@@ -89,6 +89,7 @@ from sc_neurocore.studio.platform.jobs import (
     StudioJobStatus,
     StudioJobStatusSnapshot,
     StudioJobTask,
+    StudioProcessJobPayload,
 )
 from sc_neurocore.studio.platform.operator import (
     OPERATOR_STATUS_SCHEMA_VERSION,
@@ -204,6 +205,7 @@ __all__ = [
     "StudioJobStatus",
     "StudioJobStatusSnapshot",
     "StudioJobTask",
+    "StudioProcessJobPayload",
     "StudioOperatorCapabilityStatus",
     "StudioOperatorIdentityStatus",
     "StudioOperatorResourceLimitStatus",

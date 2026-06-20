@@ -381,6 +381,16 @@ for path-free job records. Those endpoints are admin-gated and expose status,
 owner, request ID, timestamps, result metadata, and artifact manifests without
 revealing the configured job-root path.
 
+Studio also exposes a process-backed job-manager path for new backend work
+that can be expressed as an importable `module:function` task with a
+JSON-serializable payload and result. Process jobs use the same path-confined
+artifact context and public manifest shape as thread-backed jobs, but they run
+in a separate Python process so timeout or cancellation can terminate the
+worker instead of leaving a long-running Python callable alive in the backend
+process. Existing route closures remain on the thread-backed path until each
+workflow is migrated to importable process tasks with explicit payload
+contracts.
+
 The Admin panel also uses the admin-gated `/api/studio/operator/status`
 aggregate when available. That endpoint reports deployment profile,
 route-policy enforcement, identity mode, audit health, worker health,

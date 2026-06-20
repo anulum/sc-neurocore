@@ -9,8 +9,11 @@
 from __future__ import annotations
 
 import hashlib
-import time
+import json
+import subprocess
 import threading
+import time
+from collections.abc import Mapping
 from pathlib import Path
 from typing import cast
 
@@ -21,14 +24,49 @@ httpx = pytest.importorskip("httpx")
 
 from starlette.testclient import TestClient
 
+import sc_neurocore.studio.platform.jobs as jobs_module
 from sc_neurocore.studio.app import create_app
-from sc_neurocore.studio.platform import StudioRuntimeSettings
+from sc_neurocore.studio.platform import StudioRuntimeSettings, process_worker
 from sc_neurocore.studio.platform.jobs import (
     StudioJobArtifactUnavailable,
     StudioJobContext,
     StudioJobManager,
     StudioJobRejected,
 )
+
+NON_CALLABLE_TASK = 1
+
+
+def process_echo_task(
+    context: StudioJobContext,
+    payload: Mapping[str, object],
+) -> dict[str, object]:
+    """Importable process task used by Studio job-manager tests."""
+
+    context.write_artifact("reports/process-result.txt", "process ok")
+    return {"payload": dict(payload), "worker_job_id": context.job_id}
+
+
+def process_sleep_task(
+    context: StudioJobContext,
+    payload: Mapping[str, object],
+) -> dict[str, object]:
+    """Importable sleep task used to exercise process cancellation paths."""
+
+    del context
+    seconds = payload.get("seconds")
+    time.sleep(float(seconds) if isinstance(seconds, int | float) else 1.0)
+    return {"slept": True}
+
+
+def process_failure_task(
+    context: StudioJobContext,
+    payload: Mapping[str, object],
+) -> dict[str, object]:
+    """Importable task that raises a stable failure for process tests."""
+
+    del context, payload
+    raise ValueError("hidden local failure detail")
 
 
 def test_studio_job_manager_completes_job_with_path_free_artifact_manifest(
@@ -303,6 +341,356 @@ def test_studio_job_manager_times_out_cooperative_job(tmp_path: Path) -> None:
 
     assert completed.status == "timed_out"
     assert completed.error == "Studio job exceeded its timeout."
+
+
+def test_studio_job_manager_completes_process_task_with_manifest(tmp_path: Path) -> None:
+    manager = StudioJobManager(
+        root=tmp_path / "jobs",
+        allowed_kinds=frozenset({"compiler"}),
+        default_timeout_seconds=3.0,
+    )
+
+    record = manager.submit_process_task(
+        kind="compiler",
+        owner="operator-1",
+        request_id="req-1",
+        task_path="tests.test_studio_jobs:process_echo_task",
+        payload={"model": "lif"},
+    )
+    completed = manager.wait(record.job_id, timeout_seconds=5.0)
+    artifact = manager.read_artifact(record.job_id, "reports/process-result.txt")
+
+    assert completed.status == "completed"
+    assert completed.result == {"payload": {"model": "lif"}, "worker_job_id": record.job_id}
+    assert completed.artifacts[0].relative_path == "reports/process-result.txt"
+    assert artifact.payload == b"process ok"
+    assert str(tmp_path) not in str(completed.to_public_dict())
+
+
+def test_studio_job_manager_fails_process_task_without_error_detail(tmp_path: Path) -> None:
+    manager = StudioJobManager(
+        root=tmp_path / "jobs",
+        allowed_kinds=frozenset({"compiler"}),
+        default_timeout_seconds=3.0,
+    )
+
+    record = manager.submit_process_task(
+        kind="compiler",
+        owner="operator-1",
+        request_id="req-1",
+        task_path="tests.test_studio_jobs:process_failure_task",
+        payload={},
+    )
+    completed = manager.wait(record.job_id, timeout_seconds=5.0)
+
+    assert completed.status == "failed"
+    assert completed.error == "ValueError"
+
+
+def test_studio_job_manager_rejects_invalid_process_inputs(tmp_path: Path) -> None:
+    manager = StudioJobManager(
+        root=tmp_path / "jobs",
+        allowed_kinds=frozenset({"compiler"}),
+        default_timeout_seconds=3.0,
+    )
+
+    with pytest.raises(StudioJobRejected, match="module:function"):
+        manager.submit_process_task(
+            kind="compiler",
+            owner="operator-1",
+            request_id="req-1",
+            task_path="bad",
+            payload={},
+        )
+    with pytest.raises(StudioJobRejected, match="module path"):
+        manager.submit_process_task(
+            kind="compiler",
+            owner="operator-1",
+            request_id="req-1",
+            task_path="tests..bad:process_echo_task",
+            payload={},
+        )
+    with pytest.raises(StudioJobRejected, match="function name"):
+        manager.submit_process_task(
+            kind="compiler",
+            owner="operator-1",
+            request_id="req-1",
+            task_path="tests.test_studio_jobs:not-valid",
+            payload={},
+        )
+    with pytest.raises(StudioJobRejected, match="JSON"):
+        manager.submit_process_task(
+            kind="compiler",
+            owner="operator-1",
+            request_id="req-1",
+            task_path="tests.test_studio_jobs:process_echo_task",
+            payload={"bad": object()},
+        )
+    with pytest.raises(StudioJobRejected, match="not allowed"):
+        manager.submit_process_task(
+            kind="training",
+            owner="operator-1",
+            request_id="req-1",
+            task_path="tests.test_studio_jobs:process_echo_task",
+            payload={},
+        )
+    with pytest.raises(StudioJobRejected, match="timeout"):
+        manager.submit_process_task(
+            kind="compiler",
+            owner="operator-1",
+            request_id="req-1",
+            task_path="tests.test_studio_jobs:process_echo_task",
+            payload={},
+            timeout_seconds=0,
+        )
+
+
+def test_studio_job_manager_cancels_process_task(tmp_path: Path) -> None:
+    manager = StudioJobManager(
+        root=tmp_path / "jobs",
+        allowed_kinds=frozenset({"compiler"}),
+        default_timeout_seconds=3.0,
+    )
+    record = manager.submit_process_task(
+        kind="compiler",
+        owner="operator-1",
+        request_id="req-1",
+        task_path="tests.test_studio_jobs:process_sleep_task",
+        payload={"seconds": 3},
+    )
+
+    assert manager.cancel(record.job_id).status == "cancelling"
+    completed = manager.wait(record.job_id, timeout_seconds=5.0)
+
+    assert completed.status == "cancelled"
+
+
+def test_studio_job_manager_times_out_process_task(tmp_path: Path) -> None:
+    manager = StudioJobManager(
+        root=tmp_path / "jobs",
+        allowed_kinds=frozenset({"compiler"}),
+        default_timeout_seconds=0.05,
+    )
+
+    record = manager.submit_process_task(
+        kind="compiler",
+        owner="operator-1",
+        request_id="req-1",
+        task_path="tests.test_studio_jobs:process_sleep_task",
+        payload={"seconds": 3},
+    )
+    completed = manager.wait(record.job_id, timeout_seconds=5.0)
+
+    assert completed.status == "timed_out"
+    assert completed.error == "Studio job exceeded its timeout."
+
+
+def test_studio_job_manager_rejects_missing_or_unknown_artifacts(tmp_path: Path) -> None:
+    manager = StudioJobManager(
+        root=tmp_path / "jobs",
+        allowed_kinds=frozenset({"compiler"}),
+        default_timeout_seconds=3.0,
+    )
+    record = manager.submit_process_task(
+        kind="compiler",
+        owner="operator-1",
+        request_id="req-1",
+        task_path="tests.test_studio_jobs:process_echo_task",
+        payload={},
+    )
+    manager.wait(record.job_id, timeout_seconds=5.0)
+
+    with pytest.raises(KeyError):
+        manager.read_artifact(record.job_id, "../escape.txt")
+    with pytest.raises(KeyError):
+        manager.read_artifact(record.job_id, "reports/missing.txt")
+
+    (tmp_path / "jobs" / record.job_id / "reports" / "process-result.txt").unlink()
+    with pytest.raises(StudioJobArtifactUnavailable, match="unavailable"):
+        manager.read_artifact(record.job_id, "reports/process-result.txt")
+
+
+def test_studio_process_result_loader_handles_invalid_payloads(tmp_path: Path) -> None:
+    missing = jobs_module._load_process_result(tmp_path / "missing.json")
+    invalid_json_path = tmp_path / "invalid.json"
+    invalid_json_path.write_text("{", encoding="utf-8")
+    invalid_json = jobs_module._load_process_result(invalid_json_path)
+    invalid_shape_path = tmp_path / "invalid-shape.json"
+    invalid_shape_path.write_text("[]", encoding="utf-8")
+    invalid_shape = jobs_module._load_process_result(invalid_shape_path)
+    malformed_artifacts_path = tmp_path / "malformed-artifacts.json"
+    malformed_artifacts_path.write_text(
+        json.dumps({"artifacts": [{"relative_path": 1}], "status": "completed"}),
+        encoding="utf-8",
+    )
+    malformed = jobs_module._load_process_result(malformed_artifacts_path)
+    not_list_path = tmp_path / "not-list-artifacts.json"
+    not_list_path.write_text(
+        json.dumps({"artifacts": {}, "status": "completed"}),
+        encoding="utf-8",
+    )
+    non_dict_path = tmp_path / "non-dict-artifact.json"
+    non_dict_path.write_text(
+        json.dumps({"artifacts": [1], "status": "completed"}),
+        encoding="utf-8",
+    )
+    bad_size_path = tmp_path / "bad-size-artifact.json"
+    bad_size_path.write_text(
+        json.dumps(
+            {
+                "artifacts": [
+                    {
+                        "relative_path": "reports/result.txt",
+                        "sha256": "0" * 64,
+                        "size_bytes": "bad",
+                    }
+                ],
+                "status": "completed",
+            }
+        ),
+        encoding="utf-8",
+    )
+    bad_hash_path = tmp_path / "bad-hash-artifact.json"
+    bad_hash_path.write_text(
+        json.dumps(
+            {
+                "artifacts": [
+                    {
+                        "relative_path": "reports/result.txt",
+                        "sha256": 1,
+                        "size_bytes": 1,
+                    }
+                ],
+                "status": "completed",
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    assert missing.error == "Studio process worker did not write a result."
+    assert invalid_json.error == "Studio process worker wrote an invalid result."
+    assert invalid_shape.error == "Studio process worker wrote an invalid result."
+    assert malformed.artifacts == ()
+    assert jobs_module._load_process_artifacts(malformed_artifacts_path) == ()
+    assert jobs_module._load_process_result(not_list_path).artifacts == ()
+    assert jobs_module._load_process_result(non_dict_path).artifacts == ()
+    assert jobs_module._load_process_result(bad_size_path).artifacts == ()
+    assert jobs_module._load_process_result(bad_hash_path).artifacts == ()
+    assert jobs_module._load_process_artifacts(tmp_path / "missing.json") == ()
+
+
+def test_studio_process_terminate_falls_back_to_kill() -> None:
+    class BlockingProcess:
+        def __init__(self) -> None:
+            self.terminated = False
+            self.killed = False
+            self.wait_calls = 0
+
+        def terminate(self) -> None:
+            self.terminated = True
+
+        def wait(self, timeout: float | None = None) -> int:
+            del timeout
+            self.wait_calls += 1
+            if self.wait_calls == 1:
+                raise subprocess.TimeoutExpired(cmd="worker", timeout=1.0)
+            return 0
+
+        def kill(self) -> None:
+            self.killed = True
+
+    process = BlockingProcess()
+
+    jobs_module._terminate_process(cast(subprocess.Popen[bytes], process))
+
+    assert process.terminated is True
+    assert process.killed is True
+    assert process.wait_calls == 2
+
+
+def test_studio_process_worker_main_writes_result_files(tmp_path: Path) -> None:
+    work_dir = tmp_path / "sj_worker"
+    work_dir.mkdir()
+    payload_path = tmp_path / "payload.json"
+    result_path = tmp_path / "result.json"
+    payload_path.write_text(json.dumps({"model": "lif"}), encoding="utf-8")
+
+    exit_code = process_worker.main(
+        [
+            "--task",
+            "tests.test_studio_jobs:process_echo_task",
+            "--payload",
+            str(payload_path),
+            "--result",
+            str(result_path),
+            "--work-dir",
+            str(work_dir),
+            "--max-artifact-bytes",
+            "1024",
+        ]
+    )
+    payload = json.loads(result_path.read_text(encoding="utf-8"))
+
+    assert exit_code == 0
+    assert payload["status"] == "completed"
+    assert payload["result"] == {"payload": {"model": "lif"}, "worker_job_id": "sj_worker"}
+    assert payload["artifacts"][0]["relative_path"] == "reports/process-result.txt"
+
+
+def test_studio_process_worker_main_records_failure(tmp_path: Path) -> None:
+    work_dir = tmp_path / "sj_worker"
+    work_dir.mkdir()
+    payload_path = tmp_path / "payload.json"
+    result_path = tmp_path / "result.json"
+    payload_path.write_text("[]", encoding="utf-8")
+
+    exit_code = process_worker.main(
+        [
+            "--task",
+            "tests.test_studio_jobs:process_echo_task",
+            "--payload",
+            str(payload_path),
+            "--result",
+            str(result_path),
+            "--work-dir",
+            str(work_dir),
+            "--max-artifact-bytes",
+            "1024",
+        ]
+    )
+    payload = json.loads(result_path.read_text(encoding="utf-8"))
+
+    assert exit_code == 1
+    assert payload["status"] == "failed"
+    assert payload["error"] == "ValueError"
+
+
+def test_studio_process_worker_main_rejects_non_callable_task(tmp_path: Path) -> None:
+    work_dir = tmp_path / "sj_worker"
+    work_dir.mkdir()
+    payload_path = tmp_path / "payload.json"
+    result_path = tmp_path / "result.json"
+    payload_path.write_text("{}", encoding="utf-8")
+
+    exit_code = process_worker.main(
+        [
+            "--task",
+            "tests.test_studio_jobs:NON_CALLABLE_TASK",
+            "--payload",
+            str(payload_path),
+            "--result",
+            str(result_path),
+            "--work-dir",
+            str(work_dir),
+            "--max-artifact-bytes",
+            "1024",
+        ]
+    )
+    payload = json.loads(result_path.read_text(encoding="utf-8"))
+
+    assert exit_code == 1
+    assert payload["status"] == "failed"
+    assert payload["error"] == "TypeError"
 
 
 def test_studio_job_status_endpoint_is_path_free(tmp_path: Path) -> None:

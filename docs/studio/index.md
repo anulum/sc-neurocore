@@ -194,6 +194,12 @@ runtime features:
   artifacts for administrators. The server resolves artifacts through the job
   manifest only, revalidates size and SHA-256 before serving, and returns
   generic errors if the artifact is missing or fails integrity checks.
+- New backend workflows can use `StudioJobManager.submit_process_task(...)` for
+  process-backed execution. The task is an importable `module:function` that
+  receives a `StudioJobContext` plus a JSON payload and returns a JSON result.
+  It shares the same artifact manifest contract as thread-backed jobs, while
+  timeout and cancellation terminate the worker process. Existing Studio route
+  closures remain compatible with the thread-backed path during migration.
 - `/api/studio/operator/status` is an admin-classified aggregate for the
   Studio control plane. It combines deployment profile, route-policy
   enforcement, identity mode, audit health, job-worker health, and capability

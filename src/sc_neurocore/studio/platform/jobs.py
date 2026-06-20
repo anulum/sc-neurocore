@@ -11,13 +11,18 @@
 from __future__ import annotations
 
 import hashlib
+import json
 import secrets
+# Process workers use shell-free local argument vectors.
+import subprocess  # nosec B404
+import sys
 import threading
-from collections.abc import Callable
+import time
+from collections.abc import Callable, Mapping
 from dataclasses import dataclass, field, replace
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Literal
+from typing import Literal, TypeAlias, cast
 
 JOBS_STATUS_SCHEMA_VERSION = "studio.jobs.status.v1"
 JOBS_LIST_SCHEMA_VERSION = "studio.jobs.list.v1"
@@ -34,6 +39,7 @@ StudioJobStatus = Literal[
     "timed_out",
 ]
 StudioJobTask = Callable[["StudioJobContext"], dict[str, object]]
+StudioProcessJobPayload: TypeAlias = Mapping[str, object]
 
 
 class StudioJobRejected(ValueError):
@@ -310,6 +316,90 @@ class StudioJobManager:
         supervisor.start()
         return record
 
+    def submit_process_task(
+        self,
+        *,
+        kind: str,
+        owner: str,
+        request_id: str | None,
+        task_path: str,
+        payload: StudioProcessJobPayload,
+        timeout_seconds: float | None = None,
+    ) -> StudioJobRecord:
+        """Submit an importable Studio job task to an isolated Python process.
+
+        Parameters
+        ----------
+        kind:
+            Job kind that must be present in the manager allow-list.
+        owner:
+            Operator or subsystem label recorded in the path-free job record.
+        request_id:
+            Optional request correlation identifier.
+        task_path:
+            Import path in ``module:function`` form. The function must accept
+            ``(StudioJobContext, Mapping[str, object])`` and return a
+            JSON-serializable ``dict[str, object]``.
+        payload:
+            JSON-serializable input payload passed to the worker function.
+        timeout_seconds:
+            Optional per-job timeout. Timed-out process jobs are terminated.
+
+        Returns
+        -------
+        StudioJobRecord
+            Initial pending record for the submitted process job.
+
+        Raises
+        ------
+        StudioJobRejected
+            If the kind, timeout, task import path, or payload is invalid.
+        """
+
+        if kind not in self._allowed_kinds:
+            raise StudioJobRejected(f"Studio job kind '{kind}' is not allowed.")
+        timeout = self._default_timeout_seconds if timeout_seconds is None else timeout_seconds
+        if timeout <= 0:
+            raise StudioJobRejected("Studio job timeout must be positive.")
+        _validate_process_task_path(task_path)
+        payload_json = _json_payload(payload, "Studio process job payload must be JSON.")
+        job_id = f"sj_{secrets.token_hex(8)}"
+        work_dir = self._root / job_id
+        work_dir.mkdir(parents=True, exist_ok=False)
+        payload_path = work_dir / ".studio_process_payload.json"
+        result_path = work_dir / ".studio_process_result.json"
+        payload_path.write_text(payload_json, encoding="utf-8")
+        cancel_event = threading.Event()
+        done_event = threading.Event()
+        record = StudioJobRecord(
+            job_id=job_id,
+            kind=kind,
+            owner=owner,
+            request_id=request_id,
+            status="pending",
+            created_at_utc=self._timestamp_utc(),
+        )
+        with self._lock:
+            self._records[job_id] = record
+            self._done_events[job_id] = done_event
+            self._cancel_events[job_id] = cancel_event
+        supervisor = threading.Thread(
+            target=self._run_process_supervised,
+            args=(
+                job_id,
+                work_dir,
+                cancel_event,
+                done_event,
+                task_path,
+                payload_path,
+                result_path,
+                timeout,
+            ),
+            daemon=True,
+        )
+        supervisor.start()
+        return record
+
     def cancel(self, job_id: str) -> StudioJobRecord:
         """Request cooperative cancellation for one job."""
 
@@ -453,6 +543,77 @@ class StudioJobManager:
             )
         done_event.set()
 
+    def _run_process_supervised(
+        self,
+        job_id: str,
+        work_dir: Path,
+        cancel_event: threading.Event,
+        done_event: threading.Event,
+        task_path: str,
+        payload_path: Path,
+        result_path: Path,
+        timeout_seconds: float,
+    ) -> None:
+        self._update(job_id, status="running", started_at_utc=self._timestamp_utc())
+        command = [
+            sys.executable,
+            "-m",
+            "sc_neurocore.studio.platform.process_worker",
+            "--task",
+            task_path,
+            "--payload",
+            str(payload_path),
+            "--result",
+            str(result_path),
+            "--work-dir",
+            str(work_dir),
+            "--max-artifact-bytes",
+            str(self._max_artifact_bytes),
+        ]
+        process = subprocess.Popen(command)  # nosec B603
+        deadline = time.monotonic() + timeout_seconds
+        while process.poll() is None:
+            if cancel_event.is_set():
+                _terminate_process(process)
+                self._update(
+                    job_id,
+                    status="cancelled",
+                    finished_at_utc=self._timestamp_utc(),
+                    artifacts=_load_process_artifacts(result_path),
+                )
+                done_event.set()
+                return
+            if time.monotonic() >= deadline:
+                _terminate_process(process)
+                self._update(
+                    job_id,
+                    status="timed_out",
+                    error="Studio job exceeded its timeout.",
+                    finished_at_utc=self._timestamp_utc(),
+                    artifacts=_load_process_artifacts(result_path),
+                )
+                done_event.set()
+                return
+            time.sleep(0.01)
+        result = _load_process_result(result_path)
+        if process.returncode == 0 and result.status == "completed":
+            self._update(
+                job_id,
+                status="completed",
+                result=result.result,
+                finished_at_utc=self._timestamp_utc(),
+                artifacts=result.artifacts,
+            )
+        else:
+            self._update(
+                job_id,
+                status="failed",
+                error=result.error or f"Studio process worker exited with {process.returncode}.",
+                finished_at_utc=self._timestamp_utc(),
+                artifacts=result.artifacts,
+            )
+        done_event.set()
+
     def _update(
         self,
         job_id: str,
@@ -513,6 +674,116 @@ def _resolve_confined_child(*, root: Path, relative_path: str, error_message: st
     return resolved
 
 
+@dataclass(frozen=True, slots=True)
+class _ProcessWorkerResult:
+    status: Literal["completed", "failed"]
+    result: dict[str, object]
+    error: str | None
+    artifacts: tuple[StudioJobArtifact, ...]
+
+
+def _validate_process_task_path(task_path: str) -> None:
+    module_path, separator, function_name = task_path.partition(":")
+    if separator != ":" or not module_path.strip() or not function_name.strip():
+        raise StudioJobRejected("Studio process task path must use module:function form.")
+    if any(part == "" or not part.isidentifier() for part in module_path.split(".")):
+        raise StudioJobRejected("Studio process task module path is invalid.")
+    if not function_name.isidentifier():
+        raise StudioJobRejected("Studio process task function name is invalid.")
+
+
+def _json_payload(payload: StudioProcessJobPayload, error_message: str) -> str:
+    try:
+        return json.dumps(dict(payload), sort_keys=True)
+    except (TypeError, ValueError) as exc:
+        raise StudioJobRejected(error_message) from exc
+
+
+def _terminate_process(process: subprocess.Popen[bytes]) -> None:
+    process.terminate()
+    try:
+        process.wait(timeout=1.0)
+    except subprocess.TimeoutExpired:
+        process.kill()
+        process.wait(timeout=1.0)
+
+
+def _load_process_result(result_path: Path) -> _ProcessWorkerResult:
+    if not result_path.exists():
+        return _ProcessWorkerResult(
+            status="failed",
+            result={},
+            error="Studio process worker did not write a result.",
+            artifacts=(),
+        )
+    try:
+        payload = json.loads(result_path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        return _ProcessWorkerResult(
+            status="failed",
+            result={},
+            error="Studio process worker wrote an invalid result.",
+            artifacts=(),
+        )
+    if not isinstance(payload, dict):
+        return _ProcessWorkerResult(
+            status="failed",
+            result={},
+            error="Studio process worker wrote an invalid result.",
+            artifacts=(),
+        )
+    return _parse_process_result(payload)
+
+
+def _load_process_artifacts(result_path: Path) -> tuple[StudioJobArtifact, ...]:
+    if not result_path.exists():
+        return ()
+    return _load_process_result(result_path).artifacts
+
+
+def _parse_process_result(payload: dict[object, object]) -> _ProcessWorkerResult:
+    raw_status = payload.get("status")
+    status: Literal["completed", "failed"] = "completed" if raw_status == "completed" else "failed"
+    raw_result = payload.get("result")
+    result = cast(dict[str, object], raw_result) if isinstance(raw_result, dict) else {}
+    raw_error = payload.get("error")
+    error = raw_error if isinstance(raw_error, str) else None
+    raw_artifacts = payload.get("artifacts")
+    artifacts = _parse_process_artifacts(raw_artifacts)
+    return _ProcessWorkerResult(
+        status=status,
+        result=result,
+        error=error,
+        artifacts=artifacts,
+    )
+
+
+def _parse_process_artifacts(raw_artifacts: object) -> tuple[StudioJobArtifact, ...]:
+    if not isinstance(raw_artifacts, list):
+        return ()
+    artifacts: list[StudioJobArtifact] = []
+    for item in raw_artifacts:
+        if not isinstance(item, dict):
+            return ()
+        relative_path = item.get("relative_path")
+        size_bytes = item.get("size_bytes")
+        sha256 = item.get("sha256")
+        if not isinstance(relative_path, str):
+            return ()
+        if not isinstance(size_bytes, int):
+            return ()
+        if not isinstance(sha256, str):
+            return ()
+        artifacts.append(
+            StudioJobArtifact(
+                relative_path=relative_path,
+                size_bytes=size_bytes,
+                sha256=sha256,
+            )
+        )
+    return tuple(artifacts)
+
+
 __all__ = [
     "JOBS_LIST_SCHEMA_VERSION",
     "JOBS_STATUS_SCHEMA_VERSION",
@@ -529,4 +800,5 @@ __all__ = [
     "StudioJobStatus",
     "StudioJobStatusSnapshot",
     "StudioJobTask",
+    "StudioProcessJobPayload",
 ]
