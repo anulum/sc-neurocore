@@ -37,8 +37,10 @@ import {
   type StudioAuditExport, type StudioAuditStatus, type StudioCapability,
   type StudioAuthSession,
   type StudioIdentityBrowserUser,
+  type StudioIdentityBrowserUserCreate,
   type StudioIdentityServiceAccount, type StudioJobRecord, type StudioJobStatus,
   type StudioOperatorStatus,
+  createStudioIdentityBrowserUser,
   setStudioAuthToken,
   updateStudioIdentityBrowserUser,
   updateStudioIdentityServiceAccount,
@@ -166,6 +168,7 @@ interface StudioState {
   loadAuditExport: () => Promise<void>;
   loadJobStatus: () => Promise<void>;
   loadIdentityServiceAccounts: () => Promise<void>;
+  createIdentityBrowserUser: (create: StudioIdentityBrowserUserCreate) => Promise<void>;
   updateIdentityServiceAccount: (
     principalId: string,
     update: { active: boolean; expires_at_utc: string | null; roles: string[] },
@@ -428,6 +431,29 @@ export const useStudioStore = create<StudioState>((set, get) => ({
       set({
         auditLoading: false,
         auditError: error instanceof Error ? error.message : "Identity account check failed",
+      });
+    }
+  },
+  createIdentityBrowserUser: async (create) => {
+    set({ auditLoading: true, auditError: null });
+    try {
+      await createStudioIdentityBrowserUser(create);
+      const [accountsResponse, usersResponse, auditExport] = await Promise.all([
+        fetchStudioIdentityServiceAccounts(),
+        fetchStudioIdentityBrowserUsers(),
+        fetchStudioAuditExport(100),
+      ]);
+      set({
+        auditExport,
+        auditLoading: false,
+        auditError: null,
+        identityBrowserUsers: usersResponse.browser_users,
+        identityServiceAccounts: accountsResponse.service_accounts,
+      });
+    } catch (error: unknown) {
+      set({
+        auditLoading: false,
+        auditError: error instanceof Error ? error.message : "Browser user creation failed",
       });
     }
   },

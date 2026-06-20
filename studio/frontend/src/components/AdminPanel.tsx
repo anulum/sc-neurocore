@@ -14,6 +14,7 @@ export default function AdminPanel() {
     jobRecords,
     jobStatus,
     operatorStatus,
+    createIdentityBrowserUser,
     loadAuditExport,
     loadAuditStatus,
     loadIdentityServiceAccounts,
@@ -39,6 +40,7 @@ export default function AdminPanel() {
     <AdminPanelView
       auditLoading={auditLoading}
       model={model}
+      onCreateIdentityBrowserUser={createIdentityBrowserUser}
       onLoadAuditExport={loadAuditExport}
       onLoadAuditStatus={loadAuditStatus}
       onLoadIdentityServiceAccounts={loadIdentityServiceAccounts}

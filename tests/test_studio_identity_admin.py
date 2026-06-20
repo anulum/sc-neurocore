@@ -282,6 +282,64 @@ def test_browser_user_admin_routes_are_admin_gated_and_audited(tmp_path: Path) -
     assert "studio.identity.browser_user.update" in actions
 
 
+def test_browser_user_create_route_is_admin_gated_password_free_and_audited(
+    tmp_path: Path,
+) -> None:
+    identity_path = tmp_path / "studio-identities.json"
+    audit_path = tmp_path / "studio-audit.jsonl"
+    token = _write_identity_file(identity_path)
+    client = _client(identity_path, audit_path)
+    payload = {
+        "active": True,
+        "expires_at_utc": None,
+        "password": "analyst-password",
+        "principal_id": "human-analyst",
+        "roles": ["studio.viewer"],
+        "username": "analyst",
+    }
+
+    denied = client.post("/api/studio/identity/browser-users", json=payload)
+    created = client.post(
+        "/api/studio/identity/browser-users",
+        headers=_admin_headers(token),
+        json=payload,
+    )
+    duplicate = client.post(
+        "/api/studio/identity/browser-users",
+        headers=_admin_headers(token),
+        json=payload,
+    )
+    login = client.post(
+        "/api/studio/auth/login",
+        json={"username": "analyst", "password": "analyst-password"},
+    )
+    listed = client.get(
+        "/api/studio/identity/browser-users",
+        headers=_admin_headers(token),
+    )
+
+    assert denied.status_code == 401
+    assert denied.json()["detail"] == "missing_principal"
+    assert created.status_code == 200
+    assert created.json() == {
+        "active": True,
+        "expires_at_utc": None,
+        "principal_id": "human-analyst",
+        "roles": ["studio.viewer"],
+        "username": "analyst",
+    }
+    assert duplicate.status_code == 409
+    assert duplicate.json()["detail"] == "Studio browser user username already exists."
+    assert login.status_code == 200
+    assert login.json()["principal_id"] == "human-analyst"
+    assert "analyst-password" not in identity_path.read_text(encoding="utf-8")
+    assert "analyst-password" not in audit_path.read_text(encoding="utf-8")
+    assert "password" not in listed.text
+    actions = [row["action"] for row in _audit_rows(audit_path)]
+    assert "studio.identity.browser_users.create" in actions
+    assert "studio.identity.browser_user.create" in actions
+
+
 def test_rotate_browser_user_password_preserves_public_metadata(tmp_path: Path) -> None:
     identity_path = tmp_path / "studio-identities.json"
     _write_identity_file(identity_path)

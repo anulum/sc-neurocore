@@ -330,11 +330,15 @@ their explicit failure reason and are not converted into throttle events.
 
 Administrators can inspect and update browser-user lifecycle metadata from the
 Admin panel Identity section or through `/api/studio/identity/browser-users`.
-The detail and PATCH routes return only username, principal ID, roles, active
-state, and optional UTC expiry. Role, active-state, and expiry updates preserve
-the stored password verifier, reload backend authentication immediately, and
-record both the route-policy audit decision and a dedicated
-`studio.identity.browser_user.update` audit event.
+The Admin panel also creates browser users through the same route. Create,
+detail, and PATCH responses return only username, principal ID, roles, active
+state, and optional UTC expiry. Creation stores only a PBKDF2-HMAC-SHA256
+verifier for the submitted password, reloads backend authentication
+immediately, rejects duplicate usernames with `409`, and records
+`studio.identity.browser_user.create` without password material. Role,
+active-state, and expiry updates preserve the stored password verifier, reload
+backend authentication immediately, and record both the route-policy audit
+decision and a dedicated `studio.identity.browser_user.update` audit event.
 
 Use `POST /api/studio/identity/browser-users/{username}/password` or the Admin
 panel per-user secret field to rotate a browser user's password verifier. The

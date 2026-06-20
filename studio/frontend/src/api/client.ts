@@ -246,6 +246,15 @@ export interface StudioIdentityBrowserUserUpdate {
   roles: string[];
 }
 
+export interface StudioIdentityBrowserUserCreate {
+  active: boolean;
+  expires_at_utc: string | null;
+  password: string;
+  principal_id: string;
+  roles: string[];
+  username: string;
+}
+
 export interface StudioIdentityBrowserUserPasswordRotate {
   password: string;
 }
@@ -326,6 +335,13 @@ export const fetchStudioIdentityServiceAccounts = () =>
   get<StudioIdentityServiceAccountsResponse>("/studio/identity/service-accounts");
 export const fetchStudioIdentityBrowserUsers = () =>
   get<StudioIdentityBrowserUsersResponse>("/studio/identity/browser-users");
+export const createStudioIdentityBrowserUser = (
+  create: StudioIdentityBrowserUserCreate,
+) =>
+  post<StudioIdentityBrowserUser>(
+    "/studio/identity/browser-users",
+    create,
+  );
 export const updateStudioIdentityServiceAccount = (
   principalId: string,
   update: StudioIdentityServiceAccountUpdate,

@@ -556,6 +556,10 @@ def test_default_route_policy_registry_classifies_platform_routes() -> None:
     job_detail_policy = registry.policy_for("GET", "/api/studio/jobs/{job_id}")
     operator_status_policy = registry.policy_for("GET", "/api/studio/operator/status")
     audit_export_policy = registry.policy_for("GET", "/api/studio/audit/export")
+    browser_user_create_policy = registry.policy_for(
+        "POST",
+        "/api/studio/identity/browser-users",
+    )
     artifact_policy = registry.policy_for(
         "GET",
         "/api/studio/jobs/{job_id}/artifacts/{artifact_path:path}",
@@ -570,6 +574,11 @@ def test_default_route_policy_registry_classifies_platform_routes() -> None:
     assert job_detail_policy.audit_action == "studio.jobs.detail"
     assert operator_status_policy.visibility is contract["RouteVisibility"].ADMIN
     assert audit_export_policy.visibility is contract["RouteVisibility"].ADMIN
+    assert browser_user_create_policy.visibility is contract["RouteVisibility"].ADMIN
+    assert (
+        browser_user_create_policy.audit_action
+        == "studio.identity.browser_users.create"
+    )
     assert artifact_policy.visibility is contract["RouteVisibility"].ADMIN
     assert artifact_policy.audit_action == "studio.jobs.artifact.read"
 

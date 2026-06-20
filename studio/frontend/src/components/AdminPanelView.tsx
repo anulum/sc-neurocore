@@ -5,6 +5,16 @@ import type { AdminShellModel } from "../adminShell";
 export interface AdminPanelViewProps {
   auditLoading: boolean;
   model: AdminShellModel;
+  onCreateIdentityBrowserUser: (
+    create: {
+      active: boolean;
+      expires_at_utc: string | null;
+      password: string;
+      principal_id: string;
+      roles: string[];
+      username: string;
+    },
+  ) => Promise<void>;
   onLoadAuditExport: () => Promise<void>;
   onLoadAuditStatus: () => Promise<void>;
   onLoadIdentityServiceAccounts: () => Promise<void>;
@@ -24,6 +34,7 @@ export interface AdminPanelViewProps {
 export default function AdminPanelView({
   auditLoading,
   model,
+  onCreateIdentityBrowserUser,
   onLoadAuditExport,
   onLoadAuditStatus,
   onLoadIdentityServiceAccounts,
@@ -49,6 +60,28 @@ export default function AdminPanelView({
       principalId,
       identityUpdateFromForm(new FormData(event.currentTarget)),
     );
+  }
+
+  function submitBrowserUserCreate(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const formElement = event.currentTarget;
+    const form = new FormData(formElement);
+    const rolesText = String(form.get("roles") ?? "");
+    void (async () => {
+      await onCreateIdentityBrowserUser({
+        active: form.get("active") === "on",
+        expires_at_utc: null,
+        password: String(form.get("password") ?? ""),
+        principal_id: String(form.get("principalId") ?? "").trim(),
+        roles: rolesText.split(",").map((role) => role.trim()).filter(Boolean),
+        username: String(form.get("username") ?? "").trim(),
+      });
+      formElement.reset();
+      const activeInput = formElement.elements.namedItem("active");
+      if (activeInput instanceof HTMLInputElement) {
+        activeInput.checked = true;
+      }
+    })();
   }
 
   function submitBrowserUserUpdate(event: FormEvent<HTMLFormElement>, username: string) {
@@ -159,6 +192,70 @@ export default function AdminPanelView({
               </button>
             </form>
           ))}
+          <form
+            className="admin-audit-row admin-identity-row"
+            onSubmit={submitBrowserUserCreate}
+          >
+            <span>new</span>
+            <strong>Browser user</strong>
+            <label>
+              Username
+              <input
+                aria-label="New browser username"
+                name="username"
+                disabled={auditLoading}
+                required
+              />
+            </label>
+            <label>
+              Principal
+              <input
+                aria-label="New browser principal"
+                name="principalId"
+                disabled={auditLoading}
+                required
+              />
+            </label>
+            <label>
+              Roles
+              <input
+                aria-label="New browser roles"
+                name="roles"
+                defaultValue="studio.viewer"
+                disabled={auditLoading}
+                required
+              />
+            </label>
+            <label>
+              Secret
+              <input
+                aria-label="New browser secret"
+                autoComplete="new-password"
+                name="password"
+                type="password"
+                disabled={auditLoading}
+                required
+              />
+            </label>
+            <label>
+              <input
+                aria-label="New browser active"
+                name="active"
+                type="checkbox"
+                defaultChecked
+                disabled={auditLoading}
+              />
+              Active
+            </label>
+            <small>pending</small>
+            <button
+              aria-label="Create browser user"
+              disabled={auditLoading}
+              type="submit"
+            >
+              Create
+            </button>
+          </form>
           {model.identityBrowserUsers.length === 0 ? (
             <div className="admin-audit-row">
               <span>unavailable</span>

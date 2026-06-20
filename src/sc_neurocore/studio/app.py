@@ -111,6 +111,7 @@ from sc_neurocore.studio.platform import (
     StudioJobContext,
     StudioJobManager,
     StudioRuntimeSettings,
+    add_studio_browser_user_record,
     build_default_studio_capability_registry,
     build_default_studio_route_policy_registry,
     build_default_studio_runtime_settings,
@@ -303,6 +304,17 @@ class StudioBrowserUserUpdateRequest(BaseModel):
 
     roles: list[str] = Field(min_length=1)
     active: bool
+    expires_at_utc: str | None = None
+
+
+class StudioBrowserUserCreateRequest(BaseModel):
+    """Request body for admin browser-user creation."""
+
+    username: str = Field(min_length=1, max_length=128)
+    principal_id: str = Field(min_length=1, max_length=256)
+    roles: list[str] = Field(min_length=1)
+    password: str = Field(min_length=1, max_length=4096)
+    active: bool = True
     expires_at_utc: str | None = None
 
 
@@ -1201,6 +1213,54 @@ def create_app(runtime_settings: StudioRuntimeSettings | None = None) -> FastAPI
             "browser_users": [record.to_public_dict() for record in records],
             "schema_version": "sc-neurocore.studio.identity.browser-users.v1",
         }
+
+    @app.post("/api/studio/identity/browser-users")
+    def api_create_studio_identity_browser_user(
+        create: StudioBrowserUserCreateRequest,
+        request: Request,
+    ) -> dict[str, bool | list[str] | str | None]:
+        """Create one persistent browser user for administrators."""
+
+        nonlocal studio_identity_authenticator
+        if settings.identity_file_path is None:
+            raise HTTPException(status_code=409, detail="identity_store_unavailable")
+        identity_path = Path(settings.identity_file_path)
+        try:
+            created = add_studio_browser_user_record(
+                identity_path,
+                active=create.active,
+                expires_at_utc=create.expires_at_utc,
+                password=create.password,
+                principal_id=create.principal_id,
+                roles=create.roles,
+                username=create.username,
+            )
+            studio_identity_authenticator = StudioIdentityAuthenticator(
+                load_studio_identity_store(identity_path)
+            )
+            app.state.studio_identity_authenticator = studio_identity_authenticator
+            actor = getattr(request.state, "studio_principal", None)
+            request_id = getattr(request.state, "studio_request_id", None)
+            studio_audit_sink.record(
+                AuditEvent(
+                    action="studio.identity.browser_user.create",
+                    decision="allow",
+                    principal_id=(
+                        actor.principal_id if isinstance(actor, Principal) else None
+                    ),
+                    reason=f"created:{created.username}",
+                    request_id=request_id if isinstance(request_id, str) else None,
+                    route="/api/studio/identity/browser-users",
+                    timestamp_utc=_studio_timestamp_utc(),
+                )
+            )
+        except ValueError as exc:
+            detail = str(exc)
+            status_code = 409 if "already exists" in detail else 422
+            raise HTTPException(status_code=status_code, detail=detail) from exc
+        except AuditSinkError as exc:
+            raise HTTPException(status_code=503, detail="audit_append_failed") from exc
+        return created.to_public_dict()
 
     @app.get("/api/studio/identity/browser-users/{username}")
     def api_studio_identity_browser_user(

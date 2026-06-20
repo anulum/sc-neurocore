@@ -159,6 +159,7 @@ describe("AdminPanel", () => {
       <AdminPanelView
         auditLoading={false}
         model={model}
+        onCreateIdentityBrowserUser={async () => undefined}
         onLoadAuditExport={async () => undefined}
         onLoadAuditStatus={async () => undefined}
         onLoadIdentityServiceAccounts={async () => undefined}
@@ -188,6 +189,10 @@ describe("AdminPanel", () => {
     expect(html).toContain("Identity");
     expect(html).toContain("svc-admin");
     expect(html).toContain("studio.admin, studio.viewer");
+    expect(html).toContain("New browser username");
+    expect(html).toContain("New browser principal");
+    expect(html).toContain("New browser secret");
+    expect(html).toContain("Create browser user");
     expect(html).toContain("operator");
     expect(html).toContain("human-operator - 2030-01-01T00:00:00Z");
     expect(html).toContain("operator new secret");

@@ -133,13 +133,18 @@ runtime features:
 - `/api/studio/identity/browser-users` returns an admin-only, password-free
   browser-user inventory for the same identity file. The payload includes
   usernames, principal IDs, roles, active state, and expiry only.
+  `POST /api/studio/identity/browser-users` creates a new browser user,
+  stores only a PBKDF2-HMAC-SHA256 verifier for the supplied password,
+  reloads authentication immediately, and emits
+  `studio.identity.browser_user.create` without password material. Duplicate
+  usernames fail closed with `409`.
   `/api/studio/identity/browser-users/{username}` returns one password-free
   browser-user record, and `PATCH /api/studio/identity/browser-users/{username}`
   updates roles, active state, and optional UTC expiry while preserving the
   stored password verifier. The backend reloads the identity authenticator
   after a successful update, so disabling a browser user or changing roles
-  applies without a Studio restart. The Admin panel exposes the same lifecycle
-  controls without returning password verifier material.
+  applies without a Studio restart. The Admin panel exposes create, lifecycle,
+  and secret-rotation controls without returning password verifier material.
 - Admins rotate a browser user's password with
   `POST /api/studio/identity/browser-users/{username}/password`. The request
   writes a fresh PBKDF2-HMAC-SHA256 verifier, preserves password-free user

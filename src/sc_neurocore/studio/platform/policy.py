@@ -591,6 +591,12 @@ def build_default_studio_route_policy_registry() -> RoutePolicyRegistry:
                 "studio.identity.browser_users.list",
             ),
             (
+                "POST",
+                "/api/studio/identity/browser-users",
+                RouteVisibility.ADMIN,
+                "studio.identity.browser_users.create",
+            ),
+            (
                 "GET",
                 "/api/studio/identity/browser-users/{username}",
                 RouteVisibility.ADMIN,
