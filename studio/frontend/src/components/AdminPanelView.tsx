@@ -1,3 +1,5 @@
+import type { FormEvent } from "react";
+
 import type { AdminShellModel } from "../adminShell";
 
 export interface AdminPanelViewProps {
@@ -5,8 +7,13 @@ export interface AdminPanelViewProps {
   model: AdminShellModel;
   onLoadAuditExport: () => Promise<void>;
   onLoadAuditStatus: () => Promise<void>;
+  onLoadIdentityServiceAccounts: () => Promise<void>;
   onLoadJobStatus: () => Promise<void>;
   onLoadOperatorStatus: () => Promise<void>;
+  onUpdateIdentityServiceAccount: (
+    principalId: string,
+    update: { active: boolean; expires_at_utc: string | null; roles: string[] },
+  ) => Promise<void>;
 }
 
 export default function AdminPanelView({
@@ -14,9 +21,23 @@ export default function AdminPanelView({
   model,
   onLoadAuditExport,
   onLoadAuditStatus,
+  onLoadIdentityServiceAccounts,
   onLoadJobStatus,
   onLoadOperatorStatus,
+  onUpdateIdentityServiceAccount,
 }: AdminPanelViewProps) {
+  function submitIdentityUpdate(event: FormEvent<HTMLFormElement>, principalId: string) {
+    event.preventDefault();
+    const form = new FormData(event.currentTarget);
+    const rolesText = String(form.get("roles") ?? "");
+    const roles = rolesText.split(",").map((role) => role.trim()).filter(Boolean);
+    void onUpdateIdentityServiceAccount(principalId, {
+      active: form.get("active") === "on",
+      expires_at_utc: null,
+      roles,
+    });
+  }
+
   return (
     <div className="admin-panel">
       <section className="admin-section">
@@ -48,6 +69,66 @@ export default function AdminPanelView({
             <strong>{model.operator.schemaVersion}</strong>
             <small>Operator status contract version</small>
           </div>
+        </div>
+      </section>
+
+      <section className="admin-section">
+        <div className="admin-section-header">
+          <h2>Identity</h2>
+          <div className="admin-actions">
+            <button
+              aria-label="Refresh identity accounts"
+              onClick={() => void onLoadIdentityServiceAccounts()}
+              disabled={auditLoading}
+            >
+              Accounts
+            </button>
+          </div>
+        </div>
+        <div className="admin-audit-list">
+          {model.identityAccounts.length === 0 ? (
+            <div className="admin-audit-row">
+              <span>unavailable</span>
+              <strong>No persistent accounts loaded</strong>
+              <small>service-account store not returned by backend</small>
+            </div>
+          ) : model.identityAccounts.map((account) => (
+            <form
+              key={account.principalId}
+              className="admin-audit-row admin-identity-row"
+              onSubmit={(event) => submitIdentityUpdate(event, account.principalId)}
+            >
+              <span>{account.activeLabel}</span>
+              <strong>{account.principalId}</strong>
+              <label>
+                Roles
+                <input
+                  aria-label={`${account.principalId} roles`}
+                  name="roles"
+                  defaultValue={account.rolesText}
+                  disabled={auditLoading}
+                />
+              </label>
+              <label>
+                <input
+                  aria-label={`${account.principalId} active`}
+                  name="active"
+                  type="checkbox"
+                  defaultChecked={account.active}
+                  disabled={auditLoading}
+                />
+                Active
+              </label>
+              <small>{account.expiresAt}</small>
+              <button
+                aria-label={`Save ${account.principalId} identity`}
+                disabled={auditLoading}
+                type="submit"
+              >
+                Save
+              </button>
+            </form>
+          ))}
         </div>
       </section>
 

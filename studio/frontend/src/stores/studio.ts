@@ -1,6 +1,7 @@
 import { create } from "zustand";
 import {
   fetchTemplates, fetchModels, fetchModelDetail, fetchPresets, fetchPreset,
+  fetchStudioIdentityServiceAccounts,
   fetchStudioAuditExport, fetchStudioAuditStatus, fetchStudioCapabilities,
   fetchStudioJobs, fetchStudioJobStatus, fetchStudioOperatorStatus,
   simulateODE, simulateModel, fetchFICurve, compileVerilog,
@@ -30,7 +31,9 @@ import {
   type PopulationNode, type ProjectionEdge, type GraphSimResult, type NIRFormat,
   type ProjectSummary, type PipelineResult,
   type StudioAuditExport, type StudioAuditStatus, type StudioCapability,
-  type StudioJobRecord, type StudioJobStatus, type StudioOperatorStatus,
+  type StudioIdentityServiceAccount, type StudioJobRecord, type StudioJobStatus,
+  type StudioOperatorStatus,
+  updateStudioIdentityServiceAccount,
   connectProgress,
 } from "../api/client";
 
@@ -59,6 +62,7 @@ interface StudioState {
   auditExport: StudioAuditExport | null;
   jobStatus: StudioJobStatus | null;
   jobRecords: StudioJobRecord[];
+  identityServiceAccounts: StudioIdentityServiceAccount[];
   operatorStatus: StudioOperatorStatus | null;
   auditLoading: boolean;
   auditError: string | null;
@@ -141,6 +145,11 @@ interface StudioState {
   loadAuditStatus: () => Promise<void>;
   loadAuditExport: () => Promise<void>;
   loadJobStatus: () => Promise<void>;
+  loadIdentityServiceAccounts: () => Promise<void>;
+  updateIdentityServiceAccount: (
+    principalId: string,
+    update: { active: boolean; expires_at_utc: string | null; roles: string[] },
+  ) => Promise<void>;
   loadOperatorStatus: () => Promise<void>;
   selectTemplate: (name: string) => void;
   selectModel: (name: string) => Promise<void>;
@@ -223,7 +232,8 @@ export const useStudioStore = create<StudioState>((set, get) => ({
   odeInit: { v: -65 },
   models: [], selectedModelName: "", modelDetail: null, modelParams: {},
   capabilities: [], capabilitiesLoading: false, capabilitiesError: null,
-  auditStatus: null, auditExport: null, jobStatus: null, jobRecords: [], operatorStatus: null,
+  auditStatus: null, auditExport: null, jobStatus: null, jobRecords: [],
+  identityServiceAccounts: [], operatorStatus: null,
   auditLoading: false, auditError: null,
   templates: [], presets: [],
   dt: 0.1, duration: 100, current: 10, protocol: "constant",
@@ -317,6 +327,43 @@ export const useStudioStore = create<StudioState>((set, get) => ({
       set({
         auditLoading: false,
         auditError: error instanceof Error ? error.message : "Job status check failed",
+      });
+    }
+  },
+  loadIdentityServiceAccounts: async () => {
+    set({ auditLoading: true, auditError: null });
+    try {
+      const response = await fetchStudioIdentityServiceAccounts();
+      set({
+        auditLoading: false,
+        auditError: null,
+        identityServiceAccounts: response.service_accounts,
+      });
+    } catch (error: unknown) {
+      set({
+        auditLoading: false,
+        auditError: error instanceof Error ? error.message : "Identity account check failed",
+      });
+    }
+  },
+  updateIdentityServiceAccount: async (principalId, update) => {
+    set({ auditLoading: true, auditError: null });
+    try {
+      await updateStudioIdentityServiceAccount(principalId, update);
+      const [identityResponse, auditExport] = await Promise.all([
+        fetchStudioIdentityServiceAccounts(),
+        fetchStudioAuditExport(100),
+      ]);
+      set({
+        auditExport,
+        auditLoading: false,
+        auditError: null,
+        identityServiceAccounts: identityResponse.service_accounts,
+      });
+    } catch (error: unknown) {
+      set({
+        auditLoading: false,
+        auditError: error instanceof Error ? error.message : "Identity account update failed",
       });
     }
   },

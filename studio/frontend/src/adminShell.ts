@@ -3,6 +3,7 @@ import type {
   StudioAuditExport,
   StudioAuditStatus,
   StudioCapability,
+  StudioIdentityServiceAccount,
   StudioJobRecord,
   StudioJobStatus,
   StudioOperatorStatus,
@@ -16,6 +17,7 @@ export interface AdminShellInput {
   capabilities: StudioCapability[];
   jobRecords: StudioJobRecord[];
   jobStatus: StudioJobStatus | null;
+  identityServiceAccounts: StudioIdentityServiceAccount[];
   operatorStatus: StudioOperatorStatus | null;
 }
 
@@ -57,6 +59,14 @@ export interface AdminJobRecordModel {
   status: StudioJobRecord["status"];
 }
 
+export interface AdminIdentityAccountModel {
+  active: boolean;
+  activeLabel: "active" | "disabled";
+  expiresAt: string;
+  principalId: string;
+  rolesText: string;
+}
+
 export interface AdminOperatorModel {
   deploymentProfile: "development" | "production" | "unknown";
   edaCpuLimit: string;
@@ -74,6 +84,7 @@ export interface AdminShellModel {
   capabilities: AdminCapabilityModel;
   jobs: AdminJobModel;
   jobRecords: AdminJobRecordModel[];
+  identityAccounts: AdminIdentityAccountModel[];
   operator: AdminOperatorModel;
   recentAuditEvents: StudioAuditEvent[];
   unhealthyCapabilities: StudioCapability[];
@@ -107,10 +118,26 @@ export function buildAdminShellModel(input: AdminShellInput): AdminShellModel {
     },
     jobs: buildJobModel(jobStatus),
     jobRecords: buildJobRecords(input.jobRecords),
+    identityAccounts: buildIdentityAccounts(input.identityServiceAccounts),
     operator: buildOperatorModel(input.operatorStatus),
     recentAuditEvents,
     unhealthyCapabilities,
   };
+}
+
+function buildIdentityAccounts(
+  accounts: StudioIdentityServiceAccount[],
+): AdminIdentityAccountModel[] {
+  return accounts
+    .slice()
+    .sort((left, right) => left.principal_id.localeCompare(right.principal_id))
+    .map((account) => ({
+      active: account.active,
+      activeLabel: account.active ? "active" : "disabled",
+      expiresAt: account.expires_at_utc ?? "never",
+      principalId: account.principal_id,
+      rolesText: account.roles.join(", "),
+    }));
 }
 
 function buildJobModel(jobStatus: StudioJobStatus | null): AdminJobModel {

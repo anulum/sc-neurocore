@@ -9,19 +9,23 @@ export default function AdminPanel() {
     auditLoading,
     auditStatus,
     capabilities,
+    identityServiceAccounts,
     jobRecords,
     jobStatus,
     operatorStatus,
     loadAuditExport,
     loadAuditStatus,
+    loadIdentityServiceAccounts,
     loadJobStatus,
     loadOperatorStatus,
+    updateIdentityServiceAccount,
   } = useStudioStore();
   const model = buildAdminShellModel({
     auditError,
     auditExport,
     auditStatus,
     capabilities,
+    identityServiceAccounts,
     jobRecords,
     jobStatus,
     operatorStatus,
@@ -33,8 +37,10 @@ export default function AdminPanel() {
       model={model}
       onLoadAuditExport={loadAuditExport}
       onLoadAuditStatus={loadAuditStatus}
+      onLoadIdentityServiceAccounts={loadIdentityServiceAccounts}
       onLoadJobStatus={loadJobStatus}
       onLoadOperatorStatus={loadOperatorStatus}
+      onUpdateIdentityServiceAccount={updateIdentityServiceAccount}
     />
   );
 }

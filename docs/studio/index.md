@@ -92,6 +92,18 @@ runtime features:
   the operator, refuses to overwrite existing files unless `--allow-overwrite`
   is supplied, and applies owner-only file permissions where the host platform
   supports POSIX modes.
+- `/api/studio/identity/service-accounts` returns an admin-only, token-free
+  service-account inventory for the configured persistent identity file.
+  `/api/studio/identity/service-accounts/{principal_id}` returns one account,
+  and `PATCH /api/studio/identity/service-accounts/{principal_id}` updates
+  roles, active state, and optional UTC expiry while preserving the stored
+  bearer-token hash. The backend reloads the identity authenticator after a
+  successful update, so role changes apply without a Studio restart.
+- The Admin panel includes an Identity section backed by the same endpoints.
+  It displays principal IDs, active state, expiry, and role lists without
+  exposing token hashes or local identity-file paths. Role changes emit both
+  the route-policy audit decision and a dedicated
+  `studio.identity.service_account.update` audit event.
 - Policy decisions can be persisted to an append-only JSONL audit log by
   setting `SC_NEUROCORE_STUDIO_AUDIT_LOG_PATH` to a writable file path. Each
   `studio.audit.v1` line records the UTC timestamp, policy action, route
@@ -341,6 +353,7 @@ for complete API details with request/response examples.
 | `/api/graph/*` | Network Canvas | Populations, projections, validate, simulate, NIR |
 | `/api/project/*`, `/api/pipeline/*` | Integration | Save/load, worker-backed full pipeline |
 | `/api/studio/audit/*` | Admin | Audit status and admin-gated export |
+| `/api/studio/identity/*` | Admin | Token-free service-account inventory and role updates |
 | `/api/studio/operator/status` | Admin | Aggregate operator control-plane health |
 
 ## Requirements

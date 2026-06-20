@@ -332,6 +332,48 @@ body {
   font-size: 10px;
 }
 
+.admin-identity-row {
+  grid-template-columns: 72px minmax(120px, 1fr) minmax(160px, 2fr) 84px 92px 64px;
+  align-items: center;
+}
+
+.admin-identity-row label {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 6px;
+  color: var(--text-muted);
+  font-size: 10px;
+}
+
+.admin-identity-row input[type="text"],
+.admin-identity-row input:not([type]) {
+  width: 100%;
+  min-width: 0;
+  padding: 4px 6px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  font-family: var(--font-mono);
+  font-size: 11px;
+}
+
+.admin-identity-row button {
+  padding: 4px 7px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--accent);
+  color: var(--bg-primary);
+  cursor: pointer;
+  font-size: 10px;
+}
+
+.admin-identity-row button:disabled {
+  cursor: wait;
+  opacity: 0.45;
+}
+
 .header-spacer { flex: 1; }
 
 .header-stats {

@@ -286,6 +286,16 @@ SHA-256 digest in the identity file. Capture that token in the deployment
 secret manager, set `SC_NEUROCORE_STUDIO_IDENTITY_FILE` to the written path,
 and do not copy the token into repository files or shell history.
 
+Administrators can inspect and update persistent service-account metadata from
+the Admin panel Identity section or through
+`/api/studio/identity/service-accounts`. The list and detail endpoints return
+principal IDs, role lists, active state, and optional UTC expiry only; they do
+not expose bearer-token hashes or filesystem paths. The PATCH endpoint updates
+roles, active state, and expiry atomically, preserves the stored token hash,
+reloads the backend authenticator after success, and records a dedicated
+`studio.identity.service_account.update` audit event in addition to the normal
+route-policy audit decision.
+
 The same Admin surface displays local worker health from
 `/api/studio/jobs/status`. Configure `SC_NEUROCORE_STUDIO_JOB_ROOT` to keep
 per-job working directories on an operator-selected disk, and tune

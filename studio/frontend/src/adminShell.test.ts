@@ -4,6 +4,7 @@ import type {
   StudioAuditExport,
   StudioAuditStatus,
   StudioCapability,
+  StudioIdentityServiceAccount,
   StudioJobRecord,
   StudioJobStatus,
   StudioOperatorStatus,
@@ -97,6 +98,13 @@ const jobRecord: StudioJobRecord = {
   status: "completed",
 };
 
+const identityServiceAccount: StudioIdentityServiceAccount = {
+  active: true,
+  expires_at_utc: null,
+  principal_id: "svc-admin",
+  roles: ["studio.admin", "studio.viewer"],
+};
+
 const operatorStatus: StudioOperatorStatus = {
   audit: auditStatus,
   capabilities: {
@@ -141,6 +149,7 @@ describe("admin shell model", () => {
           message: "Yosys unavailable.",
         }),
       ],
+      identityServiceAccounts: [identityServiceAccount],
       jobRecords: [jobRecord],
       jobStatus,
       operatorStatus,
@@ -180,6 +189,15 @@ describe("admin shell model", () => {
         kind: "synthesis",
         owner: "operator-1",
         status: "completed",
+      },
+    ]);
+    expect(model.identityAccounts).toEqual([
+      {
+        active: true,
+        activeLabel: "active",
+        expiresAt: "never",
+        principalId: "svc-admin",
+        rolesText: "studio.admin, studio.viewer",
       },
     ]);
     expect(model.operator).toEqual({

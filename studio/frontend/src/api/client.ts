@@ -209,6 +209,24 @@ export interface StudioOperatorStatus {
   schema_version: string;
 }
 
+export interface StudioIdentityServiceAccount {
+  active: boolean;
+  expires_at_utc: string | null;
+  principal_id: string;
+  roles: string[];
+}
+
+export interface StudioIdentityServiceAccountsResponse {
+  schema_version: string;
+  service_accounts: StudioIdentityServiceAccount[];
+}
+
+export interface StudioIdentityServiceAccountUpdate {
+  active: boolean;
+  expires_at_utc: string | null;
+  roles: string[];
+}
+
 const BASE = "/api";
 
 async function json<T>(r: Response): Promise<T> {
@@ -222,6 +240,13 @@ async function json<T>(r: Response): Promise<T> {
 function post<T>(path: string, body: unknown): Promise<T> {
   return fetch(`${BASE}${path}`, {
     method: "POST", headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+  }).then((r) => json<T>(r));
+}
+
+function patch<T>(path: string, body: unknown): Promise<T> {
+  return fetch(`${BASE}${path}`, {
+    method: "PATCH", headers: { "Content-Type": "application/json" },
     body: JSON.stringify(body),
   }).then((r) => json<T>(r));
 }
@@ -247,6 +272,16 @@ export const fetchStudioJobs = () =>
   get<StudioJobListResponse>("/studio/jobs");
 export const fetchStudioOperatorStatus = () =>
   get<StudioOperatorStatus>("/studio/operator/status");
+export const fetchStudioIdentityServiceAccounts = () =>
+  get<StudioIdentityServiceAccountsResponse>("/studio/identity/service-accounts");
+export const updateStudioIdentityServiceAccount = (
+  principalId: string,
+  update: StudioIdentityServiceAccountUpdate,
+) =>
+  patch<StudioIdentityServiceAccount>(
+    `/studio/identity/service-accounts/${encodeURIComponent(principalId)}`,
+    update,
+  );
 
 export const simulateODE = (req: Record<string, unknown>) => post<SimulateResponse>("/simulate", req);
 export const simulateModel = (req: Record<string, unknown>) => post<SimulateResponse>("/models/simulate", req);

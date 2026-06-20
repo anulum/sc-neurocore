@@ -46,10 +46,13 @@ from sc_neurocore.studio.platform.policy import (
 from sc_neurocore.studio.platform.identity import (
     IDENTITY_SCHEMA_VERSION,
     StudioIdentityAuthenticator,
+    StudioIdentityPublicRecord,
     StudioIdentityRecord,
     StudioIdentityResult,
     StudioIdentityStore,
+    list_studio_identity_public_records,
     load_studio_identity_store,
+    update_studio_identity_record,
 )
 from sc_neurocore.studio.platform.jobs import (
     JOBS_LIST_SCHEMA_VERSION,
@@ -138,6 +141,7 @@ __all__ = [
     "StudioRuntimeSettings",
     "StudioIdentityAuthenticator",
     "StudioIdentityBootstrapResult",
+    "StudioIdentityPublicRecord",
     "StudioIdentityRecord",
     "StudioIdentityResult",
     "StudioIdentityStore",
@@ -163,5 +167,7 @@ __all__ = [
     "build_default_studio_runtime_settings",
     "build_studio_operator_status",
     "bootstrap_studio_admin_identity",
+    "list_studio_identity_public_records",
     "load_studio_identity_store",
+    "update_studio_identity_record",
 ]

@@ -16,6 +16,7 @@ import tempfile
 from uuid import uuid4
 from collections import OrderedDict
 from collections.abc import Callable, Mapping
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, cast
 
@@ -95,6 +96,7 @@ from sc_neurocore.studio.training import (
 from sc_neurocore.studio.models import get_model_detail, list_models, simulate_model
 from sc_neurocore.studio.platform import (
     AuditExportValue,
+    AuditEvent,
     AuditSinkError,
     InMemoryAuditSink,
     JsonlAuditSink,
@@ -110,7 +112,9 @@ from sc_neurocore.studio.platform import (
     build_default_studio_route_policy_registry,
     build_default_studio_runtime_settings,
     build_studio_operator_status,
+    list_studio_identity_public_records,
     load_studio_identity_store,
+    update_studio_identity_record,
 )
 from sc_neurocore.studio.presets import (
     get_preset,
@@ -278,6 +282,14 @@ class PresetDefaultFlowRunFromContractRequest(BaseModel):
 
 class PresetDefaultFlowAttestRequest(BaseModel):
     run_result: dict[str, Any]
+
+
+class StudioIdentityServiceAccountUpdateRequest(BaseModel):
+    """Request body for admin service-account metadata updates."""
+
+    roles: list[str] = Field(min_length=1)
+    active: bool
+    expires_at_utc: str | None = None
 
 
 class PresetDefaultFlowAttestationVerifyRequest(BaseModel):
@@ -708,6 +720,11 @@ def _studio_request_id(candidate: str | None) -> str:
     return str(uuid4())
 
 
+def _studio_timestamp_utc() -> str:
+    timestamp = datetime.now(timezone.utc).replace(microsecond=0)
+    return timestamp.isoformat().replace("+00:00", "Z")
+
+
 def _studio_principal_from_headers(headers: Mapping[str, str]) -> Principal | None:
     principal_id = headers.get("x-studio-principal")
     if principal_id is None or not principal_id.strip():
@@ -802,6 +819,8 @@ def create_app(runtime_settings: StudioRuntimeSettings | None = None) -> FastAPI
         request: Request, call_next: Callable[[Request], Any]
     ) -> Any:
         request_id = _studio_request_id(request.headers.get(settings.request_id_header))
+        request.state.studio_request_id = request_id
+        request.state.studio_principal = None
         content_length = request.headers.get("content-length")
         if (
             content_length is not None
@@ -833,6 +852,7 @@ def create_app(runtime_settings: StudioRuntimeSettings | None = None) -> FastAPI
                         identity_failure_reason=identity_result.failure_reason,
                     )
                     if decision.allowed:
+                        request.state.studio_principal = identity_result.principal
                         response = await call_next(request)
                     else:
                         response = JSONResponse(
@@ -974,6 +994,88 @@ def create_app(runtime_settings: StudioRuntimeSettings | None = None) -> FastAPI
             return studio_audit_sink.export_recent(limit=limit).to_public_dict()
         except AuditSinkError as exc:
             raise HTTPException(status_code=503, detail="audit_export_failed") from exc
+
+    @app.get("/api/studio/identity/service-accounts")
+    def api_studio_identity_service_accounts() -> dict[str, object]:
+        """Return token-free persistent service accounts for administrators."""
+
+        if settings.identity_file_path is None:
+            raise HTTPException(status_code=409, detail="identity_store_unavailable")
+        try:
+            records = list_studio_identity_public_records(Path(settings.identity_file_path))
+        except ValueError as exc:
+            raise HTTPException(status_code=503, detail="identity_store_unhealthy") from exc
+        return {
+            "schema_version": "sc-neurocore.studio.identity.service-accounts.v1",
+            "service_accounts": [record.to_public_dict() for record in records],
+        }
+
+    @app.get("/api/studio/identity/service-accounts/{principal_id}")
+    def api_studio_identity_service_account(
+        principal_id: str,
+    ) -> dict[str, bool | list[str] | str | None]:
+        """Return one token-free persistent service account for administrators."""
+
+        if settings.identity_file_path is None:
+            raise HTTPException(status_code=409, detail="identity_store_unavailable")
+        try:
+            records = list_studio_identity_public_records(Path(settings.identity_file_path))
+        except ValueError as exc:
+            raise HTTPException(status_code=503, detail="identity_store_unhealthy") from exc
+        for record in records:
+            if record.principal_id == principal_id:
+                return record.to_public_dict()
+        raise HTTPException(status_code=404, detail="identity_service_account_not_found")
+
+    @app.patch("/api/studio/identity/service-accounts/{principal_id}")
+    def api_update_studio_identity_service_account(
+        principal_id: str,
+        update: StudioIdentityServiceAccountUpdateRequest,
+        request: Request,
+    ) -> dict[str, bool | list[str] | str | None]:
+        """Update persistent service-account role metadata for administrators."""
+
+        nonlocal studio_identity_authenticator
+        if settings.identity_file_path is None:
+            raise HTTPException(status_code=409, detail="identity_store_unavailable")
+        identity_path = Path(settings.identity_file_path)
+        try:
+            updated = update_studio_identity_record(
+                identity_path,
+                active=update.active,
+                expires_at_utc=update.expires_at_utc,
+                principal_id=principal_id,
+                roles=update.roles,
+            )
+            studio_identity_authenticator = StudioIdentityAuthenticator(
+                load_studio_identity_store(identity_path)
+            )
+            app.state.studio_identity_authenticator = studio_identity_authenticator
+            actor = getattr(request.state, "studio_principal", None)
+            request_id = getattr(request.state, "studio_request_id", None)
+            studio_audit_sink.record(
+                AuditEvent(
+                    action="studio.identity.service_account.update",
+                    decision="allow",
+                    principal_id=(
+                        actor.principal_id if isinstance(actor, Principal) else None
+                    ),
+                    reason=f"updated:{updated.principal_id}",
+                    request_id=request_id if isinstance(request_id, str) else None,
+                    route="/api/studio/identity/service-accounts/{principal_id}",
+                    timestamp_utc=_studio_timestamp_utc(),
+                )
+            )
+        except KeyError as exc:
+            raise HTTPException(
+                status_code=404,
+                detail="identity_service_account_not_found",
+            ) from exc
+        except ValueError as exc:
+            raise HTTPException(status_code=422, detail=str(exc)) from exc
+        except AuditSinkError as exc:
+            raise HTTPException(status_code=503, detail="audit_append_failed") from exc
+        return updated.to_public_dict()
 
     # --- Templates & Models ---
     @app.get("/api/templates")
