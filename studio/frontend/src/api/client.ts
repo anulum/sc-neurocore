@@ -937,7 +937,9 @@ export const saveProject = (name: string, state: Record<string, unknown>) =>
 export const loadProject = (name: string) => get<Record<string, unknown>>(`/project/load/${name}`);
 export const listProjects = () => get<ProjectSummary[]>("/project/list");
 export const deleteProject = (name: string) =>
-  fetch(`/api/project/${name}`, { method: "DELETE" }).then((r) => json<{ deleted: string }>(r));
+  fetch(`/api/project/${name}`, { method: "DELETE", headers: authHeaders() }).then((r) =>
+    json<{ deleted: string }>(r),
+  );
 export const runPipeline = (graph: NetworkGraph, target: string) =>
   post<PipelineResult>("/pipeline/run", { graph, target });
 
