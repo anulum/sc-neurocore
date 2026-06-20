@@ -284,8 +284,11 @@ def test_write_studio_evidence_bundle_copies_project_job_audit_and_replay(
     assert entry_type_counts["action_evidence"] == 1
     assert entry_type_counts["default_flow_attestation"] == 1
     assert entry_type_counts["default_flow_run"] == 1
+    assert entry_type_counts["analysis_result"] == 1
     assert entry_type_counts["simulation_result"] == 1
+    assert evidence_classification_counts["analysis"] == 1
     assert evidence_classification_counts["compile"] == 1
+    assert evidence_classification_counts["simulation"] == 1
     assert source_job_kind_counts["compiler"] == 1
     assert source_job_owner_counts["studio-compiler"] == 1
 
@@ -335,6 +338,21 @@ def test_write_studio_evidence_bundle_copies_project_job_audit_and_replay(
         (
             lambda job_id: json.dumps(
                 _action_evidence_payload(job_id) | {"artifacts": ["bad"]}
+            ),
+            "invalid artifact metadata",
+        ),
+        (
+            lambda job_id: json.dumps(
+                _action_evidence_payload(job_id)
+                | {
+                    "artifacts": [
+                        {
+                            "relative_path": 1,
+                            "sha256": "5" * 64,
+                            "size_bytes": 1,
+                        }
+                    ]
+                }
             ),
             "invalid artifact metadata",
         ),
@@ -477,8 +495,54 @@ def test_write_studio_evidence_bundle_rejects_invalid_json_and_artifact_state(
             default_flow_runs=({"schema_version": "legacy"},),
         )
     invalid_default_flow_run = _default_flow_run_payload()
+    invalid_default_flow_run["preset_id"] = ""
+    with pytest.raises(ValueError, match="requires a preset ID"):
+        write_studio_evidence_bundle(
+            context,
+            default_flow_runs=(invalid_default_flow_run,),
+        )
+    invalid_default_flow_run = _default_flow_run_payload()
+    invalid_default_flow_run["flow_id"] = ""
+    with pytest.raises(ValueError, match="requires a flow ID"):
+        write_studio_evidence_bundle(
+            context,
+            default_flow_runs=(invalid_default_flow_run,),
+        )
+    invalid_default_flow_run = _default_flow_run_payload()
+    invalid_default_flow_run["action_order"] = [""]
+    with pytest.raises(ValueError, match="requires action order"):
+        write_studio_evidence_bundle(
+            context,
+            default_flow_runs=(invalid_default_flow_run,),
+        )
+    invalid_default_flow_run = _default_flow_run_payload()
+    invalid_default_flow_run["executed_count"] = -1
+    with pytest.raises(ValueError, match="requires executed count"):
+        write_studio_evidence_bundle(
+            context,
+            default_flow_runs=(invalid_default_flow_run,),
+        )
+    invalid_default_flow_run = _default_flow_run_payload()
+    invalid_default_flow_run["reproducibility_manifest"] = None
+    with pytest.raises(ValueError, match="requires reproducibility metadata"):
+        write_studio_evidence_bundle(
+            context,
+            default_flow_runs=(invalid_default_flow_run,),
+        )
+    invalid_default_flow_run = _default_flow_run_payload()
     invalid_default_flow_run["reproducibility_manifest"] = {"hash_algorithm": "md5"}
     with pytest.raises(ValueError, match="unsupported hash algorithm"):
+        write_studio_evidence_bundle(
+            context,
+            default_flow_runs=(invalid_default_flow_run,),
+        )
+    invalid_default_flow_run = _default_flow_run_payload()
+    invalid_default_flow_run["reproducibility_manifest"] = {
+        "hash_algorithm": "sha256",
+        "inputs_fingerprint_sha256": "bad",
+        "run_fingerprint_sha256": "8" * 64,
+    }
+    with pytest.raises(ValueError, match="requires SHA-256 fingerprints"):
         write_studio_evidence_bundle(
             context,
             default_flow_runs=(invalid_default_flow_run,),
@@ -487,6 +551,27 @@ def test_write_studio_evidence_bundle_rejects_invalid_json_and_artifact_state(
         write_studio_evidence_bundle(
             context,
             default_flow_attestations=({"schema_version": "legacy"},),
+        )
+    invalid_attestation = _default_flow_attestation_payload()
+    invalid_attestation["preset_id"] = ""
+    with pytest.raises(ValueError, match="requires a preset ID"):
+        write_studio_evidence_bundle(
+            context,
+            default_flow_attestations=(invalid_attestation,),
+        )
+    invalid_attestation = _default_flow_attestation_payload()
+    invalid_attestation["flow_id"] = ""
+    with pytest.raises(ValueError, match="requires a flow ID"):
+        write_studio_evidence_bundle(
+            context,
+            default_flow_attestations=(invalid_attestation,),
+        )
+    invalid_attestation = _default_flow_attestation_payload()
+    invalid_attestation["plan_fingerprint_sha256"] = "bad"
+    with pytest.raises(ValueError, match="requires SHA-256 fingerprints"):
+        write_studio_evidence_bundle(
+            context,
+            default_flow_attestations=(invalid_attestation,),
         )
     mismatched_attestation = _default_flow_attestation_payload()
     mismatched_attestation["run_fingerprint_sha256"] = "b" * 64
@@ -740,8 +825,19 @@ def test_studio_evidence_bundle_route_exports_selected_state(
     assert body["summary"]["entry_type_counts"]["simulation_result"] == 1
     assert body["summary"]["entry_type_counts"]["analysis_result"] == 1
     assert body["summary"]["entry_type_counts"]["default_flow_run"] == 1
+    assert body["summary"]["evidence_classification_counts"]["analysis"] == 1
     assert body["summary"]["evidence_classification_counts"]["compile"] == 1
+    assert body["summary"]["evidence_classification_counts"]["simulation"] == 1
     assert body["summary"]["source_job_kind_counts"]["compiler"] == 1
+    manifest_entries = cast(list[dict[str, object]], manifest["entries"])
+    simulation_entry = next(
+        entry for entry in manifest_entries if entry["type"] == "simulation_result"
+    )
+    analysis_entry = next(
+        entry for entry in manifest_entries if entry["type"] == "analysis_result"
+    )
+    assert simulation_entry["evidence_classification"] == "simulation"
+    assert analysis_entry["evidence_classification"] == "analysis"
     assert project_payload["name"] == "demo"
     assert simulation_payload["run_metadata"] == simulation_response.json()["run_metadata"]
     assert analysis_payload["analysis_metadata"] == analysis_response.json()["analysis_metadata"]

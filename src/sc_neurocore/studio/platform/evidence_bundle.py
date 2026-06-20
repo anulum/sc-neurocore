@@ -163,24 +163,28 @@ def write_studio_evidence_bundle(
         )
 
     for index, simulation_payload in enumerate(simulation_payloads):
+        payload = _simulation_result_payload(simulation_payload)
         entries.append(
-            _write_json_entry(
+            _write_classified_json_entry(
                 context,
                 written_paths,
                 "simulation_result",
                 f"evidence/simulations/{index:03d}.json",
-                _simulation_result_payload(simulation_payload),
+                payload,
+                evidence_classification="simulation",
             )
         )
 
     for index, analysis_payload in enumerate(analysis_payloads):
+        payload = _analysis_result_payload(analysis_payload)
         entries.append(
-            _write_json_entry(
+            _write_classified_json_entry(
                 context,
                 written_paths,
                 "analysis_result",
                 f"evidence/analyses/{index:03d}.json",
-                _analysis_result_payload(analysis_payload),
+                payload,
+                evidence_classification="analysis",
             )
         )
 
@@ -359,6 +363,20 @@ def _write_json_entry(
         "size_bytes": artifact.size_bytes,
         "type": entry_type,
     }
+
+
+def _write_classified_json_entry(
+    context: StudioJobContext,
+    written_paths: list[str],
+    entry_type: str,
+    relative_path: str,
+    payload: Mapping[str, JsonValue],
+    *,
+    evidence_classification: str,
+) -> dict[str, JsonValue]:
+    entry = _write_json_entry(context, written_paths, entry_type, relative_path, payload)
+    entry["evidence_classification"] = evidence_classification
+    return entry
 
 
 def _json_object(payload: Mapping[str, object], error_message: str) -> dict[str, JsonValue]:

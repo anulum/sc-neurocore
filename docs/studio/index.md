@@ -280,8 +280,9 @@ runtime features:
   only after `studio.action-evidence.v1` validation. The response and manifest
   are path-free and omit bearer tokens, token hashes, password material, and
   local filesystem paths. Both surfaces include a summary with artifact-path
-  count, manifest-entry count, entry-type counts, action-evidence
-  classification counts, and selected source-job counts by kind and owner.
+  count, manifest-entry count, entry-type counts, evidence classification
+  counts for validated simulation, analysis, and action-evidence entries, and
+  selected source-job counts by kind and owner.
 - The Admin panel surfaces that evidence route as an operator workflow with
   project, simulation JSON, analysis JSON, default-flow run JSON,
   default-flow attestation JSON, job ID, audit, and replay metadata fields.
