@@ -370,6 +370,14 @@ flows, and the Admin queue records path-free artifacts at
 `synthesis/multi-target-result.json`, `synthesis/pnr-result.json`, and
 `pipeline/result.json`.
 
+Each worker-backed compile, synthesis, PnR, and pipeline action also writes a
+normalized `studio.action-evidence.v1` manifest next to the result artifact:
+`compiler/evidence.json`, `synthesis/evidence.json`,
+`synthesis/multi-target-evidence.json`, `synthesis/pnr-evidence.json`, or
+`pipeline/evidence.json`. The manifest records the action kind, replay route,
+job ID, evidence classification, result payload SHA-256, and result artifact
+metadata without exposing host-local paths or secrets.
+
 Job artifacts are served through the admin-gated
 `/api/studio/jobs/{job_id}/artifacts/{artifact_path}` endpoint. The endpoint
 only serves manifest-declared artifacts, revalidates the recorded size and

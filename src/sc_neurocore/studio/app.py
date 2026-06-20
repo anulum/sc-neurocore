@@ -103,6 +103,7 @@ from sc_neurocore.studio.platform import (
     PolicyGateway,
     Principal,
     THROTTLED_BROWSER_LOGIN_REASON,
+    EvidenceClassification,
     StudioBrowserLoginThrottle,
     StudioBrowserSessionManager,
     StudioIdentityAuthenticator,
@@ -122,6 +123,7 @@ from sc_neurocore.studio.platform import (
     rotate_studio_browser_user_password,
     update_studio_identity_record,
     update_studio_browser_user_record,
+    write_studio_action_evidence_manifest,
     write_studio_evidence_bundle,
 )
 from sc_neurocore.studio.presets import (
@@ -945,16 +947,32 @@ def create_app(runtime_settings: StudioRuntimeSettings | None = None) -> FastAPI
 
     def run_studio_worker_job_sync(
         *,
+        action_kind: str,
+        evidence_artifact_path: str,
+        evidence_classification: EvidenceClassification,
         kind: str,
         owner: str,
         artifact_path: str,
+        replay_route: str,
         task: Callable[[], dict[str, Any]],
     ) -> dict[str, Any]:
         """Run one API workload through the bounded Studio job manager."""
 
         def job_task(context: StudioJobContext) -> dict[str, object]:
             result = task()
-            context.write_artifact(artifact_path, _serialize_studio_worker_result(result))
+            result_artifact = context.write_artifact(
+                artifact_path,
+                _serialize_studio_worker_result(result),
+            )
+            write_studio_action_evidence_manifest(
+                context,
+                action_kind=action_kind,
+                result=result,
+                result_artifact=result_artifact,
+                evidence_artifact_path=evidence_artifact_path,
+                evidence_classification=evidence_classification,
+                replay_route=replay_route,
+            )
             return cast(dict[str, object], result)
 
         submitted = studio_job_manager.submit(
@@ -2133,9 +2151,13 @@ def create_app(runtime_settings: StudioRuntimeSettings | None = None) -> FastAPI
 
         return _safe(
             lambda: run_studio_worker_job_sync(
+                action_kind="studio.compile",
+                evidence_artifact_path="compiler/evidence.json",
+                evidence_classification="compile",
                 kind="compiler",
                 owner="studio-compiler",
                 artifact_path="compiler/result.json",
+                replay_route="POST /api/compile",
                 task=fn,
             )
         )
@@ -2389,9 +2411,13 @@ def create_app(runtime_settings: StudioRuntimeSettings | None = None) -> FastAPI
         target = _validate_synthesis_target(data.get("target", "ice40"))
         return _safe(
             lambda: run_studio_worker_job_sync(
+                action_kind="studio.synthesis.run",
+                evidence_artifact_path="synthesis/evidence.json",
+                evidence_classification="synthesis",
                 kind="synthesis",
                 owner="studio-synthesis",
                 artifact_path="synthesis/result.json",
+                replay_route="POST /api/synth/run",
                 task=lambda: run_synthesis(verilog, target, process_limits=eda_process_limits),
             )
         )
@@ -2401,9 +2427,13 @@ def create_app(runtime_settings: StudioRuntimeSettings | None = None) -> FastAPI
         verilog = _validate_synthesis_verilog(data.get("verilog", ""))
         return _safe(
             lambda: run_studio_worker_job_sync(
+                action_kind="studio.synthesis.multi_target",
+                evidence_artifact_path="synthesis/multi-target-evidence.json",
+                evidence_classification="synthesis",
                 kind="synthesis",
                 owner="studio-synthesis",
                 artifact_path="synthesis/multi-target-result.json",
+                replay_route="POST /api/synth/multi-target",
                 task=lambda: multi_target_synthesis(verilog, process_limits=eda_process_limits),
             )
         )
@@ -2427,9 +2457,13 @@ def create_app(runtime_settings: StudioRuntimeSettings | None = None) -> FastAPI
         target = _validate_synthesis_target(data.get("target", "ice40"))
         return _safe(
             lambda: run_studio_worker_job_sync(
+                action_kind="studio.synthesis.pnr",
+                evidence_artifact_path="synthesis/pnr-evidence.json",
+                evidence_classification="synthesis",
                 kind="synthesis",
                 owner="studio-pnr",
                 artifact_path="synthesis/pnr-result.json",
+                replay_route="POST /api/synth/pnr",
                 task=lambda: run_pnr(json_path, target, process_limits=eda_process_limits),
             )
         )
@@ -2467,9 +2501,13 @@ def create_app(runtime_settings: StudioRuntimeSettings | None = None) -> FastAPI
         target = _validate_synthesis_target(data.get("target", "ice40"))
         return _safe(
             lambda: run_studio_worker_job_sync(
+                action_kind="studio.pipeline.run",
+                evidence_artifact_path="pipeline/evidence.json",
+                evidence_classification="compile",
                 kind="compiler",
                 owner="studio-pipeline",
                 artifact_path="pipeline/result.json",
+                replay_route="POST /api/pipeline/run",
                 task=lambda: run_pipeline(graph, target, process_limits=eda_process_limits),
             )
         )

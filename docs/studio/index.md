@@ -186,6 +186,11 @@ runtime features:
   The Admin queue records `studio-compiler`, `studio-synthesis`, `studio-pnr`,
   and `studio-pipeline` owners with path-free result artifacts under
   `compiler/`, `synthesis/`, and `pipeline/`.
+- Those worker-backed compile, synthesis, PnR, and pipeline routes also write
+  `studio.action-evidence.v1` manifests beside the result artifacts. These
+  manifests record action kind, replay route, job ID, evidence classification,
+  result payload SHA-256, and result artifact metadata without local paths or
+  secret material.
 - `/api/studio/jobs` and `/api/studio/jobs/{job_id}` return admin-only,
   path-free job records for the Admin panel queue view. Records include job
   status, owner, request ID, timestamps, result metadata, and artifact

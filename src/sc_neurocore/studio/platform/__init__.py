@@ -29,6 +29,12 @@ from sc_neurocore.studio.platform.auth_throttle import (
     StudioBrowserLoginThrottle,
     StudioLoginThrottleDecision,
 )
+from sc_neurocore.studio.platform.action_evidence import (
+    STUDIO_ACTION_EVIDENCE_SCHEMA_VERSION,
+    EvidenceClassification,
+    StudioActionEvidence,
+    write_studio_action_evidence_manifest,
+)
 from sc_neurocore.studio.platform.backup_plan import (
     STUDIO_BACKUP_PLAN_SCHEMA_VERSION,
     StudioBackupPlan,
@@ -171,6 +177,7 @@ __all__ = [
     "DEFAULT_STUDIO_BROWSER_LOGIN_FAILURE_WINDOW_SECONDS",
     "DEFAULT_STUDIO_BROWSER_LOGIN_MAX_FAILURES",
     "EvidenceClass",
+    "EvidenceClassification",
     "IDENTITY_SCHEMA_VERSION",
     "JOBS_LIST_SCHEMA_VERSION",
     "JOBS_STATUS_SCHEMA_VERSION",
@@ -187,6 +194,7 @@ __all__ = [
     "RoutePolicy",
     "RoutePolicyRegistry",
     "RouteVisibility",
+    "STUDIO_ACTION_EVIDENCE_SCHEMA_VERSION",
     "STUDIO_BACKUP_PLAN_SCHEMA_VERSION",
     "STUDIO_EVIDENCE_BUNDLE_SCHEMA_VERSION",
     "THROTTLED_BROWSER_LOGIN_REASON",
@@ -208,6 +216,7 @@ __all__ = [
     "StudioBackupPlan",
     "StudioBackupPlanItem",
     "StudioBackupTargetKind",
+    "StudioActionEvidence",
     "StudioArtifactReader",
     "StudioDeploymentPackageName",
     "StudioDeploymentProfilePackage",
@@ -267,5 +276,6 @@ __all__ = [
     "update_studio_browser_user_record",
     "update_studio_identity_record",
     "verify_browser_user_password",
+    "write_studio_action_evidence_manifest",
     "write_studio_evidence_bundle",
 ]
