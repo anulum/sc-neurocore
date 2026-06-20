@@ -139,7 +139,8 @@ Four injection protocols for all simulations:
 - **10 preset experiments**: threshold exploration, adaptation, bursting, chaos,
   hardware comparison, and more
 - **CSV export**: download simulation data as comma-separated values
-- **JSON export**: download raw simulation response
+- **JSON export**: download the simulation response with path-free
+  `studio.simulation-run.v1` reproducibility metadata
 - **PNG export**: screenshot the current plot
 
 ## API Reference
@@ -224,7 +225,11 @@ fields must be finite.
 
 Response includes `time`, `states`, `spikes`, `spike_count`, `dt`, `n_steps`,
 `stats` (rate_hz, isi_mean_ms, isi_cv, isi_histogram), `current_trace`, and
-`pattern` (auto-classified firing behaviour).
+`pattern` (auto-classified firing behaviour). Simulation responses also include
+`run_metadata` with the `studio.simulation-run.v1` schema, `simulation`
+evidence classification, source (`ode` or `model`), input and result SHA-256
+digests, effective `dt`, executed step count, returned sample count, spike
+count, and state variable names.
 
 ## Development
 

@@ -445,7 +445,7 @@ for complete API details with request/response examples.
 
 | Prefix | Block | Endpoints |
 |--------|-------|-----------|
-| `/api/simulate`, `/api/models/*` | Phase 1 | ODE/model simulation, templates, presets |
+| `/api/simulate`, `/api/models/*` | Phase 1 | ODE/model simulation with path-free run metadata, templates, presets |
 | `/api/fi-curve`, `/api/bifurcation`, `/api/heatmap`, ... | Phase 1 | Analysis views |
 | `/api/ir/*` | Compiler Inspector | IR build, verify, emit SV, co-sim |
 | `/api/compile`, `/api/synth/*` | Compiler/Synthesis | Worker-backed compile, Yosys synthesis, multi-target, estimate |

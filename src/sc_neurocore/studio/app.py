@@ -133,6 +133,7 @@ from sc_neurocore.studio.presets import (
     list_preset_action_catalog,
     list_presets,
 )
+from sc_neurocore.studio.simulation_manifest import build_simulation_run_manifest
 from sc_neurocore.studio.simulation import simulate
 from sc_neurocore.studio.templates import get_template, list_templates
 
@@ -2004,6 +2005,11 @@ def create_app(runtime_settings: StudioRuntimeSettings | None = None) -> FastAPI
             result["pattern"] = classify_firing_pattern(
                 result["spikes"], result["n_steps"], result["dt"]
             )
+            result["run_metadata"] = build_simulation_run_manifest(
+                source="ode",
+                request_payload=req.model_dump(),
+                result_payload=result,
+            ).to_public_dict()
             _cache.put(cache_key, result)
             return result
 
@@ -2028,6 +2034,11 @@ def create_app(runtime_settings: StudioRuntimeSettings | None = None) -> FastAPI
             result["pattern"] = classify_firing_pattern(
                 result["spikes"], result["n_steps"], result["dt"]
             )
+            result["run_metadata"] = build_simulation_run_manifest(
+                source="model",
+                request_payload=req.model_dump(),
+                result_payload=result,
+            ).to_public_dict()
             _cache.put(cache_key, result)
             return result
 

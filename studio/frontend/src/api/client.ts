@@ -12,6 +12,19 @@ export interface FiringPattern {
   isi_cv?: number;
 }
 
+export interface SimulationRunMetadata {
+  dt: number;
+  evidence_classification: "simulation";
+  input_sha256: string;
+  n_steps: number;
+  result_sha256: string;
+  sample_count: number;
+  schema_version: "studio.simulation-run.v1";
+  source: "ode" | "model";
+  spike_count: number;
+  state_variables: string[];
+}
+
 export interface SimulateResponse {
   time: number[];
   states: Record<string, number[]>;
@@ -23,6 +36,7 @@ export interface SimulateResponse {
   dt: number;
   n_steps: number;
   model_name?: string;
+  run_metadata: SimulationRunMetadata;
 }
 
 export interface HeatmapResponse {
