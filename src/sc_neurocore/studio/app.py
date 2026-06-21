@@ -2738,7 +2738,15 @@ def create_app(runtime_settings: StudioRuntimeSettings | None = None) -> FastAPI
                 "current": req.current,
                 "protocol": "constant",
             }
-            return characterize_model(sim_fn, base_cfg)
+            result = characterize_model(sim_fn, base_cfg)
+            # ModelSimulateRequest is always model-driven; its dump uses ``name``
+            # (not ``model_name``), so source is set explicitly rather than inferred.
+            return attach_analysis_result_manifest(
+                analysis_type="characterize",
+                source="model",
+                request_payload=req.model_dump(),
+                result_payload=result,
+            )
 
         return _safe(fn)
 
@@ -2766,6 +2774,11 @@ def create_app(runtime_settings: StudioRuntimeSettings | None = None) -> FastAPI
                 )
                 r = sim_fn()
                 r["pattern"] = classify_firing_pattern(r["spikes"], r["n_steps"], r["dt"])
+                r["run_metadata"] = build_simulation_run_manifest(
+                    source="model",
+                    request_payload=cfg.model_dump(),
+                    result_payload=r,
+                ).to_public_dict()
                 results.append(r)
             return results
 

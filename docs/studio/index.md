@@ -263,10 +263,12 @@ runtime features:
   class and status through the shared Studio evidence-classification contract
   before returning public metadata.
 - `/api/compare`, `/api/fi-curve`, `/api/bifurcation`, `/api/sensitivity`,
-  `/api/heatmap`, `/api/freq-response`, `/api/precision`, and
-  `/api/nullclines` responses include `studio.analysis-result.v1` metadata
-  with the analysis type, evidence classification, terminal status, source,
-  input and result SHA-256 digests, and output keys without host-local paths.
+  `/api/heatmap`, `/api/freq-response`, `/api/precision`, `/api/nullclines`,
+  and `/api/characterize` responses include `studio.analysis-result.v1`
+  metadata with the analysis type, evidence classification, terminal status,
+  source, input and result SHA-256 digests, and output keys without host-local
+  paths. `/api/multi-simulate` attaches `studio.simulation-run.v1` metadata to
+  each overlaid result, matching `/api/simulate`.
   Studio plot panels surface those class/source/status/digest labels beside
   analysis views, and the trace view surfaces the same labels from
   `studio.simulation-run.v1` metadata.

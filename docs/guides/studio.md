@@ -175,12 +175,15 @@ Simulations are cached (LRU, 64 slots) for instant replay.
 
 Analysis responses for `/api/compare`, `/api/fi-curve`, `/api/bifurcation`,
 `/api/sensitivity`, `/api/heatmap`, `/api/freq-response`, `/api/precision`,
-and `/api/nullclines` include `analysis_metadata` with the
+`/api/nullclines`, and `/api/characterize` include `analysis_metadata` with the
 `studio.analysis-result.v1` schema. The manifest records the analysis type,
 evidence classification, source (`ode`, `model`, `mixed`, or `unknown`),
 input and result SHA-256 digests, and the returned result keys without
 exposing host-local paths. The corresponding plot views surface the evidence
 class, source, input digest, and result digest next to the rendered analysis.
+`/api/multi-simulate` attaches per-result `run_metadata` with the
+`studio.simulation-run.v1` schema so each overlaid trace carries the same
+reproducibility provenance as `/api/simulate`.
 
 The frequency-response endpoint runs the simulator with a true sinusoidal
 current protocol for each frequency. The injected trace is
