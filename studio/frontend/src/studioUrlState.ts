@@ -28,6 +28,10 @@ export interface StudioShareUrlLocation {
   pathname: string;
 }
 
+export interface StudioShareUrlClipboard {
+  writeText(text: string): Promise<void>;
+}
+
 export interface StudioShareUrlPayload {
   m: StudioUrlSourceMode;
   mn: string;
@@ -89,6 +93,17 @@ export function buildStudioShareUrl(
 ): string {
   const encodedState = encodeStudioSharePayload(studioShareUrlPayload(input), encodeBase64);
   return `${location.origin}${location.pathname}#${encodedState}`;
+}
+
+export function copyStudioShareUrl(
+  input: StudioShareUrlInput,
+  location: StudioShareUrlLocation,
+  clipboard: StudioShareUrlClipboard,
+  encodeBase64: (payload: string) => string = btoa,
+): string {
+  const url = buildStudioShareUrl(input, location, encodeBase64);
+  void clipboard.writeText(url);
+  return url;
 }
 
 export function decodeStudioStartupHash(

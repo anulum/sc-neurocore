@@ -10,6 +10,7 @@ import { describe, expect, it } from "vitest";
 
 import {
   buildStudioShareUrl,
+  copyStudioShareUrl,
   decodeStudioStartupHash,
   encodeStudioSharePayload,
   studioShareUrlPayload,
@@ -61,6 +62,24 @@ describe("Studio share URL state codec", () => {
 
     expect(url.startsWith("https://studio.example/workbench#encoded:")).toBe(true);
     expect(url).toContain("\"mn\":\"lif\"");
+  });
+
+  it("copies the generated share URL through the supplied clipboard", () => {
+    const writes: string[] = [];
+    const url = copyStudioShareUrl(
+      input,
+      { origin: "https://studio.example", pathname: "/workbench" },
+      {
+        writeText: (text: string) => {
+          writes.push(text);
+          return Promise.resolve();
+        },
+      },
+      (payload) => `encoded:${payload}`,
+    );
+
+    expect(writes).toEqual([url]);
+    expect(url.startsWith("https://studio.example/workbench#encoded:")).toBe(true);
   });
 
   it("decodes startup hash state and normalises optional defaults", () => {

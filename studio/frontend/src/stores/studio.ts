@@ -75,7 +75,7 @@ import {
   type StudioSavedSession,
 } from "../studioSavedSessions";
 import {
-  buildStudioShareUrl,
+  copyStudioShareUrl,
   decodeStudioStartupHash,
 } from "../studioUrlState";
 import {
@@ -1671,7 +1671,7 @@ export const useStudioStore = create<StudioState>((set, get) => ({
 
   shareURL: () => {
     const s = get();
-    const url = buildStudioShareUrl({
+    copyStudioShareUrl({
       sourceMode: s.sourceMode,
       selectedModelName: s.selectedModelName,
       equations: s.equations,
@@ -1684,8 +1684,7 @@ export const useStudioStore = create<StudioState>((set, get) => ({
       duration: s.duration,
       current: s.current,
       protocol: s.protocol,
-    }, window.location);
-    void navigator.clipboard.writeText(url);
+    }, window.location, navigator.clipboard);
     set({ error: "URL copied to clipboard" });
     setTimeout(() => set({ error: null }), 2000);
   },
