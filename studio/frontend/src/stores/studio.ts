@@ -78,6 +78,7 @@ import {
   copyStudioShareUrl,
   decodeStudioStartupHash,
 } from "../studioUrlState";
+import { studioTraceImportRequest } from "../studioTraceImport";
 import {
   studioBifurcationRequest,
   studioCodegenRequest,
@@ -1127,16 +1128,8 @@ export const useStudioStore = create<StudioState>((set, get) => ({
   },
 
   importCSV: async (csv) => {
-    const lines = csv.trim().split("\n").map((l) => l.trim()).filter((l) => l);
-    const values: number[] = [];
-    for (const line of lines) {
-      const parts = line.split(/[,\t\s]+/);
-      const num = parseFloat(parts[parts.length - 1]);
-      if (!isNaN(num)) values.push(num);
-    }
-    if (values.length < 10) { set({ error: "Need at least 10 data points" }); return; }
     try {
-      const importedTrace = await importTrace({ voltage: values, dt: get().dt });
+      const importedTrace = await importTrace(studioTraceImportRequest(csv, get().dt));
       set({ importedTrace, activeTab: "trace" });
     } catch (e) { set({ error: e instanceof Error ? e.message : String(e) }); }
   },
