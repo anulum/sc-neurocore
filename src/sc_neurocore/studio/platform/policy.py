@@ -21,6 +21,7 @@ from typing import Protocol
 
 AUDIT_SCHEMA_VERSION = "studio.audit.v1"
 AUDIT_EXPORT_SCHEMA_VERSION = "studio.audit.export.v1"
+AUDIT_QUARANTINE_EXPORT_SCHEMA_VERSION = "studio.audit.quarantine.export.v1"
 UTC = timezone.utc
 
 
@@ -94,6 +95,34 @@ class AuditExport:
             "latest_event_hash": self.latest_event_hash,
             "quarantine_reason": self.quarantine_reason,
             "quarantined_event_count": self.quarantined_event_count,
+            "retained_event_count": self.retained_event_count,
+            "schema_version": self.schema_version,
+            "sink_type": self.sink_type,
+            "truncated": self.truncated,
+        }
+
+
+@dataclass(frozen=True, slots=True)
+class AuditQuarantineExport:
+    """Operator-safe export of quarantined retained Studio audit rows."""
+
+    configured: bool
+    sink_type: str
+    event_count: int
+    truncated: bool
+    events: tuple[dict[str, str | None], ...]
+    retained_event_count: int
+    quarantine_reason: str | None
+    schema_version: str = AUDIT_QUARANTINE_EXPORT_SCHEMA_VERSION
+
+    def to_public_dict(self) -> dict[str, AuditExportValue]:
+        """Return path-free quarantined audit rows for incident handoff."""
+
+        return {
+            "configured": self.configured,
+            "event_count": self.event_count,
+            "events": [dict(event) for event in self.events],
+            "quarantine_reason": self.quarantine_reason,
             "retained_event_count": self.retained_event_count,
             "schema_version": self.schema_version,
             "sink_type": self.sink_type,
@@ -340,6 +369,47 @@ class JsonlAuditSink:
             retained_event_count=integrity.retained_event_count,
         )
 
+    def export_quarantine(self, limit: int = 100) -> AuditQuarantineExport:
+        """Export quarantined retained audit rows without exposing local paths.
+
+        Parameters
+        ----------
+        limit:
+            Maximum number of quarantined rows to include. Must be positive.
+
+        Returns
+        -------
+        AuditQuarantineExport
+            Path-free export payload containing retained rows that require
+            migration, quarantine, or incident review.
+
+        Raises
+        ------
+        AuditSinkError
+            If the sink location is malformed or a stored row is not a JSON
+            object with scalar public values.
+        """
+
+        if limit < 1:
+            raise ValueError("Audit quarantine export limit must be positive.")
+        preflight_error = self._preflight_error()
+        if preflight_error is not None:
+            self._last_error = preflight_error
+            raise AuditSinkError("Studio audit quarantine export failed.")
+        rows = self._export_rows()
+        quarantined_rows = self._quarantine_export_rows(rows)
+        truncated = len(quarantined_rows) > limit
+        selected_rows = quarantined_rows[-limit:]
+        return AuditQuarantineExport(
+            configured=True,
+            sink_type="jsonl",
+            event_count=len(selected_rows),
+            truncated=truncated,
+            events=tuple(selected_rows),
+            retained_event_count=len(rows),
+            quarantine_reason=self._quarantine_summary(quarantined_rows),
+        )
+
     def _preflight_error(self) -> str | None:
         if self._path.exists() and self._path.is_dir():
             return "AuditPathIsDirectory"
@@ -471,6 +541,81 @@ class JsonlAuditSink:
             latest_hash,
             retained_event_count=len(rows),
         )
+
+    def _quarantine_export_rows(
+        self,
+        rows: list[dict[str, str | None]],
+    ) -> list[dict[str, str | None]]:
+        quarantined_rows: list[dict[str, str | None]] = []
+        previous_hash: str | None = None
+        for index, row in enumerate(rows):
+            event_hash = row.get("event_hash")
+            if event_hash is None:
+                quarantined_rows.append(
+                    {
+                        **row,
+                        "quarantine_reason": "legacy_or_unverifiable_rows",
+                    }
+                )
+                previous_hash = None
+                continue
+            row_quarantine_reason = self._row_quarantine_reason(
+                row,
+                event_hash=event_hash,
+                previous_hash=previous_hash,
+                requires_previous_hash=index > 0,
+            )
+            if row_quarantine_reason is not None:
+                quarantined_rows.extend(
+                    self._quarantine_tail(
+                        rows[index:],
+                        quarantine_reason=row_quarantine_reason,
+                    )
+                )
+                break
+            previous_hash = event_hash
+        return quarantined_rows
+
+    def _row_quarantine_reason(
+        self,
+        row: dict[str, str | None],
+        *,
+        event_hash: str,
+        previous_hash: str | None,
+        requires_previous_hash: bool,
+    ) -> str | None:
+        if event_hash != self._event_hash(row):
+            return "tampered_or_corrupt_rows"
+        if requires_previous_hash and row.get("previous_event_hash") != previous_hash:
+            return "chain_break_rows"
+        return None
+
+    def _quarantine_tail(
+        self,
+        rows: list[dict[str, str | None]],
+        *,
+        quarantine_reason: str,
+    ) -> list[dict[str, str | None]]:
+        return [
+            {
+                **row,
+                "quarantine_reason": quarantine_reason,
+            }
+            for row in rows
+        ]
+
+    @staticmethod
+    def _quarantine_summary(rows: list[dict[str, str | None]]) -> str | None:
+        reasons = {
+            row["quarantine_reason"]
+            for row in rows
+            if row.get("quarantine_reason") is not None
+        }
+        if not reasons:
+            return None
+        if len(reasons) == 1:
+            return next(iter(reasons))
+        return "multiple_quarantine_reasons"
 
     def _previous_event_hash(self) -> str | None:
         if not self._path.exists():
@@ -686,6 +831,12 @@ def build_default_studio_route_policy_registry() -> RoutePolicyRegistry:
                 "/api/studio/audit/export",
                 RouteVisibility.ADMIN,
                 "studio.audit.export",
+            ),
+            (
+                "GET",
+                "/api/studio/audit/quarantine/export",
+                RouteVisibility.ADMIN,
+                "studio.audit.quarantine.export",
             ),
             (
                 "POST",

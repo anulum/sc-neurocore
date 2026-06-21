@@ -301,6 +301,10 @@ Legacy or unverifiable retained rows are not silently trusted: status and export
 payloads include `retained_event_count`, `quarantined_event_count`, and
 `quarantine_reason` so operators can separate verified evidence from rows that
 must be migrated, quarantined, or reviewed during incident reconstruction.
+Administrators can export only the quarantined retained rows through
+`GET /api/studio/audit/quarantine/export`; the payload is path-free, includes
+per-row `quarantine_reason` values, and is intended for incident handoff or
+offline archive migration.
 When `SC_NEUROCORE_STUDIO_AUDIT_ROTATION_BYTES` is set, the retained-file count
 must be a positive integer so rotation always keeps at least one archived JSONL
 segment for incident review and retained-chain verification.

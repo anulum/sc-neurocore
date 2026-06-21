@@ -24,6 +24,7 @@ def _policy_contract() -> dict[str, Any]:
         from sc_neurocore.studio.platform.policy import (  # noqa: PLC0415
             AuditEvent,
             AUDIT_SCHEMA_VERSION,
+            AUDIT_QUARANTINE_EXPORT_SCHEMA_VERSION,
             AuditSinkError,
             AuditSinkStatus,
             InMemoryAuditSink,
@@ -40,6 +41,7 @@ def _policy_contract() -> dict[str, Any]:
     return {
         "AuditEvent": AuditEvent,
         "AUDIT_SCHEMA_VERSION": AUDIT_SCHEMA_VERSION,
+        "AUDIT_QUARANTINE_EXPORT_SCHEMA_VERSION": AUDIT_QUARANTINE_EXPORT_SCHEMA_VERSION,
         "AuditSinkError": AuditSinkError,
         "AuditSinkStatus": AuditSinkStatus,
         "InMemoryAuditSink": InMemoryAuditSink,
@@ -199,6 +201,10 @@ def test_audit_schema_version_is_stable() -> None:
     contract = _policy_contract()
 
     assert contract["AUDIT_SCHEMA_VERSION"] == "studio.audit.v1"
+    assert (
+        contract["AUDIT_QUARANTINE_EXPORT_SCHEMA_VERSION"]
+        == "studio.audit.quarantine.export.v1"
+    )
 
 
 def test_jsonl_audit_sink_exposes_configured_path(tmp_path: Path) -> None:
@@ -417,6 +423,114 @@ def test_jsonl_audit_sink_exports_bounded_recent_events_without_paths(tmp_path: 
     assert str(tmp_path) not in json.dumps(exported)
 
 
+def test_jsonl_audit_sink_exports_quarantined_legacy_rows(tmp_path: Path) -> None:
+    contract = _policy_contract()
+    audit_path = tmp_path / "studio-audit.jsonl"
+    audit_path.write_text('{"schema_version":"studio.audit.v1"}\n', encoding="utf-8")
+    audit_sink = contract["JsonlAuditSink"](audit_path)
+    audit_sink.record(
+        contract["AuditEvent"](
+            action="studio.simulate.run",
+            route="/api/simulate",
+            principal_id="operator-1",
+            decision="allow",
+            reason="authorized",
+        )
+    )
+
+    exported = audit_sink.export_quarantine().to_public_dict()
+
+    assert exported["schema_version"] == "studio.audit.quarantine.export.v1"
+    assert exported["event_count"] == 1
+    assert exported["events"][0]["quarantine_reason"] == "legacy_or_unverifiable_rows"
+    assert exported["quarantine_reason"] == "legacy_or_unverifiable_rows"
+    assert exported["retained_event_count"] == 2
+    assert exported["sink_type"] == "jsonl"
+    assert exported["truncated"] is False
+    assert str(tmp_path) not in json.dumps(exported)
+
+
+def test_jsonl_audit_sink_exports_chain_break_tail(tmp_path: Path) -> None:
+    contract = _policy_contract()
+    audit_path = tmp_path / "studio-audit.jsonl"
+    audit_sink = contract["JsonlAuditSink"](audit_path)
+    for index in range(3):
+        audit_sink.record(
+            contract["AuditEvent"](
+                action=f"studio.simulate.run.{index}",
+                route="/api/simulate",
+                principal_id="operator-1",
+                decision="allow",
+                reason="authorized",
+            )
+        )
+    rows = [json.loads(line) for line in audit_path.read_text(encoding="utf-8").splitlines()]
+    rows[1]["previous_event_hash"] = "0" * 64
+    rows[1]["event_hash"] = _audit_event_hash(rows[1])
+    audit_path.write_text(
+        "\n".join(json.dumps(row, sort_keys=True) for row in rows),
+        encoding="utf-8",
+    )
+
+    exported = audit_sink.export_quarantine(limit=1).to_public_dict()
+
+    assert exported["event_count"] == 1
+    assert exported["events"][0]["action"] == "studio.simulate.run.2"
+    assert exported["events"][0]["quarantine_reason"] == "chain_break_rows"
+    assert exported["quarantine_reason"] == "chain_break_rows"
+    assert exported["retained_event_count"] == 3
+    assert exported["truncated"] is True
+
+
+def test_jsonl_audit_sink_rejects_non_positive_quarantine_export_limit(
+    tmp_path: Path,
+) -> None:
+    contract = _policy_contract()
+    audit_sink = contract["JsonlAuditSink"](tmp_path / "studio-audit.jsonl")
+
+    with pytest.raises(ValueError, match="positive"):
+        audit_sink.export_quarantine(limit=0)
+
+
+def test_jsonl_audit_sink_exports_empty_quarantine_for_clean_log(tmp_path: Path) -> None:
+    """Clean retained audit logs produce an empty quarantine payload."""
+
+    contract = _policy_contract()
+    audit_path = tmp_path / "studio-audit.jsonl"
+    audit_sink = contract["JsonlAuditSink"](audit_path)
+    audit_sink.record(
+        contract["AuditEvent"](
+            action="studio.simulate.run",
+            route="/api/simulate",
+            principal_id="operator-1",
+            decision="allow",
+            reason="authorized",
+        )
+    )
+
+    exported = audit_sink.export_quarantine().to_public_dict()
+
+    assert exported["event_count"] == 0
+    assert exported["events"] == []
+    assert exported["quarantine_reason"] is None
+    assert exported["retained_event_count"] == 1
+    assert exported["truncated"] is False
+
+
+def test_jsonl_audit_sink_quarantine_export_reports_preflight_failure(
+    tmp_path: Path,
+) -> None:
+    """Quarantine export fails closed when the sink path is malformed."""
+
+    contract = _policy_contract()
+    audit_sink = contract["JsonlAuditSink"](tmp_path)
+
+    with pytest.raises(contract["AuditSinkError"], match="quarantine export failed"):
+        audit_sink.export_quarantine()
+
+    assert audit_sink.status().last_error == "AuditPathIsDirectory"
+
+
 def test_jsonl_audit_sink_status_reports_hash_mismatch_without_paths(
     tmp_path: Path,
 ) -> None:
@@ -440,6 +554,7 @@ def test_jsonl_audit_sink_status_reports_hash_mismatch_without_paths(
 
     status = audit_sink.status().to_public_dict()
     exported = audit_sink.export_recent().to_public_dict()
+    quarantine_export = audit_sink.export_quarantine().to_public_dict()
 
     assert status["healthy"] is False
     assert status["integrity_verified"] is False
@@ -454,6 +569,49 @@ def test_jsonl_audit_sink_status_reports_hash_mismatch_without_paths(
     assert exported["quarantine_reason"] == "tampered_or_corrupt_rows"
     assert exported["quarantined_event_count"] == 1
     assert exported["retained_event_count"] == 1
+    assert quarantine_export["event_count"] == 1
+    assert quarantine_export["quarantine_reason"] == "tampered_or_corrupt_rows"
+    assert quarantine_export["events"][0]["quarantine_reason"] == "tampered_or_corrupt_rows"
+    assert str(tmp_path) not in json.dumps(exported)
+    assert str(tmp_path) not in json.dumps(quarantine_export)
+
+
+def test_jsonl_audit_sink_quarantine_export_summarizes_mixed_reasons(
+    tmp_path: Path,
+) -> None:
+    """Quarantine export preserves rows when multiple defect classes exist."""
+
+    contract = _policy_contract()
+    audit_path = tmp_path / "studio-audit.jsonl"
+    audit_path.write_text('{"schema_version":"studio.audit.v1"}\n', encoding="utf-8")
+    audit_sink = contract["JsonlAuditSink"](audit_path)
+    for index in range(2):
+        audit_sink.record(
+            contract["AuditEvent"](
+                action=f"studio.simulate.run.{index}",
+                route="/api/simulate",
+                principal_id="operator-1",
+                decision="allow",
+                reason="authorized",
+            )
+        )
+    rows = [json.loads(line) for line in audit_path.read_text(encoding="utf-8").splitlines()]
+    rows[2]["reason"] = "tampered"
+    audit_path.write_text(
+        "\n".join(json.dumps(row, sort_keys=True) for row in rows),
+        encoding="utf-8",
+    )
+
+    exported = audit_sink.export_quarantine().to_public_dict()
+
+    assert exported["event_count"] == 2
+    assert exported["quarantine_reason"] == "multiple_quarantine_reasons"
+    assert [
+        event["quarantine_reason"] for event in exported["events"]
+    ] == [
+        "legacy_or_unverifiable_rows",
+        "tampered_or_corrupt_rows",
+    ]
     assert str(tmp_path) not in json.dumps(exported)
 
 
@@ -803,6 +961,10 @@ def test_default_route_policy_registry_classifies_platform_routes() -> None:
     job_detail_policy = registry.policy_for("GET", "/api/studio/jobs/{job_id}")
     operator_status_policy = registry.policy_for("GET", "/api/studio/operator/status")
     audit_export_policy = registry.policy_for("GET", "/api/studio/audit/export")
+    quarantine_export_policy = registry.policy_for(
+        "GET",
+        "/api/studio/audit/quarantine/export",
+    )
     browser_user_create_policy = registry.policy_for(
         "POST",
         "/api/studio/identity/browser-users",
@@ -821,6 +983,8 @@ def test_default_route_policy_registry_classifies_platform_routes() -> None:
     assert job_detail_policy.audit_action == "studio.jobs.detail"
     assert operator_status_policy.visibility is contract["RouteVisibility"].ADMIN
     assert audit_export_policy.visibility is contract["RouteVisibility"].ADMIN
+    assert quarantine_export_policy.visibility is contract["RouteVisibility"].ADMIN
+    assert quarantine_export_policy.audit_action == "studio.audit.quarantine.export"
     assert browser_user_create_policy.visibility is contract["RouteVisibility"].ADMIN
     assert (
         browser_user_create_policy.audit_action

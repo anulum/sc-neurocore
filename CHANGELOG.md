@@ -41,6 +41,8 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
   convention) in `docs/formal/timing_aware_properties.md`.
 
 ### Studio platform
+- Added an admin-gated, path-free Studio audit quarantine export for legacy,
+  corrupt, or chain-broken retained audit rows.
 - Added path-free quarantine metadata to Studio audit status and export payloads
   so legacy, corrupt, or chain-broken retained audit rows are counted separately
   from verified retained evidence.

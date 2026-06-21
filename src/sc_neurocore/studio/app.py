@@ -1190,6 +1190,27 @@ def create_app(runtime_settings: StudioRuntimeSettings | None = None) -> FastAPI
         except AuditSinkError as exc:
             raise HTTPException(status_code=503, detail="audit_export_failed") from exc
 
+    @app.get("/api/studio/audit/quarantine/export")
+    def api_studio_audit_quarantine_export(
+        limit: int = 100,
+    ) -> dict[str, AuditExportValue]:
+        """Return path-free quarantined audit rows for incident handoff."""
+
+        if not isinstance(studio_audit_sink, JsonlAuditSink):
+            raise HTTPException(status_code=409, detail="audit_export_unavailable")
+        if limit < 1 or limit > 1000:
+            raise HTTPException(
+                status_code=422,
+                detail="Audit quarantine export limit must be 1..1000",
+            )
+        try:
+            return studio_audit_sink.export_quarantine(limit=limit).to_public_dict()
+        except AuditSinkError as exc:
+            raise HTTPException(
+                status_code=503,
+                detail="audit_quarantine_export_failed",
+            ) from exc
+
     @app.post("/api/studio/evidence/bundle")
     def api_studio_evidence_bundle(
         export_request: StudioEvidenceBundleRequest,
