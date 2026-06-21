@@ -285,8 +285,9 @@ runtime features:
   `studio.analysis-result.v1` analysis responses, selected default-flow run
   and attestation responses, selected job IDs, bounded audit export length, and
   command replay metadata. The resulting
-  `studio.evidence-bundle.v1` manifest, project payload, simulation result
-  payloads, analysis result payloads, default-flow run/attestation payloads,
+  `studio.evidence-bundle.v1` manifest, validated `project_workspace` project
+  payload, simulation result payloads, analysis result payloads,
+  default-flow run/attestation payloads,
   job records, copied verified job artifacts, audit excerpt, and replay
   metadata are all written as job artifacts under `evidence/`. Simulation
   payloads are stored under `evidence/simulations/`; analysis payloads are
@@ -297,8 +298,8 @@ runtime features:
   are path-free and omit bearer tokens, token hashes, password material, and
   local filesystem paths. Both surfaces include a summary with artifact-path
   count, manifest-entry count, entry-type counts, evidence classification
-  counts for validated simulation, analysis, and action-evidence entries, and
-  selected source-job counts by kind and owner.
+  counts for validated project-workspace, simulation, analysis, and
+  action-evidence entries, and selected source-job counts by kind and owner.
 - The Admin panel surfaces that evidence route as an operator workflow with
   project, simulation JSON, analysis JSON, default-flow run JSON,
   default-flow attestation JSON, job ID, audit, and replay metadata fields.
@@ -558,6 +559,8 @@ After a save completes, the Projects panel renders the path-free evidence
 summary returned by the API: classification, project name, state digest,
 project digest, and schema version. That keeps the operator-visible save
 confirmation tied to the persisted payload without leaking host-local paths.
+Evidence bundle export revalidates the saved project shape and stores it as a
+classified `project_workspace` entry before adding it to bundle summaries.
 
 ## Detailed Guides
 

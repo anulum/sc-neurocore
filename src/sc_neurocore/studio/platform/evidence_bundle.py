@@ -31,6 +31,7 @@ from sc_neurocore.studio.evidence_classification import (
     validate_studio_evidence_classification,
     validate_studio_evidence_status,
 )
+from sc_neurocore.studio.project_manifest import build_project_save_manifest
 
 STUDIO_EVIDENCE_BUNDLE_SCHEMA_VERSION = "studio.evidence-bundle.v1"
 STUDIO_ACTION_EVIDENCE_SCHEMA_VERSION = "studio.action-evidence.v1"
@@ -147,13 +148,15 @@ def write_studio_evidence_bundle(
     entries: list[dict[str, JsonValue]] = []
 
     if project_payload is not None:
+        payload = _project_workspace_payload(project_payload)
         entries.append(
-            _write_json_entry(
+            _write_classified_json_entry(
                 context,
                 written_paths,
                 "project",
                 "evidence/project.json",
-                _json_object(project_payload, "Studio project payload must be JSON."),
+                payload,
+                evidence_classification="project_workspace",
             )
         )
 
@@ -378,6 +381,32 @@ def _write_classified_json_entry(
 
 def _json_object(payload: Mapping[str, object], error_message: str) -> dict[str, JsonValue]:
     return cast(dict[str, JsonValue], _json_value(dict(payload), error_message))
+
+
+def _project_workspace_payload(payload: Mapping[str, object]) -> dict[str, JsonValue]:
+    """Validate a saved Studio project payload before bundle export."""
+
+    result = _json_object(payload, "Studio project payload must be JSON.")
+    name = result.get("name")
+    if not isinstance(name, str) or not name:
+        raise ValueError("Studio project payload requires a project name.")
+    saved_at = result.get("saved_at")
+    if isinstance(saved_at, bool) or not isinstance(saved_at, int | float):
+        raise ValueError("Studio project payload requires a saved timestamp.")
+    version = result.get("version")
+    if not isinstance(version, str) or not version:
+        raise ValueError("Studio project payload requires a project version.")
+    state = result.get("state")
+    if not isinstance(state, Mapping):
+        raise ValueError("Studio project payload requires a state object.")
+    build_project_save_manifest(
+        name=name,
+        saved_at=float(saved_at),
+        version=version,
+        state=state,
+        project_payload=result,
+    )
+    return result
 
 
 def _simulation_result_payload(payload: Mapping[str, object]) -> dict[str, JsonValue]:

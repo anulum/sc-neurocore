@@ -86,6 +86,17 @@ def _analysis_payload() -> dict[str, object]:
     }
 
 
+def _project_payload() -> dict[str, object]:
+    """Return a minimal saved Studio project payload."""
+
+    return {
+        "name": "demo",
+        "saved_at": 1_782_000_000.0,
+        "state": {"duration": 10},
+        "version": "0.3.0",
+    }
+
+
 def _action_evidence_payload(job_id: str) -> dict[str, object]:
     """Return a minimal worker action-evidence manifest payload."""
 
@@ -233,7 +244,7 @@ def test_write_studio_evidence_bundle_copies_project_job_audit_and_replay(
 
     result = write_studio_evidence_bundle(
         bundle_context,
-        project_payload={"name": "demo", "state": {"duration": 10}},
+        project_payload=_project_payload(),
         simulation_payloads=(_simulation_payload(),),
         analysis_payloads=(_analysis_payload(),),
         default_flow_runs=(_default_flow_run_payload(),),
@@ -288,6 +299,7 @@ def test_write_studio_evidence_bundle_copies_project_job_audit_and_replay(
     assert entry_type_counts["simulation_result"] == 1
     assert evidence_classification_counts["analysis"] == 1
     assert evidence_classification_counts["compile"] == 1
+    assert evidence_classification_counts["project_workspace"] == 1
     assert evidence_classification_counts["simulation"] == 1
     assert summary["known_evidence_classifications"] == [
         "analysis",
@@ -307,6 +319,10 @@ def test_write_studio_evidence_bundle_copies_project_job_audit_and_replay(
     ]
     assert source_job_kind_counts["compiler"] == 1
     assert source_job_owner_counts["studio-compiler"] == 1
+    manifest = cast(dict[str, object], payload["manifest"])
+    manifest_entries = cast(list[dict[str, object]], manifest["entries"])
+    project_entry = next(entry for entry in manifest_entries if entry["type"] == "project")
+    assert project_entry["evidence_classification"] == "project_workspace"
 
 
 @pytest.mark.parametrize(
@@ -324,9 +340,19 @@ def test_write_studio_evidence_bundle_copies_project_job_audit_and_replay(
         ),
         (
             lambda job_id: json.dumps(
+                _action_evidence_payload(job_id) | {"evidence_classification": None}
+            ),
+            "unsupported classification",
+        ),
+        (
+            lambda job_id: json.dumps(
                 _action_evidence_payload(job_id) | {"evidence_classification": "unknown"}
             ),
             "unsupported classification",
+        ),
+        (
+            lambda job_id: json.dumps(_action_evidence_payload(job_id) | {"status": None}),
+            "unsupported status",
         ),
         (
             lambda job_id: json.dumps(_action_evidence_payload(job_id) | {"status": "running"}),
@@ -451,6 +477,41 @@ def test_write_studio_evidence_bundle_rejects_invalid_json_and_artifact_state(
         write_studio_evidence_bundle(
             context,
             project_payload=cast(dict[str, object], {1: "bad"}),
+        )
+    with pytest.raises(ValueError, match="project name"):
+        write_studio_evidence_bundle(
+            context,
+            project_payload={"saved_at": 1.0, "state": {}, "version": "0.3.0"},
+        )
+    with pytest.raises(ValueError, match="project version"):
+        write_studio_evidence_bundle(
+            context,
+            project_payload={"name": "demo", "saved_at": 1.0, "state": {}},
+        )
+    with pytest.raises(ValueError, match="project payload"):
+        write_studio_evidence_bundle(
+            context,
+            project_payload={
+                "name": "demo",
+                "saved_at": math.nan,
+                "state": {},
+                "version": "0.3.0",
+            },
+        )
+    with pytest.raises(ValueError, match="state object"):
+        write_studio_evidence_bundle(
+            context,
+            project_payload={"name": "demo", "saved_at": 1.0, "state": [], "version": "0.3.0"},
+        )
+    with pytest.raises(ValueError, match="saved timestamp"):
+        write_studio_evidence_bundle(
+            context,
+            project_payload={
+                "name": "demo",
+                "saved_at": True,
+                "state": {},
+                "version": "0.3.0",
+            },
         )
     with pytest.raises(ValueError, match="Studio simulation payload requires run metadata"):
         write_studio_evidence_bundle(
@@ -828,6 +889,7 @@ def test_studio_evidence_bundle_route_exports_selected_state(
     assert body["summary"]["entry_type_counts"]["default_flow_run"] == 1
     assert body["summary"]["evidence_classification_counts"]["analysis"] == 1
     assert body["summary"]["evidence_classification_counts"]["compile"] == 1
+    assert body["summary"]["evidence_classification_counts"]["project_workspace"] == 1
     assert body["summary"]["evidence_classification_counts"]["simulation"] == 1
     assert body["summary"]["source_job_kind_counts"]["compiler"] == 1
     manifest_entries = cast(list[dict[str, object]], manifest["entries"])
@@ -835,8 +897,10 @@ def test_studio_evidence_bundle_route_exports_selected_state(
         entry for entry in manifest_entries if entry["type"] == "simulation_result"
     )
     analysis_entry = next(entry for entry in manifest_entries if entry["type"] == "analysis_result")
+    project_entry = next(entry for entry in manifest_entries if entry["type"] == "project")
     assert simulation_entry["evidence_classification"] == "simulation"
     assert analysis_entry["evidence_classification"] == "analysis"
+    assert project_entry["evidence_classification"] == "project_workspace"
     assert project_payload["name"] == "demo"
     assert simulation_payload["run_metadata"] == simulation_response.json()["run_metadata"]
     assert analysis_payload["analysis_metadata"] == analysis_response.json()["analysis_metadata"]
