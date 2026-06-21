@@ -120,7 +120,11 @@ import {
   studioProjectionRemovedState,
   studioProjectionUpdatedState,
 } from "../studioGraphRequests";
-import { copyStudioShareUrlInRuntime } from "../studioShareRuntime";
+import {
+  copyStudioShareUrlInRuntime,
+  studioShareStatusClearedState,
+  studioShareStatusState,
+} from "../studioShareRuntime";
 import { readStudioStartupHashState } from "../studioStartupRuntime";
 import { studioTraceImportRequest } from "../studioTraceImport";
 import {
@@ -1522,8 +1526,8 @@ export const useStudioStore = create<StudioState>((set, get) => ({
       current: s.current,
       protocol: s.protocol,
     }).then((result) => {
-      set({ error: result.ok ? "URL copied to clipboard" : result.message });
-      setTimeout(() => set({ error: null }), 2000);
+      set(studioShareStatusState(result));
+      setTimeout(() => set(studioShareStatusClearedState()), 2000);
     });
   },
 }));

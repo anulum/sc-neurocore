@@ -10,6 +10,8 @@ import { describe, expect, it } from "vitest";
 
 import {
   copyStudioShareUrlInRuntime,
+  studioShareStatusClearedState,
+  studioShareStatusState,
   type StudioShareRuntime,
 } from "./studioShareRuntime";
 import type { StudioShareUrlInput } from "./studioUrlState";
@@ -80,5 +82,19 @@ describe("Studio share URL browser runtime", () => {
       ok: false,
       message: "clipboard denied",
     });
+  });
+
+  it("builds the success status patch for store consumers", () => {
+    expect(studioShareStatusState({ ok: true, url: "https://studio.example/workbench#state" }))
+      .toEqual({ error: "URL copied to clipboard" });
+  });
+
+  it("builds the failure status patch for store consumers", () => {
+    expect(studioShareStatusState({ ok: false, message: "Clipboard access is unavailable." }))
+      .toEqual({ error: "Clipboard access is unavailable." });
+  });
+
+  it("builds the cleared status patch for store consumers", () => {
+    expect(studioShareStatusClearedState()).toEqual({ error: null });
   });
 });

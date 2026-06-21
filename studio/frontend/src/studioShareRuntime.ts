@@ -22,6 +22,14 @@ export type StudioShareRuntimeResult =
   | { ok: true; url: string }
   | { ok: false; message: string };
 
+export interface StudioShareStatusStatePatch {
+  error: string;
+}
+
+export interface StudioShareStatusClearedStatePatch {
+  error: null;
+}
+
 export function browserStudioShareRuntime(): StudioShareRuntime | null {
   if (typeof window === "undefined") {
     return null;
@@ -30,6 +38,16 @@ export function browserStudioShareRuntime(): StudioShareRuntime | null {
     clipboard: typeof navigator === "undefined" ? null : navigator.clipboard ?? null,
     location: window.location,
   };
+}
+
+export function studioShareStatusState(
+  result: StudioShareRuntimeResult,
+): StudioShareStatusStatePatch {
+  return { error: result.ok ? "URL copied to clipboard" : result.message };
+}
+
+export function studioShareStatusClearedState(): StudioShareStatusClearedStatePatch {
+  return { error: null };
 }
 
 export async function copyStudioShareUrlInRuntime(
