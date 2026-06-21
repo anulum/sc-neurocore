@@ -245,6 +245,13 @@ import {
   templateSelectedState,
   templatesLoadedState,
 } from "../modelSelectionStoreState";
+import {
+  characterizeCompleteState,
+  characterizeFailureState,
+  characterizeProgressMessageState,
+  characterizeRequestConfig,
+  characterizeRunStartState,
+} from "../characterizeStoreState";
 
 let debounceTimer: ReturnType<typeof setTimeout> | null = null;
 syncStoredStudioAuthToken(setStudioAuthToken);
@@ -1002,25 +1009,16 @@ export const useStudioStore = create<StudioState>((set, get) => ({
   runCharacterize: async () => {
     const s = get();
     if (s.isSimulating || !s.selectedModelName) return;
-    set({ isSimulating: true, error: null, activeTab: "characterize", progressPct: 0, progressMsg: "Starting characterisation..." });
-    const config = {
-      name: s.selectedModelName, params: s.modelParams,
-      dt: s.dt, duration: s.duration, current: s.current,
-    };
+    set(characterizeRunStartState());
+    const config = characterizeRequestConfig(s);
     const ws = connectProgress("characterize", config, (msg) => {
-      if (msg.type === "progress") {
-        set({ progressPct: msg.pct || 0, progressMsg: msg.msg || "" });
-      } else if (msg.type === "complete") {
-        set({ charResult: msg.result as CharacterizeResponse, isSimulating: false, progressPct: 100, progressMsg: "" });
-      } else if (msg.type === "error") {
-        set({ error: msg.msg || "Characterisation failed", isSimulating: false, progressPct: 0, progressMsg: "" });
-      }
+      const state = characterizeProgressMessageState(msg);
+      if (state !== null) set(state);
     });
     ws.onerror = () => {
-      // Fallback to HTTP if WebSocket unavailable
       fetchCharacterize(config).then(
-        (charResult) => set({ charResult, isSimulating: false, progressPct: 0, progressMsg: "" }),
-        (e) => set({ error: e instanceof Error ? e.message : String(e), isSimulating: false, progressPct: 0, progressMsg: "" }),
+        (charResult) => set(characterizeCompleteState(charResult)),
+        (e) => set(characterizeFailureState(e)),
       );
     };
   },
