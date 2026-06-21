@@ -514,7 +514,9 @@ generated Verilog side-by-side with a verification badge. Direct
 equation-to-Verilog output includes a source-to-RTL traceability strip with
 source, RTL, and manifest digests for evidence review. The strip can export a
 compile evidence bundle with replay metadata for the direct SystemVerilog emit
-route.
+route. Adaptive-precision formal-bundle manifests also carry the controlled
+Studio compile evidence class and terminal generation status while keeping
+external proof and hardware claims fail-closed.
 
 ### Synthesis Dashboard
 

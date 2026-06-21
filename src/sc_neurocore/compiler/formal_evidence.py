@@ -57,6 +57,8 @@ def write_precision_formal_evidence_bundle(
 
     manifest = {
         "schema_version": "sc-neurocore.adaptive-precision-formal-bundle.v1",
+        "evidence_classification": "compile",
+        "status": "completed",
         "module_name": module_name,
         "evidence_boundary": ("bundle_generation_only_no_symbiyosys_execution_no_silicon_claim"),
         "assignments_count": len(assignments),

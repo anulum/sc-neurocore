@@ -111,6 +111,13 @@ metadata for `/api/ir/emit-sv-direct`, the compile input digest, and the
 traceability digest note through the same admin evidence-bundle route used by
 the Admin panel. It deliberately contains no host-local paths.
 
+Adaptive-precision formal bundles created through
+`/api/adaptive-precision/formal-bundle` use the same evidence-classification
+contract for their generated SymbiYosys-ready manifests:
+`evidence_classification: "compile"` and `status: "completed"` mean the bundle
+generation completed, while the embedded formal-claim flags remain fail-closed
+until external SymbiYosys execution evidence is attached.
+
 ## Co-Simulation
 
 The co-simulation view (accessible via the existing Q8.8 tab or the
