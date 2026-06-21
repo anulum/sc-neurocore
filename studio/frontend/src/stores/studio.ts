@@ -62,6 +62,11 @@ import {
   validateStudioAuditQuarantineArchive,
   connectProgress,
 } from "../api/client";
+import {
+  clearStoredStudioAuthToken,
+  storeStudioAuthToken,
+  syncStoredStudioAuthToken,
+} from "../studioAuthSession";
 import { parseTrainingCheckpointPayload } from "../trainingCheckpoint";
 import {
   buildTrainingWeightRestoreVerificationManifest,
@@ -77,11 +82,8 @@ import {
 import { downloadBrowserArtefact } from "../browserArtefactDownload";
 
 let debounceTimer: ReturnType<typeof setTimeout> | null = null;
-const AUTH_STORAGE_KEY = "sc-neurocore-studio-auth-token";
-const browserSessionStorage = typeof sessionStorage === "undefined" ? null : sessionStorage;
 const browserLocalStorage = typeof localStorage === "undefined" ? null : localStorage;
-const initialAuthToken = browserSessionStorage?.getItem(AUTH_STORAGE_KEY) ?? null;
-setStudioAuthToken(initialAuthToken);
+syncStoredStudioAuthToken(setStudioAuthToken);
 
 export type SourceMode = "model" | "ode";
 export type ViewTab = "trace" | "phase" | "isi" | "fi-curve" | "bifurcation" |
@@ -409,8 +411,7 @@ export const useStudioStore = create<StudioState>((set, get) => ({
     }
   },
   loadAuthSession: async () => {
-    const currentToken = browserSessionStorage?.getItem(AUTH_STORAGE_KEY) ?? null;
-    setStudioAuthToken(currentToken);
+    const currentToken = syncStoredStudioAuthToken(setStudioAuthToken);
     if (currentToken === null) {
       set({ authSession: { authenticated: false, principal_id: null, roles: [] } });
       return;
@@ -420,8 +421,8 @@ export const useStudioStore = create<StudioState>((set, get) => ({
       const authSession = await fetchStudioAuthSession();
       set({ authLoading: false, authError: null, authSession });
     } catch (error: unknown) {
-      browserSessionStorage?.removeItem(AUTH_STORAGE_KEY);
-      setStudioAuthToken(null);
+      clearStoredStudioAuthToken();
+      syncStoredStudioAuthToken(setStudioAuthToken);
       set({
         authLoading: false,
         authError: error instanceof Error ? error.message : "Session check failed",
@@ -433,14 +434,14 @@ export const useStudioStore = create<StudioState>((set, get) => ({
     set({ authLoading: true, authError: null });
     try {
       const login = await loginStudioBrowserUser(username, password);
-      browserSessionStorage?.setItem(AUTH_STORAGE_KEY, login.access_token);
-      setStudioAuthToken(login.access_token);
+      storeStudioAuthToken(login.access_token);
+      syncStoredStudioAuthToken(setStudioAuthToken);
       const authSession = await fetchStudioAuthSession();
       set({ authLoading: false, authError: null, authSession });
       await get().loadOperatorStatus();
     } catch (error: unknown) {
-      browserSessionStorage?.removeItem(AUTH_STORAGE_KEY);
-      setStudioAuthToken(null);
+      clearStoredStudioAuthToken();
+      syncStoredStudioAuthToken(setStudioAuthToken);
       set({
         authLoading: false,
         authError: error instanceof Error ? error.message : "Login failed",
@@ -455,8 +456,8 @@ export const useStudioStore = create<StudioState>((set, get) => ({
     } catch (error: unknown) {
       set({ authError: error instanceof Error ? error.message : "Logout failed" });
     } finally {
-      browserSessionStorage?.removeItem(AUTH_STORAGE_KEY);
-      setStudioAuthToken(null);
+      clearStoredStudioAuthToken();
+      syncStoredStudioAuthToken(setStudioAuthToken);
       set({
         authLoading: false,
         authSession: { authenticated: false, principal_id: null, roles: [] },
