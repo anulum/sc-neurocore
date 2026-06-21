@@ -24,6 +24,7 @@ from sc_neurocore.studio.platform.jobs import (
     StudioJobCancelled,
     StudioJobContext,
     StudioJobManager,
+    StudioJobRejected,
 )
 from sc_neurocore.studio.platform.action_evidence import (
     EvidenceStatus,
@@ -118,6 +119,7 @@ class TrainingJob:
         self._weight_checkpoint_architecture: str | None = None
         self._weight_checkpoint_parameter_count: int | None = None
         self._initial_state_dict = initial_state_dict
+        self.live_attach_evidence: dict[str, JsonValue] | None = None
 
     def start(self) -> None:
         """Start this training job in its legacy background thread."""
@@ -156,7 +158,7 @@ class TrainingJob:
 
         self.status = "running"
         try:
-            self._train()
+            self._train(context)
         except Exception as exc:
             self.error = str(exc)
             self._emit("error", {"message": str(exc)})
@@ -235,7 +237,7 @@ class TrainingJob:
             "weight_checkpoint": self.weight_checkpoint,
         }
 
-    def _train(self) -> None:
+    def _train(self, context: StudioJobContext | None = None) -> None:
         if not HAS_TORCH:
             raise RuntimeError("PyTorch not installed. pip install sc-neurocore[research]")
 
@@ -302,6 +304,9 @@ class TrainingJob:
                 self.status = "stopped"
                 self._emit("stopped", {"epoch": epoch})
                 return
+
+            if context is not None:
+                self._poll_live_attach(context, model, epoch)
 
             model.train()
             monitor.reset()
@@ -432,6 +437,88 @@ class TrainingJob:
                 "Training weight attach is incompatible with the target architecture."
             ) from exc
         self._emit("attach", {"loaded_key_count": len(state_dict)})
+
+    def _poll_live_attach(self, context: StudioJobContext, model: Any, epoch: int) -> None:
+        """Consume and apply a pending live weight-attach control command.
+
+        Polled at each epoch boundary. A malformed or incompatible command is
+        rejected without interrupting the running job, so a bad attach can never
+        crash an in-flight training run.
+        """
+
+        try:
+            command = context.poll_control_command()
+        except ValueError:
+            self._emit("attach_rejected", {"epoch": epoch, "reason": "invalid_command"})
+            return
+        if command is None or command.get("action") != "attach_weights":
+            return
+        self._apply_live_attach(context, model, command, epoch)
+
+    def _apply_live_attach(
+        self,
+        context: StudioJobContext,
+        model: Any,
+        command: Mapping[str, object],
+        epoch: int,
+    ) -> None:
+        """Verify and load a live weight attach, rejecting on any failure."""
+
+        from sc_neurocore.studio.platform.training_weight_loader import (
+            load_training_weight_state_dict,
+        )
+        from sc_neurocore.studio.platform.training_weights import (
+            TRAINING_WEIGHT_RESTORE_ATTACH_EVIDENCE_ARTIFACT_PATH,
+            build_training_weight_restore_attach_evidence,
+            materialize_training_weight_payload,
+        )
+
+        restore_plan = command.get("restore_plan")
+        fingerprint = command.get("architecture_fingerprint")
+        weights_seed = command.get("weights_seed_path")
+        metadata_seed = command.get("metadata_seed_path")
+        if (
+            not isinstance(restore_plan, Mapping)
+            or not isinstance(fingerprint, str)
+            or not isinstance(weights_seed, str)
+            or not isinstance(metadata_seed, str)
+        ):
+            self._emit("attach_rejected", {"epoch": epoch, "reason": "invalid_command"})
+            return
+        try:
+            metadata_payload = context.read_control_seed(metadata_seed)
+            weights_payload = context.read_control_seed(weights_seed)
+            materialization = materialize_training_weight_payload(
+                restore_plan=restore_plan,
+                metadata_payload=metadata_payload,
+                weights_payload=weights_payload,
+                trusted_loader=load_training_weight_state_dict,
+            )
+            model.load_state_dict(dict(materialization.state_dict), strict=True)
+        except (RuntimeError, KeyError, ValueError, StudioJobArtifactUnavailable):
+            self._emit("attach_rejected", {"epoch": epoch, "reason": "incompatible"})
+            return
+        evidence = build_training_weight_restore_attach_evidence(
+            materialization,
+            mode="live",
+            target_job_id=self.id,
+            target_architecture=materialization.architecture,
+            target_parameter_count=materialization.parameter_count,
+            architecture_fingerprint=fingerprint,
+        )
+        context.write_artifact(
+            TRAINING_WEIGHT_RESTORE_ATTACH_EVIDENCE_ARTIFACT_PATH,
+            json.dumps(evidence, sort_keys=True),
+        )
+        self.live_attach_evidence = evidence
+        self._emit(
+            "attach",
+            {
+                "epoch": epoch,
+                "mode": "live",
+                "loaded_key_count": len(materialization.state_dict),
+            },
+        )
 
     def _capture_weight_checkpoint(
         self,
@@ -659,6 +746,121 @@ def start_training_attach(
         "job_id": record.job_id,
         "status": "running",
         "source_job_id": source_job_id,
+        "architecture_fingerprint": fingerprint,
+    }
+
+
+_LIVE_ATTACH_WEIGHTS_SEED = "model_state.pt"
+_LIVE_ATTACH_METADATA_SEED = "model_state.json"
+
+
+def request_live_training_weight_attach(
+    target_job_id: str,
+    source_job_id: str,
+    job_manager: StudioJobManager,
+    *,
+    expected_config_sha256: str | None = None,
+) -> dict[str, Any]:
+    """Deliver verified weights to a running training job for a live attach.
+
+    Validates that the target job is running, that the source job published a
+    weight checkpoint, and that the source and target architectures are
+    compatible, then delivers the integrity-checked weight artifacts to the
+    running worker as a confined control command. The worker applies the attach
+    at its next epoch boundary; an incompatible attach is rejected without
+    interrupting the running job.
+
+    Parameters
+    ----------
+    target_job_id:
+        Studio job ID of the running training job to attach weights into.
+    source_job_id:
+        Studio job ID of a completed training job that published weights.
+    job_manager:
+        Bounded Studio job manager that owns artifact reads and control delivery.
+    expected_config_sha256:
+        Optional source configuration digest that the checkpoint must match.
+
+    Returns
+    -------
+    dict[str, Any]
+        ``{"target_job_id", "status", "architecture_fingerprint"}`` when the
+        attach command is delivered, or ``{"error"}`` for a precondition failure.
+
+    Raises
+    ------
+    ValueError
+        If the restore plan cannot be built from the source checkpoint.
+    """
+
+    try:
+        target_record = job_manager.record(target_job_id)
+    except KeyError:
+        return {"error": "training_job_not_found"}
+    if target_record.status != "running":
+        return {"error": "training_job_not_running"}
+    with _jobs_lock:
+        target_proxy = _jobs.get(target_job_id)
+        source_proxy = _jobs.get(source_job_id)
+    target_config = dict(target_proxy.config) if target_proxy is not None else {}
+
+    source_status = get_training_status(source_job_id, job_manager)
+    if "status" not in source_status:
+        return {"error": "source_job_not_found"}
+    weight_checkpoint = source_status.get("weight_checkpoint")
+    if not isinstance(weight_checkpoint, dict):
+        return {"error": "training_weight_checkpoint_unavailable"}
+    source_job_status = source_status.get("status")
+    if not isinstance(source_job_status, str) or not source_job_status:
+        return {"error": "training_status_unavailable"}
+
+    restore_plan = build_training_weight_restore_plan(
+        source_job_id=source_job_id,
+        source_status=source_job_status,
+        weight_checkpoint=weight_checkpoint,
+        expected_config_sha256=expected_config_sha256,
+    )
+    try:
+        metadata_bytes = job_manager.read_artifact(
+            source_job_id,
+            TRAINING_WEIGHT_METADATA_ARTIFACT_PATH,
+        ).payload
+        weights_bytes = job_manager.read_artifact(
+            source_job_id,
+            TRAINING_WEIGHT_ARTIFACT_PATH,
+        ).payload
+    except KeyError:
+        return {"error": "training_weight_artifact_not_found"}
+    except (StudioJobArtifactUnavailable, ValueError):
+        return {"error": "training_weight_artifact_unavailable"}
+
+    fingerprint = training_architecture_fingerprint(target_config)
+    if source_proxy is not None and (
+        training_architecture_fingerprint(source_proxy.config) != fingerprint
+    ):
+        return {"error": "architecture_incompatible"}
+
+    try:
+        job_manager.send_control_command(
+            target_job_id,
+            command={
+                "action": "attach_weights",
+                "restore_plan": restore_plan.to_public_dict(),
+                "architecture_fingerprint": fingerprint,
+                "weights_seed_path": _LIVE_ATTACH_WEIGHTS_SEED,
+                "metadata_seed_path": _LIVE_ATTACH_METADATA_SEED,
+            },
+            seed_inputs={
+                _LIVE_ATTACH_WEIGHTS_SEED: weights_bytes,
+                _LIVE_ATTACH_METADATA_SEED: metadata_bytes,
+            },
+        )
+    except StudioJobRejected:
+        return {"error": "training_job_not_running"}
+    return {
+        "target_job_id": target_job_id,
+        "source_job_id": source_job_id,
+        "status": "attach_requested",
         "architecture_fingerprint": fingerprint,
     }
 

@@ -179,6 +179,7 @@ operator triggers the restore.
 | GET | `/api/training/jobs` | List all jobs |
 | POST | `/api/studio/training/weight-restore` | Materialize and verify weights (admin) |
 | POST | `/api/studio/training/weight-restore/attach` | Warm-start a job from verified weights (admin) |
+| POST | `/api/studio/training/weight-restore/attach/live` | Live-attach verified weights into a running job (admin) |
 
 ### POST /api/training/start
 
@@ -353,6 +354,49 @@ learning rate, epoch count, batch size, or timestep count. Error responses:
 checkpoint, and `422` when the restore plan or config digest is invalid. The
 attach evidence can be supplied to `POST /api/studio/evidence/bundle` under
 `weight_restore_attach_results`.
+
+### POST /api/studio/training/weight-restore/attach/live
+
+Admin-only. Delivers the verified weights of a completed source job to a
+**running** target training job, which applies them at its next epoch boundary.
+Request body:
+
+```json
+{
+  "target_job_id": "sj_running_...",
+  "source_job_id": "sj_1711504200000",
+  "expected_config_sha256": "..."
+}
+```
+
+The endpoint validates that the target job is running and, when both job
+configurations are known, that their architecture fingerprints match (a mismatch
+is rejected with `409`). It builds the canonical restore plan from the source
+checkpoint and delivers the integrity-checked weight and metadata artifacts to
+the running worker through the confined control channel — a reserved control
+directory in the job sandbox that the worker polls at each epoch boundary. The
+worker verifies and loads the weights with a strict `load_state_dict` and writes
+a path-free `studio.training.weight-restore-attach.v1` (`mode: live`) evidence
+artifact. An incompatible or malformed attach is rejected with an
+`attach_rejected` metric event and never interrupts the running job. The
+response is returned immediately on delivery:
+
+```json
+{
+  "target_job_id": "sj_running_...",
+  "source_job_id": "sj_1711504200000",
+  "status": "attach_requested",
+  "architecture_fingerprint": "..."
+}
+```
+
+Error responses: `404` when the target or source job is unknown, `409` when the
+target is not running, the source published no weight checkpoint, or the
+architectures are incompatible, and `422` when the restore plan or config digest
+is invalid. Because the attach is applied asynchronously at the next epoch
+boundary, the outcome is surfaced through the training metric stream (`attach`
+or `attach_rejected` events) and the resulting evidence artifact rather than the
+immediate response.
 
 ### GET /api/training/{job_id}/stream
 

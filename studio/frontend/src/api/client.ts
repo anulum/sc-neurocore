@@ -975,6 +975,13 @@ export interface TrainingWeightAttachResult {
   status: string;
 }
 
+export interface TrainingWeightLiveAttachResult {
+  architecture_fingerprint: string;
+  source_job_id: string;
+  status: string;
+  target_job_id: string;
+}
+
 export interface TrainingCheckpointImportResponse {
   config: Partial<TrainingConfig>;
   config_sha256: string;
@@ -1020,6 +1027,16 @@ export const attachTrainingWeights = (
   post<TrainingWeightAttachResult>("/studio/training/weight-restore/attach", {
     source_job_id: sourceJobId,
     config,
+    ...(expectedConfigSha256 ? { expected_config_sha256: expectedConfigSha256 } : {}),
+  });
+export const attachTrainingWeightsLive = (
+  targetJobId: string,
+  sourceJobId: string,
+  expectedConfigSha256?: string,
+) =>
+  post<TrainingWeightLiveAttachResult>("/studio/training/weight-restore/attach/live", {
+    target_job_id: targetJobId,
+    source_job_id: sourceJobId,
     ...(expectedConfigSha256 ? { expected_config_sha256: expectedConfigSha256 } : {}),
   });
 

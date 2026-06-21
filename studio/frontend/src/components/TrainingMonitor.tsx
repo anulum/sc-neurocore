@@ -1,6 +1,7 @@
 import { useEffect, useRef } from "react";
 import type {
   TrainingWeightAttachResult,
+  TrainingWeightLiveAttachResult,
   TrainingWeightRestorePlan,
   TrainingWeightRestoreResult,
 } from "../api/client";
@@ -299,15 +300,37 @@ export function TrainingWeightAttachStrip({
   );
 }
 
+export function TrainingWeightLiveAttachStrip({
+  liveAttach,
+}: {
+  liveAttach: TrainingWeightLiveAttachResult | null;
+}) {
+  if (!liveAttach) return null;
+
+  return (
+    <div style={{ borderBottom: "1px solid var(--border)" }}>
+      <EvidenceSummaryStrip
+        variant="banner"
+        items={[
+          { label: "Live attach", value: liveAttach.status },
+          { label: "Target", value: liveAttach.target_job_id },
+          { label: "Source", value: liveAttach.source_job_id },
+          { label: "Fingerprint", value: liveAttach.architecture_fingerprint.slice(0, 12) },
+        ]}
+      />
+    </div>
+  );
+}
+
 export default function TrainingMonitor() {
   const {
     trainingStatus, trainingEpochs, trainingSurrogates, trainingConfig,
     trainingJobId, trainingWeightRestorePlan, trainingWeightRestoreVerification,
-    trainingWeightMaterialization, trainingWeightAttach,
+    trainingWeightMaterialization, trainingWeightAttach, trainingWeightLiveAttach,
     startTraining, stopTraining, setTrainingConfig, loadSurrogates, isSimulating,
     exportTrainingCheckpoint, importTrainingCheckpointText,
     exportTrainingWeightRestoreVerification, verifyTrainingWeightRestoreArtifact,
-    materializeTrainingWeights, attachTrainingWeights,
+    materializeTrainingWeights, attachTrainingWeights, liveAttachTrainingWeights,
   } = useStudioStore();
 
   useEffect(() => { loadSurrogates(); }, [loadSurrogates]);
@@ -401,6 +424,21 @@ export default function TrainingMonitor() {
         >
           Attach (warm-start)
         </button>
+        <button
+          onClick={() => { void liveAttachTrainingWeights(); }}
+          disabled={!isRunning || trainingWeightMaterialization === null}
+          title="Attach the verified weights into the running job at the next epoch boundary"
+          style={{
+            background: "var(--bg-tertiary)",
+            border: "1px solid var(--border)",
+            color: isRunning && trainingWeightMaterialization !== null ? "var(--text-secondary)" : "var(--text-muted)",
+            cursor: isRunning && trainingWeightMaterialization !== null ? "pointer" : "not-allowed",
+            fontSize: 10,
+            padding: "3px 8px",
+          }}
+        >
+          Live attach
+        </button>
       </div>
 
       <TrainingEvidenceStrip evidence={evidence} />
@@ -412,6 +450,7 @@ export default function TrainingMonitor() {
       />
       <TrainingWeightMaterializationStrip materialization={trainingWeightMaterialization} />
       <TrainingWeightAttachStrip attach={trainingWeightAttach} />
+      <TrainingWeightLiveAttachStrip liveAttach={trainingWeightLiveAttach} />
 
       {/* Config panel */}
       {!isRunning && (

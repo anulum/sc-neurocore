@@ -26,6 +26,7 @@ import {
   importTrainingCheckpoint as apiImportTrainingCheckpoint,
   restoreTrainingWeights as apiRestoreTrainingWeights,
   attachTrainingWeights as apiAttachTrainingWeights,
+  attachTrainingWeightsLive as apiAttachTrainingWeightsLive,
   fetchGraphModels as apiFetchGraphModels,
   createPopulation as apiCreatePop, createProjection as apiCreateProj,
   simulateGraph as apiSimGraph, validateGraph as apiValidateGraph,
@@ -44,6 +45,7 @@ import {
   type TrainingWeightRestorePlan,
   type TrainingWeightRestoreResult,
   type TrainingWeightAttachResult,
+  type TrainingWeightLiveAttachResult,
   type PopulationNode, type ProjectionEdge, type GraphSimResult, type NIRFormat,
   type ProjectSaveResponse, type ProjectSummary, type PipelineResult,
   type StudioAuditExport, type StudioAuditStatus, type StudioCapability,
@@ -201,6 +203,7 @@ import {
   trainingWeightRestoreVerificationLoadedState,
   trainingWeightMaterializationLoadedState,
   trainingWeightAttachLoadedState,
+  trainingWeightLiveAttachLoadedState,
   trainingWeightRestoreVerificationStartState,
 } from "../trainingStoreState";
 import {
@@ -384,6 +387,7 @@ interface StudioState {
   trainingWeightRestoreVerification: TrainingWeightRestoreVerification | null;
   trainingWeightMaterialization: TrainingWeightRestoreResult | null;
   trainingWeightAttach: TrainingWeightAttachResult | null;
+  trainingWeightLiveAttach: TrainingWeightLiveAttachResult | null;
   trainingSurrogates: SurrogateInfo[];
   trainingConfig: StudioProjectTrainingConfig;
   codeScript: string;
@@ -507,6 +511,7 @@ interface StudioState {
   exportTrainingWeightRestoreVerification: () => void;
   materializeTrainingWeights: () => Promise<void>;
   attachTrainingWeights: () => Promise<void>;
+  liveAttachTrainingWeights: () => Promise<void>;
   setTrainingConfig: <K extends keyof StudioProjectTrainingConfig>(
     key: K,
     value: StudioProjectTrainingConfig[K],
@@ -576,6 +581,7 @@ export const useStudioStore = create<StudioState>((set, get) => ({
   trainingJobId: null, trainingStatus: "idle", trainingEpochs: [],
   trainingWeightRestorePlan: null, trainingWeightRestoreVerification: null,
   trainingWeightMaterialization: null, trainingWeightAttach: null,
+  trainingWeightLiveAttach: null,
   trainingSurrogates: [],
   trainingConfig: {
     dataset: "synthetic", epochs: 10, batch_size: 64, lr: 0.001,
@@ -1497,6 +1503,25 @@ export const useStudioStore = create<StudioState>((set, get) => ({
       set(trainingWeightAttachLoadedState(attach));
     } catch (error: unknown) {
       set(trainingFailureState(error, "Training weight attach failed"));
+    }
+  },
+
+  liveAttachTrainingWeights: async () => {
+    const s = get();
+    const sourceJobId = s.trainingWeightMaterialization?.source_job_id;
+    if (!s.trainingJobId || !sourceJobId) {
+      set(
+        trainingPreconditionErrorState(
+          "A running target job and a verified source are required.",
+        ),
+      );
+      return;
+    }
+    try {
+      const attach = await apiAttachTrainingWeightsLive(s.trainingJobId, sourceJobId);
+      set(trainingWeightLiveAttachLoadedState(attach));
+    } catch (error: unknown) {
+      set(trainingFailureState(error, "Training weight live attach failed"));
     }
   },
 

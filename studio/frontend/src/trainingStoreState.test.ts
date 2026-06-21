@@ -28,11 +28,16 @@ import {
   trainingSurrogatesLoadedState,
   trainingTerminalState,
   trainingWeightAttachLoadedState,
+  trainingWeightLiveAttachLoadedState,
   trainingWeightMaterializationLoadedState,
   trainingWeightRestoreVerificationLoadedState,
   trainingWeightRestoreVerificationStartState,
 } from "./trainingStoreState";
-import type { TrainingWeightAttachResult, TrainingWeightRestoreResult } from "./api/client";
+import type {
+  TrainingWeightAttachResult,
+  TrainingWeightLiveAttachResult,
+  TrainingWeightRestoreResult,
+} from "./api/client";
 import type { TrainingWeightRestoreVerification } from "./trainingRestore";
 
 const trainingConfig: StudioProjectTrainingConfig = {
@@ -198,6 +203,20 @@ describe("training store state helpers", () => {
     expect(trainingWeightAttachLoadedState(attach)).toEqual({
       error: null,
       trainingWeightAttach: attach,
+    });
+  });
+
+  it("loads live weight attach request state and clears errors", () => {
+    const liveAttach: TrainingWeightLiveAttachResult = {
+      architecture_fingerprint: "d".repeat(64),
+      source_job_id: "sj_source",
+      status: "attach_requested",
+      target_job_id: "sj_running",
+    };
+
+    expect(trainingWeightLiveAttachLoadedState(liveAttach)).toEqual({
+      error: null,
+      trainingWeightLiveAttach: liveAttach,
     });
   });
 

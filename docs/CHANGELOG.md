@@ -103,6 +103,22 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
   `accel/mojo/kernels` stubs with real backends.
 
 ### Studio
+- Added the admin `POST /api/studio/training/weight-restore/attach/live` endpoint
+  and the confined control channel that backs it. The endpoint delivers the
+  verified weights of a completed source job to a running target training job;
+  the worker polls a reserved control directory at each epoch boundary and applies
+  the attach with a strict `load_state_dict` that records a
+  `studio.training.weight-restore-attach.v1` (`mode: live`) evidence artifact. An
+  incompatible or malformed attach is rejected with an `attach_rejected` metric
+  event and never interrupts the running job. Added the control channel
+  (`StudioJobManager.send_control_command` with atomic command publication +
+  `StudioJobContext.poll_control_command`/`read_control_seed`, reserved
+  `.studio_control` and `.studio_control_seed` directories), the epoch-boundary
+  poll in the training loop, an architecture-fingerprint pre-check, the route
+  policy, the `studio.training.weight_restore.attach_live` audit action, the
+  preflight required-route entry, a Training Monitor live-attach action with a
+  path-free request strip, frontend client types, and full backend and frontend
+  tests plus documentation.
 - Added the admin `POST /api/studio/training/weight-restore/attach` endpoint and
   the confined seed-input channel that backs it. The endpoint rebuilds the
   canonical restore plan from a completed training job's checkpoint, delivers the

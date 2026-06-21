@@ -348,6 +348,15 @@ runtime features:
   `studio.training.weight-restore-attach.v1` evidence artifact recording the
   verified digests, resolved target architecture, and the architecture
   fingerprint that gated compatibility.
+- `/api/studio/training/weight-restore/attach/live` is an admin-only endpoint
+  that delivers the verified weights of a completed source job to a running
+  target training job through the confined control channel — a reserved control
+  directory in the job sandbox that the worker polls at each epoch boundary. The
+  worker verifies and loads the weights with a strict `load_state_dict` at the
+  next boundary and writes a `studio.training.weight-restore-attach.v1`
+  (`mode: live`) evidence artifact. An incompatible or malformed attach is
+  rejected without interrupting the running job, so a bad live attach can never
+  crash an in-flight training run.
 - `/api/studio/evidence/bundle` creates an admin-only evidence export as a
   bounded `studio-evidence` worker job. The request can name one saved project,
   selected `studio.simulation-run.v1` simulation responses, selected
@@ -683,6 +692,7 @@ for complete API details with request/response examples.
 | `/api/training/*` | Training Monitor | Start/stop, SSE stream, surrogates |
 | `/api/studio/training/weight-restore` | Admin | Bounded worker materialization and verification of training weights into path-free restore evidence |
 | `/api/studio/training/weight-restore/attach` | Admin | Warm-start a bounded training job seeded with verified weights at the epoch-zero checkpoint boundary |
+| `/api/studio/training/weight-restore/attach/live` | Admin | Live-attach verified weights into a running training job at its next epoch boundary via the confined control channel |
 | `/api/graph/*` | Network Canvas | Populations, projections, validate, simulate, NIR |
 | `/api/project/*`, `/api/pipeline/*` | Integration | Save/load, worker-backed full pipeline |
 | `/api/studio/audit/*` | Admin | Audit status and admin-gated export |

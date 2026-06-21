@@ -5,6 +5,7 @@ import {
   TrainingCheckpointControls,
   TrainingEvidenceStrip,
   TrainingWeightAttachStrip,
+  TrainingWeightLiveAttachStrip,
   TrainingWeightMaterializationStrip,
   TrainingWeightRestorePlanStrip,
 } from "./TrainingMonitor";
@@ -212,5 +213,30 @@ describe("TrainingMonitor", () => {
     expect(html).toContain("sj_training");
     expect(html).toContain("running");
     expect(html).toContain("cccccccccccc");
+  });
+
+  it("renders nothing when no live attach result is present", () => {
+    const html = renderToStaticMarkup(<TrainingWeightLiveAttachStrip liveAttach={null} />);
+
+    expect(html).toBe("");
+  });
+
+  it("renders path-free live attach request metadata", () => {
+    const html = renderToStaticMarkup(
+      <TrainingWeightLiveAttachStrip
+        liveAttach={{
+          architecture_fingerprint: "d".repeat(64),
+          source_job_id: "sj_source",
+          status: "attach_requested",
+          target_job_id: "sj_running",
+        }}
+      />,
+    );
+
+    expect(html).toContain("Live attach");
+    expect(html).toContain("attach_requested");
+    expect(html).toContain("sj_running");
+    expect(html).toContain("sj_source");
+    expect(html).toContain("dddddddddddd");
   });
 });

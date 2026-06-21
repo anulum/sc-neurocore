@@ -12,6 +12,8 @@ from __future__ import annotations
 
 import io
 import json
+import threading
+import time
 from pathlib import Path
 from typing import cast
 
@@ -20,11 +22,17 @@ from starlette.testclient import TestClient
 
 from sc_neurocore.studio.app import create_app
 from sc_neurocore.studio.platform import (
+    STUDIO_CONTROL_COMMAND_FILE,
+    STUDIO_CONTROL_DIR,
+    STUDIO_CONTROL_SEED_DIR,
     StudioJobContext,
     StudioJobManager,
     StudioRuntimeSettings,
+    build_training_weight_restore_plan,
+    training_architecture_fingerprint,
     write_training_weight_checkpoint,
 )
+from sc_neurocore.studio.training import TrainingJob
 
 _SOURCE_CONFIG = {"dataset": "synthetic", "hidden": [16]}
 
@@ -219,3 +227,208 @@ def test_attach_rejects_config_digest_mismatch(tmp_path: Path) -> None:
     )
 
     assert response.status_code == 422
+
+
+def _control_command_context(
+    tmp_path: Path,
+    *,
+    weights_bytes: bytes,
+) -> tuple[StudioJobContext, dict[str, object]]:
+    """Return a context seeded with a live attach control command and seeds."""
+
+    work_dir = tmp_path / "live"
+    src_dir = tmp_path / "live-src"
+    src_ctx = StudioJobContext(
+        job_id="sj_src",
+        work_dir=src_dir,
+        cancel_event=threading.Event(),
+        max_artifact_bytes=50_000_000,
+    )
+    summary = write_training_weight_checkpoint(
+        src_ctx,
+        weights_payload=weights_bytes,
+        config=dict(_SOURCE_CONFIG),
+        architecture="64->16->10",
+        parameter_count=2410,
+        final_metrics={"val_accuracy": 0.5},
+    ).to_public_dict()
+    plan = build_training_weight_restore_plan(
+        source_job_id="sj_src",
+        source_status="completed",
+        weight_checkpoint=summary,
+    ).to_public_dict()
+    metadata_bytes = (src_dir / "training" / "model_state.json").read_bytes()
+
+    seed_dir = work_dir / STUDIO_CONTROL_SEED_DIR
+    seed_dir.mkdir(parents=True)
+    (seed_dir / "model_state.pt").write_bytes(weights_bytes)
+    (seed_dir / "model_state.json").write_bytes(metadata_bytes)
+    context = StudioJobContext(
+        job_id="sj_live",
+        work_dir=work_dir,
+        cancel_event=threading.Event(),
+        max_artifact_bytes=50_000_000,
+    )
+    command = {
+        "action": "attach_weights",
+        "restore_plan": plan,
+        "architecture_fingerprint": training_architecture_fingerprint(dict(_SOURCE_CONFIG)),
+        "weights_seed_path": "model_state.pt",
+        "metadata_seed_path": "model_state.json",
+    }
+    return context, command
+
+
+def test_live_attach_handler_loads_compatible_weights(tmp_path: Path) -> None:
+    """A compatible live attach loads the weights and records attach evidence."""
+
+    pytest.importorskip("torch")
+    from sc_neurocore.training import SpikingNet
+
+    context, command = _control_command_context(tmp_path, weights_bytes=_source_weights_bytes(10))
+    job = TrainingJob(dict(_SOURCE_CONFIG), job_id="sj_live")
+    model = SpikingNet(n_input=64, n_hidden=16, n_output=10, n_layers=1)
+
+    job._apply_live_attach(context, model, command, epoch=2)
+
+    assert job.live_attach_evidence is not None
+    assert job.live_attach_evidence["mode"] == "live"
+    assert job.live_attach_evidence["target_job_id"] == "sj_live"
+    assert (tmp_path / "live" / "training" / "weight-restore-attach.json").is_file()
+
+
+def test_live_attach_handler_rejects_incompatible_without_crashing(tmp_path: Path) -> None:
+    """An incompatible live attach is rejected and never crashes the run."""
+
+    pytest.importorskip("torch")
+    from sc_neurocore.training import SpikingNet
+
+    context, command = _control_command_context(tmp_path, weights_bytes=_source_weights_bytes(10))
+    job = TrainingJob(dict(_SOURCE_CONFIG), job_id="sj_live")
+    incompatible = SpikingNet(n_input=64, n_hidden=16, n_output=2, n_layers=1)
+
+    job._apply_live_attach(context, incompatible, command, epoch=1)
+
+    assert job.live_attach_evidence is None
+    assert not (tmp_path / "live" / "training" / "weight-restore-attach.json").is_file()
+
+
+def test_live_attach_poll_ignores_unrelated_command(tmp_path: Path) -> None:
+    """The poll ignores commands that are not weight attaches."""
+
+    pytest.importorskip("torch")
+    from sc_neurocore.training import SpikingNet
+
+    work_dir = tmp_path / "live"
+    (work_dir / STUDIO_CONTROL_DIR).mkdir(parents=True)
+    (work_dir / STUDIO_CONTROL_DIR / STUDIO_CONTROL_COMMAND_FILE).write_text(
+        json.dumps({"action": "noop"}), encoding="utf-8"
+    )
+    context = StudioJobContext(
+        job_id="sj_live",
+        work_dir=work_dir,
+        cancel_event=threading.Event(),
+        max_artifact_bytes=4096,
+    )
+    job = TrainingJob(dict(_SOURCE_CONFIG), job_id="sj_live")
+    model = SpikingNet(n_input=64, n_hidden=16, n_output=10, n_layers=1)
+
+    job._poll_live_attach(context, model, epoch=0)
+
+    assert job.live_attach_evidence is None
+
+
+def _wait_for_running(manager: StudioJobManager, job_id: str) -> None:
+    """Block until a process job reaches the running state."""
+
+    deadline = time.monotonic() + 5.0
+    while manager.record(job_id).status != "running":
+        if time.monotonic() >= deadline:
+            pytest.fail("process job did not reach running state")
+        time.sleep(0.02)
+
+
+def test_live_attach_delivers_command_to_running_target(tmp_path: Path) -> None:
+    """The live endpoint delivers a control command to a running target job."""
+
+    pytest.importorskip("torch")
+    client = _build_client(tmp_path)
+    manager = _job_manager(client)
+    target = manager.submit_process_task(
+        kind="training",
+        owner="studio-training",
+        request_id="req-target",
+        task_path="tests.studio_job_tasks:process_sleep_task",
+        payload={"seconds": 4.0},
+    )
+    _wait_for_running(manager, target.job_id)
+    source_job_id = _submit_source_job(manager, weights_bytes=_source_weights_bytes(10))
+
+    response = client.post(
+        "/api/studio/training/weight-restore/attach/live",
+        json={"target_job_id": target.job_id, "source_job_id": source_job_id},
+    )
+
+    assert response.status_code == 200, response.text
+    body = response.json()
+    assert body["status"] == "attach_requested"
+    assert body["target_job_id"] == target.job_id
+    work_dir = tmp_path / "jobs" / target.job_id
+    command = json.loads((work_dir / STUDIO_CONTROL_DIR / STUDIO_CONTROL_COMMAND_FILE).read_text())
+    assert command["action"] == "attach_weights"
+    assert (work_dir / STUDIO_CONTROL_SEED_DIR / "model_state.pt").is_file()
+
+
+def test_live_attach_rejects_unknown_target(tmp_path: Path) -> None:
+    """The live endpoint returns 404 for an unknown target job."""
+
+    client = _build_client(tmp_path)
+
+    response = client.post(
+        "/api/studio/training/weight-restore/attach/live",
+        json={"target_job_id": "sj_missing", "source_job_id": "sj_other"},
+    )
+
+    assert response.status_code == 404
+    assert response.json()["detail"] == "training_job_not_found"
+
+
+def test_live_attach_rejects_non_running_target(tmp_path: Path) -> None:
+    """The live endpoint returns 409 when the target job is not running."""
+
+    pytest.importorskip("torch")
+    client = _build_client(tmp_path)
+    manager = _job_manager(client)
+    target_job_id = _submit_source_job(manager, weights_bytes=_source_weights_bytes(10))
+
+    response = client.post(
+        "/api/studio/training/weight-restore/attach/live",
+        json={"target_job_id": target_job_id, "source_job_id": target_job_id},
+    )
+
+    assert response.status_code == 409
+    assert response.json()["detail"] == "training_job_not_running"
+
+
+def test_live_attach_rejects_source_without_weights(tmp_path: Path) -> None:
+    """The live endpoint returns 409 when the source published no weights."""
+
+    client = _build_client(tmp_path)
+    manager = _job_manager(client)
+    target = manager.submit_process_task(
+        kind="training",
+        owner="studio-training",
+        request_id="req-target",
+        task_path="tests.studio_job_tasks:process_sleep_task",
+        payload={"seconds": 3.0},
+    )
+    _wait_for_running(manager, target.job_id)
+    source_job_id = _submit_source_job(manager, weights_bytes=None)
+
+    response = client.post(
+        "/api/studio/training/weight-restore/attach/live",
+        json={"target_job_id": target.job_id, "source_job_id": source_job_id},
+    )
+
+    assert response.status_code == 409
+    assert response.json()["detail"] == "training_weight_checkpoint_unavailable"

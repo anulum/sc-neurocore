@@ -44,7 +44,11 @@ StudioJobStatus = Literal[
 StudioJobExecutionModel = Literal["thread", "process"]
 StudioJobTask = Callable[["StudioJobContext"], dict[str, object]]
 StudioProcessJobPayload: TypeAlias = Mapping[str, object]
+JsonValue: TypeAlias = "str | int | float | bool | None | list[JsonValue] | dict[str, JsonValue]"
 STUDIO_SEED_INPUT_DIR = ".studio_seed"
+STUDIO_CONTROL_DIR = ".studio_control"
+STUDIO_CONTROL_SEED_DIR = ".studio_control_seed"
+STUDIO_CONTROL_COMMAND_FILE = "command.json"
 
 
 class StudioJobRejected(ValueError):
@@ -384,6 +388,74 @@ class StudioJobContext:
             raise ValueError("Studio job seed input exceeds configured size limit.")
         return data
 
+    def poll_control_command(self) -> dict[str, JsonValue] | None:
+        """Consume one pending control command delivered to a running job.
+
+        The manager writes a control command into a reserved directory after a
+        process job has started. The worker polls for it at safe checkpoint
+        boundaries and consumes it exactly once. Returns ``None`` when no command
+        is pending.
+
+        Returns
+        -------
+        dict[str, JsonValue] | None
+            The decoded control command, or ``None`` when none is pending.
+
+        Raises
+        ------
+        ValueError
+            If a pending control command is not a JSON object.
+        """
+
+        command_path = self._work_dir / STUDIO_CONTROL_DIR / STUDIO_CONTROL_COMMAND_FILE
+        try:
+            raw = command_path.read_bytes()
+        except FileNotFoundError:
+            return None
+        command_path.unlink(missing_ok=True)
+        try:
+            decoded = json.loads(raw.decode("utf-8"))
+        except (UnicodeDecodeError, json.JSONDecodeError) as exc:
+            raise ValueError("Studio job control command is not valid JSON.") from exc
+        if not isinstance(decoded, dict):
+            raise ValueError("Studio job control command must be a JSON object.")
+        return cast(dict[str, JsonValue], decoded)
+
+    def read_control_seed(self, relative_path: str) -> bytes:
+        """Read one confined seed payload delivered with a control command.
+
+        Parameters
+        ----------
+        relative_path:
+            Relative seed path below the reserved control-seed directory.
+            Absolute paths and traversal segments are rejected.
+
+        Returns
+        -------
+        bytes
+            The raw control-seed payload.
+
+        Raises
+        ------
+        ValueError
+            If ``relative_path`` escapes the control-seed directory or the
+            payload exceeds the configured size limit.
+        StudioJobArtifactUnavailable
+            If the control-seed payload does not exist.
+        """
+
+        target_path = _resolve_confined_child(
+            root=self._work_dir / STUDIO_CONTROL_SEED_DIR,
+            relative_path=relative_path,
+            error_message="Studio job control-seed path escapes the control-seed directory.",
+        )
+        if not target_path.is_file():
+            raise StudioJobArtifactUnavailable("Studio job control seed is unavailable.")
+        data = target_path.read_bytes()
+        if len(data) > self._max_artifact_bytes:
+            raise ValueError("Studio job control seed exceeds configured size limit.")
+        return data
+
     def _artifact_path(self, relative_path: str) -> Path:
         return _resolve_confined_child(
             root=self._work_dir,
@@ -558,16 +630,68 @@ class StudioJobManager:
         supervisor.start()
         return record
 
+    def send_control_command(
+        self,
+        job_id: str,
+        *,
+        command: Mapping[str, object],
+        seed_inputs: Mapping[str, bytes] | None = None,
+    ) -> None:
+        """Deliver a control command and confined seeds to a running process job.
+
+        The command is written into a reserved control directory inside the job's
+        sandbox; a running worker consumes it once at its next checkpoint
+        boundary. Confined seed payloads are written first so they are present
+        before the command becomes visible. The command file is published with an
+        atomic rename so the worker never observes a partial command.
+
+        Parameters
+        ----------
+        job_id:
+            Identifier of the target job.
+        command:
+            JSON-serializable control command for the worker.
+        seed_inputs:
+            Optional confined binary payloads referenced by the command and read
+            through :meth:`StudioJobContext.read_control_seed`.
+
+        Raises
+        ------
+        KeyError
+            If the job is unknown.
+        StudioJobRejected
+            If the job is not running, the work directory is missing, or a
+            command or seed is invalid.
+        """
+
+        with self._lock:
+            record = self._records[job_id]
+        if record.status != "running":
+            raise StudioJobRejected("Studio job is not running.")
+        command_json = _json_payload(command, "Studio job control command must be JSON.")
+        work_dir = self._root / job_id
+        if not work_dir.is_dir():
+            raise StudioJobRejected("Studio job work directory is unavailable.")
+        self._write_seed_inputs(work_dir, seed_inputs, seed_dir=STUDIO_CONTROL_SEED_DIR)
+        control_dir = work_dir / STUDIO_CONTROL_DIR
+        control_dir.mkdir(parents=True, exist_ok=True)
+        command_path = control_dir / STUDIO_CONTROL_COMMAND_FILE
+        temp_path = control_dir / f".{STUDIO_CONTROL_COMMAND_FILE}.tmp"
+        temp_path.write_text(command_json, encoding="utf-8")
+        os.replace(temp_path, command_path)
+
     def _write_seed_inputs(
         self,
         work_dir: Path,
         seed_inputs: Mapping[str, bytes] | None,
+        *,
+        seed_dir: str = STUDIO_SEED_INPUT_DIR,
     ) -> None:
-        """Write confined binary seed inputs into the reserved seed directory."""
+        """Write confined binary seed inputs into a reserved seed directory."""
 
         if not seed_inputs:
             return
-        seed_root = work_dir / STUDIO_SEED_INPUT_DIR
+        seed_root = work_dir / seed_dir
         for relative_path, data in seed_inputs.items():
             if not isinstance(data, bytes | bytearray):
                 raise StudioJobRejected("Studio job seed input must be bytes.")

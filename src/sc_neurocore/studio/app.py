@@ -87,6 +87,7 @@ from sc_neurocore.studio.training import (
     list_cell_types,
     list_jobs,
     list_surrogates,
+    request_live_training_weight_attach,
     start_training,
     start_training_attach,
     stop_training,
@@ -425,6 +426,17 @@ class StudioTrainingWeightAttachRequest(BaseModel):
 
     source_job_id: str = Field(min_length=1, max_length=128)
     config: dict[str, Any] = Field(default_factory=dict)
+    expected_config_sha256: str | None = Field(
+        default=None,
+        pattern=r"^[0-9a-f]{64}$",
+    )
+
+
+class StudioTrainingWeightLiveAttachRequest(BaseModel):
+    """Request body for admin training weight-restore live attach."""
+
+    target_job_id: str = Field(min_length=1, max_length=128)
+    source_job_id: str = Field(min_length=1, max_length=128)
     expected_config_sha256: str | None = Field(
         default=None,
         pattern=r"^[0-9a-f]{64}$",
@@ -1718,6 +1730,47 @@ def create_app(runtime_settings: StudioRuntimeSettings | None = None) -> FastAPI
             "training_weight_checkpoint_unavailable",
             "training_status_unavailable",
             "training_weight_artifact_unavailable",
+        }:
+            raise HTTPException(status_code=409, detail=error)
+        if error is not None:
+            raise HTTPException(status_code=500, detail="training_weight_attach_failed")
+        return result
+
+    @app.post("/api/studio/training/weight-restore/attach/live")
+    def api_studio_training_weight_restore_attach_live(
+        attach_request: StudioTrainingWeightLiveAttachRequest,
+    ) -> dict[str, object]:
+        """Deliver verified weights to a running training job for a live attach.
+
+        Validates that the target job is running and that the source and target
+        architectures are compatible, then delivers the integrity-checked weight
+        artifacts to the running worker as a confined control command. The worker
+        applies the attach at its next epoch boundary and writes a path-free
+        ``studio.training.weight-restore-attach.v1`` (``mode: live``) evidence
+        artifact. An incompatible attach is rejected without interrupting the
+        running job. The response is returned immediately on delivery.
+        """
+
+        try:
+            result = request_live_training_weight_attach(
+                attach_request.target_job_id,
+                attach_request.source_job_id,
+                studio_job_manager,
+                expected_config_sha256=attach_request.expected_config_sha256,
+            )
+        except ValueError as exc:
+            raise HTTPException(status_code=422, detail=str(exc)) from exc
+        error = result.get("error")
+        if error in {"training_job_not_found", "source_job_not_found"}:
+            raise HTTPException(status_code=404, detail=error)
+        if error == "training_weight_artifact_not_found":
+            raise HTTPException(status_code=404, detail=error)
+        if error in {
+            "training_job_not_running",
+            "training_weight_checkpoint_unavailable",
+            "training_status_unavailable",
+            "training_weight_artifact_unavailable",
+            "architecture_incompatible",
         }:
             raise HTTPException(status_code=409, detail=error)
         if error is not None:

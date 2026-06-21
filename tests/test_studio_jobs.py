@@ -29,6 +29,9 @@ import sc_neurocore.studio.platform.jobs as jobs_module
 from sc_neurocore.studio.app import create_app
 from sc_neurocore.studio.platform import StudioRuntimeSettings, process_worker
 from sc_neurocore.studio.platform.jobs import (
+    STUDIO_CONTROL_COMMAND_FILE,
+    STUDIO_CONTROL_DIR,
+    STUDIO_CONTROL_SEED_DIR,
     STUDIO_SEED_INPUT_DIR,
     StudioJobArtifactUnavailable,
     StudioJobContext,
@@ -711,6 +714,113 @@ def test_read_seed_input_rejects_escaping_path(tmp_path: Path) -> None:
 
     with pytest.raises(ValueError, match="escapes the seed directory"):
         context.read_seed_input("../escape.bin")
+
+
+def test_poll_control_command_consumes_pending_command_once(tmp_path: Path) -> None:
+    """A pending control command is decoded and consumed exactly once."""
+
+    work_dir = tmp_path / "ctrl-job"
+    (work_dir / STUDIO_CONTROL_DIR).mkdir(parents=True)
+    context = StudioJobContext(
+        job_id="sj_ctrl",
+        work_dir=work_dir,
+        cancel_event=threading.Event(),
+        max_artifact_bytes=4096,
+    )
+    assert context.poll_control_command() is None
+
+    (work_dir / STUDIO_CONTROL_DIR / STUDIO_CONTROL_COMMAND_FILE).write_text(
+        json.dumps({"action": "attach_weights"}), encoding="utf-8"
+    )
+
+    assert context.poll_control_command() == {"action": "attach_weights"}
+    assert context.poll_control_command() is None
+
+
+def test_read_control_seed_reports_missing_payload(tmp_path: Path) -> None:
+    """Reading an absent control seed fails closed."""
+
+    context = StudioJobContext(
+        job_id="sj_ctrl",
+        work_dir=tmp_path / "ctrl-job",
+        cancel_event=threading.Event(),
+        max_artifact_bytes=4096,
+    )
+
+    with pytest.raises(StudioJobArtifactUnavailable, match="control seed is unavailable"):
+        context.read_control_seed("model.bin")
+
+
+def test_read_control_seed_rejects_escaping_path(tmp_path: Path) -> None:
+    """Reading a control seed whose path escapes the directory fails closed."""
+
+    work_dir = tmp_path / "ctrl-job"
+    (work_dir / STUDIO_CONTROL_SEED_DIR).mkdir(parents=True)
+    context = StudioJobContext(
+        job_id="sj_ctrl",
+        work_dir=work_dir,
+        cancel_event=threading.Event(),
+        max_artifact_bytes=4096,
+    )
+
+    with pytest.raises(ValueError, match="escapes the control-seed directory"):
+        context.read_control_seed("../escape.bin")
+
+
+def test_send_control_command_rejects_terminal_job(tmp_path: Path) -> None:
+    """Control commands are rejected for jobs that are not running."""
+
+    manager = StudioJobManager(
+        root=tmp_path / "jobs",
+        allowed_kinds=frozenset({"compiler"}),
+        default_timeout_seconds=15.0,
+    )
+    record = manager.submit_process_task(
+        kind="compiler",
+        owner="operator",
+        request_id="req-done",
+        task_path="tests.studio_job_tasks:process_echo_task",
+        payload={"model": "lif"},
+    )
+    completed = manager.wait(record.job_id, timeout_seconds=20.0)
+    assert completed.status == "completed"
+
+    with pytest.raises(StudioJobRejected, match="not running"):
+        manager.send_control_command(record.job_id, command={"action": "attach_weights"})
+
+
+def test_send_control_command_delivers_to_running_job(tmp_path: Path) -> None:
+    """Control commands and seeds are delivered into a running job's sandbox."""
+
+    manager = StudioJobManager(
+        root=tmp_path / "jobs",
+        allowed_kinds=frozenset({"training"}),
+        default_timeout_seconds=15.0,
+    )
+    record = manager.submit_process_task(
+        kind="training",
+        owner="studio-training",
+        request_id="req-run",
+        task_path="tests.studio_job_tasks:process_sleep_task",
+        payload={"seconds": 3.0},
+    )
+    deadline = time.monotonic() + 5.0
+    while manager.record(record.job_id).status != "running":
+        if time.monotonic() >= deadline:
+            pytest.fail("process job did not reach running state")
+        time.sleep(0.02)
+
+    manager.send_control_command(
+        record.job_id,
+        command={"action": "attach_weights", "architecture_fingerprint": "a" * 64},
+        seed_inputs={"model_state.pt": b"seed weights"},
+    )
+
+    work_dir = tmp_path / "jobs" / record.job_id
+    command_path = work_dir / STUDIO_CONTROL_DIR / STUDIO_CONTROL_COMMAND_FILE
+    seed_path = work_dir / STUDIO_CONTROL_SEED_DIR / "model_state.pt"
+    assert json.loads(command_path.read_text())["action"] == "attach_weights"
+    assert seed_path.read_bytes() == b"seed weights"
 
 
 def test_studio_process_worker_environment_prepends_source_path(

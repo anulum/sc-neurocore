@@ -10,6 +10,7 @@ import type {
   TrainingCheckpointImportResponse,
   TrainingEpochMetrics,
   TrainingWeightAttachResult,
+  TrainingWeightLiveAttachResult,
   TrainingWeightRestorePlan,
   TrainingWeightRestoreResult,
 } from "./api/client";
@@ -88,6 +89,11 @@ export interface TrainingWeightMaterializationLoadedStatePatch {
 export interface TrainingWeightAttachLoadedStatePatch {
   error: null;
   trainingWeightAttach: TrainingWeightAttachResult;
+}
+
+export interface TrainingWeightLiveAttachLoadedStatePatch {
+  error: null;
+  trainingWeightLiveAttach: TrainingWeightLiveAttachResult;
 }
 
 export interface TrainingFailureStatePatch {
@@ -210,6 +216,12 @@ export function trainingWeightAttachLoadedState(
   trainingWeightAttach: TrainingWeightAttachResult,
 ): TrainingWeightAttachLoadedStatePatch {
   return { error: null, trainingWeightAttach };
+}
+
+export function trainingWeightLiveAttachLoadedState(
+  trainingWeightLiveAttach: TrainingWeightLiveAttachResult,
+): TrainingWeightLiveAttachLoadedStatePatch {
+  return { error: null, trainingWeightLiveAttach };
 }
 
 export function trainingFailureState(
