@@ -7,13 +7,34 @@
 // SC-NeuroCore — Studio simulation export builders
 
 import type { SimulateResponse } from "./api/client";
+import { downloadBrowserArtefact } from "./browserArtefactDownload";
+import { downloadCanvasPng } from "./browserCanvasExport";
 
 const SVG_COLORS = ["#4fc3f7", "#81c784", "#ffb74d", "#e57373", "#ce93d8"] as const;
+
+export type SimulationExportKind = "csv" | "json" | "svg";
+
+export type SimulationExportDownloader = (payload: Blob, filename: string) => void;
+
+export type SimulationExportCanvasFallback = () => boolean;
 
 export interface SimulationExportArtefact {
   blob: Blob;
   filename: string;
 }
+
+export interface SimulationExportReadyPlan {
+  available: true;
+  artefact: SimulationExportArtefact;
+  writeArtefact: (downloader?: SimulationExportDownloader) => void;
+}
+
+export interface SimulationExportUnavailablePlan {
+  available: false;
+  runFallback: (fallback?: SimulationExportCanvasFallback) => boolean;
+}
+
+export type SimulationExportPlan = SimulationExportReadyPlan | SimulationExportUnavailablePlan;
 
 function safeSimulationStem(modelName: string | undefined, fallback: string): string {
   const rawName = modelName?.trim() || fallback;
@@ -144,5 +165,39 @@ export function simulationSvgExport(result: SimulateResponse): SimulationExportA
   return {
     blob: simulationSvgBlob(result),
     filename: simulationSvgFilename(result),
+  };
+}
+
+export function simulationExportArtefact(
+  kind: SimulationExportKind,
+  result: SimulateResponse,
+): SimulationExportArtefact {
+  if (kind === "json") {
+    return simulationJsonExport(result);
+  }
+  if (kind === "csv") {
+    return simulationCsvExport(result);
+  }
+  return simulationSvgExport(result);
+}
+
+export function simulationExportPlan(
+  kind: SimulationExportKind,
+  result: SimulateResponse | null,
+): SimulationExportPlan {
+  if (result === null) {
+    return {
+      available: false,
+      runFallback: (fallback = kind === "svg" ? downloadCanvasPng : undefined) =>
+        fallback?.() ?? false,
+    };
+  }
+  const artefact = simulationExportArtefact(kind, result);
+  return {
+    available: true,
+    artefact,
+    writeArtefact: (downloader = downloadBrowserArtefact) => {
+      downloader(artefact.blob, artefact.filename);
+    },
   };
 }

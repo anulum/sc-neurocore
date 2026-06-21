@@ -161,11 +161,8 @@ import {
   studioSTAResultState,
 } from "../studioAnalysisState";
 import {
-  simulationCsvExport,
-  simulationJsonExport,
-  simulationSvgExport,
+  simulationExportPlan,
 } from "../simulationExports";
-import { downloadCanvasPng } from "../browserCanvasExport";
 import {
   networkNirExport,
 } from "../networkNirExport";
@@ -1029,27 +1026,26 @@ export const useStudioStore = create<StudioState>((set, get) => ({
   },
 
   exportData: () => {
-    const { result } = get();
-    if (!result) return;
-    const exported = simulationJsonExport(result);
-    downloadBrowserArtefact(exported.blob, exported.filename);
+    const plan = simulationExportPlan("json", get().result);
+    if (plan.available) {
+      plan.writeArtefact();
+    }
   },
 
   exportCSV: () => {
-    const { result } = get();
-    if (!result) return;
-    const exported = simulationCsvExport(result);
-    downloadBrowserArtefact(exported.blob, exported.filename);
+    const plan = simulationExportPlan("csv", get().result);
+    if (plan.available) {
+      plan.writeArtefact();
+    }
   },
 
   exportSVG: () => {
-    const { result } = get();
-    if (!result) {
-      downloadCanvasPng();
-      return;
+    const plan = simulationExportPlan("svg", get().result);
+    if (plan.available) {
+      plan.writeArtefact();
+    } else {
+      plan.runFallback();
     }
-    const exported = simulationSvgExport(result);
-    downloadBrowserArtefact(exported.blob, exported.filename);
   },
 
   runCharacterize: async () => {
