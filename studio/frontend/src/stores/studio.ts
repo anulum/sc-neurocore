@@ -78,6 +78,14 @@ import {
   buildStudioShareUrl,
   decodeStudioStartupHash,
 } from "../studioUrlState";
+import {
+  simulationCsvBlob,
+  simulationCsvFilename,
+  simulationJsonBlob,
+  simulationJsonFilename,
+  simulationSvgBlob,
+  simulationSvgFilename,
+} from "../simulationExports";
 import { parseTrainingCheckpointPayload } from "../trainingCheckpoint";
 import {
   buildTrainingWeightRestoreVerificationManifest,
@@ -1035,28 +1043,13 @@ export const useStudioStore = create<StudioState>((set, get) => ({
   exportData: () => {
     const { result } = get();
     if (!result) return;
-    const blob = new Blob([JSON.stringify(result, null, 2)], { type: "application/json" });
-    const a = document.createElement("a");
-    a.href = URL.createObjectURL(blob);
-    a.download = `simulation_${result.model_name || "custom"}.json`;
-    a.click();
+    downloadBrowserArtefact(simulationJsonBlob(result), simulationJsonFilename(result));
   },
 
   exportCSV: () => {
     const { result } = get();
     if (!result) return;
-    const vars = Object.keys(result.states);
-    const header = ["time", ...vars, "current"].join(",");
-    const rows = result.time.map((t, i) => {
-      const vals = vars.map((v) => result.states[v][i]?.toFixed(6) ?? "");
-      return [t.toFixed(4), ...vals, result.current_trace[i]?.toFixed(4) ?? ""].join(",");
-    });
-    const csv = [header, ...rows].join("\n");
-    const blob = new Blob([csv], { type: "text/csv" });
-    const a = document.createElement("a");
-    a.href = URL.createObjectURL(blob);
-    a.download = `simulation_${result.model_name || "custom"}.csv`;
-    a.click();
+    downloadBrowserArtefact(simulationCsvBlob(result), simulationCsvFilename(result));
   },
 
   exportSVG: () => {
@@ -1070,42 +1063,7 @@ export const useStudioStore = create<StudioState>((set, get) => ({
       a.click();
       return;
     }
-    const w = 800, h = 400;
-    const pad = { top: 20, right: 20, bottom: 40, left: 60 };
-    const pw = w - pad.left - pad.right, ph = h - pad.top - pad.bottom;
-    const vars = Object.keys(result.states);
-    const colors = ["#4fc3f7", "#81c784", "#ffb74d", "#e57373", "#ce93d8"];
-    const allY = vars.flatMap((v) => result.states[v]);
-    const yMin = Math.min(...allY), yMax = Math.max(...allY);
-    const yRange = yMax - yMin || 1;
-    const xMin = result.time[0], xMax = result.time[result.time.length - 1];
-    const xRange = xMax - xMin || 1;
-    const toX = (t: number) => pad.left + ((t - xMin) / xRange) * pw;
-    const toY = (v: number) => pad.top + (1 - (v - yMin) / yRange) * ph;
-    let svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${h}" viewBox="0 0 ${w} ${h}">\n`;
-    svg += `<rect width="${w}" height="${h}" fill="#0d1117"/>\n`;
-    for (let i = 0; i <= 4; i++) { const y = pad.top + (ph * i) / 4; svg += `<line x1="${pad.left}" y1="${y}" x2="${pad.left + pw}" y2="${y}" stroke="#1a1f2a" stroke-width="0.5"/>\n`; }
-    const stride = Math.max(1, Math.floor(result.time.length / 2000));
-    for (let vi = 0; vi < vars.length; vi++) {
-      const values = result.states[vars[vi]];
-      const pts: string[] = [];
-      for (let i = 0; i < result.time.length; i += stride) pts.push(`${toX(result.time[i]).toFixed(1)},${toY(values[i]).toFixed(1)}`);
-      svg += `<polyline points="${pts.join(" ")}" fill="none" stroke="${colors[vi % colors.length]}" stroke-width="1.5"/>\n`;
-    }
-    for (const idx of result.spikes.slice(0, 200)) { const x = toX(result.time[idx] ?? idx * result.dt); svg += `<line x1="${x.toFixed(1)}" y1="${pad.top}" x2="${x.toFixed(1)}" y2="${pad.top + 8}" stroke="#ff5252" stroke-width="1.5"/>\n`; }
-    svg += `<line x1="${pad.left}" y1="${pad.top}" x2="${pad.left}" y2="${pad.top + ph}" stroke="#484f58"/>\n`;
-    svg += `<line x1="${pad.left}" y1="${pad.top + ph}" x2="${pad.left + pw}" y2="${pad.top + ph}" stroke="#484f58"/>\n`;
-    svg += `<text x="${pad.left + pw / 2}" y="${h - 5}" text-anchor="middle" fill="#8b949e" font-size="11" font-family="sans-serif">time (ms)</text>\n`;
-    svg += `<text x="12" y="${pad.top + ph / 2}" text-anchor="middle" fill="#8b949e" font-size="11" font-family="sans-serif" transform="rotate(-90,12,${pad.top + ph / 2})">mV</text>\n`;
-    for (let i = 0; i <= 4; i++) { const val = yMin + (yRange * i) / 4; svg += `<text x="${pad.left - 5}" y="${toY(val) + 3}" text-anchor="end" fill="#8b949e" font-size="9" font-family="monospace">${val.toFixed(1)}</text>\n`; }
-    for (let vi = 0; vi < vars.length; vi++) { svg += `<line x1="${pad.left + vi * 80}" y1="10" x2="${pad.left + vi * 80 + 15}" y2="10" stroke="${colors[vi % colors.length]}" stroke-width="2"/><text x="${pad.left + vi * 80 + 18}" y="13" fill="#8b949e" font-size="10">${vars[vi]}</text>\n`; }
-    if (result.model_name) svg += `<text x="${w - pad.right}" y="13" text-anchor="end" fill="#484f58" font-size="9" font-family="monospace">${result.model_name}</text>\n`;
-    svg += `</svg>`;
-    const blob = new Blob([svg], { type: "image/svg+xml" });
-    const a = document.createElement("a");
-    a.href = URL.createObjectURL(blob);
-    a.download = `sc_neurocore_${result.model_name || "custom"}.svg`;
-    a.click();
+    downloadBrowserArtefact(simulationSvgBlob(result), simulationSvgFilename(result));
   },
 
   runCharacterize: async () => {
