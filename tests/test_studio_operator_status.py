@@ -187,6 +187,9 @@ def test_build_studio_operator_status_counts_platform_health(tmp_path: Path) -> 
         "eda_process_memory_bytes": 268435456,
         "job_default_timeout_seconds": 7.5,
         "job_max_artifact_bytes": 4096,
+        "max_sync_analysis_simulations": 4096,
+        "max_sync_analysis_steps_per_simulation": 5_000_000,
+        "max_sync_analysis_total_steps": 200_000_000,
     }
     assert payload["capabilities"] == {
         "degraded_count": 1,

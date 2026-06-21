@@ -101,3 +101,34 @@ def test_studio_runtime_settings_production_accepts_bounded_eda_ceilings() -> No
         build_default_studio_runtime_settings(
             env={"SC_NEUROCORE_STUDIO_EDA_PROCESS_MEMORY_BYTES": "not-a-number"}
         )
+
+
+def test_studio_runtime_settings_parse_sync_analysis_budget() -> None:
+    """Synchronous analysis budgets are configurable through environment values."""
+
+    settings = build_default_studio_runtime_settings(
+        env={
+            "SC_NEUROCORE_STUDIO_MAX_SYNC_ANALYSIS_STEPS_PER_SIMULATION": "1000",
+            "SC_NEUROCORE_STUDIO_MAX_SYNC_ANALYSIS_TOTAL_STEPS": "50000",
+            "SC_NEUROCORE_STUDIO_MAX_SYNC_ANALYSIS_SIMULATIONS": "32",
+        }
+    )
+
+    assert settings.max_sync_analysis_steps_per_simulation == 1000
+    assert settings.max_sync_analysis_total_steps == 50000
+    assert settings.max_sync_analysis_simulations == 32
+
+
+def test_studio_runtime_settings_reject_invalid_sync_analysis_budget() -> None:
+    """Invalid synchronous analysis budget settings fail before app startup."""
+
+    with pytest.raises(ValueError, match="steps-per-simulation budget"):
+        StudioRuntimeSettings(max_sync_analysis_steps_per_simulation=0)
+    with pytest.raises(ValueError, match="total-steps budget"):
+        StudioRuntimeSettings(max_sync_analysis_total_steps=0)
+    with pytest.raises(ValueError, match="simulation-count budget"):
+        StudioRuntimeSettings(max_sync_analysis_simulations=0)
+    with pytest.raises(ValueError, match="simulation-count budget must be an integer"):
+        build_default_studio_runtime_settings(
+            env={"SC_NEUROCORE_STUDIO_MAX_SYNC_ANALYSIS_SIMULATIONS": "not-a-number"}
+        )

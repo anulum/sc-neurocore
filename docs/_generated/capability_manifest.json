@@ -9,7 +9,7 @@
     "python_model_classes": 157,
     "python_model_source_modules": 151,
     "rust_pyo3_model_wrappers": 175,
-    "test_files": 838
+    "test_files": 839
   },
   "documentation": {
     "public_pages": [
@@ -2511,6 +2511,7 @@
       "tests/test_studio_adaptive_precision_evidence.py",
       "tests/test_studio_advanced.py",
       "tests/test_studio_analysis.py",
+      "tests/test_studio_analysis_limits.py",
       "tests/test_studio_analysis_manifest.py",
       "tests/test_studio_app.py",
       "tests/test_studio_audit_quarantine_archive.py",

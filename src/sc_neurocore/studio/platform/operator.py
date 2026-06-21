@@ -107,6 +107,9 @@ class StudioOperatorResourceLimitStatus:
     eda_process_limits_supported: bool
     job_default_timeout_seconds: float
     job_max_artifact_bytes: int
+    max_sync_analysis_steps_per_simulation: int
+    max_sync_analysis_total_steps: int
+    max_sync_analysis_simulations: int
 
     def to_public_dict(self) -> dict[str, bool | float | int | None]:
         """Return configured resource ceilings without host paths."""
@@ -117,6 +120,9 @@ class StudioOperatorResourceLimitStatus:
             "eda_process_memory_bytes": self.eda_process_memory_bytes,
             "job_default_timeout_seconds": self.job_default_timeout_seconds,
             "job_max_artifact_bytes": self.job_max_artifact_bytes,
+            "max_sync_analysis_simulations": self.max_sync_analysis_simulations,
+            "max_sync_analysis_steps_per_simulation": self.max_sync_analysis_steps_per_simulation,
+            "max_sync_analysis_total_steps": self.max_sync_analysis_total_steps,
         }
 
 
@@ -274,6 +280,9 @@ def _build_resource_limit_status(
         eda_process_limits_supported=os.name == "posix",
         job_default_timeout_seconds=settings.job_default_timeout_seconds,
         job_max_artifact_bytes=settings.job_max_artifact_bytes,
+        max_sync_analysis_steps_per_simulation=settings.max_sync_analysis_steps_per_simulation,
+        max_sync_analysis_total_steps=settings.max_sync_analysis_total_steps,
+        max_sync_analysis_simulations=settings.max_sync_analysis_simulations,
     )
 
 

@@ -443,6 +443,19 @@ counts. It also includes one `resource_profiles` entry per allowed job kind,
 recording the default timeout, per-artifact size ceiling, and supported
 execution models (`thread` and `process`) without exposing the job-root path.
 
+Synchronous analysis routes (`/api/simulate`, `/api/fi-curve`,
+`/api/bifurcation`, `/api/sensitivity`, `/api/freq-response`, `/api/heatmap`,
+`/api/precision`, `/api/characterize`, `/api/multi-simulate`, `/api/compare`)
+execute in the request worker, so a fail-closed synchronous analysis budget
+bounds their cost. The budget projects each request's integration steps
+(`simulation_count * ceil(duration / dt)`) and returns HTTP 422 before running
+when the request exceeds `SC_NEUROCORE_STUDIO_MAX_SYNC_ANALYSIS_STEPS_PER_SIMULATION`,
+`SC_NEUROCORE_STUDIO_MAX_SYNC_ANALYSIS_TOTAL_STEPS`, or
+`SC_NEUROCORE_STUDIO_MAX_SYNC_ANALYSIS_SIMULATIONS`. The 422 detail names the
+violated `limit`, the `projected` cost, and the `allowed` ceiling without local
+paths; a non-positive timestep is rejected the same way. Operator status echoes
+the three ceilings in `resource_limits`.
+
 Training start now submits work through the process-backed local worker manager;
 stop, status, and SSE stream routes retain the parent-process control and
 observation surface. The training monitor's SSE stream remains the live metric

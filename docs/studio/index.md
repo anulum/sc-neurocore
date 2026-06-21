@@ -205,6 +205,21 @@ runtime features:
   paths. Job list and detail payloads also label each job as `thread` or
   `process`, allowing operators to verify isolation coverage without reading
   local worker directories.
+- Synchronous analysis endpoints (simulation, f-I curve, bifurcation,
+  sensitivity, frequency response, heatmap, precision, characterisation,
+  multi-simulate, compare) run inside the request worker. A fail-closed
+  synchronous analysis budget projects each request's integration cost
+  (``simulation_count * ceil(duration / dt)``) and rejects an over-budget
+  request with HTTP 422 before any work runs, keeping the worker responsive.
+  The budget has three ceilings, configurable through
+  `SC_NEUROCORE_STUDIO_MAX_SYNC_ANALYSIS_STEPS_PER_SIMULATION`,
+  `SC_NEUROCORE_STUDIO_MAX_SYNC_ANALYSIS_TOTAL_STEPS`, and
+  `SC_NEUROCORE_STUDIO_MAX_SYNC_ANALYSIS_SIMULATIONS`. The 422 detail is
+  path-free and reports the violated `limit`, the `projected` cost, and the
+  `allowed` ceiling so callers can shorten the duration, coarsen the timestep,
+  or reduce the sweep, grid, or parameter count. A non-positive timestep is
+  rejected with the same contract instead of failing deeper in the engine. The
+  operator status `resource_limits` payload echoes the three ceilings.
 - `/api/training/start` now uses the process-backed local worker manager for
   bounded training execution, while `/api/training/stop`,
   `/api/training/status/{job_id}`, and `/api/training/stream/{job_id}` keep the

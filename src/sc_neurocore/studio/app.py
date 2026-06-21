@@ -100,6 +100,8 @@ from sc_neurocore.studio.platform.synthesis_process import (
     SYNTHESIS_RUN_PROCESS_TASK,
 )
 from sc_neurocore.studio.platform import (
+    AnalysisBudget,
+    AnalysisBudgetError,
     AuditExportValue,
     AuditEvent,
     AuditSinkError,
@@ -126,6 +128,10 @@ from sc_neurocore.studio.platform import (
     build_default_studio_runtime_settings,
     build_studio_audit_quarantine_archive_retention_plan,
     build_studio_operator_status,
+    enforce_analysis_budget,
+    evaluate_analysis_cost,
+    evaluate_multi_config_cost,
+    resolve_request_timestep,
     list_studio_browser_user_public_records,
     list_studio_identity_public_records,
     load_studio_identity_store,
@@ -535,6 +541,100 @@ def _safe(fn: Callable[..., Any]) -> Any:
         raise HTTPException(status_code=500, detail="Internal error") from None
 
 
+def _analysis_budget_from_settings(settings: StudioRuntimeSettings) -> AnalysisBudget:
+    """Build the synchronous analysis execution budget from runtime settings."""
+
+    return AnalysisBudget(
+        max_steps_per_simulation=settings.max_sync_analysis_steps_per_simulation,
+        max_total_steps=settings.max_sync_analysis_total_steps,
+        max_simulations=settings.max_sync_analysis_simulations,
+    )
+
+
+def _guard_analysis_request(
+    budget: AnalysisBudget,
+    *,
+    simulation_count: int,
+    duration: float,
+    dt: float | None,
+) -> None:
+    """Reject an analysis request whose projected synchronous cost is over budget.
+
+    Parameters
+    ----------
+    budget:
+        Active synchronous analysis ceilings.
+    simulation_count:
+        Number of simulations the request drives.
+    duration:
+        Shared simulated time span in milliseconds.
+    dt:
+        Shared timestep in milliseconds, or ``None`` when the request defers to
+        the model default.
+
+    Raises
+    ------
+    HTTPException
+        With status 422 and a path-free budget detail when the request exceeds
+        the configured synchronous analysis budget.
+    """
+
+    try:
+        cost = evaluate_analysis_cost(
+            simulation_count=simulation_count,
+            duration=duration,
+            dt=resolve_request_timestep(dt),
+        )
+        enforce_analysis_budget(cost, budget)
+    except AnalysisBudgetError as exc:
+        raise HTTPException(status_code=422, detail=exc.to_public_detail()) from None
+
+
+def _guard_multi_config_analysis_request(
+    budget: AnalysisBudget,
+    configs: list[tuple[float, float | None]],
+) -> None:
+    """Reject a multi-config analysis request whose projected cost is over budget.
+
+    Parameters
+    ----------
+    budget:
+        Active synchronous analysis ceilings.
+    configs:
+        One ``(duration, dt)`` pair per simulation; ``dt`` may be ``None`` when
+        the simulation defers to the model default.
+
+    Raises
+    ------
+    HTTPException
+        With status 422 and a path-free budget detail when the request exceeds
+        the configured synchronous analysis budget.
+    """
+
+    try:
+        cost = evaluate_multi_config_cost(
+            [(duration, resolve_request_timestep(dt)) for duration, dt in configs]
+        )
+        enforce_analysis_budget(cost, budget)
+    except AnalysisBudgetError as exc:
+        raise HTTPException(status_code=422, detail=exc.to_public_detail()) from None
+
+
+def _config_duration_dt(config: dict[str, Any]) -> tuple[float, float | None]:
+    """Extract a ``(duration, dt)`` cost pair from a free-form simulate config.
+
+    Mirrors the defaults used by :func:`_make_simulate_fn` (duration ``200`` ms,
+    model-default timestep when absent). Non-numeric values fall back to the
+    defaults; the simulate call validates the real payload downstream.
+    """
+
+    raw_duration = config.get("duration", 200.0)
+    raw_dt = config.get("dt")
+    duration = float(raw_duration) if isinstance(raw_duration, (int, float)) else 200.0
+    dt = float(raw_dt) if isinstance(raw_dt, (int, float)) else None
+    return duration, dt
+
+
 def _make_simulate_fn(req_dict: dict[str, Any]) -> Callable[..., dict[str, Any]]:
     """Build a simulate callable from request params (ODE or model)."""
     if req_dict.get("model_name"):
@@ -938,6 +1038,7 @@ def _studio_route_signature(app: FastAPI, request: Request) -> tuple[str, str] |
 def create_app(runtime_settings: StudioRuntimeSettings | None = None) -> FastAPI:
     app = FastAPI(title="SC-NeuroCore Studio", version="1.0.0")
     settings = runtime_settings or build_default_studio_runtime_settings()
+    analysis_budget = _analysis_budget_from_settings(settings)
     studio_capabilities = build_default_studio_capability_registry()
     studio_route_policies = build_default_studio_route_policy_registry()
     studio_audit_sink = (
@@ -2283,6 +2384,9 @@ def create_app(runtime_settings: StudioRuntimeSettings | None = None) -> FastAPI
         cached = _cache.get(cache_key)
         if cached:
             return cached
+        _guard_analysis_request(
+            analysis_budget, simulation_count=1, duration=req.duration, dt=req.dt
+        )
 
         def fn() -> dict[str, Any]:
             result = simulate(
@@ -2315,6 +2419,9 @@ def create_app(runtime_settings: StudioRuntimeSettings | None = None) -> FastAPI
         cached = _cache.get(cache_key)
         if cached:
             return cached
+        _guard_analysis_request(
+            analysis_budget, simulation_count=1, duration=req.duration, dt=req.dt
+        )
 
         def fn() -> dict[str, Any]:
             result = simulate_model(
@@ -2345,6 +2452,11 @@ def create_app(runtime_settings: StudioRuntimeSettings | None = None) -> FastAPI
     # --- Comparison (#1) ---
     @app.post("/api/compare")
     def api_compare(req: CompareRequest) -> Any:
+        _guard_multi_config_analysis_request(
+            analysis_budget,
+            [_config_duration_dt(req.config_a), _config_duration_dt(req.config_b)],
+        )
+
         def fn() -> dict[str, Any]:
             sim_a = _make_simulate_fn(req.config_a)
             sim_b = _make_simulate_fn(req.config_b)
@@ -2361,6 +2473,13 @@ def create_app(runtime_settings: StudioRuntimeSettings | None = None) -> FastAPI
     # --- f-I Curve ---
     @app.post("/api/fi-curve")
     def api_fi_curve(req: FICurveRequest) -> Any:
+        _guard_analysis_request(
+            analysis_budget,
+            simulation_count=req.i_steps,
+            duration=req.duration,
+            dt=req.dt,
+        )
+
         def fn() -> dict[str, Any]:
             import numpy as np
 
@@ -2375,6 +2494,13 @@ def create_app(runtime_settings: StudioRuntimeSettings | None = None) -> FastAPI
     # --- Bifurcation (#2) ---
     @app.post("/api/bifurcation")
     def api_bifurcation(req: BifurcationRequest) -> Any:
+        _guard_analysis_request(
+            analysis_budget,
+            simulation_count=req.sweep_steps,
+            duration=req.duration,
+            dt=req.dt,
+        )
+
         def fn() -> dict[str, Any]:
             sim_fn = _make_simulate_fn(req.model_dump())
             base_cfg = {
@@ -2395,6 +2521,13 @@ def create_app(runtime_settings: StudioRuntimeSettings | None = None) -> FastAPI
     # --- Sensitivity (#8) ---
     @app.post("/api/sensitivity")
     def api_sensitivity(req: SensitivityRequest) -> Any:
+        _guard_analysis_request(
+            analysis_budget,
+            simulation_count=1 + 2 * len(req.params or {}),
+            duration=req.duration,
+            dt=req.dt,
+        )
+
         def fn() -> dict[str, Any]:
             sim_fn = _make_simulate_fn(req.model_dump())
             param_names = list((req.params or {}).keys())
@@ -2424,6 +2557,10 @@ def create_app(runtime_settings: StudioRuntimeSettings | None = None) -> FastAPI
     # --- Precision Compare (#5) ---
     @app.post("/api/precision")
     def api_precision(req: PrecisionRequest) -> Any:
+        _guard_analysis_request(
+            analysis_budget, simulation_count=2, duration=req.duration, dt=req.dt
+        )
+
         def fn() -> dict[str, Any]:
             payload = precision_compare(
                 equations=req.equations,
@@ -2465,6 +2602,13 @@ def create_app(runtime_settings: StudioRuntimeSettings | None = None) -> FastAPI
     # --- Frequency Response (#11) ---
     @app.post("/api/freq-response")
     def api_freq_response(req: FreqResponseRequest) -> Any:
+        _guard_analysis_request(
+            analysis_budget,
+            simulation_count=req.n_freqs,
+            duration=req.duration,
+            dt=req.dt,
+        )
+
         def fn() -> dict[str, Any]:
             sim_fn = _make_simulate_fn(req.model_dump())
             base_cfg = {
@@ -2485,6 +2629,13 @@ def create_app(runtime_settings: StudioRuntimeSettings | None = None) -> FastAPI
     # --- 2D Heatmap ---
     @app.post("/api/heatmap")
     def api_heatmap(req: HeatmapRequest) -> Any:
+        _guard_analysis_request(
+            analysis_budget,
+            simulation_count=req.x_steps * req.y_steps,
+            duration=req.duration,
+            dt=req.dt,
+        )
+
         def fn() -> dict[str, Any]:
             sim_fn = _make_simulate_fn(req.model_dump())
             base_cfg = {
@@ -2536,6 +2687,10 @@ def create_app(runtime_settings: StudioRuntimeSettings | None = None) -> FastAPI
     # --- Firing Pattern Classification ---
     @app.post("/api/classify")
     def api_classify(req: SimulateRequest) -> Any:
+        _guard_analysis_request(
+            analysis_budget, simulation_count=1, duration=req.duration, dt=req.dt
+        )
+
         def fn() -> dict[str, Any]:
             result = simulate(
                 equations=req.equations,
@@ -2556,6 +2711,15 @@ def create_app(runtime_settings: StudioRuntimeSettings | None = None) -> FastAPI
     # --- One-click Characterisation ---
     @app.post("/api/characterize")
     def api_characterize(req: ModelSimulateRequest) -> Any:
+        # characterize_model drives: 1 trace + 20-point f-I curve + 2 sims per
+        # parameter for the top-15 quick-sensitivity sweep.
+        _guard_analysis_request(
+            analysis_budget,
+            simulation_count=1 + 20 + 2 * min(15, len(req.params or {})),
+            duration=req.duration,
+            dt=req.dt,
+        )
+
         def fn() -> dict[str, Any]:
             sim_fn = _make_simulate_fn(
                 {
@@ -2581,6 +2745,12 @@ def create_app(runtime_settings: StudioRuntimeSettings | None = None) -> FastAPI
     # --- Multi-model Overlay ---
     @app.post("/api/multi-simulate")
     def api_multi_simulate(configs: list[ModelSimulateRequest]) -> Any:
+        if configs:
+            _guard_multi_config_analysis_request(
+                analysis_budget,
+                [(cfg.duration, cfg.dt) for cfg in configs[:4]],
+            )
+
         def fn() -> list[dict[str, Any]]:
             results: list[dict[str, Any]] = []
             for cfg in configs[:4]:

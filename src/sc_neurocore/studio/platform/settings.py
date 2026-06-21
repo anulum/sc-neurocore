@@ -16,6 +16,11 @@ from dataclasses import dataclass, field
 from types import MappingProxyType
 from typing import Literal
 
+from sc_neurocore.studio.platform.analysis_limits import (
+    DEFAULT_STUDIO_MAX_SYNC_ANALYSIS_SIMULATIONS,
+    DEFAULT_STUDIO_MAX_SYNC_ANALYSIS_STEPS_PER_SIMULATION,
+    DEFAULT_STUDIO_MAX_SYNC_ANALYSIS_TOTAL_STEPS,
+)
 from sc_neurocore.studio.platform.jobs import (
     DEFAULT_STUDIO_JOB_MAX_ARTIFACT_BYTES as DEFAULT_STUDIO_JOB_MAX_ARTIFACT_BYTES,
 )
@@ -82,6 +87,11 @@ class StudioRuntimeSettings:
     job_max_artifact_bytes: int = DEFAULT_STUDIO_JOB_MAX_ARTIFACT_BYTES
     eda_process_cpu_seconds: float | None = DEFAULT_STUDIO_EDA_PROCESS_CPU_SECONDS
     eda_process_memory_bytes: int | None = DEFAULT_STUDIO_EDA_PROCESS_MEMORY_BYTES
+    max_sync_analysis_steps_per_simulation: int = (
+        DEFAULT_STUDIO_MAX_SYNC_ANALYSIS_STEPS_PER_SIMULATION
+    )
+    max_sync_analysis_total_steps: int = DEFAULT_STUDIO_MAX_SYNC_ANALYSIS_TOTAL_STEPS
+    max_sync_analysis_simulations: int = DEFAULT_STUDIO_MAX_SYNC_ANALYSIS_SIMULATIONS
     browser_session_ttl_seconds: float = DEFAULT_STUDIO_BROWSER_SESSION_TTL_SECONDS
     browser_login_max_failures: int = DEFAULT_STUDIO_BROWSER_LOGIN_MAX_FAILURES
     browser_login_failure_window_seconds: float = (
@@ -131,6 +141,12 @@ class StudioRuntimeSettings:
             raise ValueError("Studio EDA process CPU limit must be positive.")
         if self.eda_process_memory_bytes is not None and self.eda_process_memory_bytes <= 0:
             raise ValueError("Studio EDA process memory limit must be positive.")
+        if self.max_sync_analysis_steps_per_simulation <= 0:
+            raise ValueError("Studio analysis steps-per-simulation budget must be positive.")
+        if self.max_sync_analysis_total_steps <= 0:
+            raise ValueError("Studio analysis total-steps budget must be positive.")
+        if self.max_sync_analysis_simulations <= 0:
+            raise ValueError("Studio analysis simulation-count budget must be positive.")
         if self.browser_session_ttl_seconds <= 0:
             raise ValueError("Studio browser session TTL must be positive.")
         if self.browser_login_max_failures <= 0:
@@ -188,6 +204,15 @@ def build_default_studio_runtime_settings(
     raw_job_max_artifact_bytes = source.get("SC_NEUROCORE_STUDIO_JOB_MAX_ARTIFACT_BYTES")
     raw_eda_process_cpu_seconds = source.get("SC_NEUROCORE_STUDIO_EDA_PROCESS_CPU_SECONDS")
     raw_eda_process_memory_bytes = source.get("SC_NEUROCORE_STUDIO_EDA_PROCESS_MEMORY_BYTES")
+    raw_max_sync_analysis_steps_per_simulation = source.get(
+        "SC_NEUROCORE_STUDIO_MAX_SYNC_ANALYSIS_STEPS_PER_SIMULATION"
+    )
+    raw_max_sync_analysis_total_steps = source.get(
+        "SC_NEUROCORE_STUDIO_MAX_SYNC_ANALYSIS_TOTAL_STEPS"
+    )
+    raw_max_sync_analysis_simulations = source.get(
+        "SC_NEUROCORE_STUDIO_MAX_SYNC_ANALYSIS_SIMULATIONS"
+    )
     raw_browser_session_ttl_seconds = source.get("SC_NEUROCORE_STUDIO_BROWSER_SESSION_TTL_SECONDS")
     raw_browser_login_max_failures = source.get("SC_NEUROCORE_STUDIO_BROWSER_LOGIN_MAX_FAILURES")
     raw_browser_login_failure_window_seconds = source.get(
@@ -276,6 +301,21 @@ def build_default_studio_runtime_settings(
         )
     except ValueError as exc:
         raise ValueError("Studio EDA process memory limit must be an integer.") from exc
+    max_sync_analysis_steps_per_simulation = _parse_int_env(
+        raw_max_sync_analysis_steps_per_simulation,
+        default=DEFAULT_STUDIO_MAX_SYNC_ANALYSIS_STEPS_PER_SIMULATION,
+        error_message="Studio analysis steps-per-simulation budget must be an integer.",
+    )
+    max_sync_analysis_total_steps = _parse_int_env(
+        raw_max_sync_analysis_total_steps,
+        default=DEFAULT_STUDIO_MAX_SYNC_ANALYSIS_TOTAL_STEPS,
+        error_message="Studio analysis total-steps budget must be an integer.",
+    )
+    max_sync_analysis_simulations = _parse_int_env(
+        raw_max_sync_analysis_simulations,
+        default=DEFAULT_STUDIO_MAX_SYNC_ANALYSIS_SIMULATIONS,
+        error_message="Studio analysis simulation-count budget must be an integer.",
+    )
     try:
         browser_session_ttl_seconds = (
             DEFAULT_STUDIO_BROWSER_SESSION_TTL_SECONDS
@@ -346,6 +386,9 @@ def build_default_studio_runtime_settings(
         job_max_artifact_bytes=job_max_artifact_bytes,
         eda_process_cpu_seconds=eda_process_cpu_seconds,
         eda_process_memory_bytes=eda_process_memory_bytes,
+        max_sync_analysis_steps_per_simulation=max_sync_analysis_steps_per_simulation,
+        max_sync_analysis_total_steps=max_sync_analysis_total_steps,
+        max_sync_analysis_simulations=max_sync_analysis_simulations,
         browser_session_ttl_seconds=browser_session_ttl_seconds,
         browser_login_max_failures=browser_login_max_failures,
         browser_login_failure_window_seconds=browser_login_failure_window_seconds,
@@ -365,6 +408,20 @@ def _parse_deployment_profile(raw_value: str | None) -> StudioDeploymentProfile:
     if normalized == "production":
         return "production"
     raise ValueError("Studio deployment profile must be development or production.")
+
+
+def _parse_int_env(
+    raw_value: str | None,
+    *,
+    default: int,
+    error_message: str,
+) -> int:
+    if raw_value is None or not raw_value.strip():
+        return default
+    try:
+        return int(raw_value)
+    except ValueError as exc:
+        raise ValueError(error_message) from exc
 
 
 def _parse_bool_env(
