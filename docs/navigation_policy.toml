@@ -41,9 +41,19 @@ patterns = [
   "api/quantum_cognition.md",
   "api/rust-analysis-engine.md",
   "api/rust-benchmarks.md",
+  "api/sc_inference.md",
   "api/scpn_datastream.md",
 ]
-expected_count = 8
+expected_count = 9
+
+[[classification]]
+name = "supplemental-kernel-references"
+rationale = "Specialized per-kernel reference pages (compiler and hardware) linked from the kernel and HDL documentation rather than placed directly in nav."
+patterns = [
+  "compiler/mixed_dense_kernel.md",
+  "hardware/adc_to_spike_kernel.md",
+]
+expected_count = 2
 
 [[classification]]
 name = "supplemental-guides"

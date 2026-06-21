@@ -150,9 +150,7 @@ def _max_diff(
     return worst
 
 
-def run(
-    n_neurons: int, n_steps: int, n_conditions: int, seed: int, repeats: int
-) -> dict[str, Any]:
+def run(n_neurons: int, n_steps: int, n_conditions: int, seed: int, repeats: int) -> dict[str, Any]:
     """Run every available dimensionality backend and return the report."""
     trains, conditions = _workload(n_neurons, n_steps, n_conditions, seed)
     availability = _availability()

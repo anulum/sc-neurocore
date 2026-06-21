@@ -108,7 +108,9 @@ def _workload(
     return np.ascontiguousarray(cluster), np.ascontiguousarray(noise)
 
 
-def _assess(cluster: np.ndarray[Any, Any], noise: np.ndarray[Any, Any], backend: str) -> tuple[float, float]:
+def _assess(
+    cluster: np.ndarray[Any, Any], noise: np.ndarray[Any, Any], backend: str
+) -> tuple[float, float]:
     """Both Mahalanobis metrics for one backend (the shared-kernel workload)."""
     iso = _SQ.isolation_distance(cluster, noise, backend=backend)
     lr = _SQ.l_ratio(cluster, noise, backend=backend)
@@ -129,9 +131,7 @@ def _time_backend(
     return samples[len(samples) // 2], values
 
 
-def run(
-    n_cluster: int, n_noise: int, n_features: int, seed: int, repeats: int
-) -> dict[str, Any]:
+def run(n_cluster: int, n_noise: int, n_features: int, seed: int, repeats: int) -> dict[str, Any]:
     """Run every available sorting-quality backend and return the report."""
     cluster, noise = _workload(n_cluster, n_noise, n_features, seed)
     availability = _availability()

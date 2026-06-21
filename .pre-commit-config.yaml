@@ -16,7 +16,7 @@ repos:
         args: [--maxkb=500]
 
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: c60c980e561ed3e73101667fe8365c609d19a438  # v0.15.9
+    rev: 22f0422809455ec89ffdcf5a00170ba816e42ddb  # v0.15.16
     hooks:
       - id: ruff
         exclude: '^data/'

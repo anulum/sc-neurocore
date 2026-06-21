@@ -19,7 +19,10 @@ not_in_nav: |
   api/quantum_cognition.md
   api/rust-analysis-engine.md
   api/rust-benchmarks.md
+  api/sc_inference.md
   api/scpn_datastream.md
+  compiler/mixed_dense_kernel.md
+  hardware/adc_to_spike_kernel.md
   guides/*.md
   benchmarks/ZENITH_BENCHMARKS.md
   benchmarks/ZENITH_BENCHMARKS_GPU.md

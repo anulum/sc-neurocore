@@ -178,9 +178,7 @@ def run(n_channels: int, n_timesteps: int, tau: int, seed: int, repeats: int) ->
 def _parity_within_tolerance(parity: dict[str, Any], tol: float) -> bool:
     """True when every accelerated backend agrees with NumPy within *tol*."""
     return all(
-        stats["phi_abs_diff"] <= tol
-        for name, stats in parity.items()
-        if name != "reference"
+        stats["phi_abs_diff"] <= tol for name, stats in parity.items() if name != "reference"
     )
 
 
