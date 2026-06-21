@@ -14,6 +14,11 @@ describe("ProjectEvidenceStrip", () => {
           schemaVersion: "studio.project-save.v1",
           stateDigest: "bbbbbbbbbbbb",
         }}
+        exportBundleId="seb_project"
+        exportError={null}
+        exportJobId="sj_project"
+        loading={false}
+        onExportBundle={() => undefined}
       />,
     );
 
@@ -24,5 +29,8 @@ describe("ProjectEvidenceStrip", () => {
     expect(html).toContain("project sha");
     expect(html).toContain("aaaaaaaaaaaa");
     expect(html).toContain("studio.project-save.v1");
+    expect(html).toContain("Export saved-network project evidence bundle");
+    expect(html).toContain("seb_project");
+    expect(html).toContain("sj_project");
   });
 });

@@ -102,6 +102,27 @@ export default function App() {
     if (!capabilityState.available) return;
     s.setActiveTab(panelKey);
   };
+  const exportProjectEvidenceBundle = () => {
+    if (s.projectSaveResult === null) {
+      return;
+    }
+    void s.createEvidenceBundle({
+      audit_limit: 100,
+      analysis_results: [],
+      command_replay: {
+        method: "POST",
+        note: `project ${s.projectSaveResult.name}`,
+        request_sha256: s.projectSaveResult.project_sha256,
+        route: "/api/project/save",
+      },
+      default_flow_attestations: [],
+      default_flow_runs: [],
+      include_audit: true,
+      job_ids: [],
+      project_name: s.projectSaveResult.name,
+      simulation_results: [],
+    });
+  };
 
   useEffect(() => {
     void loadCapabilities();
@@ -390,7 +411,14 @@ export default function App() {
               </div>
             )}
             {s.projectSaveResult && (
-              <ProjectEvidenceStrip evidence={buildProjectEvidenceModel(s.projectSaveResult)} />
+              <ProjectEvidenceStrip
+                evidence={buildProjectEvidenceModel(s.projectSaveResult)}
+                exportBundleId={s.evidenceBundle?.bundle_id ?? null}
+                exportError={s.evidenceBundleError}
+                exportJobId={s.evidenceBundle?.job_id ?? null}
+                loading={s.evidenceBundleLoading}
+                onExportBundle={exportProjectEvidenceBundle}
+              />
             )}
           </div>
 

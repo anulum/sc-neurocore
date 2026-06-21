@@ -72,6 +72,8 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
   convention) in `docs/formal/timing_aware_properties.md`.
 
 ### Studio platform
+- Added Projects panel evidence-bundle export for saved project workspaces,
+  using the bounded Studio evidence worker from the normal workbench UI.
 - Added Admin panel audit-archive restore controls for path-free payload
   validation and confined restore-artifact materialization, wired to the
   existing admin-gated validate and restore endpoints.

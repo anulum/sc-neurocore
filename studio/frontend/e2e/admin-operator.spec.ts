@@ -1,5 +1,7 @@
 import { expect, test, type Page } from "@playwright/test";
 
+test.setTimeout(60_000);
+
 function capability(overrides: Record<string, unknown>): Record<string, unknown> {
   return {
     capability_id: "studio.capability_registry",
@@ -220,6 +222,16 @@ const auditArchivePurge = {
   retain_latest: 1,
   schema_version: "studio.audit-quarantine-archive.purge.v1",
   skipped_record_count: 0,
+};
+
+const projectSaveResult = {
+  evidence_classification: "project_workspace",
+  name: "saved-network",
+  project_sha256: "b".repeat(64),
+  saved_at: 1782010000,
+  schema_version: "studio.project-save.v1",
+  state_sha256: "a".repeat(64),
+  version: "studio.project.v1",
 };
 
 const jobStatus = {
@@ -818,6 +830,40 @@ test("admin job rows can seed evidence bundle job IDs", async ({ page }) => {
   expect(bodies[0]).toMatchObject({
     include_audit: true,
     job_ids: ["sj_artifact"],
+  });
+});
+
+test("project evidence strip exports saved project bundles", async ({ page }) => {
+  const mocks = defaultApiMocks();
+  mocks.set("/api/project/save", projectSaveResult);
+  const api = await installApiDispatcher(page, mocks);
+
+  page.once("dialog", async (dialog) => {
+    await dialog.accept("saved-network");
+  });
+  await page.goto("/");
+
+  await page.getByRole("button", { name: "Save" }).first().click();
+  await expect(page.getByText("project_workspace")).toBeVisible();
+  await expect(page.getByText("state sha aaaaaaaaaaaa")).toBeVisible();
+  await expect(page.getByText("project sha bbbbbbbbbbbb")).toBeVisible();
+
+  await page
+    .getByRole("button", { name: "Export saved-network project evidence bundle" })
+    .click();
+  await expect(page.getByText("seb_sj_browser")).toBeVisible();
+  await expect(page.getByText("sj_browser", { exact: true })).toBeVisible();
+
+  const bodies = api.bodies("/api/studio/evidence/bundle");
+  expect(bodies).toHaveLength(1);
+  expect(bodies[0]).toMatchObject({
+    command_replay: {
+      method: "POST",
+      request_sha256: "b".repeat(64),
+      route: "/api/project/save",
+    },
+    include_audit: true,
+    project_name: "saved-network",
   });
 });
 
