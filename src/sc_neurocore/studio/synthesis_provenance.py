@@ -16,9 +16,7 @@ from collections.abc import Mapping
 from dataclasses import dataclass
 from typing import TypeAlias, cast
 
-STUDIO_SYNTHESIS_TARGET_PROVENANCE_SCHEMA_VERSION = (
-    "studio.synthesis-target-provenance.v1"
-)
+STUDIO_SYNTHESIS_TARGET_PROVENANCE_SCHEMA_VERSION = "studio.synthesis-target-provenance.v1"
 STUDIO_SYNTHESIS_TARGET_PROVENANCE_MATRIX_SCHEMA_VERSION = (
     "studio.synthesis-target-provenance-matrix.v1"
 )

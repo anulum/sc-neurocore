@@ -139,14 +139,17 @@ def test_build_synthesis_target_provenance_matrix_has_stable_digest() -> None:
 
     assert matrix["schema_version"] == STUDIO_SYNTHESIS_TARGET_PROVENANCE_MATRIX_SCHEMA_VERSION
     assert set(cast(dict[str, JsonValue], matrix["targets"])) == {"ice40", "gowin"}
-    assert matrix["matrix_sha256"] == hashlib.sha256(
-        json.dumps(
-            matrix_without_digest,
-            allow_nan=False,
-            separators=(",", ":"),
-            sort_keys=True,
-        ).encode("utf-8")
-    ).hexdigest()
+    assert (
+        matrix["matrix_sha256"]
+        == hashlib.sha256(
+            json.dumps(
+                matrix_without_digest,
+                allow_nan=False,
+                separators=(",", ":"),
+                sort_keys=True,
+            ).encode("utf-8")
+        ).hexdigest()
+    )
 
 
 def test_run_synthesis_includes_target_provenance_when_yosys_is_missing(

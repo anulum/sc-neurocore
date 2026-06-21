@@ -115,9 +115,9 @@ def test_training_process_task_publishes_worker_event_log(
     ]
     events = [
         json.loads(line)
-        for line in (
-            tmp_path / "sj_training_process_events" / "training" / "events.jsonl"
-        ).read_text().splitlines()
+        for line in (tmp_path / "sj_training_process_events" / "training" / "events.jsonl")
+        .read_text()
+        .splitlines()
     ]
     assert [event["event"] for event in events] == ["config", "epoch", "completed"]
     assert events[0]["data"] == {"dataset": "synthetic", "job_id": "sj_training_process_events"}
@@ -173,9 +173,7 @@ def test_training_process_task_publishes_weight_checkpoint_metadata(
     ]
     metadata = json.loads(
         (
-            tmp_path
-            / "sj_training_process_weights"
-            / TRAINING_WEIGHT_METADATA_ARTIFACT_PATH
+            tmp_path / "sj_training_process_weights" / TRAINING_WEIGHT_METADATA_ARTIFACT_PATH
         ).read_text()
     )
     assert metadata["architecture"] == "64->128->10"

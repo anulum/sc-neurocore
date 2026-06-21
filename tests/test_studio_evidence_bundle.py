@@ -299,21 +299,16 @@ def test_write_studio_evidence_bundle_copies_project_job_audit_and_replay(
         (lambda _job_id: b"\xff", "must be JSON"),
         (lambda _job_id: "[]", "JSON object"),
         (
-            lambda job_id: json.dumps(
-                _action_evidence_payload(job_id) | {"job_id": "sj_other"}
-            ),
+            lambda job_id: json.dumps(_action_evidence_payload(job_id) | {"job_id": "sj_other"}),
             "job ID",
         ),
         (
-            lambda job_id: json.dumps(
-                _action_evidence_payload(job_id) | {"action_kind": ""}
-            ),
+            lambda job_id: json.dumps(_action_evidence_payload(job_id) | {"action_kind": ""}),
             "action kind",
         ),
         (
             lambda job_id: json.dumps(
-                _action_evidence_payload(job_id)
-                | {"evidence_classification": "unknown"}
+                _action_evidence_payload(job_id) | {"evidence_classification": "unknown"}
             ),
             "unsupported classification",
         ),
@@ -322,9 +317,7 @@ def test_write_studio_evidence_bundle_copies_project_job_audit_and_replay(
             "unsupported status",
         ),
         (
-            lambda job_id: json.dumps(
-                _action_evidence_payload(job_id) | {"payload_sha256": "bad"}
-            ),
+            lambda job_id: json.dumps(_action_evidence_payload(job_id) | {"payload_sha256": "bad"}),
             "payload SHA-256",
         ),
         (
@@ -336,9 +329,7 @@ def test_write_studio_evidence_bundle_copies_project_job_audit_and_replay(
             "artifact metadata",
         ),
         (
-            lambda job_id: json.dumps(
-                _action_evidence_payload(job_id) | {"artifacts": ["bad"]}
-            ),
+            lambda job_id: json.dumps(_action_evidence_payload(job_id) | {"artifacts": ["bad"]}),
             "invalid artifact metadata",
         ),
         (
@@ -740,11 +731,7 @@ def test_studio_evidence_bundle_route_exports_selected_state(
     assert analysis_response.status_code == 200
     default_flow_run_response = client.post(
         "/api/presets/fpga_precision/default-flow/run",
-        json={
-            "action_overrides": {
-                "auto_tune_adaptive_precision": {"target_error_percent": 0.05}
-            }
-        },
+        json={"action_overrides": {"auto_tune_adaptive_precision": {"target_error_percent": 0.05}}},
     )
     assert default_flow_run_response.status_code == 200
     default_flow_attestation_response = client.post(
@@ -753,9 +740,7 @@ def test_studio_evidence_bundle_route_exports_selected_state(
     )
     assert default_flow_attestation_response.status_code == 200
     source_records = [
-        record
-        for record in _job_manager(app).list_records()
-        if record.owner == "studio-compiler"
+        record for record in _job_manager(app).list_records() if record.owner == "studio-compiler"
     ]
     assert len(source_records) == 1
 
@@ -833,9 +818,7 @@ def test_studio_evidence_bundle_route_exports_selected_state(
     simulation_entry = next(
         entry for entry in manifest_entries if entry["type"] == "simulation_result"
     )
-    analysis_entry = next(
-        entry for entry in manifest_entries if entry["type"] == "analysis_result"
-    )
+    analysis_entry = next(entry for entry in manifest_entries if entry["type"] == "analysis_result")
     assert simulation_entry["evidence_classification"] == "simulation"
     assert analysis_entry["evidence_classification"] == "analysis"
     assert project_payload["name"] == "demo"

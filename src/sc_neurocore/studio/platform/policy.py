@@ -607,9 +607,7 @@ class JsonlAuditSink:
     @staticmethod
     def _quarantine_summary(rows: list[dict[str, str | None]]) -> str | None:
         reasons = {
-            row["quarantine_reason"]
-            for row in rows
-            if row.get("quarantine_reason") is not None
+            row["quarantine_reason"] for row in rows if row.get("quarantine_reason") is not None
         }
         if not reasons:
             return None

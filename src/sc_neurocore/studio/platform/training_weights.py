@@ -25,9 +25,7 @@ STUDIO_TRAINING_WEIGHT_CHECKPOINT_SCHEMA_VERSION = "studio.training.weight-check
 STUDIO_TRAINING_WEIGHT_RESTORE_PLAN_SCHEMA_VERSION = "studio.training.weight-restore-plan.v1"
 TRAINING_WEIGHT_ARTIFACT_PATH = "training/model_state.pt"
 TRAINING_WEIGHT_METADATA_ARTIFACT_PATH = "training/model_state.json"
-TRAINING_WEIGHT_ARTIFACT_ROUTE_TEMPLATE = (
-    "/api/studio/jobs/{job_id}/artifacts/{artifact_path}"
-)
+TRAINING_WEIGHT_ARTIFACT_ROUTE_TEMPLATE = "/api/studio/jobs/{job_id}/artifacts/{artifact_path}"
 _SHA256_HEX_PATTERN = re.compile(r"^[0-9a-f]{64}$")
 TrainingWeightStateLoader = Callable[[bytes], Mapping[str, object]]
 

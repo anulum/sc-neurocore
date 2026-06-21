@@ -62,9 +62,7 @@ def _cluster_mahalanobis_sq(
     return mah_sq
 
 
-def _isolation_distance_python(
-    cluster: np.ndarray[Any, Any], noise: np.ndarray[Any, Any]
-) -> float:
+def _isolation_distance_python(cluster: np.ndarray[Any, Any], noise: np.ndarray[Any, Any]) -> float:
     """NumPy reference for :func:`isolation_distance` (inputs pre-validated)."""
     n_c = cluster.shape[0]
     mah = np.sort(_cluster_mahalanobis_sq(cluster, noise))
@@ -169,9 +167,7 @@ def _ensure_mojo_sq() -> bool:
     return True
 
 
-def _run_go_metric(
-    fn: Any, cluster: np.ndarray[Any, Any], noise: np.ndarray[Any, Any]
-) -> float:
+def _run_go_metric(fn: Any, cluster: np.ndarray[Any, Any], noise: np.ndarray[Any, Any]) -> float:
     """Dispatch a sorting-quality metric to the Go c-shared backend."""
     n_c, d = cluster.shape
     n_noise = noise.shape[0]
@@ -182,9 +178,7 @@ def _run_go_metric(
     return float(fn(cptr, n_c, nptr, n_noise, d))
 
 
-def _run_mojo_metric(
-    fn: Any, cluster: np.ndarray[Any, Any], noise: np.ndarray[Any, Any]
-) -> float:
+def _run_mojo_metric(fn: Any, cluster: np.ndarray[Any, Any], noise: np.ndarray[Any, Any]) -> float:
     """Dispatch a sorting-quality metric to the Mojo backend (raw ``int64`` addresses)."""
     n_c, d = cluster.shape
     n_noise = noise.shape[0]

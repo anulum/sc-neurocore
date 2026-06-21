@@ -184,12 +184,8 @@ def build_default_studio_runtime_settings(
     raw_job_max_artifact_bytes = source.get("SC_NEUROCORE_STUDIO_JOB_MAX_ARTIFACT_BYTES")
     raw_eda_process_cpu_seconds = source.get("SC_NEUROCORE_STUDIO_EDA_PROCESS_CPU_SECONDS")
     raw_eda_process_memory_bytes = source.get("SC_NEUROCORE_STUDIO_EDA_PROCESS_MEMORY_BYTES")
-    raw_browser_session_ttl_seconds = source.get(
-        "SC_NEUROCORE_STUDIO_BROWSER_SESSION_TTL_SECONDS"
-    )
-    raw_browser_login_max_failures = source.get(
-        "SC_NEUROCORE_STUDIO_BROWSER_LOGIN_MAX_FAILURES"
-    )
+    raw_browser_session_ttl_seconds = source.get("SC_NEUROCORE_STUDIO_BROWSER_SESSION_TTL_SECONDS")
+    raw_browser_login_max_failures = source.get("SC_NEUROCORE_STUDIO_BROWSER_LOGIN_MAX_FAILURES")
     raw_browser_login_failure_window_seconds = source.get(
         "SC_NEUROCORE_STUDIO_BROWSER_LOGIN_FAILURE_WINDOW_SECONDS"
     )
@@ -288,8 +284,7 @@ def build_default_studio_runtime_settings(
     try:
         browser_login_max_failures = (
             DEFAULT_STUDIO_BROWSER_LOGIN_MAX_FAILURES
-            if raw_browser_login_max_failures is None
-            or not raw_browser_login_max_failures.strip()
+            if raw_browser_login_max_failures is None or not raw_browser_login_max_failures.strip()
             else int(raw_browser_login_max_failures)
         )
     except ValueError as exc:

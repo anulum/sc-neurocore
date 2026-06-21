@@ -21,9 +21,7 @@ from sc_neurocore.studio.platform.jobs import StudioJobContext
 from sc_neurocore.studio.project import run_pipeline
 from sc_neurocore.studio.synthesis import EdaProcessLimits, supported_targets
 
-PIPELINE_PROCESS_TASK = (
-    "sc_neurocore.studio.platform.pipeline_process:run_pipeline_process_task"
-)
+PIPELINE_PROCESS_TASK = "sc_neurocore.studio.platform.pipeline_process:run_pipeline_process_task"
 
 
 def run_pipeline_process_task(
@@ -107,10 +105,7 @@ def _target_field(payload: Mapping[str, object], key: str) -> str:
     value = payload.get(key, "ice40")
     targets = supported_targets()
     if not isinstance(value, str) or value not in targets:
-        raise ValueError(
-            "Studio pipeline payload field "
-            f"{key!r} must be one of {list(targets)!r}."
-        )
+        raise ValueError(f"Studio pipeline payload field {key!r} must be one of {list(targets)!r}.")
     return value
 
 

@@ -294,7 +294,10 @@ def _pca_dispatch(mat: np.ndarray[Any, Any], n_components: int, backend: str) ->
         proj = np.zeros(nc * t, dtype=np.float64)
         expl = np.zeros(nc, dtype=np.float64)
         lib.pca_from_matrix_c(
-            buf.ctypes.data_as(_ctypes.POINTER(_ctypes.c_double)), d, t, nc,
+            buf.ctypes.data_as(_ctypes.POINTER(_ctypes.c_double)),
+            d,
+            t,
+            nc,
             proj.ctypes.data_as(_ctypes.POINTER(_ctypes.c_double)),
             expl.ctypes.data_as(_ctypes.POINTER(_ctypes.c_double)),
         )
@@ -311,7 +314,9 @@ def _pca_dispatch(mat: np.ndarray[Any, Any], n_components: int, backend: str) ->
     return _pca_from_matrix(mat, n_components)
 
 
-def _demixed_dispatch(mean_mat: np.ndarray[Any, Any], n_components: int, backend: str) -> _DimResult:
+def _demixed_dispatch(
+    mean_mat: np.ndarray[Any, Any], n_components: int, backend: str
+) -> _DimResult:
     _check_backend(backend)
     n_cond, t = mean_mat.shape
     nc = min(n_components, t)
@@ -334,7 +339,10 @@ def _demixed_dispatch(mean_mat: np.ndarray[Any, Any], n_components: int, backend
         proj = np.zeros(n_cond * nc, dtype=np.float64)
         expl = np.zeros(nc, dtype=np.float64)
         lib.demixed_from_matrix_c(
-            buf.ctypes.data_as(_ctypes.POINTER(_ctypes.c_double)), n_cond, t, nc,
+            buf.ctypes.data_as(_ctypes.POINTER(_ctypes.c_double)),
+            n_cond,
+            t,
+            nc,
             proj.ctypes.data_as(_ctypes.POINTER(_ctypes.c_double)),
             expl.ctypes.data_as(_ctypes.POINTER(_ctypes.c_double)),
         )
@@ -353,7 +361,9 @@ def _demixed_dispatch(mean_mat: np.ndarray[Any, Any], n_components: int, backend
     return _demixed_from_matrix(mean_mat, n_components)
 
 
-def _fa_dispatch(mat: np.ndarray[Any, Any], n_factors: int, n_iter: int, backend: str) -> _DimResult:
+def _fa_dispatch(
+    mat: np.ndarray[Any, Any], n_factors: int, n_iter: int, backend: str
+) -> _DimResult:
     _check_backend(backend)
     d, _t = mat.shape
     nf = min(n_factors, d)
@@ -376,9 +386,13 @@ def _fa_dispatch(mat: np.ndarray[Any, Any], n_factors: int, n_iter: int, backend
         loadings = np.zeros(d * nf, dtype=np.float64)
         psi = np.zeros(d, dtype=np.float64)
         lib.factor_analysis_c(
-            buf.ctypes.data_as(_ctypes.POINTER(_ctypes.c_double)), d, _t, nf,
+            buf.ctypes.data_as(_ctypes.POINTER(_ctypes.c_double)),
+            d,
+            _t,
+            nf,
             loadings.ctypes.data_as(_ctypes.POINTER(_ctypes.c_double)),
-            psi.ctypes.data_as(_ctypes.POINTER(_ctypes.c_double)), n_iter,
+            psi.ctypes.data_as(_ctypes.POINTER(_ctypes.c_double)),
+            n_iter,
         )
         return loadings.reshape(d, nf), psi
     if backend == "mojo":

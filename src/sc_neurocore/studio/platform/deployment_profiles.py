@@ -234,9 +234,7 @@ def _server_profile_package() -> StudioDeploymentProfilePackage:
             "SC_NEUROCORE_STUDIO_JOB_MAX_ARTIFACT_BYTES": "16777216",
             "SC_NEUROCORE_STUDIO_JOB_ROOT": "<job-root>",
             "SC_NEUROCORE_STUDIO_JOB_TIMEOUT_SECONDS": "300",
-            "SC_NEUROCORE_STUDIO_WEBSOCKET_ALLOWED_ORIGINS": (
-                "https://<public-studio-hostname>"
-            ),
+            "SC_NEUROCORE_STUDIO_WEBSOCKET_ALLOWED_ORIGINS": ("https://<public-studio-hostname>"),
         },
         required_operator_inputs=(
             "<public-studio-hostname>",

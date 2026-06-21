@@ -239,9 +239,7 @@ def test_studio_runtime_settings_rejects_invalid_browser_login_throttle() -> Non
         )
     with pytest.raises(ValueError, match="browser login failure window"):
         build_default_studio_runtime_settings(
-            env={
-                "SC_NEUROCORE_STUDIO_BROWSER_LOGIN_FAILURE_WINDOW_SECONDS": "not-a-number"
-            }
+            env={"SC_NEUROCORE_STUDIO_BROWSER_LOGIN_FAILURE_WINDOW_SECONDS": "not-a-number"}
         )
     with pytest.raises(ValueError, match="browser login cooldown"):
         build_default_studio_runtime_settings(

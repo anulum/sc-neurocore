@@ -76,7 +76,10 @@ def test_synthesis_process_task_writes_result_and_action_evidence(tmp_path: Path
         "synthesis/result.json",
         "synthesis/evidence.json",
     ]
-    assert json.loads((tmp_path / "sj_synthesis_test" / "synthesis" / "result.json").read_text()) == result
+    assert (
+        json.loads((tmp_path / "sj_synthesis_test" / "synthesis" / "result.json").read_text())
+        == result
+    )
     _assert_evidence(
         tmp_path,
         job_id="sj_synthesis_test",
@@ -107,7 +110,9 @@ def test_multi_target_process_task_writes_result_and_action_evidence(tmp_path: P
     ]
     assert (
         json.loads(
-            (tmp_path / "sj_multi_target_test" / "synthesis" / "multi-target-result.json").read_text()
+            (
+                tmp_path / "sj_multi_target_test" / "synthesis" / "multi-target-result.json"
+            ).read_text()
         )
         == result
     )
@@ -142,7 +147,10 @@ def test_pnr_process_task_writes_result_and_action_evidence(tmp_path: Path) -> N
         "synthesis/pnr-result.json",
         "synthesis/pnr-evidence.json",
     ]
-    assert json.loads((tmp_path / "sj_pnr_test" / "synthesis" / "pnr-result.json").read_text()) == result
+    assert (
+        json.loads((tmp_path / "sj_pnr_test" / "synthesis" / "pnr-result.json").read_text())
+        == result
+    )
     _assert_evidence(
         tmp_path,
         job_id="sj_pnr_test",

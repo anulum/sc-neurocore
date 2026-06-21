@@ -31,9 +31,7 @@ SYNTHESIS_RUN_PROCESS_TASK = (
 SYNTHESIS_MULTI_TARGET_PROCESS_TASK = (
     "sc_neurocore.studio.platform.synthesis_process:run_multi_target_synthesis_process_task"
 )
-SYNTHESIS_PNR_PROCESS_TASK = (
-    "sc_neurocore.studio.platform.synthesis_process:run_pnr_process_task"
-)
+SYNTHESIS_PNR_PROCESS_TASK = "sc_neurocore.studio.platform.synthesis_process:run_pnr_process_task"
 
 
 def run_synthesis_process_task(
@@ -234,8 +232,7 @@ def _target_field(payload: Mapping[str, object], key: str) -> str:
     targets = supported_targets()
     if not isinstance(value, str) or value not in targets:
         raise ValueError(
-            "Studio synthesis payload field "
-            f"{key!r} must be one of {list(targets)!r}."
+            f"Studio synthesis payload field {key!r} must be one of {list(targets)!r}."
         )
     return value
 

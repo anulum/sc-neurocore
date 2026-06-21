@@ -50,9 +50,7 @@ _RESULT_FIELDS = (
 
 def _assert_bit_exact(reference: DclsBatchResult, candidate: DclsBatchResult) -> None:
     for field in _RESULT_FIELDS:
-        npt.assert_array_equal(
-            getattr(reference, field), getattr(candidate, field), err_msg=field
-        )
+        npt.assert_array_equal(getattr(reference, field), getattr(candidate, field), err_msg=field)
 
 
 def _named_workloads() -> dict[str, tuple[Any, Any, Any, Any, int]]:

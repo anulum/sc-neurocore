@@ -660,12 +660,7 @@ def make_browser_user_password_verifier(password: str) -> str:
         raise ValueError("Studio browser-user password must not be empty.")
     salt = secrets.token_hex(MIN_BROWSER_USER_PASSWORD_SALT_BYTES)
     password_hash = _pbkdf2_sha256(password, salt, DEFAULT_BROWSER_USER_PASSWORD_ITERATIONS)
-    return (
-        "pbkdf2_sha256"
-        f"${DEFAULT_BROWSER_USER_PASSWORD_ITERATIONS}"
-        f"${salt}"
-        f"${password_hash}"
-    )
+    return f"pbkdf2_sha256${DEFAULT_BROWSER_USER_PASSWORD_ITERATIONS}${salt}${password_hash}"
 
 
 def verify_browser_user_password(password: str, encoded_verifier: str) -> bool:
@@ -719,7 +714,10 @@ def _parse_browser_user_record(index: int, item: object) -> StudioBrowserUserRec
         raise ValueError("Studio browser user roles must be a non-empty list.")
     roles = frozenset(_parse_role(role) for role in raw_roles)
     password_verifier = item.get("password_pbkdf2_sha256")
-    if not isinstance(password_verifier, str) or _parse_password_verifier(password_verifier) is None:
+    if (
+        not isinstance(password_verifier, str)
+        or _parse_password_verifier(password_verifier) is None
+    ):
         raise ValueError("Studio browser user password verifier is invalid.")
     raw_active = item.get("active", True)
     if not isinstance(raw_active, bool):

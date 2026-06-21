@@ -1283,9 +1283,7 @@ def create_app(runtime_settings: StudioRuntimeSettings | None = None) -> FastAPI
         if completed.status == "completed" and completed.result is not None:
             result = dict(completed.result)
             result["job_id"] = completed.job_id
-            result["artifacts"] = [
-                artifact.to_public_dict() for artifact in completed.artifacts
-            ]
+            result["artifacts"] = [artifact.to_public_dict() for artifact in completed.artifacts]
             return result
         if completed.status in {"pending", "running", "cancelling"}:
             raise HTTPException(status_code=503, detail="studio_job_wait_exceeded")
@@ -1359,9 +1357,7 @@ def create_app(runtime_settings: StudioRuntimeSettings | None = None) -> FastAPI
         if completed.status == "completed" and completed.result is not None:
             result = dict(completed.result)
             result["job_id"] = completed.job_id
-            result["artifacts"] = [
-                artifact.to_public_dict() for artifact in completed.artifacts
-            ]
+            result["artifacts"] = [artifact.to_public_dict() for artifact in completed.artifacts]
             return result
         if completed.status in {"pending", "running", "cancelling"}:
             raise HTTPException(status_code=503, detail="studio_job_wait_exceeded")
@@ -1443,9 +1439,7 @@ def create_app(runtime_settings: StudioRuntimeSettings | None = None) -> FastAPI
         if completed.status == "completed" and completed.result is not None:
             result = dict(completed.result)
             result["job_id"] = completed.job_id
-            result["artifacts"] = [
-                artifact.to_public_dict() for artifact in completed.artifacts
-            ]
+            result["artifacts"] = [artifact.to_public_dict() for artifact in completed.artifacts]
             return result
         if completed.status in {"pending", "running", "cancelling"}:
             raise HTTPException(status_code=503, detail="studio_job_wait_exceeded")
@@ -1642,9 +1636,7 @@ def create_app(runtime_settings: StudioRuntimeSettings | None = None) -> FastAPI
                 AuditEvent(
                     action="studio.identity.browser_user.create",
                     decision="allow",
-                    principal_id=(
-                        actor.principal_id if isinstance(actor, Principal) else None
-                    ),
+                    principal_id=(actor.principal_id if isinstance(actor, Principal) else None),
                     reason=f"created:{created.username}",
                     request_id=request_id if isinstance(request_id, str) else None,
                     route="/api/studio/identity/browser-users",
@@ -1723,9 +1715,7 @@ def create_app(runtime_settings: StudioRuntimeSettings | None = None) -> FastAPI
                 AuditEvent(
                     action="studio.identity.service_account.update",
                     decision="allow",
-                    principal_id=(
-                        actor.principal_id if isinstance(actor, Principal) else None
-                    ),
+                    principal_id=(actor.principal_id if isinstance(actor, Principal) else None),
                     reason=f"updated:{updated.principal_id}",
                     request_id=request_id if isinstance(request_id, str) else None,
                     route="/api/studio/identity/service-accounts/{principal_id}",
@@ -1775,9 +1765,7 @@ def create_app(runtime_settings: StudioRuntimeSettings | None = None) -> FastAPI
                 AuditEvent(
                     action="studio.identity.browser_user.update",
                     decision="allow",
-                    principal_id=(
-                        actor.principal_id if isinstance(actor, Principal) else None
-                    ),
+                    principal_id=(actor.principal_id if isinstance(actor, Principal) else None),
                     reason=f"updated:{updated.username}",
                     request_id=request_id if isinstance(request_id, str) else None,
                     route="/api/studio/identity/browser-users/{username}",
@@ -1819,9 +1807,7 @@ def create_app(runtime_settings: StudioRuntimeSettings | None = None) -> FastAPI
                 load_studio_identity_store(identity_path)
             )
             app.state.studio_identity_authenticator = studio_identity_authenticator
-            revoked_sessions = studio_browser_session_manager.revoke_principal(
-                updated.principal_id
-            )
+            revoked_sessions = studio_browser_session_manager.revoke_principal(updated.principal_id)
             studio_browser_login_throttle.record_success(username)
             actor = getattr(request.state, "studio_principal", None)
             request_id = getattr(request.state, "studio_request_id", None)
@@ -1829,9 +1815,7 @@ def create_app(runtime_settings: StudioRuntimeSettings | None = None) -> FastAPI
                 AuditEvent(
                     action="studio.identity.browser_user.password.rotate",
                     decision="allow",
-                    principal_id=(
-                        actor.principal_id if isinstance(actor, Principal) else None
-                    ),
+                    principal_id=(actor.principal_id if isinstance(actor, Principal) else None),
                     reason=f"rotated:{updated.username}:sessions_revoked:{revoked_sessions}",
                     request_id=request_id if isinstance(request_id, str) else None,
                     route="/api/studio/identity/browser-users/{username}/password",

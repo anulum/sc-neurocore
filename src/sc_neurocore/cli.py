@@ -15,6 +15,7 @@ import importlib.metadata
 import json
 import re
 import shutil
+
 # CLI subprocess calls use shell-free argument vectors and bounded local tool entrypoints.
 import subprocess  # nosec B404
 import sys

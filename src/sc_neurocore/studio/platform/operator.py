@@ -17,7 +17,11 @@ from typing import Literal
 from sc_neurocore.studio.platform.auth_throttle import StudioLoginThrottleSnapshot
 from sc_neurocore.studio.platform.capabilities import CapabilityHealth, CapabilityStatus
 from sc_neurocore.studio.platform.jobs import StudioJobStatusSnapshot
-from sc_neurocore.studio.platform.policy import AuditSinkStatus, RoutePolicyRegistry, RouteVisibility
+from sc_neurocore.studio.platform.policy import (
+    AuditSinkStatus,
+    RoutePolicyRegistry,
+    RouteVisibility,
+)
 from sc_neurocore.studio.platform.settings import StudioRuntimeSettings
 
 OPERATOR_STATUS_SCHEMA_VERSION = "studio.operator.status.v1"
@@ -216,9 +220,7 @@ def _build_route_policy_status(
     route_policy_registry: RoutePolicyRegistry,
 ) -> StudioOperatorRoutePolicyStatus:
     policies = route_policy_registry.policies()
-    public_count = sum(
-        policy.visibility is RouteVisibility.PUBLIC for _, _, policy in policies
-    )
+    public_count = sum(policy.visibility is RouteVisibility.PUBLIC for _, _, policy in policies)
     authenticated_count = sum(
         policy.visibility is RouteVisibility.AUTHENTICATED for _, _, policy in policies
     )

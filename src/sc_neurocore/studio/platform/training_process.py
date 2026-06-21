@@ -15,9 +15,7 @@ from collections.abc import Mapping
 from sc_neurocore.studio.platform.jobs import StudioJobContext
 from sc_neurocore.studio.training import TRAINING_EVENT_LOG_ARTIFACT_PATH, TrainingJob
 
-TRAINING_PROCESS_TASK = (
-    "sc_neurocore.studio.platform.training_process:run_training_process_task"
-)
+TRAINING_PROCESS_TASK = "sc_neurocore.studio.platform.training_process:run_training_process_task"
 
 
 def run_training_process_task(

@@ -44,9 +44,7 @@ _RESULT_FIELDS = ("outputs_q1616", "overflow", "underflow")
 
 def _assert_bit_exact(reference: MixedDenseBatchResult, candidate: MixedDenseBatchResult) -> None:
     for field in _RESULT_FIELDS:
-        npt.assert_array_equal(
-            getattr(reference, field), getattr(candidate, field), err_msg=field
-        )
+        npt.assert_array_equal(getattr(reference, field), getattr(candidate, field), err_msg=field)
 
 
 def _named_workloads() -> dict[str, tuple[Any, Any, int, int]]:

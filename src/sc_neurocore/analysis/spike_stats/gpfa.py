@@ -122,7 +122,9 @@ def _ensure_mojo_gpfa() -> bool:
     if fn is None:
         return False
     # 13 args: 5 input addresses + 4 size scalars + tol + 3 output addresses.
-    fn.argtypes = [_ctypes.c_int64] * 5 + [_ctypes.c_int64] * 4 + [_ctypes.c_double] + [_ctypes.c_int64] * 3
+    fn.argtypes = (
+        [_ctypes.c_int64] * 5 + [_ctypes.c_int64] * 4 + [_ctypes.c_double] + [_ctypes.c_int64] * 3
+    )
     fn.restype = None
     _mojo_gpfa_lib = lib
     return True
@@ -201,7 +203,7 @@ def _gpfa_e_step(
 
     xx_post = x_post @ x_post.T
     for t_idx in range(n_bins):
-        block = sigma_post[t_idx :: n_bins, t_idx :: n_bins]
+        block = sigma_post[t_idx::n_bins, t_idx::n_bins]
         xx_post = xx_post + block
     return x_post, xx_post
 

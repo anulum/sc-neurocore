@@ -116,15 +116,18 @@ def test_simulation_run_manifest_excludes_existing_manifest_from_result_hash() -
     }
 
     assert manifest.to_public_dict()["source"] == "model"
-    assert manifest.to_public_dict()["result_sha256"] == hashlib.sha256(
-        json.dumps(
-            expected_payload,
-            allow_nan=False,
-            default=str,
-            separators=(",", ":"),
-            sort_keys=True,
-        ).encode("utf-8")
-    ).hexdigest()
+    assert (
+        manifest.to_public_dict()["result_sha256"]
+        == hashlib.sha256(
+            json.dumps(
+                expected_payload,
+                allow_nan=False,
+                default=str,
+                separators=(",", ":"),
+                sort_keys=True,
+            ).encode("utf-8")
+        ).hexdigest()
+    )
 
 
 @pytest.mark.parametrize(

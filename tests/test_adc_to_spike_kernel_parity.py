@@ -49,9 +49,7 @@ _RESULT_FIELDS = ("window_values_q", "spike_counts", "polarities")
 
 def _assert_bit_exact(reference: ADCSpikeWindowResult, candidate: ADCSpikeWindowResult) -> None:
     for field in _RESULT_FIELDS:
-        npt.assert_array_equal(
-            getattr(reference, field), getattr(candidate, field), err_msg=field
-        )
+        npt.assert_array_equal(getattr(reference, field), getattr(candidate, field), err_msg=field)
 
 
 def _named_configs() -> dict[str, ADCSpikeWindowConfig]:
@@ -66,7 +64,9 @@ def _named_configs() -> dict[str, ADCSpikeWindowConfig]:
 
 def _samples(config: ADCSpikeWindowConfig, n_windows: int, seed: int) -> np.ndarray:
     rng = np.random.default_rng(seed)
-    return rng.integers(0, 1 << config.adc_width, size=config.decimation * n_windows, dtype=np.int64)
+    return rng.integers(
+        0, 1 << config.adc_width, size=config.decimation * n_windows, dtype=np.int64
+    )
 
 
 @pytest.mark.parametrize("backend", _BACKENDS)

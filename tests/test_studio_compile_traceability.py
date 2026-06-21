@@ -101,9 +101,7 @@ def test_compile_route_returns_traceability_manifest(client: TestClient) -> None
     output = cast(dict[str, JsonValue], traceability["output"])
     assert output["module_name"] == payload["module_name"] == "sc_traceable_neuron"
     assert output["rtl_chars"] == payload["chars"]
-    assert output["rtl_sha256"] == hashlib.sha256(
-        payload["verilog"].encode("utf-8")
-    ).hexdigest()
+    assert output["rtl_sha256"] == hashlib.sha256(payload["verilog"].encode("utf-8")).hexdigest()
 
 
 def test_direct_sv_route_returns_traceability_manifest(client: TestClient) -> None:
@@ -117,9 +115,7 @@ def test_direct_sv_route_returns_traceability_manifest(client: TestClient) -> No
     output = cast(dict[str, JsonValue], traceability["output"])
     assert traceability["schema_version"] == STUDIO_COMPILE_TRACEABILITY_SCHEMA_VERSION
     assert output["module_name"] == payload["module_name"] == "sc_ode_neuron"
-    assert output["rtl_sha256"] == hashlib.sha256(
-        payload["verilog"].encode("utf-8")
-    ).hexdigest()
+    assert output["rtl_sha256"] == hashlib.sha256(payload["verilog"].encode("utf-8")).hexdigest()
 
 
 def test_compile_route_rejects_empty_equation_list(client: TestClient) -> None:

@@ -53,9 +53,7 @@ def test_write_studio_action_evidence_manifest_is_path_free(tmp_path: Path) -> N
     )
 
     expected_hash = hashlib.sha256(
-        json.dumps(result, allow_nan=False, sort_keys=True, separators=(",", ":")).encode(
-            "utf-8"
-        )
+        json.dumps(result, allow_nan=False, sort_keys=True, separators=(",", ":")).encode("utf-8")
     ).hexdigest()
     payload = evidence.to_public_dict()
     assert payload["schema_version"] == STUDIO_ACTION_EVIDENCE_SCHEMA_VERSION

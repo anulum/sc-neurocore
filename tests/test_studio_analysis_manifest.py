@@ -90,9 +90,7 @@ def test_attach_analysis_result_manifest_ignores_existing_metadata_for_hash() ->
 
     metadata = cast(dict[str, JsonValue], attached["analysis_metadata"])
     assert metadata["source"] == "model"
-    assert metadata["result_sha256"] == _sha256_json(
-        {"frequencies_hz": [1.0], "rates": [2.0]}
-    )
+    assert metadata["result_sha256"] == _sha256_json({"frequencies_hz": [1.0], "rates": [2.0]})
     assert metadata["output_keys"] == ["frequencies_hz", "rates"]
 
 
@@ -134,7 +132,13 @@ def test_build_analysis_result_manifest_rejects_non_portable_numbers() -> None:
         ),
         (
             "/api/bifurcation",
-            {**LIF_REQUEST, "sweep_param": "tau_m", "sweep_min": 8.0, "sweep_max": 12.0, "sweep_steps": 5},
+            {
+                **LIF_REQUEST,
+                "sweep_param": "tau_m",
+                "sweep_min": 8.0,
+                "sweep_max": 12.0,
+                "sweep_steps": 5,
+            },
             "bifurcation",
             "ode",
         ),

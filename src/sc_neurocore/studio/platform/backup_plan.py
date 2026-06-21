@@ -165,15 +165,17 @@ def build_studio_backup_plan(
         Backup and restore manifest for the active Studio runtime profile.
     """
 
-    runtime_settings = (
-        build_default_studio_runtime_settings() if settings is None else settings
-    )
+    runtime_settings = build_default_studio_runtime_settings() if settings is None else settings
     required_for_production = runtime_settings.deployment_profile == "production"
     resolved_project_root = (
-        Path.home() / ".sc-neurocore" / "studio" / "projects"
-        if project_root is None
-        else project_root
-    ).expanduser().resolve()
+        (
+            Path.home() / ".sc-neurocore" / "studio" / "projects"
+            if project_root is None
+            else project_root
+        )
+        .expanduser()
+        .resolve()
+    )
     items = (
         _file_item(
             item_id="identity_file",

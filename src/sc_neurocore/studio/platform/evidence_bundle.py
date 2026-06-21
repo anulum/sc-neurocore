@@ -29,9 +29,7 @@ from sc_neurocore.studio.simulation_manifest import STUDIO_SIMULATION_RUN_SCHEMA
 STUDIO_EVIDENCE_BUNDLE_SCHEMA_VERSION = "studio.evidence-bundle.v1"
 STUDIO_ACTION_EVIDENCE_SCHEMA_VERSION = "studio.action-evidence.v1"
 STUDIO_DEFAULT_FLOW_RUN_SCHEMA_VERSION = "sc-neurocore.studio.default-flow-run.v1"
-STUDIO_DEFAULT_FLOW_ATTESTATION_SCHEMA_VERSION = (
-    "sc-neurocore.studio.default-flow-attestation.v1"
-)
+STUDIO_DEFAULT_FLOW_ATTESTATION_SCHEMA_VERSION = "sc-neurocore.studio.default-flow-attestation.v1"
 UTC = timezone.utc
 
 JsonScalar: TypeAlias = str | int | float | bool | None
@@ -260,9 +258,7 @@ def write_studio_evidence_bundle(
         )
         for artifact in record.artifacts:
             safe_relative_path = _safe_bundle_artifact_path(artifact.relative_path)
-            bundle_path = (
-                f"evidence/jobs/{record.job_id}/artifacts/{safe_relative_path}"
-            )
+            bundle_path = f"evidence/jobs/{record.job_id}/artifacts/{safe_relative_path}"
             artifact_payload = reader(record.job_id, artifact.relative_path)
             written = context.write_artifact(bundle_path, artifact_payload.payload)
             written_paths.append(written.relative_path)
@@ -330,17 +326,13 @@ def _bundle_summary(
 
     for record in job_records:
         source_job_kind_counts[record.kind] = source_job_kind_counts.get(record.kind, 0) + 1
-        source_job_owner_counts[record.owner] = (
-            source_job_owner_counts.get(record.owner, 0) + 1
-        )
+        source_job_owner_counts[record.owner] = source_job_owner_counts.get(record.owner, 0) + 1
 
     return {
         "artifact_path_count": artifact_path_count,
         "entry_count": len(entries),
         "entry_type_counts": dict(sorted(entry_type_counts.items())),
-        "evidence_classification_counts": dict(
-            sorted(evidence_classification_counts.items())
-        ),
+        "evidence_classification_counts": dict(sorted(evidence_classification_counts.items())),
         "source_job_count": len(job_records),
         "source_job_kind_counts": dict(sorted(source_job_kind_counts.items())),
         "source_job_owner_counts": dict(sorted(source_job_owner_counts.items())),
@@ -462,7 +454,9 @@ def _default_flow_attestation_payload(
         "run_fingerprint_sha256",
     ):
         if not _is_sha256_hex(result.get(key)):
-            raise ValueError("Studio default-flow attestation payload requires SHA-256 fingerprints.")
+            raise ValueError(
+                "Studio default-flow attestation payload requires SHA-256 fingerprints."
+            )
     expected = run_fingerprints.get((preset_id, flow_id))
     observed = (
         cast(str, result["inputs_fingerprint_sha256"]),

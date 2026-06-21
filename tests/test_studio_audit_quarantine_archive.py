@@ -209,9 +209,7 @@ def test_write_studio_audit_quarantine_archive_writes_manifest_and_payload(
     )
     assert archive_payload["schema_version"] == STUDIO_AUDIT_QUARANTINE_ARCHIVE_SCHEMA_VERSION
     assert archive_payload["quarantine_export"]["event_count"] == 1
-    assert archive_payload["summary"]["reason_counts"] == {
-        "legacy_or_unverifiable_rows": 1
-    }
+    assert archive_payload["summary"]["reason_counts"] == {"legacy_or_unverifiable_rows": 1}
     assert manifest_payload["summary"] == archive_payload["summary"]
     assert str(tmp_path) not in json.dumps(payload)
 
@@ -422,7 +420,9 @@ def test_write_studio_audit_quarantine_restore_writes_jsonl_and_manifest(
         "evidence/audit-quarantine/restore-manifest.json",
     )
     assert json.loads(restore_rows)["event_hash"] == "1" * 64
-    assert restore_manifest["schema_version"] == STUDIO_AUDIT_QUARANTINE_ARCHIVE_RESTORE_SCHEMA_VERSION
+    assert (
+        restore_manifest["schema_version"] == STUDIO_AUDIT_QUARANTINE_ARCHIVE_RESTORE_SCHEMA_VERSION
+    )
     assert restore_manifest["summary"]["event_count"] == 1
     assert restore_manifest["summary"]["restored_at_utc"] == "2026-06-22T00:00:00Z"
     assert str(tmp_path) not in json.dumps(payload)

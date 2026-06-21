@@ -304,9 +304,7 @@ class TestDispatch:
 
     def test_l_ratio_python_matches_reference(self) -> None:
         cluster, noise = _cluster_noise(15, 25, 2)
-        direct = _SQ._l_ratio_python(
-            np.ascontiguousarray(cluster), np.ascontiguousarray(noise)
-        )
+        direct = _SQ._l_ratio_python(np.ascontiguousarray(cluster), np.ascontiguousarray(noise))
         routed = l_ratio(cluster, noise, backend="python")
         npt.assert_allclose(routed, direct, atol=0)
 

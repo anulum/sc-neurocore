@@ -30,9 +30,7 @@ STUDIO_AUDIT_QUARANTINE_ARCHIVE_RETENTION_SCHEMA_VERSION = (
 STUDIO_AUDIT_QUARANTINE_ARCHIVE_RESTORE_SCHEMA_VERSION = (
     "studio.audit-quarantine-archive.restore.v1"
 )
-STUDIO_AUDIT_QUARANTINE_ARCHIVE_PURGE_SCHEMA_VERSION = (
-    "studio.audit-quarantine-archive.purge.v1"
-)
+STUDIO_AUDIT_QUARANTINE_ARCHIVE_PURGE_SCHEMA_VERSION = "studio.audit-quarantine-archive.purge.v1"
 STUDIO_AUDIT_QUARANTINE_ARCHIVE_OWNER = "studio-audit-quarantine"
 STUDIO_AUDIT_QUARANTINE_RESTORE_OWNER = "studio-audit-quarantine-restore"
 STUDIO_AUDIT_QUARANTINE_ARCHIVE_KIND = "evidence"
@@ -263,13 +261,9 @@ class StudioAuditQuarantineArchivePurgeResult:
 
         return {
             "purged_archive_count": len(self.purged_entries),
-            "purged_entries": [
-                entry.to_public_dict() for entry in self.purged_entries
-            ],
+            "purged_entries": [entry.to_public_dict() for entry in self.purged_entries],
             "retained_archive_count": len(self.retained_entries),
-            "retained_entries": [
-                entry.to_public_dict() for entry in self.retained_entries
-            ],
+            "retained_entries": [entry.to_public_dict() for entry in self.retained_entries],
             "retain_latest": self.retain_latest,
             "schema_version": self.schema_version,
             "skipped_record_count": self.skipped_record_count,
@@ -821,9 +815,7 @@ def _write_jsonl_entry(
     relative_path: str,
     rows: Sequence[Mapping[str, JsonValue]],
 ) -> dict[str, JsonValue]:
-    encoded_rows = (
-        json.dumps(dict(row), separators=(",", ":"), sort_keys=True) for row in rows
-    )
+    encoded_rows = (json.dumps(dict(row), separators=(",", ":"), sort_keys=True) for row in rows)
     payload = "\n".join(encoded_rows)
     if payload:
         payload = f"{payload}\n"

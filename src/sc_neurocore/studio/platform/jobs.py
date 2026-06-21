@@ -15,6 +15,7 @@ import json
 import os
 import secrets
 import shutil
+
 # Process workers use shell-free local argument vectors.
 import subprocess  # nosec B404
 import sys
@@ -178,9 +179,7 @@ class StudioJobStatusSnapshot:
             "configured": self.configured,
             "failed_count": self.failed_count,
             "process_count": self.process_count,
-            "resource_profiles": [
-                profile.to_public_dict() for profile in self.resource_profiles
-            ],
+            "resource_profiles": [profile.to_public_dict() for profile in self.resource_profiles],
             "schema_version": self.schema_version,
             "thread_count": self.thread_count,
             "timed_out_count": self.timed_out_count,

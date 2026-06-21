@@ -201,10 +201,7 @@ def test_audit_schema_version_is_stable() -> None:
     contract = _policy_contract()
 
     assert contract["AUDIT_SCHEMA_VERSION"] == "studio.audit.v1"
-    assert (
-        contract["AUDIT_QUARANTINE_EXPORT_SCHEMA_VERSION"]
-        == "studio.audit.quarantine.export.v1"
-    )
+    assert contract["AUDIT_QUARANTINE_EXPORT_SCHEMA_VERSION"] == "studio.audit.quarantine.export.v1"
 
 
 def test_jsonl_audit_sink_exposes_configured_path(tmp_path: Path) -> None:
@@ -606,9 +603,7 @@ def test_jsonl_audit_sink_quarantine_export_summarizes_mixed_reasons(
 
     assert exported["event_count"] == 2
     assert exported["quarantine_reason"] == "multiple_quarantine_reasons"
-    assert [
-        event["quarantine_reason"] for event in exported["events"]
-    ] == [
+    assert [event["quarantine_reason"] for event in exported["events"]] == [
         "legacy_or_unverifiable_rows",
         "tampered_or_corrupt_rows",
     ]
@@ -1019,19 +1014,12 @@ def test_default_route_policy_registry_classifies_platform_routes() -> None:
     )
     assert quarantine_archive_restore_policy.visibility is contract["RouteVisibility"].ADMIN
     assert (
-        quarantine_archive_restore_policy.audit_action
-        == "studio.audit.quarantine.archive.restore"
+        quarantine_archive_restore_policy.audit_action == "studio.audit.quarantine.archive.restore"
     )
     assert quarantine_archive_purge_policy.visibility is contract["RouteVisibility"].ADMIN
-    assert (
-        quarantine_archive_purge_policy.audit_action
-        == "studio.audit.quarantine.archive.purge"
-    )
+    assert quarantine_archive_purge_policy.audit_action == "studio.audit.quarantine.archive.purge"
     assert browser_user_create_policy.visibility is contract["RouteVisibility"].ADMIN
-    assert (
-        browser_user_create_policy.audit_action
-        == "studio.identity.browser_users.create"
-    )
+    assert browser_user_create_policy.audit_action == "studio.identity.browser_users.create"
     assert artifact_policy.visibility is contract["RouteVisibility"].ADMIN
     assert artifact_policy.audit_action == "studio.jobs.artifact.read"
 
@@ -1137,14 +1125,8 @@ def test_default_route_policy_registry_marks_stateful_routes_protected() -> None
     )
 
     assert training_policy.visibility is contract["RouteVisibility"].AUTHENTICATED
-    assert (
-        training_checkpoint_export_policy.visibility
-        is contract["RouteVisibility"].AUTHENTICATED
-    )
-    assert (
-        training_checkpoint_import_policy.visibility
-        is contract["RouteVisibility"].AUTHENTICATED
-    )
+    assert training_checkpoint_export_policy.visibility is contract["RouteVisibility"].AUTHENTICATED
+    assert training_checkpoint_import_policy.visibility is contract["RouteVisibility"].AUTHENTICATED
     assert synth_policy.visibility is contract["RouteVisibility"].ADMIN
     assert websocket_policy.visibility is contract["RouteVisibility"].AUTHENTICATED
     assert jobs_status_policy.visibility is contract["RouteVisibility"].PUBLIC

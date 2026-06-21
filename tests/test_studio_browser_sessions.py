@@ -316,10 +316,7 @@ def test_identity_lifecycle_routes_emit_allow_and_deny_audit_rows(
     ]
     route_rows = [row for row in rows if row["action"].startswith("studio.identity.browser_users.")]
 
-    assert {
-        (row["action"], row["decision"], row["reason"])
-        for row in lifecycle_rows
-    } >= {
+    assert {(row["action"], row["decision"], row["reason"]) for row in lifecycle_rows} >= {
         ("studio.identity.browser_user.create", "allow", "created:viewer"),
         ("studio.identity.browser_user.update", "allow", "updated:viewer"),
         (
@@ -381,10 +378,7 @@ def test_browser_login_throttles_repeated_invalid_passwords(tmp_path: Path) -> N
     assert browser_login_status["max_failures"] == 2
     assert 1 <= browser_login_status["max_retry_after_seconds"] <= 60
     assert "operator" not in json.dumps(browser_login_status)
-    rows = [
-        row for row in _audit_rows(audit_path)
-        if row["action"] == "studio.auth.login"
-    ]
+    rows = [row for row in _audit_rows(audit_path) if row["action"] == "studio.auth.login"]
     assert [row["reason"] for row in rows[-3:]] == [
         "invalid_browser_login",
         "browser_login_throttled",
