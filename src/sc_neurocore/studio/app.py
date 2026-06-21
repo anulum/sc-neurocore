@@ -107,6 +107,7 @@ from sc_neurocore.studio.platform import (
     JsonlAuditSink,
     PolicyGateway,
     Principal,
+    STUDIO_AUDIT_QUARANTINE_RESTORE_OWNER,
     THROTTLED_BROWSER_LOGIN_REASON,
     EvidenceClassification,
     StudioBrowserLoginThrottle,
@@ -134,6 +135,7 @@ from sc_neurocore.studio.platform import (
     validate_studio_audit_quarantine_archive,
     write_studio_action_evidence_manifest,
     write_studio_audit_quarantine_archive,
+    write_studio_audit_quarantine_restore,
     write_studio_evidence_bundle,
 )
 from sc_neurocore.studio.presets import (
@@ -371,6 +373,13 @@ class StudioAuditQuarantineArchiveRequest(BaseModel):
 
 class StudioAuditQuarantineArchiveValidateRequest(BaseModel):
     """Request body for admin audit quarantine archive validation."""
+
+    archive: dict[str, Any]
+    manifest: dict[str, Any] | None = None
+
+
+class StudioAuditQuarantineArchiveRestoreRequest(BaseModel):
+    """Request body for admin audit quarantine archive restore materialization."""
 
     archive: dict[str, Any]
     manifest: dict[str, Any] | None = None
@@ -1300,6 +1309,58 @@ def create_app(runtime_settings: StudioRuntimeSettings | None = None) -> FastAPI
             retain_latest=retain_latest,
         ).to_public_dict()
         return cast(dict[str, object], result)
+
+    @app.post("/api/studio/audit/quarantine/archive/restore")
+    def api_studio_audit_quarantine_archive_restore(
+        restore_request: StudioAuditQuarantineArchiveRestoreRequest,
+        request: Request,
+    ) -> dict[str, object]:
+        """Materialize a validated archive as confined restore artifacts."""
+
+        validation = validate_studio_audit_quarantine_archive(
+            restore_request.archive,
+            manifest_payload=restore_request.manifest,
+        )
+        if not validation.valid:
+            raise HTTPException(
+                status_code=422,
+                detail={
+                    "errors": list(validation.errors),
+                    "schema_version": validation.schema_version,
+                },
+            )
+        request_id = getattr(request.state, "studio_request_id", None)
+
+        def task(context: StudioJobContext) -> dict[str, object]:
+            result = write_studio_audit_quarantine_restore(
+                context,
+                archive_payload=restore_request.archive,
+                manifest_payload=restore_request.manifest,
+            ).to_public_dict()
+            return cast(dict[str, object], result)
+
+        submitted = studio_job_manager.submit(
+            kind="evidence",
+            owner=STUDIO_AUDIT_QUARANTINE_RESTORE_OWNER,
+            request_id=request_id if isinstance(request_id, str) else None,
+            task=task,
+        )
+        completed = studio_job_manager.wait(
+            submitted.job_id,
+            timeout_seconds=settings.job_default_timeout_seconds + 1.0,
+        )
+        if completed.status == "completed" and completed.result is not None:
+            result = dict(completed.result)
+            result["job_id"] = completed.job_id
+            result["artifacts"] = [
+                artifact.to_public_dict() for artifact in completed.artifacts
+            ]
+            return result
+        if completed.status in {"pending", "running", "cancelling"}:
+            raise HTTPException(status_code=503, detail="studio_job_wait_exceeded")
+        if completed.status == "timed_out":
+            raise HTTPException(status_code=504, detail="studio_job_timed_out")
+        raise HTTPException(status_code=500, detail="studio_job_failed")
 
     @app.post("/api/studio/evidence/bundle")
     def api_studio_evidence_bundle(

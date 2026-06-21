@@ -24,6 +24,7 @@ from starlette.testclient import TestClient
 from sc_neurocore.studio.app import create_app
 from sc_neurocore.studio.platform import (
     STUDIO_AUDIT_QUARANTINE_ARCHIVE_RETENTION_SCHEMA_VERSION,
+    STUDIO_AUDIT_QUARANTINE_ARCHIVE_RESTORE_SCHEMA_VERSION,
     STUDIO_AUDIT_QUARANTINE_ARCHIVE_SCHEMA_VERSION,
     STUDIO_AUDIT_QUARANTINE_ARCHIVE_VALIDATION_SCHEMA_VERSION,
     AuditEvent,
@@ -36,6 +37,7 @@ from sc_neurocore.studio.platform import (
     build_studio_audit_quarantine_archive_retention_plan,
     validate_studio_audit_quarantine_archive,
     write_studio_audit_quarantine_archive,
+    write_studio_audit_quarantine_restore,
 )
 
 UTC = timezone.utc
@@ -121,6 +123,17 @@ def _json_artifact(
     decoded = json.loads(payload.payload.decode("utf-8"))
     assert isinstance(decoded, dict)
     return cast(dict[str, object], decoded)
+
+
+def _text_artifact(
+    manager: StudioJobManager,
+    job_id: str,
+    relative_path: str,
+) -> str:
+    """Read one text job artifact through the verified artifact API."""
+
+    payload = manager.read_artifact(job_id, relative_path)
+    return payload.payload.decode("utf-8")
 
 
 def _archive_record(
@@ -334,6 +347,54 @@ def test_build_studio_audit_quarantine_archive_retention_plan_skips_malformed_jo
     assert plan["archive_count"] == 0
     assert plan["skipped_record_count"] == 1
     assert plan["entries"] == []
+
+
+def test_write_studio_audit_quarantine_restore_writes_jsonl_and_manifest(
+    tmp_path: Path,
+) -> None:
+    """Restore writer materializes validated archive rows as job artifacts."""
+
+    archive_payload, manifest_payload = _written_archive_pair(tmp_path)
+    result = write_studio_audit_quarantine_restore(
+        _archive_context(tmp_path / "restore"),
+        archive_payload=archive_payload,
+        manifest_payload=manifest_payload,
+        clock=lambda: datetime(2026, 6, 22, tzinfo=UTC),
+    )
+    payload = result.to_public_dict()
+    restore_root = tmp_path / "restore" / "job" / "evidence" / "audit-quarantine"
+    restore_rows = restore_root.joinpath("restore.jsonl").read_text(encoding="utf-8")
+    restore_manifest = json.loads(
+        restore_root.joinpath("restore-manifest.json").read_text(encoding="utf-8")
+    )
+
+    assert payload["schema_version"] == STUDIO_AUDIT_QUARANTINE_ARCHIVE_RESTORE_SCHEMA_VERSION
+    assert payload["archive_id"] == "saqa_sj_quarantine"
+    assert result.artifact_paths == (
+        "evidence/audit-quarantine/restore.jsonl",
+        "evidence/audit-quarantine/restore-manifest.json",
+    )
+    assert json.loads(restore_rows)["event_hash"] == "1" * 64
+    assert restore_manifest["schema_version"] == STUDIO_AUDIT_QUARANTINE_ARCHIVE_RESTORE_SCHEMA_VERSION
+    assert restore_manifest["summary"]["event_count"] == 1
+    assert restore_manifest["summary"]["restored_at_utc"] == "2026-06-22T00:00:00Z"
+    assert str(tmp_path) not in json.dumps(payload)
+
+
+def test_write_studio_audit_quarantine_restore_rejects_invalid_archive(
+    tmp_path: Path,
+) -> None:
+    """Restore writer rejects archives that fail validation."""
+
+    archive_payload, manifest_payload = _written_archive_pair(tmp_path)
+    manifest_payload["archive_id"] = "saqa_other"
+
+    with pytest.raises(ValueError, match="archive_restore_validation_failed"):
+        write_studio_audit_quarantine_restore(
+            _archive_context(tmp_path / "restore"),
+            archive_payload=archive_payload,
+            manifest_payload=manifest_payload,
+        )
 
 
 def test_validate_studio_audit_quarantine_archive_reports_manifest_mismatch(
@@ -669,6 +730,70 @@ def test_studio_audit_quarantine_archive_validate_route_accepts_archive_pair(
     assert str(tmp_path) not in json.dumps(body)
 
 
+def test_studio_audit_quarantine_archive_restore_route_writes_job_artifacts(
+    tmp_path: Path,
+) -> None:
+    """Admin restore route writes confined restore artifacts."""
+
+    archive_payload, manifest_payload = _written_archive_pair(tmp_path)
+    app = create_app(
+        StudioRuntimeSettings(
+            enforce_route_policies=True,
+            job_root_path=str(tmp_path / "jobs"),
+        )
+    )
+    client = TestClient(app, base_url="http://127.0.0.1")
+
+    response = client.post(
+        "/api/studio/audit/quarantine/archive/restore",
+        json={"archive": archive_payload, "manifest": manifest_payload},
+        headers={"x-studio-principal": "admin-1", "x-studio-roles": "studio.admin"},
+    )
+    body = response.json()
+    manager = _job_manager(app)
+    restore_rows = _text_artifact(
+        manager,
+        body["job_id"],
+        "evidence/audit-quarantine/restore.jsonl",
+    )
+    restore_manifest = _json_artifact(
+        manager,
+        body["job_id"],
+        "evidence/audit-quarantine/restore-manifest.json",
+    )
+
+    assert response.status_code == 200
+    assert body["schema_version"] == STUDIO_AUDIT_QUARANTINE_ARCHIVE_RESTORE_SCHEMA_VERSION
+    assert body["archive_id"] == "saqa_sj_quarantine"
+    assert body["summary"]["event_count"] == 1
+    assert len(body["artifacts"]) == 2
+    assert json.loads(restore_rows)["event_hash"] == "1" * 64
+    assert restore_manifest["summary"] == body["summary"]
+    assert str(tmp_path) not in json.dumps(body)
+
+
+def test_studio_audit_quarantine_archive_restore_route_rejects_invalid_archive(
+    tmp_path: Path,
+) -> None:
+    """Admin restore route returns validation errors without creating a job."""
+
+    archive_payload, manifest_payload = _written_archive_pair(tmp_path)
+    manifest_payload["archive_id"] = "saqa_other"
+    app = create_app(StudioRuntimeSettings(enforce_route_policies=True))
+    client = TestClient(app, base_url="http://127.0.0.1")
+
+    response = client.post(
+        "/api/studio/audit/quarantine/archive/restore",
+        json={"archive": archive_payload, "manifest": manifest_payload},
+        headers={"x-studio-principal": "admin-1", "x-studio-roles": "studio.admin"},
+    )
+    body = response.json()
+
+    assert response.status_code == 422
+    assert body["detail"]["errors"] == ["manifest_archive_id_mismatch"]
+    assert _job_manager(app).list_records() == ()
+
+
 def test_studio_audit_quarantine_archive_routes_require_admin(
     tmp_path: Path,
 ) -> None:
@@ -699,6 +824,11 @@ def test_studio_audit_quarantine_archive_routes_require_admin(
         "/api/studio/audit/quarantine/archive/retention",
         headers={"x-studio-principal": "operator-1", "x-studio-roles": "studio.viewer"},
     )
+    restore_response = client.post(
+        "/api/studio/audit/quarantine/archive/restore",
+        json={"archive": archive_payload, "manifest": manifest_payload},
+        headers={"x-studio-principal": "operator-1", "x-studio-roles": "studio.viewer"},
+    )
 
     assert archive_response.status_code == 403
     assert archive_response.json()["detail"] == "missing_admin_role"
@@ -706,3 +836,5 @@ def test_studio_audit_quarantine_archive_routes_require_admin(
     assert validate_response.json()["detail"] == "missing_admin_role"
     assert retention_response.status_code == 403
     assert retention_response.json()["detail"] == "missing_admin_role"
+    assert restore_response.status_code == 403
+    assert restore_response.json()["detail"] == "missing_admin_role"

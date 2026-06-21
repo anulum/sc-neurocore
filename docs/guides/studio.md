@@ -320,6 +320,14 @@ Administrators can review archive retention through
 path-free response lists valid quarantine archive jobs newest first, marks the
 newest archives as `retain`, and marks older archives as `prune_candidate`
 without deleting job artifacts.
+Administrators can materialize a validated quarantine archive into confined
+restore artifacts through `POST /api/studio/audit/quarantine/archive/restore`.
+The route validates the archive and optional manifest, then writes
+`evidence/audit-quarantine/restore.jsonl` and
+`evidence/audit-quarantine/restore-manifest.json` as Studio job artifacts. It
+does not append restored rows to the active audit chain; operators can inspect,
+download, and hand off the restore artifact before any destructive or
+chain-mutating action.
 When `SC_NEUROCORE_STUDIO_AUDIT_ROTATION_BYTES` is set, the retained-file count
 must be a positive integer so rotation always keeps at least one archived JSONL
 segment for incident review and retained-chain verification.

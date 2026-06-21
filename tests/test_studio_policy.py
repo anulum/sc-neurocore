@@ -977,6 +977,10 @@ def test_default_route_policy_registry_classifies_platform_routes() -> None:
         "GET",
         "/api/studio/audit/quarantine/archive/retention",
     )
+    quarantine_archive_restore_policy = registry.policy_for(
+        "POST",
+        "/api/studio/audit/quarantine/archive/restore",
+    )
     browser_user_create_policy = registry.policy_for(
         "POST",
         "/api/studio/identity/browser-users",
@@ -1008,6 +1012,11 @@ def test_default_route_policy_registry_classifies_platform_routes() -> None:
     assert (
         quarantine_archive_retention_policy.audit_action
         == "studio.audit.quarantine.archive.retention"
+    )
+    assert quarantine_archive_restore_policy.visibility is contract["RouteVisibility"].ADMIN
+    assert (
+        quarantine_archive_restore_policy.audit_action
+        == "studio.audit.quarantine.archive.restore"
     )
     assert browser_user_create_policy.visibility is contract["RouteVisibility"].ADMIN
     assert (

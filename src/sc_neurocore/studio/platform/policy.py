@@ -858,6 +858,12 @@ def build_default_studio_route_policy_registry() -> RoutePolicyRegistry:
             ),
             (
                 "POST",
+                "/api/studio/audit/quarantine/archive/restore",
+                RouteVisibility.ADMIN,
+                "studio.audit.quarantine.archive.restore",
+            ),
+            (
+                "POST",
                 "/api/studio/evidence/bundle",
                 RouteVisibility.ADMIN,
                 "studio.evidence.bundle.create",

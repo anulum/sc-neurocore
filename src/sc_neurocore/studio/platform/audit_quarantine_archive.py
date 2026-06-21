@@ -27,7 +27,11 @@ STUDIO_AUDIT_QUARANTINE_ARCHIVE_VALIDATION_SCHEMA_VERSION = (
 STUDIO_AUDIT_QUARANTINE_ARCHIVE_RETENTION_SCHEMA_VERSION = (
     "studio.audit-quarantine-archive.retention.v1"
 )
+STUDIO_AUDIT_QUARANTINE_ARCHIVE_RESTORE_SCHEMA_VERSION = (
+    "studio.audit-quarantine-archive.restore.v1"
+)
 STUDIO_AUDIT_QUARANTINE_ARCHIVE_OWNER = "studio-audit-quarantine"
+STUDIO_AUDIT_QUARANTINE_RESTORE_OWNER = "studio-audit-quarantine-restore"
 STUDIO_AUDIT_QUARANTINE_ARCHIVE_KIND = "evidence"
 UTC = timezone.utc
 
@@ -193,6 +197,39 @@ class StudioAuditQuarantineArchiveRetentionPlan:
             "retain_latest": self.retain_latest,
             "schema_version": self.schema_version,
             "skipped_record_count": self.skipped_record_count,
+        }
+
+
+@dataclass(frozen=True, slots=True)
+class StudioAuditQuarantineArchiveRestoreResult:
+    """Path-free result returned after materializing a restore artifact.
+
+    Parameters
+    ----------
+    archive_id:
+        Validated archive identifier restored into job artifacts.
+    manifest:
+        JSON manifest describing the restore artifacts written by the job.
+    summary:
+        Path-free aggregate counts for operator review.
+    artifact_paths:
+        Restore-relative artifact paths written through the Studio job context.
+    """
+
+    archive_id: str
+    manifest: dict[str, JsonValue]
+    summary: dict[str, JsonValue]
+    artifact_paths: tuple[str, ...]
+
+    def to_public_dict(self) -> dict[str, JsonValue]:
+        """Return the path-free quarantine archive restore result."""
+
+        return {
+            "archive_id": self.archive_id,
+            "artifact_paths": list(self.artifact_paths),
+            "manifest": self.manifest,
+            "schema_version": STUDIO_AUDIT_QUARANTINE_ARCHIVE_RESTORE_SCHEMA_VERSION,
+            "summary": self.summary,
         }
 
 
@@ -386,6 +423,94 @@ def build_studio_audit_quarantine_archive_retention_plan(
     )
 
 
+def write_studio_audit_quarantine_restore(
+    context: StudioJobContext,
+    *,
+    archive_payload: Mapping[str, object],
+    manifest_payload: Mapping[str, object] | None = None,
+    clock: Callable[[], datetime] | None = None,
+) -> StudioAuditQuarantineArchiveRestoreResult:
+    """Materialize validated quarantine archive rows into restore artifacts.
+
+    Parameters
+    ----------
+    context:
+        Studio job context that owns the restore artifacts and enforces path
+        confinement, byte ceilings, and SHA-256 manifests.
+    archive_payload:
+        Candidate archive JSON object from
+        ``evidence/audit-quarantine/archive.json``.
+    manifest_payload:
+        Optional companion manifest JSON object from
+        ``evidence/audit-quarantine/manifest.json``.
+    clock:
+        Optional UTC clock for deterministic tests.
+
+    Returns
+    -------
+    StudioAuditQuarantineArchiveRestoreResult
+        Path-free restore manifest and artifact list.
+
+    Raises
+    ------
+    ValueError
+        If archive validation fails before restore materialization.
+    """
+
+    validation = validate_studio_audit_quarantine_archive(
+        archive_payload,
+        manifest_payload=manifest_payload,
+    )
+    if not validation.valid or validation.archive_id is None or validation.summary is None:
+        raise ValueError("archive_restore_validation_failed")
+    archive = _audit_quarantine_archive_payload(archive_payload)
+    export_payload = cast(Mapping[str, JsonValue], archive["quarantine_export"])
+    event_rows = _restore_event_rows(export_payload)
+    now = (clock or _utc_now)().astimezone(UTC).replace(microsecond=0)
+    restored_at_utc = now.isoformat().replace("+00:00", "Z")
+    written_paths: list[str] = []
+    restore_entry = _write_jsonl_entry(
+        context,
+        written_paths,
+        "audit_quarantine_restore_jsonl",
+        "evidence/audit-quarantine/restore.jsonl",
+        event_rows,
+    )
+    summary: dict[str, JsonValue] = {
+        "archive_id": validation.archive_id,
+        "event_count": len(event_rows),
+        "quarantine_reason": validation.summary["quarantine_reason"],
+        "reason_counts": validation.summary["reason_counts"],
+        "restored_at_utc": restored_at_utc,
+        "restore_artifact_count": 2,
+        "retained_event_count": validation.summary["retained_event_count"],
+        "source_schema_version": validation.summary["source_schema_version"],
+        "truncated": validation.summary["truncated"],
+    }
+    manifest: dict[str, JsonValue] = {
+        "archive_id": validation.archive_id,
+        "artifact_count": 1,
+        "created_at_utc": restored_at_utc,
+        "entries": [restore_entry],
+        "schema_version": STUDIO_AUDIT_QUARANTINE_ARCHIVE_RESTORE_SCHEMA_VERSION,
+        "summary": summary,
+    }
+    manifest_entry = _write_json_entry(
+        context,
+        written_paths,
+        "audit_quarantine_restore_manifest",
+        "evidence/audit-quarantine/restore-manifest.json",
+        manifest,
+    )
+    manifest["manifest_artifact"] = manifest_entry
+    return StudioAuditQuarantineArchiveRestoreResult(
+        archive_id=validation.archive_id,
+        manifest=manifest,
+        summary=summary,
+        artifact_paths=tuple(written_paths),
+    )
+
+
 def _invalid_archive_result(
     archive_id: str | None,
     error_code: str,
@@ -449,6 +574,17 @@ def _artifact_paths(value: JsonValue | None) -> tuple[str, ...] | None:
             return None
         paths.append(item)
     return tuple(paths)
+
+
+def _restore_event_rows(
+    export_payload: Mapping[str, JsonValue],
+) -> tuple[dict[str, JsonValue], ...]:
+    events = cast(list[JsonValue], export_payload["events"])
+    rows: list[dict[str, JsonValue]] = []
+    for event in events:
+        event_object = cast(Mapping[str, object], event)
+        rows.append(_json_object(event_object, "restore_event_not_json"))
+    return tuple(rows)
 
 
 def _manifest_validation_errors(
@@ -583,6 +719,30 @@ def _write_json_entry(
     }
 
 
+def _write_jsonl_entry(
+    context: StudioJobContext,
+    written_paths: list[str],
+    entry_type: str,
+    relative_path: str,
+    rows: Sequence[Mapping[str, JsonValue]],
+) -> dict[str, JsonValue]:
+    encoded_rows = (
+        json.dumps(dict(row), separators=(",", ":"), sort_keys=True) for row in rows
+    )
+    payload = "\n".join(encoded_rows)
+    if payload:
+        payload = f"{payload}\n"
+    artifact = context.write_artifact(relative_path, payload)
+    written_paths.append(artifact.relative_path)
+    return {
+        "bundle_path": artifact.relative_path,
+        "row_count": len(rows),
+        "sha256": artifact.sha256,
+        "size_bytes": artifact.size_bytes,
+        "type": entry_type,
+    }
+
+
 def _json_object(payload: Mapping[str, object], error_code: str) -> dict[str, JsonValue]:
     return cast(dict[str, JsonValue], _json_value(dict(payload), error_code))
 
@@ -612,7 +772,9 @@ __all__ = [
     "STUDIO_AUDIT_QUARANTINE_ARCHIVE_SCHEMA_VERSION",
     "STUDIO_AUDIT_QUARANTINE_ARCHIVE_VALIDATION_SCHEMA_VERSION",
     "STUDIO_AUDIT_QUARANTINE_ARCHIVE_RETENTION_SCHEMA_VERSION",
+    "STUDIO_AUDIT_QUARANTINE_ARCHIVE_RESTORE_SCHEMA_VERSION",
     "STUDIO_AUDIT_QUARANTINE_ARCHIVE_OWNER",
+    "STUDIO_AUDIT_QUARANTINE_RESTORE_OWNER",
     "STUDIO_AUDIT_QUARANTINE_ARCHIVE_KIND",
     "JsonScalar",
     "JsonValue",
@@ -620,7 +782,9 @@ __all__ = [
     "StudioAuditQuarantineArchiveValidation",
     "StudioAuditQuarantineArchiveRetentionEntry",
     "StudioAuditQuarantineArchiveRetentionPlan",
+    "StudioAuditQuarantineArchiveRestoreResult",
     "build_studio_audit_quarantine_archive_retention_plan",
     "validate_studio_audit_quarantine_archive",
     "write_studio_audit_quarantine_archive",
+    "write_studio_audit_quarantine_restore",
 ]
