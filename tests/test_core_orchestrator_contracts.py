@@ -79,3 +79,53 @@ def test_orchestrator_rejects_attention_to_unknown_module() -> None:
     orchestrator.set_attention("missing")
 
     assert orchestrator.attention_focus is None
+
+
+class _QuantumModule:
+    def forward(self, values):
+        return np.array([0.6 + 0.8j], dtype=complex)
+
+
+class _Uint8Module:
+    def forward(self, values):
+        return np.array([0, 1, 1, 0], dtype=np.uint8)
+
+
+def test_orchestrator_set_attention_focuses_registered_module() -> None:
+    """set_attention focuses on a module that has been registered."""
+    orchestrator = CognitiveOrchestrator()
+    orchestrator.register_module("vision", _ForwardModule(lambda values: values))
+
+    orchestrator.set_attention("vision")
+
+    assert orchestrator.attention_focus == "vision"
+
+
+def test_orchestrator_quantum_module_wraps_complex_output_as_quantum_stream() -> None:
+    """A Quantum-named module is fed a bitstream and its complex output wraps as quantum."""
+    orchestrator = CognitiveOrchestrator()
+    orchestrator.register_module("q", _QuantumModule())
+
+    result = orchestrator.execute_pipeline(["q"], TensorStream.from_prob(np.array([0.5])))
+
+    assert result.domain == "quantum"
+
+
+def test_orchestrator_uint8_output_wraps_as_bitstream_stream() -> None:
+    """A uint8 forward output is re-wrapped into the bitstream domain."""
+    orchestrator = CognitiveOrchestrator()
+    orchestrator.register_module("b", _Uint8Module())
+
+    result = orchestrator.execute_pipeline(["b"], TensorStream.from_prob(np.array([0.5])))
+
+    assert result.domain == "bitstream"
+
+
+def test_orchestrator_step_module_handles_scalar_stream() -> None:
+    """A step module processes a 0-d (scalar) stream via the scalar branch."""
+    orchestrator = CognitiveOrchestrator()
+    orchestrator.register_module("s", _StepModule(factor=3.0))
+
+    result = orchestrator.execute_pipeline(["s"], TensorStream.from_prob(np.array(0.2)))
+
+    np.testing.assert_allclose(result.to_prob(), np.array(0.6))
