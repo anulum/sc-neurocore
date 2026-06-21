@@ -27,6 +27,7 @@
 //!   P_filt = (I - K C) P_pred (I - K C)^T + K R K^T   (Joseph form)
 //!   log-lik += -0.5 * (p log 2pi + log |S| + e_t^T S^{-1} e_t)
 
+use nalgebra::{Cholesky as NaCholesky, DMatrix, DVector};
 use ndarray::{s, Array1, Array2, Array3, ArrayView1, ArrayView2};
 
 /// Result of the Kalman filter forward pass.
@@ -96,17 +97,43 @@ pub fn kalman_filter(
         // Innovation covariance: S = C P_pred C^T + R
         let s_mat = c.dot(&p_pred).dot(&c.t()) + r;
 
-        // Solve S z = innov using Gaussian elimination (small p)
-        let s_inv = invert_psd_matrix(&s_mat);
-        let s_inv_innov = s_inv.dot(&innov);
+        // S is symmetric positive-definite; factor it once with a Cholesky
+        // decomposition (nalgebra, LAPACK-grade) and reuse the single factor for the
+        // log-determinant, the innovation quadratic form, and the Kalman gain —
+        // never forming S^{-1} explicitly.
+        let s_na = DMatrix::<f64>::from_fn(p_dim, p_dim, |i, j| s_mat[(i, j)]);
+        let (logdet_s, s_inv_innov, k_gain) = match NaCholesky::new(s_na) {
+            Some(chol) => {
+                // log|S| = 2 Σ ln L_ii — the stable sum-of-logs form.
+                let l = chol.l();
+                let logdet = 2.0 * (0..p_dim).map(|i| l[(i, i)].ln()).sum::<f64>();
+                // S^{-1} innov for the quadratic form, via the triangular solves.
+                let innov_na = DVector::<f64>::from_fn(p_dim, |i, _| innov[i]);
+                let z = chol.solve(&innov_na);
+                let s_inv_innov = Array1::<f64>::from_iter((0..p_dim).map(|i| z[i]));
+                // Kalman gain K = P_pred C^T S^{-1}. With S and P_pred symmetric,
+                // K^T = S^{-1} (C P_pred), so solve S X = C P_pred and transpose —
+                // no explicit inverse.
+                let cp = c.dot(&p_pred); // (p × d)
+                let cp_na = DMatrix::<f64>::from_fn(p_dim, d_dim, |i, j| cp[(i, j)]);
+                let x = chol.solve(&cp_na); // S^{-1} (C P_pred), (p × d)
+                let k = Array2::<f64>::from_shape_fn((d_dim, p_dim), |(i, j)| x[(j, i)]);
+                (logdet, s_inv_innov, k)
+            }
+            None => {
+                // Defensive: a non-positive-definite innovation covariance cannot
+                // occur while R is positive-definite. Mirror the prior NaN
+                // propagation rather than panicking.
+                (
+                    f64::NAN,
+                    Array1::<f64>::zeros(p_dim),
+                    Array2::<f64>::zeros((d_dim, p_dim)),
+                )
+            }
+        };
 
-        // Log-determinant of S via LU/Cholesky-style recursion
-        let logdet_s = log_det_psd(&s_mat);
         let quad_form = innov.dot(&s_inv_innov);
         log_lik += -0.5 * (p_dim as f64 * two_pi_log + logdet_s + quad_form);
-
-        // Kalman gain: K = P_pred C^T S^{-1}
-        let k_gain = p_pred.dot(&c.t()).dot(&s_inv);
 
         // Filtered state: x_filt = x_pred + K e
         let x_filt = &x_pred + &k_gain.dot(&innov);
@@ -139,111 +166,10 @@ pub fn kalman_filter(
     }
 }
 
-/// Cholesky-decomposition log-determinant of a symmetric PSD matrix.
-///
-/// Returns 2 * sum(log diag(L)) where M = L L^T. Returns NaN if
-/// the matrix is not positive definite.
-fn log_det_psd(m: &Array2<f64>) -> f64 {
-    let l = cholesky(m);
-    let mut acc = 0.0_f64;
-    for i in 0..l.nrows() {
-        let d = l[(i, i)];
-        if d <= 0.0 {
-            return f64::NAN;
-        }
-        acc += d.ln();
-    }
-    2.0 * acc
-}
-
-/// Cholesky-based inversion of a symmetric PSD matrix.
-///
-/// Computes `M^{-1}` via L L^T = M then inverting via forward +
-/// backward substitution on the identity.
-fn invert_psd_matrix(m: &Array2<f64>) -> Array2<f64> {
-    let n = m.nrows();
-    let l = cholesky(m);
-    let mut inv = Array2::<f64>::eye(n);
-    // Solve L Y = I
-    for k in 0..n {
-        for i in 0..n {
-            let mut sum = inv[(i, k)];
-            for j in 0..i {
-                sum -= l[(i, j)] * inv[(j, k)];
-            }
-            inv[(i, k)] = sum / l[(i, i)];
-        }
-    }
-    // Solve L^T X = Y
-    let mut out = Array2::<f64>::zeros((n, n));
-    for k in 0..n {
-        for i in (0..n).rev() {
-            let mut sum = inv[(i, k)];
-            for j in (i + 1)..n {
-                sum -= l[(j, i)] * out[(j, k)];
-            }
-            out[(i, k)] = sum / l[(i, i)];
-        }
-    }
-    out
-}
-
-/// Cholesky decomposition: returns L lower-triangular such that
-/// L L^T = M for symmetric PSD M. No checks on PSD-ness; if M is
-/// not PSD, the diagonal of L will contain a NaN.
-fn cholesky(m: &Array2<f64>) -> Array2<f64> {
-    let n = m.nrows();
-    let mut l = Array2::<f64>::zeros((n, n));
-    for i in 0..n {
-        for j in 0..=i {
-            let mut sum = m[(i, j)];
-            for k in 0..j {
-                sum -= l[(i, k)] * l[(j, k)];
-            }
-            if i == j {
-                l[(i, j)] = sum.sqrt();
-            } else {
-                l[(i, j)] = sum / l[(j, j)];
-            }
-        }
-    }
-    l
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;
     use ndarray::array;
-
-    #[test]
-    fn cholesky_identity() {
-        let i = Array2::<f64>::eye(3);
-        let l = cholesky(&i);
-        for r in 0..3 {
-            for c in 0..3 {
-                let expected = if r == c { 1.0 } else { 0.0 };
-                assert!((l[(r, c)] - expected).abs() < 1e-12);
-            }
-        }
-    }
-
-    #[test]
-    fn invert_psd_matrix_identity() {
-        let i = Array2::<f64>::eye(3);
-        let inv = invert_psd_matrix(&i);
-        for r in 0..3 {
-            for c in 0..3 {
-                let expected = if r == c { 1.0 } else { 0.0 };
-                assert!((inv[(r, c)] - expected).abs() < 1e-12);
-            }
-        }
-    }
-
-    #[test]
-    fn log_det_identity_is_zero() {
-        let i = Array2::<f64>::eye(4);
-        assert!(log_det_psd(&i).abs() < 1e-12);
-    }
 
     #[test]
     fn kalman_scalar_random_walk_matches_analytic() {
@@ -281,6 +207,13 @@ mod tests {
 
         assert!((result.means[(0, 0)] - 0.5).abs() < 1e-12);
         assert!((result.covariances[(0, 0, 0)] - 0.5).abs() < 1e-12);
+
+        // Exact single-step Gaussian log-likelihood exercises the Cholesky
+        // log-determinant and quadratic-form path: S = 2, innov = 1, p = 1.
+        //   log N(y | y_hat, S) = -0.5 (log 2π + log|S| + innovᵀ S⁻¹ innov)
+        //                       = -0.5 (log 2π + log 2 + 0.5)
+        let expected_ll = -0.5 * ((2.0 * std::f64::consts::PI).ln() + 2.0_f64.ln() + 0.5);
+        assert!((result.log_likelihood - expected_ll).abs() < 1e-12);
     }
 
     #[test]
@@ -323,5 +256,61 @@ mod tests {
         );
 
         assert!(result.log_likelihood.is_finite());
+    }
+
+    #[test]
+    fn kalman_two_dim_obs_symmetric_psd_and_finite() {
+        // 2-D state, 2-D observation with a non-diagonal C and a non-diagonal R so
+        // the gain transpose and the 2×2 Cholesky solve are exercised (p = d = 2).
+        let a = array![[0.95, 0.0], [0.1, 0.9]];
+        let b = array![[], []];
+        let c = array![[1.0, 0.2], [0.0, 1.0]];
+        let d = array![[], []];
+        let q = array![[0.02, 0.0], [0.0, 0.02]];
+        let r_mat = array![[0.15, 0.05], [0.05, 0.2]];
+        let mu_0 = array![0.0, 0.0];
+        let sigma_0 = array![[1.0, 0.0], [0.0, 1.0]];
+
+        let obs = array![
+            [0.10, 0.05],
+            [0.20, 0.12],
+            [0.18, 0.09],
+            [0.25, 0.15],
+            [0.30, 0.20],
+        ];
+        let controls = Array2::<f64>::zeros((5, 0));
+
+        let result = kalman_filter(
+            obs.view(),
+            controls.view(),
+            a.view(),
+            b.view(),
+            c.view(),
+            d.view(),
+            q.view(),
+            r_mat.view(),
+            mu_0.view(),
+            sigma_0.view(),
+        );
+
+        assert!(result.log_likelihood.is_finite());
+        for t in 0..obs.nrows() {
+            assert!(result.means[(t, 0)].is_finite());
+            assert!(result.means[(t, 1)].is_finite());
+            // Filtered covariance must stay symmetric (Joseph form) and PSD.
+            let p00 = result.covariances[(t, 0, 0)];
+            let p11 = result.covariances[(t, 1, 1)];
+            let p01 = result.covariances[(t, 0, 1)];
+            let p10 = result.covariances[(t, 1, 0)];
+            assert!(
+                (p01 - p10).abs() < 1e-12,
+                "covariance not symmetric at t={t}"
+            );
+            assert!(p00 >= 0.0 && p11 >= 0.0, "negative variance at t={t}");
+            assert!(
+                p00 * p11 - p01 * p10 >= -1e-12,
+                "covariance not PSD at t={t}"
+            );
+        }
     }
 }

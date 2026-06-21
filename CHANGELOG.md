@@ -123,6 +123,16 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
   (Rust backend, `nalgebra`) — the numerically optimal route for an SPD system.
   Decoded classes are unchanged; the naive-Bayes decoder (diagonal covariance) is
   unaffected.
+- The Rust world-model Kalman filter (`lgssm.rs`) factors the innovation
+  covariance `S = C P_pred Cᵀ + R` with a single `nalgebra` Cholesky decomposition
+  per timestep, replacing a hand-rolled Cholesky and an explicit matrix inverse.
+  The one factor serves the log-determinant (`2 Σ log Lᵢᵢ`), the innovation
+  quadratic form (`S⁻¹ innov` via triangular solves), and the Kalman gain
+  `K = P_pred Cᵀ S⁻¹` — computed as `Kᵀ = S⁻¹ (C P_pred)` so `S⁻¹` is never formed
+  explicitly. Matches the NumPy/LAPACK reference
+  (`world_model/predictive_model.py`) to float64 round-off; the Rust-vs-Python
+  parity suite (means, covariances, log-likelihood, atol 1e-9) stays green. No
+  public API change.
 
 ### Studio platform
 - The FPGA synthesis panel can export a synthesis-scoped evidence bundle from
