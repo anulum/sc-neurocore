@@ -193,7 +193,7 @@ current protocol for each frequency. The injected trace is
 | GET | `/api/templates` | List ODE templates |
 | GET | `/api/templates/{name}` | Get template by name |
 | GET | `/api/models` | List all 118 models |
-| GET | `/api/models/scan` | Classify all models by firing pattern |
+| GET | `/api/models/scan` | Classify all models by firing pattern and return `studio.model-scan.v1` evidence metadata |
 | GET | `/api/models/{name}` | Get model detail (params, state vars) |
 | GET | `/api/presets` | List preset experiments |
 | GET | `/api/presets/{id}` | Get preset detail |

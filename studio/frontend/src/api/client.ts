@@ -623,7 +623,7 @@ export const fetchCompare = (a: Record<string, unknown>, b: Record<string, unkno
 export const fetchFreqResponse = (req: Record<string, unknown>) => post<FreqResponse>("/freq-response", req);
 export const fetchHeatmap = (req: Record<string, unknown>) => post<HeatmapResponse>("/heatmap", req);
 export const fetchCodegen = (req: Record<string, unknown>) => post<{ script: string; oneliner: string }>("/codegen", req);
-export const fetchModelScan = () => get<ModelBehavior[]>("/models/scan");
+export const fetchModelScan = () => get<ModelScanResponse>("/models/scan");
 export const simulateNetwork = (req: Record<string, unknown>) => post<NetworkResult>("/network/ei", req);
 
 export interface NetworkResult {
@@ -638,6 +638,24 @@ export interface NetworkResult {
 export interface ModelBehavior {
   name: string; category: string; pattern: string;
   description: string; rate_hz: number; spike_count: number;
+}
+
+export interface ModelScanMetadata {
+  current: number;
+  duration: number;
+  evidence_classification: "analysis";
+  input_sha256: string;
+  model_count: number;
+  pattern_counts: Record<string, number>;
+  result_sha256: string;
+  schema_version: "studio.model-scan.v1";
+  status: "completed";
+}
+
+export interface ModelScanResponse {
+  models: ModelBehavior[];
+  scan_metadata: ModelScanMetadata;
+  schema_version: "studio.model-scan.v1";
 }
 export const fetchCharacterize = (req: Record<string, unknown>) => post<CharacterizeResponse>("/characterize", req);
 export const fetchMultiSimulate = (configs: Record<string, unknown>[]) => post<SimulateResponse[]>("/multi-simulate", configs);

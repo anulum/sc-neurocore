@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useStudioStore } from "../stores/studio";
-import { fetchModelScan, type ModelBehavior } from "../api/client";
+import { fetchModelScan, type ModelBehavior, type ModelScanMetadata } from "../api/client";
+import EvidenceSummaryStrip, { type EvidenceSummaryItem } from "./EvidenceSummaryStrip";
 
 const PATTERN_COLORS: Record<string, string> = {
   tonic: "#81c784",
@@ -13,6 +14,23 @@ const PATTERN_COLORS: Record<string, string> = {
   error: "#616161",
 };
 
+function shortDigest(value: string): string {
+  return value.slice(0, 10);
+}
+
+export function buildModelScanEvidenceItems(
+  metadata: ModelScanMetadata | null,
+): EvidenceSummaryItem[] {
+  if (!metadata) return [];
+  return [
+    { label: "class", value: metadata.evidence_classification },
+    { label: "status", value: metadata.status },
+    { label: "models", value: String(metadata.model_count) },
+    { label: "in", value: shortDigest(metadata.input_sha256) },
+    { label: "out", value: shortDigest(metadata.result_sha256) },
+  ];
+}
+
 export default function ModelBrowser() {
   const {
     models, selectedModelName, modelFilter,
@@ -20,6 +38,7 @@ export default function ModelBrowser() {
   } = useStudioStore();
 
   const [behaviors, setBehaviors] = useState<Record<string, ModelBehavior>>({});
+  const [scanMetadata, setScanMetadata] = useState<ModelScanMetadata | null>(null);
   const [patternFilter, setPatternFilter] = useState<string>("");
   const [scanLoaded, setScanLoaded] = useState(false);
 
@@ -30,8 +49,9 @@ export default function ModelBrowser() {
     setScanLoaded(true);
     fetchModelScan().then((data) => {
       const map: Record<string, ModelBehavior> = {};
-      for (const b of data) map[b.name] = b;
+      for (const b of data.models) map[b.name] = b;
       setBehaviors(map);
+      setScanMetadata(data.scan_metadata);
     }).catch(() => setScanLoaded(false));
   }
 
@@ -95,6 +115,13 @@ export default function ModelBrowser() {
             }}>{p}</span>
           ))}
         </div>
+      )}
+
+      {scanMetadata && (
+        <EvidenceSummaryStrip
+          variant="grid"
+          items={buildModelScanEvidenceItems(scanMetadata)}
+        />
       )}
 
       <div style={{ maxHeight: 200, overflowY: "auto" }}>

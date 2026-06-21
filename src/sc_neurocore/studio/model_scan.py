@@ -4,29 +4,136 @@
 # © Code 2020–2026 Miroslav Šotek. All rights reserved.
 # ORCID: 0009-0009-3560-0851
 # Contact: www.anulum.li | protoscience@anulum.li
-# SC-NeuroCore — Batch model scanning for behavior classification
+# SC-NeuroCore — Batch model scanning for behaviour classification
+
+"""Evidence-producing model scan workflow for the Studio model browser."""
 
 from __future__ import annotations
 
-from typing import Any
+import hashlib
+import json
 import warnings
+from collections.abc import Mapping
+from dataclasses import dataclass
+from typing import TypeAlias, cast
 
 from sc_neurocore.studio.codegen import classify_firing_pattern
+from sc_neurocore.studio.evidence_classification import (
+    StudioEvidenceClassification,
+    StudioEvidenceStatus,
+    validate_studio_evidence_classification,
+    validate_studio_evidence_status,
+)
 from sc_neurocore.studio.models import list_models, simulate_model
 
-_CACHE: dict[str, dict[str, Any]] | None = None
+STUDIO_MODEL_SCAN_SCHEMA_VERSION = "studio.model-scan.v1"
+
+JsonScalar: TypeAlias = str | int | float | bool | None
+JsonValue: TypeAlias = JsonScalar | list["JsonValue"] | dict[str, "JsonValue"]
+ModelScanCacheKey: TypeAlias = tuple[float, float]
 
 
-def scan_all_models(current: float = 10.0, duration: float = 100.0) -> list[dict[str, Any]]:
+@dataclass(frozen=True, slots=True)
+class ModelScanEntry:
+    """Path-free firing-pattern classification for one Studio model."""
+
+    name: str
+    category: str
+    pattern: str
+    description: str
+    rate_hz: float
+    spike_count: int
+
+    def to_public_dict(self) -> dict[str, JsonValue]:
+        """Return a JSON-compatible model scan entry."""
+
+        return {
+            "category": self.category,
+            "description": self.description,
+            "name": self.name,
+            "pattern": self.pattern,
+            "rate_hz": self.rate_hz,
+            "spike_count": self.spike_count,
+        }
+
+
+@dataclass(frozen=True, slots=True)
+class StudioModelScanManifest:
+    """Path-free metadata for one complete Studio model scan.
+
+    Parameters
+    ----------
+    current:
+        Constant input current used for each model simulation.
+    duration:
+        Simulation duration used for each model scan run.
+    model_count:
+        Number of successfully classified models in the result.
+    pattern_counts:
+        Count of each detected firing-pattern label.
+    input_sha256:
+        SHA-256 digest of the scan configuration.
+    result_sha256:
+        SHA-256 digest of the returned model classifications.
+    evidence_classification:
+        Controlled evidence class for the scan workflow.
+    status:
+        Controlled terminal status for the scan workflow.
+    """
+
+    current: float
+    duration: float
+    model_count: int
+    pattern_counts: Mapping[str, int]
+    input_sha256: str
+    result_sha256: str
+    evidence_classification: StudioEvidenceClassification = "analysis"
+    status: StudioEvidenceStatus = "completed"
+
+    def to_public_dict(self) -> dict[str, JsonValue]:
+        """Return the JSON-compatible model scan metadata."""
+
+        return {
+            "current": self.current,
+            "duration": self.duration,
+            "evidence_classification": validate_studio_evidence_classification(
+                self.evidence_classification
+            ),
+            "input_sha256": self.input_sha256,
+            "model_count": self.model_count,
+            "pattern_counts": dict(sorted(self.pattern_counts.items())),
+            "result_sha256": self.result_sha256,
+            "schema_version": STUDIO_MODEL_SCAN_SCHEMA_VERSION,
+            "status": validate_studio_evidence_status(self.status),
+        }
+
+
+_CACHE: dict[ModelScanCacheKey, tuple[ModelScanEntry, ...]] = {}
+
+
+def scan_all_models(current: float = 10.0, duration: float = 100.0) -> dict[str, JsonValue]:
     """Simulate every model at a given current and classify its firing pattern.
 
-    Results are cached after first call.
+    Results are cached per ``(current, duration)`` pair so a scan for one
+    configuration cannot be served as evidence for another configuration.
     """
-    global _CACHE
-    if _CACHE is not None:
-        return list(_CACHE.values())
+    cache_key = (float(current), float(duration))
+    if cache_key not in _CACHE:
+        _CACHE[cache_key] = _run_model_scan(current=cache_key[0], duration=cache_key[1])
+    entries = _CACHE[cache_key]
+    models = cast(list[JsonValue], [entry.to_public_dict() for entry in entries])
+    manifest = _build_model_scan_manifest(current=cache_key[0], duration=cache_key[1], models=models)
+    return {
+        "models": models,
+        "scan_metadata": manifest.to_public_dict(),
+        "schema_version": STUDIO_MODEL_SCAN_SCHEMA_VERSION,
+    }
 
-    results: dict[str, dict[str, Any]] = {}
+
+def _run_model_scan(*, current: float, duration: float) -> tuple[ModelScanEntry, ...]:
+    """Run model simulations and return validated scan entries."""
+
+    results: dict[str, ModelScanEntry] = {}
     failures: list[dict[str, str]] = []
     models = list_models()
 
@@ -36,14 +143,14 @@ def scan_all_models(current: float = 10.0, duration: float = 100.0) -> list[dict
             try:
                 r = simulate_model(m["name"], duration=duration, current=current)
                 pattern = classify_firing_pattern(r["spikes"], r["n_steps"], r["dt"])
-                results[m["name"]] = {
-                    "name": m["name"],
-                    "category": m.get("category", "Other"),
-                    "pattern": pattern["pattern"],
-                    "description": pattern["description"],
-                    "rate_hz": pattern.get("rate_hz", 0),
-                    "spike_count": r["spike_count"],
-                }
+                results[str(m["name"])] = ModelScanEntry(
+                    name=str(m["name"]),
+                    category=str(m.get("category", "Other")),
+                    pattern=str(pattern["pattern"]),
+                    description=str(pattern["description"]),
+                    rate_hz=float(pattern.get("rate_hz", 0.0)),
+                    spike_count=int(r["spike_count"]),
+                )
             except Exception as exc:
                 failures.append(
                     {
@@ -66,5 +173,38 @@ def scan_all_models(current: float = 10.0, duration: float = 100.0) -> list[dict
             },
         )
 
-    _CACHE = results
-    return list(results.values())
+    return tuple(results.values())
+
+
+def _build_model_scan_manifest(
+    *,
+    current: float,
+    duration: float,
+    models: list[JsonValue],
+) -> StudioModelScanManifest:
+    """Build digest-backed metadata for a complete model scan."""
+
+    pattern_counts: dict[str, int] = {}
+    for model in models:
+        if not isinstance(model, dict):
+            continue
+        pattern = model.get("pattern")
+        if isinstance(pattern, str):
+            pattern_counts[pattern] = pattern_counts.get(pattern, 0) + 1
+    return StudioModelScanManifest(
+        current=current,
+        duration=duration,
+        model_count=len(models),
+        pattern_counts=pattern_counts,
+        input_sha256=_sha256_json({"current": current, "duration": duration}),
+        result_sha256=_sha256_json({"models": models}),
+    )
+
+
+def _sha256_json(payload: Mapping[str, JsonValue]) -> str:
+    """Return a SHA-256 digest over canonical JSON."""
+
+    encoded = json.dumps(payload, sort_keys=True, separators=(",", ":"), allow_nan=False).encode(
+        "utf-8"
+    )
+    return hashlib.sha256(encoded).hexdigest()

@@ -15,6 +15,16 @@ model browser, ODE mode, analysis views, FPGA pipeline, network canvas,
 training monitor, and keyboard shortcuts. The tour is dismissable and
 won't appear again (stored in localStorage).
 
+## Model Browser
+
+Browse built-in neuron models by category, search by name, and run the model
+scan workflow to classify firing patterns across the catalogue. The scan uses
+the configured constant-current and duration pair as evidence input, caches
+results by that pair only, and returns a path-free `studio.model-scan.v1`
+metadata object. After scanning, the browser shows the evidence class,
+terminal status, model count, and shortened input/result digests beside the
+pattern filters.
+
 ## Launch
 
 ```bash
@@ -249,6 +259,12 @@ runtime features:
   serializers validate their evidence class and terminal status through the
   shared Studio evidence-classification contract before returning public
   metadata, so malformed workflow metadata fails closed before export.
+- `/api/models/scan` returns a `studio.model-scan.v1` envelope. The payload
+  contains classified model behaviours plus scan metadata with the configured
+  current, duration, model count, pattern counts, `analysis` evidence
+  classification, completed terminal status, and input/result SHA-256 digests.
+  The Model Browser renders those labels after a scan completes, so the
+  operator can distinguish a cached scan from an unclassified model list.
 - Those worker-backed compile, synthesis, PnR, and pipeline routes also write
   `studio.action-evidence.v1` manifests beside the result artifacts. These
   manifests record action kind, replay route, job ID, evidence classification,
