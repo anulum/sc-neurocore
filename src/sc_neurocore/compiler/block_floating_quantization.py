@@ -292,9 +292,6 @@ def dequantize_block_floating(
 ) -> np.ndarray[Any, Any]:
     """Reconstruct floats from block-floating mantissas and exponents."""
     mode = BlockFloatingMode.from_aliases(fmt)
-    if mode.block_size <= 0:
-        raise ValueError(f"Invalid block size {mode.block_size}")
-
     flat = np.asarray(quantized, dtype=np.float64).reshape(-1)
     exps = np.asarray(exponents, dtype=np.int64).reshape(-1)
 
