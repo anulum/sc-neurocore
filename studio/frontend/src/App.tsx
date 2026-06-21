@@ -119,6 +119,7 @@ export default function App() {
       default_flow_runs: [],
       include_audit: true,
       job_ids: [],
+      model_scan_results: [],
       project_name: s.projectSaveResult.name,
       simulation_results: [],
     });

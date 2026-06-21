@@ -38,6 +38,7 @@ export default function CompilerInspector() {
       default_flow_runs: [],
       include_audit: true,
       job_ids: [],
+      model_scan_results: [],
       project_name: `compile-${compileTraceability.output.module_name}`,
       simulation_results: [],
     });

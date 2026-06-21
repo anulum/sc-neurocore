@@ -24,6 +24,7 @@ from sc_neurocore.studio.platform.jobs import (
     StudioJobRecord,
 )
 from sc_neurocore.studio.analysis_manifest import STUDIO_ANALYSIS_RESULT_SCHEMA_VERSION
+from sc_neurocore.studio.model_scan import STUDIO_MODEL_SCAN_SCHEMA_VERSION
 from sc_neurocore.studio.simulation_manifest import STUDIO_SIMULATION_RUN_SCHEMA_VERSION
 from sc_neurocore.studio.evidence_classification import (
     STUDIO_EVIDENCE_CLASSIFICATIONS,
@@ -85,6 +86,7 @@ def write_studio_evidence_bundle(
     project_payload: Mapping[str, object] | None = None,
     simulation_payloads: Sequence[Mapping[str, object]] = (),
     analysis_payloads: Sequence[Mapping[str, object]] = (),
+    model_scan_payloads: Sequence[Mapping[str, object]] = (),
     default_flow_runs: Sequence[Mapping[str, object]] = (),
     default_flow_attestations: Sequence[Mapping[str, object]] = (),
     job_records: Sequence[StudioJobRecord] = (),
@@ -108,6 +110,9 @@ def write_studio_evidence_bundle(
     analysis_payloads:
         Optional Studio analysis responses carrying ``studio.analysis-result.v1``
         analysis metadata.
+    model_scan_payloads:
+        Optional Studio model-scan responses carrying ``studio.model-scan.v1``
+        scan metadata classified as analysis evidence.
     default_flow_runs:
         Optional guided default-flow run responses carrying reproducibility
         fingerprints.
@@ -181,6 +186,19 @@ def write_studio_evidence_bundle(
                 written_paths,
                 "analysis_result",
                 f"evidence/analyses/{index:03d}.json",
+                payload,
+                evidence_classification="analysis",
+            )
+        )
+
+    for index, model_scan_payload in enumerate(model_scan_payloads):
+        payload = _model_scan_payload(model_scan_payload)
+        entries.append(
+            _write_classified_json_entry(
+                context,
+                written_paths,
+                "model_scan_result",
+                f"evidence/model-scans/{index:03d}.json",
                 payload,
                 evidence_classification="analysis",
             )
@@ -440,6 +458,24 @@ def _analysis_result_payload(payload: Mapping[str, object]) -> dict[str, JsonVal
         raise ValueError("Studio analysis payload must be classified as analysis evidence.")
     if metadata.get("status") != validate_studio_evidence_status("completed"):
         raise ValueError("Studio analysis payload must have completed evidence status.")
+    return result
+
+
+def _model_scan_payload(payload: Mapping[str, object]) -> dict[str, JsonValue]:
+    result = _json_object(payload, "Studio model-scan payload must be JSON.")
+    if result.get("schema_version") != STUDIO_MODEL_SCAN_SCHEMA_VERSION:
+        raise ValueError("Studio model-scan payload has unsupported scan metadata.")
+    metadata = result.get("scan_metadata")
+    if not isinstance(metadata, Mapping):
+        raise ValueError("Studio model-scan payload requires scan metadata.")
+    if metadata.get("schema_version") != STUDIO_MODEL_SCAN_SCHEMA_VERSION:
+        raise ValueError("Studio model-scan payload has unsupported scan metadata.")
+    if metadata.get("evidence_classification") != validate_studio_evidence_classification(
+        "analysis"
+    ):
+        raise ValueError("Studio model-scan payload must be classified as analysis evidence.")
+    if metadata.get("status") != validate_studio_evidence_status("completed"):
+        raise ValueError("Studio model-scan payload must have completed evidence status.")
     return result
 
 

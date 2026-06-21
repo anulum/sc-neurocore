@@ -1011,3 +1011,83 @@ def test_studio_evidence_bundle_route_requires_configured_audit_export(
 
     assert response.status_code == 409
     assert response.json()["detail"] == "audit_export_unavailable"
+
+
+def _model_scan_response() -> dict[str, object]:
+    """Return a minimal Studio model-scan response carrying scan metadata."""
+
+    scan_metadata = {
+        "current": 10.0,
+        "duration": 100.0,
+        "evidence_classification": "analysis",
+        "input_sha256": "5" * 64,
+        "model_count": 2,
+        "pattern_counts": {"tonic": 2},
+        "result_sha256": "6" * 64,
+        "schema_version": "studio.model-scan.v1",
+        "status": "completed",
+    }
+    return {
+        "models": [{"name": "AdExNeuron", "pattern": "tonic"}],
+        "scan_metadata": scan_metadata,
+        "schema_version": "studio.model-scan.v1",
+    }
+
+
+def test_write_studio_evidence_bundle_includes_model_scan(tmp_path: Path) -> None:
+    context = StudioJobContext(
+        job_id="sj_scan",
+        work_dir=tmp_path / "scan",
+        cancel_event=threading.Event(),
+        max_artifact_bytes=1024 * 1024,
+    )
+
+    result = write_studio_evidence_bundle(
+        context,
+        model_scan_payloads=(_model_scan_response(),),
+        clock=lambda: datetime(2026, 6, 20, tzinfo=UTC),
+    )
+    payload = result.to_public_dict()
+    summary = cast(dict[str, object], payload["summary"])
+    entry_type_counts = cast(dict[str, int], summary["entry_type_counts"])
+    classification_counts = cast(dict[str, int], summary["evidence_classification_counts"])
+
+    assert "evidence/model-scans/000.json" in result.artifact_paths
+    assert "model_scan_result" in json.dumps(payload)
+    assert entry_type_counts["model_scan_result"] == 1
+    assert classification_counts["analysis"] == 1
+
+
+@pytest.mark.parametrize(
+    ("mutate", "match"),
+    [
+        (lambda p: p.__setitem__("schema_version", "wrong"), "unsupported scan metadata"),
+        (lambda p: p.pop("scan_metadata"), "requires scan metadata"),
+        (
+            lambda p: cast(dict[str, object], p["scan_metadata"]).__setitem__(
+                "evidence_classification", "synthesis"
+            ),
+            "classified as analysis evidence",
+        ),
+        (
+            lambda p: cast(dict[str, object], p["scan_metadata"]).__setitem__("status", "failed"),
+            "completed evidence status",
+        ),
+    ],
+)
+def test_write_studio_evidence_bundle_rejects_invalid_model_scan(
+    tmp_path: Path,
+    mutate: Callable[[dict[str, object]], object],
+    match: str,
+) -> None:
+    context = StudioJobContext(
+        job_id="sj_scan_bad",
+        work_dir=tmp_path / "scan-bad",
+        cancel_event=threading.Event(),
+        max_artifact_bytes=1024 * 1024,
+    )
+    payload = _model_scan_response()
+    mutate(payload)
+
+    with pytest.raises(ValueError, match=match):
+        write_studio_evidence_bundle(context, model_scan_payloads=(payload,))

@@ -364,6 +364,7 @@ class StudioEvidenceBundleRequest(BaseModel):
     project_name: str | None = Field(default=None, min_length=1, max_length=128)
     simulation_results: list[dict[str, Any]] = Field(default_factory=list, max_length=16)
     analysis_results: list[dict[str, Any]] = Field(default_factory=list, max_length=16)
+    model_scan_results: list[dict[str, Any]] = Field(default_factory=list, max_length=16)
     default_flow_runs: list[dict[str, Any]] = Field(default_factory=list, max_length=16)
     default_flow_attestations: list[dict[str, Any]] = Field(default_factory=list, max_length=16)
     job_ids: list[str] = Field(default_factory=list, max_length=64)
@@ -1520,6 +1521,7 @@ def create_app(runtime_settings: StudioRuntimeSettings | None = None) -> FastAPI
                 project_payload=project_payload,
                 simulation_payloads=tuple(export_request.simulation_results),
                 analysis_payloads=tuple(export_request.analysis_results),
+                model_scan_payloads=tuple(export_request.model_scan_results),
                 default_flow_runs=tuple(export_request.default_flow_runs),
                 default_flow_attestations=tuple(export_request.default_flow_attestations),
                 job_records=tuple(job_records),

@@ -310,6 +310,7 @@ export interface StudioEvidenceBundleRequest {
   default_flow_runs: Record<string, unknown>[];
   include_audit: boolean;
   job_ids: string[];
+  model_scan_results: Record<string, unknown>[];
   project_name: string | null;
   simulation_results: Record<string, unknown>[];
 }

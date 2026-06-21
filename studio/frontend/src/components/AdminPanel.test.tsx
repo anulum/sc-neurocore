@@ -480,6 +480,7 @@ describe("AdminPanel", () => {
     expect(html).toContain("Evidence job IDs");
     expect(html).toContain("Evidence simulation JSON");
     expect(html).toContain("Evidence analysis JSON");
+    expect(html).toContain("Evidence model-scan JSON");
     expect(html).toContain("Evidence default-flow run JSON");
     expect(html).toContain("Evidence default-flow attestation JSON");
     expect(html).toContain("action_evidence:1, audit_export:1, manifest:1");

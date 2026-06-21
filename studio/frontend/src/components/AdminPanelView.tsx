@@ -199,6 +199,7 @@ export default function AdminPanelView({
       default_flow_runs: jsonObjects(form.get("defaultFlowRuns")),
       include_audit: form.get("includeAudit") === "on",
       job_ids: textList(form.get("jobIds")),
+      model_scan_results: jsonObjects(form.get("modelScanResults")),
       project_name: optionalText(form.get("projectName")),
       simulation_results: jsonObjects(form.get("simulationResults")),
     });
@@ -636,6 +637,15 @@ export default function AdminPanelView({
             <textarea
               aria-label="Evidence analysis JSON"
               name="analysisResults"
+              disabled={model.evidenceBundle.loading}
+              rows={4}
+            />
+          </label>
+          <label className="admin-evidence-wide">
+            Model Scan JSON
+            <textarea
+              aria-label="Evidence model-scan JSON"
+              name="modelScanResults"
               disabled={model.evidenceBundle.loading}
               rows={4}
             />

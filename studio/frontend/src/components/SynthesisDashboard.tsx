@@ -180,6 +180,7 @@ export default function SynthesisDashboard() {
       default_flow_runs: [],
       include_audit: true,
       job_ids: [activeSynthesisJobId],
+      model_scan_results: [],
       project_name: projectName,
       simulation_results: [],
     });
