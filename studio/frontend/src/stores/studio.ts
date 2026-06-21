@@ -79,6 +79,16 @@ import {
   decodeStudioStartupHash,
 } from "../studioUrlState";
 import {
+  studioBifurcationRequest,
+  studioCodegenRequest,
+  studioFICurveRequest,
+  studioFrequencyResponseRequest,
+  studioHeatmapRequest,
+  studioPrecisionRequest,
+  studioSimulationConfig,
+  type StudioSimulationConfigInput,
+} from "../studioSimulationConfig";
+import {
   simulationCsvBlob,
   simulationCsvFilename,
   simulationJsonBlob,
@@ -344,17 +354,20 @@ interface StudioState {
   setSweepParamY: (p: string) => void;
 }
 
-function currentConfig(s: StudioState): Record<string, unknown> {
-  if (s.sourceMode === "model" && s.selectedModelName) {
-    return {
-      model_name: s.selectedModelName, params: s.modelParams,
-      dt: s.dt, duration: s.duration, current: s.current, protocol: s.protocol,
-    };
-  }
+function simulationConfigInput(s: StudioState): StudioSimulationConfigInput {
   return {
-    equations: s.equations, threshold: s.threshold || null, reset: s.reset || null,
-    params: s.odeParams, init: s.odeInit,
-    dt: s.dt, duration: s.duration, current: s.current, protocol: s.protocol,
+    sourceMode: s.sourceMode,
+    selectedModelName: s.selectedModelName,
+    modelParams: s.modelParams,
+    equations: s.equations,
+    threshold: s.threshold,
+    reset: s.reset,
+    odeParams: s.odeParams,
+    odeInit: s.odeInit,
+    dt: s.dt,
+    duration: s.duration,
+    current: s.current,
+    protocol: s.protocol,
   };
 }
 
@@ -933,7 +946,7 @@ export const useStudioStore = create<StudioState>((set, get) => ({
     if (s.isSimulating) return;
     set({ isSimulating: true, error: null });
     try {
-      const cfg = currentConfig(s);
+      const cfg = studioSimulationConfig(simulationConfigInput(s));
       const result = s.sourceMode === "model" && s.selectedModelName
         ? await simulateModel(cfg) : await simulateODE(cfg);
       set({ result, isSimulating: false });
@@ -947,10 +960,8 @@ export const useStudioStore = create<StudioState>((set, get) => ({
     if (s.isSimulating) return;
     set({ isSimulating: true, error: null, activeTab: "fi-curve" });
     try {
-      const cfg = currentConfig(s);
-      const fiResult = await fetchFICurve({
-        ...cfg, i_min: 0, i_max: Math.abs(s.current) * 2 || 50, i_steps: 25,
-      });
+      const cfg = studioSimulationConfig(simulationConfigInput(s));
+      const fiResult = await fetchFICurve(studioFICurveRequest(cfg, s.current));
       set({ fiResult, isSimulating: false });
     } catch (e) { set({ error: e instanceof Error ? e.message : String(e), isSimulating: false }); }
   },
@@ -960,12 +971,12 @@ export const useStudioStore = create<StudioState>((set, get) => ({
     if (s.isSimulating || !s.sweepParam) return;
     set({ isSimulating: true, error: null, activeTab: "bifurcation" });
     try {
-      const cfg = currentConfig(s);
+      const cfg = studioSimulationConfig(simulationConfigInput(s));
       const paramVal = (s.sourceMode === "model" ? s.modelParams : s.odeParams)[s.sweepParam] ?? 0;
-      const bifResult = await fetchBifurcation({
-        ...cfg, sweep_param: s.sweepParam,
-        sweep_min: paramVal * 0.2, sweep_max: paramVal * 3, sweep_steps: 40,
-      });
+      const bifResult = await fetchBifurcation(studioBifurcationRequest(cfg, {
+        sweepParam: s.sweepParam,
+        parameterValue: paramVal,
+      }));
       set({ bifResult, isSimulating: false });
     } catch (e) { set({ error: e instanceof Error ? e.message : String(e), isSimulating: false }); }
   },
@@ -975,7 +986,7 @@ export const useStudioStore = create<StudioState>((set, get) => ({
     if (s.isSimulating) return;
     set({ isSimulating: true, error: null, activeTab: "sensitivity" });
     try {
-      const cfg = currentConfig(s);
+      const cfg = studioSimulationConfig(simulationConfigInput(s));
       const sensResult = await fetchSensitivity(cfg);
       set({ sensResult, isSimulating: false });
     } catch (e) { set({ error: e instanceof Error ? e.message : String(e), isSimulating: false }); }
@@ -989,10 +1000,7 @@ export const useStudioStore = create<StudioState>((set, get) => ({
     }
     set({ isSimulating: true, error: null, activeTab: "precision" });
     try {
-      const precResult = await fetchPrecision({
-        equations: s.equations, threshold: s.threshold, reset: s.reset,
-        params: s.odeParams, init: s.odeInit, dt: s.dt, duration: s.duration, current: s.current,
-      });
+      const precResult = await fetchPrecision(studioPrecisionRequest(simulationConfigInput(s)));
       set({ precResult, isSimulating: false });
     } catch (e) { set({ error: e instanceof Error ? e.message : String(e), isSimulating: false }); }
   },
@@ -1021,12 +1029,13 @@ export const useStudioStore = create<StudioState>((set, get) => ({
       const params = s.sourceMode === "model" ? s.modelParams : s.odeParams;
       const xVal = params[s.sweepParam] ?? 0;
       const yVal = params[s.sweepParamY] ?? 0;
-      const cfg = currentConfig(s);
-      const heatmapResult = await fetchHeatmap({
-        ...cfg,
-        param_x: s.sweepParam, x_min: xVal * 0.2, x_max: xVal * 3, x_steps: 15,
-        param_y: s.sweepParamY, y_min: yVal * 0.2, y_max: yVal * 3, y_steps: 15,
-      });
+      const cfg = studioSimulationConfig(simulationConfigInput(s));
+      const heatmapResult = await fetchHeatmap(studioHeatmapRequest(cfg, {
+        sweepParamX: s.sweepParam,
+        parameterValueX: xVal,
+        sweepParamY: s.sweepParamY,
+        parameterValueY: yVal,
+      }));
       set({ heatmapResult, isSimulating: false });
     } catch (e) { set({ error: e instanceof Error ? e.message : String(e), isSimulating: false }); }
   },
@@ -1035,15 +1044,7 @@ export const useStudioStore = create<StudioState>((set, get) => ({
     const s = get();
     set({ activeTab: "code" });
     try {
-      const res = await fetchCodegen({
-        mode: s.sourceMode,
-        model_name: s.sourceMode === "model" ? s.selectedModelName : null,
-        equations: s.sourceMode === "ode" ? s.equations : null,
-        threshold: s.threshold, reset: s.reset,
-        params: s.sourceMode === "model" ? s.modelParams : s.odeParams,
-        init: s.sourceMode === "ode" ? s.odeInit : null,
-        dt: s.dt, duration: s.duration, current: s.current,
-      });
+      const res = await fetchCodegen(studioCodegenRequest(simulationConfigInput(s)));
       set({ codeScript: res.script, codeOneliner: res.oneliner });
     } catch (e) { set({ error: e instanceof Error ? e.message : String(e) }); }
   },
@@ -1145,7 +1146,7 @@ export const useStudioStore = create<StudioState>((set, get) => ({
     if (s.isSimulating) return;
     set({ isSimulating: true, error: null, activeTab: "compare" });
     try {
-      const configA = currentConfig(s);
+      const configA = studioSimulationConfig(simulationConfigInput(s));
       const compareResult = await fetchCompare(configA, configB);
       set({ compareResult, isSimulating: false });
     } catch (e) { set({ error: e instanceof Error ? e.message : String(e), isSimulating: false }); }
@@ -1182,10 +1183,8 @@ export const useStudioStore = create<StudioState>((set, get) => ({
     if (s.isSimulating) return;
     set({ isSimulating: true, error: null, activeTab: "freq" });
     try {
-      const cfg = currentConfig(s);
-      const freqResult = await fetchFreqResponse({
-        ...cfg, amplitude: Math.abs(s.current) || 10, freq_min: 1, freq_max: 200, n_freqs: 20,
-      });
+      const cfg = studioSimulationConfig(simulationConfigInput(s));
+      const freqResult = await fetchFreqResponse(studioFrequencyResponseRequest(cfg, s.current));
       set({ freqResult, isSimulating: false });
     } catch (e) { set({ error: e instanceof Error ? e.message : String(e), isSimulating: false }); }
   },
