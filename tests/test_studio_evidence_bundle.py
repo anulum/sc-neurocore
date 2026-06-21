@@ -293,6 +293,7 @@ def test_write_studio_evidence_bundle_copies_project_job_audit_and_replay(
         "analysis",
         "compile",
         "local_regression",
+        "project_workspace",
         "release_benchmark",
         "simulation",
         "synthesis",

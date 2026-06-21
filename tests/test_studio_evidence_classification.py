@@ -32,6 +32,7 @@ def test_studio_evidence_classification_contract_lists_all_manifest_classes() ->
                 "analysis",
                 "compile",
                 "local_regression",
+                "project_workspace",
                 "release_benchmark",
                 "simulation",
                 "synthesis",
@@ -52,6 +53,7 @@ def test_studio_evidence_classification_validators_return_controlled_values() ->
 
     assert validate_studio_evidence_classification("analysis") == "analysis"
     assert validate_studio_evidence_classification("compile") == "compile"
+    assert validate_studio_evidence_classification("project_workspace") == "project_workspace"
     assert validate_studio_evidence_status("completed") == "completed"
     assert validate_studio_evidence_status("timed_out") == "timed_out"
 

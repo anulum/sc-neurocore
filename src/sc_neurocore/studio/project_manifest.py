@@ -16,6 +16,11 @@ from collections.abc import Mapping
 from dataclasses import dataclass
 from typing import Any, TypeAlias
 
+from sc_neurocore.studio.evidence_classification import (
+    StudioEvidenceClassification,
+    validate_studio_evidence_classification,
+)
+
 STUDIO_PROJECT_SAVE_SCHEMA_VERSION = "studio.project-save.v1"
 
 JsonScalar: TypeAlias = str | int | float | bool | None
@@ -47,13 +52,15 @@ class StudioProjectSaveManifest:
     version: str
     state_sha256: str
     project_sha256: str
-    evidence_classification: str = "project_workspace"
+    evidence_classification: StudioEvidenceClassification = "project_workspace"
 
     def to_public_dict(self) -> dict[str, JsonValue]:
         """Return the public, path-free project save response."""
 
         return {
-            "evidence_classification": self.evidence_classification,
+            "evidence_classification": validate_studio_evidence_classification(
+                self.evidence_classification
+            ),
             "name": self.name,
             "project_sha256": self.project_sha256,
             "saved_at": self.saved_at,

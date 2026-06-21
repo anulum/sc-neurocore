@@ -18,6 +18,7 @@ import pytest
 
 from sc_neurocore.studio.project_manifest import (
     STUDIO_PROJECT_SAVE_SCHEMA_VERSION,
+    StudioProjectSaveManifest,
     build_project_save_manifest,
     dump_project_payload,
 )
@@ -80,6 +81,22 @@ def test_dump_project_payload_keeps_readable_portable_json() -> None:
 
     assert encoded.startswith("{\n")
     assert json.loads(encoded) == payload
+
+
+def test_project_save_manifest_rejects_unknown_evidence_classification() -> None:
+    """Project save manifests use the shared Studio evidence-class contract."""
+
+    manifest = StudioProjectSaveManifest(
+        name="demo",
+        saved_at=1.0,
+        version="0.3.0",
+        state_sha256="0" * 64,
+        project_sha256="1" * 64,
+        evidence_classification="screenshots",  # type: ignore[arg-type]  # Invalid by design.
+    )
+
+    with pytest.raises(ValueError, match="classification"):
+        manifest.to_public_dict()
 
 
 @pytest.mark.parametrize(

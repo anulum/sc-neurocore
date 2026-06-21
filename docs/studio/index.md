@@ -253,8 +253,8 @@ runtime features:
   as `action_evidence` entries in the bundle manifest.
 - Studio evidence classifications are a shared backend contract, not free-form
   labels. Current accepted classes are `analysis`, `compile`,
-  `local_regression`, `release_benchmark`, `simulation`, `synthesis`, and
-  `training`. Terminal evidence statuses are `completed`, `failed`,
+  `local_regression`, `project_workspace`, `release_benchmark`, `simulation`,
+  `synthesis`, and `training`. Terminal evidence statuses are `completed`, `failed`,
   `cancelled`, and `timed_out`. Bundle writers, action-evidence writers, and
   manifest validators reject unknown classes or non-terminal statuses before
   persisting evidence. Evidence bundle summaries include the known
