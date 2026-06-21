@@ -74,6 +74,7 @@ import {
   selectEvidenceBundleForSurface,
   type EvidenceBundleSurface,
 } from "../evidenceBundles";
+import { downloadBrowserArtefact } from "../browserArtefactDownload";
 
 let debounceTimer: ReturnType<typeof setTimeout> | null = null;
 const AUTH_STORAGE_KEY = "sc-neurocore-studio-auth-token";
@@ -650,17 +651,12 @@ export const useStudioStore = create<StudioState>((set, get) => ({
     set({ evidenceBundleError: null });
     try {
       const payload = await fetchStudioJobArtifact(evidenceBundle.job_id, relativePath);
-      const url = URL.createObjectURL(payload);
-      const anchor = document.createElement("a");
-      anchor.href = url;
-      anchor.download = relativePath.split("/").filter(Boolean).pop() ?? "studio-artifact";
-      anchor.click();
-      URL.revokeObjectURL(url);
+      downloadBrowserArtefact(payload, relativePath);
     } catch (error: unknown) {
       set({
         evidenceBundleError: error instanceof Error
           ? error.message
-          : "Evidence artifact download failed",
+          : "Evidence artefact download failed",
       });
     }
   },
@@ -679,17 +675,12 @@ export const useStudioStore = create<StudioState>((set, get) => ({
     set({ [errorKey]: null });
     try {
       const payload = await fetchStudioJobArtifact(evidenceBundle.job_id, relativePath);
-      const url = URL.createObjectURL(payload);
-      const anchor = document.createElement("a");
-      anchor.href = url;
-      anchor.download = relativePath.split("/").filter(Boolean).pop() ?? "studio-artifact";
-      anchor.click();
-      URL.revokeObjectURL(url);
+      downloadBrowserArtefact(payload, relativePath);
     } catch (error: unknown) {
       set({
         [errorKey]: error instanceof Error
           ? error.message
-          : "Evidence artifact download failed",
+          : "Evidence artefact download failed",
       });
     }
   },
