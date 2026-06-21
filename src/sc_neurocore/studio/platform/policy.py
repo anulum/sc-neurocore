@@ -874,6 +874,12 @@ def build_default_studio_route_policy_registry() -> RoutePolicyRegistry:
             ),
             (
                 "POST",
+                "/api/studio/training/weight-restore",
+                RouteVisibility.ADMIN,
+                "studio.training.weight_restore.materialize",
+            ),
+            (
+                "POST",
                 "/api/studio/auth/login",
                 RouteVisibility.PUBLIC,
                 "studio.auth.login",

@@ -33,7 +33,10 @@ from sc_neurocore.studio.platform.training_checkpoint import (
     import_training_checkpoint_payload,
 )
 from sc_neurocore.studio.platform.training_evidence import build_training_evidence_summary
-from sc_neurocore.studio.platform.training_weights import write_training_weight_checkpoint
+from sc_neurocore.studio.platform.training_weights import (
+    STUDIO_TRAINING_TORCH_STATE_DICT_SCHEMA_VERSION,
+    write_training_weight_checkpoint,
+)
 
 try:
     import torch
@@ -415,7 +418,7 @@ class TrainingJob:
             "final_metrics": self.final_metrics,
             "model_info": model_info,
             "model_state_dict": model.state_dict(),
-            "schema_version": "studio.training.torch-state-dict.v1",
+            "schema_version": STUDIO_TRAINING_TORCH_STATE_DICT_SCHEMA_VERSION,
         }
         buffer = BytesIO()
         torch.save(payload, buffer)

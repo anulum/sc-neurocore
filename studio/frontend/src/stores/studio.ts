@@ -24,6 +24,7 @@ import {
   stopTraining as apiStopTraining,
   exportTrainingCheckpoint as apiExportTrainingCheckpoint,
   importTrainingCheckpoint as apiImportTrainingCheckpoint,
+  restoreTrainingWeights as apiRestoreTrainingWeights,
   fetchGraphModels as apiFetchGraphModels,
   createPopulation as apiCreatePop, createProjection as apiCreateProj,
   simulateGraph as apiSimGraph, validateGraph as apiValidateGraph,
@@ -40,6 +41,7 @@ import {
   type SynthToolInfo,
   type SurrogateInfo, type TrainingEpochMetrics,
   type TrainingWeightRestorePlan,
+  type TrainingWeightRestoreResult,
   type PopulationNode, type ProjectionEdge, type GraphSimResult, type NIRFormat,
   type ProjectSaveResponse, type ProjectSummary, type PipelineResult,
   type StudioAuditExport, type StudioAuditStatus, type StudioCapability,
@@ -195,6 +197,7 @@ import {
   trainingSurrogatesLoadedState,
   trainingTerminalState,
   trainingWeightRestoreVerificationLoadedState,
+  trainingWeightMaterializationLoadedState,
   trainingWeightRestoreVerificationStartState,
 } from "../trainingStoreState";
 import {
@@ -376,6 +379,7 @@ interface StudioState {
   trainingEpochs: TrainingEpochMetrics[];
   trainingWeightRestorePlan: TrainingWeightRestorePlan | null;
   trainingWeightRestoreVerification: TrainingWeightRestoreVerification | null;
+  trainingWeightMaterialization: TrainingWeightRestoreResult | null;
   trainingSurrogates: SurrogateInfo[];
   trainingConfig: StudioProjectTrainingConfig;
   codeScript: string;
@@ -497,6 +501,7 @@ interface StudioState {
   importTrainingCheckpointText: (checkpointJson: string) => Promise<void>;
   verifyTrainingWeightRestoreArtifact: () => Promise<void>;
   exportTrainingWeightRestoreVerification: () => void;
+  materializeTrainingWeights: () => Promise<void>;
   setTrainingConfig: <K extends keyof StudioProjectTrainingConfig>(
     key: K,
     value: StudioProjectTrainingConfig[K],
@@ -565,6 +570,7 @@ export const useStudioStore = create<StudioState>((set, get) => ({
   latestSynthesisJobId: null, latestMultiTargetSynthesisJobId: null, toolsAvailable: null,
   trainingJobId: null, trainingStatus: "idle", trainingEpochs: [],
   trainingWeightRestorePlan: null, trainingWeightRestoreVerification: null,
+  trainingWeightMaterialization: null,
   trainingSurrogates: [],
   trainingConfig: {
     dataset: "synthetic", epochs: 10, batch_size: 64, lr: 0.001,
@@ -1458,6 +1464,20 @@ export const useStudioStore = create<StudioState>((set, get) => ({
       set(trainingExportSuccessState());
     } catch (error: unknown) {
       set(trainingFailureState(error, "Training weight restore verification export failed"));
+    }
+  },
+
+  materializeTrainingWeights: async () => {
+    const s = get();
+    if (!s.trainingJobId) {
+      set(trainingPreconditionErrorState("No completed training job is available."));
+      return;
+    }
+    try {
+      const materialization = await apiRestoreTrainingWeights(s.trainingJobId);
+      set(trainingWeightMaterializationLoadedState(materialization));
+    } catch (error: unknown) {
+      set(trainingFailureState(error, "Training weight materialization failed"));
     }
   },
 

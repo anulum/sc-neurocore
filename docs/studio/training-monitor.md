@@ -149,11 +149,20 @@ After verification, operators can export a
 `studio.training.weight-restore-verification.v1` manifest that records the
 source job, route template, loader policy, metadata artifact hash, weight
 artifact hash, byte count, and verification timestamp without embedding raw
-model weights. Backend integrations that need actual in-memory weights should
-use the platform materializer for the restore plan, metadata bytes, and weight
-bytes; it rechecks artifact sizes and SHA-256 digests before invoking a trusted
-state-dictionary loader and returns only path-free materialization metadata to
-operator-facing surfaces.
+model weights. Administrators that need an authenticated, audited
+materialization can call `POST /api/studio/training/weight-restore` with the
+source training job ID. The endpoint rebuilds the canonical restore plan from
+the source job's stored checkpoint metadata, fetches the integrity-checked
+weight and metadata artifacts, and runs the untrusted PyTorch deserialization
+inside a bounded worker job (never in the request thread). The worker rechecks
+artifact sizes and SHA-256 digests, loads the weights through a trusted
+state-dictionary loader that restricts deserialization to tensors and primitive
+containers (`torch.load(..., weights_only=True)`), and writes a path-free
+`studio.training.weight-restore.v1` evidence artifact that records only the
+verified digests, parameter count, and loaded-key total. The in-memory tensor
+state dictionary never leaves the worker, so no raw weights reach the API
+response. The Training panel surfaces that materialization evidence after the
+operator triggers the restore.
 
 ## API Endpoints
 
@@ -168,6 +177,7 @@ operator-facing surfaces.
 | POST | `/api/training/checkpoint/import` | Validate checkpoint and restore config |
 | GET | `/api/training/stream/{job_id}` | SSE metric stream |
 | GET | `/api/training/jobs` | List all jobs |
+| POST | `/api/studio/training/weight-restore` | Materialize and verify weights (admin) |
 
 ### POST /api/training/start
 
@@ -254,6 +264,52 @@ Accepts the checkpoint JSON and returns the validated config:
   }
 }
 ```
+
+### POST /api/studio/training/weight-restore
+
+Admin-only. Materializes and verifies a completed training job's weights inside
+a bounded worker job and returns path-free restore evidence. Request body:
+
+```json
+{
+  "source_job_id": "sj_1711504200000",
+  "expected_config_sha256": "..."
+}
+```
+
+`expected_config_sha256` is optional; when present it must match the source
+checkpoint's configuration digest or the request is rejected with `422`.
+Returns a `studio.training.weight-restore.v1` evidence object plus the worker
+job ID and artifacts:
+
+```json
+{
+  "schema_version": "studio.training.weight-restore.v1",
+  "evidence_classification": "training",
+  "status": "completed",
+  "source_job_id": "sj_1711504200000",
+  "source_status": "completed",
+  "materialization": {
+    "schema_version": "studio.training.weight-materialization.v1",
+    "architecture": "64->128->10",
+    "parameter_count": 9610,
+    "loaded_key_count": 6,
+    "config_sha256": "...",
+    "weights_sha256": "...",
+    "metadata_sha256": "..."
+  },
+  "job_id": "sj_restore_...",
+  "artifacts": [
+    {"relative_path": "training/weight-restore.json", "size_bytes": 256, "sha256": "..."}
+  ]
+}
+```
+
+Error responses: `404` when the source job is unknown, `409` when the job
+published no weight checkpoint, and `422` when the restore plan or config digest
+is invalid. The evidence object can be supplied to
+`POST /api/studio/evidence/bundle` under `weight_restore_results` to preserve it
+in an evidence bundle.
 
 ### GET /api/training/{job_id}/stream
 

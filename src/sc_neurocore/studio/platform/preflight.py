@@ -135,6 +135,12 @@ _REQUIRED_ROUTE_POLICIES: tuple[tuple[str, str, RouteVisibility, str], ...] = (
         "studio.jobs.artifact.read",
     ),
     ("POST", "/api/studio/evidence/bundle", RouteVisibility.ADMIN, "studio.evidence.bundle.create"),
+    (
+        "POST",
+        "/api/studio/training/weight-restore",
+        RouteVisibility.ADMIN,
+        "studio.training.weight_restore.materialize",
+    ),
     ("POST", "/api/synth/run", RouteVisibility.ADMIN, "studio.synth.run"),
     ("POST", "/api/synth/pnr", RouteVisibility.ADMIN, "studio.synth.pnr"),
 )

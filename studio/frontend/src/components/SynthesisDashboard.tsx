@@ -183,6 +183,7 @@ export default function SynthesisDashboard() {
       model_scan_results: [],
       project_name: projectName,
       simulation_results: [],
+      weight_restore_results: [],
     });
   }
 

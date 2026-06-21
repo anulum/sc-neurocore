@@ -27,9 +27,11 @@ import {
   trainingStreamErrorState,
   trainingSurrogatesLoadedState,
   trainingTerminalState,
+  trainingWeightMaterializationLoadedState,
   trainingWeightRestoreVerificationLoadedState,
   trainingWeightRestoreVerificationStartState,
 } from "./trainingStoreState";
+import type { TrainingWeightRestoreResult } from "./api/client";
 import type { TrainingWeightRestoreVerification } from "./trainingRestore";
 
 const trainingConfig: StudioProjectTrainingConfig = {
@@ -150,6 +152,37 @@ describe("training store state helpers", () => {
     });
     expect(trainingWeightRestoreVerificationLoadedState(verification)).toEqual({
       trainingWeightRestoreVerification: verification,
+    });
+  });
+
+  it("loads server weight materialization evidence and clears errors", () => {
+    const materialization: TrainingWeightRestoreResult = {
+      artifacts: [
+        { relative_path: "training/weight-restore.json", sha256: "f".repeat(64), size_bytes: 256 },
+      ],
+      evidence_classification: "training",
+      job_id: "sj_restore",
+      materialization: {
+        architecture: "64->128->10",
+        config_sha256: "7".repeat(64),
+        format: "torch_state_dict",
+        framework: "pytorch",
+        loaded_key_count: 6,
+        metadata_sha256: "8".repeat(64),
+        parameter_count: 9610,
+        schema_version: "studio.training.weight-materialization.v1",
+        source_job_id: "sj_training",
+        weights_sha256: "9".repeat(64),
+      },
+      schema_version: "studio.training.weight-restore.v1",
+      source_job_id: "sj_training",
+      source_status: "completed",
+      status: "completed",
+    };
+
+    expect(trainingWeightMaterializationLoadedState(materialization)).toEqual({
+      error: null,
+      trainingWeightMaterialization: materialization,
     });
   });
 

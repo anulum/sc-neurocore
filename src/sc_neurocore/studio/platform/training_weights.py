@@ -23,8 +23,13 @@ from sc_neurocore.studio.platform.jobs import StudioJobArtifact, StudioJobContex
 
 STUDIO_TRAINING_WEIGHT_CHECKPOINT_SCHEMA_VERSION = "studio.training.weight-checkpoint.v1"
 STUDIO_TRAINING_WEIGHT_RESTORE_PLAN_SCHEMA_VERSION = "studio.training.weight-restore-plan.v1"
+STUDIO_TRAINING_WEIGHT_RESTORE_SCHEMA_VERSION = "studio.training.weight-restore.v1"
+STUDIO_TRAINING_TORCH_STATE_DICT_SCHEMA_VERSION = "studio.training.torch-state-dict.v1"
+STUDIO_TRAINING_WEIGHT_RESTORE_OWNER = "studio-training-restore"
+STUDIO_TRAINING_WEIGHT_RESTORE_EVIDENCE_CLASSIFICATION = "training"
 TRAINING_WEIGHT_ARTIFACT_PATH = "training/model_state.pt"
 TRAINING_WEIGHT_METADATA_ARTIFACT_PATH = "training/model_state.json"
+TRAINING_WEIGHT_RESTORE_EVIDENCE_ARTIFACT_PATH = "training/weight-restore.json"
 TRAINING_WEIGHT_ARTIFACT_ROUTE_TEMPLATE = "/api/studio/jobs/{job_id}/artifacts/{artifact_path}"
 _SHA256_HEX_PATTERN = re.compile(r"^[0-9a-f]{64}$")
 TrainingWeightStateLoader = Callable[[bytes], Mapping[str, object]]
@@ -400,6 +405,105 @@ def materialize_training_weight_payload(
     )
 
 
+def build_training_weight_restore_evidence(
+    materialization: StudioTrainingWeightMaterialization,
+    *,
+    source_status: str,
+) -> dict[str, JsonValue]:
+    """Wrap a verified weight materialization as path-free restore evidence.
+
+    The returned object is the ``studio.training.weight-restore.v1`` payload that
+    a restore job persists as a confined evidence artifact. It carries only the
+    verified digests, parameter counts, and loaded-key totals from the
+    materialization; the in-memory tensor state dictionary is never serialized.
+
+    Parameters
+    ----------
+    materialization:
+        Verified, path-free materialization returned by
+        :func:`materialize_training_weight_payload`.
+    source_status:
+        Terminal status of the source training job that owns the restored
+        weight artifacts.
+
+    Returns
+    -------
+    dict[str, JsonValue]
+        JSON-compatible restore evidence classified as training evidence with a
+        completed terminal status.
+
+    Raises
+    ------
+    ValueError
+        If ``source_status`` is empty.
+    """
+
+    return {
+        "schema_version": STUDIO_TRAINING_WEIGHT_RESTORE_SCHEMA_VERSION,
+        "evidence_classification": STUDIO_TRAINING_WEIGHT_RESTORE_EVIDENCE_CLASSIFICATION,
+        "status": "completed",
+        "source_job_id": materialization.source_job_id,
+        "source_status": _required_non_empty_string(source_status, "source_status"),
+        "materialization": materialization.to_public_dict(),
+    }
+
+
+def validate_training_weight_restore_evidence(
+    payload: Mapping[str, object],
+) -> dict[str, JsonValue]:
+    """Validate a path-free ``studio.training.weight-restore.v1`` evidence object.
+
+    Parameters
+    ----------
+    payload:
+        Candidate restore evidence object from a Studio API response or import.
+
+    Returns
+    -------
+    dict[str, JsonValue]
+        The JSON-compatible, validated restore evidence object.
+
+    Raises
+    ------
+    ValueError
+        If the schema, classification, status, source identifiers, or embedded
+        materialization summary are invalid.
+    """
+
+    evidence = _json_object(payload, "Training weight restore evidence must be JSON.")
+    if evidence.get("schema_version") != STUDIO_TRAINING_WEIGHT_RESTORE_SCHEMA_VERSION:
+        raise ValueError("Training weight restore evidence schema is unsupported.")
+    if (
+        evidence.get("evidence_classification")
+        != STUDIO_TRAINING_WEIGHT_RESTORE_EVIDENCE_CLASSIFICATION
+    ):
+        raise ValueError("Training weight restore evidence classification is invalid.")
+    if evidence.get("status") != "completed":
+        raise ValueError("Training weight restore evidence must be completed.")
+    _required_json_string(evidence, "source_job_id")
+    _required_json_string(evidence, "source_status")
+    materialization = evidence.get("materialization")
+    if not isinstance(materialization, Mapping):
+        raise ValueError("Training weight restore evidence requires materialization.")
+    summary = _json_object(
+        materialization,
+        "Training weight restore materialization must be JSON.",
+    )
+    if summary.get("schema_version") != "studio.training.weight-materialization.v1":
+        raise ValueError("Training weight restore materialization schema is unsupported.")
+    config_sha256 = summary.get("config_sha256")
+    if not isinstance(config_sha256, str) or not _SHA256_HEX_PATTERN.fullmatch(config_sha256):
+        raise ValueError("Training weight restore materialization config digest is invalid.")
+    for digest_field in ("weights_sha256", "metadata_sha256"):
+        digest = summary.get(digest_field)
+        if not isinstance(digest, str) or not _SHA256_HEX_PATTERN.fullmatch(digest):
+            raise ValueError(f"Training weight restore materialization {digest_field} is invalid.")
+    loaded_key_count = summary.get("loaded_key_count")
+    if not isinstance(loaded_key_count, int) or loaded_key_count < 0:
+        raise ValueError("Training weight restore materialization key count is invalid.")
+    return evidence
+
+
 def validate_training_weight_checkpoint_metadata(
     payload: Mapping[str, object],
     *,
@@ -649,17 +753,24 @@ def _required_non_empty_string(value: str, field_name: str) -> str:
 
 
 __all__ = [
+    "STUDIO_TRAINING_TORCH_STATE_DICT_SCHEMA_VERSION",
     "STUDIO_TRAINING_WEIGHT_CHECKPOINT_SCHEMA_VERSION",
+    "STUDIO_TRAINING_WEIGHT_RESTORE_EVIDENCE_CLASSIFICATION",
+    "STUDIO_TRAINING_WEIGHT_RESTORE_OWNER",
     "STUDIO_TRAINING_WEIGHT_RESTORE_PLAN_SCHEMA_VERSION",
+    "STUDIO_TRAINING_WEIGHT_RESTORE_SCHEMA_VERSION",
     "TRAINING_WEIGHT_ARTIFACT_ROUTE_TEMPLATE",
     "TRAINING_WEIGHT_ARTIFACT_PATH",
     "TRAINING_WEIGHT_METADATA_ARTIFACT_PATH",
+    "TRAINING_WEIGHT_RESTORE_EVIDENCE_ARTIFACT_PATH",
     "StudioTrainingWeightCheckpoint",
     "StudioTrainingWeightMaterialization",
     "StudioTrainingWeightRestorePlan",
     "TrainingWeightStateLoader",
+    "build_training_weight_restore_evidence",
     "build_training_weight_restore_plan",
     "materialize_training_weight_payload",
     "validate_training_weight_checkpoint_metadata",
+    "validate_training_weight_restore_evidence",
     "write_training_weight_checkpoint",
 ]

@@ -41,6 +41,7 @@ export default function CompilerInspector() {
       model_scan_results: [],
       project_name: `compile-${compileTraceability.output.module_name}`,
       simulation_results: [],
+      weight_restore_results: [],
     });
   }
 

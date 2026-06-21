@@ -110,7 +110,11 @@ from sc_neurocore.studio.platform import (
     PolicyGateway,
     Principal,
     STUDIO_AUDIT_QUARANTINE_RESTORE_OWNER,
+    STUDIO_TRAINING_WEIGHT_RESTORE_OWNER,
     THROTTLED_BROWSER_LOGIN_REASON,
+    TRAINING_WEIGHT_ARTIFACT_PATH,
+    TRAINING_WEIGHT_METADATA_ARTIFACT_PATH,
+    TRAINING_WEIGHT_RESTORE_EVIDENCE_ARTIFACT_PATH,
     EvidenceClassification,
     StudioBrowserLoginThrottle,
     StudioBrowserSessionManager,
@@ -128,7 +132,11 @@ from sc_neurocore.studio.platform import (
     build_default_studio_runtime_settings,
     build_studio_audit_quarantine_archive_retention_plan,
     build_studio_operator_status,
+    build_training_weight_restore_evidence,
+    build_training_weight_restore_plan,
     enforce_analysis_budget,
+    load_training_weight_state_dict,
+    materialize_training_weight_payload,
     evaluate_analysis_cost,
     evaluate_multi_config_cost,
     resolve_request_timestep,
@@ -365,6 +373,7 @@ class StudioEvidenceBundleRequest(BaseModel):
     simulation_results: list[dict[str, Any]] = Field(default_factory=list, max_length=16)
     analysis_results: list[dict[str, Any]] = Field(default_factory=list, max_length=16)
     model_scan_results: list[dict[str, Any]] = Field(default_factory=list, max_length=16)
+    weight_restore_results: list[dict[str, Any]] = Field(default_factory=list, max_length=16)
     default_flow_runs: list[dict[str, Any]] = Field(default_factory=list, max_length=16)
     default_flow_attestations: list[dict[str, Any]] = Field(default_factory=list, max_length=16)
     job_ids: list[str] = Field(default_factory=list, max_length=64)
@@ -397,6 +406,16 @@ class StudioAuditQuarantineArchivePurgeRequest(BaseModel):
     """Request body for admin audit quarantine archive retention purges."""
 
     retain_latest: int = Field(default=10, ge=1, le=1000)
+
+
+class StudioTrainingWeightRestoreRequest(BaseModel):
+    """Request body for admin training weight-restore materialization."""
+
+    source_job_id: str = Field(min_length=1, max_length=128)
+    expected_config_sha256: str | None = Field(
+        default=None,
+        pattern=r"^[0-9a-f]{64}$",
+    )
 
 
 class PresetDefaultFlowAttestationVerifyRequest(BaseModel):
@@ -1522,6 +1541,7 @@ def create_app(runtime_settings: StudioRuntimeSettings | None = None) -> FastAPI
                 simulation_payloads=tuple(export_request.simulation_results),
                 analysis_payloads=tuple(export_request.analysis_results),
                 model_scan_payloads=tuple(export_request.model_scan_results),
+                weight_restore_payloads=tuple(export_request.weight_restore_results),
                 default_flow_runs=tuple(export_request.default_flow_runs),
                 default_flow_attestations=tuple(export_request.default_flow_attestations),
                 job_records=tuple(job_records),
@@ -1534,6 +1554,105 @@ def create_app(runtime_settings: StudioRuntimeSettings | None = None) -> FastAPI
         submitted = studio_job_manager.submit(
             kind="evidence",
             owner="studio-evidence",
+            request_id=request_id if isinstance(request_id, str) else None,
+            task=task,
+        )
+        completed = studio_job_manager.wait(
+            submitted.job_id,
+            timeout_seconds=settings.job_default_timeout_seconds + 1.0,
+        )
+        if completed.status == "completed" and completed.result is not None:
+            result = dict(completed.result)
+            result["job_id"] = completed.job_id
+            result["artifacts"] = [artifact.to_public_dict() for artifact in completed.artifacts]
+            return result
+        if completed.status in {"pending", "running", "cancelling"}:
+            raise HTTPException(status_code=503, detail="studio_job_wait_exceeded")
+        if completed.status == "timed_out":
+            raise HTTPException(status_code=504, detail="studio_job_timed_out")
+        raise HTTPException(status_code=500, detail="studio_job_failed")
+
+    @app.post("/api/studio/training/weight-restore")
+    def api_studio_training_weight_restore(
+        restore_request: StudioTrainingWeightRestoreRequest,
+        request: Request,
+    ) -> dict[str, object]:
+        """Materialize and verify a training job's weights as confined evidence.
+
+        Builds the canonical restore plan from the source training job's stored
+        checkpoint metadata, fetches the integrity-checked weight and metadata
+        artifacts, then runs the untrusted torch deserialization inside a bounded
+        worker job. The job emits a path-free
+        ``studio.training.weight-restore.v1`` evidence artifact carrying only the
+        verified digests and loaded-key totals; the in-memory tensor state
+        dictionary never leaves the worker.
+        """
+
+        source_job_id = restore_request.source_job_id
+        status_payload = get_training_status(source_job_id, studio_job_manager)
+        if "status" not in status_payload:
+            raise HTTPException(status_code=404, detail="training_job_not_found")
+        weight_checkpoint = status_payload.get("weight_checkpoint")
+        if not isinstance(weight_checkpoint, dict):
+            raise HTTPException(
+                status_code=409,
+                detail="training_weight_checkpoint_unavailable",
+            )
+        source_status = status_payload.get("status")
+        if not isinstance(source_status, str) or not source_status:
+            raise HTTPException(status_code=409, detail="training_status_unavailable")
+        try:
+            restore_plan = build_training_weight_restore_plan(
+                source_job_id=source_job_id,
+                source_status=source_status,
+                weight_checkpoint=weight_checkpoint,
+                expected_config_sha256=restore_request.expected_config_sha256,
+            )
+        except ValueError as exc:
+            raise HTTPException(status_code=422, detail=str(exc)) from exc
+        try:
+            metadata_payload = studio_job_manager.read_artifact(
+                source_job_id,
+                TRAINING_WEIGHT_METADATA_ARTIFACT_PATH,
+            ).payload
+            weights_payload = studio_job_manager.read_artifact(
+                source_job_id,
+                TRAINING_WEIGHT_ARTIFACT_PATH,
+            ).payload
+        except KeyError as exc:
+            raise HTTPException(
+                status_code=404,
+                detail="training_weight_artifact_not_found",
+            ) from exc
+        except (StudioJobArtifactUnavailable, ValueError) as exc:
+            raise HTTPException(
+                status_code=409,
+                detail="training_weight_artifact_unavailable",
+            ) from exc
+
+        restore_plan_payload = restore_plan.to_public_dict()
+        request_id = getattr(request.state, "studio_request_id", None)
+
+        def task(context: StudioJobContext) -> dict[str, object]:
+            materialization = materialize_training_weight_payload(
+                restore_plan=restore_plan_payload,
+                metadata_payload=metadata_payload,
+                weights_payload=weights_payload,
+                trusted_loader=load_training_weight_state_dict,
+            )
+            evidence = build_training_weight_restore_evidence(
+                materialization,
+                source_status=source_status,
+            )
+            context.write_artifact(
+                TRAINING_WEIGHT_RESTORE_EVIDENCE_ARTIFACT_PATH,
+                json.dumps(evidence, indent=2, sort_keys=True),
+            )
+            return cast(dict[str, object], evidence)
+
+        submitted = studio_job_manager.submit(
+            kind="training",
+            owner=STUDIO_TRAINING_WEIGHT_RESTORE_OWNER,
             request_id=request_id if isinstance(request_id, str) else None,
             task=task,
         )

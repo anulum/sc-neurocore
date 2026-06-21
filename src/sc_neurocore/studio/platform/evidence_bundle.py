@@ -87,6 +87,7 @@ def write_studio_evidence_bundle(
     simulation_payloads: Sequence[Mapping[str, object]] = (),
     analysis_payloads: Sequence[Mapping[str, object]] = (),
     model_scan_payloads: Sequence[Mapping[str, object]] = (),
+    weight_restore_payloads: Sequence[Mapping[str, object]] = (),
     default_flow_runs: Sequence[Mapping[str, object]] = (),
     default_flow_attestations: Sequence[Mapping[str, object]] = (),
     job_records: Sequence[StudioJobRecord] = (),
@@ -113,6 +114,10 @@ def write_studio_evidence_bundle(
     model_scan_payloads:
         Optional Studio model-scan responses carrying ``studio.model-scan.v1``
         scan metadata classified as analysis evidence.
+    weight_restore_payloads:
+        Optional Studio training weight-restore responses carrying
+        ``studio.training.weight-restore.v1`` materialization evidence classified
+        as training evidence.
     default_flow_runs:
         Optional guided default-flow run responses carrying reproducibility
         fingerprints.
@@ -201,6 +206,19 @@ def write_studio_evidence_bundle(
                 f"evidence/model-scans/{index:03d}.json",
                 payload,
                 evidence_classification="analysis",
+            )
+        )
+
+    for index, weight_restore_payload in enumerate(weight_restore_payloads):
+        payload = _weight_restore_payload(weight_restore_payload)
+        entries.append(
+            _write_classified_json_entry(
+                context,
+                written_paths,
+                "training_weight_restore_result",
+                f"evidence/training-weight-restores/{index:03d}.json",
+                payload,
+                evidence_classification="training",
             )
         )
 
@@ -476,6 +494,22 @@ def _model_scan_payload(payload: Mapping[str, object]) -> dict[str, JsonValue]:
         raise ValueError("Studio model-scan payload must be classified as analysis evidence.")
     if metadata.get("status") != validate_studio_evidence_status("completed"):
         raise ValueError("Studio model-scan payload must have completed evidence status.")
+    return result
+
+
+def _weight_restore_payload(payload: Mapping[str, object]) -> dict[str, JsonValue]:
+    # Lazy import: ``training_weights`` imports ``JsonValue`` from this module, so
+    # a module-level import would create a circular import.
+    from sc_neurocore.studio.platform.training_weights import (
+        validate_training_weight_restore_evidence,
+    )
+
+    result = _json_object(payload, "Studio weight-restore payload must be JSON.")
+    validate_training_weight_restore_evidence(result)
+    if result.get("evidence_classification") != validate_studio_evidence_classification("training"):
+        raise ValueError("Studio weight-restore payload must be classified as training evidence.")
+    if result.get("status") != validate_studio_evidence_status("completed"):
+        raise ValueError("Studio weight-restore payload must have completed evidence status.")
     return result
 
 

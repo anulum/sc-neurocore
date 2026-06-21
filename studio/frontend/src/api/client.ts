@@ -313,6 +313,7 @@ export interface StudioEvidenceBundleRequest {
   model_scan_results: Record<string, unknown>[];
   project_name: string | null;
   simulation_results: Record<string, unknown>[];
+  weight_restore_results: Record<string, unknown>[];
 }
 
 export interface StudioEvidenceBundleSummary {
@@ -942,6 +943,30 @@ export interface TrainingWeightRestorePlan {
   weights_artifact: TrainingWeightArtifact;
 }
 
+export interface TrainingWeightMaterialization {
+  architecture: string;
+  config_sha256: string;
+  format: string;
+  framework: string;
+  loaded_key_count: number;
+  metadata_sha256: string;
+  parameter_count: number;
+  schema_version: "studio.training.weight-materialization.v1";
+  source_job_id: string;
+  weights_sha256: string;
+}
+
+export interface TrainingWeightRestoreResult {
+  artifacts: StudioJobArtifact[];
+  evidence_classification: "training";
+  job_id: string;
+  materialization: TrainingWeightMaterialization;
+  schema_version: "studio.training.weight-restore.v1";
+  source_job_id: string;
+  source_status: string;
+  status: "completed";
+}
+
 export interface TrainingCheckpointImportResponse {
   config: Partial<TrainingConfig>;
   config_sha256: string;
@@ -971,6 +996,14 @@ export const exportTrainingCheckpoint = (jobId: string) =>
   get<TrainingCheckpointPayload>(`/training/checkpoint/${jobId}`);
 export const importTrainingCheckpoint = (checkpoint: TrainingCheckpointPayload) =>
   post<TrainingCheckpointImportResponse>("/training/checkpoint/import", checkpoint);
+export const restoreTrainingWeights = (
+  sourceJobId: string,
+  expectedConfigSha256?: string,
+) =>
+  post<TrainingWeightRestoreResult>("/studio/training/weight-restore", {
+    source_job_id: sourceJobId,
+    ...(expectedConfigSha256 ? { expected_config_sha256: expectedConfigSha256 } : {}),
+  });
 
 // --- Network Canvas (Block 5) ---
 

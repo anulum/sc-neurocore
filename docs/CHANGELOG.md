@@ -102,6 +102,22 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
   model-documentation upgrade; replaced the decorative `accel/go/services` and
   `accel/mojo/kernels` stubs with real backends.
 
+### Studio
+- Added the admin `POST /api/studio/training/weight-restore` endpoint. It
+  rebuilds the canonical restore plan from a completed training job's stored
+  checkpoint metadata, fetches the integrity-checked weight and metadata
+  artifacts, and materializes the weights inside a bounded
+  `studio-training-restore` worker job using a `weights_only=True` trusted
+  state-dictionary loader. The worker writes a path-free
+  `studio.training.weight-restore.v1` evidence artifact holding only verified
+  digests, parameter count, and loaded-key total; the deserialized tensors never
+  reach the API response. Added the route policy, the
+  `studio.training.weight_restore.materialize` audit action, the preflight
+  required-route entry, a `weight_restore_results` evidence-bundle field stored
+  under `evidence/training-weight-restores/`, a Training Monitor materialize
+  action with a path-free evidence strip, frontend client types, and full
+  backend and frontend tests plus documentation.
+
 ## [3.15.34] - 2026-06-15
 
 ### Physics and mathematics hardening

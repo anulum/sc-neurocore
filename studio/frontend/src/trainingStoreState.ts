@@ -10,6 +10,7 @@ import type {
   TrainingCheckpointImportResponse,
   TrainingEpochMetrics,
   TrainingWeightRestorePlan,
+  TrainingWeightRestoreResult,
 } from "./api/client";
 import type { StudioProjectTrainingConfig } from "./studioProjectState";
 import type { StudioTrainingTerminalStatus } from "./studioTrainingStream";
@@ -76,6 +77,11 @@ export interface TrainingWeightRestoreVerificationStartStatePatch {
 
 export interface TrainingWeightRestoreVerificationLoadedStatePatch {
   trainingWeightRestoreVerification: TrainingWeightRestoreVerification;
+}
+
+export interface TrainingWeightMaterializationLoadedStatePatch {
+  error: null;
+  trainingWeightMaterialization: TrainingWeightRestoreResult;
 }
 
 export interface TrainingFailureStatePatch {
@@ -186,6 +192,12 @@ export function trainingWeightRestoreVerificationLoadedState(
   trainingWeightRestoreVerification: TrainingWeightRestoreVerification,
 ): TrainingWeightRestoreVerificationLoadedStatePatch {
   return { trainingWeightRestoreVerification };
+}
+
+export function trainingWeightMaterializationLoadedState(
+  trainingWeightMaterialization: TrainingWeightRestoreResult,
+): TrainingWeightMaterializationLoadedStatePatch {
+  return { error: null, trainingWeightMaterialization };
 }
 
 export function trainingFailureState(

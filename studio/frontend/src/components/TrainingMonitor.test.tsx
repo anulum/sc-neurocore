@@ -4,6 +4,7 @@ import { describe, expect, it } from "vitest";
 import {
   TrainingCheckpointControls,
   TrainingEvidenceStrip,
+  TrainingWeightMaterializationStrip,
   TrainingWeightRestorePlanStrip,
 } from "./TrainingMonitor";
 
@@ -138,5 +139,52 @@ describe("TrainingMonitor", () => {
     expect(html).toContain("pending");
     expect(html).toContain("Export verification");
     expect(html).toContain("disabled");
+  });
+
+  it("renders nothing when no weight materialization is present", () => {
+    const html = renderToStaticMarkup(
+      <TrainingWeightMaterializationStrip materialization={null} />,
+    );
+
+    expect(html).toBe("");
+  });
+
+  it("renders path-free server weight materialization evidence", () => {
+    const html = renderToStaticMarkup(
+      <TrainingWeightMaterializationStrip
+        materialization={{
+          artifacts: [
+            { relative_path: "training/weight-restore.json", sha256: "f".repeat(64), size_bytes: 256 },
+          ],
+          evidence_classification: "training",
+          job_id: "sj_restore",
+          materialization: {
+            architecture: "64->128->10",
+            config_sha256: "7".repeat(64),
+            format: "torch_state_dict",
+            framework: "pytorch",
+            loaded_key_count: 6,
+            metadata_sha256: "8".repeat(64),
+            parameter_count: 9610,
+            schema_version: "studio.training.weight-materialization.v1",
+            source_job_id: "sj_training",
+            weights_sha256: "9".repeat(64),
+          },
+          schema_version: "studio.training.weight-restore.v1",
+          source_job_id: "sj_training",
+          source_status: "completed",
+          status: "completed",
+        }}
+      />,
+    );
+
+    expect(html).toContain("studio.training.weight-restore.v1");
+    expect(html).toContain("training");
+    expect(html).toContain("sj_restore");
+    expect(html).toContain("sj_training");
+    expect(html).toContain("Loaded keys");
+    expect(html).toContain(">6<");
+    expect(html).toContain("999999999999");
+    expect(html).toContain("888888888888");
   });
 });

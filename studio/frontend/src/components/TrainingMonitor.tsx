@@ -1,5 +1,5 @@
 import { useEffect, useRef } from "react";
-import type { TrainingWeightRestorePlan } from "../api/client";
+import type { TrainingWeightRestorePlan, TrainingWeightRestoreResult } from "../api/client";
 import type { TrainingWeightRestoreVerification } from "../trainingRestore";
 import { useStudioStore } from "../stores/studio";
 import { buildTrainingEvidenceModel, type TrainingEvidenceModel } from "../trainingEvidence";
@@ -243,13 +243,44 @@ export function TrainingWeightRestorePlanStrip({
   );
 }
 
+export function TrainingWeightMaterializationStrip({
+  materialization,
+}: {
+  materialization: TrainingWeightRestoreResult | null;
+}) {
+  if (!materialization) return null;
+
+  const summary = materialization.materialization;
+  return (
+    <div style={{ borderBottom: "1px solid var(--border)" }}>
+      <EvidenceSummaryStrip
+        variant="banner"
+        items={[
+          { label: "Restore", value: materialization.schema_version },
+          { label: "Evidence", value: materialization.evidence_classification },
+          { label: "Job", value: materialization.job_id },
+          { label: "Source", value: materialization.source_job_id },
+          { label: "Status", value: materialization.source_status },
+          { label: "Architecture", value: summary.architecture },
+          { label: "Params", value: String(summary.parameter_count) },
+          { label: "Loaded keys", value: String(summary.loaded_key_count) },
+          { label: "Weights", value: summary.weights_sha256.slice(0, 12) },
+          { label: "Metadata", value: summary.metadata_sha256.slice(0, 12) },
+        ]}
+      />
+    </div>
+  );
+}
+
 export default function TrainingMonitor() {
   const {
     trainingStatus, trainingEpochs, trainingSurrogates, trainingConfig,
     trainingJobId, trainingWeightRestorePlan, trainingWeightRestoreVerification,
+    trainingWeightMaterialization,
     startTraining, stopTraining, setTrainingConfig, loadSurrogates, isSimulating,
     exportTrainingCheckpoint, importTrainingCheckpointText,
     exportTrainingWeightRestoreVerification, verifyTrainingWeightRestoreArtifact,
+    materializeTrainingWeights,
   } = useStudioStore();
 
   useEffect(() => { loadSurrogates(); }, [loadSurrogates]);
@@ -313,6 +344,21 @@ export default function TrainingMonitor() {
           onExport={() => { void exportTrainingCheckpoint(); }}
           onImportText={(checkpointJson) => { void importTrainingCheckpointText(checkpointJson); }}
         />
+        <button
+          onClick={() => { void materializeTrainingWeights(); }}
+          disabled={trainingJobId === null}
+          title="Materialize and verify training weights into confined evidence"
+          style={{
+            background: "var(--bg-tertiary)",
+            border: "1px solid var(--border)",
+            color: trainingJobId !== null ? "var(--text-secondary)" : "var(--text-muted)",
+            cursor: trainingJobId !== null ? "pointer" : "not-allowed",
+            fontSize: 10,
+            padding: "3px 8px",
+          }}
+        >
+          Materialize weights
+        </button>
       </div>
 
       <TrainingEvidenceStrip evidence={evidence} />
@@ -322,6 +368,7 @@ export default function TrainingMonitor() {
         restorePlan={trainingWeightRestorePlan}
         verification={trainingWeightRestoreVerification}
       />
+      <TrainingWeightMaterializationStrip materialization={trainingWeightMaterialization} />
 
       {/* Config panel */}
       {!isRunning && (

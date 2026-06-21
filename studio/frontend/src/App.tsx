@@ -156,6 +156,7 @@ export default function App() {
       model_scan_results: [],
       project_name: s.projectSaveResult.name,
       simulation_results: [],
+      weight_restore_results: [],
     });
   };
 

@@ -18,15 +18,22 @@ from pathlib import Path
 import pytest
 
 from sc_neurocore.studio.platform.jobs import StudioJobContext
+from sc_neurocore.studio.platform.training_weight_loader import (
+    load_training_weight_state_dict,
+)
 from sc_neurocore.studio.platform.training_weights import (
+    STUDIO_TRAINING_TORCH_STATE_DICT_SCHEMA_VERSION,
     STUDIO_TRAINING_WEIGHT_CHECKPOINT_SCHEMA_VERSION,
     STUDIO_TRAINING_WEIGHT_RESTORE_PLAN_SCHEMA_VERSION,
+    STUDIO_TRAINING_WEIGHT_RESTORE_SCHEMA_VERSION,
     TRAINING_WEIGHT_ARTIFACT_ROUTE_TEMPLATE,
     TRAINING_WEIGHT_ARTIFACT_PATH,
     TRAINING_WEIGHT_METADATA_ARTIFACT_PATH,
+    build_training_weight_restore_evidence,
     build_training_weight_restore_plan,
     materialize_training_weight_payload,
     validate_training_weight_checkpoint_metadata,
+    validate_training_weight_restore_evidence,
     write_training_weight_checkpoint,
 )
 
@@ -312,3 +319,223 @@ def test_build_training_weight_restore_plan_rejects_missing_source_metadata(
             source_status="completed",
             weight_checkpoint=summary,
         )
+
+
+def _torch_checkpoint_bytes(
+    *,
+    schema_version: str = STUDIO_TRAINING_TORCH_STATE_DICT_SCHEMA_VERSION,
+    state_dict: dict[str, object] | None = None,
+    include_state_dict: bool = True,
+) -> bytes:
+    """Return a portable torch checkpoint payload like the Training Monitor."""
+
+    from io import BytesIO
+
+    torch = pytest.importorskip("torch")
+    payload: dict[str, object] = {
+        "config": {"dataset": "synthetic", "epochs": 2},
+        "final_metrics": {"train_accuracy": 0.75},
+        "model_info": {"architecture": "64->10"},
+        "schema_version": schema_version,
+    }
+    if include_state_dict:
+        if state_dict is None:
+            state_dict = {
+                "fc.weight": torch.zeros(2, 3),
+                "fc.bias": torch.zeros(2),
+            }
+        payload["model_state_dict"] = state_dict
+    buffer = BytesIO()
+    torch.save(payload, buffer)
+    return buffer.getvalue()
+
+
+def test_load_training_weight_state_dict_extracts_model_state() -> None:
+    """Trusted loader returns only the string-keyed model state dictionary."""
+
+    pytest.importorskip("torch")
+    state_dict = load_training_weight_state_dict(_torch_checkpoint_bytes())
+
+    assert sorted(state_dict.keys()) == ["fc.bias", "fc.weight"]
+
+
+def test_load_training_weight_state_dict_rejects_non_checkpoint() -> None:
+    """Trusted loader rejects payloads that are not checkpoint objects."""
+
+    torch = pytest.importorskip("torch")
+    from io import BytesIO
+
+    buffer = BytesIO()
+    torch.save(torch.zeros(3), buffer)
+
+    with pytest.raises(ValueError, match="not a checkpoint object"):
+        load_training_weight_state_dict(buffer.getvalue())
+
+
+def test_load_training_weight_state_dict_rejects_unsupported_schema() -> None:
+    """Trusted loader rejects checkpoints with an unexpected payload schema."""
+
+    pytest.importorskip("torch")
+    payload = _torch_checkpoint_bytes(schema_version="studio.training.torch-state-dict.v0")
+
+    with pytest.raises(ValueError, match="schema is unsupported"):
+        load_training_weight_state_dict(payload)
+
+
+def test_load_training_weight_state_dict_rejects_missing_state_dict() -> None:
+    """Trusted loader rejects checkpoints without a model state dictionary."""
+
+    pytest.importorskip("torch")
+    payload = _torch_checkpoint_bytes(include_state_dict=False)
+
+    with pytest.raises(ValueError, match="missing a model state dict"):
+        load_training_weight_state_dict(payload)
+
+
+def test_load_training_weight_state_dict_rejects_invalid_state_key() -> None:
+    """Trusted loader rejects model state dictionaries with empty keys."""
+
+    torch = pytest.importorskip("torch")
+    payload = _torch_checkpoint_bytes(state_dict={"": torch.zeros(1)})
+
+    with pytest.raises(ValueError, match="invalid state key"):
+        load_training_weight_state_dict(payload)
+
+
+def test_load_training_weight_state_dict_rejects_undeserializable() -> None:
+    """Trusted loader fails closed on payloads torch cannot deserialize."""
+
+    pytest.importorskip("torch")
+    with pytest.raises(ValueError, match="could not be deserialized"):
+        load_training_weight_state_dict(b"not a torch payload")
+
+
+def test_materialize_with_real_torch_loader_roundtrips(tmp_path: Path) -> None:
+    """End-to-end materialization loads real torch weights after verification."""
+
+    pytest.importorskip("torch")
+    context = _context(tmp_path)
+    weights_payload = _torch_checkpoint_bytes()
+    summary = write_training_weight_checkpoint(
+        context,
+        weights_payload=weights_payload,
+        config={"dataset": "synthetic", "epochs": 2},
+        architecture="64->10",
+        parameter_count=8,
+        final_metrics={"train_accuracy": 0.75},
+    ).to_public_dict()
+    plan = build_training_weight_restore_plan(
+        source_job_id="sj_training",
+        source_status="completed",
+        weight_checkpoint=summary,
+        expected_config_sha256=str(summary["config_sha256"]),
+    ).to_public_dict()
+
+    materialization = materialize_training_weight_payload(
+        restore_plan=plan,
+        metadata_payload=(tmp_path / TRAINING_WEIGHT_METADATA_ARTIFACT_PATH).read_bytes(),
+        weights_payload=(tmp_path / TRAINING_WEIGHT_ARTIFACT_PATH).read_bytes(),
+        trusted_loader=load_training_weight_state_dict,
+    )
+
+    assert materialization.to_public_dict()["loaded_key_count"] == 2
+    assert sorted(materialization.state_dict.keys()) == ["fc.bias", "fc.weight"]
+
+
+def _materialization(tmp_path: Path):
+    """Return a verified materialization for restore-evidence tests."""
+
+    context = _context(tmp_path)
+    summary = write_training_weight_checkpoint(
+        context,
+        weights_payload=b"weights",
+        config={"dataset": "synthetic", "epochs": 2},
+        architecture="64->10",
+        parameter_count=650,
+        final_metrics={"train_accuracy": 0.75},
+    ).to_public_dict()
+    plan = build_training_weight_restore_plan(
+        source_job_id="sj_training",
+        source_status="completed",
+        weight_checkpoint=summary,
+        expected_config_sha256=str(summary["config_sha256"]),
+    ).to_public_dict()
+    return materialize_training_weight_payload(
+        restore_plan=plan,
+        metadata_payload=(tmp_path / TRAINING_WEIGHT_METADATA_ARTIFACT_PATH).read_bytes(),
+        weights_payload=(tmp_path / TRAINING_WEIGHT_ARTIFACT_PATH).read_bytes(),
+        trusted_loader=lambda payload: {"layer.weight": payload},
+    )
+
+
+def test_build_training_weight_restore_evidence_wraps_materialization(
+    tmp_path: Path,
+) -> None:
+    """Restore evidence wraps a verified materialization as training evidence."""
+
+    materialization = _materialization(tmp_path)
+
+    evidence = build_training_weight_restore_evidence(
+        materialization,
+        source_status="completed",
+    )
+
+    assert evidence["schema_version"] == STUDIO_TRAINING_WEIGHT_RESTORE_SCHEMA_VERSION
+    assert evidence["evidence_classification"] == "training"
+    assert evidence["status"] == "completed"
+    assert evidence["source_job_id"] == "sj_training"
+    assert evidence["source_status"] == "completed"
+    materialization_summary = evidence["materialization"]
+    assert isinstance(materialization_summary, dict)
+    assert "state_dict" not in materialization_summary
+    assert validate_training_weight_restore_evidence(evidence) == evidence
+
+
+def test_build_training_weight_restore_evidence_requires_source_status(
+    tmp_path: Path,
+) -> None:
+    """Restore evidence requires a non-empty source training status."""
+
+    materialization = _materialization(tmp_path)
+
+    with pytest.raises(ValueError, match="source_status"):
+        build_training_weight_restore_evidence(materialization, source_status="")
+
+
+def test_validate_training_weight_restore_evidence_rejects_forged(
+    tmp_path: Path,
+) -> None:
+    """Restore evidence validation rejects forged or incomplete payloads."""
+
+    materialization = _materialization(tmp_path)
+    evidence = build_training_weight_restore_evidence(
+        materialization,
+        source_status="completed",
+    )
+
+    bad_schema = dict(evidence)
+    bad_schema["schema_version"] = "studio.training.weight-restore.v0"
+    with pytest.raises(ValueError, match="schema is unsupported"):
+        validate_training_weight_restore_evidence(bad_schema)
+
+    bad_class = dict(evidence)
+    bad_class["evidence_classification"] = "analysis"
+    with pytest.raises(ValueError, match="classification is invalid"):
+        validate_training_weight_restore_evidence(bad_class)
+
+    bad_status = dict(evidence)
+    bad_status["status"] = "failed"
+    with pytest.raises(ValueError, match="must be completed"):
+        validate_training_weight_restore_evidence(bad_status)
+
+    missing_materialization = dict(evidence)
+    del missing_materialization["materialization"]
+    with pytest.raises(ValueError, match="requires materialization"):
+        validate_training_weight_restore_evidence(missing_materialization)
+
+    forged_digest = dict(evidence)
+    forged_summary = dict(materialization.to_public_dict())
+    forged_summary["weights_sha256"] = "z" * 64
+    forged_digest["materialization"] = forged_summary
+    with pytest.raises(ValueError, match="weights_sha256 is invalid"):
+        validate_training_weight_restore_evidence(forged_digest)

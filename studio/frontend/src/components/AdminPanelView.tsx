@@ -202,6 +202,7 @@ export default function AdminPanelView({
       model_scan_results: jsonObjects(form.get("modelScanResults")),
       project_name: optionalText(form.get("projectName")),
       simulation_results: jsonObjects(form.get("simulationResults")),
+      weight_restore_results: jsonObjects(form.get("weightRestoreResults")),
     });
   }
 
@@ -646,6 +647,15 @@ export default function AdminPanelView({
             <textarea
               aria-label="Evidence model-scan JSON"
               name="modelScanResults"
+              disabled={model.evidenceBundle.loading}
+              rows={4}
+            />
+          </label>
+          <label className="admin-evidence-wide">
+            Weight Restore JSON
+            <textarea
+              aria-label="Evidence weight-restore JSON"
+              name="weightRestoreResults"
               disabled={model.evidenceBundle.loading}
               rows={4}
             />

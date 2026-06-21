@@ -553,10 +553,12 @@ Bundle files are declared job artifacts under `evidence/`, with simulation
 payloads stored under `evidence/simulations/`, analysis payloads stored under
 `evidence/analyses/`, selected `studio.model-scan.v1` model-scan payloads
 (classified as analysis evidence) stored under `evidence/model-scans/`,
+selected `studio.training.weight-restore.v1` weight-restore payloads (classified
+as training evidence) stored under `evidence/training-weight-restores/`,
 default-flow payloads stored under
 `evidence/default-flows/`, and a `studio.evidence-bundle.v1` manifest at
-`evidence/manifest.json`. The Admin evidence form exposes a Model Scan JSON
-field alongside the simulation and analysis inputs. Selected job action-evidence artifacts are copied
+`evidence/manifest.json`. The Admin evidence form exposes Model Scan JSON and
+Weight Restore JSON fields alongside the simulation and analysis inputs. Selected job action-evidence artifacts are copied
 under `evidence/jobs/{job_id}/artifacts/` and classified as `action_evidence`
 only after `studio.action-evidence.v1` validation. The bundle manifest is
 path-free and omits bearer tokens, token hashes, password material, and

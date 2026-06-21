@@ -330,6 +330,15 @@ runtime features:
   carries validated Training Monitor weight metadata. The plan points clients to
   the authenticated job artifact route and preserves the expected artifact
   hashes instead of moving raw model weights through checkpoint JSON.
+- `/api/studio/training/weight-restore` is an admin-only endpoint that rebuilds
+  the canonical restore plan from a completed training job's stored checkpoint
+  metadata, fetches the integrity-checked weight and metadata artifacts, and runs
+  the untrusted PyTorch deserialization inside a bounded `studio-training-restore`
+  worker job. The worker loads the weights through a `weights_only=True`
+  state-dictionary loader and writes a path-free
+  `studio.training.weight-restore.v1` evidence artifact holding only the verified
+  digests, parameter count, and loaded-key total; the tensors never reach the API
+  response.
 - `/api/studio/evidence/bundle` creates an admin-only evidence export as a
   bounded `studio-evidence` worker job. The request can name one saved project,
   selected `studio.simulation-run.v1` simulation responses, selected
@@ -345,7 +354,9 @@ runtime features:
   metadata are all written as job artifacts under `evidence/`. Simulation
   payloads are stored under `evidence/simulations/`; analysis payloads are
   stored under `evidence/analyses/`; model-scan payloads are stored under
-  `evidence/model-scans/`; default-flow payloads are stored under
+  `evidence/model-scans/`; weight-restore payloads classified as training
+  evidence are stored under `evidence/training-weight-restores/`; default-flow
+  payloads are stored under
   `evidence/default-flows/`. Selected job action-evidence artifacts are copied
   under `evidence/jobs/{job_id}/artifacts/` and classified as `action_evidence`
   only after `studio.action-evidence.v1` validation. The response and manifest
@@ -659,6 +670,7 @@ for complete API details with request/response examples.
 | `/api/ir/*` | Compiler Inspector | IR build, verify, emit SV, co-sim, direct-SV traceability |
 | `/api/compile`, `/api/synth/*` | Compiler/Synthesis | Worker-backed compile traceability, Yosys synthesis, target provenance, multi-target, estimate |
 | `/api/training/*` | Training Monitor | Start/stop, SSE stream, surrogates |
+| `/api/studio/training/weight-restore` | Admin | Bounded worker materialization and verification of training weights into path-free restore evidence |
 | `/api/graph/*` | Network Canvas | Populations, projections, validate, simulate, NIR |
 | `/api/project/*`, `/api/pipeline/*` | Integration | Save/load, worker-backed full pipeline |
 | `/api/studio/audit/*` | Admin | Audit status and admin-gated export |
