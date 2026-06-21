@@ -214,9 +214,12 @@ runtime features:
   metadata.
 - `/api/training/checkpoint/{job_id}` exports a portable
   `studio.training.checkpoint.v1` JSON checkpoint for the selected Training
-  Monitor job. `/api/training/checkpoint/import` validates checkpoint and
-  config digests before returning the restored training config. The Training
-  Monitor UI exposes matching import/export controls. Completed worker-backed
+  Monitor job. Export and import validate embedded
+  `studio.training.evidence-summary.v1` metadata as verified `training`
+  evidence before digesting or accepting a checkpoint.
+  `/api/training/checkpoint/import` validates checkpoint and config digests
+  before returning the restored training config. The Training Monitor UI
+  exposes matching import/export controls. Completed worker-backed
   training jobs also publish `training/model_state.pt` plus
   `training/model_state.json` metadata using
   `studio.training.weight-checkpoint.v1`; checkpoint JSON may reference that

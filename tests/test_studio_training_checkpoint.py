@@ -10,9 +10,13 @@
 
 from __future__ import annotations
 
+from collections.abc import Mapping
 from datetime import UTC, datetime
+import hashlib
+import json
 from pathlib import Path
 import threading
+from typing import cast
 
 import pytest
 
@@ -22,6 +26,10 @@ from starlette.testclient import TestClient
 
 from sc_neurocore.studio.app import create_app
 from sc_neurocore.studio.platform import JsonValue, StudioRuntimeSettings
+from sc_neurocore.studio.platform.training_evidence import (
+    TRAINING_EVIDENCE_ARTIFACT_PATH,
+    TRAINING_EVIDENCE_SUMMARY_SCHEMA_VERSION,
+)
 from sc_neurocore.studio.platform.training_checkpoint import (
     STUDIO_TRAINING_CHECKPOINT_SCHEMA_VERSION,
     build_training_checkpoint,
@@ -58,6 +66,42 @@ def _weight_checkpoint_metadata(
     ).to_public_dict()
 
 
+def _evidence_summary() -> dict[str, object]:
+    """Return a validated Training Monitor evidence summary payload."""
+
+    return {
+        "action_kind": "studio.training.run",
+        "evidence_artifact": {
+            "relative_path": TRAINING_EVIDENCE_ARTIFACT_PATH,
+            "sha256": "0" * 64,
+            "size_bytes": 128,
+        },
+        "evidence_classification": "training",
+        "job_id": "sj_training",
+        "payload_sha256": "1" * 64,
+        "replay_route": "POST /api/training/start",
+        "result_artifacts": [
+            {
+                "relative_path": "training/status.json",
+                "sha256": "2" * 64,
+                "size_bytes": 256,
+            }
+        ],
+        "schema_version": TRAINING_EVIDENCE_SUMMARY_SCHEMA_VERSION,
+        "status": "completed",
+    }
+
+
+def _rehash_checkpoint(checkpoint: Mapping[str, object]) -> dict[str, object]:
+    """Return a checkpoint copy with a matching digest for its current content."""
+
+    updated = dict(checkpoint)
+    without_digest = {key: value for key, value in updated.items() if key != "checkpoint_sha256"}
+    encoded = json.dumps(without_digest, sort_keys=True, separators=(",", ":")).encode("utf-8")
+    updated["checkpoint_sha256"] = hashlib.sha256(encoded).hexdigest()
+    return updated
+
+
 def test_training_checkpoint_round_trip_validates_hashes(tmp_path: Path) -> None:
     """Checkpoint import accepts an untampered exported checkpoint."""
 
@@ -74,10 +118,7 @@ def test_training_checkpoint_round_trip_validates_hashes(tmp_path: Path) -> None
         config=config,
         status="completed",
         final_metrics={"train_accuracy": 0.9},
-        evidence_summary={
-            "action_kind": "studio.training.run",
-            "schema_version": "studio.training.evidence-summary.v1",
-        },
+        evidence_summary=_evidence_summary(),
         weight_checkpoint=_weight_checkpoint_metadata(tmp_path, config=config),
         clock=datetime(2026, 6, 20, 12, 0, tzinfo=UTC),
     ).to_public_dict()
@@ -90,6 +131,7 @@ def test_training_checkpoint_round_trip_validates_hashes(tmp_path: Path) -> None
     assert imported["source_weight_checkpoint"] == checkpoint["weight_checkpoint"]
     assert imported["config"] == checkpoint["config"]
     assert imported["config_sha256"] == checkpoint["config_sha256"]
+    assert checkpoint["evidence_summary"] == _evidence_summary()
     restore_plan = imported["weight_restore_plan"]
     assert isinstance(restore_plan, dict)
     assert restore_plan["schema_version"] == STUDIO_TRAINING_WEIGHT_RESTORE_PLAN_SCHEMA_VERSION
@@ -118,6 +160,90 @@ def test_training_checkpoint_import_rejects_tampered_config() -> None:
         import_training_checkpoint_payload(tampered)
 
 
+@pytest.mark.parametrize(
+    ("payload", "error_match"),
+    [
+        ({"schema_version": "studio.old.v1"}, "schema"),
+        (
+            {
+                "schema_version": STUDIO_TRAINING_CHECKPOINT_SCHEMA_VERSION,
+                "config": [],
+            },
+            "config object",
+        ),
+        (
+            {
+                "schema_version": STUDIO_TRAINING_CHECKPOINT_SCHEMA_VERSION,
+                "config": {"dataset": float("nan")},
+            },
+            "import must be JSON",
+        ),
+        ({1: "bad"}, "import must be JSON"),
+        (
+            {"schema_version": STUDIO_TRAINING_CHECKPOINT_SCHEMA_VERSION, "bad": object()},
+            "import must be JSON",
+        ),
+    ],
+)
+def test_training_checkpoint_import_rejects_invalid_json_contract(
+    payload: dict[object, object],
+    error_match: str,
+) -> None:
+    """Checkpoint import rejects malformed schemas and non-portable JSON."""
+
+    with pytest.raises(ValueError, match=error_match):
+        import_training_checkpoint_payload(cast(dict[str, object], payload))
+
+
+def test_training_checkpoint_rejects_invalid_evidence_summary() -> None:
+    """Checkpoint export rejects unverified Training Monitor evidence summaries."""
+
+    with pytest.raises(ValueError, match="evidence summary"):
+        build_training_checkpoint(
+            job_id="sj_training",
+            config={"dataset": "synthetic", "epochs": 4},
+            status="completed",
+            evidence_summary={"schema_version": TRAINING_EVIDENCE_SUMMARY_SCHEMA_VERSION},
+            clock=datetime(2026, 6, 20, 12, 0, tzinfo=UTC),
+        )
+
+
+def test_training_checkpoint_import_rejects_tampered_evidence_summary() -> None:
+    """Checkpoint import validates evidence summaries even when digest matches."""
+
+    checkpoint = build_training_checkpoint(
+        job_id="sj_training",
+        config={"dataset": "synthetic", "epochs": 4},
+        status="completed",
+        evidence_summary=_evidence_summary(),
+        clock=datetime(2026, 6, 20, 12, 0, tzinfo=UTC),
+    ).to_public_dict()
+    tampered: dict[str, object] = dict(checkpoint)
+    tampered["evidence_summary"] = {
+        "schema_version": TRAINING_EVIDENCE_SUMMARY_SCHEMA_VERSION,
+        "status": "unavailable",
+    }
+
+    with pytest.raises(ValueError, match="evidence summary"):
+        import_training_checkpoint_payload(_rehash_checkpoint(tampered))
+
+
+def test_training_checkpoint_import_rejects_non_object_evidence_summary() -> None:
+    """Checkpoint import requires evidence summary objects."""
+
+    checkpoint = build_training_checkpoint(
+        job_id="sj_training",
+        config={"dataset": "synthetic", "epochs": 4},
+        status="completed",
+        clock=datetime(2026, 6, 20, 12, 0, tzinfo=UTC),
+    ).to_public_dict()
+    tampered: dict[str, object] = dict(checkpoint)
+    tampered["evidence_summary"] = []
+
+    with pytest.raises(ValueError, match="evidence"):
+        import_training_checkpoint_payload(_rehash_checkpoint(tampered))
+
+
 def test_training_checkpoint_import_without_weights_has_no_restore_plan() -> None:
     """Checkpoint import omits restore plans when no weight artifact exists."""
 
@@ -132,6 +258,77 @@ def test_training_checkpoint_import_without_weights_has_no_restore_plan() -> Non
 
     assert imported["source_weight_checkpoint"] is None
     assert imported["weight_restore_plan"] is None
+
+
+def test_training_checkpoint_rejects_missing_build_metadata() -> None:
+    """Checkpoint export requires source job and status metadata."""
+
+    with pytest.raises(ValueError, match="job_id"):
+        build_training_checkpoint(
+            job_id="",
+            config={"dataset": "synthetic"},
+            status="completed",
+            clock=datetime(2026, 6, 20, 12, 0, tzinfo=UTC),
+        )
+    with pytest.raises(ValueError, match="status"):
+        build_training_checkpoint(
+            job_id="sj_training",
+            config={"dataset": "synthetic"},
+            status="",
+            clock=datetime(2026, 6, 20, 12, 0, tzinfo=UTC),
+        )
+
+
+def test_training_checkpoint_import_rejects_missing_source_metadata() -> None:
+    """Checkpoint import requires source job and status metadata."""
+
+    checkpoint = build_training_checkpoint(
+        job_id="sj_training",
+        config={"dataset": "synthetic", "epochs": 4},
+        status="completed",
+        clock=datetime(2026, 6, 20, 12, 0, tzinfo=UTC),
+    ).to_public_dict()
+    missing_job_id = dict(checkpoint)
+    missing_job_id["job_id"] = ""
+    missing_status = dict(checkpoint)
+    missing_status["status"] = ""
+
+    with pytest.raises(ValueError, match="job_id"):
+        import_training_checkpoint_payload(_rehash_checkpoint(missing_job_id))
+    with pytest.raises(ValueError, match="status"):
+        import_training_checkpoint_payload(_rehash_checkpoint(missing_status))
+
+
+def test_training_checkpoint_import_rejects_non_object_weight_metadata() -> None:
+    """Checkpoint import requires weight checkpoint objects."""
+
+    checkpoint = build_training_checkpoint(
+        job_id="sj_training",
+        config={"dataset": "synthetic", "epochs": 4},
+        status="completed",
+        clock=datetime(2026, 6, 20, 12, 0, tzinfo=UTC),
+    ).to_public_dict()
+    tampered: dict[str, object] = dict(checkpoint)
+    tampered["weight_checkpoint"] = []
+
+    with pytest.raises(ValueError, match="weight metadata"):
+        import_training_checkpoint_payload(_rehash_checkpoint(tampered))
+
+
+def test_training_checkpoint_import_rejects_digest_mismatch() -> None:
+    """Checkpoint import rejects stale checkpoint digests."""
+
+    checkpoint = build_training_checkpoint(
+        job_id="sj_training",
+        config={"dataset": "synthetic", "epochs": 4},
+        status="completed",
+        clock=datetime(2026, 6, 20, 12, 0, tzinfo=UTC),
+    ).to_public_dict()
+    tampered: dict[str, object] = dict(checkpoint)
+    tampered["status"] = "failed"
+
+    with pytest.raises(ValueError, match="digest mismatch"):
+        import_training_checkpoint_payload(tampered)
 
 
 def test_training_checkpoint_import_rejects_tampered_weight_metadata(

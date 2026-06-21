@@ -158,6 +158,7 @@ from sc_neurocore.studio.platform.training_evidence import (
     TRAINING_EVIDENCE_SUMMARY_SCHEMA_VERSION,
     TrainingEvidenceSummary,
     build_training_evidence_summary,
+    validate_training_evidence_summary,
 )
 from sc_neurocore.studio.platform.training_checkpoint import (
     STUDIO_TRAINING_CHECKPOINT_SCHEMA_VERSION,
@@ -364,6 +365,7 @@ __all__ = [
     "build_training_evidence_summary",
     "build_training_checkpoint",
     "build_training_weight_restore_plan",
+    "validate_training_evidence_summary",
     "validate_training_weight_checkpoint_metadata",
     "validate_studio_evidence_classification",
     "validate_studio_evidence_status",

@@ -19,6 +19,7 @@ from datetime import UTC, datetime
 from typing import TypeAlias, cast
 
 from sc_neurocore.studio.platform.evidence_bundle import JsonValue
+from sc_neurocore.studio.platform.training_evidence import validate_training_evidence_summary
 from sc_neurocore.studio.platform.training_weights import (
     build_training_weight_restore_plan,
     validate_training_weight_checkpoint_metadata,
@@ -132,9 +133,7 @@ def build_training_checkpoint(
         else _json_object(final_metrics, "Training checkpoint metrics must be JSON.")
     )
     evidence_payload = (
-        None
-        if evidence_summary is None
-        else _json_object(evidence_summary, "Training checkpoint evidence must be JSON.")
+        None if evidence_summary is None else validate_training_evidence_summary(evidence_summary)
     )
     generated_at = (clock or datetime.now(UTC)).astimezone(UTC).replace(microsecond=0)
     config_sha256 = _sha256_json(checkpoint_config)
@@ -209,6 +208,11 @@ def import_training_checkpoint_payload(
         if weight_value is None
         else _weight_checkpoint_payload(weight_value, expected_config_sha256=expected_config_sha)
     )
+    evidence_value = checkpoint.get("evidence_summary")
+    if evidence_value is not None:
+        if not isinstance(evidence_value, dict):
+            raise ValueError("Training checkpoint evidence must be an object.")
+        validate_training_evidence_summary(evidence_value)
     checkpoint_without_digest = {
         key: value for key, value in checkpoint.items() if key != "checkpoint_sha256"
     }

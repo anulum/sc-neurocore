@@ -13,6 +13,9 @@ from __future__ import annotations
 import json
 from collections.abc import Callable, Mapping
 from pathlib import Path
+from typing import cast
+
+import pytest
 
 from sc_neurocore.studio.platform.action_evidence import (
     STUDIO_ACTION_EVIDENCE_SCHEMA_VERSION,
@@ -30,6 +33,7 @@ from sc_neurocore.studio.platform.training_evidence import (
     TRAINING_EVIDENCE_ARTIFACT_PATH,
     TRAINING_EVIDENCE_SUMMARY_SCHEMA_VERSION,
     build_training_evidence_summary,
+    validate_training_evidence_summary,
 )
 from sc_neurocore.studio.training import get_training_status
 
@@ -269,6 +273,149 @@ def test_training_evidence_summary_rejects_non_object_artifact_entry() -> None:
     assert summary == _unavailable_training_summary()
 
 
+def test_validate_training_evidence_summary_accepts_verified_summary() -> None:
+    """Evidence summary validator accepts verified Training Monitor summaries."""
+
+    summary = build_training_evidence_summary(_training_record(), _training_payload_reader())
+    assert isinstance(summary, dict)
+    summary["duration_seconds"] = 1.5
+
+    validated = validate_training_evidence_summary(summary)
+
+    assert validated == summary
+
+
+def test_validate_training_evidence_summary_rejects_unavailable_summary() -> None:
+    """Evidence summary validator rejects bounded unavailable summaries."""
+
+    with pytest.raises(ValueError, match="action_kind"):
+        validate_training_evidence_summary(_unavailable_training_summary())
+
+
+def test_validate_training_evidence_summary_rejects_forged_artifact_path() -> None:
+    """Evidence summary validator rejects non-confined artifact metadata."""
+
+    summary = build_training_evidence_summary(_training_record(), _training_payload_reader())
+    assert isinstance(summary, dict)
+    evidence_artifact = summary["evidence_artifact"]
+    assert isinstance(evidence_artifact, dict)
+    evidence_artifact["relative_path"] = "../training/evidence.json"
+
+    with pytest.raises(ValueError, match="path"):
+        validate_training_evidence_summary(summary)
+
+
+@pytest.mark.parametrize(
+    ("mutator", "error_match"),
+    [
+        (lambda payload: payload.__setitem__("schema_version", "studio.old.v1"), "schema"),
+        (lambda payload: payload.__setitem__("action_kind", "studio.compile"), "action"),
+        (
+            lambda payload: payload.__setitem__("evidence_classification", "compile"),
+            "classification",
+        ),
+        (lambda payload: payload.__setitem__("payload_sha256", "bad"), "payload digest"),
+        (lambda payload: payload.__setitem__("result_artifacts", None), "result artifacts"),
+        (lambda payload: payload.__setitem__("replay_route", ""), "replay_route"),
+    ],
+)
+def test_validate_training_evidence_summary_rejects_invalid_fields(
+    mutator: Callable[[dict[str, object]], None],
+    error_match: str,
+) -> None:
+    """Evidence summary validator rejects malformed top-level fields."""
+
+    summary = _valid_training_summary()
+    mutator(summary)
+
+    with pytest.raises(ValueError, match=error_match):
+        validate_training_evidence_summary(summary)
+
+
+@pytest.mark.parametrize(
+    ("evidence_artifact", "error_match"),
+    [
+        (None, "evidence_artifact"),
+        ({"relative_path": "training/evidence.txt", "sha256": "0" * 64, "size_bytes": 128}, "path"),
+        (
+            {"relative_path": TRAINING_EVIDENCE_ARTIFACT_PATH, "sha256": "bad", "size_bytes": 128},
+            "digest",
+        ),
+        (
+            {
+                "relative_path": TRAINING_EVIDENCE_ARTIFACT_PATH,
+                "sha256": "0" * 64,
+                "size_bytes": -1,
+            },
+            "size",
+        ),
+        (
+            {
+                "relative_path": TRAINING_EVIDENCE_ARTIFACT_PATH,
+                "sha256": "0" * 64,
+                "size_bytes": 128,
+                1: "bad",
+            },
+            "must be JSON",
+        ),
+    ],
+)
+def test_validate_training_evidence_summary_rejects_invalid_evidence_artifact(
+    evidence_artifact: object,
+    error_match: str,
+) -> None:
+    """Evidence summary validator rejects malformed evidence artifact metadata."""
+
+    summary = _valid_training_summary()
+    summary["evidence_artifact"] = evidence_artifact
+
+    with pytest.raises(ValueError, match=error_match):
+        validate_training_evidence_summary(summary)
+
+
+@pytest.mark.parametrize(
+    ("result_artifact", "error_match"),
+    [
+        ("bad", "result_artifacts"),
+        ({"relative_path": "/training/status.json", "sha256": "2" * 64, "size_bytes": 256}, "path"),
+        ({"relative_path": "training/status.json", "sha256": "bad", "size_bytes": 256}, "digest"),
+        ({"relative_path": "training/status.json", "sha256": "2" * 64, "size_bytes": -1}, "size"),
+    ],
+)
+def test_validate_training_evidence_summary_rejects_invalid_result_artifact(
+    result_artifact: object,
+    error_match: str,
+) -> None:
+    """Evidence summary validator rejects malformed result artifact metadata."""
+
+    summary = _valid_training_summary()
+    summary["result_artifacts"] = [result_artifact]
+
+    with pytest.raises(ValueError, match=error_match):
+        validate_training_evidence_summary(summary)
+
+
+@pytest.mark.parametrize(
+    ("payload", "error_match"),
+    [
+        ({"schema_version": float("nan")}, "must be JSON"),
+        ({1: "bad"}, "must be JSON"),
+        (
+            {"schema_version": TRAINING_EVIDENCE_SUMMARY_SCHEMA_VERSION, "bad": object()},
+            "must be JSON",
+        ),
+    ],
+)
+def test_validate_training_evidence_summary_rejects_non_portable_json(
+    payload: Mapping[object, object],
+    error_match: str,
+) -> None:
+    """Evidence summary validator rejects non-portable JSON payloads."""
+
+    with pytest.raises(ValueError, match=error_match):
+        validate_training_evidence_summary(cast(Mapping[str, object], payload))
+
+
 def _training_record() -> StudioJobRecord:
     """Return a completed Training Monitor record declaring evidence."""
 
@@ -344,3 +491,11 @@ def _unavailable_training_summary() -> dict[str, object]:
         "schema_version": TRAINING_EVIDENCE_SUMMARY_SCHEMA_VERSION,
         "status": "unavailable",
     }
+
+
+def _valid_training_summary() -> dict[str, object]:
+    """Return a mutable verified Training Monitor evidence summary."""
+
+    summary = build_training_evidence_summary(_training_record(), _training_payload_reader())
+    assert isinstance(summary, dict)
+    return dict(summary)

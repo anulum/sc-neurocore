@@ -111,10 +111,13 @@ return a bounded unavailable summary instead of untrusted metadata.
 Training checkpoints use the `studio.training.checkpoint.v1` schema. They are
 portable JSON manifests for Studio configuration, terminal status, metrics, and
 evidence metadata. They do not expose local filesystem paths and do not include
-raw model-weight tensors. Import validates both the config digest and full
-checkpoint digest before returning the restored training config to the UI. The
-browser import control first validates the JSON schema, lowercase SHA-256
-digest fields, training config shape, and optional weight-artifact paths before
+raw model-weight tensors. Export and import validate embedded
+`studio.training.evidence-summary.v1` metadata as verified `training` evidence
+with terminal status, replay route, payload digest, and path-free artifact
+manifests. Import also validates both the config digest and full checkpoint
+digest before returning the restored training config to the UI. The browser
+import control first validates the JSON schema, lowercase SHA-256 digest
+fields, training config shape, and optional weight-artifact paths before
 submitting the checkpoint to the backend.
 
 Completed process-backed training jobs also publish binary model weights as
@@ -199,6 +202,12 @@ Returns a `studio.training.checkpoint.v1` payload:
   "status": "completed",
   "config": {"dataset": "synthetic", "epochs": 10},
   "config_sha256": "...",
+  "evidence_summary": {
+    "schema_version": "studio.training.evidence-summary.v1",
+    "evidence_classification": "training",
+    "status": "completed",
+    "replay_route": "POST /api/training/start"
+  },
   "weight_checkpoint": {
     "schema_version": "studio.training.weight-checkpoint.v1",
     "weights_artifact": {

@@ -11,8 +11,11 @@
 from __future__ import annotations
 
 import json
+import math
+import re
 from collections.abc import Callable, Mapping
 from dataclasses import dataclass
+from pathlib import PurePosixPath
 from typing import TypeAlias, cast
 
 from sc_neurocore.studio.evidence_classification import (
@@ -34,6 +37,7 @@ from sc_neurocore.studio.platform.jobs import (
 
 TRAINING_EVIDENCE_SUMMARY_SCHEMA_VERSION = "studio.training.evidence-summary.v1"
 TRAINING_EVIDENCE_ARTIFACT_PATH = "training/evidence.json"
+_SHA256_HEX_PATTERN = re.compile(r"^[0-9a-f]{64}$")
 
 ArtifactReader: TypeAlias = Callable[[str, str], StudioJobArtifactPayload]
 
@@ -119,6 +123,59 @@ def build_training_evidence_summary(
         return _unavailable_summary(record, artifact)
 
 
+def validate_training_evidence_summary(payload: Mapping[str, object]) -> dict[str, JsonValue]:
+    """Validate a portable Training Monitor evidence summary.
+
+    Parameters
+    ----------
+    payload:
+        Candidate ``studio.training.evidence-summary.v1`` object, normally
+        embedded in a portable Training Monitor checkpoint.
+
+    Returns
+    -------
+    dict[str, JsonValue]
+        JSON-compatible, validated evidence summary.
+
+    Raises
+    ------
+    ValueError
+        If the summary is not verified training evidence, uses an unsupported
+        status or classification, or contains malformed artifact metadata.
+    """
+
+    summary = _json_object(payload, "Training evidence summary must be JSON.")
+    if summary.get("schema_version") != TRAINING_EVIDENCE_SUMMARY_SCHEMA_VERSION:
+        raise ValueError("Training evidence summary schema is unsupported.")
+    if _required_json_string(summary, "action_kind") != "studio.training.run":
+        raise ValueError("Training evidence summary action is unsupported.")
+    if _required_json_string(summary, "evidence_classification") != (
+        validate_studio_evidence_classification("training")
+    ):
+        raise ValueError("Training evidence summary classification is unsupported.")
+    validate_studio_evidence_status(_required_json_string(summary, "status"))
+    _required_json_string(summary, "job_id")
+    _required_json_string(summary, "replay_route")
+    payload_sha256 = _required_json_string(summary, "payload_sha256")
+    if not _SHA256_HEX_PATTERN.fullmatch(payload_sha256):
+        raise ValueError("Training evidence summary payload digest is invalid.")
+    _validate_artifact_metadata(
+        summary.get("evidence_artifact"),
+        expected_path=TRAINING_EVIDENCE_ARTIFACT_PATH,
+        field_name="evidence_artifact",
+    )
+    result_artifacts = summary.get("result_artifacts")
+    if not isinstance(result_artifacts, list):
+        raise ValueError("Training evidence summary requires result artifacts.")
+    for artifact in result_artifacts:
+        _validate_artifact_metadata(
+            artifact,
+            expected_path=None,
+            field_name="result_artifacts",
+        )
+    return summary
+
+
 def _training_evidence_artifact(record: StudioJobRecord) -> StudioJobArtifact | None:
     """Return the declared Training Monitor evidence artifact, if present."""
 
@@ -175,6 +232,79 @@ def _result_artifacts(payload: Mapping[str, object]) -> tuple[dict[str, JsonValu
     return tuple(result)
 
 
+def _json_object(payload: Mapping[str, object], error_message: str) -> dict[str, JsonValue]:
+    """Return a JSON object after recursively validating portable values."""
+
+    return cast(dict[str, JsonValue], _json_value(dict(payload), error_message))
+
+
+def _json_value(value: object, error_message: str) -> JsonValue:
+    """Return a portable JSON value or raise ``ValueError``."""
+
+    if value is None or isinstance(value, str | bool):
+        return value
+    if isinstance(value, int):
+        return value
+    if isinstance(value, float):
+        if not math.isfinite(value):
+            raise ValueError(error_message)
+        return value
+    if isinstance(value, list | tuple):
+        return [_json_value(item, error_message) for item in value]
+    if isinstance(value, dict):
+        result: dict[str, JsonValue] = {}
+        for key, item in value.items():
+            if not isinstance(key, str):
+                raise ValueError(error_message)
+            result[key] = _json_value(item, error_message)
+        return result
+    raise ValueError(error_message)
+
+
+def _required_json_string(payload: Mapping[str, JsonValue], field_name: str) -> str:
+    """Return a required non-empty string field from a summary payload."""
+
+    value = payload.get(field_name)
+    if not isinstance(value, str) or not value:
+        raise ValueError(f"Training evidence summary requires {field_name}.")
+    return value
+
+
+def _validate_artifact_metadata(
+    value: object,
+    *,
+    expected_path: str | None,
+    field_name: str,
+) -> None:
+    """Validate one path-free artifact manifest entry."""
+
+    if not isinstance(value, dict):
+        raise ValueError(f"Training evidence summary requires {field_name}.")
+    artifact = _json_object(value, f"Training evidence summary {field_name} must be JSON.")
+    relative_path = artifact.get("relative_path")
+    if not isinstance(relative_path, str) or not _safe_relative_artifact_path(relative_path):
+        raise ValueError(f"Training evidence summary {field_name} path is invalid.")
+    if expected_path is not None and relative_path != expected_path:
+        raise ValueError(f"Training evidence summary {field_name} path is invalid.")
+    sha256 = artifact.get("sha256")
+    if not isinstance(sha256, str) or not _SHA256_HEX_PATTERN.fullmatch(sha256):
+        raise ValueError(f"Training evidence summary {field_name} digest is invalid.")
+    size_bytes = artifact.get("size_bytes")
+    if not isinstance(size_bytes, int) or size_bytes < 0:
+        raise ValueError(f"Training evidence summary {field_name} size is invalid.")
+
+
+def _safe_relative_artifact_path(relative_path: str) -> bool:
+    """Return whether an artifact path is relative and traversal-free."""
+
+    path = PurePosixPath(relative_path)
+    return (
+        not path.is_absolute()
+        and bool(path.parts)
+        and all(part not in ("", ".", "..") for part in path.parts)
+    )
+
+
 def _unavailable_summary(
     record: StudioJobRecord,
     artifact: StudioJobArtifact,
@@ -194,4 +324,5 @@ __all__ = [
     "TRAINING_EVIDENCE_SUMMARY_SCHEMA_VERSION",
     "TrainingEvidenceSummary",
     "build_training_evidence_summary",
+    "validate_training_evidence_summary",
 ]
