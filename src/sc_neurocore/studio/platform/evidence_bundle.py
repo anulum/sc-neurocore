@@ -25,6 +25,12 @@ from sc_neurocore.studio.platform.jobs import (
 )
 from sc_neurocore.studio.analysis_manifest import STUDIO_ANALYSIS_RESULT_SCHEMA_VERSION
 from sc_neurocore.studio.simulation_manifest import STUDIO_SIMULATION_RUN_SCHEMA_VERSION
+from sc_neurocore.studio.platform.evidence_classification import (
+    STUDIO_EVIDENCE_CLASSIFICATIONS,
+    STUDIO_EVIDENCE_TERMINAL_STATUSES,
+    validate_studio_evidence_classification,
+    validate_studio_evidence_status,
+)
 
 STUDIO_EVIDENCE_BUNDLE_SCHEMA_VERSION = "studio.evidence-bundle.v1"
 STUDIO_ACTION_EVIDENCE_SCHEMA_VERSION = "studio.action-evidence.v1"
@@ -35,17 +41,8 @@ UTC = timezone.utc
 JsonScalar: TypeAlias = str | int | float | bool | None
 JsonValue: TypeAlias = JsonScalar | list["JsonValue"] | dict[str, "JsonValue"]
 StudioArtifactReader: TypeAlias = Callable[[str, str], StudioJobArtifactPayload]
-ACTION_EVIDENCE_CLASSIFICATIONS = frozenset(
-    {
-        "compile",
-        "local_regression",
-        "release_benchmark",
-        "simulation",
-        "synthesis",
-        "training",
-    }
-)
-ACTION_EVIDENCE_STATUSES = frozenset({"cancelled", "completed", "failed", "timed_out"})
+ACTION_EVIDENCE_CLASSIFICATIONS = STUDIO_EVIDENCE_CLASSIFICATIONS
+ACTION_EVIDENCE_STATUSES = STUDIO_EVIDENCE_TERMINAL_STATUSES
 
 
 @dataclass(frozen=True, slots=True)
@@ -384,7 +381,7 @@ def _simulation_result_payload(payload: Mapping[str, object]) -> dict[str, JsonV
     if schema_version != STUDIO_SIMULATION_RUN_SCHEMA_VERSION:
         raise ValueError("Studio simulation payload has unsupported run metadata.")
     evidence_classification = metadata.get("evidence_classification")
-    if evidence_classification != "simulation":
+    if evidence_classification != validate_studio_evidence_classification("simulation"):
         raise ValueError("Studio simulation payload must be classified as simulation evidence.")
     return result
 
@@ -398,7 +395,7 @@ def _analysis_result_payload(payload: Mapping[str, object]) -> dict[str, JsonVal
     if schema_version != STUDIO_ANALYSIS_RESULT_SCHEMA_VERSION:
         raise ValueError("Studio analysis payload has unsupported analysis metadata.")
     evidence_classification = metadata.get("evidence_classification")
-    if evidence_classification != "analysis":
+    if evidence_classification != validate_studio_evidence_classification("analysis"):
         raise ValueError("Studio analysis payload must be classified as analysis evidence.")
     return result
 
@@ -531,11 +528,19 @@ def _action_evidence_payload(payload: bytes, *, source_job_id: str) -> dict[str,
     if not isinstance(action_kind, str) or not action_kind:
         raise ValueError("Studio action evidence artifact requires an action kind.")
     evidence_classification = result.get("evidence_classification")
-    if evidence_classification not in ACTION_EVIDENCE_CLASSIFICATIONS:
+    if not isinstance(evidence_classification, str):
         raise ValueError("Studio action evidence artifact has unsupported classification.")
+    try:
+        validate_studio_evidence_classification(evidence_classification)
+    except ValueError as exc:
+        raise ValueError("Studio action evidence artifact has unsupported classification.") from exc
     status = result.get("status")
-    if status not in ACTION_EVIDENCE_STATUSES:
+    if not isinstance(status, str):
         raise ValueError("Studio action evidence artifact has unsupported status.")
+    try:
+        validate_studio_evidence_status(status)
+    except ValueError as exc:
+        raise ValueError("Studio action evidence artifact has unsupported status.") from exc
     payload_sha256 = result.get("payload_sha256")
     if not _is_sha256_hex(payload_sha256):
         raise ValueError("Studio action evidence artifact requires a payload SHA-256.")

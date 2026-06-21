@@ -58,6 +58,14 @@ from sc_neurocore.studio.platform.evidence_bundle import (
     StudioEvidenceBundleResult,
     write_studio_evidence_bundle,
 )
+from sc_neurocore.studio.platform.evidence_classification import (
+    STUDIO_EVIDENCE_CLASSIFICATIONS,
+    STUDIO_EVIDENCE_TERMINAL_STATUSES,
+    StudioEvidenceClassification,
+    StudioEvidenceStatus,
+    validate_studio_evidence_classification,
+    validate_studio_evidence_status,
+)
 from sc_neurocore.studio.platform.audit_quarantine_archive import (
     STUDIO_AUDIT_QUARANTINE_ARCHIVE_KIND,
     STUDIO_AUDIT_QUARANTINE_ARCHIVE_OWNER,
@@ -259,6 +267,8 @@ __all__ = [
     "STUDIO_AUDIT_QUARANTINE_RESTORE_OWNER",
     "STUDIO_BACKUP_PLAN_SCHEMA_VERSION",
     "STUDIO_EVIDENCE_BUNDLE_SCHEMA_VERSION",
+    "STUDIO_EVIDENCE_CLASSIFICATIONS",
+    "STUDIO_EVIDENCE_TERMINAL_STATUSES",
     "THROTTLED_BROWSER_LOGIN_REASON",
     "TRAINING_EVIDENCE_ARTIFACT_PATH",
     "TRAINING_EVIDENCE_SUMMARY_SCHEMA_VERSION",
@@ -287,6 +297,8 @@ __all__ = [
     "StudioDeploymentPackageName",
     "StudioDeploymentProfilePackage",
     "StudioEvidenceBundleResult",
+    "StudioEvidenceClassification",
+    "StudioEvidenceStatus",
     "StudioBrowserLoginThrottle",
     "StudioBrowserSessionIssue",
     "StudioBrowserSessionManager",
@@ -353,6 +365,8 @@ __all__ = [
     "build_training_checkpoint",
     "build_training_weight_restore_plan",
     "validate_training_weight_checkpoint_metadata",
+    "validate_studio_evidence_classification",
+    "validate_studio_evidence_status",
     "write_training_weight_checkpoint",
     "import_training_checkpoint_payload",
     "list_studio_deployment_profile_packages",

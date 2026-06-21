@@ -15,34 +15,25 @@ import json
 from collections.abc import Mapping
 from dataclasses import dataclass
 from datetime import datetime, timezone
-from typing import Literal, TypeAlias
 
 from sc_neurocore.studio.platform.evidence_bundle import JsonValue
+from sc_neurocore.studio.platform.evidence_classification import (
+    STUDIO_EVIDENCE_CLASSIFICATIONS,
+    STUDIO_EVIDENCE_TERMINAL_STATUSES,
+    StudioEvidenceClassification,
+    StudioEvidenceStatus,
+    validate_studio_evidence_classification,
+    validate_studio_evidence_status,
+)
 from sc_neurocore.studio.platform.jobs import StudioJobArtifact, StudioJobContext
 
 STUDIO_ACTION_EVIDENCE_SCHEMA_VERSION = "studio.action-evidence.v1"
 UTC = timezone.utc
 
-EvidenceClassification: TypeAlias = Literal[
-    "local_regression",
-    "simulation",
-    "compile",
-    "synthesis",
-    "training",
-    "release_benchmark",
-]
-EvidenceStatus: TypeAlias = Literal["completed", "failed", "cancelled", "timed_out"]
-ACTION_EVIDENCE_CLASSIFICATIONS = frozenset(
-    {
-        "compile",
-        "local_regression",
-        "release_benchmark",
-        "simulation",
-        "synthesis",
-        "training",
-    }
-)
-ACTION_EVIDENCE_STATUSES = frozenset({"cancelled", "completed", "failed", "timed_out"})
+EvidenceClassification = StudioEvidenceClassification
+EvidenceStatus = StudioEvidenceStatus
+ACTION_EVIDENCE_CLASSIFICATIONS = STUDIO_EVIDENCE_CLASSIFICATIONS
+ACTION_EVIDENCE_STATUSES = STUDIO_EVIDENCE_TERMINAL_STATUSES
 
 
 @dataclass(frozen=True, slots=True)
@@ -161,10 +152,14 @@ def _validate_manifest_fields(
 ) -> None:
     if not _is_dotted_action_kind(action_kind):
         raise ValueError("Studio action evidence action kind is invalid.")
-    if evidence_classification not in ACTION_EVIDENCE_CLASSIFICATIONS:
-        raise ValueError("Studio action evidence classification is invalid.")
-    if status not in ACTION_EVIDENCE_STATUSES:
-        raise ValueError("Studio action evidence status is invalid.")
+    try:
+        validate_studio_evidence_classification(evidence_classification)
+    except ValueError as exc:
+        raise ValueError("Studio action evidence classification is invalid.") from exc
+    try:
+        validate_studio_evidence_status(status)
+    except ValueError as exc:
+        raise ValueError("Studio action evidence status is invalid.") from exc
     if not _is_replay_route(replay_route):
         raise ValueError("Studio action evidence replay route is invalid.")
 

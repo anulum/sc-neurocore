@@ -248,6 +248,13 @@ runtime features:
   hashing. Evidence bundle export validates selected job evidence artifacts
   (`evidence.json` and `*-evidence.json`) against this contract and marks them
   as `action_evidence` entries in the bundle manifest.
+- Studio evidence classifications are a shared backend contract, not free-form
+  labels. Current accepted classes are `analysis`, `compile`,
+  `local_regression`, `release_benchmark`, `simulation`, `synthesis`, and
+  `training`. Terminal evidence statuses are `completed`, `failed`,
+  `cancelled`, and `timed_out`. Bundle writers, action-evidence writers, and
+  manifest validators reject unknown classes or non-terminal statuses before
+  persisting evidence.
 - `/api/studio/jobs` and `/api/studio/jobs/{job_id}` return admin-only,
   path-free job records for the Admin panel queue view. Records include job
   status, owner, request ID, timestamps, result metadata, and artifact
