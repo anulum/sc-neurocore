@@ -7,12 +7,20 @@
 // SC-NeuroCore — Studio network NIR export helper
 
 import type { NIRFormat } from "./api/client";
+import { downloadBrowserArtefact } from "./browserArtefactDownload";
 
 export const NETWORK_NIR_EXPORT_FILENAME = "network.nir.json";
+
+export type NetworkNirExportDownloader = (payload: Blob, filename: string) => void;
 
 export interface NetworkNirExportArtefact {
   blob: Blob;
   filename: string;
+}
+
+export interface NetworkNirExportPlan {
+  artefact: NetworkNirExportArtefact;
+  writeArtefact: (downloader?: NetworkNirExportDownloader) => void;
 }
 
 export function networkNirJson(nir: NIRFormat): string {
@@ -27,5 +35,15 @@ export function networkNirExport(nir: NIRFormat): NetworkNirExportArtefact {
   return {
     blob: networkNirBlob(nir),
     filename: NETWORK_NIR_EXPORT_FILENAME,
+  };
+}
+
+export function networkNirExportPlan(nir: NIRFormat): NetworkNirExportPlan {
+  const artefact = networkNirExport(nir);
+  return {
+    artefact,
+    writeArtefact: (downloader = downloadBrowserArtefact) => {
+      downloader(artefact.blob, artefact.filename);
+    },
   };
 }

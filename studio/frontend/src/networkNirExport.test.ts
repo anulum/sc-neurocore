@@ -12,6 +12,7 @@ import type { NIRFormat } from "./api/client";
 import {
   NETWORK_NIR_EXPORT_FILENAME,
   networkNirExport,
+  networkNirExportPlan,
   networkNirJson,
 } from "./networkNirExport";
 
@@ -39,5 +40,20 @@ describe("network NIR export", () => {
     expect(exported.filename).toBe(NETWORK_NIR_EXPORT_FILENAME);
     expect(exported.blob.type).toBe("application/json");
     await expect(exported.blob.text()).resolves.toBe(JSON.stringify(nir, null, 2));
+  });
+
+  it("plans browser downloads with an injectable writer", () => {
+    const plan = networkNirExportPlan(nir);
+    const downloads: Array<{ filename: string; payload: Blob }> = [];
+
+    plan.writeArtefact((payload, filename) => {
+      downloads.push({ filename, payload });
+    });
+
+    expect(plan.artefact.filename).toBe(NETWORK_NIR_EXPORT_FILENAME);
+    expect(downloads).toEqual([{
+      filename: NETWORK_NIR_EXPORT_FILENAME,
+      payload: plan.artefact.blob,
+    }]);
   });
 });
