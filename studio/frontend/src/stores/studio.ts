@@ -93,10 +93,13 @@ import {
 } from "../networkNirExport";
 import { parseTrainingCheckpointPayload } from "../trainingCheckpoint";
 import {
-  buildTrainingWeightRestoreVerificationManifest,
   verifyTrainingWeightArtifactBlob,
   type TrainingWeightRestoreVerification,
 } from "../trainingRestore";
+import {
+  trainingCheckpointExport,
+  trainingWeightRestoreVerificationExport,
+} from "../trainingExports";
 import {
   evidenceBundleSurfaceKeys,
   latestSynthesisJobIdWithArtefact,
@@ -1540,12 +1543,8 @@ export const useStudioStore = create<StudioState>((set, get) => ({
     if (!s.trainingJobId) return;
     try {
       const checkpoint = await apiExportTrainingCheckpoint(s.trainingJobId);
-      const blob = new Blob([JSON.stringify(checkpoint, null, 2)], { type: "application/json" });
-      const a = document.createElement("a");
-      a.href = URL.createObjectURL(blob);
-      a.download = `training_checkpoint_${checkpoint.job_id}.json`;
-      a.click();
-      URL.revokeObjectURL(a.href);
+      const exported = trainingCheckpointExport(checkpoint);
+      downloadBrowserArtefact(exported.blob, exported.filename);
     } catch (e) {
       set({ error: e instanceof Error ? e.message : String(e) });
     }
@@ -1600,16 +1599,11 @@ export const useStudioStore = create<StudioState>((set, get) => ({
       return;
     }
     try {
-      const manifest = buildTrainingWeightRestoreVerificationManifest(
+      const exported = trainingWeightRestoreVerificationExport(
         trainingWeightRestorePlan,
         trainingWeightRestoreVerification,
       );
-      const blob = new Blob([JSON.stringify(manifest, null, 2)], { type: "application/json" });
-      const anchor = document.createElement("a");
-      anchor.href = URL.createObjectURL(blob);
-      anchor.download = `training_weight_restore_${manifest.source_job_id}.json`;
-      anchor.click();
-      URL.revokeObjectURL(anchor.href);
+      downloadBrowserArtefact(exported.blob, exported.filename);
       set({ error: null });
     } catch (error: unknown) {
       set({
