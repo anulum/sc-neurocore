@@ -177,8 +177,8 @@ import {
   type StudioAutoSimulationTimer,
 } from "../studioAutoSimulation";
 import {
-  trainingCheckpointExport,
-  trainingWeightRestoreVerificationExport,
+  trainingCheckpointExportPlan,
+  trainingWeightRestoreVerificationExportPlan,
 } from "../trainingExports";
 import {
   trainingCheckpointImportedState,
@@ -1421,8 +1421,7 @@ export const useStudioStore = create<StudioState>((set, get) => ({
     if (!s.trainingJobId) return;
     try {
       const checkpoint = await apiExportTrainingCheckpoint(s.trainingJobId);
-      const exported = trainingCheckpointExport(checkpoint);
-      downloadBrowserArtefact(exported.blob, exported.filename);
+      trainingCheckpointExportPlan(checkpoint).writeExport();
     } catch (e) {
       set(trainingFailureState(e, "Training checkpoint export failed"));
     }
@@ -1459,18 +1458,16 @@ export const useStudioStore = create<StudioState>((set, get) => ({
 
   exportTrainingWeightRestoreVerification: () => {
     const { trainingWeightRestorePlan, trainingWeightRestoreVerification } = get();
-    if (trainingWeightRestorePlan === null || trainingWeightRestoreVerification === null) {
-      set(trainingPreconditionErrorState(
-        "No verified training weight artifact is available for export.",
-      ));
+    const plan = trainingWeightRestoreVerificationExportPlan(
+      trainingWeightRestorePlan,
+      trainingWeightRestoreVerification,
+    );
+    if (!plan.available) {
+      set(trainingPreconditionErrorState(plan.message));
       return;
     }
     try {
-      const exported = trainingWeightRestoreVerificationExport(
-        trainingWeightRestorePlan,
-        trainingWeightRestoreVerification,
-      );
-      downloadBrowserArtefact(exported.blob, exported.filename);
+      plan.writeExport();
       set(trainingExportSuccessState());
     } catch (error: unknown) {
       set(trainingFailureState(error, "Training weight restore verification export failed"));

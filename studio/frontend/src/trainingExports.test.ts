@@ -15,8 +15,10 @@ import type {
 import type { TrainingWeightRestoreVerification } from "./trainingRestore";
 import {
   trainingCheckpointExport,
+  trainingCheckpointExportPlan,
   trainingCheckpointFilename,
   trainingWeightRestoreVerificationExport,
+  trainingWeightRestoreVerificationExportPlan,
 } from "./trainingExports";
 
 const digest = "a".repeat(64);
@@ -88,6 +90,22 @@ describe("training export helpers", () => {
     await expect(exported.blob.text()).resolves.toBe(JSON.stringify(payload, null, 2));
   });
 
+  it("plans checkpoint exports with injectable browser download writers", () => {
+    const plan = trainingCheckpointExportPlan(checkpoint("job-1"));
+
+    expect(plan.available).toBe(true);
+    const downloads: Array<{ filename: string; payload: Blob }> = [];
+    plan.writeExport((payload, filename) => {
+      downloads.push({ filename, payload });
+    });
+
+    expect(plan.export.filename).toBe("training_checkpoint_job-1.json");
+    expect(downloads).toEqual([{
+      filename: "training_checkpoint_job-1.json",
+      payload: plan.export.blob,
+    }]);
+  });
+
   it("exports weight-restore verification manifests with safe filenames", async () => {
     const exported = trainingWeightRestoreVerificationExport(restorePlan(), verification());
 
@@ -102,6 +120,45 @@ describe("training export helpers", () => {
 
     expect(() =>
       trainingWeightRestoreVerificationExport(restorePlan(), forgedVerification),
+    ).toThrow("digest is not confirmed");
+  });
+
+  it("plans verified weight-restore exports with success writers", () => {
+    const plan = trainingWeightRestoreVerificationExportPlan(restorePlan(), verification());
+
+    expect(plan.available).toBe(true);
+    if (!plan.available) {
+      throw new Error("expected available weight-restore verification export plan");
+    }
+
+    const downloads: Array<{ filename: string; payload: Blob }> = [];
+    plan.writeExport((payload, filename) => {
+      downloads.push({ filename, payload });
+    });
+
+    expect(plan.export.filename).toBe("training_weight_restore_job_with_spaces.json");
+    expect(downloads).toEqual([{
+      filename: "training_weight_restore_job_with_spaces.json",
+      payload: plan.export.blob,
+    }]);
+  });
+
+  it("plans unavailable weight-restore exports when verification is missing", () => {
+    expect(trainingWeightRestoreVerificationExportPlan(null, verification())).toEqual({
+      available: false,
+      message: "No verified training weight artifact is available for export.",
+    });
+    expect(trainingWeightRestoreVerificationExportPlan(restorePlan(), null)).toEqual({
+      available: false,
+      message: "No verified training weight artifact is available for export.",
+    });
+  });
+
+  it("rejects inconsistent verification while planning weight-restore exports", () => {
+    const forgedVerification = { ...verification(), actual_sha256: "d".repeat(64) };
+
+    expect(() =>
+      trainingWeightRestoreVerificationExportPlan(restorePlan(), forgedVerification),
     ).toThrow("digest is not confirmed");
   });
 });
