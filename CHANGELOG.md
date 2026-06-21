@@ -59,6 +59,8 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
   convention) in `docs/formal/timing_aware_properties.md`.
 
 ### Studio platform
+- Added an admin-gated Studio audit quarantine archive restore job that
+  materializes validated archive rows as confined evidence artifacts.
 - Added an admin-gated Studio audit quarantine archive retention endpoint that
   inventories valid archive jobs and marks non-destructive prune candidates.
 - Added an admin-gated Studio audit quarantine archive validation endpoint for

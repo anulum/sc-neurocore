@@ -18,6 +18,7 @@ counts via EM with squared-exponential GP priors on latent dimensions.
 
 from __future__ import annotations
 
+import ctypes as _ctypes
 import importlib as _importlib
 import importlib.util as _importlib_util
 import os as _os
@@ -26,6 +27,17 @@ from typing import Any
 import numpy as np
 
 from .basic import bin_spike_train
+
+
+def _accel_path(*parts: str) -> str:
+    """Absolute path to a backend asset under the ``accel`` tree."""
+    root = _os.path.dirname(_os.path.dirname(_os.path.dirname(__file__)))
+    return _os.path.join(root, "accel", *parts)
+
+
+def _as_double_ptr(arr: np.ndarray[Any, Any]) -> Any:
+    """Return a ``ctypes`` double pointer to a contiguous float64 array."""
+    return arr.ctypes.data_as(_ctypes.POINTER(_ctypes.c_double))
 
 
 def _load_rust_gpfa_em() -> Any | None:
@@ -39,8 +51,9 @@ def _load_rust_gpfa_em() -> Any | None:
 # Rust acceleration backend — probed at import (the wheel import is cheap).
 _rust_gpfa_em: Any | None = _load_rust_gpfa_em()
 
-# Julia backend — loaded lazily on first explicit request (Julia startup ~5 s).
+# Julia / Go backends — loaded lazily on first explicit request.
 _julia_gpfa: Any | None = None
+_go_gpfa_lib: Any | None = None
 
 
 def _ensure_julia_gpfa() -> bool:
@@ -50,18 +63,34 @@ def _ensure_julia_gpfa() -> bool:
         return True
     if _importlib_util.find_spec("juliacall") is None:
         return False
-    jl_path = _os.path.join(
-        _os.path.dirname(_os.path.dirname(_os.path.dirname(__file__))),
-        "accel",
-        "julia",
-        "analysis",
-        "gpfa.jl",
-    )
+    jl_path = _accel_path("julia", "analysis", "gpfa.jl")
     if not _os.path.isfile(jl_path):
         return False
     jl = _importlib.import_module("juliacall").Main
     jl.include(jl_path)
     _julia_gpfa = jl.GpfaAccel
+    return True
+
+
+def _ensure_go_gpfa() -> bool:
+    """Lazy-load the Go GPFA c-shared library, returning ``True`` when available."""
+    global _go_gpfa_lib
+    if _go_gpfa_lib is not None:
+        return True
+    so_path = _accel_path("go", "gpfa", "libgpfa.so")
+    if not _os.path.isfile(so_path):
+        return False
+    try:
+        lib = _ctypes.CDLL(so_path)
+    except OSError:
+        return False
+    fn = getattr(lib, "gpfa_em_c", None)
+    if fn is None:
+        return False
+    dp = _ctypes.POINTER(_ctypes.c_double)
+    fn.argtypes = [dp] * 5 + [_ctypes.c_int] * 4 + [_ctypes.c_double] + [dp] * 3
+    fn.restype = None
+    _go_gpfa_lib = lib
     return True
 
 
@@ -381,6 +410,59 @@ def _run_julia_gpfa_em(
     )
 
 
+def _run_go_gpfa_em(
+    Y: np.ndarray[Any, Any],
+    C0: np.ndarray[Any, Any],
+    d0: np.ndarray[Any, Any],
+    R0: np.ndarray[Any, Any],
+    tau: np.ndarray[Any, Any],
+    max_iter: int,
+    tol: float,
+) -> tuple[
+    np.ndarray[Any, Any],
+    np.ndarray[Any, Any],
+    np.ndarray[Any, Any],
+    np.ndarray[Any, Any],
+    list[float],
+]:
+    """Dispatch the EM loop to the Go c-shared backend and rebuild NumPy outputs."""
+    assert _go_gpfa_lib is not None
+    n_neurons, n_bins = Y.shape
+    n_latents = int(C0.shape[1])
+    y_buf = np.ascontiguousarray(Y, dtype=np.float64).reshape(-1)
+    c0_buf = np.ascontiguousarray(C0, dtype=np.float64).reshape(-1)
+    d0_buf = np.ascontiguousarray(d0, dtype=np.float64)
+    r0_buf = np.ascontiguousarray(np.diag(R0), dtype=np.float64)
+    tau_buf = np.ascontiguousarray(tau, dtype=np.float64)
+    x_out = np.zeros(n_latents * n_bins, dtype=np.float64)
+    params_out = np.zeros(n_neurons * n_latents + 2 * n_neurons, dtype=np.float64)
+    loglik_out = np.zeros(max_iter + 1, dtype=np.float64)
+    _go_gpfa_lib.gpfa_em_c(
+        _as_double_ptr(y_buf),
+        _as_double_ptr(c0_buf),
+        _as_double_ptr(d0_buf),
+        _as_double_ptr(r0_buf),
+        _as_double_ptr(tau_buf),
+        n_neurons,
+        n_bins,
+        n_latents,
+        int(max_iter),
+        _ctypes.c_double(float(tol)),
+        _as_double_ptr(x_out),
+        _as_double_ptr(params_out),
+        _as_double_ptr(loglik_out),
+    )
+    c_end = n_neurons * n_latents
+    n_iter = int(loglik_out[0])
+    return (
+        x_out.reshape(n_latents, n_bins),
+        params_out[:c_end].reshape(n_neurons, n_latents).copy(),
+        params_out[c_end : c_end + n_neurons].copy(),
+        np.diag(params_out[c_end + n_neurons : c_end + 2 * n_neurons].copy()),
+        [float(v) for v in loglik_out[1 : 1 + n_iter]],
+    )
+
+
 def _gpfa_em_dispatch(
     Y: np.ndarray[Any, Any],
     C0: np.ndarray[Any, Any],
@@ -400,11 +482,11 @@ def _gpfa_em_dispatch(
     """Run the GPFA EM loop on the requested backend, fastest-first under ``auto``.
 
     The deterministic initialisation (see :func:`gpfa_pca_init`) lets every backend
-    share an identical starting point. The Rust path and the NumPy reference agree
-    up to floating-point round-off; the Julia backend binds the same ``gpfa_em``
-    contract, and Go and Mojo are wired in as they land.
+    share an identical starting point. The Rust, Julia and Go backends bind the same
+    ``gpfa_em`` contract and agree with the NumPy reference up to floating-point
+    round-off; Mojo is wired in as it lands.
     """
-    if backend not in ("auto", "python", "rust", "julia"):
+    if backend not in ("auto", "python", "rust", "julia", "go"):
         raise ValueError(f"GPFA backend {backend!r} is not available")
     if backend in ("auto", "rust") and _rust_gpfa_em is not None:
         return _run_rust_gpfa_em(Y, C0, d0, R0, tau, max_iter, tol)
@@ -414,6 +496,10 @@ def _gpfa_em_dispatch(
         if not _ensure_julia_gpfa():
             raise RuntimeError("Julia GPFA backend is not available")
         return _run_julia_gpfa_em(Y, C0, d0, R0, tau, max_iter, tol)
+    if backend == "go":
+        if not _ensure_go_gpfa():
+            raise RuntimeError("Go GPFA backend is not available")
+        return _run_go_gpfa_em(Y, C0, d0, R0, tau, max_iter, tol)
     return gpfa_em(Y, C0, d0, R0, tau, max_iter, tol)
 
 

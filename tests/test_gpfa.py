@@ -37,6 +37,11 @@ from sc_neurocore.analysis.spike_stats.gpfa import (
 
 _RUST_AVAILABLE = _rust_gpfa_em is not None
 _JULIA_AVAILABLE = importlib.util.find_spec("juliacall") is not None
+_GO_AVAILABLE = _GPFA_MODULE._ensure_go_gpfa()
+
+
+def _raise_oserror(_path: str) -> object:
+    raise OSError("library load failed")
 
 
 def _synthetic_trains(n_neurons: int = 8, n_samples: int = 600, seed: int = 0) -> list[np.ndarray]:
@@ -233,6 +238,52 @@ def test_julia_backend_raises_when_unavailable(monkeypatch: pytest.MonkeyPatch) 
     trains = _synthetic_trains(n_neurons=3, n_samples=120)
     with pytest.raises(RuntimeError, match="Julia GPFA backend is not available"):
         gpfa(trains, n_latents=2, bin_ms=20.0, max_iter=3, backend="julia")
+
+
+@pytest.mark.skipif(not _GO_AVAILABLE, reason="Go GPFA library not built")
+class TestGoParity:
+    """The Go backend matches the NumPy reference up to float64 round-off."""
+
+    def test_full_pipeline_parity(self) -> None:
+        trains = _synthetic_trains(6, 400)
+        py = gpfa(trains, n_latents=2, bin_ms=20.0, max_iter=30, backend="python")
+        go = gpfa(trains, n_latents=2, bin_ms=20.0, max_iter=30, backend="go")
+        assert len(py["log_likelihoods"]) == len(go["log_likelihoods"])
+        npt.assert_allclose(go["trajectories"], py["trajectories"], atol=1e-8)
+        npt.assert_allclose(go["C"], py["C"], atol=1e-8)
+        npt.assert_allclose(go["R"], py["R"], atol=1e-9)
+        npt.assert_allclose(go["log_likelihoods"], py["log_likelihoods"], atol=1e-6)
+
+    def test_ensure_go_is_cached(self) -> None:
+        assert _GPFA_MODULE._ensure_go_gpfa() is True
+        assert _GPFA_MODULE._ensure_go_gpfa() is True
+
+
+def test_ensure_go_false_when_missing(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(_GPFA_MODULE, "_go_gpfa_lib", None)
+    monkeypatch.setattr(_GPFA_MODULE._os.path, "isfile", lambda _path: False)
+    assert _GPFA_MODULE._ensure_go_gpfa() is False
+
+
+def test_ensure_go_false_on_load_error(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(_GPFA_MODULE, "_go_gpfa_lib", None)
+    monkeypatch.setattr(_GPFA_MODULE._os.path, "isfile", lambda _path: True)
+    monkeypatch.setattr(_GPFA_MODULE._ctypes, "CDLL", _raise_oserror)
+    assert _GPFA_MODULE._ensure_go_gpfa() is False
+
+
+def test_ensure_go_false_when_symbol_missing(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(_GPFA_MODULE, "_go_gpfa_lib", None)
+    monkeypatch.setattr(_GPFA_MODULE._os.path, "isfile", lambda _path: True)
+    monkeypatch.setattr(_GPFA_MODULE._ctypes, "CDLL", lambda _path: object())
+    assert _GPFA_MODULE._ensure_go_gpfa() is False
+
+
+def test_go_backend_raises_when_unavailable(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(_GPFA_MODULE, "_ensure_go_gpfa", lambda: False)
+    trains = _synthetic_trains(n_neurons=3, n_samples=120)
+    with pytest.raises(RuntimeError, match="Go GPFA backend is not available"):
+        gpfa(trains, n_latents=2, bin_ms=20.0, max_iter=3, backend="go")
 
 
 def test_rust_probe_returns_none_when_engine_missing(monkeypatch: pytest.MonkeyPatch) -> None:
