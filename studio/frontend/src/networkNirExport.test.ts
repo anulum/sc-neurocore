@@ -11,6 +11,7 @@ import { describe, expect, it } from "vitest";
 import type { NIRFormat } from "./api/client";
 import {
   NETWORK_NIR_EXPORT_FILENAME,
+  networkNirExport,
   networkNirJson,
 } from "./networkNirExport";
 
@@ -30,5 +31,13 @@ describe("network NIR export", () => {
 
   it("serialises exported NIR with stable indentation", () => {
     expect(networkNirJson(nir)).toBe(JSON.stringify(nir, null, 2));
+  });
+
+  it("builds browser download artefacts with the canonical filename and MIME type", async () => {
+    const exported = networkNirExport(nir);
+
+    expect(exported.filename).toBe(NETWORK_NIR_EXPORT_FILENAME);
+    expect(exported.blob.type).toBe("application/json");
+    await expect(exported.blob.text()).resolves.toBe(JSON.stringify(nir, null, 2));
   });
 });

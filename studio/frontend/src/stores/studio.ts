@@ -167,8 +167,7 @@ import {
 } from "../simulationExports";
 import { downloadCanvasPng } from "../browserCanvasExport";
 import {
-  NETWORK_NIR_EXPORT_FILENAME,
-  networkNirBlob,
+  networkNirExport,
 } from "../networkNirExport";
 import { parseTrainingCheckpointPayload } from "../trainingCheckpoint";
 import {
@@ -1364,7 +1363,8 @@ export const useStudioStore = create<StudioState>((set, get) => ({
     const s = get();
     try {
       const nir = await apiExportNIR({ populations: s.graphPopulations, projections: s.graphProjections });
-      downloadBrowserArtefact(networkNirBlob(nir), NETWORK_NIR_EXPORT_FILENAME);
+      const exported = networkNirExport(nir);
+      downloadBrowserArtefact(exported.blob, exported.filename);
     } catch (e) { set(studioGraphFailureState(e, "Graph NIR export failed")); }
   },
 
