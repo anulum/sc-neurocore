@@ -59,6 +59,7 @@ def test_build_compile_traceability_records_source_and_output_hashes() -> None:
 
     assert traceability["schema_version"] == STUDIO_COMPILE_TRACEABILITY_SCHEMA_VERSION
     assert traceability["evidence_classification"] == "compile"
+    assert traceability["status"] == "completed"
     assert traceability["source"] == "ode"
     assert traceability["input_sha256"] == _sha256_json(
         cast(dict[str, JsonValue], traceability["source_payload"])
@@ -103,6 +104,24 @@ def test_compile_traceability_rejects_unknown_evidence_classification() -> None:
         traceability.to_public_dict()
 
 
+def test_compile_traceability_rejects_unknown_status() -> None:
+    """Compile traceability uses the shared terminal-status contract."""
+
+    traceability = StudioCompileTraceability(
+        equations=("dv/dt = -v / tau",),
+        threshold="v > 1",
+        reset="v = 0",
+        params={"tau": 10.0},
+        init={"v": 0.0},
+        module_name="sc_traceable_neuron",
+        verilog="module sc_traceable_neuron; endmodule\n",
+        status="running",  # type: ignore[arg-type]  # Invalid by design.
+    )
+
+    with pytest.raises(ValueError, match="status"):
+        traceability.to_public_dict()
+
+
 def test_compile_route_returns_traceability_manifest(client: TestClient) -> None:
     """The public compile route returns source-to-RTL traceability."""
 
@@ -113,6 +132,7 @@ def test_compile_route_returns_traceability_manifest(client: TestClient) -> None
     traceability = cast(dict[str, JsonValue], payload["compile_traceability"])
     assert traceability["schema_version"] == STUDIO_COMPILE_TRACEABILITY_SCHEMA_VERSION
     assert traceability["evidence_classification"] == "compile"
+    assert traceability["status"] == "completed"
     assert traceability["source"] == "ode"
     assert traceability["input_sha256"] == _sha256_json(
         cast(dict[str, JsonValue], traceability["source_payload"])
@@ -133,6 +153,7 @@ def test_direct_sv_route_returns_traceability_manifest(client: TestClient) -> No
     traceability = cast(dict[str, JsonValue], payload["compile_traceability"])
     output = cast(dict[str, JsonValue], traceability["output"])
     assert traceability["schema_version"] == STUDIO_COMPILE_TRACEABILITY_SCHEMA_VERSION
+    assert traceability["status"] == "completed"
     assert output["module_name"] == payload["module_name"] == "sc_ode_neuron"
     assert output["rtl_sha256"] == hashlib.sha256(payload["verilog"].encode("utf-8")).hexdigest()
 

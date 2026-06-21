@@ -97,10 +97,12 @@ The manifest records:
 - `input_sha256`, a stable SHA-256 digest over the canonical source payload;
 - the emitted RTL language, module name, source length, and `rtl_sha256`;
 - `traceability_sha256`, a stable digest over the complete public manifest;
-- `evidence_classification: "compile"` for evidence-bundle consumers.
+- `evidence_classification: "compile"` and `status: "completed"` for
+  evidence-bundle consumers.
 
-The traceability serializer validates its evidence class through the shared
-Studio evidence-classification contract before returning public metadata.
+The traceability serializer validates its evidence class and terminal status
+through the shared Studio evidence-classification contract before returning
+public metadata.
 
 The manifest is included in both `/api/compile` and
 `/api/ir/emit-sv-direct` responses. The Compiler Inspector displays the

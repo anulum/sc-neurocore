@@ -69,6 +69,7 @@ def test_build_synthesis_target_provenance_for_pnr_target() -> None:
     assert provenance["synthesis_ready"] is True
     assert provenance["pnr_ready"] is False
     assert provenance["evidence_classification"] == "synthesis"
+    assert provenance["status"] == "completed"
     assert "path" not in provenance
     tools = cast(list[dict[str, JsonValue]], provenance["tools"])
     assert tools == [
@@ -141,6 +142,31 @@ def test_synthesis_target_provenance_rejects_unknown_evidence_classification() -
         provenance.to_public_dict()
 
 
+def test_synthesis_target_provenance_rejects_unknown_status() -> None:
+    """Synthesis provenance uses the shared terminal-status contract."""
+
+    provenance = StudioSynthesisTargetProvenance(
+        target="ice40",
+        capacity={"luts": 5280},
+        synthesis_command="synth_ice40",
+        pnr_tool=None,
+        device=None,
+        tools=(
+            StudioSynthesisToolProvenance(
+                key="yosys",
+                executable="yosys",
+                role="synthesis",
+                available=True,
+                version="Yosys 0.test",
+            ),
+        ),
+        status="running",  # type: ignore[arg-type]  # Invalid by design.
+    )
+
+    with pytest.raises(ValueError, match="status"):
+        provenance.to_public_dict()
+
+
 def test_build_synthesis_target_provenance_matrix_has_stable_digest() -> None:
     """The target matrix has deterministic target membership and digest."""
 
@@ -201,6 +227,7 @@ def test_run_synthesis_includes_target_provenance_when_yosys_is_missing(
     provenance = result["target_provenance"]
     assert provenance["schema_version"] == STUDIO_SYNTHESIS_TARGET_PROVENANCE_SCHEMA_VERSION
     assert provenance["target"] == "ice40"
+    assert provenance["status"] == "completed"
     assert provenance["synthesis_ready"] is True
     assert provenance["pnr_ready"] is False
 
@@ -218,4 +245,5 @@ def test_synthesis_endpoint_returns_target_provenance(client: TestClient) -> Non
     provenance = data["target_provenance"]
     assert provenance["schema_version"] == STUDIO_SYNTHESIS_TARGET_PROVENANCE_SCHEMA_VERSION
     assert provenance["target"] == "ice40"
+    assert provenance["status"] == "completed"
     assert re.fullmatch(r"[a-z0-9_]+", provenance["evidence_classification"])

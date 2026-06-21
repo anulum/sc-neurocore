@@ -18,7 +18,9 @@ from typing import TypeAlias, cast
 
 from sc_neurocore.studio.evidence_classification import (
     StudioEvidenceClassification,
+    StudioEvidenceStatus,
     validate_studio_evidence_classification,
+    validate_studio_evidence_status,
 )
 
 STUDIO_SYNTHESIS_TARGET_PROVENANCE_SCHEMA_VERSION = "studio.synthesis-target-provenance.v1"
@@ -92,6 +94,8 @@ class StudioSynthesisTargetProvenance:
         Required tool provenance records for this target.
     evidence_classification:
         Stable evidence lane label for synthesis target provenance.
+    status:
+        Terminal status for this synthesis target provenance object.
     """
 
     target: str
@@ -101,6 +105,7 @@ class StudioSynthesisTargetProvenance:
     device: str | None
     tools: tuple[StudioSynthesisToolProvenance, ...]
     evidence_classification: StudioEvidenceClassification = "synthesis"
+    status: StudioEvidenceStatus = "completed"
 
     def to_public_dict(self) -> dict[str, JsonValue]:
         """Return the public, path-free target provenance payload."""
@@ -117,6 +122,7 @@ class StudioSynthesisTargetProvenance:
             ),
             "pnr_tool": self.pnr_tool,
             "schema_version": STUDIO_SYNTHESIS_TARGET_PROVENANCE_SCHEMA_VERSION,
+            "status": validate_studio_evidence_status(self.status),
             "synthesis_command": self.synthesis_command,
             "synthesis_ready": all(
                 tool.available for tool in self.tools if tool.role == "synthesis"

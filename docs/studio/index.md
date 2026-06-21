@@ -233,10 +233,10 @@ runtime features:
   `compiler/`, `synthesis/`, and `pipeline/`.
 - `/api/compile` responses include `studio.compile-traceability.v1` metadata
   with the source equation payload, RTL module metadata, source and RTL
-  SHA-256 digests, and `evidence_classification: "compile"` without
-  host-local paths. Compile traceability validates that class through the
-  shared Studio evidence-classification contract before returning public
-  metadata.
+  SHA-256 digests, `evidence_classification: "compile"`, and completed
+  terminal status without host-local paths. Compile traceability validates that
+  class and status through the shared Studio evidence-classification contract
+  before returning public metadata.
 - `/api/compare`, `/api/fi-curve`, `/api/bifurcation`, `/api/sensitivity`,
   `/api/heatmap`, `/api/freq-response`, `/api/precision`, and
   `/api/nullclines` responses include `studio.analysis-result.v1` metadata

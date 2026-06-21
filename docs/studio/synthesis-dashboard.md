@@ -180,6 +180,7 @@ Returns:
     "synthesis_ready": true,
     "pnr_ready": true,
     "evidence_classification": "synthesis",
+    "status": "completed",
     "tools": [
       {"key": "yosys", "executable": "yosys", "role": "synthesis", "available": true, "version": "Yosys 0.40"}
     ]

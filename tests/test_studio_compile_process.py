@@ -56,6 +56,7 @@ def test_compile_process_task_writes_result_and_action_evidence(tmp_path: Path) 
     traceability = cast(dict[str, object], result["compile_traceability"])
     assert traceability["schema_version"] == "studio.compile-traceability.v1"
     assert traceability["evidence_classification"] == "compile"
+    assert traceability["status"] == "completed"
     assert [artifact.relative_path for artifact in context.artifacts] == [
         "compiler/result.json",
         "compiler/evidence.json",

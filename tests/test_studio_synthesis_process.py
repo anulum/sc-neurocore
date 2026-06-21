@@ -13,6 +13,7 @@ from __future__ import annotations
 import json
 import threading
 from pathlib import Path
+from typing import cast
 
 import pytest
 
@@ -72,6 +73,9 @@ def test_synthesis_process_task_writes_result_and_action_evidence(tmp_path: Path
 
     assert result["target"] == "ice40"
     assert "success" in result
+    target_provenance = cast(dict[str, object], result["target_provenance"])
+    assert target_provenance["schema_version"] == "studio.synthesis-target-provenance.v1"
+    assert target_provenance["status"] == "completed"
     assert [artifact.relative_path for artifact in context.artifacts] == [
         "synthesis/result.json",
         "synthesis/evidence.json",

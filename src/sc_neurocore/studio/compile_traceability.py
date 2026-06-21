@@ -18,7 +18,9 @@ from typing import TypeAlias, cast
 
 from sc_neurocore.studio.evidence_classification import (
     StudioEvidenceClassification,
+    StudioEvidenceStatus,
     validate_studio_evidence_classification,
+    validate_studio_evidence_status,
 )
 
 STUDIO_COMPILE_TRACEABILITY_SCHEMA_VERSION = "studio.compile-traceability.v1"
@@ -54,6 +56,8 @@ class StudioCompileTraceability:
         RTL language emitted by the backend compiler.
     evidence_classification:
         Evidence lane label consumed by Studio evidence bundles.
+    status:
+        Terminal status for this compile traceability object.
     """
 
     equations: tuple[str, ...]
@@ -66,6 +70,7 @@ class StudioCompileTraceability:
     source: str = "ode"
     output_language: str = "verilog"
     evidence_classification: StudioEvidenceClassification = "compile"
+    status: StudioEvidenceStatus = "completed"
 
     def to_public_dict(self) -> dict[str, JsonValue]:
         """Return the public, path-free traceability payload."""
@@ -92,6 +97,7 @@ class StudioCompileTraceability:
             "schema_version": STUDIO_COMPILE_TRACEABILITY_SCHEMA_VERSION,
             "source": self.source,
             "source_payload": source_payload,
+            "status": validate_studio_evidence_status(self.status),
         }
         payload["traceability_sha256"] = _sha256_json(payload)
         return payload
