@@ -266,18 +266,6 @@ class FaultInjectionResilienceMode:
             )
             affected[trial_index] = affected_bits
             errors[trial_index] = abs(nominal_probability - float(np.mean(corrupted)))
-        if errors.shape != (self.config.num_trials,):
-            raise ValueError("internal error: probability-error vector shape mismatch")
-        if affected.shape != (self.config.num_trials,):
-            raise ValueError("internal error: affected-bit vector shape mismatch")
-        if not np.isfinite(errors).all() or (errors < 0.0).any():
-            raise ValueError("internal error: invalid probability-error values produced")
-        if (
-            not np.isfinite(affected).all()
-            or (affected < 0.0).any()
-            or (affected > flat.size).any()
-        ):
-            raise ValueError("internal error: invalid affected-bit values produced")
 
         plan = self.config.policy.evaluate(
             streams,
