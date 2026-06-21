@@ -14,6 +14,7 @@ import type {
 } from "./api/client";
 import type { StudioProjectTrainingConfig } from "./studioProjectState";
 import {
+  trainingConfigUpdatedState,
   trainingCheckpointImportedState,
   trainingEpochAppendedState,
   trainingExportSuccessState,
@@ -148,6 +149,18 @@ describe("training store state helpers", () => {
     });
     expect(trainingWeightRestoreVerificationLoadedState(verification)).toEqual({
       trainingWeightRestoreVerification: verification,
+    });
+  });
+
+  it("updates training config through typed field patches", () => {
+    expect(trainingConfigUpdatedState(trainingConfig, "epochs", 20)).toEqual({
+      trainingConfig: { ...trainingConfig, epochs: 20 },
+    });
+    expect(trainingConfigUpdatedState(trainingConfig, "learn_beta", true)).toEqual({
+      trainingConfig: { ...trainingConfig, learn_beta: true },
+    });
+    expect(trainingConfigUpdatedState(trainingConfig, "hidden", [256, 128])).toEqual({
+      trainingConfig: { ...trainingConfig, hidden: [256, 128] },
     });
   });
 

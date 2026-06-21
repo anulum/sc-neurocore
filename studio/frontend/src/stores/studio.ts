@@ -178,6 +178,7 @@ import {
 } from "../trainingExports";
 import {
   trainingCheckpointImportedState,
+  trainingConfigUpdatedState,
   trainingEpochAppendedState,
   trainingExportSuccessState,
   trainingFailureState,
@@ -487,7 +488,10 @@ interface StudioState {
   importTrainingCheckpointText: (checkpointJson: string) => Promise<void>;
   verifyTrainingWeightRestoreArtifact: () => Promise<void>;
   exportTrainingWeightRestoreVerification: () => void;
-  setTrainingConfig: (key: string, value: unknown) => void;
+  setTrainingConfig: <K extends keyof StudioProjectTrainingConfig>(
+    key: K,
+    value: StudioProjectTrainingConfig[K],
+  ) => void;
   autoSimulate: () => void;
   exportData: () => void;
   exportCSV: () => void;
@@ -1449,7 +1453,7 @@ export const useStudioStore = create<StudioState>((set, get) => ({
   },
 
   setTrainingConfig: (key, value) => {
-    set((s) => ({ trainingConfig: { ...s.trainingConfig, [key]: value } }));
+    set((s) => trainingConfigUpdatedState(s.trainingConfig, key, value));
   },
 
   resetDefaults: () => {

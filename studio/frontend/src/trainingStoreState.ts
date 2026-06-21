@@ -65,6 +65,10 @@ export interface TrainingCheckpointImportedStatePatch {
   trainingWeightRestoreVerification: null;
 }
 
+export interface TrainingConfigUpdatedStatePatch {
+  trainingConfig: StudioProjectTrainingConfig;
+}
+
 export interface TrainingWeightRestoreVerificationStartStatePatch {
   error: null;
   trainingWeightRestoreVerification: null;
@@ -150,6 +154,19 @@ export function trainingCheckpointImportedState(
     trainingStatus: `checkpoint:${imported.source_status}`,
     trainingWeightRestorePlan: imported.weight_restore_plan,
     trainingWeightRestoreVerification: null,
+  };
+}
+
+export function trainingConfigUpdatedState<K extends keyof StudioProjectTrainingConfig>(
+  currentConfig: StudioProjectTrainingConfig,
+  key: K,
+  value: StudioProjectTrainingConfig[K],
+): TrainingConfigUpdatedStatePatch {
+  return {
+    trainingConfig: {
+      ...currentConfig,
+      [key]: value,
+    },
   };
 }
 
