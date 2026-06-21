@@ -17,7 +17,6 @@ from .precision_config import (
     PrecisionConfig,
     PrecisionSpecLike,
 )
-from .q_format import QFormat
 from .quantizer import parse_precision_format
 
 PRECISION_PRESETS: dict[str, PrecisionConfig | BlockFloatingPrecisionConfig] = {
@@ -46,6 +45,8 @@ def _parse_precision_spec(
     if isinstance(spec, BlockFloatingPrecisionConfig):
         return spec
 
+    # parse_precision_format returns QFormat | BlockFloatingMode, so the two cases
+    # below are exhaustive once the explicit-config short-circuits above are handled.
     parsed = parse_precision_format(spec)
     if isinstance(parsed, BlockFloatingMode):
         return BlockFloatingPrecisionConfig(
@@ -53,14 +54,11 @@ def _parse_precision_spec(
             exponent_bits=parsed.exponent_bits,
             block_size=parsed.block_size,
         )
-    if isinstance(parsed, QFormat):
-        return PrecisionConfig(
-            data_width=parsed.total_bits,
-            fraction=parsed.fraction_bits,
-            signed=True,
-        )
-
-    raise TypeError(f"Unsupported precision spec: {spec!r}")
+    return PrecisionConfig(
+        data_width=parsed.total_bits,
+        fraction=parsed.fraction_bits,
+        signed=True,
+    )
 
 
 def from_preset(
