@@ -1,4 +1,16 @@
-import type { StudioAuditExport, StudioAuditStatus } from "./api/client";
+import type {
+  StudioAuditExport,
+  StudioAuditQuarantineArchivePurgeResult,
+  StudioAuditQuarantineArchiveResult,
+  StudioAuditQuarantineArchiveRestoreResult,
+  StudioAuditQuarantineArchiveRetentionPlan,
+  StudioAuditQuarantineArchiveValidation,
+  StudioAuditStatus,
+  StudioJobListResponse,
+  StudioJobRecord,
+  StudioJobStatus,
+  StudioOperatorStatus,
+} from "./api/client";
 
 export interface AuditExportSummary {
   total: number;
@@ -41,6 +53,42 @@ export interface AuditFailureStatePatch {
   auditLoading: false;
 }
 
+export interface AuditArchiveCreatedStatePatch extends OperatorAuditRefreshPatch {
+  auditArchive: StudioAuditQuarantineArchiveResult;
+  auditExport: StudioAuditExport;
+}
+
+export interface AuditArchiveRetentionLoadedStatePatch {
+  auditArchiveRetention: StudioAuditQuarantineArchiveRetentionPlan;
+  auditError: null;
+  auditLoading: false;
+}
+
+export interface AuditArchiveValidationLoadedStatePatch {
+  auditArchiveValidation: StudioAuditQuarantineArchiveValidation;
+  auditError: null;
+  auditLoading: false;
+}
+
+export interface AuditArchiveRestoredStatePatch extends OperatorAuditRefreshPatch {
+  auditArchiveRestore: StudioAuditQuarantineArchiveRestoreResult;
+  auditArchiveValidation: null;
+}
+
+export interface AuditArchivePurgedStatePatch extends OperatorAuditRefreshPatch {
+  auditArchivePurge: StudioAuditQuarantineArchivePurgeResult;
+  auditArchiveRetention: StudioAuditQuarantineArchiveRetentionPlan;
+}
+
+interface OperatorAuditRefreshPatch {
+  auditError: null;
+  auditLoading: false;
+  auditStatus: StudioAuditStatus;
+  jobRecords: StudioJobRecord[];
+  jobStatus: StudioJobStatus;
+  operatorStatus: StudioOperatorStatus;
+}
+
 export type AuditStatusStatePatch =
   | AuditFailureStatePatch
   | AuditLoadingStatePatch
@@ -48,6 +96,15 @@ export type AuditStatusStatePatch =
 
 export type AuditExportStatePatch =
   | AuditExportLoadedStatePatch
+  | AuditFailureStatePatch
+  | AuditLoadingStatePatch;
+
+export type AuditArchiveStatePatch =
+  | AuditArchiveCreatedStatePatch
+  | AuditArchivePurgedStatePatch
+  | AuditArchiveRestoredStatePatch
+  | AuditArchiveRetentionLoadedStatePatch
+  | AuditArchiveValidationLoadedStatePatch
   | AuditFailureStatePatch
   | AuditLoadingStatePatch;
 
@@ -159,10 +216,82 @@ export function auditFailureState(
   };
 }
 
+export function auditArchiveCreatedState(
+  auditArchive: StudioAuditQuarantineArchiveResult,
+  auditExport: StudioAuditExport,
+  operatorStatus: StudioOperatorStatus,
+  jobList: StudioJobListResponse,
+): AuditArchiveCreatedStatePatch {
+  return {
+    ...operatorAuditRefreshState(operatorStatus, jobList),
+    auditArchive,
+    auditExport,
+  };
+}
+
+export function auditArchiveRetentionLoadedState(
+  auditArchiveRetention: StudioAuditQuarantineArchiveRetentionPlan,
+): AuditArchiveRetentionLoadedStatePatch {
+  return {
+    auditArchiveRetention,
+    auditError: null,
+    auditLoading: false,
+  };
+}
+
+export function auditArchiveValidationLoadedState(
+  auditArchiveValidation: StudioAuditQuarantineArchiveValidation,
+): AuditArchiveValidationLoadedStatePatch {
+  return {
+    auditArchiveValidation,
+    auditError: null,
+    auditLoading: false,
+  };
+}
+
+export function auditArchiveRestoredState(
+  auditArchiveRestore: StudioAuditQuarantineArchiveRestoreResult,
+  operatorStatus: StudioOperatorStatus,
+  jobList: StudioJobListResponse,
+): AuditArchiveRestoredStatePatch {
+  return {
+    ...operatorAuditRefreshState(operatorStatus, jobList),
+    auditArchiveRestore,
+    auditArchiveValidation: null,
+  };
+}
+
+export function auditArchivePurgedState(
+  auditArchivePurge: StudioAuditQuarantineArchivePurgeResult,
+  auditArchiveRetention: StudioAuditQuarantineArchiveRetentionPlan,
+  operatorStatus: StudioOperatorStatus,
+  jobList: StudioJobListResponse,
+): AuditArchivePurgedStatePatch {
+  return {
+    ...operatorAuditRefreshState(operatorStatus, jobList),
+    auditArchivePurge,
+    auditArchiveRetention,
+  };
+}
+
 function isIdentityLifecycleAction(event: StudioAuditExport["events"][number]): boolean {
   return event.action.startsWith("studio.identity.");
 }
 
 function isBrowserAuthAction(event: StudioAuditExport["events"][number]): boolean {
   return event.action.startsWith("studio.auth.");
+}
+
+function operatorAuditRefreshState(
+  operatorStatus: StudioOperatorStatus,
+  jobList: StudioJobListResponse,
+): OperatorAuditRefreshPatch {
+  return {
+    auditError: null,
+    auditLoading: false,
+    auditStatus: operatorStatus.audit,
+    jobRecords: jobList.jobs,
+    jobStatus: operatorStatus.jobs,
+    operatorStatus,
+  };
 }

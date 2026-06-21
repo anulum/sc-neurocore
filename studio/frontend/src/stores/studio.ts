@@ -73,6 +73,11 @@ import {
   syncStoredStudioAuthToken,
 } from "../studioAuthSession";
 import {
+  auditArchiveCreatedState,
+  auditArchivePurgedState,
+  auditArchiveRestoredState,
+  auditArchiveRetentionLoadedState,
+  auditArchiveValidationLoadedState,
   auditExportLoadedState,
   auditFailureState,
   auditLoadingState,
@@ -529,7 +534,7 @@ export const useStudioStore = create<StudioState>((set, get) => ({
     }
   },
   createAuditQuarantineArchive: async (limit) => {
-    set({ auditLoading: true, auditError: null });
+    set(auditLoadingState());
     try {
       const auditArchive = await createStudioAuditQuarantineArchive(limit);
       const [operatorStatus, jobList, auditExport] = await Promise.all([
@@ -537,74 +542,44 @@ export const useStudioStore = create<StudioState>((set, get) => ({
         fetchStudioJobs(),
         fetchStudioAuditExport(100),
       ]);
-      set({
-        auditArchive,
-        auditExport,
-        auditLoading: false,
-        auditError: null,
-        auditStatus: operatorStatus.audit,
-        jobRecords: jobList.jobs,
-        jobStatus: operatorStatus.jobs,
-        operatorStatus,
-      });
+      set(auditArchiveCreatedState(auditArchive, auditExport, operatorStatus, jobList));
     } catch (error: unknown) {
-      set({
-        auditLoading: false,
-        auditError: error instanceof Error ? error.message : "Audit archive creation failed",
-      });
+      set(auditFailureState(error, "Audit archive creation failed"));
     }
   },
   loadAuditQuarantineArchiveRetention: async (retainLatest) => {
-    set({ auditLoading: true, auditError: null });
+    set(auditLoadingState());
     try {
       const auditArchiveRetention = await fetchStudioAuditQuarantineArchiveRetention(retainLatest);
-      set({ auditArchiveRetention, auditLoading: false, auditError: null });
+      set(auditArchiveRetentionLoadedState(auditArchiveRetention));
     } catch (error: unknown) {
-      set({
-        auditLoading: false,
-        auditError: error instanceof Error ? error.message : "Audit archive retention check failed",
-      });
+      set(auditFailureState(error, "Audit archive retention check failed"));
     }
   },
   validateAuditQuarantineArchive: async (archive, manifest) => {
-    set({ auditLoading: true, auditError: null });
+    set(auditLoadingState());
     try {
       const auditArchiveValidation = await validateStudioAuditQuarantineArchive(archive, manifest);
-      set({ auditArchiveValidation, auditLoading: false, auditError: null });
+      set(auditArchiveValidationLoadedState(auditArchiveValidation));
     } catch (error: unknown) {
-      set({
-        auditLoading: false,
-        auditError: error instanceof Error ? error.message : "Audit archive validation failed",
-      });
+      set(auditFailureState(error, "Audit archive validation failed"));
     }
   },
   restoreAuditQuarantineArchive: async (archive, manifest) => {
-    set({ auditLoading: true, auditError: null });
+    set(auditLoadingState());
     try {
       const auditArchiveRestore = await restoreStudioAuditQuarantineArchive(archive, manifest);
       const [operatorStatus, jobList] = await Promise.all([
         fetchStudioOperatorStatus(),
         fetchStudioJobs(),
       ]);
-      set({
-        auditArchiveRestore,
-        auditArchiveValidation: null,
-        auditLoading: false,
-        auditError: null,
-        auditStatus: operatorStatus.audit,
-        jobRecords: jobList.jobs,
-        jobStatus: operatorStatus.jobs,
-        operatorStatus,
-      });
+      set(auditArchiveRestoredState(auditArchiveRestore, operatorStatus, jobList));
     } catch (error: unknown) {
-      set({
-        auditLoading: false,
-        auditError: error instanceof Error ? error.message : "Audit archive restore failed",
-      });
+      set(auditFailureState(error, "Audit archive restore failed"));
     }
   },
   purgeAuditQuarantineArchiveRetention: async (retainLatest) => {
-    set({ auditLoading: true, auditError: null });
+    set(auditLoadingState());
     try {
       const auditArchivePurge = await purgeStudioAuditQuarantineArchiveRetention(retainLatest);
       const [operatorStatus, jobList, auditArchiveRetention] = await Promise.all([
@@ -612,21 +587,14 @@ export const useStudioStore = create<StudioState>((set, get) => ({
         fetchStudioJobs(),
         fetchStudioAuditQuarantineArchiveRetention(retainLatest),
       ]);
-      set({
+      set(auditArchivePurgedState(
         auditArchivePurge,
         auditArchiveRetention,
-        auditLoading: false,
-        auditError: null,
-        auditStatus: operatorStatus.audit,
-        jobRecords: jobList.jobs,
-        jobStatus: operatorStatus.jobs,
         operatorStatus,
-      });
+        jobList,
+      ));
     } catch (error: unknown) {
-      set({
-        auditLoading: false,
-        auditError: error instanceof Error ? error.message : "Audit archive retention purge failed",
-      });
+      set(auditFailureState(error, "Audit archive retention purge failed"));
     }
   },
   createEvidenceBundle: async (request) => {
