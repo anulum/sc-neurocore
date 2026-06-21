@@ -261,6 +261,7 @@ import {
   equationsState,
   modelDefaultsState,
   modelFilterState,
+  networkParamState,
   numberRecordEntryState,
   protocolState,
   resetState,
@@ -268,6 +269,7 @@ import {
   sweepParamState,
   sweepParamYState,
   thresholdState,
+  type StudioNetworkParams,
 } from "../studioInputState";
 
 let debounceTimer: ReturnType<typeof setTimeout> | null = null;
@@ -342,7 +344,7 @@ interface StudioState {
   multiResults: SimulateResponse[] | null;
   importedTrace: ImportedTrace | null;
   networkResult: NetworkResult | null;
-  networkParams: { n_exc: number; n_inh: number; w_ee: number; w_ei: number; w_ie: number; w_ii: number; p_conn: number; ext_rate: number };
+  networkParams: StudioNetworkParams;
   verilogSrc: string;
   irText: string;
   svSource: string;
@@ -453,7 +455,10 @@ interface StudioState {
   runCharacterize: () => Promise<void>;
   runMultiSimulate: (modelNames: string[]) => Promise<void>;
   runNetwork: () => Promise<void>;
-  setNetworkParam: (key: string, value: number) => void;
+  setNetworkParam: <K extends keyof StudioNetworkParams>(
+    key: K,
+    value: StudioNetworkParams[K],
+  ) => void;
   importCSV: (csv: string) => Promise<void>;
   runCompare: (configB: Record<string, unknown>) => Promise<void>;
   runNullclines: () => Promise<void>;
@@ -1066,7 +1071,7 @@ export const useStudioStore = create<StudioState>((set, get) => ({
   },
 
   setNetworkParam: (key, value) => {
-    set((s) => ({ networkParams: { ...s.networkParams, [key]: value } }));
+    set((s) => networkParamState(s.networkParams, key, value));
   },
 
   runNetwork: async () => {

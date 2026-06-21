@@ -1,10 +1,13 @@
 import { useStudioStore } from "../stores/studio";
+import type { StudioNetworkParams } from "../studioInputState";
+
+type NetworkParamName = keyof StudioNetworkParams;
 
 function NetSlider({ label, param, min, max, step }: {
-  label: string; param: string; min: number; max: number; step: number;
+  label: string; param: NetworkParamName; min: number; max: number; step: number;
 }) {
   const { networkParams, setNetworkParam } = useStudioStore();
-  const value = (networkParams as Record<string, number>)[param] ?? 0;
+  const value = networkParams[param];
   return (
     <div className="slider-row">
       <span className="slider-label">{label}</span>

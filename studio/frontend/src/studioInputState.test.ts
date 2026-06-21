@@ -16,6 +16,7 @@ import {
   equationsState,
   modelDefaultsState,
   modelFilterState,
+  networkParamState,
   numberRecordEntryState,
   protocolState,
   resetState,
@@ -23,6 +24,7 @@ import {
   sweepParamState,
   sweepParamYState,
   thresholdState,
+  type StudioNetworkParams,
 } from "./studioInputState";
 
 function modelDetail(overrides: Partial<ModelDetail> = {}): ModelDetail {
@@ -76,6 +78,24 @@ describe("Studio input state helpers", () => {
     expect(numberRecordEntryState("odeInit", {}, "w", 0)).toEqual({
       odeInit: { w: 0 },
     });
+  });
+
+  it("updates typed network parameters without mutating the current record", () => {
+    const networkParams: StudioNetworkParams = {
+      ext_rate: 5,
+      n_exc: 80,
+      n_inh: 20,
+      p_conn: 0.2,
+      w_ee: 0.1,
+      w_ei: 0.4,
+      w_ie: 0.1,
+      w_ii: 0.4,
+    };
+
+    expect(networkParamState(networkParams, "w_ei", 0.5)).toEqual({
+      networkParams: { ...networkParams, w_ei: 0.5 },
+    });
+    expect(networkParams.w_ei).toBe(0.4);
   });
 
   it("builds model default reset patches from model details", () => {

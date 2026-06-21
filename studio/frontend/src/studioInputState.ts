@@ -66,6 +66,21 @@ export interface StudioSweepParamYStatePatch {
   sweepParamY: string;
 }
 
+export interface StudioNetworkParams {
+  ext_rate: number;
+  n_exc: number;
+  n_inh: number;
+  p_conn: number;
+  w_ee: number;
+  w_ei: number;
+  w_ie: number;
+  w_ii: number;
+}
+
+export interface StudioNetworkParamsStatePatch {
+  networkParams: StudioNetworkParams;
+}
+
 export interface StudioModelDefaultsStatePatch {
   current: 10;
   dt: number;
@@ -128,6 +143,19 @@ export function sweepParamState(sweepParam: string): StudioSweepParamStatePatch 
 
 export function sweepParamYState(sweepParamY: string): StudioSweepParamYStatePatch {
   return { sweepParamY };
+}
+
+export function networkParamState<K extends keyof StudioNetworkParams>(
+  current: StudioNetworkParams,
+  key: K,
+  value: StudioNetworkParams[K],
+): StudioNetworkParamsStatePatch {
+  return {
+    networkParams: {
+      ...current,
+      [key]: value,
+    },
+  };
 }
 
 export function modelDefaultsState(modelDetail: ModelDetail): StudioModelDefaultsStatePatch {
