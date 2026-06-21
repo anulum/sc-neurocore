@@ -339,6 +339,15 @@ runtime features:
   `studio.training.weight-restore.v1` evidence artifact holding only the verified
   digests, parameter count, and loaded-key total; the tensors never reach the API
   response.
+- `/api/studio/training/weight-restore/attach` is an admin-only endpoint that
+  warm-starts a new bounded training job seeded with the verified weights of a
+  completed source job. The integrity-checked weight artifacts are delivered to
+  the worker as confined seed inputs through the reserved seed-input channel, and
+  a strict `load_state_dict` at the epoch-zero checkpoint boundary fails closed on
+  an architecture mismatch before training begins. The worker writes a path-free
+  `studio.training.weight-restore-attach.v1` evidence artifact recording the
+  verified digests, resolved target architecture, and the architecture
+  fingerprint that gated compatibility.
 - `/api/studio/evidence/bundle` creates an admin-only evidence export as a
   bounded `studio-evidence` worker job. The request can name one saved project,
   selected `studio.simulation-run.v1` simulation responses, selected
@@ -355,7 +364,9 @@ runtime features:
   payloads are stored under `evidence/simulations/`; analysis payloads are
   stored under `evidence/analyses/`; model-scan payloads are stored under
   `evidence/model-scans/`; weight-restore payloads classified as training
-  evidence are stored under `evidence/training-weight-restores/`; default-flow
+  evidence are stored under `evidence/training-weight-restores/`; weight-restore
+  attach payloads are stored under `evidence/training-weight-restore-attaches/`;
+  default-flow
   payloads are stored under
   `evidence/default-flows/`. Selected job action-evidence artifacts are copied
   under `evidence/jobs/{job_id}/artifacts/` and classified as `action_evidence`
@@ -671,6 +682,7 @@ for complete API details with request/response examples.
 | `/api/compile`, `/api/synth/*` | Compiler/Synthesis | Worker-backed compile traceability, Yosys synthesis, target provenance, multi-target, estimate |
 | `/api/training/*` | Training Monitor | Start/stop, SSE stream, surrogates |
 | `/api/studio/training/weight-restore` | Admin | Bounded worker materialization and verification of training weights into path-free restore evidence |
+| `/api/studio/training/weight-restore/attach` | Admin | Warm-start a bounded training job seeded with verified weights at the epoch-zero checkpoint boundary |
 | `/api/graph/*` | Network Canvas | Populations, projections, validate, simulate, NIR |
 | `/api/project/*`, `/api/pipeline/*` | Integration | Save/load, worker-backed full pipeline |
 | `/api/studio/audit/*` | Admin | Audit status and admin-gated export |

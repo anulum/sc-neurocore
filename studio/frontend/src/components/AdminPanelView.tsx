@@ -203,6 +203,7 @@ export default function AdminPanelView({
       project_name: optionalText(form.get("projectName")),
       simulation_results: jsonObjects(form.get("simulationResults")),
       weight_restore_results: jsonObjects(form.get("weightRestoreResults")),
+      weight_restore_attach_results: jsonObjects(form.get("weightRestoreAttachResults")),
     });
   }
 
@@ -656,6 +657,15 @@ export default function AdminPanelView({
             <textarea
               aria-label="Evidence weight-restore JSON"
               name="weightRestoreResults"
+              disabled={model.evidenceBundle.loading}
+              rows={4}
+            />
+          </label>
+          <label className="admin-evidence-wide">
+            Weight Restore Attach JSON
+            <textarea
+              aria-label="Evidence weight-restore attach JSON"
+              name="weightRestoreAttachResults"
               disabled={model.evidenceBundle.loading}
               rows={4}
             />

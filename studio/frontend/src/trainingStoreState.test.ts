@@ -27,11 +27,12 @@ import {
   trainingStreamErrorState,
   trainingSurrogatesLoadedState,
   trainingTerminalState,
+  trainingWeightAttachLoadedState,
   trainingWeightMaterializationLoadedState,
   trainingWeightRestoreVerificationLoadedState,
   trainingWeightRestoreVerificationStartState,
 } from "./trainingStoreState";
-import type { TrainingWeightRestoreResult } from "./api/client";
+import type { TrainingWeightAttachResult, TrainingWeightRestoreResult } from "./api/client";
 import type { TrainingWeightRestoreVerification } from "./trainingRestore";
 
 const trainingConfig: StudioProjectTrainingConfig = {
@@ -183,6 +184,20 @@ describe("training store state helpers", () => {
     expect(trainingWeightMaterializationLoadedState(materialization)).toEqual({
       error: null,
       trainingWeightMaterialization: materialization,
+    });
+  });
+
+  it("loads warm-start weight attach evidence and clears errors", () => {
+    const attach: TrainingWeightAttachResult = {
+      architecture_fingerprint: "c".repeat(64),
+      job_id: "sj_attach",
+      source_job_id: "sj_training",
+      status: "running",
+    };
+
+    expect(trainingWeightAttachLoadedState(attach)).toEqual({
+      error: null,
+      trainingWeightAttach: attach,
     });
   });
 

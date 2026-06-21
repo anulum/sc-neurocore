@@ -24,12 +24,16 @@ from sc_neurocore.studio.platform.jobs import StudioJobArtifact, StudioJobContex
 STUDIO_TRAINING_WEIGHT_CHECKPOINT_SCHEMA_VERSION = "studio.training.weight-checkpoint.v1"
 STUDIO_TRAINING_WEIGHT_RESTORE_PLAN_SCHEMA_VERSION = "studio.training.weight-restore-plan.v1"
 STUDIO_TRAINING_WEIGHT_RESTORE_SCHEMA_VERSION = "studio.training.weight-restore.v1"
+STUDIO_TRAINING_WEIGHT_RESTORE_ATTACH_SCHEMA_VERSION = "studio.training.weight-restore-attach.v1"
 STUDIO_TRAINING_TORCH_STATE_DICT_SCHEMA_VERSION = "studio.training.torch-state-dict.v1"
 STUDIO_TRAINING_WEIGHT_RESTORE_OWNER = "studio-training-restore"
+STUDIO_TRAINING_WEIGHT_RESTORE_ATTACH_OWNER = "studio-training-attach"
 STUDIO_TRAINING_WEIGHT_RESTORE_EVIDENCE_CLASSIFICATION = "training"
+STUDIO_TRAINING_WEIGHT_RESTORE_ATTACH_MODES = ("warm_start", "live")
 TRAINING_WEIGHT_ARTIFACT_PATH = "training/model_state.pt"
 TRAINING_WEIGHT_METADATA_ARTIFACT_PATH = "training/model_state.json"
 TRAINING_WEIGHT_RESTORE_EVIDENCE_ARTIFACT_PATH = "training/weight-restore.json"
+TRAINING_WEIGHT_RESTORE_ATTACH_EVIDENCE_ARTIFACT_PATH = "training/weight-restore-attach.json"
 TRAINING_WEIGHT_ARTIFACT_ROUTE_TEMPLATE = "/api/studio/jobs/{job_id}/artifacts/{artifact_path}"
 _SHA256_HEX_PATTERN = re.compile(r"^[0-9a-f]{64}$")
 TrainingWeightStateLoader = Callable[[bytes], Mapping[str, object]]
@@ -482,7 +486,162 @@ def validate_training_weight_restore_evidence(
         raise ValueError("Training weight restore evidence must be completed.")
     _required_json_string(evidence, "source_job_id")
     _required_json_string(evidence, "source_status")
-    materialization = evidence.get("materialization")
+    _validate_materialization_summary(evidence.get("materialization"))
+    return evidence
+
+
+def training_architecture_fingerprint(config: Mapping[str, object]) -> str:
+    """Return a SHA-256 fingerprint of a training config's architecture fields.
+
+    The fingerprint folds only the configuration fields that determine the model
+    state-dictionary shape (dataset, hidden layer widths, and the learnable
+    beta/threshold flags). Two configurations whose fingerprints match produce
+    architecturally compatible models, so the fingerprint identifies whether
+    restored weights can be attached to a target training configuration.
+
+    Parameters
+    ----------
+    config:
+        Training configuration following the ``/api/training/start`` contract.
+
+    Returns
+    -------
+    str
+        SHA-256 hex digest of the canonical architecture field projection.
+    """
+
+    raw_hidden = config.get("hidden", [128])
+    hidden: list[JsonValue] = (
+        [int(width) for width in raw_hidden]
+        if isinstance(raw_hidden, list | tuple) and raw_hidden
+        else [128]
+    )
+    projection: dict[str, JsonValue] = {
+        "dataset": str(config.get("dataset", "synthetic")),
+        "hidden": hidden,
+        "learn_beta": bool(config.get("learn_beta", False)),
+        "learn_threshold": bool(config.get("learn_threshold", False)),
+    }
+    return _sha256_json(projection)
+
+
+def build_training_weight_restore_attach_evidence(
+    materialization: StudioTrainingWeightMaterialization,
+    *,
+    mode: str,
+    target_job_id: str,
+    target_architecture: str,
+    target_parameter_count: int,
+    architecture_fingerprint: str,
+) -> dict[str, JsonValue]:
+    """Wrap a verified materialization as path-free attach evidence.
+
+    The returned ``studio.training.weight-restore-attach.v1`` object records that
+    verified weights were attached to a target training job. It carries only the
+    verified digests from the materialization, the target job identity, the
+    resolved target architecture, and the architecture fingerprint that gated
+    compatibility; the in-memory tensor state dictionary is never serialized.
+
+    Parameters
+    ----------
+    materialization:
+        Verified, path-free materialization returned by
+        :func:`materialize_training_weight_payload`.
+    mode:
+        Attach delivery mode. One of ``warm_start`` or ``live``.
+    target_job_id:
+        Studio job ID that received the attached weights.
+    target_architecture:
+        Resolved architecture summary of the target model.
+    target_parameter_count:
+        Number of parameters in the target model.
+    architecture_fingerprint:
+        SHA-256 architecture fingerprint that gated the attach.
+
+    Returns
+    -------
+    dict[str, JsonValue]
+        JSON-compatible attach evidence classified as training evidence with a
+        completed terminal status.
+
+    Raises
+    ------
+    ValueError
+        If the mode, target identifiers, or fingerprint are invalid.
+    """
+
+    if mode not in STUDIO_TRAINING_WEIGHT_RESTORE_ATTACH_MODES:
+        raise ValueError("Training weight restore attach mode is unsupported.")
+    if target_parameter_count < 0:
+        raise ValueError("Training weight restore attach parameter count is invalid.")
+    if not _SHA256_HEX_PATTERN.fullmatch(architecture_fingerprint):
+        raise ValueError("Training weight restore attach fingerprint is invalid.")
+    return {
+        "schema_version": STUDIO_TRAINING_WEIGHT_RESTORE_ATTACH_SCHEMA_VERSION,
+        "evidence_classification": STUDIO_TRAINING_WEIGHT_RESTORE_EVIDENCE_CLASSIFICATION,
+        "status": "completed",
+        "mode": mode,
+        "source_job_id": materialization.source_job_id,
+        "target_job_id": _required_non_empty_string(target_job_id, "target_job_id"),
+        "target_architecture": _required_non_empty_string(
+            target_architecture, "target_architecture"
+        ),
+        "target_parameter_count": target_parameter_count,
+        "architecture_fingerprint": architecture_fingerprint,
+        "materialization": materialization.to_public_dict(),
+    }
+
+
+def validate_training_weight_restore_attach_evidence(
+    payload: Mapping[str, object],
+) -> dict[str, JsonValue]:
+    """Validate a ``studio.training.weight-restore-attach.v1`` evidence object.
+
+    Parameters
+    ----------
+    payload:
+        Candidate attach evidence object from a Studio API response or import.
+
+    Returns
+    -------
+    dict[str, JsonValue]
+        The JSON-compatible, validated attach evidence object.
+
+    Raises
+    ------
+    ValueError
+        If the schema, classification, status, mode, target identifiers,
+        fingerprint, or embedded materialization summary are invalid.
+    """
+
+    evidence = _json_object(payload, "Training weight restore attach evidence must be JSON.")
+    if evidence.get("schema_version") != STUDIO_TRAINING_WEIGHT_RESTORE_ATTACH_SCHEMA_VERSION:
+        raise ValueError("Training weight restore attach evidence schema is unsupported.")
+    if (
+        evidence.get("evidence_classification")
+        != STUDIO_TRAINING_WEIGHT_RESTORE_EVIDENCE_CLASSIFICATION
+    ):
+        raise ValueError("Training weight restore attach evidence classification is invalid.")
+    if evidence.get("status") != "completed":
+        raise ValueError("Training weight restore attach evidence must be completed.")
+    if evidence.get("mode") not in STUDIO_TRAINING_WEIGHT_RESTORE_ATTACH_MODES:
+        raise ValueError("Training weight restore attach evidence mode is unsupported.")
+    _required_json_string(evidence, "source_job_id")
+    _required_json_string(evidence, "target_job_id")
+    _required_json_string(evidence, "target_architecture")
+    fingerprint = evidence.get("architecture_fingerprint")
+    if not isinstance(fingerprint, str) or not _SHA256_HEX_PATTERN.fullmatch(fingerprint):
+        raise ValueError("Training weight restore attach fingerprint is invalid.")
+    target_parameter_count = evidence.get("target_parameter_count")
+    if not isinstance(target_parameter_count, int) or target_parameter_count < 0:
+        raise ValueError("Training weight restore attach parameter count is invalid.")
+    _validate_materialization_summary(evidence.get("materialization"))
+    return evidence
+
+
+def _validate_materialization_summary(materialization: object) -> dict[str, JsonValue]:
+    """Validate an embedded path-free weight materialization summary."""
+
     if not isinstance(materialization, Mapping):
         raise ValueError("Training weight restore evidence requires materialization.")
     summary = _json_object(
@@ -501,7 +660,7 @@ def validate_training_weight_restore_evidence(
     loaded_key_count = summary.get("loaded_key_count")
     if not isinstance(loaded_key_count, int) or loaded_key_count < 0:
         raise ValueError("Training weight restore materialization key count is invalid.")
-    return evidence
+    return summary
 
 
 def validate_training_weight_checkpoint_metadata(
@@ -755,6 +914,9 @@ def _required_non_empty_string(value: str, field_name: str) -> str:
 __all__ = [
     "STUDIO_TRAINING_TORCH_STATE_DICT_SCHEMA_VERSION",
     "STUDIO_TRAINING_WEIGHT_CHECKPOINT_SCHEMA_VERSION",
+    "STUDIO_TRAINING_WEIGHT_RESTORE_ATTACH_MODES",
+    "STUDIO_TRAINING_WEIGHT_RESTORE_ATTACH_OWNER",
+    "STUDIO_TRAINING_WEIGHT_RESTORE_ATTACH_SCHEMA_VERSION",
     "STUDIO_TRAINING_WEIGHT_RESTORE_EVIDENCE_CLASSIFICATION",
     "STUDIO_TRAINING_WEIGHT_RESTORE_OWNER",
     "STUDIO_TRAINING_WEIGHT_RESTORE_PLAN_SCHEMA_VERSION",
@@ -762,15 +924,19 @@ __all__ = [
     "TRAINING_WEIGHT_ARTIFACT_ROUTE_TEMPLATE",
     "TRAINING_WEIGHT_ARTIFACT_PATH",
     "TRAINING_WEIGHT_METADATA_ARTIFACT_PATH",
+    "TRAINING_WEIGHT_RESTORE_ATTACH_EVIDENCE_ARTIFACT_PATH",
     "TRAINING_WEIGHT_RESTORE_EVIDENCE_ARTIFACT_PATH",
     "StudioTrainingWeightCheckpoint",
     "StudioTrainingWeightMaterialization",
     "StudioTrainingWeightRestorePlan",
     "TrainingWeightStateLoader",
+    "build_training_weight_restore_attach_evidence",
     "build_training_weight_restore_evidence",
     "build_training_weight_restore_plan",
     "materialize_training_weight_payload",
+    "training_architecture_fingerprint",
     "validate_training_weight_checkpoint_metadata",
+    "validate_training_weight_restore_attach_evidence",
     "validate_training_weight_restore_evidence",
     "write_training_weight_checkpoint",
 ]

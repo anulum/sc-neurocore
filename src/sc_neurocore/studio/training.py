@@ -14,12 +14,13 @@ import secrets
 import threading
 import time
 import queue
-from collections.abc import Callable
+from collections.abc import Callable, Mapping
 from io import BytesIO
 from typing import Any, cast
 
 from sc_neurocore.studio.platform.evidence_bundle import JsonValue
 from sc_neurocore.studio.platform.jobs import (
+    StudioJobArtifactUnavailable,
     StudioJobCancelled,
     StudioJobContext,
     StudioJobManager,
@@ -35,6 +36,11 @@ from sc_neurocore.studio.platform.training_checkpoint import (
 from sc_neurocore.studio.platform.training_evidence import build_training_evidence_summary
 from sc_neurocore.studio.platform.training_weights import (
     STUDIO_TRAINING_TORCH_STATE_DICT_SCHEMA_VERSION,
+    STUDIO_TRAINING_WEIGHT_RESTORE_ATTACH_OWNER,
+    TRAINING_WEIGHT_ARTIFACT_PATH,
+    TRAINING_WEIGHT_METADATA_ARTIFACT_PATH,
+    build_training_weight_restore_plan,
+    training_architecture_fingerprint,
     write_training_weight_checkpoint,
 )
 
@@ -94,6 +100,7 @@ class TrainingJob:
         job_id: str | None = None,
         cancelled: Callable[[], bool] | None = None,
         event_sink: Callable[[dict[str, object]], None] | None = None,
+        initial_state_dict: Mapping[str, object] | None = None,
     ) -> None:
         self.config = config
         self.id = job_id or f"j{secrets.token_hex(6)}"
@@ -110,6 +117,7 @@ class TrainingJob:
         self._weight_checkpoint_payload: bytes | None = None
         self._weight_checkpoint_architecture: str | None = None
         self._weight_checkpoint_parameter_count: int | None = None
+        self._initial_state_dict = initial_state_dict
 
     def start(self) -> None:
         """Start this training job in its legacy background thread."""
@@ -271,6 +279,8 @@ class TrainingJob:
             learn_beta=learn_beta,
             learn_threshold=learn_threshold,
         ).to(device)
+        if self._initial_state_dict is not None:
+            self._attach_initial_state_dict(model)
         optimizer = torch.optim.Adam(model.parameters(), lr=lr)
         monitor = SpikeMonitor(model)
         info = model_info(model)
@@ -404,6 +414,25 @@ class TrainingJob:
         self._emit("completed", self.final_metrics)
         monitor.remove()
 
+    def _attach_initial_state_dict(self, model: Any) -> None:
+        """Load externally restored weights into the model before training.
+
+        The attach happens at the epoch-zero checkpoint boundary, before any
+        optimization step. A strict load fails closed: an architecture mismatch
+        raises before training begins, so partial weights are never applied.
+        """
+
+        state_dict = self._initial_state_dict
+        if state_dict is None:
+            return
+        try:
+            model.load_state_dict(dict(state_dict), strict=True)
+        except (RuntimeError, KeyError, ValueError) as exc:
+            raise ValueError(
+                "Training weight attach is incompatible with the target architecture."
+            ) from exc
+        self._emit("attach", {"loaded_key_count": len(state_dict)})
+
     def _capture_weight_checkpoint(
         self,
         *,
@@ -530,6 +559,108 @@ def start_training(
     _register_job(job)
     job.start()
     return {"job_id": job.id, "status": "running"}
+
+
+def start_training_attach(
+    source_job_id: str,
+    config: dict[str, Any],
+    job_manager: StudioJobManager,
+    *,
+    expected_config_sha256: str | None = None,
+) -> dict[str, Any]:
+    """Start a warm-start training job seeded with restored, verified weights.
+
+    Builds the canonical restore plan from the source training job's stored
+    checkpoint metadata, fetches the integrity-checked weight and metadata
+    artifacts, and submits a bounded process job that materializes and verifies
+    the weights before loading them into the target model at the epoch-zero
+    checkpoint boundary. The verified weights are delivered to the worker as
+    confined seed inputs, never through the API response.
+
+    Parameters
+    ----------
+    source_job_id:
+        Studio job ID of a completed training job that published weights.
+    config:
+        Target training configuration for the warm-started job.
+    job_manager:
+        Bounded Studio job manager that owns artifact reads and job submission.
+    expected_config_sha256:
+        Optional source configuration digest that the checkpoint must match.
+
+    Returns
+    -------
+    dict[str, Any]
+        ``{"job_id", "status"}`` for the warm-started job, or ``{"error"}`` when
+        the source job is unknown or published no usable weight checkpoint.
+
+    Raises
+    ------
+    ValueError
+        If the restore plan cannot be built from the source checkpoint.
+    """
+
+    from sc_neurocore.studio.platform.training_process import (
+        TRAINING_ATTACH_PROCESS_TASK,
+        TRAINING_ATTACH_SEED_METADATA_PATH,
+        TRAINING_ATTACH_SEED_WEIGHTS_PATH,
+    )
+
+    status_payload = get_training_status(source_job_id, job_manager)
+    if "status" not in status_payload:
+        return {"error": "training_job_not_found"}
+    weight_checkpoint = status_payload.get("weight_checkpoint")
+    if not isinstance(weight_checkpoint, dict):
+        return {"error": "training_weight_checkpoint_unavailable"}
+    source_status = status_payload.get("status")
+    if not isinstance(source_status, str) or not source_status:
+        return {"error": "training_status_unavailable"}
+
+    restore_plan = build_training_weight_restore_plan(
+        source_job_id=source_job_id,
+        source_status=source_status,
+        weight_checkpoint=weight_checkpoint,
+        expected_config_sha256=expected_config_sha256,
+    )
+    try:
+        metadata_bytes = job_manager.read_artifact(
+            source_job_id,
+            TRAINING_WEIGHT_METADATA_ARTIFACT_PATH,
+        ).payload
+        weights_bytes = job_manager.read_artifact(
+            source_job_id,
+            TRAINING_WEIGHT_ARTIFACT_PATH,
+        ).payload
+    except KeyError:
+        return {"error": "training_weight_artifact_not_found"}
+    except (StudioJobArtifactUnavailable, ValueError):
+        return {"error": "training_weight_artifact_unavailable"}
+
+    fingerprint = training_architecture_fingerprint(config)
+    record = job_manager.submit_process_task(
+        kind="training",
+        owner=STUDIO_TRAINING_WEIGHT_RESTORE_ATTACH_OWNER,
+        request_id=None,
+        task_path=TRAINING_ATTACH_PROCESS_TASK,
+        payload={
+            "config": config,
+            "restore_plan": restore_plan.to_public_dict(),
+            "architecture_fingerprint": fingerprint,
+        },
+        seed_inputs={
+            TRAINING_ATTACH_SEED_WEIGHTS_PATH: weights_bytes,
+            TRAINING_ATTACH_SEED_METADATA_PATH: metadata_bytes,
+        },
+    )
+    proxy = TrainingJob(config, job_id=record.job_id)
+    proxy.status = "running"
+    _register_job(proxy)
+    return {
+        "job_id": record.job_id,
+        "status": "running",
+        "source_job_id": source_job_id,
+        "architecture_fingerprint": fingerprint,
+    }
 
 
 def stop_training(

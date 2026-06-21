@@ -178,6 +178,7 @@ operator triggers the restore.
 | GET | `/api/training/stream/{job_id}` | SSE metric stream |
 | GET | `/api/training/jobs` | List all jobs |
 | POST | `/api/studio/training/weight-restore` | Materialize and verify weights (admin) |
+| POST | `/api/studio/training/weight-restore/attach` | Warm-start a job from verified weights (admin) |
 
 ### POST /api/training/start
 
@@ -310,6 +311,48 @@ published no weight checkpoint, and `422` when the restore plan or config digest
 is invalid. The evidence object can be supplied to
 `POST /api/studio/evidence/bundle` under `weight_restore_results` to preserve it
 in an evidence bundle.
+
+### POST /api/studio/training/weight-restore/attach
+
+Admin-only. Warm-starts a new bounded training job seeded with the verified
+weights of a completed source job. Request body:
+
+```json
+{
+  "source_job_id": "sj_1711504200000",
+  "config": {"dataset": "synthetic", "hidden": [128], "epochs": 5},
+  "expected_config_sha256": "..."
+}
+```
+
+The endpoint builds the canonical restore plan from the source checkpoint,
+delivers the integrity-checked weight and metadata artifacts to the worker as
+confined seed inputs, and starts a process job that materializes and verifies
+the weights before loading them into the target model at the epoch-zero
+checkpoint boundary (`load_state_dict(..., strict=True)`). A compatible attach
+trains forward and writes a path-free `studio.training.weight-restore-attach.v1`
+evidence artifact recording the verified digests, the resolved target
+architecture, and the architecture fingerprint that gated compatibility. An
+incompatible architecture fails the job before training begins, so partial
+weights are never applied. The response is returned immediately:
+
+```json
+{
+  "job_id": "sj_attach_...",
+  "status": "running",
+  "source_job_id": "sj_1711504200000",
+  "architecture_fingerprint": "..."
+}
+```
+
+The architecture fingerprint folds only the configuration fields that determine
+the model state-dictionary shape (dataset, hidden widths, and the learnable
+beta/threshold flags), so warm-start compatibility is independent of the
+learning rate, epoch count, batch size, or timestep count. Error responses:
+`404` when the source job is unknown, `409` when it published no weight
+checkpoint, and `422` when the restore plan or config digest is invalid. The
+attach evidence can be supplied to `POST /api/studio/evidence/bundle` under
+`weight_restore_attach_results`.
 
 ### GET /api/training/{job_id}/stream
 

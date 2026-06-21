@@ -9,6 +9,7 @@ import type {
   SurrogateInfo,
   TrainingCheckpointImportResponse,
   TrainingEpochMetrics,
+  TrainingWeightAttachResult,
   TrainingWeightRestorePlan,
   TrainingWeightRestoreResult,
 } from "./api/client";
@@ -82,6 +83,11 @@ export interface TrainingWeightRestoreVerificationLoadedStatePatch {
 export interface TrainingWeightMaterializationLoadedStatePatch {
   error: null;
   trainingWeightMaterialization: TrainingWeightRestoreResult;
+}
+
+export interface TrainingWeightAttachLoadedStatePatch {
+  error: null;
+  trainingWeightAttach: TrainingWeightAttachResult;
 }
 
 export interface TrainingFailureStatePatch {
@@ -198,6 +204,12 @@ export function trainingWeightMaterializationLoadedState(
   trainingWeightMaterialization: TrainingWeightRestoreResult,
 ): TrainingWeightMaterializationLoadedStatePatch {
   return { error: null, trainingWeightMaterialization };
+}
+
+export function trainingWeightAttachLoadedState(
+  trainingWeightAttach: TrainingWeightAttachResult,
+): TrainingWeightAttachLoadedStatePatch {
+  return { error: null, trainingWeightAttach };
 }
 
 export function trainingFailureState(

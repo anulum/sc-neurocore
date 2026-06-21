@@ -141,6 +141,12 @@ _REQUIRED_ROUTE_POLICIES: tuple[tuple[str, str, RouteVisibility, str], ...] = (
         RouteVisibility.ADMIN,
         "studio.training.weight_restore.materialize",
     ),
+    (
+        "POST",
+        "/api/studio/training/weight-restore/attach",
+        RouteVisibility.ADMIN,
+        "studio.training.weight_restore.attach",
+    ),
     ("POST", "/api/synth/run", RouteVisibility.ADMIN, "studio.synth.run"),
     ("POST", "/api/synth/pnr", RouteVisibility.ADMIN, "studio.synth.pnr"),
 )

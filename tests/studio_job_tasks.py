@@ -96,9 +96,36 @@ def process_failure_task(
     raise ValueError("hidden local failure detail")
 
 
+def process_seed_echo_task(
+    context: StudioJobContext,
+    payload: Mapping[str, object],
+) -> dict[str, object]:
+    """Read one confined seed input and echo its decoded content.
+
+    Parameters
+    ----------
+    context:
+        Studio job context that exposes the confined seed-input directory.
+    payload:
+        JSON object with a ``seed_path`` naming the seed input to read.
+
+    Returns
+    -------
+    dict[str, object]
+        Path-free decoded seed content and its byte length.
+    """
+
+    seed_path = payload.get("seed_path")
+    if not isinstance(seed_path, str) or not seed_path:
+        raise ValueError("process seed echo task requires a seed path")
+    data = context.read_seed_input(seed_path)
+    return {"seed_text": data.decode("utf-8"), "seed_bytes": len(data)}
+
+
 __all__ = [
     "NON_CALLABLE_TASK",
     "process_echo_task",
     "process_failure_task",
+    "process_seed_echo_task",
     "process_sleep_task",
 ]

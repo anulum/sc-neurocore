@@ -103,6 +103,21 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
   `accel/mojo/kernels` stubs with real backends.
 
 ### Studio
+- Added the admin `POST /api/studio/training/weight-restore/attach` endpoint and
+  the confined seed-input channel that backs it. The endpoint rebuilds the
+  canonical restore plan from a completed training job's checkpoint, delivers the
+  integrity-checked weight artifacts to a bounded `studio-training-restore` worker
+  as confined seed inputs, and warm-starts a training job that loads the verified
+  weights at the epoch-zero checkpoint boundary before training forward. A strict
+  `load_state_dict` fails closed on an architecture mismatch before training
+  begins. Added an architecture fingerprint that gates compatibility on the
+  shape-determining config fields only, the
+  `studio.training.weight-restore-attach.v1` evidence contract, the route policy,
+  the `studio.training.weight_restore.attach` audit action, the preflight
+  required-route entry, a `weight_restore_attach_results` evidence-bundle field
+  stored under `evidence/training-weight-restore-attaches/`, a Training Monitor
+  warm-start action with a path-free evidence strip, frontend client types, and
+  full backend and frontend tests plus documentation.
 - Added the admin `POST /api/studio/training/weight-restore` endpoint. It
   rebuilds the canonical restore plan from a completed training job's stored
   checkpoint metadata, fetches the integrity-checked weight and metadata

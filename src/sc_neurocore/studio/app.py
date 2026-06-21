@@ -88,6 +88,7 @@ from sc_neurocore.studio.training import (
     list_jobs,
     list_surrogates,
     start_training,
+    start_training_attach,
     stop_training,
     stream_metrics,
 )
@@ -374,6 +375,7 @@ class StudioEvidenceBundleRequest(BaseModel):
     analysis_results: list[dict[str, Any]] = Field(default_factory=list, max_length=16)
     model_scan_results: list[dict[str, Any]] = Field(default_factory=list, max_length=16)
     weight_restore_results: list[dict[str, Any]] = Field(default_factory=list, max_length=16)
+    weight_restore_attach_results: list[dict[str, Any]] = Field(default_factory=list, max_length=16)
     default_flow_runs: list[dict[str, Any]] = Field(default_factory=list, max_length=16)
     default_flow_attestations: list[dict[str, Any]] = Field(default_factory=list, max_length=16)
     job_ids: list[str] = Field(default_factory=list, max_length=64)
@@ -412,6 +414,17 @@ class StudioTrainingWeightRestoreRequest(BaseModel):
     """Request body for admin training weight-restore materialization."""
 
     source_job_id: str = Field(min_length=1, max_length=128)
+    expected_config_sha256: str | None = Field(
+        default=None,
+        pattern=r"^[0-9a-f]{64}$",
+    )
+
+
+class StudioTrainingWeightAttachRequest(BaseModel):
+    """Request body for admin training weight-restore warm-start attach."""
+
+    source_job_id: str = Field(min_length=1, max_length=128)
+    config: dict[str, Any] = Field(default_factory=dict)
     expected_config_sha256: str | None = Field(
         default=None,
         pattern=r"^[0-9a-f]{64}$",
@@ -1542,6 +1555,7 @@ def create_app(runtime_settings: StudioRuntimeSettings | None = None) -> FastAPI
                 analysis_payloads=tuple(export_request.analysis_results),
                 model_scan_payloads=tuple(export_request.model_scan_results),
                 weight_restore_payloads=tuple(export_request.weight_restore_results),
+                weight_restore_attach_payloads=tuple(export_request.weight_restore_attach_results),
                 default_flow_runs=tuple(export_request.default_flow_runs),
                 default_flow_attestations=tuple(export_request.default_flow_attestations),
                 job_records=tuple(job_records),
@@ -1670,6 +1684,45 @@ def create_app(runtime_settings: StudioRuntimeSettings | None = None) -> FastAPI
         if completed.status == "timed_out":
             raise HTTPException(status_code=504, detail="studio_job_timed_out")
         raise HTTPException(status_code=500, detail="studio_job_failed")
+
+    @app.post("/api/studio/training/weight-restore/attach")
+    def api_studio_training_weight_restore_attach(
+        attach_request: StudioTrainingWeightAttachRequest,
+    ) -> dict[str, object]:
+        """Warm-start a training job seeded with restored, verified weights.
+
+        Builds the canonical restore plan from the source job's checkpoint,
+        delivers the integrity-checked weights to a bounded process worker as
+        confined seed inputs, and starts a training job that loads them at the
+        epoch-zero checkpoint boundary before training forward. A strict load of
+        an incompatible architecture fails the job before training begins. The
+        worker writes a path-free ``studio.training.weight-restore-attach.v1``
+        evidence artifact; the deserialized tensors never reach the response.
+        """
+
+        try:
+            result = start_training_attach(
+                attach_request.source_job_id,
+                dict(attach_request.config),
+                studio_job_manager,
+                expected_config_sha256=attach_request.expected_config_sha256,
+            )
+        except ValueError as exc:
+            raise HTTPException(status_code=422, detail=str(exc)) from exc
+        error = result.get("error")
+        if error == "training_job_not_found":
+            raise HTTPException(status_code=404, detail=error)
+        if error == "training_weight_artifact_not_found":
+            raise HTTPException(status_code=404, detail=error)
+        if error in {
+            "training_weight_checkpoint_unavailable",
+            "training_status_unavailable",
+            "training_weight_artifact_unavailable",
+        }:
+            raise HTTPException(status_code=409, detail=error)
+        if error is not None:
+            raise HTTPException(status_code=500, detail="training_weight_attach_failed")
+        return result
 
     @app.post("/api/studio/auth/login")
     def api_studio_auth_login(

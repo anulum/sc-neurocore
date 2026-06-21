@@ -314,6 +314,7 @@ export interface StudioEvidenceBundleRequest {
   project_name: string | null;
   simulation_results: Record<string, unknown>[];
   weight_restore_results: Record<string, unknown>[];
+  weight_restore_attach_results: Record<string, unknown>[];
 }
 
 export interface StudioEvidenceBundleSummary {
@@ -967,6 +968,13 @@ export interface TrainingWeightRestoreResult {
   status: "completed";
 }
 
+export interface TrainingWeightAttachResult {
+  architecture_fingerprint: string;
+  job_id: string;
+  source_job_id: string;
+  status: string;
+}
+
 export interface TrainingCheckpointImportResponse {
   config: Partial<TrainingConfig>;
   config_sha256: string;
@@ -1002,6 +1010,16 @@ export const restoreTrainingWeights = (
 ) =>
   post<TrainingWeightRestoreResult>("/studio/training/weight-restore", {
     source_job_id: sourceJobId,
+    ...(expectedConfigSha256 ? { expected_config_sha256: expectedConfigSha256 } : {}),
+  });
+export const attachTrainingWeights = (
+  sourceJobId: string,
+  config: Partial<TrainingConfig>,
+  expectedConfigSha256?: string,
+) =>
+  post<TrainingWeightAttachResult>("/studio/training/weight-restore/attach", {
+    source_job_id: sourceJobId,
+    config,
     ...(expectedConfigSha256 ? { expected_config_sha256: expectedConfigSha256 } : {}),
   });
 

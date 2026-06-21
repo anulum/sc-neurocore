@@ -44,6 +44,7 @@ StudioJobStatus = Literal[
 StudioJobExecutionModel = Literal["thread", "process"]
 StudioJobTask = Callable[["StudioJobContext"], dict[str, object]]
 StudioProcessJobPayload: TypeAlias = Mapping[str, object]
+STUDIO_SEED_INPUT_DIR = ".studio_seed"
 
 
 class StudioJobRejected(ValueError):
@@ -342,6 +343,47 @@ class StudioJobContext:
         self._artifacts.append(artifact)
         return artifact
 
+    def read_seed_input(self, relative_path: str) -> bytes:
+        """Read one confined seed-input payload provided at job submission.
+
+        Seed inputs are written by the manager into a reserved directory before
+        the worker starts. They are job inputs, not outputs, so they are never
+        published in the artifact manifest. The path is confined to the reserved
+        seed directory and the payload is bounded by the configured artifact
+        ceiling.
+
+        Parameters
+        ----------
+        relative_path:
+            Relative seed path below the reserved seed-input directory. Absolute
+            paths and traversal segments are rejected.
+
+        Returns
+        -------
+        bytes
+            The raw seed payload.
+
+        Raises
+        ------
+        ValueError
+            If ``relative_path`` escapes the seed directory or the payload
+            exceeds the configured size limit.
+        StudioJobArtifactUnavailable
+            If the seed payload does not exist.
+        """
+
+        target_path = _resolve_confined_child(
+            root=self._work_dir / STUDIO_SEED_INPUT_DIR,
+            relative_path=relative_path,
+            error_message="Studio job seed-input path escapes the seed directory.",
+        )
+        if not target_path.is_file():
+            raise StudioJobArtifactUnavailable("Studio job seed input is unavailable.")
+        data = target_path.read_bytes()
+        if len(data) > self._max_artifact_bytes:
+            raise ValueError("Studio job seed input exceeds configured size limit.")
+        return data
+
     def _artifact_path(self, relative_path: str) -> Path:
         return _resolve_confined_child(
             root=self._work_dir,
@@ -431,6 +473,7 @@ class StudioJobManager:
         task_path: str,
         payload: StudioProcessJobPayload,
         timeout_seconds: float | None = None,
+        seed_inputs: Mapping[str, bytes] | None = None,
     ) -> StudioJobRecord:
         """Submit an importable Studio job task to an isolated Python process.
 
@@ -450,6 +493,12 @@ class StudioJobManager:
             JSON-serializable input payload passed to the worker function.
         timeout_seconds:
             Optional per-job timeout. Timed-out process jobs are terminated.
+        seed_inputs:
+            Optional confined binary inputs written into a reserved seed
+            directory before the worker starts. The worker reads them through
+            :meth:`StudioJobContext.read_seed_input`. Each payload is bounded by
+            the configured artifact ceiling and each path is confined to the
+            seed directory. Seed inputs are never published as job artifacts.
 
         Returns
         -------
@@ -459,7 +508,8 @@ class StudioJobManager:
         Raises
         ------
         StudioJobRejected
-            If the kind, timeout, task import path, or payload is invalid.
+            If the kind, timeout, task import path, payload, or a seed input is
+            invalid.
         """
 
         if kind not in self._allowed_kinds:
@@ -472,6 +522,7 @@ class StudioJobManager:
         job_id = f"sj_{secrets.token_hex(8)}"
         work_dir = self._root / job_id
         work_dir.mkdir(parents=True, exist_ok=False)
+        self._write_seed_inputs(work_dir, seed_inputs)
         payload_path = work_dir / ".studio_process_payload.json"
         result_path = work_dir / ".studio_process_result.json"
         payload_path.write_text(payload_json, encoding="utf-8")
@@ -506,6 +557,32 @@ class StudioJobManager:
         )
         supervisor.start()
         return record
+
+    def _write_seed_inputs(
+        self,
+        work_dir: Path,
+        seed_inputs: Mapping[str, bytes] | None,
+    ) -> None:
+        """Write confined binary seed inputs into the reserved seed directory."""
+
+        if not seed_inputs:
+            return
+        seed_root = work_dir / STUDIO_SEED_INPUT_DIR
+        for relative_path, data in seed_inputs.items():
+            if not isinstance(data, bytes | bytearray):
+                raise StudioJobRejected("Studio job seed input must be bytes.")
+            if len(data) > self._max_artifact_bytes:
+                raise StudioJobRejected("Studio job seed input exceeds configured size limit.")
+            try:
+                target_path = _resolve_confined_child(
+                    root=seed_root,
+                    relative_path=relative_path,
+                    error_message="Studio job seed-input path escapes the seed directory.",
+                )
+            except ValueError as exc:
+                raise StudioJobRejected(str(exc)) from exc
+            target_path.parent.mkdir(parents=True, exist_ok=True)
+            target_path.write_bytes(bytes(data))
 
     def cancel(self, job_id: str) -> StudioJobRecord:
         """Request cooperative cancellation for one job."""

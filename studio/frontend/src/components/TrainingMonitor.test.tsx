@@ -4,6 +4,7 @@ import { describe, expect, it } from "vitest";
 import {
   TrainingCheckpointControls,
   TrainingEvidenceStrip,
+  TrainingWeightAttachStrip,
   TrainingWeightMaterializationStrip,
   TrainingWeightRestorePlanStrip,
 } from "./TrainingMonitor";
@@ -186,5 +187,30 @@ describe("TrainingMonitor", () => {
     expect(html).toContain(">6<");
     expect(html).toContain("999999999999");
     expect(html).toContain("888888888888");
+  });
+
+  it("renders nothing when no weight attach result is present", () => {
+    const html = renderToStaticMarkup(<TrainingWeightAttachStrip attach={null} />);
+
+    expect(html).toBe("");
+  });
+
+  it("renders path-free warm-start attach metadata", () => {
+    const html = renderToStaticMarkup(
+      <TrainingWeightAttachStrip
+        attach={{
+          architecture_fingerprint: "c".repeat(64),
+          job_id: "sj_attach",
+          source_job_id: "sj_training",
+          status: "running",
+        }}
+      />,
+    );
+
+    expect(html).toContain("warm_start");
+    expect(html).toContain("sj_attach");
+    expect(html).toContain("sj_training");
+    expect(html).toContain("running");
+    expect(html).toContain("cccccccccccc");
   });
 });

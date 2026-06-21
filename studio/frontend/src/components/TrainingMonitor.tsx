@@ -1,5 +1,9 @@
 import { useEffect, useRef } from "react";
-import type { TrainingWeightRestorePlan, TrainingWeightRestoreResult } from "../api/client";
+import type {
+  TrainingWeightAttachResult,
+  TrainingWeightRestorePlan,
+  TrainingWeightRestoreResult,
+} from "../api/client";
 import type { TrainingWeightRestoreVerification } from "../trainingRestore";
 import { useStudioStore } from "../stores/studio";
 import { buildTrainingEvidenceModel, type TrainingEvidenceModel } from "../trainingEvidence";
@@ -272,15 +276,38 @@ export function TrainingWeightMaterializationStrip({
   );
 }
 
+export function TrainingWeightAttachStrip({
+  attach,
+}: {
+  attach: TrainingWeightAttachResult | null;
+}) {
+  if (!attach) return null;
+
+  return (
+    <div style={{ borderBottom: "1px solid var(--border)" }}>
+      <EvidenceSummaryStrip
+        variant="banner"
+        items={[
+          { label: "Attach", value: "warm_start" },
+          { label: "Job", value: attach.job_id },
+          { label: "Source", value: attach.source_job_id },
+          { label: "Status", value: attach.status },
+          { label: "Fingerprint", value: attach.architecture_fingerprint.slice(0, 12) },
+        ]}
+      />
+    </div>
+  );
+}
+
 export default function TrainingMonitor() {
   const {
     trainingStatus, trainingEpochs, trainingSurrogates, trainingConfig,
     trainingJobId, trainingWeightRestorePlan, trainingWeightRestoreVerification,
-    trainingWeightMaterialization,
+    trainingWeightMaterialization, trainingWeightAttach,
     startTraining, stopTraining, setTrainingConfig, loadSurrogates, isSimulating,
     exportTrainingCheckpoint, importTrainingCheckpointText,
     exportTrainingWeightRestoreVerification, verifyTrainingWeightRestoreArtifact,
-    materializeTrainingWeights,
+    materializeTrainingWeights, attachTrainingWeights,
   } = useStudioStore();
 
   useEffect(() => { loadSurrogates(); }, [loadSurrogates]);
@@ -359,6 +386,21 @@ export default function TrainingMonitor() {
         >
           Materialize weights
         </button>
+        <button
+          onClick={() => { void attachTrainingWeights(); }}
+          disabled={trainingJobId === null || isRunning}
+          title="Warm-start a new training job from the verified weights"
+          style={{
+            background: "var(--bg-tertiary)",
+            border: "1px solid var(--border)",
+            color: trainingJobId !== null && !isRunning ? "var(--text-secondary)" : "var(--text-muted)",
+            cursor: trainingJobId !== null && !isRunning ? "pointer" : "not-allowed",
+            fontSize: 10,
+            padding: "3px 8px",
+          }}
+        >
+          Attach (warm-start)
+        </button>
       </div>
 
       <TrainingEvidenceStrip evidence={evidence} />
@@ -369,6 +411,7 @@ export default function TrainingMonitor() {
         verification={trainingWeightRestoreVerification}
       />
       <TrainingWeightMaterializationStrip materialization={trainingWeightMaterialization} />
+      <TrainingWeightAttachStrip attach={trainingWeightAttach} />
 
       {/* Config panel */}
       {!isRunning && (

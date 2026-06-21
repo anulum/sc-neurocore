@@ -184,6 +184,7 @@ export default function SynthesisDashboard() {
       project_name: projectName,
       simulation_results: [],
       weight_restore_results: [],
+      weight_restore_attach_results: [],
     });
   }
 
