@@ -9,6 +9,7 @@ import { describe, expect, it } from "vitest";
 
 import type { StudioEvidenceBundleResponse, StudioJobRecord } from "./api/client";
 import {
+  evidenceBundleDownloadSelection,
   evidenceBundleSurfaceKeys,
   latestSynthesisJobIdWithArtefact,
   selectEvidenceBundleForSurface,
@@ -83,6 +84,30 @@ describe("evidence bundle surface helpers", () => {
       projectEvidenceBundle: bundle,
       synthesisEvidenceBundle: null,
     })).toBe(bundle);
+  });
+
+  it("selects the admin evidence bundle download slot", () => {
+    expect(evidenceBundleDownloadSelection("admin", {
+      compileEvidenceBundle: null,
+      evidenceBundle: bundle,
+      projectEvidenceBundle: null,
+      synthesisEvidenceBundle: null,
+    })).toEqual({
+      bundle,
+      error: "evidenceBundleError",
+    });
+  });
+
+  it("selects scoped evidence bundle download slots", () => {
+    expect(evidenceBundleDownloadSelection("compile", {
+      compileEvidenceBundle: bundle,
+      evidenceBundle: null,
+      projectEvidenceBundle: null,
+      synthesisEvidenceBundle: null,
+    })).toEqual({
+      bundle,
+      error: "compileEvidenceBundleError",
+    });
   });
 
   it("chooses the newest synthesis job carrying the requested artefact", () => {

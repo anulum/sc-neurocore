@@ -16,6 +16,10 @@ export interface EvidenceBundleSlots {
   synthesisEvidenceBundle: StudioEvidenceBundleResponse | null;
 }
 
+export interface EvidenceBundleDownloadSlots extends EvidenceBundleSlots {
+  evidenceBundle: StudioEvidenceBundleResponse | null;
+}
+
 export interface EvidenceBundleSurfaceKeys {
   bundle: keyof EvidenceBundleSlots;
   error:
@@ -26,6 +30,17 @@ export interface EvidenceBundleSurfaceKeys {
     | "compileEvidenceBundleLoading"
     | "projectEvidenceBundleLoading"
     | "synthesisEvidenceBundleLoading";
+}
+
+export type EvidenceBundleDownloadErrorKey =
+  | "compileEvidenceBundleError"
+  | "evidenceBundleError"
+  | "projectEvidenceBundleError"
+  | "synthesisEvidenceBundleError";
+
+export interface EvidenceBundleDownloadSelection {
+  bundle: StudioEvidenceBundleResponse | null;
+  error: EvidenceBundleDownloadErrorKey;
 }
 
 const evidenceBundleKeys: Record<ScopedEvidenceBundleSurface, EvidenceBundleSurfaceKeys> = {
@@ -57,6 +72,23 @@ export function selectEvidenceBundleForSurface(
   slots: EvidenceBundleSlots,
 ): StudioEvidenceBundleResponse | null {
   return slots[evidenceBundleKeys[surface].bundle];
+}
+
+export function evidenceBundleDownloadSelection(
+  surface: EvidenceBundleSurface,
+  slots: EvidenceBundleDownloadSlots,
+): EvidenceBundleDownloadSelection {
+  if (surface === "admin") {
+    return {
+      bundle: slots.evidenceBundle,
+      error: "evidenceBundleError",
+    };
+  }
+  const keys = evidenceBundleSurfaceKeys(surface);
+  return {
+    bundle: slots[keys.bundle],
+    error: keys.error,
+  };
 }
 
 export function latestSynthesisJobIdWithArtefact(

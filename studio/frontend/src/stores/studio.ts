@@ -124,9 +124,9 @@ import {
   trainingWeightRestoreVerificationExport,
 } from "../trainingExports";
 import {
+  evidenceBundleDownloadSelection,
   evidenceBundleSurfaceKeys,
   latestSynthesisJobIdWithArtefact,
-  selectEvidenceBundleForSurface,
   type EvidenceBundleSurface,
 } from "../evidenceBundles";
 import { downloadBrowserArtefact } from "../browserArtefactDownload";
@@ -692,31 +692,11 @@ export const useStudioStore = create<StudioState>((set, get) => ({
     }
   },
   downloadEvidenceBundleArtifact: async (relativePath) => {
-    const evidenceBundle = get().evidenceBundle;
-    if (evidenceBundle === null) {
-      set({ evidenceBundleError: "No evidence bundle is available for artifact download." });
-      return;
-    }
-    set({ evidenceBundleError: null });
-    try {
-      const payload = await fetchStudioJobArtifact(evidenceBundle.job_id, relativePath);
-      downloadBrowserArtefact(payload, relativePath);
-    } catch (error: unknown) {
-      set({
-        evidenceBundleError: error instanceof Error
-          ? error.message
-          : "Evidence artefact download failed",
-      });
-    }
+    await get().downloadEvidenceBundleArtifactForSurface("admin", relativePath);
   },
   downloadEvidenceBundleArtifactForSurface: async (surface, relativePath) => {
-    if (surface === "admin") {
-      await get().downloadEvidenceBundleArtifact(relativePath);
-      return;
-    }
-    const state = get();
-    const { error: errorKey } = evidenceBundleSurfaceKeys(surface);
-    const evidenceBundle = selectEvidenceBundleForSurface(surface, state);
+    const { bundle: evidenceBundle, error: errorKey } =
+      evidenceBundleDownloadSelection(surface, get());
     if (evidenceBundle === null) {
       set({ [errorKey]: "No evidence bundle is available for artifact download." });
       return;
@@ -1700,13 +1680,14 @@ export const useStudioStore = create<StudioState>((set, get) => ({
   },
 }));
 
-// Load from URL hash on startup
-const startupHashState = decodeStudioStartupHash(window.location.hash);
-if (startupHashState !== null) {
-  useStudioStore.getState().selectModel(startupHashState.selectedModelName);
-  useStudioStore.setState({
-    current: startupHashState.current,
-    duration: startupHashState.duration,
-    protocol: startupHashState.protocol,
-  });
+if (typeof window !== "undefined") {
+  const startupHashState = decodeStudioStartupHash(window.location.hash);
+  if (startupHashState !== null) {
+    useStudioStore.getState().selectModel(startupHashState.selectedModelName);
+    useStudioStore.setState({
+      current: startupHashState.current,
+      duration: startupHashState.duration,
+      protocol: startupHashState.protocol,
+    });
+  }
 }
