@@ -140,9 +140,17 @@ import {
   trainingWeightRestoreVerificationExport,
 } from "../trainingExports";
 import {
+  adminEvidenceBundleCreatedState,
+  adminEvidenceBundleFailureState,
+  adminEvidenceBundleLoadingState,
+  evidenceBundleArtifactDownloadFailureState,
+  evidenceBundleArtifactDownloadStartState,
+  evidenceBundleArtifactUnavailableState,
   evidenceBundleDownloadSelection,
-  evidenceBundleSurfaceKeys,
   latestSynthesisJobIdWithArtefact,
+  scopedEvidenceBundleCreatedState,
+  scopedEvidenceBundleFailureState,
+  scopedEvidenceBundleLoadingState,
   type EvidenceBundleSurface,
 } from "../evidenceBundles";
 import { downloadBrowserArtefact } from "../browserArtefactDownload";
@@ -598,27 +606,16 @@ export const useStudioStore = create<StudioState>((set, get) => ({
     }
   },
   createEvidenceBundle: async (request) => {
-    set({ evidenceBundleLoading: true, evidenceBundleError: null });
+    set(adminEvidenceBundleLoadingState());
     try {
       const evidenceBundle = await createStudioEvidenceBundle(request);
       const [operatorStatus, jobList] = await Promise.all([
         fetchStudioOperatorStatus(),
         fetchStudioJobs(),
       ]);
-      set({
-        auditStatus: operatorStatus.audit,
-        evidenceBundle,
-        evidenceBundleError: null,
-        evidenceBundleLoading: false,
-        jobRecords: jobList.jobs,
-        jobStatus: operatorStatus.jobs,
-        operatorStatus,
-      });
+      set(adminEvidenceBundleCreatedState(evidenceBundle, operatorStatus, jobList));
     } catch (error: unknown) {
-      set({
-        evidenceBundleError: error instanceof Error ? error.message : "Evidence bundle export failed",
-        evidenceBundleLoading: false,
-      });
+      set(adminEvidenceBundleFailureState(error));
     }
   },
   createEvidenceBundleForSurface: async (surface, request) => {
@@ -626,51 +623,33 @@ export const useStudioStore = create<StudioState>((set, get) => ({
       await get().createEvidenceBundle(request);
       return;
     }
-    const { bundle: bundleKey, error: errorKey, loading: loadingKey } =
-      evidenceBundleSurfaceKeys(surface);
-    set({ [loadingKey]: true, [errorKey]: null });
+    set(scopedEvidenceBundleLoadingState(surface));
     try {
       const evidenceBundle = await createStudioEvidenceBundle(request);
       const [operatorStatus, jobList] = await Promise.all([
         fetchStudioOperatorStatus(),
         fetchStudioJobs(),
       ]);
-      set({
-        auditStatus: operatorStatus.audit,
-        [bundleKey]: evidenceBundle,
-        [errorKey]: null,
-        [loadingKey]: false,
-        jobRecords: jobList.jobs,
-        jobStatus: operatorStatus.jobs,
-        operatorStatus,
-      });
+      set(scopedEvidenceBundleCreatedState(surface, evidenceBundle, operatorStatus, jobList));
     } catch (error: unknown) {
-      set({
-        [errorKey]: error instanceof Error ? error.message : "Evidence bundle export failed",
-        [loadingKey]: false,
-      });
+      set(scopedEvidenceBundleFailureState(surface, error));
     }
   },
   downloadEvidenceBundleArtifact: async (relativePath) => {
     await get().downloadEvidenceBundleArtifactForSurface("admin", relativePath);
   },
   downloadEvidenceBundleArtifactForSurface: async (surface, relativePath) => {
-    const { bundle: evidenceBundle, error: errorKey } =
-      evidenceBundleDownloadSelection(surface, get());
+    const { bundle: evidenceBundle } = evidenceBundleDownloadSelection(surface, get());
     if (evidenceBundle === null) {
-      set({ [errorKey]: "No evidence bundle is available for artifact download." });
+      set(evidenceBundleArtifactUnavailableState(surface));
       return;
     }
-    set({ [errorKey]: null });
+    set(evidenceBundleArtifactDownloadStartState(surface));
     try {
       const payload = await fetchStudioJobArtifact(evidenceBundle.job_id, relativePath);
       downloadBrowserArtefact(payload, relativePath);
     } catch (error: unknown) {
-      set({
-        [errorKey]: error instanceof Error
-          ? error.message
-          : "Evidence artefact download failed",
-      });
+      set(evidenceBundleArtifactDownloadFailureState(surface, error));
     }
   },
   loadJobStatus: async () => {
