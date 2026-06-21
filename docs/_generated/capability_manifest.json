@@ -9,7 +9,7 @@
     "python_model_classes": 157,
     "python_model_source_modules": 151,
     "rust_pyo3_model_wrappers": 175,
-    "test_files": 856
+    "test_files": 857
   },
   "documentation": {
     "public_pages": [
@@ -1987,6 +1987,7 @@
       "tests/test_edge/test_power_thermal.py",
       "tests/test_edge/test_tinysc_ports.py",
       "tests/test_edge/test_web_deploy.py",
+      "tests/test_edge_neuron_and_online_o1.py",
       "tests/test_encoding_zoo.py",
       "tests/test_energy_accounting/test_sustainability_profiler.py",
       "tests/test_energy_accounting.py",
