@@ -67,6 +67,13 @@ import {
   storeStudioAuthToken,
   syncStoredStudioAuthToken,
 } from "../studioAuthSession";
+import {
+  readStoredStudioSessions,
+  removeStudioSavedSession,
+  upsertStudioSavedSession,
+  writeStoredStudioSessions,
+  type StudioSavedSession,
+} from "../studioSavedSessions";
 import { parseTrainingCheckpointPayload } from "../trainingCheckpoint";
 import {
   buildTrainingWeightRestoreVerificationManifest,
@@ -82,7 +89,6 @@ import {
 import { downloadBrowserArtefact } from "../browserArtefactDownload";
 
 let debounceTimer: ReturnType<typeof setTimeout> | null = null;
-const browserLocalStorage = typeof localStorage === "undefined" ? null : localStorage;
 syncStoredStudioAuthToken(setStudioAuthToken);
 
 export type SourceMode = "model" | "ode";
@@ -190,7 +196,7 @@ interface StudioState {
   };
   codeScript: string;
   codeOneliner: string;
-  savedSessions: { name: string; state: Record<string, unknown> }[];
+  savedSessions: StudioSavedSession[];
   error: string | null;
   isSimulating: boolean;
   activeTab: ViewTab;
@@ -373,7 +379,7 @@ export const useStudioStore = create<StudioState>((set, get) => ({
     learn_beta: false, learn_threshold: false,
   },
   codeScript: "", codeOneliner: "",
-  savedSessions: JSON.parse(browserLocalStorage?.getItem("sc-studio-sessions") ?? "[]"),
+  savedSessions: readStoredStudioSessions(),
   error: null, isSimulating: false,
   activeTab: "trace", modelFilter: "", sweepParam: "", sweepParamY: "",
 
@@ -1679,10 +1685,9 @@ export const useStudioStore = create<StudioState>((set, get) => ({
       selectedModelName: s.selectedModelName, modelParams: s.modelParams,
       dt: s.dt, duration: s.duration, current: s.current, protocol: s.protocol,
     };
-    const sessions = s.savedSessions.filter((ss) => ss.name !== name);
-    sessions.unshift({ name, state });
+    const sessions = upsertStudioSavedSession(s.savedSessions, { name, state });
     set({ savedSessions: sessions });
-    browserLocalStorage?.setItem("sc-studio-sessions", JSON.stringify(sessions));
+    writeStoredStudioSessions(sessions);
   },
 
   loadSession: (name) => {
@@ -1707,9 +1712,9 @@ export const useStudioStore = create<StudioState>((set, get) => ({
   },
 
   deleteSession: (name) => {
-    const sessions = get().savedSessions.filter((ss) => ss.name !== name);
+    const sessions = removeStudioSavedSession(get().savedSessions, name);
     set({ savedSessions: sessions });
-    browserLocalStorage?.setItem("sc-studio-sessions", JSON.stringify(sessions));
+    writeStoredStudioSessions(sessions);
   },
 
   shareURL: () => {
