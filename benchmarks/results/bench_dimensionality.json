@@ -1,0 +1,100 @@
+{
+  "benchmark": "dimensionality_polyglot",
+  "date_utc": "2026-06-21T05:43:01Z",
+  "language_surfaces": [
+    "Python",
+    "Rust",
+    "Julia",
+    "Go",
+    "Mojo"
+  ],
+  "estimators": [
+    "spike_train_pca",
+    "demixed_pca",
+    "factor_analysis"
+  ],
+  "eigensolver": "LAPACK (NumPy/Rust/Julia), cyclic Jacobi (Go/Mojo)",
+  "hardware_measurement_claimed": false,
+  "workload": {
+    "n_neurons": 24,
+    "n_steps": 2000,
+    "n_conditions": 3,
+    "seed": 20260621
+  },
+  "meta": {
+    "cpu": "11th Gen Intel(R) Core(TM) i5-11600K @ 3.90GHz",
+    "platform": "Linux-6.17.0-35-generic-x86_64-with-glibc2.39",
+    "python": "3.12.3",
+    "numpy": "2.2.6"
+  },
+  "backends": {
+    "python": {
+      "available": true,
+      "used": true,
+      "median_call_ms": 6.280014,
+      "repeats": 15
+    },
+    "rust": {
+      "available": true,
+      "used": true,
+      "median_call_ms": 12.022684,
+      "repeats": 15,
+      "speedup_over_python": 0.522
+    },
+    "julia": {
+      "available": true,
+      "used": true,
+      "median_call_ms": 593.578842,
+      "repeats": 5,
+      "speedup_over_python": 0.011
+    },
+    "go": {
+      "available": true,
+      "used": true,
+      "median_call_ms": 84.96713,
+      "repeats": 15,
+      "speedup_over_python": 0.074
+    },
+    "mojo": {
+      "available": true,
+      "used": true,
+      "median_call_ms": 54.576435,
+      "repeats": 15,
+      "speedup_over_python": 0.115
+    }
+  },
+  "parity": {
+    "reference": "python",
+    "rust": {
+      "max_abs_diff": 3.2862601528904634e-14
+    },
+    "julia": {
+      "max_abs_diff": 2.842170943040401e-14
+    },
+    "go": {
+      "max_abs_diff": 2.120525977034049e-14
+    },
+    "mojo": {
+      "max_abs_diff": 5.3734794391857577e-14
+    }
+  },
+  "host_context": {
+    "affinity_cpus": [
+      10,
+      11
+    ],
+    "cgroup_effective_cpuset": "10-11",
+    "load_average_before": [
+      11.73486328125,
+      11.62255859375,
+      14.64208984375
+    ],
+    "load_average_after": [
+      11.80712890625,
+      11.66748046875,
+      14.609375
+    ],
+    "runtime_cpuset_shield_claimed": true,
+    "isolation_mode": "runtime-cpuset-shield"
+  }
+}

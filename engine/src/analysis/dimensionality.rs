@@ -7,134 +7,96 @@
 // SC-NeuroCore — Dimensionality reduction for spike train populations
 
 use super::basic;
-use rayon::prelude::*;
+use nalgebra::{DMatrix, SymmetricEigen};
 
-// ── helpers ─────────────────────────────────────────────────────────
+// ── linear-algebra helpers ──────────────────────────────────────────
 
-/// Symmetric eigendecomposition via Jacobi rotations.
-/// `a` is row-major `n x n` (symmetric).
-/// Returns `(eigenvalues, eigenvectors_col_major)` sorted descending.
+/// Descending eigenvalues and sign-canonicalised eigenvectors of a symmetric
+/// matrix `a` (row-major `n × n`) via nalgebra's symmetric eigensolver
+/// (tridiagonalisation + implicit QR — LAPACK-grade, replacing a hand-rolled
+/// Jacobi sweep). Each eigenvector column is sign-fixed so its largest-magnitude
+/// entry is positive, making downstream projections deterministic across
+/// backends. Eigenvectors are returned row-major (`vecs[row * n + col]`).
 fn symmetric_eigen(a: &[f64], n: usize) -> (Vec<f64>, Vec<f64>) {
-    let mut mat = a.to_vec();
+    let se = SymmetricEigen::new(DMatrix::<f64>::from_row_slice(n, n, a));
+    let mut idx: Vec<usize> = (0..n).collect();
+    idx.sort_by(|&i, &j| se.eigenvalues[j].partial_cmp(&se.eigenvalues[i]).unwrap());
+
+    let vals: Vec<f64> = idx.iter().map(|&i| se.eigenvalues[i]).collect();
     let mut vecs = vec![0.0f64; n * n];
-    for i in 0..n {
-        vecs[i * n + i] = 1.0;
-    }
-    let max_iter = 100 * n * n;
-    for _ in 0..max_iter {
-        // Find largest off-diagonal
-        let mut p = 0;
-        let mut q = 1;
-        let mut max_val = 0.0f64;
-        for i in 0..n {
-            for j in i + 1..n {
-                let v = mat[i * n + j].abs();
-                if v > max_val {
-                    max_val = v;
-                    p = i;
-                    q = j;
-                }
+    for (new_col, &old_col) in idx.iter().enumerate() {
+        // Sign convention: make the largest-magnitude entry positive.
+        let mut pivot = 0usize;
+        let mut max_abs = 0.0f64;
+        for r in 0..n {
+            let v = se.eigenvectors[(r, old_col)].abs();
+            if v > max_abs {
+                max_abs = v;
+                pivot = r;
             }
         }
-        if max_val < 1e-15 {
-            break;
-        }
-        let app = mat[p * n + p];
-        let aqq = mat[q * n + q];
-        let apq = mat[p * n + q];
-        let theta = if (app - aqq).abs() < 1e-30 {
-            std::f64::consts::FRAC_PI_4
+        let sign = if se.eigenvectors[(pivot, old_col)] < 0.0 {
+            -1.0
         } else {
-            0.5 * (2.0 * apq / (app - aqq)).atan()
+            1.0
         };
-        let c = theta.cos();
-        let s = theta.sin();
-        // Apply rotation (unrolled)
-        for i in 0..n {
-            let i_off = i * n;
-            let ip = mat[i_off + p];
-            let iq = mat[i_off + q];
-            mat[i_off + p] = c * ip + s * iq;
-            mat[i_off + q] = -s * ip + c * iq;
-        }
-        let p_off = p * n;
-        let q_off = q * n;
-        for j in 0..n {
-            let pj = mat[p_off + j];
-            let qj = mat[q_off + j];
-            mat[p_off + j] = c * pj + s * qj;
-            mat[q_off + j] = -s * pj + c * qj;
-        }
-        // Update eigenvectors (unrolled)
-        for i in 0..n {
-            let i_off = i * n;
-            let vip = vecs[i_off + p];
-            let viq = vecs[i_off + q];
-            vecs[i_off + p] = c * vip + s * viq;
-            vecs[i_off + q] = -s * vip + c * viq;
+        for r in 0..n {
+            vecs[r * n + new_col] = sign * se.eigenvectors[(r, old_col)];
         }
     }
-    let eigenvalues: Vec<f64> = (0..n).map(|i| mat[i * n + i]).collect();
-    // Sort descending
-    let mut idx: Vec<usize> = (0..n).collect();
-    idx.sort_by(|&a, &b| eigenvalues[b].partial_cmp(&eigenvalues[a]).unwrap());
-    let sorted_vals: Vec<f64> = idx.iter().map(|&i| eigenvalues[i]).collect();
-    let mut sorted_vecs = vec![0.0f64; n * n];
-    for (new_col, &old_col) in idx.iter().enumerate() {
-        for row in 0..n {
-            sorted_vecs[row * n + new_col] = vecs[row * n + old_col];
-        }
-    }
-    (sorted_vals, sorted_vecs)
+    (vals, vecs)
 }
 
-/// PCA on binned spike count matrix (neurons x time_bins).
-///
-/// `trains`: list of binary trains (each `&[i32]`).
-/// Returns `(projected, explained_variance_ratio)` where
-/// `projected` is row-major `(n_components, min_bins)`.
-pub fn spike_train_pca(
-    trains: &[&[i32]],
-    n_components: usize,
-    bin_size: usize,
-) -> (Vec<f64>, Vec<f64>) {
-    if trains.is_empty() {
-        return (vec![], vec![]);
-    }
-    let binned: Vec<Vec<f64>> = trains
-        .iter()
-        .map(|t| {
-            basic::bin_spike_train(t, bin_size)
-                .into_iter()
-                .map(|c| c as f64)
-                .collect()
-        })
-        .collect();
-    let min_bins = binned.iter().map(|b| b.len()).min().unwrap_or(0);
-    if min_bins == 0 {
-        return (vec![], vec![]);
-    }
-    let d = trains.len(); // neurons
-                          // Mean-centre each neuron
-    let mut mat = vec![0.0f64; d * min_bins];
-    for i in 0..d {
-        let mean: f64 = binned[i][..min_bins].iter().sum::<f64>() / min_bins as f64;
-        for j in 0..min_bins {
-            mat[i * min_bins + j] = binned[i][j] - mean;
+/// Solve the SPD system `A X = B` via Cholesky. `a` is row-major `n × n`, `b` is
+/// row-major `n × k`; returns `X` row-major `n × k`. `A` is never inverted.
+fn spd_solve(a: &[f64], n: usize, b: &[f64], k: usize) -> Vec<f64> {
+    let chol = DMatrix::<f64>::from_row_slice(n, n, a)
+        .cholesky()
+        .expect("factor-analysis system must be symmetric positive-definite");
+    let solved = chol.solve(&DMatrix::<f64>::from_row_slice(n, k, b));
+    let mut out = vec![0.0f64; n * k];
+    for i in 0..n {
+        for j in 0..k {
+            out[i * k + j] = solved[(i, j)];
         }
     }
-    if d < 2 {
-        return (mat[..min_bins].to_vec(), vec![1.0]);
+    out
+}
+
+/// SPD inverse via Cholesky (needed for the explicit `nf · M⁻¹` term).
+fn spd_inverse(a: &[f64], n: usize) -> Vec<f64> {
+    let inv = DMatrix::<f64>::from_row_slice(n, n, a)
+        .cholesky()
+        .expect("factor-analysis system must be symmetric positive-definite")
+        .inverse();
+    let mut out = vec![0.0f64; n * n];
+    for i in 0..n {
+        for j in 0..n {
+            out[i * n + j] = inv[(i, j)];
+        }
     }
-    // Covariance matrix (d x d)
+    out
+}
+
+// ── centred-matrix cores ────────────────────────────────────────────
+
+/// PCA of a mean-centred matrix `mat` (`d × t`, row-major).
+/// Returns `(projected [nc × t], explained_variance_ratio [nc])`.
+pub fn pca_from_centered(
+    mat: &[f64],
+    d: usize,
+    t: usize,
+    n_components: usize,
+) -> (Vec<f64>, Vec<f64>) {
+    let denom = (t - 1).max(1) as f64;
     let mut cov = vec![0.0f64; d * d];
     for i in 0..d {
         for j in i..d {
             let mut s = 0.0;
-            for t in 0..min_bins {
-                s += mat[i * min_bins + t] * mat[j * min_bins + t];
+            for k in 0..t {
+                s += mat[i * t + k] * mat[j * t + k];
             }
-            s /= (min_bins - 1).max(1) as f64;
+            s /= denom;
             cov[i * d + j] = s;
             cov[j * d + i] = s;
         }
@@ -146,25 +108,240 @@ pub fn spike_train_pca(
         .iter()
         .map(|&v| if total > 0.0 { v / total } else { v })
         .collect();
-    // Project: components^T @ mat
-    // components are first nc columns of eigvecs
-    let mut projected = vec![0.0f64; nc * min_bins];
+    let mut projected = vec![0.0f64; nc * t];
     for c in 0..nc {
-        for t in 0..min_bins {
+        for tt in 0..t {
             let mut s = 0.0;
             for i in 0..d {
-                s += eigvecs[i * d + c] * mat[i * min_bins + t];
+                s += eigvecs[i * d + c] * mat[i * t + tt];
             }
-            projected[c * min_bins + t] = s;
+            projected[c * t + tt] = s;
         }
     }
     (projected, explained)
 }
 
-/// Demixed PCA. Kobak et al. 2016.
+/// Demixed PCA of a grand-mean-centred condition-mean matrix (`n_cond × t`).
+/// Returns `(projected [n_cond × nc], explained_variance_ratio [nc])`.
+pub fn demixed_from_centered(
+    mean_mat: &[f64],
+    n_cond: usize,
+    t: usize,
+    n_components: usize,
+) -> (Vec<f64>, Vec<f64>) {
+    let denom = n_cond as f64;
+    let mut cov = vec![0.0f64; t * t];
+    for i in 0..t {
+        for j in i..t {
+            let mut s = 0.0;
+            for c in 0..n_cond {
+                s += mean_mat[c * t + i] * mean_mat[c * t + j];
+            }
+            s /= denom;
+            cov[i * t + j] = s;
+            cov[j * t + i] = s;
+        }
+    }
+    let (eigvals, eigvecs) = symmetric_eigen(&cov, t);
+    let nc = n_components.min(t);
+    let total: f64 = eigvals.iter().sum();
+    let explained: Vec<f64> = eigvals[..nc]
+        .iter()
+        .map(|&v| if total > 0.0 { v / total } else { v })
+        .collect();
+    let mut projected = vec![0.0f64; n_cond * nc];
+    for c in 0..n_cond {
+        for k in 0..nc {
+            let mut s = 0.0;
+            for j in 0..t {
+                s += mean_mat[c * t + j] * eigvecs[j * t + k];
+            }
+            projected[c * nc + k] = s;
+        }
+    }
+    (projected, explained)
+}
+
+/// Factor-analysis EM of a mean-centred matrix `mat` (`d × t`).
 ///
-/// `conditions`: list of (condition trains) where each is a `Vec<&[i32]>`.
-/// Returns `(projected, explained_variance_ratio)`.
+/// The loadings start from a deterministic PCA initialisation (top eigenvectors
+/// of the sample covariance scaled by `sqrt` of the eigenvalues, sign-fixed), and
+/// each EM step solves its SPD `M` and `E[zzᵀ]` systems by Cholesky.
+/// Returns `(loadings [d × nf], uniquenesses [d])`.
+pub fn fa_from_centered(
+    mat: &[f64],
+    d: usize,
+    t: usize,
+    n_factors: usize,
+    n_iter: usize,
+) -> (Vec<f64>, Vec<f64>) {
+    let tf = t as f64;
+    let mut cov = vec![0.0f64; d * d];
+    for i in 0..d {
+        for j in i..d {
+            let mut s = 0.0;
+            for k in 0..t {
+                s += mat[i * t + k] * mat[j * t + k];
+            }
+            s /= tf;
+            cov[i * d + j] = s;
+            cov[j * d + i] = s;
+        }
+    }
+    let nf = n_factors.min(d);
+    let (eigvals, eigvecs) = symmetric_eigen(&cov, d);
+    // Deterministic PCA initialisation (sign-canon preserved by the positive scale).
+    let mut loadings = vec![0.0f64; d * nf];
+    for c in 0..nf {
+        let scale = eigvals[c].max(0.0).sqrt();
+        for i in 0..d {
+            loadings[i * nf + c] = eigvecs[i * d + c] * scale;
+        }
+    }
+    let mut psi: Vec<f64> = (0..d).map(|i| cov[i * d + i]).collect();
+
+    for _ in 0..n_iter {
+        let psi_inv: Vec<f64> = psi.iter().map(|&p| 1.0 / (p + 1e-10)).collect();
+
+        // M = Lᵀ diag(psi_inv) L + I  (nf × nf)
+        let mut m = vec![0.0f64; nf * nf];
+        for a in 0..nf {
+            for b in 0..nf {
+                let mut s = 0.0;
+                for i in 0..d {
+                    s += loadings[i * nf + a] * psi_inv[i] * loadings[i * nf + b];
+                }
+                m[a * nf + b] = s + if a == b { 1.0 } else { 0.0 };
+            }
+        }
+        let m_inv = spd_inverse(&m, nf);
+
+        // beta = M⁻¹ (Lᵀ diag(psi_inv))  (nf × d)
+        let mut beta = vec![0.0f64; nf * d];
+        for a in 0..nf {
+            for i in 0..d {
+                let mut s = 0.0;
+                for kk in 0..nf {
+                    s += m_inv[a * nf + kk] * loadings[i * nf + kk] * psi_inv[i];
+                }
+                beta[a * d + i] = s;
+            }
+        }
+
+        // E[z] = beta mat  (nf × t)
+        let mut ez = vec![0.0f64; nf * t];
+        for a in 0..nf {
+            for tt in 0..t {
+                let mut s = 0.0;
+                for i in 0..d {
+                    s += beta[a * d + i] * mat[i * t + tt];
+                }
+                ez[a * t + tt] = s;
+            }
+        }
+
+        // E[zzᵀ] = nf M⁻¹ + ez ezᵀ / t  (nf × nf)
+        let mut ezzt = vec![0.0f64; nf * nf];
+        for a in 0..nf {
+            for b in 0..nf {
+                let mut s = 0.0;
+                for tt in 0..t {
+                    s += ez[a * t + tt] * ez[b * t + tt];
+                }
+                ezzt[a * nf + b] = nf as f64 * m_inv[a * nf + b] + s / tf;
+            }
+        }
+
+        // mat_ez_t = mat ezᵀ / t  (d × nf)
+        let mut mat_ez_t = vec![0.0f64; d * nf];
+        for i in 0..d {
+            for a in 0..nf {
+                let mut s = 0.0;
+                for tt in 0..t {
+                    s += mat[i * t + tt] * ez[a * t + tt];
+                }
+                mat_ez_t[i * nf + a] = s / tf;
+            }
+        }
+
+        // loadings = mat_ez_t E[zzᵀ]⁻¹  via solving  E[zzᵀ] Xᵀ = mat_ez_tᵀ.
+        let mut rhs = vec![0.0f64; nf * d];
+        for a in 0..nf {
+            for i in 0..d {
+                rhs[a * d + i] = mat_ez_t[i * nf + a];
+            }
+        }
+        let solved = spd_solve(&ezzt, nf, &rhs, d); // (nf × d) = E[zzᵀ]⁻¹ rhs
+        for i in 0..d {
+            for a in 0..nf {
+                loadings[i * nf + a] = solved[a * d + i];
+            }
+        }
+
+        // psi = diag(cov - loadings ez matᵀ / t)
+        for i in 0..d {
+            let mut s = 0.0;
+            for tt in 0..t {
+                let mut l_ez = 0.0;
+                for a in 0..nf {
+                    l_ez += loadings[i * nf + a] * ez[a * t + tt];
+                }
+                s += l_ez * mat[i * t + tt];
+            }
+            psi[i] = (cov[i * d + i] - s / tf).max(1e-6);
+        }
+    }
+
+    (loadings, psi)
+}
+
+// ── binning wrappers (raw trains → centred matrix → core) ───────────
+
+fn binned_centred(trains: &[&[i32]], bin_size: usize) -> (Vec<f64>, usize, usize) {
+    let binned: Vec<Vec<f64>> = trains
+        .iter()
+        .map(|t| {
+            basic::bin_spike_train(t, bin_size)
+                .into_iter()
+                .map(|c| c as f64)
+                .collect()
+        })
+        .collect();
+    let min_bins = binned.iter().map(|b| b.len()).min().unwrap_or(0);
+    let d = trains.len();
+    if min_bins == 0 {
+        return (vec![], d, 0);
+    }
+    let mut mat = vec![0.0f64; d * min_bins];
+    for i in 0..d {
+        let mean: f64 = binned[i][..min_bins].iter().sum::<f64>() / min_bins as f64;
+        for j in 0..min_bins {
+            mat[i * min_bins + j] = binned[i][j] - mean;
+        }
+    }
+    (mat, d, min_bins)
+}
+
+/// PCA on binned spike trains. `trains`: list of binary trains.
+pub fn spike_train_pca(
+    trains: &[&[i32]],
+    n_components: usize,
+    bin_size: usize,
+) -> (Vec<f64>, Vec<f64>) {
+    if trains.is_empty() {
+        return (vec![], vec![]);
+    }
+    let (mat, d, min_bins) = binned_centred(trains, bin_size);
+    if min_bins == 0 {
+        return (vec![], vec![]);
+    }
+    if d < 2 {
+        return (mat[..min_bins].to_vec(), vec![1.0]);
+    }
+    pca_from_centered(&mat, d, min_bins, n_components)
+}
+
+/// Demixed PCA. Kobak et al. 2016. `conditions`: list of (condition trains).
 pub fn demixed_pca(
     conditions: &[Vec<&[i32]>],
     n_components: usize,
@@ -173,7 +350,6 @@ pub fn demixed_pca(
     if conditions.len() < 2 {
         return (vec![], vec![]);
     }
-    // Compute mean binned vector per condition
     let mut all_means: Vec<Vec<f64>> = Vec::new();
     for trains in conditions {
         let binned: Vec<Vec<f64>> = trains
@@ -192,8 +368,8 @@ pub fn demixed_pca(
         let n = binned.len();
         let mut mean = vec![0.0f64; min_bins];
         for b in &binned {
-            for j in 0..min_bins {
-                mean[j] += b[j];
+            for (j, m) in mean.iter_mut().enumerate() {
+                *m += b[j];
             }
         }
         for v in &mut mean {
@@ -206,74 +382,25 @@ pub fn demixed_pca(
     }
     let min_bins = all_means.iter().map(|m| m.len()).min().unwrap();
     let n_cond = all_means.len();
-    // Grand mean
     let mut grand = vec![0.0f64; min_bins];
     for m in &all_means {
-        for j in 0..min_bins {
-            grand[j] += m[j];
+        for (j, g) in grand.iter_mut().enumerate() {
+            *g += m[j];
         }
     }
     for v in &mut grand {
         *v /= n_cond as f64;
     }
-    // Centre
     let mut mean_mat = vec![0.0f64; n_cond * min_bins];
-    for i in 0..n_cond {
+    for (i, m) in all_means.iter().enumerate() {
         for j in 0..min_bins {
-            mean_mat[i * min_bins + j] = all_means[i][j] - grand[j];
+            mean_mat[i * min_bins + j] = m[j] - grand[j];
         }
     }
-    // Covariance: M^T M / n_cond (min_bins x min_bins) - unrolled & SIMD
-    let t = min_bins;
-    let mut cov = vec![0.0f64; t * t];
-    let n_cond_f = n_cond as f64;
-
-    // Transpose mean_mat to column-major for SIMD dots: (t x n_cond)
-    let mut m_cols = vec![vec![0.0_f64; n_cond]; t];
-    for c in 0..n_cond {
-        for i in 0..t {
-            m_cols[i][c] = mean_mat[c * t + i];
-        }
-    }
-
-    cov.par_chunks_exact_mut(t)
-        .enumerate()
-        .for_each(|(i, row)| {
-            for j in i..t {
-                let dot = crate::simd::dot_f64_dispatch(&m_cols[i], &m_cols[j]);
-                row[j] = dot / n_cond_f;
-            }
-        });
-    // Mirror
-    for i in 0..t {
-        for j in (i + 1)..t {
-            cov[j * t + i] = cov[i * t + j];
-        }
-    }
-    let (eigvals, eigvecs) = symmetric_eigen(&cov, t);
-    let nc = n_components.min(t);
-    let total: f64 = eigvals.iter().sum();
-    let explained: Vec<f64> = eigvals[..nc]
-        .iter()
-        .map(|&v| if total > 0.0 { v / total } else { v })
-        .collect();
-    // Project: mean_mat @ eigvecs[:, :nc]
-    let mut projected = vec![0.0f64; n_cond * nc];
-    for c in 0..n_cond {
-        for k in 0..nc {
-            let mut s = 0.0;
-            for j in 0..t {
-                s += mean_mat[c * t + j] * eigvecs[j * t + k];
-            }
-            projected[c * nc + k] = s;
-        }
-    }
-    (projected, explained)
+    demixed_from_centered(&mean_mat, n_cond, min_bins, n_components)
 }
 
 /// Factor analysis via EM. Rubin & Thayer 1982.
-///
-/// Returns `(loading_matrix [d*n_factors], uniquenesses [d])`.
 pub fn factor_analysis(
     trains: &[&[i32]],
     n_factors: usize,
@@ -284,206 +411,11 @@ pub fn factor_analysis(
     if d == 0 {
         return (vec![], vec![]);
     }
-    let binned: Vec<Vec<f64>> = trains
-        .iter()
-        .map(|t| {
-            basic::bin_spike_train(t, bin_size)
-                .into_iter()
-                .map(|c| c as f64)
-                .collect()
-        })
-        .collect();
-    let t = binned.iter().map(|b| b.len()).min().unwrap_or(0);
+    let (mat, _d, t) = binned_centred(trains, bin_size);
     if t == 0 {
-        return (vec![0.0; d * n_factors], vec![1.0; d]);
+        return (vec![0.0; d * n_factors.min(d)], vec![1.0; d]);
     }
-    // Mean-centre
-    let mut mat = vec![0.0f64; d * t];
-    for i in 0..d {
-        let mean: f64 = binned[i][..t].iter().sum::<f64>() / t as f64;
-        for j in 0..t {
-            mat[i * t + j] = binned[i][j] - mean;
-        }
-    }
-    // Covariance (d x d)
-    let mut cov = vec![0.0f64; d * d];
-    for i in 0..d {
-        for j in i..d {
-            let mut s = 0.0;
-            for k in 0..t {
-                s += mat[i * t + k] * mat[j * t + k];
-            }
-            s /= t as f64;
-            cov[i * d + j] = s;
-            cov[j * d + i] = s;
-        }
-    }
-    let nf = n_factors.min(d);
-    let mut psi: Vec<f64> = (0..d).map(|i| cov[i * d + i]).collect();
-    // Initialise loadings (deterministic pseudo-random)
-    let mut loadings = vec![0.0f64; d * nf];
-    let mut rng = 42u64;
-    for v in &mut loadings {
-        rng = rng.wrapping_mul(6364136223846793005).wrapping_add(1);
-        *v = ((rng >> 33) as f64 / (1u64 << 31) as f64 - 0.5) * 0.2;
-    }
-
-    for _ in 0..n_iter {
-        // psi_inv: diagonal
-        let psi_inv: Vec<f64> = psi.iter().map(|&p| 1.0 / (p + 1e-10)).collect();
-
-        // M = L^T psi_inv L + I (nf x nf)
-        let mut m = vec![0.0f64; nf * nf];
-        for i in 0..nf {
-            for j in 0..nf {
-                let mut s = 0.0;
-                for k in 0..d {
-                    s += loadings[k * nf + i] * psi_inv[k] * loadings[k * nf + j];
-                }
-                m[i * nf + j] = s + if i == j { 1.0 } else { 0.0 };
-            }
-        }
-        let m_inv = mat_inv_small(&m, nf);
-
-        // beta = m_inv @ L^T @ psi_inv (nf x d)
-        let mut beta = vec![0.0f64; nf * d];
-        for i in 0..nf {
-            for j in 0..d {
-                let mut s = 0.0;
-                for k in 0..nf {
-                    s += m_inv[i * nf + k] * loadings[j * nf + k] * psi_inv[j];
-                }
-                beta[i * d + j] = s;
-            }
-        }
-
-        // E[z] = beta @ mat (nf x t)
-        let mut ez = vec![0.0f64; nf * t];
-        for i in 0..nf {
-            for j in 0..t {
-                let mut s = 0.0;
-                for k in 0..d {
-                    s += beta[i * d + k] * mat[k * t + j];
-                }
-                ez[i * t + j] = s;
-            }
-        }
-
-        // E[zz^T] = nf * m_inv + ez @ ez^T / t (nf x nf)
-        let mut ezzt = vec![0.0f64; nf * nf];
-        for i in 0..nf {
-            for j in 0..nf {
-                let mut s = 0.0;
-                for k in 0..t {
-                    s += ez[i * t + k] * ez[j * t + k];
-                }
-                // The Python uses: nf * m_inv + ez @ ez.T / t
-                // But the correct EM formula is: t * m_inv + ez @ ez.T
-                // Python's formula: ezzt = n_factors * m_inv + ez @ ez.T / t
-                ezzt[i * nf + j] = nf as f64 * m_inv[i * nf + j] + s / t as f64;
-            }
-        }
-
-        // L_new = (mat @ ez^T / t) @ inv(ezzt / t * t) = (mat @ ez^T / t) @ inv(ezzt)
-        // Actually Python: loadings = mat @ ez.T / t @ np.linalg.inv(ezzt / t * t)
-        // This simplifies to: (mat @ ez^T) @ inv(t * ezzt)
-        // Let's just follow the Python exactly:
-        // mat_ez_t = mat @ ez.T (d x nf)
-        let mut mat_ez_t = vec![0.0f64; d * nf];
-        for i in 0..d {
-            for j in 0..nf {
-                let mut s = 0.0;
-                for k in 0..t {
-                    s += mat[i * t + k] * ez[j * t + k];
-                }
-                mat_ez_t[i * nf + j] = s / t as f64;
-            }
-        }
-        // Scale ezzt for inversion: the Python does ezzt / t * t which is just ezzt
-        let ezzt_inv = mat_inv_small(&ezzt, nf);
-        // L_new = mat_ez_t @ ezzt_inv
-        for i in 0..d {
-            for j in 0..nf {
-                let mut s = 0.0;
-                for k in 0..nf {
-                    s += mat_ez_t[i * nf + k] * ezzt_inv[k * nf + j];
-                }
-                loadings[i * nf + j] = s;
-            }
-        }
-
-        // psi = diag(cov - L @ ez @ mat^T / t)
-        // L @ ez (d x t)
-        let mut l_ez = vec![0.0f64; d * t];
-        for i in 0..d {
-            for j in 0..t {
-                let mut s = 0.0;
-                for k in 0..nf {
-                    s += loadings[i * nf + k] * ez[k * t + j];
-                }
-                l_ez[i * t + j] = s;
-            }
-        }
-        for i in 0..d {
-            let mut s = 0.0;
-            for k in 0..t {
-                s += l_ez[i * t + k] * mat[i * t + k];
-            }
-            psi[i] = (cov[i * d + i] - s / t as f64).max(1e-6);
-        }
-    }
-
-    (loadings, psi)
-}
-
-/// Small matrix inverse (Gauss-Jordan) for nf x nf matrices.
-fn mat_inv_small(a: &[f64], n: usize) -> Vec<f64> {
-    let mut aug = vec![0.0f64; n * 2 * n];
-    for i in 0..n {
-        for j in 0..n {
-            aug[i * 2 * n + j] = a[i * n + j];
-        }
-        aug[i * 2 * n + n + i] = 1.0;
-    }
-    for col in 0..n {
-        let mut max_row = col;
-        let mut max_val = aug[col * 2 * n + col].abs();
-        for row in col + 1..n {
-            let v = aug[row * 2 * n + col].abs();
-            if v > max_val {
-                max_val = v;
-                max_row = row;
-            }
-        }
-        if max_val < 1e-30 {
-            continue;
-        }
-        if max_row != col {
-            for k in 0..2 * n {
-                aug.swap(col * 2 * n + k, max_row * 2 * n + k);
-            }
-        }
-        let pivot = aug[col * 2 * n + col];
-        for k in 0..2 * n {
-            aug[col * 2 * n + k] /= pivot;
-        }
-        for row in 0..n {
-            if row == col {
-                continue;
-            }
-            let factor = aug[row * 2 * n + col];
-            for k in 0..2 * n {
-                aug[row * 2 * n + k] -= factor * aug[col * 2 * n + k];
-            }
-        }
-    }
-    let mut inv = vec![0.0f64; n * n];
-    for i in 0..n {
-        for j in 0..n {
-            inv[i * n + j] = aug[i * 2 * n + n + j];
-        }
-    }
-    inv
+    fa_from_centered(&mat, d, t, n_factors, n_iter)
 }
 
 #[cfg(test)]
@@ -491,7 +423,6 @@ mod tests {
     use super::*;
 
     fn make_trains() -> Vec<Vec<i32>> {
-        // 5 neurons, 200 steps each, varied rates
         let mut trains = Vec::new();
         for n in 0..5 {
             let mut t = vec![0i32; 200];
@@ -510,10 +441,8 @@ mod tests {
         let refs: Vec<&[i32]> = trains.iter().map(|t| t.as_slice()).collect();
         let (proj, explained) = spike_train_pca(&refs, 3, 10);
         assert_eq!(explained.len(), 3);
-        // Explained variances should sum to <= 1
         let total: f64 = explained.iter().sum();
         assert!(total <= 1.0 + 1e-6, "Total explained {total} > 1");
-        // First component should explain the most
         assert!(explained[0] >= explained[1]);
         assert!(!proj.is_empty());
     }
@@ -530,7 +459,6 @@ mod tests {
         let train = vec![1, 0, 1, 0, 1, 0, 1, 0, 1, 0];
         let refs = vec![train.as_slice()];
         let (proj, expl) = spike_train_pca(&refs, 1, 2);
-        // Single neuron -> 1 component
         assert_eq!(expl.len(), 1);
         assert!(!proj.is_empty());
     }
@@ -572,7 +500,6 @@ mod tests {
         let (loadings, psi) = factor_analysis(&refs, 2, 10, 20);
         assert_eq!(loadings.len(), 5 * 2);
         assert_eq!(psi.len(), 5);
-        // Uniquenesses should be positive
         assert!(psi.iter().all(|&p| p > 0.0));
     }
 
@@ -594,7 +521,7 @@ mod tests {
 
     #[test]
     fn test_symmetric_eigen_known() {
-        // [[2, 1], [1, 2]] -> eigenvalues 3, 1
+        // [[2, 1], [1, 2]] -> eigenvalues 3, 1 (descending)
         let a = vec![2.0, 1.0, 1.0, 2.0];
         let (vals, _) = symmetric_eigen(&a, 2);
         assert!((vals[0] - 3.0).abs() < 1e-10);
@@ -602,11 +529,40 @@ mod tests {
     }
 
     #[test]
+    fn test_symmetric_eigen_sign_canonical() {
+        // The dominant entry of each eigenvector column must be positive.
+        let a = vec![2.0, 1.0, 1.0, 2.0];
+        let (_, vecs) = symmetric_eigen(&a, 2);
+        for c in 0..2 {
+            let mut pivot = 0usize;
+            let mut max_abs = 0.0f64;
+            for r in 0..2 {
+                if vecs[r * 2 + c].abs() > max_abs {
+                    max_abs = vecs[r * 2 + c].abs();
+                    pivot = r;
+                }
+            }
+            assert!(vecs[pivot * 2 + c] > 0.0, "column {c} not sign-canonical");
+        }
+    }
+
+    #[test]
+    fn test_spd_solve_matches_inverse() {
+        // SPD 2x2; solving A x = b equals A⁻¹ b.
+        let a = vec![4.0, 1.0, 1.0, 3.0];
+        let b = vec![1.0, 2.0];
+        let x = spd_solve(&a, 2, &b, 1);
+        let det = 4.0 * 3.0 - 1.0 * 1.0;
+        let ref0 = (3.0 * 1.0 - 1.0 * 2.0) / det;
+        let ref1 = (-1.0 * 1.0 + 4.0 * 2.0) / det;
+        assert!((x[0] - ref0).abs() < 1e-12 && (x[1] - ref1).abs() < 1e-12);
+    }
+
+    #[test]
     fn test_pca_explains_variance() {
         let trains = make_trains();
         let refs: Vec<&[i32]> = trains.iter().map(|t| t.as_slice()).collect();
         let (_, explained) = spike_train_pca(&refs, 5, 10);
-        // All components should explain the full variance
         let total: f64 = explained.iter().sum();
         assert!(
             (total - 1.0).abs() < 0.05,

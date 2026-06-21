@@ -78,6 +78,24 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
   sorting-quality section.
 - Fixed a latent type-inference error in the Rust Phi* test (`det.ln()` on an
   ambiguous numeric literal) that prevented the engine test target from compiling.
+- Dimensionality reduction (`analysis/spike_stats/dimensionality.py`) now uses a
+  deterministic, reproducible covariance eigendecomposition — eigenvalues in
+  descending order with sign-canonicalised eigenvectors — across PCA, demixed PCA
+  and factor analysis. The Rust backend's hand-rolled Jacobi eigensolver and
+  Gauss-Jordan inverse are replaced by `nalgebra`'s symmetric eigensolver and
+  Cholesky solves; factor analysis starts from a deterministic PCA initialisation
+  (replacing a random one, so it is seed-independent) and solves its symmetric
+  positive-definite systems by Cholesky. Each estimator gains a `backend=`
+  dispatch over five parity-verified backends — NumPy, Rust (`py_pca_components`
+  / `py_demixed_components` / `py_factor_loadings`, re-exported from the bridge),
+  Julia and Mojo (both previously non-functional stubs, now real), and a new Go
+  c-shared backend (cyclic Jacobi where no LAPACK is linked) — agreeing to ~1e-13.
+  Dense symmetric eigendecomposition is LAPACK's strength, so on the reference
+  workload (`benchmarks/bench_dimensionality.py`) the NumPy/LAPACK path is the
+  fastest and `backend="auto"` resolves to it; the compiled backends are kept for
+  cross-language parity and portability. Added a dedicated test module
+  (dimensionality.py at 100% statement coverage), the benchmark and the
+  `docs/api/analysis.md` dimensionality section.
 
 ### Studio platform
 - The FPGA synthesis panel can export a synthesis-scoped evidence bundle from

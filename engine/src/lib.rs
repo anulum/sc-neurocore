@@ -950,6 +950,9 @@ fn sc_neurocore_engine(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_function(wrap_pyfunction!(py_spike_train_pca, m)?)?;
     m.add_function(wrap_pyfunction!(py_demixed_pca, m)?)?;
     m.add_function(wrap_pyfunction!(py_factor_analysis, m)?)?;
+    m.add_function(wrap_pyfunction!(py_pca_components, m)?)?;
+    m.add_function(wrap_pyfunction!(py_demixed_components, m)?)?;
+    m.add_function(wrap_pyfunction!(py_factor_loadings, m)?)?;
     // gpfa
     m.add_function(wrap_pyfunction!(py_gpfa, m)?)?;
     m.add_function(wrap_pyfunction!(py_gpfa_em, m)?)?;
@@ -4882,6 +4885,56 @@ fn py_factor_analysis(
     let refs: Vec<&[i32]> = vecs.iter().map(|v| v.as_slice()).collect();
     let (loadings, psi) =
         analysis::dimensionality::factor_analysis(&refs, n_factors, bin_size, n_iter);
+    (
+        loadings.into_pyarray(py).into(),
+        psi.into_pyarray(py).into(),
+    )
+}
+
+// Matrix-input wrappers: the caller bins and mean-centres once, so every backend
+// (NumPy / Rust / Julia / Go / Mojo) shares an identical input matrix and the
+// outputs agree to floating-point round-off.
+
+#[pyfunction]
+#[pyo3(signature = (mat, n_components=3))]
+fn py_pca_components(
+    py: Python<'_>,
+    mat: PyReadonlyArray2<'_, f64>,
+    n_components: usize,
+) -> (Py<PyArray1<f64>>, Py<PyArray1<f64>>) {
+    let shape = mat.shape();
+    let data: Vec<f64> = mat.as_slice().unwrap().to_vec();
+    let (proj, expl) =
+        analysis::dimensionality::pca_from_centered(&data, shape[0], shape[1], n_components);
+    (proj.into_pyarray(py).into(), expl.into_pyarray(py).into())
+}
+
+#[pyfunction]
+#[pyo3(signature = (mean_mat, n_components=3))]
+fn py_demixed_components(
+    py: Python<'_>,
+    mean_mat: PyReadonlyArray2<'_, f64>,
+    n_components: usize,
+) -> (Py<PyArray1<f64>>, Py<PyArray1<f64>>) {
+    let shape = mean_mat.shape();
+    let data: Vec<f64> = mean_mat.as_slice().unwrap().to_vec();
+    let (proj, expl) =
+        analysis::dimensionality::demixed_from_centered(&data, shape[0], shape[1], n_components);
+    (proj.into_pyarray(py).into(), expl.into_pyarray(py).into())
+}
+
+#[pyfunction]
+#[pyo3(signature = (mat, n_factors=3, n_iter=50))]
+fn py_factor_loadings(
+    py: Python<'_>,
+    mat: PyReadonlyArray2<'_, f64>,
+    n_factors: usize,
+    n_iter: usize,
+) -> (Py<PyArray1<f64>>, Py<PyArray1<f64>>) {
+    let shape = mat.shape();
+    let data: Vec<f64> = mat.as_slice().unwrap().to_vec();
+    let (loadings, psi) =
+        analysis::dimensionality::fa_from_centered(&data, shape[0], shape[1], n_factors, n_iter);
     (
         loadings.into_pyarray(py).into(),
         psi.into_pyarray(py).into(),

@@ -487,6 +487,18 @@ except ImportError:
 
 try:
     from sc_neurocore_engine.sc_neurocore_engine import (
+        py_pca_components,
+        py_demixed_components,
+        py_factor_loadings,
+    )
+
+    __all__ += ["py_pca_components", "py_demixed_components", "py_factor_loadings"]
+    _dimensionality_rust_available = True
+except ImportError:
+    _dimensionality_rust_available = False
+
+try:
+    from sc_neurocore_engine.sc_neurocore_engine import (
         py_ollivier_ricci_curvature,
     )
 

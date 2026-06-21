@@ -207,9 +207,29 @@ Low-dimensional projections of population activity.
 
 | Function | Description |
 |----------|-------------|
-| `spike_train_pca(trains, n_components, bin_size)` | PCA on binned spike count matrix |
-| `demixed_pca(trains_by_condition, n_components, ...)` | Demixed PCA separating condition variance (Kobak et al. 2016) |
-| `factor_analysis(trains, n_factors, bin_size, n_iter)` | Factor analysis via EM (Rubin & Thayer 1982) |
+| `spike_train_pca(trains, n_components, bin_size, backend)` | PCA on binned spike count matrix |
+| `demixed_pca(trains_by_condition, n_components, ..., backend)` | Demixed PCA separating condition variance (Kobak et al. 2016) |
+| `factor_analysis(trains, n_factors, bin_size, n_iter, backend)` | Factor analysis via EM (Rubin & Thayer 1982) |
+
+**Deterministic eigendecomposition.** The covariance eigendecomposition returns
+eigenvalues in descending order with **sign-canonicalised** eigenvectors (each
+component's largest-magnitude entry is positive), so the projections are
+reproducible. Factor analysis starts from a deterministic PCA initialisation
+(replacing a random one — seed-independent, like the GPFA init) and solves its
+symmetric positive-definite `M` and `E[zzᵀ]` systems by Cholesky rather than an
+explicit inverse (the Rust backend previously used a hand-rolled Jacobi sweep and
+a Gauss-Jordan inverse).
+
+**Polyglot chain.** Each estimator accepts `backend=` over five parity-verified
+backends (NumPy / Rust / Julia / Go / Mojo), agreeing to ~1e-13: LAPACK in NumPy
+and Julia, the `nalgebra` symmetric solver in Rust, and an accurate cyclic-Jacobi
+solver where no LAPACK is linked (Go / Mojo). Unlike the smaller structured
+kernels, dense symmetric eigendecomposition is LAPACK's strength, so on the
+reference workload (`benchmarks/bench_dimensionality.py`, i5-11600K, shielded
+cores) the NumPy/LAPACK reference is the fastest path (Rust ~0.5×, Mojo ~0.12×,
+Go ~0.07×, Julia interop-bound). `backend="auto"` therefore resolves to the
+NumPy reference; the compiled backends are kept for cross-language parity and for
+deployments that run without an optimised BLAS.
 
 ### Decoding (`spike_stats.decoding`)
 
