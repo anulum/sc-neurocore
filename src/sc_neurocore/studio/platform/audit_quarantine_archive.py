@@ -17,13 +17,18 @@ from dataclasses import dataclass
 from datetime import datetime, timezone
 from typing import TypeAlias, cast
 
-from sc_neurocore.studio.platform.jobs import StudioJobContext
+from sc_neurocore.studio.platform.jobs import StudioJobContext, StudioJobRecord
 from sc_neurocore.studio.platform.policy import AUDIT_QUARANTINE_EXPORT_SCHEMA_VERSION
 
 STUDIO_AUDIT_QUARANTINE_ARCHIVE_SCHEMA_VERSION = "studio.audit-quarantine-archive.v1"
 STUDIO_AUDIT_QUARANTINE_ARCHIVE_VALIDATION_SCHEMA_VERSION = (
     "studio.audit-quarantine-archive.validation.v1"
 )
+STUDIO_AUDIT_QUARANTINE_ARCHIVE_RETENTION_SCHEMA_VERSION = (
+    "studio.audit-quarantine-archive.retention.v1"
+)
+STUDIO_AUDIT_QUARANTINE_ARCHIVE_OWNER = "studio-audit-quarantine"
+STUDIO_AUDIT_QUARANTINE_ARCHIVE_KIND = "evidence"
 UTC = timezone.utc
 
 JsonScalar: TypeAlias = str | int | float | bool | None
@@ -99,6 +104,95 @@ class StudioAuditQuarantineArchiveValidation:
             "summary": self.summary,
             "valid": self.valid,
             "warnings": list(self.warnings),
+        }
+
+
+@dataclass(frozen=True, slots=True)
+class StudioAuditQuarantineArchiveRetentionEntry:
+    """Path-free retention disposition for one quarantine archive job.
+
+    Parameters
+    ----------
+    archive_id:
+        Stable archive identifier returned by the archive job.
+    job_id:
+        Studio job identifier that owns the archive artifacts.
+    created_at_utc:
+        Job creation timestamp from the job manager record.
+    finished_at_utc:
+        Terminal job timestamp when available.
+    event_count:
+        Number of quarantined audit rows captured in the archive.
+    retained_event_count:
+        Number of retained audit rows visible to the source quarantine export.
+    artifact_paths:
+        Path-free artifact identifiers declared by the archive job.
+    disposition:
+        Operator retention decision for this archive.
+    summary:
+        Archive summary copied from the validated job result.
+    """
+
+    archive_id: str
+    job_id: str
+    created_at_utc: str
+    finished_at_utc: str | None
+    event_count: int
+    retained_event_count: int
+    artifact_paths: tuple[str, ...]
+    disposition: str
+    summary: dict[str, JsonValue]
+
+    def to_public_dict(self) -> dict[str, JsonValue]:
+        """Return this retention entry as a path-free JSON object."""
+
+        return {
+            "archive_id": self.archive_id,
+            "artifact_paths": list(self.artifact_paths),
+            "created_at_utc": self.created_at_utc,
+            "disposition": self.disposition,
+            "event_count": self.event_count,
+            "finished_at_utc": self.finished_at_utc,
+            "job_id": self.job_id,
+            "retained_event_count": self.retained_event_count,
+            "summary": self.summary,
+        }
+
+
+@dataclass(frozen=True, slots=True)
+class StudioAuditQuarantineArchiveRetentionPlan:
+    """Path-free retention inventory for quarantine archive jobs.
+
+    Parameters
+    ----------
+    entries:
+        Archive job entries sorted newest first.
+    retain_latest:
+        Number of newest archives marked for retention.
+    skipped_record_count:
+        Number of archive-owner job records that were incomplete or malformed.
+    """
+
+    entries: tuple[StudioAuditQuarantineArchiveRetentionEntry, ...]
+    retain_latest: int
+    skipped_record_count: int
+    schema_version: str = STUDIO_AUDIT_QUARANTINE_ARCHIVE_RETENTION_SCHEMA_VERSION
+
+    def to_public_dict(self) -> dict[str, JsonValue]:
+        """Return the path-free retention plan for operator APIs."""
+
+        prune_candidate_count = sum(
+            entry.disposition == "prune_candidate" for entry in self.entries
+        )
+        retain_count = sum(entry.disposition == "retain" for entry in self.entries)
+        return {
+            "archive_count": len(self.entries),
+            "entries": [entry.to_public_dict() for entry in self.entries],
+            "prune_candidate_count": prune_candidate_count,
+            "retain_count": retain_count,
+            "retain_latest": self.retain_latest,
+            "schema_version": self.schema_version,
+            "skipped_record_count": self.skipped_record_count,
         }
 
 
@@ -225,6 +319,73 @@ def validate_studio_audit_quarantine_archive(
     )
 
 
+def build_studio_audit_quarantine_archive_retention_plan(
+    records: Sequence[StudioJobRecord],
+    *,
+    retain_latest: int = 10,
+) -> StudioAuditQuarantineArchiveRetentionPlan:
+    """Build a non-destructive retention plan for quarantine archive jobs.
+
+    Parameters
+    ----------
+    records:
+        Studio job records from the local job manager.
+    retain_latest:
+        Number of newest valid quarantine archives that should be retained.
+
+    Returns
+    -------
+    StudioAuditQuarantineArchiveRetentionPlan
+        Path-free inventory marking older valid archives as prune candidates.
+
+    Raises
+    ------
+    ValueError
+        If ``retain_latest`` is not positive.
+    """
+
+    if retain_latest <= 0:
+        raise ValueError("archive_retention_retain_latest_invalid")
+    valid_entries: list[StudioAuditQuarantineArchiveRetentionEntry] = []
+    skipped_record_count = 0
+    for record in records:
+        if not _is_quarantine_archive_record(record):
+            continue
+        entry = _retention_entry_from_record(record)
+        if entry is None:
+            skipped_record_count += 1
+            continue
+        valid_entries.append(entry)
+    sorted_entries = sorted(
+        valid_entries,
+        key=lambda entry: (
+            entry.finished_at_utc or "",
+            entry.created_at_utc,
+            entry.job_id,
+        ),
+        reverse=True,
+    )
+    planned_entries = tuple(
+        StudioAuditQuarantineArchiveRetentionEntry(
+            archive_id=entry.archive_id,
+            job_id=entry.job_id,
+            created_at_utc=entry.created_at_utc,
+            finished_at_utc=entry.finished_at_utc,
+            event_count=entry.event_count,
+            retained_event_count=entry.retained_event_count,
+            artifact_paths=entry.artifact_paths,
+            disposition="retain" if index < retain_latest else "prune_candidate",
+            summary=entry.summary,
+        )
+        for index, entry in enumerate(sorted_entries)
+    )
+    return StudioAuditQuarantineArchiveRetentionPlan(
+        entries=planned_entries,
+        retain_latest=retain_latest,
+        skipped_record_count=skipped_record_count,
+    )
+
+
 def _invalid_archive_result(
     archive_id: str | None,
     error_code: str,
@@ -235,6 +396,59 @@ def _invalid_archive_result(
         summary=None,
         errors=(error_code,),
     )
+
+
+def _is_quarantine_archive_record(record: StudioJobRecord) -> bool:
+    return (
+        record.kind == STUDIO_AUDIT_QUARANTINE_ARCHIVE_KIND
+        and record.owner == STUDIO_AUDIT_QUARANTINE_ARCHIVE_OWNER
+    )
+
+
+def _retention_entry_from_record(
+    record: StudioJobRecord,
+) -> StudioAuditQuarantineArchiveRetentionEntry | None:
+    if record.status != "completed" or record.result is None:
+        return None
+    result = _json_object(record.result, "archive_job_result_invalid")
+    if result.get("schema_version") != STUDIO_AUDIT_QUARANTINE_ARCHIVE_SCHEMA_VERSION:
+        return None
+    archive_id = result.get("archive_id")
+    if not isinstance(archive_id, str) or not archive_id:
+        return None
+    summary_value = result.get("summary")
+    if not isinstance(summary_value, Mapping):
+        return None
+    summary = _json_object(summary_value, "archive_summary_invalid")
+    event_count = summary.get("event_count")
+    retained_event_count = summary.get("retained_event_count")
+    if not isinstance(event_count, int) or not isinstance(retained_event_count, int):
+        return None
+    artifact_paths = _artifact_paths(result.get("artifact_paths"))
+    if artifact_paths is None:
+        return None
+    return StudioAuditQuarantineArchiveRetentionEntry(
+        archive_id=archive_id,
+        job_id=record.job_id,
+        created_at_utc=record.created_at_utc,
+        finished_at_utc=record.finished_at_utc,
+        event_count=event_count,
+        retained_event_count=retained_event_count,
+        artifact_paths=artifact_paths,
+        disposition="retain",
+        summary=summary,
+    )
+
+
+def _artifact_paths(value: JsonValue | None) -> tuple[str, ...] | None:
+    if not isinstance(value, list):
+        return None
+    paths: list[str] = []
+    for item in value:
+        if not isinstance(item, str) or not item:
+            return None
+        paths.append(item)
+    return tuple(paths)
 
 
 def _manifest_validation_errors(
@@ -397,10 +611,16 @@ def _utc_now() -> datetime:
 __all__ = [
     "STUDIO_AUDIT_QUARANTINE_ARCHIVE_SCHEMA_VERSION",
     "STUDIO_AUDIT_QUARANTINE_ARCHIVE_VALIDATION_SCHEMA_VERSION",
+    "STUDIO_AUDIT_QUARANTINE_ARCHIVE_RETENTION_SCHEMA_VERSION",
+    "STUDIO_AUDIT_QUARANTINE_ARCHIVE_OWNER",
+    "STUDIO_AUDIT_QUARANTINE_ARCHIVE_KIND",
     "JsonScalar",
     "JsonValue",
     "StudioAuditQuarantineArchiveResult",
     "StudioAuditQuarantineArchiveValidation",
+    "StudioAuditQuarantineArchiveRetentionEntry",
+    "StudioAuditQuarantineArchiveRetentionPlan",
+    "build_studio_audit_quarantine_archive_retention_plan",
     "validate_studio_audit_quarantine_archive",
     "write_studio_audit_quarantine_archive",
 ]

@@ -851,6 +851,12 @@ def build_default_studio_route_policy_registry() -> RoutePolicyRegistry:
                 "studio.audit.quarantine.archive.validate",
             ),
             (
+                "GET",
+                "/api/studio/audit/quarantine/archive/retention",
+                RouteVisibility.ADMIN,
+                "studio.audit.quarantine.archive.retention",
+            ),
+            (
                 "POST",
                 "/api/studio/evidence/bundle",
                 RouteVisibility.ADMIN,

@@ -315,6 +315,11 @@ archive payload and optional companion manifest to
 `POST /api/studio/audit/quarantine/archive/validate`; Studio recomputes the
 reason counts and verifies the manifest linkage without reading arbitrary
 server-side paths.
+Administrators can review archive retention through
+`GET /api/studio/audit/quarantine/archive/retention?retain_latest=10`; the
+path-free response lists valid quarantine archive jobs newest first, marks the
+newest archives as `retain`, and marks older archives as `prune_candidate`
+without deleting job artifacts.
 When `SC_NEUROCORE_STUDIO_AUDIT_ROTATION_BYTES` is set, the retained-file count
 must be a positive integer so rotation always keeps at least one archived JSONL
 segment for incident review and retained-chain verification.

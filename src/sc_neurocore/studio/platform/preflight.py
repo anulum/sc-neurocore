@@ -62,6 +62,12 @@ _REQUIRED_ROUTE_POLICIES: tuple[tuple[str, str, RouteVisibility, str], ...] = (
     ),
     (
         "GET",
+        "/api/studio/audit/quarantine/archive/retention",
+        RouteVisibility.ADMIN,
+        "studio.audit.quarantine.archive.retention",
+    ),
+    (
+        "GET",
         "/api/studio/identity/service-accounts",
         RouteVisibility.ADMIN,
         "studio.identity.service_accounts.list",

@@ -23,13 +23,17 @@ from starlette.testclient import TestClient
 
 from sc_neurocore.studio.app import create_app
 from sc_neurocore.studio.platform import (
+    STUDIO_AUDIT_QUARANTINE_ARCHIVE_RETENTION_SCHEMA_VERSION,
     STUDIO_AUDIT_QUARANTINE_ARCHIVE_SCHEMA_VERSION,
     STUDIO_AUDIT_QUARANTINE_ARCHIVE_VALIDATION_SCHEMA_VERSION,
     AuditEvent,
     JsonlAuditSink,
     StudioJobContext,
     StudioJobManager,
+    StudioJobRecord,
+    StudioJobStatus,
     StudioRuntimeSettings,
+    build_studio_audit_quarantine_archive_retention_plan,
     validate_studio_audit_quarantine_archive,
     write_studio_audit_quarantine_archive,
 )
@@ -119,6 +123,47 @@ def _json_artifact(
     return cast(dict[str, object], decoded)
 
 
+def _archive_record(
+    *,
+    job_id: str,
+    result: dict[str, object] | None,
+    created_at_utc: str,
+    finished_at_utc: str | None,
+    owner: str = "studio-audit-quarantine",
+    status: StudioJobStatus = "completed",
+) -> StudioJobRecord:
+    """Return a synthetic archive job record for retention-plan tests."""
+
+    return StudioJobRecord(
+        job_id=job_id,
+        kind="evidence",
+        owner=owner,
+        request_id=None,
+        status=status,
+        execution_model="thread",
+        created_at_utc=created_at_utc,
+        finished_at_utc=finished_at_utc,
+        result=result,
+    )
+
+
+def _archive_result_for_job(tmp_path: Path, job_id: str) -> dict[str, object]:
+    """Return a public archive result for a synthetic job ID."""
+
+    context = StudioJobContext(
+        job_id=job_id,
+        work_dir=tmp_path / job_id,
+        cancel_event=threading.Event(),
+        max_artifact_bytes=65536,
+    )
+    result = write_studio_audit_quarantine_archive(
+        context,
+        quarantine_export=_quarantine_export_payload(),
+        clock=lambda: datetime(2026, 6, 21, tzinfo=UTC),
+    ).to_public_dict()
+    return cast(dict[str, object], result)
+
+
 def test_write_studio_audit_quarantine_archive_writes_manifest_and_payload(
     tmp_path: Path,
 ) -> None:
@@ -176,6 +221,119 @@ def test_validate_studio_audit_quarantine_archive_accepts_writer_output(
     assert validation_summary["event_count"] == 1
     assert validation_summary["reason_counts"] == {"legacy_or_unverifiable_rows": 1}
     assert str(tmp_path) not in json.dumps(validation)
+
+
+def test_build_studio_audit_quarantine_archive_retention_plan_marks_old_archives(
+    tmp_path: Path,
+) -> None:
+    """Retention planning marks newest valid archive jobs for retention."""
+
+    old_result = _archive_result_for_job(tmp_path, "sj_old")
+    new_result = _archive_result_for_job(tmp_path, "sj_new")
+    records = (
+        _archive_record(
+            job_id="sj_old",
+            result=old_result,
+            created_at_utc="2026-06-20T00:00:00Z",
+            finished_at_utc="2026-06-20T00:00:01Z",
+        ),
+        _archive_record(
+            job_id="sj_other",
+            result=new_result,
+            created_at_utc="2026-06-21T00:00:00Z",
+            finished_at_utc="2026-06-21T00:00:01Z",
+            owner="studio-evidence",
+        ),
+        _archive_record(
+            job_id="sj_failed",
+            result=None,
+            created_at_utc="2026-06-21T01:00:00Z",
+            finished_at_utc="2026-06-21T01:00:01Z",
+            status="failed",
+        ),
+        _archive_record(
+            job_id="sj_new",
+            result=new_result,
+            created_at_utc="2026-06-22T00:00:00Z",
+            finished_at_utc="2026-06-22T00:00:01Z",
+        ),
+    )
+
+    plan = build_studio_audit_quarantine_archive_retention_plan(
+        records,
+        retain_latest=1,
+    ).to_public_dict()
+
+    assert plan["schema_version"] == STUDIO_AUDIT_QUARANTINE_ARCHIVE_RETENTION_SCHEMA_VERSION
+    assert plan["archive_count"] == 2
+    assert plan["retain_count"] == 1
+    assert plan["prune_candidate_count"] == 1
+    assert plan["skipped_record_count"] == 1
+    entries = cast(list[dict[str, object]], plan["entries"])
+    assert entries[0]["job_id"] == "sj_new"
+    assert entries[0]["disposition"] == "retain"
+    assert entries[1]["job_id"] == "sj_old"
+    assert entries[1]["disposition"] == "prune_candidate"
+    assert str(tmp_path) not in json.dumps(plan)
+
+
+def test_build_studio_audit_quarantine_archive_retention_plan_rejects_zero_retain(
+    tmp_path: Path,
+) -> None:
+    """Retention planning fails closed on non-positive retain counts."""
+
+    with pytest.raises(ValueError, match="archive_retention_retain_latest_invalid"):
+        build_studio_audit_quarantine_archive_retention_plan(
+            (
+                _archive_record(
+                    job_id="sj_archive",
+                    result=_archive_result_for_job(tmp_path, "sj_archive"),
+                    created_at_utc="2026-06-20T00:00:00Z",
+                    finished_at_utc="2026-06-20T00:00:01Z",
+                ),
+            ),
+            retain_latest=0,
+        )
+
+
+@pytest.mark.parametrize(
+    "mutation",
+    [
+        lambda result: result.__setitem__("schema_version", "unsupported"),
+        lambda result: result.__setitem__("archive_id", ""),
+        lambda result: result.__setitem__("summary", []),
+        lambda result: cast(dict[str, object], result["summary"]).__setitem__(
+            "event_count",
+            "1",
+        ),
+        lambda result: result.pop("artifact_paths", None),
+        lambda result: result.__setitem__("artifact_paths", [""]),
+    ],
+)
+def test_build_studio_audit_quarantine_archive_retention_plan_skips_malformed_jobs(
+    tmp_path: Path,
+    mutation: Callable[[dict[str, object]], object],
+) -> None:
+    """Retention planning skips malformed archive job results."""
+
+    result = _archive_result_for_job(tmp_path, "sj_malformed")
+    mutation(result)
+
+    plan = build_studio_audit_quarantine_archive_retention_plan(
+        (
+            _archive_record(
+                job_id="sj_malformed",
+                result=result,
+                created_at_utc="2026-06-20T00:00:00Z",
+                finished_at_utc="2026-06-20T00:00:01Z",
+            ),
+        ),
+        retain_latest=1,
+    ).to_public_dict()
+
+    assert plan["archive_count"] == 0
+    assert plan["skipped_record_count"] == 1
+    assert plan["entries"] == []
 
 
 def test_validate_studio_audit_quarantine_archive_reports_manifest_mismatch(
@@ -436,6 +594,58 @@ def test_studio_audit_quarantine_archive_route_writes_job_artifacts(
     assert str(tmp_path) not in json.dumps(body)
 
 
+def test_studio_audit_quarantine_archive_retention_route_lists_archive_jobs(
+    tmp_path: Path,
+) -> None:
+    """Admin retention route returns path-free archive disposition."""
+
+    audit_path = tmp_path / "audit" / "studio.jsonl"
+    audit_path.parent.mkdir()
+    audit_path.write_text('{"schema_version":"studio.audit.v1"}\n', encoding="utf-8")
+    JsonlAuditSink(audit_path).record(
+        AuditEvent(
+            action="studio.test",
+            route="/api/test",
+            principal_id="operator",
+            decision="allow",
+            reason="authorized",
+            request_id="req-test",
+        )
+    )
+    app = create_app(
+        StudioRuntimeSettings(
+            audit_log_path=str(audit_path),
+            enforce_route_policies=True,
+            job_root_path=str(tmp_path / "jobs"),
+        )
+    )
+    client = TestClient(app, base_url="http://127.0.0.1")
+    headers = {"x-studio-principal": "admin-1", "x-studio-roles": "studio.admin"}
+    for _index in range(2):
+        response = client.post(
+            "/api/studio/audit/quarantine/archive",
+            json={"limit": 10},
+            headers=headers,
+        )
+        assert response.status_code == 200
+
+    retention_response = client.get(
+        "/api/studio/audit/quarantine/archive/retention?retain_latest=1",
+        headers=headers,
+    )
+    body = retention_response.json()
+
+    assert retention_response.status_code == 200
+    assert body["schema_version"] == STUDIO_AUDIT_QUARANTINE_ARCHIVE_RETENTION_SCHEMA_VERSION
+    assert body["archive_count"] == 2
+    assert body["retain_count"] == 1
+    assert body["prune_candidate_count"] == 1
+    assert body["skipped_record_count"] == 0
+    entries = cast(list[dict[str, object]], body["entries"])
+    assert {entry["disposition"] for entry in entries} == {"retain", "prune_candidate"}
+    assert str(tmp_path) not in json.dumps(body)
+
+
 def test_studio_audit_quarantine_archive_validate_route_accepts_archive_pair(
     tmp_path: Path,
 ) -> None:
@@ -485,8 +695,14 @@ def test_studio_audit_quarantine_archive_routes_require_admin(
         json={"archive": archive_payload, "manifest": manifest_payload},
         headers={"x-studio-principal": "operator-1", "x-studio-roles": "studio.viewer"},
     )
+    retention_response = client.get(
+        "/api/studio/audit/quarantine/archive/retention",
+        headers={"x-studio-principal": "operator-1", "x-studio-roles": "studio.viewer"},
+    )
 
     assert archive_response.status_code == 403
     assert archive_response.json()["detail"] == "missing_admin_role"
     assert validate_response.status_code == 403
     assert validate_response.json()["detail"] == "missing_admin_role"
+    assert retention_response.status_code == 403
+    assert retention_response.json()["detail"] == "missing_admin_role"

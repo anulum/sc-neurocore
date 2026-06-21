@@ -20,7 +20,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, cast
 
-from fastapi import FastAPI, HTTPException, Request, WebSocket, WebSocketDisconnect
+from fastapi import FastAPI, HTTPException, Query, Request, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
 from starlette.responses import JSONResponse
 from starlette.responses import Response
@@ -123,6 +123,7 @@ from sc_neurocore.studio.platform import (
     build_default_studio_capability_registry,
     build_default_studio_route_policy_registry,
     build_default_studio_runtime_settings,
+    build_studio_audit_quarantine_archive_retention_plan,
     build_studio_operator_status,
     list_studio_browser_user_public_records,
     list_studio_identity_public_records,
@@ -1285,6 +1286,18 @@ def create_app(runtime_settings: StudioRuntimeSettings | None = None) -> FastAPI
         result = validate_studio_audit_quarantine_archive(
             validate_request.archive,
             manifest_payload=validate_request.manifest,
+        ).to_public_dict()
+        return cast(dict[str, object], result)
+
+    @app.get("/api/studio/audit/quarantine/archive/retention")
+    def api_studio_audit_quarantine_archive_retention(
+        retain_latest: int = Query(default=10, ge=1, le=1000),
+    ) -> dict[str, object]:
+        """Return a path-free quarantine archive retention plan."""
+
+        result = build_studio_audit_quarantine_archive_retention_plan(
+            studio_job_manager.list_records(),
+            retain_latest=retain_latest,
         ).to_public_dict()
         return cast(dict[str, object], result)
 
