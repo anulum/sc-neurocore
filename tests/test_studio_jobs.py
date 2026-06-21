@@ -626,7 +626,10 @@ def test_studio_process_worker_environment_prepends_source_path(
     pythonpath = environment["PYTHONPATH"].split(os.pathsep)
 
     assert pythonpath[0].endswith("/src")
-    assert pythonpath[1].endswith("/SC-NEUROCORE")
+    # Repo root is the parent of the src path — assert structurally rather than by a
+    # hard-coded directory name (the checkout dir differs by environment, e.g.
+    # "sc-neurocore" in CI vs "SC-NEUROCORE" locally).
+    assert pythonpath[1] == str(Path(pythonpath[0]).parent)
     assert "existing" in pythonpath
 
 
