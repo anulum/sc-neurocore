@@ -10,6 +10,9 @@
 
 use super::basic;
 
+/// EM output: `(trajectories, C, d, R_diag, log_likelihoods)`.
+pub type GpfaEmOutput = (Vec<f64>, Vec<f64>, Vec<f64>, Vec<f64>, Vec<f64>);
+
 // ── helpers ─────────────────────────────────────────────────────────
 
 /// Squared-exponential GP kernel for `n` time points.
@@ -127,6 +130,46 @@ fn mat_solve(a: &[f64], b: &[f64], n: usize, m: usize) -> Vec<f64> {
         }
     }
     x
+}
+
+/// Sign and natural log of the absolute determinant of an `n x n` matrix, via LU
+/// with partial pivoting. Matches `numpy.linalg.slogdet`.
+fn mat_slogdet(a: &[f64], n: usize) -> (f64, f64) {
+    let mut m = a.to_vec();
+    let mut sign = 1.0f64;
+    let mut log_abs = 0.0f64;
+    for col in 0..n {
+        let mut max_row = col;
+        let mut max_val = m[col * n + col].abs();
+        for row in col + 1..n {
+            let v = m[row * n + col].abs();
+            if v > max_val {
+                max_val = v;
+                max_row = row;
+            }
+        }
+        if max_val < 1e-300 {
+            return (0.0, f64::NEG_INFINITY);
+        }
+        if max_row != col {
+            for k in 0..n {
+                m.swap(col * n + k, max_row * n + k);
+            }
+            sign = -sign;
+        }
+        let pivot = m[col * n + col];
+        if pivot < 0.0 {
+            sign = -sign;
+        }
+        log_abs += pivot.abs().ln();
+        for row in col + 1..n {
+            let factor = m[row * n + col] / pivot;
+            for k in col..n {
+                m[row * n + k] -= factor * m[col * n + k];
+            }
+        }
+    }
+    (sign, log_abs)
 }
 
 /// E-step: compute posterior p(x|y).
@@ -321,6 +364,138 @@ fn gpfa_m_step(
     (c_new, d_new, r_new)
 }
 
+/// Exact marginal Gaussian log-likelihood for the GPFA observation model.
+///
+/// Matches the Python reference: builds the dense `(n_obs x n_obs)` marginal
+/// covariance `A K A^T + (I_T ⊗ R) + 1e-8 I` and returns
+/// `-0.5 (yᵀ Σ⁻¹ y + log|Σ| + n_obs log 2π)`.
+fn gpfa_log_likelihood(
+    y: &[f64],
+    c: &[f64],
+    d: &[f64],
+    r_diag: &[f64],
+    k_all: &[Vec<f64>],
+    n_neurons: usize,
+    n_bins: usize,
+    n_latents: usize,
+) -> f64 {
+    let n_obs = n_neurons * n_bins;
+    let n_state = n_latents * n_bins;
+
+    // A: (n_obs x n_state) with A[t*n_neurons + i, j*n_bins + t] = C[i, j].
+    let mut a = vec![0.0f64; n_obs * n_state];
+    for t in 0..n_bins {
+        for j in 0..n_latents {
+            let col = j * n_bins + t;
+            for i in 0..n_neurons {
+                a[(t * n_neurons + i) * n_state + col] = c[i * n_latents + j];
+            }
+        }
+    }
+
+    // K_big: block-diagonal (n_state x n_state).
+    let mut k_big = vec![0.0f64; n_state * n_state];
+    for (j, kernel) in k_all.iter().enumerate() {
+        for ii in 0..n_bins {
+            for jj in 0..n_bins {
+                k_big[(j * n_bins + ii) * n_state + (j * n_bins + jj)] = kernel[ii * n_bins + jj];
+            }
+        }
+    }
+
+    // AK = A @ K_big.
+    let mut ak = vec![0.0f64; n_obs * n_state];
+    for i in 0..n_obs {
+        for j in 0..n_state {
+            let mut s = 0.0;
+            for k in 0..n_state {
+                s += a[i * n_state + k] * k_big[k * n_state + j];
+            }
+            ak[i * n_state + j] = s;
+        }
+    }
+
+    // cov = AK @ Aᵀ + (I_T ⊗ R) + 1e-8 I.
+    let mut cov = vec![0.0f64; n_obs * n_obs];
+    for i in 0..n_obs {
+        for j in 0..n_obs {
+            let mut s = 0.0;
+            for k in 0..n_state {
+                s += ak[i * n_state + k] * a[j * n_state + k];
+            }
+            cov[i * n_obs + j] = s;
+        }
+    }
+    for t in 0..n_bins {
+        for i in 0..n_neurons {
+            let idx = t * n_neurons + i;
+            cov[idx * n_obs + idx] += r_diag[i];
+        }
+    }
+    for i in 0..n_obs {
+        cov[i * n_obs + i] += 1e-8;
+    }
+
+    // y_centered = (Y - d)ᵀ flattened time-major.
+    let mut yc = vec![0.0f64; n_obs];
+    for t in 0..n_bins {
+        for i in 0..n_neurons {
+            yc[t * n_neurons + i] = y[i * n_bins + t] - d[i];
+        }
+    }
+
+    let sol = mat_solve(&cov, &yc, n_obs, 1);
+    let quad: f64 = (0..n_obs).map(|i| yc[i] * sol[i]).sum();
+    let (_sign, logdet) = mat_slogdet(&cov, n_obs);
+    -0.5 * (quad + logdet + n_obs as f64 * (2.0 * std::f64::consts::PI).ln())
+}
+
+/// Run the GPFA EM loop from a fixed initialisation (the dispatchable kernel).
+///
+/// Returns `(trajectories, C, d, R_diag, log_likelihoods)`. The GP timescales
+/// `tau` are held fixed, so the kernels are constant across iterations.
+#[allow(clippy::too_many_arguments)]
+pub fn gpfa_em_from_init(
+    y: &[f64],
+    c0: &[f64],
+    d0: &[f64],
+    r0_diag: &[f64],
+    tau: &[f64],
+    n_neurons: usize,
+    n_bins: usize,
+    n_latents: usize,
+    max_iter: usize,
+    tol: f64,
+) -> GpfaEmOutput {
+    let k_all: Vec<Vec<f64>> = (0..n_latents)
+        .map(|j| gp_kernel(n_bins, tau[j], 1.0))
+        .collect();
+    let mut c = c0.to_vec();
+    let mut d = d0.to_vec();
+    let mut r = r0_diag.to_vec();
+    let mut log_liks: Vec<f64> = Vec::new();
+    let mut x_post = vec![0.0f64; n_latents * n_bins];
+
+    for _ in 0..max_iter {
+        let (xp, xx_post) = gpfa_e_step(y, &c, &d, &r, &k_all, n_neurons, n_bins, n_latents);
+        x_post = xp;
+        let (c_new, d_new, r_new) = gpfa_m_step(y, &x_post, &xx_post, n_neurons, n_bins, n_latents);
+        c = c_new;
+        d = d_new;
+        r = r_new;
+        let ll = gpfa_log_likelihood(y, &c, &d, &r, &k_all, n_neurons, n_bins, n_latents);
+        log_liks.push(ll);
+        if log_liks.len() > 1 {
+            let prev = log_liks[log_liks.len() - 2];
+            if (ll - prev).abs() < tol {
+                break;
+            }
+        }
+    }
+
+    (x_post, c, d, r, log_liks)
+}
+
 // ── public API ──────────────────────────────────────────────────────
 
 /// GPFA result.
@@ -421,42 +596,9 @@ pub fn gpfa(
     }
     let tau = vec![bin_ms * 2.0; nl];
 
-    let mut log_liks = Vec::new();
-    let mut x_post = vec![0.0f64; nl * n_bins];
-
-    for _ in 0..max_iter {
-        let k_all: Vec<Vec<f64>> = (0..nl).map(|j| gp_kernel(n_bins, tau[j], 1.0)).collect();
-
-        let (xp, xx_post) = gpfa_e_step(&y, &c, &d_vec, &r_diag, &k_all, n_neurons, n_bins, nl);
-        x_post = xp;
-
-        let (c_new, d_new, r_new) = gpfa_m_step(&y, &x_post, &xx_post, n_neurons, n_bins, nl);
-        c = c_new;
-        d_vec = d_new;
-        r_diag = r_new;
-
-        // Approximate log-likelihood
-        let mut ll = 0.0f64;
-        for i in 0..n_neurons {
-            for t in 0..n_bins {
-                let mut pred = d_vec[i];
-                for j in 0..nl {
-                    pred += c[i * nl + j] * x_post[j * n_bins + t];
-                }
-                let resid = y[i * n_bins + t] - pred;
-                ll -= 0.5 * resid * resid / (r_diag[i] + 1e-10);
-            }
-        }
-        ll -= 0.5 * n_bins as f64 * r_diag.iter().map(|&r| (r + 1e-10).ln()).sum::<f64>();
-        log_liks.push(ll);
-
-        if log_liks.len() > 1 {
-            let prev = log_liks[log_liks.len() - 2];
-            if (ll - prev).abs() < tol {
-                break;
-            }
-        }
-    }
+    let (x_post, c, d_vec, r_diag, log_liks) = gpfa_em_from_init(
+        &y, &c, &d_vec, &r_diag, &tau, n_neurons, n_bins, nl, max_iter, tol,
+    );
 
     GpfaResult {
         trajectories: x_post,

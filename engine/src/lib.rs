@@ -952,6 +952,7 @@ fn sc_neurocore_engine(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_function(wrap_pyfunction!(py_factor_analysis, m)?)?;
     // gpfa
     m.add_function(wrap_pyfunction!(py_gpfa, m)?)?;
+    m.add_function(wrap_pyfunction!(py_gpfa_em, m)?)?;
     m.add_function(wrap_pyfunction!(py_gpfa_transform, m)?)?;
     // spade
     m.add_function(wrap_pyfunction!(py_spade_detect, m)?)?;
@@ -4919,6 +4920,54 @@ fn py_gpfa<'py>(
     dict.set_item("n_bins", result.n_bins)?;
     dict.set_item("n_neurons", result.n_neurons)?;
     Ok(dict)
+}
+
+/// Run the GPFA EM loop from a caller-supplied deterministic initialisation.
+///
+/// Parity contract with `sc_neurocore.analysis.spike_stats.gpfa.gpfa_em`: identical
+/// inputs (the PCA init computed once in Python) produce the same trajectories,
+/// parameters and exact-marginal log-likelihoods up to floating-point round-off.
+#[pyfunction]
+#[pyo3(signature = (y, n_neurons, n_bins, c0, d0, r0_diag, tau, n_latents, max_iter, tol))]
+#[allow(clippy::too_many_arguments, clippy::type_complexity)]
+fn py_gpfa_em<'py>(
+    py: Python<'py>,
+    y: PyReadonlyArray1<'py, f64>,
+    n_neurons: usize,
+    n_bins: usize,
+    c0: PyReadonlyArray1<'py, f64>,
+    d0: PyReadonlyArray1<'py, f64>,
+    r0_diag: PyReadonlyArray1<'py, f64>,
+    tau: PyReadonlyArray1<'py, f64>,
+    n_latents: usize,
+    max_iter: usize,
+    tol: f64,
+) -> PyResult<(
+    Bound<'py, PyArray1<f64>>,
+    Bound<'py, PyArray1<f64>>,
+    Bound<'py, PyArray1<f64>>,
+    Bound<'py, PyArray1<f64>>,
+    Vec<f64>,
+)> {
+    let (x_post, c, d, r, log_liks) = analysis::gpfa::gpfa_em_from_init(
+        y.as_slice()?,
+        c0.as_slice()?,
+        d0.as_slice()?,
+        r0_diag.as_slice()?,
+        tau.as_slice()?,
+        n_neurons,
+        n_bins,
+        n_latents,
+        max_iter,
+        tol,
+    );
+    Ok((
+        x_post.into_pyarray(py),
+        c.into_pyarray(py),
+        d.into_pyarray(py),
+        r.into_pyarray(py),
+        log_liks,
+    ))
 }
 
 #[pyfunction]

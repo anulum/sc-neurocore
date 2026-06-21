@@ -13,6 +13,11 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
   backends share an identical starting point, and the marginal log-likelihood is
   the exact Gaussian form. Added a full reference test suite (deterministic init,
   EM convergence, exact log-likelihood and its non-PSD guard, projection, dispatch).
+- GPFA Rust backend (`py_gpfa_em`) now shares the deterministic initialisation and
+  computes the exact marginal log-likelihood (previously an approximate
+  residual-sum form), so it agrees with the NumPy reference to within float64
+  round-off (same iteration count, trajectories within ~1e-10). The accelerated
+  path is selected automatically; a parity test gates the agreement.
 
 ### Public bitstream-inference API
 - Restored a stable public stochastic-inference surface over caller-owned packed

@@ -459,6 +459,14 @@ except ImportError:
     _lgssm_rust_available = False
 
 try:
+    from sc_neurocore_engine.sc_neurocore_engine import py_gpfa_em
+
+    __all__ += ["py_gpfa_em"]
+    _gpfa_em_rust_available = True
+except ImportError:
+    _gpfa_em_rust_available = False
+
+try:
     from sc_neurocore_engine.sc_neurocore_engine import (
         py_ollivier_ricci_curvature,
     )

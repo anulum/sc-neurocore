@@ -18,11 +18,24 @@ counts via EM with squared-exponential GP priors on latent dimensions.
 
 from __future__ import annotations
 
+import importlib as _importlib
 from typing import Any
 
 import numpy as np
 
 from .basic import bin_spike_train
+
+
+def _load_rust_gpfa_em() -> Any | None:
+    """Return the Rust GPFA EM entry point, or ``None`` when the engine is absent."""
+    try:
+        return _importlib.import_module("sc_neurocore_engine").py_gpfa_em
+    except (ImportError, AttributeError):
+        return None
+
+
+# Rust acceleration backend — probed at import (the wheel import is cheap).
+_rust_gpfa_em: Any | None = _load_rust_gpfa_em()
 
 
 def _gp_kernel(n_bins: int, tau: float, sigma: float = 1.0) -> np.ndarray[Any, Any]:
@@ -266,6 +279,46 @@ def gpfa_em(
     return x_post, C, d, R, log_liks
 
 
+def _run_rust_gpfa_em(
+    Y: np.ndarray[Any, Any],
+    C0: np.ndarray[Any, Any],
+    d0: np.ndarray[Any, Any],
+    R0: np.ndarray[Any, Any],
+    tau: np.ndarray[Any, Any],
+    max_iter: int,
+    tol: float,
+) -> tuple[
+    np.ndarray[Any, Any],
+    np.ndarray[Any, Any],
+    np.ndarray[Any, Any],
+    np.ndarray[Any, Any],
+    list[float],
+]:
+    """Dispatch the EM loop to the Rust engine and rebuild NumPy outputs."""
+    assert _rust_gpfa_em is not None
+    n_neurons, n_bins = Y.shape
+    n_latents = int(C0.shape[1])
+    x_flat, c_flat, d_out, r_diag, log_liks = _rust_gpfa_em(
+        np.ascontiguousarray(Y, dtype=np.float64).reshape(-1),
+        n_neurons,
+        n_bins,
+        np.ascontiguousarray(C0, dtype=np.float64).reshape(-1),
+        np.ascontiguousarray(d0, dtype=np.float64),
+        np.ascontiguousarray(np.diag(R0), dtype=np.float64),
+        np.ascontiguousarray(tau, dtype=np.float64),
+        n_latents,
+        int(max_iter),
+        float(tol),
+    )
+    return (
+        np.asarray(x_flat, dtype=np.float64).reshape(n_latents, n_bins),
+        np.asarray(c_flat, dtype=np.float64).reshape(n_neurons, n_latents),
+        np.asarray(d_out, dtype=np.float64),
+        np.diag(np.asarray(r_diag, dtype=np.float64)),
+        [float(v) for v in log_liks],
+    )
+
+
 def _gpfa_em_dispatch(
     Y: np.ndarray[Any, Any],
     C0: np.ndarray[Any, Any],
@@ -282,15 +335,19 @@ def _gpfa_em_dispatch(
     np.ndarray[Any, Any],
     list[float],
 ]:
-    """Run the GPFA EM loop on the requested backend.
+    """Run the GPFA EM loop on the requested backend, fastest-first under ``auto``.
 
     The deterministic initialisation (see :func:`gpfa_pca_init`) lets every backend
-    share an identical starting point. This revision ships the NumPy reference;
-    the Rust, Julia, Go and Mojo backends bind to the same ``gpfa_em`` contract and
-    are wired in as they land.
+    share an identical starting point. The Rust path and the NumPy reference agree
+    up to floating-point round-off; the Julia, Go and Mojo backends bind to the same
+    ``gpfa_em`` contract and are wired in as they land.
     """
-    if backend not in ("auto", "python"):
-        raise ValueError(f"GPFA backend {backend!r} is not available; only 'python' is built")
+    if backend not in ("auto", "python", "rust"):
+        raise ValueError(f"GPFA backend {backend!r} is not available")
+    if backend in ("auto", "rust") and _rust_gpfa_em is not None:
+        return _run_rust_gpfa_em(Y, C0, d0, R0, tau, max_iter, tol)
+    if backend == "rust":
+        raise RuntimeError("Rust GPFA backend is not available in this environment")
     return gpfa_em(Y, C0, d0, R0, tau, max_iter, tol)
 
 

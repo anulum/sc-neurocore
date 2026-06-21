@@ -15,19 +15,27 @@ backend dispatch contract.
 
 from __future__ import annotations
 
+import importlib
+
 import numpy as np
 import numpy.testing as npt
 import pytest
+
+_GPFA_MODULE = importlib.import_module("sc_neurocore.analysis.spike_stats.gpfa")
 
 from sc_neurocore.analysis.spike_stats.gpfa import (
     _gp_kernel,
     _gpfa_em_dispatch,
     _gpfa_log_likelihood,
+    _load_rust_gpfa_em,
+    _rust_gpfa_em,
     gpfa,
     gpfa_em,
     gpfa_pca_init,
     gpfa_transform,
 )
+
+_RUST_AVAILABLE = _rust_gpfa_em is not None
 
 
 def _synthetic_trains(n_neurons: int = 8, n_samples: int = 600, seed: int = 0) -> list[np.ndarray]:
@@ -119,11 +127,13 @@ class TestGpfa:
         npt.assert_array_equal(a["trajectories"], b["trajectories"])
         npt.assert_array_equal(a["C"], b["C"])
 
-    def test_python_backend_matches_auto(self) -> None:
+    def test_auto_matches_python_within_tolerance(self) -> None:
+        # `auto` may select an accelerated backend; it agrees with the NumPy
+        # reference up to floating-point round-off.
         trains = _synthetic_trains()
         auto = gpfa(trains, n_latents=2, bin_ms=20.0, max_iter=20, backend="auto")
         py = gpfa(trains, n_latents=2, bin_ms=20.0, max_iter=20, backend="python")
-        npt.assert_array_equal(auto["trajectories"], py["trajectories"])
+        npt.assert_allclose(auto["trajectories"], py["trajectories"], atol=1e-7)
 
     def test_clamps_latent_count(self) -> None:
         trains = _synthetic_trains(n_neurons=2, n_samples=120)
@@ -161,3 +171,43 @@ def test_dispatch_python_matches_reference() -> None:
     direct = gpfa_em(Y, c0, d0, r0, tau, 20, 1e-4)
     routed = _gpfa_em_dispatch(Y, c0, d0, r0, tau, 20, 1e-4, "python")
     npt.assert_array_equal(direct[0], routed[0])
+
+
+@pytest.mark.skipif(not _RUST_AVAILABLE, reason="Rust GPFA backend not built")
+class TestRustParity:
+    """The Rust backend matches the NumPy reference up to float64 round-off."""
+
+    def test_full_pipeline_parity(self) -> None:
+        trains = _synthetic_trains()
+        py = gpfa(trains, n_latents=3, bin_ms=20.0, max_iter=40, backend="python")
+        ru = gpfa(trains, n_latents=3, bin_ms=20.0, max_iter=40, backend="rust")
+        assert len(py["log_likelihoods"]) == len(ru["log_likelihoods"])
+        npt.assert_allclose(ru["trajectories"], py["trajectories"], atol=1e-7)
+        npt.assert_allclose(ru["C"], py["C"], atol=1e-7)
+        npt.assert_allclose(ru["d"], py["d"], atol=1e-9)
+        npt.assert_allclose(ru["R"], py["R"], atol=1e-9)
+        npt.assert_allclose(ru["log_likelihoods"], py["log_likelihoods"], atol=1e-6)
+
+    def test_auto_selects_rust(self) -> None:
+        trains = _synthetic_trains()
+        auto = gpfa(trains, n_latents=2, bin_ms=20.0, max_iter=20, backend="auto")
+        rust = gpfa(trains, n_latents=2, bin_ms=20.0, max_iter=20, backend="rust")
+        npt.assert_array_equal(auto["trajectories"], rust["trajectories"])
+
+
+def test_rust_probe_returns_none_when_engine_missing(monkeypatch: pytest.MonkeyPatch) -> None:
+    def _raise(_name: str) -> object:
+        raise ImportError("engine absent")
+
+    monkeypatch.setattr(_GPFA_MODULE._importlib, "import_module", _raise)
+    assert _load_rust_gpfa_em() is None
+
+
+def test_rust_backend_raises_when_unavailable(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(_GPFA_MODULE, "_rust_gpfa_em", None)
+    trains = _synthetic_trains(n_neurons=3, n_samples=120)
+    with pytest.raises(RuntimeError, match="not available"):
+        gpfa(trains, n_latents=2, bin_ms=20.0, max_iter=3, backend="rust")
+    # auto falls back to the NumPy reference when Rust is absent
+    result = gpfa(trains, n_latents=2, bin_ms=20.0, max_iter=3, backend="auto")
+    assert result["trajectories"].size > 0
