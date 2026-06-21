@@ -278,33 +278,16 @@ exclude = [
 module = ['cupy.*', 'cupyx.*', 'mpi4py.*', 'numba.*', 'matplotlib.*', 'scipy.*', 'sklearn.*', 'networkx.*', 'onnx.*', 'torch.*', 'torchvision.*', 'gym.*', 'flask.*', 'scpn_evo2_real_interface.*', 'scpn_opentrions_verify.*', 'scpn_cross_layer_integration_L1_L7.*', 'jax.*', 'qiskit.*', 'pennylane.*', 'qiskit_aer.*', 'qiskit_ibm_runtime.*', 'psutil.*', 'watchdog.*', 'pytest.*', 'llm.*', 'fastapi.*', 'uvicorn.*', 'starlette.*', 'pydantic.*', 'httpx.*', 'nir.*', 'h5py.*', 'orjson.*', 'sc_neurocore_engine.*', 'tonic.*', 'lava.*', 'wandb.*', 'yaml.*', 'serial.*', 'usb.*', 'zstandard.*', 'pywt.*', 'juliacall.*', 'gdsfactory.*', 'meep.*', 'gdstk.*', 'dimod.*', 'dwave.*', 'nupack.*']
 ignore_missing_imports = true
 
-# Strict-typing burn-down ledger — TODO(gh-strict-mypy): docs/internal/MASTER_TODO_2026-04-20.md §1.4.
-# Each package below still carries type-arg / no-any-return / unused-ignore debt under
-# full `strict = true`. Entries are deleted package-by-package as the debt is cleared; the
-# destination is an empty ledger (the whole tree fully strict). Do NOT add packages here to
-# silence new code — newly written or modified code must be strict-clean from the first commit.
-[[tool.mypy.overrides]]
-module = [
-  'sc_neurocore.bci_studio.*',
+# Strict-typing burn-down ledger — COMPLETE (2026-06-21). Package-wide
+# `mypy --strict src/sc_neurocore/` is green with an EMPTY ledger: every package that
+# once carried type-arg / no-any-return / unused-ignore debt has been cleared (the last
+# was `sc_neurocore.bci_studio`). No general per-module strictness relaxations remain.
+# Newly written or modified code must be strict-clean from the first commit; do NOT
+# reintroduce a burn-down override to silence new code.
+# History: docs/internal/MASTER_TODO_2026-04-20.md §1.4.
 
-
-
-
-
-
-
-
-
-
-
-
-]
-disallow_any_generics = false
-warn_return_any = false
-warn_unused_ignores = false
-
-# Hard external-binding modules (torch / jax / Rust FFI) — additionally relax untyped
-# call/decorator/subclassing checks on top of the burn-down ledger above.
+# Hard external-binding modules (torch / jax / Rust FFI) — relax untyped
+# call/decorator/subclassing checks only, since these bindings have no upstream type stubs.
 # TODO(gh-strict-mypy): docs/internal/MASTER_TODO_2026-04-20.md §1.4.
 [[tool.mypy.overrides]]
 module = ['sc_neurocore.training.*', 'sc_neurocore.qat.*', 'sc_neurocore.conversion.*', 'sc_neurocore.accel.jax_backend', 'sc_neurocore.accel.jit_kernels', 'sc_neurocore.nas.*', 'sc_neurocore._native.*', 'sc_neurocore.quantum_cognition.fs_watcher']

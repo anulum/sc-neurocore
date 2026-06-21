@@ -19,7 +19,7 @@ import struct
 import time
 from collections import deque
 from dataclasses import dataclass, field
-from typing import Dict, List, Tuple
+from typing import Any, Dict, List, Tuple
 
 import numpy as np
 
@@ -59,7 +59,7 @@ class SpikeCodec:
     Uses run-length encoding on spike trains with delta-time encoding.
     """
 
-    def encode(self, spikes: np.ndarray) -> bytes:
+    def encode(self, spikes: np.ndarray[Any, Any]) -> bytes:
         """Compress boolean spike array to RLE byte stream.
 
         Format: [total_len:u32_le] + N × [value:u8, count:u8]
@@ -85,7 +85,7 @@ class SpikeCodec:
             data.append(cnt & 0xFF)
         return bytes(data)
 
-    def decode(self, data: bytes) -> np.ndarray:
+    def decode(self, data: bytes) -> np.ndarray[Any, Any]:
         """Decompress RLE byte stream back to spike array."""
         if len(data) < 4:
             return np.array([], dtype=np.uint8)
@@ -99,7 +99,7 @@ class SpikeCodec:
             i += 2
         return np.array(spikes[:total_len], dtype=np.uint8)
 
-    def compression_ratio(self, original: np.ndarray) -> float:
+    def compression_ratio(self, original: np.ndarray[Any, Any]) -> float:
         """Return compression ratio (original_bytes / compressed_bytes)."""
         compressed = self.encode(original)
         if len(compressed) == 0:
@@ -123,9 +123,9 @@ class OnlineLearner:
 
     def step(
         self,
-        spikes: np.ndarray,
+        spikes: np.ndarray[Any, Any],
         reward: float,
-    ) -> np.ndarray:
+    ) -> np.ndarray[Any, Any]:
         """Apply reward-modulated STDP update.
 
         Spikes that contributed to a positive reward get potentiated;
@@ -162,7 +162,7 @@ class FPGAFeedbackController:
         """
         return struct.pack("<BHfdx", command, channel, amplitude, timestamp_us)
 
-    def deserialize(self, data: bytes) -> Dict:
+    def deserialize(self, data: bytes) -> Dict[str, float]:
         """Unpack a feedback command."""
         cmd, chan, amp, ts = struct.unpack("<BHfdx", data[:16])
         return {"command": cmd, "channel": chan, "amplitude": amp, "timestamp_us": ts}
@@ -225,9 +225,9 @@ class BCIStudio:
 
     def process_frame(
         self,
-        raw_ephys: np.ndarray,
+        raw_ephys: np.ndarray[Any, Any],
         reward: float = 0.0,
-    ) -> Dict:
+    ) -> Dict[str, float]:
         """Process a single BCI frame through the full pipeline."""
         t0 = time.perf_counter()
 
