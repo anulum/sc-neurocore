@@ -147,7 +147,6 @@ import {
   evidenceBundleArtifactDownloadStartState,
   evidenceBundleArtifactUnavailableState,
   evidenceBundleDownloadSelection,
-  latestSynthesisJobIdWithArtefact,
   scopedEvidenceBundleCreatedState,
   scopedEvidenceBundleFailureState,
   scopedEvidenceBundleLoadingState,
@@ -167,6 +166,15 @@ import {
   capabilityLoadedState,
   capabilityLoadingState,
 } from "../capabilityShell";
+import {
+  multiTargetSynthesisRunCompletedState,
+  multiTargetSynthesisRunStartState,
+  synthesisEstimateLoadedState,
+  synthesisFailureState,
+  synthesisRunCompletedState,
+  synthesisRunStartState,
+  synthesisToolStatusLoadedState,
+} from "../synthesisStoreState";
 
 let debounceTimer: ReturnType<typeof setTimeout> | null = null;
 syncStoredStudioAuthToken(setStudioAuthToken);
@@ -1121,15 +1129,7 @@ export const useStudioStore = create<StudioState>((set, get) => ({
   runSynthesis: async () => {
     const s = get();
     if (!s.svSource && !s.verilogSrc) { set({ error: "Generate Verilog first" }); return; }
-    set({
-      isSimulating: true,
-      error: null,
-      activeTab: "synth",
-      latestSynthesisJobId: null,
-      multiTargetResult: null,
-      synthesisEvidenceBundle: null,
-      synthesisEvidenceBundleError: null,
-    });
+    set(synthesisRunStartState());
     try {
       const verilog = s.svSource || s.verilogSrc;
       const synthResult = await apiRunSynthesis(verilog, s.synthTarget);
@@ -1137,33 +1137,14 @@ export const useStudioStore = create<StudioState>((set, get) => ({
         fetchStudioOperatorStatus(),
         fetchStudioJobs(),
       ]);
-      set({
-        auditStatus: operatorStatus.audit,
-        jobRecords: jobList.jobs,
-        jobStatus: operatorStatus.jobs,
-        latestSynthesisJobId: latestSynthesisJobIdWithArtefact(
-          jobList.jobs,
-          "synthesis/result.json",
-        ),
-        operatorStatus,
-        synthResult,
-        isSimulating: false,
-      });
-    } catch (e) { set({ error: e instanceof Error ? e.message : String(e), isSimulating: false }); }
+      set(synthesisRunCompletedState(synthResult, operatorStatus, jobList));
+    } catch (e) { set(synthesisFailureState(e)); }
   },
 
   runMultiTargetSynthesis: async () => {
     const s = get();
     if (!s.svSource && !s.verilogSrc) { set({ error: "Generate Verilog first" }); return; }
-    set({
-      isSimulating: true,
-      error: null,
-      activeTab: "synth",
-      latestMultiTargetSynthesisJobId: null,
-      synthResult: null,
-      synthesisEvidenceBundle: null,
-      synthesisEvidenceBundleError: null,
-    });
+    set(multiTargetSynthesisRunStartState());
     try {
       const verilog = s.svSource || s.verilogSrc;
       const multiTargetResult = await runMultiTargetSynthesis(verilog);
@@ -1171,19 +1152,8 @@ export const useStudioStore = create<StudioState>((set, get) => ({
         fetchStudioOperatorStatus(),
         fetchStudioJobs(),
       ]);
-      set({
-        auditStatus: operatorStatus.audit,
-        jobRecords: jobList.jobs,
-        jobStatus: operatorStatus.jobs,
-        latestMultiTargetSynthesisJobId: latestSynthesisJobIdWithArtefact(
-          jobList.jobs,
-          "synthesis/multi-target-result.json",
-        ),
-        multiTargetResult,
-        operatorStatus,
-        isSimulating: false,
-      });
-    } catch (e) { set({ error: e instanceof Error ? e.message : String(e), isSimulating: false }); }
+      set(multiTargetSynthesisRunCompletedState(multiTargetResult, operatorStatus, jobList));
+    } catch (e) { set(synthesisFailureState(e)); }
   },
 
   runSynthEstimate: async () => {
@@ -1192,14 +1162,14 @@ export const useStudioStore = create<StudioState>((set, get) => ({
     if (irOps < 1) { set({ error: "Build IR first to estimate resources" }); return; }
     try {
       const synthEstimate = await fetchSynthEstimate(irOps, s.synthTarget);
-      set({ synthEstimate });
+      set(synthesisEstimateLoadedState(synthEstimate));
     } catch (e) { set({ error: e instanceof Error ? e.message : String(e) }); }
   },
 
   checkSynthTools: async () => {
     try {
       const toolsAvailable = await fetchSynthTools();
-      set({ toolsAvailable });
+      set(synthesisToolStatusLoadedState(toolsAvailable));
     } catch { /* tools check is non-critical */ }
   },
 
