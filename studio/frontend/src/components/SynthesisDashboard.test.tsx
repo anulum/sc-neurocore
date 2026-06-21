@@ -8,6 +8,7 @@ import SynthesisEvidenceControls from "./SynthesisEvidenceControls";
 const provenanceMatrix: SynthesisTargetProvenanceMatrix = {
   evidence_classification: "synthesis",
   matrix_sha256: "a".repeat(64),
+  provenance_grade: "unverified",
   schema_version: "studio.synthesis-target-provenance-matrix.v1",
   status: "completed",
   targets: {
@@ -17,6 +18,7 @@ const provenanceMatrix: SynthesisTargetProvenanceMatrix = {
       evidence_classification: "synthesis",
       pnr_ready: false,
       pnr_tool: "nextpnr-ice40",
+      provenance_grade: "unverified",
       schema_version: "studio.synthesis-target-provenance.v1",
       status: "completed",
       synthesis_command: "synth_ice40",
@@ -45,6 +47,7 @@ const provenanceMatrix: SynthesisTargetProvenanceMatrix = {
       evidence_classification: "synthesis",
       pnr_ready: true,
       pnr_tool: null,
+      provenance_grade: "tool_backed",
       schema_version: "studio.synthesis-target-provenance.v1",
       status: "completed",
       synthesis_command: "synth_gowin",

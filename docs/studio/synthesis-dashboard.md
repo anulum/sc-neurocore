@@ -104,8 +104,13 @@ Synthesis responses include `target_provenance` using the
 `studio.synthesis-target-provenance.v1` schema. The payload records the target
 ID, Yosys synthesis command, optional nextpnr command and device selector,
 static capacity metadata, tool availability, tool version strings when
-available, readiness booleans, and the `synthesis` evidence classification.
-The serializer validates that class and the `completed` terminal status
+available, readiness booleans, the `synthesis` evidence classification, and a
+`provenance_grade` claim grade. The grade is `tool_backed` only when every
+required tool for the target was detected and reported a version; otherwise it
+is `unverified` (missing tool, missing version, or no required tools). An
+`unverified` result must not be presented as release-grade PPA evidence — it
+records that synthesis ran without confirmed tool provenance.
+The serializer validates the class and the `completed` terminal status
 through the shared Studio evidence-classification contract before returning
 public metadata. It is path-free and suitable for operator logs and evidence
 bundles.
@@ -114,7 +119,9 @@ Multi-target responses additionally include
 `target_provenance_matrix` with schema
 `studio.synthesis-target-provenance-matrix.v1`. The matrix captures the same
 target records for every supported target, top-level `synthesis` evidence
-classification, top-level `completed` terminal status, and a stable
+classification, top-level `completed` terminal status, an aggregate
+`provenance_grade` that is `tool_backed` only when every target is
+`tool_backed`, and a stable
 `matrix_sha256` digest so operators can compare target-support evidence across
 runs without relying on local filesystem paths. The Studio dashboard renders
 that matrix after an all-target run, showing each target's device selector,
@@ -181,6 +188,7 @@ Returns:
     "device": "up5k",
     "synthesis_ready": true,
     "pnr_ready": true,
+    "provenance_grade": "tool_backed",
     "evidence_classification": "synthesis",
     "status": "completed",
     "tools": [
@@ -208,6 +216,7 @@ Returns synthesis results for all supported targets:
   },
   "target_provenance_matrix": {
     "evidence_classification": "synthesis",
+    "provenance_grade": "tool_backed",
     "schema_version": "studio.synthesis-target-provenance-matrix.v1",
     "status": "completed",
     "matrix_sha256": "<64 lowercase hex characters>",

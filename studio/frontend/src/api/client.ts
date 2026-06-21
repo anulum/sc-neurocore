@@ -792,6 +792,7 @@ export interface SynthesisTargetProvenance {
   evidence_classification: "synthesis";
   pnr_ready: boolean;
   pnr_tool: string | null;
+  provenance_grade: "tool_backed" | "unverified";
   schema_version: "studio.synthesis-target-provenance.v1";
   status: "completed";
   synthesis_command: string;
@@ -803,6 +804,7 @@ export interface SynthesisTargetProvenance {
 export interface SynthesisTargetProvenanceMatrix {
   evidence_classification: "synthesis";
   matrix_sha256: string;
+  provenance_grade: "tool_backed" | "unverified";
   schema_version: "studio.synthesis-target-provenance-matrix.v1";
   status: "completed";
   targets: Record<string, SynthesisTargetProvenance>;

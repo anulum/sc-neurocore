@@ -187,6 +187,7 @@ def test_build_synthesis_target_provenance_matrix_has_stable_digest() -> None:
     )
     matrix_without_digest = {
         "evidence_classification": "synthesis",
+        "provenance_grade": matrix["provenance_grade"],
         "schema_version": STUDIO_SYNTHESIS_TARGET_PROVENANCE_MATRIX_SCHEMA_VERSION,
         "status": "completed",
         "targets": matrix["targets"],
@@ -251,3 +252,87 @@ def test_synthesis_endpoint_returns_target_provenance(client: TestClient) -> Non
     assert provenance["target"] == "ice40"
     assert provenance["status"] == "completed"
     assert re.fullmatch(r"[a-z0-9_]+", provenance["evidence_classification"])
+
+
+def test_target_provenance_grade_tool_backed_when_tools_available_and_versioned() -> None:
+    grade = build_synthesis_target_provenance(
+        "gowin",
+        target_config={"synth_cmd": "synth_gowin", "pnr": None, "device": None},
+        capacity={},
+        tool_status=_tool_status(),
+    ).provenance_grade
+
+    assert grade == "tool_backed"
+
+
+def test_target_provenance_grade_unverified_when_required_tool_missing() -> None:
+    provenance = build_synthesis_target_provenance(
+        "ice40",
+        target_config={"synth_cmd": "synth_ice40", "pnr": "nextpnr-ice40", "device": "up5k"},
+        capacity={},
+        tool_status=_tool_status(),
+    )
+
+    assert provenance.provenance_grade == "unverified"
+    assert provenance.to_public_dict()["provenance_grade"] == "unverified"
+
+
+def test_target_provenance_grade_unverified_when_version_missing() -> None:
+    tool_status = cast(ToolStatusMap, {"yosys": {"available": True, "version": None}})
+    grade = build_synthesis_target_provenance(
+        "gowin",
+        target_config={"synth_cmd": "synth_gowin", "pnr": None, "device": None},
+        capacity={},
+        tool_status=tool_status,
+    ).provenance_grade
+
+    assert grade == "unverified"
+
+
+def test_target_provenance_grade_unverified_when_no_tools() -> None:
+    provenance = StudioSynthesisTargetProvenance(
+        target="empty",
+        capacity={},
+        synthesis_command="synth",
+        pnr_tool=None,
+        device=None,
+        tools=(),
+    )
+
+    assert provenance.provenance_grade == "unverified"
+
+
+def test_matrix_provenance_grade_tool_backed_when_every_target_backed() -> None:
+    matrix = build_synthesis_target_provenance_matrix(
+        targets={
+            "gowin": {"synth_cmd": "synth_gowin", "pnr": None, "device": None},
+            "ecp5": {"synth_cmd": "synth_ecp5", "pnr": "nextpnr-ecp5", "device": "25k"},
+        },
+        capacities={},
+        tool_status=_tool_status(),
+    )
+
+    assert matrix["provenance_grade"] == "tool_backed"
+
+
+def test_matrix_provenance_grade_unverified_when_any_target_unverified() -> None:
+    matrix = build_synthesis_target_provenance_matrix(
+        targets={
+            "gowin": {"synth_cmd": "synth_gowin", "pnr": None, "device": None},
+            "ice40": {"synth_cmd": "synth_ice40", "pnr": "nextpnr-ice40", "device": "up5k"},
+        },
+        capacities={},
+        tool_status=_tool_status(),
+    )
+
+    assert matrix["provenance_grade"] == "unverified"
+
+
+def test_matrix_provenance_grade_unverified_when_empty() -> None:
+    matrix = build_synthesis_target_provenance_matrix(
+        targets={},
+        capacities={},
+        tool_status=_tool_status(),
+    )
+
+    assert matrix["provenance_grade"] == "unverified"

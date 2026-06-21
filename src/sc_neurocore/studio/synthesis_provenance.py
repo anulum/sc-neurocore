@@ -14,7 +14,7 @@ import hashlib
 import json
 from collections.abc import Mapping
 from dataclasses import dataclass
-from typing import TypeAlias, cast
+from typing import Literal, TypeAlias, cast
 
 from sc_neurocore.studio.evidence_classification import (
     StudioEvidenceClassification,
@@ -22,6 +22,8 @@ from sc_neurocore.studio.evidence_classification import (
     validate_studio_evidence_classification,
     validate_studio_evidence_status,
 )
+
+StudioSynthesisProvenanceGrade: TypeAlias = Literal["tool_backed", "unverified"]
 
 STUDIO_SYNTHESIS_TARGET_PROVENANCE_SCHEMA_VERSION = "studio.synthesis-target-provenance.v1"
 STUDIO_SYNTHESIS_TARGET_PROVENANCE_MATRIX_SCHEMA_VERSION = (
@@ -107,6 +109,20 @@ class StudioSynthesisTargetProvenance:
     evidence_classification: StudioEvidenceClassification = "synthesis"
     status: StudioEvidenceStatus = "completed"
 
+    @property
+    def provenance_grade(self) -> StudioSynthesisProvenanceGrade:
+        """Return the claim grade for this target's synthesis provenance.
+
+        ``"tool_backed"`` only when every required tool was detected and
+        reported a version, so a result may be presented as tool-produced
+        evidence. Otherwise ``"unverified"`` (missing tool, missing version, or
+        no required tools), which must not be presented as release-grade.
+        """
+
+        if self.tools and all(tool.available and bool(tool.version) for tool in self.tools):
+            return "tool_backed"
+        return "unverified"
+
     def to_public_dict(self) -> dict[str, JsonValue]:
         """Return the public, path-free target provenance payload."""
 
@@ -121,6 +137,7 @@ class StudioSynthesisTargetProvenance:
                 tool.available for tool in self.tools if tool.role == "place_and_route"
             ),
             "pnr_tool": self.pnr_tool,
+            "provenance_grade": self.provenance_grade,
             "schema_version": STUDIO_SYNTHESIS_TARGET_PROVENANCE_SCHEMA_VERSION,
             "status": validate_studio_evidence_status(self.status),
             "synthesis_command": self.synthesis_command,
@@ -217,17 +234,27 @@ def build_synthesis_target_provenance_matrix(
         Matrix payload keyed by target with a stable SHA-256 digest.
     """
 
-    target_payloads = {
+    provenances = {
         target: build_synthesis_target_provenance(
             target,
             target_config=config,
             capacity=capacities.get(target, {}),
             tool_status=tool_status,
-        ).to_public_dict()
+        )
         for target, config in targets.items()
     }
+    target_payloads = {
+        target: provenance.to_public_dict() for target, provenance in provenances.items()
+    }
+    aggregate_grade: StudioSynthesisProvenanceGrade = (
+        "tool_backed"
+        if provenances
+        and all(provenance.provenance_grade == "tool_backed" for provenance in provenances.values())
+        else "unverified"
+    )
     matrix_contract: dict[str, JsonValue] = {
         "evidence_classification": validate_studio_evidence_classification("synthesis"),
+        "provenance_grade": aggregate_grade,
         "schema_version": STUDIO_SYNTHESIS_TARGET_PROVENANCE_MATRIX_SCHEMA_VERSION,
         "status": validate_studio_evidence_status("completed"),
         "targets": cast(dict[str, JsonValue], target_payloads),
