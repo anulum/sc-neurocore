@@ -34,7 +34,7 @@ def test_from_string_parses_canonical_and_blocked_formats() -> None:
     ["XYZ16E3", "BFP", "BFPxyz", "BFP1E3", "BFP16E0", "BFP16E3X0"],
 )
 def test_from_string_rejects_malformed_formats(fmt: str) -> None:
-    """from_string rejects non-BFP, empty, unparseable and out-of-range formats."""
+    """from_string rejects non-BFP, empty, unparsable and out-of-range formats."""
     with pytest.raises(ValueError):
         BlockFloatingMode.from_string(fmt)
 
