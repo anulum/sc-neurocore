@@ -227,6 +227,15 @@ import {
   synthesisRunStartState,
   synthesisToolStatusLoadedState,
 } from "../synthesisStoreState";
+import {
+  compilerErrorState,
+  compilerFailureState,
+  compilerIRLoadedState,
+  compilerRunStartState,
+  compilerSVDirectLoadedState,
+  compilerSVLoadedState,
+  compilerVerilogLoadedState,
+} from "../compilerStoreState";
 
 let debounceTimer: ReturnType<typeof setTimeout> | null = null;
 syncStoredStudioAuthToken(setStudioAuthToken);
@@ -946,18 +955,14 @@ export const useStudioStore = create<StudioState>((set, get) => ({
 
   runCompile: async () => {
     const s = get();
-    if (s.sourceMode !== "ode") { set({ error: "Verilog compile only for ODE mode" }); return; }
-    set({ isSimulating: true, error: null, activeTab: "verilog" });
+    if (s.sourceMode !== "ode") { set(compilerErrorState("Verilog compile only for ODE mode")); return; }
+    set(compilerRunStartState("verilog"));
     try {
       const res = await compileVerilog({
         equations: s.equations, threshold: s.threshold, reset: s.reset, params: s.odeParams,
       });
-      set({
-        compileTraceability: res.compile_traceability,
-        verilogSrc: res.verilog,
-        isSimulating: false,
-      });
-    } catch (e) { set({ error: e instanceof Error ? e.message : String(e), isSimulating: false }); }
+      set(compilerVerilogLoadedState(res));
+    } catch (e) { set(compilerFailureState(e)); }
   },
 
   runHeatmap: async () => {
@@ -1129,38 +1134,33 @@ export const useStudioStore = create<StudioState>((set, get) => ({
 
   runBuildIR: async () => {
     const s = get();
-    if (s.sourceMode !== "ode") { set({ error: "IR build requires ODE mode" }); return; }
-    set({ isSimulating: true, error: null, activeTab: "ir" });
+    if (s.sourceMode !== "ode") { set(compilerErrorState("IR build requires ODE mode")); return; }
+    set(compilerRunStartState("ir"));
     try {
       const cfg = {
         equations: s.equations, threshold: s.threshold || null, reset: s.reset || null,
         params: s.odeParams, dt: s.dt,
       };
       const result = await buildIR(cfg);
-      set({ irText: result.ir_text, irErrors: result.errors, isSimulating: false });
+      set(compilerIRLoadedState(result));
       if (result.errors.length === 0) {
         const sv = await emitSV(result.ir_text);
-        set({ svSource: sv.systemverilog });
+        set(compilerSVLoadedState(sv));
       }
-    } catch (e) { set({ error: e instanceof Error ? e.message : String(e), isSimulating: false }); }
+    } catch (e) { set(compilerFailureState(e)); }
   },
 
   runEmitSV: async () => {
     const s = get();
-    if (s.sourceMode !== "ode") { set({ error: "SV emit requires ODE mode" }); return; }
-    set({ isSimulating: true, error: null, activeTab: "ir" });
+    if (s.sourceMode !== "ode") { set(compilerErrorState("SV emit requires ODE mode")); return; }
+    set(compilerRunStartState("ir"));
     try {
       const result = await emitSVDirect({
         equations: s.equations, threshold: s.threshold || null, reset: s.reset || null,
         params: s.odeParams,
       });
-      set({
-        compileTraceability: result.compile_traceability,
-        svSource: result.verilog,
-        irText: result.ir_repr,
-        isSimulating: false,
-      });
-    } catch (e) { set({ error: e instanceof Error ? e.message : String(e), isSimulating: false }); }
+      set(compilerSVDirectLoadedState(result));
+    } catch (e) { set(compilerFailureState(e)); }
   },
 
   setSynthTarget: (t) => set({ synthTarget: t }),
