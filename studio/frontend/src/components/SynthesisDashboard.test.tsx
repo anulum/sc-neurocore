@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 
 import type { SynthesisTargetProvenanceMatrix } from "../api/client";
 import { ProvenanceMatrixSummary } from "./SynthesisDashboard";
+import SynthesisEvidenceControls from "./SynthesisEvidenceControls";
 
 const provenanceMatrix: SynthesisTargetProvenanceMatrix = {
   matrix_sha256: "a".repeat(64),
@@ -73,5 +74,51 @@ describe("ProvenanceMatrixSummary", () => {
     expect(html).toContain("missing - nextpnr-ice40 missing");
     expect(html).toContain("ready - not required");
     expect(html).toContain("synthesis");
+  });
+});
+
+describe("SynthesisEvidenceControls", () => {
+  it("renders job, bundle artifact metadata, and download actions", () => {
+    const html = renderToStaticMarkup(
+      <SynthesisEvidenceControls
+        bundle={{
+          artifact_paths: ["evidence/jobs/sj_synth/artifacts/synthesis/multi-target-evidence.json"],
+          artifacts: [
+            {
+              relative_path: "evidence/jobs/sj_synth/artifacts/synthesis/multi-target-evidence.json",
+              sha256: "b".repeat(64),
+              size_bytes: 512,
+            },
+          ],
+          bundle_id: "seb_synthesis",
+          job_id: "sj_bundle",
+          manifest: {},
+          schema_version: "studio.evidence-bundle.v1",
+          summary: {
+            artifact_path_count: 1,
+            entry_count: 1,
+            entry_type_counts: { action_evidence: 1 },
+            evidence_classification_counts: { synthesis: 1 },
+            source_job_count: 1,
+            source_job_kind_counts: { synthesis: 1 },
+            source_job_owner_counts: { browser: 1 },
+          },
+        }}
+        error={null}
+        jobId="sj_synth"
+        loading={false}
+        onDownloadArtifact={() => undefined}
+        onExport={() => undefined}
+      />,
+    );
+
+    expect(html).toContain("Synthesis evidence");
+    expect(html).toContain("job sj_synth");
+    expect(html).toContain("bundle seb_synthesis");
+    expect(html).toContain("evidence/jobs/sj_synth/artifacts/synthesis/multi-target-evidence.json");
+    expect(html).toContain("512 B - sha bbbbbbbbbbbb");
+    expect(html).toContain(
+      "Download synthesis evidence artefact evidence/jobs/sj_synth/artifacts/synthesis/multi-target-evidence.json",
+    );
   });
 });

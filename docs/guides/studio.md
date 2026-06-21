@@ -494,6 +494,11 @@ Yosys command, optional nextpnr command/device, tool availability, and tool
 version strings when available. The frontend renders the all-target matrix as
 device, synthesis-readiness, PnR-readiness, tool, evidence-class, and digest
 rows so operators can inspect target support without opening raw JSON.
+After a single-target or all-target synthesis run, the FPGA panel can export a
+synthesis-scoped evidence bundle anchored on the captured worker job ID. The
+bundle includes the worker record plus the validated `synthesis/evidence.json`
+or `synthesis/multi-target-evidence.json` artifact, and the panel downloads
+bundle artefacts through the authenticated job-artifact route.
 
 Each worker-backed compile, synthesis, PnR, and pipeline action also writes a
 normalized `studio.action-evidence.v1` manifest next to the result artifact:

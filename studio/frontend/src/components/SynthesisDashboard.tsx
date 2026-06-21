@@ -1,9 +1,10 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useStudioStore } from "../stores/studio";
 import type {
   SynthesisTargetProvenance,
   SynthesisTargetProvenanceMatrix,
 } from "../api/client";
+import SynthesisEvidenceControls from "./SynthesisEvidenceControls";
 
 function ResourceBar({ label, used, total, color }: {
   label: string; used: number; total: number; color: string;
@@ -144,17 +145,42 @@ export function ProvenanceMatrixSummary({
 export default function SynthesisDashboard() {
   const {
     synthResult, synthEstimate, multiTargetResult,
+    synthesisEvidenceBundle, synthesisEvidenceBundleError, synthesisEvidenceBundleLoading,
+    latestSynthesisJobId, latestMultiTargetSynthesisJobId,
     synthTarget, toolsAvailable, svSource, verilogSrc,
     irText,
+    createEvidenceBundleForSurface, downloadEvidenceBundleArtifactForSurface,
     setSynthTarget, runSynthesis, runMultiTargetSynthesis, runSynthEstimate,
     checkSynthTools, isSimulating,
   } = useStudioStore();
+  const [synthesisBundleRequested, setSynthesisBundleRequested] = useState(false);
 
   useEffect(() => { checkSynthTools(); }, [checkSynthTools]);
 
   const targets = ["ice40", "ecp5", "gowin", "xilinx"];
   const hasSV = svSource.length > 0 || verilogSrc.length > 0;
   const hasIR = irText.length > 0;
+  const activeSynthesisJobId = multiTargetResult
+    ? latestMultiTargetSynthesisJobId
+    : latestSynthesisJobId;
+
+  function exportSynthesisEvidence(projectName: string) {
+    if (activeSynthesisJobId === null) {
+      return;
+    }
+    setSynthesisBundleRequested(true);
+    void createEvidenceBundleForSurface("synthesis", {
+      audit_limit: 100,
+      analysis_results: [],
+      command_replay: null,
+      default_flow_attestations: [],
+      default_flow_runs: [],
+      include_audit: true,
+      job_ids: [activeSynthesisJobId],
+      project_name: projectName,
+      simulation_results: [],
+    });
+  }
 
   return (
     <div style={{ flex: 1, display: "flex", flexDirection: "column", overflow: "auto" }}>
@@ -290,6 +316,16 @@ export default function SynthesisDashboard() {
               </tbody>
             </table>
             <ProvenanceMatrixSummary matrix={multiTargetResult.target_provenance_matrix} />
+            <SynthesisEvidenceControls
+              bundle={synthesisBundleRequested ? synthesisEvidenceBundle : null}
+              error={synthesisBundleRequested ? synthesisEvidenceBundleError : null}
+              jobId={latestMultiTargetSynthesisJobId}
+              loading={synthesisEvidenceBundleLoading}
+              onDownloadArtifact={(relativePath) => {
+                void downloadEvidenceBundleArtifactForSurface("synthesis", relativePath);
+              }}
+              onExport={() => exportSynthesisEvidence("synthesis-multi-target")}
+            />
           </div>
         )}
 
@@ -342,6 +378,16 @@ export default function SynthesisDashboard() {
                 <ProvenanceSummary provenance={synthResult.target_provenance} />
               </>
             )}
+            <SynthesisEvidenceControls
+              bundle={synthesisBundleRequested ? synthesisEvidenceBundle : null}
+              error={synthesisBundleRequested ? synthesisEvidenceBundleError : null}
+              jobId={latestSynthesisJobId}
+              loading={synthesisEvidenceBundleLoading}
+              onDownloadArtifact={(relativePath) => {
+                void downloadEvidenceBundleArtifactForSurface("synthesis", relativePath);
+              }}
+              onExport={() => exportSynthesisEvidence(`synthesis-${synthResult.target}`)}
+            />
           </div>
         )}
 

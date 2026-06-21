@@ -80,7 +80,7 @@ export type SourceMode = "model" | "ode";
 export type ViewTab = "trace" | "phase" | "isi" | "fi-curve" | "bifurcation" |
   "sensitivity" | "precision" | "heatmap" | "verilog" | "code" |
   "compare" | "freq" | "sta" | "characterize" | "multi" | "network" | "ir" | "synth" | "train" | "canvas" | "admin";
-export type EvidenceBundleSurface = "admin" | "project" | "compile";
+export type EvidenceBundleSurface = "admin" | "project" | "compile" | "synthesis";
 
 interface StudioState {
   sourceMode: SourceMode;
@@ -115,6 +115,9 @@ interface StudioState {
   compileEvidenceBundle: StudioEvidenceBundleResponse | null;
   compileEvidenceBundleError: string | null;
   compileEvidenceBundleLoading: boolean;
+  synthesisEvidenceBundle: StudioEvidenceBundleResponse | null;
+  synthesisEvidenceBundleError: string | null;
+  synthesisEvidenceBundleLoading: boolean;
   jobStatus: StudioJobStatus | null;
   jobRecords: StudioJobRecord[];
   identityBrowserUsers: StudioIdentityBrowserUser[];
@@ -152,6 +155,8 @@ interface StudioState {
   synthResult: SynthResult | null;
   synthEstimate: SynthEstimate | null;
   multiTargetResult: MultiTargetResult | null;
+  latestSynthesisJobId: string | null;
+  latestMultiTargetSynthesisJobId: string | null;
   toolsAvailable: Record<string, SynthToolInfo> | null;
   graphPopulations: PopulationNode[];
   graphProjections: ProjectionEdge[];
@@ -318,6 +323,37 @@ function currentConfig(s: StudioState): Record<string, unknown> {
   };
 }
 
+const evidenceBundleKeys = {
+  compile: {
+    bundle: "compileEvidenceBundle",
+    error: "compileEvidenceBundleError",
+    loading: "compileEvidenceBundleLoading",
+  },
+  project: {
+    bundle: "projectEvidenceBundle",
+    error: "projectEvidenceBundleError",
+    loading: "projectEvidenceBundleLoading",
+  },
+  synthesis: {
+    bundle: "synthesisEvidenceBundle",
+    error: "synthesisEvidenceBundleError",
+    loading: "synthesisEvidenceBundleLoading",
+  },
+} as const;
+
+function latestJobIdWithArtifact(
+  jobs: StudioJobRecord[],
+  artifactPath: string,
+): string | null {
+  const records = jobs
+    .filter((job) =>
+      job.kind === "synthesis"
+      && job.artifacts.some((artifact) => artifact.relative_path === artifactPath),
+    )
+    .sort((left, right) => right.created_at_utc.localeCompare(left.created_at_utc));
+  return records[0]?.job_id ?? null;
+}
+
 export const useStudioStore = create<StudioState>((set, get) => ({
   sourceMode: "model",
   equations: ["dv/dt = -(v - E_L) / tau_m + I / C"],
@@ -333,6 +369,7 @@ export const useStudioStore = create<StudioState>((set, get) => ({
   evidenceBundle: null, evidenceBundleError: null, evidenceBundleLoading: false,
   projectEvidenceBundle: null, projectEvidenceBundleError: null, projectEvidenceBundleLoading: false,
   compileEvidenceBundle: null, compileEvidenceBundleError: null, compileEvidenceBundleLoading: false,
+  synthesisEvidenceBundle: null, synthesisEvidenceBundleError: null, synthesisEvidenceBundleLoading: false,
   jobStatus: null, jobRecords: [],
   identityBrowserUsers: [], identityServiceAccounts: [], operatorStatus: null,
   auditLoading: false, auditError: null,
@@ -347,7 +384,8 @@ export const useStudioStore = create<StudioState>((set, get) => ({
   progressPct: 0, progressMsg: "",
   graphPopulations: [], graphProjections: [], graphModels: [], graphSimResult: null, graphErrors: [],
   projectSaveResult: null, serverProjects: [], pipelineResult: null,
-  synthTarget: "ice40", synthResult: null, synthEstimate: null, multiTargetResult: null, toolsAvailable: null,
+  synthTarget: "ice40", synthResult: null, synthEstimate: null, multiTargetResult: null,
+  latestSynthesisJobId: null, latestMultiTargetSynthesisJobId: null, toolsAvailable: null,
   trainingJobId: null, trainingStatus: "idle", trainingEpochs: [],
   trainingWeightRestorePlan: null, trainingWeightRestoreVerification: null,
   trainingSurrogates: [],
@@ -603,9 +641,7 @@ export const useStudioStore = create<StudioState>((set, get) => ({
       await get().createEvidenceBundle(request);
       return;
     }
-    const loadingKey = surface === "project" ? "projectEvidenceBundleLoading" : "compileEvidenceBundleLoading";
-    const errorKey = surface === "project" ? "projectEvidenceBundleError" : "compileEvidenceBundleError";
-    const bundleKey = surface === "project" ? "projectEvidenceBundle" : "compileEvidenceBundle";
+    const { bundle: bundleKey, error: errorKey, loading: loadingKey } = evidenceBundleKeys[surface];
     set({ [loadingKey]: true, [errorKey]: null });
     try {
       const evidenceBundle = await createStudioEvidenceBundle(request);
@@ -658,10 +694,12 @@ export const useStudioStore = create<StudioState>((set, get) => ({
       return;
     }
     const state = get();
+    const { error: errorKey } = evidenceBundleKeys[surface];
     const evidenceBundle = surface === "project"
       ? state.projectEvidenceBundle
-      : state.compileEvidenceBundle;
-    const errorKey = surface === "project" ? "projectEvidenceBundleError" : "compileEvidenceBundleError";
+      : surface === "compile"
+        ? state.compileEvidenceBundle
+        : state.synthesisEvidenceBundle;
     if (evidenceBundle === null) {
       set({ [errorKey]: "No evidence bundle is available for artifact download." });
       return;
@@ -1278,22 +1316,65 @@ export const useStudioStore = create<StudioState>((set, get) => ({
   runSynthesis: async () => {
     const s = get();
     if (!s.svSource && !s.verilogSrc) { set({ error: "Generate Verilog first" }); return; }
-    set({ isSimulating: true, error: null, activeTab: "synth" });
+    set({
+      isSimulating: true,
+      error: null,
+      activeTab: "synth",
+      latestSynthesisJobId: null,
+      multiTargetResult: null,
+      synthesisEvidenceBundle: null,
+      synthesisEvidenceBundleError: null,
+    });
     try {
       const verilog = s.svSource || s.verilogSrc;
       const synthResult = await apiRunSynthesis(verilog, s.synthTarget);
-      set({ synthResult, isSimulating: false });
+      const [operatorStatus, jobList] = await Promise.all([
+        fetchStudioOperatorStatus(),
+        fetchStudioJobs(),
+      ]);
+      set({
+        auditStatus: operatorStatus.audit,
+        jobRecords: jobList.jobs,
+        jobStatus: operatorStatus.jobs,
+        latestSynthesisJobId: latestJobIdWithArtifact(jobList.jobs, "synthesis/result.json"),
+        operatorStatus,
+        synthResult,
+        isSimulating: false,
+      });
     } catch (e) { set({ error: e instanceof Error ? e.message : String(e), isSimulating: false }); }
   },
 
   runMultiTargetSynthesis: async () => {
     const s = get();
     if (!s.svSource && !s.verilogSrc) { set({ error: "Generate Verilog first" }); return; }
-    set({ isSimulating: true, error: null, activeTab: "synth" });
+    set({
+      isSimulating: true,
+      error: null,
+      activeTab: "synth",
+      latestMultiTargetSynthesisJobId: null,
+      synthResult: null,
+      synthesisEvidenceBundle: null,
+      synthesisEvidenceBundleError: null,
+    });
     try {
       const verilog = s.svSource || s.verilogSrc;
       const multiTargetResult = await runMultiTargetSynthesis(verilog);
-      set({ multiTargetResult, isSimulating: false });
+      const [operatorStatus, jobList] = await Promise.all([
+        fetchStudioOperatorStatus(),
+        fetchStudioJobs(),
+      ]);
+      set({
+        auditStatus: operatorStatus.audit,
+        jobRecords: jobList.jobs,
+        jobStatus: operatorStatus.jobs,
+        latestMultiTargetSynthesisJobId: latestJobIdWithArtifact(
+          jobList.jobs,
+          "synthesis/multi-target-result.json",
+        ),
+        multiTargetResult,
+        operatorStatus,
+        isSimulating: false,
+      });
     } catch (e) { set({ error: e instanceof Error ? e.message : String(e), isSimulating: false }); }
   },
 

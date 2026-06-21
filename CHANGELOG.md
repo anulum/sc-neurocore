@@ -48,6 +48,11 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
   and portability. Added `docs/api/gpfa.md` describing the deterministic init, the
   structured EM contract, the five backends and the benchmark.
 
+### Studio platform
+- The FPGA synthesis panel can export a synthesis-scoped evidence bundle from
+  the latest single-target or all-target worker job, list the bundle artefacts,
+  and download them through the authenticated Studio job-artifact route.
+
 ### Public bitstream-inference API
 - Restored a stable public stochastic-inference surface over caller-owned packed
   weight bitstreams. `sc_neurocore.accel.sc_forward(weights_packed, input_probs,
