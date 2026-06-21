@@ -73,6 +73,12 @@ import {
   syncStoredStudioAuthToken,
 } from "../studioAuthSession";
 import {
+  auditExportLoadedState,
+  auditFailureState,
+  auditLoadingState,
+  auditStatusLoadedState,
+} from "../auditShell";
+import {
   readStoredStudioSessions,
   removeStudioSavedSession,
   studioSavedSessionRestoreState,
@@ -505,27 +511,21 @@ export const useStudioStore = create<StudioState>((set, get) => ({
     }
   },
   loadAuditStatus: async () => {
-    set({ auditLoading: true, auditError: null });
+    set(auditLoadingState());
     try {
       const auditStatus = await fetchStudioAuditStatus();
-      set({ auditStatus, auditLoading: false, auditError: null });
+      set(auditStatusLoadedState(auditStatus));
     } catch (error: unknown) {
-      set({
-        auditLoading: false,
-        auditError: error instanceof Error ? error.message : "Audit status check failed",
-      });
+      set(auditFailureState(error, "Audit status check failed"));
     }
   },
   loadAuditExport: async () => {
-    set({ auditLoading: true, auditError: null });
+    set(auditLoadingState());
     try {
       const auditExport = await fetchStudioAuditExport(100);
-      set({ auditExport, auditLoading: false, auditError: null });
+      set(auditExportLoadedState(auditExport));
     } catch (error: unknown) {
-      set({
-        auditLoading: false,
-        auditError: error instanceof Error ? error.message : "Audit export failed",
-      });
+      set(auditFailureState(error, "Audit export failed"));
     }
   },
   createAuditQuarantineArchive: async (limit) => {

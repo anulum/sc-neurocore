@@ -1,4 +1,4 @@
-import type { StudioAuditExport } from "./api/client";
+import type { StudioAuditExport, StudioAuditStatus } from "./api/client";
 
 export interface AuditExportSummary {
   total: number;
@@ -18,6 +18,38 @@ export interface AuditExportSummary {
   latestTimestamp: string | null;
   headline: string;
 }
+
+export interface AuditLoadingStatePatch {
+  auditError: null;
+  auditLoading: true;
+}
+
+export interface AuditStatusLoadedStatePatch {
+  auditError: null;
+  auditLoading: false;
+  auditStatus: StudioAuditStatus;
+}
+
+export interface AuditExportLoadedStatePatch {
+  auditError: null;
+  auditExport: StudioAuditExport;
+  auditLoading: false;
+}
+
+export interface AuditFailureStatePatch {
+  auditError: string;
+  auditLoading: false;
+}
+
+export type AuditStatusStatePatch =
+  | AuditFailureStatePatch
+  | AuditLoadingStatePatch
+  | AuditStatusLoadedStatePatch;
+
+export type AuditExportStatePatch =
+  | AuditExportLoadedStatePatch
+  | AuditFailureStatePatch
+  | AuditLoadingStatePatch;
 
 /** Derive operator-facing audit export statistics from the backend payload. */
 export function summarizeAuditExport(
@@ -85,6 +117,45 @@ export function summarizeAuditExport(
     latestIdentityLifecycleAction: latestIdentityLifecycle?.action ?? null,
     latestTimestamp: latest?.timestamp_utc ?? null,
     headline: `${exportPayload.event_count} events, ${denied} denied`,
+  };
+}
+
+export function auditLoadingState(): AuditLoadingStatePatch {
+  return {
+    auditError: null,
+    auditLoading: true,
+  };
+}
+
+export function auditStatusLoadedState(
+  auditStatus: StudioAuditStatus,
+): AuditStatusLoadedStatePatch {
+  return {
+    auditError: null,
+    auditLoading: false,
+    auditStatus,
+  };
+}
+
+export function auditExportLoadedState(
+  auditExport: StudioAuditExport,
+): AuditExportLoadedStatePatch {
+  return {
+    auditError: null,
+    auditExport,
+    auditLoading: false,
+  };
+}
+
+export function auditFailureState(
+  error: unknown,
+  fallbackMessage: string,
+): AuditFailureStatePatch {
+  return {
+    auditError: error instanceof Error && error.message.length > 0
+      ? error.message
+      : fallbackMessage,
+    auditLoading: false,
   };
 }
 
