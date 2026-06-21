@@ -125,8 +125,9 @@ def _scc_python(a: np.ndarray[Any, Any], b: np.ndarray[Any, Any]) -> float:
         denominator = min(pa, pb) - (pa * pb)
     else:
         denominator = (pa * pb) - max(0.0, pa + pb - 1.0)
-    if abs(denominator) < 1e-12:
-        return 0.0
+    # A zero denominator only arises at the pa/pb boundaries (0 or 1), which force
+    # p_and == pa*pb and so a zero numerator handled above; the clamp below also
+    # bounds any residual tiny-denominator ratio.
     return max(-1.0, min(1.0, numerator / denominator))
 
 

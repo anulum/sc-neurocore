@@ -9,7 +9,7 @@
     "python_model_classes": 157,
     "python_model_source_modules": 151,
     "rust_pyo3_model_wrappers": 175,
-    "test_files": 846
+    "test_files": 847
   },
   "documentation": {
     "public_pages": [
@@ -2511,6 +2511,7 @@
       "tests/test_stochastic_core_properties.py",
       "tests/test_stochastic_doctor/test_diagnostics.py",
       "tests/test_stochastic_doctor/test_diagnostics_branches.py",
+      "tests/test_stochastic_doctor_diagnostics_fallback.py",
       "tests/test_stochastic_lif.py",
       "tests/test_streaming_spike_codec.py",
       "tests/test_structured_logging.py",
