@@ -179,6 +179,10 @@ import {
 } from "../trainingRestore";
 import { parseStudioTrainingStreamMessage } from "../studioTrainingStream";
 import {
+  scheduleStudioAutoSimulation,
+  type StudioAutoSimulationTimer,
+} from "../studioAutoSimulation";
+import {
   trainingCheckpointExport,
   trainingWeightRestoreVerificationExport,
 } from "../trainingExports";
@@ -282,7 +286,7 @@ import {
   type StudioNetworkParams,
 } from "../studioInputState";
 
-let debounceTimer: ReturnType<typeof setTimeout> | null = null;
+let debounceTimer: StudioAutoSimulationTimer | null = null;
 syncStoredStudioAuthToken(setStudioAuthToken);
 
 export type SourceMode = "model" | "ode";
@@ -921,8 +925,9 @@ export const useStudioStore = create<StudioState>((set, get) => ({
   },
 
   autoSimulate: () => {
-    if (debounceTimer) clearTimeout(debounceTimer);
-    debounceTimer = setTimeout(() => get().runSimulation(), 250);
+    debounceTimer = scheduleStudioAutoSimulation(debounceTimer, () => {
+      void get().runSimulation();
+    });
   },
 
   runSimulation: async () => {
