@@ -165,6 +165,145 @@ def _gpfa_log_likelihood(
     return np.float64(-0.5 * (quad + logdet + n_obs * np.log(2.0 * np.pi)))
 
 
+def gpfa_pca_init(
+    Y: np.ndarray[Any, Any], n_latents: int, bin_ms: float
+) -> tuple[np.ndarray[Any, Any], np.ndarray[Any, Any], np.ndarray[Any, Any], np.ndarray[Any, Any]]:
+    """Deterministic PCA initialisation of the GPFA parameters.
+
+    The loading matrix ``C`` is the top ``n_latents`` left singular vectors of the
+    centred data, scaled by their singular values; a fixed sign convention (each
+    column's largest-magnitude entry made positive) makes the result reproducible
+    across runs and BLAS/LAPACK implementations. This replaces the former random
+    initialisation, so every backend can start the EM from an identical ``C``.
+
+    Parameters
+    ----------
+    Y : numpy.ndarray
+        Binned spike counts, shape ``(n_neurons, n_bins)``.
+    n_latents : int
+        Number of latent dimensions.
+    bin_ms : float
+        Bin width in milliseconds, used to set the GP timescales ``tau``.
+
+    Returns
+    -------
+    tuple
+        ``(C, d, R, tau)`` — loading matrix ``(n_neurons, n_latents)``, offset
+        ``(n_neurons,)``, observation-noise covariance ``(n_neurons, n_neurons)``
+        and GP timescales ``(n_latents,)``.
+    """
+    n_neurons, n_bins = Y.shape
+    d = Y.mean(axis=1)
+    y_centered = Y - d[:, None]
+    u, s, _ = np.linalg.svd(y_centered, full_matrices=False)
+    u = u[:, :n_latents]
+    s = s[:n_latents]
+    max_abs_row = np.argmax(np.abs(u), axis=0)
+    signs = np.sign(u[max_abs_row, np.arange(u.shape[1])])
+    signs[signs == 0] = 1.0
+    c = u * signs * (s / np.sqrt(max(n_bins, 1)))
+    r = np.diag(Y.var(axis=1) + 1e-4)
+    tau = np.full(n_latents, bin_ms * 2.0)
+    return c, d, r, tau
+
+
+def gpfa_em(
+    Y: np.ndarray[Any, Any],
+    C0: np.ndarray[Any, Any],
+    d0: np.ndarray[Any, Any],
+    R0: np.ndarray[Any, Any],
+    tau: np.ndarray[Any, Any],
+    max_iter: int,
+    tol: float,
+) -> tuple[
+    np.ndarray[Any, Any],
+    np.ndarray[Any, Any],
+    np.ndarray[Any, Any],
+    np.ndarray[Any, Any],
+    list[float],
+]:
+    """Run the GPFA EM loop from a fixed initialisation (NumPy reference floor).
+
+    The GP timescales ``tau`` are held fixed, so the kernel matrices are constant
+    across iterations. Returns the filtered trajectories together with the final
+    parameters and the per-iteration marginal log-likelihoods.
+
+    Parameters
+    ----------
+    Y : numpy.ndarray
+        Binned spike counts, shape ``(n_neurons, n_bins)``.
+    C0, d0, R0 : numpy.ndarray
+        Initial loading matrix, offset and observation-noise covariance.
+    tau : numpy.ndarray
+        GP timescales, shape ``(n_latents,)``.
+    max_iter : int
+        Maximum EM iterations.
+    tol : float
+        Convergence tolerance on the log-likelihood increment.
+
+    Returns
+    -------
+    tuple
+        ``(trajectories, C, d, R, log_likelihoods)``.
+    """
+    n_latents = int(C0.shape[1])
+    n_bins = int(Y.shape[1])
+    k_all = [_gp_kernel(n_bins, float(tau[j])) for j in range(n_latents)]
+
+    C = C0.astype(np.float64, copy=True)
+    d = d0.astype(np.float64, copy=True)
+    R = R0.astype(np.float64, copy=True)
+
+    log_liks: list[float] = []
+    x_post = np.zeros((n_latents, n_bins), dtype=np.float64)
+    for _ in range(max_iter):
+        x_post, xx_post = _gpfa_e_step(Y, C, d, R, k_all)
+        C, d, R = _gpfa_m_step(Y, x_post, xx_post)
+        log_liks.append(float(_gpfa_log_likelihood(Y, C, d, R, k_all)))
+        if len(log_liks) > 1 and abs(log_liks[-1] - log_liks[-2]) < tol:
+            break
+
+    return x_post, C, d, R, log_liks
+
+
+def _gpfa_em_dispatch(
+    Y: np.ndarray[Any, Any],
+    C0: np.ndarray[Any, Any],
+    d0: np.ndarray[Any, Any],
+    R0: np.ndarray[Any, Any],
+    tau: np.ndarray[Any, Any],
+    max_iter: int,
+    tol: float,
+    backend: str,
+) -> tuple[
+    np.ndarray[Any, Any],
+    np.ndarray[Any, Any],
+    np.ndarray[Any, Any],
+    np.ndarray[Any, Any],
+    list[float],
+]:
+    """Run the GPFA EM loop on the requested backend.
+
+    The deterministic initialisation (see :func:`gpfa_pca_init`) lets every backend
+    share an identical starting point. This revision ships the NumPy reference;
+    the Rust, Julia, Go and Mojo backends bind to the same ``gpfa_em`` contract and
+    are wired in as they land.
+    """
+    if backend not in ("auto", "python"):
+        raise ValueError(f"GPFA backend {backend!r} is not available; only 'python' is built")
+    return gpfa_em(Y, C0, d0, R0, tau, max_iter, tol)
+
+
+def _bin_trains(
+    trains: list[np.ndarray[Any, Any]], bin_ms: float, dt: float
+) -> np.ndarray[Any, Any]:
+    """Bin parallel spike trains into an aligned ``(n_neurons, n_bins)`` matrix."""
+    bin_steps = max(1, int(bin_ms / (dt * 1000)))
+    binned = [bin_spike_train(t, bin_steps).astype(np.float64) for t in trains]
+    min_bins = min(b.size for b in binned)
+    return np.array([b[:min_bins] for b in binned])
+
+
 def gpfa(
     trains: list[np.ndarray[Any, Any]],
     n_latents: int = 3,
@@ -173,8 +312,37 @@ def gpfa(
     max_iter: int = 50,
     tol: float = 1e-4,
     seed: int = 42,
+    backend: str = "auto",
 ) -> dict[str, Any]:
-    """Extract smooth latent trajectories from parallel spike trains via EM."""
+    """Extract smooth latent trajectories from parallel spike trains via EM.
+
+    The initialisation is deterministic (PCA, see :func:`gpfa_pca_init`), so the
+    result is reproducible and identical across acceleration backends up to
+    floating-point round-off. ``seed`` is retained for API compatibility but no
+    longer affects the result.
+
+    Parameters
+    ----------
+    trains : list of numpy.ndarray
+        Parallel binary/integer spike trains.
+    n_latents : int, optional
+        Number of latent dimensions (clamped to ``min(n_neurons, n_bins)``).
+    bin_ms, dt : float, optional
+        Bin width (ms) and simulation timestep (s).
+    max_iter, tol : int, float, optional
+        EM iteration cap and log-likelihood convergence tolerance.
+    seed : int, optional
+        Retained for API compatibility; initialisation is deterministic.
+    backend : str, optional
+        ``"auto"`` selects the fastest available backend; ``"python"`` forces the
+        NumPy reference.
+
+    Returns
+    -------
+    dict
+        Keys ``trajectories``, ``C``, ``d``, ``R``, ``log_likelihoods``, ``tau``.
+    """
+    del seed  # initialisation is deterministic; retained only for API compatibility
     n_neurons = len(trains)
     if n_neurons == 0:
         return {
@@ -186,33 +354,12 @@ def gpfa(
             "tau": np.array([]),
         }
 
-    bin_steps = max(1, int(bin_ms / (dt * 1000)))
-    binned = [bin_spike_train(t, bin_steps).astype(np.float64) for t in trains]
-    min_bins = min(b.size for b in binned)
-    Y = np.array([b[:min_bins] for b in binned])  # (n_neurons, n_bins)
+    Y = _bin_trains(trains, bin_ms, dt)
     n_bins = Y.shape[1]
-
     n_latents = min(n_latents, n_neurons, n_bins)
-    rng = np.random.default_rng(seed)
 
-    # Initialize
-    C = rng.normal(0, 0.1, (n_neurons, n_latents))
-    d = Y.mean(axis=1)
-    R = np.diag(Y.var(axis=1) + 1e-4)
-    tau = np.full(n_latents, bin_ms * 2.0)  # GP timescales in bin units
-
-    log_liks = []
-    for iteration in range(max_iter):
-        K_all = [_gp_kernel(n_bins, tau[j]) for j in range(n_latents)]
-
-        x_post, xx_post = _gpfa_e_step(Y, C, d, R, K_all)
-        C, d, R = _gpfa_m_step(Y, x_post, xx_post)
-
-        ll = _gpfa_log_likelihood(Y, C, d, R, K_all)
-        log_liks.append(float(ll))
-
-        if len(log_liks) > 1 and abs(log_liks[-1] - log_liks[-2]) < tol:
-            break
+    C0, d0, R0, tau = gpfa_pca_init(Y, n_latents, bin_ms)
+    x_post, C, d, R, log_liks = _gpfa_em_dispatch(Y, C0, d0, R0, tau, max_iter, tol, backend)
 
     return {
         "trajectories": x_post,

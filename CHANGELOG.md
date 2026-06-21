@@ -4,6 +4,16 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+### Physics and mathematics hardening
+- GPFA (Gaussian Process Factor Analysis) now uses a deterministic PCA
+  initialisation (top singular vectors of the centred data with a fixed sign
+  convention) instead of a random one, so results are reproducible and
+  seed-independent. The EM loop is factored into reusable `gpfa_pca_init` and
+  `gpfa_em` entry points with a backend dispatch contract that lets acceleration
+  backends share an identical starting point, and the marginal log-likelihood is
+  the exact Gaussian form. Added a full reference test suite (deterministic init,
+  EM convergence, exact log-likelihood and its non-PSD guard, projection, dispatch).
+
 ### Public bitstream-inference API
 - Restored a stable public stochastic-inference surface over caller-owned packed
   weight bitstreams. `sc_neurocore.accel.sc_forward(weights_packed, input_probs,
@@ -41,6 +51,8 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
   convention) in `docs/formal/timing_aware_properties.md`.
 
 ### Studio platform
+- Added an admin-gated Studio audit quarantine archive retention endpoint that
+  inventories valid archive jobs and marks non-destructive prune candidates.
 - Added an admin-gated Studio audit quarantine archive validation endpoint for
   path-free import and restore preflight checks.
 - Added an admin-gated Studio audit quarantine archive job that persists
