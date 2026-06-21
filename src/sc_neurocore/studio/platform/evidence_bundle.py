@@ -330,6 +330,14 @@ def _bundle_summary(
         "entry_count": len(entries),
         "entry_type_counts": dict(sorted(entry_type_counts.items())),
         "evidence_classification_counts": dict(sorted(evidence_classification_counts.items())),
+        "known_evidence_classifications": cast(
+            list[JsonValue],
+            sorted(STUDIO_EVIDENCE_CLASSIFICATIONS),
+        ),
+        "known_terminal_statuses": cast(
+            list[JsonValue],
+            sorted(STUDIO_EVIDENCE_TERMINAL_STATUSES),
+        ),
         "source_job_count": len(job_records),
         "source_job_kind_counts": dict(sorted(source_job_kind_counts.items())),
         "source_job_owner_counts": dict(sorted(source_job_owner_counts.items())),

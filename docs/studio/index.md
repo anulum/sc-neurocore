@@ -254,7 +254,9 @@ runtime features:
   `training`. Terminal evidence statuses are `completed`, `failed`,
   `cancelled`, and `timed_out`. Bundle writers, action-evidence writers, and
   manifest validators reject unknown classes or non-terminal statuses before
-  persisting evidence.
+  persisting evidence. Evidence bundle summaries include the known
+  classification and terminal-status vocabularies for Admin/UI consumers, so
+  client code can render available classes without hard-coded duplicate lists.
 - `/api/studio/jobs` and `/api/studio/jobs/{job_id}` return admin-only,
   path-free job records for the Admin panel queue view. Records include job
   status, owner, request ID, timestamps, result metadata, and artifact

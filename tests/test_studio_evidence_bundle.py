@@ -289,6 +289,21 @@ def test_write_studio_evidence_bundle_copies_project_job_audit_and_replay(
     assert evidence_classification_counts["analysis"] == 1
     assert evidence_classification_counts["compile"] == 1
     assert evidence_classification_counts["simulation"] == 1
+    assert summary["known_evidence_classifications"] == [
+        "analysis",
+        "compile",
+        "local_regression",
+        "release_benchmark",
+        "simulation",
+        "synthesis",
+        "training",
+    ]
+    assert summary["known_terminal_statuses"] == [
+        "cancelled",
+        "completed",
+        "failed",
+        "timed_out",
+    ]
     assert source_job_kind_counts["compiler"] == 1
     assert source_job_owner_counts["studio-compiler"] == 1
 
