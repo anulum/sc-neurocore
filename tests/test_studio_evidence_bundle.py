@@ -59,6 +59,7 @@ def _simulation_payload() -> dict[str, object]:
             "schema_version": "studio.simulation-run.v1",
             "source": "ode",
             "spike_count": 0,
+            "status": "completed",
             "state_variables": ["v"],
         },
         "spike_count": 0,
@@ -80,6 +81,7 @@ def _analysis_payload() -> dict[str, object]:
             "result_sha256": "4" * 64,
             "schema_version": "studio.analysis-result.v1",
             "source": "ode",
+            "status": "completed",
         },
         "currents": [0.0, 1.0],
         "rates": [0.0, 10.0],
@@ -547,6 +549,7 @@ def test_write_studio_evidence_bundle_rejects_invalid_json_and_artifact_state(
     invalid_simulation_classification["run_metadata"] = {
         "evidence_classification": "analysis",
         "schema_version": "studio.simulation-run.v1",
+        "status": "completed",
     }
     with pytest.raises(ValueError, match="classified as simulation evidence"):
         write_studio_evidence_bundle(
@@ -557,11 +560,26 @@ def test_write_studio_evidence_bundle_rejects_invalid_json_and_artifact_state(
     invalid_analysis_classification["analysis_metadata"] = {
         "evidence_classification": "simulation",
         "schema_version": "studio.analysis-result.v1",
+        "status": "completed",
     }
     with pytest.raises(ValueError, match="classified as analysis evidence"):
         write_studio_evidence_bundle(
             context,
             analysis_payloads=(invalid_analysis_classification,),
+        )
+    invalid_simulation_status = _simulation_payload()
+    cast(dict[str, object], invalid_simulation_status["run_metadata"])["status"] = "failed"
+    with pytest.raises(ValueError, match="completed evidence status"):
+        write_studio_evidence_bundle(
+            context,
+            simulation_payloads=(invalid_simulation_status,),
+        )
+    invalid_analysis_status = _analysis_payload()
+    cast(dict[str, object], invalid_analysis_status["analysis_metadata"])["status"] = "failed"
+    with pytest.raises(ValueError, match="completed evidence status"):
+        write_studio_evidence_bundle(
+            context,
+            analysis_payloads=(invalid_analysis_status,),
         )
     with pytest.raises(ValueError, match="default-flow run payload has unsupported schema"):
         write_studio_evidence_bundle(

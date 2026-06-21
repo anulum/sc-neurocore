@@ -107,6 +107,7 @@ Returns path-free save evidence:
   "saved_at": 1711504200.0,
   "schema_version": "studio.project-save.v1",
   "state_sha256": "<64 lowercase hex characters>",
+  "status": "completed",
   "version": "0.3.0"
 }
 ```

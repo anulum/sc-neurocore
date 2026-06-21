@@ -68,6 +68,7 @@ def test_build_analysis_result_manifest_returns_path_free_hashes() -> None:
         "result_sha256": _sha256_json(result),
         "schema_version": STUDIO_ANALYSIS_RESULT_SCHEMA_VERSION,
         "source": "ode",
+        "status": "completed",
     }
     assert "path" not in json.dumps(manifest, sort_keys=True).lower()
 
@@ -135,6 +136,22 @@ def test_analysis_result_manifest_rejects_unknown_evidence_classification() -> N
     )
 
     with pytest.raises(ValueError, match="classification"):
+        manifest.to_public_dict()
+
+
+def test_analysis_result_manifest_rejects_unknown_status() -> None:
+    """Analysis metadata rejects statuses outside the shared contract."""
+
+    manifest = StudioAnalysisResultManifest(
+        analysis_type="fi_curve",
+        source="ode",
+        input_sha256="0" * 64,
+        result_sha256="1" * 64,
+        output_keys=("rates",),
+        status="running",  # type: ignore[arg-type] # Invalid by design.
+    )
+
+    with pytest.raises(ValueError, match="status"):
         manifest.to_public_dict()
 
 
@@ -215,6 +232,7 @@ def test_analysis_routes_return_metadata(
     assert metadata["analysis_type"] == analysis_type
     assert metadata["source"] == source
     assert metadata["evidence_classification"] == "analysis"
+    assert metadata["status"] == "completed"
     assert isinstance(metadata["input_sha256"], str)
     assert re.fullmatch(r"[0-9a-f]{64}", metadata["input_sha256"])
     result_without_metadata = {

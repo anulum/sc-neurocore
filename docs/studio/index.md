@@ -240,14 +240,15 @@ runtime features:
 - `/api/compare`, `/api/fi-curve`, `/api/bifurcation`, `/api/sensitivity`,
   `/api/heatmap`, `/api/freq-response`, `/api/precision`, and
   `/api/nullclines` responses include `studio.analysis-result.v1` metadata
-  with the analysis type, evidence classification, source, input and result
-  SHA-256 digests, and output keys without host-local paths. Studio plot panels
-  surface those class/source/digest labels beside analysis views, and the trace
-  view surfaces the same labels from `studio.simulation-run.v1` metadata.
+  with the analysis type, evidence classification, terminal status, source,
+  input and result SHA-256 digests, and output keys without host-local paths.
+  Studio plot panels surface those class/source/status/digest labels beside
+  analysis views, and the trace view surfaces the same labels from
+  `studio.simulation-run.v1` metadata.
   Simulation, analysis, synthesis provenance, and Training Monitor evidence
-  serializers validate their evidence class through the shared Studio
-  evidence-classification contract before returning public metadata, so
-  malformed workflow metadata fails closed before export.
+  serializers validate their evidence class and terminal status through the
+  shared Studio evidence-classification contract before returning public
+  metadata, so malformed workflow metadata fails closed before export.
 - Those worker-backed compile, synthesis, PnR, and pipeline routes also write
   `studio.action-evidence.v1` manifests beside the result artifacts. These
   manifests record action kind, replay route, job ID, evidence classification,
@@ -258,14 +259,15 @@ runtime features:
   (`evidence.json` and `*-evidence.json`) against this contract and marks them
   as `action_evidence` entries in the bundle manifest.
 - Studio evidence classifications are a shared backend contract, not free-form
-  labels. Current accepted classes are `analysis`, `compile`,
+  labels. Current accepted classes are `analysis`, `compile`, `default_flow`,
   `local_regression`, `project_workspace`, `release_benchmark`, `simulation`,
   `synthesis`, and `training`. Terminal evidence statuses are `completed`,
   `failed`, `cancelled`, and `timed_out`. Bundle writers, action-evidence
   writers, and manifest validators reject unknown classes or non-terminal
-  statuses before persisting evidence. Evidence bundle summaries include the known
-  classification and terminal-status vocabularies for Admin/UI consumers, so
-  client code can render available classes without hard-coded duplicate lists.
+  statuses before persisting evidence. Evidence bundle summaries include the
+  known classification and terminal-status vocabularies for Admin/UI consumers,
+  so client code can render available classes without hard-coded duplicate
+  lists.
 - `/api/studio/jobs` and `/api/studio/jobs/{job_id}` return admin-only,
   path-free job records for the Admin panel queue view. Records include job
   status, owner, request ID, timestamps, result metadata, and artifact
@@ -558,15 +560,15 @@ Save complete workspace state (equations, parameters, network graph,
 synthesis target, training config) as JSON files. Restore any saved
 project from the sidebar. The save API returns `studio.project-save.v1`
 metadata with state and project SHA-256 digests plus the
-`project_workspace` evidence classification; it does not expose resolved
-local filesystem paths.
+`project_workspace` evidence classification and completed terminal status; it
+does not expose resolved local filesystem paths.
 
 After a save completes, the Projects panel renders the path-free evidence
-summary returned by the API: classification, project name, state digest,
-project digest, and schema version. That keeps the operator-visible save
-confirmation tied to the persisted payload without leaking host-local paths.
-Evidence bundle export revalidates the saved project shape and stores it as a
-classified `project_workspace` entry before adding it to bundle summaries.
+summary returned by the API: classification, status, project name, state
+digest, project digest, and schema version. That keeps the operator-visible
+save confirmation tied to the persisted payload without leaking host-local
+paths. Evidence bundle export revalidates the saved project shape and stores it
+as a classified `project_workspace` entry before adding it to bundle summaries.
 
 ## Detailed Guides
 

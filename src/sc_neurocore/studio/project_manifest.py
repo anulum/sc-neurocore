@@ -18,7 +18,9 @@ from typing import Any, TypeAlias
 
 from sc_neurocore.studio.evidence_classification import (
     StudioEvidenceClassification,
+    StudioEvidenceStatus,
     validate_studio_evidence_classification,
+    validate_studio_evidence_status,
 )
 
 STUDIO_PROJECT_SAVE_SCHEMA_VERSION = "studio.project-save.v1"
@@ -45,6 +47,8 @@ class StudioProjectSaveManifest:
         SHA-256 digest of the canonical full project payload JSON.
     evidence_classification:
         Stable evidence lane label for saved project workspaces.
+    status:
+        Terminal status for this project-save evidence object.
     """
 
     name: str
@@ -53,6 +57,7 @@ class StudioProjectSaveManifest:
     state_sha256: str
     project_sha256: str
     evidence_classification: StudioEvidenceClassification = "project_workspace"
+    status: StudioEvidenceStatus = "completed"
 
     def to_public_dict(self) -> dict[str, JsonValue]:
         """Return the public, path-free project save response."""
@@ -66,6 +71,7 @@ class StudioProjectSaveManifest:
             "saved_at": self.saved_at,
             "schema_version": STUDIO_PROJECT_SAVE_SCHEMA_VERSION,
             "state_sha256": self.state_sha256,
+            "status": validate_studio_evidence_status(self.status),
             "version": self.version,
         }
 

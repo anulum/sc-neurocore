@@ -85,6 +85,7 @@ def test_build_simulation_run_manifest_returns_path_free_hashes() -> None:
         "schema_version": STUDIO_SIMULATION_RUN_SCHEMA_VERSION,
         "source": "ode",
         "spike_count": 0,
+        "status": "completed",
         "state_variables": ["v"],
     }
     assert "path" not in public
@@ -176,6 +177,25 @@ def test_simulation_run_manifest_rejects_unknown_evidence_classification() -> No
         manifest.to_public_dict()
 
 
+def test_simulation_run_manifest_rejects_unknown_status() -> None:
+    """Simulation metadata rejects statuses outside the shared contract."""
+
+    manifest = StudioSimulationRunManifest(
+        source="ode",
+        input_sha256="0" * 64,
+        result_sha256="1" * 64,
+        dt=0.1,
+        n_steps=1,
+        sample_count=1,
+        spike_count=0,
+        state_variables=("v",),
+        status="running",  # type: ignore[arg-type] # Invalid by design.
+    )
+
+    with pytest.raises(ValueError, match="status"):
+        manifest.to_public_dict()
+
+
 def test_ode_simulation_endpoint_returns_run_metadata(client: TestClient) -> None:
     """ODE simulation responses include path-free reproducibility metadata."""
 
@@ -195,6 +215,7 @@ def test_ode_simulation_endpoint_returns_run_metadata(client: TestClient) -> Non
     assert metadata["schema_version"] == STUDIO_SIMULATION_RUN_SCHEMA_VERSION
     assert metadata["source"] == "ode"
     assert metadata["evidence_classification"] == "simulation"
+    assert metadata["status"] == "completed"
     assert metadata["sample_count"] == len(response.json()["time"])
     assert metadata["state_variables"] == ["v"]
     assert re.fullmatch(r"[0-9a-f]{64}", metadata["input_sha256"])
@@ -215,6 +236,7 @@ def test_model_simulation_endpoint_returns_run_metadata(client: TestClient) -> N
     assert metadata["schema_version"] == STUDIO_SIMULATION_RUN_SCHEMA_VERSION
     assert metadata["source"] == "model"
     assert metadata["evidence_classification"] == "simulation"
+    assert metadata["status"] == "completed"
     assert metadata["sample_count"] == len(response.json()["time"])
     assert re.fullmatch(r"[0-9a-f]{64}", metadata["input_sha256"])
     assert re.fullmatch(r"[0-9a-f]{64}", metadata["result_sha256"])

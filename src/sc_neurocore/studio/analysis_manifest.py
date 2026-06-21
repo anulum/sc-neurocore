@@ -18,7 +18,9 @@ from typing import Any, Literal, TypeAlias
 
 from sc_neurocore.studio.evidence_classification import (
     StudioEvidenceClassification,
+    StudioEvidenceStatus,
     validate_studio_evidence_classification,
+    validate_studio_evidence_status,
 )
 
 STUDIO_ANALYSIS_RESULT_SCHEMA_VERSION = "studio.analysis-result.v1"
@@ -46,6 +48,8 @@ class StudioAnalysisResultManifest:
         Sorted top-level keys present in the result payload before metadata.
     evidence_classification:
         Stable evidence lane label for analysis results.
+    status:
+        Terminal status for this analysis evidence object.
     """
 
     analysis_type: str
@@ -54,6 +58,7 @@ class StudioAnalysisResultManifest:
     result_sha256: str
     output_keys: tuple[str, ...]
     evidence_classification: StudioEvidenceClassification = "analysis"
+    status: StudioEvidenceStatus = "completed"
 
     def to_public_dict(self) -> dict[str, JsonValue]:
         """Return the public, path-free analysis manifest."""
@@ -68,6 +73,7 @@ class StudioAnalysisResultManifest:
             "result_sha256": self.result_sha256,
             "schema_version": STUDIO_ANALYSIS_RESULT_SCHEMA_VERSION,
             "source": self.source,
+            "status": validate_studio_evidence_status(self.status),
         }
 
 

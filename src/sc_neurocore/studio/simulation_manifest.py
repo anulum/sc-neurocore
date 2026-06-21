@@ -18,7 +18,9 @@ from typing import Any, Literal, TypeAlias
 
 from sc_neurocore.studio.evidence_classification import (
     StudioEvidenceClassification,
+    StudioEvidenceStatus,
     validate_studio_evidence_classification,
+    validate_studio_evidence_status,
 )
 
 STUDIO_SIMULATION_RUN_SCHEMA_VERSION = "studio.simulation-run.v1"
@@ -52,6 +54,8 @@ class StudioSimulationRunManifest:
         Sorted state variable names returned in the result payload.
     evidence_classification:
         Stable evidence lane label for simulation runs.
+    status:
+        Terminal status for this simulation evidence object.
     """
 
     source: SimulationSource
@@ -63,6 +67,7 @@ class StudioSimulationRunManifest:
     spike_count: int
     state_variables: tuple[str, ...]
     evidence_classification: StudioEvidenceClassification = "simulation"
+    status: StudioEvidenceStatus = "completed"
 
     def to_public_dict(self) -> dict[str, JsonValue]:
         """Return the public, path-free simulation run manifest."""
@@ -79,6 +84,7 @@ class StudioSimulationRunManifest:
             "schema_version": STUDIO_SIMULATION_RUN_SCHEMA_VERSION,
             "source": self.source,
             "spike_count": self.spike_count,
+            "status": validate_studio_evidence_status(self.status),
             "state_variables": list(self.state_variables),
         }
 

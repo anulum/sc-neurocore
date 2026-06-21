@@ -422,6 +422,8 @@ def _simulation_result_payload(payload: Mapping[str, object]) -> dict[str, JsonV
     evidence_classification = metadata.get("evidence_classification")
     if evidence_classification != validate_studio_evidence_classification("simulation"):
         raise ValueError("Studio simulation payload must be classified as simulation evidence.")
+    if metadata.get("status") != validate_studio_evidence_status("completed"):
+        raise ValueError("Studio simulation payload must have completed evidence status.")
     return result
 
 
@@ -436,6 +438,8 @@ def _analysis_result_payload(payload: Mapping[str, object]) -> dict[str, JsonVal
     evidence_classification = metadata.get("evidence_classification")
     if evidence_classification != validate_studio_evidence_classification("analysis"):
         raise ValueError("Studio analysis payload must be classified as analysis evidence.")
+    if metadata.get("status") != validate_studio_evidence_status("completed"):
+        raise ValueError("Studio analysis payload must have completed evidence status.")
     return result
 
 

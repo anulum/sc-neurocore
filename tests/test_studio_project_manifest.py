@@ -67,6 +67,7 @@ def test_build_project_save_manifest_returns_path_free_digests() -> None:
                 sort_keys=True,
             ).encode("utf-8")
         ).hexdigest(),
+        "status": "completed",
         "version": "0.3.0",
     }
     assert "path" not in public
@@ -96,6 +97,22 @@ def test_project_save_manifest_rejects_unknown_evidence_classification() -> None
     )
 
     with pytest.raises(ValueError, match="classification"):
+        manifest.to_public_dict()
+
+
+def test_project_save_manifest_rejects_unknown_status() -> None:
+    """Project save manifests use the shared terminal-status contract."""
+
+    manifest = StudioProjectSaveManifest(
+        name="demo",
+        saved_at=1.0,
+        version="0.3.0",
+        state_sha256="0" * 64,
+        project_sha256="1" * 64,
+        status="running",  # type: ignore[arg-type]  # Invalid by design.
+    )
+
+    with pytest.raises(ValueError, match="status"):
         manifest.to_public_dict()
 
 

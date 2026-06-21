@@ -49,6 +49,7 @@ class TestProjectSaveLoad:
         assert result["name"] == "test_proj"
         assert result["schema_version"] == "studio.project-save.v1"
         assert result["evidence_classification"] == "project_workspace"
+        assert result["status"] == "completed"
         assert re.fullmatch(r"[0-9a-f]{64}", result["state_sha256"])
         assert re.fullmatch(r"[0-9a-f]{64}", result["project_sha256"])
         assert "saved_at" in result
@@ -312,6 +313,7 @@ class TestEndpoints:
         assert data["name"] == "endpoint_test"
         assert data["schema_version"] == "studio.project-save.v1"
         assert data["evidence_classification"] == "project_workspace"
+        assert data["status"] == "completed"
         assert re.fullmatch(r"[0-9a-f]{64}", data["state_sha256"])
         assert re.fullmatch(r"[0-9a-f]{64}", data["project_sha256"])
         assert "path" not in data
