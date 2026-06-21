@@ -21,7 +21,7 @@ from __future__ import annotations
 from collections.abc import Mapping
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any
+from typing import Any, cast
 
 import json
 
@@ -249,7 +249,7 @@ def _required_int(payload: Mapping[str, Any], key: str, source: str) -> int:
     value = payload[key]
     if isinstance(value, bool) or not isinstance(value, int):
         raise ValueError(f"{source}: {key} must be an integer")
-    return value
+    return cast(int, value)
 
 
 def _required_positive_float(payload: Mapping[str, Any], key: str, source: str) -> float:

@@ -419,7 +419,7 @@ def _expect_mapping(value: Any, label: str) -> Mapping[str, Any]:
 def _expect_sequence(value: Any, label: str) -> Sequence[Any]:
     if isinstance(value, str) or not isinstance(value, Sequence):
         raise MLPerfSCValidationError(f"{label} must be a sequence")
-    return value
+    return cast(Sequence[Any], value)
 
 
 def _expect_non_empty_string(value: Any, label: str) -> str:
@@ -431,7 +431,7 @@ def _expect_non_empty_string(value: Any, label: str) -> str:
 def _expect_int(value: Any, label: str) -> int:
     if isinstance(value, bool) or not isinstance(value, int):
         raise MLPerfSCValidationError(f"{label} must be an integer")
-    return value
+    return cast(int, value)
 
 
 def _expect_optional_non_negative_int(value: Any, label: str) -> int | None:
