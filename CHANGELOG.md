@@ -18,6 +18,9 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
   residual-sum form), so it agrees with the NumPy reference to within float64
   round-off (same iteration count, trajectories within ~1e-10). The accelerated
   path is selected automatically; a parity test gates the agreement.
+- GPFA Julia backend (`accel/julia/analysis/gpfa.jl`, previously a stub) implements
+  the same EM-from-initialisation contract and agrees with the NumPy reference to
+  within ~1e-12; selectable via `backend="julia"`, gated parity test included.
 
 ### Public bitstream-inference API
 - Restored a stable public stochastic-inference surface over caller-owned packed

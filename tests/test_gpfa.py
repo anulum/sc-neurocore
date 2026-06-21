@@ -36,6 +36,7 @@ from sc_neurocore.analysis.spike_stats.gpfa import (
 )
 
 _RUST_AVAILABLE = _rust_gpfa_em is not None
+_JULIA_AVAILABLE = importlib.util.find_spec("juliacall") is not None
 
 
 def _synthetic_trains(n_neurons: int = 8, n_samples: int = 600, seed: int = 0) -> list[np.ndarray]:
@@ -193,6 +194,45 @@ class TestRustParity:
         auto = gpfa(trains, n_latents=2, bin_ms=20.0, max_iter=20, backend="auto")
         rust = gpfa(trains, n_latents=2, bin_ms=20.0, max_iter=20, backend="rust")
         npt.assert_array_equal(auto["trajectories"], rust["trajectories"])
+
+
+@pytest.mark.skipif(not _JULIA_AVAILABLE, reason="juliacall not installed")
+class TestJuliaParity:
+    """The Julia backend matches the NumPy reference up to float64 round-off."""
+
+    def test_full_pipeline_parity(self) -> None:
+        trains = _synthetic_trains(6, 400)
+        py = gpfa(trains, n_latents=2, bin_ms=20.0, max_iter=30, backend="python")
+        ju = gpfa(trains, n_latents=2, bin_ms=20.0, max_iter=30, backend="julia")
+        assert len(py["log_likelihoods"]) == len(ju["log_likelihoods"])
+        npt.assert_allclose(ju["trajectories"], py["trajectories"], atol=1e-8)
+        npt.assert_allclose(ju["C"], py["C"], atol=1e-8)
+        npt.assert_allclose(ju["R"], py["R"], atol=1e-9)
+        npt.assert_allclose(ju["log_likelihoods"], py["log_likelihoods"], atol=1e-6)
+
+    def test_ensure_julia_is_cached(self) -> None:
+        assert _GPFA_MODULE._ensure_julia_gpfa() is True
+        assert _GPFA_MODULE._ensure_julia_gpfa() is True
+
+
+def test_ensure_julia_false_without_juliacall(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(_GPFA_MODULE, "_julia_gpfa", None)
+    monkeypatch.setattr(_GPFA_MODULE._importlib_util, "find_spec", lambda _name: None)
+    assert _GPFA_MODULE._ensure_julia_gpfa() is False
+
+
+def test_ensure_julia_false_when_module_file_missing(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(_GPFA_MODULE, "_julia_gpfa", None)
+    monkeypatch.setattr(_GPFA_MODULE._importlib_util, "find_spec", lambda _name: object())
+    monkeypatch.setattr(_GPFA_MODULE._os.path, "isfile", lambda _path: False)
+    assert _GPFA_MODULE._ensure_julia_gpfa() is False
+
+
+def test_julia_backend_raises_when_unavailable(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(_GPFA_MODULE, "_ensure_julia_gpfa", lambda: False)
+    trains = _synthetic_trains(n_neurons=3, n_samples=120)
+    with pytest.raises(RuntimeError, match="Julia GPFA backend is not available"):
+        gpfa(trains, n_latents=2, bin_ms=20.0, max_iter=3, backend="julia")
 
 
 def test_rust_probe_returns_none_when_engine_missing(monkeypatch: pytest.MonkeyPatch) -> None:

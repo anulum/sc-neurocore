@@ -19,6 +19,8 @@ counts via EM with squared-exponential GP priors on latent dimensions.
 from __future__ import annotations
 
 import importlib as _importlib
+import importlib.util as _importlib_util
+import os as _os
 from typing import Any
 
 import numpy as np
@@ -36,6 +38,31 @@ def _load_rust_gpfa_em() -> Any | None:
 
 # Rust acceleration backend — probed at import (the wheel import is cheap).
 _rust_gpfa_em: Any | None = _load_rust_gpfa_em()
+
+# Julia backend — loaded lazily on first explicit request (Julia startup ~5 s).
+_julia_gpfa: Any | None = None
+
+
+def _ensure_julia_gpfa() -> bool:
+    """Lazy-load the Julia GPFA module, returning ``True`` when available."""
+    global _julia_gpfa
+    if _julia_gpfa is not None:
+        return True
+    if _importlib_util.find_spec("juliacall") is None:
+        return False
+    jl_path = _os.path.join(
+        _os.path.dirname(_os.path.dirname(_os.path.dirname(__file__))),
+        "accel",
+        "julia",
+        "analysis",
+        "gpfa.jl",
+    )
+    if not _os.path.isfile(jl_path):
+        return False
+    jl = _importlib.import_module("juliacall").Main
+    jl.include(jl_path)
+    _julia_gpfa = jl.GpfaAccel
+    return True
 
 
 def _gp_kernel(n_bins: int, tau: float, sigma: float = 1.0) -> np.ndarray[Any, Any]:
@@ -319,6 +346,41 @@ def _run_rust_gpfa_em(
     )
 
 
+def _run_julia_gpfa_em(
+    Y: np.ndarray[Any, Any],
+    C0: np.ndarray[Any, Any],
+    d0: np.ndarray[Any, Any],
+    R0: np.ndarray[Any, Any],
+    tau: np.ndarray[Any, Any],
+    max_iter: int,
+    tol: float,
+) -> tuple[
+    np.ndarray[Any, Any],
+    np.ndarray[Any, Any],
+    np.ndarray[Any, Any],
+    np.ndarray[Any, Any],
+    list[float],
+]:
+    """Dispatch the EM loop to the Julia backend and rebuild NumPy outputs."""
+    assert _julia_gpfa is not None
+    result = _julia_gpfa.gpfa_em(
+        np.ascontiguousarray(Y, dtype=np.float64),
+        np.ascontiguousarray(C0, dtype=np.float64),
+        np.ascontiguousarray(d0, dtype=np.float64),
+        np.ascontiguousarray(np.diag(R0), dtype=np.float64),
+        np.ascontiguousarray(tau, dtype=np.float64),
+        int(max_iter),
+        float(tol),
+    )
+    return (
+        np.asarray(result.trajectories, dtype=np.float64),
+        np.asarray(result.C, dtype=np.float64),
+        np.asarray(result.d, dtype=np.float64),
+        np.diag(np.asarray(result.R_diag, dtype=np.float64)),
+        [float(v) for v in result.log_liks],
+    )
+
+
 def _gpfa_em_dispatch(
     Y: np.ndarray[Any, Any],
     C0: np.ndarray[Any, Any],
@@ -339,15 +401,19 @@ def _gpfa_em_dispatch(
 
     The deterministic initialisation (see :func:`gpfa_pca_init`) lets every backend
     share an identical starting point. The Rust path and the NumPy reference agree
-    up to floating-point round-off; the Julia, Go and Mojo backends bind to the same
-    ``gpfa_em`` contract and are wired in as they land.
+    up to floating-point round-off; the Julia backend binds the same ``gpfa_em``
+    contract, and Go and Mojo are wired in as they land.
     """
-    if backend not in ("auto", "python", "rust"):
+    if backend not in ("auto", "python", "rust", "julia"):
         raise ValueError(f"GPFA backend {backend!r} is not available")
     if backend in ("auto", "rust") and _rust_gpfa_em is not None:
         return _run_rust_gpfa_em(Y, C0, d0, R0, tau, max_iter, tol)
     if backend == "rust":
         raise RuntimeError("Rust GPFA backend is not available in this environment")
+    if backend == "julia":
+        if not _ensure_julia_gpfa():
+            raise RuntimeError("Julia GPFA backend is not available")
+        return _run_julia_gpfa_em(Y, C0, d0, R0, tau, max_iter, tol)
     return gpfa_em(Y, C0, d0, R0, tau, max_iter, tol)
 
 
