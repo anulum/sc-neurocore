@@ -6,302 +6,77 @@
 // Contact: www.anulum.li | protoscience@anulum.li
 // SC-NeuroCore — Granger causality and directed connectivity measures
 
+use nalgebra::{Cholesky, Complex, DMatrix};
 use rayon::prelude::*;
 use std::f64::consts::PI;
 
 use super::basic::bin_spike_train;
 
-// ── Small-matrix linear algebra (real) ──────────────────────────────
+// ── Structured linear algebra (nalgebra-backed) ─────────────────────
 
-/// Solve A x = b via Gaussian elimination with partial pivoting.
-/// A is n×n (row-major flat), b is n-length. Returns x.
-fn solve_linear(a: &[f64], b: &[f64], n: usize) -> Vec<f64> {
-    let mut aug = vec![0.0_f64; n * (n + 1)];
-    for i in 0..n {
-        for j in 0..n {
-            aug[i * (n + 1) + j] = a[i * n + j];
-        }
-        aug[i * (n + 1) + n] = b[i];
-    }
-    let stride = n + 1;
-
-    for col in 0..n {
-        // Partial pivoting
-        let mut max_row = col;
-        let mut max_val = aug[col * stride + col].abs();
-        for row in (col + 1)..n {
-            let v = aug[row * stride + col].abs();
-            if v > max_val {
-                max_val = v;
-                max_row = row;
-            }
-        }
-        if max_row != col {
-            for j in 0..stride {
-                aug.swap(col * stride + j, max_row * stride + j);
-            }
-        }
-        let pivot = aug[col * stride + col];
-        if pivot.abs() < 1e-30 {
-            continue;
-        }
-        for row in (col + 1)..n {
-            let factor = aug[row * stride + col] / pivot;
-            let mut j = col;
-            let r_off = row * stride;
-            let c_off = col * stride;
-            while j + 3 < stride {
-                aug[r_off + j] -= factor * aug[c_off + j];
-                aug[r_off + j + 1] -= factor * aug[c_off + j + 1];
-                aug[r_off + j + 2] -= factor * aug[c_off + j + 2];
-                aug[r_off + j + 3] -= factor * aug[c_off + j + 3];
-                j += 4;
-            }
-            while j < stride {
-                aug[r_off + j] -= factor * aug[c_off + j];
-                j += 1;
-            }
-        }
-    }
-
-    // Back substitution
-    let mut x = vec![0.0_f64; n];
-    for i in (0..n).rev() {
-        let mut sum = aug[i * stride + n];
-        for j in (i + 1)..n {
-            sum -= aug[i * stride + j] * x[j];
-        }
-        let diag = aug[i * stride + i];
-        x[i] = if diag.abs() > 1e-30 { sum / diag } else { 0.0 };
-    }
-    x
-}
-
-/// Solve A X = B where A is n×n and B is n×m. Returns X (n×m, row-major).
-fn solve_matrix(a: &[f64], b: &[f64], n: usize, m: usize) -> Vec<f64> {
-    let result = vec![0.0_f64; n * m];
-    (0..m).into_par_iter().for_each(|col| {
-        let rhs: Vec<f64> = (0..n).map(|i| b[i * m + col]).collect();
-        let x = solve_linear(a, &rhs, n);
-        // SAFETY: Each thread writes to unique indices based on col.
-        unsafe {
-            let ptr = result.as_ptr() as *mut f64;
+/// Solve the symmetric positive-definite system `S X = B` via Cholesky
+/// factorisation. `S` (n×n, row-major) is a ridge-regularised normal-equations
+/// matrix `XᵀX + εI`, which is positive-definite for any `ε > 0`; `B` is n×m,
+/// row-major. Returns `X` (n×m, row-major).
+///
+/// Cholesky is the numerically-optimal factorisation for an SPD system — half
+/// the arithmetic of LU and unconditionally stable without pivoting — and a
+/// single factorisation solves every right-hand-side column at once. Falls back
+/// to a zero solution if `S` is not positive-definite; this cannot occur while
+/// the `ε` ridge is present but keeps the solve total for degenerate inputs.
+fn solve_spd(s: &[f64], b: &[f64], n: usize, m: usize) -> Vec<f64> {
+    let s_mat = DMatrix::<f64>::from_row_slice(n, n, s);
+    let b_mat = DMatrix::<f64>::from_row_slice(n, m, b);
+    match Cholesky::new(s_mat) {
+        Some(chol) => {
+            let x = chol.solve(&b_mat);
+            let mut out = vec![0.0_f64; n * m];
             for i in 0..n {
-                *ptr.add(i * m + col) = x[i];
+                for j in 0..m {
+                    out[i * m + j] = x[(i, j)];
+                }
             }
+            out
         }
-    });
-    result
-}
-
-// ── Small-matrix linear algebra (complex) ───────────────────────────
-
-#[derive(Clone, Copy)]
-struct C64 {
-    re: f64,
-    im: f64,
-}
-
-impl C64 {
-    fn new(re: f64, im: f64) -> Self {
-        Self { re, im }
-    }
-    fn zero() -> Self {
-        Self { re: 0.0, im: 0.0 }
-    }
-    fn one() -> Self {
-        Self { re: 1.0, im: 0.0 }
-    }
-    fn norm_sq(self) -> f64 {
-        self.re * self.re + self.im * self.im
-    }
-    fn abs(self) -> f64 {
-        self.norm_sq().sqrt()
-    }
-    fn conj(self) -> Self {
-        Self {
-            re: self.re,
-            im: -self.im,
-        }
+        None => vec![0.0_f64; n * m],
     }
 }
 
-impl std::ops::Add for C64 {
-    type Output = Self;
-    fn add(self, rhs: Self) -> Self {
-        Self {
-            re: self.re + rhs.re,
-            im: self.im + rhs.im,
-        }
-    }
-}
-
-impl std::ops::Sub for C64 {
-    type Output = Self;
-    fn sub(self, rhs: Self) -> Self {
-        Self {
-            re: self.re - rhs.re,
-            im: self.im - rhs.im,
-        }
-    }
-}
-
-impl std::ops::Mul for C64 {
-    type Output = Self;
-    fn mul(self, rhs: Self) -> Self {
-        Self {
-            re: self.re * rhs.re - self.im * rhs.im,
-            im: self.re * rhs.im + self.im * rhs.re,
-        }
-    }
-}
-
-impl std::ops::Mul<f64> for C64 {
-    type Output = Self;
-    fn mul(self, rhs: f64) -> Self {
-        Self {
-            re: self.re * rhs,
-            im: self.im * rhs,
-        }
-    }
-}
-
-impl std::ops::AddAssign for C64 {
-    fn add_assign(&mut self, rhs: Self) {
-        self.re += rhs.re;
-        self.im += rhs.im;
-    }
-}
-
-impl std::ops::SubAssign for C64 {
-    fn sub_assign(&mut self, rhs: Self) {
-        self.re -= rhs.re;
-        self.im -= rhs.im;
-    }
-}
-
-/// Complex matrix multiply: C = A * B, all d×d row-major.
-fn cmat_mul(a: &[C64], b: &[C64], d: usize) -> Vec<C64> {
-    let mut c = vec![C64::zero(); d * d];
-    for i in 0..d {
-        for j in 0..d {
-            let mut s = C64::zero();
-            for k in 0..d {
-                s += a[i * d + k] * b[k * d + j];
-            }
-            c[i * d + j] = s;
-        }
-    }
-    c
-}
-
-/// Complex matrix inverse via Gauss-Jordan, d×d row-major.
-fn cmat_inv(a: &[C64], d: usize) -> Option<Vec<C64>> {
-    let mut aug = vec![C64::zero(); d * 2 * d];
-    for i in 0..d {
-        for j in 0..d {
-            aug[i * 2 * d + j] = a[i * d + j];
-        }
-        aug[i * 2 * d + d + i] = C64::one();
-    }
-    let w = 2 * d;
-    for col in 0..d {
-        // Pivot
-        let mut max_row = col;
-        let mut max_val = aug[col * w + col].abs();
-        for row in (col + 1)..d {
-            let v = aug[row * w + col].abs();
-            if v > max_val {
-                max_val = v;
-                max_row = row;
-            }
-        }
-        if max_val < 1e-30 {
-            return None;
-        }
-        if max_row != col {
-            for j in 0..w {
-                aug.swap(col * w + j, max_row * w + j);
-            }
-        }
-        let pivot = aug[col * w + col];
-        let inv_pivot = pivot.conj() * (1.0 / pivot.norm_sq());
-        for j in 0..w {
-            aug[col * w + j] = aug[col * w + j] * inv_pivot;
-        }
-        for row in 0..d {
-            if row == col {
-                continue;
-            }
-            let factor = aug[row * w + col];
-            for j in 0..w {
-                let sub = factor * aug[col * w + j];
-                aug[row * w + j] -= sub;
-            }
-        }
-    }
-    let mut result = vec![C64::zero(); d * d];
-    for i in 0..d {
-        for j in 0..d {
-            result[i * d + j] = aug[i * w + d + j];
-        }
-    }
-    Some(result)
-}
-
-/// Complex matrix determinant, d×d.
-fn cmat_det(a: &[C64], d: usize) -> C64 {
-    if d == 1 {
-        return a[0];
-    }
-    if d == 2 {
-        return a[0] * a[3] - a[1] * a[2];
-    }
-    // LU-based via Gaussian elimination
-    let mut m = a.to_vec();
-    let mut det = C64::one();
-    for col in 0..d {
-        let mut max_row = col;
-        let mut max_val = m[col * d + col].abs();
-        for row in (col + 1)..d {
-            let v = m[row * d + col].abs();
-            if v > max_val {
-                max_val = v;
-                max_row = row;
-            }
-        }
-        if max_val < 1e-30 {
-            return C64::zero();
-        }
-        if max_row != col {
+/// Build the multivariate-autoregressive spectral matrix
+/// `A(f) = I − Σ_{k=0}^{order−1} A_{k+1} · e^{−i2πf(k+1)}` at normalised
+/// frequency `f ∈ [0, 0.5)`, from the row-major VAR coefficient stack `beta`
+/// ((order·d) × d). Block `k` is transposed on the fly:
+/// `coeff_block.T[i, j] = beta[k·d + j, i]`. `A(f)` is a general complex,
+/// non-Hermitian matrix.
+fn spectral_matrix(beta: &[f64], d: usize, order: usize, f: f64) -> DMatrix<Complex<f64>> {
+    let mut a_f = DMatrix::<Complex<f64>>::identity(d, d);
+    for k in 0..order {
+        let angle = -2.0 * PI * f * (k + 1) as f64;
+        let exp_val = Complex::new(angle.cos(), angle.sin());
+        for i in 0..d {
             for j in 0..d {
-                m.swap(col * d + j, max_row * d + j);
-            }
-            det = det * (-1.0);
-        }
-        det = det * m[col * d + col];
-        let pivot = m[col * d + col];
-        let inv_pivot = pivot.conj() * (1.0 / pivot.norm_sq());
-        for row in (col + 1)..d {
-            let factor = m[row * d + col] * inv_pivot;
-            for j in col..d {
-                let sub = factor * m[col * d + j];
-                m[row * d + j] -= sub;
+                let coeff = beta[(k * d + j) * d + i];
+                a_f[(i, j)] -= Complex::new(coeff, 0.0) * exp_val;
             }
         }
     }
-    det
+    a_f
 }
 
-/// Conjugate transpose of d×d complex matrix.
-fn cmat_conj_t(a: &[C64], d: usize) -> Vec<C64> {
-    let mut r = vec![C64::zero(); d * d];
-    for i in 0..d {
-        for j in 0..d {
-            r[j * d + i] = a[i * d + j].conj();
-        }
+/// Invert the MVAR spectral matrix `A(f)` to the transfer function `H(f) = A(f)⁻¹`
+/// via LU factorisation, returning `None` when `A(f)` is numerically singular
+/// (`|det A(f)| < 1e-30`).
+///
+/// `A(f)` is non-Hermitian, so LU — not Cholesky — is the structured
+/// factorisation. A single factorisation yields both the singularity test (its
+/// determinant) and the inverse, replacing the former separate complex
+/// Gauss-Jordan inverse and Gaussian-elimination determinant.
+fn spectral_transfer_inverse(a_f: DMatrix<Complex<f64>>) -> Option<DMatrix<Complex<f64>>> {
+    let lu = a_f.lu();
+    if lu.determinant().norm() < 1e-30 {
+        return None;
     }
-    r
+    lu.try_inverse()
 }
 
 // ── VAR model ───────────────────────────────────────────────────────
@@ -361,8 +136,8 @@ fn var_coefficients(trains_binned: &[Vec<f64>], order: usize) -> (Vec<f64>, Vec<
             }
         });
 
-    // beta = (X^T X)^{-1} X^T Y
-    let beta = solve_matrix(&xtx, &xty, x_cols, d);
+    // beta = (X^T X)^{-1} X^T Y — SPD normal equations via Cholesky
+    let beta = solve_spd(&xtx, &xty, x_cols, d);
 
     // Residuals Sigma = (1/N) (Y - X beta)^T (Y - X beta)
     let mut sigma = vec![0.0_f64; d * d];
@@ -426,7 +201,8 @@ fn sse_ols(x: &[f64], y: &[f64], n_pts: usize, x_cols: usize) -> f64 {
         }
         xty[i] = s;
     }
-    let beta = solve_linear(&xtx, &xty, x_cols);
+    // beta = (X^T X)^{-1} X^T y — SPD normal equations via Cholesky
+    let beta = solve_spd(&xtx, &xty, x_cols, 1);
     let mut sse = 0.0_f64;
     for p in 0..n_pts {
         let mut pred = 0.0;
@@ -575,46 +351,26 @@ pub fn spectral_granger_causality(
     for fi in 0..n_freqs {
         let f = fi as f64 / (2 * n_freqs) as f64; // [0, 0.5)
 
-        // A(f) = I - sum_k coeff_k * exp(-2πi f (k+1))
-        let mut a_f = vec![C64::zero(); d * d];
-        for i in 0..d {
-            a_f[i * d + i] = C64::one();
-        }
-        for k in 0..order {
-            let angle = -2.0 * PI * f * (k + 1) as f64;
-            let exp_val = C64::new(angle.cos(), angle.sin());
-            for i in 0..d {
-                for j in 0..d {
-                    // beta is (order*d × d), block k is rows [k*d..(k+1)*d], transposed
-                    let coeff = beta[(k * d + j) * d + i]; // beta[k*d+j, i] → coeff_block.T[i,j]
-                    a_f[i * d + j] -= C64::new(coeff, 0.0) * exp_val;
-                }
-            }
-        }
-
-        let det = cmat_det(&a_f, d);
-        if det.abs() < 1e-30 {
-            continue;
-        }
-        let h = match cmat_inv(&a_f, d) {
+        // A(f) = I - sum_k coeff_k * exp(-2πi f (k+1)); H(f) = A(f)⁻¹ via LU.
+        let a_f = spectral_matrix(&beta, d, order, f);
+        let h = match spectral_transfer_inverse(a_f) {
             Some(inv) => inv,
             None => continue,
         };
 
         // S = H Σ H*
-        let sigma_c: Vec<C64> = sigma.iter().map(|&v| C64::new(v, 0.0)).collect();
-        let h_conj_t = cmat_conj_t(&h, d);
-        let tmp = cmat_mul(&h, &sigma_c, d);
-        let s = cmat_mul(&tmp, &h_conj_t, d);
+        let sigma_c =
+            DMatrix::<Complex<f64>>::from_fn(d, d, |i, j| Complex::new(sigma[i * d + j], 0.0));
+        let s = &h * &sigma_c * h.adjoint();
 
         for i in 0..d {
             for j in 0..d {
                 if i == j {
                     continue;
                 }
-                let s_ii = s[i * d + i].abs();
+                let s_ii = s[(i, i)].norm();
                 if s_ii > 1e-30 {
-                    let h_ij_sq = h[i * d + j].norm_sq();
+                    let h_ij_sq = h[(i, j)].norm_sqr();
                     let reduced = s_ii - sigma[j * d + j] * h_ij_sq;
                     if reduced > 0.0 && reduced < s_ii {
                         gc[(i * d + j) * n_freqs + fi] = (s_ii / reduced).ln().max(0.0);
@@ -651,26 +407,13 @@ pub fn partial_directed_coherence(
     for fi in 0..n_freqs {
         let f = fi as f64 / (2 * n_freqs) as f64;
 
-        let mut a_f = vec![C64::zero(); d * d];
-        for i in 0..d {
-            a_f[i * d + i] = C64::one();
-        }
-        for k in 0..order {
-            let angle = -2.0 * PI * f * (k + 1) as f64;
-            let exp_val = C64::new(angle.cos(), angle.sin());
-            for i in 0..d {
-                for j in 0..d {
-                    let coeff = beta[(k * d + j) * d + i];
-                    a_f[i * d + j] -= C64::new(coeff, 0.0) * exp_val;
-                }
-            }
-        }
+        let a_f = spectral_matrix(&beta, d, order, f);
 
         for j in 0..d {
-            let norm: f64 = (0..d).map(|i| a_f[i * d + j].norm_sq()).sum::<f64>().sqrt();
+            let norm: f64 = (0..d).map(|i| a_f[(i, j)].norm_sqr()).sum::<f64>().sqrt();
             if norm > 0.0 {
                 for i in 0..d {
-                    pdc[(i * d + j) * n_freqs + fi] = a_f[i * d + j].abs() / norm;
+                    pdc[(i * d + j) * n_freqs + fi] = a_f[(i, j)].norm() / norm;
                 }
             }
         }
@@ -703,35 +446,17 @@ pub fn directed_transfer_function(
     for fi in 0..n_freqs {
         let f = fi as f64 / (2 * n_freqs) as f64;
 
-        let mut a_f = vec![C64::zero(); d * d];
-        for i in 0..d {
-            a_f[i * d + i] = C64::one();
-        }
-        for k in 0..order {
-            let angle = -2.0 * PI * f * (k + 1) as f64;
-            let exp_val = C64::new(angle.cos(), angle.sin());
-            for i in 0..d {
-                for j in 0..d {
-                    let coeff = beta[(k * d + j) * d + i];
-                    a_f[i * d + j] -= C64::new(coeff, 0.0) * exp_val;
-                }
-            }
-        }
-
-        let det = cmat_det(&a_f, d);
-        if det.abs() < 1e-30 {
-            continue;
-        }
-        let h = match cmat_inv(&a_f, d) {
+        let a_f = spectral_matrix(&beta, d, order, f);
+        let h = match spectral_transfer_inverse(a_f) {
             Some(inv) => inv,
             None => continue,
         };
 
         for i in 0..d {
-            let norm: f64 = (0..d).map(|j| h[i * d + j].norm_sq()).sum::<f64>().sqrt();
+            let norm: f64 = (0..d).map(|j| h[(i, j)].norm_sqr()).sum::<f64>().sqrt();
             if norm > 0.0 {
                 for j in 0..d {
-                    dtf[(i * d + j) * n_freqs + fi] = h[i * d + j].abs() / norm;
+                    dtf[(i * d + j) * n_freqs + fi] = h[(i, j)].norm() / norm;
                 }
             }
         }
@@ -751,66 +476,95 @@ mod tests {
         t
     }
 
-    // ── linear algebra helpers ──────────────────────────────────────
+    // ── structured linear algebra helpers ───────────────────────────
 
     #[test]
-    fn test_solve_linear_identity() {
+    fn test_solve_spd_identity() {
         // I x = b → x = b
         let a = vec![1.0, 0.0, 0.0, 1.0];
         let b = vec![3.0, 7.0];
-        let x = solve_linear(&a, &b, 2);
+        let x = solve_spd(&a, &b, 2, 1);
         assert!((x[0] - 3.0).abs() < 1e-10);
         assert!((x[1] - 7.0).abs() < 1e-10);
     }
 
     #[test]
-    fn test_solve_linear_2x2() {
-        // [2 1; 1 3] x = [5; 10] → x = [1, 3]
+    fn test_solve_spd_2x2() {
+        // [2 1; 1 3] x = [5; 10] → x = [1, 3]  (matrix is SPD)
         let a = vec![2.0, 1.0, 1.0, 3.0];
         let b = vec![5.0, 10.0];
-        let x = solve_linear(&a, &b, 2);
+        let x = solve_spd(&a, &b, 2, 1);
         assert!((x[0] - 1.0).abs() < 1e-10);
         assert!((x[1] - 3.0).abs() < 1e-10);
     }
 
     #[test]
-    fn test_cmat_det_2x2() {
-        let a = vec![
-            C64::new(1.0, 0.0),
-            C64::new(2.0, 0.0),
-            C64::new(3.0, 0.0),
-            C64::new(4.0, 0.0),
-        ];
-        let det = cmat_det(&a, 2);
-        assert!((det.re - (-2.0)).abs() < 1e-10);
-        assert!(det.im.abs() < 1e-10);
+    fn test_solve_spd_multi_rhs() {
+        // diag(2, 4) X = [[2, 4]; [4, 8]] → X = [[1, 2]; [1, 2]] (row-major)
+        let a = vec![2.0, 0.0, 0.0, 4.0];
+        let b = vec![2.0, 4.0, 4.0, 8.0];
+        let x = solve_spd(&a, &b, 2, 2);
+        assert!((x[0] - 1.0).abs() < 1e-10); // X[0,0]
+        assert!((x[1] - 2.0).abs() < 1e-10); // X[0,1]
+        assert!((x[2] - 1.0).abs() < 1e-10); // X[1,0]
+        assert!((x[3] - 2.0).abs() < 1e-10); // X[1,1]
     }
 
     #[test]
-    fn test_cmat_inv_identity() {
-        let a = vec![C64::one(), C64::zero(), C64::zero(), C64::one()];
-        let inv = cmat_inv(&a, 2).unwrap();
-        assert!((inv[0].re - 1.0).abs() < 1e-10);
-        assert!((inv[3].re - 1.0).abs() < 1e-10);
-        assert!(inv[1].abs() < 1e-10);
-        assert!(inv[2].abs() < 1e-10);
+    fn test_solve_spd_non_pd_falls_back_to_zero() {
+        // Indefinite matrix → Cholesky fails → zero solution.
+        let a = vec![0.0, 1.0, 1.0, 0.0];
+        let b = vec![1.0, 1.0];
+        let x = solve_spd(&a, &b, 2, 1);
+        assert_eq!(x, vec![0.0, 0.0]);
     }
 
     #[test]
-    fn test_cmat_inv_roundtrip() {
-        let a = vec![
-            C64::new(2.0, 1.0),
-            C64::new(1.0, 0.0),
-            C64::new(0.0, 1.0),
-            C64::new(3.0, 0.0),
-        ];
-        let inv = cmat_inv(&a, 2).unwrap();
-        let prod = cmat_mul(&a, &inv, 2);
-        // Should be identity
-        assert!((prod[0].re - 1.0).abs() < 1e-8);
-        assert!((prod[3].re - 1.0).abs() < 1e-8);
-        assert!(prod[1].abs() < 1e-8);
-        assert!(prod[2].abs() < 1e-8);
+    fn test_spectral_matrix_dc_zero_beta() {
+        // f = 0 (exp = 1) with zero VAR coefficients → A(0) = I.
+        let beta = vec![0.0_f64; 2 * 2 * 2]; // order = 2, d = 2
+        let a = spectral_matrix(&beta, 2, 2, 0.0);
+        assert!((a[(0, 0)].re - 1.0).abs() < 1e-12);
+        assert!((a[(1, 1)].re - 1.0).abs() < 1e-12);
+        assert!(a[(0, 1)].norm() < 1e-12);
+        assert!(a[(1, 0)].norm() < 1e-12);
+    }
+
+    #[test]
+    fn test_spectral_transfer_inverse_identity() {
+        let a = DMatrix::<Complex<f64>>::identity(2, 2);
+        let inv = spectral_transfer_inverse(a).unwrap();
+        assert!((inv[(0, 0)].re - 1.0).abs() < 1e-10);
+        assert!((inv[(1, 1)].re - 1.0).abs() < 1e-10);
+        assert!(inv[(0, 1)].norm() < 1e-10);
+        assert!(inv[(1, 0)].norm() < 1e-10);
+    }
+
+    #[test]
+    fn test_spectral_transfer_inverse_roundtrip() {
+        let a = DMatrix::from_row_slice(
+            2,
+            2,
+            &[
+                Complex::new(2.0, 1.0),
+                Complex::new(1.0, 0.0),
+                Complex::new(0.0, 1.0),
+                Complex::new(3.0, 0.0),
+            ],
+        );
+        let inv = spectral_transfer_inverse(a.clone()).unwrap();
+        let prod = &a * &inv; // A · A⁻¹ = I
+        assert!((prod[(0, 0)].re - 1.0).abs() < 1e-8);
+        assert!((prod[(1, 1)].re - 1.0).abs() < 1e-8);
+        assert!(prod[(0, 1)].norm() < 1e-8);
+        assert!(prod[(1, 0)].norm() < 1e-8);
+    }
+
+    #[test]
+    fn test_spectral_transfer_inverse_singular() {
+        // Zero matrix is singular → None.
+        let a = DMatrix::<Complex<f64>>::zeros(2, 2);
+        assert!(spectral_transfer_inverse(a).is_none());
     }
 
     // ── pairwise_granger_causality ──────────────────────────────────

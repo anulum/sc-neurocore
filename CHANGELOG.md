@@ -100,6 +100,20 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
   hand-rolled Jacobi eigensolver with `nalgebra`'s symmetric solver, returning
   descending, sign-canonicalised eigenvectors — matching the NumPy/LAPACK
   reference the Python path already uses. No public API change.
+- The Rust causality backend (`analysis/causality.rs`) now uses structured
+  factorisations for its dense linear algebra. The per-frequency MVAR transfer
+  function `H(f) = A(f)⁻¹` in spectral Granger causality and the directed
+  transfer function is obtained from a single `nalgebra` LU factorisation of the
+  non-Hermitian spectral matrix — one factorisation yields both the
+  near-singularity test (its determinant) and the inverse — replacing a separate
+  hand-rolled complex Gauss-Jordan inverse and Gaussian-elimination determinant.
+  The VAR fit and the Granger sum-of-squared-errors solves now solve their
+  ridge-regularised normal equations `XᵀX + εI` (symmetric positive-definite) with
+  a Cholesky factorisation rather than generic Gaussian elimination, factoring
+  once for all right-hand sides. The spectral-matrix assembly is shared across the
+  spectral Granger, partial-directed-coherence and directed-transfer-function
+  paths. Results match the previous implementation to float64 round-off; no public
+  API change.
 
 ### Studio platform
 - The FPGA synthesis panel can export a synthesis-scoped evidence bundle from
