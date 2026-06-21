@@ -131,6 +131,7 @@ from sc_neurocore.studio.platform import (
     update_studio_identity_record,
     update_studio_browser_user_record,
     write_studio_action_evidence_manifest,
+    write_studio_audit_quarantine_archive,
     write_studio_evidence_bundle,
 )
 from sc_neurocore.studio.presets import (
@@ -358,6 +359,12 @@ class StudioEvidenceBundleRequest(BaseModel):
     include_audit: bool = True
     audit_limit: int = Field(default=100, ge=1, le=1000)
     command_replay: dict[str, Any] | None = None
+
+
+class StudioAuditQuarantineArchiveRequest(BaseModel):
+    """Request body for admin audit quarantine archive creation."""
+
+    limit: int = Field(default=100, ge=1, le=1000)
 
 
 class PresetDefaultFlowAttestationVerifyRequest(BaseModel):
@@ -1210,6 +1217,56 @@ def create_app(runtime_settings: StudioRuntimeSettings | None = None) -> FastAPI
                 status_code=503,
                 detail="audit_quarantine_export_failed",
             ) from exc
+
+    @app.post("/api/studio/audit/quarantine/archive")
+    def api_studio_audit_quarantine_archive(
+        archive_request: StudioAuditQuarantineArchiveRequest,
+        request: Request,
+    ) -> dict[str, object]:
+        """Write quarantined audit rows into a confined Studio evidence job."""
+
+        if not isinstance(studio_audit_sink, JsonlAuditSink):
+            raise HTTPException(status_code=409, detail="audit_export_unavailable")
+        try:
+            quarantine_export = studio_audit_sink.export_quarantine(
+                limit=archive_request.limit
+            ).to_public_dict()
+        except AuditSinkError as exc:
+            raise HTTPException(
+                status_code=503,
+                detail="audit_quarantine_export_failed",
+            ) from exc
+        request_id = getattr(request.state, "studio_request_id", None)
+
+        def task(context: StudioJobContext) -> dict[str, object]:
+            result = write_studio_audit_quarantine_archive(
+                context,
+                quarantine_export=quarantine_export,
+            ).to_public_dict()
+            return cast(dict[str, object], result)
+
+        submitted = studio_job_manager.submit(
+            kind="evidence",
+            owner="studio-audit-quarantine",
+            request_id=request_id if isinstance(request_id, str) else None,
+            task=task,
+        )
+        completed = studio_job_manager.wait(
+            submitted.job_id,
+            timeout_seconds=settings.job_default_timeout_seconds + 1.0,
+        )
+        if completed.status == "completed" and completed.result is not None:
+            result = dict(completed.result)
+            result["job_id"] = completed.job_id
+            result["artifacts"] = [
+                artifact.to_public_dict() for artifact in completed.artifacts
+            ]
+            return result
+        if completed.status in {"pending", "running", "cancelling"}:
+            raise HTTPException(status_code=503, detail="studio_job_wait_exceeded")
+        if completed.status == "timed_out":
+            raise HTTPException(status_code=504, detail="studio_job_timed_out")
+        raise HTTPException(status_code=500, detail="studio_job_failed")
 
     @app.post("/api/studio/evidence/bundle")
     def api_studio_evidence_bundle(

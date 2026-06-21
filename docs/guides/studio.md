@@ -305,6 +305,11 @@ Administrators can export only the quarantined retained rows through
 `GET /api/studio/audit/quarantine/export`; the payload is path-free, includes
 per-row `quarantine_reason` values, and is intended for incident handoff or
 offline archive migration.
+Administrators can also persist that quarantine export as confined Studio job
+artifacts through `POST /api/studio/audit/quarantine/archive`; the response
+returns a path-free archive manifest, reason counts, job ID, and downloadable
+artifact metadata under the existing `/api/studio/jobs/{job_id}/artifacts/...`
+surface.
 When `SC_NEUROCORE_STUDIO_AUDIT_ROTATION_BYTES` is set, the retained-file count
 must be a positive integer so rotation always keeps at least one archived JSONL
 segment for incident review and retained-chain verification.

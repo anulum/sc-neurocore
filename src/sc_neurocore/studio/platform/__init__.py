@@ -51,11 +51,14 @@ from sc_neurocore.studio.platform.deployment_profiles import (
     list_studio_deployment_profile_packages,
 )
 from sc_neurocore.studio.platform.evidence_bundle import (
+    STUDIO_AUDIT_QUARANTINE_ARCHIVE_SCHEMA_VERSION,
     STUDIO_EVIDENCE_BUNDLE_SCHEMA_VERSION,
     JsonScalar,
     JsonValue,
     StudioArtifactReader,
+    StudioAuditQuarantineArchiveResult,
     StudioEvidenceBundleResult,
+    write_studio_audit_quarantine_archive,
     write_studio_evidence_bundle,
 )
 from sc_neurocore.studio.platform.policy import (
@@ -228,6 +231,7 @@ __all__ = [
     "RoutePolicyRegistry",
     "RouteVisibility",
     "STUDIO_ACTION_EVIDENCE_SCHEMA_VERSION",
+    "STUDIO_AUDIT_QUARANTINE_ARCHIVE_SCHEMA_VERSION",
     "STUDIO_BACKUP_PLAN_SCHEMA_VERSION",
     "STUDIO_EVIDENCE_BUNDLE_SCHEMA_VERSION",
     "THROTTLED_BROWSER_LOGIN_REASON",
@@ -253,6 +257,7 @@ __all__ = [
     "StudioBackupTargetKind",
     "StudioActionEvidence",
     "StudioArtifactReader",
+    "StudioAuditQuarantineArchiveResult",
     "StudioDeploymentPackageName",
     "StudioDeploymentProfilePackage",
     "StudioEvidenceBundleResult",
@@ -331,5 +336,6 @@ __all__ = [
     "update_studio_identity_record",
     "verify_browser_user_password",
     "write_studio_action_evidence_manifest",
+    "write_studio_audit_quarantine_archive",
     "write_studio_evidence_bundle",
 ]
