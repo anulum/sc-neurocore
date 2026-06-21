@@ -358,6 +358,57 @@ def test_studio_preflight_rejects_audit_log_directory(tmp_path: Path) -> None:
     assert "audit-log parent" in audit_check.remediation[0]
 
 
+def test_studio_preflight_surfaces_bounded_resource_limits(tmp_path: Path) -> None:
+    identity_path = tmp_path / "private" / "studio-identities.json"
+    bootstrap_studio_admin_identity(
+        identity_path,
+        token_factory=lambda _: "release-preflight-token",
+    )
+    (tmp_path / "audit").mkdir()
+    (tmp_path / "jobs").mkdir()
+    env = _release_env(tmp_path, identity_path)
+    env["SC_NEUROCORE_STUDIO_EDA_PROCESS_CPU_SECONDS"] = "90"
+    env["SC_NEUROCORE_STUDIO_EDA_PROCESS_MEMORY_BYTES"] = "1073741824"
+    env["SC_NEUROCORE_STUDIO_JOB_MAX_ARTIFACT_BYTES"] = "16777216"
+
+    report = run_studio_preflight(env)
+    resource_check = _check_by_id(report.checks, "resource_limits")
+
+    assert report.passed is True
+    assert report.warned is False
+    assert resource_check.status == "pass"
+    assert resource_check.remediation == ()
+    assert resource_check.evidence["eda_process_cpu_seconds"] == 90.0
+    assert resource_check.evidence["eda_process_memory_bytes"] == 1073741824
+    assert resource_check.evidence["job_max_artifact_bytes"] == 16777216
+    assert resource_check.evidence["eda_process_limits_enforceable"] is True
+
+
+def test_studio_preflight_warns_when_eda_ceilings_not_enforceable(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    identity_path = tmp_path / "private" / "studio-identities.json"
+    bootstrap_studio_admin_identity(
+        identity_path,
+        token_factory=lambda _: "release-preflight-token",
+    )
+    (tmp_path / "audit").mkdir()
+    (tmp_path / "jobs").mkdir()
+    monkeypatch.setattr(preflight, "_eda_limits_enforceable", lambda: False)
+
+    report = run_studio_preflight(_release_env(tmp_path, identity_path))
+    resource_check = _check_by_id(report.checks, "resource_limits")
+    payload = report.to_public_dict()
+
+    assert report.passed is True
+    assert report.warned is True
+    assert payload["warned"] is True
+    assert resource_check.status == "warn"
+    assert resource_check.evidence["eda_process_limits_enforceable"] is False
+    assert "POSIX host" in resource_check.remediation[0]
+
+
 def test_studio_preflight_public_remediation_is_path_and_secret_free() -> None:
     report = run_studio_preflight({})
     payload = report.to_public_dict()

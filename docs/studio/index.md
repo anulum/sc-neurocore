@@ -375,8 +375,10 @@ runtime features:
   to a comma-separated allow-list instead of using wildcard origins.
 - `SC_NEUROCORE_STUDIO_DEPLOYMENT_PROFILE=production` is a fail-closed profile:
   route-policy enforcement must be enabled, development header principals must
-  be disabled, and identity, audit log, and job-root paths must be configured
-  before the backend can start.
+  be disabled, identity, audit log, and job-root paths must be configured, and
+  EDA process CPU and memory ceilings must be set before the backend can start.
+  Both the `lab` and `server` deployment-profile packages provide bounded EDA
+  ceilings; `local` development keeps the bounded defaults.
 - `sc-neurocore studio-deployment-profile --studio-profile local|lab|server`
   emits a `studio.deployment-profile.v1` package for the supported operating
   contexts. `local` is loopback-only development use. `lab` and `server` are
@@ -395,7 +397,11 @@ runtime features:
   report exits non-zero on any failed check and verifies runtime settings,
   route-policy enforcement, disabled header-principal fallback, required admin
   route policies, at least one active unexpired `studio.admin` identity,
-  audit-log readiness, and job-root readiness. The required admin route set
+  audit-log readiness, job-root readiness, and bounded EDA process and job
+  artifact resource limits. The `resource_limits` check surfaces the configured
+  EDA CPU and memory ceilings and the per-job artifact byte limit; it reports a
+  non-blocking `warn` status when the ceilings cannot be enforced on the host
+  (non-POSIX) rather than failing the gate. The required admin route set
   covers identity list/detail/update, browser-user create/update, and password
   rotation routes, job record and artifact access, and evidence bundle export
   in addition to operator/audit/synthesis checks. Its payload contains stable

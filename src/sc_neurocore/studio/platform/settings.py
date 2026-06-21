@@ -163,6 +163,10 @@ class StudioRuntimeSettings:
             raise ValueError("Studio production profile requires a persistent audit log.")
         if self.job_root_path is None:
             raise ValueError("Studio production profile requires a persistent job root.")
+        if self.eda_process_cpu_seconds is None or self.eda_process_memory_bytes is None:
+            raise ValueError(
+                "Studio production profile requires EDA process CPU and memory ceilings."
+            )
 
 
 def build_default_studio_runtime_settings(

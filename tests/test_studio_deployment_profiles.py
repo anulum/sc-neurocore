@@ -57,6 +57,9 @@ def test_studio_deployment_profile_lab_and_server_are_fail_closed() -> None:
         assert "SC_NEUROCORE_STUDIO_IDENTITY_FILE" in environment
         assert "SC_NEUROCORE_STUDIO_AUDIT_LOG_PATH" in environment
         assert "SC_NEUROCORE_STUDIO_JOB_ROOT" in environment
+        assert int(environment["SC_NEUROCORE_STUDIO_EDA_PROCESS_CPU_SECONDS"]) > 0
+        assert int(environment["SC_NEUROCORE_STUDIO_EDA_PROCESS_MEMORY_BYTES"]) > 0
+        assert "process CPU and memory ceilings for EDA jobs" in package.security_controls
         assert package.preflight_command.endswith("--output studio-preflight.json")
         assert "<identity-file>" in package.backup_items
 

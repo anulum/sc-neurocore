@@ -179,6 +179,8 @@ def _lab_profile_package() -> StudioDeploymentProfilePackage:
             "SC_NEUROCORE_STUDIO_BROWSER_LOGIN_MAX_FAILURES": "5",
             "SC_NEUROCORE_STUDIO_CORS_ORIGINS": "https://<lab-hostname>",
             "SC_NEUROCORE_STUDIO_DEPLOYMENT_PROFILE": "production",
+            "SC_NEUROCORE_STUDIO_EDA_PROCESS_CPU_SECONDS": "120",
+            "SC_NEUROCORE_STUDIO_EDA_PROCESS_MEMORY_BYTES": "2147483648",
             "SC_NEUROCORE_STUDIO_ENFORCE_ROUTE_POLICIES": "true",
             "SC_NEUROCORE_STUDIO_IDENTITY_FILE": "<identity-file>",
             "SC_NEUROCORE_STUDIO_JOB_ROOT": "<job-root>",
@@ -199,6 +201,7 @@ def _lab_profile_package() -> StudioDeploymentProfilePackage:
             "append-only audit log",
             "persistent job root",
             "explicit host and origin allow-lists",
+            "process CPU and memory ceilings for EDA jobs",
         ),
         backup_items=(
             "<identity-file>",

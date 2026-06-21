@@ -50,6 +50,49 @@ def test_studio_runtime_settings_reject_invalid_eda_process_limits() -> None:
         StudioRuntimeSettings(eda_process_cpu_seconds=0)
     with pytest.raises(ValueError, match="EDA process memory limit"):
         StudioRuntimeSettings(eda_process_memory_bytes=0)
+
+
+def test_studio_runtime_settings_production_requires_eda_ceilings() -> None:
+    """Production fails closed when an EDA process ceiling is unbounded."""
+
+    with pytest.raises(ValueError, match="EDA process CPU and memory ceilings"):
+        StudioRuntimeSettings(
+            deployment_profile="production",
+            enforce_route_policies=True,
+            allow_header_principal=False,
+            identity_file_path="/etc/sc-neurocore/studio-identities.json",
+            audit_log_path="/var/log/sc-neurocore/studio-audit.jsonl",
+            job_root_path="/var/lib/sc-neurocore/studio-jobs",
+            eda_process_cpu_seconds=None,
+        )
+    with pytest.raises(ValueError, match="EDA process CPU and memory ceilings"):
+        StudioRuntimeSettings(
+            deployment_profile="production",
+            enforce_route_policies=True,
+            allow_header_principal=False,
+            identity_file_path="/etc/sc-neurocore/studio-identities.json",
+            audit_log_path="/var/log/sc-neurocore/studio-audit.jsonl",
+            job_root_path="/var/lib/sc-neurocore/studio-jobs",
+            eda_process_memory_bytes=None,
+        )
+
+
+def test_studio_runtime_settings_production_accepts_bounded_eda_ceilings() -> None:
+    """Production accepts explicit bounded EDA process ceilings."""
+
+    settings = StudioRuntimeSettings(
+        deployment_profile="production",
+        enforce_route_policies=True,
+        allow_header_principal=False,
+        identity_file_path="/etc/sc-neurocore/studio-identities.json",
+        audit_log_path="/var/log/sc-neurocore/studio-audit.jsonl",
+        job_root_path="/var/lib/sc-neurocore/studio-jobs",
+        eda_process_cpu_seconds=90.0,
+        eda_process_memory_bytes=1_073_741_824,
+    )
+
+    assert settings.eda_process_cpu_seconds == 90.0
+    assert settings.eda_process_memory_bytes == 1_073_741_824
     with pytest.raises(ValueError, match="EDA process CPU limit"):
         build_default_studio_runtime_settings(
             env={"SC_NEUROCORE_STUDIO_EDA_PROCESS_CPU_SECONDS": "not-a-number"}

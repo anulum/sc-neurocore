@@ -36,7 +36,7 @@ from sc_neurocore.studio.platform.settings import (
 STUDIO_PREFLIGHT_SCHEMA_VERSION = "studio.preflight.v1"
 UTC = timezone.utc
 
-StudioPreflightStatus: TypeAlias = Literal["pass", "fail"]
+StudioPreflightStatus: TypeAlias = Literal["pass", "fail", "warn"]
 StudioPreflightEvidenceValue: TypeAlias = bool | float | int | str | None
 
 _REQUIRED_ROUTE_POLICIES: tuple[tuple[str, str, RouteVisibility, str], ...] = (
@@ -149,14 +149,16 @@ class StudioPreflightCheck:
     check_id:
         Stable machine-readable identifier for the checked release invariant.
     status:
-        ``"pass"`` when the invariant holds, otherwise ``"fail"``.
+        ``"pass"`` when the invariant holds, ``"fail"`` when it is violated and
+        blocks release, or ``"warn"`` for a non-blocking advisory the operator
+        should resolve before production use.
     message:
         Operator-facing summary that does not include local paths or secrets.
     evidence:
         Small scalar evidence fields suitable for JSON reports.
     remediation:
-        Operator actions that can resolve a failed check. Entries must not
-        expose local filesystem paths or secret material.
+        Operator actions that can resolve a failed or warned check. Entries
+        must not expose local filesystem paths or secret material.
     """
 
     check_id: str
@@ -197,9 +199,15 @@ class StudioPreflightReport:
 
     @property
     def passed(self) -> bool:
-        """Return whether every preflight check passed."""
+        """Return whether no preflight check failed (warnings do not block)."""
 
-        return all(check.status == "pass" for check in self.checks)
+        return all(check.status != "fail" for check in self.checks)
+
+    @property
+    def warned(self) -> bool:
+        """Return whether any check raised a non-blocking advisory warning."""
+
+        return any(check.status == "warn" for check in self.checks)
 
     def to_public_dict(self) -> dict[str, object]:
         """Return a JSON-serializable, secret-free preflight payload."""
@@ -209,6 +217,7 @@ class StudioPreflightReport:
             "deployment_profile": self.deployment_profile,
             "passed": self.passed,
             "schema_version": self.schema_version,
+            "warned": self.warned,
         }
 
 
@@ -280,6 +289,7 @@ def run_studio_preflight(
             target_kind="directory",
         )
     )
+    checks.append(_resource_limits_check(settings))
     return StudioPreflightReport(
         checks=tuple(checks),
         deployment_profile=settings.deployment_profile,
@@ -342,6 +352,60 @@ def _browser_login_lockout_check(settings: StudioRuntimeSettings) -> StudioPrefl
             "Set positive SC_NEUROCORE_STUDIO_BROWSER_LOGIN_* limits before launch.",
             "Rerun studio-preflight from the deployment environment.",
         ),
+    )
+
+
+def _eda_limits_enforceable() -> bool:
+    """Return whether this host can enforce POSIX child-process resource limits.
+
+    Mirrors ``sc_neurocore.studio.synthesis._eda_process_limits_supported``: the
+    ``resource`` rlimit primitives Studio uses for Yosys and nextpnr child
+    processes are only available on POSIX hosts.
+    """
+
+    return os.name == "posix"
+
+
+def _resource_limits_check(settings: StudioRuntimeSettings) -> StudioPreflightCheck:
+    cpu_seconds = settings.eda_process_cpu_seconds
+    memory_bytes = settings.eda_process_memory_bytes
+    enforceable = _eda_limits_enforceable()
+    ceilings_configured = cpu_seconds is not None and memory_bytes is not None
+    evidence: dict[str, StudioPreflightEvidenceValue] = {
+        "eda_process_cpu_seconds": cpu_seconds,
+        "eda_process_limits_enforceable": enforceable,
+        "eda_process_memory_bytes": memory_bytes,
+        "job_default_timeout_seconds": settings.job_default_timeout_seconds,
+        "job_max_artifact_bytes": settings.job_max_artifact_bytes,
+    }
+    if not ceilings_configured:
+        return StudioPreflightCheck(
+            check_id="resource_limits",
+            status="warn",
+            message="EDA process CPU and memory ceilings are not configured; child processes run unbounded.",
+            evidence=evidence,
+            remediation=(
+                "Set SC_NEUROCORE_STUDIO_EDA_PROCESS_CPU_SECONDS and "
+                "SC_NEUROCORE_STUDIO_EDA_PROCESS_MEMORY_BYTES before launch.",
+                "Use the server deployment profile for default bounded EDA ceilings.",
+            ),
+        )
+    if not enforceable:
+        return StudioPreflightCheck(
+            check_id="resource_limits",
+            status="warn",
+            message="EDA process ceilings are configured but cannot be enforced on this host.",
+            evidence=evidence,
+            remediation=(
+                "Deploy Studio on a POSIX host so configured EDA ceilings apply.",
+                "Otherwise bound Yosys and nextpnr through the container or orchestrator runtime.",
+            ),
+        )
+    return StudioPreflightCheck(
+        check_id="resource_limits",
+        status="pass",
+        message="EDA process ceilings and the job artifact size limit are configured and enforceable.",
+        evidence=evidence,
     )
 
 

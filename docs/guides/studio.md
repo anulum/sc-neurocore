@@ -644,19 +644,24 @@ environment that will launch the backend:
 sc-neurocore studio-preflight --output studio-preflight.json
 ```
 
-The command exits with status `0` only when the release posture passes. It
-checks runtime settings, route-policy enforcement, disabled development header
-principals, required admin route policies, a valid identity store with at least
-one active unexpired `studio.admin` principal, browser-login lockout settings,
-audit-log readiness, and job-root readiness. The required route-policy
-inventory includes service
+The command exits with status `0` when no check fails; non-blocking warnings do
+not change the exit status. It checks runtime settings, route-policy
+enforcement, disabled development header principals, required admin route
+policies, a valid identity store with at least one active unexpired
+`studio.admin` principal, browser-login lockout settings, audit-log readiness,
+job-root readiness, and bounded EDA process and job-artifact resource limits.
+The required route-policy inventory includes service
 account list/detail/update routes and browser-user list/detail/create/update
 and password-rotation routes, job list/detail/artifact routes, and the
-evidence bundle export route. The JSON report uses schema
+evidence bundle export route. The `resource_limits` check reports the configured
+EDA CPU and memory ceilings and the per-job artifact byte limit; it returns a
+`warn` status, rather than failing, when the host cannot enforce the ceilings
+(non-POSIX) or when they are left unbounded, so operators can still see the gap
+in deployment logs. The JSON report uses schema
 `studio.preflight.v1` and is safe for deployment logs: it reports booleans,
-counts, stable check IDs, and path-free remediation steps without local
-filesystem paths, bearer tokens, token hashes, passwords, or password
-verifiers.
+counts, stable check IDs, a top-level `warned` flag, and path-free remediation
+steps without local filesystem paths, bearer tokens, token hashes, passwords, or
+password verifiers.
 
 ## Additional Panels (Blocks 2–6)
 
