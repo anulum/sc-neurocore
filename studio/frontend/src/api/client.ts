@@ -771,6 +771,7 @@ export interface SynthesisTargetProvenance {
   pnr_ready: boolean;
   pnr_tool: string | null;
   schema_version: "studio.synthesis-target-provenance.v1";
+  status: "completed";
   synthesis_command: string;
   synthesis_ready: boolean;
   target: string;
@@ -778,8 +779,10 @@ export interface SynthesisTargetProvenance {
 }
 
 export interface SynthesisTargetProvenanceMatrix {
+  evidence_classification: "synthesis";
   matrix_sha256: string;
   schema_version: "studio.synthesis-target-provenance-matrix.v1";
+  status: "completed";
   targets: Record<string, SynthesisTargetProvenance>;
 }
 

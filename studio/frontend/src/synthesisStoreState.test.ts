@@ -124,6 +124,7 @@ function synthResult(overrides: Partial<SynthResult> = {}): SynthResult {
       pnr_ready: true,
       pnr_tool: "nextpnr",
       schema_version: "studio.synthesis-target-provenance.v1",
+      status: "completed",
       synthesis_command: "synth_ice40",
       synthesis_ready: true,
       target: "ice40",
@@ -139,8 +140,10 @@ function multiTargetResult(
   return {
     supported: overrides.supported ?? ["ice40"],
     target_provenance_matrix: overrides.target_provenance_matrix ?? {
+      evidence_classification: "synthesis",
       matrix_sha256: "a".repeat(64),
       schema_version: "studio.synthesis-target-provenance-matrix.v1",
+      status: "completed",
       targets: { ice40: synthResult().target_provenance },
     },
     targets: overrides.targets ?? { ice40: synthResult() },

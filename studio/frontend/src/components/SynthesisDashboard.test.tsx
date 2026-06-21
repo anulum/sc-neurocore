@@ -6,8 +6,10 @@ import { ProvenanceMatrixSummary } from "./SynthesisDashboard";
 import SynthesisEvidenceControls from "./SynthesisEvidenceControls";
 
 const provenanceMatrix: SynthesisTargetProvenanceMatrix = {
+  evidence_classification: "synthesis",
   matrix_sha256: "a".repeat(64),
   schema_version: "studio.synthesis-target-provenance-matrix.v1",
+  status: "completed",
   targets: {
     ice40: {
       capacity: { brams: 30, dsps: 0, ffs: 5280, luts: 5280 },
@@ -16,6 +18,7 @@ const provenanceMatrix: SynthesisTargetProvenanceMatrix = {
       pnr_ready: false,
       pnr_tool: "nextpnr-ice40",
       schema_version: "studio.synthesis-target-provenance.v1",
+      status: "completed",
       synthesis_command: "synth_ice40",
       synthesis_ready: true,
       target: "ice40",
@@ -43,6 +46,7 @@ const provenanceMatrix: SynthesisTargetProvenanceMatrix = {
       pnr_ready: true,
       pnr_tool: null,
       schema_version: "studio.synthesis-target-provenance.v1",
+      status: "completed",
       synthesis_command: "synth_gowin",
       synthesis_ready: true,
       target: "gowin",
@@ -66,6 +70,7 @@ describe("ProvenanceMatrixSummary", () => {
     );
 
     expect(html).toContain("Target provenance matrix");
+    expect(html).toContain("synthesis / completed / aaaaaaaaaaaa");
     expect(html).toContain("aaaaaaaaaaaa");
     expect(html).toContain("GOWIN");
     expect(html).toContain("ICE40");
@@ -74,6 +79,7 @@ describe("ProvenanceMatrixSummary", () => {
     expect(html).toContain("missing - nextpnr-ice40 missing");
     expect(html).toContain("ready - not required");
     expect(html).toContain("synthesis");
+    expect(html).toContain("completed");
   });
 });
 

@@ -76,6 +76,7 @@ function ProvenanceSummary({ provenance }: { provenance: SynthesisTargetProvenan
         {provenance.pnr_tool ? (provenance.pnr_ready ? "available" : "missing") : "not required"})
       </div>
       <div>Evidence: {provenance.evidence_classification}</div>
+      <div>Status: {provenance.status}</div>
     </div>
   );
 }
@@ -109,7 +110,7 @@ export function ProvenanceMatrixSummary({
       <div style={{ display: "flex", justifyContent: "space-between", gap: 8, marginBottom: 6 }}>
         <strong>Target provenance matrix</strong>
         <span style={{ fontFamily: "var(--font-mono)", color: "var(--text-muted)" }}>
-          {matrix.matrix_sha256.slice(0, 12)}
+          {matrix.evidence_classification} / {matrix.status} / {matrix.matrix_sha256.slice(0, 12)}
         </span>
       </div>
       <table style={{ width: "100%", borderCollapse: "collapse" }}>
@@ -120,6 +121,7 @@ export function ProvenanceMatrixSummary({
             <th style={{ padding: "3px 6px", textAlign: "left" }}>Synthesis</th>
             <th style={{ padding: "3px 6px", textAlign: "left" }}>PnR</th>
             <th style={{ padding: "3px 6px", textAlign: "left" }}>Evidence</th>
+            <th style={{ padding: "3px 6px", textAlign: "left" }}>Status</th>
           </tr>
         </thead>
         <tbody>
@@ -134,6 +136,7 @@ export function ProvenanceMatrixSummary({
                 {readinessLabel(provenance.pnr_ready)} - {toolLabel(provenance, "place_and_route")}
               </td>
               <td style={{ padding: "3px 6px" }}>{provenance.evidence_classification}</td>
+              <td style={{ padding: "3px 6px" }}>{provenance.status}</td>
             </tr>
           ))}
         </tbody>
