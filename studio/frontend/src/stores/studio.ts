@@ -161,12 +161,9 @@ import {
   studioSTAResultState,
 } from "../studioAnalysisState";
 import {
-  simulationCsvBlob,
-  simulationCsvFilename,
-  simulationJsonBlob,
-  simulationJsonFilename,
-  simulationSvgBlob,
-  simulationSvgFilename,
+  simulationCsvExport,
+  simulationJsonExport,
+  simulationSvgExport,
 } from "../simulationExports";
 import { downloadCanvasPng } from "../browserCanvasExport";
 import {
@@ -1038,13 +1035,15 @@ export const useStudioStore = create<StudioState>((set, get) => ({
   exportData: () => {
     const { result } = get();
     if (!result) return;
-    downloadBrowserArtefact(simulationJsonBlob(result), simulationJsonFilename(result));
+    const exported = simulationJsonExport(result);
+    downloadBrowserArtefact(exported.blob, exported.filename);
   },
 
   exportCSV: () => {
     const { result } = get();
     if (!result) return;
-    downloadBrowserArtefact(simulationCsvBlob(result), simulationCsvFilename(result));
+    const exported = simulationCsvExport(result);
+    downloadBrowserArtefact(exported.blob, exported.filename);
   },
 
   exportSVG: () => {
@@ -1053,7 +1052,8 @@ export const useStudioStore = create<StudioState>((set, get) => ({
       downloadCanvasPng();
       return;
     }
-    downloadBrowserArtefact(simulationSvgBlob(result), simulationSvgFilename(result));
+    const exported = simulationSvgExport(result);
+    downloadBrowserArtefact(exported.blob, exported.filename);
   },
 
   runCharacterize: async () => {

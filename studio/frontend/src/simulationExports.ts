@@ -10,6 +10,11 @@ import type { SimulateResponse } from "./api/client";
 
 const SVG_COLORS = ["#4fc3f7", "#81c784", "#ffb74d", "#e57373", "#ce93d8"] as const;
 
+export interface SimulationExportArtefact {
+  blob: Blob;
+  filename: string;
+}
+
 function safeSimulationStem(modelName: string | undefined, fallback: string): string {
   const rawName = modelName?.trim() || fallback;
   const safeName = rawName.replace(/[^A-Za-z0-9._-]+/g, "_").replace(/^_+|_+$/g, "");
@@ -41,6 +46,13 @@ export function simulationJsonBlob(result: SimulateResponse): Blob {
   return new Blob([JSON.stringify(result, null, 2)], { type: "application/json" });
 }
 
+export function simulationJsonExport(result: SimulateResponse): SimulationExportArtefact {
+  return {
+    blob: simulationJsonBlob(result),
+    filename: simulationJsonFilename(result),
+  };
+}
+
 export function simulationCsvText(result: SimulateResponse): string {
   const variables = Object.keys(result.states);
   const header = ["time", ...variables, "current"].join(",");
@@ -57,6 +69,13 @@ export function simulationCsvText(result: SimulateResponse): string {
 
 export function simulationCsvBlob(result: SimulateResponse): Blob {
   return new Blob([simulationCsvText(result)], { type: "text/csv" });
+}
+
+export function simulationCsvExport(result: SimulateResponse): SimulationExportArtefact {
+  return {
+    blob: simulationCsvBlob(result),
+    filename: simulationCsvFilename(result),
+  };
 }
 
 export function simulationSvgText(result: SimulateResponse): string {
@@ -119,4 +138,11 @@ export function simulationSvgText(result: SimulateResponse): string {
 
 export function simulationSvgBlob(result: SimulateResponse): Blob {
   return new Blob([simulationSvgText(result)], { type: "image/svg+xml" });
+}
+
+export function simulationSvgExport(result: SimulateResponse): SimulationExportArtefact {
+  return {
+    blob: simulationSvgBlob(result),
+    filename: simulationSvgFilename(result),
+  };
 }

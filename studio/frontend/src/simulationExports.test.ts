@@ -10,9 +10,12 @@ import { describe, expect, it } from "vitest";
 
 import type { SimulateResponse } from "./api/client";
 import {
+  simulationCsvExport,
   simulationCsvFilename,
   simulationCsvText,
+  simulationJsonExport,
   simulationJsonFilename,
+  simulationSvgExport,
   simulationSvgFilename,
   simulationSvgText,
 } from "./simulationExports";
@@ -38,6 +41,19 @@ describe("Studio simulation export builders", () => {
     expect(simulationJsonFilename(result)).toBe("simulation_lif_model_x.json");
     expect(simulationCsvFilename(result)).toBe("simulation_lif_model_x.csv");
     expect(simulationSvgFilename(result)).toBe("sc_neurocore_lif_model_x.svg");
+  });
+
+  it("builds browser download artefacts with canonical filenames and MIME types", () => {
+    const jsonExport = simulationJsonExport(result);
+    const csvExport = simulationCsvExport(result);
+    const svgExport = simulationSvgExport(result);
+
+    expect(jsonExport.filename).toBe("simulation_lif_model_x.json");
+    expect(jsonExport.blob.type).toBe("application/json");
+    expect(csvExport.filename).toBe("simulation_lif_model_x.csv");
+    expect(csvExport.blob.type).toBe("text/csv");
+    expect(svgExport.filename).toBe("sc_neurocore_lif_model_x.svg");
+    expect(svgExport.blob.type).toBe("image/svg+xml");
   });
 
   it("builds deterministic CSV output from result traces", () => {
