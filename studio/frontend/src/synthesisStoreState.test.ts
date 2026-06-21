@@ -22,10 +22,13 @@ import type {
 import {
   multiTargetSynthesisRunCompletedState,
   multiTargetSynthesisRunStartState,
+  synthesisErrorMessageState,
+  synthesisErrorState,
   synthesisEstimateLoadedState,
   synthesisFailureState,
   synthesisRunCompletedState,
   synthesisRunStartState,
+  synthesisTargetState,
   synthesisToolStatusLoadedState,
 } from "./synthesisStoreState";
 
@@ -265,7 +268,7 @@ describe("synthesis store state helpers", () => {
     });
   });
 
-  it("builds failure, estimate, and tool-status patches", () => {
+  it("builds failure, target, estimate, and tool-status patches", () => {
     const estimate = synthEstimate();
 
     expect(synthesisFailureState(new Error("synth offline"))).toEqual({
@@ -276,7 +279,15 @@ describe("synthesis store state helpers", () => {
       error: "Synthesis failed",
       isSimulating: false,
     });
+    expect(synthesisErrorState(new Error("estimate offline"), "fallback")).toEqual({
+      error: "estimate offline",
+    });
+    expect(synthesisErrorState("bad", "fallback")).toEqual({ error: "fallback" });
+    expect(synthesisErrorMessageState("Generate Verilog first")).toEqual({
+      error: "Generate Verilog first",
+    });
     expect(synthesisEstimateLoadedState(estimate)).toEqual({ synthEstimate: estimate });
+    expect(synthesisTargetState("ecp5")).toEqual({ synthTarget: "ecp5" });
     expect(synthesisToolStatusLoadedState({ yosys: { available: true, version: "0.50" } }))
       .toEqual({ toolsAvailable: { yosys: { available: true, version: "0.50" } } });
   });

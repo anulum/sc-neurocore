@@ -222,10 +222,13 @@ import {
 import {
   multiTargetSynthesisRunCompletedState,
   multiTargetSynthesisRunStartState,
+  synthesisErrorMessageState,
+  synthesisErrorState,
   synthesisEstimateLoadedState,
   synthesisFailureState,
   synthesisRunCompletedState,
   synthesisRunStartState,
+  synthesisTargetState,
   synthesisToolStatusLoadedState,
 } from "../synthesisStoreState";
 import {
@@ -1180,11 +1183,14 @@ export const useStudioStore = create<StudioState>((set, get) => ({
     } catch (e) { set(compilerFailureState(e)); }
   },
 
-  setSynthTarget: (t) => set({ synthTarget: t }),
+  setSynthTarget: (t) => set(synthesisTargetState(t)),
 
   runSynthesis: async () => {
     const s = get();
-    if (!s.svSource && !s.verilogSrc) { set({ error: "Generate Verilog first" }); return; }
+    if (!s.svSource && !s.verilogSrc) {
+      set(synthesisErrorMessageState("Generate Verilog first"));
+      return;
+    }
     set(synthesisRunStartState());
     try {
       const verilog = s.svSource || s.verilogSrc;
@@ -1199,7 +1205,10 @@ export const useStudioStore = create<StudioState>((set, get) => ({
 
   runMultiTargetSynthesis: async () => {
     const s = get();
-    if (!s.svSource && !s.verilogSrc) { set({ error: "Generate Verilog first" }); return; }
+    if (!s.svSource && !s.verilogSrc) {
+      set(synthesisErrorMessageState("Generate Verilog first"));
+      return;
+    }
     set(multiTargetSynthesisRunStartState());
     try {
       const verilog = s.svSource || s.verilogSrc;
@@ -1215,11 +1224,14 @@ export const useStudioStore = create<StudioState>((set, get) => ({
   runSynthEstimate: async () => {
     const s = get();
     const irOps = s.irText ? s.irText.split("\n").filter((l) => l.trim().startsWith("%")).length : 0;
-    if (irOps < 1) { set({ error: "Build IR first to estimate resources" }); return; }
+    if (irOps < 1) {
+      set(synthesisErrorMessageState("Build IR first to estimate resources"));
+      return;
+    }
     try {
       const synthEstimate = await fetchSynthEstimate(irOps, s.synthTarget);
       set(synthesisEstimateLoadedState(synthEstimate));
-    } catch (e) { set({ error: e instanceof Error ? e.message : String(e) }); }
+    } catch (e) { set(synthesisErrorState(e, "Synthesis estimate failed")); }
   },
 
   checkSynthTools: async () => {

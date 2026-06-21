@@ -64,8 +64,16 @@ export interface SynthesisFailureStatePatch {
   isSimulating: false;
 }
 
+export interface SynthesisErrorStatePatch {
+  error: string;
+}
+
 export interface SynthesisEstimateLoadedStatePatch {
   synthEstimate: SynthEstimate;
+}
+
+export interface SynthesisTargetStatePatch {
+  synthTarget: string;
 }
 
 export interface SynthesisToolStatusLoadedStatePatch {
@@ -130,11 +138,20 @@ export function multiTargetSynthesisRunCompletedState(
 
 export function synthesisFailureState(error: unknown): SynthesisFailureStatePatch {
   return {
-    error: error instanceof Error && error.message.length > 0
-      ? error.message
-      : "Synthesis failed",
+    error: synthesisErrorMessage(error, "Synthesis failed"),
     isSimulating: false,
   };
+}
+
+export function synthesisErrorState(
+  error: unknown,
+  fallbackMessage: string,
+): SynthesisErrorStatePatch {
+  return { error: synthesisErrorMessage(error, fallbackMessage) };
+}
+
+export function synthesisErrorMessageState(message: string): SynthesisErrorStatePatch {
+  return { error: message };
 }
 
 export function synthesisEstimateLoadedState(
@@ -143,10 +160,20 @@ export function synthesisEstimateLoadedState(
   return { synthEstimate };
 }
 
+export function synthesisTargetState(synthTarget: string): SynthesisTargetStatePatch {
+  return { synthTarget };
+}
+
 export function synthesisToolStatusLoadedState(
   toolsAvailable: Record<string, SynthToolInfo>,
 ): SynthesisToolStatusLoadedStatePatch {
   return { toolsAvailable };
+}
+
+function synthesisErrorMessage(error: unknown, fallbackMessage: string): string {
+  return error instanceof Error && error.message.length > 0
+    ? error.message
+    : fallbackMessage;
 }
 
 function synthesisOperatorRefreshState(
