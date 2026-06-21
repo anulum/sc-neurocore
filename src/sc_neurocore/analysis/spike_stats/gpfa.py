@@ -51,9 +51,10 @@ def _load_rust_gpfa_em() -> Any | None:
 # Rust acceleration backend — probed at import (the wheel import is cheap).
 _rust_gpfa_em: Any | None = _load_rust_gpfa_em()
 
-# Julia / Go backends — loaded lazily on first explicit request.
+# Julia / Go / Mojo backends — loaded lazily on first explicit request.
 _julia_gpfa: Any | None = None
 _go_gpfa_lib: Any | None = None
+_mojo_gpfa_lib: Any | None = None
 
 
 def _ensure_julia_gpfa() -> bool:
@@ -91,6 +92,38 @@ def _ensure_go_gpfa() -> bool:
     fn.argtypes = [dp] * 5 + [_ctypes.c_int] * 4 + [_ctypes.c_double] + [dp] * 3
     fn.restype = None
     _go_gpfa_lib = lib
+    return True
+
+
+def _ensure_mojo_gpfa() -> bool:
+    """Lazy-load the Mojo GPFA shared library, returning ``True`` when available.
+
+    Built once via::
+
+        cd src/sc_neurocore/accel/mojo/kernels
+        mojo build --emit shared-lib -o libgpfa.so gpfa.mojo
+
+    Per ``feedback_mojo_026_ffi_pattern``, the ``@export`` signature accepts no
+    parametric pointer types, so every array is passed as a raw ``int64`` address
+    (``numpy.ndarray.ctypes.data``) and the lone ``tol`` scalar as a ``c_double``.
+    """
+    global _mojo_gpfa_lib
+    if _mojo_gpfa_lib is not None:
+        return True
+    so_path = _accel_path("mojo", "kernels", "libgpfa.so")
+    if not _os.path.isfile(so_path):
+        return False
+    try:
+        lib = _ctypes.CDLL(so_path)
+    except OSError:
+        return False
+    fn = getattr(lib, "gpfa_em_c", None)
+    if fn is None:
+        return False
+    # 13 args: 5 input addresses + 4 size scalars + tol + 3 output addresses.
+    fn.argtypes = [_ctypes.c_int64] * 5 + [_ctypes.c_int64] * 4 + [_ctypes.c_double] + [_ctypes.c_int64] * 3
+    fn.restype = None
+    _mojo_gpfa_lib = lib
     return True
 
 
@@ -463,6 +496,63 @@ def _run_go_gpfa_em(
     )
 
 
+def _run_mojo_gpfa_em(
+    Y: np.ndarray[Any, Any],
+    C0: np.ndarray[Any, Any],
+    d0: np.ndarray[Any, Any],
+    R0: np.ndarray[Any, Any],
+    tau: np.ndarray[Any, Any],
+    max_iter: int,
+    tol: float,
+) -> tuple[
+    np.ndarray[Any, Any],
+    np.ndarray[Any, Any],
+    np.ndarray[Any, Any],
+    np.ndarray[Any, Any],
+    list[float],
+]:
+    """Dispatch the EM loop to the Mojo c-shared backend and rebuild NumPy outputs.
+
+    Mirrors :func:`_run_go_gpfa_em` but, per the Mojo 0.26 FFI rules, hands every
+    buffer to the kernel as a raw ``int64`` address rather than a typed pointer.
+    """
+    assert _mojo_gpfa_lib is not None
+    n_neurons, n_bins = Y.shape
+    n_latents = int(C0.shape[1])
+    y_buf = np.ascontiguousarray(Y, dtype=np.float64).reshape(-1)
+    c0_buf = np.ascontiguousarray(C0, dtype=np.float64).reshape(-1)
+    d0_buf = np.ascontiguousarray(d0, dtype=np.float64)
+    r0_buf = np.ascontiguousarray(np.diag(R0), dtype=np.float64)
+    tau_buf = np.ascontiguousarray(tau, dtype=np.float64)
+    x_out = np.zeros(n_latents * n_bins, dtype=np.float64)
+    params_out = np.zeros(n_neurons * n_latents + 2 * n_neurons, dtype=np.float64)
+    loglik_out = np.zeros(max_iter + 1, dtype=np.float64)
+    _mojo_gpfa_lib.gpfa_em_c(
+        y_buf.ctypes.data,
+        c0_buf.ctypes.data,
+        d0_buf.ctypes.data,
+        r0_buf.ctypes.data,
+        tau_buf.ctypes.data,
+        n_neurons,
+        n_bins,
+        n_latents,
+        int(max_iter),
+        float(tol),
+        x_out.ctypes.data,
+        params_out.ctypes.data,
+        loglik_out.ctypes.data,
+    )
+    c_end = n_neurons * n_latents
+    n_iter = int(loglik_out[0])
+    return (
+        x_out.reshape(n_latents, n_bins),
+        params_out[:c_end].reshape(n_neurons, n_latents).copy(),
+        params_out[c_end : c_end + n_neurons].copy(),
+        np.diag(params_out[c_end + n_neurons : c_end + 2 * n_neurons].copy()),
+        [float(v) for v in loglik_out[1 : 1 + n_iter]],
+    )
+
+
 def _gpfa_em_dispatch(
     Y: np.ndarray[Any, Any],
     C0: np.ndarray[Any, Any],
@@ -479,19 +569,30 @@ def _gpfa_em_dispatch(
     np.ndarray[Any, Any],
     list[float],
 ]:
-    """Run the GPFA EM loop on the requested backend, fastest-first under ``auto``.
+    """Run the GPFA EM loop on the requested backend; ``auto`` selects the fastest.
 
     The deterministic initialisation (see :func:`gpfa_pca_init`) lets every backend
-    share an identical starting point. The Rust, Julia and Go backends bind the same
-    ``gpfa_em`` contract and agree with the NumPy reference up to floating-point
-    round-off; Mojo is wired in as it lands.
+    share an identical starting point. The Rust, Julia, Go and Mojo backends bind the
+    same ``gpfa_em`` contract and agree with the NumPy reference up to floating-point
+    round-off.
+
+    Backend selection under ``auto`` is data-driven (see
+    ``benchmarks/results/bench_gpfa.json``): GPFA's inner loop is dense linear
+    algebra — Gaussian elimination, marginal-covariance ``slogdet`` and solves — and
+    the NumPy reference dispatches those to LAPACK, which outpaces the hand-written
+    Gauss-Jordan kernels of the compiled backends (measured ~6× faster than Rust/Mojo,
+    ~11× faster than Go). ``auto`` therefore runs the NumPy path; the Rust, Julia, Go
+    and Mojo backends remain available by name for cross-language parity checking and
+    for embedding in environments without a tuned NumPy/LAPACK stack.
     """
-    if backend not in ("auto", "python", "rust", "julia", "go"):
+    if backend not in ("auto", "python", "rust", "julia", "go", "mojo"):
         raise ValueError(f"GPFA backend {backend!r} is not available")
-    if backend in ("auto", "rust") and _rust_gpfa_em is not None:
-        return _run_rust_gpfa_em(Y, C0, d0, R0, tau, max_iter, tol)
+    if backend in ("auto", "python"):
+        return gpfa_em(Y, C0, d0, R0, tau, max_iter, tol)
     if backend == "rust":
-        raise RuntimeError("Rust GPFA backend is not available in this environment")
+        if _rust_gpfa_em is None:
+            raise RuntimeError("Rust GPFA backend is not available in this environment")
+        return _run_rust_gpfa_em(Y, C0, d0, R0, tau, max_iter, tol)
     if backend == "julia":
         if not _ensure_julia_gpfa():
             raise RuntimeError("Julia GPFA backend is not available")
@@ -500,7 +601,9 @@ def _gpfa_em_dispatch(
         if not _ensure_go_gpfa():
             raise RuntimeError("Go GPFA backend is not available")
         return _run_go_gpfa_em(Y, C0, d0, R0, tau, max_iter, tol)
-    return gpfa_em(Y, C0, d0, R0, tau, max_iter, tol)
+    if not _ensure_mojo_gpfa():
+        raise RuntimeError("Mojo GPFA backend is not available")
+    return _run_mojo_gpfa_em(Y, C0, d0, R0, tau, max_iter, tol)
 
 
 def _bin_trains(
@@ -543,8 +646,9 @@ def gpfa(
     seed : int, optional
         Retained for API compatibility; initialisation is deterministic.
     backend : str, optional
-        ``"auto"`` selects the fastest available backend; ``"python"`` forces the
-        NumPy reference.
+        ``"auto"`` selects the fastest measured backend, which for GPFA is the
+        LAPACK-backed NumPy reference (``"python"``); ``"rust"``, ``"julia"``,
+        ``"go"`` and ``"mojo"`` run the parity-verified compiled paths on request.
 
     Returns
     -------

@@ -1,0 +1,124 @@
+{
+  "benchmark": "gpfa_em_polyglot",
+  "date_utc": "2026-06-21T02:09:56Z",
+  "language_surfaces": [
+    "Python",
+    "Rust",
+    "Julia",
+    "Go",
+    "Mojo"
+  ],
+  "kernel": "gpfa_em_from_init",
+  "hardware_measurement_claimed": false,
+  "workload": {
+    "n_neurons": 8,
+    "n_samples": 600,
+    "n_bins": 30,
+    "n_latents": 3,
+    "bin_ms": 20.0,
+    "max_iter": 30,
+    "tol": 0.0001,
+    "seed": 20260621
+  },
+  "meta": {
+    "cpu": "11th Gen Intel(R) Core(TM) i5-11600K @ 3.90GHz",
+    "platform": "Linux-6.17.0-35-generic-x86_64-with-glibc2.39",
+    "python": "3.12.3",
+    "numpy": "2.2.6"
+  },
+  "backends": {
+    "python": {
+      "available": true,
+      "used": true,
+      "median_call_ms": 7.762831,
+      "em_iterations": 3,
+      "repeats": 3
+    },
+    "rust": {
+      "available": true,
+      "used": true,
+      "median_call_ms": 45.30022,
+      "em_iterations": 3,
+      "repeats": 7,
+      "speedup_over_python": 0.171
+    },
+    "julia": {
+      "available": true,
+      "used": true,
+      "median_call_ms": 5555.924262,
+      "em_iterations": 3,
+      "repeats": 7,
+      "speedup_over_python": 0.001
+    },
+    "go": {
+      "available": true,
+      "used": true,
+      "median_call_ms": 82.622422,
+      "em_iterations": 3,
+      "repeats": 7,
+      "speedup_over_python": 0.094
+    },
+    "mojo": {
+      "available": true,
+      "used": true,
+      "median_call_ms": 47.923933,
+      "em_iterations": 3,
+      "repeats": 7,
+      "speedup_over_python": 0.162
+    }
+  },
+  "parity": {
+    "reference": "python",
+    "rust": {
+      "trajectories_max_abs_diff": 8.5878124056471e-11,
+      "C_max_abs_diff": 2.1869173139066334e-11,
+      "d_max_abs_diff": 0.0,
+      "R_max_abs_diff": 6.994405055138486e-14,
+      "log_likelihood_max_abs_diff": 5.684341886080801e-13,
+      "iterations_match": true
+    },
+    "julia": {
+      "trajectories_max_abs_diff": 3.470456561016633e-11,
+      "C_max_abs_diff": 2.2731261317687768e-12,
+      "d_max_abs_diff": 0.0,
+      "R_max_abs_diff": 1.8096635301390052e-14,
+      "log_likelihood_max_abs_diff": 8.526512829121202e-13,
+      "iterations_match": true
+    },
+    "go": {
+      "trajectories_max_abs_diff": 1.0399288374873805e-10,
+      "C_max_abs_diff": 1.4799050873648412e-11,
+      "d_max_abs_diff": 0.0,
+      "R_max_abs_diff": 9.805489753489383e-13,
+      "log_likelihood_max_abs_diff": 2.7284841053187847e-12,
+      "iterations_match": true
+    },
+    "mojo": {
+      "trajectories_max_abs_diff": 1.239192568003311e-10,
+      "C_max_abs_diff": 1.8625878617228864e-11,
+      "d_max_abs_diff": 0.0,
+      "R_max_abs_diff": 7.02327085377874e-13,
+      "log_likelihood_max_abs_diff": 3.4707170470937854e-08,
+      "iterations_match": true
+    }
+  },
+  "host_context": {
+    "affinity_cpus": [
+      10,
+      11
+    ],
+    "cgroup_effective_cpuset": "10-11",
+    "load_average_before": [
+      8.8525390625,
+      9.98583984375,
+      11.15087890625
+    ],
+    "load_average_after": [
+      10.16064453125,
+      10.06005859375,
+      11.10302734375
+    ],
+    "runtime_cpuset_shield_claimed": true,
+    "isolation_mode": "runtime-cpuset-shield"
+  }
+}

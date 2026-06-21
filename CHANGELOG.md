@@ -16,14 +16,24 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 - GPFA Rust backend (`py_gpfa_em`) now shares the deterministic initialisation and
   computes the exact marginal log-likelihood (previously an approximate
   residual-sum form), so it agrees with the NumPy reference to within float64
-  round-off (same iteration count, trajectories within ~1e-10). The accelerated
-  path is selected automatically; a parity test gates the agreement.
+  round-off (same iteration count, trajectories within ~1e-10); selectable via
+  `backend="rust"`, with a gated parity test.
 - GPFA Julia backend (`accel/julia/analysis/gpfa.jl`, previously a stub) implements
   the same EM-from-initialisation contract and agrees with the NumPy reference to
   within ~1e-12; selectable via `backend="julia"`, gated parity test included.
 - GPFA Go backend (`accel/go/gpfa/gpfa.go`, c-shared via cgo) implements the same
   EM-from-initialisation contract and agrees with the NumPy reference to within
   ~1e-12; selectable via `backend="go"`, with parity and loader-branch tests.
+- GPFA Mojo backend (`accel/mojo/kernels/gpfa.mojo`, previously a stub) implements
+  the same EM-from-initialisation contract over the `@export` raw-address FFI and
+  agrees with the NumPy reference to within ~1e-10; selectable via `backend="mojo"`,
+  with parity and loader-branch tests.
+- GPFA `backend="auto"` now resolves to the NumPy/LAPACK reference, which the new
+  `benchmarks/bench_gpfa.py` measures as the fastest path for this dense-linear-algebra
+  kernel (about 6x faster than the Rust and Mojo Gauss-Jordan kernels and 11x faster
+  than Go on the reference workload); the compiled backends remain available by name
+  for cross-language parity and portability. Added `docs/api/gpfa.md` describing the
+  deterministic init, the EM contract, the five backends and the benchmark.
 
 ### Public bitstream-inference API
 - Restored a stable public stochastic-inference surface over caller-owned packed
@@ -62,6 +72,8 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
   convention) in `docs/formal/timing_aware_properties.md`.
 
 ### Studio platform
+- Added Admin panel audit-archive controls for quarantine archive creation,
+  retention review, and prune-candidate purge execution.
 - Added an admin-gated Studio audit quarantine archive retention purge endpoint
   that removes only archive jobs marked as prune candidates.
 - Added an admin-gated Studio audit quarantine archive restore job that

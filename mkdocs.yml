@@ -255,6 +255,7 @@ nav:
           - Sources: api/sources.md
           - Recorders: api/recorders.md
           - Spike Train Analysis: api/analysis.md
+          - GPFA (deterministic init + polyglot EM): api/gpfa.md
           - Utilities: api/utils.md
           - Acceleration: api/accel.md
           - Ensembles: api/ensembles.md

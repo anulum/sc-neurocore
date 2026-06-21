@@ -303,12 +303,17 @@ Spike Pattern Detection and Evaluation (Torre et al. 2013).
 
 ### GPFA (`spike_stats.gpfa`)
 
-Gaussian Process Factor Analysis (Yu et al. 2009).
+Gaussian Process Factor Analysis (Yu et al. 2009). Deterministic PCA
+initialisation and a five-language EM chain (NumPy / Rust / Julia / Go / Mojo)
+that agree to floating-point round-off. See **[GPFA -- deterministic init and
+polyglot EM](gpfa.md)** for the algorithm, the backend contract and the
+benchmark.
 
 | Function | Description |
 |----------|-------------|
-| `gpfa(trains, n_latents, bin_ms, dt, max_iter, ...)` | Extract smooth latent trajectories via EM with SE-GP priors |
+| `gpfa(trains, n_latents, bin_ms, dt, max_iter, ..., backend)` | Extract smooth latent trajectories via EM with SE-GP priors |
 | `gpfa_transform(new_trains, params, bin_ms, dt)` | Project new data using learned GPFA parameters |
+| `gpfa_pca_init(Y, n_latents, bin_ms)` | Deterministic PCA initialisation shared by every backend |
 
 ## Explainability
 

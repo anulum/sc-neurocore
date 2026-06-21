@@ -38,6 +38,7 @@ from sc_neurocore.analysis.spike_stats.gpfa import (
 _RUST_AVAILABLE = _rust_gpfa_em is not None
 _JULIA_AVAILABLE = importlib.util.find_spec("juliacall") is not None
 _GO_AVAILABLE = _GPFA_MODULE._ensure_go_gpfa()
+_MOJO_AVAILABLE = _GPFA_MODULE._ensure_mojo_gpfa()
 
 
 def _raise_oserror(_path: str) -> object:
@@ -133,13 +134,14 @@ class TestGpfa:
         npt.assert_array_equal(a["trajectories"], b["trajectories"])
         npt.assert_array_equal(a["C"], b["C"])
 
-    def test_auto_matches_python_within_tolerance(self) -> None:
-        # `auto` may select an accelerated backend; it agrees with the NumPy
-        # reference up to floating-point round-off.
+    def test_auto_selects_fastest_numpy_path(self) -> None:
+        # GPFA's inner loop is LAPACK-bound, so the measured-fastest backend is the
+        # NumPy reference; `auto` resolves to it and matches `python` exactly.
         trains = _synthetic_trains()
         auto = gpfa(trains, n_latents=2, bin_ms=20.0, max_iter=20, backend="auto")
         py = gpfa(trains, n_latents=2, bin_ms=20.0, max_iter=20, backend="python")
-        npt.assert_allclose(auto["trajectories"], py["trajectories"], atol=1e-7)
+        npt.assert_array_equal(auto["trajectories"], py["trajectories"])
+        npt.assert_array_equal(auto["C"], py["C"])
 
     def test_clamps_latent_count(self) -> None:
         trains = _synthetic_trains(n_neurons=2, n_samples=120)
@@ -194,11 +196,13 @@ class TestRustParity:
         npt.assert_allclose(ru["R"], py["R"], atol=1e-9)
         npt.assert_allclose(ru["log_likelihoods"], py["log_likelihoods"], atol=1e-6)
 
-    def test_auto_selects_rust(self) -> None:
+    def test_rust_matches_numpy_not_necessarily_auto(self) -> None:
+        # `auto` is the NumPy path (measured fastest); the explicit Rust backend
+        # agrees with it up to round-off but is not bit-identical to it.
         trains = _synthetic_trains()
         auto = gpfa(trains, n_latents=2, bin_ms=20.0, max_iter=20, backend="auto")
         rust = gpfa(trains, n_latents=2, bin_ms=20.0, max_iter=20, backend="rust")
-        npt.assert_array_equal(auto["trajectories"], rust["trajectories"])
+        npt.assert_allclose(rust["trajectories"], auto["trajectories"], atol=1e-7)
 
 
 @pytest.mark.skipif(not _JULIA_AVAILABLE, reason="juliacall not installed")
@@ -286,6 +290,52 @@ def test_go_backend_raises_when_unavailable(monkeypatch: pytest.MonkeyPatch) -> 
         gpfa(trains, n_latents=2, bin_ms=20.0, max_iter=3, backend="go")
 
 
+@pytest.mark.skipif(not _MOJO_AVAILABLE, reason="Mojo GPFA library not built")
+class TestMojoParity:
+    """The Mojo backend matches the NumPy reference up to float64 round-off."""
+
+    def test_full_pipeline_parity(self) -> None:
+        trains = _synthetic_trains(6, 400)
+        py = gpfa(trains, n_latents=2, bin_ms=20.0, max_iter=30, backend="python")
+        mo = gpfa(trains, n_latents=2, bin_ms=20.0, max_iter=30, backend="mojo")
+        assert len(py["log_likelihoods"]) == len(mo["log_likelihoods"])
+        npt.assert_allclose(mo["trajectories"], py["trajectories"], atol=1e-8)
+        npt.assert_allclose(mo["C"], py["C"], atol=1e-8)
+        npt.assert_allclose(mo["R"], py["R"], atol=1e-9)
+        npt.assert_allclose(mo["log_likelihoods"], py["log_likelihoods"], atol=1e-6)
+
+    def test_ensure_mojo_is_cached(self) -> None:
+        assert _GPFA_MODULE._ensure_mojo_gpfa() is True
+        assert _GPFA_MODULE._ensure_mojo_gpfa() is True
+
+
+def test_ensure_mojo_false_when_missing(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(_GPFA_MODULE, "_mojo_gpfa_lib", None)
+    monkeypatch.setattr(_GPFA_MODULE._os.path, "isfile", lambda _path: False)
+    assert _GPFA_MODULE._ensure_mojo_gpfa() is False
+
+
+def test_ensure_mojo_false_on_load_error(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(_GPFA_MODULE, "_mojo_gpfa_lib", None)
+    monkeypatch.setattr(_GPFA_MODULE._os.path, "isfile", lambda _path: True)
+    monkeypatch.setattr(_GPFA_MODULE._ctypes, "CDLL", _raise_oserror)
+    assert _GPFA_MODULE._ensure_mojo_gpfa() is False
+
+
+def test_ensure_mojo_false_when_symbol_missing(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(_GPFA_MODULE, "_mojo_gpfa_lib", None)
+    monkeypatch.setattr(_GPFA_MODULE._os.path, "isfile", lambda _path: True)
+    monkeypatch.setattr(_GPFA_MODULE._ctypes, "CDLL", lambda _path: object())
+    assert _GPFA_MODULE._ensure_mojo_gpfa() is False
+
+
+def test_mojo_backend_raises_when_unavailable(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(_GPFA_MODULE, "_ensure_mojo_gpfa", lambda: False)
+    trains = _synthetic_trains(n_neurons=3, n_samples=120)
+    with pytest.raises(RuntimeError, match="Mojo GPFA backend is not available"):
+        gpfa(trains, n_latents=2, bin_ms=20.0, max_iter=3, backend="mojo")
+
+
 def test_rust_probe_returns_none_when_engine_missing(monkeypatch: pytest.MonkeyPatch) -> None:
     def _raise(_name: str) -> object:
         raise ImportError("engine absent")
@@ -299,6 +349,7 @@ def test_rust_backend_raises_when_unavailable(monkeypatch: pytest.MonkeyPatch) -
     trains = _synthetic_trains(n_neurons=3, n_samples=120)
     with pytest.raises(RuntimeError, match="not available"):
         gpfa(trains, n_latents=2, bin_ms=20.0, max_iter=3, backend="rust")
-    # auto falls back to the NumPy reference when Rust is absent
+    # auto always runs the NumPy reference (the measured-fastest path), so it
+    # stays functional whether or not the Rust engine is present
     result = gpfa(trains, n_latents=2, bin_ms=20.0, max_iter=3, backend="auto")
     assert result["trajectories"].size > 0
