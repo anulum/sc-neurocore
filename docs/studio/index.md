@@ -286,7 +286,8 @@ runtime features:
   bounded `studio-evidence` worker job. The request can name one saved project,
   selected `studio.simulation-run.v1` simulation responses, selected
   `studio.analysis-result.v1` analysis responses, selected default-flow run
-  and attestation responses, selected job IDs, bounded audit export length, and
+  and attestation responses classified as `default_flow` evidence, selected
+  job IDs, bounded audit export length, and
   command replay metadata. The resulting
   `studio.evidence-bundle.v1` manifest, validated `project_workspace` project
   payload, simulation result payloads, analysis result payloads,

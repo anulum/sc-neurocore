@@ -126,6 +126,7 @@ def _default_flow_run_payload() -> dict[str, object]:
 
     return {
         "action_order": ["auto_tune_adaptive_precision"],
+        "evidence_classification": "default_flow",
         "executed_count": 1,
         "execution_time_ms": 1.0,
         "flow_id": "studio_default_adaptive_precision_v1",
@@ -137,6 +138,7 @@ def _default_flow_run_payload() -> dict[str, object]:
         },
         "results": [],
         "schema_version": "sc-neurocore.studio.default-flow-run.v1",
+        "status": "completed",
     }
 
 
@@ -145,12 +147,14 @@ def _default_flow_attestation_payload() -> dict[str, object]:
 
     return {
         "attestation_fingerprint_sha256": "9" * 64,
+        "evidence_classification": "default_flow",
         "flow_id": "studio_default_adaptive_precision_v1",
         "inputs_fingerprint_sha256": "7" * 64,
         "plan_fingerprint_sha256": "a" * 64,
         "preset_id": "fpga_precision",
         "run_fingerprint_sha256": "8" * 64,
         "schema_version": "sc-neurocore.studio.default-flow-attestation.v1",
+        "status": "completed",
     }
 
 
@@ -299,11 +303,13 @@ def test_write_studio_evidence_bundle_copies_project_job_audit_and_replay(
     assert entry_type_counts["simulation_result"] == 1
     assert evidence_classification_counts["analysis"] == 1
     assert evidence_classification_counts["compile"] == 1
+    assert evidence_classification_counts["default_flow"] == 2
     assert evidence_classification_counts["project_workspace"] == 1
     assert evidence_classification_counts["simulation"] == 1
     assert summary["known_evidence_classifications"] == [
         "analysis",
         "compile",
+        "default_flow",
         "local_regression",
         "project_workspace",
         "release_benchmark",
@@ -570,6 +576,20 @@ def test_write_studio_evidence_bundle_rejects_invalid_json_and_artifact_state(
             default_flow_runs=(invalid_default_flow_run,),
         )
     invalid_default_flow_run = _default_flow_run_payload()
+    invalid_default_flow_run["evidence_classification"] = "analysis"
+    with pytest.raises(ValueError, match="classified as default-flow evidence"):
+        write_studio_evidence_bundle(
+            context,
+            default_flow_runs=(invalid_default_flow_run,),
+        )
+    invalid_default_flow_run = _default_flow_run_payload()
+    invalid_default_flow_run["status"] = "failed"
+    with pytest.raises(ValueError, match="completed evidence status"):
+        write_studio_evidence_bundle(
+            context,
+            default_flow_runs=(invalid_default_flow_run,),
+        )
+    invalid_default_flow_run = _default_flow_run_payload()
     invalid_default_flow_run["flow_id"] = ""
     with pytest.raises(ValueError, match="requires a flow ID"):
         write_studio_evidence_bundle(
@@ -623,6 +643,20 @@ def test_write_studio_evidence_bundle_rejects_invalid_json_and_artifact_state(
     invalid_attestation = _default_flow_attestation_payload()
     invalid_attestation["preset_id"] = ""
     with pytest.raises(ValueError, match="requires a preset ID"):
+        write_studio_evidence_bundle(
+            context,
+            default_flow_attestations=(invalid_attestation,),
+        )
+    invalid_attestation = _default_flow_attestation_payload()
+    invalid_attestation["evidence_classification"] = "analysis"
+    with pytest.raises(ValueError, match="classified as default-flow evidence"):
+        write_studio_evidence_bundle(
+            context,
+            default_flow_attestations=(invalid_attestation,),
+        )
+    invalid_attestation = _default_flow_attestation_payload()
+    invalid_attestation["status"] = "failed"
+    with pytest.raises(ValueError, match="completed evidence status"):
         write_studio_evidence_bundle(
             context,
             default_flow_attestations=(invalid_attestation,),
@@ -905,10 +939,14 @@ def test_studio_evidence_bundle_route_exports_selected_state(
     assert simulation_payload["run_metadata"] == simulation_response.json()["run_metadata"]
     assert analysis_payload["analysis_metadata"] == analysis_response.json()["analysis_metadata"]
     assert default_flow_run_payload["schema_version"] == "sc-neurocore.studio.default-flow-run.v1"
+    assert default_flow_run_payload["evidence_classification"] == "default_flow"
+    assert default_flow_run_payload["status"] == "completed"
     assert (
         default_flow_attestation_payload["schema_version"]
         == "sc-neurocore.studio.default-flow-attestation.v1"
     )
+    assert default_flow_attestation_payload["evidence_classification"] == "default_flow"
+    assert default_flow_attestation_payload["status"] == "completed"
     assert copied_action_evidence["schema_version"] == "studio.action-evidence.v1"
     assert copied_action_evidence["evidence_classification"] == "compile"
     assert "action_evidence" in json.dumps(manifest)

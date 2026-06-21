@@ -811,6 +811,8 @@ def _execute_default_flow_with_overrides(
     }
     return {
         "schema_version": "sc-neurocore.studio.default-flow-run.v1",
+        "evidence_classification": "default_flow",
+        "status": "completed",
         "preset_id": preset_id,
         "flow_id": "studio_default_adaptive_precision_v1",
         "action_order": action_order,
@@ -2177,6 +2179,8 @@ def create_app(runtime_settings: StudioRuntimeSettings | None = None) -> FastAPI
             plan = _build_default_flow_plan_payload(preset_id)
             attestation_payload = {
                 "schema_version": "sc-neurocore.studio.default-flow-attestation.v1",
+                "evidence_classification": "default_flow",
+                "status": "completed",
                 "preset_id": preset_id,
                 "flow_id": "studio_default_adaptive_precision_v1",
                 "plan_fingerprint_sha256": plan["plan_fingerprint_sha256"],
@@ -2218,6 +2222,8 @@ def create_app(runtime_settings: StudioRuntimeSettings | None = None) -> FastAPI
             plan = _build_default_flow_plan_payload(preset_id)
             expected_attestation_base = {
                 "schema_version": "sc-neurocore.studio.default-flow-attestation.v1",
+                "evidence_classification": "default_flow",
+                "status": "completed",
                 "preset_id": preset_id,
                 "flow_id": "studio_default_adaptive_precision_v1",
                 "plan_fingerprint_sha256": plan["plan_fingerprint_sha256"],

@@ -193,12 +193,13 @@ def write_studio_evidence_bundle(
             payload
         )
         entries.append(
-            _write_json_entry(
+            _write_classified_json_entry(
                 context,
                 written_paths,
                 "default_flow_run",
                 f"evidence/default-flows/runs/{index:03d}.json",
                 payload,
+                evidence_classification="default_flow",
             )
         )
 
@@ -208,12 +209,13 @@ def write_studio_evidence_bundle(
             run_fingerprints=default_flow_run_fingerprints,
         )
         entries.append(
-            _write_json_entry(
+            _write_classified_json_entry(
                 context,
                 written_paths,
                 "default_flow_attestation",
                 f"evidence/default-flows/attestations/{index:03d}.json",
                 payload,
+                evidence_classification="default_flow",
             )
         )
 
@@ -441,6 +443,14 @@ def _default_flow_run_payload(payload: Mapping[str, object]) -> dict[str, JsonVa
     result = _json_object(payload, "Studio default-flow run payload must be JSON.")
     if result.get("schema_version") != STUDIO_DEFAULT_FLOW_RUN_SCHEMA_VERSION:
         raise ValueError("Studio default-flow run payload has unsupported schema.")
+    if result.get("evidence_classification") != validate_studio_evidence_classification(
+        "default_flow"
+    ):
+        raise ValueError(
+            "Studio default-flow run payload must be classified as default-flow evidence."
+        )
+    if result.get("status") != validate_studio_evidence_status("completed"):
+        raise ValueError("Studio default-flow run payload must have completed evidence status.")
     preset_id = result.get("preset_id")
     flow_id = result.get("flow_id")
     if not isinstance(preset_id, str) or not preset_id:
@@ -475,6 +485,16 @@ def _default_flow_attestation_payload(
     result = _json_object(payload, "Studio default-flow attestation payload must be JSON.")
     if result.get("schema_version") != STUDIO_DEFAULT_FLOW_ATTESTATION_SCHEMA_VERSION:
         raise ValueError("Studio default-flow attestation payload has unsupported schema.")
+    if result.get("evidence_classification") != validate_studio_evidence_classification(
+        "default_flow"
+    ):
+        raise ValueError(
+            "Studio default-flow attestation payload must be classified as default-flow evidence."
+        )
+    if result.get("status") != validate_studio_evidence_status("completed"):
+        raise ValueError(
+            "Studio default-flow attestation payload must have completed evidence status."
+        )
     preset_id = result.get("preset_id")
     flow_id = result.get("flow_id")
     if not isinstance(preset_id, str) or not preset_id:

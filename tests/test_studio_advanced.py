@@ -398,6 +398,8 @@ class TestPresets:
         payload = response.json()
         assert payload["preset_id"] == "fpga_precision"
         assert payload["schema_version"] == "sc-neurocore.studio.default-flow-run.v1"
+        assert payload["evidence_classification"] == "default_flow"
+        assert payload["status"] == "completed"
         assert payload["flow_id"] == "studio_default_adaptive_precision_v1"
         assert payload["executed_count"] >= 2
         assert payload["execution_time_ms"] >= 0.0
@@ -507,6 +509,8 @@ class TestPresets:
         assert response.status_code == 200
         payload = response.json()
         assert payload["schema_version"] == "sc-neurocore.studio.default-flow-attestation.v1"
+        assert payload["evidence_classification"] == "default_flow"
+        assert payload["status"] == "completed"
         assert payload["preset_id"] == "fpga_precision"
         assert len(payload["attestation_fingerprint_sha256"]) == 64
 

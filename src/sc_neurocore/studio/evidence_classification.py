@@ -15,6 +15,7 @@ from typing import Literal, TypeAlias, cast
 StudioEvidenceClassification: TypeAlias = Literal[
     "analysis",
     "compile",
+    "default_flow",
     "local_regression",
     "project_workspace",
     "release_benchmark",
@@ -28,6 +29,7 @@ STUDIO_EVIDENCE_CLASSIFICATIONS = frozenset(
     {
         "analysis",
         "compile",
+        "default_flow",
         "local_regression",
         "project_workspace",
         "release_benchmark",
