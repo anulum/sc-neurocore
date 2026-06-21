@@ -3,6 +3,9 @@ import { describe, expect, it } from "vitest";
 import type { StudioCapability } from "./api/client";
 import {
   capabilityById,
+  capabilityFailureState,
+  capabilityLoadedState,
+  capabilityLoadingState,
   panelCapabilityState,
   summarizeCapabilities,
 } from "./capabilityShell";
@@ -58,6 +61,31 @@ describe("capability shell contract", () => {
 
     expect(capabilityById([api], "studio.api")).toBe(api);
     expect(capabilityById([api], "studio.missing")).toBeNull();
+  });
+
+  it("builds capability registry loading and loaded state patches", () => {
+    const api = capability({ capability_id: "studio.api", title: "Studio API" });
+
+    expect(capabilityLoadingState()).toEqual({
+      capabilitiesError: null,
+      capabilitiesLoading: true,
+    });
+    expect(capabilityLoadedState([api])).toEqual({
+      capabilities: [api],
+      capabilitiesError: null,
+      capabilitiesLoading: false,
+    });
+  });
+
+  it("builds capability registry failure state patches", () => {
+    expect(capabilityFailureState(new Error("registry offline"))).toEqual({
+      capabilitiesError: "registry offline",
+      capabilitiesLoading: false,
+    });
+    expect(capabilityFailureState("bad")).toEqual({
+      capabilitiesError: "Capability check failed",
+      capabilitiesLoading: false,
+    });
   });
 
   it("blocks unavailable panels with requirement and evidence details", () => {

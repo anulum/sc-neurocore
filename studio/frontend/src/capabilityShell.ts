@@ -57,6 +57,12 @@ export interface PanelCapabilityState {
   docsPath: string | null;
 }
 
+export interface CapabilityLoadStatePatch {
+  capabilities?: StudioCapability[];
+  capabilitiesError?: string | null;
+  capabilitiesLoading: boolean;
+}
+
 const PANEL_CAPABILITY_IDS: Partial<Record<PanelKey, string>> = {
   trace: "studio.simulation_workbench",
   phase: "studio.simulation_workbench",
@@ -111,6 +117,32 @@ export function capabilityById(
   capabilityId: string,
 ): StudioCapability | null {
   return capabilities.find((capability) => capability.capability_id === capabilityId) ?? null;
+}
+
+export function capabilityLoadingState(): CapabilityLoadStatePatch {
+  return {
+    capabilitiesError: null,
+    capabilitiesLoading: true,
+  };
+}
+
+export function capabilityLoadedState(
+  capabilities: StudioCapability[],
+): CapabilityLoadStatePatch {
+  return {
+    capabilities,
+    capabilitiesError: null,
+    capabilitiesLoading: false,
+  };
+}
+
+export function capabilityFailureState(error: unknown): CapabilityLoadStatePatch {
+  return {
+    capabilitiesError: error instanceof Error && error.message.length > 0
+      ? error.message
+      : "Capability check failed",
+    capabilitiesLoading: false,
+  };
 }
 
 /** Summarize backend capability health without storing duplicate UI state. */

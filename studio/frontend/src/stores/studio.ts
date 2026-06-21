@@ -135,6 +135,11 @@ import {
   type EvidenceBundleSurface,
 } from "../evidenceBundles";
 import { downloadBrowserArtefact } from "../browserArtefactDownload";
+import {
+  capabilityFailureState,
+  capabilityLoadedState,
+  capabilityLoadingState,
+} from "../capabilityShell";
 
 let debounceTimer: ReturnType<typeof setTimeout> | null = null;
 syncStoredStudioAuthToken(setStudioAuthToken);
@@ -448,19 +453,12 @@ export const useStudioStore = create<StudioState>((set, get) => ({
 
   loadTemplates: async () => set({ templates: await fetchTemplates() }),
   loadCapabilities: async () => {
-    set({ capabilitiesLoading: true, capabilitiesError: null });
+    set(capabilityLoadingState());
     try {
       const response = await fetchStudioCapabilities();
-      set({
-        capabilities: response.capabilities,
-        capabilitiesLoading: false,
-        capabilitiesError: null,
-      });
+      set(capabilityLoadedState(response.capabilities));
     } catch (error: unknown) {
-      set({
-        capabilitiesLoading: false,
-        capabilitiesError: error instanceof Error ? error.message : "Capability check failed",
-      });
+      set(capabilityFailureState(error));
     }
   },
   loadAuthSession: async () => {
