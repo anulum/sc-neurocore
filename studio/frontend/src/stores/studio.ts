@@ -64,6 +64,11 @@ import {
 } from "../api/client";
 import {
   clearStoredStudioAuthToken,
+  studioAuthFailureState,
+  studioAuthLoadingState,
+  studioAuthLogoutCompleteState,
+  studioAuthSessionLoadedState,
+  studioAuthUnauthenticatedState,
   storeStudioAuthToken,
   syncStoredStudioAuthToken,
 } from "../studioAuthSession";
@@ -461,44 +466,36 @@ export const useStudioStore = create<StudioState>((set, get) => ({
   loadAuthSession: async () => {
     const currentToken = syncStoredStudioAuthToken(setStudioAuthToken);
     if (currentToken === null) {
-      set({ authSession: { authenticated: false, principal_id: null, roles: [] } });
+      set(studioAuthUnauthenticatedState());
       return;
     }
-    set({ authLoading: true, authError: null });
+    set(studioAuthLoadingState());
     try {
       const authSession = await fetchStudioAuthSession();
-      set({ authLoading: false, authError: null, authSession });
+      set(studioAuthSessionLoadedState(authSession));
     } catch (error: unknown) {
       clearStoredStudioAuthToken();
       syncStoredStudioAuthToken(setStudioAuthToken);
-      set({
-        authLoading: false,
-        authError: error instanceof Error ? error.message : "Session check failed",
-        authSession: { authenticated: false, principal_id: null, roles: [] },
-      });
+      set(studioAuthFailureState(error, "Session check failed"));
     }
   },
   loginBrowserUser: async (username, password) => {
-    set({ authLoading: true, authError: null });
+    set(studioAuthLoadingState());
     try {
       const login = await loginStudioBrowserUser(username, password);
       storeStudioAuthToken(login.access_token);
       syncStoredStudioAuthToken(setStudioAuthToken);
       const authSession = await fetchStudioAuthSession();
-      set({ authLoading: false, authError: null, authSession });
+      set(studioAuthSessionLoadedState(authSession));
       await get().loadOperatorStatus();
     } catch (error: unknown) {
       clearStoredStudioAuthToken();
       syncStoredStudioAuthToken(setStudioAuthToken);
-      set({
-        authLoading: false,
-        authError: error instanceof Error ? error.message : "Login failed",
-        authSession: { authenticated: false, principal_id: null, roles: [] },
-      });
+      set(studioAuthFailureState(error, "Login failed"));
     }
   },
   logoutBrowserUser: async () => {
-    set({ authLoading: true, authError: null });
+    set(studioAuthLoadingState());
     try {
       await logoutStudioBrowserUser();
     } catch (error: unknown) {
@@ -506,10 +503,7 @@ export const useStudioStore = create<StudioState>((set, get) => ({
     } finally {
       clearStoredStudioAuthToken();
       syncStoredStudioAuthToken(setStudioAuthToken);
-      set({
-        authLoading: false,
-        authSession: { authenticated: false, principal_id: null, roles: [] },
-      });
+      set(studioAuthLogoutCompleteState());
     }
   },
   loadAuditStatus: async () => {

@@ -12,8 +12,14 @@ import {
   STUDIO_AUTH_STORAGE_KEY,
   clearStoredStudioAuthToken,
   readStoredStudioAuthToken,
+  studioAuthFailureState,
+  studioAuthLoadingState,
+  studioAuthLogoutCompleteState,
+  studioAuthSessionLoadedState,
+  studioAuthUnauthenticatedState,
   storeStudioAuthToken,
   syncStoredStudioAuthToken,
+  unauthenticatedStudioAuthSession,
   type StudioAuthTokenStorage,
 } from "./studioAuthSession";
 
@@ -70,5 +76,59 @@ describe("Studio auth token persistence", () => {
     expect(syncStoredStudioAuthToken(setToken, storage)).toBe("persisted-token");
 
     expect(syncedTokens).toEqual(["persisted-token"]);
+  });
+
+  it("builds the canonical unauthenticated browser session state", () => {
+    expect(unauthenticatedStudioAuthSession()).toEqual({
+      authenticated: false,
+      principal_id: null,
+      roles: [],
+    });
+    expect(studioAuthUnauthenticatedState()).toEqual({
+      authSession: {
+        authenticated: false,
+        principal_id: null,
+        roles: [],
+      },
+    });
+  });
+
+  it("builds loading and loaded state patches", () => {
+    const session = { authenticated: true, principal_id: "operator", roles: ["studio.admin"] };
+
+    expect(studioAuthLoadingState()).toEqual({
+      authError: null,
+      authLoading: true,
+    });
+    expect(studioAuthSessionLoadedState(session)).toEqual({
+      authError: null,
+      authLoading: false,
+      authSession: session,
+    });
+  });
+
+  it("builds failure state patches with error and fallback messages", () => {
+    expect(studioAuthFailureState(new Error("session expired"), "Session check failed"))
+      .toEqual({
+        authError: "session expired",
+        authLoading: false,
+        authSession: {
+          authenticated: false,
+          principal_id: null,
+          roles: [],
+        },
+      });
+    expect(studioAuthFailureState("bad", "Login failed").authError).toBe("Login failed");
+  });
+
+  it("builds logout completion without clearing a prior logout error", () => {
+    expect(studioAuthLogoutCompleteState()).toEqual({
+      authLoading: false,
+      authSession: {
+        authenticated: false,
+        principal_id: null,
+        roles: [],
+      },
+    });
   });
 });

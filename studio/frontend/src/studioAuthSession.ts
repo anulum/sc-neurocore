@@ -6,6 +6,8 @@
 // Contact: www.anulum.li | protoscience@anulum.li
 // SC-NeuroCore — Studio browser auth token persistence helpers
 
+import type { StudioAuthSession } from "./api/client";
+
 export const STUDIO_AUTH_STORAGE_KEY = "sc-neurocore-studio-auth-token";
 
 export interface StudioAuthTokenStorage {
@@ -14,8 +16,67 @@ export interface StudioAuthTokenStorage {
   removeItem(key: string): void;
 }
 
+export interface StudioAuthStatePatch {
+  authError?: string | null;
+  authLoading?: boolean;
+  authSession?: StudioAuthSession;
+}
+
+function errorMessage(error: unknown, fallback: string): string {
+  return error instanceof Error && error.message.length > 0 ? error.message : fallback;
+}
+
 export function browserSessionTokenStorage(): StudioAuthTokenStorage | null {
   return typeof sessionStorage === "undefined" ? null : sessionStorage;
+}
+
+export function unauthenticatedStudioAuthSession(): StudioAuthSession {
+  return {
+    authenticated: false,
+    principal_id: null,
+    roles: [],
+  };
+}
+
+export function studioAuthLoadingState(): StudioAuthStatePatch {
+  return {
+    authError: null,
+    authLoading: true,
+  };
+}
+
+export function studioAuthSessionLoadedState(
+  authSession: StudioAuthSession,
+): StudioAuthStatePatch {
+  return {
+    authError: null,
+    authLoading: false,
+    authSession,
+  };
+}
+
+export function studioAuthUnauthenticatedState(): StudioAuthStatePatch {
+  return {
+    authSession: unauthenticatedStudioAuthSession(),
+  };
+}
+
+export function studioAuthFailureState(
+  error: unknown,
+  fallback: string,
+): StudioAuthStatePatch {
+  return {
+    authError: errorMessage(error, fallback),
+    authLoading: false,
+    authSession: unauthenticatedStudioAuthSession(),
+  };
+}
+
+export function studioAuthLogoutCompleteState(): StudioAuthStatePatch {
+  return {
+    authLoading: false,
+    authSession: unauthenticatedStudioAuthSession(),
+  };
 }
 
 export function readStoredStudioAuthToken(
