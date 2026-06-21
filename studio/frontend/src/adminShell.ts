@@ -4,6 +4,8 @@ import type {
   StudioAuditQuarantineArchivePurgeResult,
   StudioAuditQuarantineArchiveResult,
   StudioAuditQuarantineArchiveRetentionPlan,
+  StudioAuditQuarantineArchiveRestoreResult,
+  StudioAuditQuarantineArchiveValidation,
   StudioAuditStatus,
   StudioCapability,
   StudioEvidenceBundleResponse,
@@ -20,6 +22,8 @@ export interface AdminShellInput {
   auditArchive: StudioAuditQuarantineArchiveResult | null;
   auditArchivePurge: StudioAuditQuarantineArchivePurgeResult | null;
   auditArchiveRetention: StudioAuditQuarantineArchiveRetentionPlan | null;
+  auditArchiveRestore: StudioAuditQuarantineArchiveRestoreResult | null;
+  auditArchiveValidation: StudioAuditQuarantineArchiveValidation | null;
   auditExport: StudioAuditExport | null;
   auditStatus: StudioAuditStatus | null;
   capabilities: StudioCapability[];
@@ -129,7 +133,15 @@ export interface AdminAuditArchiveModel {
   retainedArchiveCount: number;
   retainCount: number;
   retainLatest: number;
+  restoreArchiveId: string;
+  restoreArtifactCount: number;
+  restoreJobId: string;
+  restoreRows: number;
   skippedRecordCount: number;
+  validationArchiveId: string;
+  validationErrors: string;
+  validationStatus: "not checked" | "valid" | "invalid";
+  validationWarnings: string;
 }
 
 export interface AdminAuditArchiveEntryModel {
@@ -224,6 +236,8 @@ export function buildAdminShellModel(input: AdminShellInput): AdminShellModel {
       input.auditArchive,
       input.auditArchiveRetention,
       input.auditArchivePurge,
+      input.auditArchiveValidation,
+      input.auditArchiveRestore,
       input.auditError,
     ),
     capabilities: {
@@ -251,6 +265,8 @@ function buildAuditArchiveModel(
   archive: StudioAuditQuarantineArchiveResult | null,
   retention: StudioAuditQuarantineArchiveRetentionPlan | null,
   purge: StudioAuditQuarantineArchivePurgeResult | null,
+  validation: StudioAuditQuarantineArchiveValidation | null,
+  restore: StudioAuditQuarantineArchiveRestoreResult | null,
   error: string | null,
 ): AdminAuditArchiveModel {
   const entries = retention?.entries ?? [];
@@ -277,7 +293,15 @@ function buildAuditArchiveModel(
     retainedArchiveCount: purge?.retained_archive_count ?? 0,
     retainCount: retention?.retain_count ?? 0,
     retainLatest: retention?.retain_latest ?? purge?.retain_latest ?? 10,
+    restoreArchiveId: restore?.archive_id ?? "none",
+    restoreArtifactCount: restore?.summary.restore_artifact_count ?? restore?.artifact_paths.length ?? 0,
+    restoreJobId: restore?.job_id ?? "none",
+    restoreRows: restore?.summary.event_count ?? 0,
     skippedRecordCount: retention?.skipped_record_count ?? purge?.skipped_record_count ?? 0,
+    validationArchiveId: validation?.archive_id ?? "none",
+    validationErrors: validation === null ? "none" : validation.errors.join(", ") || "none",
+    validationStatus: validation === null ? "not checked" : validation.valid ? "valid" : "invalid",
+    validationWarnings: validation === null ? "none" : validation.warnings.join(", ") || "none",
   };
 }
 

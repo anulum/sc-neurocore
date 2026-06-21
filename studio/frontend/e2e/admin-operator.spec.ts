@@ -134,6 +134,43 @@ const auditArchiveResult = {
   summary: auditArchiveSummary,
 };
 
+const auditArchiveValidation = {
+  archive_id: "saqa_sj_archive",
+  errors: [],
+  schema_version: "studio.audit-quarantine-archive.validation.v1",
+  summary: auditArchiveSummary,
+  valid: true,
+  warnings: ["manifest_recomputed"],
+};
+
+const auditArchiveRestore = {
+  archive_id: "saqa_sj_archive",
+  artifact_paths: [
+    "evidence/audit-quarantine/restore.jsonl",
+    "evidence/audit-quarantine/restore-manifest.json",
+  ],
+  artifacts: [
+    {
+      relative_path: "evidence/audit-quarantine/restore.jsonl",
+      sha256: "e".repeat(64),
+      size_bytes: 512,
+    },
+    {
+      relative_path: "evidence/audit-quarantine/restore-manifest.json",
+      sha256: "f".repeat(64),
+      size_bytes: 384,
+    },
+  ],
+  job_id: "sj_restore",
+  manifest: { schema_version: "studio.audit-quarantine-archive.restore.v1" },
+  schema_version: "studio.audit-quarantine-archive.restore.v1",
+  summary: {
+    ...auditArchiveSummary,
+    restore_artifact_count: 2,
+    restored_at_utc: "2026-06-21T11:00:00Z",
+  },
+};
+
 const auditArchiveRetention = {
   archive_count: 2,
   entries: [
@@ -583,6 +620,8 @@ test("admin panel refreshes operator, audit, export, and job status", async ({ p
 test("admin audit archive controls create, review, and purge archives", async ({ page }) => {
   const mocks = defaultApiMocks();
   mocks.set("/api/studio/audit/quarantine/archive", auditArchiveResult);
+  mocks.set("/api/studio/audit/quarantine/archive/validate", auditArchiveValidation);
+  mocks.set("/api/studio/audit/quarantine/archive/restore", auditArchiveRestore);
   mocks.set(
     "/api/studio/audit/quarantine/archive/retention?retain_latest=1",
     { sequence: [auditArchiveRetention, auditArchiveRetentionAfterPurge] },
@@ -601,6 +640,29 @@ test("admin audit archive controls create, review, and purge archives", async ({
   await expect(page.getByText("saqa_sj_archive")).toBeVisible();
   await expect(page.getByText("chain_broken:1, legacy_row:2")).toBeVisible();
 
+  const archivePayload = {
+    archive_id: "saqa_sj_archive",
+    events: [{ event_hash: "1".repeat(64), quarantine_reason: "chain_broken" }],
+    schema_version: "studio.audit-quarantine-archive.v1",
+    summary: auditArchiveSummary,
+  };
+  const manifestPayload = {
+    archive_id: "saqa_sj_archive",
+    archive_sha256: "2".repeat(64),
+    schema_version: "studio.audit-quarantine-archive.v1",
+  };
+  await page.getByRole("textbox", { name: "Audit archive JSON" }).fill(JSON.stringify(archivePayload));
+  await page
+    .getByRole("textbox", { name: "Audit archive manifest JSON" })
+    .fill(JSON.stringify(manifestPayload));
+  await page.getByRole("button", { name: "Validate audit archive restore payload" }).click();
+  await expect(page.getByText("valid", { exact: true })).toBeVisible();
+  await expect(page.getByText("manifest_recomputed")).toBeVisible();
+
+  await page.getByRole("button", { name: "Materialize audit archive restore" }).click();
+  await expect(page.getByText("sj_restore")).toBeVisible();
+  await expect(page.getByText("Restore artifacts")).toBeVisible();
+
   await page.getByRole("spinbutton", { name: "Audit archive retain latest" }).fill("1");
   await page.getByRole("button", { name: "Review audit archive retention" }).click();
   await expect(page.getByText("saqa_sj_new")).toBeVisible();
@@ -611,6 +673,12 @@ test("admin audit archive controls create, review, and purge archives", async ({
   await expect(page.getByText("1 purged / 1 retained")).toBeVisible();
 
   expect(api.bodies("/api/studio/audit/quarantine/archive")).toEqual([{ limit: 75 }]);
+  expect(api.bodies("/api/studio/audit/quarantine/archive/validate")).toEqual([
+    { archive: archivePayload, manifest: manifestPayload },
+  ]);
+  expect(api.bodies("/api/studio/audit/quarantine/archive/restore")).toEqual([
+    { archive: archivePayload, manifest: manifestPayload },
+  ]);
   expect(api.bodies("/api/studio/audit/quarantine/archive/purge")).toEqual([
     { retain_latest: 1 },
   ]);

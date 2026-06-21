@@ -7,6 +7,8 @@ export default function AdminPanel() {
     auditArchive,
     auditArchivePurge,
     auditArchiveRetention,
+    auditArchiveRestore,
+    auditArchiveValidation,
     auditError,
     auditExport,
     auditLoading,
@@ -34,11 +36,15 @@ export default function AdminPanel() {
     createAuditQuarantineArchive,
     loadAuditQuarantineArchiveRetention,
     purgeAuditQuarantineArchiveRetention,
+    restoreAuditQuarantineArchive,
+    validateAuditQuarantineArchive,
   } = useStudioStore();
   const model = buildAdminShellModel({
     auditArchive,
     auditArchivePurge,
     auditArchiveRetention,
+    auditArchiveRestore,
+    auditArchiveValidation,
     auditError,
     auditExport,
     auditStatus,
@@ -68,9 +74,11 @@ export default function AdminPanel() {
       onLoadJobStatus={loadJobStatus}
       onLoadOperatorStatus={loadOperatorStatus}
       onPurgeAuditArchiveRetention={purgeAuditQuarantineArchiveRetention}
+      onRestoreAuditArchive={restoreAuditQuarantineArchive}
       onRotateIdentityBrowserUserPassword={rotateIdentityBrowserUserPassword}
       onUpdateIdentityBrowserUser={updateIdentityBrowserUser}
       onUpdateIdentityServiceAccount={updateIdentityServiceAccount}
+      onValidateAuditArchive={validateAuditQuarantineArchive}
     />
   );
 }

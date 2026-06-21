@@ -27,6 +27,10 @@ export interface AdminPanelViewProps {
   onLoadJobStatus: () => Promise<void>;
   onLoadOperatorStatus: () => Promise<void>;
   onPurgeAuditArchiveRetention: (retainLatest: number) => Promise<void>;
+  onRestoreAuditArchive: (
+    archive: Record<string, unknown>,
+    manifest: Record<string, unknown> | null,
+  ) => Promise<void>;
   onRotateIdentityBrowserUserPassword: (username: string, password: string) => Promise<void>;
   onUpdateIdentityServiceAccount: (
     principalId: string,
@@ -35,6 +39,10 @@ export interface AdminPanelViewProps {
   onUpdateIdentityBrowserUser: (
     username: string,
     update: { active: boolean; expires_at_utc: string | null; roles: string[] },
+  ) => Promise<void>;
+  onValidateAuditArchive: (
+    archive: Record<string, unknown>,
+    manifest: Record<string, unknown> | null,
   ) => Promise<void>;
 }
 
@@ -52,9 +60,11 @@ export default function AdminPanelView({
   onLoadJobStatus,
   onLoadOperatorStatus,
   onPurgeAuditArchiveRetention,
+  onRestoreAuditArchive,
   onRotateIdentityBrowserUserPassword,
   onUpdateIdentityBrowserUser,
   onUpdateIdentityServiceAccount,
+  onValidateAuditArchive,
 }: AdminPanelViewProps) {
   const [evidenceJobIds, setEvidenceJobIds] = useState("");
 
@@ -482,6 +492,8 @@ export default function AdminPanelView({
         onCreateAuditArchive={onCreateAuditArchive}
         onLoadAuditArchiveRetention={onLoadAuditArchiveRetention}
         onPurgeAuditArchiveRetention={onPurgeAuditArchiveRetention}
+        onRestoreAuditArchive={onRestoreAuditArchive}
+        onValidateAuditArchive={onValidateAuditArchive}
       />
 
       <section className="admin-section">

@@ -198,6 +198,30 @@ export interface StudioAuditQuarantineArchiveResult {
   summary: StudioAuditQuarantineArchiveSummary;
 }
 
+export interface StudioAuditQuarantineArchiveValidation {
+  archive_id: string | null;
+  errors: string[];
+  schema_version: string;
+  summary: StudioAuditQuarantineArchiveSummary | null;
+  valid: boolean;
+  warnings: string[];
+}
+
+export interface StudioAuditQuarantineArchiveRestoreSummary extends StudioAuditQuarantineArchiveSummary {
+  restore_artifact_count: number;
+  restored_at_utc: string;
+}
+
+export interface StudioAuditQuarantineArchiveRestoreResult {
+  archive_id: string;
+  artifact_paths: string[];
+  artifacts: StudioJobArtifact[];
+  job_id: string;
+  manifest: Record<string, unknown>;
+  schema_version: string;
+  summary: StudioAuditQuarantineArchiveRestoreSummary;
+}
+
 export interface StudioAuditQuarantineArchiveRetentionEntry {
   archive_id: string;
   artifact_paths: string[];
@@ -507,9 +531,25 @@ export const createStudioAuditQuarantineArchive = (limit = 100) =>
     "/studio/audit/quarantine/archive",
     { limit },
   );
+export const validateStudioAuditQuarantineArchive = (
+  archive: Record<string, unknown>,
+  manifest: Record<string, unknown> | null,
+) =>
+  post<StudioAuditQuarantineArchiveValidation>(
+    "/studio/audit/quarantine/archive/validate",
+    { archive, manifest },
+  );
 export const fetchStudioAuditQuarantineArchiveRetention = (retainLatest = 10) =>
   get<StudioAuditQuarantineArchiveRetentionPlan>(
     `/studio/audit/quarantine/archive/retention?retain_latest=${encodeURIComponent(retainLatest)}`,
+  );
+export const restoreStudioAuditQuarantineArchive = (
+  archive: Record<string, unknown>,
+  manifest: Record<string, unknown> | null,
+) =>
+  post<StudioAuditQuarantineArchiveRestoreResult>(
+    "/studio/audit/quarantine/archive/restore",
+    { archive, manifest },
   );
 export const purgeStudioAuditQuarantineArchiveRetention = (retainLatest = 10) =>
   post<StudioAuditQuarantineArchivePurgeResult>(

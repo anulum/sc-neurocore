@@ -11,6 +11,7 @@ import {
   fetchStudioIdentityBrowserUsers,
   loginStudioBrowserUser, logoutStudioBrowserUser,
   purgeStudioAuditQuarantineArchiveRetention,
+  restoreStudioAuditQuarantineArchive,
   rotateStudioIdentityBrowserUserPassword,
   simulateODE, simulateModel, fetchFICurve, compileVerilog,
   fetchBifurcation, fetchSensitivity, fetchPrecision, fetchHeatmap, fetchCodegen,
@@ -45,6 +46,8 @@ import {
   type StudioAuditQuarantineArchivePurgeResult,
   type StudioAuditQuarantineArchiveResult,
   type StudioAuditQuarantineArchiveRetentionPlan,
+  type StudioAuditQuarantineArchiveRestoreResult,
+  type StudioAuditQuarantineArchiveValidation,
   type StudioAuthSession,
   type StudioEvidenceBundleRequest,
   type StudioEvidenceBundleResponse,
@@ -56,6 +59,7 @@ import {
   setStudioAuthToken,
   updateStudioIdentityBrowserUser,
   updateStudioIdentityServiceAccount,
+  validateStudioAuditQuarantineArchive,
   connectProgress,
 } from "../api/client";
 import { parseTrainingCheckpointPayload } from "../trainingCheckpoint";
@@ -99,6 +103,8 @@ interface StudioState {
   auditArchive: StudioAuditQuarantineArchiveResult | null;
   auditArchiveRetention: StudioAuditQuarantineArchiveRetentionPlan | null;
   auditArchivePurge: StudioAuditQuarantineArchivePurgeResult | null;
+  auditArchiveRestore: StudioAuditQuarantineArchiveRestoreResult | null;
+  auditArchiveValidation: StudioAuditQuarantineArchiveValidation | null;
   evidenceBundle: StudioEvidenceBundleResponse | null;
   evidenceBundleError: string | null;
   evidenceBundleLoading: boolean;
@@ -195,7 +201,15 @@ interface StudioState {
   loadAuditStatus: () => Promise<void>;
   loadAuditExport: () => Promise<void>;
   createAuditQuarantineArchive: (limit: number) => Promise<void>;
+  validateAuditQuarantineArchive: (
+    archive: Record<string, unknown>,
+    manifest: Record<string, unknown> | null,
+  ) => Promise<void>;
   loadAuditQuarantineArchiveRetention: (retainLatest: number) => Promise<void>;
+  restoreAuditQuarantineArchive: (
+    archive: Record<string, unknown>,
+    manifest: Record<string, unknown> | null,
+  ) => Promise<void>;
   purgeAuditQuarantineArchiveRetention: (retainLatest: number) => Promise<void>;
   createEvidenceBundle: (request: StudioEvidenceBundleRequest) => Promise<void>;
   downloadEvidenceBundleArtifact: (relativePath: string) => Promise<void>;
@@ -300,6 +314,7 @@ export const useStudioStore = create<StudioState>((set, get) => ({
   authSession: null, authLoading: false, authError: null,
   auditStatus: null, auditExport: null,
   auditArchive: null, auditArchiveRetention: null, auditArchivePurge: null,
+  auditArchiveRestore: null, auditArchiveValidation: null,
   evidenceBundle: null, evidenceBundleError: null, evidenceBundleLoading: false,
   jobStatus: null, jobRecords: [],
   identityBrowserUsers: [], identityServiceAccounts: [], operatorStatus: null,
@@ -476,6 +491,43 @@ export const useStudioStore = create<StudioState>((set, get) => ({
       set({
         auditLoading: false,
         auditError: error instanceof Error ? error.message : "Audit archive retention check failed",
+      });
+    }
+  },
+  validateAuditQuarantineArchive: async (archive, manifest) => {
+    set({ auditLoading: true, auditError: null });
+    try {
+      const auditArchiveValidation = await validateStudioAuditQuarantineArchive(archive, manifest);
+      set({ auditArchiveValidation, auditLoading: false, auditError: null });
+    } catch (error: unknown) {
+      set({
+        auditLoading: false,
+        auditError: error instanceof Error ? error.message : "Audit archive validation failed",
+      });
+    }
+  },
+  restoreAuditQuarantineArchive: async (archive, manifest) => {
+    set({ auditLoading: true, auditError: null });
+    try {
+      const auditArchiveRestore = await restoreStudioAuditQuarantineArchive(archive, manifest);
+      const [operatorStatus, jobList] = await Promise.all([
+        fetchStudioOperatorStatus(),
+        fetchStudioJobs(),
+      ]);
+      set({
+        auditArchiveRestore,
+        auditArchiveValidation: null,
+        auditLoading: false,
+        auditError: null,
+        auditStatus: operatorStatus.audit,
+        jobRecords: jobList.jobs,
+        jobStatus: operatorStatus.jobs,
+        operatorStatus,
+      });
+    } catch (error: unknown) {
+      set({
+        auditLoading: false,
+        auditError: error instanceof Error ? error.message : "Audit archive restore failed",
       });
     }
   },

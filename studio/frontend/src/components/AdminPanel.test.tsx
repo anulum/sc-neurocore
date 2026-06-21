@@ -6,6 +6,8 @@ import type {
   StudioAuditQuarantineArchivePurgeResult,
   StudioAuditQuarantineArchiveResult,
   StudioAuditQuarantineArchiveRetentionPlan,
+  StudioAuditQuarantineArchiveRestoreResult,
+  StudioAuditQuarantineArchiveValidation,
   StudioAuditStatus,
   StudioCapability,
   StudioEvidenceBundleResponse,
@@ -155,6 +157,43 @@ const auditArchivePurge: StudioAuditQuarantineArchivePurgeResult = {
   retain_latest: 1,
   schema_version: "studio.audit-quarantine-archive.purge.v1",
   skipped_record_count: 0,
+};
+
+const auditArchiveValidation: StudioAuditQuarantineArchiveValidation = {
+  archive_id: "saqa_sj_archive",
+  errors: [],
+  schema_version: "studio.audit-quarantine-archive.validation.v1",
+  summary: auditArchive.summary,
+  valid: true,
+  warnings: ["manifest_recomputed"],
+};
+
+const auditArchiveRestore: StudioAuditQuarantineArchiveRestoreResult = {
+  archive_id: "saqa_sj_archive",
+  artifact_paths: [
+    "evidence/audit-quarantine/restore.jsonl",
+    "evidence/audit-quarantine/restore-manifest.json",
+  ],
+  artifacts: [
+    {
+      relative_path: "evidence/audit-quarantine/restore.jsonl",
+      sha256: "e".repeat(64),
+      size_bytes: 512,
+    },
+    {
+      relative_path: "evidence/audit-quarantine/restore-manifest.json",
+      sha256: "f".repeat(64),
+      size_bytes: 384,
+    },
+  ],
+  job_id: "sj_restore",
+  manifest: { schema_version: "studio.audit-quarantine-archive.restore.v1" },
+  schema_version: "studio.audit-quarantine-archive.restore.v1",
+  summary: {
+    ...auditArchive.summary,
+    restore_artifact_count: 2,
+    restored_at_utc: "2026-06-21T11:00:00Z",
+  },
 };
 
 const jobStatus: StudioJobStatus = {
@@ -314,6 +353,8 @@ describe("AdminPanel", () => {
       auditArchive,
       auditArchivePurge,
       auditArchiveRetention,
+      auditArchiveRestore,
+      auditArchiveValidation,
       auditError: "Audit export failed",
       auditExport,
       auditStatus,
@@ -352,9 +393,11 @@ describe("AdminPanel", () => {
         onLoadJobStatus={async () => undefined}
         onLoadOperatorStatus={async () => undefined}
         onPurgeAuditArchiveRetention={async () => undefined}
+        onRestoreAuditArchive={async () => undefined}
         onRotateIdentityBrowserUserPassword={async () => undefined}
         onUpdateIdentityBrowserUser={async () => undefined}
         onUpdateIdentityServiceAccount={async () => undefined}
+        onValidateAuditArchive={async () => undefined}
       />,
     );
 
@@ -398,6 +441,12 @@ describe("AdminPanel", () => {
     expect(html).toContain("Review audit archive retention");
     expect(html).toContain("Purge audit archive prune candidates");
     expect(html).toContain("Create audit quarantine archive");
+    expect(html).toContain("Validation");
+    expect(html).toContain("manifest_recomputed");
+    expect(html).toContain("Validate audit archive restore payload");
+    expect(html).toContain("Materialize audit archive restore");
+    expect(html).toContain("sj_restore");
+    expect(html).toContain("Restore artifacts");
     expect(html).toContain("Synthesis Dashboard");
     expect(html).toContain("Yosys unavailable.");
     expect(html).toContain("Jobs");
