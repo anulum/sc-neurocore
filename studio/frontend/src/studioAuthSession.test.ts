@@ -15,6 +15,7 @@ import {
   studioAuthFailureState,
   studioAuthLoadingState,
   studioAuthLogoutCompleteState,
+  studioAuthLogoutFailureState,
   studioAuthSessionLoadedState,
   studioAuthUnauthenticatedState,
   storeStudioAuthToken,
@@ -130,5 +131,11 @@ describe("Studio auth token persistence", () => {
         roles: [],
       },
     });
+  });
+
+  it("builds logout failure state patches with error and fallback messages", () => {
+    expect(studioAuthLogoutFailureState(new Error("logout request failed")))
+      .toEqual({ authError: "logout request failed" });
+    expect(studioAuthLogoutFailureState("bad")).toEqual({ authError: "Logout failed" });
   });
 });

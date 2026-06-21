@@ -72,6 +72,12 @@ export function studioAuthFailureState(
   };
 }
 
+export function studioAuthLogoutFailureState(error: unknown): StudioAuthStatePatch {
+  return {
+    authError: errorMessage(error, "Logout failed"),
+  };
+}
+
 export function studioAuthLogoutCompleteState(): StudioAuthStatePatch {
   return {
     authLoading: false,

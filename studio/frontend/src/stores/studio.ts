@@ -67,6 +67,7 @@ import {
   studioAuthFailureState,
   studioAuthLoadingState,
   studioAuthLogoutCompleteState,
+  studioAuthLogoutFailureState,
   studioAuthSessionLoadedState,
   studioAuthUnauthenticatedState,
   storeStudioAuthToken,
@@ -652,7 +653,7 @@ export const useStudioStore = create<StudioState>((set, get) => ({
     try {
       await logoutStudioBrowserUser();
     } catch (error: unknown) {
-      set({ authError: error instanceof Error ? error.message : "Logout failed" });
+      set(studioAuthLogoutFailureState(error));
     } finally {
       clearStoredStudioAuthToken();
       syncStoredStudioAuthToken(setStudioAuthToken);
