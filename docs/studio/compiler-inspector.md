@@ -118,6 +118,11 @@ contract for their generated SymbiYosys-ready manifests:
 generation completed, while the embedded formal-claim flags remain fail-closed
 until external SymbiYosys execution evidence is attached.
 
+The adaptive-precision planner accepts finite vector or matrix layer weights
+and rejects empty, non-finite, or higher-rank inputs before stochastic
+sensitivity sampling. This keeps Studio auto-tune and formal-bundle generation
+deterministic across NumPy runtime and coverage-instrumented environments.
+
 ## Co-Simulation
 
 The co-simulation view (accessible via the existing Q8.8 tab or the
