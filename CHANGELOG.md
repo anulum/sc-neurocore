@@ -96,6 +96,10 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
   cross-language parity and portability. Added a dedicated test module
   (dimensionality.py at 100% statement coverage), the benchmark and the
   `docs/api/analysis.md` dimensionality section.
+- The Rust `cell_assembly_detection` backend (`analysis/network.rs`) replaces its
+  hand-rolled Jacobi eigensolver with `nalgebra`'s symmetric solver, returning
+  descending, sign-canonicalised eigenvectors — matching the NumPy/LAPACK
+  reference the Python path already uses. No public API change.
 
 ### Studio platform
 - The FPGA synthesis panel can export a synthesis-scoped evidence bundle from

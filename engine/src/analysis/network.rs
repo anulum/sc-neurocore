@@ -8,6 +8,7 @@
 
 use super::basic::bin_spike_train;
 use super::correlation::cross_correlation;
+use nalgebra::{DMatrix, SymmetricEigen};
 
 /// Functional connectivity matrix from peak cross-correlation.
 /// Returns n×n matrix (flat, row-major) where (i,j) = max |cc| between neurons i and j.
@@ -118,8 +119,8 @@ pub fn cell_assembly_detection(
         }
     }
 
-    // Eigendecomposition via Jacobi iteration
-    let (eigvals, eigvecs) = jacobi_eigen(&corr, n, 100);
+    // Eigendecomposition via the LAPACK-grade symmetric solver
+    let (eigvals, eigvecs) = symmetric_eigen(&corr, n);
 
     // Marcenko-Pastur upper bound
     let q = n as f64 / min_bins as f64;
@@ -211,75 +212,39 @@ pub fn synfire_chain_detection(
     chains
 }
 
-/// Jacobi eigenvalue algorithm for symmetric n×n matrix (row-major flat).
-/// Returns (eigenvalues sorted ascending, eigenvectors as n×n column-major in flat row-major).
-fn jacobi_eigen(a: &[f64], n: usize, max_iter: usize) -> (Vec<f64>, Vec<f64>) {
-    let mut m = a.to_vec();
-    // V = identity
-    let mut v = vec![0.0_f64; n * n];
-    for i in 0..n {
-        v[i * n + i] = 1.0;
-    }
+/// Descending eigenvalues and sign-canonicalised eigenvectors of a symmetric
+/// matrix `a` (row-major `n × n`) via nalgebra's symmetric eigensolver
+/// (tridiagonalisation + implicit QR — LAPACK-grade, replacing a hand-rolled
+/// Jacobi sweep). Eigenvectors are returned row-major (`vecs[row * n + col]`),
+/// column `i` paired with eigenvalue `i`, each sign-fixed so its
+/// largest-magnitude entry is positive.
+fn symmetric_eigen(a: &[f64], n: usize) -> (Vec<f64>, Vec<f64>) {
+    let se = SymmetricEigen::new(DMatrix::<f64>::from_row_slice(n, n, a));
+    let mut idx: Vec<usize> = (0..n).collect();
+    idx.sort_by(|&i, &j| se.eigenvalues[j].partial_cmp(&se.eigenvalues[i]).unwrap());
 
-    for _ in 0..max_iter {
-        // Find largest off-diagonal
-        let mut max_val = 0.0_f64;
-        let mut p = 0;
-        let mut q = 1;
-        for i in 0..n {
-            for j in (i + 1)..n {
-                let val = m[i * n + j].abs();
-                if val > max_val {
-                    max_val = val;
-                    p = i;
-                    q = j;
-                }
+    let vals: Vec<f64> = idx.iter().map(|&i| se.eigenvalues[i]).collect();
+    let mut vecs = vec![0.0f64; n * n];
+    for (new_col, &old_col) in idx.iter().enumerate() {
+        let mut pivot = 0usize;
+        let mut max_abs = 0.0f64;
+        for r in 0..n {
+            let v = se.eigenvectors[(r, old_col)].abs();
+            if v > max_abs {
+                max_abs = v;
+                pivot = r;
             }
         }
-        if max_val < 1e-12 {
-            break;
-        }
-
-        // Compute rotation
-        let app = m[p * n + p];
-        let aqq = m[q * n + q];
-        let apq = m[p * n + q];
-        let theta = if (app - aqq).abs() < 1e-30 {
-            std::f64::consts::FRAC_PI_4
+        let sign = if se.eigenvectors[(pivot, old_col)] < 0.0 {
+            -1.0
         } else {
-            0.5 * (2.0 * apq / (app - aqq)).atan()
+            1.0
         };
-        let c = theta.cos();
-        let s = theta.sin();
-
-        // Apply Givens rotation to rows/cols p, q
-        let mut new_m = m.clone();
-        for i in 0..n {
-            if i == p || i == q {
-                continue;
-            }
-            new_m[i * n + p] = c * m[i * n + p] + s * m[i * n + q];
-            new_m[p * n + i] = new_m[i * n + p];
-            new_m[i * n + q] = -s * m[i * n + p] + c * m[i * n + q];
-            new_m[q * n + i] = new_m[i * n + q];
-        }
-        new_m[p * n + p] = c * c * app + 2.0 * s * c * apq + s * s * aqq;
-        new_m[q * n + q] = s * s * app - 2.0 * s * c * apq + c * c * aqq;
-        new_m[p * n + q] = 0.0;
-        new_m[q * n + p] = 0.0;
-        m = new_m;
-
-        // Update eigenvectors
-        for i in 0..n {
-            let vp = v[i * n + p];
-            let vq = v[i * n + q];
-            v[i * n + p] = c * vp + s * vq;
-            v[i * n + q] = -s * vp + c * vq;
+        for r in 0..n {
+            vecs[r * n + new_col] = sign * se.eigenvectors[(r, old_col)];
         }
     }
-
-    let eigvals: Vec<f64> = (0..n).map(|i| m[i * n + i]).collect();
-    (eigvals, v)
+    (vals, vecs)
 }
 
 #[cfg(test)]
@@ -419,54 +384,62 @@ mod tests {
         );
     }
 
-    // ── jacobi_eigen ────────────────────────────────────────────────
+    // ── symmetric_eigen ─────────────────────────────────────────────
 
     #[test]
-    fn test_jacobi_identity() {
+    fn test_symmetric_eigen_identity() {
         let a = vec![1.0, 0.0, 0.0, 1.0];
-        let (vals, _) = jacobi_eigen(&a, 2, 100);
+        let (vals, _) = symmetric_eigen(&a, 2);
         assert!((vals[0] - 1.0).abs() < 1e-10);
         assert!((vals[1] - 1.0).abs() < 1e-10);
     }
 
     #[test]
-    fn test_jacobi_diagonal() {
+    fn test_symmetric_eigen_descending() {
         let a = vec![3.0, 0.0, 0.0, 7.0];
-        let (vals, _) = jacobi_eigen(&a, 2, 100);
-        let mut sorted = vals.clone();
-        sorted.sort_by(|a, b| a.partial_cmp(b).unwrap());
-        assert!((sorted[0] - 3.0).abs() < 1e-10);
-        assert!((sorted[1] - 7.0).abs() < 1e-10);
+        let (vals, _) = symmetric_eigen(&a, 2);
+        // Eigenvalues are returned in descending order.
+        assert!((vals[0] - 7.0).abs() < 1e-10);
+        assert!((vals[1] - 3.0).abs() < 1e-10);
     }
 
     #[test]
-    fn test_jacobi_symmetric() {
-        // [[2, 1], [1, 2]] → eigenvalues 1 and 3
+    fn test_symmetric_eigen_known() {
+        // [[2, 1], [1, 2]] → eigenvalues 3 and 1 (descending)
         let a = vec![2.0, 1.0, 1.0, 2.0];
-        let (vals, _) = jacobi_eigen(&a, 2, 100);
-        let mut sorted = vals.clone();
-        sorted.sort_by(|a, b| a.partial_cmp(b).unwrap());
+        let (vals, _) = symmetric_eigen(&a, 2);
         assert!(
-            (sorted[0] - 1.0).abs() < 1e-8,
-            "eigenvalue 1, got {}",
-            sorted[0]
-        );
-        assert!(
-            (sorted[1] - 3.0).abs() < 1e-8,
+            (vals[0] - 3.0).abs() < 1e-8,
             "eigenvalue 3, got {}",
-            sorted[1]
+            vals[0]
+        );
+        assert!(
+            (vals[1] - 1.0).abs() < 1e-8,
+            "eigenvalue 1, got {}",
+            vals[1]
         );
     }
 
     #[test]
-    fn test_jacobi_eigenvectors_orthogonal() {
+    fn test_symmetric_eigen_eigenvectors_orthogonal() {
         let a = vec![2.0, 1.0, 1.0, 2.0];
-        let (_, v) = jacobi_eigen(&a, 2, 100);
+        let (_, v) = symmetric_eigen(&a, 2);
         // v[:,0] . v[:,1] should be ~0
         let dot: f64 = (0..2).map(|i| v[i * 2] * v[i * 2 + 1]).sum();
         assert!(
             dot.abs() < 1e-8,
             "eigenvectors should be orthogonal, dot={dot}"
         );
+    }
+
+    #[test]
+    fn test_symmetric_eigen_sign_canonical() {
+        // Each eigenvector column's dominant entry is positive.
+        let a = vec![2.0, 1.0, 1.0, 2.0];
+        let (_, v) = symmetric_eigen(&a, 2);
+        for c in 0..2 {
+            let pivot = if v[c].abs() >= v[2 + c].abs() { 0 } else { 1 };
+            assert!(v[pivot * 2 + c] > 0.0, "column {c} not sign-canonical");
+        }
     }
 }
