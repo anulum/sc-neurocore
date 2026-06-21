@@ -21,7 +21,11 @@ name, state digest, project digest, and schema version after a successful save.
 ### Load
 
 Click a project name to restore all state: equations, model selection,
-parameters, network graph populations and projections, synthesis target.
+parameters, network graph populations and projections, synthesis target, and
+the Training Monitor configuration. Positive timebase settings and finite
+numeric parameters are restored from saved values, including zero current,
+while malformed optional fields fall back to Studio defaults before the next
+simulation refresh.
 
 ### Storage Format
 

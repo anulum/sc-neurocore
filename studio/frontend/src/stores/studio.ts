@@ -75,6 +75,11 @@ import {
   type StudioSavedSession,
 } from "../studioSavedSessions";
 import {
+  studioProjectSaveState,
+  studioProjectStateFromLoadResponse,
+  type StudioProjectTrainingConfig,
+} from "../studioProjectState";
+import {
   copyStudioShareUrl,
   decodeStudioStartupHash,
 } from "../studioUrlState";
@@ -220,11 +225,7 @@ interface StudioState {
   trainingWeightRestorePlan: TrainingWeightRestorePlan | null;
   trainingWeightRestoreVerification: TrainingWeightRestoreVerification | null;
   trainingSurrogates: SurrogateInfo[];
-  trainingConfig: {
-    dataset: string; epochs: number; batch_size: number; lr: number;
-    hidden: number[]; timesteps: number; surrogate: string;
-    learn_beta: boolean; learn_threshold: boolean;
-  };
+  trainingConfig: StudioProjectTrainingConfig;
   codeScript: string;
   codeOneliner: string;
   savedSessions: StudioSavedSession[];
@@ -1327,14 +1328,24 @@ export const useStudioStore = create<StudioState>((set, get) => ({
 
   saveProjectToServer: async (name) => {
     const s = get();
-    const state = {
-      sourceMode: s.sourceMode, equations: s.equations, threshold: s.threshold,
-      reset: s.reset, odeParams: s.odeParams, odeInit: s.odeInit,
-      selectedModelName: s.selectedModelName, modelParams: s.modelParams,
-      dt: s.dt, duration: s.duration, current: s.current, protocol: s.protocol,
-      graphPopulations: s.graphPopulations, graphProjections: s.graphProjections,
-      synthTarget: s.synthTarget, trainingConfig: s.trainingConfig,
-    };
+    const state = studioProjectSaveState({
+      sourceMode: s.sourceMode,
+      equations: s.equations,
+      threshold: s.threshold,
+      reset: s.reset,
+      odeParams: s.odeParams,
+      odeInit: s.odeInit,
+      selectedModelName: s.selectedModelName,
+      modelParams: s.modelParams,
+      dt: s.dt,
+      duration: s.duration,
+      current: s.current,
+      protocol: s.protocol,
+      graphPopulations: s.graphPopulations,
+      graphProjections: s.graphProjections,
+      synthTarget: s.synthTarget,
+      trainingConfig: s.trainingConfig,
+    });
     try {
       const projectSaveResult = await apiSaveProject(name, state);
       set({ projectSaveResult });
@@ -1345,23 +1356,24 @@ export const useStudioStore = create<StudioState>((set, get) => ({
   loadProjectFromServer: async (name) => {
     try {
       const data = await apiLoadProject(name);
-      const st = (data as Record<string, unknown>).state as Record<string, unknown> || {};
+      const projectState = studioProjectStateFromLoadResponse(data, get().trainingConfig);
       set({
-        sourceMode: (st.sourceMode as "model" | "ode") || "model",
-        equations: (st.equations as string[]) || [],
-        threshold: (st.threshold as string) || "",
-        reset: (st.reset as string) || "",
-        odeParams: (st.odeParams as Record<string, number>) || {},
-        odeInit: (st.odeInit as Record<string, number>) || {},
-        selectedModelName: (st.selectedModelName as string) || "",
-        modelParams: (st.modelParams as Record<string, number>) || {},
-        dt: (st.dt as number) || 0.1,
-        duration: (st.duration as number) || 100,
-        current: (st.current as number) || 10,
-        protocol: (st.protocol as string) || "constant",
-        graphPopulations: (st.graphPopulations as PopulationNode[]) || [],
-        graphProjections: (st.graphProjections as ProjectionEdge[]) || [],
-        synthTarget: (st.synthTarget as string) || "ice40",
+        sourceMode: projectState.sourceMode,
+        equations: projectState.equations,
+        threshold: projectState.threshold,
+        reset: projectState.reset,
+        odeParams: projectState.odeParams,
+        odeInit: projectState.odeInit,
+        selectedModelName: projectState.selectedModelName,
+        modelParams: projectState.modelParams,
+        dt: projectState.dt,
+        duration: projectState.duration,
+        current: projectState.current,
+        protocol: projectState.protocol,
+        graphPopulations: projectState.graphPopulations,
+        graphProjections: projectState.graphProjections,
+        synthTarget: projectState.synthTarget,
+        trainingConfig: projectState.trainingConfig,
       });
       get().runSimulation();
     } catch (e) { set({ error: e instanceof Error ? e.message : String(e) }); }
