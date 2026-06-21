@@ -108,6 +108,9 @@ def test_multi_target_process_task_writes_result_and_action_evidence(tmp_path: P
     )
 
     assert set(result) == {"supported", "target_provenance_matrix", "targets"}
+    matrix = cast(dict[str, object], result["target_provenance_matrix"])
+    assert matrix["evidence_classification"] == "synthesis"
+    assert matrix["status"] == "completed"
     assert [artifact.relative_path for artifact in context.artifacts] == [
         "synthesis/multi-target-result.json",
         "synthesis/multi-target-evidence.json",

@@ -227,7 +227,9 @@ def build_synthesis_target_provenance_matrix(
         for target, config in targets.items()
     }
     matrix_contract: dict[str, JsonValue] = {
+        "evidence_classification": validate_studio_evidence_classification("synthesis"),
         "schema_version": STUDIO_SYNTHESIS_TARGET_PROVENANCE_MATRIX_SCHEMA_VERSION,
+        "status": validate_studio_evidence_status("completed"),
         "targets": cast(dict[str, JsonValue], target_payloads),
     }
     matrix_contract["matrix_sha256"] = _sha256_json(matrix_contract)

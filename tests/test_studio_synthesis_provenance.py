@@ -186,11 +186,15 @@ def test_build_synthesis_target_provenance_matrix_has_stable_digest() -> None:
         tool_status=_tool_status(),
     )
     matrix_without_digest = {
+        "evidence_classification": "synthesis",
         "schema_version": STUDIO_SYNTHESIS_TARGET_PROVENANCE_MATRIX_SCHEMA_VERSION,
+        "status": "completed",
         "targets": matrix["targets"],
     }
 
+    assert matrix["evidence_classification"] == "synthesis"
     assert matrix["schema_version"] == STUDIO_SYNTHESIS_TARGET_PROVENANCE_MATRIX_SCHEMA_VERSION
+    assert matrix["status"] == "completed"
     assert set(cast(dict[str, JsonValue], matrix["targets"])) == {"ice40", "gowin"}
     assert (
         matrix["matrix_sha256"]

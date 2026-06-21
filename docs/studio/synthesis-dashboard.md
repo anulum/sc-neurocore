@@ -105,19 +105,21 @@ Synthesis responses include `target_provenance` using the
 ID, Yosys synthesis command, optional nextpnr command and device selector,
 static capacity metadata, tool availability, tool version strings when
 available, readiness booleans, and the `synthesis` evidence classification.
-The serializer validates that class through the shared Studio
-evidence-classification contract before returning public metadata. It is
-path-free and suitable for operator logs and evidence bundles.
+The serializer validates that class and the `completed` terminal status
+through the shared Studio evidence-classification contract before returning
+public metadata. It is path-free and suitable for operator logs and evidence
+bundles.
 
 Multi-target responses additionally include
 `target_provenance_matrix` with schema
 `studio.synthesis-target-provenance-matrix.v1`. The matrix captures the same
-target records for every supported target plus a stable `matrix_sha256` digest
-so operators can compare target-support evidence across runs without relying on
-local filesystem paths. The Studio dashboard renders that matrix after an
-all-target run, showing each target's device selector, synthesis readiness,
-PnR readiness, tool command, evidence classification, and shortened matrix
-digest without exposing host-local paths.
+target records for every supported target, top-level `synthesis` evidence
+classification, top-level `completed` terminal status, and a stable
+`matrix_sha256` digest so operators can compare target-support evidence across
+runs without relying on local filesystem paths. The Studio dashboard renders
+that matrix after an all-target run, showing each target's device selector,
+synthesis readiness, PnR readiness, tool command, evidence classification,
+status, and shortened matrix digest without exposing host-local paths.
 
 ## API Endpoints
 
@@ -205,7 +207,9 @@ Returns synthesis results for all supported targets:
     "xilinx": {"success": true, ...}
   },
   "target_provenance_matrix": {
+    "evidence_classification": "synthesis",
     "schema_version": "studio.synthesis-target-provenance-matrix.v1",
+    "status": "completed",
     "matrix_sha256": "<64 lowercase hex characters>",
     "targets": {"ice40": {...}, "ecp5": {...}, "gowin": {...}, "xilinx": {...}}
   },
