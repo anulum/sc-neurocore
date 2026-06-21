@@ -156,6 +156,21 @@ import {
   trainingWeightRestoreVerificationExport,
 } from "../trainingExports";
 import {
+  trainingCheckpointImportedState,
+  trainingEpochAppendedState,
+  trainingExportSuccessState,
+  trainingFailureState,
+  trainingStartedState,
+  trainingStartState,
+  trainingStoppingState,
+  trainingStreamDisconnectedState,
+  trainingStreamErrorState,
+  trainingSurrogatesLoadedState,
+  trainingTerminalState,
+  trainingWeightRestoreVerificationLoadedState,
+  trainingWeightRestoreVerificationStartState,
+} from "../trainingStoreState";
+import {
   adminEvidenceBundleCreatedState,
   adminEvidenceBundleFailureState,
   adminEvidenceBundleLoadingState,
@@ -1331,44 +1346,37 @@ export const useStudioStore = create<StudioState>((set, get) => ({
   loadSurrogates: async () => {
     try {
       const trainingSurrogates = await apiFetchSurrogates();
-      set({ trainingSurrogates });
+      set(trainingSurrogatesLoadedState(trainingSurrogates));
     } catch { /* non-critical */ }
   },
 
   startTraining: async () => {
     const s = get();
     if (s.trainingStatus === "running") return;
-    set({
-      trainingStatus: "starting",
-      trainingEpochs: [],
-      trainingWeightRestorePlan: null,
-      trainingWeightRestoreVerification: null,
-      error: null,
-      activeTab: "train",
-    });
+    set(trainingStartState());
     try {
       const result = await apiStartTraining(s.trainingConfig);
-      set({ trainingJobId: result.job_id, trainingStatus: "running" });
+      set(trainingStartedState(result.job_id));
       const evtSource = new EventSource(`/api/training/stream/${result.job_id}`);
       evtSource.onmessage = (e) => {
         const update = parseStudioTrainingStreamMessage(e.data);
         if (!update) return;
         if (update.kind === "epoch") {
-          set((prev) => ({ trainingEpochs: [...prev.trainingEpochs, update.metrics] }));
+          set((prev) => trainingEpochAppendedState(prev.trainingEpochs, update.metrics));
         } else if (update.kind === "terminal") {
-          set({ trainingStatus: update.status });
+          set(trainingTerminalState(update.status));
           evtSource.close();
         } else {
-          set({ trainingStatus: "failed", error: update.message });
+          set(trainingStreamErrorState(update.message));
           evtSource.close();
         }
       };
       evtSource.onerror = () => {
-        set({ trainingStatus: "disconnected" });
+        set(trainingStreamDisconnectedState());
         evtSource.close();
       };
     } catch (e) {
-      set({ error: e instanceof Error ? e.message : String(e), trainingStatus: "failed" });
+      set(trainingFailureState(e, "Training start failed", { markFailed: true }));
     }
   },
 
@@ -1377,9 +1385,9 @@ export const useStudioStore = create<StudioState>((set, get) => ({
     if (!s.trainingJobId) return;
     try {
       await apiStopTraining(s.trainingJobId);
-      set({ trainingStatus: "stopping" });
+      set(trainingStoppingState());
     } catch (e) {
-      set({ error: e instanceof Error ? e.message : String(e) });
+      set(trainingFailureState(e, "Training stop failed"));
     }
   },
 
@@ -1391,7 +1399,7 @@ export const useStudioStore = create<StudioState>((set, get) => ({
       const exported = trainingCheckpointExport(checkpoint);
       downloadBrowserArtefact(exported.blob, exported.filename);
     } catch (e) {
-      set({ error: e instanceof Error ? e.message : String(e) });
+      set(trainingFailureState(e, "Training checkpoint export failed"));
     }
   },
 
@@ -1399,18 +1407,9 @@ export const useStudioStore = create<StudioState>((set, get) => ({
     try {
       const parsed = parseTrainingCheckpointPayload(checkpointJson);
       const imported = await apiImportTrainingCheckpoint(parsed);
-      set((s) => ({
-        trainingConfig: { ...s.trainingConfig, ...imported.config },
-        trainingJobId: imported.source_job_id,
-        trainingStatus: `checkpoint:${imported.source_status}`,
-        trainingEpochs: [],
-        trainingWeightRestorePlan: imported.weight_restore_plan,
-        trainingWeightRestoreVerification: null,
-        activeTab: "train",
-        error: null,
-      }));
+      set((s) => trainingCheckpointImportedState(s.trainingConfig, imported));
     } catch (e) {
-      set({ error: e instanceof Error ? e.message : String(e) });
+      set(trainingFailureState(e, "Training checkpoint import failed"));
     }
   },
 
@@ -1420,20 +1419,16 @@ export const useStudioStore = create<StudioState>((set, get) => ({
       set({ error: "No training weight restore plan is available." });
       return;
     }
-    set({ error: null, trainingWeightRestoreVerification: null });
+    set(trainingWeightRestoreVerificationStartState());
     try {
       const payload = await fetchStudioJobArtifact(
         restorePlan.source_job_id,
         restorePlan.weights_artifact.relative_path,
       );
       const verification = await verifyTrainingWeightArtifactBlob(restorePlan, payload);
-      set({ trainingWeightRestoreVerification: verification });
+      set(trainingWeightRestoreVerificationLoadedState(verification));
     } catch (error: unknown) {
-      set({
-        error: error instanceof Error
-          ? error.message
-          : "Training weight artifact verification failed",
-      });
+      set(trainingFailureState(error, "Training weight artifact verification failed"));
     }
   },
 
@@ -1449,13 +1444,9 @@ export const useStudioStore = create<StudioState>((set, get) => ({
         trainingWeightRestoreVerification,
       );
       downloadBrowserArtefact(exported.blob, exported.filename);
-      set({ error: null });
+      set(trainingExportSuccessState());
     } catch (error: unknown) {
-      set({
-        error: error instanceof Error
-          ? error.message
-          : "Training weight restore verification export failed",
-      });
+      set(trainingFailureState(error, "Training weight restore verification export failed"));
     }
   },
 
