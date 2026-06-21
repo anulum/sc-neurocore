@@ -915,7 +915,7 @@ export const useStudioStore = create<StudioState>((set, get) => ({
     if (selection.action.kind === "fi-curve") get().runFICurve();
     else if (selection.action.kind === "precision") get().runPrecision();
     else {
-      set({ activeTab: selection.action.activeTab });
+      set(activeTabState(selection.action.activeTab));
       get().runSimulation();
     }
   },
