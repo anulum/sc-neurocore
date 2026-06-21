@@ -10,10 +10,61 @@ import type { TrainingEpochMetrics } from "./api/client";
 
 export type StudioTrainingTerminalStatus = "completed" | "stopped";
 
+export type StudioTrainingStreamMessageEvent = MessageEvent<string>;
+
+export interface StudioTrainingStreamEventSource {
+  close: () => void;
+  onerror: ((event: Event) => void) | null;
+  onmessage: ((event: StudioTrainingStreamMessageEvent) => void) | null;
+}
+
+export type StudioTrainingStreamFactory = (url: string) => StudioTrainingStreamEventSource;
+
+export interface StudioTrainingStreamHandlers {
+  onDisconnected: () => void;
+  onEpoch: (metrics: TrainingEpochMetrics) => void;
+  onError: (message: string) => void;
+  onTerminal: (status: StudioTrainingTerminalStatus) => void;
+}
+
 export type StudioTrainingStreamUpdate =
   | { kind: "epoch"; metrics: TrainingEpochMetrics }
   | { kind: "terminal"; status: StudioTrainingTerminalStatus }
   | { kind: "error"; message: string };
+
+export function studioTrainingStreamUrl(jobId: string): string {
+  return `/api/training/stream/${encodeURIComponent(jobId)}`;
+}
+
+export function connectStudioTrainingEventSource(
+  jobId: string,
+  handlers: StudioTrainingStreamHandlers,
+  createEventSource: StudioTrainingStreamFactory = defaultStudioTrainingStreamFactory,
+): StudioTrainingStreamEventSource {
+  const eventSource = createEventSource(studioTrainingStreamUrl(jobId));
+  eventSource.onmessage = (event) => {
+    const update = parseStudioTrainingStreamMessage(event.data);
+    if (update === null) {
+      return;
+    }
+    if (update.kind === "epoch") {
+      handlers.onEpoch(update.metrics);
+      return;
+    }
+    if (update.kind === "terminal") {
+      handlers.onTerminal(update.status);
+      eventSource.close();
+      return;
+    }
+    handlers.onError(update.message);
+    eventSource.close();
+  };
+  eventSource.onerror = () => {
+    handlers.onDisconnected();
+    eventSource.close();
+  };
+  return eventSource;
+}
 
 export function parseStudioTrainingStreamMessage(data: string): StudioTrainingStreamUpdate | null {
   let parsed: unknown;
@@ -81,4 +132,8 @@ function numberRecordValue(value: unknown): Record<string, number> {
     Object.entries(recordValue(value)).filter((entry): entry is [string, number] =>
       finiteNumber(entry[1])),
   );
+}
+
+function defaultStudioTrainingStreamFactory(url: string): StudioTrainingStreamEventSource {
+  return new EventSource(url);
 }

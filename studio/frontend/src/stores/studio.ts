@@ -171,7 +171,7 @@ import {
   verifyTrainingWeightArtifactBlob,
   type TrainingWeightRestoreVerification,
 } from "../trainingRestore";
-import { parseStudioTrainingStreamMessage } from "../studioTrainingStream";
+import { connectStudioTrainingEventSource } from "../studioTrainingStream";
 import {
   scheduleStudioAutoSimulation,
   type StudioAutoSimulationTimer,
@@ -1380,24 +1380,13 @@ export const useStudioStore = create<StudioState>((set, get) => ({
     try {
       const result = await apiStartTraining(s.trainingConfig);
       set(trainingStartedState(result.job_id));
-      const evtSource = new EventSource(`/api/training/stream/${result.job_id}`);
-      evtSource.onmessage = (e) => {
-        const update = parseStudioTrainingStreamMessage(e.data);
-        if (!update) return;
-        if (update.kind === "epoch") {
-          set((prev) => trainingEpochAppendedState(prev.trainingEpochs, update.metrics));
-        } else if (update.kind === "terminal") {
-          set(trainingTerminalState(update.status));
-          evtSource.close();
-        } else {
-          set(trainingStreamErrorState(update.message));
-          evtSource.close();
-        }
-      };
-      evtSource.onerror = () => {
-        set(trainingStreamDisconnectedState());
-        evtSource.close();
-      };
+      connectStudioTrainingEventSource(result.job_id, {
+        onDisconnected: () => set(trainingStreamDisconnectedState()),
+        onEpoch: (metrics) =>
+          set((prev) => trainingEpochAppendedState(prev.trainingEpochs, metrics)),
+        onError: (message) => set(trainingStreamErrorState(message)),
+        onTerminal: (status) => set(trainingTerminalState(status)),
+      });
     } catch (e) {
       set(trainingFailureState(e, "Training start failed", { markFailed: true }));
     }
