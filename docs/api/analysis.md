@@ -251,8 +251,8 @@ Spike sorting quality metrics.
 
 | Function | Description |
 |----------|-------------|
-| `isolation_distance(cluster, noise)` | Mahalanobis isolation distance (Harris et al. 2001) |
-| `l_ratio(cluster, noise)` | L-ratio cluster quality (Schmitzer-Torbert et al. 2005) |
+| `isolation_distance(cluster, noise, backend)` | Mahalanobis isolation distance (Harris et al. 2001) |
+| `l_ratio(cluster, noise, backend)` | L-ratio cluster quality (Schmitzer-Torbert et al. 2005) |
 | `silhouette_score(features, labels)` | Mean silhouette score (Rousseeuw 1987) |
 | `d_prime(cluster_a, cluster_b)` | Sensitivity index between two clusters (Green & Swets 1966) |
 | `isi_violation_rate(train, dt, refractory_ms)` | Fraction of ISIs below refractory period (Hill et al. 2011) |
@@ -261,6 +261,28 @@ Spike sorting quality metrics.
 | `snr(waveforms)` | Signal-to-noise ratio of spike waveforms (Suner et al. 2005) |
 | `nn_hit_rate(cluster, noise, k)` | k-NN cluster purity (Chung et al. 2017) |
 | `drift_metric(waveforms, timestamps, n_bins)` | Waveform amplitude drift over time (IBL 2019) |
+
+**Mahalanobis kernel.** `isolation_distance` and `l_ratio` share one numerically
+optimal kernel for the squared Mahalanobis distance
+`(x-μ)ᵀ Σ⁻¹ (x-μ)`. The regularised cluster covariance `Σ = L Lᵀ` is Cholesky-
+factorised once and the quadratic form is obtained by a triangular solve
+`L z = x-μ` followed by `Σ z²` — the covariance is never inverted explicitly,
+which is both more accurate for ill-conditioned cluster covariances and cheaper
+than forming `Σ⁻¹` and multiplying.
+
+**Polyglot chain.** `isolation_distance(..., backend=...)` and
+`l_ratio(..., backend=...)` run the same Cholesky kernel across five backends
+(NumPy / Rust / Julia / Go / Mojo), agreeing with the NumPy reference to
+floating-point round-off (~1e-13). `backend="auto"` prefers the Rust engine (the
+always-available compiled path) and otherwise falls back to the NumPy reference;
+`"python"`, `"rust"`, `"julia"`, `"go"` and `"mojo"` force a specific path. On
+the reference workload (`benchmarks/bench_sorting_quality.py`, i5-11600K,
+shielded cores 10–11; 64-point cluster, 256 noise points, 12 features) the
+compiled backends beat NumPy — Mojo ~4.6×, Go ~3.8×, Rust ~1.9× — while the
+Julia path is dominated by per-call interop overhead on this small workload
+(~0.5×). Degenerate inputs (`n_cluster < 2`, fewer noise points than the cluster
+size for the isolation distance, or empty noise for the L-ratio) return `nan`
+before any backend runs.
 
 ### Waveform (`spike_stats.waveform`)
 

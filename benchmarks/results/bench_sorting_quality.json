@@ -1,0 +1,113 @@
+{
+  "benchmark": "sorting_quality_mahalanobis_polyglot",
+  "date_utc": "2026-06-21T05:02:39Z",
+  "language_surfaces": [
+    "Python",
+    "Rust",
+    "Julia",
+    "Go",
+    "Mojo"
+  ],
+  "kernel": "cluster_mahalanobis_sq (Cholesky solve)",
+  "metrics": [
+    "isolation_distance",
+    "l_ratio"
+  ],
+  "hardware_measurement_claimed": false,
+  "workload": {
+    "n_cluster": 64,
+    "n_noise": 256,
+    "n_features": 12,
+    "seed": 20260621
+  },
+  "meta": {
+    "cpu": "11th Gen Intel(R) Core(TM) i5-11600K @ 3.90GHz",
+    "platform": "Linux-6.17.0-35-generic-x86_64-with-glibc2.39",
+    "python": "3.12.3",
+    "numpy": "2.2.6"
+  },
+  "backends": {
+    "python": {
+      "available": true,
+      "used": true,
+      "median_call_ms": 0.216364,
+      "isolation_distance": 92.42492954173511,
+      "l_ratio": 3.101520753655355e-08,
+      "repeats": 15
+    },
+    "rust": {
+      "available": true,
+      "used": true,
+      "median_call_ms": 0.128726,
+      "isolation_distance": 92.42492954173505,
+      "l_ratio": 3.101520753655365e-08,
+      "repeats": 15,
+      "speedup_over_python": 1.681
+    },
+    "julia": {
+      "available": true,
+      "used": true,
+      "median_call_ms": 0.400581,
+      "isolation_distance": 92.42492954173507,
+      "l_ratio": 3.101520753655355e-08,
+      "repeats": 5,
+      "speedup_over_python": 0.54
+    },
+    "go": {
+      "available": true,
+      "used": true,
+      "median_call_ms": 0.090446,
+      "isolation_distance": 92.42492954173505,
+      "l_ratio": 3.101520753655354e-08,
+      "repeats": 15,
+      "speedup_over_python": 2.392
+    },
+    "mojo": {
+      "available": true,
+      "used": true,
+      "median_call_ms": 0.059804,
+      "isolation_distance": 92.42492954173507,
+      "l_ratio": 3.101520753638567e-08,
+      "repeats": 15,
+      "speedup_over_python": 3.618
+    }
+  },
+  "parity": {
+    "reference": "python",
+    "rust": {
+      "isolation_distance_abs_diff": 5.684341886080802e-14,
+      "l_ratio_abs_diff": 9.926167350636332e-23
+    },
+    "julia": {
+      "isolation_distance_abs_diff": 4.263256414560601e-14,
+      "l_ratio_abs_diff": 0.0
+    },
+    "go": {
+      "isolation_distance_abs_diff": 5.684341886080802e-14,
+      "l_ratio_abs_diff": 6.617444900424222e-24
+    },
+    "mojo": {
+      "isolation_distance_abs_diff": 4.263256414560601e-14,
+      "l_ratio_abs_diff": 1.6787795967886207e-19
+    }
+  },
+  "host_context": {
+    "affinity_cpus": [
+      10,
+      11
+    ],
+    "cgroup_effective_cpuset": "10-11",
+    "load_average_before": [
+      13.052734375,
+      15.39013671875,
+      17.244140625
+    ],
+    "load_average_after": [
+      13.92578125,
+      15.494140625,
+      17.2578125
+    ],
+    "runtime_cpuset_shield_claimed": true,
+    "isolation_mode": "runtime-cpuset-shield"
+  }
+}

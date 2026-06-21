@@ -476,6 +476,17 @@ except ImportError:
 
 try:
     from sc_neurocore_engine.sc_neurocore_engine import (
+        py_isolation_distance,
+        py_l_ratio,
+    )
+
+    __all__ += ["py_isolation_distance", "py_l_ratio"]
+    _sorting_quality_rust_available = True
+except ImportError:
+    _sorting_quality_rust_available = False
+
+try:
+    from sc_neurocore_engine.sc_neurocore_engine import (
         py_ollivier_ricci_curvature,
     )
 

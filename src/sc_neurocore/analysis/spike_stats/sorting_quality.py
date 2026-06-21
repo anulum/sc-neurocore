@@ -6,62 +6,299 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore — Spike sorting quality metrics
 
-"""Spike sorting quality metrics."""
+"""Spike sorting quality metrics.
+
+The Mahalanobis cluster-quality metrics ``isolation_distance`` (Harris et al.
+2001) and ``l_ratio`` (Schmitzer-Torbert et al. 2005) share one numerically
+optimal kernel: the squared Mahalanobis distance ``(x-μ)ᵀ Σ⁻¹ (x-μ)`` is
+evaluated through the Cholesky factor of the regularised cluster covariance
+``Σ = L Lᵀ`` (solving ``L z = x-μ`` and summing ``z²``) rather than forming and
+multiplying by ``Σ⁻¹``. This is the LAPACK-grade route — more accurate for
+ill-conditioned cluster covariances and cheaper than an explicit inverse. The
+same kernel is available across the polyglot chain (NumPy / Rust / Julia / Go /
+Mojo) with parity to floating-point round-off, selected via ``backend=``.
+"""
 
 from __future__ import annotations
 
+import ctypes as _ctypes
+import importlib as _importlib
+import importlib.util as _importlib_util
+import os as _os
 from typing import Any
 
 import numpy as np
+from scipy.linalg import solve_triangular
 
 from .basic import isi, bin_spike_train
 
 
-def isolation_distance(cluster: np.ndarray[Any, Any], noise: np.ndarray[Any, Any]) -> float:
-    """Isolation distance. Harris et al. 2001.
+def _accel_path(*parts: str) -> str:
+    """Absolute path to a backend asset under the ``accel`` tree."""
+    root = _os.path.dirname(_os.path.dirname(_os.path.dirname(__file__)))
+    return _os.path.join(root, "accel", *parts)
 
-    Mahalanobis distance at which the number of noise points equals cluster size.
-    cluster: (n_cluster, n_features). noise: (n_noise, n_features).
+
+def _cluster_mahalanobis_sq(
+    cluster: np.ndarray[Any, Any], noise: np.ndarray[Any, Any]
+) -> np.ndarray[Any, Any]:
+    """Squared Mahalanobis distances of each ``noise`` row from the cluster mean.
+
+    The cluster covariance ``Σ`` is the unbiased (``ddof=1``) feature covariance
+    with a ``1e-8`` diagonal jitter, so it is SPD. The quadratic form
+    ``(x-μ)ᵀ Σ⁻¹ (x-μ)`` is computed from the Cholesky factor ``Σ = L Lᵀ`` via a
+    triangular solve ``L z = (x-μ)`` followed by ``Σ z²``; ``Σ`` is never
+    inverted explicitly.
     """
+    mu = cluster.mean(axis=0)
+    cov = np.cov(cluster.T)
+    if cov.ndim < 2:
+        cov = np.atleast_2d(cov)
+    cov = cov + 1e-8 * np.eye(cov.shape[0])
+    chol = np.linalg.cholesky(cov)  # lower L
+    diff = (noise - mu).T  # (d, n_noise)
+    z = solve_triangular(chol, diff, lower=True)
+    mah_sq: np.ndarray[Any, Any] = np.einsum("ij,ij->j", z, z)
+    return mah_sq
+
+
+def _isolation_distance_python(
+    cluster: np.ndarray[Any, Any], noise: np.ndarray[Any, Any]
+) -> float:
+    """NumPy reference for :func:`isolation_distance` (inputs pre-validated)."""
+    n_c = cluster.shape[0]
+    mah = np.sort(_cluster_mahalanobis_sq(cluster, noise))
+    # Inputs are pre-validated (n_noise >= n_cluster), so the n_cluster-th
+    # smallest squared Mahalanobis distance always exists.
+    return float(mah[n_c - 1])
+
+
+def _l_ratio_python(cluster: np.ndarray[Any, Any], noise: np.ndarray[Any, Any]) -> float:
+    """NumPy reference for :func:`l_ratio` (inputs pre-validated)."""
+    n_c = cluster.shape[0]
+    mah = np.clip(_cluster_mahalanobis_sq(cluster, noise), 1e-10, None)
+    d = cluster.shape[1]
+    l_vals = np.clip(np.exp(-0.5 * (mah - d)), 0, 1)
+    return float(l_vals.sum() / n_c)
+
+
+def _load_rust_metric(name: str) -> Any | None:
+    """Return a Rust sorting-quality entry point, or ``None`` when absent."""
+    try:
+        return getattr(_importlib.import_module("sc_neurocore_engine"), name)
+    except (ImportError, AttributeError):
+        return None
+
+
+# Rust acceleration backends — probed at import (the wheel import is cheap).
+_rust_isolation: Any | None = _load_rust_metric("py_isolation_distance")
+_rust_l_ratio: Any | None = _load_rust_metric("py_l_ratio")
+
+# Julia / Go / Mojo backends — loaded lazily on first explicit request.
+_julia_sq: Any | None = None
+_go_sq_lib: Any | None = None
+_mojo_sq_lib: Any | None = None
+
+
+def _ensure_julia_sq() -> bool:
+    """Lazy-load the Julia sorting-quality module, ``True`` when available."""
+    global _julia_sq
+    if _julia_sq is not None:
+        return True
+    if _importlib_util.find_spec("juliacall") is None:
+        return False
+    jl_path = _accel_path("julia", "analysis", "sorting_quality.jl")
+    if not _os.path.isfile(jl_path):
+        return False
+    jl = _importlib.import_module("juliacall").Main
+    jl.include(jl_path)
+    _julia_sq = jl.SortingQualityAccel
+    return True
+
+
+def _ensure_go_sq() -> bool:
+    """Lazy-load the Go sorting-quality c-shared library, ``True`` when available."""
+    global _go_sq_lib
+    if _go_sq_lib is not None:
+        return True
+    so_path = _accel_path("go", "sorting_quality", "libsorting_quality.so")
+    if not _os.path.isfile(so_path):
+        return False
+    try:
+        lib = _ctypes.CDLL(so_path)
+    except OSError:
+        return False
+    iso = getattr(lib, "isolation_distance_c", None)
+    lr = getattr(lib, "l_ratio_c", None)
+    if iso is None or lr is None:
+        return False
+    sig = [
+        _ctypes.POINTER(_ctypes.c_double),
+        _ctypes.c_int,
+        _ctypes.POINTER(_ctypes.c_double),
+        _ctypes.c_int,
+        _ctypes.c_int,
+    ]
+    for fn in (iso, lr):
+        fn.argtypes = sig
+        fn.restype = _ctypes.c_double
+    _go_sq_lib = lib
+    return True
+
+
+def _ensure_mojo_sq() -> bool:
+    """Lazy-load the Mojo sorting-quality shared library, ``True`` when available."""
+    global _mojo_sq_lib
+    if _mojo_sq_lib is not None:
+        return True
+    so_path = _accel_path("mojo", "kernels", "libsorting_quality.so")
+    if not _os.path.isfile(so_path):
+        return False
+    try:
+        lib = _ctypes.CDLL(so_path)
+    except OSError:
+        return False
+    iso = getattr(lib, "isolation_distance_c", None)
+    lr = getattr(lib, "l_ratio_c", None)
+    if iso is None or lr is None:
+        return False
+    for fn in (iso, lr):
+        fn.argtypes = [_ctypes.c_int64] * 6
+        fn.restype = None
+    _mojo_sq_lib = lib
+    return True
+
+
+def _run_go_metric(
+    fn: Any, cluster: np.ndarray[Any, Any], noise: np.ndarray[Any, Any]
+) -> float:
+    """Dispatch a sorting-quality metric to the Go c-shared backend."""
+    n_c, d = cluster.shape
+    n_noise = noise.shape[0]
+    cbuf = np.ascontiguousarray(cluster, dtype=np.float64).reshape(-1)
+    nbuf = np.ascontiguousarray(noise, dtype=np.float64).reshape(-1)
+    cptr = cbuf.ctypes.data_as(_ctypes.POINTER(_ctypes.c_double))
+    nptr = nbuf.ctypes.data_as(_ctypes.POINTER(_ctypes.c_double))
+    return float(fn(cptr, n_c, nptr, n_noise, d))
+
+
+def _run_mojo_metric(
+    fn: Any, cluster: np.ndarray[Any, Any], noise: np.ndarray[Any, Any]
+) -> float:
+    """Dispatch a sorting-quality metric to the Mojo backend (raw ``int64`` addresses)."""
+    n_c, d = cluster.shape
+    n_noise = noise.shape[0]
+    cbuf = np.ascontiguousarray(cluster, dtype=np.float64).reshape(-1)
+    nbuf = np.ascontiguousarray(noise, dtype=np.float64).reshape(-1)
+    out = np.zeros(1, dtype=np.float64)
+    fn(cbuf.ctypes.data, n_c, nbuf.ctypes.data, n_noise, d, out.ctypes.data)
+    return float(out[0])
+
+
+_SQ_BACKENDS = ("auto", "python", "rust", "julia", "go", "mojo")
+
+
+def _sq_dispatch(
+    metric: str,
+    cluster: np.ndarray[Any, Any],
+    noise: np.ndarray[Any, Any],
+    backend: str,
+) -> float:
+    """Run a Mahalanobis sorting-quality metric on the requested backend.
+
+    ``metric`` is ``"isolation_distance"`` or ``"l_ratio"``. Every backend shares
+    the Cholesky-solve kernel and agrees with the NumPy reference up to
+    floating-point round-off. ``auto`` prefers the Rust engine when present and
+    falls back to the NumPy reference; Julia, Go and Mojo run on request.
+    """
+    if backend not in _SQ_BACKENDS:
+        raise ValueError(f"sorting-quality backend {backend!r} is not available")
+
+    rust = _rust_isolation if metric == "isolation_distance" else _rust_l_ratio
+    if backend in ("auto", "rust") and rust is not None:
+        return float(rust(cluster, noise))
+    if backend == "rust":
+        raise RuntimeError("Rust sorting-quality backend is not available in this environment")
+    if backend == "julia":
+        if not _ensure_julia_sq():
+            raise RuntimeError("Julia sorting-quality backend is not available")
+        return float(getattr(_julia_sq, metric)(cluster, noise))
+    if backend == "go":
+        if not _ensure_go_sq():
+            raise RuntimeError("Go sorting-quality backend is not available")
+        return _run_go_metric(getattr(_go_sq_lib, f"{metric}_c"), cluster, noise)
+    if backend == "mojo":
+        if not _ensure_mojo_sq():
+            raise RuntimeError("Mojo sorting-quality backend is not available")
+        return _run_mojo_metric(getattr(_mojo_sq_lib, f"{metric}_c"), cluster, noise)
+    if metric == "isolation_distance":
+        return _isolation_distance_python(cluster, noise)
+    return _l_ratio_python(cluster, noise)
+
+
+def isolation_distance(
+    cluster: np.ndarray[Any, Any], noise: np.ndarray[Any, Any], backend: str = "auto"
+) -> float:
+    """Isolation distance (Harris et al. 2001).
+
+    The Mahalanobis distance at which the number of noise points reaching the
+    cluster equals the cluster size — the squared Mahalanobis radius of the
+    ``n_cluster``-th nearest noise point.
+
+    Parameters
+    ----------
+    cluster : numpy.ndarray
+        Shape ``(n_cluster, n_features)`` — the cluster's feature vectors.
+    noise : numpy.ndarray
+        Shape ``(n_noise, n_features)`` — competing (noise) feature vectors.
+    backend : str, optional
+        ``"auto"`` selects the fastest available backend (Rust engine when
+        present, otherwise the NumPy reference); ``"python"``, ``"rust"``,
+        ``"julia"``, ``"go"`` and ``"mojo"`` force a specific path.
+
+    Returns
+    -------
+    float
+        Isolation distance; ``nan`` when ``n_cluster < 2`` or fewer noise points
+        than cluster points are supplied.
+    """
+    cluster = np.ascontiguousarray(cluster, dtype=np.float64)
+    noise = np.ascontiguousarray(noise, dtype=np.float64)
     n_c = cluster.shape[0]
     if n_c < 2 or noise.shape[0] < n_c:
         return float("nan")
-    mu = cluster.mean(axis=0)
-    cov = np.cov(cluster.T)
-    if cov.ndim < 2:
-        cov = np.array([[cov]])
-    cov += 1e-8 * np.eye(cov.shape[0])
-    cov_inv = np.linalg.inv(cov)
-    diff = noise - mu
-    mah = np.sum(diff @ cov_inv * diff, axis=1)
-    mah_sorted = np.sort(mah)
-    if n_c - 1 < len(mah_sorted):
-        return float(mah_sorted[n_c - 1])
-    return float(mah_sorted[-1])
+    return _sq_dispatch("isolation_distance", cluster, noise, backend)
 
 
-def l_ratio(cluster: np.ndarray[Any, Any], noise: np.ndarray[Any, Any]) -> float:
-    """L-ratio. Schmitzer-Torbert et al. 2005.
+def l_ratio(
+    cluster: np.ndarray[Any, Any], noise: np.ndarray[Any, Any], backend: str = "auto"
+) -> float:
+    """L-ratio cluster quality (Schmitzer-Torbert et al. 2005).
 
-    Sum of inverse-chi2 CDF values for noise Mahalanobis distances, normalized by cluster size.
-    Approximated here as sum(1/mah_dist) / n_cluster.
+    The mean over noise points of the chi-squared survival weight
+    ``exp(-½ (d²_Mahalanobis - n_features))`` (clamped to ``[0, 1]``), normalised
+    by the cluster size — small for well-isolated clusters.
+
+    Parameters
+    ----------
+    cluster : numpy.ndarray
+        Shape ``(n_cluster, n_features)`` — the cluster's feature vectors.
+    noise : numpy.ndarray
+        Shape ``(n_noise, n_features)`` — competing (noise) feature vectors.
+    backend : str, optional
+        Forwarded to the polyglot dispatch (see :func:`isolation_distance`).
+
+    Returns
+    -------
+    float
+        L-ratio; ``nan`` when ``n_cluster < 2`` or no noise points are supplied.
     """
+    cluster = np.ascontiguousarray(cluster, dtype=np.float64)
+    noise = np.ascontiguousarray(noise, dtype=np.float64)
     n_c = cluster.shape[0]
     if n_c < 2 or noise.shape[0] == 0:
         return float("nan")
-    mu = cluster.mean(axis=0)
-    cov = np.cov(cluster.T)
-    if cov.ndim < 2:
-        cov = np.array([[cov]])
-    cov += 1e-8 * np.eye(cov.shape[0])
-    cov_inv = np.linalg.inv(cov)
-    diff = noise - mu
-    mah = np.sum(diff @ cov_inv * diff, axis=1)
-    mah = np.clip(mah, 1e-10, None)
-    d = cluster.shape[1]
-    l_vals = np.exp(-0.5 * (mah - d))
-    l_vals = np.clip(l_vals, 0, 1)
-    return float(l_vals.sum() / n_c)
+    return _sq_dispatch("l_ratio", cluster, noise, backend)
 
 
 def silhouette_score(features: np.ndarray[Any, Any], labels: np.ndarray[Any, Any]) -> float:
@@ -144,9 +381,9 @@ def amplitude_cutoff(amplitudes: np.ndarray[Any, Any], bins: int = 100) -> float
         return 0.5
     left_count = hist[:peak_idx].sum()
     right_count = hist[peak_idx:].sum()
+    # Every amplitude lands in exactly one bin, so total == len(amplitudes) >= 10
+    # after the early-return guard above — it is always positive.
     total = left_count + right_count
-    if total == 0:
-        return 0.0
     estimated_missing = max(0, right_count - left_count)
     return float(estimated_missing / (total + estimated_missing))
 

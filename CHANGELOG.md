@@ -60,6 +60,24 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
   backend faster than NumPy (Rust ~7x, Julia ~4.4x, Mojo ~3.5x, Go ~3.0x). Added
   parity and loader-branch tests (phi_estimation.py at 100% statement coverage) and
   refreshed the `docs/api/analysis.md` Phi* section.
+- Sorting-quality Mahalanobis metrics (`analysis/spike_stats/sorting_quality.py`)
+  now evaluate the squared Mahalanobis distance `(x-μ)ᵀ Σ⁻¹ (x-μ)` through the
+  Cholesky factor of the regularised cluster covariance (a triangular solve, then
+  `Σ z²`) instead of forming the covariance inverse explicitly — more accurate for
+  ill-conditioned cluster covariances and cheaper. `isolation_distance` and
+  `l_ratio` share the kernel and gain a polyglot dispatch `backend=` over five
+  parity-verified backends — NumPy, Rust (`py_isolation_distance` / `py_l_ratio`,
+  re-exported from the bridge; the Rust path previously used a Gauss-Jordan
+  inverse mislabelled as Cholesky), Julia and Mojo (both previously non-functional
+  stubs, now real), and a new Go c-shared backend — agreeing with the reference to
+  ~1e-13. `backend="auto"` prefers Rust; `benchmarks/bench_sorting_quality.py`
+  measures Mojo ~4.6x, Go ~3.8x and Rust ~1.9x over NumPy on the reference workload
+  (Julia ~0.5x, interop-bound on this size). Added Cholesky-kernel, parity and
+  loader-branch tests (sorting_quality.py at 100% statement coverage), removed two
+  unreachable defensive branches, and expanded the `docs/api/analysis.md`
+  sorting-quality section.
+- Fixed a latent type-inference error in the Rust Phi* test (`det.ln()` on an
+  ambiguous numeric literal) that prevented the engine test target from compiling.
 
 ### Studio platform
 - The FPGA synthesis panel can export a synthesis-scoped evidence bundle from

@@ -7,88 +7,45 @@
 // SC-NeuroCore — Spike sorting quality metrics
 
 use super::basic;
+use nalgebra::DMatrix;
 
 // ── helpers ─────────────────────────────────────────────────────────
 
-/// Invert a symmetric positive-definite matrix via Cholesky fallback to
-/// regularised pseudo-inverse.  `a` is row-major `n x n`.
-fn mat_inverse(a: &[f64], n: usize) -> Vec<f64> {
-    // Gauss-Jordan elimination on [A | I]
-    let mut aug = vec![0.0f64; n * 2 * n];
-    for i in 0..n {
-        for j in 0..n {
-            aug[i * 2 * n + j] = a[i * n + j];
-        }
-        aug[i * 2 * n + n + i] = 1.0;
-    }
-    for col in 0..n {
-        // Partial pivot
-        let mut max_row = col;
-        let mut max_val = aug[col * 2 * n + col].abs();
-        for row in col + 1..n {
-            let v = aug[row * 2 * n + col].abs();
-            if v > max_val {
-                max_val = v;
-                max_row = row;
-            }
-        }
-        if max_val < 1e-30 {
-            continue;
-        }
-        if max_row != col {
-            for k in 0..2 * n {
-                aug.swap(col * 2 * n + k, max_row * 2 * n + k);
-            }
-        }
-        let pivot = aug[col * 2 * n + col];
-        for k in 0..2 * n {
-            aug[col * 2 * n + k] /= pivot;
-        }
-        for row in 0..n {
-            if row == col {
-                continue;
-            }
-            let factor = aug[row * 2 * n + col];
-            for k in 0..2 * n {
-                aug[row * 2 * n + k] -= factor * aug[col * 2 * n + k];
-            }
-        }
-    }
-    let mut inv = vec![0.0f64; n * n];
-    for i in 0..n {
-        for j in 0..n {
-            inv[i * n + j] = aug[i * 2 * n + n + j];
-        }
-    }
-    inv
-}
-
-/// Mahalanobis distances from each row of `points` (n_pts x d) to `mu` (d,)
-/// using `cov_inv` (d x d).
-fn mahalanobis_distances(
+/// Squared Mahalanobis distances `(x-μ)ᵀ Σ⁻¹ (x-μ)` of each row of `points`
+/// (`n_pts × d`) from the cluster mean, using the regularised cluster
+/// covariance `Σ`.
+///
+/// `Σ` is symmetric positive-definite (jitter-regularised in
+/// [`covariance_matrix`]), so the quadratic form is evaluated through its
+/// Cholesky factorisation — `Σ = L Lᵀ`, then `Σ X = D` is solved for the
+/// centred points `D` and the distance is the column-wise dot product
+/// `Dᵢᵀ Xᵢ`. The covariance is never inverted explicitly, which is both more
+/// accurate and cheaper than forming `Σ⁻¹` and multiplying.
+fn cluster_mahalanobis_sq(
+    cluster: &[f64],
+    n_cluster: usize,
     points: &[f64],
     n_pts: usize,
     d: usize,
-    mu: &[f64],
-    cov_inv: &[f64],
 ) -> Vec<f64> {
-    let mut result = vec![0.0f64; n_pts];
+    let mu = col_mean(cluster, n_cluster, d);
+    let cov = covariance_matrix(cluster, n_cluster, d);
+    let chol = DMatrix::<f64>::from_row_slice(d, d, &cov)
+        .cholesky()
+        .expect("cluster covariance must be symmetric positive-definite");
+
+    // Centred points as columns of a `d × n_pts` matrix.
+    let mut diffs = DMatrix::<f64>::zeros(d, n_pts);
     for i in 0..n_pts {
-        let mut diff = vec![0.0f64; d];
         for j in 0..d {
-            diff[j] = points[i * d + j] - mu[j];
+            diffs[(j, i)] = points[i * d + j] - mu[j];
         }
-        let mut mah = 0.0;
-        for j in 0..d {
-            let mut s = 0.0;
-            for k in 0..d {
-                s += cov_inv[j * d + k] * diff[k];
-            }
-            mah += diff[j] * s;
-        }
-        result[i] = mah;
     }
-    result
+    let solved = chol.solve(&diffs); // Σ⁻¹ · diffs, column-wise
+
+    (0..n_pts)
+        .map(|i| (0..d).map(|j| diffs[(j, i)] * solved[(j, i)]).sum::<f64>())
+        .collect()
 }
 
 /// Covariance matrix (d x d) of row-major data (n x d), with regularisation.
@@ -154,10 +111,7 @@ pub fn isolation_distance(
     if n_cluster < 2 || n_noise < n_cluster {
         return f64::NAN;
     }
-    let mu = col_mean(cluster, n_cluster, n_features);
-    let cov = covariance_matrix(cluster, n_cluster, n_features);
-    let cov_inv = mat_inverse(&cov, n_features);
-    let mut mah = mahalanobis_distances(noise, n_noise, n_features, &mu, &cov_inv);
+    let mut mah = cluster_mahalanobis_sq(cluster, n_cluster, noise, n_noise, n_features);
     mah.sort_by(|a, b| a.partial_cmp(b).unwrap());
     if n_cluster - 1 < mah.len() {
         mah[n_cluster - 1]
@@ -177,10 +131,7 @@ pub fn l_ratio(
     if n_cluster < 2 || n_noise == 0 {
         return f64::NAN;
     }
-    let mu = col_mean(cluster, n_cluster, n_features);
-    let cov = covariance_matrix(cluster, n_cluster, n_features);
-    let cov_inv = mat_inverse(&cov, n_features);
-    let mah = mahalanobis_distances(noise, n_noise, n_features, &mu, &cov_inv);
+    let mah = cluster_mahalanobis_sq(cluster, n_cluster, noise, n_noise, n_features);
     let d = n_features as f64;
     let l_sum: f64 = mah
         .iter()
@@ -669,14 +620,38 @@ mod tests {
     }
 
     #[test]
-    fn test_mat_inverse_identity() {
-        let eye = vec![1.0, 0.0, 0.0, 1.0];
-        let inv = mat_inverse(&eye, 2);
-        for i in 0..2 {
-            for j in 0..2 {
-                let expected = if i == j { 1.0 } else { 0.0 };
-                assert!((inv[i * 2 + j] - expected).abs() < 1e-10);
-            }
-        }
+    fn test_cluster_mahalanobis_sq_matches_dense() {
+        // 4-point 2-D cluster; the Cholesky-solve helper must equal the
+        // closed-form `diffᵀ Σ⁻¹ diff` using the 2×2 analytic inverse.
+        let cluster = vec![0.0, 0.0, 2.0, 0.0, 0.0, 2.0, 2.0, 2.0];
+        let point = vec![5.0, 3.0];
+        let mah = cluster_mahalanobis_sq(&cluster, 4, &point, 1, 2);
+
+        let cov = covariance_matrix(&cluster, 4, 2);
+        let (a, b, c, dd) = (cov[0], cov[1], cov[2], cov[3]);
+        let det = a * dd - b * c;
+        let mu = col_mean(&cluster, 4, 2);
+        let (dx, dy) = (point[0] - mu[0], point[1] - mu[1]);
+        // Σ⁻¹ = (1/det) [[dd, -b], [-c, a]]
+        let ref_mah = (dx * (dd * dx - b * dy) + dy * (-c * dx + a * dy)) / det;
+        assert!(
+            (mah[0] - ref_mah).abs() < 1e-9,
+            "mah={} ref={}",
+            mah[0],
+            ref_mah
+        );
+    }
+
+    #[test]
+    fn test_cluster_mahalanobis_sq_centre_is_zero() {
+        // The cluster mean has zero Mahalanobis distance from itself.
+        let cluster = vec![1.0, 4.0, 3.0, 4.0, 1.0, 8.0, 3.0, 8.0];
+        let centre = vec![2.0, 6.0]; // column means
+        let mah = cluster_mahalanobis_sq(&cluster, 4, &centre, 1, 2);
+        assert!(
+            mah[0].abs() < 1e-9,
+            "centre distance {} should be ~0",
+            mah[0]
+        );
     }
 }

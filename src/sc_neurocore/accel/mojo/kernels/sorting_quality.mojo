@@ -4,150 +4,204 @@
 # © Code 2020–2026 Miroslav Šotek. All rights reserved.
 # ORCID: 0009-0009-3560-0851
 # Contact: www.anulum.li | protoscience@anulum.li
-# SC-NeuroCore — Mojo SIMD acceleration for sorting_quality
+# SC-NeuroCore — Mojo sorting-quality backend
+#
+# Build:
+#   cd src/sc_neurocore/accel/mojo/kernels
+#   mojo build --emit shared-lib -o libsorting_quality.so sorting_quality.mojo
+#
+# Mahalanobis cluster-quality metrics (Harris et al. 2001; Schmitzer-Torbert et
+# al. 2005). The squared Mahalanobis distance is evaluated through the Cholesky
+# factor of the regularised cluster covariance with a forward substitution
+# (mah = ‖L⁻¹(x-μ)‖²) — the covariance is never inverted — matching the NumPy,
+# Rust, Julia and Go backends within float64 round-off. Each scalar result is
+# returned through an output address (Mojo 0.26 @export: every array arg is a raw
+# int64 address).
 
-fn isolation_distance(cluster: Int, noise: Int) -> Int:
-    var _isolation_distance_line = 'n_c = cluster.shape[0]'
-    var _isolation_distance_line = 'if n_c < 2 or noise.shape[0] < n_c:'
-    return 0  # return float("nan")
-    var _isolation_distance_line = 'mu = cluster.mean(axis=0)'
-    var _isolation_distance_line = 'cov = cov(cluster.T)'
-    var _isolation_distance_line = 'if cov.ndim < 2:'
-    var _isolation_distance_line = 'cov = array([[cov]])'
-    var _isolation_distance_line = 'cov += 1e-8 * eye(cov.shape[0])'
-    var _isolation_distance_line = 'cov_inv = linalg.inv(cov)'
-    var _isolation_distance_line = 'diff = noise - mu'
-    var _isolation_distance_line = 'mah = sum(diff @ cov_inv * diff, axis=1)'
-    var _isolation_distance_line = 'mah_sorted = sort(mah)'
-    var _isolation_distance_line = 'if n_c - 1 < len(mah_sorted):'
-    return 0  # return float(mah_sorted[n_c - 1])
-    return 0  # return float(mah_sorted[-1])
+from std.memory import UnsafePointer, alloc
+from std.math import log, sqrt, exp
 
-fn l_ratio(cluster: Int, noise: Int) -> Int:
-    var _l_ratio_line = 'n_c = cluster.shape[0]'
-    var _l_ratio_line = 'if n_c < 2 or noise.shape[0] == 0:'
-    return 0  # return float("nan")
-    var _l_ratio_line = 'mu = cluster.mean(axis=0)'
-    var _l_ratio_line = 'cov = cov(cluster.T)'
-    var _l_ratio_line = 'if cov.ndim < 2:'
-    var _l_ratio_line = 'cov = array([[cov]])'
-    var _l_ratio_line = 'cov += 1e-8 * eye(cov.shape[0])'
-    var _l_ratio_line = 'cov_inv = linalg.inv(cov)'
-    var _l_ratio_line = 'diff = noise - mu'
-    var _l_ratio_line = 'mah = sum(diff @ cov_inv * diff, axis=1)'
-    var _l_ratio_line = 'mah = clip(mah, 1e-10, 0)'
-    var _l_ratio_line = 'd = cluster.shape[1]'
-    var _l_ratio_line = 'l_vals = exp(-0.5 * (mah - d))'
-    var _l_ratio_line = 'l_vals = clip(l_vals, 0, 1)'
-    return 0  # return float(l_vals.sum() / n_c)
 
-fn silhouette_score(features: Int, labels: Int) -> Int:
-    var _silhouette_score_line = 'n = features.shape[0]'
-    var _silhouette_score_line = 'if n < 2:'
-    return 0  # return 0.0
-    var _silhouette_score_line = 'classes = unique(labels)'
-    var _silhouette_score_line = 'if len(classes) < 2:'
-    return 0  # return 0.0
-    var _silhouette_score_line = 'scores = zeros(n)'
-    var _silhouette_score_line = 'for i in range(n):'
-    var _silhouette_score_line = 'own_class = labels[i]'
-    var _silhouette_score_line = 'own_mask = labels == own_class'
-    var _silhouette_score_line = 'other_classes = classes[classes != own_class]'
-    var _silhouette_score_line = 'own_dists = sqrt(sum((features[own_mask] - features[i]) ** 2'
-    var _silhouette_score_line = 'a_i = own_dists.sum() / max(own_mask.sum() - 1, 1)'
-    var _silhouette_score_line = 'b_i = inf'
-    var _silhouette_score_line = 'for c in other_classes:'
-    var _silhouette_score_line = 'c_mask = labels == c'
-    var _silhouette_score_line = 'c_dists = sqrt(sum((features[c_mask] - features[i]) ** 2, ax'
-    var _silhouette_score_line = 'b_i = min(b_i, c_dists.mean())'
-    var _silhouette_score_line = 'scores[i] = (b_i - a_i) / max(a_i, b_i, 1e-30)'
-    return 0  # return float(scores.mean())
+comptime F64Ptr = UnsafePointer[Float64, MutAnyOrigin]
 
-fn d_prime(cluster_a: Int, cluster_b: Int) -> Int:
-    var _d_prime_line = 'mu_a = cluster_a.mean(axis=0)'
-    var _d_prime_line = 'mu_b = cluster_b.mean(axis=0)'
-    var _d_prime_line = 'direction = mu_b - mu_a'
-    var _d_prime_line = 'norm = linalg.norm(direction)'
-    var _d_prime_line = 'if norm < 1e-30:'
-    return 0  # return 0.0
-    var _d_prime_line = 'direction /= norm'
-    var _d_prime_line = 'proj_a = cluster_a @ direction'
-    var _d_prime_line = 'proj_b = cluster_b @ direction'
-    var _d_prime_line = 'var_a = proj_a.var()'
-    var _d_prime_line = 'var_b = proj_b.var()'
-    var _d_prime_line = 'pooled_std = sqrt(0.5 * (var_a + var_b))'
-    var _d_prime_line = 'if pooled_std < 1e-30:'
-    return 0  # return 0.0
-    return 0  # return float(abs(proj_a.mean() - proj_b.mean()) /
 
-fn isi_violation_rate(binary_train: Int, dt: Int, refractory_ms: Int) -> Int:
-    var _isi_violation_rate_line = 'binary_train: ndarray[Any, Any], dt: float = 0.001, refracto'
-    var _isi_violation_rate_line = ') -> float:'
-    var _isi_violation_rate_line = 'intervals = isi(binary_train, dt)'
-    var _isi_violation_rate_line = 'if intervals.size == 0:'
-    return 0  # return 0.0
-    var _isi_violation_rate_line = 'ref = refractory_ms / 1000.0'
-    return 0  # return float(sum(intervals < ref) / intervals.size
+@always_inline
+fn _ptr(addr: Int) -> F64Ptr:
+    return F64Ptr(unsafe_from_address=addr)
 
-fn presence_ratio(binary_train: Int, n_bins: Int) -> Int:
-    var _presence_ratio_line = 'bin_size = max(1, binary_train.size // n_bins)'
-    var _presence_ratio_line = 'counts = bin_spike_train(binary_train, bin_size)'
-    return 0  # return float(sum(counts > 0) / max(counts.size, 1)
 
-fn amplitude_cutoff(amplitudes: Int, bins: Int) -> Int:
-    var _amplitude_cutoff_line = 'if amplitudes.size < 10:'
-    return 0  # return float("nan")
-    var _amplitude_cutoff_line = 'hist, edges = histogram(amplitudes, bins=bins)'
-    var _amplitude_cutoff_line = 'peak_idx = argmax(hist)'
-    var _amplitude_cutoff_line = 'if peak_idx == 0:'
-    return 0  # return 0.5
-    var _amplitude_cutoff_line = 'left_count = hist[:peak_idx].sum()'
-    var _amplitude_cutoff_line = 'right_count = hist[peak_idx:].sum()'
-    var _amplitude_cutoff_line = 'total = left_count + right_count'
-    var _amplitude_cutoff_line = 'if total == 0:'
-    return 0  # return 0.0
-    var _amplitude_cutoff_line = 'estimated_missing = max(0, right_count - left_count)'
-    return 0  # return float(estimated_missing / (total + estimate
+fn _alloc(n: Int) -> F64Ptr:
+    var raw = alloc[Float64](n)
+    return F64Ptr(unsafe_from_address=Int(raw))
 
-fn snr(waveforms: Int) -> Int:
-    var _snr_line = 'if waveforms.ndim < 2 or waveforms.shape[0] < 2:'
-    return 0  # return float("nan")
-    var _snr_line = 'mean_wf = waveforms.mean(axis=0)'
-    var _snr_line = 'peak = max(abs(mean_wf))'
-    var _snr_line = 'noise_std = waveforms.std(axis=0).mean()'
-    var _snr_line = 'if noise_std < 1e-30:'
-    return 0  # return float("inf")
-    return 0  # return float(peak / noise_std)
 
-fn nn_hit_rate(cluster: Int, noise: Int, k: Int) -> Int:
-    var _nn_hit_rate_line = 'n_c = cluster.shape[0]'
-    var _nn_hit_rate_line = 'if n_c < k + 1:'
-    return 0  # return float("nan")
-    var _nn_hit_rate_line = 'all_points = vstack([cluster, noise])'
-    var _nn_hit_rate_line = 'all_labels = concatenate([ones(n_c), zeros(noise.shape[0])])'
-    var _nn_hit_rate_line = 'hits = 0'
-    var _nn_hit_rate_line = 'for i in range(n_c):'
-    var _nn_hit_rate_line = 'dists = sqrt(sum((all_points - cluster[i]) ** 2, axis=1))'
-    var _nn_hit_rate_line = 'dists[i] = inf'
-    var _nn_hit_rate_line = 'nn_idx = argpartition(dists, k)[:k]'
-    var _nn_hit_rate_line = 'if all(all_labels[nn_idx] == 1):'
-    var _nn_hit_rate_line = 'hits += 1'
-    return 0  # return float(hits / n_c)
+fn _free(p: F64Ptr):
+    var raw = UnsafePointer[Float64, MutExternalOrigin](unsafe_from_address=Int(p))
+    raw.free()
 
-fn drift_metric(waveforms: Int, timestamps: Int, n_bins: Int) -> Int:
-    var _drift_metric_line = 'waveforms: ndarray[Any, Any], timestamps: ndarray[Any, Any],'
-    var _drift_metric_line = ') -> float:'
-    var _drift_metric_line = 'if waveforms.ndim < 2 or waveforms.shape[0] < n_bins:'
-    return 0  # return float("nan")
-    var _drift_metric_line = 'amplitudes = max(abs(waveforms), axis=1)'
-    var _drift_metric_line = 'sorted_idx = argsort(timestamps)'
-    var _drift_metric_line = 'amplitudes = amplitudes[sorted_idx]'
-    var _drift_metric_line = 'bin_size = len(amplitudes) // n_bins'
-    var _drift_metric_line = 'means_list: list[Any] = []'
-    var _drift_metric_line = 'for i in range(n_bins):'
-    var _drift_metric_line = 'chunk = amplitudes[i * bin_size : (i + 1) * bin_size]'
-    var _drift_metric_line = 'means_list.append(chunk.mean())'
-    var _drift_metric_line = 'means = array(means_list)'
-    var _drift_metric_line = 'if means.std() < 1e-30:'
-    return 0  # return 0.0
-    return 0  # return float((means.max() - means.min()) / means.m
+
+fn _zero(p: F64Ptr, n: Int):
+    for i in range(n):
+        p[i] = 0.0
+
+
+@always_inline
+fn _nan() -> Float64:
+    # IEEE 0/0 = NaN; the runtime variable prevents constant folding.
+    var z: Float64 = 0.0
+    return z / z
+
+
+# Lower Cholesky factor L (row-major) of the SPD matrix `a`.
+fn _cholesky(a: F64Ptr, n: Int, l: F64Ptr):
+    _zero(l, n * n)
+    for j in range(n):
+        var d = a[j * n + j]
+        for k in range(j):
+            d -= l[j * n + k] * l[j * n + k]
+        if d <= 0.0:
+            d = 1e-300
+        var ljj = sqrt(d)
+        l[j * n + j] = ljj
+        var inv = 1.0 / ljj
+        for i in range(j + 1, n):
+            var s = a[i * n + j]
+            for k in range(j):
+                s -= l[i * n + k] * l[j * n + k]
+            l[i * n + j] = s * inv
+
+
+# Unbiased (ddof=1) feature covariance of `data` (n_rows × d) over its rows, with
+# `eps` jitter on the diagonal, written row-major into `cov_out` (d × d).
+fn _feature_covariance(data: F64Ptr, n_rows: Int, d: Int, eps: Float64, cov_out: F64Ptr):
+    var means = _alloc(d)
+    for j in range(d):
+        means[j] = 0.0
+    for i in range(n_rows):
+        for j in range(d):
+            means[j] += data[i * d + j]
+    for j in range(d):
+        means[j] /= Float64(n_rows)
+    var denom = Float64(n_rows - 1)
+    if denom < 1.0:
+        denom = 1.0
+    _zero(cov_out, d * d)
+    for i in range(n_rows):
+        for j in range(d):
+            var dj = data[i * d + j] - means[j]
+            for k in range(j, d):
+                cov_out[j * d + k] += dj * (data[i * d + k] - means[k])
+    for j in range(d):
+        for k in range(j, d):
+            cov_out[j * d + k] /= denom
+            cov_out[k * d + j] = cov_out[j * d + k]
+        cov_out[j * d + j] += eps
+    _free(means)
+
+
+# Squared Mahalanobis distances of each row of `points` (n_pts × d) from the
+# cluster mean, via the Cholesky factor of the cluster covariance.
+fn _mahalanobis_sq(
+    cluster: F64Ptr, n_cluster: Int, points: F64Ptr, n_pts: Int, d: Int, dst: F64Ptr
+):
+    var mu = _alloc(d)
+    for j in range(d):
+        mu[j] = 0.0
+    for i in range(n_cluster):
+        for j in range(d):
+            mu[j] += cluster[i * d + j]
+    for j in range(d):
+        mu[j] /= Float64(n_cluster)
+
+    var cov = _alloc(d * d)
+    _feature_covariance(cluster, n_cluster, d, 1e-8, cov)
+    var l = _alloc(d * d)
+    _cholesky(cov, d, l)
+
+    var z = _alloc(d)
+    for p in range(n_pts):
+        for j in range(d):
+            var s = points[p * d + j] - mu[j]
+            for k in range(j):
+                s -= l[j * d + k] * z[k]
+            z[j] = s / l[j * d + j]
+        var m: Float64 = 0.0
+        for j in range(d):
+            m += z[j] * z[j]
+        dst[p] = m
+
+    _free(mu)
+    _free(cov)
+    _free(l)
+    _free(z)
+
+
+# Insertion sort of `a` (length n) in place — n is the noise count.
+fn _sort(a: F64Ptr, n: Int):
+    for i in range(1, n):
+        var key = a[i]
+        var j = i - 1
+        while j >= 0 and a[j] > key:
+            a[j + 1] = a[j]
+            j -= 1
+        a[j + 1] = key
+
+
+@export
+fn isolation_distance_c(
+    cluster_addr: Int,
+    n_cluster: Int,
+    noise_addr: Int,
+    n_noise: Int,
+    d: Int,
+    out_addr: Int,
+):
+    var dst = _ptr(out_addr)
+    if n_cluster < 2 or n_noise < n_cluster or d == 0:
+        dst[0] = _nan()
+        return
+    var cluster = _ptr(cluster_addr)
+    var noise = _ptr(noise_addr)
+
+    var mah = _alloc(n_noise)
+    _mahalanobis_sq(cluster, n_cluster, noise, n_noise, d, mah)
+    _sort(mah, n_noise)
+    if n_cluster - 1 < n_noise:
+        dst[0] = mah[n_cluster - 1]
+    else:
+        dst[0] = mah[n_noise - 1]
+    _free(mah)
+
+
+@export
+fn l_ratio_c(
+    cluster_addr: Int,
+    n_cluster: Int,
+    noise_addr: Int,
+    n_noise: Int,
+    d: Int,
+    out_addr: Int,
+):
+    var dst = _ptr(out_addr)
+    if n_cluster < 2 or n_noise == 0 or d == 0:
+        dst[0] = _nan()
+        return
+    var cluster = _ptr(cluster_addr)
+    var noise = _ptr(noise_addr)
+
+    var mah = _alloc(n_noise)
+    _mahalanobis_sq(cluster, n_cluster, noise, n_noise, d, mah)
+    var df = Float64(d)
+    var s: Float64 = 0.0
+    for i in range(n_noise):
+        var m = mah[i]
+        if m < 1e-10:
+            m = 1e-10
+        var v = exp(-0.5 * (m - df))
+        if v < 0.0:
+            v = 0.0
+        elif v > 1.0:
+            v = 1.0
+        s += v
+    _free(mah)
+    dst[0] = s / Float64(n_cluster)
