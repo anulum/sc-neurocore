@@ -622,7 +622,9 @@ classification, project name, state digest, project digest, and schema version
 as the operator-visible confirmation for the persisted workspace. The same
 strip can export a project evidence bundle through the bounded evidence worker,
 using the saved project name and project SHA-256 as replay metadata while
-refreshing the worker queue after export.
+refreshing the worker queue after export. When the bundle is available, the
+Projects strip lists the path-confined artifacts with size and SHA-256 labels
+and downloads each file through the authenticated Studio job-artifact endpoint.
 
 Before promoting a Studio deployment, run the release preflight from the same
 environment that will launch the backend:

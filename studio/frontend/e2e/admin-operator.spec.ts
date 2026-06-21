@@ -836,6 +836,10 @@ test("admin job rows can seed evidence bundle job IDs", async ({ page }) => {
 test("project evidence strip exports saved project bundles", async ({ page }) => {
   const mocks = defaultApiMocks();
   mocks.set("/api/project/save", projectSaveResult);
+  mocks.set("/api/studio/jobs/sj_browser/artifacts/evidence/simulations/000.json", {
+    binaryBody: "{\"kind\":\"simulation\"}\n",
+    contentType: "application/json",
+  });
   const api = await installApiDispatcher(page, mocks);
 
   page.once("dialog", async (dialog) => {
@@ -853,6 +857,8 @@ test("project evidence strip exports saved project bundles", async ({ page }) =>
     .click();
   await expect(page.getByText("seb_sj_browser")).toBeVisible();
   await expect(page.getByText("sj_browser", { exact: true })).toBeVisible();
+  await expect(page.getByText("evidence/simulations/000.json", { exact: true })).toBeVisible();
+  await expect(page.getByText("256 B - sha cccccccccccc")).toBeVisible();
 
   const bodies = api.bodies("/api/studio/evidence/bundle");
   expect(bodies).toHaveLength(1);
@@ -864,6 +870,15 @@ test("project evidence strip exports saved project bundles", async ({ page }) =>
     },
     include_audit: true,
     project_name: "saved-network",
+  });
+
+  await page
+    .getByRole("button", { name: "Download project evidence artifact evidence/simulations/000.json" })
+    .click();
+  const artifactPath = "/api/studio/jobs/sj_browser/artifacts/evidence/simulations/000.json";
+  expect(api.requests(artifactPath)).toBe(1);
+  expect(api.headers(artifactPath)[0]).toMatchObject({
+    authorization: "Bearer browser-token",
   });
 });
 

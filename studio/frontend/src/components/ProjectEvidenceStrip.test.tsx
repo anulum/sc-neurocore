@@ -7,6 +7,13 @@ describe("ProjectEvidenceStrip", () => {
   it("renders path-free project save evidence", () => {
     const html = renderToStaticMarkup(
       <ProjectEvidenceStrip
+        artifacts={[
+          {
+            relative_path: "evidence/projects/saved-network.json",
+            sha256: "c".repeat(64),
+            size_bytes: 1536,
+          },
+        ]}
         evidence={{
           classification: "project_workspace",
           name: "saved-network",
@@ -18,6 +25,7 @@ describe("ProjectEvidenceStrip", () => {
         exportError={null}
         exportJobId="sj_project"
         loading={false}
+        onDownloadArtifact={() => undefined}
         onExportBundle={() => undefined}
       />,
     );
@@ -30,6 +38,10 @@ describe("ProjectEvidenceStrip", () => {
     expect(html).toContain("aaaaaaaaaaaa");
     expect(html).toContain("studio.project-save.v1");
     expect(html).toContain("Export saved-network project evidence bundle");
+    expect(html).toContain("Project evidence bundle artifacts");
+    expect(html).toContain("evidence/projects/saved-network.json");
+    expect(html).toContain("1.5 KiB - sha cccccccccccc");
+    expect(html).toContain("Download project evidence artifact evidence/projects/saved-network.json");
     expect(html).toContain("seb_project");
     expect(html).toContain("sj_project");
   });

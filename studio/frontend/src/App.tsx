@@ -412,11 +412,13 @@ export default function App() {
             )}
             {s.projectSaveResult && (
               <ProjectEvidenceStrip
+                artifacts={s.evidenceBundle?.artifacts ?? []}
                 evidence={buildProjectEvidenceModel(s.projectSaveResult)}
                 exportBundleId={s.evidenceBundle?.bundle_id ?? null}
                 exportError={s.evidenceBundleError}
                 exportJobId={s.evidenceBundle?.job_id ?? null}
                 loading={s.evidenceBundleLoading}
+                onDownloadArtifact={(relativePath) => void s.downloadEvidenceBundleArtifact(relativePath)}
                 onExportBundle={exportProjectEvidenceBundle}
               />
             )}
