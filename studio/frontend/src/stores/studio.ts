@@ -123,6 +123,7 @@ import {
 } from "../studioGraphRequests";
 import {
   copyStudioShareUrlInRuntime,
+  scheduleStudioShareStatusClear,
   studioShareStatusClearedState,
   studioShareStatusState,
 } from "../studioShareRuntime";
@@ -1533,7 +1534,7 @@ export const useStudioStore = create<StudioState>((set, get) => ({
       protocol: s.protocol,
     }).then((result) => {
       set(studioShareStatusState(result));
-      setTimeout(() => set(studioShareStatusClearedState()), 2000);
+      scheduleStudioShareStatusClear(() => set(studioShareStatusClearedState()));
     });
   },
 }));

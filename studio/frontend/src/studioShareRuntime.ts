@@ -13,6 +13,8 @@ import {
   type StudioShareUrlLocation,
 } from "./studioUrlState";
 
+export const STUDIO_SHARE_STATUS_CLEAR_DELAY_MS = 2000;
+
 export interface StudioShareRuntime {
   clipboard: StudioShareUrlClipboard | null;
   location: StudioShareUrlLocation;
@@ -30,6 +32,12 @@ export interface StudioShareStatusClearedStatePatch {
   error: null;
 }
 
+export type StudioShareStatusClearTimer = ReturnType<typeof setTimeout>;
+
+export interface StudioShareStatusClearScheduler {
+  setTimeout(callback: () => void, delayMs: number): StudioShareStatusClearTimer;
+}
+
 export function browserStudioShareRuntime(): StudioShareRuntime | null {
   if (typeof window === "undefined") {
     return null;
@@ -37,6 +45,12 @@ export function browserStudioShareRuntime(): StudioShareRuntime | null {
   return {
     clipboard: typeof navigator === "undefined" ? null : navigator.clipboard ?? null,
     location: window.location,
+  };
+}
+
+export function browserStudioShareStatusClearScheduler(): StudioShareStatusClearScheduler {
+  return {
+    setTimeout: (callback, delayMs) => setTimeout(callback, delayMs),
   };
 }
 
@@ -48,6 +62,14 @@ export function studioShareStatusState(
 
 export function studioShareStatusClearedState(): StudioShareStatusClearedStatePatch {
   return { error: null };
+}
+
+export function scheduleStudioShareStatusClear(
+  clearStatus: () => void,
+  scheduler: StudioShareStatusClearScheduler = browserStudioShareStatusClearScheduler(),
+  delayMs: number = STUDIO_SHARE_STATUS_CLEAR_DELAY_MS,
+): StudioShareStatusClearTimer {
+  return scheduler.setTimeout(clearStatus, delayMs);
 }
 
 export async function copyStudioShareUrlInRuntime(

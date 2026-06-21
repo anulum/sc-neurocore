@@ -9,7 +9,11 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  STUDIO_SHARE_STATUS_CLEAR_DELAY_MS,
   copyStudioShareUrlInRuntime,
+  scheduleStudioShareStatusClear,
+  type StudioShareStatusClearScheduler,
+  type StudioShareStatusClearTimer,
   studioShareStatusClearedState,
   studioShareStatusState,
   type StudioShareRuntime,
@@ -30,6 +34,21 @@ const input: StudioShareUrlInput = {
   sourceMode: "model",
   threshold: "v > 1",
 };
+
+class RecordingClearScheduler implements StudioShareStatusClearScheduler {
+  readonly delays: number[] = [];
+  private callbacks: Array<() => void> = [];
+
+  setTimeout(callback: () => void, delayMs: number): StudioShareStatusClearTimer {
+    this.callbacks.push(callback);
+    this.delays.push(delayMs);
+    return this.callbacks.length as unknown as StudioShareStatusClearTimer;
+  }
+
+  runLatest(): void {
+    this.callbacks[this.callbacks.length - 1]?.();
+  }
+}
 
 describe("Studio share URL browser runtime", () => {
   it("copies the generated URL through the runtime clipboard", async () => {
@@ -96,5 +115,18 @@ describe("Studio share URL browser runtime", () => {
 
   it("builds the cleared status patch for store consumers", () => {
     expect(studioShareStatusClearedState()).toEqual({ error: null });
+  });
+
+  it("schedules share status clearing with the canonical delay", () => {
+    const scheduler = new RecordingClearScheduler();
+    let clearCount = 0;
+
+    scheduleStudioShareStatusClear(() => {
+      clearCount += 1;
+    }, scheduler);
+    scheduler.runLatest();
+
+    expect(scheduler.delays).toEqual([STUDIO_SHARE_STATUS_CLEAR_DELAY_MS]);
+    expect(clearCount).toBe(1);
   });
 });
