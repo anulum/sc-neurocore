@@ -74,6 +74,10 @@ import {
   writeStoredStudioSessions,
   type StudioSavedSession,
 } from "../studioSavedSessions";
+import {
+  buildStudioShareUrl,
+  decodeStudioStartupHash,
+} from "../studioUrlState";
 import { parseTrainingCheckpointPayload } from "../trainingCheckpoint";
 import {
   buildTrainingWeightRestoreVerificationManifest,
@@ -1719,31 +1723,33 @@ export const useStudioStore = create<StudioState>((set, get) => ({
 
   shareURL: () => {
     const s = get();
-    const state = {
-      m: s.sourceMode, mn: s.selectedModelName, eq: s.equations,
-      th: s.threshold, rs: s.reset,
-      p: s.sourceMode === "model" ? s.modelParams : s.odeParams,
-      i: s.odeInit, dt: s.dt, d: s.duration, c: s.current, pr: s.protocol,
-    };
-    const encoded = btoa(JSON.stringify(state));
-    const url = `${window.location.origin}${window.location.pathname}#${encoded}`;
-    navigator.clipboard.writeText(url);
+    const url = buildStudioShareUrl({
+      sourceMode: s.sourceMode,
+      selectedModelName: s.selectedModelName,
+      equations: s.equations,
+      threshold: s.threshold,
+      reset: s.reset,
+      modelParams: s.modelParams,
+      odeParams: s.odeParams,
+      odeInit: s.odeInit,
+      dt: s.dt,
+      duration: s.duration,
+      current: s.current,
+      protocol: s.protocol,
+    }, window.location);
+    void navigator.clipboard.writeText(url);
     set({ error: "URL copied to clipboard" });
     setTimeout(() => set({ error: null }), 2000);
   },
 }));
 
 // Load from URL hash on startup
-try {
-  const hash = window.location.hash.slice(1);
-  if (hash) {
-    const state = JSON.parse(atob(hash));
-    if (state.m && state.mn) {
-      useStudioStore.getState().selectModel(state.mn);
-      useStudioStore.setState({
-        current: state.c || 10, duration: state.d || 100,
-        protocol: state.pr || "constant",
-      });
-    }
-  }
-} catch { /* ignore invalid hash */ }
+const startupHashState = decodeStudioStartupHash(window.location.hash);
+if (startupHashState !== null) {
+  useStudioStore.getState().selectModel(startupHashState.selectedModelName);
+  useStudioStore.setState({
+    current: startupHashState.current,
+    duration: startupHashState.duration,
+    protocol: startupHashState.protocol,
+  });
+}
