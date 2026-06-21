@@ -133,6 +133,27 @@ import {
   type StudioSimulationConfigInput,
 } from "../studioSimulationConfig";
 import {
+  studioAnalysisErrorState,
+  studioAnalysisFailureState,
+  studioAnalysisIdleState,
+  studioAnalysisStartState,
+  studioBifurcationResultState,
+  studioCodegenResultState,
+  studioCodegenStartState,
+  studioCompareResultState,
+  studioFICurveResultState,
+  studioFrequencyResultState,
+  studioHeatmapResultState,
+  studioImportedTraceState,
+  studioMultiResultsState,
+  studioNetworkResultState,
+  studioNullclineResultState,
+  studioPrecisionResultState,
+  studioSensitivityResultState,
+  studioSimulationResultState,
+  studioSTAResultState,
+} from "../studioAnalysisState";
+import {
   simulationCsvBlob,
   simulationCsvFilename,
   simulationJsonBlob,
@@ -862,32 +883,32 @@ export const useStudioStore = create<StudioState>((set, get) => ({
   runSimulation: async () => {
     const s = get();
     if (s.isSimulating) return;
-    set({ isSimulating: true, error: null });
+    set(studioAnalysisStartState());
     try {
       const cfg = studioSimulationConfig(simulationConfigInput(s));
       const result = s.sourceMode === "model" && s.selectedModelName
         ? await simulateModel(cfg) : await simulateODE(cfg);
-      set({ result, isSimulating: false });
+      set(studioSimulationResultState(result));
     } catch (e) {
-      set({ error: e instanceof Error ? e.message : String(e), isSimulating: false });
+      set(studioAnalysisFailureState(e));
     }
   },
 
   runFICurve: async () => {
     const s = get();
     if (s.isSimulating) return;
-    set({ isSimulating: true, error: null, activeTab: "fi-curve" });
+    set(studioAnalysisStartState("fi-curve"));
     try {
       const cfg = studioSimulationConfig(simulationConfigInput(s));
       const fiResult = await fetchFICurve(studioFICurveRequest(cfg, s.current));
-      set({ fiResult, isSimulating: false });
-    } catch (e) { set({ error: e instanceof Error ? e.message : String(e), isSimulating: false }); }
+      set(studioFICurveResultState(fiResult));
+    } catch (e) { set(studioAnalysisFailureState(e)); }
   },
 
   runBifurcation: async () => {
     const s = get();
     if (s.isSimulating || !s.sweepParam) return;
-    set({ isSimulating: true, error: null, activeTab: "bifurcation" });
+    set(studioAnalysisStartState("bifurcation"));
     try {
       const cfg = studioSimulationConfig(simulationConfigInput(s));
       const paramVal = (s.sourceMode === "model" ? s.modelParams : s.odeParams)[s.sweepParam] ?? 0;
@@ -895,32 +916,32 @@ export const useStudioStore = create<StudioState>((set, get) => ({
         sweepParam: s.sweepParam,
         parameterValue: paramVal,
       }));
-      set({ bifResult, isSimulating: false });
-    } catch (e) { set({ error: e instanceof Error ? e.message : String(e), isSimulating: false }); }
+      set(studioBifurcationResultState(bifResult));
+    } catch (e) { set(studioAnalysisFailureState(e)); }
   },
 
   runSensitivity: async () => {
     const s = get();
     if (s.isSimulating) return;
-    set({ isSimulating: true, error: null, activeTab: "sensitivity" });
+    set(studioAnalysisStartState("sensitivity"));
     try {
       const cfg = studioSimulationConfig(simulationConfigInput(s));
       const sensResult = await fetchSensitivity(cfg);
-      set({ sensResult, isSimulating: false });
-    } catch (e) { set({ error: e instanceof Error ? e.message : String(e), isSimulating: false }); }
+      set(studioSensitivityResultState(sensResult));
+    } catch (e) { set(studioAnalysisFailureState(e)); }
   },
 
   runPrecision: async () => {
     const s = get();
     if (s.sourceMode !== "ode") {
-      set({ error: "Precision compare only for custom ODE mode" });
+      set(studioAnalysisErrorState("Precision compare only for custom ODE mode"));
       return;
     }
-    set({ isSimulating: true, error: null, activeTab: "precision" });
+    set(studioAnalysisStartState("precision"));
     try {
       const precResult = await fetchPrecision(studioPrecisionRequest(simulationConfigInput(s)));
-      set({ precResult, isSimulating: false });
-    } catch (e) { set({ error: e instanceof Error ? e.message : String(e), isSimulating: false }); }
+      set(studioPrecisionResultState(precResult));
+    } catch (e) { set(studioAnalysisFailureState(e)); }
   },
 
   runCompile: async () => {
@@ -942,7 +963,7 @@ export const useStudioStore = create<StudioState>((set, get) => ({
   runHeatmap: async () => {
     const s = get();
     if (s.isSimulating || !s.sweepParam || !s.sweepParamY) return;
-    set({ isSimulating: true, error: null, activeTab: "heatmap" });
+    set(studioAnalysisStartState("heatmap"));
     try {
       const params = s.sourceMode === "model" ? s.modelParams : s.odeParams;
       const xVal = params[s.sweepParam] ?? 0;
@@ -954,17 +975,17 @@ export const useStudioStore = create<StudioState>((set, get) => ({
         sweepParamY: s.sweepParamY,
         parameterValueY: yVal,
       }));
-      set({ heatmapResult, isSimulating: false });
-    } catch (e) { set({ error: e instanceof Error ? e.message : String(e), isSimulating: false }); }
+      set(studioHeatmapResultState(heatmapResult));
+    } catch (e) { set(studioAnalysisFailureState(e)); }
   },
 
   runCodegen: async () => {
     const s = get();
-    set({ activeTab: "code" });
+    set(studioCodegenStartState());
     try {
       const res = await fetchCodegen(studioCodegenRequest(simulationConfigInput(s)));
-      set({ codeScript: res.script, codeOneliner: res.oneliner });
-    } catch (e) { set({ error: e instanceof Error ? e.message : String(e) }); }
+      set(studioCodegenResultState(res.script, res.oneliner));
+    } catch (e) { set(studioAnalysisErrorState(e instanceof Error ? e.message : String(e))); }
   },
 
   exportData: () => {
@@ -1017,14 +1038,14 @@ export const useStudioStore = create<StudioState>((set, get) => ({
   runMultiSimulate: async (modelNames) => {
     const s = get();
     if (s.isSimulating) return;
-    set({ isSimulating: true, error: null, activeTab: "multi" });
+    set(studioAnalysisStartState("multi"));
     try {
       const configs = modelNames.slice(0, 4).map((name) => ({
         name, params: null, dt: null, duration: s.duration, current: s.current, protocol: s.protocol,
       }));
       const multiResults = await fetchMultiSimulate(configs);
-      set({ multiResults, isSimulating: false });
-    } catch (e) { set({ error: e instanceof Error ? e.message : String(e), isSimulating: false }); }
+      set(studioMultiResultsState(multiResults));
+    } catch (e) { set(studioAnalysisFailureState(e)); }
   },
 
   setNetworkParam: (key, value) => {
@@ -1034,44 +1055,44 @@ export const useStudioStore = create<StudioState>((set, get) => ({
   runNetwork: async () => {
     const s = get();
     if (s.isSimulating) return;
-    set({ isSimulating: true, error: null, activeTab: "network" });
+    set(studioAnalysisStartState("network"));
     try {
       const np = s.networkParams;
       const networkResult = await simulateNetwork({
         ...np, duration: s.duration,
       });
-      set({ networkResult, isSimulating: false });
-    } catch (e) { set({ error: e instanceof Error ? e.message : String(e), isSimulating: false }); }
+      set(studioNetworkResultState(networkResult));
+    } catch (e) { set(studioAnalysisFailureState(e)); }
   },
 
   importCSV: async (csv) => {
     try {
       const importedTrace = await importTrace(studioTraceImportRequest(csv, get().dt));
-      set({ importedTrace, activeTab: "trace" });
-    } catch (e) { set({ error: e instanceof Error ? e.message : String(e) }); }
+      set(studioImportedTraceState(importedTrace));
+    } catch (e) { set(studioAnalysisErrorState(e instanceof Error ? e.message : String(e))); }
   },
 
   runCompare: async (configB) => {
     const s = get();
     if (s.isSimulating) return;
-    set({ isSimulating: true, error: null, activeTab: "compare" });
+    set(studioAnalysisStartState("compare"));
     try {
       const configA = studioSimulationConfig(simulationConfigInput(s));
       const compareResult = await fetchCompare(configA, configB);
-      set({ compareResult, isSimulating: false });
-    } catch (e) { set({ error: e instanceof Error ? e.message : String(e), isSimulating: false }); }
+      set(studioCompareResultState(compareResult));
+    } catch (e) { set(studioAnalysisFailureState(e)); }
   },
 
   runNullclines: async () => {
     const s = get();
     if (s.sourceMode !== "ode" || s.equations.length < 2) {
-      set({ error: "Nullclines need 2+ variable ODE in custom mode" });
+      set(studioAnalysisErrorState("Nullclines need 2+ variable ODE in custom mode"));
       return;
     }
-    set({ isSimulating: true, error: null });
+    set(studioAnalysisStartState());
     try {
       const vars = Object.keys(s.odeInit);
-      if (vars.length < 2) { set({ isSimulating: false }); return; }
+      if (vars.length < 2) { set(studioAnalysisIdleState()); return; }
       const v0vals = s.result?.states[vars[0]];
       const v1vals = s.result?.states[vars[1]];
       const r0: [number, number] = v0vals
@@ -1084,39 +1105,26 @@ export const useStudioStore = create<StudioState>((set, get) => ({
         equations: s.equations, params: s.odeParams,
         var_names: vars, ranges: { [vars[0]]: r0, [vars[1]]: r1 }, grid_size: 60,
       });
-      set({ nullclineResult, isSimulating: false, activeTab: "phase" });
-    } catch (e) { set({ error: e instanceof Error ? e.message : String(e), isSimulating: false }); }
+      set(studioNullclineResultState(nullclineResult));
+    } catch (e) { set(studioAnalysisFailureState(e)); }
   },
 
   runFreqResponse: async () => {
     const s = get();
     if (s.isSimulating) return;
-    set({ isSimulating: true, error: null, activeTab: "freq" });
+    set(studioAnalysisStartState("freq"));
     try {
       const cfg = studioSimulationConfig(simulationConfigInput(s));
       const freqResult = await fetchFreqResponse(studioFrequencyResponseRequest(cfg, s.current));
-      set({ freqResult, isSimulating: false });
-    } catch (e) { set({ error: e instanceof Error ? e.message : String(e), isSimulating: false }); }
+      set(studioFrequencyResultState(freqResult));
+    } catch (e) { set(studioAnalysisFailureState(e)); }
   },
 
   computeSTA: () => {
     const { result } = get();
-    if (!result || result.spikes.length < 3) return;
-    const vars = Object.keys(result.states);
-    const voltage = result.states[vars[0]];
-    const halfWin = Math.min(Math.floor(10 / result.dt), 200);
-    const snippets: number[][] = [];
-    for (const idx of result.spikes) {
-      if (idx - halfWin >= 0 && idx + halfWin < voltage.length) {
-        snippets.push(voltage.slice(idx - halfWin, idx + halfWin));
-      }
-    }
-    if (snippets.length === 0) return;
-    const avg = snippets[0].map((_, i) =>
-      snippets.reduce((sum, s) => sum + s[i], 0) / snippets.length
-    );
-    const time_ms = avg.map((_, i) => (i - halfWin) * result.dt);
-    set({ staResult: { time_ms, average: avg, n_spikes: snippets.length }, activeTab: "sta" });
+    if (!result) return;
+    const state = studioSTAResultState(result);
+    if (state !== null) set(state);
   },
 
   runBuildIR: async () => {
