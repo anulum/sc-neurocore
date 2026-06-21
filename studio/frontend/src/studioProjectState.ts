@@ -6,7 +6,12 @@
 // Contact: www.anulum.li | protoscience@anulum.li
 // SC-NeuroCore — Studio project state snapshot helpers
 
-import type { PopulationNode, ProjectionEdge } from "./api/client";
+import type {
+  PopulationNode,
+  ProjectSaveResponse,
+  ProjectSummary,
+  ProjectionEdge,
+} from "./api/client";
 import type { StudioSimulationSourceMode } from "./studioSimulationConfig";
 
 export interface StudioProjectTrainingConfig {
@@ -40,6 +45,18 @@ export interface StudioProjectStateSnapshot extends Record<string, unknown> {
   trainingConfig: StudioProjectTrainingConfig;
 }
 
+export interface StudioProjectSavedStatePatch {
+  projectSaveResult: ProjectSaveResponse;
+}
+
+export interface StudioProjectListLoadedStatePatch {
+  serverProjects: ProjectSummary[];
+}
+
+export interface StudioProjectFailureStatePatch {
+  error: string;
+}
+
 export function studioProjectSaveState(input: StudioProjectStateSnapshot): StudioProjectStateSnapshot {
   return {
     sourceMode: input.sourceMode,
@@ -58,6 +75,35 @@ export function studioProjectSaveState(input: StudioProjectStateSnapshot): Studi
     graphProjections: input.graphProjections,
     synthTarget: input.synthTarget,
     trainingConfig: input.trainingConfig,
+  };
+}
+
+export function studioProjectSavedState(
+  projectSaveResult: ProjectSaveResponse,
+): StudioProjectSavedStatePatch {
+  return { projectSaveResult };
+}
+
+export function studioProjectListLoadedState(
+  serverProjects: ProjectSummary[],
+): StudioProjectListLoadedStatePatch {
+  return { serverProjects };
+}
+
+export function studioProjectRestoreState(
+  projectState: StudioProjectStateSnapshot,
+): StudioProjectStateSnapshot {
+  return studioProjectSaveState(projectState);
+}
+
+export function studioProjectFailureState(
+  error: unknown,
+  fallbackMessage: string,
+): StudioProjectFailureStatePatch {
+  return {
+    error: error instanceof Error && error.message.length > 0
+      ? error.message
+      : fallbackMessage,
   };
 }
 

@@ -9,7 +9,11 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  studioProjectFailureState,
+  studioProjectListLoadedState,
+  studioProjectRestoreState,
   studioProjectSaveState,
+  studioProjectSavedState,
   studioProjectStateFromLoadResponse,
   type StudioProjectStateSnapshot,
   type StudioProjectTrainingConfig,
@@ -147,5 +151,30 @@ describe("Studio project state helpers", () => {
       synthTarget: "ice40",
       trainingConfig: fallbackTrainingConfig,
     });
+  });
+
+  it("builds project persistence store patches", () => {
+    const saved = {
+      evidence_classification: "project_workspace" as const,
+      name: "demo",
+      project_sha256: "a".repeat(64),
+      saved_at: 1782028800,
+      schema_version: "studio.project-save.v1" as const,
+      state_sha256: "b".repeat(64),
+      version: "studio.project.v1",
+    };
+    const summaries = [{
+      name: "demo",
+      saved_at: 1782028800,
+      version: "studio.project.v1",
+    }];
+
+    expect(studioProjectSavedState(saved)).toEqual({ projectSaveResult: saved });
+    expect(studioProjectListLoadedState(summaries)).toEqual({ serverProjects: summaries });
+    expect(studioProjectRestoreState(snapshot())).toEqual(snapshot());
+    expect(studioProjectFailureState(new Error("storage offline"), "fallback")).toEqual({
+      error: "storage offline",
+    });
+    expect(studioProjectFailureState("bad", "fallback")).toEqual({ error: "fallback" });
   });
 });

@@ -94,6 +94,10 @@ import {
 } from "../studioSavedSessions";
 import {
   studioProjectSaveState,
+  studioProjectFailureState,
+  studioProjectListLoadedState,
+  studioProjectRestoreState,
+  studioProjectSavedState,
   studioProjectStateFromLoadResponse,
   type StudioProjectTrainingConfig,
 } from "../studioProjectState";
@@ -1195,41 +1199,24 @@ export const useStudioStore = create<StudioState>((set, get) => ({
     });
     try {
       const projectSaveResult = await apiSaveProject(name, state);
-      set({ projectSaveResult });
+      set(studioProjectSavedState(projectSaveResult));
       await get().listServerProjects();
-    } catch (e) { set({ error: e instanceof Error ? e.message : String(e) }); }
+    } catch (e) { set(studioProjectFailureState(e, "Project save failed")); }
   },
 
   loadProjectFromServer: async (name) => {
     try {
       const data = await apiLoadProject(name);
       const projectState = studioProjectStateFromLoadResponse(data, get().trainingConfig);
-      set({
-        sourceMode: projectState.sourceMode,
-        equations: projectState.equations,
-        threshold: projectState.threshold,
-        reset: projectState.reset,
-        odeParams: projectState.odeParams,
-        odeInit: projectState.odeInit,
-        selectedModelName: projectState.selectedModelName,
-        modelParams: projectState.modelParams,
-        dt: projectState.dt,
-        duration: projectState.duration,
-        current: projectState.current,
-        protocol: projectState.protocol,
-        graphPopulations: projectState.graphPopulations,
-        graphProjections: projectState.graphProjections,
-        synthTarget: projectState.synthTarget,
-        trainingConfig: projectState.trainingConfig,
-      });
+      set(studioProjectRestoreState(projectState));
       get().runSimulation();
-    } catch (e) { set({ error: e instanceof Error ? e.message : String(e) }); }
+    } catch (e) { set(studioProjectFailureState(e, "Project load failed")); }
   },
 
   listServerProjects: async () => {
     try {
       const serverProjects = await apiListProjects();
-      set({ serverProjects });
+      set(studioProjectListLoadedState(serverProjects));
     } catch { /* non-critical */ }
   },
 
@@ -1237,7 +1224,7 @@ export const useStudioStore = create<StudioState>((set, get) => ({
     try {
       await apiDeleteProject(name);
       await get().listServerProjects();
-    } catch (e) { set({ error: e instanceof Error ? e.message : String(e) }); }
+    } catch (e) { set(studioProjectFailureState(e, "Project delete failed")); }
   },
 
   runPipelineAction: async () => {
