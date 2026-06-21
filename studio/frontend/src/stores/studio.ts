@@ -68,6 +68,12 @@ import {
   verifyTrainingWeightArtifactBlob,
   type TrainingWeightRestoreVerification,
 } from "../trainingRestore";
+import {
+  evidenceBundleSurfaceKeys,
+  latestSynthesisJobIdWithArtefact,
+  selectEvidenceBundleForSurface,
+  type EvidenceBundleSurface,
+} from "../evidenceBundles";
 
 let debounceTimer: ReturnType<typeof setTimeout> | null = null;
 const AUTH_STORAGE_KEY = "sc-neurocore-studio-auth-token";
@@ -80,7 +86,7 @@ export type SourceMode = "model" | "ode";
 export type ViewTab = "trace" | "phase" | "isi" | "fi-curve" | "bifurcation" |
   "sensitivity" | "precision" | "heatmap" | "verilog" | "code" |
   "compare" | "freq" | "sta" | "characterize" | "multi" | "network" | "ir" | "synth" | "train" | "canvas" | "admin";
-export type EvidenceBundleSurface = "admin" | "project" | "compile" | "synthesis";
+export type { EvidenceBundleSurface };
 
 interface StudioState {
   sourceMode: SourceMode;
@@ -321,37 +327,6 @@ function currentConfig(s: StudioState): Record<string, unknown> {
     params: s.odeParams, init: s.odeInit,
     dt: s.dt, duration: s.duration, current: s.current, protocol: s.protocol,
   };
-}
-
-const evidenceBundleKeys = {
-  compile: {
-    bundle: "compileEvidenceBundle",
-    error: "compileEvidenceBundleError",
-    loading: "compileEvidenceBundleLoading",
-  },
-  project: {
-    bundle: "projectEvidenceBundle",
-    error: "projectEvidenceBundleError",
-    loading: "projectEvidenceBundleLoading",
-  },
-  synthesis: {
-    bundle: "synthesisEvidenceBundle",
-    error: "synthesisEvidenceBundleError",
-    loading: "synthesisEvidenceBundleLoading",
-  },
-} as const;
-
-function latestJobIdWithArtifact(
-  jobs: StudioJobRecord[],
-  artifactPath: string,
-): string | null {
-  const records = jobs
-    .filter((job) =>
-      job.kind === "synthesis"
-      && job.artifacts.some((artifact) => artifact.relative_path === artifactPath),
-    )
-    .sort((left, right) => right.created_at_utc.localeCompare(left.created_at_utc));
-  return records[0]?.job_id ?? null;
 }
 
 export const useStudioStore = create<StudioState>((set, get) => ({
@@ -641,7 +616,8 @@ export const useStudioStore = create<StudioState>((set, get) => ({
       await get().createEvidenceBundle(request);
       return;
     }
-    const { bundle: bundleKey, error: errorKey, loading: loadingKey } = evidenceBundleKeys[surface];
+    const { bundle: bundleKey, error: errorKey, loading: loadingKey } =
+      evidenceBundleSurfaceKeys(surface);
     set({ [loadingKey]: true, [errorKey]: null });
     try {
       const evidenceBundle = await createStudioEvidenceBundle(request);
@@ -694,12 +670,8 @@ export const useStudioStore = create<StudioState>((set, get) => ({
       return;
     }
     const state = get();
-    const { error: errorKey } = evidenceBundleKeys[surface];
-    const evidenceBundle = surface === "project"
-      ? state.projectEvidenceBundle
-      : surface === "compile"
-        ? state.compileEvidenceBundle
-        : state.synthesisEvidenceBundle;
+    const { error: errorKey } = evidenceBundleSurfaceKeys(surface);
+    const evidenceBundle = selectEvidenceBundleForSurface(surface, state);
     if (evidenceBundle === null) {
       set({ [errorKey]: "No evidence bundle is available for artifact download." });
       return;
@@ -1336,7 +1308,10 @@ export const useStudioStore = create<StudioState>((set, get) => ({
         auditStatus: operatorStatus.audit,
         jobRecords: jobList.jobs,
         jobStatus: operatorStatus.jobs,
-        latestSynthesisJobId: latestJobIdWithArtifact(jobList.jobs, "synthesis/result.json"),
+        latestSynthesisJobId: latestSynthesisJobIdWithArtefact(
+          jobList.jobs,
+          "synthesis/result.json",
+        ),
         operatorStatus,
         synthResult,
         isSimulating: false,
@@ -1367,7 +1342,7 @@ export const useStudioStore = create<StudioState>((set, get) => ({
         auditStatus: operatorStatus.audit,
         jobRecords: jobList.jobs,
         jobStatus: operatorStatus.jobs,
-        latestMultiTargetSynthesisJobId: latestJobIdWithArtifact(
+        latestMultiTargetSynthesisJobId: latestSynthesisJobIdWithArtefact(
           jobList.jobs,
           "synthesis/multi-target-result.json",
         ),
