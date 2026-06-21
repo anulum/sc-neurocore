@@ -16,6 +16,11 @@ from collections.abc import Mapping
 from dataclasses import dataclass
 from typing import Any, Literal, TypeAlias
 
+from sc_neurocore.studio.evidence_classification import (
+    StudioEvidenceClassification,
+    validate_studio_evidence_classification,
+)
+
 STUDIO_SIMULATION_RUN_SCHEMA_VERSION = "studio.simulation-run.v1"
 
 JsonScalar: TypeAlias = str | int | float | bool | None
@@ -57,14 +62,16 @@ class StudioSimulationRunManifest:
     sample_count: int
     spike_count: int
     state_variables: tuple[str, ...]
-    evidence_classification: str = "simulation"
+    evidence_classification: StudioEvidenceClassification = "simulation"
 
     def to_public_dict(self) -> dict[str, JsonValue]:
         """Return the public, path-free simulation run manifest."""
 
         return {
             "dt": self.dt,
-            "evidence_classification": self.evidence_classification,
+            "evidence_classification": validate_studio_evidence_classification(
+                self.evidence_classification
+            ),
             "input_sha256": self.input_sha256,
             "n_steps": self.n_steps,
             "result_sha256": self.result_sha256,

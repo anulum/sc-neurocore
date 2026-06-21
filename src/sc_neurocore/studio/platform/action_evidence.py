@@ -17,7 +17,7 @@ from dataclasses import dataclass
 from datetime import datetime, timezone
 
 from sc_neurocore.studio.platform.evidence_bundle import JsonValue
-from sc_neurocore.studio.platform.evidence_classification import (
+from sc_neurocore.studio.evidence_classification import (
     STUDIO_EVIDENCE_CLASSIFICATIONS,
     STUDIO_EVIDENCE_TERMINAL_STATUSES,
     StudioEvidenceClassification,

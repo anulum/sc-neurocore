@@ -21,6 +21,7 @@ from starlette.testclient import TestClient
 from sc_neurocore.studio.analysis_manifest import (
     STUDIO_ANALYSIS_RESULT_SCHEMA_VERSION,
     JsonValue,
+    StudioAnalysisResultManifest,
     attach_analysis_result_manifest,
     build_analysis_result_manifest,
     infer_analysis_source,
@@ -119,6 +120,22 @@ def test_build_analysis_result_manifest_rejects_non_portable_numbers() -> None:
             request_payload={"bad": float("nan")},
             result_payload={"rates": [1.0]},
         )
+
+
+def test_analysis_result_manifest_rejects_unknown_evidence_classification() -> None:
+    """Analysis metadata rejects evidence classes outside the shared contract."""
+
+    manifest = StudioAnalysisResultManifest(
+        analysis_type="fi_curve",
+        source="ode",
+        input_sha256="0" * 64,
+        result_sha256="1" * 64,
+        output_keys=("rates",),
+        evidence_classification="screenshots",  # type: ignore[arg-type] # Invalid by design.
+    )
+
+    with pytest.raises(ValueError, match="classification"):
+        manifest.to_public_dict()
 
 
 @pytest.mark.parametrize(

@@ -16,6 +16,11 @@ from collections.abc import Mapping
 from dataclasses import dataclass
 from typing import Any, Literal, TypeAlias
 
+from sc_neurocore.studio.evidence_classification import (
+    StudioEvidenceClassification,
+    validate_studio_evidence_classification,
+)
+
 STUDIO_ANALYSIS_RESULT_SCHEMA_VERSION = "studio.analysis-result.v1"
 
 AnalysisSource: TypeAlias = Literal["ode", "model", "mixed", "unknown"]
@@ -48,14 +53,16 @@ class StudioAnalysisResultManifest:
     input_sha256: str
     result_sha256: str
     output_keys: tuple[str, ...]
-    evidence_classification: str = "analysis"
+    evidence_classification: StudioEvidenceClassification = "analysis"
 
     def to_public_dict(self) -> dict[str, JsonValue]:
         """Return the public, path-free analysis manifest."""
 
         return {
             "analysis_type": self.analysis_type,
-            "evidence_classification": self.evidence_classification,
+            "evidence_classification": validate_studio_evidence_classification(
+                self.evidence_classification
+            ),
             "input_sha256": self.input_sha256,
             "output_keys": list(self.output_keys),
             "result_sha256": self.result_sha256,

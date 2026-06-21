@@ -21,6 +21,7 @@ from starlette.testclient import TestClient
 from sc_neurocore.studio.app import create_app
 from sc_neurocore.studio.simulation_manifest import (
     STUDIO_SIMULATION_RUN_SCHEMA_VERSION,
+    StudioSimulationRunManifest,
     build_simulation_run_manifest,
 )
 
@@ -154,6 +155,25 @@ def test_simulation_run_manifest_rejects_non_portable_json(
             request_payload={},
             result_payload=payload,
         )
+
+
+def test_simulation_run_manifest_rejects_unknown_evidence_classification() -> None:
+    """Simulation metadata rejects evidence classes outside the shared contract."""
+
+    manifest = StudioSimulationRunManifest(
+        source="ode",
+        input_sha256="0" * 64,
+        result_sha256="1" * 64,
+        dt=0.1,
+        n_steps=1,
+        sample_count=1,
+        spike_count=0,
+        state_variables=("v",),
+        evidence_classification="screenshots",  # type: ignore[arg-type] # Invalid by design.
+    )
+
+    with pytest.raises(ValueError, match="classification"):
+        manifest.to_public_dict()
 
 
 def test_ode_simulation_endpoint_returns_run_metadata(client: TestClient) -> None:

@@ -12,11 +12,14 @@ from __future__ import annotations
 
 import pytest
 
-from sc_neurocore.studio.platform import (
+from sc_neurocore.studio.evidence_classification import (
     STUDIO_EVIDENCE_CLASSIFICATIONS,
     STUDIO_EVIDENCE_TERMINAL_STATUSES,
     validate_studio_evidence_classification,
     validate_studio_evidence_status,
+)
+from sc_neurocore.studio.platform import (
+    STUDIO_EVIDENCE_CLASSIFICATIONS as PLATFORM_STUDIO_EVIDENCE_CLASSIFICATIONS,
 )
 
 
@@ -41,6 +44,7 @@ def test_studio_evidence_classification_contract_lists_all_manifest_classes() ->
         frozenset({"cancelled", "completed", "failed", "timed_out"})
         == STUDIO_EVIDENCE_TERMINAL_STATUSES
     )
+    assert PLATFORM_STUDIO_EVIDENCE_CLASSIFICATIONS == STUDIO_EVIDENCE_CLASSIFICATIONS
 
 
 def test_studio_evidence_classification_validators_return_controlled_values() -> None:

@@ -25,7 +25,7 @@ from sc_neurocore.studio.platform.jobs import (
 )
 from sc_neurocore.studio.analysis_manifest import STUDIO_ANALYSIS_RESULT_SCHEMA_VERSION
 from sc_neurocore.studio.simulation_manifest import STUDIO_SIMULATION_RUN_SCHEMA_VERSION
-from sc_neurocore.studio.platform.evidence_classification import (
+from sc_neurocore.studio.evidence_classification import (
     STUDIO_EVIDENCE_CLASSIFICATIONS,
     STUDIO_EVIDENCE_TERMINAL_STATUSES,
     validate_studio_evidence_classification,

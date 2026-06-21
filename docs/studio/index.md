@@ -239,6 +239,9 @@ runtime features:
   SHA-256 digests, and output keys without host-local paths. Studio plot panels
   surface those class/source/digest labels beside analysis views, and the trace
   view surfaces the same labels from `studio.simulation-run.v1` metadata.
+  Simulation and analysis manifest serializers validate their evidence class
+  through the shared Studio evidence-classification contract before returning
+  public metadata, so malformed workflow metadata fails closed before export.
 - Those worker-backed compile, synthesis, PnR, and pipeline routes also write
   `studio.action-evidence.v1` manifests beside the result artifacts. These
   manifests record action kind, replay route, job ID, evidence classification,
