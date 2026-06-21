@@ -122,7 +122,9 @@ def scan_all_models(current: float = 10.0, duration: float = 100.0) -> dict[str,
         _CACHE[cache_key] = _run_model_scan(current=cache_key[0], duration=cache_key[1])
     entries = _CACHE[cache_key]
     models = cast(list[JsonValue], [entry.to_public_dict() for entry in entries])
-    manifest = _build_model_scan_manifest(current=cache_key[0], duration=cache_key[1], models=models)
+    manifest = _build_model_scan_manifest(
+        current=cache_key[0], duration=cache_key[1], models=models
+    )
     return {
         "models": models,
         "scan_metadata": manifest.to_public_dict(),
