@@ -1,6 +1,7 @@
 import { useState } from "react";
 
 import { useStudioStore } from "../stores/studio";
+import EvidenceBundleArtifactList from "./EvidenceBundleArtifactList";
 
 export default function CompilerInspector() {
   const {
@@ -9,6 +10,7 @@ export default function CompilerInspector() {
     compileEvidenceBundleError,
     compileEvidenceBundleLoading,
     createEvidenceBundleForSurface,
+    downloadEvidenceBundleArtifactForSurface,
     irText,
     svSource,
     irErrors,
@@ -104,6 +106,17 @@ export default function CompilerInspector() {
           )}
           {compileBundleRequested && compileEvidenceBundleError && (
             <span style={{ color: "#ff5252" }}>{compileEvidenceBundleError}</span>
+          )}
+          {compileBundleRequested && compileEvidenceBundle && (
+            <EvidenceBundleArtifactList
+              ariaLabel="Compile evidence bundle artifacts"
+              artifacts={compileEvidenceBundle.artifacts}
+              downloadLabelPrefix="Download compile evidence artifact"
+              loading={compileEvidenceBundleLoading}
+              onDownloadArtifact={(relativePath) => {
+                void downloadEvidenceBundleArtifactForSurface("compile", relativePath);
+              }}
+            />
           )}
         </div>
       )}

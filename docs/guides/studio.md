@@ -481,7 +481,10 @@ without exposing host-local paths. The Compiler Inspector displays shortened
 source, RTL, and manifest digests beside direct equation-to-Verilog output.
 The same strip can export a compile evidence bundle with replay metadata for
 `/api/ir/emit-sv-direct`, using the compile input digest as the replay request
-fingerprint and the traceability digest as the operator note.
+fingerprint and the traceability digest as the operator note. After export, it
+lists the compile bundle's path-confined artifacts with size and SHA-256 labels
+and downloads each file through the compile-scoped authenticated job-artifact
+route.
 
 Synthesis results include path-free `studio.synthesis-target-provenance.v1`
 metadata for the selected target. Multi-target runs include the

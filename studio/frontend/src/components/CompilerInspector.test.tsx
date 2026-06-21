@@ -27,11 +27,34 @@ const compileTraceability: CompileTraceability = {
 
 vi.mock("../stores/studio", () => ({
   useStudioStore: () => ({
-    compileEvidenceBundle: null,
+    compileEvidenceBundle: {
+      artifact_paths: ["evidence/replay.json"],
+      artifacts: [
+        {
+          relative_path: "evidence/replay.json",
+          sha256: "c".repeat(64),
+          size_bytes: 128,
+        },
+      ],
+      bundle_id: "seb_compile",
+      job_id: "sj_compile",
+      manifest: { entries: [{ type: "command_replay" }] },
+      schema_version: "studio.evidence-bundle.v1",
+      summary: {
+        artifact_path_count: 1,
+        entry_count: 1,
+        entry_type_counts: { command_replay: 1 },
+        evidence_classification_counts: {},
+        source_job_count: 0,
+        source_job_kind_counts: {},
+        source_job_owner_counts: {},
+      },
+    },
     compileEvidenceBundleError: null,
     compileEvidenceBundleLoading: false,
     compileTraceability,
     createEvidenceBundleForSurface: async () => undefined,
+    downloadEvidenceBundleArtifactForSurface: async () => undefined,
     irErrors: [],
     irText: "%0 = input clk",
     isSimulating: false,
@@ -51,5 +74,6 @@ describe("CompilerInspector", () => {
     expect(html).toContain("rtl 222222222222");
     expect(html).toContain("trace 333333333333");
     expect(html).toContain("Export compile evidence bundle");
+    expect(html).not.toContain("evidence/replay.json");
   });
 });

@@ -1044,7 +1044,16 @@ test("synthesis dashboard renders target provenance matrix from all-target run",
           source_job_owner_counts: {},
         },
       }],
+      ["/api/studio/jobs/sj_compile/artifacts/evidence/replay.json", {
+        binaryBody: "{\"kind\":\"compile-replay\"}\n",
+        contentType: "application/json",
+      }],
       ["/api/studio/operator/status", operatorStatus],
+      ["/api/studio/auth/session", {
+        authenticated: true,
+        principal_id: "svc-admin",
+        roles: ["studio.admin", "studio.viewer"],
+      }],
       ["/api/studio/jobs", jobList],
       ["/api/synth/multi-target", {
         supported: ["ice40", "gowin"],
@@ -1154,6 +1163,8 @@ test("synthesis dashboard renders target provenance matrix from all-target run",
   await expect(page.getByText("trace 333333333333")).toBeVisible();
   await page.getByRole("button", { name: "Export compile evidence bundle" }).click();
   await expect(page.getByText("bundle seb_compile")).toBeVisible();
+  await expect(page.getByText("evidence/replay.json", { exact: true })).toBeVisible();
+  await expect(page.getByText("128 B - sha cccccccccccc")).toBeVisible();
 
   const evidenceBodies = api.bodies("/api/studio/evidence/bundle");
   expect(evidenceBodies).toHaveLength(1);
@@ -1165,6 +1176,14 @@ test("synthesis dashboard renders target provenance matrix from all-target run",
     },
     include_audit: true,
     project_name: "compile-test",
+  });
+  await page
+    .getByRole("button", { name: "Download compile evidence artifact evidence/replay.json" })
+    .click();
+  const compileArtifactPath = "/api/studio/jobs/sj_compile/artifacts/evidence/replay.json";
+  expect(api.requests(compileArtifactPath)).toBe(1);
+  expect(api.headers(compileArtifactPath)[0]).toMatchObject({
+    authorization: "Bearer browser-token",
   });
 
   await page.getByRole("button", { name: "FPGA" }).first().click();
