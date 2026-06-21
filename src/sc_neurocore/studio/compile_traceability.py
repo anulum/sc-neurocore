@@ -16,6 +16,11 @@ from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
 from typing import TypeAlias, cast
 
+from sc_neurocore.studio.evidence_classification import (
+    StudioEvidenceClassification,
+    validate_studio_evidence_classification,
+)
+
 STUDIO_COMPILE_TRACEABILITY_SCHEMA_VERSION = "studio.compile-traceability.v1"
 
 JsonScalar: TypeAlias = str | int | float | bool | None
@@ -60,7 +65,7 @@ class StudioCompileTraceability:
     verilog: str
     source: str = "ode"
     output_language: str = "verilog"
-    evidence_classification: str = "compile"
+    evidence_classification: StudioEvidenceClassification = "compile"
 
     def to_public_dict(self) -> dict[str, JsonValue]:
         """Return the public, path-free traceability payload."""
@@ -79,7 +84,9 @@ class StudioCompileTraceability:
             "rtl_sha256": _sha256_text(self.verilog),
         }
         payload: dict[str, JsonValue] = {
-            "evidence_classification": self.evidence_classification,
+            "evidence_classification": validate_studio_evidence_classification(
+                self.evidence_classification
+            ),
             "input_sha256": _sha256_json(source_payload),
             "output": output_payload,
             "schema_version": STUDIO_COMPILE_TRACEABILITY_SCHEMA_VERSION,

@@ -105,7 +105,9 @@ Synthesis responses include `target_provenance` using the
 ID, Yosys synthesis command, optional nextpnr command and device selector,
 static capacity metadata, tool availability, tool version strings when
 available, readiness booleans, and the `synthesis` evidence classification.
-It is path-free and suitable for operator logs and evidence bundles.
+The serializer validates that class through the shared Studio
+evidence-classification contract before returning public metadata. It is
+path-free and suitable for operator logs and evidence bundles.
 
 Multi-target responses additionally include
 `target_provenance_matrix` with schema

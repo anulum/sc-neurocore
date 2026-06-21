@@ -99,6 +99,9 @@ The manifest records:
 - `traceability_sha256`, a stable digest over the complete public manifest;
 - `evidence_classification: "compile"` for evidence-bundle consumers.
 
+The traceability serializer validates its evidence class through the shared
+Studio evidence-classification contract before returning public metadata.
+
 The manifest is included in both `/api/compile` and
 `/api/ir/emit-sv-direct` responses. The Compiler Inspector displays the
 schema version, evidence class, module name, and shortened source/RTL/manifest

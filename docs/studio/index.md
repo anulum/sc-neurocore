@@ -231,7 +231,9 @@ runtime features:
 - `/api/compile` responses include `studio.compile-traceability.v1` metadata
   with the source equation payload, RTL module metadata, source and RTL
   SHA-256 digests, and `evidence_classification: "compile"` without
-  host-local paths.
+  host-local paths. Compile traceability validates that class through the
+  shared Studio evidence-classification contract before returning public
+  metadata.
 - `/api/compare`, `/api/fi-curve`, `/api/bifurcation`, `/api/sensitivity`,
   `/api/heatmap`, `/api/freq-response`, `/api/precision`, and
   `/api/nullclines` responses include `studio.analysis-result.v1` metadata
@@ -239,9 +241,10 @@ runtime features:
   SHA-256 digests, and output keys without host-local paths. Studio plot panels
   surface those class/source/digest labels beside analysis views, and the trace
   view surfaces the same labels from `studio.simulation-run.v1` metadata.
-  Simulation and analysis manifest serializers validate their evidence class
-  through the shared Studio evidence-classification contract before returning
-  public metadata, so malformed workflow metadata fails closed before export.
+  Simulation, analysis, synthesis provenance, and Training Monitor evidence
+  serializers validate their evidence class through the shared Studio
+  evidence-classification contract before returning public metadata, so
+  malformed workflow metadata fails closed before export.
 - Those worker-backed compile, synthesis, PnR, and pipeline routes also write
   `studio.action-evidence.v1` manifests beside the result artifacts. These
   manifests record action kind, replay route, job ID, evidence classification,
@@ -254,10 +257,10 @@ runtime features:
 - Studio evidence classifications are a shared backend contract, not free-form
   labels. Current accepted classes are `analysis`, `compile`,
   `local_regression`, `project_workspace`, `release_benchmark`, `simulation`,
-  `synthesis`, and `training`. Terminal evidence statuses are `completed`, `failed`,
-  `cancelled`, and `timed_out`. Bundle writers, action-evidence writers, and
-  manifest validators reject unknown classes or non-terminal statuses before
-  persisting evidence. Evidence bundle summaries include the known
+  `synthesis`, and `training`. Terminal evidence statuses are `completed`,
+  `failed`, `cancelled`, and `timed_out`. Bundle writers, action-evidence
+  writers, and manifest validators reject unknown classes or non-terminal
+  statuses before persisting evidence. Evidence bundle summaries include the known
   classification and terminal-status vocabularies for Admin/UI consumers, so
   client code can render available classes without hard-coded duplicate lists.
 - `/api/studio/jobs` and `/api/studio/jobs/{job_id}` return admin-only,

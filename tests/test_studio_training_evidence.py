@@ -11,6 +11,7 @@
 from __future__ import annotations
 
 import json
+from collections.abc import Callable, Mapping
 from pathlib import Path
 
 from sc_neurocore.studio.platform.action_evidence import (
@@ -134,6 +135,210 @@ def test_training_evidence_summary_reports_unavailable_artifact() -> None:
     summary = build_training_evidence_summary(record, unavailable_reader)
 
     assert summary == {
+        "evidence_artifact": artifact.to_public_dict(),
+        "job_id": "sj_training",
+        "schema_version": TRAINING_EVIDENCE_SUMMARY_SCHEMA_VERSION,
+        "status": "unavailable",
+    }
+
+
+def test_training_evidence_summary_returns_none_without_declared_artifact() -> None:
+    """Records without Training Monitor evidence do not fabricate summaries."""
+
+    record = StudioJobRecord(
+        job_id="sj_training",
+        kind="training",
+        owner="studio-training",
+        request_id=None,
+        status="completed",
+        execution_model="thread",
+        created_at_utc="2026-06-20T00:00:00Z",
+        artifacts=(),
+    )
+
+    assert build_training_evidence_summary(record, _training_payload_reader()) is None
+
+
+def test_training_evidence_summary_rejects_unknown_classification() -> None:
+    """Training evidence summaries fail closed on unknown evidence classes."""
+
+    summary = build_training_evidence_summary(
+        _training_record(),
+        _training_payload_reader(evidence_classification="screenshots"),
+    )
+
+    assert summary == _unavailable_training_summary()
+
+
+def test_training_evidence_summary_rejects_non_terminal_status() -> None:
+    """Training evidence summaries fail closed on non-terminal evidence statuses."""
+
+    summary = build_training_evidence_summary(
+        _training_record(),
+        _training_payload_reader(status="running"),
+    )
+
+    assert summary == _unavailable_training_summary()
+
+
+def test_training_evidence_summary_rejects_non_object_payload() -> None:
+    """Training evidence summaries fail closed on non-object JSON payloads."""
+
+    summary = build_training_evidence_summary(
+        _training_record(),
+        _training_raw_payload_reader(["not", "an", "object"]),
+    )
+
+    assert summary == _unavailable_training_summary()
+
+
+def test_training_evidence_summary_rejects_unsupported_schema() -> None:
+    """Training evidence summaries fail closed on unsupported schema versions."""
+
+    summary = build_training_evidence_summary(
+        _training_record(),
+        _training_payload_reader(payload_overrides={"schema_version": "studio.old.v1"}),
+    )
+
+    assert summary == _unavailable_training_summary()
+
+
+def test_training_evidence_summary_rejects_unsupported_action() -> None:
+    """Training evidence summaries fail closed on unsupported action kinds."""
+
+    summary = build_training_evidence_summary(
+        _training_record(),
+        _training_payload_reader(payload_overrides={"action_kind": "studio.compile"}),
+    )
+
+    assert summary == _unavailable_training_summary()
+
+
+def test_training_evidence_summary_rejects_missing_status() -> None:
+    """Training evidence summaries fail closed when evidence status is absent."""
+
+    summary = build_training_evidence_summary(
+        _training_record(),
+        _training_payload_reader(payload_overrides={"status": None}),
+    )
+
+    assert summary == _unavailable_training_summary()
+
+
+def test_training_evidence_summary_rejects_missing_job_id() -> None:
+    """Training evidence summaries fail closed when evidence omits job identity."""
+
+    summary = build_training_evidence_summary(
+        _training_record(),
+        _training_payload_reader(payload_overrides={"job_id": None}),
+    )
+
+    assert summary == _unavailable_training_summary()
+
+
+def test_training_evidence_summary_rejects_empty_required_string() -> None:
+    """Training evidence summaries fail closed on empty required string fields."""
+
+    summary = build_training_evidence_summary(
+        _training_record(),
+        _training_payload_reader(payload_overrides={"payload_sha256": ""}),
+    )
+
+    assert summary == _unavailable_training_summary()
+
+
+def test_training_evidence_summary_rejects_missing_artifact_list() -> None:
+    """Training evidence summaries fail closed when result artifact data is absent."""
+
+    summary = build_training_evidence_summary(
+        _training_record(),
+        _training_payload_reader(payload_overrides={"artifacts": None}),
+    )
+
+    assert summary == _unavailable_training_summary()
+
+
+def test_training_evidence_summary_rejects_non_object_artifact_entry() -> None:
+    """Training evidence summaries fail closed on malformed artifact metadata."""
+
+    summary = build_training_evidence_summary(
+        _training_record(),
+        _training_payload_reader(payload_overrides={"artifacts": ["bad"]}),
+    )
+
+    assert summary == _unavailable_training_summary()
+
+
+def _training_record() -> StudioJobRecord:
+    """Return a completed Training Monitor record declaring evidence."""
+
+    return StudioJobRecord(
+        job_id="sj_training",
+        kind="training",
+        owner="studio-training",
+        request_id="req-1",
+        status="completed",
+        execution_model="thread",
+        created_at_utc="2026-06-20T00:00:00Z",
+        artifacts=(
+            StudioJobArtifact(
+                relative_path=TRAINING_EVIDENCE_ARTIFACT_PATH,
+                size_bytes=128,
+                sha256="0" * 64,
+            ),
+        ),
+    )
+
+
+def _training_payload_reader(
+    *,
+    evidence_classification: str = "training",
+    status: str = "completed",
+    payload_overrides: Mapping[str, object] | None = None,
+) -> Callable[[str, str], StudioJobArtifactPayload]:
+    """Return an artifact reader with configurable Training Monitor evidence."""
+
+    def reader(_job_id: str, _relative_path: str) -> StudioJobArtifactPayload:
+        payload: dict[str, object] = {
+            "action_kind": "studio.training.run",
+            "artifacts": [],
+            "evidence_classification": evidence_classification,
+            "job_id": "sj_training",
+            "payload_sha256": "1" * 64,
+            "replay_route": "POST /api/training/start",
+            "schema_version": STUDIO_ACTION_EVIDENCE_SCHEMA_VERSION,
+            "status": status,
+        }
+        if payload_overrides is not None:
+            payload.update(payload_overrides)
+        return _payload(payload)
+
+    return reader
+
+
+def _training_raw_payload_reader(payload: object) -> Callable[[str, str], StudioJobArtifactPayload]:
+    """Return an artifact reader that emits a caller-supplied JSON payload."""
+
+    def reader(_job_id: str, _relative_path: str) -> StudioJobArtifactPayload:
+        return _payload(payload)
+
+    return reader
+
+
+def _payload(payload: object) -> StudioJobArtifactPayload:
+    """Return an artifact payload encoded as UTF-8 JSON bytes."""
+
+    return StudioJobArtifactPayload(
+        artifact=_training_record().artifacts[0],
+        payload=json.dumps(payload).encode("utf-8"),
+    )
+
+
+def _unavailable_training_summary() -> dict[str, object]:
+    """Return the bounded unavailable summary for malformed evidence."""
+
+    artifact = _training_record().artifacts[0]
+    return {
         "evidence_artifact": artifact.to_public_dict(),
         "job_id": "sj_training",
         "schema_version": TRAINING_EVIDENCE_SUMMARY_SCHEMA_VERSION,

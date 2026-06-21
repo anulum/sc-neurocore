@@ -24,6 +24,8 @@ from sc_neurocore.studio.synthesis_provenance import (
     STUDIO_SYNTHESIS_TARGET_PROVENANCE_MATRIX_SCHEMA_VERSION,
     STUDIO_SYNTHESIS_TARGET_PROVENANCE_SCHEMA_VERSION,
     JsonValue,
+    StudioSynthesisTargetProvenance,
+    StudioSynthesisToolProvenance,
     ToolStatusMap,
     build_synthesis_target_provenance,
     build_synthesis_target_provenance_matrix,
@@ -112,6 +114,31 @@ def test_build_synthesis_target_provenance_rejects_missing_command() -> None:
             capacity={},
             tool_status=_tool_status(),
         )
+
+
+def test_synthesis_target_provenance_rejects_unknown_evidence_classification() -> None:
+    """Synthesis provenance uses the shared Studio evidence-class contract."""
+
+    provenance = StudioSynthesisTargetProvenance(
+        target="ice40",
+        capacity={"luts": 5280},
+        synthesis_command="synth_ice40",
+        pnr_tool=None,
+        device=None,
+        tools=(
+            StudioSynthesisToolProvenance(
+                key="yosys",
+                executable="yosys",
+                role="synthesis",
+                available=True,
+                version="Yosys 0.test",
+            ),
+        ),
+        evidence_classification="screenshots",  # type: ignore[arg-type]  # Invalid by design.
+    )
+
+    with pytest.raises(ValueError, match="classification"):
+        provenance.to_public_dict()
 
 
 def test_build_synthesis_target_provenance_matrix_has_stable_digest() -> None:

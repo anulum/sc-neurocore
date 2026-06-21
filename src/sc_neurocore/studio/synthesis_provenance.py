@@ -16,6 +16,11 @@ from collections.abc import Mapping
 from dataclasses import dataclass
 from typing import TypeAlias, cast
 
+from sc_neurocore.studio.evidence_classification import (
+    StudioEvidenceClassification,
+    validate_studio_evidence_classification,
+)
+
 STUDIO_SYNTHESIS_TARGET_PROVENANCE_SCHEMA_VERSION = "studio.synthesis-target-provenance.v1"
 STUDIO_SYNTHESIS_TARGET_PROVENANCE_MATRIX_SCHEMA_VERSION = (
     "studio.synthesis-target-provenance-matrix.v1"
@@ -95,7 +100,7 @@ class StudioSynthesisTargetProvenance:
     pnr_tool: str | None
     device: str | None
     tools: tuple[StudioSynthesisToolProvenance, ...]
-    evidence_classification: str = "synthesis"
+    evidence_classification: StudioEvidenceClassification = "synthesis"
 
     def to_public_dict(self) -> dict[str, JsonValue]:
         """Return the public, path-free target provenance payload."""
@@ -104,7 +109,9 @@ class StudioSynthesisTargetProvenance:
         return {
             "capacity": cast(dict[str, JsonValue], self.capacity),
             "device": self.device,
-            "evidence_classification": self.evidence_classification,
+            "evidence_classification": validate_studio_evidence_classification(
+                self.evidence_classification
+            ),
             "pnr_ready": all(
                 tool.available for tool in self.tools if tool.role == "place_and_route"
             ),

@@ -15,6 +15,12 @@ from collections.abc import Callable, Mapping
 from dataclasses import dataclass
 from typing import TypeAlias, cast
 
+from sc_neurocore.studio.evidence_classification import (
+    StudioEvidenceClassification,
+    StudioEvidenceStatus,
+    validate_studio_evidence_classification,
+    validate_studio_evidence_status,
+)
 from sc_neurocore.studio.platform.action_evidence import (
     STUDIO_ACTION_EVIDENCE_SCHEMA_VERSION,
 )
@@ -37,9 +43,9 @@ class TrainingEvidenceSummary:
     """Path-free operator summary of one Training Monitor evidence artifact."""
 
     job_id: str
-    status: str
+    status: StudioEvidenceStatus
     action_kind: str
-    evidence_classification: str
+    evidence_classification: StudioEvidenceClassification
     replay_route: str
     payload_sha256: str
     evidence_artifact: StudioJobArtifact
@@ -52,13 +58,15 @@ class TrainingEvidenceSummary:
         return {
             "action_kind": self.action_kind,
             "evidence_artifact": self.evidence_artifact.to_public_dict(),
-            "evidence_classification": self.evidence_classification,
+            "evidence_classification": validate_studio_evidence_classification(
+                self.evidence_classification
+            ),
             "job_id": self.job_id,
             "payload_sha256": self.payload_sha256,
             "replay_route": self.replay_route,
             "result_artifacts": [dict(artifact) for artifact in self.result_artifacts],
             "schema_version": self.schema_version,
-            "status": self.status,
+            "status": validate_studio_evidence_status(self.status),
         }
 
 
@@ -89,6 +97,18 @@ def build_training_evidence_summary(
     try:
         payload = artifact_reader(record.job_id, TRAINING_EVIDENCE_ARTIFACT_PATH).payload
         evidence = _training_evidence_payload(payload)
+        return TrainingEvidenceSummary(
+            job_id=_required_string(evidence, "job_id"),
+            status=validate_studio_evidence_status(_required_string(evidence, "status")),
+            action_kind=_required_string(evidence, "action_kind"),
+            evidence_classification=validate_studio_evidence_classification(
+                _required_string(evidence, "evidence_classification")
+            ),
+            replay_route=_required_string(evidence, "replay_route"),
+            payload_sha256=_required_string(evidence, "payload_sha256"),
+            evidence_artifact=artifact,
+            result_artifacts=_result_artifacts(evidence),
+        ).to_public_dict()
     except (
         KeyError,
         StudioJobArtifactUnavailable,
@@ -97,16 +117,6 @@ def build_training_evidence_summary(
         ValueError,
     ):
         return _unavailable_summary(record, artifact)
-    return TrainingEvidenceSummary(
-        job_id=_required_string(evidence, "job_id"),
-        status=_required_string(evidence, "status"),
-        action_kind=_required_string(evidence, "action_kind"),
-        evidence_classification=_required_string(evidence, "evidence_classification"),
-        replay_route=_required_string(evidence, "replay_route"),
-        payload_sha256=_required_string(evidence, "payload_sha256"),
-        evidence_artifact=artifact,
-        result_artifacts=_result_artifacts(evidence),
-    ).to_public_dict()
 
 
 def _training_evidence_artifact(record: StudioJobRecord) -> StudioJobArtifact | None:
@@ -129,8 +139,14 @@ def _training_evidence_payload(payload: bytes) -> dict[str, object]:
         raise ValueError("Studio training evidence payload has unsupported schema.")
     if evidence.get("action_kind") != "studio.training.run":
         raise ValueError("Studio training evidence payload has unsupported action.")
-    if evidence.get("evidence_classification") != "training":
+    if evidence.get("evidence_classification") != validate_studio_evidence_classification(
+        "training"
+    ):
         raise ValueError("Studio training evidence payload has unsupported classification.")
+    status = evidence.get("status")
+    if not isinstance(status, str):
+        raise ValueError("Studio training evidence payload requires a status.")
+    validate_studio_evidence_status(status)
     if evidence.get("job_id") is None:
         raise ValueError("Studio training evidence payload requires a job ID.")
     return evidence

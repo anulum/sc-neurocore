@@ -21,6 +21,7 @@ from sc_neurocore.studio.app import create_app
 from sc_neurocore.studio.compile_traceability import (
     STUDIO_COMPILE_TRACEABILITY_SCHEMA_VERSION,
     JsonValue,
+    StudioCompileTraceability,
     build_compile_traceability,
 )
 
@@ -82,6 +83,24 @@ def test_build_compile_traceability_rejects_missing_equations() -> None:
             module_name="sc_traceable_neuron",
             verilog="module sc_traceable_neuron; endmodule\n",
         )
+
+
+def test_compile_traceability_rejects_unknown_evidence_classification() -> None:
+    """Compile traceability uses the shared Studio evidence-class contract."""
+
+    traceability = StudioCompileTraceability(
+        equations=("dv/dt = -v / tau",),
+        threshold="v > 1",
+        reset="v = 0",
+        params={"tau": 10.0},
+        init={"v": 0.0},
+        module_name="sc_traceable_neuron",
+        verilog="module sc_traceable_neuron; endmodule\n",
+        evidence_classification="screenshots",  # type: ignore[arg-type]  # Invalid by design.
+    )
+
+    with pytest.raises(ValueError, match="classification"):
+        traceability.to_public_dict()
 
 
 def test_compile_route_returns_traceability_manifest(client: TestClient) -> None:

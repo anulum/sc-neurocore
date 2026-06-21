@@ -99,6 +99,13 @@ idle → starting → running → completed | stopped | failed
 Multiple training jobs can run concurrently. Each job has a unique ID
 used for status queries and SSE stream subscription.
 
+Completed jobs expose a Training Monitor evidence summary for
+`training/evidence.json`, result artifacts, replay route, and terminal status
+without host-local paths. The summary validates `training` evidence
+classification and terminal statuses through the shared Studio
+evidence-classification contract; malformed or non-terminal evidence artifacts
+return a bounded unavailable summary instead of untrusted metadata.
+
 ### Portable Checkpoints
 
 Training checkpoints use the `studio.training.checkpoint.v1` schema. They are
