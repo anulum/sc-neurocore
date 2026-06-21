@@ -12,8 +12,10 @@ import {
   STUDIO_SAVED_SESSIONS_KEY,
   readStoredStudioSessions,
   removeStudioSavedSession,
+  studioSavedSessionRemovedState,
   studioSavedSessionRestoreState,
   studioSavedSessionState,
+  studioSavedSessionUpsertState,
   upsertStudioSavedSession,
   writeStoredStudioSessions,
   type StudioSavedSessionInput,
@@ -89,10 +91,27 @@ describe("Studio saved-session persistence", () => {
     ]);
   });
 
+  it("builds saved-session upsert state patches for store consumers", () => {
+    const existing: StudioSavedSession = { name: "other", state: { dt: 0.1 } };
+    const replaced: StudioSavedSession = { name: "demo", state: { dt: 1 } };
+
+    expect(studioSavedSessionUpsertState([demoSession, existing], replaced)).toEqual({
+      savedSessions: [replaced, existing],
+    });
+  });
+
   it("removes saved sessions by name", () => {
     const existing: StudioSavedSession = { name: "other", state: { dt: 0.1 } };
 
     expect(removeStudioSavedSession([demoSession, existing], "demo")).toEqual([existing]);
+  });
+
+  it("builds saved-session removal state patches for store consumers", () => {
+    const existing: StudioSavedSession = { name: "other", state: { dt: 0.1 } };
+
+    expect(studioSavedSessionRemovedState([demoSession, existing], "demo")).toEqual({
+      savedSessions: [existing],
+    });
   });
 
   it("builds the persisted state snapshot from the active Studio state", () => {

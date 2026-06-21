@@ -32,6 +32,10 @@ export interface StudioSavedSessionInput {
 
 export interface StudioSavedSessionRestoreState extends StudioSavedSessionInput {}
 
+export interface StudioSavedSessionsStatePatch {
+  savedSessions: StudioSavedSession[];
+}
+
 export interface StudioSavedSessionStorage {
   getItem(key: string): string | null;
   setItem(key: string, value: string): void;
@@ -157,9 +161,27 @@ export function upsertStudioSavedSession(
   ];
 }
 
+export function studioSavedSessionUpsertState(
+  sessions: readonly StudioSavedSession[],
+  nextSession: StudioSavedSession,
+): StudioSavedSessionsStatePatch {
+  return {
+    savedSessions: upsertStudioSavedSession(sessions, nextSession),
+  };
+}
+
 export function removeStudioSavedSession(
   sessions: readonly StudioSavedSession[],
   name: string,
 ): StudioSavedSession[] {
   return sessions.filter((session) => session.name !== name);
+}
+
+export function studioSavedSessionRemovedState(
+  sessions: readonly StudioSavedSession[],
+  name: string,
+): StudioSavedSessionsStatePatch {
+  return {
+    savedSessions: removeStudioSavedSession(sessions, name),
+  };
 }

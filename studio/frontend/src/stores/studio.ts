@@ -86,10 +86,10 @@ import {
 } from "../auditShell";
 import {
   readStoredStudioSessions,
-  removeStudioSavedSession,
+  studioSavedSessionRemovedState,
   studioSavedSessionRestoreState,
   studioSavedSessionState,
-  upsertStudioSavedSession,
+  studioSavedSessionUpsertState,
   writeStoredStudioSessions,
   type StudioSavedSession,
 } from "../studioSavedSessions";
@@ -1493,9 +1493,9 @@ export const useStudioStore = create<StudioState>((set, get) => ({
   saveSession: (name) => {
     const s = get();
     const state = studioSavedSessionState(s);
-    const sessions = upsertStudioSavedSession(s.savedSessions, { name, state });
-    set({ savedSessions: sessions });
-    writeStoredStudioSessions(sessions);
+    const nextState = studioSavedSessionUpsertState(s.savedSessions, { name, state });
+    set(nextState);
+    writeStoredStudioSessions(nextState.savedSessions);
   },
 
   loadSession: (name) => {
@@ -1506,9 +1506,9 @@ export const useStudioStore = create<StudioState>((set, get) => ({
   },
 
   deleteSession: (name) => {
-    const sessions = removeStudioSavedSession(get().savedSessions, name);
-    set({ savedSessions: sessions });
-    writeStoredStudioSessions(sessions);
+    const nextState = studioSavedSessionRemovedState(get().savedSessions, name);
+    set(nextState);
+    writeStoredStudioSessions(nextState.savedSessions);
   },
 
   shareURL: () => {
