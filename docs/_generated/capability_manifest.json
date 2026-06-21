@@ -9,7 +9,7 @@
     "python_model_classes": 157,
     "python_model_source_modules": 151,
     "rust_pyo3_model_wrappers": 175,
-    "test_files": 845
+    "test_files": 846
   },
   "documentation": {
     "public_pages": [
@@ -2320,6 +2320,7 @@
       "tests/test_neuron_integrator_paths.py",
       "tests/test_neuron_runtime_state_contracts.py",
       "tests/test_neurons.py",
+      "tests/test_neurons_units.py",
       "tests/test_new_models.py",
       "tests/test_new_neurons.py",
       "tests/test_nir_bridge.py",
