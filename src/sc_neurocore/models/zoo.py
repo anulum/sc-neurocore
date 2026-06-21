@@ -60,13 +60,14 @@ class SCDigitClassifier:
 
 
 class SCKeywordSpotter:
-    """
-    Audio Keyword Spotter (e.g., "Yes"/"No").
-    Uses: Recurrent / Dense Layer
+    """Dense MFCC keyword spotter (e.g. "Yes"/"No").
+
+    Classifies a fixed-length 16-dimensional MFCC feature vector with a single
+    vectorized SC dense layer. This is the feed-forward baseline; a recurrent
+    variant for variable-length audio sequences is not yet implemented.
     """
 
-    def __init__(self, n_keywords=2) -> None:  # type: ignore[no-untyped-def]
-        # Simple Dense for demo (RNN requires sequence logic implementation)
+    def __init__(self, n_keywords: int = 2) -> None:
         self.classifier = VectorizedSCLayer(n_inputs=16, n_neurons=n_keywords)
 
     def predict(self, mfcc_features: np.ndarray[Any, Any]) -> int:

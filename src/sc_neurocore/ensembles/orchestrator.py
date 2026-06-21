@@ -6,14 +6,14 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore — Multi-agent ensemble orchestration with consensus and
 
-from typing import Any
-
 """Multi-agent ensemble orchestration with consensus and coordinated missions."""
 
 import logging
-import numpy as np
 from dataclasses import dataclass, field
-from typing import List, Dict
+from typing import Any, Dict, List
+
+import numpy as np
+
 from ..core.orchestrator import CognitiveOrchestrator
 
 logger = logging.getLogger(__name__)
