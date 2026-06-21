@@ -4,6 +4,9 @@ import AdminPanelView from "./AdminPanelView";
 
 export default function AdminPanel() {
   const {
+    auditArchive,
+    auditArchivePurge,
+    auditArchiveRetention,
     auditError,
     auditExport,
     auditLoading,
@@ -28,8 +31,14 @@ export default function AdminPanel() {
     rotateIdentityBrowserUserPassword,
     updateIdentityBrowserUser,
     updateIdentityServiceAccount,
+    createAuditQuarantineArchive,
+    loadAuditQuarantineArchiveRetention,
+    purgeAuditQuarantineArchiveRetention,
   } = useStudioStore();
   const model = buildAdminShellModel({
+    auditArchive,
+    auditArchivePurge,
+    auditArchiveRetention,
     auditError,
     auditExport,
     auditStatus,
@@ -48,14 +57,17 @@ export default function AdminPanel() {
     <AdminPanelView
       auditLoading={auditLoading}
       model={model}
+      onCreateAuditArchive={createAuditQuarantineArchive}
       onCreateEvidenceBundle={createEvidenceBundle}
       onCreateIdentityBrowserUser={createIdentityBrowserUser}
       onDownloadEvidenceArtifact={downloadEvidenceBundleArtifact}
       onLoadAuditExport={loadAuditExport}
+      onLoadAuditArchiveRetention={loadAuditQuarantineArchiveRetention}
       onLoadAuditStatus={loadAuditStatus}
       onLoadIdentityServiceAccounts={loadIdentityServiceAccounts}
       onLoadJobStatus={loadJobStatus}
       onLoadOperatorStatus={loadOperatorStatus}
+      onPurgeAuditArchiveRetention={purgeAuditQuarantineArchiveRetention}
       onRotateIdentityBrowserUserPassword={rotateIdentityBrowserUserPassword}
       onUpdateIdentityBrowserUser={updateIdentityBrowserUser}
       onUpdateIdentityServiceAccount={updateIdentityServiceAccount}

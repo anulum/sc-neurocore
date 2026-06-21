@@ -105,12 +105,93 @@ const auditExport = {
   truncated: false,
 };
 
+const auditArchiveSummary = {
+  archive_artifact_count: 2,
+  event_count: 3,
+  quarantine_reason: "legacy_or_corrupt_retained_rows",
+  reason_counts: { chain_broken: 1, legacy_row: 2 },
+  retained_event_count: 8,
+  source_schema_version: "studio.audit.quarantine.export.v1",
+  truncated: false,
+};
+
+const auditArchiveResult = {
+  archive_id: "saqa_sj_archive",
+  artifact_paths: [
+    "evidence/audit-quarantine/archive.json",
+    "evidence/audit-quarantine/manifest.json",
+  ],
+  artifacts: [
+    {
+      relative_path: "evidence/audit-quarantine/archive.json",
+      sha256: "a".repeat(64),
+      size_bytes: 1024,
+    },
+  ],
+  job_id: "sj_archive",
+  manifest: { schema_version: "studio.audit-quarantine-archive.v1" },
+  schema_version: "studio.audit-quarantine-archive.v1",
+  summary: auditArchiveSummary,
+};
+
+const auditArchiveRetention = {
+  archive_count: 2,
+  entries: [
+    {
+      archive_id: "saqa_sj_new",
+      artifact_paths: ["evidence/audit-quarantine/archive.json"],
+      created_at_utc: "2026-06-21T10:00:00Z",
+      disposition: "retain",
+      event_count: 3,
+      finished_at_utc: "2026-06-21T10:00:01Z",
+      job_id: "sj_new",
+      retained_event_count: 8,
+      summary: auditArchiveSummary,
+    },
+    {
+      archive_id: "saqa_sj_old",
+      artifact_paths: ["evidence/audit-quarantine/archive.json"],
+      created_at_utc: "2026-06-21T09:00:00Z",
+      disposition: "prune_candidate",
+      event_count: 2,
+      finished_at_utc: "2026-06-21T09:00:01Z",
+      job_id: "sj_old",
+      retained_event_count: 7,
+      summary: auditArchiveSummary,
+    },
+  ],
+  prune_candidate_count: 1,
+  retain_count: 1,
+  retain_latest: 1,
+  schema_version: "studio.audit-quarantine-archive.retention.v1",
+  skipped_record_count: 0,
+};
+
+const auditArchiveRetentionAfterPurge = {
+  ...auditArchiveRetention,
+  archive_count: 1,
+  entries: [auditArchiveRetention.entries[0]],
+  prune_candidate_count: 0,
+  retain_count: 1,
+};
+
+const auditArchivePurge = {
+  purged_archive_count: 1,
+  purged_entries: [auditArchiveRetention.entries[1]],
+  retained_archive_count: 1,
+  retained_entries: [auditArchiveRetention.entries[0]],
+  retain_latest: 1,
+  schema_version: "studio.audit-quarantine-archive.purge.v1",
+  skipped_record_count: 0,
+};
+
 const jobStatus = {
   active_count: 1,
   allowed_kinds: ["compiler", "synthesis", "training"],
   completed_count: 7,
   configured: true,
   failed_count: 0,
+  process_count: 1,
   resource_profiles: [
     {
       default_timeout_seconds: 120,
@@ -120,6 +201,7 @@ const jobStatus = {
     },
   ],
   schema_version: "studio.jobs.status.v1",
+  thread_count: 0,
   timed_out_count: 0,
 };
 
@@ -145,6 +227,7 @@ const artifactJobList = {
       ],
       created_at_utc: "2026-06-20T01:00:00Z",
       error: null,
+      execution_model: "process",
       finished_at_utc: "2026-06-20T01:01:00Z",
       job_id: "sj_artifact",
       kind: "compiler",
@@ -160,6 +243,14 @@ const artifactJobList = {
 
 const operatorStatus = {
   audit: auditStatus,
+  browser_login: {
+    active_bucket_count: 0,
+    cooldown_seconds: 900,
+    failure_window_seconds: 300,
+    locked_bucket_count: 0,
+    max_failures: 5,
+    max_retry_after_seconds: 0,
+  },
   capabilities: {
     degraded_count: 0,
     experimental_count: 0,
@@ -392,7 +483,7 @@ test("admin panel renders aggregate operator status", async ({ page }) => {
   await expect(page.getByText("audited")).toBeVisible();
   await expect(page.getByText("service_account")).toBeVisible();
   await expect(page.getByText("studio.operator.status.v1")).toBeVisible();
-  await expect(page.getByRole("heading", { name: "Audit" })).toBeVisible();
+  await expect(page.getByRole("heading", { exact: true, name: "Audit" })).toBeVisible();
   await expect(page.getByText("jsonl")).toBeVisible();
   await expect(page.getByRole("heading", { name: "Jobs" })).toBeVisible();
   await expect(page.getByText("compiler, synthesis, training")).toBeVisible();
@@ -487,6 +578,43 @@ test("admin panel refreshes operator, audit, export, and job status", async ({ p
   expect(api.requests("/api/studio/audit/status")).toBeGreaterThanOrEqual(2);
   expect(api.requests("/api/studio/audit/export?limit=100")).toBe(1);
   expect(api.requests("/api/studio/jobs/status")).toBe(1);
+});
+
+test("admin audit archive controls create, review, and purge archives", async ({ page }) => {
+  const mocks = defaultApiMocks();
+  mocks.set("/api/studio/audit/quarantine/archive", auditArchiveResult);
+  mocks.set(
+    "/api/studio/audit/quarantine/archive/retention?retain_latest=1",
+    { sequence: [auditArchiveRetention, auditArchiveRetentionAfterPurge] },
+  );
+  mocks.set("/api/studio/audit/quarantine/archive/purge", auditArchivePurge);
+  const api = await installApiDispatcher(page, mocks);
+
+  await page.goto("/");
+  await page.getByRole("button", { name: "Admin" }).first().click();
+
+  await expect(page.getByRole("heading", { name: "Audit archive" })).toBeVisible();
+  await expect(page.getByText("No archive retention inventory loaded")).toBeVisible();
+
+  await page.getByRole("spinbutton", { name: "Audit archive limit" }).fill("75");
+  await page.getByRole("button", { name: "Create audit quarantine archive" }).click();
+  await expect(page.getByText("saqa_sj_archive")).toBeVisible();
+  await expect(page.getByText("chain_broken:1, legacy_row:2")).toBeVisible();
+
+  await page.getByRole("spinbutton", { name: "Audit archive retain latest" }).fill("1");
+  await page.getByRole("button", { name: "Review audit archive retention" }).click();
+  await expect(page.getByText("saqa_sj_new")).toBeVisible();
+  await expect(page.getByText("saqa_sj_old")).toBeVisible();
+  await expect(page.getByText("prune_candidate")).toBeVisible();
+
+  await page.getByRole("button", { name: "Purge audit archive prune candidates" }).click();
+  await expect(page.getByText("1 purged / 1 retained")).toBeVisible();
+
+  expect(api.bodies("/api/studio/audit/quarantine/archive")).toEqual([{ limit: 75 }]);
+  expect(api.bodies("/api/studio/audit/quarantine/archive/purge")).toEqual([
+    { retain_latest: 1 },
+  ]);
+  expect(api.requests("/api/studio/audit/quarantine/archive/retention?retain_latest=1")).toBe(2);
 });
 
 test("admin evidence bundle form submits simulation and analysis result payloads", async ({ page }) => {

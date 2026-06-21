@@ -2,6 +2,7 @@ import { useState, type FormEvent } from "react";
 
 import type { AdminShellModel } from "../adminShell";
 import type { StudioEvidenceBundleRequest } from "../api/client";
+import AdminAuditArchiveSection from "./AdminAuditArchiveSection";
 
 export interface AdminPanelViewProps {
   auditLoading: boolean;
@@ -16,13 +17,16 @@ export interface AdminPanelViewProps {
       username: string;
     },
   ) => Promise<void>;
+  onCreateAuditArchive: (limit: number) => Promise<void>;
   onCreateEvidenceBundle: (request: StudioEvidenceBundleRequest) => Promise<void>;
   onDownloadEvidenceArtifact: (relativePath: string) => Promise<void>;
   onLoadAuditExport: () => Promise<void>;
+  onLoadAuditArchiveRetention: (retainLatest: number) => Promise<void>;
   onLoadAuditStatus: () => Promise<void>;
   onLoadIdentityServiceAccounts: () => Promise<void>;
   onLoadJobStatus: () => Promise<void>;
   onLoadOperatorStatus: () => Promise<void>;
+  onPurgeAuditArchiveRetention: (retainLatest: number) => Promise<void>;
   onRotateIdentityBrowserUserPassword: (username: string, password: string) => Promise<void>;
   onUpdateIdentityServiceAccount: (
     principalId: string,
@@ -37,14 +41,17 @@ export interface AdminPanelViewProps {
 export default function AdminPanelView({
   auditLoading,
   model,
+  onCreateAuditArchive,
   onCreateEvidenceBundle,
   onCreateIdentityBrowserUser,
   onDownloadEvidenceArtifact,
   onLoadAuditExport,
+  onLoadAuditArchiveRetention,
   onLoadAuditStatus,
   onLoadIdentityServiceAccounts,
   onLoadJobStatus,
   onLoadOperatorStatus,
+  onPurgeAuditArchiveRetention,
   onRotateIdentityBrowserUserPassword,
   onUpdateIdentityBrowserUser,
   onUpdateIdentityServiceAccount,
@@ -468,6 +475,14 @@ export default function AdminPanelView({
           </div>
         )}
       </section>
+
+      <AdminAuditArchiveSection
+        archive={model.auditArchive}
+        auditLoading={auditLoading}
+        onCreateAuditArchive={onCreateAuditArchive}
+        onLoadAuditArchiveRetention={onLoadAuditArchiveRetention}
+        onPurgeAuditArchiveRetention={onPurgeAuditArchiveRetention}
+      />
 
       <section className="admin-section">
         <div className="admin-section-header">

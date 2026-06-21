@@ -178,6 +178,58 @@ export interface StudioAuditExport {
   truncated: boolean;
 }
 
+export interface StudioAuditQuarantineArchiveSummary {
+  archive_artifact_count: number;
+  event_count: number;
+  quarantine_reason: string;
+  reason_counts: Record<string, number>;
+  retained_event_count: number;
+  source_schema_version: string;
+  truncated: boolean;
+}
+
+export interface StudioAuditQuarantineArchiveResult {
+  archive_id: string;
+  artifact_paths: string[];
+  artifacts: StudioJobArtifact[];
+  job_id: string;
+  manifest: Record<string, unknown>;
+  schema_version: string;
+  summary: StudioAuditQuarantineArchiveSummary;
+}
+
+export interface StudioAuditQuarantineArchiveRetentionEntry {
+  archive_id: string;
+  artifact_paths: string[];
+  created_at_utc: string;
+  disposition: "retain" | "prune_candidate";
+  event_count: number;
+  finished_at_utc: string | null;
+  job_id: string;
+  retained_event_count: number;
+  summary: StudioAuditQuarantineArchiveSummary;
+}
+
+export interface StudioAuditQuarantineArchiveRetentionPlan {
+  archive_count: number;
+  entries: StudioAuditQuarantineArchiveRetentionEntry[];
+  prune_candidate_count: number;
+  retain_count: number;
+  retain_latest: number;
+  schema_version: string;
+  skipped_record_count: number;
+}
+
+export interface StudioAuditQuarantineArchivePurgeResult {
+  purged_archive_count: number;
+  purged_entries: StudioAuditQuarantineArchiveRetentionEntry[];
+  retained_archive_count: number;
+  retained_entries: StudioAuditQuarantineArchiveRetentionEntry[];
+  retain_latest: number;
+  schema_version: string;
+  skipped_record_count: number;
+}
+
 export interface StudioJobStatus {
   active_count: number;
   allowed_kinds: string[];
@@ -450,6 +502,20 @@ export const fetchStudioAuditStatus = () =>
   get<StudioAuditStatus>("/studio/audit/status");
 export const fetchStudioAuditExport = (limit = 100) =>
   get<StudioAuditExport>(`/studio/audit/export?limit=${encodeURIComponent(limit)}`);
+export const createStudioAuditQuarantineArchive = (limit = 100) =>
+  post<StudioAuditQuarantineArchiveResult>(
+    "/studio/audit/quarantine/archive",
+    { limit },
+  );
+export const fetchStudioAuditQuarantineArchiveRetention = (retainLatest = 10) =>
+  get<StudioAuditQuarantineArchiveRetentionPlan>(
+    `/studio/audit/quarantine/archive/retention?retain_latest=${encodeURIComponent(retainLatest)}`,
+  );
+export const purgeStudioAuditQuarantineArchiveRetention = (retainLatest = 10) =>
+  post<StudioAuditQuarantineArchivePurgeResult>(
+    "/studio/audit/quarantine/archive/purge",
+    { retain_latest: retainLatest },
+  );
 export const fetchStudioJobStatus = () =>
   get<StudioJobStatus>("/studio/jobs/status");
 export const fetchStudioJobs = () =>

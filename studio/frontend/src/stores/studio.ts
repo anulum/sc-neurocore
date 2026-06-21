@@ -2,12 +2,15 @@ import { create } from "zustand";
 import {
   fetchTemplates, fetchModels, fetchModelDetail, fetchPresets, fetchPreset,
   fetchStudioAuthSession,
+  createStudioAuditQuarantineArchive,
   createStudioEvidenceBundle,
   fetchStudioIdentityServiceAccounts,
+  fetchStudioAuditQuarantineArchiveRetention,
   fetchStudioAuditExport, fetchStudioAuditStatus, fetchStudioCapabilities,
   fetchStudioJobArtifact, fetchStudioJobs, fetchStudioJobStatus, fetchStudioOperatorStatus,
   fetchStudioIdentityBrowserUsers,
   loginStudioBrowserUser, logoutStudioBrowserUser,
+  purgeStudioAuditQuarantineArchiveRetention,
   rotateStudioIdentityBrowserUserPassword,
   simulateODE, simulateModel, fetchFICurve, compileVerilog,
   fetchBifurcation, fetchSensitivity, fetchPrecision, fetchHeatmap, fetchCodegen,
@@ -39,6 +42,9 @@ import {
   type PopulationNode, type ProjectionEdge, type GraphSimResult, type NIRFormat,
   type ProjectSaveResponse, type ProjectSummary, type PipelineResult,
   type StudioAuditExport, type StudioAuditStatus, type StudioCapability,
+  type StudioAuditQuarantineArchivePurgeResult,
+  type StudioAuditQuarantineArchiveResult,
+  type StudioAuditQuarantineArchiveRetentionPlan,
   type StudioAuthSession,
   type StudioEvidenceBundleRequest,
   type StudioEvidenceBundleResponse,
@@ -90,6 +96,9 @@ interface StudioState {
   authError: string | null;
   auditStatus: StudioAuditStatus | null;
   auditExport: StudioAuditExport | null;
+  auditArchive: StudioAuditQuarantineArchiveResult | null;
+  auditArchiveRetention: StudioAuditQuarantineArchiveRetentionPlan | null;
+  auditArchivePurge: StudioAuditQuarantineArchivePurgeResult | null;
   evidenceBundle: StudioEvidenceBundleResponse | null;
   evidenceBundleError: string | null;
   evidenceBundleLoading: boolean;
@@ -185,6 +194,9 @@ interface StudioState {
   logoutBrowserUser: () => Promise<void>;
   loadAuditStatus: () => Promise<void>;
   loadAuditExport: () => Promise<void>;
+  createAuditQuarantineArchive: (limit: number) => Promise<void>;
+  loadAuditQuarantineArchiveRetention: (retainLatest: number) => Promise<void>;
+  purgeAuditQuarantineArchiveRetention: (retainLatest: number) => Promise<void>;
   createEvidenceBundle: (request: StudioEvidenceBundleRequest) => Promise<void>;
   downloadEvidenceBundleArtifact: (relativePath: string) => Promise<void>;
   loadJobStatus: () => Promise<void>;
@@ -287,6 +299,7 @@ export const useStudioStore = create<StudioState>((set, get) => ({
   capabilities: [], capabilitiesLoading: false, capabilitiesError: null,
   authSession: null, authLoading: false, authError: null,
   auditStatus: null, auditExport: null,
+  auditArchive: null, auditArchiveRetention: null, auditArchivePurge: null,
   evidenceBundle: null, evidenceBundleError: null, evidenceBundleLoading: false,
   jobStatus: null, jobRecords: [],
   identityBrowserUsers: [], identityServiceAccounts: [], operatorStatus: null,
@@ -425,6 +438,70 @@ export const useStudioStore = create<StudioState>((set, get) => ({
       set({
         auditLoading: false,
         auditError: error instanceof Error ? error.message : "Audit export failed",
+      });
+    }
+  },
+  createAuditQuarantineArchive: async (limit) => {
+    set({ auditLoading: true, auditError: null });
+    try {
+      const auditArchive = await createStudioAuditQuarantineArchive(limit);
+      const [operatorStatus, jobList, auditExport] = await Promise.all([
+        fetchStudioOperatorStatus(),
+        fetchStudioJobs(),
+        fetchStudioAuditExport(100),
+      ]);
+      set({
+        auditArchive,
+        auditExport,
+        auditLoading: false,
+        auditError: null,
+        auditStatus: operatorStatus.audit,
+        jobRecords: jobList.jobs,
+        jobStatus: operatorStatus.jobs,
+        operatorStatus,
+      });
+    } catch (error: unknown) {
+      set({
+        auditLoading: false,
+        auditError: error instanceof Error ? error.message : "Audit archive creation failed",
+      });
+    }
+  },
+  loadAuditQuarantineArchiveRetention: async (retainLatest) => {
+    set({ auditLoading: true, auditError: null });
+    try {
+      const auditArchiveRetention = await fetchStudioAuditQuarantineArchiveRetention(retainLatest);
+      set({ auditArchiveRetention, auditLoading: false, auditError: null });
+    } catch (error: unknown) {
+      set({
+        auditLoading: false,
+        auditError: error instanceof Error ? error.message : "Audit archive retention check failed",
+      });
+    }
+  },
+  purgeAuditQuarantineArchiveRetention: async (retainLatest) => {
+    set({ auditLoading: true, auditError: null });
+    try {
+      const auditArchivePurge = await purgeStudioAuditQuarantineArchiveRetention(retainLatest);
+      const [operatorStatus, jobList, auditArchiveRetention] = await Promise.all([
+        fetchStudioOperatorStatus(),
+        fetchStudioJobs(),
+        fetchStudioAuditQuarantineArchiveRetention(retainLatest),
+      ]);
+      set({
+        auditArchivePurge,
+        auditArchiveRetention,
+        auditLoading: false,
+        auditError: null,
+        auditStatus: operatorStatus.audit,
+        jobRecords: jobList.jobs,
+        jobStatus: operatorStatus.jobs,
+        operatorStatus,
+      });
+    } catch (error: unknown) {
+      set({
+        auditLoading: false,
+        auditError: error instanceof Error ? error.message : "Audit archive retention purge failed",
       });
     }
   },

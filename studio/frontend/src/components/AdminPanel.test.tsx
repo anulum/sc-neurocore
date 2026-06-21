@@ -3,6 +3,9 @@ import { describe, expect, it } from "vitest";
 
 import type {
   StudioAuditExport,
+  StudioAuditQuarantineArchivePurgeResult,
+  StudioAuditQuarantineArchiveResult,
+  StudioAuditQuarantineArchiveRetentionPlan,
   StudioAuditStatus,
   StudioCapability,
   StudioEvidenceBundleResponse,
@@ -82,6 +85,76 @@ const auditExport: StudioAuditExport = {
   schema_version: "studio.audit.export.v1",
   sink_type: "jsonl",
   truncated: false,
+};
+
+const auditArchive: StudioAuditQuarantineArchiveResult = {
+  archive_id: "saqa_sj_archive",
+  artifact_paths: [
+    "evidence/audit-quarantine/archive.json",
+    "evidence/audit-quarantine/manifest.json",
+  ],
+  artifacts: [
+    {
+      relative_path: "evidence/audit-quarantine/archive.json",
+      sha256: "a".repeat(64),
+      size_bytes: 1024,
+    },
+  ],
+  job_id: "sj_archive",
+  manifest: { schema_version: "studio.audit-quarantine-archive.v1" },
+  schema_version: "studio.audit-quarantine-archive.v1",
+  summary: {
+    archive_artifact_count: 2,
+    event_count: 3,
+    quarantine_reason: "legacy_or_corrupt_retained_rows",
+    reason_counts: { chain_broken: 1, legacy_row: 2 },
+    retained_event_count: 8,
+    source_schema_version: "studio.audit.quarantine.export.v1",
+    truncated: false,
+  },
+};
+
+const auditArchiveRetention: StudioAuditQuarantineArchiveRetentionPlan = {
+  archive_count: 2,
+  entries: [
+    {
+      archive_id: "saqa_sj_new",
+      artifact_paths: ["evidence/audit-quarantine/archive.json"],
+      created_at_utc: "2026-06-21T10:00:00Z",
+      disposition: "retain",
+      event_count: 3,
+      finished_at_utc: "2026-06-21T10:00:01Z",
+      job_id: "sj_new",
+      retained_event_count: 8,
+      summary: auditArchive.summary,
+    },
+    {
+      archive_id: "saqa_sj_old",
+      artifact_paths: ["evidence/audit-quarantine/archive.json"],
+      created_at_utc: "2026-06-21T09:00:00Z",
+      disposition: "prune_candidate",
+      event_count: 2,
+      finished_at_utc: "2026-06-21T09:00:01Z",
+      job_id: "sj_old",
+      retained_event_count: 7,
+      summary: auditArchive.summary,
+    },
+  ],
+  prune_candidate_count: 1,
+  retain_count: 1,
+  retain_latest: 1,
+  schema_version: "studio.audit-quarantine-archive.retention.v1",
+  skipped_record_count: 0,
+};
+
+const auditArchivePurge: StudioAuditQuarantineArchivePurgeResult = {
+  purged_archive_count: 1,
+  purged_entries: [auditArchiveRetention.entries[1]],
+  retained_archive_count: 1,
+  retained_entries: [auditArchiveRetention.entries[0]],
+  retain_latest: 1,
+  schema_version: "studio.audit-quarantine-archive.purge.v1",
+  skipped_record_count: 0,
 };
 
 const jobStatus: StudioJobStatus = {
@@ -238,6 +311,9 @@ const operatorStatus: StudioOperatorStatus = {
 describe("AdminPanel", () => {
   it("renders audit health, denied events, and degraded capabilities", () => {
     const model = buildAdminShellModel({
+      auditArchive,
+      auditArchivePurge,
+      auditArchiveRetention,
       auditError: "Audit export failed",
       auditExport,
       auditStatus,
@@ -265,14 +341,17 @@ describe("AdminPanel", () => {
       <AdminPanelView
         auditLoading={false}
         model={model}
+        onCreateAuditArchive={async () => undefined}
         onCreateEvidenceBundle={async () => undefined}
         onCreateIdentityBrowserUser={async () => undefined}
         onDownloadEvidenceArtifact={async () => undefined}
         onLoadAuditExport={async () => undefined}
+        onLoadAuditArchiveRetention={async () => undefined}
         onLoadAuditStatus={async () => undefined}
         onLoadIdentityServiceAccounts={async () => undefined}
         onLoadJobStatus={async () => undefined}
         onLoadOperatorStatus={async () => undefined}
+        onPurgeAuditArchiveRetention={async () => undefined}
         onRotateIdentityBrowserUserPassword={async () => undefined}
         onUpdateIdentityBrowserUser={async () => undefined}
         onUpdateIdentityServiceAccount={async () => undefined}
@@ -309,6 +388,16 @@ describe("AdminPanel", () => {
     expect(html).toContain("unhealthy");
     expect(html).toContain("1");
     expect(html).toContain("missing_admin_role");
+    expect(html).toContain("Audit archive");
+    expect(html).toContain("saqa_sj_archive");
+    expect(html).toContain("chain_broken:1, legacy_row:2");
+    expect(html).toContain("Prune candidates");
+    expect(html).toContain("1 purged / 1 retained");
+    expect(html).toContain("saqa_sj_new");
+    expect(html).toContain("saqa_sj_old");
+    expect(html).toContain("Review audit archive retention");
+    expect(html).toContain("Purge audit archive prune candidates");
+    expect(html).toContain("Create audit quarantine archive");
     expect(html).toContain("Synthesis Dashboard");
     expect(html).toContain("Yosys unavailable.");
     expect(html).toContain("Jobs");
@@ -325,6 +414,7 @@ describe("AdminPanel", () => {
     expect(html).toContain("studio.viewer");
     expect(html).not.toContain("token_sha256");
     expect(html).not.toContain("password_pbkdf2_sha256");
+    expect(html).not.toContain("/tmp/");
     expect(html).toContain("attention");
     expect(html).toContain("Process");
     expect(html).toContain("Thread");

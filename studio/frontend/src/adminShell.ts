@@ -1,6 +1,9 @@
 import type {
   StudioAuditEvent,
   StudioAuditExport,
+  StudioAuditQuarantineArchivePurgeResult,
+  StudioAuditQuarantineArchiveResult,
+  StudioAuditQuarantineArchiveRetentionPlan,
   StudioAuditStatus,
   StudioCapability,
   StudioEvidenceBundleResponse,
@@ -14,6 +17,9 @@ import { summarizeAuditExport } from "./auditShell";
 
 export interface AdminShellInput {
   auditError: string | null;
+  auditArchive: StudioAuditQuarantineArchiveResult | null;
+  auditArchivePurge: StudioAuditQuarantineArchivePurgeResult | null;
+  auditArchiveRetention: StudioAuditQuarantineArchiveRetentionPlan | null;
   auditExport: StudioAuditExport | null;
   auditStatus: StudioAuditStatus | null;
   capabilities: StudioCapability[];
@@ -109,6 +115,32 @@ export interface AdminEvidenceBundleEntryModel {
   type: string;
 }
 
+export interface AdminAuditArchiveModel {
+  archiveCount: number;
+  archivedEventCount: number;
+  archiveId: string;
+  artifactCount: number;
+  error: string | null;
+  latestEntries: AdminAuditArchiveEntryModel[];
+  lastPurge: string;
+  pruneCandidateCount: number;
+  purgedArchiveCount: number;
+  reasonCounts: string;
+  retainedArchiveCount: number;
+  retainCount: number;
+  retainLatest: number;
+  skippedRecordCount: number;
+}
+
+export interface AdminAuditArchiveEntryModel {
+  archiveId: string;
+  disposition: "retain" | "prune_candidate";
+  eventCount: number;
+  finishedAt: string;
+  jobId: string;
+  retainedEventCount: number;
+}
+
 export interface AdminIdentityAccountModel {
   active: boolean;
   activeLabel: "active" | "disabled";
@@ -148,6 +180,7 @@ export interface AdminOperatorModel {
 
 export interface AdminShellModel {
   audit: AdminAuditModel;
+  auditArchive: AdminAuditArchiveModel;
   capabilities: AdminCapabilityModel;
   evidenceBundle: AdminEvidenceBundleModel;
   jobs: AdminJobModel;
@@ -187,6 +220,12 @@ export function buildAdminShellModel(input: AdminShellInput): AdminShellModel {
       total: auditSummary.total,
       truncated: auditSummary.truncated,
     },
+    auditArchive: buildAuditArchiveModel(
+      input.auditArchive,
+      input.auditArchiveRetention,
+      input.auditArchivePurge,
+      input.auditError,
+    ),
     capabilities: {
       registered: operatorCapabilities?.total_count ?? input.capabilities.length,
       unhealthy: operatorCapabilities?.unavailable_count ?? unhealthyCapabilities.length,
@@ -205,6 +244,40 @@ export function buildAdminShellModel(input: AdminShellInput): AdminShellModel {
     operator: buildOperatorModel(input.operatorStatus),
     recentAuditEvents,
     unhealthyCapabilities,
+  };
+}
+
+function buildAuditArchiveModel(
+  archive: StudioAuditQuarantineArchiveResult | null,
+  retention: StudioAuditQuarantineArchiveRetentionPlan | null,
+  purge: StudioAuditQuarantineArchivePurgeResult | null,
+  error: string | null,
+): AdminAuditArchiveModel {
+  const entries = retention?.entries ?? [];
+  return {
+    archiveCount: retention?.archive_count ?? 0,
+    archivedEventCount: archive?.summary.event_count ?? 0,
+    archiveId: archive?.archive_id ?? "none",
+    artifactCount: archive?.artifact_paths.length ?? 0,
+    error,
+    latestEntries: entries.slice(0, 5).map((entry) => ({
+      archiveId: entry.archive_id,
+      disposition: entry.disposition,
+      eventCount: entry.event_count,
+      finishedAt: entry.finished_at_utc ?? "unfinished",
+      jobId: entry.job_id,
+      retainedEventCount: entry.retained_event_count,
+    })),
+    lastPurge: purge === null
+      ? "none"
+      : `${purge.purged_archive_count} purged / ${purge.retained_archive_count} retained`,
+    pruneCandidateCount: retention?.prune_candidate_count ?? 0,
+    purgedArchiveCount: purge?.purged_archive_count ?? 0,
+    reasonCounts: formatCounts(archive?.summary.reason_counts),
+    retainedArchiveCount: purge?.retained_archive_count ?? 0,
+    retainCount: retention?.retain_count ?? 0,
+    retainLatest: retention?.retain_latest ?? purge?.retain_latest ?? 10,
+    skippedRecordCount: retention?.skipped_record_count ?? purge?.skipped_record_count ?? 0,
   };
 }
 
@@ -447,12 +520,22 @@ function buildOperatorModel(operatorStatus: StudioOperatorStatus | null): AdminO
   const limits = operatorStatus.resource_limits;
   const routePolicies = operatorStatus.route_policies;
   return {
-    browserLoginActiveBuckets: `${browserLogin.active_bucket_count}`,
-    browserLoginCooldown: formatSeconds(browserLogin.cooldown_seconds),
-    browserLoginLockedBuckets: `${browserLogin.locked_bucket_count}`,
-    browserLoginLimit: `${browserLogin.max_failures}`,
-    browserLoginMaxRetryAfter: formatSeconds(browserLogin.max_retry_after_seconds),
-    browserLoginWindow: formatSeconds(browserLogin.failure_window_seconds),
+    browserLoginActiveBuckets: browserLogin === undefined
+      ? "unknown"
+      : `${browserLogin.active_bucket_count}`,
+    browserLoginCooldown: browserLogin === undefined
+      ? "unknown"
+      : formatSeconds(browserLogin.cooldown_seconds),
+    browserLoginLockedBuckets: browserLogin === undefined
+      ? "unknown"
+      : `${browserLogin.locked_bucket_count}`,
+    browserLoginLimit: browserLogin === undefined ? "unknown" : `${browserLogin.max_failures}`,
+    browserLoginMaxRetryAfter: browserLogin === undefined
+      ? "unknown"
+      : formatSeconds(browserLogin.max_retry_after_seconds),
+    browserLoginWindow: browserLogin === undefined
+      ? "unknown"
+      : formatSeconds(browserLogin.failure_window_seconds),
     deploymentProfile: operatorStatus.deployment_profile,
     edaCpuLimit: formatSeconds(limits.eda_process_cpu_seconds),
     edaMemoryLimit: formatBytes(limits.eda_process_memory_bytes),

@@ -320,6 +320,10 @@ Administrators can review archive retention through
 path-free response lists valid quarantine archive jobs newest first, marks the
 newest archives as `retain`, and marks older archives as `prune_candidate`
 without deleting job artifacts.
+The Admin panel exposes the same archive lifecycle through the Audit archive
+section: operators can create a quarantine archive, review the retention plan
+with a bounded retain-latest value, and execute the retention purge without
+copying host paths or raw audit files into the browser.
 Administrators can materialize a validated quarantine archive into confined
 restore artifacts through `POST /api/studio/audit/quarantine/archive/restore`.
 The route validates the archive and optional manifest, then writes
