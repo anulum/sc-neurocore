@@ -112,15 +112,17 @@ describe("Studio saved-session persistence", () => {
     });
   });
 
-  it("restores valid persisted state with finite numeric records", () => {
+  it("restores valid persisted state with finite numeric records and zero current", () => {
     expect(studioSavedSessionRestoreState({
       ...studioSavedSessionState(demoInput),
+      current: 0,
       equations: ["ok", 4],
       modelParams: { keep: 1, drop: Number.NaN, text: "x" },
       odeInit: { v: -64, invalid: Number.POSITIVE_INFINITY },
       sourceMode: "ode",
     })).toEqual({
       ...demoInput,
+      current: 0,
       equations: ["ok"],
       modelParams: { keep: 1 },
       odeInit: { v: -64 },

@@ -62,10 +62,14 @@ function stringArrayValue(value: unknown): string[] {
     : [];
 }
 
-function finiteNumberValue(value: unknown, fallback: number): number {
+function nonZeroFiniteNumberValue(value: unknown, fallback: number): number {
   return typeof value === "number" && Number.isFinite(value) && value !== 0
     ? value
     : fallback;
+}
+
+function finiteNumberValue(value: unknown, fallback: number): number {
+  return typeof value === "number" && Number.isFinite(value) ? value : fallback;
 }
 
 function numberRecordValue(value: unknown): Record<string, number> {
@@ -111,8 +115,8 @@ export function studioSavedSessionRestoreState(
     odeInit: numberRecordValue(state.odeInit),
     selectedModelName: stringValue(state.selectedModelName, ""),
     modelParams: numberRecordValue(state.modelParams),
-    dt: finiteNumberValue(state.dt, 0.1),
-    duration: finiteNumberValue(state.duration, 100),
+    dt: nonZeroFiniteNumberValue(state.dt, 0.1),
+    duration: nonZeroFiniteNumberValue(state.duration, 100),
     current: finiteNumberValue(state.current, 10),
     protocol: stringValue(state.protocol, "constant"),
   };

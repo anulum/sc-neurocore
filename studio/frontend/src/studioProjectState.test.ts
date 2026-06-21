@@ -15,6 +15,7 @@ import {
   studioProjectSaveState,
   studioProjectSavedState,
   studioProjectStateFromLoadResponse,
+  type StudioProjectSnapshotInput,
   type StudioProjectStateSnapshot,
   type StudioProjectTrainingConfig,
 } from "./studioProjectState";
@@ -81,6 +82,16 @@ function snapshot(): StudioProjectStateSnapshot {
 describe("Studio project state helpers", () => {
   it("builds the complete project save snapshot", () => {
     expect(studioProjectSaveState(snapshot())).toEqual(snapshot());
+  });
+
+  it("builds a project save snapshot from a wider store state object", () => {
+    const widerState: StudioProjectSnapshotInput & { error: string | null; isSimulating: boolean } = {
+      ...snapshot(),
+      error: "ignored",
+      isSimulating: true,
+    };
+
+    expect(studioProjectSaveState(widerState)).toEqual(snapshot());
   });
 
   it("restores project state and preserves finite zero current", () => {

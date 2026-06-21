@@ -1221,25 +1221,7 @@ export const useStudioStore = create<StudioState>((set, get) => ({
   },
 
   saveProjectToServer: async (name) => {
-    const s = get();
-    const state = studioProjectSaveState({
-      sourceMode: s.sourceMode,
-      equations: s.equations,
-      threshold: s.threshold,
-      reset: s.reset,
-      odeParams: s.odeParams,
-      odeInit: s.odeInit,
-      selectedModelName: s.selectedModelName,
-      modelParams: s.modelParams,
-      dt: s.dt,
-      duration: s.duration,
-      current: s.current,
-      protocol: s.protocol,
-      graphPopulations: s.graphPopulations,
-      graphProjections: s.graphProjections,
-      synthTarget: s.synthTarget,
-      trainingConfig: s.trainingConfig,
-    });
+    const state = studioProjectSaveState(get());
     try {
       const projectSaveResult = await apiSaveProject(name, state);
       set(studioProjectSavedState(projectSaveResult));

@@ -26,7 +26,7 @@ export interface StudioProjectTrainingConfig {
   learn_threshold: boolean;
 }
 
-export interface StudioProjectStateSnapshot extends Record<string, unknown> {
+export interface StudioProjectSnapshotInput {
   sourceMode: StudioSimulationSourceMode;
   equations: string[];
   threshold: string;
@@ -45,6 +45,9 @@ export interface StudioProjectStateSnapshot extends Record<string, unknown> {
   trainingConfig: StudioProjectTrainingConfig;
 }
 
+export interface StudioProjectStateSnapshot
+  extends StudioProjectSnapshotInput, Record<string, unknown> {}
+
 export interface StudioProjectSavedStatePatch {
   projectSaveResult: ProjectSaveResponse;
 }
@@ -57,7 +60,7 @@ export interface StudioProjectFailureStatePatch {
   error: string;
 }
 
-export function studioProjectSaveState(input: StudioProjectStateSnapshot): StudioProjectStateSnapshot {
+export function studioProjectSaveState(input: StudioProjectSnapshotInput): StudioProjectStateSnapshot {
   return {
     sourceMode: input.sourceMode,
     equations: input.equations,
