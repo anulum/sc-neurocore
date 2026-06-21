@@ -25,7 +25,10 @@ import CapabilityStrip from "./components/CapabilityStrip";
 import AdminPanel from "./components/AdminPanel";
 import AuthControl from "./components/AuthControl";
 import ProjectEvidenceStrip from "./components/ProjectEvidenceStrip";
+import GuidedFlowPanel from "./components/GuidedFlowPanel";
 import { buildProjectEvidenceModel } from "./projectEvidence";
+import { computeGuidedFlowState } from "./guidedFlowState";
+import type { GuidedFlowCapabilityMap, GuidedFlowInputs } from "./guidedFlowState";
 
 function Tab({ active, color, label, onClick, disabled, title }: {
   active: boolean; color: string; label: string; onClick: () => void; disabled?: boolean; title?: string;
@@ -90,6 +93,37 @@ export default function App() {
   const panelState = (panelKey: PanelKey) => panelCapabilityState(s.capabilities, panelKey);
   const activePanelState = panelState(s.activeTab as PanelKey);
   const panelUnavailable = (panelKey: PanelKey) => !panelState(panelKey).available;
+
+  const guidedFlowInputs: GuidedFlowInputs = {
+    modelSelected: s.selectedModelName.length > 0,
+    simulationComplete: s.result !== null,
+    analysisComplete: [
+      s.fiResult,
+      s.bifResult,
+      s.sensResult,
+      s.precResult,
+      s.heatmapResult,
+      s.compareResult,
+      s.nullclineResult,
+      s.freqResult,
+      s.charResult,
+    ].some((analysis) => analysis !== null),
+    trainingComplete: s.trainingEpochs.length > 0,
+    trainingSkipped: false,
+    compileComplete: s.compileTraceability !== null,
+    synthesisComplete: s.synthResult !== null || s.multiTargetResult !== null,
+    evidenceExported: s.evidenceBundle !== null,
+  };
+  const guidedFlowCapabilities: GuidedFlowCapabilityMap = {
+    design: true,
+    simulate: !panelUnavailable("trace"),
+    analyse: !panelUnavailable("fi-curve"),
+    train: !panelUnavailable("train"),
+    compile: !panelUnavailable("verilog"),
+    synthesise: !panelUnavailable("synth"),
+    export: true,
+  };
+  const guidedFlow = computeGuidedFlowState(guidedFlowInputs, guidedFlowCapabilities);
   const panelControl = (panelKey: PanelKey) => {
     const capabilityState = panelState(panelKey);
     return {
@@ -349,6 +383,9 @@ export default function App() {
 
       <div className="main-content">
         <div className="left-panel">
+          <div className="panel-section">
+            <GuidedFlowPanel state={guidedFlow} />
+          </div>
           {s.sourceMode === "model" ? (
             <>
               <div className="panel-section">

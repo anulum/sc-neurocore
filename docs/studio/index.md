@@ -15,6 +15,19 @@ model browser, ODE mode, analysis views, FPGA pipeline, network canvas,
 training monitor, and keyboard shortcuts. The tour is dismissable and
 won't appear again (stored in localStorage).
 
+## Guided Flow
+
+The left panel shows a guided default flow over the seven lifecycle steps —
+design, simulate, analyse, train (optional), compile, synthesise, export
+evidence — so the Studio reads as a sequence rather than a loose set of panels.
+Each step derives its status from the evidence already produced: `done` when the
+step's result exists (training also counts as done when explicitly skipped),
+`next` for the earliest actionable step, `ready` for a later actionable step,
+and `blocked` with a concrete reason when a prerequisite is missing or the
+step's capability is unavailable in the capability registry. The panel reports a
+`completed/total` count and never invents marketing or tutorial copy — it
+reflects only the live store and capability state.
+
 ## Model Browser
 
 Browse built-in neuron models by category, search by name, and run the model
