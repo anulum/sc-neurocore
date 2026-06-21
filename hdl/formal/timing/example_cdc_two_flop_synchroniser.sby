@@ -1,0 +1,15 @@
+[options]
+mode bmc
+depth 12
+
+[engines]
+smtbmc cvc5
+
+[script]
+read_verilog -formal -sv -I. timing_wrapper_lib.sv example_cdc_two_flop_synchroniser.sv
+prep -top example_cdc_two_flop_synchroniser
+
+[files]
+hdl/formal/timing/timing_wrapper_lib.sv
+hdl/formal/timing/timing_assertions.svh
+hdl/formal/timing/example_cdc_two_flop_synchroniser.sv

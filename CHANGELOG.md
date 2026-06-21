@@ -26,6 +26,20 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
   coverage tracers over code that imports sc-neurocore without the torch
   C-extension crash; torch loads only when a torch-dependent feature is used.
 
+### Timing-aware formal verification
+- Added a two-flop clock-domain-crossing synchroniser property template to the
+  timing formal framework: `sc_cdc_two_flop_monitor` (in
+  `hdl/formal/timing/timing_wrapper_lib.sv`) and the `SC_ASSERT_CDC_TWO_FLOP`
+  macro (in `timing_assertions.svh`). A consumer binds it over its own
+  destination-domain synchroniser flops; the monitor proves the output is the
+  source delayed by exactly the synchroniser depth with no combinational path past
+  the last flop. The property is expressed in the open-source Yosys/SymbiYosys
+  procedural-immediate-assertion subset (no concurrent SVA). Added a worked
+  `example_cdc_two_flop_synchroniser.{sv,sby}` proof, a SymbiYosys-gated proof
+  test, a mutation test proving a one-flop synchroniser is rejected, and a
+  consumable-surface section (bounded-latency macros, CDC template, SymbiYosys task
+  convention) in `docs/formal/timing_aware_properties.md`.
+
 ### Studio platform
 - Added path-free quarantine metadata to Studio audit status and export payloads
   so legacy, corrupt, or chain-broken retained audit rows are counted separately

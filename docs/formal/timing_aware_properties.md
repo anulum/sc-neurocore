@@ -21,7 +21,45 @@ A timing property is valid only when it states a real event-response contract. T
 
 `sc_latency_monitor` starts one obligation when `start_event` rises while no obligation is active. It clears the obligation on `end_event`. If the obligation remains active after the configured cycle bound, the sticky `violation` flag is asserted.
 
-`sc_deadline_monitor` and `sc_bounded_liveness_monitor` are named wrappers over the same obligation semantics. This keeps deadline and liveness contracts auditable while avoiding divergent RTL behavior between property classes.
+`sc_deadline_monitor` and `sc_bounded_liveness_monitor` are named wrappers over the same obligation semantics. This keeps deadline and liveness contracts auditable while avoiding divergent RTL behaviour between property classes.
+
+## Consumable surface for external integration
+
+A downstream repository (for example SCPN-MIF-CORE) binds these properties against its own RTL in the open-source Yosys/SymbiYosys flow, which has no concurrent SVA. Every property here is therefore a counter/shift-register monitor plus a **procedural immediate** `assert (!violation)` inside `always @(posedge CLK)` — read with `read_verilog -formal -sv` alongside the consumer's RTL. The framework owns the reusable property; the consumer owns the instantiation against its own signals.
+
+### Bounded latency
+
+`` `SC_ASSERT_LATENCY_LE(NAME, CLK, RST_N, START_EVENT, END_EVENT, BOUND_CYCLES) `` expresses "END_EVENT within BOUND_CYCLES of START_EVENT", e.g. an actuator asserted within N cycles of a sensor event. `SC_ASSERT_DEADLINE_LE` and `SC_ASSERT_BOUNDED_LIVENESS` share the shape. Cycle-accurate only — nanosecond timing is a post-route/silicon fact, not a framework claim.
+
+### Two-flop CDC synchroniser
+
+`` `SC_ASSERT_CDC_TWO_FLOP(NAME, DST_CLK, RST_N, ASYNC_IN, META_Q, SYNC_OUT, SYNC_DEPTH_N) `` binds `sc_cdc_two_flop_monitor` over the destination-domain synchroniser flops the consumer owns (`META_Q` = first flop, `SYNC_OUT` = last flop). The monitor builds a `SYNC_DEPTH_N`-deep reference delay of `ASYNC_IN` and, once warmed up, asserts:
+
+- `SYNC_OUT` is `ASYNC_IN` delayed by exactly `SYNC_DEPTH_N` flops — this pins the synchroniser depth (a one-flop chain fails) and the absence of combinational contamination on the data path;
+- `SYNC_OUT` is a pure registered copy of `META_Q` — no combinational/glitch path escapes past the last flop, so the output is stable for the whole destination cycle.
+
+A `cover` on the synchronised-output transition keeps the proof non-vacuous. This is RTL-level structural verification; physical metastability resolution time stays a silicon/STA fact, so the monitor never asserts that the first flop is metastability-free. `example_cdc_two_flop_synchroniser.{sv,sby}` is the worked proof; the test suite also proves a one-flop synchroniser is rejected, so the property has teeth. Multi-bit non-gray buses need a handshake/FIFO template rather than this single-bit/gray-coded one.
+
+### SymbiYosys task convention
+
+Tasks register in a consumer's `formal_manifest.py` drift gate with the triple `(mode, engine, depth)` used by `example_*.sby`:
+
+```
+[options]
+mode bmc            # or `prove` for k-induction; the monitors reset cleanly and are induction-friendly
+depth <BOUND + margin>   # CDC: SYNC_DEPTH + 4; latency: BOUND + 2
+
+[engines]
+smtbmc cvc5         # boolector is interchangeable
+
+[script]
+read_verilog -formal -sv -I. timing_wrapper_lib.sv <wrapper>.sv <rtl...>.sv
+prep -top <formal_wrapper>
+```
+
+### Ownership
+
+For a CDC crossing into a consumer's fabric, the consumer owns the synchroniser RTL instantiation (e.g. `mif_aer_cdc_synchroniser.sv`) and sc-neurocore owns the property template plus the upstream stream (the AER router/encoder up to the crossing boundary).
 
 ## Dependency policy
 

@@ -70,4 +70,34 @@
         end \
     end
 
+// Two-flop CDC synchroniser property template. A consumer binds it over the
+// destination-domain synchroniser flops it owns (META_Q = first flop, SYNC_OUT =
+// last flop); ASYNC_IN is the source-domain bit. SYNC_DEPTH_N is the synchroniser
+// flop depth (2 for a two-flop synchroniser). Asserts SYNC_OUT is ASYNC_IN delayed
+// by exactly SYNC_DEPTH_N flops with no combinational/glitch path past the last
+// flop, with a liveness cover that the crossing fires.
+`define SC_ASSERT_CDC_TWO_FLOP(NAME, DST_CLK, RST_N, ASYNC_IN, META_Q, SYNC_OUT, SYNC_DEPTH_N) \
+    wire NAME``_violation; \
+    wire NAME``_crossing_seen; \
+    wire [7:0] NAME``_warmup_age; \
+    sc_cdc_two_flop_monitor #( \
+        .SYNC_DEPTH(SYNC_DEPTH_N), \
+        .COUNTER_WIDTH(8) \
+    ) NAME``_cdc_monitor ( \
+        .dst_clk(DST_CLK), \
+        .rst_n(RST_N), \
+        .async_in(ASYNC_IN), \
+        .meta_q(META_Q), \
+        .sync_out(SYNC_OUT), \
+        .violation(NAME``_violation), \
+        .crossing_seen(NAME``_crossing_seen), \
+        .warmup_age(NAME``_warmup_age) \
+    ); \
+    always @(posedge DST_CLK) begin \
+        if (RST_N) begin \
+            assert (!NAME``_violation); \
+            cover (NAME``_crossing_seen); \
+        end \
+    end
+
 `endif
