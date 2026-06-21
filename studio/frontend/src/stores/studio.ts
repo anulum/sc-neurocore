@@ -236,6 +236,15 @@ import {
   compilerSVLoadedState,
   compilerVerilogLoadedState,
 } from "../compilerStoreState";
+import {
+  modelDetailLoadedState,
+  modelSelectionStartedState,
+  modelsLoadedState,
+  presetSelection,
+  presetsLoadedState,
+  templateSelectedState,
+  templatesLoadedState,
+} from "../modelSelectionStoreState";
 
 let debounceTimer: ReturnType<typeof setTimeout> | null = null;
 syncStoredStudioAuthToken(setStudioAuthToken);
@@ -547,7 +556,7 @@ export const useStudioStore = create<StudioState>((set, get) => ({
   setSweepParam: (p) => set({ sweepParam: p }),
   setSweepParamY: (p) => set({ sweepParamY: p }),
 
-  loadTemplates: async () => set({ templates: await fetchTemplates() }),
+  loadTemplates: async () => set(templatesLoadedState(await fetchTemplates())),
   loadCapabilities: async () => {
     set(capabilityLoadingState());
     try {
@@ -823,63 +832,39 @@ export const useStudioStore = create<StudioState>((set, get) => ({
   },
   loadModels: async () => {
     const models = await fetchModels();
-    set({ models });
+    set(modelsLoadedState(models));
     if (models.length > 0 && !get().selectedModelName) await get().selectModel(models[0].name);
   },
-  loadPresets: async () => set({ presets: await fetchPresets() }),
+  loadPresets: async () => set(presetsLoadedState(await fetchPresets())),
 
   selectTemplate: (name) => {
-    const t = get().templates.find((t) => t.name === name);
-    if (!t) return;
-    set({
-      sourceMode: "ode", equations: t.equations, threshold: t.threshold, reset: t.reset,
-      odeParams: { ...t.params }, odeInit: { ...t.init },
-      dt: t.dt, duration: t.duration, current: t.current,
-      result: null, fiResult: null, error: null,
-    });
+    const template = get().templates.find((candidate) => candidate.name === name);
+    if (template === undefined) return;
+    set(templateSelectedState(template));
     get().runSimulation();
   },
 
   selectModel: async (name) => {
-    set({ selectedModelName: name, result: null, fiResult: null, error: null });
+    set(modelSelectionStartedState(name));
     const detail = await fetchModelDetail(name);
-    if (!detail) return;
-    const params: Record<string, number> = {};
-    for (const p of detail.params) params[p.name] = p.default;
-    for (const s of detail.state_vars) params[s.name] = s.default;
-    set({ modelDetail: detail, modelParams: params, dt: detail.dt, sourceMode: "model" });
+    if (detail === null) return;
+    set(modelDetailLoadedState(detail));
     get().runSimulation();
   },
 
   loadPreset: async (id) => {
     const preset = await fetchPreset(id);
-    if (!preset) return;
-    if (preset.mode === "model" && preset.model_name) {
-      await get().selectModel(preset.model_name as string);
-      set({
-        current: (preset.current as number) || 10,
-        duration: (preset.duration as number) || 200,
-        protocol: (preset.protocol as string) || "constant",
-      });
-    } else if (preset.equations) {
-      set({
-        sourceMode: "ode",
-        equations: preset.equations as string[],
-        threshold: (preset.threshold as string) || "",
-        reset: (preset.reset as string) || "",
-        odeParams: (preset.params as Record<string, number>) || {},
-        odeInit: (preset.init as Record<string, number>) || {},
-        dt: (preset.dt as number) || 0.1,
-        duration: (preset.duration as number) || 200,
-        current: (preset.current as number) || 10,
-        protocol: (preset.protocol as string) || "constant",
-      });
+    const selection = presetSelection(preset);
+    if (selection.modelName !== null) {
+      await get().selectModel(selection.modelName);
+      if (selection.modelRuntimeState !== null) set(selection.modelRuntimeState);
+    } else if (selection.odeState !== null) {
+      set(selection.odeState);
     }
-    const view = preset.suggested_view as string;
-    if (view === "fi-curve") { get().runFICurve(); }
-    else if (view === "precision") { get().runPrecision(); }
+    if (selection.action.kind === "fi-curve") get().runFICurve();
+    else if (selection.action.kind === "precision") get().runPrecision();
     else {
-      set({ activeTab: (view as ViewTab) || "trace" });
+      set({ activeTab: selection.action.activeTab });
       get().runSimulation();
     }
   },
