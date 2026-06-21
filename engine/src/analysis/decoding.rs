@@ -7,6 +7,7 @@ use rayon::prelude::*;
 // Contact: www.anulum.li | protoscience@anulum.li
 // SC-NeuroCore — Neural population decoding algorithms
 
+use nalgebra::{Cholesky, DMatrix};
 use std::f64::consts::PI;
 
 /// Georgopoulos population vector decoding.
@@ -182,16 +183,25 @@ pub fn linear_discriminant_decode(
         *v /= n_samples as f64;
     }
 
-    // For each class: w = S_w^{-1} (mean_c - overall_mean), score = w . test_point
+    // Every class's Fisher weights share the same SPD system S_w; assemble the
+    // (mean_c - overall_mean) right-hand sides as columns and solve them all from
+    // a single Cholesky factorisation. Column ci of `weights` is
+    // w_ci = S_w^{-1} (mean_ci - overall_mean); the decision is score = w_ci · test.
+    let n_classes = classes.len();
+    let mut diffs = vec![0.0_f64; nf * n_classes];
+    for (ci, mean) in class_means.iter().enumerate() {
+        for f in 0..nf {
+            diffs[f * n_classes + ci] = mean[f] - overall_mean[f];
+        }
+    }
+    let weights = solve_spd(&s_w, &diffs, nf, n_classes);
+
     let mut best_class = classes[0];
     let mut best_score = f64::NEG_INFINITY;
-
     for (ci, &c) in classes.iter().enumerate() {
-        let diff: Vec<f64> = (0..nf)
-            .map(|f| class_means[ci][f] - overall_mean[f])
-            .collect();
-        let w = solve_linear(&s_w, &diff, nf);
-        let score: f64 = (0..nf).map(|f| w[f] * test_point[f]).sum();
+        let score: f64 = (0..nf)
+            .map(|f| weights[f * n_classes + ci] * test_point[f])
+            .sum();
         if score > best_score {
             best_score = score;
             best_class = c;
@@ -248,52 +258,29 @@ pub fn naive_bayes_decode(
     best_class
 }
 
-/// Solve A x = b via Gaussian elimination with partial pivoting.
-fn solve_linear(a: &[f64], b: &[f64], n: usize) -> Vec<f64> {
-    let mut aug = vec![0.0_f64; n * (n + 1)];
-    for i in 0..n {
-        for j in 0..n {
-            aug[i * (n + 1) + j] = a[i * n + j];
-        }
-        aug[i * (n + 1) + n] = b[i];
-    }
-    let stride = n + 1;
-    for col in 0..n {
-        let mut max_row = col;
-        let mut max_val = aug[col * stride + col].abs();
-        for row in (col + 1)..n {
-            let v = aug[row * stride + col].abs();
-            if v > max_val {
-                max_val = v;
-                max_row = row;
+/// Solve the symmetric positive-definite system `A X = B` via Cholesky
+/// factorisation. `a` is n×n row-major — here the ridge-regularised within-class
+/// scatter, which is SPD — and `b` is n×m row-major; returns X (n×m, row-major).
+/// A single factorisation solves every right-hand-side column (one per class),
+/// the numerically optimal route for an SPD system: half the arithmetic of a
+/// general elimination and unconditionally stable without pivoting. Falls back to
+/// a zero solution if `a` is not positive-definite, which the ridge precludes.
+fn solve_spd(a: &[f64], b: &[f64], n: usize, m: usize) -> Vec<f64> {
+    let a_mat = DMatrix::<f64>::from_row_slice(n, n, a);
+    let b_mat = DMatrix::<f64>::from_row_slice(n, m, b);
+    match Cholesky::new(a_mat) {
+        Some(chol) => {
+            let x = chol.solve(&b_mat);
+            let mut out = vec![0.0_f64; n * m];
+            for i in 0..n {
+                for j in 0..m {
+                    out[i * m + j] = x[(i, j)];
+                }
             }
+            out
         }
-        if max_row != col {
-            for j in 0..stride {
-                aug.swap(col * stride + j, max_row * stride + j);
-            }
-        }
-        let pivot = aug[col * stride + col];
-        if pivot.abs() < 1e-30 {
-            continue;
-        }
-        for row in (col + 1)..n {
-            let factor = aug[row * stride + col] / pivot;
-            for j in col..stride {
-                aug[row * stride + j] -= factor * aug[col * stride + j];
-            }
-        }
+        None => vec![0.0_f64; n * m],
     }
-    let mut x = vec![0.0_f64; n];
-    for i in (0..n).rev() {
-        let mut sum = aug[i * stride + n];
-        for j in (i + 1)..n {
-            sum -= aug[i * stride + j] * x[j];
-        }
-        let diag = aug[i * stride + i];
-        x[i] = if diag.abs() > 1e-30 { sum / diag } else { 0.0 };
-    }
-    x
 }
 
 #[cfg(test)]
@@ -462,14 +449,36 @@ mod tests {
         assert_eq!(lda, nb, "well-separated → both predict same class");
     }
 
-    // ── solve_linear ────────────────────────────────────────────────
+    // ── solve_spd ───────────────────────────────────────────────────
 
     #[test]
-    fn test_solve_2x2() {
+    fn test_solve_spd_2x2() {
+        // [2 1; 1 3] x = [5; 10] → x = [1, 3]  (matrix is SPD)
         let a = vec![2.0, 1.0, 1.0, 3.0];
         let b = vec![5.0, 10.0];
-        let x = solve_linear(&a, &b, 2);
+        let x = solve_spd(&a, &b, 2, 1);
         assert!((x[0] - 1.0).abs() < 1e-10);
         assert!((x[1] - 3.0).abs() < 1e-10);
+    }
+
+    #[test]
+    fn test_solve_spd_multi_rhs() {
+        // diag(2, 4) X = [[2, 4]; [4, 8]] → X = [[1, 2]; [1, 2]] (row-major)
+        let a = vec![2.0, 0.0, 0.0, 4.0];
+        let b = vec![2.0, 4.0, 4.0, 8.0];
+        let x = solve_spd(&a, &b, 2, 2);
+        assert!((x[0] - 1.0).abs() < 1e-10); // X[0,0]
+        assert!((x[1] - 2.0).abs() < 1e-10); // X[0,1]
+        assert!((x[2] - 1.0).abs() < 1e-10); // X[1,0]
+        assert!((x[3] - 2.0).abs() < 1e-10); // X[1,1]
+    }
+
+    #[test]
+    fn test_solve_spd_non_pd_falls_back_to_zero() {
+        // Indefinite matrix → Cholesky fails → zero solution.
+        let a = vec![0.0, 1.0, 1.0, 0.0];
+        let b = vec![1.0, 1.0];
+        let x = solve_spd(&a, &b, 2, 1);
+        assert_eq!(x, vec![0.0, 0.0]);
     }
 }

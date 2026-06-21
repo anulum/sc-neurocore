@@ -898,6 +898,33 @@ def test_lda_decode_valid():
     assert r in (0, 1)
 
 
+def test_lda_decode_single_class():
+    # decoding.py:89 — len(classes) == 1 → return the sole class without a solve
+    from sc_neurocore.analysis.spike_stats.decoding import linear_discriminant_decode
+
+    train_data = np.array([[1.0, 2.0], [2.0, 3.0]])
+    labels = np.array([7, 7])
+    assert linear_discriminant_decode(train_data, labels, np.array([1.0, 1.0])) == 7
+
+
+def test_lda_decode_empty_labels():
+    # decoding.py:89 — len(classes) == 0 → 0
+    from sc_neurocore.analysis.spike_stats.decoding import linear_discriminant_decode
+
+    empty = np.empty((0, 2))
+    r = linear_discriminant_decode(empty, np.array([]), np.array([1.0, 1.0]))
+    assert r == 0
+
+
+def test_population_vector_decode_no_bins():
+    # decoding.py:34 — min_len // window == 0 → empty result
+    from sc_neurocore.analysis.spike_stats.decoding import population_vector_decode
+
+    short = [np.ones(10)]
+    r = population_vector_decode(short, np.array([0.0]), window=50)
+    assert r.size == 0
+
+
 def test_dtf_with_real_data():
     # causality.py:186 — det_a NOT near zero
     rng = np.random.default_rng(42)

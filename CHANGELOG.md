@@ -114,6 +114,15 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
   spectral Granger, partial-directed-coherence and directed-transfer-function
   paths. Results match the previous implementation to float64 round-off; no public
   API change.
+- The Fisher linear-discriminant decoder now solves its within-class scatter
+  system with a Cholesky factorisation in both backends. The scatter matrix
+  `S_w + εI` is symmetric positive-definite, so the per-class Fisher weights
+  `w_c = S_w⁻¹ (mean_c − overall_mean)` come from a single factorisation reused
+  across classes rather than an explicit matrix inverse (Python reference,
+  `scipy.linalg.cho_factor`/`cho_solve`) or a per-class Gaussian elimination
+  (Rust backend, `nalgebra`) — the numerically optimal route for an SPD system.
+  Decoded classes are unchanged; the naive-Bayes decoder (diagonal covariance) is
+  unaffected.
 
 ### Studio platform
 - The FPGA synthesis panel can export a synthesis-scoped evidence bundle from

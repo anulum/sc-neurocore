@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from typing import Any
 import numpy as np
+from scipy.linalg import cho_factor, cho_solve
 
 
 def population_vector_decode(
@@ -95,12 +96,16 @@ def linear_discriminant_decode(
         diff = class_data - means[c]
         s_w += diff.T @ diff
     s_w += 1e-8 * np.eye(s_w.shape[0])
-    s_w_inv = np.linalg.inv(s_w)
+    # s_w (within-class scatter + ridge) is symmetric positive-definite, so the
+    # Fisher weights w = s_w^{-1} (mean_c - overall_mean) come from a single
+    # Cholesky factorisation reused across classes — the numerically optimal route
+    # for an SPD system, without forming the explicit inverse.
+    s_w_chol = cho_factor(s_w)
     best_class = classes[0]
     best_score = -np.inf
     overall_mean = train_data.mean(axis=0)
     for c in classes:
-        w = s_w_inv @ (means[c] - overall_mean)
+        w = cho_solve(s_w_chol, means[c] - overall_mean)
         score = w @ test_point
         if score > best_score:
             best_score = score
