@@ -252,6 +252,22 @@ import {
   characterizeRequestConfig,
   characterizeRunStartState,
 } from "../characterizeStoreState";
+import {
+  activeTabState,
+  currentState,
+  dtState,
+  durationState,
+  equationsState,
+  modelDefaultsState,
+  modelFilterState,
+  numberRecordEntryState,
+  protocolState,
+  resetState,
+  sourceModeState,
+  sweepParamState,
+  sweepParamYState,
+  thresholdState,
+} from "../studioInputState";
 
 let debounceTimer: ReturnType<typeof setTimeout> | null = null;
 syncStoredStudioAuthToken(setStudioAuthToken);
@@ -547,21 +563,30 @@ export const useStudioStore = create<StudioState>((set, get) => ({
   error: null, isSimulating: false,
   activeTab: "trace", modelFilter: "", sweepParam: "", sweepParamY: "",
 
-  setSourceMode: (m) => set({ sourceMode: m }),
-  setEquations: (eqs) => { set({ equations: eqs }); get().autoSimulate(); },
-  setThreshold: (t) => { set({ threshold: t }); get().autoSimulate(); },
-  setReset: (r) => { set({ reset: r }); get().autoSimulate(); },
-  setOdeParam: (key, value) => { set((s) => ({ odeParams: { ...s.odeParams, [key]: value } })); get().autoSimulate(); },
-  setOdeInit: (key, value) => { set((s) => ({ odeInit: { ...s.odeInit, [key]: value } })); get().autoSimulate(); },
-  setModelParam: (key, value) => { set((s) => ({ modelParams: { ...s.modelParams, [key]: value } })); get().autoSimulate(); },
-  setDt: (dt) => { set({ dt }); get().autoSimulate(); },
-  setDuration: (d) => { set({ duration: d }); get().autoSimulate(); },
-  setCurrent: (c) => { set({ current: c }); get().autoSimulate(); },
-  setProtocol: (p) => { set({ protocol: p }); get().autoSimulate(); },
-  setActiveTab: (tab) => set({ activeTab: tab }),
-  setModelFilter: (f) => set({ modelFilter: f }),
-  setSweepParam: (p) => set({ sweepParam: p }),
-  setSweepParamY: (p) => set({ sweepParamY: p }),
+  setSourceMode: (m) => set(sourceModeState(m)),
+  setEquations: (eqs) => { set(equationsState(eqs)); get().autoSimulate(); },
+  setThreshold: (t) => { set(thresholdState(t)); get().autoSimulate(); },
+  setReset: (r) => { set(resetState(r)); get().autoSimulate(); },
+  setOdeParam: (key, value) => {
+    set((s) => numberRecordEntryState("odeParams", s.odeParams, key, value));
+    get().autoSimulate();
+  },
+  setOdeInit: (key, value) => {
+    set((s) => numberRecordEntryState("odeInit", s.odeInit, key, value));
+    get().autoSimulate();
+  },
+  setModelParam: (key, value) => {
+    set((s) => numberRecordEntryState("modelParams", s.modelParams, key, value));
+    get().autoSimulate();
+  },
+  setDt: (dt) => { set(dtState(dt)); get().autoSimulate(); },
+  setDuration: (d) => { set(durationState(d)); get().autoSimulate(); },
+  setCurrent: (c) => { set(currentState(c)); get().autoSimulate(); },
+  setProtocol: (p) => { set(protocolState(p)); get().autoSimulate(); },
+  setActiveTab: (tab) => set(activeTabState(tab)),
+  setModelFilter: (f) => set(modelFilterState(f)),
+  setSweepParam: (p) => set(sweepParamState(p)),
+  setSweepParamY: (p) => set(sweepParamYState(p)),
 
   loadTemplates: async () => set(templatesLoadedState(await fetchTemplates())),
   loadCapabilities: async () => {
@@ -1448,10 +1473,7 @@ export const useStudioStore = create<StudioState>((set, get) => ({
   resetDefaults: () => {
     const s = get();
     if (s.sourceMode === "model" && s.modelDetail) {
-      const params: Record<string, number> = {};
-      for (const p of s.modelDetail.params) params[p.name] = p.default;
-      for (const sv of s.modelDetail.state_vars) params[sv.name] = sv.default;
-      set({ modelParams: params, dt: s.modelDetail.dt, current: 10, duration: 100 });
+      set(modelDefaultsState(s.modelDetail));
     }
     get().runSimulation();
   },
