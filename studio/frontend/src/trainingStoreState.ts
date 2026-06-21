@@ -83,6 +83,10 @@ export interface TrainingFailureStatePatch {
   trainingStatus?: "failed";
 }
 
+export interface TrainingPreconditionErrorStatePatch {
+  error: string;
+}
+
 export interface TrainingExportSuccessStatePatch {
   error: null;
 }
@@ -195,6 +199,12 @@ export function trainingFailureState(
       : fallbackMessage,
     ...(options.markFailed ? { trainingStatus: "failed" as const } : {}),
   };
+}
+
+export function trainingPreconditionErrorState(
+  message: string,
+): TrainingPreconditionErrorStatePatch {
+  return { error: message };
 }
 
 export function trainingExportSuccessState(): TrainingExportSuccessStatePatch {

@@ -183,6 +183,7 @@ import {
   trainingEpochAppendedState,
   trainingExportSuccessState,
   trainingFailureState,
+  trainingPreconditionErrorState,
   trainingStartedState,
   trainingStartState,
   trainingStoppingState,
@@ -1436,7 +1437,7 @@ export const useStudioStore = create<StudioState>((set, get) => ({
   verifyTrainingWeightRestoreArtifact: async () => {
     const restorePlan = get().trainingWeightRestorePlan;
     if (restorePlan === null) {
-      set({ error: "No training weight restore plan is available." });
+      set(trainingPreconditionErrorState("No training weight restore plan is available."));
       return;
     }
     set(trainingWeightRestoreVerificationStartState());
@@ -1455,7 +1456,9 @@ export const useStudioStore = create<StudioState>((set, get) => ({
   exportTrainingWeightRestoreVerification: () => {
     const { trainingWeightRestorePlan, trainingWeightRestoreVerification } = get();
     if (trainingWeightRestorePlan === null || trainingWeightRestoreVerification === null) {
-      set({ error: "No verified training weight artifact is available for export." });
+      set(trainingPreconditionErrorState(
+        "No verified training weight artifact is available for export.",
+      ));
       return;
     }
     try {

@@ -19,6 +19,7 @@ import {
   trainingEpochAppendedState,
   trainingExportSuccessState,
   trainingFailureState,
+  trainingPreconditionErrorState,
   trainingStartedState,
   trainingStartState,
   trainingStoppingState,
@@ -172,6 +173,8 @@ describe("training store state helpers", () => {
       error: "fallback",
       trainingStatus: "failed",
     });
+    expect(trainingPreconditionErrorState("No training weight restore plan is available."))
+      .toEqual({ error: "No training weight restore plan is available." });
     expect(trainingExportSuccessState()).toEqual({ error: null });
   });
 });
