@@ -44,7 +44,7 @@ def test_training_process_task_writes_terminal_evidence(
 ) -> None:
     """Training process task writes route-compatible terminal artifacts."""
 
-    def complete_training(job: TrainingJob) -> None:
+    def complete_training(job: TrainingJob, context: object = None) -> None:
         job.status = "completed"
         job.final_metrics = {
             "train_loss": 0.1,
@@ -90,7 +90,7 @@ def test_training_process_task_publishes_worker_event_log(
 ) -> None:
     """Training process task persists child-process events for live tailing."""
 
-    def complete_training(job: TrainingJob) -> None:
+    def complete_training(job: TrainingJob, context: object = None) -> None:
         job._emit("config", {"job_id": job.id, "dataset": "synthetic"})
         job._emit("batch", {"batch": 1})
         job._emit("epoch", {"epoch": 0, "train_accuracy": 0.75})
@@ -130,7 +130,7 @@ def test_training_process_task_publishes_weight_checkpoint_metadata(
 ) -> None:
     """Training process task publishes terminal weight artifacts when captured."""
 
-    def complete_training(job: TrainingJob) -> None:
+    def complete_training(job: TrainingJob, context: object = None) -> None:
         job.status = "completed"
         job.final_metrics = {
             "train_loss": 0.1,
@@ -186,7 +186,7 @@ def test_training_process_task_writes_failed_evidence(
 ) -> None:
     """Training process task writes failed evidence before propagating errors."""
 
-    def fail_training(_job: TrainingJob) -> None:
+    def fail_training(_job: TrainingJob, _context: object = None) -> None:
         raise RuntimeError("training process boom")
 
     monkeypatch.setattr(TrainingJob, "_train", fail_training)

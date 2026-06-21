@@ -130,7 +130,7 @@ class TestJobLifecycle:
     ) -> None:
         """Bounded training writes status and action evidence artifacts."""
 
-        def complete_training(job: TrainingJob) -> None:
+        def complete_training(job: TrainingJob, context: object = None) -> None:
             job.status = "completed"
             job.final_metrics = {
                 "train_loss": 0.1,
@@ -171,7 +171,7 @@ class TestJobLifecycle:
     ) -> None:
         """Failed bounded training writes failed evidence before propagating."""
 
-        def fail_training(job: TrainingJob) -> None:
+        def fail_training(job: TrainingJob, context: object = None) -> None:
             raise RuntimeError("training boom")
 
         monkeypatch.setattr(TrainingJob, "_train", fail_training)
@@ -197,7 +197,7 @@ class TestJobLifecycle:
     ) -> None:
         """Stopped bounded training writes cancelled evidence before propagating."""
 
-        def stop_training_run(job: TrainingJob) -> None:
+        def stop_training_run(job: TrainingJob, context: object = None) -> None:
             job.status = "stopped"
 
         monkeypatch.setattr(TrainingJob, "_train", stop_training_run)
