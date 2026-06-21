@@ -9,7 +9,7 @@
     "python_model_classes": 157,
     "python_model_source_modules": 151,
     "rust_pyo3_model_wrappers": 175,
-    "test_files": 836
+    "test_files": 838
   },
   "documentation": {
     "public_pages": [
@@ -2464,6 +2464,7 @@
       "tests/test_security_side_channel_benchmark.py",
       "tests/test_security_side_channel_metrics.py",
       "tests/test_security_thermal_sc_encoding.py",
+      "tests/test_sensitivity_analysis.py",
       "tests/test_sensors_dvs.py",
       "tests/test_serve_server.py",
       "tests/test_shd_iterative_prune_protocol.py",
@@ -2507,6 +2508,7 @@
       "tests/test_streaming_spike_codec.py",
       "tests/test_structured_logging.py",
       "tests/test_studio_action_evidence.py",
+      "tests/test_studio_adaptive_precision_evidence.py",
       "tests/test_studio_advanced.py",
       "tests/test_studio_analysis.py",
       "tests/test_studio_analysis_manifest.py",
