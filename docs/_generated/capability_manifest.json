@@ -9,7 +9,7 @@
     "python_model_classes": 157,
     "python_model_source_modules": 151,
     "rust_pyo3_model_wrappers": 175,
-    "test_files": 839
+    "test_files": 841
   },
   "documentation": {
     "public_pages": [
@@ -2046,6 +2046,7 @@
       "tests/test_gap_junction.py",
       "tests/test_gap_models.py",
       "tests/test_generate_docs.py",
+      "tests/test_generative_audio_text.py",
       "tests/test_generative_three_d_contracts.py",
       "tests/test_glif_backends.py",
       "tests/test_gnn_sc_mode.py",
@@ -2105,6 +2106,7 @@
       "tests/test_interfaces/test_bci_hil_manifest.py",
       "tests/test_interfaces/test_dvs_input.py",
       "tests/test_interfaces/test_zenith_bci_loop.py",
+      "tests/test_interfaces_real_world.py",
       "tests/test_ir_python.py",
       "tests/test_ir_type_checker.py",
       "tests/test_izhikevich2007_backends.py",
