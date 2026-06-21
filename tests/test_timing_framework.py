@@ -36,6 +36,7 @@ _FORMAL_UNAVAILABLE = shutil.which("sby") is None or shutil.which("cvc5") is Non
 
 
 def test_emitters_encode_bounded_timing_contract() -> None:
+    """Both external model-checker emitters encode the bounded timing contract."""
     prop = TimingProperty(
         name="dense_start_to_done",
         kind="latency",
@@ -56,6 +57,7 @@ def test_emitters_encode_bounded_timing_contract() -> None:
 
 
 def test_timing_property_rejects_invalid_bounds() -> None:
+    """A negative cycle bound is rejected at property construction."""
     with pytest.raises(ValueError, match="bound_cycles"):
         TimingProperty(
             name="dense_bad_bound",
@@ -67,6 +69,7 @@ def test_timing_property_rejects_invalid_bounds() -> None:
 
 
 def test_orchestrator_reports_missing_external_dependency() -> None:
+    """A missing formal executable fails the proof instead of passing it."""
     orchestrator = TimingProofOrchestrator(
         EXAMPLE_SBY,
         executable="sc_neurocore_missing_sby",
@@ -86,6 +89,7 @@ def test_orchestrator_reports_missing_external_dependency() -> None:
     reason="SymbiYosys/cvc5 external formal dependencies are unavailable",
 )
 def test_dense_layer_latency_example_proves_with_symbiyosys(tmp_path: Path) -> None:
+    """The dense-layer latency example proves under SymbiYosys + cvc5."""
     result = TimingProofOrchestrator(EXAMPLE_SBY, temp_root=tmp_path).prove(timeout_s=120)
 
     assert result.passed, result.stdout_tail + "\n" + result.stderr_tail
@@ -94,6 +98,7 @@ def test_dense_layer_latency_example_proves_with_symbiyosys(tmp_path: Path) -> N
 
 
 def test_cdc_template_example_binds_property_in_open_source_subset() -> None:
+    """The CDC example binds the template in the open-source assertion subset."""
     # The consumable surface MIF reads: the macro binding plus an open-source-flow
     # SymbiYosys task (procedural-immediate assertions, no concurrent SVA).
     sv_text = CDC_SV.read_text(encoding="utf-8")
@@ -113,6 +118,7 @@ def test_cdc_template_example_binds_property_in_open_source_subset() -> None:
 
 @pytest.mark.skipif(_FORMAL_UNAVAILABLE, reason="SymbiYosys/cvc5 unavailable")
 def test_cdc_two_flop_synchroniser_proves_with_symbiyosys(tmp_path: Path) -> None:
+    """A correct two-flop synchroniser proves under SymbiYosys + cvc5."""
     result = TimingProofOrchestrator(CDC_SBY, temp_root=tmp_path).prove(timeout_s=180)
 
     assert result.passed, result.stdout_tail + "\n" + result.stderr_tail
@@ -122,6 +128,7 @@ def test_cdc_two_flop_synchroniser_proves_with_symbiyosys(tmp_path: Path) -> Non
 
 @pytest.mark.skipif(_FORMAL_UNAVAILABLE, reason="SymbiYosys/cvc5 unavailable")
 def test_cdc_template_rejects_single_flop_synchroniser(tmp_path: Path) -> None:
+    """The depth-2 CDC property rejects a one-flop synchroniser (non-vacuous)."""
     # A one-flop "synchroniser" delays the source by one cycle, not two; the depth-2
     # binding must catch it, proving the property is not vacuous.
     broken_sv = tmp_path / "broken_one_flop.sv"
