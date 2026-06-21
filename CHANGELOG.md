@@ -47,6 +47,19 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
   0.51x); the compiled backends remain available by name for cross-language parity
   and portability. Added `docs/api/gpfa.md` describing the deterministic init, the
   structured EM contract, the five backends and the benchmark.
+- Phi* (integrated information, `analysis/phi_estimation.py`) now computes the
+  Gaussian mutual information from covariance log-determinants taken via Cholesky
+  (`MI = 0.5(log|Cov_X| + log|Cov_Y| - log|Cov_XY|)`) instead of a product/ratio of
+  raw determinants with a `1e-300` clamp, which underflowed for larger channel
+  counts; the single-channel covariance now uses the unbiased (`ddof=1`) estimator
+  consistently. `phi_star(..., backend=...)` gains a polyglot dispatch over five
+  parity-verified backends — NumPy, Rust (`py_phi_star`, re-exported from the
+  bridge), Julia and Mojo (both previously non-functional stubs, now real), and a
+  new Go c-shared backend — agreeing with the reference to ~1e-15 (Mojo ~1e-10).
+  `backend="auto"` prefers Rust; `benchmarks/bench_phi.py` measures every compiled
+  backend faster than NumPy (Rust ~7x, Julia ~4.4x, Mojo ~3.5x, Go ~3.0x). Added
+  parity and loader-branch tests (phi_estimation.py at 100% statement coverage) and
+  refreshed the `docs/api/analysis.md` Phi* section.
 
 ### Studio platform
 - The FPGA synthesis panel can export a synthesis-scoped evidence bundle from

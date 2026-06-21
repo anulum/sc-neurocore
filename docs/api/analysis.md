@@ -324,13 +324,27 @@ benchmark.
 `phi_star(...)` estimates geometric integrated information following
 Barrett and Seth (2011). It compares Gaussian mutual information between
 past and future whole-system states against contiguous bipartitions and
-returns a non-negative reducibility estimate in bits. This is a tractable
+returns a non-negative reducibility estimate in nats. This is a tractable
 analysis metric, not a claim about consciousness or intrinsic causal power.
+
+Each Gaussian mutual information is a difference of covariance
+**log-determinants** taken from Cholesky factors
+(`MI = 0.5 (log|Cov_X| + log|Cov_Y| - log|Cov_XY|)`). Summing log-determinants is
+the numerically stable form of the determinant ratio: the naive product of raw
+determinants underflows for larger channel counts, where the log-determinant form
+stays exact.
 
 `phi_from_spike_trains(...)` bins binary spike trains into spike counts and
 then applies `phi_star(...)` at the requested lag. The estimator is suitable
 for small analysis windows and coarse-grained spike-train diagnostics; it is
 not a full IIT minimum-information-partition search.
+
+**Polyglot chain.** `phi_star(..., backend=...)` runs the same estimator across
+five backends (NumPy / Rust / Julia / Go / Mojo), agreeing to floating-point
+round-off (Rust, Julia, Go ~1e-15; Mojo ~1e-10). `backend="auto"` prefers the
+Rust engine when present, otherwise the NumPy reference. On the reference
+workload (`benchmarks/bench_phi.py`, i5-11600K, shielded cores) every compiled
+backend beats NumPy: Rust ~7x, Julia ~4.4x, Mojo ~3.5x, Go ~3.0x.
 
 The public contract is tested as follows:
 
@@ -341,7 +355,9 @@ The public contract is tested as follows:
 - single-channel and too-short inputs return `0.0`;
 - Phi* is always non-negative;
 - correlated spike trains pass through the binning adapter;
-- independent random spike trains remain low-Phi under the maintained bound.
+- independent random spike trains remain low-Phi under the maintained bound;
+- the Rust, Julia, Go and Mojo backends match the NumPy reference (gated parity
+  tests).
 
 ::: sc_neurocore.analysis.phi_estimation.phi_star
 

@@ -467,6 +467,14 @@ except ImportError:
     _gpfa_em_rust_available = False
 
 try:
+    from sc_neurocore_engine.sc_neurocore_engine import py_phi_star
+
+    __all__ += ["py_phi_star"]
+    _phi_star_rust_available = True
+except ImportError:
+    _phi_star_rust_available = False
+
+try:
     from sc_neurocore_engine.sc_neurocore_engine import (
         py_ollivier_ricci_curvature,
     )

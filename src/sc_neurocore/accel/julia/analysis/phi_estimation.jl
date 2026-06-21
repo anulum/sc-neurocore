@@ -5,42 +5,57 @@
 # ORCID: 0009-0009-3560-0851
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore — Julia acceleration for analysis/phi_estimation
+#
+# Geometric integrated information Phi* (Barrett & Seth 2011) under the Gaussian
+# assumption. Mutual information is a difference of covariance log-determinants
+# taken from Cholesky factors (LAPACK via Julia's LinearAlgebra), matching the
+# NumPy reference and the Rust, Go and Mojo backends within float64 round-off.
 
-module PhiEstimationAccel
+module PhiAccel
 
 using Statistics, LinearAlgebra
 
-function phi_star(data, tau)
-    n, T = data.shape
-    if 2 * tau >= T || n < 2
+# log|A| for a symmetric positive-definite matrix via Cholesky.
+logdet_spd(cov) = logdet(cholesky(Symmetric(cov)))
+
+# Gaussian mutual information MI(X;Y) = 0.5 (log|Cov_X| + log|Cov_Y| - log|Cov_XY|).
+# Covariances use the unbiased (ddof=1) estimator with a 1e-10 diagonal jitter.
+function gaussian_mi(x, y)
+    eps = 1e-10
+    cov_x = cov(x; dims=2) + eps * I
+    cov_y = cov(y; dims=2) + eps * I
+    cov_xy = cov(vcat(x, y); dims=2) + eps * I
+    mi = 0.5 * (logdet_spd(cov_x) + logdet_spd(cov_y) - logdet_spd(cov_xy))
+    return max(0.0, mi)
+end
+
+"""
+    phi_star(data, tau)
+
+Geometric Phi* for a `(n_channels, n_timesteps)` matrix. Returns a non-negative
+`Float64`; `0` means fully reducible. Bipartitions are the contiguous splits
+`{1..k} | {k+1..n}`.
+"""
+function phi_star(data_in, tau_in)
+    data = Matrix{Float64}(data_in)
+    tau = Int(tau_in)
+    n, t = size(data)
+    if n < 2 || 2 * tau >= t
         return 0.0
-    past = data[:, :-tau]
-    future = data[:, tau:]
-    # Joint mutual information I(past; future)
-    mi_whole = _gaussian_mi(past, future)
-    # Minimum information partition: try all bipartitions
-    # For tractability, only try contiguous splits (first k vs rest)
+    end
+
+    past = data[:, 1:(t - tau)]
+    future = data[:, (1 + tau):t]
+
+    mi_whole = gaussian_mi(past, future)
     mi_parts_min = Inf
-    for k in 1:1, n
-        idx_a = list(range(k))
-        idx_b = list(range(k, n))
-        mi_a = _gaussian_mi(past[idx_a], future[idx_a])
-        mi_b = _gaussian_mi(past[idx_b], future[idx_b])
+    for k in 1:(n - 1)
+        mi_a = gaussian_mi(past[1:k, :], future[1:k, :])
+        mi_b = gaussian_mi(past[(k + 1):n, :], future[(k + 1):n, :])
         mi_parts_min = min(mi_parts_min, mi_a + mi_b)
-    phi = max(0.0, mi_whole - mi_parts_min)
-    return float(phi)
+    end
+
+    return max(0.0, mi_whole - mi_parts_min)
 end
 
-function phi_from_spike_trains(spikes, bin_size, tau)
-    n_neurons, n_steps = spikes.shape
-    n_bins = n_steps // bin_size
-    if n_bins < 2 * tau + 2
-        return 0.0
-    # Bin spike trains into spike counts
-    binned = zeros((n_neurons, n_bins))
-    for b in 1:n_bins
-        binned[:, b] = spikes[:, b * bin_size : (b + 1) * bin_size].sum(axis=1)
-    return phi_star(binned, tau=tau)
-end
-
-end # module PhiEstimationAccel
+end # module PhiAccel

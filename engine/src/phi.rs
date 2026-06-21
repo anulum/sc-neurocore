@@ -9,6 +9,8 @@
 //! Barrett & Seth 2011 geometric Phi under Gaussian assumption.
 //! Phi* = MI(past; future) - max_partition sum MI(past_k; future_k)
 
+use nalgebra::DMatrix;
+
 /// Compute Phi* for a multi-channel time series.
 /// data: [n_channels][n_timesteps], row-major.
 pub fn phi_star(data: &[Vec<f64>], tau: usize) -> f64 {
@@ -40,7 +42,12 @@ pub fn phi_star(data: &[Vec<f64>], tau: usize) -> f64 {
     (mi_whole - mi_parts_min).max(0.0)
 }
 
-/// Gaussian mutual information: MI(X;Y) = 0.5 * ln(det(Cov_X) * det(Cov_Y) / det(Cov_XY))
+/// Gaussian mutual information `MI(X;Y) = 0.5 (log|Cov_X| + log|Cov_Y| - log|Cov_XY|)`.
+///
+/// The covariances are symmetric positive-definite (regularised with `eps` on the
+/// diagonal), so each log-determinant is taken from a Cholesky factor
+/// (`2 Σ log Lᵢᵢ`). Summing log-determinants is numerically stable where the former
+/// product/ratio of raw determinants would underflow for larger channel counts.
 fn gaussian_mi(x: &[Vec<f64>], y: &[Vec<f64>]) -> f64 {
     let eps = 1e-10;
     let cov_x = covariance_matrix(x, eps);
@@ -50,11 +57,7 @@ fn gaussian_mi(x: &[Vec<f64>], y: &[Vec<f64>]) -> f64 {
     xy.extend_from_slice(y);
     let cov_xy = covariance_matrix(&xy, eps);
 
-    let det_x = determinant(&cov_x).max(1e-300);
-    let det_y = determinant(&cov_y).max(1e-300);
-    let det_xy = determinant(&cov_xy).max(1e-300);
-
-    let mi = 0.5 * (det_x * det_y / det_xy).ln();
+    let mi = 0.5 * (logdet_spd(&cov_x) + logdet_spd(&cov_y) - logdet_spd(&cov_xy));
     mi.max(0.0)
 }
 
@@ -92,50 +95,21 @@ fn covariance_matrix(data: &[Vec<f64>], eps: f64) -> Vec<Vec<f64>> {
     cov
 }
 
-/// Determinant via LU decomposition (in-place, partial pivoting).
-fn determinant(matrix: &[Vec<f64>]) -> f64 {
+/// Natural log-determinant of a symmetric positive-definite matrix via Cholesky.
+///
+/// `log|A| = 2 Σ log Lᵢᵢ` where `A = L Lᵀ`. The phi covariances are SPD by
+/// construction (`eps`-regularised), so the Cholesky cannot fail in practice.
+fn logdet_spd(matrix: &[Vec<f64>]) -> f64 {
     let n = matrix.len();
     if n == 0 {
-        return 1.0;
+        return 0.0;
     }
-    if n == 1 {
-        return matrix[0][0];
-    }
-    if n == 2 {
-        return matrix[0][0] * matrix[1][1] - matrix[0][1] * matrix[1][0];
-    }
-
-    let mut a: Vec<Vec<f64>> = matrix.to_vec();
-    let mut det = 1.0f64;
-
-    for col in 0..n {
-        // Partial pivot
-        let mut max_row = col;
-        let mut max_val = a[col][col].abs();
-        for row in (col + 1)..n {
-            if a[row][col].abs() > max_val {
-                max_val = a[row][col].abs();
-                max_row = row;
-            }
-        }
-        if max_val < 1e-300 {
-            return 0.0;
-        }
-        if max_row != col {
-            a.swap(col, max_row);
-            det = -det;
-        }
-
-        det *= a[col][col];
-        let pivot = a[col][col];
-        for row in (col + 1)..n {
-            let factor = a[row][col] / pivot;
-            for j in (col + 1)..n {
-                a[row][j] -= factor * a[col][j];
-            }
-        }
-    }
-    det
+    let flat: Vec<f64> = matrix.iter().flatten().copied().collect();
+    let chol = DMatrix::<f64>::from_row_slice(n, n, &flat)
+        .cholesky()
+        .expect("phi covariance must be symmetric positive-definite");
+    let l = chol.l();
+    2.0 * (0..n).map(|i| l[(i, i)].ln()).sum::<f64>()
 }
 
 #[cfg(test)]
@@ -185,20 +159,22 @@ mod tests {
     }
 
     #[test]
-    fn test_determinant_2x2() {
-        let m = vec![vec![1.0, 2.0], vec![3.0, 4.0]];
-        let det = determinant(&m);
-        assert!((det - (-2.0)).abs() < 1e-10);
+    fn test_logdet_spd_diagonal() {
+        // log|diag(2, 8)| = log 16
+        let m = vec![vec![2.0, 0.0], vec![0.0, 8.0]];
+        assert!((logdet_spd(&m) - 16.0_f64.ln()).abs() < 1e-10);
     }
 
     #[test]
-    fn test_determinant_3x3() {
+    fn test_logdet_spd_matches_dense() {
+        // SPD matrix; compare against a direct ln(det) reference.
         let m = vec![
-            vec![1.0, 2.0, 3.0],
-            vec![0.0, 1.0, 4.0],
-            vec![5.0, 6.0, 0.0],
+            vec![4.0, 1.0, 0.5],
+            vec![1.0, 3.0, 0.2],
+            vec![0.5, 0.2, 2.0],
         ];
-        let det = determinant(&m);
-        assert!((det - 1.0).abs() < 1e-10);
+        let det = 4.0 * (3.0 * 2.0 - 0.2 * 0.2) - 1.0 * (1.0 * 2.0 - 0.2 * 0.5)
+            + 0.5 * (1.0 * 0.2 - 3.0 * 0.5);
+        assert!((logdet_spd(&m) - det.ln()).abs() < 1e-10);
     }
 }
