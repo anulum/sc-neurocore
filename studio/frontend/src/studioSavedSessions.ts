@@ -13,6 +13,25 @@ export interface StudioSavedSession {
   state: Record<string, unknown>;
 }
 
+export type StudioSavedSessionSourceMode = "model" | "ode";
+
+export interface StudioSavedSessionInput {
+  sourceMode: StudioSavedSessionSourceMode;
+  equations: string[];
+  threshold: string;
+  reset: string;
+  odeParams: Record<string, number>;
+  odeInit: Record<string, number>;
+  selectedModelName: string;
+  modelParams: Record<string, number>;
+  dt: number;
+  duration: number;
+  current: number;
+  protocol: string;
+}
+
+export interface StudioSavedSessionRestoreState extends StudioSavedSessionInput {}
+
 export interface StudioSavedSessionStorage {
   getItem(key: string): string | null;
   setItem(key: string, value: string): void;
@@ -29,8 +48,74 @@ function isStudioSavedSession(value: unknown): value is StudioSavedSession {
   return typeof value.name === "string" && isRecord(value.state);
 }
 
+function stringValue(value: unknown, fallback: string): string {
+  return typeof value === "string" ? value : fallback;
+}
+
+function sourceModeValue(value: unknown): StudioSavedSessionSourceMode {
+  return value === "ode" ? "ode" : "model";
+}
+
+function stringArrayValue(value: unknown): string[] {
+  return Array.isArray(value)
+    ? value.filter((item): item is string => typeof item === "string")
+    : [];
+}
+
+function finiteNumberValue(value: unknown, fallback: number): number {
+  return typeof value === "number" && Number.isFinite(value) && value !== 0
+    ? value
+    : fallback;
+}
+
+function numberRecordValue(value: unknown): Record<string, number> {
+  if (!isRecord(value)) {
+    return {};
+  }
+  return Object.fromEntries(
+    Object.entries(value).filter((entry): entry is [string, number] =>
+      typeof entry[1] === "number" && Number.isFinite(entry[1])),
+  );
+}
+
 export function browserSavedSessionStorage(): StudioSavedSessionStorage | null {
   return typeof localStorage === "undefined" ? null : localStorage;
+}
+
+export function studioSavedSessionState(input: StudioSavedSessionInput): Record<string, unknown> {
+  return {
+    sourceMode: input.sourceMode,
+    equations: input.equations,
+    threshold: input.threshold,
+    reset: input.reset,
+    odeParams: input.odeParams,
+    odeInit: input.odeInit,
+    selectedModelName: input.selectedModelName,
+    modelParams: input.modelParams,
+    dt: input.dt,
+    duration: input.duration,
+    current: input.current,
+    protocol: input.protocol,
+  };
+}
+
+export function studioSavedSessionRestoreState(
+  state: Record<string, unknown>,
+): StudioSavedSessionRestoreState {
+  return {
+    sourceMode: sourceModeValue(state.sourceMode),
+    equations: stringArrayValue(state.equations),
+    threshold: stringValue(state.threshold, ""),
+    reset: stringValue(state.reset, ""),
+    odeParams: numberRecordValue(state.odeParams),
+    odeInit: numberRecordValue(state.odeInit),
+    selectedModelName: stringValue(state.selectedModelName, ""),
+    modelParams: numberRecordValue(state.modelParams),
+    dt: finiteNumberValue(state.dt, 0.1),
+    duration: finiteNumberValue(state.duration, 100),
+    current: finiteNumberValue(state.current, 10),
+    protocol: stringValue(state.protocol, "constant"),
+  };
 }
 
 export function readStoredStudioSessions(

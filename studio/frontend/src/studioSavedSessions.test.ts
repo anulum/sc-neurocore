@@ -12,8 +12,11 @@ import {
   STUDIO_SAVED_SESSIONS_KEY,
   readStoredStudioSessions,
   removeStudioSavedSession,
+  studioSavedSessionRestoreState,
+  studioSavedSessionState,
   upsertStudioSavedSession,
   writeStoredStudioSessions,
+  type StudioSavedSessionInput,
   type StudioSavedSession,
   type StudioSavedSessionStorage,
 } from "./studioSavedSessions";
@@ -35,6 +38,20 @@ describe("Studio saved-session persistence", () => {
   const demoSession: StudioSavedSession = {
     name: "demo",
     state: { sourceMode: "model", selectedModelName: "lif" },
+  };
+  const demoInput: StudioSavedSessionInput = {
+    current: 10,
+    dt: 0.1,
+    duration: 100,
+    equations: ["dv/dt = -v / tau"],
+    modelParams: { tau: 10 },
+    odeInit: { v: -65 },
+    odeParams: { tau: 20 },
+    protocol: "constant",
+    reset: "v = -65",
+    selectedModelName: "lif",
+    sourceMode: "model",
+    threshold: "v > -50",
   };
 
   it("returns an empty list when browser storage is unavailable or invalid", () => {
@@ -76,5 +93,68 @@ describe("Studio saved-session persistence", () => {
     const existing: StudioSavedSession = { name: "other", state: { dt: 0.1 } };
 
     expect(removeStudioSavedSession([demoSession, existing], "demo")).toEqual([existing]);
+  });
+
+  it("builds the persisted state snapshot from the active Studio state", () => {
+    expect(studioSavedSessionState(demoInput)).toEqual({
+      current: 10,
+      dt: 0.1,
+      duration: 100,
+      equations: ["dv/dt = -v / tau"],
+      modelParams: { tau: 10 },
+      odeInit: { v: -65 },
+      odeParams: { tau: 20 },
+      protocol: "constant",
+      reset: "v = -65",
+      selectedModelName: "lif",
+      sourceMode: "model",
+      threshold: "v > -50",
+    });
+  });
+
+  it("restores valid persisted state with finite numeric records", () => {
+    expect(studioSavedSessionRestoreState({
+      ...studioSavedSessionState(demoInput),
+      equations: ["ok", 4],
+      modelParams: { keep: 1, drop: Number.NaN, text: "x" },
+      odeInit: { v: -64, invalid: Number.POSITIVE_INFINITY },
+      sourceMode: "ode",
+    })).toEqual({
+      ...demoInput,
+      equations: ["ok"],
+      modelParams: { keep: 1 },
+      odeInit: { v: -64 },
+      sourceMode: "ode",
+    });
+  });
+
+  it("falls back safely for malformed restored session fields", () => {
+    expect(studioSavedSessionRestoreState({
+      current: Number.NaN,
+      dt: 0,
+      duration: Number.POSITIVE_INFINITY,
+      equations: "not-array",
+      modelParams: [],
+      odeInit: null,
+      odeParams: { keep: 2, bad: "x" },
+      protocol: 4,
+      reset: null,
+      selectedModelName: false,
+      sourceMode: "invalid",
+      threshold: undefined,
+    })).toEqual({
+      current: 10,
+      dt: 0.1,
+      duration: 100,
+      equations: [],
+      modelParams: {},
+      odeInit: {},
+      odeParams: { keep: 2 },
+      protocol: "constant",
+      reset: "",
+      selectedModelName: "",
+      sourceMode: "model",
+      threshold: "",
+    });
   });
 });

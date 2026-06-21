@@ -70,6 +70,8 @@ import {
 import {
   readStoredStudioSessions,
   removeStudioSavedSession,
+  studioSavedSessionRestoreState,
+  studioSavedSessionState,
   upsertStudioSavedSession,
   writeStoredStudioSessions,
   type StudioSavedSession,
@@ -1621,12 +1623,7 @@ export const useStudioStore = create<StudioState>((set, get) => ({
 
   saveSession: (name) => {
     const s = get();
-    const state = {
-      sourceMode: s.sourceMode, equations: s.equations, threshold: s.threshold,
-      reset: s.reset, odeParams: s.odeParams, odeInit: s.odeInit,
-      selectedModelName: s.selectedModelName, modelParams: s.modelParams,
-      dt: s.dt, duration: s.duration, current: s.current, protocol: s.protocol,
-    };
+    const state = studioSavedSessionState(s);
     const sessions = upsertStudioSavedSession(s.savedSessions, { name, state });
     set({ savedSessions: sessions });
     writeStoredStudioSessions(sessions);
@@ -1635,21 +1632,7 @@ export const useStudioStore = create<StudioState>((set, get) => ({
   loadSession: (name) => {
     const session = get().savedSessions.find((ss) => ss.name === name);
     if (!session) return;
-    const st = session.state as Record<string, unknown>;
-    set({
-      sourceMode: (st.sourceMode as SourceMode) || "model",
-      equations: (st.equations as string[]) || [],
-      threshold: (st.threshold as string) || "",
-      reset: (st.reset as string) || "",
-      odeParams: (st.odeParams as Record<string, number>) || {},
-      odeInit: (st.odeInit as Record<string, number>) || {},
-      selectedModelName: (st.selectedModelName as string) || "",
-      modelParams: (st.modelParams as Record<string, number>) || {},
-      dt: (st.dt as number) || 0.1,
-      duration: (st.duration as number) || 100,
-      current: (st.current as number) || 10,
-      protocol: (st.protocol as string) || "constant",
-    });
+    set(studioSavedSessionRestoreState(session.state));
     get().runSimulation();
   },
 
