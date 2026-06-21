@@ -11,25 +11,23 @@
 #   mojo build --emit shared-lib -o libgpfa.so gpfa.mojo
 #
 # Algorithm parity contract: gpfa_em_c runs the GPFA EM loop from a
-# caller-supplied deterministic initialisation (PCA, computed once in
-# Python) and produces trajectories, parameters and exact marginal
-# Gaussian log-likelihoods identical to the NumPy, Rust, Julia and Go
-# backends within float64 round-off.
+# caller-supplied deterministic initialisation. The linear algebra is
+# Cholesky-based and structured: the marginal log-likelihood uses the Woodbury
+# identity and the matrix-determinant lemma, so it never forms the dense
+# (n_obs × n_obs) covariance and matches the NumPy, Rust, Julia and Go backends
+# within float64 round-off.
 #
-# Reference (matches the Python module): Yu, Cunningham, Santhanam, Ryu,
-# Shenoy, Sahani (2009) "Gaussian-process factor analysis for
-# low-dimensional single-trial analysis of neural population activity",
-# J. Neurophysiol. 102:614-635.
+# Reference (matches the Python module): Yu, Cunningham, Santhanam, Ryu, Shenoy,
+# Sahani (2009), J. Neurophysiol. 102:614-635.
 #
 # Mojo 0.26 FFI rules (per feedback_mojo_026_ffi_pattern):
-#   - @export rejects parametric signatures, so every matrix/vector arg
-#     is a raw `Int` address (numpy `arr.ctypes.data`) plus size scalars;
-#     we reconstruct UnsafePointer[Float64, MutAnyOrigin] inside.
-#   - All matrices are flat row-major Float64 (matches the Python + Rust +
-#     Julia + Go convention). `tol` is the lone Float64 scalar.
+#   - @export rejects parametric signatures, so every array arg is a raw `Int`
+#     address (numpy `arr.ctypes.data`) plus size scalars; we reconstruct
+#     UnsafePointer[Float64, MutAnyOrigin] inside. `tol` is the lone Float64.
+#   - All matrices are flat row-major Float64 (Python/Rust/Julia/Go convention).
 
 from std.memory import UnsafePointer, alloc
-from std.math import log, pi, exp
+from std.math import log, pi, exp, sqrt
 
 
 comptime F64Ptr = UnsafePointer[Float64, MutAnyOrigin]
@@ -52,13 +50,6 @@ fn _free(p: F64Ptr):
     raw.free()
 
 
-@always_inline
-fn _fabs(x: Float64) -> Float64:
-    if x < 0.0:
-        return -x
-    return x
-
-
 fn _zero(p: F64Ptr, n: Int):
     for i in range(n):
         p[i] = 0.0
@@ -70,99 +61,71 @@ fn _identity(p: F64Ptr, n: Int):
         p[i * n + i] = 1.0
 
 
-# ─── dense linear algebra (row-major, parity with the Go backend) ─
+# ─── Cholesky-based dense linear algebra (SPD, row-major) ────────
 
-# Solve A x = b (A is n×n, b is n×m) via Gauss-Jordan elimination with
-# partial pivoting. Inputs are left unmodified; the solution is written
-# into the caller-supplied `x` buffer (n×m). A near-singular column is
-# skipped (matches the Go reference exactly for bit-comparable parity).
-fn _mat_solve(a: F64Ptr, b: F64Ptr, x: F64Ptr, n: Int, m: Int):
-    var w = n + m
-    var aug = _alloc(n * w)
+# Lower Cholesky factor L (row-major, upper triangle left at zero) of the
+# symmetric positive-definite matrix `a`. GPFA only factors SPD matrices, so
+# Cholesky is the stable, ~2x cheaper choice over a general LU elimination.
+fn _cholesky(a: F64Ptr, n: Int, l: F64Ptr):
+    _zero(l, n * n)
+    for j in range(n):
+        var d = a[j * n + j]
+        for k in range(j):
+            d -= l[j * n + k] * l[j * n + k]
+        var ljj = sqrt(d)
+        l[j * n + j] = ljj
+        var inv = 1.0 / ljj
+        for i in range(j + 1, n):
+            var s = a[i * n + j]
+            for k in range(j):
+                s -= l[i * n + k] * l[j * n + k]
+            l[i * n + j] = s * inv
+
+
+# Solve M X = B for `cols` right-hand sides (B and X row-major n×cols) given the
+# lower Cholesky factor L of M, via forward and back substitution. `y_work` is a
+# caller-supplied scratch buffer of length n.
+fn _chol_solve(l: F64Ptr, n: Int, b: F64Ptr, cols: Int, x_out: F64Ptr, y_work: F64Ptr):
+    for c in range(cols):
+        for i in range(n):
+            var s = b[i * cols + c]
+            for k in range(i):
+                s -= l[i * n + k] * y_work[k]
+            y_work[i] = s / l[i * n + i]
+        for i_rev in range(n):
+            var i = n - 1 - i_rev
+            var s = y_work[i]
+            for k in range(i + 1, n):
+                s -= l[k * n + i] * x_out[k * cols + c]
+            x_out[i * cols + c] = s / l[i * n + i]
+
+
+# log|M| = 2 Σ log L_ii from the Cholesky factor.
+fn _chol_logdet(l: F64Ptr, n: Int) -> Float64:
+    var s: Float64 = 0.0
     for i in range(n):
-        for j in range(n):
-            aug[i * w + j] = a[i * n + j]
-        for j in range(m):
-            aug[i * w + n + j] = b[i * m + j]
-    for col in range(n):
-        var max_row = col
-        var max_val = _fabs(aug[col * w + col])
-        for row in range(col + 1, n):
-            var v = _fabs(aug[row * w + col])
-            if v > max_val:
-                max_val = v
-                max_row = row
-        if max_val < 1e-30:
-            continue
-        if max_row != col:
-            for k in range(w):
-                var tmp = aug[col * w + k]
-                aug[col * w + k] = aug[max_row * w + k]
-                aug[max_row * w + k] = tmp
-        var pivot = aug[col * w + col]
-        for k in range(w):
-            aug[col * w + k] /= pivot
-        for row in range(n):
-            if row == col:
-                continue
-            var factor = aug[row * w + col]
-            for k in range(w):
-                aug[row * w + k] -= factor * aug[col * w + k]
-    for i in range(n):
-        for j in range(m):
-            x[i * m + j] = aug[i * w + n + j]
-    _free(aug)
-
-
-# Natural log of the absolute determinant of A (n×n) via LU with partial
-# pivoting. A is copied internally and left unmodified. Returns -inf on a
-# singular pivot (unreachable for the positive-definite GPFA covariance).
-fn _mat_logabsdet(a: F64Ptr, n: Int) -> Float64:
-    var m = _alloc(n * n)
-    for i in range(n * n):
-        m[i] = a[i]
-    var log_abs: Float64 = 0.0
-    for col in range(n):
-        var max_row = col
-        var max_val = _fabs(m[col * n + col])
-        for row in range(col + 1, n):
-            var v = _fabs(m[row * n + col])
-            if v > max_val:
-                max_val = v
-                max_row = row
-        if max_val < 1e-300:
-            _free(m)
-            return log(0.0)
-        if max_row != col:
-            for k in range(n):
-                var tmp = m[col * n + k]
-                m[col * n + k] = m[max_row * n + k]
-                m[max_row * n + k] = tmp
-        var pivot = m[col * n + col]
-        log_abs += log(_fabs(pivot))
-        for row in range(col + 1, n):
-            var factor = m[row * n + col] / pivot
-            for k in range(col, n):
-                m[row * n + k] -= factor * m[col * n + k]
-    _free(m)
-    return log_abs
+        s += log(l[i * n + i])
+    return 2.0 * s
 
 
 # ─── GPFA EM steps ───────────────────────────────────────────────
 
-# E-step: posterior mean x_out (flat n_latents*n_bins) and the summed
-# second moment xx_out (n_latents×n_latents). `k_all` packs the per-latent
-# squared-exponential kernels: kernel j occupies offset j*n_bins*n_bins.
-fn _e_step(
-    y: F64Ptr, c: F64Ptr, d: F64Ptr, r_diag: F64Ptr, k_all: F64Ptr,
+# Assemble the posterior precision M = blkdiag(K_j⁻¹) + AᵀR⁻¹A (row-major
+# n_state×n_state, n_state = nl·nb) into `m_out` and return the GP prior
+# log-determinant log|K|. AᵀR⁻¹A adds (CᵀR⁻¹C)[j,k] along the time-diagonal of each
+# (j,k) block. Each kernel carries a 1e-6 jitter (the model kernel) and is
+# Cholesky-factored once for both its inverse block and its log-determinant.
+fn _gpfa_precision(
+    c: F64Ptr, r_diag: F64Ptr, k_all: F64Ptr,
     nn: Int, nb: Int, nl: Int,
-    x_out: F64Ptr, xx_out: F64Ptr,
-):
-    var kt = nl * nb
+    m_out: F64Ptr,
+) -> Float64:
+    var n_state = nl * nb
+    _zero(m_out, n_state * n_state)
 
     var r_inv = _alloc(nn)
     for k in range(nn):
-        r_inv[k] = 1.0 / (r_diag[k] + 1e-10)
+        r_inv[k] = 1.0 / r_diag[k]
 
     var ctrinvc = _alloc(nl * nl)
     for i in range(nl):
@@ -172,54 +135,75 @@ fn _e_step(
                 s += c[k * nl + i] * r_inv[k] * c[k * nl + j]
             ctrinvc[i * nl + j] = s
 
-    var ctrinv = _alloc(nl * nn)
-    for i in range(nl):
-        for k in range(nn):
-            ctrinv[i * nn + k] = c[k * nl + i] * r_inv[k]
-
-    var prec = _alloc(kt * kt)
-    _zero(prec, kt * kt)
-    var eye_bins = _alloc(nb * nb)
-    _identity(eye_bins, nb)
     var k_reg = _alloc(nb * nb)
+    var l_k = _alloc(nb * nb)
+    var eye_b = _alloc(nb * nb)
+    _identity(eye_b, nb)
     var k_inv = _alloc(nb * nb)
+    var y_work = _alloc(nb)
+    var logdet_k: Float64 = 0.0
     for j in range(nl):
-        var slj = j * nb
         for i in range(nb * nb):
             k_reg[i] = k_all[j * nb * nb + i]
         for i in range(nb):
             k_reg[i * nb + i] += 1e-6
-        _mat_solve(k_reg, eye_bins, k_inv, nb, nb)
+        _cholesky(k_reg, nb, l_k)
+        logdet_k += _chol_logdet(l_k, nb)
+        _chol_solve(l_k, nb, eye_b, nb, k_inv, y_work)
+        var slj = j * nb
         for i in range(nb):
             for jj in range(nb):
-                var diag: Float64 = 0.0
-                if i == jj:
-                    diag = 1.0
-                prec[(slj + i) * kt + (slj + jj)] = (
-                    k_inv[i * nb + jj] + ctrinvc[j * nl + j] * diag
-                )
-        for k in range(nl):
-            if k != j:
-                var slk = k * nb
-                for i in range(nb):
-                    prec[(slj + i) * kt + (slk + i)] = ctrinvc[j * nl + k]
+                m_out[(slj + i) * n_state + (slj + jj)] = k_inv[i * nb + jj]
 
-    var rhs = _alloc(kt)
+    for j in range(nl):
+        for k in range(nl):
+            var v = ctrinvc[j * nl + k]
+            for t in range(nb):
+                m_out[(j * nb + t) * n_state + (k * nb + t)] += v
+
+    _free(r_inv)
+    _free(ctrinvc)
+    _free(k_reg)
+    _free(l_k)
+    _free(eye_b)
+    _free(k_inv)
+    _free(y_work)
+    return logdet_k
+
+
+# E-step: posterior mean x_out (flat nl·nb) and second moment xx_out (nl×nl). The
+# precision M is Cholesky-factored once; the same factor yields the mean
+# (M⁻¹ AᵀR⁻¹y) and the covariance (M⁻¹).
+fn _e_step(
+    y: F64Ptr, c: F64Ptr, d: F64Ptr, r_diag: F64Ptr, k_all: F64Ptr,
+    nn: Int, nb: Int, nl: Int,
+    x_out: F64Ptr, xx_out: F64Ptr,
+):
+    var n_state = nl * nb
+    var r_inv = _alloc(nn)
+    for k in range(nn):
+        r_inv[k] = 1.0 / r_diag[k]
+
+    var m = _alloc(n_state * n_state)
+    var _ld = _gpfa_precision(c, r_diag, k_all, nn, nb, nl, m)
+
+    var rhs = _alloc(n_state)
     for t in range(nb):
         for j in range(nl):
             var s: Float64 = 0.0
             for k in range(nn):
-                s += ctrinv[j * nn + k] * (y[k * nb + t] - d[k])
+                s += c[k * nl + j] * r_inv[k] * (y[k * nb + t] - d[k])
             rhs[j * nb + t] = s
-    for i in range(kt):
-        prec[i * kt + i] += 1e-8
 
-    _mat_solve(prec, rhs, x_out, kt, 1)
+    var l_m = _alloc(n_state * n_state)
+    _cholesky(m, n_state, l_m)
+    var y_work = _alloc(n_state)
+    _chol_solve(l_m, n_state, rhs, 1, x_out, y_work)
 
-    var eye_kt = _alloc(kt * kt)
-    _identity(eye_kt, kt)
-    var sigma_post = _alloc(kt * kt)
-    _mat_solve(prec, eye_kt, sigma_post, kt, kt)
+    var eye_s = _alloc(n_state * n_state)
+    _identity(eye_s, n_state)
+    var sigma = _alloc(n_state * n_state)
+    _chol_solve(l_m, n_state, eye_s, n_state, sigma, y_work)
 
     _zero(xx_out, nl * nl)
     for t in range(nb):
@@ -227,25 +211,19 @@ fn _e_step(
             var xj = x_out[j * nb + t]
             for k in range(nl):
                 var xk = x_out[k * nb + t]
-                xx_out[j * nl + k] += (
-                    xj * xk + sigma_post[(j * nb + t) * kt + (k * nb + t)]
-                )
+                xx_out[j * nl + k] += xj * xk + sigma[(j * nb + t) * n_state + (k * nb + t)]
 
     _free(r_inv)
-    _free(ctrinvc)
-    _free(ctrinv)
-    _free(prec)
-    _free(eye_bins)
-    _free(k_reg)
-    _free(k_inv)
+    _free(m)
     _free(rhs)
-    _free(eye_kt)
-    _free(sigma_post)
+    _free(l_m)
+    _free(y_work)
+    _free(eye_s)
+    _free(sigma)
 
 
-# M-step: update C (n_neurons×n_latents), d (n_neurons) and the noise
-# diagonal R (n_neurons). Reads only y, x_post and xx_post, so it may write
-# straight into the persistent c/d/r buffers without aliasing hazard.
+# M-step: update C (nn×nl), d (nn) and the noise diagonal R (nn). Reads only y,
+# x_post and xx_post, so it writes straight into the persistent c/d/r buffers.
 fn _m_step(
     y: F64Ptr, x_post: F64Ptr, xx_post: F64Ptr,
     nn: Int, nb: Int, nl: Int,
@@ -270,10 +248,13 @@ fn _m_step(
         xx_reg[i] = xx_post[i]
     for i in range(nl):
         xx_reg[i * nl + i] += 1e-8
+    var l_xx = _alloc(nl * nl)
+    _cholesky(xx_reg, nl, l_xx)
     var eye_nl = _alloc(nl * nl)
     _identity(eye_nl, nl)
     var xx_inv = _alloc(nl * nl)
-    _mat_solve(xx_reg, eye_nl, xx_inv, nl, nl)
+    var y_work = _alloc(nl)
+    _chol_solve(l_xx, nl, eye_nl, nl, xx_inv, y_work)
 
     for i in range(nn):
         for j in range(nl):
@@ -300,76 +281,68 @@ fn _m_step(
 
     _free(yx)
     _free(xx_reg)
+    _free(l_xx)
     _free(eye_nl)
     _free(xx_inv)
+    _free(y_work)
 
 
-# Exact marginal Gaussian log-likelihood of the GPFA observation model:
-# cov = A·K_big·Aᵀ + (I_T ⊗ R) + 1e-8 I, then -0.5(yᵀcov⁻¹y + log|cov| + n logged 2π).
+# Exact marginal Gaussian log-likelihood via the Woodbury identity and the
+# matrix-determinant lemma, routed through the n_state×n_state precision M:
+#   yᵀ Σ⁻¹ y = yᵀ R⁻¹ y − (AᵀR⁻¹y)ᵀ M⁻¹ (AᵀR⁻¹y)
+#   log|Σ|   = log|M| + log|K| + log|R_big|
 fn _log_likelihood(
     y: F64Ptr, c: F64Ptr, d: F64Ptr, r_diag: F64Ptr, k_all: F64Ptr,
     nn: Int, nb: Int, nl: Int,
 ) -> Float64:
     var n_obs = nn * nb
     var n_state = nl * nb
+    var r_inv = _alloc(nn)
+    for k in range(nn):
+        r_inv[k] = 1.0 / r_diag[k]
 
-    var a = _alloc(n_obs * n_state)
-    _zero(a, n_obs * n_state)
+    var m = _alloc(n_state * n_state)
+    var logdet_k = _gpfa_precision(c, r_diag, k_all, nn, nb, nl, m)
+
+    var rhs = _alloc(n_state)
     for t in range(nb):
-        var row_start = t * nn
         for j in range(nl):
-            var col = j * nb + t
-            for i in range(nn):
-                a[(row_start + i) * n_state + col] = c[i * nl + j]
-
-    var k_big = _alloc(n_state * n_state)
-    _zero(k_big, n_state * n_state)
-    for j in range(nl):
-        for ii in range(nb):
-            for jj in range(nb):
-                k_big[(j * nb + ii) * n_state + (j * nb + jj)] = k_all[j * nb * nb + ii * nb + jj]
-
-    var ak = _alloc(n_obs * n_state)
-    for i in range(n_obs):
-        for j in range(n_state):
             var s: Float64 = 0.0
-            for k in range(n_state):
-                s += a[i * n_state + k] * k_big[k * n_state + j]
-            ak[i * n_state + j] = s
+            for k in range(nn):
+                s += c[k * nl + j] * r_inv[k] * (y[k * nb + t] - d[k])
+            rhs[j * nb + t] = s
 
-    var cov = _alloc(n_obs * n_obs)
-    for i in range(n_obs):
-        for j in range(n_obs):
-            var s: Float64 = 0.0
-            for k in range(n_state):
-                s += ak[i * n_state + k] * a[j * n_state + k]
-            cov[i * n_obs + j] = s
-    for t in range(nb):
-        for i in range(nn):
-            var idx = t * nn + i
-            cov[idx * n_obs + idx] += r_diag[i]
-    for i in range(n_obs):
-        cov[i * n_obs + i] += 1e-8
+    var l_m = _alloc(n_state * n_state)
+    _cholesky(m, n_state, l_m)
+    var logdet_m = _chol_logdet(l_m, n_state)
+    var x_mean = _alloc(n_state)
+    var y_work = _alloc(n_state)
+    _chol_solve(l_m, n_state, rhs, 1, x_mean, y_work)
 
-    var yc = _alloc(n_obs)
-    for t in range(nb):
-        for i in range(nn):
-            yc[t * nn + i] = y[i * nb + t] - d[i]
+    var rhs_x_mean: Float64 = 0.0
+    for i in range(n_state):
+        rhs_x_mean += rhs[i] * x_mean[i]
 
-    var sol = _alloc(n_obs)
-    _mat_solve(cov, yc, sol, n_obs, 1)
-    var quad: Float64 = 0.0
-    for i in range(n_obs):
-        quad += yc[i] * sol[i]
-    var logdet = _mat_logabsdet(cov, n_obs)
-    var result = -0.5 * (quad + logdet + Float64(n_obs) * log(2.0 * pi))
+    var y_rinv_y: Float64 = 0.0
+    for k in range(nn):
+        for t in range(nb):
+            var v = y[k * nb + t] - d[k]
+            y_rinv_y += r_inv[k] * v * v
 
-    _free(a)
-    _free(k_big)
-    _free(ak)
-    _free(cov)
-    _free(yc)
-    _free(sol)
+    var quad = y_rinv_y - rhs_x_mean
+    var logdet_r_big: Float64 = 0.0
+    for k in range(nn):
+        logdet_r_big += log(r_diag[k])
+    logdet_r_big *= Float64(nb)
+    var logdet_sigma = logdet_m + logdet_k + logdet_r_big
+    var result = -0.5 * (quad + logdet_sigma + Float64(n_obs) * log(2.0 * pi))
+
+    _free(r_inv)
+    _free(m)
+    _free(rhs)
+    _free(l_m)
+    _free(x_mean)
+    _free(y_work)
     return result
 
 
@@ -404,7 +377,6 @@ fn gpfa_em_c(
                 var diff = Float64(i - jj)
                 k_all[j * nb * nb + i * nb + jj] = exp(-0.5 * diff * diff / tau_sq)
 
-    # Working parameters initialised from the caller-supplied PCA init.
     var c = _alloc(nn * nl)
     for i in range(nn * nl):
         c[i] = c0[i]
@@ -427,7 +399,10 @@ fn gpfa_em_c(
         var ll = _log_likelihood(y, c, d, r, k_all, nn, nb, nl)
         loglik_out[1 + em_it] = ll
         n_iter += 1
-        if em_it > 0 and _fabs(ll - prev_ll) < tol:
+        var diff = ll - prev_ll
+        if diff < 0.0:
+            diff = -diff
+        if em_it > 0 and diff < tol:
             break
         prev_ll = ll
 

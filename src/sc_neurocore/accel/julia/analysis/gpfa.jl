@@ -7,9 +7,11 @@
 # SC-NeuroCore — Julia acceleration for analysis/gpfa (Gaussian Process Factor Analysis)
 #
 # Runs the GPFA EM loop from a caller-supplied deterministic initialisation,
-# matching the NumPy reference in src/sc_neurocore/analysis/spike_stats/gpfa.py
-# (block-structured E-step, exact marginal Gaussian log-likelihood). Results agree
-# with the Python, Rust, Go and Mojo backends within float64 round-off.
+# matching the NumPy reference in src/sc_neurocore/analysis/spike_stats/gpfa.py.
+# The linear algebra is Cholesky-based (LAPACK via Julia's LinearAlgebra) and
+# structured: the marginal log-likelihood uses the Woodbury identity and the
+# matrix-determinant lemma so it never forms the dense (n_obs × n_obs) covariance.
+# Results agree with the Python, Rust, Go and Mojo backends within float64 round-off.
 
 module GpfaAccel
 
@@ -21,28 +23,40 @@ function gp_kernel(n_bins::Int, tau::Float64)
     return exp.(-0.5 .* diff .^ 2 ./ (tau^2 + 1e-12))
 end
 
-function e_step(Y, C, d, r_diag, k_all, n_neurons::Int, n_bins::Int, n_latents::Int)
-    kt = n_latents * n_bins
-    r_inv = 1.0 ./ (r_diag .+ 1e-10)
-    ct_rinv = C' .* r_inv'                         # (n_latents, n_neurons)
-    ct_rinv_c = ct_rinv * C                        # (n_latents, n_latents)
-
-    prec = zeros(Float64, kt, kt)
+# Posterior precision M = blkdiag(K_j^-1) + AᵀR⁻¹A (n_state × n_state) and the GP
+# prior log-determinant log|K|. AᵀR⁻¹A adds (CᵀR⁻¹C)[j,k] along the time-diagonal of
+# each (j,k) block. Each kernel carries a 1e-6 jitter (the model kernel) and is
+# Cholesky-factored once for both its inverse block and its log-determinant.
+function gpfa_precision(C, r_diag, k_all, n_bins::Int, n_latents::Int)
+    n_state = n_latents * n_bins
+    r_inv = 1.0 ./ r_diag
+    ct_rinv_c = (C' .* r_inv') * C
+    M = zeros(Float64, n_state, n_state)
+    logdet_k = 0.0
     eye_bins = Matrix{Float64}(I, n_bins, n_bins)
     for j in 1:n_latents
+        F = cholesky(Symmetric(k_all[j] + 1e-6 .* eye_bins))
+        logdet_k += logdet(F)
         slj = ((j - 1) * n_bins + 1):(j * n_bins)
-        k_inv = (k_all[j] + 1e-6 .* eye_bins) \ eye_bins
-        prec[slj, slj] = k_inv + ct_rinv_c[j, j] .* eye_bins
-        for k in 1:n_latents
-            if k != j
-                slk = ((k - 1) * n_bins + 1):(k * n_bins)
-                prec[slj, slk] = ct_rinv_c[j, k] .* eye_bins
-            end
+        M[slj, slj] = inv(F)
+    end
+    for j in 1:n_latents, k in 1:n_latents
+        v = ct_rinv_c[j, k]
+        for t in 1:n_bins
+            M[(j - 1) * n_bins + t, (k - 1) * n_bins + t] += v
         end
     end
+    return M, logdet_k
+end
+
+function e_step(Y, C, d, r_diag, k_all, n_bins::Int, n_latents::Int)
+    n_state = n_latents * n_bins
+    r_inv = 1.0 ./ r_diag
+    M, _ = gpfa_precision(C, r_diag, k_all, n_bins, n_latents)
 
     y_centered = Y .- d
-    rhs = zeros(Float64, kt)
+    ct_rinv = C' .* r_inv'
+    rhs = zeros(Float64, n_state)
     for t in 1:n_bins
         v = ct_rinv * y_centered[:, t]
         for j in 1:n_latents
@@ -50,9 +64,9 @@ function e_step(Y, C, d, r_diag, k_all, n_neurons::Int, n_bins::Int, n_latents::
         end
     end
 
-    prec_reg = prec + 1e-8 .* Matrix{Float64}(I, kt, kt)
-    x_vec = prec_reg \ rhs
-    sigma_post = prec_reg \ Matrix{Float64}(I, kt, kt)
+    F = cholesky(Symmetric(M))
+    x_vec = F \ rhs
+    sigma_post = inv(F)
 
     x_post = zeros(Float64, n_latents, n_bins)
     for j in 1:n_latents, t in 1:n_bins
@@ -76,45 +90,41 @@ function m_step(Y, x_post, xx_post, n_bins::Int, n_latents::Int)
     d_new = vec(sum(Y; dims=2) ./ n_bins)
     y_centered = Y .- d_new
     yx = y_centered * x_post'
-    c_new = ((xx_post' + 1e-8 .* Matrix{Float64}(I, n_latents, n_latents)) \ yx')'
+    xx_reg = xx_post + 1e-8 .* Matrix{Float64}(I, n_latents, n_latents)
+    c_new = (cholesky(Symmetric(xx_reg)) \ yx')'
     yyt = (y_centered * y_centered') ./ n_bins
     cxyt = (c_new * x_post * y_centered') ./ n_bins
     r_new = max.(diag(yyt - cxyt), 1e-6)
     return Matrix{Float64}(c_new), d_new, r_new
 end
 
+# Exact marginal Gaussian log-likelihood via the Woodbury identity and the
+# matrix-determinant lemma, routed through the n_state × n_state precision M:
+#     yᵀ Σ⁻¹ y = yᵀ R⁻¹ y − (AᵀR⁻¹y)ᵀ M⁻¹ (AᵀR⁻¹y)
+#     log|Σ|   = log|M| + log|K| + log|R_big|
 function log_likelihood(Y, C, d, r_diag, k_all, n_neurons::Int, n_bins::Int, n_latents::Int)
     n_obs = n_neurons * n_bins
     n_state = n_latents * n_bins
-    a = zeros(Float64, n_obs, n_state)
+    r_inv = 1.0 ./ r_diag
+    M, logdet_k = gpfa_precision(C, r_diag, k_all, n_bins, n_latents)
+
+    y_centered = Y .- d
+    ct_rinv = C' .* r_inv'
+    rhs = zeros(Float64, n_state)
     for t in 1:n_bins
-        row_start = (t - 1) * n_neurons
+        v = ct_rinv * y_centered[:, t]
         for j in 1:n_latents
-            col = (j - 1) * n_bins + t
-            a[(row_start + 1):(row_start + n_neurons), col] = C[:, j]
+            rhs[(j - 1) * n_bins + t] = v[j]
         end
     end
-    k_big = zeros(Float64, n_state, n_state)
-    for j in 1:n_latents
-        sl = ((j - 1) * n_bins + 1):(j * n_bins)
-        k_big[sl, sl] = k_all[j]
-    end
-    cov = a * k_big * a'
-    for t in 1:n_bins
-        for i in 1:n_neurons
-            idx = (t - 1) * n_neurons + i
-            cov[idx, idx] += r_diag[i]
-        end
-    end
-    cov += 1e-8 .* Matrix{Float64}(I, n_obs, n_obs)
-    yc = zeros(Float64, n_obs)
-    for t in 1:n_bins
-        for i in 1:n_neurons
-            yc[(t - 1) * n_neurons + i] = Y[i, t] - d[i]
-        end
-    end
-    quad = dot(yc, cov \ yc)
-    return -0.5 * (quad + logdet(cov) + n_obs * log(2.0 * pi))
+
+    F = cholesky(Symmetric(M))
+    logdet_m = logdet(F)
+    x_mean = F \ rhs
+    quad = sum(r_inv .* (y_centered .^ 2)) - dot(rhs, x_mean)
+    logdet_rbig = n_bins * sum(log.(r_diag))
+    logdet_sigma = logdet_m + logdet_k + logdet_rbig
+    return -0.5 * (quad + logdet_sigma + n_obs * log(2.0 * pi))
 end
 
 """
@@ -141,7 +151,7 @@ function gpfa_em(Y_in, C0_in, d0_in, R0_diag_in, tau_in, max_iter, tol)
     log_liks = Float64[]
     x_post = zeros(Float64, n_latents, n_bins)
     for _ in 1:max_iter
-        x_post, xx_post = e_step(Y, C, d, r, k_all, n_neurons, n_bins, n_latents)
+        x_post, xx_post = e_step(Y, C, d, r, k_all, n_bins, n_latents)
         C, d, r = m_step(Y, x_post, xx_post, n_bins, n_latents)
         ll = log_likelihood(Y, C, d, r, k_all, n_neurons, n_bins, n_latents)
         push!(log_liks, ll)

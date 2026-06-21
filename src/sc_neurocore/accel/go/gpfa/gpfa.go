@@ -8,10 +8,12 @@
 
 // Package main exposes a C-ABI shared library
 // (`go build -buildmode=c-shared -o libgpfa.so`) that the Python dispatcher
-// loads via ctypes. The function gpfa_em_c runs the GPFA EM loop from a
-// caller-supplied deterministic initialisation and produces trajectories,
-// parameters and exact marginal Gaussian log-likelihoods identical to the
-// NumPy, Rust and Julia backends within float64 round-off.
+// loads via ctypes. gpfa_em_c runs the GPFA EM loop from a caller-supplied
+// deterministic initialisation. The linear algebra is Cholesky-based and
+// structured: the marginal log-likelihood uses the Woodbury identity and the
+// matrix-determinant lemma so it never forms the dense (n_obs x n_obs)
+// covariance, matching the NumPy, Rust, Julia and Mojo backends within float64
+// round-off.
 package main
 
 /*
@@ -37,56 +39,65 @@ func gpKernel(n int, tau float64) []float64 {
 	return k
 }
 
-// matSolve solves A x = b (A is n*n, b is n*m) via Gauss-Jordan elimination.
-func matSolve(a, b []float64, n, m int) []float64 {
-	w := n + m
-	aug := make([]float64, n*w)
-	for i := 0; i < n; i++ {
-		for j := 0; j < n; j++ {
-			aug[i*w+j] = a[i*n+j]
+// cholesky returns the lower-triangular Cholesky factor L (row-major n*n) of the
+// symmetric positive-definite matrix a (row-major), and false on a non-positive
+// pivot. GPFA only factors SPD matrices, so Cholesky is the stable, ~2x cheaper
+// choice over a general LU elimination.
+func cholesky(a []float64, n int) ([]float64, bool) {
+	l := make([]float64, n*n)
+	for j := 0; j < n; j++ {
+		d := a[j*n+j]
+		for k := 0; k < j; k++ {
+			d -= l[j*n+k] * l[j*n+k]
 		}
-		for j := 0; j < m; j++ {
-			aug[i*w+n+j] = b[i*m+j]
+		if d <= 0 {
+			return nil, false
+		}
+		ljj := math.Sqrt(d)
+		l[j*n+j] = ljj
+		inv := 1.0 / ljj
+		for i := j + 1; i < n; i++ {
+			s := a[i*n+j]
+			for k := 0; k < j; k++ {
+				s -= l[i*n+k] * l[j*n+k]
+			}
+			l[i*n+j] = s * inv
 		}
 	}
-	for col := 0; col < n; col++ {
-		maxRow := col
-		maxVal := math.Abs(aug[col*w+col])
-		for row := col + 1; row < n; row++ {
-			if v := math.Abs(aug[row*w+col]); v > maxVal {
-				maxVal = v
-				maxRow = row
+	return l, true
+}
+
+// cholSolve solves M X = B for cols right-hand sides (B and X row-major n*cols)
+// given the lower Cholesky factor L of M, via forward and back substitution.
+func cholSolve(l []float64, n int, b []float64, cols int) []float64 {
+	x := make([]float64, n*cols)
+	y := make([]float64, n)
+	for c := 0; c < cols; c++ {
+		for i := 0; i < n; i++ {
+			s := b[i*cols+c]
+			for k := 0; k < i; k++ {
+				s -= l[i*n+k] * y[k]
 			}
+			y[i] = s / l[i*n+i]
 		}
-		if maxVal < 1e-30 {
-			continue
-		}
-		if maxRow != col {
-			for k := 0; k < w; k++ {
-				aug[col*w+k], aug[maxRow*w+k] = aug[maxRow*w+k], aug[col*w+k]
+		for i := n - 1; i >= 0; i-- {
+			s := y[i]
+			for k := i + 1; k < n; k++ {
+				s -= l[k*n+i] * x[k*cols+c]
 			}
-		}
-		pivot := aug[col*w+col]
-		for k := 0; k < w; k++ {
-			aug[col*w+k] /= pivot
-		}
-		for row := 0; row < n; row++ {
-			if row == col {
-				continue
-			}
-			factor := aug[row*w+col]
-			for k := 0; k < w; k++ {
-				aug[row*w+k] -= factor * aug[col*w+k]
-			}
-		}
-	}
-	x := make([]float64, n*m)
-	for i := 0; i < n; i++ {
-		for j := 0; j < m; j++ {
-			x[i*m+j] = aug[i*w+n+j]
+			x[i*cols+c] = s / l[i*n+i]
 		}
 	}
 	return x
+}
+
+// cholLogdet returns log|M| = 2 sum log L_ii from the Cholesky factor.
+func cholLogdet(l []float64, n int) float64 {
+	s := 0.0
+	for i := 0; i < n; i++ {
+		s += math.Log(l[i*n+i])
+	}
+	return 2.0 * s
 }
 
 // identity returns the n*n identity matrix, row-major.
@@ -98,115 +109,96 @@ func identity(n int) []float64 {
 	return e
 }
 
-// matSlogdet returns the sign and natural log absolute determinant via LU.
-func matSlogdet(a []float64, n int) (float64, float64) {
-	m := make([]float64, len(a))
-	copy(m, a)
-	sign := 1.0
-	logAbs := 0.0
-	for col := 0; col < n; col++ {
-		maxRow := col
-		maxVal := math.Abs(m[col*n+col])
-		for row := col + 1; row < n; row++ {
-			if v := math.Abs(m[row*n+col]); v > maxVal {
-				maxVal = v
-				maxRow = row
-			}
-		}
-		if maxVal < 1e-300 {
-			return 0.0, math.Inf(-1)
-		}
-		if maxRow != col {
-			for k := 0; k < n; k++ {
-				m[col*n+k], m[maxRow*n+k] = m[maxRow*n+k], m[col*n+k]
-			}
-			sign = -sign
-		}
-		pivot := m[col*n+col]
-		if pivot < 0 {
-			sign = -sign
-		}
-		logAbs += math.Log(math.Abs(pivot))
-		for row := col + 1; row < n; row++ {
-			factor := m[row*n+col] / pivot
-			for k := col; k < n; k++ {
-				m[row*n+k] -= factor * m[col*n+k]
-			}
-		}
+// spdInverse returns the inverse of an SPD matrix (row-major) via Cholesky.
+func spdInverse(a []float64, n int) []float64 {
+	l, ok := cholesky(a, n)
+	if !ok {
+		panic("spdInverse: matrix is not positive definite")
 	}
-	return sign, logAbs
+	return cholSolve(l, n, identity(n), n)
 }
 
-// eStep computes the posterior mean (flat, n_latents*n_bins) and E[xx^T].
-func eStep(y, c, d, rDiag []float64, kAll [][]float64, nNeurons, nBins, nLatents int) ([]float64, []float64) {
-	kt := nLatents * nBins
+// gpfaPrecision assembles M = blkdiag(K_j^-1) + A^T R^-1 A (row-major
+// n_state x n_state, n_state = nLatents*nBins) and the GP prior log-determinant
+// log|K|. A^T R^-1 A has the Kronecker form delta_{s,t} (C^T R^-1 C)[j,k], adding
+// the constant (C^T R^-1 C)[j,k] along the time-diagonal of each (j,k) block. Each
+// kernel carries a 1e-6 jitter so the regularised kernel is the model kernel
+// everywhere, and is Cholesky-factored once for both inverse block and logdet.
+func gpfaPrecision(c, rDiag []float64, kAll [][]float64, nNeurons, nBins, nLatents int) ([]float64, float64) {
+	nState := nLatents * nBins
 	rInv := make([]float64, nNeurons)
 	for k := 0; k < nNeurons; k++ {
-		rInv[k] = 1.0 / (rDiag[k] + 1e-10)
+		rInv[k] = 1.0 / rDiag[k]
 	}
-
-	ctRinvC := make([]float64, nLatents*nLatents)
+	ctrInvC := make([]float64, nLatents*nLatents)
 	for i := 0; i < nLatents; i++ {
 		for j := 0; j < nLatents; j++ {
 			s := 0.0
 			for k := 0; k < nNeurons; k++ {
 				s += c[k*nLatents+i] * rInv[k] * c[k*nLatents+j]
 			}
-			ctRinvC[i*nLatents+j] = s
+			ctrInvC[i*nLatents+j] = s
 		}
 	}
-	ctRinv := make([]float64, nLatents*nNeurons)
-	for i := 0; i < nLatents; i++ {
-		for k := 0; k < nNeurons; k++ {
-			ctRinv[i*nNeurons+k] = c[k*nLatents+i] * rInv[k]
-		}
-	}
-
-	prec := make([]float64, kt*kt)
-	eyeBins := identity(nBins)
+	m := make([]float64, nState*nState)
+	logdetK := 0.0
 	for j := 0; j < nLatents; j++ {
-		slj := j * nBins
 		kReg := make([]float64, nBins*nBins)
 		copy(kReg, kAll[j])
 		for i := 0; i < nBins; i++ {
 			kReg[i*nBins+i] += 1e-6
 		}
-		kInv := matSolve(kReg, eyeBins, nBins, nBins)
+		l, ok := cholesky(kReg, nBins)
+		if !ok {
+			panic("gpfaPrecision: GP prior is not positive definite")
+		}
+		logdetK += cholLogdet(l, nBins)
+		kInv := cholSolve(l, nBins, identity(nBins), nBins)
+		slj := j * nBins
 		for i := 0; i < nBins; i++ {
 			for jj := 0; jj < nBins; jj++ {
-				diag := 0.0
-				if i == jj {
-					diag = 1.0
-				}
-				prec[(slj+i)*kt+(slj+jj)] = kInv[i*nBins+jj] + ctRinvC[j*nLatents+j]*diag
-			}
-		}
-		for k := 0; k < nLatents; k++ {
-			if k != j {
-				slk := k * nBins
-				for i := 0; i < nBins; i++ {
-					prec[(slj+i)*kt+(slk+i)] = ctRinvC[j*nLatents+k]
-				}
+				m[(slj+i)*nState+(slj+jj)] = kInv[i*nBins+jj]
 			}
 		}
 	}
+	for j := 0; j < nLatents; j++ {
+		for k := 0; k < nLatents; k++ {
+			v := ctrInvC[j*nLatents+k]
+			for t := 0; t < nBins; t++ {
+				m[(j*nBins+t)*nState+(k*nBins+t)] += v
+			}
+		}
+	}
+	return m, logdetK
+}
 
-	rhs := make([]float64, kt)
+// eStep computes the posterior mean (flat, nLatents*nBins) and E[xx^T]. The
+// posterior precision M is Cholesky-factored once; the same factor yields the mean
+// (M^-1 A^T R^-1 y) and the covariance (M^-1).
+func eStep(y, c, d, rDiag []float64, kAll [][]float64, nNeurons, nBins, nLatents int) ([]float64, []float64) {
+	nState := nLatents * nBins
+	rInv := make([]float64, nNeurons)
+	for k := 0; k < nNeurons; k++ {
+		rInv[k] = 1.0 / rDiag[k]
+	}
+	m, _ := gpfaPrecision(c, rDiag, kAll, nNeurons, nBins, nLatents)
+
+	rhs := make([]float64, nState)
 	for t := 0; t < nBins; t++ {
 		for j := 0; j < nLatents; j++ {
 			s := 0.0
 			for k := 0; k < nNeurons; k++ {
-				s += ctRinv[j*nNeurons+k] * (y[k*nBins+t] - d[k])
+				s += c[k*nLatents+j] * rInv[k] * (y[k*nBins+t] - d[k])
 			}
 			rhs[j*nBins+t] = s
 		}
 	}
-	for i := 0; i < kt; i++ {
-		prec[i*kt+i] += 1e-8
+	l, ok := cholesky(m, nState)
+	if !ok {
+		panic("eStep: precision is not positive definite")
 	}
-
-	xVec := matSolve(prec, rhs, kt, 1)
-	sigmaPost := matSolve(prec, identity(kt), kt, kt)
+	xVec := cholSolve(l, nState, rhs, 1)
+	sigma := cholSolve(l, nState, identity(nState), nState)
 
 	xxPost := make([]float64, nLatents*nLatents)
 	for t := 0; t < nBins; t++ {
@@ -214,7 +206,7 @@ func eStep(y, c, d, rDiag []float64, kAll [][]float64, nNeurons, nBins, nLatents
 			xj := xVec[j*nBins+t]
 			for k := 0; k < nLatents; k++ {
 				xk := xVec[k*nBins+t]
-				xxPost[j*nLatents+k] += xj*xk + sigmaPost[(j*nBins+t)*kt+(k*nBins+t)]
+				xxPost[j*nLatents+k] += xj*xk + sigma[(j*nBins+t)*nState+(k*nBins+t)]
 			}
 		}
 	}
@@ -246,7 +238,7 @@ func mStep(y, xPost, xxPost []float64, nNeurons, nBins, nLatents int) ([]float64
 	for i := 0; i < nLatents; i++ {
 		xxReg[i*nLatents+i] += 1e-8
 	}
-	xxInv := matSolve(xxReg, identity(nLatents), nLatents, nLatents)
+	xxInv := spdInverse(xxReg, nLatents)
 	cNew := make([]float64, nNeurons*nLatents)
 	for i := 0; i < nNeurons; i++ {
 		for j := 0; j < nLatents; j++ {
@@ -277,70 +269,56 @@ func mStep(y, xPost, xxPost []float64, nNeurons, nBins, nLatents int) ([]float64
 	return cNew, dNew, rNew
 }
 
-// logLikelihood returns the exact marginal Gaussian log-likelihood.
+// logLikelihood returns the exact marginal Gaussian log-likelihood via the
+// Woodbury identity and the matrix-determinant lemma, routed through the
+// n_state x n_state posterior precision M (never forming the dense covariance):
+//
+//	y^T Sigma^-1 y = y^T R^-1 y - (A^T R^-1 y)^T M^-1 (A^T R^-1 y)
+//	log|Sigma|     = log|M| + log|K| + log|R_big|
 func logLikelihood(y, c, d, rDiag []float64, kAll [][]float64, nNeurons, nBins, nLatents int) float64 {
 	nObs := nNeurons * nBins
 	nState := nLatents * nBins
-	a := make([]float64, nObs*nState)
+	rInv := make([]float64, nNeurons)
+	for k := 0; k < nNeurons; k++ {
+		rInv[k] = 1.0 / rDiag[k]
+	}
+	m, logdetK := gpfaPrecision(c, rDiag, kAll, nNeurons, nBins, nLatents)
+
+	rhs := make([]float64, nState)
 	for t := 0; t < nBins; t++ {
-		rowStart := t * nNeurons
 		for j := 0; j < nLatents; j++ {
-			col := j*nBins + t
-			for i := 0; i < nNeurons; i++ {
-				a[(rowStart+i)*nState+col] = c[i*nLatents+j]
-			}
-		}
-	}
-	kBig := make([]float64, nState*nState)
-	for j := 0; j < nLatents; j++ {
-		for ii := 0; ii < nBins; ii++ {
-			for jj := 0; jj < nBins; jj++ {
-				kBig[(j*nBins+ii)*nState+(j*nBins+jj)] = kAll[j][ii*nBins+jj]
-			}
-		}
-	}
-	ak := make([]float64, nObs*nState)
-	for i := 0; i < nObs; i++ {
-		for j := 0; j < nState; j++ {
 			s := 0.0
-			for k := 0; k < nState; k++ {
-				s += a[i*nState+k] * kBig[k*nState+j]
+			for k := 0; k < nNeurons; k++ {
+				s += c[k*nLatents+j] * rInv[k] * (y[k*nBins+t] - d[k])
 			}
-			ak[i*nState+j] = s
+			rhs[j*nBins+t] = s
 		}
 	}
-	cov := make([]float64, nObs*nObs)
-	for i := 0; i < nObs; i++ {
-		for j := 0; j < nObs; j++ {
-			s := 0.0
-			for k := 0; k < nState; k++ {
-				s += ak[i*nState+k] * a[j*nState+k]
-			}
-			cov[i*nObs+j] = s
+	l, ok := cholesky(m, nState)
+	if !ok {
+		panic("logLikelihood: precision is not positive definite")
+	}
+	logdetM := cholLogdet(l, nState)
+	xMean := cholSolve(l, nState, rhs, 1)
+	rhsXMean := 0.0
+	for i := 0; i < nState; i++ {
+		rhsXMean += rhs[i] * xMean[i]
+	}
+	yRinvY := 0.0
+	for k := 0; k < nNeurons; k++ {
+		for t := 0; t < nBins; t++ {
+			v := y[k*nBins+t] - d[k]
+			yRinvY += rInv[k] * v * v
 		}
 	}
-	for t := 0; t < nBins; t++ {
-		for i := 0; i < nNeurons; i++ {
-			idx := t*nNeurons + i
-			cov[idx*nObs+idx] += rDiag[i]
-		}
+	quad := yRinvY - rhsXMean
+	logdetRBig := 0.0
+	for k := 0; k < nNeurons; k++ {
+		logdetRBig += math.Log(rDiag[k])
 	}
-	for i := 0; i < nObs; i++ {
-		cov[i*nObs+i] += 1e-8
-	}
-	yc := make([]float64, nObs)
-	for t := 0; t < nBins; t++ {
-		for i := 0; i < nNeurons; i++ {
-			yc[t*nNeurons+i] = y[i*nBins+t] - d[i]
-		}
-	}
-	sol := matSolve(cov, yc, nObs, 1)
-	quad := 0.0
-	for i := 0; i < nObs; i++ {
-		quad += yc[i] * sol[i]
-	}
-	_, logdet := matSlogdet(cov, nObs)
-	return -0.5 * (quad + logdet + float64(nObs)*math.Log(2.0*math.Pi))
+	logdetRBig *= float64(nBins)
+	logdetSigma := logdetM + logdetK + logdetRBig
+	return -0.5 * (quad + logdetSigma + float64(nObs)*math.Log(2.0*math.Pi))
 }
 
 // gpfaEMFromInit runs the EM loop and returns trajectories, C, d, R_diag, log_liks.

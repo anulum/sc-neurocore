@@ -28,12 +28,25 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
   the same EM-from-initialisation contract over the `@export` raw-address FFI and
   agrees with the NumPy reference to within ~1e-10; selectable via `backend="mojo"`,
   with parity and loader-branch tests.
-- GPFA `backend="auto"` now resolves to the NumPy/LAPACK reference, which the new
-  `benchmarks/bench_gpfa.py` measures as the fastest path for this dense-linear-algebra
-  kernel (about 6x faster than the Rust and Mojo Gauss-Jordan kernels and 11x faster
-  than Go on the reference workload); the compiled backends remain available by name
-  for cross-language parity and portability. Added `docs/api/gpfa.md` describing the
-  deterministic init, the EM contract, the five backends and the benchmark.
+- GPFA now uses a structured Cholesky estimator across all five backends. The
+  E-step, M-step and marginal log-likelihood operate on the `n_state × n_state`
+  posterior precision (`n_state = n_latents · n_bins`) via Cholesky factorisations
+  rather than a general elimination, and the log-likelihood uses the Woodbury
+  identity and the matrix-determinant lemma so it never forms the dense
+  `(n_neurons · n_bins)²` marginal covariance. This is the exact structured
+  estimator of Yu et al. (2009): more numerically stable for the symmetric
+  positive-definite systems and far cheaper at scale (the dense form would build,
+  e.g., an 8000×8000 covariance where the structured form factors a 1600×1600
+  precision). The Rust backend factors with `nalgebra`, Julia with native LAPACK,
+  Go and Mojo with an in-place Cholesky, and the Python reference with SciPy; the
+  structured likelihood is checked against a dense brute-force covariance (~1e-11).
+- GPFA `backend="auto"` resolves to the structured Rust path when the engine is
+  present and falls back to the NumPy reference otherwise. With the dense
+  `n_obs`-sized solve removed, `benchmarks/bench_gpfa.py` measures the Rust backend
+  as the fastest path (1.43x over NumPy on the reference workload; Mojo 0.87x, Go
+  0.51x); the compiled backends remain available by name for cross-language parity
+  and portability. Added `docs/api/gpfa.md` describing the deterministic init, the
+  structured EM contract, the five backends and the benchmark.
 
 ### Public bitstream-inference API
 - Restored a stable public stochastic-inference surface over caller-owned packed

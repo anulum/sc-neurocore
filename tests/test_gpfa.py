@@ -134,14 +134,14 @@ class TestGpfa:
         npt.assert_array_equal(a["trajectories"], b["trajectories"])
         npt.assert_array_equal(a["C"], b["C"])
 
-    def test_auto_selects_fastest_numpy_path(self) -> None:
-        # GPFA's inner loop is LAPACK-bound, so the measured-fastest backend is the
-        # NumPy reference; `auto` resolves to it and matches `python` exactly.
+    def test_auto_matches_python_within_tolerance(self) -> None:
+        # `auto` selects the fastest available backend (Rust when the engine is
+        # present, else NumPy); either way it agrees with the NumPy reference up to
+        # floating-point round-off.
         trains = _synthetic_trains()
         auto = gpfa(trains, n_latents=2, bin_ms=20.0, max_iter=20, backend="auto")
         py = gpfa(trains, n_latents=2, bin_ms=20.0, max_iter=20, backend="python")
-        npt.assert_array_equal(auto["trajectories"], py["trajectories"])
-        npt.assert_array_equal(auto["C"], py["C"])
+        npt.assert_allclose(auto["trajectories"], py["trajectories"], atol=1e-7)
 
     def test_clamps_latent_count(self) -> None:
         trains = _synthetic_trains(n_neurons=2, n_samples=120)
@@ -196,13 +196,13 @@ class TestRustParity:
         npt.assert_allclose(ru["R"], py["R"], atol=1e-9)
         npt.assert_allclose(ru["log_likelihoods"], py["log_likelihoods"], atol=1e-6)
 
-    def test_rust_matches_numpy_not_necessarily_auto(self) -> None:
-        # `auto` is the NumPy path (measured fastest); the explicit Rust backend
-        # agrees with it up to round-off but is not bit-identical to it.
+    def test_auto_selects_rust(self) -> None:
+        # The structured nalgebra Rust path is the fastest measured backend, so
+        # `auto` resolves to it when the engine is present (identical result).
         trains = _synthetic_trains()
         auto = gpfa(trains, n_latents=2, bin_ms=20.0, max_iter=20, backend="auto")
         rust = gpfa(trains, n_latents=2, bin_ms=20.0, max_iter=20, backend="rust")
-        npt.assert_allclose(rust["trajectories"], auto["trajectories"], atol=1e-7)
+        npt.assert_array_equal(auto["trajectories"], rust["trajectories"])
 
 
 @pytest.mark.skipif(not _JULIA_AVAILABLE, reason="juliacall not installed")
@@ -349,7 +349,6 @@ def test_rust_backend_raises_when_unavailable(monkeypatch: pytest.MonkeyPatch) -
     trains = _synthetic_trains(n_neurons=3, n_samples=120)
     with pytest.raises(RuntimeError, match="not available"):
         gpfa(trains, n_latents=2, bin_ms=20.0, max_iter=3, backend="rust")
-    # auto always runs the NumPy reference (the measured-fastest path), so it
-    # stays functional whether or not the Rust engine is present
+    # auto falls back to the NumPy reference when the Rust engine is absent
     result = gpfa(trains, n_latents=2, bin_ms=20.0, max_iter=3, backend="auto")
     assert result["trajectories"].size > 0

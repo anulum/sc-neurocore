@@ -25,6 +25,7 @@ import os as _os
 from typing import Any
 
 import numpy as np
+from scipy.linalg import cho_factor, cho_solve
 
 from .basic import bin_spike_train
 
@@ -134,6 +135,43 @@ def _gp_kernel(n_bins: int, tau: float, sigma: float = 1.0) -> np.ndarray[Any, A
     return sigma**2 * np.exp(-0.5 * diff**2 / (tau**2 + 1e-12))
 
 
+def _gpfa_precision(
+    C: np.ndarray[Any, Any],
+    R_diag: np.ndarray[Any, Any],
+    K_all: list[np.ndarray[Any, Any]],
+    n_bins: int,
+) -> tuple[np.ndarray[Any, Any], float]:
+    """Assemble the posterior precision and the GP prior log-determinant.
+
+    Returns ``(M, log|K|)`` where ``M = blkdiag(K_j^{-1}) + AᵀR⁻¹A`` is the
+    symmetric positive-definite ``n_state × n_state`` precision (``n_state =
+    n_latents · n_bins``) and ``log|K|`` is the log-determinant of the block-diagonal
+    GP prior. Each GP kernel is factored once via Cholesky and reused for both the
+    block inverse and its log-determinant, so the likelihood need not refactor them.
+    ``AᵀR⁻¹A`` has the Kronecker form ``δ_{s,t} (CᵀR⁻¹C)[j,k]``, adding the constant
+    ``(CᵀR⁻¹C)[j,k]`` along the time-diagonal of each ``(j, k)`` block. Each kernel
+    carries a ``1e-6`` jitter so the regularised kernel is the model kernel
+    everywhere (E-step and likelihood stay mutually consistent).
+    """
+    n_latents = C.shape[1]
+    n_state = n_latents * n_bins
+    r_inv = 1.0 / R_diag
+    ctr_inv_c = C.T @ (r_inv[:, None] * C)  # (n_latents, n_latents)
+    eye_b = np.eye(n_bins)
+    m = np.zeros((n_state, n_state))
+    logdet_k = 0.0
+    for j in range(n_latents):
+        chol = cho_factor(K_all[j] + 1e-6 * eye_b, lower=True, check_finite=False)
+        logdet_k += 2.0 * float(np.sum(np.log(np.abs(np.diag(chol[0])))))
+        sl = slice(j * n_bins, (j + 1) * n_bins)
+        m[sl, sl] = cho_solve(chol, eye_b, check_finite=False)
+    idx = np.arange(n_bins)
+    for j in range(n_latents):
+        for k in range(n_latents):
+            m[j * n_bins + idx, k * n_bins + idx] += ctr_inv_c[j, k]
+    return m, logdet_k
+
+
 def _gpfa_e_step(
     Y: np.ndarray[Any, Any],
     C: np.ndarray[Any, Any],
@@ -141,69 +179,30 @@ def _gpfa_e_step(
     R: np.ndarray[Any, Any],
     K_all: list[np.ndarray[Any, Any]],
 ) -> tuple[np.ndarray[Any, Any], np.ndarray[Any, Any]]:
-    """Posterior p(x|y) for each latent dimension jointly."""
-    n_neurons, n_bins = Y.shape
+    """Joint Gaussian posterior ``p(x|y)`` over all latents and time points.
+
+    The posterior precision ``M`` (see :func:`_gpfa_precision`) is Cholesky-factored
+    once via LAPACK; the same factor yields the posterior mean (``M⁻¹`` applied to
+    ``AᵀR⁻¹ y``) and the posterior covariance (``M⁻¹``). Working on the
+    ``n_state``-dimensional state rather than the ``n_obs``-dimensional observation
+    avoids the dense ``(n_neurons·n_bins)²`` solve of the naive form.
+    """
+    n_bins = Y.shape[1]
     n_latents = C.shape[1]
+    r_diag = np.diag(R)
 
-    # Build block-diagonal K (n_latents*n_bins x n_latents*n_bins)
-    KT = n_latents * n_bins
-    K_big = np.zeros((KT, KT))
-    for j in range(n_latents):
-        sl = slice(j * n_bins, (j + 1) * n_bins)
-        K_big[sl, sl] = K_all[j]
+    m, _ = _gpfa_precision(C, r_diag, K_all, n_bins)
+    factor = cho_factor(m, lower=True, check_finite=False)
 
-    # Observation model: Y_centered = C x + noise
-    Y_centered = Y - d[:, None]  # (n_neurons, n_bins)
+    y_centered = Y - d[:, None]
+    rhs = (C.T @ ((1.0 / r_diag)[:, None] * y_centered)).reshape(n_latents * n_bins)
+    x_post = cho_solve(factor, rhs, check_finite=False).reshape(n_latents, n_bins)
+    sigma_post = cho_solve(factor, np.eye(n_latents * n_bins), check_finite=False)
 
-    # Kronecker structure: C_big = I_T kron C, R_big = I_T kron R
-    # Posterior: Sigma_post = (K^-1 + C_big^T R_big^-1 C_big)^-1
-    # Mean: mu_post = Sigma_post C_big^T R_big^-1 y_vec
-    R_inv = np.diag(1.0 / (np.diag(R) + 1e-10))  # (n_neurons, n_neurons)
-
-    # Exploit temporal structure: work per-timepoint then combine
-    # C^T R^{-1} C is (n_latents x n_latents), same every timepoint
-    CtRinvC = C.T @ R_inv @ C  # (n_latents, n_latents)
-    CtRinv = C.T @ R_inv  # (n_latents, n_neurons)
-
-    # Build the precision of the posterior in block form
-    # For efficiency: Sigma_post^{-1}[j,k block] = K_j^{-1} delta_{jk} + CtRinvC[j,k] I_T
-    # This is block-structured: n_latents blocks of (n_bins x n_bins)
-    # Off-diagonal blocks are CtRinvC[j,k] * I_T
-    # Diagonal blocks are K_j^{-1} + CtRinvC[j,j] * I_T
-
-    prec = np.zeros((KT, KT))
-    for j in range(n_latents):
-        slj = slice(j * n_bins, (j + 1) * n_bins)
-        K_j_inv = np.linalg.solve(K_all[j] + 1e-6 * np.eye(n_bins), np.eye(n_bins))
-        prec[slj, slj] = K_j_inv + CtRinvC[j, j] * np.eye(n_bins)
-        for k in range(n_latents):
-            if k != j:
-                slk = slice(k * n_bins, (k + 1) * n_bins)
-                prec[slj, slk] = CtRinvC[j, k] * np.eye(n_bins)
-
-    # y_vec -> (n_neurons * n_bins,) but we compute C^T R^{-1} y per timepoint
-    rhs = np.zeros(KT)
+    xx_post = x_post @ x_post.T
     for t_idx in range(n_bins):
-        v = CtRinv @ Y_centered[:, t_idx]  # (n_latents,)
-        for j in range(n_latents):
-            rhs[j * n_bins + t_idx] = v[j]
-
-    # Solve for posterior mean
-    x_vec = np.linalg.solve(prec + 1e-8 * np.eye(KT), rhs)
-    x_post = x_vec.reshape(n_latents, n_bins)
-
-    # Posterior covariance (for M-step sufficient statistics)
-    Sigma_post = np.linalg.solve(prec + 1e-8 * np.eye(KT), np.eye(KT))
-
-    # E[x x^T] per timepoint: sum over timepoints
-    xx_post = np.zeros((n_latents, n_latents))
-    for t_idx in range(n_bins):
-        xt = x_post[:, t_idx]
-        xx_post += np.outer(xt, xt)
-        for j in range(n_latents):
-            for k in range(n_latents):
-                xx_post[j, k] += Sigma_post[j * n_bins + t_idx, k * n_bins + t_idx]
-
+        block = sigma_post[t_idx :: n_bins, t_idx :: n_bins]
+        xx_post = xx_post + block
     return x_post, xx_post
 
 
@@ -216,9 +215,11 @@ def _gpfa_m_step(
     d_new = Y.mean(axis=1)
     Y_centered = Y - d_new[:, None]
 
-    # C_new = (sum_t y_t x_t^T) (sum_t x_t x_t^T + Sigma)^{-1}
+    # C_new = (sum_t y_t x_t^T) (sum_t x_t x_t^T + Sigma)^{-1}; the second-moment
+    # matrix is symmetric positive-definite, so the solve goes through Cholesky.
     Yx = Y_centered @ x_post.T  # (n_neurons, n_latents)
-    C_new = np.linalg.solve(xx_post.T + 1e-8 * np.eye(xx_post.shape[0]), Yx.T).T
+    factor = cho_factor(xx_post + 1e-8 * np.eye(xx_post.shape[0]), lower=True, check_finite=False)
+    C_new = cho_solve(factor, Yx.T, check_finite=False).T
 
     # R_new = diag(1/T sum_t (y_t - d)(y_t - d)^T - C E[x y^T])
     YYt = Y_centered @ Y_centered.T / n_bins
@@ -237,34 +238,47 @@ def _gpfa_log_likelihood(
     R: np.ndarray[Any, Any],
     K_all: list[np.ndarray[Any, Any]],
 ) -> np.float64:
-    """Exact marginal Gaussian log likelihood for the GPFA observation model."""
+    r"""Exact marginal Gaussian log likelihood via the Woodbury identity.
+
+    The marginal covariance is :math:`\Sigma = A K A^\top + (I_T \otimes R)` with
+    :math:`A` the block design matrix, :math:`K` the block-diagonal GP prior and
+    :math:`R` diagonal. Forming :math:`\Sigma` densely is :math:`O(n_\text{obs}^3)`;
+    instead the Woodbury identity and the matrix-determinant lemma express both the
+    quadratic form and the log-determinant through the ``n_state × n_state``
+    posterior precision :math:`M = K^{-1} + A^\top R^{-1} A` (Cholesky-factored):
+
+    .. math::
+        y^\top \Sigma^{-1} y &= y^\top R^{-1} y - (A^\top R^{-1} y)^\top M^{-1}
+            (A^\top R^{-1} y) \\
+        \log|\Sigma| &= \log|M| + \log|K| + \log|R_\text{big}|
+
+    This is the structured estimator of Yu et al. (2009); it is the exact marginal
+    likelihood of the regularised model (each GP kernel carries the same ``1e-6``
+    jitter as the E-step), not an approximation.
+    """
     n_neurons, n_bins = Y.shape
     n_latents = C.shape[1]
     n_obs = n_neurons * n_bins
-    n_state = n_latents * n_bins
 
-    A = np.zeros((n_obs, n_state), dtype=np.float64)
-    for t_idx in range(n_bins):
-        row_start = t_idx * n_neurons
-        for j in range(n_latents):
-            col = j * n_bins + t_idx
-            A[row_start : row_start + n_neurons, col] = C[:, j]
+    r_diag = np.diag(R)
+    if np.any(r_diag <= 0.0):
+        raise np.linalg.LinAlgError("GPFA observation noise must be positive definite")
+    r_inv = 1.0 / r_diag
 
-    K_big = np.zeros((n_state, n_state), dtype=np.float64)
-    for j, kernel in enumerate(K_all):
-        sl = slice(j * n_bins, (j + 1) * n_bins)
-        K_big[sl, sl] = kernel
+    # M is positive-definite whenever the noise is (guarded above), so the Cholesky
+    # cannot fail here; any failure surfaces as a LinAlgError to the caller.
+    m, logdet_k = _gpfa_precision(C, r_diag, K_all, n_bins)
+    chol_m = np.linalg.cholesky(m)
+    logdet_m = 2.0 * float(np.sum(np.log(np.diag(chol_m))))
 
-    R_big = np.kron(np.eye(n_bins, dtype=np.float64), R)
-    cov = A @ K_big @ A.T + R_big
-    cov = cov + 1e-8 * np.eye(n_obs, dtype=np.float64)
+    y_centered = Y - d[:, None]
+    rhs = (C.T @ (r_inv[:, None] * y_centered)).reshape(n_latents * n_bins)
+    x_mean = cho_solve((chol_m, True), rhs, check_finite=False)
+    quad = float(np.sum(r_inv[:, None] * y_centered * y_centered)) - float(rhs @ x_mean)
 
-    y_centered = (Y - d[:, None]).T.reshape(n_obs)
-    sign, logdet = np.linalg.slogdet(cov)
-    if sign <= 0:
-        raise np.linalg.LinAlgError("GPFA marginal covariance is not positive definite")
-    quad = y_centered @ np.linalg.solve(cov, y_centered)
-    return np.float64(-0.5 * (quad + logdet + n_obs * np.log(2.0 * np.pi)))
+    logdet_r_big = float(n_bins * np.sum(np.log(r_diag)))
+    logdet_sigma = logdet_m + logdet_k + logdet_r_big
+    return np.float64(-0.5 * (quad + logdet_sigma + n_obs * np.log(2.0 * np.pi)))
 
 
 def gpfa_pca_init(
@@ -577,22 +591,20 @@ def _gpfa_em_dispatch(
     round-off.
 
     Backend selection under ``auto`` is data-driven (see
-    ``benchmarks/results/bench_gpfa.json``): GPFA's inner loop is dense linear
-    algebra — Gaussian elimination, marginal-covariance ``slogdet`` and solves — and
-    the NumPy reference dispatches those to LAPACK, which outpaces the hand-written
-    Gauss-Jordan kernels of the compiled backends (measured ~6× faster than Rust/Mojo,
-    ~11× faster than Go). ``auto`` therefore runs the NumPy path; the Rust, Julia, Go
-    and Mojo backends remain available by name for cross-language parity checking and
-    for embedding in environments without a tuned NumPy/LAPACK stack.
+    ``benchmarks/results/bench_gpfa.json``). Every backend uses the structured
+    Cholesky estimator (Woodbury identity + matrix-determinant lemma) on the
+    ``n_state``-dimensional precision rather than the dense ``n_obs`` covariance, so
+    the compiled paths are no longer bottlenecked on a large general solve: the Rust
+    backend (``nalgebra`` Cholesky, no Python dispatch overhead) is the fastest
+    measured path. ``auto`` therefore prefers Rust when the engine is present and
+    falls back to the NumPy reference otherwise; Julia, Go and Mojo run on request.
     """
     if backend not in ("auto", "python", "rust", "julia", "go", "mojo"):
         raise ValueError(f"GPFA backend {backend!r} is not available")
-    if backend in ("auto", "python"):
-        return gpfa_em(Y, C0, d0, R0, tau, max_iter, tol)
-    if backend == "rust":
-        if _rust_gpfa_em is None:
-            raise RuntimeError("Rust GPFA backend is not available in this environment")
+    if backend in ("auto", "rust") and _rust_gpfa_em is not None:
         return _run_rust_gpfa_em(Y, C0, d0, R0, tau, max_iter, tol)
+    if backend == "rust":
+        raise RuntimeError("Rust GPFA backend is not available in this environment")
     if backend == "julia":
         if not _ensure_julia_gpfa():
             raise RuntimeError("Julia GPFA backend is not available")
@@ -601,9 +613,11 @@ def _gpfa_em_dispatch(
         if not _ensure_go_gpfa():
             raise RuntimeError("Go GPFA backend is not available")
         return _run_go_gpfa_em(Y, C0, d0, R0, tau, max_iter, tol)
-    if not _ensure_mojo_gpfa():
-        raise RuntimeError("Mojo GPFA backend is not available")
-    return _run_mojo_gpfa_em(Y, C0, d0, R0, tau, max_iter, tol)
+    if backend == "mojo":
+        if not _ensure_mojo_gpfa():
+            raise RuntimeError("Mojo GPFA backend is not available")
+        return _run_mojo_gpfa_em(Y, C0, d0, R0, tau, max_iter, tol)
+    return gpfa_em(Y, C0, d0, R0, tau, max_iter, tol)
 
 
 def _bin_trains(
@@ -646,9 +660,10 @@ def gpfa(
     seed : int, optional
         Retained for API compatibility; initialisation is deterministic.
     backend : str, optional
-        ``"auto"`` selects the fastest measured backend, which for GPFA is the
-        LAPACK-backed NumPy reference (``"python"``); ``"rust"``, ``"julia"``,
-        ``"go"`` and ``"mojo"`` run the parity-verified compiled paths on request.
+        ``"auto"`` selects the fastest measured backend — the ``nalgebra``-backed
+        Rust path when the engine is present, otherwise the NumPy reference
+        (``"python"``); ``"rust"``, ``"julia"``, ``"go"`` and ``"mojo"`` run the
+        parity-verified compiled paths on request.
 
     Returns
     -------

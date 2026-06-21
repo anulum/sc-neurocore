@@ -9,6 +9,7 @@
 // Yu, Cunningham et al. (2009) J. Neurophysiol. 102:614-635.
 
 use super::basic;
+use nalgebra::{Cholesky, DMatrix, Dyn};
 
 /// EM output: `(trajectories, C, d, R_diag, log_likelihoods)`.
 pub type GpfaEmOutput = (Vec<f64>, Vec<f64>, Vec<f64>, Vec<f64>, Vec<f64>);
@@ -29,150 +30,97 @@ fn gp_kernel(n: usize, tau: f64, sigma: f64) -> Vec<f64> {
     k
 }
 
-/// Gauss-Jordan inverse for n x n matrix.
-fn mat_inv(a: &[f64], n: usize) -> Vec<f64> {
-    let mut aug = vec![0.0f64; n * 2 * n];
-    for i in 0..n {
-        for j in 0..n {
-            aug[i * 2 * n + j] = a[i * n + j];
-        }
-        aug[i * 2 * n + n + i] = 1.0;
-    }
-    for col in 0..n {
-        let mut max_row = col;
-        let mut max_val = aug[col * 2 * n + col].abs();
-        for row in col + 1..n {
-            let v = aug[row * 2 * n + col].abs();
-            if v > max_val {
-                max_val = v;
-                max_row = row;
-            }
-        }
-        if max_val < 1e-30 {
-            continue;
-        }
-        if max_row != col {
-            for k in 0..2 * n {
-                aug.swap(col * 2 * n + k, max_row * 2 * n + k);
-            }
-        }
-        let pivot = aug[col * 2 * n + col];
-        for k in 0..2 * n {
-            aug[col * 2 * n + k] /= pivot;
-        }
-        for row in 0..n {
-            if row == col {
-                continue;
-            }
-            let factor = aug[row * 2 * n + col];
-            for k in 0..2 * n {
-                aug[row * 2 * n + k] -= factor * aug[col * 2 * n + k];
-            }
-        }
-    }
-    let mut inv = vec![0.0f64; n * n];
-    for i in 0..n {
-        for j in 0..n {
-            inv[i * n + j] = aug[i * 2 * n + n + j];
-        }
-    }
-    inv
+/// Cholesky factor of a symmetric positive-definite row-major matrix (LAPACK-grade
+/// dense linear algebra via `nalgebra`). GPFA only factors SPD matrices — the GP
+/// prior, the posterior precision and the second-moment matrix — so the
+/// decomposition is the numerically stable, ~2x cheaper choice over a general LU.
+fn spd_cholesky(a: &[f64], n: usize) -> Cholesky<f64, Dyn> {
+    DMatrix::<f64>::from_row_slice(n, n, a)
+        .cholesky()
+        .expect("GPFA matrix must be symmetric positive-definite")
 }
 
-/// Solve A x = b via Gauss-Jordan (A is n x n, b is n x m, returns x as n x m).
-fn mat_solve(a: &[f64], b: &[f64], n: usize, m: usize) -> Vec<f64> {
-    let mut aug = vec![0.0f64; n * (n + m)];
-    let w = n + m;
+/// log-determinant of an SPD matrix from its Cholesky factor (`2 Σ log L_ii`).
+fn chol_logdet(chol: &Cholesky<f64, Dyn>, n: usize) -> f64 {
+    let l = chol.l();
+    2.0 * (0..n).map(|i| l[(i, i)].ln()).sum::<f64>()
+}
+
+/// Inverse of an SPD matrix (row-major in, row-major out) via Cholesky.
+fn spd_inverse(a: &[f64], n: usize) -> Vec<f64> {
+    let inv = spd_cholesky(a, n).inverse();
+    let mut out = vec![0.0f64; n * n];
     for i in 0..n {
         for j in 0..n {
-            aug[i * w + j] = a[i * n + j];
-        }
-        for j in 0..m {
-            aug[i * w + n + j] = b[i * m + j];
+            out[i * n + j] = inv[(i, j)];
         }
     }
-    for col in 0..n {
-        let mut max_row = col;
-        let mut max_val = aug[col * w + col].abs();
-        for row in col + 1..n {
-            let v = aug[row * w + col].abs();
-            if v > max_val {
-                max_val = v;
-                max_row = row;
-            }
-        }
-        if max_val < 1e-30 {
-            continue;
-        }
-        if max_row != col {
-            for k in 0..w {
-                aug.swap(col * w + k, max_row * w + k);
-            }
-        }
-        let pivot = aug[col * w + col];
-        for k in 0..w {
-            aug[col * w + k] /= pivot;
-        }
-        for row in 0..n {
-            if row == col {
-                continue;
-            }
-            let factor = aug[row * w + col];
-            for k in 0..w {
-                aug[row * w + k] -= factor * aug[col * w + k];
-            }
-        }
-    }
-    let mut x = vec![0.0f64; n * m];
-    for i in 0..n {
-        for j in 0..m {
-            x[i * m + j] = aug[i * w + n + j];
-        }
-    }
-    x
+    out
 }
 
-/// Sign and natural log of the absolute determinant of an `n x n` matrix, via LU
-/// with partial pivoting. Matches `numpy.linalg.slogdet`.
-fn mat_slogdet(a: &[f64], n: usize) -> (f64, f64) {
-    let mut m = a.to_vec();
-    let mut sign = 1.0f64;
-    let mut log_abs = 0.0f64;
-    for col in 0..n {
-        let mut max_row = col;
-        let mut max_val = m[col * n + col].abs();
-        for row in col + 1..n {
-            let v = m[row * n + col].abs();
-            if v > max_val {
-                max_val = v;
-                max_row = row;
+/// Assemble the posterior precision `M = blkdiag(K_j⁻¹) + AᵀR⁻¹A` (row-major,
+/// `n_state × n_state` with `n_state = n_latents · n_bins`) and the GP prior
+/// log-determinant `log|K|`.
+///
+/// `AᵀR⁻¹A` has the Kronecker form `δ_{s,t} (CᵀR⁻¹C)[j,k]`, so it adds the constant
+/// `(CᵀR⁻¹C)[j,k]` along the time-diagonal of each `(j, k)` block. Each GP kernel
+/// carries a `1e-6` jitter so the regularised kernel is the model kernel everywhere
+/// (E-step and likelihood stay mutually consistent), and is Cholesky-factored once
+/// to yield both its inverse block and its log-determinant.
+fn gpfa_precision(
+    c: &[f64],
+    r_diag: &[f64],
+    k_all: &[Vec<f64>],
+    n_neurons: usize,
+    n_bins: usize,
+    n_latents: usize,
+) -> (Vec<f64>, f64) {
+    let n_state = n_latents * n_bins;
+    let r_inv: Vec<f64> = r_diag.iter().map(|&r| 1.0 / r).collect();
+    let mut ctr_inv_c = vec![0.0f64; n_latents * n_latents];
+    for i in 0..n_latents {
+        for j in 0..n_latents {
+            let mut s = 0.0;
+            for k in 0..n_neurons {
+                s += c[k * n_latents + i] * r_inv[k] * c[k * n_latents + j];
             }
+            ctr_inv_c[i * n_latents + j] = s;
         }
-        if max_val < 1e-300 {
-            return (0.0, f64::NEG_INFINITY);
+    }
+    let mut m = vec![0.0f64; n_state * n_state];
+    let mut logdet_k = 0.0f64;
+    for j in 0..n_latents {
+        let mut k_reg = k_all[j].clone();
+        for i in 0..n_bins {
+            k_reg[i * n_bins + i] += 1e-6;
         }
-        if max_row != col {
-            for k in 0..n {
-                m.swap(col * n + k, max_row * n + k);
-            }
-            sign = -sign;
-        }
-        let pivot = m[col * n + col];
-        if pivot < 0.0 {
-            sign = -sign;
-        }
-        log_abs += pivot.abs().ln();
-        for row in col + 1..n {
-            let factor = m[row * n + col] / pivot;
-            for k in col..n {
-                m[row * n + k] -= factor * m[col * n + k];
+        let chol = spd_cholesky(&k_reg, n_bins);
+        logdet_k += chol_logdet(&chol, n_bins);
+        let k_inv = chol.inverse();
+        let slj = j * n_bins;
+        for i in 0..n_bins {
+            for jj in 0..n_bins {
+                m[(slj + i) * n_state + (slj + jj)] = k_inv[(i, jj)];
             }
         }
     }
-    (sign, log_abs)
+    for j in 0..n_latents {
+        for k in 0..n_latents {
+            let v = ctr_inv_c[j * n_latents + k];
+            for t in 0..n_bins {
+                m[(j * n_bins + t) * n_state + (k * n_bins + t)] += v;
+            }
+        }
+    }
+    (m, logdet_k)
 }
 
-/// E-step: compute posterior p(x|y).
+/// E-step: joint Gaussian posterior `p(x|y)` over all latents and time points.
+///
+/// The posterior precision `M` (see [`gpfa_precision`]) is Cholesky-factored once;
+/// the same factor yields the posterior mean (`M⁻¹` applied to `AᵀR⁻¹y`) and the
+/// posterior covariance (`M⁻¹`). Working on the `n_state`-dimensional state avoids
+/// the dense `(n_neurons·n_bins)²` solve of the naive marginal form.
 fn gpfa_e_step(
     y: &[f64],          // n_neurons x n_bins (row-major)
     c: &[f64],          // n_neurons x n_latents
@@ -183,108 +131,36 @@ fn gpfa_e_step(
     n_bins: usize,
     n_latents: usize,
 ) -> (Vec<f64>, Vec<f64>) {
-    // x_post (n_latents x n_bins), xx_post (n_latents x n_latents)
-    let kt = n_latents * n_bins;
+    let n_state = n_latents * n_bins;
+    let r_inv: Vec<f64> = r_diag.iter().map(|&r| 1.0 / r).collect();
+    let (m, _) = gpfa_precision(c, r_diag, k_all, n_neurons, n_bins, n_latents);
 
-    // R^{-1}
-    let r_inv: Vec<f64> = r_diag.iter().map(|&r| 1.0 / (r + 1e-10)).collect();
-
-    // C^T R^{-1} C (n_latents x n_latents)
-    let mut ct_rinv_c = vec![0.0f64; n_latents * n_latents];
-    for i in 0..n_latents {
-        for j in 0..n_latents {
-            let mut s = 0.0;
-            for k in 0..n_neurons {
-                s += c[k * n_latents + i] * r_inv[k] * c[k * n_latents + j];
-            }
-            ct_rinv_c[i * n_latents + j] = s;
-        }
-    }
-
-    // C^T R^{-1} (n_latents x n_neurons)
-    let mut ct_rinv = vec![0.0f64; n_latents * n_neurons];
-    for i in 0..n_latents {
-        for k in 0..n_neurons {
-            ct_rinv[i * n_neurons + k] = c[k * n_latents + i] * r_inv[k];
-        }
-    }
-
-    // Build precision (kt x kt)
-    let mut prec = vec![0.0f64; kt * kt];
-    for j in 0..n_latents {
-        let slj = j * n_bins;
-        // K_j^{-1}
-        let mut k_reg = k_all[j].clone();
-        for i in 0..n_bins {
-            k_reg[i * n_bins + i] += 1e-6;
-        }
-        let k_eye = vec![0.0f64; n_bins * n_bins]
-            .iter()
-            .enumerate()
-            .map(|(idx, _)| {
-                if idx / n_bins == idx % n_bins {
-                    1.0
-                } else {
-                    0.0
-                }
-            })
-            .collect::<Vec<f64>>();
-        let k_inv = mat_solve(&k_reg, &k_eye, n_bins, n_bins);
-
-        for i in 0..n_bins {
-            for jj in 0..n_bins {
-                prec[(slj + i) * kt + (slj + jj)] = k_inv[i * n_bins + jj]
-                    + ct_rinv_c[j * n_latents + j] * if i == jj { 1.0 } else { 0.0 };
-            }
-        }
-        for k in 0..n_latents {
-            if k != j {
-                let slk = k * n_bins;
-                for i in 0..n_bins {
-                    prec[(slj + i) * kt + (slk + i)] = ct_rinv_c[j * n_latents + k];
-                }
-            }
-        }
-    }
-
-    // RHS
-    let mut rhs = vec![0.0f64; kt];
-    // Y_centered = Y - d[:, None]
+    // rhs[j*nb+t] = sum_k C[k,j] R⁻¹[k] (y[k,t] - d[k])
+    let mut rhs = vec![0.0f64; n_state];
     for t in 0..n_bins {
-        // v = C^T R^{-1} (y_t - d)
         for j in 0..n_latents {
             let mut s = 0.0;
             for k in 0..n_neurons {
-                s += ct_rinv[j * n_neurons + k] * (y[k * n_bins + t] - d[k]);
+                s += c[k * n_latents + j] * r_inv[k] * (y[k * n_bins + t] - d[k]);
             }
             rhs[j * n_bins + t] = s;
         }
     }
 
-    // Regularise precision
-    for i in 0..kt {
-        prec[i * kt + i] += 1e-8;
-    }
+    let chol = spd_cholesky(&m, n_state);
+    let x_solved = chol.solve(&DMatrix::from_row_slice(n_state, 1, &rhs));
+    let x_vec: Vec<f64> = (0..n_state).map(|i| x_solved[(i, 0)]).collect();
+    let sigma = chol.inverse();
 
-    // Solve prec * x_vec = rhs
-    let rhs_col: Vec<f64> = rhs.clone();
-    let x_vec = mat_solve(&prec, &rhs_col, kt, 1);
-
-    // Posterior covariance (for E[xx^T])
-    let eye_kt: Vec<f64> = (0..kt * kt)
-        .map(|idx| if idx / kt == idx % kt { 1.0 } else { 0.0 })
-        .collect();
-    let sigma_post = mat_solve(&prec, &eye_kt, kt, kt);
-
-    // E[xx^T] per timepoint
+    // xx_post = Σ_t [ x_t x_tᵀ + Σ_post(t) ], Σ_post(t) the n_latents×n_latents
+    // block of M⁻¹ at the latent indices sharing time t.
     let mut xx_post = vec![0.0f64; n_latents * n_latents];
     for t in 0..n_bins {
         for j in 0..n_latents {
             let xj = x_vec[j * n_bins + t];
             for k in 0..n_latents {
                 let xk = x_vec[k * n_bins + t];
-                xx_post[j * n_latents + k] +=
-                    xj * xk + sigma_post[(j * n_bins + t) * kt + (k * n_bins + t)];
+                xx_post[j * n_latents + k] += xj * xk + sigma[(j * n_bins + t, k * n_bins + t)];
             }
         }
     }
@@ -321,12 +197,12 @@ fn gpfa_m_step(
         }
     }
 
-    // C_new = Yx @ inv(xx_post + eps*I)
+    // C_new = Yx @ inv(xx_post + eps*I); the second-moment matrix is SPD.
     let mut xx_reg = xx_post.to_vec();
     for i in 0..n_latents {
         xx_reg[i * n_latents + i] += 1e-8;
     }
-    let xx_inv = mat_inv(&xx_reg, n_latents);
+    let xx_inv = spd_inverse(&xx_reg, n_latents);
     let mut c_new = vec![0.0f64; n_neurons * n_latents];
     for i in 0..n_neurons {
         for j in 0..n_latents {
@@ -364,11 +240,21 @@ fn gpfa_m_step(
     (c_new, d_new, r_new)
 }
 
-/// Exact marginal Gaussian log-likelihood for the GPFA observation model.
+/// Exact marginal Gaussian log-likelihood via the Woodbury identity.
 ///
-/// Matches the Python reference: builds the dense `(n_obs x n_obs)` marginal
-/// covariance `A K A^T + (I_T ⊗ R) + 1e-8 I` and returns
-/// `-0.5 (yᵀ Σ⁻¹ y + log|Σ| + n_obs log 2π)`.
+/// The marginal covariance `Σ = A K Aᵀ + (I_T ⊗ R)` is never formed densely.
+/// The Woodbury identity and the matrix-determinant lemma route both the quadratic
+/// form and the log-determinant through the `n_state × n_state` posterior precision
+/// `M = K⁻¹ + AᵀR⁻¹A` (Cholesky-factored):
+///
+/// ```text
+/// yᵀ Σ⁻¹ y = yᵀ R⁻¹ y − (AᵀR⁻¹y)ᵀ M⁻¹ (AᵀR⁻¹y)
+/// log|Σ|   = log|M| + log|K| + log|R_big|
+/// ```
+///
+/// This is the structured estimator of Yu et al. (2009): the exact marginal
+/// likelihood of the regularised model (the GP kernels carry the same `1e-6` jitter
+/// as the E-step), not an approximation.
 fn gpfa_log_likelihood(
     y: &[f64],
     c: &[f64],
@@ -381,73 +267,36 @@ fn gpfa_log_likelihood(
 ) -> f64 {
     let n_obs = n_neurons * n_bins;
     let n_state = n_latents * n_bins;
+    let r_inv: Vec<f64> = r_diag.iter().map(|&r| 1.0 / r).collect();
+    let (m, logdet_k) = gpfa_precision(c, r_diag, k_all, n_neurons, n_bins, n_latents);
 
-    // A: (n_obs x n_state) with A[t*n_neurons + i, j*n_bins + t] = C[i, j].
-    let mut a = vec![0.0f64; n_obs * n_state];
+    let mut rhs = vec![0.0f64; n_state];
     for t in 0..n_bins {
         for j in 0..n_latents {
-            let col = j * n_bins + t;
-            for i in 0..n_neurons {
-                a[(t * n_neurons + i) * n_state + col] = c[i * n_latents + j];
-            }
-        }
-    }
-
-    // K_big: block-diagonal (n_state x n_state).
-    let mut k_big = vec![0.0f64; n_state * n_state];
-    for (j, kernel) in k_all.iter().enumerate() {
-        for ii in 0..n_bins {
-            for jj in 0..n_bins {
-                k_big[(j * n_bins + ii) * n_state + (j * n_bins + jj)] = kernel[ii * n_bins + jj];
-            }
-        }
-    }
-
-    // AK = A @ K_big.
-    let mut ak = vec![0.0f64; n_obs * n_state];
-    for i in 0..n_obs {
-        for j in 0..n_state {
             let mut s = 0.0;
-            for k in 0..n_state {
-                s += a[i * n_state + k] * k_big[k * n_state + j];
+            for k in 0..n_neurons {
+                s += c[k * n_latents + j] * r_inv[k] * (y[k * n_bins + t] - d[k]);
             }
-            ak[i * n_state + j] = s;
+            rhs[j * n_bins + t] = s;
         }
     }
 
-    // cov = AK @ Aᵀ + (I_T ⊗ R) + 1e-8 I.
-    let mut cov = vec![0.0f64; n_obs * n_obs];
-    for i in 0..n_obs {
-        for j in 0..n_obs {
-            let mut s = 0.0;
-            for k in 0..n_state {
-                s += ak[i * n_state + k] * a[j * n_state + k];
-            }
-            cov[i * n_obs + j] = s;
-        }
-    }
-    for t in 0..n_bins {
-        for i in 0..n_neurons {
-            let idx = t * n_neurons + i;
-            cov[idx * n_obs + idx] += r_diag[i];
-        }
-    }
-    for i in 0..n_obs {
-        cov[i * n_obs + i] += 1e-8;
-    }
+    let chol = spd_cholesky(&m, n_state);
+    let logdet_m = chol_logdet(&chol, n_state);
+    let x_mean = chol.solve(&DMatrix::from_row_slice(n_state, 1, &rhs));
+    let rhs_x_mean: f64 = (0..n_state).map(|i| rhs[i] * x_mean[(i, 0)]).sum();
 
-    // y_centered = (Y - d)ᵀ flattened time-major.
-    let mut yc = vec![0.0f64; n_obs];
-    for t in 0..n_bins {
-        for i in 0..n_neurons {
-            yc[t * n_neurons + i] = y[i * n_bins + t] - d[i];
+    let mut y_rinv_y = 0.0f64;
+    for k in 0..n_neurons {
+        for t in 0..n_bins {
+            let v = y[k * n_bins + t] - d[k];
+            y_rinv_y += r_inv[k] * v * v;
         }
     }
-
-    let sol = mat_solve(&cov, &yc, n_obs, 1);
-    let quad: f64 = (0..n_obs).map(|i| yc[i] * sol[i]).sum();
-    let (_sign, logdet) = mat_slogdet(&cov, n_obs);
-    -0.5 * (quad + logdet + n_obs as f64 * (2.0 * std::f64::consts::PI).ln())
+    let quad = y_rinv_y - rhs_x_mean;
+    let logdet_r_big = n_bins as f64 * r_diag.iter().map(|&r| r.ln()).sum::<f64>();
+    let logdet_sigma = logdet_m + logdet_k + logdet_r_big;
+    -0.5 * (quad + logdet_sigma + n_obs as f64 * (2.0 * std::f64::consts::PI).ln())
 }
 
 /// Run the GPFA EM loop from a fixed initialisation (the dispatchable kernel).
