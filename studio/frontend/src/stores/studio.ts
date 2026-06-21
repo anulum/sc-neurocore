@@ -88,9 +88,9 @@ import {
   studioGraphWithoutPopulation,
 } from "../studioGraphRequests";
 import {
-  copyStudioShareUrl,
   decodeStudioStartupHash,
 } from "../studioUrlState";
+import { copyStudioShareUrlInRuntime } from "../studioShareRuntime";
 import { studioTraceImportRequest } from "../studioTraceImport";
 import {
   studioBifurcationRequest,
@@ -1644,7 +1644,7 @@ export const useStudioStore = create<StudioState>((set, get) => ({
 
   shareURL: () => {
     const s = get();
-    copyStudioShareUrl({
+    void copyStudioShareUrlInRuntime({
       sourceMode: s.sourceMode,
       selectedModelName: s.selectedModelName,
       equations: s.equations,
@@ -1657,9 +1657,10 @@ export const useStudioStore = create<StudioState>((set, get) => ({
       duration: s.duration,
       current: s.current,
       protocol: s.protocol,
-    }, window.location, navigator.clipboard);
-    set({ error: "URL copied to clipboard" });
-    setTimeout(() => set({ error: null }), 2000);
+    }).then((result) => {
+      set({ error: result.ok ? "URL copied to clipboard" : result.message });
+      setTimeout(() => set({ error: null }), 2000);
+    });
   },
 }));
 
