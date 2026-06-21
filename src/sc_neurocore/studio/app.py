@@ -130,6 +130,7 @@ from sc_neurocore.studio.platform import (
     rotate_studio_browser_user_password,
     update_studio_identity_record,
     update_studio_browser_user_record,
+    validate_studio_audit_quarantine_archive,
     write_studio_action_evidence_manifest,
     write_studio_audit_quarantine_archive,
     write_studio_evidence_bundle,
@@ -365,6 +366,13 @@ class StudioAuditQuarantineArchiveRequest(BaseModel):
     """Request body for admin audit quarantine archive creation."""
 
     limit: int = Field(default=100, ge=1, le=1000)
+
+
+class StudioAuditQuarantineArchiveValidateRequest(BaseModel):
+    """Request body for admin audit quarantine archive validation."""
+
+    archive: dict[str, Any]
+    manifest: dict[str, Any] | None = None
 
 
 class PresetDefaultFlowAttestationVerifyRequest(BaseModel):
@@ -1267,6 +1275,18 @@ def create_app(runtime_settings: StudioRuntimeSettings | None = None) -> FastAPI
         if completed.status == "timed_out":
             raise HTTPException(status_code=504, detail="studio_job_timed_out")
         raise HTTPException(status_code=500, detail="studio_job_failed")
+
+    @app.post("/api/studio/audit/quarantine/archive/validate")
+    def api_studio_audit_quarantine_archive_validate(
+        validate_request: StudioAuditQuarantineArchiveValidateRequest,
+    ) -> dict[str, object]:
+        """Validate a path-free quarantine archive before import handling."""
+
+        result = validate_studio_audit_quarantine_archive(
+            validate_request.archive,
+            manifest_payload=validate_request.manifest,
+        ).to_public_dict()
+        return cast(dict[str, object], result)
 
     @app.post("/api/studio/evidence/bundle")
     def api_studio_evidence_bundle(

@@ -23,12 +23,10 @@ from sc_neurocore.studio.platform.jobs import (
     StudioJobContext,
     StudioJobRecord,
 )
-from sc_neurocore.studio.platform.policy import AUDIT_QUARANTINE_EXPORT_SCHEMA_VERSION
 from sc_neurocore.studio.analysis_manifest import STUDIO_ANALYSIS_RESULT_SCHEMA_VERSION
 from sc_neurocore.studio.simulation_manifest import STUDIO_SIMULATION_RUN_SCHEMA_VERSION
 
 STUDIO_EVIDENCE_BUNDLE_SCHEMA_VERSION = "studio.evidence-bundle.v1"
-STUDIO_AUDIT_QUARANTINE_ARCHIVE_SCHEMA_VERSION = "studio.audit-quarantine-archive.v1"
 STUDIO_ACTION_EVIDENCE_SCHEMA_VERSION = "studio.action-evidence.v1"
 STUDIO_DEFAULT_FLOW_RUN_SCHEMA_VERSION = "sc-neurocore.studio.default-flow-run.v1"
 STUDIO_DEFAULT_FLOW_ATTESTATION_SCHEMA_VERSION = (
@@ -81,39 +79,6 @@ class StudioEvidenceBundleResult:
             "bundle_id": self.bundle_id,
             "manifest": self.manifest,
             "schema_version": STUDIO_EVIDENCE_BUNDLE_SCHEMA_VERSION,
-            "summary": self.summary,
-        }
-
-
-@dataclass(frozen=True, slots=True)
-class StudioAuditQuarantineArchiveResult:
-    """Path-free result returned after writing a quarantine archive.
-
-    Parameters
-    ----------
-    archive_id:
-        Stable archive identifier derived from the evidence job ID.
-    manifest:
-        JSON manifest describing the archive artifacts written by the job.
-    summary:
-        Path-free aggregate counts for operator review.
-    artifact_paths:
-        Archive-relative artifact paths written through the Studio job context.
-    """
-
-    archive_id: str
-    manifest: dict[str, JsonValue]
-    summary: dict[str, JsonValue]
-    artifact_paths: tuple[str, ...]
-
-    def to_public_dict(self) -> dict[str, JsonValue]:
-        """Return the path-free quarantine archive result."""
-
-        return {
-            "archive_id": self.archive_id,
-            "artifact_paths": list(self.artifact_paths),
-            "manifest": self.manifest,
-            "schema_version": STUDIO_AUDIT_QUARANTINE_ARCHIVE_SCHEMA_VERSION,
             "summary": self.summary,
         }
 
@@ -342,78 +307,6 @@ def write_studio_evidence_bundle(
     )
 
 
-def write_studio_audit_quarantine_archive(
-    context: StudioJobContext,
-    *,
-    quarantine_export: Mapping[str, object],
-    clock: Callable[[], datetime] | None = None,
-) -> StudioAuditQuarantineArchiveResult:
-    """Write quarantined audit evidence into a confined Studio job archive.
-
-    Parameters
-    ----------
-    context:
-        Studio job context that owns the archive artifacts and enforces path
-        confinement, byte ceilings, and SHA-256 manifests.
-    quarantine_export:
-        Path-free payload returned by ``JsonlAuditSink.export_quarantine``.
-    clock:
-        Optional UTC clock for deterministic tests.
-
-    Returns
-    -------
-    StudioAuditQuarantineArchiveResult
-        Path-free manifest and artifact list for the generated archive.
-
-    Raises
-    ------
-    ValueError
-        If the export payload is malformed or not the quarantine export schema.
-    """
-
-    now = (clock or _utc_now)().astimezone(UTC).replace(microsecond=0)
-    archive_id = f"saqa_{context.job_id}"
-    export_payload = _audit_quarantine_export_payload(quarantine_export)
-    summary = _audit_quarantine_archive_summary(export_payload)
-    written_paths: list[str] = []
-    archive_payload: dict[str, JsonValue] = {
-        "archive_id": archive_id,
-        "archived_at_utc": now.isoformat().replace("+00:00", "Z"),
-        "quarantine_export": export_payload,
-        "schema_version": STUDIO_AUDIT_QUARANTINE_ARCHIVE_SCHEMA_VERSION,
-        "summary": summary,
-    }
-    archive_entry = _write_json_entry(
-        context,
-        written_paths,
-        "audit_quarantine_archive",
-        "evidence/audit-quarantine/archive.json",
-        archive_payload,
-    )
-    manifest: dict[str, JsonValue] = {
-        "archive_id": archive_id,
-        "artifact_count": 1,
-        "created_at_utc": now.isoformat().replace("+00:00", "Z"),
-        "entries": [archive_entry],
-        "schema_version": STUDIO_AUDIT_QUARANTINE_ARCHIVE_SCHEMA_VERSION,
-        "summary": summary,
-    }
-    manifest_entry = _write_json_entry(
-        context,
-        written_paths,
-        "manifest",
-        "evidence/audit-quarantine/manifest.json",
-        manifest,
-    )
-    manifest["manifest_artifact"] = manifest_entry
-    return StudioAuditQuarantineArchiveResult(
-        archive_id=archive_id,
-        manifest=manifest,
-        summary=summary,
-        artifact_paths=tuple(written_paths),
-    )
-
-
 def _bundle_summary(
     entries: Sequence[Mapping[str, JsonValue]],
     *,
@@ -452,55 +345,6 @@ def _bundle_summary(
         "source_job_kind_counts": dict(sorted(source_job_kind_counts.items())),
         "source_job_owner_counts": dict(sorted(source_job_owner_counts.items())),
     }
-
-
-def _audit_quarantine_archive_summary(
-    export_payload: Mapping[str, JsonValue],
-) -> dict[str, JsonValue]:
-    events = cast(list[JsonValue], export_payload["events"])
-    reason_counts: dict[str, int] = {}
-    for event in events:
-        event_object = cast(Mapping[str, JsonValue], event)
-        reason = cast(str, event_object["quarantine_reason"])
-        reason_counts[reason] = reason_counts.get(reason, 0) + 1
-    return {
-        "archive_artifact_count": 2,
-        "event_count": cast(int, export_payload["event_count"]),
-        "quarantine_reason": export_payload["quarantine_reason"],
-        "reason_counts": dict(sorted(reason_counts.items())),
-        "retained_event_count": cast(int, export_payload["retained_event_count"]),
-        "source_schema_version": cast(str, export_payload["schema_version"]),
-        "truncated": cast(bool, export_payload["truncated"]),
-    }
-
-
-def _audit_quarantine_export_payload(
-    payload: Mapping[str, object],
-) -> dict[str, JsonValue]:
-    result = _json_object(payload, "Studio audit quarantine export must be JSON.")
-    if result.get("schema_version") != AUDIT_QUARANTINE_EXPORT_SCHEMA_VERSION:
-        raise ValueError("Studio audit quarantine export has unsupported schema.")
-    events = result.get("events")
-    if not isinstance(events, list):
-        raise ValueError("Studio audit quarantine export requires event rows.")
-    event_count = result.get("event_count")
-    if not isinstance(event_count, int) or event_count != len(events):
-        raise ValueError("Studio audit quarantine export has inconsistent event count.")
-    retained_event_count = result.get("retained_event_count")
-    if not isinstance(retained_event_count, int) or retained_event_count < event_count:
-        raise ValueError("Studio audit quarantine export has invalid retained count.")
-    if not isinstance(result.get("truncated"), bool):
-        raise ValueError("Studio audit quarantine export requires truncation status.")
-    quarantine_reason = result.get("quarantine_reason")
-    if quarantine_reason is not None and not isinstance(quarantine_reason, str):
-        raise ValueError("Studio audit quarantine export has invalid summary reason.")
-    for event in events:
-        if not isinstance(event, Mapping):
-            raise ValueError("Studio audit quarantine export has invalid event rows.")
-        reason = event.get("quarantine_reason")
-        if not isinstance(reason, str) or not reason:
-            raise ValueError("Studio audit quarantine export has invalid event rows.")
-    return result
 
 
 def _write_json_entry(
@@ -757,13 +601,10 @@ def _utc_now() -> datetime:
 
 
 __all__ = [
-    "STUDIO_AUDIT_QUARANTINE_ARCHIVE_SCHEMA_VERSION",
     "STUDIO_EVIDENCE_BUNDLE_SCHEMA_VERSION",
     "JsonScalar",
     "JsonValue",
     "StudioArtifactReader",
-    "StudioAuditQuarantineArchiveResult",
     "StudioEvidenceBundleResult",
-    "write_studio_audit_quarantine_archive",
     "write_studio_evidence_bundle",
 ]

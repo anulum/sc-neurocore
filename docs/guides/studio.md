@@ -310,6 +310,11 @@ artifacts through `POST /api/studio/audit/quarantine/archive`; the response
 returns a path-free archive manifest, reason counts, job ID, and downloadable
 artifact metadata under the existing `/api/studio/jobs/{job_id}/artifacts/...`
 surface.
+Before importing or restoring a saved archive, administrators can submit the
+archive payload and optional companion manifest to
+`POST /api/studio/audit/quarantine/archive/validate`; Studio recomputes the
+reason counts and verifies the manifest linkage without reading arbitrary
+server-side paths.
 When `SC_NEUROCORE_STUDIO_AUDIT_ROTATION_BYTES` is set, the retained-file count
 must be a positive integer so rotation always keeps at least one archived JSONL
 segment for incident review and retained-chain verification.
