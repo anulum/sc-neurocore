@@ -87,6 +87,10 @@ import {
   simulationSvgFilename,
 } from "../simulationExports";
 import { downloadCanvasPng } from "../browserCanvasExport";
+import {
+  NETWORK_NIR_EXPORT_FILENAME,
+  networkNirBlob,
+} from "../networkNirExport";
 import { parseTrainingCheckpointPayload } from "../trainingCheckpoint";
 import {
   buildTrainingWeightRestoreVerificationManifest,
@@ -1463,11 +1467,7 @@ export const useStudioStore = create<StudioState>((set, get) => ({
     const s = get();
     try {
       const nir = await apiExportNIR({ populations: s.graphPopulations, projections: s.graphProjections });
-      const blob = new Blob([JSON.stringify(nir, null, 2)], { type: "application/json" });
-      const a = document.createElement("a");
-      a.href = URL.createObjectURL(blob);
-      a.download = "network.nir.json";
-      a.click();
+      downloadBrowserArtefact(networkNirBlob(nir), NETWORK_NIR_EXPORT_FILENAME);
     } catch (e) { set({ error: e instanceof Error ? e.message : String(e) }); }
   },
 
