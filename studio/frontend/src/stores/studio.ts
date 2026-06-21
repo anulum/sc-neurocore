@@ -80,6 +80,12 @@ import {
   type StudioProjectTrainingConfig,
 } from "../studioProjectState";
 import {
+  studioDefaultPopulationRequest,
+  studioDefaultProjectionRequest,
+  studioGraphRequest,
+  studioGraphWithoutPopulation,
+} from "../studioGraphRequests";
+import {
   copyStudioShareUrl,
   decodeStudioStartupHash,
 } from "../studioUrlState";
@@ -1398,7 +1404,7 @@ export const useStudioStore = create<StudioState>((set, get) => ({
     if (s.isSimulating || s.graphPopulations.length === 0) return;
     set({ isSimulating: true, error: null, pipelineResult: null });
     try {
-      const graph = { populations: s.graphPopulations, projections: s.graphProjections, duration: s.duration, dt: s.dt };
+      const graph = studioGraphRequest(s.graphPopulations, s.graphProjections, s.duration, s.dt);
       const pipelineResult = await apiRunPipeline(graph, s.synthTarget);
       set({ pipelineResult, isSimulating: false });
     } catch (e) { set({ error: e instanceof Error ? e.message : String(e), isSimulating: false }); }
@@ -1413,22 +1419,23 @@ export const useStudioStore = create<StudioState>((set, get) => ({
 
   addPopulation: async (neuronType) => {
     const s = get();
-    const idx = s.graphPopulations.length;
-    const label = neuronType === "excitatory" ? `Exc ${idx}` : `Inh ${idx}`;
     try {
-      const pop = await apiCreatePop({
-        label, model: "LIFNeuron", count: neuronType === "excitatory" ? 80 : 20,
-        neuron_type: neuronType, x: 100 + idx * 200, y: neuronType === "excitatory" ? 100 : 300,
-      } as Record<string, unknown>);
+      const pop = await apiCreatePop(studioDefaultPopulationRequest(neuronType, s.graphPopulations.length));
       set((prev) => ({ graphPopulations: [...prev.graphPopulations, pop] }));
     } catch (e) { set({ error: e instanceof Error ? e.message : String(e) }); }
   },
 
   removePopulation: (id) => {
-    set((s) => ({
-      graphPopulations: s.graphPopulations.filter((p) => p.id !== id),
-      graphProjections: s.graphProjections.filter((e) => e.source !== id && e.target !== id),
-    }));
+    set((s) => {
+      const graph = studioGraphWithoutPopulation({
+        populations: s.graphPopulations,
+        projections: s.graphProjections,
+      }, id);
+      return {
+        graphPopulations: graph.populations,
+        graphProjections: graph.projections,
+      };
+    });
   },
 
   updatePopulation: (id, updates) => {
@@ -1439,7 +1446,7 @@ export const useStudioStore = create<StudioState>((set, get) => ({
 
   addProjection: async (sourceId, targetId) => {
     try {
-      const proj = await apiCreateProj({ source_id: sourceId, target_id: targetId, weight: 0.1, probability: 0.2 });
+      const proj = await apiCreateProj(studioDefaultProjectionRequest(sourceId, targetId));
       set((prev) => ({ graphProjections: [...prev.graphProjections, proj] }));
     } catch (e) { set({ error: e instanceof Error ? e.message : String(e) }); }
   },
@@ -1459,7 +1466,7 @@ export const useStudioStore = create<StudioState>((set, get) => ({
     if (s.isSimulating) return;
     set({ isSimulating: true, error: null, graphErrors: [] });
     try {
-      const graph = { populations: s.graphPopulations, projections: s.graphProjections, duration: s.duration, dt: s.dt };
+      const graph = studioGraphRequest(s.graphPopulations, s.graphProjections, s.duration, s.dt);
       const validation = await apiValidateGraph(graph);
       if (!validation.valid) {
         set({ graphErrors: validation.errors, isSimulating: false });
