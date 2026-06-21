@@ -70,6 +70,10 @@ export interface StudioProjectionUpdatedStatePatch {
   graphProjections: ProjectionEdge[];
 }
 
+export interface StudioProjectionRemovedStatePatch {
+  graphProjections: ProjectionEdge[];
+}
+
 export interface StudioGraphValidationFailedStatePatch {
   graphErrors: string[];
   isSimulating: false;
@@ -191,6 +195,15 @@ export function studioProjectionUpdatedState(
   return {
     graphProjections: graphProjections.map((projection) =>
       projection.id === projectionId ? { ...projection, ...updates } : projection),
+  };
+}
+
+export function studioProjectionRemovedState(
+  graphProjections: ProjectionEdge[],
+  projectionId: string,
+): StudioProjectionRemovedStatePatch {
+  return {
+    graphProjections: graphProjections.filter((projection) => projection.id !== projectionId),
   };
 }
 

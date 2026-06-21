@@ -25,6 +25,7 @@ import {
   studioPopulationAddedState,
   studioPopulationUpdatedState,
   studioProjectionAddedState,
+  studioProjectionRemovedState,
   studioProjectionUpdatedState,
 } from "./studioGraphRequests";
 
@@ -129,6 +130,7 @@ describe("Studio graph request builders", () => {
   it("builds graph model and element mutation patches", () => {
     const replacement = { ...population, label: "Renamed" };
     const updatedProjection = { ...projection, weight: 0.3 };
+    const retainedProjection = { ...projection, id: "e2", weight: 0.5 };
 
     expect(studioGraphModelsLoadedState(["LIFNeuron"])).toEqual({ graphModels: ["LIFNeuron"] });
     expect(studioPopulationAddedState([], population)).toEqual({ graphPopulations: [population] });
@@ -137,6 +139,8 @@ describe("Studio graph request builders", () => {
     expect(studioProjectionAddedState([], projection)).toEqual({ graphProjections: [projection] });
     expect(studioProjectionUpdatedState([projection], projection.id, { weight: 0.3 }))
       .toEqual({ graphProjections: [updatedProjection] });
+    expect(studioProjectionRemovedState([projection, retainedProjection], projection.id))
+      .toEqual({ graphProjections: [retainedProjection] });
   });
 
   it("builds graph import and failure patches", () => {

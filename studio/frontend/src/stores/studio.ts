@@ -117,6 +117,7 @@ import {
   studioPopulationAddedState,
   studioPopulationUpdatedState,
   studioProjectionAddedState,
+  studioProjectionRemovedState,
   studioProjectionUpdatedState,
 } from "../studioGraphRequests";
 import { copyStudioShareUrlInRuntime } from "../studioShareRuntime";
@@ -1324,7 +1325,7 @@ export const useStudioStore = create<StudioState>((set, get) => ({
   },
 
   removeProjection: (id) => {
-    set((s) => ({ graphProjections: s.graphProjections.filter((e) => e.id !== id) }));
+    set((s) => studioProjectionRemovedState(s.graphProjections, id));
   },
 
   updateProjection: (id, updates) => {
