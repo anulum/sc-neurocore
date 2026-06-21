@@ -22,6 +22,7 @@ export interface SimulationRunMetadata {
   schema_version: "studio.simulation-run.v1";
   source: "ode" | "model";
   spike_count: number;
+  status: "completed";
   state_variables: string[];
 }
 
@@ -33,6 +34,7 @@ export interface AnalysisResultMetadata {
   result_sha256: string;
   schema_version: "studio.analysis-result.v1";
   source: "ode" | "model" | "mixed" | "unknown";
+  status: "completed";
 }
 
 export interface SimulateResponse {

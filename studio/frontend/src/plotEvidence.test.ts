@@ -13,6 +13,7 @@ const simulationMetadata: SimulationRunMetadata = {
   schema_version: "studio.simulation-run.v1",
   source: "ode",
   spike_count: 0,
+  status: "completed",
   state_variables: ["v"],
 };
 
@@ -24,6 +25,7 @@ const analysisMetadata: AnalysisResultMetadata = {
   result_sha256: "4".repeat(64),
   schema_version: "studio.analysis-result.v1",
   source: "model",
+  status: "completed",
 };
 
 describe("plot evidence models", () => {
@@ -31,6 +33,7 @@ describe("plot evidence models", () => {
     expect(buildSimulationEvidenceItems(simulationMetadata)).toEqual([
       { label: "class", value: "simulation" },
       { label: "source", value: "ode" },
+      { label: "status", value: "completed" },
       { label: "in", value: "1111111111" },
       { label: "out", value: "2222222222" },
     ]);
@@ -41,6 +44,7 @@ describe("plot evidence models", () => {
       { label: "type", value: "fi_curve" },
       { label: "class", value: "analysis" },
       { label: "source", value: "model" },
+      { label: "status", value: "completed" },
       { label: "in", value: "3333333333" },
       { label: "out", value: "4444444444" },
     ]);

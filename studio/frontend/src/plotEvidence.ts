@@ -5,6 +5,7 @@ export function buildSimulationEvidenceItems(metadata: SimulationRunMetadata): E
   return [
     { label: "class", value: metadata.evidence_classification },
     { label: "source", value: metadata.source },
+    { label: "status", value: metadata.status },
     { label: "in", value: metadata.input_sha256.slice(0, 10) },
     { label: "out", value: metadata.result_sha256.slice(0, 10) },
   ];
@@ -15,6 +16,7 @@ export function buildAnalysisEvidenceItems(metadata: AnalysisResultMetadata): Ev
     { label: "type", value: metadata.analysis_type },
     { label: "class", value: metadata.evidence_classification },
     { label: "source", value: metadata.source },
+    { label: "status", value: metadata.status },
     { label: "in", value: metadata.input_sha256.slice(0, 10) },
     { label: "out", value: metadata.result_sha256.slice(0, 10) },
   ];

@@ -27,6 +27,7 @@ const simulationResult: SimulateResponse = {
     schema_version: "studio.simulation-run.v1",
     source: "ode",
     spike_count: 0,
+    status: "completed",
     state_variables: ["v"],
   },
   spike_count: 0,
@@ -50,6 +51,7 @@ const fiResult: FICurveResponse = {
     result_sha256: "4".repeat(64),
     schema_version: "studio.analysis-result.v1",
     source: "ode",
+    status: "completed",
   },
   currents: [0, 1],
   rates: [0, 10],
@@ -84,6 +86,7 @@ describe("SimulationPlot", () => {
 
     expect(html).toContain("class simulation");
     expect(html).toContain("source ode");
+    expect(html).toContain("status completed");
     expect(html).toContain("in 1111111111");
     expect(html).toContain("out 2222222222");
   });
