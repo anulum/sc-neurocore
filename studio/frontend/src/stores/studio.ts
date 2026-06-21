@@ -87,10 +87,8 @@ import {
   studioGraphRequest,
   studioGraphWithoutPopulation,
 } from "../studioGraphRequests";
-import {
-  decodeStudioStartupHash,
-} from "../studioUrlState";
 import { copyStudioShareUrlInRuntime } from "../studioShareRuntime";
+import { readStudioStartupHashState } from "../studioStartupRuntime";
 import { studioTraceImportRequest } from "../studioTraceImport";
 import {
   studioBifurcationRequest,
@@ -1664,14 +1662,12 @@ export const useStudioStore = create<StudioState>((set, get) => ({
   },
 }));
 
-if (typeof window !== "undefined") {
-  const startupHashState = decodeStudioStartupHash(window.location.hash);
-  if (startupHashState !== null) {
-    useStudioStore.getState().selectModel(startupHashState.selectedModelName);
-    useStudioStore.setState({
-      current: startupHashState.current,
-      duration: startupHashState.duration,
-      protocol: startupHashState.protocol,
-    });
-  }
+const startupHashState = readStudioStartupHashState();
+if (startupHashState !== null) {
+  useStudioStore.getState().selectModel(startupHashState.selectedModelName);
+  useStudioStore.setState({
+    current: startupHashState.current,
+    duration: startupHashState.duration,
+    protocol: startupHashState.protocol,
+  });
 }
