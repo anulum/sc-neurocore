@@ -118,6 +118,7 @@ import {
   verifyTrainingWeightArtifactBlob,
   type TrainingWeightRestoreVerification,
 } from "../trainingRestore";
+import { parseStudioTrainingStreamMessage } from "../studioTrainingStream";
 import {
   trainingCheckpointExport,
   trainingWeightRestoreVerificationExport,
@@ -1513,21 +1514,19 @@ export const useStudioStore = create<StudioState>((set, get) => ({
     try {
       const result = await apiStartTraining(s.trainingConfig);
       set({ trainingJobId: result.job_id, trainingStatus: "running" });
-      // Start SSE listener
       const evtSource = new EventSource(`/api/training/stream/${result.job_id}`);
       evtSource.onmessage = (e) => {
-        try {
-          const msg = JSON.parse(e.data);
-          if (msg.event === "epoch") {
-            set((prev) => ({ trainingEpochs: [...prev.trainingEpochs, msg.data] }));
-          } else if (msg.event === "completed" || msg.event === "stopped") {
-            set({ trainingStatus: msg.event });
-            evtSource.close();
-          } else if (msg.event === "error") {
-            set({ trainingStatus: "failed", error: msg.data.message });
-            evtSource.close();
-          }
-        } catch { /* ignore parse errors */ }
+        const update = parseStudioTrainingStreamMessage(e.data);
+        if (!update) return;
+        if (update.kind === "epoch") {
+          set((prev) => ({ trainingEpochs: [...prev.trainingEpochs, update.metrics] }));
+        } else if (update.kind === "terminal") {
+          set({ trainingStatus: update.status });
+          evtSource.close();
+        } else {
+          set({ trainingStatus: "failed", error: update.message });
+          evtSource.close();
+        }
       };
       evtSource.onerror = () => {
         set({ trainingStatus: "disconnected" });
