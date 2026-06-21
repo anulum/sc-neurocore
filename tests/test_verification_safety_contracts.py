@@ -62,3 +62,23 @@ def test_logic_invariant_returns_false_for_exception() -> None:
     )
 
     assert result is False
+
+
+def test_code_safety_verifier_rejects_blocked_builtin_call() -> None:
+    """A blocked builtin call (e.g. eval/exec/compile) is rejected at AST level."""
+    verifier = CodeSafetyVerifier()
+
+    assert verifier.verify_code_safety("y = eval('1 + 1')") is False
+
+
+def test_logic_invariant_returns_true_when_condition_holds() -> None:
+    """The invariant passes when the function output satisfies the condition."""
+    verifier = CodeSafetyVerifier()
+
+    result = verifier.verify_logic_invariant(
+        func=lambda x: x * 2,
+        input_sample=3,
+        expected_condition=lambda output: output == 6,
+    )
+
+    assert result is True

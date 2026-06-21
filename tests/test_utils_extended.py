@@ -449,6 +449,41 @@ class TestSCBridge:
             SCBridge.load_from_state_dict(state_dict, layer_mapping)
         assert "No weights found" in caplog.text
 
+    def test_load_updates_individual_synapses(self):
+        """A learning layer exposing a synapse grid has every synapse weight updated."""
+        updated = []
+
+        class MockSynapse:
+            def __init__(self, i, j):
+                self._ij = (i, j)
+
+            def update_weight(self, value):
+                updated.append((self._ij, float(value)))
+
+        class LearningLayer:
+            def __init__(self, shape):
+                self.weights = np.zeros(shape)
+                self.synapses = [
+                    [MockSynapse(i, j) for j in range(shape[1])] for i in range(shape[0])
+                ]
+
+        layer = LearningLayer((2, 3))
+        state_dict = {"fc1.weight": np.random.randn(2, 3)}
+        SCBridge.load_from_state_dict(state_dict, {"fc1": layer})
+        assert len(updated) == 6
+        assert {ij for ij, _ in updated} == {(i, j) for i in range(2) for j in range(3)}
+
+    def test_load_layer_without_weights_attribute(self, caplog):
+        """A layer lacking a 'weights' attribute is reported and left untouched."""
+
+        class NoWeightsLayer:
+            pass
+
+        state_dict = {"fc1.weight": np.random.randn(3, 4)}
+        with caplog.at_level("WARNING", logger="sc_neurocore.utils.model_bridge"):
+            SCBridge.load_from_state_dict(state_dict, {"fc1": NoWeightsLayer()})
+        assert "does not have 'weights'" in caplog.text
+
     def test_export_to_numpy(self):
         class MockLayerWithGetWeights:
             def get_weights(self):
