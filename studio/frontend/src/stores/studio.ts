@@ -155,6 +155,14 @@ import {
 } from "../evidenceBundles";
 import { downloadBrowserArtefact } from "../browserArtefactDownload";
 import {
+  adminBusyState,
+  adminFailureState,
+  identityAccountsLoadedState,
+  identityAccountsMutatedState,
+  jobStatusLoadedState,
+  operatorStatusLoadedState,
+} from "../adminStoreState";
+import {
   capabilityFailureState,
   capabilityLoadedState,
   capabilityLoadingState,
@@ -653,42 +661,31 @@ export const useStudioStore = create<StudioState>((set, get) => ({
     }
   },
   loadJobStatus: async () => {
-    set({ auditLoading: true, auditError: null });
+    set(adminBusyState());
     try {
       const [jobStatus, jobList] = await Promise.all([
         fetchStudioJobStatus(),
         fetchStudioJobs(),
       ]);
-      set({ jobStatus, jobRecords: jobList.jobs, auditLoading: false, auditError: null });
+      set(jobStatusLoadedState(jobStatus, jobList));
     } catch (error: unknown) {
-      set({
-        auditLoading: false,
-        auditError: error instanceof Error ? error.message : "Job status check failed",
-      });
+      set(adminFailureState(error, "Job status check failed"));
     }
   },
   loadIdentityServiceAccounts: async () => {
-    set({ auditLoading: true, auditError: null });
+    set(adminBusyState());
     try {
       const [accountsResponse, usersResponse] = await Promise.all([
         fetchStudioIdentityServiceAccounts(),
         fetchStudioIdentityBrowserUsers(),
       ]);
-      set({
-        auditLoading: false,
-        auditError: null,
-        identityBrowserUsers: usersResponse.browser_users,
-        identityServiceAccounts: accountsResponse.service_accounts,
-      });
+      set(identityAccountsLoadedState(accountsResponse, usersResponse));
     } catch (error: unknown) {
-      set({
-        auditLoading: false,
-        auditError: error instanceof Error ? error.message : "Identity account check failed",
-      });
+      set(adminFailureState(error, "Identity account check failed"));
     }
   },
   createIdentityBrowserUser: async (create) => {
-    set({ auditLoading: true, auditError: null });
+    set(adminBusyState());
     try {
       await createStudioIdentityBrowserUser(create);
       const [accountsResponse, usersResponse, auditExport] = await Promise.all([
@@ -696,22 +693,13 @@ export const useStudioStore = create<StudioState>((set, get) => ({
         fetchStudioIdentityBrowserUsers(),
         fetchStudioAuditExport(100),
       ]);
-      set({
-        auditExport,
-        auditLoading: false,
-        auditError: null,
-        identityBrowserUsers: usersResponse.browser_users,
-        identityServiceAccounts: accountsResponse.service_accounts,
-      });
+      set(identityAccountsMutatedState(accountsResponse, usersResponse, auditExport));
     } catch (error: unknown) {
-      set({
-        auditLoading: false,
-        auditError: error instanceof Error ? error.message : "Browser user creation failed",
-      });
+      set(adminFailureState(error, "Browser user creation failed"));
     }
   },
   updateIdentityServiceAccount: async (principalId, update) => {
-    set({ auditLoading: true, auditError: null });
+    set(adminBusyState());
     try {
       await updateStudioIdentityServiceAccount(principalId, update);
       const [accountsResponse, usersResponse, auditExport] = await Promise.all([
@@ -719,22 +707,13 @@ export const useStudioStore = create<StudioState>((set, get) => ({
         fetchStudioIdentityBrowserUsers(),
         fetchStudioAuditExport(100),
       ]);
-      set({
-        auditExport,
-        auditLoading: false,
-        auditError: null,
-        identityBrowserUsers: usersResponse.browser_users,
-        identityServiceAccounts: accountsResponse.service_accounts,
-      });
+      set(identityAccountsMutatedState(accountsResponse, usersResponse, auditExport));
     } catch (error: unknown) {
-      set({
-        auditLoading: false,
-        auditError: error instanceof Error ? error.message : "Identity account update failed",
-      });
+      set(adminFailureState(error, "Identity account update failed"));
     }
   },
   updateIdentityBrowserUser: async (username, update) => {
-    set({ auditLoading: true, auditError: null });
+    set(adminBusyState());
     try {
       await updateStudioIdentityBrowserUser(username, update);
       const [accountsResponse, usersResponse, auditExport] = await Promise.all([
@@ -742,22 +721,13 @@ export const useStudioStore = create<StudioState>((set, get) => ({
         fetchStudioIdentityBrowserUsers(),
         fetchStudioAuditExport(100),
       ]);
-      set({
-        auditExport,
-        auditLoading: false,
-        auditError: null,
-        identityBrowserUsers: usersResponse.browser_users,
-        identityServiceAccounts: accountsResponse.service_accounts,
-      });
+      set(identityAccountsMutatedState(accountsResponse, usersResponse, auditExport));
     } catch (error: unknown) {
-      set({
-        auditLoading: false,
-        auditError: error instanceof Error ? error.message : "Browser user update failed",
-      });
+      set(adminFailureState(error, "Browser user update failed"));
     }
   },
   rotateIdentityBrowserUserPassword: async (username, password) => {
-    set({ auditLoading: true, auditError: null });
+    set(adminBusyState());
     try {
       await rotateStudioIdentityBrowserUserPassword(username, { password });
       const [accountsResponse, usersResponse, auditExport] = await Promise.all([
@@ -765,40 +735,21 @@ export const useStudioStore = create<StudioState>((set, get) => ({
         fetchStudioIdentityBrowserUsers(),
         fetchStudioAuditExport(100),
       ]);
-      set({
-        auditExport,
-        auditLoading: false,
-        auditError: null,
-        identityBrowserUsers: usersResponse.browser_users,
-        identityServiceAccounts: accountsResponse.service_accounts,
-      });
+      set(identityAccountsMutatedState(accountsResponse, usersResponse, auditExport));
     } catch (error: unknown) {
-      set({
-        auditLoading: false,
-        auditError: error instanceof Error ? error.message : "Browser user secret rotation failed",
-      });
+      set(adminFailureState(error, "Browser user secret rotation failed"));
     }
   },
   loadOperatorStatus: async () => {
-    set({ auditLoading: true, auditError: null });
+    set(adminBusyState());
     try {
       const [operatorStatus, jobList] = await Promise.all([
         fetchStudioOperatorStatus(),
         fetchStudioJobs(),
       ]);
-      set({
-        auditStatus: operatorStatus.audit,
-        jobStatus: operatorStatus.jobs,
-        jobRecords: jobList.jobs,
-        operatorStatus,
-        auditLoading: false,
-        auditError: null,
-      });
+      set(operatorStatusLoadedState(operatorStatus, jobList));
     } catch (error: unknown) {
-      set({
-        auditLoading: false,
-        auditError: error instanceof Error ? error.message : "Operator status check failed",
-      });
+      set(adminFailureState(error, "Operator status check failed"));
     }
   },
   loadModels: async () => {
