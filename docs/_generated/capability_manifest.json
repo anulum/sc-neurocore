@@ -9,7 +9,7 @@
     "python_model_classes": 157,
     "python_model_source_modules": 151,
     "rust_pyo3_model_wrappers": 175,
-    "test_files": 847
+    "test_files": 849
   },
   "documentation": {
     "public_pages": [
@@ -1922,6 +1922,7 @@
       "tests/test_codec_registry.py",
       "tests/test_comm_aer.py",
       "tests/test_compare_experimental_suites.py",
+      "tests/test_compiler_block_floating.py",
       "tests/test_compiler_compat_facades.py",
       "tests/test_compiler_live_control.py",
       "tests/test_compiler_live_control_and_presets.py",
@@ -2562,6 +2563,7 @@
       "tests/test_studio_training_checkpoint.py",
       "tests/test_studio_training_evidence.py",
       "tests/test_studio_training_process.py",
+      "tests/test_studio_training_weight_restore.py",
       "tests/test_studio_training_weights.py",
       "tests/test_studio_worker_routes.py",
       "tests/test_supply_chain_audit.py",
