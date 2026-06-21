@@ -86,6 +86,7 @@ import {
   simulationSvgBlob,
   simulationSvgFilename,
 } from "../simulationExports";
+import { downloadCanvasPng } from "../browserCanvasExport";
 import { parseTrainingCheckpointPayload } from "../trainingCheckpoint";
 import {
   buildTrainingWeightRestoreVerificationManifest,
@@ -1055,12 +1056,7 @@ export const useStudioStore = create<StudioState>((set, get) => ({
   exportSVG: () => {
     const { result } = get();
     if (!result) {
-      const canvas = document.querySelector("canvas");
-      if (!canvas) return;
-      const a = document.createElement("a");
-      a.href = canvas.toDataURL("image/png", 1.0);
-      a.download = "sc_neurocore_plot.png";
-      a.click();
+      downloadCanvasPng();
       return;
     }
     downloadBrowserArtefact(simulationSvgBlob(result), simulationSvgFilename(result));
