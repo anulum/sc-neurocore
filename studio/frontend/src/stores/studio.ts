@@ -104,8 +104,20 @@ import {
 import {
   studioDefaultPopulationRequest,
   studioDefaultProjectionRequest,
+  studioGraphFailureState,
+  studioGraphImportedState,
+  studioGraphModelsLoadedState,
   studioGraphRequest,
+  studioGraphSimulationCompletedState,
+  studioGraphSimulationStartState,
+  studioGraphValidationFailedState,
   studioGraphWithoutPopulation,
+  studioPipelineCompletedState,
+  studioPipelineStartState,
+  studioPopulationAddedState,
+  studioPopulationUpdatedState,
+  studioProjectionAddedState,
+  studioProjectionUpdatedState,
 } from "../studioGraphRequests";
 import { copyStudioShareUrlInRuntime } from "../studioShareRuntime";
 import { readStudioStartupHashState } from "../studioStartupRuntime";
@@ -1230,18 +1242,18 @@ export const useStudioStore = create<StudioState>((set, get) => ({
   runPipelineAction: async () => {
     const s = get();
     if (s.isSimulating || s.graphPopulations.length === 0) return;
-    set({ isSimulating: true, error: null, pipelineResult: null });
+    set(studioPipelineStartState());
     try {
       const graph = studioGraphRequest(s.graphPopulations, s.graphProjections, s.duration, s.dt);
       const pipelineResult = await apiRunPipeline(graph, s.synthTarget);
-      set({ pipelineResult, isSimulating: false });
-    } catch (e) { set({ error: e instanceof Error ? e.message : String(e), isSimulating: false }); }
+      set(studioPipelineCompletedState(pipelineResult));
+    } catch (e) { set(studioGraphFailureState(e, "Pipeline run failed", { clearBusy: true })); }
   },
 
   loadGraphModels: async () => {
     try {
       const graphModels = await apiFetchGraphModels();
-      set({ graphModels });
+      set(studioGraphModelsLoadedState(graphModels));
     } catch { /* non-critical */ }
   },
 
@@ -1249,8 +1261,8 @@ export const useStudioStore = create<StudioState>((set, get) => ({
     const s = get();
     try {
       const pop = await apiCreatePop(studioDefaultPopulationRequest(neuronType, s.graphPopulations.length));
-      set((prev) => ({ graphPopulations: [...prev.graphPopulations, pop] }));
-    } catch (e) { set({ error: e instanceof Error ? e.message : String(e) }); }
+      set((prev) => studioPopulationAddedState(prev.graphPopulations, pop));
+    } catch (e) { set(studioGraphFailureState(e, "Population creation failed")); }
   },
 
   removePopulation: (id) => {
@@ -1267,16 +1279,14 @@ export const useStudioStore = create<StudioState>((set, get) => ({
   },
 
   updatePopulation: (id, updates) => {
-    set((s) => ({
-      graphPopulations: s.graphPopulations.map((p) => p.id === id ? { ...p, ...updates } : p),
-    }));
+    set((s) => studioPopulationUpdatedState(s.graphPopulations, id, updates));
   },
 
   addProjection: async (sourceId, targetId) => {
     try {
       const proj = await apiCreateProj(studioDefaultProjectionRequest(sourceId, targetId));
-      set((prev) => ({ graphProjections: [...prev.graphProjections, proj] }));
-    } catch (e) { set({ error: e instanceof Error ? e.message : String(e) }); }
+      set((prev) => studioProjectionAddedState(prev.graphProjections, proj));
+    } catch (e) { set(studioGraphFailureState(e, "Projection creation failed")); }
   },
 
   removeProjection: (id) => {
@@ -1284,25 +1294,23 @@ export const useStudioStore = create<StudioState>((set, get) => ({
   },
 
   updateProjection: (id, updates) => {
-    set((s) => ({
-      graphProjections: s.graphProjections.map((e) => e.id === id ? { ...e, ...updates } : e),
-    }));
+    set((s) => studioProjectionUpdatedState(s.graphProjections, id, updates));
   },
 
   simulateGraphAction: async () => {
     const s = get();
     if (s.isSimulating) return;
-    set({ isSimulating: true, error: null, graphErrors: [] });
+    set(studioGraphSimulationStartState());
     try {
       const graph = studioGraphRequest(s.graphPopulations, s.graphProjections, s.duration, s.dt);
       const validation = await apiValidateGraph(graph);
       if (!validation.valid) {
-        set({ graphErrors: validation.errors, isSimulating: false });
+        set(studioGraphValidationFailedState(validation.errors));
         return;
       }
       const graphSimResult = await apiSimGraph(graph);
-      set({ graphSimResult, isSimulating: false });
-    } catch (e) { set({ error: e instanceof Error ? e.message : String(e), isSimulating: false }); }
+      set(studioGraphSimulationCompletedState(graphSimResult));
+    } catch (e) { set(studioGraphFailureState(e, "Graph simulation failed", { clearBusy: true })); }
   },
 
   exportGraphNIR: async () => {
@@ -1310,14 +1318,14 @@ export const useStudioStore = create<StudioState>((set, get) => ({
     try {
       const nir = await apiExportNIR({ populations: s.graphPopulations, projections: s.graphProjections });
       downloadBrowserArtefact(networkNirBlob(nir), NETWORK_NIR_EXPORT_FILENAME);
-    } catch (e) { set({ error: e instanceof Error ? e.message : String(e) }); }
+    } catch (e) { set(studioGraphFailureState(e, "Graph NIR export failed")); }
   },
 
   importGraphNIR: async (nir) => {
     try {
       const graph = await apiImportNIR(nir);
-      set({ graphPopulations: graph.populations, graphProjections: graph.projections, activeTab: "canvas" });
-    } catch (e) { set({ error: e instanceof Error ? e.message : String(e) }); }
+      set(studioGraphImportedState(graph));
+    } catch (e) { set(studioGraphFailureState(e, "Graph NIR import failed")); }
   },
 
   loadSurrogates: async () => {

@@ -8,12 +8,24 @@
 
 import { describe, expect, it } from "vitest";
 
-import type { PopulationNode, ProjectionEdge } from "./api/client";
+import type { GraphSimResult, NIRFormat, PipelineResult, PopulationNode, ProjectionEdge } from "./api/client";
 import {
+  studioGraphFailureState,
+  studioGraphImportedState,
+  studioGraphModelsLoadedState,
   studioDefaultPopulationRequest,
   studioDefaultProjectionRequest,
+  studioGraphSimulationCompletedState,
+  studioGraphSimulationStartState,
   studioGraphRequest,
+  studioGraphValidationFailedState,
   studioGraphWithoutPopulation,
+  studioPipelineCompletedState,
+  studioPipelineStartState,
+  studioPopulationAddedState,
+  studioPopulationUpdatedState,
+  studioProjectionAddedState,
+  studioProjectionUpdatedState,
 } from "./studioGraphRequests";
 
 const population: PopulationNode = {
@@ -83,6 +95,74 @@ describe("Studio graph request builders", () => {
     }, "p1")).toEqual({
       populations: [{ ...population, id: "p2" }],
       projections: [unrelatedProjection],
+    });
+  });
+
+  it("builds pipeline and graph simulation lifecycle patches", () => {
+    const pipelineResult: PipelineResult = { success: true, target: "ice40" };
+    const simResult: GraphSimResult = { n_spikes: 10, success: true };
+
+    expect(studioPipelineStartState()).toEqual({
+      error: null,
+      isSimulating: true,
+      pipelineResult: null,
+    });
+    expect(studioPipelineCompletedState(pipelineResult)).toEqual({
+      isSimulating: false,
+      pipelineResult,
+    });
+    expect(studioGraphSimulationStartState()).toEqual({
+      error: null,
+      graphErrors: [],
+      isSimulating: true,
+    });
+    expect(studioGraphValidationFailedState(["missing projection"])).toEqual({
+      graphErrors: ["missing projection"],
+      isSimulating: false,
+    });
+    expect(studioGraphSimulationCompletedState(simResult)).toEqual({
+      graphSimResult: simResult,
+      isSimulating: false,
+    });
+  });
+
+  it("builds graph model and element mutation patches", () => {
+    const replacement = { ...population, label: "Renamed" };
+    const updatedProjection = { ...projection, weight: 0.3 };
+
+    expect(studioGraphModelsLoadedState(["LIFNeuron"])).toEqual({ graphModels: ["LIFNeuron"] });
+    expect(studioPopulationAddedState([], population)).toEqual({ graphPopulations: [population] });
+    expect(studioPopulationUpdatedState([population], population.id, { label: "Renamed" }))
+      .toEqual({ graphPopulations: [replacement] });
+    expect(studioProjectionAddedState([], projection)).toEqual({ graphProjections: [projection] });
+    expect(studioProjectionUpdatedState([projection], projection.id, { weight: 0.3 }))
+      .toEqual({ graphProjections: [updatedProjection] });
+  });
+
+  it("builds graph import and failure patches", () => {
+    const imported = {
+      populations: [population],
+      projections: [projection],
+    };
+    const nir: NIRFormat = {
+      edges: [],
+      format: "nir",
+      nodes: {},
+      version: "1.0",
+    };
+
+    expect(studioGraphImportedState(imported)).toEqual({
+      activeTab: "canvas",
+      graphPopulations: [population],
+      graphProjections: [projection],
+    });
+    expect(nir.format).toBe("nir");
+    expect(studioGraphFailureState(new Error("graph offline"), "fallback")).toEqual({
+      error: "graph offline",
+    });
+    expect(studioGraphFailureState("bad", "fallback", { clearBusy: true })).toEqual({
+      error: "fallback",
+      isSimulating: false,
     });
   });
 });

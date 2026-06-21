@@ -6,7 +6,13 @@
 // Contact: www.anulum.li | protoscience@anulum.li
 // SC-NeuroCore — Studio graph request builders
 
-import type { NetworkGraph, PopulationNode, ProjectionEdge } from "./api/client";
+import type {
+  GraphSimResult,
+  NetworkGraph,
+  PipelineResult,
+  PopulationNode,
+  ProjectionEdge,
+} from "./api/client";
 
 export type StudioNeuronType = "excitatory" | "inhibitory";
 
@@ -31,6 +37,60 @@ export interface StudioGraphElements {
   projections: ProjectionEdge[];
 }
 
+export interface StudioGraphBusyStatePatch {
+  error: null;
+  graphErrors?: [];
+  graphSimResult?: null;
+  isSimulating: true;
+  pipelineResult?: null;
+}
+
+export interface StudioPipelineCompletedStatePatch {
+  isSimulating: false;
+  pipelineResult: PipelineResult;
+}
+
+export interface StudioGraphModelsLoadedStatePatch {
+  graphModels: string[];
+}
+
+export interface StudioPopulationAddedStatePatch {
+  graphPopulations: PopulationNode[];
+}
+
+export interface StudioPopulationUpdatedStatePatch {
+  graphPopulations: PopulationNode[];
+}
+
+export interface StudioProjectionAddedStatePatch {
+  graphProjections: ProjectionEdge[];
+}
+
+export interface StudioProjectionUpdatedStatePatch {
+  graphProjections: ProjectionEdge[];
+}
+
+export interface StudioGraphValidationFailedStatePatch {
+  graphErrors: string[];
+  isSimulating: false;
+}
+
+export interface StudioGraphSimulationCompletedStatePatch {
+  graphSimResult: GraphSimResult;
+  isSimulating: false;
+}
+
+export interface StudioGraphImportedStatePatch {
+  activeTab: "canvas";
+  graphPopulations: PopulationNode[];
+  graphProjections: ProjectionEdge[];
+}
+
+export interface StudioGraphFailureStatePatch {
+  error: string;
+  isSimulating?: false;
+}
+
 export function studioGraphRequest(
   populations: PopulationNode[],
   projections: ProjectionEdge[],
@@ -42,6 +102,116 @@ export function studioGraphRequest(
     projections,
     duration,
     dt,
+  };
+}
+
+export function studioPipelineStartState(): StudioGraphBusyStatePatch {
+  return {
+    error: null,
+    isSimulating: true,
+    pipelineResult: null,
+  };
+}
+
+export function studioPipelineCompletedState(
+  pipelineResult: PipelineResult,
+): StudioPipelineCompletedStatePatch {
+  return {
+    isSimulating: false,
+    pipelineResult,
+  };
+}
+
+export function studioGraphSimulationStartState(): StudioGraphBusyStatePatch {
+  return {
+    error: null,
+    graphErrors: [],
+    isSimulating: true,
+  };
+}
+
+export function studioGraphValidationFailedState(
+  graphErrors: string[],
+): StudioGraphValidationFailedStatePatch {
+  return {
+    graphErrors,
+    isSimulating: false,
+  };
+}
+
+export function studioGraphSimulationCompletedState(
+  graphSimResult: GraphSimResult,
+): StudioGraphSimulationCompletedStatePatch {
+  return {
+    graphSimResult,
+    isSimulating: false,
+  };
+}
+
+export function studioGraphModelsLoadedState(
+  graphModels: string[],
+): StudioGraphModelsLoadedStatePatch {
+  return { graphModels };
+}
+
+export function studioPopulationAddedState(
+  graphPopulations: PopulationNode[],
+  population: PopulationNode,
+): StudioPopulationAddedStatePatch {
+  return {
+    graphPopulations: [...graphPopulations, population],
+  };
+}
+
+export function studioPopulationUpdatedState(
+  graphPopulations: PopulationNode[],
+  populationId: string,
+  updates: Partial<PopulationNode>,
+): StudioPopulationUpdatedStatePatch {
+  return {
+    graphPopulations: graphPopulations.map((population) =>
+      population.id === populationId ? { ...population, ...updates } : population),
+  };
+}
+
+export function studioProjectionAddedState(
+  graphProjections: ProjectionEdge[],
+  projection: ProjectionEdge,
+): StudioProjectionAddedStatePatch {
+  return {
+    graphProjections: [...graphProjections, projection],
+  };
+}
+
+export function studioProjectionUpdatedState(
+  graphProjections: ProjectionEdge[],
+  projectionId: string,
+  updates: Partial<ProjectionEdge>,
+): StudioProjectionUpdatedStatePatch {
+  return {
+    graphProjections: graphProjections.map((projection) =>
+      projection.id === projectionId ? { ...projection, ...updates } : projection),
+  };
+}
+
+export function studioGraphImportedState(nir: NetworkGraph): StudioGraphImportedStatePatch {
+  return {
+    activeTab: "canvas",
+    graphPopulations: nir.populations,
+    graphProjections: nir.projections,
+  };
+}
+
+export function studioGraphFailureState(
+  error: unknown,
+  fallbackMessage: string,
+  options: { clearBusy?: boolean } = {},
+): StudioGraphFailureStatePatch {
+  return {
+    error: error instanceof Error && error.message.length > 0
+      ? error.message
+      : fallbackMessage,
+    ...(options.clearBusy ? { isSimulating: false } : {}),
   };
 }
 
