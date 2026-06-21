@@ -23,6 +23,7 @@ from starlette.testclient import TestClient
 
 from sc_neurocore.studio.app import create_app
 from sc_neurocore.studio.platform import (
+    STUDIO_AUDIT_QUARANTINE_ARCHIVE_PURGE_SCHEMA_VERSION,
     STUDIO_AUDIT_QUARANTINE_ARCHIVE_RETENTION_SCHEMA_VERSION,
     STUDIO_AUDIT_QUARANTINE_ARCHIVE_RESTORE_SCHEMA_VERSION,
     STUDIO_AUDIT_QUARANTINE_ARCHIVE_SCHEMA_VERSION,
@@ -35,6 +36,7 @@ from sc_neurocore.studio.platform import (
     StudioJobStatus,
     StudioRuntimeSettings,
     build_studio_audit_quarantine_archive_retention_plan,
+    purge_studio_audit_quarantine_archive_prune_candidates,
     validate_studio_audit_quarantine_archive,
     write_studio_audit_quarantine_archive,
     write_studio_audit_quarantine_restore,
@@ -347,6 +349,51 @@ def test_build_studio_audit_quarantine_archive_retention_plan_skips_malformed_jo
     assert plan["archive_count"] == 0
     assert plan["skipped_record_count"] == 1
     assert plan["entries"] == []
+
+
+def test_purge_studio_audit_quarantine_archive_prune_candidates_purges_old_jobs(
+    tmp_path: Path,
+) -> None:
+    """Archive purge removes only retention prune candidates."""
+
+    old_result = _archive_result_for_job(tmp_path, "sj_old")
+    new_result = _archive_result_for_job(tmp_path, "sj_new")
+    purged_job_ids: list[str] = []
+    records = (
+        _archive_record(
+            job_id="sj_old",
+            result=old_result,
+            created_at_utc="2026-06-20T00:00:00Z",
+            finished_at_utc="2026-06-20T00:00:01Z",
+        ),
+        _archive_record(
+            job_id="sj_new",
+            result=new_result,
+            created_at_utc="2026-06-21T00:00:00Z",
+            finished_at_utc="2026-06-21T00:00:01Z",
+        ),
+    )
+
+    def purge_job(job_id: str) -> StudioJobRecord:
+        purged_job_ids.append(job_id)
+        return records[0]
+
+    result = purge_studio_audit_quarantine_archive_prune_candidates(
+        records,
+        purge_job=purge_job,
+        retain_latest=1,
+    ).to_public_dict()
+
+    assert result["schema_version"] == STUDIO_AUDIT_QUARANTINE_ARCHIVE_PURGE_SCHEMA_VERSION
+    assert result["purged_archive_count"] == 1
+    assert result["retained_archive_count"] == 1
+    assert result["skipped_record_count"] == 0
+    assert purged_job_ids == ["sj_old"]
+    purged_entries = cast(list[dict[str, object]], result["purged_entries"])
+    retained_entries = cast(list[dict[str, object]], result["retained_entries"])
+    assert purged_entries[0]["job_id"] == "sj_old"
+    assert retained_entries[0]["job_id"] == "sj_new"
+    assert str(tmp_path) not in json.dumps(result)
 
 
 def test_write_studio_audit_quarantine_restore_writes_jsonl_and_manifest(
@@ -707,6 +754,63 @@ def test_studio_audit_quarantine_archive_retention_route_lists_archive_jobs(
     assert str(tmp_path) not in json.dumps(body)
 
 
+def test_studio_audit_quarantine_archive_purge_route_removes_prune_candidates(
+    tmp_path: Path,
+) -> None:
+    """Admin purge route deletes only archive jobs outside retention."""
+
+    audit_path = tmp_path / "audit" / "studio.jsonl"
+    audit_path.parent.mkdir()
+    audit_path.write_text('{"schema_version":"studio.audit.v1"}\n', encoding="utf-8")
+    JsonlAuditSink(audit_path).record(
+        AuditEvent(
+            action="studio.test",
+            route="/api/test",
+            principal_id="operator",
+            decision="allow",
+            reason="authorized",
+            request_id="req-test",
+        )
+    )
+    app = create_app(
+        StudioRuntimeSettings(
+            audit_log_path=str(audit_path),
+            enforce_route_policies=True,
+            job_root_path=str(tmp_path / "jobs"),
+        )
+    )
+    client = TestClient(app, base_url="http://127.0.0.1")
+    headers = {"x-studio-principal": "admin-1", "x-studio-roles": "studio.admin"}
+    archive_job_ids: list[str] = []
+    for _index in range(2):
+        response = client.post(
+            "/api/studio/audit/quarantine/archive",
+            json={"limit": 10},
+            headers=headers,
+        )
+        assert response.status_code == 200
+        archive_job_ids.append(cast(str, response.json()["job_id"]))
+
+    purge_response = client.post(
+        "/api/studio/audit/quarantine/archive/purge",
+        json={"retain_latest": 1},
+        headers=headers,
+    )
+    body = purge_response.json()
+    manager = _job_manager(app)
+
+    assert purge_response.status_code == 200
+    assert body["schema_version"] == STUDIO_AUDIT_QUARANTINE_ARCHIVE_PURGE_SCHEMA_VERSION
+    assert body["purged_archive_count"] == 1
+    assert body["retained_archive_count"] == 1
+    assert [record.job_id for record in manager.list_records()] == [archive_job_ids[1]]
+    assert not (tmp_path / "jobs" / archive_job_ids[0]).exists()
+    assert (tmp_path / "jobs" / archive_job_ids[1]).is_dir()
+    with pytest.raises(KeyError):
+        manager.record(archive_job_ids[0])
+    assert str(tmp_path) not in json.dumps(body)
+
+
 def test_studio_audit_quarantine_archive_validate_route_accepts_archive_pair(
     tmp_path: Path,
 ) -> None:
@@ -829,6 +933,11 @@ def test_studio_audit_quarantine_archive_routes_require_admin(
         json={"archive": archive_payload, "manifest": manifest_payload},
         headers={"x-studio-principal": "operator-1", "x-studio-roles": "studio.viewer"},
     )
+    purge_response = client.post(
+        "/api/studio/audit/quarantine/archive/purge",
+        json={"retain_latest": 1},
+        headers={"x-studio-principal": "operator-1", "x-studio-roles": "studio.viewer"},
+    )
 
     assert archive_response.status_code == 403
     assert archive_response.json()["detail"] == "missing_admin_role"
@@ -838,3 +947,5 @@ def test_studio_audit_quarantine_archive_routes_require_admin(
     assert retention_response.json()["detail"] == "missing_admin_role"
     assert restore_response.status_code == 403
     assert restore_response.json()["detail"] == "missing_admin_role"
+    assert purge_response.status_code == 403
+    assert purge_response.json()["detail"] == "missing_admin_role"

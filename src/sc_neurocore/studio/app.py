@@ -129,6 +129,7 @@ from sc_neurocore.studio.platform import (
     list_studio_browser_user_public_records,
     list_studio_identity_public_records,
     load_studio_identity_store,
+    purge_studio_audit_quarantine_archive_prune_candidates,
     rotate_studio_browser_user_password,
     update_studio_identity_record,
     update_studio_browser_user_record,
@@ -383,6 +384,12 @@ class StudioAuditQuarantineArchiveRestoreRequest(BaseModel):
 
     archive: dict[str, Any]
     manifest: dict[str, Any] | None = None
+
+
+class StudioAuditQuarantineArchivePurgeRequest(BaseModel):
+    """Request body for admin audit quarantine archive retention purges."""
+
+    retain_latest: int = Field(default=10, ge=1, le=1000)
 
 
 class PresetDefaultFlowAttestationVerifyRequest(BaseModel):
@@ -1361,6 +1368,19 @@ def create_app(runtime_settings: StudioRuntimeSettings | None = None) -> FastAPI
         if completed.status == "timed_out":
             raise HTTPException(status_code=504, detail="studio_job_timed_out")
         raise HTTPException(status_code=500, detail="studio_job_failed")
+
+    @app.post("/api/studio/audit/quarantine/archive/purge")
+    def api_studio_audit_quarantine_archive_purge(
+        purge_request: StudioAuditQuarantineArchivePurgeRequest,
+    ) -> dict[str, object]:
+        """Purge archive jobs marked as retention prune candidates."""
+
+        result = purge_studio_audit_quarantine_archive_prune_candidates(
+            studio_job_manager.list_records(),
+            purge_job=studio_job_manager.purge_terminal_record,
+            retain_latest=purge_request.retain_latest,
+        ).to_public_dict()
+        return cast(dict[str, object], result)
 
     @app.post("/api/studio/evidence/bundle")
     def api_studio_evidence_bundle(

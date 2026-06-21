@@ -92,6 +92,102 @@ def test_studio_job_manager_reads_manifest_declared_artifacts(tmp_path: Path) ->
     assert payload.artifact.sha256 == hashlib.sha256(b"artifact body").hexdigest()
 
 
+def test_studio_job_manager_purges_terminal_record_and_directory(tmp_path: Path) -> None:
+    """Terminal job purges remove the record and confined work directory."""
+
+    manager = StudioJobManager(
+        root=tmp_path / "jobs",
+        allowed_kinds=frozenset({"synthesis"}),
+        default_timeout_seconds=1.0,
+    )
+
+    def task(context: StudioJobContext) -> dict[str, object]:
+        context.write_artifact("reports/result.txt", "artifact body")
+        return {"ok": True}
+
+    record = manager.submit(
+        kind="synthesis",
+        owner="operator-1",
+        request_id="req-1",
+        task=task,
+    )
+    completed = manager.wait(record.job_id, timeout_seconds=2.0)
+    job_dir = tmp_path / "jobs" / record.job_id
+
+    purged = manager.purge_terminal_record(record.job_id)
+
+    assert completed.status == "completed"
+    assert purged.job_id == record.job_id
+    assert manager.list_records() == ()
+    assert not job_dir.exists()
+    with pytest.raises(KeyError):
+        manager.record(record.job_id)
+    with pytest.raises(KeyError):
+        manager.read_artifact(record.job_id, "reports/result.txt")
+
+
+def test_studio_job_manager_rejects_active_record_purge(tmp_path: Path) -> None:
+    """Active jobs cannot be purged while their worker may still write files."""
+
+    manager = StudioJobManager(
+        root=tmp_path / "jobs",
+        allowed_kinds=frozenset({"training"}),
+        default_timeout_seconds=2.0,
+    )
+    release = threading.Event()
+
+    def task(context: StudioJobContext) -> dict[str, object]:
+        release.wait(timeout=1.0)
+        context.write_artifact("reports/result.txt", "artifact body")
+        return {"ok": True}
+
+    record = manager.submit(
+        kind="training",
+        owner="operator-1",
+        request_id="req-1",
+        task=task,
+    )
+
+    with pytest.raises(StudioJobRejected, match="active"):
+        manager.purge_terminal_record(record.job_id)
+
+    release.set()
+    completed = manager.wait(record.job_id, timeout_seconds=3.0)
+
+    assert completed.status == "completed"
+    assert manager.record(record.job_id).job_id == record.job_id
+
+
+def test_studio_job_manager_rejects_non_directory_purge_target(tmp_path: Path) -> None:
+    """Job purges reject corrupted non-directory job targets."""
+
+    manager = StudioJobManager(
+        root=tmp_path / "jobs",
+        allowed_kinds=frozenset({"synthesis"}),
+        default_timeout_seconds=1.0,
+    )
+
+    def task(_context: StudioJobContext) -> dict[str, object]:
+        return {"ok": True}
+
+    record = manager.submit(
+        kind="synthesis",
+        owner="operator-1",
+        request_id="req-1",
+        task=task,
+    )
+    completed = manager.wait(record.job_id, timeout_seconds=2.0)
+    job_dir = tmp_path / "jobs" / record.job_id
+    job_dir.rmdir()
+    job_dir.write_text("not a directory", encoding="utf-8")
+
+    with pytest.raises(StudioJobRejected, match="not a directory"):
+        manager.purge_terminal_record(record.job_id)
+
+    assert completed.status == "completed"
+    assert manager.record(record.job_id).job_id == record.job_id
+
+
 def test_studio_job_context_appends_and_publishes_live_event_artifact(
     tmp_path: Path,
 ) -> None:
@@ -133,6 +229,65 @@ def test_studio_job_context_rejects_live_event_artifact_escape(tmp_path: Path) -
         context.append_artifact_event("../escape.jsonl", {"event": "bad"})
 
     assert not (tmp_path / "escape.jsonl").exists()
+
+
+def test_studio_job_context_rejects_invalid_live_event_payload(
+    tmp_path: Path,
+) -> None:
+    """Live JSONL event writes reject non-JSON payloads."""
+
+    work_dir = tmp_path / "job"
+    work_dir.mkdir()
+    context = StudioJobContext(
+        job_id="sj_live_invalid_payload",
+        work_dir=work_dir,
+        cancel_event=threading.Event(),
+        max_artifact_bytes=4096,
+    )
+
+    with pytest.raises(ValueError, match="payload must be JSON"):
+        context.append_artifact_event("events/live.jsonl", {"bad": object()})
+
+
+def test_studio_job_context_rejects_oversized_live_event_artifact(
+    tmp_path: Path,
+) -> None:
+    """Live JSONL event writes enforce per-artifact byte ceilings."""
+
+    work_dir = tmp_path / "job"
+    work_dir.mkdir()
+    context = StudioJobContext(
+        job_id="sj_live_too_large",
+        work_dir=work_dir,
+        cancel_event=threading.Event(),
+        max_artifact_bytes=8,
+    )
+
+    with pytest.raises(ValueError, match="exceeds configured size"):
+        context.append_artifact_event("events/live.jsonl", {"event": "epoch"})
+
+
+def test_studio_job_context_rejects_missing_or_oversized_existing_artifact(
+    tmp_path: Path,
+) -> None:
+    """Publishing existing artifacts validates availability and byte ceilings."""
+
+    work_dir = tmp_path / "job"
+    work_dir.mkdir()
+    context = StudioJobContext(
+        job_id="sj_existing_artifact",
+        work_dir=work_dir,
+        cancel_event=threading.Event(),
+        max_artifact_bytes=4,
+    )
+    artifact_path = work_dir / "events" / "live.jsonl"
+    artifact_path.parent.mkdir()
+    artifact_path.write_text("too-large", encoding="utf-8")
+
+    with pytest.raises(ValueError, match="unavailable"):
+        context.publish_existing_artifact("events/missing.jsonl")
+    with pytest.raises(ValueError, match="exceeds configured size"):
+        context.publish_existing_artifact("events/live.jsonl")
 
 
 def test_studio_job_manager_tails_live_artifact_before_manifest(
@@ -177,6 +332,44 @@ def test_studio_job_manager_tails_live_artifact_before_manifest(
     assert offset == len(payload)
     with pytest.raises(KeyError):
         manager.read_live_artifact_bytes(record.job_id, "../escape.jsonl", offset=0)
+
+
+def test_studio_job_manager_rejects_invalid_live_artifact_read_bounds(
+    tmp_path: Path,
+) -> None:
+    """Live artifact reads validate offsets and return empty missing tails."""
+
+    manager = StudioJobManager(
+        root=tmp_path / "jobs",
+        allowed_kinds=frozenset({"training"}),
+        default_timeout_seconds=1.0,
+    )
+
+    def task(_context: StudioJobContext) -> dict[str, object]:
+        return {"ok": True}
+
+    record = manager.submit(
+        kind="training",
+        owner="operator-1",
+        request_id="req-1",
+        task=task,
+    )
+    manager.wait(record.job_id, timeout_seconds=2.0)
+
+    with pytest.raises(ValueError, match="offset"):
+        manager.read_live_artifact_bytes(record.job_id, "events/missing.jsonl", offset=-1)
+    with pytest.raises(ValueError, match="read size"):
+        manager.read_live_artifact_bytes(
+            record.job_id,
+            "events/missing.jsonl",
+            offset=0,
+            max_bytes=0,
+        )
+    assert manager.read_live_artifact_bytes(
+        record.job_id,
+        "events/missing.jsonl",
+        offset=7,
+    ) == (b"", 7)
 
 
 def test_studio_job_manager_rejects_tampered_manifest_artifact(tmp_path: Path) -> None:
@@ -723,6 +916,19 @@ def test_studio_process_result_loader_handles_invalid_payloads(tmp_path: Path) -
     assert jobs_module._load_process_result(bad_size_path).artifacts == ()
     assert jobs_module._load_process_result(bad_hash_path).artifacts == ()
     assert jobs_module._load_process_artifacts(tmp_path / "missing.json") == ()
+
+
+def test_studio_process_worker_environment_bootstraps_missing_pythonpath(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Process-worker environment sets PYTHONPATH when it is absent."""
+
+    monkeypatch.delenv("PYTHONPATH", raising=False)
+
+    environment = jobs_module._process_worker_environment()
+
+    assert "PYTHONPATH" in environment
+    assert str(Path(jobs_module.__file__).resolve().parents[3]) in environment["PYTHONPATH"]
 
 
 def test_studio_process_terminate_falls_back_to_kill() -> None:

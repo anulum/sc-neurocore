@@ -328,6 +328,11 @@ The route validates the archive and optional manifest, then writes
 does not append restored rows to the active audit chain; operators can inspect,
 download, and hand off the restore artifact before any destructive or
 chain-mutating action.
+After reviewing retention state, administrators can execute the retention purge
+through `POST /api/studio/audit/quarantine/archive/purge` with
+`{"retain_latest": 10}`. The route recomputes the retention plan and removes
+only archive jobs marked as `prune_candidate`; retained archives and non-archive
+jobs are left untouched.
 When `SC_NEUROCORE_STUDIO_AUDIT_ROTATION_BYTES` is set, the retained-file count
 must be a positive integer so rotation always keeps at least one archived JSONL
 segment for incident review and retained-chain verification.

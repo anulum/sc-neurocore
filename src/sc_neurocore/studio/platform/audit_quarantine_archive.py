@@ -30,6 +30,9 @@ STUDIO_AUDIT_QUARANTINE_ARCHIVE_RETENTION_SCHEMA_VERSION = (
 STUDIO_AUDIT_QUARANTINE_ARCHIVE_RESTORE_SCHEMA_VERSION = (
     "studio.audit-quarantine-archive.restore.v1"
 )
+STUDIO_AUDIT_QUARANTINE_ARCHIVE_PURGE_SCHEMA_VERSION = (
+    "studio.audit-quarantine-archive.purge.v1"
+)
 STUDIO_AUDIT_QUARANTINE_ARCHIVE_OWNER = "studio-audit-quarantine"
 STUDIO_AUDIT_QUARANTINE_RESTORE_OWNER = "studio-audit-quarantine-restore"
 STUDIO_AUDIT_QUARANTINE_ARCHIVE_KIND = "evidence"
@@ -233,6 +236,46 @@ class StudioAuditQuarantineArchiveRestoreResult:
         }
 
 
+@dataclass(frozen=True, slots=True)
+class StudioAuditQuarantineArchivePurgeResult:
+    """Path-free result returned after purging archive prune candidates.
+
+    Parameters
+    ----------
+    purged_entries:
+        Archive entries removed from the Studio job manager.
+    retained_entries:
+        Archive entries kept according to the retention policy.
+    skipped_record_count:
+        Number of archive-owner job records that were incomplete or malformed.
+    retain_latest:
+        Number of newest valid archives retained before purging older entries.
+    """
+
+    purged_entries: tuple[StudioAuditQuarantineArchiveRetentionEntry, ...]
+    retained_entries: tuple[StudioAuditQuarantineArchiveRetentionEntry, ...]
+    skipped_record_count: int
+    retain_latest: int
+    schema_version: str = STUDIO_AUDIT_QUARANTINE_ARCHIVE_PURGE_SCHEMA_VERSION
+
+    def to_public_dict(self) -> dict[str, JsonValue]:
+        """Return the path-free purge result for operator APIs."""
+
+        return {
+            "purged_archive_count": len(self.purged_entries),
+            "purged_entries": [
+                entry.to_public_dict() for entry in self.purged_entries
+            ],
+            "retained_archive_count": len(self.retained_entries),
+            "retained_entries": [
+                entry.to_public_dict() for entry in self.retained_entries
+            ],
+            "retain_latest": self.retain_latest,
+            "schema_version": self.schema_version,
+            "skipped_record_count": self.skipped_record_count,
+        }
+
+
 def write_studio_audit_quarantine_archive(
     context: StudioJobContext,
     *,
@@ -393,14 +436,18 @@ def build_studio_audit_quarantine_archive_retention_plan(
             skipped_record_count += 1
             continue
         valid_entries.append(entry)
-    sorted_entries = sorted(
-        valid_entries,
-        key=lambda entry: (
-            entry.finished_at_utc or "",
-            entry.created_at_utc,
-            entry.job_id,
-        ),
-        reverse=True,
+    indexed_entries = tuple(enumerate(valid_entries))
+    sorted_entries = tuple(
+        entry
+        for _index, entry in sorted(
+            indexed_entries,
+            key=lambda indexed_entry: (
+                indexed_entry[1].finished_at_utc or "",
+                indexed_entry[1].created_at_utc,
+                indexed_entry[0],
+            ),
+            reverse=True,
+        )
     )
     planned_entries = tuple(
         StudioAuditQuarantineArchiveRetentionEntry(
@@ -508,6 +555,54 @@ def write_studio_audit_quarantine_restore(
         manifest=manifest,
         summary=summary,
         artifact_paths=tuple(written_paths),
+    )
+
+
+def purge_studio_audit_quarantine_archive_prune_candidates(
+    records: Sequence[StudioJobRecord],
+    *,
+    purge_job: Callable[[str], StudioJobRecord],
+    retain_latest: int = 10,
+) -> StudioAuditQuarantineArchivePurgeResult:
+    """Purge archive jobs marked as retention prune candidates.
+
+    Parameters
+    ----------
+    records:
+        Studio job records from the local job manager before deletion.
+    purge_job:
+        Callable that performs the path-confined job purge for one job ID.
+    retain_latest:
+        Number of newest valid quarantine archives to keep.
+
+    Returns
+    -------
+    StudioAuditQuarantineArchivePurgeResult
+        Path-free summary of purged and retained archive entries.
+
+    Raises
+    ------
+    ValueError
+        If ``retain_latest`` is not positive.
+    """
+
+    retention_plan = build_studio_audit_quarantine_archive_retention_plan(
+        records,
+        retain_latest=retain_latest,
+    )
+    purged_entries: list[StudioAuditQuarantineArchiveRetentionEntry] = []
+    retained_entries: list[StudioAuditQuarantineArchiveRetentionEntry] = []
+    for entry in retention_plan.entries:
+        if entry.disposition == "prune_candidate":
+            purge_job(entry.job_id)
+            purged_entries.append(entry)
+        else:
+            retained_entries.append(entry)
+    return StudioAuditQuarantineArchivePurgeResult(
+        purged_entries=tuple(purged_entries),
+        retained_entries=tuple(retained_entries),
+        skipped_record_count=retention_plan.skipped_record_count,
+        retain_latest=retain_latest,
     )
 
 
@@ -773,6 +868,7 @@ __all__ = [
     "STUDIO_AUDIT_QUARANTINE_ARCHIVE_VALIDATION_SCHEMA_VERSION",
     "STUDIO_AUDIT_QUARANTINE_ARCHIVE_RETENTION_SCHEMA_VERSION",
     "STUDIO_AUDIT_QUARANTINE_ARCHIVE_RESTORE_SCHEMA_VERSION",
+    "STUDIO_AUDIT_QUARANTINE_ARCHIVE_PURGE_SCHEMA_VERSION",
     "STUDIO_AUDIT_QUARANTINE_ARCHIVE_OWNER",
     "STUDIO_AUDIT_QUARANTINE_RESTORE_OWNER",
     "STUDIO_AUDIT_QUARANTINE_ARCHIVE_KIND",
@@ -783,7 +879,9 @@ __all__ = [
     "StudioAuditQuarantineArchiveRetentionEntry",
     "StudioAuditQuarantineArchiveRetentionPlan",
     "StudioAuditQuarantineArchiveRestoreResult",
+    "StudioAuditQuarantineArchivePurgeResult",
     "build_studio_audit_quarantine_archive_retention_plan",
+    "purge_studio_audit_quarantine_archive_prune_candidates",
     "validate_studio_audit_quarantine_archive",
     "write_studio_audit_quarantine_archive",
     "write_studio_audit_quarantine_restore",

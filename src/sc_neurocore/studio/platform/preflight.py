@@ -73,6 +73,12 @@ _REQUIRED_ROUTE_POLICIES: tuple[tuple[str, str, RouteVisibility, str], ...] = (
         "studio.audit.quarantine.archive.restore",
     ),
     (
+        "POST",
+        "/api/studio/audit/quarantine/archive/purge",
+        RouteVisibility.ADMIN,
+        "studio.audit.quarantine.archive.purge",
+    ),
+    (
         "GET",
         "/api/studio/identity/service-accounts",
         RouteVisibility.ADMIN,

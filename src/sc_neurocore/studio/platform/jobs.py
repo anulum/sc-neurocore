@@ -14,6 +14,7 @@ import hashlib
 import json
 import os
 import secrets
+import shutil
 # Process workers use shell-free local argument vectors.
 import subprocess  # nosec B404
 import sys
@@ -544,6 +545,46 @@ class StudioJobManager:
         """Return a path-free snapshot of all known jobs."""
 
         return StudioJobListSnapshot(records=self.list_records())
+
+    def purge_terminal_record(self, job_id: str) -> StudioJobRecord:
+        """Delete one terminal job directory and remove its in-memory record.
+
+        Parameters
+        ----------
+        job_id:
+            Job identifier previously returned by this manager.
+
+        Returns
+        -------
+        StudioJobRecord
+            The purged immutable job record for audit or response summaries.
+
+        Raises
+        ------
+        KeyError
+            If the job ID is unknown.
+        StudioJobRejected
+            If the job is still active and cannot be purged safely.
+        """
+
+        with self._lock:
+            record = self._records[job_id]
+            if record.status in ("pending", "running", "cancelling"):
+                raise StudioJobRejected("Studio active jobs cannot be purged.")
+        work_dir = _resolve_confined_child(
+            root=self._root,
+            relative_path=record.job_id,
+            error_message="Studio job purge path escapes the job root.",
+        )
+        if work_dir.exists():
+            if not work_dir.is_dir():
+                raise StudioJobRejected("Studio job purge target is not a directory.")
+            shutil.rmtree(work_dir)
+        with self._lock:
+            self._records.pop(job_id, None)
+            self._done_events.pop(job_id, None)
+            self._cancel_events.pop(job_id, None)
+        return record
 
     def read_artifact(self, job_id: str, relative_path: str) -> StudioJobArtifactPayload:
         """Return a verified payload for one declared job artifact.
