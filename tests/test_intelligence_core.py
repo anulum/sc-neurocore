@@ -1391,6 +1391,20 @@ class TestNIRImport:
         g = import_nir_graph({"nodes": {}, "edges": []}, framework="Norse")
         assert g.framework == "Norse"
 
+    def test_izhikevich_import(self):
+        """An Izhikevich node maps to its quadratic membrane equation."""
+        from sc_neurocore.compiler.intelligence import import_nir_graph
+
+        g = import_nir_graph({"nodes": {"n0": {"type": "Izhikevich"}}, "edges": []})
+        assert "0.04" in g.equations["n0"]
+
+    def test_unknown_type_falls_back_to_leaky_equation(self):
+        """An unrecognised node type falls back to a generic leaky equation."""
+        from sc_neurocore.compiler.intelligence import import_nir_graph
+
+        g = import_nir_graph({"nodes": {"n0": {"type": "Mystery", "tau": 5.0}}, "edges": []})
+        assert "5.0" in g.equations["n0"]
+
 
 class TestDebugProbes:
     def test_xilinx(self):

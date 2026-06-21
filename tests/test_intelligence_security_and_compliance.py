@@ -316,6 +316,22 @@ class TestSupplyChainRisk:
         r = score_supply_chain_risk("artix7")
         assert len(r.alternatives) > 0
 
+    def test_itar_for_radiation_hardened_fpga(self):
+        """A radiation-hardened FPGA part is flagged ITAR-controlled."""
+        from sc_neurocore.compiler.intelligence import score_supply_chain_risk
+
+        r = score_supply_chain_risk("bae_rad750")
+        assert r.export_control == "ITAR"
+        assert "ITAR" in " ".join(r.risk_factors)
+
+    def test_export_controlled_superconducting(self):
+        """A superconducting platform is flagged export-controlled emerging tech."""
+        from sc_neurocore.compiler.intelligence import score_supply_chain_risk
+
+        r = score_supply_chain_risk("josephson_jj")
+        assert r.export_control == "EAR-controlled"
+        assert "superconducting" in " ".join(r.risk_factors).lower()
+
 
 class TestCarbonFootprint:
     def test_basic(self):
