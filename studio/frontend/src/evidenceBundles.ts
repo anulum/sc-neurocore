@@ -13,6 +13,7 @@ import type {
   StudioJobStatus,
   StudioOperatorStatus,
 } from "./api/client";
+import { downloadBrowserArtefact } from "./browserArtefactDownload";
 
 export type EvidenceBundleSurface = "admin" | "project" | "compile" | "synthesis";
 export type ScopedEvidenceBundleSurface = Exclude<EvidenceBundleSurface, "admin">;
@@ -49,6 +50,26 @@ export interface EvidenceBundleDownloadSelection {
   bundle: StudioEvidenceBundleResponse | null;
   error: EvidenceBundleDownloadErrorKey;
 }
+
+export type EvidenceBundleArtefactDownloader = (payload: Blob, relativePath: string) => void;
+
+export interface EvidenceBundleArtifactDownloadUnavailablePlan {
+  available: false;
+  statePatch: EvidenceBundleDownloadStatePatch;
+}
+
+export interface EvidenceBundleArtifactDownloadReadyPlan {
+  available: true;
+  failureState: (error: unknown) => EvidenceBundleDownloadStatePatch;
+  jobId: string;
+  relativePath: string;
+  startState: EvidenceBundleDownloadStatePatch;
+  writePayload: (payload: Blob, downloader?: EvidenceBundleArtefactDownloader) => void;
+}
+
+export type EvidenceBundleArtifactDownloadPlan =
+  | EvidenceBundleArtifactDownloadReadyPlan
+  | EvidenceBundleArtifactDownloadUnavailablePlan;
 
 export interface EvidenceBundleOperatorRefreshPatch {
   auditStatus: StudioAuditStatus;
@@ -226,6 +247,30 @@ export function evidenceBundleArtifactDownloadFailureState(
     surface,
     errorMessage(error, "Evidence artefact download failed"),
   );
+}
+
+export function evidenceBundleArtifactDownloadPlan(
+  surface: EvidenceBundleSurface,
+  relativePath: string,
+  slots: EvidenceBundleDownloadSlots,
+): EvidenceBundleArtifactDownloadPlan {
+  const { bundle } = evidenceBundleDownloadSelection(surface, slots);
+  if (bundle === null) {
+    return {
+      available: false,
+      statePatch: evidenceBundleArtifactUnavailableState(surface),
+    };
+  }
+  return {
+    available: true,
+    failureState: (error) => evidenceBundleArtifactDownloadFailureState(surface, error),
+    jobId: bundle.job_id,
+    relativePath,
+    startState: evidenceBundleArtifactDownloadStartState(surface),
+    writePayload: (payload, downloader = downloadBrowserArtefact) => {
+      downloader(payload, relativePath);
+    },
+  };
 }
 
 export function latestSynthesisJobIdWithArtefact(

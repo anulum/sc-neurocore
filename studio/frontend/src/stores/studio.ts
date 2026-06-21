@@ -204,10 +204,7 @@ import {
   adminEvidenceBundleCreatedState,
   adminEvidenceBundleFailureState,
   adminEvidenceBundleLoadingState,
-  evidenceBundleArtifactDownloadFailureState,
-  evidenceBundleArtifactDownloadStartState,
-  evidenceBundleArtifactUnavailableState,
-  evidenceBundleDownloadSelection,
+  evidenceBundleArtifactDownloadPlan,
   scopedEvidenceBundleCreatedState,
   scopedEvidenceBundleFailureState,
   scopedEvidenceBundleLoadingState,
@@ -777,17 +774,17 @@ export const useStudioStore = create<StudioState>((set, get) => ({
     await get().downloadEvidenceBundleArtifactForSurface("admin", relativePath);
   },
   downloadEvidenceBundleArtifactForSurface: async (surface, relativePath) => {
-    const { bundle: evidenceBundle } = evidenceBundleDownloadSelection(surface, get());
-    if (evidenceBundle === null) {
-      set(evidenceBundleArtifactUnavailableState(surface));
+    const downloadPlan = evidenceBundleArtifactDownloadPlan(surface, relativePath, get());
+    if (!downloadPlan.available) {
+      set(downloadPlan.statePatch);
       return;
     }
-    set(evidenceBundleArtifactDownloadStartState(surface));
+    set(downloadPlan.startState);
     try {
-      const payload = await fetchStudioJobArtifact(evidenceBundle.job_id, relativePath);
-      downloadBrowserArtefact(payload, relativePath);
+      const payload = await fetchStudioJobArtifact(downloadPlan.jobId, downloadPlan.relativePath);
+      downloadPlan.writePayload(payload);
     } catch (error: unknown) {
-      set(evidenceBundleArtifactDownloadFailureState(surface, error));
+      set(downloadPlan.failureState(error));
     }
   },
   loadJobStatus: async () => {

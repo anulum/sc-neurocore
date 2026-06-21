@@ -19,6 +19,7 @@ import {
   adminEvidenceBundleCreatedState,
   adminEvidenceBundleFailureState,
   adminEvidenceBundleLoadingState,
+  evidenceBundleArtifactDownloadPlan,
   evidenceBundleArtifactDownloadFailureState,
   evidenceBundleArtifactDownloadStartState,
   evidenceBundleArtifactUnavailableState,
@@ -291,5 +292,60 @@ describe("evidence bundle surface helpers", () => {
     expect(
       evidenceBundleArtifactDownloadFailureState("compile", new Error("missing artifact")),
     ).toEqual({ compileEvidenceBundleError: "missing artifact" });
+  });
+
+  it("plans an evidence artifact download with scoped state patches", () => {
+    const plan = evidenceBundleArtifactDownloadPlan(
+      "project",
+      "evidence/jobs/sj_bundle/artifacts/manifest.json",
+      {
+        compileEvidenceBundle: null,
+        evidenceBundle: null,
+        projectEvidenceBundle: bundle,
+        synthesisEvidenceBundle: null,
+      },
+    );
+
+    expect(plan.available).toBe(true);
+    if (!plan.available) {
+      throw new Error("expected available evidence bundle artifact plan");
+    }
+
+    const downloads: Array<{ payload: Blob; relativePath: string }> = [];
+    const payload = new Blob(["manifest"], { type: "application/json" });
+    plan.writePayload(payload, (downloadedPayload, relativePath) => {
+      downloads.push({ payload: downloadedPayload, relativePath });
+    });
+
+    expect(plan.jobId).toBe("sj_bundle");
+    expect(plan.relativePath).toBe("evidence/jobs/sj_bundle/artifacts/manifest.json");
+    expect(plan.startState).toEqual({ projectEvidenceBundleError: null });
+    expect(plan.failureState(new Error("download failed"))).toEqual({
+      projectEvidenceBundleError: "download failed",
+    });
+    expect(downloads).toEqual([{
+      payload,
+      relativePath: "evidence/jobs/sj_bundle/artifacts/manifest.json",
+    }]);
+  });
+
+  it("plans an unavailable evidence artifact download without a bundle", () => {
+    const plan = evidenceBundleArtifactDownloadPlan(
+      "admin",
+      "evidence/jobs/sj_bundle/artifacts/manifest.json",
+      {
+        compileEvidenceBundle: null,
+        evidenceBundle: null,
+        projectEvidenceBundle: null,
+        synthesisEvidenceBundle: null,
+      },
+    );
+
+    expect(plan).toEqual({
+      available: false,
+      statePatch: {
+        evidenceBundleError: "No evidence bundle is available for artifact download.",
+      },
+    });
   });
 });
