@@ -106,7 +106,7 @@ export default function App() {
     if (s.projectSaveResult === null) {
       return;
     }
-    void s.createEvidenceBundle({
+    void s.createEvidenceBundleForSurface("project", {
       audit_limit: 100,
       analysis_results: [],
       command_replay: {
@@ -412,13 +412,13 @@ export default function App() {
             )}
             {s.projectSaveResult && (
               <ProjectEvidenceStrip
-                artifacts={s.evidenceBundle?.artifacts ?? []}
+                artifacts={s.projectEvidenceBundle?.artifacts ?? []}
                 evidence={buildProjectEvidenceModel(s.projectSaveResult)}
-                exportBundleId={s.evidenceBundle?.bundle_id ?? null}
-                exportError={s.evidenceBundleError}
-                exportJobId={s.evidenceBundle?.job_id ?? null}
-                loading={s.evidenceBundleLoading}
-                onDownloadArtifact={(relativePath) => void s.downloadEvidenceBundleArtifact(relativePath)}
+                exportBundleId={s.projectEvidenceBundle?.bundle_id ?? null}
+                exportError={s.projectEvidenceBundleError}
+                exportJobId={s.projectEvidenceBundle?.job_id ?? null}
+                loading={s.projectEvidenceBundleLoading}
+                onDownloadArtifact={(relativePath) => void s.downloadEvidenceBundleArtifactForSurface("project", relativePath)}
                 onExportBundle={exportProjectEvidenceBundle}
               />
             )}

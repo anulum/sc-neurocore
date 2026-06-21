@@ -5,10 +5,10 @@ import { useStudioStore } from "../stores/studio";
 export default function CompilerInspector() {
   const {
     compileTraceability,
-    createEvidenceBundle,
-    evidenceBundle,
-    evidenceBundleError,
-    evidenceBundleLoading,
+    compileEvidenceBundle,
+    compileEvidenceBundleError,
+    compileEvidenceBundleLoading,
+    createEvidenceBundleForSurface,
     irText,
     svSource,
     irErrors,
@@ -23,7 +23,7 @@ export default function CompilerInspector() {
       return;
     }
     setCompileBundleRequested(true);
-    void createEvidenceBundle({
+    void createEvidenceBundleForSurface("compile", {
       audit_limit: 100,
       analysis_results: [],
       command_replay: {
@@ -84,7 +84,7 @@ export default function CompilerInspector() {
           <span>trace {compileTraceability.traceability_sha256.slice(0, 12)}</span>
           <button
             aria-label="Export compile evidence bundle"
-            disabled={evidenceBundleLoading}
+            disabled={compileEvidenceBundleLoading}
             onClick={exportCompileEvidence}
             style={{
               padding: "3px 8px",
@@ -92,18 +92,18 @@ export default function CompilerInspector() {
               borderRadius: "var(--radius)",
               background: "var(--accent)",
               color: "var(--bg-primary)",
-              cursor: evidenceBundleLoading ? "wait" : "pointer",
+              cursor: compileEvidenceBundleLoading ? "wait" : "pointer",
               fontSize: 10,
             }}
             type="button"
           >
             Export
           </button>
-          {compileBundleRequested && evidenceBundle && (
-            <span>bundle {evidenceBundle.bundle_id}</span>
+          {compileBundleRequested && compileEvidenceBundle && (
+            <span>bundle {compileEvidenceBundle.bundle_id}</span>
           )}
-          {compileBundleRequested && evidenceBundleError && (
-            <span style={{ color: "#ff5252" }}>{evidenceBundleError}</span>
+          {compileBundleRequested && compileEvidenceBundleError && (
+            <span style={{ color: "#ff5252" }}>{compileEvidenceBundleError}</span>
           )}
         </div>
       )}

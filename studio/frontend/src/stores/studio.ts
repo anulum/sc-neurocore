@@ -80,6 +80,7 @@ export type SourceMode = "model" | "ode";
 export type ViewTab = "trace" | "phase" | "isi" | "fi-curve" | "bifurcation" |
   "sensitivity" | "precision" | "heatmap" | "verilog" | "code" |
   "compare" | "freq" | "sta" | "characterize" | "multi" | "network" | "ir" | "synth" | "train" | "canvas" | "admin";
+export type EvidenceBundleSurface = "admin" | "project" | "compile";
 
 interface StudioState {
   sourceMode: SourceMode;
@@ -108,6 +109,12 @@ interface StudioState {
   evidenceBundle: StudioEvidenceBundleResponse | null;
   evidenceBundleError: string | null;
   evidenceBundleLoading: boolean;
+  projectEvidenceBundle: StudioEvidenceBundleResponse | null;
+  projectEvidenceBundleError: string | null;
+  projectEvidenceBundleLoading: boolean;
+  compileEvidenceBundle: StudioEvidenceBundleResponse | null;
+  compileEvidenceBundleError: string | null;
+  compileEvidenceBundleLoading: boolean;
   jobStatus: StudioJobStatus | null;
   jobRecords: StudioJobRecord[];
   identityBrowserUsers: StudioIdentityBrowserUser[];
@@ -212,7 +219,15 @@ interface StudioState {
   ) => Promise<void>;
   purgeAuditQuarantineArchiveRetention: (retainLatest: number) => Promise<void>;
   createEvidenceBundle: (request: StudioEvidenceBundleRequest) => Promise<void>;
+  createEvidenceBundleForSurface: (
+    surface: EvidenceBundleSurface,
+    request: StudioEvidenceBundleRequest,
+  ) => Promise<void>;
   downloadEvidenceBundleArtifact: (relativePath: string) => Promise<void>;
+  downloadEvidenceBundleArtifactForSurface: (
+    surface: EvidenceBundleSurface,
+    relativePath: string,
+  ) => Promise<void>;
   loadJobStatus: () => Promise<void>;
   loadIdentityServiceAccounts: () => Promise<void>;
   createIdentityBrowserUser: (create: StudioIdentityBrowserUserCreate) => Promise<void>;
@@ -316,6 +331,8 @@ export const useStudioStore = create<StudioState>((set, get) => ({
   auditArchive: null, auditArchiveRetention: null, auditArchivePurge: null,
   auditArchiveRestore: null, auditArchiveValidation: null,
   evidenceBundle: null, evidenceBundleError: null, evidenceBundleLoading: false,
+  projectEvidenceBundle: null, projectEvidenceBundleError: null, projectEvidenceBundleLoading: false,
+  compileEvidenceBundle: null, compileEvidenceBundleError: null, compileEvidenceBundleLoading: false,
   jobStatus: null, jobRecords: [],
   identityBrowserUsers: [], identityServiceAccounts: [], operatorStatus: null,
   auditLoading: false, auditError: null,
@@ -581,6 +598,37 @@ export const useStudioStore = create<StudioState>((set, get) => ({
       });
     }
   },
+  createEvidenceBundleForSurface: async (surface, request) => {
+    if (surface === "admin") {
+      await get().createEvidenceBundle(request);
+      return;
+    }
+    const loadingKey = surface === "project" ? "projectEvidenceBundleLoading" : "compileEvidenceBundleLoading";
+    const errorKey = surface === "project" ? "projectEvidenceBundleError" : "compileEvidenceBundleError";
+    const bundleKey = surface === "project" ? "projectEvidenceBundle" : "compileEvidenceBundle";
+    set({ [loadingKey]: true, [errorKey]: null });
+    try {
+      const evidenceBundle = await createStudioEvidenceBundle(request);
+      const [operatorStatus, jobList] = await Promise.all([
+        fetchStudioOperatorStatus(),
+        fetchStudioJobs(),
+      ]);
+      set({
+        auditStatus: operatorStatus.audit,
+        [bundleKey]: evidenceBundle,
+        [errorKey]: null,
+        [loadingKey]: false,
+        jobRecords: jobList.jobs,
+        jobStatus: operatorStatus.jobs,
+        operatorStatus,
+      });
+    } catch (error: unknown) {
+      set({
+        [errorKey]: error instanceof Error ? error.message : "Evidence bundle export failed",
+        [loadingKey]: false,
+      });
+    }
+  },
   downloadEvidenceBundleArtifact: async (relativePath) => {
     const evidenceBundle = get().evidenceBundle;
     if (evidenceBundle === null) {
@@ -599,6 +647,37 @@ export const useStudioStore = create<StudioState>((set, get) => ({
     } catch (error: unknown) {
       set({
         evidenceBundleError: error instanceof Error
+          ? error.message
+          : "Evidence artifact download failed",
+      });
+    }
+  },
+  downloadEvidenceBundleArtifactForSurface: async (surface, relativePath) => {
+    if (surface === "admin") {
+      await get().downloadEvidenceBundleArtifact(relativePath);
+      return;
+    }
+    const state = get();
+    const evidenceBundle = surface === "project"
+      ? state.projectEvidenceBundle
+      : state.compileEvidenceBundle;
+    const errorKey = surface === "project" ? "projectEvidenceBundleError" : "compileEvidenceBundleError";
+    if (evidenceBundle === null) {
+      set({ [errorKey]: "No evidence bundle is available for artifact download." });
+      return;
+    }
+    set({ [errorKey]: null });
+    try {
+      const payload = await fetchStudioJobArtifact(evidenceBundle.job_id, relativePath);
+      const url = URL.createObjectURL(payload);
+      const anchor = document.createElement("a");
+      anchor.href = url;
+      anchor.download = relativePath.split("/").filter(Boolean).pop() ?? "studio-artifact";
+      anchor.click();
+      URL.revokeObjectURL(url);
+    } catch (error: unknown) {
+      set({
+        [errorKey]: error instanceof Error
           ? error.message
           : "Evidence artifact download failed",
       });

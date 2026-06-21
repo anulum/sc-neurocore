@@ -27,11 +27,11 @@ const compileTraceability: CompileTraceability = {
 
 vi.mock("../stores/studio", () => ({
   useStudioStore: () => ({
+    compileEvidenceBundle: null,
+    compileEvidenceBundleError: null,
+    compileEvidenceBundleLoading: false,
     compileTraceability,
-    createEvidenceBundle: async () => undefined,
-    evidenceBundle: null,
-    evidenceBundleError: null,
-    evidenceBundleLoading: false,
+    createEvidenceBundleForSurface: async () => undefined,
     irErrors: [],
     irText: "%0 = input clk",
     isSimulating: false,

@@ -625,6 +625,9 @@ using the saved project name and project SHA-256 as replay metadata while
 refreshing the worker queue after export. When the bundle is available, the
 Projects strip lists the path-confined artifacts with size and SHA-256 labels
 and downloads each file through the authenticated Studio job-artifact endpoint.
+The frontend keeps Admin, Projects, and Compiler evidence-bundle state in
+separate slots so one workflow cannot display or download another workflow's
+last exported bundle by accident.
 
 Before promoting a Studio deployment, run the release preflight from the same
 environment that will launch the backend:

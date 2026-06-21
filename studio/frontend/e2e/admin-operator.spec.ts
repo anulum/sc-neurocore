@@ -882,6 +882,92 @@ test("project evidence strip exports saved project bundles", async ({ page }) =>
   });
 });
 
+test("project evidence strip ignores admin bundle artifacts", async ({ page }) => {
+  const mocks = defaultApiMocks();
+  mocks.set("/api/project/save", projectSaveResult);
+  mocks.set("/api/studio/evidence/bundle", {
+    sequence: [
+      {
+        artifact_paths: ["evidence/admin/audit.json"],
+        artifacts: [
+          {
+            relative_path: "evidence/admin/audit.json",
+            sha256: "9".repeat(64),
+            size_bytes: 64,
+          },
+        ],
+        bundle_id: "seb_admin",
+        job_id: "sj_admin",
+        manifest: { entries: [{ bundle_path: "evidence/admin/audit.json", type: "audit" }] },
+        schema_version: "studio.evidence-bundle.v1",
+        summary: {
+          artifact_path_count: 1,
+          entry_count: 1,
+          entry_type_counts: { audit: 1 },
+          evidence_classification_counts: { audit: 1 },
+          source_job_count: 0,
+          source_job_kind_counts: {},
+          source_job_owner_counts: {},
+        },
+      },
+      {
+        artifact_paths: ["evidence/projects/saved-network.json"],
+        artifacts: [
+          {
+            relative_path: "evidence/projects/saved-network.json",
+            sha256: "8".repeat(64),
+            size_bytes: 128,
+          },
+        ],
+        bundle_id: "seb_project",
+        job_id: "sj_project",
+        manifest: {
+          entries: [
+            {
+              bundle_path: "evidence/projects/saved-network.json",
+              evidence_classification: "project_workspace",
+              type: "project",
+            },
+          ],
+        },
+        schema_version: "studio.evidence-bundle.v1",
+        summary: {
+          artifact_path_count: 1,
+          entry_count: 1,
+          entry_type_counts: { project: 1 },
+          evidence_classification_counts: { project_workspace: 1 },
+          source_job_count: 0,
+          source_job_kind_counts: {},
+          source_job_owner_counts: {},
+        },
+      },
+    ],
+  });
+  const api = await installApiDispatcher(page, mocks);
+
+  page.once("dialog", async (dialog) => {
+    await dialog.accept("saved-network");
+  });
+  await page.goto("/");
+  await page.getByRole("button", { name: "Admin" }).first().click();
+  await page.getByRole("button", { name: "Create evidence bundle" }).click();
+  await expect(page.getByText("seb_admin")).toBeVisible();
+  await expect(page.getByText("evidence/admin/audit.json", { exact: true })).toHaveCount(2);
+
+  await page.getByRole("button", { name: "Save" }).first().click();
+  await expect(page.getByText("project_workspace")).toBeVisible();
+  await expect(page.getByText("evidence/admin/audit.json", { exact: true })).toHaveCount(2);
+  await expect(page.getByText("evidence/projects/saved-network.json", { exact: true })).toHaveCount(0);
+
+  await page
+    .getByRole("button", { name: "Export saved-network project evidence bundle" })
+    .click();
+  await expect(page.getByText("seb_project")).toBeVisible();
+  await expect(page.getByText("evidence/projects/saved-network.json", { exact: true })).toBeVisible();
+
+  expect(api.bodies("/api/studio/evidence/bundle")).toHaveLength(2);
+});
+
 test("synthesis dashboard renders target provenance matrix from all-target run", async ({ page }) => {
   const verilog = "module test(input clk, output y); assign y = clk; endmodule";
   const api = await installApiDispatcher(
