@@ -15,7 +15,7 @@ import json
 import math
 from collections.abc import Mapping
 from dataclasses import dataclass
-from datetime import UTC, datetime
+from datetime import datetime, timezone
 from typing import TypeAlias, cast
 
 from sc_neurocore.studio.platform.evidence_bundle import JsonValue
@@ -135,7 +135,9 @@ def build_training_checkpoint(
     evidence_payload = (
         None if evidence_summary is None else validate_training_evidence_summary(evidence_summary)
     )
-    generated_at = (clock or datetime.now(UTC)).astimezone(UTC).replace(microsecond=0)
+    generated_at = (
+        (clock or datetime.now(timezone.utc)).astimezone(timezone.utc).replace(microsecond=0)
+    )
     config_sha256 = _sha256_json(checkpoint_config)
     weight_payload = (
         None
