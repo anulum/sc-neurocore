@@ -21,6 +21,9 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 - GPFA Julia backend (`accel/julia/analysis/gpfa.jl`, previously a stub) implements
   the same EM-from-initialisation contract and agrees with the NumPy reference to
   within ~1e-12; selectable via `backend="julia"`, gated parity test included.
+- GPFA Go backend (`accel/go/gpfa/gpfa.go`, c-shared via cgo) implements the same
+  EM-from-initialisation contract and agrees with the NumPy reference to within
+  ~1e-12; selectable via `backend="go"`, with parity and loader-branch tests.
 
 ### Public bitstream-inference API
 - Restored a stable public stochastic-inference surface over caller-owned packed
