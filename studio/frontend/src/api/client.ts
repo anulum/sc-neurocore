@@ -687,6 +687,7 @@ export interface CompileTraceability {
   schema_version: "studio.compile-traceability.v1";
   source: "ode";
   source_payload: CompileSourcePayload;
+  status: "completed";
   traceability_sha256: string;
 }
 

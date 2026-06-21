@@ -106,8 +106,8 @@ public metadata.
 
 The manifest is included in both `/api/compile` and
 `/api/ir/emit-sv-direct` responses. The Compiler Inspector displays the
-schema version, evidence class, module name, and shortened source/RTL/manifest
-digests beside the generated RTL. Operators can export a compile evidence
+schema version, evidence class, terminal status, module name, and shortened
+source/RTL/manifest digests beside the generated RTL. Operators can export a compile evidence
 bundle directly from that traceability strip; the bundle records replay
 metadata for `/api/ir/emit-sv-direct`, the compile input digest, and the
 traceability digest note through the same admin evidence-bundle route used by

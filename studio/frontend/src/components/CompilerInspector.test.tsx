@@ -22,6 +22,7 @@ const compileTraceability: CompileTraceability = {
     reset: "v = -65",
     threshold: "v > -50",
   },
+  status: "completed",
   traceability_sha256: "3".repeat(64),
 };
 
@@ -69,6 +70,7 @@ describe("CompilerInspector", () => {
 
     expect(html).toContain("schema studio.compile-traceability.v1");
     expect(html).toContain("class compile");
+    expect(html).toContain("status completed");
     expect(html).toContain("module lif_neuron");
     expect(html).toContain("input 111111111111");
     expect(html).toContain("rtl 222222222222");

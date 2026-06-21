@@ -45,6 +45,7 @@ function compileTraceability(
       reset: "v = -65",
       threshold: "v > -50",
     },
+    status: overrides.status ?? "completed",
     traceability_sha256: overrides.traceability_sha256 ?? "3".repeat(64),
   };
 }

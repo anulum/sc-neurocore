@@ -80,6 +80,7 @@ export default function CompilerInspector() {
         }}>
           <span>schema {compileTraceability.schema_version}</span>
           <span>class {compileTraceability.evidence_classification}</span>
+          <span>status {compileTraceability.status}</span>
           <span>module {compileTraceability.output.module_name}</span>
           <span>input {compileTraceability.input_sha256.slice(0, 12)}</span>
           <span>rtl {compileTraceability.output.rtl_sha256.slice(0, 12)}</span>
