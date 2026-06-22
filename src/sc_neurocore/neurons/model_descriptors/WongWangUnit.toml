@@ -15,17 +15,11 @@ behavior_tags = []
 
 [provenance]
 
-[state]
+[state.s1]
+init = 0.1
 
-[parameters.s1]
-default = 0.1
-unit = ""
-meaning = ""
-
-[parameters.s2]
-default = 0.1
-unit = ""
-meaning = ""
+[state.s2]
+init = 0.1
 
 [parameters.tau_s]
 default = 0.1

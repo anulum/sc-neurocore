@@ -43,7 +43,7 @@ from sc_neurocore.neurons.models import _CLASS_TO_MODULE
 # three-variable models (suffixed forms like ``x_rest`` stay parameters via
 # ``_is_param``).
 _KNOWN_STATE_VARS = frozenset(
-    {"v", "w", "u", "h", "n", "m", "ca", "s", "r", "theta", "vm", "x", "y", "z"}
+    {"v", "w", "u", "h", "n", "m", "ca", "s", "s1", "s2", "r", "theta", "vm", "x", "y", "z"}
 )
 _PARAM_PREFIXES = ("v_", "e_", "g_", "tau_", "c_", "sigma", "alpha", "beta")
 _PARAM_SUFFIXES = ("_threshold", "_reset", "_rest", "_rev", "_max", "_min")
@@ -91,10 +91,12 @@ def _field_specs(cls: type) -> list[tuple[str, float]]:
 
 
 def _is_state_var(name: str) -> bool:
-    # Exact membership only. A ``v``-prefixed two-letter name (``v0``, ``v1`` …)
-    # is far more often a reversal/midpoint parameter than a state variable, so
-    # it is not auto-classified as state.
-    return name in _KNOWN_STATE_VARS
+    # Exact membership, plus ion-channel gating variables: ``m_``/``h_``-prefixed
+    # names (m_na, h_cat, h_nap, ...) are activation/inactivation gates, which are
+    # integration state. Suffixed parameters (h_max, m_min) are caught by
+    # ``_is_param`` first, which takes precedence in the classifier. A ``v``-prefixed
+    # two-letter name (v0, v1) is a reversal/midpoint parameter, not state.
+    return name in _KNOWN_STATE_VARS or name.startswith(("m_", "h_"))
 
 
 def _is_param(name: str) -> bool:

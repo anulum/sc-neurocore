@@ -24,18 +24,14 @@ init = 0.8
 [state.n]
 init = 0.1
 
-[state.ca]
+[state.m_pic]
 init = 0.0
 
-[parameters.m_pic]
-default = 0.0
-unit = ""
-meaning = ""
+[state.h_pic]
+init = 1.0
 
-[parameters.h_pic]
-default = 1.0
-unit = ""
-meaning = ""
+[state.ca]
+init = 0.0
 
 [parameters.ca_buf]
 default = 0.0

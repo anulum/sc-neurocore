@@ -18,53 +18,35 @@ behavior_tags = []
 [state.v]
 init = -60.0
 
+[state.m_na]
+init = 0.0
+
+[state.h_na]
+init = 0.9
+
+[state.m_cat]
+init = 0.0
+
+[state.h_cat]
+init = 0.9
+
+[state.m_cas]
+init = 0.0
+
+[state.m_a]
+init = 0.0
+
+[state.h_a]
+init = 0.9
+
+[state.m_kd]
+init = 0.0
+
+[state.m_h]
+init = 0.0
+
 [state.ca]
 init = 0.05
-
-[parameters.m_na]
-default = 0.0
-unit = ""
-meaning = ""
-
-[parameters.h_na]
-default = 0.9
-unit = ""
-meaning = ""
-
-[parameters.m_cat]
-default = 0.0
-unit = ""
-meaning = ""
-
-[parameters.h_cat]
-default = 0.9
-unit = ""
-meaning = ""
-
-[parameters.m_cas]
-default = 0.0
-unit = ""
-meaning = ""
-
-[parameters.m_a]
-default = 0.0
-unit = ""
-meaning = ""
-
-[parameters.h_a]
-default = 0.9
-unit = ""
-meaning = ""
-
-[parameters.m_kd]
-default = 0.0
-unit = ""
-meaning = ""
-
-[parameters.m_h]
-default = 0.0
-unit = ""
-meaning = ""
 
 [parameters.g_na]
 default = 200.0

@@ -21,10 +21,8 @@ init = -50.0
 [state.n]
 init = 0.01
 
-[parameters.h_nap]
-default = 0.5
-unit = ""
-meaning = ""
+[state.h_nap]
+init = 0.5
 
 [parameters.g_na]
 default = 28.0

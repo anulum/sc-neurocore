@@ -27,6 +27,9 @@ init = 0.85
 [state.n]
 init = 0.05
 
+[state.m_t]
+init = 0.01
+
 [state.s]
 init = 0.95
 
@@ -43,11 +46,6 @@ meaning = ""
 
 [parameters.b]
 default = 0.8
-unit = ""
-meaning = ""
-
-[parameters.m_t]
-default = 0.01
 unit = ""
 meaning = ""
 

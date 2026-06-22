@@ -18,26 +18,20 @@ behavior_tags = []
 [state.v]
 init = -68.0
 
+[state.h_na]
+init = 0.8
+
+[state.m_cap]
+init = 0.0
+
+[state.h_cap]
+init = 0.9
+
 [state.ca]
 init = 0.0001
 
-[parameters.h_na]
-default = 0.8
-unit = ""
-meaning = ""
-
 [parameters.n_k]
 default = 0.1
-unit = ""
-meaning = ""
-
-[parameters.m_cap]
-default = 0.0
-unit = ""
-meaning = ""
-
-[parameters.h_cap]
-default = 0.9
 unit = ""
 meaning = ""
 
