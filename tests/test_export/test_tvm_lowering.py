@@ -92,6 +92,14 @@ class TestTVMLowering(unittest.TestCase):
         self.assertIn("@scpn.lif", relay_text)
         self.assertIn("threshold=0.75", relay_text)
 
+    def test_unknown_node_type_lowers_to_passthrough(self):
+        # A node whose type matches none of the SC primitives is emitted as a
+        # scalar-shaped passthrough binding rather than dropped.
+        lowering = TVMLowering()
+        graph = MockGraph([MockNode("UNSUPPORTED_OP", "p1", ["input_a"], "out_p")])
+        relay_text = lowering.lower(graph, {"input_a": (128,)})
+        self.assertIn("passthrough", relay_text)
+
     def test_target_header(self):
         schedule = TargetSchedule.for_gpu()
         lowering = TVMLowering(schedule)

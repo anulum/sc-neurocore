@@ -96,6 +96,13 @@ def test_online_o1_resource_estimate_rejects_invalid_synapse_count() -> None:
         emitter.estimate_resources(n_synapses=0)
 
 
+def test_online_o1_resource_estimate_rejects_empty_target() -> None:
+    emitter = OnlineO1LearningEmitter(config=OnlineO1Config())
+
+    with pytest.raises(ValueError, match="target must be non-empty"):
+        emitter.estimate_resources(n_synapses=128, target="")
+
+
 def test_online_o1_emitter_rejects_invalid_module_name() -> None:
     with pytest.raises(ValueError, match="module name"):
         OnlineO1LearningEmitter(module_name="bad module", config=OnlineO1Config())

@@ -39,6 +39,25 @@ def test_sc_error_signature_rejects_mismatched_shapes() -> None:
         build_sc_error_signature([1.0, -1.0], [1.0])
 
 
+def test_sc_error_signature_rejects_multi_dimensional_inputs() -> None:
+    # Matching shapes pass the first guard, but a 2-D observation/prediction
+    # pair has no single bitstream to XOR, so it is rejected.
+    with pytest.raises(ValueError, match="must be one-dimensional"):
+        build_sc_error_signature(
+            np.zeros((2, 2), dtype=np.float32),
+            np.zeros((2, 2), dtype=np.float32),
+        )
+
+
+def test_agent_rejects_multi_dimensional_observation() -> None:
+    agent = NeuroSymbolicPredictiveAgent(
+        PredictiveAgentConfig(input_dim=2, hidden_dim=1, lr=0.01, precision=1.0)
+    )
+
+    with pytest.raises(ValueError, match="observation must be one-dimensional"):
+        agent.observe(np.zeros((2, 2), dtype=np.float32))
+
+
 def test_agent_observe_returns_symbols_trace_and_signature() -> None:
     agent = NeuroSymbolicPredictiveAgent(
         PredictiveAgentConfig(

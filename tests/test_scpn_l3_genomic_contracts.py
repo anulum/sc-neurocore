@@ -119,6 +119,8 @@ def test_l3_rejects_invalid_parameters_and_inputs() -> None:
         L3_GenomicLayer(L3_StochasticParameters(cellular_coupling=-0.1))
     with pytest.raises(ValueError, match="rng_seed"):
         L3_GenomicLayer(L3_StochasticParameters(rng_seed=cast(Any, 1.5)))
+    with pytest.raises(ValueError, match="rng_seed"):
+        L3_GenomicLayer(L3_StochasticParameters(rng_seed=-1))
 
     layer = L3_GenomicLayer(
         L3_StochasticParameters(n_genes=4, n_regulatory_elements=2, bitstream_length=16)

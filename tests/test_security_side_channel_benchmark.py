@@ -29,7 +29,11 @@ from sc_neurocore.security.side_channel_benchmark import (
     run_side_channel_leakage_benchmark,
     write_side_channel_benchmark_report,
 )
-from sc_neurocore.security.side_channel_metrics import compute_class_activity_proxy
+from sc_neurocore.security.side_channel_metrics import (
+    SideChannelMetricError,
+    compute_class_activity_proxy,
+    compute_switching_activity,
+)
 from sc_neurocore.security.thermal_sc_encoding import ThermalSCEncodingConfig
 
 
@@ -348,3 +352,16 @@ def test_correlated_activity_fixture_stream_rejects_invalid_contracts(
 ) -> None:
     with pytest.raises(SideChannelBenchmarkError, match=match):
         _correlated_activity_fixture_stream(probability, bitstream_length)
+
+
+def test_class_activity_proxy_rejects_non_sequence_sample() -> None:
+    # Each per-class entry must be a bitstream matrix; a scalar sample cannot be
+    # normalised into rows of cycles.
+    with pytest.raises(SideChannelMetricError, match="non-empty bitstream matrix"):
+        compute_class_activity_proxy([42], [0])
+
+
+def test_switching_activity_rejects_ragged_matrix() -> None:
+    # Rows of differing cycle counts cannot form a rectangular bitstream matrix.
+    with pytest.raises(SideChannelMetricError, match="must be rectangular"):
+        compute_switching_activity([[1, 0, 1], [1, 0]])
