@@ -191,6 +191,37 @@ class TestAdaptiveLoop:
         s = ctrl.summary()
         assert "AdaptiveController" in s
 
+    def test_cooldown_suppresses_back_to_back_reoptimisation(self):
+        from sc_neurocore.core.types import HardwareBudget, LayerSpec
+        from sc_neurocore.control.adaptive_loop import (
+            AdaptiveController,
+            AdaptiveLoopConfig,
+        )
+
+        budget = HardwareBudget(max_luts=500_000, max_power_mw=5000.0)
+        layers = [LayerSpec(layer_id="L0", neurons=10, mac_count=10)]
+        config = AdaptiveLoopConfig(
+            drift_threshold=0.05,
+            reoptimize_cooldown_s=100.0,
+            sa_max_iter=50,
+        )
+        ctrl = AdaptiveController(budget, layers, config)
+        rng = np.random.default_rng(42)
+        pattern = rng.integers(0, 2, size=256).astype(np.float64)
+
+        # Drive identical pairs until the first re-optimisation fires...
+        first = None
+        for _ in range(100):
+            event = ctrl.step(pattern, pattern)
+            if event is not None:
+                first = event
+                break
+        assert first is not None
+        # ...the very next step lands inside the 100 s cooldown window and is
+        # suppressed, and the adaptation-rate property stays well defined.
+        assert ctrl.step(pattern, pattern) is None
+        assert 0.0 <= ctrl.adaptation_rate <= 1.0
+
 
 # ── Action #4: Unified energy reporter ────────────────────────────────
 

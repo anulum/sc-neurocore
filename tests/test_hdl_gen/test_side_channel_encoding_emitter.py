@@ -76,3 +76,42 @@ def test_side_channel_encoding_emitter_rejects_empty_module_name() -> None:
 
     with pytest.raises(ValueError):
         SideChannelEncodingEmitter(module_name="", encoding=record).generate()
+
+
+def test_side_channel_encoding_emitter_ties_dummy_bits_low_when_no_streams() -> None:
+    record = encode_activity_balanced_probability(
+        0.5,
+        ThermalSCEncodingConfig(bitstream_length=8, dummy_streams_per_record=0),
+    )
+
+    verilog = SideChannelEncodingEmitter(
+        module_name="unpadded_source",
+        encoding=record,
+    ).generate()
+
+    assert "assign dummy_bits = 1'b0;" in verilog
+
+
+def test_side_channel_encoding_emitter_offsets_third_and_later_dummy_streams() -> None:
+    record = encode_activity_balanced_probability(
+        0.5,
+        ThermalSCEncodingConfig(
+            bitstream_length=8,
+            seed=5,
+            dummy_streams_per_record=3,
+            max_dummy_overhead_ratio=4.0,
+        ),
+    )
+
+    verilog = SideChannelEncodingEmitter(
+        module_name="triple_dummy_source",
+        encoding=record,
+    ).generate()
+
+    assert "assign dummy_bits[2] = DUMMY_BITS[BITSTREAM_LENGTH * 2 + sample_index];" in verilog
+
+
+def test_bits_literal_renders_empty_tuple_as_single_zero() -> None:
+    from sc_neurocore.hdl_gen.side_channel_encoding_emitter import _bits_literal
+
+    assert _bits_literal(()) == "0"
