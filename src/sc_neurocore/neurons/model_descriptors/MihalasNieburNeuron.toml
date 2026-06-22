@@ -14,6 +14,11 @@ hardware_fit = []
 behavior_tags = []
 
 [provenance]
+authors = [
+    "Mihalas, S. & Niebur, E.",
+]
+year = 2009
+doi = "10.1162/neco.2008.12-07-680"
 
 [state.v]
 init = 0.0
@@ -29,63 +34,111 @@ init = 0.0
 
 [parameters.v_rest]
 default = 0.0
-unit = ""
-meaning = ""
+unit = "1"
+meaning = "resting potential (normalised)"
+range = [
+    -5.0,
+    5.0,
+]
 
 [parameters.v_reset]
 default = 0.0
-unit = ""
-meaning = ""
+unit = "1"
+meaning = "membrane potential reset to after a spike (normalised)"
+range = [
+    -5.0,
+    5.0,
+]
 
 [parameters.theta_reset]
 default = 1.0
-unit = ""
-meaning = ""
+unit = "1"
+meaning = "threshold value reset to after a spike (normalised)"
+range = [
+    0.0,
+    10.0,
+]
 
 [parameters.theta_inf]
 default = 1.0
-unit = ""
-meaning = ""
+unit = "1"
+meaning = "steady-state value of the adaptive threshold (normalised)"
+range = [
+    0.0,
+    10.0,
+]
 
 [parameters.tau_v]
 default = 10.0
-unit = ""
-meaning = ""
+unit = "ms"
+meaning = "membrane time constant"
+range = [
+    1.0,
+    100.0,
+]
 
 [parameters.tau_theta]
 default = 100.0
-unit = ""
-meaning = ""
+unit = "ms"
+meaning = "threshold adaptation time constant"
+range = [
+    1.0,
+    500.0,
+]
 
 [parameters.tau_1]
 default = 10.0
-unit = ""
-meaning = ""
+unit = "ms"
+meaning = "decay time constant of the first internal current"
+range = [
+    1.0,
+    100.0,
+]
 
 [parameters.tau_2]
 default = 200.0
-unit = ""
-meaning = ""
+unit = "ms"
+meaning = "decay time constant of the second internal current"
+range = [
+    1.0,
+    500.0,
+]
 
 [parameters.a]
 default = 0.0
-unit = ""
-meaning = ""
+unit = "1/ms"
+meaning = "coupling of the membrane potential to the threshold dynamics"
+range = [
+    0.0,
+    1.0,
+]
 
 [parameters.b]
 default = 0.0
-unit = ""
-meaning = ""
+unit = "1/ms"
+meaning = "relaxation rate of the threshold toward its steady state"
+range = [
+    0.0,
+    1.0,
+]
 
 [parameters.r1]
 default = 0.0
-unit = ""
-meaning = ""
+unit = "1"
+meaning = "normalised amplitude added to the first internal current at each spike"
+range = [
+    -10.0,
+    10.0,
+]
 
 [parameters.r2]
 default = 0.0
-unit = ""
-meaning = ""
+unit = "1"
+meaning = "normalised amplitude added to the second internal current at each spike"
+range = [
+    -10.0,
+    10.0,
+]
 
 [integration]
 dt = 1.0

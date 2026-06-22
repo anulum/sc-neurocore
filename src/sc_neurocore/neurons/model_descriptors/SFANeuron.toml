@@ -14,6 +14,11 @@ hardware_fit = []
 behavior_tags = []
 
 [provenance]
+authors = [
+    "Benda, J. & Herz, A.V.M.",
+]
+year = 2003
+doi = "10.1162/089976603322385063"
 
 [state.v]
 init = -70.0
@@ -23,43 +28,75 @@ init = 0.0
 
 [parameters.v_rest]
 default = -70.0
-unit = ""
-meaning = ""
+unit = "mV"
+meaning = "resting / leak reversal potential"
+range = [
+    -90.0,
+    -40.0,
+]
 
 [parameters.v_reset]
 default = -70.0
-unit = ""
-meaning = ""
+unit = "mV"
+meaning = "membrane potential reset to after a spike"
+range = [
+    -90.0,
+    -40.0,
+]
 
 [parameters.v_threshold]
 default = -50.0
-unit = ""
-meaning = ""
+unit = "mV"
+meaning = "voltage at which a spike is registered"
+range = [
+    -60.0,
+    -20.0,
+]
 
 [parameters.tau_m]
 default = 10.0
-unit = ""
-meaning = ""
+unit = "ms"
+meaning = "membrane time constant"
+range = [
+    1.0,
+    100.0,
+]
 
 [parameters.tau_sfa]
 default = 200.0
-unit = ""
-meaning = ""
+unit = "ms"
+meaning = "adaptation time constant of the spike-frequency-adaptation conductance"
+range = [
+    10.0,
+    2000.0,
+]
 
 [parameters.delta_g]
 default = 0.5
-unit = ""
-meaning = ""
+unit = "1"
+meaning = "normalised adaptation-conductance increment added at each spike"
+range = [
+    0.0,
+    5.0,
+]
 
 [parameters.e_k]
 default = -80.0
-unit = ""
-meaning = ""
+unit = "mV"
+meaning = "potassium (adaptation) reversal potential"
+range = [
+    -100.0,
+    -60.0,
+]
 
 [parameters.resistance]
 default = 1.0
-unit = ""
-meaning = ""
+unit = "1"
+meaning = "normalised membrane resistance (R=1 in the project's normalised-current convention)"
+range = [
+    0.0,
+    100.0,
+]
 
 [integration]
 dt = 1.0

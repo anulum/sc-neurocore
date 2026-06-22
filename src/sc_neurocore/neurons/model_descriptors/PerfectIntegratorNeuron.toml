@@ -14,24 +14,41 @@ hardware_fit = []
 behavior_tags = []
 
 [provenance]
+authors = [
+    "Gerstner, W., Kistler, W.M., Naud, R. & Paninski, L.",
+]
+year = 2014
+doi = "10.1017/CBO9781107447615"
 
 [state.v]
 init = 0.0
 
 [parameters.c_m]
 default = 1.0
-unit = ""
-meaning = ""
+unit = "1"
+meaning = "normalised membrane capacitance"
+range = [
+    0.1,
+    10.0,
+]
 
 [parameters.v_threshold]
 default = 1.0
-unit = ""
-meaning = ""
+unit = "1"
+meaning = "firing threshold (normalised)"
+range = [
+    0.0,
+    10.0,
+]
 
 [parameters.v_reset]
 default = 0.0
-unit = ""
-meaning = ""
+unit = "1"
+meaning = "membrane potential reset to after a spike (normalised)"
+range = [
+    -5.0,
+    5.0,
+]
 
 [integration]
 dt = 0.1

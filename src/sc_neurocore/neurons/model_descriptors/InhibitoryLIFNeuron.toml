@@ -14,6 +14,11 @@ hardware_fit = []
 behavior_tags = []
 
 [provenance]
+authors = [
+    "Fourcaud-Trocme, N., Hansel, D., van Vreeswijk, C. & Brunel, N.",
+]
+year = 2003
+doi = "10.1523/JNEUROSCI.23-37-11628.2003"
 
 [state.v]
 init = 0.0
@@ -23,28 +28,48 @@ init = 0.0
 
 [parameters.tau_m]
 default = 10.0
-unit = ""
-meaning = ""
+unit = "ms"
+meaning = "membrane time constant"
+range = [
+    1.0,
+    100.0,
+]
 
 [parameters.tau_inh]
 default = 5.0
-unit = ""
-meaning = ""
+unit = "ms"
+meaning = "decay time constant of the inhibitory trace"
+range = [
+    1.0,
+    100.0,
+]
 
 [parameters.v_threshold]
 default = 1.0
-unit = ""
-meaning = ""
+unit = "1"
+meaning = "firing threshold (normalised)"
+range = [
+    0.0,
+    10.0,
+]
 
 [parameters.v_reset]
 default = 0.0
-unit = ""
-meaning = ""
+unit = "1"
+meaning = "membrane potential reset to after a spike (normalised)"
+range = [
+    -5.0,
+    5.0,
+]
 
 [parameters.inh_strength]
 default = 0.5
-unit = ""
-meaning = ""
+unit = "1"
+meaning = "normalised voltage reduction per unit of inhibitory trace"
+range = [
+    0.0,
+    5.0,
+]
 
 [integration]
 dt = 1.0
