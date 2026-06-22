@@ -14,14 +14,23 @@ hardware_fit = []
 behavior_tags = []
 
 [provenance]
+authors = [
+    "Comsa, I.-M., Potempa, K., Versari, L. et al.",
+]
+year = 2020
+doi = "10.1109/ICASSP40776.2020.9053856"
 
 [state.kernel_size]
 init = 8.0
 
 [parameters.v_threshold]
 default = 1.0
-unit = ""
-meaning = ""
+unit = "1"
+meaning = "normalised firing threshold of the alpha-synapse temporal-coding neuron"
+range = [
+    0.0,
+    10.0,
+]
 
 [integration]
 dt = 0.1

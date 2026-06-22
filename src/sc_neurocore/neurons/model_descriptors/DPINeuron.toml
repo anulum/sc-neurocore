@@ -14,34 +14,59 @@ hardware_fit = []
 behavior_tags = []
 
 [provenance]
+authors = [
+    "Indiveri, G., Linares-Barranco, B., Hamilton, T.J. et al.",
+]
+year = 2011
+doi = "10.3389/fnins.2011.00073"
 
 [state.i_mem]
 init = 0.0
 
 [parameters.i_threshold]
 default = 1.0
-unit = ""
-meaning = ""
+unit = "1"
+meaning = "normalised current threshold for spiking"
+range = [
+    0.0,
+    100.0,
+]
 
 [parameters.i_reset]
 default = 0.0
-unit = ""
-meaning = ""
+unit = "1"
+meaning = "normalised current reset value after a spike"
+range = [
+    0.0,
+    10.0,
+]
 
 [parameters.i_leak]
 default = 0.01
-unit = ""
-meaning = ""
+unit = "1"
+meaning = "normalised leak current of the differential-pair integrator"
+range = [
+    0.0,
+    1.0,
+]
 
 [parameters.tau]
 default = 20.0
-unit = ""
-meaning = ""
+unit = "ms"
+meaning = "integration time constant"
+range = [
+    1.0,
+    100.0,
+]
 
 [parameters.gain]
 default = 1.0
-unit = ""
-meaning = ""
+unit = "1"
+meaning = "gain applied to the injected input current"
+range = [
+    0.0,
+    10.0,
+]
 
 [integration]
 dt = 1.0

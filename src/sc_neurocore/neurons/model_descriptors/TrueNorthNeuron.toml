@@ -14,24 +14,41 @@ hardware_fit = []
 behavior_tags = []
 
 [provenance]
+authors = [
+    "Merolla, P.A., Arthur, J.V., Alvarez-Icaza, R. et al.",
+]
+year = 2014
+doi = "10.1126/science.1254642"
 
 [state.v]
 init = 0.0
 
 [parameters.leak]
 default = 0.0
-unit = ""
-meaning = ""
+unit = "1"
+meaning = "integer leak added to the membrane each timestep"
+range = [
+    -256.0,
+    256.0,
+]
 
 [parameters.threshold]
 default = 100.0
-unit = ""
-meaning = ""
+unit = "1"
+meaning = "integer firing threshold"
+range = [
+    1.0,
+    262144.0,
+]
 
 [parameters.v_reset]
 default = 0.0
-unit = ""
-meaning = ""
+unit = "1"
+meaning = "integer reset value"
+range = [
+    -256.0,
+    256.0,
+]
 
 [integration]
 dt = 0.1

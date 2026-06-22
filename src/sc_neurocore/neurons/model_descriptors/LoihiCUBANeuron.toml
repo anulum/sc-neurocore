@@ -14,6 +14,11 @@ hardware_fit = []
 behavior_tags = []
 
 [provenance]
+authors = [
+    "Davies, M., Srinivasa, N., Lin, T.-H. et al.",
+]
+year = 2018
+doi = "10.1109/MM.2018.112130359"
 
 [state.v]
 init = 0.0
@@ -23,23 +28,39 @@ init = 0.0
 
 [parameters.tau_v]
 default = 10.0
-unit = ""
-meaning = ""
+unit = "1"
+meaning = "membrane-current decay time constant (in timesteps, fixed-point)"
+range = [
+    1.0,
+    4096.0,
+]
 
 [parameters.tau_u]
 default = 5.0
-unit = ""
-meaning = ""
+unit = "1"
+meaning = "synaptic-current decay time constant (in timesteps, fixed-point)"
+range = [
+    1.0,
+    4096.0,
+]
 
 [parameters.v_threshold]
 default = 1000.0
-unit = ""
-meaning = ""
+unit = "1"
+meaning = "integer fixed-point firing threshold"
+range = [
+    1.0,
+    131072.0,
+]
 
 [parameters.v_reset]
 default = 0.0
-unit = ""
-meaning = ""
+unit = "1"
+meaning = "integer fixed-point reset value"
+range = [
+    0.0,
+    1000.0,
+]
 
 [integration]
 dt = 0.1

@@ -14,6 +14,11 @@ hardware_fit = []
 behavior_tags = []
 
 [provenance]
+authors = [
+    "Bellec, G., Scherr, F., Subramoney, A. et al.",
+]
+year = 2020
+doi = "10.1038/s41467-020-17236-y"
 
 [state.v]
 init = 0.0
@@ -26,28 +31,48 @@ init = 0.0
 
 [parameters.tau_m]
 default = 20.0
-unit = ""
-meaning = ""
+unit = "ms"
+meaning = "membrane time constant"
+range = [
+    1.0,
+    100.0,
+]
 
 [parameters.tau_a]
 default = 200.0
-unit = ""
-meaning = ""
+unit = "ms"
+meaning = "adaptation (threshold) time constant"
+range = [
+    10.0,
+    2000.0,
+]
 
 [parameters.v_threshold_base]
 default = 1.0
-unit = ""
-meaning = ""
+unit = "1"
+meaning = "baseline firing threshold (normalised)"
+range = [
+    0.0,
+    10.0,
+]
 
 [parameters.beta]
 default = 0.07
-unit = ""
-meaning = ""
+unit = "1"
+meaning = "strength of the spike-triggered threshold adaptation"
+range = [
+    0.0,
+    5.0,
+]
 
 [parameters.v_reset]
 default = 0.0
-unit = ""
-meaning = ""
+unit = "1"
+meaning = "membrane potential reset to after a spike (normalised)"
+range = [
+    -5.0,
+    5.0,
+]
 
 [integration]
 dt = 1.0
