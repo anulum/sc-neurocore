@@ -145,3 +145,82 @@ def test_codesign_loop_rejects_mismatched_inputs() -> None:
         loop.compile(np.eye(2), node_labels=["only_one"])
     with pytest.raises(ValueError, match="probabilities"):
         loop.compile(np.eye(2), probabilities=[0.5, 0.5, 0.5])
+
+
+def test_config_rejects_invalid_parameters() -> None:
+    with pytest.raises(ValueError, match="bitstream_length must be positive"):
+        PhotonicCoDesignConfig(bitstream_length=0)
+    with pytest.raises(ValueError, match="density_alpha"):
+        PhotonicCoDesignConfig(density_alpha=1.0)
+    with pytest.raises(ValueError, match="fdtd_steps"):
+        PhotonicCoDesignConfig(fdtd_steps=-1)
+
+
+def test_transition_count_of_single_bit_is_zero() -> None:
+    from sc_neurocore.bridges.photonic_codesign import _transition_count
+
+    assert _transition_count(np.array([1], dtype=np.uint8)) == 0
+
+
+def test_derive_probabilities_rejects_non_square_and_empty() -> None:
+    with pytest.raises(ValueError, match="square matrix"):
+        derive_probabilities_from_adjacency(np.zeros((2, 3)))
+    with pytest.raises(ValueError, match="at least one node"):
+        derive_probabilities_from_adjacency(np.zeros((0, 0)))
+
+
+def test_derive_probabilities_zero_mass_falls_back_to_uniform_half() -> None:
+    probs = derive_probabilities_from_adjacency(np.zeros((3, 3)))
+    np.testing.assert_allclose(probs, np.full(3, 0.5))
+
+
+def test_encode_bitstream_bank_rejects_nonpositive_length_and_name_mismatch() -> None:
+    with pytest.raises(ValueError, match="bitstream_length must be positive"):
+        encode_bitstream_bank([0.5], bitstream_length=0, seed=1)
+    with pytest.raises(ValueError, match="names length must match"):
+        encode_bitstream_bank([0.5, 0.5], bitstream_length=64, seed=1, names=["only_one"])
+
+
+def test_codesign_loop_rejects_non_square_adjacency() -> None:
+    loop = StochasticPhotonicCoDesignLoop(PhotonicCoDesignConfig(run_fdtd=False))
+    with pytest.raises(ValueError, match="square matrix"):
+        loop.compile(np.zeros((2, 3), dtype=np.float64))
+
+
+def test_codesign_loop_flags_density_outside_hoeffding_tolerance() -> None:
+    adjacency = np.ones((4, 4), dtype=np.float64) - np.eye(4, dtype=np.float64)
+    # A tight density_alpha over a long bitstream shrinks the Hoeffding tolerance
+    # below the realised LFSR density error, forcing a density blocker.
+    config = PhotonicCoDesignConfig(
+        bitstream_length=4096, density_alpha=0.999999, run_fdtd=False
+    )
+    report = StochasticPhotonicCoDesignLoop(config).compile(
+        adjacency, probabilities=[0.2, 0.4, 0.6, 0.8]
+    )
+    assert report.feasible is False
+    assert any("Hoeffding tolerance" in blocker for blocker in report.blockers)
+
+
+def test_codesign_loop_flags_optical_paths_below_detector_margin() -> None:
+    # A densely connected 40-node fabric exhausts the WDM split budget, pushing
+    # optical paths below the detector margin.
+    n = 40
+    adjacency = np.ones((n, n), dtype=np.float64) - np.eye(n, dtype=np.float64)
+    config = PhotonicCoDesignConfig(bitstream_length=64, run_fdtd=False)
+    report = StochasticPhotonicCoDesignLoop(config).compile(
+        adjacency, probabilities=[0.5] * n
+    )
+    assert report.feasible is False
+    assert any("below detector margin" in blocker for blocker in report.blockers)
+
+
+def test_codesign_loop_flags_zero_energy_fdtd_pulse() -> None:
+    adjacency = np.ones((4, 4), dtype=np.float64) - np.eye(4, dtype=np.float64)
+    config = PhotonicCoDesignConfig(bitstream_length=256, run_fdtd=True, fdtd_steps=4)
+    # All-zero probabilities encode unmodulated streams, so the representative
+    # FDTD pulse carries no field energy.
+    report = StochasticPhotonicCoDesignLoop(config).compile(
+        adjacency, probabilities=[0.0, 0.0, 0.0, 0.0]
+    )
+    assert report.feasible is False
+    assert any("zero field energy" in blocker for blocker in report.blockers)
