@@ -14,39 +14,68 @@ hardware_fit = []
 behavior_tags = []
 
 [provenance]
+authors = [
+    "Fourcaud-Trocme, N., Hansel, D., van Vreeswijk, C. & Brunel, N.",
+]
+year = 2003
+doi = "10.1523/JNEUROSCI.23-37-11628.2003"
 
 [state.v]
 init = -65.0
 
 [parameters.v_rest]
 default = -65.0
-unit = ""
-meaning = ""
+unit = "mV"
+meaning = "resting / leak reversal potential"
+range = [
+    -90.0,
+    -40.0,
+]
 
 [parameters.v_reset]
 default = -68.0
-unit = ""
-meaning = ""
+unit = "mV"
+meaning = "membrane potential reset to after a spike"
+range = [
+    -90.0,
+    -40.0,
+]
 
 [parameters.v_threshold]
 default = -50.0
-unit = ""
-meaning = ""
+unit = "mV"
+meaning = "voltage cutoff at which a spike is registered and reset applied"
+range = [
+    -60.0,
+    -20.0,
+]
 
 [parameters.v_rh]
 default = -55.0
-unit = ""
-meaning = ""
+unit = "mV"
+meaning = "rheobase threshold of the exponential spike-initiation term"
+range = [
+    -65.0,
+    -40.0,
+]
 
 [parameters.delta_t]
 default = 2.0
-unit = ""
-meaning = ""
+unit = "mV"
+meaning = "slope factor (sharpness) of the exponential spike initiation"
+range = [
+    0.25,
+    5.0,
+]
 
 [parameters.tau]
 default = 20.0
-unit = ""
-meaning = ""
+unit = "ms"
+meaning = "membrane time constant"
+range = [
+    1.0,
+    100.0,
+]
 
 [integration]
 dt = 0.1

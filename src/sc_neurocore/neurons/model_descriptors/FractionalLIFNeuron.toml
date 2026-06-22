@@ -14,34 +14,59 @@ hardware_fit = []
 behavior_tags = []
 
 [provenance]
+authors = [
+    "Lundstrom, B.N., Higgs, M.H., Spain, W.J. & Fairhall, A.L.",
+]
+year = 2008
+doi = "10.1038/nn.2212"
 
 [state.v]
 init = 0.0
 
 [parameters.v_rest]
 default = 0.0
-unit = ""
-meaning = ""
+unit = "mV"
+meaning = "resting / leak reversal potential"
+range = [
+    -90.0,
+    -40.0,
+]
 
 [parameters.v_reset]
 default = 0.0
-unit = ""
-meaning = ""
+unit = "mV"
+meaning = "membrane potential reset to after a spike"
+range = [
+    -90.0,
+    -40.0,
+]
 
 [parameters.v_threshold]
 default = 1.0
-unit = ""
-meaning = ""
+unit = "mV"
+meaning = "voltage at which a spike is registered"
+range = [
+    -60.0,
+    -20.0,
+]
 
 [parameters.alpha]
 default = 0.8
-unit = ""
-meaning = ""
+unit = "1"
+meaning = "fractional-derivative order (memory exponent; 1 recovers the standard LIF)"
+range = [
+    0.0,
+    1.0,
+]
 
 [parameters.resistance]
 default = 1.0
-unit = ""
-meaning = ""
+unit = "1"
+meaning = "normalised membrane resistance (R=1 in the project's normalised-current convention)"
+range = [
+    0.0,
+    100.0,
+]
 
 [integration]
 dt = 1.0
