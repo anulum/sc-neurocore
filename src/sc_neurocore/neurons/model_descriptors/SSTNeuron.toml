@@ -14,6 +14,11 @@ hardware_fit = []
 behavior_tags = []
 
 [provenance]
+authors = [
+    "Pospischil, M., Toledo-Rodriguez, M., Monier, C. et al.",
+]
+year = 2008
+doi = "10.1007/s00422-008-0263-8"
 
 [state.v]
 init = -65.0
@@ -38,68 +43,120 @@ init = 0.1
 
 [parameters.g_na]
 default = 50.0
-unit = ""
-meaning = ""
+unit = "mS/cm^2"
+meaning = "maximal sodium conductance"
+range = [
+    0.0,
+    200.0,
+]
 
 [parameters.g_k]
 default = 5.0
-unit = ""
-meaning = ""
+unit = "mS/cm^2"
+meaning = "maximal delayed-rectifier potassium conductance"
+range = [
+    0.0,
+    200.0,
+]
 
 [parameters.g_m]
 default = 0.12
-unit = ""
-meaning = ""
+unit = "mS/cm^2"
+meaning = "maximal slow non-inactivating (M-type) potassium conductance"
+range = [
+    0.0,
+    200.0,
+]
 
 [parameters.g_t]
 default = 0.01
-unit = ""
-meaning = ""
+unit = "mS/cm^2"
+meaning = "maximal low-threshold (T-type) calcium conductance"
+range = [
+    0.0,
+    200.0,
+]
 
 [parameters.g_h]
 default = 0.02
-unit = ""
-meaning = ""
+unit = "mS/cm^2"
+meaning = "maximal hyperpolarisation-activated (Ih) conductance"
+range = [
+    0.0,
+    200.0,
+]
 
 [parameters.g_l]
 default = 0.05
-unit = ""
-meaning = ""
+unit = "mS/cm^2"
+meaning = "maximal leak conductance"
+range = [
+    0.0,
+    200.0,
+]
 
 [parameters.e_na]
 default = 50.0
-unit = ""
-meaning = ""
+unit = "mV"
+meaning = "sodium reversal potential"
+range = [
+    30.0,
+    70.0,
+]
 
 [parameters.e_k]
 default = -90.0
-unit = ""
-meaning = ""
+unit = "mV"
+meaning = "potassium reversal potential"
+range = [
+    -100.0,
+    -70.0,
+]
 
 [parameters.e_ca]
 default = 120.0
-unit = ""
-meaning = ""
+unit = "mV"
+meaning = "calcium reversal potential"
+range = [
+    60.0,
+    150.0,
+]
 
 [parameters.e_h]
 default = -40.0
-unit = ""
-meaning = ""
+unit = "mV"
+meaning = "hyperpolarisation-activated current reversal potential"
+range = [
+    -60.0,
+    -20.0,
+]
 
 [parameters.e_l]
 default = -65.0
-unit = ""
-meaning = ""
+unit = "mV"
+meaning = "leak reversal potential"
+range = [
+    -90.0,
+    -50.0,
+]
 
 [parameters.c_m]
 default = 1.0
-unit = ""
-meaning = ""
+unit = "uF/cm^2"
+meaning = "membrane capacitance"
+range = [
+    0.5,
+    2.0,
+]
 
 [parameters.v_threshold]
 default = -20.0
-unit = ""
-meaning = ""
+unit = "mV"
+meaning = "voltage at which a spike is registered"
+range = [
+    -40.0,
+    20.0,
+]
 
 [integration]
 dt = 0.025
