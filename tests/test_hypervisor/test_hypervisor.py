@@ -128,6 +128,11 @@ class TestBitstreamFirewall:
         fw.add_rule(FirewallRule("t0", 0x1000, 0x100, write_allowed=False))
         assert fw.check_access("t0", 0x1050, is_write=True) is False
 
+    def test_deny_read(self):
+        fw = BitstreamFirewall()
+        fw.add_rule(FirewallRule("t0", 0x1000, 0x100, read_allowed=False))
+        assert fw.check_access("t0", 0x1050) is False
+
     def test_violation_logged(self):
         fw = BitstreamFirewall()
         fw.check_access("t0", 0x1000)
@@ -196,6 +201,20 @@ class TestScheduler:
         sched = Scheduler()
         assert sched.generate_schedule([], 1000) == []
 
+    def test_priority_realtime_gets_half(self):
+        # A realtime tenant is granted a fixed 50% slice under priority
+        # scheduling rather than the even per-tenant share.
+        rt = _tenant("rt", prio=TenantPriority.REALTIME)
+        rt.active = True
+        rt.region_id = 0
+        normal = _tenant("nm", prio=TenantPriority.NORMAL)
+        normal.active = True
+        normal.region_id = 1
+        sched = Scheduler(SchedulingPolicy.PRIORITY)
+        slots = sched.generate_schedule([rt, normal], 1000)
+        rt_slot = next(s for s in slots if s.tenant_id == "rt")
+        assert rt_slot.duration_cycles == 500
+
     def test_slot_continuity(self):
         sched = Scheduler(SchedulingPolicy.ROUND_ROBIN)
         sched.time_quantum_cycles = 100
@@ -226,6 +245,26 @@ class TestMigrationEngine:
         state.compute_checksum()
         assert me.restore(t, state) is True
         assert t.state is not None
+
+    def test_checkpoint_initialises_missing_state(self):
+        # A tenant that has never run has no state; checkpointing one must
+        # materialise a fresh TenantState rather than dereference None.
+        me = MigrationEngine()
+        t = _tenant()
+        assert t.state is None
+        state = me.checkpoint(t)
+        assert isinstance(state, TenantState)
+        assert t.state is state
+
+    def test_restore_rejects_tampered_state(self):
+        # If the stored checksum no longer matches the recomputed one (the state
+        # was altered after checkpointing), restore must refuse it.
+        me = MigrationEngine()
+        t = _tenant()
+        state = TenantState(lfsr_state=42, timestep=10)
+        state.compute_checksum()
+        state.timestep = 99  # tamper after the checksum was sealed
+        assert me.restore(t, state) is False
 
     def test_migrate_success(self):
         me = MigrationEngine()
@@ -383,6 +422,35 @@ class TestHypervisor:
         hv.register_tenant(_tenant("t1"))
         assert hv.register_tenant(_tenant("t2")) is False
 
+    def test_allocate_unknown_tenant(self):
+        hv = self._setup()
+        assert hv.allocate("ghost") is None
+
+    def test_allocate_no_region_fits(self):
+        hv = self._setup()
+        t = _tenant("big")
+        t.qos.max_neurons = 100_000  # larger than every region
+        hv.register_tenant(t)
+        assert hv.allocate("big") is None
+
+    def test_migrate_unknown_tenant_not_found(self):
+        hv = self._setup()
+        result = hv.migrate("ghost", 1)
+        assert result.success is False
+        assert result.reason == "not_found"
+
+    def test_migrate_invalid_target_region(self):
+        hv = self._setup()
+        hv.register_tenant(_tenant("t0"))
+        hv.allocate("t0")
+        result = hv.migrate("t0", 999)  # no such region
+        assert result.success is False
+        assert result.reason == "invalid_region"
+
+    def test_tenant_report_unknown_returns_none(self):
+        hv = self._setup()
+        assert hv.tenant_report("ghost") is None
+
 
 # ── Utilisation Tests ────────────────────────────────────────────────
 
@@ -415,6 +483,25 @@ class TestUtilisation:
         util = hv.compute_utilisation()
         for v in util.values():
             assert 0.0 <= v <= 1.0
+
+    def test_utilisation_unassigned_non_free_region_is_idle(self):
+        # A region that is not free yet carries no tenant_id (e.g. faulted out of
+        # service) contributes zero utilisation.
+        hv = self._setup()
+        hv.regions[0].state = RegionState.FAULTED
+        util = hv.compute_utilisation()
+        assert util[0] == 0.0
+
+    def test_utilisation_orphaned_region_is_full(self):
+        # A region still tagged with a tenant_id whose tenant record is gone
+        # (e.g. removed without deallocation) is treated as fully utilised.
+        hv = self._setup()
+        hv.register_tenant(_tenant("t0"))
+        hv.allocate("t0")
+        rid = hv.tenants["t0"].region_id
+        del hv.tenants["t0"]  # region keeps its tenant_id, tenant lookup misses
+        util = hv.compute_utilisation()
+        assert util[rid] == 1.0
 
 
 # ── Overcommit Tests ─────────────────────────────────────────────────
@@ -502,6 +589,13 @@ class TestBandwidthMeter:
         bm = BandwidthMeter()
         assert bm.throughput("t_none") == 0.0
 
+    def test_throughput_single_record_returns_raw_count(self):
+        # With only one sample there is no time span to divide by, so the
+        # throughput is reported as the raw spike count.
+        bm = BandwidthMeter()
+        bm.record("t0", 100, 1000)
+        assert bm.throughput("t0") == 100.0
+
     def test_exceeds_quota(self):
         bm = BandwidthMeter()
         bm.record("t0", 1000, 100)
@@ -561,6 +655,12 @@ class TestSLAMonitor:
         assert v is not None
         assert v.metric == "latency"
         assert mon.total_violations == 1
+
+    def test_bandwidth_ok(self):
+        mon = SLAMonitor()
+        t = _tenant("t0")
+        t.qos.max_bandwidth_mbps = 100.0
+        assert mon.check_bandwidth(t, 50.0, 10) is None
 
     def test_bandwidth_violation(self):
         mon = SLAMonitor()
@@ -645,6 +745,19 @@ class TestAdmissionControl:
         ok, msg = admission_check(t, regions, {})
         assert ok is False
         assert "insufficient" in msg
+
+    def test_reject_no_single_region_large_enough(self):
+        # Aggregate free capacity is sufficient, but no single region can hold
+        # the tenant: admission is refused because a tenant cannot be split.
+        t = _tenant("new")
+        t.qos.max_neurons = 800
+        regions = {
+            0: _region(0, neurons=512, base=0x4000_0000),
+            1: _region(1, neurons=512, base=0x5000_0000),
+        }
+        ok, msg = admission_check(t, regions, {})
+        assert ok is False
+        assert msg == "no_single_region_large_enough"
 
 
 # ── Region Health Tests (Gap 7) ───────────────────────────────────────
