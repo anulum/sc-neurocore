@@ -7,6 +7,7 @@
 # SC-NeuroCore — Spintronic Mapper Tests
 
 import numpy as np
+import pytest
 
 from sc_neurocore.spintronic.spintronic_mapper import (
     AgingModel,
@@ -90,6 +91,23 @@ class TestSpintronicDeviceConfig:
         sot = SpintronicDeviceConfig.from_tech(SpintronicTech.SOT_MRAM)
         stt = SpintronicDeviceConfig.from_tech(SpintronicTech.STT_MTJ)
         assert sot.switching_time_ns < stt.switching_time_ns
+
+    @pytest.mark.parametrize(
+        ("kwargs", "match"),
+        [
+            ({"width_nm": 0.0}, "width_nm must be positive"),
+            ({"length_nm": 0.0}, "length_nm must be positive"),
+            ({"thickness_nm": 0.0}, "thickness_nm must be positive"),
+            ({"switching_current_ua": 0.0}, "switching_current_ua must be positive"),
+            ({"switching_time_ns": 0.0}, "switching_time_ns must be positive"),
+            ({"write_resistance_ohm": 0.0}, "write_resistance_ohm must be positive"),
+            ({"parallel_resistance_ohm": 0.0}, "parallel_resistance_ohm must be positive"),
+            ({"tmr_ratio": -0.1}, "tmr_ratio must be non-negative"),
+        ],
+    )
+    def test_rejects_each_invalid_field(self, kwargs: dict[str, float], match: str) -> None:
+        with pytest.raises(ValueError, match=match):
+            SpintronicDeviceConfig(**kwargs)
 
 
 # ── VariabilityModel Tests ───────────────────────────────────────────
@@ -391,6 +409,19 @@ class TestRacetrackShiftRegister:
         rt = RacetrackShiftRegister(n_positions=8)
         assert rt.shift_energy_fj > 0
 
+    def test_shift_right_injects_error_under_rng(self):
+        # With a certain shift-error rate, the rng-driven bit flip path is taken.
+        rt = RacetrackShiftRegister(n_positions=8, shift_error_rate=1.0)
+        rt.load(np.zeros(8, dtype=np.int8))
+        rt.shift_right(rng=np.random.default_rng(0))
+        assert int(rt.bits.sum()) == 1  # the single injected flip
+
+    def test_shift_left_injects_error_under_rng(self):
+        rt = RacetrackShiftRegister(n_positions=8, shift_error_rate=1.0)
+        rt.load(np.zeros(8, dtype=np.int8))
+        rt.shift_left(rng=np.random.default_rng(0))
+        assert int(rt.bits.sum()) == 1
+
 
 # ── Skyrmion Hall Angle Tests (Gap 2) ─────────────────────────────────
 
@@ -424,6 +455,11 @@ class TestTempSwitching:
         t_cold = switching_time_vs_temperature(1.0, 200.0)
         t_hot = switching_time_vs_temperature(1.0, 400.0)
         assert t_hot > t_cold
+
+    def test_current_degenerate_parameters_return_baseline(self):
+        # A non-positive stability barrier leaves the model undefined, so the
+        # baseline critical current is returned unchanged.
+        assert switching_current_vs_temperature(50.0, 0.0, 300.0) == 50.0
 
 
 # ── Retention Failure Tests (Gap 4) ───────────────────────────────────
@@ -459,6 +495,12 @@ class TestMLCConfig:
     def test_density(self):
         assert MLCConfig(bits_per_cell=3).density_improvement == 3.0
 
+    def test_resistance_margins_span_parallel_to_antiparallel(self):
+        margins = MLCConfig(bits_per_cell=2).resistance_margins
+        assert len(margins) == 4
+        assert margins[0] == 5000.0
+        assert margins[-1] == 12500.0
+
 
 # ── Write-Verify Tests (Gap 6) ────────────────────────────────────────
 
@@ -478,6 +520,19 @@ class TestWriteVerify:
         result = write_verify(cell, 200, rng=rng)
         assert result.attempts >= 1
 
+    def test_exhausts_attempts_when_noise_never_settles(self):
+        # A noise source that always overshoots the tolerance forces every
+        # attempt to miss, so the loop reports failure after max_attempts.
+        class _AlwaysFarNoise:
+            def normal(self, _mean: float, _std: float) -> float:
+                return 100.0
+
+        dev = SpintronicDeviceConfig.from_tech(SpintronicTech.SOT_MRAM)
+        cell = SpintronicCell(0, 0, dev)
+        result = write_verify(cell, 200, max_attempts=3, rng=_AlwaysFarNoise())
+        assert result.success is False
+        assert result.attempts == 3
+
 
 # ── Aging Model Tests (Gap 7) ─────────────────────────────────────────
 
@@ -496,6 +551,20 @@ class TestAgingModel:
         am = AgingModel()
         am.write(100)
         assert am.cycles_written == 100
+
+    def test_tmr_degradation_zero_endurance_is_identity(self):
+        assert AgingModel(cycles_written=10).tmr_degradation(1.5, 0) == 1.5
+
+    def test_stability_degradation_zero_endurance_is_identity(self):
+        assert AgingModel(cycles_written=10).stability_degradation(2.0, 0) == 2.0
+
+    def test_stability_degradation_with_cycles(self):
+        degraded = AgingModel(cycles_written=10**12).stability_degradation(2.0, 10**12)
+        assert degraded < 2.0
+
+    def test_is_worn_out_flag(self):
+        am = AgingModel(cycles_written=10)
+        assert isinstance(am.is_worn_out, bool)
 
 
 # ── Radiation Model Tests (Gap 8) ─────────────────────────────────────
@@ -538,6 +607,11 @@ class TestDefectMap:
         dm.add_defect(0, 0, "open")
         assert dm.defect_rate(100) == 0.01
 
+    def test_defect_rate_zero_cells(self):
+        dm = DefectMap()
+        dm.add_defect(0, 0, "open")
+        assert dm.defect_rate(0) == 0.0
+
 
 # ── MuMax3 Parser Tests (Gap 10) ──────────────────────────────────────
 
@@ -560,3 +634,18 @@ class TestMuMax3Parser:
     def test_empty_input(self):
         result = MuMax3OutputParser.parse_table("")
         assert result.final_mz == 0.0
+
+    def test_parse_table_whitespace_separated_row(self):
+        # A row that is space- rather than tab-separated falls back to a generic
+        # whitespace split and still parses.
+        table = "# t mx my mz\n5e-9 0.01 0.02 -0.99"
+        result = MuMax3OutputParser.parse_table(table)
+        assert result.switched is True
+        assert result.final_mz < 0
+
+    def test_parse_table_non_numeric_row_returns_default(self):
+        # A malformed row that cannot be parsed as floats yields a default
+        # result rather than raising.
+        result = MuMax3OutputParser.parse_table("# header\nnot a number row")
+        assert result.final_mz == 0.0
+        assert result.switched is False
