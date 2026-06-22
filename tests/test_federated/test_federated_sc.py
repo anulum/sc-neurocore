@@ -62,6 +62,13 @@ class TestLFSREncoder:
         b = lfsr_encode(0.5, 0xBEEF, 128)
         assert not np.array_equal(a, b)
 
+    def test_zero_seed_is_reset_to_one(self):
+        # A zero LFSR register is a fixed point that never advances, so a seed
+        # of 0 must be bumped to 1 before stepping.
+        bs = lfsr_encode(0.5, 0, 64)
+        assert bs.shape == (64,)
+        assert bs.dtype == np.uint8
+
 
 # ── DP Mechanism Tests ───────────────────────────────────────────────
 
@@ -103,6 +110,14 @@ class TestDPMechanism:
     def test_per_bit_epsilon(self):
         dp = DPMechanism(epsilon=2.0)
         assert dp.per_bit_epsilon() > 0
+
+    def test_per_bit_epsilon_degenerate_flip_probability_is_infinite(self):
+        # A deeply negative epsilon drives the flip probability to 1.0 (every
+        # bit flipped), where ln((1-p)/p) is undefined: the per-bit cost is
+        # reported as infinite rather than raising.
+        dp = DPMechanism(epsilon=-800.0)
+        assert dp.flip_probability >= 1.0
+        assert dp.per_bit_epsilon() == float("inf")
 
     def test_total_epsilon(self):
         dp = DPMechanism(epsilon=1.0)
@@ -299,6 +314,16 @@ class TestSCGradientEncoder:
         assert len(bitstreams) == 2
         assert len(bitstreams[0]) == 512
 
+    def test_encode_zero_seed_is_reset(self):
+        # A supplied seed of 0 masks to a zero register, which the encoder must
+        # bump to 1 before LFSR stepping.
+        enc = SCGradientEncoder(bitstream_length=64)
+        rng = np.random.default_rng(0)
+        gradients = np.array([0.2, 0.8])
+        bitstreams = enc.encode(gradients, np.array([0, 0]), rng)
+        assert len(bitstreams) == 2
+        assert all(len(bs) == 64 for bs in bitstreams)
+
 
 # ── Federated Client Tests ───────────────────────────────────────────
 
@@ -401,6 +426,24 @@ class TestFederatedAggregator:
         outliers = agg.detect_outliers([[np.ones(10, dtype=np.uint8)]])
         assert outliers == [False]
 
+    def test_outlier_detection_zero_norm_client(self):
+        # A client whose update is all zeros has zero norm, so its cosine
+        # similarity is undefined and defined as 0 rather than dividing by zero;
+        # below any positive threshold it is flagged as an outlier.
+        agg = FederatedAggregator(num_clients=2, bitstream_length=16)
+        empty = [np.zeros(16, dtype=np.uint8)]
+        active = [np.ones(16, dtype=np.uint8)]
+        outliers = agg.detect_outliers([empty, active], threshold=0.1)
+        assert outliers[0] is True
+
+    def test_verify_commitments_matches_and_rejects(self):
+        agg = FederatedAggregator(num_clients=2, bitstream_length=4)
+        bs_a = [np.array([1, 0, 1, 1], dtype=np.uint8)]
+        bs_b = [np.array([0, 1, 0, 0], dtype=np.uint8)]
+        good = CommitmentScheme.commit(np.concatenate(bs_a))
+        results = agg.verify_commitments([bs_a, bs_b], [good, "deadbeef"])
+        assert results == [True, False]
+
 
 # ── Poisson Subsampling Tests ────────────────────────────────────────
 
@@ -464,6 +507,14 @@ class TestConvergenceTracker:
     def test_trend_insufficient(self):
         ct = ConvergenceTracker()
         assert ct.trend == "insufficient_data"
+
+    def test_trend_stable_on_equal_norms(self):
+        # Two consecutive rounds with the same gradient norm are neither rising
+        # nor falling, so the trend is reported as stable.
+        ct = ConvergenceTracker()
+        ct.record(np.array([3.0, 4.0]))  # norm 5.0
+        ct.record(np.array([4.0, 3.0]))  # norm 5.0
+        assert ct.trend == "stable"
 
     def test_record_loss(self):
         ct = ConvergenceTracker()
@@ -723,6 +774,14 @@ class TestTrimmedMean:
         vecs = [np.array([1.0, 2.0]), np.array([3.0, 4.0]), np.array([5.0, 6.0])]
         result = trimmed_mean(vecs, trim_fraction=0.0)
         np.testing.assert_array_almost_equal(result, np.array([3.0, 4.0]))
+
+    def test_over_trimming_falls_back_to_full_mean(self):
+        # With two clients the minimum trim of one from each end removes every
+        # row, so the aggregator falls back to the untrimmed mean rather than
+        # averaging an empty slice.
+        vecs = [np.array([1.0, 2.0]), np.array([3.0, 4.0])]
+        result = trimmed_mean(vecs, trim_fraction=0.1)
+        np.testing.assert_array_almost_equal(result, np.array([2.0, 3.0]))
 
 
 # ── FedProx Tests ────────────────────────────────────────────────────
