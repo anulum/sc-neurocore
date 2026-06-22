@@ -90,6 +90,22 @@ class TestPrecisionFormatParser:
         assert isinstance(fmt, BlockFloatingMode)
         assert fmt.block_size == 32
 
+    def test_parse_rejects_non_string_format(self):
+        with pytest.raises(TypeError, match="precision format string"):
+            parse_precision_format(123)  # type: ignore[arg-type]
+
+    def test_precision_label_appends_block_size_when_source_omits_it(self):
+        # When the originating string lacks the explicit `X<block_size>` suffix
+        # the telemetry label re-attaches it so block-floating modes stay
+        # unambiguous.
+        from sc_neurocore.compiler.manifest_gen import _precision_label
+
+        parsed = parse_precision_format("BFP16E3X32")
+        label = _precision_label(parsed, source="BFP16E3")
+        assert label.endswith(f"X{parsed.block_size}")
+        # The already-suffixed source is returned verbatim.
+        assert not _precision_label(parsed, source="BFP16E3X32").endswith("X32X32")
+
 
 class TestPrecisionMetadata:
     """Validate precision-format parse coverage for wide fixed-point formats."""

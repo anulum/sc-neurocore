@@ -55,6 +55,16 @@ class TestAssignLengths:
         result = assign_lengths(weights, layer_names=["my_layer"])
         assert result[0].name == "my_layer"
 
+    def test_sensitivity_path_defaults_budget_to_full_width(self):
+        # A non-Hoeffding method follows the sensitivity-proportional branch;
+        # with no explicit budget it defaults to max_length * n_layers and still
+        # produces one bounded assignment per layer.
+        weights = [np.random.randn(4, 2), np.random.randn(3, 4)]
+        result = assign_lengths(weights, method="proportional", max_length=512)
+        assert len(result) == 2
+        assert all(r.bitstream_length <= 512 for r in result)
+        assert all(r.sensitivity >= 0.0 for r in result)
+
     def test_default_layer_names(self):
         weights = [np.random.randn(4, 2), np.random.randn(3, 4)]
         result = assign_lengths(weights)

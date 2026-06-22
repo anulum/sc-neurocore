@@ -1360,6 +1360,18 @@ class TestNetworkTopology:
         plan = optimize_network_topology(adj, num_chips=2)
         assert plan.bandwidth_reduction >= 0.0
 
+    def test_hub_neighbours_overflow_to_second_chip(self):
+        from sc_neurocore.compiler.intelligence import (
+            optimize_network_topology,
+        )
+
+        # A hub fans out to three leaves but each chip holds only two neurons,
+        # so two of the hub's edges are forced across the chip boundary.
+        adj = {0: [1, 2, 3], 1: [0], 2: [0], 3: [0]}
+        plan = optimize_network_topology(adj, num_chips=2)
+        assert plan.inter_chip_spikes > 0
+        assert plan.inter_chip_spikes + plan.intra_chip_spikes == 6
+
 
 class TestNIRImport:
     def test_lif_import(self):

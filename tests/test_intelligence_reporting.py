@@ -124,6 +124,18 @@ class TestCompilationSummary:
         )
         assert "On-chip learning" in s
 
+    def test_in_memory_features(self):
+        from sc_neurocore.compiler.intelligence import (
+            generate_compilation_summary,
+        )
+
+        s = generate_compilation_summary(
+            "sc_lif",
+            {"v": "a + b"},
+            "upmem_pim",
+        )
+        assert "PIM layout planner" in s
+
     def test_verilog_lines_shown(self):
         from sc_neurocore.compiler.intelligence import (
             generate_compilation_summary,

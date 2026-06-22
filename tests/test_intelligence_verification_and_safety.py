@@ -110,6 +110,14 @@ class TestTimingClosure(unittest.TestCase):
         if not r.timing_met:
             self.assertGreater(len(r.recommendations), 0)
 
+    def test_tight_slack_recommends_extra_stage(self):
+        # 3 adds + 2 muls is 3.8 ns of logic against a 4.0 ns period: the path
+        # still closes (positive slack) but sits inside the 10% margin, so the
+        # report flags it as tight rather than comfortable.
+        r = verify_timing_closure({"v": "a + b + c - d * e * f"}, target_freq_mhz=250.0)
+        self.assertTrue(r.timing_met)
+        self.assertTrue(any("Tight slack" in rec for rec in r.recommendations))
+
 
 class TestWave11Integration(unittest.TestCase):
     def test_full_pipeline(self):
