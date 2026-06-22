@@ -28,23 +28,39 @@ init = -0.5
 
 [parameters.a]
 default = 0.7
-unit = ""
-meaning = ""
+unit = "1"
+meaning = "recovery-variable offset (w-nullcline intercept)"
+range = [
+    0.0,
+    1.5,
+]
 
 [parameters.b]
 default = 0.8
-unit = ""
-meaning = ""
+unit = "1"
+meaning = "recovery coupling coefficient"
+range = [
+    0.0,
+    1.5,
+]
 
 [parameters.epsilon]
 default = 0.08
-unit = ""
-meaning = ""
+unit = "1"
+meaning = "timescale separation; small values slow the recovery variable"
+range = [
+    0.001,
+    0.5,
+]
 
 [parameters.v_threshold]
 default = 1.0
-unit = ""
-meaning = ""
+unit = "1"
+meaning = "level on v at which a spike is registered"
+range = [
+    0.0,
+    2.0,
+]
 
 [integration]
 dt = 0.1

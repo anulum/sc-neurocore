@@ -28,23 +28,39 @@ init = -3.0
 
 [parameters.alpha]
 default = 4.0
-unit = ""
-meaning = ""
+unit = "1"
+meaning = "fast-map nonlinearity control parameter"
+range = [
+    1.0,
+    10.0,
+]
 
 [parameters.sigma]
 default = -1.6
-unit = ""
-meaning = ""
+unit = "1"
+meaning = "slow-map parameter setting the DC drive"
+range = [
+    -3.0,
+    1.0,
+]
 
 [parameters.mu]
 default = 0.001
-unit = ""
-meaning = ""
+unit = "1"
+meaning = "slow-map timescale; small values slow the recovery variable"
+range = [
+    0.0001,
+    0.05,
+]
 
 [parameters.x_threshold]
 default = 0.0
-unit = ""
-meaning = ""
+unit = "1"
+meaning = "level on x at which a spike is registered"
+range = [
+    -1.0,
+    2.0,
+]
 
 [integration]
 dt = 0.1

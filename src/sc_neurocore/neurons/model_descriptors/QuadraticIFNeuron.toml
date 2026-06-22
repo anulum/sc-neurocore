@@ -25,13 +25,21 @@ init = -1.0
 
 [parameters.v_reset]
 default = -1.0
-unit = ""
-meaning = ""
+unit = "1"
+meaning = "dimensionless value v is reset to after reaching the peak"
+range = [
+    -5.0,
+    0.0,
+]
 
 [parameters.v_peak]
 default = 1.0
-unit = ""
-meaning = ""
+unit = "1"
+meaning = "dimensionless peak at which a spike is registered and reset applied"
+range = [
+    0.5,
+    10.0,
+]
 
 [integration]
 dt = 0.01

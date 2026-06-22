@@ -28,68 +28,120 @@ init = 0.0
 
 [parameters.c_m]
 default = 20.0
-unit = ""
-meaning = ""
+unit = "uF/cm^2"
+meaning = "membrane capacitance"
+range = [
+    1.0,
+    50.0,
+]
 
 [parameters.g_ca]
 default = 4.0
-unit = ""
-meaning = ""
+unit = "mS/cm^2"
+meaning = "maximal calcium conductance"
+range = [
+    0.0,
+    20.0,
+]
 
 [parameters.g_k]
 default = 8.0
-unit = ""
-meaning = ""
+unit = "mS/cm^2"
+meaning = "maximal potassium conductance"
+range = [
+    0.0,
+    40.0,
+]
 
 [parameters.g_l]
 default = 2.0
-unit = ""
-meaning = ""
+unit = "mS/cm^2"
+meaning = "leak conductance"
+range = [
+    0.0,
+    10.0,
+]
 
 [parameters.e_ca]
 default = 120.0
-unit = ""
-meaning = ""
+unit = "mV"
+meaning = "calcium reversal potential"
+range = [
+    80.0,
+    150.0,
+]
 
 [parameters.e_k]
 default = -84.0
-unit = ""
-meaning = ""
+unit = "mV"
+meaning = "potassium reversal potential"
+range = [
+    -100.0,
+    -60.0,
+]
 
 [parameters.e_l]
 default = -60.0
-unit = ""
-meaning = ""
+unit = "mV"
+meaning = "leak reversal potential"
+range = [
+    -80.0,
+    -40.0,
+]
 
 [parameters.v1]
 default = -1.2
-unit = ""
-meaning = ""
+unit = "mV"
+meaning = "midpoint voltage of the calcium activation function"
+range = [
+    -20.0,
+    20.0,
+]
 
 [parameters.v2]
 default = 18.0
-unit = ""
-meaning = ""
+unit = "mV"
+meaning = "slope voltage of the calcium activation function"
+range = [
+    5.0,
+    40.0,
+]
 
 [parameters.v3]
 default = 12.0
-unit = ""
-meaning = ""
+unit = "mV"
+meaning = "midpoint voltage of the potassium activation function"
+range = [
+    -20.0,
+    30.0,
+]
 
 [parameters.v4]
 default = 17.4
-unit = ""
-meaning = ""
+unit = "mV"
+meaning = "slope voltage of the potassium activation function"
+range = [
+    5.0,
+    40.0,
+]
 
 [parameters.phi]
 default = 0.06666666666666667
-unit = ""
-meaning = ""
+unit = "1/ms"
+meaning = "potassium activation rate scaling"
+range = [
+    0.01,
+    0.5,
+]
 
 [parameters.v_threshold]
 default = 0.0
-unit = ""
-meaning = ""
+unit = "mV"
+meaning = "voltage at which a spike is registered"
+range = [
+    -20.0,
+    20.0,
+]
 
 [integration]
 dt = 0.1

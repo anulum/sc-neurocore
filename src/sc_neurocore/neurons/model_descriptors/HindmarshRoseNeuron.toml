@@ -31,28 +31,48 @@ init = 2.0
 
 [parameters.b]
 default = 3.0
-unit = ""
-meaning = ""
+unit = "1"
+meaning = "fast-subsystem nonlinearity controlling spiking vs bursting"
+range = [
+    2.0,
+    4.0,
+]
 
 [parameters.r]
 default = 0.001
-unit = ""
-meaning = ""
+unit = "1"
+meaning = "slow adaptation timescale; small values give slow bursting"
+range = [
+    0.0001,
+    0.01,
+]
 
 [parameters.s]
 default = 4.0
-unit = ""
-meaning = ""
+unit = "1"
+meaning = "adaptation coupling strength"
+range = [
+    1.0,
+    6.0,
+]
 
 [parameters.x_rest]
 default = -1.6
-unit = ""
-meaning = ""
+unit = "1"
+meaning = "resting value of x setting the adaptation drive"
+range = [
+    -2.0,
+    -1.0,
+]
 
 [parameters.x_threshold]
 default = 1.0
-unit = ""
-meaning = ""
+unit = "1"
+meaning = "level on x at which a spike is registered"
+range = [
+    0.0,
+    2.0,
+]
 
 [integration]
 dt = 0.1

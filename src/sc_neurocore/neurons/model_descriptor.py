@@ -176,9 +176,9 @@ def descriptor_completeness_tier(descriptor: ModelDescriptor) -> int:
     has_taxonomy = bool(descriptor.family) and bool(descriptor.category)
     if has_taxonomy:
         tier = 1
-    params_curated = bool(descriptor.parameters) and all(
-        p.is_curated for p in descriptor.parameters
-    )
+    # A parameterless model (for example the theta phase model) is vacuously
+    # parameter-curated; otherwise every parameter must carry unit, range, meaning.
+    params_curated = all(p.is_curated for p in descriptor.parameters)
     if tier == 1 and descriptor.provenance.is_citeable and params_curated:
         tier = 2
     implemented = sum(1 for b in descriptor.backends if b.status == "implemented")

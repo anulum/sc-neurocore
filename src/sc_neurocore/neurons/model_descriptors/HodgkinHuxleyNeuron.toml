@@ -34,43 +34,79 @@ init = 0.32
 
 [parameters.c_m]
 default = 1.0
-unit = ""
-meaning = ""
+unit = "uF/cm^2"
+meaning = "membrane capacitance"
+range = [
+    0.5,
+    2.0,
+]
+biological_range = [
+    0.8,
+    1.2,
+]
 
 [parameters.g_na]
 default = 120.0
-unit = ""
-meaning = ""
+unit = "mS/cm^2"
+meaning = "maximal sodium conductance"
+range = [
+    0.0,
+    200.0,
+]
 
 [parameters.g_k]
 default = 36.0
-unit = ""
-meaning = ""
+unit = "mS/cm^2"
+meaning = "maximal potassium conductance"
+range = [
+    0.0,
+    100.0,
+]
 
 [parameters.g_l]
 default = 0.3
-unit = ""
-meaning = ""
+unit = "mS/cm^2"
+meaning = "leak conductance"
+range = [
+    0.0,
+    5.0,
+]
 
 [parameters.e_na]
 default = 50.0
-unit = ""
-meaning = ""
+unit = "mV"
+meaning = "sodium reversal potential"
+range = [
+    30.0,
+    70.0,
+]
 
 [parameters.e_k]
 default = -77.0
-unit = ""
-meaning = ""
+unit = "mV"
+meaning = "potassium reversal potential"
+range = [
+    -100.0,
+    -60.0,
+]
 
 [parameters.e_l]
 default = -54.4
-unit = ""
-meaning = ""
+unit = "mV"
+meaning = "leak reversal potential"
+range = [
+    -70.0,
+    -40.0,
+]
 
 [parameters.v_threshold]
 default = 0.0
-unit = ""
-meaning = ""
+unit = "mV"
+meaning = "voltage at which a spike is registered"
+range = [
+    -20.0,
+    20.0,
+]
 
 [integration]
 dt = 0.01
