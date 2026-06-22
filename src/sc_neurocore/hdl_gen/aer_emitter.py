@@ -63,17 +63,11 @@ class AEREmitter:
             code += f"    wire [{layer_widths[i][1] - 1}:0] layer_{i}_to_{i + 1};\n"
         code += "\n"
 
-        dense_idx = 0
+        # _validate_layers() above rejects any non-Dense layer, so every layer is
+        # Dense and its position ``i`` doubles as the dense-layer index.
         for i, layer in enumerate(self.layers):
-            if layer["type"] != "Dense":
-                continue
-
-            output_bus = (
-                "spike_vector"
-                if dense_idx == len(layer_widths) - 1
-                else f"layer_{dense_idx}_to_{dense_idx + 1}"
-            )
-            input_bus = "input_bus" if dense_idx == 0 else f"layer_{dense_idx - 1}_to_{dense_idx}"
+            output_bus = "spike_vector" if i == len(layer_widths) - 1 else f"layer_{i}_to_{i + 1}"
+            input_bus = "input_bus" if i == 0 else f"layer_{i - 1}_to_{i}"
             code += f"    // Sync layer {i}: {layer['name']}\n"
             code += "    sc_dense_layer_core #(\n"
             code += f"        .NUM_NEURONS({layer['params']['n_neurons']})\n"
@@ -83,7 +77,6 @@ class AEREmitter:
             code += f"        .input_bus({input_bus}),\n"
             code += f"        .output_bus({output_bus})\n"
             code += "    );\n\n"
-            dense_idx += 1
 
         if not self.layers:
             code += f"    assign spike_vector = {spike_width}'b0;\n\n"

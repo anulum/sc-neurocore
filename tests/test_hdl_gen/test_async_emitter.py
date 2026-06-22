@@ -208,3 +208,47 @@ endmodule
         check=False,
     )
     assert sim_result.returncode == 0, sim_result.stdout + sim_result.stderr
+
+
+def test_async_aer_emitter_emits_zero_spike_vector_for_empty_network() -> None:
+    code = AEREmitter(module_name="async_empty").generate()
+    assert "assign spike_vector = 8'b0;" in code
+
+
+def test_async_aer_emitter_rejects_non_positive_bus_width() -> None:
+    try:
+        AEREmitter(module_name="async_bad_bus", bus_width=0)
+    except ValueError as exc:
+        assert "bus_width must be a positive integer" in str(exc)
+    else:
+        raise AssertionError("Expected ValueError for non-positive bus_width")
+
+
+def test_async_aer_emitter_rejects_unsupported_layer_type() -> None:
+    emitter = AEREmitter(module_name="async_unsupported")
+    emitter.add_layer("Conv", "conv0", {"n_neurons": 4})
+    try:
+        emitter.generate()
+    except ValueError as exc:
+        assert "unsupported async AER layer type 'Conv'" in str(exc)
+    else:
+        raise AssertionError("Expected ValueError for unsupported layer type")
+
+
+def test_async_aer_emitter_honours_explicit_input_width() -> None:
+    emitter = AEREmitter(module_name="async_explicit_in", bus_width=8)
+    emitter.add_layer("Dense", "dense0", {"n_neurons": 6, "input_width": 8})
+    code = emitter.generate()
+    assert "dense0_inst" in code
+
+
+def test_async_aer_emitter_rejects_layer_width_mismatch() -> None:
+    emitter = AEREmitter(module_name="async_mismatch")
+    emitter.add_layer("Dense", "dense0", {"n_neurons": 4, "output_width": 4})
+    emitter.add_layer("Dense", "dense1", {"n_neurons": 6, "input_width": 7})
+    try:
+        emitter.generate()
+    except ValueError as exc:
+        assert "width mismatch" in str(exc)
+    else:
+        raise AssertionError("Expected ValueError for width mismatch")
