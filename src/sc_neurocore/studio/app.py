@@ -93,6 +93,14 @@ from sc_neurocore.studio.training import (
     stop_training,
     stream_metrics,
 )
+from sc_neurocore.studio.benchmark_contribution import (
+    ALLOWED_ENVIRONMENT_KEYS,
+    FORBIDDEN_KEYS,
+    SUBMISSION_SCHEMA_VERSION,
+    databank_leaderboard,
+    run_local_benchmark,
+    store_contribution,
+)
 from sc_neurocore.studio.dcls import (
     dcls_benchmark,
     dcls_forward_parity,
@@ -234,6 +242,17 @@ class DclsEvaluateRequest(BaseModel):
     n_taps: int = Field(default=8, ge=1, le=256)
     spikes: list[int] | None = None
     weights_q88: list[int] | None = None
+
+
+class BenchmarkRunRequest(BaseModel):
+    n_channels: int = Field(default=512, ge=16, le=8192)
+    n_taps: int = Field(default=32, ge=4, le=256)
+    repeats: int = Field(default=12, ge=3, le=50)
+
+
+class BenchmarkContributeRequest(BaseModel):
+    submission: dict[str, Any]
+    handle: str = Field(default="", max_length=40)
 
 
 class CompileRequest(BaseModel):
@@ -2239,6 +2258,42 @@ def create_app(runtime_settings: StudioRuntimeSettings | None = None) -> FastAPI
                 )
             )
         )
+
+    # --- Community benchmark contribution (opt-in, privacy-controlled) ---
+    @app.get("/api/benchmarks/schema")
+    def api_benchmark_schema() -> Any:
+        return {
+            "schema_version": SUBMISSION_SCHEMA_VERSION,
+            "allowed_environment_keys": sorted(ALLOWED_ENVIRONMENT_KEYS),
+            "forbidden_keys": sorted(FORBIDDEN_KEYS),
+            "consent": "opt-in; nothing is submitted unless you choose to contribute",
+        }
+
+    @app.post("/api/benchmarks/run")
+    def api_benchmark_run(run_request: BenchmarkRunRequest) -> Any:
+        return _safe(
+            lambda: run_local_benchmark(
+                n_channels=run_request.n_channels,
+                n_taps=run_request.n_taps,
+                repeats=run_request.repeats,
+            )
+        )
+
+    @app.post("/api/benchmarks/contribute")
+    def api_benchmark_contribute(contribute_request: BenchmarkContributeRequest) -> Any:
+        def _contribute() -> dict[str, Any]:
+            try:
+                return store_contribution(
+                    contribute_request.submission, contribute_request.handle
+                )
+            except ValueError as exc:
+                raise HTTPException(400, str(exc)) from exc
+
+        return _safe(_contribute)
+
+    @app.get("/api/benchmarks/databank")
+    def api_benchmark_databank() -> Any:
+        return _safe(databank_leaderboard)
 
     @app.post("/api/dcls/evaluate")
     def api_dcls_evaluate(dcls_request: DclsEvaluateRequest) -> Any:

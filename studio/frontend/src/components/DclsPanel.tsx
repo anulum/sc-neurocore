@@ -8,6 +8,7 @@ import {
   type DclsEvaluation,
   type DclsInfo,
 } from "../api/client";
+import BenchmarkContribution from "./BenchmarkContribution";
 
 const BACKEND_BAR_COLOR: Record<string, string> = {
   rust: "#dea584",
@@ -190,6 +191,8 @@ export default function DclsPanel() {
           </div>
         </div>
       )}
+
+      <BenchmarkContribution />
 
       {info && (
         <div style={{

@@ -627,6 +627,34 @@ export const fetchDclsBenchmark = () => get<DclsBenchmark>("/dcls/benchmark");
 export const evaluateDcls = (body: DclsEvaluateBody) =>
   post<DclsEvaluation>("/dcls/evaluate", body);
 
+export interface BenchmarkSubmission {
+  schema_version: string;
+  kernel: string;
+  workload: { n_channels: number; n_taps: number; elements: number; spike_density: number };
+  backends: {
+    backend: string; median_call_ms: number; channels_per_s: number;
+    speedup_over_python: number; repeats: number; bit_exact: boolean;
+  }[];
+  parity: { reference: string; tolerance: number; bit_exact_all: boolean };
+  environment: { cpu: string; os: string; python: string; numpy: string; toolchains: Record<string, string> };
+  hardware_measurement_claimed: boolean;
+  contributor: { handle: string };
+}
+
+export interface DatabankLeaderboard {
+  count: number;
+  entries: {
+    cpu: string; handle: string; fastest_backend: string;
+    speedup: number; workload: { n_channels: number; n_taps: number };
+  }[];
+}
+
+export const runBenchmark = (body: { n_channels: number; n_taps: number; repeats: number }) =>
+  post<BenchmarkSubmission>("/benchmarks/run", body);
+export const contributeBenchmark = (submission: BenchmarkSubmission, handle: string) =>
+  post<{ stored: boolean }>("/benchmarks/contribute", { submission, handle });
+export const fetchDatabank = () => get<DatabankLeaderboard>("/benchmarks/databank");
+
 export const fetchPresets = () => get<PresetSummary[]>("/presets");
 export const fetchPreset = (id: string) => get<Record<string, unknown>>(`/presets/${id}`);
 export const fetchStudioCapabilities = () =>

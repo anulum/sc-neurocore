@@ -201,3 +201,6 @@ results/vertex/
 
 # Stale lowercase-name symlink to this repo root (deleted on cleanup)
 sc-neurocore
+
+# Community benchmark contributions (runtime data, not source)
+benchmarks/databank/
