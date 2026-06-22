@@ -14,6 +14,11 @@ hardware_fit = []
 behavior_tags = []
 
 [provenance]
+authors = [
+    "Larter, R., Speelman, B. & Worth, R.M.",
+]
+year = 1999
+doi = "10.1063/1.166453"
 
 [state.v]
 init = -0.5
@@ -26,73 +31,129 @@ init = 0.0
 
 [parameters.g_ca]
 default = 1.1
-unit = ""
-meaning = ""
+unit = "1"
+meaning = "normalised calcium conductance"
+range = [
+    0.0,
+    2.0,
+]
 
 [parameters.g_na]
 default = 6.7
-unit = ""
-meaning = ""
+unit = "1"
+meaning = "normalised sodium conductance"
+range = [
+    0.0,
+    10.0,
+]
 
 [parameters.g_k]
 default = 2.0
-unit = ""
-meaning = ""
+unit = "1"
+meaning = "normalised potassium conductance"
+range = [
+    0.0,
+    5.0,
+]
 
 [parameters.v_ca]
 default = 1.0
-unit = ""
-meaning = ""
+unit = "1"
+meaning = "normalised half-activation threshold of the calcium current"
+range = [
+    -1.0,
+    2.0,
+]
 
 [parameters.v_na]
 default = 0.53
-unit = ""
-meaning = ""
+unit = "1"
+meaning = "normalised half-activation threshold of the sodium current"
+range = [
+    -1.0,
+    2.0,
+]
 
 [parameters.v_k]
 default = -0.7
-unit = ""
-meaning = ""
+unit = "1"
+meaning = "normalised half-activation threshold of the potassium current"
+range = [
+    -2.0,
+    1.0,
+]
 
 [parameters.v_l]
 default = -0.5
-unit = ""
-meaning = ""
+unit = "1"
+meaning = "normalised leak reversal potential"
+range = [
+    -2.0,
+    1.0,
+]
 
 [parameters.g_l]
 default = 0.5
-unit = ""
-meaning = ""
+unit = "1"
+meaning = "normalised leak conductance"
+range = [
+    0.0,
+    2.0,
+]
 
 [parameters.phi]
 default = 0.7
-unit = ""
-meaning = ""
+unit = "1"
+meaning = "temperature scaling factor of the potassium kinetics"
+range = [
+    0.0,
+    2.0,
+]
 
 [parameters.tau_k]
 default = 1.0
-unit = ""
-meaning = ""
+unit = "1"
+meaning = "normalised potassium relaxation timescale"
+range = [
+    0.0,
+    2.0,
+]
 
 [parameters.b]
 default = 0.1
-unit = ""
-meaning = ""
+unit = "1"
+meaning = "calcium-current slope (sharpness) parameter"
+range = [
+    0.0,
+    2.0,
+]
 
 [parameters.a_ee]
 default = 0.36
-unit = ""
-meaning = ""
+unit = "1"
+meaning = "excitatory self-coupling strength"
+range = [
+    0.0,
+    2.0,
+]
 
 [parameters.v0]
 default = 0.0
-unit = ""
-meaning = ""
+unit = "1"
+meaning = "normalised midpoint of the firing-rate function"
+range = [
+    -1.0,
+    1.0,
+]
 
 [parameters.i_ext]
 default = 0.3
-unit = ""
-meaning = ""
+unit = "1"
+meaning = "normalised external input"
+range = [
+    -1.0,
+    1.0,
+]
 
 [integration]
 dt = 0.01

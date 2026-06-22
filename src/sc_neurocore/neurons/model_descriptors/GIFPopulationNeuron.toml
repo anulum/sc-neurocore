@@ -14,6 +14,11 @@ hardware_fit = []
 behavior_tags = []
 
 [provenance]
+authors = [
+    "Mensi, S., Naud, R., Pozzorini, C. et al.",
+]
+year = 2012
+doi = "10.1152/jn.00408.2011"
 
 [state.v]
 init = -65.0
@@ -26,43 +31,75 @@ init = 0.0
 
 [parameters.tau_m]
 default = 20.0
-unit = ""
-meaning = ""
+unit = "ms"
+meaning = "membrane time constant"
+range = [
+    1.0,
+    100.0,
+]
 
 [parameters.tau_eta]
 default = 100.0
-unit = ""
-meaning = ""
+unit = "ms"
+meaning = "time constant of the spike-triggered adaptation kernel"
+range = [
+    1.0,
+    500.0,
+]
 
 [parameters.delta_v]
 default = 2.0
-unit = ""
-meaning = ""
+unit = "mV"
+meaning = "sharpness of the exponential escape-rate hazard"
+range = [
+    0.5,
+    20.0,
+]
 
 [parameters.lambda_0]
 default = 0.001
-unit = ""
-meaning = ""
+unit = "1/ms"
+meaning = "escape (firing) rate at threshold"
+range = [
+    1e-05,
+    1.0,
+]
 
 [parameters.eta_increment]
 default = 5.0
-unit = ""
-meaning = ""
+unit = "mV"
+meaning = "threshold/adaptation increment added at each spike"
+range = [
+    0.0,
+    20.0,
+]
 
 [parameters.v_rest]
 default = -65.0
-unit = ""
-meaning = ""
+unit = "mV"
+meaning = "resting potential"
+range = [
+    -90.0,
+    -40.0,
+]
 
 [parameters.v_reset]
 default = -65.0
-unit = ""
-meaning = ""
+unit = "mV"
+meaning = "reset potential"
+range = [
+    -90.0,
+    -40.0,
+]
 
 [parameters.seed]
 default = 42.0
-unit = ""
-meaning = ""
+unit = "1"
+meaning = "random seed for the stochastic spike-generation process"
+range = [
+    0.0,
+    1000000.0,
+]
 
 [integration]
 dt = 0.5

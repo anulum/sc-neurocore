@@ -14,6 +14,11 @@ hardware_fit = []
 behavior_tags = []
 
 [provenance]
+authors = [
+    "Wendling, F., Bartolomei, F., Bellanger, J.J. & Chauvel, P.",
+]
+year = 2002
+doi = "10.1046/j.1460-9568.2002.01985.x"
 
 [state.y0]
 init = 0.0
@@ -50,48 +55,84 @@ init = 0.56
 
 [parameters.a_exc]
 default = 3.25
-unit = ""
-meaning = ""
+unit = "mV"
+meaning = "excitatory synaptic gain"
+range = [
+    0.0,
+    20.0,
+]
 
 [parameters.b_fast]
 default = 22.0
-unit = ""
-meaning = ""
+unit = "mV"
+meaning = "fast (GABA-A) inhibitory synaptic gain"
+range = [
+    0.0,
+    50.0,
+]
 
 [parameters.g_slow]
 default = 10.0
-unit = ""
-meaning = ""
+unit = "mV"
+meaning = "slow (GABA-B) inhibitory synaptic gain"
+range = [
+    0.0,
+    50.0,
+]
 
 [parameters.a_rate]
 default = 100.0
-unit = ""
-meaning = ""
+unit = "1/s"
+meaning = "excitatory synaptic rate constant"
+range = [
+    10.0,
+    500.0,
+]
 
 [parameters.b_rate]
 default = 500.0
-unit = ""
-meaning = ""
+unit = "1/s"
+meaning = "fast inhibitory synaptic rate constant"
+range = [
+    10.0,
+    200.0,
+]
 
 [parameters.g_rate]
 default = 20.0
-unit = ""
-meaning = ""
+unit = "1/s"
+meaning = "slow inhibitory synaptic rate constant"
+range = [
+    1.0,
+    100.0,
+]
 
 [parameters.c]
 default = 135.0
-unit = ""
-meaning = ""
+unit = "1"
+meaning = "average synaptic connectivity within the column"
+range = [
+    1.0,
+    500.0,
+]
 
 [parameters.e0]
 default = 2.5
-unit = ""
-meaning = ""
+unit = "Hz"
+meaning = "half of the maximum population firing rate"
+range = [
+    0.0,
+    10.0,
+]
 
 [parameters.v0]
 default = 6.0
-unit = ""
-meaning = ""
+unit = "mV"
+meaning = "midpoint of the sigmoidal firing-rate function"
+range = [
+    0.0,
+    20.0,
+]
 
 [integration]
 dt = 0.001

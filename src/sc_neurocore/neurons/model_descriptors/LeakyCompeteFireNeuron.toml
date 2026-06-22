@@ -14,28 +14,49 @@ hardware_fit = []
 behavior_tags = []
 
 [provenance]
+authors = [
+    "Oster, M., Douglas, R. & Liu, S.-C.",
+]
+year = 2009
+doi = "10.1162/neco.2009.07-08-829"
 
 [state]
 
 [parameters.n_units]
 default = 4.0
-unit = ""
-meaning = ""
+unit = "1"
+meaning = "number of competing units in the winner-take-all network"
+range = [
+    2.0,
+    1000.0,
+]
 
 [parameters.tau]
 default = 10.0
-unit = ""
-meaning = ""
+unit = "ms"
+meaning = "integration time constant"
+range = [
+    1.0,
+    100.0,
+]
 
 [parameters.v_threshold]
 default = 1.0
-unit = ""
-meaning = ""
+unit = "1"
+meaning = "normalised firing threshold"
+range = [
+    0.0,
+    10.0,
+]
 
 [parameters.w_inh]
 default = 0.5
-unit = ""
-meaning = ""
+unit = "1"
+meaning = "strength of the global inhibitory (competition) feedback"
+range = [
+    0.0,
+    10.0,
+]
 
 [integration]
 dt = 1.0

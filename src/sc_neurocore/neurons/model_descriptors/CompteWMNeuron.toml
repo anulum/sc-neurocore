@@ -14,6 +14,11 @@ hardware_fit = []
 behavior_tags = []
 
 [provenance]
+authors = [
+    "Compte, A., Brunel, N., Goldman-Rakic, P.S. & Wang, X.-J.",
+]
+year = 2000
+doi = "10.1093/cercor/10.9.910"
 
 [state.v]
 init = -70.0
@@ -32,78 +37,138 @@ init = 0.0
 
 [parameters.g_l]
 default = 0.025
-unit = ""
-meaning = ""
+unit = "nS"
+meaning = "leak conductance"
+range = [
+    0.0,
+    100.0,
+]
 
 [parameters.g_ampa]
 default = 0.005
-unit = ""
-meaning = ""
+unit = "nS"
+meaning = "AMPA synaptic conductance"
+range = [
+    0.0,
+    10.0,
+]
 
 [parameters.g_nmda]
 default = 0.165
-unit = ""
-meaning = ""
+unit = "nS"
+meaning = "NMDA synaptic conductance"
+range = [
+    0.0,
+    5.0,
+]
 
 [parameters.g_gaba]
 default = 0.013
-unit = ""
-meaning = ""
+unit = "nS"
+meaning = "GABA synaptic conductance"
+range = [
+    0.0,
+    10.0,
+]
 
 [parameters.e_l]
 default = -70.0
-unit = ""
-meaning = ""
+unit = "mV"
+meaning = "leak reversal potential"
+range = [
+    -90.0,
+    -50.0,
+]
 
 [parameters.e_exc]
 default = 0.0
-unit = ""
-meaning = ""
+unit = "mV"
+meaning = "excitatory synaptic reversal potential"
+range = [
+    -10.0,
+    10.0,
+]
 
 [parameters.e_inh]
 default = -70.0
-unit = ""
-meaning = ""
+unit = "mV"
+meaning = "inhibitory synaptic reversal potential"
+range = [
+    -90.0,
+    -50.0,
+]
 
 [parameters.c_m]
 default = 0.5
-unit = ""
-meaning = ""
+unit = "nF"
+meaning = "membrane capacitance"
+range = [
+    0.1,
+    1.0,
+]
 
 [parameters.mg]
 default = 1.0
-unit = ""
-meaning = ""
+unit = "mM"
+meaning = "extracellular magnesium concentration setting the NMDA block"
+range = [
+    0.0,
+    5.0,
+]
 
 [parameters.tau_ampa]
 default = 2.0
-unit = ""
-meaning = ""
+unit = "ms"
+meaning = "AMPA synaptic decay time constant"
+range = [
+    0.5,
+    10.0,
+]
 
 [parameters.tau_nmda]
 default = 100.0
-unit = ""
-meaning = ""
+unit = "ms"
+meaning = "NMDA synaptic decay time constant"
+range = [
+    20.0,
+    200.0,
+]
 
 [parameters.tau_x]
 default = 2.0
-unit = ""
-meaning = ""
+unit = "ms"
+meaning = "NMDA gating rise time constant"
+range = [
+    0.1,
+    10.0,
+]
 
 [parameters.alpha_nmda]
 default = 0.5
-unit = ""
-meaning = ""
+unit = "1/ms"
+meaning = "NMDA gating saturation rate"
+range = [
+    0.1,
+    2.0,
+]
 
 [parameters.v_threshold]
 default = -50.0
-unit = ""
-meaning = ""
+unit = "mV"
+meaning = "firing threshold"
+range = [
+    -60.0,
+    -20.0,
+]
 
 [parameters.v_reset]
 default = -55.0
-unit = ""
-meaning = ""
+unit = "mV"
+meaning = "reset potential"
+range = [
+    -90.0,
+    -40.0,
+]
 
 [integration]
 dt = 0.1

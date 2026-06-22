@@ -14,99 +14,176 @@ hardware_fit = []
 behavior_tags = []
 
 [provenance]
+authors = [
+    "Brunel, N. & Wang, X.-J.",
+]
+year = 2001
+doi = "10.1023/A:1011204814320"
 
 [state.v]
 init = -70.0
 
 [parameters.v_rest]
 default = -70.0
-unit = ""
-meaning = ""
+unit = "mV"
+meaning = "resting / leak reversal potential"
+range = [
+    -90.0,
+    -40.0,
+]
 
 [parameters.v_reset]
 default = -55.0
-unit = ""
-meaning = ""
+unit = "mV"
+meaning = "membrane potential reset to after a spike"
+range = [
+    -90.0,
+    -40.0,
+]
 
 [parameters.v_threshold]
 default = -50.0
-unit = ""
-meaning = ""
+unit = "mV"
+meaning = "firing threshold"
+range = [
+    -60.0,
+    -20.0,
+]
 
 [parameters.tau_m]
 default = 20.0
-unit = ""
-meaning = ""
+unit = "ms"
+meaning = "membrane time constant"
+range = [
+    1.0,
+    50.0,
+]
 
 [parameters.tau_ref]
 default = 2.0
-unit = ""
-meaning = ""
+unit = "ms"
+meaning = "absolute refractory period"
+range = [
+    0.0,
+    5.0,
+]
 
 [parameters.tau_ampa]
 default = 2.0
-unit = ""
-meaning = ""
+unit = "ms"
+meaning = "AMPA synaptic decay time constant"
+range = [
+    0.5,
+    10.0,
+]
 
 [parameters.tau_nmda_rise]
 default = 2.0
-unit = ""
-meaning = ""
+unit = "ms"
+meaning = "NMDA rise time constant"
+range = [
+    0.1,
+    10.0,
+]
 
 [parameters.tau_nmda_decay]
 default = 100.0
-unit = ""
-meaning = ""
+unit = "ms"
+meaning = "NMDA decay time constant"
+range = [
+    20.0,
+    200.0,
+]
 
 [parameters.tau_gaba]
 default = 5.0
-unit = ""
-meaning = ""
+unit = "ms"
+meaning = "GABA synaptic decay time constant"
+range = [
+    1.0,
+    20.0,
+]
 
 [parameters.g_ampa_ext]
 default = 2.1
-unit = ""
-meaning = ""
+unit = "nS"
+meaning = "external AMPA synaptic conductance"
+range = [
+    0.0,
+    10.0,
+]
 
 [parameters.g_ampa_rec]
 default = 0.05
-unit = ""
-meaning = ""
+unit = "nS"
+meaning = "recurrent AMPA synaptic conductance"
+range = [
+    0.0,
+    1.0,
+]
 
 [parameters.g_nmda]
 default = 0.165
-unit = ""
-meaning = ""
+unit = "nS"
+meaning = "recurrent NMDA synaptic conductance"
+range = [
+    0.0,
+    1.0,
+]
 
 [parameters.g_gaba]
 default = 1.3
-unit = ""
-meaning = ""
+unit = "nS"
+meaning = "GABA synaptic conductance"
+range = [
+    0.0,
+    5.0,
+]
 
 [parameters.v_ampa]
 default = 0.0
-unit = ""
-meaning = ""
+unit = "mV"
+meaning = "AMPA reversal potential"
+range = [
+    -10.0,
+    10.0,
+]
 
 [parameters.v_nmda]
 default = 0.0
-unit = ""
-meaning = ""
+unit = "mV"
+meaning = "NMDA reversal potential"
+range = [
+    -10.0,
+    10.0,
+]
 
 [parameters.v_gaba]
 default = -70.0
-unit = ""
-meaning = ""
+unit = "mV"
+meaning = "GABA reversal potential"
+range = [
+    -90.0,
+    -50.0,
+]
 
 [parameters.C_m]
 default = 0.5
-unit = ""
-meaning = ""
+unit = "nF"
+meaning = "membrane capacitance"
+range = [
+    0.1,
+    1.0,
+]
 
 [parameters.mg_conc]
 default = 1.0
-unit = ""
-meaning = ""
+unit = "mM"
+meaning = "extracellular magnesium concentration setting the NMDA block"
+range = [
+    0.0,
+    5.0,
+]
 
 [integration]
 dt = 0.1
