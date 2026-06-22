@@ -48,13 +48,14 @@ interface ModelGroupFilters {
   modelFilter: string;
   familyFilter: string;
   patternFilter: string;
+  minTier: number;
   behaviors: Record<string, ModelBehavior>;
 }
 
-/** Filter the catalogue by search text, family, and firing pattern, then group
- *  the survivors by their displayed category (the curated family). */
+/** Filter the catalogue by search text, family, firing pattern, and minimum
+ *  evidence tier, then group the survivors by their displayed family. */
 export function filterAndGroupModels<
-  T extends { name: string; category: string; family: string },
+  T extends { name: string; category: string; family: string; tier?: number },
 >(models: T[], filters: ModelGroupFilters): Record<string, T[]> {
   let filtered = models;
   if (filters.modelFilter) {
@@ -65,6 +66,9 @@ export function filterAndGroupModels<
   }
   if (filters.familyFilter) {
     filtered = filtered.filter((m) => m.family === filters.familyFilter);
+  }
+  if (filters.minTier > 0) {
+    filtered = filtered.filter((m) => (m.tier ?? 0) >= filters.minTier);
   }
   if (filters.patternFilter) {
     filtered = filtered.filter(
@@ -90,6 +94,7 @@ export default function ModelBrowser() {
   const [scanLoaded, setScanLoaded] = useState(false);
   const [facets, setFacets] = useState<ModelFacets | null>(null);
   const [familyFilter, setFamilyFilter] = useState<string>("");
+  const [minTier, setMinTier] = useState<number>(0);
 
   useEffect(() => { loadModels(); }, [loadModels]);
   useEffect(() => {
@@ -108,8 +113,15 @@ export default function ModelBrowser() {
   }
 
   const grouped = useMemo(
-    () => filterAndGroupModels(models, { modelFilter, familyFilter, patternFilter, behaviors }),
-    [models, modelFilter, familyFilter, patternFilter, behaviors],
+    () =>
+      filterAndGroupModels(models, {
+        modelFilter,
+        familyFilter,
+        patternFilter,
+        minTier,
+        behaviors,
+      }),
+    [models, modelFilter, familyFilter, patternFilter, minTier, behaviors],
   );
 
   const totalFiltered = Object.values(grouped).reduce((s, g) => s + g.length, 0);
@@ -159,6 +171,24 @@ export default function ModelBrowser() {
           ))}
         </select>
       )}
+
+      <div style={{ display: "flex", gap: 3, marginBottom: 4 }}>
+        {[
+          { tier: 0, label: "all evidence" },
+          { tier: 2, label: "curated+" },
+          { tier: 3, label: "verified" },
+        ].map((o) => (
+          <span key={o.tier} onClick={() => setMinTier(o.tier)} style={{
+            fontSize: 9, padding: "1px 6px", borderRadius: 3, cursor: "pointer",
+            background: minTier === o.tier ? "var(--accent)" : "var(--bg-tertiary)",
+            color: minTier === o.tier ? "var(--bg-primary)" : "var(--text-muted)",
+          }} title={
+            o.tier === 0 ? "Show all models" :
+            o.tier === 2 ? "Tier 2+ — scientifically curated" :
+            "Tier 3 — engineering-verified (parity + reproducibility)"
+          }>{o.label}</span>
+        ))}
+      </div>
 
       {patterns.length > 0 && (
         <div style={{ display: "flex", gap: 3, flexWrap: "wrap", marginBottom: 4 }}>

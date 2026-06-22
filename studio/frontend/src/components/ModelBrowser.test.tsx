@@ -7,13 +7,14 @@ interface BrowseModel {
   name: string;
   category: string;
   family: string;
+  tier: number;
 }
 
 const CATALOGUE: BrowseModel[] = [
-  { name: "AdExNeuron", category: "Integrate-and-Fire", family: "Integrate-and-Fire" },
-  { name: "GLIFNeuron", category: "Integrate-and-Fire", family: "Integrate-and-Fire" },
-  { name: "GolgiCell", category: "Cerebellar", family: "Cerebellar" },
-  { name: "RulkovMapNeuron", category: "Map-based", family: "Map-based" },
+  { name: "AdExNeuron", category: "Integrate-and-Fire", family: "Integrate-and-Fire", tier: 2 },
+  { name: "GLIFNeuron", category: "Integrate-and-Fire", family: "Integrate-and-Fire", tier: 3 },
+  { name: "GolgiCell", category: "Cerebellar", family: "Cerebellar", tier: 1 },
+  { name: "RulkovMapNeuron", category: "Map-based", family: "Map-based", tier: 3 },
 ];
 
 const NONE: Record<string, ModelBehavior> = {};
@@ -50,6 +51,7 @@ describe("ModelBrowser", () => {
       modelFilter: "",
       familyFilter: "",
       patternFilter: "",
+      minTier: 0,
       behaviors: NONE,
     });
     expect(Object.keys(grouped).sort()).toEqual([
@@ -68,10 +70,38 @@ describe("ModelBrowser", () => {
       modelFilter: "",
       familyFilter: "Cerebellar",
       patternFilter: "",
+      minTier: 0,
       behaviors: NONE,
     });
     expect(Object.keys(grouped)).toEqual(["Cerebellar"]);
     expect(grouped["Cerebellar"].map((m) => m.name)).toEqual(["GolgiCell"]);
+  });
+
+  it("restricts the catalogue to a minimum evidence tier", () => {
+    const curated = filterAndGroupModels(CATALOGUE, {
+      modelFilter: "",
+      familyFilter: "",
+      patternFilter: "",
+      minTier: 2,
+      behaviors: NONE,
+    });
+    expect(Object.values(curated).flat().map((m) => m.name).sort()).toEqual([
+      "AdExNeuron",
+      "GLIFNeuron",
+      "RulkovMapNeuron",
+    ]);
+
+    const verified = filterAndGroupModels(CATALOGUE, {
+      modelFilter: "",
+      familyFilter: "",
+      patternFilter: "",
+      minTier: 3,
+      behaviors: NONE,
+    });
+    expect(Object.values(verified).flat().map((m) => m.name).sort()).toEqual([
+      "GLIFNeuron",
+      "RulkovMapNeuron",
+    ]);
   });
 
   it("filters by search text across name and category", () => {
@@ -79,6 +109,7 @@ describe("ModelBrowser", () => {
       modelFilter: "map",
       familyFilter: "",
       patternFilter: "",
+      minTier: 0,
       behaviors: NONE,
     });
     expect(Object.keys(grouped)).toEqual(["Map-based"]);

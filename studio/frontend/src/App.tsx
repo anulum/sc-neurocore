@@ -9,6 +9,7 @@ import ParameterSliders from "./components/ParameterSliders";
 import SimulationPlot from "./components/SimulationPlot";
 import ModelInfo from "./components/ModelInfo";
 import ModelDocViewer from "./components/ModelDocViewer";
+import BackendMatrix from "./components/BackendMatrix";
 import SpikeStats from "./components/SpikeStats";
 import ModelBrowser from "./components/ModelBrowser";
 import VerilogPreview from "./components/VerilogPreview";
@@ -507,6 +508,10 @@ export default function App() {
               </div>
             )}
           </div>
+
+          {s.sourceMode === "model" && s.modelDetail && (
+            <BackendMatrix backends={s.modelDetail.backends} />
+          )}
 
           <ModelDocViewer />
 
