@@ -14,6 +14,11 @@ hardware_fit = []
 behavior_tags = []
 
 [provenance]
+authors = [
+    "Solinas, S., Forti, L., Cesana, E. et al.",
+]
+year = 2007
+doi = "10.3389/neuro.03.002.2007"
 
 [state.v]
 init = -60.0
@@ -56,113 +61,201 @@ init = 0.05
 
 [parameters.g_na_t]
 default = 48.0
-unit = ""
-meaning = ""
+unit = "mS/cm^2"
+meaning = "maximal transient sodium conductance"
+range = [
+    0.0,
+    300.0,
+]
 
 [parameters.g_na_p]
 default = 0.2
-unit = ""
-meaning = ""
+unit = "mS/cm^2"
+meaning = "maximal persistent sodium conductance"
+range = [
+    0.0,
+    300.0,
+]
 
 [parameters.g_kdr]
 default = 16.0
-unit = ""
-meaning = ""
+unit = "mS/cm^2"
+meaning = "maximal delayed-rectifier potassium conductance"
+range = [
+    0.0,
+    300.0,
+]
 
 [parameters.g_ka]
 default = 8.0
-unit = ""
-meaning = ""
+unit = "mS/cm^2"
+meaning = "maximal A-type potassium conductance"
+range = [
+    0.0,
+    300.0,
+]
 
 [parameters.g_km]
 default = 1.0
-unit = ""
-meaning = ""
+unit = "mS/cm^2"
+meaning = "maximal slow (M-type) potassium conductance"
+range = [
+    0.0,
+    300.0,
+]
 
 [parameters.g_cat]
 default = 0.5
-unit = ""
-meaning = ""
+unit = "mS/cm^2"
+meaning = "maximal low-threshold (T-type) calcium conductance"
+range = [
+    0.0,
+    300.0,
+]
 
 [parameters.g_can]
 default = 1.0
-unit = ""
-meaning = ""
+unit = "mS/cm^2"
+meaning = "maximal high-threshold (N-type) calcium conductance"
+range = [
+    0.0,
+    300.0,
+]
 
 [parameters.g_bk]
 default = 3.0
-unit = ""
-meaning = ""
+unit = "mS/cm^2"
+meaning = "maximal BK calcium-activated potassium conductance"
+range = [
+    0.0,
+    300.0,
+]
 
 [parameters.g_sk]
 default = 1.0
-unit = ""
-meaning = ""
+unit = "mS/cm^2"
+meaning = "maximal SK calcium-activated potassium conductance"
+range = [
+    0.0,
+    300.0,
+]
 
 [parameters.g_h]
 default = 0.1
-unit = ""
-meaning = ""
+unit = "mS/cm^2"
+meaning = "maximal hyperpolarisation-activated (Ih) conductance"
+range = [
+    0.0,
+    300.0,
+]
 
 [parameters.g_l]
 default = 0.05
-unit = ""
-meaning = ""
+unit = "mS/cm^2"
+meaning = "maximal leak conductance"
+range = [
+    0.0,
+    300.0,
+]
 
 [parameters.e_na]
 default = 55.0
-unit = ""
-meaning = ""
+unit = "mV"
+meaning = "sodium reversal potential"
+range = [
+    30.0,
+    70.0,
+]
 
 [parameters.e_k]
 default = -90.0
-unit = ""
-meaning = ""
+unit = "mV"
+meaning = "potassium reversal potential"
+range = [
+    -100.0,
+    -70.0,
+]
 
 [parameters.e_ca]
 default = 120.0
-unit = ""
-meaning = ""
+unit = "mV"
+meaning = "calcium reversal potential"
+range = [
+    60.0,
+    150.0,
+]
 
 [parameters.e_h]
 default = -40.0
-unit = ""
-meaning = ""
+unit = "mV"
+meaning = "hyperpolarisation-activated current reversal potential"
+range = [
+    -60.0,
+    -20.0,
+]
 
 [parameters.e_l]
 default = -55.0
-unit = ""
-meaning = ""
+unit = "mV"
+meaning = "leak reversal potential"
+range = [
+    -90.0,
+    -50.0,
+]
 
 [parameters.c_m]
 default = 1.0
-unit = ""
-meaning = ""
+unit = "uF/cm^2"
+meaning = "membrane capacitance"
+range = [
+    0.5,
+    2.0,
+]
 
 [parameters.tau_ca]
 default = 200.0
-unit = ""
-meaning = ""
+unit = "ms"
+meaning = "calcium removal time constant"
+range = [
+    1.0,
+    2000.0,
+]
 
 [parameters.kd_bk]
 default = 1.0
-unit = ""
-meaning = ""
+unit = "uM"
+meaning = "calcium concentration at half-activation of the BK current"
+range = [
+    0.01,
+    5.0,
+]
 
 [parameters.kd_sk]
 default = 0.5
-unit = ""
-meaning = ""
+unit = "uM"
+meaning = "calcium concentration at half-activation of the SK current"
+range = [
+    0.01,
+    5.0,
+]
 
 [parameters.sub_steps]
 default = 10.0
-unit = ""
-meaning = ""
+unit = "1"
+meaning = "number of numerical integration sub-steps per timestep"
+range = [
+    1.0,
+    64.0,
+]
 
 [parameters.gain]
 default = 1.0
-unit = ""
-meaning = ""
+unit = "1"
+meaning = "gain applied to the injected input current"
+range = [
+    0.0,
+    10.0,
+]
 
 [integration]
 dt = 0.5

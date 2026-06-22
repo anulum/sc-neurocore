@@ -14,6 +14,11 @@ hardware_fit = []
 behavior_tags = []
 
 [provenance]
+authors = [
+    "De Schutter, E. & Bower, J.M.",
+]
+year = 1994
+doi = "10.1152/jn.1994.71.1.375"
 
 [state.v]
 init = -68.0
@@ -38,63 +43,111 @@ init = 0.0001
 
 [parameters.g_na]
 default = 125.0
-unit = ""
-meaning = ""
+unit = "mS/cm^2"
+meaning = "maximal sodium conductance"
+range = [
+    0.0,
+    300.0,
+]
 
 [parameters.g_k]
 default = 10.0
-unit = ""
-meaning = ""
+unit = "mS/cm^2"
+meaning = "maximal potassium conductance"
+range = [
+    0.0,
+    200.0,
+]
 
 [parameters.g_cap]
 default = 45.0
-unit = ""
-meaning = ""
+unit = "mS/cm^2"
+meaning = "maximal P-type calcium conductance"
+range = [
+    0.0,
+    20.0,
+]
 
 [parameters.g_kca]
 default = 35.0
-unit = ""
-meaning = ""
+unit = "mS/cm^2"
+meaning = "maximal calcium-activated potassium conductance"
+range = [
+    0.0,
+    100.0,
+]
 
 [parameters.g_l]
 default = 0.5
-unit = ""
-meaning = ""
+unit = "mS/cm^2"
+meaning = "leak conductance"
+range = [
+    0.0,
+    5.0,
+]
 
 [parameters.e_na]
 default = 45.0
-unit = ""
-meaning = ""
+unit = "mV"
+meaning = "sodium reversal potential"
+range = [
+    30.0,
+    70.0,
+]
 
 [parameters.e_k]
 default = -85.0
-unit = ""
-meaning = ""
+unit = "mV"
+meaning = "potassium reversal potential"
+range = [
+    -100.0,
+    -70.0,
+]
 
 [parameters.e_ca]
 default = 135.0
-unit = ""
-meaning = ""
+unit = "mV"
+meaning = "calcium reversal potential"
+range = [
+    60.0,
+    150.0,
+]
 
 [parameters.e_l]
 default = -68.0
-unit = ""
-meaning = ""
+unit = "mV"
+meaning = "leak reversal potential"
+range = [
+    -90.0,
+    -50.0,
+]
 
 [parameters.ca_decay]
 default = 0.02
-unit = ""
-meaning = ""
+unit = "1/ms"
+meaning = "calcium efflux (removal) rate"
+range = [
+    0.001,
+    1.0,
+]
 
 [parameters.f_ca]
 default = 0.00024
-unit = ""
-meaning = ""
+unit = "cm^2/(uA*ms)"
+meaning = "calcium influx coefficient converting calcium current into concentration change"
+range = [
+    0.0001,
+    0.01,
+]
 
 [parameters.v_threshold]
 default = -20.0
-unit = ""
-meaning = ""
+unit = "mV"
+meaning = "voltage at which a spike is registered"
+range = [
+    -40.0,
+    20.0,
+]
 
 [integration]
 dt = 0.01

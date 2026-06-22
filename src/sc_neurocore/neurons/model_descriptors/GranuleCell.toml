@@ -14,6 +14,11 @@ hardware_fit = []
 behavior_tags = []
 
 [provenance]
+authors = [
+    "D'Angelo, E., Nieus, T., Maffei, A. et al.",
+]
+year = 2001
+doi = "10.1523/JNEUROSCI.21-03-00759.2001"
 
 [state.v]
 init = -70.0
@@ -47,98 +52,174 @@ init = 0.1
 
 [parameters.c_m]
 default = 1.0
-unit = ""
-meaning = ""
+unit = "uF/cm^2"
+meaning = "membrane capacitance"
+range = [
+    0.5,
+    2.0,
+]
 
 [parameters.g_na]
 default = 17.0
-unit = ""
-meaning = ""
+unit = "mS/cm^2"
+meaning = "maximal sodium conductance"
+range = [
+    0.0,
+    300.0,
+]
 
 [parameters.g_kdr]
 default = 9.0
-unit = ""
-meaning = ""
+unit = "mS/cm^2"
+meaning = "maximal delayed-rectifier potassium conductance"
+range = [
+    0.0,
+    300.0,
+]
 
 [parameters.g_ka]
 default = 1.0
-unit = ""
-meaning = ""
+unit = "mS/cm^2"
+meaning = "maximal A-type potassium conductance"
+range = [
+    0.0,
+    300.0,
+]
 
 [parameters.g_t]
 default = 0.5
-unit = ""
-meaning = ""
+unit = "mS/cm^2"
+meaning = "maximal low-threshold (T-type) calcium conductance"
+range = [
+    0.0,
+    300.0,
+]
 
 [parameters.g_kca]
 default = 3.5
-unit = ""
-meaning = ""
+unit = "mS/cm^2"
+meaning = "maximal calcium-activated potassium conductance"
+range = [
+    0.0,
+    300.0,
+]
 
 [parameters.g_h]
 default = 0.03
-unit = ""
-meaning = ""
+unit = "mS/cm^2"
+meaning = "maximal hyperpolarisation-activated (Ih) conductance"
+range = [
+    0.0,
+    300.0,
+]
 
 [parameters.g_l]
 default = 0.1
-unit = ""
-meaning = ""
+unit = "mS/cm^2"
+meaning = "maximal leak conductance"
+range = [
+    0.0,
+    300.0,
+]
 
 [parameters.g_tonic]
 default = 0.2
-unit = ""
-meaning = ""
+unit = "mS/cm^2"
+meaning = "maximal tonic GABA-A conductance"
+range = [
+    0.0,
+    300.0,
+]
 
 [parameters.e_na]
 default = 87.4
-unit = ""
-meaning = ""
+unit = "mV"
+meaning = "sodium reversal potential"
+range = [
+    30.0,
+    70.0,
+]
 
 [parameters.e_k]
 default = -84.7
-unit = ""
-meaning = ""
+unit = "mV"
+meaning = "potassium reversal potential"
+range = [
+    -100.0,
+    -70.0,
+]
 
 [parameters.e_ca]
 default = 129.3
-unit = ""
-meaning = ""
+unit = "mV"
+meaning = "calcium reversal potential"
+range = [
+    60.0,
+    150.0,
+]
 
 [parameters.e_h]
 default = -40.0
-unit = ""
-meaning = ""
+unit = "mV"
+meaning = "hyperpolarisation-activated current reversal potential"
+range = [
+    -60.0,
+    -20.0,
+]
 
 [parameters.e_l]
 default = -58.0
-unit = ""
-meaning = ""
+unit = "mV"
+meaning = "leak reversal potential"
+range = [
+    -90.0,
+    -50.0,
+]
 
 [parameters.e_gaba]
 default = -75.0
-unit = ""
-meaning = ""
+unit = "mV"
+meaning = "GABA-A reversal potential"
+range = [
+    -90.0,
+    -50.0,
+]
 
 [parameters.tau_ca]
 default = 10.0
-unit = ""
-meaning = ""
+unit = "ms"
+meaning = "calcium removal time constant"
+range = [
+    1.0,
+    2000.0,
+]
 
 [parameters.kd_kca]
 default = 0.2
-unit = ""
-meaning = ""
+unit = "uM"
+meaning = "calcium concentration at half-activation of the calcium-activated potassium current"
+range = [
+    0.01,
+    5.0,
+]
 
 [parameters.sub_steps]
 default = 4.0
-unit = ""
-meaning = ""
+unit = "1"
+meaning = "number of numerical integration sub-steps per timestep"
+range = [
+    1.0,
+    64.0,
+]
 
 [parameters.gain]
 default = 1.0
-unit = ""
-meaning = ""
+unit = "1"
+meaning = "gain applied to the injected input current"
+range = [
+    0.0,
+    10.0,
+]
 
 [integration]
 dt = 0.5
