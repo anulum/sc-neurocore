@@ -19,20 +19,35 @@ const PROTOCOLS = [
   { value: "pulse", label: "Pulse train" },
 ];
 
-function Slider({ label, value, onChange, min, max, step }: {
+export function sliderBounds(
+  value: number,
+  range?: [number, number] | null,
+): [number, number, number] {
+  if (range && range[0] < range[1]) {
+    const [lo, hi] = range;
+    return [lo, hi, (hi - lo) / 200 || 1e-6];
+  }
+  return sliderRange(value);
+}
+
+function Slider({ label, value, onChange, min, max, step, unit, title }: {
   label: string; value: number;
   onChange: (v: number) => void;
   min?: number; max?: number; step?: number;
+  unit?: string; title?: string;
 }) {
   const [lo, hi, st] = min !== undefined
     ? [min, max!, step!]
     : sliderRange(value);
   return (
-    <div className="slider-row">
+    <div className="slider-row" title={title}>
       <span className="slider-label">{label}</span>
       <input type="range" min={lo} max={hi} step={st} value={value}
         onChange={(e) => onChange(parseFloat(e.target.value))} />
-      <span className="slider-value">{fmt(value)}</span>
+      <span className="slider-value">
+        {fmt(value)}
+        {unit ? <span style={{ color: "var(--text-muted)", marginLeft: 3 }}>{unit}</span> : null}
+      </span>
     </div>
   );
 }
@@ -53,11 +68,20 @@ export default function ParameterSliders() {
             <div className="panel-header">
               Parameters ({modelDetail.params.length})
             </div>
-            {modelDetail.params.map((p) => (
-              <Slider key={p.name} label={p.name}
-                value={modelParams[p.name] ?? p.default}
-                onChange={(v) => setModelParam(p.name, v)} />
-            ))}
+            {modelDetail.params.map((p) => {
+              const [lo, hi, st] = sliderBounds(
+                modelParams[p.name] ?? p.default,
+                p.range,
+              );
+              return (
+                <Slider key={p.name} label={p.name}
+                  value={modelParams[p.name] ?? p.default}
+                  onChange={(v) => setModelParam(p.name, v)}
+                  min={lo} max={hi} step={st}
+                  unit={p.unit || undefined}
+                  title={p.meaning || undefined} />
+              );
+            })}
           </div>
           {modelDetail.state_vars.length > 0 && (
             <div className="panel-section">

@@ -38,7 +38,8 @@ body {
 .header {
   display: flex;
   align-items: center;
-  gap: 12px;
+  flex-wrap: wrap;
+  gap: 8px 12px;
   padding: 10px 16px;
   background: var(--bg-secondary);
   border-bottom: 1px solid var(--border);

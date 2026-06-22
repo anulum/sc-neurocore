@@ -20,6 +20,7 @@ from sc_neurocore.studio.models import (
     _introspected_summary,
     get_model_detail,
     list_models,
+    model_documentation,
     model_facets,
 )
 
@@ -101,3 +102,20 @@ def test_api_model_detail_endpoint_serves_descriptor(client: TestClient) -> None
     detail = response.json()
     assert detail["category_slug"] == "integrate-and-fire"
     assert "dynamics" in detail
+
+
+def test_model_documentation_serves_reference_markdown() -> None:
+    doc = model_documentation("AdExNeuron")
+    assert doc is not None
+    assert doc["name"] == "AdExNeuron"
+    assert doc["slug"] == "models/adex"
+    assert doc["markdown"].lstrip().startswith("# AdExNeuron")
+    assert model_documentation("DefinitelyNotARealModel") is None
+
+
+def test_api_model_doc_endpoint(client: TestClient) -> None:
+    ok = client.get("/api/models/HodgkinHuxleyNeuron/doc")
+    assert ok.status_code == 200, ok.text
+    assert ok.json()["markdown"].lstrip().startswith("# HodgkinHuxleyNeuron")
+    missing = client.get("/api/models/DefinitelyNotARealModel/doc")
+    assert missing.status_code == 404

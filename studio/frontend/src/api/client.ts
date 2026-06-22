@@ -117,6 +117,12 @@ export interface ModelFacets {
   maturities: Record<string, number>;
 }
 
+export interface ModelDoc {
+  name: string;
+  slug: string;
+  markdown: string;
+}
+
 export interface PresetSummary {
   id: string; title: string; description: string; suggested_view: string;
 }
@@ -557,6 +563,8 @@ export const fetchTemplates = () => get<NeuronTemplate[]>("/templates");
 export const fetchModels = () => get<ModelSummary[]>("/models");
 export const fetchModelDetail = (name: string) => get<ModelDetail>(`/models/${name}`);
 export const fetchModelFacets = () => get<ModelFacets>("/models/facets");
+export const fetchModelDoc = (name: string) =>
+  get<ModelDoc>(`/models/${encodeURIComponent(name)}/doc`);
 export const fetchPresets = () => get<PresetSummary[]>("/presets");
 export const fetchPreset = (id: string) => get<Record<string, unknown>>(`/presets/${id}`);
 export const fetchStudioCapabilities = () =>

@@ -8,6 +8,7 @@ import EquationEditor from "./components/EquationEditor";
 import ParameterSliders from "./components/ParameterSliders";
 import SimulationPlot from "./components/SimulationPlot";
 import ModelInfo from "./components/ModelInfo";
+import ModelDocViewer from "./components/ModelDocViewer";
 import SpikeStats from "./components/SpikeStats";
 import ModelBrowser from "./components/ModelBrowser";
 import VerilogPreview from "./components/VerilogPreview";
@@ -391,7 +392,7 @@ export default function App() {
           {s.sourceMode === "model" ? (
             <>
               <div className="panel-section">
-                <div className="panel-header">Model Library (118)</div>
+                <div className="panel-header">Model Library ({s.models.length})</div>
                 <ModelBrowser />
               </div>
               <MultiModelPicker />
@@ -506,6 +507,8 @@ export default function App() {
               </div>
             )}
           </div>
+
+          <ModelDocViewer />
 
           {s.result && (
             <div className="panel-section">

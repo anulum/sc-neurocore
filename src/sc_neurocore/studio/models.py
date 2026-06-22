@@ -11,6 +11,7 @@ from __future__ import annotations
 import dataclasses
 import importlib
 import inspect
+from pathlib import Path
 from typing import Any
 
 try:
@@ -430,6 +431,26 @@ def model_facets() -> dict[str, Any]:
         "families": families,
         "maturities": dict(sorted(maturity_counts.items())),
     }
+
+
+_DOCS_DIR = Path(__file__).resolve().parents[3] / "docs" / "api" / "models"
+
+
+def model_documentation(name: str) -> dict[str, Any] | None:
+    """Return the rendered reference documentation for a model, or ``None``.
+
+    The per-model reference page lives at ``docs/api/models/<module>.md``; the
+    Studio serves its Markdown so the documentation is browsable inline next to
+    the live model rather than only in the built docs site.
+    """
+
+    if name not in _CLASS_TO_MODULE:
+        return None
+    module = _CLASS_TO_MODULE[name]
+    path = _DOCS_DIR / f"{module}.md"
+    if not path.is_file():
+        return None
+    return {"name": name, "slug": f"models/{module}", "markdown": path.read_text(encoding="utf-8")}
 
 
 def _load_rust_batch_simulate() -> Any:

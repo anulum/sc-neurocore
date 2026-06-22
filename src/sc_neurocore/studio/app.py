@@ -96,6 +96,7 @@ from sc_neurocore.studio.training import (
 from sc_neurocore.studio.models import (
     get_model_detail,
     list_models,
+    model_documentation,
     model_facets,
     simulate_model,
 )
@@ -2196,6 +2197,18 @@ def create_app(runtime_settings: StudioRuntimeSettings | None = None) -> FastAPI
     @app.get("/api/models/facets")
     def api_model_facets() -> Any:
         return _safe(model_facets)
+
+    # --- Per-model reference documentation (Markdown) ---
+    @app.get("/api/models/{name}/doc")
+    def api_model_doc(name: str) -> Any:
+        return _safe(
+            lambda: (
+                model_documentation(name)
+                or (_ for _ in ()).throw(
+                    HTTPException(404, f"No documentation for model '{name}'")
+                )
+            )
+        )
 
     @app.get("/api/models/{name}")
     def api_model(name: str) -> Any:
