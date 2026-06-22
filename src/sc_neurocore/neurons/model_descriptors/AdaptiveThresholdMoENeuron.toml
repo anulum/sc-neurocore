@@ -23,13 +23,21 @@ init = 1.0
 
 [parameters.k]
 default = 4.0
-unit = ""
-meaning = ""
+unit = "1"
+meaning = "firing-rate control gain (higher yields sparser firing)"
+range = [
+    0.1,
+    20.0,
+]
 
 [parameters.ema_alpha]
 default = 0.1
-unit = ""
-meaning = ""
+unit = "1"
+meaning = "exponential-moving-average smoothing factor for the adaptive threshold"
+range = [
+    0.0,
+    1.0,
+]
 
 [integration]
 dt = 0.1

@@ -23,43 +23,75 @@ init = 0.0
 
 [parameters.v_rest]
 default = -65.0
-unit = ""
-meaning = ""
+unit = "mV"
+meaning = "resting membrane potential"
+range = [
+    -80.0,
+    -50.0,
+]
 
 [parameters.v_crit]
 default = -40.0
-unit = ""
-meaning = ""
+unit = "mV"
+meaning = "critical spike-initiation potential"
+range = [
+    -55.0,
+    -30.0,
+]
 
 [parameters.v_threshold]
 default = -20.0
-unit = ""
-meaning = ""
+unit = "mV"
+meaning = "spike-detection threshold"
+range = [
+    -40.0,
+    10.0,
+]
 
 [parameters.v_reset]
 default = -65.0
-unit = ""
-meaning = ""
+unit = "mV"
+meaning = "post-spike reset potential"
+range = [
+    -90.0,
+    -50.0,
+]
 
 [parameters.a]
 default = 0.04
-unit = ""
-meaning = ""
+unit = "1/(mV*ms)"
+meaning = "quadratic curvature coefficient of the membrane nonlinearity"
+range = [
+    0.01,
+    0.1,
+]
 
 [parameters.b]
 default = 0.5
-unit = ""
-meaning = ""
+unit = "1"
+meaning = "subthreshold adaptation coupling strength"
+range = [
+    0.0,
+    2.0,
+]
 
 [parameters.tau_w]
 default = 100.0
-unit = ""
-meaning = ""
+unit = "ms"
+meaning = "adaptation current time constant"
+range = [
+    10.0,
+    1000.0,
+]
 
 [parameters.c_m]
 default = 1.0
-unit = ""
-meaning = ""
+unit = "uF/cm^2"
+meaning = "membrane capacitance"
+range = [
+    0.5,
+    2.0,
+]
 
 [integration]
 dt = 0.1

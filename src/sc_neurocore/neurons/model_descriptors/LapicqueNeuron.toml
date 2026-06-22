@@ -25,28 +25,48 @@ init = 0.0
 
 [parameters.v_rest]
 default = 0.0
-unit = ""
-meaning = ""
+unit = "1"
+meaning = "resting potential (normalised, R=1)"
+range = [
+    -1.0,
+    1.0,
+]
 
 [parameters.v_reset]
 default = 0.0
-unit = ""
-meaning = ""
+unit = "1"
+meaning = "post-spike reset potential (normalised)"
+range = [
+    -1.0,
+    1.0,
+]
 
 [parameters.v_threshold]
 default = 1.0
-unit = ""
-meaning = ""
+unit = "1"
+meaning = "firing threshold (normalised)"
+range = [
+    0.0,
+    5.0,
+]
 
 [parameters.tau]
 default = 20.0
-unit = ""
-meaning = ""
+unit = "ms"
+meaning = "membrane (RC) time constant"
+range = [
+    1.0,
+    100.0,
+]
 
 [parameters.resistance]
 default = 1.0
-unit = ""
-meaning = ""
+unit = "1"
+meaning = "membrane resistance (normalised, R=1)"
+range = [
+    0.1,
+    10.0,
+]
 
 [integration]
 dt = 1.0
