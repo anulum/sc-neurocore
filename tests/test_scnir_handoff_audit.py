@@ -29,7 +29,15 @@ from sc_neurocore.ir import (
 )
 from sc_neurocore.ir.scnir_handoff_audit import (
     SCNIRHDLHandoffAuditError,
+    _delay_steps_for_row,
+    _expect_int,
+    _expect_mapping_sequence,
+    _expect_non_empty_string,
+    _expect_non_negative_int,
+    _expect_positive_int,
+    _verify_source_row_matches_stream,
     audit_scnir_hdl_handoff,
+    write_scnir_hdl_handoff_audit,
 )
 
 
@@ -478,3 +486,307 @@ def test_audit_scnir_hdl_handoff_accepts_real_compile_nir_output(tmp_path: Path)
     assert report.source_module_count == 2
     assert report.hierarchy_instance_count == 0
     assert report.hierarchy_port_count == 0
+
+
+def _read_manifest(root: Path) -> dict:
+    return json.loads((root / "scnir_source_manifest.json").read_text(encoding="utf-8"))
+
+
+def _write_manifest(root: Path, manifest: dict) -> None:
+    (root / "scnir_source_manifest.json").write_text(
+        json.dumps(manifest, indent=2, sort_keys=True) + "\n", encoding="utf-8"
+    )
+
+
+def test_audit_rejects_missing_directory(tmp_path: Path) -> None:
+    """A non-existent handoff directory is rejected up front."""
+    with pytest.raises(SCNIRHDLHandoffAuditError, match="does not exist"):
+        audit_scnir_hdl_handoff(tmp_path / "absent")
+
+
+def test_audit_rejects_unparsable_document(tmp_path: Path) -> None:
+    """A corrupt scnir_document.json is reported as invalid."""
+    handoff = tmp_path / "handoff"
+    _write_valid_handoff(handoff)
+    (handoff / "scnir_document.json").write_text("{not json", encoding="utf-8")
+
+    with pytest.raises(SCNIRHDLHandoffAuditError, match="invalid scnir_document.json"):
+        audit_scnir_hdl_handoff(handoff)
+
+
+def test_audit_rejects_unparsable_manifest(tmp_path: Path) -> None:
+    """A corrupt scnir_source_manifest.json is reported as invalid."""
+    handoff = tmp_path / "handoff"
+    _write_valid_handoff(handoff)
+    (handoff / "scnir_source_manifest.json").write_text("{not json", encoding="utf-8")
+
+    with pytest.raises(SCNIRHDLHandoffAuditError, match="invalid scnir_source_manifest.json"):
+        audit_scnir_hdl_handoff(handoff)
+
+
+def test_audit_rejects_non_object_manifest(tmp_path: Path) -> None:
+    """A manifest that is a JSON array rather than an object is rejected."""
+    handoff = tmp_path / "handoff"
+    _write_valid_handoff(handoff)
+    (handoff / "scnir_source_manifest.json").write_text("[]", encoding="utf-8")
+
+    with pytest.raises(SCNIRHDLHandoffAuditError, match="must be a JSON object"):
+        audit_scnir_hdl_handoff(handoff)
+
+
+def test_audit_rejects_manifest_key_mismatch(tmp_path: Path) -> None:
+    """An unexpected manifest key is reported as a key mismatch."""
+    handoff = tmp_path / "handoff"
+    _write_valid_handoff(handoff)
+    manifest = _read_manifest(handoff)
+    manifest["unexpected"] = 1
+    _write_manifest(handoff, manifest)
+
+    with pytest.raises(SCNIRHDLHandoffAuditError, match="source manifest keys mismatch"):
+        audit_scnir_hdl_handoff(handoff)
+
+
+def test_audit_rejects_manifest_schema_version(tmp_path: Path) -> None:
+    """A manifest with the wrong schema version is rejected."""
+    handoff = tmp_path / "handoff"
+    _write_valid_handoff(handoff)
+    manifest = _read_manifest(handoff)
+    manifest["schema_version"] = "sc-neurocore.scnir.hdl-sources.v0.1"
+    _write_manifest(handoff, manifest)
+
+    with pytest.raises(SCNIRHDLHandoffAuditError, match="schema_version must be"):
+        audit_scnir_hdl_handoff(handoff)
+
+
+def test_audit_rejects_stream_count_mismatch(tmp_path: Path) -> None:
+    """A scnir_stream_count that disagrees with the document is rejected."""
+    handoff = tmp_path / "handoff"
+    _write_valid_handoff(handoff)
+    manifest = _read_manifest(handoff)
+    manifest["scnir_stream_count"] = 99
+    _write_manifest(handoff, manifest)
+
+    with pytest.raises(SCNIRHDLHandoffAuditError, match="does not match document stream count"):
+        audit_scnir_hdl_handoff(handoff)
+
+
+def test_audit_rejects_sources_length_mismatch(tmp_path: Path) -> None:
+    """A sources array shorter than the document stream set is rejected."""
+    handoff = tmp_path / "handoff"
+    _write_valid_handoff(handoff)
+    manifest = _read_manifest(handoff)
+    manifest["sources"] = manifest["sources"][:-1]
+    _write_manifest(handoff, manifest)
+
+    with pytest.raises(SCNIRHDLHandoffAuditError, match="sources length"):
+        audit_scnir_hdl_handoff(handoff)
+
+
+def test_audit_rejects_external_input_key_mismatch(tmp_path: Path) -> None:
+    """An external-input row with an unexpected key is rejected."""
+    handoff = tmp_path / "handoff"
+    _write_valid_handoff(handoff)
+    manifest = _read_manifest(handoff)
+    manifest["scnir_external_inputs"][0]["extra"] = 1
+    _write_manifest(handoff, manifest)
+
+    with pytest.raises(
+        SCNIRHDLHandoffAuditError, match=r"scnir_external_inputs\[0\] keys mismatch"
+    ):
+        audit_scnir_hdl_handoff(handoff)
+
+
+def test_audit_rejects_external_input_duplicate_source(tmp_path: Path) -> None:
+    """Two external-input rows sharing a source name are rejected."""
+    handoff = tmp_path / "handoff"
+    _write_valid_handoff(handoff)
+    manifest = _read_manifest(handoff)
+    manifest["scnir_external_inputs"][1]["source"] = manifest["scnir_external_inputs"][0]["source"]
+    _write_manifest(handoff, manifest)
+
+    with pytest.raises(SCNIRHDLHandoffAuditError, match="duplicate source"):
+        audit_scnir_hdl_handoff(handoff)
+
+
+def test_audit_rejects_external_input_non_positive_width(tmp_path: Path) -> None:
+    """An external-input row with a non-positive width is rejected."""
+    handoff = tmp_path / "handoff"
+    _write_valid_handoff(handoff)
+    manifest = _read_manifest(handoff)
+    manifest["scnir_external_inputs"] = [{"source": "only", "offset": 0, "width": 0}]
+    _write_manifest(handoff, manifest)
+
+    with pytest.raises(SCNIRHDLHandoffAuditError, match="width must be positive"):
+        audit_scnir_hdl_handoff(handoff)
+
+
+def test_audit_rejects_duplicate_source_row(tmp_path: Path) -> None:
+    """Two source rows for the same stream id are rejected."""
+    handoff = tmp_path / "handoff"
+    _write_valid_handoff(handoff)
+    manifest = _read_manifest(handoff)
+    manifest["sources"][1]["stream_id"] = manifest["sources"][0]["stream_id"]
+    _write_manifest(handoff, manifest)
+
+    with pytest.raises(SCNIRHDLHandoffAuditError, match="duplicate source row"):
+        audit_scnir_hdl_handoff(handoff)
+
+
+def test_audit_rejects_source_row_for_unknown_stream(tmp_path: Path) -> None:
+    """A source row referencing a stream absent from the document is rejected."""
+    handoff = tmp_path / "handoff"
+    _write_valid_handoff(handoff)
+    manifest = _read_manifest(handoff)
+    manifest["sources"][0]["stream_id"] = "pop.ghost.spike"
+    _write_manifest(handoff, manifest)
+
+    with pytest.raises(SCNIRHDLHandoffAuditError, match="unknown stream_id"):
+        audit_scnir_hdl_handoff(handoff)
+
+
+def test_audit_rejects_hierarchy_module_without_declaration(tmp_path: Path) -> None:
+    """A hierarchy module file that does not declare its module is rejected."""
+    handoff = tmp_path / "handoff"
+    _write_valid_handoff(handoff)
+    (handoff / "mixed_audit_net_core.v").write_text("// empty\n", encoding="utf-8")
+
+    with pytest.raises(SCNIRHDLHandoffAuditError, match="does not declare module"):
+        audit_scnir_hdl_handoff(handoff)
+
+
+def test_audit_rejects_hierarchy_module_missing_port(tmp_path: Path) -> None:
+    """A hierarchy module file that omits a declared port is rejected."""
+    handoff = tmp_path / "handoff"
+    _write_valid_handoff(handoff)
+    (handoff / "mixed_audit_net_core.v").write_text(
+        "module mixed_audit_net_core;\nendmodule\n", encoding="utf-8"
+    )
+
+    with pytest.raises(SCNIRHDLHandoffAuditError, match="is missing port"):
+        audit_scnir_hdl_handoff(handoff)
+
+
+def test_audit_rejects_top_instance_missing_port(tmp_path: Path) -> None:
+    """A top module hierarchy instance that omits a port connection is rejected."""
+    handoff = tmp_path / "handoff"
+    _write_valid_handoff(handoff)
+    top_path = handoff / "mixed_audit_net.v"
+    top = top_path.read_text(encoding="utf-8").replace(
+        "    .weight_i(mixed_audit_net_core__weight_i)\n", ""
+    )
+    top_path.write_text(top, encoding="utf-8")
+
+    with pytest.raises(SCNIRHDLHandoffAuditError, match="missing port"):
+        audit_scnir_hdl_handoff(handoff)
+
+
+def test_audit_rejects_missing_top_localparam(tmp_path: Path) -> None:
+    """A top module missing a required localparam declaration is rejected."""
+    handoff = tmp_path / "handoff"
+    _write_valid_handoff(handoff)
+    top_path = handoff / "mixed_audit_net.v"
+    top = top_path.read_text(encoding="utf-8").replace(
+        "localparam integer SCNIR_BITSTREAM_LENGTH = 512;\n", ""
+    )
+    top_path.write_text(top, encoding="utf-8")
+
+    with pytest.raises(SCNIRHDLHandoffAuditError, match="top module missing"):
+        audit_scnir_hdl_handoff(handoff)
+
+
+def _lfsr_stream() -> SCNIRStream:
+    return SCNIRStream(
+        stream_id="s",
+        layer="L",
+        bitstream_length=512,
+        encoding="bipolar",
+        signal_kind="spike",
+        precision=SCNIRPrecision(
+            signed=True,
+            total_bits=16,
+            fractional_bits=8,
+            accumulator_bits=32,
+            rounding="nearest_even",
+            overflow="saturate",
+        ),
+        source=SCNIRSource(kind="lfsr", seed=5, lfsr_polynomial="x^16", tap_mask=0xB400),
+    )
+
+
+def _lfsr_row() -> dict:
+    return {
+        "layer": "L",
+        "bitstream_length": 512,
+        "encoding": "bipolar",
+        "signal_kind": "spike",
+        "delay_steps": 0,
+        "total_bits": 16,
+        "fractional_bits": 8,
+        "source_kind": "lfsr16",
+        "transforms": [],
+        "online_learning": None,
+        "seed": 5,
+        "lfsr_polynomial": "x^16",
+        "tap_mask": 0xB400,
+    }
+
+
+def test_source_row_match_accepts_lfsr_fields() -> None:
+    """A matching LFSR source row carries seed, polynomial and tap-mask expectations."""
+    _verify_source_row_matches_stream(_lfsr_row(), _lfsr_stream(), 0)
+
+
+def test_source_row_match_rejects_lfsr_tap_mask_mismatch() -> None:
+    """A divergent LFSR tap mask is reported against the stream value."""
+    row = _lfsr_row()
+    row["tap_mask"] = 0x1234
+
+    with pytest.raises(SCNIRHDLHandoffAuditError, match="tap_mask"):
+        _verify_source_row_matches_stream(row, _lfsr_stream(), 0)
+
+
+def test_delay_steps_for_row_expands_vector() -> None:
+    """A per-source-column delay vector is materialised as a list of ints."""
+    assert _delay_steps_for_row((1, 2, 3)) == [1, 2, 3]
+
+
+def test_low_level_manifest_validators_reject_bad_values() -> None:
+    """The structural manifest validators reject malformed sequences and scalars."""
+    with pytest.raises(SCNIRHDLHandoffAuditError, match="must be a sequence"):
+        _expect_mapping_sequence({"rows": "nope"}, "rows")
+    with pytest.raises(SCNIRHDLHandoffAuditError, match="must be a JSON object"):
+        _expect_mapping_sequence({"rows": [123]}, "rows")
+    with pytest.raises(SCNIRHDLHandoffAuditError, match="must be a non-empty string"):
+        _expect_non_empty_string({"k": ""}, "k")
+    with pytest.raises(SCNIRHDLHandoffAuditError, match="must be an integer"):
+        _expect_int({"k": "x"}, "k")
+    with pytest.raises(SCNIRHDLHandoffAuditError, match="must be positive"):
+        _expect_positive_int({"k": 0}, "k")
+    with pytest.raises(SCNIRHDLHandoffAuditError, match="must be non-negative"):
+        _expect_non_negative_int({"k": -1}, "k")
+
+
+def test_audit_rejects_source_row_key_mismatch(tmp_path: Path) -> None:
+    """A source row carrying an unexpected key is rejected as a keys mismatch."""
+    handoff = tmp_path / "handoff"
+    _write_valid_handoff(handoff)
+    manifest = _read_manifest(handoff)
+    manifest["sources"][0]["unexpected"] = 1
+    _write_manifest(handoff, manifest)
+
+    with pytest.raises(SCNIRHDLHandoffAuditError, match=r"sources\[0\] keys mismatch"):
+        audit_scnir_hdl_handoff(handoff)
+
+
+def test_write_audit_report_emits_valid_json(tmp_path: Path) -> None:
+    """Writing the audit report serialises the valid summary to JSON on disk."""
+    handoff = tmp_path / "handoff"
+    _write_valid_handoff(handoff)
+    output = tmp_path / "audit.json"
+
+    report = write_scnir_hdl_handoff_audit(handoff, output)
+
+    written = json.loads(output.read_text(encoding="utf-8"))
+    assert written["status"] == "valid"
+    assert written["module_name"] == report.module_name
+    assert written == report.as_dict()

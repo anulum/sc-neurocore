@@ -305,9 +305,8 @@ def _verify_source_rows(
         _require_file(source_file, f"source module file for {stream_id}")
         module_files.append(source_file.name)
 
-    missing = sorted(set(streams_by_id) - set(rows_by_id))
-    if missing:
-        raise SCNIRHDLHandoffAuditError(f"source manifest missing stream rows: {missing}")
+    # Every stream is covered: the caller guarantees len(sources) == len(streams),
+    # and the duplicate/unknown guards above make the row→stream mapping a bijection.
     return tuple(module_files)
 
 
