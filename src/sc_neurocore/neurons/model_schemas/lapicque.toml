@@ -3,7 +3,6 @@ schema_version = 1
 name = "Lapicque"
 author = "Lapicque, L."
 year = 1907
-doi = "10.1085/jgp.5.6.747"
 description = "Classical RC integrate-and-fire — the original neuron model (1907)"
 
 [state]

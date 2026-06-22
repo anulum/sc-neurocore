@@ -164,9 +164,10 @@ def descriptor_completeness_tier(descriptor: ModelDescriptor) -> int:
     Tier 1 — discovery taxonomy declared (family and category). Behaviour tags
              are an optional measured facet, not a tier requirement, so a tier
              never depends on running a simulation.
-    Tier 2 — citeable provenance, every parameter curated (unit+range+meaning),
-             and at least two implemented backends.
-    Tier 3 — reproducible (reference config + golden trace digest).
+    Tier 2 — scientifically curated: citeable provenance (authors + year + DOI)
+             and every parameter curated (unit + range + meaning).
+    Tier 3 — engineering-verified: at least two implemented backends and a
+             reproducibility anchor (reference config + golden trace digest).
     """
 
     if not descriptor.parameters and not descriptor.state:
@@ -178,10 +179,10 @@ def descriptor_completeness_tier(descriptor: ModelDescriptor) -> int:
     params_curated = bool(descriptor.parameters) and all(
         p.is_curated for p in descriptor.parameters
     )
-    implemented = sum(1 for b in descriptor.backends if b.status == "implemented")
-    if tier == 1 and descriptor.provenance.is_citeable and params_curated and implemented >= 2:
+    if tier == 1 and descriptor.provenance.is_citeable and params_curated:
         tier = 2
-    if tier == 2 and descriptor.reproducibility.is_reproducible:
+    implemented = sum(1 for b in descriptor.backends if b.status == "implemented")
+    if tier == 2 and implemented >= 2 and descriptor.reproducibility.is_reproducible:
         tier = 3
     return tier
 

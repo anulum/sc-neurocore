@@ -28,53 +28,109 @@ init = 0.0
 
 [parameters.v_rest]
 default = -65.0
-unit = ""
-meaning = ""
+unit = "mV"
+meaning = "resting / leak reversal potential"
+range = [
+    -90.0,
+    -40.0,
+]
+biological_range = [
+    -80.0,
+    -55.0,
+]
 
 [parameters.v_reset]
 default = -68.0
-unit = ""
-meaning = ""
+unit = "mV"
+meaning = "membrane potential the model is reset to after a spike"
+range = [
+    -90.0,
+    -40.0,
+]
+biological_range = [
+    -80.0,
+    -50.0,
+]
 
 [parameters.v_threshold]
 default = -50.0
-unit = ""
-meaning = ""
+unit = "mV"
+meaning = "voltage cutoff at which a spike is registered and reset applied"
+range = [
+    -60.0,
+    -20.0,
+]
 
 [parameters.v_rh]
 default = -55.0
-unit = ""
-meaning = ""
+unit = "mV"
+meaning = "rheobase threshold of the exponential spike-initiation term"
+range = [
+    -65.0,
+    -40.0,
+]
 
 [parameters.delta_t]
 default = 2.0
-unit = ""
-meaning = ""
+unit = "mV"
+meaning = "slope factor (sharpness) of the exponential spike initiation"
+range = [
+    0.25,
+    5.0,
+]
 
 [parameters.tau]
 default = 20.0
-unit = ""
-meaning = ""
+unit = "ms"
+meaning = "membrane time constant (C / g_leak)"
+range = [
+    1.0,
+    100.0,
+]
+biological_range = [
+    5.0,
+    50.0,
+]
 
 [parameters.tau_w]
 default = 100.0
-unit = ""
-meaning = ""
+unit = "ms"
+meaning = "adaptation time constant"
+range = [
+    5.0,
+    600.0,
+]
 
 [parameters.a]
 default = 0.5
-unit = ""
-meaning = ""
+unit = "nS"
+meaning = "subthreshold adaptation conductance coupling voltage to the adaptation current"
+range = [
+    0.0,
+    10.0,
+]
 
 [parameters.b]
 default = 7.0
-unit = ""
-meaning = ""
+unit = "pA"
+meaning = "spike-triggered adaptation current increment added to w at each spike"
+range = [
+    0.0,
+    200.0,
+]
 
 [parameters.c_m]
 default = 200.0
-unit = ""
-meaning = ""
+unit = "pF"
+meaning = "membrane capacitance"
+range = [
+    20.0,
+    500.0,
+]
+biological_range = [
+    50.0,
+    300.0,
+]
 
 [integration]
 dt = 0.1

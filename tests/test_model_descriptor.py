@@ -101,16 +101,18 @@ def test_completeness_tiers_rise_with_curation() -> None:
     )
     assert descriptor_completeness_tier(parse_model_descriptor(payload)) == 1
 
+    # Tier 2 — scientifically curated: citeable provenance + every parameter curated.
     payload["provenance"] = {"authors": ["Brette"], "year": 2005, "doi": "10.1152/jn.00686.2005"}
     payload["parameters"] = {
         "tau": {"default": 20.0, "unit": "ms", "range": [1.0, 100.0], "meaning": "time constant"}
     }
+    assert descriptor_completeness_tier(parse_model_descriptor(payload)) == 2
+
+    # Tier 3 — engineering-verified: two implemented backends + a golden trace.
     payload["backends"] = {
         "python": {"status": "implemented"},
         "rust": {"status": "implemented", "parity": "ulp-bounded"},
     }
-    assert descriptor_completeness_tier(parse_model_descriptor(payload)) == 2
-
     payload["reproducibility"] = {
         "reference_config": "golden/adex.json",
         "golden_trace_sha256": "a" * 64,

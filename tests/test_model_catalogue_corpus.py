@@ -65,9 +65,12 @@ def test_coverage_describes_every_model() -> None:
     assert coverage.total_models == len(_CLASS_TO_MODULE)
     assert coverage.described == len(_CLASS_TO_MODULE)
     assert sum(coverage.tier_counts.values()) == coverage.described
-    # Every model carries a declared family + category, so none remains at tier 0.
+    # Every model carries a declared family + category, so none remains at tier 0;
+    # all described models are at least Tier 1 (some curated higher).
     assert coverage.tier_counts[0] == 0
-    assert coverage.tier_counts[1] == coverage.described
+    assert coverage.tier_counts[1] + coverage.tier_counts[2] + coverage.tier_counts[3] == (
+        coverage.described
+    )
 
 
 def test_merge_preserves_curation_and_follows_code() -> None:
