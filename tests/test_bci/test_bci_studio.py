@@ -54,6 +54,14 @@ class TestSpikeCodec(unittest.TestCase):
         ratio = self.codec.compression_ratio(spikes)
         self.assertGreater(ratio, 1.0)
 
+    def test_decode_returns_empty_for_truncated_header(self):
+        # An RLE stream shorter than the 4-byte length header carries no spikes.
+        self.assertEqual(self.codec.decode(b"\x00\x00").size, 0)
+
+    def test_compression_ratio_of_empty_array_is_unity(self):
+        # An empty spike array compresses to nothing, so the ratio is defined as 1.0.
+        self.assertEqual(self.codec.compression_ratio(np.array([], dtype=np.uint8)), 1.0)
+
     def test_compression_ratio_dense(self):
         rng = np.random.default_rng(42)
         spikes = rng.integers(0, 2, size=1000, dtype=np.uint8)
@@ -155,6 +163,14 @@ class TestBCIStudio(unittest.TestCase):
         raw = np.random.randn(64).astype(np.float32)
         result = self.studio.process_frame(raw, reward=0.0)
         self.assertLess(result["latency_ms"], 10.0)
+
+    def test_large_weight_shift_records_adaptation_event(self):
+        # A fully-spiking frame with a strong reward moves every weight, so the
+        # aggregate shift clears the adaptation threshold (0.01 * channels).
+        raw = np.tile([1.0, -1.0], 32).astype(np.float32)  # all 64 channels spike
+        before = self.studio.metrics.adaptation_events
+        self.studio.process_frame(raw, reward=2.0)
+        self.assertEqual(self.studio.metrics.adaptation_events, before + 1)
 
     def test_session_lifecycle(self):
         self.studio.start_session()

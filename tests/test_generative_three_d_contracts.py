@@ -71,3 +71,21 @@ def test_surface_mesh_rejects_non_3d_grid() -> None:
 
     with pytest.raises(ValueError, match="Expected 3D"):
         generator.generate_surface_mesh(np.zeros((4, 4)))
+
+
+def test_compute_normals_returns_empty_for_degenerate_mesh() -> None:
+    generator = SC3DGenerator()
+
+    normals = generator._compute_normals(np.zeros((0, 3)), np.zeros((0, 3), dtype=int))
+
+    assert normals.shape == (0, 3)
+
+
+def test_bitstream_to_voxels_subsamples_when_units_exceed_voxels() -> None:
+    # 100 bitstreams mapped onto an 8-voxel grid takes the subsampling branch.
+    generator = SC3DGenerator()
+    bitstreams = np.random.default_rng(0).integers(0, 2, size=(100, 8)).astype(np.uint8)
+
+    voxels = generator.bitstream_to_voxels(bitstreams, grid_size=(2, 2, 2))
+
+    assert voxels.shape == (2, 2, 2)
