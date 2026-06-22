@@ -311,9 +311,7 @@ def _descriptor_detail(descriptor: ModelDescriptor) -> dict[str, Any]:
                     "default": p.default,
                     "unit": p.unit,
                     "range": list(p.value_range) if p.value_range else None,
-                    "biological_range": (
-                        list(p.biological_range) if p.biological_range else None
-                    ),
+                    "biological_range": (list(p.biological_range) if p.biological_range else None),
                     "meaning": p.meaning,
                 }
                 for p in descriptor.parameters
