@@ -134,7 +134,7 @@ class TermanWangOscillator:
     uses candidate-first RK4 so invalid derivatives or candidates cannot poison
     state.
 
-    Reference: Terman, D. & Wang, D.L. (1995). Neural Comput. 7:1035-1064.
+    Reference: Terman, D. & Wang, D.L. (1995). Physica D 81:148-176.
     """
 
     _FINITE_FIELDS: ClassVar[tuple[str, ...]] = ("v", "w", "alpha", "rho", "v_peak")

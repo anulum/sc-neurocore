@@ -14,6 +14,11 @@ hardware_fit = []
 behavior_tags = []
 
 [provenance]
+authors = [
+    "Pernarowski, M.",
+]
+year = 1994
+doi = "10.1137/S003613999223449X"
 
 [state.v]
 init = -1.0
@@ -26,33 +31,57 @@ init = 0.0
 
 [parameters.alpha]
 default = 0.1
-unit = ""
-meaning = ""
+unit = "1"
+meaning = "offset in the fast recovery (w) nullcline"
+range = [
+    -2.0,
+    2.0,
+]
 
 [parameters.beta]
 default = 0.5
-unit = ""
-meaning = ""
+unit = "1"
+meaning = "coupling gain of the fast variable to the slow bursting variable"
+range = [
+    0.0,
+    2.0,
+]
 
 [parameters.eps1]
 default = 0.1
-unit = ""
-meaning = ""
+unit = "1"
+meaning = "timescale of the fast recovery variable"
+range = [
+    0.001,
+    1.0,
+]
 
 [parameters.eps2]
 default = 0.001
-unit = ""
-meaning = ""
+unit = "1"
+meaning = "timescale of the slow bursting variable; small values give slow bursting"
+range = [
+    0.0001,
+    0.1,
+]
 
 [parameters.gamma]
 default = 0.5
-unit = ""
-meaning = ""
+unit = "1"
+meaning = "recovery coupling coefficient"
+range = [
+    0.0,
+    2.0,
+]
 
 [parameters.v_threshold]
 default = 0.5
-unit = ""
-meaning = ""
+unit = "1"
+meaning = "level on v at which a spike is registered"
+range = [
+    -2.0,
+    2.0,
+]
 
 [integration]
 dt = 0.1

@@ -14,6 +14,11 @@ hardware_fit = []
 behavior_tags = []
 
 [provenance]
+authors = [
+    "McKean, H.P.",
+]
+year = 1970
+doi = "10.1016/0001-8708(70)90023-X"
 
 [state.v]
 init = 0.0
@@ -23,23 +28,39 @@ init = 0.0
 
 [parameters.a]
 default = 0.25
-unit = ""
-meaning = ""
+unit = "1"
+meaning = "threshold of the piecewise-linear (McKean) cubic nonlinearity"
+range = [
+    0.0,
+    1.0,
+]
 
 [parameters.epsilon]
 default = 0.01
-unit = ""
-meaning = ""
+unit = "1"
+meaning = "timescale separation; small values give slow recovery"
+range = [
+    0.001,
+    0.5,
+]
 
 [parameters.gamma]
 default = 0.5
-unit = ""
-meaning = ""
+unit = "1"
+meaning = "recovery-variable coupling coefficient"
+range = [
+    0.0,
+    2.0,
+]
 
 [parameters.v_peak]
 default = 0.8
-unit = ""
-meaning = ""
+unit = "1"
+meaning = "level on v at which a spike is registered"
+range = [
+    0.0,
+    2.0,
+]
 
 [integration]
 dt = 0.1

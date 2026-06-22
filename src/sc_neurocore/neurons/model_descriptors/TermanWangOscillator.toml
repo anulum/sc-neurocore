@@ -14,6 +14,11 @@ hardware_fit = []
 behavior_tags = []
 
 [provenance]
+authors = [
+    "Terman, D. & Wang, D.L.",
+]
+year = 1995
+doi = "10.1016/0167-2789(94)00205-5"
 
 [state.v]
 init = -1.5
@@ -23,28 +28,48 @@ init = -0.5
 
 [parameters.alpha]
 default = 3.0
-unit = ""
-meaning = ""
+unit = "1"
+meaning = "amplitude of the sigmoidal recovery nullcline"
+range = [
+    0.0,
+    10.0,
+]
 
 [parameters.beta]
 default = 0.2
-unit = ""
-meaning = ""
+unit = "1"
+meaning = "voltage scale (steepness) of the tanh recovery activation"
+range = [
+    0.01,
+    2.0,
+]
 
 [parameters.epsilon]
 default = 0.02
-unit = ""
-meaning = ""
+unit = "1"
+meaning = "timescale separation; small values give slow recovery"
+range = [
+    0.001,
+    0.5,
+]
 
 [parameters.rho]
 default = 0.0
-unit = ""
-meaning = ""
+unit = "1"
+meaning = "constant baseline drive added to the fast variable"
+range = [
+    -5.0,
+    5.0,
+]
 
 [parameters.v_peak]
 default = 1.5
-unit = ""
-meaning = ""
+unit = "1"
+meaning = "level on v at which a spike is registered"
+range = [
+    -5.0,
+    5.0,
+]
 
 [integration]
 dt = 0.05
