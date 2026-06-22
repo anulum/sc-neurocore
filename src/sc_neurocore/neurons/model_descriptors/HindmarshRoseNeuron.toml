@@ -85,8 +85,27 @@ z = "r * (s * (x - x_rest) - z)"
 
 [backends.python]
 status = "implemented"
+parity = "exact"
+
+[backends.rust]
+status = "implemented"
+parity = "exact"
+
+[backends.julia]
+status = "implemented"
+parity = "exact"
+
+[backends.go]
+status = "implemented"
+parity = "exact"
+
+[backends.mojo]
+status = "implemented"
+parity = "ulp-bounded"
 
 [reproducibility]
+reference_config = "{\"n_steps\":1000,\"current\":2.0,\"backend\":\"python\",\"parameters\":\"defaults\"}"
+golden_trace_sha256 = "38321340107629a994d0c18b9ea553adcd3f7d4dff6afeebf8a98fa184d84991"
 
 [documentation]
 slug = "models/hindmarsh_rose"

@@ -70,8 +70,27 @@ method = "euler"
 
 [backends.python]
 status = "implemented"
+parity = "exact"
+
+[backends.rust]
+status = "implemented"
+parity = "exact"
+
+[backends.julia]
+status = "implemented"
+parity = "exact"
+
+[backends.go]
+status = "implemented"
+parity = "exact"
+
+[backends.mojo]
+status = "implemented"
+parity = "ulp-bounded"
 
 [reproducibility]
+reference_config = "{\"n_steps\":1000,\"current\":2.0,\"backend\":\"python\",\"parameters\":\"defaults\"}"
+golden_trace_sha256 = "b2f3466ecf24c36388051b392bc24441e77f3cf6fa060c5584591b161aac9a91"
 
 [documentation]
 slug = "models/mckean"

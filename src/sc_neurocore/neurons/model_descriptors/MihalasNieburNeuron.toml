@@ -148,8 +148,27 @@ method = "euler"
 
 [backends.python]
 status = "implemented"
+parity = "exact"
+
+[backends.rust]
+status = "implemented"
+parity = "exact"
+
+[backends.julia]
+status = "implemented"
+parity = "exact"
+
+[backends.go]
+status = "implemented"
+parity = "exact"
+
+[backends.mojo]
+status = "implemented"
+parity = "exact"
 
 [reproducibility]
+reference_config = "{\"n_steps\":1000,\"current\":2.0,\"backend\":\"python\",\"parameters\":\"defaults\"}"
+golden_trace_sha256 = "d92ed2edac56da363bc2ee6351d4b653415a7164c8759aaafe9059641efa6cb8"
 
 [documentation]
 slug = "models/mihalas_niebur"

@@ -49,8 +49,27 @@ method = "euler"
 
 [backends.python]
 status = "implemented"
+parity = "exact"
+
+[backends.rust]
+status = "implemented"
+parity = "exact"
+
+[backends.julia]
+status = "implemented"
+parity = "ulp-bounded"
+
+[backends.go]
+status = "implemented"
+parity = "ulp-bounded"
+
+[backends.mojo]
+status = "implemented"
+parity = "ulp-bounded"
 
 [reproducibility]
+reference_config = "{\"n_steps\":1000,\"current\":2.0,\"backend\":\"python\",\"parameters\":\"defaults\"}"
+golden_trace_sha256 = "a1a8eb94a2a3318964722901c46b7006533780e790ae7c666df43961b1a8a113"
 
 [documentation]
 slug = "models/ermentrout_kopell_map_neuron"

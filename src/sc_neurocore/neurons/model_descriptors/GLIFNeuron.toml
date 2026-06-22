@@ -152,8 +152,27 @@ i_asc2 = "-i_asc2 / tau_asc2"
 
 [backends.python]
 status = "implemented"
+parity = "exact"
+
+[backends.rust]
+status = "implemented"
+parity = "exact"
+
+[backends.julia]
+status = "implemented"
+parity = "exact"
+
+[backends.go]
+status = "implemented"
+parity = "exact"
+
+[backends.mojo]
+status = "implemented"
+parity = "exact"
 
 [reproducibility]
+reference_config = "{\"n_steps\":1000,\"current\":2.0,\"backend\":\"python\",\"parameters\":\"defaults\"}"
+golden_trace_sha256 = "b5847da0aef34a9e6b73f322c36c2f1b002f069d8624dd0d94ec17d95408e2bd"
 
 [documentation]
 slug = "models/glif"

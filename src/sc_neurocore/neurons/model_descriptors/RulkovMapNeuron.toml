@@ -72,8 +72,27 @@ y = "y - sigma * x - beta"
 
 [backends.python]
 status = "implemented"
+parity = "exact"
+
+[backends.rust]
+status = "implemented"
+parity = "exact"
+
+[backends.julia]
+status = "implemented"
+parity = "exact"
+
+[backends.go]
+status = "implemented"
+parity = "exact"
+
+[backends.mojo]
+status = "implemented"
+parity = "exact"
 
 [reproducibility]
+reference_config = "{\"n_steps\":1000,\"current\":2.0,\"backend\":\"python\",\"parameters\":\"defaults\"}"
+golden_trace_sha256 = "d79d2acc23996089ca0b4195544c211734b235f67ac09ef66acaa9ad9d9c7691"
 
 [documentation]
 slug = "models/rulkov_map"
