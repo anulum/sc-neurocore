@@ -9,6 +9,7 @@
 from __future__ import annotations
 
 import numpy as np
+import pytest
 
 from sc_neurocore.neuro_symbolic import (
     NeuroSymbolicPredictiveAgent,
@@ -125,3 +126,12 @@ def test_trace_only_mode_records_symbolic_evidence() -> None:
     assert trace.reasoning_steps == result.trace.length
     assert trace.top_symbols == tuple(symbol for symbol, _score in result.symbol_scores)
     assert trace.sc_popcount == result.signature.popcount
+
+
+def test_json_default_serialises_numpy_and_rejects_unknown_types() -> None:
+    from sc_neurocore.neuro_symbolic.self_verification import _json_default
+
+    assert _json_default(np.array([1, 2])) == [1, 2]
+    assert _json_default(np.float64(1.5)) == 1.5
+    with pytest.raises(TypeError, match="cannot serialise"):
+        _json_default(object())

@@ -44,3 +44,18 @@ def test_decoder_connectivity_signature_is_array_like() -> None:
     signature = decoder.extract_connectivity_signature()
 
     assert signature.shape[0] >= 0
+
+
+def test_decoder_groups_correlated_neurons_into_attractors() -> None:
+    # A permissive threshold makes the first neuron absorb its correlated
+    # partners into one ensemble, so the rest are skipped as already-visited.
+    substrate = IdentitySubstrate(n_cortical=8)
+    rng = np.random.default_rng(7)
+    for _ in range(100):
+        substrate.step(rng.standard_normal(8) * 5)
+    decoder = StateDecoder(substrate)
+
+    attractors = decoder.extract_attractor_states(threshold=-1.0)
+
+    assert isinstance(attractors, list)
+    assert any(group.size >= 2 for group in attractors)
