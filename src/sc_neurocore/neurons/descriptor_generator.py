@@ -33,6 +33,7 @@ from sc_neurocore.neurons.model_descriptor import (
     ModelDescriptor,
     parse_model_descriptor,
 )
+from sc_neurocore.neurons.model_taxonomy import model_family
 from sc_neurocore.neurons.models import _CLASS_TO_MODULE
 
 # Single letters that are conventionally state variables. ``a``/``b`` are
@@ -130,6 +131,7 @@ def generate_descriptor_payload(class_name: str) -> dict[str, Any]:
         raise KeyError(class_name)
     module = _CLASS_TO_MODULE[class_name]
     cls = _load_class(class_name)
+    family, category = model_family(class_name) or ("", "")
     v1 = _load_v1_schema(module)
     v1_meta = v1.get("metadata", {}) if isinstance(v1.get("metadata"), Mapping) else {}
     v1_state = v1.get("state", {}) if isinstance(v1.get("state"), Mapping) else {}
@@ -190,8 +192,8 @@ def generate_descriptor_payload(class_name: str) -> dict[str, Any]:
             "module": module,
             "display_name": "",
             "summary": str(v1_meta.get("description") or _summary_from_docstring(cls)),
-            "family": "",
-            "category": "",
+            "family": family,
+            "category": category,
             "biophysical_detail": "point",
             "maturity": "experimental",
             "intended_use": [],

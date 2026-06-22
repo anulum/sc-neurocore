@@ -97,7 +97,7 @@ def test_completeness_tiers_rise_with_curation() -> None:
 
     payload = _minimal_payload()
     payload["metadata"].update(  # type: ignore[union-attr]
-        {"family": "Integrate-and-Fire", "category": "adaptive", "behavior_tags": ["tonic"]}
+        {"family": "Integrate-and-Fire", "category": "adaptive"}
     )
     assert descriptor_completeness_tier(parse_model_descriptor(payload)) == 1
 
@@ -130,8 +130,11 @@ def test_generate_descriptor_reads_real_fields_and_provenance() -> None:
     assert "integrator" not in payload["parameters"]
     # Provenance carried over from the curated v1 schema.
     assert payload["provenance"]["doi"] == "10.1152/jn.00686.2005"
-    # Curation-only fields are left empty, never fabricated.
-    assert payload["metadata"]["family"] == ""
+    # Family/category are filled from the curated taxonomy.
+    assert payload["metadata"]["family"] == "Integrate-and-Fire"
+    assert payload["metadata"]["category"] == "integrate-and-fire"
+    # Curation-only fields with no source are left empty, never fabricated.
+    assert payload["metadata"]["intended_use"] == []
     assert all(p["unit"] == "" for p in payload["parameters"].values())
 
 

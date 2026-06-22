@@ -161,7 +161,9 @@ def descriptor_completeness_tier(descriptor: ModelDescriptor) -> int:
     """Return the completeness tier (0-3) a descriptor satisfies.
 
     Tier 0 — exists and identifies a real model (class, module, params, state).
-    Tier 1 — discovery taxonomy declared (family, category, behaviour tags).
+    Tier 1 — discovery taxonomy declared (family and category). Behaviour tags
+             are an optional measured facet, not a tier requirement, so a tier
+             never depends on running a simulation.
     Tier 2 — citeable provenance, every parameter curated (unit+range+meaning),
              and at least two implemented backends.
     Tier 3 — reproducible (reference config + golden trace digest).
@@ -170,9 +172,7 @@ def descriptor_completeness_tier(descriptor: ModelDescriptor) -> int:
     if not descriptor.parameters and not descriptor.state:
         return 0
     tier = 0
-    has_taxonomy = (
-        bool(descriptor.family) and bool(descriptor.category) and bool(descriptor.behavior_tags)
-    )
+    has_taxonomy = bool(descriptor.family) and bool(descriptor.category)
     if has_taxonomy:
         tier = 1
     params_curated = bool(descriptor.parameters) and all(
