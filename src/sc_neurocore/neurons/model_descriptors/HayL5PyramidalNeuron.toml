@@ -14,6 +14,11 @@ hardware_fit = []
 behavior_tags = []
 
 [provenance]
+authors = [
+    "Hay, E., Hill, S., Schurmann, F., Markram, H. & Segev, I.",
+]
+year = 2011
+doi = "10.1371/journal.pcbi.1002107"
 
 [state.v_s]
 init = -75.0
@@ -44,118 +49,210 @@ init = 0.0001
 
 [parameters.g_na]
 default = 300.0
-unit = ""
-meaning = ""
+unit = "mS/cm^2"
+meaning = "maximal somatic sodium conductance"
+range = [
+    0.0,
+    500.0,
+]
 
 [parameters.g_k]
 default = 40.0
-unit = ""
-meaning = ""
+unit = "mS/cm^2"
+meaning = "maximal somatic potassium conductance"
+range = [
+    0.0,
+    200.0,
+]
 
 [parameters.g_l_s]
 default = 0.03
-unit = ""
-meaning = ""
+unit = "mS/cm^2"
+meaning = "somatic leak conductance"
+range = [
+    0.0,
+    5.0,
+]
 
 [parameters.e_na]
 default = 50.0
-unit = ""
-meaning = ""
+unit = "mV"
+meaning = "sodium reversal potential"
+range = [
+    30.0,
+    70.0,
+]
 
 [parameters.e_k]
 default = -85.0
-unit = ""
-meaning = ""
+unit = "mV"
+meaning = "potassium reversal potential"
+range = [
+    -100.0,
+    -70.0,
+]
 
 [parameters.e_l]
 default = -75.0
-unit = ""
-meaning = ""
+unit = "mV"
+meaning = "leak reversal potential"
+range = [
+    -90.0,
+    -50.0,
+]
 
 [parameters.g_ca_t]
 default = 2.0
-unit = ""
-meaning = ""
+unit = "mS/cm^2"
+meaning = "maximal trunk low-threshold (T-type) calcium conductance"
+range = [
+    0.0,
+    20.0,
+]
 
 [parameters.g_ih]
 default = 0.02
-unit = ""
-meaning = ""
+unit = "mS/cm^2"
+meaning = "maximal trunk hyperpolarisation-activated (Ih) conductance"
+range = [
+    0.0,
+    5.0,
+]
 
 [parameters.g_l_t]
 default = 0.03
-unit = ""
-meaning = ""
+unit = "mS/cm^2"
+meaning = "trunk leak conductance"
+range = [
+    0.0,
+    5.0,
+]
 
 [parameters.e_ca]
 default = 140.0
-unit = ""
-meaning = ""
+unit = "mV"
+meaning = "calcium reversal potential"
+range = [
+    60.0,
+    150.0,
+]
 
 [parameters.e_ih]
 default = -45.0
-unit = ""
-meaning = ""
+unit = "mV"
+meaning = "hyperpolarisation-activated current reversal potential"
+range = [
+    -60.0,
+    -20.0,
+]
 
 [parameters.g_ca_a]
 default = 1.5
-unit = ""
-meaning = ""
+unit = "mS/cm^2"
+meaning = "maximal apical (high-threshold) calcium conductance"
+range = [
+    0.0,
+    20.0,
+]
 
 [parameters.g_kca]
 default = 2.5
-unit = ""
-meaning = ""
+unit = "mS/cm^2"
+meaning = "maximal apical calcium-activated potassium conductance"
+range = [
+    0.0,
+    50.0,
+]
 
 [parameters.g_l_a]
 default = 0.03
-unit = ""
-meaning = ""
+unit = "mS/cm^2"
+meaning = "apical leak conductance"
+range = [
+    0.0,
+    5.0,
+]
 
 [parameters.g_st]
 default = 1.5
-unit = ""
-meaning = ""
+unit = "mS/cm^2"
+meaning = "soma-trunk coupling conductance"
+range = [
+    0.0,
+    10.0,
+]
 
 [parameters.g_ta]
 default = 0.8
-unit = ""
-meaning = ""
+unit = "mS/cm^2"
+meaning = "trunk-apical coupling conductance"
+range = [
+    0.0,
+    10.0,
+]
 
 [parameters.p_s]
 default = 0.15
-unit = ""
-meaning = ""
+unit = "1"
+meaning = "somatic compartment area fraction"
+range = [
+    0.01,
+    1.0,
+]
 
 [parameters.p_t]
 default = 0.25
-unit = ""
-meaning = ""
+unit = "1"
+meaning = "trunk compartment area fraction"
+range = [
+    0.01,
+    1.0,
+]
 
 [parameters.p_a]
 default = 0.6
-unit = ""
-meaning = ""
+unit = "1"
+meaning = "apical compartment area fraction"
+range = [
+    0.01,
+    1.0,
+]
 
 [parameters.ca_decay]
 default = 200.0
-unit = ""
-meaning = ""
+unit = "1/ms"
+meaning = "calcium efflux (removal) rate"
+range = [
+    0.001,
+    1.0,
+]
 
 [parameters.f_ca]
 default = 0.0002
-unit = ""
-meaning = ""
+unit = "cm^2/(uA*ms)"
+meaning = "calcium influx coefficient converting calcium current into concentration change"
+range = [
+    0.0001,
+    0.01,
+]
 
 [parameters.v_threshold]
 default = -30.0
-unit = ""
-meaning = ""
+unit = "mV"
+meaning = "voltage at which a spike is registered"
+range = [
+    -40.0,
+    20.0,
+]
 
 [parameters.c_m]
 default = 1.0
-unit = ""
-meaning = ""
+unit = "uF/cm^2"
+meaning = "membrane capacitance"
+range = [
+    0.5,
+    2.0,
+]
 
 [integration]
 dt = 0.025
