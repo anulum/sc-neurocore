@@ -14,6 +14,11 @@ hardware_fit = []
 behavior_tags = []
 
 [provenance]
+authors = [
+    "Bertram, R., Previte, J., Sherman, A., Kinard, T.A. & Satin, L.S.",
+]
+year = 2000
+doi = "10.1016/S0006-3495(00)76525-8"
 
 [state.v]
 init = -50.0
@@ -26,103 +31,183 @@ init = 0.1
 
 [parameters.g_ca]
 default = 3.6
-unit = ""
-meaning = ""
+unit = "mS/cm^2"
+meaning = "maximal calcium conductance"
+range = [
+    0.0,
+    20.0,
+]
 
 [parameters.g_k]
 default = 10.0
-unit = ""
-meaning = ""
+unit = "mS/cm^2"
+meaning = "maximal potassium conductance"
+range = [
+    0.0,
+    50.0,
+]
 
 [parameters.g_s1]
 default = 4.0
-unit = ""
-meaning = ""
+unit = "mS/cm^2"
+meaning = "maximal conductance of the first slow current"
+range = [
+    0.0,
+    20.0,
+]
 
 [parameters.g_s2]
 default = 4.0
-unit = ""
-meaning = ""
+unit = "mS/cm^2"
+meaning = "maximal conductance of the second slow current"
+range = [
+    0.0,
+    20.0,
+]
 
 [parameters.g_l]
 default = 0.2
-unit = ""
-meaning = ""
+unit = "mS/cm^2"
+meaning = "leak conductance"
+range = [
+    0.0,
+    5.0,
+]
 
 [parameters.e_ca]
 default = 25.0
-unit = ""
-meaning = ""
+unit = "mV"
+meaning = "calcium reversal potential"
+range = [
+    0.0,
+    150.0,
+]
 
 [parameters.e_k]
 default = -75.0
-unit = ""
-meaning = ""
+unit = "mV"
+meaning = "potassium reversal potential"
+range = [
+    -100.0,
+    -50.0,
+]
 
 [parameters.e_l]
 default = -40.0
-unit = ""
-meaning = ""
+unit = "mV"
+meaning = "leak reversal potential"
+range = [
+    -70.0,
+    -20.0,
+]
 
 [parameters.c_m]
 default = 5.3
-unit = ""
-meaning = ""
+unit = "uF/cm^2"
+meaning = "membrane capacitance"
+range = [
+    1.0,
+    10.0,
+]
 
 [parameters.v_m]
 default = -20.0
-unit = ""
-meaning = ""
+unit = "mV"
+meaning = "half-activation voltage of the calcium current"
+range = [
+    -40.0,
+    0.0,
+]
 
 [parameters.s_m]
 default = 12.0
-unit = ""
-meaning = ""
+unit = "mV"
+meaning = "slope of the calcium activation function"
+range = [
+    1.0,
+    30.0,
+]
 
 [parameters.v_n]
 default = -16.0
-unit = ""
-meaning = ""
+unit = "mV"
+meaning = "half-activation voltage of the potassium current"
+range = [
+    -30.0,
+    10.0,
+]
 
 [parameters.s_n]
 default = 5.6
-unit = ""
-meaning = ""
+unit = "mV"
+meaning = "slope of the potassium activation function"
+range = [
+    1.0,
+    30.0,
+]
 
 [parameters.v_s1]
 default = -40.0
-unit = ""
-meaning = ""
+unit = "mV"
+meaning = "half-activation voltage of the first slow variable"
+range = [
+    -60.0,
+    0.0,
+]
 
 [parameters.s_s1]
 default = 10.0
-unit = ""
-meaning = ""
+unit = "mV"
+meaning = "slope of the first slow-variable activation"
+range = [
+    1.0,
+    30.0,
+]
 
 [parameters.v_s2]
 default = -42.0
-unit = ""
-meaning = ""
+unit = "mV"
+meaning = "half-activation voltage of the second slow variable"
+range = [
+    -60.0,
+    0.0,
+]
 
 [parameters.s_s2]
 default = 0.4
-unit = ""
-meaning = ""
+unit = "mV"
+meaning = "slope of the second slow-variable activation"
+range = [
+    1.0,
+    30.0,
+]
 
 [parameters.tau_s1]
 default = 20000.0
-unit = ""
-meaning = ""
+unit = "ms"
+meaning = "time constant of the first slow variable"
+range = [
+    1000.0,
+    60000.0,
+]
 
 [parameters.tau_s2]
 default = 100000.0
-unit = ""
-meaning = ""
+unit = "ms"
+meaning = "time constant of the second slow variable"
+range = [
+    1000.0,
+    300000.0,
+]
 
 [parameters.v_threshold]
 default = -20.0
-unit = ""
-meaning = ""
+unit = "mV"
+meaning = "voltage at which a spike is registered"
+range = [
+    -40.0,
+    10.0,
+]
 
 [integration]
 dt = 0.5

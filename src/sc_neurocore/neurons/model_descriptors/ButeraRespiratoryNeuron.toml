@@ -14,6 +14,11 @@ hardware_fit = []
 behavior_tags = []
 
 [provenance]
+authors = [
+    "Butera, R.J., Rinzel, J. & Smith, J.C.",
+]
+year = 1999
+doi = "10.1152/jn.1999.82.1.382"
 
 [state.v]
 init = -50.0
@@ -26,53 +31,93 @@ init = 0.5
 
 [parameters.g_na]
 default = 28.0
-unit = ""
-meaning = ""
+unit = "nS"
+meaning = "maximal fast sodium conductance"
+range = [
+    0.0,
+    100.0,
+]
 
 [parameters.g_nap]
 default = 2.8
-unit = ""
-meaning = ""
+unit = "nS"
+meaning = "maximal persistent sodium conductance"
+range = [
+    0.0,
+    20.0,
+]
 
 [parameters.g_k]
 default = 11.2
-unit = ""
-meaning = ""
+unit = "nS"
+meaning = "maximal delayed-rectifier potassium conductance"
+range = [
+    0.0,
+    50.0,
+]
 
 [parameters.g_l]
 default = 2.8
-unit = ""
-meaning = ""
+unit = "nS"
+meaning = "leak conductance"
+range = [
+    0.0,
+    20.0,
+]
 
 [parameters.e_na]
 default = 50.0
-unit = ""
-meaning = ""
+unit = "mV"
+meaning = "sodium reversal potential"
+range = [
+    30.0,
+    70.0,
+]
 
 [parameters.e_k]
 default = -85.0
-unit = ""
-meaning = ""
+unit = "mV"
+meaning = "potassium reversal potential"
+range = [
+    -100.0,
+    -70.0,
+]
 
 [parameters.e_l]
 default = -65.0
-unit = ""
-meaning = ""
+unit = "mV"
+meaning = "leak reversal potential"
+range = [
+    -80.0,
+    -40.0,
+]
 
 [parameters.e_syn]
 default = -10.0
-unit = ""
-meaning = ""
+unit = "mV"
+meaning = "reversal potential of the tonic synaptic drive"
+range = [
+    -40.0,
+    10.0,
+]
 
 [parameters.tau_h]
 default = 10000.0
-unit = ""
-meaning = ""
+unit = "ms"
+meaning = "maximal inactivation time constant of the persistent sodium current"
+range = [
+    1000.0,
+    30000.0,
+]
 
 [parameters.v_threshold]
 default = -20.0
-unit = ""
-meaning = ""
+unit = "mV"
+meaning = "voltage at which a spike is registered"
+range = [
+    -40.0,
+    10.0,
+]
 
 [integration]
 dt = 0.1

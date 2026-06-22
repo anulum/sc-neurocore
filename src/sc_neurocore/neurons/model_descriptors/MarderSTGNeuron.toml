@@ -14,6 +14,11 @@ hardware_fit = []
 behavior_tags = []
 
 [provenance]
+authors = [
+    "Marder, E. & Calabrese, R.L.",
+]
+year = 1996
+doi = "10.1152/physrev.1996.76.3.687"
 
 [state.v]
 init = -60.0
@@ -50,83 +55,147 @@ init = 0.05
 
 [parameters.g_na]
 default = 200.0
-unit = ""
-meaning = ""
+unit = "mS/cm^2"
+meaning = "maximal fast sodium conductance"
+range = [
+    0.0,
+    1000.0,
+]
 
 [parameters.g_cat]
 default = 2.5
-unit = ""
-meaning = ""
+unit = "mS/cm^2"
+meaning = "maximal transient (T-type) calcium conductance"
+range = [
+    0.0,
+    50.0,
+]
 
 [parameters.g_cas]
 default = 4.0
-unit = ""
-meaning = ""
+unit = "mS/cm^2"
+meaning = "maximal slow calcium conductance"
+range = [
+    0.0,
+    50.0,
+]
 
 [parameters.g_a]
 default = 50.0
-unit = ""
-meaning = ""
+unit = "mS/cm^2"
+meaning = "maximal transient A-type potassium conductance"
+range = [
+    0.0,
+    200.0,
+]
 
 [parameters.g_kca]
 default = 25.0
-unit = ""
-meaning = ""
+unit = "mS/cm^2"
+meaning = "maximal calcium-activated potassium conductance"
+range = [
+    0.0,
+    200.0,
+]
 
 [parameters.g_kd]
 default = 75.0
-unit = ""
-meaning = ""
+unit = "mS/cm^2"
+meaning = "maximal delayed-rectifier potassium conductance"
+range = [
+    0.0,
+    300.0,
+]
 
 [parameters.g_h]
 default = 0.01
-unit = ""
-meaning = ""
+unit = "mS/cm^2"
+meaning = "maximal hyperpolarisation-activated (H) conductance"
+range = [
+    0.0,
+    1.0,
+]
 
 [parameters.g_l]
 default = 0.01
-unit = ""
-meaning = ""
+unit = "mS/cm^2"
+meaning = "leak conductance"
+range = [
+    0.0,
+    1.0,
+]
 
 [parameters.e_na]
 default = 50.0
-unit = ""
-meaning = ""
+unit = "mV"
+meaning = "sodium reversal potential"
+range = [
+    30.0,
+    70.0,
+]
 
 [parameters.e_ca]
 default = 80.0
-unit = ""
-meaning = ""
+unit = "mV"
+meaning = "calcium reversal potential"
+range = [
+    60.0,
+    150.0,
+]
 
 [parameters.e_k]
 default = -80.0
-unit = ""
-meaning = ""
+unit = "mV"
+meaning = "potassium reversal potential"
+range = [
+    -100.0,
+    -60.0,
+]
 
 [parameters.e_h]
 default = -20.0
-unit = ""
-meaning = ""
+unit = "mV"
+meaning = "H-current reversal potential"
+range = [
+    -40.0,
+    0.0,
+]
 
 [parameters.e_l]
 default = -50.0
-unit = ""
-meaning = ""
+unit = "mV"
+meaning = "leak reversal potential"
+range = [
+    -70.0,
+    -30.0,
+]
 
 [parameters.ca_decay]
 default = 0.02
-unit = ""
-meaning = ""
+unit = "1/ms"
+meaning = "calcium efflux (removal) rate"
+range = [
+    0.001,
+    1.0,
+]
 
 [parameters.f_ca]
 default = 0.0003
-unit = ""
-meaning = ""
+unit = "cm^2/(uA*ms)"
+meaning = "calcium influx coefficient converting calcium current into concentration change"
+range = [
+    0.0001,
+    0.01,
+]
 
 [parameters.v_threshold]
 default = -20.0
-unit = ""
-meaning = ""
+unit = "mV"
+meaning = "voltage at which a spike is registered"
+range = [
+    -40.0,
+    20.0,
+]
 
 [integration]
 dt = 0.05

@@ -4,7 +4,7 @@
 # © Code 2020–2026 Miroslav Šotek. All rights reserved.
 # ORCID: 0009-0009-3560-0851
 # Contact: www.anulum.li | protoscience@anulum.li
-# SC-NeuroCore — Bertram et al. 2008 — phantom burster with dual slow
+# SC-NeuroCore — Bertram et al. 2000 — phantom burster with dual slow
 
 from __future__ import annotations
 
@@ -51,7 +51,7 @@ def _gate_value(name: str, value: float) -> float:
 
 @dataclass
 class BertramPhantomBurster:
-    """Bertram et al. 2008 — phantom burster with dual slow variables.
+    """Bertram et al. 2000 — phantom burster with dual slow variables.
 
     C dV/dt  = -(I_Ca + I_K + I_s1 + I_s2 + I_L) + I_ext
     ds1/dt   = (s1_inf(V) - s1) / tau_s1
@@ -60,7 +60,8 @@ class BertramPhantomBurster:
     Two slow variables (s1, s2) with different timescales produce
     bursting via a phantom slow manifold.
 
-    Reference: Bertram, R. et al. (1995). Biophys. J. 68:2323–2332.
+    Reference: Bertram, R., Previte, J., Sherman, A., Kinard, T.A. & Satin, L.S.
+    (2000). Biophys. J. 79:2880–2892.
     """
 
     v: float = -50.0

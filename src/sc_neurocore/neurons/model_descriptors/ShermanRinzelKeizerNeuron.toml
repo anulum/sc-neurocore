@@ -14,6 +14,11 @@ hardware_fit = []
 behavior_tags = []
 
 [provenance]
+authors = [
+    "Sherman, A., Rinzel, J. & Keizer, J.",
+]
+year = 1988
+doi = "10.1016/S0006-3495(88)82975-8"
 
 [state.v]
 init = -50.0
@@ -26,38 +31,66 @@ init = 0.1
 
 [parameters.g_ca]
 default = 3.6
-unit = ""
-meaning = ""
+unit = "mS/cm^2"
+meaning = "maximal calcium conductance"
+range = [
+    0.0,
+    20.0,
+]
 
 [parameters.g_k]
 default = 10.0
-unit = ""
-meaning = ""
+unit = "mS/cm^2"
+meaning = "maximal potassium conductance"
+range = [
+    0.0,
+    50.0,
+]
 
 [parameters.g_s]
 default = 4.0
-unit = ""
-meaning = ""
+unit = "mS/cm^2"
+meaning = "maximal conductance of the slow current"
+range = [
+    0.0,
+    20.0,
+]
 
 [parameters.e_ca]
 default = 25.0
-unit = ""
-meaning = ""
+unit = "mV"
+meaning = "calcium reversal potential"
+range = [
+    0.0,
+    150.0,
+]
 
 [parameters.e_k]
 default = -75.0
-unit = ""
-meaning = ""
+unit = "mV"
+meaning = "potassium reversal potential"
+range = [
+    -100.0,
+    -50.0,
+]
 
 [parameters.tau_s]
 default = 5000.0
-unit = ""
-meaning = ""
+unit = "ms"
+meaning = "time constant of the slow gating variable"
+range = [
+    1000.0,
+    20000.0,
+]
 
 [parameters.v_threshold]
 default = -20.0
-unit = ""
-meaning = ""
+unit = "mV"
+meaning = "voltage at which a spike is registered"
+range = [
+    -40.0,
+    10.0,
+]
 
 [integration]
 dt = 0.5
