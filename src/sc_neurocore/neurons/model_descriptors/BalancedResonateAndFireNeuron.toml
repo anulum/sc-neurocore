@@ -21,10 +21,8 @@ init = 0.0
 [state.y]
 init = 0.0
 
-[parameters.q]
-default = 0.0
-unit = ""
-meaning = ""
+[state.q]
+init = 0.0
 
 [parameters.omega]
 default = 10.0

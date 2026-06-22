@@ -21,6 +21,9 @@ init = 0.9
 [state.n]
 init = 0.0
 
+[state.q]
+init = 0.0
+
 [state.ca]
 init = 0.0
 
@@ -31,11 +34,6 @@ meaning = ""
 
 [parameters.vd]
 default = -65.0
-unit = ""
-meaning = ""
-
-[parameters.q]
-default = 0.0
 unit = ""
 meaning = ""
 

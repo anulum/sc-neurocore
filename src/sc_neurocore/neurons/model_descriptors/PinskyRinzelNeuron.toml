@@ -24,6 +24,9 @@ init = 0.1
 [state.s]
 init = 0.0
 
+[state.q]
+init = 0.0
+
 [parameters.v_s]
 default = -60.0
 unit = ""
@@ -35,11 +38,6 @@ unit = ""
 meaning = ""
 
 [parameters.c]
-default = 0.0
-unit = ""
-meaning = ""
-
-[parameters.q]
 default = 0.0
 unit = ""
 meaning = ""

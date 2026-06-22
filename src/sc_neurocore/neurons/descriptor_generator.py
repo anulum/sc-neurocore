@@ -43,7 +43,7 @@ from sc_neurocore.neurons.models import _CLASS_TO_MODULE
 # three-variable models (suffixed forms like ``x_rest`` stay parameters via
 # ``_is_param``).
 _KNOWN_STATE_VARS = frozenset(
-    {"v", "w", "u", "h", "n", "m", "ca", "s", "s1", "s2", "r", "theta", "vm", "x", "y", "z"}
+    {"v", "w", "u", "h", "n", "m", "ca", "s", "s1", "s2", "q", "r", "theta", "vm", "x", "y", "z"}
 )
 _PARAM_PREFIXES = ("v_", "e_", "g_", "tau_", "c_", "sigma", "alpha", "beta")
 _PARAM_SUFFIXES = ("_threshold", "_reset", "_rest", "_rev", "_max", "_min")
