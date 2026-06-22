@@ -107,6 +107,93 @@ def test_l5_rejects_invalid_parameters_and_inputs() -> None:
     with pytest.raises(ValueError, match="synchronization"):
         layer.step(0.01, l4_input={"synchronization": np.nan})
     with pytest.raises(ValueError, match="external_event"):
-        layer.step(0.01, external_event={0: np.nan})
+        layer.step(0.01, external_event=cast(Any, {0: np.nan}))
     with pytest.raises(ValueError, match="intensity"):
         layer.step(0.01, external_event={"type": "stress", "intensity": np.nan})
+
+
+def test_l5_rejects_negative_rng_seed() -> None:
+    with pytest.raises(ValueError, match="rng_seed"):
+        L5_OrganismalLayer(L5_StochasticParameters(rng_seed=-1))
+
+
+def test_l5_rejects_unknown_external_event_type_and_keys() -> None:
+    layer = L5_OrganismalLayer(L5_StochasticParameters(n_autonomic_nodes=8, bitstream_length=16))
+    with pytest.raises(ValueError, match="external_event type"):
+        layer.step(0.01, external_event={"type": "euphoria"})
+    with pytest.raises(ValueError, match="dimension values must be finite"):
+        layer.step(0.01, external_event={"valence": np.nan})
+    with pytest.raises(ValueError, match="external_event keys"):
+        layer.step(0.01, external_event=cast(Any, {"banana": 0.5}))
+
+
+def test_l5_trims_rr_interval_history_beyond_window() -> None:
+    layer = L5_OrganismalLayer(
+        L5_StochasticParameters(
+            n_autonomic_nodes=6, bitstream_length=8, emotional_noise=0.0, rng_seed=1
+        )
+    )
+    for _ in range(150):
+        layer.step(0.01)
+    assert len(layer.rr_intervals) == 100
+
+
+def test_l5_get_global_metric_combines_hrv_and_emotional_stability() -> None:
+    layer = L5_OrganismalLayer(
+        L5_StochasticParameters(
+            n_autonomic_nodes=8, bitstream_length=16, emotional_noise=0.0, rng_seed=7
+        )
+    )
+    for _ in range(5):
+        layer.step(0.01)
+
+    metric = layer.get_global_metric()
+    assert isinstance(metric, float)
+    assert 0.0 <= metric <= 1.0
+    assert layer.get_emotional_valence() == pytest.approx(
+        float(layer.emotional_state[layer.VALENCE])
+    )
+
+
+def test_l5_calm_and_reward_events_shift_emotional_state() -> None:
+    calm_layer = L5_OrganismalLayer(
+        L5_StochasticParameters(
+            n_autonomic_nodes=8, bitstream_length=16, emotional_noise=0.0, rng_seed=3
+        )
+    )
+    calm_before = calm_layer.emotional_state.copy()
+    calm = calm_layer.step(0.01, external_event={"type": "calm", "intensity": 0.8})
+    assert calm["emotional_state"][calm_layer.SAFETY] > calm_before[calm_layer.SAFETY]
+    assert calm["emotional_state"][calm_layer.AROUSAL] < calm_before[calm_layer.AROUSAL]
+
+    reward_layer = L5_OrganismalLayer(
+        L5_StochasticParameters(
+            n_autonomic_nodes=8, bitstream_length=16, emotional_noise=0.0, rng_seed=3
+        )
+    )
+    reward_before = reward_layer.emotional_state.copy()
+    reward = reward_layer.step(0.01, external_event={"type": "reward", "intensity": 0.8})
+    assert reward["emotional_state"][reward_layer.VALENCE] > reward_before[reward_layer.VALENCE]
+    assert reward["emotional_state"][reward_layer.APPROACH] > reward_before[reward_layer.APPROACH]
+
+
+def test_l5_named_dimension_event_key_adjusts_that_dimension() -> None:
+    layer = L5_OrganismalLayer(
+        L5_StochasticParameters(
+            n_autonomic_nodes=8, bitstream_length=16, emotional_noise=0.0, rng_seed=9
+        )
+    )
+    before = layer.emotional_state.copy()
+    result = layer.step(0.01, external_event={"fairness": 0.5})
+    assert result["emotional_state"][layer.FAIRNESS] > before[layer.FAIRNESS]
+
+
+def test_l5_integer_dimension_event_key_adjusts_that_dimension() -> None:
+    layer = L5_OrganismalLayer(
+        L5_StochasticParameters(
+            n_autonomic_nodes=8, bitstream_length=16, emotional_noise=0.0, rng_seed=11
+        )
+    )
+    before = layer.emotional_state.copy()
+    result = layer.step(0.01, external_event=cast(Any, {layer.DOMINANCE: 0.4}))
+    assert result["emotional_state"][layer.DOMINANCE] > before[layer.DOMINANCE]
