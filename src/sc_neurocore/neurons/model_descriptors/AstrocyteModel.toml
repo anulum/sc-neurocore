@@ -21,10 +21,8 @@ init = 0.05
 [state.h]
 init = 0.8
 
-[parameters.ip3]
-default = 0.5
-unit = ""
-meaning = ""
+[state.ip3]
+init = 0.5
 
 [parameters.v_er]
 default = 0.9

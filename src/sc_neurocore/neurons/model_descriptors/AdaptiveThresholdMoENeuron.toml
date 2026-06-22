@@ -18,6 +18,9 @@ behavior_tags = []
 [state.v]
 init = 0.0
 
+[state.v_th]
+init = 1.0
+
 [parameters.k]
 default = 4.0
 unit = ""
@@ -25,11 +28,6 @@ meaning = ""
 
 [parameters.ema_alpha]
 default = 0.1
-unit = ""
-meaning = ""
-
-[parameters.v_th]
-default = 1.0
 unit = ""
 meaning = ""
 

@@ -21,21 +21,17 @@ init = -65.0
 [state.h_na]
 init = 0.6
 
+[state.n_k]
+init = 0.3
+
 [state.m_h]
 init = 0.0
 
 [state.h_t]
 init = 0.9
 
-[parameters.n_k]
-default = 0.3
-unit = ""
-meaning = ""
-
-[parameters.na_i]
-default = 5.0
-unit = ""
-meaning = ""
+[state.na_i]
+init = 5.0
 
 [parameters.g_na]
 default = 50.0

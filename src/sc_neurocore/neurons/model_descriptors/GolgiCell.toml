@@ -24,8 +24,17 @@ init = 0.02
 [state.h]
 init = 0.85
 
+[state.p_na]
+init = 0.01
+
 [state.n]
 init = 0.05
+
+[state.a]
+init = 0.1
+
+[state.b]
+init = 0.8
 
 [state.w]
 init = 0.01
@@ -36,31 +45,14 @@ init = 0.01
 [state.s]
 init = 0.9
 
+[state.c_n]
+init = 0.01
+
 [state.r]
 init = 0.1
 
 [state.ca]
 init = 0.05
-
-[parameters.p_na]
-default = 0.01
-unit = ""
-meaning = ""
-
-[parameters.a]
-default = 0.1
-unit = ""
-meaning = ""
-
-[parameters.b]
-default = 0.8
-unit = ""
-meaning = ""
-
-[parameters.c_n]
-default = 0.01
-unit = ""
-meaning = ""
 
 [parameters.g_na_t]
 default = 48.0

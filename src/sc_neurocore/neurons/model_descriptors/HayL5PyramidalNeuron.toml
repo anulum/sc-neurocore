@@ -15,8 +15,17 @@ behavior_tags = []
 
 [provenance]
 
+[state.v_s]
+init = -75.0
+
 [state.h_na]
 init = 0.9
+
+[state.n_k]
+init = 0.1
+
+[state.v_t]
+init = -75.0
 
 [state.m_ca]
 init = 0.0
@@ -27,30 +36,11 @@ init = 1.0
 [state.m_ih]
 init = 0.0
 
-[parameters.v_s]
-default = -75.0
-unit = ""
-meaning = ""
+[state.v_a]
+init = -75.0
 
-[parameters.n_k]
-default = 0.1
-unit = ""
-meaning = ""
-
-[parameters.v_t]
-default = -75.0
-unit = ""
-meaning = ""
-
-[parameters.v_a]
-default = -75.0
-unit = ""
-meaning = ""
-
-[parameters.ca_a]
-default = 0.0001
-unit = ""
-meaning = ""
+[state.ca_a]
+init = 0.0001
 
 [parameters.g_na]
 default = 300.0

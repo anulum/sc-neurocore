@@ -15,17 +15,11 @@ behavior_tags = []
 
 [provenance]
 
-[state]
+[state.v_pos]
+init = 0.0
 
-[parameters.v_pos]
-default = 0.0
-unit = ""
-meaning = ""
-
-[parameters.v_neg]
-default = 0.0
-unit = ""
-meaning = ""
+[state.v_neg]
+init = 0.0
 
 [parameters.tau]
 default = 10.0

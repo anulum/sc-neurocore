@@ -15,18 +15,14 @@ behavior_tags = []
 
 [provenance]
 
+[state.e]
+init = 0.1
+
+[state.i]
+init = 0.05
+
 [state.theta]
 init = 4.0
-
-[parameters.e]
-default = 0.1
-unit = ""
-meaning = ""
-
-[parameters.i]
-default = 0.05
-unit = ""
-meaning = ""
 
 [parameters.w_ee]
 default = 10.0

@@ -15,12 +15,8 @@ behavior_tags = []
 
 [provenance]
 
-[state]
-
-[parameters.a]
-default = 0.0
-unit = ""
-meaning = ""
+[state.a]
+init = 0.0
 
 [parameters.f_max]
 default = 200.0

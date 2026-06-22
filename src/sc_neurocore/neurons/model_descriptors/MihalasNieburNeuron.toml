@@ -21,15 +21,11 @@ init = 0.0
 [state.theta]
 init = 1.0
 
-[parameters.i1]
-default = 0.0
-unit = ""
-meaning = ""
+[state.i1]
+init = 0.0
 
-[parameters.i2]
-default = 0.0
-unit = ""
-meaning = ""
+[state.i2]
+init = 0.0
 
 [parameters.v_rest]
 default = 0.0

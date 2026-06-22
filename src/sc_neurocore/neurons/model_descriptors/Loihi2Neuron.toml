@@ -21,10 +21,8 @@ init = 0.0
 [state.s2]
 init = 0.0
 
-[parameters.s3]
-default = 0.0
-unit = ""
-meaning = ""
+[state.s3]
+init = 0.0
 
 [parameters.tau1]
 default = 10.0

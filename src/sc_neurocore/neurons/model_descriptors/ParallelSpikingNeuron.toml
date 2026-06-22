@@ -15,12 +15,8 @@ behavior_tags = []
 
 [provenance]
 
-[state]
-
-[parameters.kernel_size]
-default = 8.0
-unit = ""
-meaning = ""
+[state.kernel_size]
+init = 8.0
 
 [parameters.v_threshold]
 default = 1.0

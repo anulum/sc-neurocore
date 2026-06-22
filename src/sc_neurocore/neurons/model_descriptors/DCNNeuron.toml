@@ -24,6 +24,9 @@ init = 0.6
 [state.n]
 init = 0.32
 
+[state.p]
+init = 0.01
+
 [state.s]
 init = 0.8
 
@@ -32,11 +35,6 @@ init = 0.1
 
 [state.ca]
 init = 0.05
-
-[parameters.p]
-default = 0.01
-unit = ""
-meaning = ""
 
 [parameters.g_na]
 default = 35.0

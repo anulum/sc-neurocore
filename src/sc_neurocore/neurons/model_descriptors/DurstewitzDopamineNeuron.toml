@@ -21,10 +21,8 @@ init = -65.0
 [state.h_na]
 init = 0.7
 
-[parameters.n_k]
-default = 0.2
-unit = ""
-meaning = ""
+[state.n_k]
+init = 0.2
 
 [parameters.g_na]
 default = 45.0

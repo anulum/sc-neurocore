@@ -18,6 +18,12 @@ behavior_tags = []
 [state.theta]
 init = 1.0
 
+[state.z_re]
+init = 0.0
+
+[state.z_im]
+init = 0.0
+
 [parameters.tau]
 default = 20.0
 unit = ""
@@ -30,16 +36,6 @@ meaning = ""
 
 [parameters.seed]
 default = 12345.0
-unit = ""
-meaning = ""
-
-[parameters.z_re]
-default = 0.0
-unit = ""
-meaning = ""
-
-[parameters.z_im]
-default = 0.0
 unit = ""
 meaning = ""
 

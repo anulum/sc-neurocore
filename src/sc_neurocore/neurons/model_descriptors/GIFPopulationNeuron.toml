@@ -21,10 +21,8 @@ init = -65.0
 [state.theta]
 init = -50.0
 
-[parameters.eta]
-default = 0.0
-unit = ""
-meaning = ""
+[state.eta]
+init = 0.0
 
 [parameters.tau_m]
 default = 20.0

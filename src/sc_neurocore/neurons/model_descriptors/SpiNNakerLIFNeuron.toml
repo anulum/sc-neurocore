@@ -18,6 +18,9 @@ behavior_tags = []
 [state.v]
 init = -70.0
 
+[state.refrac_count]
+init = 0.0
+
 [parameters.v_rest]
 default = -70.0
 unit = ""
@@ -45,11 +48,6 @@ meaning = ""
 
 [parameters.tau_refrac]
 default = 2.0
-unit = ""
-meaning = ""
-
-[parameters.refrac_count]
-default = 0.0
 unit = ""
 meaning = ""
 

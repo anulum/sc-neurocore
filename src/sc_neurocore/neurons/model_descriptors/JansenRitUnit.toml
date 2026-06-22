@@ -15,38 +15,26 @@ behavior_tags = []
 
 [provenance]
 
+[state.y0]
+init = 0.0
+
+[state.y3]
+init = 0.0
+
+[state.y1]
+init = 0.0
+
+[state.y4]
+init = 0.0
+
+[state.y2]
+init = 0.0
+
+[state.y5]
+init = 0.0
+
 [state.r]
 init = 0.56
-
-[parameters.y0]
-default = 0.0
-unit = ""
-meaning = ""
-
-[parameters.y3]
-default = 0.0
-unit = ""
-meaning = ""
-
-[parameters.y1]
-default = 0.0
-unit = ""
-meaning = ""
-
-[parameters.y4]
-default = 0.0
-unit = ""
-meaning = ""
-
-[parameters.y2]
-default = 0.0
-unit = ""
-meaning = ""
-
-[parameters.y5]
-default = 0.0
-unit = ""
-meaning = ""
 
 [parameters.a_exc]
 default = 3.25

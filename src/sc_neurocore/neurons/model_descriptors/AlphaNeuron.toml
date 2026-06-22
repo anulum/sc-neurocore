@@ -18,25 +18,17 @@ behavior_tags = []
 [state.v]
 init = 0.0
 
-[parameters.i_exc]
-default = 0.0
-unit = ""
-meaning = ""
+[state.i_exc]
+init = 0.0
 
-[parameters.i_inh]
-default = 0.0
-unit = ""
-meaning = ""
+[state.i_inh]
+init = 0.0
 
-[parameters.a_exc]
-default = 0.0
-unit = ""
-meaning = ""
+[state.a_exc]
+init = 0.0
 
-[parameters.a_inh]
-default = 0.0
-unit = ""
-meaning = ""
+[state.a_inh]
+init = 0.0
 
 [parameters.v_rest]
 default = 0.0

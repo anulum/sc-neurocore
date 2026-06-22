@@ -21,10 +21,12 @@ validates.
 
 from __future__ import annotations
 
+import ast
 import dataclasses
 import importlib
 import inspect
 import re
+import textwrap
 from collections.abc import Mapping
 from typing import Any
 
@@ -122,6 +124,74 @@ def _is_param(name: str) -> bool:
     return name.startswith(_PARAM_PREFIXES) or name.endswith(_PARAM_SUFFIXES)
 
 
+# Methods whose ``self.x = ...`` assignments are construction or sanitisation,
+# not integration dynamics. Everything else (step, simulate, reset, helpers) that
+# assigns an instance field is treated as evidence the field is state.
+_NON_DYNAMICS_METHOD_PREFIXES = (
+    "validate",
+    "raise",
+    "check",
+    "finite",
+    "ensure",
+    "assert",
+    "nonneg",
+    "non_negative",
+    "positive",
+    "clamp",
+    "sanitize",
+    "guard",
+)
+
+
+def _is_non_dynamics_method(name: str) -> bool:
+    if name in ("__init__", "__post_init__"):
+        return True
+    return name.lstrip("_").startswith(_NON_DYNAMICS_METHOD_PREFIXES)
+
+
+def _dynamic_state_fields(cls: type) -> frozenset[str]:
+    """Return instance fields assigned outside construction and validation.
+
+    A field assigned (``self.x = ...`` or ``self.x += ...``, including tuple
+    unpacking) inside a dynamics method — step, simulate, reset, or a helper they
+    call — is an integration state variable. Assignments confined to
+    ``__init__``/``__post_init__`` or a validation/clamp helper are construction or
+    sanitisation, not state. This reads the model's actual behaviour rather than
+    guessing from the field name, which the name heuristics cannot do reliably for
+    internal currents (i1, i2), traces (inh_trace), and adaptation variables.
+    """
+
+    try:
+        source = textwrap.dedent(inspect.getsource(cls))
+        tree = ast.parse(source)
+    except (OSError, TypeError, SyntaxError):
+        return frozenset()
+    classdef = next((node for node in tree.body if isinstance(node, ast.ClassDef)), None)
+    if classdef is None:
+        return frozenset()
+    fields: set[str] = set()
+    for node in classdef.body:
+        if not isinstance(node, ast.FunctionDef | ast.AsyncFunctionDef):
+            continue
+        if _is_non_dynamics_method(node.name):
+            continue
+        for sub in ast.walk(node):
+            targets: list[ast.expr] = []
+            if isinstance(sub, ast.Assign):
+                targets = list(sub.targets)
+            elif isinstance(sub, ast.AugAssign):
+                targets = [sub.target]
+            for target in targets:
+                for leaf in ast.walk(target):
+                    if (
+                        isinstance(leaf, ast.Attribute)
+                        and isinstance(leaf.value, ast.Name)
+                        and leaf.value.id == "self"
+                    ):
+                        fields.add(leaf.attr)
+    return frozenset(fields)
+
+
 def _load_v1_schema(module: str) -> dict[str, Any]:
     """Return the curated v1 schema for a module, or an empty mapping."""
 
@@ -174,6 +244,7 @@ def generate_descriptor_payload(class_name: str) -> dict[str, Any]:
     v1_params = v1.get("parameters", {}) if isinstance(v1.get("parameters"), Mapping) else {}
 
     specs = _field_specs(cls)
+    dyn_state = _dynamic_state_fields(cls)
     state: dict[str, Any] = {}
     parameters: dict[str, Any] = {}
     dt = 0.1
@@ -183,12 +254,16 @@ def generate_descriptor_payload(class_name: str) -> dict[str, Any]:
             continue
         if name in v1_state:
             state[name] = {"init": float(v1_state[name]) if _is_number(v1_state[name]) else default}
-        elif name in v1_params or _is_param(name):
+        elif name in v1_params:
+            # A curated v1 schema is authoritative: it keeps its declared parameters.
             parameters[name] = {"default": default, "unit": "", "meaning": ""}
-        elif _is_state_var(name):
+        elif name in dyn_state:
+            # Assigned by the model's dynamics — an integration state variable.
             state[name] = {"init": default}
-        else:
+        elif _is_param(name) or not _is_state_var(name):
             parameters[name] = {"default": default, "unit": "", "meaning": ""}
+        else:
+            state[name] = {"init": default}
     # No fabricated fallback: a model whose integration state is an internal
     # accumulator (rate, statistical, and generator models) exposes no numeric
     # state field, so its declared state stays empty until curated rather than

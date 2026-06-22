@@ -27,13 +27,11 @@ init = 0.8
 [state.n]
 init = 0.2
 
+[state.p]
+init = 0.0
+
 [state.s]
 init = 0.9
-
-[parameters.p]
-default = 0.0
-unit = ""
-meaning = ""
 
 [parameters.g_na]
 default = 40.0

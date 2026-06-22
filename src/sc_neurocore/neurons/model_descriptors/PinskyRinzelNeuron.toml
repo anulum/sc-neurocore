@@ -15,6 +15,12 @@ behavior_tags = []
 
 [provenance]
 
+[state.v_s]
+init = -60.0
+
+[state.v_d]
+init = -60.0
+
 [state.h]
 init = 0.9
 
@@ -24,23 +30,11 @@ init = 0.1
 [state.s]
 init = 0.0
 
-[state.q]
+[state.c]
 init = 0.0
 
-[parameters.v_s]
-default = -60.0
-unit = ""
-meaning = ""
-
-[parameters.v_d]
-default = -60.0
-unit = ""
-meaning = ""
-
-[parameters.c]
-default = 0.0
-unit = ""
-meaning = ""
+[state.q]
+init = 0.0
 
 [parameters.gc]
 default = 2.1

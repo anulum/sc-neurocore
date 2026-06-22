@@ -18,10 +18,8 @@ behavior_tags = []
 [state.v]
 init = 0.0
 
-[parameters.trace]
-default = 0.0
-unit = ""
-meaning = ""
+[state.trace]
+init = 0.0
 
 [parameters.tau_m]
 default = 10.0

@@ -18,13 +18,11 @@ behavior_tags = []
 [state.v]
 init = 0.0
 
+[state.pred]
+init = 0.0
+
 [state.theta]
 init = 1.0
-
-[parameters.pred]
-default = 0.0
-unit = ""
-meaning = ""
 
 [parameters.tau]
 default = 10.0

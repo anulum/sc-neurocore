@@ -15,21 +15,20 @@ behavior_tags = []
 
 [provenance]
 
+[state.v_fast]
+init = 0.0
+
+[state.v_work]
+init = 0.0
+
+[state.v_deep]
+init = 0.0
+
 [state.theta]
 init = 1.0
 
-[parameters.v_fast]
-default = 0.0
-unit = ""
-meaning = ""
-
 [parameters.tau_fast]
 default = 5.0
-unit = ""
-meaning = ""
-
-[parameters.v_work]
-default = 0.0
 unit = ""
 meaning = ""
 
@@ -40,11 +39,6 @@ meaning = ""
 
 [parameters.alpha_w]
 default = 0.3
-unit = ""
-meaning = ""
-
-[parameters.v_deep]
-default = 0.0
 unit = ""
 meaning = ""
 

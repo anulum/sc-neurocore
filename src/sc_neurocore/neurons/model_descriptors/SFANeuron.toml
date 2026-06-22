@@ -18,10 +18,8 @@ behavior_tags = []
 [state.v]
 init = -70.0
 
-[parameters.g_sfa]
-default = 0.0
-unit = ""
-meaning = ""
+[state.g_sfa]
+init = 0.0
 
 [parameters.v_rest]
 default = -70.0

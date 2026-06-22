@@ -24,18 +24,14 @@ init = 0.8
 [state.n]
 init = 0.1
 
+[state.a]
+init = 0.0
+
+[state.b]
+init = 0.9
+
 [state.ca]
 init = 0.05
-
-[parameters.a]
-default = 0.0
-unit = ""
-meaning = ""
-
-[parameters.b]
-default = 0.9
-unit = ""
-meaning = ""
 
 [parameters.g_na]
 default = 35.0

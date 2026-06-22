@@ -18,6 +18,9 @@ behavior_tags = []
 [state.v]
 init = -65.0
 
+[state.adapt]
+init = 0.0
+
 [parameters.v_rest]
 default = -65.0
 unit = ""
@@ -35,11 +38,6 @@ meaning = ""
 
 [parameters.tau]
 default = 8.0
-unit = ""
-meaning = ""
-
-[parameters.adapt]
-default = 0.0
 unit = ""
 meaning = ""
 

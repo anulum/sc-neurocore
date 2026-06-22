@@ -15,18 +15,14 @@ behavior_tags = []
 
 [provenance]
 
+[state.phi]
+init = 0.0
+
+[state.amplitude]
+init = 0.0
+
 [state.theta]
 init = 0.8
-
-[parameters.phi]
-default = 0.0
-unit = ""
-meaning = ""
-
-[parameters.amplitude]
-default = 0.0
-unit = ""
-meaning = ""
 
 [parameters.omega]
 default = 0.1

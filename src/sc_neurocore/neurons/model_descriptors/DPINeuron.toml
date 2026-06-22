@@ -15,12 +15,8 @@ behavior_tags = []
 
 [provenance]
 
-[state]
-
-[parameters.i_mem]
-default = 0.0
-unit = ""
-meaning = ""
+[state.i_mem]
+init = 0.0
 
 [parameters.i_threshold]
 default = 1.0

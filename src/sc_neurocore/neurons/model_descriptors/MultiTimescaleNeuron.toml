@@ -15,22 +15,14 @@ behavior_tags = []
 
 [provenance]
 
-[state]
+[state.v_fast]
+init = 0.0
 
-[parameters.v_fast]
-default = 0.0
-unit = ""
-meaning = ""
+[state.v_medium]
+init = 0.0
 
-[parameters.v_medium]
-default = 0.0
-unit = ""
-meaning = ""
-
-[parameters.v_slow]
-default = 0.0
-unit = ""
-meaning = ""
+[state.v_slow]
+init = 0.0
 
 [parameters.tau_fast]
 default = 5.0

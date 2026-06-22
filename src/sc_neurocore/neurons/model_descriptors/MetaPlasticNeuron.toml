@@ -18,18 +18,14 @@ behavior_tags = []
 [state.v]
 init = 0.0
 
+[state.error_trace]
+init = 0.0
+
+[state.expected_reward]
+init = 0.0
+
 [state.theta]
 init = 1.0
-
-[parameters.error_trace]
-default = 0.0
-unit = ""
-meaning = ""
-
-[parameters.expected_reward]
-default = 0.0
-unit = ""
-meaning = ""
 
 [parameters.tau]
 default = 10.0

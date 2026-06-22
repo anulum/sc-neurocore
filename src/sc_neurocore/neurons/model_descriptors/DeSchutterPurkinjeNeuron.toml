@@ -21,24 +21,20 @@ init = -68.0
 [state.h_na]
 init = 0.8
 
+[state.n_k]
+init = 0.1
+
 [state.m_cap]
 init = 0.0
 
 [state.h_cap]
 init = 0.9
 
+[state.q_kca]
+init = 0.0
+
 [state.ca]
 init = 0.0001
-
-[parameters.n_k]
-default = 0.1
-unit = ""
-meaning = ""
-
-[parameters.q_kca]
-default = 0.0
-unit = ""
-meaning = ""
 
 [parameters.g_na]
 default = 125.0

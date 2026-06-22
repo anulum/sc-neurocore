@@ -18,6 +18,9 @@ behavior_tags = []
 [state.v]
 init = -60.0
 
+[state.glutamate_release]
+init = 0.0
+
 [parameters.g_max]
 default = 10.0
 unit = ""
@@ -50,11 +53,6 @@ meaning = ""
 
 [parameters.delta]
 default = 0.1
-unit = ""
-meaning = ""
-
-[parameters.glutamate_release]
-default = 0.0
 unit = ""
 meaning = ""
 

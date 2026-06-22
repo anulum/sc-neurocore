@@ -24,10 +24,8 @@ init = 0.6
 [state.n]
 init = 0.32
 
-[parameters.s_nmda]
-default = 0.0
-unit = ""
-meaning = ""
+[state.s_nmda]
+init = 0.0
 
 [parameters.g_na]
 default = 35.0

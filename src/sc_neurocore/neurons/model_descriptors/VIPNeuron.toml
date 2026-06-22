@@ -24,15 +24,11 @@ init = 0.8
 [state.n]
 init = 0.1
 
-[parameters.a]
-default = 0.0
-unit = ""
-meaning = ""
+[state.a]
+init = 0.0
 
-[parameters.b]
-default = 0.9
-unit = ""
-meaning = ""
+[state.b]
+init = 0.9
 
 [parameters.g_na]
 default = 35.0

@@ -18,25 +18,17 @@ behavior_tags = []
 [state.v]
 init = -70.0
 
-[parameters.s_ampa]
-default = 0.0
-unit = ""
-meaning = ""
+[state.s_ampa]
+init = 0.0
 
-[parameters.s_nmda]
-default = 0.0
-unit = ""
-meaning = ""
+[state.s_nmda]
+init = 0.0
 
-[parameters.x_nmda]
-default = 0.0
-unit = ""
-meaning = ""
+[state.x_nmda]
+init = 0.0
 
-[parameters.s_gaba]
-default = 0.0
-unit = ""
-meaning = ""
+[state.s_gaba]
+init = 0.0
 
 [parameters.g_l]
 default = 0.025

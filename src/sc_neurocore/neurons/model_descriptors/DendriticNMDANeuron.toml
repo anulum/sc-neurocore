@@ -18,6 +18,12 @@ behavior_tags = []
 [state.theta]
 init = -50.0
 
+[state.v_soma]
+init = -65.0
+
+[state.v_dend]
+init = -65.0
+
 [parameters.g_nmda]
 default = 1.5
 unit = ""
@@ -45,16 +51,6 @@ meaning = ""
 
 [parameters.tau_dend]
 default = 50.0
-unit = ""
-meaning = ""
-
-[parameters.v_soma]
-default = -65.0
-unit = ""
-meaning = ""
-
-[parameters.v_dend]
-default = -65.0
 unit = ""
 meaning = ""
 

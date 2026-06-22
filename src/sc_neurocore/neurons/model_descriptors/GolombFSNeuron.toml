@@ -24,10 +24,8 @@ init = 0.9
 [state.n]
 init = 0.1
 
-[parameters.p]
-default = 0.0
-unit = ""
-meaning = ""
+[state.p]
+init = 0.0
 
 [parameters.g_na]
 default = 112.5

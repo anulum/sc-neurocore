@@ -15,6 +15,9 @@ behavior_tags = []
 
 [provenance]
 
+[state.window_size]
+init = 16.0
+
 [state.v]
 init = 0.0
 
@@ -25,11 +28,6 @@ meaning = ""
 
 [parameters.lambda_decay]
 default = 0.95
-unit = ""
-meaning = ""
-
-[parameters.window_size]
-default = 16.0
 unit = ""
 meaning = ""
 
