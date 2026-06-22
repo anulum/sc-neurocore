@@ -14,34 +14,59 @@ hardware_fit = []
 behavior_tags = []
 
 [provenance]
+authors = [
+    "Benda, J. & Herz, A.V.M.",
+]
+year = 2003
+doi = "10.1162/089976603322385063"
 
 [state.a]
 init = 0.0
 
 [parameters.f_max]
 default = 200.0
-unit = ""
-meaning = ""
+unit = "Hz"
+meaning = "maximum (unadapted) firing rate"
+range = [
+    1.0,
+    1000.0,
+]
 
 [parameters.beta]
 default = 0.1
-unit = ""
-meaning = ""
+unit = "1"
+meaning = "gain (steepness) of the normalised input-output firing function"
+range = [
+    0.0,
+    5.0,
+]
 
 [parameters.i_half]
 default = 5.0
-unit = ""
-meaning = ""
+unit = "1"
+meaning = "normalised input at which the firing rate reaches half its maximum"
+range = [
+    0.0,
+    50.0,
+]
 
 [parameters.tau_a]
 default = 100.0
-unit = ""
-meaning = ""
+unit = "ms"
+meaning = "adaptation time constant"
+range = [
+    1.0,
+    2000.0,
+]
 
 [parameters.delta_a]
 default = 0.5
-unit = ""
-meaning = ""
+unit = "1"
+meaning = "normalised adaptation increment added at each spike"
+range = [
+    0.0,
+    5.0,
+]
 
 [integration]
 dt = 1.0

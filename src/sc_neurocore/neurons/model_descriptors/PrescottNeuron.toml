@@ -14,6 +14,11 @@ hardware_fit = []
 behavior_tags = []
 
 [provenance]
+authors = [
+    "Prescott, S.A., De Koninck, Y. & Sejnowski, T.J.",
+]
+year = 2008
+doi = "10.1371/journal.pcbi.1000198"
 
 [state.v]
 init = -65.0
@@ -23,58 +28,102 @@ init = 0.0
 
 [parameters.g_fast]
 default = 20.0
-unit = ""
-meaning = ""
+unit = "mS/cm^2"
+meaning = "maximal fast (spike-generating) conductance"
+range = [
+    0.0,
+    50.0,
+]
 
 [parameters.g_slow]
 default = 20.0
-unit = ""
-meaning = ""
+unit = "mS/cm^2"
+meaning = "maximal slow (recovery) conductance"
+range = [
+    0.0,
+    50.0,
+]
 
 [parameters.g_l]
 default = 2.0
-unit = ""
-meaning = ""
+unit = "mS/cm^2"
+meaning = "leak conductance"
+range = [
+    0.0,
+    10.0,
+]
 
 [parameters.e_fast]
 default = 50.0
-unit = ""
-meaning = ""
+unit = "mV"
+meaning = "reversal potential of the fast current"
+range = [
+    30.0,
+    70.0,
+]
 
 [parameters.e_slow]
 default = -100.0
-unit = ""
-meaning = ""
+unit = "mV"
+meaning = "reversal potential of the slow current"
+range = [
+    -120.0,
+    -60.0,
+]
 
 [parameters.e_l]
 default = -70.0
-unit = ""
-meaning = ""
+unit = "mV"
+meaning = "leak reversal potential"
+range = [
+    -90.0,
+    -50.0,
+]
 
 [parameters.beta_w]
 default = -21.0
-unit = ""
-meaning = ""
+unit = "mV"
+meaning = "half-activation voltage of the slow (w) gating variable"
+range = [
+    -50.0,
+    0.0,
+]
 
 [parameters.gamma_w]
 default = 15.0
-unit = ""
-meaning = ""
+unit = "mV"
+meaning = "slope of the slow (w) gating activation"
+range = [
+    1.0,
+    40.0,
+]
 
 [parameters.tau_w]
 default = 100.0
-unit = ""
-meaning = ""
+unit = "ms"
+meaning = "time constant of the slow gating variable"
+range = [
+    1.0,
+    500.0,
+]
 
 [parameters.phi]
 default = 0.15
-unit = ""
-meaning = ""
+unit = "1"
+meaning = "temperature scaling factor of the slow gating kinetics"
+range = [
+    0.01,
+    2.0,
+]
 
 [parameters.v_threshold]
 default = -20.0
-unit = ""
-meaning = ""
+unit = "mV"
+meaning = "voltage at which a spike is registered"
+range = [
+    -40.0,
+    20.0,
+]
 
 [integration]
 dt = 0.1
