@@ -450,3 +450,14 @@ class TestThermalAnalysisBranches:
 
         with pytest.raises(ValueError, match="t_ambient_c must be finite"):
             thermal_analysis(100.0, 500.0, t_ambient_c=float("nan"))
+
+
+class TestEnergyHarvestZeroDesignPower:
+    """A non-positive design power has no ratio, so the harvester budget reports
+    a full duty cycle and saturated margin rather than dividing by zero."""
+
+    def test_zero_design_power_assumes_full_duty(self):
+        budget = model_energy_harvest(0.0, harvester_type="solar", environment="outdoor")
+        assert budget.recommended_duty_cycle == 1.0
+        assert budget.margin_pct == 100.0
+        assert budget.energy_positive is True
