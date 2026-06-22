@@ -12,7 +12,7 @@ export type StudioInputViewTab =
   "trace" | "phase" | "isi" | "fi-curve" | "bifurcation" | "sensitivity" |
   "precision" | "heatmap" | "verilog" | "code" | "compare" | "freq" |
   "sta" | "characterize" | "multi" | "network" | "ir" | "synth" |
-  "train" | "canvas" | "admin";
+  "train" | "canvas" | "delays" | "admin";
 
 export interface StudioSourceModeStatePatch {
   sourceMode: "model" | "ode";

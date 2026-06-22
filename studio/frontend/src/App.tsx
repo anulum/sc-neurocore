@@ -10,6 +10,7 @@ import SimulationPlot from "./components/SimulationPlot";
 import ModelInfo from "./components/ModelInfo";
 import ModelDocViewer from "./components/ModelDocViewer";
 import BackendMatrix from "./components/BackendMatrix";
+import DclsPanel from "./components/DclsPanel";
 import SpikeStats from "./components/SpikeStats";
 import ModelBrowser from "./components/ModelBrowser";
 import VerilogPreview from "./components/VerilogPreview";
@@ -326,6 +327,7 @@ export default function App() {
           <Tab active={s.activeTab === "compare"} color="#ce93d8" label="A/B" onClick={() => activatePanel("compare")} {...panelControl("compare")} />
           <Tab active={s.activeTab === "network"} color="#80cbc4" label="E-I" onClick={() => activatePanel("network")} {...panelControl("network")} />
           <Tab active={s.activeTab === "code"} color="#90a4ae" label="Code" onClick={() => activatePanel("code")} {...panelControl("code")} />
+          <Tab active={s.activeTab === "delays"} color="#f48fb1" label="Delays" onClick={() => activatePanel("delays")} {...panelControl("delays")} />
           {s.sourceMode === "ode" && (
             <>
               <Tab active={s.activeTab === "precision"} color="#80deea" label="Q8.8" onClick={() => activatePanel("precision")} {...panelControl("precision")} />
@@ -544,6 +546,8 @@ export default function App() {
             <CompilerInspector />
           ) : s.activeTab === "verilog" ? (
             <VerilogPreview />
+          ) : s.activeTab === "delays" ? (
+            <DclsPanel />
           ) : s.activeTab === "code" ? (
             <div style={{ flex: 1, padding: 8 }}>
               {s.codeScript ? (

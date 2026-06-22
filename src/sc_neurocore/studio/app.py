@@ -93,6 +93,11 @@ from sc_neurocore.studio.training import (
     stop_training,
     stream_metrics,
 )
+from sc_neurocore.studio.dcls import (
+    dcls_forward_parity,
+    dcls_kernel_info,
+    dcls_tent_profile,
+)
 from sc_neurocore.studio.models import (
     get_model_detail,
     list_models,
@@ -220,6 +225,14 @@ class FICurveRequest(BaseModel):
     i_min: float = 0.0
     i_max: float = 50.0
     i_steps: int = Field(default=25, ge=2, le=100)
+
+
+class DclsEvaluateRequest(BaseModel):
+    centre_q88: int = Field(default=512, ge=0, le=65535)
+    sigma_q88: int = Field(default=512, gt=0, le=65535)
+    n_taps: int = Field(default=8, ge=1, le=256)
+    spikes: list[int] | None = None
+    weights_q88: list[int] | None = None
 
 
 class CompileRequest(BaseModel):
@@ -2209,6 +2222,36 @@ def create_app(runtime_settings: StudioRuntimeSettings | None = None) -> FastAPI
                 )
             )
         )
+
+    # --- DCLS-max learnable-delay tent kernel (synaptic-delay layer) ---
+    @app.get("/api/dcls/info")
+    def api_dcls_info() -> Any:
+        return _safe(dcls_kernel_info)
+
+    @app.post("/api/dcls/evaluate")
+    def api_dcls_evaluate(dcls_request: DclsEvaluateRequest) -> Any:
+        def _evaluate() -> dict[str, Any]:
+            profile = dcls_tent_profile(
+                dcls_request.centre_q88, dcls_request.sigma_q88, dcls_request.n_taps
+            )
+            spikes = (
+                dcls_request.spikes
+                if dcls_request.spikes is not None
+                else [1] * dcls_request.n_taps
+            )
+            weights = (
+                dcls_request.weights_q88
+                if dcls_request.weights_q88 is not None
+                else [256] * len(spikes)
+            )
+            if len(spikes) != len(weights):
+                raise HTTPException(400, "spikes and weights_q88 must have equal length")
+            forward = dcls_forward_parity(
+                spikes, weights, dcls_request.centre_q88, dcls_request.sigma_q88
+            )
+            return {"profile": profile, "forward": forward}
+
+        return _safe(_evaluate)
 
     @app.get("/api/models/{name}")
     def api_model(name: str) -> Any:

@@ -566,6 +566,54 @@ export const fetchModelDetail = (name: string) => get<ModelDetail>(`/models/${na
 export const fetchModelFacets = () => get<ModelFacets>("/models/facets");
 export const fetchModelDoc = (name: string) =>
   get<ModelDoc>(`/models/${encodeURIComponent(name)}/doc`);
+
+export interface DclsBackendStatus {
+  backend: string;
+  available: boolean;
+  live: boolean;
+  output_q88?: number;
+  output?: number;
+  bit_exact?: boolean;
+  parity?: string;
+}
+
+export interface DclsInfo {
+  name: string;
+  provenance: { authors: string[]; year: number; venue: string; title: string; doi: string };
+  fixed_point: {
+    weight_format: string; accumulator_format: string;
+    one: number; fraction_bits: number; parity: string;
+  };
+  backends: { backend: string; available: boolean; live: boolean }[];
+  backend_order: string[];
+  rtl_modules: string[];
+  synthesis_target: string;
+}
+
+export interface DclsEvaluation {
+  profile: {
+    centre_q88: number; sigma_q88: number; centre: number; sigma: number;
+    n_taps: number; gates_q88: number[]; gates: number[];
+  };
+  forward: {
+    reference_output_q88: number; reference_output: number;
+    active_tap_count: number; max_gate_q88: number; overflow: boolean;
+    backends: DclsBackendStatus[]; bit_exact: boolean;
+  };
+}
+
+export interface DclsEvaluateBody {
+  centre_q88: number;
+  sigma_q88: number;
+  n_taps: number;
+  spikes?: number[];
+  weights_q88?: number[];
+}
+
+export const fetchDclsInfo = () => get<DclsInfo>("/dcls/info");
+export const evaluateDcls = (body: DclsEvaluateBody) =>
+  post<DclsEvaluation>("/dcls/evaluate", body);
+
 export const fetchPresets = () => get<PresetSummary[]>("/presets");
 export const fetchPreset = (id: string) => get<Record<string, unknown>>(`/presets/${id}`);
 export const fetchStudioCapabilities = () =>

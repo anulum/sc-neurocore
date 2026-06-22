@@ -10,7 +10,7 @@
 
 Dilated convolution with learnable spacings (DCLS), ``max`` variant, after
 Khalfaoui-Hassani, Pellegrini & Masquelier (2023), *Dilated convolution with
-learnable spacings*, NeurIPS. Each delay tap is weighted by a triangular kernel
+learnable spacings*, ICLR. Each delay tap is weighted by a triangular kernel
 centred on the learnable spacing ``centre`` with half-width ``sigma``; the
 synapse contracts the active spike taps through that kernel into a fixed-point
 accumulator.

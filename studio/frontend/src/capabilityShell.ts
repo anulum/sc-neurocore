@@ -30,6 +30,7 @@ export type PanelKey =
   | "synth"
   | "train"
   | "canvas"
+  | "delays"
   | "admin";
 
 /** Aggregate health projection for the backend capability registry. */
@@ -108,6 +109,7 @@ const PANEL_TITLES: Record<PanelKey, string> = {
   synth: "FPGA",
   train: "Training",
   canvas: "Canvas",
+  delays: "Learnable Delays (DCLS)",
   admin: "Admin",
 };
 
