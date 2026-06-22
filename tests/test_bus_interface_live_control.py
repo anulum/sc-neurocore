@@ -133,6 +133,82 @@ def test_live_parameter_bank_emits_bram_and_distributed_banks() -> None:
     assert "trap_clear_pulse <= 1'b1;" in source
 
 
+def test_live_parameter_bank_rejects_invalid_axi_configuration() -> None:
+    bank = ParameterBankSpec(
+        bank_name="weights",
+        start_address_bytes=0x2000,
+        parameter_count=1,
+        parameter_names=("w0",),
+    )
+    base = MMIOUpdateSpec(
+        bus_protocol="axi4_lite", banks=(bank,), control_base_address_bytes=0x100
+    )
+    with pytest.raises(ValueError, match="32-bit AXI data bus"):
+        generate_live_parameter_bank(base, module_name="m", bus_data_width=64)
+    with pytest.raises(ValueError, match="addr_width must be between 8 and 64"):
+        generate_live_parameter_bank(base, module_name="m", addr_width=4)
+    with pytest.raises(ValueError, match="block_ram_threshold_bits must be positive"):
+        generate_live_parameter_bank(base, module_name="m", block_ram_threshold_bits=0)
+    wide_trap = MMIOUpdateSpec(
+        bus_protocol="axi4_lite",
+        banks=(bank,),
+        control_base_address_bytes=0x100,
+        trap=TrapSpec(max_flags=40),
+    )
+    with pytest.raises(ValueError, match="trap flag count must fit"):
+        generate_live_parameter_bank(wide_trap, module_name="m")
+
+
+def test_live_parameter_bank_rejects_invalid_pcie_configuration() -> None:
+    bank = ParameterBankSpec(
+        bank_name="weights",
+        start_address_bytes=0x2000,
+        parameter_count=1,
+        parameter_names=("w0",),
+    )
+    spec = MMIOUpdateSpec(
+        bus_protocol="pcie", banks=(bank,), control_base_address_bytes=0x100
+    )
+    with pytest.raises(ValueError, match="addr_width must be between 8 and 64"):
+        generate_live_parameter_bank(spec, module_name="m", addr_width=4)
+    with pytest.raises(ValueError, match="requires 32-bit data"):
+        generate_live_parameter_bank(spec, module_name="m", bus_data_width=64)
+
+
+def test_live_parameter_bank_emits_wide_multiword_bank_read_paths() -> None:
+    spec = MMIOUpdateSpec(
+        bus_protocol="axi4_lite",
+        control_base_address_bytes=0x100,
+        banks=(
+            ParameterBankSpec(
+                bank_name="wide48",
+                start_address_bytes=0x2000,
+                parameter_count=2,
+                parameter_names=("a", "b"),
+                q_format="Q24.24",
+            ),
+            ParameterBankSpec(
+                bank_name="wide64",
+                start_address_bytes=0x3000,
+                parameter_count=2,
+                parameter_names=("c", "d"),
+                q_format="Q32.32",
+            ),
+        ),
+        trap=TrapSpec(max_flags=4),
+    )
+    source = generate_live_parameter_bank(spec, module_name="sc_wide_params")
+
+    # 48-bit entry: low word plus a zero-padded high-word slice.
+    assert "wide48[reg_entry_index][DATA_WIDTH-1:0]" in source
+    assert "wide48[reg_entry_index][47:DATA_WIDTH]" in source
+    # 64-bit entry: full high-word slice with no padding, and the staged-range
+    # extension check is skipped (overflow/underflow tied low).
+    assert "wide64[reg_entry_index][63:DATA_WIDTH]" in source
+    assert "wire wide64_staged_overflow = 1'b0;" in source
+    assert "wire wide64_staged_underflow = 1'b0;" in source
+
+
 def test_live_parameter_bank_emits_pcie_mmio_register_window_contract() -> None:
     bank = ParameterBankSpec(
         bank_name="weights",

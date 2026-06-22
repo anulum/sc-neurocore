@@ -192,8 +192,10 @@ def generate_live_parameter_bank(
             bus_data_width=bus_data_width,
             block_ram_threshold_bits=block_ram_threshold_bits,
         )
-    if spec.bus_protocol != "axi4_lite":
-        raise ValueError("live parameter-bank RTL emission requires axi4_lite or pcie")
+    # ``MMIOUpdateSpec`` normalises ``bus_protocol`` into ``_VALID_PROTOCOLS`` =
+    # {"axi4_lite", "pcie"} at construction, and the PCIe case has already
+    # returned above, so the only protocol reaching this point is axi4_lite — no
+    # further protocol guard is reachable here.
     if bus_data_width != 32:
         raise ValueError("live parameter-bank RTL currently requires a 32-bit AXI data bus")
     if spec.supports_partial_write:
