@@ -362,10 +362,11 @@ def emit_sources_from_ir(ir: Any) -> str:
             emitted.append(Lfsr16Emitter(module_name=module_name, seed=seed).generate())
         elif kind == "sobol16":
             emitted.append(Sobol16Emitter(module_name=module_name, seed=seed).generate())
-        elif kind == "halton16":
-            emitted.append(Halton16Emitter(module_name=module_name).generate())
         else:
-            raise ValueError(f"unsupported stochastic source type {kind!r}")
+            # _source_kind() only ever returns lfsr16/sobol16/halton16 (None is
+            # filtered above; an unknown candidate raises inside it), so the
+            # remaining case is always halton16.
+            emitted.append(Halton16Emitter(module_name=module_name).generate())
     return "\n\n".join(emitted)
 
 

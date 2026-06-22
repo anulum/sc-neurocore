@@ -355,3 +355,35 @@ def test_sobol16_emitter_masks_seed_to_16_bits():
     assert emitter.seed == 0x0042
     verilog = emitter.generate()
     assert "16'h0042" in verilog
+
+
+def test_require_positive_int_rejects_non_positive_value():
+    with pytest.raises(ValueError, match="must be a positive integer"):
+        VerilogGenerator._require_positive_int(0, "width")
+
+
+def test_emit_async_aer_wraps_declared_dense_layers():
+    generator = VerilogGenerator(module_name="async_route")
+    generator.add_layer("Dense", "dense0", {"n_neurons": 4})
+    verilog = generator.emit_async_aer()
+    assert "module async_route" in verilog
+
+
+def test_emit_quasirandom_source_rejects_unknown_method():
+    with pytest.raises(ValueError, match="method must be 'sobol' or 'halton'"):
+        VerilogGenerator().emit_quasirandom_source(method="mt19937")
+
+
+def test_emit_sources_from_ir_rejects_non_collection_payload():
+    with pytest.raises(TypeError, match="mapping or sequence of nodes"):
+        emit_sources_from_ir(42)
+
+
+def test_emit_sources_from_ir_rejects_source_without_generator():
+    with pytest.raises(ValueError, match="missing source_type/decorrelator"):
+        emit_sources_from_ir([{"type": "stochastic_source"}])
+
+
+def test_emit_sources_from_ir_defaults_unnamed_source_module() -> None:
+    verilog = emit_sources_from_ir([{"type": "stochastic_source", "source_type": "sobol"}])
+    assert "sc_stochastic_source_0" in verilog
