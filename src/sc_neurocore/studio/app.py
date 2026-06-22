@@ -27,7 +27,7 @@ from starlette.responses import Response
 from starlette.middleware.trustedhost import TrustedHostMiddleware
 from starlette.routing import Match, Route
 import numpy as np
-from pydantic import BaseModel, Field, StringConstraints
+from pydantic import AliasChoices, BaseModel, Field, StringConstraints
 from typing import Annotated
 from sc_neurocore.compiler import (
     auto_tune_synapse_precisions,
@@ -191,7 +191,10 @@ class SimulateRequest(BaseModel):
 
 
 class ModelSimulateRequest(BaseModel):
-    name: str
+    # Accept ``model_name`` as well so the field matches the rest of the model API
+    # surface (fi-curve, characterize, sensitivity, …) and the Studio frontend,
+    # which sends ``model_name`` consistently.
+    name: str = Field(validation_alias=AliasChoices("name", "model_name"))
     params: dict[str, float] | None = None
     dt: float | None = None
     duration: float = Field(default=100.0, gt=0)

@@ -149,3 +149,24 @@ class TestSimulateEndpoint:
         data = r.json()
         assert "v" in data["states"]
         assert "u" in data["states"]
+
+    def test_models_simulate_accepts_model_name_alias(self, client):
+        # The Studio frontend and every other model endpoint send ``model_name``;
+        # /api/models/simulate must accept it (not only the bare ``name``).
+        by_alias = client.post(
+            "/api/models/simulate",
+            json={
+                "model_name": "AdExNeuron",
+                "current": 50.0,
+                "duration": 50.0,
+                "dt": 0.1,
+            },
+        )
+        assert by_alias.status_code == 200, by_alias.text
+        assert "states" in by_alias.json()
+
+        by_name = client.post(
+            "/api/models/simulate",
+            json={"name": "AdExNeuron", "current": 50.0, "duration": 50.0, "dt": 0.1},
+        )
+        assert by_name.status_code == 200, by_name.text
