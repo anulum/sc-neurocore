@@ -55,6 +55,13 @@ class TestSubstrateCreation:
         assert spikes.dtype == np.int8
         assert sub._total_steps == 1
 
+    def test_step_zero_pads_short_stimuli(self):
+        # Stimuli narrower than the cortical population are zero-padded to the
+        # full width rather than truncating the injection.
+        sub = _make_substrate()
+        spikes = sub.step(stimuli=np.ones(N_CORTICAL // 4))
+        assert spikes.shape == (N_CORTICAL,)
+
     def test_run_returns_correct_shape(self):
         sub = _make_substrate()
         result = sub.run(duration=0.01, dt=0.001)
@@ -251,3 +258,12 @@ class TestHealthCheck:
         hc = sub.health_check()
         assert hc["is_healthy"] is True
         assert hc["mean_rate"] == 0.0
+
+    def test_health_check_reports_zero_spectral_entropy_for_silent_substrate(self):
+        # Once enough silent history accumulates, the population train carries no
+        # spectral power, so the spectral entropy collapses to zero.
+        sub = _make_substrate()
+        for _ in range(110):
+            sub.step()
+        hc = sub.health_check()
+        assert hc["spectral_entropy"] == 0.0
