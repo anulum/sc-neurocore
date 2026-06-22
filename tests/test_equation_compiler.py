@@ -944,3 +944,46 @@ class TestDtUnderflowGuard:
             pytest.raises(ValueError, match="underflows in Q8.8"),
         ):
             main()
+
+
+class TestOverflowAndSignednessModes:
+    """Codegen branches for the non-default overflow modes and unsigned format."""
+
+    def _unsigned_neuron(self):
+        # Non-negative parameters/initial state so the unsigned Q-format can
+        # encode every literal.
+        return from_equations("dv/dt = -v/tau + I", params=dict(tau=10), init=dict(v=0))
+
+    def _signed_neuron(self):
+        return from_equations(
+            "dv/dt = -(v - E_L)/tau_m + I/C",
+            threshold="v > -50",
+            reset="v = -65",
+            params=dict(E_L=-65, tau_m=10, C=1),
+            init=dict(v=-65),
+        )
+
+    def test_unsigned_saturate_emits_unsigned_clamp(self):
+        verilog = compile_to_verilog(self._unsigned_neuron(), signed=False, overflow="saturate")
+        assert "16'd65535" in verilog  # unsigned saturate ceiling
+        assert "16'd0" in verilog  # underflow floor for unsigned
+        assert "signed" not in verilog.split("_next")[0].split("\n")[-1]
+
+    def test_wrap_overflow_passes_raw_low_bits(self):
+        verilog = compile_to_verilog(self._signed_neuron(), overflow="wrap")
+        assert "_next = " in verilog
+        assert "[15:0];" in verilog
+        assert "OVERFLOW TRAP" not in verilog
+
+    def test_trap_overflow_signed_emits_simulation_assertion(self):
+        verilog = compile_to_verilog(self._signed_neuron(), overflow="trap")
+        assert "OVERFLOW TRAP" in verilog
+        assert "// synthesis translate_off" in verilog
+        assert "// synthesis translate_on" in verilog
+        assert "$fatal" in verilog
+
+    def test_trap_overflow_unsigned_emits_simulation_assertion(self):
+        verilog = compile_to_verilog(self._unsigned_neuron(), signed=False, overflow="trap")
+        assert "OVERFLOW TRAP" in verilog
+        assert "[16]) " in verilog  # unsigned carry-out overflow check
+        assert "$fatal" in verilog
