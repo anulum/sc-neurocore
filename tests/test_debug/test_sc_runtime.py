@@ -142,6 +142,34 @@ class TestActivityMonitor:
         mon.observe(np.ones(100, dtype=np.uint8))
         assert mon.current_zone == ActivityZone.BURST
 
+    def test_scc_zero_streams_hit_numerator_floor(self):
+        # All-zero stream and reference give pa=pb=p_and=0, so the numerator
+        # collapses to the |num|<eps floor and the coefficient is 0.
+        mon = ActivityMonitor()
+        m = mon.observe(np.zeros(8, dtype=np.uint8), reference=np.zeros(8, dtype=np.uint8))
+        assert m["scc"] == 0.0
+
+    def test_compute_scc_degenerate_denominator_returns_zero(self):
+        # A non-binary input breaks the bitstream invariant p_and<=min(pa,pb):
+        # for [1.5,0.5] (pa=1.0) the denominator min(pa,pb)-pa*pb is exactly 0
+        # while the numerator stays positive, exercising the |denom|<eps floor.
+        mon = ActivityMonitor()
+        degenerate = np.array([1.5, 0.5], dtype=np.float64)
+        assert mon._compute_scc(degenerate, degenerate) == 0.0
+
+    def test_mean_scc_within_bounds(self):
+        mon = ActivityMonitor()
+        a = np.array([1, 0, 1, 0, 1, 0, 1, 0], dtype=np.uint8)
+        mon.observe(a, reference=a)
+        assert -1.0 <= mon.mean_scc <= 1.0
+
+    def test_drift_active_property(self):
+        mon = ActivityMonitor(drift_threshold=0.2)
+        a = np.array([1, 0, 1, 1, 0, 0, 1, 0], dtype=np.uint8)
+        for _ in range(50):
+            mon.observe(a, reference=a)
+        assert mon.drift_active is True
+
 
 # ── HammingECC Tests ────────────────────────────────────────────────
 
@@ -323,6 +351,18 @@ class TestAdaptationPolicy:
         new, trigger = policy.decide(config, {"ema_scc": 0.08, "drift_detected": True})
         assert trigger is None  # already at top of cascade
 
+    def test_next_decorrelator_off_cascade_returns_current(self, monkeypatch):
+        # Guards against the cascade table and the DecorrelatorType enum drifting
+        # out of sync: a decorrelator missing from the cascade is left unchanged
+        # rather than raising. Simulate the drift by shrinking the cascade.
+        import sc_neurocore.control.sc_runtime as sc_runtime_module
+
+        monkeypatch.setattr(
+            sc_runtime_module, "DECORRELATOR_CASCADE", [DecorrelatorType.LFSR]
+        )
+        result = AdaptationPolicy._next_decorrelator(DecorrelatorType.HYBRID)
+        assert result == DecorrelatorType.HYBRID
+
 
 # ── RuntimeReport Tests ─────────────────────────────────────────────
 
@@ -348,6 +388,23 @@ class TestRuntimeReport:
     def test_adaptation_rate_zero(self):
         report = RuntimeReport(total_observations=0)
         assert report.adaptation_rate() == 0.0
+
+    def test_adaptation_rate_last_n_window(self):
+        from sc_neurocore.control.sc_runtime import AdaptationEvent
+
+        report = RuntimeReport(total_observations=100)
+        for _ in range(10):
+            report.adaptations.append(
+                AdaptationEvent(
+                    timestamp_ns=0,
+                    trigger="test",
+                    old_config={},
+                    new_config={},
+                    metric_value=0.0,
+                )
+            )
+        # last_n=5 windows the rate over the five most recent adaptations.
+        assert report.adaptation_rate(last_n=5) == pytest.approx(1.0)
 
     def test_summary_includes_ecc_mode(self):
         config = RuntimeConfig(ecc_enabled=True, ecc_mode=ECCMode.SECDED)
@@ -415,6 +472,31 @@ class TestSCRuntimeEngine:
         bs = np.array([1, 0, 1, 1], dtype=np.uint8)
         protected = engine.protect(bs)
         np.testing.assert_array_equal(protected, bs)
+
+    def test_protect_ecc_enabled_mode_none_passthrough(self):
+        # ecc_enabled with ECCMode.NONE selects no concrete codec, so protect
+        # returns the bitstream unchanged.
+        engine = SCRuntimeEngine(
+            initial_config=RuntimeConfig(ecc_enabled=True, ecc_mode=ECCMode.NONE),
+        )
+        bs = np.array([1, 0, 1, 1], dtype=np.uint8)
+        np.testing.assert_array_equal(engine.protect(bs), bs)
+
+    def test_recover_without_ecc_passthrough(self):
+        engine = SCRuntimeEngine(
+            initial_config=RuntimeConfig(ecc_enabled=False),
+        )
+        bs = np.array([1, 0, 1, 1], dtype=np.uint8)
+        np.testing.assert_array_equal(engine.recover(bs), bs)
+
+    def test_recover_ecc_enabled_mode_none_passthrough(self):
+        # ecc_enabled with ECCMode.NONE selects no concrete codec, so recover
+        # returns the encoded stream unchanged.
+        engine = SCRuntimeEngine(
+            initial_config=RuntimeConfig(ecc_enabled=True, ecc_mode=ECCMode.NONE),
+        )
+        bs = np.array([1, 0, 1, 1], dtype=np.uint8)
+        np.testing.assert_array_equal(engine.recover(bs), bs)
 
     def test_protect_recover_roundtrip_hamming(self):
         engine = SCRuntimeEngine(

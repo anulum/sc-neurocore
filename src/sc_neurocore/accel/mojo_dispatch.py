@@ -172,7 +172,7 @@ def _np_scc(a: np.ndarray[Any, Any], b: np.ndarray[Any, Any], bit_length: int) -
         denom = min(pa, pb) - (pa * pb)
     else:
         denom = (pa * pb) - max(pa + pb - 1.0, 0.0)
-    if abs(denom) < 1e-7:  # pragma: no cover - algebraic guard for degenerate streams.
+    if abs(denom) < 1e-7:
         return 0.0
     return max(-1.0, min(1.0, num / denom))
 

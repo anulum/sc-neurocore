@@ -110,6 +110,29 @@ class TestBitstreamDecorrelator:
         scc = dec.measure_scc(a, a)
         assert abs(scc - 1.0) < 0.01
 
+    def test_seed_zero_collides_and_resets_to_one(self):
+        # base_seed 0 makes the i=0 mask seed land on 0, which the generator
+        # must bump to 1 (a zero LFSR seed produces a degenerate all-zero mask).
+        dec = BitstreamDecorrelator(seed=0)
+        stream = np.ones((2, 4), dtype=np.uint8)
+        result = dec.decorrelate([stream])
+        assert result[0].shape == (2, 4)
+
+    def test_scc_independent_streams_hit_numerator_floor(self):
+        # Two all-zero streams give pa=pb=p_and=0, so the numerator collapses
+        # to the |num|<eps floor and the coefficient is defined as 0.
+        dec = BitstreamDecorrelator()
+        zeros = np.zeros(8, dtype=np.float64)
+        assert dec.measure_scc(zeros, zeros) == 0.0
+
+    def test_scc_degenerate_denominator_returns_zero(self):
+        # A non-binary stream breaks the bitstream invariant p_and<=min(pa,pb):
+        # for a=[1.5,0.5] (pa=1.0) the denominator min(pa,pb)-pa*pb is exactly 0
+        # while the numerator stays positive, exercising the |denom|<eps floor.
+        dec = BitstreamDecorrelator()
+        degenerate = np.array([1.5, 0.5], dtype=np.float64)
+        assert dec.measure_scc(degenerate, degenerate) == 0.0
+
 
 # ── CrossModalAttention Tests ────────────────────────────────────────
 
@@ -239,6 +262,12 @@ class TestHDCBinding:
         c = np.zeros(1024, dtype=np.uint8)
         result = hdc.bundle([a, b, c])
         assert np.sum(result) == 1024  # majority is 1
+
+    def test_bundle_empty_returns_zero_hypervector(self):
+        hdc = HDCBinding(dim=64)
+        result = hdc.bundle([])
+        assert result.shape == (64,)
+        assert np.sum(result) == 0
 
     def test_similarity_identical(self):
         hdc = HDCBinding(dim=512, seed=42)
@@ -394,6 +423,38 @@ class TestTemporalAligner:
     def test_empty_alignment(self):
         aligner = TemporalAligner()
         assert aligner.align([]) == []
+
+    def test_align_non_overlapping_returns_streams_unchanged(self):
+        # Streams whose active spans do not overlap give t_min >= t_max, so
+        # there is no common window and the originals are returned as-is.
+        aligner = TemporalAligner(window_us=1000.0)
+        early = EventStream(
+            SensorModality.DVS,
+            timestamps=np.array([100, 200], dtype=np.float64),
+            addresses=np.arange(2),
+            polarities=np.ones(2, dtype=np.int8),
+        )
+        late = EventStream(
+            SensorModality.TACTILE,
+            timestamps=np.array([300, 400], dtype=np.float64),
+            addresses=np.arange(2),
+            polarities=np.ones(2, dtype=np.int8),
+        )
+        aligned = aligner.align([early, late])
+        assert aligned == [early, late]
+
+    def test_slice_windows_single_event_returns_whole_stream(self):
+        # A stream with fewer than two events cannot be windowed and is passed
+        # through as a single window.
+        aligner = TemporalAligner(window_us=200.0)
+        s = EventStream(
+            SensorModality.DVS,
+            timestamps=np.array([100.0], dtype=np.float64),
+            addresses=np.arange(1),
+            polarities=np.ones(1, dtype=np.int8),
+        )
+        windows = aligner.slice_windows(s)
+        assert windows == [s]
 
 
 # ── FusionVerilogEmitter Tests ───────────────────────────────────────

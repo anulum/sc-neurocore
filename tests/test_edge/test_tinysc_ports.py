@@ -125,6 +125,19 @@ class TestSCC:
     def test_zero_length(self):
         assert scc([0], [0], 0) == 0.0
 
+    def test_zero_density_streams_hit_numerator_floor(self):
+        # Empty (all-zero) streams over a non-zero length give pa=pb=p_and=0,
+        # so the numerator collapses to the |num|<eps floor: the coefficient
+        # is defined as 0 rather than 0/0.
+        assert scc([0x0000_0000], [0x0000_0000], 32) == 0.0
+
+    def test_under_counted_length_hits_denominator_floor(self):
+        # bit_length under-counts the bits packed into the words, pushing pa
+        # above 1 and breaking the p_and<=min(pa,pb) invariant: here pa=2, pb=1
+        # make the denominator collapse to 0 while the numerator stays nonzero,
+        # exercising the |denom|<eps floor that keeps the result finite.
+        assert scc([0b11], [0b01], 1) == 0.0
+
 
 # ===== LFSR Tests =====
 
