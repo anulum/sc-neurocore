@@ -79,26 +79,6 @@ default = -20.0
 unit = ""
 meaning = ""
 
-[parameters._MAX_SUBSTEP]
-default = 0.001
-unit = ""
-meaning = ""
-
-[parameters._V_MIN]
-default = -200.0
-unit = ""
-meaning = ""
-
-[parameters._V_MAX]
-default = 200.0
-unit = ""
-meaning = ""
-
-[parameters._CA_MAX]
-default = 100.0
-unit = ""
-meaning = ""
-
 [integration]
 dt = 0.02
 method = "euler"

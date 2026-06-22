@@ -48,11 +48,6 @@ default = 2.0
 unit = ""
 meaning = ""
 
-[parameters._refrac_count]
-default = 0.0
-unit = ""
-meaning = ""
-
 [integration]
 dt = 0.1
 method = "euler"

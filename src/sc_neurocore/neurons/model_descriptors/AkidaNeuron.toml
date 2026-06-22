@@ -28,16 +28,6 @@ default = 0.75
 unit = ""
 meaning = ""
 
-[parameters._rank]
-default = 0.0
-unit = ""
-meaning = ""
-
-[parameters._current_modulation]
-default = 1.0
-unit = ""
-meaning = ""
-
 [integration]
 dt = 0.1
 method = "euler"

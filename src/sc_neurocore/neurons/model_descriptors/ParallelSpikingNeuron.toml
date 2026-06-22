@@ -27,11 +27,6 @@ default = 1.0
 unit = ""
 meaning = ""
 
-[parameters._ptr]
-default = 0.0
-unit = ""
-meaning = ""
-
 [integration]
 dt = 0.1
 method = "euler"

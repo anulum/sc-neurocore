@@ -113,26 +113,6 @@ default = -55.0
 unit = ""
 meaning = ""
 
-[parameters._V_MIN]
-default = -200.0
-unit = ""
-meaning = ""
-
-[parameters._V_MAX]
-default = 100.0
-unit = ""
-meaning = ""
-
-[parameters._GATE_MAX]
-default = 1000000.0
-unit = ""
-meaning = ""
-
-[parameters._GABA_TAU]
-default = 5.0
-unit = ""
-meaning = ""
-
 [integration]
 dt = 0.1
 method = "euler"

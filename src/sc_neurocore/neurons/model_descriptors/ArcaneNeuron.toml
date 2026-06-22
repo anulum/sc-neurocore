@@ -88,46 +88,6 @@ default = 2.0
 unit = ""
 meaning = ""
 
-[parameters._prediction]
-default = 0.0
-unit = ""
-meaning = ""
-
-[parameters._surprise]
-default = 0.0
-unit = ""
-meaning = ""
-
-[parameters._novelty]
-default = 0.0
-unit = ""
-meaning = ""
-
-[parameters._confidence]
-default = 0.5
-unit = ""
-meaning = ""
-
-[parameters._hist_idx]
-default = 0.0
-unit = ""
-meaning = ""
-
-[parameters._nov_idx]
-default = 0.0
-unit = ""
-meaning = ""
-
-[parameters._total_steps]
-default = 0.0
-unit = ""
-meaning = ""
-
-[parameters._identity_drift]
-default = 0.0
-unit = ""
-meaning = ""
-
 [parameters.w_inh]
 default = 0.3
 unit = ""

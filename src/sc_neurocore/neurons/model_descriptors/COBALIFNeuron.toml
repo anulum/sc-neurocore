@@ -73,21 +73,6 @@ default = -65.0
 unit = ""
 meaning = ""
 
-[parameters._V_MIN]
-default = -200.0
-unit = ""
-meaning = ""
-
-[parameters._V_MAX]
-default = 100.0
-unit = ""
-meaning = ""
-
-[parameters._G_MAX]
-default = 1000000000.0
-unit = ""
-meaning = ""
-
 [integration]
 dt = 0.1
 method = "euler"

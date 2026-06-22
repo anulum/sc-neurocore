@@ -62,6 +62,11 @@ def _field_specs(cls: type) -> list[tuple[str, float]]:
         specs: list[tuple[str, float]] = []
         for f in dataclasses.fields(cls):
             default = f.default
+            # Skip private implementation fields (integration sub-step counts,
+            # clamp constants, RNG and history buffers): they are not model
+            # parameters or declared state.
+            if f.name.startswith("_"):
+                continue
             # Skip non-numeric fields (string Literal integrator choices, flags,
             # labels): they are not numeric parameters of the model.
             if isinstance(default, bool) or not isinstance(default, (int, float)):
@@ -75,6 +80,8 @@ def _field_specs(cls: type) -> list[tuple[str, float]]:
     plain: list[tuple[str, float]] = []
     for pname, param in signature.parameters.items():
         if param.kind in (inspect.Parameter.VAR_POSITIONAL, inspect.Parameter.VAR_KEYWORD):
+            continue
+        if pname.startswith("_"):
             continue
         default = param.default
         if isinstance(default, bool) or not isinstance(default, (int, float)):

@@ -89,11 +89,6 @@ default = 1.0
 unit = ""
 meaning = ""
 
-[parameters._sub_steps]
-default = 50.0
-unit = ""
-meaning = ""
-
 [integration]
 dt = 0.5
 method = "euler"

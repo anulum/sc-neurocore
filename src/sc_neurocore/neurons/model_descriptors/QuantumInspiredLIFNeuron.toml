@@ -43,11 +43,6 @@ default = 0.0
 unit = ""
 meaning = ""
 
-[parameters._rng_state]
-default = 0.0
-unit = ""
-meaning = ""
-
 [integration]
 dt = 0.1
 method = "euler"
