@@ -130,11 +130,16 @@ def isi_entropy(binary_train: np.ndarray[Any, Any], dt: float = 0.001, bins: int
     intervals = isi(binary_train, dt)
     if intervals.size < 2:
         return float("nan")
+    value_range = float(intervals.max() - intervals.min())
+    # A (numerically) constant ISI distribution carries zero entropy. Guard on
+    # the histogram's own resolution limit -- a range narrower than `bins` ULPs
+    # of the largest interval -- so a regular train short-circuits to 0.0
+    # instead of tripping np.histogram's "too many bins for data range" error.
+    if value_range < bins * float(np.spacing(intervals.max())):
+        return 0.0
+    bin_width = value_range / bins
     hist, _ = np.histogram(intervals, bins=bins, density=True)
     hist = hist[hist > 0]
-    bin_width = (intervals.max() - intervals.min()) / bins
-    if bin_width <= 0:
-        return 0.0
     p = hist * bin_width
     p = p[p > 0]
     return float(-np.sum(p * np.log2(p)))
@@ -185,8 +190,9 @@ def approximate_entropy(
         return float(_ssc.py_approximate_entropy(np.ascontiguousarray(x), m, r))
 
     def _phi(dim: int) -> float:
-        if n - dim + 1 < 1:
-            return 0.0
+        # _phi is only called with dim in {m, m+1}; the n < m + 2 guard above
+        # ensures n >= m + 2 > dim, so n - dim + 1 >= 2 and the template list is
+        # never empty.
         templates = np.array([x[i : i + dim] for i in range(n - dim + 1)])
         count = np.zeros(len(templates))
         for i in range(len(templates)):
@@ -235,9 +241,10 @@ def permutation_entropy(
         return float("nan")
     if _HAS_RUST and _ssc is not None:
         return float(_ssc.py_permutation_entropy(np.ascontiguousarray(x), order, delay))
+    # n_patterns = n - (order - 1) * delay; the n < order * delay guard above
+    # ensures n >= order * delay, so n_patterns >= delay >= 1 and at least one
+    # ordinal pattern always exists.
     n_patterns = n - (order - 1) * delay
-    if n_patterns < 1:
-        return float("nan")
     patterns = np.zeros(n_patterns, dtype=np.int64)
     for i in range(n_patterns):
         window = x[i : i + order * delay : delay]
@@ -278,9 +285,10 @@ def hurst_exponent(binary_train: np.ndarray[Any, Any], min_window: int = 10) -> 
             f2 += np.mean((chunk - trend) ** 2)
         f2 /= n_seg
         flucts.append(np.sqrt(f2))
+        # int(1.5*s) > s for every integer s >= 2 (since 0.5*s >= 1), and a DFA
+        # window of size 1 cannot be detrended (polyfit would be singular), so s
+        # is never 1 here; the scale strictly increases and cannot stagnate.
         s = int(s * 1.5)
-        if s == scales[-1]:
-            s += 1
     if len(scales) < 2:
         return float("nan")
     log_s = np.log(np.array(scales, dtype=np.float64))
@@ -303,10 +311,10 @@ def allan_factor(
     windows = np.unique(np.logspace(np.log10(2), np.log10(max_w), n_scales).astype(int))
     af = np.zeros(len(windows))
     for i, w in enumerate(windows):
+        # Every window w comes from logspace(2, max_w) with max_w = n // 4, so
+        # w <= n // 4 and n_bins = n // w >= n // (n // 4) >= 4 > 2 for all n;
+        # the count-array always has enough bins to difference.
         n_bins = n // w
-        if n_bins < 2:
-            af[i] = float("nan")
-            continue
         counts = binary_train[: n_bins * w].reshape(n_bins, w).sum(axis=1).astype(np.float64)
         diffs = np.diff(counts)
         mean_count = counts.mean()
@@ -343,9 +351,13 @@ def rescaled_range(binary_train: np.ndarray[Any, Any], min_window: int = 10) -> 
         if rs_seg:
             scales.append(s)
             rs_vals.append(np.mean(rs_seg))
+        # Guarantee a strictly increasing scale: int(1.5*s) stalls at s only for
+        # s == 1 (size-1 segments yield zero variance and no R/S sample), which
+        # would otherwise loop forever, so force at least a unit step.
+        prev_s = s
         s = int(s * 1.5)
-        if len(scales) > 0 and s == scales[-1]:
-            s += 1
+        if s <= prev_s:
+            s = prev_s + 1
     if len(scales) < 2:
         return float("nan")
     log_s = np.log(np.array(scales, dtype=np.float64))
