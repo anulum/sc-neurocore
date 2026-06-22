@@ -14,6 +14,11 @@ hardware_fit = []
 behavior_tags = []
 
 [provenance]
+authors = [
+    "Hill, S. & Tononi, G.",
+]
+year = 2005
+doi = "10.1152/jn.00915.2004"
 
 [state.v]
 init = -65.0
@@ -35,73 +40,129 @@ init = 5.0
 
 [parameters.g_na]
 default = 50.0
-unit = ""
-meaning = ""
+unit = "mS/cm^2"
+meaning = "maximal sodium conductance"
+range = [
+    0.0,
+    200.0,
+]
 
 [parameters.g_k]
 default = 5.0
-unit = ""
-meaning = ""
+unit = "mS/cm^2"
+meaning = "maximal potassium conductance"
+range = [
+    0.0,
+    50.0,
+]
 
 [parameters.g_h]
 default = 1.0
-unit = ""
-meaning = ""
+unit = "mS/cm^2"
+meaning = "maximal hyperpolarisation-activated (Ih) conductance"
+range = [
+    0.0,
+    5.0,
+]
 
 [parameters.g_t]
 default = 3.0
-unit = ""
-meaning = ""
+unit = "mS/cm^2"
+meaning = "maximal low-threshold (T-type) calcium conductance"
+range = [
+    0.0,
+    20.0,
+]
 
 [parameters.g_kna]
 default = 1.33
-unit = ""
-meaning = ""
+unit = "mS/cm^2"
+meaning = "maximal sodium-dependent potassium conductance"
+range = [
+    0.0,
+    10.0,
+]
 
 [parameters.g_l]
 default = 0.02
-unit = ""
-meaning = ""
+unit = "mS/cm^2"
+meaning = "leak conductance"
+range = [
+    0.0,
+    1.0,
+]
 
 [parameters.e_na]
 default = 50.0
-unit = ""
-meaning = ""
+unit = "mV"
+meaning = "sodium reversal potential"
+range = [
+    30.0,
+    70.0,
+]
 
 [parameters.e_k]
 default = -90.0
-unit = ""
-meaning = ""
+unit = "mV"
+meaning = "potassium reversal potential"
+range = [
+    -100.0,
+    -70.0,
+]
 
 [parameters.e_h]
 default = -43.0
-unit = ""
-meaning = ""
+unit = "mV"
+meaning = "hyperpolarisation-activated current reversal potential"
+range = [
+    -60.0,
+    -20.0,
+]
 
 [parameters.e_ca]
 default = 120.0
-unit = ""
-meaning = ""
+unit = "mV"
+meaning = "calcium reversal potential"
+range = [
+    60.0,
+    150.0,
+]
 
 [parameters.e_l]
 default = -70.0
-unit = ""
-meaning = ""
+unit = "mV"
+meaning = "leak reversal potential"
+range = [
+    -90.0,
+    -50.0,
+]
 
 [parameters.na_pump_max]
 default = 20.0
-unit = ""
-meaning = ""
+unit = "mM/s"
+meaning = "maximum rate of the sodium-potassium pump"
+range = [
+    0.0,
+    100.0,
+]
 
 [parameters.na_eq]
 default = 9.5
-unit = ""
-meaning = ""
+unit = "mM"
+meaning = "intracellular sodium concentration at half-maximal pump activation"
+range = [
+    1.0,
+    30.0,
+]
 
 [parameters.v_threshold]
 default = -20.0
-unit = ""
-meaning = ""
+unit = "mV"
+meaning = "voltage at which a spike is registered"
+range = [
+    -40.0,
+    20.0,
+]
 
 [integration]
 dt = 0.05
