@@ -40,3 +40,16 @@ def test_morphism_wraps_transformed_category_object() -> None:
 def test_unknown_functor_is_rejected() -> None:
     with pytest.raises(ValueError):
         CategoryTheoryBridge().get_functor("Unknown", "Bio")
+
+
+def test_each_named_functor_resolves_to_its_morphism() -> None:
+    bridge = CategoryTheoryBridge()
+    pairs = [
+        ("Stochastic", "Quantum", "Sto->Quant"),
+        ("Quantum", "Bio", "Quant->Bio"),
+        ("Bio", "Stochastic", "Bio->Sto"),
+    ]
+    for source, target, label in pairs:
+        morphism = bridge.get_functor(source, target)
+        assert isinstance(morphism, Morphism)
+        assert label in morphism.name

@@ -158,3 +158,28 @@ def test_forward_bitstream_rejects_out_of_range_probabilities(Q, K, V, message):
     attn = StochasticAttention(dim_k=2)
     with pytest.raises(ValueError, match=message):
         attn.forward_bitstream(Q, K, V, length=8)
+
+
+def test_forward_rejects_three_dimensional_inputs():
+    attn = StochasticAttention(dim_k=4)
+    cube = np.zeros((2, 2, 2))
+    with pytest.raises(ValueError, match="one- or two-dimensional"):
+        attn.forward(cube, cube, cube)
+
+
+def test_forward_rejects_query_with_wrong_dim_k():
+    attn = StochasticAttention(dim_k=4)
+    Q = np.zeros((1, 3))  # three columns, expected four
+    K = np.zeros((1, 4))
+    V = np.zeros((1, 4))
+    with pytest.raises(ValueError, match="dim_k=4 columns"):
+        attn.forward(Q, K, V)
+
+
+def test_forward_rejects_value_row_count_mismatch():
+    attn = StochasticAttention(dim_k=4)
+    Q = np.zeros((1, 4))
+    K = np.zeros((2, 4))
+    V = np.zeros((3, 4))  # rows must match K
+    with pytest.raises(ValueError, match="same number of rows as K"):
+        attn.forward(Q, K, V)

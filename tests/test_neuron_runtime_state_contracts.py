@@ -11,6 +11,7 @@
 from __future__ import annotations
 
 import numpy as np
+import pytest
 
 
 def test_sc_izhikevich_initial_state_and_reset_are_consistent() -> None:
@@ -82,6 +83,17 @@ def test_fixed_point_lif_reset_state_and_lfsr_seed_reset() -> None:
     encoder = FixedPointBitstreamEncoder(seed_init=0xACE1)
     encoder.step(128)
     encoder.reset()
+
+
+def test_fixed_point_lif_rejects_invalid_fixed_point_format() -> None:
+    from sc_neurocore.neurons.fixed_point_lif import FixedPointLIFNeuron
+
+    with pytest.raises(ValueError, match="data_width must be in"):
+        FixedPointLIFNeuron(data_width=0)
+    with pytest.raises(ValueError, match="fraction must be in"):
+        FixedPointLIFNeuron(data_width=8, fraction=8)
+    with pytest.raises(ValueError, match="refractory_period must be"):
+        FixedPointLIFNeuron(refractory_period=-1)
 
 
 def test_stochastic_dendritic_neuron_xor_and_reset_contract() -> None:

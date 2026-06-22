@@ -110,6 +110,22 @@ class TestPublicAPIExports:
         assert Halton16Emitter is not None
         assert callable(generate_tmr_wrapper)
 
+    def test_generate_tmr_wrapper_handles_multi_bit_input_and_single_bit_output(
+        self,
+    ) -> None:
+        from sc_neurocore.hdl_gen.tmr_wrapper import generate_tmr_wrapper
+
+        code = generate_tmr_wrapper(
+            "sc_router",
+            inputs=[("addr", 8)],
+            outputs=[("done", 1)],
+        )
+        # A multi-bit input declares an explicit range; a single-bit output and
+        # its triplicated replica wires stay scalar.
+        assert "input  wire [7:0] addr" in code
+        assert "output wire done" in code
+        assert "wire rep0_done;" in code
+
     def test_neurons_exports(self) -> None:
         from sc_neurocore.neurons import UniversalNeuron, list_bundled_schemas
 
