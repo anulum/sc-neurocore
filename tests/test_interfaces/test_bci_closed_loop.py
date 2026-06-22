@@ -84,3 +84,27 @@ def test_closed_loop_rejects_non_matrix_waveform() -> None:
 
     with pytest.raises(ValueError, match="shape"):
         template.process_window(np.zeros(4, dtype=np.float32))
+
+
+def test_closed_loop_rejects_empty_window() -> None:
+    template = ClosedLoopBCITemplate(ClosedLoopBCIConfig(n_channels=4))
+
+    with pytest.raises(ValueError, match="at least one sample"):
+        template.process_window(np.zeros((0, 4), dtype=np.float32))
+
+
+def test_closed_loop_fails_closed_when_decoder_is_cleared() -> None:
+    # __post_init__ always installs a decoder and feedback sink; if either is
+    # externally nulled the template must fail closed rather than dereference None.
+    template = ClosedLoopBCITemplate(ClosedLoopBCIConfig(n_channels=4))
+    template.decoder = None
+
+    with pytest.raises(RuntimeError, match="was not initialised"):
+        template.process_window(_waveform())
+
+
+def test_rate_decoder_rejects_non_matrix_raster() -> None:
+    decoder = RateSpikeDecoder(sampling_rate_hz=1_000)
+
+    with pytest.raises(ValueError, match="samples, channels"):
+        decoder.decode(np.zeros(5, dtype=np.float32))

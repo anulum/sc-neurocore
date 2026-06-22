@@ -49,6 +49,16 @@ class TestQ88:
         # -1.0 in Q8.8 = -256, two's complement = 65280
         assert "65280" in lit or "-256" in lit
 
+    def test_unsigned_range_uses_full_width_and_zero_floor(self):
+        q = Q88(signed=False)
+        # An unsigned UQ8.8 reaches the full 2**16-1 magnitude and floors at zero.
+        assert q.max_value == ((1 << 16) - 1) / (1 << 8)
+        assert q.min_value == 0.0
+
+    def test_check_range_flags_underflow(self):
+        warnings = Q88().check_range(-1000.0, label="v")
+        assert any("Underflow" in warning for warning in warnings)
+
 
 class TestCompileLIF:
     def test_basic_lif_generates_verilog(self):
