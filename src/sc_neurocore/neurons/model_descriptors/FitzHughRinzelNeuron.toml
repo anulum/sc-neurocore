@@ -14,6 +14,11 @@ hardware_fit = []
 behavior_tags = []
 
 [provenance]
+authors = [
+    "Rinzel, J.",
+]
+year = 1987
+doi = "10.1007/978-3-642-93360-8_26"
 
 [state.v]
 init = -1.0
@@ -26,38 +31,66 @@ init = 0.0
 
 [parameters.a]
 default = 0.7
-unit = ""
-meaning = ""
+unit = "1"
+meaning = "offset in the fast recovery (w) nullcline"
+range = [
+    0.0,
+    1.5,
+]
 
 [parameters.b]
 default = 0.8
-unit = ""
-meaning = ""
+unit = "1"
+meaning = "recovery-variable self-decay coefficient"
+range = [
+    0.0,
+    1.5,
+]
 
 [parameters.c]
 default = -0.775
-unit = ""
-meaning = ""
+unit = "1"
+meaning = "offset in the super-slow (y) nullcline"
+range = [
+    -2.0,
+    2.0,
+]
 
 [parameters.d]
 default = 1.0
-unit = ""
-meaning = ""
+unit = "1"
+meaning = "super-slow-variable self-decay coefficient"
+range = [
+    0.0,
+    2.0,
+]
 
 [parameters.delta]
 default = 0.08
-unit = ""
-meaning = ""
+unit = "1"
+meaning = "timescale of the fast recovery variable"
+range = [
+    0.001,
+    0.5,
+]
 
 [parameters.mu]
 default = 0.0001
-unit = ""
-meaning = ""
+unit = "1"
+meaning = "timescale of the super-slow variable; small values give slow bursting"
+range = [
+    1e-05,
+    0.01,
+]
 
 [parameters.v_threshold]
 default = 1.0
-unit = ""
-meaning = ""
+unit = "1"
+meaning = "level on v at which a spike is registered"
+range = [
+    0.0,
+    2.0,
+]
 
 [integration]
 dt = 0.1

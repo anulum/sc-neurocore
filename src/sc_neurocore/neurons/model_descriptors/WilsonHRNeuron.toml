@@ -14,6 +14,11 @@ hardware_fit = []
 behavior_tags = []
 
 [provenance]
+authors = [
+    "Wilson, H.R.",
+]
+year = 1999
+doi = "10.1006/jtbi.1999.1002"
 
 [state.v]
 init = -0.7
@@ -23,13 +28,21 @@ init = 0.1
 
 [parameters.tau_r]
 default = 1.9
-unit = ""
-meaning = ""
+unit = "ms"
+meaning = "recovery-variable time constant"
+range = [
+    0.1,
+    20.0,
+]
 
 [parameters.v_peak]
 default = 0.4
-unit = ""
-meaning = ""
+unit = "1"
+meaning = "normalised voltage level at which a spike is registered"
+range = [
+    -1.0,
+    2.0,
+]
 
 [integration]
 dt = 0.05
