@@ -23,38 +23,66 @@ init = 0.0
 
 [parameters.g_max]
 default = 10.0
-unit = ""
-meaning = ""
+unit = "nS"
+meaning = "maximum mechano-electrical-transduction (MET) channel conductance"
+range = [
+    0.0,
+    100.0,
+]
 
 [parameters.e_met]
 default = 0.0
-unit = ""
-meaning = ""
+unit = "mV"
+meaning = "MET channel reversal potential"
+range = [
+    -10.0,
+    10.0,
+]
 
 [parameters.g_l]
 default = 1.0
-unit = ""
-meaning = ""
+unit = "nS"
+meaning = "leak conductance"
+range = [
+    0.0,
+    20.0,
+]
 
 [parameters.e_l]
 default = -60.0
-unit = ""
-meaning = ""
+unit = "mV"
+meaning = "leak reversal / resting potential"
+range = [
+    -80.0,
+    -40.0,
+]
 
 [parameters.cap]
 default = 10.0
-unit = ""
-meaning = ""
+unit = "pF"
+meaning = "membrane capacitance"
+range = [
+    1.0,
+    100.0,
+]
 
 [parameters.x0]
 default = 0.0
-unit = ""
-meaning = ""
+unit = "nm"
+meaning = "Boltzmann half-activation hair-bundle displacement"
+range = [
+    -50.0,
+    50.0,
+]
 
 [parameters.delta]
 default = 0.1
-unit = ""
-meaning = ""
+unit = "nm"
+meaning = "Boltzmann slope factor (displacement sensitivity)"
+range = [
+    0.01,
+    10.0,
+]
 
 [integration]
 dt = 0.01

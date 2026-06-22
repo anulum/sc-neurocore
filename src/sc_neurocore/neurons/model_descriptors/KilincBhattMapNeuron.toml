@@ -23,28 +23,48 @@ init = 0.0
 
 [parameters.k]
 default = 1.5
-unit = ""
-meaning = ""
+unit = "1"
+meaning = "sigmoid gain of the fast map variable"
+range = [
+    0.0,
+    5.0,
+]
 
 [parameters.beta]
 default = 0.95
-unit = ""
-meaning = ""
+unit = "1"
+meaning = "slow-threshold decay (leak) factor"
+range = [
+    0.0,
+    1.0,
+]
 
 [parameters.gamma]
 default = 0.3
-unit = ""
-meaning = ""
+unit = "1"
+meaning = "threshold increment per spike"
+range = [
+    0.0,
+    2.0,
+]
 
 [parameters.theta_spike]
 default = 0.8
-unit = ""
-meaning = ""
+unit = "1"
+meaning = "baseline adaptive threshold"
+range = [
+    0.0,
+    2.0,
+]
 
 [parameters.x_threshold]
 default = 0.8
-unit = ""
-meaning = ""
+unit = "1"
+meaning = "spike-detection threshold on the map variable"
+range = [
+    0.0,
+    2.0,
+]
 
 [integration]
 dt = 0.1

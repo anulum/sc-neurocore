@@ -23,38 +23,66 @@ init = 0.0
 
 [parameters.v_rest]
 default = -65.0
-unit = ""
-meaning = ""
+unit = "mV"
+meaning = "resting membrane potential"
+range = [
+    -80.0,
+    -55.0,
+]
 
 [parameters.v_reset]
 default = -70.0
-unit = ""
-meaning = ""
+unit = "mV"
+meaning = "post-spike reset potential"
+range = [
+    -85.0,
+    -60.0,
+]
 
 [parameters.v_threshold]
 default = -50.0
-unit = ""
-meaning = ""
+unit = "mV"
+meaning = "spike threshold"
+range = [
+    -60.0,
+    -35.0,
+]
 
 [parameters.tau_m]
 default = 8.0
-unit = ""
-meaning = ""
+unit = "ms"
+meaning = "membrane time constant"
+range = [
+    1.0,
+    50.0,
+]
 
 [parameters.tau_persistent]
 default = 200.0
-unit = ""
-meaning = ""
+unit = "ms"
+meaning = "persistent (NMDA-like) current time constant"
+range = [
+    50.0,
+    1000.0,
+]
 
 [parameters.persistent_gain]
 default = 0.5
-unit = ""
-meaning = ""
+unit = "1"
+meaning = "persistent inward current gain"
+range = [
+    0.0,
+    5.0,
+]
 
 [parameters.gain]
 default = 2.5
-unit = ""
-meaning = ""
+unit = "1"
+meaning = "gain applied to the injected drive"
+range = [
+    0.0,
+    10.0,
+]
 
 [integration]
 dt = 0.5

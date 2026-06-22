@@ -26,48 +26,84 @@ init = 0.0
 
 [parameters.c_m]
 default = 200.0
-unit = ""
-meaning = ""
+unit = "pF"
+meaning = "membrane capacitance"
+range = [
+    50.0,
+    500.0,
+]
 
 [parameters.g_l]
 default = 10.0
-unit = ""
-meaning = ""
+unit = "nS"
+meaning = "leak conductance"
+range = [
+    1.0,
+    50.0,
+]
 
 [parameters.e_l]
 default = -65.0
-unit = ""
-meaning = ""
+unit = "mV"
+meaning = "leak reversal potential"
+range = [
+    -80.0,
+    -50.0,
+]
 
 [parameters.e_e]
 default = 0.0
-unit = ""
-meaning = ""
+unit = "mV"
+meaning = "excitatory synapse reversal potential"
+range = [
+    -10.0,
+    10.0,
+]
 
 [parameters.e_i]
 default = -80.0
-unit = ""
-meaning = ""
+unit = "mV"
+meaning = "inhibitory synapse reversal potential"
+range = [
+    -90.0,
+    -60.0,
+]
 
 [parameters.tau_e]
 default = 5.0
-unit = ""
-meaning = ""
+unit = "ms"
+meaning = "excitatory synaptic conductance time constant"
+range = [
+    1.0,
+    20.0,
+]
 
 [parameters.tau_i]
 default = 10.0
-unit = ""
-meaning = ""
+unit = "ms"
+meaning = "inhibitory synaptic conductance time constant"
+range = [
+    1.0,
+    30.0,
+]
 
 [parameters.v_threshold]
 default = -50.0
-unit = ""
-meaning = ""
+unit = "mV"
+meaning = "spike threshold"
+range = [
+    -60.0,
+    -30.0,
+]
 
 [parameters.v_reset]
 default = -65.0
-unit = ""
-meaning = ""
+unit = "mV"
+meaning = "post-spike reset potential"
+range = [
+    -90.0,
+    -50.0,
+]
 
 [integration]
 dt = 0.1

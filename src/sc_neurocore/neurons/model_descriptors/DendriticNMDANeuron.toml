@@ -26,33 +26,57 @@ init = -65.0
 
 [parameters.g_nmda]
 default = 1.5
-unit = ""
-meaning = ""
+unit = "1"
+meaning = "NMDA synaptic conductance (relative)"
+range = [
+    0.0,
+    5.0,
+]
 
 [parameters.e_nmda]
 default = 0.0
-unit = ""
-meaning = ""
+unit = "mV"
+meaning = "NMDA reversal potential"
+range = [
+    -10.0,
+    10.0,
+]
 
 [parameters.mg_conc]
 default = 1.0
-unit = ""
-meaning = ""
+unit = "mM"
+meaning = "extracellular Mg2+ concentration"
+range = [
+    0.0,
+    5.0,
+]
 
 [parameters.g_coupling]
 default = 0.5
-unit = ""
-meaning = ""
+unit = "1"
+meaning = "soma-dendrite coupling conductance (relative)"
+range = [
+    0.0,
+    5.0,
+]
 
 [parameters.tau_soma]
 default = 20.0
-unit = ""
-meaning = ""
+unit = "ms"
+meaning = "somatic membrane time constant"
+range = [
+    1.0,
+    100.0,
+]
 
 [parameters.tau_dend]
 default = 50.0
-unit = ""
-meaning = ""
+unit = "ms"
+meaning = "dendritic membrane time constant"
+range = [
+    1.0,
+    200.0,
+]
 
 [integration]
 dt = 0.1

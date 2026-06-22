@@ -23,43 +23,75 @@ init = 0.0
 
 [parameters.v_rest]
 default = -55.0
-unit = ""
-meaning = ""
+unit = "mV"
+meaning = "resting potential (depolarised for spontaneous firing)"
+range = [
+    -70.0,
+    -45.0,
+]
 
 [parameters.v_reset]
 default = -65.0
-unit = ""
-meaning = ""
+unit = "mV"
+meaning = "post-spike reset potential"
+range = [
+    -80.0,
+    -55.0,
+]
 
 [parameters.v_threshold]
 default = -48.0
-unit = ""
-meaning = ""
+unit = "mV"
+meaning = "spike threshold"
+range = [
+    -55.0,
+    -35.0,
+]
 
 [parameters.tau_m]
 default = 10.0
-unit = ""
-meaning = ""
+unit = "ms"
+meaning = "membrane time constant"
+range = [
+    1.0,
+    50.0,
+]
 
 [parameters.tau_adapt]
 default = 150.0
-unit = ""
-meaning = ""
+unit = "ms"
+meaning = "spike-frequency adaptation time constant"
+range = [
+    10.0,
+    1000.0,
+]
 
 [parameters.a_adapt]
 default = 0.05
-unit = ""
-meaning = ""
+unit = "1"
+meaning = "adaptation increment per spike"
+range = [
+    0.0,
+    2.0,
+]
 
 [parameters.gain]
 default = 2.0
-unit = ""
-meaning = ""
+unit = "1"
+meaning = "gain applied to the injected drive"
+range = [
+    0.0,
+    10.0,
+]
 
 [parameters.serotonin]
 default = 0.0
-unit = ""
-meaning = ""
+unit = "1"
+meaning = "serotonin (5-HT) modulation level"
+range = [
+    0.0,
+    1.0,
+]
 
 [integration]
 dt = 0.5

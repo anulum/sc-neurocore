@@ -23,23 +23,39 @@ init = 0.0
 
 [parameters.tau]
 default = 10.0
-unit = ""
-meaning = ""
+unit = "ms"
+meaning = "membrane time constant"
+range = [
+    1.0,
+    100.0,
+]
 
 [parameters.w_centre]
 default = 1.0
-unit = ""
-meaning = ""
+unit = "1"
+meaning = "centre receptive-field weight"
+range = [
+    0.0,
+    5.0,
+]
 
 [parameters.w_surround]
 default = 0.3
-unit = ""
-meaning = ""
+unit = "1"
+meaning = "surround receptive-field weight"
+range = [
+    0.0,
+    5.0,
+]
 
 [parameters.direction_pref]
 default = 0.0
-unit = ""
-meaning = ""
+unit = "rad"
+meaning = "preferred motion direction"
+range = [
+    -3.15159,
+    3.15159,
+]
 
 [integration]
 dt = 1.0

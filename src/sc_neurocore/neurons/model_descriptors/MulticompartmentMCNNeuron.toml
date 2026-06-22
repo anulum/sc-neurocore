@@ -26,33 +26,57 @@ init = 0.0
 
 [parameters.tau]
 default = 2.0
-unit = ""
-meaning = ""
+unit = "ms"
+meaning = "soma membrane time constant"
+range = [
+    0.5,
+    50.0,
+]
 
 [parameters.tau_b]
 default = 2.0
-unit = ""
-meaning = ""
+unit = "ms"
+meaning = "basal dendrite time constant"
+range = [
+    0.5,
+    50.0,
+]
 
 [parameters.tau_a]
 default = 2.0
-unit = ""
-meaning = ""
+unit = "ms"
+meaning = "apical dendrite time constant"
+range = [
+    0.5,
+    50.0,
+]
 
 [parameters.g_ratio]
 default = 1.0
-unit = ""
-meaning = ""
+unit = "1"
+meaning = "basal-to-soma conductance ratio g_B/g_L"
+range = [
+    0.0,
+    10.0,
+]
 
 [parameters.beta]
 default = 1.0
-unit = ""
-meaning = ""
+unit = "1"
+meaning = "sigmoid steepness for apical gating"
+range = [
+    0.1,
+    10.0,
+]
 
 [parameters.v_th]
 default = 1.0
-unit = ""
-meaning = ""
+unit = "1"
+meaning = "spike threshold (normalised)"
+range = [
+    0.0,
+    5.0,
+]
 
 [integration]
 dt = 1.0
