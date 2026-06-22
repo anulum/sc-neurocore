@@ -9,7 +9,7 @@
     "python_model_classes": 157,
     "python_model_source_modules": 151,
     "rust_pyo3_model_wrappers": 175,
-    "test_files": 867
+    "test_files": 870
   },
   "documentation": {
     "public_pages": [
@@ -1964,6 +1964,7 @@
       "tests/test_debug/test_sc_doctor_python_fallback.py",
       "tests/test_debug/test_sc_runtime.py",
       "tests/test_debug/test_sc_scope.py",
+      "tests/test_debug/test_sc_scope_edges.py",
       "tests/test_debug/test_wave4.py",
       "tests/test_debug_toolkit.py",
       "tests/test_delay_training.py",
@@ -2291,6 +2292,7 @@
       "tests/test_model_stellate_cell.py",
       "tests/test_model_stochastic_if.py",
       "tests/test_model_superspike_neuron.py",
+      "tests/test_model_taxonomy.py",
       "tests/test_model_tc_lif.py",
       "tests/test_model_terman_wang.py",
       "tests/test_model_theta.py",
@@ -2558,6 +2560,7 @@
       "tests/test_studio_identity_bootstrap.py",
       "tests/test_studio_integration.py",
       "tests/test_studio_jobs.py",
+      "tests/test_studio_model_catalogue_api.py",
       "tests/test_studio_model_scan.py",
       "tests/test_studio_network_canvas.py",
       "tests/test_studio_operator_status.py",

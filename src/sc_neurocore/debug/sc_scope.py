@@ -246,11 +246,12 @@ def _compute_scc_python(a: np.ndarray[Any, Any], b: np.ndarray[Any, Any]) -> flo
     if abs(numerator) < 1e-12:
         return 0.0
     if numerator > 0.0:
+        # The AND density obeys p_and <= min(pa, pb), so this denominator is
+        # always >= numerator > 1e-12 — no division-by-zero guard is reachable.
         denominator = min(pa, pb) - pa * pb
     else:
+        # Symmetrically p_and >= max(0, pa + pb - 1), so denominator >= |numerator|.
         denominator = pa * pb - max(0.0, pa + pb - 1.0)
-    if abs(denominator) < 1e-12:
-        return 0.0
     return max(-1.0, min(1.0, numerator / denominator))
 
 
