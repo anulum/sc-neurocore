@@ -120,3 +120,15 @@ class TestTelemetry(unittest.TestCase):
         r = ingest_telemetry([], [])
         self.assertTrue(r.healthy)
         self.assertEqual(r.samples, 0)
+
+
+class TestSeuScrubberFallback:
+    """No configuration bits means no expected upsets, so the scrub interval
+    falls back to the daily cadence rather than dividing by zero."""
+
+    def test_zero_config_bits_uses_daily_fallback_interval(self):
+        from sc_neurocore.compiler.intelligence import schedule_seu_scrubbing
+
+        s = schedule_seu_scrubbing(0, orbit_altitude_km=400)
+        assert s.interval_ms == round(24.0 * 3_600_000, 2)
+        assert s.expected_seu_rate == 0.0

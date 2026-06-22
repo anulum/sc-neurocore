@@ -2081,3 +2081,34 @@ class TestSetNumThreads:
 class TestPhase9Version:
     def test_version_is_current(self):
         _assert_engine_version_matches_core()
+
+
+class TestDriftCompensatorFallback:
+    """A non-positive drift rate has no tolerance horizon, so the refresh
+    interval falls back to the fixed ceiling instead of dividing by zero."""
+
+    def test_non_positive_drift_uses_fallback_refresh(self):
+        from sc_neurocore.compiler.intelligence import generate_drift_compensator
+
+        c = generate_drift_compensator("sc_lif", drift_rate_per_day=0.0)
+        assert c.refresh_interval_ms == round(1e9, 2)
+
+
+class TestTimescalePartitionerEdges:
+    """Cover the op-count timescale heuristic and the empty-model short-circuit."""
+
+    def test_op_heavy_equation_is_partitioned(self):
+        from sc_neurocore.compiler.intelligence import partition_timescales
+
+        # With no explicit time constants, the arithmetic ops in each expression
+        # drive the heuristic; both variables land in the partition.
+        p = partition_timescales({"fast": "a", "slow": "a*b*c"})
+        assert set(p.fast_equations) | set(p.slow_equations) == {"fast", "slow"}
+
+    def test_empty_equations_returns_empty_partition(self):
+        from sc_neurocore.compiler.intelligence import partition_timescales
+
+        p = partition_timescales({})
+        assert p.fast_equations == {}
+        assert p.slow_equations == {}
+        assert p.cdc_signals == []
