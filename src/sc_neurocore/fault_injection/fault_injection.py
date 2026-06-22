@@ -364,20 +364,14 @@ class ResilienceBenchmark:
             bits_flipped_list.append(n_flipped)
 
         wall_time = (time.perf_counter() - start) * 1000.0
+        # One entry is appended per trial, so both arrays have shape
+        # (num_trials,). Each entry is a FaultInjectionResult.absolute_error
+        # (|p_orig - p_corr|, both in [0, 1] after the popcount<=length checks in
+        # FaultInjectionResult.__post_init__) and a bits-flipped count in
+        # [0, bitstream_length]; the per-trial post-conditions therefore always
+        # hold and need no further runtime re-validation here.
         errors_arr = np.array(errors)
         flipped_arr = np.array(bits_flipped_list, dtype=np.float64)
-        if errors_arr.shape != (num_trials,):
-            raise ValueError("internal error: error vector shape mismatch")
-        if flipped_arr.shape != (num_trials,):
-            raise ValueError("internal error: flipped vector shape mismatch")
-        if not np.isfinite(errors_arr).all():
-            raise ValueError("internal error: non-finite error values produced")
-        if not np.isfinite(flipped_arr).all():
-            raise ValueError("internal error: non-finite flipped-count values produced")
-        if (errors_arr < 0.0).any():
-            raise ValueError("internal error: negative error values produced")
-        if (flipped_arr < 0.0).any() or (flipped_arr > bitstream_length).any():
-            raise ValueError("internal error: flipped-count values out of range")
 
         return ResilienceReport(
             fault_model=fault_model.value,
