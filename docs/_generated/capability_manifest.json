@@ -9,7 +9,7 @@
     "python_model_classes": 157,
     "python_model_source_modules": 151,
     "rust_pyo3_model_wrappers": 175,
-    "test_files": 863
+    "test_files": 865
   },
   "documentation": {
     "public_pages": [
@@ -1961,6 +1961,7 @@
       "tests/test_debug/test_hierarchical_partitioner.py",
       "tests/test_debug/test_hil_debugger_wrapper.py",
       "tests/test_debug/test_photonic_emitter.py",
+      "tests/test_debug/test_sc_doctor_python_fallback.py",
       "tests/test_debug/test_sc_runtime.py",
       "tests/test_debug/test_sc_scope.py",
       "tests/test_debug/test_wave4.py",
@@ -2207,6 +2208,7 @@
       "tests/test_model_dcn_neuron.py",
       "tests/test_model_de_schutter_purkinje.py",
       "tests/test_model_dendrify.py",
+      "tests/test_model_descriptor.py",
       "tests/test_model_destexhe_thalamic.py",
       "tests/test_model_direction_selective_rgc.py",
       "tests/test_model_dpi_neuron.py",
