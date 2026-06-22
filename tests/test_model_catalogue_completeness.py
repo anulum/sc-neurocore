@@ -86,8 +86,12 @@ def test_registered_model_is_browsable(name: str) -> None:
     detail = get_model_detail(name)
     assert detail is not None, f"{name} is registered but not browsable (get_model_detail is None)"
     assert detail["name"] == name
-    assert detail["state_vars"], f"{name} has no state variables"
+    assert isinstance(detail["state_vars"], list)
     assert isinstance(detail["params"], list)
+    # A model must expose some numeric content; rate, statistical, and pure
+    # transfer-function models legitimately carry no scalar state variable, so the
+    # invariant is state-or-parameters rather than mandatory state.
+    assert detail["state_vars"] or detail["params"], f"{name} exposes neither state nor parameters"
     assert isinstance(detail["dt"], float)
 
 

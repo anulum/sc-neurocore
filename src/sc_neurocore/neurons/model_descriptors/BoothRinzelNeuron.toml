@@ -15,12 +15,6 @@ behavior_tags = []
 
 [provenance]
 
-[state.vs]
-init = -65.0
-
-[state.vd]
-init = -65.0
-
 [state.h]
 init = 0.9
 
@@ -29,6 +23,16 @@ init = 0.0
 
 [state.ca]
 init = 0.0
+
+[parameters.vs]
+default = -65.0
+unit = ""
+meaning = ""
+
+[parameters.vd]
+default = -65.0
+unit = ""
+meaning = ""
 
 [parameters.q]
 default = 0.0

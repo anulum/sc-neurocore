@@ -21,10 +21,8 @@ init = -1.0
 [state.w]
 init = 0.0
 
-[parameters.z]
-default = 0.0
-unit = ""
-meaning = ""
+[state.z]
+init = 0.0
 
 [parameters.alpha]
 default = 0.1

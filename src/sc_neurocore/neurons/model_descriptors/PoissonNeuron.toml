@@ -20,8 +20,7 @@ authors = [
 year = 2014
 doi = "10.1017/CBO9781107447615"
 
-[state.v]
-init = -65.0
+[state]
 
 [parameters.rate_hz]
 default = 100.0

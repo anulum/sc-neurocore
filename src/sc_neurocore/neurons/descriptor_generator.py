@@ -38,8 +38,13 @@ from sc_neurocore.neurons.models import _CLASS_TO_MODULE
 
 # Single letters that are conventionally state variables. ``a``/``b`` are
 # intentionally excluded — across this library they are far more often
-# parameters (adaptation increments, coupling constants) than state.
-_KNOWN_STATE_VARS = frozenset({"v", "w", "u", "h", "n", "m", "ca", "s", "r", "theta", "vm"})
+# parameters (adaptation increments, coupling constants) than state. ``x``/``y``/
+# ``z`` are the integration coordinates of the map-based, resonate-and-fire, and
+# three-variable models (suffixed forms like ``x_rest`` stay parameters via
+# ``_is_param``).
+_KNOWN_STATE_VARS = frozenset(
+    {"v", "w", "u", "h", "n", "m", "ca", "s", "r", "theta", "vm", "x", "y", "z"}
+)
 _PARAM_PREFIXES = ("v_", "e_", "g_", "tau_", "c_", "sigma", "alpha", "beta")
 _PARAM_SUFFIXES = ("_threshold", "_reset", "_rest", "_rev", "_max", "_min")
 _DOI_IN_TEXT = re.compile(r"10\.\d{4,9}/[^\s,)]+")
@@ -79,7 +84,10 @@ def _field_specs(cls: type) -> list[tuple[str, float]]:
 
 
 def _is_state_var(name: str) -> bool:
-    return name in _KNOWN_STATE_VARS or (name.startswith("v") and len(name) <= 2)
+    # Exact membership only. A ``v``-prefixed two-letter name (``v0``, ``v1`` …)
+    # is far more often a reversal/midpoint parameter than a state variable, so
+    # it is not auto-classified as state.
+    return name in _KNOWN_STATE_VARS
 
 
 def _is_param(name: str) -> bool:
@@ -153,8 +161,10 @@ def generate_descriptor_payload(class_name: str) -> dict[str, Any]:
             state[name] = {"init": default}
         else:
             parameters[name] = {"default": default, "unit": "", "meaning": ""}
-    if not state:
-        state["v"] = {"init": -65.0}
+    # No fabricated fallback: a model whose integration state is an internal
+    # accumulator (rate, statistical, and generator models) exposes no numeric
+    # state field, so its declared state stays empty until curated rather than
+    # inventing a membrane potential that does not exist.
 
     doc = cls.__doc__ or ""
     doi = ""

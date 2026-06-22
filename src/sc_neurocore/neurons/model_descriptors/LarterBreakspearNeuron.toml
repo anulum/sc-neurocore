@@ -21,13 +21,8 @@ init = -0.5
 [state.w]
 init = 0.0
 
-[state.v0]
+[state.z]
 init = 0.0
-
-[parameters.z]
-default = 0.0
-unit = ""
-meaning = ""
 
 [parameters.g_ca]
 default = 1.1
@@ -86,6 +81,11 @@ meaning = ""
 
 [parameters.a_ee]
 default = 0.36
+unit = ""
+meaning = ""
+
+[parameters.v0]
+default = 0.0
 unit = ""
 meaning = ""
 

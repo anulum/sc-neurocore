@@ -15,9 +15,6 @@ behavior_tags = []
 
 [provenance]
 
-[state.v0]
-init = 6.0
-
 [state.r]
 init = 0.56
 
@@ -78,6 +75,11 @@ meaning = ""
 
 [parameters.e0]
 default = 2.5
+unit = ""
+meaning = ""
+
+[parameters.v0]
+default = 6.0
 unit = ""
 meaning = ""
 

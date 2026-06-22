@@ -18,13 +18,11 @@ behavior_tags = []
 [state.v]
 init = -65.0
 
+[state.x]
+init = 1.0
+
 [state.u]
 init = 0.2
-
-[parameters.x]
-default = 1.0
-unit = ""
-meaning = ""
 
 [parameters.v_rest]
 default = -65.0

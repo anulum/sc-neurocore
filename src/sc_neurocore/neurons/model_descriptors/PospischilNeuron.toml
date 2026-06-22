@@ -27,9 +27,6 @@ init = 0.6
 [state.n]
 init = 0.3
 
-[state.vt]
-init = -56.2
-
 [parameters.p]
 default = 0.0
 unit = ""
@@ -72,6 +69,11 @@ meaning = ""
 
 [parameters.c_m]
 default = 1.0
+unit = ""
+meaning = ""
+
+[parameters.vt]
+default = -56.2
 unit = ""
 meaning = ""
 

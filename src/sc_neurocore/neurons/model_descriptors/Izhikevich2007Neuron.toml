@@ -15,12 +15,6 @@ behavior_tags = []
 
 [provenance]
 
-[state.vr]
-init = -60.0
-
-[state.vt]
-init = -40.0
-
 [state.v]
 init = 0.0
 
@@ -34,6 +28,16 @@ meaning = ""
 
 [parameters.k]
 default = 0.7
+unit = ""
+meaning = ""
+
+[parameters.vr]
+default = -60.0
+unit = ""
+meaning = ""
+
+[parameters.vt]
+default = -40.0
 unit = ""
 meaning = ""
 

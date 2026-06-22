@@ -15,8 +15,7 @@ behavior_tags = []
 
 [provenance]
 
-[state.v]
-init = -65.0
+[state]
 
 [parameters.v_s]
 default = -75.0

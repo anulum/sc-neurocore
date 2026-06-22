@@ -15,12 +15,6 @@ behavior_tags = []
 
 [provenance]
 
-[state.vs]
-init = -65.0
-
-[state.va]
-init = -65.0
-
 [state.m]
 init = 0.05
 
@@ -29,6 +23,16 @@ init = 0.6
 
 [state.n]
 init = 0.3
+
+[parameters.vs]
+default = -65.0
+unit = ""
+meaning = ""
+
+[parameters.va]
+default = -65.0
+unit = ""
+meaning = ""
 
 [parameters.kappa]
 default = 10.0
