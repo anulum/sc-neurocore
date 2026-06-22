@@ -27,6 +27,20 @@ const PATTERN_COLORS: Record<string, string> = {
   error: "#616161",
 };
 
+// Measured behaviour-tag colours (descriptor facet, distinct from the live scan).
+const BEHAVIOR_COLORS: Record<string, string> = {
+  excitable: "#81c784",
+  quiescent: "#616161",
+  tonic: "#81c784",
+  adapting: "#4fc3f7",
+  bursting: "#ffb74d",
+  irregular: "#ce93d8",
+  chaotic: "#ff5252",
+  phasic: "#90a4ae",
+  "rate-coded": "#4dd0e1",
+  stochastic: "#ba68c8",
+};
+
 function shortDigest(value: string): string {
   return value.slice(0, 10);
 }
@@ -39,6 +53,7 @@ export function buildModelScanEvidenceItems(
     { label: "class", value: metadata.evidence_classification },
     { label: "status", value: metadata.status },
     { label: "models", value: String(metadata.model_count) },
+    { label: "errors", value: String(metadata.error_count) },
     { label: "in", value: shortDigest(metadata.input_sha256) },
     { label: "out", value: shortDigest(metadata.result_sha256) },
   ];
@@ -50,12 +65,20 @@ interface ModelGroupFilters {
   patternFilter: string;
   minTier: number;
   behaviors: Record<string, ModelBehavior>;
+  behaviorFilter?: string;
 }
 
-/** Filter the catalogue by search text, family, firing pattern, and minimum
- *  evidence tier, then group the survivors by their displayed family. */
+/** Filter the catalogue by search text, family, measured behaviour tag, live
+ *  firing pattern, and minimum evidence tier, then group the survivors by their
+ *  displayed family. */
 export function filterAndGroupModels<
-  T extends { name: string; category: string; family: string; tier?: number },
+  T extends {
+    name: string;
+    category: string;
+    family: string;
+    tier?: number;
+    behavior_tags?: string[];
+  },
 >(models: T[], filters: ModelGroupFilters): Record<string, T[]> {
   let filtered = models;
   if (filters.modelFilter) {
@@ -66,6 +89,9 @@ export function filterAndGroupModels<
   }
   if (filters.familyFilter) {
     filtered = filtered.filter((m) => m.family === filters.familyFilter);
+  }
+  if (filters.behaviorFilter) {
+    filtered = filtered.filter((m) => m.behavior_tags?.includes(filters.behaviorFilter!));
   }
   if (filters.minTier > 0) {
     filtered = filtered.filter((m) => (m.tier ?? 0) >= filters.minTier);
@@ -94,6 +120,7 @@ export default function ModelBrowser() {
   const [scanLoaded, setScanLoaded] = useState(false);
   const [facets, setFacets] = useState<ModelFacets | null>(null);
   const [familyFilter, setFamilyFilter] = useState<string>("");
+  const [behaviorFilter, setBehaviorFilter] = useState<string>("");
   const [minTier, setMinTier] = useState<number>(0);
 
   useEffect(() => { loadModels(); }, [loadModels]);
@@ -120,8 +147,9 @@ export default function ModelBrowser() {
         patternFilter,
         minTier,
         behaviors,
+        behaviorFilter,
       }),
-    [models, modelFilter, familyFilter, patternFilter, minTier, behaviors],
+    [models, modelFilter, familyFilter, patternFilter, minTier, behaviors, behaviorFilter],
   );
 
   const totalFiltered = Object.values(grouped).reduce((s, g) => s + g.length, 0);
@@ -170,6 +198,28 @@ export default function ModelBrowser() {
             </option>
           ))}
         </select>
+      )}
+
+      {facets && facets.behaviors.length > 0 && (
+        <div style={{ display: "flex", gap: 3, flexWrap: "wrap", marginBottom: 4 }}>
+          <span onClick={() => setBehaviorFilter("")} style={{
+            fontSize: 9, padding: "1px 5px", borderRadius: 3, cursor: "pointer",
+            background: !behaviorFilter ? "var(--accent)" : "var(--bg-tertiary)",
+            color: !behaviorFilter ? "var(--bg-primary)" : "var(--text-muted)",
+          }} title="Measured behaviour across the current sweep (descriptor facet)">behaviour</span>
+          {facets.behaviors.map((b) => (
+            <span
+              key={b.tag}
+              onClick={() => setBehaviorFilter(b.tag === behaviorFilter ? "" : b.tag)}
+              title={`${b.count} models measured ${b.tag}`}
+              style={{
+                fontSize: 9, padding: "1px 5px", borderRadius: 3, cursor: "pointer",
+                background: b.tag === behaviorFilter ? (BEHAVIOR_COLORS[b.tag] || "var(--accent)") : "var(--bg-tertiary)",
+                color: b.tag === behaviorFilter ? "var(--bg-primary)" : (BEHAVIOR_COLORS[b.tag] || "var(--text-muted)"),
+              }}
+            >{b.tag} {b.count}</span>
+          ))}
+        </div>
       )}
 
       <div style={{ display: "flex", gap: 3, marginBottom: 4 }}>

@@ -1,0 +1,1623 @@
+{
+  "models": {
+    "ATypeKNeuron": {
+      "behavior_tags": [
+        "chaotic",
+        "excitable",
+        "irregular",
+        "rate-coded",
+        "tonic"
+      ],
+      "drivable": true,
+      "result_sha256": "88b05f687abc59cf9acf935f0e3aaaf207221d76175226fb2249f4b0e60c9244",
+      "stochastic": false
+    },
+    "AdExNeuron": {
+      "behavior_tags": [
+        "excitable",
+        "rate-coded",
+        "tonic"
+      ],
+      "drivable": true,
+      "result_sha256": "70a109b977178d157fe598ab17acc60b89ce77c109ea4ccd9fb2b81da50e7115",
+      "stochastic": false
+    },
+    "AdaptiveThresholdIFNeuron": {
+      "behavior_tags": [
+        "adapting",
+        "excitable",
+        "rate-coded",
+        "tonic"
+      ],
+      "drivable": true,
+      "result_sha256": "1c4931b39c1412e4dfc84a94dff8a7d1df6d8534d44a6f27c9c8adea25599a18",
+      "stochastic": false
+    },
+    "AdaptiveThresholdMoENeuron": {
+      "behavior_tags": [
+        "excitable",
+        "rate-coded",
+        "tonic"
+      ],
+      "drivable": true,
+      "result_sha256": "56dab1ecc558436aa8b162ab7d18ac4bf755eb5b7ee3a48c9dd6209155282a4f",
+      "stochastic": false
+    },
+    "AiharaMapNeuron": {
+      "behavior_tags": [
+        "excitable",
+        "phasic",
+        "rate-coded"
+      ],
+      "drivable": true,
+      "result_sha256": "8f3597b381f1c390f690b0a465f8ecea62d1075b14562ff005cb2077fcfe0410",
+      "stochastic": false
+    },
+    "AkidaNeuron": {
+      "behavior_tags": [
+        "excitable",
+        "phasic",
+        "rate-coded"
+      ],
+      "drivable": true,
+      "result_sha256": "b1c3db724c081576cf574561d8fcccaf1d1efbecc15c40a415b881fb2d0b6272",
+      "stochastic": false
+    },
+    "AlphaMotorNeuron": {
+      "behavior_tags": [
+        "chaotic",
+        "excitable",
+        "phasic",
+        "tonic"
+      ],
+      "drivable": true,
+      "result_sha256": "52d89d049f651b766f850234106a0b95c9faf66ca1ff5676b5d6eb771226a2f1",
+      "stochastic": false
+    },
+    "AlphaNeuron": {
+      "behavior_tags": [
+        "excitable",
+        "rate-coded",
+        "tonic"
+      ],
+      "drivable": true,
+      "result_sha256": "5fa8e826456202c80c5c171eddb1c860d480e62bfab185b93f9969954774fbe0",
+      "stochastic": false
+    },
+    "AmariNeuralField": {
+      "behavior_tags": [
+        "excitable",
+        "rate-coded",
+        "tonic"
+      ],
+      "drivable": true,
+      "result_sha256": "bfa8f917697161b9f06730c1f4a1cfed51a771ce9e150f1e57d3319ea8b87783",
+      "stochastic": false
+    },
+    "ArcaneNeuron": {
+      "behavior_tags": [
+        "excitable",
+        "rate-coded",
+        "tonic"
+      ],
+      "drivable": true,
+      "result_sha256": "7c86ba2ebc3a81f9e4759a4a213480be00748fc83c85ae515de5ae3a6e3e5e6b",
+      "stochastic": false
+    },
+    "AstrocyteLIFNeuron": {
+      "behavior_tags": [
+        "excitable",
+        "rate-coded",
+        "tonic"
+      ],
+      "drivable": true,
+      "result_sha256": "65a451716718f8e801ebec2b8dfea8bf39077b696c1170b7f2189df7909409d6",
+      "stochastic": false
+    },
+    "AstrocyteModel": {
+      "behavior_tags": [
+        "excitable",
+        "tonic"
+      ],
+      "drivable": true,
+      "result_sha256": "358855d18edda6181f0d7f07cb2717383c2d6ae432831789afab190c35dc956b",
+      "stochastic": false
+    },
+    "AstrocyteNeuron": {
+      "behavior_tags": [
+        "excitable",
+        "rate-coded",
+        "tonic"
+      ],
+      "drivable": true,
+      "result_sha256": "6b25327f60db34a2e5fb54ba787d70c2436e603edae2cc0df40bdf506be04628",
+      "stochastic": false
+    },
+    "AttentionGatedNeuron": {
+      "behavior_tags": [
+        "excitable",
+        "rate-coded",
+        "tonic"
+      ],
+      "drivable": true,
+      "result_sha256": "b4622f5032651ed9d22e52621871b602e6bc354da7664e8684d4eed805607088",
+      "stochastic": false
+    },
+    "AvRonCardiacNeuron": {
+      "behavior_tags": [
+        "excitable",
+        "phasic",
+        "tonic"
+      ],
+      "drivable": true,
+      "result_sha256": "59c22812130b680039fcb06b410dc582541d48c6e76000778c7e9d0d8cb8bece",
+      "stochastic": false
+    },
+    "BKNeuron": {
+      "behavior_tags": [
+        "adapting",
+        "excitable",
+        "irregular",
+        "rate-coded",
+        "tonic"
+      ],
+      "drivable": true,
+      "result_sha256": "99647fa7e4bb8a5a0442cbd03b61f84b61c4d15f1e8e1b3a79f5388596f7460c",
+      "stochastic": false
+    },
+    "BalancedResonateAndFireNeuron": {
+      "behavior_tags": [
+        "bursting",
+        "excitable",
+        "phasic",
+        "rate-coded",
+        "tonic"
+      ],
+      "drivable": true,
+      "result_sha256": "cfc0ccee4f8a59457f5d02556270bc3cde59fa5eeca30b4577f0d3781497fa23",
+      "stochastic": false
+    },
+    "BendaHerzNeuron": {
+      "behavior_tags": [
+        "excitable",
+        "stochastic"
+      ],
+      "drivable": true,
+      "result_sha256": "6fd5e572ec9a46b8967357de3eb24ad1cf2afcbcf6e542ebf88b5a7089acc228",
+      "stochastic": true
+    },
+    "BertramPhantomBurster": {
+      "behavior_tags": [
+        "excitable",
+        "phasic",
+        "rate-coded"
+      ],
+      "drivable": true,
+      "result_sha256": "c83606237832a403db94d43ad1b861a17c2e93f757d41f6d12b8374e9591af15",
+      "stochastic": false
+    },
+    "BoothRinzelNeuron": {
+      "behavior_tags": [
+        "excitable",
+        "phasic",
+        "tonic"
+      ],
+      "drivable": true,
+      "result_sha256": "3b87410b42e72d544234e16675fb68644bfe578b5860d6e13d9e1c2a141ade1f",
+      "stochastic": false
+    },
+    "BrainScaleSAdExNeuron": {
+      "behavior_tags": [
+        "adapting",
+        "excitable",
+        "phasic",
+        "rate-coded"
+      ],
+      "drivable": true,
+      "result_sha256": "c9ba1851e8d5f354ac74445e20c9afdd4e890df0464af840039856d769b8b759",
+      "stochastic": false
+    },
+    "BrunelWangNeuron": {
+      "behavior_tags": [
+        "excitable",
+        "rate-coded",
+        "tonic"
+      ],
+      "drivable": true,
+      "result_sha256": "b7ba8887c534e5046b2bc35e69f3d26ba6cd6d41d4b6d526ac2cd3fc0cd66f96",
+      "stochastic": false
+    },
+    "ButeraRespiratoryNeuron": {
+      "behavior_tags": [
+        "adapting",
+        "excitable",
+        "phasic"
+      ],
+      "drivable": true,
+      "result_sha256": "231f3816dd5ed6dbb1a5244fdf7358c17b435e4f2b25561bbdf9677310c59222",
+      "stochastic": false
+    },
+    "COBALIFNeuron": {
+      "behavior_tags": [
+        "excitable",
+        "rate-coded",
+        "tonic"
+      ],
+      "drivable": true,
+      "result_sha256": "d44a66b4265e7b6bf05354176c47f8c404f28a0bd408d2f734588cfa029b76ba",
+      "stochastic": false
+    },
+    "CazellesMapNeuron": {
+      "behavior_tags": [
+        "adapting",
+        "chaotic",
+        "excitable",
+        "irregular",
+        "rate-coded",
+        "tonic"
+      ],
+      "drivable": true,
+      "result_sha256": "30663825111a670a8cfceedfbd1b46aeea9a4bf270c888211e03ccfb140e7de7",
+      "stochastic": false
+    },
+    "CerebellarBasketNeuron": {
+      "behavior_tags": [
+        "excitable",
+        "irregular",
+        "phasic",
+        "tonic"
+      ],
+      "drivable": true,
+      "result_sha256": "f06c52b9c326d3026fb11ef8c94db6a47be6d05a0d43d8535aa19966aa79604b",
+      "stochastic": false
+    },
+    "ChandelierNeuron": {
+      "behavior_tags": [
+        "adapting",
+        "chaotic",
+        "excitable",
+        "phasic"
+      ],
+      "drivable": true,
+      "result_sha256": "813bb5291f8f931bbcba43824f3014631375f11f03cbee5aa8cc1781844971fb",
+      "stochastic": false
+    },
+    "ChayKeizerNeuron": {
+      "behavior_tags": [],
+      "drivable": false,
+      "result_sha256": "98c3c9414e17622662e49db19bb80c805f389be2dae09784a2af69e6139d78f9",
+      "stochastic": false
+    },
+    "ChayNeuron": {
+      "behavior_tags": [
+        "quiescent"
+      ],
+      "drivable": true,
+      "result_sha256": "8e70fdddba5cd82b5fca1e6d6247418115893ded2e39ab6e8d0c244ef74c5ea9",
+      "stochastic": false
+    },
+    "ChialvoMapNeuron": {
+      "behavior_tags": [
+        "excitable",
+        "phasic",
+        "tonic"
+      ],
+      "drivable": true,
+      "result_sha256": "2c3289d317e635a180826e92d8c6b82c5e29e8cc2453b8ab8fc74ca66f3a6801",
+      "stochastic": false
+    },
+    "ClosedFormContinuousNeuron": {
+      "behavior_tags": [
+        "excitable",
+        "rate-coded",
+        "tonic"
+      ],
+      "drivable": true,
+      "result_sha256": "e2319dcd851fc0a36c27d93a1b3f74ab242698bab095a7bb701a73cb587a759f",
+      "stochastic": false
+    },
+    "CochlearHairCell": {
+      "behavior_tags": [
+        "excitable",
+        "rate-coded",
+        "tonic"
+      ],
+      "drivable": true,
+      "result_sha256": "6bc3aa1bf18c445d05e9feb85b9f053b153c24c7bea1474ea84973c50f5ac35f",
+      "stochastic": false
+    },
+    "ComplementaryLIFNeuron": {
+      "behavior_tags": [
+        "excitable",
+        "rate-coded",
+        "tonic"
+      ],
+      "drivable": true,
+      "result_sha256": "8c7f12fac593e460b1b7d15ce2e9ea0d6fa838255c71a1c04152e1472cdfcd7e",
+      "stochastic": false
+    },
+    "CompositionalBindingNeuron": {
+      "behavior_tags": [
+        "adapting",
+        "chaotic",
+        "excitable",
+        "rate-coded"
+      ],
+      "drivable": true,
+      "result_sha256": "1d7ac77db7f3ce5987f876348cedd40f0669c75b65542c460be21dcfe35014c0",
+      "stochastic": false
+    },
+    "CompteWMNeuron": {
+      "behavior_tags": [
+        "excitable",
+        "rate-coded",
+        "tonic"
+      ],
+      "drivable": true,
+      "result_sha256": "28a57afe3838f197d9254973c9004e0c3d0b177e67b93ea8d47e76e6e527a791",
+      "stochastic": false
+    },
+    "ConnorStevensNeuron": {
+      "behavior_tags": [
+        "chaotic",
+        "excitable",
+        "irregular",
+        "phasic"
+      ],
+      "drivable": true,
+      "result_sha256": "1620d3e3354ab8c6269e1c1563e7ec3c23bdb0b084efe5c4ac1f74901221dda9",
+      "stochastic": false
+    },
+    "ContinuousAttractorNeuron": {
+      "behavior_tags": [
+        "excitable",
+        "rate-coded",
+        "tonic"
+      ],
+      "drivable": true,
+      "result_sha256": "88ef17784a6505671144d79dc57402c12a14d420e058f589d499293a2723cfd2",
+      "stochastic": false
+    },
+    "CourageNekorkinMapNeuron": {
+      "behavior_tags": [
+        "chaotic",
+        "excitable"
+      ],
+      "drivable": true,
+      "result_sha256": "7c0bda301dc5399e25d3c07d07a4bdb0c3ce54792b7c1cc2771226ee98fbb17d",
+      "stochastic": false
+    },
+    "DCNNeuron": {
+      "behavior_tags": [
+        "excitable",
+        "irregular",
+        "phasic",
+        "rate-coded",
+        "tonic"
+      ],
+      "drivable": true,
+      "result_sha256": "80c1d1f53ad493ab9d94f98cf5b9c68bf798e9214d4e18d5aedc4afbb5ace9a1",
+      "stochastic": false
+    },
+    "DPINeuron": {
+      "behavior_tags": [
+        "excitable",
+        "phasic",
+        "rate-coded",
+        "tonic"
+      ],
+      "drivable": true,
+      "result_sha256": "6d52e496bb3d82861719c5974717ba6dfe0afb09ff111e9824ef9353dcac92e1",
+      "stochastic": false
+    },
+    "DeSchutterPurkinjeNeuron": {
+      "behavior_tags": [
+        "excitable",
+        "phasic",
+        "rate-coded"
+      ],
+      "drivable": true,
+      "result_sha256": "c83606237832a403db94d43ad1b861a17c2e93f757d41f6d12b8374e9591af15",
+      "stochastic": false
+    },
+    "DendrifyNeuron": {
+      "behavior_tags": [
+        "excitable",
+        "rate-coded",
+        "tonic"
+      ],
+      "drivable": true,
+      "result_sha256": "da781fbe4c739676688be967af885e0774c7093b4c5dc50314050738a9088757",
+      "stochastic": false
+    },
+    "DendriticNMDANeuron": {
+      "behavior_tags": [],
+      "drivable": false,
+      "result_sha256": "7a0a6126d8ab0c878f7a187eeaf8c87e880defe6db38bf6dec3af94344175aaf",
+      "stochastic": false
+    },
+    "DestexheThalamicNeuron": {
+      "behavior_tags": [
+        "excitable",
+        "phasic"
+      ],
+      "drivable": true,
+      "result_sha256": "e605127ba954adeaeb72020b8a94b3be0b19069ad488d59a4bbe003eee73c364",
+      "stochastic": false
+    },
+    "DifferentiableSurrogateNeuron": {
+      "behavior_tags": [
+        "excitable",
+        "rate-coded",
+        "tonic"
+      ],
+      "drivable": true,
+      "result_sha256": "5e6b99d948400ea662fac6394e6f41c6a78a6dc3ab5ae547b308187e9fa87f27",
+      "stochastic": false
+    },
+    "DirectionSelectiveRGC": {
+      "behavior_tags": [
+        "excitable",
+        "phasic",
+        "rate-coded"
+      ],
+      "drivable": true,
+      "result_sha256": "0513d05f825419b39ac1bfa3f5ca68c33030a3898f3de32b6e8c1c3cbb96848f",
+      "stochastic": false
+    },
+    "DurstewitzDopamineNeuron": {
+      "behavior_tags": [
+        "excitable",
+        "phasic",
+        "tonic"
+      ],
+      "drivable": true,
+      "result_sha256": "e0a6c1f1f914e7eebaa07a96f6d988c8698bb3e875ad18ff4d3997ea3bdb368d",
+      "stochastic": false
+    },
+    "EPropALIFNeuron": {
+      "behavior_tags": [
+        "adapting",
+        "excitable",
+        "rate-coded",
+        "tonic"
+      ],
+      "drivable": true,
+      "result_sha256": "d947bbc59153b0a2b976a8f9c1edda574b4fef00374ef3802cc86caddd81379c",
+      "stochastic": false
+    },
+    "EnergyLIFNeuron": {
+      "behavior_tags": [
+        "adapting",
+        "excitable",
+        "rate-coded"
+      ],
+      "drivable": true,
+      "result_sha256": "811c1e16e3e4d1203b499cc7c175514732b9ea144953c70934836482fd56447d",
+      "stochastic": false
+    },
+    "ErmentroutKopellMapNeuron": {
+      "behavior_tags": [
+        "chaotic",
+        "excitable",
+        "tonic"
+      ],
+      "drivable": true,
+      "result_sha256": "bd5dcec685779fd76542c16170cd5f50b205ca058125ce3985bb2f4d66b50fa9",
+      "stochastic": false
+    },
+    "ErmentroutKopellPopulation": {
+      "behavior_tags": [
+        "excitable",
+        "irregular",
+        "tonic"
+      ],
+      "drivable": true,
+      "result_sha256": "b80b7f10aba464f143be8da7ace6505f9a7408db88fcf9ad92ecdf33e39b28aa",
+      "stochastic": false
+    },
+    "EscapeRateNeuron": {
+      "behavior_tags": [
+        "excitable",
+        "irregular",
+        "rate-coded",
+        "tonic"
+      ],
+      "drivable": true,
+      "result_sha256": "abac74f7f027ce5a650653ecbe205054cc5178166f6b83f86ea5cb624f71edfb",
+      "stochastic": false
+    },
+    "ExpIFNeuron": {
+      "behavior_tags": [
+        "excitable",
+        "rate-coded",
+        "tonic"
+      ],
+      "drivable": true,
+      "result_sha256": "631ad6e916779c305b10d44aa246cae381055151562ce7dccdaf603ca00656a3",
+      "stochastic": false
+    },
+    "FitzHughNagumoNeuron": {
+      "behavior_tags": [
+        "excitable",
+        "phasic",
+        "tonic"
+      ],
+      "drivable": true,
+      "result_sha256": "0ce1d3b93f64705a0ce15a136fa0915189cc7929a411add002cea152ae5931a2",
+      "stochastic": false
+    },
+    "FitzHughRinzelNeuron": {
+      "behavior_tags": [
+        "excitable",
+        "phasic",
+        "tonic"
+      ],
+      "drivable": true,
+      "result_sha256": "0ce1d3b93f64705a0ce15a136fa0915189cc7929a411add002cea152ae5931a2",
+      "stochastic": false
+    },
+    "FractionalLIFNeuron": {
+      "behavior_tags": [
+        "excitable",
+        "rate-coded",
+        "tonic"
+      ],
+      "drivable": true,
+      "result_sha256": "8c7f12fac593e460b1b7d15ce2e9ea0d6fa838255c71a1c04152e1472cdfcd7e",
+      "stochastic": false
+    },
+    "GIFPopulationNeuron": {
+      "behavior_tags": [
+        "adapting",
+        "excitable",
+        "rate-coded",
+        "tonic"
+      ],
+      "drivable": true,
+      "result_sha256": "52fd8bbc93f13d49ab04ebfaae8c929b879e83fb7d14c1624cf7ffa7209e6c7a",
+      "stochastic": false
+    },
+    "GLIFNeuron": {
+      "behavior_tags": [
+        "adapting",
+        "excitable",
+        "rate-coded"
+      ],
+      "drivable": true,
+      "result_sha256": "4bbd62dfbb6477d05782cf41a8b2690dbc2562a4fa20101f1a8fefe0f2bb92df",
+      "stochastic": false
+    },
+    "GLMNeuron": {
+      "behavior_tags": [
+        "excitable",
+        "stochastic"
+      ],
+      "drivable": true,
+      "result_sha256": "b0f8078498875e67a08c32ffec0bf08ff8a99b57dc9f9a740762314b4bdb68b8",
+      "stochastic": true
+    },
+    "GalvesLocherbachNeuron": {
+      "behavior_tags": [
+        "bursting",
+        "excitable",
+        "irregular",
+        "rate-coded",
+        "tonic"
+      ],
+      "drivable": true,
+      "result_sha256": "c7876270f860abd3d11b739baa8b17e9945f6658daa85e0bb0c8200004b55dd3",
+      "stochastic": false
+    },
+    "GammaMotorNeuron": {
+      "behavior_tags": [
+        "excitable",
+        "rate-coded",
+        "tonic"
+      ],
+      "drivable": true,
+      "result_sha256": "cfe6c487b30dac80187e446538af5b3ac97ef1d92f0ea18f7fd7c9ab54bb91c6",
+      "stochastic": false
+    },
+    "GammaRenewalNeuron": {
+      "behavior_tags": [
+        "excitable",
+        "stochastic"
+      ],
+      "drivable": true,
+      "result_sha256": "e0afbb0436f3142b2f7f9cf24f2195e7eb2e534efd14863cee33b018d1f79d08",
+      "stochastic": true
+    },
+    "GatedLIFNeuron": {
+      "behavior_tags": [
+        "excitable",
+        "rate-coded",
+        "tonic"
+      ],
+      "drivable": true,
+      "result_sha256": "8c7f12fac593e460b1b7d15ce2e9ea0d6fa838255c71a1c04152e1472cdfcd7e",
+      "stochastic": false
+    },
+    "GolgiCell": {
+      "behavior_tags": [
+        "chaotic",
+        "excitable",
+        "irregular",
+        "phasic"
+      ],
+      "drivable": true,
+      "result_sha256": "61ab6b235bd8a6f806c0650ffb3c9a6f8024344d243635154b65b287c88be5f0",
+      "stochastic": false
+    },
+    "GolombFSNeuron": {
+      "behavior_tags": [
+        "excitable",
+        "irregular",
+        "tonic"
+      ],
+      "drivable": true,
+      "result_sha256": "8f710d3f6e8b485ad7991376464afb4caf91dfb6d87426064cd57208d2bd2243",
+      "stochastic": false
+    },
+    "GranuleCell": {
+      "behavior_tags": [
+        "excitable",
+        "irregular",
+        "phasic",
+        "tonic"
+      ],
+      "drivable": true,
+      "result_sha256": "b6fd6dcc3ecb39150fc4807233282558c982f2e3742fecf50e662bac894382a8",
+      "stochastic": false
+    },
+    "GutkinErmentroutNeuron": {
+      "behavior_tags": [
+        "excitable",
+        "phasic",
+        "tonic"
+      ],
+      "drivable": true,
+      "result_sha256": "283dbb68f77ce5b375111fe2c2b4eaa55f5529f8a0ea31e0e3212468ba161881",
+      "stochastic": false
+    },
+    "HayL5PyramidalNeuron": {
+      "behavior_tags": [
+        "bursting",
+        "chaotic",
+        "excitable",
+        "irregular",
+        "phasic"
+      ],
+      "drivable": true,
+      "result_sha256": "ee6796ae52160b72fa8357c890b0743237b7be18570a1b2c4c11e2c7361b93d1",
+      "stochastic": false
+    },
+    "HillTononiNeuron": {
+      "behavior_tags": [
+        "bursting",
+        "chaotic",
+        "excitable",
+        "phasic"
+      ],
+      "drivable": true,
+      "result_sha256": "b7f9ac4382604cbee42d6595bb5c6cd90595ad0afd8c46521e7a2ec7b9499b0a",
+      "stochastic": false
+    },
+    "HindmarshRoseNeuron": {
+      "behavior_tags": [
+        "excitable",
+        "phasic",
+        "tonic"
+      ],
+      "drivable": true,
+      "result_sha256": "15bacd0b16f384718200b1066bfb00f58cd02ea044d02b75ac6cbf6e18fb7f8d",
+      "stochastic": false
+    },
+    "HodgkinHuxleyNeuron": {
+      "behavior_tags": [
+        "excitable",
+        "irregular",
+        "phasic"
+      ],
+      "drivable": true,
+      "result_sha256": "29316ce875ad964403a9c93dc927edc37460787b347a5335339d8164af494eb4",
+      "stochastic": false
+    },
+    "HuberBraunNeuron": {
+      "behavior_tags": [
+        "excitable",
+        "phasic"
+      ],
+      "drivable": true,
+      "result_sha256": "e605127ba954adeaeb72020b8a94b3be0b19069ad488d59a4bbe003eee73c364",
+      "stochastic": false
+    },
+    "HybridFisherPosnerLIFNeuron": {
+      "behavior_tags": [
+        "adapting",
+        "excitable",
+        "rate-coded"
+      ],
+      "drivable": true,
+      "result_sha256": "55ac317794b74043eaced92861e04c9298b04b9206fca211bf9aa146f1a2d414",
+      "stochastic": false
+    },
+    "HybridLinearAttentionNeuron": {
+      "behavior_tags": [
+        "excitable",
+        "rate-coded",
+        "tonic"
+      ],
+      "drivable": true,
+      "result_sha256": "8c7f12fac593e460b1b7d15ce2e9ea0d6fa838255c71a1c04152e1472cdfcd7e",
+      "stochastic": false
+    },
+    "IbarzTanakaMapNeuron": {
+      "behavior_tags": [
+        "adapting",
+        "excitable",
+        "rate-coded",
+        "tonic"
+      ],
+      "drivable": true,
+      "result_sha256": "cd8958874cbcbfac93f09cfac928f491c3b026234df1f63210d4ed491759abc9",
+      "stochastic": false
+    },
+    "IhNeuron": {
+      "behavior_tags": [
+        "excitable",
+        "rate-coded",
+        "tonic"
+      ],
+      "drivable": true,
+      "result_sha256": "f90832d6a782e034aa7b4c1c609eabc10a7a60a5a69d10a8601251d6d1a5b262",
+      "stochastic": false
+    },
+    "InhibitoryLIFNeuron": {
+      "behavior_tags": [
+        "excitable",
+        "rate-coded",
+        "tonic"
+      ],
+      "drivable": true,
+      "result_sha256": "a406f91c518b7d90ae64a8548d13c13fce002f56a9ef890a61e9dddbd779fd98",
+      "stochastic": false
+    },
+    "InhomogeneousPoissonNeuron": {
+      "behavior_tags": [
+        "bursting",
+        "chaotic",
+        "excitable",
+        "phasic",
+        "rate-coded"
+      ],
+      "drivable": true,
+      "result_sha256": "7cac20161cc9ffa42bbc4af021dc47ca74c5fbb63abc54faa4550e34889ce02d",
+      "stochastic": false
+    },
+    "IntegerQIFNeuron": {
+      "behavior_tags": [
+        "excitable",
+        "rate-coded",
+        "tonic"
+      ],
+      "drivable": true,
+      "result_sha256": "c051b385e8c59d36bdfdfb5b1f3b8ce4910b0cbee69f32c0d818f345df5ee6ab",
+      "stochastic": false
+    },
+    "Izhikevich2007Neuron": {
+      "behavior_tags": [
+        "excitable",
+        "phasic",
+        "rate-coded",
+        "tonic"
+      ],
+      "drivable": true,
+      "result_sha256": "2686f7607a097f5d0d0314f4c3f319062fe8951861510ef569771b2a787e95f2",
+      "stochastic": false
+    },
+    "JansenRitUnit": {
+      "behavior_tags": [
+        "excitable",
+        "tonic"
+      ],
+      "drivable": true,
+      "result_sha256": "1957de377216ce33d7103d2f7fbeb9ddf2f567558bd045bfd75e52c209ad0957",
+      "stochastic": false
+    },
+    "KLIFNeuron": {
+      "behavior_tags": [
+        "excitable",
+        "rate-coded",
+        "tonic"
+      ],
+      "drivable": true,
+      "result_sha256": "8c7f12fac593e460b1b7d15ce2e9ea0d6fa838255c71a1c04152e1472cdfcd7e",
+      "stochastic": false
+    },
+    "KilincBhattMapNeuron": {
+      "behavior_tags": [
+        "excitable",
+        "phasic",
+        "tonic"
+      ],
+      "drivable": true,
+      "result_sha256": "a45bc3fee7f6159be66477e928a88b495e8a0b686da0f752e53370491b5b876b",
+      "stochastic": false
+    },
+    "LapicqueNeuron": {
+      "behavior_tags": [
+        "excitable",
+        "rate-coded",
+        "tonic"
+      ],
+      "drivable": true,
+      "result_sha256": "56bcfb6f7650eb54c2b08b01a90e15242d13f04c744ca704b67029b32c6c9bd2",
+      "stochastic": false
+    },
+    "LarterBreakspearNeuron": {
+      "behavior_tags": [
+        "excitable",
+        "tonic"
+      ],
+      "drivable": true,
+      "result_sha256": "358855d18edda6181f0d7f07cb2717383c2d6ae432831789afab190c35dc956b",
+      "stochastic": false
+    },
+    "LeakyCompeteFireNeuron": {
+      "behavior_tags": [
+        "excitable",
+        "tonic"
+      ],
+      "drivable": true,
+      "result_sha256": "eafe11c8943d8869a3de84401d355baf9947abb451e87009eb87d7deb8a7fcd5",
+      "stochastic": false
+    },
+    "LearnableNeuronModel": {
+      "behavior_tags": [
+        "excitable",
+        "rate-coded",
+        "tonic"
+      ],
+      "drivable": true,
+      "result_sha256": "66dece9ea730b60df199ff5402ddef8ce989fcc5602b9a6f648eeacf03e25192",
+      "stochastic": false
+    },
+    "LiquidTimeConstantNeuron": {
+      "behavior_tags": [
+        "excitable",
+        "rate-coded",
+        "tonic"
+      ],
+      "drivable": true,
+      "result_sha256": "6f0bfb4c32870942d994dfe05d6154a9ed221e3a11fe1c4dc110aece736a8a9d",
+      "stochastic": false
+    },
+    "Loihi2Neuron": {
+      "behavior_tags": [
+        "excitable",
+        "rate-coded",
+        "tonic"
+      ],
+      "drivable": true,
+      "result_sha256": "68188904fab0b8bf58a9c79b5bc9bb978c0795decf00528c16047e311f4b535c",
+      "stochastic": false
+    },
+    "LoihiCUBANeuron": {
+      "behavior_tags": [
+        "excitable",
+        "rate-coded",
+        "tonic"
+      ],
+      "drivable": true,
+      "result_sha256": "68188904fab0b8bf58a9c79b5bc9bb978c0795decf00528c16047e311f4b535c",
+      "stochastic": false
+    },
+    "LugaroCell": {
+      "behavior_tags": [
+        "adapting",
+        "excitable",
+        "irregular",
+        "rate-coded",
+        "tonic"
+      ],
+      "drivable": true,
+      "result_sha256": "8fff03823f0fac0dd2df9b313fcaf30bd2bf25bf5e9f4854cdfb24fd83ad505f",
+      "stochastic": false
+    },
+    "MATNeuron": {
+      "behavior_tags": [
+        "adapting",
+        "excitable",
+        "rate-coded"
+      ],
+      "drivable": true,
+      "result_sha256": "9db6308fa2ff1b65e8bc9e989a52c230cbe9e50bbdb2ad6bf2b222f6ae70bd9e",
+      "stochastic": false
+    },
+    "MainenSejnowskiNeuron": {
+      "behavior_tags": [
+        "excitable",
+        "phasic"
+      ],
+      "drivable": true,
+      "result_sha256": "e605127ba954adeaeb72020b8a94b3be0b19069ad488d59a4bbe003eee73c364",
+      "stochastic": false
+    },
+    "MarderSTGNeuron": {
+      "behavior_tags": [
+        "bursting",
+        "chaotic",
+        "excitable",
+        "irregular"
+      ],
+      "drivable": true,
+      "result_sha256": "79e1a62e2dbe9b8998db906e10fadb01db49b053d4bef9ef2ad540877dd2f0ea",
+      "stochastic": false
+    },
+    "MartinottiNeuron": {
+      "behavior_tags": [
+        "excitable",
+        "irregular",
+        "phasic"
+      ],
+      "drivable": true,
+      "result_sha256": "fcb9d1444fd051932c7707af032e64aa60a8fb5cb6ce7155614380e66e9b2761",
+      "stochastic": false
+    },
+    "McCullochPittsNeuron": {
+      "behavior_tags": [
+        "excitable",
+        "rate-coded",
+        "tonic"
+      ],
+      "drivable": true,
+      "result_sha256": "56dab1ecc558436aa8b162ab7d18ac4bf755eb5b7ee3a48c9dd6209155282a4f",
+      "stochastic": false
+    },
+    "McKeanNeuron": {
+      "behavior_tags": [
+        "excitable",
+        "phasic",
+        "rate-coded"
+      ],
+      "drivable": true,
+      "result_sha256": "8f3597b381f1c390f690b0a465f8ecea62d1075b14562ff005cb2077fcfe0410",
+      "stochastic": false
+    },
+    "MedvedevMapNeuron": {
+      "behavior_tags": [
+        "quiescent"
+      ],
+      "drivable": true,
+      "result_sha256": "8e70fdddba5cd82b5fca1e6d6247418115893ded2e39ab6e8d0c244ef74c5ea9",
+      "stochastic": false
+    },
+    "MetaPlasticNeuron": {
+      "behavior_tags": [
+        "excitable",
+        "rate-coded",
+        "tonic"
+      ],
+      "drivable": true,
+      "result_sha256": "b4622f5032651ed9d22e52621871b602e6bc354da7664e8684d4eed805607088",
+      "stochastic": false
+    },
+    "MihalasNieburNeuron": {
+      "behavior_tags": [
+        "excitable",
+        "rate-coded",
+        "tonic"
+      ],
+      "drivable": true,
+      "result_sha256": "b4622f5032651ed9d22e52621871b602e6bc354da7664e8684d4eed805607088",
+      "stochastic": false
+    },
+    "MorrisLecarNeuron": {
+      "behavior_tags": [
+        "excitable",
+        "phasic",
+        "tonic"
+      ],
+      "drivable": true,
+      "result_sha256": "81b5a07468a229c97f13670e27ab717bc0e4e0b06b3e12fc00436cdae2c01529",
+      "stochastic": false
+    },
+    "MotorUnit": {
+      "behavior_tags": [
+        "excitable",
+        "phasic",
+        "rate-coded",
+        "tonic"
+      ],
+      "drivable": true,
+      "result_sha256": "e83f068de9ecf3742805184a9d38647c0fb774a42131f571a76390c9f508f637",
+      "stochastic": false
+    },
+    "MultiTimescaleNeuron": {
+      "behavior_tags": [
+        "excitable",
+        "rate-coded",
+        "tonic"
+      ],
+      "drivable": true,
+      "result_sha256": "7c86ba2ebc3a81f9e4759a4a213480be00748fc83c85ae515de5ae3a6e3e5e6b",
+      "stochastic": false
+    },
+    "MulticompartmentMCNNeuron": {
+      "behavior_tags": [
+        "excitable",
+        "irregular",
+        "rate-coded",
+        "tonic"
+      ],
+      "drivable": true,
+      "result_sha256": "0089054bee22ff8e799d7e487a6ac4a45f2bce8cbcca1b010a685f17f4aa20ff",
+      "stochastic": false
+    },
+    "NMDANeuron": {
+      "behavior_tags": [
+        "excitable",
+        "irregular",
+        "rate-coded",
+        "tonic"
+      ],
+      "drivable": true,
+      "result_sha256": "69dcffe397db8dd93f9ad0e3ec2b685f7ff16338ffd6d2daea0a083f1c1ffdf3",
+      "stochastic": false
+    },
+    "NeuroGridNeuron": {
+      "behavior_tags": [
+        "excitable",
+        "irregular",
+        "phasic",
+        "rate-coded"
+      ],
+      "drivable": true,
+      "result_sha256": "df605c2db05b62dc61f4bc8abf3a013d55e714427ddf53850809eaaf95b81570",
+      "stochastic": false
+    },
+    "NonResettingLIFNeuron": {
+      "behavior_tags": [
+        "adapting",
+        "excitable",
+        "rate-coded",
+        "tonic"
+      ],
+      "drivable": true,
+      "result_sha256": "ef28fa03bfef1d452ce5c06b2286e692b315522d78cc0bf80435bae3a47f6d91",
+      "stochastic": false
+    },
+    "NonlinearLIFNeuron": {
+      "behavior_tags": [
+        "adapting",
+        "excitable",
+        "rate-coded",
+        "tonic"
+      ],
+      "drivable": true,
+      "result_sha256": "5613fed2d12f1ec3e9cded21e2ab5d7ac82faf68263783071528d35a6102a794",
+      "stochastic": false
+    },
+    "PVFastSpikingNeuron": {
+      "behavior_tags": [
+        "chaotic",
+        "excitable",
+        "irregular",
+        "phasic"
+      ],
+      "drivable": true,
+      "result_sha256": "7b84d39857a6f6c0ba51d3ae273949a6896a08b917651e6726d8293d0f66fb3d",
+      "stochastic": false
+    },
+    "ParallelSpikingNeuron": {
+      "behavior_tags": [
+        "excitable",
+        "rate-coded",
+        "tonic"
+      ],
+      "drivable": true,
+      "result_sha256": "79e9f000f2ef917bd6246518ca2c84d2a566339652a91aa4efeb825eb3dcd542",
+      "stochastic": false
+    },
+    "ParametricLIFNeuron": {
+      "behavior_tags": [
+        "excitable",
+        "rate-coded",
+        "tonic"
+      ],
+      "drivable": true,
+      "result_sha256": "8c7f12fac593e460b1b7d15ce2e9ea0d6fa838255c71a1c04152e1472cdfcd7e",
+      "stochastic": false
+    },
+    "PerfectIntegratorNeuron": {
+      "behavior_tags": [
+        "excitable",
+        "rate-coded",
+        "tonic"
+      ],
+      "drivable": true,
+      "result_sha256": "da5d4eef708690ae2aa201b128821a093c24d4bb7d6cac4c7fe2b2ecbafc4583",
+      "stochastic": false
+    },
+    "PernarowskiNeuron": {
+      "behavior_tags": [
+        "excitable",
+        "phasic",
+        "tonic"
+      ],
+      "drivable": true,
+      "result_sha256": "26e263bfbbf66cbf6aca56596ed430b4f40a16ae4529ad68fa7b4166cb94855a",
+      "stochastic": false
+    },
+    "PersistentNaNeuron": {
+      "behavior_tags": [
+        "excitable",
+        "irregular",
+        "rate-coded",
+        "tonic"
+      ],
+      "drivable": true,
+      "result_sha256": "d10badfd0f6404f034637e14bb0418890dff296469efbcbc3c9c0ad26b007e88",
+      "stochastic": false
+    },
+    "PinskyRinzelNeuron": {
+      "behavior_tags": [
+        "excitable",
+        "irregular",
+        "phasic",
+        "tonic"
+      ],
+      "drivable": true,
+      "result_sha256": "f73fb1817610305c55677e13253906bb5c8764a53f41c5fc33e95e61f4837b6e",
+      "stochastic": false
+    },
+    "PlantR15Neuron": {
+      "behavior_tags": [
+        "excitable",
+        "phasic"
+      ],
+      "drivable": true,
+      "result_sha256": "e605127ba954adeaeb72020b8a94b3be0b19069ad488d59a4bbe003eee73c364",
+      "stochastic": false
+    },
+    "PoissonNeuron": {
+      "behavior_tags": [
+        "excitable",
+        "stochastic"
+      ],
+      "drivable": true,
+      "result_sha256": "c9e011b38c381f06d6279fa9f6ed7488c99caee35a1d1ac16ec8d4dbd3243b57",
+      "stochastic": true
+    },
+    "PospischilNeuron": {
+      "behavior_tags": [
+        "excitable",
+        "phasic",
+        "tonic"
+      ],
+      "drivable": true,
+      "result_sha256": "4b00c0eef85c5ce39ed2681429fcd8e3d2e90891ed788378cc8baf9226090298",
+      "stochastic": false
+    },
+    "PredictiveCodingNeuron": {
+      "behavior_tags": [
+        "adapting",
+        "excitable",
+        "rate-coded",
+        "tonic"
+      ],
+      "drivable": true,
+      "result_sha256": "a94d831247b492a3121f202ef3a95bdb335a5ab6026f1cb56a95c22cdff9a9cf",
+      "stochastic": false
+    },
+    "PrescottNeuron": {
+      "behavior_tags": [
+        "excitable",
+        "phasic"
+      ],
+      "drivable": true,
+      "result_sha256": "e605127ba954adeaeb72020b8a94b3be0b19069ad488d59a4bbe003eee73c364",
+      "stochastic": false
+    },
+    "QuadraticIFNeuron": {
+      "behavior_tags": [
+        "excitable",
+        "rate-coded",
+        "tonic"
+      ],
+      "drivable": true,
+      "result_sha256": "c2e7284486dcdc93e47ab911b08f6f2b772d3a99f98b33c4348ac3f5f0605fe2",
+      "stochastic": false
+    },
+    "QuantumInspiredLIFNeuron": {
+      "behavior_tags": [
+        "bursting",
+        "excitable",
+        "irregular",
+        "rate-coded",
+        "tonic"
+      ],
+      "drivable": true,
+      "result_sha256": "4b649cd4f8bdb31aaf05c03a000069515f73ef383684078c746a7827e275b13a",
+      "stochastic": false
+    },
+    "RallCableNeuron": {
+      "behavior_tags": [
+        "quiescent"
+      ],
+      "drivable": true,
+      "result_sha256": "8e70fdddba5cd82b5fca1e6d6247418115893ded2e39ab6e8d0c244ef74c5ea9",
+      "stochastic": false
+    },
+    "RenshawCell": {
+      "behavior_tags": [
+        "excitable",
+        "irregular",
+        "phasic",
+        "tonic"
+      ],
+      "drivable": true,
+      "result_sha256": "1191dc0cc8ab6dc5156385d3d5b0fa8805beb572eca5a6504b6769c3af58dbc8",
+      "stochastic": false
+    },
+    "ResonateAndFireNeuron": {
+      "behavior_tags": [
+        "excitable",
+        "rate-coded",
+        "tonic"
+      ],
+      "drivable": true,
+      "result_sha256": "56039fe9e5e759b36b554ee995acbb9f66839e0d33e040418ca4ba4747e0ceae",
+      "stochastic": false
+    },
+    "RulkovMapNeuron": {
+      "behavior_tags": [
+        "adapting",
+        "excitable",
+        "rate-coded",
+        "tonic"
+      ],
+      "drivable": true,
+      "result_sha256": "6582ac2c91a2bec16830f15daf69d2aa238ec805f388272394f72c7d54e0cd0a",
+      "stochastic": false
+    },
+    "SFANeuron": {
+      "behavior_tags": [
+        "adapting",
+        "bursting",
+        "excitable",
+        "rate-coded"
+      ],
+      "drivable": true,
+      "result_sha256": "a8817776644c6a5858184cb3f640083ad1b5df680e56c30ca55a632a46913290",
+      "stochastic": false
+    },
+    "SKNeuron": {
+      "behavior_tags": [
+        "bursting",
+        "chaotic",
+        "excitable",
+        "phasic",
+        "rate-coded",
+        "tonic"
+      ],
+      "drivable": true,
+      "result_sha256": "763ba2aa41d906c32af2c400982099e9fb2747975c075665d4e9e551b22907cf",
+      "stochastic": false
+    },
+    "SRM0Neuron": {
+      "behavior_tags": [
+        "excitable",
+        "rate-coded",
+        "tonic"
+      ],
+      "drivable": true,
+      "result_sha256": "06f15ee7335237891fd831f32bc92a55cd11de130ad31c7332c3cf4b8ee7dd0f",
+      "stochastic": false
+    },
+    "SSTNeuron": {
+      "behavior_tags": [
+        "excitable",
+        "irregular",
+        "phasic"
+      ],
+      "drivable": true,
+      "result_sha256": "31894be837b45c75e004dce640a2dc1a0247dc0d2c23ba4d1a76e3bfaf4082b5",
+      "stochastic": false
+    },
+    "SelfReferentialNeuron": {
+      "behavior_tags": [
+        "excitable",
+        "irregular",
+        "rate-coded",
+        "tonic"
+      ],
+      "drivable": true,
+      "result_sha256": "b5484c6911529cb4c321bb65826da69392f84cb5a5dba64fa49ce79424daa0a0",
+      "stochastic": false
+    },
+    "ShermanRinzelKeizerNeuron": {
+      "behavior_tags": [
+        "excitable",
+        "phasic",
+        "tonic"
+      ],
+      "drivable": true,
+      "result_sha256": "7056897edccd384da6c7c3e26b460f55c056cd75a4c414b77d854661e1af0906",
+      "stochastic": false
+    },
+    "SiegertTransferFunction": {
+      "behavior_tags": [
+        "excitable",
+        "tonic"
+      ],
+      "drivable": true,
+      "result_sha256": "dc9c20286f7b9ba312708e5c740a81e1a3c7f3d6b1f653807c83e62f03c93e44",
+      "stochastic": false
+    },
+    "SigmaDeltaNeuron": {
+      "behavior_tags": [
+        "excitable",
+        "rate-coded",
+        "tonic"
+      ],
+      "drivable": true,
+      "result_sha256": "56dab1ecc558436aa8b162ab7d18ac4bf755eb5b7ee3a48c9dd6209155282a4f",
+      "stochastic": false
+    },
+    "SigmoidRateNeuron": {
+      "behavior_tags": [
+        "excitable",
+        "tonic"
+      ],
+      "drivable": true,
+      "result_sha256": "dc9c20286f7b9ba312708e5c740a81e1a3c7f3d6b1f653807c83e62f03c93e44",
+      "stochastic": false
+    },
+    "SpiNNaker2Neuron": {
+      "behavior_tags": [
+        "excitable",
+        "rate-coded",
+        "tonic"
+      ],
+      "drivable": true,
+      "result_sha256": "f3e9ed061129401329488e4a51e4c14947a2c67ceedd72c20a8f4c643f5b74e5",
+      "stochastic": false
+    },
+    "SpiNNakerLIFNeuron": {
+      "behavior_tags": [
+        "excitable",
+        "rate-coded",
+        "tonic"
+      ],
+      "drivable": true,
+      "result_sha256": "12190b2869e5af7c1145be14a8ca6428f66664b204bf84b2ca5a985ad0cba792",
+      "stochastic": false
+    },
+    "SpikeResponseNeuron": {
+      "behavior_tags": [
+        "excitable",
+        "rate-coded",
+        "tonic"
+      ],
+      "drivable": true,
+      "result_sha256": "d8a6dce329ec531c977fc508b24fedbffd91887fbf58ef3b68545309243544e2",
+      "stochastic": false
+    },
+    "StellateCell": {
+      "behavior_tags": [
+        "excitable",
+        "irregular",
+        "rate-coded",
+        "tonic"
+      ],
+      "drivable": true,
+      "result_sha256": "eae8bdaacc1f40f197047152f37b0d478c97e271b782be8b3c02677009023ca4",
+      "stochastic": false
+    },
+    "StochasticIFNeuron": {
+      "behavior_tags": [
+        "excitable",
+        "rate-coded",
+        "tonic"
+      ],
+      "drivable": true,
+      "result_sha256": "4dc2578a3bea9dd77c600b4a1e5dcae8b9e1a204e0461d5c573ee89b1f0319d3",
+      "stochastic": false
+    },
+    "SuperSpikeNeuron": {
+      "behavior_tags": [
+        "excitable",
+        "rate-coded",
+        "tonic"
+      ],
+      "drivable": true,
+      "result_sha256": "8c7f12fac593e460b1b7d15ce2e9ea0d6fa838255c71a1c04152e1472cdfcd7e",
+      "stochastic": false
+    },
+    "TTypeCaNeuron": {
+      "behavior_tags": [
+        "adapting",
+        "excitable",
+        "rate-coded",
+        "tonic"
+      ],
+      "drivable": true,
+      "result_sha256": "2a463fc271b491bca6942555ee21d98dadbf5a5357bef34c4a6bf78a2d570694",
+      "stochastic": false
+    },
+    "TermanWangOscillator": {
+      "behavior_tags": [
+        "excitable",
+        "phasic"
+      ],
+      "drivable": true,
+      "result_sha256": "76b1d8ddf2b041b0dade798938fcdbcc422725e1123c8c67a88a1b023bec65b0",
+      "stochastic": false
+    },
+    "ThetaNeuron": {
+      "behavior_tags": [
+        "excitable",
+        "rate-coded",
+        "tonic"
+      ],
+      "drivable": true,
+      "result_sha256": "89cfaeef205445ae8c776dd7a52f8e3a4cf07006eb0c9491574a8862e5cba971",
+      "stochastic": false
+    },
+    "ThresholdLinearRateNeuron": {
+      "behavior_tags": [
+        "excitable",
+        "rate-coded",
+        "tonic"
+      ],
+      "drivable": true,
+      "result_sha256": "56dab1ecc558436aa8b162ab7d18ac4bf755eb5b7ee3a48c9dd6209155282a4f",
+      "stochastic": false
+    },
+    "TraubMilesNeuron": {
+      "behavior_tags": [
+        "excitable",
+        "phasic",
+        "tonic"
+      ],
+      "drivable": true,
+      "result_sha256": "5000b6172ae3f7b9af8729e30e0cc694199e2e7596e569cc6a51edfc6302980f",
+      "stochastic": false
+    },
+    "TrueNorthNeuron": {
+      "behavior_tags": [
+        "excitable",
+        "rate-coded",
+        "tonic"
+      ],
+      "drivable": true,
+      "result_sha256": "df129126287c0e751ffafe5ffd8d829b944ad846a3bd3b246d773407062e7261",
+      "stochastic": false
+    },
+    "TsodyksMarkramNeuron": {
+      "behavior_tags": [
+        "excitable",
+        "rate-coded",
+        "tonic"
+      ],
+      "drivable": true,
+      "result_sha256": "65a451716718f8e801ebec2b8dfea8bf39077b696c1170b7f2189df7909409d6",
+      "stochastic": false
+    },
+    "TwoCompartmentLIFNeuron": {
+      "behavior_tags": [
+        "excitable",
+        "rate-coded",
+        "tonic"
+      ],
+      "drivable": true,
+      "result_sha256": "c7b600699ffc9399f1b7d390f1c3754eaed0c53851aae2a8301c2c36a5046b2a",
+      "stochastic": false
+    },
+    "UnipolarBrushCell": {
+      "behavior_tags": [
+        "excitable",
+        "rate-coded",
+        "tonic"
+      ],
+      "drivable": true,
+      "result_sha256": "6df67e44077002d0199e0a9e863fd2c01e690ac7cb866188717ee1770f652ce0",
+      "stochastic": false
+    },
+    "UpperMotorNeuron": {
+      "behavior_tags": [
+        "excitable",
+        "irregular",
+        "phasic"
+      ],
+      "drivable": true,
+      "result_sha256": "3e290533c91d0b9477d1729ff09d84f29be9cb597809537c4e45b02db315d72e",
+      "stochastic": false
+    },
+    "VIPNeuron": {
+      "behavior_tags": [
+        "chaotic",
+        "excitable",
+        "phasic",
+        "tonic"
+      ],
+      "drivable": true,
+      "result_sha256": "c6d8b617cc21c04a5ed7d2f3e750b8c90526aeeeb32a71b1f650dc04d70a1384",
+      "stochastic": false
+    },
+    "WangBuzsakiNeuron": {
+      "behavior_tags": [
+        "excitable",
+        "phasic",
+        "tonic"
+      ],
+      "drivable": true,
+      "result_sha256": "9e46c653b10ada404e6931126d0dcd9df028ee5785c4cd948bbd24cbde9964d5",
+      "stochastic": false
+    },
+    "WendlingNeuron": {
+      "behavior_tags": [
+        "excitable",
+        "tonic"
+      ],
+      "drivable": true,
+      "result_sha256": "1957de377216ce33d7103d2f7fbeb9ddf2f567558bd045bfd75e52c209ad0957",
+      "stochastic": false
+    },
+    "WilsonCowanUnit": {
+      "behavior_tags": [
+        "excitable",
+        "tonic"
+      ],
+      "drivable": true,
+      "result_sha256": "dc9c20286f7b9ba312708e5c740a81e1a3c7f3d6b1f653807c83e62f03c93e44",
+      "stochastic": false
+    },
+    "WilsonHRNeuron": {
+      "behavior_tags": [
+        "excitable",
+        "phasic"
+      ],
+      "drivable": true,
+      "result_sha256": "237c0f686f8a0ccb6cf141ac07a26f1432eee9c36bf80cd8b8770b4a80564d5b",
+      "stochastic": false
+    },
+    "WongWangUnit": {
+      "behavior_tags": [
+        "excitable",
+        "tonic"
+      ],
+      "drivable": true,
+      "result_sha256": "699d8ec7dc096842271a9b642016646e25aa7c8146f9f7bedd54edddd4defac9",
+      "stochastic": false
+    },
+    "YamadaNeuron": {
+      "behavior_tags": [
+        "adapting",
+        "excitable",
+        "phasic"
+      ],
+      "drivable": true,
+      "result_sha256": "c9a450ef9d338fa9ea6cbcbc9b49784b0513a379444f96b0266f50e79257ac2c",
+      "stochastic": false
+    }
+  },
+  "result_sha256": "4997f7826849986e2a441c6efcf73b191c01e943ad348fabc6e20af1ef1e62b4",
+  "schema_version": "studio.behavior-probe.v1",
+  "sweep": {
+    "currents": [
+      0.0,
+      1.0,
+      4.0,
+      16.0,
+      64.0,
+      256.0,
+      1024.0
+    ],
+    "duration_ms": 200.0,
+    "seed": 20260622
+  },
+  "sweep_sha256": "e96ff70d2bb149cd27e00e8f72c638438b615afb64003c652dc6c82cf4548bea"
+}

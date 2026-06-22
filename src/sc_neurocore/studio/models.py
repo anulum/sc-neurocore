@@ -437,17 +437,26 @@ def model_facets() -> dict[str, Any]:
     models = list_models()
     family_counts: Counter[tuple[str, str]] = Counter()
     maturity_counts: Counter[str] = Counter()
+    behavior_counts: Counter[str] = Counter()
     for model in models:
         family_counts[(str(model["family"]), str(model["category_slug"]))] += 1
         maturity_counts[str(model["maturity"])] += 1
+        for tag in model.get("behavior_tags", []):
+            behavior_counts[str(tag)] += 1
     families = [
         {"family": family, "category_slug": slug, "count": count}
         for (family, slug), count in sorted(family_counts.items())
+    ]
+    # Most-common behaviour first so the discovery UX leads with the richest filters.
+    behaviors = [
+        {"tag": tag, "count": count}
+        for tag, count in sorted(behavior_counts.items(), key=lambda item: (-item[1], item[0]))
     ]
     return {
         "total": len(models),
         "families": families,
         "maturities": dict(sorted(maturity_counts.items())),
+        "behaviors": behaviors,
     }
 
 
@@ -570,8 +579,15 @@ def simulate_model(
     current: float = 10.0,
     protocol: str = "constant",
     frequency_hz: float = 10.0,
+    use_fast_path: bool = True,
 ) -> dict[str, Any]:
-    """Simulate a named model. Uses Rust engine when model has default params."""
+    """Simulate a named model. Uses Rust engine when model has default params.
+
+    Set ``use_fast_path=False`` to force the Python reference model and bypass the
+    Rust accelerator. The behaviour probe relies on this so its characterisation
+    is the canonical model's, independent of whether the Rust extension happens to
+    be loaded (the two backends can differ for models with an internal RNG).
+    """
     import numpy as np
     from sc_neurocore.studio.simulation import (
         MAX_PLOT_POINTS,
@@ -585,7 +601,7 @@ def simulate_model(
 
     # Rust fast path: default params, no overrides
     has_overrides = param_overrides and any(True for _ in param_overrides.values())
-    if not has_overrides and dt is None:
+    if use_fast_path and not has_overrides and dt is None:
         cls = _load_class(name)
         actual_dt = 0.1
         if dataclasses.is_dataclass(cls):

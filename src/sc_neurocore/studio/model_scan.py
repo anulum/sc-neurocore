@@ -35,7 +35,12 @@ ModelScanCacheKey: TypeAlias = tuple[float, float]
 
 @dataclass(frozen=True, slots=True)
 class ModelScanEntry:
-    """Path-free firing-pattern classification for one Studio model."""
+    """Path-free firing-pattern classification for one Studio model.
+
+    A model that could not be driven by the scan's constant current carries the
+    ``error`` pattern and a non-empty ``error_type`` so the failure is visible in
+    the result rather than aborting the whole scan.
+    """
 
     name: str
     category: str
@@ -43,11 +48,18 @@ class ModelScanEntry:
     description: str
     rate_hz: float
     spike_count: int
+    error_type: str = ""
+
+    @property
+    def is_error(self) -> bool:
+        """True when this entry records a simulation failure."""
+
+        return bool(self.error_type)
 
     def to_public_dict(self) -> dict[str, JsonValue]:
         """Return a JSON-compatible model scan entry."""
 
-        return {
+        entry: dict[str, JsonValue] = {
             "category": self.category,
             "description": self.description,
             "name": self.name,
@@ -55,6 +67,9 @@ class ModelScanEntry:
             "rate_hz": self.rate_hz,
             "spike_count": self.spike_count,
         }
+        if self.error_type:
+            entry["error_type"] = self.error_type
+        return entry
 
 
 @dataclass(frozen=True, slots=True)
@@ -87,18 +102,27 @@ class StudioModelScanManifest:
     pattern_counts: Mapping[str, int]
     input_sha256: str
     result_sha256: str
+    error_count: int = 0
+    failed_models: tuple[Mapping[str, str], ...] = ()
     evidence_classification: StudioEvidenceClassification = "analysis"
     status: StudioEvidenceStatus = "completed"
 
     def to_public_dict(self) -> dict[str, JsonValue]:
-        """Return the JSON-compatible model scan metadata."""
+        """Return the JSON-compatible model scan metadata.
+
+        ``error_count`` and ``failed_models`` make a partial scan explicit, so a
+        consumer never mistakes a result with undriveable models for a complete
+        classification of the whole catalogue.
+        """
 
         return {
             "current": self.current,
             "duration": self.duration,
+            "error_count": self.error_count,
             "evidence_classification": validate_studio_evidence_classification(
                 self.evidence_classification
             ),
+            "failed_models": [dict(sorted(model.items())) for model in self.failed_models],
             "input_sha256": self.input_sha256,
             "model_count": self.model_count,
             "pattern_counts": dict(sorted(self.pattern_counts.items())),
@@ -133,47 +157,44 @@ def scan_all_models(current: float = 10.0, duration: float = 100.0) -> dict[str,
 
 
 def _run_model_scan(*, current: float, duration: float) -> tuple[ModelScanEntry, ...]:
-    """Run model simulations and return validated scan entries."""
+    """Classify every model, recording per-model failures rather than aborting.
+
+    A model that cannot be driven at the scan's constant current — one whose
+    ``step`` needs an extra synaptic input, or one whose internal stability guard
+    rejects the operating point — yields an ``error`` entry instead of failing the
+    whole scan. The failures are surfaced in the manifest (``error_count`` /
+    ``failed_models``) so the result stays honest about what was classified.
+    """
 
     results: dict[str, ModelScanEntry] = {}
-    failures: list[dict[str, str]] = []
     models = list_models()
 
     with warnings.catch_warnings():
         warnings.simplefilter("ignore")
         for m in models:
+            name = str(m["name"])
+            category = str(m.get("category", "Other"))
             try:
-                r = simulate_model(m["name"], duration=duration, current=current)
+                r = simulate_model(name, duration=duration, current=current)
                 pattern = classify_firing_pattern(r["spikes"], r["n_steps"], r["dt"])
-                results[str(m["name"])] = ModelScanEntry(
-                    name=str(m["name"]),
-                    category=str(m.get("category", "Other")),
+                results[name] = ModelScanEntry(
+                    name=name,
+                    category=category,
                     pattern=str(pattern["pattern"]),
                     description=str(pattern["description"]),
                     rate_hz=float(pattern.get("rate_hz", 0.0)),
                     spike_count=int(r["spike_count"]),
                 )
             except Exception as exc:
-                failures.append(
-                    {
-                        "name": str(m.get("name", "")),
-                        "category": str(m.get("category", "Other")),
-                        "error_type": type(exc).__name__,
-                        "error_message": str(exc),
-                    }
+                results[name] = ModelScanEntry(
+                    name=name,
+                    category=category,
+                    pattern="error",
+                    description=f"{type(exc).__name__}: {exc}",
+                    rate_hz=0.0,
+                    spike_count=0,
+                    error_type=type(exc).__name__,
                 )
-
-    if failures:
-        total = len(models)
-        raise ValueError(
-            f"model scan failed for {len(failures)}/{total} models",
-            {
-                "failed_models": failures,
-                "failed_count": len(failures),
-                "total_models": total,
-                "failure_rate": float(len(failures)) / float(max(total, 1)),
-            },
-        )
 
     return tuple(results.values())
 
@@ -187,12 +208,22 @@ def _build_model_scan_manifest(
     """Build digest-backed metadata for a complete model scan."""
 
     pattern_counts: dict[str, int] = {}
+    failed_models: list[Mapping[str, str]] = []
     for model in models:
         if not isinstance(model, dict):
             continue
         pattern = model.get("pattern")
         if isinstance(pattern, str):
             pattern_counts[pattern] = pattern_counts.get(pattern, 0) + 1
+        if pattern == "error":
+            failed_models.append(
+                {
+                    "name": str(model.get("name", "")),
+                    "category": str(model.get("category", "Other")),
+                    "error_type": str(model.get("error_type", "")),
+                    "error_message": str(model.get("description", "")),
+                }
+            )
     return StudioModelScanManifest(
         current=current,
         duration=duration,
@@ -200,6 +231,8 @@ def _build_model_scan_manifest(
         pattern_counts=pattern_counts,
         input_sha256=_sha256_json({"current": current, "duration": duration}),
         result_sha256=_sha256_json({"models": models}),
+        error_count=len(failed_models),
+        failed_models=tuple(failed_models),
     )
 
 

@@ -22,7 +22,12 @@ const NONE: Record<string, ModelBehavior> = {};
 const scanMetadata: ModelScanMetadata = {
   current: 10,
   duration: 100,
+  error_count: 2,
   evidence_classification: "analysis",
+  failed_models: [
+    { name: "DendriticNMDANeuron", category: "Synaptic", error_type: "TypeError", error_message: "needs glutamate" },
+    { name: "ChayKeizerNeuron", category: "Bursting", error_type: "ValueError", error_message: "outside safety envelope" },
+  ],
   input_sha256: "1".repeat(64),
   model_count: 118,
   pattern_counts: { bursting: 7, silent: 20, tonic: 91 },
@@ -37,6 +42,7 @@ describe("ModelBrowser", () => {
       { label: "class", value: "analysis" },
       { label: "status", value: "completed" },
       { label: "models", value: "118" },
+      { label: "errors", value: "2" },
       { label: "in", value: "1111111111" },
       { label: "out", value: "2222222222" },
     ]);
@@ -113,5 +119,50 @@ describe("ModelBrowser", () => {
       behaviors: NONE,
     });
     expect(Object.keys(grouped)).toEqual(["Map-based"]);
+  });
+
+  it("restricts the catalogue to a measured behaviour tag", () => {
+    const tagged = [
+      { ...CATALOGUE[0], behavior_tags: ["excitable", "tonic", "rate-coded"] },
+      { ...CATALOGUE[1], behavior_tags: ["excitable", "adapting"] },
+      { ...CATALOGUE[2], behavior_tags: ["quiescent"] },
+      { ...CATALOGUE[3], behavior_tags: ["excitable", "bursting"] },
+    ];
+    const adapting = filterAndGroupModels(tagged, {
+      modelFilter: "",
+      familyFilter: "",
+      patternFilter: "",
+      minTier: 0,
+      behaviors: NONE,
+      behaviorFilter: "adapting",
+    });
+    expect(Object.values(adapting).flat().map((m) => m.name)).toEqual(["GLIFNeuron"]);
+
+    const excitable = filterAndGroupModels(tagged, {
+      modelFilter: "",
+      familyFilter: "",
+      patternFilter: "",
+      minTier: 0,
+      behaviors: NONE,
+      behaviorFilter: "excitable",
+    });
+    expect(Object.values(excitable).flat().map((m) => m.name).sort()).toEqual([
+      "AdExNeuron",
+      "GLIFNeuron",
+      "RulkovMapNeuron",
+    ]);
+  });
+
+  it("ignores a behaviour filter that no model carries", () => {
+    const tagged = [{ ...CATALOGUE[0], behavior_tags: ["excitable", "tonic"] }];
+    const grouped = filterAndGroupModels(tagged, {
+      modelFilter: "",
+      familyFilter: "",
+      patternFilter: "",
+      minTier: 0,
+      behaviors: NONE,
+      behaviorFilter: "chaotic",
+    });
+    expect(Object.values(grouped).flat()).toEqual([]);
   });
 });

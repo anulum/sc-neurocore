@@ -116,6 +116,7 @@ export interface ModelFacets {
   total: number;
   families: { family: string; category_slug: string; count: number }[];
   maturities: Record<string, number>;
+  behaviors: { tag: string; count: number }[];
 }
 
 export interface ModelDoc {
@@ -773,12 +774,19 @@ export interface NetworkResult {
 export interface ModelBehavior {
   name: string; category: string; pattern: string;
   description: string; rate_hz: number; spike_count: number;
+  error_type?: string;
+}
+
+export interface ModelScanFailure {
+  name: string; category: string; error_type: string; error_message: string;
 }
 
 export interface ModelScanMetadata {
   current: number;
   duration: number;
+  error_count: number;
   evidence_classification: "analysis";
+  failed_models: ModelScanFailure[];
   input_sha256: string;
   model_count: number;
   pattern_counts: Record<string, number>;

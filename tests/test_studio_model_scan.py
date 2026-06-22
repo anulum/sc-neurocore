@@ -71,7 +71,9 @@ def test_scan_all_models_caches_successful_results(monkeypatch: pytest.MonkeyPat
     assert metadata == {
         "current": 10.0,
         "duration": 100.0,
+        "error_count": 0,
         "evidence_classification": "analysis",
+        "failed_models": [],
         "input_sha256": metadata["input_sha256"],
         "model_count": 1,
         "pattern_counts": {"tonic": 1},
@@ -121,9 +123,49 @@ def test_scan_all_models_cache_is_keyed_by_scan_configuration(
     assert first_metadata["input_sha256"] != second_metadata["input_sha256"]
 
 
-def test_scan_all_models_fails_closed_with_structured_diagnostics(
+def test_scan_survives_real_undriveable_models(monkeypatch: pytest.MonkeyPatch) -> None:
+    """The real simulation path stays resilient to a genuinely undriveable model.
+
+    ``DendriticNMDANeuron`` needs a synaptic glutamate input its ``step`` cannot
+    get from a constant current, so it errored the old fail-closed scan. Here the
+    genuine ``simulate_model`` runs (only the model list is narrowed) and the scan
+    must still classify the drivable model and report the failure.
+    """
+
+    model_scan._CACHE.clear()
+    monkeypatch.setattr(
+        model_scan,
+        "list_models",
+        lambda: [
+            {"name": "ThetaNeuron", "category": "Integrate-and-Fire"},
+            {"name": "DendriticNMDANeuron", "category": "Synaptic"},
+        ],
+    )
+
+    scan = model_scan.scan_all_models(current=10.0, duration=100.0)
+
+    models = _list_field(scan, "models")
+    by_name = {cast(dict[str, JsonValue], m)["name"]: cast(dict[str, JsonValue], m) for m in models}
+    assert by_name["ThetaNeuron"]["pattern"] != "error"
+    assert by_name["DendriticNMDANeuron"]["pattern"] == "error"
+    assert by_name["DendriticNMDANeuron"]["error_type"] == "TypeError"
+
+    metadata = _object_field(scan, "scan_metadata")
+    assert metadata["error_count"] == 1
+    failed = {cast(dict[str, JsonValue], f)["name"] for f in _list_field(metadata, "failed_models")}
+    assert failed == {"DendriticNMDANeuron"}
+
+
+def test_scan_all_models_reports_per_model_failures(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
+    """A model that cannot be driven is reported, not allowed to abort the scan.
+
+    The scan must complete for the rest of the catalogue and surface the failure
+    explicitly (an ``error`` entry plus ``error_count`` / ``failed_models``), so a
+    single undriveable model never breaks the whole endpoint.
+    """
+
     model_scan._CACHE.clear()
 
     monkeypatch.setattr(
@@ -151,19 +193,24 @@ def test_scan_all_models_fails_closed_with_structured_diagnostics(
         },
     )
 
-    with pytest.raises(ValueError) as exc_info:
-        model_scan.scan_all_models(current=10.0, duration=100.0)
+    scan = model_scan.scan_all_models(current=10.0, duration=100.0)
 
-    assert "model scan failed for 1/2 models" in str(exc_info.value)
-    diagnostics = exc_info.value.args[1]
-    assert diagnostics["failed_count"] == 1
-    assert diagnostics["total_models"] == 2
-    assert diagnostics["failure_rate"] == pytest.approx(0.5)
-    assert diagnostics["failed_models"] == [
+    models = _list_field(scan, "models")
+    by_name = {cast(dict[str, JsonValue], m)["name"]: cast(dict[str, JsonValue], m) for m in models}
+    assert by_name["GoodModel"]["pattern"] == "single_spike"
+    assert by_name["BadModel"]["pattern"] == "error"
+    assert by_name["BadModel"]["error_type"] == "RuntimeError"
+    assert "backend missing" in str(by_name["BadModel"]["description"])
+
+    metadata = _object_field(scan, "scan_metadata")
+    assert metadata["error_count"] == 1
+    assert metadata["model_count"] == 2
+    assert metadata["status"] == "completed"
+    assert metadata["failed_models"] == [
         {
-            "name": "BadModel",
             "category": "Cortex",
+            "error_message": "RuntimeError: backend missing",
             "error_type": "RuntimeError",
-            "error_message": "backend missing",
+            "name": "BadModel",
         }
     ]

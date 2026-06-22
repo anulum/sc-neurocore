@@ -82,6 +82,11 @@ def test_model_facets_cover_the_whole_catalogue() -> None:
     families = {f["family"] for f in facets["families"]}
     assert "Cerebellar" in families
     assert "Integrate-and-Fire" in families
+    # The measured behaviour facet is present and ordered most-common first.
+    behaviors = facets["behaviors"]
+    assert all({"tag", "count"} <= set(entry) for entry in behaviors)
+    counts = [entry["count"] for entry in behaviors]
+    assert counts == sorted(counts, reverse=True)
 
 
 def test_introspected_fallback_flags_inferred_category() -> None:

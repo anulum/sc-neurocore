@@ -11,7 +11,10 @@ biophysical_detail = "point"
 maturity = "experimental"
 intended_use = []
 hardware_fit = []
-behavior_tags = []
+behavior_tags = [
+    "chaotic",
+    "excitable",
+]
 
 [provenance]
 authors = [
