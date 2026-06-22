@@ -9,7 +9,7 @@
     "python_model_classes": 157,
     "python_model_source_modules": 151,
     "rust_pyo3_model_wrappers": 175,
-    "test_files": 858
+    "test_files": 860
   },
   "documentation": {
     "public_pages": [
@@ -2189,6 +2189,7 @@
       "tests/test_model_brainscales_adex.py",
       "tests/test_model_brunel_wang.py",
       "tests/test_model_butera_respiratory.py",
+      "tests/test_model_catalogue_completeness.py",
       "tests/test_model_cazelles_map.py",
       "tests/test_model_cerebellar_basket_neuron.py",
       "tests/test_model_cfc.py",
@@ -2384,6 +2385,7 @@
       "tests/test_pipeline_training.py",
       "tests/test_planner.py",
       "tests/test_platforms.py",
+      "tests/test_platforms_registry_edges.py",
       "tests/test_power_estimator.py",
       "tests/test_precision_envelope_guard_hdl.py",
       "tests/test_precision_overflow_trap_hdl.py",
