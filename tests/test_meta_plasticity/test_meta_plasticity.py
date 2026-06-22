@@ -7,6 +7,7 @@
 # SC-NeuroCore — Self-Evolving Meta-Plasticity Tests
 
 import numpy as np
+import pytest
 
 from sc_neurocore.meta_plasticity.meta_plasticity import (
     CheckpointStore,
@@ -182,6 +183,32 @@ class TestMetaController:
         mc.decide()
         assert len(mc.signal_history) > 0
 
+    def test_widen_window_on_unstable_gci(self):
+        mc = MetaController()
+        for i in range(10):
+            mc.observe({"novelty": 0.5, "surprise": 0.5, "gci": 0.1 if i % 2 else 0.9})
+        types = [s.signal_type for s in mc.decide()]
+        assert MetaSignalType.WIDEN_WINDOW in types
+
+    def test_no_op_when_metrics_are_mid_range_and_stable(self):
+        mc = MetaController()
+        self._feed_observations(mc, novelty=0.5, surprise=0.5, gci=0.5)
+        assert [s.signal_type for s in mc.decide()] == [MetaSignalType.NO_OP]
+
+    def test_apply_increase_homeostatic(self):
+        mc = MetaController()
+        rules = PlasticityRuleSet()
+        old = rules.homeostatic.gain_adaptation_rate
+        mc.apply_signals(rules, [MetaControlSignal(MetaSignalType.INCREASE_HOMEOSTATIC)])
+        assert rules.homeostatic.gain_adaptation_rate > old
+
+    def test_apply_reset_stp(self):
+        mc = MetaController()
+        rules = PlasticityRuleSet()
+        rules.stp.u_base = 0.9
+        mc.apply_signals(rules, [MetaControlSignal(MetaSignalType.RESET_STP)])
+        assert rules.stp.u_base == STPParams().u_base
+
 
 # ── RuleEvolver Tests ────────────────────────────────────────────────
 
@@ -266,6 +293,16 @@ class TestNeuromodulatorState:
     def test_modulation_factor_default(self):
         ns = NeuromodulatorState()
         assert ns.modulation_factor("unknown") == 1.0
+
+    def test_modulation_factor_tau(self):
+        ns = NeuromodulatorState()
+        # 0.8 + 0.4*(1 - ach=0.5) = 1.0
+        assert ns.modulation_factor("tau") == pytest.approx(1.0)
+
+    def test_modulation_factor_gain(self):
+        ns = NeuromodulatorState()
+        # 0.5 + 0.5*ne=0.5 = 0.75
+        assert ns.modulation_factor("gain") == pytest.approx(0.75)
 
 
 # ── MetaPlasticityEngine Tests ───────────────────────────────────────
@@ -352,6 +389,14 @@ class TestCheckpointStore:
             store.save(PlasticityRuleSet(), step=i)
         assert store.count == 3
 
+    def test_restore_best_empty_store(self):
+        assert CheckpointStore().restore_best() is None
+
+    def test_restore_by_tag_missing(self):
+        store = CheckpointStore()
+        store.save(PlasticityRuleSet(), step=1, tag="present")
+        assert store.restore_by_tag("absent") is None
+
 
 # ── EWC Protection Tests (Gap 2) ──────────────────────────────────────
 
@@ -378,6 +423,17 @@ class TestEWCProtection:
         modified.stdp.lr = 0.1
         regularised = ewc.regularise(modified, max_penalty=0.01)
         assert abs(regularised.stdp.lr - rs.stdp.lr) < abs(modified.stdp.lr - rs.stdp.lr)
+
+    def test_regularise_without_anchor_is_identity(self):
+        ewc = EWCProtection()
+        rs = PlasticityRuleSet()
+        assert ewc.regularise(rs) is rs
+
+    def test_regularise_below_threshold_is_identity(self):
+        ewc = EWCProtection()
+        rs = PlasticityRuleSet()
+        ewc.consolidate(rs)  # anchor == current, so penalty is 0 <= max_penalty
+        assert ewc.regularise(rs, max_penalty=10.0) is rs
 
 
 # ── Curiosity Signal Tests (Gap 3) ────────────────────────────────────
@@ -516,6 +572,11 @@ class TestPopulationDiversity:
         d_after = population_diversity(ev)
         assert d_after >= d_before
 
+    def test_single_member_population_is_zero_diversity(self):
+        # A single individual has no pairs to compare, so diversity is 0.
+        ev = RuleEvolver(population_size=1)
+        assert population_diversity(ev) == 0.0
+
 
 # ── Context Rule Bank Tests (Gap 8) ───────────────────────────────────
 
@@ -572,6 +633,22 @@ class TestFitnessTrajectory:
         ft.record(0.5)
         assert ft.best_ever == 0.9
 
+    def test_trend_insufficient_history(self):
+        assert FitnessTrajectory().trend() == 0.0
+
+    def test_trend_single_point_window_has_no_slope(self):
+        # A window of one collapses the x-axis to a single point with zero
+        # variance, so no slope can be fit and the trend is 0.
+        ft = FitnessTrajectory(window=1)
+        ft.record(1.0)
+        ft.record(2.0)
+        assert ft.trend() == 0.0
+
+    def test_is_stagnant_false_before_window_fills(self):
+        ft = FitnessTrajectory(window=20)
+        ft.record(0.5)
+        assert ft.is_stagnant is False
+
 
 # ── Rule Constraints Tests (Gap 10) ───────────────────────────────────
 
@@ -586,6 +663,15 @@ class TestRuleConstraints:
         rc = RuleConstraints()
         rs = PlasticityRuleSet()
         rs.stdp.lr = 999.0
+        assert not rc.is_valid(rs)
+
+    def test_invalid_tau_with_valid_lr(self):
+        # lr passes its range check so validation proceeds to the tau check,
+        # which an out-of-range tau_plus fails.
+        rc = RuleConstraints()
+        rs = PlasticityRuleSet()
+        rs.stdp.lr = 0.01
+        rs.stdp.tau_plus = 1000.0
         assert not rc.is_valid(rs)
 
     def test_enforce_clamps(self):
