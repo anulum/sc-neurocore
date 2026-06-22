@@ -29,6 +29,7 @@ class TestBCMSynapse:
             {"w_min": 1.0, "w_max": 0.0},
             {"weight": -0.01},
             {"weight": 1.01},
+            {"weight": float("inf")},
         ],
     )
     def test_rejects_non_physical_bcm_parameters(self, kwargs):

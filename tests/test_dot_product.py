@@ -87,3 +87,13 @@ def test_invalid_output_range_fails_closed(y_min, y_max):
 
     with pytest.raises(ValueError, match="y_min"):
         dot.apply(pre_matrix, y_min=y_min, y_max=y_max)
+
+
+def test_dot_product_rejects_pre_matrix_length_mismatch():
+    # The matrix passes the input-count check but each row is shorter than the
+    # synapses' shared bitstream length, so the dot product cannot be evaluated.
+    dot = BitstreamDotProduct(synapses=[_synapse(0.5, length=256)])
+    pre_matrix = np.ones((1, 128), dtype=np.uint8)
+
+    with pytest.raises(ValueError, match="bitstream length"):
+        dot.apply(pre_matrix)

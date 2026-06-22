@@ -119,6 +119,11 @@ class TestGapJunctionPopulation:
             (np.array([-50.0, -60.0]), np.ones((2, 3))),
             (np.array([-50.0, -60.0]), np.array([[0.0, -1.0], [-1.0, 0.0]])),
             (np.array([-50.0, -60.0]), np.array([[0.0, 1.0], [0.0, 0.0]])),
+            (np.array([-50.0, -60.0]), np.ones(2)),
+            (
+                np.array([-50.0, -60.0]),
+                np.array([[0.0, float("inf")], [float("inf"), 0.0]]),
+            ),
         ],
     )
     def test_invalid_current_matrix_inputs_fail_closed(self, voltages, adjacency):

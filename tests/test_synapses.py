@@ -101,3 +101,13 @@ def test_invalid_pre_bitstream_fails_closed(pre_bits):
 
     with pytest.raises(ValueError, match="pre_bits"):
         syn.apply(pre_bits)
+
+
+def test_apply_rejects_bitstream_length_mismatch():
+    # A correctly-typed 1-D binary bitstream whose length differs from the
+    # weight bitstream cannot be multiplied element-wise.
+    syn = BitstreamSynapse(w_min=0.0, w_max=1.0, length=256, w=0.5, seed=42)
+    pre_bits = np.ones(128, dtype=np.uint8)
+
+    with pytest.raises(ValueError, match="length mismatch"):
+        syn.apply(pre_bits)

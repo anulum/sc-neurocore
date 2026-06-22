@@ -129,3 +129,10 @@ class TestTripartiteSynapse:
             syn.step(pre_spike=1, post_spike=False, dt=0.01)
         with pytest.raises(TypeError, match="post_spike"):
             syn.step(pre_spike=True, post_spike=0, dt=0.01)
+
+    @pytest.mark.parametrize("bound", ["w_min", "w_max"])
+    def test_rejects_non_finite_weight_bounds(self, bound):
+        """Non-finite weight clamps would make the facilitation/depression
+        update unbounded, so the bounds are rejected before any stepping."""
+        with pytest.raises(ValueError, match="w_min and w_max must be finite"):
+            TripartiteSynapse(**{bound: float("nan")})

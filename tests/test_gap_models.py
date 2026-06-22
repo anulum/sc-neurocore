@@ -1119,6 +1119,7 @@ class TestDopamineStdpSynapse:
             {"dopamine": float("inf")},
             {"trace_pre": float("nan")},
             {"trace_post": float("inf")},
+            {"trace_pre": -1.0},
         ],
     )
     def test_rejects_non_physical_dopamine_stdp_parameters(self, kwargs):
