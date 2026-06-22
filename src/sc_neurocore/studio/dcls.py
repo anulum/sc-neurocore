@@ -19,6 +19,7 @@ because the whole computation is exact integer Q8.8 arithmetic.
 
 from __future__ import annotations
 
+import json
 import sys
 from pathlib import Path
 from typing import Any
@@ -92,6 +93,46 @@ _RTL_FILES = (
 
 #: Hard caps so an interactive request can never ask for an unbounded kernel.
 _MAX_TAPS = 256
+
+_BENCH_FILE = _REPO_ROOT / "benchmarks" / "results" / "bench_dcls_tent_kernel.json"
+
+
+def dcls_benchmark() -> dict[str, Any] | None:
+    """Return the recorded multi-backend throughput benchmark, or ``None``.
+
+    These are pre-measured numbers from ``benchmarks/results`` — a CPU-shielded
+    run on a known host — not a live timing, so the Studio reports honest,
+    reproducible figures with their measurement context rather than noisy
+    per-request samples. Backends are ordered fastest-measured-first; Python is
+    the 1x reference floor.
+    """
+
+    if not _BENCH_FILE.is_file():
+        return None
+    raw = json.loads(_BENCH_FILE.read_text(encoding="utf-8"))
+    raw_backends = raw.get("backends", {})
+    rows: list[dict[str, Any]] = []
+    for name, entry in raw_backends.items():
+        if not entry.get("used"):
+            continue
+        rows.append(
+            {
+                "backend": name,
+                "median_call_ms": entry.get("median_call_ms"),
+                "channels_per_s": entry.get("channels_per_s"),
+                "speedup_over_python": entry.get("speedup_over_python", 1.0),
+            }
+        )
+    rows.sort(key=lambda r: r["speedup_over_python"], reverse=True)
+    meta = raw.get("meta", {})
+    return {
+        "date_utc": raw.get("date_utc"),
+        "cpu": meta.get("cpu"),
+        "workload": raw.get("workload"),
+        "isolation_mode": raw.get("benchmark_isolation_mode"),
+        "hardware_measurement_claimed": raw.get("hardware_measurement_claimed", False),
+        "backends": rows,
+    }
 
 
 def dcls_kernel_info() -> dict[str, Any]:

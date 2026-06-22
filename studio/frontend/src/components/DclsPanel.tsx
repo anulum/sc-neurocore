@@ -1,11 +1,21 @@
 import { useEffect, useState } from "react";
 import {
   evaluateDcls,
+  fetchDclsBenchmark,
   fetchDclsInfo,
   type DclsBackendStatus,
+  type DclsBenchmark,
   type DclsEvaluation,
   type DclsInfo,
 } from "../api/client";
+
+const BACKEND_BAR_COLOR: Record<string, string> = {
+  rust: "#dea584",
+  julia: "#9558b2",
+  mojo: "#ff5f1f",
+  go: "#00add8",
+  python: "#80cbc4",
+};
 
 const Q88 = 256;
 
@@ -52,6 +62,7 @@ function TentChart({ gates, centre }: { gates: number[]; centre: number }) {
 
 export default function DclsPanel() {
   const [info, setInfo] = useState<DclsInfo | null>(null);
+  const [benchmark, setBenchmark] = useState<DclsBenchmark | null>(null);
   const [evaluation, setEvaluation] = useState<DclsEvaluation | null>(null);
   const [centre, setCentre] = useState(3.0);
   const [sigma, setSigma] = useState(2.5);
@@ -59,6 +70,7 @@ export default function DclsPanel() {
 
   useEffect(() => {
     void fetchDclsInfo().then(setInfo).catch(() => setInfo(null));
+    void fetchDclsBenchmark().then(setBenchmark).catch(() => setBenchmark(null));
   }, []);
 
   useEffect(() => {
@@ -144,6 +156,40 @@ export default function DclsPanel() {
           )}
         </div>
       </div>
+
+      {benchmark && (
+        <div style={{ marginTop: 16, paddingTop: 10, borderTop: "1px solid var(--border)" }}>
+          <div style={{ fontSize: 11, color: "var(--text-muted)", marginBottom: 6 }}>
+            Backend throughput — recorded {benchmark.workload.n_channels.toLocaleString()} channels
+            × {benchmark.workload.n_taps} taps, speed-up over the Python floor
+          </div>
+          <div style={{ display: "grid", gap: 3 }}>
+            {benchmark.backends.map((b) => {
+              const max = benchmark.backends[0]?.speedup_over_python || 1;
+              return (
+                <div key={b.backend} style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 11 }}>
+                  <span style={{ width: 56, fontFamily: "var(--font-mono)" }}>{b.backend}</span>
+                  <div style={{ flex: 1, background: "var(--bg-tertiary)", borderRadius: 2, height: 14 }}>
+                    <div style={{
+                      width: `${(b.speedup_over_python / max) * 100}%`, height: "100%",
+                      background: BACKEND_BAR_COLOR[b.backend] ?? "var(--accent)",
+                      borderRadius: 2, minWidth: 2,
+                    }} />
+                  </div>
+                  <span style={{ width: 96, textAlign: "right", fontFamily: "var(--font-mono)" }}>
+                    {b.speedup_over_python.toFixed(1)}× · {b.median_call_ms.toFixed(2)}ms
+                  </span>
+                </div>
+              );
+            })}
+          </div>
+          <div style={{ fontSize: 10, color: "var(--text-muted)", marginTop: 5 }}>
+            {benchmark.cpu} · {benchmark.isolation_mode} ·{" "}
+            {benchmark.hardware_measurement_claimed ? "silicon" : "software measurement, not silicon"}
+            {" · "}{benchmark.date_utc?.slice(0, 10)}
+          </div>
+        </div>
+      )}
 
       {info && (
         <div style={{

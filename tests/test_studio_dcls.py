@@ -15,6 +15,7 @@ from starlette.testclient import TestClient
 
 from sc_neurocore.studio.app import create_app
 from sc_neurocore.studio.dcls import (
+    dcls_benchmark,
     dcls_forward_parity,
     dcls_kernel_info,
     dcls_tent_profile,
@@ -83,6 +84,24 @@ def test_forward_parity_validates_input() -> None:
         dcls_forward_parity(spikes=[], weights_q88=[], centre_q88=256, sigma_q88=256)
     with pytest.raises(ValueError):
         dcls_forward_parity(spikes=[1, 0], weights_q88=[256], centre_q88=256, sigma_q88=256)
+
+
+def test_benchmark_reports_fastest_first_speedups_with_context() -> None:
+    bench = dcls_benchmark()
+    assert bench is not None
+    assert "i5-11600K" in bench["cpu"]
+    assert bench["hardware_measurement_claimed"] is False  # honest: software, not silicon
+    speedups = [b["speedup_over_python"] for b in bench["backends"]]
+    assert speedups == sorted(speedups, reverse=True)  # fastest measured first
+    python = next(b for b in bench["backends"] if b["backend"] == "python")
+    assert python["speedup_over_python"] == pytest.approx(1.0)
+    assert max(speedups) > 10  # the accelerated backends are an order faster
+
+
+def test_api_dcls_benchmark_endpoint(client: TestClient) -> None:
+    response = client.get("/api/dcls/benchmark")
+    assert response.status_code == 200, response.text
+    assert response.json()["backends"][0]["speedup_over_python"] > 1.0
 
 
 def test_api_dcls_info_endpoint(client: TestClient) -> None:

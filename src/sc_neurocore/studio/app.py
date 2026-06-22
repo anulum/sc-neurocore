@@ -94,6 +94,7 @@ from sc_neurocore.studio.training import (
     stream_metrics,
 )
 from sc_neurocore.studio.dcls import (
+    dcls_benchmark,
     dcls_forward_parity,
     dcls_kernel_info,
     dcls_tent_profile,
@@ -2227,6 +2228,17 @@ def create_app(runtime_settings: StudioRuntimeSettings | None = None) -> FastAPI
     @app.get("/api/dcls/info")
     def api_dcls_info() -> Any:
         return _safe(dcls_kernel_info)
+
+    @app.get("/api/dcls/benchmark")
+    def api_dcls_benchmark() -> Any:
+        return _safe(
+            lambda: (
+                dcls_benchmark()
+                or (_ for _ in ()).throw(
+                    HTTPException(404, "No recorded DCLS benchmark available")
+                )
+            )
+        )
 
     @app.post("/api/dcls/evaluate")
     def api_dcls_evaluate(dcls_request: DclsEvaluateRequest) -> Any:

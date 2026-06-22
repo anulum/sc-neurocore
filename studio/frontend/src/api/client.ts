@@ -610,7 +610,20 @@ export interface DclsEvaluateBody {
   weights_q88?: number[];
 }
 
+export interface DclsBenchmark {
+  date_utc: string;
+  cpu: string;
+  workload: { n_channels: number; n_taps: number; elements: number; spike_density: number };
+  isolation_mode: string;
+  hardware_measurement_claimed: boolean;
+  backends: {
+    backend: string; median_call_ms: number;
+    channels_per_s: number; speedup_over_python: number;
+  }[];
+}
+
 export const fetchDclsInfo = () => get<DclsInfo>("/dcls/info");
+export const fetchDclsBenchmark = () => get<DclsBenchmark>("/dcls/benchmark");
 export const evaluateDcls = (body: DclsEvaluateBody) =>
   post<DclsEvaluation>("/dcls/evaluate", body);
 
