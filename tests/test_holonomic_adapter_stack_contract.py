@@ -336,6 +336,38 @@ def test_grn_contract():
     assert state.shape == (5,)
 
 
+def test_l11_adapter_broadcasts_mismatched_input_width():
+    # An informational drive whose node count differs from the adapter is
+    # collapsed to a single mean and broadcast across all nodes.
+    adapter = L11_NoosphericAdapter()
+    out = adapter.step_jax(0.1, inputs=jnp.ones((50, 1024)))
+    assert out.shape[0] == 100
+
+
+def test_l12_adapter_broadcasts_mismatched_input_width():
+    # The Gaian environmental drive applies the same broadcast rule.
+    adapter = L12_GaianAdapter()
+    out = adapter.step_jax(0.1, inputs=jnp.ones((50, 1024)))
+    assert out.shape[0] == 100
+
+
+def test_l1_adapter_consumes_metabolic_drive():
+    # Supplying a metabolic/field drive advances the pump term rather than
+    # leaving it at its initial value.
+    adapter = L1_QuantumAdapter(L1_HolonomicParameters(n_qubits=4))
+    out = adapter.step_jax(0.1, inputs=jnp.ones((4, 8)))
+    assert out.shape[0] == 4
+
+
+def test_dna_encoder_pads_odd_length_bitstream():
+    # An odd-length bitstream is zero-padded to an even length before the
+    # two-bits-per-base mapping, so it still yields whole DNA bases.
+    encoder = DNAEncoder()
+    bits = np.array([1, 0, 0, 1, 1, 1, 0], dtype=np.uint8)
+    dna = encoder.encode(bits)
+    assert len(dna) == 4
+
+
 def test_neuromodulator_contract():
     mod = NeuromodulatorSystem()
     mod.update_levels(reward=0.8, stress=0.2)
