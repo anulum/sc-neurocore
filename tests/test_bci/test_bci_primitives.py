@@ -135,5 +135,83 @@ def test_config_rejects_invalid_latency_budget() -> None:
         BCIPrimitiveConfig(latency_budget_ms=0)
 
 
+@pytest.mark.parametrize(
+    ("kwargs", "match"),
+    [
+        ({"channels": 0}, "channels must be positive"),
+        ({"sampling_rate_hz": 0}, "sampling_rate_hz must be positive"),
+        ({"threshold_sigma": 0.0}, "threshold_sigma must be positive"),
+        ({"legacy_derivative_threshold": 0.0}, "legacy_derivative_threshold must be positive"),
+        ({"refractory_samples": 0}, "refractory_samples must be >= 1"),
+        ({"command_threshold_hz": -1.0}, "command_threshold_hz must be non-negative"),
+        ({"legacy_active_fraction_threshold": 1.5}, "legacy_active_fraction_threshold must be in"),
+        ({"learning_rate": -0.1}, "learning_rate must be non-negative"),
+        ({"weight_decay": 0.0}, "weight_decay must be in"),
+        ({"min_weight": 0.0}, "min_weight must be positive"),
+        ({"max_feedback_amplitude": 0.0}, "max_feedback_amplitude must be positive"),
+    ],
+)
+def test_config_rejects_each_invalid_field(kwargs: dict[str, float], match: str) -> None:
+    with pytest.raises(ValueError, match=match):
+        BCIPrimitiveConfig(**kwargs)
+
+
+def test_from_packet_rejects_short_packet() -> None:
+    with pytest.raises(ValueError, match="at least 24 bytes"):
+        BCIFeedbackCommand.from_packet(b"\x00" * 10)
+
+
+def test_from_packet_rejects_unknown_schema() -> None:
+    cmd = BCIFeedbackCommand(command=1, channel=0, amplitude=0.5, timestamp_us=1, score=0.5)
+    tampered = bytearray(cmd.to_packet())
+    tampered[0] = 7  # overwrite the schema field with an unsupported version
+    with pytest.raises(ValueError, match="unsupported BCI feedback packet schema"):
+        BCIFeedbackCommand.from_packet(bytes(tampered))
+
+
+def test_primitive_accepts_matching_initial_weights() -> None:
+    weights = np.full(4, 2.0, dtype=np.float32)
+    primitive = BCIClosedLoopPrimitive(BCIPrimitiveConfig(channels=4), initial_weights=weights)
+    assert primitive.weights.shape == (4,)
+    assert np.all(primitive.weights == 2.0)
+
+
+def test_primitive_rejects_mismatched_initial_weights() -> None:
+    with pytest.raises(ValueError, match="does not match"):
+        BCIClosedLoopPrimitive(
+            BCIPrimitiveConfig(channels=4),
+            initial_weights=np.ones(3, dtype=np.float32),
+        )
+
+
+def test_primitive_honours_explicit_frame_id() -> None:
+    primitive = BCIClosedLoopPrimitive(BCIPrimitiveConfig(channels=4))
+    result = primitive.process_frame(
+        BCIFrame(samples=np.zeros((2, 4), dtype=np.float32), frame_id=42)
+    )
+    assert result.trace.frame_id == 42
+    # The counter advances past the explicit id so the next auto id does not collide.
+    nxt = primitive.process_frame(BCIFrame(samples=np.zeros((2, 4), dtype=np.float32)))
+    assert nxt.trace.frame_id == 43
+
+
+def test_validate_samples_rejects_three_dimensional_frame() -> None:
+    primitive = BCIClosedLoopPrimitive(BCIPrimitiveConfig(channels=4))
+    with pytest.raises(ValueError, match=r"shape \(channels,\) or \(samples, channels\)"):
+        primitive.process_frame(BCIFrame(samples=np.zeros((2, 2, 4), dtype=np.float32)))
+
+
+def test_validate_samples_rejects_empty_matrix() -> None:
+    primitive = BCIClosedLoopPrimitive(BCIPrimitiveConfig(channels=4))
+    with pytest.raises(ValueError, match="at least one sample"):
+        primitive.process_frame(BCIFrame(samples=np.zeros((0, 4), dtype=np.float32)))
+
+
+def test_validate_samples_rejects_wrong_channel_count_matrix() -> None:
+    primitive = BCIClosedLoopPrimitive(BCIPrimitiveConfig(channels=4))
+    with pytest.raises(ValueError, match="expected 4"):
+        primitive.process_frame(BCIFrame(samples=np.zeros((2, 5), dtype=np.float32)))
+
+
 if __name__ == "__main__":
     unittest.main()
