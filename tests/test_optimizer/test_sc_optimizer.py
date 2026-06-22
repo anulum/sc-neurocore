@@ -12,8 +12,6 @@ from __future__ import annotations
 
 import unittest
 
-import pytest
-
 from sc_neurocore.optimizer.sc_optimizer import (
     SCOptimizer,
     HardwareBudget,
