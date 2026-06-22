@@ -218,3 +218,36 @@ def test_generation_rejects_invalid_window() -> None:
 
     with pytest.raises(ValueError, match="dt_s"):
         generate_scpn_datastream(dt_s=0.0)
+
+
+def test_validation_rejects_non_finite_arrays() -> None:
+    stream = generate_scpn_datastream(n_steps=4, seed=5)
+    base = dict(
+        dt_s=stream.dt_s,
+        seed=stream.seed,
+        probabilities=stream.probabilities,
+        spike_train=stream.spike_train,
+        omega_rad_s=stream.omega_rad_s,
+        knm=stream.knm,
+    )
+
+    probs = stream.probabilities.copy()
+    probs[0, 0] = np.inf
+    with pytest.raises(ValueError, match="probabilities must be finite"):
+        validate_scpn_datastream(SCPNDatastream(**{**base, "probabilities": probs}))
+
+    omega = stream.omega_rad_s.copy()
+    omega[0] = np.inf
+    with pytest.raises(ValueError, match="omega_rad_s must be finite"):
+        validate_scpn_datastream(SCPNDatastream(**{**base, "omega_rad_s": omega}))
+
+    knm = stream.knm.copy()
+    knm[0, 1] = np.inf
+    knm[1, 0] = np.inf
+    with pytest.raises(ValueError, match="knm must be finite"):
+        validate_scpn_datastream(SCPNDatastream(**{**base, "knm": knm}))
+
+
+def test_numeric_array_from_payload_rejects_ragged_values() -> None:
+    with pytest.raises(ValueError, match="must be a numeric JSON array"):
+        datastream_module._numeric_array_from_payload([[1.0, 2.0], [3.0]], key="knm")
