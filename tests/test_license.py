@@ -133,6 +133,73 @@ def test_missing_http_dependency_is_reported_only_when_validation_is_requested(
         validate_license_key("scn_key")
 
 
+def test_validate_license_key_rejects_blank_key() -> None:
+    """A whitespace-only licence key is rejected before any network call."""
+    with pytest.raises(ValueError, match="Licence key must be a non-empty string"):
+        validate_license_key("   ")
+
+
+def test_post_json_with_httpx_reports_missing_dependency(monkeypatch: pytest.MonkeyPatch) -> None:
+    """The real transport raises SCDependencyError when httpx is not importable."""
+    import sys
+
+    from sc_neurocore.license import _post_json_with_httpx
+
+    monkeypatch.setitem(sys.modules, "httpx", None)
+
+    with pytest.raises(SCDependencyError, match="\\[license\\]"):
+        _post_json_with_httpx("https://example.test", {"key": "scn"}, timeout=1.0)
+
+
+class _FakeHttpxResponse:
+    """Minimal httpx.Response stand-in returning a preset JSON payload."""
+
+    def __init__(self, payload: Any) -> None:
+        self._payload = payload
+        self.raise_for_status_calls = 0
+
+    def raise_for_status(self) -> None:
+        self.raise_for_status_calls += 1
+
+    def json(self) -> Any:
+        return self._payload
+
+
+def test_post_json_with_httpx_returns_decoded_object(monkeypatch: pytest.MonkeyPatch) -> None:
+    """A successful POST returns the decoded JSON object after raising for status."""
+    import httpx
+
+    from sc_neurocore.license import _post_json_with_httpx
+
+    response = _FakeHttpxResponse({"valid": True, "status": "active"})
+
+    def fake_post(endpoint: str, *, json: dict[str, str], timeout: float) -> _FakeHttpxResponse:
+        assert json == {"key": "scn"}
+        return response
+
+    monkeypatch.setattr(httpx, "post", fake_post)
+
+    data = _post_json_with_httpx("https://example.test", {"key": "scn"}, timeout=2.0)
+
+    assert data == {"valid": True, "status": "active"}
+    assert response.raise_for_status_calls == 1
+
+
+def test_post_json_with_httpx_rejects_non_object_response(monkeypatch: pytest.MonkeyPatch) -> None:
+    """A JSON response that is not an object is rejected."""
+    import httpx
+
+    from sc_neurocore.license import _post_json_with_httpx
+
+    def fake_post(endpoint: str, *, json: dict[str, str], timeout: float) -> _FakeHttpxResponse:
+        return _FakeHttpxResponse([1, 2, 3])
+
+    monkeypatch.setattr(httpx, "post", fake_post)
+
+    with pytest.raises(ValueError, match="must be a JSON object"):
+        _post_json_with_httpx("https://example.test", {"key": "scn"}, timeout=2.0)
+
+
 def test_root_api_exports_license_helpers() -> None:
     assert sc_neurocore.set_license_key is set_license_key
     assert sc_neurocore.get_license_status is get_license_status
