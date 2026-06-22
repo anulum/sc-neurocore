@@ -14,6 +14,11 @@ hardware_fit = []
 behavior_tags = []
 
 [provenance]
+authors = [
+    "Gerstner, W. & Kistler, W.M.",
+]
+year = 2002
+doi = "10.1017/CBO9780511815706"
 
 [state.v]
 init = 0.0
@@ -32,28 +37,48 @@ init = 0.0
 
 [parameters.v_rest]
 default = 0.0
-unit = ""
-meaning = ""
+unit = "mV"
+meaning = "resting potential"
+range = [
+    -90.0,
+    -40.0,
+]
 
 [parameters.v_threshold]
 default = 1.0
-unit = ""
-meaning = ""
+unit = "mV"
+meaning = "firing threshold"
+range = [
+    -60.0,
+    -20.0,
+]
 
 [parameters.tau_v]
 default = 20.0
-unit = ""
-meaning = ""
+unit = "ms"
+meaning = "membrane time constant"
+range = [
+    1.0,
+    100.0,
+]
 
 [parameters.tau_exc]
 default = 5.0
-unit = ""
-meaning = ""
+unit = "ms"
+meaning = "time constant of the excitatory alpha synapse"
+range = [
+    0.1,
+    50.0,
+]
 
 [parameters.tau_inh]
 default = 10.0
-unit = ""
-meaning = ""
+unit = "ms"
+meaning = "time constant of the inhibitory alpha synapse"
+range = [
+    0.1,
+    50.0,
+]
 
 [integration]
 dt = 1.0

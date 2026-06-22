@@ -14,6 +14,11 @@ hardware_fit = []
 behavior_tags = []
 
 [provenance]
+authors = [
+    "Tsodyks, M., Pawelzik, K. & Markram, H.",
+]
+year = 1998
+doi = "10.1162/089976698300017502"
 
 [state.v]
 init = -65.0
@@ -26,48 +31,84 @@ init = 0.2
 
 [parameters.v_rest]
 default = -65.0
-unit = ""
-meaning = ""
+unit = "mV"
+meaning = "resting potential"
+range = [
+    -90.0,
+    -40.0,
+]
 
 [parameters.v_reset]
 default = -65.0
-unit = ""
-meaning = ""
+unit = "mV"
+meaning = "reset potential"
+range = [
+    -90.0,
+    -40.0,
+]
 
 [parameters.v_threshold]
 default = -50.0
-unit = ""
-meaning = ""
+unit = "mV"
+meaning = "firing threshold"
+range = [
+    -60.0,
+    -20.0,
+]
 
 [parameters.tau_m]
 default = 20.0
-unit = ""
-meaning = ""
+unit = "ms"
+meaning = "membrane time constant"
+range = [
+    1.0,
+    100.0,
+]
 
 [parameters.tau_d]
 default = 200.0
-unit = ""
-meaning = ""
+unit = "ms"
+meaning = "synaptic depression recovery time constant"
+range = [
+    10.0,
+    2000.0,
+]
 
 [parameters.tau_f]
 default = 600.0
-unit = ""
-meaning = ""
+unit = "ms"
+meaning = "synaptic facilitation time constant"
+range = [
+    10.0,
+    5000.0,
+]
 
 [parameters.u_se]
 default = 0.2
-unit = ""
-meaning = ""
+unit = "1"
+meaning = "utilisation of synaptic efficacy (release probability)"
+range = [
+    0.0,
+    1.0,
+]
 
 [parameters.a_se]
 default = 50.0
-unit = ""
-meaning = ""
+unit = "1"
+meaning = "absolute synaptic efficacy (maximal synaptic weight)"
+range = [
+    0.0,
+    100.0,
+]
 
 [parameters.r_m]
 default = 1.0
-unit = ""
-meaning = ""
+unit = "1"
+meaning = "normalised membrane resistance"
+range = [
+    0.0,
+    100.0,
+]
 
 [integration]
 dt = 0.1

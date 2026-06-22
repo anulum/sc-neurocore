@@ -14,38 +14,67 @@ hardware_fit = []
 behavior_tags = []
 
 [provenance]
+authors = [
+    "Rall, W.",
+]
+year = 1959
+doi = "10.1016/0014-4886(59)90046-9"
 
 [state]
 
 [parameters.n_comp]
 default = 5.0
-unit = ""
-meaning = ""
+unit = "1"
+meaning = "number of cable compartments"
+range = [
+    1.0,
+    100.0,
+]
 
 [parameters.tau_m]
 default = 20.0
-unit = ""
-meaning = ""
+unit = "ms"
+meaning = "membrane time constant"
+range = [
+    1.0,
+    100.0,
+]
 
 [parameters.v_rest]
 default = -65.0
-unit = ""
-meaning = ""
+unit = "mV"
+meaning = "resting potential"
+range = [
+    -90.0,
+    -40.0,
+]
 
 [parameters.g_ratio]
 default = 0.5
-unit = ""
-meaning = ""
+unit = "1"
+meaning = "ratio of inter-compartment coupling to membrane conductance"
+range = [
+    0.0,
+    100.0,
+]
 
 [parameters.v_threshold]
 default = -50.0
-unit = ""
-meaning = ""
+unit = "mV"
+meaning = "voltage at which a spike is registered"
+range = [
+    -60.0,
+    -20.0,
+]
 
 [parameters.v_reset]
 default = -65.0
-unit = ""
-meaning = ""
+unit = "mV"
+meaning = "reset potential"
+range = [
+    -90.0,
+    -40.0,
+]
 
 [integration]
 dt = 0.1

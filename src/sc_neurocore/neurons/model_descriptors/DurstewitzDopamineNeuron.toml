@@ -14,6 +14,11 @@ hardware_fit = []
 behavior_tags = []
 
 [provenance]
+authors = [
+    "Durstewitz, D., Seamans, J.K. & Sejnowski, T.J.",
+]
+year = 2000
+doi = "10.1152/jn.2000.83.3.1733"
 
 [state.v]
 init = -65.0
@@ -26,73 +31,129 @@ init = 0.2
 
 [parameters.g_na]
 default = 45.0
-unit = ""
-meaning = ""
+unit = "mS/cm^2"
+meaning = "maximal sodium conductance"
+range = [
+    0.0,
+    200.0,
+]
 
 [parameters.g_k]
 default = 18.0
-unit = ""
-meaning = ""
+unit = "mS/cm^2"
+meaning = "maximal delayed-rectifier potassium conductance"
+range = [
+    0.0,
+    200.0,
+]
 
 [parameters.g_nmda]
 default = 0.5
-unit = ""
-meaning = ""
+unit = "mS/cm^2"
+meaning = "maximal NMDA-receptor conductance"
+range = [
+    0.0,
+    200.0,
+]
 
 [parameters.g_l]
 default = 0.02
-unit = ""
-meaning = ""
+unit = "mS/cm^2"
+meaning = "maximal leak conductance"
+range = [
+    0.0,
+    200.0,
+]
 
 [parameters.e_na]
 default = 55.0
-unit = ""
-meaning = ""
+unit = "mV"
+meaning = "sodium reversal potential"
+range = [
+    30.0,
+    70.0,
+]
 
 [parameters.e_k]
 default = -80.0
-unit = ""
-meaning = ""
+unit = "mV"
+meaning = "potassium reversal potential"
+range = [
+    -100.0,
+    -70.0,
+]
 
 [parameters.e_nmda]
 default = 0.0
-unit = ""
-meaning = ""
+unit = "mV"
+meaning = "NMDA reversal potential"
+range = [
+    -10.0,
+    10.0,
+]
 
 [parameters.e_l]
 default = -65.0
-unit = ""
-meaning = ""
+unit = "mV"
+meaning = "leak reversal potential"
+range = [
+    -90.0,
+    -50.0,
+]
 
 [parameters.mg]
 default = 1.0
-unit = ""
-meaning = ""
+unit = "mM"
+meaning = "extracellular magnesium concentration setting the NMDA block"
+range = [
+    0.0,
+    5.0,
+]
 
 [parameters.d1_level]
 default = 0.0
-unit = ""
-meaning = ""
+unit = "1"
+meaning = "dopamine D1-receptor activation level"
+range = [
+    0.0,
+    2.0,
+]
 
 [parameters.g_nmda_scale]
 default = 2.5
-unit = ""
-meaning = ""
+unit = "1"
+meaning = "D1-dependent scaling of the NMDA conductance"
+range = [
+    0.0,
+    3.0,
+]
 
 [parameters.g_k_scale]
 default = 1.5
-unit = ""
-meaning = ""
+unit = "1"
+meaning = "D1-dependent scaling of the potassium conductance"
+range = [
+    0.0,
+    3.0,
+]
 
 [parameters.v_shift_na]
 default = -5.0
-unit = ""
-meaning = ""
+unit = "mV"
+meaning = "D1-dependent shift of the sodium-current activation"
+range = [
+    -20.0,
+    20.0,
+]
 
 [parameters.v_threshold]
 default = -20.0
-unit = ""
-meaning = ""
+unit = "mV"
+meaning = "voltage at which a spike is registered"
+range = [
+    -40.0,
+    20.0,
+]
 
 [integration]
 dt = 0.05

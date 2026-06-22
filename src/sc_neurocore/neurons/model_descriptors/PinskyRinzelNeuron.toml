@@ -14,6 +14,11 @@ hardware_fit = []
 behavior_tags = []
 
 [provenance]
+authors = [
+    "Pinsky, P.F. & Rinzel, J.",
+]
+year = 1994
+doi = "10.1007/BF00962717"
 
 [state.v_s]
 init = -60.0
@@ -38,68 +43,120 @@ init = 0.0
 
 [parameters.gc]
 default = 2.1
-unit = ""
-meaning = ""
+unit = "mS/cm^2"
+meaning = "soma-dendrite coupling conductance"
+range = [
+    0.0,
+    20.0,
+]
 
 [parameters.p]
 default = 0.5
-unit = ""
-meaning = ""
+unit = "1"
+meaning = "somatic compartment area fraction"
+range = [
+    0.01,
+    1.0,
+]
 
 [parameters.g_na]
 default = 30.0
-unit = ""
-meaning = ""
+unit = "mS/cm^2"
+meaning = "maximal sodium conductance"
+range = [
+    0.0,
+    200.0,
+]
 
 [parameters.g_kdr]
 default = 15.0
-unit = ""
-meaning = ""
+unit = "mS/cm^2"
+meaning = "maximal delayed-rectifier potassium conductance"
+range = [
+    0.0,
+    200.0,
+]
 
 [parameters.g_ca]
 default = 10.0
-unit = ""
-meaning = ""
+unit = "mS/cm^2"
+meaning = "maximal calcium conductance"
+range = [
+    0.0,
+    200.0,
+]
 
 [parameters.g_kahp]
 default = 0.8
-unit = ""
-meaning = ""
+unit = "mS/cm^2"
+meaning = "maximal calcium-dependent afterhyperpolarisation potassium conductance"
+range = [
+    0.0,
+    200.0,
+]
 
 [parameters.g_kc]
 default = 15.0
-unit = ""
-meaning = ""
+unit = "mS/cm^2"
+meaning = "maximal voltage- and calcium-dependent potassium conductance"
+range = [
+    0.0,
+    200.0,
+]
 
 [parameters.g_l]
 default = 0.1
-unit = ""
-meaning = ""
+unit = "mS/cm^2"
+meaning = "maximal leak conductance"
+range = [
+    0.0,
+    200.0,
+]
 
 [parameters.e_na]
 default = 60.0
-unit = ""
-meaning = ""
+unit = "mV"
+meaning = "sodium reversal potential"
+range = [
+    30.0,
+    70.0,
+]
 
 [parameters.e_k]
 default = -75.0
-unit = ""
-meaning = ""
+unit = "mV"
+meaning = "potassium reversal potential"
+range = [
+    -100.0,
+    -70.0,
+]
 
 [parameters.e_ca]
 default = 80.0
-unit = ""
-meaning = ""
+unit = "mV"
+meaning = "calcium reversal potential"
+range = [
+    60.0,
+    150.0,
+]
 
 [parameters.e_l]
 default = -60.0
-unit = ""
-meaning = ""
+unit = "mV"
+meaning = "leak reversal potential"
+range = [
+    -90.0,
+    -50.0,
+]
 
 [parameters.v_threshold]
 default = -20.0
-unit = ""
-meaning = ""
+unit = "mV"
+meaning = "voltage at which a spike is registered"
+range = [
+    -40.0,
+    20.0,
+]
 
 [integration]
 dt = 0.02
