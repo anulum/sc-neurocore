@@ -14,6 +14,11 @@ hardware_fit = []
 behavior_tags = []
 
 [provenance]
+authors = [
+    "McCulloch, W.S. & Pitts, W.",
+]
+year = 1943
+doi = "10.1007/BF02478259"
 
 [state.theta]
 init = 1.0

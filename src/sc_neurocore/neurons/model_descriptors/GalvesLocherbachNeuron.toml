@@ -14,29 +14,50 @@ hardware_fit = []
 behavior_tags = []
 
 [provenance]
+authors = [
+    "Galves, A. & Locherbach, E.",
+]
+year = 2013
+doi = "10.1007/s10955-013-0733-9"
 
 [state.v]
 init = 0.0
 
 [parameters.v_rest]
 default = 0.0
-unit = ""
-meaning = ""
+unit = "1"
+meaning = "resting value of the normalised membrane-potential variable"
+range = [
+    -5.0,
+    5.0,
+]
 
 [parameters.decay]
 default = 0.95
-unit = ""
-meaning = ""
+unit = "1"
+meaning = "leak factor applied to the membrane potential each step"
+range = [
+    0.0,
+    1.0,
+]
 
 [parameters.threshold_rate]
 default = 0.5
-unit = ""
-meaning = ""
+unit = "1"
+meaning = "scale of the sigmoidal per-step firing intensity"
+range = [
+    0.0,
+    5.0,
+]
 
 [parameters.steepness]
 default = 5.0
-unit = ""
-meaning = ""
+unit = "1"
+meaning = "steepness of the sigmoidal firing intensity"
+range = [
+    0.1,
+    50.0,
+]
 
 [integration]
 dt = 1.0

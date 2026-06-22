@@ -14,39 +14,68 @@ hardware_fit = []
 behavior_tags = []
 
 [provenance]
+authors = [
+    "Gerstner, W. & Kistler, W.M.",
+]
+year = 2002
+doi = "10.1017/CBO9780511815706"
 
 [state.v]
 init = 0.0
 
 [parameters.v_rest]
 default = 0.0
-unit = ""
-meaning = ""
+unit = "1"
+meaning = "resting potential (normalised)"
+range = [
+    -5.0,
+    5.0,
+]
 
 [parameters.v_threshold]
 default = 1.0
-unit = ""
-meaning = ""
+unit = "1"
+meaning = "firing threshold (normalised)"
+range = [
+    0.0,
+    10.0,
+]
 
 [parameters.tau_m]
 default = 20.0
-unit = ""
-meaning = ""
+unit = "ms"
+meaning = "membrane time constant"
+range = [
+    1.0,
+    100.0,
+]
 
 [parameters.tau_eta]
 default = 50.0
-unit = ""
-meaning = ""
+unit = "ms"
+meaning = "time constant of the refractory afterhyperpolarisation kernel"
+range = [
+    1.0,
+    500.0,
+]
 
 [parameters.eta_reset]
 default = 5.0
-unit = ""
-meaning = ""
+unit = "1"
+meaning = "amplitude of the refractory reset kernel (normalised voltage)"
+range = [
+    0.0,
+    50.0,
+]
 
 [parameters.resistance]
 default = 1.0
-unit = ""
-meaning = ""
+unit = "1"
+meaning = "normalised membrane resistance (R=1 in the project's normalised-current convention)"
+range = [
+    0.0,
+    100.0,
+]
 
 [integration]
 dt = 1.0

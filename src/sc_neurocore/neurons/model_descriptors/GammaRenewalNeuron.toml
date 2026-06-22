@@ -14,23 +14,40 @@ hardware_fit = []
 behavior_tags = []
 
 [provenance]
+authors = [
+    "Keat, J., Reinagel, P., Reid, R.C. & Meister, M.",
+]
+year = 2001
+doi = "10.1016/S0896-6273(01)00322-1"
 
 [state]
 
 [parameters.rate_hz]
 default = 50.0
-unit = ""
-meaning = ""
+unit = "Hz"
+meaning = "mean firing rate of the gamma renewal process"
+range = [
+    0.0,
+    1000.0,
+]
 
 [parameters.shape_k]
 default = 3.0
-unit = ""
-meaning = ""
+unit = "1"
+meaning = "shape parameter of the gamma inter-spike-interval distribution"
+range = [
+    0.1,
+    50.0,
+]
 
 [parameters.dt_ms]
 default = 1.0
-unit = ""
-meaning = ""
+unit = "ms"
+meaning = "timestep"
+range = [
+    0.01,
+    10.0,
+]
 
 [integration]
 dt = 0.1

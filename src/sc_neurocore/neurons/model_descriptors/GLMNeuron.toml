@@ -14,28 +14,49 @@ hardware_fit = []
 behavior_tags = []
 
 [provenance]
+authors = [
+    "Pillow, J.W. et al.",
+]
+year = 2008
+doi = "10.1038/nature07140"
 
 [state]
 
 [parameters.n_k]
 default = 10.0
-unit = ""
-meaning = ""
+unit = "1"
+meaning = "number of stimulus filter taps"
+range = [
+    1.0,
+    200.0,
+]
 
 [parameters.n_h]
 default = 20.0
-unit = ""
-meaning = ""
+unit = "1"
+meaning = "number of post-spike history filter taps"
+range = [
+    1.0,
+    200.0,
+]
 
 [parameters.mu]
 default = -3.0
-unit = ""
-meaning = ""
+unit = "1"
+meaning = "baseline log-firing-rate offset"
+range = [
+    -10.0,
+    10.0,
+]
 
 [parameters.dt_ms]
 default = 1.0
-unit = ""
-meaning = ""
+unit = "ms"
+meaning = "timestep"
+range = [
+    0.01,
+    10.0,
+]
 
 [integration]
 dt = 0.1

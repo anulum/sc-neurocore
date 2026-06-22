@@ -22,7 +22,7 @@ class SpikeResponseNeuron:
     Spike when v(t) ≥ threshold.
     Gerstner 1995.
 
-    Reference: Gerstner, W. (1995). Neural Comput. 7:1049–1071.
+    Reference: Gerstner, W. (1995). Phys. Rev. E 51:738–758.
     """
 
     v: float = 0.0

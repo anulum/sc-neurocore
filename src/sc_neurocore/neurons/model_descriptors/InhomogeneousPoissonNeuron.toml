@@ -14,13 +14,22 @@ hardware_fit = []
 behavior_tags = []
 
 [provenance]
+authors = [
+    "Gerstner, W., Kistler, W.M., Naud, R. & Paninski, L.",
+]
+year = 2014
+doi = "10.1017/CBO9781107447615"
 
 [state]
 
 [parameters.dt_ms]
 default = 1.0
-unit = ""
-meaning = ""
+unit = "ms"
+meaning = "timestep used to convert the time-varying rate to a per-step spike probability"
+range = [
+    0.01,
+    10.0,
+]
 
 [integration]
 dt = 0.1
