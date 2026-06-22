@@ -359,17 +359,6 @@ def write_stochastic_backprop_estimator_regression_manifest(
     return output
 
 
-def _task_loss(
-    inputs: torch.Tensor,
-    targets: torch.Tensor,
-    weight: torch.Tensor,
-    bias: torch.Tensor,
-    sc_config: DifferentiableSCConfig,
-) -> float:
-    prediction = relaxed_sc_linear(inputs, weight, bias, sc_config)
-    return float(F.mse_loss(prediction, targets).detach().item())
-
-
 def _design_length_options(bitstream_length: int) -> tuple[int, int, int]:
     low = max(2, bitstream_length // 2)
     if low >= bitstream_length:

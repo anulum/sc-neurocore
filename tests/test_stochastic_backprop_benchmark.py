@@ -11,11 +11,19 @@
 from __future__ import annotations
 
 import json
+from unittest.mock import patch
+
+import pytest
+import torch
 
 from sc_neurocore.benchmarks.stochastic_backprop import (
     STOCHASTIC_BACKPROP_BENCHMARK_SCHEMA_VERSION,
     STOCHASTIC_BACKPROP_ESTIMATOR_REGRESSION_SCHEMA_VERSION,
     STOCHASTIC_BACKPROP_EVIDENCE_BOUNDARY,
+    _all_estimator_variances_are_finite_nonnegative,
+    _design_length_options,
+    _estimator_variance_evidence,
+    _validate_bitstream_length_grid,
     build_stochastic_backprop_benchmark,
     build_stochastic_backprop_estimator_regression_manifest,
     write_stochastic_backprop_estimator_regression_manifest,
@@ -139,3 +147,47 @@ def test_write_estimator_regression_manifest_writes_canonical_json(tmp_path) -> 
         sample_count=16,
     )
     assert path.read_text(encoding="utf-8").endswith("\n")
+
+
+def test_estimator_regression_manifest_requires_at_least_two_samples() -> None:
+    with pytest.raises(ValueError, match="sample_count must be at least two"):
+        build_stochastic_backprop_estimator_regression_manifest(sample_count=1)
+
+
+def test_estimator_variance_evidence_requires_at_least_two_samples() -> None:
+    with pytest.raises(ValueError, match="sample_count must be at least two"):
+        _estimator_variance_evidence(bitstream_length=64, sample_count=1)
+
+
+def test_estimator_variance_evidence_raises_when_reference_grad_missing() -> None:
+    # Suppressing autograd leaves the reference weight gradient unpopulated,
+    # which the defensive guard must surface as a RuntimeError.
+    with (
+        patch.object(torch.Tensor, "backward", lambda self, *args, **kwargs: None),
+        pytest.raises(RuntimeError, match="reference gradient was not populated"),
+    ):
+        _estimator_variance_evidence(bitstream_length=64, sample_count=2)
+
+
+def test_design_length_options_collapses_for_minimal_length() -> None:
+    # A length-2 grid collapses the distinct-options set below three, falling
+    # back to the consecutive (n, n+1, n+2) ladder.
+    assert _design_length_options(2) == (2, 3, 4)
+
+
+def test_validate_bitstream_length_grid_rejects_malformed_grids() -> None:
+    with pytest.raises(ValueError, match="at least two entries"):
+        _validate_bitstream_length_grid((64,))
+    with pytest.raises(ValueError, match="positive integers"):
+        _validate_bitstream_length_grid((64, -1))
+    with pytest.raises(ValueError, match="strictly increasing"):
+        _validate_bitstream_length_grid((64, 64))
+
+
+def test_estimator_variance_finiteness_guard_rejects_bad_variances() -> None:
+    non_numeric = {"estimators": {"e": {"variance": "nan"}}}
+    assert _all_estimator_variances_are_finite_nonnegative(non_numeric) is False
+    non_finite = {"estimators": {"e": {"variance": float("inf")}}}
+    assert _all_estimator_variances_are_finite_nonnegative(non_finite) is False
+    negative = {"estimators": {"e": {"variance": -1.0}}}
+    assert _all_estimator_variances_are_finite_nonnegative(negative) is False
