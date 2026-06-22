@@ -248,6 +248,41 @@ class TestTimeWarpEngine:
         assert "num_nodes" in st
         assert "gvt_ns" in st
 
+    def test_process_cancelled_event_short_circuits(self):
+        eng = TimeWarpEngine(2)
+        eng.inject_event(TwinEvent(100, target_node=0, cancelled=True))
+        ev = eng.process_next()
+        assert ev is not None
+        assert ev.cancelled is True
+        assert eng.nodes[0].processed_events == 0  # not applied to the node
+
+    def test_process_event_for_unknown_target(self):
+        eng = TimeWarpEngine(2)
+        eng.inject_event(TwinEvent(100, target_node=99))
+        ev = eng.process_next()
+        assert ev is not None
+        assert ev.target_node == 99
+
+    def test_process_event_merges_vector_clock(self):
+        eng = TimeWarpEngine(2)
+        eng.inject_event(TwinEvent(100, target_node=0, vector_ts=np.array([3, 0])))
+        eng.process_next()
+        assert eng.nodes[0].vector_clock.clock[0] >= 3
+
+    def test_rollback_restores_earlier_checkpoint(self):
+        # A straggler with a checkpoint at or before its time rolls the node
+        # back to that checkpoint (restoring lamport/vector state) before
+        # re-advancing, rather than falling back to the bare target time.
+        eng = TimeWarpEngine(1, checkpoint_interval_ns=1)
+        eng.inject_event(TwinEvent(50, target_node=0, lamport_ts=1, vector_ts=np.array([1])))
+        eng.process_next()  # checkpoint at vt=50
+        eng.inject_event(TwinEvent(200, target_node=0, lamport_ts=2, vector_ts=np.array([2])))
+        eng.process_next()  # checkpoint at vt=200
+        eng.inject_event(TwinEvent(100, target_node=0, lamport_ts=3))
+        eng.process_next()  # straggler -> rollback to cp@50
+        assert eng.total_rollbacks > 0
+        assert eng.nodes[0].local_virtual_time_ns == 100
+
 
 # ── DivergenceMetric Tests ──────────────────────────────────────────
 
@@ -352,6 +387,16 @@ class TestCausalOrder:
         eng = TimeWarpEngine(1)
         assert eng.verify_causal_order() == []
 
+    def test_straggler_processing_records_violation(self):
+        # Processing a later event then an earlier one for the same node leaves
+        # the processed log out of causal order, which the verifier flags.
+        eng = TimeWarpEngine(1)
+        eng.inject_event(TwinEvent(200, target_node=0, lamport_ts=1))
+        eng.process_next()
+        eng.inject_event(TwinEvent(100, target_node=0, lamport_ts=2))
+        eng.process_next()
+        assert (0, 1) in eng.verify_causal_order()
+
 
 # ── Starvation Detection Tests ──────────────────────────────────────
 
@@ -428,6 +473,13 @@ class TestNullMessageOptimizer:
         assert lc.can_advance_to(1400) is True
         assert lc.can_advance_to(1600) is False
 
+    def test_safe_advance_single_node_uses_own_horizon(self):
+        # With no peers to constrain it, a node may advance to its own last
+        # null-message time plus its lookahead horizon.
+        nmo = NullMessageOptimizer(1, default_lookahead_ns=1000)
+        nmo.broadcast_null(0, 500)
+        assert nmo.safe_advance_time(0) == 1500
+
 
 # ── Delta Checkpoint Tests (Gap 2) ────────────────────────────────────
 
@@ -444,6 +496,19 @@ class TestDeltaCheckpoint:
         state = np.array([1.0, 2.0, 3.0])
         dc = DeltaCheckpoint.compute_delta(state, state.copy(), 0, 1, 0, 0)
         assert dc.num_changes == 0
+
+    def test_compression_ratio_zero_for_empty_delta(self):
+        state = np.array([1.0, 2.0, 3.0])
+        dc = DeltaCheckpoint.compute_delta(state, state.copy(), 0, 1, 0, 0)
+        assert dc.size_bytes == 0
+        assert dc.compression_ratio == 0.0
+
+    def test_compression_ratio_nonzero_delta(self):
+        base = np.array([1.0, 2.0])
+        new = np.array([1.0, 9.0])
+        dc = DeltaCheckpoint.compute_delta(base, new, 0, 1, 0, 0)
+        assert dc.size_bytes > 0
+        assert dc.compression_ratio == 1.0
 
 
 # ── Replay Verifier Tests (Gap 3) ────────────────────────────────────
@@ -473,6 +538,15 @@ class TestReplayVerifier:
     def test_empty(self):
         rv = ReplayVerifier()
         assert not rv.is_deterministic
+
+    def test_compared_count_is_shorter_run_length(self):
+        rv = ReplayVerifier()
+        cp = Checkpoint(0, 100, 0, lfsr_state=1)
+        cp.compute_checksum()
+        rv.record_run_a(cp)
+        rv.record_run_a(cp)
+        rv.record_run_b(cp)
+        assert rv.compared_count == 1
 
 
 # ── Drift Auto-Correction Tests (Gap 4) ──────────────────────────────
@@ -537,6 +611,15 @@ class TestBackpressure:
         bp.should_accept(0)  # accept
         bp.should_accept(1)  # reject
         assert bp.rejection_rate == 0.5
+
+    def test_rejection_rate_no_offers(self):
+        bp = BackpressureController(max_queue_depth=10)
+        assert bp.rejection_rate == 0.0
+
+    def test_is_backpressured_above_threshold(self):
+        bp = BackpressureController(max_queue_depth=1)
+        bp.should_accept(1)  # reject -> rejection rate 1.0
+        assert bp.is_backpressured is True
 
 
 # ── Audit Chain Tests (Gap 7) ─────────────────────────────────────────
@@ -608,6 +691,21 @@ class TestTwinFederation:
         fed.register("a", TwinSession(1))
         assert fed.global_gvt() == 0
 
+    def test_global_gvt_empty_federation(self):
+        fed = TwinFederation()
+        assert fed.global_gvt() == 0
+
+    def test_total_divergence_empty_federation(self):
+        fed = TwinFederation()
+        assert fed.total_divergence() == 0.0
+
+    def test_total_divergence_sums_registered_twins(self):
+        fed = TwinFederation()
+        fed.register("a", TwinSession(1))
+        fed.register("b", TwinSession(1))
+        # Fresh sessions each carry zero divergence; the federation sums them.
+        assert fed.total_divergence() == 0.0
+
 
 # ── Adaptive Checkpoint Interval Tests (Gap 10) ───────────────────────
 
@@ -632,3 +730,13 @@ class TestAdaptiveCheckpointInterval:
         for _ in range(10):
             aci.update(999, 100)
         assert aci.current_interval >= 100
+
+    def test_update_zero_events_keeps_interval(self):
+        aci = AdaptiveCheckpointInterval(base_interval=1000)
+        assert aci.update(5, 0) == 1000
+
+    def test_is_aggressive_near_minimum(self):
+        aci = AdaptiveCheckpointInterval(base_interval=200, min_interval=100)
+        aci.update(100, 100)  # rollback rate 1.0 -> halve to the floor of 100
+        assert aci.current_interval == 100
+        assert aci.is_aggressive is True
