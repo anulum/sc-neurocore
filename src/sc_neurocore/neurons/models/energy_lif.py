@@ -20,7 +20,7 @@ _ENERGY_GATE = 0.1
 class EnergyLIFNeuron:
     """Fardet & Levina 2020 — LIF with metabolic energy constraint.
 
-    Reference: Blouw, P. et al. (2019). Proc. NeurIPS Workshop on Energy Efficient ML.
+    Reference: Fardet, T. & Levina, A. (2020). PLoS Comput. Biol. 16(12):e1008503.
     """
 
     v: float = -70.0

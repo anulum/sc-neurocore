@@ -14,39 +14,68 @@ hardware_fit = []
 behavior_tags = []
 
 [provenance]
+authors = [
+    "Tuckwell, H.C.",
+]
+year = 1988
+doi = "10.1017/CBO9780511623202"
 
 [state.v]
 init = -70.0
 
 [parameters.v_rest]
 default = -70.0
-unit = ""
-meaning = ""
+unit = "mV"
+meaning = "resting / leak reversal potential"
+range = [
+    -90.0,
+    -40.0,
+]
 
 [parameters.v_reset]
 default = -70.0
-unit = ""
-meaning = ""
+unit = "mV"
+meaning = "membrane potential reset to after a spike"
+range = [
+    -90.0,
+    -40.0,
+]
 
 [parameters.v_threshold]
 default = -50.0
-unit = ""
-meaning = ""
+unit = "mV"
+meaning = "voltage at which a spike is registered"
+range = [
+    -60.0,
+    -20.0,
+]
 
 [parameters.tau_m]
 default = 20.0
-unit = ""
-meaning = ""
+unit = "ms"
+meaning = "membrane time constant"
+range = [
+    1.0,
+    100.0,
+]
 
 [parameters.mu]
 default = 0.0
-unit = ""
-meaning = ""
+unit = "mV"
+meaning = "mean input drive (voltage-equivalent)"
+range = [
+    -20.0,
+    20.0,
+]
 
 [parameters.sigma]
 default = 3.0
-unit = ""
-meaning = ""
+unit = "mV"
+meaning = "standard deviation of the membrane-potential noise"
+range = [
+    0.0,
+    20.0,
+]
 
 [integration]
 dt = 1.0

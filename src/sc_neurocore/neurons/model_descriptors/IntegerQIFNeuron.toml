@@ -14,29 +14,50 @@ hardware_fit = []
 behavior_tags = []
 
 [provenance]
+authors = [
+    "Wu, T., Yeh, C.-H., Lo, C.-C. et al.",
+]
+year = 2021
+doi = "10.1109/AICAS51828.2021.9458572"
 
 [state.v]
 init = 0.0
 
 [parameters.k]
 default = 6.0
-unit = ""
-meaning = ""
+unit = "1"
+meaning = "integer curvature (bit-shift) coefficient of the quadratic term"
+range = [
+    1.0,
+    16.0,
+]
 
 [parameters.v_threshold]
 default = 1024.0
-unit = ""
-meaning = ""
+unit = "1"
+meaning = "integer fixed-point membrane level at which a spike is registered"
+range = [
+    1.0,
+    32768.0,
+]
 
 [parameters.v_reset]
 default = -1024.0
-unit = ""
-meaning = ""
+unit = "1"
+meaning = "integer fixed-point membrane level reset to after a spike"
+range = [
+    -32768.0,
+    0.0,
+]
 
 [parameters.v_min]
 default = -2048.0
-unit = ""
-meaning = ""
+unit = "1"
+meaning = "integer fixed-point lower clamp on the membrane level"
+range = [
+    -65536.0,
+    0.0,
+]
 
 [integration]
 dt = 0.1
