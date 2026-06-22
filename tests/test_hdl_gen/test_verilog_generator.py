@@ -141,3 +141,22 @@ def test_verilog_generator_perf_small():
     _ = gen.generate()
     elapsed = time.perf_counter() - start
     assert elapsed < 1.0
+
+
+def test_save_to_file_reraises_oserror(tmp_path):
+    """save_to_file should log and re-raise when the target path is unwritable."""
+    gen = VerilogGenerator(module_name="io_fail")
+    # The parent directory does not exist, so open() raises an OSError.
+    bad_path = tmp_path / "missing_subdir" / "out.v"
+    with pytest.raises(OSError):
+        gen.save_to_file(str(bad_path))
+
+
+def test_source_seed_rejects_non_integer_seed():
+    """A stochastic-source seed must be a real integer, not a bool or string."""
+    from sc_neurocore.hdl_gen.verilog_generator import _source_seed
+
+    with pytest.raises(ValueError, match="seed must be an integer"):
+        _source_seed({"seed": True}, default=0)
+    with pytest.raises(ValueError, match="seed must be an integer"):
+        _source_seed({"seed": "not-an-int"}, default=0)
