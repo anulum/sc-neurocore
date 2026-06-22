@@ -831,8 +831,6 @@ def _delay_steps_from_value(value: Any, path: str) -> int | tuple[int, ...]:
 
 
 def _delay_steps_to_json(value: SCNIRDelaySteps) -> int | list[int]:
-    if isinstance(value, int) and not isinstance(value, bool):
-        return value
     steps = _expect_delay_steps(value, "delay_steps")
     if isinstance(steps, int):
         return steps

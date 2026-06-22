@@ -9,7 +9,7 @@
     "python_model_classes": 157,
     "python_model_source_modules": 151,
     "rust_pyo3_model_wrappers": 175,
-    "test_files": 865
+    "test_files": 866
   },
   "documentation": {
     "public_pages": [
@@ -2451,6 +2451,7 @@
       "tests/test_scnir_fpga_integration.py",
       "tests/test_scnir_handoff_audit.py",
       "tests/test_scnir_schema.py",
+      "tests/test_scnir_schema_validation_edges.py",
       "tests/test_scpn_cross_layer.py",
       "tests/test_scpn_datastream.py",
       "tests/test_scpn_integrated.py",
