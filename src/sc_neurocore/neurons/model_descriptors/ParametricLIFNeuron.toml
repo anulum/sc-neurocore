@@ -14,19 +14,32 @@ hardware_fit = []
 behavior_tags = []
 
 [provenance]
+authors = [
+    "Fang, W., Yu, Z., Chen, Y., Masquelier, T., Huang, T. & Tian, Y.",
+]
+year = 2021
+doi = "10.1109/ICCV48922.2021.00266"
 
 [state.v]
 init = 0.0
 
 [parameters.a]
 default = 0.0
-unit = ""
-meaning = ""
+unit = "1"
+meaning = "trainable parameter setting the membrane decay (the leak is a function of a)"
+range = [
+    -10.0,
+    10.0,
+]
 
 [parameters.threshold]
 default = 1.0
-unit = ""
-meaning = ""
+unit = "1"
+meaning = "firing threshold (normalised)"
+range = [
+    0.0,
+    10.0,
+]
 
 [integration]
 dt = 1.0

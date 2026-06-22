@@ -14,24 +14,41 @@ hardware_fit = []
 behavior_tags = []
 
 [provenance]
+authors = [
+    "Yao, X., Li, F., Mo, Z. & Cheng, J.",
+]
+year = 2022
+doi = "10.52202/068431-2330"
 
 [state.v]
 init = 0.0
 
 [parameters.gate_v]
 default = 0.9
-unit = ""
-meaning = ""
+unit = "1"
+meaning = "learnable gate on the membrane-decay pathway"
+range = [
+    0.0,
+    1.0,
+]
 
 [parameters.gate_i]
 default = 1.0
-unit = ""
-meaning = ""
+unit = "1"
+meaning = "learnable gate on the input-integration pathway"
+range = [
+    0.0,
+    1.0,
+]
 
 [parameters.v_threshold]
 default = 1.0
-unit = ""
-meaning = ""
+unit = "1"
+meaning = "firing threshold (normalised)"
+range = [
+    0.0,
+    10.0,
+]
 
 [integration]
 dt = 1.0

@@ -14,29 +14,50 @@ hardware_fit = []
 behavior_tags = []
 
 [provenance]
+authors = [
+    "Jiang, C. & Zhang, Y.",
+]
+year = 2024
+doi = "10.1162/neco_a_01712"
 
 [state.v]
 init = 0.0
 
 [parameters.k]
 default = 1.0
-unit = ""
-meaning = ""
+unit = "1"
+meaning = "trainable slope/scaling factor of the surrogate activation"
+range = [
+    0.1,
+    20.0,
+]
 
 [parameters.tau]
 default = 10.0
-unit = ""
-meaning = ""
+unit = "ms"
+meaning = "membrane time constant"
+range = [
+    1.0,
+    100.0,
+]
 
 [parameters.v_threshold]
 default = 1.0
-unit = ""
-meaning = ""
+unit = "1"
+meaning = "firing threshold (normalised)"
+range = [
+    0.0,
+    10.0,
+]
 
 [parameters.v_reset]
 default = 0.0
-unit = ""
-meaning = ""
+unit = "1"
+meaning = "membrane potential reset to after a spike (normalised)"
+range = [
+    -5.0,
+    5.0,
+]
 
 [integration]
 dt = 1.0
