@@ -17,6 +17,7 @@ torch = pytest.importorskip("torch")
 
 from sc_neurocore.security.checkpoint_loading import (
     CheckpointTrustError,
+    _checkpoint_digest,
     safe_load_legacy_checkpoint,
     safe_load_checkpoint,
 )
@@ -213,3 +214,36 @@ def test_safe_load_legacy_checkpoint_rejects_oversized_file(tmp_path):
             trusted_sha256={checkpoint.name: digest},
             max_bytes=1,
         )
+
+
+def test_safe_load_legacy_checkpoint_rejects_non_positive_max_bytes(tmp_path):
+    checkpoint = tmp_path / "metadata.pth"
+    with pytest.raises(CheckpointTrustError, match="max_bytes must be a positive integer"):
+        safe_load_legacy_checkpoint(checkpoint, trusted_sha256={}, max_bytes=0)
+
+
+def test_safe_load_legacy_checkpoint_rejects_missing_file(tmp_path):
+    missing = tmp_path / "absent.pth"
+    with pytest.raises(CheckpointTrustError, match="does not exist"):
+        safe_load_legacy_checkpoint(missing, trusted_sha256={missing.name: "0" * 64})
+
+
+def test_safe_load_legacy_checkpoint_rejects_digest_mismatch(tmp_path):
+    checkpoint = tmp_path / "metadata.pth"
+    torch.save({"net": {"weight": torch.tensor([1.0])}, "acc": 75.0}, checkpoint)
+    with pytest.raises(CheckpointTrustError, match="SHA-256 mismatch"):
+        safe_load_legacy_checkpoint(checkpoint, trusted_sha256={checkpoint.name: "0" * 64})
+
+
+def test_checkpoint_digest_rejects_missing_path(tmp_path):
+    with pytest.raises(CheckpointTrustError, match="does not exist"):
+        _checkpoint_digest(tmp_path / "absent.pth")
+
+
+def test_checkpoint_digest_rejects_symlink_path(tmp_path):
+    real = tmp_path / "real.pth"
+    real.write_bytes(b"checkpoint bytes")
+    link = tmp_path / "link.pth"
+    link.symlink_to(real)
+    with pytest.raises(CheckpointTrustError, match="must not be a symlink"):
+        _checkpoint_digest(link)

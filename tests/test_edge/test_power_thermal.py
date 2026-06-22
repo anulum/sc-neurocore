@@ -187,3 +187,21 @@ def test_write_power_thermal_model_from_vivado_reports_writes_json(tmp_path: Pat
     assert destination == tmp_path / "power_thermal_model.json"
     assert payload["source_mode"] == "vivado_report_derived"
     assert payload["source_reports"]["power"].endswith("system_wrapper_power_routed.rpt")
+
+
+def test_vivado_field_extractors_fail_closed_on_malformed_reports() -> None:
+    from sc_neurocore.edge.power_thermal import (
+        _extract_header,
+        _extract_summary_float,
+        _extract_summary_text,
+        _extract_utilisation_row,
+    )
+
+    with pytest.raises(ValueError, match="missing Vivado header field"):
+        _extract_header("no matching line", "Total On-Chip Power (W)")
+    with pytest.raises(ValueError, match="missing Vivado summary field"):
+        _extract_summary_text("no matching line", "Confidence Level")
+    with pytest.raises(ValueError, match="missing Vivado utilisation row"):
+        _extract_utilisation_row("no matching line", "CLB LUTs")
+    with pytest.raises(ValueError, match="is not numeric"):
+        _extract_summary_float("| Dynamic (W) | not_a_number |", "Dynamic (W)")
