@@ -681,6 +681,67 @@ class TestEdgeCaseCoverage:
         verilog = compile_to_verilog(neuron, module_name="max1")
         assert "module max1" in verilog
 
+    def test_trunc_emits_nearest_rounding_pair(self):
+        """Nearest rounding adds a half-LSB bias wire before the shift."""
+        from sc_neurocore.compiler.equation_compiler import _VerilogExprEmitter, Q88
+
+        emitter = _VerilogExprEmitter({}, {}, Q88(rounding="nearest"))
+        trunc_name = emitter._trunc("_wide")
+        joined = "\n".join(emitter.intermediates)
+        assert "_rnd_half" in joined
+        assert trunc_name.startswith("_t")
+
+    def test_trunc_emits_bankers_rounding_guard(self):
+        """Banker's rounding adds a tie-detect guard alongside the biased sum."""
+        from sc_neurocore.compiler.equation_compiler import _VerilogExprEmitter, Q88
+
+        emitter = _VerilogExprEmitter({}, {}, Q88(rounding="bankers"))
+        emitter._trunc("_wide")
+        joined = "\n".join(emitter.intermediates)
+        assert "_rnd_biased" in joined
+        assert "_rnd_guard" in joined
+
+    def test_trunc_emits_stochastic_rounding_lfsr_dither(self):
+        """Stochastic rounding dithers the low fraction bits with the LFSR."""
+        from sc_neurocore.compiler.equation_compiler import _VerilogExprEmitter, Q88
+
+        emitter = _VerilogExprEmitter({}, {}, Q88(rounding="stochastic"))
+        emitter._trunc("_wide")
+        joined = "\n".join(emitter.intermediates)
+        assert "_rnd_stoch" in joined
+        assert "_lfsr" in joined
+
+    def test_trunc_rejects_unknown_rounding_mode(self):
+        """An unrecognised rounding mode is rejected by the truncation emitter."""
+        import pytest
+
+        from sc_neurocore.compiler.equation_compiler import _VerilogExprEmitter, Q88
+
+        emitter = _VerilogExprEmitter({}, {}, Q88(rounding="dither-supreme"))
+        with pytest.raises(ValueError, match="Unknown rounding mode"):
+            emitter._trunc("_wide")
+
+    def test_multiply_with_global_pipeline_flag_registers_product(self):
+        """The global pipeline flag registers the wide product before truncation."""
+        from sc_neurocore.compiler.verilog_expr_emitter import _emit_expr
+        from sc_neurocore.compiler.equation_compiler import Q88
+
+        _result, intermediates, _mul, _trunc, pipeline_regs = _emit_expr(
+            "v * v", {"v": "v"}, {}, Q88(), pipeline=True
+        )
+        assert any(reg.startswith("reg signed") and "_r;" in reg for reg in pipeline_regs)
+        assert any("_mul0" in line for line in intermediates)
+
+    def test_multiply_with_named_pipeline_point_registers_product(self):
+        """A named pipeline insertion point forces product registration."""
+        from sc_neurocore.compiler.verilog_expr_emitter import _emit_expr
+        from sc_neurocore.compiler.equation_compiler import Q88
+
+        _result, _intermediates, _mul, _trunc, pipeline_regs = _emit_expr(
+            "v * v", {"v": "v"}, {}, Q88(), pipeline_points={"_mul0"}
+        )
+        assert pipeline_regs
+
 
 class TestCompileCLI:
     """Tests for the sc-neurocore compile CLI command."""
