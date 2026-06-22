@@ -186,3 +186,37 @@ def test_write_hub_bundle_creates_compose_manifests_and_directories(tmp_path: Pa
     index = json.loads(paths["model_zoo_index"].read_text(encoding="utf-8"))
     assert index == manifest["model_zoo"]
     assert paths["readme"].read_text(encoding="utf-8").endswith("\n")
+
+
+def test_ingress_scope_classifies_host_categories() -> None:
+    from sc_neurocore.hub.bundle import _ingress_scope
+
+    assert _ingress_scope("example.com") == "operator_selected_hostname"
+    assert _ingress_scope("127.0.0.2") == "loopback"
+    assert _ingress_scope("8.8.8.8") == "public_or_routable"
+
+
+def test_validate_bind_host_rejects_whitespace() -> None:
+    from sc_neurocore.hub.bundle import _validate_bind_host
+
+    with pytest.raises(ValueError, match="must not contain whitespace"):
+        _validate_bind_host("bad host")
+
+
+def test_model_zoo_index_skips_unresolvable_plugin_names(monkeypatch) -> None:
+    # A listed plugin name that fails to resolve is skipped rather than crashing
+    # the index build.
+    class _GhostRegistry:
+        @classmethod
+        def with_builtins(cls) -> "_GhostRegistry":
+            return cls()
+
+        def list_plugins(self) -> list[str]:
+            return ["ghost"]
+
+        def get(self, name: str) -> None:
+            return None
+
+    monkeypatch.setattr("sc_neurocore.hub.bundle.PluginRegistry", _GhostRegistry)
+    index = build_model_zoo_index()
+    assert index["plugins"] == []
