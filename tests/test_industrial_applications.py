@@ -12,6 +12,8 @@ import pytest
 
 from sc_neurocore.industrial_applications import (
     EvidenceCategory,
+    EvidenceRequirement,
+    IndustrialApplicationProfile,
     IndustrialApplicationRegistry,
     IndustrialDomain,
     assess_industrial_readiness,
@@ -121,3 +123,47 @@ def test_fusion_control_profile_requires_hil_and_timing() -> None:
 
     assert not assessment.ready
     assert EvidenceCategory.HIL in {item.category for item in assessment.missing_mandatory}
+
+
+def _optional_only_profile(domain: IndustrialDomain) -> IndustrialApplicationProfile:
+    return IndustrialApplicationProfile(
+        domain=domain,
+        name="optional-only profile",
+        description="profile whose evidence requirements are all optional",
+        safety_standards=(SafetyStandard.IEC_61508,),
+        target_sil=None,
+        target_asil=None,
+        hazards=("illustrative hazard",),
+        required_modules=("safety_cert",),
+        evidence_requirements=(
+            EvidenceRequirement(
+                category=EvidenceCategory.DESIGN,
+                description="optional design evidence",
+                mandatory=False,
+            ),
+        ),
+    )
+
+
+def test_all_optional_profile_is_fully_covered_yet_lists_optional_gaps() -> None:
+    registry = IndustrialApplicationRegistry(
+        profiles=[_optional_only_profile(IndustrialDomain.AEROSPACE)]
+    )
+
+    assessment = registry.assess(IndustrialDomain.AEROSPACE, EvidenceBag())
+
+    # No evidence supplied, so the optional requirement is recorded as a gap...
+    assert len(assessment.missing_optional) == 1
+    assert assessment.missing_mandatory == ()
+    # ...but with no mandatory requirements the mandatory coverage is a full 1.0.
+    assert assessment.mandatory_coverage == 1.0
+
+
+def test_registry_rejects_valid_domain_without_a_registered_profile() -> None:
+    registry = IndustrialApplicationRegistry(
+        profiles=[_optional_only_profile(IndustrialDomain.AEROSPACE)]
+    )
+
+    # AUTOMOTIVE is a valid domain enum but is absent from this single-profile registry.
+    with pytest.raises(ValueError, match="unknown industrial domain"):
+        registry.get(IndustrialDomain.AUTOMOTIVE)
