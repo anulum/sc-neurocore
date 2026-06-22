@@ -9,7 +9,7 @@
     "python_model_classes": 157,
     "python_model_source_modules": 151,
     "rust_pyo3_model_wrappers": 175,
-    "test_files": 860
+    "test_files": 861
   },
   "documentation": {
     "public_pages": [
@@ -2441,6 +2441,7 @@
       "tests/test_sc_primitives.py",
       "tests/test_sc_quantum_compiler.py",
       "tests/test_schema_validator.py",
+      "tests/test_schema_validator_edges.py",
       "tests/test_scnir_compatibility.py",
       "tests/test_scnir_convert.py",
       "tests/test_scnir_fpga_integration.py",
