@@ -1,8 +1,19 @@
+import { useState } from "react";
 import { useStudioStore } from "../stores/studio";
+import { formatCitation } from "../citation";
 import EvidenceTierBadge from "./EvidenceTierBadge";
 
 export default function ModelInfo() {
   const { sourceMode, modelDetail, equations, odeParams, odeInit, dt, duration } = useStudioStore();
+  const [copied, setCopied] = useState(false);
+
+  const citation = modelDetail ? formatCitation(modelDetail.provenance, modelDetail.name) : "";
+  function copyCitation() {
+    if (!citation) return;
+    void navigator.clipboard?.writeText(citation);
+    setCopied(true);
+    window.setTimeout(() => setCopied(false), 1500);
+  }
 
   const nSteps = Math.min(Math.floor(duration / dt), 100_000);
 
@@ -34,13 +45,25 @@ export default function ModelInfo() {
               {prov.authors.join(", ")}
               {prov.year ? ` (${prov.year})` : ""}
             </div>
-            {prov.doi && (
-              <a href={`https://doi.org/${prov.doi}`} target="_blank" rel="noreferrer"
-                title="Open the cited paper"
-                style={{ color: "var(--accent)", textDecoration: "none", fontFamily: "var(--font-mono)" }}>
-                doi:{prov.doi}
-              </a>
-            )}
+            <div style={{ display: "flex", gap: 6, alignItems: "center", marginTop: 2 }}>
+              {prov.doi && (
+                <a href={`https://doi.org/${prov.doi}`} target="_blank" rel="noreferrer"
+                  title="Open the cited paper"
+                  style={{ color: "var(--accent)", textDecoration: "none", fontFamily: "var(--font-mono)" }}>
+                  doi:{prov.doi}
+                </a>
+              )}
+              {citation && (
+                <button type="button" onClick={copyCitation} title={citation}
+                  style={{
+                    fontSize: 9, padding: "0 5px", cursor: "pointer",
+                    background: "var(--bg-secondary)", color: "var(--text-secondary)",
+                    border: "1px solid var(--border)", borderRadius: "var(--radius)",
+                  }}>
+                  {copied ? "✓ copied" : "⧉ How to cite"}
+                </button>
+              )}
+            </div>
           </div>
         )}
         <div className="model-info">

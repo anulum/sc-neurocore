@@ -14,6 +14,7 @@ import SpikeStats from "./components/SpikeStats";
 import ModelBrowser from "./components/ModelBrowser";
 import VerilogPreview from "./components/VerilogPreview";
 import MultiModelPicker from "./components/MultiModelPicker";
+import ModelComparison from "./components/ModelComparison";
 import NetworkControls from "./components/NetworkControls";
 import ComparePanel from "./components/ComparePanel";
 import KeyboardHelp from "./components/KeyboardHelp";
@@ -397,6 +398,7 @@ export default function App() {
                 <ModelBrowser />
               </div>
               <MultiModelPicker />
+              <ModelComparison />
             </>
           ) : (
             <div className="panel-section">
