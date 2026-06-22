@@ -29,48 +29,84 @@ init = 0.5
 
 [parameters.g_na]
 default = 80.0
-unit = ""
-meaning = ""
+unit = "mS/cm^2"
+meaning = "maximal sodium conductance"
+range = [
+    0.0,
+    200.0,
+]
 
 [parameters.g_k]
 default = 40.0
-unit = ""
-meaning = ""
+unit = "mS/cm^2"
+meaning = "maximal delayed-rectifier potassium conductance"
+range = [
+    0.0,
+    100.0,
+]
 
 [parameters.g_s]
 default = 20.0
-unit = ""
-meaning = ""
+unit = "mS/cm^2"
+meaning = "slow inward current conductance"
+range = [
+    0.0,
+    100.0,
+]
 
 [parameters.g_l]
 default = 0.1
-unit = ""
-meaning = ""
+unit = "mS/cm^2"
+meaning = "leak conductance"
+range = [
+    0.0,
+    5.0,
+]
 
 [parameters.e_na]
 default = 40.0
-unit = ""
-meaning = ""
+unit = "mV"
+meaning = "sodium reversal potential"
+range = [
+    40.0,
+    70.0,
+]
 
 [parameters.e_k]
 default = -80.0
-unit = ""
-meaning = ""
+unit = "mV"
+meaning = "potassium reversal potential"
+range = [
+    -100.0,
+    -70.0,
+]
 
 [parameters.e_s]
 default = -25.0
-unit = ""
-meaning = ""
+unit = "mV"
+meaning = "slow inward current reversal potential"
+range = [
+    -90.0,
+    -40.0,
+]
 
 [parameters.e_l]
 default = -60.0
-unit = ""
-meaning = ""
+unit = "mV"
+meaning = "leak reversal potential"
+range = [
+    -80.0,
+    -50.0,
+]
 
 [parameters.v_threshold]
 default = -20.0
-unit = ""
-meaning = ""
+unit = "mV"
+meaning = "spike-detection threshold"
+range = [
+    -40.0,
+    10.0,
+]
 
 [integration]
 dt = 0.02

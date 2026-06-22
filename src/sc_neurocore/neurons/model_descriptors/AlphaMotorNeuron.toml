@@ -38,73 +38,129 @@ init = 0.0
 
 [parameters.g_na]
 default = 35.0
-unit = ""
-meaning = ""
+unit = "mS/cm^2"
+meaning = "maximal sodium conductance"
+range = [
+    0.0,
+    200.0,
+]
 
 [parameters.g_k]
 default = 9.0
-unit = ""
-meaning = ""
+unit = "mS/cm^2"
+meaning = "maximal delayed-rectifier potassium conductance"
+range = [
+    0.0,
+    100.0,
+]
 
 [parameters.g_pic]
 default = 0.15
-unit = ""
-meaning = ""
+unit = "mS/cm^2"
+meaning = "persistent inward calcium current conductance"
+range = [
+    0.0,
+    5.0,
+]
 
 [parameters.g_ahp]
 default = 3.0
-unit = ""
-meaning = ""
+unit = "mS/cm^2"
+meaning = "calcium-dependent afterhyperpolarisation conductance"
+range = [
+    0.0,
+    20.0,
+]
 
 [parameters.g_l]
 default = 0.3
-unit = ""
-meaning = ""
+unit = "mS/cm^2"
+meaning = "leak conductance"
+range = [
+    0.0,
+    5.0,
+]
 
 [parameters.e_na]
 default = 55.0
-unit = ""
-meaning = ""
+unit = "mV"
+meaning = "sodium reversal potential"
+range = [
+    40.0,
+    70.0,
+]
 
 [parameters.e_k]
 default = -90.0
-unit = ""
-meaning = ""
+unit = "mV"
+meaning = "potassium reversal potential"
+range = [
+    -100.0,
+    -70.0,
+]
 
 [parameters.e_ca]
 default = 120.0
-unit = ""
-meaning = ""
+unit = "mV"
+meaning = "calcium reversal potential"
+range = [
+    100.0,
+    140.0,
+]
 
 [parameters.e_l]
 default = -65.0
-unit = ""
-meaning = ""
+unit = "mV"
+meaning = "leak reversal potential"
+range = [
+    -80.0,
+    -50.0,
+]
 
 [parameters.c_m]
 default = 1.5
-unit = ""
-meaning = ""
+unit = "uF/cm^2"
+meaning = "membrane capacitance"
+range = [
+    0.5,
+    2.0,
+]
 
 [parameters.phi]
 default = 4.0
-unit = ""
-meaning = ""
+unit = "1"
+meaning = "temperature scaling factor for gating kinetics"
+range = [
+    1.0,
+    15.0,
+]
 
 [parameters.tau_ca]
 default = 150.0
-unit = ""
-meaning = ""
+unit = "ms"
+meaning = "intracellular calcium decay time constant"
+range = [
+    10.0,
+    1000.0,
+]
 
 [parameters.buf_ratio]
 default = 0.003
-unit = ""
-meaning = ""
+unit = "1"
+meaning = "free-calcium buffering fraction"
+range = [
+    0.0,
+    1.0,
+]
 
 [parameters.v_threshold]
 default = -20.0
-unit = ""
-meaning = ""
+unit = "mV"
+meaning = "spike-detection threshold"
+range = [
+    -40.0,
+    10.0,
+]
 
 [integration]
 dt = 0.01
