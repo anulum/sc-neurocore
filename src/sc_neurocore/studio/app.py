@@ -93,7 +93,12 @@ from sc_neurocore.studio.training import (
     stop_training,
     stream_metrics,
 )
-from sc_neurocore.studio.models import get_model_detail, list_models, simulate_model
+from sc_neurocore.studio.models import (
+    get_model_detail,
+    list_models,
+    model_facets,
+    simulate_model,
+)
 from sc_neurocore.studio.platform.compile_process import COMPILE_PROCESS_TASK
 from sc_neurocore.studio.platform.pipeline_process import PIPELINE_PROCESS_TASK
 from sc_neurocore.studio.platform.synthesis_process import (
@@ -2186,6 +2191,11 @@ def create_app(runtime_settings: StudioRuntimeSettings | None = None) -> FastAPI
     @app.get("/api/models/scan")
     def api_model_scan() -> Any:
         return _safe(lambda: scan_all_models(current=10.0, duration=100.0))
+
+    # --- Catalogue facets (family taxonomy) — must precede /api/models/{name} ---
+    @app.get("/api/models/facets")
+    def api_model_facets() -> Any:
+        return _safe(model_facets)
 
     @app.get("/api/models/{name}")
     def api_model(name: str) -> Any:

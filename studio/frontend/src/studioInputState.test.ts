@@ -29,16 +29,36 @@ import {
 
 function modelDetail(overrides: Partial<ModelDetail> = {}): ModelDetail {
   return {
-    category: overrides.category ?? "point",
-    docstring: overrides.docstring ?? "Leaky integrate-and-fire neuron.",
-    dt: overrides.dt ?? 0.05,
-    module: overrides.module ?? "lif",
-    name: overrides.name ?? "lif",
-    params: overrides.params ?? [
-      { default: 10, name: "tau_m" },
-      { default: -65, name: "E_L" },
+    name: "lif",
+    module: "lif",
+    category: "point",
+    category_slug: "point",
+    category_source: "declared",
+    family: "point",
+    maturity: "experimental",
+    biophysical_detail: "point",
+    n_params: 2,
+    n_state_vars: 1,
+    state_var_names: ["v"],
+    description: "LIF",
+    intended_use: [],
+    hardware_fit: [],
+    behavior_tags: [],
+    provenance: null,
+    docstring: "Leaky integrate-and-fire neuron.",
+    display_name: "",
+    dt: 0.05,
+    params: [
+      { default: 10, name: "tau_m", unit: "", range: null, biological_range: null, meaning: "" },
+      { default: -65, name: "E_L", unit: "", range: null, biological_range: null, meaning: "" },
     ],
-    state_vars: overrides.state_vars ?? [{ default: -65, name: "v" }],
+    state_vars: [{ default: -65, name: "v", unit: "", meaning: "" }],
+    dynamics: {},
+    integration_method: "euler",
+    backends: [],
+    reproducibility: { reference_config: "", golden_trace_sha256: "", reproducible: false },
+    documentation_slug: "",
+    ...overrides,
   };
 }
 

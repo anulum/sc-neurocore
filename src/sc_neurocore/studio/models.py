@@ -21,6 +21,8 @@ except ImportError:
         raise ImportError("Studio Rust batch simulator unavailable")
 
 
+from sc_neurocore.neurons.model_catalogue import load_descriptor
+from sc_neurocore.neurons.model_descriptor import ModelDescriptor
 from sc_neurocore.neurons.models import _CLASS_TO_MODULE
 
 # State variable names that change during .step() — common across models
@@ -249,10 +251,123 @@ class ModelMetadataError(RuntimeError):
     """Raised when Studio model metadata loading fails for a known model."""
 
 
-def list_models() -> list[dict[str, Any]]:
-    """Return metadata for every registered neuron model with categories.
+def _provenance_summary(descriptor: ModelDescriptor) -> dict[str, Any] | None:
+    """Return a path-free provenance summary, or ``None`` when uncited."""
 
-    Results are cached after first call — subsequent calls return instantly.
+    prov = descriptor.provenance
+    if not (prov.authors or prov.year or prov.doi):
+        return None
+    return {
+        "authors": list(prov.authors),
+        "year": prov.year,
+        "doi": prov.doi,
+        "paper_title": prov.paper_title,
+        "url": prov.url,
+        "citeable": prov.is_citeable,
+    }
+
+
+def _descriptor_summary(descriptor: ModelDescriptor) -> dict[str, Any]:
+    """Build a catalogue list entry from a declared descriptor."""
+
+    return {
+        "name": descriptor.class_name,
+        "module": descriptor.module,
+        # ``category`` carries the family display name so existing clients group
+        # by the curated family; the fine slug is exposed separately.
+        "category": descriptor.family,
+        "category_slug": descriptor.category,
+        "category_source": "declared",
+        "family": descriptor.family,
+        "maturity": descriptor.maturity,
+        "biophysical_detail": descriptor.biophysical_detail,
+        "n_state_vars": len(descriptor.state),
+        "n_params": len(descriptor.parameters),
+        "state_var_names": [s.name for s in descriptor.state],
+        "dt": descriptor.dt,
+        "description": descriptor.summary,
+        "intended_use": list(descriptor.intended_use),
+        "hardware_fit": list(descriptor.hardware_fit),
+        "behavior_tags": list(descriptor.behavior_tags),
+        "provenance": _provenance_summary(descriptor),
+    }
+
+
+def _descriptor_detail(descriptor: ModelDescriptor) -> dict[str, Any]:
+    """Build a full catalogue detail view from a declared descriptor."""
+
+    detail = _descriptor_summary(descriptor)
+    detail.update(
+        {
+            "docstring": descriptor.summary,
+            "display_name": descriptor.display_name,
+            "state_vars": [
+                {"name": s.name, "default": s.init, "unit": s.unit, "meaning": s.meaning}
+                for s in descriptor.state
+            ],
+            "params": [
+                {
+                    "name": p.name,
+                    "default": p.default,
+                    "unit": p.unit,
+                    "range": list(p.value_range) if p.value_range else None,
+                    "biological_range": (
+                        list(p.biological_range) if p.biological_range else None
+                    ),
+                    "meaning": p.meaning,
+                }
+                for p in descriptor.parameters
+            ],
+            "dynamics": dict(descriptor.dynamics),
+            "integration_method": descriptor.integration_method,
+            "backends": [
+                {"name": b.name, "status": b.status, "parity": b.parity}
+                for b in descriptor.backends
+            ],
+            "reproducibility": {
+                "reference_config": descriptor.reproducibility.reference_config,
+                "golden_trace_sha256": descriptor.reproducibility.golden_trace_sha256,
+                "reproducible": descriptor.reproducibility.is_reproducible,
+            },
+            "documentation_slug": descriptor.documentation_slug,
+        }
+    )
+    return detail
+
+
+def _introspected_summary(name: str) -> dict[str, Any]:
+    """Fallback catalogue entry for a model with no committed descriptor."""
+
+    cls = _load_class(name)
+    state_vars, params = _classify_fields(cls)
+    return {
+        "name": name,
+        "module": _CLASS_TO_MODULE[name],
+        "category": _categorize(name),
+        "category_slug": "",
+        "category_source": "inferred",
+        "family": _categorize(name),
+        "maturity": "experimental",
+        "biophysical_detail": "point",
+        "n_state_vars": len(state_vars),
+        "n_params": len(params),
+        "state_var_names": [s["name"] for s in state_vars],
+        "dt": _extract_dt(cls),
+        "description": (cls.__doc__ or "").strip().split("\n")[0],
+        "intended_use": [],
+        "hardware_fit": [],
+        "behavior_tags": [],
+        "provenance": None,
+    }
+
+
+def list_models() -> list[dict[str, Any]]:
+    """Return declared metadata for every registered neuron model.
+
+    Each entry is built from the model's committed descriptor (family, category,
+    maturity, provenance, parameter and state counts). Models without a descriptor
+    fall back to code introspection with an ``inferred`` category. Results are
+    cached after the first call.
     """
     global _models_cache
     if _models_cache is not None:
@@ -261,21 +376,11 @@ def list_models() -> list[dict[str, Any]]:
     result = []
     for name in sorted(_CLASS_TO_MODULE.keys()):
         try:
-            cls = _load_class(name)
-            state_vars, params = _classify_fields(cls)
-            dt_val = _extract_dt(cls)
-            result.append(
-                {
-                    "name": name,
-                    "module": _CLASS_TO_MODULE[name],
-                    "category": _categorize(name),
-                    "n_state_vars": len(state_vars),
-                    "n_params": len(params),
-                    "state_var_names": [s["name"] for s in state_vars],
-                    "dt": dt_val,
-                    "description": (cls.__doc__ or "").strip().split("\n")[0],
-                }
-            )
+            descriptor = load_descriptor(name)
+            if descriptor is not None:
+                result.append(_descriptor_summary(descriptor))
+            else:
+                result.append(_introspected_summary(name))
         except (TypeError, AttributeError, ValueError):
             continue
     _models_cache = result
@@ -283,26 +388,49 @@ def list_models() -> list[dict[str, Any]]:
 
 
 def get_model_detail(name: str) -> dict[str, Any] | None:
-    """Return full metadata for a single model."""
+    """Return the full declared metadata view for a single model."""
     if name not in _CLASS_TO_MODULE:
         return None
     try:
-        cls = _load_class(name)
+        descriptor = load_descriptor(name)
     except Exception as exc:
-        raise ModelMetadataError(f"Failed to load Studio model metadata for '{name}'") from exc
+        raise ModelMetadataError(f"Failed to load Studio model descriptor for '{name}'") from exc
+    if descriptor is not None:
+        return _descriptor_detail(descriptor)
     try:
+        cls = _load_class(name)
         state_vars, params = _classify_fields(cls)
         dt_val = _extract_dt(cls)
     except Exception as exc:
         raise ModelMetadataError(f"Failed to classify Studio model metadata for '{name}'") from exc
     return {
-        "name": name,
-        "module": _CLASS_TO_MODULE[name],
-        "category": _categorize(name),
+        **_introspected_summary(name),
+        "docstring": (cls.__doc__ or "").strip().split("\n")[0],
         "state_vars": state_vars,
         "params": params,
         "dt": dt_val,
-        "docstring": (cls.__doc__ or "").strip().split("\n")[0],
+    }
+
+
+def model_facets() -> dict[str, Any]:
+    """Return the catalogue facet taxonomy and counts for discovery UX."""
+
+    from collections import Counter
+
+    models = list_models()
+    family_counts: Counter[tuple[str, str]] = Counter()
+    maturity_counts: Counter[str] = Counter()
+    for model in models:
+        family_counts[(str(model["family"]), str(model["category_slug"]))] += 1
+        maturity_counts[str(model["maturity"])] += 1
+    families = [
+        {"family": family, "category_slug": slug, "count": count}
+        for (family, slug), count in sorted(family_counts.items())
+    ]
+    return {
+        "total": len(models),
+        "families": families,
+        "maturities": dict(sorted(maturity_counts.items())),
     }
 
 

@@ -71,17 +71,50 @@ export interface NeuronTemplate {
   init: Record<string, number>; dt: number; current: number; duration: number;
 }
 
-export interface ModelSummary {
-  name: string; module: string; category: string;
-  n_state_vars: number; n_params: number; state_var_names: string[];
-  dt: number; description: string;
+export interface ModelProvenance {
+  authors: string[]; year: number | null; doi: string;
+  paper_title: string; url: string; citeable: boolean;
 }
 
-export interface ModelDetail {
+export interface ModelSummary {
   name: string; module: string; category: string;
-  state_vars: { name: string; default: number }[];
-  params: { name: string; default: number }[];
-  dt: number; docstring: string;
+  category_slug: string; category_source: string; family: string;
+  maturity: string; biophysical_detail: string;
+  n_state_vars: number; n_params: number; state_var_names: string[];
+  dt: number; description: string;
+  intended_use: string[]; hardware_fit: string[]; behavior_tags: string[];
+  provenance: ModelProvenance | null;
+}
+
+export interface ModelParameter {
+  name: string; default: number; unit: string;
+  range: [number, number] | null; biological_range: [number, number] | null;
+  meaning: string;
+}
+
+export interface ModelStateVariable {
+  name: string; default: number; unit: string; meaning: string;
+}
+
+export interface ModelBackendSupport {
+  name: string; status: string; parity: string;
+}
+
+export interface ModelDetail extends ModelSummary {
+  docstring: string; display_name: string;
+  state_vars: ModelStateVariable[];
+  params: ModelParameter[];
+  dynamics: Record<string, string>;
+  integration_method: string;
+  backends: ModelBackendSupport[];
+  reproducibility: { reference_config: string; golden_trace_sha256: string; reproducible: boolean };
+  documentation_slug: string;
+}
+
+export interface ModelFacets {
+  total: number;
+  families: { family: string; category_slug: string; count: number }[];
+  maturities: Record<string, number>;
 }
 
 export interface PresetSummary {
@@ -523,6 +556,7 @@ function encodeArtifactPath(path: string): string {
 export const fetchTemplates = () => get<NeuronTemplate[]>("/templates");
 export const fetchModels = () => get<ModelSummary[]>("/models");
 export const fetchModelDetail = (name: string) => get<ModelDetail>(`/models/${name}`);
+export const fetchModelFacets = () => get<ModelFacets>("/models/facets");
 export const fetchPresets = () => get<PresetSummary[]>("/presets");
 export const fetchPreset = (id: string) => get<Record<string, unknown>>(`/presets/${id}`);
 export const fetchStudioCapabilities = () =>
