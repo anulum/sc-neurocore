@@ -26,68 +26,120 @@ init = 0.5
 
 [parameters.v_er]
 default = 0.9
-unit = ""
-meaning = ""
+unit = "1/s"
+meaning = "maximal calcium flux through the IP3 receptor"
+range = [
+    0.0,
+    10.0,
+]
 
 [parameters.k_er]
 default = 0.15
-unit = ""
-meaning = ""
+unit = "uM"
+meaning = "SERCA pump half-activation calcium concentration"
+range = [
+    0.0,
+    1.0,
+]
 
 [parameters.v_serca]
 default = 0.4
-unit = ""
-meaning = ""
+unit = "uM/s"
+meaning = "maximal SERCA pump uptake rate"
+range = [
+    0.0,
+    5.0,
+]
 
 [parameters.d1]
 default = 0.13
-unit = ""
-meaning = ""
+unit = "uM"
+meaning = "IP3 dissociation constant of the IP3 receptor"
+range = [
+    0.0,
+    2.0,
+]
 
 [parameters.d2]
 default = 1.049
-unit = ""
-meaning = ""
+unit = "uM"
+meaning = "calcium-inhibition dissociation constant"
+range = [
+    0.0,
+    3.0,
+]
 
 [parameters.d3]
 default = 0.9434
-unit = ""
-meaning = ""
+unit = "uM"
+meaning = "IP3 dissociation constant (inhibitory site)"
+range = [
+    0.0,
+    2.0,
+]
 
 [parameters.d5]
 default = 0.08234
-unit = ""
-meaning = ""
+unit = "uM"
+meaning = "calcium-activation dissociation constant"
+range = [
+    0.0,
+    1.0,
+]
 
 [parameters.a2]
 default = 0.2
-unit = ""
-meaning = ""
+unit = "1/(uM*s)"
+meaning = "calcium-inhibition binding rate of the IP3 receptor"
+range = [
+    0.0,
+    1.0,
+]
 
 [parameters.c0]
 default = 2.0
-unit = ""
-meaning = ""
+unit = "uM"
+meaning = "total cell calcium (cytosol plus ER)"
+range = [
+    0.0,
+    10.0,
+]
 
 [parameters.c1]
 default = 0.185
-unit = ""
-meaning = ""
+unit = "1"
+meaning = "ER-to-cytosol volume ratio"
+range = [
+    0.0,
+    1.0,
+]
 
 [parameters.leak]
 default = 0.01
-unit = ""
-meaning = ""
+unit = "1/s"
+meaning = "passive calcium leak rate from the ER"
+range = [
+    0.0,
+    1.0,
+]
 
 [parameters.ip3_prod]
 default = 0.0
-unit = ""
-meaning = ""
+unit = "uM/s"
+meaning = "IP3 production rate"
+range = [
+    0.0,
+    5.0,
+]
 
 [parameters.ip3_decay]
 default = 0.14
-unit = ""
-meaning = ""
+unit = "1/s"
+meaning = "IP3 degradation rate"
+range = [
+    0.0,
+    2.0,
+]
 
 [integration]
 dt = 0.01

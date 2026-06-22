@@ -20,33 +20,57 @@ init = 0.0
 
 [parameters.v_rest]
 default = 0.0
-unit = ""
-meaning = ""
+unit = "1"
+meaning = "resting potential (integer fixed-point units)"
+range = [
+    0.0,
+    65535.0,
+]
 
 [parameters.v_reset]
 default = 0.0
-unit = ""
-meaning = ""
+unit = "1"
+meaning = "post-spike reset potential (integer fixed-point units)"
+range = [
+    0.0,
+    65535.0,
+]
 
 [parameters.v_threshold]
 default = 1024.0
-unit = ""
-meaning = ""
+unit = "1"
+meaning = "firing threshold (integer fixed-point units)"
+range = [
+    0.0,
+    65535.0,
+]
 
 [parameters.decay_mult]
 default = 243.0
-unit = ""
-meaning = ""
+unit = "1"
+meaning = "integer multiplier for the exponential membrane decay"
+range = [
+    0.0,
+    255.0,
+]
 
 [parameters.decay_shift]
 default = 8.0
-unit = ""
-meaning = ""
+unit = "1"
+meaning = "right-shift amount paired with the decay multiplier"
+range = [
+    0.0,
+    15.0,
+]
 
 [parameters.refrac_steps]
 default = 2.0
-unit = ""
-meaning = ""
+unit = "1"
+meaning = "refractory period in simulation time-steps"
+range = [
+    0.0,
+    100.0,
+]
 
 [integration]
 dt = 0.1

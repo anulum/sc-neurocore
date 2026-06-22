@@ -19,8 +19,12 @@ behavior_tags = []
 
 [parameters.ca_threshold]
 default = 0.3
-unit = ""
-meaning = ""
+unit = "uM"
+meaning = "calcium concentration above which the astrocyte releases gliotransmitter"
+range = [
+    0.0,
+    2.0,
+]
 
 [integration]
 dt = 0.01

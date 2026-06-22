@@ -20,8 +20,12 @@ init = 0.0
 
 [parameters.v_threshold]
 default = 1.0
-unit = ""
-meaning = ""
+unit = "1"
+meaning = "firing threshold (normalised sigma-delta encoding)"
+range = [
+    0.0,
+    5.0,
+]
 
 [integration]
 dt = 0.1

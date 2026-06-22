@@ -20,13 +20,21 @@ init = 0.0
 
 [parameters.threshold]
 default = 100.0
-unit = ""
-meaning = ""
+unit = "1"
+meaning = "membrane threshold for an output spike (integer accumulator units)"
+range = [
+    0.0,
+    1000.0,
+]
 
 [parameters.modulation]
 default = 0.75
-unit = ""
-meaning = ""
+unit = "1"
+meaning = "rank-order decay factor applied per spike rank"
+range = [
+    0.0,
+    1.0,
+]
 
 [integration]
 dt = 0.1

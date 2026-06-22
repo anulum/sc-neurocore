@@ -26,38 +26,66 @@ init = 0.0
 
 [parameters.tau_m]
 default = 20.0
-unit = ""
-meaning = ""
+unit = "ms"
+meaning = "membrane time constant"
+range = [
+    1.0,
+    100.0,
+]
 
 [parameters.tau_ca]
 default = 500.0
-unit = ""
-meaning = ""
+unit = "ms"
+meaning = "astrocytic calcium decay time constant"
+range = [
+    50.0,
+    2000.0,
+]
 
 [parameters.e_l]
 default = -65.0
-unit = ""
-meaning = ""
+unit = "mV"
+meaning = "leak reversal potential"
+range = [
+    -80.0,
+    -50.0,
+]
 
 [parameters.v_reset]
 default = -65.0
-unit = ""
-meaning = ""
+unit = "mV"
+meaning = "post-spike reset potential"
+range = [
+    -80.0,
+    -55.0,
+]
 
 [parameters.ca_delta]
 default = 0.1
-unit = ""
-meaning = ""
+unit = "uM"
+meaning = "calcium increment per presynaptic spike"
+range = [
+    0.0,
+    2.0,
+]
 
 [parameters.ca_thresh]
 default = 0.5
-unit = ""
-meaning = ""
+unit = "uM"
+meaning = "calcium threshold for gliotransmitter release"
+range = [
+    0.0,
+    5.0,
+]
 
 [parameters.g_glio]
 default = 2.0
-unit = ""
-meaning = ""
+unit = "1"
+meaning = "gliotransmission feedback conductance (relative)"
+range = [
+    0.0,
+    10.0,
+]
 
 [integration]
 dt = 0.1

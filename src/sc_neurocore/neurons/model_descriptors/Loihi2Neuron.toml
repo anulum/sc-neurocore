@@ -26,48 +26,84 @@ init = 0.0
 
 [parameters.tau1]
 default = 10.0
-unit = ""
-meaning = ""
+unit = "1"
+meaning = "decay time constant of state variable 1 (chip time-steps)"
+range = [
+    1.0,
+    1000.0,
+]
 
 [parameters.tau2]
 default = 5.0
-unit = ""
-meaning = ""
+unit = "1"
+meaning = "decay time constant of state variable 2 (chip time-steps)"
+range = [
+    1.0,
+    1000.0,
+]
 
 [parameters.tau3]
 default = 50.0
-unit = ""
-meaning = ""
+unit = "1"
+meaning = "decay time constant of state variable 3 (chip time-steps)"
+range = [
+    1.0,
+    1000.0,
+]
 
 [parameters.w12]
 default = 1.0
-unit = ""
-meaning = ""
+unit = "1"
+meaning = "cross-coupling weight from state 2 into state 1"
+range = [
+    -10.0,
+    10.0,
+]
 
 [parameters.w13]
 default = 0.0
-unit = ""
-meaning = ""
+unit = "1"
+meaning = "cross-coupling weight from state 3 into state 1"
+range = [
+    -10.0,
+    10.0,
+]
 
 [parameters.w23]
 default = 0.0
-unit = ""
-meaning = ""
+unit = "1"
+meaning = "cross-coupling weight from state 3 into state 2"
+range = [
+    -10.0,
+    10.0,
+]
 
 [parameters.s1_threshold]
 default = 1000.0
-unit = ""
-meaning = ""
+unit = "1"
+meaning = "firing threshold on state variable 1 (integer units)"
+range = [
+    0.0,
+    100000.0,
+]
 
 [parameters.s1_reset]
 default = 0.0
-unit = ""
-meaning = ""
+unit = "1"
+meaning = "post-spike reset value of state variable 1"
+range = [
+    0.0,
+    100000.0,
+]
 
 [parameters.s3_incr]
 default = 10.0
-unit = ""
-meaning = ""
+unit = "1"
+meaning = "increment added to state variable 3 per spike"
+range = [
+    0.0,
+    1000.0,
+]
 
 [integration]
 dt = 0.1
