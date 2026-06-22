@@ -9,7 +9,7 @@
     "python_model_classes": 157,
     "python_model_source_modules": 151,
     "rust_pyo3_model_wrappers": 175,
-    "test_files": 866
+    "test_files": 867
   },
   "documentation": {
     "public_pages": [
@@ -2192,6 +2192,7 @@
       "tests/test_model_brunel_wang.py",
       "tests/test_model_butera_respiratory.py",
       "tests/test_model_catalogue_completeness.py",
+      "tests/test_model_catalogue_corpus.py",
       "tests/test_model_cazelles_map.py",
       "tests/test_model_cerebellar_basket_neuron.py",
       "tests/test_model_cfc.py",
