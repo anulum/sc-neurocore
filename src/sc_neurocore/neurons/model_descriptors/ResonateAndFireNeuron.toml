@@ -14,6 +14,11 @@ hardware_fit = []
 behavior_tags = []
 
 [provenance]
+authors = [
+    "Izhikevich, E.M.",
+]
+year = 2001
+doi = "10.1016/S0893-6080(01)00078-8"
 
 [state.x]
 init = 0.0
@@ -23,18 +28,30 @@ init = 0.0
 
 [parameters.b]
 default = -0.1
-unit = ""
-meaning = ""
+unit = "1/ms"
+meaning = "damping rate of the subthreshold oscillation (negative for a stable spiral)"
+range = [
+    -2.0,
+    2.0,
+]
 
 [parameters.omega]
 default = 1.0
-unit = ""
-meaning = ""
+unit = "1/ms"
+meaning = "angular frequency of the subthreshold oscillation"
+range = [
+    0.01,
+    50.0,
+]
 
 [parameters.threshold]
 default = 1.0
-unit = ""
-meaning = ""
+unit = "1"
+meaning = "amplitude threshold on the complex state at which a spike is registered"
+range = [
+    0.0,
+    10.0,
+]
 
 [integration]
 dt = 0.05

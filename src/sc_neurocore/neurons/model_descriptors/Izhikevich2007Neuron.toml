@@ -14,6 +14,11 @@ hardware_fit = []
 behavior_tags = []
 
 [provenance]
+authors = [
+    "Izhikevich, E.M.",
+]
+year = 2007
+doi = "10.7551/mitpress/2526.001.0001"
 
 [state.v]
 init = 0.0
@@ -23,48 +28,84 @@ init = 0.0
 
 [parameters.C]
 default = 100.0
-unit = ""
-meaning = ""
+unit = "pF"
+meaning = "membrane capacitance"
+range = [
+    1.0,
+    500.0,
+]
 
 [parameters.k]
 default = 0.7
-unit = ""
-meaning = ""
+unit = "pA/mV^2"
+meaning = "quadratic scaling of the spike-generating current"
+range = [
+    0.0,
+    5.0,
+]
 
 [parameters.vr]
 default = -60.0
-unit = ""
-meaning = ""
+unit = "mV"
+meaning = "resting membrane potential"
+range = [
+    -90.0,
+    -40.0,
+]
 
 [parameters.vt]
 default = -40.0
-unit = ""
-meaning = ""
+unit = "mV"
+meaning = "instantaneous threshold potential"
+range = [
+    -60.0,
+    -20.0,
+]
 
 [parameters.vpeak]
 default = 35.0
-unit = ""
-meaning = ""
+unit = "mV"
+meaning = "spike cutoff (peak) potential"
+range = [
+    0.0,
+    60.0,
+]
 
 [parameters.a]
 default = 0.03
-unit = ""
-meaning = ""
+unit = "1/ms"
+meaning = "recovery time-scale (rate of the recovery variable)"
+range = [
+    0.001,
+    1.0,
+]
 
 [parameters.b]
 default = -2.0
-unit = ""
-meaning = ""
+unit = "nS"
+meaning = "sensitivity of the recovery variable to subthreshold voltage"
+range = [
+    -20.0,
+    20.0,
+]
 
 [parameters.c]
 default = -50.0
-unit = ""
-meaning = ""
+unit = "mV"
+meaning = "voltage reset value after a spike"
+range = [
+    -90.0,
+    -40.0,
+]
 
 [parameters.d]
 default = 100.0
-unit = ""
-meaning = ""
+unit = "pA"
+meaning = "recovery-variable increment after a spike"
+range = [
+    -50.0,
+    500.0,
+]
 
 [integration]
 dt = 0.1

@@ -14,6 +14,11 @@ hardware_fit = []
 behavior_tags = []
 
 [provenance]
+authors = [
+    "Higuchi, S., Kairat, S., Bohte, S.M. & Otte, S.",
+]
+year = 2024
+doi = "10.48550/arXiv.2402.14603"
 
 [state.x]
 init = 0.0
@@ -26,23 +31,39 @@ init = 0.0
 
 [parameters.omega]
 default = 10.0
-unit = ""
-meaning = ""
+unit = "1/ms"
+meaning = "angular frequency of the resonator"
+range = [
+    0.01,
+    50.0,
+]
 
 [parameters.b_offset]
 default = 1.0
-unit = ""
-meaning = ""
+unit = "1/ms"
+meaning = "offset from the divergence-boundary damping controlling closeness to sustained oscillation"
+range = [
+    0.0,
+    5.0,
+]
 
 [parameters.threshold]
 default = 1.0
-unit = ""
-meaning = ""
+unit = "1"
+meaning = "base firing threshold on the real part of the state"
+range = [
+    0.0,
+    10.0,
+]
 
 [parameters.gamma]
 default = 0.9
-unit = ""
-meaning = ""
+unit = "1"
+meaning = "decay factor of the refractory variable"
+range = [
+    0.0,
+    1.0,
+]
 
 [integration]
 dt = 0.01
