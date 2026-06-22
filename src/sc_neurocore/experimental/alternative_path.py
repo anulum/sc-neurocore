@@ -13,8 +13,6 @@ from enum import Enum
 from time import perf_counter_ns
 from typing import Any, Callable, Generic, Literal, Mapping, TypeVar, cast
 
-import math
-
 import numpy as np
 
 T = TypeVar("T")
@@ -261,24 +259,12 @@ def compare_outputs(
             context,
         )
 
-    if isinstance(baseline, (int, float, bool)) and isinstance(candidate, (int, float, bool)):
-        abs_diff = abs(float(baseline) - float(candidate))
-        denom = max(abs(float(baseline)), config.absolute_tolerance)
-        rel_diff = abs_diff / denom
-        matched = math.isclose(
-            float(baseline),
-            float(candidate),
-            abs_tol=config.absolute_tolerance,
-            rel_tol=config.relative_tolerance,
-        )
-        return ComparisonStats(
-            matched=matched,
-            comparable_leaf_count=1,
-            max_abs_diff=abs_diff,
-            max_rel_diff=rel_diff,
-            detail=f"{context}: scalar {'matched' if matched else 'diverged'}",
-        )
-
+    # A bare ``int``/``float``/``bool`` pair is never routed here: ``_numeric_comparison``
+    # runs first and returns a non-None result for every such pair (``np.asarray`` cannot
+    # raise on a Python scalar, and the resulting dtype kind is always one of ``b``/``i``/
+    # ``u``/``f``, so neither None-return branch can fire). The exact-equality fallback below
+    # therefore handles the only leaves that reach this point — strings, ``None``,
+    # mismatched-type pairs, and other non-numeric objects.
     matched = baseline == candidate
     return ComparisonStats(
         matched=matched,

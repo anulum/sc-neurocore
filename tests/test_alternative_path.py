@@ -28,6 +28,7 @@ from sc_neurocore.experimental import (
     make_lif_subthreshold_exact_route,
     write_batch_report,
 )
+from sc_neurocore.experimental.alternative_path import compare_outputs
 from sc_neurocore.experimental.builtins import builtin_cases_for_route
 
 
@@ -617,3 +618,109 @@ def test_builtin_cases_cover_shared_state_route_and_reject_unknown() -> None:
 
     with pytest.raises(KeyError, match="No built-in cases for route"):
         builtin_cases_for_route("route.that.does.not.exist")
+
+
+# ── compare_outputs: structural and numeric edge branches ────────────
+
+
+def test_compare_numeric_shape_mismatch_is_reported_as_diverged():
+    stats = compare_outputs(
+        np.array([1.0, 2.0]), np.array([1.0, 2.0, 3.0]), AlternativePathConfig()
+    )
+    assert not stats.matched
+    assert "shape mismatch" in stats.detail
+
+
+def test_compare_empty_numeric_arrays_match_trivially():
+    stats = compare_outputs(np.array([]), np.array([]), AlternativePathConfig())
+    assert stats.matched
+    assert stats.comparable_leaf_count == 1
+    assert stats.max_abs_diff == 0.0
+    assert "empty numeric outputs matched" in stats.detail
+
+
+def test_compare_empty_mappings_have_no_comparable_leaves():
+    stats = compare_outputs({}, {}, AlternativePathConfig())
+    assert stats.matched
+    assert stats.comparable_leaf_count == 0
+    assert "no comparable leaves" in stats.detail
+
+
+def test_compare_mappings_with_different_keys_diverge():
+    stats = compare_outputs({"a": 1}, {"b": 1}, AlternativePathConfig())
+    assert not stats.matched
+    assert "mapping keys differ" in stats.detail
+
+
+def test_compare_ragged_sequences_of_unequal_length_diverge():
+    # A ragged baseline makes ``np.asarray`` raise, so the numeric comparator
+    # returns None and the sequence branch handles the length mismatch.
+    stats = compare_outputs([1, [2, 3]], [1], AlternativePathConfig())
+    assert not stats.matched
+    assert "sequence length mismatch" in stats.detail
+
+
+def test_compare_mixed_sequences_combine_per_element_matches():
+    # Mixed numeric/string sequences are non-numeric to ``np.asarray`` (string
+    # dtype), so each element is compared recursively and combined.
+    stats = compare_outputs([1, "tag"], [1, "tag"], AlternativePathConfig())
+    assert stats.matched
+    assert stats.comparable_leaf_count == 2
+
+
+# ── shadow-mode candidate failure and aggregation ────────────────────
+
+
+def _broken_shadow_route():
+    return AlternativePathRoute(
+        name="safe.shadow-broken",
+        baseline=lambda: 1.0,
+        candidate=lambda: (_ for _ in ()).throw(RuntimeError("shadow boom")),
+        summary="Shadow route whose candidate raises",
+        expected_behavior="Returns the baseline and records the candidate error",
+    )
+
+
+def test_shadow_mode_records_candidate_error_without_comparison():
+    result = _broken_shadow_route().run(
+        AlternativePathConfig(enabled=True, mode=AlternativePathMode.SHADOW)
+    )
+    assert result.returned_path == "shadow-baseline"
+    assert result.value == 1.0
+    assert result.candidate_value is None
+    assert result.comparison is None
+    assert result.candidate_error is not None
+    assert "shadow boom" in result.candidate_error
+
+
+def test_evaluate_cases_counts_candidate_failures():
+    summary = _broken_shadow_route().evaluate_cases(
+        [AlternativePathCase("c1"), AlternativePathCase("c2")],
+        AlternativePathConfig(enabled=True, mode=AlternativePathMode.SHADOW),
+    )
+    assert summary.candidate_failures == 2
+    assert summary.matched_cases == 0
+
+
+def test_evaluate_cases_without_benchmark_yields_no_median_runtimes():
+    route = AlternativePathRoute(
+        name="safe.nobench",
+        baseline=lambda: 1.0,
+        candidate=lambda: 1.0,
+        summary="Route evaluated without benchmarking",
+        expected_behavior="Median runtimes collapse to None when timing is disabled",
+    )
+    summary = route.evaluate_cases(
+        [AlternativePathCase("c1")],
+        AlternativePathConfig(
+            enabled=True, mode=AlternativePathMode.SHADOW, benchmark=False
+        ),
+    )
+    assert summary.median_baseline_runtime_ns is None
+    assert summary.median_candidate_runtime_ns is None
+
+
+def test_registry_get_unknown_route_raises_keyerror():
+    registry = AlternativePathRegistry()
+    with pytest.raises(KeyError, match="Unknown alternative path"):
+        registry.get("missing")
