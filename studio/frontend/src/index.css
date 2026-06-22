@@ -43,6 +43,10 @@ body {
   padding: 10px 16px;
   background: var(--bg-secondary);
   border-bottom: 1px solid var(--border);
+  /* Own stacking context above the main content so header dropdowns
+     (capability menu, etc.) render over the panels instead of behind them. */
+  position: relative;
+  z-index: 50;
 }
 
 .header-logo {
