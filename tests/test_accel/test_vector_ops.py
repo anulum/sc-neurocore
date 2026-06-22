@@ -14,7 +14,15 @@ import time
 import numpy as np
 import pytest
 
-from sc_neurocore.accel.vector_ops import pack_bitstream, unpack_bitstream, vec_and, vec_popcount
+from sc_neurocore.accel.vector_ops import (
+    pack_bitstream,
+    unpack_bitstream,
+    vec_and,
+    vec_mux,
+    vec_not,
+    vec_popcount,
+    vec_xnor,
+)
 
 
 def _perf_enabled() -> bool:
@@ -90,6 +98,53 @@ def test_pack_bitstream_accepts_list():
     packed = pack_bitstream(bits)
     unpacked = unpack_bitstream(packed, len(bits))
     assert np.array_equal(np.array(bits, dtype=np.uint8), unpacked)
+
+
+def test_vec_xnor_matches_equality_per_bit():
+    """vec_xnor sets a bit where the two streams agree (SC bipolar multiply)."""
+    a = pack_bitstream(np.array([1, 0, 1, 0], dtype=np.uint8))
+    b = pack_bitstream(np.array([1, 1, 0, 0], dtype=np.uint8))
+    out = vec_xnor(a, b)
+    unpacked = unpack_bitstream(out, 4)
+    assert np.array_equal(unpacked, np.array([1, 0, 0, 1], dtype=np.uint8))
+
+
+def test_vec_not_complements_each_bit():
+    """vec_not flips every packed bit (SC complement 1 - P(A))."""
+    a = pack_bitstream(np.array([1, 0, 1, 0], dtype=np.uint8))
+    out = vec_not(a)
+    unpacked = unpack_bitstream(out, 4)
+    assert np.array_equal(unpacked, np.array([0, 1, 0, 1], dtype=np.uint8))
+
+
+def test_vec_mux_selects_per_bit():
+    """vec_mux routes A where select is 1 and B where select is 0."""
+    select = pack_bitstream(np.array([1, 1, 0, 0], dtype=np.uint8))
+    a = pack_bitstream(np.array([1, 1, 1, 1], dtype=np.uint8))
+    b = pack_bitstream(np.array([0, 0, 0, 0], dtype=np.uint8))
+    out = vec_mux(select, a, b)
+    unpacked = unpack_bitstream(out, 4)
+    assert np.array_equal(unpacked, np.array([1, 1, 0, 0], dtype=np.uint8))
+
+
+def test_unpack_2d_without_shape_splits_evenly_per_batch():
+    """A 2D unpack with no original_shape recovers original_length // batch bits per row."""
+    bits = np.array([[1, 0, 1], [0, 1, 0]], dtype=np.uint8)
+    packed = pack_bitstream(bits)
+    unpacked = unpack_bitstream(packed, bits.size, original_shape=None)
+    assert np.array_equal(unpacked, bits)
+
+
+def test_pack_bitstream_rejects_3d_input():
+    """pack_bitstream accepts only 1D or 2D arrays."""
+    with pytest.raises(ValueError, match="Expected 1D or 2D array"):
+        pack_bitstream(np.zeros((2, 2, 2), dtype=np.uint8))
+
+
+def test_unpack_bitstream_rejects_3d_packed():
+    """unpack_bitstream accepts only 1D or 2D packed arrays."""
+    with pytest.raises(ValueError, match="Expected 1D or 2D packed array"):
+        unpack_bitstream(np.zeros((2, 2, 2), dtype=np.uint64), 8)
 
 
 @pytest.mark.skipif(not _perf_enabled(), reason="Set SC_NEUROCORE_PERF=1 to enable perf checks.")
