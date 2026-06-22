@@ -124,8 +124,6 @@ class ParameterBankSpec:
         width_bits = self.entry_width_bits
         if width_bits % 8 != 0:
             raise ValueError("entry width must be byte-aligned")
-        if width_bits <= 0:
-            raise ValueError("entry width must be positive")
         if width_bits > 64:
             raise ValueError("entry width must not exceed 64 bits")
         if not isinstance(self.writable, bool):
