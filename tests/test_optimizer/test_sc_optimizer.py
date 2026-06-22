@@ -12,6 +12,8 @@ from __future__ import annotations
 
 import unittest
 
+import pytest
+
 from sc_neurocore.optimizer.sc_optimizer import (
     SCOptimizer,
     HardwareBudget,
@@ -117,6 +119,101 @@ class TestOptimization(unittest.TestCase):
         if report:
             self.assertLessEqual(report.total_luts, budget.max_luts)
             self.assertLessEqual(report.total_power_mw, budget.max_power_mw)
+
+
+def test_is_feasible_rejects_power_over_budget():
+    # LUTs fit comfortably but the power ceiling is below any candidate, so the
+    # power branch of the feasibility check rejects the configuration.
+    opt = SCOptimizer(HardwareBudget(max_luts=10**9, max_power_mw=1e-9))
+    report = opt.optimize([LayerProfile(id="L0", mac_count=100)])
+    assert report is None
+
+
+def test_annealing_python_handles_infeasible_trials():
+    # Pin the LUT ceiling to exactly the cheapest candidate: the annealing start
+    # is feasible, but any pricier trial overshoots it and takes the
+    # cool-and-continue rejection path. The feasible start is still returned.
+    layer = LayerProfile(id="L0", mac_count=50)
+    probe = SCOptimizer(HardwareBudget(max_luts=10**9, max_power_mw=10**9))
+    min_luts = min(c.luts_used for c in probe._generate_candidates(layer))
+    opt = SCOptimizer(HardwareBudget(max_luts=min_luts, max_power_mw=10**9))
+    report = opt.optimize_annealing([layer], max_iter=400, seed=1)
+    assert report is not None
+
+
+def _fake_sa_result(n, *, feasible=True, with_pareto=True):
+    return {
+        "feasible": feasible,
+        "layer_luts": [100] * n,
+        "layer_power": [1.0] * n,
+        "layer_accuracy": [0.9] * n,
+        "pareto_luts": [100, 200] if with_pareto else [],
+        "pareto_power": [1.0, 2.0] if with_pareto else [],
+        "pareto_score": [0.9, 0.95] if with_pareto else [],
+    }
+
+
+def _install_fake_rust(monkeypatch, sa_result):
+    import sc_neurocore.optimizer.sc_optimizer as mod
+
+    monkeypatch.setattr(mod, "_HAS_RUST", True)
+    monkeypatch.setattr(mod, "py_opt_sa_search", lambda *a, **k: sa_result, raising=False)
+    monkeypatch.setattr(
+        mod,
+        "py_opt_extract_pareto",
+        lambda luts, power, score: {"luts": luts, "power": power, "score": score},
+        raising=False,
+    )
+
+
+def test_annealing_dispatches_to_rust_backend(monkeypatch):
+    network = [LayerProfile(id="L0", mac_count=100), LayerProfile(id="L1", mac_count=200)]
+    _install_fake_rust(monkeypatch, _fake_sa_result(len(network)))
+    opt = SCOptimizer(HardwareBudget(max_luts=10**6, max_power_mw=10**4))
+    report = opt.optimize_annealing(network)
+    assert report is not None
+    assert len(report.pareto_frontier) == 2
+
+
+def test_annealing_rust_infeasible_returns_none(monkeypatch):
+    network = [LayerProfile(id="L0", mac_count=100)]
+    _install_fake_rust(monkeypatch, _fake_sa_result(len(network), feasible=False))
+    opt = SCOptimizer(HardwareBudget(max_luts=10**6, max_power_mw=10**4))
+    assert opt.optimize_annealing(network) is None
+
+
+def test_annealing_rust_without_pareto_points(monkeypatch):
+    network = [LayerProfile(id="L0", mac_count=100)]
+    _install_fake_rust(monkeypatch, _fake_sa_result(len(network), with_pareto=False))
+    opt = SCOptimizer(HardwareBudget(max_luts=10**6, max_power_mw=10**4))
+    report = opt.optimize_annealing(network)
+    assert report is not None
+    assert report.pareto_frontier == []
+
+
+def test_module_detects_rust_engine_when_importable():
+    # Drive the import-time `_HAS_RUST = True` branch by making a stand-in
+    # sc_neurocore_engine importable, then restore the real (engine-absent) state.
+    import importlib
+    import sys
+    import types
+
+    import sc_neurocore.optimizer.sc_optimizer as mod
+
+    fake = types.ModuleType("sc_neurocore_engine")
+    fake.py_opt_sa_search = lambda *a, **k: {}  # type: ignore[attr-defined]
+    fake.py_opt_extract_pareto = lambda *a, **k: {}  # type: ignore[attr-defined]
+    had = sys.modules.get("sc_neurocore_engine")
+    sys.modules["sc_neurocore_engine"] = fake
+    try:
+        reloaded = importlib.reload(mod)
+        assert reloaded._HAS_RUST is True
+    finally:
+        if had is not None:
+            sys.modules["sc_neurocore_engine"] = had
+        else:
+            sys.modules.pop("sc_neurocore_engine", None)
+        importlib.reload(mod)
 
 
 if __name__ == "__main__":
