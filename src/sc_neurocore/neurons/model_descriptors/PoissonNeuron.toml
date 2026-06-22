@@ -25,13 +25,21 @@ init = -65.0
 
 [parameters.rate_hz]
 default = 100.0
-unit = ""
-meaning = ""
+unit = "Hz"
+meaning = "mean firing rate of the Poisson spike process"
+range = [
+    0.0,
+    1000.0,
+]
 
 [parameters.dt_ms]
 default = 1.0
-unit = ""
-meaning = ""
+unit = "ms"
+meaning = "timestep used to convert the rate to a per-step spike probability"
+range = [
+    0.01,
+    10.0,
+]
 
 [integration]
 dt = 0.1
