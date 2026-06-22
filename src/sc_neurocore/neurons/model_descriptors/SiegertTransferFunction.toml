@@ -14,33 +14,58 @@ hardware_fit = []
 behavior_tags = []
 
 [provenance]
+authors = [
+    "Siegert, A.J.F.",
+]
+year = 1951
+doi = "10.1103/PhysRev.81.617"
 
 [state]
 
 [parameters.tau_m]
 default = 20.0
-unit = ""
-meaning = ""
+unit = "ms"
+meaning = "membrane time constant"
+range = [
+    1.0,
+    100.0,
+]
 
 [parameters.tau_rp]
 default = 2.0
-unit = ""
-meaning = ""
+unit = "ms"
+meaning = "absolute refractory period"
+range = [
+    0.0,
+    10.0,
+]
 
 [parameters.v_threshold]
 default = -50.0
-unit = ""
-meaning = ""
+unit = "mV"
+meaning = "firing threshold"
+range = [
+    -60.0,
+    -20.0,
+]
 
 [parameters.v_reset]
 default = -70.0
-unit = ""
-meaning = ""
+unit = "mV"
+meaning = "reset potential"
+range = [
+    -90.0,
+    -40.0,
+]
 
 [parameters.v_rest]
 default = -65.0
-unit = ""
-meaning = ""
+unit = "mV"
+meaning = "resting potential"
+range = [
+    -90.0,
+    -40.0,
+]
 
 [integration]
 dt = 0.1

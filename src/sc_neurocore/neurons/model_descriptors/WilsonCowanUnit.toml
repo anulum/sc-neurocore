@@ -14,6 +14,11 @@ hardware_fit = []
 behavior_tags = []
 
 [provenance]
+authors = [
+    "Wilson, H.R. & Cowan, J.D.",
+]
+year = 1972
+doi = "10.1016/S0006-3495(72)86068-5"
 
 [state.e]
 init = 0.1
@@ -26,38 +31,66 @@ init = 4.0
 
 [parameters.w_ee]
 default = 10.0
-unit = ""
-meaning = ""
+unit = "1"
+meaning = "recurrent excitatory-to-excitatory connection weight"
+range = [
+    0.0,
+    30.0,
+]
 
 [parameters.w_ei]
 default = 6.0
-unit = ""
-meaning = ""
+unit = "1"
+meaning = "inhibitory-to-excitatory connection weight"
+range = [
+    0.0,
+    30.0,
+]
 
 [parameters.w_ie]
 default = 10.0
-unit = ""
-meaning = ""
+unit = "1"
+meaning = "excitatory-to-inhibitory connection weight"
+range = [
+    0.0,
+    30.0,
+]
 
 [parameters.w_ii]
 default = 1.0
-unit = ""
-meaning = ""
+unit = "1"
+meaning = "recurrent inhibitory-to-inhibitory connection weight"
+range = [
+    0.0,
+    30.0,
+]
 
 [parameters.tau_e]
 default = 1.0
-unit = ""
-meaning = ""
+unit = "ms"
+meaning = "excitatory population time constant"
+range = [
+    1.0,
+    100.0,
+]
 
 [parameters.tau_i]
 default = 2.0
-unit = ""
-meaning = ""
+unit = "ms"
+meaning = "inhibitory population time constant"
+range = [
+    1.0,
+    100.0,
+]
 
 [parameters.a]
 default = 1.2
-unit = ""
-meaning = ""
+unit = "1"
+meaning = "steepness of the population response (sigmoid) function"
+range = [
+    0.1,
+    10.0,
+]
 
 [integration]
 dt = 0.1

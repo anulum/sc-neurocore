@@ -14,6 +14,11 @@ hardware_fit = []
 behavior_tags = []
 
 [provenance]
+authors = [
+    "Wilson, H.R. & Cowan, J.D.",
+]
+year = 1972
+doi = "10.1016/S0006-3495(72)86068-5"
 
 [state.r]
 init = 0.0
@@ -23,13 +28,21 @@ init = 0.0
 
 [parameters.tau]
 default = 10.0
-unit = ""
-meaning = ""
+unit = "ms"
+meaning = "rate-variable time constant"
+range = [
+    1.0,
+    100.0,
+]
 
 [parameters.beta]
 default = 1.0
-unit = ""
-meaning = ""
+unit = "1"
+meaning = "steepness of the sigmoidal input-output function"
+range = [
+    0.1,
+    20.0,
+]
 
 [integration]
 dt = 0.1

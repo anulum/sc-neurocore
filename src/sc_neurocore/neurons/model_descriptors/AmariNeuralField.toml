@@ -14,39 +14,68 @@ hardware_fit = []
 behavior_tags = []
 
 [provenance]
+authors = [
+    "Amari, S.",
+]
+year = 1977
+doi = "10.1007/BF00337259"
 
 [state.n]
 init = 64.0
 
 [parameters.tau]
 default = 10.0
-unit = ""
-meaning = ""
+unit = "ms"
+meaning = "field time constant"
+range = [
+    1.0,
+    100.0,
+]
 
 [parameters.a_exc]
 default = 1.5
-unit = ""
-meaning = ""
+unit = "1"
+meaning = "amplitude of the excitatory interaction kernel"
+range = [
+    0.0,
+    10.0,
+]
 
 [parameters.a_width]
 default = 1.0
-unit = ""
-meaning = ""
+unit = "1"
+meaning = "spatial width of the excitatory interaction kernel"
+range = [
+    0.1,
+    20.0,
+]
 
 [parameters.b_inh]
 default = 0.75
-unit = ""
-meaning = ""
+unit = "1"
+meaning = "amplitude of the inhibitory interaction kernel"
+range = [
+    0.0,
+    10.0,
+]
 
 [parameters.b_width]
 default = 2.0
-unit = ""
-meaning = ""
+unit = "1"
+meaning = "spatial width of the inhibitory interaction kernel"
+range = [
+    0.1,
+    20.0,
+]
 
 [parameters.dx]
 default = 0.5
-unit = ""
-meaning = ""
+unit = "1"
+meaning = "spatial discretisation step"
+range = [
+    0.001,
+    1.0,
+]
 
 [integration]
 dt = 0.5
