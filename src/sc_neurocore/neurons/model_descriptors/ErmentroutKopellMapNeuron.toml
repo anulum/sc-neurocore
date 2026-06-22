@@ -14,19 +14,32 @@ hardware_fit = []
 behavior_tags = []
 
 [provenance]
+authors = [
+    "Ermentrout, G.B. & Kopell, N.",
+]
+year = 1986
+doi = "10.1137/0146017"
 
 [state.theta]
 init = 0.0
 
 [parameters.gain]
 default = 1.0
-unit = ""
-meaning = ""
+unit = "1"
+meaning = "input gain applied to the phase advance"
+range = [
+    0.0,
+    10.0,
+]
 
 [parameters.theta_threshold]
 default = 3.141592653589793
-unit = ""
-meaning = ""
+unit = "1"
+meaning = "phase value at which a spike is registered"
+range = [
+    0.0,
+    6.2832,
+]
 
 [integration]
 dt = 0.1

@@ -14,6 +14,11 @@ hardware_fit = []
 behavior_tags = []
 
 [provenance]
+authors = [
+    "Cazelles, B., Courbage, M. & Rabinovich, M.",
+]
+year = 2001
+doi = "10.1209/epl/i2001-00548-y"
 
 [state.x]
 init = 0.1
@@ -23,23 +28,39 @@ init = 0.0
 
 [parameters.a]
 default = 3.8
-unit = ""
-meaning = ""
+unit = "1"
+meaning = "fast-map control parameter"
+range = [
+    0.0,
+    5.0,
+]
 
 [parameters.epsilon]
 default = 0.01
-unit = ""
-meaning = ""
+unit = "1"
+meaning = "slow-variable timescale; small values give slow bursting"
+range = [
+    0.0001,
+    0.5,
+]
 
 [parameters.sigma]
 default = 0.5
-unit = ""
-meaning = ""
+unit = "1"
+meaning = "set-point of the fast variable in the slow-variable update"
+range = [
+    -2.0,
+    2.0,
+]
 
 [parameters.x_threshold]
 default = 0.9
-unit = ""
-meaning = ""
+unit = "1"
+meaning = "level on x at which a spike is registered"
+range = [
+    -2.0,
+    2.0,
+]
 
 [integration]
 dt = 0.1

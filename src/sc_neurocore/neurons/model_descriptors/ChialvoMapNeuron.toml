@@ -14,6 +14,11 @@ hardware_fit = []
 behavior_tags = []
 
 [provenance]
+authors = [
+    "Chialvo, D.R.",
+]
+year = 1995
+doi = "10.1016/0960-0779(93)E0056-H"
 
 [state.x]
 init = 0.0
@@ -23,28 +28,48 @@ init = 0.0
 
 [parameters.a]
 default = 0.89
-unit = ""
-meaning = ""
+unit = "1"
+meaning = "recovery-variable time constant (decay of the recovery variable)"
+range = [
+    0.0,
+    1.0,
+]
 
 [parameters.b]
 default = 0.6
-unit = ""
-meaning = ""
+unit = "1"
+meaning = "activation dependence of the recovery variable on x"
+range = [
+    0.0,
+    1.0,
+]
 
 [parameters.c]
 default = 0.28
-unit = ""
-meaning = ""
+unit = "1"
+meaning = "additive offset of the recovery variable"
+range = [
+    0.0,
+    1.0,
+]
 
 [parameters.k]
 default = 0.04
-unit = ""
-meaning = ""
+unit = "1"
+meaning = "constant additive excitability (drive) term"
+range = [
+    0.0,
+    0.1,
+]
 
 [parameters.x_threshold]
 default = 1.0
-unit = ""
-meaning = ""
+unit = "1"
+meaning = "level on x at which a spike is registered"
+range = [
+    0.0,
+    5.0,
+]
 
 [integration]
 dt = 0.1

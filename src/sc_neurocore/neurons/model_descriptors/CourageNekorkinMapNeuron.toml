@@ -14,6 +14,11 @@ hardware_fit = []
 behavior_tags = []
 
 [provenance]
+authors = [
+    "Courbage, M., Nekorkin, V.I. & Vdovin, L.V.",
+]
+year = 2007
+doi = "10.1063/1.2795435"
 
 [state.x]
 init = 0.0
@@ -23,43 +28,75 @@ init = 0.0
 
 [parameters.m0]
 default = 0.0864
-unit = ""
-meaning = ""
+unit = "1"
+meaning = "slope of the resting branch of the piecewise fast map"
+range = [
+    0.0,
+    5.0,
+]
 
 [parameters.m1]
 default = 0.65
-unit = ""
-meaning = ""
+unit = "1"
+meaning = "slope of the spike-generating branch of the piecewise fast map"
+range = [
+    0.0,
+    5.0,
+]
 
 [parameters.a]
 default = 0.2
-unit = ""
-meaning = ""
+unit = "1"
+meaning = "breakpoint location of the piecewise fast map"
+range = [
+    0.0,
+    1.0,
+]
 
 [parameters.d]
 default = 0.235
-unit = ""
-meaning = ""
+unit = "1"
+meaning = "threshold of the slow regenerative (bursting) term"
+range = [
+    0.0,
+    1.0,
+]
 
 [parameters.j]
 default = 0.2
-unit = ""
-meaning = ""
+unit = "1"
+meaning = "set-point of the fast variable in the slow-variable update"
+range = [
+    -1.0,
+    1.0,
+]
 
 [parameters.beta]
 default = 0.085
-unit = ""
-meaning = ""
+unit = "1"
+meaning = "strength of the slow regenerative (bursting) reinjection"
+range = [
+    0.0,
+    1.0,
+]
 
 [parameters.eps]
 default = 0.02
-unit = ""
-meaning = ""
+unit = "1"
+meaning = "slow-variable timescale; small values give slow bursting"
+range = [
+    0.0001,
+    0.5,
+]
 
 [parameters.x_threshold]
 default = 0.235
-unit = ""
-meaning = ""
+unit = "1"
+meaning = "level on x at which a spike is registered"
+range = [
+    -2.0,
+    2.0,
+]
 
 [integration]
 dt = 0.1

@@ -14,24 +14,41 @@ hardware_fit = []
 behavior_tags = []
 
 [provenance]
+authors = [
+    "Medvedev, G.S.",
+]
+year = 2005
+doi = "10.1016/j.physd.2005.01.021"
 
 [state.x]
 init = 0.0
 
 [parameters.alpha]
 default = 3.5
-unit = ""
-meaning = ""
+unit = "1"
+meaning = "slope of the piecewise-linear map branches"
+range = [
+    1.0,
+    5.0,
+]
 
 [parameters.beta]
 default = 0.5
-unit = ""
-meaning = ""
+unit = "1"
+meaning = "breakpoint separating the rising and falling branches"
+range = [
+    0.0,
+    1.0,
+]
 
 [parameters.x_threshold]
 default = 0.9
-unit = ""
-meaning = ""
+unit = "1"
+meaning = "level on x at which a spike is registered"
+range = [
+    0.0,
+    1.0,
+]
 
 [integration]
 dt = 0.1

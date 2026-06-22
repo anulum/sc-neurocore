@@ -14,6 +14,11 @@ hardware_fit = []
 behavior_tags = []
 
 [provenance]
+authors = [
+    "Ibarz, B., Casado, J.M. & Sanjuan, M.A.F.",
+]
+year = 2011
+doi = "10.1016/j.physrep.2010.12.003"
 
 [state.x]
 init = -1.0
@@ -23,33 +28,57 @@ init = -2.5
 
 [parameters.alpha]
 default = 3.65
-unit = ""
-meaning = ""
+unit = "1"
+meaning = "gain of the hyperbolic branch of the fast map"
+range = [
+    0.0,
+    10.0,
+]
 
 [parameters.beta]
 default = 0.25
-unit = ""
-meaning = ""
+unit = "1"
+meaning = "slope of the linear branch of the fast map"
+range = [
+    0.0,
+    5.0,
+]
 
 [parameters.mu]
 default = 0.0005
-unit = ""
-meaning = ""
+unit = "1"
+meaning = "slow-variable timescale; small values give slow bursting"
+range = [
+    0.0001,
+    0.1,
+]
 
 [parameters.sigma]
 default = -1.6
-unit = ""
-meaning = ""
+unit = "1"
+meaning = "DC set-point of the slow variable"
+range = [
+    -2.0,
+    2.0,
+]
 
 [parameters.x_threshold]
 default = 3.0
-unit = ""
-meaning = ""
+unit = "1"
+meaning = "level on x at which a spike is registered"
+range = [
+    -2.0,
+    2.0,
+]
 
 [parameters.x_reset]
 default = -1.0
-unit = ""
-meaning = ""
+unit = "1"
+meaning = "value the fast variable is reset to after a spike"
+range = [
+    -5.0,
+    0.0,
+]
 
 [integration]
 dt = 0.1
