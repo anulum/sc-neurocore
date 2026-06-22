@@ -506,3 +506,19 @@ class TestSymbolicReasoningLog:
             assert (
                 embedded["schema_version"] == "sc-neurocore.arcane-zenith.symbolic-reasoning-log.v1"
             )
+
+
+def test_level_band_classifies_below_and_above_thresholds() -> None:
+    assert ArcaneZenithCognitiveCore._level(0.0, low=0.33, high=0.66) == "low"
+    assert ArcaneZenithCognitiveCore._level(1.0, low=0.33, high=0.66) == "high"
+    assert ArcaneZenithCognitiveCore._level(0.5, low=0.33, high=0.66) == "medium"
+
+
+def test_pathway_bitstreams_are_all_zero_for_silent_rates() -> None:
+    # When no channel carries a positive rate the maximum is zero, so every
+    # pathway probability collapses to zero rather than dividing by it.
+    bitstreams = ArcaneZenithCognitiveCore._pathway_bitstreams(
+        {0: 0.0, 1: 0.0}, bitstream_length=16, seed=0
+    )
+    assert bitstreams.shape == (2, 16)
+    assert int(bitstreams.sum()) == 0

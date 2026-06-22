@@ -12,6 +12,8 @@ import pytest
 
 from sc_neurocore.verification import (
     SNNVerificationEvidence,
+    SNNVerificationRequirement,
+    SNNVerificationStandardProfile,
     VerificationClaimStatus,
     VerificationEvidenceKind,
     VerificationLevel,
@@ -164,3 +166,72 @@ def test_evidence_requires_id_and_description() -> None:
             status=VerificationClaimStatus.PASS,
             description="bad",
         )
+
+
+def test_evidence_requires_non_empty_description() -> None:
+    with pytest.raises(ValueError, match="description must be non-empty"):
+        SNNVerificationEvidence(
+            evidence_id="e1",
+            level=VerificationLevel.INTERVAL_PROOF,
+            kind=VerificationEvidenceKind.INTERVAL_BOUND,
+            status=VerificationClaimStatus.PASS,
+            description="",
+        )
+
+
+def _requirement(**overrides: object) -> SNNVerificationRequirement:
+    kwargs: dict[str, object] = dict(
+        requirement_id="r1",
+        level=VerificationLevel.BOUNDED_SIMULATION,
+        accepted_kinds=(VerificationEvidenceKind.TRACE,),
+        description="a requirement",
+    )
+    kwargs.update(overrides)
+    return SNNVerificationRequirement(**kwargs)  # type: ignore[arg-type]
+
+
+def test_requirement_rejects_malformed_contracts() -> None:
+    with pytest.raises(ValueError, match="requirement_id must be non-empty"):
+        _requirement(requirement_id="")
+    with pytest.raises(ValueError, match="accepted_kinds must not be empty"):
+        _requirement(accepted_kinds=())
+    with pytest.raises(ValueError, match="description must be non-empty"):
+        _requirement(description="")
+
+
+def test_profile_rejects_malformed_contracts() -> None:
+    with pytest.raises(ValueError, match="profile_id must be non-empty"):
+        SNNVerificationStandardProfile(
+            profile_id="", description="d", requirements=(_requirement(),)
+        )
+    with pytest.raises(ValueError, match="description must be non-empty"):
+        SNNVerificationStandardProfile(
+            profile_id="p", description="", requirements=(_requirement(),)
+        )
+    with pytest.raises(ValueError, match="requirement ids must be unique"):
+        SNNVerificationStandardProfile(
+            profile_id="p",
+            description="d",
+            requirements=(_requirement(), _requirement()),
+        )
+
+
+def test_optional_requirement_with_only_missing_evidence_is_missing_and_fully_covered() -> None:
+    # An optional requirement matched only by MISSING-status evidence resolves to
+    # MISSING; with no mandatory requirements the mandatory coverage is a full 1.0.
+    profile = SNNVerificationStandardProfile(
+        profile_id="optional-only",
+        description="profile with a single optional requirement",
+        requirements=(_requirement(mandatory=False),),
+    )
+    evidence = _evidence(
+        "e1",
+        VerificationLevel.BOUNDED_SIMULATION,
+        VerificationEvidenceKind.TRACE,
+        status=VerificationClaimStatus.MISSING,
+    )
+
+    report = assess_snn_verification_standard([evidence], profile)
+
+    assert report.requirement_results[0].status == VerificationClaimStatus.MISSING
+    assert report.mandatory_coverage == 1.0
