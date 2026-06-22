@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import dataclasses
 import importlib
+import inspect
 from typing import Any
 
 try:
@@ -77,25 +78,69 @@ def _load_class(name: str) -> type:
     return cls
 
 
+def _model_field_specs(cls: type) -> list[tuple[str, float]]:
+    """Return ``(name, numeric-default)`` specs for a model class.
+
+    Works for dataclass models (declared fields) and plain classes (the numeric
+    keyword parameters of ``__init__``) so the catalogue can browse any
+    registered model, not only dataclasses. Non-numeric parameters (identifiers,
+    pools, flags) are skipped for plain classes; missing or non-numeric dataclass
+    defaults are reported as ``0.0`` to preserve the historical contract.
+    """
+
+    if dataclasses.is_dataclass(cls):
+        specs: list[tuple[str, float]] = []
+        for f in dataclasses.fields(cls):
+            default = f.default if f.default is not dataclasses.MISSING else 0.0
+            value = (
+                float(default)
+                if isinstance(default, (int, float)) and not isinstance(default, bool)
+                else 0.0
+            )
+            specs.append((f.name, value))
+        return specs
+    try:
+        signature = inspect.signature(cls)
+    except (TypeError, ValueError):
+        return []
+    plain: list[tuple[str, float]] = []
+    for pname, param in signature.parameters.items():
+        if pname == "self" or param.kind in (
+            inspect.Parameter.VAR_POSITIONAL,
+            inspect.Parameter.VAR_KEYWORD,
+        ):
+            continue
+        default = param.default
+        if isinstance(default, bool) or not isinstance(default, (int, float)):
+            continue
+        plain.append((pname, float(default)))
+    return plain
+
+
+def _extract_dt(cls: type) -> float:
+    """Return the model's default timestep, or ``0.1`` when undeclared."""
+
+    for name, default in _model_field_specs(cls):
+        if name == "dt":
+            return default
+    return 0.1
+
+
 def _classify_fields(cls: type) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
-    """Split dataclass fields into state variables and parameters."""
+    """Split model fields into state variables and parameters."""
     state_vars: list[dict[str, Any]] = []
     params: list[dict[str, Any]] = []
-    for f in dataclasses.fields(cls):
-        if f.name == "dt":
+    for name, default in _model_field_specs(cls):
+        if name == "dt":
             continue
-        default = f.default if f.default is not dataclasses.MISSING else 0.0
-        entry = {
-            "name": f.name,
-            "default": float(default) if isinstance(default, (int, float)) else 0.0,
-        }
-        if f.name in _KNOWN_STATE_VARS or f.name.startswith("v") and len(f.name) <= 2:
+        entry = {"name": name, "default": default}
+        if name in _KNOWN_STATE_VARS or name.startswith("v") and len(name) <= 2:
             state_vars.append(entry)
-        elif f.name.startswith(
+        elif name.startswith(
             ("v_", "e_", "g_", "tau_", "c_", "sigma", "alpha", "beta")
-        ) or f.name.endswith(("_threshold", "_reset", "_rest", "_rev", "_max", "_min")):
+        ) or name.endswith(("_threshold", "_reset", "_rest", "_rev", "_max", "_min")):
             params.append(entry)
-        elif f.name in _KNOWN_STATE_VARS:
+        elif name in _KNOWN_STATE_VARS:
             state_vars.append(entry)
         else:
             params.append(entry)
@@ -205,7 +250,7 @@ class ModelMetadataError(RuntimeError):
 
 
 def list_models() -> list[dict[str, Any]]:
-    """Return metadata for all 118 neuron models with categories.
+    """Return metadata for every registered neuron model with categories.
 
     Results are cached after first call — subsequent calls return instantly.
     """
@@ -217,15 +262,8 @@ def list_models() -> list[dict[str, Any]]:
     for name in sorted(_CLASS_TO_MODULE.keys()):
         try:
             cls = _load_class(name)
-            if not dataclasses.is_dataclass(cls):
-                continue
             state_vars, params = _classify_fields(cls)
-            dt_field = next((f for f in dataclasses.fields(cls) if f.name == "dt"), None)
-            dt_val = (
-                float(dt_field.default)
-                if dt_field and dt_field.default is not dataclasses.MISSING
-                else 0.1
-            )
+            dt_val = _extract_dt(cls)
             result.append(
                 {
                     "name": name,
@@ -252,16 +290,9 @@ def get_model_detail(name: str) -> dict[str, Any] | None:
         cls = _load_class(name)
     except Exception as exc:
         raise ModelMetadataError(f"Failed to load Studio model metadata for '{name}'") from exc
-    if not dataclasses.is_dataclass(cls):
-        return None
     try:
         state_vars, params = _classify_fields(cls)
-        dt_field = next((f for f in dataclasses.fields(cls) if f.name == "dt"), None)
-        dt_val = (
-            float(dt_field.default)
-            if dt_field and dt_field.default is not dataclasses.MISSING
-            else 0.1
-        )
+        dt_val = _extract_dt(cls)
     except Exception as exc:
         raise ModelMetadataError(f"Failed to classify Studio model metadata for '{name}'") from exc
     return {
