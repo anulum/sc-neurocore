@@ -34,63 +34,111 @@ init = 0.0
 
 [parameters.theta_inf]
 default = -50.0
-unit = ""
-meaning = ""
+unit = "mV"
+meaning = "steady-state value of the adaptive threshold"
+range = [
+    -70.0,
+    -20.0,
+]
 
 [parameters.v_rest]
 default = -70.0
-unit = ""
-meaning = ""
+unit = "mV"
+meaning = "resting membrane potential"
+range = [
+    -90.0,
+    -40.0,
+]
 
 [parameters.v_reset]
 default = -70.0
-unit = ""
-meaning = ""
+unit = "mV"
+meaning = "membrane potential reset to after a spike"
+range = [
+    -90.0,
+    -40.0,
+]
 
 [parameters.tau_m]
 default = 10.0
-unit = ""
-meaning = ""
+unit = "ms"
+meaning = "membrane time constant"
+range = [
+    1.0,
+    100.0,
+]
 
 [parameters.tau_theta]
 default = 100.0
-unit = ""
-meaning = ""
+unit = "ms"
+meaning = "threshold adaptation time constant"
+range = [
+    5.0,
+    1000.0,
+]
 
 [parameters.tau_asc1]
 default = 10.0
-unit = ""
-meaning = ""
+unit = "ms"
+meaning = "decay time constant of the first after-spike current"
+range = [
+    1.0,
+    100.0,
+]
 
 [parameters.tau_asc2]
 default = 200.0
-unit = ""
-meaning = ""
+unit = "ms"
+meaning = "decay time constant of the second after-spike current"
+range = [
+    10.0,
+    1000.0,
+]
 
 [parameters.a_theta]
 default = 0.01
-unit = ""
-meaning = ""
+unit = "1"
+meaning = "voltage coupling of the adaptive threshold to the membrane potential"
+range = [
+    0.0,
+    1.0,
+]
 
 [parameters.delta_theta]
 default = 2.0
-unit = ""
-meaning = ""
+unit = "mV"
+meaning = "threshold increment added at each spike"
+range = [
+    0.0,
+    20.0,
+]
 
 [parameters.r_asc1]
 default = 1.0
-unit = ""
-meaning = ""
+unit = "mV"
+meaning = "voltage-equivalent amplitude added to the first after-spike current at each spike"
+range = [
+    -50.0,
+    50.0,
+]
 
 [parameters.r_asc2]
 default = 0.5
-unit = ""
-meaning = ""
+unit = "mV"
+meaning = "voltage-equivalent amplitude added to the second after-spike current at each spike"
+range = [
+    -50.0,
+    50.0,
+]
 
 [parameters.resistance]
 default = 1.0
-unit = ""
-meaning = ""
+unit = "1"
+meaning = "normalised membrane resistance mapping injected current to a voltage offset (R=1 in the project's normalised-current convention, see docs/validation/lif_fi_curve.md)"
+range = [
+    0.0,
+    100.0,
+]
 
 [integration]
 dt = 1.0

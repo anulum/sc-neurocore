@@ -25,38 +25,66 @@ init = -70.0
 
 [parameters.v_rest]
 default = -70.0
-unit = ""
-meaning = ""
+unit = "mV"
+meaning = "resting membrane potential"
+range = [
+    -90.0,
+    -40.0,
+]
 
 [parameters.v_reset]
 default = -70.0
-unit = ""
-meaning = ""
+unit = "mV"
+meaning = "membrane potential reset to after a spike"
+range = [
+    -90.0,
+    -40.0,
+]
 
 [parameters.v_threshold]
 default = -50.0
-unit = ""
-meaning = ""
+unit = "mV"
+meaning = "reference voltage of the soft escape threshold"
+range = [
+    -70.0,
+    -20.0,
+]
 
 [parameters.tau_m]
 default = 10.0
-unit = ""
-meaning = ""
+unit = "ms"
+meaning = "membrane time constant"
+range = [
+    1.0,
+    100.0,
+]
 
 [parameters.rho_0]
 default = 0.001
-unit = ""
-meaning = ""
+unit = "1/ms"
+meaning = "instantaneous escape (firing) rate at threshold"
+range = [
+    1e-05,
+    1.0,
+]
 
 [parameters.delta_u]
 default = 3.0
-unit = ""
-meaning = ""
+unit = "mV"
+meaning = "voltage scale (sharpness) of the soft escape threshold"
+range = [
+    0.5,
+    20.0,
+]
 
 [parameters.resistance]
 default = 1.0
-unit = ""
-meaning = ""
+unit = "1"
+meaning = "normalised membrane resistance mapping injected current to a voltage offset (R=1 in the project's normalised-current convention, see docs/validation/lif_fi_curve.md)"
+range = [
+    0.0,
+    100.0,
+]
 
 [integration]
 dt = 1.0
