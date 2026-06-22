@@ -63,6 +63,16 @@ class TestPopulation:
         assert "v" in states
         assert states["v"].shape == (3,)
 
+    def test_get_states_uses_neuron_get_state_when_available(self):
+        # Neuron models exposing get_state() drive the state keys directly,
+        # rather than the dataclass-field fallback used for plain dataclasses.
+        from sc_neurocore.neurons.models import Izhikevich2007Neuron
+
+        pop = Population(Izhikevich2007Neuron, 3)
+        states = pop.get_states()
+        assert "v" in states and "u" in states
+        assert states["v"].shape == (3,)
+
     def test_params_override(self):
         pop = Population("LapicqueNeuron", 2, params={"v_threshold": 0.5})
         assert pop.neurons[0].v_threshold == 0.5

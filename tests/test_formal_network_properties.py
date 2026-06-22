@@ -1660,3 +1660,38 @@ def test_population_coactivation_replay_rejects_string_sample() -> None:
 
     with pytest.raises(ValueError, match="must contain a binary spike sample"):
         replay_population_coactivation_counterexample(cast(Any, ["ab"]), prop)
+
+
+def test_antagonistic_exclusion_rejects_output_index_beyond_width() -> None:
+    spec = DenseLIFNetworkSpec(
+        name="dense_lif_frontier_fixture",
+        input_width=3,
+        output_width=2,
+        state_width=16,
+    )
+    exclusion = NetworkAntagonisticOutputExclusion(
+        name="exclusion_out_of_range",
+        output_a=5,
+        output_b=1,
+    )
+
+    with pytest.raises(ValueError, match="output_a must refer to an existing"):
+        compile_network_antagonistic_exclusion_sva(spec, exclusion)
+
+
+def test_temporal_separation_rejects_output_index_beyond_width() -> None:
+    spec = DenseLIFNetworkSpec(
+        name="dense_lif_frontier_fixture",
+        input_width=3,
+        output_width=2,
+        state_width=16,
+    )
+    separation = NetworkOutputTemporalSeparation(
+        name="separation_out_of_range",
+        output_a=5,
+        output_b=1,
+        separation_cycles=4,
+    )
+
+    with pytest.raises(ValueError, match="output_a must refer to an existing"):
+        compile_network_temporal_separation_sva(spec, separation)

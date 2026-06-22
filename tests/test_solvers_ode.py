@@ -379,6 +379,23 @@ class TestImplicitSolvers:
         with pytest.raises(ValueError, match="jacobian_epsilon must be positive"):
             RosenbrockEuler(jacobian_epsilon=0.0)
 
+    def test_rosenbrock_euler_falls_back_to_lstsq_on_singular_system(self, monkeypatch):
+        # When the Newton matrix (I - gamma*dt*J) is singular, np.linalg.solve
+        # raises LinAlgError; the step must recover via a least-squares solve.
+        # A finite-difference Jacobian rarely lands exactly singular, so force
+        # the failure deterministically and assert the fallback still returns a
+        # finite increment.
+        import sc_neurocore.solvers.stiff as stiff_mod
+
+        def _raise_singular(*_args, **_kwargs):
+            raise np.linalg.LinAlgError("forced singular system")
+
+        monkeypatch.setattr(stiff_mod.np.linalg, "solve", _raise_singular)
+        solver = RosenbrockEuler(gamma=1.0)
+        y_new, dt_used = solver.step(lambda t, y: y, np.array([1.0]), 0.0, 0.5)
+        assert np.all(np.isfinite(y_new))
+        assert dt_used == 0.5
+
     def test_implicit_euler_stable_for_stiff(self):
         solver = ImplicitEuler(max_iterations=50)
         y = np.array([1.0])
