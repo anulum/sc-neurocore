@@ -1,0 +1,69 @@
+[metadata]
+schema_version = 2
+name = "AiharaMapNeuron"
+class_name = "AiharaMapNeuron"
+module = "aihara_map_neuron"
+display_name = ""
+summary = "Aihara 1990 chaotic map neuron."
+family = ""
+category = ""
+biophysical_detail = "point"
+maturity = "experimental"
+intended_use = []
+hardware_fit = []
+behavior_tags = []
+
+[provenance]
+
+[state.v]
+init = -65.0
+
+[parameters.x]
+default = 0.0
+unit = ""
+meaning = ""
+
+[parameters.y]
+default = 0.0
+unit = ""
+meaning = ""
+
+[parameters.k_f]
+default = 0.7
+unit = ""
+meaning = ""
+
+[parameters.k_s]
+default = 0.95
+unit = ""
+meaning = ""
+
+[parameters.alpha]
+default = 2.0
+unit = ""
+meaning = ""
+
+[parameters.delta]
+default = 0.05
+unit = ""
+meaning = ""
+
+[parameters.x_threshold]
+default = 0.5
+unit = ""
+meaning = ""
+
+[integration]
+dt = 0.1
+method = "euler"
+
+[dynamics]
+
+[backends.python]
+status = "implemented"
+
+[reproducibility]
+
+[documentation]
+slug = "models/aihara_map_neuron"
+notes = ""

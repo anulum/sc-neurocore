@@ -1,0 +1,50 @@
+[metadata]
+schema_version = 2
+name = "Quadratic IF"
+class_name = "QuadraticIFNeuron"
+module = "quadratic_if"
+display_name = ""
+summary = "Canonical Type-I excitable model — simplest model exhibiting saddle-node bifurcation"
+family = ""
+category = ""
+biophysical_detail = "point"
+maturity = "experimental"
+intended_use = []
+hardware_fit = []
+behavior_tags = []
+
+[provenance]
+authors = [
+    "Latham, P.E. et al.",
+]
+year = 2000
+doi = "10.1152/jn.2000.83.2.808"
+
+[state.v]
+init = -1.0
+
+[parameters.v_reset]
+default = -1.0
+unit = ""
+meaning = ""
+
+[parameters.v_peak]
+default = 1.0
+unit = ""
+meaning = ""
+
+[integration]
+dt = 0.01
+method = "euler"
+
+[dynamics]
+v = "v**2 + I"
+
+[backends.python]
+status = "implemented"
+
+[reproducibility]
+
+[documentation]
+slug = "models/quadratic_if"
+notes = ""

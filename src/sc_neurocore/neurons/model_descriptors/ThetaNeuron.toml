@@ -1,0 +1,42 @@
+[metadata]
+schema_version = 2
+name = "Theta"
+class_name = "ThetaNeuron"
+module = "theta"
+display_name = ""
+summary = "Canonical Type-I neuron on the unit circle — phase model"
+family = ""
+category = ""
+biophysical_detail = "point"
+maturity = "experimental"
+intended_use = []
+hardware_fit = []
+behavior_tags = []
+
+[provenance]
+authors = [
+    "Ermentrout, G.B. & Kopell, N.",
+]
+year = 1986
+doi = "10.1137/0146017"
+
+[state.theta]
+init = 0.0
+
+[parameters]
+
+[integration]
+dt = 0.01
+method = "euler"
+
+[dynamics]
+theta = "(1 - cos(theta)) + (1 + cos(theta)) * I"
+
+[backends.python]
+status = "implemented"
+
+[reproducibility]
+
+[documentation]
+slug = "models/theta"
+notes = ""

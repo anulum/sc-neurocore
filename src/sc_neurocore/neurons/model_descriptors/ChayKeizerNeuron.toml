@@ -1,0 +1,115 @@
+[metadata]
+schema_version = 2
+name = "ChayKeizerNeuron"
+class_name = "ChayKeizerNeuron"
+module = "chay_keizer"
+display_name = ""
+summary = "Chay-Keizer pancreatic beta-cell model with guarded Ca-K dynamics."
+family = ""
+category = ""
+biophysical_detail = "point"
+maturity = "experimental"
+intended_use = []
+hardware_fit = []
+behavior_tags = []
+
+[provenance]
+
+[state.v]
+init = -50.0
+
+[state.n]
+init = 0.01
+
+[state.ca]
+init = 0.1
+
+[parameters.g_ca]
+default = 20.0
+unit = ""
+meaning = ""
+
+[parameters.g_k]
+default = 25.0
+unit = ""
+meaning = ""
+
+[parameters.g_kca]
+default = 12.0
+unit = ""
+meaning = ""
+
+[parameters.g_l]
+default = 0.1
+unit = ""
+meaning = ""
+
+[parameters.e_ca]
+default = 100.0
+unit = ""
+meaning = ""
+
+[parameters.e_k]
+default = -75.0
+unit = ""
+meaning = ""
+
+[parameters.e_l]
+default = -40.0
+unit = ""
+meaning = ""
+
+[parameters.k_d]
+default = 1.0
+unit = ""
+meaning = ""
+
+[parameters.f_ca]
+default = 0.004
+unit = ""
+meaning = ""
+
+[parameters.k_ca]
+default = 0.03
+unit = ""
+meaning = ""
+
+[parameters.v_threshold]
+default = -20.0
+unit = ""
+meaning = ""
+
+[parameters._MAX_SUBSTEP]
+default = 0.001
+unit = ""
+meaning = ""
+
+[parameters._V_MIN]
+default = -200.0
+unit = ""
+meaning = ""
+
+[parameters._V_MAX]
+default = 200.0
+unit = ""
+meaning = ""
+
+[parameters._CA_MAX]
+default = 100.0
+unit = ""
+meaning = ""
+
+[integration]
+dt = 0.02
+method = "euler"
+
+[dynamics]
+
+[backends.python]
+status = "implemented"
+
+[reproducibility]
+
+[documentation]
+slug = "models/chay_keizer"
+notes = ""

@@ -1,0 +1,36 @@
+[metadata]
+schema_version = 2
+name = "McCullochPittsNeuron"
+class_name = "McCullochPittsNeuron"
+module = "mcculloch_pitts"
+display_name = ""
+summary = "McCulloch & Pitts 1943 — binary threshold neuron."
+family = ""
+category = ""
+biophysical_detail = "point"
+maturity = "experimental"
+intended_use = []
+hardware_fit = []
+behavior_tags = []
+
+[provenance]
+
+[state.theta]
+init = 1.0
+
+[parameters]
+
+[integration]
+dt = 0.1
+method = "euler"
+
+[dynamics]
+
+[backends.python]
+status = "implemented"
+
+[reproducibility]
+
+[documentation]
+slug = "models/mcculloch_pitts"
+notes = ""

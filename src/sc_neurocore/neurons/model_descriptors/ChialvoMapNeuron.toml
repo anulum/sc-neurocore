@@ -1,0 +1,69 @@
+[metadata]
+schema_version = 2
+name = "ChialvoMapNeuron"
+class_name = "ChialvoMapNeuron"
+module = "chialvo_map"
+display_name = ""
+summary = "Chialvo 1995 — 2D discrete map neuron."
+family = ""
+category = ""
+biophysical_detail = "point"
+maturity = "experimental"
+intended_use = []
+hardware_fit = []
+behavior_tags = []
+
+[provenance]
+
+[state.v]
+init = -65.0
+
+[parameters.x]
+default = 0.0
+unit = ""
+meaning = ""
+
+[parameters.y]
+default = 0.0
+unit = ""
+meaning = ""
+
+[parameters.a]
+default = 0.89
+unit = ""
+meaning = ""
+
+[parameters.b]
+default = 0.6
+unit = ""
+meaning = ""
+
+[parameters.c]
+default = 0.28
+unit = ""
+meaning = ""
+
+[parameters.k]
+default = 0.04
+unit = ""
+meaning = ""
+
+[parameters.x_threshold]
+default = 1.0
+unit = ""
+meaning = ""
+
+[integration]
+dt = 0.1
+method = "euler"
+
+[dynamics]
+
+[backends.python]
+status = "implemented"
+
+[reproducibility]
+
+[documentation]
+slug = "models/chialvo_map"
+notes = ""

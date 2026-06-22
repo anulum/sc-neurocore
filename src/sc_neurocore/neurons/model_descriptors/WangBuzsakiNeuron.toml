@@ -1,0 +1,93 @@
+[metadata]
+schema_version = 2
+name = "Wang-Buzsáki"
+class_name = "WangBuzsakiNeuron"
+module = "wang_buzsaki"
+display_name = ""
+summary = "Modified HH for hippocampal interneurons — fast-spiking GABAergic basket cells"
+family = ""
+category = ""
+biophysical_detail = "point"
+maturity = "experimental"
+intended_use = []
+hardware_fit = []
+behavior_tags = []
+
+[provenance]
+authors = [
+    "Wang, X.-J. & Buzsáki, G.",
+]
+year = 1996
+doi = "10.1523/JNEUROSCI.16-20-06402.1996"
+
+[state.v]
+init = -65.0
+
+[state.h]
+init = 0.6
+
+[state.n]
+init = 0.32
+
+[parameters.g_na]
+default = 35.0
+unit = ""
+meaning = ""
+
+[parameters.g_k]
+default = 9.0
+unit = ""
+meaning = ""
+
+[parameters.g_l]
+default = 0.1
+unit = ""
+meaning = ""
+
+[parameters.e_na]
+default = 55.0
+unit = ""
+meaning = ""
+
+[parameters.e_k]
+default = -90.0
+unit = ""
+meaning = ""
+
+[parameters.e_l]
+default = -65.0
+unit = ""
+meaning = ""
+
+[parameters.c_m]
+default = 1.0
+unit = ""
+meaning = ""
+
+[parameters.phi]
+default = 5.0
+unit = ""
+meaning = ""
+
+[parameters.v_threshold]
+default = -20.0
+unit = ""
+meaning = ""
+
+[integration]
+dt = 0.01
+method = "euler"
+
+[dynamics]
+v = "(-g_Na * (1 / (1 + exp(-(v + 35) / 10)))**3 * h * (v - E_Na) - g_K * n**4 * (v - E_K) - g_L * (v - E_L) + I) / C"
+h = "phi * (0.07 * exp(-(v + 58) / 20) * (1 - h) - 1 / (1 + exp(-(v + 28) / 10)) * h)"
+n = "phi * (0.01 * (v + 34) / (1 - exp(-(v + 34) / 10)) * (1 - n) - 0.125 * exp(-(v + 44) / 80) * n)"
+
+[backends.python]
+status = "implemented"
+
+[reproducibility]
+
+[documentation]
+slug = "models/wang_buzsaki"
+notes = ""

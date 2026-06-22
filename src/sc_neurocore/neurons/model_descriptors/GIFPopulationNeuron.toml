@@ -1,0 +1,82 @@
+[metadata]
+schema_version = 2
+name = "GIFPopulationNeuron"
+class_name = "GIFPopulationNeuron"
+module = "gif_population"
+display_name = ""
+summary = "Generalized integrate-and-fire population neuron with escape-rate spiking."
+family = ""
+category = ""
+biophysical_detail = "point"
+maturity = "experimental"
+intended_use = []
+hardware_fit = []
+behavior_tags = []
+
+[provenance]
+
+[state.v]
+init = -65.0
+
+[state.theta]
+init = -50.0
+
+[parameters.eta]
+default = 0.0
+unit = ""
+meaning = ""
+
+[parameters.tau_m]
+default = 20.0
+unit = ""
+meaning = ""
+
+[parameters.tau_eta]
+default = 100.0
+unit = ""
+meaning = ""
+
+[parameters.delta_v]
+default = 2.0
+unit = ""
+meaning = ""
+
+[parameters.lambda_0]
+default = 0.001
+unit = ""
+meaning = ""
+
+[parameters.eta_increment]
+default = 5.0
+unit = ""
+meaning = ""
+
+[parameters.v_rest]
+default = -65.0
+unit = ""
+meaning = ""
+
+[parameters.v_reset]
+default = -65.0
+unit = ""
+meaning = ""
+
+[parameters.seed]
+default = 42.0
+unit = ""
+meaning = ""
+
+[integration]
+dt = 0.5
+method = "euler"
+
+[dynamics]
+
+[backends.python]
+status = "implemented"
+
+[reproducibility]
+
+[documentation]
+slug = "models/gif_population"
+notes = ""

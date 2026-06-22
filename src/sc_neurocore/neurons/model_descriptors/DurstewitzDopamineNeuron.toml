@@ -1,0 +1,114 @@
+[metadata]
+schema_version = 2
+name = "DurstewitzDopamineNeuron"
+class_name = "DurstewitzDopamineNeuron"
+module = "durstewitz_dopamine"
+display_name = ""
+summary = "Durstewitz, Seamans & Sejnowski 2000 — PFC neuron with D1 modulation."
+family = ""
+category = ""
+biophysical_detail = "point"
+maturity = "experimental"
+intended_use = []
+hardware_fit = []
+behavior_tags = []
+
+[provenance]
+
+[state.v]
+init = -65.0
+
+[parameters.h_na]
+default = 0.7
+unit = ""
+meaning = ""
+
+[parameters.n_k]
+default = 0.2
+unit = ""
+meaning = ""
+
+[parameters.g_na]
+default = 45.0
+unit = ""
+meaning = ""
+
+[parameters.g_k]
+default = 18.0
+unit = ""
+meaning = ""
+
+[parameters.g_nmda]
+default = 0.5
+unit = ""
+meaning = ""
+
+[parameters.g_l]
+default = 0.02
+unit = ""
+meaning = ""
+
+[parameters.e_na]
+default = 55.0
+unit = ""
+meaning = ""
+
+[parameters.e_k]
+default = -80.0
+unit = ""
+meaning = ""
+
+[parameters.e_nmda]
+default = 0.0
+unit = ""
+meaning = ""
+
+[parameters.e_l]
+default = -65.0
+unit = ""
+meaning = ""
+
+[parameters.mg]
+default = 1.0
+unit = ""
+meaning = ""
+
+[parameters.d1_level]
+default = 0.0
+unit = ""
+meaning = ""
+
+[parameters.g_nmda_scale]
+default = 2.5
+unit = ""
+meaning = ""
+
+[parameters.g_k_scale]
+default = 1.5
+unit = ""
+meaning = ""
+
+[parameters.v_shift_na]
+default = -5.0
+unit = ""
+meaning = ""
+
+[parameters.v_threshold]
+default = -20.0
+unit = ""
+meaning = ""
+
+[integration]
+dt = 0.05
+method = "euler"
+
+[dynamics]
+
+[backends.python]
+status = "implemented"
+
+[reproducibility]
+
+[documentation]
+slug = "models/durstewitz_dopamine"
+notes = ""

@@ -1,0 +1,64 @@
+[metadata]
+schema_version = 2
+name = "Rulkov Map"
+class_name = "RulkovMapNeuron"
+module = "rulkov_map"
+display_name = ""
+summary = "Discrete-time map neuron — fast/slow dynamics via 2D iteration"
+family = ""
+category = ""
+biophysical_detail = "point"
+maturity = "experimental"
+intended_use = []
+hardware_fit = []
+behavior_tags = []
+
+[provenance]
+authors = [
+    "Rulkov, N.F.",
+]
+year = 2002
+doi = "10.1103/PhysRevE.65.041922"
+
+[state.x]
+init = -1.0
+
+[state.y]
+init = -3.0
+
+[parameters.alpha]
+default = 4.0
+unit = ""
+meaning = ""
+
+[parameters.sigma]
+default = -1.6
+unit = ""
+meaning = ""
+
+[parameters.mu]
+default = 0.001
+unit = ""
+meaning = ""
+
+[parameters.x_threshold]
+default = 0.0
+unit = ""
+meaning = ""
+
+[integration]
+dt = 0.1
+method = "euler"
+
+[dynamics]
+x = "alpha / (1.0 + x**2) + y + I"
+y = "y - sigma * x - beta"
+
+[backends.python]
+status = "implemented"
+
+[reproducibility]
+
+[documentation]
+slug = "models/rulkov_map"
+notes = ""

@@ -1,0 +1,94 @@
+[metadata]
+schema_version = 2
+name = "Loihi2Neuron"
+class_name = "Loihi2Neuron"
+module = "loihi2"
+display_name = ""
+summary = "Intel Loihi 2, 2021 — programmable 3-state-variable neuron."
+family = ""
+category = ""
+biophysical_detail = "point"
+maturity = "experimental"
+intended_use = []
+hardware_fit = []
+behavior_tags = []
+
+[provenance]
+
+[state.v]
+init = -65.0
+
+[parameters.s1]
+default = 0.0
+unit = ""
+meaning = ""
+
+[parameters.s2]
+default = 0.0
+unit = ""
+meaning = ""
+
+[parameters.s3]
+default = 0.0
+unit = ""
+meaning = ""
+
+[parameters.tau1]
+default = 10.0
+unit = ""
+meaning = ""
+
+[parameters.tau2]
+default = 5.0
+unit = ""
+meaning = ""
+
+[parameters.tau3]
+default = 50.0
+unit = ""
+meaning = ""
+
+[parameters.w12]
+default = 1.0
+unit = ""
+meaning = ""
+
+[parameters.w13]
+default = 0.0
+unit = ""
+meaning = ""
+
+[parameters.w23]
+default = 0.0
+unit = ""
+meaning = ""
+
+[parameters.s1_threshold]
+default = 1000.0
+unit = ""
+meaning = ""
+
+[parameters.s1_reset]
+default = 0.0
+unit = ""
+meaning = ""
+
+[parameters.s3_incr]
+default = 10.0
+unit = ""
+meaning = ""
+
+[integration]
+dt = 0.1
+method = "euler"
+
+[dynamics]
+
+[backends.python]
+status = "implemented"
+
+[reproducibility]
+
+[documentation]
+slug = "models/loihi2"
+notes = ""

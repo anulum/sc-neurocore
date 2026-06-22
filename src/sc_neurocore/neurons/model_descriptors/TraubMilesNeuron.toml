@@ -1,0 +1,78 @@
+[metadata]
+schema_version = 2
+name = "TraubMilesNeuron"
+class_name = "TraubMilesNeuron"
+module = "traub_miles"
+display_name = ""
+summary = "Traub & Miles 1991 — reduced hippocampal CA3 pyramidal."
+family = ""
+category = ""
+biophysical_detail = "point"
+maturity = "experimental"
+intended_use = []
+hardware_fit = []
+behavior_tags = []
+
+[provenance]
+
+[state.v]
+init = -67.0
+
+[state.m]
+init = 0.05
+
+[state.h]
+init = 0.6
+
+[state.n]
+init = 0.3
+
+[parameters.g_na]
+default = 100.0
+unit = ""
+meaning = ""
+
+[parameters.g_k]
+default = 80.0
+unit = ""
+meaning = ""
+
+[parameters.g_l]
+default = 0.1
+unit = ""
+meaning = ""
+
+[parameters.e_na]
+default = 50.0
+unit = ""
+meaning = ""
+
+[parameters.e_k]
+default = -100.0
+unit = ""
+meaning = ""
+
+[parameters.e_l]
+default = -67.0
+unit = ""
+meaning = ""
+
+[parameters.v_threshold]
+default = -20.0
+unit = ""
+meaning = ""
+
+[integration]
+dt = 0.01
+method = "euler"
+
+[dynamics]
+
+[backends.python]
+status = "implemented"
+
+[reproducibility]
+
+[documentation]
+slug = "models/traub_miles"
+notes = ""

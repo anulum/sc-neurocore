@@ -1,0 +1,194 @@
+[metadata]
+schema_version = 2
+name = "HayL5PyramidalNeuron"
+class_name = "HayL5PyramidalNeuron"
+module = "hay_l5"
+display_name = ""
+summary = "Hay et al. 2011 — Layer 5 thick-tufted pyramidal cell (reduced)."
+family = ""
+category = ""
+biophysical_detail = "point"
+maturity = "experimental"
+intended_use = []
+hardware_fit = []
+behavior_tags = []
+
+[provenance]
+
+[state.v]
+init = -65.0
+
+[parameters.v_s]
+default = -75.0
+unit = ""
+meaning = ""
+
+[parameters.h_na]
+default = 0.9
+unit = ""
+meaning = ""
+
+[parameters.n_k]
+default = 0.1
+unit = ""
+meaning = ""
+
+[parameters.v_t]
+default = -75.0
+unit = ""
+meaning = ""
+
+[parameters.m_ca]
+default = 0.0
+unit = ""
+meaning = ""
+
+[parameters.h_ca]
+default = 1.0
+unit = ""
+meaning = ""
+
+[parameters.m_ih]
+default = 0.0
+unit = ""
+meaning = ""
+
+[parameters.v_a]
+default = -75.0
+unit = ""
+meaning = ""
+
+[parameters.ca_a]
+default = 0.0001
+unit = ""
+meaning = ""
+
+[parameters.g_na]
+default = 300.0
+unit = ""
+meaning = ""
+
+[parameters.g_k]
+default = 40.0
+unit = ""
+meaning = ""
+
+[parameters.g_l_s]
+default = 0.03
+unit = ""
+meaning = ""
+
+[parameters.e_na]
+default = 50.0
+unit = ""
+meaning = ""
+
+[parameters.e_k]
+default = -85.0
+unit = ""
+meaning = ""
+
+[parameters.e_l]
+default = -75.0
+unit = ""
+meaning = ""
+
+[parameters.g_ca_t]
+default = 2.0
+unit = ""
+meaning = ""
+
+[parameters.g_ih]
+default = 0.02
+unit = ""
+meaning = ""
+
+[parameters.g_l_t]
+default = 0.03
+unit = ""
+meaning = ""
+
+[parameters.e_ca]
+default = 140.0
+unit = ""
+meaning = ""
+
+[parameters.e_ih]
+default = -45.0
+unit = ""
+meaning = ""
+
+[parameters.g_ca_a]
+default = 1.5
+unit = ""
+meaning = ""
+
+[parameters.g_kca]
+default = 2.5
+unit = ""
+meaning = ""
+
+[parameters.g_l_a]
+default = 0.03
+unit = ""
+meaning = ""
+
+[parameters.g_st]
+default = 1.5
+unit = ""
+meaning = ""
+
+[parameters.g_ta]
+default = 0.8
+unit = ""
+meaning = ""
+
+[parameters.p_s]
+default = 0.15
+unit = ""
+meaning = ""
+
+[parameters.p_t]
+default = 0.25
+unit = ""
+meaning = ""
+
+[parameters.p_a]
+default = 0.6
+unit = ""
+meaning = ""
+
+[parameters.ca_decay]
+default = 200.0
+unit = ""
+meaning = ""
+
+[parameters.f_ca]
+default = 0.0002
+unit = ""
+meaning = ""
+
+[parameters.v_threshold]
+default = -30.0
+unit = ""
+meaning = ""
+
+[parameters.c_m]
+default = 1.0
+unit = ""
+meaning = ""
+
+[integration]
+dt = 0.025
+method = "euler"
+
+[dynamics]
+
+[backends.python]
+status = "implemented"
+
+[reproducibility]
+
+[documentation]
+slug = "models/hay_l5"
+notes = ""

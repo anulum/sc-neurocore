@@ -1,0 +1,64 @@
+[metadata]
+schema_version = 2
+name = "ExpIFNeuron"
+class_name = "ExpIFNeuron"
+module = "expif"
+display_name = ""
+summary = "Exponential IF (no adaptation). Fourcaud-Trocmé et al. 2003."
+family = ""
+category = ""
+biophysical_detail = "point"
+maturity = "experimental"
+intended_use = []
+hardware_fit = []
+behavior_tags = []
+
+[provenance]
+
+[state.v]
+init = -65.0
+
+[parameters.v_rest]
+default = -65.0
+unit = ""
+meaning = ""
+
+[parameters.v_reset]
+default = -68.0
+unit = ""
+meaning = ""
+
+[parameters.v_threshold]
+default = -50.0
+unit = ""
+meaning = ""
+
+[parameters.v_rh]
+default = -55.0
+unit = ""
+meaning = ""
+
+[parameters.delta_t]
+default = 2.0
+unit = ""
+meaning = ""
+
+[parameters.tau]
+default = 20.0
+unit = ""
+meaning = ""
+
+[integration]
+dt = 0.1
+method = "euler"
+
+[dynamics]
+
+[backends.python]
+status = "implemented"
+
+[reproducibility]
+
+[documentation]
+slug = "models/expif"
+notes = ""

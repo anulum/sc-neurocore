@@ -1,0 +1,105 @@
+[metadata]
+schema_version = 2
+name = "ChandelierNeuron"
+class_name = "ChandelierNeuron"
+module = "chandelier_neuron"
+display_name = ""
+summary = "Axo-axonic fast-spiking interneuron with Kv1 and Kv3 currents."
+family = ""
+category = ""
+biophysical_detail = "point"
+maturity = "experimental"
+intended_use = []
+hardware_fit = []
+behavior_tags = []
+
+[provenance]
+
+[state.v]
+init = -65.0
+
+[state.h]
+init = 0.8
+
+[state.n]
+init = 0.1
+
+[parameters.d]
+default = 0.0
+unit = ""
+meaning = ""
+
+[parameters.p]
+default = 0.0
+unit = ""
+meaning = ""
+
+[parameters.g_na]
+default = 35.0
+unit = ""
+meaning = ""
+
+[parameters.g_k]
+default = 9.0
+unit = ""
+meaning = ""
+
+[parameters.g_kv1]
+default = 3.0
+unit = ""
+meaning = ""
+
+[parameters.g_kv3]
+default = 4.0
+unit = ""
+meaning = ""
+
+[parameters.g_l]
+default = 0.1
+unit = ""
+meaning = ""
+
+[parameters.e_na]
+default = 55.0
+unit = ""
+meaning = ""
+
+[parameters.e_k]
+default = -90.0
+unit = ""
+meaning = ""
+
+[parameters.e_l]
+default = -65.0
+unit = ""
+meaning = ""
+
+[parameters.c_m]
+default = 1.0
+unit = ""
+meaning = ""
+
+[parameters.phi]
+default = 5.0
+unit = ""
+meaning = ""
+
+[parameters.v_threshold]
+default = -20.0
+unit = ""
+meaning = ""
+
+[integration]
+dt = 0.01
+method = "euler"
+
+[dynamics]
+
+[backends.python]
+status = "implemented"
+
+[reproducibility]
+
+[documentation]
+slug = "models/chandelier_neuron"
+notes = ""

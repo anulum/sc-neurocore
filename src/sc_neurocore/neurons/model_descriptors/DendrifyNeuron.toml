@@ -1,0 +1,94 @@
+[metadata]
+schema_version = 2
+name = "DendrifyNeuron"
+class_name = "DendrifyNeuron"
+module = "dendrify"
+display_name = ""
+summary = "Beniaguev et al. 2022 — active dendrite 2-compartment reduced model."
+family = ""
+category = ""
+biophysical_detail = "point"
+maturity = "experimental"
+intended_use = []
+hardware_fit = []
+behavior_tags = []
+
+[provenance]
+
+[state.v]
+init = -65.0
+
+[parameters.v_s]
+default = -65.0
+unit = ""
+meaning = ""
+
+[parameters.v_d]
+default = -65.0
+unit = ""
+meaning = ""
+
+[parameters.tau_s]
+default = 10.0
+unit = ""
+meaning = ""
+
+[parameters.tau_d]
+default = 20.0
+unit = ""
+meaning = ""
+
+[parameters.g_c]
+default = 0.8
+unit = ""
+meaning = ""
+
+[parameters.d_threshold]
+default = -35.0
+unit = ""
+meaning = ""
+
+[parameters.d_amplitude]
+default = 30.0
+unit = ""
+meaning = ""
+
+[parameters.d_duration]
+default = 10.0
+unit = ""
+meaning = ""
+
+[parameters.d_timer]
+default = 0.0
+unit = ""
+meaning = ""
+
+[parameters.v_rest]
+default = -65.0
+unit = ""
+meaning = ""
+
+[parameters.v_threshold]
+default = -50.0
+unit = ""
+meaning = ""
+
+[parameters.v_reset]
+default = -65.0
+unit = ""
+meaning = ""
+
+[integration]
+dt = 0.1
+method = "euler"
+
+[dynamics]
+
+[backends.python]
+status = "implemented"
+
+[reproducibility]
+
+[documentation]
+slug = "models/dendrify"
+notes = ""

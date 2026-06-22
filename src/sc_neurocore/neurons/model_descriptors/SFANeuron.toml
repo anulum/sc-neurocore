@@ -1,0 +1,94 @@
+[metadata]
+schema_version = 2
+name = "SFANeuron"
+class_name = "SFANeuron"
+module = "sfa"
+display_name = ""
+summary = "Benda-Herz spike-frequency adaptation IF with RK4 candidates."
+family = ""
+category = ""
+biophysical_detail = "point"
+maturity = "experimental"
+intended_use = []
+hardware_fit = []
+behavior_tags = []
+
+[provenance]
+
+[state.v]
+init = -70.0
+
+[parameters.g_sfa]
+default = 0.0
+unit = ""
+meaning = ""
+
+[parameters.v_rest]
+default = -70.0
+unit = ""
+meaning = ""
+
+[parameters.v_reset]
+default = -70.0
+unit = ""
+meaning = ""
+
+[parameters.v_threshold]
+default = -50.0
+unit = ""
+meaning = ""
+
+[parameters.tau_m]
+default = 10.0
+unit = ""
+meaning = ""
+
+[parameters.tau_sfa]
+default = 200.0
+unit = ""
+meaning = ""
+
+[parameters.delta_g]
+default = 0.5
+unit = ""
+meaning = ""
+
+[parameters.e_k]
+default = -80.0
+unit = ""
+meaning = ""
+
+[parameters.resistance]
+default = 1.0
+unit = ""
+meaning = ""
+
+[parameters._V_MIN]
+default = -200.0
+unit = ""
+meaning = ""
+
+[parameters._V_MAX]
+default = 100.0
+unit = ""
+meaning = ""
+
+[parameters._G_MAX]
+default = 1000000000.0
+unit = ""
+meaning = ""
+
+[integration]
+dt = 1.0
+method = "euler"
+
+[dynamics]
+
+[backends.python]
+status = "implemented"
+
+[reproducibility]
+
+[documentation]
+slug = "models/sfa"
+notes = ""

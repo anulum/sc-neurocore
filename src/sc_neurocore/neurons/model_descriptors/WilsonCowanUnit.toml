@@ -1,0 +1,79 @@
+[metadata]
+schema_version = 2
+name = "WilsonCowanUnit"
+class_name = "WilsonCowanUnit"
+module = "wilson_cowan"
+display_name = ""
+summary = "Wilson-Cowan 1972 — excitatory/inhibitory population rate model."
+family = ""
+category = ""
+biophysical_detail = "point"
+maturity = "experimental"
+intended_use = []
+hardware_fit = []
+behavior_tags = []
+
+[provenance]
+
+[state.theta]
+init = 4.0
+
+[parameters.e]
+default = 0.1
+unit = ""
+meaning = ""
+
+[parameters.i]
+default = 0.05
+unit = ""
+meaning = ""
+
+[parameters.w_ee]
+default = 10.0
+unit = ""
+meaning = ""
+
+[parameters.w_ei]
+default = 6.0
+unit = ""
+meaning = ""
+
+[parameters.w_ie]
+default = 10.0
+unit = ""
+meaning = ""
+
+[parameters.w_ii]
+default = 1.0
+unit = ""
+meaning = ""
+
+[parameters.tau_e]
+default = 1.0
+unit = ""
+meaning = ""
+
+[parameters.tau_i]
+default = 2.0
+unit = ""
+meaning = ""
+
+[parameters.a]
+default = 1.2
+unit = ""
+meaning = ""
+
+[integration]
+dt = 0.1
+method = "euler"
+
+[dynamics]
+
+[backends.python]
+status = "implemented"
+
+[reproducibility]
+
+[documentation]
+slug = "models/wilson_cowan"
+notes = ""

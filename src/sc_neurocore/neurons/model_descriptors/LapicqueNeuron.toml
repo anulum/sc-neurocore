@@ -1,0 +1,65 @@
+[metadata]
+schema_version = 2
+name = "Lapicque"
+class_name = "LapicqueNeuron"
+module = "lapicque"
+display_name = ""
+summary = "Classical RC integrate-and-fire — the original neuron model (1907)"
+family = ""
+category = ""
+biophysical_detail = "point"
+maturity = "experimental"
+intended_use = []
+hardware_fit = []
+behavior_tags = []
+
+[provenance]
+authors = [
+    "Lapicque, L.",
+]
+year = 1907
+doi = "10.1085/jgp.5.6.747"
+
+[state.v]
+init = 0.0
+
+[parameters.v_rest]
+default = 0.0
+unit = ""
+meaning = ""
+
+[parameters.v_reset]
+default = 0.0
+unit = ""
+meaning = ""
+
+[parameters.v_threshold]
+default = 1.0
+unit = ""
+meaning = ""
+
+[parameters.tau]
+default = 20.0
+unit = ""
+meaning = ""
+
+[parameters.resistance]
+default = 1.0
+unit = ""
+meaning = ""
+
+[integration]
+dt = 1.0
+method = "euler"
+
+[dynamics]
+v = "(-(v - v_rest) + resistance * I) / tau"
+
+[backends.python]
+status = "implemented"
+
+[reproducibility]
+
+[documentation]
+slug = "models/lapicque"
+notes = ""

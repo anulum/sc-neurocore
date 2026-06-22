@@ -1,0 +1,52 @@
+[metadata]
+schema_version = 2
+name = "PredictiveCodingNeuron"
+class_name = "PredictiveCodingNeuron"
+module = "ai_optimized"
+display_name = ""
+summary = "Fires only on prediction errors."
+family = ""
+category = ""
+biophysical_detail = "point"
+maturity = "experimental"
+intended_use = []
+hardware_fit = []
+behavior_tags = []
+
+[provenance]
+
+[state.v]
+init = 0.0
+
+[state.theta]
+init = 1.0
+
+[parameters.pred]
+default = 0.0
+unit = ""
+meaning = ""
+
+[parameters.tau]
+default = 10.0
+unit = ""
+meaning = ""
+
+[parameters.tau_pred]
+default = 50.0
+unit = ""
+meaning = ""
+
+[integration]
+dt = 1.0
+method = "euler"
+
+[dynamics]
+
+[backends.python]
+status = "implemented"
+
+[reproducibility]
+
+[documentation]
+slug = "models/ai_optimized"
+notes = ""

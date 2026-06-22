@@ -1,0 +1,54 @@
+[metadata]
+schema_version = 2
+name = "GalvesLocherbachNeuron"
+class_name = "GalvesLocherbachNeuron"
+module = "galves_locherbach"
+display_name = ""
+summary = "Galves-Löcherbach 2013 — stochastic point process neuron."
+family = ""
+category = ""
+biophysical_detail = "point"
+maturity = "experimental"
+intended_use = []
+hardware_fit = []
+behavior_tags = []
+
+[provenance]
+
+[state.v]
+init = 0.0
+
+[parameters.v_rest]
+default = 0.0
+unit = ""
+meaning = ""
+
+[parameters.decay]
+default = 0.95
+unit = ""
+meaning = ""
+
+[parameters.threshold_rate]
+default = 0.5
+unit = ""
+meaning = ""
+
+[parameters.steepness]
+default = 5.0
+unit = ""
+meaning = ""
+
+[integration]
+dt = 1.0
+method = "euler"
+
+[dynamics]
+
+[backends.python]
+status = "implemented"
+
+[reproducibility]
+
+[documentation]
+slug = "models/galves_locherbach"
+notes = ""

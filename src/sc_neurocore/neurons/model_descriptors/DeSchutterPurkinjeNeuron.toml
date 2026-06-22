@@ -1,0 +1,122 @@
+[metadata]
+schema_version = 2
+name = "DeSchutterPurkinjeNeuron"
+class_name = "DeSchutterPurkinjeNeuron"
+module = "de_schutter_purkinje"
+display_name = ""
+summary = "Single-compartment Purkinje-cell conductance model after De Schutter & Bower."
+family = ""
+category = ""
+biophysical_detail = "point"
+maturity = "experimental"
+intended_use = []
+hardware_fit = []
+behavior_tags = []
+
+[provenance]
+
+[state.v]
+init = -68.0
+
+[state.ca]
+init = 0.0001
+
+[parameters.h_na]
+default = 0.8
+unit = ""
+meaning = ""
+
+[parameters.n_k]
+default = 0.1
+unit = ""
+meaning = ""
+
+[parameters.m_cap]
+default = 0.0
+unit = ""
+meaning = ""
+
+[parameters.h_cap]
+default = 0.9
+unit = ""
+meaning = ""
+
+[parameters.q_kca]
+default = 0.0
+unit = ""
+meaning = ""
+
+[parameters.g_na]
+default = 125.0
+unit = ""
+meaning = ""
+
+[parameters.g_k]
+default = 10.0
+unit = ""
+meaning = ""
+
+[parameters.g_cap]
+default = 45.0
+unit = ""
+meaning = ""
+
+[parameters.g_kca]
+default = 35.0
+unit = ""
+meaning = ""
+
+[parameters.g_l]
+default = 0.5
+unit = ""
+meaning = ""
+
+[parameters.e_na]
+default = 45.0
+unit = ""
+meaning = ""
+
+[parameters.e_k]
+default = -85.0
+unit = ""
+meaning = ""
+
+[parameters.e_ca]
+default = 135.0
+unit = ""
+meaning = ""
+
+[parameters.e_l]
+default = -68.0
+unit = ""
+meaning = ""
+
+[parameters.ca_decay]
+default = 0.02
+unit = ""
+meaning = ""
+
+[parameters.f_ca]
+default = 0.00024
+unit = ""
+meaning = ""
+
+[parameters.v_threshold]
+default = -20.0
+unit = ""
+meaning = ""
+
+[integration]
+dt = 0.01
+method = "euler"
+
+[dynamics]
+
+[backends.python]
+status = "implemented"
+
+[reproducibility]
+
+[documentation]
+slug = "models/de_schutter_purkinje"
+notes = ""

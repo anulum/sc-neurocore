@@ -1,0 +1,108 @@
+[metadata]
+schema_version = 2
+name = "CerebellarBasketNeuron"
+class_name = "CerebellarBasketNeuron"
+module = "cerebellar_basket_neuron"
+display_name = ""
+summary = "Cerebellar basket cell with A-type and Ca-dependent K currents."
+family = ""
+category = ""
+biophysical_detail = "point"
+maturity = "experimental"
+intended_use = []
+hardware_fit = []
+behavior_tags = []
+
+[provenance]
+
+[state.v]
+init = -65.0
+
+[state.h]
+init = 0.8
+
+[state.n]
+init = 0.1
+
+[state.ca]
+init = 0.05
+
+[parameters.a]
+default = 0.0
+unit = ""
+meaning = ""
+
+[parameters.b]
+default = 0.9
+unit = ""
+meaning = ""
+
+[parameters.g_na]
+default = 35.0
+unit = ""
+meaning = ""
+
+[parameters.g_k]
+default = 9.0
+unit = ""
+meaning = ""
+
+[parameters.g_a]
+default = 3.0
+unit = ""
+meaning = ""
+
+[parameters.g_kca]
+default = 2.0
+unit = ""
+meaning = ""
+
+[parameters.g_l]
+default = 0.1
+unit = ""
+meaning = ""
+
+[parameters.e_na]
+default = 55.0
+unit = ""
+meaning = ""
+
+[parameters.e_k]
+default = -90.0
+unit = ""
+meaning = ""
+
+[parameters.e_l]
+default = -65.0
+unit = ""
+meaning = ""
+
+[parameters.c_m]
+default = 1.0
+unit = ""
+meaning = ""
+
+[parameters.phi]
+default = 5.0
+unit = ""
+meaning = ""
+
+[parameters.v_threshold]
+default = -20.0
+unit = ""
+meaning = ""
+
+[integration]
+dt = 0.01
+method = "euler"
+
+[dynamics]
+
+[backends.python]
+status = "implemented"
+
+[reproducibility]
+
+[documentation]
+slug = "models/cerebellar_basket_neuron"
+notes = ""

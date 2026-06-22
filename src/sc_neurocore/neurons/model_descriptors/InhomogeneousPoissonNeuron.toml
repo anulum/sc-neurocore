@@ -1,0 +1,39 @@
+[metadata]
+schema_version = 2
+name = "InhomogeneousPoissonNeuron"
+class_name = "InhomogeneousPoissonNeuron"
+module = "inhomogeneous_poisson"
+display_name = ""
+summary = "Cox 1955 — doubly stochastic Poisson (time-varying rate)."
+family = ""
+category = ""
+biophysical_detail = "point"
+maturity = "experimental"
+intended_use = []
+hardware_fit = []
+behavior_tags = []
+
+[provenance]
+
+[state.v]
+init = -65.0
+
+[parameters.dt_ms]
+default = 1.0
+unit = ""
+meaning = ""
+
+[integration]
+dt = 0.1
+method = "euler"
+
+[dynamics]
+
+[backends.python]
+status = "implemented"
+
+[reproducibility]
+
+[documentation]
+slug = "models/inhomogeneous_poisson"
+notes = ""

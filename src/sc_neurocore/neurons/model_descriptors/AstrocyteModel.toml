@@ -1,0 +1,107 @@
+[metadata]
+schema_version = 2
+name = "AstrocyteModel"
+class_name = "AstrocyteModel"
+module = "astrocyte"
+display_name = ""
+summary = "Li & Bhatt 1994 — astrocyte Ca2+ signaling via IP3 receptor."
+family = ""
+category = ""
+biophysical_detail = "point"
+maturity = "experimental"
+intended_use = []
+hardware_fit = []
+behavior_tags = []
+
+[provenance]
+
+[state.ca]
+init = 0.05
+
+[state.h]
+init = 0.8
+
+[parameters.ip3]
+default = 0.5
+unit = ""
+meaning = ""
+
+[parameters.v_er]
+default = 0.9
+unit = ""
+meaning = ""
+
+[parameters.k_er]
+default = 0.15
+unit = ""
+meaning = ""
+
+[parameters.v_serca]
+default = 0.4
+unit = ""
+meaning = ""
+
+[parameters.d1]
+default = 0.13
+unit = ""
+meaning = ""
+
+[parameters.d2]
+default = 1.049
+unit = ""
+meaning = ""
+
+[parameters.d3]
+default = 0.9434
+unit = ""
+meaning = ""
+
+[parameters.d5]
+default = 0.08234
+unit = ""
+meaning = ""
+
+[parameters.a2]
+default = 0.2
+unit = ""
+meaning = ""
+
+[parameters.c0]
+default = 2.0
+unit = ""
+meaning = ""
+
+[parameters.c1]
+default = 0.185
+unit = ""
+meaning = ""
+
+[parameters.leak]
+default = 0.01
+unit = ""
+meaning = ""
+
+[parameters.ip3_prod]
+default = 0.0
+unit = ""
+meaning = ""
+
+[parameters.ip3_decay]
+default = 0.14
+unit = ""
+meaning = ""
+
+[integration]
+dt = 0.01
+method = "euler"
+
+[dynamics]
+
+[backends.python]
+status = "implemented"
+
+[reproducibility]
+
+[documentation]
+slug = "models/astrocyte"
+notes = ""

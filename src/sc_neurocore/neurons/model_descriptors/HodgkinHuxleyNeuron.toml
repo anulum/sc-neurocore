@@ -1,0 +1,92 @@
+[metadata]
+schema_version = 2
+name = "Hodgkin-Huxley"
+class_name = "HodgkinHuxleyNeuron"
+module = "hodgkin_huxley"
+display_name = ""
+summary = "4D conductance-based model — Nobel Prize 1963 — the gold standard of biophysical neuron modelling"
+family = ""
+category = ""
+biophysical_detail = "point"
+maturity = "experimental"
+intended_use = []
+hardware_fit = []
+behavior_tags = []
+
+[provenance]
+authors = [
+    "Hodgkin, A.L. & Huxley, A.F.",
+]
+year = 1952
+doi = "10.1113/jphysiol.1952.sp004764"
+
+[state.v]
+init = -65.0
+
+[state.m]
+init = 0.05
+
+[state.h]
+init = 0.6
+
+[state.n]
+init = 0.32
+
+[parameters.c_m]
+default = 1.0
+unit = ""
+meaning = ""
+
+[parameters.g_na]
+default = 120.0
+unit = ""
+meaning = ""
+
+[parameters.g_k]
+default = 36.0
+unit = ""
+meaning = ""
+
+[parameters.g_l]
+default = 0.3
+unit = ""
+meaning = ""
+
+[parameters.e_na]
+default = 50.0
+unit = ""
+meaning = ""
+
+[parameters.e_k]
+default = -77.0
+unit = ""
+meaning = ""
+
+[parameters.e_l]
+default = -54.4
+unit = ""
+meaning = ""
+
+[parameters.v_threshold]
+default = 0.0
+unit = ""
+meaning = ""
+
+[integration]
+dt = 0.01
+method = "euler"
+
+[dynamics]
+v = "(-g_Na * m**3 * h * (v - E_Na) - g_K * n**4 * (v - E_K) - g_L * (v - E_L) + I) / C"
+m = "0.1 * (v + 40) / (1 - exp(-(v + 40) / 10)) * (1 - m) - 4 * exp(-(v + 65) / 18) * m"
+h = "0.07 * exp(-(v + 65) / 20) * (1 - h) - 1 / (1 + exp(-(v + 35) / 10)) * h"
+n = "0.01 * (v + 55) / (1 - exp(-(v + 55) / 10)) * (1 - n) - 0.125 * exp(-(v + 65) / 80) * n"
+
+[backends.python]
+status = "implemented"
+
+[reproducibility]
+
+[documentation]
+slug = "models/hodgkin_huxley"
+notes = ""

@@ -1,0 +1,72 @@
+[metadata]
+schema_version = 2
+name = "MetaPlasticNeuron"
+class_name = "MetaPlasticNeuron"
+module = "ai_optimized"
+display_name = ""
+summary = "Neuron with self-regulating meta-learning rate."
+family = ""
+category = ""
+biophysical_detail = "point"
+maturity = "experimental"
+intended_use = []
+hardware_fit = []
+behavior_tags = []
+
+[provenance]
+
+[state.v]
+init = 0.0
+
+[state.theta]
+init = 1.0
+
+[parameters.error_trace]
+default = 0.0
+unit = ""
+meaning = ""
+
+[parameters.expected_reward]
+default = 0.0
+unit = ""
+meaning = ""
+
+[parameters.tau]
+default = 10.0
+unit = ""
+meaning = ""
+
+[parameters.tau_meta]
+default = 500.0
+unit = ""
+meaning = ""
+
+[parameters.lr0]
+default = 0.01
+unit = ""
+meaning = ""
+
+[parameters.kappa]
+default = 5.0
+unit = ""
+meaning = ""
+
+[parameters.target_error]
+default = 0.3
+unit = ""
+meaning = ""
+
+[integration]
+dt = 1.0
+method = "euler"
+
+[dynamics]
+
+[backends.python]
+status = "implemented"
+
+[reproducibility]
+
+[documentation]
+slug = "models/ai_optimized"
+notes = ""

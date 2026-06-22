@@ -1,0 +1,89 @@
+[metadata]
+schema_version = 2
+name = "MATNeuron"
+class_name = "MATNeuron"
+module = "mat"
+display_name = ""
+summary = "Kobayashi 2009 — Multi-timescale Adaptive Threshold."
+family = ""
+category = ""
+biophysical_detail = "point"
+maturity = "experimental"
+intended_use = []
+hardware_fit = []
+behavior_tags = []
+
+[provenance]
+
+[state.v]
+init = -70.0
+
+[parameters.theta1]
+default = 0.0
+unit = ""
+meaning = ""
+
+[parameters.theta2]
+default = 0.0
+unit = ""
+meaning = ""
+
+[parameters.v_rest]
+default = -70.0
+unit = ""
+meaning = ""
+
+[parameters.v_reset]
+default = -70.0
+unit = ""
+meaning = ""
+
+[parameters.v_threshold_base]
+default = -50.0
+unit = ""
+meaning = ""
+
+[parameters.tau_m]
+default = 10.0
+unit = ""
+meaning = ""
+
+[parameters.tau_1]
+default = 10.0
+unit = ""
+meaning = ""
+
+[parameters.tau_2]
+default = 200.0
+unit = ""
+meaning = ""
+
+[parameters.h1]
+default = 5.0
+unit = ""
+meaning = ""
+
+[parameters.h2]
+default = 3.0
+unit = ""
+meaning = ""
+
+[parameters.resistance]
+default = 1.0
+unit = ""
+meaning = ""
+
+[integration]
+dt = 1.0
+method = "euler"
+
+[dynamics]
+
+[backends.python]
+status = "implemented"
+
+[reproducibility]
+
+[documentation]
+slug = "models/mat"
+notes = ""

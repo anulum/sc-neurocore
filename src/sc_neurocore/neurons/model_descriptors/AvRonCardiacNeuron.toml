@@ -1,0 +1,88 @@
+[metadata]
+schema_version = 2
+name = "AvRonCardiacNeuron"
+class_name = "AvRonCardiacNeuron"
+module = "av_ron_cardiac"
+display_name = ""
+summary = "Av-Ron, Parnas & Segel cardiac ganglion Type III burster."
+family = ""
+category = ""
+biophysical_detail = "point"
+maturity = "experimental"
+intended_use = []
+hardware_fit = []
+behavior_tags = []
+
+[provenance]
+
+[state.v]
+init = -60.0
+
+[state.h]
+init = 0.6
+
+[state.n]
+init = 0.3
+
+[state.s]
+init = 0.5
+
+[parameters.g_na]
+default = 80.0
+unit = ""
+meaning = ""
+
+[parameters.g_k]
+default = 40.0
+unit = ""
+meaning = ""
+
+[parameters.g_s]
+default = 20.0
+unit = ""
+meaning = ""
+
+[parameters.g_l]
+default = 0.1
+unit = ""
+meaning = ""
+
+[parameters.e_na]
+default = 40.0
+unit = ""
+meaning = ""
+
+[parameters.e_k]
+default = -80.0
+unit = ""
+meaning = ""
+
+[parameters.e_s]
+default = -25.0
+unit = ""
+meaning = ""
+
+[parameters.e_l]
+default = -60.0
+unit = ""
+meaning = ""
+
+[parameters.v_threshold]
+default = -20.0
+unit = ""
+meaning = ""
+
+[integration]
+dt = 0.02
+method = "euler"
+
+[dynamics]
+
+[backends.python]
+status = "implemented"
+
+[reproducibility]
+
+[documentation]
+slug = "models/av_ron_cardiac"
+notes = ""

@@ -1,0 +1,110 @@
+[metadata]
+schema_version = 2
+name = "ATypeKNeuron"
+class_name = "ATypeKNeuron"
+module = "atype_k_neuron"
+display_name = ""
+summary = "A-type K+ neuron with Wang-Buzsaki core and transient IA current."
+family = ""
+category = ""
+biophysical_detail = "point"
+maturity = "experimental"
+intended_use = []
+hardware_fit = []
+behavior_tags = []
+
+[provenance]
+
+[state.v]
+init = -65.0
+
+[state.h]
+init = 0.6
+
+[state.n]
+init = 0.32
+
+[parameters.a]
+default = 0.1
+unit = ""
+meaning = ""
+
+[parameters.b]
+default = 0.8
+unit = ""
+meaning = ""
+
+[parameters.g_na]
+default = 35.0
+unit = ""
+meaning = ""
+
+[parameters.g_k]
+default = 9.0
+unit = ""
+meaning = ""
+
+[parameters.g_a]
+default = 8.0
+unit = ""
+meaning = ""
+
+[parameters.g_l]
+default = 0.1
+unit = ""
+meaning = ""
+
+[parameters.e_na]
+default = 55.0
+unit = ""
+meaning = ""
+
+[parameters.e_k]
+default = -90.0
+unit = ""
+meaning = ""
+
+[parameters.e_l]
+default = -65.0
+unit = ""
+meaning = ""
+
+[parameters.c_m]
+default = 1.0
+unit = ""
+meaning = ""
+
+[parameters.phi]
+default = 5.0
+unit = ""
+meaning = ""
+
+[parameters.v_threshold]
+default = -20.0
+unit = ""
+meaning = ""
+
+[parameters.gain]
+default = 1.0
+unit = ""
+meaning = ""
+
+[parameters._sub_steps]
+default = 50.0
+unit = ""
+meaning = ""
+
+[integration]
+dt = 0.5
+method = "euler"
+
+[dynamics]
+
+[backends.python]
+status = "implemented"
+
+[reproducibility]
+
+[documentation]
+slug = "models/atype_k_neuron"
+notes = ""

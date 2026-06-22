@@ -1,0 +1,94 @@
+[metadata]
+schema_version = 2
+name = "AdEx"
+class_name = "AdExNeuron"
+module = "adex"
+display_name = ""
+summary = "Adaptive Exponential Integrate-and-Fire — exponential spike initiation with subthreshold adaptation"
+family = ""
+category = ""
+biophysical_detail = "point"
+maturity = "experimental"
+intended_use = []
+hardware_fit = []
+behavior_tags = []
+
+[provenance]
+authors = [
+    "Brette, R. & Gerstner, W.",
+]
+year = 2005
+doi = "10.1152/jn.00686.2005"
+
+[state.v]
+init = -65.0
+
+[state.w]
+init = 0.0
+
+[parameters.v_rest]
+default = -65.0
+unit = ""
+meaning = ""
+
+[parameters.v_reset]
+default = -68.0
+unit = ""
+meaning = ""
+
+[parameters.v_threshold]
+default = -50.0
+unit = ""
+meaning = ""
+
+[parameters.v_rh]
+default = -55.0
+unit = ""
+meaning = ""
+
+[parameters.delta_t]
+default = 2.0
+unit = ""
+meaning = ""
+
+[parameters.tau]
+default = 20.0
+unit = ""
+meaning = ""
+
+[parameters.tau_w]
+default = 100.0
+unit = ""
+meaning = ""
+
+[parameters.a]
+default = 0.5
+unit = ""
+meaning = ""
+
+[parameters.b]
+default = 7.0
+unit = ""
+meaning = ""
+
+[parameters.c_m]
+default = 200.0
+unit = ""
+meaning = ""
+
+[integration]
+dt = 0.1
+method = "euler"
+
+[dynamics]
+v = "(-(v - v_rest) + delta_T * exp((v - v_rh) / delta_T)) / tau + (-w + I) / C"
+w = "(a * (v - v_rest) - w) / tau_w"
+
+[backends.python]
+status = "implemented"
+
+[reproducibility]
+
+[documentation]
+slug = "models/adex"
+notes = ""

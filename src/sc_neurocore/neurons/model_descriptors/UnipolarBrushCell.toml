@@ -1,0 +1,74 @@
+[metadata]
+schema_version = 2
+name = "UnipolarBrushCell"
+class_name = "UnipolarBrushCell"
+module = "unipolar_brush_cell"
+display_name = ""
+summary = "Unipolar brush cell (UBC) — excitatory vestibular cerebellum interneuron."
+family = ""
+category = ""
+biophysical_detail = "point"
+maturity = "experimental"
+intended_use = []
+hardware_fit = []
+behavior_tags = []
+
+[provenance]
+
+[state.v]
+init = -65.0
+
+[parameters.persistent]
+default = 0.0
+unit = ""
+meaning = ""
+
+[parameters.v_rest]
+default = -65.0
+unit = ""
+meaning = ""
+
+[parameters.v_reset]
+default = -70.0
+unit = ""
+meaning = ""
+
+[parameters.v_threshold]
+default = -50.0
+unit = ""
+meaning = ""
+
+[parameters.tau_m]
+default = 8.0
+unit = ""
+meaning = ""
+
+[parameters.tau_persistent]
+default = 200.0
+unit = ""
+meaning = ""
+
+[parameters.persistent_gain]
+default = 0.5
+unit = ""
+meaning = ""
+
+[parameters.gain]
+default = 2.5
+unit = ""
+meaning = ""
+
+[integration]
+dt = 0.5
+method = "euler"
+
+[dynamics]
+
+[backends.python]
+status = "implemented"
+
+[reproducibility]
+
+[documentation]
+slug = "models/unipolar_brush_cell"
+notes = ""

@@ -1,0 +1,95 @@
+[metadata]
+schema_version = 2
+name = "VIPNeuron"
+class_name = "VIPNeuron"
+module = "vip_neuron"
+display_name = ""
+summary = "VIP (vasoactive intestinal peptide) irregular-spiking interneuron."
+family = ""
+category = ""
+biophysical_detail = "point"
+maturity = "experimental"
+intended_use = []
+hardware_fit = []
+behavior_tags = []
+
+[provenance]
+
+[state.v]
+init = -65.0
+
+[state.h]
+init = 0.8
+
+[state.n]
+init = 0.1
+
+[parameters.a]
+default = 0.0
+unit = ""
+meaning = ""
+
+[parameters.b]
+default = 0.9
+unit = ""
+meaning = ""
+
+[parameters.g_na]
+default = 35.0
+unit = ""
+meaning = ""
+
+[parameters.g_k]
+default = 6.0
+unit = ""
+meaning = ""
+
+[parameters.g_a]
+default = 8.0
+unit = ""
+meaning = ""
+
+[parameters.g_l]
+default = 0.01
+unit = ""
+meaning = ""
+
+[parameters.e_na]
+default = 55.0
+unit = ""
+meaning = ""
+
+[parameters.e_k]
+default = -90.0
+unit = ""
+meaning = ""
+
+[parameters.e_l]
+default = -65.0
+unit = ""
+meaning = ""
+
+[parameters.c_m]
+default = 0.5
+unit = ""
+meaning = ""
+
+[parameters.v_threshold]
+default = -20.0
+unit = ""
+meaning = ""
+
+[integration]
+dt = 0.025
+method = "euler"
+
+[dynamics]
+
+[backends.python]
+status = "implemented"
+
+[reproducibility]
+
+[documentation]
+slug = "models/vip_neuron"
+notes = ""

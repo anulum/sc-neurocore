@@ -1,0 +1,64 @@
+[metadata]
+schema_version = 2
+name = "FractionalLIFNeuron"
+class_name = "FractionalLIFNeuron"
+module = "fractional_lif"
+display_name = ""
+summary = "Fractional-order LIF — memory-dependent dynamics."
+family = ""
+category = ""
+biophysical_detail = "point"
+maturity = "experimental"
+intended_use = []
+hardware_fit = []
+behavior_tags = []
+
+[provenance]
+
+[state.v]
+init = 0.0
+
+[parameters.v_rest]
+default = 0.0
+unit = ""
+meaning = ""
+
+[parameters.v_reset]
+default = 0.0
+unit = ""
+meaning = ""
+
+[parameters.v_threshold]
+default = 1.0
+unit = ""
+meaning = ""
+
+[parameters.alpha]
+default = 0.8
+unit = ""
+meaning = ""
+
+[parameters.resistance]
+default = 1.0
+unit = ""
+meaning = ""
+
+[parameters._max_history]
+default = 100.0
+unit = ""
+meaning = ""
+
+[integration]
+dt = 1.0
+method = "euler"
+
+[dynamics]
+
+[backends.python]
+status = "implemented"
+
+[reproducibility]
+
+[documentation]
+slug = "models/fractional_lif"
+notes = ""

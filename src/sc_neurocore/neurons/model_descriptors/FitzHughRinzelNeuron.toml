@@ -1,0 +1,77 @@
+[metadata]
+schema_version = 2
+name = "FitzHughRinzelNeuron"
+class_name = "FitzHughRinzelNeuron"
+module = "fitzhugh_rinzel"
+display_name = ""
+summary = "FitzHugh-Rinzel three-state qualitative bursting model."
+family = ""
+category = ""
+biophysical_detail = "point"
+maturity = "experimental"
+intended_use = []
+hardware_fit = []
+behavior_tags = []
+
+[provenance]
+
+[state.v]
+init = -1.0
+
+[state.w]
+init = -0.5
+
+[parameters.y]
+default = 0.0
+unit = ""
+meaning = ""
+
+[parameters.a]
+default = 0.7
+unit = ""
+meaning = ""
+
+[parameters.b]
+default = 0.8
+unit = ""
+meaning = ""
+
+[parameters.c]
+default = -0.775
+unit = ""
+meaning = ""
+
+[parameters.d]
+default = 1.0
+unit = ""
+meaning = ""
+
+[parameters.delta]
+default = 0.08
+unit = ""
+meaning = ""
+
+[parameters.mu]
+default = 0.0001
+unit = ""
+meaning = ""
+
+[parameters.v_threshold]
+default = 1.0
+unit = ""
+meaning = ""
+
+[integration]
+dt = 0.1
+method = "euler"
+
+[dynamics]
+
+[backends.python]
+status = "implemented"
+
+[reproducibility]
+
+[documentation]
+slug = "models/fitzhugh_rinzel"
+notes = ""

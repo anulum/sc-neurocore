@@ -1,0 +1,110 @@
+[metadata]
+schema_version = 2
+name = "LarterBreakspearNeuron"
+class_name = "LarterBreakspearNeuron"
+module = "larter_breakspear"
+display_name = ""
+summary = "Breakspear, Terry & Friston 2003 — neural mass with ion channels."
+family = ""
+category = ""
+biophysical_detail = "point"
+maturity = "experimental"
+intended_use = []
+hardware_fit = []
+behavior_tags = []
+
+[provenance]
+
+[state.v]
+init = -0.5
+
+[state.w]
+init = 0.0
+
+[state.v0]
+init = 0.0
+
+[parameters.z]
+default = 0.0
+unit = ""
+meaning = ""
+
+[parameters.g_ca]
+default = 1.1
+unit = ""
+meaning = ""
+
+[parameters.g_na]
+default = 6.7
+unit = ""
+meaning = ""
+
+[parameters.g_k]
+default = 2.0
+unit = ""
+meaning = ""
+
+[parameters.v_ca]
+default = 1.0
+unit = ""
+meaning = ""
+
+[parameters.v_na]
+default = 0.53
+unit = ""
+meaning = ""
+
+[parameters.v_k]
+default = -0.7
+unit = ""
+meaning = ""
+
+[parameters.v_l]
+default = -0.5
+unit = ""
+meaning = ""
+
+[parameters.g_l]
+default = 0.5
+unit = ""
+meaning = ""
+
+[parameters.phi]
+default = 0.7
+unit = ""
+meaning = ""
+
+[parameters.tau_k]
+default = 1.0
+unit = ""
+meaning = ""
+
+[parameters.b]
+default = 0.1
+unit = ""
+meaning = ""
+
+[parameters.a_ee]
+default = 0.36
+unit = ""
+meaning = ""
+
+[parameters.i_ext]
+default = 0.3
+unit = ""
+meaning = ""
+
+[integration]
+dt = 0.01
+method = "euler"
+
+[dynamics]
+
+[backends.python]
+status = "implemented"
+
+[reproducibility]
+
+[documentation]
+slug = "models/larter_breakspear"
+notes = ""

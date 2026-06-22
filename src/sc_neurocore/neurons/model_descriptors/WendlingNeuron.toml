@@ -1,0 +1,127 @@
+[metadata]
+schema_version = 2
+name = "WendlingNeuron"
+class_name = "WendlingNeuron"
+module = "wendling"
+display_name = ""
+summary = "Wendling et al. 2002 — extended Jansen-Rit with slow GABA_B inhibition."
+family = ""
+category = ""
+biophysical_detail = "point"
+maturity = "experimental"
+intended_use = []
+hardware_fit = []
+behavior_tags = []
+
+[provenance]
+
+[state.v0]
+init = 6.0
+
+[state.r]
+init = 0.56
+
+[parameters.y0]
+default = 0.0
+unit = ""
+meaning = ""
+
+[parameters.y5]
+default = 0.0
+unit = ""
+meaning = ""
+
+[parameters.y1]
+default = 0.0
+unit = ""
+meaning = ""
+
+[parameters.y6]
+default = 0.0
+unit = ""
+meaning = ""
+
+[parameters.y2]
+default = 0.0
+unit = ""
+meaning = ""
+
+[parameters.y7]
+default = 0.0
+unit = ""
+meaning = ""
+
+[parameters.y3]
+default = 0.0
+unit = ""
+meaning = ""
+
+[parameters.y8]
+default = 0.0
+unit = ""
+meaning = ""
+
+[parameters.y4]
+default = 0.0
+unit = ""
+meaning = ""
+
+[parameters.y9]
+default = 0.0
+unit = ""
+meaning = ""
+
+[parameters.a_exc]
+default = 3.25
+unit = ""
+meaning = ""
+
+[parameters.b_fast]
+default = 22.0
+unit = ""
+meaning = ""
+
+[parameters.g_slow]
+default = 10.0
+unit = ""
+meaning = ""
+
+[parameters.a_rate]
+default = 100.0
+unit = ""
+meaning = ""
+
+[parameters.b_rate]
+default = 500.0
+unit = ""
+meaning = ""
+
+[parameters.g_rate]
+default = 20.0
+unit = ""
+meaning = ""
+
+[parameters.c]
+default = 135.0
+unit = ""
+meaning = ""
+
+[parameters.e0]
+default = 2.5
+unit = ""
+meaning = ""
+
+[integration]
+dt = 0.001
+method = "euler"
+
+[dynamics]
+
+[backends.python]
+status = "implemented"
+
+[reproducibility]
+
+[documentation]
+slug = "models/wendling"
+notes = ""

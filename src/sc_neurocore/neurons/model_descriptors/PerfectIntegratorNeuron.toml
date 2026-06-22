@@ -1,0 +1,49 @@
+[metadata]
+schema_version = 2
+name = "PerfectIntegratorNeuron"
+class_name = "PerfectIntegratorNeuron"
+module = "perfect_integrator"
+display_name = ""
+summary = "Non-leaky integrate-and-fire. Lapicque 1907 (no leak)."
+family = ""
+category = ""
+biophysical_detail = "point"
+maturity = "experimental"
+intended_use = []
+hardware_fit = []
+behavior_tags = []
+
+[provenance]
+
+[state.v]
+init = 0.0
+
+[parameters.c_m]
+default = 1.0
+unit = ""
+meaning = ""
+
+[parameters.v_threshold]
+default = 1.0
+unit = ""
+meaning = ""
+
+[parameters.v_reset]
+default = 0.0
+unit = ""
+meaning = ""
+
+[integration]
+dt = 0.1
+method = "euler"
+
+[dynamics]
+
+[backends.python]
+status = "implemented"
+
+[reproducibility]
+
+[documentation]
+slug = "models/perfect_integrator"
+notes = ""

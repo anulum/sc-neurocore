@@ -1,0 +1,50 @@
+[metadata]
+schema_version = 2
+name = "Poisson"
+class_name = "PoissonNeuron"
+module = "poisson"
+display_name = ""
+summary = "Poisson spike generator — stochastic input layer at rate lambda"
+family = ""
+category = ""
+biophysical_detail = "point"
+maturity = "experimental"
+intended_use = []
+hardware_fit = []
+behavior_tags = []
+
+[provenance]
+authors = [
+    "Gerstner, W. et al.",
+]
+year = 2014
+doi = "10.1017/CBO9781107447615"
+
+[state.v]
+init = -65.0
+
+[parameters.rate_hz]
+default = 100.0
+unit = ""
+meaning = ""
+
+[parameters.dt_ms]
+default = 1.0
+unit = ""
+meaning = ""
+
+[integration]
+dt = 0.1
+method = "euler"
+
+[dynamics]
+phase = "rate_hz * dt_ms / 1000.0"
+
+[backends.python]
+status = "implemented"
+
+[reproducibility]
+
+[documentation]
+slug = "models/poisson"
+notes = ""

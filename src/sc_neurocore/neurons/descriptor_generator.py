@@ -221,11 +221,108 @@ def generate_descriptor(class_name: str) -> ModelDescriptor:
     return parse_model_descriptor(generate_descriptor_payload(class_name))
 
 
+_PARAMETER_CURATION_KEYS = ("unit", "range", "biological_range", "meaning")
+_STATE_CURATION_KEYS = ("unit", "meaning")
+_METADATA_CURATION_KEYS = (
+    "display_name",
+    "family",
+    "category",
+    "intended_use",
+    "hardware_fit",
+    "behavior_tags",
+)
+
+
+def merge_descriptor_payloads(
+    curated: Mapping[str, Any],
+    regenerated: Mapping[str, Any],
+) -> dict[str, Any]:
+    """Merge a curated descriptor onto a freshly regenerated one.
+
+    Structural fields (which parameters and state variables exist, their
+    defaults and initial values, the timestep) always follow the regenerated
+    payload, which is read from the model code — so the corpus can never drift
+    from the implementation. Curation fields (parameter units/ranges/meaning,
+    state semantics, taxonomy, the backend matrix, reproducibility, notes, and
+    any richer provenance, dynamics, or display fields) are preserved from the
+    curated payload. The result is the regenerated payload with curation
+    overlaid, ready to be re-serialized.
+
+    Parameters
+    ----------
+    curated:
+        The existing on-disk descriptor payload (may carry curation).
+    regenerated:
+        A freshly generated payload from :func:`generate_descriptor_payload`.
+
+    Returns
+    -------
+    dict[str, Any]
+        The merged descriptor payload.
+    """
+
+    merged: dict[str, Any] = {key: _copy(value) for key, value in regenerated.items()}
+    cur_meta = _mapping(curated.get("metadata"))
+    merged_meta = merged.setdefault("metadata", {})
+    for key in _METADATA_CURATION_KEYS:
+        value = cur_meta.get(key)
+        if value not in (None, "", []):
+            merged_meta[key] = _copy(value)
+    for key in ("biophysical_detail", "maturity", "summary"):
+        value = cur_meta.get(key)
+        if isinstance(value, str) and value:
+            merged_meta[key] = value
+
+    cur_params = _mapping(curated.get("parameters"))
+    for name, spec in merged.get("parameters", {}).items():
+        overlay = _mapping(cur_params.get(name))
+        for key in _PARAMETER_CURATION_KEYS:
+            if key in overlay:
+                spec[key] = _copy(overlay[key])
+
+    cur_state = _mapping(curated.get("state"))
+    for name, spec in merged.get("state", {}).items():
+        overlay = _mapping(cur_state.get(name))
+        for key in _STATE_CURATION_KEYS:
+            if key in overlay:
+                spec[key] = _copy(overlay[key])
+
+    cur_prov = _mapping(curated.get("provenance"))
+    if cur_prov:
+        merged_prov = {**_mapping(merged.get("provenance")), **cur_prov}
+        merged["provenance"] = merged_prov
+    cur_dyn = _mapping(curated.get("dynamics"))
+    if cur_dyn:
+        merged["dynamics"] = {**_mapping(merged.get("dynamics")), **cur_dyn}
+    for section in ("backends", "reproducibility"):
+        cur_section = _mapping(curated.get(section))
+        if cur_section:
+            merged[section] = _copy(cur_section)
+    cur_doc = _mapping(curated.get("documentation"))
+    notes = cur_doc.get("notes")
+    if isinstance(notes, str) and notes:
+        merged.setdefault("documentation", {})["notes"] = notes
+    return merged
+
+
 def _is_number(value: object) -> bool:
     return isinstance(value, (int, float)) and not isinstance(value, bool)
+
+
+def _mapping(value: object) -> dict[str, Any]:
+    return dict(value) if isinstance(value, Mapping) else {}
+
+
+def _copy(value: Any) -> Any:
+    if isinstance(value, Mapping):
+        return {key: _copy(item) for key, item in value.items()}
+    if isinstance(value, list):
+        return [_copy(item) for item in value]
+    return value
 
 
 __all__ = [
     "generate_descriptor",
     "generate_descriptor_payload",
+    "merge_descriptor_payloads",
 ]

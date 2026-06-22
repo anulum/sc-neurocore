@@ -1,0 +1,57 @@
+[metadata]
+schema_version = 2
+name = "McKeanNeuron"
+class_name = "McKeanNeuron"
+module = "mckean"
+display_name = ""
+summary = "McKean 1970 piecewise-linear FitzHugh-Nagumo caricature."
+family = ""
+category = ""
+biophysical_detail = "point"
+maturity = "experimental"
+intended_use = []
+hardware_fit = []
+behavior_tags = []
+
+[provenance]
+
+[state.v]
+init = 0.0
+
+[state.w]
+init = 0.0
+
+[parameters.a]
+default = 0.25
+unit = ""
+meaning = ""
+
+[parameters.epsilon]
+default = 0.01
+unit = ""
+meaning = ""
+
+[parameters.gamma]
+default = 0.5
+unit = ""
+meaning = ""
+
+[parameters.v_peak]
+default = 0.8
+unit = ""
+meaning = ""
+
+[integration]
+dt = 0.1
+method = "euler"
+
+[dynamics]
+
+[backends.python]
+status = "implemented"
+
+[reproducibility]
+
+[documentation]
+slug = "models/mckean"
+notes = ""

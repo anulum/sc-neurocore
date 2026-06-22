@@ -1,0 +1,124 @@
+[metadata]
+schema_version = 2
+name = "BrunelWangNeuron"
+class_name = "BrunelWangNeuron"
+module = "brunel_wang"
+display_name = ""
+summary = "LIF neuron with NMDA, AMPA, and GABA synaptic currents."
+family = ""
+category = ""
+biophysical_detail = "point"
+maturity = "experimental"
+intended_use = []
+hardware_fit = []
+behavior_tags = []
+
+[provenance]
+
+[state.v]
+init = -70.0
+
+[parameters.v_rest]
+default = -70.0
+unit = ""
+meaning = ""
+
+[parameters.v_reset]
+default = -55.0
+unit = ""
+meaning = ""
+
+[parameters.v_threshold]
+default = -50.0
+unit = ""
+meaning = ""
+
+[parameters.tau_m]
+default = 20.0
+unit = ""
+meaning = ""
+
+[parameters.tau_ref]
+default = 2.0
+unit = ""
+meaning = ""
+
+[parameters.tau_ampa]
+default = 2.0
+unit = ""
+meaning = ""
+
+[parameters.tau_nmda_rise]
+default = 2.0
+unit = ""
+meaning = ""
+
+[parameters.tau_nmda_decay]
+default = 100.0
+unit = ""
+meaning = ""
+
+[parameters.tau_gaba]
+default = 5.0
+unit = ""
+meaning = ""
+
+[parameters.g_ampa_ext]
+default = 2.1
+unit = ""
+meaning = ""
+
+[parameters.g_ampa_rec]
+default = 0.05
+unit = ""
+meaning = ""
+
+[parameters.g_nmda]
+default = 0.165
+unit = ""
+meaning = ""
+
+[parameters.g_gaba]
+default = 1.3
+unit = ""
+meaning = ""
+
+[parameters.v_ampa]
+default = 0.0
+unit = ""
+meaning = ""
+
+[parameters.v_nmda]
+default = 0.0
+unit = ""
+meaning = ""
+
+[parameters.v_gaba]
+default = -70.0
+unit = ""
+meaning = ""
+
+[parameters.C_m]
+default = 0.5
+unit = ""
+meaning = ""
+
+[parameters.mg_conc]
+default = 1.0
+unit = ""
+meaning = ""
+
+[integration]
+dt = 0.1
+method = "euler"
+
+[dynamics]
+
+[backends.python]
+status = "implemented"
+
+[reproducibility]
+
+[documentation]
+slug = "models/brunel_wang"
+notes = ""

@@ -1,0 +1,64 @@
+[metadata]
+schema_version = 2
+name = "RallCableNeuron"
+class_name = "RallCableNeuron"
+module = "rall_cable"
+display_name = ""
+summary = "Rall 1962 N-compartment passive cable with an implicit step."
+family = ""
+category = ""
+biophysical_detail = "point"
+maturity = "experimental"
+intended_use = []
+hardware_fit = []
+behavior_tags = []
+
+[provenance]
+
+[state.v]
+init = -65.0
+
+[parameters.n_comp]
+default = 5.0
+unit = ""
+meaning = ""
+
+[parameters.tau_m]
+default = 20.0
+unit = ""
+meaning = ""
+
+[parameters.v_rest]
+default = -65.0
+unit = ""
+meaning = ""
+
+[parameters.g_ratio]
+default = 0.5
+unit = ""
+meaning = ""
+
+[parameters.v_threshold]
+default = -50.0
+unit = ""
+meaning = ""
+
+[parameters.v_reset]
+default = -65.0
+unit = ""
+meaning = ""
+
+[integration]
+dt = 0.1
+method = "euler"
+
+[dynamics]
+
+[backends.python]
+status = "implemented"
+
+[reproducibility]
+
+[documentation]
+slug = "models/rall_cable"
+notes = ""

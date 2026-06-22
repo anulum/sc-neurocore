@@ -1,0 +1,112 @@
+[metadata]
+schema_version = 2
+name = "GLIF"
+class_name = "GLIFNeuron"
+module = "glif"
+display_name = ""
+summary = "Allen Institute GLIF5 — Generalized LIF with threshold adaptation and after-spike currents"
+family = ""
+category = ""
+biophysical_detail = "point"
+maturity = "experimental"
+intended_use = []
+hardware_fit = []
+behavior_tags = []
+
+[provenance]
+authors = [
+    "Teeter, C. et al.",
+]
+year = 2018
+doi = "10.1038/s41467-017-02717-4"
+
+[state.v]
+init = -70.0
+
+[state.theta]
+init = -50.0
+
+[state.i_asc1]
+init = 0.0
+
+[state.i_asc2]
+init = 0.0
+
+[parameters.theta_inf]
+default = -50.0
+unit = ""
+meaning = ""
+
+[parameters.v_rest]
+default = -70.0
+unit = ""
+meaning = ""
+
+[parameters.v_reset]
+default = -70.0
+unit = ""
+meaning = ""
+
+[parameters.tau_m]
+default = 10.0
+unit = ""
+meaning = ""
+
+[parameters.tau_theta]
+default = 100.0
+unit = ""
+meaning = ""
+
+[parameters.tau_asc1]
+default = 10.0
+unit = ""
+meaning = ""
+
+[parameters.tau_asc2]
+default = 200.0
+unit = ""
+meaning = ""
+
+[parameters.a_theta]
+default = 0.01
+unit = ""
+meaning = ""
+
+[parameters.delta_theta]
+default = 2.0
+unit = ""
+meaning = ""
+
+[parameters.r_asc1]
+default = 1.0
+unit = ""
+meaning = ""
+
+[parameters.r_asc2]
+default = 0.5
+unit = ""
+meaning = ""
+
+[parameters.resistance]
+default = 1.0
+unit = ""
+meaning = ""
+
+[integration]
+dt = 1.0
+method = "euler"
+
+[dynamics]
+v = "(-(v - v_rest) + resistance * I + i_asc1 + i_asc2) / tau_m"
+theta = "(theta_inf - theta + a_theta * (v - v_rest)) / tau_theta"
+i_asc1 = "-i_asc1 / tau_asc1"
+i_asc2 = "-i_asc2 / tau_asc2"
+
+[backends.python]
+status = "implemented"
+
+[reproducibility]
+
+[documentation]
+slug = "models/glif"
+notes = ""

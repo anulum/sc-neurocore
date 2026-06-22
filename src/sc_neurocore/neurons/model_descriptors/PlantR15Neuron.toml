@@ -1,0 +1,111 @@
+[metadata]
+schema_version = 2
+name = "PlantR15Neuron"
+class_name = "PlantR15Neuron"
+module = "plant_r15"
+display_name = ""
+summary = "Plant 1981 — Aplysia R15 parabolic burster, 5 ODEs."
+family = ""
+category = ""
+biophysical_detail = "point"
+maturity = "experimental"
+intended_use = []
+hardware_fit = []
+behavior_tags = []
+
+[provenance]
+
+[state.v]
+init = -50.0
+
+[state.m]
+init = 0.05
+
+[state.h]
+init = 0.6
+
+[state.n]
+init = 0.3
+
+[state.ca]
+init = 0.1
+
+[parameters.g_na]
+default = 4.0
+unit = ""
+meaning = ""
+
+[parameters.g_k]
+default = 0.3
+unit = ""
+meaning = ""
+
+[parameters.g_ca]
+default = 0.004
+unit = ""
+meaning = ""
+
+[parameters.g_l]
+default = 0.003
+unit = ""
+meaning = ""
+
+[parameters.g_kca]
+default = 0.03
+unit = ""
+meaning = ""
+
+[parameters.e_na]
+default = 30.0
+unit = ""
+meaning = ""
+
+[parameters.e_k]
+default = -75.0
+unit = ""
+meaning = ""
+
+[parameters.e_ca]
+default = 140.0
+unit = ""
+meaning = ""
+
+[parameters.e_l]
+default = -40.0
+unit = ""
+meaning = ""
+
+[parameters.c_m]
+default = 1.0
+unit = ""
+meaning = ""
+
+[parameters.k_ca]
+default = 0.0085
+unit = ""
+meaning = ""
+
+[parameters.tau_ca]
+default = 500.0
+unit = ""
+meaning = ""
+
+[parameters.v_threshold]
+default = -10.0
+unit = ""
+meaning = ""
+
+[integration]
+dt = 0.05
+method = "euler"
+
+[dynamics]
+
+[backends.python]
+status = "implemented"
+
+[reproducibility]
+
+[documentation]
+slug = "models/plant_r15"
+notes = ""

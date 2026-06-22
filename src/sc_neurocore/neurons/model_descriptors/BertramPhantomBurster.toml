@@ -1,0 +1,144 @@
+[metadata]
+schema_version = 2
+name = "BertramPhantomBurster"
+class_name = "BertramPhantomBurster"
+module = "bertram_phantom"
+display_name = ""
+summary = "Bertram et al. 2008 — phantom burster with dual slow variables."
+family = ""
+category = ""
+biophysical_detail = "point"
+maturity = "experimental"
+intended_use = []
+hardware_fit = []
+behavior_tags = []
+
+[provenance]
+
+[state.v]
+init = -50.0
+
+[parameters.s1]
+default = 0.1
+unit = ""
+meaning = ""
+
+[parameters.s2]
+default = 0.1
+unit = ""
+meaning = ""
+
+[parameters.g_ca]
+default = 3.6
+unit = ""
+meaning = ""
+
+[parameters.g_k]
+default = 10.0
+unit = ""
+meaning = ""
+
+[parameters.g_s1]
+default = 4.0
+unit = ""
+meaning = ""
+
+[parameters.g_s2]
+default = 4.0
+unit = ""
+meaning = ""
+
+[parameters.g_l]
+default = 0.2
+unit = ""
+meaning = ""
+
+[parameters.e_ca]
+default = 25.0
+unit = ""
+meaning = ""
+
+[parameters.e_k]
+default = -75.0
+unit = ""
+meaning = ""
+
+[parameters.e_l]
+default = -40.0
+unit = ""
+meaning = ""
+
+[parameters.c_m]
+default = 5.3
+unit = ""
+meaning = ""
+
+[parameters.v_m]
+default = -20.0
+unit = ""
+meaning = ""
+
+[parameters.s_m]
+default = 12.0
+unit = ""
+meaning = ""
+
+[parameters.v_n]
+default = -16.0
+unit = ""
+meaning = ""
+
+[parameters.s_n]
+default = 5.6
+unit = ""
+meaning = ""
+
+[parameters.v_s1]
+default = -40.0
+unit = ""
+meaning = ""
+
+[parameters.s_s1]
+default = 10.0
+unit = ""
+meaning = ""
+
+[parameters.v_s2]
+default = -42.0
+unit = ""
+meaning = ""
+
+[parameters.s_s2]
+default = 0.4
+unit = ""
+meaning = ""
+
+[parameters.tau_s1]
+default = 20000.0
+unit = ""
+meaning = ""
+
+[parameters.tau_s2]
+default = 100000.0
+unit = ""
+meaning = ""
+
+[parameters.v_threshold]
+default = -20.0
+unit = ""
+meaning = ""
+
+[integration]
+dt = 0.5
+method = "euler"
+
+[dynamics]
+
+[backends.python]
+status = "implemented"
+
+[reproducibility]
+
+[documentation]
+slug = "models/bertram_phantom"
+notes = ""

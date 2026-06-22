@@ -1,0 +1,47 @@
+[metadata]
+schema_version = 2
+name = "DifferentiableSurrogateNeuron"
+class_name = "DifferentiableSurrogateNeuron"
+module = "ai_optimized"
+display_name = ""
+summary = "Spiking neuron with learnable surrogate gradient parameters."
+family = ""
+category = ""
+biophysical_detail = "point"
+maturity = "experimental"
+intended_use = []
+hardware_fit = []
+behavior_tags = []
+
+[provenance]
+
+[state.v]
+init = 0.0
+
+[state.theta]
+init = 1.0
+
+[parameters.alpha]
+default = 0.9
+unit = ""
+meaning = ""
+
+[parameters.beta]
+default = 5.0
+unit = ""
+meaning = ""
+
+[integration]
+dt = 0.1
+method = "euler"
+
+[dynamics]
+
+[backends.python]
+status = "implemented"
+
+[reproducibility]
+
+[documentation]
+slug = "models/ai_optimized"
+notes = ""

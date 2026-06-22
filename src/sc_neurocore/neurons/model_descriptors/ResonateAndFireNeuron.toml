@@ -1,0 +1,59 @@
+[metadata]
+schema_version = 2
+name = "ResonateAndFireNeuron"
+class_name = "ResonateAndFireNeuron"
+module = "resonate_and_fire"
+display_name = ""
+summary = "ResonateAndFireNeuron(x: 'float' = 0.0, y: 'float' = 0.0, b: 'float' = -0.1, omega: 'float' = 1.0, threshold: 'float' = 1.0, dt: 'float' = 0.05)"
+family = ""
+category = ""
+biophysical_detail = "point"
+maturity = "experimental"
+intended_use = []
+hardware_fit = []
+behavior_tags = []
+
+[provenance]
+
+[state.v]
+init = -65.0
+
+[parameters.x]
+default = 0.0
+unit = ""
+meaning = ""
+
+[parameters.y]
+default = 0.0
+unit = ""
+meaning = ""
+
+[parameters.b]
+default = -0.1
+unit = ""
+meaning = ""
+
+[parameters.omega]
+default = 1.0
+unit = ""
+meaning = ""
+
+[parameters.threshold]
+default = 1.0
+unit = ""
+meaning = ""
+
+[integration]
+dt = 0.05
+method = "euler"
+
+[dynamics]
+
+[backends.python]
+status = "implemented"
+
+[reproducibility]
+
+[documentation]
+slug = "models/resonate_and_fire"
+notes = ""

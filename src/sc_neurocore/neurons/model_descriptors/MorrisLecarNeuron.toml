@@ -1,0 +1,109 @@
+[metadata]
+schema_version = 2
+name = "Morris-Lecar"
+class_name = "MorrisLecarNeuron"
+module = "morris_lecar"
+display_name = ""
+summary = "Calcium-potassium oscillator — 2D conductance-based model with sigmoidal activation"
+family = ""
+category = ""
+biophysical_detail = "point"
+maturity = "experimental"
+intended_use = []
+hardware_fit = []
+behavior_tags = []
+
+[provenance]
+authors = [
+    "Morris, C. & Lecar, H.",
+]
+year = 1981
+doi = "10.1016/S0006-3495(81)84782-0"
+
+[state.v]
+init = -60.0
+
+[state.w]
+init = 0.0
+
+[parameters.c_m]
+default = 20.0
+unit = ""
+meaning = ""
+
+[parameters.g_ca]
+default = 4.0
+unit = ""
+meaning = ""
+
+[parameters.g_k]
+default = 8.0
+unit = ""
+meaning = ""
+
+[parameters.g_l]
+default = 2.0
+unit = ""
+meaning = ""
+
+[parameters.e_ca]
+default = 120.0
+unit = ""
+meaning = ""
+
+[parameters.e_k]
+default = -84.0
+unit = ""
+meaning = ""
+
+[parameters.e_l]
+default = -60.0
+unit = ""
+meaning = ""
+
+[parameters.v1]
+default = -1.2
+unit = ""
+meaning = ""
+
+[parameters.v2]
+default = 18.0
+unit = ""
+meaning = ""
+
+[parameters.v3]
+default = 12.0
+unit = ""
+meaning = ""
+
+[parameters.v4]
+default = 17.4
+unit = ""
+meaning = ""
+
+[parameters.phi]
+default = 0.06666666666666667
+unit = ""
+meaning = ""
+
+[parameters.v_threshold]
+default = 0.0
+unit = ""
+meaning = ""
+
+[integration]
+dt = 0.1
+method = "euler"
+
+[dynamics]
+v = "(-g_ca * 0.5 * (1 + tanh((v - v1) / v2)) * (v - e_ca) - g_k * w * (v - e_k) - g_l * (v - e_l) + I) / c_m"
+w = "phi * cosh((v - v3) / (2 * v4)) * (0.5 * (1 + tanh((v - v3) / v4)) - w)"
+
+[backends.python]
+status = "implemented"
+
+[reproducibility]
+
+[documentation]
+slug = "models/morris_lecar"
+notes = ""

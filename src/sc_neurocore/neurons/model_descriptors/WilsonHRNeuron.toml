@@ -1,0 +1,47 @@
+[metadata]
+schema_version = 2
+name = "WilsonHRNeuron"
+class_name = "WilsonHRNeuron"
+module = "wilson_hr"
+display_name = ""
+summary = "Wilson 1999 polynomial cortical model."
+family = ""
+category = ""
+biophysical_detail = "point"
+maturity = "experimental"
+intended_use = []
+hardware_fit = []
+behavior_tags = []
+
+[provenance]
+
+[state.v]
+init = -0.7
+
+[state.r]
+init = 0.1
+
+[parameters.tau_r]
+default = 1.9
+unit = ""
+meaning = ""
+
+[parameters.v_peak]
+default = 0.4
+unit = ""
+meaning = ""
+
+[integration]
+dt = 0.05
+method = "euler"
+
+[dynamics]
+
+[backends.python]
+status = "implemented"
+
+[reproducibility]
+
+[documentation]
+slug = "models/wilson_hr"
+notes = ""

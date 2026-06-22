@@ -1,0 +1,75 @@
+[metadata]
+schema_version = 2
+name = "Escape Rate"
+class_name = "EscapeRateNeuron"
+module = "escape_rate"
+display_name = ""
+summary = "Stochastic threshold neuron — spike probability via escape noise"
+family = ""
+category = ""
+biophysical_detail = "point"
+maturity = "experimental"
+intended_use = []
+hardware_fit = []
+behavior_tags = []
+
+[provenance]
+authors = [
+    "Gerstner, W.",
+]
+year = 2000
+doi = "10.1162/089976600300015899"
+
+[state.v]
+init = -70.0
+
+[parameters.v_rest]
+default = -70.0
+unit = ""
+meaning = ""
+
+[parameters.v_reset]
+default = -70.0
+unit = ""
+meaning = ""
+
+[parameters.v_threshold]
+default = -50.0
+unit = ""
+meaning = ""
+
+[parameters.tau_m]
+default = 10.0
+unit = ""
+meaning = ""
+
+[parameters.rho_0]
+default = 0.001
+unit = ""
+meaning = ""
+
+[parameters.delta_u]
+default = 3.0
+unit = ""
+meaning = ""
+
+[parameters.resistance]
+default = 1.0
+unit = ""
+meaning = ""
+
+[integration]
+dt = 1.0
+method = "euler"
+
+[dynamics]
+v = "(-(v - v_rest) + resistance * I) / tau_m"
+
+[backends.python]
+status = "implemented"
+
+[reproducibility]
+
+[documentation]
+slug = "models/escape_rate"
+notes = ""

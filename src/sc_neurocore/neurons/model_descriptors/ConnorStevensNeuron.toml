@@ -1,0 +1,110 @@
+[metadata]
+schema_version = 2
+name = "Connor-Stevens"
+class_name = "ConnorStevensNeuron"
+module = "connor_stevens"
+display_name = ""
+summary = "A-type potassium current model — Type-I excitability with 6 state variables"
+family = ""
+category = ""
+biophysical_detail = "point"
+maturity = "experimental"
+intended_use = []
+hardware_fit = []
+behavior_tags = []
+
+[provenance]
+authors = [
+    "Connor, J.A. & Stevens, C.F.",
+]
+year = 1971
+doi = "10.1113/jphysiol.1971.sp009368"
+
+[state.v]
+init = -68.0
+
+[state.m]
+init = 0.01
+
+[state.h]
+init = 0.99
+
+[state.n]
+init = 0.1
+
+[state.a]
+init = 0.5
+
+[state.b]
+init = 0.1
+
+[parameters.g_na]
+default = 120.0
+unit = ""
+meaning = ""
+
+[parameters.g_k]
+default = 20.0
+unit = ""
+meaning = ""
+
+[parameters.g_a]
+default = 47.7
+unit = ""
+meaning = ""
+
+[parameters.g_l]
+default = 0.3
+unit = ""
+meaning = ""
+
+[parameters.e_na]
+default = 55.0
+unit = ""
+meaning = ""
+
+[parameters.e_k]
+default = -72.0
+unit = ""
+meaning = ""
+
+[parameters.e_a]
+default = -75.0
+unit = ""
+meaning = ""
+
+[parameters.e_l]
+default = -17.0
+unit = ""
+meaning = ""
+
+[parameters.c_m]
+default = 1.0
+unit = ""
+meaning = ""
+
+[parameters.v_threshold]
+default = 0.0
+unit = ""
+meaning = ""
+
+[integration]
+dt = 0.01
+method = "euler"
+
+[dynamics]
+v = "(-g_na*m**3*h*(v-e_na) - g_k*n**4*(v-e_k) - g_a*a**3*b*(v-e_a) - g_l*(v-e_l) + I) / c_m"
+m = "0.38*(v+29.7)/(1-exp(-(v+29.7)/10))*(1-m) - 15.2*exp(-(v+54.7)/18)*m"
+h = "0.266*exp(-(v+48)/20)*(1-h) - 3.8/(1+exp(-(v+18)/10))*h"
+n = "0.02*(v+45.7)/(1-exp(-(v+45.7)/10))*(1-n) - 0.25*exp(-(v+55.7)/80)*n"
+a = "(((0.0761*exp((v+94.22)/31.84)/(1+exp((v+1.17)/28.93)))**(1.0/3.0)) - a) / (0.3632 + 1.158/(1+exp((v+55.96)/20.12)))"
+b = "((1/(1+exp((v+53.3)/14.54))**4) - b) / (1.24 + 2.678/(1+exp((v+50)/16.027)))"
+
+[backends.python]
+status = "implemented"
+
+[reproducibility]
+
+[documentation]
+slug = "models/connor_stevens"
+notes = ""

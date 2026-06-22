@@ -1,0 +1,42 @@
+[metadata]
+schema_version = 2
+name = "ThresholdLinearRateNeuron"
+class_name = "ThresholdLinearRateNeuron"
+module = "threshold_linear_rate"
+display_name = ""
+summary = "Threshold-linear (ReLU) rate neuron. Dayan & Abbott 2001."
+family = ""
+category = ""
+biophysical_detail = "point"
+maturity = "experimental"
+intended_use = []
+hardware_fit = []
+behavior_tags = []
+
+[provenance]
+
+[state.r]
+init = 0.0
+
+[state.theta]
+init = 0.0
+
+[parameters.gain]
+default = 1.0
+unit = ""
+meaning = ""
+
+[integration]
+dt = 0.1
+method = "euler"
+
+[dynamics]
+
+[backends.python]
+status = "implemented"
+
+[reproducibility]
+
+[documentation]
+slug = "models/threshold_linear_rate"
+notes = ""

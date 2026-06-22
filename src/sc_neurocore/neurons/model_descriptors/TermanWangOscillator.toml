@@ -1,0 +1,62 @@
+[metadata]
+schema_version = 2
+name = "TermanWangOscillator"
+class_name = "TermanWangOscillator"
+module = "terman_wang"
+display_name = ""
+summary = "Terman & Wang 1995 relaxation oscillator for LEGION networks."
+family = ""
+category = ""
+biophysical_detail = "point"
+maturity = "experimental"
+intended_use = []
+hardware_fit = []
+behavior_tags = []
+
+[provenance]
+
+[state.v]
+init = -1.5
+
+[state.w]
+init = -0.5
+
+[parameters.alpha]
+default = 3.0
+unit = ""
+meaning = ""
+
+[parameters.beta]
+default = 0.2
+unit = ""
+meaning = ""
+
+[parameters.epsilon]
+default = 0.02
+unit = ""
+meaning = ""
+
+[parameters.rho]
+default = 0.0
+unit = ""
+meaning = ""
+
+[parameters.v_peak]
+default = 1.5
+unit = ""
+meaning = ""
+
+[integration]
+dt = 0.05
+method = "euler"
+
+[dynamics]
+
+[backends.python]
+status = "implemented"
+
+[reproducibility]
+
+[documentation]
+slug = "models/terman_wang"
+notes = ""

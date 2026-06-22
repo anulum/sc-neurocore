@@ -1,0 +1,79 @@
+[metadata]
+schema_version = 2
+name = "EnergyLIFNeuron"
+class_name = "EnergyLIFNeuron"
+module = "energy_lif"
+display_name = ""
+summary = "Fardet & Levina 2020 — LIF with metabolic energy constraint."
+family = ""
+category = ""
+biophysical_detail = "point"
+maturity = "experimental"
+intended_use = []
+hardware_fit = []
+behavior_tags = []
+
+[provenance]
+
+[state.v]
+init = -70.0
+
+[parameters.epsilon]
+default = 1.0
+unit = ""
+meaning = ""
+
+[parameters.v_rest]
+default = -70.0
+unit = ""
+meaning = ""
+
+[parameters.v_reset]
+default = -70.0
+unit = ""
+meaning = ""
+
+[parameters.v_threshold]
+default = -50.0
+unit = ""
+meaning = ""
+
+[parameters.tau_m]
+default = 10.0
+unit = ""
+meaning = ""
+
+[parameters.tau_e]
+default = 500.0
+unit = ""
+meaning = ""
+
+[parameters.alpha]
+default = 0.1
+unit = ""
+meaning = ""
+
+[parameters.epsilon_0]
+default = 1.0
+unit = ""
+meaning = ""
+
+[parameters.resistance]
+default = 1.0
+unit = ""
+meaning = ""
+
+[integration]
+dt = 1.0
+method = "euler"
+
+[dynamics]
+
+[backends.python]
+status = "implemented"
+
+[reproducibility]
+
+[documentation]
+slug = "models/energy_lif"
+notes = ""

@@ -1,0 +1,64 @@
+[metadata]
+schema_version = 2
+name = "SuperSpikeNeuron"
+class_name = "SuperSpikeNeuron"
+module = "superspike_neuron"
+display_name = ""
+summary = "Zenke & Ganguli 2018 — LIF with SuperSpike surrogate gradient."
+family = ""
+category = ""
+biophysical_detail = "point"
+maturity = "experimental"
+intended_use = []
+hardware_fit = []
+behavior_tags = []
+
+[provenance]
+
+[state.v]
+init = 0.0
+
+[parameters.trace]
+default = 0.0
+unit = ""
+meaning = ""
+
+[parameters.tau_m]
+default = 10.0
+unit = ""
+meaning = ""
+
+[parameters.tau_e]
+default = 10.0
+unit = ""
+meaning = ""
+
+[parameters.v_threshold]
+default = 1.0
+unit = ""
+meaning = ""
+
+[parameters.v_reset]
+default = 0.0
+unit = ""
+meaning = ""
+
+[parameters.beta_sg]
+default = 10.0
+unit = ""
+meaning = ""
+
+[integration]
+dt = 1.0
+method = "euler"
+
+[dynamics]
+
+[backends.python]
+status = "implemented"
+
+[reproducibility]
+
+[documentation]
+slug = "models/superspike_neuron"
+notes = ""

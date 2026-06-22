@@ -1,0 +1,119 @@
+[metadata]
+schema_version = 2
+name = "SSTNeuron"
+class_name = "SSTNeuron"
+module = "sst_neuron"
+display_name = ""
+summary = "SST+ (somatostatin) low-threshold spiking interneuron."
+family = ""
+category = ""
+biophysical_detail = "point"
+maturity = "experimental"
+intended_use = []
+hardware_fit = []
+behavior_tags = []
+
+[provenance]
+
+[state.v]
+init = -65.0
+
+[state.m]
+init = 0.02
+
+[state.h]
+init = 0.8
+
+[state.n]
+init = 0.2
+
+[state.s]
+init = 0.9
+
+[state.r]
+init = 0.1
+
+[parameters.p]
+default = 0.0
+unit = ""
+meaning = ""
+
+[parameters.g_na]
+default = 50.0
+unit = ""
+meaning = ""
+
+[parameters.g_k]
+default = 5.0
+unit = ""
+meaning = ""
+
+[parameters.g_m]
+default = 0.12
+unit = ""
+meaning = ""
+
+[parameters.g_t]
+default = 0.01
+unit = ""
+meaning = ""
+
+[parameters.g_h]
+default = 0.02
+unit = ""
+meaning = ""
+
+[parameters.g_l]
+default = 0.05
+unit = ""
+meaning = ""
+
+[parameters.e_na]
+default = 50.0
+unit = ""
+meaning = ""
+
+[parameters.e_k]
+default = -90.0
+unit = ""
+meaning = ""
+
+[parameters.e_ca]
+default = 120.0
+unit = ""
+meaning = ""
+
+[parameters.e_h]
+default = -40.0
+unit = ""
+meaning = ""
+
+[parameters.e_l]
+default = -65.0
+unit = ""
+meaning = ""
+
+[parameters.c_m]
+default = 1.0
+unit = ""
+meaning = ""
+
+[parameters.v_threshold]
+default = -20.0
+unit = ""
+meaning = ""
+
+[integration]
+dt = 0.025
+method = "euler"
+
+[dynamics]
+
+[backends.python]
+status = "implemented"
+
+[reproducibility]
+
+[documentation]
+slug = "models/sst_neuron"
+notes = ""

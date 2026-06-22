@@ -1,0 +1,64 @@
+[metadata]
+schema_version = 2
+name = "StochasticIFNeuron"
+class_name = "StochasticIFNeuron"
+module = "stochastic_if"
+display_name = ""
+summary = "Brunel & Hakim 1999 — Ornstein-Uhlenbeck driven IF."
+family = ""
+category = ""
+biophysical_detail = "point"
+maturity = "experimental"
+intended_use = []
+hardware_fit = []
+behavior_tags = []
+
+[provenance]
+
+[state.v]
+init = -70.0
+
+[parameters.v_rest]
+default = -70.0
+unit = ""
+meaning = ""
+
+[parameters.v_reset]
+default = -70.0
+unit = ""
+meaning = ""
+
+[parameters.v_threshold]
+default = -50.0
+unit = ""
+meaning = ""
+
+[parameters.tau_m]
+default = 20.0
+unit = ""
+meaning = ""
+
+[parameters.mu]
+default = 0.0
+unit = ""
+meaning = ""
+
+[parameters.sigma]
+default = 3.0
+unit = ""
+meaning = ""
+
+[integration]
+dt = 1.0
+method = "euler"
+
+[dynamics]
+
+[backends.python]
+status = "implemented"
+
+[reproducibility]
+
+[documentation]
+slug = "models/stochastic_if"
+notes = ""

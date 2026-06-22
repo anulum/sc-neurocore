@@ -1,0 +1,59 @@
+[metadata]
+schema_version = 2
+name = "CompositionalBindingNeuron"
+class_name = "CompositionalBindingNeuron"
+module = "ai_optimized"
+display_name = ""
+summary = "Phase-coding neuron for variable binding."
+family = ""
+category = ""
+biophysical_detail = "point"
+maturity = "experimental"
+intended_use = []
+hardware_fit = []
+behavior_tags = []
+
+[provenance]
+
+[state.theta]
+init = 0.8
+
+[parameters.phi]
+default = 0.0
+unit = ""
+meaning = ""
+
+[parameters.amplitude]
+default = 0.0
+unit = ""
+meaning = ""
+
+[parameters.omega]
+default = 0.1
+unit = ""
+meaning = ""
+
+[parameters.coupling]
+default = 0.5
+unit = ""
+meaning = ""
+
+[parameters.tau]
+default = 10.0
+unit = ""
+meaning = ""
+
+[integration]
+dt = 1.0
+method = "euler"
+
+[dynamics]
+
+[backends.python]
+status = "implemented"
+
+[reproducibility]
+
+[documentation]
+slug = "models/ai_optimized"
+notes = ""

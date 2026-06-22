@@ -1,0 +1,75 @@
+[metadata]
+schema_version = 2
+name = "ShermanRinzelKeizerNeuron"
+class_name = "ShermanRinzelKeizerNeuron"
+module = "sherman_rinzel_keizer"
+display_name = ""
+summary = "Sherman, Rinzel & Keizer 1988 reduced pancreatic beta-cell burster."
+family = ""
+category = ""
+biophysical_detail = "point"
+maturity = "experimental"
+intended_use = []
+hardware_fit = []
+behavior_tags = []
+
+[provenance]
+
+[state.v]
+init = -50.0
+
+[state.n]
+init = 0.1
+
+[state.s]
+init = 0.1
+
+[parameters.g_ca]
+default = 3.6
+unit = ""
+meaning = ""
+
+[parameters.g_k]
+default = 10.0
+unit = ""
+meaning = ""
+
+[parameters.g_s]
+default = 4.0
+unit = ""
+meaning = ""
+
+[parameters.e_ca]
+default = 25.0
+unit = ""
+meaning = ""
+
+[parameters.e_k]
+default = -75.0
+unit = ""
+meaning = ""
+
+[parameters.tau_s]
+default = 5000.0
+unit = ""
+meaning = ""
+
+[parameters.v_threshold]
+default = -20.0
+unit = ""
+meaning = ""
+
+[integration]
+dt = 0.5
+method = "euler"
+
+[dynamics]
+
+[backends.python]
+status = "implemented"
+
+[reproducibility]
+
+[documentation]
+slug = "models/sherman_rinzel_keizer"
+notes = ""

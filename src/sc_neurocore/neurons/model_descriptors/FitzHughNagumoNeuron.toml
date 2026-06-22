@@ -1,0 +1,64 @@
+[metadata]
+schema_version = 2
+name = "FitzHugh-Nagumo"
+class_name = "FitzHughNagumoNeuron"
+module = "fitzhugh_nagumo"
+display_name = ""
+summary = "2D qualitative spike model — cubic v-nullcline relaxation oscillator"
+family = ""
+category = ""
+biophysical_detail = "point"
+maturity = "experimental"
+intended_use = []
+hardware_fit = []
+behavior_tags = []
+
+[provenance]
+authors = [
+    "FitzHugh, R.",
+]
+year = 1961
+doi = "10.1016/S0006-3495(61)86902-6"
+
+[state.v]
+init = -1.0
+
+[state.w]
+init = -0.5
+
+[parameters.a]
+default = 0.7
+unit = ""
+meaning = ""
+
+[parameters.b]
+default = 0.8
+unit = ""
+meaning = ""
+
+[parameters.epsilon]
+default = 0.08
+unit = ""
+meaning = ""
+
+[parameters.v_threshold]
+default = 1.0
+unit = ""
+meaning = ""
+
+[integration]
+dt = 0.1
+method = "euler"
+
+[dynamics]
+v = "v - v**3 / 3 - w + I"
+w = "epsilon * (v + a - b * w)"
+
+[backends.python]
+status = "implemented"
+
+[reproducibility]
+
+[documentation]
+slug = "models/fitzhugh_nagumo"
+notes = ""

@@ -1,0 +1,78 @@
+[metadata]
+schema_version = 2
+name = "Izhikevich2007Neuron"
+class_name = "Izhikevich2007Neuron"
+module = "izhikevich2007"
+display_name = ""
+summary = "Izhikevich 2007 biophysical quadratic integrate-and-fire neuron."
+family = ""
+category = ""
+biophysical_detail = "point"
+maturity = "experimental"
+intended_use = []
+hardware_fit = []
+behavior_tags = []
+
+[provenance]
+
+[state.vr]
+init = -60.0
+
+[state.vt]
+init = -40.0
+
+[state.v]
+init = 0.0
+
+[state.u]
+init = 0.0
+
+[parameters.C]
+default = 100.0
+unit = ""
+meaning = ""
+
+[parameters.k]
+default = 0.7
+unit = ""
+meaning = ""
+
+[parameters.vpeak]
+default = 35.0
+unit = ""
+meaning = ""
+
+[parameters.a]
+default = 0.03
+unit = ""
+meaning = ""
+
+[parameters.b]
+default = -2.0
+unit = ""
+meaning = ""
+
+[parameters.c]
+default = -50.0
+unit = ""
+meaning = ""
+
+[parameters.d]
+default = 100.0
+unit = ""
+meaning = ""
+
+[integration]
+dt = 0.1
+method = "euler"
+
+[dynamics]
+
+[backends.python]
+status = "implemented"
+
+[reproducibility]
+
+[documentation]
+slug = "models/izhikevich2007"
+notes = ""

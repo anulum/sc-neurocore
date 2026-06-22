@@ -1,0 +1,128 @@
+[metadata]
+schema_version = 2
+name = "AlphaMotorNeuron"
+class_name = "AlphaMotorNeuron"
+module = "alpha_motor_neuron"
+display_name = ""
+summary = "Alpha motor neuron with WB Na/K, PIC, and Ca-dependent AHP dynamics."
+family = ""
+category = ""
+biophysical_detail = "point"
+maturity = "experimental"
+intended_use = []
+hardware_fit = []
+behavior_tags = []
+
+[provenance]
+
+[state.v]
+init = -65.0
+
+[state.h]
+init = 0.8
+
+[state.n]
+init = 0.1
+
+[state.ca]
+init = 0.0
+
+[parameters.m_pic]
+default = 0.0
+unit = ""
+meaning = ""
+
+[parameters.h_pic]
+default = 1.0
+unit = ""
+meaning = ""
+
+[parameters.ca_buf]
+default = 0.0
+unit = ""
+meaning = ""
+
+[parameters.g_na]
+default = 35.0
+unit = ""
+meaning = ""
+
+[parameters.g_k]
+default = 9.0
+unit = ""
+meaning = ""
+
+[parameters.g_pic]
+default = 0.15
+unit = ""
+meaning = ""
+
+[parameters.g_ahp]
+default = 3.0
+unit = ""
+meaning = ""
+
+[parameters.g_l]
+default = 0.3
+unit = ""
+meaning = ""
+
+[parameters.e_na]
+default = 55.0
+unit = ""
+meaning = ""
+
+[parameters.e_k]
+default = -90.0
+unit = ""
+meaning = ""
+
+[parameters.e_ca]
+default = 120.0
+unit = ""
+meaning = ""
+
+[parameters.e_l]
+default = -65.0
+unit = ""
+meaning = ""
+
+[parameters.c_m]
+default = 1.5
+unit = ""
+meaning = ""
+
+[parameters.phi]
+default = 4.0
+unit = ""
+meaning = ""
+
+[parameters.tau_ca]
+default = 150.0
+unit = ""
+meaning = ""
+
+[parameters.buf_ratio]
+default = 0.003
+unit = ""
+meaning = ""
+
+[parameters.v_threshold]
+default = -20.0
+unit = ""
+meaning = ""
+
+[integration]
+dt = 0.01
+method = "euler"
+
+[dynamics]
+
+[backends.python]
+status = "implemented"
+
+[reproducibility]
+
+[documentation]
+slug = "models/alpha_motor_neuron"
+notes = ""

@@ -1,0 +1,64 @@
+[metadata]
+schema_version = 2
+name = "AmariNeuralField"
+class_name = "AmariNeuralField"
+module = "amari_field"
+display_name = ""
+summary = "Amari 1977 — continuous neural field, discretized on N nodes."
+family = ""
+category = ""
+biophysical_detail = "point"
+maturity = "experimental"
+intended_use = []
+hardware_fit = []
+behavior_tags = []
+
+[provenance]
+
+[state.n]
+init = 64.0
+
+[parameters.tau]
+default = 10.0
+unit = ""
+meaning = ""
+
+[parameters.a_exc]
+default = 1.5
+unit = ""
+meaning = ""
+
+[parameters.a_width]
+default = 1.0
+unit = ""
+meaning = ""
+
+[parameters.b_inh]
+default = 0.75
+unit = ""
+meaning = ""
+
+[parameters.b_width]
+default = 2.0
+unit = ""
+meaning = ""
+
+[parameters.dx]
+default = 0.5
+unit = ""
+meaning = ""
+
+[integration]
+dt = 0.5
+method = "euler"
+
+[dynamics]
+
+[backends.python]
+status = "implemented"
+
+[reproducibility]
+
+[documentation]
+slug = "models/amari_field"
+notes = ""

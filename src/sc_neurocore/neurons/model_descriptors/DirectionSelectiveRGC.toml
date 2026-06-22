@@ -1,0 +1,67 @@
+[metadata]
+schema_version = 2
+name = "DirectionSelectiveRGC"
+class_name = "DirectionSelectiveRGC"
+module = "direction_selective_rgc"
+display_name = ""
+summary = "Direction-selective retinal ganglion cell."
+family = ""
+category = ""
+biophysical_detail = "point"
+maturity = "experimental"
+intended_use = []
+hardware_fit = []
+behavior_tags = []
+
+[provenance]
+
+[state.theta]
+init = 0.5
+
+[state.v]
+init = 0.0
+
+[parameters.tau]
+default = 10.0
+unit = ""
+meaning = ""
+
+[parameters.w_centre]
+default = 1.0
+unit = ""
+meaning = ""
+
+[parameters.w_surround]
+default = 0.3
+unit = ""
+meaning = ""
+
+[parameters.direction_pref]
+default = 0.0
+unit = ""
+meaning = ""
+
+[parameters._prev_intensity]
+default = 0.0
+unit = ""
+meaning = ""
+
+[parameters._surround]
+default = 0.0
+unit = ""
+meaning = ""
+
+[integration]
+dt = 1.0
+method = "euler"
+
+[dynamics]
+
+[backends.python]
+status = "implemented"
+
+[reproducibility]
+
+[documentation]
+slug = "models/direction_selective_rgc"
+notes = ""

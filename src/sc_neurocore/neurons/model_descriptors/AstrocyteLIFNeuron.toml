@@ -1,0 +1,75 @@
+[metadata]
+schema_version = 2
+name = "AstrocyteLIFNeuron"
+class_name = "AstrocyteLIFNeuron"
+module = "astrocyte_lif"
+display_name = ""
+summary = "Astrocyte-LIF hybrid with tripartite synapse feedback."
+family = ""
+category = ""
+biophysical_detail = "point"
+maturity = "experimental"
+intended_use = []
+hardware_fit = []
+behavior_tags = []
+
+[provenance]
+
+[state.theta]
+init = -50.0
+
+[state.v]
+init = -65.0
+
+[state.ca]
+init = 0.0
+
+[parameters.tau_m]
+default = 20.0
+unit = ""
+meaning = ""
+
+[parameters.tau_ca]
+default = 500.0
+unit = ""
+meaning = ""
+
+[parameters.e_l]
+default = -65.0
+unit = ""
+meaning = ""
+
+[parameters.v_reset]
+default = -65.0
+unit = ""
+meaning = ""
+
+[parameters.ca_delta]
+default = 0.1
+unit = ""
+meaning = ""
+
+[parameters.ca_thresh]
+default = 0.5
+unit = ""
+meaning = ""
+
+[parameters.g_glio]
+default = 2.0
+unit = ""
+meaning = ""
+
+[integration]
+dt = 0.1
+method = "euler"
+
+[dynamics]
+
+[backends.python]
+status = "implemented"
+
+[reproducibility]
+
+[documentation]
+slug = "models/astrocyte_lif"
+notes = ""

@@ -1,0 +1,94 @@
+[metadata]
+schema_version = 2
+name = "MotorUnit"
+class_name = "MotorUnit"
+module = "motor_unit"
+display_name = ""
+summary = "Motor unit — alpha motor neuron + muscle fibre."
+family = ""
+category = ""
+biophysical_detail = "point"
+maturity = "experimental"
+intended_use = []
+hardware_fit = []
+behavior_tags = []
+
+[provenance]
+
+[state.v]
+init = -65.0
+
+[parameters.v_rest]
+default = -65.0
+unit = ""
+meaning = ""
+
+[parameters.v_reset]
+default = -70.0
+unit = ""
+meaning = ""
+
+[parameters.v_threshold]
+default = -50.0
+unit = ""
+meaning = ""
+
+[parameters.tau_m]
+default = 10.0
+unit = ""
+meaning = ""
+
+[parameters.adapt]
+default = 0.0
+unit = ""
+meaning = ""
+
+[parameters.tau_adapt]
+default = 100.0
+unit = ""
+meaning = ""
+
+[parameters.a_adapt]
+default = 0.2
+unit = ""
+meaning = ""
+
+[parameters.gain]
+default = 1.0
+unit = ""
+meaning = ""
+
+[parameters.force]
+default = 0.0
+unit = ""
+meaning = ""
+
+[parameters.twitch_amp]
+default = 0.05
+unit = ""
+meaning = ""
+
+[parameters.tau_twitch]
+default = 90.0
+unit = ""
+meaning = ""
+
+[parameters.force_decay]
+default = 0.0
+unit = ""
+meaning = ""
+
+[integration]
+dt = 0.5
+method = "euler"
+
+[dynamics]
+
+[backends.python]
+status = "implemented"
+
+[reproducibility]
+
+[documentation]
+slug = "models/motor_unit"
+notes = ""

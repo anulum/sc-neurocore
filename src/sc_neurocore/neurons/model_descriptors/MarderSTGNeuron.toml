@@ -1,0 +1,162 @@
+[metadata]
+schema_version = 2
+name = "MarderSTGNeuron"
+class_name = "MarderSTGNeuron"
+module = "marder_stg"
+display_name = ""
+summary = "Marder & Selverston 1992 — stomatogastric ganglion neuron."
+family = ""
+category = ""
+biophysical_detail = "point"
+maturity = "experimental"
+intended_use = []
+hardware_fit = []
+behavior_tags = []
+
+[provenance]
+
+[state.v]
+init = -60.0
+
+[state.ca]
+init = 0.05
+
+[parameters.m_na]
+default = 0.0
+unit = ""
+meaning = ""
+
+[parameters.h_na]
+default = 0.9
+unit = ""
+meaning = ""
+
+[parameters.m_cat]
+default = 0.0
+unit = ""
+meaning = ""
+
+[parameters.h_cat]
+default = 0.9
+unit = ""
+meaning = ""
+
+[parameters.m_cas]
+default = 0.0
+unit = ""
+meaning = ""
+
+[parameters.m_a]
+default = 0.0
+unit = ""
+meaning = ""
+
+[parameters.h_a]
+default = 0.9
+unit = ""
+meaning = ""
+
+[parameters.m_kd]
+default = 0.0
+unit = ""
+meaning = ""
+
+[parameters.m_h]
+default = 0.0
+unit = ""
+meaning = ""
+
+[parameters.g_na]
+default = 200.0
+unit = ""
+meaning = ""
+
+[parameters.g_cat]
+default = 2.5
+unit = ""
+meaning = ""
+
+[parameters.g_cas]
+default = 4.0
+unit = ""
+meaning = ""
+
+[parameters.g_a]
+default = 50.0
+unit = ""
+meaning = ""
+
+[parameters.g_kca]
+default = 25.0
+unit = ""
+meaning = ""
+
+[parameters.g_kd]
+default = 75.0
+unit = ""
+meaning = ""
+
+[parameters.g_h]
+default = 0.01
+unit = ""
+meaning = ""
+
+[parameters.g_l]
+default = 0.01
+unit = ""
+meaning = ""
+
+[parameters.e_na]
+default = 50.0
+unit = ""
+meaning = ""
+
+[parameters.e_ca]
+default = 80.0
+unit = ""
+meaning = ""
+
+[parameters.e_k]
+default = -80.0
+unit = ""
+meaning = ""
+
+[parameters.e_h]
+default = -20.0
+unit = ""
+meaning = ""
+
+[parameters.e_l]
+default = -50.0
+unit = ""
+meaning = ""
+
+[parameters.ca_decay]
+default = 0.02
+unit = ""
+meaning = ""
+
+[parameters.f_ca]
+default = 0.0003
+unit = ""
+meaning = ""
+
+[parameters.v_threshold]
+default = -20.0
+unit = ""
+meaning = ""
+
+[integration]
+dt = 0.05
+method = "euler"
+
+[dynamics]
+
+[backends.python]
+status = "implemented"
+
+[reproducibility]
+
+[documentation]
+slug = "models/marder_stg"
+notes = ""

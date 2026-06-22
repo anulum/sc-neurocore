@@ -1,0 +1,73 @@
+[metadata]
+schema_version = 2
+name = "Hindmarsh-Rose"
+class_name = "HindmarshRoseNeuron"
+module = "hindmarsh_rose"
+display_name = ""
+summary = "3D chaotic bursting model with slow adaptation variable"
+family = ""
+category = ""
+biophysical_detail = "point"
+maturity = "experimental"
+intended_use = []
+hardware_fit = []
+behavior_tags = []
+
+[provenance]
+authors = [
+    "Hindmarsh, J.L. & Rose, R.M.",
+]
+year = 1984
+doi = "10.1098/rspb.1984.0024"
+
+[state.x]
+init = -1.6
+
+[state.y]
+init = -10.0
+
+[state.z]
+init = 2.0
+
+[parameters.b]
+default = 3.0
+unit = ""
+meaning = ""
+
+[parameters.r]
+default = 0.001
+unit = ""
+meaning = ""
+
+[parameters.s]
+default = 4.0
+unit = ""
+meaning = ""
+
+[parameters.x_rest]
+default = -1.6
+unit = ""
+meaning = ""
+
+[parameters.x_threshold]
+default = 1.0
+unit = ""
+meaning = ""
+
+[integration]
+dt = 0.1
+method = "euler"
+
+[dynamics]
+x = "y - x**3 + b * x**2 - z + I"
+y = "1 - 5 * x**2 - y"
+z = "r * (s * (x - x_rest) - z)"
+
+[backends.python]
+status = "implemented"
+
+[reproducibility]
+
+[documentation]
+slug = "models/hindmarsh_rose"
+notes = ""

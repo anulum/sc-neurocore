@@ -1,0 +1,57 @@
+[metadata]
+schema_version = 2
+name = "ErmentroutKopellPopulation"
+class_name = "ErmentroutKopellPopulation"
+module = "ermentrout_kopell_pop"
+display_name = ""
+summary = "Montbrio, Pazo & Roxin 2015 — exact mean-field of QIF/theta network."
+family = ""
+category = ""
+biophysical_detail = "point"
+maturity = "experimental"
+intended_use = []
+hardware_fit = []
+behavior_tags = []
+
+[provenance]
+
+[state.r]
+init = 0.1
+
+[state.v]
+init = -2.0
+
+[parameters.tau]
+default = 1.0
+unit = ""
+meaning = ""
+
+[parameters.delta]
+default = 1.0
+unit = ""
+meaning = ""
+
+[parameters.eta_bar]
+default = -5.0
+unit = ""
+meaning = ""
+
+[parameters.j]
+default = 15.0
+unit = ""
+meaning = ""
+
+[integration]
+dt = 0.01
+method = "euler"
+
+[dynamics]
+
+[backends.python]
+status = "implemented"
+
+[reproducibility]
+
+[documentation]
+slug = "models/ermentrout_kopell_pop"
+notes = ""

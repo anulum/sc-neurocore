@@ -1,0 +1,149 @@
+[metadata]
+schema_version = 2
+name = "ArcaneNeuron"
+class_name = "ArcaneNeuron"
+module = "arcane_neuron"
+display_name = ""
+summary = "Unified self-referential cognition neuron for persistent identity."
+family = ""
+category = ""
+biophysical_detail = "point"
+maturity = "experimental"
+intended_use = []
+hardware_fit = []
+behavior_tags = []
+
+[provenance]
+
+[state.theta]
+init = 1.0
+
+[parameters.v_fast]
+default = 0.0
+unit = ""
+meaning = ""
+
+[parameters.tau_fast]
+default = 5.0
+unit = ""
+meaning = ""
+
+[parameters.v_work]
+default = 0.0
+unit = ""
+meaning = ""
+
+[parameters.tau_work]
+default = 200.0
+unit = ""
+meaning = ""
+
+[parameters.alpha_w]
+default = 0.3
+unit = ""
+meaning = ""
+
+[parameters.v_deep]
+default = 0.0
+unit = ""
+meaning = ""
+
+[parameters.tau_deep]
+default = 10000.0
+unit = ""
+meaning = ""
+
+[parameters.alpha_d]
+default = 0.05
+unit = ""
+meaning = ""
+
+[parameters.gamma]
+default = 0.2
+unit = ""
+meaning = ""
+
+[parameters.delta_conf]
+default = 0.3
+unit = ""
+meaning = ""
+
+[parameters.kappa]
+default = 5.0
+unit = ""
+meaning = ""
+
+[parameters.surprise_baseline]
+default = 0.1
+unit = ""
+meaning = ""
+
+[parameters.lr_base]
+default = 0.01
+unit = ""
+meaning = ""
+
+[parameters.eta]
+default = 2.0
+unit = ""
+meaning = ""
+
+[parameters._prediction]
+default = 0.0
+unit = ""
+meaning = ""
+
+[parameters._surprise]
+default = 0.0
+unit = ""
+meaning = ""
+
+[parameters._novelty]
+default = 0.0
+unit = ""
+meaning = ""
+
+[parameters._confidence]
+default = 0.5
+unit = ""
+meaning = ""
+
+[parameters._hist_idx]
+default = 0.0
+unit = ""
+meaning = ""
+
+[parameters._nov_idx]
+default = 0.0
+unit = ""
+meaning = ""
+
+[parameters._total_steps]
+default = 0.0
+unit = ""
+meaning = ""
+
+[parameters._identity_drift]
+default = 0.0
+unit = ""
+meaning = ""
+
+[parameters.w_inh]
+default = 0.3
+unit = ""
+meaning = ""
+
+[integration]
+dt = 1.0
+method = "euler"
+
+[dynamics]
+
+[backends.python]
+status = "implemented"
+
+[reproducibility]
+
+[documentation]
+slug = "models/arcane_neuron"
+notes = ""

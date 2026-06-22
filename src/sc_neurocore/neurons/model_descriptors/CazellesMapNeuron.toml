@@ -1,0 +1,64 @@
+[metadata]
+schema_version = 2
+name = "CazellesMapNeuron"
+class_name = "CazellesMapNeuron"
+module = "cazelles_map"
+display_name = ""
+summary = "Cazelles et al. 2001 — simple 2D bursting map neuron."
+family = ""
+category = ""
+biophysical_detail = "point"
+maturity = "experimental"
+intended_use = []
+hardware_fit = []
+behavior_tags = []
+
+[provenance]
+
+[state.v]
+init = -65.0
+
+[parameters.x]
+default = 0.1
+unit = ""
+meaning = ""
+
+[parameters.y]
+default = 0.0
+unit = ""
+meaning = ""
+
+[parameters.a]
+default = 3.8
+unit = ""
+meaning = ""
+
+[parameters.epsilon]
+default = 0.01
+unit = ""
+meaning = ""
+
+[parameters.sigma]
+default = 0.5
+unit = ""
+meaning = ""
+
+[parameters.x_threshold]
+default = 0.9
+unit = ""
+meaning = ""
+
+[integration]
+dt = 0.1
+method = "euler"
+
+[dynamics]
+
+[backends.python]
+status = "implemented"
+
+[reproducibility]
+
+[documentation]
+slug = "models/cazelles_map"
+notes = ""

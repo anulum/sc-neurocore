@@ -1,0 +1,74 @@
+[metadata]
+schema_version = 2
+name = "DendriticNMDANeuron"
+class_name = "DendriticNMDANeuron"
+module = "dendritic_nmda"
+display_name = ""
+summary = "Two-compartment neuron with NMDA Mg2+ block (Jahr & Stevens 1990)."
+family = ""
+category = ""
+biophysical_detail = "point"
+maturity = "experimental"
+intended_use = []
+hardware_fit = []
+behavior_tags = []
+
+[provenance]
+
+[state.theta]
+init = -50.0
+
+[parameters.g_nmda]
+default = 1.5
+unit = ""
+meaning = ""
+
+[parameters.e_nmda]
+default = 0.0
+unit = ""
+meaning = ""
+
+[parameters.mg_conc]
+default = 1.0
+unit = ""
+meaning = ""
+
+[parameters.g_coupling]
+default = 0.5
+unit = ""
+meaning = ""
+
+[parameters.tau_soma]
+default = 20.0
+unit = ""
+meaning = ""
+
+[parameters.tau_dend]
+default = 50.0
+unit = ""
+meaning = ""
+
+[parameters.v_soma]
+default = -65.0
+unit = ""
+meaning = ""
+
+[parameters.v_dend]
+default = -65.0
+unit = ""
+meaning = ""
+
+[integration]
+dt = 0.1
+method = "euler"
+
+[dynamics]
+
+[backends.python]
+status = "implemented"
+
+[reproducibility]
+
+[documentation]
+slug = "models/dendritic_nmda"
+notes = ""

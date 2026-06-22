@@ -1,0 +1,72 @@
+[metadata]
+schema_version = 2
+name = "PernarowskiNeuron"
+class_name = "PernarowskiNeuron"
+module = "pernarowski"
+display_name = ""
+summary = "Pernarowski 1994 pancreatic beta-cell burster."
+family = ""
+category = ""
+biophysical_detail = "point"
+maturity = "experimental"
+intended_use = []
+hardware_fit = []
+behavior_tags = []
+
+[provenance]
+
+[state.v]
+init = -1.0
+
+[state.w]
+init = 0.0
+
+[parameters.z]
+default = 0.0
+unit = ""
+meaning = ""
+
+[parameters.alpha]
+default = 0.1
+unit = ""
+meaning = ""
+
+[parameters.beta]
+default = 0.5
+unit = ""
+meaning = ""
+
+[parameters.eps1]
+default = 0.1
+unit = ""
+meaning = ""
+
+[parameters.eps2]
+default = 0.001
+unit = ""
+meaning = ""
+
+[parameters.gamma]
+default = 0.5
+unit = ""
+meaning = ""
+
+[parameters.v_threshold]
+default = 0.5
+unit = ""
+meaning = ""
+
+[integration]
+dt = 0.1
+method = "euler"
+
+[dynamics]
+
+[backends.python]
+status = "implemented"
+
+[reproducibility]
+
+[documentation]
+slug = "models/pernarowski"
+notes = ""

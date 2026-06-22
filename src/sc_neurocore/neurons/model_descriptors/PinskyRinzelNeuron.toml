@@ -1,0 +1,125 @@
+[metadata]
+schema_version = 2
+name = "PinskyRinzelNeuron"
+class_name = "PinskyRinzelNeuron"
+module = "pinsky_rinzel"
+display_name = ""
+summary = "Pinsky-Rinzel 1994 — 2-compartment pyramidal cell."
+family = ""
+category = ""
+biophysical_detail = "point"
+maturity = "experimental"
+intended_use = []
+hardware_fit = []
+behavior_tags = []
+
+[provenance]
+
+[state.h]
+init = 0.9
+
+[state.n]
+init = 0.1
+
+[state.s]
+init = 0.0
+
+[parameters.v_s]
+default = -60.0
+unit = ""
+meaning = ""
+
+[parameters.v_d]
+default = -60.0
+unit = ""
+meaning = ""
+
+[parameters.c]
+default = 0.0
+unit = ""
+meaning = ""
+
+[parameters.q]
+default = 0.0
+unit = ""
+meaning = ""
+
+[parameters.gc]
+default = 2.1
+unit = ""
+meaning = ""
+
+[parameters.p]
+default = 0.5
+unit = ""
+meaning = ""
+
+[parameters.g_na]
+default = 30.0
+unit = ""
+meaning = ""
+
+[parameters.g_kdr]
+default = 15.0
+unit = ""
+meaning = ""
+
+[parameters.g_ca]
+default = 10.0
+unit = ""
+meaning = ""
+
+[parameters.g_kahp]
+default = 0.8
+unit = ""
+meaning = ""
+
+[parameters.g_kc]
+default = 15.0
+unit = ""
+meaning = ""
+
+[parameters.g_l]
+default = 0.1
+unit = ""
+meaning = ""
+
+[parameters.e_na]
+default = 60.0
+unit = ""
+meaning = ""
+
+[parameters.e_k]
+default = -75.0
+unit = ""
+meaning = ""
+
+[parameters.e_ca]
+default = 80.0
+unit = ""
+meaning = ""
+
+[parameters.e_l]
+default = -60.0
+unit = ""
+meaning = ""
+
+[parameters.v_threshold]
+default = -20.0
+unit = ""
+meaning = ""
+
+[integration]
+dt = 0.02
+method = "euler"
+
+[dynamics]
+
+[backends.python]
+status = "implemented"
+
+[reproducibility]
+
+[documentation]
+slug = "models/pinsky_rinzel"
+notes = ""

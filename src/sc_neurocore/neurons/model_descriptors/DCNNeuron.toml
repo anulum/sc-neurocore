@@ -1,0 +1,149 @@
+[metadata]
+schema_version = 2
+name = "DCNNeuron"
+class_name = "DCNNeuron"
+module = "dcn_neuron"
+display_name = ""
+summary = "Deep cerebellar nuclei neuron — main output of the cerebellum."
+family = ""
+category = ""
+biophysical_detail = "point"
+maturity = "experimental"
+intended_use = []
+hardware_fit = []
+behavior_tags = []
+
+[provenance]
+
+[state.v]
+init = -60.0
+
+[state.h]
+init = 0.6
+
+[state.n]
+init = 0.32
+
+[state.s]
+init = 0.8
+
+[state.r]
+init = 0.1
+
+[state.ca]
+init = 0.05
+
+[parameters.p]
+default = 0.01
+unit = ""
+meaning = ""
+
+[parameters.g_na]
+default = 35.0
+unit = ""
+meaning = ""
+
+[parameters.g_nap]
+default = 0.5
+unit = ""
+meaning = ""
+
+[parameters.g_k]
+default = 9.0
+unit = ""
+meaning = ""
+
+[parameters.g_t]
+default = 0.1
+unit = ""
+meaning = ""
+
+[parameters.g_ahp]
+default = 2.0
+unit = ""
+meaning = ""
+
+[parameters.g_h]
+default = 0.02
+unit = ""
+meaning = ""
+
+[parameters.g_l]
+default = 0.2
+unit = ""
+meaning = ""
+
+[parameters.e_na]
+default = 55.0
+unit = ""
+meaning = ""
+
+[parameters.e_k]
+default = -90.0
+unit = ""
+meaning = ""
+
+[parameters.e_ca]
+default = 120.0
+unit = ""
+meaning = ""
+
+[parameters.e_h]
+default = -40.0
+unit = ""
+meaning = ""
+
+[parameters.e_l]
+default = -65.0
+unit = ""
+meaning = ""
+
+[parameters.c_m]
+default = 1.0
+unit = ""
+meaning = ""
+
+[parameters.phi]
+default = 5.0
+unit = ""
+meaning = ""
+
+[parameters.tau_ca]
+default = 150.0
+unit = ""
+meaning = ""
+
+[parameters.kd_ahp]
+default = 0.5
+unit = ""
+meaning = ""
+
+[parameters.v_threshold]
+default = -20.0
+unit = ""
+meaning = ""
+
+[parameters.gain]
+default = 1.0
+unit = ""
+meaning = ""
+
+[parameters._sub_steps]
+default = 20.0
+unit = ""
+meaning = ""
+
+[integration]
+dt = 0.5
+method = "euler"
+
+[dynamics]
+
+[backends.python]
+status = "implemented"
+
+[reproducibility]
+
+[documentation]
+slug = "models/dcn_neuron"
+notes = ""

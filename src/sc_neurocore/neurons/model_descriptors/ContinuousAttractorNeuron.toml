@@ -1,0 +1,59 @@
+[metadata]
+schema_version = 2
+name = "ContinuousAttractorNeuron"
+class_name = "ContinuousAttractorNeuron"
+module = "ai_optimized"
+display_name = ""
+summary = "Ring attractor for continuous working memory."
+family = ""
+category = ""
+biophysical_detail = "point"
+maturity = "experimental"
+intended_use = []
+hardware_fit = []
+behavior_tags = []
+
+[provenance]
+
+[state.v]
+init = -65.0
+
+[parameters.n_units]
+default = 16.0
+unit = ""
+meaning = ""
+
+[parameters.tau]
+default = 10.0
+unit = ""
+meaning = ""
+
+[parameters.sigma_e]
+default = 1.0
+unit = ""
+meaning = ""
+
+[parameters.excitation]
+default = 4.0
+unit = ""
+meaning = ""
+
+[parameters.inhibition]
+default = 0.5
+unit = ""
+meaning = ""
+
+[integration]
+dt = 1.0
+method = "euler"
+
+[dynamics]
+
+[backends.python]
+status = "implemented"
+
+[reproducibility]
+
+[documentation]
+slug = "models/ai_optimized"
+notes = ""

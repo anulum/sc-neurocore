@@ -1,0 +1,54 @@
+[metadata]
+schema_version = 2
+name = "MedvedevMapNeuron"
+class_name = "MedvedevMapNeuron"
+module = "medvedev_map"
+display_name = ""
+summary = "Medvedev 2005 — 1D piecewise-monotone spiking map."
+family = ""
+category = ""
+biophysical_detail = "point"
+maturity = "experimental"
+intended_use = []
+hardware_fit = []
+behavior_tags = []
+
+[provenance]
+
+[state.v]
+init = -65.0
+
+[parameters.x]
+default = 0.0
+unit = ""
+meaning = ""
+
+[parameters.alpha]
+default = 3.5
+unit = ""
+meaning = ""
+
+[parameters.beta]
+default = 0.5
+unit = ""
+meaning = ""
+
+[parameters.x_threshold]
+default = 0.9
+unit = ""
+meaning = ""
+
+[integration]
+dt = 0.1
+method = "euler"
+
+[dynamics]
+
+[backends.python]
+status = "implemented"
+
+[reproducibility]
+
+[documentation]
+slug = "models/medvedev_map"
+notes = ""

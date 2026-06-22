@@ -1,0 +1,96 @@
+[metadata]
+schema_version = 2
+name = "MainenSejnowskiNeuron"
+class_name = "MainenSejnowskiNeuron"
+module = "mainen_sejnowski"
+display_name = ""
+summary = "Mainen & Sejnowski 1996 — axonal Na spike initiation model."
+family = ""
+category = ""
+biophysical_detail = "point"
+maturity = "experimental"
+intended_use = []
+hardware_fit = []
+behavior_tags = []
+
+[provenance]
+
+[state.vs]
+init = -65.0
+
+[state.va]
+init = -65.0
+
+[state.m]
+init = 0.05
+
+[state.h]
+init = 0.6
+
+[state.n]
+init = 0.3
+
+[parameters.kappa]
+default = 10.0
+unit = ""
+meaning = ""
+
+[parameters.g_na]
+default = 3000.0
+unit = ""
+meaning = ""
+
+[parameters.g_k]
+default = 1500.0
+unit = ""
+meaning = ""
+
+[parameters.g_l]
+default = 1.0
+unit = ""
+meaning = ""
+
+[parameters.e_na]
+default = 50.0
+unit = ""
+meaning = ""
+
+[parameters.e_k]
+default = -90.0
+unit = ""
+meaning = ""
+
+[parameters.e_l]
+default = -70.0
+unit = ""
+meaning = ""
+
+[parameters.c_s]
+default = 1.0
+unit = ""
+meaning = ""
+
+[parameters.c_a]
+default = 0.1
+unit = ""
+meaning = ""
+
+[parameters.v_threshold]
+default = -20.0
+unit = ""
+meaning = ""
+
+[integration]
+dt = 0.005
+method = "euler"
+
+[dynamics]
+
+[backends.python]
+status = "implemented"
+
+[reproducibility]
+
+[documentation]
+slug = "models/mainen_sejnowski"
+notes = ""

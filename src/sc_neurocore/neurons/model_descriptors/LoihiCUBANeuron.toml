@@ -1,0 +1,57 @@
+[metadata]
+schema_version = 2
+name = "LoihiCUBANeuron"
+class_name = "LoihiCUBANeuron"
+module = "loihi_cuba"
+display_name = ""
+summary = "Loihi CUBA LIF — Intel Loihi fixed-point neuron. Davies 2018."
+family = ""
+category = ""
+biophysical_detail = "point"
+maturity = "experimental"
+intended_use = []
+hardware_fit = []
+behavior_tags = []
+
+[provenance]
+
+[state.v]
+init = 0.0
+
+[state.u]
+init = 0.0
+
+[parameters.tau_v]
+default = 10.0
+unit = ""
+meaning = ""
+
+[parameters.tau_u]
+default = 5.0
+unit = ""
+meaning = ""
+
+[parameters.v_threshold]
+default = 1000.0
+unit = ""
+meaning = ""
+
+[parameters.v_reset]
+default = 0.0
+unit = ""
+meaning = ""
+
+[integration]
+dt = 0.1
+method = "euler"
+
+[dynamics]
+
+[backends.python]
+status = "implemented"
+
+[reproducibility]
+
+[documentation]
+slug = "models/loihi_cuba"
+notes = ""

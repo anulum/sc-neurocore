@@ -1,0 +1,64 @@
+[metadata]
+schema_version = 2
+name = "QuantumInspiredLIFNeuron"
+class_name = "QuantumInspiredLIFNeuron"
+module = "quantum_inspired_lif"
+display_name = ""
+summary = "Quantum-inspired LIF with complex amplitude and stochastic firing."
+family = ""
+category = ""
+biophysical_detail = "point"
+maturity = "experimental"
+intended_use = []
+hardware_fit = []
+behavior_tags = []
+
+[provenance]
+
+[state.theta]
+init = 1.0
+
+[parameters.tau]
+default = 20.0
+unit = ""
+meaning = ""
+
+[parameters.v_reset]
+default = 0.0
+unit = ""
+meaning = ""
+
+[parameters.seed]
+default = 12345.0
+unit = ""
+meaning = ""
+
+[parameters.z_re]
+default = 0.0
+unit = ""
+meaning = ""
+
+[parameters.z_im]
+default = 0.0
+unit = ""
+meaning = ""
+
+[parameters._rng_state]
+default = 0.0
+unit = ""
+meaning = ""
+
+[integration]
+dt = 0.1
+method = "euler"
+
+[dynamics]
+
+[backends.python]
+status = "implemented"
+
+[reproducibility]
+
+[documentation]
+slug = "models/quantum_inspired_lif"
+notes = ""

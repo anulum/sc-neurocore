@@ -1,0 +1,54 @@
+[metadata]
+schema_version = 2
+name = "HybridLinearAttentionNeuron"
+class_name = "HybridLinearAttentionNeuron"
+module = "hybrid_linear_attention"
+display_name = ""
+summary = "Hybrid linear attention spiking neuron."
+family = ""
+category = ""
+biophysical_detail = "point"
+maturity = "experimental"
+intended_use = []
+hardware_fit = []
+behavior_tags = []
+
+[provenance]
+
+[state.v]
+init = 0.0
+
+[parameters.dim]
+default = 16.0
+unit = ""
+meaning = ""
+
+[parameters.lambda_decay]
+default = 0.95
+unit = ""
+meaning = ""
+
+[parameters.window_size]
+default = 16.0
+unit = ""
+meaning = ""
+
+[parameters._window_idx]
+default = 0.0
+unit = ""
+meaning = ""
+
+[integration]
+dt = 1.0
+method = "euler"
+
+[dynamics]
+
+[backends.python]
+status = "implemented"
+
+[reproducibility]
+
+[documentation]
+slug = "models/hybrid_linear_attention"
+notes = ""

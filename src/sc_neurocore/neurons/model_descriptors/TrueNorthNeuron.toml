@@ -1,0 +1,49 @@
+[metadata]
+schema_version = 2
+name = "TrueNorthNeuron"
+class_name = "TrueNorthNeuron"
+module = "truenorth"
+display_name = ""
+summary = "Merolla 2014 — IBM TrueNorth digital neuron."
+family = ""
+category = ""
+biophysical_detail = "point"
+maturity = "experimental"
+intended_use = []
+hardware_fit = []
+behavior_tags = []
+
+[provenance]
+
+[state.v]
+init = 0.0
+
+[parameters.leak]
+default = 0.0
+unit = ""
+meaning = ""
+
+[parameters.threshold]
+default = 100.0
+unit = ""
+meaning = ""
+
+[parameters.v_reset]
+default = 0.0
+unit = ""
+meaning = ""
+
+[integration]
+dt = 0.1
+method = "euler"
+
+[dynamics]
+
+[backends.python]
+status = "implemented"
+
+[reproducibility]
+
+[documentation]
+slug = "models/truenorth"
+notes = ""

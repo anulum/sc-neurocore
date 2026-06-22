@@ -1,0 +1,94 @@
+[metadata]
+schema_version = 2
+name = "HuberBraunNeuron"
+class_name = "HuberBraunNeuron"
+module = "huber_braun"
+display_name = ""
+summary = "Braun, Huber et al. 1998 — cold receptor, temperature-dependent."
+family = ""
+category = ""
+biophysical_detail = "point"
+maturity = "experimental"
+intended_use = []
+hardware_fit = []
+behavior_tags = []
+
+[provenance]
+
+[state.v]
+init = -50.0
+
+[parameters.a_sd]
+default = 0.0
+unit = ""
+meaning = ""
+
+[parameters.a_sr]
+default = 0.0
+unit = ""
+meaning = ""
+
+[parameters.g_sd]
+default = 1.5
+unit = ""
+meaning = ""
+
+[parameters.g_sr]
+default = 0.4
+unit = ""
+meaning = ""
+
+[parameters.g_l]
+default = 0.1
+unit = ""
+meaning = ""
+
+[parameters.e_sd]
+default = 50.0
+unit = ""
+meaning = ""
+
+[parameters.e_sr]
+default = -90.0
+unit = ""
+meaning = ""
+
+[parameters.e_l]
+default = -60.0
+unit = ""
+meaning = ""
+
+[parameters.tau_sd]
+default = 10.0
+unit = ""
+meaning = ""
+
+[parameters.tau_sr]
+default = 20.0
+unit = ""
+meaning = ""
+
+[parameters.eta]
+default = 0.012
+unit = ""
+meaning = ""
+
+[parameters.v_threshold]
+default = -20.0
+unit = ""
+meaning = ""
+
+[integration]
+dt = 0.1
+method = "euler"
+
+[dynamics]
+
+[backends.python]
+status = "implemented"
+
+[reproducibility]
+
+[documentation]
+slug = "models/huber_braun"
+notes = ""

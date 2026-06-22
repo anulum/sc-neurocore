@@ -1,0 +1,107 @@
+[metadata]
+schema_version = 2
+name = "MihalasNieburNeuron"
+class_name = "MihalasNieburNeuron"
+module = "mihalas_niebur"
+display_name = ""
+summary = "Mihalas-Niebur generalised integrate-and-fire neuron."
+family = ""
+category = ""
+biophysical_detail = "point"
+maturity = "experimental"
+intended_use = []
+hardware_fit = []
+behavior_tags = []
+
+[provenance]
+
+[state.v]
+init = 0.0
+
+[state.theta]
+init = 1.0
+
+[parameters.i1]
+default = 0.0
+unit = ""
+meaning = ""
+
+[parameters.i2]
+default = 0.0
+unit = ""
+meaning = ""
+
+[parameters.v_rest]
+default = 0.0
+unit = ""
+meaning = ""
+
+[parameters.v_reset]
+default = 0.0
+unit = ""
+meaning = ""
+
+[parameters.theta_reset]
+default = 1.0
+unit = ""
+meaning = ""
+
+[parameters.theta_inf]
+default = 1.0
+unit = ""
+meaning = ""
+
+[parameters.tau_v]
+default = 10.0
+unit = ""
+meaning = ""
+
+[parameters.tau_theta]
+default = 100.0
+unit = ""
+meaning = ""
+
+[parameters.tau_1]
+default = 10.0
+unit = ""
+meaning = ""
+
+[parameters.tau_2]
+default = 200.0
+unit = ""
+meaning = ""
+
+[parameters.a]
+default = 0.0
+unit = ""
+meaning = ""
+
+[parameters.b]
+default = 0.0
+unit = ""
+meaning = ""
+
+[parameters.r1]
+default = 0.0
+unit = ""
+meaning = ""
+
+[parameters.r2]
+default = 0.0
+unit = ""
+meaning = ""
+
+[integration]
+dt = 1.0
+method = "euler"
+
+[dynamics]
+
+[backends.python]
+status = "implemented"
+
+[reproducibility]
+
+[documentation]
+slug = "models/mihalas_niebur"
+notes = ""

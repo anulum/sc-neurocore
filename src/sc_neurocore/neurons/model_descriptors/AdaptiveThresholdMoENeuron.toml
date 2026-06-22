@@ -1,0 +1,54 @@
+[metadata]
+schema_version = 2
+name = "AdaptiveThresholdMoENeuron"
+class_name = "AdaptiveThresholdMoENeuron"
+module = "adaptive_threshold_moe"
+display_name = ""
+summary = "Adaptive threshold MoE spiking neuron (SpikingBrain)."
+family = ""
+category = ""
+biophysical_detail = "point"
+maturity = "experimental"
+intended_use = []
+hardware_fit = []
+behavior_tags = []
+
+[provenance]
+
+[state.v]
+init = 0.0
+
+[parameters.k]
+default = 4.0
+unit = ""
+meaning = ""
+
+[parameters.ema_alpha]
+default = 0.1
+unit = ""
+meaning = ""
+
+[parameters.v_th]
+default = 1.0
+unit = ""
+meaning = ""
+
+[parameters._mean_abs_x]
+default = 0.0
+unit = ""
+meaning = ""
+
+[integration]
+dt = 0.1
+method = "euler"
+
+[dynamics]
+
+[backends.python]
+status = "implemented"
+
+[reproducibility]
+
+[documentation]
+slug = "models/adaptive_threshold_moe"
+notes = ""

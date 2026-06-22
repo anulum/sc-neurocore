@@ -1,0 +1,149 @@
+[metadata]
+schema_version = 2
+name = "CompteWMNeuron"
+class_name = "CompteWMNeuron"
+module = "compte_wm"
+display_name = ""
+summary = "Compte et al. NMDA-based working-memory neuron with Mg2+ block."
+family = ""
+category = ""
+biophysical_detail = "point"
+maturity = "experimental"
+intended_use = []
+hardware_fit = []
+behavior_tags = []
+
+[provenance]
+
+[state.v]
+init = -70.0
+
+[parameters.s_ampa]
+default = 0.0
+unit = ""
+meaning = ""
+
+[parameters.s_nmda]
+default = 0.0
+unit = ""
+meaning = ""
+
+[parameters.x_nmda]
+default = 0.0
+unit = ""
+meaning = ""
+
+[parameters.s_gaba]
+default = 0.0
+unit = ""
+meaning = ""
+
+[parameters.g_l]
+default = 0.025
+unit = ""
+meaning = ""
+
+[parameters.g_ampa]
+default = 0.005
+unit = ""
+meaning = ""
+
+[parameters.g_nmda]
+default = 0.165
+unit = ""
+meaning = ""
+
+[parameters.g_gaba]
+default = 0.013
+unit = ""
+meaning = ""
+
+[parameters.e_l]
+default = -70.0
+unit = ""
+meaning = ""
+
+[parameters.e_exc]
+default = 0.0
+unit = ""
+meaning = ""
+
+[parameters.e_inh]
+default = -70.0
+unit = ""
+meaning = ""
+
+[parameters.c_m]
+default = 0.5
+unit = ""
+meaning = ""
+
+[parameters.mg]
+default = 1.0
+unit = ""
+meaning = ""
+
+[parameters.tau_ampa]
+default = 2.0
+unit = ""
+meaning = ""
+
+[parameters.tau_nmda]
+default = 100.0
+unit = ""
+meaning = ""
+
+[parameters.tau_x]
+default = 2.0
+unit = ""
+meaning = ""
+
+[parameters.alpha_nmda]
+default = 0.5
+unit = ""
+meaning = ""
+
+[parameters.v_threshold]
+default = -50.0
+unit = ""
+meaning = ""
+
+[parameters.v_reset]
+default = -55.0
+unit = ""
+meaning = ""
+
+[parameters._V_MIN]
+default = -200.0
+unit = ""
+meaning = ""
+
+[parameters._V_MAX]
+default = 100.0
+unit = ""
+meaning = ""
+
+[parameters._GATE_MAX]
+default = 1000000.0
+unit = ""
+meaning = ""
+
+[parameters._GABA_TAU]
+default = 5.0
+unit = ""
+meaning = ""
+
+[integration]
+dt = 0.1
+method = "euler"
+
+[dynamics]
+
+[backends.python]
+status = "implemented"
+
+[reproducibility]
+
+[documentation]
+slug = "models/compte_wm"
+notes = ""
