@@ -114,6 +114,18 @@ class TestSpikeDetector:
         for s in spikes:
             assert s.timestamp_s >= 0
 
+    def test_edge_spike_waveform_is_padded_to_fixed_length(self):
+        # A spike close to the start of the recording yields a truncated raw
+        # snippet that must be left-padded to the fixed snippet length.
+        cfg = MEAConfig(num_channels=1, sample_rate_hz=20000.0, spike_threshold_sigma=3.0)
+        det = SpikeDetector(config=cfg, refractory_samples=0)
+        data = np.random.default_rng(0).normal(0.0, 1.0, size=(2000, 1))
+        data[5, 0] = -100.0  # strong spike within half a snippet of the edge
+        spikes = det.detect(data)
+        assert spikes, "edge spike should be detected"
+        target_len = 2 * int(2.0 * 20000.0 / 2000.0)
+        assert all(len(s.waveform) == target_len for s in spikes)
+
 
 # ── MEAToAERTranscoder Tests ─────────────────────────────────────────
 
@@ -179,6 +191,14 @@ class TestAERToSCConverter:
         conv = AERToSCConverter()
         bs = conv.convert([])
         assert len(bs) == 0
+
+    def test_lfsr_encode_zero_seed_is_reset(self):
+        # A zero LFSR register is a fixed point; with lfsr_seed=0 and neuron 0
+        # the derived seed is 0 and must be bumped to 1 before stepping.
+        conv = AERToSCConverter(bitstream_length=64, num_neurons=4, lfsr_seed=0)
+        bits = conv._lfsr_encode(0.5, neuron_id=0)
+        assert bits.shape == (64,)
+        assert bits.dtype == np.uint8
 
 
 # ── SCToOptoEncoder Tests ────────────────────────────────────────────
@@ -293,6 +313,14 @@ class TestCultureHealth:
         result = ch.assess(counts, duration_s=1.0)
         assert result["bursting_channels"] == 2
 
+    def test_excessive_firing_rate_caps_health(self):
+        # A mean rate above the hyperactivity ceiling scales the health score
+        # down rather than leaving it at 1.0.
+        ch = CultureHealth(min_active_channels=1, max_firing_rate_hz=10.0)
+        counts = np.full(8, 1000.0)
+        result = ch.assess(counts, duration_s=1.0)
+        assert result["health_score"] < 1.0
+
 
 # ── BioHybridSession Tests ───────────────────────────────────────────
 
@@ -348,6 +376,31 @@ class TestBioHybridSession:
         result = session.process_frame(data)
         assert "latency_us" in result
         assert result["latency_us"] > 0
+
+    def test_process_frame_runs_all_optional_stages(self):
+        cfg = MEAConfig(num_channels=10)
+        captured: dict = {}
+
+        class _ZenithStub:
+            def step_from_bio_rates(self, rates):
+                captured["rates"] = rates
+
+        session = BioHybridSession(
+            mea_config=cfg,
+            detector=SpikeDetector(config=cfg),
+            transcoder=MEAToAERTranscoder(hw_clock_hz=1e6),
+            sc_converter=AERToSCConverter(bitstream_length=128, num_neurons=10),
+            opto_encoder=SCToOptoEncoder(),
+            artifact_rejector=ArtifactRejector(),
+            sorter=SpikeSorter(num_units=3),
+            pharm_model=PharmModel(),
+            latency_budget=LatencyBudget(),
+            zenith_core=_ZenithStub(),
+        )
+        data = _synth_voltage(n_channels=10)
+        result = session.process_frame(data, stim_times_s=[0.001])
+        assert result["round"] == 1
+        assert "rates" in captured  # the zenith stage received decoded rates
 
 
 # ── Refractory Period Tests ──────────────────────────────────────────
@@ -483,6 +536,29 @@ class TestSpikeSorter:
         result = sorter.assign([])
         assert len(result) == 0
 
+    def test_assign_passes_through_spike_without_waveform(self):
+        pytest.importorskip("sklearn")
+        rng = np.random.default_rng(seed=7)
+        t = np.linspace(0.0, 1.0, 32, dtype=np.float64)
+        shapes = [-30.0 * np.sin(np.pi * t), -60.0 * np.sin(np.pi * t) ** 2]
+        train = [
+            DetectedSpike(
+                channel=0,
+                timestamp_s=0.01 * rep + 0.1 * unit,
+                amplitude_uv=float(base.min()),
+                waveform=base + rng.normal(0.0, 1.5, size=base.shape),
+            )
+            for unit, base in enumerate(shapes)
+            for rep in range(6)
+        ]
+        sorter = SpikeSorter(num_units=2)
+        sorter.fit(train)
+        # A spike with no recorded waveform cannot be projected and is passed
+        # through unchanged.
+        no_wave = DetectedSpike(channel=1, timestamp_s=0.5, amplitude_uv=-50.0, waveform=None)
+        result = sorter.assign([no_wave])
+        assert result == [no_wave]
+
 
 # ── LFP Extraction Tests (Gap 2) ───────────────────────────────────────
 
@@ -529,6 +605,15 @@ class TestLatencyBudget:
         for i in range(100):
             lb.record(float(i))
         assert lb.p99_latency_us > 90.0
+
+    def test_mean_latency(self):
+        lb = LatencyBudget()
+        lb.record(100.0)
+        lb.record(300.0)
+        assert lb.mean_latency_us == pytest.approx(200.0)
+
+    def test_compliance_ratio_empty_history(self):
+        assert LatencyBudget().compliance_ratio == 1.0
 
 
 # ── PharmModel Tests (Gap 4) ───────────────────────────────────────────
@@ -588,6 +673,45 @@ class TestPharmModel:
         assert min(timestamps) >= spikes[0].timestamp_s
         assert max(timestamps) <= spikes[-1].timestamp_s
         assert {s.channel for s in result} == {0, 1}
+
+    def test_modulate_negative_gain_raises(self):
+        pm = PharmModel(gain=-1.0, onset_delay_s=0.0)
+        pm.apply(0.0)
+        spikes = [DetectedSpike(channel=0, timestamp_s=0.0, amplitude_uv=-40.0)]
+        with pytest.raises(ValueError, match="finite and >= 0"):
+            pm.modulate_spike_events(spikes, 1.0)
+
+    def test_modulate_unit_gain_preserves_events(self):
+        pm = PharmModel(gain=1.0, onset_delay_s=0.0)
+        pm.apply(0.0)
+        spikes = [
+            DetectedSpike(channel=0, timestamp_s=i * 0.001, amplitude_uv=-40.0) for i in range(4)
+        ]
+        result = pm.modulate_spike_events(spikes, 1.0)
+        assert len(result) == 4  # gain 1.0 -> target count equals input count
+
+    def test_modulate_excitatory_non_finite_timestamp_raises(self):
+        pm = PharmModel(gain=2.0, onset_delay_s=0.0)
+        pm.apply(0.0)
+        spikes = [
+            DetectedSpike(channel=0, timestamp_s=0.0, amplitude_uv=-40.0),
+            DetectedSpike(channel=0, timestamp_s=float("inf"), amplitude_uv=-40.0),
+        ]
+        with pytest.raises(ValueError, match="timestamps must be finite"):
+            pm.modulate_spike_events(spikes, 1.0)
+
+    def test_modulate_excitatory_single_spike_clones(self):
+        pm = PharmModel(gain=3.0, onset_delay_s=0.0)
+        pm.apply(0.0)
+        spikes = [DetectedSpike(channel=0, timestamp_s=0.005, amplitude_uv=-40.0)]
+        result = pm.modulate_spike_events(spikes, 1.0)
+        assert len(result) == 3  # single observed spike plus two clones
+
+    def test_quantile_indices_edge_counts(self):
+        from sc_neurocore.bioware.bioware import _quantile_indices
+
+        assert _quantile_indices(3, 5) == [0, 1, 2]  # target >= n keeps all
+        assert _quantile_indices(5, 1) == [0]  # a single sample takes the head
 
 
 # ── Multi-Well Plate Tests (Gap 5) ─────────────────────────────────────
@@ -896,6 +1020,24 @@ class TestMEAFitnessHook:
         ]
         r = mea_fitness_hook(spikes, stimulus_time_s=0.100)
         assert r["latency_ms"] == pytest.approx(25.0)
+
+    def test_latency_zero_when_no_spike_follows_stimulus(self):
+        # Every spike precedes the stimulus, so there is no causal response.
+        spikes = [DetectedSpike(channel=0, timestamp_s=0.05, amplitude_uv=-40.0)]
+        r = mea_fitness_hook(spikes, stimulus_time_s=0.1)
+        assert r["latency_ms"] == 0.0
+
+    def test_latency_non_finite_timestamp_raises(self):
+        spikes = [DetectedSpike(channel=0, timestamp_s=float("inf"), amplitude_uv=-40.0)]
+        with pytest.raises(ValueError, match="timestamps must be finite"):
+            mea_fitness_hook(spikes)
+
+    def test_response_latency_empty_spikes_without_measured_is_zero(self):
+        from sc_neurocore.bioware.bioware import _mea_response_latency_ms
+
+        assert (
+            _mea_response_latency_ms([], stimulus_time_s=None, measured_latency_ms=None) == 0.0
+        )
 
     def test_latency_without_stimulus_uses_first_spike_timestamp(self):
         spikes = [

@@ -150,21 +150,17 @@ class SpikeDetector:
                 start = max(0, idx - half)
                 end = min(n_samples, idx + half)
 
-                # Pad if too close to edges
+                # Pad if too close to edges. The raw slice length is at most
+                # 2*half == target_len (it is min(n, idx+half) - max(0, idx-half)),
+                # and for an edge spike (idx < half) the slice starts at 0 so
+                # pad_before = half - idx exactly closes the gap: pad_after is
+                # never negative and the padded waveform is exactly target_len.
                 raw_wave = voltage_data[start:end, ch].copy()
                 target_len = int(2 * half)
                 if len(raw_wave) < target_len:
                     pad_before = max(0, half - idx)
-                    pad_after = target_len - len(raw_wave) - pad_before
-                    # ensure we don't end up with negative pad_after in edge cases
-                    pad_after = max(0, pad_after)
+                    pad_after = max(0, target_len - len(raw_wave) - pad_before)
                     raw_wave = np.pad(raw_wave, (pad_before, pad_after), "constant")
-
-                # Strict bound to prevent arbitrary dimension mismatches
-                if len(raw_wave) > target_len:
-                    raw_wave = raw_wave[:target_len]
-                elif len(raw_wave) < target_len:
-                    raw_wave = np.pad(raw_wave, (0, target_len - len(raw_wave)), "constant")
 
                 spikes.append(
                     DetectedSpike(
@@ -825,10 +821,12 @@ class PharmModel:
             insert_times = np.linspace(timestamps[0], timestamps[-1], extra + 2)[1:-1]
             synthetic = []
             for t in insert_times:
+                # insert_times are strictly interior to (timestamps[0],
+                # timestamps[-1]) — the linspace endpoints are dropped — so for
+                # t < timestamps[-1] a left-side searchsorted always yields
+                # idx <= len(ordered) - 1; no upper clamp is reachable.
                 idx = int(np.searchsorted(timestamps, t, side="left"))
-                if idx >= len(ordered):
-                    idx = len(ordered) - 1
-                elif idx > 0 and abs(timestamps[idx - 1] - t) <= abs(timestamps[idx] - t):
+                if idx > 0 and abs(timestamps[idx - 1] - t) <= abs(timestamps[idx] - t):
                     idx -= 1
                 synthetic.append(_clone_spike(ordered[idx], timestamp_s=float(t)))
 
