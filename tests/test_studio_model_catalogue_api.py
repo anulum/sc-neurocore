@@ -44,6 +44,19 @@ def test_list_models_serves_declared_family_and_provenance() -> None:
     assert provenance["doi"] == "10.1152/jn.00686.2005"
 
 
+def test_summary_exposes_completeness_tier_and_evidence_kind() -> None:
+    by_name = {m["name"]: m for m in list_models()}
+    adex = by_name["AdExNeuron"]
+    assert adex["tier"] >= 2
+    assert adex["evidence_kind"] == "curated"
+    fhn = by_name["FitzHughNagumoNeuron"]
+    assert fhn["tier"] == 3
+    assert fhn["evidence_kind"] == "measured"
+    lapicque = by_name["LapicqueNeuron"]
+    assert lapicque["tier"] < 2
+    assert lapicque["evidence_kind"] == ""
+
+
 def test_no_model_falls_into_an_other_bucket() -> None:
     """Every model now declares a real family — the 'Other' bucket is gone."""
 

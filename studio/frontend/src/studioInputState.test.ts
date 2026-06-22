@@ -32,6 +32,8 @@ function modelDetail(overrides: Partial<ModelDetail> = {}): ModelDetail {
     name: "lif",
     module: "lif",
     category: "point",
+    tier: 2,
+    evidence_kind: "curated",
     category_slug: "point",
     category_source: "declared",
     family: "point",

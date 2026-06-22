@@ -78,6 +78,7 @@ export interface ModelProvenance {
 
 export interface ModelSummary {
   name: string; module: string; category: string;
+  tier: number; evidence_kind: string;
   category_slug: string; category_source: string; family: string;
   maturity: string; biophysical_detail: string;
   n_state_vars: number; n_params: number; state_var_names: string[];

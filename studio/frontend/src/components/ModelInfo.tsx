@@ -1,4 +1,5 @@
 import { useStudioStore } from "../stores/studio";
+import EvidenceTierBadge from "./EvidenceTierBadge";
 
 export default function ModelInfo() {
   const { sourceMode, modelDetail, equations, odeParams, odeInit, dt, duration } = useStudioStore();
@@ -13,6 +14,7 @@ export default function ModelInfo() {
           {modelDetail.docstring || modelDetail.name}
         </div>
         <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginBottom: 4, alignItems: "center" }}>
+          <EvidenceTierBadge tier={modelDetail.tier} evidenceKind={modelDetail.evidence_kind} full />
           {modelDetail.family && (
             <span style={{ fontSize: 10, color: "var(--accent)" }}>{modelDetail.family}</span>
           )}

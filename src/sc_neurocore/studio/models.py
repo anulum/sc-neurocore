@@ -23,7 +23,20 @@ except ImportError:
 
 
 from sc_neurocore.neurons.model_catalogue import load_descriptor
-from sc_neurocore.neurons.model_descriptor import ModelDescriptor
+from sc_neurocore.neurons.model_descriptor import (
+    ModelDescriptor,
+    descriptor_completeness_tier,
+)
+
+
+def _evidence_kind(tier: int) -> str:
+    """Map a completeness tier to the SCPN-Studio evidence modality."""
+
+    if tier >= 3:
+        return "measured"
+    if tier == 2:
+        return "curated"
+    return ""
 from sc_neurocore.neurons.models import _CLASS_TO_MODULE
 
 # State variable names that change during .step() — common across models
@@ -271,9 +284,12 @@ def _provenance_summary(descriptor: ModelDescriptor) -> dict[str, Any] | None:
 def _descriptor_summary(descriptor: ModelDescriptor) -> dict[str, Any]:
     """Build a catalogue list entry from a declared descriptor."""
 
+    tier = descriptor_completeness_tier(descriptor)
     return {
         "name": descriptor.class_name,
         "module": descriptor.module,
+        "tier": tier,
+        "evidence_kind": _evidence_kind(tier),
         # ``category`` carries the family display name so existing clients group
         # by the curated family; the fine slug is exposed separately.
         "category": descriptor.family,
@@ -342,6 +358,8 @@ def _introspected_summary(name: str) -> dict[str, Any]:
     return {
         "name": name,
         "module": _CLASS_TO_MODULE[name],
+        "tier": 0,
+        "evidence_kind": "",
         "category": _categorize(name),
         "category_slug": "",
         "category_source": "inferred",

@@ -39,6 +39,8 @@ function modelSummary(overrides: Partial<ModelSummary> = {}): ModelSummary {
     name: "lif",
     module: "lif",
     category: "point",
+    tier: 2,
+    evidence_kind: "curated",
     category_slug: "point",
     category_source: "declared",
     family: "point",

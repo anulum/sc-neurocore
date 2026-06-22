@@ -8,6 +8,7 @@ import {
   type ModelScanMetadata,
 } from "../api/client";
 import EvidenceSummaryStrip, { type EvidenceSummaryItem } from "./EvidenceSummaryStrip";
+import EvidenceTierBadge from "./EvidenceTierBadge";
 
 const MATURITY_COLORS: Record<string, string> = {
   validated: "#81c784",
@@ -204,6 +205,7 @@ export default function ModelBrowser() {
                 }}>
                   <span>{m.name.replace("Neuron", "").replace("Model", "")}</span>
                   <span style={{ display: "flex", gap: 4, alignItems: "center" }}>
+                    <EvidenceTierBadge tier={m.tier} evidenceKind={m.evidence_kind} />
                     {m.provenance?.doi && (
                       <a
                         href={`https://doi.org/${m.provenance.doi}`}
