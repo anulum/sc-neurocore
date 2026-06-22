@@ -257,3 +257,43 @@ def test_json_export_surfaces_oserror(monkeypatch, tmp_path):
     monkeypatch.setattr(builtins, "open", _failing_open)
     with pytest.raises(OSError, match="disk full"):
         SCOnnxExporter._export_json(layers, str(out))
+
+
+class DenseWeightedLayer:
+    """Dense-named layer exposing weights so the weight-emitting branches run."""
+
+    def __init__(self, n_inputs: int, n_neurons: int):
+        self.n_inputs = n_inputs
+        self.n_neurons = n_neurons
+        self.length = 8
+        self.weights = np.ones((n_inputs, n_neurons), dtype=np.float32)
+
+
+def test_json_export_emits_weight_sidecar_for_dense_layer(tmp_path):
+    """A Dense layer with weights is classified SC_Dense and gets a weight sidecar."""
+    out = tmp_path / "dense.json"
+    SCOnnxExporter.export([DenseWeightedLayer(3, 2)], str(out))
+
+    graph = json.loads(out.read_text())
+    node = graph["nodes"][0]
+
+    assert node["op_type"] == "SC_Dense"
+    assert node["attributes"]["has_weights"] is True
+    sidecar = node["attributes"]["weights_file"]
+    assert os.path.exists(sidecar)
+    np.testing.assert_array_equal(np.load(sidecar), np.ones((3, 2), dtype=np.float32))
+
+
+def test_protobuf_export_embeds_dense_weights_initializer(tmp_path):
+    """A Dense layer with weights is exported as an ONNX initializer in the protobuf graph."""
+    onnx = pytest.importorskip("onnx")
+    out = tmp_path / "dense.onnx"
+
+    SCOnnxExporter.export([DenseWeightedLayer(3, 2)], str(out))
+
+    model = onnx.load(str(out))
+    node = model.graph.node[0]
+    assert node.op_type == "SC_Dense"
+    assert "Layer_0_weights" in node.input
+    initializer_names = {init.name for init in model.graph.initializer}
+    assert "Layer_0_weights" in initializer_names
