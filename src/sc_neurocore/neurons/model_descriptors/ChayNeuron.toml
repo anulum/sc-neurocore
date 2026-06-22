@@ -14,6 +14,11 @@ hardware_fit = []
 behavior_tags = []
 
 [provenance]
+authors = [
+    "Chay, T.R.",
+]
+year = 1985
+doi = "10.1016/0167-2789(85)90060-0"
 
 [state.v]
 init = -50.0
@@ -26,58 +31,102 @@ init = 0.1
 
 [parameters.g_ca]
 default = 25.0
-unit = ""
-meaning = ""
+unit = "1"
+meaning = "nondimensionalised maximal calcium conductance (reduced conductance, Chay scaling)"
+range = [
+    0.0,
+    200.0,
+]
 
 [parameters.g_k]
 default = 1400.0
-unit = ""
-meaning = ""
+unit = "1"
+meaning = "nondimensionalised maximal voltage-gated potassium conductance"
+range = [
+    0.0,
+    3000.0,
+]
 
 [parameters.g_kca]
 default = 12.0
-unit = ""
-meaning = ""
+unit = "1"
+meaning = "nondimensionalised maximal calcium-activated potassium conductance"
+range = [
+    0.0,
+    100.0,
+]
 
 [parameters.g_l]
 default = 7.0
-unit = ""
-meaning = ""
+unit = "1"
+meaning = "nondimensionalised leak conductance"
+range = [
+    0.0,
+    50.0,
+]
 
 [parameters.e_ca]
 default = 100.0
-unit = ""
-meaning = ""
+unit = "mV"
+meaning = "calcium reversal potential"
+range = [
+    50.0,
+    150.0,
+]
 
 [parameters.e_k]
 default = -75.0
-unit = ""
-meaning = ""
+unit = "mV"
+meaning = "potassium reversal potential"
+range = [
+    -100.0,
+    -50.0,
+]
 
 [parameters.e_l]
 default = -40.0
-unit = ""
-meaning = ""
+unit = "mV"
+meaning = "leak reversal potential"
+range = [
+    -60.0,
+    -20.0,
+]
 
 [parameters.rho]
 default = 0.00015
-unit = ""
-meaning = ""
+unit = "1"
+meaning = "calcium timescale ratio; small values make the calcium dynamics slow"
+range = [
+    1e-05,
+    0.01,
+]
 
 [parameters.alpha_ca]
 default = 0.002
-unit = ""
-meaning = ""
+unit = "1"
+meaning = "nondimensionalised calcium influx coefficient from the calcium current"
+range = [
+    0.0,
+    0.1,
+]
 
 [parameters.k_ca]
 default = 0.04
-unit = ""
-meaning = ""
+unit = "1"
+meaning = "nondimensionalised calcium efflux rate coefficient"
+range = [
+    0.0,
+    1.0,
+]
 
 [parameters.v_threshold]
 default = -20.0
-unit = ""
-meaning = ""
+unit = "mV"
+meaning = "voltage at which a spike is registered"
+range = [
+    -40.0,
+    20.0,
+]
 
 [integration]
 dt = 0.02
