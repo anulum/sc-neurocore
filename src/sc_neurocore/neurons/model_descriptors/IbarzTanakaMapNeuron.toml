@@ -67,8 +67,8 @@ default = 3.0
 unit = "1"
 meaning = "level on x at which a spike is registered"
 range = [
-    -2.0,
-    2.0,
+    -5.0,
+    5.0,
 ]
 
 [parameters.x_reset]

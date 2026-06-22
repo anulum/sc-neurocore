@@ -58,7 +58,7 @@ default = -5.0
 unit = "1"
 meaning = "amplitude of the refractory reset kernel"
 range = [
-    0.0,
+    -50.0,
     50.0,
 ]
 

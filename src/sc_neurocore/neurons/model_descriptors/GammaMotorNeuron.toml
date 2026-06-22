@@ -44,8 +44,8 @@ default = -50.0
 unit = "mV"
 meaning = "spike-detection threshold"
 range = [
-    -40.0,
-    10.0,
+    -60.0,
+    -20.0,
 ]
 
 [parameters.tau]

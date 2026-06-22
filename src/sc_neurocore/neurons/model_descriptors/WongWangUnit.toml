@@ -28,11 +28,11 @@ init = 0.1
 
 [parameters.tau_s]
 default = 0.1
-unit = "ms"
+unit = "s"
 meaning = "NMDA gating-variable time constant"
 range = [
-    10.0,
-    200.0,
+    0.01,
+    0.5,
 ]
 
 [parameters.gamma]

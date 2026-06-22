@@ -137,7 +137,7 @@ unit = "mV"
 meaning = "sodium reversal potential"
 range = [
     30.0,
-    70.0,
+    100.0,
 ]
 
 [parameters.e_k]

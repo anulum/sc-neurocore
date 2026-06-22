@@ -178,7 +178,7 @@ default = 0.4
 unit = "mV"
 meaning = "slope of the second slow-variable activation"
 range = [
-    1.0,
+    0.01,
     30.0,
 ]
 

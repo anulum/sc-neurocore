@@ -95,7 +95,7 @@ unit = "1/s"
 meaning = "fast inhibitory synaptic rate constant"
 range = [
     10.0,
-    200.0,
+    1000.0,
 ]
 
 [parameters.g_rate]

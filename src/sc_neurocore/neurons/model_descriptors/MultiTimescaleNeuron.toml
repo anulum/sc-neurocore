@@ -48,7 +48,7 @@ unit = "ms"
 meaning = "slow-compartment time constant"
 range = [
     100.0,
-    5000.0,
+    20000.0,
 ]
 
 [parameters.alpha]
@@ -57,7 +57,7 @@ unit = "1"
 meaning = "fast-to-medium spike coupling weight"
 range = [
     0.0,
-    5.0,
+    20.0,
 ]
 
 [parameters.beta]

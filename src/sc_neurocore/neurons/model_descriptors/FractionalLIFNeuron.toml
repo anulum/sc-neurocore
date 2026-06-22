@@ -25,29 +25,29 @@ init = 0.0
 
 [parameters.v_rest]
 default = 0.0
-unit = "mV"
+unit = "1"
 meaning = "resting / leak reversal potential"
 range = [
-    -90.0,
-    -40.0,
+    -1.0,
+    1.0,
 ]
 
 [parameters.v_reset]
 default = 0.0
-unit = "mV"
+unit = "1"
 meaning = "membrane potential reset to after a spike"
 range = [
-    -90.0,
-    -40.0,
+    -1.0,
+    1.0,
 ]
 
 [parameters.v_threshold]
 default = 1.0
-unit = "mV"
+unit = "1"
 meaning = "voltage at which a spike is registered"
 range = [
-    -60.0,
-    -20.0,
+    0.0,
+    5.0,
 ]
 
 [parameters.alpha]

@@ -65,7 +65,7 @@ unit = "mS/cm^2"
 meaning = "maximal P-type calcium conductance"
 range = [
     0.0,
-    20.0,
+    100.0,
 ]
 
 [parameters.g_kca]

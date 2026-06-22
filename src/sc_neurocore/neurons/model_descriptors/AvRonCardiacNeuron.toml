@@ -86,8 +86,8 @@ default = -25.0
 unit = "mV"
 meaning = "slow inward current reversal potential"
 range = [
-    -90.0,
-    -40.0,
+    -50.0,
+    30.0,
 ]
 
 [parameters.e_l]

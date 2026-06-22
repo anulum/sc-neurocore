@@ -47,7 +47,7 @@ unit = "mS/cm^2"
 meaning = "maximal delayed-rectifier potassium conductance"
 range = [
     0.0,
-    100.0,
+    300.0,
 ]
 
 [parameters.g_kv3]
@@ -56,7 +56,7 @@ unit = "mS/cm^2"
 meaning = "maximal Kv3-type potassium conductance"
 range = [
     0.0,
-    100.0,
+    200.0,
 ]
 
 [parameters.g_l]

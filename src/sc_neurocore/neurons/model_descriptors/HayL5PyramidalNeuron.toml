@@ -220,11 +220,11 @@ range = [
 
 [parameters.ca_decay]
 default = 200.0
-unit = "1/ms"
-meaning = "calcium efflux (removal) rate"
+unit = "ms"
+meaning = "calcium decay time constant"
 range = [
-    0.001,
-    1.0,
+    10.0,
+    1000.0,
 ]
 
 [parameters.f_ca]

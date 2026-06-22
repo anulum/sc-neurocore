@@ -32,11 +32,11 @@ range = [
 
 [parameters.target_rate]
 default = 0.1
-unit = "Hz"
-meaning = "target self-firing rate for homeostatic modulation"
+unit = "1"
+meaning = "target self-firing fraction (spikes per window)"
 range = [
+    0.01,
     1.0,
-    200.0,
 ]
 
 [parameters.window]

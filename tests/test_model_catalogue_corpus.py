@@ -93,6 +93,31 @@ def test_every_parameter_has_a_complete_schema() -> None:
     )
 
 
+def test_every_parameter_default_lies_within_its_range() -> None:
+    """A declared valid range must contain the parameter's own default value.
+
+    A default outside its range is a curation bug — it makes the documented
+    bounds contradict the shipped model. This gate catches both a too-narrow
+    range and a unit mismatch (e.g. a normalised default under millivolt bounds).
+    """
+
+    out_of_range: list[str] = []
+    for class_name in _CLASS_TO_MODULE:
+        descriptor = load_descriptor(class_name)
+        assert descriptor is not None
+        for parameter in descriptor.parameters:
+            if parameter.value_range is None:
+                continue
+            low, high = parameter.value_range
+            if not low <= parameter.default <= high:
+                out_of_range.append(
+                    f"{class_name}.{parameter.name}={parameter.default} not in [{low}, {high}]"
+                )
+    assert not out_of_range, (
+        f"{len(out_of_range)} defaults outside their range: {sorted(out_of_range)[:20]}"
+    )
+
+
 def test_merge_preserves_curation_and_follows_code() -> None:
     """A merge keeps human curation but takes structure from the code."""
 

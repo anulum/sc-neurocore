@@ -60,7 +60,7 @@ unit = "ms"
 meaning = "deep (identity) compartment time constant"
 range = [
     100.0,
-    5000.0,
+    20000.0,
 ]
 
 [parameters.alpha_d]

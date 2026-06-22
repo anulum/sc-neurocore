@@ -37,20 +37,20 @@ init = 0.0
 
 [parameters.v_rest]
 default = 0.0
-unit = "mV"
+unit = "1"
 meaning = "resting potential"
 range = [
-    -90.0,
-    -40.0,
+    -1.0,
+    1.0,
 ]
 
 [parameters.v_threshold]
 default = 1.0
-unit = "mV"
+unit = "1"
 meaning = "firing threshold"
 range = [
-    -60.0,
-    -20.0,
+    0.0,
+    5.0,
 ]
 
 [parameters.tau_v]

@@ -50,7 +50,7 @@ unit = "mS/cm^2"
 meaning = "leak conductance"
 range = [
     0.0,
-    5.0,
+    20.0,
 ]
 
 [parameters.e_na]
