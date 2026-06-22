@@ -14,6 +14,11 @@ hardware_fit = []
 behavior_tags = []
 
 [provenance]
+authors = [
+    "Zhang, S., Yang, Q., Ma, C., Wu, J., Li, H. & Tan, K.C.",
+]
+year = 2024
+doi = "10.1609/aaai.v38i15.29625"
 
 [state.v_s]
 init = 0.0
@@ -26,28 +31,48 @@ init = 1.0
 
 [parameters.v_rest]
 default = 0.0
-unit = ""
-meaning = ""
+unit = "1"
+meaning = "resting potential (normalised)"
+range = [
+    -5.0,
+    5.0,
+]
 
 [parameters.v_reset]
 default = 0.0
-unit = ""
-meaning = ""
+unit = "1"
+meaning = "reset potential (normalised)"
+range = [
+    -5.0,
+    5.0,
+]
 
 [parameters.tau_s]
 default = 2.0
-unit = ""
-meaning = ""
+unit = "ms"
+meaning = "somatic-compartment time constant"
+range = [
+    1.0,
+    100.0,
+]
 
 [parameters.tau_d]
 default = 20.0
-unit = ""
-meaning = ""
+unit = "ms"
+meaning = "dendritic-compartment time constant"
+range = [
+    1.0,
+    200.0,
+]
 
 [parameters.kappa]
 default = 0.5
-unit = ""
-meaning = ""
+unit = "1"
+meaning = "soma-dendrite coupling factor"
+range = [
+    0.0,
+    2.0,
+]
 
 [integration]
 dt = 1.0

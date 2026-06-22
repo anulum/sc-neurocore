@@ -14,6 +14,11 @@ hardware_fit = []
 behavior_tags = []
 
 [provenance]
+authors = [
+    "Booth, V. & Rinzel, J.",
+]
+year = 1995
+doi = "10.1007/BF00961442"
 
 [state.vs]
 init = -65.0
@@ -35,83 +40,147 @@ init = 0.0
 
 [parameters.p]
 default = 0.5
-unit = ""
-meaning = ""
+unit = "1"
+meaning = "somatic compartment area fraction"
+range = [
+    0.01,
+    1.0,
+]
 
 [parameters.gc]
 default = 0.1
-unit = ""
-meaning = ""
+unit = "mS/cm^2"
+meaning = "soma-dendrite coupling conductance"
+range = [
+    0.0,
+    20.0,
+]
 
 [parameters.g_na]
 default = 120.0
-unit = ""
-meaning = ""
+unit = "mS/cm^2"
+meaning = "maximal sodium conductance"
+range = [
+    0.0,
+    200.0,
+]
 
 [parameters.g_k]
 default = 20.0
-unit = ""
-meaning = ""
+unit = "mS/cm^2"
+meaning = "maximal delayed-rectifier potassium conductance"
+range = [
+    0.0,
+    200.0,
+]
 
 [parameters.g_ca]
 default = 14.0
-unit = ""
-meaning = ""
+unit = "mS/cm^2"
+meaning = "maximal calcium conductance"
+range = [
+    0.0,
+    200.0,
+]
 
 [parameters.g_kca]
 default = 5.0
-unit = ""
-meaning = ""
+unit = "mS/cm^2"
+meaning = "maximal calcium-activated potassium conductance"
+range = [
+    0.0,
+    200.0,
+]
 
 [parameters.g_l]
 default = 0.51
-unit = ""
-meaning = ""
+unit = "mS/cm^2"
+meaning = "maximal leak conductance"
+range = [
+    0.0,
+    200.0,
+]
 
 [parameters.e_na]
 default = 55.0
-unit = ""
-meaning = ""
+unit = "mV"
+meaning = "sodium reversal potential"
+range = [
+    30.0,
+    70.0,
+]
 
 [parameters.e_k]
 default = -80.0
-unit = ""
-meaning = ""
+unit = "mV"
+meaning = "potassium reversal potential"
+range = [
+    -100.0,
+    -70.0,
+]
 
 [parameters.e_ca]
 default = 80.0
-unit = ""
-meaning = ""
+unit = "mV"
+meaning = "calcium reversal potential"
+range = [
+    60.0,
+    150.0,
+]
 
 [parameters.e_l]
 default = -60.0
-unit = ""
-meaning = ""
+unit = "mV"
+meaning = "leak reversal potential"
+range = [
+    -90.0,
+    -50.0,
+]
 
 [parameters.c_m]
 default = 1.0
-unit = ""
-meaning = ""
+unit = "uF/cm^2"
+meaning = "membrane capacitance"
+range = [
+    0.5,
+    2.0,
+]
 
 [parameters.alpha_ca]
 default = 0.009
-unit = ""
-meaning = ""
+unit = "1"
+meaning = "calcium influx coefficient from the calcium current"
+range = [
+    0.0,
+    1.0,
+]
 
 [parameters.k_ca]
 default = 0.18
-unit = ""
-meaning = ""
+unit = "1/ms"
+meaning = "calcium efflux (removal) rate"
+range = [
+    0.001,
+    1.0,
+]
 
 [parameters.f_ca]
 default = 0.0025
-unit = ""
-meaning = ""
+unit = "1"
+meaning = "fraction of free intracellular calcium"
+range = [
+    0.0001,
+    0.1,
+]
 
 [parameters.v_threshold]
 default = -20.0
-unit = ""
-meaning = ""
+unit = "mV"
+meaning = "voltage at which a spike is registered"
+range = [
+    -40.0,
+    20.0,
+]
 
 [integration]
 dt = 0.025
