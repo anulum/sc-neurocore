@@ -219,3 +219,39 @@ def test_evaluate_candidate_with_surrogate_sets_search_scores() -> None:
 
     assert evaluation.candidate.accuracy == 0.99
     assert evaluation.candidate.fitness == 0.99
+
+
+def test_candidate_layer_profiles_reject_mismatched_mac_counts() -> None:
+    with pytest.raises(ValueError, match="mac_counts length must match"):
+        candidate_layer_profiles(_candidate(), mac_counts=[64])  # candidate has two layers
+
+
+class _NoReportOptimiser:
+    def optimise(self, network: list[LayerProfile]) -> None:
+        return None
+
+
+def test_optimise_candidate_policy_requires_a_report() -> None:
+    with pytest.raises(RuntimeError, match="returned no report"):
+        optimise_candidate_policy(_candidate(), _NoReportOptimiser())
+
+
+def test_optimise_candidate_policy_returns_unapplied_for_infeasible_report() -> None:
+    # A report that rejected a layer is infeasible, so the bridge returns the
+    # candidate unchanged with no policy plan rather than applying a partial fit.
+    infeasible = SurrogateOptimizerReport(
+        config={},
+        total_luts=0,
+        total_power_mw=0.0,
+        total_latency_cycles=0,
+        mean_accuracy=0.0,
+        training_points=0,
+        target_name="unit-fpga",
+        rejected_layers=["L0"],
+    )
+
+    evaluation = optimise_candidate_policy(_candidate(), _FakeOptimiser(infeasible))
+
+    assert evaluation.applied_policy is False
+    assert evaluation.policy_plan is None
+    assert evaluation.report is infeasible

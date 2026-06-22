@@ -128,3 +128,20 @@ def test_mlperf_sc_fixture_runner_rejects_unknown_fixture_model(tmp_path: Path) 
             seed=1,
             bitstream_length=64,
         )
+
+
+def test_mlperf_sc_fixture_runner_rejects_negative_seed(tmp_path: Path) -> None:
+    with pytest.raises(MLPerfSCValidationError, match="seed must be non-negative"):
+        run_mlperf_sc_fixture(output_dir=tmp_path, seed=-1)
+
+
+def test_mlperf_sc_fixture_runner_rejects_unsupported_task(tmp_path: Path) -> None:
+    with pytest.raises(MLPerfSCValidationError, match="supports synthetic_sc_xor"):
+        run_mlperf_sc_fixture(output_dir=tmp_path, task="image_classification")
+
+
+def test_fixture_baseline_rejects_unknown_model() -> None:
+    from sc_neurocore.benchmarks.mlperf_sc_runner import _fixture_baseline
+
+    with pytest.raises(MLPerfSCValidationError, match="fixture_sc_linear"):
+        _fixture_baseline("not_a_fixture_model")

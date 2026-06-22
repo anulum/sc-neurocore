@@ -609,3 +609,11 @@ def test_result_report_is_json_friendly():
     assert report["route_name"] == "safe.report"
     assert report["returned_path"] == "shadow-baseline"
     assert report["comparison"]["matched"] is True
+
+
+def test_builtin_cases_cover_shared_state_route_and_reject_unknown() -> None:
+    cases = builtin_cases_for_route("memory.delayed-recall.shared-state")
+    assert len(cases) >= 1
+
+    with pytest.raises(KeyError, match="No built-in cases for route"):
+        builtin_cases_for_route("route.that.does.not.exist")

@@ -548,3 +548,24 @@ class TestMultiDUT:
         gen = UVMGenerator()
         benchmarks = gen.generate_multi([lif_module(), dense_module()])
         assert benchmarks[0].top_sv != benchmarks[1].top_sv
+
+
+PARAMLESS_VERILOG_WITH_BLANK_PORT = """\
+module sc_paramless (
+    input  wire clk,
+    ,
+    output wire done
+);
+endmodule
+"""
+
+
+def test_from_verilog_source_handles_paramless_module_and_blank_port_entries():
+    # No `#(...)` block exercises the parameter-less port-section branch, and the
+    # stray comma yields a blank port entry that must be skipped, not parsed.
+    module = RTLModule.from_verilog_source(PARAMLESS_VERILOG_WITH_BLANK_PORT)
+
+    assert module.name == "sc_paramless"
+    port_names = {port.name for port in module.ports}
+    assert {"clk", "done"} <= port_names
+    assert "" not in port_names
