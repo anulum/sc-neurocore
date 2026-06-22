@@ -23,13 +23,21 @@ init = 0.0
 
 [parameters.dim]
 default = 16.0
-unit = ""
-meaning = ""
+unit = "1"
+meaning = "dimension of the recurrent key-value state"
+range = [
+    1.0,
+    512.0,
+]
 
 [parameters.lambda_decay]
 default = 0.95
-unit = ""
-meaning = ""
+unit = "1"
+meaning = "exponential decay factor of the linear-attention state"
+range = [
+    0.0,
+    1.0,
+]
 
 [integration]
 dt = 1.0

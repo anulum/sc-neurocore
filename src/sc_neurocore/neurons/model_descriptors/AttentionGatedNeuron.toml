@@ -23,18 +23,30 @@ init = 1.0
 
 [parameters.w_key]
 default = 1.0
-unit = ""
-meaning = ""
+unit = "1"
+meaning = "attention-gate weight on the input current"
+range = [
+    -10.0,
+    10.0,
+]
 
 [parameters.w_query]
 default = 0.5
-unit = ""
-meaning = ""
+unit = "1"
+meaning = "attention-gate weight on the membrane potential"
+range = [
+    -10.0,
+    10.0,
+]
 
 [parameters.tau]
 default = 10.0
-unit = ""
-meaning = ""
+unit = "ms"
+meaning = "membrane time constant"
+range = [
+    1.0,
+    100.0,
+]
 
 [integration]
 dt = 1.0

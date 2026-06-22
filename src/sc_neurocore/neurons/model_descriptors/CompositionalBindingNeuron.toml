@@ -26,18 +26,30 @@ init = 0.8
 
 [parameters.omega]
 default = 0.1
-unit = ""
-meaning = ""
+unit = "rad/ms"
+meaning = "intrinsic phase oscillation frequency"
+range = [
+    0.0,
+    10.0,
+]
 
 [parameters.coupling]
 default = 0.5
-unit = ""
-meaning = ""
+unit = "1"
+meaning = "phase-coupling strength to the input oscillation"
+range = [
+    0.0,
+    10.0,
+]
 
 [parameters.tau]
 default = 10.0
-unit = ""
-meaning = ""
+unit = "ms"
+meaning = "amplitude time constant"
+range = [
+    1.0,
+    100.0,
+]
 
 [integration]
 dt = 1.0

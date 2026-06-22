@@ -19,28 +19,48 @@ behavior_tags = []
 
 [parameters.n_units]
 default = 16.0
-unit = ""
-meaning = ""
+unit = "1"
+meaning = "number of units in the ring attractor"
+range = [
+    8.0,
+    256.0,
+]
 
 [parameters.tau]
 default = 10.0
-unit = ""
-meaning = ""
+unit = "ms"
+meaning = "membrane time constant"
+range = [
+    1.0,
+    100.0,
+]
 
 [parameters.sigma_e]
 default = 1.0
-unit = ""
-meaning = ""
+unit = "1"
+meaning = "width of the local excitatory connectivity kernel"
+range = [
+    0.1,
+    10.0,
+]
 
 [parameters.excitation]
 default = 4.0
-unit = ""
-meaning = ""
+unit = "1"
+meaning = "local excitatory connection strength"
+range = [
+    0.0,
+    10.0,
+]
 
 [parameters.inhibition]
 default = 0.5
-unit = ""
-meaning = ""
+unit = "1"
+meaning = "global inhibitory connection strength"
+range = [
+    0.0,
+    10.0,
+]
 
 [integration]
 dt = 1.0

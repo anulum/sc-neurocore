@@ -73,6 +73,26 @@ def test_coverage_describes_every_model() -> None:
     )
 
 
+def test_every_parameter_has_a_complete_schema() -> None:
+    """Every catalogued parameter documents its unit, valid range and meaning.
+
+    This is independent of the citation tier: a model may stay Tier 1 for want of
+    a confirmable DOI yet still describe each of its parameters fully. The gate
+    keeps that completeness from regressing once filled.
+    """
+
+    incomplete: list[str] = []
+    for class_name in _CLASS_TO_MODULE:
+        descriptor = load_descriptor(class_name)
+        assert descriptor is not None
+        for parameter in descriptor.parameters:
+            if not parameter.unit or parameter.value_range is None or not parameter.meaning:
+                incomplete.append(f"{class_name}.{parameter.name}")
+    assert not incomplete, (
+        f"{len(incomplete)} parameters miss unit/range/meaning: {sorted(incomplete)[:20]}"
+    )
+
+
 def test_merge_preserves_curation_and_follows_code() -> None:
     """A merge keeps human curation but takes structure from the code."""
 

@@ -26,18 +26,30 @@ init = 0.0
 
 [parameters.tau]
 default = 20.0
-unit = ""
-meaning = ""
+unit = "ms"
+meaning = "membrane time constant"
+range = [
+    1.0,
+    100.0,
+]
 
 [parameters.v_reset]
 default = 0.0
-unit = ""
-meaning = ""
+unit = "1"
+meaning = "post-spike reset of the membrane amplitude (normalised)"
+range = [
+    -5.0,
+    5.0,
+]
 
 [parameters.seed]
 default = 12345.0
-unit = ""
-meaning = ""
+unit = "1"
+meaning = "random seed for stochastic measurement-collapse firing"
+range = [
+    0.0,
+    4294967295.0,
+]
 
 [integration]
 dt = 0.1

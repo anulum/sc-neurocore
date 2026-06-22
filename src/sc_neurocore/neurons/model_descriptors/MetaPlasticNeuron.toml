@@ -29,28 +29,48 @@ init = 1.0
 
 [parameters.tau]
 default = 10.0
-unit = ""
-meaning = ""
+unit = "ms"
+meaning = "membrane time constant"
+range = [
+    1.0,
+    100.0,
+]
 
 [parameters.tau_meta]
 default = 500.0
-unit = ""
-meaning = ""
+unit = "ms"
+meaning = "meta-learning error-trace time constant"
+range = [
+    10.0,
+    2000.0,
+]
 
 [parameters.lr0]
 default = 0.01
-unit = ""
-meaning = ""
+unit = "1"
+meaning = "baseline learning rate"
+range = [
+    0.0,
+    1.0,
+]
 
 [parameters.kappa]
 default = 5.0
-unit = ""
-meaning = ""
+unit = "1"
+meaning = "sigmoid steepness of the meta-learning-rate modulation"
+range = [
+    0.0,
+    50.0,
+]
 
 [parameters.target_error]
 default = 0.3
-unit = ""
-meaning = ""
+unit = "1"
+meaning = "target error level for the meta-learning controller"
+range = [
+    0.0,
+    5.0,
+]
 
 [integration]
 dt = 1.0

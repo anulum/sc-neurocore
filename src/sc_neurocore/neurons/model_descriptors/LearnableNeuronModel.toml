@@ -20,38 +20,66 @@ init = 0.0
 
 [parameters.alpha]
 default = 0.9
-unit = ""
-meaning = ""
+unit = "1"
+meaning = "trainable membrane retention (leak) coefficient"
+range = [
+    0.0,
+    2.0,
+]
 
 [parameters.beta]
 default = 0.1
-unit = ""
-meaning = ""
+unit = "1"
+meaning = "trainable input weight"
+range = [
+    -5.0,
+    5.0,
+]
 
 [parameters.gamma]
 default = 0.05
-unit = ""
-meaning = ""
+unit = "1"
+meaning = "trainable activation-nonlinearity weight"
+range = [
+    -5.0,
+    5.0,
+]
 
 [parameters.v_threshold]
 default = 1.0
-unit = ""
-meaning = ""
+unit = "1"
+meaning = "firing threshold (normalised)"
+range = [
+    0.0,
+    5.0,
+]
 
 [parameters.v_reset]
 default = 0.0
-unit = ""
-meaning = ""
+unit = "1"
+meaning = "post-spike reset potential (normalised)"
+range = [
+    -5.0,
+    5.0,
+]
 
 [parameters.f_slope]
 default = 5.0
-unit = ""
-meaning = ""
+unit = "1"
+meaning = "slope of the learnable activation function"
+range = [
+    0.0,
+    10.0,
+]
 
 [parameters.f_shift]
 default = 0.5
-unit = ""
-meaning = ""
+unit = "1"
+meaning = "horizontal shift of the learnable activation function"
+range = [
+    -5.0,
+    5.0,
+]
 
 [integration]
 dt = 0.1

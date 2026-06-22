@@ -29,63 +29,111 @@ init = 1.0
 
 [parameters.tau_fast]
 default = 5.0
-unit = ""
-meaning = ""
+unit = "ms"
+meaning = "fast (perceptual) compartment time constant"
+range = [
+    1.0,
+    50.0,
+]
 
 [parameters.tau_work]
 default = 200.0
-unit = ""
-meaning = ""
+unit = "ms"
+meaning = "working-memory compartment time constant"
+range = [
+    10.0,
+    500.0,
+]
 
 [parameters.alpha_w]
 default = 0.3
-unit = ""
-meaning = ""
+unit = "1"
+meaning = "fast-to-working-memory coupling weight"
+range = [
+    0.0,
+    5.0,
+]
 
 [parameters.tau_deep]
 default = 10000.0
-unit = ""
-meaning = ""
+unit = "ms"
+meaning = "deep (identity) compartment time constant"
+range = [
+    100.0,
+    5000.0,
+]
 
 [parameters.alpha_d]
 default = 0.05
-unit = ""
-meaning = ""
+unit = "1"
+meaning = "working-to-deep coupling weight"
+range = [
+    0.0,
+    5.0,
+]
 
 [parameters.gamma]
 default = 0.2
-unit = ""
-meaning = ""
+unit = "1"
+meaning = "deep-state gain on the adaptive threshold"
+range = [
+    0.0,
+    5.0,
+]
 
 [parameters.delta_conf]
 default = 0.3
-unit = ""
-meaning = ""
+unit = "1"
+meaning = "confidence-driven reduction of the firing threshold"
+range = [
+    0.0,
+    1.0,
+]
 
 [parameters.kappa]
 default = 5.0
-unit = ""
-meaning = ""
+unit = "1"
+meaning = "steepness of the novelty (surprise) sigmoid"
+range = [
+    0.0,
+    50.0,
+]
 
 [parameters.surprise_baseline]
 default = 0.1
-unit = ""
-meaning = ""
+unit = "1"
+meaning = "baseline surprise subtracted before the novelty sigmoid"
+range = [
+    0.0,
+    5.0,
+]
 
 [parameters.lr_base]
 default = 0.01
-unit = ""
-meaning = ""
+unit = "1"
+meaning = "baseline meta-learning rate"
+range = [
+    0.0,
+    1.0,
+]
 
 [parameters.eta]
 default = 2.0
-unit = ""
-meaning = ""
+unit = "1"
+meaning = "novelty modulation strength of the learning rate"
+range = [
+    0.0,
+    10.0,
+]
 
 [parameters.w_inh]
 default = 0.3
-unit = ""
-meaning = ""
+unit = "1"
+meaning = "recurrent inhibition weight on the fast compartment"
+range = [
+    0.0,
+    10.0,
+]
 
 [integration]
 dt = 1.0

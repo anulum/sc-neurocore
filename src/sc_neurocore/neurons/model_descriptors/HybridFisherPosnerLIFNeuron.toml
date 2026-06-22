@@ -19,43 +19,75 @@ behavior_tags = []
 
 [parameters.v_rest]
 default = -70.0
-unit = ""
-meaning = ""
+unit = "mV"
+meaning = "resting membrane potential"
+range = [
+    -80.0,
+    -50.0,
+]
 
 [parameters.v_threshold]
 default = -50.0
-unit = ""
-meaning = ""
+unit = "mV"
+meaning = "spike threshold"
+range = [
+    -60.0,
+    -20.0,
+]
 
 [parameters.v_reset]
 default = -70.0
-unit = ""
-meaning = ""
+unit = "mV"
+meaning = "post-spike reset potential"
+range = [
+    -90.0,
+    -50.0,
+]
 
 [parameters.tau_m]
 default = 20.0
-unit = ""
-meaning = ""
+unit = "ms"
+meaning = "membrane time constant"
+range = [
+    1.0,
+    100.0,
+]
 
 [parameters.atp_initial]
 default = 1.0
-unit = ""
-meaning = ""
+unit = "1"
+meaning = "initial ATP / phosphate resource level"
+range = [
+    0.0,
+    10.0,
+]
 
 [parameters.atp_consumption]
 default = 0.05
-unit = ""
-meaning = ""
+unit = "1"
+meaning = "ATP consumed per spike"
+range = [
+    0.0,
+    5.0,
+]
 
 [parameters.atp_basal_regeneration]
 default = 0.001
-unit = ""
-meaning = ""
+unit = "1"
+meaning = "basal ATP regeneration rate per step"
+range = [
+    0.0,
+    1.0,
+]
 
 [parameters.n_sites]
 default = 32.0
-unit = ""
-meaning = ""
+unit = "1"
+meaning = "number of Posner-molecule binding sites"
+range = [
+    1.0,
+    100.0,
+]
 
 [integration]
 dt = 1.0

@@ -23,13 +23,21 @@ init = 1.0
 
 [parameters.alpha]
 default = 0.9
-unit = ""
-meaning = ""
+unit = "1"
+meaning = "surrogate-gradient amplitude scale"
+range = [
+    0.0,
+    10.0,
+]
 
 [parameters.beta]
 default = 5.0
-unit = ""
-meaning = ""
+unit = "1"
+meaning = "surrogate-gradient sharpness (pseudo-derivative steepness)"
+range = [
+    0.0,
+    50.0,
+]
 
 [integration]
 dt = 0.1

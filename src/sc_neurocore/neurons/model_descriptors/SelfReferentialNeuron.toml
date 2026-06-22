@@ -23,18 +23,30 @@ init = 1.0
 
 [parameters.tau]
 default = 10.0
-unit = ""
-meaning = ""
+unit = "ms"
+meaning = "base membrane time constant"
+range = [
+    1.0,
+    100.0,
+]
 
 [parameters.target_rate]
 default = 0.1
-unit = ""
-meaning = ""
+unit = "Hz"
+meaning = "target self-firing rate for homeostatic modulation"
+range = [
+    1.0,
+    200.0,
+]
 
 [parameters.window]
 default = 50.0
-unit = ""
-meaning = ""
+unit = "1"
+meaning = "spike-history window length in time-steps"
+range = [
+    1.0,
+    1000.0,
+]
 
 [integration]
 dt = 1.0
