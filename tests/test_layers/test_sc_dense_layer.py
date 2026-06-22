@@ -59,6 +59,26 @@ def test_dense_rejects_negative_neuron_count():
         _make_layer(n_neurons=-1)
 
 
+def test_dense_rejects_non_finite_shared_weight_vector():
+    with pytest.raises(ValueError, match="only finite values"):
+        _make_layer(n_neurons=1, weight_values=[float("inf"), 0.5])
+
+
+def test_dense_rejects_2d_weights_without_output_neuron():
+    with pytest.raises(ValueError, match="at least one output neuron"):
+        _make_layer(n_neurons=0, weight_values=[[0.1, 0.2]])
+
+
+def test_dense_rejects_non_finite_weight_matrix():
+    with pytest.raises(ValueError, match="only finite values"):
+        _make_layer(n_neurons=1, weight_values=[[float("inf"), 0.2]])
+
+
+def test_dense_rejects_three_dimensional_weights():
+    with pytest.raises(ValueError, match="1-D shared vector or a 2-D"):
+        _make_layer(n_neurons=1, weight_values=[[[0.1, 0.2]]])
+
+
 def test_dense_rejects_weight_matrix_with_wrong_input_width():
     """Per-neuron weight matrices must keep one weight per input channel."""
     with pytest.raises(ValueError, match="shape"):

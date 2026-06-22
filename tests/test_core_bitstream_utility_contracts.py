@@ -49,3 +49,24 @@ def test_bitstream_probability_and_unipolar_domain_boundaries() -> None:
         value_to_unipolar_prob(0.5, 1.0, 1.0)
     with pytest.raises(SCEncodingError, match="Probability"):
         unipolar_prob_to_value(1.1, 0.0, 1.0)
+
+
+def test_bitstream_encoder_rejects_unknown_mode() -> None:
+    from sc_neurocore.exceptions import SCEncodingError
+    from sc_neurocore.utils.bitstreams import BitstreamEncoder
+
+    with pytest.raises(SCEncodingError, match="Unknown mode"):
+        BitstreamEncoder(mode="not_a_mode")
+
+
+def test_bitstream_encoder_sobol_mode_encodes_to_length() -> None:
+    from sc_neurocore.utils.bitstreams import BitstreamEncoder
+
+    stream = BitstreamEncoder(mode="sobol", length=16).encode(0.5)
+    assert stream.shape == (16,)
+
+
+def test_bitstream_averager_estimate_is_zero_before_any_push() -> None:
+    from sc_neurocore.utils.bitstreams import BitstreamAverager
+
+    assert BitstreamAverager(window=8).estimate() == 0.0
