@@ -14,39 +14,68 @@ hardware_fit = []
 behavior_tags = []
 
 [provenance]
+authors = [
+    "Hasani, R., Lechner, M., Amini, A., Rus, D. & Grosu, R.",
+]
+year = 2021
+doi = "10.1609/aaai.v35i9.16936"
 
 [state.x]
 init = 0.0
 
 [parameters.tau_base]
 default = 10.0
-unit = ""
-meaning = ""
+unit = "ms"
+meaning = "baseline membrane time constant"
+range = [
+    1.0,
+    200.0,
+]
 
 [parameters.w_tau]
 default = -0.5
-unit = ""
-meaning = ""
+unit = "1"
+meaning = "input weight modulating the liquid (input-dependent) time constant"
+range = [
+    -10.0,
+    10.0,
+]
 
 [parameters.w_x]
 default = 0.8
-unit = ""
-meaning = ""
+unit = "1"
+meaning = "recurrent (self) weight on the membrane state"
+range = [
+    -10.0,
+    10.0,
+]
 
 [parameters.w_in]
 default = 1.0
-unit = ""
-meaning = ""
+unit = "1"
+meaning = "input weight on the injected drive"
+range = [
+    -10.0,
+    10.0,
+]
 
 [parameters.bias]
 default = 0.0
-unit = ""
-meaning = ""
+unit = "1"
+meaning = "constant bias term"
+range = [
+    -10.0,
+    10.0,
+]
 
 [parameters.v_threshold]
 default = 1.0
-unit = ""
-meaning = ""
+unit = "1"
+meaning = "normalised firing threshold"
+range = [
+    0.0,
+    10.0,
+]
 
 [integration]
 dt = 1.0
