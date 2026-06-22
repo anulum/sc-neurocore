@@ -286,3 +286,15 @@ class TestCompilationReport:
             include_carbon=False,
         )
         assert "Carbon" not in md
+
+
+class TestPortabilityManyVariables:
+    """A model with more than four state variables raises the register-file
+    blocker that the single-variable portability cases never trigger."""
+
+    def test_many_state_variables_flagged_as_blocker(self):
+        from sc_neurocore.compiler.intelligence import score_portability
+
+        eqs = {f"v{i}": "a + b" for i in range(5)}
+        s = score_portability(eqs)
+        assert any("state variables" in blocker for blocker in s.blockers)

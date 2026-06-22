@@ -361,3 +361,23 @@ class TestLicenseChecker:
         r = check_license_compliance("MIT", {"gpl_lib": "GPL-3.0"})
         assert r.compatible is False
         assert len(r.conflicts) == 1
+
+
+class TestTrojanLintBranches:
+    """Cover the payload cross-reference accounting and the high-risk verdict
+    that the single-equation lint cases never reach."""
+
+    def test_payload_cross_reference_counts_as_check(self):
+        from sc_neurocore.compiler.intelligence import lint_hardware_trojans
+
+        # "u" appears inside v's expression, so a payload cross-reference check
+        # runs on top of the two per-variable checks.
+        r = lint_hardware_trojans({"v": "u + 1", "u": "2"})
+        assert r.total_checks >= 3
+
+    def test_two_conditional_paths_are_high_risk(self):
+        from sc_neurocore.compiler.intelligence import lint_hardware_trojans
+
+        r = lint_hardware_trojans({"a": "if x then 1", "b": "y ? 1 : 0"})
+        assert r.risk_level == "HIGH"
+        assert len(r.suspicious_paths) >= 2
