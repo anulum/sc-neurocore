@@ -226,6 +226,44 @@ class TestPrecisionTrapReport:
                 output_fmt=Q16_16,
             )
 
+    def test_rejects_blank_operation_wrong_format_and_non_vector_masks(self):
+        with pytest.raises(ValueError, match="non-empty string"):
+            PrecisionTrapReport(
+                operation="",
+                output_codes=np.array([0], dtype=np.int64),
+                overflow_mask=np.array([False], dtype=bool),
+                output_fmt=Q16_16,
+            )
+        with pytest.raises(TypeError, match="must be a QFormat"):
+            PrecisionTrapReport(
+                operation="dense_mixed_qformat",
+                output_codes=np.array([0], dtype=np.int64),
+                overflow_mask=np.array([False], dtype=bool),
+                output_fmt="Q16.16",
+            )
+        with pytest.raises(ValueError, match="output_codes must be a 1-D vector"):
+            PrecisionTrapReport(
+                operation="dense_mixed_qformat",
+                output_codes=np.array([[0, 1]], dtype=np.int64),
+                overflow_mask=np.array([False, True], dtype=bool),
+                output_fmt=Q16_16,
+            )
+        with pytest.raises(ValueError, match="overflow_mask must be a 1-D vector"):
+            PrecisionTrapReport(
+                operation="dense_mixed_qformat",
+                output_codes=np.array([0, 1], dtype=np.int64),
+                overflow_mask=np.array([[False, True]], dtype=bool),
+                output_fmt=Q16_16,
+            )
+        with pytest.raises(ValueError, match="underflow_mask must be a 1-D vector"):
+            PrecisionTrapReport(
+                operation="dense_mixed_qformat",
+                output_codes=np.array([0, 1], dtype=np.int64),
+                overflow_mask=np.array([False, True], dtype=bool),
+                underflow_mask=np.array([[False, True]], dtype=bool),
+                output_fmt=Q16_16,
+            )
+
 
 class TestPrecisionEnvelopeReport:
     """Validate precision envelope invariants for predeployment range gates."""
@@ -348,6 +386,90 @@ class TestPrecisionEnvelopeReport:
                 abs_bound_codes=np.array([1.5]),
                 output_fmt=Q16_16,
             )
+
+    def test_rejects_blank_operation_wrong_format_and_non_vector_arrays(self):
+        with pytest.raises(ValueError, match="non-empty string"):
+            PrecisionEnvelopeReport(
+                operation="",
+                output_codes=np.array([0], dtype=np.int64),
+                overflow_mask=np.array([False], dtype=bool),
+                abs_bound_codes=np.array([0], dtype=np.int64),
+                output_fmt=Q16_16,
+            )
+        with pytest.raises(TypeError, match="must be a QFormat"):
+            PrecisionEnvelopeReport(
+                operation="dense_mixed_qformat",
+                output_codes=np.array([0], dtype=np.int64),
+                overflow_mask=np.array([False], dtype=bool),
+                abs_bound_codes=np.array([0], dtype=np.int64),
+                output_fmt="Q16.16",
+            )
+        with pytest.raises(TypeError, match="output_codes must contain integer"):
+            PrecisionEnvelopeReport(
+                operation="dense_mixed_qformat",
+                output_codes=np.array([0.0]),
+                overflow_mask=np.array([False], dtype=bool),
+                abs_bound_codes=np.array([0], dtype=np.int64),
+                output_fmt=Q16_16,
+            )
+        with pytest.raises(ValueError, match="output_codes must be a 1-D vector"):
+            PrecisionEnvelopeReport(
+                operation="dense_mixed_qformat",
+                output_codes=np.array([[0, 1]], dtype=np.int64),
+                overflow_mask=np.array([False, True], dtype=bool),
+                abs_bound_codes=np.array([0, 1], dtype=np.int64),
+                output_fmt=Q16_16,
+            )
+        with pytest.raises(ValueError, match="overflow_mask must be a 1-D vector"):
+            PrecisionEnvelopeReport(
+                operation="dense_mixed_qformat",
+                output_codes=np.array([0, 1], dtype=np.int64),
+                overflow_mask=np.array([[False, True]], dtype=bool),
+                abs_bound_codes=np.array([0, 1], dtype=np.int64),
+                output_fmt=Q16_16,
+            )
+        with pytest.raises(ValueError, match="underflow_mask must be a 1-D vector"):
+            PrecisionEnvelopeReport(
+                operation="dense_mixed_qformat",
+                output_codes=np.array([0, 1], dtype=np.int64),
+                overflow_mask=np.array([False, True], dtype=bool),
+                underflow_mask=np.array([[False, True]], dtype=bool),
+                abs_bound_codes=np.array([0, 1], dtype=np.int64),
+                output_fmt=Q16_16,
+            )
+        with pytest.raises(ValueError, match="abs_bound_codes must be a 1-D vector"):
+            PrecisionEnvelopeReport(
+                operation="dense_mixed_qformat",
+                output_codes=np.array([0, 1], dtype=np.int64),
+                overflow_mask=np.array([False, True], dtype=bool),
+                abs_bound_codes=np.array([[0, 1]], dtype=np.int64),
+                output_fmt=Q16_16,
+            )
+        with pytest.raises(ValueError, match="exceed"):
+            PrecisionEnvelopeReport(
+                operation="dense_mixed_qformat",
+                output_codes=np.array([1 << 31], dtype=np.int64),
+                overflow_mask=np.array([False], dtype=bool),
+                abs_bound_codes=np.array([0], dtype=np.int64),
+                output_fmt=Q16_16,
+            )
+
+    def test_empty_envelope_reports_zero_extents_and_zero_bound_proof(self):
+        report = PrecisionEnvelopeReport(
+            operation="dense_mixed_qformat",
+            output_codes=np.array([], dtype=np.int64),
+            overflow_mask=np.array([], dtype=bool),
+            abs_bound_codes=np.array([], dtype=np.int64),
+            output_fmt=Q16_16,
+        )
+
+        assert report.output_count == 0
+        assert report.max_abs_output_code == 0
+        assert report.max_abs_bound_code == 0
+        # Empty bounds fall back to [0] before the static width proof, which is
+        # trivially overflow-free.
+        assert report.conservative_overflow_free is True
+        assert report.static_overflow_proven_safe is True
 
 
 class TestQFormatMixed:
