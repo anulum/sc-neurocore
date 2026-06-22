@@ -1,7 +1,19 @@
 import { useEffect, useMemo, useState } from "react";
 import { useStudioStore } from "../stores/studio";
-import { fetchModelScan, type ModelBehavior, type ModelScanMetadata } from "../api/client";
+import {
+  fetchModelFacets,
+  fetchModelScan,
+  type ModelBehavior,
+  type ModelFacets,
+  type ModelScanMetadata,
+} from "../api/client";
 import EvidenceSummaryStrip, { type EvidenceSummaryItem } from "./EvidenceSummaryStrip";
+
+const MATURITY_COLORS: Record<string, string> = {
+  validated: "#81c784",
+  experimental: "#ffb74d",
+  reference: "#4fc3f7",
+};
 
 const PATTERN_COLORS: Record<string, string> = {
   tonic: "#81c784",
@@ -31,6 +43,40 @@ export function buildModelScanEvidenceItems(
   ];
 }
 
+interface ModelGroupFilters {
+  modelFilter: string;
+  familyFilter: string;
+  patternFilter: string;
+  behaviors: Record<string, ModelBehavior>;
+}
+
+/** Filter the catalogue by search text, family, and firing pattern, then group
+ *  the survivors by their displayed category (the curated family). */
+export function filterAndGroupModels<
+  T extends { name: string; category: string; family: string },
+>(models: T[], filters: ModelGroupFilters): Record<string, T[]> {
+  let filtered = models;
+  if (filters.modelFilter) {
+    const q = filters.modelFilter.toLowerCase();
+    filtered = filtered.filter(
+      (m) => m.name.toLowerCase().includes(q) || m.category.toLowerCase().includes(q),
+    );
+  }
+  if (filters.familyFilter) {
+    filtered = filtered.filter((m) => m.family === filters.familyFilter);
+  }
+  if (filters.patternFilter) {
+    filtered = filtered.filter(
+      (m) => filters.behaviors[m.name]?.pattern === filters.patternFilter,
+    );
+  }
+  const groups: Record<string, T[]> = {};
+  for (const m of filtered) {
+    (groups[m.category] ??= []).push(m);
+  }
+  return groups;
+}
+
 export default function ModelBrowser() {
   const {
     models, selectedModelName, modelFilter,
@@ -41,8 +87,13 @@ export default function ModelBrowser() {
   const [scanMetadata, setScanMetadata] = useState<ModelScanMetadata | null>(null);
   const [patternFilter, setPatternFilter] = useState<string>("");
   const [scanLoaded, setScanLoaded] = useState(false);
+  const [facets, setFacets] = useState<ModelFacets | null>(null);
+  const [familyFilter, setFamilyFilter] = useState<string>("");
 
   useEffect(() => { loadModels(); }, [loadModels]);
+  useEffect(() => {
+    fetchModelFacets().then(setFacets).catch(() => setFacets(null));
+  }, []);
 
   function loadBehaviors() {
     if (scanLoaded) return;
@@ -55,23 +106,10 @@ export default function ModelBrowser() {
     }).catch(() => setScanLoaded(false));
   }
 
-  const grouped = useMemo(() => {
-    let filtered = models;
-    if (modelFilter) {
-      const q = modelFilter.toLowerCase();
-      filtered = filtered.filter((m) =>
-        m.name.toLowerCase().includes(q) || m.category.toLowerCase().includes(q));
-    }
-    if (patternFilter) {
-      filtered = filtered.filter((m) =>
-        behaviors[m.name]?.pattern === patternFilter);
-    }
-    const groups: Record<string, typeof filtered> = {};
-    for (const m of filtered) {
-      (groups[m.category] ??= []).push(m);
-    }
-    return groups;
-  }, [models, modelFilter, patternFilter, behaviors]);
+  const grouped = useMemo(
+    () => filterAndGroupModels(models, { modelFilter, familyFilter, patternFilter, behaviors }),
+    [models, modelFilter, familyFilter, patternFilter, behaviors],
+  );
 
   const totalFiltered = Object.values(grouped).reduce((s, g) => s + g.length, 0);
   const patterns = [...new Set(Object.values(behaviors).map((b) => b.pattern))].sort();
@@ -99,6 +137,27 @@ export default function ModelBrowser() {
           {scanLoaded ? "Scanned" : "Scan"}
         </button>
       </div>
+
+      {facets && (
+        <select
+          aria-label="Filter by family"
+          value={familyFilter}
+          onChange={(e) => setFamilyFilter(e.target.value)}
+          style={{
+            width: "100%", marginBottom: 4, padding: "3px 4px", fontSize: 10,
+            background: "var(--bg-tertiary)", color: "var(--text-primary)",
+            border: "1px solid var(--border)", borderRadius: "var(--radius)",
+            fontFamily: "var(--font-mono)",
+          }}
+        >
+          <option value="">All families ({facets.total})</option>
+          {facets.families.map((f) => (
+            <option key={f.family} value={f.family}>
+              {f.family} ({f.count})
+            </option>
+          ))}
+        </select>
+      )}
 
       {patterns.length > 0 && (
         <div style={{ display: "flex", gap: 3, flexWrap: "wrap", marginBottom: 4 }}>
@@ -145,6 +204,23 @@ export default function ModelBrowser() {
                 }}>
                   <span>{m.name.replace("Neuron", "").replace("Model", "")}</span>
                   <span style={{ display: "flex", gap: 4, alignItems: "center" }}>
+                    {m.provenance?.doi && (
+                      <a
+                        href={`https://doi.org/${m.provenance.doi}`}
+                        target="_blank"
+                        rel="noreferrer"
+                        onClick={(e) => e.stopPropagation()}
+                        title={`DOI ${m.provenance.doi}`}
+                        style={{ fontSize: 8, color: "var(--accent)", textDecoration: "none" }}
+                      >DOI</a>
+                    )}
+                    <span
+                      title={`maturity: ${m.maturity}`}
+                      style={{
+                        width: 6, height: 6, borderRadius: "50%",
+                        background: MATURITY_COLORS[m.maturity] || "var(--bg-tertiary)",
+                      }}
+                    />
                     {beh && (
                       <span style={{
                         fontSize: 8, padding: "0 3px", borderRadius: 2,
