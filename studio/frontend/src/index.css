@@ -735,11 +735,12 @@ input[type="range"]::-moz-range-thumb {
 
 /* --- Responsive layout --- */
 
-/* Header: scrollable on narrow screens */
+/* Header wraps on narrow screens (it no longer scrolls horizontally, so it must
+   keep overflow visible — overflow-x:auto here computed overflow-y to auto and
+   clipped header dropdowns like the capability menu to the header's height). */
 .header {
   flex-wrap: wrap;
-  overflow-x: auto;
-  -webkit-overflow-scrolling: touch;
+  overflow: visible;
 }
 
 /* Tablet: narrower sidebar */
