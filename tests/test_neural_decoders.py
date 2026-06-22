@@ -326,6 +326,23 @@ class TestNDT3Decoder:
         o2 = dec.decode(t2)
         assert not np.allclose(o1, o2)
 
+    def test_bin_and_embed_train_shorter_than_one_bin(self) -> None:
+        """Trains too short to fill a single 20 ms bin yield no bins at all,
+        keeping the neuron dimension on the (empty) binned matrix."""
+        dec = NDT3Decoder(d_model=8)
+        trains = [np.zeros(5), np.zeros(5)]
+        binned, embedded = dec.bin_and_embed(trains, dt=1.0)
+        assert binned.shape == (0, 2)
+        assert embedded.shape == (0, 8)
+
+    def test_predict_next_on_empty_embedding(self) -> None:
+        """Predicting from an empty embedding short-circuits to an empty
+        output rather than running attention over zero positions."""
+        dec = NDT3Decoder(d_model=8)
+        empty = np.zeros((0, 8))
+        out = dec.predict_next(empty)
+        assert out.shape == (0, 8)
+
 
 # ---------------------------------------------------------------------------
 # CEBRA — Schneider, Lee & Mathis (2023)

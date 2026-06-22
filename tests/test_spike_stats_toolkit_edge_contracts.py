@@ -879,6 +879,46 @@ def test_spike_sync_close_spikes():
     assert r > 0
 
 
+def test_isi_distance_zero_timestep_collapses_intervals():
+    # distance.py:97 — a zero timestep maps every spike to t=0, so both ISI
+    # sequences are all-zero and the matched ratio is exactly 0.0.
+    train_a = np.array([1, 0, 1, 0, 1], dtype=np.int8)
+    train_b = np.array([1, 1, 0, 1, 0], dtype=np.int8)
+    r = isi_distance(train_a, train_b, dt=0.0)
+    assert r == 0.0
+
+
+def test_spike_directionality_one_sided_neighbours():
+    # patterns.py:47 — both trains are non-empty but every reference spike sees
+    # partner spikes on only one side, so no lead is ever scored (total == 0).
+    r = spike_directionality(np.array([0.5]), np.array([0.6, 0.7]))
+    assert r == 0.0
+
+
+def test_cubic_higher_order_lag_exceeds_signal():
+    # patterns.py:82 — lags beyond the signal length leave valid_n <= 0, so the
+    # corresponding cumulant entries are skipped and stay zero.
+    r = cubic_higher_order(np.array([0, 1, 0], dtype=np.int8), max_lag=20)
+    assert r.shape == (20, 20)
+    assert r[10, 10] == 0.0
+
+
+def test_spatial_information_zero_timestep_no_occupancy():
+    # stimulus.py:73 — a zero timestep yields zero occupancy everywhere, so the
+    # information measure is undefined and returns 0.0.
+    train = np.ones(12, dtype=np.int8)
+    positions = np.linspace(0.0, 1.0, 12)
+    assert spatial_information(train, positions, dt=0.0) == 0.0
+
+
+def test_spatial_information_silent_train_zero_mean_rate():
+    # stimulus.py:80 — a silent train has zero mean firing rate, so the
+    # bits-per-spike normalisation is undefined and returns 0.0.
+    train = np.zeros(20, dtype=np.int8)
+    positions = np.linspace(0.0, 1.0, 20)
+    assert spatial_information(train, positions) == 0.0
+
+
 def test_sttc_with_real_spikes():
     # correlation.py:123 — ta and tb both non-empty
     rng = np.random.default_rng(42)

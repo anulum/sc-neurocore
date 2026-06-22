@@ -49,10 +49,10 @@ def waveform_recovery_slope(waveform: np.ndarray[Any, Any], dt: float = 1.0 / 30
     peak = trough + np.argmax(waveform[trough:])
     if peak >= waveform.size - 2:
         return float("nan")
+    # The guard above ensures peak <= size - 3, so post_peak spans at least
+    # three samples and np.diff yields at least two -- dv is never empty here.
     post_peak = waveform[peak:]
     dv = np.diff(post_peak) / dt
-    if dv.size == 0:
-        return float("nan")
     return float(np.min(dv))
 
 
