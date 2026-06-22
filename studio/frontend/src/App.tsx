@@ -310,7 +310,7 @@ export default function App() {
 
         <div className="header-spacer" />
 
-        <div style={{ display: "flex", gap: 0, borderRadius: "var(--radius)", overflow: "hidden" }}>
+        <div style={{ display: "flex", gap: 0, borderRadius: "var(--radius)", flexWrap: "wrap" }}>
           <Tab active={s.activeTab === "trace"} color="var(--accent)" label="Trace" onClick={() => activatePanel("trace")} {...panelControl("trace")} />
           {hasPhase && <Tab active={s.activeTab === "phase"} color="#ce93d8" label="Phase" onClick={() => activatePanel("phase")} {...panelControl("phase")} />}
           {hasISI && <Tab active={s.activeTab === "isi"} color="var(--warning)" label="ISI" onClick={() => activatePanel("isi")} {...panelControl("isi")} />}
