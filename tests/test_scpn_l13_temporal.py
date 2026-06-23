@@ -81,3 +81,41 @@ def test_l13_temporal_output_bitstreams_are_seed_scoped() -> None:
         L13_TemporalLayer(L13_StochasticParameters(rng_seed=-1))
     with pytest.raises(ValueError, match="rng_seed"):
         L13_TemporalLayer(L13_StochasticParameters(rng_seed=cast(Any, 1.5)))
+
+
+def test_l13_get_global_metric_off_diagonal_binding_mean() -> None:
+    layer = L13_TemporalLayer(L13_StochasticParameters(n_channels=3, rng_seed=4))
+    # A freshly-initialised binding matrix is zero, so the off-diagonal mean is 0.
+    assert layer.get_global_metric() == 0.0
+
+
+def test_l13_validate_params_bitstream_and_threshold_guards() -> None:
+    with pytest.raises(ValueError, match="bitstream_length must be positive"):
+        L13_TemporalLayer(L13_StochasticParameters(bitstream_length=0))
+    with pytest.raises(ValueError, match=r"binding_threshold must be in \[0, 1\]"):
+        L13_TemporalLayer(L13_StochasticParameters(binding_threshold=1.5))
+
+
+def test_l13_coherence_signal_empty_guard_and_pad() -> None:
+    with pytest.raises(ValueError, match="coherence must contain at least one value"):
+        L13_TemporalLayer._coherence_signal([], 4)
+    padded = L13_TemporalLayer._coherence_signal([0.5], 4)
+    assert padded.shape == (4,)
+    assert padded.tolist() == [0.5, 0.0, 0.0, 0.0]
+
+
+def test_l13_source_context_null_and_blank_branches() -> None:
+    empty = L13_TemporalLayer._source_context(
+        {"boundary_context_id": None, "boundary_terminals": ()}
+    )
+    assert empty["boundary_context_id"] is None
+    assert empty["source_terminal_set"] == ()
+    with pytest.raises(ValueError, match="boundary_context_id must be non-empty"):
+        L13_TemporalLayer._source_context(
+            {"boundary_context_id": "", "boundary_terminals": ("T5",)}
+        )
+
+
+def test_l13_scalar_rejects_non_finite_value() -> None:
+    with pytest.raises(ValueError, match="must be a finite scalar"):
+        L13_TemporalLayer._scalar(float("inf"), "gaian_stabilization_drive")
