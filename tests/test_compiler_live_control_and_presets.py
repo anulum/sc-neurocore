@@ -10,7 +10,7 @@
 
 from __future__ import annotations
 
-from typing import Any
+from typing import Any, get_args
 
 import pytest
 
@@ -23,8 +23,10 @@ from sc_neurocore.compiler.precision_config import (
 )
 from sc_neurocore.compiler.precision_presets import _parse_precision_spec, from_preset
 
-_WRITE_PURPOSE = next(iter(MMIOWritePurpose))
-_READ_PURPOSE = next(iter(MMIOReadPurpose))
+# ``get_args`` extracts the Literal members portably; iterating the Literal alias
+# directly fails on Python 3.10 (it falls back to subscript-based iteration).
+_WRITE_PURPOSE = next(iter(get_args(MMIOWritePurpose)))
+_READ_PURPOSE = next(iter(get_args(MMIOReadPurpose)))
 
 
 def test_mmio_write_accepts_a_well_formed_transaction() -> None:
