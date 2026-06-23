@@ -7,12 +7,16 @@
 # SC-NeuroCore — SC-NAS Engine Tests
 
 
+import pytest
+
+from sc_neurocore.nas import sc_nas_engine as nas_module
 from sc_neurocore.nas.sc_nas_engine import (
     DecorrelationStrategy,
     EvolutionaryNAS,
     FPGAResourceBudget,
     LayerConfig,
     NASObjective,
+    NASReport,
     NASVerilogEmitter,
     NeuronType,
     SCCandidate,
@@ -436,3 +440,54 @@ class TestNASVerilogEmitter:
             v = NASVerilogEmitter.emit(c)
             assert "module" in v
             assert "endmodule" in v
+
+
+class TestSCNASEngineEdgeBranches:
+    """Resource-utilisation ratios, empty-front report accessors, and the
+    Rust-evolution tournament path (flag + import branch)."""
+
+    @staticmethod
+    def _candidate(fitness: float) -> SCCandidate:
+        return SCCandidate(
+            layers=[LayerConfig(32, NeuronType.LIF, 256, DecorrelationStrategy.LFSR)],
+            fitness=fitness,
+        )
+
+    def test_resource_budget_utilisation_ratios(self) -> None:
+        budget = FPGAResourceBudget(max_luts=1000, max_ffs=2000, max_bram_kb=100, max_dsp=50)
+        util = budget.utilisation(luts=500, ffs=500, bram=25, dsp=25)
+        assert util["luts"] == 0.5
+        assert util["ffs"] == 0.25
+        assert util["bram"] == 0.25
+        assert util["dsp"] == 0.5
+
+    def test_report_accessors_on_empty_pareto_front(self) -> None:
+        report = NASReport(pareto_front=[], search_history=[])
+        assert report.best_accuracy == 0.0
+        assert report.most_efficient is None
+
+    def test_tournament_select_uses_rust_evo_when_available(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        nas = EvolutionaryNAS(
+            objective=NASObjective(),
+            budget=FPGAResourceBudget(),
+            population_size=24,
+            num_generations=1,
+            seed=7,
+        )
+        population = [self._candidate(float(index)) for index in range(24)]
+        captured: dict[str, list[float]] = {}
+
+        def _fake_evo(fitness: list[float], n: int, k: int, seed: int) -> list[int]:
+            captured["fitness"] = list(fitness)
+            return [3]
+
+        # The Rust tournament path activates only when the flag is set AND the
+        # population exceeds the 20-candidate threshold.
+        monkeypatch.setattr(nas_module, "_HAS_RUST_EVO", True)
+        monkeypatch.setattr(nas_module, "py_evo_tournament", _fake_evo, raising=False)
+
+        chosen = nas._tournament_select(population, k=3)
+        assert chosen is population[3]
+        assert len(captured["fitness"]) == 24
