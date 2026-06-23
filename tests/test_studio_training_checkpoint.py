@@ -11,7 +11,7 @@
 from __future__ import annotations
 
 from collections.abc import Mapping
-from datetime import UTC, datetime
+from datetime import datetime, timezone
 import hashlib
 import json
 from pathlib import Path
@@ -23,6 +23,9 @@ import pytest
 fastapi = pytest.importorskip("fastapi")
 
 from starlette.testclient import TestClient
+
+# datetime.UTC is Python 3.11+; alias the timezone so the module imports on 3.10.
+UTC = timezone.utc
 
 from sc_neurocore.studio.app import create_app
 from sc_neurocore.studio.platform import JsonValue, StudioRuntimeSettings
