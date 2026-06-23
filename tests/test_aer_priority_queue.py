@@ -117,6 +117,62 @@ def test_priority_queue_randomized_order_matches_priority_fifo(
     assert queue.drain() == expected
 
 
+def test_construction_rejects_non_positive_capacity() -> None:
+    """A queue with no storage is a misconfiguration, not a degenerate queue."""
+    with pytest.raises(ValueError, match="capacity must be positive"):
+        AERPriorityQueueReference(capacity=0)
+
+
+def test_construction_rejects_negative_max_latency() -> None:
+    """The deadline budget counts cycles, so it cannot be negative."""
+    with pytest.raises(ValueError, match="max_latency_cycles must be non-negative"):
+        AERPriorityQueueReference(capacity=1, max_latency_cycles=-1)
+
+
+def test_empty_and_peek_report_vacant_queue() -> None:
+    """``empty`` and a ``None`` peek both signal a vacant queue; enqueuing one
+    event flips ``empty`` and exposes a non-destructive head via ``peek``."""
+    queue = AERPriorityQueueReference(capacity=2)
+    assert queue.empty is True
+    assert queue.peek() is None
+
+    head = AERPriorityEvent(target_id=1, weight=1, timestamp=0, priority=0)
+    queue.enqueue(head)
+    assert queue.empty is False
+    assert queue.peek() == head
+    # peek must not consume the event.
+    assert queue.occupancy == 1
+
+
+def test_step_accepts_input_event_when_capacity_is_free() -> None:
+    """With free capacity the cycle accepts the input and raises occupancy
+    without latching a drop."""
+    queue = AERPriorityQueueReference(capacity=2)
+    event = AERPriorityEvent(target_id=1, weight=5, timestamp=0, priority=1)
+
+    result = queue.step(event, out_ready=False)
+
+    assert result.accepted is True
+    assert result.ready is True
+    assert result.occupancy == 1
+    assert result.dropped_event is False
+
+
+def test_step_drops_input_event_under_backpressure() -> None:
+    """A full queue with no downstream readiness is not ready, so the incoming
+    event is dropped and the sticky drop trap latches."""
+    queue = AERPriorityQueueReference(capacity=1)
+    queue.enqueue(AERPriorityEvent(target_id=1, weight=1, timestamp=0, priority=2))
+    incoming = AERPriorityEvent(target_id=2, weight=2, timestamp=1, priority=2)
+
+    result = queue.step(incoming, out_ready=False)
+
+    assert result.ready is False
+    assert result.accepted is False
+    assert result.dropped_event is True
+    assert result.occupancy == 1
+
+
 def test_hdl_priority_queue_simulates_backpressure_contract(tmp_path: Path) -> None:
     iverilog = shutil.which("iverilog")
     vvp = shutil.which("vvp")
