@@ -80,3 +80,30 @@ def test_l12_rejects_invalid_parameters_and_inputs() -> None:
         layer.step(0.001, {"info_saturation": np.nan})
     with pytest.raises(ValueError, match="info_saturation"):
         layer.step(0.001, {"info_saturation": np.array([0.1, 0.2])})
+
+
+def test_l12_get_global_metric_returns_mean_coherence() -> None:
+    layer = L12_QuantumInfoLayer(
+        L12_StochasticParameters(n_sites=4, bitstream_length=16, rng_seed=3)
+    )
+    assert 0.0 <= layer.get_global_metric() <= 1.0
+
+
+def test_l12_validate_params_type_guards_and_negative_seed() -> None:
+    with pytest.raises(ValueError, match="n_sites must be a positive integer"):
+        L12_QuantumInfoLayer(L12_StochasticParameters(n_sites=cast(int, True)))
+    with pytest.raises(ValueError, match="bitstream_length must be a positive integer"):
+        L12_QuantumInfoLayer(L12_StochasticParameters(bitstream_length=cast(int, True)))
+    with pytest.raises(ValueError, match="rng_seed"):
+        L12_QuantumInfoLayer(L12_StochasticParameters(rng_seed=-1))
+
+
+def test_l12_gaian_context_null_and_blank_branches() -> None:
+    empty = L12_QuantumInfoLayer._gaian_context(
+        {"boundary_context_id": None, "boundary_terminals": ()}
+    )
+    assert empty["boundary_context_id"] is None
+    with pytest.raises(ValueError, match="boundary_context_id must be non-empty"):
+        L12_QuantumInfoLayer._gaian_context(
+            {"boundary_context_id": "", "boundary_terminals": ("T1",)}
+        )
