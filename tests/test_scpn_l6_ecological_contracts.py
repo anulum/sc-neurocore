@@ -172,3 +172,22 @@ def test_l6_rejects_invalid_parameters_and_inputs() -> None:
         layer.step(0.01, l5_input={"ecological_drive": np.array([0.5, np.nan])})
     with pytest.raises(ValueError, match="ecological_drive"):
         layer.step(0.01, l5_input={"ecological_drive": np.array([-0.1, 0.2])})
+
+
+def test_l6_history_trim_and_state_accessors() -> None:
+    layer = L6_EcologicalLayer(L6_StochasticParameters(rng_seed=4))
+    for _ in range(110):
+        layer.step(0.01, solar_activity=0.4, lunar_phase=0.2)
+    assert len(layer.history) <= 100  # rolling 100-step window
+    assert isinstance(layer.get_global_metric(), float)
+    assert isinstance(layer.get_schumann_spectrum(), dict)
+    assert 0.0 <= layer.get_circadian_time() <= 24.0
+
+
+def test_l6_circadian_amplitude_bound_and_neutral_l5_payload() -> None:
+    with pytest.raises(ValueError, match="circadian_amplitude"):
+        L6_EcologicalLayer(L6_StochasticParameters(circadian_amplitude=0.9))
+    # An l5 payload with neither known key contributes no organismal effect.
+    layer = L6_EcologicalLayer(L6_StochasticParameters(rng_seed=5))
+    result = layer.step(0.01, solar_activity=0.5, lunar_phase=0.0, l5_input={"unrelated": 1.0})
+    assert "output_bitstreams" in result
