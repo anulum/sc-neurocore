@@ -118,6 +118,16 @@ def test_write_side_channel_benchmark_report_rejects_invalid_output_path(output_
         )
 
 
+def test_write_side_channel_benchmark_report_rejects_non_path_output_type() -> None:
+    with pytest.raises(SideChannelBenchmarkError, match="output_path must be a string or Path"):
+        write_side_channel_benchmark_report(
+            123,  # type: ignore[arg-type]
+            probabilities=(0.25, 0.5),
+            labels=(0, 1),
+            protected_config=ThermalSCEncodingConfig(bitstream_length=16, seed=3),
+        )
+
+
 def test_write_side_channel_benchmark_report_rejects_directory_output_path(tmp_path) -> None:
     with pytest.raises(SideChannelBenchmarkError, match="existing directory"):
         write_side_channel_benchmark_report(
@@ -207,6 +217,7 @@ def test_side_channel_benchmark_rejects_mismatched_encoder_batch_length(monkeypa
     [
         ({"name": ""}, "name"),
         ({"class_activity_proxy": "bad"}, "class_activity_proxy"),
+        ({"dummy_stream_overhead_ratio": True}, "dummy_stream_overhead_ratio"),
         ({"dummy_stream_overhead_ratio": -0.1}, "dummy_stream_overhead_ratio"),
         ({"dummy_stream_overhead_ratio": float("nan")}, "dummy_stream_overhead_ratio"),
         ({"bitstream_count": -1}, "bitstream_count"),
@@ -229,6 +240,8 @@ def test_side_channel_benchmark_arm_rejects_invalid_contracts(kwargs, match) -> 
     ("kwargs", "match"),
     [
         ({"label": True}, "label"),
+        ({"label": float("nan")}, "label"),
+        ({"probability": True}, "probability"),
         ({"probability": 1.1}, "probability"),
         ({"protected_realised_probability": -0.1}, "protected_realised_probability"),
         ({"protected_dummy_streams_inserted": -1}, "protected_dummy_streams_inserted"),
@@ -255,6 +268,7 @@ def test_side_channel_benchmark_record_rejects_invalid_contracts(kwargs, match) 
         ({"security_parameters": "bad"}, "security_parameters"),
         ({"overhead_measurements": "bad"}, "overhead_measurements"),
         ({"boundary_notes": ()}, "boundary_notes"),
+        ({"boundary_notes": ("",)}, "boundary_notes"),
     ],
 )
 def test_side_channel_deploy_manifest_rejects_invalid_contracts(kwargs, match) -> None:
@@ -279,9 +293,12 @@ def test_side_channel_deploy_manifest_rejects_invalid_contracts(kwargs, match) -
         ({"threat_model": ""}, "threat_model"),
         ({"baseline": "bad"}, "baseline"),
         ({"protected": "bad"}, "protected"),
+        ({"max_class_mean_gap_reduction": True}, "max_class_mean_gap_reduction"),
         ({"max_class_mean_gap_reduction": float("nan")}, "max_class_mean_gap_reduction"),
         ({"deploy_manifest": "bad"}, "deploy_manifest"),
         ({"boundary_notes": ()}, "boundary_notes"),
+        ({"boundary_notes": ("",)}, "boundary_notes"),
+        ({"records": ["bad"]}, "records"),
         ({"records": ("bad",)}, "records"),
     ],
 )
@@ -342,6 +359,7 @@ def test_report_payload_rejects_invalid_report() -> None:
 @pytest.mark.parametrize(
     ("probability", "bitstream_length", "match"),
     [
+        (True, 16, "probability"),
         (1.1, 16, "probability"),
         (float("nan"), 16, "probability"),
         (0.5, 0, "bitstream_length"),
