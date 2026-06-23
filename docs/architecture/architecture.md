@@ -1,5 +1,9 @@
 # Architecture
 
+> **Superseded by [`SYSTEM_MAP.md`](SYSTEM_MAP.md) (2026-06-23).** This page is
+> retained for history but is stale (e.g. the "174 neuron models" figure; the
+> verified count is 152 model files). Use `SYSTEM_MAP.md` as the canonical map.
+
 ## Package Structure
 
 ```

@@ -1,5 +1,11 @@
 # SC-NeuroCore Component Inventory
 
+> **Superseded by [`SYSTEM_MAP.md`](SYSTEM_MAP.md) (2026-06-23).** This inventory
+> is stale and inflated: sections 4–5 list speculative/aspirational modules, and
+> several classes named here (e.g. `DigitalSoul`, `MetaCognitionLoop`,
+> `PhiEvaluator`, `QualiaTuringTest`, `KardashevEstimator`) are **not present in
+> `src/`**. Use `SYSTEM_MAP.md` for the verified component set.
+
 **Version:** 3.14.0
 **Date:** 2026-04-13
 

@@ -1,5 +1,10 @@
 # Architecture
 
+> **Canonical map: [`docs/architecture/SYSTEM_MAP.md`](docs/architecture/SYSTEM_MAP.md) (2026-06-23).**
+> This file is retained for the SHD FPGA pipeline detail but its package figures
+> are stale (e.g. "122 neuron models"; the verified count is 152 model source
+> modules, matching `docs/_generated/capability_manifest.json`). Use SYSTEM_MAP.md.
+
 > Last updated: 2026-04-13 (v3.14.0)
 
 SC-NeuroCore is a three-tier stochastic computing framework: a Rust SIMD
