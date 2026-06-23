@@ -128,3 +128,38 @@ def test_l10_short_external_noise_is_padded_before_step() -> None:
     layer.step(0.01, external_noise=np.array([0.1]))
 
     assert layer.time > 0
+
+
+def test_l10_get_global_metric_returns_integrity() -> None:
+    layer = L10_BoundaryLayer(
+        L10_StochasticParameters(n_boundary_nodes=4, bitstream_length=16, rng_seed=3)
+    )
+    assert 0.0 <= layer.get_global_metric() <= 1.0
+
+
+def test_l10_validate_params_type_guards_and_negative_seed() -> None:
+    with pytest.raises(ValueError, match="n_boundary_nodes must be a positive integer"):
+        L10_BoundaryLayer(L10_StochasticParameters(n_boundary_nodes=cast(int, True)))
+    with pytest.raises(ValueError, match="bitstream_length must be a positive integer"):
+        L10_BoundaryLayer(L10_StochasticParameters(bitstream_length=cast(int, True)))
+    with pytest.raises(ValueError, match="rng_seed"):
+        L10_BoundaryLayer(L10_StochasticParameters(rng_seed=-1))
+
+
+def test_l10_memory_complexity_flux_rejects_non_scalar() -> None:
+    layer = L10_BoundaryLayer(
+        L10_StochasticParameters(n_boundary_nodes=4, bitstream_length=16, rng_seed=2)
+    )
+    with pytest.raises(ValueError, match="memory_free_energy must be a finite scalar"):
+        layer._memory_complexity_flux({"memory_free_energy": np.array([1.0, 2.0])})
+
+
+def test_l10_boundary_context_null_and_blank_branches() -> None:
+    empty = L10_BoundaryLayer._boundary_context(
+        {"boundary_context_id": None, "boundary_terminals": ()}
+    )
+    assert empty["ebs_id"] is None
+    with pytest.raises(ValueError, match="boundary_context_id must be non-empty"):
+        L10_BoundaryLayer._boundary_context(
+            {"boundary_context_id": "", "boundary_terminals": ("T1",)}
+        )
