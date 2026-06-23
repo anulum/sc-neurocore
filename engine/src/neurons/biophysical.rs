@@ -886,44 +886,94 @@ impl PospischilNeuron {
             v_threshold: -20.0,
         }
     }
+    /// Return `[dV, dm, dh, dn, dp]` of the five-state system at one consistent
+    /// state. The Traub-Miles activation rates use the closed-form L'Hôpital limit
+    /// within `1e-6` of their `x/(exp(±x/k)-1)` removable singularities, matching
+    /// the Python/Julia/Go/Mojo kernels.
+    fn derivatives(&self, v: f64, m: f64, h: f64, n: f64, p: f64, current: f64) -> [f64; 5] {
+        let dv_vt = v - self.vt;
+        let x_m = dv_vt - 13.0;
+        let am = if x_m.abs() < 1e-6 {
+            1.28
+        } else {
+            -0.32 * x_m / ((-(x_m) / 4.0).exp() - 1.0)
+        };
+        let x_bm = dv_vt - 40.0;
+        let bm = if x_bm.abs() < 1e-6 {
+            1.4
+        } else {
+            0.28 * x_bm / ((x_bm / 5.0).exp() - 1.0)
+        };
+        let ah = 0.128 * (-(dv_vt - 17.0) / 18.0).exp();
+        let bh = 4.0 / (1.0 + (-(dv_vt - 40.0) / 5.0).exp());
+        let x_n = dv_vt - 15.0;
+        let an = if x_n.abs() < 1e-6 {
+            0.16
+        } else {
+            -0.032 * x_n / ((-(x_n) / 5.0).exp() - 1.0)
+        };
+        let bn = 0.5 * (-(dv_vt - 10.0) / 40.0).exp();
+        let p_inf = 1.0 / (1.0 + (-(v + 35.0) / 10.0).exp());
+        let tau_p = 608.0 / (3.3 * ((v + 35.0) / 20.0).exp() + (-(v + 35.0) / 20.0).exp());
+        let dm = am * (1.0 - m) - bm * m;
+        let dh = ah * (1.0 - h) - bh * h;
+        let dn = an * (1.0 - n) - bn * n;
+        let dp = (p_inf - p) / tau_p;
+        let i_na = self.g_na * m * m * m * h * (v - self.e_na);
+        let i_k = self.g_k * n * n * n * n * (v - self.e_k);
+        let i_m = self.g_m * p * (v - self.e_k);
+        let i_l = self.g_l * (v - self.e_l);
+        let dv = (-i_na - i_k - i_m - i_l + current) / self.c_m;
+        [dv, dm, dh, dn, dp]
+    }
+
+    /// Return one classical RK4 increment of `[V, m, h, n, p]`, holding `current`
+    /// constant across the four stages.
+    fn rk4_substep(&self, s: [f64; 5], current: f64) -> [f64; 5] {
+        let dt = self.dt;
+        let k1 = self.derivatives(s[0], s[1], s[2], s[3], s[4], current);
+        let k2 = self.derivatives(
+            s[0] + 0.5 * dt * k1[0],
+            s[1] + 0.5 * dt * k1[1],
+            s[2] + 0.5 * dt * k1[2],
+            s[3] + 0.5 * dt * k1[3],
+            s[4] + 0.5 * dt * k1[4],
+            current,
+        );
+        let k3 = self.derivatives(
+            s[0] + 0.5 * dt * k2[0],
+            s[1] + 0.5 * dt * k2[1],
+            s[2] + 0.5 * dt * k2[2],
+            s[3] + 0.5 * dt * k2[3],
+            s[4] + 0.5 * dt * k2[4],
+            current,
+        );
+        let k4 = self.derivatives(
+            s[0] + dt * k3[0],
+            s[1] + dt * k3[1],
+            s[2] + dt * k3[2],
+            s[3] + dt * k3[3],
+            s[4] + dt * k3[4],
+            current,
+        );
+        let mut out = [0.0_f64; 5];
+        for i in 0..5 {
+            out[i] = s[i] + dt * (k1[i] + 2.0 * k2[i] + 2.0 * k3[i] + k4[i]) / 6.0;
+        }
+        out
+    }
+
     pub fn step(&mut self, current: f64) -> i32 {
         let v_prev = self.v;
+        let mut s = [self.v, self.m, self.h, self.n, self.p];
         for _ in 0..4 {
-            let dv = self.v - self.vt;
-            let x_m = dv - 13.0;
-            let am = if x_m.abs() < 1e-6 {
-                -0.32 * -4.0
-            } else {
-                -0.32 * x_m / ((-(x_m) / 4.0).exp() - 1.0)
-            };
-            let x_bm = dv - 40.0;
-            let bm = if x_bm.abs() < 1e-6 {
-                0.28 * 5.0
-            } else {
-                0.28 * x_bm / ((x_bm / 5.0).exp() - 1.0)
-            };
-            let ah = 0.128 * (-(dv - 17.0) / 18.0).exp();
-            let bh = 4.0 / (1.0 + (-(dv - 40.0) / 5.0).exp());
-            let x_n = dv - 15.0;
-            let an = if x_n.abs() < 1e-6 {
-                -0.032 * -5.0
-            } else {
-                -0.032 * x_n / ((-(x_n) / 5.0).exp() - 1.0)
-            };
-            let bn = 0.5 * (-(dv - 10.0) / 40.0).exp();
-            let p_inf = 1.0 / (1.0 + (-(self.v + 35.0) / 10.0).exp());
-            self.m += (am * (1.0 - self.m) - bm * self.m) * self.dt;
-            self.h += (ah * (1.0 - self.h) - bh * self.h) * self.dt;
-            self.n += (an * (1.0 - self.n) - bn * self.n) * self.dt;
-            let tau_p =
-                608.0 / (3.3 * ((self.v + 35.0) / 20.0).exp() + (-(self.v + 35.0) / 20.0).exp());
-            self.p += (p_inf - self.p) / tau_p * self.dt;
-            let i_na = self.g_na * self.m.powi(3) * self.h * (self.v - self.e_na);
-            let i_k = self.g_k * self.n.powi(4) * (self.v - self.e_k);
-            let i_m = self.g_m * self.p * (self.v - self.e_k);
-            let i_l = self.g_l * (self.v - self.e_l);
-            self.v += (-i_na - i_k - i_m - i_l + current) / self.c_m * self.dt;
+            s = self.rk4_substep(s, current);
         }
+        self.v = s[0];
+        self.m = s[1];
+        self.h = s[2];
+        self.n = s[3];
+        self.p = s[4];
         if self.v >= self.v_threshold && v_prev < self.v_threshold {
             1
         } else {

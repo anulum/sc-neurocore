@@ -81,6 +81,9 @@ name = "bench_morris_lecar_rk4"
 name = "bench_gutkin_ermentrout_rk4"
 
 [[example]]
+name = "bench_pospischil_rk4"
+
+[[example]]
 name = "bench_lapicque_exact_flow"
 
 [[example]]

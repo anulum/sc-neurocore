@@ -1,0 +1,268 @@
+{
+  "spdx_license": "AGPL-3.0-or-later",
+  "benchmark": "PospischilNeuron candidate-first RK4 Hodgkin-Huxley step",
+  "timestamp_utc": "2026-06-23T19:58:49+00:00",
+  "command": "PYTHONPATH=src .venv/bin/python benchmarks/bench_model_pospischil.py",
+  "evidence_class": "local_regression_non_isolated",
+  "production_speed_claim": false,
+  "hardware_measurement_claimed": false,
+  "python": "3.12.3",
+  "platform": "Linux-6.17.0-35-generic-x86_64-with-glibc2.39",
+  "processor": "x86_64",
+  "steps": 200000,
+  "repeats": 5,
+  "current": 5.0,
+  "backend_summary": {
+    "python": {
+      "median_ns_per_step": 43033.839835,
+      "min_ns_per_step": 42572.800715,
+      "max_ns_per_step": 45956.54684,
+      "spikes": 1651
+    },
+    "rust": {
+      "median_ns_per_step": 1099.21491,
+      "min_ns_per_step": 1080.871025,
+      "max_ns_per_step": 1128.89309,
+      "spikes": 1651
+    },
+    "go": {
+      "median_ns_per_step": 1550.0,
+      "min_ns_per_step": 1543.0,
+      "max_ns_per_step": 1633.0,
+      "spikes": 1651
+    },
+    "julia": {
+      "median_ns_per_step": 879.921125,
+      "min_ns_per_step": 857.04506,
+      "max_ns_per_step": 923.363135,
+      "spikes": 1651
+    },
+    "mojo": {
+      "median_ns_per_step": 1507.493780227378,
+      "min_ns_per_step": 1405.3479704307392,
+      "max_ns_per_step": 1531.2832948984578,
+      "spikes": 1651
+    }
+  },
+  "results": [
+    {
+      "backend": "python",
+      "median_ns_per_step": 43033.839835,
+      "min_ns_per_step": 42572.800715,
+      "max_ns_per_step": 45956.54684,
+      "spikes": 1651,
+      "results": [
+        {
+          "backend": "python",
+          "steps": 200000,
+          "current": 5.0,
+          "elapsed_ns": 8514560143,
+          "ns_per_step": 42572.800715,
+          "spikes": 1651,
+          "ending_state": [
+            -60.47663402535832,
+            0.7076789261906782
+          ]
+        },
+        {
+          "backend": "python",
+          "steps": 200000,
+          "current": 5.0,
+          "elapsed_ns": 8571811070,
+          "ns_per_step": 42859.05535,
+          "spikes": 1651,
+          "ending_state": [
+            -60.47663402535832,
+            0.7076789261906782
+          ]
+        },
+        {
+          "backend": "python",
+          "steps": 200000,
+          "current": 5.0,
+          "elapsed_ns": 9191309368,
+          "ns_per_step": 45956.54684,
+          "spikes": 1651,
+          "ending_state": [
+            -60.47663402535832,
+            0.7076789261906782
+          ]
+        },
+        {
+          "backend": "python",
+          "steps": 200000,
+          "current": 5.0,
+          "elapsed_ns": 8665988521,
+          "ns_per_step": 43329.942605,
+          "spikes": 1651,
+          "ending_state": [
+            -60.47663402535832,
+            0.7076789261906782
+          ]
+        },
+        {
+          "backend": "python",
+          "steps": 200000,
+          "current": 5.0,
+          "elapsed_ns": 8606767967,
+          "ns_per_step": 43033.839835,
+          "spikes": 1651,
+          "ending_state": [
+            -60.47663402535832,
+            0.7076789261906782
+          ]
+        }
+      ]
+    },
+    {
+      "backend": "rust",
+      "timestamp_unix": 1782244717,
+      "command": "cargo run --manifest-path engine/Cargo.toml --example bench_pospischil_rk4",
+      "rustc": "rustc 1.96.0 (ac68faa20 2026-05-25)",
+      "target_os": "linux",
+      "target_arch": "x86_64",
+      "measurement_context": {
+        "host_load": "workstation under concurrent load during capture",
+        "cpu_isolation": "runtime cpuset shield when cgroup_effective_cpuset matches benchmark CPUs; kernel-reserved isolated cores were not detected on this workstation",
+        "cpu_affinity": "0-11",
+        "cgroup_effective_cpuset": "unavailable",
+        "runtime_cpuset_shield_claimed": false,
+        "load_average_before": "8.38 8.81 8.83 1/6362 811386",
+        "load_average_after": "8.38 8.81 8.83 9/6362 811409",
+        "cpu_governor": "powersave",
+        "cpu_frequency_mhz": "min=3899.957,max=3906.103,sampled_cpu_count=12",
+        "concurrent_load_status": "non-exclusive workstation run; other heavy jobs may have been active",
+        "timing_interpretation": "use timing medians as local regression context only, not final throughput claims",
+        "production_rerun_requirement": "rerun on reserved isolated cores with recorded affinity, governor, frequency, versions, and host-load evidence before publishing performance claims"
+      },
+      "steps": 200000,
+      "repeats": 5,
+      "current": 5,
+      "median_ns_per_step": 1099.21491,
+      "min_ns_per_step": 1080.871025,
+      "max_ns_per_step": 1128.89309,
+      "results_ns_per_step": [
+        1121.29006,
+        1080.871025,
+        1083.05938,
+        1099.21491,
+        1128.89309
+      ],
+      "spike_counts": [
+        1651,
+        1651,
+        1651,
+        1651,
+        1651
+      ],
+      "final_vs": [
+        -60.476634025362316,
+        -60.476634025362316,
+        -60.476634025362316,
+        -60.476634025362316,
+        -60.476634025362316
+      ],
+      "final_ps": [
+        0.7076789261906866,
+        0.7076789261906866,
+        0.7076789261906866,
+        0.7076789261906866,
+        0.7076789261906866
+      ],
+      "driver_command": "cargo run --release --manifest-path engine/Cargo.toml --example bench_pospischil_rk4"
+    },
+    {
+      "backend": "go",
+      "command": "go test src/sc_neurocore/accel/go/services/pospischil.go src/sc_neurocore/accel/go/services/pospischil_test.go -run ^$ -bench BenchmarkPospischilRK4$ -benchtime 200000x -count 5",
+      "steps": 200000,
+      "repeats": 5,
+      "current": 5.0,
+      "median_ns_per_step": 1550.0,
+      "min_ns_per_step": 1543.0,
+      "max_ns_per_step": 1633.0,
+      "results_ns_per_step": [
+        1633.0,
+        1582.0,
+        1550.0,
+        1550.0,
+        1543.0
+      ],
+      "spikes": 1651,
+      "spike_counts": [
+        1651,
+        1651,
+        1651,
+        1651,
+        1651
+      ]
+    },
+    {
+      "backend": "julia",
+      "command": "julia --project=. -e <pospischil rk4 benchmark>",
+      "steps": 200000,
+      "repeats": 5,
+      "current": 5.0,
+      "median_ns_per_step": 879.921125,
+      "min_ns_per_step": 857.04506,
+      "max_ns_per_step": 923.363135,
+      "results_ns_per_step": [
+        879.921125,
+        914.28738,
+        923.363135,
+        862.388605,
+        857.04506
+      ],
+      "spikes": 1651,
+      "final_vs": [
+        -60.476634025360525,
+        -60.476634025360525,
+        -60.476634025360525,
+        -60.476634025360525,
+        -60.476634025360525
+      ],
+      "final_ps": [
+        0.7076789261906824,
+        0.7076789261906824,
+        0.7076789261906824,
+        0.7076789261906824,
+        0.7076789261906824
+      ]
+    },
+    {
+      "backend": "mojo",
+      "command": "mojo run --disable-warnings -I src/sc_neurocore/accel/mojo/kernels <temp pospischil benchmark>",
+      "steps": 200000,
+      "repeats": 5,
+      "current": 5.0,
+      "median_ns_per_step": 1507.493780227378,
+      "min_ns_per_step": 1405.3479704307392,
+      "max_ns_per_step": 1531.2832948984578,
+      "results_ns_per_step": [
+        1439.2114552902058,
+        1507.493780227378,
+        1527.2313199238852,
+        1531.2832948984578,
+        1405.3479704307392
+      ],
+      "spikes": 1651,
+      "spike_counts": [
+        1651,
+        1651,
+        1651,
+        1651,
+        1651
+      ]
+    }
+  ],
+  "source_hashes": {
+    "benchmarks/bench_model_pospischil.py": "a83a29d2944cb5ce560b1ada9ed0b5a98afcd6f4e25e21e4fc177708b85ea2bd",
+    "engine/Cargo.toml": "278a8089691c138c69e864a4bd514f9c3488a486f1be29ac05ba6c1493dfc5c0",
+    "engine/examples/bench_pospischil_rk4.rs": "5a5353b08683fe0c691f48842d3fae8afcfee87cd2f8b2d01daa6f67d1d599d3",
+    "engine/src/neurons/biophysical.rs": "95a536724a8a6c4d3626bae115ccabf235d863e58cba73174cfb985dca91f2db",
+    "src/sc_neurocore/neurons/models/pospischil.py": "49b4dd82de778cef4dcb2ea40015119d4063a82c52b0f3cbedb493c4ed5e25ac",
+    "src/sc_neurocore/accel/go/services/pospischil.go": "f868326f1c2899d6715adeff0a78a388ecae113572e14f6c33a09e6a5abec64c",
+    "src/sc_neurocore/accel/go/services/pospischil_test.go": "fd393812fd585f06294cb120a5d9aff9585319754e443cb73ad9cd12236af4d8",
+    "src/sc_neurocore/accel/julia/neurons/pospischil.jl": "41ac5aec34ca6c16a214f8fea21100f8729eb7ed939cc66afdbad70aca3e9f78",
+    "src/sc_neurocore/accel/mojo/kernels/pospischil.mojo": "a30ccda02dbb75fecbc8e81c653a511c8911257f54d86e959b88609cb2399a83"
+  }
+}

@@ -269,32 +269,43 @@ All fields are `pub` in Rust. Python: direct attribute access.
 | 1,000 | 686 µs | Linear scaling |
 | 10,000 | ~6.86 ms | Verified linear |
 
+### Integration
+
+Each `step()` call executes **4 candidate-first RK4 sub-steps**. Every sub-step
+evaluates the full five-state right-hand side four times (the classical RK4
+stages) from one consistent state, forms the combined candidate, and commits it
+only after a finiteness check; the historical hard-coded forward-Euler update —
+which staggered the gate and membrane increments against mismatched states —
+remains reachable only through the explicit `integrator="baseline_euler"`
+regression option. The Traub-Miles activation rates use the closed-form
+L'Hôpital limit within `1e-6` of their `x/(exp(±x/k)-1)` removable singularities
+on every backend, replacing the earlier `1e-12` denominator perturbation.
+
 ### Cost breakdown per step
 
-Each step() call executes 4 sub-steps. Per sub-step:
-- 3 singularity-protected rate functions (alpha_m, alpha_n use safe_rate) — 3× branch + exp
-- 3 unconditional exp/sigmoid evaluations — 3× exp
-- 4 current calculations — 4× multiply + add
-- 4 gating variable updates — 4× multiply + add
-- 1 voltage update — 1× divide + add
-
-Total per step: 4 × (6 exp + 8 mul + 8 add + 1 div) ≈ 24 exp + 32 mul.
-
-Measured 2026-04-05 on i5-11600K @ 3.90 GHz, Criterion 0.8.
+RK4 evaluates the derivative four times per sub-step, so each `step()` call runs
+`4 sub-steps × 4 stages` right-hand-side evaluations. Per evaluation: 3
+singularity-protected rate functions and 3 unconditional exp/sigmoid evaluations
+(6 exp), 4 current terms, 4 gate derivatives, and 1 membrane derivative. The
+higher arithmetic cost over forward Euler buys correct integration of the stiff
+sodium spike rather than a first-order approximation of it.
 
 ---
 
-## Python/Rust Parity
+## Polyglot Parity
 
-**EXACT** — Python and Rust implementations are algorithmically identical:
-- Same alpha/beta rate functions with same coefficients
-- Same safe_rate singularity protection (Python uses 1e-12 offset, Rust uses L'Hôpital)
-- Same p_inf and tau_p formulas
-- Same 4 sub-steps per call
-- Spike counts match exactly at same input
+The candidate-first RK4 integrator is mirrored across Python, the Rust engine,
+Julia, Go and Mojo:
+- Same alpha/beta rate functions with the same coefficients
+- Same L'Hôpital singularity limit (no per-backend epsilon divergence)
+- Same `p_inf` and `tau_p` formulas
+- Same 4 RK4 sub-steps per call
+- Spike counts match exactly across all five backends — 519 spikes over 40 000
+  steps of the regular-spiking cell at I = 7 µA/cm², 1651 over 200 000 steps at
+  I = 5 µA/cm² — and Go reproduces the Python membrane potential to `1e-6`.
 
-This is one of the few biophysical models with verified EXACT parity
-across implementations.
+Measured backend throughput is recorded in
+`benchmarks/results/local_python_2026-06-23_pospischil_rk4.json`.
 
 ---
 

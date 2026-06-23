@@ -283,3 +283,107 @@ class TestPospischilAnalysis:
         n = PospischilNeuron()
         train = np.array([float(n.step(10.0)) for _ in range(50000)])
         assert spike_count(train) == int(train.sum())
+
+
+# ---------------------------------------------------------------------------
+# 10. RK4 integrator + fail-closed validation
+# ---------------------------------------------------------------------------
+
+
+class TestPospischilIntegrator:
+    def test_default_integrator_is_rk4(self):
+        assert PospischilNeuron().integrator == "rk4"
+
+    def test_rejects_unknown_integrator(self):
+        with pytest.raises(ValueError, match="Unsupported integrator"):
+            PospischilNeuron(integrator="midpoint")  # type: ignore[arg-type]
+
+    def test_baseline_euler_path_runs_and_diverges_from_rk4(self):
+        rk4 = PospischilNeuron()
+        euler = PospischilNeuron(integrator="baseline_euler")
+        rk4_spikes = sum(rk4.step(7.0) for _ in range(40000))
+        euler_spikes = sum(euler.step(7.0) for _ in range(40000))
+        assert rk4_spikes > 0 and euler_spikes > 0
+        # The two integrators advance the same RHS but produce distinct
+        # trajectories; their final membrane potentials differ.
+        assert rk4.v != euler.v
+
+    def test_rk4_and_euler_agree_to_first_order_at_tiny_dt(self):
+        rk4 = PospischilNeuron(dt=1e-4)
+        euler = PospischilNeuron(dt=1e-4, integrator="baseline_euler")
+        for _ in range(200):
+            rk4.step(5.0)
+            euler.step(5.0)
+        # As dt -> 0 the schemes converge; the membrane potentials stay close.
+        assert abs(rk4.v - euler.v) < 1e-2
+
+
+class TestPospischilAlphaSingular:
+    def test_limit_returned_at_singularity(self):
+        from sc_neurocore.neurons.models.pospischil import _alpha_singular
+
+        assert _alpha_singular(0.0, -4.0, -4.0) == -4.0
+        assert _alpha_singular(5e-7, 5.0, 5.0) == 5.0
+
+    def test_regular_branch_matches_hodgkin_huxley_ratio(self):
+        from sc_neurocore.neurons.models.pospischil import _alpha_singular
+
+        expected = 2.0 / (np.exp(2.0 / -4.0) - 1.0)
+        assert _alpha_singular(2.0, -4.0, -4.0) == pytest.approx(expected)
+
+    def test_neuron_runs_through_gating_singularity(self):
+        # V_T + 13 = -43.2 puts the m-activation numerator exactly on its
+        # removable singularity at the start of a sub-step.
+        n = PospischilNeuron(v=-43.2)
+        n.step(0.0)
+        assert np.isfinite(n.v)
+
+
+class TestPospischilValidation:
+    @pytest.mark.parametrize(
+        "kwargs",
+        [
+            {"g_na": -1.0},
+            {"g_kd": 0.0},
+            {"g_l": -0.1},
+            {"c_m": 0.0},
+            {"dt": 0.0},
+            {"dt": -0.025},
+            {"g_m": -0.01},
+        ],
+    )
+    def test_rejects_invalid_parameters(self, kwargs: dict[str, float]):
+        with pytest.raises(ValueError):
+            PospischilNeuron(**kwargs)
+
+    def test_accepts_zero_m_current_conductance(self):
+        # The fast-spiking variant legitimately sets g_m = 0.
+        assert PospischilNeuron(g_m=0.0).g_m == 0.0
+
+    @pytest.mark.parametrize("field", ["v", "vt", "e_na", "e_k"])
+    def test_rejects_non_finite_field(self, field: str):
+        with pytest.raises(ValueError, match="must be finite"):
+            PospischilNeuron(**{field: float("nan")})
+
+    def test_rejects_boolean_field(self):
+        with pytest.raises(ValueError, match="must be finite"):
+            PospischilNeuron(v=True)  # type: ignore[arg-type]
+
+    def test_rejects_non_finite_current(self):
+        n = PospischilNeuron()
+        with pytest.raises(ValueError, match="must be finite"):
+            n.step(float("inf"))
+
+    def test_runtime_validation_catches_corrupted_state(self):
+        n = PospischilNeuron()
+        n.dt = -1.0  # corrupt a positive parameter after construction
+        with pytest.raises(ValueError, match="dt must be positive"):
+            n.step(0.0)
+
+    def test_non_finite_candidate_fails_closed(self):
+        # A colossal stimulus overflows the membrane derivative; the candidate
+        # guard raises rather than committing a non-finite state.
+        n = PospischilNeuron()
+        with pytest.raises((FloatingPointError, OverflowError)):
+            for _ in range(20):
+                n.step(1e308)
