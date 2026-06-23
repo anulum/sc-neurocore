@@ -13,6 +13,8 @@ from sc_neurocore.security.side_channel_metrics import compute_class_activity_pr
 from sc_neurocore.security.thermal_sc_encoding import (
     ThermalSCEncodingConfig,
     ThermalSCEncodingError,
+    _activity_preserving_rotation_offset,
+    _distribute_ones,
     encode_activity_balanced_probability,
     encode_activity_balanced_probabilities,
 )
@@ -153,6 +155,64 @@ def test_batch_encoder_rejects_non_finite_or_non_numeric_labels(labels) -> None:
             ThermalSCEncodingConfig(bitstream_length=8),
             labels=labels,
         )
+
+
+def test_validate_config_rejects_non_config_object() -> None:
+    """A config of the wrong type is rejected before any field is read."""
+    with pytest.raises(ThermalSCEncodingError, match="must be a ThermalSCEncodingConfig"):
+        encode_activity_balanced_probability(0.5, object())  # type: ignore[arg-type]
+
+
+@pytest.mark.parametrize(
+    "config",
+    [
+        ThermalSCEncodingConfig(bitstream_length=8, seed=-1),
+        ThermalSCEncodingConfig(bitstream_length=8, dummy_streams_per_record=-1),
+        ThermalSCEncodingConfig(bitstream_length=8, max_dummy_overhead_ratio=-1.0),
+        ThermalSCEncodingConfig(bitstream_length=8, max_dummy_overhead_ratio=float("inf")),
+    ],
+)
+def test_validate_config_rejects_out_of_range_fields(config: ThermalSCEncodingConfig) -> None:
+    """A negative seed, negative dummy-stream count, and a negative or
+    non-finite overhead ratio are each rejected as contract violations."""
+    with pytest.raises(ThermalSCEncodingError):
+        encode_activity_balanced_probability(0.5, config)
+
+
+def test_validate_probability_rejects_non_numeric() -> None:
+    """A non-numeric probability fails the type guard before the range check."""
+    with pytest.raises(ThermalSCEncodingError, match=r"probability must be a finite value"):
+        encode_activity_balanced_probability(
+            "oops",  # type: ignore[arg-type]
+            ThermalSCEncodingConfig(bitstream_length=8),
+        )
+
+
+@pytest.mark.parametrize(("probability", "expected_ones"), [(0.0, 0), (1.0, 8)])
+def test_distribute_ones_handles_degenerate_densities(
+    probability: float, expected_ones: int
+) -> None:
+    """All-zero and all-one densities take the dedicated fast paths instead of
+    the interior rank-spreading loop."""
+    result = encode_activity_balanced_probability(
+        probability, ThermalSCEncodingConfig(bitstream_length=8)
+    )
+    assert result.bitstream.count(1) == expected_ones
+    assert result.realised_probability == probability
+
+
+def test_rotation_offset_falls_back_to_zero_without_candidates(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """When the candidate generator yields no offsets the activity-preserving
+    search finds nothing and falls back to the safe identity rotation."""
+    config = ThermalSCEncodingConfig(bitstream_length=8)
+    base = _distribute_ones(4, config.bitstream_length)
+    monkeypatch.setattr(
+        "sc_neurocore.security.thermal_sc_encoding._candidate_offsets",
+        lambda *args, **kwargs: (),
+    )
+    assert _activity_preserving_rotation_offset(base, config, 0) == 0
 
 
 def _correlated_activity_stream(probability: float, bitstream_length: int) -> tuple[int, ...]:
