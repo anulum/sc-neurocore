@@ -181,3 +181,48 @@ def test_lfsr_encode_bits_rejects_invalid_contract_values() -> None:
 
     with pytest.raises(ValueError, match="bit_length"):
         ceb.lfsr_encode_bits(seed=1, threshold=1, bit_length=0)
+
+
+def test_sc_scc_packed_empty_returns_zero() -> None:
+    assert ceb.sc_scc_packed([], []) == 0.0
+
+
+def test_logical_bit_length_validation_guards() -> None:
+    with pytest.raises(ValueError, match="bit_length must be positive"):
+        ceb._logical_bit_length(2, 0)
+    with pytest.raises(ValueError, match="exceeds packed word capacity"):
+        ceb._logical_bit_length(1, 1000)
+
+
+def test_python_scc_packed_degenerate_branches() -> None:
+    # A zero bit_length short-circuits to a zero correlation.
+    assert ceb._python_scc_packed([], [], bit_length=0) == 0.0
+    # An under-counted bit_length pushes pa>1 so the denominator collapses to 0.
+    assert ceb._python_scc_packed([0b11], [0b01], bit_length=1) == 0.0
+
+
+def test_lfsr_encode_bits_unpacks_packed_words() -> None:
+    bits = ceb.lfsr_encode_bits(seed=1, threshold=0x8000, bit_length=80)
+    assert bits.shape == (80,)
+    assert {int(value) for value in np.unique(bits)}.issubset({0, 1})
+
+
+def test_lfsr_and_scc_python_fallbacks_when_engine_absent() -> None:
+    # The autouse fixture restores _HAS_CORE_ENGINE afterwards.
+    ceb._HAS_CORE_ENGINE = False
+    packed = ceb.lfsr_encode_packed(seed=1, threshold=0x8000, bit_length=128)
+    assert packed.dtype == np.uint64
+    correlation = ceb.sc_scc_packed_np(np.asarray(packed), np.asarray(packed), bit_length=128)
+    assert -1.0 <= correlation <= 1.0
+
+
+def test_lfsr_encode_packed_rejects_null_handle(monkeypatch: pytest.MonkeyPatch) -> None:
+    class _NullHandleLib:
+        @staticmethod
+        def lfsr_create(seed: object) -> int:
+            return 0
+
+    ceb._HAS_CORE_ENGINE = True
+    monkeypatch.setattr(ceb, "_get_lib", lambda: _NullHandleLib())
+    with pytest.raises(RuntimeError, match="lfsr_create returned a null handle"):
+        ceb.lfsr_encode_packed(seed=1, threshold=0x8000, bit_length=64)
