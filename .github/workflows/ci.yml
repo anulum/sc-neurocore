@@ -168,7 +168,7 @@ jobs:
               --cov=sc_neurocore \
               --cov-report=term-missing \
               --cov-report=html:htmlcov \
-              --cov-fail-under=96 \
+              --cov-fail-under=98 \
               --junitxml=test-results.xml
           else
             # Full behavioral compatibility matrix, without repeating

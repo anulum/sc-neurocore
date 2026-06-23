@@ -206,7 +206,7 @@ omit = [
 ]
 
 [tool.coverage.report]
-fail_under = 96  # Ratcheted after closing the first coverage slice; target remains 100.
+fail_under = 98  # Ratcheted to the measured 98.52% floor; target remains 100.
 exclude_lines = [
     "pragma: no cover",
     "if __name__",
