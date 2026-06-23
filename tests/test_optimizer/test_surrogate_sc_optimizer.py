@@ -8,11 +8,17 @@
 
 from __future__ import annotations
 
+import dataclasses
+
+import numpy as np
+import pytest
+
 from sc_neurocore.optimizer.sc_optimizer import HardwareBudget, LayerProfile
 from sc_neurocore.optimizer.surrogate_sc_optimizer import (
     BenchmarkObservation,
     SurrogateSCOptimizer,
     TargetHardwareProfile,
+    _RidgeSurrogate,
 )
 
 
@@ -127,3 +133,38 @@ def test_surrogate_optimizer_is_deterministic() -> None:
     assert second is not None
     assert first.config == second.config
     assert first.mean_accuracy == second.mean_accuracy
+
+
+def test_ridge_surrogate_rejects_non_two_dimensional_inputs() -> None:
+    surrogate = _RidgeSurrogate()
+    with pytest.raises(ValueError, match="two-dimensional"):
+        surrogate.fit(np.ones(3), np.ones((3, 1)))
+
+
+def test_ridge_surrogate_rejects_row_count_mismatch() -> None:
+    surrogate = _RidgeSurrogate()
+    with pytest.raises(ValueError, match="row count mismatch"):
+        surrogate.fit(np.ones((3, 2)), np.ones((4, 1)))
+
+
+def test_ridge_surrogate_predict_before_fit_raises() -> None:
+    surrogate = _RidgeSurrogate()
+    with pytest.raises(RuntimeError, match="not fitted"):
+        surrogate.predict(np.ones((1, 2)))
+
+
+def test_rebalance_greedy_pass_upgrades_low_utility_selection() -> None:
+    # Drive the greedy second pass: seed every layer with a sentinel-low utility
+    # so _rank_layer_candidates always surfaces a better affordable candidate,
+    # exercising the gain-improvement and apply branches of _rebalance.
+    opt = SurrogateSCOptimizer(_target())
+    network = _network()
+    report = opt.optimise(network)
+    assert report is not None
+
+    poisoned = {
+        layer_id: dataclasses.replace(cfg, utility_score=-1.0e9)
+        for layer_id, cfg in report.config.items()
+    }
+    rebalanced = opt._rebalance(poisoned, network)
+    assert any(cfg.utility_score > -1.0e9 for cfg in rebalanced.config.values())
