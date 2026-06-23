@@ -78,9 +78,7 @@ def safe_environment() -> dict[str, Any]:
 
 def _make_workload(
     n_channels: int, n_taps: int, seed: int
-) -> tuple[
-    np.ndarray[Any, Any], np.ndarray[Any, Any], np.ndarray[Any, Any], np.ndarray[Any, Any]
-]:
+) -> tuple[np.ndarray[Any, Any], np.ndarray[Any, Any], np.ndarray[Any, Any], np.ndarray[Any, Any]]:
     rng = np.random.default_rng(seed)
     total = n_channels * n_taps
     spikes = (rng.random(total) < 0.5).astype(np.int16)
@@ -197,7 +195,11 @@ def validate_submission(payload: Any) -> list[str]:
         errors.append("backends must be a non-empty list")
     else:
         for entry in backends:
-            if not isinstance(entry, dict) or "backend" not in entry or "median_call_ms" not in entry:
+            if (
+                not isinstance(entry, dict)
+                or "backend" not in entry
+                or "median_call_ms" not in entry
+            ):
                 errors.append("each backend needs a name and median_call_ms")
                 break
     environment = payload.get("environment")
@@ -209,9 +211,11 @@ def validate_submission(payload: Any) -> list[str]:
             errors.append(f"environment carries disallowed keys: {sorted(extra)}")
     if payload.get("hardware_measurement_claimed") not in (True, False):
         errors.append("hardware_measurement_claimed must be a boolean")
-    handle = payload.get("contributor", {}).get("handle", "") if isinstance(
-        payload.get("contributor"), dict
-    ) else None
+    handle = (
+        payload.get("contributor", {}).get("handle", "")
+        if isinstance(payload.get("contributor"), dict)
+        else None
+    )
     if handle is None or not _HANDLE_RE.match(str(handle)):
         errors.append("contributor.handle must be <=40 chars of letters/digits/space/.-_")
     forbidden = _find_forbidden(payload)

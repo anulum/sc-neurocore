@@ -1035,9 +1035,7 @@ class TestMEAFitnessHook:
     def test_response_latency_empty_spikes_without_measured_is_zero(self):
         from sc_neurocore.bioware.bioware import _mea_response_latency_ms
 
-        assert (
-            _mea_response_latency_ms([], stimulus_time_s=None, measured_latency_ms=None) == 0.0
-        )
+        assert _mea_response_latency_ms([], stimulus_time_s=None, measured_latency_ms=None) == 0.0
 
     def test_latency_without_stimulus_uses_first_spike_timestamp(self):
         spikes = [

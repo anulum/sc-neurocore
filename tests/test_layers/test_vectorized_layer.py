@@ -292,9 +292,7 @@ def test_mask_unused_tail_bits_masks_partial_final_word():
     """A non-64-aligned length zeroes the unused high bits of the final word."""
     from sc_neurocore.layers.vectorized_layer import _mask_unused_tail_bits
 
-    packed = np.array(
-        [0xFFFFFFFFFFFFFFFF, 0xFFFFFFFFFFFFFFFF], dtype=np.uint64
-    )
+    packed = np.array([0xFFFFFFFFFFFFFFFF, 0xFFFFFFFFFFFFFFFF], dtype=np.uint64)
     masked = _mask_unused_tail_bits(packed, length=64 + 4)  # valid_tail = 4
     assert masked[-1] == np.uint64((1 << 4) - 1)
     assert masked[0] == np.uint64(0xFFFFFFFFFFFFFFFF)  # earlier words untouched
@@ -315,14 +313,8 @@ def test_from_exported_weights_validates_payload():
     with pytest.raises(ValueError, match="2-D matrix"):
         VectorizedSCLayer.from_exported_weights({"weight": [1.0, 2.0, 3.0]})
     with pytest.raises(ValueError, match="must be 'unipolar' or 'bipolar'"):
-        VectorizedSCLayer.from_exported_weights(
-            {"weight": [[0.5, 0.5]], "encoding": "ternary"}
-        )
+        VectorizedSCLayer.from_exported_weights({"weight": [[0.5, 0.5]], "encoding": "ternary"})
     with pytest.raises(ValueError, match=r"bipolar exported weights must be in \[-1, 1\]"):
-        VectorizedSCLayer.from_exported_weights(
-            {"weight": [[2.0, 0.0]], "encoding": "bipolar"}
-        )
+        VectorizedSCLayer.from_exported_weights({"weight": [[2.0, 0.0]], "encoding": "bipolar"})
     with pytest.raises(ValueError, match=r"unipolar exported weights must be in \[0, 1\]"):
-        VectorizedSCLayer.from_exported_weights(
-            {"weight": [[2.0, 0.0]], "encoding": "unipolar"}
-        )
+        VectorizedSCLayer.from_exported_weights({"weight": [[2.0, 0.0]], "encoding": "unipolar"})

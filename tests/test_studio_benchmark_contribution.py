@@ -102,7 +102,5 @@ def test_api_contribute_and_databank(client: TestClient, databank: Path) -> None
 
     leaky = dict(run)
     leaky["environment"] = {**run["environment"], "ip": "10.0.0.1"}
-    rejected = client.post(
-        "/api/benchmarks/contribute", json={"submission": leaky, "handle": ""}
-    )
+    rejected = client.post("/api/benchmarks/contribute", json={"submission": leaky, "handle": ""})
     assert rejected.status_code == 400

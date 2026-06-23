@@ -37,6 +37,8 @@ def _evidence_kind(tier: int) -> str:
     if tier == 2:
         return "curated"
     return ""
+
+
 from sc_neurocore.neurons.models import _CLASS_TO_MODULE
 
 # State variable names that change during .step() — common across models

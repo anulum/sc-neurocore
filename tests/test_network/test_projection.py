@@ -107,9 +107,7 @@ def test_max_delay_uniform_mode_returns_steps():
 
 def test_max_delay_per_synapse_without_state_raises():
     src, tgt = _pops(2)
-    proj = Projection(
-        src, tgt, weight=0.5, topology="all_to_all", delay=np.full(4, 3.0)
-    )
+    proj = Projection(src, tgt, weight=0.5, topology="all_to_all", delay=np.full(4, 3.0))
     proj._per_syn_delays = None  # simulate corrupted delay state
     with pytest.raises(RuntimeError, match="per-synapse delay state is not initialized"):
         _ = proj.max_delay
@@ -120,9 +118,7 @@ def test_max_delay_per_synapse_without_state_raises():
 
 def test_weight_threshold_skips_subthreshold_synapses():
     src, tgt = _pops(2)
-    proj = Projection(
-        src, tgt, weight=0.5, topology="all_to_all", weight_threshold=1.0
-    )
+    proj = Projection(src, tgt, weight=0.5, topology="all_to_all", weight_threshold=1.0)
     out = proj.propagate(np.array([1, 1], dtype=np.float64))
     # Every weight (0.5) is at/below the threshold, so no current accumulates.
     assert np.all(out == 0.0)
@@ -138,9 +134,7 @@ def test_propagate_uniform_without_buffer_raises():
 
 def test_propagate_per_synapse_without_state_raises():
     src, tgt = _pops(2)
-    proj = Projection(
-        src, tgt, weight=0.5, topology="all_to_all", delay=np.full(4, 3.0)
-    )
+    proj = Projection(src, tgt, weight=0.5, topology="all_to_all", delay=np.full(4, 3.0))
     proj._per_syn_delays = None  # simulate corrupted delay state
     with pytest.raises(RuntimeError, match="per-synapse delay state is not initialized"):
         proj.propagate(np.array([1, 1], dtype=np.float64))

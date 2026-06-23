@@ -357,9 +357,7 @@ class TestAdaptationPolicy:
         # rather than raising. Simulate the drift by shrinking the cascade.
         import sc_neurocore.control.sc_runtime as sc_runtime_module
 
-        monkeypatch.setattr(
-            sc_runtime_module, "DECORRELATOR_CASCADE", [DecorrelatorType.LFSR]
-        )
+        monkeypatch.setattr(sc_runtime_module, "DECORRELATOR_CASCADE", [DecorrelatorType.LFSR])
         result = AdaptationPolicy._next_decorrelator(DecorrelatorType.HYBRID)
         assert result == DecorrelatorType.HYBRID
 

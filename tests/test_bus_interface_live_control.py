@@ -140,9 +140,7 @@ def test_live_parameter_bank_rejects_invalid_axi_configuration() -> None:
         parameter_count=1,
         parameter_names=("w0",),
     )
-    base = MMIOUpdateSpec(
-        bus_protocol="axi4_lite", banks=(bank,), control_base_address_bytes=0x100
-    )
+    base = MMIOUpdateSpec(bus_protocol="axi4_lite", banks=(bank,), control_base_address_bytes=0x100)
     with pytest.raises(ValueError, match="32-bit AXI data bus"):
         generate_live_parameter_bank(base, module_name="m", bus_data_width=64)
     with pytest.raises(ValueError, match="addr_width must be between 8 and 64"):
@@ -166,9 +164,7 @@ def test_live_parameter_bank_rejects_invalid_pcie_configuration() -> None:
         parameter_count=1,
         parameter_names=("w0",),
     )
-    spec = MMIOUpdateSpec(
-        bus_protocol="pcie", banks=(bank,), control_base_address_bytes=0x100
-    )
+    spec = MMIOUpdateSpec(bus_protocol="pcie", banks=(bank,), control_base_address_bytes=0x100)
     with pytest.raises(ValueError, match="addr_width must be between 8 and 64"):
         generate_live_parameter_bank(spec, module_name="m", addr_width=4)
     with pytest.raises(ValueError, match="requires 32-bit data"):

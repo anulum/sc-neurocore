@@ -2237,9 +2237,7 @@ def create_app(runtime_settings: StudioRuntimeSettings | None = None) -> FastAPI
         return _safe(
             lambda: (
                 model_documentation(name)
-                or (_ for _ in ()).throw(
-                    HTTPException(404, f"No documentation for model '{name}'")
-                )
+                or (_ for _ in ()).throw(HTTPException(404, f"No documentation for model '{name}'"))
             )
         )
 
@@ -2253,9 +2251,7 @@ def create_app(runtime_settings: StudioRuntimeSettings | None = None) -> FastAPI
         return _safe(
             lambda: (
                 dcls_benchmark()
-                or (_ for _ in ()).throw(
-                    HTTPException(404, "No recorded DCLS benchmark available")
-                )
+                or (_ for _ in ()).throw(HTTPException(404, "No recorded DCLS benchmark available"))
             )
         )
 
@@ -2283,9 +2279,7 @@ def create_app(runtime_settings: StudioRuntimeSettings | None = None) -> FastAPI
     def api_benchmark_contribute(contribute_request: BenchmarkContributeRequest) -> Any:
         def _contribute() -> dict[str, Any]:
             try:
-                return store_contribution(
-                    contribute_request.submission, contribute_request.handle
-                )
+                return store_contribution(contribute_request.submission, contribute_request.handle)
             except ValueError as exc:
                 raise HTTPException(400, str(exc)) from exc
 

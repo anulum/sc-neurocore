@@ -84,6 +84,7 @@ def probe_backends() -> list[dict[str, Any]]:
             status.append({"backend": name, "available": False, "live": True})
     return status
 
+
 _REPO_ROOT = Path(__file__).resolve().parents[3]
 _RTL_FILES = (
     "hdl/sc_dcls_tent_kernel.v",

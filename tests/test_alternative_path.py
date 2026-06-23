@@ -712,9 +712,7 @@ def test_evaluate_cases_without_benchmark_yields_no_median_runtimes():
     )
     summary = route.evaluate_cases(
         [AlternativePathCase("c1")],
-        AlternativePathConfig(
-            enabled=True, mode=AlternativePathMode.SHADOW, benchmark=False
-        ),
+        AlternativePathConfig(enabled=True, mode=AlternativePathMode.SHADOW, benchmark=False),
     )
     assert summary.median_baseline_runtime_ns is None
     assert summary.median_candidate_runtime_ns is None

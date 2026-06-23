@@ -191,9 +191,7 @@ def test_codesign_loop_flags_density_outside_hoeffding_tolerance() -> None:
     adjacency = np.ones((4, 4), dtype=np.float64) - np.eye(4, dtype=np.float64)
     # A tight density_alpha over a long bitstream shrinks the Hoeffding tolerance
     # below the realised LFSR density error, forcing a density blocker.
-    config = PhotonicCoDesignConfig(
-        bitstream_length=4096, density_alpha=0.999999, run_fdtd=False
-    )
+    config = PhotonicCoDesignConfig(bitstream_length=4096, density_alpha=0.999999, run_fdtd=False)
     report = StochasticPhotonicCoDesignLoop(config).compile(
         adjacency, probabilities=[0.2, 0.4, 0.6, 0.8]
     )
@@ -207,9 +205,7 @@ def test_codesign_loop_flags_optical_paths_below_detector_margin() -> None:
     n = 40
     adjacency = np.ones((n, n), dtype=np.float64) - np.eye(n, dtype=np.float64)
     config = PhotonicCoDesignConfig(bitstream_length=64, run_fdtd=False)
-    report = StochasticPhotonicCoDesignLoop(config).compile(
-        adjacency, probabilities=[0.5] * n
-    )
+    report = StochasticPhotonicCoDesignLoop(config).compile(adjacency, probabilities=[0.5] * n)
     assert report.feasible is False
     assert any("below detector margin" in blocker for blocker in report.blockers)
 
