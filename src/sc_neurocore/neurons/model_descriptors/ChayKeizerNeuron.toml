@@ -3,43 +3,64 @@ schema_version = 2
 name = "ChayKeizerNeuron"
 class_name = "ChayKeizerNeuron"
 module = "chay_keizer"
-display_name = ""
-summary = "Chay-Keizer pancreatic beta-cell model with guarded Ca-K dynamics."
+display_name = "Chay-Keizer pancreatic beta-cell"
+summary = "Five-state Chay-Keizer 1983 pancreatic beta-cell square-wave burster: a Hodgkin-Huxley calcium and potassium membrane with a calcium-activated potassium conductance whose slow cytosolic calcium variable packages spikes into bursts."
 family = "Bursting"
 category = "bursting"
-biophysical_detail = "point"
-maturity = "experimental"
-intended_use = []
+biophysical_detail = "conductance"
+maturity = "validated"
+intended_use = [
+    "education",
+    "single-cell-dynamics",
+]
 hardware_fit = []
 behavior_tags = []
 
 [provenance]
+doi = "10.1016/S0006-3495(83)84384-7"
 authors = [
-    "Chay, T.R. & Keizer, J.",
+    "Chay, T.R.",
+    "Keizer, J.",
 ]
 year = 1983
-doi = "10.1016/S0006-3495(83)84384-7"
+paper_title = "Minimal model for membrane oscillations in the pancreatic beta-cell"
 
 [state.v]
-init = -50.0
+init = -54.774
+unit = "mV"
+meaning = "membrane potential"
+
+[state.m]
+init = 0.029725
+unit = "1"
+meaning = "calcium-current activation gate"
+
+[state.h]
+init = 0.747865
+unit = "1"
+meaning = "calcium-current inactivation gate"
 
 [state.n]
-init = 0.01
+init = 0.061079
+unit = "1"
+meaning = "delayed-rectifier potassium activation gate"
 
 [state.ca]
-init = 0.1
+init = 0.8
+unit = "uM"
+meaning = "free cytosolic calcium concentration"
 
 [parameters.g_ca]
-default = 20.0
+default = 6.5
 unit = "mS/cm^2"
 meaning = "maximal calcium conductance"
 range = [
     0.0,
-    100.0,
+    50.0,
 ]
 
 [parameters.g_k]
-default = 25.0
+default = 12.0
 unit = "mS/cm^2"
 meaning = "maximal voltage-gated potassium conductance"
 range = [
@@ -48,16 +69,16 @@ range = [
 ]
 
 [parameters.g_kca]
-default = 12.0
+default = 0.09
 unit = "mS/cm^2"
 meaning = "maximal calcium-activated potassium conductance"
 range = [
     0.0,
-    100.0,
+    10.0,
 ]
 
 [parameters.g_l]
-default = 0.1
+default = 0.04
 unit = "mS/cm^2"
 meaning = "leak conductance"
 range = [
@@ -92,44 +113,98 @@ range = [
     -20.0,
 ]
 
-[parameters.k_d]
+[parameters.c_m]
 default = 1.0
-unit = "1"
-meaning = "calcium half-saturation of the calcium-activated potassium current (normalised calcium units)"
+unit = "uF/cm^2"
+meaning = "membrane capacitance"
 range = [
-    0.01,
+    0.5,
     10.0,
+]
+
+[parameters.v_prime]
+default = 50.0
+unit = "mV"
+meaning = "voltage shift of the calcium-gate Hodgkin-Huxley rate functions"
+range = [
+    0.0,
+    100.0,
+]
+
+[parameters.v_star]
+default = 30.0
+unit = "mV"
+meaning = "voltage shift of the potassium-gate Hodgkin-Huxley rate functions"
+range = [
+    0.0,
+    100.0,
+]
+
+[parameters.k_dis]
+default = 1.0
+unit = "uM"
+meaning = "calcium dissociation constant of the calcium-activated potassium channel"
+range = [
+    0.1,
+    10.0,
+]
+
+[parameters.radius_cm]
+default = 0.00089
+unit = "cm"
+meaning = "cell radius (sets the surface-to-volume calcium influx scaling)"
+range = [
+    0.0001,
+    0.01,
+]
+
+[parameters.faraday]
+default = 96487.0
+unit = "C/mol"
+meaning = "Faraday constant"
+range = [
+    96000.0,
+    97000.0,
 ]
 
 [parameters.f_ca]
 default = 0.004
-unit = "cm^2/(uA*ms)"
-meaning = "calcium influx coefficient converting calcium current into concentration change"
+unit = "1"
+meaning = "fraction of free (unbuffered) cytosolic calcium"
 range = [
     0.0001,
     0.1,
 ]
 
 [parameters.k_ca]
-default = 0.03
+default = 0.04
 unit = "1/ms"
-meaning = "calcium efflux rate"
+meaning = "calcium removal (pump) rate constant"
 range = [
     0.001,
-    1.0,
+    0.5,
+]
+
+[parameters.temp_celsius]
+default = 20.0
+unit = "degC"
+meaning = "temperature (sets the Q10 gate-kinetics factor)"
+range = [
+    0.0,
+    40.0,
 ]
 
 [parameters.v_threshold]
-default = -20.0
+default = -30.0
 unit = "mV"
-meaning = "voltage at which a spike is registered"
+meaning = "membrane potential at which an upward spike crossing is registered"
 range = [
-    -40.0,
-    20.0,
+    -50.0,
+    0.0,
 ]
 
 [integration]
-dt = 0.02
+dt = 0.05
 method = "euler"
 
 [dynamics]

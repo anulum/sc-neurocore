@@ -4,7 +4,7 @@
 # © Code 2020–2026 Miroslav Šotek. All rights reserved.
 # ORCID: 0009-0009-3560-0851
 # Contact: www.anulum.li | protoscience@anulum.li
-# SC-NeuroCore — Chay & Keizer 1983 — pancreatic beta cell with Ca-dependent K
+# SC-NeuroCore — Chay & Keizer 1983 — pancreatic beta-cell square-wave burster
 
 from __future__ import annotations
 
@@ -14,31 +14,63 @@ from dataclasses import dataclass
 
 @dataclass
 class ChayKeizerNeuron:
-    """Chay-Keizer pancreatic beta-cell model with guarded Ca-K dynamics.
+    """Chay & Keizer 1983 pancreatic beta-cell minimal model (five-state burster).
 
-    Reference: Chay, T.R. & Keizer, J. (1983). Biophys. J. 42:181-190.
+    The original five-dimensional model: membrane potential ``v``, the
+    Hodgkin-Huxley activation/inactivation gates ``m``/``h`` of the inward
+    calcium current, the delayed-rectifier potassium activation ``n``, and the
+    free cytosolic calcium concentration ``ca`` (the slow variable that packages
+    spikes into bursts). Calcium enters through the voltage-gated calcium channel
+    during the active phase, gradually activating a calcium-dependent potassium
+    conductance until it terminates the burst; calcium then decays through the
+    silent phase until the next burst begins. With the published parameters the
+    model produces square-wave bursts with a period of order ten to twenty
+    seconds and a cytosolic calcium oscillation of order one micromolar.
+
+    The conductances follow the Hodgkin-Huxley convention written as
+    ``g (E_rev - V)`` (inward positive). The gate rate functions are the
+    Hodgkin-Huxley 1952 forms with the membrane potential shifted by ``v_prime``
+    for the calcium gates and ``v_star`` for the potassium gate, scaled by the
+    temperature factor ``phi``; calcium influx is the surface-to-volume scaled
+    calcium current minus a first-order pump removal.
+
+    Reference: Chay, T.R. & Keizer, J. (1983). Minimal model for membrane
+    oscillations in the pancreatic beta-cell. Biophys. J. 42:181-190.
+    DOI 10.1016/S0006-3495(83)84384-7. Parameters are the paper's Table I with
+    the burst calcium-removal rate of Fig. 1b; cross-checked against the Wolfram
+    Demonstrations reference implementation.
     """
 
-    v: float = -50.0
-    n: float = 0.01
-    ca: float = 0.1
-    g_ca: float = 20.0
-    g_k: float = 25.0
-    g_kca: float = 12.0
-    g_l: float = 0.1
+    v: float = -54.774
+    m: float = 0.029725
+    h: float = 0.747865
+    n: float = 0.061079
+    ca: float = 0.8
+    g_ca: float = 6.5
+    g_k: float = 12.0
+    g_kca: float = 0.09
+    g_l: float = 0.04
     e_ca: float = 100.0
     e_k: float = -75.0
     e_l: float = -40.0
-    k_d: float = 1.0
+    c_m: float = 1.0
+    v_prime: float = 50.0
+    v_star: float = 30.0
+    k_dis: float = 1.0
+    radius_cm: float = 8.9e-4
+    faraday: float = 96487.0
     f_ca: float = 0.004
-    k_ca: float = 0.03
-    dt: float = 0.02
-    v_threshold: float = -20.0
+    k_ca: float = 0.04
+    temp_celsius: float = 20.0
+    dt: float = 0.05
+    # Spike peaks sit on the burst plateau near -25 mV with troughs near -39 mV
+    # (the paper's ~12 mV spikes); detect upward crossings between the two.
+    v_threshold: float = -30.0
 
-    _MAX_SUBSTEP: float = 0.001
+    _MAX_SUBSTEP: float = 0.01
     _V_MIN: float = -200.0
     _V_MAX: float = 200.0
-    _CA_MAX: float = 100.0
+    _CA_MAX: float = 1000.0
 
     @staticmethod
     def _finite(value: float, name: str) -> float:
@@ -69,22 +101,45 @@ class ChayKeizerNeuron:
         return value
 
     @classmethod
-    def _checked_exp(cls, exponent: float, name: str) -> float:
-        exponent = cls._finite(exponent, name)
+    def _checked_exp(cls, exponent: float) -> float:
         if exponent < -700.0:
             return 0.0
         if exponent > 700.0:
             return math.exp(700.0)
         return math.exp(exponent)
 
-    @classmethod
-    def _gate_inf(cls, exponent: float, name: str) -> float:
-        return 1.0 / (1.0 + cls._checked_exp(exponent, name))
+    def _alpha_m(self, v: float) -> float:
+        d = (v + self.v_prime) - 25.0
+        if abs(d) < 1e-7:
+            return 1.0
+        return -0.1 * d / (self._checked_exp(-d / 10.0) - 1.0)
 
-    def _validated_state(self) -> tuple[float, float, float, int, float]:
+    def _beta_m(self, v: float) -> float:
+        return 4.0 * self._checked_exp(-(v + self.v_prime) / 18.0)
+
+    def _alpha_h(self, v: float) -> float:
+        return 0.07 * self._checked_exp(-(v + self.v_prime) / 20.0)
+
+    def _beta_h(self, v: float) -> float:
+        return 1.0 / (self._checked_exp(-((v + self.v_prime) - 30.0) / 10.0) + 1.0)
+
+    def _alpha_n(self, v: float) -> float:
+        d = (v + self.v_star) - 10.0
+        if abs(d) < 1e-7:
+            return 0.1
+        return -0.01 * d / (self._checked_exp(-d / 10.0) - 1.0)
+
+    def _beta_n(self, v: float) -> float:
+        return 0.125 * self._checked_exp(-(v + self.v_star) / 80.0)
+
+    def _validated_state(
+        self,
+    ) -> tuple[float, float, float, float, float, int, float, float, float]:
         v = self._finite(self.v, "v")
         if not self._V_MIN <= v <= self._V_MAX:
             raise ValueError("v outside Chay-Keizer safety envelope")
+        m = self._probability(self.m, "m")
+        h = self._probability(self.h, "h")
         n = self._probability(self.n, "n")
         ca = self._nonnegative(self.ca, "ca")
         if ca > self._CA_MAX:
@@ -97,62 +152,82 @@ class ChayKeizerNeuron:
         self._finite(self.e_ca, "e_ca")
         self._finite(self.e_k, "e_k")
         self._finite(self.e_l, "e_l")
-        self._positive(self.k_d, "k_d")
+        self._positive(self.c_m, "c_m")
+        self._finite(self.v_prime, "v_prime")
+        self._finite(self.v_star, "v_star")
+        self._positive(self.k_dis, "k_dis")
+        self._positive(self.radius_cm, "radius_cm")
+        self._positive(self.faraday, "faraday")
         self._nonnegative(self.f_ca, "f_ca")
         self._nonnegative(self.k_ca, "k_ca")
+        self._finite(self.temp_celsius, "temp_celsius")
         dt = self._positive(self.dt, "dt")
         self._finite(self.v_threshold, "v_threshold")
 
+        # Temperature factor (Q10 = 3, Hodgkin-Huxley reference 6.3 degrees C) and
+        # the surface-to-volume calcium influx coefficient, both from the paper.
+        phi = 3.0 ** ((self.temp_celsius - 6.3) / 10.0)
+        ca_influx = 3.0 / (self.radius_cm * self.faraday)
+
         substeps = max(1, math.ceil(dt / self._MAX_SUBSTEP))
-        if substeps > 10000:
-            raise ValueError("dt requires too many Chay-Keizer safety substeps")
-        return v, n, ca, substeps, dt / substeps
+        if substeps > 100000:
+            raise ValueError("dt requires too many Chay-Keizer integration substeps")
+        return v, m, h, n, ca, substeps, dt / substeps, phi, ca_influx
 
     def _candidate(
-        self, v: float, n: float, ca: float, h: float, current: float
-    ) -> tuple[float, float, float]:
-        m_inf = self._gate_inf(-(v + 25.0) / 8.0, "m_inf exponent")
-        n_inf = self._gate_inf(-(v + 18.0) / 14.0, "n_inf exponent")
-        tau_n_denominator = 1.0 + self._checked_exp((v + 18.0) / 14.0, "tau_n exponent")
-        tau_n = 20.0 / tau_n_denominator
-        ca_denominator = ca + self.k_d
-        if ca_denominator <= 0.0:
-            raise ValueError("calcium activation denominator must be positive")
+        self,
+        v: float,
+        m: float,
+        h: float,
+        n: float,
+        ca: float,
+        current: float,
+        step_dt: float,
+        phi: float,
+        ca_influx: float,
+    ) -> tuple[float, float, float, float, float]:
+        g_ca_open = self.g_ca * m * m * m * h
+        i_ca = g_ca_open * (self.e_ca - v)
+        i_k = self.g_k * n * n * n * n * (self.e_k - v)
+        i_kca = self.g_kca * (ca / (ca + self.k_dis)) * (self.e_k - v)
+        i_l = self.g_l * (self.e_l - v)
 
-        q_kca = ca / ca_denominator
-        i_ca = self.g_ca * m_inf * (v - self.e_ca)
-        i_k = self.g_k * n * (v - self.e_k)
-        i_kca = self.g_kca * q_kca * (v - self.e_k)
-        i_l = self.g_l * (v - self.e_l)
-
-        v_next = v + (-i_ca - i_k - i_kca - i_l + current) * h
-        n_next = n + (n_inf - n) / max(tau_n, 0.1) * h
-        ca_next = ca + (-self.f_ca * i_ca - self.k_ca * ca) * h
+        v_next = v + (current + 2.0 * i_ca + i_k + i_kca + i_l) / self.c_m * step_dt
+        m_next = m + phi * (self._alpha_m(v) * (1.0 - m) - self._beta_m(v) * m) * step_dt
+        h_next = h + phi * (self._alpha_h(v) * (1.0 - h) - self._beta_h(v) * h) * step_dt
+        n_next = n + phi * (self._alpha_n(v) * (1.0 - n) - self._beta_n(v) * n) * step_dt
+        ca_next = ca + self.f_ca * (ca_influx * i_ca - self.k_ca * ca) * step_dt
 
         if not math.isfinite(v_next) or not self._V_MIN <= v_next <= self._V_MAX:
             raise ValueError("Chay-Keizer voltage candidate outside safety envelope")
-        if not math.isfinite(n_next) or not 0.0 <= n_next <= 1.0:
-            raise ValueError("Chay-Keizer n-gate candidate outside [0, 1]")
+        m_next = min(max(m_next, 0.0), 1.0)
+        h_next = min(max(h_next, 0.0), 1.0)
+        n_next = min(max(n_next, 0.0), 1.0)
         if not math.isfinite(ca_next) or not 0.0 <= ca_next <= self._CA_MAX:
             raise ValueError("Chay-Keizer calcium candidate outside safety envelope")
-        return v_next, n_next, ca_next
+        return v_next, m_next, h_next, n_next, ca_next
 
-    def step(self, current: float) -> int:
-        """Advance one timestep and return an upward-threshold spike flag."""
+    def step(self, current: float = 0.0) -> int:
+        """Advance one timestep and return an upward-threshold spike flag.
+
+        The default zero current is the autonomous glucose-stimulated regime in
+        which the cell bursts on its own; a non-zero ``current`` is an applied
+        membrane current (for example the negative pump-mimicking current of the
+        paper's Na/K-pump extension).
+        """
 
         current = self._finite(current, "current")
         v_initial = self.v
-        v, n, ca, substeps, h = self._validated_state()
+        v, m, h, n, ca, substeps, step_dt, phi, ca_influx = self._validated_state()
+
         crossed = False
         for _ in range(substeps):
-            v_next, n_next, ca_next = self._candidate(v, n, ca, h, current)
+            v_next, m, h, n, ca = self._candidate(v, m, h, n, ca, current, step_dt, phi, ca_influx)
             crossed = crossed or (v_next >= self.v_threshold and v < self.v_threshold)
-            v, n, ca = v_next, n_next, ca_next
+            v = v_next
 
-        self.v = v
-        self.n = n
-        self.ca = ca
+        self.v, self.m, self.h, self.n, self.ca = v, m, h, n, ca
         return 1 if crossed and v_initial < self.v_threshold else 0
 
     def reset(self) -> None:
-        self.v, self.n, self.ca = -50.0, 0.01, 0.1
+        self.v, self.m, self.h, self.n, self.ca = -54.774, 0.029725, 0.747865, 0.061079, 0.8
