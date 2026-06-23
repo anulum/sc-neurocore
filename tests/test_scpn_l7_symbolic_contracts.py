@@ -181,3 +181,90 @@ def test_l7_rejects_invalid_parameters_and_inputs() -> None:
         layer.step(0.001, acupoint_stimulus={0: np.nan})
     with pytest.raises(ValueError, match="acupoint_stimulus"):
         layer.step(0.001, acupoint_stimulus={16: 0.5})
+
+
+def _layer(**overrides: Any) -> L7_SymbolicLayer:
+    params = dict(n_symbols=16, n_meridians=4, n_acupoints=16, bitstream_length=16, rng_seed=5)
+    params.update(overrides)
+    return L7_SymbolicLayer(L7_StochasticParameters(**params))
+
+
+def test_l7_step_consumes_valid_symbol_and_acupoint_inputs() -> None:
+    layer = _layer()
+    result = layer.step(
+        0.001,
+        symbol_input=np.ones(16, dtype=np.float64),
+        acupoint_stimulus={0: 0.5, 3: 0.25},
+    )
+    assert "glyph_vector" in result
+    assert layer.acupoint_activations[0] > 0.0
+    assert layer.acupoint_activations[3] > 0.0
+    # get_global_metric mirrors the assembled symbolic health.
+    assert layer.get_global_metric() == layer.symbolic_health
+
+
+def test_l7_neutral_alignments_with_silent_state() -> None:
+    layer = _layer()
+    layer.symbol_activations = np.zeros_like(layer.symbol_activations)
+    layer.e8_state = np.zeros(8, dtype=np.float64)
+    result = layer.step(0.001)
+    # Sub-threshold activations and a zero E8 state take the neutral fallbacks.
+    assert result["phi_alignment"] == 0.5
+    assert result["fibonacci_alignment"] == 0.5
+    assert result["e8_alignment"] == 0.5
+
+
+def test_l7_l6_schumann_fallback_and_neutral_payload() -> None:
+    # schumann_field (no symbolic_drive) drives the finite-mean fallback branch.
+    schumann = _layer(ecological_coupling=0.2)
+    schumann.step(0.001, l6_input={"schumann_field": np.full(8, 1.5, dtype=np.float64)})
+
+    # An l6 payload with neither known key contributes a zero ecological effect.
+    neutral = _layer(ecological_coupling=0.2)
+    result = neutral.step(0.001, l6_input={"unrelated_channel": 1.0})
+    assert "meridian_qi" in result
+
+
+def test_l7_l6_drive_rejects_empty_payloads() -> None:
+    layer = _layer()
+    with pytest.raises(ValueError, match="schumann_field"):
+        layer.step(0.001, l6_input={"schumann_field": np.array([], dtype=np.float64)})
+    with pytest.raises(ValueError, match="symbolic_drive"):
+        layer.step(0.001, l6_input={"symbolic_drive": np.array([], dtype=np.float64)})
+
+
+def test_l7_acupoint_stimulus_rejects_non_integer_keys() -> None:
+    layer = _layer()
+    with pytest.raises(ValueError, match="integer point ids"):
+        layer.step(0.001, acupoint_stimulus=cast(Any, {True: 0.5}))
+
+
+def test_l7_symbol_input_rejects_non_finite_at_full_length() -> None:
+    # A full-length symbol vector clears the size guard but a non-finite entry
+    # is rejected by the finiteness check.
+    layer = _layer()
+    bad = np.ones(16, dtype=np.float64)
+    bad[5] = np.nan
+    with pytest.raises(ValueError, match="symbol_input must contain only finite"):
+        layer.step(0.001, symbol_input=bad)
+
+
+def test_l7_stimulate_meridian_guards() -> None:
+    layer = _layer(n_meridians=4)
+    with pytest.raises(ValueError, match="meridian_id must be in range"):
+        layer.stimulate_meridian(10, 0.5)
+    with pytest.raises(ValueError, match="intensity must be finite"):
+        layer.stimulate_meridian(0, float("nan"))
+
+
+def test_l7_validate_params_type_guards_and_negative_seed() -> None:
+    with pytest.raises(ValueError, match="n_symbols must be a positive integer"):
+        L7_SymbolicLayer(L7_StochasticParameters(n_symbols=cast(int, True)))
+    with pytest.raises(ValueError, match="n_meridians must be a positive integer"):
+        L7_SymbolicLayer(L7_StochasticParameters(n_meridians=cast(int, True)))
+    with pytest.raises(ValueError, match="n_acupoints must be a positive integer"):
+        L7_SymbolicLayer(L7_StochasticParameters(n_acupoints=cast(int, True)))
+    with pytest.raises(ValueError, match="bitstream_length must be a positive integer"):
+        L7_SymbolicLayer(L7_StochasticParameters(bitstream_length=cast(int, True)))
+    with pytest.raises(ValueError, match="rng_seed"):
+        L7_SymbolicLayer(L7_StochasticParameters(rng_seed=-1))
