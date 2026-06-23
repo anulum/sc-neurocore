@@ -82,3 +82,24 @@ def test_l1_rejects_invalid_parameters_and_inputs() -> None:
         layer.step(0.01, external_field=np.ones(3))
     with pytest.raises(ValueError, match="external_field"):
         layer.step(0.01, external_field=np.array([0.0, 0.0, 0.0, np.nan]))
+
+
+def test_l1_non_simulated_backend_builds_hardware_core() -> None:
+    layer = L1_QuantumLayer(
+        L1_StochasticParameters(n_qubits=2, bitstream_length=16, backend="qiskit", rng_seed=1)
+    )
+    assert type(layer.quantum_core).__name__ == "QuantumHardwareLayer"
+
+
+def test_l1_get_global_metric_returns_mean_coherence() -> None:
+    layer = L1_QuantumLayer(L1_StochasticParameters(n_qubits=4, bitstream_length=16, rng_seed=2))
+    metric = layer.get_global_metric()
+    assert 0.0 <= metric <= 1.0
+
+
+def test_l1_negative_seed_and_out_of_range_external_field_rejected() -> None:
+    with pytest.raises(ValueError, match="rng_seed"):
+        L1_QuantumLayer(L1_StochasticParameters(rng_seed=-1))
+    layer = L1_QuantumLayer(L1_StochasticParameters(n_qubits=4, bitstream_length=16))
+    with pytest.raises(ValueError, match="external_field must be within"):
+        layer.step(0.01, external_field=np.array([0.0, 0.0, 0.0, 1.5]))
