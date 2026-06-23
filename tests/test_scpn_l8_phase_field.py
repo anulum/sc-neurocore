@@ -194,3 +194,41 @@ def test_l8_rejects_invalid_parameters_and_inputs() -> None:
         layer.step(0.001, {"cosmic_phase_drive": np.array([0.1, 0.2])})
     with pytest.raises(ValueError, match="cosmic_phase_drive"):
         layer.step(0.001, {"cosmic_phase_drive": -0.1})
+
+
+def test_l8_get_global_metric_order_parameter() -> None:
+    layer = L8_PhaseFieldLayer(
+        L8_StochasticParameters(n_pulsars=4, bitstream_length=16, rng_seed=2)
+    )
+    assert 0.0 <= layer.get_global_metric() <= 1.0
+
+
+def test_l8_validate_params_type_guards_omegas_and_negative_seed() -> None:
+    # __post_init__ rejects a bool n_pulsars during construction (np.resize), so
+    # exercise the validator directly with fields mutated after a valid build.
+    def _params() -> L8_StochasticParameters:
+        return L8_StochasticParameters(n_pulsars=3, bitstream_length=16, rng_seed=1)
+
+    bad_pulsars = _params()
+    bad_pulsars.n_pulsars = cast(int, True)
+    with pytest.raises(ValueError, match="n_pulsars must be a positive integer"):
+        L8_PhaseFieldLayer._validate_params(bad_pulsars)
+
+    bad_bits = _params()
+    bad_bits.bitstream_length = cast(int, True)
+    with pytest.raises(ValueError, match="bitstream_length must be a positive integer"):
+        L8_PhaseFieldLayer._validate_params(bad_bits)
+
+    no_omegas = _params()
+    no_omegas.pulsar_omegas = None
+    with pytest.raises(ValueError, match="pulsar_omegas must be initialised"):
+        L8_PhaseFieldLayer._validate_params(no_omegas)
+
+    bad_seed = _params()
+    bad_seed.rng_seed = -1
+    with pytest.raises(ValueError, match="rng_seed"):
+        L8_PhaseFieldLayer._validate_params(bad_seed)
+
+
+def test_l8_l7_phase_drive_is_neutral_without_known_keys() -> None:
+    assert L8_PhaseFieldLayer._l7_phase_drive({"unrelated_channel": 1.0}) == 0.0
