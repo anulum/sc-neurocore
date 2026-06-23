@@ -15,7 +15,7 @@ against the matching note in `parameters/`.
 | `Sherman_Bertram_Integrative_modeling_pancreatic_beta_cell_encyclopedia_NIDDK.pdf` | Sherman, A. & Bertram, R. Integrative modeling of the pancreatic β-cell. *Wiley Encyclopedia of Genetics, Genomics, Proteomics and Bioinformatics.* | [10.1002/047001153X.g308213](https://doi.org/10.1002/047001153X.g308213) | © Wiley | Equation structure of the reduced "Chay–Keizer-like" minimal model (planned `ChayKeizerMinimalNeuron`). |
 | `0702010v1.pdf` | The electrophysiology of the beta-cell based on single transmembrane protein characteristics. | [arXiv:q-bio/0702010](https://arxiv.org/abs/q-bio/0702010) | arXiv preprint | Beta-cell electrophysiology background. |
 | `1-s2.0-S0025556423001256-main.pdf` | Deconstructing the integrated oscillator model for pancreatic β-cells. *Mathematical Biosciences.* | [10.1016/j.mbs.2023.109015](https://doi.org/10.1016/j.mbs.2023.109015) | © Elsevier | Beta-cell oscillator-model context. |
-| `MBS_23.pdf` | *Mathematical Biosciences* article (beta-cell modelling). | — | © Elsevier | Beta-cell modelling context. |
+| `MBS_23.pdf` | Bertram, R., Marinelli, I., Fletcher, P.A., Satin, L.S. & Sherman, A.S. (2023). Deconstructing the integrated oscillator model for pancreatic β-cells. *Math. Biosci.* 365:109085. | [10.1016/j.mbs.2023.109015](https://doi.org/10.1016/j.mbs.2023.109015) | CC BY 4.0 (open access) | `ChayKeizerMinimalNeuron` (3-D reduced) — Table 1 + Eqs 1–10. See `parameters/chay_keizer_minimal_2023.md`. |
 | `Programmable_neuromorphic_circuits_for_s.pdf` | Programmable neuromorphic circuits (neuromorphic hardware). | — | — | Neuromorphic-hardware background. |
 
 ## Adding a source

@@ -1,0 +1,225 @@
+[metadata]
+schema_version = 2
+name = "ChayKeizerMinimalNeuron"
+class_name = "ChayKeizerMinimalNeuron"
+module = "chay_keizer_minimal"
+display_name = "Reduced Chay-Keizer pancreatic beta-cell"
+summary = "Three-state reduction of the Chay-Keizer pancreatic beta-cell burster (membrane potential, potassium activation, cytosolic calcium): fast spikes from the V-n subsystem with calcium as the slow variable that paces square-wave bursts through a calcium-activated potassium conductance."
+family = "Bursting"
+category = "bursting"
+biophysical_detail = "conductance"
+maturity = "validated"
+intended_use = [
+    "education",
+    "single-cell-dynamics",
+]
+hardware_fit = []
+behavior_tags = [
+    "excitable",
+    "phasic",
+    "rate-coded",
+]
+
+[provenance]
+doi = "10.1016/j.mbs.2023.109015"
+authors = [
+    "Bertram, R.",
+    "Marinelli, I.",
+    "Fletcher, P.A.",
+    "Satin, L.S.",
+    "Sherman, A.S.",
+]
+year = 2023
+paper_title = "Deconstructing the integrated oscillator model for pancreatic beta-cells"
+
+[state.v]
+init = -60.0
+unit = "mV"
+meaning = "membrane potential"
+
+[state.n]
+init = 0.0
+unit = "1"
+meaning = "delayed-rectifier potassium activation gate"
+
+[state.c]
+init = 0.1
+unit = "uM"
+meaning = "free cytosolic calcium concentration"
+
+[parameters.g_ca]
+default = 1000.0
+unit = "pS"
+meaning = "maximal calcium conductance"
+range = [
+    0.0,
+    5000.0,
+]
+
+[parameters.g_k]
+default = 2700.0
+unit = "pS"
+meaning = "maximal delayed-rectifier potassium conductance"
+range = [
+    0.0,
+    10000.0,
+]
+
+[parameters.g_kca]
+default = 400.0
+unit = "pS"
+meaning = "maximal calcium-activated potassium conductance"
+range = [
+    0.0,
+    5000.0,
+]
+
+[parameters.g_katp]
+default = 180.0
+unit = "pS"
+meaning = "ATP-sensitive potassium conductance (glucose excitability handle)"
+range = [
+    0.0,
+    5000.0,
+]
+
+[parameters.c_m]
+default = 5300.0
+unit = "fF"
+meaning = "membrane capacitance"
+range = [
+    1000.0,
+    20000.0,
+]
+
+[parameters.e_ca]
+default = 25.0
+unit = "mV"
+meaning = "calcium reversal potential"
+range = [
+    0.0,
+    100.0,
+]
+
+[parameters.e_k]
+default = -75.0
+unit = "mV"
+meaning = "potassium reversal potential"
+range = [
+    -100.0,
+    -50.0,
+]
+
+[parameters.v_m]
+default = -20.0
+unit = "mV"
+meaning = "half-maximal voltage of calcium-current activation"
+range = [
+    -60.0,
+    20.0,
+]
+
+[parameters.v_n]
+default = -16.0
+unit = "mV"
+meaning = "half-maximal voltage of potassium activation"
+range = [
+    -60.0,
+    20.0,
+]
+
+[parameters.s_m]
+default = 12.0
+unit = "mV"
+meaning = "slope of calcium-current activation"
+range = [
+    1.0,
+    30.0,
+]
+
+[parameters.s_n]
+default = 5.0
+unit = "mV"
+meaning = "slope of potassium activation"
+range = [
+    1.0,
+    30.0,
+]
+
+[parameters.n_hill]
+default = 3.0
+unit = "1"
+meaning = "Hill coefficient of calcium binding to the calcium-activated potassium channel"
+range = [
+    1.0,
+    6.0,
+]
+
+[parameters.k_d]
+default = 0.3
+unit = "uM"
+meaning = "calcium half-activation of the calcium-activated potassium channel"
+range = [
+    0.01,
+    5.0,
+]
+
+[parameters.f_c]
+default = 0.001
+unit = "1"
+meaning = "fraction of free (unbuffered) cytosolic calcium"
+range = [
+    0.0001,
+    0.1,
+]
+
+[parameters.alpha]
+default = 1.125e-06
+unit = "uM/(fA*ms)"
+meaning = "conversion factor from calcium current to cytosolic concentration flux"
+range = [
+    1e-07,
+    1e-05,
+]
+
+[parameters.k_pmca]
+default = 0.045
+unit = "1/ms"
+meaning = "plasma-membrane calcium pump removal rate"
+range = [
+    0.001,
+    0.5,
+]
+
+[parameters.tau_n]
+default = 20.0
+unit = "ms"
+meaning = "potassium activation time constant"
+range = [
+    1.0,
+    100.0,
+]
+
+[parameters.v_threshold]
+default = -35.0
+unit = "mV"
+meaning = "membrane potential at which an upward spike crossing is registered"
+range = [
+    -60.0,
+    0.0,
+]
+
+[integration]
+dt = 0.05
+method = "euler"
+
+[dynamics]
+
+[backends.python]
+status = "implemented"
+
+[reproducibility]
+
+[documentation]
+slug = "models/chay_keizer_minimal"
+notes = ""

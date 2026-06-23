@@ -138,6 +138,7 @@ _FAMILIES: dict[str, tuple[str, tuple[str, ...]]] = {
         (
             "BertramPhantomBurster",
             "ButeraRespiratoryNeuron",
+            "ChayKeizerMinimalNeuron",
             "ChayKeizerNeuron",
             "ChayNeuron",
             "FitzHughRinzelNeuron",

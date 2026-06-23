@@ -183,7 +183,7 @@
         "stochastic"
       ],
       "drivable": true,
-      "result_sha256": "6fd5e572ec9a46b8967357de3eb24ad1cf2afcbcf6e542ebf88b5a7089acc228",
+      "result_sha256": "b14c88610b4bb4df68f78bb472140abbef313e5f7afad052e41f7ad2ee8188e6",
       "stochastic": true
     },
     "BertramPhantomBurster": {
@@ -282,10 +282,24 @@
       "result_sha256": "813bb5291f8f931bbcba43824f3014631375f11f03cbee5aa8cc1781844971fb",
       "stochastic": false
     },
+    "ChayKeizerMinimalNeuron": {
+      "behavior_tags": [
+        "excitable",
+        "phasic",
+        "rate-coded"
+      ],
+      "drivable": true,
+      "result_sha256": "d1044dd895338f004a2245bfe351f6596a887425b6e2e6cd5e5562fc46c544a2",
+      "stochastic": false
+    },
     "ChayKeizerNeuron": {
-      "behavior_tags": [],
-      "drivable": false,
-      "result_sha256": "98c3c9414e17622662e49db19bb80c805f389be2dae09784a2af69e6139d78f9",
+      "behavior_tags": [
+        "excitable",
+        "phasic",
+        "tonic"
+      ],
+      "drivable": true,
+      "result_sha256": "45fad5d48e8ec55720246f06d2e73343e60dbfd520735e0b1887d4777fa12bdd",
       "stochastic": false
     },
     "ChayNeuron": {
@@ -594,7 +608,7 @@
         "stochastic"
       ],
       "drivable": true,
-      "result_sha256": "b0f8078498875e67a08c32ffec0bf08ff8a99b57dc9f9a740762314b4bdb68b8",
+      "result_sha256": "663e239554718a2a3aebd2e344617d2f01f650d2517b8e8155df1b3ec82820e9",
       "stochastic": true
     },
     "GalvesLocherbachNeuron": {
@@ -625,7 +639,7 @@
         "stochastic"
       ],
       "drivable": true,
-      "result_sha256": "e0afbb0436f3142b2f7f9cf24f2195e7eb2e534efd14863cee33b018d1f79d08",
+      "result_sha256": "5cf173499dcb805d2523918185f4ffb801c8928a140095fada43dac9bce71885",
       "stochastic": true
     },
     "GatedLIFNeuron": {
@@ -1187,7 +1201,7 @@
         "stochastic"
       ],
       "drivable": true,
-      "result_sha256": "c9e011b38c381f06d6279fa9f6ed7488c99caee35a1d1ac16ec8d4dbd3243b57",
+      "result_sha256": "7aa12f41e41f9fe8e7844081d8d89a24022e532ea5dd656042cd4638b0d324e1",
       "stochastic": true
     },
     "PospischilNeuron": {
@@ -1604,7 +1618,7 @@
       "stochastic": false
     }
   },
-  "result_sha256": "4997f7826849986e2a441c6efcf73b191c01e943ad348fabc6e20af1ef1e62b4",
+  "result_sha256": "64c96445ced07d3a9e02776149a96a5025b6ff37fd19161b0e4b5e3c808eb294",
   "schema_version": "studio.behavior-probe.v1",
   "sweep": {
     "currents": [

@@ -14,7 +14,11 @@ intended_use = [
     "single-cell-dynamics",
 ]
 hardware_fit = []
-behavior_tags = []
+behavior_tags = [
+    "excitable",
+    "phasic",
+    "tonic",
+]
 
 [provenance]
 doi = "10.1016/S0006-3495(83)84384-7"

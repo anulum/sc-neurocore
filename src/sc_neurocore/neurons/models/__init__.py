@@ -41,6 +41,7 @@ _CLASS_TO_MODULE = {
     "CazellesMapNeuron": "cazelles_map",
     "CerebellarBasketNeuron": "cerebellar_basket_neuron",
     "ChandelierNeuron": "chandelier_neuron",
+    "ChayKeizerMinimalNeuron": "chay_keizer_minimal",
     "ChayKeizerNeuron": "chay_keizer",
     "ChayNeuron": "chay",
     "ChialvoMapNeuron": "chialvo_map",
