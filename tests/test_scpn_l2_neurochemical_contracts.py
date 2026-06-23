@@ -105,3 +105,35 @@ def test_l2_rejects_invalid_parameters_and_inputs() -> None:
         layer.step(0.01, nt_release=np.array([0.0, 0.0, 0.0, np.nan]))
     with pytest.raises(ValueError, match="l1_input"):
         layer.step(0.01, l1_input=np.array([0.5, np.nan]))
+
+
+def test_l2_history_is_trimmed_past_window() -> None:
+    layer = L2_NeurochemicalLayer(
+        L2_StochasticParameters(n_receptors=4, bitstream_length=16, rng_seed=3)
+    )
+    for _ in range(110):
+        layer.step(0.01)
+    # The rolling history is capped at the 100-step window.
+    assert len(layer.history) <= 100
+
+
+def test_l2_release_neurotransmitter_rejects_non_integer_type() -> None:
+    layer = L2_NeurochemicalLayer(L2_StochasticParameters(n_receptors=4, bitstream_length=16))
+    with pytest.raises(ValueError, match="nt_type must be a valid neurotransmitter index"):
+        layer.release_neurotransmitter(cast(int, True), 0.1)
+
+
+def test_l2_state_accessors_and_negative_seed() -> None:
+    layer = L2_NeurochemicalLayer(
+        L2_StochasticParameters(n_receptors=4, bitstream_length=16, rng_seed=2)
+    )
+    assert 0.0 <= layer.get_global_metric() <= 1.0
+    assert "dopamine" in layer.get_neuromodulation_state()
+    with pytest.raises(ValueError, match="rng_seed"):
+        L2_NeurochemicalLayer(L2_StochasticParameters(rng_seed=-1))
+
+
+def test_l2_nt_release_out_of_range_rejected() -> None:
+    layer = L2_NeurochemicalLayer(L2_StochasticParameters(n_receptors=4, bitstream_length=16))
+    with pytest.raises(ValueError, match=r"nt_release must be within \[0, 1\]"):
+        layer.step(0.01, nt_release=np.array([0.0, 0.0, 0.0, 1.5]))
