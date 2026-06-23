@@ -133,8 +133,8 @@ def test_build_studio_operator_status_counts_platform_health(tmp_path: Path) -> 
         "protected_audit_action_count": 82,
         "protected_count": 82,
         "protected_routes_audited": True,
-        "public_count": 22,
-        "total_count": 104,
+        "public_count": 31,
+        "total_count": 113,
     }
     assert payload["identity"] == {
         "configured": True,
