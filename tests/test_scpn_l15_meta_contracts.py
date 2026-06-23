@@ -137,3 +137,50 @@ def test_l15_rejects_invalid_parameters_and_inputs() -> None:
     for dt, l14_input in invalid_steps:
         with pytest.raises(ValueError):
             layer.step(dt, l14_input=l14_input)
+
+
+def test_l15_validate_params_bridge_coupling_bounds() -> None:
+    with pytest.raises(ValueError, match="bridge_alignment_coupling must be finite and in"):
+        L15_MetaLayer(L15_StochasticParameters(bridge_alignment_coupling=1.5))
+    with pytest.raises(ValueError, match="bridge_protection_coupling must be finite and in"):
+        L15_MetaLayer(L15_StochasticParameters(bridge_protection_coupling=1.5))
+
+
+def test_l15_step_without_l14_input_uses_neutral_defaults() -> None:
+    layer = L15_MetaLayer(L15_StochasticParameters(rng_seed=3))
+    assert layer.step(0.01) is not None
+
+
+def test_l15_step_requires_integrated_coherence() -> None:
+    layer = L15_MetaLayer(L15_StochasticParameters(rng_seed=3))
+    with pytest.raises(ValueError, match="must include integrated_coherence"):
+        layer.step(0.01, {"resonance_lock": True})
+
+
+def test_l15_consilium_context_branches() -> None:
+    ctx = L15_MetaLayer._consilium_context
+    # A partial boundary context (one key only) is rejected.
+    with pytest.raises(ValueError, match="boundary context requires"):
+        ctx({"boundary_context_id": "ctx"})
+    # A null id with no terminals yields the empty consilium context.
+    empty = ctx({"boundary_context_id": None, "boundary_terminals": ()})
+    assert empty["boundary_context_id"] is None
+    # A blank id is rejected.
+    with pytest.raises(ValueError, match="boundary_context_id must be non-empty"):
+        ctx({"boundary_context_id": "", "boundary_terminals": ("T2",)})
+    # An unrecognised terminal is rejected.
+    with pytest.raises(ValueError, match="valid T1-T7"):
+        ctx({"boundary_context_id": "ctx", "boundary_terminals": ("T9",)})
+    # A valid context computes the consilium terminal subset and bandwidth.
+    valid = ctx({"boundary_context_id": "ctx", "boundary_terminals": ("T2", "T4")})
+    assert valid["consilium_terminal_set"] == ("T2", "T4")
+    assert valid["consilium_terminal_bandwidth"] == 0.5
+
+
+def test_l15_scalar_helpers_guard_shape_sign_and_unit_range() -> None:
+    with pytest.raises(ValueError, match="must be a finite scalar"):
+        L15_MetaLayer._nonnegative_scalar(np.array([1.0, 2.0]), "x")
+    with pytest.raises(ValueError, match="must be finite and non-negative"):
+        L15_MetaLayer._nonnegative_scalar(-1.0, "x")
+    with pytest.raises(ValueError, match=r"must be in \[0, 1\]"):
+        L15_MetaLayer._unit_scalar(1.5, "x")
