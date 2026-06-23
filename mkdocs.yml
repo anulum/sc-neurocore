@@ -127,6 +127,7 @@ nav:
       - SVG Vector Export: studio/svg-export.md
       - Onboarding Tour: studio/onboarding.md
       - Measured Behaviour Facet: studio/behaviour-facet.md
+      - Admin Identity & Audit: studio/admin-identity.md
   - Tutorials:
       - Studio Quickstart: tutorials/studio_quickstart.md
       - SC Training Pipeline: tutorials/sc_training_pipeline.md
