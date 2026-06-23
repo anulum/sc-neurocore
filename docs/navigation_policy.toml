@@ -28,7 +28,7 @@ expected_count = 1
 name = "model-reference-pages"
 rationale = "Generated per-model API pages; the navigable entry point is the curated model catalogue."
 patterns = ["api/models/*.md"]
-expected_count = 173
+expected_count = 174
 
 [[classification]]
 name = "supplemental-api-references"
@@ -90,3 +90,13 @@ patterns = [
   "SC_NEUROCORE_PERFORMANCE_INDEX.md",
 ]
 expected_count = 2
+
+[[classification]]
+name = "source-paper-provenance"
+rationale = "Source-paper index and our transcribed parameter notes — reference provenance for model parameters, kept outside task-oriented navigation."
+patterns = [
+  "source_papers/SOURCES.md",
+  "source_papers/parameters/chay_keizer_1983.md",
+  "source_papers/parameters/chay_keizer_minimal_2023.md",
+]
+expected_count = 3

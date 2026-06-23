@@ -30,6 +30,8 @@ not_in_nav: |
   research/SC_NEUROCORE_FOUNDATIONAL_WHITEPAPER.md
   HARDWARE_BENCHMARK_REPORT.md
   SC_NEUROCORE_PERFORMANCE_INDEX.md
+  source_papers/SOURCES.md
+  source_papers/parameters/*.md
 
 validation:
   anchors: ignore

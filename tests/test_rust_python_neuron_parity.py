@@ -60,7 +60,10 @@ _STOCHASTIC = {
     "GIFPopulationNeuron",
     "WongWangUnit",
 }
-_KNOWN_PARITY_DIVERGENCE: set[str] = set()
+# The Python ChayKeizer model is the faithful five-dimensional Chay-Keizer 1983
+# burster; the Rust kernel still implements the earlier reduced three-variable
+# form, so the two legitimately diverge until the Rust kernel is updated to match.
+_KNOWN_PARITY_DIVERGENCE: set[str] = {"ChayKeizerNeuron"}
 
 
 def _get_all_model_names():
