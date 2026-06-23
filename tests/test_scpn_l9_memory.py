@@ -162,3 +162,45 @@ def test_l9_rejects_invalid_parameters_and_inputs() -> None:
     for payload in invalid_reference_payloads:
         with pytest.raises(ValueError, match="memory_imprint_drive"):
             layer.step(0.001, {"memory_imprint_drive": payload})
+
+
+def test_get_global_metric_reflects_stored_pattern() -> None:
+    layer = L9_MemoryLayer(L9_StochasticParameters(n_memory_slots=4, bitstream_length=16))
+    assert layer.get_global_metric() == 0.0  # nothing stored yet
+    layer.store(np.array([1.0, -1.0, 1.0, -1.0]))
+    metric = layer.get_global_metric()
+    assert 0.0 <= metric <= 1.0
+
+
+def test_validate_params_rejects_non_integer_and_negative_seed() -> None:
+    with pytest.raises(ValueError, match="n_memory_slots must be a positive integer"):
+        L9_MemoryLayer(L9_StochasticParameters(n_memory_slots=cast(int, True)))
+    with pytest.raises(ValueError, match="bitstream_length must be a positive integer"):
+        L9_MemoryLayer(L9_StochasticParameters(n_memory_slots=4, bitstream_length=cast(int, True)))
+    with pytest.raises(ValueError, match="rng_seed"):
+        L9_MemoryLayer(L9_StochasticParameters(n_memory_slots=4, rng_seed=-1))
+
+
+def test_l8_phase_reference_drive_is_neutral_without_known_keys() -> None:
+    layer = L9_MemoryLayer(L9_StochasticParameters(n_memory_slots=4, bitstream_length=16))
+    # An L8 payload carrying neither drive key contributes no phase reference.
+    result = layer.step(0.001, {"unrelated_signal": 1.0})
+    assert "state" in result
+
+
+def test_memory_imprint_drive_remaining_contract_guards() -> None:
+    drive = L9_MemoryLayer._memory_imprint_drive
+    with pytest.raises(ValueError, match="must be a mapping"):
+        drive(cast(Any, "not-a-mapping"))
+    with pytest.raises(ValueError, match="reference_amplitude and reference_phase"):
+        drive({"reference_amplitude": 0.5})
+    with pytest.raises(ValueError, match="reference_phase must be finite"):
+        drive({"reference_amplitude": 0.5, "reference_phase": float("inf")})
+    with pytest.raises(ValueError, match="reference_real must be a finite scalar"):
+        drive(
+            {
+                "reference_amplitude": 0.5,
+                "reference_phase": 0.0,
+                "reference_real": np.array([1.0, 2.0]),
+            }
+        )
