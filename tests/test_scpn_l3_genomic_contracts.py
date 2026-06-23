@@ -133,3 +133,11 @@ def test_l3_rejects_invalid_parameters_and_inputs() -> None:
         layer.step(0.01, bioelectric_signal=np.ones(3))
     with pytest.raises(ValueError, match="bioelectric_signal"):
         layer.step(0.01, bioelectric_signal=np.array([-70.0, -70.0, -70.0, np.nan]))
+
+
+def test_l3_global_metric_and_ciss_coherence_accessors() -> None:
+    layer = L3_GenomicLayer(
+        L3_StochasticParameters(n_genes=12, n_regulatory_elements=4, rng_seed=7)
+    )
+    assert 0.0 <= layer.get_global_metric() <= 1.0
+    assert layer.get_ciss_coherence() >= 0.0
