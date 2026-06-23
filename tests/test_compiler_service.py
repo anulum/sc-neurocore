@@ -177,3 +177,62 @@ def test_build_response_serialises_optimizer_report() -> None:
 def test_digital_twin_sync_contract_validation(sync: dict[str, Any]) -> None:
     with pytest.raises(ValueError):
         DigitalTwinSyncContract(**sync)
+
+
+def test_classify_rejects_empty_changed_fields() -> None:
+    """Classifying no changed fields is a contract violation, raised before the
+    known-field set is consulted."""
+    with pytest.raises(ValueError, match="changed_fields must be non-empty"):
+        LiveUpdatePolicy().classify(())
+
+
+@pytest.mark.parametrize(
+    "overrides",
+    [
+        {"request_id": ""},
+        {"changed_fields": ()},
+        {"objective": ""},
+    ],
+)
+def test_compiler_service_request_field_validation(overrides: dict[str, Any]) -> None:
+    """Each required scalar field on the request must be non-empty: a blank
+    request id, an empty changed-field tuple, and a blank objective are all
+    rejected at construction."""
+    kwargs: dict[str, Any] = {
+        "request_id": "req-x",
+        "target": _target(),
+        "network": (LayerProfile("input", mac_count=64),),
+        "changed_fields": ("weights",),
+        "twin_sync": DigitalTwinSyncContract(session_id="twin-a"),
+    }
+    kwargs.update(overrides)
+    with pytest.raises(ValueError):
+        CompilerServiceRequest(**kwargs)
+
+
+def test_build_compiler_service_contract_rejects_empty_targets() -> None:
+    """A service boundary with no supported targets is a misconfiguration."""
+    with pytest.raises(ValueError, match="targets must be non-empty"):
+        build_compiler_service_contract(
+            targets=(),
+            sync=DigitalTwinSyncContract(session_id="session-1"),
+        )
+
+
+def test_response_diagnostics_vary_by_update_kind() -> None:
+    """Full-resynthesis and partial-reconfiguration packages each carry their
+    own dedicated diagnostic message, distinct from the hot-swap default."""
+    full = build_compiler_service_response(_request("clock")).to_dict()
+    partial = build_compiler_service_response(_request("aer_route_overlay")).to_dict()
+
+    assert full["update_package"]["kind"] == "full_resynthesis_required"
+    assert "full synthesis toolchain" in full["diagnostics"][0]
+    assert partial["update_package"]["kind"] == "partial_reconfiguration"
+    assert "partial reconfiguration" in partial["diagnostics"][0]
+
+
+def test_response_without_optimiser_report_serialises_null() -> None:
+    """A response built without an optimiser report serialises the report slot
+    as null rather than an empty object."""
+    payload = build_compiler_service_response(_request("weights")).to_dict()
+    assert payload["optimiser_report"] is None
