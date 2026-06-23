@@ -117,3 +117,56 @@ def test_l11_rejects_invalid_parameters_and_inputs() -> None:
         layer.step(0.001, {"integrity": np.nan})
     with pytest.raises(ValueError, match="integrity"):
         layer.step(0.001, {"integrity": np.array([0.1, 0.2])})
+
+
+def test_l11_get_global_metric_returns_mean_spin() -> None:
+    layer = L11_MorphicLayer(L11_StochasticParameters(n_nodes=4, rng_seed=3))
+    assert layer.get_global_metric() == pytest.approx(float(np.mean(layer.spins)))
+
+
+def test_l11_validate_params_type_guards_and_negative_seed() -> None:
+    with pytest.raises(ValueError, match="n_nodes must be a positive integer"):
+        L11_MorphicLayer(L11_StochasticParameters(n_nodes=cast(int, True)))
+    with pytest.raises(ValueError, match="bitstream_length must be a positive integer"):
+        L11_MorphicLayer(L11_StochasticParameters(bitstream_length=cast(int, True)))
+    with pytest.raises(ValueError, match="rng_seed"):
+        L11_MorphicLayer(L11_StochasticParameters(rng_seed=-1))
+
+
+def test_l11_l10_boundary_effect_rejects_out_of_range_integrity() -> None:
+    layer = L11_MorphicLayer(L11_StochasticParameters(n_nodes=2, rng_seed=5))
+    with pytest.raises(ValueError, match=r"integrity must be within \[0, 1\]"):
+        layer.step(0.001, {"integrity": 2.0})
+
+
+def test_l11_noospheric_context_null_and_blank_branches() -> None:
+    # A null context id with no terminals yields the empty noospheric context.
+    empty = L11_MorphicLayer._noospheric_context(
+        {"boundary_context_id": None, "boundary_terminals": ()}
+    )
+    assert empty["boundary_context_id"] is None
+    assert empty["noospheric_terminal_set"] == ()
+    # A blank context id paired with terminals is rejected.
+    with pytest.raises(ValueError, match="boundary_context_id must be non-empty"):
+        L11_MorphicLayer._noospheric_context(
+            {"boundary_context_id": "", "boundary_terminals": ("T1",)}
+        )
+
+
+def test_l11_project_nonnegative_vector_negative_and_pad() -> None:
+    with pytest.raises(ValueError, match="firewall must be non-negative"):
+        L11_MorphicLayer._project_nonnegative_vector([1.0, -1.0], 4, "firewall")
+    padded = L11_MorphicLayer._project_nonnegative_vector([1.0, 2.0], 4, "firewall")
+    assert padded.shape == (4,)
+    assert padded.tolist() == [1.0, 2.0, 0.0, 0.0]
+
+
+def test_l11_project_rejection_mask_branches() -> None:
+    with pytest.raises(ValueError, match="at least one value"):
+        L11_MorphicLayer._project_rejection_mask([], 4)
+    with pytest.raises(ValueError, match="only finite values"):
+        L11_MorphicLayer._project_rejection_mask([0.0, np.nan], 4)
+    # A numeric (non-bool) 0/1 mask is coerced to bool and padded to n_nodes.
+    mask = L11_MorphicLayer._project_rejection_mask(np.array([1, 0]), 4)
+    assert mask.dtype == np.bool_
+    assert mask.tolist() == [True, False, False, False]
