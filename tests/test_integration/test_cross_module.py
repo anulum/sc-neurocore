@@ -128,6 +128,48 @@ class TestCoreTypes:
         ls = LayerSpec(layer_id="L0", neurons=10, mode=ComputeMode.DETERMINISTIC)
         assert ls.estimate_accuracy() == 1.0
 
+    def test_resource_report_exceeds_each_budget_dimension(self) -> None:
+        # meets_budget returns on the first failing dimension, so each branch
+        # needs a report that clears the earlier checks and breaches one.
+        from sc_neurocore.core.types import HardwareBudget, ResourceReport
+
+        power = ResourceReport(total_power_mw=2_000.0)
+        assert not power.meets_budget(HardwareBudget(max_power_mw=1_000.0))
+
+        latency = ResourceReport(total_latency_cycles=200)
+        assert not latency.meets_budget(HardwareBudget(max_latency_cycles=100))
+
+        ffs = ResourceReport(total_ffs=600_000)
+        assert not ffs.meets_budget(HardwareBudget(max_ffs=500_000))
+
+        dsp = ResourceReport(total_dsp=300)
+        assert not dsp.meets_budget(HardwareBudget(max_dsp=256))
+
+    def test_resource_report_summary_is_human_readable(self) -> None:
+        from sc_neurocore.core.types import ResourceReport
+
+        report = ResourceReport(
+            total_luts=1_000,
+            total_ffs=2_000,
+            total_dsp=4,
+            total_bram_kb=12.5,
+            total_power_mw=3.25,
+            total_latency_cycles=128,
+            mean_accuracy=0.9876,
+        )
+        text = report.summary()
+        assert "LUTs: 1000" in text
+        assert "Accuracy: 0.9876" in text
+
+    def test_layer_spec_deterministic_luts_and_power(self) -> None:
+        # The deterministic mode takes the dedicated MAC-count cost paths in
+        # estimate_luts and estimate_power_mw rather than the stochastic ones.
+        from sc_neurocore.core.types import ComputeMode, LayerSpec
+
+        ls = LayerSpec(layer_id="L0", neurons=8, mac_count=20, mode=ComputeMode.DETERMINISTIC)
+        assert ls.estimate_luts() == 20 * 120
+        assert ls.estimate_power_mw() == 20 * 0.5
+
 
 # ── Action #3: Closed-loop adaptive controller ────────────────────────
 
