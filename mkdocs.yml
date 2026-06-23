@@ -220,6 +220,7 @@ nav:
   - Benchmarks:
       - Cross-Framework Comparison: benchmarks/cross_framework.md
   - Architecture:
+      - System Map: architecture/SYSTEM_MAP.md
       - Overview: architecture/architecture.md
       - Component Inventory: architecture/COMPONENT_INVENTORY.md
   - Hardware:
