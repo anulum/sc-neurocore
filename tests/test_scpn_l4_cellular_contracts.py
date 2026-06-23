@@ -119,3 +119,21 @@ def test_l4_rejects_invalid_parameters_and_inputs() -> None:
         layer.step(0.01, external_stimulus=np.ones(3))
     with pytest.raises(ValueError, match="external_stimulus"):
         layer.step(0.01, external_stimulus=np.array([0.0, 0.0, 0.0, np.nan]))
+
+
+def test_l4_valid_external_stimulus_and_state_accessors() -> None:
+    layer = L4_CellularLayer(
+        L4_StochasticParameters(grid_size=(2, 2), bitstream_length=16, rng_seed=5)
+    )
+    # A valid full-grid stimulus is applied to the calcium field.
+    result = layer.step(0.01, external_stimulus=np.ones(4, dtype=np.float64))
+    assert "output_bitstreams" in result
+
+    metric = layer.get_global_metric()
+    assert 0.0 <= metric <= 1.0
+    assert layer.get_tissue_pattern().shape == (2, 2)
+
+
+def test_l4_negative_seed_rejected() -> None:
+    with pytest.raises(ValueError, match="rng_seed"):
+        L4_CellularLayer(L4_StochasticParameters(rng_seed=-1))
