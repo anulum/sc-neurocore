@@ -9,6 +9,8 @@
 from __future__ import annotations
 
 import math
+from pathlib import Path
+from typing import Callable
 
 import numpy as np
 import pytest
@@ -17,6 +19,7 @@ from sc_neurocore.optics.photonic_emitter import (
     BitstreamToOptical,
     CompilationResult,
     CrosstalkModel,
+    FDTD2DSolver,
     MeepAdapter,
     OpticalModulation,
     PhotonicCompiler,
@@ -101,3 +104,102 @@ def test_coupled_waveguide_analyzer_paths() -> None:
     assert power_a >= 0.0
     assert power_b >= 0.0
     assert analyzer.worst_case_isolation() == pytest.approx(pair.isolation_db)
+
+
+def test_photonic_compiler_mzi_netlist_branch() -> None:
+    """An MZI-typed target drives the MZI netlist branch (phase + amplitude
+    directives), distinct from the microring coupling/detuning lines."""
+    compiler = PhotonicCompiler(PhotonicTarget.lightmatter())  # modulator_type == "MZI"
+    result = compiler.compile_bitstream(np.array([1, 0, 1], dtype=np.uint8))
+    assert "ADD MZI mod_0" in result.netlist
+    assert "mod_0:phase" in result.netlist
+    assert "mod_0:amplitude" in result.netlist
+    # The microring directives must be absent for an MZI target.
+    assert "MICRORING" not in result.netlist
+
+
+def test_generate_modulator_verilog_sources_parameterise_bit_width() -> None:
+    """Both modulator SystemVerilog generators emit a module with the
+    requested bus width threaded into the BW parameter."""
+    compiler = PhotonicCompiler(PhotonicTarget.lightmatter())
+
+    mzi_src = compiler.generate_mzi_verilog(bit_width=12)
+    assert "module sc_photonic_mzi" in mzi_src
+    assert "parameter BW = 12" in mzi_src
+
+    microring_src = compiler.generate_microring_verilog(bit_width=10)
+    assert "module sc_photonic_microring" in microring_src
+    assert "parameter BW = 10" in microring_src
+
+
+def test_fdtd2d_field_at_point_reads_ez_grid() -> None:
+    """``field_at_point`` returns the scalar Ez value at a grid cell; an
+    injected Gaussian source raises the central cell above the zero floor."""
+    solver = FDTD2DSolver(nx=24, ny=16)
+    assert solver.field_at_point(6, 8) == 0.0
+
+    solver.inject_source(6, 8, wavelength_nm=1550.0, amplitude=1.0, sigma_cells=3)
+    centre = solver.field_at_point(6, 8)
+    assert isinstance(centre, float)
+    assert centre == pytest.approx(1.0)
+
+
+def test_analyze_bank_single_waveguide_has_no_pairs(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """A bank of one waveguide forms zero adjacent and zero next-nearest
+    pairs, so the pure-Python fallback collapses to the empty-bank defaults.
+
+    The flag is forced off so the fallback runs regardless of whether the
+    native crosstalk backend is built in this environment (the Rust path has
+    its own return and would otherwise shadow the ``total == 0`` branch)."""
+    monkeypatch.setattr("sc_neurocore.optics.photonic_emitter._HAS_RUST_PH", False)
+    analyzer = CrosstalkModel()
+    report = analyzer.analyze_bank(waveguides=1, gap_nm=200.0, coupling_length_um=50.0)
+    assert report["num_pairs"] == 0
+    assert report["num_near_pairs"] == 0
+    assert report["num_far_pairs"] == 0
+    assert report["worst_isolation_db"] == float("inf")
+    assert report["mean_coupling_ratio"] == 0.0
+    assert report["max_coupling_ratio"] == 0.0
+    assert report["crosstalk_safe"] is True
+
+
+def test_to_gdsii_activates_generic_pdk_when_none_active(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    """When ``get_active_pdk`` reports no active PDK, ``to_gdsii`` activates
+    the generic PDK on demand rather than failing the export."""
+    gf = pytest.importorskip(
+        "gdsfactory",
+        reason="gdsfactory is an optional dep (install via `pip install sc-neurocore[optics]`)",
+    )
+
+    real_get_active_pdk: Callable[[], object] = gf.get_active_pdk
+    calls = {"n": 0}
+
+    def _raise_first_then_real() -> object:
+        # The export's own probe (first call) must hit the no-PDK branch; any
+        # later resolution (e.g. gf.components.mzi defaults) sees the PDK the
+        # fallback just activated.
+        calls["n"] += 1
+        if calls["n"] == 1:
+            raise ValueError("no active PDK")
+        return real_get_active_pdk()
+
+    monkeypatch.setattr(gf, "get_active_pdk", _raise_first_then_real)
+
+    result = CompilationResult(
+        target="pdk_fallback_probe",
+        num_modulators=2,
+        optical_power_mean_mw=1.0,
+        phase_coverage_rad=1.0,
+        netlist="",
+    )
+    out_path = tmp_path / "pdk_fallback.gds"
+    info = result.to_gdsii(str(out_path))
+
+    assert calls["n"] >= 1
+    assert out_path.exists()
+    assert out_path.stat().st_size > 0
+    assert info["n_modulators"] == 2
