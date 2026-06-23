@@ -305,6 +305,14 @@ class TestSynchrony:
         val = spike_time_tiling_coefficient(a, b)
         assert -1.0 <= val <= 1.0
 
+    def test_sttc_silent_train_is_zero(self) -> None:
+        # With no spikes in one train the tiling coefficient is undefined and
+        # collapses to zero rather than indexing an empty spike-time array.
+        silent = np.zeros(200, dtype=np.float64)
+        active = np.zeros(200, dtype=np.float64)
+        active[::20] = 1.0
+        assert spike_time_tiling_coefficient(silent, active) == 0.0
+
     def test_covariance_matrix(self, population):
         cov = covariance_matrix(population)
         assert cov.shape[0] == 5

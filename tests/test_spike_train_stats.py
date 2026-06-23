@@ -11,6 +11,7 @@
 from __future__ import annotations
 
 import numpy as np
+import pytest
 
 from sc_neurocore.analysis.spike_stats import (
     spike_times,
@@ -153,6 +154,14 @@ class TestCrossCorrelation:
         b = _poisson_train(100.0, 1.0, seed=2)
         cc, _ = cross_correlation(a, b, max_lag_ms=10.0)
         assert np.abs(cc).max() < 0.3
+
+    def test_silent_train_returns_zero_correlogram(self) -> None:
+        # A silent train has zero variance, so the normaliser is zero and the
+        # correlogram is returned flat rather than dividing by zero.
+        silent = np.zeros(200, dtype=np.float64)
+        cc, lags = cross_correlation(silent, silent, max_lag_ms=10.0)
+        assert np.all(cc == 0.0)
+        assert cc.size == lags.size
 
 
 class TestPairwiseCorrelation:
@@ -299,6 +308,16 @@ class TestEventSynchronization:
         b = _poisson_train(50.0, 0.5, seed=2)
         s = event_synchronization(a, b, tau_ms=1.0)
         assert s < 0.5
+
+    def test_pure_python_fallback_when_rust_unavailable(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        # Force the pure-Python double-loop branch; the native accelerator is
+        # built in this environment and would otherwise shadow it.
+        monkeypatch.setattr("sc_neurocore.analysis.spike_stats.correlation._HAS_RUST", False)
+        train = _poisson_train(50.0, 0.5)
+        s = event_synchronization(train, train, tau_ms=2.0)
+        assert s > 0.5
 
 
 class TestSpikeTrainCoherence:
