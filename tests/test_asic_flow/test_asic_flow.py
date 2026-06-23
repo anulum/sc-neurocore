@@ -9,6 +9,8 @@
 import json
 from pathlib import Path
 
+import pytest
+
 from sc_neurocore.asic_flow.asic_flow import (
     ASICFlowBundle,
     ASICFlowGenerator,
@@ -45,6 +47,7 @@ from sc_neurocore.asic_flow.asic_flow import (
     validate_pdk_installation,
     validate_pdk,
     generate_asic_flow_bundle,
+    _normalise_pdk_type,
 )
 
 
@@ -750,3 +753,62 @@ class TestTapeOutChecklist:
         assert cl.timing_met is True
         assert cl.power_within_budget is False
         assert cl.lvs_clean is True
+
+
+# ── Edge-branch coverage ─────────────────────────────────────────────
+
+
+class TestASICFlowEdgeBranches:
+    """Cover the non-open-source PDK manifest fallback, bundle serialisation,
+    the unknown-PDK normaliser guard, the empty-corner slack sentinel, and the
+    timing/metal-layer validation branches."""
+
+    def test_file_manifest_for_non_open_source_pdk_omits_signoff_decks(self) -> None:
+        """A commercial PDK (no bundled netgen/KLayout decks) resolves only the
+        liberty/LEF paths; the setup/DRC/LVS deck fields stay empty."""
+        pdk = PDKConfig(
+            pdk_type=PDKType.TSMC28,
+            liberty_file="lib/tsmc28.lib",
+            lef_file="lef/tsmc28.lef",
+            tech_lef="lef/tsmc28.tech.lef",
+        )
+        files = OpenSourcePDKResolver._file_manifest(pdk)
+        assert files.liberty_file == "lib/tsmc28.lib"
+        assert files.lef_file == "lef/tsmc28.lef"
+        assert files.tech_lef == "lef/tsmc28.tech.lef"
+        assert files.setup_tcl == ""
+        assert files.drc_deck == ""
+        assert files.lvs_setup == ""
+
+    def test_bundle_to_dict_round_trips_paths(self, tmp_path: Path) -> None:
+        """ASICFlowBundle.to_dict mirrors the bundle's own path fields."""
+        bundle = generate_asic_flow_bundle(tmp_path, pdk_type="sky130")
+        assert isinstance(bundle, ASICFlowBundle)
+        payload = bundle.to_dict()
+        assert payload["output_dir"] == bundle.output_dir
+        assert payload["manifest_path"] == bundle.manifest_path
+        assert payload["file_paths"] == dict(bundle.file_paths)
+
+    def test_normalise_pdk_type_rejects_unknown_string(self) -> None:
+        """An unrecognised PDK name is rejected with the list of valid types."""
+        with pytest.raises(ValueError, match="unknown PDK type"):
+            _normalise_pdk_type("not-a-real-pdk")
+
+    def test_worst_slack_returns_sentinel_for_empty_corners(self) -> None:
+        """With no corner data there is no worst slack, so a neutral sentinel is
+        returned rather than raising on an empty min()."""
+        assert MultiCornerAnalysis.worst_slack({}) == ("none", 0.0)
+
+    def test_validate_pdk_flags_bad_clock_and_low_metal_layers(self) -> None:
+        """A non-positive clock period is an error and fewer than three metal
+        layers is a routing warning; the custom type skips the file checks."""
+        pdk = PDKConfig(
+            pdk_type=PDKType.CUSTOM,
+            clock_period_ns=0.0,
+            metal_layers=2,
+            voltage_v=1.8,
+        )
+        result = validate_pdk(pdk)
+        assert not result.valid
+        assert any("clock_period_ns must be positive" in err for err in result.errors)
+        assert any("metal layers" in warn for warn in result.warnings)
