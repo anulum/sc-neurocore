@@ -87,6 +87,9 @@ name = "bench_pospischil_rk4"
 name = "bench_golomb_fs_rk4"
 
 [[example]]
+name = "bench_pv_fast_spiking_rk4"
+
+[[example]]
 name = "bench_lapicque_exact_flow"
 
 [[example]]

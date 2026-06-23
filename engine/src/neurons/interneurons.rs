@@ -72,33 +72,72 @@ impl PVFastSpikingNeuron {
         }
     }
 
+    /// Return `[dV, dh, dn, dp]` of the four-state Wang-Buzsáki + Kv3.1 system at
+    /// one consistent state.
+    fn derivatives(&self, v: f64, h: f64, n: f64, p: f64, current: f64) -> [f64; 4] {
+        let am = safe_rate(0.1, 35.0, v, 10.0, 1.0);
+        let bm = 4.0 * (-(v + 60.0) / 18.0).exp();
+        let m_inf = am / (am + bm);
+        let ah = 0.07 * (-(v + 58.0) / 20.0).exp();
+        let bh = 1.0 / (1.0 + (-(v + 28.0) / 10.0).exp());
+        let an = safe_rate(0.01, 34.0, v, 10.0, 0.1);
+        let bn = 0.125 * (-(v + 44.0) / 80.0).exp();
+        let p_inf = 1.0 / (1.0 + (-(v + 10.0) / 10.0).exp());
+        let dh = self.phi * (ah * (1.0 - h) - bh * h);
+        let dn = self.phi * (an * (1.0 - n) - bn * n);
+        let dp = self.phi * (p_inf - p);
+        let i_na = self.g_na * m_inf * m_inf * m_inf * h * (v - self.e_na);
+        let i_k = self.g_k * n * n * n * n * (v - self.e_k);
+        let i_kv3 = self.g_kv3 * p * (v - self.e_k);
+        let i_l = self.g_l * (v - self.e_l);
+        let dv = (-i_na - i_k - i_kv3 - i_l + current) / self.c_m;
+        [dv, dh, dn, dp]
+    }
+
+    /// Return one classical RK4 increment of `[V, h, n, p]`, holding `current`
+    /// constant across the four stages.
+    fn rk4_substep(&self, s: [f64; 4], current: f64) -> [f64; 4] {
+        let dt = self.dt;
+        let k1 = self.derivatives(s[0], s[1], s[2], s[3], current);
+        let k2 = self.derivatives(
+            s[0] + 0.5 * dt * k1[0],
+            s[1] + 0.5 * dt * k1[1],
+            s[2] + 0.5 * dt * k1[2],
+            s[3] + 0.5 * dt * k1[3],
+            current,
+        );
+        let k3 = self.derivatives(
+            s[0] + 0.5 * dt * k2[0],
+            s[1] + 0.5 * dt * k2[1],
+            s[2] + 0.5 * dt * k2[2],
+            s[3] + 0.5 * dt * k2[3],
+            current,
+        );
+        let k4 = self.derivatives(
+            s[0] + dt * k3[0],
+            s[1] + dt * k3[1],
+            s[2] + dt * k3[2],
+            s[3] + dt * k3[3],
+            current,
+        );
+        let mut out = [0.0_f64; 4];
+        for i in 0..4 {
+            out[i] = s[i] + dt * (k1[i] + 2.0 * k2[i] + 2.0 * k3[i] + k4[i]) / 6.0;
+        }
+        out
+    }
+
     pub fn step(&mut self, current: f64) -> i32 {
         let v_prev = self.v;
         let n_sub = (0.5 / self.dt.max(0.001)) as usize;
+        let mut s = [self.v, self.h, self.n, self.p];
         for _ in 0..n_sub {
-            // Wang-Buzsáki gating
-            let am = safe_rate(0.1, 35.0, self.v, 10.0, 1.0);
-            let bm = 4.0 * (-(self.v + 60.0) / 18.0).exp();
-            let m_inf = am / (am + bm);
-            let ah = 0.07 * (-(self.v + 58.0) / 20.0).exp();
-            let bh = 1.0 / (1.0 + (-(self.v + 28.0) / 10.0).exp());
-            let an = safe_rate(0.01, 34.0, self.v, 10.0, 0.1);
-            let bn = 0.125 * (-(self.v + 44.0) / 80.0).exp();
-
-            self.h += self.phi * (ah * (1.0 - self.h) - bh * self.h) * self.dt;
-            self.n += self.phi * (an * (1.0 - self.n) - bn * self.n) * self.dt;
-
-            // Kv3.1: fast sigmoid activation (narrow APs)
-            let p_inf = 1.0 / (1.0 + (-(self.v + 10.0) / 10.0).exp());
-            self.p += self.phi * (p_inf - self.p) / 1.0 * self.dt;
-
-            let i_na = self.g_na * m_inf.powi(3) * self.h * (self.v - self.e_na);
-            let i_k = self.g_k * self.n.powi(4) * (self.v - self.e_k);
-            let i_kv3 = self.g_kv3 * self.p * (self.v - self.e_k);
-            let i_l = self.g_l * (self.v - self.e_l);
-
-            self.v += (-i_na - i_k - i_kv3 - i_l + current) / self.c_m * self.dt;
+            s = self.rk4_substep(s, current);
         }
+        self.v = s[0];
+        self.h = s[1];
+        self.n = s[2];
+        self.p = s[3];
         if self.v >= self.v_threshold && v_prev < self.v_threshold {
             1
         } else {
