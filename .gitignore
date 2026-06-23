@@ -204,3 +204,12 @@ sc-neurocore
 
 # Community benchmark contributions (runtime data, not source)
 benchmarks/databank/
+
+# Source papers — COPYRIGHT SAFETY. Full publisher PDFs are kept locally for
+# reference under docs/source_papers/pdfs/ but MUST NOT be committed. Only our
+# own transcribed parameter tables + the SOURCES.md index (facts, attributed)
+# are tracked. Belt-and-suspenders: any PDF anywhere under source_papers is
+# ignored, plus the legacy external_papers location.
+docs/source_papers/pdfs/
+docs/source_papers/**/*.pdf
+docs/external_papers/
