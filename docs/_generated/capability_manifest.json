@@ -5,11 +5,11 @@
     "model_documentation_pages": 175,
     "optional_extras": 24,
     "public_api_exports": 44,
-    "public_documentation_pages": 556,
+    "public_documentation_pages": 557,
     "python_model_classes": 158,
     "python_model_source_modules": 152,
     "rust_pyo3_model_wrappers": 175,
-    "test_files": 880
+    "test_files": 882
   },
   "documentation": {
     "public_pages": [
@@ -358,6 +358,7 @@
       "docs/applications_and_market.md",
       "docs/architecture/AUTONOMOUS_LEARNING_ZENITH.md",
       "docs/architecture/COMPONENT_INVENTORY.md",
+      "docs/architecture/SYSTEM_MAP.md",
       "docs/architecture/architecture.md",
       "docs/benchmarks/BENCHMARKS.md",
       "docs/benchmarks/BENCHMARK_REPORT.md",
@@ -2294,6 +2295,7 @@
       "tests/test_model_pospischil.py",
       "tests/test_model_prescott.py",
       "tests/test_model_psn.py",
+      "tests/test_model_pv_fast_spiking_neuron.py",
       "tests/test_model_quadratic_if.py",
       "tests/test_model_rall_cable.py",
       "tests/test_model_renshaw_cell.py",
@@ -2344,6 +2346,7 @@
       "tests/test_network/test_projection.py",
       "tests/test_network/test_to_torch_bridge.py",
       "tests/test_network_basic.py",
+      "tests/test_network_execution_paths.py",
       "tests/test_network_monitor_edges.py",
       "tests/test_network_monitors_stimulus.py",
       "tests/test_neural_decoders.py",
