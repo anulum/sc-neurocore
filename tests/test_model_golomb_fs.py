@@ -251,3 +251,75 @@ class TestGFSPipeline:
         train = np.array([float(n.step(5.0)) for _ in range(5000)])
         rate = firing_rate(train, dt=0.001)
         assert rate > 0
+
+
+class TestGolombFSIntegrator:
+    def test_default_integrator_is_rk4(self):
+        assert GolombFSNeuron().integrator == "rk4"
+
+    def test_rejects_unknown_integrator(self):
+        with pytest.raises(ValueError, match="Unsupported integrator"):
+            GolombFSNeuron(integrator="midpoint")  # type: ignore[arg-type]
+
+    def test_baseline_euler_path_runs_and_diverges_from_rk4(self):
+        rk4 = GolombFSNeuron()
+        euler = GolombFSNeuron(integrator="baseline_euler")
+        rk4_spikes = sum(rk4.step(5.0) for _ in range(40000))
+        euler_spikes = sum(euler.step(5.0) for _ in range(40000))
+        assert rk4_spikes > 0 and euler_spikes > 0
+        assert rk4.v != euler.v
+
+    def test_rk4_and_euler_agree_to_first_order_at_tiny_dt(self):
+        rk4 = GolombFSNeuron(dt=1e-5)
+        euler = GolombFSNeuron(dt=1e-5, integrator="baseline_euler")
+        for _ in range(200):
+            rk4.step(5.0)
+            euler.step(5.0)
+        assert abs(rk4.v - euler.v) < 1e-2
+
+
+class TestGolombFSValidation:
+    @pytest.mark.parametrize(
+        "kwargs",
+        [
+            {"g_na": -1.0},
+            {"g_kd": 0.0},
+            {"g_l": -0.1},
+            {"c_m": 0.0},
+            {"dt": 0.0},
+            {"dt": -0.01},
+            {"g_kv3": -1.0},
+        ],
+    )
+    def test_rejects_invalid_parameters(self, kwargs: dict[str, float]):
+        with pytest.raises(ValueError):
+            GolombFSNeuron(**kwargs)
+
+    def test_accepts_zero_kv3_conductance(self):
+        # A Kv3-block experiment legitimately sets g_Kv3 = 0.
+        assert GolombFSNeuron(g_kv3=0.0).g_kv3 == 0.0
+
+    @pytest.mark.parametrize("field", ["v", "e_na", "e_k", "e_l"])
+    def test_rejects_non_finite_field(self, field: str):
+        with pytest.raises(ValueError, match="must be finite"):
+            GolombFSNeuron(**{field: float("nan")})
+
+    def test_rejects_boolean_field(self):
+        with pytest.raises(ValueError, match="must be finite"):
+            GolombFSNeuron(v=True)  # type: ignore[arg-type]
+
+    def test_rejects_non_finite_current(self):
+        with pytest.raises(ValueError, match="must be finite"):
+            GolombFSNeuron().step(float("inf"))
+
+    def test_runtime_validation_catches_corrupted_state(self):
+        n = GolombFSNeuron()
+        n.dt = -1.0
+        with pytest.raises(ValueError, match="dt must be positive"):
+            n.step(0.0)
+
+    def test_non_finite_candidate_fails_closed(self):
+        n = GolombFSNeuron()
+        with pytest.raises((FloatingPointError, OverflowError)):
+            for _ in range(40):
+                n.step(1e308)

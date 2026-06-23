@@ -238,15 +238,22 @@ Measured 2026-04-05 on i5-11600K @ 3.90 GHz, Criterion 0.8.
    the activation properties of Kv1/Kv2 channels in FS interneurons.
    This is biophysically more accurate than HH-standard $n^4$.
 
-4. **10 sub-steps sufficient:** Despite fast Na gating, 10 sub-steps
-   (dt = 0.01 ms) provide stable integration. WangBuzsaki needs 50
-   sub-steps for the same dt due to different kinetics formulation.
+4. **Candidate-first RK4 over 10 sub-steps:** each `step()` advances the
+   four-state `(V, h, n, p)` system with 10 RK4 sub-steps (dt = 0.01 ms);
+   every sub-step evaluates the full right-hand side from one consistent state
+   and commits the combined candidate only once finite. The historical
+   forward-Euler update is retained behind `integrator="baseline_euler"`.
+   Construction and runtime fail closed on non-finite state, non-positive
+   conductance/capacitance/timestep and non-finite stimulus.
 
 5. **No adaptation by design:** PV+ FS interneurons are non-adapting
    in vivo. The model correctly omits Ca²⁺-dependent K and M-current.
 
-6. **Pipeline verified:** All stages pass — construction, step, Population,
-   Network, Rust parity within 15% tolerance.
+6. **Polyglot parity:** the RK4 integrator is mirrored across Python, the Rust
+   engine, Julia, Go and Mojo with exact spike-count parity — 199 spikes over
+   40 000 steps at I = 5 µA/cm² on every backend — and Go reproduces the Python
+   membrane potential to 1e-6. Measured throughput is recorded in
+   `benchmarks/results/local_python_2026-06-23_golomb_fs_rk4.json`.
 
 7. **Most efficient FS model:** At 711 ns/step, GolombFS is 6× faster
    than PVFastSpiking (4.25 µs) and 10× faster than WangBuzsaki (6.94 µs).

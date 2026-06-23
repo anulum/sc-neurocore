@@ -1,0 +1,268 @@
+{
+  "spdx_license": "AGPL-3.0-or-later",
+  "benchmark": "GolombFSNeuron candidate-first RK4 Kv3 fast-spiking step",
+  "timestamp_utc": "2026-06-23T20:16:49+00:00",
+  "command": "PYTHONPATH=src .venv/bin/python benchmarks/bench_model_golomb_fs.py",
+  "evidence_class": "local_regression_non_isolated",
+  "production_speed_claim": false,
+  "hardware_measurement_claimed": false,
+  "python": "3.12.3",
+  "platform": "Linux-6.17.0-35-generic-x86_64-with-glibc2.39",
+  "processor": "x86_64",
+  "steps": 200000,
+  "repeats": 5,
+  "current": 5.0,
+  "backend_summary": {
+    "python": {
+      "median_ns_per_step": 87823.7691,
+      "min_ns_per_step": 79683.68726,
+      "max_ns_per_step": 99587.018645,
+      "spikes": 996
+    },
+    "rust": {
+      "median_ns_per_step": 2018.205605,
+      "min_ns_per_step": 1980.200525,
+      "max_ns_per_step": 2092.72295,
+      "spikes": 996
+    },
+    "go": {
+      "median_ns_per_step": 3685.0,
+      "min_ns_per_step": 3548.0,
+      "max_ns_per_step": 3847.0,
+      "spikes": 996
+    },
+    "julia": {
+      "median_ns_per_step": 2012.17596,
+      "min_ns_per_step": 1890.28468,
+      "max_ns_per_step": 2136.69624,
+      "spikes": 996
+    },
+    "mojo": {
+      "median_ns_per_step": 1916.471440345049,
+      "min_ns_per_step": 1866.1159998737276,
+      "max_ns_per_step": 1937.9793398547918,
+      "spikes": 996
+    }
+  },
+  "results": [
+    {
+      "backend": "python",
+      "median_ns_per_step": 87823.7691,
+      "min_ns_per_step": 79683.68726,
+      "max_ns_per_step": 99587.018645,
+      "spikes": 996,
+      "results": [
+        {
+          "backend": "python",
+          "steps": 200000,
+          "current": 5.0,
+          "elapsed_ns": 17564753820,
+          "ns_per_step": 87823.7691,
+          "spikes": 996,
+          "ending_state": [
+            -44.47270127206627,
+            0.004550539853068891
+          ]
+        },
+        {
+          "backend": "python",
+          "steps": 200000,
+          "current": 5.0,
+          "elapsed_ns": 15936737452,
+          "ns_per_step": 79683.68726,
+          "spikes": 996,
+          "ending_state": [
+            -44.47270127206627,
+            0.004550539853068891
+          ]
+        },
+        {
+          "backend": "python",
+          "steps": 200000,
+          "current": 5.0,
+          "elapsed_ns": 16936482532,
+          "ns_per_step": 84682.41266,
+          "spikes": 996,
+          "ending_state": [
+            -44.47270127206627,
+            0.004550539853068891
+          ]
+        },
+        {
+          "backend": "python",
+          "steps": 200000,
+          "current": 5.0,
+          "elapsed_ns": 18869758804,
+          "ns_per_step": 94348.79402,
+          "spikes": 996,
+          "ending_state": [
+            -44.47270127206627,
+            0.004550539853068891
+          ]
+        },
+        {
+          "backend": "python",
+          "steps": 200000,
+          "current": 5.0,
+          "elapsed_ns": 19917403729,
+          "ns_per_step": 99587.018645,
+          "spikes": 996,
+          "ending_state": [
+            -44.47270127206627,
+            0.004550539853068891
+          ]
+        }
+      ]
+    },
+    {
+      "backend": "rust",
+      "timestamp_unix": 1782245793,
+      "command": "cargo run --manifest-path engine/Cargo.toml --example bench_golomb_fs_rk4",
+      "rustc": "rustc 1.96.0 (ac68faa20 2026-05-25)",
+      "target_os": "linux",
+      "target_arch": "x86_64",
+      "measurement_context": {
+        "host_load": "workstation under concurrent load during capture",
+        "cpu_isolation": "runtime cpuset shield when cgroup_effective_cpuset matches benchmark CPUs; kernel-reserved isolated cores were not detected on this workstation",
+        "cpu_affinity": "0-11",
+        "cgroup_effective_cpuset": "unavailable",
+        "runtime_cpuset_shield_claimed": false,
+        "load_average_before": "11.44 8.80 8.38 7/6291 877504",
+        "load_average_after": "11.00 8.75 8.37 4/6302 877556",
+        "cpu_governor": "powersave",
+        "cpu_frequency_mhz": "min=4294.149,max=4300.373,sampled_cpu_count=12",
+        "concurrent_load_status": "non-exclusive workstation run; other heavy jobs may have been active",
+        "timing_interpretation": "use timing medians as local regression context only, not final throughput claims",
+        "production_rerun_requirement": "rerun on reserved isolated cores with recorded affinity, governor, frequency, versions, and host-load evidence before publishing performance claims"
+      },
+      "steps": 200000,
+      "repeats": 5,
+      "current": 5,
+      "median_ns_per_step": 2018.205605,
+      "min_ns_per_step": 1980.200525,
+      "max_ns_per_step": 2092.72295,
+      "results_ns_per_step": [
+        2054.639885,
+        1980.200525,
+        2018.205605,
+        2092.72295,
+        2007.62322
+      ],
+      "spike_counts": [
+        996,
+        996,
+        996,
+        996,
+        996
+      ],
+      "final_vs": [
+        -44.47270127206627,
+        -44.47270127206627,
+        -44.47270127206627,
+        -44.47270127206627,
+        -44.47270127206627
+      ],
+      "final_ps": [
+        0.004550539853068891,
+        0.004550539853068891,
+        0.004550539853068891,
+        0.004550539853068891,
+        0.004550539853068891
+      ],
+      "driver_command": "cargo run --release --manifest-path engine/Cargo.toml --example bench_golomb_fs_rk4"
+    },
+    {
+      "backend": "go",
+      "command": "go test src/sc_neurocore/accel/go/services/golomb_fs.go src/sc_neurocore/accel/go/services/golomb_fs_test.go -run ^$ -bench BenchmarkGolombFSRK4$ -benchtime 200000x -count 5",
+      "steps": 200000,
+      "repeats": 5,
+      "current": 5.0,
+      "median_ns_per_step": 3685.0,
+      "min_ns_per_step": 3548.0,
+      "max_ns_per_step": 3847.0,
+      "results_ns_per_step": [
+        3604.0,
+        3548.0,
+        3685.0,
+        3847.0,
+        3782.0
+      ],
+      "spikes": 996,
+      "spike_counts": [
+        996,
+        996,
+        996,
+        996,
+        996
+      ]
+    },
+    {
+      "backend": "julia",
+      "command": "julia --project=. -e <golomb_fs rk4 benchmark>",
+      "steps": 200000,
+      "repeats": 5,
+      "current": 5.0,
+      "median_ns_per_step": 2012.17596,
+      "min_ns_per_step": 1890.28468,
+      "max_ns_per_step": 2136.69624,
+      "results_ns_per_step": [
+        1932.37729,
+        2101.12587,
+        1890.28468,
+        2012.17596,
+        2136.69624
+      ],
+      "spikes": 996,
+      "final_vs": [
+        -44.472701272066345,
+        -44.472701272066345,
+        -44.472701272066345,
+        -44.472701272066345,
+        -44.472701272066345
+      ],
+      "final_ps": [
+        0.004550539853068886,
+        0.004550539853068886,
+        0.004550539853068886,
+        0.004550539853068886,
+        0.004550539853068886
+      ]
+    },
+    {
+      "backend": "mojo",
+      "command": "mojo run --disable-warnings -I src/sc_neurocore/accel/mojo/kernels <temp golomb_fs benchmark>",
+      "steps": 200000,
+      "repeats": 5,
+      "current": 5.0,
+      "median_ns_per_step": 1916.471440345049,
+      "min_ns_per_step": 1866.1159998737276,
+      "max_ns_per_step": 1937.9793398547918,
+      "results_ns_per_step": [
+        1937.9793398547918,
+        1866.1159998737276,
+        1916.6685454547405,
+        1906.2928896164522,
+        1916.471440345049
+      ],
+      "spikes": 996,
+      "spike_counts": [
+        996,
+        996,
+        996,
+        996,
+        996
+      ]
+    }
+  ],
+  "source_hashes": {
+    "benchmarks/bench_model_golomb_fs.py": "88d2685cb002980955192c9d07cfda362fd67401a5c904f382702ffa209e5627",
+    "engine/Cargo.toml": "dbe0f233ae4a6f0db034715675fb577d57f30ee41876c274450bc557e1e73e3d",
+    "engine/examples/bench_golomb_fs_rk4.rs": "3021e7102bf6207d3b3568fa39c351320a867e862bf071e10be3ad7d4787313c",
+    "engine/src/neurons/biophysical.rs": "95b83ea83ad4a9d8d0dc1f9b630955cae35cf97548917342b1295e29c49999a0",
+    "src/sc_neurocore/neurons/models/golomb_fs.py": "913db4992f7af1be9b2db9e78ce2d33d1ecc5c0c9f75a47eb9e5ec0d7277e5d3",
+    "src/sc_neurocore/accel/go/services/golomb_fs.go": "1ee8344c78f7e3cad9c82d8a75ff7a7c3d3ca24b600b1fef3ede5ce565b536f4",
+    "src/sc_neurocore/accel/go/services/golomb_fs_test.go": "d89dfa195a5b893db7afc90d1ae10a647bbbd2476c45f9a8f6dd41df6f5e74c0",
+    "src/sc_neurocore/accel/julia/neurons/golomb_fs.jl": "01f50082123b587ab5b4f3581af06e80060cc02b9b12488d6f8cdb140c33d340",
+    "src/sc_neurocore/accel/mojo/kernels/golomb_fs.mojo": "675119db142b0375e38bbcdf94fae45c13200703c4a77f5d0611f9407d949cfb"
+  }
+}
