@@ -375,6 +375,12 @@
         "tier": "core"
       },
       {
+        "domain": "Interop, serving & deployment",
+        "name": "federation",
+        "status": "library-only",
+        "tier": "core"
+      },
+      {
         "domain": "Plasticity & continual learning",
         "name": "few_shot",
         "status": "library-only",
@@ -953,13 +959,13 @@
   "counts": {
     "github_workflows": 14,
     "model_documentation_pages": 175,
-    "optional_extras": 24,
+    "optional_extras": 25,
     "public_api_exports": 44,
     "public_documentation_pages": 557,
     "python_model_classes": 158,
     "python_model_source_modules": 152,
     "rust_pyo3_model_wrappers": 175,
-    "test_files": 885
+    "test_files": 886
   },
   "documentation": {
     "public_pages": [
@@ -2739,6 +2745,7 @@
       "dev",
       "dev-full",
       "docs",
+      "federation",
       "full",
       "gpu",
       "hdl",
@@ -2999,6 +3006,7 @@
       "tests/test_fault_injection_module.py",
       "tests/test_fault_tolerance.py",
       "tests/test_federated/test_federated_sc.py",
+      "tests/test_federation/test_federation_vertical.py",
       "tests/test_few_shot.py",
       "tests/test_fim_symmetry_dynamics.py",
       "tests/test_fitzhugh_nagumo_backends.py",
