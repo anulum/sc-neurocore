@@ -506,3 +506,10 @@ class TestEndToEnd:
         b = Lfsr16(0x1234).encode_float(0.5, 1024)
         corr = scc(a, b, 1024)
         assert abs(corr) < 0.15
+
+
+def test_sclayer_rejects_mismatched_weight_row_length() -> None:
+    # Right number of rows but a row whose word count does not match
+    # words_per_input is rejected by the SCLayer weight validator.
+    with pytest.raises(ValueError, match="each weight row must match words_per_input"):
+        SCLayer(n_inputs=64, n_outputs=2, weights=[[0], [0, 0, 0]])

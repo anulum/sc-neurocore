@@ -31,6 +31,11 @@ class TestSwarmAgent(unittest.TestCase):
         self.assertEqual(a.agent_id, 0)
         self.assertEqual(a.position.shape, (2,))
 
+    def test_weights_setter_rejects_wrong_size(self):
+        a = SwarmAgent(AgentConfig())
+        with self.assertRaises(ValueError):
+            a.weights = np.zeros(3, dtype=np.float64)
+
     def test_init_config(self):
         cfg = AgentConfig(n_sensory=20, n_hidden=8, n_motor=2)
         a = SwarmAgent(cfg)
