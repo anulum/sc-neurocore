@@ -167,3 +167,10 @@ def test_conv_layer_perf_small():
     _ = layer.forward(inp)
     elapsed = time.perf_counter() - start
     assert elapsed < 2.0
+
+
+def test_conv_rejects_nonpositive_spatial_dimensions() -> None:
+    layer = SCConv2DLayer(in_channels=1, out_channels=2, kernel_size=3)
+    # A zero-height image clears the channel check but fails the positive-size guard.
+    with pytest.raises(ValueError, match="height and width must be positive"):
+        layer.forward(np.zeros((1, 0, 5), dtype=np.float64))
