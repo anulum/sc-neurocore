@@ -106,6 +106,14 @@ def test_invalid_retention_duration_is_rejected() -> None:
         GovernanceContract.from_dict(payload)
 
 
+def test_telemetry_logging_requires_telemetry_enabled() -> None:
+    payload = _minimal_contract_payload()
+    payload["telemetry"]["enabled"] = False
+
+    with pytest.raises(ValueError, match="requires telemetry enabled"):
+        GovernanceContract.from_dict(payload)
+
+
 def test_telemetry_requires_redaction_and_consent() -> None:
     payload = _minimal_contract_payload()
     payload["redaction_policy"]["enabled"] = False
