@@ -4,7 +4,7 @@
 # © Code 2020–2026 Miroslav Šotek. All rights reserved.
 # ORCID: 0009-0009-3560-0851
 # Contact: www.anulum.li | protoscience@anulum.li
-# SC-NeuroCore — Julia for sst_neuron
+# SC-NeuroCore — Julia RK4 kernel for the SST+ low-threshold spiking neuron
 
 module SstNeuronAccel
 
@@ -38,46 +38,64 @@ function SSTNeuronState()
     SSTNeuronState(-65.0, 0.02, 0.8, 0.2, 0.0, 0.9, 0.1, 50.0, 5.0, 0.12, 0.01, 0.02, 0.05, 50.0, -90.0, 120.0, -40.0, -65.0, 1.0, 0.025, -20.0)
 end
 
+# L'Hôpital limit of the Traub-Miles x/(exp(x/slope)-1) rate at the singularity.
+@inline function asing(num::Float64, slope::Float64, limit::Float64)
+    return (abs(num) < 1e-6) ? limit : num / (exp(num / slope) - 1.0)
+end
+
+# Return (dV, dm, dh, dn, dp, ds, dr) of the seven-state system at one state.
+@inline function derivatives(st::SSTNeuronState, v, m, h, n, p, s, r, current)
+    dvt = v - (-56.2)
+    alpha_m = -0.32 * asing(dvt - 13.0, -4.0, -4.0)
+    beta_m = 0.28 * asing(dvt - 40.0, 5.0, 5.0)
+    alpha_h = 0.128 * exp(-(dvt - 17.0) / 18.0)
+    beta_h = 4.0 / (1.0 + exp(-(dvt - 40.0) / 5.0))
+    alpha_n = -0.032 * asing(dvt - 15.0, -5.0, -5.0)
+    beta_n = 0.5 * exp(-(dvt - 10.0) / 40.0)
+    dm = alpha_m * (1.0 - m) - beta_m * m
+    dh = alpha_h * (1.0 - h) - beta_h * h
+    dn = alpha_n * (1.0 - n) - beta_n * n
+    p_inf = 1.0 / (1.0 + exp(-(v + 35.0) / 10.0))
+    tau_p = 400.0 / (3.3 * exp((v + 35.0) / 20.0) + exp(-(v + 35.0) / 20.0))
+    dp = (p_inf - p) / tau_p
+    m_t_inf = 1.0 / (1.0 + exp(-(v + 57.0) / 6.2))
+    s_inf = 1.0 / (1.0 + exp((v + 81.0) / 4.0))
+    tau_s = 30.0 + 200.0 / (1.0 + exp((v + 70.0) / 5.0))
+    ds = (s_inf - s) / tau_s
+    r_inf = 1.0 / (1.0 + exp((v + 80.0) / 10.0))
+    tau_r = 100.0 + 500.0 / (exp(-(v + 70.0) / 20.0) + exp((v + 70.0) / 20.0))
+    dr = (r_inf - r) / tau_r
+    i_na = st.g_na * m * m * m * h * (v - st.e_na)
+    i_k = st.g_k * n * n * n * n * (v - st.e_k)
+    i_m = st.g_m * p * (v - st.e_k)
+    i_t = st.g_t * m_t_inf * m_t_inf * s * (v - st.e_ca)
+    i_h = st.g_h * r * (v - st.e_h)
+    i_l = st.g_l * (v - st.e_l)
+    dv = (-i_na - i_k - i_m - i_t - i_h - i_l + current) / st.c_m
+    return (dv, dm, dh, dn, dp, ds, dr)
+end
+
+# One classical RK4 increment of (V, m, h, n, p, s, r), `current` held constant.
+@inline function rk4_substep(st::SSTNeuronState, y::NTuple{7,Float64}, current::Float64)
+    dt = st.dt
+    k1 = derivatives(st, y[1], y[2], y[3], y[4], y[5], y[6], y[7], current)
+    a = ntuple(i -> y[i] + 0.5 * dt * k1[i], 7)
+    k2 = derivatives(st, a[1], a[2], a[3], a[4], a[5], a[6], a[7], current)
+    b = ntuple(i -> y[i] + 0.5 * dt * k2[i], 7)
+    k3 = derivatives(st, b[1], b[2], b[3], b[4], b[5], b[6], b[7], current)
+    c = ntuple(i -> y[i] + dt * k3[i], 7)
+    k4 = derivatives(st, c[1], c[2], c[3], c[4], c[5], c[6], c[7], current)
+    return ntuple(i -> y[i] + dt * (k1[i] + 2.0 * k2[i] + 2.0 * k3[i] + k4[i]) / 6.0, 7)
+end
+
 function step!(s::SSTNeuronState, I_ext::Float64=0.0; dt::Float64=0.1)
-    try
-        v_prev = s.v
-        vt = -56.2
-        for _ in 1:4
-            dv = s.v - vt
-            x_m = dv - 13.0
-            alpha_m = (abs(x_m) < 1e-06) ? 0.32 * 4.0 : -0.32 * x_m / (exp(-x_m / 4.0) - 1.0)
-            x_h = dv - 17.0
-            beta_m = (abs(x_h) < 1e-06) ? 0.28 * 5.0 : 0.28 * x_h / (exp(x_h / 5.0) - 1.0)
-            alpha_h = 0.128 * exp(-(dv - 17.0) / 18.0)
-            beta_h = 4.0 / (1.0 + exp(-(dv - 40.0) / 5.0))
-            x_n = dv - 15.0
-            alpha_n = (abs(x_n) < 1e-06) ? 0.032 * 5.0 : -0.032 * x_n / (exp(-x_n / 5.0) - 1.0)
-            beta_n = 0.5 * exp(-(dv - 10.0) / 40.0)
-            s.m += (alpha_m * (1.0 - s.m) - beta_m * s.m) * s.dt
-            s.h += (alpha_h * (1.0 - s.h) - beta_h * s.h) * s.dt
-            s.n += (alpha_n * (1.0 - s.n) - beta_n * s.n) * s.dt
-            p_inf = 1.0 / (1.0 + exp(-(s.v + 35.0) / 10.0))
-            tau_p = 400.0 / (3.3 * exp((s.v + 35.0) / 20.0) + exp(-(s.v + 35.0) / 20.0))
-            s.p += (p_inf - s.p) / tau_p * s.dt
-            m_t_inf = 1.0 / (1.0 + exp(-(s.v + 57.0) / 6.2))
-            s_inf = 1.0 / (1.0 + exp((s.v + 81.0) / 4.0))
-            tau_s = 30.0 + 200.0 / (1.0 + exp((s.v + 70.0) / 5.0))
-            s.s += (s_inf - s.s) / tau_s * s.dt
-            r_inf = 1.0 / (1.0 + exp((s.v + 80.0) / 10.0))
-            tau_r = 100.0 + 500.0 / (exp(-(s.v + 70.0) / 20.0) + exp((s.v + 70.0) / 20.0))
-            s.r += (r_inf - s.r) / tau_r * s.dt
-            i_na = s.g_na * s.m ^ 3 * s.h * (s.v - s.e_na)
-            i_k = s.g_k * s.n ^ 4 * (s.v - s.e_k)
-            i_m = s.g_m * s.p * (s.v - s.e_k)
-            i_t = s.g_t * m_t_inf ^ 2 * s.s * (s.v - s.e_ca)
-            i_h = s.g_h * s.r * (s.v - s.e_h)
-            i_l = s.g_l * (s.v - s.e_l)
-            s.v += (-i_na - i_k - i_m - i_t - i_h - i_l + I_ext) / s.c_m * s.dt
-        end
-        return (s.v >= s.v_threshold && v_prev < s.v_threshold) ? 1 : 0
-    catch _e
-        return 0
+    v_prev = s.v
+    y = (s.v, s.m, s.h, s.n, s.p, s.s, s.r)
+    for _ in 1:4
+        y = rk4_substep(s, y, I_ext)
     end
+    s.v, s.m, s.h, s.n, s.p, s.s, s.r = y
+    return (s.v >= s.v_threshold && v_prev < s.v_threshold) ? 1 : 0
 end
 
 function simulate(n_steps::Int=1000; I_ext::Float64=10.0, dt::Float64=0.1)
@@ -85,9 +103,9 @@ function simulate(n_steps::Int=1000; I_ext::Float64=10.0, dt::Float64=0.1)
     trace = zeros(n_steps)
     spikes = 0
     for t in 1:n_steps
-        result = step!(s, I_ext; dt=dt)
+        result = step!(s, I_ext)
         trace[t] = s.v
-        if result isa Number && result > 0
+        if result > 0
             spikes += 1
         end
     end
