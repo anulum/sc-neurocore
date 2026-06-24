@@ -2153,24 +2153,67 @@ impl DurstewitzDopamineNeuron {
             v_threshold: -20.0,
         }
     }
+    /// Right-hand side ``(dV, dh_na, dn_k)`` evaluated from one consistent state.
+    ///
+    /// The sodium activation ``m_∞`` is instantaneous, so it is recomputed from
+    /// `v` at every RK4 stage. The conductance powers use explicit multiplication
+    /// and the Mg²⁺ block keeps the `mg / 3.57 * exp` operand order so the
+    /// Python, Julia, Go, and Mojo backends reproduce the trajectory bit-for-bit.
+    fn derivatives(&self, v: f64, h_na: f64, n_k: f64, current: f64) -> [f64; 3] {
+        let v_sh = self.d1_level * self.v_shift_na;
+        let m_na_inf = 1.0 / (1.0 + (-(v + 30.0 + v_sh) / 9.5).exp());
+        let h_na_inf = 1.0 / (1.0 + ((v + 53.0) / 7.0).exp());
+        let n_k_inf = 1.0 / (1.0 + (-(v + 30.0) / 10.0).exp());
+        let tau_h = 0.5 + 14.0 / (1.0 + ((v + 50.0) / 12.0).exp());
+        let tau_n = 1.0 + 11.0 / (1.0 + ((v + 40.0) / 10.0).exp());
+        let d_h_na = (h_na_inf - h_na) / tau_h;
+        let d_n_k = (n_k_inf - n_k) / tau_n;
+        let mg_block = 1.0 / (1.0 + self.mg / 3.57 * (-0.062 * v).exp());
+        let nmda_g = self.g_nmda * (1.0 + self.d1_level * (self.g_nmda_scale - 1.0));
+        let k_g = self.g_k * (1.0 + self.d1_level * (self.g_k_scale - 1.0));
+        let i_na = self.g_na * m_na_inf * m_na_inf * m_na_inf * h_na * (v - self.e_na);
+        let i_k = k_g * n_k * n_k * n_k * n_k * (v - self.e_k);
+        let i_nmda = nmda_g * mg_block * (v - self.e_nmda);
+        let i_l = self.g_l * (v - self.e_l);
+        let d_v = -i_na - i_k - i_nmda - i_l + current;
+        [d_v, d_h_na, d_n_k]
+    }
+
+    /// One classical RK4 increment of the `(V, h_na, n_k)` vector over `dt`.
+    fn rk4_substep(&self, s: [f64; 3], current: f64) -> [f64; 3] {
+        let dt = self.dt;
+        let k1 = self.derivatives(s[0], s[1], s[2], current);
+        let k2 = self.derivatives(
+            s[0] + 0.5 * dt * k1[0],
+            s[1] + 0.5 * dt * k1[1],
+            s[2] + 0.5 * dt * k1[2],
+            current,
+        );
+        let k3 = self.derivatives(
+            s[0] + 0.5 * dt * k2[0],
+            s[1] + 0.5 * dt * k2[1],
+            s[2] + 0.5 * dt * k2[2],
+            current,
+        );
+        let k4 = self.derivatives(
+            s[0] + dt * k3[0],
+            s[1] + dt * k3[1],
+            s[2] + dt * k3[2],
+            current,
+        );
+        let mut out = [0.0_f64; 3];
+        for i in 0..3 {
+            out[i] = s[i] + dt * (k1[i] + 2.0 * k2[i] + 2.0 * k3[i] + k4[i]) / 6.0;
+        }
+        out
+    }
+
     pub fn step(&mut self, current: f64) -> i32 {
         let v_prev = self.v;
-        let shift = self.d1_level * self.v_shift_na;
-        let m_inf = 1.0 / (1.0 + (-(self.v + 30.0 + shift) / 9.5).exp());
-        let h_inf = 1.0 / (1.0 + ((self.v + 53.0) / 7.0).exp());
-        let n_inf = 1.0 / (1.0 + (-(self.v + 30.0) / 10.0).exp());
-        let tau_h = 0.5 + 14.0 / (1.0 + ((self.v + 50.0) / 12.0).exp());
-        let tau_n = 1.0 + 11.0 / (1.0 + ((self.v + 40.0) / 10.0).exp());
-        self.h_na += (h_inf - self.h_na) / tau_h * self.dt;
-        self.n_k += (n_inf - self.n_k) / tau_n * self.dt;
-        let g_eff_nmda = self.g_nmda * (1.0 + self.d1_level * (self.g_nmda_scale - 1.0));
-        let g_eff_k = self.g_k * (1.0 + self.d1_level * (self.g_k_scale - 1.0));
-        let mg_block = 1.0 / (1.0 + self.mg * (-0.062 * self.v).exp() / 3.57);
-        let i_na = self.g_na * m_inf.powi(3) * self.h_na * (self.v - self.e_na);
-        let i_k = g_eff_k * self.n_k.powi(4) * (self.v - self.e_k);
-        let i_nmda = g_eff_nmda * mg_block * (self.v - self.e_nmda);
-        let i_l = self.g_l * (self.v - self.e_l);
-        self.v += (-i_na - i_k - i_nmda - i_l + current) * self.dt;
+        let s = self.rk4_substep([self.v, self.h_na, self.n_k], current);
+        self.v = s[0];
+        self.h_na = s[1];
+        self.n_k = s[2];
         if self.v >= self.v_threshold && v_prev < self.v_threshold {
             1
         } else {

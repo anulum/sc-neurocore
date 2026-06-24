@@ -6,6 +6,20 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 ## [Unreleased]
 
 ### Physics and mathematics hardening
+- Promoted `DurstewitzDopamineNeuron` (Durstewitz, Seamans & Sejnowski 2000
+  D1-modulated PFC cell) from a hard-coded forward-Euler step — which advanced
+  the gates from the old voltage and then the voltage from the freshly updated
+  gates, mixing two inconsistent states — to candidate-first RK4 over the
+  three-state `(V, h_na, n_k)` system, with input validation and the opt-in
+  `integrator="baseline_euler"` regression path. Replaced the decorative
+  `accel/go/services` and Mojo placeholders with real RK4 backends and harmonised
+  the cross-language arithmetic (explicit `m·m·m`/`n·n·n·n` conductance powers,
+  the `mg / 3.57 · exp` Mg²⁺-block operand order, `math.exp`) so Python, Rust,
+  Julia, Go, and Mojo reproduce the trajectory bit-for-bit. Added native Go RK4
+  parity/behaviour tests, a Go benchmark hook, a Rust benchmark example, the
+  Python RK4/fail-closed test coverage, and a five-backend local non-isolated
+  benchmark that fails closed unless every backend reports an identical spike
+  count (925 at 200k steps / 10 nA).
 - Completed the `UpperMotorNeuron` (Pospischil 2008 corticospinal L5 pyramidal)
   polyglot backend coverage by adding the Mojo exponential-Euler kernel, raising
   it to a Python / Rust / Julia / Go / Mojo set. The membrane keeps its analytic
