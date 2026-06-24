@@ -1,0 +1,262 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Commercial license available
+# © Concepts 1996–2026 Miroslav Šotek. All rights reserved.
+# © Code 2020–2026 Miroslav Šotek. All rights reserved.
+# ORCID: 0009-0009-3560-0851
+# Contact: www.anulum.li | protoscience@anulum.li
+# SC-NeuroCore — curated architecture-map source for the capability manifest
+#
+# Curated companion to the mechanical inventory in tools/capability_manifest.py.
+# Emitted verbatim into capability_manifest.json -> architecture_map (schema v2),
+# the second block of the two-block manifest (inventory core + architecture_map
+# extension). Fields: pipeline_stages / capabilities{status} / backends{status} /
+# interfaces / wire_formats / cross_repo / boundaries. Status uses the public set
+# {wired | library-only | stub | feasibility-only}; SOTA grades stay private
+# (docs/internal/audit). Anchored to docs/architecture/SYSTEM_MAP.md.
+
+version = "architecture-map.v2"
+
+# --- The spine: end-to-end data flow (SYSTEM_MAP §3) -------------------------
+[[pipeline_stages]]
+stage = "encode"
+inputs = ["float values"]
+outputs = ["bitstream (uint8 0/1 or packed uint64)"]
+processing_model = "LFSR (x^16+x^14+x^13+x^11+1) or Sobol/Halton quasi-random encoding"
+
+[[pipeline_stages]]
+stage = "sc-primitives"
+inputs = ["bitstreams", "fixed-point weights (Q8.8)"]
+outputs = ["spikes", "membrane voltages"]
+processing_model = "multiply = AND (unipolar) / XNOR (bipolar [-1,1]); scaled-add = MUX; fixed-point LIF neurons; packed AND + popcount"
+
+[[pipeline_stages]]
+stage = "network"
+inputs = ["populations", "CSR projections", "stimuli"]
+outputs = ["spike trains", "voltages", "firing rates"]
+processing_model = "clock-driven step loop: apply stimuli -> CSR matvec -> population.step_all -> record -> STDP -> optional FIM sync (network/network.py:203)"
+
+[[pipeline_stages]]
+stage = "analyse-decode"
+inputs = ["spike trains"]
+outputs = ["statistics", "decoded signals", "compressed spike codes"]
+processing_model = "spike-train statistics (rate/correlation/information/dimensionality/decoding), BCI spike codecs"
+
+[[pipeline_stages]]
+stage = "compile-rtl"
+inputs = ["neuron equations / IR graph"]
+outputs = [".v/.sv RTL", "MLIR"]
+processing_model = "SC-NIR build -> fixed-point quantisation -> AST->Verilog -> HDL bundle -> top assembly (SYSTEM_MAP §6)"
+
+[[pipeline_stages]]
+stage = "synthesise-deploy"
+inputs = ["RTL"]
+outputs = ["FPGA bitstream (.bit+.hwh)", "ASIC PDK deck"]
+processing_model = "Yosys -> nextpnr/OpenROAD / Vivado -> PYNQ-Z2; ASIC flow SKY130/GF180/TSMC28/Intel16 (silicon-proven: SHD on Zynq XC7Z020)"
+
+# --- Backends and their wiring (SYSTEM_MAP §5) ------------------------------
+# status: runtime-active (registered + probes in this env) | build-available
+#         (optional dep, used when present) | declared (named in the chain but
+#         not registered in the canonical selector)
+[[backends]]
+name = "numpy"
+language = "Python"
+role = "bit-true floor for SC inference"
+dispatch_order = 5
+status = "runtime-active"
+
+[[backends]]
+name = "rust"
+language = "Rust"
+role = "SIMD SC inference + integrators + analysis + IR emit (sc_neurocore_engine, PyO3)"
+dispatch_order = 1
+status = "runtime-active"
+
+[[backends]]
+name = "mojo"
+language = "Mojo"
+role = "per-package SIMD kernels (accel/mojo); NOT registered in accel/backend.py selector"
+dispatch_order = 2
+status = "declared"
+
+[[backends]]
+name = "julia"
+language = "Julia"
+role = "per-package kernels (accel/julia); reference ODEs; NOT in canonical selector"
+dispatch_order = 3
+status = "declared"
+
+[[backends]]
+name = "go"
+language = "Go"
+role = "per-package kernels (accel/go); NOT in canonical selector"
+dispatch_order = 4
+status = "declared"
+
+[[backends]]
+name = "numba"
+language = "Python/LLVM"
+role = "JIT bit-pack / MAC hot paths (accel extra)"
+dispatch_order = 0
+status = "build-available"
+
+[[backends]]
+name = "cupy"
+language = "CUDA"
+role = "GPU device arrays for layers (gpu extra)"
+dispatch_order = 0
+status = "build-available"
+
+[[backends]]
+name = "jax"
+language = "Python/XLA"
+role = "dense layer + SCPN holonomic adapters (jax extra)"
+dispatch_order = 0
+status = "build-available"
+
+[[backends]]
+name = "torch"
+language = "Python/C++"
+role = "surrogate-gradient training, ANN->SNN conversion (training extra)"
+dispatch_order = 0
+status = "build-available"
+
+[[backends]]
+name = "mpi4py"
+language = "C/MPI"
+role = "distributed network simulation (mpi extra)"
+dispatch_order = 0
+status = "build-available"
+
+[[backends]]
+name = "fpga-rtl"
+language = "Verilog"
+role = "synthesisable SC hardware (hdl/, silicon-proven SHD)"
+dispatch_order = 0
+status = "build-available"
+
+# --- Interfaces (SYSTEM_MAP §2, §9) -----------------------------------------
+[[interfaces]]
+kind = "cli"
+entry = "sc-neurocore = sc_neurocore.cli:main"
+
+[[interfaces]]
+kind = "library"
+entry = "import sc_neurocore (lazy PEP 562 public API)"
+
+[[interfaces]]
+kind = "rest"
+entry = "sc_neurocore.studio (FastAPI; ~113 /api endpoints)"
+
+# --- Cross-repo wire formats (SYSTEM_MAP §9) --------------------------------
+[[wire_formats]]
+name = "sc_forward"
+schema_ref = "sc_neurocore.accel.get_backend().sc_forward (packed-dense SC inference, bit-identical rust/numpy)"
+
+[[wire_formats]]
+name = "nir"
+schema_ref = "sc_neurocore.nir_bridge.from_nir/to_nir (NIR graph, 18/18 primitives)"
+
+[[wire_formats]]
+name = "hil-telemetry"
+schema_ref = "proto/core.proto + proto/telemetry.proto (Tensor / BitstreamMetadata / HILFrame)"
+
+[[cross_repo]]
+sibling = "SCPN-CONTROL"
+adapter = "accel.get_backend().sc_forward"
+wire_format = "sc_forward"
+
+[[cross_repo]]
+sibling = "NIR ecosystem (Norse/snnTorch/SpikingJelly/Sinabs/Rockpool)"
+adapter = "nir_bridge"
+wire_format = "nir"
+
+[[cross_repo]]
+sibling = "FPGA host (PYNQ-Z2)"
+adapter = "hdl/pynq/sc_shd_driver.py"
+wire_format = "hil-telemetry"
+
+# --- Honest scope boundaries (SYSTEM_MAP §1, §7; audit) ---------------------
+[boundaries]
+executed = [
+  "SC inference rust/numpy bit-identical for fixed seed (accel/backend.py)",
+  "SHD pipeline proven on silicon: Zynq XC7Z020, 1317 LUT / 2.5%, cosim bit-exact",
+]
+bounded = [
+  "Network Rust/MPI paths cover a subset (plasticity/FIM/spike-gating are Python-only)",
+  "polyglot julia/go/mojo kernels are real but reachable only per-package, not via the canonical selector",
+]
+feasibility_only = [
+  "per-language speed multipliers asserted only in docstrings (e.g. Mojo 27-214x) lack stored measured artefacts",
+  "research-tier device-substrate models (spintronic LLG not integrated; photonic circuit symbolic)",
+]
+closed = [
+  "speculative sci-fi modules are NOT in src/ (confined to repo-root research/, not importable as sc_neurocore.*)",
+]
+
+# --- Capability catalogue (SYSTEM_MAP §7) -----------------------------------
+# Every src/sc_neurocore subpackage is mapped to exactly one domain (the
+# generator errors if a scanned package is unmapped — completeness gate).
+# tier is derived (research = pyproject wheel-exclude set, else core).
+# status DEFAULT is "library-only" (importable + functional, not on the main
+# execution path). "wired" is asserted ONLY for the spine actually on the
+# SC->neuron->network->compile->hardware path (conservative, not over-claimed);
+# "stub" / "feasibility-only" are directly-verified exceptions. The PRIVATE audit
+# (docs/internal/audit) holds the full per-component maturity ledger.
+[capabilities.domains]
+"SC substrate & arithmetic" = ["core", "math", "utils", "encoding", "conversion", "compression", "stochastic_doctor", "doctor", "solvers"]
+"Spike coding & DSP" = ["spike_codec", "spike_dsp", "spike_norm", "spike_ode", "spike_gnn"]
+"Neurons & synapses" = ["neurons", "synapses", "sources", "recorders"]
+"Plasticity & continual learning" = ["learning", "meta_plasticity", "homeostasis", "online_learning", "continual", "contrastive", "few_shot", "transfer", "distillation"]
+"Network & dynamics" = ["network", "layers", "reservoir", "topology", "graphs", "ensembles", "residual", "temporal_hierarchy", "spatial", "event_driven", "fusion"]
+"SCPN integration" = ["scpn", "adapters"]
+"Hardware compiler & IR" = ["compiler", "chip_compiler", "ir", "hdl", "hdl_gen", "hardware"]
+"EDA / ASIC / verification" = ["asic_flow", "chiplet", "uvm_gen", "verification", "formal", "safety_cert"]
+"Acceleration & polyglot" = ["accel", "_native", "bridges"]
+"Interop, serving & deployment" = ["nir_bridge", "export", "datasets", "model_zoo", "models", "studio", "serve", "hub", "integrations", "interfaces", "comm", "federated", "hypervisor", "pipeline", "bci_studio"]
+"Training & optimisation" = ["training", "qat", "nas", "optimizer", "snn_optimizer", "augmentation", "autofit"]
+"Neuromorphic substrates & physical I/O" = ["bio", "bioware", "memristor", "spintronic", "optics", "analog_bridge", "sensors", "drivers", "edge", "robotics", "world_model", "transformers", "hdc", "symbolic", "neuro_symbolic", "evo_substrate", "digital_twin", "audio"]
+"Analysis, explainability & profiling" = ["analysis", "explain", "explainability", "debug", "profiler", "profiling", "viz", "dashboard", "energy", "energy_accounting"]
+"Quantum & cognition" = ["quantum", "quantum_cognition", "chaos", "physics"]
+"Safety, security & resilience" = ["security", "privacy", "resilience", "fault_injection", "identity", "control", "swarm", "sleep", "generative"]
+"Wire contracts & harnesses" = ["proto", "experimental", "experiments", "benchmarks"]
+
+# Status overrides (default is "library-only"). "wired" = on the main execution
+# path; "stub"/"feasibility-only" = directly verified.
+[capabilities.status]
+# wired spine (SYSTEM_MAP §3-6)
+core = "wired"
+math = "wired"
+utils = "wired"
+encoding = "wired"
+conversion = "wired"
+stochastic_doctor = "wired"
+neurons = "wired"
+synapses = "wired"
+sources = "wired"
+recorders = "wired"
+network = "wired"
+layers = "wired"
+learning = "wired"
+scpn = "wired"
+adapters = "wired"
+accel = "wired"
+_native = "wired"
+compiler = "wired"
+ir = "wired"
+hdl_gen = "wired"
+hdl = "wired"
+hardware = "wired"
+spike_codec = "wired"
+nir_bridge = "wired"
+# thin / schema-deferred
+serve = "stub"
+hub = "stub"
+federated = "stub"
+hypervisor = "stub"
+uvm_gen = "stub"
+verification = "stub"
+safety_cert = "stub"
+# experimental / naming-ahead-of-substance
+quantum_cognition = "feasibility-only"
+physics = "feasibility-only"
+chaos = "feasibility-only"

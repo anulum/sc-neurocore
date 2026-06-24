@@ -1,5 +1,955 @@
 {
   "SPDX-License-Identifier": "AGPL-3.0-or-later",
+  "architecture_map": {
+    "backends": [
+      {
+        "dispatch_order": 5,
+        "language": "Python",
+        "name": "numpy",
+        "role": "bit-true floor for SC inference",
+        "status": "runtime-active"
+      },
+      {
+        "dispatch_order": 1,
+        "language": "Rust",
+        "name": "rust",
+        "role": "SIMD SC inference + integrators + analysis + IR emit (sc_neurocore_engine, PyO3)",
+        "status": "runtime-active"
+      },
+      {
+        "dispatch_order": 2,
+        "language": "Mojo",
+        "name": "mojo",
+        "role": "per-package SIMD kernels (accel/mojo); NOT registered in accel/backend.py selector",
+        "status": "declared"
+      },
+      {
+        "dispatch_order": 3,
+        "language": "Julia",
+        "name": "julia",
+        "role": "per-package kernels (accel/julia); reference ODEs; NOT in canonical selector",
+        "status": "declared"
+      },
+      {
+        "dispatch_order": 4,
+        "language": "Go",
+        "name": "go",
+        "role": "per-package kernels (accel/go); NOT in canonical selector",
+        "status": "declared"
+      },
+      {
+        "dispatch_order": 0,
+        "language": "Python/LLVM",
+        "name": "numba",
+        "role": "JIT bit-pack / MAC hot paths (accel extra)",
+        "status": "build-available"
+      },
+      {
+        "dispatch_order": 0,
+        "language": "CUDA",
+        "name": "cupy",
+        "role": "GPU device arrays for layers (gpu extra)",
+        "status": "build-available"
+      },
+      {
+        "dispatch_order": 0,
+        "language": "Python/XLA",
+        "name": "jax",
+        "role": "dense layer + SCPN holonomic adapters (jax extra)",
+        "status": "build-available"
+      },
+      {
+        "dispatch_order": 0,
+        "language": "Python/C++",
+        "name": "torch",
+        "role": "surrogate-gradient training, ANN->SNN conversion (training extra)",
+        "status": "build-available"
+      },
+      {
+        "dispatch_order": 0,
+        "language": "C/MPI",
+        "name": "mpi4py",
+        "role": "distributed network simulation (mpi extra)",
+        "status": "build-available"
+      },
+      {
+        "dispatch_order": 0,
+        "language": "Verilog",
+        "name": "fpga-rtl",
+        "role": "synthesisable SC hardware (hdl/, silicon-proven SHD)",
+        "status": "build-available"
+      }
+    ],
+    "boundaries": {
+      "bounded": [
+        "Network Rust/MPI paths cover a subset (plasticity/FIM/spike-gating are Python-only)",
+        "polyglot julia/go/mojo kernels are real but reachable only per-package, not via the canonical selector"
+      ],
+      "closed": [
+        "speculative sci-fi modules are NOT in src/ (confined to repo-root research/, not importable as sc_neurocore.*)"
+      ],
+      "executed": [
+        "SC inference rust/numpy bit-identical for fixed seed (accel/backend.py)",
+        "SHD pipeline proven on silicon: Zynq XC7Z020, 1317 LUT / 2.5%, cosim bit-exact"
+      ],
+      "feasibility_only": [
+        "per-language speed multipliers asserted only in docstrings (e.g. Mojo 27-214x) lack stored measured artefacts",
+        "research-tier device-substrate models (spintronic LLG not integrated; photonic circuit symbolic)"
+      ]
+    },
+    "capabilities": [
+      {
+        "domain": "Acceleration & polyglot",
+        "name": "_native",
+        "status": "wired",
+        "tier": "core"
+      },
+      {
+        "domain": "Acceleration & polyglot",
+        "name": "accel",
+        "status": "wired",
+        "tier": "core"
+      },
+      {
+        "domain": "SCPN integration",
+        "name": "adapters",
+        "status": "wired",
+        "tier": "core"
+      },
+      {
+        "domain": "Neuromorphic substrates & physical I/O",
+        "name": "analog_bridge",
+        "status": "library-only",
+        "tier": "core"
+      },
+      {
+        "domain": "Analysis, explainability & profiling",
+        "name": "analysis",
+        "status": "library-only",
+        "tier": "research"
+      },
+      {
+        "domain": "EDA / ASIC / verification",
+        "name": "asic_flow",
+        "status": "library-only",
+        "tier": "core"
+      },
+      {
+        "domain": "Neuromorphic substrates & physical I/O",
+        "name": "audio",
+        "status": "library-only",
+        "tier": "research"
+      },
+      {
+        "domain": "Training & optimisation",
+        "name": "augmentation",
+        "status": "library-only",
+        "tier": "core"
+      },
+      {
+        "domain": "Training & optimisation",
+        "name": "autofit",
+        "status": "library-only",
+        "tier": "core"
+      },
+      {
+        "domain": "Interop, serving & deployment",
+        "name": "bci_studio",
+        "status": "library-only",
+        "tier": "core"
+      },
+      {
+        "domain": "Wire contracts & harnesses",
+        "name": "benchmarks",
+        "status": "library-only",
+        "tier": "core"
+      },
+      {
+        "domain": "Neuromorphic substrates & physical I/O",
+        "name": "bio",
+        "status": "library-only",
+        "tier": "research"
+      },
+      {
+        "domain": "Neuromorphic substrates & physical I/O",
+        "name": "bioware",
+        "status": "library-only",
+        "tier": "core"
+      },
+      {
+        "domain": "Acceleration & polyglot",
+        "name": "bridges",
+        "status": "library-only",
+        "tier": "core"
+      },
+      {
+        "domain": "Quantum & cognition",
+        "name": "chaos",
+        "status": "feasibility-only",
+        "tier": "research"
+      },
+      {
+        "domain": "Hardware compiler & IR",
+        "name": "chip_compiler",
+        "status": "library-only",
+        "tier": "core"
+      },
+      {
+        "domain": "EDA / ASIC / verification",
+        "name": "chiplet",
+        "status": "library-only",
+        "tier": "core"
+      },
+      {
+        "domain": "Interop, serving & deployment",
+        "name": "comm",
+        "status": "library-only",
+        "tier": "core"
+      },
+      {
+        "domain": "Hardware compiler & IR",
+        "name": "compiler",
+        "status": "wired",
+        "tier": "core"
+      },
+      {
+        "domain": "SC substrate & arithmetic",
+        "name": "compression",
+        "status": "library-only",
+        "tier": "core"
+      },
+      {
+        "domain": "Plasticity & continual learning",
+        "name": "continual",
+        "status": "library-only",
+        "tier": "core"
+      },
+      {
+        "domain": "Plasticity & continual learning",
+        "name": "contrastive",
+        "status": "library-only",
+        "tier": "core"
+      },
+      {
+        "domain": "Safety, security & resilience",
+        "name": "control",
+        "status": "library-only",
+        "tier": "core"
+      },
+      {
+        "domain": "SC substrate & arithmetic",
+        "name": "conversion",
+        "status": "wired",
+        "tier": "core"
+      },
+      {
+        "domain": "SC substrate & arithmetic",
+        "name": "core",
+        "status": "wired",
+        "tier": "core"
+      },
+      {
+        "domain": "Analysis, explainability & profiling",
+        "name": "dashboard",
+        "status": "library-only",
+        "tier": "research"
+      },
+      {
+        "domain": "Interop, serving & deployment",
+        "name": "datasets",
+        "status": "library-only",
+        "tier": "core"
+      },
+      {
+        "domain": "Analysis, explainability & profiling",
+        "name": "debug",
+        "status": "library-only",
+        "tier": "core"
+      },
+      {
+        "domain": "Neuromorphic substrates & physical I/O",
+        "name": "digital_twin",
+        "status": "library-only",
+        "tier": "core"
+      },
+      {
+        "domain": "Plasticity & continual learning",
+        "name": "distillation",
+        "status": "library-only",
+        "tier": "core"
+      },
+      {
+        "domain": "SC substrate & arithmetic",
+        "name": "doctor",
+        "status": "library-only",
+        "tier": "core"
+      },
+      {
+        "domain": "Neuromorphic substrates & physical I/O",
+        "name": "drivers",
+        "status": "library-only",
+        "tier": "research"
+      },
+      {
+        "domain": "Neuromorphic substrates & physical I/O",
+        "name": "edge",
+        "status": "library-only",
+        "tier": "core"
+      },
+      {
+        "domain": "SC substrate & arithmetic",
+        "name": "encoding",
+        "status": "wired",
+        "tier": "core"
+      },
+      {
+        "domain": "Analysis, explainability & profiling",
+        "name": "energy",
+        "status": "library-only",
+        "tier": "core"
+      },
+      {
+        "domain": "Analysis, explainability & profiling",
+        "name": "energy_accounting",
+        "status": "library-only",
+        "tier": "core"
+      },
+      {
+        "domain": "Network & dynamics",
+        "name": "ensembles",
+        "status": "library-only",
+        "tier": "core"
+      },
+      {
+        "domain": "Network & dynamics",
+        "name": "event_driven",
+        "status": "library-only",
+        "tier": "core"
+      },
+      {
+        "domain": "Neuromorphic substrates & physical I/O",
+        "name": "evo_substrate",
+        "status": "library-only",
+        "tier": "core"
+      },
+      {
+        "domain": "Wire contracts & harnesses",
+        "name": "experimental",
+        "status": "library-only",
+        "tier": "core"
+      },
+      {
+        "domain": "Wire contracts & harnesses",
+        "name": "experiments",
+        "status": "library-only",
+        "tier": "research"
+      },
+      {
+        "domain": "Analysis, explainability & profiling",
+        "name": "explain",
+        "status": "library-only",
+        "tier": "core"
+      },
+      {
+        "domain": "Analysis, explainability & profiling",
+        "name": "explainability",
+        "status": "library-only",
+        "tier": "core"
+      },
+      {
+        "domain": "Interop, serving & deployment",
+        "name": "export",
+        "status": "library-only",
+        "tier": "core"
+      },
+      {
+        "domain": "Safety, security & resilience",
+        "name": "fault_injection",
+        "status": "library-only",
+        "tier": "core"
+      },
+      {
+        "domain": "Interop, serving & deployment",
+        "name": "federated",
+        "status": "stub",
+        "tier": "core"
+      },
+      {
+        "domain": "Plasticity & continual learning",
+        "name": "few_shot",
+        "status": "library-only",
+        "tier": "core"
+      },
+      {
+        "domain": "EDA / ASIC / verification",
+        "name": "formal",
+        "status": "library-only",
+        "tier": "core"
+      },
+      {
+        "domain": "Network & dynamics",
+        "name": "fusion",
+        "status": "library-only",
+        "tier": "core"
+      },
+      {
+        "domain": "Safety, security & resilience",
+        "name": "generative",
+        "status": "library-only",
+        "tier": "research"
+      },
+      {
+        "domain": "Network & dynamics",
+        "name": "graphs",
+        "status": "library-only",
+        "tier": "core"
+      },
+      {
+        "domain": "Hardware compiler & IR",
+        "name": "hardware",
+        "status": "wired",
+        "tier": "core"
+      },
+      {
+        "domain": "Neuromorphic substrates & physical I/O",
+        "name": "hdc",
+        "status": "library-only",
+        "tier": "core"
+      },
+      {
+        "domain": "Hardware compiler & IR",
+        "name": "hdl",
+        "status": "wired",
+        "tier": "core"
+      },
+      {
+        "domain": "Hardware compiler & IR",
+        "name": "hdl_gen",
+        "status": "wired",
+        "tier": "core"
+      },
+      {
+        "domain": "Plasticity & continual learning",
+        "name": "homeostasis",
+        "status": "library-only",
+        "tier": "core"
+      },
+      {
+        "domain": "Interop, serving & deployment",
+        "name": "hub",
+        "status": "stub",
+        "tier": "core"
+      },
+      {
+        "domain": "Interop, serving & deployment",
+        "name": "hypervisor",
+        "status": "stub",
+        "tier": "core"
+      },
+      {
+        "domain": "Safety, security & resilience",
+        "name": "identity",
+        "status": "library-only",
+        "tier": "core"
+      },
+      {
+        "domain": "Interop, serving & deployment",
+        "name": "integrations",
+        "status": "library-only",
+        "tier": "core"
+      },
+      {
+        "domain": "Interop, serving & deployment",
+        "name": "interfaces",
+        "status": "library-only",
+        "tier": "research"
+      },
+      {
+        "domain": "Hardware compiler & IR",
+        "name": "ir",
+        "status": "wired",
+        "tier": "core"
+      },
+      {
+        "domain": "Network & dynamics",
+        "name": "layers",
+        "status": "wired",
+        "tier": "core"
+      },
+      {
+        "domain": "Plasticity & continual learning",
+        "name": "learning",
+        "status": "wired",
+        "tier": "core"
+      },
+      {
+        "domain": "SC substrate & arithmetic",
+        "name": "math",
+        "status": "wired",
+        "tier": "core"
+      },
+      {
+        "domain": "Neuromorphic substrates & physical I/O",
+        "name": "memristor",
+        "status": "library-only",
+        "tier": "core"
+      },
+      {
+        "domain": "Plasticity & continual learning",
+        "name": "meta_plasticity",
+        "status": "library-only",
+        "tier": "core"
+      },
+      {
+        "domain": "Interop, serving & deployment",
+        "name": "model_zoo",
+        "status": "library-only",
+        "tier": "core"
+      },
+      {
+        "domain": "Interop, serving & deployment",
+        "name": "models",
+        "status": "library-only",
+        "tier": "core"
+      },
+      {
+        "domain": "Training & optimisation",
+        "name": "nas",
+        "status": "library-only",
+        "tier": "core"
+      },
+      {
+        "domain": "Network & dynamics",
+        "name": "network",
+        "status": "wired",
+        "tier": "core"
+      },
+      {
+        "domain": "Neuromorphic substrates & physical I/O",
+        "name": "neuro_symbolic",
+        "status": "library-only",
+        "tier": "core"
+      },
+      {
+        "domain": "Neurons & synapses",
+        "name": "neurons",
+        "status": "wired",
+        "tier": "core"
+      },
+      {
+        "domain": "Interop, serving & deployment",
+        "name": "nir_bridge",
+        "status": "wired",
+        "tier": "core"
+      },
+      {
+        "domain": "Plasticity & continual learning",
+        "name": "online_learning",
+        "status": "library-only",
+        "tier": "core"
+      },
+      {
+        "domain": "Neuromorphic substrates & physical I/O",
+        "name": "optics",
+        "status": "library-only",
+        "tier": "research"
+      },
+      {
+        "domain": "Training & optimisation",
+        "name": "optimizer",
+        "status": "library-only",
+        "tier": "core"
+      },
+      {
+        "domain": "Quantum & cognition",
+        "name": "physics",
+        "status": "feasibility-only",
+        "tier": "research"
+      },
+      {
+        "domain": "Interop, serving & deployment",
+        "name": "pipeline",
+        "status": "library-only",
+        "tier": "core"
+      },
+      {
+        "domain": "Safety, security & resilience",
+        "name": "privacy",
+        "status": "library-only",
+        "tier": "core"
+      },
+      {
+        "domain": "Analysis, explainability & profiling",
+        "name": "profiler",
+        "status": "library-only",
+        "tier": "core"
+      },
+      {
+        "domain": "Analysis, explainability & profiling",
+        "name": "profiling",
+        "status": "library-only",
+        "tier": "core"
+      },
+      {
+        "domain": "Wire contracts & harnesses",
+        "name": "proto",
+        "status": "library-only",
+        "tier": "core"
+      },
+      {
+        "domain": "Training & optimisation",
+        "name": "qat",
+        "status": "library-only",
+        "tier": "core"
+      },
+      {
+        "domain": "Quantum & cognition",
+        "name": "quantum",
+        "status": "library-only",
+        "tier": "core"
+      },
+      {
+        "domain": "Quantum & cognition",
+        "name": "quantum_cognition",
+        "status": "feasibility-only",
+        "tier": "core"
+      },
+      {
+        "domain": "Neurons & synapses",
+        "name": "recorders",
+        "status": "wired",
+        "tier": "core"
+      },
+      {
+        "domain": "Network & dynamics",
+        "name": "reservoir",
+        "status": "library-only",
+        "tier": "core"
+      },
+      {
+        "domain": "Network & dynamics",
+        "name": "residual",
+        "status": "library-only",
+        "tier": "core"
+      },
+      {
+        "domain": "Safety, security & resilience",
+        "name": "resilience",
+        "status": "library-only",
+        "tier": "core"
+      },
+      {
+        "domain": "Neuromorphic substrates & physical I/O",
+        "name": "robotics",
+        "status": "library-only",
+        "tier": "research"
+      },
+      {
+        "domain": "EDA / ASIC / verification",
+        "name": "safety_cert",
+        "status": "stub",
+        "tier": "core"
+      },
+      {
+        "domain": "SCPN integration",
+        "name": "scpn",
+        "status": "wired",
+        "tier": "core"
+      },
+      {
+        "domain": "Safety, security & resilience",
+        "name": "security",
+        "status": "library-only",
+        "tier": "core"
+      },
+      {
+        "domain": "Neuromorphic substrates & physical I/O",
+        "name": "sensors",
+        "status": "library-only",
+        "tier": "core"
+      },
+      {
+        "domain": "Interop, serving & deployment",
+        "name": "serve",
+        "status": "stub",
+        "tier": "core"
+      },
+      {
+        "domain": "Safety, security & resilience",
+        "name": "sleep",
+        "status": "library-only",
+        "tier": "research"
+      },
+      {
+        "domain": "Training & optimisation",
+        "name": "snn_optimizer",
+        "status": "library-only",
+        "tier": "core"
+      },
+      {
+        "domain": "SC substrate & arithmetic",
+        "name": "solvers",
+        "status": "library-only",
+        "tier": "core"
+      },
+      {
+        "domain": "Neurons & synapses",
+        "name": "sources",
+        "status": "wired",
+        "tier": "core"
+      },
+      {
+        "domain": "Network & dynamics",
+        "name": "spatial",
+        "status": "library-only",
+        "tier": "core"
+      },
+      {
+        "domain": "Spike coding & DSP",
+        "name": "spike_codec",
+        "status": "wired",
+        "tier": "core"
+      },
+      {
+        "domain": "Spike coding & DSP",
+        "name": "spike_dsp",
+        "status": "library-only",
+        "tier": "core"
+      },
+      {
+        "domain": "Spike coding & DSP",
+        "name": "spike_gnn",
+        "status": "library-only",
+        "tier": "core"
+      },
+      {
+        "domain": "Spike coding & DSP",
+        "name": "spike_norm",
+        "status": "library-only",
+        "tier": "core"
+      },
+      {
+        "domain": "Spike coding & DSP",
+        "name": "spike_ode",
+        "status": "library-only",
+        "tier": "core"
+      },
+      {
+        "domain": "Neuromorphic substrates & physical I/O",
+        "name": "spintronic",
+        "status": "library-only",
+        "tier": "core"
+      },
+      {
+        "domain": "SC substrate & arithmetic",
+        "name": "stochastic_doctor",
+        "status": "wired",
+        "tier": "core"
+      },
+      {
+        "domain": "Interop, serving & deployment",
+        "name": "studio",
+        "status": "library-only",
+        "tier": "core"
+      },
+      {
+        "domain": "Safety, security & resilience",
+        "name": "swarm",
+        "status": "library-only",
+        "tier": "research"
+      },
+      {
+        "domain": "Neuromorphic substrates & physical I/O",
+        "name": "symbolic",
+        "status": "library-only",
+        "tier": "core"
+      },
+      {
+        "domain": "Neurons & synapses",
+        "name": "synapses",
+        "status": "wired",
+        "tier": "core"
+      },
+      {
+        "domain": "Network & dynamics",
+        "name": "temporal_hierarchy",
+        "status": "library-only",
+        "tier": "core"
+      },
+      {
+        "domain": "Network & dynamics",
+        "name": "topology",
+        "status": "library-only",
+        "tier": "core"
+      },
+      {
+        "domain": "Training & optimisation",
+        "name": "training",
+        "status": "library-only",
+        "tier": "core"
+      },
+      {
+        "domain": "Plasticity & continual learning",
+        "name": "transfer",
+        "status": "library-only",
+        "tier": "core"
+      },
+      {
+        "domain": "Neuromorphic substrates & physical I/O",
+        "name": "transformers",
+        "status": "library-only",
+        "tier": "core"
+      },
+      {
+        "domain": "SC substrate & arithmetic",
+        "name": "utils",
+        "status": "wired",
+        "tier": "core"
+      },
+      {
+        "domain": "EDA / ASIC / verification",
+        "name": "uvm_gen",
+        "status": "stub",
+        "tier": "core"
+      },
+      {
+        "domain": "EDA / ASIC / verification",
+        "name": "verification",
+        "status": "stub",
+        "tier": "core"
+      },
+      {
+        "domain": "Analysis, explainability & profiling",
+        "name": "viz",
+        "status": "library-only",
+        "tier": "research"
+      },
+      {
+        "domain": "Neuromorphic substrates & physical I/O",
+        "name": "world_model",
+        "status": "library-only",
+        "tier": "research"
+      }
+    ],
+    "cross_repo": [
+      {
+        "adapter": "accel.get_backend().sc_forward",
+        "sibling": "SCPN-CONTROL",
+        "wire_format": "sc_forward"
+      },
+      {
+        "adapter": "nir_bridge",
+        "sibling": "NIR ecosystem (Norse/snnTorch/SpikingJelly/Sinabs/Rockpool)",
+        "wire_format": "nir"
+      },
+      {
+        "adapter": "hdl/pynq/sc_shd_driver.py",
+        "sibling": "FPGA host (PYNQ-Z2)",
+        "wire_format": "hil-telemetry"
+      }
+    ],
+    "interfaces": [
+      {
+        "entry": "sc-neurocore = sc_neurocore.cli:main",
+        "kind": "cli"
+      },
+      {
+        "entry": "import sc_neurocore (lazy PEP 562 public API)",
+        "kind": "library"
+      },
+      {
+        "entry": "sc_neurocore.studio (FastAPI; ~113 /api endpoints)",
+        "kind": "rest"
+      }
+    ],
+    "pipeline_stages": [
+      {
+        "inputs": [
+          "float values"
+        ],
+        "outputs": [
+          "bitstream (uint8 0/1 or packed uint64)"
+        ],
+        "processing_model": "LFSR (x^16+x^14+x^13+x^11+1) or Sobol/Halton quasi-random encoding",
+        "stage": "encode"
+      },
+      {
+        "inputs": [
+          "bitstreams",
+          "fixed-point weights (Q8.8)"
+        ],
+        "outputs": [
+          "spikes",
+          "membrane voltages"
+        ],
+        "processing_model": "multiply = AND (unipolar) / XNOR (bipolar [-1,1]); scaled-add = MUX; fixed-point LIF neurons; packed AND + popcount",
+        "stage": "sc-primitives"
+      },
+      {
+        "inputs": [
+          "populations",
+          "CSR projections",
+          "stimuli"
+        ],
+        "outputs": [
+          "spike trains",
+          "voltages",
+          "firing rates"
+        ],
+        "processing_model": "clock-driven step loop: apply stimuli -> CSR matvec -> population.step_all -> record -> STDP -> optional FIM sync (network/network.py:203)",
+        "stage": "network"
+      },
+      {
+        "inputs": [
+          "spike trains"
+        ],
+        "outputs": [
+          "statistics",
+          "decoded signals",
+          "compressed spike codes"
+        ],
+        "processing_model": "spike-train statistics (rate/correlation/information/dimensionality/decoding), BCI spike codecs",
+        "stage": "analyse-decode"
+      },
+      {
+        "inputs": [
+          "neuron equations / IR graph"
+        ],
+        "outputs": [
+          ".v/.sv RTL",
+          "MLIR"
+        ],
+        "processing_model": "SC-NIR build -> fixed-point quantisation -> AST->Verilog -> HDL bundle -> top assembly (SYSTEM_MAP \u00a76)",
+        "stage": "compile-rtl"
+      },
+      {
+        "inputs": [
+          "RTL"
+        ],
+        "outputs": [
+          "FPGA bitstream (.bit+.hwh)",
+          "ASIC PDK deck"
+        ],
+        "processing_model": "Yosys -> nextpnr/OpenROAD / Vivado -> PYNQ-Z2; ASIC flow SKY130/GF180/TSMC28/Intel16 (silicon-proven: SHD on Zynq XC7Z020)",
+        "stage": "synthesise-deploy"
+      }
+    ],
+    "version": "architecture-map.v2",
+    "wire_formats": [
+      {
+        "name": "sc_forward",
+        "schema_ref": "sc_neurocore.accel.get_backend().sc_forward (packed-dense SC inference, bit-identical rust/numpy)"
+      },
+      {
+        "name": "nir",
+        "schema_ref": "sc_neurocore.nir_bridge.from_nir/to_nir (NIR graph, 18/18 primitives)"
+      },
+      {
+        "name": "hil-telemetry",
+        "schema_ref": "proto/core.proto + proto/telemetry.proto (Tensor / BitstreamMetadata / HILFrame)"
+      }
+    ]
+  },
   "counts": {
     "github_workflows": 14,
     "model_documentation_pages": 175,
@@ -9,7 +959,7 @@
     "python_model_classes": 158,
     "python_model_source_modules": 152,
     "rust_pyo3_model_wrappers": 175,
-    "test_files": 882
+    "test_files": 885
   },
   "documentation": {
     "public_pages": [
@@ -2276,6 +3226,7 @@
       "tests/test_model_lugaro_cell.py",
       "tests/test_model_mainen_sejnowski.py",
       "tests/test_model_marder_stg.py",
+      "tests/test_model_martinotti_neuron.py",
       "tests/test_model_mat.py",
       "tests/test_model_mcculloch_pitts.py",
       "tests/test_model_mckean.py",
@@ -2310,6 +3261,7 @@
       "tests/test_model_spinnaker2.py",
       "tests/test_model_spinnaker_lif.py",
       "tests/test_model_srm0.py",
+      "tests/test_model_sst_neuron.py",
       "tests/test_model_stellate_cell.py",
       "tests/test_model_stochastic_if.py",
       "tests/test_model_superspike_neuron.py",
@@ -2323,6 +3275,7 @@
       "tests/test_model_tsodyks_markram.py",
       "tests/test_model_unipolar_brush_cell.py",
       "tests/test_model_upper_motor_neuron.py",
+      "tests/test_model_vip_neuron.py",
       "tests/test_model_wang_buzsaki.py",
       "tests/test_model_wendling.py",
       "tests/test_model_wilson_cowan.py",
@@ -2725,5 +3678,5 @@
       "tests/test_world_model_planner_contracts.py"
     ]
   },
-  "schema_version": "capability-manifest.v1"
+  "schema_version": "capability-manifest.v2"
 }

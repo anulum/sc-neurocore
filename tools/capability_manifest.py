@@ -32,7 +32,8 @@ except ModuleNotFoundError:  # pragma: no cover
     import tomli as tomllib  # type: ignore[no-redef]
 
 
-CAPABILITY_MANIFEST_SCHEMA_VERSION = "capability-manifest.v1"
+CAPABILITY_MANIFEST_SCHEMA_VERSION = "capability-manifest.v2"
+DEFAULT_ARCHITECTURE_MAP = Path("tools/architecture_map.toml")
 DEFAULT_JSON_OUTPUT = Path("docs/_generated/capability_manifest.json")
 DEFAULT_MARKDOWN_OUTPUT = Path("docs/_generated/capability_snapshot.md")
 DEFAULT_CONFIG = Path("tools/capability_manifest.toml")
@@ -154,6 +155,101 @@ def capability_paths(repo: Path, config: CapabilityManifestConfig) -> Capability
     )
 
 
+def _research_tier_packages(pyproject: dict[str, Any]) -> set[str]:
+    """Return wheel-excluded subpackage names (the research tier).
+
+    Derived from ``[tool.setuptools.packages.find] exclude`` so the tier label
+    tracks the packaging source of truth rather than a hand-maintained list.
+    """
+
+    exclude = (
+        pyproject.get("tool", {})
+        .get("setuptools", {})
+        .get("packages", {})
+        .get("find", {})
+        .get("exclude", [])
+    )
+    research: set[str] = set()
+    for entry in exclude:
+        parts = str(entry).split(".")
+        if len(parts) >= 2 and parts[0] == "sc_neurocore" and parts[1] != "*":
+            research.add(parts[1])
+    return research
+
+
+def build_architecture_map(
+    repo: Path, config: CapabilityManifestConfig | None = None
+) -> dict[str, Any]:
+    """Build the architecture-map block (SYSTEM_MAP §3-9) for the manifest.
+
+    Curated structure (pipeline / backends / interfaces / wire-formats /
+    cross-repo / boundaries) is read verbatim from ``tools/architecture_map.toml``;
+    the capability catalogue is the real subpackage scan joined to that file's
+    domain map (a subpackage missing from the map is a hard error, so the
+    catalogue can never silently drift from the tree). Status is the override
+    where one is declared, else tier-derived (core -> wired, research ->
+    library-only). The fleet-ratified PUBLIC vocabulary only; SOTA stays private.
+
+    Parameters
+    ----------
+    repo : Path
+        Repository root.
+    config : CapabilityManifestConfig, optional
+        Loaded configuration; defaults are loaded when omitted.
+
+    Returns
+    -------
+    dict
+        The ``architecture_map`` block.
+
+    Raises
+    ------
+    RuntimeError
+        If a scanned subpackage is unmapped, or a mapped package is absent.
+    """
+
+    repo = repo.resolve()
+    config = config or load_config(repo)
+    raw = tomllib.loads((repo / DEFAULT_ARCHITECTURE_MAP).read_text(encoding="utf-8"))
+    paths = capability_paths(repo, config)
+    research = _research_tier_packages(_load_pyproject(paths.pyproject))
+
+    scanned = sorted(
+        entry.name
+        for entry in paths.package_root.iterdir()
+        if entry.is_dir() and entry.name != "__pycache__" and not entry.name.endswith(".egg-info")
+    )
+    domains: dict[str, list[str]] = raw["capabilities"]["domains"]
+    status_override: dict[str, str] = raw["capabilities"]["status"]
+    package_domain = {pkg: domain for domain, pkgs in domains.items() for pkg in pkgs}
+
+    unmapped = [pkg for pkg in scanned if pkg not in package_domain]
+    if unmapped:
+        raise RuntimeError(f"architecture_map: subpackages missing a domain: {unmapped}")
+    absent = sorted(pkg for pkg in package_domain if pkg not in scanned)
+    if absent:
+        raise RuntimeError(f"architecture_map: mapped packages absent from the tree: {absent}")
+
+    capabilities = []
+    for pkg in scanned:
+        tier = "research" if pkg in research else "core"
+        status = status_override.get(pkg, "library-only")
+        capabilities.append(
+            {"name": pkg, "domain": package_domain[pkg], "tier": tier, "status": status}
+        )
+
+    return {
+        "version": raw["version"],
+        "pipeline_stages": raw["pipeline_stages"],
+        "capabilities": capabilities,
+        "backends": raw["backends"],
+        "interfaces": raw["interfaces"],
+        "wire_formats": raw["wire_formats"],
+        "cross_repo": raw["cross_repo"],
+        "boundaries": raw["boundaries"],
+    }
+
+
 def build_capability_manifest(
     repo: Path, config: CapabilityManifestConfig | None = None
 ) -> dict[str, Any]:
@@ -181,7 +277,7 @@ def build_capability_manifest(
         display_root=paths.model_docs_root,
     )
 
-    return {
+    manifest: dict[str, Any] = {
         "SPDX-License-Identifier": "AGPL-3.0-or-later",
         "schema_version": config.schema_version,
         "project_label": config.project_label,
@@ -237,6 +333,9 @@ def build_capability_manifest(
             "their dedicated evidence artefacts."
         ),
     }
+    if (repo / DEFAULT_ARCHITECTURE_MAP).exists():
+        manifest["architecture_map"] = build_architecture_map(repo, config)
+    return manifest
 
 
 def render_markdown_snapshot(manifest: dict[str, Any]) -> str:

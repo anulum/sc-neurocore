@@ -136,7 +136,7 @@ def test_cli_writes_valid_manifest_and_markdown() -> None:
         )
         assert result.returncode == 0
         manifest = json.loads(json_path.read_text(encoding="utf-8"))
-        assert manifest["schema_version"] == "capability-manifest.v1"
+        assert manifest["schema_version"] == "capability-manifest.v2"
         assert markdown_path.read_text(encoding="utf-8").startswith("<!-- SPDX-License-Identifier")
 
         validate = subprocess.run(
@@ -263,3 +263,87 @@ def _write_portable_fixture(repo: Path) -> None:
             ]
         ),
     )
+
+
+def test_architecture_map_is_complete_and_uses_locked_vocab() -> None:
+    tool = _load_tool()
+    repo = _repo_root()
+    manifest = tool.build_capability_manifest(repo)
+
+    assert manifest["schema_version"] == "capability-manifest.v2"
+    arch = manifest["architecture_map"]
+    assert arch["version"].startswith("architecture-map")
+
+    # Pipeline stages carry the I/O + processing-model contract.
+    assert arch["pipeline_stages"]
+    for stage in arch["pipeline_stages"]:
+        assert {"stage", "inputs", "outputs", "processing_model"} <= set(stage)
+
+    # Backend status uses the locked §4.5 vocabulary; dispatch_order is an int.
+    backend_status = {"runtime-active", "build-available", "declared"}
+    for backend in arch["backends"]:
+        assert {"name", "language", "role", "dispatch_order", "status"} <= set(backend)
+        assert backend["status"] in backend_status
+        assert isinstance(backend["dispatch_order"], int)
+
+    assert all({"kind", "entry"} <= set(i) for i in arch["interfaces"])
+    assert all({"name", "schema_ref"} <= set(w) for w in arch["wire_formats"])
+    assert all({"sibling", "adapter", "wire_format"} <= set(c) for c in arch["cross_repo"])
+    assert {"executed", "bounded", "feasibility_only", "closed"} == set(arch["boundaries"])
+
+    # Every scanned subpackage appears exactly once with locked tier + status vocab.
+    package_root = tool.capability_paths(repo, tool.load_config(repo)).package_root
+    scanned = {
+        entry.name
+        for entry in package_root.iterdir()
+        if entry.is_dir() and entry.name != "__pycache__" and not entry.name.endswith(".egg-info")
+    }
+    catalogued = [cap["name"] for cap in arch["capabilities"]]
+    assert sorted(catalogued) == sorted(scanned)
+    assert len(catalogued) == len(set(catalogued))  # no duplicates
+
+    status_vocab = {"wired", "library-only", "stub", "feasibility-only"}
+    for cap in arch["capabilities"]:
+        assert {"name", "domain", "tier", "status"} <= set(cap)
+        assert cap["tier"] in {"core", "research"}
+        assert cap["status"] in status_vocab
+    # "wired" is reserved for the on-path spine, so it must not swallow the catalogue.
+    wired = [c for c in arch["capabilities"] if c["status"] == "wired"]
+    assert 0 < len(wired) < len(catalogued)
+    assert any(c["status"] == "feasibility-only" for c in arch["capabilities"])
+
+
+def test_architecture_map_completeness_gate_rejects_unmapped_subpackage() -> None:
+    import pytest
+
+    tool = _load_tool()
+    with tempfile.TemporaryDirectory() as tmp:
+        repo = Path(tmp)
+        (repo / "src" / "pkg" / "alpha").mkdir(parents=True)
+        (repo / "src" / "pkg" / "beta").mkdir(parents=True)  # deliberately unmapped
+        (repo / "pyproject.toml").write_text(
+            '[project]\nname = "pkg"\nversion = "0"\n'
+            'requires-python = ">=3.10"\nreadme = "README.md"\nlicense = "X"\n',
+            encoding="utf-8",
+        )
+        (repo / "tools").mkdir()
+        (repo / "tools" / "capability_manifest.toml").write_text(
+            'project_label = "pkg"\nschema_version = "capability-manifest.v2"\n'
+            '[paths]\npackage_root = "src/pkg"\n',
+            encoding="utf-8",
+        )
+        (repo / "tools" / "architecture_map.toml").write_text(
+            'version = "architecture-map.v2"\n'
+            '[[pipeline_stages]]\nstage = "s"\ninputs = []\noutputs = []\nprocessing_model = "m"\n'
+            '[[backends]]\nname = "numpy"\nlanguage = "Python"\nrole = "r"\n'
+            'dispatch_order = 0\nstatus = "runtime-active"\n'
+            '[[interfaces]]\nkind = "cli"\nentry = "e"\n'
+            '[[wire_formats]]\nname = "w"\nschema_ref = "s"\n'
+            '[[cross_repo]]\nsibling = "s"\nadapter = "a"\nwire_format = "w"\n'
+            "[boundaries]\nexecuted = []\nbounded = []\nfeasibility_only = []\nclosed = []\n"
+            '[capabilities.domains]\n"D" = ["alpha"]\n'
+            '[capabilities.status]\nalpha = "wired"\n',
+            encoding="utf-8",
+        )
+        with pytest.raises(RuntimeError, match="missing a domain"):
+            tool.build_architecture_map(repo)
