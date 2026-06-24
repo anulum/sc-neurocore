@@ -39,10 +39,10 @@ func upperMotorReferenceStep(state UpperMotorNeuronState, current float64) Upper
 		if math.Abs(xM) >= 1e-6 {
 			alphaM = -0.32 * xM / (math.Exp(-xM/4.0) - 1.0)
 		}
-		xH := dv - 17.0
+		xBm := dv - 40.0
 		betaM := 0.28 * 5.0
-		if math.Abs(xH) >= 1e-6 {
-			betaM = 0.28 * xH / (math.Exp(xH/5.0) - 1.0)
+		if math.Abs(xBm) >= 1e-6 {
+			betaM = 0.28 * xBm / (math.Exp(xBm/5.0) - 1.0)
 		}
 		alphaH := 0.128 * math.Exp(-(dv-17.0)/18.0)
 		betaH := 4.0 / (1.0 + math.Exp(-(dv-40.0)/5.0))

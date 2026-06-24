@@ -113,8 +113,11 @@ class UpperMotorNeuron:
         alpha_m = (
             0.32 * 4.0 if abs(x_m) < 1e-6 else -0.32 * x_m / (self._rate_exp(-x_m / 4.0) - 1.0)
         )
-        x_h = dv - 17.0
-        beta_m = 0.28 * 5.0 if abs(x_h) < 1e-6 else 0.28 * x_h / (self._rate_exp(x_h / 5.0) - 1.0)
+        # Published Pospischil beta_m numerator is V - V_T - 40; an earlier revision
+        # shared the -17 offset of alpha_h, which drove the cell into depolarisation
+        # block (three spikes then a fixed point near threshold for any stimulus).
+        x_bm = dv - 40.0
+        beta_m = 0.28 * 5.0 if abs(x_bm) < 1e-6 else 0.28 * x_bm / (self._rate_exp(x_bm / 5.0) - 1.0)
         alpha_h = 0.128 * self._rate_exp(-(dv - 17.0) / 18.0)
         beta_h = 4.0 / (1.0 + self._rate_exp(-(dv - 40.0) / 5.0))
         x_n = dv - 15.0
