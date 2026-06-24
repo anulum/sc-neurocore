@@ -11,7 +11,8 @@
 Hub-facing federation surface (schema-A capability manifest + schema-B evidence
 bundles), distinct from the local FastAPI Studio web app under
 ``sc_neurocore.studio``. Importing this package requires the ``federation`` extra
-(``pip install sc-neurocore[federation]`` → ``scpn-studio-platform>=0.6,<0.7``); a
+(``pip install sc-neurocore[federation]`` → ``scpn-studio-platform>=0.9,<0.10``, the
+era that ships the verifiable-honesty :mod:`~scpn_studio_platform.seal` module); a
 clean ``ModuleNotFoundError`` is raised when the platform SDK is absent, which is
 why tests guard with ``pytest.importorskip("scpn_studio_platform")``.
 
@@ -25,6 +26,14 @@ Example
 
 from __future__ import annotations
 
+from .attestation import (
+    FpgaArtifact,
+    attest_fpga_deployment,
+    regrade_fpga,
+    regrade_sc_inference,
+    seal_sc_inference,
+    verify_envelope,
+)
 from .evidence import (
     FpgaDeploymentResult,
     ScInferenceResult,
@@ -52,13 +61,19 @@ __all__ = [
     "PROTOCOL_VERSION",
     "STUDIO_ID",
     "STUDIO_VERSION",
+    "FpgaArtifact",
     "FpgaDeploymentResult",
     "ScInferenceResult",
+    "attest_fpga_deployment",
     "build_manifest",
     "core_verbs",
     "declared_surface",
     "domain_verbs",
     "evidence_schemas",
     "fpga_deployment_evidence",
+    "regrade_fpga",
+    "regrade_sc_inference",
     "sc_inference_evidence",
+    "seal_sc_inference",
+    "verify_envelope",
 ]

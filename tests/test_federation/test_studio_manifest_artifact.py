@@ -68,7 +68,7 @@ def test_artifact_is_schema_a_well_formed() -> None:
     )
     assert payload["studio"] == "sc-neurocore"
     assert payload["contract_era"].startswith("v")
-    assert payload["platform_sdk"] == ">=0.6,<0.7"
+    assert payload["platform_sdk"] == ">=0.9,<0.10"
     assert _DIGEST_RE.match(payload["content_digest"]), payload["content_digest"]
     verbs = [verb["verb"] if isinstance(verb, dict) else verb for verb in payload["verbs"]]
     assert len(verbs) == len(set(verbs)) == 8, "the SC-NeuroCore vertical advertises eight verbs"

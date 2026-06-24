@@ -105,7 +105,7 @@ nir = ["nir>=1.0"]
 mpi = ["mpi4py>=3.0"]
 lava = ["lava-nc; python_version < '3.11'"]
 studio = ["fastapi>=0.100", "uvicorn[standard]>=0.20", "httpx>=0.27"]
-federation = ["scpn-studio-platform>=0.6,<0.7"]  # Hub federation vertical (sc_neurocore.federation)
+federation = ["scpn-studio-platform>=0.9,<0.10"]  # Hub federation vertical (sc_neurocore.federation)
 docs = ["mkdocs>=1.6", "mkdocs-material>=9.5", "mkdocstrings[python]>=0.25"]
 compression = ["PyWavelets>=1.4", "zstandard>=0.22"]
 optics = ["gdsfactory>=9.0"]

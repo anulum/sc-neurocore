@@ -48,7 +48,7 @@ def test_manifest_is_well_formed_and_digest_is_reproducible() -> None:
     manifest = build_manifest(studio_version="3.15.34")
 
     assert manifest.studio == STUDIO_ID == "sc-neurocore"
-    assert manifest.platform_sdk == ">=0.6,<0.7"
+    assert manifest.platform_sdk == ">=0.9,<0.10"
     assert len(manifest.verbs) == len(NEUROCORE_VERBS) == 8
     assert tuple(manifest.evidence_types) == evidence_schemas()
     # content digest is over the declared surface, not git state — reproducible.
