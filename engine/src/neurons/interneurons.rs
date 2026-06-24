@@ -363,35 +363,75 @@ impl VIPNeuron {
         }
     }
 
+    /// Return `[dV, dh, dn, da, db]` of the five-state VIP system at one consistent
+    /// state. All gates relax through sigmoidal steady states (no singularities).
+    fn derivatives(&self, v: f64, h: f64, n: f64, a: f64, b: f64, current: f64) -> [f64; 5] {
+        let m_inf = 1.0 / (1.0 + (-(v + 30.0) / 9.5).exp());
+        let h_inf = 1.0 / (1.0 + ((v + 53.0) / 7.0).exp());
+        let tau_h = 0.37 + 2.78 / (1.0 + ((v + 40.5) / 6.0).exp());
+        let n_inf = 1.0 / (1.0 + (-(v + 30.0) / 10.0).exp());
+        let tau_n = 0.37 + 1.85 / (1.0 + ((v + 27.0) / 15.0).exp());
+        let a_inf = 1.0 / (1.0 + (-(v + 50.0) / 20.0).exp());
+        let b_inf = 1.0 / (1.0 + ((v + 78.0) / 6.0).exp());
+        let dh = (h_inf - h) / tau_h;
+        let dn = (n_inf - n) / tau_n;
+        let da = (a_inf - a) / 5.0;
+        let db = (b_inf - b) / 50.0;
+        let i_na = self.g_na * m_inf * m_inf * m_inf * h * (v - self.e_na);
+        let i_k = self.g_k * n * n * n * n * (v - self.e_k);
+        let i_a = self.g_a * a * a * a * b * (v - self.e_k);
+        let i_l = self.g_l * (v - self.e_l);
+        let dv = (-i_na - i_k - i_a - i_l + current) / self.c_m;
+        [dv, dh, dn, da, db]
+    }
+
+    /// Return one classical RK4 increment of `[V, h, n, a, b]`, holding `current`
+    /// constant across the four stages.
+    fn rk4_substep(&self, s: [f64; 5], current: f64) -> [f64; 5] {
+        let dt = self.dt;
+        let k1 = self.derivatives(s[0], s[1], s[2], s[3], s[4], current);
+        let k2 = self.derivatives(
+            s[0] + 0.5 * dt * k1[0],
+            s[1] + 0.5 * dt * k1[1],
+            s[2] + 0.5 * dt * k1[2],
+            s[3] + 0.5 * dt * k1[3],
+            s[4] + 0.5 * dt * k1[4],
+            current,
+        );
+        let k3 = self.derivatives(
+            s[0] + 0.5 * dt * k2[0],
+            s[1] + 0.5 * dt * k2[1],
+            s[2] + 0.5 * dt * k2[2],
+            s[3] + 0.5 * dt * k2[3],
+            s[4] + 0.5 * dt * k2[4],
+            current,
+        );
+        let k4 = self.derivatives(
+            s[0] + dt * k3[0],
+            s[1] + dt * k3[1],
+            s[2] + dt * k3[2],
+            s[3] + dt * k3[3],
+            s[4] + dt * k3[4],
+            current,
+        );
+        let mut out = [0.0_f64; 5];
+        for i in 0..5 {
+            out[i] = s[i] + dt * (k1[i] + 2.0 * k2[i] + 2.0 * k3[i] + k4[i]) / 6.0;
+        }
+        out
+    }
+
     pub fn step(&mut self, current: f64) -> i32 {
         let v_prev = self.v;
+        let mut s = [self.v, self.h, self.n, self.a, self.b];
         for _ in 0..4 {
-            // Na+ (standard HH)
-            let m_inf = 1.0 / (1.0 + (-(self.v + 30.0) / 9.5).exp());
-            let h_inf = 1.0 / (1.0 + ((self.v + 53.0) / 7.0).exp());
-            let tau_h = 0.37 + 2.78 / (1.0 + ((self.v + 40.5) / 6.0).exp());
-            self.h += (h_inf - self.h) / tau_h * self.dt;
-
-            // Delayed-rectifier K+
-            let n_inf = 1.0 / (1.0 + (-(self.v + 30.0) / 10.0).exp());
-            let tau_n = 0.37 + 1.85 / (1.0 + ((self.v + 27.0) / 15.0).exp());
-            self.n += (n_inf - self.n) / tau_n * self.dt;
-
-            // A-type K+ (accommodation current)
-            let a_inf = 1.0 / (1.0 + (-(self.v + 50.0) / 20.0).exp());
-            let b_inf = 1.0 / (1.0 + ((self.v + 78.0) / 6.0).exp());
-            let tau_a = 5.0;
-            let tau_b = 50.0;
-            self.a += (a_inf - self.a) / tau_a * self.dt;
-            self.b += (b_inf - self.b) / tau_b * self.dt;
-
-            let i_na = self.g_na * m_inf.powi(3) * self.h * (self.v - self.e_na);
-            let i_k = self.g_k * self.n.powi(4) * (self.v - self.e_k);
-            let i_a = self.g_a * self.a.powi(3) * self.b * (self.v - self.e_k);
-            let i_l = self.g_l * (self.v - self.e_l);
-
-            self.v += (-i_na - i_k - i_a - i_l + current) / self.c_m * self.dt;
+            s = self.rk4_substep(s, current);
         }
+        self.v = s[0];
+        self.h = s[1];
+        self.n = s[2];
+        self.a = s[3];
+        self.b = s[4];
         if self.v >= self.v_threshold && v_prev < self.v_threshold {
             1
         } else {
