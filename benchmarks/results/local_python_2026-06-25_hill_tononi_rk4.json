@@ -1,0 +1,268 @@
+{
+  "spdx_license": "AGPL-3.0-or-later",
+  "benchmark": "HillTononiNeuron candidate-first RK4 thalamocortical sleep/wake step",
+  "timestamp_utc": "2026-06-24T23:33:32+00:00",
+  "command": "PYTHONPATH=src .venv/bin/python benchmarks/bench_model_hill_tononi.py",
+  "evidence_class": "local_regression_non_isolated",
+  "production_speed_claim": false,
+  "hardware_measurement_claimed": false,
+  "python": "3.12.3",
+  "platform": "Linux-6.17.0-35-generic-x86_64-with-glibc2.39",
+  "processor": "x86_64",
+  "steps": 200000,
+  "repeats": 5,
+  "current": 10.0,
+  "backend_summary": {
+    "python": {
+      "median_ns_per_step": 21162.381545,
+      "min_ns_per_step": 18439.394895,
+      "max_ns_per_step": 29156.419795,
+      "spikes": 694
+    },
+    "rust": {
+      "median_ns_per_step": 306.09832,
+      "min_ns_per_step": 298.140405,
+      "max_ns_per_step": 323.716845,
+      "spikes": 694
+    },
+    "go": {
+      "median_ns_per_step": 384.6,
+      "min_ns_per_step": 368.8,
+      "max_ns_per_step": 578.1,
+      "spikes": 694
+    },
+    "julia": {
+      "median_ns_per_step": 259.51008,
+      "min_ns_per_step": 249.165055,
+      "max_ns_per_step": 276.78451,
+      "spikes": 694
+    },
+    "mojo": {
+      "median_ns_per_step": 346.9095501350239,
+      "min_ns_per_step": 333.4072098368779,
+      "max_ns_per_step": 379.74357488565147,
+      "spikes": 694
+    }
+  },
+  "results": [
+    {
+      "backend": "python",
+      "median_ns_per_step": 21162.381545,
+      "min_ns_per_step": 18439.394895,
+      "max_ns_per_step": 29156.419795,
+      "spikes": 694,
+      "results": [
+        {
+          "backend": "python",
+          "steps": 200000,
+          "current": 10.0,
+          "elapsed_ns": 3687878979,
+          "ns_per_step": 18439.394895,
+          "spikes": 694,
+          "ending_state": [
+            -38.05947179571837,
+            0.017874804467545646
+          ]
+        },
+        {
+          "backend": "python",
+          "steps": 200000,
+          "current": 10.0,
+          "elapsed_ns": 5083563715,
+          "ns_per_step": 25417.818575,
+          "spikes": 694,
+          "ending_state": [
+            -38.05947179571837,
+            0.017874804467545646
+          ]
+        },
+        {
+          "backend": "python",
+          "steps": 200000,
+          "current": 10.0,
+          "elapsed_ns": 5831283959,
+          "ns_per_step": 29156.419795,
+          "spikes": 694,
+          "ending_state": [
+            -38.05947179571837,
+            0.017874804467545646
+          ]
+        },
+        {
+          "backend": "python",
+          "steps": 200000,
+          "current": 10.0,
+          "elapsed_ns": 4232476309,
+          "ns_per_step": 21162.381545,
+          "spikes": 694,
+          "ending_state": [
+            -38.05947179571837,
+            0.017874804467545646
+          ]
+        },
+        {
+          "backend": "python",
+          "steps": 200000,
+          "current": 10.0,
+          "elapsed_ns": 4160288635,
+          "ns_per_step": 20801.443175,
+          "spikes": 694,
+          "ending_state": [
+            -38.05947179571837,
+            0.017874804467545646
+          ]
+        }
+      ]
+    },
+    {
+      "backend": "rust",
+      "timestamp_unix": 1782344003,
+      "command": "cargo run --manifest-path engine/Cargo.toml --example bench_hill_tononi_rk4",
+      "rustc": "rustc 1.96.0 (ac68faa20 2026-05-25)",
+      "target_os": "linux",
+      "target_arch": "x86_64",
+      "measurement_context": {
+        "host_load": "workstation under concurrent load during capture",
+        "cpu_isolation": "runtime cpuset shield when cgroup_effective_cpuset matches benchmark CPUs; kernel-reserved isolated cores were not detected on this workstation",
+        "cpu_affinity": "0-11",
+        "cgroup_effective_cpuset": "unavailable",
+        "runtime_cpuset_shield_claimed": false,
+        "load_average_before": "9.00 9.90 13.77 2/4811 2332688",
+        "load_average_after": "9.00 9.90 13.77 1/4811 2332716",
+        "cpu_governor": "powersave",
+        "cpu_frequency_mhz": "min=2384.507,max=4606.534,sampled_cpu_count=12",
+        "concurrent_load_status": "non-exclusive workstation run; other heavy jobs may have been active",
+        "timing_interpretation": "use timing medians as local regression context only, not final throughput claims",
+        "production_rerun_requirement": "rerun on reserved isolated cores with recorded affinity, governor, frequency, versions, and host-load evidence before publishing performance claims"
+      },
+      "steps": 200000,
+      "repeats": 5,
+      "current": 10,
+      "median_ns_per_step": 306.09832,
+      "min_ns_per_step": 298.140405,
+      "max_ns_per_step": 323.716845,
+      "results_ns_per_step": [
+        307.53098,
+        306.09832,
+        298.140405,
+        305.983385,
+        323.716845
+      ],
+      "spike_counts": [
+        694,
+        694,
+        694,
+        694,
+        694
+      ],
+      "final_vs": [
+        -38.05947179571837,
+        -38.05947179571837,
+        -38.05947179571837,
+        -38.05947179571837,
+        -38.05947179571837
+      ],
+      "final_nas": [
+        0.017874804467545646,
+        0.017874804467545646,
+        0.017874804467545646,
+        0.017874804467545646,
+        0.017874804467545646
+      ],
+      "driver_command": "cargo run --release --manifest-path engine/Cargo.toml --example bench_hill_tononi_rk4"
+    },
+    {
+      "backend": "go",
+      "command": "go test src/sc_neurocore/accel/go/services/hill_tononi.go src/sc_neurocore/accel/go/services/hill_tononi_test.go -run ^$ -bench BenchmarkHillTononiRK4$ -benchtime 200000x -count 5",
+      "steps": 200000,
+      "repeats": 5,
+      "current": 10.0,
+      "median_ns_per_step": 384.6,
+      "min_ns_per_step": 368.8,
+      "max_ns_per_step": 578.1,
+      "results_ns_per_step": [
+        578.1,
+        407.2,
+        384.6,
+        375.7,
+        368.8
+      ],
+      "spikes": 694,
+      "spike_counts": [
+        694,
+        694,
+        694,
+        694,
+        694
+      ]
+    },
+    {
+      "backend": "julia",
+      "command": "julia --project=. -e <hill_tononi rk4 benchmark>",
+      "steps": 200000,
+      "repeats": 5,
+      "current": 10.0,
+      "median_ns_per_step": 259.51008,
+      "min_ns_per_step": 249.165055,
+      "max_ns_per_step": 276.78451,
+      "results_ns_per_step": [
+        249.165055,
+        259.51008,
+        276.78451,
+        255.947325,
+        272.836125
+      ],
+      "spikes": 694,
+      "final_vs": [
+        -38.05947179571837,
+        -38.05947179571837,
+        -38.05947179571837,
+        -38.05947179571837,
+        -38.05947179571837
+      ],
+      "final_nas": [
+        0.017874804467545646,
+        0.017874804467545646,
+        0.017874804467545646,
+        0.017874804467545646,
+        0.017874804467545646
+      ]
+    },
+    {
+      "backend": "mojo",
+      "command": "mojo run --disable-warnings -I src/sc_neurocore/accel/mojo/kernels <temp hill_tononi benchmark>",
+      "steps": 200000,
+      "repeats": 5,
+      "current": 10.0,
+      "median_ns_per_step": 346.9095501350239,
+      "min_ns_per_step": 333.4072098368779,
+      "max_ns_per_step": 379.74357488565147,
+      "results_ns_per_step": [
+        379.74357488565147,
+        336.74142498057336,
+        333.4072098368779,
+        379.1143751004711,
+        346.9095501350239
+      ],
+      "spikes": 694,
+      "spike_counts": [
+        694,
+        694,
+        694,
+        694,
+        694
+      ]
+    }
+  ],
+  "source_hashes": {
+    "benchmarks/bench_model_hill_tononi.py": "48f6b153ba1703180d27e2a71da95aaeb02d43887c3d93bce4ccc743108a4cb6",
+    "engine/Cargo.toml": "356d2914c6b193575400ae422fdf14aa03687a53949e63b836f36a04ae351d6a",
+    "engine/examples/bench_hill_tononi_rk4.rs": "583b7ce08d0af976d10add889ada78cc2b5359bce81e5f564cbe7cacc149e08b",
+    "engine/src/neurons/biophysical.rs": "adfccc3bb0f97a676ca9f302953360655792ff4b6cfada1e974a4caece448073",
+    "src/sc_neurocore/neurons/models/hill_tononi.py": "8459ac7593880fb7eeb575260718f5f2426b983274a7ebf4222b1ef0f4c6de83",
+    "src/sc_neurocore/accel/go/services/hill_tononi.go": "110c9a0ad251b8b0eafe7e695de3d5636d1a3bc4c4f02ded1363c41e505c6c5b",
+    "src/sc_neurocore/accel/go/services/hill_tononi_test.go": "375f0e5f50da5c7d037386928eac3aa55e61225273895da862a7c5c94c1bdb1b",
+    "src/sc_neurocore/accel/julia/neurons/hill_tononi.jl": "420b35db5b1f0c91248ee95db7ebc532cd16ae75eb2c3580d8fa5d7dbb9847e3",
+    "src/sc_neurocore/accel/mojo/kernels/hill_tononi.mojo": "8de24a4fdf96bca08d515f741148744ddd5c6d285dd217ad8531e938e9038904"
+  }
+}
