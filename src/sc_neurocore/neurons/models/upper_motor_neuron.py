@@ -117,7 +117,9 @@ class UpperMotorNeuron:
         # shared the -17 offset of alpha_h, which drove the cell into depolarisation
         # block (three spikes then a fixed point near threshold for any stimulus).
         x_bm = dv - 40.0
-        beta_m = 0.28 * 5.0 if abs(x_bm) < 1e-6 else 0.28 * x_bm / (self._rate_exp(x_bm / 5.0) - 1.0)
+        beta_m = (
+            0.28 * 5.0 if abs(x_bm) < 1e-6 else 0.28 * x_bm / (self._rate_exp(x_bm / 5.0) - 1.0)
+        )
         alpha_h = 0.128 * self._rate_exp(-(dv - 17.0) / 18.0)
         beta_h = 4.0 / (1.0 + self._rate_exp(-(dv - 40.0) / 5.0))
         x_n = dv - 15.0
