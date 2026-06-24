@@ -99,6 +99,9 @@ name = "bench_sst_neuron_rk4"
 name = "bench_martinotti_neuron_rk4"
 
 [[example]]
+name = "bench_upper_motor_neuron_exp_euler"
+
+[[example]]
 name = "bench_lapicque_exact_flow"
 
 [[example]]

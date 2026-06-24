@@ -1,0 +1,268 @@
+{
+  "spdx_license": "AGPL-3.0-or-later",
+  "benchmark": "UpperMotorNeuron exponential-Euler corticospinal adaptation step",
+  "timestamp_utc": "2026-06-24T04:08:14+00:00",
+  "command": "PYTHONPATH=src .venv/bin/python benchmarks/bench_model_upper_motor_neuron.py",
+  "evidence_class": "local_regression_non_isolated",
+  "production_speed_claim": false,
+  "hardware_measurement_claimed": false,
+  "python": "3.12.3",
+  "platform": "Linux-6.17.0-35-generic-x86_64-with-glibc2.39",
+  "processor": "x86_64",
+  "steps": 200000,
+  "repeats": 5,
+  "current": 5.0,
+  "backend_summary": {
+    "python": {
+      "median_ns_per_step": 39055.14693,
+      "min_ns_per_step": 35308.164055,
+      "max_ns_per_step": 42014.463305,
+      "spikes": 1881
+    },
+    "rust": {
+      "median_ns_per_step": 551.64649,
+      "min_ns_per_step": 517.047805,
+      "max_ns_per_step": 575.70988,
+      "spikes": 1881
+    },
+    "go": {
+      "median_ns_per_step": 1788.0,
+      "min_ns_per_step": 1559.0,
+      "max_ns_per_step": 2208.0,
+      "spikes": 1881
+    },
+    "julia": {
+      "median_ns_per_step": 633.617725,
+      "min_ns_per_step": 586.549045,
+      "max_ns_per_step": 660.704345,
+      "spikes": 1881
+    },
+    "mojo": {
+      "median_ns_per_step": 482.0871102856472,
+      "min_ns_per_step": 474.4600399862975,
+      "max_ns_per_step": 488.42863470781595,
+      "spikes": 1881
+    }
+  },
+  "results": [
+    {
+      "backend": "python",
+      "median_ns_per_step": 39055.14693,
+      "min_ns_per_step": 35308.164055,
+      "max_ns_per_step": 42014.463305,
+      "spikes": 1881,
+      "results": [
+        {
+          "backend": "python",
+          "steps": 200000,
+          "current": 5.0,
+          "elapsed_ns": 8402892661,
+          "ns_per_step": 42014.463305,
+          "spikes": 1881,
+          "ending_state": [
+            -61.128328860900844,
+            0.11984341599012974
+          ]
+        },
+        {
+          "backend": "python",
+          "steps": 200000,
+          "current": 5.0,
+          "elapsed_ns": 7811029386,
+          "ns_per_step": 39055.14693,
+          "spikes": 1881,
+          "ending_state": [
+            -61.128328860900844,
+            0.11984341599012974
+          ]
+        },
+        {
+          "backend": "python",
+          "steps": 200000,
+          "current": 5.0,
+          "elapsed_ns": 7252898606,
+          "ns_per_step": 36264.49303,
+          "spikes": 1881,
+          "ending_state": [
+            -61.128328860900844,
+            0.11984341599012974
+          ]
+        },
+        {
+          "backend": "python",
+          "steps": 200000,
+          "current": 5.0,
+          "elapsed_ns": 7847852355,
+          "ns_per_step": 39239.261775,
+          "spikes": 1881,
+          "ending_state": [
+            -61.128328860900844,
+            0.11984341599012974
+          ]
+        },
+        {
+          "backend": "python",
+          "steps": 200000,
+          "current": 5.0,
+          "elapsed_ns": 7061632811,
+          "ns_per_step": 35308.164055,
+          "spikes": 1881,
+          "ending_state": [
+            -61.128328860900844,
+            0.11984341599012974
+          ]
+        }
+      ]
+    },
+    {
+      "backend": "rust",
+      "timestamp_unix": 1782274084,
+      "command": "cargo run --manifest-path engine/Cargo.toml --example bench_upper_motor_neuron_exp_euler",
+      "rustc": "rustc 1.96.0 (ac68faa20 2026-05-25)",
+      "target_os": "linux",
+      "target_arch": "x86_64",
+      "measurement_context": {
+        "host_load": "workstation under concurrent load during capture",
+        "cpu_isolation": "runtime cpuset shield when cgroup_effective_cpuset matches benchmark CPUs; kernel-reserved isolated cores were not detected on this workstation",
+        "cpu_affinity": "0-11",
+        "cgroup_effective_cpuset": "unavailable",
+        "runtime_cpuset_shield_claimed": false,
+        "load_average_before": "13.81 11.59 11.11 3/6839 2762674",
+        "load_average_after": "13.81 11.59 11.11 3/6839 2762752",
+        "cpu_governor": "powersave",
+        "cpu_frequency_mhz": "min=4200.000,max=4211.444,sampled_cpu_count=12",
+        "concurrent_load_status": "non-exclusive workstation run; other heavy jobs may have been active",
+        "timing_interpretation": "use timing medians as local regression context only, not final throughput claims",
+        "production_rerun_requirement": "rerun on reserved isolated cores with recorded affinity, governor, frequency, versions, and host-load evidence before publishing performance claims"
+      },
+      "steps": 200000,
+      "repeats": 5,
+      "current": 5,
+      "median_ns_per_step": 551.64649,
+      "min_ns_per_step": 517.047805,
+      "max_ns_per_step": 575.70988,
+      "results_ns_per_step": [
+        539.10808,
+        551.64649,
+        575.70988,
+        517.047805,
+        556.39681
+      ],
+      "spike_counts": [
+        1881,
+        1881,
+        1881,
+        1881,
+        1881
+      ],
+      "final_vs": [
+        -61.1283288609028,
+        -61.1283288609028,
+        -61.1283288609028,
+        -61.1283288609028,
+        -61.1283288609028
+      ],
+      "final_ss": [
+        0.11984341599013719,
+        0.11984341599013719,
+        0.11984341599013719,
+        0.11984341599013719,
+        0.11984341599013719
+      ],
+      "driver_command": "cargo run --release --manifest-path engine/Cargo.toml --example bench_upper_motor_neuron_exp_euler"
+    },
+    {
+      "backend": "go",
+      "command": "go test src/sc_neurocore/accel/go/services/upper_motor_neuron.go src/sc_neurocore/accel/go/services/upper_motor_neuron_test.go -run ^$ -bench BenchmarkUpperMotorExpEuler$ -benchtime 200000x -count 5",
+      "steps": 200000,
+      "repeats": 5,
+      "current": 5.0,
+      "median_ns_per_step": 1788.0,
+      "min_ns_per_step": 1559.0,
+      "max_ns_per_step": 2208.0,
+      "results_ns_per_step": [
+        2208.0,
+        1840.0,
+        1559.0,
+        1604.0,
+        1788.0
+      ],
+      "spikes": 1881,
+      "spike_counts": [
+        1881,
+        1881,
+        1881,
+        1881,
+        1881
+      ]
+    },
+    {
+      "backend": "julia",
+      "command": "julia --project=. -e <upper_motor_neuron exp-Euler benchmark>",
+      "steps": 200000,
+      "repeats": 5,
+      "current": 5.0,
+      "median_ns_per_step": 633.617725,
+      "min_ns_per_step": 586.549045,
+      "max_ns_per_step": 660.704345,
+      "results_ns_per_step": [
+        633.617725,
+        660.704345,
+        586.549045,
+        647.487275,
+        615.404005
+      ],
+      "spikes": 1881,
+      "final_vs": [
+        -61.12832886097032,
+        -61.12832886097032,
+        -61.12832886097032,
+        -61.12832886097032,
+        -61.12832886097032
+      ],
+      "final_ss": [
+        0.1198434159904114,
+        0.1198434159904114,
+        0.1198434159904114,
+        0.1198434159904114,
+        0.1198434159904114
+      ]
+    },
+    {
+      "backend": "mojo",
+      "command": "mojo run --disable-warnings -I src/sc_neurocore/accel/mojo/kernels <temp upper_motor_neuron benchmark>",
+      "steps": 200000,
+      "repeats": 5,
+      "current": 5.0,
+      "median_ns_per_step": 482.0871102856472,
+      "min_ns_per_step": 474.4600399862975,
+      "max_ns_per_step": 488.42863470781595,
+      "results_ns_per_step": [
+        482.0871102856472,
+        474.4600399862975,
+        476.39575495850295,
+        487.8868500236422,
+        488.42863470781595
+      ],
+      "spikes": 1881,
+      "spike_counts": [
+        1881,
+        1881,
+        1881,
+        1881,
+        1881
+      ]
+    }
+  ],
+  "source_hashes": {
+    "benchmarks/bench_model_upper_motor_neuron.py": "b800c85a99b51a396c8667c0628260a8c534b00e55fa1d9dbdb2f8d8d13ea579",
+    "engine/Cargo.toml": "68cde8723028edceba308383934dae0f2ada2befe629cf74f4b0611e1800961a",
+    "engine/examples/bench_upper_motor_neuron_exp_euler.rs": "43fd42567cf57dc7cb3a1c9cadb6b542b0353c8f14bcbd538dc5f6c3b1c7e401",
+    "engine/src/neurons/motor.rs": "403eb33b5745adc0a7e7a6ff6e7460cf581c099fdfdec4e496743452edc5c828",
+    "src/sc_neurocore/neurons/models/upper_motor_neuron.py": "f31bfb8de6bfa893dbe52aad34170830b498db42c6cdb3e89fcfcc9bb5e3f84a",
+    "src/sc_neurocore/accel/go/services/upper_motor_neuron.go": "6e0d51749b436755c46b14e7acf46dc0bb246bd1a19ee6a52e8c5f6dbbcba406",
+    "src/sc_neurocore/accel/go/services/upper_motor_neuron_test.go": "005ecfa7d8d54e329750a4a8deb0e6dd5d3b4400829f750646d83b5b8fc80b8e",
+    "src/sc_neurocore/accel/julia/neurons/upper_motor_neuron.jl": "102179b7f621acf0b8a37a3a9d8ffff5fefc4b2e65f80165789cbf6e1e73b793",
+    "src/sc_neurocore/accel/mojo/kernels/upper_motor_neuron.mojo": "f9cd5a15f0fb73c7336454806b693e370b1386d6236f52787dc54a21d0a98db8"
+  }
+}

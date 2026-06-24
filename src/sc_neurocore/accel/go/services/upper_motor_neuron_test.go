@@ -13,6 +13,20 @@ import (
 	"testing"
 )
 
+// BenchmarkUpperMotorExpEuler exercises the exponential-Euler step at the
+// 5 nA anchor current so the reported spike metric cross-checks the Python,
+// Rust, Julia and Mojo backends bit-for-bit.
+func BenchmarkUpperMotorExpEuler(b *testing.B) {
+	s := NewUpperMotorNeuron()
+	spikes := 0
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		spikes += s.Step(5.0)
+	}
+	b.StopTimer()
+	b.ReportMetric(float64(spikes), "spikes")
+}
+
 func upperMotorNeuronClose(t *testing.T, name string, got float64, want float64) {
 	t.Helper()
 	if math.Abs(got-want) > 1e-12 {

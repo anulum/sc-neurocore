@@ -6,6 +6,15 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 ## [Unreleased]
 
 ### Physics and mathematics hardening
+- Completed the `UpperMotorNeuron` (Pospischil 2008 corticospinal L5 pyramidal)
+  polyglot backend coverage by adding the Mojo exponential-Euler kernel, raising
+  it to a Python / Rust / Julia / Go / Mojo set. The membrane keeps its analytic
+  frozen-conductance exponential-Euler step and the gates keep their closed-form
+  steady/tau update — both unconditionally stable for the stiff sodium gate, so
+  RK4 here would be a regression rather than a hardening. Added a Go benchmark
+  hook, a Rust exponential-Euler benchmark example, and a five-backend local
+  non-isolated benchmark that fails closed unless every backend reports an
+  identical spike count.
 - Promoted `EnergyLIFNeuron` from raw Euler membrane and metabolic-reserve
   updates to the exact constant-current flow for the coupled `(v, epsilon)`
   state across Python, Go, Julia, Mojo, and Rust safety surfaces. Added
