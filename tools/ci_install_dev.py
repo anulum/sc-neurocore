@@ -14,9 +14,19 @@ modules, ``bioware`` adds scikit-learn, ``studio`` adds fastapi + uvicorn
 for the web UI surface. Without these, ``pytest.importorskip`` skips the
 tests and coverage drops below the 99 % gate even though the code is
 reachable.
+
+``federation`` (scpn-studio-platform) is added only on Python >= 3.12, the
+platform SDK's floor: it makes the studio-federation conformance tests under
+``tests/test_federation`` run (instead of ``pytest.importorskip``-skipping), so a
+schema-A manifest or evidence-bundle drift reds the (required) 3.12 test job.
 """
+
+import sys
 
 from ci_install_common import install_editable
 
+_EXTRAS = "dev,units,nir,compression,training,research,bioware,studio"
+if sys.version_info >= (3, 12):
+    _EXTRAS += ",federation"
 
-raise SystemExit(install_editable("dev,units,nir,compression,training,research,bioware,studio"))
+raise SystemExit(install_editable(_EXTRAS))
