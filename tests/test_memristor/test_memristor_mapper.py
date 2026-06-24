@@ -558,3 +558,11 @@ class TestCrossbarEstimator:
             est = CrossbarEstimator.estimate(xbar)
             assert est.read_latency_ns > 0
             assert est.write_latency_ns > 0
+
+
+def test_signal_to_sneak_ratio_is_infinite_without_sneak_current() -> None:
+    # A zero off-conductance gives zero worst-case sneak current, so the
+    # signal-to-sneak ratio is infinite rather than dividing by zero.
+    assert SneakPathModel.signal_to_sneak_ratio(g_on=1e-3, g_off=0.0, rows=8, cols=8) == float(
+        "inf"
+    )
