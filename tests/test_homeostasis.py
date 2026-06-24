@@ -170,3 +170,12 @@ class TestSleepConsolidation:
         sleep = SleepConsolidation()
         with pytest.raises(ValueError, match="epoch"):
             sleep.should_sleep(epoch, total_epochs)
+
+
+def test_regulate_rejects_non_finite_thresholds() -> None:
+    reg = NetworkRegulator(target_rate=0.1)
+    rates = np.full(4, 0.1)
+    thresholds = np.array([1.0, 1.0, np.nan, 1.0])
+    # A correctly-shaped 1-D threshold vector with a non-finite entry is rejected.
+    with pytest.raises(ValueError, match="thresholds must be finite"):
+        reg.regulate(rates, thresholds, 0.01)
