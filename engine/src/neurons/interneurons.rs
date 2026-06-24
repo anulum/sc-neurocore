@@ -770,59 +770,81 @@ impl MartinottiNeuron {
         }
     }
 
+    /// Return `[dV, dm, dh, dn, dp, ds]` of the six-state Martinotti system at one
+    /// consistent state. The Na/K activation rates use the L'Hôpital limit at the
+    /// removable Traub-Miles singularity; β_m carries the published `V - V_T - 40`
+    /// offset (an earlier `-17` offset drove the cell into depolarisation block).
+    fn derivatives(&self, v: f64, m: f64, h: f64, n: f64, p: f64, s: f64, current: f64) -> [f64; 6] {
+        let dvt = v - (-56.2);
+        let asing = |num: f64, slope: f64, limit: f64| {
+            if num.abs() < 1e-6 {
+                limit
+            } else {
+                num / ((num / slope).exp() - 1.0)
+            }
+        };
+        let alpha_m = -0.32 * asing(dvt - 13.0, -4.0, -4.0);
+        let beta_m = 0.28 * asing(dvt - 40.0, 5.0, 5.0);
+        let alpha_h = 0.128 * (-(dvt - 17.0) / 18.0).exp();
+        let beta_h = 4.0 / (1.0 + (-(dvt - 40.0) / 5.0).exp());
+        let alpha_n = -0.032 * asing(dvt - 15.0, -5.0, -5.0);
+        let beta_n = 0.5 * (-(dvt - 10.0) / 40.0).exp();
+        let dm = alpha_m * (1.0 - m) - beta_m * m;
+        let dh = alpha_h * (1.0 - h) - beta_h * h;
+        let dn = alpha_n * (1.0 - n) - beta_n * n;
+        let p_inf = 1.0 / (1.0 + (-(v + 35.0) / 10.0).exp());
+        let tau_p = 400.0 / (3.3 * ((v + 35.0) / 20.0).exp() + (-(v + 35.0) / 20.0).exp());
+        let dp = (p_inf - p) / tau_p;
+        let m_t_inf = 1.0 / (1.0 + (-(v + 57.0) / 6.2).exp());
+        let s_inf = 1.0 / (1.0 + ((v + 81.0) / 4.0).exp());
+        let tau_s = 30.0 + 200.0 / (1.0 + ((v + 70.0) / 5.0).exp());
+        let ds = (s_inf - s) / tau_s;
+        let i_na = self.g_na * m * m * m * h * (v - self.e_na);
+        let i_k = self.g_k * n * n * n * n * (v - self.e_k);
+        let i_m = self.g_m * p * (v - self.e_k);
+        let i_t = self.g_t * m_t_inf * m_t_inf * s * (v - self.e_ca);
+        let i_l = self.g_l * (v - self.e_l);
+        let dvdt = (-i_na - i_k - i_m - i_t - i_l + current) / self.c_m;
+        [dvdt, dm, dh, dn, dp, ds]
+    }
+
+    /// Return one classical RK4 increment of `[V, m, h, n, p, s]`, holding
+    /// `current` constant across the four stages.
+    fn rk4_substep(&self, st: [f64; 6], current: f64) -> [f64; 6] {
+        let dt = self.dt;
+        let k1 = self.derivatives(st[0], st[1], st[2], st[3], st[4], st[5], current);
+        let mut a = [0.0_f64; 6];
+        for i in 0..6 {
+            a[i] = st[i] + 0.5 * dt * k1[i];
+        }
+        let k2 = self.derivatives(a[0], a[1], a[2], a[3], a[4], a[5], current);
+        for i in 0..6 {
+            a[i] = st[i] + 0.5 * dt * k2[i];
+        }
+        let k3 = self.derivatives(a[0], a[1], a[2], a[3], a[4], a[5], current);
+        for i in 0..6 {
+            a[i] = st[i] + dt * k3[i];
+        }
+        let k4 = self.derivatives(a[0], a[1], a[2], a[3], a[4], a[5], current);
+        let mut out = [0.0_f64; 6];
+        for i in 0..6 {
+            out[i] = st[i] + dt * (k1[i] + 2.0 * k2[i] + 2.0 * k3[i] + k4[i]) / 6.0;
+        }
+        out
+    }
+
     pub fn step(&mut self, current: f64) -> i32 {
         let v_prev = self.v;
-        let vt = -56.2;
+        let mut st = [self.v, self.m, self.h, self.n, self.p, self.s];
         for _ in 0..4 {
-            let dv = self.v - vt;
-            // Na+ gating
-            let x_m = dv - 13.0;
-            let alpha_m = if x_m.abs() < 1e-6 {
-                0.32 * 4.0
-            } else {
-                -0.32 * x_m / ((-x_m / 4.0).exp() - 1.0)
-            };
-            let x_h = dv - 17.0;
-            let beta_m = if x_h.abs() < 1e-6 {
-                0.28 * 5.0
-            } else {
-                0.28 * x_h / ((x_h / 5.0).exp() - 1.0)
-            };
-            let alpha_h = 0.128 * (-(dv - 17.0) / 18.0).exp();
-            let beta_h = 4.0 / (1.0 + (-(dv - 40.0) / 5.0).exp());
-            // K+ gating
-            let x_n = dv - 15.0;
-            let alpha_n = if x_n.abs() < 1e-6 {
-                0.032 * 5.0
-            } else {
-                -0.032 * x_n / ((-x_n / 5.0).exp() - 1.0)
-            };
-            let beta_n = 0.5 * (-(dv - 10.0) / 40.0).exp();
-
-            self.m += (alpha_m * (1.0 - self.m) - beta_m * self.m) * self.dt;
-            self.h += (alpha_h * (1.0 - self.h) - beta_h * self.h) * self.dt;
-            self.n += (alpha_n * (1.0 - self.n) - beta_n * self.n) * self.dt;
-
-            // M-current (Kv7, very strong for Martinotti)
-            let p_inf = 1.0 / (1.0 + (-(self.v + 35.0) / 10.0).exp());
-            let tau_p =
-                400.0 / (3.3 * ((self.v + 35.0) / 20.0).exp() + (-(self.v + 35.0) / 20.0).exp());
-            self.p += (p_inf - self.p) / tau_p * self.dt;
-
-            // T-type Ca2+
-            let m_t_inf = 1.0 / (1.0 + (-(self.v + 57.0) / 6.2).exp());
-            let s_inf = 1.0 / (1.0 + ((self.v + 81.0) / 4.0).exp());
-            let tau_s = 30.0 + 200.0 / (1.0 + ((self.v + 70.0) / 5.0).exp());
-            self.s += (s_inf - self.s) / tau_s * self.dt;
-
-            let i_na = self.g_na * self.m.powi(3) * self.h * (self.v - self.e_na);
-            let i_k = self.g_k * self.n.powi(4) * (self.v - self.e_k);
-            let i_m = self.g_m * self.p * (self.v - self.e_k);
-            let i_t = self.g_t * m_t_inf.powi(2) * self.s * (self.v - self.e_ca);
-            let i_l = self.g_l * (self.v - self.e_l);
-
-            self.v += (-i_na - i_k - i_m - i_t - i_l + current) / self.c_m * self.dt;
+            st = self.rk4_substep(st, current);
         }
+        self.v = st[0];
+        self.m = st[1];
+        self.h = st[2];
+        self.n = st[3];
+        self.p = st[4];
+        self.s = st[5];
         if self.v >= self.v_threshold && v_prev < self.v_threshold {
             1
         } else {
