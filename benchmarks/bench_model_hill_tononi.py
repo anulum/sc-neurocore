@@ -5,7 +5,7 @@
 # © Code 2020–2026 Miroslav Šotek. All rights reserved.
 # ORCID: 0009-0009-3560-0851
 # Contact: www.anulum.li | protoscience@anulum.li
-# SC-NeuroCore — upper motor neuron exponential-Euler multi-backend local regression benchmark
+# SC-NeuroCore — Hill-Tononi thalamocortical neuron RK4 multi-backend local regression benchmark
 
 from __future__ import annotations
 
@@ -22,38 +22,37 @@ import textwrap
 import time
 from typing import Protocol, cast
 
-from sc_neurocore.neurons.models.upper_motor_neuron import UpperMotorNeuron
+from sc_neurocore.neurons.models.hill_tononi import HillTononiNeuron
 
 STEPS = 200_000
 REPEATS = 5
-CURRENT = 5.0
-OUTPUT = Path("benchmarks/results/local_python_2026-06-24_upper_motor_neuron_exp_euler.json")
+CURRENT = 10.0
+OUTPUT = Path("benchmarks/results/local_python_2026-06-25_hill_tononi_rk4.json")
 REPO_ROOT = Path(__file__).resolve().parents[1]
-GO_BENCH_RE = re.compile(r"^BenchmarkUpperMotorExpEuler-\d+\s+\d+\s+([0-9.]+)\s+ns/op")
+GO_BENCH_RE = re.compile(r"^BenchmarkHillTononiRK4-\d+\s+\d+\s+([0-9.]+)\s+ns/op")
 GO_SPIKES_RE = re.compile(r"\s([0-9.]+)\s+spikes(?:\s|$)")
 SOURCE_HASH_PATHS = {
-    "benchmarks/bench_model_upper_motor_neuron.py": REPO_ROOT
-    / "benchmarks/bench_model_upper_motor_neuron.py",
+    "benchmarks/bench_model_hill_tononi.py": REPO_ROOT / "benchmarks/bench_model_hill_tononi.py",
     "engine/Cargo.toml": REPO_ROOT / "engine/Cargo.toml",
-    "engine/examples/bench_upper_motor_neuron_exp_euler.rs": REPO_ROOT
-    / "engine/examples/bench_upper_motor_neuron_exp_euler.rs",
-    "engine/src/neurons/motor.rs": REPO_ROOT / "engine/src/neurons/motor.rs",
-    "src/sc_neurocore/neurons/models/upper_motor_neuron.py": REPO_ROOT
-    / "src/sc_neurocore/neurons/models/upper_motor_neuron.py",
-    "src/sc_neurocore/accel/go/services/upper_motor_neuron.go": REPO_ROOT
-    / "src/sc_neurocore/accel/go/services/upper_motor_neuron.go",
-    "src/sc_neurocore/accel/go/services/upper_motor_neuron_test.go": REPO_ROOT
-    / "src/sc_neurocore/accel/go/services/upper_motor_neuron_test.go",
-    "src/sc_neurocore/accel/julia/neurons/upper_motor_neuron.jl": REPO_ROOT
-    / "src/sc_neurocore/accel/julia/neurons/upper_motor_neuron.jl",
-    "src/sc_neurocore/accel/mojo/kernels/upper_motor_neuron.mojo": REPO_ROOT
-    / "src/sc_neurocore/accel/mojo/kernels/upper_motor_neuron.mojo",
+    "engine/examples/bench_hill_tononi_rk4.rs": REPO_ROOT
+    / "engine/examples/bench_hill_tononi_rk4.rs",
+    "engine/src/neurons/biophysical.rs": REPO_ROOT / "engine/src/neurons/biophysical.rs",
+    "src/sc_neurocore/neurons/models/hill_tononi.py": REPO_ROOT
+    / "src/sc_neurocore/neurons/models/hill_tononi.py",
+    "src/sc_neurocore/accel/go/services/hill_tononi.go": REPO_ROOT
+    / "src/sc_neurocore/accel/go/services/hill_tononi.go",
+    "src/sc_neurocore/accel/go/services/hill_tononi_test.go": REPO_ROOT
+    / "src/sc_neurocore/accel/go/services/hill_tononi_test.go",
+    "src/sc_neurocore/accel/julia/neurons/hill_tononi.jl": REPO_ROOT
+    / "src/sc_neurocore/accel/julia/neurons/hill_tononi.jl",
+    "src/sc_neurocore/accel/mojo/kernels/hill_tononi.mojo": REPO_ROOT
+    / "src/sc_neurocore/accel/mojo/kernels/hill_tononi.mojo",
 }
 
 
 class _StepNeuron(Protocol):
     v: float
-    s: float
+    na_i: float
 
     def step(self, current: float) -> int: ...
 
@@ -71,7 +70,7 @@ def _source_hashes() -> dict[str, str]:
 
 
 def _run_once(backend: str) -> dict[str, object]:
-    neuron: _StepNeuron = UpperMotorNeuron()
+    neuron: _StepNeuron = HillTononiNeuron()
     spikes = 0
     start_ns = time.perf_counter_ns()
     for _ in range(STEPS):
@@ -84,7 +83,7 @@ def _run_once(backend: str) -> dict[str, object]:
         "elapsed_ns": elapsed_ns,
         "ns_per_step": elapsed_ns / STEPS,
         "spikes": spikes,
-        "ending_state": [float(neuron.v), float(neuron.s)],
+        "ending_state": [float(neuron.v), float(neuron.na_i)],
     }
 
 
@@ -113,7 +112,7 @@ def _run_rust_backend() -> dict[str, object]:
         "--manifest-path",
         "engine/Cargo.toml",
         "--example",
-        "bench_upper_motor_neuron_exp_euler",
+        "bench_hill_tononi_rk4",
     ]
     try:
         completed = _run_command(command)
@@ -128,12 +127,12 @@ def _run_go_backend() -> dict[str, object]:
     command = [
         "go",
         "test",
-        "src/sc_neurocore/accel/go/services/upper_motor_neuron.go",
-        "src/sc_neurocore/accel/go/services/upper_motor_neuron_test.go",
+        "src/sc_neurocore/accel/go/services/hill_tononi.go",
+        "src/sc_neurocore/accel/go/services/hill_tononi_test.go",
         "-run",
         "^$",
         "-bench",
-        "BenchmarkUpperMotorExpEuler$",
+        "BenchmarkHillTononiRK4$",
         "-benchtime",
         "200000x",
         "-count",
@@ -154,7 +153,7 @@ def _run_go_backend() -> dict[str, object]:
         return {
             "backend": "go",
             "skipped": True,
-            "reason": "Go benchmark output did not include BenchmarkUpperMotorExpEuler ns/op rows",
+            "reason": "Go benchmark output did not include BenchmarkHillTononiRK4 ns/op rows",
             "stdout": completed.stdout,
         }
     return {
@@ -175,19 +174,19 @@ def _run_go_backend() -> dict[str, object]:
 def _run_julia_backend() -> dict[str, object]:
     script = f"""
 using Statistics
-include("src/sc_neurocore/accel/julia/neurons/upper_motor_neuron.jl")
+include("src/sc_neurocore/accel/julia/neurons/hill_tononi.jl")
 const STEPS = {STEPS}
 const REPEATS = {REPEATS}
 const CURRENT = {CURRENT}
 function run_once()
-    s = UpperMotorNeuronAccel.UpperMotorNeuronState()
+    s = HillTononiAccel.HillTononiNeuronState()
     spikes = 0
     start = time_ns()
     for _ in 1:STEPS
-        spikes += UpperMotorNeuronAccel.step!(s, CURRENT)
+        spikes += HillTononiAccel.step!(s, CURRENT)
     end
     elapsed = time_ns() - start
-    return elapsed / STEPS, spikes, s.v, s.s
+    return elapsed / STEPS, spikes, s.v, s.na_i
 end
 results = [run_once() for _ in 1:REPEATS]
 values = [r[1] for r in results]
@@ -197,7 +196,7 @@ println("max_ns_per_step=", maximum(values))
 println("results_ns_per_step=", join(values, ","))
 println("spike_counts=", join([r[2] for r in results], ","))
 println("final_vs=", join([r[3] for r in results], ","))
-println("final_ss=", join([r[4] for r in results], ","))
+println("final_nas=", join([r[4] for r in results], ","))
 """
     command = ["julia", "--project=.", "-e", script]
     try:
@@ -208,7 +207,7 @@ println("final_ss=", join([r[4] for r in results], ","))
     values = [float(value) for value in fields["results_ns_per_step"].split(",")]
     return {
         "backend": "julia",
-        "command": "julia --project=. -e <upper_motor_neuron exp-Euler benchmark>",
+        "command": "julia --project=. -e <hill_tononi rk4 benchmark>",
         "steps": STEPS,
         "repeats": len(values),
         "current": CURRENT,
@@ -218,14 +217,14 @@ println("final_ss=", join([r[4] for r in results], ","))
         "results_ns_per_step": values,
         "spikes": int(fields["spike_counts"].split(",")[0]),
         "final_vs": [float(value) for value in fields["final_vs"].split(",")],
-        "final_ss": [float(value) for value in fields["final_ss"].split(",")],
+        "final_nas": [float(value) for value in fields["final_nas"].split(",")],
     }
 
 
 def _run_mojo_backend() -> dict[str, object]:
     program = textwrap.dedent(
         f"""
-        from upper_motor_neuron import UpperMotor
+        from hill_tononi import HillTononi
         from std.time import perf_counter
 
         alias STEPS = {STEPS}
@@ -233,7 +232,7 @@ def _run_mojo_backend() -> dict[str, object]:
         alias CURRENT = {CURRENT}
 
         def run_once() raises:
-            var neuron = UpperMotor()
+            var neuron = HillTononi()
             var start = perf_counter()
             var spikes = neuron.simulate(STEPS, CURRENT)
             var elapsed = perf_counter() - start
@@ -274,7 +273,7 @@ def _run_mojo_backend() -> dict[str, object]:
         return {"backend": "mojo", "skipped": True, "reason": "Mojo benchmark produced no rows"}
     return {
         "backend": "mojo",
-        "command": "mojo run --disable-warnings -I src/sc_neurocore/accel/mojo/kernels <temp upper_motor_neuron benchmark>",
+        "command": "mojo run --disable-warnings -I src/sc_neurocore/accel/mojo/kernels <temp hill_tononi benchmark>",
         "steps": STEPS,
         "repeats": len(values),
         "current": CURRENT,
@@ -312,7 +311,7 @@ def _require_all_backends(payloads: list[dict[str, object]]) -> None:
         if payload.get("skipped", False)
     ]
     if skipped:
-        raise RuntimeError("Upper motor benchmark requires every backend: " + "; ".join(skipped))
+        raise RuntimeError("Hill-Tononi benchmark requires every backend: " + "; ".join(skipped))
 
 
 def _require_spike_parity(summaries: dict[str, dict[str, object]]) -> None:
@@ -338,9 +337,9 @@ def main() -> None:
     _require_spike_parity(summaries)
     payload = {
         "spdx_license": "AGPL-3.0-or-later",
-        "benchmark": "UpperMotorNeuron exponential-Euler corticospinal adaptation step",
+        "benchmark": "HillTononiNeuron candidate-first RK4 thalamocortical sleep/wake step",
         "timestamp_utc": datetime.now(UTC).isoformat(timespec="seconds"),
-        "command": "PYTHONPATH=src .venv/bin/python benchmarks/bench_model_upper_motor_neuron.py",
+        "command": "PYTHONPATH=src .venv/bin/python benchmarks/bench_model_hill_tononi.py",
         "evidence_class": "local_regression_non_isolated",
         "production_speed_claim": False,
         "hardware_measurement_claimed": False,

@@ -229,7 +229,17 @@ impl SSTNeuron {
     /// consistent state. The Na/K activation rates use the L'Hôpital limit at the
     /// removable Traub-Miles singularity; β_m carries the published `V - V_T - 40`
     /// offset (an earlier `-17` offset drove the cell into depolarisation block).
-    fn derivatives(&self, v: f64, m: f64, h: f64, n: f64, p: f64, s: f64, r: f64, current: f64) -> [f64; 7] {
+    fn derivatives(
+        &self,
+        v: f64,
+        m: f64,
+        h: f64,
+        n: f64,
+        p: f64,
+        s: f64,
+        r: f64,
+        current: f64,
+    ) -> [f64; 7] {
         let dvt = v - (-56.2);
         let asing = |num: f64, slope: f64, limit: f64| {
             if num.abs() < 1e-6 {
@@ -774,7 +784,16 @@ impl MartinottiNeuron {
     /// consistent state. The Na/K activation rates use the L'Hôpital limit at the
     /// removable Traub-Miles singularity; β_m carries the published `V - V_T - 40`
     /// offset (an earlier `-17` offset drove the cell into depolarisation block).
-    fn derivatives(&self, v: f64, m: f64, h: f64, n: f64, p: f64, s: f64, current: f64) -> [f64; 6] {
+    fn derivatives(
+        &self,
+        v: f64,
+        m: f64,
+        h: f64,
+        n: f64,
+        p: f64,
+        s: f64,
+        current: f64,
+    ) -> [f64; 6] {
         let dvt = v - (-56.2);
         let asing = |num: f64, slope: f64, limit: f64| {
             if num.abs() < 1e-6 {
