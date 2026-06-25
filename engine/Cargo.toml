@@ -105,6 +105,9 @@ name = "bench_upper_motor_neuron_exp_euler"
 name = "bench_durstewitz_dopamine_rk4"
 
 [[example]]
+name = "bench_hill_tononi_rk4"
+
+[[example]]
 name = "bench_lapicque_exact_flow"
 
 [[example]]
