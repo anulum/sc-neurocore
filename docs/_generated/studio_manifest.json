@@ -1,0 +1,138 @@
+{
+  "content_digest": "sha256:2623169357cf4bf0331312817a8dd370c6c97008ed76d8531c18583558258ab7",
+  "contract_era": "v1",
+  "enumeration": "language-agnostic",
+  "evidence_types": [
+    "studio.backend-benchmark.v1",
+    "studio.bitstream-encoding.v1",
+    "studio.cosim-parity.v1",
+    "studio.fpga-deployment.v1",
+    "studio.rtl-compilation.v1",
+    "studio.sc-inference.v1",
+    "studio.spike-analysis.v1"
+  ],
+  "platform_sdk": ">=0.9,<0.10",
+  "protocol_version": "1",
+  "studio": "sc-neurocore",
+  "studio_version": "3.15.34",
+  "transport_profile": "local-first",
+  "verbs": [
+    {
+      "backends": [
+        "numpy",
+        "rust"
+      ],
+      "produces": [
+        "studio.bitstream-encoding.v1"
+      ],
+      "safety_tier": "research",
+      "side_effect": "read-only",
+      "timing": {
+        "class": "interactive"
+      },
+      "verb": "encode"
+    },
+    {
+      "backends": [
+        "numpy",
+        "rust"
+      ],
+      "fidelity": "first-principles",
+      "produces": [
+        "studio.sc-inference.v1"
+      ],
+      "safety_tier": "research",
+      "side_effect": "simulated",
+      "timing": {
+        "class": "batch"
+      },
+      "verb": "simulate"
+    },
+    {
+      "backends": [
+        "numpy",
+        "rust"
+      ],
+      "produces": [
+        "studio.spike-analysis.v1"
+      ],
+      "safety_tier": "research",
+      "side_effect": "read-only",
+      "timing": {
+        "class": "batch"
+      },
+      "verb": "analyse"
+    },
+    {
+      "backends": [
+        "numpy",
+        "rust"
+      ],
+      "produces": [
+        "studio.backend-benchmark.v1"
+      ],
+      "safety_tier": "research",
+      "side_effect": "simulated",
+      "timing": {
+        "class": "batch"
+      },
+      "verb": "benchmark"
+    },
+    {
+      "backends": [
+        "python"
+      ],
+      "produces": [
+        "studio.cosim-parity.v1"
+      ],
+      "safety_tier": "research",
+      "side_effect": "read-only",
+      "timing": {
+        "class": "batch"
+      },
+      "verb": "validate"
+    },
+    {
+      "backends": [
+        "python"
+      ],
+      "produces": [
+        "studio.rtl-compilation.v1"
+      ],
+      "safety_tier": "research",
+      "side_effect": "read-only",
+      "timing": {
+        "class": "batch"
+      },
+      "verb": "compile"
+    },
+    {
+      "backends": [
+        "python"
+      ],
+      "produces": [
+        "studio.fpga-deployment.v1"
+      ],
+      "safety_tier": "research",
+      "side_effect": "simulated",
+      "timing": {
+        "class": "batch"
+      },
+      "verb": "synthesise"
+    },
+    {
+      "backends": [
+        "python"
+      ],
+      "produces": [
+        "studio.fpga-deployment.v1"
+      ],
+      "safety_tier": "research",
+      "side_effect": "live-hardware",
+      "timing": {
+        "class": "batch"
+      },
+      "verb": "deploy"
+    }
+  ]
+}

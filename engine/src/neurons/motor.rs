@@ -429,11 +429,14 @@ impl UpperMotorNeuron {
         } else {
             -0.32 * x_m / (Self::rate_exp(-x_m / 4.0) - 1.0)
         };
-        let x_h = dv - 17.0;
-        let beta_m = if x_h.abs() < 1e-6 {
+        // Published Pospischil beta_m numerator is V - V_T - 40; an earlier revision
+        // shared the -17 offset of alpha_h, which drove the cell into depolarisation
+        // block (three spikes then a fixed point near threshold for any stimulus).
+        let x_bm = dv - 40.0;
+        let beta_m = if x_bm.abs() < 1e-6 {
             0.28 * 5.0
         } else {
-            0.28 * x_h / (Self::rate_exp(x_h / 5.0) - 1.0)
+            0.28 * x_bm / (Self::rate_exp(x_bm / 5.0) - 1.0)
         };
         let alpha_h = 0.128 * Self::rate_exp(-(dv - 17.0) / 18.0);
         let beta_h = 4.0 / (1.0 + Self::rate_exp(-(dv - 40.0) / 5.0));
@@ -1202,11 +1205,11 @@ mod tests {
             } else {
                 -0.32 * x_m / ((-x_m / 4.0).exp() - 1.0)
             };
-            let x_h = dv - 17.0;
-            let beta_m = if x_h.abs() < 1e-6 {
+            let x_bm = dv - 40.0;
+            let beta_m = if x_bm.abs() < 1e-6 {
                 0.28 * 5.0
             } else {
-                0.28 * x_h / ((x_h / 5.0).exp() - 1.0)
+                0.28 * x_bm / ((x_bm / 5.0).exp() - 1.0)
             };
             let alpha_h = 0.128 * (-(dv - 17.0) / 18.0).exp();
             let beta_h = 4.0 / (1.0 + (-(dv - 40.0) / 5.0).exp());

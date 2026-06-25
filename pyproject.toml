@@ -105,6 +105,7 @@ nir = ["nir>=1.0"]
 mpi = ["mpi4py>=3.0"]
 lava = ["lava-nc; python_version < '3.11'"]
 studio = ["fastapi>=0.100", "uvicorn[standard]>=0.20", "httpx>=0.27"]
+federation = ["scpn-studio-platform>=0.9,<0.10"]  # Hub federation vertical (sc_neurocore.federation)
 docs = ["mkdocs>=1.6", "mkdocs-material>=9.5", "mkdocstrings[python]>=0.25"]
 compression = ["PyWavelets>=1.4", "zstandard>=0.22"]
 optics = ["gdsfactory>=9.0"]
@@ -203,6 +204,8 @@ omit = [
     "*/viz/plots.py",
     # --- Studio web UI (requires fastapi, tested separately) ---
     "*/studio/*",
+    # --- Hub federation vertical (requires the scpn-studio-platform SDK) ---
+    "*/federation/*",
 ]
 
 [tool.coverage.report]
@@ -294,3 +297,12 @@ module = ['sc_neurocore.training.*', 'sc_neurocore.qat.*', 'sc_neurocore.convers
 disallow_subclassing_any = false
 disallow_untyped_decorators = false
 disallow_untyped_calls = false
+
+# Optional federation SDK: scpn-studio-platform ships py.typed but its StrEnum
+# members resolve to `str` under pinned mypy, and the SDK is absent from the CI
+# base dev-lock. Treat it as untyped so sc_neurocore.federation stays strict-clean
+# with or without the optional extra installed.
+[[tool.mypy.overrides]]
+module = "scpn_studio_platform.*"
+ignore_missing_imports = true
+follow_imports = "skip"

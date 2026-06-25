@@ -90,8 +90,10 @@ function _step_candidate(s::UpperMotorNeuronState, v::Float64, m::Float64, h::Fl
     dv = v - (-56.2)
     x_m = dv - 13.0
     alpha_m = (abs(x_m) < 1e-06) ? 0.32 * 4.0 : -0.32 * x_m / (_rate_exp(-x_m / 4.0) - 1.0)
-    x_h = dv - 17.0
-    beta_m = (abs(x_h) < 1e-06) ? 0.28 * 5.0 : 0.28 * x_h / (_rate_exp(x_h / 5.0) - 1.0)
+    # Published Pospischil beta_m numerator is V - V_T - 40 (an earlier -17 offset,
+    # shared with alpha_h, drove the cell into depolarisation block).
+    x_bm = dv - 40.0
+    beta_m = (abs(x_bm) < 1e-06) ? 0.28 * 5.0 : 0.28 * x_bm / (_rate_exp(x_bm / 5.0) - 1.0)
     alpha_h = 0.128 * _rate_exp(-(dv - 17.0) / 18.0)
     beta_h = 4.0 / (1.0 + _rate_exp(-(dv - 40.0) / 5.0))
     x_n = dv - 15.0

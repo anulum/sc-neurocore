@@ -90,6 +90,24 @@ name = "bench_golomb_fs_rk4"
 name = "bench_pv_fast_spiking_rk4"
 
 [[example]]
+name = "bench_vip_neuron_rk4"
+
+[[example]]
+name = "bench_sst_neuron_rk4"
+
+[[example]]
+name = "bench_martinotti_neuron_rk4"
+
+[[example]]
+name = "bench_upper_motor_neuron_exp_euler"
+
+[[example]]
+name = "bench_durstewitz_dopamine_rk4"
+
+[[example]]
+name = "bench_hill_tononi_rk4"
+
+[[example]]
 name = "bench_lapicque_exact_flow"
 
 [[example]]

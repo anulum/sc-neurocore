@@ -1,0 +1,268 @@
+{
+  "spdx_license": "AGPL-3.0-or-later",
+  "benchmark": "DurstewitzDopamineNeuron candidate-first RK4 D1-modulated PFC step",
+  "timestamp_utc": "2026-06-24T04:31:21+00:00",
+  "command": "PYTHONPATH=src .venv/bin/python benchmarks/bench_model_durstewitz_dopamine.py",
+  "evidence_class": "local_regression_non_isolated",
+  "production_speed_claim": false,
+  "hardware_measurement_claimed": false,
+  "python": "3.12.3",
+  "platform": "Linux-6.17.0-35-generic-x86_64-with-glibc2.39",
+  "processor": "x86_64",
+  "steps": 200000,
+  "repeats": 5,
+  "current": 10.0,
+  "backend_summary": {
+    "python": {
+      "median_ns_per_step": 12982.695135,
+      "min_ns_per_step": 12674.179385,
+      "max_ns_per_step": 13576.29441,
+      "spikes": 925
+    },
+    "rust": {
+      "median_ns_per_step": 196.187105,
+      "min_ns_per_step": 183.76701,
+      "max_ns_per_step": 199.571905,
+      "spikes": 925
+    },
+    "go": {
+      "median_ns_per_step": 293.5,
+      "min_ns_per_step": 290.2,
+      "max_ns_per_step": 324.5,
+      "spikes": 925
+    },
+    "julia": {
+      "median_ns_per_step": 217.89466,
+      "min_ns_per_step": 200.55796,
+      "max_ns_per_step": 251.190085,
+      "spikes": 925
+    },
+    "mojo": {
+      "median_ns_per_step": 181.91660521551967,
+      "min_ns_per_step": 169.06648001167923,
+      "max_ns_per_step": 211.05115010868758,
+      "spikes": 925
+    }
+  },
+  "results": [
+    {
+      "backend": "python",
+      "median_ns_per_step": 12982.695135,
+      "min_ns_per_step": 12674.179385,
+      "max_ns_per_step": 13576.29441,
+      "spikes": 925,
+      "results": [
+        {
+          "backend": "python",
+          "steps": 200000,
+          "current": 10.0,
+          "elapsed_ns": 2637300747,
+          "ns_per_step": 13186.503735,
+          "spikes": 925,
+          "ending_state": [
+            -75.69683062867615,
+            0.13677697673294678
+          ]
+        },
+        {
+          "backend": "python",
+          "steps": 200000,
+          "current": 10.0,
+          "elapsed_ns": 2595499569,
+          "ns_per_step": 12977.497845,
+          "spikes": 925,
+          "ending_state": [
+            -75.69683062867615,
+            0.13677697673294678
+          ]
+        },
+        {
+          "backend": "python",
+          "steps": 200000,
+          "current": 10.0,
+          "elapsed_ns": 2534835877,
+          "ns_per_step": 12674.179385,
+          "spikes": 925,
+          "ending_state": [
+            -75.69683062867615,
+            0.13677697673294678
+          ]
+        },
+        {
+          "backend": "python",
+          "steps": 200000,
+          "current": 10.0,
+          "elapsed_ns": 2715258882,
+          "ns_per_step": 13576.29441,
+          "spikes": 925,
+          "ending_state": [
+            -75.69683062867615,
+            0.13677697673294678
+          ]
+        },
+        {
+          "backend": "python",
+          "steps": 200000,
+          "current": 10.0,
+          "elapsed_ns": 2596539027,
+          "ns_per_step": 12982.695135,
+          "spikes": 925,
+          "ending_state": [
+            -75.69683062867615,
+            0.13677697673294678
+          ]
+        }
+      ]
+    },
+    {
+      "backend": "rust",
+      "timestamp_unix": 1782275473,
+      "command": "cargo run --manifest-path engine/Cargo.toml --example bench_durstewitz_dopamine_rk4",
+      "rustc": "rustc 1.96.0 (ac68faa20 2026-05-25)",
+      "target_os": "linux",
+      "target_arch": "x86_64",
+      "measurement_context": {
+        "host_load": "workstation under concurrent load during capture",
+        "cpu_isolation": "runtime cpuset shield when cgroup_effective_cpuset matches benchmark CPUs; kernel-reserved isolated cores were not detected on this workstation",
+        "cpu_affinity": "0-11",
+        "cgroup_effective_cpuset": "unavailable",
+        "runtime_cpuset_shield_claimed": false,
+        "load_average_before": "6.71 8.85 10.06 6/6768 2902285",
+        "load_average_after": "6.71 8.85 10.06 4/6766 2902296",
+        "cpu_governor": "powersave",
+        "cpu_frequency_mhz": "min=4370.488,max=4398.414,sampled_cpu_count=12",
+        "concurrent_load_status": "non-exclusive workstation run; other heavy jobs may have been active",
+        "timing_interpretation": "use timing medians as local regression context only, not final throughput claims",
+        "production_rerun_requirement": "rerun on reserved isolated cores with recorded affinity, governor, frequency, versions, and host-load evidence before publishing performance claims"
+      },
+      "steps": 200000,
+      "repeats": 5,
+      "current": 10,
+      "median_ns_per_step": 196.187105,
+      "min_ns_per_step": 183.76701,
+      "max_ns_per_step": 199.571905,
+      "results_ns_per_step": [
+        188.28389,
+        199.39979,
+        196.187105,
+        199.571905,
+        183.76701
+      ],
+      "spike_counts": [
+        925,
+        925,
+        925,
+        925,
+        925
+      ],
+      "final_vs": [
+        -75.69683062867615,
+        -75.69683062867615,
+        -75.69683062867615,
+        -75.69683062867615,
+        -75.69683062867615
+      ],
+      "final_hs": [
+        0.13677697673294678,
+        0.13677697673294678,
+        0.13677697673294678,
+        0.13677697673294678,
+        0.13677697673294678
+      ],
+      "driver_command": "cargo run --release --manifest-path engine/Cargo.toml --example bench_durstewitz_dopamine_rk4"
+    },
+    {
+      "backend": "go",
+      "command": "go test src/sc_neurocore/accel/go/services/durstewitz_dopamine.go src/sc_neurocore/accel/go/services/durstewitz_dopamine_test.go -run ^$ -bench BenchmarkDurstewitzRK4$ -benchtime 200000x -count 5",
+      "steps": 200000,
+      "repeats": 5,
+      "current": 10.0,
+      "median_ns_per_step": 293.5,
+      "min_ns_per_step": 290.2,
+      "max_ns_per_step": 324.5,
+      "results_ns_per_step": [
+        290.2,
+        292.0,
+        296.7,
+        324.5,
+        293.5
+      ],
+      "spikes": 925,
+      "spike_counts": [
+        925,
+        925,
+        925,
+        925,
+        925
+      ]
+    },
+    {
+      "backend": "julia",
+      "command": "julia --project=. -e <durstewitz_dopamine rk4 benchmark>",
+      "steps": 200000,
+      "repeats": 5,
+      "current": 10.0,
+      "median_ns_per_step": 217.89466,
+      "min_ns_per_step": 200.55796,
+      "max_ns_per_step": 251.190085,
+      "results_ns_per_step": [
+        234.032985,
+        251.190085,
+        213.307375,
+        217.89466,
+        200.55796
+      ],
+      "spikes": 925,
+      "final_vs": [
+        -75.69683062867615,
+        -75.69683062867615,
+        -75.69683062867615,
+        -75.69683062867615,
+        -75.69683062867615
+      ],
+      "final_hs": [
+        0.13677697673294678,
+        0.13677697673294678,
+        0.13677697673294678,
+        0.13677697673294678,
+        0.13677697673294678
+      ]
+    },
+    {
+      "backend": "mojo",
+      "command": "mojo run --disable-warnings -I src/sc_neurocore/accel/mojo/kernels <temp durstewitz_dopamine benchmark>",
+      "steps": 200000,
+      "repeats": 5,
+      "current": 10.0,
+      "median_ns_per_step": 181.91660521551967,
+      "min_ns_per_step": 169.06648001167923,
+      "max_ns_per_step": 211.05115010868758,
+      "results_ns_per_step": [
+        207.5596252689138,
+        211.05115010868758,
+        181.91660521551967,
+        174.69921032898128,
+        169.06648001167923
+      ],
+      "spikes": 925,
+      "spike_counts": [
+        925,
+        925,
+        925,
+        925,
+        925
+      ]
+    }
+  ],
+  "source_hashes": {
+    "benchmarks/bench_model_durstewitz_dopamine.py": "9829d796126d11e372327dc571df1412b9a4b272e5ee0712035d76bc19961bc4",
+    "engine/Cargo.toml": "35b84bf1f2933e9fb4b5c80ac8dd04fd68ebec6e6dac7eb8d552cbd7a8e8e130",
+    "engine/examples/bench_durstewitz_dopamine_rk4.rs": "cd18c8d2e0f64fb6f92344afbd9b95fd5b6bc7fdc57e7d0f1d90d9b388d3e6a0",
+    "engine/src/neurons/biophysical.rs": "29633316a5eb238e732a2a666c5afb60c3832a06cef7b25a45d83f8dbcba08ea",
+    "src/sc_neurocore/neurons/models/durstewitz_dopamine.py": "7615aaca44343ef49860af4744dccd4c5b74645c79cccca1ac853b64fe343bc1",
+    "src/sc_neurocore/accel/go/services/durstewitz_dopamine.go": "d53dca91f3e7f9b65c94a2c086c59353e6efa6b43ed3a50ef2ef46964932d880",
+    "src/sc_neurocore/accel/go/services/durstewitz_dopamine_test.go": "4f0ed5cba0a1756ac678c120da450f1060500c11523c773f2675d45894dd20de",
+    "src/sc_neurocore/accel/julia/neurons/durstewitz_dopamine.jl": "68f5c38ecaa71b84d76b4a7e57e0f99ab2887af3a0efc51451cd34a8ff36e268",
+    "src/sc_neurocore/accel/mojo/kernels/durstewitz_dopamine.mojo": "8ee2a4e05e92e7bcb613f4859f002fcd904104e33239ff08d3df2ff19355e86c"
+  }
+}

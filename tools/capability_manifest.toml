@@ -7,7 +7,7 @@
 # SC-NeuroCore capability manifest configuration
 
 project_label = "SC-NeuroCore"
-schema_version = "capability-manifest.v1"
+schema_version = "capability-manifest.v2"
 exclude_doc_parts = ["internal", "_generated"]
 
 [paths]

@@ -130,10 +130,12 @@ func (s *UpperMotorNeuronState) stepCandidate(v float64, m float64, h float64, n
 	if math.Abs(xM) >= 1e-6 {
 		alphaM = -0.32 * xM / (upperMotorNeuronRateExp(-xM/4.0) - 1.0)
 	}
-	xH := dv - 17.0
+	// Published Pospischil beta_m numerator is V - V_T - 40 (an earlier -17 offset,
+	// shared with alpha_h, drove the cell into depolarisation block).
+	xBm := dv - 40.0
 	betaM := 0.28 * 5.0
-	if math.Abs(xH) >= 1e-6 {
-		betaM = 0.28 * xH / (upperMotorNeuronRateExp(xH/5.0) - 1.0)
+	if math.Abs(xBm) >= 1e-6 {
+		betaM = 0.28 * xBm / (upperMotorNeuronRateExp(xBm/5.0) - 1.0)
 	}
 	alphaH := 0.128 * upperMotorNeuronRateExp(-(dv-17.0)/18.0)
 	betaH := 4.0 / (1.0 + upperMotorNeuronRateExp(-(dv-40.0)/5.0))

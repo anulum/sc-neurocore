@@ -1,0 +1,268 @@
+{
+  "spdx_license": "AGPL-3.0-or-later",
+  "benchmark": "MartinottiNeuron candidate-first RK4 adapting-interneuron step",
+  "timestamp_utc": "2026-06-24T03:25:07+00:00",
+  "command": "PYTHONPATH=src .venv/bin/python benchmarks/bench_model_martinotti_neuron.py",
+  "evidence_class": "local_regression_non_isolated",
+  "production_speed_claim": false,
+  "hardware_measurement_claimed": false,
+  "python": "3.12.3",
+  "platform": "Linux-6.17.0-35-generic-x86_64-with-glibc2.39",
+  "processor": "x86_64",
+  "steps": 200000,
+  "repeats": 5,
+  "current": 5.0,
+  "backend_summary": {
+    "python": {
+      "median_ns_per_step": 61717.832225,
+      "min_ns_per_step": 56431.762415,
+      "max_ns_per_step": 65241.158545,
+      "spikes": 657
+    },
+    "rust": {
+      "median_ns_per_step": 1479.205385,
+      "min_ns_per_step": 1352.906785,
+      "max_ns_per_step": 1635.26849,
+      "spikes": 657
+    },
+    "go": {
+      "median_ns_per_step": 2381.0,
+      "min_ns_per_step": 2278.0,
+      "max_ns_per_step": 2531.0,
+      "spikes": 657
+    },
+    "julia": {
+      "median_ns_per_step": 1355.042155,
+      "min_ns_per_step": 1301.82843,
+      "max_ns_per_step": 1428.09393,
+      "spikes": 657
+    },
+    "mojo": {
+      "median_ns_per_step": 1910.2970499079674,
+      "min_ns_per_step": 1907.705960329622,
+      "max_ns_per_step": 1974.6843248140067,
+      "spikes": 657
+    }
+  },
+  "results": [
+    {
+      "backend": "python",
+      "median_ns_per_step": 61717.832225,
+      "min_ns_per_step": 56431.762415,
+      "max_ns_per_step": 65241.158545,
+      "spikes": 657,
+      "results": [
+        {
+          "backend": "python",
+          "steps": 200000,
+          "current": 5.0,
+          "elapsed_ns": 12762059949,
+          "ns_per_step": 63810.299745,
+          "spikes": 657,
+          "ending_state": [
+            -60.382589601308844,
+            0.002199590334638431
+          ]
+        },
+        {
+          "backend": "python",
+          "steps": 200000,
+          "current": 5.0,
+          "elapsed_ns": 11432486268,
+          "ns_per_step": 57162.43134,
+          "spikes": 657,
+          "ending_state": [
+            -60.382589601308844,
+            0.002199590334638431
+          ]
+        },
+        {
+          "backend": "python",
+          "steps": 200000,
+          "current": 5.0,
+          "elapsed_ns": 11286352483,
+          "ns_per_step": 56431.762415,
+          "spikes": 657,
+          "ending_state": [
+            -60.382589601308844,
+            0.002199590334638431
+          ]
+        },
+        {
+          "backend": "python",
+          "steps": 200000,
+          "current": 5.0,
+          "elapsed_ns": 13048231709,
+          "ns_per_step": 65241.158545,
+          "spikes": 657,
+          "ending_state": [
+            -60.382589601308844,
+            0.002199590334638431
+          ]
+        },
+        {
+          "backend": "python",
+          "steps": 200000,
+          "current": 5.0,
+          "elapsed_ns": 12343566445,
+          "ns_per_step": 61717.832225,
+          "spikes": 657,
+          "ending_state": [
+            -60.382589601308844,
+            0.002199590334638431
+          ]
+        }
+      ]
+    },
+    {
+      "backend": "rust",
+      "timestamp_unix": 1782271492,
+      "command": "cargo run --manifest-path engine/Cargo.toml --example bench_martinotti_neuron_rk4",
+      "rustc": "rustc 1.96.0 (ac68faa20 2026-05-25)",
+      "target_os": "linux",
+      "target_arch": "x86_64",
+      "measurement_context": {
+        "host_load": "workstation under concurrent load during capture",
+        "cpu_isolation": "runtime cpuset shield when cgroup_effective_cpuset matches benchmark CPUs; kernel-reserved isolated cores were not detected on this workstation",
+        "cpu_affinity": "0-11",
+        "cgroup_effective_cpuset": "unavailable",
+        "runtime_cpuset_shield_claimed": false,
+        "load_average_before": "10.08 10.77 10.26 8/7084 2584128",
+        "load_average_after": "10.08 10.77 10.26 7/7078 2584252",
+        "cpu_governor": "powersave",
+        "cpu_frequency_mhz": "min=3899.949,max=3900.061,sampled_cpu_count=12",
+        "concurrent_load_status": "non-exclusive workstation run; other heavy jobs may have been active",
+        "timing_interpretation": "use timing medians as local regression context only, not final throughput claims",
+        "production_rerun_requirement": "rerun on reserved isolated cores with recorded affinity, governor, frequency, versions, and host-load evidence before publishing performance claims"
+      },
+      "steps": 200000,
+      "repeats": 5,
+      "current": 5,
+      "median_ns_per_step": 1479.205385,
+      "min_ns_per_step": 1352.906785,
+      "max_ns_per_step": 1635.26849,
+      "results_ns_per_step": [
+        1635.26849,
+        1389.975835,
+        1508.156695,
+        1352.906785,
+        1479.205385
+      ],
+      "spike_counts": [
+        657,
+        657,
+        657,
+        657,
+        657
+      ],
+      "final_vs": [
+        -60.382589601308844,
+        -60.382589601308844,
+        -60.382589601308844,
+        -60.382589601308844,
+        -60.382589601308844
+      ],
+      "final_ss": [
+        0.002199590334638431,
+        0.002199590334638431,
+        0.002199590334638431,
+        0.002199590334638431,
+        0.002199590334638431
+      ],
+      "driver_command": "cargo run --release --manifest-path engine/Cargo.toml --example bench_martinotti_neuron_rk4"
+    },
+    {
+      "backend": "go",
+      "command": "go test src/sc_neurocore/accel/go/services/martinotti_neuron.go src/sc_neurocore/accel/go/services/martinotti_neuron_test.go -run ^$ -bench BenchmarkMartinottiRK4$ -benchtime 200000x -count 5",
+      "steps": 200000,
+      "repeats": 5,
+      "current": 5.0,
+      "median_ns_per_step": 2381.0,
+      "min_ns_per_step": 2278.0,
+      "max_ns_per_step": 2531.0,
+      "results_ns_per_step": [
+        2317.0,
+        2501.0,
+        2278.0,
+        2531.0,
+        2381.0
+      ],
+      "spikes": 657,
+      "spike_counts": [
+        657,
+        657,
+        657,
+        657,
+        657
+      ]
+    },
+    {
+      "backend": "julia",
+      "command": "julia --project=. -e <martinotti_neuron rk4 benchmark>",
+      "steps": 200000,
+      "repeats": 5,
+      "current": 5.0,
+      "median_ns_per_step": 1355.042155,
+      "min_ns_per_step": 1301.82843,
+      "max_ns_per_step": 1428.09393,
+      "results_ns_per_step": [
+        1302.81074,
+        1301.82843,
+        1365.766115,
+        1428.09393,
+        1355.042155
+      ],
+      "spikes": 657,
+      "final_vs": [
+        -60.382589601308844,
+        -60.382589601308844,
+        -60.382589601308844,
+        -60.382589601308844,
+        -60.382589601308844
+      ],
+      "final_ss": [
+        0.002199590334638431,
+        0.002199590334638431,
+        0.002199590334638431,
+        0.002199590334638431,
+        0.002199590334638431
+      ]
+    },
+    {
+      "backend": "mojo",
+      "command": "mojo run --disable-warnings -I src/sc_neurocore/accel/mojo/kernels <temp martinotti_neuron benchmark>",
+      "steps": 200000,
+      "repeats": 5,
+      "current": 5.0,
+      "median_ns_per_step": 1910.2970499079674,
+      "min_ns_per_step": 1907.705960329622,
+      "max_ns_per_step": 1974.6843248140067,
+      "results_ns_per_step": [
+        1908.901630085893,
+        1974.6843248140067,
+        1946.9941349234432,
+        1907.705960329622,
+        1910.2970499079674
+      ],
+      "spikes": 657,
+      "spike_counts": [
+        657,
+        657,
+        657,
+        657,
+        657
+      ]
+    }
+  ],
+  "source_hashes": {
+    "benchmarks/bench_model_martinotti_neuron.py": "b1d32bb47304b1d22ffeea103d0c812d2a321929281f5e3833737ca386c99f3e",
+    "engine/Cargo.toml": "9c26bb3c7babf47d7ee71e22133053b9b95e2d122873e515710dae77ac98a36f",
+    "engine/examples/bench_martinotti_neuron_rk4.rs": "abd0fad38ce939943133d3eacd6812522480cdb9cdb9d15250cb55108f142211",
+    "engine/src/neurons/interneurons.rs": "bce84b3bf217b9352d28ef6e16871a2359fdde5119ef74ef3608bb8c9299a9b1",
+    "src/sc_neurocore/neurons/models/martinotti_neuron.py": "eb9dc7bebca43a6dd7c827b0c75ff82141ab32a5014eebebe3d7bc75192571bb",
+    "src/sc_neurocore/accel/go/services/martinotti_neuron.go": "7f8d2f699bec27b7c35f8cbaf673932f344d141b3274ddaf1964d5da56251de6",
+    "src/sc_neurocore/accel/go/services/martinotti_neuron_test.go": "7d0c645fda44b5ddc9f7bb148c40fb87b0228ef3fb104231f92c65dd9692e9ae",
+    "src/sc_neurocore/accel/julia/neurons/martinotti_neuron.jl": "56d9a9fdde1fdcfca07592f8e75d1eda132ff4ff0bf403debafaa8c8c863ce1e",
+    "src/sc_neurocore/accel/mojo/kernels/martinotti_neuron.mojo": "22306140e668a97abc49893fd1fb8109b6a5c2f21ed2d1f94197dac25caa19a0"
+  }
+}
