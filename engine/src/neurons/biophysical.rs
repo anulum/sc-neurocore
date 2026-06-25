@@ -2373,7 +2373,10 @@ impl HillTononiNeuron {
 
     pub fn step(&mut self, current: f64) -> i32 {
         let v_prev = self.v;
-        let s = self.rk4_substep([self.v, self.h_na, self.n_k, self.m_h, self.h_t, self.na_i], current);
+        let s = self.rk4_substep(
+            [self.v, self.h_na, self.n_k, self.m_h, self.h_t, self.na_i],
+            current,
+        );
         self.v = s[0];
         self.h_na = s[1];
         self.n_k = s[2];
