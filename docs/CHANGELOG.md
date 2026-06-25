@@ -6,6 +6,23 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 ## [Unreleased]
 
 ### Physics and mathematics hardening
+- Promoted `HillTononiNeuron` (Hill & Tononi 2005 thalamocortical sleep/wake
+  cell) from a hard-coded forward-Euler step to candidate-first RK4 over the
+  six-state `(V, h_na, n_k, m_h, h_t, na_i)` system — fast Na⁺, delayed-rectifier
+  K⁺, `Ih`, T-type Ca²⁺, a sodium-dependent K⁺ current, and a saturating Na/K
+  pump — with input validation and the opt-in `integrator="baseline_euler"`
+  regression path. Replaced the decorative `accel/go/services` and Mojo
+  placeholders (and corrected a wrong Go spike threshold) with real RK4 backends
+  and harmonised the cross-language arithmetic so Python, Rust, Julia, Go, and
+  Mojo reproduce the trajectory bit-for-bit: explicit `m·m·m`/`n·n·n·n`
+  conductance powers, and the `I_KNa` Hill exponent `3.5` evaluated as
+  `b·b·b·sqrt(b)` (an IEEE-754 exact decomposition) instead of a per-platform
+  `pow`. Added a `_safe_exp` guard so the saturating gates stay finite under an
+  out-of-range stimulus (Python `math.exp` would otherwise raise where the other
+  backends return `+inf`), native Go RK4 parity/behaviour tests, a Go benchmark
+  hook, a Rust benchmark example, Python RK4/fail-closed coverage, and a
+  five-backend local non-isolated benchmark that fails closed unless every
+  backend reports an identical spike count (694 at 200k steps / 10 nA).
 - Promoted `DurstewitzDopamineNeuron` (Durstewitz, Seamans & Sejnowski 2000
   D1-modulated PFC cell) from a hard-coded forward-Euler step — which advanced
   the gates from the old voltage and then the voltage from the freshly updated
