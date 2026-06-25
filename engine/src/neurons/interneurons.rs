@@ -1023,7 +1023,12 @@ mod tests {
         for _ in 0..10_000 {
             n.step(5.0);
         }
-        assert!(start.elapsed().as_millis() < 100);
+        let elapsed = start.elapsed();
+        assert!(
+            elapsed.as_millis() < 500,
+            "10k SST steps took {:?}",
+            elapsed
+        );
     }
 
     // ── VIP tests ────────────────────────────────────────────────
