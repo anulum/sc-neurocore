@@ -1,0 +1,287 @@
+{
+  "spdx_license": "AGPL-3.0-or-later",
+  "benchmark": "MulticompartmentMCNNeuron candidate-first RK4 three-compartment step",
+  "timestamp_utc": "2026-06-26T15:44:33+00:00",
+  "command": "PYTHONPATH=src .venv/bin/python benchmarks/bench_model_multicompartment_mcn.py",
+  "evidence_class": "local_regression_non_isolated",
+  "production_speed_claim": false,
+  "hardware_measurement_claimed": false,
+  "python": "3.12.3",
+  "platform": "Linux-6.17.0-35-generic-x86_64-with-glibc2.39",
+  "processor": "x86_64",
+  "steps": 200000,
+  "repeats": 5,
+  "current": 3.2,
+  "backend_summary": {
+    "python": {
+      "median_ns_per_step": 12644.231095,
+      "min_ns_per_step": 11561.742835,
+      "max_ns_per_step": 14075.619365,
+      "spikes": 49999
+    },
+    "rust": {
+      "median_ns_per_step": 54.17135,
+      "min_ns_per_step": 52.30281,
+      "max_ns_per_step": 57.92902,
+      "spikes": 49999
+    },
+    "go": {
+      "median_ns_per_step": 107.5,
+      "min_ns_per_step": 106.4,
+      "max_ns_per_step": 117.0,
+      "spikes": 49999
+    },
+    "julia": {
+      "median_ns_per_step": 77.278175,
+      "min_ns_per_step": 76.02249,
+      "max_ns_per_step": 80.007675,
+      "spikes": 49999
+    },
+    "mojo": {
+      "median_ns_per_step": 124.20844497682992,
+      "min_ns_per_step": 123.07514494750649,
+      "max_ns_per_step": 128.0897800461389,
+      "spikes": 49999
+    }
+  },
+  "results": [
+    {
+      "backend": "python",
+      "median_ns_per_step": 12644.231095,
+      "min_ns_per_step": 11561.742835,
+      "max_ns_per_step": 14075.619365,
+      "spikes": 49999,
+      "results": [
+        {
+          "backend": "python",
+          "steps": 200000,
+          "current": 3.2,
+          "elapsed_ns": 2528846219,
+          "ns_per_step": 12644.231095,
+          "spikes": 49999,
+          "ending_state": [
+            0.0,
+            3.1999999999999997,
+            0.0
+          ]
+        },
+        {
+          "backend": "python",
+          "steps": 200000,
+          "current": 3.2,
+          "elapsed_ns": 2406996103,
+          "ns_per_step": 12034.980515,
+          "spikes": 49999,
+          "ending_state": [
+            0.0,
+            3.1999999999999997,
+            0.0
+          ]
+        },
+        {
+          "backend": "python",
+          "steps": 200000,
+          "current": 3.2,
+          "elapsed_ns": 2626499612,
+          "ns_per_step": 13132.49806,
+          "spikes": 49999,
+          "ending_state": [
+            0.0,
+            3.1999999999999997,
+            0.0
+          ]
+        },
+        {
+          "backend": "python",
+          "steps": 200000,
+          "current": 3.2,
+          "elapsed_ns": 2815123873,
+          "ns_per_step": 14075.619365,
+          "spikes": 49999,
+          "ending_state": [
+            0.0,
+            3.1999999999999997,
+            0.0
+          ]
+        },
+        {
+          "backend": "python",
+          "steps": 200000,
+          "current": 3.2,
+          "elapsed_ns": 2312348567,
+          "ns_per_step": 11561.742835,
+          "spikes": 49999,
+          "ending_state": [
+            0.0,
+            3.1999999999999997,
+            0.0
+          ]
+        }
+      ]
+    },
+    {
+      "backend": "rust",
+      "timestamp_unix": 1782488660,
+      "command": "cargo run --release --manifest-path engine/Cargo.toml --example bench_multicompartment_mcn_rk4",
+      "rustc": "rustc 1.96.0 (ac68faa20 2026-05-25)",
+      "target_os": "linux",
+      "target_arch": "x86_64",
+      "measurement_context": {
+        "host_load": "workstation under concurrent load during capture",
+        "cpu_isolation": "runtime cpuset shield when cgroup_effective_cpuset matches benchmark CPUs; kernel-reserved isolated cores were not detected on this workstation",
+        "cpu_affinity": "0-11",
+        "cgroup_effective_cpuset": "unavailable",
+        "runtime_cpuset_shield_claimed": false,
+        "load_average_before": "20.28 13.59 11.96 3/4409 197116",
+        "load_average_after": "20.28 13.59 11.96 5/4409 197126",
+        "cpu_governor": "powersave",
+        "cpu_frequency_mhz": "min=3995.397,max=4100.367,sampled_cpu_count=12",
+        "concurrent_load_status": "non-exclusive workstation run; other heavy jobs may have been active",
+        "timing_interpretation": "use timing medians as local regression context only, not final throughput claims",
+        "production_rerun_requirement": "rerun on reserved isolated cores with recorded affinity, governor, frequency, versions, and host-load evidence before publishing performance claims"
+      },
+      "steps": 200000,
+      "repeats": 5,
+      "current": 3.2,
+      "median_ns_per_step": 54.17135,
+      "min_ns_per_step": 52.30281,
+      "max_ns_per_step": 57.92902,
+      "results_ns_per_step": [
+        52.481415,
+        57.92902,
+        54.17135,
+        54.239055,
+        52.30281
+      ],
+      "spike_counts": [
+        49999,
+        49999,
+        49999,
+        49999,
+        49999
+      ],
+      "final_us": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "final_basals": [
+        3.1999999999999997,
+        3.1999999999999997,
+        3.1999999999999997,
+        3.1999999999999997,
+        3.1999999999999997
+      ],
+      "final_apicals": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "driver_command": "cargo run --release --manifest-path engine/Cargo.toml --example bench_multicompartment_mcn_rk4"
+    },
+    {
+      "backend": "go",
+      "command": "go test src/sc_neurocore/accel/go/services/multicompartment_mcn.go src/sc_neurocore/accel/go/services/multicompartment_mcn_test.go -run ^$ -bench BenchmarkMulticompartmentMCNRK4$ -benchtime 200000x -count 5",
+      "steps": 200000,
+      "repeats": 5,
+      "current": 3.2,
+      "median_ns_per_step": 107.5,
+      "min_ns_per_step": 106.4,
+      "max_ns_per_step": 117.0,
+      "results_ns_per_step": [
+        106.8,
+        117.0,
+        107.5,
+        106.4,
+        107.8
+      ],
+      "spikes": 49999,
+      "spike_counts": [
+        49999,
+        49999,
+        49999,
+        49999,
+        49999
+      ]
+    },
+    {
+      "backend": "julia",
+      "command": "julia --project=. -e <multicompartment_mcn rk4 benchmark>",
+      "steps": 200000,
+      "repeats": 5,
+      "current": 3.2,
+      "median_ns_per_step": 77.278175,
+      "min_ns_per_step": 76.02249,
+      "max_ns_per_step": 80.007675,
+      "results_ns_per_step": [
+        80.007675,
+        76.02249,
+        76.98623,
+        77.278175,
+        79.502115
+      ],
+      "spikes": 49999,
+      "final_us": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "final_basals": [
+        3.1999999999999997,
+        3.1999999999999997,
+        3.1999999999999997,
+        3.1999999999999997,
+        3.1999999999999997
+      ],
+      "final_apicals": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ]
+    },
+    {
+      "backend": "mojo",
+      "command": "mojo run --disable-warnings -I src/sc_neurocore/accel/mojo/kernels <temp multicompartment_mcn benchmark>",
+      "steps": 200000,
+      "repeats": 5,
+      "current": 3.2,
+      "median_ns_per_step": 124.20844497682992,
+      "min_ns_per_step": 123.07514494750649,
+      "max_ns_per_step": 128.0897800461389,
+      "results_ns_per_step": [
+        128.0897800461389,
+        124.20844497682992,
+        127.52489499689545,
+        123.07514494750649,
+        124.19862498063594
+      ],
+      "spikes": 49999,
+      "spike_counts": [
+        49999,
+        49999,
+        49999,
+        49999,
+        49999
+      ]
+    }
+  ],
+  "source_hashes": {
+    "benchmarks/bench_model_multicompartment_mcn.py": "4c2ff0c4fb47938218ae7e38afa5680dd02fc891e64869433e4d49a0d0d021a7",
+    "engine/Cargo.toml": "497ca1396cd117ac752ca9f59fd55ba9df7dd451b76405211394fac8c58f0f5b",
+    "engine/examples/bench_multicompartment_mcn_rk4.rs": "1e8c496f2cd816d0b8398045402b267a92f9b59b6be3e712bc0f4f336b69f98f",
+    "engine/src/neurons/multi_compartment.rs": "acc46ff25d880760bb1d7be795c80a203f69e1ce47780b39c1887dabf5435196",
+    "src/sc_neurocore/neurons/models/multicompartment_mcn.py": "452f5c85b71db197427e64dda2fbab6df9b456623fad856ffcb85c04ef3bf299",
+    "src/sc_neurocore/accel/go/services/multicompartment_mcn.go": "9aabac2f2093a0e828f06771728a437beb67b2cd402ecbf81779e4839e79166a",
+    "src/sc_neurocore/accel/go/services/multicompartment_mcn_test.go": "7c09de47b70ff65ba47b459f0fd40edaa056e3ea0ee255d1ef119e0d3cbf31da",
+    "src/sc_neurocore/accel/julia/neurons/multicompartment_mcn.jl": "8e6c50a8ca1b1563be4b4dadea29289cd53af935630a40034fd0195075b4999b",
+    "src/sc_neurocore/accel/mojo/kernels/multicompartment_mcn.mojo": "b87095c4af8c8c4879fe673ff37828502c1f1f051035d7c161785dacf9594265"
+  }
+}

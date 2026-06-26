@@ -5,6 +5,17 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+### Physics and mathematics hardening
+- Promoted `MulticompartmentMCNNeuron` (Spiking-WM dual-dendrite working-memory
+  cell) from raw forward Euler to candidate-first RK4 over the coupled
+  `(u, v_basal, v_apical)` system, with finite input/state/candidate validation
+  and an explicit `integrator="baseline_euler"` regression path. The Rust engine,
+  Rust safety mirror, Go service, Julia mirror, and new Mojo kernel now share the
+  same derivative order and threshold-reset rule. Added focused Python/Go/Rust
+  tests, a Rust benchmark example, a five-backend local non-isolated benchmark
+  artefact, and refreshed the model documentation. All five backends agree on
+  the `49,999` spike anchor at 200k steps / basal current 3.2.
+
 ## [3.15.35] - 2026-06-26
 
 ### Physics and mathematics hardening

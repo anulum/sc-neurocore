@@ -1035,7 +1035,9 @@ impl Default for DendriticNMDANeuron {
 ///
 /// Dual-dendrite model with basal and apical compartments. The apical dendrite
 /// gates how strongly basal information influences the soma, enabling
-/// nonlinear integration for long-term temporal memory in RL tasks.
+/// nonlinear integration for long-term temporal memory in RL tasks. The engine
+/// uses candidate-first RK4 over `(u, v_basal, v_apical)` so all compartments
+/// are advanced from one consistent state before the reset is committed.
 ///
 /// Exact equations from arXiv:2503.00713 (Spiking-WM, PNAS 2025):
 ///
@@ -1094,28 +1096,90 @@ impl MulticompartmentMCNNeuron {
         1.0 / (1.0 + (-self.beta * x).exp())
     }
 
+    fn valid(&self) -> bool {
+        self.tau.is_finite()
+            && self.tau > 0.0
+            && self.tau_b.is_finite()
+            && self.tau_b > 0.0
+            && self.tau_a.is_finite()
+            && self.tau_a > 0.0
+            && self.g_ratio.is_finite()
+            && self.g_ratio >= 0.0
+            && self.beta.is_finite()
+            && self.beta > 0.0
+            && self.v_th.is_finite()
+            && self.v_th > 0.0
+            && self.dt.is_finite()
+            && self.dt > 0.0
+            && self.u.is_finite()
+            && self.v_basal.is_finite()
+            && self.v_apical.is_finite()
+    }
+
+    fn derivatives(
+        &self,
+        u: f64,
+        v_basal: f64,
+        v_apical: f64,
+        x_basal: f64,
+        x_apical: f64,
+        i_soma: f64,
+    ) -> [f64; 3] {
+        let gate = self.sigma(v_apical);
+        let du = (-u + gate * (self.g_ratio * (v_basal - u) + i_soma)) / self.tau;
+        let dv_basal = (-v_basal + x_basal) / self.tau_b;
+        let dv_apical = (-v_apical + x_apical) / self.tau_a;
+        [du, dv_basal, dv_apical]
+    }
+
+    fn rk4_substep(&self, state: [f64; 3], x_basal: f64, x_apical: f64, i_soma: f64) -> [f64; 3] {
+        let dt = self.dt;
+        let k1 = self.derivatives(state[0], state[1], state[2], x_basal, x_apical, i_soma);
+        let k2 = self.derivatives(
+            state[0] + 0.5 * dt * k1[0],
+            state[1] + 0.5 * dt * k1[1],
+            state[2] + 0.5 * dt * k1[2],
+            x_basal,
+            x_apical,
+            i_soma,
+        );
+        let k3 = self.derivatives(
+            state[0] + 0.5 * dt * k2[0],
+            state[1] + 0.5 * dt * k2[1],
+            state[2] + 0.5 * dt * k2[2],
+            x_basal,
+            x_apical,
+            i_soma,
+        );
+        let k4 = self.derivatives(
+            state[0] + dt * k3[0],
+            state[1] + dt * k3[1],
+            state[2] + dt * k3[2],
+            x_basal,
+            x_apical,
+            i_soma,
+        );
+        [
+            state[0] + dt * (k1[0] + 2.0 * k2[0] + 2.0 * k3[0] + k4[0]) / 6.0,
+            state[1] + dt * (k1[1] + 2.0 * k2[1] + 2.0 * k3[1] + k4[1]) / 6.0,
+            state[2] + dt * (k1[2] + 2.0 * k2[2] + 2.0 * k3[2] + k4[2]) / 6.0,
+        ]
+    }
+
     /// Step with basal input (x_b), apical input (x_a), and direct somatic input.
     pub fn step_compartments(&mut self, x_basal: f64, x_apical: f64, i_soma: f64) -> i32 {
-        // Basal dendrite: τ_b dV_b/dt = -V_b + x_b.
-        let dv_b = (-self.v_basal + x_basal) / self.tau_b;
-        self.v_basal += dv_b * self.dt;
-
-        // Apical dendrite: τ_a dV_a/dt = -V_a + x_a.
-        let dv_a = (-self.v_apical + x_apical) / self.tau_a;
-        self.v_apical += dv_a * self.dt;
-
-        // Soma: τ dU/dt = -U + σ(V_a)·[g_B/g_L·(V_b - U) + i_soma].
-        let gate = self.sigma(self.v_apical);
-        let du = (-self.u + gate * (self.g_ratio * (self.v_basal - self.u) + i_soma)) / self.tau;
-        self.u += du * self.dt;
-
-        // Spike: S = Θ(U - V_th), reset: U ← U·(1 - S).
-        if self.u >= self.v_th {
-            self.u = 0.0;
-            1
-        } else {
-            0
+        if !x_basal.is_finite() || !x_apical.is_finite() || !i_soma.is_finite() || !self.valid() {
+            return 0;
         }
+        let next = self.rk4_substep([self.u, self.v_basal, self.v_apical], x_basal, x_apical, i_soma);
+        if !next.iter().all(|value| value.is_finite()) {
+            return 0;
+        }
+        let spike = next[0] >= self.v_th;
+        self.u = if spike { 0.0 } else { next[0] };
+        self.v_basal = next[1];
+        self.v_apical = next[2];
+        i32::from(spike)
     }
 
     /// Simple step: input goes to basal dendrite only.
@@ -1277,19 +1341,40 @@ mod gap_mc_tests {
         // Without apical input, gate = σ(0) = 0.5, moderate drive.
         let mut n_no_apical = MulticompartmentMCNNeuron::new();
         let mut spikes_no = 0;
-        for _ in 0..100 {
-            spikes_no += n_no_apical.step_compartments(3.0, 0.0, 0.0);
+        for _ in 0..1000 {
+            spikes_no += n_no_apical.step_compartments(2.5, 0.0, 0.0);
         }
         // With strong apical input, gate ≈ 1.0, full basal→soma coupling.
         let mut n_apical = MulticompartmentMCNNeuron::new();
         let mut spikes_yes = 0;
-        for _ in 0..100 {
-            spikes_yes += n_apical.step_compartments(3.0, 5.0, 0.0);
+        for _ in 0..1000 {
+            spikes_yes += n_apical.step_compartments(2.5, 5.0, 0.0);
         }
         assert!(
-            spikes_yes >= spikes_no,
+            spikes_yes >= spikes_no && spikes_yes > 0,
             "Apical gating should boost firing: apical={spikes_yes} >= none={spikes_no}"
         );
+    }
+
+    #[test]
+    fn mcn_rk4_cross_backend_anchor() {
+        let mut n = MulticompartmentMCNNeuron::new();
+        let mut spikes = 0;
+        for _ in 0..200_000 {
+            spikes += n.step(3.2);
+        }
+        assert_eq!(spikes, 49_999);
+    }
+
+    #[test]
+    fn mcn_invalid_input_preserves_state() {
+        let mut n = MulticompartmentMCNNeuron::new();
+        for _ in 0..5 {
+            let _ = n.step(3.2);
+        }
+        let old = (n.u, n.v_basal, n.v_apical);
+        assert_eq!(n.step(f64::INFINITY), 0);
+        assert_eq!((n.u, n.v_basal, n.v_apical), old);
     }
 
     #[test]

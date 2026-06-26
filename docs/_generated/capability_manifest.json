@@ -965,7 +965,7 @@
     "python_model_classes": 158,
     "python_model_source_modules": 152,
     "rust_pyo3_model_wrappers": 175,
-    "test_files": 888
+    "test_files": 889
   },
   "documentation": {
     "public_pages": [
@@ -3245,6 +3245,7 @@
       "tests/test_model_mihalas_niebur.py",
       "tests/test_model_morris_lecar.py",
       "tests/test_model_motor_unit.py",
+      "tests/test_model_multicompartment_mcn.py",
       "tests/test_model_neurogrid.py",
       "tests/test_model_nlif.py",
       "tests/test_model_non_resetting_lif.py",

@@ -111,13 +111,19 @@ This energy interpretation connects to attractor network models of working
 memory (Hopfield 1982, Amit & Brunel 1997), where sustained activity corresponds
 to a stable fixed point in a high-dimensional energy landscape.
 
-### Discretisation (forward Euler)
+### Discretisation (candidate-first RK4)
 
-$$V_b[t+1] = V_b[t] + \frac{(-V_b[t] + x_b) \cdot dt}{\tau_b}$$
+The production implementation advances the three-state vector
+$(U, V_b, V_a)$ with classical RK4. Basal, apical, and direct somatic drives are
+held constant across the four stages, and every stage evaluates the soma gate
+from the stage-local apical voltage. The candidate state is checked for finite
+values before commit; the soma is then reset to 0 if the candidate crosses
+$V_{th}$.
 
-$$V_a[t+1] = V_a[t] + \frac{(-V_a[t] + x_a) \cdot dt}{\tau_a}$$
-
-$$U[t+1] = U[t] + \frac{(-U[t] + \sigma(V_a) \cdot [g_{ratio} \cdot (V_b - U[t]) + I]) \cdot dt}{\tau}$$
+For regression comparison only, Python accepts
+`integrator="baseline_euler"`, which evaluates the same coupled right-hand side
+with one explicit Euler increment. The default and all production backend
+surfaces use `integrator="rk4"`.
 
 ---
 
@@ -257,7 +263,9 @@ For the simple `step(current)` interface: `x_basal = current`, `x_apical = 0`, `
 | **Direct soma input** | Bypass dendrites via i_soma parameter |
 | **Simple API** | `step(current)` for single-input use |
 | **Full API** | `step_compartments(x_b, x_a, I)` for triple-input use |
-| **Rust parity** | Identical equations to Rust implementation |
+| **Candidate-first RK4** | Python, Rust, Julia, Go, and Mojo advance the same coupled three-state RHS |
+| **Fail-closed validation** | Non-finite inputs, parameters, states, and candidates are rejected before state commit |
+| **Baseline comparison path** | Python keeps `integrator="baseline_euler"` for explicit regression comparisons |
 
 ---
 
@@ -269,7 +277,7 @@ For the simple `step(current)` interface: `x_basal = current`, `x_apical = 0`, `
 from sc_neurocore.neurons.models import MulticompartmentMCNNeuron
 
 neuron = MulticompartmentMCNNeuron()
-spikes = sum(neuron.step(3.0) for _ in range(100))
+spikes = sum(neuron.step(3.2) for _ in range(100))
 print(f"Basal-only: {spikes} spikes in 100 steps")
 # Note: with step(), x_apical=0 → σ(0)=0.5 → half-gated
 ```
@@ -279,15 +287,15 @@ print(f"Basal-only: {spikes} spikes in 100 steps")
 ```python
 # No apical input: gate = σ(0) = 0.5.
 n1 = MulticompartmentMCNNeuron()
-s1 = sum(n1.step_compartments(2.0, 0.0, 0.0) for _ in range(200))
+s1 = sum(n1.step_compartments(2.5, 0.0, 0.0) for _ in range(200))
 
 # Strong apical: gate → 1.0, full basal-soma coupling.
 n2 = MulticompartmentMCNNeuron()
-s2 = sum(n2.step_compartments(2.0, 5.0, 0.0) for _ in range(200))
+s2 = sum(n2.step_compartments(2.5, 5.0, 0.0) for _ in range(200))
 
 # Inhibitory apical: gate → 0.0, basal blocked.
 n3 = MulticompartmentMCNNeuron()
-s3 = sum(n3.step_compartments(2.0, -5.0, 0.0) for _ in range(200))
+s3 = sum(n3.step_compartments(2.5, -5.0, 0.0) for _ in range(200))
 
 print(f"No apical: {s1} spikes")
 print(f"Strong apical: {s2} spikes")
@@ -358,8 +366,9 @@ Decorated with `@dataclass`. Defined in
 | `tau_a` | `float` | `2.0` | $> 0$ | Apical dendrite time constant |
 | `g_ratio` | `float` | `1.0` | $\geq 0$ | Basal-to-soma conductance ratio ($g_B/g_L$) |
 | `beta` | `float` | `1.0` | $> 0$ | Sigmoid gate steepness |
-| `v_th` | `float` | `1.0` | Any | Spike threshold |
+| `v_th` | `float` | `1.0` | $> 0$ | Spike threshold |
 | `dt` | `float` | `1.0` | $> 0$ | Integration timestep |
+| `integrator` | `"rk4"` or `"baseline_euler"` | `"rk4"` | supported literal | Production RK4 or explicit Euler regression path |
 
 #### State Variables
 
@@ -387,15 +396,20 @@ Reset u, v_basal, v_apical to 0.0.
 
 Sigmoid gate: 1/(1 + exp(-β·x)).
 
-### Rust implementation parity
+### Polyglot implementation parity
 
-| Operation | Python | Rust |
-|-----------|--------|------|
-| Basal ODE | `(-v_basal + x_b)/tau_b * dt` | `(-self.v_basal + x_basal)/self.tau_b * dt` |
-| Apical ODE | `(-v_apical + x_a)/tau_a * dt` | `(-self.v_apical + x_apical)/self.tau_a * dt` |
-| Sigmoid | `1/(1+exp(-beta*x))` | `1.0/(1.0+(-self.beta*x).exp())` |
-| Soma ODE | `(-u + gate*(g*(v_b-u)+I))/tau * dt` | identical |
-| Spike | `u >= v_th → u = 0.0` | `u >= v_th → u = 0.0` |
+| Surface | Path | Role |
+|---------|------|------|
+| Python reference | `src/sc_neurocore/neurons/models/multicompartment_mcn.py` | Public model, validation, `baseline_euler` comparison mode |
+| Rust engine | `engine/src/neurons/multi_compartment.rs` | Compiled production backend and Rust benchmark path |
+| Rust safety mirror | `src/sc_neurocore/accel/rust/safety/multicompartment_mcn.rs` | Standalone safety-surface parity check |
+| Go service | `src/sc_neurocore/accel/go/services/multicompartment_mcn.go` | Native Go RK4 service and benchmark hook |
+| Julia mirror | `src/sc_neurocore/accel/julia/neurons/multicompartment_mcn.jl` | Julia RK4 parity mirror |
+| Mojo kernel | `src/sc_neurocore/accel/mojo/kernels/multicompartment_mcn.mojo` | SIMD-shaped RK4 kernel |
+
+All five production language surfaces use the same `(U, V_b, V_a)` derivative
+order, the same `1/(1+exp(-beta*x))` gate, the same threshold-reset rule, and the
+same `49,999` spike anchor at `200,000` steps with basal current `3.2`.
 
 ### Edge cases
 
@@ -405,42 +419,43 @@ Sigmoid gate: 1/(1 + exp(-β·x)).
 | `x_apical >> 0` always | Gate ≈ 1.0 — full coupling (equivalent to 2-compartment) |
 | `x_apical << 0` always | Gate ≈ 0.0 — decoupled (soma only receives i_soma) |
 | `g_ratio = 0` | No basal-to-soma current even with gate open |
-| `beta = 0` | σ(x) = 0.5 always — gate locked at 50% |
-| `dt > tau` | Euler unstable — oscillation |
+| `beta = 0` | rejected; use a small positive value for a nearly flat gate |
+| `dt > tau` | accepted if finite/positive; RK4 is more stable than Euler, but large steps still alter dynamics |
+| non-finite input/state/candidate | Python raises before mutation; Go/Rust safety/Rust engine return no spike and preserve state |
 
 ---
 
 ## 7. Performance Benchmarks
 
-### Python (i5-11600K, single core, CPython 3.12)
+### Five-backend local regression benchmark
 
-| Method | Time per step | Steps/second |
-|--------|--------------|--------------|
-| `step_compartments()` | 1,310 ns | 763,000 |
-| `step()` | ~1,350 ns | 741,000 |
+Command:
 
-**Cost breakdown:**
+```bash
+PYTHONPATH=src .venv/bin/python benchmarks/bench_model_multicompartment_mcn.py
+```
 
-| Operation | Fraction |
-|-----------|----------|
-| 3 ODE updates (V_b, V_a, U) | ~40% |
-| `math.exp()` in sigmoid | ~25% |
-| Spike check + reset | ~10% |
-| Gate multiplication | ~10% |
-| Python overhead | ~15% |
+Artefact:
+`benchmarks/results/local_python_2026-06-26_multicompartment_mcn_rk4.json`.
 
-### Rust (i5-11600K, single core, Criterion)
+This is a local non-isolated workstation run for regression context only, not a
+published throughput claim. The benchmark fails closed unless Python, Rust, Go,
+Julia, and Mojo all report the same spike count.
 
-| Method | Time per step | Speedup vs Python |
-|--------|--------------|-------------------|
-| `step_compartments()` | ~5 ns | ~262× |
+| Backend | Median ns/step | Spike anchor |
+|---------|----------------|--------------|
+| Python | 12,644.231 | 49,999 |
+| Rust | 54.171 | 49,999 |
+| Go | 107.500 | 49,999 |
+| Julia | 77.278 | 49,999 |
+| Mojo | 124.208 | 49,999 |
 
 ### Memory
 
 | Implementation | Per-neuron |
 |---------------|------------|
 | Python | ~200 bytes |
-| Rust | 88 bytes (11× f64) |
+| Rust | 80 bytes (10× f64) |
 
 ---
 
@@ -492,8 +507,13 @@ Sigmoid gate: 1/(1 + exp(-β·x)).
 | `test_defaults_match_table_ii` | tau=tau_b=tau_a=2.0, g_ratio=1.0, beta=1.0, v_th=1.0 | PASS |
 | `test_step_returns_binary` | Output in {0, 1} | PASS |
 | `test_sigma_gating` | σ(0)=0.5, σ(10)>0.99, σ(-10)<0.01 | PASS |
-| `test_basal_input_produces_spikes` | step(3.0) fires | PASS |
-| `test_apical_gating_modulates_firing` | Strong apical enhances firing | PASS |
+| `test_default_integrator_is_rk4` | RK4 is the default production path | PASS |
+| `test_unknown_integrator_rejected` | unsupported integrator literals fail closed | PASS |
+| `test_rk4_and_baseline_euler_paths_diverge` | comparison path remains explicit and observable | PASS |
+| `test_cross_backend_spike_anchor` | `49,999` spikes at 200k steps / current 3.2 | PASS |
+| `test_non_finite_current_rejected_without_mutation` | invalid input is rejected before state commit | PASS |
+| `test_non_finite_runtime_state_rejected_before_mutation` | corrupted runtime state is rejected before mutation | PASS |
+| `test_apical_drive_increases_firing_anchor` | strong apical drive increases firing at basal drive 2.5 | PASS |
 | `test_soft_reset_to_zero` | U=0 after spike | PASS |
 | `test_step_compartments_api` | 3-arg API works | PASS |
 | `test_reset` | u=v_basal=v_apical=0 | PASS |
@@ -502,11 +522,12 @@ Sigmoid gate: 1/(1 + exp(-β·x)).
 
 | Equation | Python location | Rust location |
 |----------|----------------|---------------|
-| $\tau_b \, dV_b/dt = -V_b + x_b$ | `multicompartment_mcn.py:81-82` | `multi_compartment.rs:1016-1017` |
-| $\tau_a \, dV_a/dt = -V_a + x_a$ | `multicompartment_mcn.py:85-86` | `multi_compartment.rs:1020-1021` |
-| $\sigma(V_a) = 1/(1+e^{-\beta V_a})$ | `multicompartment_mcn.py:70-71` | `multi_compartment.rs:1009-1011` |
-| $\tau \, dU/dt = -U + \sigma \cdot [g(V_b-U)+I]$ | `multicompartment_mcn.py:89-92` | `multi_compartment.rs:1024-1025` |
-| $S = \Theta(U - V_{th})$, reset $U \leftarrow 0$ | `multicompartment_mcn.py:95-97` | `multi_compartment.rs:1029-1031` |
+| $\tau_b \, dV_b/dt = -V_b + x_b$ | `multicompartment_mcn.py:202` | `multi_compartment.rs:1130` |
+| $\tau_a \, dV_a/dt = -V_a + x_a$ | `multicompartment_mcn.py:203` | `multi_compartment.rs:1131` |
+| $\sigma(V_a) = 1/(1+e^{-\beta V_a})$ | `multicompartment_mcn.py:157-171` | `multi_compartment.rs:1094-1096` |
+| $\tau \, dU/dt = -U + \sigma \cdot [g(V_b-U)+I]$ | `multicompartment_mcn.py:200-201` | `multi_compartment.rs:1128-1129` |
+| RK4 candidate | `multicompartment_mcn.py:209-254` | `multi_compartment.rs:1135-1166` |
+| $S = \Theta(U - V_{th})$, reset $U \leftarrow 0$ | `multicompartment_mcn.py:333-339` | `multi_compartment.rs:1178-1182` |
 
 ---
 
@@ -557,11 +578,11 @@ special handling during backpropagation.
 6. **No heterogeneity:** All parameters are shared across the neuron. For
    heterogeneous populations, create neurons with different parameter sets.
 
-7. **Forward Euler only:** No adaptive timestepping. For stiff dynamics
-   (very different τ values), reduce dt accordingly.
+7. **Fixed-step RK4:** No adaptive timestepping. For stiff dynamics
+   (very different τ values), reduce `dt` and re-run the parity benchmark.
 
 ---
 
-*SC-NeuroCore v3.14.0 — Stochastic Computing Spiking Neural Network Framework*
+*SC-NeuroCore v3.15.35 — Stochastic Computing Spiking Neural Network Framework*
 
 *© 2020–2026 Miroslav Šotek. AGPL-3.0-or-later.*
