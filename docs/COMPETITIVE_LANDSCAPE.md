@@ -94,10 +94,11 @@ quadrantChart
    simulation, packed AND+popcount operations, and Sobol LDS encoding
 2. **FPGA co-design** — IR compiler emits synthesizable SystemVerilog
    and MLIR/CIRCT, with bit-exact Python↔Verilog co-simulation
-3. **Formal verification** — 67 SymbiYosys properties across 7 HDL
-   modules (no other SNN framework offers formal proofs)
+3. **Formal verification** — 18 SymbiYosys proof jobs and 130 formal
+   statements (100 assert, 7 assume, 23 cover) across the HDL formal tree
+   (no other SNN framework offers formal proofs)
 4. **Rust SIMD engine** — AVX-512/AVX2/NEON/SVE/RVV dispatch with
-   174 Rust neuron models with PyO3 bindings, 161-model NetworkRunner
+   175 Rust PyO3 model wrappers and a 161-model NetworkRunner
 5. **Network simulation** — 3 backends (Python, Rust, MPI), 6 topology
    generators, 10 model zoo configs, 3 pre-trained weight sets
 6. **Analysis toolkit** — 132 spike train analysis functions across
@@ -163,10 +164,11 @@ Brian2 comparison (same network, 1K excitatory + 250 inhibitory):
 | V01 ratio | 1.17× faster | baseline |
 
 **Honest framing**: The 1.17× figure is for 1K-neuron Python-path simulation.
-The Rust engine with Rayon parallelism shows 39–202× speedup on 100K-neuron
-Brunel networks (measured, stored artifact). Brian2 is faster at
-small networks where its C++ code generation amortizes overhead.
-SC-NeuroCore's Rust engine advantage grows with network size.
+The committed Brunel balanced-network scaling artifact
+`benchmarks/results/rust_scaling_benchmark.json` records 39-202x speedups
+against Brian2 for its 10K-100K Rust rows. Brian2 is faster at small networks
+where its C++ code generation amortizes overhead. SC-NeuroCore's Rust engine
+advantage grows with network size on that recorded workload.
 
 ### 3.3 GPU Scaling (NVIDIA RTX A6000)
 
@@ -227,7 +229,7 @@ Use that manifest as the evidence boundary for the public claim.
 | Bio-plausible learning | **Norse** or **BindsNET** | STDP/bio-learning focus |
 | Large-scale brain models | **Nengo** | NEF, SpiNNaker support |
 | Stochastic + quantum hybrid | **SC-NeuroCore** | Unique quantum-SC bridge |
-| Formal safety verification | **SC-NeuroCore** | 67 SymbiYosys properties |
+| Formal safety verification | **SC-NeuroCore** | 18 SymbiYosys proof jobs and 130 formal statements |
 
 ---
 

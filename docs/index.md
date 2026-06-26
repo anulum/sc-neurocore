@@ -2,7 +2,7 @@
 
 **Stochastic computing and neuromorphic hardware co-design toolkit**
 
-**Version 3.15.35** | 174 neuron models | optional Rust engine + Python front-end | HDL generation + hardware guides | [PyPI](https://pypi.org/project/sc-neurocore/) | [GitHub](https://github.com/anulum/sc-neurocore)
+**Version 3.15.35** | 158 lazy-loaded Python model classes | 175 Rust PyO3 model wrappers | HDL generation + hardware guides | [PyPI](https://pypi.org/project/sc-neurocore/) | [GitHub](https://github.com/anulum/sc-neurocore)
 
 SC-NeuroCore helps research and engineering teams build spiking and stochastic neural systems, validate their numerical behaviour, and move selected workflows toward hardware evidence. It is designed for people who need more than a simulator: bounded stochastic arithmetic, reproducible benchmark artefacts, generated RTL, synthesis evidence, and explicit readiness gaps.
 
@@ -33,8 +33,8 @@ Start here if you need to understand what the software is for:
 
 ## Key Features
 
-- **174 neuron models** — McCulloch-Pitts (1943) through ArcaneNeuron (2026), 9 hardware chip emulators, 9 AI-optimised
-- **174 Rust neuron models** — PyO3 bindings, 161-model NetworkRunner with Rayon parallelism
+- **158 lazy-loaded Python model classes** — 152 Python model source modules spanning McCulloch-Pitts (1943) through ArcaneNeuron (2026), hardware chip emulators, and AI-optimised research paths
+- **175 Rust PyO3 model wrappers** — optional acceleration wrappers with a 161-model NetworkRunner dispatch list and Rayon parallelism
 - **ArcaneNeuron** — primary self-referential cognition model with 3 coupled compartments (fast / working / deep) + attention gate + self-model predictor
 - **Identity substrate** — persistent spiking network with checkpointing, trace encoding/decoding, L16 Director control
 - **Network simulation** — Population-Projection-Network with 3 backends (Python, Rust, MPI)
@@ -148,7 +148,7 @@ See [Architecture](architecture/architecture.md) for the full package map.
 ## Demo
 
 See the [Neuron Explorer Notebook](https://github.com/anulum/sc-neurocore/blob/main/notebooks/04_neuron_explorer.ipynb)
-for an interactive walkthrough of all 174 neuron models with voltage traces,
+for an interactive walkthrough of the generated model catalogue with voltage traces,
 phase portraits, and F-I curves. The [NIR Bridge Notebook](https://github.com/anulum/sc-neurocore/blob/main/notebooks/05_nir_bridge.ipynb)
 demonstrates importing NIR graphs and simulating spiking networks. Or try the
 [Quickstart on Google Colab](https://colab.research.google.com/github/anulum/sc-neurocore/blob/main/notebooks/quickstart_colab.ipynb)

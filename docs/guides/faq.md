@@ -11,8 +11,10 @@ within the same process are instant (<1ms).
 ### Do I need the Rust engine?
 
 No. The Rust engine (`sc-neurocore-engine`) is optional. All Python
-functionality works without it. The Rust engine provides 39–202× speedup
-for bitstream operations and network simulation.
+functionality works without it. The committed Brunel balanced-network
+benchmark artifact `benchmarks/results/rust_scaling_benchmark.json` records
+39-202x speedups against Brian2 for its 10K-100K rows; treat that as
+workload-specific evidence, not a universal speed claim for every operation.
 
 Use `sc-neurocore info` to see whether the current environment can import
 `sc_neurocore_engine`. For source checkouts, build the local bridge with

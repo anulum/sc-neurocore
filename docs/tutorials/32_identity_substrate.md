@@ -61,7 +61,7 @@ substrate.inject_experience("The Euler method converges as O(dt)")
 
 # Multiple experiences build up weight structure
 substrate.inject_experience("NIR bridge maps 18 primitives to SC nodes")
-substrate.inject_experience("Formal verification covers 67 properties")
+substrate.inject_experience("Formal verification covers 18 proof jobs")
 ```
 
 ## 3. Extract State
@@ -153,7 +153,7 @@ substrate.run(duration=0.5, dt=0.001)  # warm up
 
 # Inject experiences from a work session
 experiences = [
-    "sc-neurocore has 174 neuron models spanning 83 years",
+    "sc-neurocore has 158 lazy-loaded Python model classes",
     "The Rust engine achieves 113 Gbit/s on AVX-512",
     "NIR bridge verified with Norse, snnTorch, SpikingJelly",
 ]

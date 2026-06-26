@@ -97,8 +97,8 @@ SC-NeuroCore is positioned for neuromorphic R&D, stochastic accelerator design, 
 | Model documentation pages | 175 |
 | Rust PyO3 model wrappers | 175 |
 | Optional extras | 25 |
-| Python test files | 889 |
-| Public documentation pages | 558 |
+| Python test files | 894 |
+| Public documentation pages | 559 |
 | GitHub Actions workflows | 14 |
 
 Evidence boundary: this snapshot is a static inventory. Performance, coverage, hardware, and scientific-fidelity claims require their own committed evidence artefacts.
@@ -158,12 +158,17 @@ pip install "sc-neurocore[full]"      # local research environment only
 See [Install Profiles](docs/guides/install_profiles.md) for the full optional
 dependency matrix and research-only boundaries.
 
-### Rust Engine (39–202× faster)
+### Rust Engine and Benchmark Evidence
 
-The optional Rust engine provides SIMD-accelerated simulation, 174 neuron
-models via PyO3, and fused E-I network simulation. Pre-built wheels are
-available through repository release assets or source builds when present in
-the local environment.
+The optional Rust engine provides SIMD-accelerated simulation, 175 Rust PyO3
+model wrappers, a 161-model NetworkRunner dispatch list, and fused E-I network
+simulation. Pre-built wheels are available through repository release assets or
+source builds when present in the local environment.
+
+The committed Brunel balanced-network scaling artefact
+`benchmarks/results/rust_scaling_benchmark.json` records 39-202x speedups
+against Brian2 for its 10K-100K rows. Treat that as workload-specific evidence,
+not as a blanket claim for every engine path.
 
 When installed, SC-NeuroCore automatically uses the Rust engine for:
 
@@ -237,7 +242,9 @@ Full documentation: [Studio Guide](https://anulum.github.io/sc-neurocore/studio/
 
 ## Docker
 
-The Docker image ships with the full Rust engine (39–202× faster than Brian2):
+Docker builds can include the optional Rust acceleration engine when the build
+profile installs it. Published speed evidence is scoped to committed benchmark
+artefacts such as `benchmarks/results/rust_scaling_benchmark.json`:
 
 ```bash
 # Build
@@ -286,7 +293,7 @@ Research and extended modules are available from source (`pip install -e ".[dev]
 graph TD
     subgraph "Python API (pip install sc-neurocore)"
         A[BitstreamEncoder] --> B[SCDenseLayer / SCConv2DLayer]
-        B --> C[173 Neuron Models<br/>LIF · HH · AdEx · Izhikevich · ArcaneNeuron · ...]
+        B --> C[158 lazy-loaded Python model classes<br/>152 Python model source modules]
         C --> NET[Network Engine<br/>Population · Projection · 3 Backends]
         C --> ID[Identity Substrate<br/>Persistent SNN · Checkpoint · Director]
         C --> D[STDP / R-STDP Synapses]
@@ -297,7 +304,7 @@ graph TD
         B --> F{Backend?}
         F -->|CPU| G[NumPy / Numba SIMD]
         F -->|GPU| H[CuPy CUDA]
-        F -->|Rust| I[sc_neurocore_engine<br/>39–202× vs Brian2 · 174 neuron models<br/>161-model NetworkRunner]
+        F -->|Rust| I[sc_neurocore_engine<br/>Brunel benchmark artefact: 39-202x vs Brian2<br/>175 Rust PyO3 wrappers · 161-model NetworkRunner]
         F -->|MPI| MPI[mpi4py distributed<br/>billion-neuron scale]
     end
 
@@ -308,7 +315,7 @@ graph TD
         K --> L[Verilog RTL<br/>AXI-Lite + LIF Core]
         K2 --> L
         L --> M[FPGA Bitstream<br/>Xilinx / Intel]
-        L --> V[Formal Verification<br/>SymbiYosys · 7 modules]
+        L --> V[Formal Verification<br/>18 proof jobs · 130 formal statements]
     end
 
     subgraph "Domain Bridges (optional)"
@@ -373,8 +380,11 @@ hdl/
   sc_event_neuron.v           -- Event-triggered LIF (power ∝ spike rate)
   sc_aer_router.v             -- AER event distribution to target neurons
   tb_sc_*.v (7 testbenches)   -- Self-checking simulation testbenches
-  formal/ (7 modules)         -- SymbiYosys formal verification properties
+  formal/ (18 proof jobs)     -- 130 formal statements (100 assert, 7 assume, 23 cover)
 ```
+
+Formal verification inventory: 18 SymbiYosys proof jobs and 130 formal
+statements (100 assert, 7 assume, 23 cover) under `hdl/formal/`.
 
 ### GPU Acceleration
 
@@ -574,19 +584,19 @@ pip install -r requirements.txt       # runtime only
 pip install -r requirements-dev.txt   # runtime + dev tools
 ```
 
-## Rust Engine (174 Neuron Models, 1 720 Tests across 6 Crates)
+## Rust Engine (175 PyO3 Wrappers, 161-Model NetworkRunner)
 
-The `sc_neurocore_engine` crate provides 174 Rust neuron models callable
-from Python via PyO3 bindings (including ArcaneNeuron), a 161-model
-NetworkRunner with Rayon-parallel population simulation (100K+ neurons),
-and SIMD-accelerated primitives with dispatch across five ISAs (AVX-512,
-AVX2, NEON, SVE, RISC-V V).
-
-1 720 Rust tests across 6 workspace crates:
+The `sc_neurocore_engine` crate provides 175 Rust PyO3 model wrappers callable
+from Python (including ArcaneNeuron), a 161-model NetworkRunner with
+Rayon-parallel population simulation (100K+ neurons), and SIMD-accelerated
+primitives with dispatch across five ISAs (AVX-512, AVX2, NEON, SVE,
+RISC-V V). Rust test totals are maintained by the Rust workspace; public
+release claims should cite the current `cargo test -- --list` output or CI
+evidence before publication.
 
 | Crate | Tests | Purpose |
 |-------|------:|---------|
-| `sc_neurocore_engine` | 1,552 | PyO3 SIMD engine, 174 neuron models, NetworkRunner |
+| `sc_neurocore_engine` | CI-listed | PyO3 SIMD engine, Rust model wrappers, NetworkRunner |
 | `tinysc_riscv` | 83 | RISC-V SC instruction set simulator |
 | `core_engine` | 22 | SC arithmetic core (standalone) |
 | `autonomous_learning` | 12 | Self-modifying plasticity rules |
@@ -596,7 +606,7 @@ AVX2, NEON, SVE, RISC-V V).
 | Category | Scope |
 |----------|-------|
 | Primitives | Bernoulli + Sobol bitstream, pack/unpack, popcount, SIMD (5 ISAs) |
-| Neurons | 174 models: LIF variants, HH-type, maps, hardware emulators, population, ArcaneNeuron |
+| Neurons | 175 PyO3 model wrappers; 161 names wired into NetworkRunner |
 | NetworkRunner | 161-model fused simulation loop with CSR projections and Rayon parallelism |
 | Synapses | Static, STDP, Reward-STDP |
 | Layers | Dense, Conv2D, Recurrent, Learning, Fusion, Memristive, Attention |

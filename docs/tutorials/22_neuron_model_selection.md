@@ -2,9 +2,10 @@
 
 # Tutorial 22: Choosing the Right Neuron Model
 
-SC-NeuroCore ships 174 neuron models spanning 83 years of computational
-neuroscience (1943-2026). This guide helps you pick the right model
-for your application.
+SC-NeuroCore currently exposes 158 lazy-loaded Python model classes across
+152 Python model source modules, with 175 Rust PyO3 model wrappers in the
+optional engine. This guide helps you pick the right model for your
+application.
 
 ## Decision Tree
 

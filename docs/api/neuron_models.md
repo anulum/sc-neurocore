@@ -1,9 +1,10 @@
-# Neuron Model Reference — 121 Python / 174 Rust
+# Neuron Model Reference — 158 Python Classes / 175 Rust PyO3 Wrappers
 
-SC-NeuroCore provides 121 neuron models in Python (114 files in `models/`)
-and 173 Rust implementations callable via PyO3
-bindings. Both backends expose identical `step()` / `reset()` /
-`get_state()` interfaces.
+SC-NeuroCore currently exposes 158 lazy-loaded Python model classes across
+152 Python model source modules in `src/sc_neurocore/neurons/models/`, plus
+175 Rust PyO3 model wrappers in the optional engine. Matching model classes
+use the same `step()` / `reset()` / `get_state()` interface shape where the
+backend implements that surface.
 
 ## Quick Start
 
@@ -26,9 +27,9 @@ spike = hh_rs.step(current=10.0)
 | Python | `sc_neurocore.neurons.models` | Prototyping, parameter tuning, debugging |
 | Rust | `sc_neurocore_engine.sc_neurocore_engine` | Production, benchmarks, batch simulation |
 
-Both backends use identical class names (e.g., `HodgkinHuxleyNeuron`).
-The Rust engine provides 174 neuron models with PyO3 bindings, 161 of
-which are wired into the NetworkRunner pipeline.
+Backends use identical class names where parity wrappers exist (for example,
+`HodgkinHuxleyNeuron`). The Rust engine provides 175 Rust PyO3 model wrappers,
+161 of which are wired into the NetworkRunner pipeline.
 
 ## Model Catalogue
 

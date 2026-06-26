@@ -190,7 +190,8 @@ print(f"LFSR: {result_hw.compression_ratio:.1f}x")
 
 The LFSR predictor uses the same polynomial (x^16 + x^14 + x^13 + x^11 + 1)
 and step semantics as `sc_bitstream_encoder.v`. Python prediction = Verilog
-prediction, bit-for-bit. Formally verified via SymbiYosys (72 properties).
+prediction, bit-for-bit. Formally verified through the HDL SymbiYosys
+inventory: 18 proof jobs and 130 formal statements.
 
 ## Delta Codec (Neural Probes)
 

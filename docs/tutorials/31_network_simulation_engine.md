@@ -4,8 +4,9 @@
 
 SC-NeuroCore's network engine provides a Population-Projection-Network architecture
 with three backends (Python/NumPy, Rust NetworkRunner, MPI distributed). Build networks
-from any of the 174 neuron models, connect them with configurable topologies, inject
-stimuli, record spikes, and run with automatic backend selection.
+from the Python model catalogue or the 161-model Rust NetworkRunner dispatch
+list, connect them with configurable topologies, inject stimuli, record spikes,
+and run with automatic backend selection.
 
 ## Core Concepts
 

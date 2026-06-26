@@ -125,8 +125,8 @@ Artix-7 100T at ~56K LUTs.
 
 ### Formal verification
 
-72 properties across 7 SymbiYosys formal modules (encoder, neuron,
-synapse, dense layer, dotproduct, firing rate, AXI-Lite config).
+18 SymbiYosys proof jobs and 130 formal statements (100 assert, 7 assume,
+23 cover) across the HDL formal tree.
 
 ### Prerequisites for physical deployment
 
@@ -182,9 +182,9 @@ train-to-hardware export path.
 
 ## Rust Engine (Optional, Recommended)
 
-The Rust SIMD engine provides 113 Gbit/s bitstream packing (AVX-512) with
-AVX-512, AVX2, or NEON auto-dispatch. 174 neuron models compiled
-to native code with PyO3 bindings.
+The Rust SIMD engine provides committed SIMD benchmark artefacts, AVX-512,
+AVX2, or NEON auto-dispatch, 175 Rust PyO3 model wrappers, and a 161-model
+NetworkRunner dispatch list.
 
 ```bash
 # From a source checkout
@@ -218,8 +218,8 @@ package. The engine adds speed, not features.
 ## Licensing
 
 SC-NeuroCore is **free for research and education** under AGPL-3.0.
-Academic labs can use the full framework — 174 neuron models, Rust
-engine, Verilog RTL, quantum modules, training pipeline — at no cost.
+Academic labs can use the full framework — Python model catalogue, optional
+Rust engine, Verilog RTL, quantum modules, and training pipeline — at no cost.
 
 Proprietary integration requires a [commercial license](../pricing.md).
 Academic discounts available — contact

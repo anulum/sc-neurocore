@@ -3,9 +3,9 @@
 # Tutorial 21: Formal Verification with SymbiYosys
 
 Formal verification proves that hardware properties hold for **all
-possible inputs**, not just a finite test set. SC-NeuroCore ships 7
-formal verification modules covering 67 properties across the core
-HDL pipeline.
+possible inputs**, not just a finite test set. SC-NeuroCore currently ships
+18 SymbiYosys proof jobs and 130 formal statements (100 assert, 7 assume,
+23 cover) across the HDL formal tree.
 
 **Prerequisites**: [SymbiYosys](https://symbiyosys.readthedocs.io/),
 [Yosys](https://yosyshq.net/yosys/), an SMT solver (Z3 or Boolector)
@@ -19,19 +19,22 @@ conda install -c litex-hub yosys symbiyosys
 
 ## 1. What's formally verified
 
-SC-NeuroCore proves properties on 7 Verilog modules:
+SC-NeuroCore proves properties through the SymbiYosys jobs under `hdl/formal/`.
+The current inventory is:
 
-| Module | Properties | What's proved |
-|--------|-----------|---------------|
-| `sc_lif_neuron` | 5 assert + 1 cover | Reset → V_REST, spike → V_RESET, refractory silence, counter bounded, spike reachable |
-| `sc_bitstream_encoder` | 2 assert + 1 cover | LFSR never locks to zero, zero probability → zero output, spike reachable |
-| `sc_bitstream_synapse` | 4 assert + 4 cover | AND-gate correctness, weight-zero blocks output, output bounded {0,1} |
-| `sc_dotproduct_to_current` | 4 assert + 1 cover | Popcount bounded by word count, reset clears accumulator |
-| `sc_dense_layer_core` | 6 assert + 1 cover | FSM transitions valid, done pulse singular, neuron count bounded |
-| `sc_firing_rate_bank` | 21 assert + 1 cover | Rate counter bounded per accumulator, window rollover, rate stability |
-| `sc_axil_cfg` | 12 assert + 2 cover | AXI-Lite protocol compliance, register read-back, address decode |
+| Inventory | Count |
+|-----------|------:|
+| SymbiYosys `.sby` proof jobs | 18 |
+| `assert(...)` statements | 100 |
+| `assume(...)` statements | 7 |
+| `cover(...)` statements | 23 |
+| Total formal statements | 130 |
 
-**Total: 53 assertions + 3 assumes + 11 cover properties = 67 formal properties**
+**Total: 18 SymbiYosys proof jobs and 130 formal statements (100 assert, 7 assume, 23 cover).**
+
+The larger proof-job set covers the original stochastic-computing RTL blocks
+plus timing, masking, controller, queue, and sensor wrappers added after the
+older seven-module tutorial inventory.
 
 ## 2. Running a single proof
 

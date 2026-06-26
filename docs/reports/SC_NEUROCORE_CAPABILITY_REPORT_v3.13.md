@@ -26,7 +26,7 @@ compiler emitting SystemVerilog.
 | Brunel 1K speedup vs Brian2 | 4.0x | Benchmarked (Numba JIT) |
 | Bitstream packing | 41.3 Gbit/s (AVX-512) | Criterion benchmark |
 | Synthesis (sc_neurocore_top) | 3 673 LUTs (Xilinx 7-series) | Yosys report |
-| Formal properties | 61 across 7 HDL modules | SymbiYosys |
+| Formal verification | Archived v3.13 inventory; current public inventory is 18 proof jobs / 130 formal statements | SymbiYosys |
 | CI workflows | 13, all SHA-pinned | GitHub Actions |
 | Python versions | 3.10–3.14 | CI matrix |
 | Platforms | Linux, macOS, Windows | Wheel builds |
@@ -122,11 +122,11 @@ Synthesisable Verilog-2005 modules:
 
 ### 2.4 Formal Verification
 
-67 properties across 7 SymbiYosys formal modules covering:
-encoder, neuron, synapse, dense layer, dotproduct, firing rate,
-AXI-Lite config. Properties include safety (no overflow), liveness
-(neurons fire under sufficient input), and equivalence (Python
-golden model matches RTL).
+Archived v3.13 formal inventory has been superseded. Current public
+documentation should cite 18 SymbiYosys proof jobs and 130 formal statements
+(100 assert, 7 assume, 23 cover) across the HDL formal tree. The historical
+scope covered encoder, neuron, synapse, dense layer, dotproduct, firing rate,
+and AXI-Lite config proofs.
 
 ### 2.5 Surrogate Gradient Training
 
@@ -268,7 +268,7 @@ This is a research module, not a production inference tool.
 | Linting | ruff 0.15.6 | Zero violations |
 | Security | bandit | Zero findings |
 | SPDX headers | CI guard | All .py, .rs, .v files |
-| Formal | SymbiYosys | 67 properties |
+| Formal | SymbiYosys | Current public inventory: 18 proof jobs / 130 formal statements |
 | Supply chain | CodeQL + OpenSSF Scorecard | Active |
 | CI workflows | 13, all SHA-pinned | Every push |
 

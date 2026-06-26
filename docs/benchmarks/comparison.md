@@ -71,8 +71,8 @@ SC-NeuroCore-specific.
 
 | Category | SC-NeuroCore | snnTorch | Norse | Brian2 | Lava |
 |----------|:---:|:---:|:---:|:---:|:---:|
-| Python models | **120** | 11 | 6 | Custom eq. | 3 |
-| Rust/compiled models | **173** | — | — | C++ codegen | — |
+| Python models | **158 lazy-loaded classes / 152 source modules** | 11 | 6 | Custom eq. | 3 |
+| Rust/compiled models | **175 Rust PyO3 wrappers / 161-model NetworkRunner** | — | — | C++ codegen | — |
 | Hardware emulators | **9** | — | — | — | Loihi only |
-| Formal verification | **72 properties** | — | — | — | — |
+| Formal verification | **18 SymbiYosys proof jobs and 130 formal statements (100 assert, 7 assume, 23 cover)** | — | — | — | — |
 | Train-to-FPGA export | **Yes** | No | No | No | No |
