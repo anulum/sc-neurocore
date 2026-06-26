@@ -7,7 +7,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 167
+expected_file_count = 168
 
 [[file]]
 path = "scripts/generate_docs.py"
@@ -284,6 +284,10 @@ rationale = "Public spike-native graph convolution and graph-classification laye
 [[file]]
 path = "src/sc_neurocore/symbolic/__init__.py"
 rationale = "Public neuromorphic symbolic-reasoning package entry point."
+
+[[file]]
+path = "src/sc_neurocore/uvm_gen/uvm_gen.py"
+rationale = "Public UVM/SystemVerilog verification-IP generator documented in API and module-integration guides."
 
 [[file]]
 path = "src/sc_neurocore/temporal_hierarchy/__init__.py"

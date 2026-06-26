@@ -39,12 +39,16 @@ from typing import Dict, List, Optional, Tuple
 
 
 class PortDirection(Enum):
+    """SystemVerilog port direction tokens accepted by the UVM generator."""
+
     INPUT = "input"
     OUTPUT = "output"
     INOUT = "inout"
 
 
 class PortType(Enum):
+    """SystemVerilog net/data type tokens emitted for module ports."""
+
     LOGIC = "logic"
     WIRE = "wire"
     REG = "reg"
@@ -52,7 +56,7 @@ class PortType(Enum):
 
 @dataclass
 class ModulePort:
-    """Parsed RTL port."""
+    """Parsed RTL port metadata used by generated UVM components."""
 
     name: str
     direction: PortDirection
@@ -64,6 +68,7 @@ class ModulePort:
 
     @property
     def sv_decl(self) -> str:
+        """Return the SystemVerilog declaration for this parsed port."""
         signed = " signed" if self.is_signed else ""
         width = f" [{self.width - 1}:0]" if self.width > 1 else ""
         arr = f" [0:{self.array_size - 1}]" if self.is_array else ""
@@ -71,10 +76,12 @@ class ModulePort:
 
     @property
     def is_clock(self) -> bool:
+        """Return whether the port name matches a supported clock convention."""
         return self.name.lower() in ("clk", "clock", "i_clk")
 
     @property
     def is_reset(self) -> bool:
+        """Return whether the port name matches a supported reset convention."""
         return self.name.lower() in ("rst_n", "reset_n", "rst", "reset", "i_rst_n")
 
 
@@ -158,6 +165,7 @@ class RTLModule:
 
     @property
     def input_ports(self) -> List[ModulePort]:
+        """Input ports excluding generated clock and reset controls."""
         return [
             p
             for p in self.ports
@@ -166,22 +174,27 @@ class RTLModule:
 
     @property
     def output_ports(self) -> List[ModulePort]:
+        """Output ports monitored by the generated scoreboard and coverage."""
         return [p for p in self.ports if p.direction == PortDirection.OUTPUT]
 
     @property
     def clock_port(self) -> Optional[ModulePort]:
+        """First parsed clock-like port, if the RTL module declares one."""
         return next((p for p in self.ports if p.is_clock), None)
 
     @property
     def reset_port(self) -> Optional[ModulePort]:
+        """First parsed reset-like port, if the RTL module declares one."""
         return next((p for p in self.ports if p.is_reset), None)
 
     @property
     def total_input_bits(self) -> int:
+        """Total data-input width excluding clock and reset ports."""
         return sum(p.width for p in self.input_ports)
 
     @property
     def total_output_bits(self) -> int:
+        """Total output width observed by generated verification components."""
         return sum(p.width for p in self.output_ports)
 
 
@@ -292,6 +305,7 @@ class UVMBenchmark:
     filelist: List[str] = field(default_factory=list)
 
     def to_dict(self) -> Dict[str, str]:
+        """Return generated artefacts keyed by their output filenames."""
         d = {
             f"{self.module_name}_transaction.sv": self.transaction_sv,
             f"{self.module_name}_sequence.sv": self.sequence_sv,
