@@ -7,7 +7,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 163
+expected_file_count = 164
 
 [[file]]
 path = "scripts/generate_docs.py"
@@ -256,6 +256,10 @@ rationale = "Public simulated quantum measurement entropy source used by source 
 [[file]]
 path = "src/sc_neurocore/spike_gnn/__init__.py"
 rationale = "Public spike-native graph neural network package entry point."
+
+[[file]]
+path = "src/sc_neurocore/spike_gnn/spike_gnn.py"
+rationale = "Public spike-native graph convolution and graph-classification layer implementation."
 
 [[file]]
 path = "src/sc_neurocore/symbolic/__init__.py"

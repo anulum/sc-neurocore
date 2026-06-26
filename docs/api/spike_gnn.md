@@ -12,6 +12,11 @@ Each `SpikeGraphConv` layer performs:
 
 `SpikeGNNLayer` stacks multiple `SpikeGraphConv` layers with inter-layer spike count normalization.
 
+The implementation is deterministic for a fixed layer seed. `SpikeGraphConv.forward`
+normalizes each node's neighbor aggregate by clipped in-degree, projects through
+the learned weight matrix, runs a rate-coded LIF loop for `T` timesteps, and
+returns non-negative spike counts with shape `(n_nodes, out_features)`.
+
 ## Components
 
 - **`SpikeGraphConv`** — Single spike-based graph convolution layer.
