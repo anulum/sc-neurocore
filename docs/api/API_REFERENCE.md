@@ -55,6 +55,7 @@ Use the smallest public surface that proves the workflow:
 ## Training And Learning
 
 - [Training API](training.md)
+- [Learning facade](learning.md)
 - [Delay training](delay_training.md)
 - [ANN-to-SNN conversion](conversion.md)
 - [Autonomous learning](autonomous_learning.md)

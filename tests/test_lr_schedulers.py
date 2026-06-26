@@ -20,7 +20,7 @@ from sc_neurocore.learning.schedulers import (
 )
 
 
-def test_step_scheduler_drops_at_interval():
+def test_step_scheduler_drops_at_interval() -> None:
     s = StepScheduler(lr_init=0.1, step_size=5, gamma=0.5)
     for _ in range(4):
         s.step()
@@ -29,21 +29,21 @@ def test_step_scheduler_drops_at_interval():
     assert abs(s.lr - 0.05) < 1e-10
 
 
-def test_step_scheduler_multiple_drops():
+def test_step_scheduler_multiple_drops() -> None:
     s = StepScheduler(lr_init=1.0, step_size=3, gamma=0.1)
     for _ in range(6):
         s.step()
     assert abs(s.lr - 0.01) < 1e-10
 
 
-def test_exponential_scheduler_decays():
+def test_exponential_scheduler_decays() -> None:
     s = ExponentialScheduler(lr_init=1.0, gamma=0.9)
     for _ in range(10):
         s.step()
     assert abs(s.lr - 0.9**10) < 1e-10
 
 
-def test_cosine_scheduler_endpoints():
+def test_cosine_scheduler_endpoints() -> None:
     s = CosineScheduler(lr_init=0.1, lr_min=0.001, total_steps=100)
     assert s.lr == 0.1
     for _ in range(100):
@@ -51,7 +51,7 @@ def test_cosine_scheduler_endpoints():
     assert abs(s.lr - 0.001) < 1e-6
 
 
-def test_cosine_scheduler_midpoint():
+def test_cosine_scheduler_midpoint() -> None:
     s = CosineScheduler(lr_init=1.0, lr_min=0.0, total_steps=100)
     for _ in range(50):
         s.step()
@@ -59,7 +59,7 @@ def test_cosine_scheduler_midpoint():
     assert abs(s.lr - expected) < 1e-6
 
 
-def test_warmup_cosine_warmup_phase():
+def test_warmup_cosine_warmup_phase() -> None:
     s = WarmupCosineScheduler(lr_init=0.1, lr_min=0.001, warmup_steps=10, total_steps=100)
     assert s.lr == 0.0
     for _ in range(5):
@@ -67,7 +67,7 @@ def test_warmup_cosine_warmup_phase():
     assert abs(s.lr - 0.05) < 1e-10
 
 
-def test_warmup_cosine_peak_and_decay():
+def test_warmup_cosine_peak_and_decay() -> None:
     s = WarmupCosineScheduler(lr_init=0.1, lr_min=0.001, warmup_steps=10, total_steps=110)
     for _ in range(10):
         s.step()
@@ -77,7 +77,7 @@ def test_warmup_cosine_peak_and_decay():
     assert abs(s.lr - 0.001) < 1e-4
 
 
-def test_cosine_reset():
+def test_cosine_reset() -> None:
     s = CosineScheduler(lr_init=0.1, lr_min=0.0, total_steps=50)
     for _ in range(50):
         s.step()
@@ -86,7 +86,7 @@ def test_cosine_reset():
     assert s._count == 0
 
 
-def test_step_scheduler_reset():
+def test_step_scheduler_reset() -> None:
     s = StepScheduler(lr_init=1.0, step_size=3, gamma=0.1)
     for _ in range(6):
         s.step()
@@ -94,14 +94,14 @@ def test_step_scheduler_reset():
     assert s._count == 0
 
 
-def test_exponential_scheduler_reset():
+def test_exponential_scheduler_reset() -> None:
     s = ExponentialScheduler(lr_init=1.0, gamma=0.9)
     for _ in range(10):
         s.step()
     s.reset()
 
 
-def test_warmup_cosine_reset():
+def test_warmup_cosine_reset() -> None:
     s = WarmupCosineScheduler(lr_init=0.1, lr_min=0.001, warmup_steps=10, total_steps=100)
     for _ in range(50):
         s.step()

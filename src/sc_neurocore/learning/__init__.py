@@ -20,6 +20,7 @@ from .advanced import (
     ShortTermPlasticity,
     StructuralPlasticity,
 )
+from .callbacks import CSVCallback, TensorBoardCallback, TrainingCallback, WandBCallback
 from .federated import FederatedAggregator
 from .lifelong import EWC_SCLayer
 from .neuroevolution import SNNGeneticEvolver
@@ -31,9 +32,18 @@ from .online_o1 import (
     OnlineO1Synapse,
     build_online_o1_memory_proof,
 )
+from .schedulers import (
+    CosineScheduler,
+    ExponentialScheduler,
+    StepScheduler,
+    WarmupCosineScheduler,
+)
 
 __all__ = [
     "BPTTLearner",
+    "CSVCallback",
+    "CosineScheduler",
+    "ExponentialScheduler",
     "TBPTTLearner",
     "EligibilityTrace",
     "FederatedAggregator",
@@ -48,6 +58,11 @@ __all__ = [
     "RewardModulatedLearner",
     "ShortTermPlasticity",
     "SNNGeneticEvolver",
+    "StepScheduler",
     "StructuralPlasticity",
+    "TensorBoardCallback",
+    "TrainingCallback",
+    "WandBCallback",
+    "WarmupCosineScheduler",
     "build_online_o1_memory_proof",
 ]

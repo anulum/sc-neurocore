@@ -3,7 +3,8 @@
 Training paradigms beyond single-node STDP: BPTT, truncated BPTT,
 eligibility traces, reward-modulated learning, meta-learning,
 homeostatic scaling, short-term plasticity, structural plasticity,
-federated learning, lifelong/continual learning, and neuroevolution.
+federated learning, lifelong/continual learning, neuroevolution,
+learning-rate schedulers, and training callbacks.
 
 ## BPTT Learner
 
@@ -24,6 +25,35 @@ Memory O(k) instead of O(T).
 ## Reward-Modulated STDP
 
 ::: sc_neurocore.learning.advanced.RewardModulatedLearner
+
+## Learning-Rate Schedulers
+
+Import these schedulers from either `sc_neurocore.learning` or
+`sc_neurocore.learning.schedulers`. They keep only deterministic local state and
+return the current learning rate from each `step()` call.
+
+::: sc_neurocore.learning.schedulers.StepScheduler
+
+::: sc_neurocore.learning.schedulers.ExponentialScheduler
+
+::: sc_neurocore.learning.schedulers.CosineScheduler
+
+::: sc_neurocore.learning.schedulers.WarmupCosineScheduler
+
+## Training Callbacks
+
+Import callbacks from either `sc_neurocore.learning` or
+`sc_neurocore.learning.callbacks`. `CSVCallback` has no optional dependencies;
+`TensorBoardCallback` and `WandBCallback` fail closed with `SCDependencyError`
+when their optional runtime packages are not installed.
+
+::: sc_neurocore.learning.callbacks.TrainingCallback
+
+::: sc_neurocore.learning.callbacks.CSVCallback
+
+::: sc_neurocore.learning.callbacks.TensorBoardCallback
+
+::: sc_neurocore.learning.callbacks.WandBCallback
 
 ## Bounded O(1) Online Learning
 

@@ -11,8 +11,10 @@
 from __future__ import annotations
 
 import csv
+from pathlib import Path
 import sys
 from types import ModuleType
+from typing import Any
 from unittest.mock import MagicMock
 
 import pytest
@@ -20,13 +22,13 @@ import pytest
 from sc_neurocore.learning.callbacks import CSVCallback, TrainingCallback
 
 
-def test_base_callback_is_noop():
+def test_base_callback_is_noop() -> None:
     cb = TrainingCallback()
     cb.log({"loss": 1.0}, step=0)
     cb.close()
 
 
-def test_csv_callback_writes_header_and_rows(tmp_path):
+def test_csv_callback_writes_header_and_rows(tmp_path: Path) -> None:
     path = str(tmp_path / "metrics.csv")
     cb = CSVCallback(path=path)
     cb.log({"loss": 0.5, "acc": 0.9}, step=0)
@@ -43,14 +45,14 @@ def test_csv_callback_writes_header_and_rows(tmp_path):
         assert row2[0] == "1"
 
 
-def test_csv_callback_close_empty_is_noop(tmp_path):
+def test_csv_callback_close_empty_is_noop(tmp_path: Path) -> None:
     path = str(tmp_path / "empty.csv")
     cb = CSVCallback(path=path)
     cb.close()
     assert not (tmp_path / "empty.csv").exists()
 
 
-def test_tensorboard_callback_raises_without_torch():
+def test_tensorboard_callback_raises_without_torch() -> None:
     try:
         from torch.utils.tensorboard import SummaryWriter  # noqa: F401
 
@@ -66,7 +68,7 @@ def test_tensorboard_callback_raises_without_torch():
         TensorBoardCallback()
 
 
-def test_wandb_callback_raises_without_wandb():
+def test_wandb_callback_raises_without_wandb() -> None:
     try:
         import wandb  # noqa: F401
 
@@ -82,17 +84,22 @@ def test_wandb_callback_raises_without_wandb():
         WandBCallback()
 
 
-def test_tensorboard_callback_with_mock(tmp_path, monkeypatch):
-    mock_writer = MagicMock()
+def test_tensorboard_callback_with_mock(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    mock_writer: Any = MagicMock()
+    summary_writer: Any = MagicMock(return_value=mock_writer)
     mock_tb = ModuleType("torch.utils.tensorboard")
-    mock_tb.SummaryWriter = MagicMock(return_value=mock_writer)
+    mock_tb_any: Any = mock_tb
+    mock_tb_any.SummaryWriter = summary_writer
 
     mock_torch = ModuleType("torch")
-    mock_torch.utils = ModuleType("torch.utils")
-    mock_torch.utils.tensorboard = mock_tb
+    mock_utils = ModuleType("torch.utils")
+    mock_utils_any: Any = mock_utils
+    mock_utils_any.tensorboard = mock_tb
+    mock_torch_any: Any = mock_torch
+    mock_torch_any.utils = mock_utils
 
     monkeypatch.setitem(sys.modules, "torch", mock_torch)
-    monkeypatch.setitem(sys.modules, "torch.utils", mock_torch.utils)
+    monkeypatch.setitem(sys.modules, "torch.utils", mock_utils)
     monkeypatch.setitem(sys.modules, "torch.utils.tensorboard", mock_tb)
 
     from sc_neurocore.learning.callbacks import TensorBoardCallback
@@ -104,8 +111,8 @@ def test_tensorboard_callback_with_mock(tmp_path, monkeypatch):
     mock_writer.close.assert_called_once()
 
 
-def test_wandb_callback_with_mock(monkeypatch):
-    mock_wandb = MagicMock()
+def test_wandb_callback_with_mock(monkeypatch: pytest.MonkeyPatch) -> None:
+    mock_wandb: Any = MagicMock()
     monkeypatch.setitem(sys.modules, "wandb", mock_wandb)
 
     from sc_neurocore.learning.callbacks import WandBCallback

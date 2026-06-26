@@ -33,12 +33,14 @@ class StepScheduler:
         self._count = 0
 
     def step(self) -> float:
+        """Advance one scheduler step and return the current learning rate."""
         self._count += 1
         if self._count % self.step_size == 0:
             self.lr *= self.gamma
         return self.lr
 
     def reset(self) -> None:
+        """Reset the internal step counter without changing the current rate."""
         self._count = 0
 
 
@@ -50,10 +52,12 @@ class ExponentialScheduler:
         self.gamma = gamma
 
     def step(self) -> float:
+        """Apply one exponential decay update and return the new rate."""
         self.lr *= self.gamma
         return self.lr
 
     def reset(self) -> None:
+        """Leave the stateless exponential schedule unchanged."""
         pass
 
 
@@ -68,12 +72,14 @@ class CosineScheduler:
         self.lr = lr_init
 
     def step(self) -> float:
+        """Advance one cosine-annealing step and return the new rate."""
         self._count += 1
         t = min(self._count / self.total_steps, 1.0)
         self.lr = self.lr_min + 0.5 * (self.lr_init - self.lr_min) * (1 + math.cos(math.pi * t))
         return self.lr
 
     def reset(self) -> None:
+        """Restore the initial learning rate and restart the cosine schedule."""
         self._count = 0
         self.lr = self.lr_init
 
@@ -96,6 +102,7 @@ class WarmupCosineScheduler:
         self.lr = 0.0
 
     def step(self) -> float:
+        """Advance through warmup or cosine decay and return the current rate."""
         self._count += 1
         if self._count <= self.warmup_steps:
             self.lr = self.lr_init * (self._count / self.warmup_steps)
@@ -106,5 +113,6 @@ class WarmupCosineScheduler:
         return self.lr
 
     def reset(self) -> None:
+        """Return to the pre-warmup state with zero current learning rate."""
         self._count = 0
         self.lr = 0.0
