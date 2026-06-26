@@ -6,6 +6,8 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore — scoped public docstring policy tests
 
+"""Regression tests for the scoped public docstring policy."""
+
 from __future__ import annotations
 
 import ast
@@ -49,6 +51,9 @@ def test_scoped_public_python_files_have_maintained_docstrings() -> None:
     violations: list[str] = []
     policy_files = policy["file"]
     assert len(policy_files) == expected_files
+    policy_paths = [entry["path"] for entry in policy_files]
+    duplicate_paths = sorted({path for path in policy_paths if policy_paths.count(path) > 1})
+    assert duplicate_paths == []
 
     for entry in policy_files:
         path = REPO_ROOT / entry["path"]

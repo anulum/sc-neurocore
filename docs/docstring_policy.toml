@@ -7,7 +7,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 168
+expected_file_count = 167
 
 [[file]]
 path = "scripts/generate_docs.py"
@@ -248,6 +248,10 @@ rationale = "Public neuromorphic-sensor interface package entry point."
 [[file]]
 path = "src/sc_neurocore/sensors/dvs.py"
 rationale = "Public DVS event-camera loader and spike/frame conversion module."
+
+[[file]]
+path = "src/sc_neurocore/sensors/adc_to_spike_kernel.py"
+rationale = "Public ADC-to-spike decimating rate-code encoder with Python, Rust, Julia, Go, and Mojo parity surfaces."
 
 [[file]]
 path = "src/sc_neurocore/security/checkpoint_loading.py"
@@ -510,10 +514,6 @@ path = "src/sc_neurocore/explain/spike_explain.py"
 rationale = "Public multi-method SNN explainability (spike attribution, temporal saliency, causal importance)."
 
 [[file]]
-path = "src/sc_neurocore/sensors/dvs.py"
-rationale = "Public DVS event-camera loader and event-to-spike/frame conversion pipeline."
-
-[[file]]
 path = "src/sc_neurocore/hdc/base.py"
 rationale = "Public hyperdimensional computing encoder and associative clean-up memory."
 
@@ -532,10 +532,6 @@ rationale = "Public composable spike-domain data augmentation transforms."
 [[file]]
 path = "src/sc_neurocore/augmentation/curriculum.py"
 rationale = "Public curriculum-learning scheduler for SNN training."
-
-[[file]]
-path = "src/sc_neurocore/spike_gnn/spike_gnn.py"
-rationale = "Public spiking graph neural network layers and stack."
 
 [[file]]
 path = "src/sc_neurocore/datasets/encoding.py"

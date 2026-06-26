@@ -76,3 +76,7 @@ production speedup claim. The zero parity delta is independent of host load.
 | `tests/test_adc_to_spike_kernel.py` | Quantisation across the three width regimes, saturation, sign-aware averaging, validation, dispatch and fallback |
 | `tests/test_adc_to_spike_kernel_parity.py` | Bit-exact parity of every built backend against the Python floor, and of the Python floor against the cycle-stepped golden reference, across five fixed-point configs |
 | `engine/src/adc_to_spike.rs` (`#[cfg(test)]`) | Rust quantise/average/rate-code and config/stream validation |
+
+`src/sc_neurocore/sensors/adc_to_spike_kernel.py` is also included in the scoped
+public docstring policy. The policy gate now rejects duplicate file entries so
+the reported enforced-file count stays tied to unique public modules.

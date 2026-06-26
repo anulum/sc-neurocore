@@ -6,8 +6,10 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore — ADC-to-spike encoder — cross-language + golden parity tests
 
-"""Bit-exact parity of every backend against the Python floor, and of the Python
-floor against the cycle-stepped golden model in ``tools/adc_to_spike_reference.py``.
+"""Bit-exact parity of every backend against the Python floor.
+
+The Python floor is also checked against the cycle-stepped golden model in
+``tools/adc_to_spike_reference.py``.
 
 The integer per-window encode is exact, so the cross-language contract is identical
 raw arrays (tolerance zero). Each backend test skips with an explanatory reason
@@ -22,6 +24,7 @@ from pathlib import Path
 
 import numpy as np
 import numpy.testing as npt
+import numpy.typing as nptyping
 import pytest
 
 from sc_neurocore.sensors.adc_to_spike_kernel import (
@@ -62,7 +65,9 @@ def _named_configs() -> dict[str, ADCSpikeWindowConfig]:
     }
 
 
-def _samples(config: ADCSpikeWindowConfig, n_windows: int, seed: int) -> np.ndarray:
+def _samples(
+    config: ADCSpikeWindowConfig, n_windows: int, seed: int
+) -> nptyping.NDArray[np.int64]:
     rng = np.random.default_rng(seed)
     return rng.integers(
         0, 1 << config.adc_width, size=config.decimation * n_windows, dtype=np.int64
@@ -72,6 +77,7 @@ def _samples(config: ADCSpikeWindowConfig, n_windows: int, seed: int) -> np.ndar
 @pytest.mark.parametrize("backend", _BACKENDS)
 @pytest.mark.parametrize("config_name", list(_named_configs()))
 def test_backend_bit_exact_with_python(backend: str, config_name: str) -> None:
+    """Built accelerator backends match the Python floor with zero tolerance."""
     if not _availability().get(backend, False):
         pytest.skip(f"{backend} backend not built in this environment")
     config = _named_configs()[config_name]
@@ -83,6 +89,7 @@ def test_backend_bit_exact_with_python(backend: str, config_name: str) -> None:
 
 @pytest.mark.parametrize("config_name", list(_named_configs()))
 def test_python_floor_matches_golden_reference(config_name: str) -> None:
+    """The batched Python floor matches the cycle-stepped golden reference."""
     config = _named_configs()[config_name]
     samples = _samples(config, 120, seed=11)
     reference = ADCToSpikeReference(
@@ -118,6 +125,7 @@ def test_python_floor_matches_golden_reference(config_name: str) -> None:
 
 @pytest.mark.parametrize("backend", _BACKENDS)
 def test_backend_rejects_short_stream(backend: str) -> None:
+    """Built accelerator backends reject streams shorter than one decimation window."""
     if not _availability().get(backend, False):
         pytest.skip(f"{backend} backend not built in this environment")
     with pytest.raises((ValueError, RuntimeError)):
@@ -125,4 +133,5 @@ def test_backend_rejects_short_stream(backend: str) -> None:
 
 
 def test_at_least_python_backend_present() -> None:
+    """The Python floor backend is always available for production fallback."""
     assert _availability()["python"] is True
