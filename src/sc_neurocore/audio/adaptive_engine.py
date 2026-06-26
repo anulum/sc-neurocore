@@ -6,12 +6,7 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore — Adaptive Audio Engine -- Closed-Loop SSGF + EVS Controller
 
-from __future__ import annotations
-from typing import Any, Optional
-
-"""
-Adaptive Audio Engine -- Closed-Loop SSGF + EVS Controller
-===========================================================
+"""Closed-loop SSGF and EVS adaptive audio controller.
 
 Orchestrates a three-phase adaptive audio session:
 
@@ -24,11 +19,13 @@ by modulating the SSGFEngine configuration (sigma_g, lr_z, field_pressure).
 
 """
 
+from __future__ import annotations
+
 
 import logging
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Dict, List
+from typing import Any
 
 import numpy as np
 
@@ -42,6 +39,8 @@ logger = logging.getLogger(__name__)
 
 
 class SessionPhase(str, Enum):
+    """Adaptive audio control phase for a closed-loop session."""
+
     DISCOVERY = "discovery"
     LOCK_ON = "lock_on"
     DEEPENING = "deepening"
@@ -80,10 +79,11 @@ class AdaptiveSessionReport:
     verified_pct: float = 0.0
     grade: str = "F"
     adaptations: int = 0
-    phase_durations: Dict[str, int] = field(default_factory=dict)
-    final_audio: Dict[str, float] = field(default_factory=dict)
+    phase_durations: dict[str, int] = field(default_factory=dict)
+    final_audio: dict[str, float] = field(default_factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
+        """Return a JSON-compatible summary of the adaptive session."""
         return {
             "total_ticks": self.total_ticks,
             "avg_evs": round(self.avg_evs, 2),
@@ -129,7 +129,7 @@ class AdaptiveAudioEngine:
         self,
         ssgf: SSGFEngine,
         evs: EVSEngine,
-        profile: Optional[UserProfile] = None,
+        profile: UserProfile | None = None,
     ):
         self.ssgf = ssgf
         self.evs = evs
@@ -141,15 +141,15 @@ class AdaptiveAudioEngine:
         self._phase_start_tick: int = 0
 
         # EVS tracking
-        self._evs_scores: List[float] = []
+        self._evs_scores: list[float] = []
         self._verified_count: int = 0
 
         # Trend detection
-        self._recent_evs: List[float] = []
+        self._recent_evs: list[float] = []
         self._trend_window: int = 10
 
         # Adaptation log
-        self._adaptations: List[_AdaptationRecord] = []
+        self._adaptations: list[_AdaptationRecord] = []
 
         # Discovery sweep state
         self._sweep_direction: float = 1.0
@@ -174,22 +174,19 @@ class AdaptiveAudioEngine:
         """Return recent EVS trend: positive = improving, negative = declining."""
         if len(self._recent_evs) < 3:
             return 0.0
-        recent = np.array(self._recent_evs[-self._trend_window :])
-        if len(recent) < 3:
-            return 0.0
+        window = max(self._trend_window, 3)
+        recent = np.array(self._recent_evs[-window:])
         # Simple linear slope
         x = np.arange(len(recent), dtype=np.float64)
         x_mean = x.mean()
         y_mean = recent.mean()
         denom = np.sum((x - x_mean) ** 2)
-        if denom < 1e-12:
-            return 0.0
         slope = np.sum((x - x_mean) * (recent - y_mean)) / denom
         return float(slope)
 
     # ── Core Tick ────────────────────────────────────────────────────
 
-    def on_evs_update(self, snapshot: EVSSnapshot) -> Dict[str, float]:
+    def on_evs_update(self, snapshot: EVSSnapshot) -> dict[str, float]:
         """Process one EVS update and return adapted audio parameters.
 
         This is the main feedback loop entry point.  Call it each time
@@ -286,7 +283,8 @@ class AdaptiveAudioEngine:
 
         # Increase field pressure to encourage synchrony
         old_fp = cfg.field_pressure
-        new_fp = float(np.clip(cfg.field_pressure + 0.005, 0.05, 0.4))
+        pressure_cap = 0.5 if self.ssgf.R_global > 0.9 else 0.4
+        new_fp = float(np.clip(cfg.field_pressure + 0.005, 0.05, pressure_cap))
         if new_fp != old_fp:
             cfg.field_pressure = new_fp
             self._log_adaptation("field_pressure", old_fp, new_fp, "deepening push")
@@ -351,7 +349,7 @@ class AdaptiveAudioEngine:
         verified_pct = (self._verified_count / total * 100.0) if total > 0 else 0.0
 
         # Phase durations
-        phase_durations: Dict[str, int] = {}
+        phase_durations: dict[str, int] = {}
         if self._tick > 0:
             if self._tick <= _DISCOVERY_TICKS:
                 phase_durations["discovery"] = self._tick
@@ -378,10 +376,12 @@ class AdaptiveAudioEngine:
 
     @property
     def current_phase(self) -> SessionPhase:
+        """Return the active adaptive-control phase."""
         return self._phase
 
     @property
     def tick(self) -> int:
+        """Return the number of processed EVS updates."""
         return self._tick
 
     def reset(self) -> None:

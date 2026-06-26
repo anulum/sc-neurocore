@@ -5,6 +5,24 @@ SSGF-based geometry-to-audio mapping, and per-user profile persistence.
 
 ## Adaptive Engine
 
+`AdaptiveAudioEngine` is the public closed-loop controller for adaptive audio
+sessions. Each `EVSSnapshot` advances one controller tick, updates the session
+phase, adjusts the `SSGFEngine` configuration when feedback trends change, runs
+one geometry step, and returns the current audio mapping.
+
+The controller exposes three stable session phases:
+
+- `discovery`: sweeps the target frequency and keeps geometry parameters in an
+  exploratory range.
+- `lock_on`: responds to EVS decline or improvement by adjusting geometry
+  coupling and learning rate.
+- `deepening`: increases field pressure and geometry coupling while reducing
+  the learning rate for stability.
+
+`AdaptiveSessionReport` summarises total ticks, EVS statistics, verified
+percentage, phase durations, adaptation count, and the final audio mapping in a
+JSON-compatible dictionary.
+
 ::: sc_neurocore.audio.adaptive_engine
 
 ## EVS Engine
