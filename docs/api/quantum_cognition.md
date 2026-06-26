@@ -674,7 +674,34 @@ PYTHONPATH=src python -m pytest tests/test_quantum_cognition.py tests/test_gotm_
 
 ---
 
-## 13. References
+## 13. Physical Evidence Boundary
+
+The quantum cognition API remains experimental, but the molecular-input lane is
+now backed by first-principles ORCA evidence rather than placeholder constants.
+As of 2026-06-26, the neutral dry Posner cluster, cation-radical EPR/HFC pass,
+neutral NMR pass, hydrated/dimer follow-up pass, and tier-2 optimized
+hydration/dimer physics pass have all completed on the ML350 with normal ORCA
+termination in the checked outputs.
+
+Processed tier-2 values include an optimized hydrated-cluster energy of
+`-10412.778244957428 Eh`, an optimized neutral-dimer energy of
+`-19908.244951484612 Eh`, a counterpoise-corrected dimer binding estimate of
+`-193.284716 kcal/mol`, a CPCM(Water) hydrated single point of
+`-10412.897506075209 Eh`, and PBE0 cross-check single points for the hydrated
+cluster and dimer. These values are processed as internal deterministic
+evidence artifacts; they are not yet promoted into runtime model constants.
+
+The active continuation is a tier-3 validation run: hydrated optimized
+frequency/IR first, then optimized dimer frequency/IR. Those jobs determine
+whether the promoted geometries are true minima and whether the vibrational
+evidence is suitable for stronger Fisher-Posner control inputs. Until that
+frequency validation, uncertainty propagation, and explicit model-constant
+injection are complete, public API behavior and IBM hardware claims remain
+gated.
+
+---
+
+## 14. References
 
 Theoretical basis:
 
@@ -701,7 +728,7 @@ Related public surfaces:
 
 ---
 
-## 14. Auto-rendered API
+## 15. Auto-rendered API
 
 ::: sc_neurocore.quantum_cognition
     options:
