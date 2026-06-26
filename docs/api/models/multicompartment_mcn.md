@@ -442,13 +442,16 @@ This is a local non-isolated workstation run for regression context only, not a
 published throughput claim. The benchmark fails closed unless Python, Rust, Go,
 Julia, and Mojo all report the same spike count.
 
-| Backend | Median ns/step | Spike anchor |
-|---------|----------------|--------------|
-| Python | 12,644.231 | 49,999 |
-| Rust | 54.171 | 49,999 |
-| Go | 107.500 | 49,999 |
-| Julia | 77.278 | 49,999 |
-| Mojo | 124.208 | 49,999 |
+Measured local regression results from
+`benchmarks/results/local_python_2026-06-26_multicompartment_mcn_rk4.json`:
+
+| Backend | Median ns/step | Min ns/step | Max ns/step | Spike anchor |
+|---------|---------------:|------------:|------------:|-------------:|
+| Python | 12,644.231 | 11,561.743 | 14,075.619 | 49,999 |
+| Rust engine | 54.171 | 52.303 | 57.929 | 49,999 |
+| Go | 107.500 | 106.400 | 117.000 | 49,999 |
+| Julia | 77.278 | 76.022 | 80.008 | 49,999 |
+| Mojo | 124.208 | 123.075 | 128.090 | 49,999 |
 
 ### Memory
 

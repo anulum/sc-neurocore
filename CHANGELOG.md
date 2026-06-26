@@ -5,6 +5,16 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 ## [Unreleased]
 
 ### Physics and mathematics hardening
+- Promoted `NeuroGridNeuron` (reduced Neurogrid two-compartment analog EIF
+  neuron) from raw Euler to candidate-first RK4 over `(v_s, v_d)`, with an
+  event-limited soma stage cap at `v_peak`, finite input/state/candidate
+  validation, reset-on-commit spike semantics, and an explicit
+  `integrator="baseline_euler"` regression path. Replaced placeholder Go and
+  Rust safety mirrors, repaired Julia, added Mojo, harmonised the Rust engine,
+  added focused Python/Go/Rust tests, a Rust benchmark example, a five-backend
+  local non-isolated benchmark artefact, and refreshed the model documentation.
+  Python, Rust, Go, Julia, and Mojo agree on the 94-spike anchor at 20k steps /
+  current 100.0.
 - Promoted `HayL5PyramidalNeuron` (reduced three-compartment Layer 5 thick-tufted
   pyramidal cell) from four raw Euler sub-steps to candidate-first RK4 over the
   nine-state `(v_s, h_na, n_k, v_t, m_ca, h_ca, m_ih, v_a, ca_a)` system, with

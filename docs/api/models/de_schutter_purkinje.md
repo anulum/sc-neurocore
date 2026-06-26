@@ -557,13 +557,16 @@ This is a local non-isolated workstation run for regression context only, not a
 published throughput claim. The benchmark fails closed unless all five backends
 report the same spike count.
 
-| Backend | Median ns/step | Spike anchor |
-|---------|----------------|--------------|
-| Python | 108,635.457 | 1 |
-| Rust | 1,624.448 | 1 |
-| Go | 1,924.000 | 1 |
-| Julia | 1,251.403 | 1 |
-| Mojo | 1,374.153 | 1 |
+Measured local regression results from
+`benchmarks/results/local_python_2026-06-26_de_schutter_purkinje_rk4.json`:
+
+| Backend | Median ns/step | Min ns/step | Max ns/step | Spike anchor |
+|---------|---------------:|------------:|------------:|-------------:|
+| Python | 108,635.457 | 82,475.474 | 113,508.530 | 1 |
+| Rust engine | 1,624.448 | 1,519.687 | 2,040.099 | 1 |
+| Go | 1,924.000 | 1,655.000 | 2,746.000 | 1 |
+| Julia | 1,251.403 | 1,186.997 | 1,941.743 | 1 |
+| Mojo | 1,374.153 | 1,296.591 | 1,410.983 | 1 |
 
 The higher per-step cost reflects 5 sub-steps × 7 state variables ×
 5 currents with Ca²⁺ dynamics — the most complex single-compartment

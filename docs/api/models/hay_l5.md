@@ -165,6 +165,17 @@ The dual-input anchor is `4` spikes at 20,000 steps with
 `current_soma=5.0` and `current_tuft=5.0`; it is covered by the Python, Rust
 engine, Rust safety, and Go tests.
 
+Measured local regression results from
+`benchmarks/results/local_python_2026-06-26_hay_l5_rk4.json`:
+
+| Backend | Median ns/step | Min ns/step | Max ns/step | Spike anchor |
+|---------|---------------:|------------:|------------:|-------------:|
+| Python | 99,490.680 | 88,847.402 | 103,916.734 | 1 |
+| Rust engine | 1,318.765 | 1,289.627 | 1,430.737 | 1 |
+| Go | 2,706.000 | 2,277.000 | 2,967.000 | 1 |
+| Julia | 1,229.921 | 1,159.662 | 1,301.917 | 1 |
+| Mojo | spike-only | spike-only | spike-only | 1 |
+
 Benchmark timing is local, non-isolated workstation context only. Use the
 recorded medians as regression signals, not published throughput claims.
 

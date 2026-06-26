@@ -434,19 +434,60 @@ impl NeuroGridNeuron {
             dt: 0.1,
         }
     }
-    pub fn step(&mut self, current: f64) -> i32 {
-        let dv_d =
-            (-(self.v_d - self.v_rest) + current - self.g_c * (self.v_d - self.v_s)) / self.tau_d;
-        self.v_d += dv_d * self.dt;
-        let exp_arg = ((self.v_s - self.v_threshold) / self.delta_t).min(20.0);
+    fn valid(&self) -> bool {
+        self.v_s.is_finite()
+            && self.v_d.is_finite()
+            && self.tau_s.is_finite()
+            && self.tau_s > 0.0
+            && self.tau_d.is_finite()
+            && self.tau_d > 0.0
+            && self.g_c.is_finite()
+            && self.g_c >= 0.0
+            && self.delta_t.is_finite()
+            && self.delta_t > 0.0
+            && self.v_rest.is_finite()
+            && self.v_threshold.is_finite()
+            && self.v_peak.is_finite()
+            && self.v_reset.is_finite()
+            && self.dt.is_finite()
+            && self.dt > 0.0
+    }
+
+    fn derivatives(&self, v_s: f64, v_d: f64, current: f64) -> (f64, f64) {
+        let v_s_eff = v_s.min(self.v_peak);
+        let dv_d = (-(v_d - self.v_rest) + current - self.g_c * (v_d - v_s_eff)) / self.tau_d;
+        let exp_arg = ((v_s_eff - self.v_threshold) / self.delta_t).min(20.0);
         let exp_term = self.delta_t * exp_arg.exp();
-        let dv_s =
-            (-(self.v_s - self.v_rest) + exp_term + self.g_c * (self.v_d - self.v_s)) / self.tau_s;
-        self.v_s += dv_s * self.dt;
-        if self.v_s >= self.v_peak {
+        let dv_s = (-(v_s_eff - self.v_rest) + exp_term + self.g_c * (v_d - v_s_eff)) / self.tau_s;
+        (dv_s, dv_d)
+    }
+
+    fn rk4_substep(&self, v_s: f64, v_d: f64, current: f64) -> (f64, f64) {
+        let dt = self.dt;
+        let (k1s, k1d) = self.derivatives(v_s, v_d, current);
+        let (k2s, k2d) = self.derivatives(v_s + 0.5 * dt * k1s, v_d + 0.5 * dt * k1d, current);
+        let (k3s, k3d) = self.derivatives(v_s + 0.5 * dt * k2s, v_d + 0.5 * dt * k2d, current);
+        let (k4s, k4d) = self.derivatives(v_s + dt * k3s, v_d + dt * k3d, current);
+        (
+            v_s + dt * (k1s + 2.0 * k2s + 2.0 * k3s + k4s) / 6.0,
+            v_d + dt * (k1d + 2.0 * k2d + 2.0 * k3d + k4d) / 6.0,
+        )
+    }
+
+    pub fn step(&mut self, current: f64) -> i32 {
+        if !current.is_finite() || !self.valid() {
+            return 0;
+        }
+        let (next_v_s, next_v_d) = self.rk4_substep(self.v_s, self.v_d, current);
+        if !next_v_s.is_finite() || !next_v_d.is_finite() {
+            return 0;
+        }
+        self.v_d = next_v_d;
+        if next_v_s >= self.v_peak {
             self.v_s = self.v_reset;
             1
         } else {
+            self.v_s = next_v_s;
             0
         }
     }
@@ -742,5 +783,23 @@ mod tests {
     #[test]
     fn neurogrid_nan_no_panic() {
         NeuroGridNeuron::new().step(f64::NAN);
+    }
+    #[test]
+    fn neurogrid_rk4_anchor() {
+        let mut n = NeuroGridNeuron::new();
+        let spikes: i32 = (0..20_000).map(|_| n.step(100.0)).sum();
+        assert_eq!(spikes, 94);
+        assert!(n.v_s.is_finite());
+        assert!(n.v_d.is_finite());
+    }
+    #[test]
+    fn neurogrid_invalid_input_preserves_state() {
+        let mut n = NeuroGridNeuron::new();
+        for _ in 0..10 {
+            n.step(100.0);
+        }
+        let old = (n.v_s, n.v_d);
+        assert_eq!(n.step(f64::INFINITY), 0);
+        assert_eq!((n.v_s, n.v_d), old);
     }
 }
