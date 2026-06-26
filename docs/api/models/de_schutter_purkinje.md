@@ -52,9 +52,16 @@ extreme sensitivity means even tiny Ca²⁺ changes modulate K(Ca).
 | h_CaP | 45 (constant) | 45 ms |
 | q_KCa | 1.0 (constant) | 1 ms |
 
-### 5 sub-steps per call
+### Candidate-first RK4 with 5 sub-steps per call
 
-Forward Euler with 5 sub-steps (dt=0.01). Each call integrates 0.05 ms.
+The production path uses candidate-first RK4 with 5 internal sub-steps
+(`dt=0.01`). Each public `step()` call integrates 0.05 ms. Every RK4 stage
+evaluates the full seven-state right-hand side from one consistent state, and
+the public step commits only after all sub-step candidates are finite. Calcium
+is clamped to `>= 0` on each local candidate before the next sub-step.
+
+Python keeps `integrator="baseline_euler"` as an explicit regression comparison
+path; all production polyglot surfaces use RK4.
 
 ---
 
@@ -82,6 +89,7 @@ Forward Euler with 5 sub-steps (dt=0.01). Each call integrates 0.05 ms.
 | `f_ca` | 0.00024 | mM·cm²/(ms·mA) | Ca²⁺ influx coupling |
 | `dt` | 0.01 | ms | Sub-step timestep |
 | `v_threshold` | −20.0 | mV | Spike detection threshold |
+| `integrator` | `"rk4"` | — | Python production path; `"baseline_euler"` is comparison-only |
 
 ### Conductance hierarchy
 
@@ -178,22 +186,26 @@ Highest ionic current complexity in SC-NeuroCore: 5 currents, 7 state vars.
 
 ## Numerical Considerations
 
-- **5 sub-steps:** dt=0.01ms, loop 5 → 0.05 ms per call. Sub-stepping is
-  needed because the fast CaP channel (τ=0.3ms) requires small dt.
+- **5 RK4 sub-steps:** dt=0.01ms, loop 5 → 0.05 ms per call. Sub-stepping is
+  retained because the fast CaP channel (τ=0.3ms) requires small dt.
 - **7 exp() per sub-step:** 5 Boltzmann + 2 tau functions = 35 exp() total
   per step() call.
-- **Ca²⁺ clipped to ≥ 0:** Physical constraint maintained.
+- **Ca²⁺ clipped to ≥ 0:** Physical constraint maintained on every candidate.
 - **No V clipping:** Relies on conductance-based stability.
+- **Fail-closed validation:** Non-finite inputs, parameters, states, and
+  candidates are rejected before state mutation.
 
 ---
 
 ## Implementation Notes
 
-- **Source:** `src/sc_neurocore/neurons/models/de_schutter_purkinje.py` — 79 lines.
+- **Source:** `src/sc_neurocore/neurons/models/de_schutter_purkinje.py`.
 - **Seven state variables:** v, h_na, n_k, m_cap, h_cap, q_kca, ca.
 - **Most state variables** of any model in SC-NeuroCore.
 - **Dataclass:** Uses `@dataclass`.
-- **Rust wiring:** Compatible (7 f64 state vars, sub-stepping).
+- **Polyglot wiring:** Python, Rust engine, Rust safety mirror, Go, Julia, and
+  Mojo share the same seven-state RK4 derivative order and threshold-crossing
+  rule.
 
 ---
 
@@ -202,12 +214,12 @@ Highest ionic current complexity in SC-NeuroCore: 5 currents, 7 state vars.
 ```
 DeSchutterPurkinjeNeuron
 ├── step(current) → int {0, 1}
-├── 5 sub-steps per call (dt=0.01ms, 0.05ms biological)
+├── 5 RK4 sub-steps per call (dt=0.01ms, 0.05ms biological)
 ├── Population, Network, SpikeMonitor: compatible
 │   PoissonInput(weight=10, rate=500Hz)
 ├── Projection: tested src→tgt wiring
 ├── Analysis: spike_count, isi, firing_rate verified
-└── Rust: compatible (7 f64 state vars)
+└── Python/Rust/Go/Julia/Mojo: parity-checked at the 20K-step anchor
 ```
 
 ---
@@ -216,11 +228,11 @@ DeSchutterPurkinjeNeuron
 
 | Metric | Python | Rust |
 |--------|--------|------|
-| Isolation | >1K steps/s (threshold) | Not measured |
+| Isolation | >1K steps/s (threshold) | RK4 benchmarked |
 | Network (3n, 1s) | Pipeline verified | — |
 
 Slow model — 5 sub-steps × 7 exp() = 35 exp() per call, plus Ca²⁺
-dynamics. Long test suite (38.95s) reflects 20K-step convergence tests.
+dynamics. Long test suite runtime reflects 20K-step convergence tests.
 
 ---
 
@@ -232,15 +244,16 @@ dynamics. Long test suite (38.95s) reflects 20K-step convergence tests.
 | Dynamics | 4 | converges to fixed point (I=0), V shifts with current, high current transient spike (I=500, ≥1), deterministic |
 | Performance | 1 | isolation >1K steps/s |
 | Pipeline | 2 | Population(n=3), Network+PoissonInput runs |
-| **Total** | **10** | **ALL PASSED (38.95s)** |
+| RK4 hardening | 7 | default RK4, rejected unknown integrator, RK4/Euler divergence, cross-backend anchor, invalid-input/state preservation, Ca²⁺ non-negative |
+| **Total** | **19** | **ALL PASSED** |
 
 See `tests/test_model_de_schutter_purkinje.py`.
 
 ---
 
-## Findings (Measured 2026-03-31)
+## Findings (Measured 2026-06-26)
 
-1. **10/10 tests PASSED in 38.95s.** No failures.
+1. **19/19 tests PASSED locally.** No failures.
 
 2. **Converges to fixed point at I=0.** After 20K steps, V stabilises.
    After 10K additional steps, |ΔV| < 0.1 mV.
@@ -258,23 +271,26 @@ See `tests/test_model_de_schutter_purkinje.py`.
 
 7. **Deterministic.** Bit-exact traces across repeated runs.
 
-8. **Network pipeline functional.** Population(n=3) with PoissonInput
+8. **RK4 cross-backend anchor.** Python, Rust, Go, Julia, and Mojo all report
+   exactly 1 spike at 20,000 steps with current 500.0.
+
+9. **Network pipeline functional.** Population(n=3) with PoissonInput
    (rate=100Hz, weight=100) runs 1.0s without crash.
 
-9. **7 state variables — most complex model.** v + 5 gates + Ca²⁺.
+10. **7 state variables — most complex model.** v + 5 gates + Ca²⁺.
 
-10. **Needs very high current for spiking.** I≥500 required for even
+11. **Needs very high current for spiking.** I≥500 required for even
     1 transient spike. The strong K(Ca) and KDR conductances dominate
     at moderate currents.
 
 ---
 
-## Pipeline Verification (End-to-End, Measured 2026-03-31)
+## Pipeline Verification (End-to-End, Measured 2026-06-26)
 
 ### Test execution
 
 ```
-10/10 PASSED in 38.95s
+19/19 PASSED locally
 ├── TestDeSchutterIsolation: 3 tests
 │   ├── step() → int {0,1}
 │   ├── state finite (20K steps at I=10)
@@ -287,6 +303,14 @@ See `tests/test_model_de_schutter_purkinje.py`.
 ├── TestDeSchutterPerformance: 1 test
 │   └── isolation >1K steps/s (2K steps benchmarked)
 └── TestDeSchutterPipeline: 2 tests
+└── TestDeSchutterRK4Hardening: 7 tests
+    ├── default integrator is RK4
+    ├── unsupported integrator literals rejected
+    ├── RK4 and baseline Euler paths diverge
+    ├── cross-backend spike anchor
+    ├── non-finite current preserves state
+    ├── non-finite runtime state rejected
+    └── calcium stays non-negative
     ├── Population(n=3)
     └── Network + PoissonInput runs (1.0s, dt=0.001)
 ```
@@ -499,39 +523,51 @@ print(f"Purkinje spikes: {spike_count(mon)}")
 | tau_q_kca | 1.0 | same | **EXACT** (fixed from 5.0) |
 | Ca²⁺ dynamics | f_ca, ca_decay | same | **EXACT** |
 
-**Parity verified:** commit 8db1dc45 corrected 11 Rust defects.
+**Parity verified:** the maintained RK4 surfaces now match across Python,
+Rust engine, Rust safety, Go, Julia, and Mojo at the pinned spike anchor.
 
 ### Source files
 
 | File | Lines | Description |
 |------|-------|-------------|
-| `src/sc_neurocore/neurons/models/de_schutter_purkinje.py` | 79 | Python reference |
-| `engine/src/neurons/biophysical.rs` | (shared) | Rust implementation |
-| `tests/test_model_de_schutter_purkinje.py` | ~120 | 10 tests |
+| `src/sc_neurocore/neurons/models/de_schutter_purkinje.py` | Python RK4 reference |
+| `engine/src/neurons/biophysical.rs` | Rust engine implementation |
+| `src/sc_neurocore/accel/go/services/de_schutter_purkinje.go` | Go RK4 service |
+| `src/sc_neurocore/accel/julia/neurons/de_schutter_purkinje.jl` | Julia RK4 mirror |
+| `src/sc_neurocore/accel/mojo/kernels/de_schutter_purkinje.mojo` | Mojo RK4 kernel |
+| `src/sc_neurocore/accel/rust/safety/de_schutter_purkinje.rs` | Rust safety mirror |
+| `tests/test_model_de_schutter_purkinje.py` | Python model and RK4 hardening tests |
 
 ---
 
 ## Performance Benchmarks
 
-### Criterion benchmarks (local i5-11600K, measured 2026-04-05)
+### Five-backend local regression benchmark
 
-| Metric | Value |
-|--------|-------|
-| Test | `de_schutter_purkinje_1k_steps` |
-| Median | 534 µs |
-| Per-step | 0.534 µs |
-| Throughput | ~1.87 Mstep/s |
+Command:
+
+```bash
+PYTHONPATH=src .venv/bin/python benchmarks/bench_model_de_schutter_purkinje.py
+```
+
+Artefact:
+`benchmarks/results/local_python_2026-06-26_de_schutter_purkinje_rk4.json`.
+
+This is a local non-isolated workstation run for regression context only, not a
+published throughput claim. The benchmark fails closed unless all five backends
+report the same spike count.
+
+| Backend | Median ns/step | Spike anchor |
+|---------|----------------|--------------|
+| Python | 108,635.457 | 1 |
+| Rust | 1,624.448 | 1 |
+| Go | 1,924.000 | 1 |
+| Julia | 1,251.403 | 1 |
+| Mojo | 1,374.153 | 1 |
 
 The higher per-step cost reflects 5 sub-steps × 7 state variables ×
 5 currents with Ca²⁺ dynamics — the most complex single-compartment
 model in the library.
-
-### Python baseline (measured 2026-03-31)
-
-| Metric | Value |
-|--------|-------|
-| Isolation | ~400 steps/s |
-| 10 tests | 10.38 s |
 
 ---
 
@@ -567,6 +603,6 @@ model in the library.
 
 ---
 
-**ALL 10 PIPELINE TESTS PASSED. MODEL IS END-TO-END FUNCTIONAL.**
-**Rust parity: EXACT (verified commit 8db1dc45, 11 defects fixed).**
-**Criterion: 534 µs / 1K steps (0.534 µs/step, ~1.87 Mstep/s).**
+**ALL 19 PIPELINE/RK4 TESTS PASSED LOCALLY. MODEL IS END-TO-END FUNCTIONAL.**
+**Polyglot RK4 parity: Python/Rust/Go/Julia/Mojo all report 1 spike at 20K steps / current 500.0.**
+**Benchmark artefact: `benchmarks/results/local_python_2026-06-26_de_schutter_purkinje_rk4.json`.**

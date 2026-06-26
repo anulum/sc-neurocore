@@ -1152,6 +1152,9 @@ impl Default for MainenSejnowskiNeuron {
 }
 
 /// De Schutter-Bower Purkinje cell — Ca-dependent K. De Schutter & Bower 1994.
+///
+/// The compact seven-state point model uses candidate-first RK4 with five
+/// internal substeps over `(v, h_na, n_k, m_cap, h_cap, q_kca, ca)`.
 #[derive(Clone, Debug)]
 pub struct DeSchutterPurkinjeNeuron {
     pub v: f64,
@@ -1201,30 +1204,114 @@ impl DeSchutterPurkinjeNeuron {
             v_threshold: -20.0,
         }
     }
-    pub fn step(&mut self, current: f64) -> i32 {
-        let v_prev = self.v;
-        for _ in 0..5 {
-            let m_na = 1.0 / (1.0 + (-(self.v + 35.0) / 7.5).exp());
-            let h_na_inf = 1.0 / (1.0 + ((self.v + 55.0) / 7.0).exp());
-            let n_inf = 1.0 / (1.0 + (-(self.v + 30.0) / 15.0).exp());
-            let m_cap_inf = 1.0 / (1.0 + (-(self.v + 19.0) / 5.5).exp());
-            let h_cap_inf = 1.0 / (1.0 + ((self.v + 48.0) / 7.0).exp());
-            let q_inf = self.ca / (self.ca + 0.0002);
-            let tau_h_na = 0.5 + 14.0 / (1.0 + ((self.v + 40.0) / 12.0).exp());
-            let tau_n_k = 1.0 + 11.0 / (1.0 + ((self.v + 15.0) / 8.0).exp());
-            self.h_na += (h_na_inf - self.h_na) / tau_h_na * self.dt;
-            self.n_k += (n_inf - self.n_k) / tau_n_k * self.dt;
-            self.m_cap += (m_cap_inf - self.m_cap) / 0.3 * self.dt;
-            self.h_cap += (h_cap_inf - self.h_cap) / 45.0 * self.dt;
-            self.q_kca += (q_inf - self.q_kca) / 1.0 * self.dt;
-            let i_na = self.g_na * m_na.powi(3) * self.h_na * (self.v - self.e_na);
-            let i_k = self.g_k * self.n_k.powi(4) * (self.v - self.e_k);
-            let i_cap = self.g_cap * self.m_cap.powi(2) * self.h_cap * (self.v - self.e_ca);
-            let i_kca = self.g_kca * self.q_kca * (self.v - self.e_k);
-            let i_l = self.g_l * (self.v - self.e_l);
-            self.v += (-i_na - i_k - i_cap - i_kca - i_l + current) * self.dt;
-            self.ca = (self.ca + (-self.f_ca * i_cap - self.ca_decay * self.ca) * self.dt).max(0.0);
+    fn valid(&self) -> bool {
+        self.v.is_finite()
+            && self.h_na.is_finite()
+            && self.n_k.is_finite()
+            && self.m_cap.is_finite()
+            && self.h_cap.is_finite()
+            && self.q_kca.is_finite()
+            && self.ca.is_finite()
+            && self.ca >= 0.0
+            && self.g_na.is_finite()
+            && self.g_na >= 0.0
+            && self.g_k.is_finite()
+            && self.g_k >= 0.0
+            && self.g_cap.is_finite()
+            && self.g_cap >= 0.0
+            && self.g_kca.is_finite()
+            && self.g_kca >= 0.0
+            && self.g_l.is_finite()
+            && self.g_l >= 0.0
+            && self.e_na.is_finite()
+            && self.e_k.is_finite()
+            && self.e_ca.is_finite()
+            && self.e_l.is_finite()
+            && self.ca_decay.is_finite()
+            && self.ca_decay >= 0.0
+            && self.f_ca.is_finite()
+            && self.f_ca >= 0.0
+            && self.dt.is_finite()
+            && self.dt > 0.0
+            && self.v_threshold.is_finite()
+    }
+    fn derivatives(&self, s: [f64; 7], current: f64) -> [f64; 7] {
+        let v = s[0];
+        let h_na = s[1];
+        let n_k = s[2];
+        let m_cap = s[3];
+        let h_cap = s[4];
+        let q_kca = s[5];
+        let ca = s[6].max(0.0);
+        let m_na = 1.0 / (1.0 + (-(v + 35.0) / 7.5).exp());
+        let h_na_inf = 1.0 / (1.0 + ((v + 55.0) / 7.0).exp());
+        let n_inf = 1.0 / (1.0 + (-(v + 30.0) / 15.0).exp());
+        let m_cap_inf = 1.0 / (1.0 + (-(v + 19.0) / 5.5).exp());
+        let h_cap_inf = 1.0 / (1.0 + ((v + 48.0) / 7.0).exp());
+        let q_inf = ca / (ca + 0.0002);
+        let tau_h_na = 0.5 + 14.0 / (1.0 + ((v + 40.0) / 12.0).exp());
+        let tau_n_k = 1.0 + 11.0 / (1.0 + ((v + 15.0) / 8.0).exp());
+        let i_na = self.g_na * m_na * m_na * m_na * h_na * (v - self.e_na);
+        let i_k = self.g_k * n_k * n_k * n_k * n_k * (v - self.e_k);
+        let i_cap = self.g_cap * m_cap * m_cap * h_cap * (v - self.e_ca);
+        let i_kca = self.g_kca * q_kca * (v - self.e_k);
+        let i_l = self.g_l * (v - self.e_l);
+        [
+            -i_na - i_k - i_cap - i_kca - i_l + current,
+            (h_na_inf - h_na) / tau_h_na,
+            (n_inf - n_k) / tau_n_k,
+            (m_cap_inf - m_cap) / 0.3,
+            (h_cap_inf - h_cap) / 45.0,
+            q_inf - q_kca,
+            -self.f_ca * i_cap - self.ca_decay * ca,
+        ]
+    }
+    fn rk4_substep(&self, s: [f64; 7], current: f64) -> [f64; 7] {
+        let dt = self.dt;
+        let k1 = self.derivatives(s, current);
+        let mut s2 = [0.0; 7];
+        let mut s3 = [0.0; 7];
+        let mut s4 = [0.0; 7];
+        for i in 0..7 {
+            s2[i] = s[i] + 0.5 * dt * k1[i];
         }
+        let k2 = self.derivatives(s2, current);
+        for i in 0..7 {
+            s3[i] = s[i] + 0.5 * dt * k2[i];
+        }
+        let k3 = self.derivatives(s3, current);
+        for i in 0..7 {
+            s4[i] = s[i] + dt * k3[i];
+        }
+        let k4 = self.derivatives(s4, current);
+        let mut next = [0.0; 7];
+        for i in 0..7 {
+            next[i] = s[i] + dt * (k1[i] + 2.0 * k2[i] + 2.0 * k3[i] + k4[i]) / 6.0;
+        }
+        next[6] = next[6].max(0.0);
+        next
+    }
+    pub fn step(&mut self, current: f64) -> i32 {
+        if !current.is_finite() || !self.valid() {
+            return 0;
+        }
+        let v_prev = self.v;
+        let mut state = [
+            self.v, self.h_na, self.n_k, self.m_cap, self.h_cap, self.q_kca, self.ca,
+        ];
+        for _ in 0..5 {
+            state = self.rk4_substep(state, current);
+            if !state.iter().all(|value| value.is_finite()) {
+                return 0;
+            }
+        }
+        self.v = state[0];
+        self.h_na = state[1];
+        self.n_k = state[2];
+        self.m_cap = state[3];
+        self.h_cap = state[4];
+        self.q_kca = state[5];
+        self.ca = state[6];
         if self.v >= self.v_threshold && v_prev < self.v_threshold {
             1
         } else {
@@ -3236,6 +3323,25 @@ mod tests {
             "KCa should activate with Ca²⁺: q={}",
             n.q_kca
         );
+    }
+    #[test]
+    fn purkinje_rk4_cross_backend_anchor() {
+        let mut n = DeSchutterPurkinjeNeuron::new();
+        let mut spikes = 0;
+        for _ in 0..20_000 {
+            spikes += n.step(500.0);
+        }
+        assert_eq!(spikes, 1);
+    }
+    #[test]
+    fn purkinje_invalid_input_preserves_state() {
+        let mut n = DeSchutterPurkinjeNeuron::new();
+        for _ in 0..10 {
+            let _ = n.step(200.0);
+        }
+        let old = (n.v, n.h_na, n.n_k, n.m_cap, n.h_cap, n.q_kca, n.ca);
+        assert_eq!(n.step(f64::INFINITY), 0);
+        assert_eq!((n.v, n.h_na, n.n_k, n.m_cap, n.h_cap, n.q_kca, n.ca), old);
     }
     #[test]
     fn purkinje_negative_no_crash() {

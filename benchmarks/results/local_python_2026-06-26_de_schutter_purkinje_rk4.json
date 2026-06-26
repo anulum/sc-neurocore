@@ -1,0 +1,268 @@
+{
+  "spdx_license": "AGPL-3.0-or-later",
+  "benchmark": "DeSchutterPurkinjeNeuron candidate-first RK4 seven-state step",
+  "timestamp_utc": "2026-06-26T16:08:12+00:00",
+  "command": "PYTHONPATH=src .venv/bin/python benchmarks/bench_model_de_schutter_purkinje.py",
+  "evidence_class": "local_regression_non_isolated",
+  "production_speed_claim": false,
+  "hardware_measurement_claimed": false,
+  "python": "3.12.3",
+  "platform": "Linux-6.17.0-35-generic-x86_64-with-glibc2.39",
+  "processor": "x86_64",
+  "steps": 20000,
+  "repeats": 5,
+  "current": 500.0,
+  "backend_summary": {
+    "python": {
+      "median_ns_per_step": 108635.45665,
+      "min_ns_per_step": 82475.47445,
+      "max_ns_per_step": 113508.5303,
+      "spikes": 1
+    },
+    "rust": {
+      "median_ns_per_step": 1624.44815,
+      "min_ns_per_step": 1519.68675,
+      "max_ns_per_step": 2040.09885,
+      "spikes": 1
+    },
+    "go": {
+      "median_ns_per_step": 1924.0,
+      "min_ns_per_step": 1655.0,
+      "max_ns_per_step": 2746.0,
+      "spikes": 1
+    },
+    "julia": {
+      "median_ns_per_step": 1251.4028,
+      "min_ns_per_step": 1186.99665,
+      "max_ns_per_step": 1941.74305,
+      "spikes": 1
+    },
+    "mojo": {
+      "median_ns_per_step": 1374.152849894017,
+      "min_ns_per_step": 1296.5908004844096,
+      "max_ns_per_step": 1410.9826501226053,
+      "spikes": 1
+    }
+  },
+  "results": [
+    {
+      "backend": "python",
+      "median_ns_per_step": 108635.45665,
+      "min_ns_per_step": 82475.47445,
+      "max_ns_per_step": 113508.5303,
+      "spikes": 1,
+      "results": [
+        {
+          "backend": "python",
+          "steps": 20000,
+          "current": 500.0,
+          "elapsed_ns": 1649509489,
+          "ns_per_step": 82475.47445,
+          "spikes": 1,
+          "ending_state": [
+            -54.620398630907715,
+            0.00017422653802349276
+          ]
+        },
+        {
+          "backend": "python",
+          "steps": 20000,
+          "current": 500.0,
+          "elapsed_ns": 2237674271,
+          "ns_per_step": 111883.71355,
+          "spikes": 1,
+          "ending_state": [
+            -54.620398630907715,
+            0.00017422653802349276
+          ]
+        },
+        {
+          "backend": "python",
+          "steps": 20000,
+          "current": 500.0,
+          "elapsed_ns": 2100835603,
+          "ns_per_step": 105041.78015,
+          "spikes": 1,
+          "ending_state": [
+            -54.620398630907715,
+            0.00017422653802349276
+          ]
+        },
+        {
+          "backend": "python",
+          "steps": 20000,
+          "current": 500.0,
+          "elapsed_ns": 2270170606,
+          "ns_per_step": 113508.5303,
+          "spikes": 1,
+          "ending_state": [
+            -54.620398630907715,
+            0.00017422653802349276
+          ]
+        },
+        {
+          "backend": "python",
+          "steps": 20000,
+          "current": 500.0,
+          "elapsed_ns": 2172709133,
+          "ns_per_step": 108635.45665,
+          "spikes": 1,
+          "ending_state": [
+            -54.620398630907715,
+            0.00017422653802349276
+          ]
+        }
+      ]
+    },
+    {
+      "backend": "rust",
+      "timestamp_unix": 1782490078,
+      "command": "cargo run --release --manifest-path engine/Cargo.toml --example bench_de_schutter_purkinje_rk4",
+      "rustc": "rustc 1.96.0 (ac68faa20 2026-05-25)",
+      "target_os": "linux",
+      "target_arch": "x86_64",
+      "measurement_context": {
+        "host_load": "workstation under concurrent load during capture",
+        "cpu_isolation": "runtime cpuset shield when cgroup_effective_cpuset matches benchmark CPUs; kernel-reserved isolated cores were not detected on this workstation",
+        "cpu_affinity": "0-11",
+        "cgroup_effective_cpuset": "unavailable",
+        "runtime_cpuset_shield_claimed": false,
+        "load_average_before": "18.02 13.40 12.84 10/4382 325480",
+        "load_average_after": "18.02 13.40 12.84 11/4365 325515",
+        "cpu_governor": "powersave",
+        "cpu_frequency_mhz": "min=3599.915,max=3600.071,sampled_cpu_count=12",
+        "concurrent_load_status": "non-exclusive workstation run; other heavy jobs may have been active",
+        "timing_interpretation": "use timing medians as local regression context only, not final throughput claims",
+        "production_rerun_requirement": "rerun on reserved isolated cores with recorded affinity, governor, frequency, versions, and host-load evidence before publishing performance claims"
+      },
+      "steps": 20000,
+      "repeats": 5,
+      "current": 500,
+      "median_ns_per_step": 1624.44815,
+      "min_ns_per_step": 1519.68675,
+      "max_ns_per_step": 2040.09885,
+      "results_ns_per_step": [
+        1735.61895,
+        1624.44815,
+        1519.68675,
+        1603.6365,
+        2040.09885
+      ],
+      "spike_counts": [
+        1,
+        1,
+        1,
+        1,
+        1
+      ],
+      "final_vs": [
+        -54.620398630907715,
+        -54.620398630907715,
+        -54.620398630907715,
+        -54.620398630907715,
+        -54.620398630907715
+      ],
+      "final_cas": [
+        0.00017422653802349276,
+        0.00017422653802349276,
+        0.00017422653802349276,
+        0.00017422653802349276,
+        0.00017422653802349276
+      ],
+      "driver_command": "cargo run --release --manifest-path engine/Cargo.toml --example bench_de_schutter_purkinje_rk4"
+    },
+    {
+      "backend": "go",
+      "command": "go test src/sc_neurocore/accel/go/services/de_schutter_purkinje.go src/sc_neurocore/accel/go/services/de_schutter_purkinje_test.go -run ^$ -bench BenchmarkDeSchutterPurkinjeRK4$ -benchtime 20000x -count 5",
+      "steps": 20000,
+      "repeats": 5,
+      "current": 500.0,
+      "median_ns_per_step": 1924.0,
+      "min_ns_per_step": 1655.0,
+      "max_ns_per_step": 2746.0,
+      "results_ns_per_step": [
+        1957.0,
+        1802.0,
+        1655.0,
+        1924.0,
+        2746.0
+      ],
+      "spikes": 1,
+      "spike_counts": [
+        1,
+        1,
+        1,
+        1,
+        1
+      ]
+    },
+    {
+      "backend": "julia",
+      "command": "julia --project=. -e <de_schutter_purkinje rk4 benchmark>",
+      "steps": 20000,
+      "repeats": 5,
+      "current": 500.0,
+      "median_ns_per_step": 1251.4028,
+      "min_ns_per_step": 1186.99665,
+      "max_ns_per_step": 1941.74305,
+      "results_ns_per_step": [
+        1941.74305,
+        1424.60615,
+        1251.4028,
+        1186.99665,
+        1209.5848
+      ],
+      "spikes": 1,
+      "final_vs": [
+        -54.620398630907715,
+        -54.620398630907715,
+        -54.620398630907715,
+        -54.620398630907715,
+        -54.620398630907715
+      ],
+      "final_cas": [
+        0.00017422653802349276,
+        0.00017422653802349276,
+        0.00017422653802349276,
+        0.00017422653802349276,
+        0.00017422653802349276
+      ]
+    },
+    {
+      "backend": "mojo",
+      "command": "mojo run --disable-warnings -I src/sc_neurocore/accel/mojo/kernels <temp de_schutter_purkinje benchmark>",
+      "steps": 20000,
+      "repeats": 5,
+      "current": 500.0,
+      "median_ns_per_step": 1374.152849894017,
+      "min_ns_per_step": 1296.5908004844096,
+      "max_ns_per_step": 1410.9826501226053,
+      "results_ns_per_step": [
+        1343.3407504635397,
+        1296.5908004844096,
+        1374.152849894017,
+        1374.859950010432,
+        1410.9826501226053
+      ],
+      "spikes": 1,
+      "spike_counts": [
+        1,
+        1,
+        1,
+        1,
+        1
+      ]
+    }
+  ],
+  "source_hashes": {
+    "benchmarks/bench_model_de_schutter_purkinje.py": "3a3ad2b127255d82981200bdcf58f3d1796feadc3b1f1f3658fe68028ce25d04",
+    "engine/Cargo.toml": "21d601390455583066a26a78262ed8bfa80b19a4e5a69051f805d2a68805cf45",
+    "engine/examples/bench_de_schutter_purkinje_rk4.rs": "ed1aee4f6224978db49bdb70bcf733c7949a34d17386708996b8478fea9d6d44",
+    "engine/src/neurons/biophysical.rs": "3eb8f0f0f9ab285a6244252ce94394d84239b41d3ccb94142d0a352125fbeb96",
+    "src/sc_neurocore/neurons/models/de_schutter_purkinje.py": "4c7912cbf0c3030807ca1959ad2665991ea00c42c69b92069876d88cba3a5f54",
+    "src/sc_neurocore/accel/go/services/de_schutter_purkinje.go": "bc199955fc51ba02c2920e53e0c3db3803386767ff579acfa9000fe296674371",
+    "src/sc_neurocore/accel/go/services/de_schutter_purkinje_test.go": "daeb1476a74830f446dadfcd53c5677c387849121b484989586b751aace4f69c",
+    "src/sc_neurocore/accel/julia/neurons/de_schutter_purkinje.jl": "ae0674bc3fbafc080ac2506a600137838488959a0626f84d9a11e05c567824d5",
+    "src/sc_neurocore/accel/mojo/kernels/de_schutter_purkinje.mojo": "b45e694fe481d5782a88118245d98ec8360dbaf56b5fcc48c529797a9824cdd7"
+  }
+}

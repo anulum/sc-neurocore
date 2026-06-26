@@ -4,38 +4,105 @@
 # © Code 2020–2026 Miroslav Šotek. All rights reserved.
 # ORCID: 0009-0009-3560-0851
 # Contact: www.anulum.li | protoscience@anulum.li
-# SC-NeuroCore — Mojo SIMD acceleration for de_schutter_purkinje
+# SC-NeuroCore — Mojo SIMD candidate-first RK4 kernel for de_schutter_purkinje
 
-fn step(current: Int) -> Int:
-    var _step_line = 'v_prev = v'
-    var _step_line = 'for _ in range(5):'
-    var _step_line = 'm_na_inf = 1.0 / (1.0 + exp(-(v + 35.0) / 7.5))'
-    var _step_line = 'h_na_inf = 1.0 / (1.0 + exp((v + 55.0) / 7.0))'
-    var _step_line = 'n_k_inf = 1.0 / (1.0 + exp(-(v + 30.0) / 15.0))'
-    var _step_line = 'm_cap_inf = 1.0 / (1.0 + exp(-(v + 19.0) / 5.5))'
-    var _step_line = 'h_cap_inf = 1.0 / (1.0 + exp((v + 48.0) / 7.0))'
-    var _step_line = 'q_kca_inf = ca / (ca + 0.0002)'
-    var _step_line = 'tau_h_na = 0.5 + 14.0 / (1.0 + exp((v + 40.0) / 12.0))'
-    var _step_line = 'tau_n_k = 1.0 + 11.0 / (1.0 + exp((v + 15.0) / 8.0))'
-    var _step_line = 'tau_m_cap = 0.3'
-    var _step_line = 'tau_h_cap = 45.0'
-    var _step_line = 'tau_q = 1.0'
-    var _step_line = 'h_na += (h_na_inf - h_na) / tau_h_na * dt'
-    var _step_line = 'n_k += (n_k_inf - n_k) / tau_n_k * dt'
-    var _step_line = 'm_cap += (m_cap_inf - m_cap) / tau_m_cap * dt'
-    var _step_line = 'h_cap += (h_cap_inf - h_cap) / tau_h_cap * dt'
-    var _step_line = 'q_kca += (q_kca_inf - q_kca) / tau_q * dt'
-    var _step_line = 'i_na = g_na * m_na_inf**3 * h_na * (v - e_na)'
-    var _step_line = 'i_k = g_k * n_k**4 * (v - e_k)'
-    var _step_line = 'i_cap = g_cap * m_cap**2 * h_cap * (v - e_ca)'
-    var _step_line = 'i_kca = g_kca * q_kca * (v - e_k)'
-    var _step_line = 'i_l = g_l * (v - e_l)'
-    var _step_line = 'v += (-i_na - i_k - i_cap - i_kca - i_l + current) * dt'
-    var _step_line = 'ca = max(0.0, ca + (-f_ca * i_cap - ca_decay * ca) * dt)'
-    return 0  # return 1 if (v >= v_threshold and v_prev < v_thres
+from math import exp
 
-fn reset() -> Int:
-    var _reset_line = 'v = -68.0'
-    var _reset_line = 'h_na, n_k, m_cap, h_cap, q_kca = 0.8, 0.1, 0.0, 0.9, 0.0'
-    var _reset_line = 'ca = 0.0001'
-    return 0
+alias State = SIMD[DType.float64, 8]
+alias N_SUBSTEPS = 5
+
+
+struct DeSchutterPurkinje(Copyable, Movable):
+    var g_na: Float64
+    var g_k: Float64
+    var g_cap: Float64
+    var g_kca: Float64
+    var g_l: Float64
+    var e_na: Float64
+    var e_k: Float64
+    var e_ca: Float64
+    var e_l: Float64
+    var ca_decay: Float64
+    var f_ca: Float64
+    var dt: Float64
+    var v_threshold: Float64
+
+    fn __init__(out self):
+        self.g_na = 125.0
+        self.g_k = 10.0
+        self.g_cap = 45.0
+        self.g_kca = 35.0
+        self.g_l = 0.5
+        self.e_na = 45.0
+        self.e_k = -85.0
+        self.e_ca = 135.0
+        self.e_l = -68.0
+        self.ca_decay = 0.02
+        self.f_ca = 0.00024
+        self.dt = 0.01
+        self.v_threshold = -20.0
+
+    fn derivatives(self, y: State, current: Float64) -> State:
+        var v = y[0]
+        var h_na = y[1]
+        var n_k = y[2]
+        var m_cap = y[3]
+        var h_cap = y[4]
+        var q_kca = y[5]
+        var ca = max(y[6], 0.0)
+        var m_na_inf = 1.0 / (1.0 + exp(-(v + 35.0) / 7.5))
+        var h_na_inf = 1.0 / (1.0 + exp((v + 55.0) / 7.0))
+        var n_k_inf = 1.0 / (1.0 + exp(-(v + 30.0) / 15.0))
+        var m_cap_inf = 1.0 / (1.0 + exp(-(v + 19.0) / 5.5))
+        var h_cap_inf = 1.0 / (1.0 + exp((v + 48.0) / 7.0))
+        var q_kca_inf = ca / (ca + 0.0002)
+        var tau_h_na = 0.5 + 14.0 / (1.0 + exp((v + 40.0) / 12.0))
+        var tau_n_k = 1.0 + 11.0 / (1.0 + exp((v + 15.0) / 8.0))
+        var i_na = self.g_na * m_na_inf * m_na_inf * m_na_inf * h_na * (v - self.e_na)
+        var i_k = self.g_k * n_k * n_k * n_k * n_k * (v - self.e_k)
+        var i_cap = self.g_cap * m_cap * m_cap * h_cap * (v - self.e_ca)
+        var i_kca = self.g_kca * q_kca * (v - self.e_k)
+        var i_l = self.g_l * (v - self.e_l)
+        var d = State(0.0)
+        d[0] = -i_na - i_k - i_cap - i_kca - i_l + current
+        d[1] = (h_na_inf - h_na) / tau_h_na
+        d[2] = (n_k_inf - n_k) / tau_n_k
+        d[3] = (m_cap_inf - m_cap) / 0.3
+        d[4] = (h_cap_inf - h_cap) / 45.0
+        d[5] = q_kca_inf - q_kca
+        d[6] = -self.f_ca * i_cap - self.ca_decay * ca
+        return d
+
+    fn rk4_substep(self, y: State, current: Float64) -> State:
+        var dt = self.dt
+        var k1 = self.derivatives(y, current)
+        var k2 = self.derivatives(y + 0.5 * dt * k1, current)
+        var k3 = self.derivatives(y + 0.5 * dt * k2, current)
+        var k4 = self.derivatives(y + dt * k3, current)
+        var next = y + dt * (k1 + 2.0 * k2 + 2.0 * k3 + k4) / 6.0
+        next[6] = max(next[6], 0.0)
+        return next
+
+    fn simulate(self, n_steps: Int, current: Float64) -> Int:
+        var y = State(0.0)
+        y[0] = -68.0
+        y[1] = 0.8
+        y[2] = 0.1
+        y[3] = 0.0
+        y[4] = 0.9
+        y[5] = 0.0
+        y[6] = 0.0001
+        var spikes = 0
+        for _ in range(n_steps):
+            var v_prev = y[0]
+            for _sub in range(N_SUBSTEPS):
+                y = self.rk4_substep(y, current)
+            if y[0] >= self.v_threshold and v_prev < self.v_threshold:
+                spikes += 1
+        return spikes
+
+
+fn main():
+    var neuron = DeSchutterPurkinje()
+    var spikes = neuron.simulate(20000, 500.0)
+    print("de_schutter_purkinje spikes:", spikes)
