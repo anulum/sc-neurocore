@@ -17,6 +17,7 @@ from __future__ import annotations
 
 import numpy as np
 import numpy.testing as npt
+import numpy.typing as nptyp
 import pytest
 
 from sc_neurocore import BitstreamEncoder
@@ -34,7 +35,9 @@ from sc_neurocore.accel.vector_ops import pack_bitstream
 _RUST_AVAILABLE = available_backends()["rust"]
 
 
-def _pack_weights(weights: np.ndarray, length: int, seed: int) -> np.ndarray:
+def _pack_weights(
+    weights: nptyp.NDArray[np.float64], length: int, seed: int
+) -> nptyp.NDArray[np.uint64]:
     """Encode weight probabilities into packed bitstreams (decorrelated from inputs)."""
     n_out, n_in = weights.shape
     bits = _lfsr_encode_bits(
@@ -155,7 +158,7 @@ class TestBackendSelector:
         assert get_backend("auto").name == "numpy"
 
     def test_probe_rust_handles_failure(self, monkeypatch: pytest.MonkeyPatch) -> None:
-        def _boom(*_args: object, **_kwargs: object) -> np.ndarray:
+        def _boom(*_args: object, **_kwargs: object) -> nptyp.NDArray[np.float64]:
             raise RuntimeError("engine missing")
 
         monkeypatch.setattr(RustBackend, "sc_forward", _boom)

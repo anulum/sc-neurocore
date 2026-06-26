@@ -16,6 +16,7 @@ documentation all name that path explicitly.
 
 | Module | Purpose |
 |--------|---------|
+| `backend` | Runtime selector for the shipped stochastic-inference backend |
 | `vector_ops` | Packed uint64 bitwise AND, popcount, pack/unpack |
 | `gpu_backend` | CuPy GPU dispatch (transparent NumPy fallback) |
 | `jax_backend` | JAX JIT-compiled LIF step for TPU/GPU scaling |
@@ -43,6 +44,10 @@ Cargo command:
 ```bash
 cargo test --manifest-path src/sc_neurocore/accel/rust/Cargo.toml --lib --no-default-features
 ```
+
+## Backend Selector
+
+::: sc_neurocore.accel.backend
 
 ## Vector Operations
 

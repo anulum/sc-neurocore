@@ -7,7 +7,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 161
+expected_file_count = 162
 
 [[file]]
 path = "scripts/generate_docs.py"
@@ -128,6 +128,10 @@ rationale = "Public FFI array-layout guard used by native bridge, debugging, and
 [[file]]
 path = "src/sc_neurocore/accel/jit_kernels.py"
 rationale = "Public Numba acceleration module for packed bitstream and stochastic MAC hot loops."
+
+[[file]]
+path = "src/sc_neurocore/accel/backend.py"
+rationale = "Public acceleration-backend selector for stochastic-computing inference."
 
 [[file]]
 path = "src/sc_neurocore/accel/gpu_backend.py"

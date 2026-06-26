@@ -62,6 +62,7 @@ class NumpyBackend(Backend):
         length: int,
         seed: int = 0xACE1,
     ) -> npt.NDArray[np.float64]:
+        """Run the NumPy bit-true stochastic forward pass."""
         return sc_forward_numpy(weights_packed, input_probs, length, seed)
 
 
@@ -78,6 +79,7 @@ class RustBackend(Backend):
         length: int,
         seed: int = 0xACE1,
     ) -> npt.NDArray[np.float64]:
+        """Run the compiled Rust stochastic forward pass."""
         from sc_neurocore_engine import py_sc_forward_packed
 
         weights = np.ascontiguousarray(weights_packed, dtype=np.uint64)
