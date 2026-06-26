@@ -5,6 +5,17 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 ## [Unreleased]
 
 ### Physics and mathematics hardening
+- Promoted `DendriticNMDANeuron` (two-compartment Jahr-Stevens NMDA Mg2+ block
+  neuron) from raw dendrite-first Euler to candidate-first RK4 over
+  `(v_soma, v_dend)`, with finite parameter/state/input validation,
+  reset-on-commit soma spike semantics, and an explicit
+  `integrator="baseline_euler"` regression path. Replaced Go, Rust safety, Julia,
+  and Mojo placeholders or broken paths with real dual-input RK4 mirrors,
+  harmonised the Rust engine, added focused Python/Go/Rust tests, a Rust
+  benchmark example, a five-backend local non-isolated benchmark artefact, and
+  refreshed the model documentation with measured benchmark results. Python,
+  Rust, Go, Julia, and Mojo agree on the 253-spike anchor at 20k steps /
+  `i_soma=50.0`, `glutamate=0.5`.
 - Promoted `NeuroGridNeuron` (reduced Neurogrid two-compartment analog EIF
   neuron) from raw Euler to candidate-first RK4 over `(v_s, v_d)`, with an
   event-limited soma stage cap at `v_peak`, finite input/state/candidate

@@ -1,0 +1,229 @@
+{
+  "backends": [
+    {
+      "backend": "python",
+      "max_ns_per_step": 3756.43325,
+      "median_ns_per_step": 3602.65285,
+      "min_ns_per_step": 3565.1106,
+      "results": [
+        {
+          "backend": "python",
+          "elapsed_ns": 75128665,
+          "ending_state": [
+            -63.763047918322876,
+            -64.19580115938746
+          ],
+          "glutamate": 0.5,
+          "i_soma": 50.0,
+          "ns_per_step": 3756.43325,
+          "spikes": 253,
+          "steps": 20000
+        },
+        {
+          "backend": "python",
+          "elapsed_ns": 73050320,
+          "ending_state": [
+            -63.763047918322876,
+            -64.19580115938746
+          ],
+          "glutamate": 0.5,
+          "i_soma": 50.0,
+          "ns_per_step": 3652.516,
+          "spikes": 253,
+          "steps": 20000
+        },
+        {
+          "backend": "python",
+          "elapsed_ns": 71933378,
+          "ending_state": [
+            -63.763047918322876,
+            -64.19580115938746
+          ],
+          "glutamate": 0.5,
+          "i_soma": 50.0,
+          "ns_per_step": 3596.6689,
+          "spikes": 253,
+          "steps": 20000
+        },
+        {
+          "backend": "python",
+          "elapsed_ns": 72053057,
+          "ending_state": [
+            -63.763047918322876,
+            -64.19580115938746
+          ],
+          "glutamate": 0.5,
+          "i_soma": 50.0,
+          "ns_per_step": 3602.65285,
+          "spikes": 253,
+          "steps": 20000
+        },
+        {
+          "backend": "python",
+          "elapsed_ns": 71302212,
+          "ending_state": [
+            -63.763047918322876,
+            -64.19580115938746
+          ],
+          "glutamate": 0.5,
+          "i_soma": 50.0,
+          "ns_per_step": 3565.1106,
+          "spikes": 253,
+          "steps": 20000
+        }
+      ],
+      "spikes": 253
+    },
+    {
+      "backend": "rust",
+      "command": "cargo run --release --manifest-path engine/Cargo.toml --example bench_dendritic_nmda_rk4",
+      "driver_command": "cargo run --release --manifest-path engine/Cargo.toml --example bench_dendritic_nmda_rk4",
+      "final_v_dend": [
+        -64.19580115938746,
+        -64.19580115938746,
+        -64.19580115938746,
+        -64.19580115938746,
+        -64.19580115938746
+      ],
+      "final_v_soma": [
+        -63.763047918322876,
+        -63.763047918322876,
+        -63.763047918322876,
+        -63.763047918322876,
+        -63.763047918322876
+      ],
+      "glutamate": 0.5,
+      "i_soma": 50,
+      "max_ns_per_step": 106.1964,
+      "measurement_context": {
+        "cgroup_effective_cpuset": "unavailable",
+        "concurrent_load_status": "non-exclusive workstation run; other heavy jobs may have been active",
+        "cpu_affinity": "0-11",
+        "cpu_frequency_mhz": "min=4195.718,max=4201.158,sampled_cpu_count=12",
+        "cpu_governor": "powersave",
+        "cpu_isolation": "runtime cpuset shield when cgroup_effective_cpuset matches benchmark CPUs; kernel-reserved isolated cores were not detected on this workstation",
+        "host_load": "workstation under concurrent load during capture",
+        "load_average_after": "12.89 26.74 19.56 3/4405 611150",
+        "load_average_before": "12.89 26.74 19.56 5/4405 611140",
+        "production_rerun_requirement": "rerun on reserved isolated cores with recorded affinity, governor, frequency, versions, and host-load evidence before publishing performance claims",
+        "runtime_cpuset_shield_claimed": false,
+        "timing_interpretation": "use timing medians as local regression context only, not final throughput claims"
+      },
+      "median_ns_per_step": 101.7431,
+      "min_ns_per_step": 100.65625,
+      "repeats": 5,
+      "results_ns_per_step": [
+        106.1964,
+        100.6578,
+        100.65625,
+        106.18015,
+        101.7431
+      ],
+      "rustc": "rustc 1.96.0 (ac68faa20 2026-05-25)",
+      "spike_counts": [
+        253,
+        253,
+        253,
+        253,
+        253
+      ],
+      "spikes": 253,
+      "steps": 20000,
+      "target_arch": "x86_64",
+      "target_os": "linux",
+      "timestamp_unix": 1782494805
+    },
+    {
+      "backend": "go",
+      "command": "go test src/sc_neurocore/accel/go/services/dendritic_nmda.go src/sc_neurocore/accel/go/services/dendritic_nmda_test.go -run ^$ -bench BenchmarkDendriticNMDARK4$ -benchtime 20000x -count 5",
+      "glutamate": 0.5,
+      "i_soma": 50.0,
+      "max_ns_per_step": 196.5,
+      "median_ns_per_step": 188.4,
+      "min_ns_per_step": 180.8,
+      "repeats": 5,
+      "results_ns_per_step": [
+        181.3,
+        196.5,
+        191.5,
+        180.8,
+        188.4
+      ],
+      "spike_counts": [
+        253,
+        253,
+        253,
+        253,
+        253
+      ],
+      "spikes": 253,
+      "steps": 20000
+    },
+    {
+      "backend": "julia",
+      "command": "julia --project=. -e <dendritic_nmda rk4 benchmark>",
+      "final_v_dend": [
+        -64.19580115938746,
+        -64.19580115938746,
+        -64.19580115938746,
+        -64.19580115938746,
+        -64.19580115938746
+      ],
+      "final_v_soma": [
+        -63.763047918322876,
+        -63.763047918322876,
+        -63.763047918322876,
+        -63.763047918322876,
+        -63.763047918322876
+      ],
+      "glutamate": 0.5,
+      "i_soma": 50.0,
+      "max_ns_per_step": 128.41745,
+      "median_ns_per_step": 127.6858,
+      "min_ns_per_step": 122.1293,
+      "repeats": 5,
+      "results_ns_per_step": [
+        123.6721,
+        122.1293,
+        128.41745,
+        127.93265,
+        127.6858
+      ],
+      "spikes": 253,
+      "steps": 20000
+    },
+    {
+      "backend": "mojo",
+      "command": "mojo run --disable-warnings src/sc_neurocore/accel/mojo/kernels/dendritic_nmda.mojo",
+      "glutamate": 0.5,
+      "i_soma": 50.0,
+      "spikes": 253,
+      "steps": 20000
+    }
+  ],
+  "benchmark": "dendritic_nmda_rk4",
+  "evidence_class": "local_regression_non_isolated",
+  "expected_spikes": 253,
+  "generated_at_utc": "2026-06-26T17:26:44.549046+00:00",
+  "glutamate": 0.5,
+  "i_soma": 50.0,
+  "notes": [
+    "Functional parity and local regression timing only; this is not isolated CPU benchmark evidence.",
+    "All available backends are expected to produce 253 spikes for the 20,000-step anchor."
+  ],
+  "platform": "Linux-6.17.0-35-generic-x86_64-with-glibc2.39",
+  "python": "3.12.3",
+  "repeats": 5,
+  "source_hashes": {
+    "benchmarks/bench_model_dendritic_nmda.py": "e446405e98489ef74ba8b37977460f52392b676a4b732a0d1dcbfa82bc758c85",
+    "engine/Cargo.toml": "8f2b9fb7a40d1777d24bd3f405caae860e7e38d9c557cad71405f78fef14b42f",
+    "engine/examples/bench_dendritic_nmda_rk4.rs": "d95126ac3e1a4be74cec5d39175569f812439bc95e081a18ffea643d69fdae05",
+    "engine/src/neurons/multi_compartment.rs": "c4782ecbf2ff0b34329b8731ae35236cb6cd1462706a02bfd305bc5000096e44",
+    "src/sc_neurocore/accel/go/services/dendritic_nmda.go": "d5bce7303c0df4b1020a6c4d5f5af46b480b517c74dc0b3e68e36ca538a197e9",
+    "src/sc_neurocore/accel/go/services/dendritic_nmda_test.go": "ec27f0657ffab903205333651f0abecede046b5898e2acb34599f92425b819b6",
+    "src/sc_neurocore/accel/julia/neurons/dendritic_nmda.jl": "ffa829e528ce95e550ba2ebc1dcab2a2335ccb4bfba8c1cb100b9fdda0693365",
+    "src/sc_neurocore/accel/mojo/kernels/dendritic_nmda.mojo": "c46c69220da340e5e57964e373da3c7aafeaa7b6c469a3176f4f118f10142c7e",
+    "src/sc_neurocore/neurons/models/dendritic_nmda.py": "22ea0bf130f0f52455e8497c0908eb7101890ebd718bc7355a8f8b45c5e979d8"
+  },
+  "steps": 20000
+}

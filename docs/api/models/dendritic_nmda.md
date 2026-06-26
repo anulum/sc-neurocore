@@ -69,7 +69,7 @@ through the membrane electric field:
 $$B(V) = \frac{1}{1 + [\text{Mg}^{2+}] \cdot K_0 \cdot \exp(-z \delta F V / RT)}$$
 
 With $z = 2$ (Mg²⁺ charge), $\delta = 0.8$, $F/RT \approx 0.0389$ mV⁻¹ at 37°C,
-and $K_0 = 1/3.57$ mM⁻��, the exponent becomes:
+and $K_0 = 1/3.57$ mM⁻¹, the exponent becomes:
 
 $$z \delta F / RT \approx 2 \times 0.8 \times 0.0389 \approx 0.062 \text{ mV}^{-1}$$
 
@@ -241,8 +241,9 @@ Binary spike (0 or 1)
 | **Separate time constants** | tau_soma (fast, 20ms) and tau_dend (slow, 50ms) |
 | **Adjustable coupling** | `g_coupling` controls soma-dendrite interaction |
 | **Hard spike reset** | Soma resets to E_L on spike |
-| **Zero dependencies** | Pure Python with `math` stdlib only |
-| **Rust parity** | Identical equations to Rust implementation |
+| **Candidate-first RK4** | Production path integrates `(v_soma, v_dend)` with RK4 before committing state |
+| **Baseline comparison** | `integrator="baseline_euler"` preserves the historical dendrite-first Euler path |
+| **Polyglot parity** | Python, Rust engine, Rust safety, Go, Julia, and Mojo share the 253-spike anchor |
 
 ---
 
@@ -342,6 +343,7 @@ Decorated with `@dataclass`. Defined in
 | `tau_dend` | `float` | `50.0` | $> 0$ | Dendrite time constant (ms) |
 | `theta` | `float` | `-50.0` | Any | Spike threshold (mV) |
 | `dt` | `float` | `0.1` | $> 0$ | Integration timestep (ms) |
+| `integrator` | `str` | `"rk4"` | `"rk4"` or `"baseline_euler"` | Numerical integration path |
 
 #### State Variables
 
@@ -354,7 +356,7 @@ Decorated with `@dataclass`. Defined in
 
 **`mg_block(v: float) -> float`**
 
-Compute Mg��⁺ block factor B(V) = 1/(1 + [Mg]/3.57 · exp(-0.062·V)).
+Compute Mg²⁺ block factor B(V) = 1/(1 + [Mg]/3.57 · exp(-0.062·V)).
 
 **`step(i_soma: float, glutamate: float) -> int`**
 
@@ -372,7 +374,8 @@ Reset v_soma and v_dend to -65.0 mV.
 | I_NMDA | `g*glut*B*(V_d - E)` | `g*glut*b*(v_dend - e_nmda)` |
 | dV_d/dt | `(-V_d - 65 + I_nmda + g_c*(V_s-V_d))/tau_d` | identical |
 | dV_s/dt | `(-V_s - 65 + I_ext + g_c*(V_d-V_s))/tau_s` | identical |
-| Spike | `V_s >= theta → reset to -65` | `v_soma >= theta → v_soma = -65` |
+| Integrator | Candidate-first RK4 over `(v_soma, v_dend)` | identical |
+| Spike | `next_v_soma >= theta → v_soma = -65` | identical |
 
 ### Edge cases
 
@@ -382,33 +385,37 @@ Reset v_soma and v_dend to -65.0 mV.
 | `glutamate = 0` | No NMDA current, regardless of B(V) |
 | `g_coupling = 0` | Soma and dendrite fully decoupled |
 | `V at -100mV` | B(-100) ≈ 0.005 — nearly complete block |
-| `V at +40mV` | B(40) ��� 0.97 — nearly no block |
+| `V at +40mV` | B(40) ≈ 0.97 — nearly no block |
 
 ---
 
 ## 7. Performance Benchmarks
 
-### Python (i5-11600K, single core, CPython 3.12)
+Measured local regression results from
+`benchmarks/results/local_python_2026-06-26_dendritic_nmda_rk4.json`.
+The run used 20,000 steps, five repeats, `i_soma=50.0`, `glutamate=0.5`,
+and the expected 253-spike anchor. The evidence class is
+`local_regression_non_isolated`; it verifies parity and regression timing on the
+local workstation, not isolated CPU-core benchmark performance.
 
-| Method | Time per step | Steps/second |
-|--------|--------------|--------------|
-| `step(i_soma, glut)` | 1,229 ns | 814,000 |
+| Backend | Median ns/step | Min ns/step | Max ns/step | Spikes | Command |
+|---------|----------------|-------------|-------------|--------|---------|
+| Python | 3602.653 | 3565.111 | 3756.433 | 253 | `PYTHONPATH=src .venv/bin/python benchmarks/bench_model_dendritic_nmda.py` |
+| Rust engine | 101.743 | 100.656 | 106.196 | 253 | `cargo run --release --manifest-path engine/Cargo.toml --example bench_dendritic_nmda_rk4` |
+| Go service | 188.400 | 180.800 | 196.500 | 253 | `go test ... -bench BenchmarkDendriticNMDARK4` |
+| Julia mirror | 127.686 | 122.129 | 128.417 | 253 | `julia --project=. -e <dendritic_nmda rk4 benchmark>` |
+| Mojo kernel | Smoke only | Smoke only | Smoke only | 253 | `mojo run --disable-warnings src/sc_neurocore/accel/mojo/kernels/dendritic_nmda.mojo` |
 
-**Cost breakdown:**
+### Benchmark artefacts
 
-| Operation | Fraction |
-|-----------|----------|
-| `math.exp()` (Mg block) | ~30% |
-| 2 ODE updates (dV_d, dV_s) | ~35% |
-| NMDA current computation | ~15% |
-| Spike check + reset | ~10% |
-| Python overhead | ~10% |
-
-### Rust (i5-11600K, single core, Criterion)
-
-| Method | Time per step | Speedup vs Python |
-|--------|--------------|-------------------|
-| `step()` | ~5 ns | ~246× |
+| Surface | Path |
+|---------|------|
+| Python benchmark driver | `benchmarks/bench_model_dendritic_nmda.py` |
+| JSON result | `benchmarks/results/local_python_2026-06-26_dendritic_nmda_rk4.json` |
+| Rust benchmark example | `engine/examples/bench_dendritic_nmda_rk4.rs` |
+| Go benchmark | `src/sc_neurocore/accel/go/services/dendritic_nmda_test.go` |
+| Julia mirror | `src/sc_neurocore/accel/julia/neurons/dendritic_nmda.jl` |
+| Mojo smoke kernel | `src/sc_neurocore/accel/mojo/kernels/dendritic_nmda.mojo` |
 
 ### Memory
 
@@ -454,23 +461,23 @@ Reset v_soma and v_dend to -65.0 mV.
 
 | Test | What it verifies | Status |
 |------|-----------------|--------|
-| `test_defaults` | V_soma=-65, V_dend=-65, mg_conc=1.0 | PASS |
-| `test_step_returns_binary` | Output in {0, 1} | PASS |
-| `test_mg_block_at_rest` | B(-65) in (0, 0.15) | PASS |
-| `test_mg_block_at_depolarised` | B(0) > 0.5 | PASS |
-| `test_mg_block_formula` | Exact match for 6 voltage points | PASS |
-| `test_spikes_with_strong_input` | Spikes with i_soma=50 | PASS |
-| `test_coincidence_detection` | Glutamate changes V_dend vs no glutamate | PASS |
-| `test_reset` | Returns to -65 mV | PASS |
+| `tests/test_model_dendritic_nmda.py` | Default RK4 path, Euler comparison, public import wiring, invalid-input preservation | PASS |
+| `tests/test_gap_models.py::TestDendriticNMDANeuron` | Legacy public behavior checks for Mg²⁺ block, spiking, coincidence detection, reset | PASS |
+| `cargo test --manifest-path engine/Cargo.toml --lib nmda_` | Rust engine NMDA unit anchor and related NMDA library checks | PASS |
+| `go test src/sc_neurocore/accel/go/services/dendritic_nmda.go src/sc_neurocore/accel/go/services/dendritic_nmda_test.go` | Go mirror anchor and invalid-state preservation | PASS |
+| `rustc --test src/sc_neurocore/accel/rust/safety/dendritic_nmda.rs` | Standalone Rust safety mirror anchor and invalid-state preservation | PASS |
+| `julia --project=. -e <dendritic_nmda anchor>` | Julia mirror 253-spike anchor | PASS |
+| `mojo run --disable-warnings src/sc_neurocore/accel/mojo/kernels/dendritic_nmda.mojo` | Mojo smoke anchor | PASS |
 
 ### Equation-to-code traceability
 
 | Equation | Python location | Rust location |
 |----------|----------------|---------------|
-| $B(V) = 1/(1 + [Mg]/3.57 \cdot e^{-0.062V})$ | `dendritic_nmda.py:78` | `multi_compartment.rs:910` |
-| $I_{NMDA} = g \cdot \text{glut} \cdot B \cdot (V_d - E)$ | `dendritic_nmda.py:86` | `multi_compartment.rs:917` |
-| $\tau_d \, dV_d/dt$ | `dendritic_nmda.py:88-91` | `multi_compartment.rs:920-922` |
-| $\tau_s \, dV_s/dt$ | `dendritic_nmda.py:94-97` | `multi_compartment.rs:926-928` |
+| $B(V) = 1/(1 + [Mg]/3.57 \cdot e^{-0.062V})$ | `_mg_block_value` | `mg_block` |
+| $I_{NMDA} = g \cdot \text{glut} \cdot B \cdot (V_d - E)$ | `_derivatives` | `derivatives` |
+| $\tau_d \, dV_d/dt$ | `_derivatives` | `derivatives` |
+| $\tau_s \, dV_s/dt$ | `_derivatives` | `derivatives` |
+| RK4 candidate | `_rk4_substep` | `rk4_substep` |
 
 ---
 
@@ -503,17 +510,18 @@ slow excitation (decay ~100ms). We omit AMPA because:
 
 ## Implementation Notes
 
-### Forward Euler stability
+### RK4 integration and Euler comparison
 
-The system has two coupled ODEs with time constants $\tau_s = 20$ ms and $\tau_d = 50$ ms.
-The stability condition for forward Euler requires $dt < 2 \cdot \min(\tau_s, \tau_d) = 40$ ms.
-With default $dt = 0.1$ ms, the stability margin is $dt/\tau_s = 0.005 \ll 1$.
+The production path integrates the coupled soma-dendrite state with a
+candidate-first fourth-order Runge-Kutta step. The model validates finite
+configuration, finite state, finite somatic current, and finite non-negative
+glutamate before computing any candidate. If the candidate leaves the finite
+domain, Python raises and the non-throwing low-level mirrors return no spike
+without committing a partial state.
 
-However, the NMDA current introduces a positive feedback loop: as $V_d$ depolarises,
-$B(V_d)$ increases, increasing $I_{NMDA}$, further depolarising $V_d$. This can lead to
-abrupt transitions (NMDA spikes in biology). In the discretised model, these manifest as
-rapid voltage jumps that are numerically stable but physiologically abrupt. If smoother
-dynamics are needed, reduce $dt$ to 0.01 ms.
+`integrator="baseline_euler"` keeps the historical dendrite-first forward Euler
+update for regression comparisons. The default path remains `"rk4"` in Python,
+Rust engine, Rust safety, Go, Julia, and Mojo.
 
 ### Leak reversal hard-coded at -65 mV
 
