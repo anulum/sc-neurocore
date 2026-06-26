@@ -18,6 +18,11 @@ Both files target **proto3** syntax and carry explicit `go_package`
 options so `protoc --go_out` produces types at the canonical import
 path `github.com/anulum/sc-neurocore/vision2030/proto/{core,telemetry}`.
 
+`src/sc_neurocore/proto/` is intentionally a **data-only schema directory**.
+It does not ship a `sc_neurocore.proto` Python package or committed generated
+bindings. Python, Go, Rust, and dashboard consumers generate bindings in their
+own build steps from the checked-in `.proto` files.
+
 ---
 
 ## 1. Mathematical formalism — wire encoding

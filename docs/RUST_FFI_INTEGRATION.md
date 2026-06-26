@@ -87,7 +87,7 @@ go test -v ./...
 | interconnect (Go) | — (standalone router) | UDP binary |
 | formal_proofs (Lean 4) | safety_cert/ (documentation) | — |
 | neuro_safe_monitor (SV) | uvm_gen/ (testbench) | — |
-| proto/ | — (unused schemas) | — |
+| proto/ | HIL telemetry/debug consumers | Protobuf schema generation (`protoc`, `prost`, `protoc-gen-go`) |
 
 ## Rust Safety Mirror Library
 
