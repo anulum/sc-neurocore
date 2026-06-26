@@ -278,6 +278,7 @@ nav:
           - Short-Term Plasticity Synapse: api/short_term_plasticity.md
       - Compiler & Export:
           - Compiler: api/compiler.md
+          - Compiler Surface Policy: api/compiler_surface.md
           - Adaptive Precision: api/adaptive_precision.md
           - Export: api/export.md
           - HDL Generation: api/hdl_gen.md

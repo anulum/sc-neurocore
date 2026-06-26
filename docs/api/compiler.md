@@ -12,6 +12,11 @@ weight quantiser, adaptive precision, IR type checker, static analysis,
 and deployment orchestrator.  This is the authoritative reference for
 all compiler-facing Python functions.
 
+The root package boundary is defined in
+[Compiler Surface Policy](compiler_surface.md). That page states which
+`sc_neurocore.compiler` modules are package-facade exports, direct public
+modules, compatibility facades, or internal build tools.
+
 ---
 
 ## 1. Mathematical Formalism

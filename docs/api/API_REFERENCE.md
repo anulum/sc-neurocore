@@ -44,6 +44,7 @@ Use the smallest public surface that proves the workflow:
 ## Compiler, Export, And Hardware
 
 - [Compiler](compiler.md)
+- [Compiler surface policy](compiler_surface.md)
 - [Adaptive precision](adaptive_precision.md)
 - [Export](export.md)
 - [HDL generation](hdl_gen.md)
