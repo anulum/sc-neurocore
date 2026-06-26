@@ -114,6 +114,9 @@ name = "bench_de_schutter_purkinje_rk4"
 name = "bench_multicompartment_mcn_rk4"
 
 [[example]]
+name = "bench_hay_l5_rk4"
+
+[[example]]
 name = "bench_lapicque_exact_flow"
 
 [[example]]

@@ -5,6 +5,18 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 ## [Unreleased]
 
 ### Physics and mathematics hardening
+- Promoted `HayL5PyramidalNeuron` (reduced three-compartment Layer 5 thick-tufted
+  pyramidal cell) from four raw Euler sub-steps to candidate-first RK4 over the
+  nine-state `(v_s, h_na, n_k, v_t, m_ca, h_ca, m_ih, v_a, ca_a)` system, with
+  finite input/state/candidate validation, non-negative tuft-calcium candidates,
+  dual soma/tuft input parity, and an explicit `integrator="baseline_euler"`
+  regression path. Replaced broken or placeholder Go, Rust safety, Julia, and
+  Mojo surfaces with real RK4 mirrors, harmonised the Rust engine, added focused
+  Python/Go/Rust tests, a Rust benchmark example, a five-backend local
+  non-isolated benchmark artefact, and refreshed the model documentation. Python,
+  Rust, Go, Julia, and Mojo agree on the 1-spike anchor at 20k steps /
+  `current_soma=10.0`, `current_tuft=0.0`; the dual-input anchor is 4 spikes at
+  20k steps / `current_soma=5.0`, `current_tuft=5.0`.
 - Promoted `DeSchutterPurkinjeNeuron` (compact De Schutter & Bower Purkinje cell)
   from five raw Euler sub-steps to candidate-first RK4 over the seven-state
   `(v, h_na, n_k, m_cap, h_cap, q_kca, ca)` system, with finite input/state/

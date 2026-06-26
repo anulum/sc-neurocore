@@ -1,0 +1,223 @@
+{
+  "backends": [
+    {
+      "backend": "python",
+      "max_ns_per_step": 103916.73435,
+      "median_ns_per_step": 99490.67995,
+      "min_ns_per_step": 88847.40235,
+      "results": [
+        {
+          "backend": "python",
+          "current_soma": 10.0,
+          "current_tuft": 0.0,
+          "elapsed_ns": 1989813599,
+          "ending_state": [
+            -25.077849252181313,
+            8.623773249014352
+          ],
+          "ns_per_step": 99490.67995,
+          "spikes": 1,
+          "steps": 20000
+        },
+        {
+          "backend": "python",
+          "current_soma": 10.0,
+          "current_tuft": 0.0,
+          "elapsed_ns": 2078334687,
+          "ending_state": [
+            -25.077849252181313,
+            8.623773249014352
+          ],
+          "ns_per_step": 103916.73435,
+          "spikes": 1,
+          "steps": 20000
+        },
+        {
+          "backend": "python",
+          "current_soma": 10.0,
+          "current_tuft": 0.0,
+          "elapsed_ns": 1915111937,
+          "ending_state": [
+            -25.077849252181313,
+            8.623773249014352
+          ],
+          "ns_per_step": 95755.59685,
+          "spikes": 1,
+          "steps": 20000
+        },
+        {
+          "backend": "python",
+          "current_soma": 10.0,
+          "current_tuft": 0.0,
+          "elapsed_ns": 2052675465,
+          "ending_state": [
+            -25.077849252181313,
+            8.623773249014352
+          ],
+          "ns_per_step": 102633.77325,
+          "spikes": 1,
+          "steps": 20000
+        },
+        {
+          "backend": "python",
+          "current_soma": 10.0,
+          "current_tuft": 0.0,
+          "elapsed_ns": 1776948047,
+          "ending_state": [
+            -25.077849252181313,
+            8.623773249014352
+          ],
+          "ns_per_step": 88847.40235,
+          "spikes": 1,
+          "steps": 20000
+        }
+      ],
+      "spikes": 1
+    },
+    {
+      "backend": "rust",
+      "command": "cargo run --release --manifest-path engine/Cargo.toml --example bench_hay_l5_rk4",
+      "current_soma": 10,
+      "current_tuft": 0,
+      "driver_command": "cargo run --release --manifest-path engine/Cargo.toml --example bench_hay_l5_rk4",
+      "final_cas": [
+        8.623773249014352,
+        8.623773249014352,
+        8.623773249014352,
+        8.623773249014352,
+        8.623773249014352
+      ],
+      "final_vs": [
+        -25.077849252181313,
+        -25.077849252181313,
+        -25.077849252181313,
+        -25.077849252181313,
+        -25.077849252181313
+      ],
+      "max_ns_per_step": 1430.7365,
+      "measurement_context": {
+        "cgroup_effective_cpuset": "unavailable",
+        "concurrent_load_status": "non-exclusive workstation run; other heavy jobs may have been active",
+        "cpu_affinity": "0-11",
+        "cpu_frequency_mhz": "min=3898.692,max=3900.123,sampled_cpu_count=12",
+        "cpu_governor": "powersave",
+        "cpu_isolation": "runtime cpuset shield when cgroup_effective_cpuset matches benchmark CPUs; kernel-reserved isolated cores were not detected on this workstation",
+        "host_load": "workstation under concurrent load during capture",
+        "load_average_after": "17.79 12.98 12.48 7/4374 489568",
+        "load_average_before": "17.79 12.98 12.48 5/4374 489554",
+        "production_rerun_requirement": "rerun on reserved isolated cores with recorded affinity, governor, frequency, versions, and host-load evidence before publishing performance claims",
+        "runtime_cpuset_shield_claimed": false,
+        "timing_interpretation": "use timing medians as local regression context only, not final throughput claims"
+      },
+      "median_ns_per_step": 1318.76525,
+      "min_ns_per_step": 1289.6266,
+      "repeats": 5,
+      "results_ns_per_step": [
+        1318.76525,
+        1289.6266,
+        1308.2524,
+        1404.24335,
+        1430.7365
+      ],
+      "rustc": "rustc 1.96.0 (ac68faa20 2026-05-25)",
+      "spike_counts": [
+        1,
+        1,
+        1,
+        1,
+        1
+      ],
+      "steps": 20000,
+      "target_arch": "x86_64",
+      "target_os": "linux",
+      "timestamp_unix": 1782492133
+    },
+    {
+      "backend": "go",
+      "command": "go test src/sc_neurocore/accel/go/services/hay_l5.go src/sc_neurocore/accel/go/services/hay_l5_test.go -run ^$ -bench BenchmarkHayL5RK4$ -benchtime 20000x -count 5",
+      "current_soma": 10.0,
+      "current_tuft": 0.0,
+      "max_ns_per_step": 2967.0,
+      "median_ns_per_step": 2706.0,
+      "min_ns_per_step": 2277.0,
+      "repeats": 5,
+      "results_ns_per_step": [
+        2277.0,
+        2706.0,
+        2967.0,
+        2949.0,
+        2588.0
+      ],
+      "spike_counts": [
+        1,
+        1,
+        1,
+        1,
+        1
+      ],
+      "spikes": 1,
+      "steps": 20000
+    },
+    {
+      "backend": "julia",
+      "command": "julia --project=. -e <hay_l5 rk4 benchmark>",
+      "current_soma": 10.0,
+      "current_tuft": 0.0,
+      "final_cas": [
+        8.623773249014352,
+        8.623773249014352,
+        8.623773249014352,
+        8.623773249014352,
+        8.623773249014352
+      ],
+      "final_vs": [
+        -25.077849252181313,
+        -25.077849252181313,
+        -25.077849252181313,
+        -25.077849252181313,
+        -25.077849252181313
+      ],
+      "max_ns_per_step": 1301.91715,
+      "median_ns_per_step": 1229.9206,
+      "min_ns_per_step": 1159.66175,
+      "repeats": 5,
+      "results_ns_per_step": [
+        1159.66175,
+        1229.9206,
+        1204.6302,
+        1301.91715,
+        1292.3468
+      ],
+      "spikes": 1,
+      "steps": 20000
+    },
+    {
+      "backend": "mojo",
+      "command": "mojo run --disable-warnings src/sc_neurocore/accel/mojo/kernels/hay_l5.mojo",
+      "current_soma": 10.0,
+      "current_tuft": 0.0,
+      "spikes": 1,
+      "steps": 20000
+    }
+  ],
+  "benchmark": "hay_l5_rk4",
+  "current_soma": 10.0,
+  "current_tuft": 0.0,
+  "expected_spikes": 1,
+  "generated_at_utc": "2026-06-26T16:40:44.679680+00:00",
+  "platform": "Linux-6.17.0-35-generic-x86_64-with-glibc2.39",
+  "python": "3.12.3",
+  "repeats": 5,
+  "source_hashes": {
+    "benchmarks/bench_model_hay_l5.py": "aa8871b0c7c90d835fc422e174babb86032b62aa10a17be3cbbf1541c901f0a9",
+    "engine/Cargo.toml": "4a58caa69ed03fa13c4d99601bccf239178381697d6da74bf731e150923acb31",
+    "engine/examples/bench_hay_l5_rk4.rs": "03b5d278e5a25c44dca633546bff20e23de2519084e85df5a6141ee595836627",
+    "engine/src/neurons/multi_compartment.rs": "9e07d631caba3ec59b760d8b19470952a8db659ea5c0a71a8892053493a9698b",
+    "src/sc_neurocore/accel/go/services/hay_l5.go": "b42c754b1e72b5ba860d43a4f2f7f0af2371839a1b3d7241c235bab03b78a8cb",
+    "src/sc_neurocore/accel/go/services/hay_l5_test.go": "3e336208d7ad786c71aa7e2f40647a2b58fd753afdb0421dc32251e2333c1a64",
+    "src/sc_neurocore/accel/julia/neurons/hay_l5.jl": "87fce58bfc7b4378ef77d145695843a4d65bdbacb05eac0dedc1794974618170",
+    "src/sc_neurocore/accel/mojo/kernels/hay_l5.mojo": "3bae11bd4b15698b8eb9a1d3d4ec742db64a371ec3ac63dcd962f4860e46ebc6",
+    "src/sc_neurocore/neurons/models/hay_l5.py": "618f896ba1fdea69316606ac1d46ca607f7277df6c09515d87698aa348a9a7d4"
+  },
+  "steps": 20000
+}
