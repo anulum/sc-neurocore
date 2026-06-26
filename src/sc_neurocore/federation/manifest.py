@@ -41,14 +41,21 @@ PROTOCOL_VERSION = "1"
 
 
 def _resolve_studio_version() -> str:
-    """Return the installed ``sc-neurocore`` version, or a local sentinel.
+    """Return the source ``sc-neurocore`` version, or an installed fallback.
 
     Returns
     -------
     str
-        The distribution version when ``sc-neurocore`` is installed, otherwise
-        ``"0+unknown"`` so the manifest never carries a fabricated version.
+        The package source version when importable, the installed distribution
+        version otherwise, or ``"0+unknown"`` so the manifest never carries a
+        fabricated version.
     """
+    try:
+        from sc_neurocore import __version__
+    except ImportError:  # pragma: no cover - only in a broken source tree
+        __version__ = ""
+    if __version__:
+        return __version__
     try:
         return version("sc-neurocore")
     except PackageNotFoundError:  # pragma: no cover - only in a non-installed tree
@@ -56,7 +63,7 @@ def _resolve_studio_version() -> str:
 
 
 STUDIO_VERSION = _resolve_studio_version()
-"""The SC-NeuroCore studio version this manifest stamps (the installed package version)."""
+"""The SC-NeuroCore studio version this manifest stamps (source package version)."""
 
 
 def declared_surface() -> dict[str, bytes]:
@@ -91,7 +98,7 @@ def build_manifest(*, studio_version: str = STUDIO_VERSION) -> CapabilityManifes
     ----------
     studio_version
         The studio version to stamp; defaults to :data:`STUDIO_VERSION` (the
-        installed ``sc-neurocore`` version).
+        source ``sc-neurocore`` version).
 
     Returns
     -------

@@ -29,6 +29,9 @@ import pytest
 
 pytest.importorskip("scpn_studio_platform")
 
+from sc_neurocore import __version__ as SOURCE_VERSION  # noqa: E402
+from sc_neurocore.federation.manifest import STUDIO_VERSION  # noqa: E402
+
 _DIGEST_RE = re.compile(r"^sha256:[0-9a-f]{64}$")
 
 
@@ -47,19 +50,17 @@ def _load_emitter() -> Any:
 
 
 def test_committed_artifact_matches_the_producer() -> None:
-    # studio_version is an environment-dependent stamp (installed distribution version
-    # vs "0+unknown" from a source tree as in CI), so it is excluded — the structural
-    # contract (verbs, evidence, digest, era) stays in lock-step, and content_digest is
-    # computed over verbs+evidence, not studio_version.
     emitter = _load_emitter()
     assert emitter._ARTIFACT.exists(), "run `python tools/emit_studio_manifest.py`"
     committed = json.loads(emitter._ARTIFACT.read_text(encoding="utf-8"))
     produced = json.loads(emitter.render())
-    committed.pop("studio_version", None)
-    produced.pop("studio_version", None)
     assert committed == produced, (
         "docs/_generated/studio_manifest.json is stale; run `python tools/emit_studio_manifest.py`"
     )
+
+
+def test_manifest_default_version_matches_source_package() -> None:
+    assert STUDIO_VERSION == SOURCE_VERSION
 
 
 def test_artifact_is_schema_a_well_formed() -> None:
@@ -67,6 +68,7 @@ def test_artifact_is_schema_a_well_formed() -> None:
         (_repo_root() / "docs" / "_generated" / "studio_manifest.json").read_text()
     )
     assert payload["studio"] == "sc-neurocore"
+    assert payload["studio_version"] == SOURCE_VERSION
     assert payload["contract_era"].startswith("v")
     assert payload["platform_sdk"] == ">=0.9,<0.10"
     assert _DIGEST_RE.match(payload["content_digest"]), payload["content_digest"]

@@ -5,6 +5,8 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+## [3.15.35] - 2026-06-26
+
 ### Physics and mathematics hardening
 - Promoted `HillTononiNeuron` (Hill & Tononi 2005 thalamocortical sleep/wake
   cell) from a hard-coded forward-Euler step to candidate-first RK4 over the
@@ -143,6 +145,9 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
   `accel/mojo/kernels` stubs with real backends.
 
 ### Studio
+- Documented the optional `sc_neurocore.federation` Hub-facing Studio federation
+  surface with a dedicated API page and navigation entry, covering schema-A
+  manifest emission, evidence bundles, and verifiable-honesty envelopes.
 - Added the admin `POST /api/studio/training/weight-restore/attach/live` endpoint
   and the confined control channel that backs it. The endpoint delivers the
   verified weights of a completed source job to a running target training job;
@@ -1450,8 +1455,6 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 - PnR added to typos dictionary
 - tsconfig.tsbuildinfo gitignored
 - uvicorn skip guard for studio optional extra
-
-## [Unreleased]
 
 ## [3.15.1] - 2026-06-01
 

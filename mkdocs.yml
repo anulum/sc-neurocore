@@ -239,6 +239,7 @@ nav:
       - Full Reference: api/API_REFERENCE.md
       - Command-Line Interface: api/cli.md
       - Self-Hosted Hub: api/hub.md
+      - Studio Federation: api/federation.md
       - Network Simulation Engine: api/network.md
       - Monitors &amp; Stimulus Sources: api/monitor.md
       - MPI Distributed Runner: api/mpi_runner.md

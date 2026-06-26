@@ -31,7 +31,7 @@ Commercial Licensing: Available
 
 **Stochastic computing and neuromorphic hardware co-design toolkit**
 
-**Version:** 3.15.34
+**Version:** 3.15.35
 
 SC-NeuroCore is a research-to-hardware software stack for designing spiking and stochastic neural systems, validating their numerical behaviour, and moving selected models toward FPGA, ASIC, and embedded neuromorphic deployment. It combines a Python public API, an optional Rust acceleration engine, SystemVerilog generation paths, benchmark evidence, and polyglot research mirrors for selected kernels.
 
@@ -73,7 +73,7 @@ SC-NeuroCore is positioned for neuromorphic R&D, stochastic accelerator design, 
 
 | Surface | Current status |
 | --- | --- |
-| Public Python package | Version 3.15.34 package surface with base NumPy/SciPy dependency boundary. |
+| Public Python package | Version 3.15.35 package surface with base NumPy/SciPy dependency boundary. |
 | Optional acceleration | Rust engine and optional heavy backends are opt-in; Python fallbacks remain available. |
 | Hardware evidence | Committed synthesis and report artefacts exist for selected flows; power/energy claims require matching committed reports. |
 | Benchmarks | Only committed JSON/CSV/report artefacts are public evidence. Local exploratory runs must not be promoted without raw artefacts. |
@@ -90,7 +90,7 @@ SC-NeuroCore is positioned for neuromorphic R&D, stochastic accelerator design, 
 
 | Surface | Current inventory |
 |---|---:|
-| Package version | 3.15.34 |
+| Package version | 3.15.35 |
 | Public API exports | 44 |
 | Python model source modules | 152 |
 | Python model classes | 158 |
@@ -98,7 +98,7 @@ SC-NeuroCore is positioned for neuromorphic R&D, stochastic accelerator design, 
 | Rust PyO3 model wrappers | 175 |
 | Optional extras | 25 |
 | Python test files | 888 |
-| Public documentation pages | 557 |
+| Public documentation pages | 558 |
 | GitHub Actions workflows | 14 |
 
 Evidence boundary: this snapshot is a static inventory. Performance, coverage, hardware, and scientific-fidelity claims require their own committed evidence artefacts.
@@ -517,6 +517,7 @@ Sample results (CPU, quick mode):
 - [Install Profiles](docs/guides/install_profiles.md) — Base install, optional extras, and research-only polyglot boundary
 - [FPGA Deploy Cookbook](docs/tutorials/fpga_deploy_cookbook.md) — Five-minute scaffold, optional synthesis, report-to-optimiser handoff
 - [**Tutorials**](https://anulum.github.io/sc-neurocore/tutorials/01_stochastic_computing_fundamentals/) — 88 tracked guides and tutorials (SC fundamentals → MNIST → FPGA → quantum → formal verification)
+- [Studio Federation API](docs/api/federation.md) — Optional Hub-facing federation manifest, verbs, and evidence envelopes
 - [API Reference](docs/api/API_REFERENCE.md) — Python package API
 - [Rust Engine API](https://anulum.github.io/sc-neurocore/rust-api/sc_neurocore_engine/) — Rust engine docs
 - [Hardware Guide](docs/hardware/HARDWARE_GUIDE.md) — FPGA deployment workflow
@@ -618,7 +619,7 @@ If you use SC-NeuroCore in your research, please cite:
 @software{sotek2026scneurocore,
   author    = {Šotek, Miroslav},
   title     = {SC-NeuroCore: A Deterministic Stochastic Computing Framework for Neuromorphic Hardware Design},
-  version   = {3.15.34},
+  version   = {3.15.35},
   year      = {2026},
   doi       = {10.5281/zenodo.18906614},
   url       = {https://github.com/anulum/sc-neurocore},

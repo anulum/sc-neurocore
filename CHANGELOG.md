@@ -4,6 +4,8 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+## [3.15.35] - 2026-06-26
+
 ### Physics and mathematics hardening
 - GPFA (Gaussian Process Factor Analysis) now uses a deterministic PCA
   initialisation (top singular vectors of the centred data with a fixed sign
@@ -135,6 +137,9 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
   public API change.
 
 ### Studio platform
+- Documented the optional `sc_neurocore.federation` Hub-facing Studio federation
+  surface with a dedicated API page and navigation entry, covering schema-A
+  manifest emission, evidence bundles, and verifiable-honesty envelopes.
 - The FPGA synthesis panel can export a synthesis-scoped evidence bundle from
   the latest single-target or all-target worker job, list the bundle artefacts,
   and download them through the authenticated Studio job-artifact route.
@@ -1316,8 +1321,6 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 - PnR added to typos dictionary
 - tsconfig.tsbuildinfo gitignored
 - uvicorn skip guard for studio optional extra
-
-## [Unreleased]
 
 ## [3.15.1] - 2026-06-01
 

@@ -37,7 +37,7 @@ Module Tiers
 import importlib
 from typing import TYPE_CHECKING, Any
 
-__version__ = "3.15.34"
+__version__ = "3.15.35"
 
 # Public symbols load lazily (PEP 562) so ``import sc_neurocore`` stays
 # lightweight and, crucially, torch-free: eager submodule imports pulled torch

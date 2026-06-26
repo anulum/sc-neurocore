@@ -19,6 +19,7 @@ import pytest
 
 pytest.importorskip("scpn_studio_platform")
 
+from sc_neurocore import __version__ as SOURCE_VERSION  # noqa: E402
 from scpn_studio_platform.evidence import (  # noqa: E402
     ClaimStatus,
     EvidenceKind,
@@ -45,14 +46,15 @@ _TS2 = "2026-06-24T06:05:00Z"
 
 
 def test_manifest_is_well_formed_and_digest_is_reproducible() -> None:
-    manifest = build_manifest(studio_version="3.15.34")
+    manifest = build_manifest(studio_version=SOURCE_VERSION)
 
     assert manifest.studio == STUDIO_ID == "sc-neurocore"
+    assert manifest.studio_version == SOURCE_VERSION
     assert manifest.platform_sdk == ">=0.9,<0.10"
     assert len(manifest.verbs) == len(NEUROCORE_VERBS) == 8
     assert tuple(manifest.evidence_types) == evidence_schemas()
     # content digest is over the declared surface, not git state — reproducible.
-    assert manifest.content_digest == build_manifest(studio_version="3.15.34").content_digest
+    assert manifest.content_digest == build_manifest(studio_version=SOURCE_VERSION).content_digest
     assert manifest.content_digest.startswith("sha256:")
 
 
@@ -77,7 +79,7 @@ def test_fpga_deployment_is_hardware_validated_and_federates() -> None:
             result_digest="a" * 64,
         ),
         operator="opaque:tenant-1",
-        studio_version="3.15.34",
+        studio_version=SOURCE_VERSION,
         started=_TS1,
         ended=_TS2,
     )
@@ -95,7 +97,7 @@ def test_sc_inference_validated_only_when_bit_identical() -> None:
     identical = sc_inference_evidence(
         ScInferenceResult("rust", "numpy", 0.0, 1024, "b" * 64, "c" * 64),
         operator="o",
-        studio_version="3.15.34",
+        studio_version=SOURCE_VERSION,
         started=_TS1,
         ended=_TS2,
     )
@@ -106,7 +108,7 @@ def test_sc_inference_validated_only_when_bit_identical() -> None:
     drifted = sc_inference_evidence(
         ScInferenceResult("rust", "numpy", 1e-3, 1024, "b" * 64, "c" * 64),
         operator="o",
-        studio_version="3.15.34",
+        studio_version=SOURCE_VERSION,
         started=_TS1,
         ended=_TS2,
     )
@@ -127,7 +129,7 @@ def test_cosim_mismatch_never_renders_validated() -> None:
             result_digest="d" * 64,
         ),
         operator="o",
-        studio_version="3.15.34",
+        studio_version=SOURCE_VERSION,
         started=_TS1,
         ended=_TS2,
     )

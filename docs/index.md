@@ -2,7 +2,7 @@
 
 **Stochastic computing and neuromorphic hardware co-design toolkit**
 
-**Version 3.15.34** | 174 neuron models | optional Rust engine + Python front-end | HDL generation + hardware guides | [PyPI](https://pypi.org/project/sc-neurocore/) | [GitHub](https://github.com/anulum/sc-neurocore)
+**Version 3.15.35** | 174 neuron models | optional Rust engine + Python front-end | HDL generation + hardware guides | [PyPI](https://pypi.org/project/sc-neurocore/) | [GitHub](https://github.com/anulum/sc-neurocore)
 
 SC-NeuroCore helps research and engineering teams build spiking and stochastic neural systems, validate their numerical behaviour, and move selected workflows toward hardware evidence. It is designed for people who need more than a simulator: bounded stochastic arithmetic, reproducible benchmark artefacts, generated RTL, synthesis evidence, and explicit readiness gaps.
 
@@ -137,6 +137,7 @@ See [Architecture](architecture/architecture.md) for the full package map.
 - **[Equation Units](guides/equation_units.md)** — Opt-in strict dimensional validation for `EquationNeuron` and `from_equations(...)`
 - **[SCPN NeuroCore Bridge API](api/scpn_neurocore.md)** — Canonical `scpn_neurocore` bridge artifacts and datastream packets for cross-repository SCPN workflows
 - **[API Reference](api/API_REFERENCE.md)** — Python package API
+- **[Studio Federation API](api/federation.md)** — optional Hub manifest, evidence bundle, and verifiable-honesty seal surface
 - **[Rust Engine API](api/rust-engine.md)** — High-performance Rust engine docs
 - **[Hardware Guide](hardware/HARDWARE_GUIDE.md)** — FPGA deployment workflow
 - **[FPGA Deploy Cookbook](tutorials/fpga_deploy_cookbook.md)** — Five-minute scaffold, optional synthesis, report-to-optimiser handoff

@@ -73,6 +73,25 @@ and why.
 3. Click **Pipeline → ICE40** (or whichever target) on the Canvas toolbar
 4. View results: simulation stats + synthesis resource usage
 
+## Hub Federation Manifest
+
+The optional Hub-facing federation surface lives under
+`sc_neurocore.federation` and is separate from this local Studio web app. It
+declares the schema-A capability manifest, the eight advertised verbs, and the
+evidence-bundle contracts consumed by SCPN Studio platform federation.
+
+Install the optional SDK before generating or checking the committed manifest:
+
+```bash
+pip install "sc-neurocore[federation]"
+python tools/emit_studio_manifest.py --check
+```
+
+The generated artifact is `docs/_generated/studio_manifest.json`; it stamps the
+source package version and hashes the declared verbs plus evidence schemas, not
+git state. API details and envelope examples are in
+[Studio Federation API](../api/federation.md).
+
 ## API Endpoints
 
 | Method | Endpoint | Description |

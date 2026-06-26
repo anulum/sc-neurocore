@@ -961,7 +961,7 @@
     "model_documentation_pages": 175,
     "optional_extras": 25,
     "public_api_exports": 44,
-    "public_documentation_pages": 557,
+    "public_documentation_pages": 558,
     "python_model_classes": 158,
     "python_model_source_modules": 152,
     "rust_pyo3_model_wrappers": 175,
@@ -1037,6 +1037,7 @@
       "docs/api/export.md",
       "docs/api/fault_injection.md",
       "docs/api/federated.md",
+      "docs/api/federation.md",
       "docs/api/few_shot.md",
       "docs/api/formal.md",
       "docs/api/formal_network_verification.md",
@@ -2777,7 +2778,7 @@
     "name": "sc-neurocore",
     "readme": "README.md",
     "requires_python": ">=3.10",
-    "version": "3.15.34"
+    "version": "3.15.35"
   },
   "project_label": "SC-NeuroCore",
   "quality_gates": {
