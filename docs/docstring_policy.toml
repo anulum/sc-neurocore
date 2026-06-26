@@ -7,7 +7,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 164
+expected_file_count = 167
 
 [[file]]
 path = "scripts/generate_docs.py"
@@ -116,6 +116,18 @@ rationale = "Public experiments package entry point with an intentionally empty 
 [[file]]
 path = "src/sc_neurocore/adapters/__init__.py"
 rationale = "Public adapter package entry point for stochastic adapter modules."
+
+[[file]]
+path = "src/sc_neurocore/conversion/__init__.py"
+rationale = "Public ANN-to-SNN conversion package entry point with lazy optional PyTorch surfaces."
+
+[[file]]
+path = "src/sc_neurocore/conversion/ann_to_snn.py"
+rationale = "Public ANN-to-SNN conversion engine used by conversion tutorials and API documentation."
+
+[[file]]
+path = "src/sc_neurocore/conversion/qcfs.py"
+rationale = "Public QCFS activation module for conversion-aware ANN-to-SNN workflows."
 
 [[file]]
 path = "src/sc_neurocore/_native/__init__.py"

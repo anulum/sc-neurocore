@@ -64,6 +64,7 @@ class ConvertedSNN:
     n_layers: int = field(init=False)
 
     def __post_init__(self) -> None:
+        """Derive the layer count from the converted weight stack."""
         self.n_layers = len(self.weights)
 
     def run(self, x: np.ndarray[Any, Any]) -> np.ndarray[Any, Any]:

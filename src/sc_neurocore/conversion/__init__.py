@@ -11,8 +11,29 @@
 Requires ``pip install sc-neurocore[torch]`` (PyTorch).
 """
 
+from __future__ import annotations
 
-def __getattr__(name):  # type: ignore[no-untyped-def]
+
+def __getattr__(name: str) -> object:
+    """Lazily resolve optional PyTorch conversion surfaces.
+
+    Parameters
+    ----------
+    name : str
+        Public conversion symbol requested from the package.
+
+    Returns
+    -------
+    object
+        The resolved conversion function or class.
+
+    Raises
+    ------
+    AttributeError
+        If ``name`` is not exported by this package.
+    ImportError
+        If the requested symbol requires PyTorch and PyTorch is unavailable.
+    """
     if name in ("convert", "ConvertedSNN"):
         from .ann_to_snn import ConvertedSNN, convert
 

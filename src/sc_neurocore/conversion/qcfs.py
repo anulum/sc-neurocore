@@ -41,7 +41,7 @@ class QCFSActivation(nn.Module):
         Make threshold trainable (default False).
     """
 
-    def __init__(self, T: int = 8, theta: float = 1.0, learn_theta: bool = False):
+    def __init__(self, T: int = 8, theta: float = 1.0, learn_theta: bool = False) -> None:
         super().__init__()
         self.T = T
         if learn_theta:
@@ -50,6 +50,19 @@ class QCFSActivation(nn.Module):
             self.register_buffer("theta", torch.tensor(theta))
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
+        """Quantise activations to the spike-rate grid with a straight-through gradient.
+
+        Parameters
+        ----------
+        x : torch.Tensor
+            ANN activation tensor to clip and quantise into ``T + 1`` rate levels.
+
+        Returns
+        -------
+        torch.Tensor
+            Tensor with values clipped to ``[0, theta]`` and quantised to the
+            finite-timestep spike-rate lattice.
+        """
         scaled = x * self.T / self.theta + 0.5
         # STE: floor in forward, pass gradient straight through
         quantized = scaled.floor() - (scaled.floor() - scaled).detach()
@@ -58,4 +71,5 @@ class QCFSActivation(nn.Module):
         return out
 
     def extra_repr(self) -> str:
+        """Return the compact PyTorch module representation."""
         return f"T={self.T}, theta={self.theta.item():.2f}"
