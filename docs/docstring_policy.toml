@@ -7,7 +7,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 176
+expected_file_count = 177
 
 [[file]]
 path = "scripts/generate_docs.py"
@@ -320,6 +320,10 @@ rationale = "Public UVM/SystemVerilog verification-IP generator documented in AP
 [[file]]
 path = "src/sc_neurocore/temporal_hierarchy/__init__.py"
 rationale = "Public multi-timescale SNN package entry point."
+
+[[file]]
+path = "src/sc_neurocore/training/utils.py"
+rationale = "Public SNN training utility surface documented in the Training API reference and covered by dedicated Torch utility tests."
 
 [[file]]
 path = "src/sc_neurocore/solvers/__init__.py"

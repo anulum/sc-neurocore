@@ -720,6 +720,18 @@ from sc_neurocore.training import reset_states
 reset_states([monitor1, monitor2])
 ```
 
+### Utility verification
+
+`sc_neurocore.training.utils` is part of the scoped public docstring policy.
+The focused utility tests exercise hook collection/removal, monitor reset,
+population-vector decoding with default, custom, batched, and vector preferred
+values, and the `reset_states(None)` no-op. On 2026-06-27 the focused checks
+passed for Ruff, NumPy docstrings, strict mypy, and
+`tests/test_training/test_utils.py` (`10 passed`). Local coverage
+instrumentation for this Torch utility currently fails during Torch import with
+`RuntimeError: function '_has_torch_function' already has a docstring`; the same
+production-path tests pass without coverage instrumentation.
+
 ---
 
 ## DelayLinear

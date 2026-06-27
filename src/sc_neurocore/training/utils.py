@@ -77,13 +77,16 @@ class SpikeMonitor:
 
     @property
     def layer_names(self) -> list[str]:
+        """Return names of modules that currently have spike hooks attached."""
         return list(self._records.keys())
 
     def reset(self) -> None:
+        """Clear recorded spike tensors while keeping hooks attached."""
         for v in self._records.values():
             v.clear()
 
     def remove(self) -> None:
+        """Remove forward hooks and clear all recorded spike tensors."""
         for h in self._hooks:
             h.remove()
         self._hooks.clear()
@@ -120,7 +123,7 @@ def population_decode(
     spike_counts: torch.Tensor,
     preferred_values: torch.Tensor | None = None,
 ) -> torch.Tensor:
-    """Population vector decoding.
+    """Decode spike counts with a population-vector weighted average.
 
     Instead of argmax, computes a weighted average of preferred values
     based on spike counts. More informative than winner-take-all.
