@@ -5,6 +5,10 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 ## [Unreleased]
 
 ### Fixed
+- Expanded spin-pool MPS coverage to 100% exact-file evidence, covering valid
+  dense exact evolution, ATP observable site rejection, status/repr telemetry,
+  and stable TEBD adjacency validation while keeping the Rust telemetry-kernel
+  tests green.
 - Expanded Kane silicon mapper coverage to 100% exact-file evidence, covering
   triangular and hexagonal donor placement, zero-site rejection, zero-distance
   exchange coupling, and the touched docstring policy surface while keeping the

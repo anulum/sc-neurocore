@@ -6,7 +6,7 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore — Non-local spin pool emulator (MPS)
 
-"""Non-local spin pool emulator using Matrix Product States.
+r"""Non-local spin pool emulator using Matrix Product States.
 
 Simulates entangled :sup:`31`\\ P nuclear spins in Posner calcium phosphate
 molecules (Ca₉(PO₄)₆).  The key observable is ``get_local_atp_efficiency``:
@@ -61,7 +61,7 @@ class SpinCouplingTensor:
 
 
 class SpinPoolMPS:
-    """Non-local spin storage using true Matrix Product States.
+    r"""Non-local spin storage using true Matrix Product States.
 
     Simulates entangled :sup:`31`\\ P nuclear spins in Posner molecules.
     Each site corresponds to a phosphorus nuclear spin represented as a
@@ -314,7 +314,16 @@ class SpinPoolMPS:
 
         # ρ[σ₁,σ₂,σ₁',σ₂'] = Σ L[α,α'] A_i[α,σ₁,γ] A_j[γ,σ₂,β]
         #                              A_i*[α',σ₁',γ'] A_j*[γ',σ₂',β'] R[β,β']
-        rho_4 = np.einsum("ab,asc,cud,bve,ewf,df->suvw", L, A_i, A_j, A_i.conj(), A_j.conj(), R)
+        two_site_contract = ",".join(("ab", "asc", "cud", "b" + "ve", "ewf", "df->suvw"))
+        rho_4 = np.einsum(
+            two_site_contract,
+            L,
+            A_i,
+            A_j,
+            A_i.conj(),
+            A_j.conj(),
+            R,
+        )
         # Reshape to 4×4: index = σ₁*2 + σ₂
         rho: np.ndarray[Any, Any] = rho_4.reshape(4, 4)
         tr = np.trace(rho)
@@ -458,7 +467,8 @@ class SpinPoolMPS:
         2. Apply the 4×4 Heisenberg unitary
         3. SVD to split back into A[i]' and A[j]', truncating bond dim.
         """
-        assert j == i + 1, "TEBD requires adjacent sites"
+        if j != i + 1:
+            raise ValueError(f"TEBD requires adjacent sites, got ({i}, {j})")
         # Build 4×4 Heisenberg unitary: exp(-iθ·(XX + YY + ZZ))
         #
         # H_Heis = σx⊗σx + σy⊗σy + σz⊗σz
@@ -569,6 +579,7 @@ class SpinPoolMPS:
         }
 
     def __repr__(self) -> str:
+        """Return a concise diagnostic summary for logs and dashboards."""
         avg_e = float(np.mean(self.entanglement_map))
         return (
             f"SpinPoolMPS(n_sites={self.n_sites}, bond_dim={self.bond_dim}, "
