@@ -5,6 +5,10 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 ## [Unreleased]
 
 ### Fixed
+- Expanded Kane silicon mapper coverage to 100% exact-file evidence, covering
+  triangular and hexagonal donor placement, zero-site rejection, zero-distance
+  exchange coupling, and the touched docstring policy surface while keeping the
+  Rust safety-kernel parity tests green.
 - Hardened Wong-Wang Julia, Go, and Mojo acceleration facades so `stim1`,
   `stim2`, and `xi` must be one-dimensional time-series before backend
   dispatch, and added module-specific dispatcher contracts for Go/Mojo loader

@@ -15,6 +15,8 @@ from sc_neurocore.quantum_cognition.kane_mapper import (
 
 
 class TestKaneSiliconMapper:
+    """Contract tests for the Kane silicon register mapper."""
+
     def test_linear_positions(self) -> None:
         """Linear topology should place qubits in a line."""
         mapper = KaneSiliconMapper(spacing_nm=20.0, topology="linear")
@@ -34,6 +36,35 @@ class TestKaneSiliconMapper:
         assert layout.n_qubits == 9
         # 9 qubits → 3×3 grid
         assert layout.qubit_positions.shape == (9, 2)
+
+    def test_triangular_positions_stagger_odd_rows(self) -> None:
+        """Triangular topology staggers every odd row by half a spacing."""
+        mapper = KaneSiliconMapper(spacing_nm=20.0, topology="triangular")
+        layout = mapper.map_pool_to_register(5)
+
+        assert layout.qubit_positions.shape == (5, 2)
+        np.testing.assert_allclose(layout.qubit_positions[0], [0.0, 0.0])
+        np.testing.assert_allclose(layout.qubit_positions[1], [20.0, 0.0])
+        np.testing.assert_allclose(
+            layout.qubit_positions[3],
+            [10.0, 20.0 * np.sqrt(3.0) / 2.0],
+        )
+
+    def test_hexagonal_positions_stop_after_requested_site_count(self) -> None:
+        """Hexagonal topology fills only the requested number of donor sites."""
+        mapper = KaneSiliconMapper(spacing_nm=20.0, topology="hexagonal")
+        layout = mapper.map_pool_to_register(3)
+
+        assert layout.qubit_positions.shape == (3, 2)
+        np.testing.assert_allclose(layout.qubit_positions[0], [0.0, 0.0])
+        np.testing.assert_allclose(
+            layout.qubit_positions[1],
+            [30.0, 20.0 * np.sqrt(3.0) / 4.0],
+        )
+        np.testing.assert_allclose(
+            layout.qubit_positions[2],
+            [0.0, 20.0 * np.sqrt(3.0) * 3.0 / 4.0],
+        )
 
     def test_coupling_matrix_symmetry(self) -> None:
         """Coupling matrix must be symmetric with zero diagonal."""
@@ -58,6 +89,10 @@ class TestKaneSiliconMapper:
         layout = mapper.map_pool_to_register(8)
         assert np.all(layout.coupling_matrix >= 0.0)
 
+    def test_exchange_coupling_returns_prefactor_at_zero_distance(self) -> None:
+        """Co-located donors use the Kane exchange prefactor directly."""
+        assert KaneSiliconMapper._exchange_coupling(0.0) == pytest.approx(0.1)
+
     def test_t2_budget(self) -> None:
         """T₂ budget must be positive."""
         mapper = KaneSiliconMapper()
@@ -72,6 +107,13 @@ class TestKaneSiliconMapper:
         assert layout.n_qubits == 1
         assert layout.coupling_matrix.shape == (1, 1)
         assert layout.coupling_matrix[0, 0] == 0.0
+
+    def test_zero_sites_are_rejected(self) -> None:
+        """Zero-site registers are invalid because no donor can be placed."""
+        mapper = KaneSiliconMapper()
+
+        with pytest.raises(ValueError, match="n_sites must be >= 1"):
+            mapper.map_pool_to_register(0)
 
     def test_constraints(self) -> None:
         """Constraints dict should contain all expected fields."""
@@ -99,14 +141,17 @@ class TestKaneSiliconMapper:
         assert len(d["coupling_matrix_meV"]) == 4
 
     def test_invalid_spacing(self) -> None:
+        """Non-positive donor spacing is rejected."""
         with pytest.raises(ValueError, match="spacing_nm"):
             KaneSiliconMapper(spacing_nm=-1)
 
     def test_invalid_topology(self) -> None:
+        """Unknown lattice topology names are rejected."""
         with pytest.raises(ValueError, match="topology"):
             KaneSiliconMapper(topology="bcc")
 
     def test_repr(self) -> None:
+        """The repr reports spacing and topology for diagnostics."""
         mapper = KaneSiliconMapper(spacing_nm=30.0, topology="grid")
         r = repr(mapper)
         assert "30.0" in r

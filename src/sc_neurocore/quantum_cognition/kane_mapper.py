@@ -369,6 +369,7 @@ class KaneSiliconMapper:
         }
 
     def __repr__(self) -> str:
+        """Return a concise constructor-style mapper description."""
         return (
             f"KaneSiliconMapper(spacing={self.spacing_nm}nm, "
             f"depth={self.depth_nm}nm, topology={self.topology!r})"
