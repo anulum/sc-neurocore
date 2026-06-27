@@ -3,9 +3,15 @@
 **Module:** `sc_neurocore.exceptions`
 **Source:** `src/sc_neurocore/exceptions.py` — 82 LOC, 13 exception classes
 **Status (v3.14.0):** clean two-level hierarchy with `SCNeuroError` as
-the single root; 7 tests pass; **9 of 13 declared classes have zero
+the single root; 23 focused compatibility tests pass; **9 of 13 declared classes have zero
 `raise` sites in the source tree** — they are reserved for future use
 or are expected to be raised by external callers (§5).
+
+The module is also covered by the scoped public-docstring policy. Its dedicated
+test surface is strict typed and verifies base-class inheritance, stdlib
+exception mixins, construction, and catchability for all public exception
+classes. This API has no polyglot or benchmark counterpart; changes here are
+Python API documentation and compatibility-surface hardening.
 
 This page documents the full hierarchy, what each exception catches,
 which ones are actually used, and where in the codebase they fire.

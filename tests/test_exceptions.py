@@ -26,6 +26,8 @@ from sc_neurocore.exceptions import (
     SeedCollisionError,
 )
 
+ExceptionClass = type[SCNeuroError]
+
 
 @pytest.mark.parametrize(
     "exc_cls",
@@ -38,11 +40,13 @@ from sc_neurocore.exceptions import (
         IRCompilationError,
     ],
 )
-def test_subclass_of_base(exc_cls):
+def test_subclass_of_base(exc_cls: ExceptionClass) -> None:
+    """All leaf exceptions inherit from the SC-NeuroCore base class."""
     assert issubclass(exc_cls, SCNeuroError)
 
 
-def test_raise_and_catch():
+def test_raise_and_catch() -> None:
+    """The base exception catches concrete SC-NeuroCore failures."""
     with pytest.raises(SCNeuroError, match="overflow"):
         raise BitstreamOverflowError("overflow")
 
@@ -59,7 +63,7 @@ def test_raise_and_catch():
     "exc_cls",
     [SCEncodingError, SCConfigError, SCWeightError, SCCompilerError],
 )
-def test_value_error_mixin(exc_cls):
+def test_value_error_mixin(exc_cls: ExceptionClass) -> None:
     """Domain exceptions are also ValueError so legacy callers keep working."""
     assert issubclass(exc_cls, ValueError)
     assert issubclass(exc_cls, SCNeuroError)
@@ -74,7 +78,7 @@ def test_value_error_mixin(exc_cls):
     "exc_cls",
     [SCDependencyError, SCHardwareError],
 )
-def test_runtime_error_mixin(exc_cls):
+def test_runtime_error_mixin(exc_cls: ExceptionClass) -> None:
     """Runtime exceptions are also RuntimeError so legacy callers keep working."""
     assert issubclass(exc_cls, RuntimeError)
     assert issubclass(exc_cls, SCNeuroError)
@@ -99,7 +103,7 @@ def test_runtime_error_mixin(exc_cls):
         IRCompilationError,
     ],
 )
-def test_reserved_classes_are_constructable_and_catchable(exc_cls):
+def test_reserved_classes_are_constructable_and_catchable(exc_cls: ExceptionClass) -> None:
     """The 'reserved for future use' classes (task #36) at least work."""
     instance = exc_cls("probe")
     assert "probe" in str(instance)
