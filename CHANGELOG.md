@@ -5,6 +5,9 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 ## [Unreleased]
 
 ### Fixed
+- Expanded GOTM brain coverage to 100% exact-file evidence, covering the local
+  LLM import-success path, valid directive parsing, invalid directive fallback,
+  local endpoint exception fallback, and repr/docstring policy.
 - Expanded L7 holonomic symbolic adapter coverage to 100% exact-file evidence,
   covering single-node routing, nonstandard ring coordinates, underflowed
   Metatron topology rejection without warnings, boolean integer parameter

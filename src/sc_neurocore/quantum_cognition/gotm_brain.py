@@ -443,6 +443,7 @@ class GOTMBrain:
         self._total_steps = 0
 
     def __repr__(self) -> str:
+        """Return a concise representation of the brain learning state."""
         return (
             f"GOTMBrain(n_neurons={self.n_neurons}, "
             f"steps={self._total_steps}, "
