@@ -327,6 +327,7 @@ class RadicalPairModel:
         }
 
     def __repr__(self) -> str:
+        """Return a concise representation of the active RPM parameters."""
         p = self.params
         return (
             f"RadicalPairModel(J={p.exchange_j}MHz, k={p.recombination_rate}µs⁻¹, "

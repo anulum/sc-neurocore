@@ -5,6 +5,11 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 ## [Unreleased]
 
 ### Fixed
+- Expanded radical-pair RPM coverage to 100% exact-file evidence, covering
+  invalid quadrature, explicit hyperfine tensor construction/state telemetry,
+  tensor-shape rejection, zero-nucleus density helper behavior, oversized dense
+  nuclear-bath rejection, non-positive kinetic parameter guards, and
+  repr/docstring policy while keeping the Rust safety kernel green.
 - Expanded quantum terminal dashboard coverage to 100% exact-file evidence,
   covering terminal-size fallback, narrow-terminal hidden-neuron telemetry,
   no-history rendering, spike-raster intensity bands, directive colour fallback,
