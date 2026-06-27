@@ -10,6 +10,7 @@
 
 from pathlib import Path
 import sys
+from typing import Any
 
 if sys.version_info >= (3, 11):
     import tomllib
@@ -20,35 +21,57 @@ import pytest
 import sc_neurocore
 
 
-def _project_metadata() -> dict:
+def _project_metadata() -> dict[str, Any]:
+    """Load the project metadata from the repository pyproject file."""
     pyproject = Path(__file__).resolve().parents[1] / "pyproject.toml"
     return tomllib.loads(pyproject.read_text(encoding="utf-8"))
 
 
 def _package_root() -> Path:
+    """Return the source-tree package root used by package-data tests."""
     return Path(__file__).resolve().parents[1] / "src" / "sc_neurocore"
 
 
-def test_all_symbols_importable():
+def test_all_symbols_importable() -> None:
+    """Every advertised root package symbol resolves through the lazy facade."""
     for name in sc_neurocore.__all__:
         assert hasattr(sc_neurocore, name), f"Missing export: {name}"
 
 
-def test_version_string():
+def test_unknown_lazy_symbol_raises_attribute_error() -> None:
+    """Unknown root-package attributes fail with the standard attribute error."""
+    missing_name = "not_a_public_symbol"
+    with pytest.raises(AttributeError, match="has no attribute 'not_a_public_symbol'"):
+        getattr(sc_neurocore, missing_name)
+
+
+def test_dir_lists_lazy_public_api() -> None:
+    """The package directory includes lazily exposed public API names."""
+    public_names = dir(sc_neurocore)
+    assert "StochasticLIFNeuron" in public_names
+    assert "BitstreamEncoder" in public_names
+    assert "not_a_public_symbol" not in public_names
+
+
+def test_version_string() -> None:
+    """The source package version matches pyproject metadata."""
     assert sc_neurocore.__version__ == _project_metadata()["project"]["version"]
 
 
-def test_all_count():
+def test_all_count() -> None:
+    """The root public API keeps its audited export count."""
     assert len(sc_neurocore.__all__) == 44, f"Public API count changed: {len(sc_neurocore.__all__)}"
 
 
-def test_project_does_not_require_separate_engine_pypi_package():
+def test_project_does_not_require_separate_engine_pypi_package() -> None:
+    """The base package does not require a separate engine package."""
     data = _project_metadata()
     dependencies = data["project"]["dependencies"]
     assert all(not dep.startswith("sc-neurocore-engine") for dep in dependencies)
 
 
-def test_install_extras_cover_documented_workflow_groups():
+def test_install_extras_cover_documented_workflow_groups() -> None:
+    """Optional dependency groups match the documented workflow boundaries."""
     extras = _project_metadata()["project"]["optional-dependencies"]
     dependencies = _project_metadata()["project"]["dependencies"]
 
@@ -83,7 +106,8 @@ def test_install_extras_cover_documented_workflow_groups():
     } <= full
 
 
-def test_hdl_install_profile_packages_source_artefacts():
+def test_hdl_install_profile_packages_source_artefacts() -> None:
+    """The HDL install profile ships the baseline RTL source artefacts."""
     package_data = _project_metadata()["tool"]["setuptools"]["package-data"]["sc_neurocore"]
 
     assert "hardware/*.v" in package_data
@@ -109,7 +133,8 @@ def test_hdl_install_profile_packages_source_artefacts():
     assert "hdl_gen/openroad_flow/run_asic_flow.sh" in matched
 
 
-def test_hdl_resource_helper_rejects_unknown_primitive_names():
+def test_hdl_resource_helper_rejects_unknown_primitive_names() -> None:
+    """The HDL resource helper rejects traversal and unknown primitive names."""
     from sc_neurocore.hdl.resources import (
         baseline_primitive_text,
         list_baseline_primitive_rtl,
@@ -136,7 +161,8 @@ def test_hdl_resource_helper_rejects_unknown_primitive_names():
 
 def test_hdl_resource_helper_contract_and_missing_packaged_file(
     monkeypatch: pytest.MonkeyPatch,
-):
+) -> None:
+    """The HDL resource helper reports missing packaged primitive files."""
     from sc_neurocore.hdl import resources as hdl_resources
 
     names = hdl_resources.list_baseline_primitive_rtl()
@@ -144,19 +170,26 @@ def test_hdl_resource_helper_contract_and_missing_packaged_file(
     assert len(set(names)) == len(names)
 
     class _MissingResource:
-        def joinpath(self, _name: str):
-            class _File:
-                def is_file(self) -> bool:
-                    return False
+        """Minimal resource object that simulates a missing packaged file."""
 
-            return _File()
+        class _File:
+            """Minimal file-like resource with a negative file predicate."""
+
+            def is_file(self) -> bool:
+                """Report that the resource does not exist as a file."""
+                return False
+
+        def joinpath(self, _name: str) -> _File:
+            """Return a missing child resource for any primitive name."""
+            return self._File()
 
     monkeypatch.setattr(hdl_resources, "files", lambda _pkg: _MissingResource())
     with pytest.raises(FileNotFoundError, match="Missing packaged HDL primitive"):
         hdl_resources.baseline_primitive_path("sc_lif_neuron.v")
 
 
-def test_base_wheel_does_not_package_polyglot_research_sources():
+def test_base_wheel_does_not_package_polyglot_research_sources() -> None:
+    """The base wheel omits research-only polyglot source trees."""
     package_data = _project_metadata()["tool"]["setuptools"]["package-data"]["sc_neurocore"]
 
     forbidden_prefixes = (

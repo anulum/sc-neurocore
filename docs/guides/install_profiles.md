@@ -56,6 +56,14 @@ Current measured evidence:
 | Heavy optional packages installed | None |
 | Public import smoke | `sc_neurocore.__version__ == "3.15.35"` and 44 public exports |
 
+The root package import contract is enforced by `tests/test_public_api.py`.
+The 2026-06-27 scoped verification passed Ruff, Ruff docstring checks, strict
+mypy, `11 passed` public API tests, and 100% isolated coverage for
+`src/sc_neurocore/__init__.py`. That test surface covers the lazy public symbol
+facade, invalid attribute handling, `dir()` membership, version metadata,
+install extras, packaged HDL resources, and exclusion of research-only
+polyglot source trees from the base wheel.
+
 ## Rust engine
 
 The Rust engine is optional acceleration. If an engine wheel or local source

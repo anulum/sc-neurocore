@@ -6,11 +6,7 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore — Universal Stochastic Computing Framework
 
-from __future__ import annotations
-
-"""
-SC-NeuroCore — Universal Stochastic Computing Framework
-========================================================
+"""SC-NeuroCore universal stochastic computing framework.
 
 Core public API surface for neuromorphic stochastic computing.
 Import the classes you need directly::
@@ -32,6 +28,8 @@ Module Tiers
 - **contrib**  -- Speculative / theoretical modules have been moved to the
   ``research/`` directory at the repository root. See ``research/README.md``.
 """
+
+from __future__ import annotations
 
 
 import importlib
