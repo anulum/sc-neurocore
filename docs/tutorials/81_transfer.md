@@ -1,44 +1,27 @@
 # Tutorial 81: SNN Transfer Learning
 
-Pretrain, save, load, freeze, fine-tune. The standard ML transfer
-learning workflow adapted for spiking neural networks — where temporal
-dynamics transfer across tasks, not just weight magnitudes.
-
-## Why Transfer Learning for SNNs
-
-SNN training is expensive: surrogate gradients through T timesteps,
-slow convergence, GPU-hungry. Transfer learning amortises this cost:
-
-1. Train once on a large dataset (MNIST, ImageNet-derived spikes)
-2. Save the trained weights
-3. Fine-tune on your specific task with few examples
-
-The key SNN-specific insight: learned *temporal dynamics* (membrane
-decay rates, threshold adaptation patterns) transfer across tasks.
-A network trained on MNIST has learned general spike-timing features
-that help with any visual task.
+Pretrain, save, load, freeze, and fine-tune an SNN checkpoint. The workflow is
+designed for reproducible transfer experiments where the checkpoint carries both
+weights and enough architecture metadata to reject incompatible reloads.
 
 ## Save and Load Checkpoints
 
 ```python
 import numpy as np
-from sc_neurocore.transfer import (
-    save_checkpoint, load_checkpoint, SNNCheckpoint, TransferConfig,
-)
+from sc_neurocore.transfer import SNNCheckpoint, load_checkpoint, save_checkpoint
 
 rng = np.random.default_rng(42)
 
-# Simulate trained weights
 model_weights = [
-    rng.standard_normal((784, 256)).astype(np.float32) * 0.05,
-    rng.standard_normal((256, 10)).astype(np.float32) * 0.1,
+    rng.standard_normal((256, 784)).astype(np.float64) * 0.05,
+    rng.standard_normal((10, 256)).astype(np.float64) * 0.1,
 ]
 
-# Save trained model
-ckpt = SNNCheckpoint(
+checkpoint = SNNCheckpoint(
     weights=model_weights,
     layer_names=["hidden", "output"],
     layer_sizes=[(784, 256), (256, 10)],
+    neuron_types=["LIF", "LIF"],
     metadata={
         "task": "mnist",
         "accuracy": 0.972,
@@ -46,88 +29,92 @@ ckpt = SNNCheckpoint(
         "beta": 0.9,
     },
 )
-save_checkpoint(ckpt, "mnist_snn")
-print(f"Saved: {len(ckpt.weights)} layers, {sum(w.size for w in ckpt.weights):,} params")
+save_checkpoint(checkpoint, "mnist_snn")
 
-# Load checkpoint
 loaded = load_checkpoint("mnist_snn")
-print(f"Loaded: task={loaded.metadata.get('task')}, accuracy={loaded.metadata.get('accuracy')}")
+print(loaded.n_layers, loaded.total_params, loaded.metadata["task"])
 ```
+
+The loader checks the JSON sidecar, rejects unexpected archive entries, disables
+pickle while opening the `.npz`, and verifies that each weight matrix shape is
+`(output_features, input_features)` for the stored layer-size pair.
 
 ## Freeze and Fine-Tune
 
-Freeze feature extraction layers, train only the readout:
+Freeze feature-extraction layers and keep the output head trainable:
 
 ```python
-from sc_neurocore.transfer.fine_tune import apply_transfer_config
+from sc_neurocore.transfer import TransferConfig, apply_transfer_config
 
-# Freeze all layers except the last
 config = TransferConfig(
-    freeze_until=0,      # freeze layers 0..0 (hidden layer)
-    lr_head=0.001,       # learning rate for unfrozen head
-    lr_frozen=0.0,       # frozen layers don't train
+    freeze_until=0,
+    lr_backbone=0.0,
+    lr_head=0.001,
 )
 
-ckpt, per_layer_lr = apply_transfer_config(loaded, config)
-print(f"Per-layer LR: {per_layer_lr}")
-# [0.0, 0.001] — hidden frozen, output trains
+loaded, per_layer_lr = apply_transfer_config(loaded, config)
+print(loaded.frozen_layers)
+print(per_layer_lr)
 ```
 
-### Gradual Unfreezing
+`freeze_until` accepts either a zero-based layer index or a layer name. Unknown
+layer names and out-of-range indices raise `ValueError` instead of silently
+leaving the schedule unchanged.
 
-For better fine-tuning, gradually unfreeze layers:
+## Gradual Unfreezing
 
 ```python
-# Phase 1: only readout (10 epochs)
-config1 = TransferConfig(freeze_until=0, lr_head=0.001)
+from sc_neurocore.transfer import TransferConfig, apply_transfer_config, unfreeze_layers
 
-# Phase 2: unfreeze hidden layer with small LR (10 more epochs)
-config2 = TransferConfig(freeze_until=-1, lr_head=0.001, lr_frozen=0.0001)
+phase_1 = TransferConfig(freeze_until=0, lr_backbone=0.0, lr_head=0.001)
+loaded, phase_1_rates = apply_transfer_config(loaded, phase_1)
+
+unfreeze_layers(loaded, layer_names=["hidden"])
+phase_2 = TransferConfig(freeze_until=-1, lr_backbone=0.0001, lr_head=0.001)
+loaded, phase_2_rates = apply_transfer_config(loaded, phase_2)
 ```
 
-## Transfer Learning Workflow
+The helpers mutate the checkpoint and return it for call chaining. Save the
+checkpoint again after each phase when you need an auditable recovery point.
 
-```
-Step 1: Pretrain on large dataset
-  └─ MNIST 60K examples, 25 timesteps, 50 epochs → 97.2% accuracy
+## Transfer Workflow
 
-Step 2: Save checkpoint
-  └─ save_checkpoint(ckpt, "mnist_pretrained")
-
-Step 3: Load on new task
-  └─ ckpt = load_checkpoint("mnist_pretrained")
-
-Step 4: Modify architecture for new task
-  └─ Replace output layer: 10 → 5 classes (new task)
-  └─ Keep hidden layer weights from MNIST
-
-Step 5: Freeze + fine-tune
-  └─ Freeze hidden, train output on 100 examples of new task
-  └─ Result: 90%+ accuracy with only 100 examples
-```
+1. Pretrain on the source task.
+2. Save a validated `SNNCheckpoint`.
+3. Load the checkpoint for the target task.
+4. Replace or reinitialize task-specific head weights outside the checkpoint
+   helper.
+5. Freeze the transferred backbone and assign per-layer learning rates.
+6. Fine-tune, unfreeze gradually when needed, then save the adapted checkpoint.
 
 ## What Transfers in SNNs
 
 | Component | What Transfers | Why It Helps |
-|-----------|---------------|-------------|
-| Synaptic weights | Learned feature detectors | Same edges/textures in different tasks |
-| Beta (leak rate) | Temporal integration timescale | Similar input dynamics |
-| Threshold | Activity level calibration | Network excitability |
-| Weight structure | Sparse connectivity pattern | Efficient information routing |
+| --- | --- | --- |
+| Synaptic weights | Feature detectors and temporal filters | Preserves learned spike-response structure. |
+| Layer metadata | Layer order, sizes, and neuron labels | Prevents incompatible checkpoint reuse. |
+| Frozen-layer markers | Fine-tuning schedule state | Makes transfer phases reproducible. |
+| Experiment metadata | Task, accuracy, timestep, or provenance fields | Keeps downstream analysis tied to the saved state. |
 
-## Comparison
+## Evidence
 
-| Feature | SC-NeuroCore | snnTorch | Norse |
-|---------|:-----------:|:--------:|:-----:|
-| Save/load checkpoints | Yes | Manual (PyTorch) | Manual (PyTorch) |
-| TransferConfig | Yes | No | No |
-| Freeze/unfreeze API | Yes | Manual | Manual |
-| Metadata preservation | Yes | No | No |
-| SC weight export | Yes | No | No |
+`benchmarks/results/bench_transfer.json` records local, non-isolated regression
+evidence for the Python API and polyglot mirrors. The 2026-06-27 run reports:
+
+| Check | Result |
+| --- | --- |
+| Python checkpoint roundtrip | 100 calls in 0.154779 s, 646.081 calls/s |
+| Python `apply_transfer_config` | 100 calls in 0.009153 s, 10925.32 calls/s |
+| Rust checkpoint and fine-tune mirrors | compile and unit tests pass |
+| Julia transfer validation | pass |
+| Mojo checkpoint and fine-tune kernels | pass |
+
+The benchmark artifact is regression evidence only and sets
+`production_benchmark_claim` to `false`.
 
 ## References
 
-- Yosinski et al. (2014). "How transferable are features in deep
-  neural networks?" NeurIPS 2014.
-- Dampfhoffer et al. (2022). "Are SNNs really more energy-efficient
-  than ANNs? An in-depth hardware-aware study." IEEE TETCI.
+- Yosinski et al. (2014). "How transferable are features in deep neural
+  networks?" NeurIPS 2014.
+- Dampfhoffer et al. (2022). "Are SNNs really more energy-efficient than ANNs?
+  An in-depth hardware-aware study." IEEE TETCI.

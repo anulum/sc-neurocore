@@ -7,7 +7,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 187
+expected_file_count = 190
 
 [[file]]
 path = "src/sc_neurocore/__init__.py"
@@ -224,6 +224,18 @@ rationale = "Public spike-domain contrastive-learning package entry point."
 [[file]]
 path = "src/sc_neurocore/contrastive/ssl.py"
 rationale = "Public spike-domain InfoNCE loss and CSDP local-learning rule."
+
+[[file]]
+path = "src/sc_neurocore/transfer/__init__.py"
+rationale = "Public transfer-learning package entry point that re-exports checkpoint and fine-tuning APIs."
+
+[[file]]
+path = "src/sc_neurocore/transfer/checkpoint.py"
+rationale = "Public validated SNN checkpoint serialization module used by transfer-learning workflows."
+
+[[file]]
+path = "src/sc_neurocore/transfer/fine_tune.py"
+rationale = "Public transfer-learning schedule module for layer freezing and per-layer learning rates."
 
 [[file]]
 path = "src/sc_neurocore/digital_twin/__init__.py"

@@ -1,0 +1,91 @@
+{
+  "benchmark_id": "transfer-checkpoint-polyglot-local-validation",
+  "evidence_class": "local_regression_non_isolated",
+  "failed_checks": [],
+  "julia_validation": {
+    "command": [
+      "julia",
+      "--startup-file=no",
+      "--history-file=no",
+      "-e",
+      "include(\"src/sc_neurocore/accel/julia/transfer/checkpoint.jl\"); include(\"src/sc_neurocore/accel/julia/transfer/fine_tune.jl\"); using .CheckpointAccel; using .FineTuneAccel; state = SNNCheckpointState([[0.1 0.2; 0.3 0.4], [0.5 0.6]], [\"hidden\", \"output\"], [(2, 2), (2, 1)], [\"LIF\", \"LIF\"], [\"hidden\"]); @assert validate_checkpoint(state); @assert total_params(state) == 6; ckpt = TransferCheckpointState([\"hidden\", \"output\"]); rates = apply_transfer_config!(ckpt, TransferConfigState(0, 0.0, 0.01)); @assert rates == [0.0, 0.01]"
+    ],
+    "returncode": 0,
+    "seconds": 1.949485,
+    "status": "pass"
+  },
+  "mojo_checkpoint_validation": {
+    "command": [
+      "mojo",
+      "src/sc_neurocore/accel/mojo/kernels/checkpoint.mojo"
+    ],
+    "returncode": 0,
+    "seconds": 1.363361,
+    "status": "pass"
+  },
+  "mojo_fine_tune_validation": {
+    "command": [
+      "mojo",
+      "src/sc_neurocore/accel/mojo/kernels/fine_tune.mojo"
+    ],
+    "returncode": 0,
+    "seconds": 0.751191,
+    "status": "pass"
+  },
+  "production_benchmark_claim": false,
+  "python": {
+    "apply_transfer_config": {
+      "calls": 100,
+      "calls_per_second": 10925.32,
+      "seconds": 0.009153
+    },
+    "checkpoint_roundtrip": {
+      "calls": 100,
+      "calls_per_second": 646.081,
+      "seconds": 0.154779
+    }
+  },
+  "rust_checkpoint_compile": {
+    "command": [
+      "rustc",
+      "--edition=2021",
+      "--test",
+      "src/sc_neurocore/accel/rust/safety/checkpoint.rs",
+      "-o",
+      "/tmp/sc_neurocore_transfer_checkpoint_tests"
+    ],
+    "returncode": 0,
+    "seconds": 1.083396,
+    "status": "pass"
+  },
+  "rust_checkpoint_tests": {
+    "command": [
+      "/tmp/sc_neurocore_transfer_checkpoint_tests"
+    ],
+    "returncode": 0,
+    "seconds": 0.00195,
+    "status": "pass"
+  },
+  "rust_fine_tune_compile": {
+    "command": [
+      "rustc",
+      "--edition=2021",
+      "--test",
+      "src/sc_neurocore/accel/rust/safety/fine_tune.rs",
+      "-o",
+      "/tmp/sc_neurocore_transfer_fine_tune_tests"
+    ],
+    "returncode": 0,
+    "seconds": 0.177597,
+    "status": "pass"
+  },
+  "rust_fine_tune_tests": {
+    "command": [
+      "/tmp/sc_neurocore_transfer_fine_tune_tests"
+    ],
+    "returncode": 0,
+    "seconds": 0.001318,
+    "status": "pass"
+  },
+  "status": "pass"
+}

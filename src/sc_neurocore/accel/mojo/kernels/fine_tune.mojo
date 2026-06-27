@@ -4,53 +4,68 @@
 # © Code 2020–2026 Miroslav Šotek. All rights reserved.
 # ORCID: 0009-0009-3560-0851
 # Contact: www.anulum.li | protoscience@anulum.li
-# SC-NeuroCore — Mojo SIMD acceleration for fine_tune
+# SC-NeuroCore — Mojo transfer fine-tune validation kernel
 
-fn freeze_layers(checkpoint: Int, layer_names: Int, until_index: Int) -> Int:
-    var _freeze_layers_line = 'checkpoint: SNNCheckpoint,'
-    var _freeze_layers_line = 'layer_names: list[str] | 0 = 0,'
-    var _freeze_layers_line = 'until_index: int | 0 = 0,'
-    var _freeze_layers_line = ') -> SNNCheckpoint:'
-    var _freeze_layers_line = 'frozen = set(checkpoint.frozen_layers)'
-    var _freeze_layers_line = 'if layer_names is not 0:'
-    var _freeze_layers_line = 'frozen.update(layer_names)'
-    var _freeze_layers_line = 'if until_index is not 0:'
-    var _freeze_layers_line = 'for i, name in enumerate(checkpoint.layer_names):'
-    var _freeze_layers_line = 'if i <= until_index:'
-    var _freeze_layers_line = 'frozen.add(name)'
-    var _freeze_layers_line = 'checkpoint.frozen_layers = sorted(frozen)'
-    return 0  # return checkpoint
+from std.math import isfinite
 
-fn unfreeze_layers(checkpoint: Int, layer_names: Int, all_layers: Int) -> Int:
-    var _unfreeze_layers_line = 'checkpoint: SNNCheckpoint,'
-    var _unfreeze_layers_line = 'layer_names: list[str] | 0 = 0,'
-    var _unfreeze_layers_line = 'all_layers: bool = False,'
-    var _unfreeze_layers_line = ') -> SNNCheckpoint:'
-    var _unfreeze_layers_line = 'if all_layers:'
-    var _unfreeze_layers_line = 'checkpoint.frozen_layers = []'
-    return 0  # return checkpoint
-    var _unfreeze_layers_line = 'if layer_names is not 0:'
-    var _unfreeze_layers_line = 'checkpoint.frozen_layers = [n for n in checkpoint.frozen_lay'
-    return 0  # return checkpoint
 
-fn apply_transfer_config(checkpoint: Int, config: Int) -> Int:
-    var _apply_transfer_config_line = 'checkpoint: SNNCheckpoint,'
-    var _apply_transfer_config_line = 'config: TransferConfig,'
-    var _apply_transfer_config_line = ') -> tuple[SNNCheckpoint, list[float]]:'
-    var _apply_transfer_config_line = 'if isinstance(config.freeze_until, int) and config.freeze_un'
-    var _apply_transfer_config_line = 'freeze_layers(checkpoint, until_index=config.freeze_until)'
-    var _apply_transfer_config_line = 'elif isinstance(config.freeze_until, str):'
-    var _apply_transfer_config_line = 'idx = ('
-    var _apply_transfer_config_line = 'checkpoint.layer_names.index(config.freeze_until)'
-    var _apply_transfer_config_line = 'if config.freeze_until in checkpoint.layer_names'
-    var _apply_transfer_config_line = 'else -1'
-    var _apply_transfer_config_line = ')'
-    var _apply_transfer_config_line = 'if idx >= 0:'
-    var _apply_transfer_config_line = 'freeze_layers(checkpoint, until_index=idx)'
-    var _apply_transfer_config_line = 'per_layer_lr = []'
-    var _apply_transfer_config_line = 'for name in checkpoint.layer_names:'
-    var _apply_transfer_config_line = 'if name in checkpoint.frozen_layers:'
-    var _apply_transfer_config_line = 'per_layer_lr.append(config.lr_backbone)'
-    var _apply_transfer_config_line = 'else:'
-    var _apply_transfer_config_line = 'per_layer_lr.append(config.lr_head)'
-    return 0  # return checkpoint, per_layer_lr
+def contains(values: List[Int], target: Int) -> Bool:
+    for idx in range(len(values)):
+        if values[idx] == target:
+            return True
+    return False
+
+
+def freeze_until(layer_count: Int, frozen: List[Int], until_index: Int) raises -> List[Int]:
+    if until_index < 0 or until_index >= layer_count:
+        raise Error("until_index must reference an existing layer")
+    var out = List[Int]()
+    for idx in range(len(frozen)):
+        if frozen[idx] < 0 or frozen[idx] >= layer_count:
+            raise Error("frozen layer must reference an existing layer")
+        if not contains(out, frozen[idx]):
+            out.append(frozen[idx])
+    for idx in range(until_index + 1):
+        if not contains(out, idx):
+            out.append(idx)
+    return out^
+
+
+def apply_transfer_config(
+    layer_count: Int,
+    freeze_index: Int,
+    lr_backbone: Float64,
+    lr_head: Float64,
+) raises -> List[Float64]:
+    if not isfinite(lr_backbone) or lr_backbone < 0.0:
+        raise Error("lr_backbone must be finite and non-negative")
+    if not isfinite(lr_head) or lr_head < 0.0:
+        raise Error("lr_head must be finite and non-negative")
+    var frozen = List[Int]()
+    if freeze_index >= 0:
+        frozen = freeze_until(layer_count, frozen, freeze_index)
+    var rates = List[Float64]()
+    for layer in range(layer_count):
+        if contains(frozen, layer):
+            rates.append(lr_backbone)
+        else:
+            rates.append(lr_head)
+    return rates^
+
+
+def validate_fine_tune_kernel() raises -> Bool:
+    var rates = apply_transfer_config(2, 0, 0.0, 0.01)
+    if len(rates) != 2:
+        return False
+    if rates[0] != 0.0 or rates[1] != 0.01:
+        return False
+    try:
+        _ = apply_transfer_config(2, 4, 0.0, 0.01)
+    except:
+        return True
+    return False
+
+
+def main() raises:
+    if not validate_fine_tune_kernel():
+        raise Error("transfer fine-tune validation failed")

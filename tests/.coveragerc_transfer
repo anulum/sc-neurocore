@@ -1,0 +1,6 @@
+[run]
+source = src/sc_neurocore/transfer
+
+[report]
+show_missing = True
+fail_under = 100

@@ -6,16 +6,22 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore — SNN transfer learning + checkpoint serialization
 
-"""Save, load, freeze, fine-tune SNN models. The foundation of modern ML."""
+"""Checkpoint serialization and transfer-learning helpers for SNN models.
 
-from .checkpoint import save_checkpoint, load_checkpoint, SNNCheckpoint
-from .fine_tune import freeze_layers, unfreeze_layers, TransferConfig
+The package exports the complete public transfer workflow: build or load a
+validated checkpoint, freeze or unfreeze named layers, apply a learning-rate
+schedule, and save the resulting state back to disk.
+"""
+
+from .checkpoint import SNNCheckpoint, load_checkpoint, save_checkpoint
+from .fine_tune import TransferConfig, apply_transfer_config, freeze_layers, unfreeze_layers
 
 __all__ = [
+    "SNNCheckpoint",
+    "TransferConfig",
+    "apply_transfer_config",
+    "freeze_layers",
     "save_checkpoint",
     "load_checkpoint",
-    "SNNCheckpoint",
-    "freeze_layers",
     "unfreeze_layers",
-    "TransferConfig",
 ]

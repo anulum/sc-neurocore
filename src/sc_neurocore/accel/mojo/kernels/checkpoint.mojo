@@ -4,131 +4,80 @@
 # © Code 2020–2026 Miroslav Šotek. All rights reserved.
 # ORCID: 0009-0009-3560-0851
 # Contact: www.anulum.li | protoscience@anulum.li
-# SC-NeuroCore — Mojo SIMD acceleration for checkpoint
+# SC-NeuroCore — Mojo transfer checkpoint validation kernel
 
-fn _restore_voltages(population: Int, voltages: Int) -> Int:
-    var __restore_voltages_line = 'for i, neuron in enumerate(population.neurons):'
-    var __restore_voltages_line = 'if hasattr(neuron, "v"):'
-    var __restore_voltages_line = 'neuron.v = float(voltages[i])'
-    var __restore_voltages_line = 'elif hasattr(neuron, "x"):'
-    var __restore_voltages_line = 'neuron.x = float(voltages[i])'
-    var __restore_voltages_line = 'population._sync_voltages()'
-    return 0
+from std.math import isfinite
 
-fn save(substrate: Int, path: Int) -> Int:
-    var _save_line = 'cortical_v = substrate.cortical.voltages.copy()'
-    var _save_line = 'inhibitory_v = substrate.inhibitory.voltages.copy()'
-    var _save_line = 'memory_v = substrate.memory.voltages.copy()'
-    var _save_line = 'ee_indptr = substrate.proj_ee.indptr.copy()'
-    var _save_line = 'ee_indices = substrate.proj_ee.indices.copy()'
-    var _save_line = 'ee_data = substrate.proj_ee.data.copy()'
-    var _save_line = 'ei_data = substrate.proj_ei.data.copy()'
-    var _save_line = 'ie_data = substrate.proj_ie.data.copy()'
-    var _save_line = 'em_data = substrate.proj_em.data.copy()'
-    var _save_line = 'me_data = substrate.proj_me.data.copy()'
-    var _save_line = 'ii_data = substrate.proj_ii.data.copy()'
-    var _save_line = 'stdp_pre = getattr(substrate.proj_ee, "_pre_trace", array([]'
-    var _save_line = 'stdp_post = getattr(substrate.proj_ee, "_post_trace", array('
-    var _save_line = 'history_len = min(len(substrate.spike_history), 2000)'
-    var _save_line = 'if history_len > 0:'
-    var _save_line = 'spike_history = array(substrate.spike_history[-history_len:]'
-    var _save_line = 'else:'
-    var _save_line = 'spike_history = zeros((0, substrate.n_cortical), dtype=int8)'
-    var _save_line = 'metadata = array('
-    var _save_line = '['
-    var _save_line = 'substrate.n_cortical,'
-    var _save_line = 'substrate.n_inhibitory,'
-    var _save_line = 'substrate.n_memory,'
-    var _save_line = 'substrate.seed,'
-    var _save_line = 'substrate._total_steps,'
-    var _save_line = 'int(time.time()),'
-    var _save_line = '],'
-    var _save_line = 'dtype=int64,'
-    var _save_line = ')'
-    var _save_line = 'savez_compressed('
-    var _save_line = 'path,'
-    var _save_line = 'cortical_v=cortical_v,'
-    var _save_line = 'inhibitory_v=inhibitory_v,'
-    var _save_line = 'memory_v=memory_v,'
-    var _save_line = 'ee_indptr=ee_indptr,'
-    var _save_line = 'ee_indices=ee_indices,'
-    var _save_line = 'ee_data=ee_data,'
-    var _save_line = 'ei_data=ei_data,'
-    var _save_line = 'ie_data=ie_data,'
-    var _save_line = 'em_data=em_data,'
-    var _save_line = 'me_data=me_data,'
-    var _save_line = 'ii_data=ii_data,'
-    var _save_line = 'stdp_pre=stdp_pre,'
-    var _save_line = 'stdp_post=stdp_post,'
-    var _save_line = 'spike_history=spike_history,'
-    var _save_line = 'metadata=metadata,'
-    var _save_line = ')'
-    return 0
 
-fn load(path: Int) -> Int:
-    var _load_line = 'from .substrate import IdentitySubstrate'
-    var _load_line = 'data = load(path, allow_pickle=False)'
-    var _load_line = 'meta = data["metadata"]'
-    var _load_line = 'n_cortical, n_inhibitory, n_memory, seed = ('
-    var _load_line = 'int(meta[0]),'
-    var _load_line = 'int(meta[1]),'
-    var _load_line = 'int(meta[2]),'
-    var _load_line = 'int(meta[3]),'
-    var _load_line = ')'
-    var _load_line = 'total_steps = int(meta[4])'
-    var _load_line = 'substrate = IdentitySubstrate(n_cortical, n_inhibitory, n_me'
-    var _load_line = '_restore_voltages(substrate.cortical, data["cortical_v"])'
-    var _load_line = '_restore_voltages(substrate.inhibitory, data["inhibitory_v"]'
-    var _load_line = '_restore_voltages(substrate.memory, data["memory_v"])'
-    var _load_line = 'substrate.proj_ee.indptr[:] = data["ee_indptr"]'
-    var _load_line = 'substrate.proj_ee.indices[:] = data["ee_indices"]'
-    var _load_line = 'substrate.proj_ee.data[:] = data["ee_data"]'
-    var _load_line = 'substrate.proj_ei.data[:] = data["ei_data"]'
-    var _load_line = 'substrate.proj_ie.data[:] = data["ie_data"]'
-    var _load_line = 'substrate.proj_em.data[:] = data["em_data"]'
-    var _load_line = 'substrate.proj_me.data[:] = data["me_data"]'
-    var _load_line = 'substrate.proj_ii.data[:] = data["ii_data"]'
-    var _load_line = 'stdp_pre = data["stdp_pre"]'
-    var _load_line = 'stdp_post = data["stdp_post"]'
-    var _load_line = 'if stdp_pre.size > 0 and hasattr(substrate.proj_ee, "_pre_tr'
-    var _load_line = 'substrate.proj_ee._pre_trace[:] = stdp_pre'
-    var _load_line = 'if stdp_post.size > 0 and hasattr(substrate.proj_ee, "_post_'
-    var _load_line = 'substrate.proj_ee._post_trace[:] = stdp_post'
-    var _load_line = 'spike_history = data["spike_history"]'
-    var _load_line = 'substrate._spike_history = [spike_history[i] for i in range('
-    var _load_line = 'substrate._total_steps = total_steps'
-    return 0  # return substrate
+def vector1(value: Float64) -> List[Float64]:
+    var row = List[Float64]()
+    row.append(value)
+    return row^
 
-fn merge(paths: Int) -> Int:
-    var _merge_line = 'if not paths:'
-    var _merge_line = 'raise ValueError("No checkpoint paths provided")'
-    var _merge_line = 'if len(paths) == 1:'
-    return 0  # return Checkpoint.load(paths[0])
-    var _merge_line = 'base = Checkpoint.load(paths[0])'
-    var _merge_line = 'ee_data_sum = base.proj_ee.data.copy()'
-    var _merge_line = 'ei_data_sum = base.proj_ei.data.copy()'
-    var _merge_line = 'ie_data_sum = base.proj_ie.data.copy()'
-    var _merge_line = 'em_data_sum = base.proj_em.data.copy()'
-    var _merge_line = 'me_data_sum = base.proj_me.data.copy()'
-    var _merge_line = 'ii_data_sum = base.proj_ii.data.copy()'
-    var _merge_line = 'all_history = list(base.spike_history)'
-    var _merge_line = 'for p in paths[1:]:'
-    var _merge_line = 'other = Checkpoint.load(p)'
-    var _merge_line = 'ee_data_sum += other.proj_ee.data'
-    var _merge_line = 'ei_data_sum += other.proj_ei.data'
-    var _merge_line = 'ie_data_sum += other.proj_ie.data'
-    var _merge_line = 'em_data_sum += other.proj_em.data'
-    var _merge_line = 'me_data_sum += other.proj_me.data'
-    var _merge_line = 'ii_data_sum += other.proj_ii.data'
-    var _merge_line = 'all_history.extend(other.spike_history)'
-    var _merge_line = 'n = len(paths)'
-    var _merge_line = 'base.proj_ee.data[:] = ee_data_sum / n'
-    var _merge_line = 'base.proj_ei.data[:] = ei_data_sum / n'
-    var _merge_line = 'base.proj_ie.data[:] = ie_data_sum / n'
-    var _merge_line = 'base.proj_em.data[:] = em_data_sum / n'
-    var _merge_line = 'base.proj_me.data[:] = me_data_sum / n'
-    var _merge_line = 'base.proj_ii.data[:] = ii_data_sum / n'
-    var _merge_line = 'max_history = 2000'
-    var _merge_line = 'base._spike_history = all_history[-max_history:]'
-    var _merge_line = 'base._total_steps = sum(int(load(p, allow_pickle=False)["met'
-    return 0  # return base
+
+def vector2(a: Float64, b: Float64) -> List[Float64]:
+    var row = List[Float64]()
+    row.append(a)
+    row.append(b)
+    return row^
+
+
+def validate_weight_layer(
+    weight: List[List[Float64]], inputs: Int, outputs: Int
+) -> Bool:
+    if len(weight) != outputs:
+        return False
+    for row in range(len(weight)):
+        if len(weight[row]) != inputs:
+            return False
+        for col in range(len(weight[row])):
+            if not isfinite(weight[row][col]):
+                return False
+    return True
+
+
+def total_params(weights: List[List[List[Float64]]]) -> Int:
+    var total = 0
+    for layer in range(len(weights)):
+        for row in range(len(weights[layer])):
+            total += len(weights[layer][row])
+    return total
+
+
+def validate_checkpoint(weights: List[List[List[Float64]]]) -> Bool:
+    if len(weights) != 2:
+        return False
+    if not validate_weight_layer(weights[0], 2, 2):
+        return False
+    if not validate_weight_layer(weights[1], 2, 1):
+        return False
+    return total_params(weights) == 6
+
+
+def checkpoint_fixture() -> List[List[List[Float64]]]:
+    var weights = List[List[List[Float64]]]()
+    var hidden = List[List[Float64]]()
+    hidden.append(vector2(0.1, 0.2))
+    hidden.append(vector2(0.3, 0.4))
+    var output = List[List[Float64]]()
+    output.append(vector2(0.5, 0.6))
+    weights.append(hidden^)
+    weights.append(output^)
+    return weights^
+
+
+def validate_checkpoint_kernel() -> Bool:
+    var weights = checkpoint_fixture()
+    if not validate_checkpoint(weights):
+        return False
+    var bad = List[List[List[Float64]]]()
+    var bad_layer = List[List[Float64]]()
+    bad_layer.append(vector1(0.1))
+    bad.append(bad_layer^)
+    bad.append(weights[1].copy())
+    return not validate_checkpoint(bad)
+
+
+def main() raises:
+    if not validate_checkpoint_kernel():
+        raise Error("transfer checkpoint validation failed")

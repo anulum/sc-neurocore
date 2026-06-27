@@ -34303,88 +34303,145 @@ torch.Tensor
 
 ## Module `transfer.checkpoint`
 
-### Class `SNNCheckpoint`
-Complete SNN model checkpoint.
+### Class `_Metadata`
+Validated metadata sidecar fields used to rebuild a checkpoint.
 
+
+### Class `SNNCheckpoint`
+Complete dense-weight SNN checkpoint for transfer workflows.
+
+Parameters
+----------
+weights:
+    One two-dimensional weight matrix per layer. A matrix shape must be
+    ``(output_features, input_features)`` for the matching ``layer_sizes``
+    entry ``(input_features, output_features)``.
+layer_names:
+    Unique layer names in forward order.
+layer_sizes:
+    ``(input_features, output_features)`` pairs for each layer.
+neuron_types:
+    Optional neuron-model labels, either empty or one label per layer.
+metadata:
+    JSON-serializable provenance or training metadata.
+frozen_layers:
+    Layer names currently marked non-trainable.
+
+- **__post_init__**()
+  - Normalize arrays and reject inconsistent checkpoint state.
 - **n_layers**()
+  - Return the number of serialized layers.
 - **total_params**()
+  - Return the total number of scalar weight parameters.
 
 ### Function `save_checkpoint(checkpoint, path)`
-Save SNN checkpoint to .npz + .json.
+Save an SNN checkpoint to ``path.npz`` plus ``path.json``.
 
 Parameters
 ----------
-checkpoint : SNNCheckpoint
-path : str or Path
-    Base path (without extension). Creates path.npz and path.json.
+checkpoint:
+    Validated checkpoint to serialize.
+path:
+    Base path without extension. Parent directories are created.
 
 ### Function `load_checkpoint(path)`
-Load SNN checkpoint from .npz + .json.
+Load and validate an SNN checkpoint from ``path.npz`` and ``path.json``.
 
 Parameters
 ----------
-path : str or Path
-    Base path (without extension).
+path:
+    Base path without extension.
 
 Returns
 -------
-SNNCheckpoint
+SNNCheckpoint:
+    Reconstructed checkpoint with finite ``float64`` weight arrays.
 
 ### Function `_validate_metadata(meta)`
 ### Function `_require_string_list(meta, key)`
 ### Function `_optional_string_list(meta, key)`
-### Function `_validate_layer_size(size)`
-### Function `_validate_weight_array(array, key)`
+### Function `_validate_layer_size_list(size)`
+### Function `_validate_layer_size_tuple(size)`
+### Function `_validate_weight_array(array, key, layer_size)`
+### Function `_validate_string_vector(values, label)`
+### Function `_validate_json_serializable(value)`
+### Function `_npz_path(path)`
+Return the weight archive path for a checkpoint base path.
+
+### Function `_json_path(path)`
+Return the metadata sidecar path for a checkpoint base path.
+
 ---
 
 ## Module `transfer.fine_tune`
 
 ### Class `TransferConfig`
-Configuration for transfer learning.
+Configuration for checkpoint-based SNN transfer learning.
 
 Parameters
 ----------
-freeze_until : str or int
-    Freeze all layers up to (and including) this layer name or index.
-lr_backbone : float
-    Learning rate for frozen layers (usually 0 or very small).
-lr_head : float
-    Learning rate for unfrozen layers.
+freeze_until:
+    Freeze all layers up to and including this layer name or index. ``-1``
+    means do not add frozen layers.
+lr_backbone:
+    Learning rate for frozen backbone layers, usually zero or a small value.
+lr_head:
+    Learning rate for unfrozen task-head layers.
 
+- **__post_init__**()
+  - Reject invalid freeze targets and learning rates.
 
 ### Function `freeze_layers(checkpoint, layer_names, until_index)`
-Freeze layers (mark as non-trainable).
+Mark checkpoint layers as frozen.
 
 Parameters
 ----------
-checkpoint : SNNCheckpoint
-layer_names : list of str, optional
-    Specific layers to freeze.
-until_index : int, optional
-    Freeze all layers with index <= until_index.
+checkpoint:
+    Checkpoint to mutate.
+layer_names:
+    Specific layer names to freeze.
+until_index:
+    Freeze every layer with index less than or equal to this value.
 
 Returns
 -------
-SNNCheckpoint with frozen_layers updated
+SNNCheckpoint:
+    The same checkpoint object with ``frozen_layers`` updated.
 
 ### Function `unfreeze_layers(checkpoint, layer_names, all_layers)`
-Unfreeze layers (mark as trainable).
+Mark checkpoint layers as trainable.
 
 Parameters
 ----------
-checkpoint : SNNCheckpoint
-layer_names : list of str, optional
-    Specific layers to unfreeze.
-all_layers : bool
-    If True, unfreeze everything.
-
-### Function `apply_transfer_config(checkpoint, config)`
-Apply transfer config: freeze layers, compute per-layer LR.
+checkpoint:
+    Checkpoint to mutate.
+layer_names:
+    Specific layer names to unfreeze.
+all_layers:
+    When true, clear every frozen-layer marker.
 
 Returns
 -------
-(checkpoint, per_layer_lr)
+SNNCheckpoint:
+    The same checkpoint object with ``frozen_layers`` updated.
 
+### Function `apply_transfer_config(checkpoint, config)`
+Apply a transfer config and return per-layer learning rates.
+
+Parameters
+----------
+checkpoint:
+    Checkpoint to mutate according to ``config``.
+config:
+    Validated transfer schedule.
+
+Returns
+-------
+tuple&#91;SNNCheckpoint, list&#91;float&#93;&#93;:
+    The mutated checkpoint and one learning rate per layer.
+
+### Function `_validate_layer_names(checkpoint, layer_names)`
+### Function `_validate_until_index(checkpoint, until_index)`
 ---
 
 ## Module `transformers.block`
