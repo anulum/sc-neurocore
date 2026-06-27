@@ -7,7 +7,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 180
+expected_file_count = 181
 
 [[file]]
 path = "src/sc_neurocore/__init__.py"
@@ -160,6 +160,10 @@ rationale = "Public closed-loop audio controller that couples SSGF geometry upda
 [[file]]
 path = "src/sc_neurocore/analog_bridge/analog_bridge.py"
 rationale = "Public stochastic-to-analog substrate bridge documented for DAC configuration and AER event workflows."
+
+[[file]]
+path = "src/sc_neurocore/analog_bridge/__init__.py"
+rationale = "Public analog bridge package entry point that re-exports substrate, event, bridge, and calibration APIs."
 
 [[file]]
 path = "src/sc_neurocore/compiler/adaptive_precision.py"

@@ -15,6 +15,7 @@ from unittest.mock import patch
 
 import numpy as np
 
+import sc_neurocore.analog_bridge as analog_bridge
 from sc_neurocore.analog_bridge import (
     AEREvent,
     AnalogBridge,
@@ -26,6 +27,20 @@ from sc_neurocore.analog_bridge import (
 
 class TestSubstrateProfiles(unittest.TestCase):
     """Substrate profile contract checks."""
+
+    def test_package_exports_bridge_api(self) -> None:
+        """Package entry point exports the documented analog bridge API."""
+        expected = [
+            "AEREvent",
+            "AnalogBridge",
+            "AnalogSubstrateProfile",
+            "CalibrationRoutine",
+            "EventDrivenInterface",
+        ]
+        self.assertEqual(analog_bridge.__tier__, "research")
+        self.assertEqual(analog_bridge.__all__, expected)
+        for name in expected:
+            self.assertIs(getattr(analog_bridge, name), globals()[name])
 
     def test_brainscales3(self) -> None:
         """The BrainScaleS-3 profile exposes its DAC and fan-in limits."""

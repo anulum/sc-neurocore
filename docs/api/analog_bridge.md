@@ -480,21 +480,24 @@ call at the AER boundary between the chip and the host.
 
 ## 9. Test surface
 
-The package ships with 29 tests across two files, all in
+The package ships with 30 tests across two files, all in
 `tests/test_analog_bridge/`:
 
 | File | Class | Scope | # tests |
 |---|---|---|---|
 | `test_analog_bridge.py` | `TestQuantization` | `_quantize` min/max/midpoint, 0 / 1 saturation | 5 |
 | `test_analog_bridge.py` | `TestEmitConfig` | `SC_WEIGHT` + `LIF_MEMBRANE` paths, mixed node list | 6 |
-| `test_analog_bridge_extended.py` | `TestSubstrateProfiles` | BrainScaleS-3, DynapSE-2, profile constructor, legacy constructor | 4 |
+| `test_analog_bridge_extended.py` | `TestSubstrateProfiles` | package facade exports, BrainScaleS-3, DynapSE-2, profile constructor, legacy constructor | 5 |
 | `test_analog_bridge_extended.py` | `TestEventDrivenInterface` | bitstream-to-events, zero bitstream, current shape / positivity / decay, rate code (incl. empty) | 7 |
 | `test_analog_bridge_extended.py` | `TestCalibrationRoutine` | sweep length, sweep endpoints, max error positive, ENOB ≤ nominal, high-res vs low-res, ENOB zero-error fallback, ENOB zero-range fallback | 7 |
 
 Statement coverage is **100 %** (101/101 statements in
 `analog_bridge.py` + 3/3 in `__init__.py`), verified via
-`pytest --cov=sc_neurocore.analog_bridge`. No `pragma: no cover`
-directives anywhere in the module. The ENOB fallback branches are
+`pytest --cov=sc_neurocore.analog_bridge`. The 2026-06-27 facade ratchet also
+passed Ruff, Ruff docstring checks, strict mypy, `30 passed` analog bridge tests,
+and the scoped public docstring policy with both `analog_bridge.py` and
+`analog_bridge/__init__.py` enforced. No `pragma: no cover`
+directives exist in the module. The ENOB fallback branches are
 covered via `unittest.mock.patch` because they are physically
 reachable but not triggered by the standard sweep-and-measure
 suite; see `test_enob_zero_error_falls_back_to_nominal` for the
