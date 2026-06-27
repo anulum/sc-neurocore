@@ -7,7 +7,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 185
+expected_file_count = 186
 
 [[file]]
 path = "src/sc_neurocore/__init__.py"
@@ -260,6 +260,10 @@ rationale = "Public network homeostasis package entry point."
 [[file]]
 path = "src/sc_neurocore/privacy/__init__.py"
 rationale = "Public spike-level differential-privacy package entry point."
+
+[[file]]
+path = "src/sc_neurocore/privacy/governance.py"
+rationale = "Public privacy-governance contract surface for consent, retention, redaction, telemetry, provenance, integrator, and audit-feature manifests."
 
 [[file]]
 path = "src/sc_neurocore/profiler/__init__.py"

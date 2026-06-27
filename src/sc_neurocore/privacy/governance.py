@@ -47,7 +47,6 @@ _FEATURE_AUDIT_FLAG = {
 
 def _expect_mapping(value: Any, *, field: str) -> Dict[str, Any]:
     """Return ``value`` as dict or raise a typed ValueError."""
-
     if not isinstance(value, dict):
         raise ValueError(f"{field} must be a mapping")
     return value
@@ -55,7 +54,6 @@ def _expect_mapping(value: Any, *, field: str) -> Dict[str, Any]:
 
 def _require_fields(payload: Dict[str, Any], section: str, required: tuple[str, ...]) -> None:
     """Raise when required fields are missing from a manifest section."""
-
     for field in required:
         if field not in payload:
             raise ValueError(f"Missing required field: {section}.{field}")
@@ -63,7 +61,6 @@ def _require_fields(payload: Dict[str, Any], section: str, required: tuple[str, 
 
 def _ensure_positive_days(value: int, name: str) -> int:
     """Validate a duration field."""
-
     if not isinstance(value, int):
         raise ValueError(f"{name} must be an int")
     if value <= 0:
@@ -108,6 +105,7 @@ class ConsentBoundary:
     issued_at_unix: int
 
     def __post_init__(self) -> None:
+        """Validate consent identity, legal basis, telemetry flag, and token fields."""
         object.__setattr__(
             self, "participant_id", _ensure_non_empty_str(self.participant_id, "participant_id")
         )
@@ -132,6 +130,7 @@ class ConsentBoundary:
         )
 
     def to_dict(self) -> Dict[str, Any]:
+        """Return this consent boundary as a deterministic mapping."""
         return {
             "participant_id": self.participant_id,
             "consent_basis": self.consent_basis,
@@ -143,6 +142,7 @@ class ConsentBoundary:
 
     @classmethod
     def from_dict(cls, data: Dict[str, Any]) -> "ConsentBoundary":
+        """Build a consent boundary from a manifest section."""
         payload = _expect_mapping(data, field="consent_boundary")
         _require_fields(
             payload,
@@ -176,6 +176,7 @@ class RetentionPolicy:
     max_days: int
 
     def __post_init__(self) -> None:
+        """Validate retention windows and enforce the maximum retention horizon."""
         object.__setattr__(
             self,
             "raw_stream_days",
@@ -201,6 +202,7 @@ class RetentionPolicy:
             raise ValueError("all retention windows must be <= max_days")
 
     def to_dict(self) -> Dict[str, Any]:
+        """Return this retention policy as a deterministic mapping."""
         return {
             "raw_stream_days": self.raw_stream_days,
             "model_artifacts_days": self.model_artifacts_days,
@@ -210,6 +212,7 @@ class RetentionPolicy:
 
     @classmethod
     def from_dict(cls, data: Dict[str, Any]) -> "RetentionPolicy":
+        """Build a retention policy from a manifest section."""
         payload = _expect_mapping(data, field="retention_policy")
         _require_fields(
             payload,
@@ -238,6 +241,7 @@ class RedactionPolicy:
     replacement: str
 
     def __post_init__(self) -> None:
+        """Validate redaction activation, field list, and replacement marker."""
         object.__setattr__(self, "enabled", _ensure_bool(self.enabled, "enabled"))
         object.__setattr__(self, "fields", _to_str_tuple(self.fields, "fields"))
         if self.enabled and not self.fields:
@@ -246,6 +250,7 @@ class RedactionPolicy:
             raise ValueError("replacement must not be None")
 
     def to_dict(self) -> Dict[str, Any]:
+        """Return this redaction policy as a deterministic mapping."""
         return {
             "enabled": self.enabled,
             "fields": list(self.fields),
@@ -254,6 +259,7 @@ class RedactionPolicy:
 
     @classmethod
     def from_dict(cls, data: Dict[str, Any]) -> "RedactionPolicy":
+        """Build a redaction policy from a manifest section."""
         payload = _expect_mapping(data, field="redaction_policy")
         _require_fields(
             payload,
@@ -276,6 +282,7 @@ class TelemetryPolicy:
     sampling_interval_ms: int
 
     def __post_init__(self) -> None:
+        """Validate telemetry activation, sink name, and sampling interval."""
         object.__setattr__(self, "enabled", _ensure_bool(self.enabled, "enabled"))
         object.__setattr__(self, "sink", _ensure_non_empty_str(self.sink, "sink"))
         if self.enabled and self.sampling_interval_ms is None:
@@ -286,6 +293,7 @@ class TelemetryPolicy:
             raise ValueError("sampling_interval_ms must be positive")
 
     def to_dict(self) -> Dict[str, Any]:
+        """Return this telemetry policy as a deterministic mapping."""
         return {
             "enabled": self.enabled,
             "sink": self.sink,
@@ -294,6 +302,7 @@ class TelemetryPolicy:
 
     @classmethod
     def from_dict(cls, data: Dict[str, Any]) -> "TelemetryPolicy":
+        """Build a telemetry policy from a manifest section."""
         payload = _expect_mapping(data, field="telemetry")
         _require_fields(payload, "telemetry", ("enabled", "sink", "sampling_interval_ms"))
         return cls(
@@ -314,6 +323,7 @@ class ProvenanceRecord:
     source_system: str
 
     def __post_init__(self) -> None:
+        """Validate provenance artefact identity, hash, and source-system fields."""
         object.__setattr__(
             self, "artifact_type", _ensure_non_empty_str(self.artifact_type, "artifact_type")
         )
@@ -333,6 +343,7 @@ class ProvenanceRecord:
         )
 
     def to_dict(self) -> Dict[str, Any]:
+        """Return this provenance record as a deterministic mapping."""
         return {
             "artifact_type": self.artifact_type,
             "artifact_uri": self.artifact_uri,
@@ -343,6 +354,7 @@ class ProvenanceRecord:
 
     @classmethod
     def from_dict(cls, data: Dict[str, Any]) -> "ProvenanceRecord":
+        """Build a provenance record from one manifest list item."""
         payload = _expect_mapping(data, field="provenance entry")
         _require_fields(
             payload,
@@ -380,6 +392,7 @@ class IntegratorResponsibility:
     release_approval_required: bool
 
     def __post_init__(self) -> None:
+        """Validate integrator contact details and approval responsibility fields."""
         object.__setattr__(self, "name", _ensure_non_empty_str(self.name, "name"))
         object.__setattr__(self, "contact", _ensure_non_empty_str(self.contact, "contact"))
         object.__setattr__(
@@ -392,6 +405,7 @@ class IntegratorResponsibility:
         )
 
     def to_dict(self) -> Dict[str, Any]:
+        """Return this integrator responsibility record as a deterministic mapping."""
         return {
             "name": self.name,
             "contact": self.contact,
@@ -401,6 +415,7 @@ class IntegratorResponsibility:
 
     @classmethod
     def from_dict(cls, data: Dict[str, Any]) -> "IntegratorResponsibility":
+        """Build an integrator responsibility record from a manifest section."""
         payload = _expect_mapping(data, field="integrator")
         _require_fields(
             payload,
@@ -426,6 +441,7 @@ class PrivacyFeatureFlags:
     audit_flags: Tuple[str, ...]
 
     def __post_init__(self) -> None:
+        """Validate feature toggles and the audit-flag activation contract."""
         object.__setattr__(
             self,
             "enable_differential_privacy",
@@ -448,6 +464,7 @@ class PrivacyFeatureFlags:
             raise ValueError("audit_enabled requires audit_flags")
 
     def to_dict(self) -> Dict[str, Any]:
+        """Return this privacy feature flag set as a deterministic mapping."""
         return {
             "enable_differential_privacy": self.enable_differential_privacy,
             "enable_federated_learning": self.enable_federated_learning,
@@ -458,6 +475,7 @@ class PrivacyFeatureFlags:
 
     @classmethod
     def from_dict(cls, data: Dict[str, Any]) -> "PrivacyFeatureFlags":
+        """Build privacy feature flags from a manifest section."""
         payload = _expect_mapping(data, field="features")
         _require_fields(
             payload,
@@ -493,6 +511,7 @@ class GovernanceContract:
     schema_version: str = "1.0"
 
     def __post_init__(self) -> None:
+        """Enforce cross-section privacy governance invariants."""
         if self.features.enable_telemetry_logging:
             if not self.telemetry.enabled:
                 raise ValueError("telemetry_logging requires telemetry enabled")
@@ -516,12 +535,10 @@ class GovernanceContract:
     @property
     def audit_required_features(self) -> Tuple[str, ...]:
         """Return sorted feature keys that require audit flags."""
-
         return tuple(sorted(_FEATURE_AUDIT_FLAG.keys()))
 
     def active_features(self) -> Tuple[str, ...]:
         """Return names of enabled privacy features in deterministic order."""
-
         enabled = []
         if self.features.enable_differential_privacy:
             enabled.append("differential_privacy")
@@ -533,7 +550,6 @@ class GovernanceContract:
 
     def to_dict(self) -> Dict[str, Any]:
         """Return a deterministic JSON-serialisable representation."""
-
         return {
             "consent_boundary": self.consent_boundary.to_dict(),
             "retention_policy": self.retention_policy.to_dict(),
@@ -547,6 +563,7 @@ class GovernanceContract:
 
     @classmethod
     def from_dict(cls, data: Dict[str, Any]) -> "GovernanceContract":
+        """Build a full governance contract from a manifest mapping."""
         payload = _expect_mapping(data, field="governance_contract")
 
         for required in _ROOT_REQUIRED_FIELDS:

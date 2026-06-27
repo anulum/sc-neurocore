@@ -33,6 +33,35 @@ Properties: `spent_epsilon`, `remaining_epsilon`, `budget_exhausted`. Methods: `
 
 - **`MembershipAudit`** — Audit SNN for membership inference vulnerability. Compares model confidence on training vs non-training samples. Returns accuracy (0.5 = no leakage, 1.0 = full leak), `vulnerable` flag if accuracy > 0.6.
 
+## Governance Contracts
+
+The `sc_neurocore.privacy.governance` module defines the deterministic manifest
+surface for neural and BCI deployments that need privacy evidence before data or
+model artefacts leave a controlled environment.
+
+| Contract | Purpose |
+|----------|---------|
+| `ConsentBoundary` | Participant identity, legal basis, telemetry consent, allowed purposes, consent token, and issue timestamp. |
+| `RetentionPolicy` | Raw-stream, model-artifact, and audit-log retention windows bounded by one maximum horizon. |
+| `RedactionPolicy` | Field-level redaction activation, protected fields, and replacement marker. |
+| `TelemetryPolicy` | Telemetry enablement, sink name, and sampling interval. |
+| `ProvenanceRecord` | Artefact URI, hash algorithm, hash value, artefact type, and source system. |
+| `IntegratorResponsibility` | Integrator contact, operational responsibilities, and release approval requirement. |
+| `PrivacyFeatureFlags` | Differential-privacy, federated-learning, telemetry logging, and audit-flag activation. |
+| `GovernanceContract` | Cross-section contract that fails closed when telemetry lacks consent/redaction or sensitive features lack audit flags. |
+
+```python
+from sc_neurocore.privacy import GovernanceContract
+
+contract = GovernanceContract.from_dict(manifest)
+assert contract.active_features() == ("telemetry_logging",)
+signed_manifest = contract.to_dict()
+```
+
+The governance surface is intentionally dependency-free and does not have a
+polyglot compute counterpart. It is covered by `tests/test_privacy_governance.py`
+with 100% isolated module coverage and strict type checking.
+
 ## Usage
 
 ```python

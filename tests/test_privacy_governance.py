@@ -1,10 +1,10 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Commercial license available
-# Copyright (c) Concepts 1996-2026 Miroslav Sotek. All rights reserved.
-# Copyright (c) Code 2020-2026 Miroslav Sotek. All rights reserved.
+# © Concepts 1996–2026 Miroslav Šotek. All rights reserved.
+# © Code 2020–2026 Miroslav Šotek. All rights reserved.
 # ORCID: 0009-0009-3560-0851
 # Contact: www.anulum.li | protoscience@anulum.li
-# SC-NeuroCore - Privacy governance contract tests
+# SC-NeuroCore — Privacy governance contract tests
 
 from __future__ import annotations
 
@@ -177,9 +177,9 @@ def test_consent_boundary_rejects_invalid_legal_basis_and_field_types() -> None:
     with pytest.raises(ValueError, match="consent_basis"):
         ConsentBoundary(**{**base, "consent_basis": "verbal_only"})
     with pytest.raises(ValueError, match="allow_telemetry"):
-        ConsentBoundary(**{**base, "allow_telemetry": "yes"})  # type: ignore[arg-type]
+        ConsentBoundary(**{**base, "allow_telemetry": "yes"})
     with pytest.raises(ValueError, match="allowed_purposes"):
-        ConsentBoundary(**{**base, "allowed_purposes": "training"})  # type: ignore[arg-type]
+        ConsentBoundary(**{**base, "allowed_purposes": "training"})
     with pytest.raises(ValueError, match="issued_at_unix"):
         ConsentBoundary(**{**base, "issued_at_unix": 0})
 

@@ -24702,55 +24702,77 @@ run_fn : callable
 Participant-level legal basis and telemetry permissions.
 
 - **__post_init__**()
+  - Validate consent identity, legal basis, telemetry flag, and token fields.
 - **to_dict**()
+  - Return this consent boundary as a deterministic mapping.
 - **from_dict**(cls, data)
+  - Build a consent boundary from a manifest section.
 
 ### Class `RetentionPolicy`
 Retention windows for neural telemetry and artefacts.
 
 - **__post_init__**()
+  - Validate retention windows and enforce the maximum retention horizon.
 - **to_dict**()
+  - Return this retention policy as a deterministic mapping.
 - **from_dict**(cls, data)
+  - Build a retention policy from a manifest section.
 
 ### Class `RedactionPolicy`
 Field-level redaction policy for protected telemetry and logs.
 
 - **__post_init__**()
+  - Validate redaction activation, field list, and replacement marker.
 - **to_dict**()
+  - Return this redaction policy as a deterministic mapping.
 - **from_dict**(cls, data)
+  - Build a redaction policy from a manifest section.
 
 ### Class `TelemetryPolicy`
 Telemetry sink and sampling policy.
 
 - **__post_init__**()
+  - Validate telemetry activation, sink name, and sampling interval.
 - **to_dict**()
+  - Return this telemetry policy as a deterministic mapping.
 - **from_dict**(cls, data)
+  - Build a telemetry policy from a manifest section.
 
 ### Class `ProvenanceRecord`
 Cryptographic provenance record for model and dataset artefacts.
 
 - **__post_init__**()
+  - Validate provenance artefact identity, hash, and source-system fields.
 - **to_dict**()
+  - Return this provenance record as a deterministic mapping.
 - **from_dict**(cls, data)
+  - Build a provenance record from one manifest list item.
 
 ### Class `IntegratorResponsibility`
 Operational responsibilities for an integrator in a deployment pipeline.
 
 - **__post_init__**()
+  - Validate integrator contact details and approval responsibility fields.
 - **to_dict**()
+  - Return this integrator responsibility record as a deterministic mapping.
 - **from_dict**(cls, data)
+  - Build an integrator responsibility record from a manifest section.
 
 ### Class `PrivacyFeatureFlags`
 Feature activation and audit flags for a governed workflow.
 
 - **__post_init__**()
+  - Validate feature toggles and the audit-flag activation contract.
 - **to_dict**()
+  - Return this privacy feature flag set as a deterministic mapping.
 - **from_dict**(cls, data)
+  - Build privacy feature flags from a manifest section.
 
 ### Class `GovernanceContract`
 Full privacy governance contract for BCI/neural workflows.
 
 - **__post_init__**()
+  - Enforce cross-section privacy governance invariants.
 - **audit_required_features**()
   - Return sorted feature keys that require audit flags.
 - **active_features**()
@@ -24758,6 +24780,7 @@ Full privacy governance contract for BCI/neural workflows.
 - **to_dict**()
   - Return a deterministic JSON-serialisable representation.
 - **from_dict**(cls, data)
+  - Build a full governance contract from a manifest mapping.
 
 ### Function `_expect_mapping(value)`
 Return ``value`` as dict or raise a typed ValueError.
