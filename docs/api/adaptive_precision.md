@@ -1,12 +1,27 @@
 # Adaptive Precision
 
-Per-layer adaptive bitstream length for mixed-precision SC networks.
+Per-layer adaptive bitstream length and per-synapse bit-width planning for
+mixed-precision SC networks.
 
-- `AdaptivePrecisionManager` — Auto-select bitstream length per layer (Hoeffding/Chebyshev/sensitivity bounds). Layers needing high precision get longer bitstreams; tolerant layers get shorter ones.
+- `assign_lengths` — auto-select bitstream length per layer from
+  Hoeffding or sensitivity bounds.
+- `assign_synapse_precisions` — choose integer bit widths and stochastic
+  bitstream lengths per synapse.
+- `auto_tune_synapse_precisions` — emit the public precision-plan manifest for a
+  percent error target.
+- `write_precision_formal_evidence_bundle` — write bounded SVA/SBY/JSON evidence
+  scaffolding for a precision plan.
 
 ```python
-from sc_neurocore.compiler.adaptive_precision import AdaptivePrecisionManager
+from sc_neurocore.compiler.adaptive_precision import assign_lengths
 ```
+
+`sc_neurocore.compiler.adaptive_precision` is in the scoped public-docstring
+policy. Its dedicated adaptive-precision tests are strict typed and cover
+layer-length assignment, sensitivity analysis, per-synapse planning, manifest
+stability, and formal-evidence bundle writing at 100% isolated facade coverage.
+The touched surface is a Python compiler facade; no polyglot or benchmark
+counterpart changes were required for this docstring-policy slice.
 
 ## 2026-04-30 per-synapse precision plan
 

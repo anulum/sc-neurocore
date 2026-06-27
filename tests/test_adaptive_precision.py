@@ -11,6 +11,8 @@
 from __future__ import annotations
 
 import json
+from pathlib import Path
+
 import numpy as np
 
 from sc_neurocore.compiler.adaptive_precision import (
@@ -26,36 +28,44 @@ from sc_neurocore.compiler.adaptive_precision import (
 
 
 class TestAssignLengths:
-    def test_hoeffding_produces_assignments(self):
+    """Layer-level bitstream-length assignment checks."""
+
+    def test_hoeffding_produces_assignments(self) -> None:
+        """Hoeffding planning returns one assignment per layer."""
         weights = [np.random.randn(4, 2), np.random.randn(3, 4)]
         result = assign_lengths(weights, method="hoeffding")
         assert len(result) == 2
         assert all(isinstance(r, LayerPrecision) for r in result)
 
-    def test_assignments_respect_bounds(self):
+    def test_assignments_respect_bounds(self) -> None:
+        """Assigned lengths stay inside caller-provided bounds."""
         weights = [np.random.randn(4, 2)]
         result = assign_lengths(weights, min_length=64, max_length=512)
         assert all(64 <= r.bitstream_length <= 512 for r in result)
 
-    def test_lengths_are_power_of_two(self):
+    def test_lengths_are_power_of_two(self) -> None:
+        """Assigned bitstream lengths are powers of two."""
         weights = [np.random.randn(8, 4), np.random.randn(4, 8)]
         result = assign_lengths(weights, method="hoeffding")
         for r in result:
             L = r.bitstream_length
             assert L & (L - 1) == 0, f"L={L} is not a power of 2"
 
-    def test_relaxed_target_gives_shorter_lengths(self):
+    def test_relaxed_target_gives_shorter_lengths(self) -> None:
+        """Relaxed error targets do not require longer bitstreams."""
         weights = [np.random.randn(4, 2)]
         tight = assign_lengths(weights, target_error=0.01, max_length=4096)
         relaxed = assign_lengths(weights, target_error=0.2, max_length=4096)
         assert relaxed[0].bitstream_length <= tight[0].bitstream_length
 
-    def test_custom_layer_names(self):
+    def test_custom_layer_names(self) -> None:
+        """Custom layer names propagate into assignments."""
         weights = [np.random.randn(4, 2)]
         result = assign_lengths(weights, layer_names=["my_layer"])
         assert result[0].name == "my_layer"
 
-    def test_sensitivity_path_defaults_budget_to_full_width(self):
+    def test_sensitivity_path_defaults_budget_to_full_width(self) -> None:
+        """Non-Hoeffding planning defaults to a full-width total budget."""
         # A non-Hoeffding method follows the sensitivity-proportional branch;
         # with no explicit budget it defaults to max_length * n_layers and still
         # produces one bounded assignment per layer.
@@ -65,13 +75,15 @@ class TestAssignLengths:
         assert all(r.bitstream_length <= 512 for r in result)
         assert all(r.sensitivity >= 0.0 for r in result)
 
-    def test_default_layer_names(self):
+    def test_default_layer_names(self) -> None:
+        """Default layer names are deterministic."""
         weights = [np.random.randn(4, 2), np.random.randn(3, 4)]
         result = assign_lengths(weights)
         assert result[0].name == "layer_0"
         assert result[1].name == "layer_1"
 
-    def test_sensitivity_method(self):
+    def test_sensitivity_method(self) -> None:
+        """Sensitivity planning returns non-negative sensitivity scores."""
         weights = [np.random.randn(4, 2), np.random.randn(3, 4)]
         result = assign_lengths(weights, method="sensitivity", total_budget=2048)
         assert len(result) == 2
@@ -79,13 +91,17 @@ class TestAssignLengths:
 
 
 class TestAnalyzeSensitivity:
-    def test_returns_per_layer_scores(self):
+    """Sensitivity-analysis facade checks."""
+
+    def test_returns_per_layer_scores(self) -> None:
+        """Sensitivity analysis returns one score per weight layer."""
         weights = [np.random.randn(4, 2), np.random.randn(3, 4)]
         sens = analyze_sensitivity(weights, n_trials=5)
         assert len(sens) == 2
         assert all(s >= 0 for s in sens)
 
-    def test_larger_weights_more_sensitive(self):
+    def test_larger_weights_more_sensitive(self) -> None:
+        """Sensitivity scores remain numeric across weight scales."""
         small_w = [np.random.randn(4, 4) * 0.01]
         large_w = [np.random.randn(4, 4) * 0.5]
         sens_small = analyze_sensitivity(small_w, n_trials=10, seed=42)
@@ -97,7 +113,10 @@ class TestAnalyzeSensitivity:
 
 
 class TestLayerPrecision:
-    def test_dataclass_fields(self):
+    """LayerPrecision data-contract checks."""
+
+    def test_dataclass_fields(self) -> None:
+        """LayerPrecision preserves assigned field values."""
         lp = LayerPrecision(
             layer_index=0,
             name="fc1",
@@ -110,7 +129,10 @@ class TestLayerPrecision:
 
 
 class TestSynapsePrecision:
-    def test_assign_synapse_precisions_returns_one_row_per_weight(self):
+    """Per-synapse precision-planning checks."""
+
+    def test_assign_synapse_precisions_returns_one_row_per_weight(self) -> None:
+        """Per-synapse planning returns one assignment per weight element."""
         weights = [np.array([[0.1, 0.8], [0.0, 0.4]])]
 
         result = assign_synapse_precisions(
@@ -130,7 +152,8 @@ class TestSynapsePrecision:
         assert all(16 <= row.bitstream_length <= 256 for row in result)
         assert all(row.total_error_bound >= row.quantization_error_bound for row in result)
 
-    def test_high_sensitivity_gets_at_least_as_much_precision(self):
+    def test_high_sensitivity_gets_at_least_as_much_precision(self) -> None:
+        """Higher-sensitivity weights receive at least as much precision."""
         weights = [np.array([[0.01, 1.0]])]
         result = assign_synapse_precisions(
             weights,
@@ -146,7 +169,8 @@ class TestSynapsePrecision:
         assert high.bit_width >= low.bit_width
         assert high.bitstream_length >= low.bitstream_length
 
-    def test_custom_sensitivity_map_controls_precision(self):
+    def test_custom_sensitivity_map_controls_precision(self) -> None:
+        """Custom sensitivity maps influence per-synapse precision."""
         weights = [np.array([[0.5, 0.5]])]
         sensitivities = [np.array([[0.1, 1.0]])]
 
@@ -163,7 +187,8 @@ class TestSynapsePrecision:
         assert result[1].sensitivity > result[0].sensitivity
         assert result[1].bit_width >= result[0].bit_width
 
-    def test_precision_plan_manifest_is_deterministic(self):
+    def test_precision_plan_manifest_is_deterministic(self) -> None:
+        """Precision plan manifests expose deterministic keys and costs."""
         assignments = assign_synapse_precisions(
             [np.array([[0.25, 0.75]])],
             target_error=0.1,
@@ -196,7 +221,8 @@ class TestSynapsePrecision:
             "total_error_bound",
         ]
 
-    def test_rejects_invalid_sensitivity_shape(self):
+    def test_rejects_invalid_sensitivity_shape(self) -> None:
+        """Sensitivity maps must match their weight tensor shapes."""
         with np.testing.assert_raises_regex(ValueError, "sensitivity map"):
             assign_synapse_precisions(
                 [np.array([[0.5, 0.5]])],
@@ -205,7 +231,10 @@ class TestSynapsePrecision:
 
 
 class TestAdaptivePrecisionAPISurface:
-    def test_auto_tune_manifest_binds_percent_target_contract(self):
+    """Public facade and formal-evidence bundle checks."""
+
+    def test_auto_tune_manifest_binds_percent_target_contract(self) -> None:
+        """Auto-tuning binds percent targets into the public manifest."""
         manifest = auto_tune_synapse_precisions(
             [np.array([[0.2, 0.8]])],
             target_error_percent=0.1,
@@ -228,11 +257,15 @@ class TestAdaptivePrecisionAPISurface:
         )
         assert manifest["num_synapses"] == 2
 
-    def test_auto_tune_rejects_non_positive_percent_target(self):
+    def test_auto_tune_rejects_non_positive_percent_target(self) -> None:
+        """Auto-tuning rejects non-positive percent error targets."""
         with np.testing.assert_raises_regex(ValueError, "target_error_percent"):
             auto_tune_synapse_precisions([np.array([[0.2]])], target_error_percent=0.0)
 
-    def test_write_formal_bundle_materialises_sva_sby_and_manifest(self, tmp_path):
+    def test_write_formal_bundle_materialises_sva_sby_and_manifest(
+        self, tmp_path: Path
+    ) -> None:
+        """Formal evidence bundle writing materializes SVA, SBY, and JSON."""
         assignments = assign_synapse_precisions(
             [np.array([[0.25, 0.75]])],
             target_error=0.01,
@@ -260,6 +293,7 @@ class TestAdaptivePrecisionAPISurface:
             encoding="utf-8"
         )
 
-    def test_write_formal_bundle_rejects_empty_assignments(self, tmp_path):
+    def test_write_formal_bundle_rejects_empty_assignments(self, tmp_path: Path) -> None:
+        """Formal evidence bundle writing rejects empty assignment lists."""
         with np.testing.assert_raises_regex(ValueError, "assignments must not be empty"):
             write_precision_formal_evidence_bundle(tmp_path, [])
