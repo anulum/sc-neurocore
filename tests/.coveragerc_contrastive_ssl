@@ -1,0 +1,7 @@
+[run]
+branch = True
+include =
+    src/sc_neurocore/contrastive/ssl.py
+
+[report]
+show_missing = True

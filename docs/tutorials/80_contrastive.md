@@ -62,6 +62,7 @@ algorithm (Hinton 2022) to spiking circuits. Each layer computes a
 backpropagation needed:
 
 ```python
+import numpy as np
 from sc_neurocore.contrastive import CSDPRule
 
 csdp = CSDPRule(lr=0.01, decay=0.001)
@@ -117,8 +118,20 @@ for epoch in range(100):
         # Negative: corrupted data (random shuffle, noise, etc.)
         neg_spikes = encode(corrupt(x_batch))
 
-        for layer_w, pos_act, neg_act in zip(weights, pos_activities, neg_activities):
-            layer_w = csdp.contrastive_step(layer_w, pos_act, neg_act)
+        for layer_w, pos_pre, pos_post, neg_pre, neg_post in zip(
+            weights,
+            positive_presynaptic_rates,
+            positive_postsynaptic_rates,
+            negative_presynaptic_rates,
+            negative_postsynaptic_rates,
+        ):
+            layer_w = csdp.contrastive_step(
+                layer_w,
+                pos_pre=pos_pre,
+                pos_post=pos_post,
+                neg_pre=neg_pre,
+                neg_post=neg_post,
+            )
 
 # Phase 2: Fine-tune readout with small labelled set
 readout_weights = train_readout(frozen_encoder, labelled_data)
@@ -126,12 +139,12 @@ readout_weights = train_readout(frozen_encoder, labelled_data)
 
 ## Comparison
 
-| Feature | SC-NeuroCore | snnTorch | Norse |
-|---------|:-----------:|:--------:|:-----:|
-| InfoNCE for spikes | Yes | No | No |
-| CSDP (Forward-Forward) | Yes | No | No |
-| Local learning (no backprop) | Yes | No | No |
-| On-chip compatible | Yes | No | No |
+| Surface | SC-NeuroCore contract |
+|---------|-----------------------|
+| InfoNCE for spikes | Finite 2-D spike-rate batches with deterministic NumPy implementation |
+| CSDP updates | Exact positive and negative local matrix updates with validation guards |
+| Polyglot mirrors | Rust, Julia, and Mojo validation sources tracked under `src/sc_neurocore/accel/` |
+| Benchmark evidence | `benchmarks/results/bench_contrastive_ssl.json` records local non-isolated regression evidence |
 
 ## References
 

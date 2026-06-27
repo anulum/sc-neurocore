@@ -10106,15 +10106,22 @@ lr : float
 decay : float
     Weight decay for regularization.
 
+- **__post_init__**()
+  - Validate the scalar learning-rule parameters.
 - **positive_update**(weights, pre_spikes, post_spikes)
   - Hebbian update from positive (real) data.
 - **negative_update**(weights, pre_spikes, post_spikes)
   - Anti-Hebbian update from negative (corrupted) data.
 - **contrastive_step**(weights, pos_pre, pos_post, neg_pre, neg_post)
-  - Full contrastive update: positive + negative phase.
+  - Apply one positive phase followed by one negative phase.
 - **goodness**(activations)
   - Compute 'goodness' score (sum of squared activations).
+- **_validate_update_inputs**(weights, pre_spikes, post_spikes)
 
+### Function `_finite_scalar(value, name)`
+### Function `_as_float_matrix(values, name)`
+### Function `_as_float_vector(values, name)`
+### Function `_as_weight_matrix(values)`
 ---
 
 ## Module `control.adaptive_loop`

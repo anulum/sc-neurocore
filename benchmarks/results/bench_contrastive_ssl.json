@@ -1,0 +1,61 @@
+{
+  "benchmark_id": "contrastive-ssl-polyglot-local-validation",
+  "evidence_class": "local_regression_non_isolated",
+  "failed_checks": [],
+  "julia_validation": {
+    "command": [
+      "julia",
+      "--startup-file=no",
+      "--history-file=no",
+      "-e",
+      "include(\"src/sc_neurocore/accel/julia/contrastive/ssl.jl\"); using .SslAccel; using LinearAlgebra; @assert validate_ssl(); loss = SpikeContrastiveLossState(0.5); view = Matrix{Float64}(I, 4, 4); @assert compute(loss, view, view) < compute(loss, view, view[[2,3,4,1], :])"
+    ],
+    "returncode": 0,
+    "seconds": 5.718295,
+    "status": "pass"
+  },
+  "mojo_validation": {
+    "command": [
+      "mojo",
+      "src/sc_neurocore/accel/mojo/kernels/ssl.mojo"
+    ],
+    "returncode": 0,
+    "seconds": 1.370987,
+    "status": "pass"
+  },
+  "production_benchmark_claim": false,
+  "python": {
+    "csdp_contrastive_step": {
+      "calls": 1000,
+      "calls_per_second": 26799.118,
+      "seconds": 0.037315
+    },
+    "infonce_compute": {
+      "calls": 1000,
+      "calls_per_second": 10117.413,
+      "seconds": 0.098839
+    }
+  },
+  "rust_compile": {
+    "command": [
+      "rustc",
+      "--edition=2021",
+      "--test",
+      "src/sc_neurocore/accel/rust/safety/ssl.rs",
+      "-o",
+      "/tmp/sc_neurocore_ssl_rust_tests"
+    ],
+    "returncode": 0,
+    "seconds": 1.68968,
+    "status": "pass"
+  },
+  "rust_tests": {
+    "command": [
+      "/tmp/sc_neurocore_ssl_rust_tests"
+    ],
+    "returncode": 0,
+    "seconds": 0.002664,
+    "status": "pass"
+  },
+  "status": "pass"
+}
