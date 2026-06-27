@@ -6,9 +6,13 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore — Brain-to-Brain coupling for SC Networks (Swarm Intelligence)
 
+"""Brain-to-brain coupling for stochastic-computing learning layers."""
+
 import logging
-import numpy as np
 from dataclasses import dataclass
+
+import numpy as np
+
 from ..layers.sc_learning_layer import SCLearningLayer
 
 logger = logging.getLogger(__name__)
@@ -16,17 +20,16 @@ logger = logging.getLogger(__name__)
 
 @dataclass
 class SwarmCoupling:
-    """
-    Brain-to-Brain coupling for SC Networks (Swarm Intelligence).
-    Synchronizes two agents via mutual spike injection.
-    """
+    """Synchronize two learning agents by mutually attracting their weights."""
 
     coupling_strength: float = 0.1
 
     def synchronize(self, agent_a: SCLearningLayer, agent_b: SCLearningLayer) -> None:
-        """
-        Adjust weights of both agents to align their firing patterns.
-        (Simplified: Hebbian cross-correlation update)
+        """Adjust both agents toward a shared weight configuration.
+
+        The update applies a bounded reciprocal shift:
+        ``W_a += alpha * (W_b - W_a)`` and
+        ``W_b -= alpha * (W_b - W_a)``.
         """
         # We assume both agents have same number of neurons
         if agent_a.n_neurons != agent_b.n_neurons:

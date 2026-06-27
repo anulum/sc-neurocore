@@ -6,19 +6,27 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore — Tests for robotics swarm coupling module
 
+"""Real-surface tests for robotics swarm coupling."""
+
+from __future__ import annotations
+
 import numpy as np
 import pytest
 
-from sc_neurocore.robotics.swarm import SwarmCoupling
 from sc_neurocore.layers.sc_learning_layer import SCLearningLayer
+from sc_neurocore.robotics.swarm import SwarmCoupling
 
 
 class TestSwarmCoupling:
-    def test_construction(self):
+    """SwarmCoupling public behavior checks."""
+
+    def test_construction(self) -> None:
+        """Construction preserves the configured coupling strength."""
         sc = SwarmCoupling(coupling_strength=0.2)
         assert sc.coupling_strength == 0.2
 
-    def test_synchronize_shifts_weights(self):
+    def test_synchronize_shifts_weights(self) -> None:
+        """Synchronization mutates both agents through the public layer API."""
         a = SCLearningLayer(n_inputs=4, n_neurons=3)
         b = SCLearningLayer(n_inputs=4, n_neurons=3)
         wa_before = a.get_weights().copy()
@@ -32,7 +40,8 @@ class TestSwarmCoupling:
         assert not np.array_equal(wa_before, wa_after)
         assert not np.array_equal(wb_before, wb_after)
 
-    def test_synchronize_converges(self):
+    def test_synchronize_converges(self) -> None:
+        """Repeated synchronization reduces inter-agent weight distance."""
         a = SCLearningLayer(n_inputs=4, n_neurons=3)
         b = SCLearningLayer(n_inputs=4, n_neurons=3)
 
@@ -45,7 +54,8 @@ class TestSwarmCoupling:
         diff = np.abs(wa - wb).mean()
         assert diff < 0.1
 
-    def test_mismatched_sizes_raises(self):
+    def test_mismatched_sizes_raises(self) -> None:
+        """Agents with different neuron counts fail closed."""
         a = SCLearningLayer(n_inputs=4, n_neurons=3)
         b = SCLearningLayer(n_inputs=4, n_neurons=5)
         sc = SwarmCoupling()

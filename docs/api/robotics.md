@@ -23,6 +23,13 @@ Synchronizes two `SCLearningLayer` agents by shifting their weights toward each 
 
 Both agents must have the same neuron count (raises `ValueError` otherwise).
 
+`sc_neurocore.robotics.swarm` is in the scoped public-docstring policy. Its
+dedicated robotics swarm tests are strict typed and cover construction,
+weight-shift mutation through `SCLearningLayer`, repeated convergence, and
+fail-closed mismatched agent sizes at 100% isolated module coverage. This slice
+touches only the Python robotics coupling surface; it has no polyglot or
+benchmark counterpart.
+
 ## Usage
 
 ```python

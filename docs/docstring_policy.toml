@@ -7,7 +7,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 173
+expected_file_count = 174
 
 [[file]]
 path = "scripts/generate_docs.py"
@@ -252,6 +252,10 @@ rationale = "Public auto-critical reservoir-computing package entry point."
 [[file]]
 path = "src/sc_neurocore/residual/__init__.py"
 rationale = "Public residual SNN block package entry point."
+
+[[file]]
+path = "src/sc_neurocore/robotics/swarm.py"
+rationale = "Public robotics swarm-coupling module documented in the robotics API guide."
 
 [[file]]
 path = "src/sc_neurocore/resilience/__init__.py"
