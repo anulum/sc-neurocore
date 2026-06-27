@@ -12,8 +12,11 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
+from collections.abc import Callable
+from typing import cast
 
 import numpy as np
+import pytest
 
 from sc_neurocore.compiler.adaptive_precision import (
     auto_tune_synapse_precisions,
@@ -127,9 +130,190 @@ class TestLayerPrecision:
         assert lp.layer_index == 0
         assert lp.bitstream_length == 256
 
+    def test_to_dict_serializes_manifest_row(self) -> None:
+        """LayerPrecision exposes a deterministic manifest row."""
+        lp = LayerPrecision(
+            layer_index=1,
+            name="classifier",
+            bitstream_length=512,
+            error_bound=0.015625,
+            sensitivity=0.25,
+        )
+
+        assert lp.to_dict() == {
+            "layer_index": 1,
+            "name": "classifier",
+            "bitstream_length": 512,
+            "error_bound": 0.015625,
+            "sensitivity": 0.25,
+        }
+
+    @pytest.mark.parametrize(
+        ("factory", "message"),
+        [
+            (
+                lambda: LayerPrecision(-1, "fc1", 256, 0.031, 0.05),
+                "layer_index",
+            ),
+            (
+                lambda: LayerPrecision(0, "", 256, 0.031, 0.05),
+                "name",
+            ),
+            (
+                lambda: LayerPrecision(0, "fc1", 0, 0.031, 0.05),
+                "bitstream_length",
+            ),
+            (
+                lambda: LayerPrecision(0, "fc1", 300, 0.031, 0.05),
+                "power of two",
+            ),
+            (
+                lambda: LayerPrecision(0, "fc1", 256, -0.1, 0.05),
+                "error_bound",
+            ),
+            (
+                lambda: LayerPrecision(0, "fc1", 256, 0.031, -0.1),
+                "sensitivity",
+            ),
+        ],
+    )
+    def test_rejects_invalid_layer_precision_fields(
+        self,
+        factory: Callable[[], LayerPrecision],
+        message: str,
+    ) -> None:
+        """LayerPrecision rejects impossible adaptive-length rows."""
+        with pytest.raises(ValueError, match=message):
+            factory()
+
+    def test_rejects_non_numeric_layer_error_bound(self) -> None:
+        """LayerPrecision rejects non-numeric error-bound payloads at runtime."""
+        with pytest.raises(ValueError, match="error_bound"):
+            LayerPrecision(
+                layer_index=0,
+                name="fc1",
+                bitstream_length=256,
+                error_bound=cast(float, "bad"),
+                sensitivity=0.05,
+            )
+
 
 class TestSynapsePrecision:
     """Per-synapse precision-planning checks."""
+
+    def test_synapse_precision_to_dict_is_stable(self) -> None:
+        """SynapsePrecision serializes in manifest field order."""
+        row = SynapsePrecision(
+            layer_index=0,
+            layer_name="fc",
+            output_index=1,
+            input_index=2,
+            bit_width=8,
+            bitstream_length=128,
+            sensitivity=0.5,
+            quantization_error_bound=0.01,
+            stochastic_error_bound=0.02,
+            total_error_bound=0.03,
+        )
+
+        assert row.to_dict() == {
+            "layer_index": 0,
+            "layer_name": "fc",
+            "output_index": 1,
+            "input_index": 2,
+            "bit_width": 8,
+            "bitstream_length": 128,
+            "sensitivity": 0.5,
+            "quantization_error_bound": 0.01,
+            "stochastic_error_bound": 0.02,
+            "total_error_bound": 0.03,
+        }
+
+    @pytest.mark.parametrize(
+        ("factory", "message"),
+        [
+            (
+                lambda: SynapsePrecision(-1, "fc", 0, 1, 8, 128, 0.5, 0.01, 0.02, 0.03),
+                "layer_index",
+            ),
+            (
+                lambda: SynapsePrecision(0, "", 0, 1, 8, 128, 0.5, 0.01, 0.02, 0.03),
+                "layer_name",
+            ),
+            (
+                lambda: SynapsePrecision(0, "fc", -1, 1, 8, 128, 0.5, 0.01, 0.02, 0.03),
+                "output_index",
+            ),
+            (
+                lambda: SynapsePrecision(0, "fc", 0, -1, 8, 128, 0.5, 0.01, 0.02, 0.03),
+                "input_index",
+            ),
+            (
+                lambda: SynapsePrecision(0, "fc", 0, 1, 0, 128, 0.5, 0.01, 0.02, 0.03),
+                "bit_width",
+            ),
+            (
+                lambda: SynapsePrecision(0, "fc", 0, 1, 8, 0, 0.5, 0.01, 0.02, 0.03),
+                "bitstream_length",
+            ),
+            (
+                lambda: SynapsePrecision(0, "fc", 0, 1, 8, 128, -0.1, 0.01, 0.02, 0.03),
+                "sensitivity",
+            ),
+            (
+                lambda: SynapsePrecision(0, "fc", 0, 1, 8, 128, 0.5, -0.1, 0.02, 0.03),
+                "quantization_error_bound",
+            ),
+            (
+                lambda: SynapsePrecision(0, "fc", 0, 1, 8, 128, 0.5, 0.01, -0.1, 0.03),
+                "stochastic_error_bound",
+            ),
+            (
+                lambda: SynapsePrecision(0, "fc", 0, 1, 8, 128, 0.5, 0.01, 0.02, -0.1),
+                "total_error_bound",
+            ),
+        ],
+    )
+    def test_rejects_invalid_synapse_precision_fields(
+        self,
+        factory: Callable[[], SynapsePrecision],
+        message: str,
+    ) -> None:
+        """SynapsePrecision rejects impossible per-synapse rows."""
+        with pytest.raises(ValueError, match=message):
+            factory()
+
+    def test_rejects_total_error_bound_below_components(self) -> None:
+        """Total error must include quantization and stochastic components."""
+        with pytest.raises(ValueError, match="total_error_bound"):
+            SynapsePrecision(
+                layer_index=0,
+                layer_name="fc",
+                output_index=0,
+                input_index=1,
+                bit_width=8,
+                bitstream_length=128,
+                sensitivity=0.5,
+                quantization_error_bound=0.02,
+                stochastic_error_bound=0.02,
+                total_error_bound=0.03,
+            )
+
+    def test_rejects_non_numeric_synapse_sensitivity(self) -> None:
+        """SynapsePrecision rejects non-numeric sensitivity payloads at runtime."""
+        with pytest.raises(ValueError, match="sensitivity"):
+            SynapsePrecision(
+                layer_index=0,
+                layer_name="fc",
+                output_index=0,
+                input_index=1,
+                bit_width=8,
+                bitstream_length=128,
+                sensitivity=cast(float, "bad"),
+                quantization_error_bound=0.01,
+                stochastic_error_bound=0.02,
+                total_error_bound=0.03,
+            )
 
     def test_assign_synapse_precisions_returns_one_row_per_weight(self) -> None:
         """Per-synapse planning returns one assignment per weight element."""

@@ -1,0 +1,61 @@
+{
+  "benchmark_id": "adaptive-precision-rows-polyglot-local-validation",
+  "evidence_class": "local_regression_non_isolated",
+  "failed_checks": [],
+  "julia_validation": {
+    "command": [
+      "julia",
+      "--startup-file=no",
+      "--history-file=no",
+      "-e",
+      "include(\"src/sc_neurocore/accel/julia/compiler/adaptive_precision.jl\"); using .AdaptivePrecisionAccel; layer = LayerPrecisionState(0, \"fc\", 256, 0.03125, 0.5); @assert validate_adaptive_precision(layer); try LayerPrecisionState(-1, \"fc\", 256, 0.03125, 0.5); error(\"layer_index accepted\"); catch err; @assert err isa ArgumentError; end; syn = SynapsePrecisionState(0, \"fc\", 1, 2, 8, 128, 0.5, 0.01, 0.02, 0.03); @assert validate_synapse_precision(syn); try SynapsePrecisionState(-1, \"fc\", 1, 2, 8, 128, 0.5, 0.01, 0.02, 0.03); error(\"layer_index accepted\"); catch err; @assert err isa ArgumentError; end; @assert to_dict(syn)[\"total_error_bound\"] == 0.03"
+    ],
+    "returncode": 0,
+    "seconds": 3.642698,
+    "status": "pass"
+  },
+  "mojo_validation": {
+    "command": [
+      "mojo",
+      "src/sc_neurocore/accel/mojo/kernels/adaptive_precision.mojo"
+    ],
+    "returncode": 0,
+    "seconds": 2.456949,
+    "status": "pass"
+  },
+  "production_benchmark_claim": false,
+  "python": {
+    "layer_precision_rows": {
+      "calls": 10000,
+      "calls_per_second": 312849.473,
+      "seconds": 0.031964
+    },
+    "synapse_precision_rows": {
+      "calls": 10000,
+      "calls_per_second": 93031.712,
+      "seconds": 0.10749
+    }
+  },
+  "rust_compile": {
+    "command": [
+      "rustc",
+      "--edition=2021",
+      "--test",
+      "src/sc_neurocore/accel/rust/safety/adaptive_precision.rs",
+      "-o",
+      "/tmp/sc_neurocore_adaptive_precision_rows_tests"
+    ],
+    "returncode": 0,
+    "seconds": 3.308644,
+    "status": "pass"
+  },
+  "rust_tests": {
+    "command": [
+      "/tmp/sc_neurocore_adaptive_precision_rows_tests"
+    ],
+    "returncode": 0,
+    "seconds": 0.004198,
+    "status": "pass"
+  },
+  "status": "pass"
+}

@@ -7,7 +7,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 190
+expected_file_count = 192
 
 [[file]]
 path = "src/sc_neurocore/__init__.py"
@@ -168,6 +168,14 @@ rationale = "Public analog bridge package entry point that re-exports substrate,
 [[file]]
 path = "src/sc_neurocore/compiler/adaptive_precision.py"
 rationale = "Public adaptive-precision facade for layer, synapse, and formal-evidence planning APIs."
+
+[[file]]
+path = "src/sc_neurocore/compiler/layer_precision.py"
+rationale = "Validated adaptive-precision layer row model serialized through public precision-plan manifests."
+
+[[file]]
+path = "src/sc_neurocore/compiler/synapse_precision.py"
+rationale = "Validated adaptive-precision synapse row model serialized through public precision-plan manifests."
 
 [[file]]
 path = "src/sc_neurocore/accel/gpu_backend.py"

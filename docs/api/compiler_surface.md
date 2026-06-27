@@ -36,7 +36,7 @@ can change without a deprecation window.
 | `guard_bits` | internal build tool | Static-analysis primitive reached through `static_analysis`. |
 | `host_driver_gen` | internal build tool | Host driver generator reached through `deployment`. |
 | `ir_type_checker` | public facade | Package-level exports provide stochastic IR validation helpers. |
-| `layer_precision` | internal build tool | Implementation detail for adaptive precision planning. |
+| `layer_precision` | internal build tool | Validated row model behind adaptive precision layer manifests. |
 | `length_planner` | internal build tool | Implementation detail for stochastic bitstream-length planning. |
 | `live_control` | public facade | Package-level exports provide live MMIO control specs. |
 | `live_control_ops` | internal build tool | Implementation module for live-control operations. |
@@ -69,7 +69,7 @@ can change without a deprecation window.
 | `static_analysis` | direct public module | Static-analysis facade aggregates guard, proof, pipeline, power, and SVA helpers. |
 | `sva_gen` | direct public module | SVA generator has direct tests and documentation. |
 | `synapse_planner` | internal build tool | Implementation detail for synapse precision planning. |
-| `synapse_precision` | internal build tool | Implementation detail behind adaptive precision planning. |
+| `synapse_precision` | internal build tool | Validated row model behind adaptive precision synapse manifests. |
 | `testbench_gen` | direct public module | Verilog testbench generator has direct tests and documentation. |
 | `validation` | direct public module | Adaptive-runtime validation is re-exported by a compatibility facade. |
 | `verilog_compiler` | internal build tool | Backend implementation reached through `equation_compiler`. |

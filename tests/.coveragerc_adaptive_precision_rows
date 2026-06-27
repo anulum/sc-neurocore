@@ -1,0 +1,9 @@
+[run]
+source = src/sc_neurocore/compiler
+
+[report]
+include =
+    src/sc_neurocore/compiler/layer_precision.py
+    src/sc_neurocore/compiler/synapse_precision.py
+show_missing = True
+fail_under = 100

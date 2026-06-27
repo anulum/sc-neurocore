@@ -19,9 +19,37 @@ from sc_neurocore.compiler.adaptive_precision import assign_lengths
 `sc_neurocore.compiler.adaptive_precision` is in the scoped public-docstring
 policy. Its dedicated adaptive-precision tests are strict typed and cover
 layer-length assignment, sensitivity analysis, per-synapse planning, manifest
-stability, and formal-evidence bundle writing at 100% isolated facade coverage.
-The touched surface is a Python compiler facade; no polyglot or benchmark
-counterpart changes were required for this docstring-policy slice.
+stability, row validation, and formal-evidence bundle writing at 100% isolated
+facade coverage.
+
+`LayerPrecision` and `SynapsePrecision` are validated row contracts behind the
+public manifest. Layer rows reject negative indices, empty names, non-positive
+or non-power-of-two bitstream lengths, and non-finite or negative error and
+sensitivity values. Synapse rows reject negative coordinates, empty layer names,
+non-positive bit widths or bitstream lengths, invalid component bounds, and
+total error bounds that do not cover the quantisation plus stochastic
+components.
+
+The polyglot adaptive-precision mirrors are validated with the Python row
+contract:
+
+- Rust: `src/sc_neurocore/accel/rust/safety/adaptive_precision.rs` compiles as
+  a Rust test binary and exercises layer/synapse contract checks.
+- Julia: `src/sc_neurocore/accel/julia/compiler/adaptive_precision.jl` exposes
+  `LayerPrecisionState`, `SynapsePrecisionState`, `to_dict`, and validation
+  helpers.
+- Mojo: `src/sc_neurocore/accel/mojo/kernels/adaptive_precision.mojo` runs the
+  same layer and synapse validation smoke path.
+
+Local non-isolated benchmark and validation evidence is stored in
+`benchmarks/results/bench_adaptive_precision_rows.json`. On this workstation,
+the 2026-06-27 artifact records 10,000 Python `LayerPrecision` row
+constructor/serialization calls in 0.031964 s (312849.473 calls/s), 10,000
+`SynapsePrecision` row constructor/serialization calls in 0.10749 s
+(93031.712 calls/s), Rust compile status `pass`, Rust tests status `pass`,
+Julia validation status `pass`, and Mojo validation status `pass`. The artifact
+sets `production_benchmark_claim` to `false`; it is regression evidence, not a
+production performance claim.
 
 ## 2026-04-30 per-synapse precision plan
 

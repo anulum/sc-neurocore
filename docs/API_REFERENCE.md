@@ -8412,6 +8412,33 @@ list of IRTypeError (empty if all types check out)
 ### Class `LayerPrecision`
 Bitstream length assignment for one layer.
 
+Parameters
+----------
+layer_index:
+    Zero-based layer index in the adaptive-precision plan.
+name:
+    Non-empty layer name used in reports and manifests.
+bitstream_length:
+    Positive stochastic-computing bitstream length. Layer-level planners
+    round this value to a power of two.
+error_bound:
+    Finite non-negative per-layer stochastic error bound.
+sensitivity:
+    Finite non-negative sensitivity score used for budget allocation.
+
+- **__post_init__**()
+  - Validate adaptive-precision row invariants.
+- **to_dict**()
+  - Return a JSON-serializable adaptive-precision manifest row.
+
+### Function `_validate_non_negative_int(value, name)`
+Reject non-integer or negative manifest index fields.
+
+### Function `_validate_positive_int(value, name)`
+Reject non-integer or non-positive manifest length fields.
+
+### Function `_validate_non_negative_float(value, name)`
+Reject non-numeric, non-finite, or negative manifest scalar fields.
 
 ---
 
@@ -9670,8 +9697,42 @@ Assign per-synapse bit widths and SC lengths with error bounds.
 ### Class `SynapsePrecision`
 Precision assignment and conservative error bound for one synapse.
 
+Parameters
+----------
+layer_index:
+    Zero-based layer index in the adaptive-precision plan.
+layer_name:
+    Non-empty layer name used in reports and manifests.
+output_index:
+    Zero-based output row index for the weight matrix.
+input_index:
+    Zero-based input column index for the weight matrix.
+bit_width:
+    Positive fixed-point bit width assigned to the synapse.
+bitstream_length:
+    Positive stochastic-computing bitstream length assigned to the synapse.
+sensitivity:
+    Finite non-negative synapse sensitivity score.
+quantization_error_bound:
+    Finite non-negative error bound from fixed-point quantization.
+stochastic_error_bound:
+    Finite non-negative Hoeffding-style stochastic error bound.
+total_error_bound:
+    Finite non-negative aggregate bound that must cover both components.
+
+- **__post_init__**()
+  - Validate per-synapse precision-row invariants.
 - **to_dict**()
   - Return a JSON-serialisable precision-plan row.
+
+### Function `_validate_non_negative_int(value, name)`
+Reject non-integer or negative manifest index fields.
+
+### Function `_validate_positive_int(value, name)`
+Reject non-integer or non-positive precision fields.
+
+### Function `_validate_non_negative_float(value, name)`
+Reject non-numeric, non-finite, or negative error-bound fields.
 
 ---
 

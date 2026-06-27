@@ -4,107 +4,81 @@
 # © Code 2020–2026 Miroslav Šotek. All rights reserved.
 # ORCID: 0009-0009-3560-0851
 # Contact: www.anulum.li | protoscience@anulum.li
-# SC-NeuroCore — Mojo SIMD acceleration for adaptive_precision
+# SC-NeuroCore — Mojo adaptive precision validation kernel
 
-fn analyze_sensitivity(layer_weights: Int, lengths: Int, n_trials: Int, seed: Int) -> Int:
-    var _analyze_sensitivity_line = 'layer_weights: list[ndarray[Any, Any]],'
-    var _analyze_sensitivity_line = 'lengths: list[int] | 0 = 0,'
-    var _analyze_sensitivity_line = 'n_trials: int = 100,'
-    var _analyze_sensitivity_line = 'seed: int = 42,'
-    var _analyze_sensitivity_line = ') -> list[float]:'
-    var _analyze_sensitivity_line = 'if lengths is 0:'
-    var _analyze_sensitivity_line = 'lengths = [32, 64, 128, 256, 512, 1024]'
-    var _analyze_sensitivity_line = 'rng = random.RandomState(seed)'
-    var _analyze_sensitivity_line = 'sensitivities = []'
-    var _analyze_sensitivity_line = 'for w in layer_weights:'
-    var _analyze_sensitivity_line = 'n_in = w.shape[1] if w.ndim == 2 else w.shape[0]'
-    var _analyze_sensitivity_line = 'errors = []'
-    var _analyze_sensitivity_line = 'for _ in range(n_trials):'
-    var _analyze_sensitivity_line = 'x = rng.random(n_in)'
-    var _analyze_sensitivity_line = 'exact = x @ w.T if w.ndim == 2 else x * w'
-    var _analyze_sensitivity_line = 'length_errors = []'
-    var _analyze_sensitivity_line = 'for L in lengths:'
-    var _analyze_sensitivity_line = '# SC computation: encode as bitstream, AND-multiply, popcoun'
-    var _analyze_sensitivity_line = 'sc_results = []'
-    var _analyze_sensitivity_line = 'for trial in range(5):'
-    var _analyze_sensitivity_line = 'bits_x = (rng.random((L, n_in)) < x).astype(float64)'
-    var _analyze_sensitivity_line = 'if w.ndim == 2:'
-    var _analyze_sensitivity_line = 'n_out = w.shape[0]'
-    var _analyze_sensitivity_line = 'bits_w = zeros((L, n_out, n_in))'
-    var _analyze_sensitivity_line = 'for j in range(n_out):'
-    var _analyze_sensitivity_line = 'w_prob = clip(w[j], 0, 1)'
-    var _analyze_sensitivity_line = 'bits_w[:, j, :] = (rng.random((L, n_in)) < w_prob).astype(fl'
-    var _analyze_sensitivity_line = 'and_result = bits_x[:, newaxis, :] * bits_w'
-    var _analyze_sensitivity_line = 'sc_out = and_result.sum(axis=(0, 2)) / L'
-    var _analyze_sensitivity_line = 'else:  # pragma: no cover — scalar weight path'
-    var _analyze_sensitivity_line = 'w_prob = clip(w, 0, 1)'
-    var _analyze_sensitivity_line = 'bits_w = (rng.random((L,)) < w_prob).astype(float64)'
-    var _analyze_sensitivity_line = 'sc_out = (bits_x.mean(axis=0) * bits_w).mean()'
-    var _analyze_sensitivity_line = 'sc_results.append(sc_out)'
-    var _analyze_sensitivity_line = 'sc_mean = mean(sc_results, axis=0)'
-    var _analyze_sensitivity_line = 'err = mean(abs(sc_mean - clip(exact, 0, 0)))'
-    var _analyze_sensitivity_line = 'length_errors.append(err)'
-    var _analyze_sensitivity_line = '# Sensitivity = how much error changes across length range'
-    var _analyze_sensitivity_line = 'sensitivity = max(length_errors) - min(length_errors) if len'
-    var _analyze_sensitivity_line = 'errors.append(sensitivity)'
-    var _analyze_sensitivity_line = 'sensitivities.append(float(mean(errors)))'
-    return 0  # return sensitivities
+from std.math import isfinite
 
-fn assign_lengths(layer_weights: Int, layer_names: Int, total_budget: Int, min_length: Int, max_length: Int, target_error: Int) -> Int:
-    var _assign_lengths_line = 'layer_weights: list[ndarray[Any, Any]],'
-    var _assign_lengths_line = 'layer_names: list[str] | 0 = 0,'
-    var _assign_lengths_line = 'total_budget: int | 0 = 0,'
-    var _assign_lengths_line = 'min_length: int = 32,'
-    var _assign_lengths_line = 'max_length: int = 1024,'
-    var _assign_lengths_line = 'target_error: float = 0.01,'
-    var _assign_lengths_line = 'method: str = "hoeffding",'
-    var _assign_lengths_line = ') -> list[LayerPrecision]:'
-    var _assign_lengths_line = 'n_layers = len(layer_weights)'
-    var _assign_lengths_line = 'if layer_names is 0:'
-    var _assign_lengths_line = 'layer_names = [f"layer_{i}" for i in range(n_layers)]'
-    var _assign_lengths_line = 'if method == "hoeffding":'
-    var _assign_lengths_line = 'assignments = []'
-    var _assign_lengths_line = 'for i, (w, name) in enumerate(zip(layer_weights, layer_names'
-    var _assign_lengths_line = 'fan_in = w.shape[1] if w.ndim == 2 else 1'
-    var _assign_lengths_line = '# Per-synapse error epsilon, aggregated over fan_in synapses'
-    var _assign_lengths_line = 'per_syn_eps = target_error / max(1, sqrt(fan_in))'
-    var _assign_lengths_line = 'L = adaptive_length(p=0.5, epsilon=per_syn_eps, confidence=0'
-    var _assign_lengths_line = 'L = int(clip(L, min_length, max_length))'
-    var _assign_lengths_line = '# Round up to power of 2 for hardware efficiency'
-    var _assign_lengths_line = 'L = int(2 ** ceil(log2(max(L, min_length))))'
-    var _assign_lengths_line = 'L = min(L, max_length)'
-    var _assign_lengths_line = 'bound = 0.5 / sqrt(L) if L > 0 else 1.0'
-    var _assign_lengths_line = 'assignments.append('
-    var _assign_lengths_line = 'LayerPrecision('
-    var _assign_lengths_line = 'layer_index=i,'
-    var _assign_lengths_line = 'name=name,'
-    var _assign_lengths_line = 'bitstream_length=L,'
-    var _assign_lengths_line = 'error_bound=bound,'
-    var _assign_lengths_line = 'sensitivity=0.0,'
-    var _assign_lengths_line = ')'
-    var _assign_lengths_line = ')'
-    return 0  # return assignments
-    var _assign_lengths_line = '# Sensitivity-based assignment'
-    var _assign_lengths_line = 'sensitivities = analyze_sensitivity(layer_weights)'
-    var _assign_lengths_line = 'total_sens = sum(sensitivities) or 1.0'
-    var _assign_lengths_line = 'if total_budget is 0:  # pragma: no cover'
-    var _assign_lengths_line = 'total_budget = max_length * n_layers'
-    var _assign_lengths_line = 'assignments = []'
-    var _assign_lengths_line = 'for i, (w, name, sens) in enumerate(zip(layer_weights, layer'
-    var _assign_lengths_line = '# Allocate budget proportional to sensitivity'
-    var _assign_lengths_line = 'fraction = sens / total_sens'
-    var _assign_lengths_line = 'L = int(fraction * total_budget / n_layers * n_layers)'
-    var _assign_lengths_line = 'L = int(clip(L, min_length, max_length))'
-    var _assign_lengths_line = 'L = int(2 ** ceil(log2(max(L, min_length))))'
-    var _assign_lengths_line = 'L = min(L, max_length)'
-    var _assign_lengths_line = 'bound = 0.5 / sqrt(L) if L > 0 else 1.0'
-    var _assign_lengths_line = 'assignments.append('
-    var _assign_lengths_line = 'LayerPrecision('
-    var _assign_lengths_line = 'layer_index=i,'
-    var _assign_lengths_line = 'name=name,'
-    var _assign_lengths_line = 'bitstream_length=L,'
-    var _assign_lengths_line = 'error_bound=bound,'
-    var _assign_lengths_line = 'sensitivity=sens,'
-    var _assign_lengths_line = ')'
-    var _assign_lengths_line = ')'
-    return 0  # return assignments
+
+def is_power_of_two(value: Int) -> Bool:
+    if value <= 0:
+        return False
+    var probe = value
+    while probe % 2 == 0:
+        probe = probe // 2
+    return probe == 1
+
+
+def validate_non_negative(value: Float64) -> Bool:
+    return isfinite(value) and value >= 0.0
+
+
+def validate_layer_precision(
+    layer_index: Int,
+    name_length: Int,
+    bitstream_length: Int,
+    error_bound: Float64,
+    sensitivity: Float64,
+) -> Bool:
+    if layer_index < 0 or name_length <= 0:
+        return False
+    if not is_power_of_two(bitstream_length):
+        return False
+    return validate_non_negative(error_bound) and validate_non_negative(sensitivity)
+
+
+def validate_synapse_precision(
+    layer_index: Int,
+    layer_name_length: Int,
+    output_index: Int,
+    input_index: Int,
+    bit_width: Int,
+    bitstream_length: Int,
+    sensitivity: Float64,
+    quantization_error_bound: Float64,
+    stochastic_error_bound: Float64,
+    total_error_bound: Float64,
+) -> Bool:
+    if layer_index < 0 or layer_name_length <= 0:
+        return False
+    if output_index < 0 or input_index < 0:
+        return False
+    if bit_width <= 0 or bitstream_length <= 0:
+        return False
+    if not validate_non_negative(sensitivity):
+        return False
+    if not validate_non_negative(quantization_error_bound):
+        return False
+    if not validate_non_negative(stochastic_error_bound):
+        return False
+    if not validate_non_negative(total_error_bound):
+        return False
+    return total_error_bound + 1.0e-15 >= quantization_error_bound + stochastic_error_bound
+
+
+def validate_adaptive_precision_kernel() -> Bool:
+    if not validate_layer_precision(0, 3, 256, 0.03125, 0.5):
+        return False
+    if validate_layer_precision(0, 3, 300, 0.03125, 0.5):
+        return False
+    if validate_layer_precision(-1, 3, 256, 0.03125, 0.5):
+        return False
+    if not validate_synapse_precision(0, 3, 1, 2, 8, 128, 0.5, 0.01, 0.02, 0.03):
+        return False
+    if validate_synapse_precision(-1, 3, 1, 2, 8, 128, 0.5, 0.01, 0.02, 0.03):
+        return False
+    return not validate_synapse_precision(0, 3, 1, 2, 8, 128, 0.5, 0.02, 0.02, 0.03)
+
+
+def main() raises:
+    if not validate_adaptive_precision_kernel():
+        raise Error("adaptive precision validation failed")
