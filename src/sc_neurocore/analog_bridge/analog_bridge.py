@@ -36,6 +36,7 @@ class AnalogSubstrateProfile:
 
     @classmethod
     def brainscales3(cls) -> AnalogSubstrateProfile:
+        """Return the bundled BrainScaleS-3 substrate profile."""
         return cls(
             name="BrainScaleS-3",
             g_min=0.0,
@@ -50,6 +51,7 @@ class AnalogSubstrateProfile:
 
     @classmethod
     def dynapse2(cls) -> AnalogSubstrateProfile:
+        """Return the bundled DynapSE-2 substrate profile."""
         return cls(
             name="DynapSE-2",
             g_min=0.0,
@@ -73,6 +75,8 @@ class AEREvent:
 
 
 class AnalogBridge:
+    """Quantize stochastic weights and thresholds for analog substrates."""
+
     def __init__(
         self,
         g_range: Tuple[float, float] | None = None,
@@ -93,7 +97,7 @@ class AnalogBridge:
         self.dac_levels = 2**self.dac_res
 
     def _quantize(self, val: float, v_min: float, v_max: float) -> Tuple[int, float]:
-        """Returns (DAC_Value, Actual_Analog_Value) after quantization."""
+        """Return ``(dac_value, actual_analog_value)`` after quantization."""
         norm = (val - v_min) / (v_max - v_min)
         norm = max(0.0, min(1.0, norm))
         dac = int(round(norm * (self.dac_levels - 1)))
@@ -101,6 +105,7 @@ class AnalogBridge:
         return dac, actual
 
     def emit_analog_config(self, nodes: List[Any]) -> Dict[str, Dict[str, Any]]:
+        """Emit DAC configuration dictionaries for SC weights and LIF nodes."""
         config: Dict[str, Dict[str, Any]] = {"synapses": {}, "neurons": {}, "errors": {}}
         for n in nodes:
             if n.type == "SC_WEIGHT":
@@ -201,6 +206,8 @@ if __name__ == "__main__":
     bridge = AnalogBridge(profile=profile)
 
     class MockNode:
+        """Minimal node descriptor for the command-line demonstration."""
+
         def __init__(self, t: str, i: str, prob: float = 0.0, th: float = 0.0) -> None:
             self.type, self.id, self.probability, self.threshold = t, i, prob, th
 

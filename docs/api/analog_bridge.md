@@ -68,6 +68,12 @@ The canonical import path is the package root, not the internal
 inner file via direct `sys.path` manipulation bypasses the
 package's `__init__.py` and causes coverage.py to miss attribution.
 
+`sc_neurocore.analog_bridge.analog_bridge` is in the scoped public-docstring
+policy. The dedicated analog-bridge tests are strict typed and docstring-clean
+across both real-surface test files. This API is pure Python + NumPy and has no
+polyglot or benchmark counterpart in this slice; the existing coverage evidence
+below remains the verification target.
+
 | Symbol | Purpose | Section |
 |---|---|---|
 | `AnalogSubstrateProfile` | Parameter envelope for a specific analog chip family | §3 |

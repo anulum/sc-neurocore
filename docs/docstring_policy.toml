@@ -7,7 +7,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 171
+expected_file_count = 172
 
 [[file]]
 path = "scripts/generate_docs.py"
@@ -148,6 +148,10 @@ rationale = "Public acceleration-backend selector for stochastic-computing infer
 [[file]]
 path = "src/sc_neurocore/audio/adaptive_engine.py"
 rationale = "Public closed-loop audio controller that couples SSGF geometry updates to EVS feedback."
+
+[[file]]
+path = "src/sc_neurocore/analog_bridge/analog_bridge.py"
+rationale = "Public stochastic-to-analog substrate bridge documented for DAC configuration and AER event workflows."
 
 [[file]]
 path = "src/sc_neurocore/accel/gpu_backend.py"
