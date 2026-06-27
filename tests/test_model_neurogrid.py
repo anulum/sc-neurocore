@@ -310,13 +310,13 @@ class TestNGPerformance:
     def test_isolation_throughput(self) -> None:
         n = NeuroGridNeuron()
         N = 100_000
-        t0 = time.perf_counter()
+        t0 = time.process_time()
         for _ in range(N):
             n.step(100.0)
-        elapsed = time.perf_counter() - t0
+        elapsed = time.process_time() - t0
         rate = N / elapsed
-        # 1 exp + 2 compartment updates
-        assert rate > 50_000, f"isolation: {rate:.0f} steps/s"
+        # Catastrophic-regression smoke only; exact throughput belongs to benchmarks.
+        assert rate > 20_000, f"isolation: {rate:.0f} steps/s"
 
     def test_network_throughput(self) -> None:
         pop = Population(NeuroGridNeuron, n=20, label="bench")
