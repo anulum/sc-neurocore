@@ -7,7 +7,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 175
+expected_file_count = 176
 
 [[file]]
 path = "scripts/generate_docs.py"
@@ -232,6 +232,10 @@ rationale = "Public few-shot spike meta-learning package entry point."
 [[file]]
 path = "src/sc_neurocore/fusion/__init__.py"
 rationale = "Public multimodal spike-fusion package entry point."
+
+[[file]]
+path = "src/sc_neurocore/layers/fusion.py"
+rationale = "Public weighted stochastic fusion layer with Python and Rust weighted-sum parity semantics."
 
 [[file]]
 path = "src/sc_neurocore/homeostasis/__init__.py"

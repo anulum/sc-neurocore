@@ -222,7 +222,15 @@ sc-neurocore includes a variety of layer types. The most common ones are:
 - `SCRecurrentLayer`: recurrent layer that updates a state vector based on inputs and previous state.
 - `VectorizedSCLayer`: packed bitstream operations for fast CPU simulation.
 - `MemristiveDenseLayer`: vectorized layer with hardware non-idealities such as stuck-at faults and variability.
-- `SCFusionLayer`: weighted fusion of multiple modalities using SC-style arithmetic.
+- `SCFusionLayer`: weighted fusion of same-width modality vectors using
+  SC-style arithmetic. Positive raw weights are normalised; zero or negative
+  total weights fall back to equal weighted-modalities, matching the Rust
+  `FusionLayer` implementation. Runtime validation rejects empty inputs,
+  undeclared weighted modalities, non-vector arrays, and feature-length
+  mismatches before producing a fused output. Local evidence on 2026-06-27:
+  Python focused tests plus the public docstring policy passed, isolated module
+  coverage was 100%, filtered Rust fusion tests passed, and the opt-in
+  non-isolated perf smoke passed in 1.92 seconds.
 - `StochasticAttention` and `StochasticTransformerBlock`: attention and transformer primitives for higher-order integration.
 - `StochasticGraphLayer`: graph convolution for relational data.
 

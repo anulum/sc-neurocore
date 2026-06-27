@@ -6,19 +6,33 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore — Fuses multiple data modalities using stochastic
 
+"""Weighted stochastic-computing fusion layer for same-width modalities."""
+
 from __future__ import annotations
-from typing import Any
-from dataclasses import dataclass
+
+from collections.abc import Mapping
+from dataclasses import dataclass, field
+
 import numpy as np
-from typing import Dict
+from numpy.typing import ArrayLike, NDArray
 
 from ..constants import LAYER_DEFAULT_LENGTH
 
 
 @dataclass
 class SCFusionLayer:
-    """
-    Fuses multiple data modalities using stochastic multiplexing (MUX).
+    """Fuse multiple data modalities using stochastic multiplexing.
+
+    Parameters
+    ----------
+    input_dims : Mapping[str, int]
+        Declared feature count for each accepted modality.
+    fusion_weights : Mapping[str, float]
+        Raw modality weights. Positive totals are normalised to one; non-positive
+        totals fall back to equal weights across the weighted modalities, matching
+        the Rust fusion layer contract.
+    length : int, default=LAYER_DEFAULT_LENGTH
+        Stochastic bitstream length carried for layer-level configuration.
 
     Example
     -------
@@ -32,47 +46,82 @@ class SCFusionLayer:
     (4,)
     """
 
-    input_dims: Dict[str, int]
-    fusion_weights: Dict[str, float]
+    input_dims: Mapping[str, int]
+    fusion_weights: Mapping[str, float]
     length: int = LAYER_DEFAULT_LENGTH
+    norm_weights: dict[str, float] = field(init=False)
 
     def __post_init__(self) -> None:
-        # Verify weights sum to <= 1 (or normalized)
+        """Validate modality metadata and normalise fusion weights."""
+        if not self.input_dims:
+            raise ValueError("input_dims must declare at least one modality")
+        if not self.fusion_weights:
+            raise ValueError("fusion_weights must declare at least one weighted modality")
+        for modality, n_features in self.input_dims.items():
+            if n_features <= 0:
+                raise ValueError(f"input dimension for {modality!r} must be positive")
+        missing_dims = set(self.fusion_weights) - set(self.input_dims)
+        if missing_dims:
+            missing = ", ".join(sorted(missing_dims))
+            raise ValueError(f"fusion_weights reference undeclared modalities: {missing}")
+
         total = sum(self.fusion_weights.values())
-        self.norm_weights = {k: v / total for k, v in self.fusion_weights.items()}
+        if total > 0.0:
+            self.norm_weights = {k: v / total for k, v in self.fusion_weights.items()}
+        else:
+            equal_weight = 1.0 / len(self.fusion_weights)
+            self.norm_weights = {k: equal_weight for k in self.fusion_weights}
 
-    def forward(self, inputs: Dict[str, np.ndarray[Any, Any]]) -> np.ndarray[Any, Any]:
+    def forward(self, inputs: Mapping[str, ArrayLike]) -> NDArray[np.float64]:
+        """Return the weighted stochastic-fusion expectation.
+
+        Parameters
+        ----------
+        inputs : Mapping[str, ArrayLike]
+            One-dimensional arrays keyed by modality name. Modalities without a
+            configured fusion weight are ignored.
+
+        Returns
+        -------
+        numpy.ndarray
+            Floating-point fused feature vector.
+
+        Raises
+        ------
+        ValueError
+            If no weighted modality input is supplied, or if supplied weighted
+            arrays are not one-dimensional vectors with their declared length.
         """
-        inputs: {'modality': np.array([values])}
-        """
-        # Determine output size (must match? or we fuse mapped features?)
-        # For simplicity, assume all modalities map to same latent dimension size
-        # or we just fuse scalar decisions.
+        if not inputs:
+            raise ValueError("forward requires at least one modality input")
 
-        # Let's assume input vectors are same length N
-        n_features = list(inputs.values())[0].shape[0]
-
-        fused_output = np.zeros(n_features)
-
-        # In SC, fusion is often MUX-based.
-        # Out = sum(Input_i * Weight_i)
-        # This is exactly what the Neuron does, but here we do it explicitly for fusion.
-
+        active: list[tuple[str, NDArray[np.float64], float]] = []
         for modality, data in inputs.items():
             if modality not in self.norm_weights:
                 continue
 
+            values = np.asarray(data, dtype=float)
+            if values.ndim != 1:
+                raise ValueError(f"input for {modality!r} must be a one-dimensional vector")
+            expected = self.input_dims[modality]
+            if values.shape[0] != expected:
+                raise ValueError(
+                    f"input for {modality!r} has length {values.shape[0]}, expected {expected}"
+                )
             weight = self.norm_weights[modality]
+            active.append((modality, values, weight))
 
-            # Encode data and weight
-            # (Simulation shortcut: use float math which is expected value of SC)
-            # SC Fusion: P(out) = P(in1)*P(w1) + P(in2)*P(w2) ...
+        if not active:
+            raise ValueError("forward requires at least one weighted modality input")
 
-            # Real bitstream implementation:
-            # We would generate bitstreams for 'data' and 'weight'.
-            # Then MUX them.
-
-            # Simulation:
-            fused_output += data * weight
+        n_features = active[0][1].shape[0]
+        fused_output = np.zeros(n_features, dtype=float)
+        for modality, values, weight in active:
+            if values.shape[0] != n_features:
+                raise ValueError(
+                    f"weighted modalities must share feature length; {modality!r} has "
+                    f"{values.shape[0]}, expected {n_features}"
+                )
+            fused_output += values * weight
 
         return fused_output

@@ -46,8 +46,20 @@ Simulates non-volatile memory behavior in synapses (L9 Identity).
 *   **Feature**: Weights persist even if the simulation is reset, modeling long-term memory.
 
 ### Fusion Layer (`fusion.py`)
-A specialized layer designed to integrate data from multiple planes (e.g., L2 Metabolic + L11 Cultural).
-*   **Use Case**: Implementing the "Consilium" (L15) optimization logic.
+A specialised layer designed to integrate same-width modality vectors with
+normalised stochastic-computing weights. Positive raw weights are normalised to
+sum to one; zero or negative total weights fall back to equal weights across the
+weighted modalities, matching the Rust `FusionLayer` fallback. Inputs must be
+one-dimensional arrays with their declared feature length, and unweighted
+modalities are ignored rather than mixed into the output.
+*   **Use Case**: Implementing the "Consilium" (L15) optimisation logic.
+*   **Verification**: `tests/test_layers/test_fusion.py` covers normalisation,
+    equal-weight fallback, validation failures, output dtype/shape, and Rust
+    weighted-sum parity semantics. Local pytest-cov reports 100% line coverage
+    for `src/sc_neurocore/layers/fusion.py`. The opt-in non-isolated perf smoke
+    `SC_NEUROCORE_PERF=1 ... test_fusion_perf_small` passed on 2026-06-27
+    (`1 passed in 1.92s`); no formal isolated benchmark artefact exists for this
+    layer yet.
 
 ---
 
