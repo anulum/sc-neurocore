@@ -3,6 +3,22 @@
 Audio entrainment pipeline: adaptive session engine, entrainment verification scoring (EVS),
 SSGF-based geometry-to-audio mapping, and per-user profile persistence.
 
+The package facade is the stable import path for application code:
+
+```python
+from sc_neurocore.audio import (
+    AdaptiveAudioEngine,
+    EVSEngine,
+    EVSSnapshot,
+    SSGFEngine,
+    UserProfile,
+)
+```
+
+`tests/test_audio_package_api.py` locks the package-level exports and verifies
+that an imported `SSGFEngine` can advance one step and produce the documented
+audio mapping keys.
+
 ## Adaptive Engine
 
 `AdaptiveAudioEngine` is the public closed-loop controller for adaptive audio

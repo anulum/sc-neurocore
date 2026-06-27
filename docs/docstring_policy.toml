@@ -7,7 +7,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 183
+expected_file_count = 184
 
 [[file]]
 path = "src/sc_neurocore/__init__.py"
@@ -340,6 +340,10 @@ rationale = "Public UVM generator package entry point that re-exports verificati
 [[file]]
 path = "src/sc_neurocore/asic_flow/__init__.py"
 rationale = "Public ASIC flow package entry point that re-exports one-command bundle generation APIs."
+
+[[file]]
+path = "src/sc_neurocore/audio/__init__.py"
+rationale = "Public adaptive-audio package entry point that re-exports SSGF, EVS, session, and profile APIs."
 
 [[file]]
 path = "src/sc_neurocore/temporal_hierarchy/__init__.py"

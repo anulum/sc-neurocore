@@ -6,19 +6,17 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore — SSGF Adaptive Audio Engine
 
-"""
-SSGF Adaptive Audio Engine
-============================
+"""Package facade for the SSGF adaptive audio engine.
 
 Lightweight SSGF geometry solver, Entrainment Verification Score (EVS),
 and closed-loop adaptive audio controller for sc-neurocore.
 
 Modules
 -------
-ssgf_engine   -- Stochastic Synthesis of Geometric Fields (Kuramoto + geometry)
-evs_engine    -- Entrainment Verification Score (FFT-based EEG scoring)
+ssgf_engine -- Stochastic Synthesis of Geometric Fields (Kuramoto + geometry)
+evs_engine -- Entrainment Verification Score (FFT-based EEG scoring)
 adaptive_engine -- Closed-loop adaptive audio controller (SSGF + EVS)
-user_profile  -- User chronotype and session preference model
+user_profile -- User chronotype and session preference model
 """
 
 from .ssgf_engine import SSGFConfig, SSGFEngine
