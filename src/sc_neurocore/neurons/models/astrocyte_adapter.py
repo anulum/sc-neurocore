@@ -6,14 +6,15 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore — Adapter: AstrocyteModel → Population-compatible neuron
 
-"""Adapter that wraps AstrocyteModel for use in Population/Network.
+"""Adapter that wraps :class:`AstrocyteModel` for population workflows.
 
-The AstrocyteModel (Li-Rinzel 1994) outputs Ca²⁺ concentration,
-not spikes. This adapter converts it to the Population neuron interface:
+The Li-Rinzel astrocyte model outputs cytosolic calcium concentration rather
+than binary spikes. This adapter preserves the model dynamics and exposes the
+population-compatible neuron interface used by the network stack:
 
-- step(current) → int (0 or 1): spike when Ca > threshold
-- v attribute: reports Ca concentration as pseudo-voltage
-- reset(): delegates to AstrocyteModel.reset()
+- ``step(current)`` returns ``1`` when calcium exceeds ``ca_threshold``.
+- ``v`` reports calcium concentration as a pseudo-voltage.
+- ``reset()`` delegates to ``AstrocyteModel.reset()`` and refreshes ``v``.
 
     from sc_neurocore.neurons.models.astrocyte_adapter import AstrocyteNeuron
     from sc_neurocore.network.population import Population
@@ -48,25 +49,42 @@ class AstrocyteNeuron:
     dt: float = 0.01
 
     def __post_init__(self) -> None:
+        """Initialise the wrapped astrocyte model and exposed pseudo-voltage."""
         if not math.isfinite(self.ca_threshold) or self.ca_threshold < 0.0:
             raise ValueError("ca_threshold must be finite and non-negative")
         self._astro = AstrocyteModel(dt=self.dt)
         self.v = self._astro.ca
 
     def step(self, current: float) -> int:
-        """Advance one timestep. Returns 1 if Ca > threshold, else 0."""
+        """Advance one timestep and return the thresholded release event.
+
+        Parameters
+        ----------
+        current : float
+            Glutamate-driven IP3 production drive passed through to the wrapped
+            astrocyte model.
+
+        Returns
+        -------
+        int
+            ``1`` when cytosolic calcium exceeds ``ca_threshold``; otherwise
+            ``0``.
+        """
         ca = self._astro.step(current)
         self.v = ca
         return 1 if ca > self.ca_threshold else 0
 
     @property
     def ca(self) -> float:
+        """Current cytosolic calcium concentration in micromolar."""
         return self._astro.ca
 
     @property
     def ip3(self) -> float:
+        """Current IP3 concentration in micromolar."""
         return self._astro.ip3
 
     def reset(self) -> None:
+        """Reset the wrapped astrocyte state and pseudo-voltage."""
         self._astro.reset()
         self.v = self._astro.ca

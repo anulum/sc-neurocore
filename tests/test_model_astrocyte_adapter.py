@@ -9,7 +9,8 @@
 """Full pipeline test for AstrocyteNeuron (adapter wrapping AstrocyteModel).
 
 Converts Ca²⁺ → spike: fires when Ca > ca_threshold. Population-compatible.
-step() returns int {0,1}. Performance: ~86K steps/s."""
+step() returns int {0,1}. Performance: ~86K steps/s.
+"""
 
 from __future__ import annotations
 
@@ -32,39 +33,46 @@ def _run(neuron: AstrocyteNeuron, current: float, steps: int) -> list[int]:
 
 
 class TestAstrocyteAdapterIsolation:
-    def test_defaults(self):
+    """Isolation tests for adapter state and validation contracts."""
+
+    def test_defaults(self) -> None:
+        """Default parameters expose resting calcium as pseudo-voltage."""
         n = AstrocyteNeuron()
         assert n.ca_threshold == 0.3
         assert n.dt == 0.01
         assert n.v == n.ca  # v exposes Ca
 
-    def test_step_returns_binary(self):
+    def test_step_returns_binary(self) -> None:
         """Adapter converts Ca to int {0,1}."""
         assert AstrocyteNeuron().step(0.0) in (0, 1)
 
-    def test_v_tracks_ca(self):
-        """v attribute mirrors Ca concentration."""
+    def test_v_tracks_ca(self) -> None:
+        """V attribute mirrors Ca concentration."""
         n = AstrocyteNeuron()
         n.step(0.5)
         assert n.v == n.ca
 
-    def test_ca_property(self):
+    def test_ca_property(self) -> None:
+        """Ca property delegates to the wrapped astrocyte model."""
         n = AstrocyteNeuron()
         n.step(0.5)
         assert n.ca > 0
 
-    def test_ip3_property(self):
+    def test_ip3_property(self) -> None:
+        """IP3 property delegates to the wrapped astrocyte model."""
         n = AstrocyteNeuron()
         n.step(0.5)
         assert n.ip3 > 0
 
-    def test_state_finite(self):
+    def test_state_finite(self) -> None:
+        """Long adapter runs keep exposed state finite."""
         n = AstrocyteNeuron()
         for _ in range(50000):
             n.step(0.5)
         assert np.isfinite(n.v) and np.isfinite(n.ca) and np.isfinite(n.ip3)
 
-    def test_reset(self):
+    def test_reset(self) -> None:
+        """Reset restores resting calcium as pseudo-voltage."""
         n = AstrocyteNeuron()
         for _ in range(100):
             n.step(1.0)
@@ -83,40 +91,43 @@ class TestAstrocyteAdapterIsolation:
             {"dt": float("inf")},
         ],
     )
-    def test_rejects_non_physical_adapter_parameters(self, kwargs):
+    def test_rejects_non_physical_adapter_parameters(self, kwargs: dict[str, float]) -> None:
         """Adapter threshold and timestep must be finite physical parameters."""
         with pytest.raises(ValueError):
             AstrocyteNeuron(**kwargs)
 
     @pytest.mark.parametrize("current", [-0.01, float("nan"), float("inf")])
-    def test_rejects_non_physical_adapter_drive(self, current):
+    def test_rejects_non_physical_adapter_drive(self, current: float) -> None:
         """Adapter must preserve the finite non-negative IP3 drive contract."""
         with pytest.raises(ValueError, match="current"):
             AstrocyteNeuron().step(current)
 
 
 class TestAstrocyteAdapterSpikeConversion:
-    def test_fires_when_ca_above_threshold(self):
+    """Tests for calcium-to-spike conversion semantics."""
+
+    def test_fires_when_ca_above_threshold(self) -> None:
         """Spike = 1 when Ca > ca_threshold."""
         n = AstrocyteNeuron(ca_threshold=0.3)
         spikes_no_input = sum(n.step(0.0) for _ in range(10000))
         # Ca oscillates to 0.94 at I=0 → crosses 0.3 → spikes
         assert spikes_no_input > 0
 
-    def test_ip3_input_drives_sustained_activity(self):
-        """Strong IP3 input → Ca stays high → fires almost every step."""
+    def test_ip3_input_drives_sustained_activity(self) -> None:
+        """Sustained IP3 input keeps Ca high and fires almost every step."""
         n = AstrocyteNeuron()
         spikes = sum(n.step(0.5) for _ in range(10000))
         assert spikes > 9000, f"Only {spikes} spikes at I=0.5"
 
-    def test_lower_threshold_more_spikes(self):
+    def test_lower_threshold_more_spikes(self) -> None:
+        """Lower thresholds produce more release events than high thresholds."""
         n_low = AstrocyteNeuron(ca_threshold=0.1)
         n_high = AstrocyteNeuron(ca_threshold=0.8)
         s_low = sum(n_low.step(0.0) for _ in range(10000))
         s_high = sum(n_high.step(0.0) for _ in range(10000))
         assert s_low > s_high
 
-    def test_zero_input_oscillatory_spiking(self):
+    def test_zero_input_oscillatory_spiking(self) -> None:
         """At I=0, Ca oscillates → intermittent spikes (not every step)."""
         n = AstrocyteNeuron(ca_threshold=0.3)
         outputs = [n.step(0.0) for _ in range(10000)]
@@ -125,7 +136,10 @@ class TestAstrocyteAdapterSpikeConversion:
 
 
 class TestAstrocyteAdapterPerformance:
-    def test_isolation_throughput(self):
+    """Smoke tests for local adapter throughput budgets."""
+
+    def test_isolation_throughput(self) -> None:
+        """Single-adapter stepping stays above the local smoke threshold."""
         n = AstrocyteNeuron()
         N = 20000
         t0 = time.perf_counter()
@@ -134,7 +148,8 @@ class TestAstrocyteAdapterPerformance:
         elapsed = time.perf_counter() - t0
         assert N / elapsed > 20000
 
-    def test_network_throughput(self):
+    def test_network_throughput(self) -> None:
+        """Network execution stays above the local smoke threshold."""
         pop = Population(AstrocyteNeuron, n=20, label="bench")
         drive = PoissonInput(n=20, rate_hz=200.0, weight=0.5, dt=0.001, seed=42)
         mon = SpikeMonitor(pop)
@@ -147,10 +162,14 @@ class TestAstrocyteAdapterPerformance:
 
 
 class TestAstrocyteAdapterPipeline:
-    def test_population(self):
+    """Pipeline tests for population, network, projection, and analysis wiring."""
+
+    def test_population(self) -> None:
+        """Population construction accepts AstrocyteNeuron."""
         assert Population(AstrocyteNeuron, n=10, label="astro").n == 10
 
-    def test_network_spikes(self):
+    def test_network_spikes(self) -> None:
+        """Network drive produces observed astrocyte release events."""
         pop = Population(AstrocyteNeuron, n=10, label="astro")
         drive = PoissonInput(n=10, rate_hz=200.0, weight=0.5, dt=0.001, seed=42)
         mon = SpikeMonitor(pop)
@@ -158,7 +177,8 @@ class TestAstrocyteAdapterPipeline:
         net.run(duration=2.0, dt=0.001, backend="python")
         assert mon.count > 0
 
-    def test_projection_wiring(self):
+    def test_projection_wiring(self) -> None:
+        """Projection wiring propagates activity between astrocyte populations."""
         src = Population(AstrocyteNeuron, n=5, label="src")
         tgt = Population(AstrocyteNeuron, n=5, label="tgt")
         drive = PoissonInput(n=5, rate_hz=200.0, weight=0.5, dt=0.001, seed=42)
@@ -170,7 +190,8 @@ class TestAstrocyteAdapterPipeline:
         assert mon_src.count > 0
         assert mon_tgt.count > 0
 
-    def test_analysis(self):
+    def test_analysis(self) -> None:
+        """Spike statistics consume the adapter's binary release trace."""
         n = AstrocyteNeuron()
         train = np.array([float(n.step(0.0)) for _ in range(10000)])
         sc = spike_count(train)
@@ -178,8 +199,9 @@ class TestAstrocyteAdapterPipeline:
         rate = firing_rate(train, dt=0.01)  # dt=0.01s per step
         assert rate > 0
 
-    def test_deterministic(self):
-        traces = []
+    def test_deterministic(self) -> None:
+        """Repeated runs with the same drive produce identical traces."""
+        traces: list[list[tuple[int, float]]] = []
         for _ in range(2):
             n = AstrocyteNeuron()
             trace = [(n.step(0.5), n.v) for _ in range(200)]

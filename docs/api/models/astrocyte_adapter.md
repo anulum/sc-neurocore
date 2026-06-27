@@ -58,10 +58,11 @@ def step(self, current: float) -> int:
 | `ca_threshold` | 0.3 | µM | Ca²⁺ threshold for "spike" |
 | `dt` | 0.01 | s | Timestep (passed to AstrocyteModel) |
 
-All other parameters (g_ca, v_er, k_er, d1–d5, etc.) are inherited from
-AstrocyteModel with its defaults. To customise: create an AstrocyteModel
-with custom parameters and assign to `_astro`, or pass params through
-Population constructor.
+The adapter constructor accepts `ca_threshold` and `dt`. The wrapped
+`AstrocyteModel` uses its default Li-Rinzel parameters; callers that need
+custom calcium dynamics should instantiate `AstrocyteModel` directly or build a
+small specialised adapter around that configured model. `Population` parameters
+therefore configure only the adapter fields documented above.
 
 ### ca_threshold = 0.3 µM
 
@@ -178,12 +179,14 @@ access to the underlying Ca²⁺/IP3 dynamics.
 
 ## Implementation Notes
 
-- **Source:** `src/sc_neurocore/neurons/models/astrocyte_adapter.py` — 67 lines.
+- **Source:** `src/sc_neurocore/neurons/models/astrocyte_adapter.py` — 90 lines.
 - **Composition:** Contains an AstrocyteModel instance (`_astro`).
 - **Properties:** `ca` and `ip3` delegate to `_astro`.
 - **__post_init__:** Creates AstrocyteModel with configured dt.
 - **Dataclass:** Uses `@dataclass`.
-- **Rust wiring:** Compatible via the standard step(f64) → i32 dispatch.
+- **Polyglot status:** Python owns the full adapter behaviour. Rust, Go, and
+  Julia safety/service stubs exist for this surface, but this documentation
+  slice did not change runtime semantics or rerun cross-language benchmarks.
 
 ---
 
@@ -204,15 +207,16 @@ AstrocyteNeuron (adapter)
 
 ---
 
-## Performance
+## Performance And Benchmark Status
 
 | Metric | Python | Rust |
 |--------|--------|------|
-| Isolation | ~300K steps/s | Not measured |
-| Network (10 astrocytes, 10s) | ~3K neuron-steps/s | — |
+| Historical isolation smoke | ~300K steps/s | Not measured |
+| Historical network smoke (10 astrocytes, 10s) | ~3K neuron-steps/s | — |
 
-Same as AstrocyteModel — the adapter adds negligible overhead
-(one comparison per step).
+The adapter adds one comparison and one pseudo-voltage assignment around
+`AstrocyteModel.step()`. The 2026-06-27 docstring-policy slice did not change
+the runtime algorithm, so no new isolated benchmark artefact was generated.
 
 ---
 
@@ -220,13 +224,18 @@ Same as AstrocyteModel — the adapter adds negligible overhead
 
 | Category | Tests | What is verified |
 |----------|------:|-----------------|
-| Isolation | 5 | defaults, binary return, v=Ca, reset, ca/ip3 properties |
-| Threshold | 4 | fires when Ca>0.3, silent when Ca<0.3, ca_threshold configurable, duty cycle |
-| Pipeline | 4 | Population, Network+drive, SpikeMonitor counts, Projection wiring |
-| Behaviour | 3 | Ca oscillation → spike bursts, glutamate drive, stimulus response |
-| **Total** | **16** | |
+| Adapter unit contract | 8 | binary return, v=Ca, reset, ca/ip3 properties, Population `step_all`, voltages, reset_all |
+| End-to-end model contract | 28 | defaults, validation, threshold sensitivity, sustained IP3 drive, finite long-run state, Network, Projection, SpikeMonitor, spike statistics, deterministic traces |
+| **Total** | **36** | |
 
-See `tests/test_model_astrocyte_adapter.py`. No bugs found.
+See `tests/test_astrocyte_adapter.py` and
+`tests/test_model_astrocyte_adapter.py`. On 2026-06-27 the focused run passed
+with `38 passed` when combined with `tests/test_public_docstring_policy.py`;
+strict mypy reported no issues for the adapter source and both dedicated test
+files. Isolated pytest-cov for this adapter is currently blocked by the local
+SciPy/NumPy `_NoValueType` import failure triggered through `network.__init__`
+under coverage instrumentation; the same production-path tests pass without
+coverage instrumentation.
 
 ---
 
@@ -238,7 +247,7 @@ See `tests/test_model_astrocyte_adapter.py`. No bugs found.
 2. **v = Ca²⁺:** The pseudo-voltage accurately tracks cytosolic Ca²⁺.
    StateMonitor can plot Ca²⁺ dynamics using standard voltage tools.
 
-3. **Pipeline fully functional:** Population, Network, SpikeMonitor,
+3. **Pipeline wiring covered:** Population, Network, SpikeMonitor,
    PoissonInput, Projection all work. "Spikes" represent gliotransmitter
    release events.
 

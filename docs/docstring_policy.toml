@@ -7,7 +7,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 174
+expected_file_count = 175
 
 [[file]]
 path = "scripts/generate_docs.py"
@@ -20,6 +20,10 @@ rationale = "Public continuous-depth spiking layer included in generated API doc
 [[file]]
 path = "src/sc_neurocore/neurons/models/de_schutter_purkinje.py"
 rationale = "Public neuron model whose documentation fidelity was corrected in the current audit slice."
+
+[[file]]
+path = "src/sc_neurocore/neurons/models/astrocyte_adapter.py"
+rationale = "Public astrocyte-to-population adapter documented in the model API guide and exercised by dedicated adapter tests."
 
 [[file]]
 path = "src/sc_neurocore/generative/three_d_gen.py"
