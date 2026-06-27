@@ -1362,7 +1362,12 @@ impl MulticompartmentMCNNeuron {
         if !x_basal.is_finite() || !x_apical.is_finite() || !i_soma.is_finite() || !self.valid() {
             return 0;
         }
-        let next = self.rk4_substep([self.u, self.v_basal, self.v_apical], x_basal, x_apical, i_soma);
+        let next = self.rk4_substep(
+            [self.u, self.v_basal, self.v_apical],
+            x_basal,
+            x_apical,
+            i_soma,
+        );
         if !next.iter().all(|value| value.is_finite()) {
             return 0;
         }

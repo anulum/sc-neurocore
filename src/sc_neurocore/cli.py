@@ -1679,7 +1679,7 @@ def _cmd_deploy(
             CheckpointTrustError,
             safe_load_checkpoint,
         )
-        from sc_neurocore.conversion import convert
+        from sc_neurocore.conversion.ann_to_snn import convert
 
         if not checkpoint_sha256:
             print(
