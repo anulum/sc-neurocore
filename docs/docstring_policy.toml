@@ -7,7 +7,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 177
+expected_file_count = 178
 
 [[file]]
 path = "scripts/generate_docs.py"
@@ -236,6 +236,10 @@ rationale = "Public multimodal spike-fusion package entry point."
 [[file]]
 path = "src/sc_neurocore/layers/fusion.py"
 rationale = "Public weighted stochastic fusion layer with Python and Rust weighted-sum parity semantics."
+
+[[file]]
+path = "src/sc_neurocore/dashboard/text_dashboard.py"
+rationale = "Public text dashboard used for terminal simulation monitoring and documented in the dashboard API guide."
 
 [[file]]
 path = "src/sc_neurocore/homeostasis/__init__.py"

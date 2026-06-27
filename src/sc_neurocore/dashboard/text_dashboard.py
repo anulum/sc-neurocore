@@ -6,17 +6,19 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore — Simple CLI Dashboard for monitoring SC simulation
 
+"""Text dashboard for quick terminal monitoring of SC simulation rates."""
+
 
 class SCDashboard:
-    """
-    Simple CLI Dashboard for monitoring SC simulation.
-    """
+    """Simple CLI dashboard for monitoring SC simulation rates."""
 
-    def __init__(self, n_neurons: int):
+    def __init__(self, n_neurons: int) -> None:
+        """Create a dashboard with one rolling history per neuron."""
         self.n_neurons = n_neurons
         self.history: list[list[float]] = [[] for _ in range(n_neurons)]
 
     def update(self, firing_rates: list[float], step: int) -> None:
+        """Append one frame of firing rates and render the dashboard."""
         # Update history
         for i, rate in enumerate(firing_rates):
             self.history[i].append(rate)

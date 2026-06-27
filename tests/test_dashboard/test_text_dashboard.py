@@ -13,13 +13,13 @@ import pytest
 from sc_neurocore.dashboard.text_dashboard import SCDashboard
 
 
-def test_dashboard_initial_history_size():
+def test_dashboard_initial_history_size() -> None:
     """History should initialize with correct length."""
     dash = SCDashboard(n_neurons=3)
     assert len(dash.history) == 3
 
 
-def test_dashboard_update_appends_history():
+def test_dashboard_update_appends_history() -> None:
     """Update should append latest firing rates."""
     dash = SCDashboard(n_neurons=2)
     dash.update([0.1, 0.2], step=1)
@@ -27,7 +27,7 @@ def test_dashboard_update_appends_history():
     assert dash.history[1][-1] == 0.2
 
 
-def test_dashboard_history_trims_to_20():
+def test_dashboard_history_trims_to_20() -> None:
     """History should keep only last 20 entries."""
     dash = SCDashboard(n_neurons=1)
     for i in range(25):
@@ -35,7 +35,7 @@ def test_dashboard_history_trims_to_20():
     assert len(dash.history[0]) == 20
 
 
-def test_dashboard_render_outputs_header(capsys):
+def test_dashboard_render_outputs_header(capsys: pytest.CaptureFixture[str]) -> None:
     """Render output should include dashboard header."""
     dash = SCDashboard(n_neurons=1)
     dash.update([0.1], step=5)
@@ -44,7 +44,7 @@ def test_dashboard_render_outputs_header(capsys):
     assert "Step 5" in output
 
 
-def test_dashboard_render_includes_neuron_ids(capsys):
+def test_dashboard_render_includes_neuron_ids(capsys: pytest.CaptureFixture[str]) -> None:
     """Render output should include neuron identifiers."""
     dash = SCDashboard(n_neurons=2)
     dash.update([0.1, 0.2], step=1)
@@ -53,7 +53,7 @@ def test_dashboard_render_includes_neuron_ids(capsys):
     assert "#1" in output
 
 
-def test_dashboard_trend_up(capsys):
+def test_dashboard_trend_up(capsys: pytest.CaptureFixture[str]) -> None:
     """Increasing rates should show UP trend."""
     dash = SCDashboard(n_neurons=1)
     dash.update([0.10], step=1)
@@ -63,7 +63,7 @@ def test_dashboard_trend_up(capsys):
     assert "/ UP" in output
 
 
-def test_dashboard_trend_down(capsys):
+def test_dashboard_trend_down(capsys: pytest.CaptureFixture[str]) -> None:
     """Decreasing rates should show DWN trend."""
     dash = SCDashboard(n_neurons=1)
     dash.update([0.30], step=1)
@@ -73,7 +73,7 @@ def test_dashboard_trend_down(capsys):
     assert "\\ DWN" in output
 
 
-def test_dashboard_trend_stable(capsys):
+def test_dashboard_trend_stable(capsys: pytest.CaptureFixture[str]) -> None:
     """Small changes should show STY trend."""
     dash = SCDashboard(n_neurons=1)
     dash.update([0.10], step=1)
@@ -83,7 +83,7 @@ def test_dashboard_trend_stable(capsys):
     assert "- STY" in output
 
 
-def test_dashboard_bar_length(capsys):
+def test_dashboard_bar_length(capsys: pytest.CaptureFixture[str]) -> None:
     """Bar length should scale with rate."""
     dash = SCDashboard(n_neurons=1)
     dash.update([0.5], step=1)
@@ -91,7 +91,7 @@ def test_dashboard_bar_length(capsys):
     assert "||||||||||" in output
 
 
-def test_dashboard_update_length_mismatch_raises():
+def test_dashboard_update_length_mismatch_raises() -> None:
     """Fewer rates than neurons should raise IndexError in render."""
     dash = SCDashboard(n_neurons=2)
     with pytest.raises(IndexError):
