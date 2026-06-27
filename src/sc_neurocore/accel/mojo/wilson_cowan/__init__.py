@@ -6,8 +6,7 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore — Mojo-backed Wilson-Cowan simulator (ctypes dispatch)
 
-"""Python entry point for the Mojo-compiled Wilson-Cowan N-step
-simulator.
+r"""Python entry point for the Mojo-compiled Wilson-Cowan N-step simulator.
 
 Build:
 
@@ -31,16 +30,16 @@ from __future__ import annotations
 
 import ctypes
 from pathlib import Path
-from typing import Any
 
 import numpy as np
+import numpy.typing as npt
 
 _LIB_PATH = Path(__file__).resolve().parent / "libwilson_cowan.so"
-_lib: ctypes.CDLL | None
 
-try:
-    _lib = ctypes.CDLL(str(_LIB_PATH))
-    _lib.wilson_cowan_simulate_c.argtypes = [
+
+def _configure_library(lib: ctypes.CDLL) -> ctypes.CDLL:
+    """Attach the Wilson-Cowan ctypes signature to a loaded shared library."""
+    lib.wilson_cowan_simulate_c.argtypes = [
         ctypes.c_int,
         ctypes.c_double,
         ctypes.c_double,
@@ -59,11 +58,27 @@ try:
         ctypes.c_void_p,
         ctypes.c_void_p,
     ]
-    _lib.wilson_cowan_simulate_c.restype = ctypes.c_int
-    _HAS_MOJO_WILSON_COWAN = True
-except OSError:
-    _lib = None
-    _HAS_MOJO_WILSON_COWAN = False
+    lib.wilson_cowan_simulate_c.restype = ctypes.c_int
+    return lib
+
+
+def _load_library() -> tuple[ctypes.CDLL | None, bool]:
+    """Load the Mojo Wilson-Cowan shared library when it is available."""
+    try:
+        return _configure_library(ctypes.CDLL(str(_LIB_PATH))), True
+    except OSError:
+        return None, False
+
+
+_lib, _HAS_MOJO_WILSON_COWAN = _load_library()
+
+
+def _as_ext_input(ext_input: npt.ArrayLike) -> npt.NDArray[np.float64]:
+    """Convert the external drive into a contiguous one-dimensional vector."""
+    ext = np.ascontiguousarray(ext_input, dtype=np.float64)
+    if ext.ndim != 1:
+        raise ValueError(f"ext_input must be one-dimensional: got shape {ext.shape}")
+    return ext
 
 
 def simulate_wilson_cowan(
@@ -78,16 +93,21 @@ def simulate_wilson_cowan(
     a: float,
     theta: float,
     dt: float,
-    ext_input: np.ndarray[Any, Any] | list[float],
-) -> dict[str, Any]:
-    """Mojo-accelerated Wilson-Cowan N-step simulator (ctypes dispatch)."""
+    ext_input: npt.ArrayLike,
+) -> dict[str, npt.NDArray[np.float64] | float]:
+    """Run the Mojo-accelerated Wilson-Cowan N-step simulator.
+
+    The external drive must be a one-dimensional time-series. The wrapper
+    validates that shape before crossing the ctypes boundary so the Mojo shared
+    library never receives an implicitly flattened matrix.
+    """
+    ext = _as_ext_input(ext_input)
     if _lib is None:
         raise ImportError(
             f"libwilson_cowan.so not built. Run: cd {_LIB_PATH.parent} && "
             f"~/.pixi/bin/mojo build --emit shared-lib "
             f"-o {_LIB_PATH.name} wilson_cowan.mojo"
         )
-    ext = np.ascontiguousarray(ext_input, dtype=np.float64)
     n = ext.size
     e_out = np.empty(n, dtype=np.float64)
     i_out = np.empty(n, dtype=np.float64)

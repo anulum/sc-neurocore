@@ -5,6 +5,10 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 ## [Unreleased]
 
 ### Fixed
+- Hardened Wilson-Cowan Julia, Go, and Mojo acceleration facades so
+  `ext_input` must be a one-dimensional time-series before backend dispatch,
+  and added module-specific dispatcher contracts for Go/Mojo unavailable
+  libraries, C return codes, and success paths.
 - Preserved local result dtype for non-root MPI gather outputs and expanded the
   MPI driver contract tests to cover no-MPI constructor fallback, root gather
   collection, non-root empty-gather dtype, missing communicator fallback, and

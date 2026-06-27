@@ -553,7 +553,9 @@ No parity defects were observed in the current automated parity suite.
 
 Wilson-Cowan is deterministic (no stochastic noise) so all five
 backends produce identical trajectories to machine epsilon given the
-same external-input array.
+same one-dimensional external-input array. The Python acceleration facades
+validate `ext_input` before crossing into Julia, Go, or Mojo so matrix-valued
+drives fail closed instead of being implicitly flattened by backend bridges.
 
 ### Multi-backend performance
 
@@ -586,6 +588,7 @@ bench_wilson_cowan.py`. Numbers trace back to
 | Julia   | `tests/test_wilson_cowan_julia_parity.py` | 4 | Python↔Julia bit-exact, Rust↔Julia cross |
 | Go      | `tests/test_wilson_cowan_go_parity.py`    | 4 | Python↔Go bit-exact, Rust↔Go cross |
 | Mojo    | `tests/test_wilson_cowan_mojo_parity.py`  | 3 | Python↔Mojo within libm ulp drift, Rust↔Mojo |
+| Dispatch contracts | `tests/test_wilson_cowan_accel_dispatch_contracts.py` | 11 | Julia/Go/Mojo reject non-1D external input; Go/Mojo cover missing library, C return-code, and successful ctypes dispatch contracts |
 
 ### Sophisticated dynamics (`tests/test_wilson_cowan_dynamics.py`, 23)
 

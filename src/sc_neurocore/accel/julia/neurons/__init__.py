@@ -65,6 +65,14 @@ def _ensure_wilson_cowan_loaded() -> Any:
     return _jl.WilsonCowanAccel
 
 
+def _as_wilson_cowan_ext_input(ext_input: npt.ArrayLike) -> npt.NDArray[np.float64]:
+    """Convert the Wilson-Cowan drive into a one-dimensional float64 vector."""
+    ext = np.asarray(ext_input, dtype=np.float64)
+    if ext.ndim != 1:
+        raise ValueError(f"ext_input must be one-dimensional: got shape {ext.shape}")
+    return ext
+
+
 def _ensure_rk4_neurons_loaded() -> Any:
     """Include `rk4_neurons.jl` into Julia Main on first use; return the module."""
     global _RK4_NEURONS_LOADED
@@ -97,9 +105,10 @@ def simulate_wong_wang(
     stim2: npt.ArrayLike,
     xi: npt.ArrayLike,
 ) -> dict[str, Any]:
-    """Julia-accelerated N-step Wong-Wang simulator; parity with
-    ``sc_neurocore_engine.py_wong_wang_simulate``. Returns a dict with
-    per-step ``s1``/``s2``/``r1``/``r2`` arrays + final scalars.
+    """Run the Julia-accelerated N-step Wong-Wang simulator.
+
+    The return shape matches ``sc_neurocore_engine.py_wong_wang_simulate``:
+    per-step ``s1``, ``s2``, ``r1``, and ``r2`` arrays plus final scalar states.
     """
     mod = _ensure_wong_wang_loaded()
     stim1_arr: npt.NDArray[np.float64] = np.asarray(stim1, dtype=np.float64)
@@ -155,13 +164,17 @@ def simulate_wilson_cowan(
     theta: float,
     dt: float,
     ext_input: npt.ArrayLike,
-) -> dict[str, Any]:
-    """Julia-accelerated N-step Wilson-Cowan simulator; parity with
-    ``sc_neurocore_engine.py_wilson_cowan_simulate``. Returns a dict
-    with per-step ``e``/``i`` arrays + final scalars.
+) -> dict[str, npt.NDArray[np.float64] | float]:
+    """Run the Julia-accelerated N-step Wilson-Cowan simulator.
+
+    The external drive must be a one-dimensional time-series. The wrapper
+    validates that shape before Julia dispatch so the kernel never receives an
+    implicitly flattened matrix. Returned values match
+    ``sc_neurocore_engine.py_wilson_cowan_simulate``: per-step ``e`` and ``i``
+    arrays plus final scalar rates.
     """
+    ext_input_arr = _as_wilson_cowan_ext_input(ext_input)
     mod = _ensure_wilson_cowan_loaded()
-    ext_input_arr: npt.NDArray[np.float64] = np.asarray(ext_input, dtype=np.float64)
     n = ext_input_arr.size
     e_out: npt.NDArray[np.float64] = np.empty(n, dtype=np.float64)
     i_out: npt.NDArray[np.float64] = np.empty(n, dtype=np.float64)
