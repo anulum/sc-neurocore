@@ -4,6 +4,11 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+### Fixed
+- Kept `sc_neurocore.accel.mojo.MojoKernelRunner` fail-closed when the optional
+  Mojo runner import fails, replacing stale reload bindings with a placeholder
+  that raises `RuntimeError` with the captured import reason.
+
 ### Physics and mathematics hardening
 - Promoted `DendriticNMDANeuron` (two-compartment Jahr-Stevens NMDA Mg2+ block
   neuron) from raw dendrite-first Euler to candidate-first RK4 over

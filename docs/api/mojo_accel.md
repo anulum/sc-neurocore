@@ -15,9 +15,13 @@ if _HAS_MOJO:
     pop = runner.popcount([0xFF00, 0x0FF0])      # FFI round-trip
 ```
 
-The ``sc_neurocore.accel.mojo`` import never raises — ``_HAS_MOJO``
-is ``False`` when the runner cannot be constructed (missing Mojo /
-pixi / kernel source). Downstream code gates on that flag.
+The ``sc_neurocore.accel.mojo`` import never raises. ``_HAS_MOJO`` is
+``False`` when the optional runner cannot be imported, and
+``_mojo_import_reason`` records the captured failure. The
+``MojoKernelRunner`` symbol remains importable in that state, but
+constructing it raises a ``RuntimeError`` with the same reason instead of
+silently reusing a stale runner binding. Downstream code gates on
+``_HAS_MOJO`` before constructing the runner.
 
 ---
 

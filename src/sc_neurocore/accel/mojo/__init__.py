@@ -17,6 +17,10 @@ Large parts of ``kernels/*.mojo`` are exploratory mirrors or transcripts and
 must not be treated as the source of truth for runtime behaviour.
 """
 
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
+
 AUTHORITATIVE_MOJO_ENTRYPOINTS: tuple[str, ...] = (
     "fault_injection/fault.mojo",
     "runner.py",
@@ -32,16 +36,32 @@ NON_AUTHORITATIVE_MOJO_MIRROR_GLOBS: tuple[str, ...] = (
 )
 
 _HAS_MOJO = False
-try:
-    from .runner import MojoKernelRunner
+_mojo_import_reason: str | None = None
 
-    _HAS_MOJO = True
-except Exception as _mojo_import_error:  # noqa: BLE001
-    # Mojo toolchain missing or runner refused to import — record why so
-    # downstream callers can log + surface the reason instead of silently
-    # falling back.
-    _HAS_MOJO = False
-    _mojo_import_reason = repr(_mojo_import_error)
+if TYPE_CHECKING:
+    from .runner import MojoKernelRunner
+else:
+
+    class _UnavailableMojoKernelRunner:
+        """Fail-closed placeholder for a missing optional Mojo runner."""
+
+        def __init__(self, *_args: object, **_kwargs: object) -> None:
+            """Raise with the captured import failure instead of constructing."""
+            reason = _mojo_import_reason or "unknown import failure"
+            raise RuntimeError(f"Mojo runner unavailable: {reason}")
+
+    try:
+        from .runner import MojoKernelRunner as _LoadedMojoKernelRunner
+
+        MojoKernelRunner = _LoadedMojoKernelRunner
+        _HAS_MOJO = True
+    except Exception as _mojo_import_error:  # noqa: BLE001
+        # Mojo toolchain missing or runner refused to import — record why so
+        # downstream callers can log + surface the reason instead of silently
+        # falling back.
+        _HAS_MOJO = False
+        _mojo_import_reason = repr(_mojo_import_error)
+        MojoKernelRunner = _UnavailableMojoKernelRunner
 
 __all__ = [
     "AUTHORITATIVE_MOJO_ENTRYPOINTS",
