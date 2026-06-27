@@ -44,10 +44,13 @@ query = rng.rand(128).astype(np.float32) * 3 / 5 + rng.randn(128).astype(np.floa
 predicted = learner.query(query)
 print(f"\nQuery predicted: class {predicted}")
 
-# Confidence scores
+# Bounded cosine scores, one per class
 scores = learner.query_scores(query)
 for c, s in enumerate(scores):
     print(f"  Class {c}: {s:.4f}")
+
+# Defensive copy for hardware export or audit logging
+weights = learner.export_weights()
 ```
 
 ### How HAAM Works
@@ -59,7 +62,7 @@ W += lr * (label_vector ⊗ input_pattern)
 
 Retrieval: Matrix-vector multiply + winner-take-all.
 ```
-scores = W @ query_pattern
+scores = cosine(W[class], query_pattern)
 predicted = argmax(scores)
 ```
 
@@ -97,7 +100,7 @@ predictions = proto_net.classify(support_x, support_y, query_x)
 print(f"Prototype predictions: {predictions}")
 
 # Prototype analysis
-prototypes = proto_net.prototypes
+prototypes = proto_net.export_prototypes()
 for c, p in prototypes.items():
     print(f"Class {c} prototype: mean={p.mean():.3f}, sparsity={np.mean(p < 0.1):.1%}")
 ```
@@ -111,7 +114,9 @@ for c, p in prototypes.items():
 | Hamming | Binary spike patterns | XOR + popcount |
 
 Hamming distance is ideal for neuromorphic hardware — XOR gates are
-the cheapest operation on FPGA.
+the cheapest operation on FPGA. In the Python API, hamming mode thresholds
+vectors at zero and scores by negative normalized bit disagreement, so higher
+scores still mean closer prototypes.
 
 ## Comparison
 
@@ -121,8 +126,10 @@ the cheapest operation on FPGA.
 | SpikePrototypeNet | Nearest prototype | O(K × D) | 1 forward | Hamming distance |
 | MAML (gradient) | Meta-gradient descent | O(N × K) | 5-10 inner steps | GPU only |
 
-Both SC-NeuroCore methods run on neuromorphic hardware. MAML requires
-GPU for inner-loop gradient computation.
+The HAAM and prototype paths have deterministic Python contracts plus Rust,
+Julia, and Mojo validation mirrors for their vector episode kernels. MAML-style
+gradient baselines are listed only as context; this tutorial does not implement
+or benchmark a MAML inner loop.
 
 ## On-Chip Deployment
 
@@ -136,6 +143,22 @@ weights = learner.export_weights()
 protos = proto_net.export_prototypes()
 # Hamming distance: XOR + popcount, ~2 LUTs per feature bit
 ```
+
+## Local Benchmark Evidence
+
+The benchmark record at `benchmarks/results/bench_few_shot_haam.json` is a
+local, non-isolated regression artifact. The current run recorded:
+
+| Surface | Result |
+|---------|--------|
+| Python `HebbianFewShot.few_shot_episode` | 1000 calls, 3581.011 calls/s |
+| Python `SpikePrototypeNet.classify` | 1000 calls, 4770.742 calls/s |
+| Rust safety mirror | Compile passed; 5 unit tests passed |
+| Julia mirror | `validate_haam()` and hamming prototype classification passed |
+| Mojo kernel | Vector, temporal, and metric validation passed |
+
+These numbers are suitable for local regression comparison only. They are not
+isolated-core production performance claims.
 
 ## References
 

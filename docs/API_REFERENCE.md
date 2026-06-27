@@ -14111,46 +14111,57 @@ tuple&#91;str, ...&#93;
 ## Module `few_shot.haam`
 
 ### Class `HebbianFewShot`
-Hebbian few-shot learner using associative memory.
-
-Support examples stored via one-shot Hebbian weight update.
-Query classified by comparing spike-rate representation to
-stored prototypes.
+Class-indexed Hebbian memory for few-shot spike episodes.
 
 Parameters
 ----------
 n_features : int
-    Input feature dimension.
+    Number of spike-rate features per pattern after temporal averaging.
 n_classes : int
-    Number of classes to support.
-lr_hebbian : float
-    Hebbian learning rate for support storage.
+    Number of class slots stored by the associative memory.
+lr_hebbian : float, default=0.1
+    Non-negative multiplier applied when support patterns are accumulated
+    into their class memory rows.
 
 - **__init__**(n_features, n_classes, lr_hebbian)
 - **store**(spike_pattern, label)
-  - Store one support example via Hebbian update.
+  - Store one support pattern in the class memory.
+- **query_scores**(spike_pattern)
+  - Return cosine scores for a query against every stored class.
 - **query**(spike_pattern)
-  - Classify a query pattern by cosine similarity to stored memories.
+  - Classify one query pattern by nearest stored memory.
 - **few_shot_episode**(support_x, support_y, query_x)
-  - Run a complete few-shot episode.
+  - Run one reset-store-query few-shot episode.
+- **export_weights**()
+  - Return a defensive copy of the class memory matrix.
 - **reset**()
-  - Clear the associative memory and per-slot usage counts.
+  - Clear the memory matrix and support counts.
 
 ### Class `SpikePrototypeNet`
-Prototypical network in spike domain.
-
-Compute class prototypes as mean spike-rate vectors from support set.
-Classify queries by nearest prototype (Euclidean or cosine).
+Nearest-prototype classifier for spike-rate few-shot episodes.
 
 Parameters
 ----------
 n_features : int
-metric : str
-    'cosine' or 'euclidean'
+    Number of features per vector after temporal averaging.
+metric : {"cosine", "euclidean", "hamming"}, default="cosine"
+    Distance or similarity metric used to score queries against support-set
+    prototypes. ``hamming`` thresholds vectors at zero and scores by negative
+    normalised bit disagreement.
 
+- **__post_init__**()
+  - Validate the prototype classifier configuration after dataclass init.
 - **classify**(support_x, support_y, query_x)
-  - Classify query set using support set prototypes.
+  - Classify query patterns from support-set prototypes.
+- **export_prototypes**()
+  - Return defensive copies of the most recently computed prototypes.
+- **_build_prototypes**(support_x, support_y)
 
+### Function `_validate_positive_int(value, name)`
+### Function `_as_feature_vector(pattern, n_features)`
+### Function `_validate_label(label, n_classes)`
+### Function `_cosine_score(lhs, rhs)`
+### Function `_metric_score(metric, query, prototype)`
 ---
 
 ## Module `formal.counterexample_replay`

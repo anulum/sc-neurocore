@@ -294,7 +294,7 @@ most-imported module (in-degree 10). **MAINTAINED.**
 `online_learning` · `continual` · `contrastive` · `few_shot` · `transfer` ·
 `distillation`
 → STDP family, e-prop, BCM, EWC/MAML, meta-plasticity. **MAINTAINED** (learning,
-meta_plasticity) / DRAFT (continual, contrastive, few_shot, transfer, distillation).
+meta_plasticity, few_shot) / DRAFT (continual, contrastive, transfer, distillation).
 
 ### E. Network & dynamics — *Core*
 `network` · `layers` · `reservoir` · `topology` · `graphs` · `ensembles` ·
