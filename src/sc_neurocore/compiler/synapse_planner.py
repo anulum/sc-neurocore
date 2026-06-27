@@ -6,7 +6,7 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore — Synapse precision planner
 
-"""Per-synapse bit width and bitstream length assignment."""
+"""Validated per-synapse bit width and bitstream length planning."""
 
 from __future__ import annotations
 
@@ -20,6 +20,7 @@ from .synapse_precision import SynapsePrecision
 
 
 def _select_bit_width(sensitivity: float, target: float, min_bits: int, max_bits: int) -> int:
+    """Return the smallest bit width whose quantization bound meets target."""
     for bits in range(min_bits, max_bits + 1):
         if _quantization_error_bound(sensitivity, bits) <= target:
             return bits
@@ -27,18 +28,23 @@ def _select_bit_width(sensitivity: float, target: float, min_bits: int, max_bits
 
 
 def _quantization_error_bound(sensitivity: float, bits: int) -> float:
+    """Return a conservative fixed-point quantization error bound."""
     levels: int = max(1, 2**bits - 1)
     return float(sensitivity) * 0.5 / levels
 
 
 def _hoeffding_radius(length: int, confidence: float) -> float:
+    """Return the Hoeffding radius for a stochastic bitstream length."""
+    if length < 1:
+        raise ValueError("length must be positive")
+    if confidence <= 0.0 or confidence >= 1.0:
+        raise ValueError("confidence must satisfy 0.0 < confidence < 1.0")
     delta = 1.0 - confidence
-    if delta <= 0:
-        raise ValueError("confidence must be < 1.0")
     return float(np.sqrt(-np.log(delta / 2.0) / (2.0 * length)))
 
 
 def _precision_cost_summary(assignments: list[SynapsePrecision]) -> dict[str, float]:
+    """Summarize relative LUT cost for a synapse precision assignment list."""
     if not assignments:
         return {
             "estimated_lut_cost": 0.0,
@@ -76,15 +82,54 @@ def assign_synapse_precisions(
     max_length: int = 4096,
     confidence: float = 0.95,
 ) -> list[SynapsePrecision]:
-    """Assign per-synapse bit widths and SC lengths with error bounds."""
-    if target_error <= 0:
-        raise ValueError("target_error must be positive")
+    """Assign per-synapse bit widths and SC lengths with error bounds.
+
+    Parameters
+    ----------
+    layer_weights:
+        One- or two-dimensional finite weight tensors, one tensor per layer.
+        One-dimensional tensors are treated as single-output layers.
+    layer_names:
+        Optional non-empty layer names. When provided, the list length must match
+        `layer_weights` exactly.
+    sensitivity_maps:
+        Optional finite non-negative sensitivity maps with shapes matching each
+        corresponding weight tensor.
+    target_error:
+        Positive aggregate target error fraction.
+    min_bits:
+        Minimum fixed-point bit width assigned to any synapse.
+    max_bits:
+        Maximum fixed-point bit width assigned to any synapse.
+    min_length:
+        Minimum stochastic bitstream length assigned to any synapse.
+    max_length:
+        Maximum stochastic bitstream length assigned to any synapse.
+    confidence:
+        Hoeffding confidence in the open interval `(0, 1)`.
+
+    Returns
+    -------
+    list[SynapsePrecision]
+        Validated per-synapse precision rows in layer/output/input order.
+
+    Raises
+    ------
+    ValueError
+        If planner bounds, names, sensitivity maps, or weight tensors are
+        invalid.
+    """
+    if not np.isfinite(target_error) or target_error <= 0.0:
+        raise ValueError("target_error must be finite and positive")
     if min_bits < 1 or max_bits < min_bits:
         raise ValueError("bit-width bounds must satisfy 1 <= min_bits <= max_bits")
     if min_length < 1 or max_length < min_length:
         raise ValueError("length bounds must satisfy 1 <= min_length <= max_length")
+    if confidence <= 0.0 or confidence >= 1.0:
+        raise ValueError("confidence must satisfy 0.0 < confidence < 1.0")
 
-    n_layers = len(layer_weights)
+    validated_weights = [_as_weight_array(weights) for weights in layer_weights]
+    n_layers = len(validated_weights)
     if layer_names is None:
         layer_names = [f"layer_{i}" for i in range(n_layers)]
     if len(layer_names) != n_layers:
@@ -92,14 +137,11 @@ def assign_synapse_precisions(
     if sensitivity_maps is not None and len(sensitivity_maps) != n_layers:
         raise ValueError("sensitivity_maps length must match layer_weights")
 
-    total_synapses = sum(int(np.asarray(w).size) for w in layer_weights)
+    total_synapses = sum(int(w.size) for w in validated_weights)
     local_target = target_error / max(1.0, float(np.sqrt(total_synapses)))
     assignments: list[SynapsePrecision] = []
 
-    for layer_index, (weights, name) in enumerate(zip(layer_weights, layer_names)):
-        w = np.asarray(weights, dtype=float)
-        if w.ndim not in {1, 2}:
-            raise ValueError("layer weights must be 1D or 2D arrays")
+    for layer_index, (w, name) in enumerate(zip(validated_weights, layer_names)):
         matrix: np.ndarray[Any, Any] = w.reshape(1, -1) if w.ndim == 1 else w
 
         if sensitivity_maps is None:
@@ -151,3 +193,15 @@ def assign_synapse_precisions(
                 )
 
     return assignments
+
+
+def _as_weight_array(weights: np.ndarray[Any, Any]) -> np.ndarray[Any, Any]:
+    """Return a finite 1D/2D synapse-weight array for planning."""
+    array = np.asarray(weights, dtype=float)
+    if array.ndim not in {1, 2}:
+        raise ValueError("layer weights must be 1D or 2D arrays")
+    if array.size == 0:
+        raise ValueError("layer weights must not be empty")
+    if not np.all(np.isfinite(array)):
+        raise ValueError("layer weights must contain finite values")
+    return array

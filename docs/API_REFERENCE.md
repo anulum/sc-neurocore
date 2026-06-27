@@ -8445,7 +8445,44 @@ Reject non-numeric, non-finite, or negative manifest scalar fields.
 ## Module `compiler.length_planner`
 
 ### Function `assign_lengths(layer_weights, layer_names, total_budget, min_length, max_length, target_error, method)`
-Assign per-layer bitstream lengths under a total budget.
+Assign per-layer bitstream lengths under a target error budget.
+
+Parameters
+----------
+layer_weights:
+    One- or two-dimensional finite weight tensors, one tensor per layer.
+    One-dimensional tensors are treated as single-output layers.
+layer_names:
+    Optional non-empty layer names. When provided, the list length must match
+    `layer_weights` exactly.
+total_budget:
+    Optional aggregate bitstream-length budget for sensitivity planning.
+    When omitted, sensitivity planning uses `max_length * n_layers`.
+min_length:
+    Minimum bitstream length assigned to any layer.
+max_length:
+    Maximum bitstream length assigned to any layer.
+target_error:
+    Positive per-layer target error used by the Hoeffding planner.
+method:
+    Planning method. `hoeffding` uses analytic Hoeffding lengths;
+    `sensitivity` and `proportional` allocate from sensitivity scores.
+
+Returns
+-------
+list&#91;LayerPrecision&#93;
+    Validated layer precision rows in input-layer order.
+
+Raises
+------
+ValueError
+    If planner bounds, method, names, or weight tensors are invalid.
+
+### Function `_validate_planner_bounds(min_length, max_length, target_error)`
+Validate scalar bounds shared by layer-length planners.
+
+### Function `_as_weight_array(weights)`
+Return a finite 1D/2D layer-weight array for planning.
 
 ---
 
@@ -9684,11 +9721,57 @@ str
 ## Module `compiler.synapse_planner`
 
 ### Function `_select_bit_width(sensitivity, target, min_bits, max_bits)`
+Return the smallest bit width whose quantization bound meets target.
+
 ### Function `_quantization_error_bound(sensitivity, bits)`
+Return a conservative fixed-point quantization error bound.
+
 ### Function `_hoeffding_radius(length, confidence)`
+Return the Hoeffding radius for a stochastic bitstream length.
+
 ### Function `_precision_cost_summary(assignments)`
+Summarize relative LUT cost for a synapse precision assignment list.
+
 ### Function `assign_synapse_precisions(layer_weights, layer_names, sensitivity_maps, target_error, min_bits, max_bits, min_length, max_length, confidence)`
 Assign per-synapse bit widths and SC lengths with error bounds.
+
+Parameters
+----------
+layer_weights:
+    One- or two-dimensional finite weight tensors, one tensor per layer.
+    One-dimensional tensors are treated as single-output layers.
+layer_names:
+    Optional non-empty layer names. When provided, the list length must match
+    `layer_weights` exactly.
+sensitivity_maps:
+    Optional finite non-negative sensitivity maps with shapes matching each
+    corresponding weight tensor.
+target_error:
+    Positive aggregate target error fraction.
+min_bits:
+    Minimum fixed-point bit width assigned to any synapse.
+max_bits:
+    Maximum fixed-point bit width assigned to any synapse.
+min_length:
+    Minimum stochastic bitstream length assigned to any synapse.
+max_length:
+    Maximum stochastic bitstream length assigned to any synapse.
+confidence:
+    Hoeffding confidence in the open interval `(0, 1)`.
+
+Returns
+-------
+list&#91;SynapsePrecision&#93;
+    Validated per-synapse precision rows in layer/output/input order.
+
+Raises
+------
+ValueError
+    If planner bounds, names, sensitivity maps, or weight tensors are
+    invalid.
+
+### Function `_as_weight_array(weights)`
+Return a finite 1D/2D synapse-weight array for planning.
 
 ---
 

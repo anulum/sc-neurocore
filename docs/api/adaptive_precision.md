@@ -30,6 +30,15 @@ non-positive bit widths or bitstream lengths, invalid component bounds, and
 total error bounds that do not cover the quantisation plus stochastic
 components.
 
+The layer and synapse planners now fail closed before row emission. `assign_lengths`
+rejects unsupported methods, mismatched `layer_names`, invalid target/length
+bounds, empty layers, non-finite weights, and tensors outside the documented
+1D/2D contract. `assign_synapse_precisions` rejects invalid target, bit-width,
+length, and confidence bounds, mismatched names or sensitivity maps, empty or
+non-finite weight layers, and non-finite or negative sensitivity maps. One
+dimensional layer and sensitivity vectors remain supported and are serialized as
+single-output rows.
+
 The polyglot adaptive-precision mirrors are validated with the Python row
 contract:
 
@@ -50,6 +59,13 @@ constructor/serialization calls in 0.031964 s (312849.473 calls/s), 10,000
 Julia validation status `pass`, and Mojo validation status `pass`. The artifact
 sets `production_benchmark_claim` to `false`; it is regression evidence, not a
 production performance claim.
+
+The 2026-06-27 planner validation slice did not change numeric planner
+objectives or add a new backend benchmark. It added fail-closed validation and a
+dedicated coverage gate:
+`tests/.coveragerc_adaptive_precision_planners`, covering
+`length_planner.py` and `synapse_planner.py` at 100% with the adaptive precision
+planner tests.
 
 ## 2026-04-30 per-synapse precision plan
 

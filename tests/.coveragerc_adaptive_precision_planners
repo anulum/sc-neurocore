@@ -1,0 +1,10 @@
+[run]
+branch = False
+source = src/sc_neurocore/compiler
+
+[report]
+include =
+    src/sc_neurocore/compiler/length_planner.py
+    src/sc_neurocore/compiler/synapse_planner.py
+show_missing = True
+fail_under = 100

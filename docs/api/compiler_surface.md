@@ -37,7 +37,7 @@ can change without a deprecation window.
 | `host_driver_gen` | internal build tool | Host driver generator reached through `deployment`. |
 | `ir_type_checker` | public facade | Package-level exports provide stochastic IR validation helpers. |
 | `layer_precision` | internal build tool | Validated row model behind adaptive precision layer manifests. |
-| `length_planner` | internal build tool | Implementation detail for stochastic bitstream-length planning. |
+| `length_planner` | internal build tool | Validated layer-length planner behind adaptive precision manifests. |
 | `live_control` | public facade | Package-level exports provide live MMIO control specs. |
 | `live_control_ops` | internal build tool | Implementation module for live-control operations. |
 | `live_control_specs` | internal build tool | Implementation module for live-control spec records. |
@@ -68,7 +68,7 @@ can change without a deprecation window.
 | `slr_placement` | internal build tool | Placement helper reached through `deployment`. |
 | `static_analysis` | direct public module | Static-analysis facade aggregates guard, proof, pipeline, power, and SVA helpers. |
 | `sva_gen` | direct public module | SVA generator has direct tests and documentation. |
-| `synapse_planner` | internal build tool | Implementation detail for synapse precision planning. |
+| `synapse_planner` | internal build tool | Validated synapse planner behind adaptive precision manifests and Studio auto-tuning. |
 | `synapse_precision` | internal build tool | Validated row model behind adaptive precision synapse manifests. |
 | `testbench_gen` | direct public module | Verilog testbench generator has direct tests and documentation. |
 | `validation` | direct public module | Adaptive-runtime validation is re-exported by a compatibility facade. |
