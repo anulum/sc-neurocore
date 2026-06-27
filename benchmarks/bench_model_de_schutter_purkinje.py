@@ -307,7 +307,9 @@ def _require_all_backends(payloads: list[dict[str, object]]) -> None:
         if payload.get("skipped", False)
     ]
     if skipped:
-        raise RuntimeError("De Schutter Purkinje benchmark requires every backend: " + "; ".join(skipped))
+        raise RuntimeError(
+            "De Schutter Purkinje benchmark requires every backend: " + "; ".join(skipped)
+        )
 
 
 def _require_spike_parity(summaries: dict[str, dict[str, object]]) -> None:

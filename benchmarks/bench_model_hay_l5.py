@@ -34,7 +34,8 @@ SOURCE_HASH_PATHS = {
     "benchmarks/bench_model_hay_l5.py": REPO_ROOT / "benchmarks/bench_model_hay_l5.py",
     "engine/Cargo.toml": REPO_ROOT / "engine/Cargo.toml",
     "engine/examples/bench_hay_l5_rk4.rs": REPO_ROOT / "engine/examples/bench_hay_l5_rk4.rs",
-    "engine/src/neurons/multi_compartment.rs": REPO_ROOT / "engine/src/neurons/multi_compartment.rs",
+    "engine/src/neurons/multi_compartment.rs": REPO_ROOT
+    / "engine/src/neurons/multi_compartment.rs",
     "src/sc_neurocore/neurons/models/hay_l5.py": REPO_ROOT
     / "src/sc_neurocore/neurons/models/hay_l5.py",
     "src/sc_neurocore/accel/go/services/hay_l5.go": REPO_ROOT

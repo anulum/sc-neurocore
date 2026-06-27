@@ -214,13 +214,24 @@ println("final_vds=", join([r[4] for r in results], ","))
 
 
 def _run_mojo_backend() -> dict[str, object]:
-    command = ["mojo", "run", "--disable-warnings", "src/sc_neurocore/accel/mojo/kernels/neurogrid.mojo"]
+    command = [
+        "mojo",
+        "run",
+        "--disable-warnings",
+        "src/sc_neurocore/accel/mojo/kernels/neurogrid.mojo",
+    ]
     try:
         completed = _run_command(command)
     except (FileNotFoundError, subprocess.CalledProcessError) as exc:
         return {"backend": "mojo", "skipped": True, "reason": f"Mojo benchmark failed: {exc}"}
     spikes = int(completed.stdout.rsplit(":", 1)[1].strip())
-    return {"backend": "mojo", "command": " ".join(command), "steps": STEPS, "current": CURRENT, "spikes": spikes}
+    return {
+        "backend": "mojo",
+        "command": " ".join(command),
+        "steps": STEPS,
+        "current": CURRENT,
+        "spikes": spikes,
+    }
 
 
 def main() -> None:

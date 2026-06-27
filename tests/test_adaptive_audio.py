@@ -301,7 +301,9 @@ class TestAdaptiveAudioEngine(unittest.TestCase):
 
         eng._phase = SessionPhase.LOCK_ON
         before_sigma = eng.ssgf.cfg.sigma_g
-        eng.on_evs_update(_snapshot(evs_score=30.0, peak_alignment=0.4, target_hz=10.0, peak_hz=20.0))
+        eng.on_evs_update(
+            _snapshot(evs_score=30.0, peak_alignment=0.4, target_hz=10.0, peak_hz=20.0)
+        )
 
         self.assertGreater(eng.ssgf.cfg.sigma_g, before_sigma)
         self.assertAlmostEqual(eng.evs._target_hz, 11.0)

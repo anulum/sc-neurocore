@@ -65,9 +65,7 @@ def _named_configs() -> dict[str, ADCSpikeWindowConfig]:
     }
 
 
-def _samples(
-    config: ADCSpikeWindowConfig, n_windows: int, seed: int
-) -> nptyping.NDArray[np.int64]:
+def _samples(config: ADCSpikeWindowConfig, n_windows: int, seed: int) -> nptyping.NDArray[np.int64]:
     rng = np.random.default_rng(seed)
     return rng.integers(
         0, 1 << config.adc_width, size=config.decimation * n_windows, dtype=np.int64

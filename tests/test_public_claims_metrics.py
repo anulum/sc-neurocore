@@ -58,9 +58,7 @@ def _formal_inventory() -> tuple[int, dict[str, int]]:
     formal_root = _repo_root() / "hdl/formal"
     statements = {"assert": 0, "assume": 0, "cover": 0}
     formal_sources = [
-        path
-        for extension in ("*.v", "*.sv", "*.svh")
-        for path in formal_root.rglob(extension)
+        path for extension in ("*.v", "*.sv", "*.svh") for path in formal_root.rglob(extension)
     ]
     for path in sorted(
         formal_sources,
@@ -68,9 +66,7 @@ def _formal_inventory() -> tuple[int, dict[str, int]]:
     ):
         text = path.read_text(encoding="utf-8")
         for keyword in statements:
-            statements[keyword] += len(
-                re.findall(rf"\b{keyword}\s*(?:property)?\s*\(", text)
-            )
+            statements[keyword] += len(re.findall(rf"\b{keyword}\s*(?:property)?\s*\(", text))
     return len(list(formal_root.rglob("*.sby"))), statements
 
 
@@ -92,10 +88,7 @@ def test_current_public_entrypoints_use_generated_inventory_terms() -> None:
     neuron_reference = (_repo_root() / "docs/api/neuron_models.md").read_text(encoding="utf-8")
     all_entrypoints = "\n".join((readme, docs_index, neuron_reference))
 
-    assert (
-        f"{counts['python_model_source_modules']} Python model source modules"
-        in all_entrypoints
-    )
+    assert f"{counts['python_model_source_modules']} Python model source modules" in all_entrypoints
     assert f"{counts['python_model_classes']} lazy-loaded Python model classes" in all_entrypoints
     assert f"{counts['rust_pyo3_model_wrappers']} Rust PyO3 model wrappers" in all_entrypoints
     assert f"{rust_models}-model NetworkRunner" in all_entrypoints

@@ -37,7 +37,8 @@ SOURCE_HASH_PATHS = {
     "engine/Cargo.toml": REPO_ROOT / "engine/Cargo.toml",
     "engine/examples/bench_multicompartment_mcn_rk4.rs": REPO_ROOT
     / "engine/examples/bench_multicompartment_mcn_rk4.rs",
-    "engine/src/neurons/multi_compartment.rs": REPO_ROOT / "engine/src/neurons/multi_compartment.rs",
+    "engine/src/neurons/multi_compartment.rs": REPO_ROOT
+    / "engine/src/neurons/multi_compartment.rs",
     "src/sc_neurocore/neurons/models/multicompartment_mcn.py": REPO_ROOT
     / "src/sc_neurocore/neurons/models/multicompartment_mcn.py",
     "src/sc_neurocore/accel/go/services/multicompartment_mcn.go": REPO_ROOT
@@ -315,7 +316,9 @@ def _require_all_backends(payloads: list[dict[str, object]]) -> None:
         if payload.get("skipped", False)
     ]
     if skipped:
-        raise RuntimeError("Multicompartment MCN benchmark requires every backend: " + "; ".join(skipped))
+        raise RuntimeError(
+            "Multicompartment MCN benchmark requires every backend: " + "; ".join(skipped)
+        )
 
 
 def _require_spike_parity(summaries: dict[str, dict[str, object]]) -> None:

@@ -32,9 +32,7 @@ class TestConversionPackageFacade:
         with pytest.raises(AttributeError, match="not_exported"):
             conversion.__getattr__("not_exported")
 
-    def test_lazy_facade_reports_qcfs_import_failure(
-        self, monkeypatch: pytest.MonkeyPatch
-    ) -> None:
+    def test_lazy_facade_reports_qcfs_import_failure(self, monkeypatch: pytest.MonkeyPatch) -> None:
         import sc_neurocore.conversion as conversion
 
         original_import: Callable[..., object] = builtins.__import__

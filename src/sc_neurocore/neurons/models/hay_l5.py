@@ -396,7 +396,17 @@ class HayL5PyramidalNeuron:
         current_tuft = self._finite_float("current_tuft", current_tuft)
         self._validate_runtime_configuration()
         v_s_prev = self.v_s
-        state = (self.v_s, self.h_na, self.n_k, self.v_t, self.m_ca, self.h_ca, self.m_ih, self.v_a, self.ca_a)
+        state = (
+            self.v_s,
+            self.h_na,
+            self.n_k,
+            self.v_t,
+            self.m_ca,
+            self.h_ca,
+            self.m_ih,
+            self.v_a,
+            self.ca_a,
+        )
         advance = self._euler_substep if self.integrator == "baseline_euler" else self._rk4_substep
         for _ in range(_N_SUBSTEPS):
             state = self._validate_candidate(advance(state, current_soma, current_tuft))

@@ -68,9 +68,7 @@ def test_compiler_root_modules_are_classified_in_public_docs() -> None:
 def test_compiler_facade_module_decisions_match_package_exports() -> None:
     """The documented facade modules must match the package-level import contract."""
     documented = _documented_surface_rows()
-    facade_modules = {
-        module for module, status in documented.items() if status == "public facade"
-    }
+    facade_modules = {module for module, status in documented.items() if status == "public facade"}
 
     assert facade_modules == PUBLIC_FACADE_MODULES
     assert compiler.__all__

@@ -174,6 +174,7 @@ class TestDispatch:
 
     def test_auto_falls_back_to_python(self, monkeypatch: pytest.MonkeyPatch) -> None:
         """Automatic dispatch falls back to Python when accelerators are unavailable."""
+
         def _boom(*_args: object, **_kwargs: object) -> ADCSpikeWindowResult:
             raise ImportError("forced unavailable")
 
@@ -188,6 +189,7 @@ class TestDispatch:
 
     def test_available_backends_marks_failure(self, monkeypatch: pytest.MonkeyPatch) -> None:
         """Backend probing reports unavailable accelerators without failing the probe."""
+
         def _boom(*_args: object, **_kwargs: object) -> ADCSpikeWindowResult:
             raise OSError("library missing")
 

@@ -131,12 +131,8 @@ class DendriticNMDANeuron:
         v_soma, v_dend = state
         b = self._mg_block_value(v_dend)
         i_nmda = self.g_nmda * glutamate * b * (v_dend - self.e_nmda)
-        dv_soma = (
-            -v_soma - 65.0 + i_soma + self.g_coupling * (v_dend - v_soma)
-        ) / self.tau_soma
-        dv_dend = (
-            -v_dend - 65.0 + i_nmda + self.g_coupling * (v_soma - v_dend)
-        ) / self.tau_dend
+        dv_soma = (-v_soma - 65.0 + i_soma + self.g_coupling * (v_dend - v_soma)) / self.tau_soma
+        dv_dend = (-v_dend - 65.0 + i_nmda + self.g_coupling * (v_soma - v_dend)) / self.tau_dend
         return dv_soma, dv_dend
 
     def _rk4_substep(self, state: _State, i_soma: float, glutamate: float) -> _State:
@@ -166,10 +162,7 @@ class DendriticNMDANeuron:
         b = self._mg_block_value(self.v_dend)
         i_nmda = self.g_nmda * glutamate * b * (self.v_dend - self.e_nmda)
         dv_dend = (
-            -self.v_dend
-            - 65.0
-            + i_nmda
-            + self.g_coupling * (self.v_soma - self.v_dend)
+            -self.v_dend - 65.0 + i_nmda + self.g_coupling * (self.v_soma - self.v_dend)
         ) / self.tau_dend
         next_v_dend = self.v_dend + dv_dend * self.dt
         i_dend_to_soma = self.g_coupling * (next_v_dend - self.v_soma)
@@ -191,7 +184,9 @@ class DendriticNMDANeuron:
         if self.integrator == "baseline_euler":
             next_v_soma, next_v_dend = self._baseline_euler_substep(i_soma, glutamate)
         else:
-            next_v_soma, next_v_dend = self._rk4_substep((self.v_soma, self.v_dend), i_soma, glutamate)
+            next_v_soma, next_v_dend = self._rk4_substep(
+                (self.v_soma, self.v_dend), i_soma, glutamate
+            )
         if not math.isfinite(next_v_soma) or not math.isfinite(next_v_dend):
             raise ValueError("candidate state must be finite")
 

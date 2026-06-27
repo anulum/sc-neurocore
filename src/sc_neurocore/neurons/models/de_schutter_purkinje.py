@@ -97,7 +97,9 @@ class DeSchutterPurkinjeNeuron:
     def __post_init__(self) -> None:
         """Validate the selected integration method before simulation."""
         if self.integrator not in {"rk4", "baseline_euler"}:
-            raise ValueError(f"Unsupported integrator for DeSchutterPurkinjeNeuron: {self.integrator}")
+            raise ValueError(
+                f"Unsupported integrator for DeSchutterPurkinjeNeuron: {self.integrator}"
+            )
         self._validate_configuration()
 
     @staticmethod

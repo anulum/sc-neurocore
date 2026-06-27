@@ -103,7 +103,9 @@ class MulticompartmentMCNNeuron:
 
     def __post_init__(self) -> None:
         if self.integrator not in {"rk4", "baseline_euler"}:
-            raise ValueError(f"Unsupported integrator for MulticompartmentMCNNeuron: {self.integrator}")
+            raise ValueError(
+                f"Unsupported integrator for MulticompartmentMCNNeuron: {self.integrator}"
+            )
         self._validate_configuration()
 
     @staticmethod
@@ -281,7 +283,9 @@ class MulticompartmentMCNNeuron:
             state[2] + self.dt * derivatives[2],
         )
 
-    def _validate_candidate(self, candidate: tuple[float, float, float]) -> tuple[float, float, float]:
+    def _validate_candidate(
+        self, candidate: tuple[float, float, float]
+    ) -> tuple[float, float, float]:
         """Return a finite candidate state or raise before commit.
 
         Parameters

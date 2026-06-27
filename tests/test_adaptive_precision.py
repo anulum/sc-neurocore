@@ -262,9 +262,7 @@ class TestAdaptivePrecisionAPISurface:
         with np.testing.assert_raises_regex(ValueError, "target_error_percent"):
             auto_tune_synapse_precisions([np.array([[0.2]])], target_error_percent=0.0)
 
-    def test_write_formal_bundle_materialises_sva_sby_and_manifest(
-        self, tmp_path: Path
-    ) -> None:
+    def test_write_formal_bundle_materialises_sva_sby_and_manifest(self, tmp_path: Path) -> None:
         """Formal evidence bundle writing materializes SVA, SBY, and JSON."""
         assignments = assign_synapse_precisions(
             [np.array([[0.25, 0.75]])],

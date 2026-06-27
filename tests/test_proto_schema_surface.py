@@ -34,13 +34,13 @@ def test_proto_schemas_keep_canonical_generation_metadata() -> None:
     telemetry = (PROTO_DIR / "telemetry.proto").read_text(encoding="utf-8")
 
     assert core.startswith('syntax = "proto3";')
-    assert 'package vision2030.core;' in core
+    assert "package vision2030.core;" in core
     assert 'option go_package = "github.com/anulum/sc-neurocore/vision2030/proto/core";' in core
     assert "message Tensor" in core
     assert "message BitstreamMetadata" in core
 
     assert telemetry.startswith('syntax = "proto3";')
-    assert 'package vision2030.telemetry;' in telemetry
+    assert "package vision2030.telemetry;" in telemetry
     assert 'import "core.proto";' in telemetry
     assert (
         'option go_package = "github.com/anulum/sc-neurocore/vision2030/proto/telemetry";'
