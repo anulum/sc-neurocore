@@ -1357,6 +1357,11 @@ impl MulticompartmentMCNNeuron {
         ]
     }
 
+    fn threshold_reached(&self, candidate_u: f64) -> bool {
+        let margin = 16.0 * f64::EPSILON * self.v_th.abs().max(1.0);
+        candidate_u >= self.v_th || (candidate_u - self.v_th).abs() <= margin
+    }
+
     /// Step with basal input (x_b), apical input (x_a), and direct somatic input.
     pub fn step_compartments(&mut self, x_basal: f64, x_apical: f64, i_soma: f64) -> i32 {
         if !x_basal.is_finite() || !x_apical.is_finite() || !i_soma.is_finite() || !self.valid() {
@@ -1371,7 +1376,7 @@ impl MulticompartmentMCNNeuron {
         if !next.iter().all(|value| value.is_finite()) {
             return 0;
         }
-        let spike = next[0] >= self.v_th;
+        let spike = self.threshold_reached(next[0]);
         self.u = if spike { 0.0 } else { next[0] };
         self.v_basal = next[1];
         self.v_apical = next[2];
@@ -1594,6 +1599,14 @@ mod gap_mc_tests {
             spikes += n.step(3.2);
         }
         assert_eq!(spikes, 49_999);
+    }
+
+    #[test]
+    fn mcn_threshold_boundary_accepts_one_ulp_roundoff() {
+        let n = MulticompartmentMCNNeuron::new();
+        let one_ulp_below = f64::from_bits(n.v_th.to_bits() - 1);
+        assert!(n.threshold_reached(one_ulp_below));
+        assert!(!n.threshold_reached(n.v_th - 1.0e-9));
     }
 
     #[test]

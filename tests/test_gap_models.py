@@ -549,6 +549,11 @@ class TestMulticompartmentMCNNeuron:
         spikes = sum(neuron.step(3.0) for _ in range(100))
         assert spikes > 0
 
+    def test_threshold_boundary_accepts_one_ulp_roundoff(self, neuron):
+        """The Heaviside equality boundary must survive binary64 RK4 roundoff."""
+        assert neuron._threshold_reached(math.nextafter(neuron.v_th, 0.0))
+        assert not neuron._threshold_reached(neuron.v_th - 1e-9)
+
     def test_apical_gating_modulates_firing(self):
         """High apical input (gate open) should increase firing vs no apical."""
         from sc_neurocore.neurons.models import MulticompartmentMCNNeuron

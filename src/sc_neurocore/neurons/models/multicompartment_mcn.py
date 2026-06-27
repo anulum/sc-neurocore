@@ -36,6 +36,7 @@ _STATE_NAMES = ("u", "v_basal", "v_apical")
 _PARAM_NAMES = ("tau", "tau_b", "tau_a", "g_ratio", "beta", "v_th", "dt")
 _STRICTLY_POSITIVE_PARAMS = ("tau", "tau_b", "tau_a", "beta", "v_th", "dt")
 _NON_NEGATIVE_PARAMS = ("g_ratio",)
+_THRESHOLD_ULP_MARGIN = 16.0
 
 
 def _safe_exp(value: float) -> float:
@@ -302,6 +303,30 @@ class MulticompartmentMCNNeuron:
             raise FloatingPointError("Multicompartment MCN candidate became non-finite")
         return candidate
 
+    def _threshold_reached(self, candidate_u: float) -> bool:
+        """Return whether ``candidate_u`` reaches the Heaviside spike boundary.
+
+        Classical RK4 can land one or two binary64 ulps below an exact threshold
+        equilibrium. The model equation uses ``Theta(U - V_th)``, so the
+        equality boundary should not depend on the host Python minor version's
+        floating-point rounding path.
+
+        Parameters
+        ----------
+        candidate_u:
+            Candidate soma voltage after integration.
+
+        Returns
+        -------
+        bool
+            ``True`` when the candidate is at or just within the binary64
+            threshold boundary, otherwise ``False``.
+        """
+        margin = _THRESHOLD_ULP_MARGIN * math.ulp(max(abs(self.v_th), 1.0))
+        return candidate_u >= self.v_th or math.isclose(
+            candidate_u, self.v_th, rel_tol=0.0, abs_tol=margin
+        )
+
     def step_compartments(
         self,
         x_basal: float,
@@ -334,7 +359,7 @@ class MulticompartmentMCNNeuron:
             advance(state, x_basal, x_apical, i_soma)
         )
 
-        spike = int(next_u >= self.v_th)
+        spike = int(self._threshold_reached(next_u))
         self.u = 0.0 if spike else next_u
         self.v_basal = next_v_basal
         self.v_apical = next_v_apical
