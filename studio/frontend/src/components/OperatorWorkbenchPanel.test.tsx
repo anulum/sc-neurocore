@@ -48,6 +48,7 @@ function workbenchState(overrides: Partial<OperatorWorkbenchState> = {}): Operat
       },
     ],
     evidenceActionEnabled: overrides.evidenceActionEnabled ?? false,
+    evidenceExportTarget: overrides.evidenceExportTarget ?? null,
     headline: overrides.headline ?? "Next: Design",
     subhead: overrides.subhead ?? "0/7 lifecycle steps complete",
   };
@@ -83,7 +84,7 @@ describe("OperatorWorkbenchPanel", () => {
         onOpenCompiler={() => undefined}
         onOpenProjects={() => undefined}
         onRunSimulation={() => undefined}
-        state={workbenchState({ evidenceActionEnabled: true })}
+        state={workbenchState({ evidenceActionEnabled: true, evidenceExportTarget: "project" })}
       />,
     );
 

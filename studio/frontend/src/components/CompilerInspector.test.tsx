@@ -76,6 +76,8 @@ describe("CompilerInspector", () => {
     expect(html).toContain("rtl 222222222222");
     expect(html).toContain("trace 333333333333");
     expect(html).toContain("Export compile evidence bundle");
-    expect(html).not.toContain("evidence/replay.json");
+    expect(html).toContain("bundle seb_compile");
+    expect(html).toContain("evidence/replay.json");
+    expect(html).toContain("Download compile evidence artifact evidence/replay.json");
   });
 });

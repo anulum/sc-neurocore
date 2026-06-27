@@ -17,6 +17,7 @@ export type OperatorWorkbenchCardKey =
   | "export";
 
 export type OperatorWorkbenchCardStatus = "ready" | "active" | "warning" | "blocked";
+export type OperatorWorkbenchEvidenceTarget = "project" | "compile" | "synthesis";
 
 export interface OperatorWorkbenchInputs {
   sourceMode: "model" | "ode";
@@ -31,8 +32,10 @@ export interface OperatorWorkbenchInputs {
   operatorStatus: StudioOperatorStatus | null;
   guidedFlow: GuidedFlowState;
   compileComplete: boolean;
+  compileBundleExported: boolean;
   synthesisComplete: boolean;
-  evidenceBundleExported: boolean;
+  synthesisBundleExported: boolean;
+  projectBundleExported: boolean;
 }
 
 export interface OperatorWorkbenchCard {
@@ -47,6 +50,7 @@ export interface OperatorWorkbenchCard {
 export interface OperatorWorkbenchState {
   cards: OperatorWorkbenchCard[];
   evidenceActionEnabled: boolean;
+  evidenceExportTarget: OperatorWorkbenchEvidenceTarget | null;
   headline: string;
   subhead: string;
 }
@@ -69,6 +73,7 @@ export function buildOperatorWorkbenchState(
   inputs: OperatorWorkbenchInputs,
 ): OperatorWorkbenchState {
   const currentStep = currentGuidedStep(inputs.guidedFlow);
+  const exportTarget = selectedEvidenceTarget(inputs);
   return {
     cards: [
       workspaceCard(inputs),
@@ -78,7 +83,8 @@ export function buildOperatorWorkbenchState(
       compileCard(inputs),
       exportCard(inputs),
     ],
-    evidenceActionEnabled: inputs.projectName !== null && !inputs.evidenceBundleExported,
+    evidenceActionEnabled: exportTarget !== null,
+    evidenceExportTarget: exportTarget,
     headline: currentStep === null ? "Workflow complete" : `Next: ${currentStep.title}`,
     subhead: `${inputs.guidedFlow.completedCount}/${inputs.guidedFlow.totalCount} lifecycle steps complete`,
   };
@@ -214,25 +220,91 @@ function compileCard(inputs: OperatorWorkbenchInputs): OperatorWorkbenchCard {
 }
 
 function exportCard(inputs: OperatorWorkbenchInputs): OperatorWorkbenchCard {
-  if (inputs.evidenceBundleExported) {
+  const exportTarget = selectedEvidenceTarget(inputs);
+  if (exportTarget === null) {
     return {
-      action: "Download bundle",
-      detail: "An evidence bundle is ready for artifact download",
+      action: "Save project first",
+      detail: "Save a project before exporting project evidence",
+      key: "export",
+      status: "blocked",
+      title: "Export",
+      value: "Not available",
+    };
+  }
+  const exported = bundleExported(inputs, exportTarget);
+  const label = evidenceTargetLabel(exportTarget);
+  if (exported) {
+    return {
+      action: `Open ${label} bundle`,
+      detail: `${label} evidence bundle is ready for artifact download`,
       key: "export",
       status: "ready",
       title: "Export",
       value: "Bundle ready",
     };
   }
-  const exportStep = guidedStep(inputs.guidedFlow, "export");
   return {
-    action: inputs.projectName === null ? "Save project first" : "Export bundle",
-    detail: stepDetail(exportStep),
+    action: `Export ${label} bundle`,
+    detail: evidenceTargetDetail(exportTarget, guidedStep(inputs.guidedFlow, "export")),
     key: "export",
-    status: inputs.projectName === null ? "blocked" : statusFromStep(exportStep),
+    status: "ready",
     title: "Export",
-    value: STEP_STATUS_LABELS[exportStep?.status ?? "blocked"],
+    value: `${label} scope`,
   };
+}
+
+function selectedEvidenceTarget(
+  inputs: OperatorWorkbenchInputs,
+): OperatorWorkbenchEvidenceTarget | null {
+  if (inputs.synthesisComplete) {
+    return "synthesis";
+  }
+  if (inputs.compileComplete) {
+    return "compile";
+  }
+  if (inputs.projectName !== null) {
+    return "project";
+  }
+  return null;
+}
+
+function bundleExported(
+  inputs: OperatorWorkbenchInputs,
+  target: OperatorWorkbenchEvidenceTarget,
+): boolean {
+  switch (target) {
+    case "compile":
+      return inputs.compileBundleExported;
+    case "project":
+      return inputs.projectBundleExported;
+    case "synthesis":
+      return inputs.synthesisBundleExported;
+  }
+}
+
+function evidenceTargetLabel(target: OperatorWorkbenchEvidenceTarget): string {
+  switch (target) {
+    case "compile":
+      return "compile";
+    case "project":
+      return "project";
+    case "synthesis":
+      return "synthesis";
+  }
+}
+
+function evidenceTargetDetail(
+  target: OperatorWorkbenchEvidenceTarget,
+  exportStep: GuidedFlowState["steps"][number] | null,
+): string {
+  switch (target) {
+    case "compile":
+      return "Bundle compile traceability, audit excerpt, and RTL provenance";
+    case "project":
+      return stepDetail(exportStep);
+    case "synthesis":
+      return "Bundle the latest synthesis job, audit excerpt, and hardware artifacts";
+  }
 }
 
 function currentGuidedStep(state: GuidedFlowState): { key: GuidedFlowStepKey; title: string } | null {

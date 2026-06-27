@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { useStudioStore } from "../stores/studio";
 import type {
   SynthesisTargetProvenance,
@@ -156,7 +156,6 @@ export default function SynthesisDashboard() {
     setSynthTarget, runSynthesis, runMultiTargetSynthesis, runSynthEstimate,
     checkSynthTools, isSimulating,
   } = useStudioStore();
-  const [synthesisBundleRequested, setSynthesisBundleRequested] = useState(false);
 
   useEffect(() => { checkSynthTools(); }, [checkSynthTools]);
 
@@ -171,7 +170,6 @@ export default function SynthesisDashboard() {
     if (activeSynthesisJobId === null) {
       return;
     }
-    setSynthesisBundleRequested(true);
     void createEvidenceBundleForSurface("synthesis", {
       audit_limit: 100,
       analysis_results: [],
@@ -323,8 +321,8 @@ export default function SynthesisDashboard() {
             </table>
             <ProvenanceMatrixSummary matrix={multiTargetResult.target_provenance_matrix} />
             <SynthesisEvidenceControls
-              bundle={synthesisBundleRequested ? synthesisEvidenceBundle : null}
-              error={synthesisBundleRequested ? synthesisEvidenceBundleError : null}
+              bundle={synthesisEvidenceBundle}
+              error={synthesisEvidenceBundleError}
               jobId={latestMultiTargetSynthesisJobId}
               loading={synthesisEvidenceBundleLoading}
               onDownloadArtifact={(relativePath) => {
@@ -385,8 +383,8 @@ export default function SynthesisDashboard() {
               </>
             )}
             <SynthesisEvidenceControls
-              bundle={synthesisBundleRequested ? synthesisEvidenceBundle : null}
-              error={synthesisBundleRequested ? synthesisEvidenceBundleError : null}
+              bundle={synthesisEvidenceBundle}
+              error={synthesisEvidenceBundleError}
               jobId={latestSynthesisJobId}
               loading={synthesisEvidenceBundleLoading}
               onDownloadArtifact={(relativePath) => {

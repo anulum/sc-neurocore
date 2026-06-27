@@ -8,11 +8,12 @@
 import type {
   OperatorWorkbenchCardKey,
   OperatorWorkbenchCardStatus,
+  OperatorWorkbenchEvidenceTarget,
   OperatorWorkbenchState,
 } from "../operatorWorkbenchState";
 
 export interface OperatorWorkbenchPanelProps {
-  onExportEvidence: () => void;
+  onExportEvidence: (target: OperatorWorkbenchEvidenceTarget) => void;
   onOpenAdmin: () => void;
   onOpenCompiler: () => void;
   onOpenProjects: () => void;
@@ -68,6 +69,7 @@ export default function OperatorWorkbenchPanel({
                 openCompiler: onOpenCompiler,
                 openProjects: onOpenProjects,
                 runSimulation: onRunSimulation,
+                state,
               })}
               type="button"
             >
@@ -81,11 +83,12 @@ export default function OperatorWorkbenchPanel({
 }
 
 interface OperatorWorkbenchActions {
-  exportEvidence: () => void;
+  exportEvidence: (target: OperatorWorkbenchEvidenceTarget) => void;
   openAdmin: () => void;
   openCompiler: () => void;
   openProjects: () => void;
   runSimulation: () => void;
+  state: OperatorWorkbenchState;
 }
 
 function actionDisabled(key: OperatorWorkbenchCardKey, state: OperatorWorkbenchState): boolean {
@@ -101,7 +104,9 @@ function runAction(key: OperatorWorkbenchCardKey, actions: OperatorWorkbenchActi
       actions.openAdmin();
       return;
     case "export":
-      actions.exportEvidence();
+      if (actions.state.evidenceExportTarget !== null) {
+        actions.exportEvidence(actions.state.evidenceExportTarget);
+      }
       return;
     case "model":
     case "workspace":

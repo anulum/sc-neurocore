@@ -123,19 +123,21 @@ function simulationResult(): SimulateResponse {
 
 function inputs(overrides: Partial<OperatorWorkbenchInputs> = {}): OperatorWorkbenchInputs {
   return {
+    compileBundleExported: false,
     compileComplete: false,
-    evidenceBundleExported: false,
     guidedFlow: computeGuidedFlowState(guidedInputs()),
     isSimulating: false,
     modelCount: 118,
     operatorStatus: operatorStatus(),
     progressMessage: "",
+    projectBundleExported: false,
     projectName: null,
     savedSessionCount: 0,
     selectedModelName: "",
     serverProjectCount: 0,
     simulationResult: null,
     sourceMode: "model",
+    synthesisBundleExported: false,
     synthesisComplete: false,
     ...overrides,
   };
@@ -148,6 +150,7 @@ describe("buildOperatorWorkbenchState", () => {
     expect(state.headline).toBe("Next: Design");
     expect(state.subhead).toBe("0/7 lifecycle steps complete");
     expect(state.evidenceActionEnabled).toBe(false);
+    expect(state.evidenceExportTarget).toBeNull();
     expect(state.cards.map((card) => card.key)).toEqual([
       "workspace",
       "model",
@@ -184,6 +187,7 @@ describe("buildOperatorWorkbenchState", () => {
 
     expect(state.headline).toBe("Next: Synthesise");
     expect(state.evidenceActionEnabled).toBe(true);
+    expect(state.evidenceExportTarget).toBe("project");
     expect(state.cards.find((card) => card.key === "simulation")).toMatchObject({
       detail: "3 spikes, 30 Hz",
       status: "ready",
@@ -194,8 +198,45 @@ describe("buildOperatorWorkbenchState", () => {
       status: "ready",
     });
     expect(state.cards.find((card) => card.key === "export")).toMatchObject({
-      action: "Export bundle",
-      status: "blocked",
+      action: "Export project bundle",
+      status: "ready",
+      value: "project scope",
+    });
+  });
+
+  it("prefers compile evidence once compile traceability exists", () => {
+    const state = buildOperatorWorkbenchState(inputs({
+      compileComplete: true,
+      projectBundleExported: true,
+      projectName: "bench-project",
+    }));
+
+    expect(state.evidenceActionEnabled).toBe(true);
+    expect(state.evidenceExportTarget).toBe("compile");
+    expect(state.cards.find((card) => card.key === "export")).toMatchObject({
+      action: "Export compile bundle",
+      detail: "Bundle compile traceability, audit excerpt, and RTL provenance",
+      status: "ready",
+      value: "compile scope",
+    });
+  });
+
+  it("prefers synthesis evidence and opens it when the bundle already exists", () => {
+    const state = buildOperatorWorkbenchState(inputs({
+      compileBundleExported: true,
+      compileComplete: true,
+      projectName: "bench-project",
+      synthesisBundleExported: true,
+      synthesisComplete: true,
+    }));
+
+    expect(state.evidenceActionEnabled).toBe(true);
+    expect(state.evidenceExportTarget).toBe("synthesis");
+    expect(state.cards.find((card) => card.key === "export")).toMatchObject({
+      action: "Open synthesis bundle",
+      detail: "synthesis evidence bundle is ready for artifact download",
+      status: "ready",
+      value: "Bundle ready",
     });
   });
 

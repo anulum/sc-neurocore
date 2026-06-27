@@ -35,6 +35,7 @@ import { buildProjectEvidenceModel } from "./projectEvidence";
 import { computeGuidedFlowState } from "./guidedFlowState";
 import type { GuidedFlowCapabilityMap, GuidedFlowInputs } from "./guidedFlowState";
 import { buildOperatorWorkbenchState } from "./operatorWorkbenchState";
+import type { OperatorWorkbenchEvidenceTarget } from "./operatorWorkbenchState";
 
 function Tab({ active, color, label, onClick, disabled, title }: {
   active: boolean; color: string; label: string; onClick: () => void; disabled?: boolean; title?: string;
@@ -118,7 +119,10 @@ export default function App() {
     trainingSkipped: false,
     compileComplete: s.compileTraceability !== null,
     synthesisComplete: s.synthResult !== null || s.multiTargetResult !== null,
-    evidenceExported: s.evidenceBundle !== null,
+    evidenceExported: s.evidenceBundle !== null
+      || s.projectEvidenceBundle !== null
+      || s.compileEvidenceBundle !== null
+      || s.synthesisEvidenceBundle !== null,
   };
   const guidedFlowCapabilities: GuidedFlowCapabilityMap = {
     design: true,
@@ -131,19 +135,21 @@ export default function App() {
   };
   const guidedFlow = computeGuidedFlowState(guidedFlowInputs, guidedFlowCapabilities);
   const operatorWorkbench = buildOperatorWorkbenchState({
+    compileBundleExported: s.compileEvidenceBundle !== null,
     compileComplete: s.compileTraceability !== null,
-    evidenceBundleExported: s.projectEvidenceBundle !== null || s.evidenceBundle !== null,
     guidedFlow,
     isSimulating: s.isSimulating,
     modelCount: s.models.length,
     operatorStatus: s.operatorStatus,
     progressMessage: s.progressMsg,
+    projectBundleExported: s.projectEvidenceBundle !== null,
     projectName: s.projectSaveResult?.name ?? null,
     savedSessionCount: s.savedSessions.length,
     selectedModelName: s.selectedModelName,
     serverProjectCount: s.serverProjects.length,
     simulationResult: s.result,
     sourceMode: s.sourceMode,
+    synthesisBundleExported: s.synthesisEvidenceBundle !== null,
     synthesisComplete: s.synthResult !== null || s.multiTargetResult !== null,
   });
   const panelControl = (panelKey: PanelKey) => {
@@ -181,6 +187,79 @@ export default function App() {
       weight_restore_results: [],
       weight_restore_attach_results: [],
     });
+  };
+  const exportCompileEvidenceBundle = () => {
+    if (s.compileTraceability === null) {
+      return;
+    }
+    void s.createEvidenceBundleForSurface("compile", {
+      audit_limit: 100,
+      analysis_results: [],
+      command_replay: {
+        method: "POST",
+        note: `compile trace ${s.compileTraceability.traceability_sha256}`,
+        request_sha256: s.compileTraceability.input_sha256,
+        route: "/api/ir/emit-sv-direct",
+      },
+      default_flow_attestations: [],
+      default_flow_runs: [],
+      include_audit: true,
+      job_ids: [],
+      model_scan_results: [],
+      project_name: `compile-${s.compileTraceability.output.module_name}`,
+      simulation_results: [],
+      weight_restore_results: [],
+      weight_restore_attach_results: [],
+    });
+  };
+  const exportSynthesisEvidenceBundle = () => {
+    const activeJobId = s.multiTargetResult === null
+      ? s.latestSynthesisJobId
+      : s.latestMultiTargetSynthesisJobId;
+    if (activeJobId === null) {
+      return;
+    }
+    void s.createEvidenceBundleForSurface("synthesis", {
+      audit_limit: 100,
+      analysis_results: [],
+      command_replay: null,
+      default_flow_attestations: [],
+      default_flow_runs: [],
+      include_audit: true,
+      job_ids: [activeJobId],
+      model_scan_results: [],
+      project_name: s.multiTargetResult === null
+        ? `synthesis-${s.synthResult?.target ?? s.synthTarget}`
+        : "synthesis-multi-target",
+      simulation_results: [],
+      weight_restore_results: [],
+      weight_restore_attach_results: [],
+    });
+  };
+  const operateWorkbenchEvidenceBundle = (target: OperatorWorkbenchEvidenceTarget) => {
+    switch (target) {
+      case "compile":
+        if (s.compileEvidenceBundle !== null) {
+          activatePanel("verilog");
+          return;
+        }
+        exportCompileEvidenceBundle();
+        return;
+      case "project":
+        if (s.projectEvidenceBundle !== null) {
+          activatePanel(s.sourceMode === "model" ? "trace" : "ir");
+          return;
+        }
+        exportProjectEvidenceBundle();
+        return;
+      case "synthesis":
+        if (s.synthesisEvidenceBundle !== null) {
+          activatePanel("synth");
+          return;
+        }
+        exportSynthesisEvidenceBundle();
+        return;
+    }
   };
 
   useEffect(() => {
@@ -410,7 +489,7 @@ export default function App() {
         <div className="left-panel">
           <div className="panel-section">
             <OperatorWorkbenchPanel
-              onExportEvidence={exportProjectEvidenceBundle}
+              onExportEvidence={operateWorkbenchEvidenceBundle}
               onOpenAdmin={() => activatePanel("admin")}
               onOpenCompiler={() => activatePanel(s.sourceMode === "ode" ? "verilog" : "canvas")}
               onOpenProjects={() => activatePanel(s.sourceMode === "model" ? "trace" : "ir")}

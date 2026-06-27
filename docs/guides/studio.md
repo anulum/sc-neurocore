@@ -26,8 +26,10 @@ write custom equations.
 The first screen opens on an operator workbench rather than a landing page. It
 shows the saved-project/session state, selected model or ODE mode, simulation
 state, audit/capability evidence health, compile/synthesis readiness, and
-evidence-bundle export availability. Each card links to the production Studio
-surface that owns the action.
+evidence-bundle export availability. The export card targets synthesis evidence
+first, then compile evidence, then saved-project evidence, and opens the owning
+surface when that scoped bundle is already available for artifact download.
+Each card links to the production Studio surface that owns the action.
 
 To use a different port:
 
@@ -664,9 +666,12 @@ using the saved project name and project SHA-256 as replay metadata while
 refreshing the worker queue after export. When the bundle is available, the
 Projects strip lists the path-confined artifacts with size and SHA-256 labels
 and downloads each file through the authenticated Studio job-artifact endpoint.
-The frontend keeps Admin, Projects, and Compiler evidence-bundle state in
-separate slots so one workflow cannot display or download another workflow's
-last exported bundle by accident.
+The frontend keeps Admin, Projects, Compiler, and Synthesis evidence-bundle
+state in separate slots so one workflow cannot display or download another
+workflow's last exported bundle by accident.
+The operator workbench uses those same scoped slots for its first-screen export
+action: it routes to synthesis evidence after a synthesis job, compile evidence
+after compile traceability, and project evidence after a saved project.
 
 Before promoting a Studio deployment, run the release preflight from the same
 environment that will launch the backend:

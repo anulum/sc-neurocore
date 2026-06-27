@@ -48,7 +48,11 @@ The workbench keeps the first screen operational:
   status without local paths or secrets.
 - **Hardware path** reports compile and synthesis readiness from the guided
   flow and existing traceability/provenance state.
-- **Export** enables evidence-bundle export only after a saved project exists.
+- **Export** targets the deepest available scoped evidence bundle: synthesis
+  when a synthesis job exists, compile when compile traceability exists, and
+  project evidence after the project is saved. When that scoped bundle already
+  exists, the action opens the owning surface for artifact download instead of
+  creating a duplicate bundle.
 
 ## Model Browser
 

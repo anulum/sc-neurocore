@@ -1,5 +1,3 @@
-import { useState } from "react";
-
 import { useStudioStore } from "../stores/studio";
 import EvidenceBundleArtifactList from "./EvidenceBundleArtifactList";
 
@@ -17,14 +15,12 @@ export default function CompilerInspector() {
     isSimulating,
     verilogSrc,
   } = useStudioStore();
-  const [compileBundleRequested, setCompileBundleRequested] = useState(false);
   const rtlSource = svSource || verilogSrc;
 
   function exportCompileEvidence() {
     if (compileTraceability === null) {
       return;
     }
-    setCompileBundleRequested(true);
     void createEvidenceBundleForSurface("compile", {
       audit_limit: 100,
       analysis_results: [],
@@ -105,13 +101,13 @@ export default function CompilerInspector() {
           >
             Export
           </button>
-          {compileBundleRequested && compileEvidenceBundle && (
+          {compileEvidenceBundle && (
             <span>bundle {compileEvidenceBundle.bundle_id}</span>
           )}
-          {compileBundleRequested && compileEvidenceBundleError && (
+          {compileEvidenceBundleError && (
             <span style={{ color: "#ff5252" }}>{compileEvidenceBundleError}</span>
           )}
-          {compileBundleRequested && compileEvidenceBundle && (
+          {compileEvidenceBundle && (
             <EvidenceBundleArtifactList
               ariaLabel="Compile evidence bundle artifacts"
               artifacts={compileEvidenceBundle.artifacts}
