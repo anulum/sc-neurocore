@@ -56,3 +56,13 @@ The helper does not run external EDA tools. The manifest explicitly records
 real Yosys/OpenROAD run, exact OpenROAD binary or container digest, and PDK
 revision are attached as evidence. When `require_pdk_files=True`, missing
 Liberty/LEF/tech LEF paths are listed as blockers instead of being hidden.
+
+The package facade also exposes the helper for stable application imports:
+
+```python
+from sc_neurocore.asic_flow import ASICFlowBundle, generate_asic_flow_bundle
+```
+
+`tests/test_asic_flow/test_asic_flow_package_api.py` locks the package-level
+exports and verifies that the facade generates a manifest-bearing
+`ASICFlowBundle` without running external EDA tools.

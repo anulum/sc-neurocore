@@ -7,7 +7,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 182
+expected_file_count = 183
 
 [[file]]
 path = "src/sc_neurocore/__init__.py"
@@ -336,6 +336,10 @@ rationale = "Public UVM/SystemVerilog verification-IP generator documented in AP
 [[file]]
 path = "src/sc_neurocore/uvm_gen/__init__.py"
 rationale = "Public UVM generator package entry point that re-exports verification-IP generator APIs."
+
+[[file]]
+path = "src/sc_neurocore/asic_flow/__init__.py"
+rationale = "Public ASIC flow package entry point that re-exports one-command bundle generation APIs."
 
 [[file]]
 path = "src/sc_neurocore/temporal_hierarchy/__init__.py"

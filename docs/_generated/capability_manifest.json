@@ -965,7 +965,7 @@
     "python_model_classes": 158,
     "python_model_source_modules": 152,
     "rust_pyo3_model_wrappers": 175,
-    "test_files": 895
+    "test_files": 896
   },
   "documentation": {
     "public_pages": [
@@ -2843,6 +2843,7 @@
       "tests/test_arcane_zenith/__init__.py",
       "tests/test_arcane_zenith/test_arcane_zenith.py",
       "tests/test_asic_flow/test_asic_flow.py",
+      "tests/test_asic_flow/test_asic_flow_package_api.py",
       "tests/test_astrocyte_adapter.py",
       "tests/test_audio_ssgf_mapping_contracts.py",
       "tests/test_augmentation.py",

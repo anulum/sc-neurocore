@@ -6,7 +6,7 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore — sc_neurocore.asic_flow -- Multi-PDK ASIC generation and verification flow
 
-"""sc_neurocore.asic_flow -- Multi-PDK ASIC generation and verification flow.
+"""Package facade for one-command ASIC flow bundle generation.
 
 Tier: industrial.
 """
