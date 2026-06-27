@@ -6,9 +6,7 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore — SCPN L7 Geometrical-Symbolic Adapter (JAX Implementation)
 
-"""
-SCPN L7: Geometrical-Symbolic Adapter (JAX Implementation)
-==========================================================
+"""SCPN L7 geometrical-symbolic adapter.
 
 This module implements the JAX-accelerated uplift of Layer 7, focusing on
 Metatron's Cube as a routing matrix and Symbolic Operators that phase-shift
@@ -47,9 +45,7 @@ class L7_HolonomicParameters:
 
 
 class L7_SymbolicAdapter(BaseStochasticAdapter):
-    """
-    JAX-traceable adapter for the SCPN Geometrical-Symbolic layer.
-    """
+    """JAX-traceable adapter for the SCPN geometrical-symbolic layer."""
 
     def __init__(self, params: Optional[L7_HolonomicParameters] = None, seed: int = 47) -> None:
         self.params = params or L7_HolonomicParameters()
@@ -71,7 +67,8 @@ class L7_SymbolicAdapter(BaseStochasticAdapter):
         deltas = coords[:, None, :] - coords[None, :, :]
         distances = np.linalg.norm(deltas, axis=2)
 
-        off_diag = np.exp(-distances / self.params.phi_golden_ratio)
+        with np.errstate(over="ignore", under="ignore"):
+            off_diag = np.exp(-distances / self.params.phi_golden_ratio)
         off_diag *= self.params.g_geometric_gain
         np.fill_diagonal(off_diag, 0.0)
 
@@ -117,9 +114,7 @@ class L7_SymbolicAdapter(BaseStochasticAdapter):
             raise ValueError("coupling_leak must be finite and in [0, 1).")
 
     def encode(self, domain_state: Any) -> jnp.ndarray:
-        """
-        Maps symbolic phases to stochastic bitstreams.
-        """
+        """Map symbolic phases to stochastic bitstreams."""
         # Activation = (1 + cos(phase)) / 2
         activation = (1.0 + jnp.cos(self.node_phases)) / 2.0
 
@@ -133,9 +128,9 @@ class L7_SymbolicAdapter(BaseStochasticAdapter):
     def _symbolic_kernel(
         phases: jnp.ndarray, metatron: jnp.ndarray, inputs: jnp.ndarray, dt: float
     ) -> jnp.ndarray:
-        """
-        Solves the Symbolic routing dynamics:
-        dTheta/dt = Metatron * inputs - decay
+        """Solve the symbolic routing dynamics.
+
+        The update follows ``dTheta/dt = Metatron * inputs - decay``.
         """
         # Phases rotate based on weighted inputs from the Metatron routing
         drive = jnp.dot(metatron, inputs)
@@ -166,15 +161,11 @@ class L7_SymbolicAdapter(BaseStochasticAdapter):
         return self.encode(None)
 
     def decode(self, bitstreams: jnp.ndarray) -> Dict[str, float]:
-        """
-        Maps bitstreams back to Symbolic Coherence.
-        """
+        """Map bitstreams back to symbolic coherence telemetry."""
         return {"symbolic_unity_r7": float(jnp.abs(jnp.mean(jnp.exp(1j * self.node_phases))))}
 
     def get_metrics(self) -> Dict[str, float]:
-        """
-        Returns L7-specific metrics like Routing Density.
-        """
+        """Return L7-specific routing and phase-stability metrics."""
         return {
             "routing_coherence": float(jnp.abs(jnp.mean(jnp.exp(1j * self.node_phases)))),
             "metatron_stability": float(jnp.mean(jnp.cos(self.node_phases))),
