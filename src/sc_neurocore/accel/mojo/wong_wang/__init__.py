@@ -6,7 +6,7 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore — Mojo-backed Wong-Wang batch (ctypes dispatch)
 
-"""Python entry point for the Mojo-compiled Wong-Wang batch simulator.
+r"""Python entry point for the Mojo-compiled Wong-Wang batch simulator.
 
 Build:
 
@@ -30,16 +30,16 @@ from __future__ import annotations
 
 import ctypes
 from pathlib import Path
-from typing import Any
 
 import numpy as np
+import numpy.typing as npt
 
 _LIB_PATH = Path(__file__).resolve().parent / "libwong_wang.so"
-_lib: ctypes.CDLL | None
 
-try:
-    _lib = ctypes.CDLL(str(_LIB_PATH))
-    _lib.wong_wang_simulate_c.argtypes = [
+
+def _configure_library(lib: ctypes.CDLL) -> ctypes.CDLL:
+    """Attach the Wong-Wang ctypes signature to a loaded shared library."""
+    lib.wong_wang_simulate_c.argtypes = [
         ctypes.c_int,
         ctypes.c_double,
         ctypes.c_double,
@@ -60,11 +60,39 @@ try:
         ctypes.c_void_p,
         ctypes.c_void_p,
     ]
-    _lib.wong_wang_simulate_c.restype = ctypes.c_int
-    _HAS_MOJO_WONG_WANG = True
-except OSError:
-    _lib = None
-    _HAS_MOJO_WONG_WANG = False
+    lib.wong_wang_simulate_c.restype = ctypes.c_int
+    return lib
+
+
+def _load_library() -> tuple[ctypes.CDLL | None, bool]:
+    """Load the Mojo Wong-Wang shared library when it is available."""
+    try:
+        return _configure_library(ctypes.CDLL(str(_LIB_PATH))), True
+    except OSError:
+        return None, False
+
+
+_lib, _HAS_MOJO_WONG_WANG = _load_library()
+
+
+def _as_wong_wang_inputs(
+    stim1: npt.ArrayLike,
+    stim2: npt.ArrayLike,
+    xi: npt.ArrayLike,
+) -> tuple[npt.NDArray[np.float64], npt.NDArray[np.float64], npt.NDArray[np.float64]]:
+    """Convert and validate Wong-Wang input traces for ctypes dispatch."""
+    stim1_arr = np.ascontiguousarray(stim1, dtype=np.float64)
+    stim2_arr = np.ascontiguousarray(stim2, dtype=np.float64)
+    xi_arr = np.ascontiguousarray(xi, dtype=np.float64)
+    for name, array in (("stim1", stim1_arr), ("stim2", stim2_arr), ("xi", xi_arr)):
+        if array.ndim != 1:
+            raise ValueError(f"{name} must be one-dimensional: got shape {array.shape}")
+    n = stim1_arr.size
+    if stim2_arr.size != n:
+        raise ValueError(f"stim1 and stim2 length mismatch: {n} vs {stim2_arr.size}")
+    if xi_arr.size != 2 * n:
+        raise ValueError(f"xi length must be 2 * n_steps ({2 * n}): got {xi_arr.size}")
+    return stim1_arr, stim2_arr, xi_arr
 
 
 def simulate_wong_wang(
@@ -77,30 +105,28 @@ def simulate_wong_wang(
     i_0: float,
     sigma: float,
     dt: float,
-    stim1: np.ndarray[Any, Any] | list[float],
-    stim2: np.ndarray[Any, Any] | list[float],
-    xi: np.ndarray[Any, Any] | list[float],
-) -> dict[str, Any]:
-    """Mojo-accelerated N-step Wong-Wang simulator. Same signature + return
-    shape as the Rust/Julia/Go dispatchers.
+    stim1: npt.ArrayLike,
+    stim2: npt.ArrayLike,
+    xi: npt.ArrayLike,
+) -> dict[str, npt.NDArray[np.float64] | float]:
+    """Run the Mojo-accelerated N-step Wong-Wang simulator.
+
+    The stimulus and noise traces must be one-dimensional time-series. The
+    wrapper validates their shapes before crossing the ctypes boundary so the
+    Mojo shared library never receives implicitly flattened matrices. The
+    return shape matches the Rust, Julia, and Go dispatchers.
 
     Mojo @export uses raw Int buffer addresses (parametric signature
     limitation in 0.26.2); the Mojo side reconstructs
     `UnsafePointer[Float64, MutAnyOrigin]` internally.
     """
+    stim1_arr, stim2_arr, xi_arr = _as_wong_wang_inputs(stim1, stim2, xi)
     if _lib is None:
         raise ImportError(
             f"libwong_wang.so not built. Run: cd {_LIB_PATH.parent} && "
             f"~/.pixi/bin/mojo build --emit shared-lib -o {_LIB_PATH.name} wong_wang.mojo"
         )
-    stim1 = np.ascontiguousarray(stim1, dtype=np.float64)
-    stim2 = np.ascontiguousarray(stim2, dtype=np.float64)
-    xi = np.ascontiguousarray(xi, dtype=np.float64)
-    n = stim1.size
-    if stim2.size != n:
-        raise ValueError(f"stim1 and stim2 length mismatch: {n} vs {stim2.size}")
-    if xi.size != 2 * n:
-        raise ValueError(f"xi length must be 2 * n_steps ({2 * n}): got {xi.size}")
+    n = stim1_arr.size
 
     s1_out = np.empty(n, dtype=np.float64)
     s2_out = np.empty(n, dtype=np.float64)
@@ -120,9 +146,9 @@ def simulate_wong_wang(
         ctypes.c_double(i_0),
         ctypes.c_double(sigma),
         ctypes.c_double(dt),
-        stim1.ctypes.data,
-        stim2.ctypes.data,
-        xi.ctypes.data,
+        stim1_arr.ctypes.data,
+        stim2_arr.ctypes.data,
+        xi_arr.ctypes.data,
         s1_out.ctypes.data,
         s2_out.ctypes.data,
         r1_out.ctypes.data,

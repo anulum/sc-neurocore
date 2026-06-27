@@ -500,6 +500,12 @@ every accelerated backend takes the same `2 * n_steps` draws as a
 pre-allocated `xi` buffer, so trajectories compare bit-exact for
 matching seeds.
 
+The Julia, Go, and Mojo facades validate `stim1`, `stim2`, and `xi` as
+one-dimensional `float64` traces before backend dispatch. `stim1` and `stim2`
+must have equal length, and `xi` must contain exactly two noise draws per step.
+This keeps every accelerated path on the same explicit time-series contract
+instead of relying on implicit NumPy flattening at the Python boundary.
+
 ### Multi-backend performance
 
 Measured on local i5-11600K, `N = 100 000` steps, `benchmarks/
@@ -538,6 +544,7 @@ IEEE-compliant but differ in the last ulp on some inputs.
 | Julia   | `tests/test_wong_wang_julia_parity.py` | 6 | Python↔Julia bit-exact (quiescent, biased, 5-seed sweep); Rust↔Julia cross-parity under shared xi; input-validation |
 | Go      | `tests/test_wong_wang_go_parity.py`   | 5 | Python↔Go bit-exact; Rust↔Go cross-parity; input-validation |
 | Mojo    | `tests/test_wong_wang_mojo_parity.py` | 4 | Python↔Mojo within libm ulp drift; Rust↔Mojo within libm ulp drift; input-validation |
+| Facade contracts | `tests/test_wong_wang_accel_dispatch_contracts.py` | 21 | Julia, Go, and Mojo non-1D input rejection; Go/Mojo loader failure sentinels, unavailable-library errors, C return-code propagation, stimulus/noise length validation, and one-dimensional return buffers |
 
 ---
 

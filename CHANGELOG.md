@@ -5,6 +5,11 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 ## [Unreleased]
 
 ### Fixed
+- Hardened Wong-Wang Julia, Go, and Mojo acceleration facades so `stim1`,
+  `stim2`, and `xi` must be one-dimensional time-series before backend
+  dispatch, and added module-specific dispatcher contracts for Go/Mojo loader
+  failures, unavailable libraries, C return codes, length validation, and
+  success return buffers.
 - Hardened Wilson-Cowan Julia, Go, and Mojo acceleration facades so
   `ext_input` must be a one-dimensional time-series before backend dispatch,
   and added module-specific dispatcher contracts for Go/Mojo unavailable

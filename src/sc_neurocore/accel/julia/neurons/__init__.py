@@ -73,6 +73,26 @@ def _as_wilson_cowan_ext_input(ext_input: npt.ArrayLike) -> npt.NDArray[np.float
     return ext
 
 
+def _as_wong_wang_inputs(
+    stim1: npt.ArrayLike,
+    stim2: npt.ArrayLike,
+    xi: npt.ArrayLike,
+) -> tuple[npt.NDArray[np.float64], npt.NDArray[np.float64], npt.NDArray[np.float64]]:
+    """Convert and validate Wong-Wang input traces for Julia dispatch."""
+    stim1_arr = np.asarray(stim1, dtype=np.float64)
+    stim2_arr = np.asarray(stim2, dtype=np.float64)
+    xi_arr = np.asarray(xi, dtype=np.float64)
+    for name, array in (("stim1", stim1_arr), ("stim2", stim2_arr), ("xi", xi_arr)):
+        if array.ndim != 1:
+            raise ValueError(f"{name} must be one-dimensional: got shape {array.shape}")
+    n = stim1_arr.size
+    if stim2_arr.size != n:
+        raise ValueError(f"stim1 and stim2 length mismatch: {n} vs {stim2_arr.size}")
+    if xi_arr.size != 2 * n:
+        raise ValueError(f"xi length must be 2 * n_steps ({2 * n}): got {xi_arr.size}")
+    return stim1_arr, stim2_arr, xi_arr
+
+
 def _ensure_rk4_neurons_loaded() -> Any:
     """Include `rk4_neurons.jl` into Julia Main on first use; return the module."""
     global _RK4_NEURONS_LOADED
@@ -104,21 +124,18 @@ def simulate_wong_wang(
     stim1: npt.ArrayLike,
     stim2: npt.ArrayLike,
     xi: npt.ArrayLike,
-) -> dict[str, Any]:
+) -> dict[str, npt.NDArray[np.float64] | float]:
     """Run the Julia-accelerated N-step Wong-Wang simulator.
 
-    The return shape matches ``sc_neurocore_engine.py_wong_wang_simulate``:
-    per-step ``s1``, ``s2``, ``r1``, and ``r2`` arrays plus final scalar states.
+    The stimulus and noise traces must be one-dimensional time-series. The
+    wrapper validates their shapes before Julia dispatch so the kernel never
+    receives implicitly flattened matrices. Returned values match
+    ``sc_neurocore_engine.py_wong_wang_simulate``: per-step ``s1``, ``s2``,
+    ``r1``, and ``r2`` arrays plus final scalar states.
     """
+    stim1_arr, stim2_arr, xi_arr = _as_wong_wang_inputs(stim1, stim2, xi)
     mod = _ensure_wong_wang_loaded()
-    stim1_arr: npt.NDArray[np.float64] = np.asarray(stim1, dtype=np.float64)
-    stim2_arr: npt.NDArray[np.float64] = np.asarray(stim2, dtype=np.float64)
-    xi_arr: npt.NDArray[np.float64] = np.asarray(xi, dtype=np.float64)
     n = stim1_arr.size
-    if stim2_arr.size != n:
-        raise ValueError(f"stim1 and stim2 length mismatch: {n} vs {stim2_arr.size}")
-    if xi_arr.size != 2 * n:
-        raise ValueError(f"xi length must be 2 * n_steps ({2 * n}): got {xi_arr.size}")
     s1_out: npt.NDArray[np.float64] = np.empty(n, dtype=np.float64)
     s2_out: npt.NDArray[np.float64] = np.empty(n, dtype=np.float64)
     r1_out: npt.NDArray[np.float64] = np.empty(n, dtype=np.float64)
