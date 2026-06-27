@@ -6,41 +6,36 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore — Mojo SIMD acceleration for spike_recorder
 
-fn record(spike: Int) -> Int:
-    var _record_line = 'if spike not in (0, 1):'
-    var _record_line = 'raise ValueError("Spike must be 0 or 1.")'
-    var _record_line = 'spikes.append(spike)'
-    return 0
+def validate_spike(spike: Int) -> Bool:
+    return spike == 0 or spike == 1
 
-fn reset() -> Int:
-    var _reset_line = 'spikes.clear()'
-    return 0
 
-fn as_array() -> Int:
-    return 0  # return array(spikes, dtype=uint8)
+def total_spikes_from_pair(spike_a: Int, spike_b: Int) -> Int:
+    if not validate_spike(spike_a) or not validate_spike(spike_b):
+        return -1
+    return spike_a + spike_b
 
-fn total_spikes() -> Int:
-    return 0  # return int(sum(as_array()))
 
-fn firing_rate_hz() -> Int:
-    var _firing_rate_hz_line = 'spikes = as_array()'
-    var _firing_rate_hz_line = 'T = spikes.size'
-    var _firing_rate_hz_line = 'if T == 0:'
-    return 0  # return 0.0
-    var _firing_rate_hz_line = 'duration_ms = T * dt_ms'
-    var _firing_rate_hz_line = 'if duration_ms == 0:'
-    return 0  # return 0.0
-    return 0  # return float(total_spikes() / (duration_ms / 1000.
+def firing_rate_hz(spike_count: Int, sample_count: Int, dt_ms: Float64) -> Float64:
+    if spike_count < 0 or sample_count <= 0 or dt_ms <= 0.0:
+        return 0.0
+    return Float64(spike_count) / (Float64(sample_count) * dt_ms / 1000.0)
 
-fn isi_histogram(bins: Int) -> Int:
-    var _isi_histogram_line = 'self,'
-    var _isi_histogram_line = 'bins: int = 10,'
-    var _isi_histogram_line = ') -> Tuple[ndarray[Any, Any], ndarray[Any, Any]]:'
-    var _isi_histogram_line = 'spikes = as_array()'
-    var _isi_histogram_line = 'spike_indices = where(spikes == 1)[0]'
-    var _isi_histogram_line = 'if spike_indices.size < 2:'
-    return 0  # return zeros(bins, dtype=int), linspace(0, 1, bins
-    var _isi_histogram_line = 'isi_steps = diff(spike_indices)'
-    var _isi_histogram_line = 'isi_ms = isi_steps * dt_ms'
-    var _isi_histogram_line = 'hist, bin_edges = histogram(isi_ms, bins=bins)'
-    return 0  # return hist, bin_edges
+
+def isi_ms(previous_index: Int, current_index: Int, dt_ms: Float64) -> Float64:
+    if current_index <= previous_index or dt_ms < 0.0:
+        return 0.0
+    return Float64(current_index - previous_index) * dt_ms
+
+
+def main() raises:
+    if not validate_spike(1):
+        raise Error("valid spike rejected")
+    if validate_spike(2):
+        raise Error("invalid spike accepted")
+    if total_spikes_from_pair(1, 0) != 1:
+        raise Error("pair spike count failed")
+    if firing_rate_hz(3, 6, 1.0) != 500.0:
+        raise Error("firing rate failed")
+    if isi_ms(3, 5, 1.0) != 2.0:
+        raise Error("ISI failed")

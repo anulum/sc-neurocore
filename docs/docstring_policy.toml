@@ -7,7 +7,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 184
+expected_file_count = 185
 
 [[file]]
 path = "src/sc_neurocore/__init__.py"
@@ -268,6 +268,10 @@ rationale = "Public cross-platform SNN profiler package entry point."
 [[file]]
 path = "src/sc_neurocore/recorders/__init__.py"
 rationale = "Public spike-recorder package entry point."
+
+[[file]]
+path = "src/sc_neurocore/recorders/spike_recorder.py"
+rationale = "Public bitstream spike recorder used by layer simulations, stochastic-core examples, and recorder API documentation."
 
 [[file]]
 path = "src/sc_neurocore/reservoir/__init__.py"

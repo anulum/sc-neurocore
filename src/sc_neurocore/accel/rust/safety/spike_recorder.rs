@@ -11,70 +11,76 @@
 #[derive(Debug, Clone)]
 pub struct BitstreamSpikeRecorder {
     pub dt_ms: f64,
-    pub spikes: f64,
+    pub spikes: Vec<u8>,
 }
 
 impl BitstreamSpikeRecorder {
     pub fn new() -> Self {
         Self {
             dt_ms: 1.0_f64,
-            spikes: 0.0_f64,
+            spikes: Vec::new(),
         }
     }
 
-    pub fn record(&self, spike: f64) -> f64 {
-        // if spike not in (0, 1):
-        // raise ValueError("Spike must be 0 || 1.")
-        // self.spikes.append(spike)
-        0.0
+    pub fn with_dt(dt_ms: f64) -> Result<Self, &'static str> {
+        if dt_ms < 0.0 {
+            return Err("dt_ms must be non-negative");
+        }
+        Ok(Self {
+            dt_ms,
+            spikes: Vec::new(),
+        })
+    }
+
+    pub fn record(&mut self, spike: u8) -> Result<(), &'static str> {
+        if spike != 0 && spike != 1 {
+            return Err("Spike must be 0 or 1");
+        }
+        self.spikes.push(spike);
+        Ok(())
     }
 
     pub fn reset(&mut self) {
-        // self.spikes.clear()
-        self.dt_ms = 1.0_f64;
-        self.spikes = 0.0_f64;
+        self.spikes.clear();
     }
 
-    pub fn as_array(&self) -> f64 {
-        // return np.array(self.spikes, dtype=np.uint8)
-        0.0
+    pub fn as_array(&self) -> Vec<u8> {
+        self.spikes.clone()
     }
 
-    pub fn total_spikes(&self) -> f64 {
-        // return int(np.sum(self.as_array()))
-        0.0
+    pub fn total_spikes(&self) -> usize {
+        self.spikes.iter().map(|&spike| spike as usize).sum()
     }
 
     pub fn firing_rate_hz(&self) -> f64 {
-        // spikes = self.as_array()
-        // T = spikes.size
-        // if T == 0:
-        // return 0.0
-        // duration_ms = T * self.dt_ms
-        // if duration_ms == 0:
-        // return 0.0
-        // return float(self.total_spikes() / (duration_ms / 1000.0))
-        0.0
+        let sample_count = self.spikes.len();
+        if sample_count == 0 {
+            return 0.0;
+        }
+        let duration_ms = sample_count as f64 * self.dt_ms;
+        if duration_ms == 0.0 {
+            return 0.0;
+        }
+        self.total_spikes() as f64 / (duration_ms / 1000.0)
     }
 
-    pub fn isi_histogram(&self, bins: f64) -> f64 {
-        // self,
-        // bins: int = 10,
-        // ) -> Tuple[np.ndarray[Any, Any], np.ndarray[Any, Any]]:
-        // spikes = self.as_array()
-        // spike_indices = np.where(spikes == 1)[0]
-        // if spike_indices.size < 2:
-        // return np.zeros(bins, dtype=int), np.linspace(0, 1, bins + 1)
-        // isi_steps = np.diff(spike_indices)
-        // isi_ms = isi_steps * self.dt_ms
-        // hist, bin_edges = np.histogram(isi_ms, bins=bins)
-        // return hist, bin_edges
-        0.0
+    pub fn isi_intervals_ms(&self) -> Vec<f64> {
+        let spike_indices: Vec<usize> = self
+            .spikes
+            .iter()
+            .enumerate()
+            .filter_map(|(idx, &spike)| if spike == 1 { Some(idx) } else { None })
+            .collect();
+
+        spike_indices
+            .windows(2)
+            .map(|window| (window[1] - window[0]) as f64 * self.dt_ms)
+            .collect()
     }
 }
 
 pub fn validate_spike_recorder(state: &BitstreamSpikeRecorder) -> bool {
-    true
+    state.dt_ms >= 0.0 && state.spikes.iter().all(|&spike| spike == 0 || spike == 1)
 }
 
 #[cfg(test)]
@@ -85,5 +91,28 @@ mod tests {
     fn test_spike_recorder_new() {
         let state = BitstreamSpikeRecorder::new();
         assert!(validate_spike_recorder(&state));
+    }
+
+    #[test]
+    fn test_spike_recorder_statistics() {
+        let mut state = BitstreamSpikeRecorder::with_dt(1.0).unwrap();
+        for spike in [1, 0, 0, 1, 0, 1] {
+            state.record(spike).unwrap();
+        }
+        assert_eq!(state.as_array(), vec![1, 0, 0, 1, 0, 1]);
+        assert_eq!(state.total_spikes(), 3);
+        assert_eq!(state.firing_rate_hz(), 500.0);
+        assert_eq!(state.isi_intervals_ms(), vec![3.0, 2.0]);
+        assert!(validate_spike_recorder(&state));
+    }
+
+    #[test]
+    fn test_spike_recorder_validation() {
+        let mut state = BitstreamSpikeRecorder::new();
+        assert!(state.record(2).is_err());
+        assert!(BitstreamSpikeRecorder::with_dt(-1.0).is_err());
+        state.record(1).unwrap();
+        state.reset();
+        assert!(state.spikes.is_empty());
     }
 }
