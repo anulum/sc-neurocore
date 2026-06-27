@@ -23,8 +23,9 @@ Maintains a rolling history (last 20 timesteps) of firing rates per neuron. On e
 ## Usage
 
 ```python
-from sc_neurocore.dashboard.text_dashboard import SCDashboard
 import numpy as np
+
+from sc_neurocore.dashboard import SCDashboard
 
 dash = SCDashboard(n_neurons=4)
 for step in range(100):
@@ -50,8 +51,8 @@ Neuron   | Rate     | Trend (Last 5)
 The dashboard surface is covered by the dedicated flat and package test paths:
 `tests/test_dashboard.py` and `tests/test_dashboard/test_text_dashboard.py`.
 The 2026-06-27 scoped verification passed Ruff, Ruff docstring checks, strict
-mypy, `15 passed` focused dashboard tests, and 100% isolated coverage for
-`sc_neurocore.dashboard.text_dashboard`.
+mypy, `16 passed` focused dashboard tests, and 100% isolated package coverage
+for `sc_neurocore.dashboard`.
 
 The dashboard is a terminal rendering helper. Its Rust, Julia, and Mojo
 counterpart files remain placeholder safety markers because this slice did not

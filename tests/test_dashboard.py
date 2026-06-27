@@ -10,11 +10,18 @@
 
 import pytest
 
+import sc_neurocore.dashboard as dashboard
 from sc_neurocore.dashboard.text_dashboard import SCDashboard
 
 
 class TestSCDashboard:
     """Tests for dashboard construction and rendering."""
+
+    def test_package_exports_dashboard(self) -> None:
+        """Package entry point exports the text dashboard API."""
+        assert dashboard.__tier__ == "research"
+        assert dashboard.__all__ == ["SCDashboard"]
+        assert dashboard.SCDashboard is SCDashboard
 
     def test_construction(self) -> None:
         """Constructor allocates one history list per neuron."""
