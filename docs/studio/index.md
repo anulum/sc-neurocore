@@ -28,6 +28,28 @@ step's capability is unavailable in the capability registry. The panel reports a
 `completed/total` count and never invents marketing or tutorial copy — it
 reflects only the live store and capability state.
 
+## Operator Workbench
+
+The first left-panel section is the operator workbench. It aggregates the live
+workspace, selected design source, simulation run state, evidence health,
+hardware path readiness, and evidence export state into six compact cards. The
+cards reuse existing Studio state and `/api/studio/operator/status`; they do not
+introduce a separate readiness authority. Actions route operators to the real
+project, simulation, admin, compiler, synthesis, and evidence-bundle surfaces.
+
+The workbench keeps the first screen operational:
+
+- **Workspace** reports whether the current project is saved, plus the loaded
+  server-project and local-session counts.
+- **Design source** reports model or ODE mode and the loaded catalogue count.
+- **Simulation** reports active progress or the latest path-free
+  `studio.simulation-run.v1` state.
+- **Evidence health** reports audit and capability posture from operator
+  status without local paths or secrets.
+- **Hardware path** reports compile and synthesis readiness from the guided
+  flow and existing traceability/provenance state.
+- **Export** enables evidence-bundle export only after a saved project exists.
+
 ## Model Browser
 
 Browse built-in neuron models by category, search by name, and run the model

@@ -23,6 +23,12 @@ Opens `http://127.0.0.1:8001` in your browser. The Studio starts in **Model
 mode** with 118 neuron models browsable by category. Switch to **ODE mode** to
 write custom equations.
 
+The first screen opens on an operator workbench rather than a landing page. It
+shows the saved-project/session state, selected model or ODE mode, simulation
+state, audit/capability evidence health, compile/synthesis readiness, and
+evidence-bundle export availability. Each card links to the production Studio
+surface that owns the action.
+
 To use a different port:
 
 ```bash

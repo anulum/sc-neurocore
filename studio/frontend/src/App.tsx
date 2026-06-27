@@ -30,9 +30,11 @@ import AdminPanel from "./components/AdminPanel";
 import AuthControl from "./components/AuthControl";
 import ProjectEvidenceStrip from "./components/ProjectEvidenceStrip";
 import GuidedFlowPanel from "./components/GuidedFlowPanel";
+import OperatorWorkbenchPanel from "./components/OperatorWorkbenchPanel";
 import { buildProjectEvidenceModel } from "./projectEvidence";
 import { computeGuidedFlowState } from "./guidedFlowState";
 import type { GuidedFlowCapabilityMap, GuidedFlowInputs } from "./guidedFlowState";
+import { buildOperatorWorkbenchState } from "./operatorWorkbenchState";
 
 function Tab({ active, color, label, onClick, disabled, title }: {
   active: boolean; color: string; label: string; onClick: () => void; disabled?: boolean; title?: string;
@@ -128,6 +130,22 @@ export default function App() {
     export: true,
   };
   const guidedFlow = computeGuidedFlowState(guidedFlowInputs, guidedFlowCapabilities);
+  const operatorWorkbench = buildOperatorWorkbenchState({
+    compileComplete: s.compileTraceability !== null,
+    evidenceBundleExported: s.projectEvidenceBundle !== null || s.evidenceBundle !== null,
+    guidedFlow,
+    isSimulating: s.isSimulating,
+    modelCount: s.models.length,
+    operatorStatus: s.operatorStatus,
+    progressMessage: s.progressMsg,
+    projectName: s.projectSaveResult?.name ?? null,
+    savedSessionCount: s.savedSessions.length,
+    selectedModelName: s.selectedModelName,
+    serverProjectCount: s.serverProjects.length,
+    simulationResult: s.result,
+    sourceMode: s.sourceMode,
+    synthesisComplete: s.synthResult !== null || s.multiTargetResult !== null,
+  });
   const panelControl = (panelKey: PanelKey) => {
     const capabilityState = panelState(panelKey);
     return {
@@ -390,6 +408,18 @@ export default function App() {
 
       <div className="main-content">
         <div className="left-panel">
+          <div className="panel-section">
+            <OperatorWorkbenchPanel
+              onExportEvidence={exportProjectEvidenceBundle}
+              onOpenAdmin={() => activatePanel("admin")}
+              onOpenCompiler={() => activatePanel(s.sourceMode === "ode" ? "verilog" : "canvas")}
+              onOpenProjects={() => activatePanel(s.sourceMode === "model" ? "trace" : "ir")}
+              onRunSimulation={() => {
+                if (!s.isSimulating && !panelUnavailable("trace")) void s.runSimulation();
+              }}
+              state={operatorWorkbench}
+            />
+          </div>
           <div className="panel-section">
             <GuidedFlowPanel state={guidedFlow} />
           </div>
