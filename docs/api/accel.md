@@ -67,4 +67,12 @@ cargo test --manifest-path src/sc_neurocore/accel/rust/Cargo.toml --lib --no-def
 
 ## MPI Driver
 
+`sc_neurocore.accel.mpi_driver.MPIDriver` is an optional `mpi4py` integration
+for distributing stochastic-computing arrays across MPI ranks. When `mpi4py` is
+unavailable, or when the communicator is absent, the driver stays in
+single-rank mode (`rank == 0`, `size == 1`) and returns the caller's local
+arrays unchanged. In multi-rank gathers, only root receives the concatenated
+buffer; non-root ranks return an empty array that preserves the local result
+dtype.
+
 ::: sc_neurocore.accel.mpi_driver

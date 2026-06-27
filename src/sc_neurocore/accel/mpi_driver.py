@@ -76,7 +76,13 @@ class MPIDriver:
         return local_input  # pragma: no cover
 
     def gather_results(self, local_results: np.ndarray[Any, Any]) -> np.ndarray[Any, Any]:
-        """Collect per-node result arrays back to the root rank."""
+        """Collect per-node result arrays back to the root rank.
+
+        Non-root MPI ranks return an empty array with the same dtype as their
+        local result buffer, which keeps downstream dtype-sensitive callers
+        deterministic even when they execute on ranks that do not receive the
+        gathered payload.
+        """
         if not HAS_MPI or self.size == 1:
             return local_results
         comm = self.comm
@@ -90,7 +96,7 @@ class MPIDriver:
             global_results = np.zeros(total_len, dtype=local_results.dtype)  # pragma: no cover
         comm.Gather(local_results, global_results, root=0)  # pragma: no cover
         if global_results is None:
-            return np.zeros(0)
+            return np.zeros(0, dtype=local_results.dtype)
         return global_results
 
     def barrier(self) -> None:

@@ -5,6 +5,10 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 ## [Unreleased]
 
 ### Fixed
+- Preserved local result dtype for non-root MPI gather outputs and expanded the
+  MPI driver contract tests to cover no-MPI constructor fallback, root gather
+  collection, non-root empty-gather dtype, missing communicator fallback, and
+  barrier delegation.
 - Kept `sc_neurocore.accel.mojo.MojoKernelRunner` fail-closed when the optional
   Mojo runner import fails, replacing stale reload bindings with a placeholder
   that raises `RuntimeError` with the captured import reason.
