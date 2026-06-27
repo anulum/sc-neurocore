@@ -32,6 +32,13 @@ industrial-control condition monitoring. The profile data deliberately records
 hazards and missing evidence instead of making unsupported field-deployment
 claims.
 
+`sc_neurocore.industrial_applications` is in the scoped public-docstring policy.
+Its focused readiness-gate suite is strict typed and covers profile inventory,
+evidence-category aliases, mandatory/optional evidence handling, deterministic
+registry ordering, and closed failure modes at 100% isolated module coverage.
+This page has no polyglot or benchmark counterpart; the surface is a Python API
+and buyer-facing documentation contract.
+
 ## Buyer-facing interpretation
 
 Use this API to turn a potential application into a diligence checklist. A

@@ -6,6 +6,8 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore — Industrial application profile tests
 
+"""Readiness-gate tests for industrial application profiles."""
+
 from __future__ import annotations
 
 import pytest
@@ -23,6 +25,7 @@ from sc_neurocore.safety_cert import EvidenceBag, EvidenceItem, SafetyStandard
 
 
 def _bag(*categories: str) -> EvidenceBag:
+    """Build an evidence bag with one synthetic item per category."""
     evidence = EvidenceBag()
     for index, category in enumerate(categories):
         evidence.add(
@@ -36,6 +39,7 @@ def _bag(*categories: str) -> EvidenceBag:
 
 
 def test_default_profiles_cover_expected_domains_and_standards() -> None:
+    """Default profiles cover every declared domain and key standards."""
     profiles = default_industrial_profiles()
     domains = {profile.domain for profile in profiles}
 
@@ -47,6 +51,7 @@ def test_default_profiles_cover_expected_domains_and_standards() -> None:
 
 
 def test_readiness_fails_closed_when_mandatory_evidence_is_missing() -> None:
+    """Missing mandatory evidence keeps aerospace readiness closed."""
     assessment = assess_industrial_readiness(
         IndustrialDomain.AEROSPACE,
         _bag("design", "formal"),
@@ -60,6 +65,7 @@ def test_readiness_fails_closed_when_mandatory_evidence_is_missing() -> None:
 
 
 def test_readiness_passes_when_required_categories_are_present() -> None:
+    """Industrial-control readiness passes when mandatory categories exist."""
     assessment = assess_industrial_readiness(
         "industrial_control",
         _bag("design", "test", "analysis", "report"),
@@ -72,6 +78,7 @@ def test_readiness_passes_when_required_categories_are_present() -> None:
 
 
 def test_evidence_category_aliases_are_normalised() -> None:
+    """Evidence aliases normalise into canonical readiness categories."""
     assessment = assess_industrial_readiness(
         IndustrialDomain.MEDICAL,
         _bag("design", "test", "analysis", "hardware-in-loop", "report", "security"),
@@ -82,6 +89,7 @@ def test_evidence_category_aliases_are_normalised() -> None:
 
 
 def test_registry_rejects_unknown_domain() -> None:
+    """The registry rejects domain names outside the declared enum."""
     registry = IndustrialApplicationRegistry()
 
     with pytest.raises(ValueError, match="unknown industrial domain"):
@@ -89,6 +97,7 @@ def test_registry_rejects_unknown_domain() -> None:
 
 
 def test_profiles_are_returned_in_deterministic_order() -> None:
+    """Registry listing order is deterministic for docs and callers."""
     registry = IndustrialApplicationRegistry()
     names = [profile.domain.value for profile in registry.list_profiles()]
 
@@ -96,6 +105,7 @@ def test_profiles_are_returned_in_deterministic_order() -> None:
 
 
 def test_robotics_profile_requires_timing_evidence() -> None:
+    """Robotics readiness requires mandatory timing evidence."""
     assessment = assess_industrial_readiness(
         IndustrialDomain.ROBOTICS,
         _bag("design", "test", "analysis", "report"),
@@ -106,6 +116,7 @@ def test_robotics_profile_requires_timing_evidence() -> None:
 
 
 def test_smart_grid_profile_accepts_latency_alias_for_timing() -> None:
+    """Smart-grid readiness accepts latency evidence as timing evidence."""
     assessment = assess_industrial_readiness(
         IndustrialDomain.SMART_GRID,
         _bag("design", "latency", "test", "analysis", "report"),
@@ -116,6 +127,7 @@ def test_smart_grid_profile_accepts_latency_alias_for_timing() -> None:
 
 
 def test_fusion_control_profile_requires_hil_and_timing() -> None:
+    """Fusion-control readiness fails when HIL evidence is absent."""
     assessment = assess_industrial_readiness(
         IndustrialDomain.FUSION_CONTROL,
         _bag("design", "timing", "test", "analysis", "report"),
@@ -126,6 +138,7 @@ def test_fusion_control_profile_requires_hil_and_timing() -> None:
 
 
 def _optional_only_profile(domain: IndustrialDomain) -> IndustrialApplicationProfile:
+    """Create a profile whose evidence requirements are all optional."""
     return IndustrialApplicationProfile(
         domain=domain,
         name="optional-only profile",
@@ -146,6 +159,7 @@ def _optional_only_profile(domain: IndustrialDomain) -> IndustrialApplicationPro
 
 
 def test_all_optional_profile_is_fully_covered_yet_lists_optional_gaps() -> None:
+    """Profiles with no mandatory evidence report full mandatory coverage."""
     registry = IndustrialApplicationRegistry(
         profiles=[_optional_only_profile(IndustrialDomain.AEROSPACE)]
     )
@@ -160,6 +174,7 @@ def test_all_optional_profile_is_fully_covered_yet_lists_optional_gaps() -> None
 
 
 def test_registry_rejects_valid_domain_without_a_registered_profile() -> None:
+    """A valid enum domain is rejected when no profile is registered."""
     registry = IndustrialApplicationRegistry(
         profiles=[_optional_only_profile(IndustrialDomain.AEROSPACE)]
     )
