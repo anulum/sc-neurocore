@@ -5,6 +5,10 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 ## [Unreleased]
 
 ### Fixed
+- Expanded quantum terminal dashboard coverage to 100% exact-file evidence,
+  covering terminal-size fallback, narrow-terminal hidden-neuron telemetry,
+  no-history rendering, spike-raster intensity bands, directive colour fallback,
+  empty-scale ATP bars, and repr/docstring policy.
 - Expanded spin-pool MPS coverage to 100% exact-file evidence, covering valid
   dense exact evolution, ATP observable site rejection, status/repr telemetry,
   and stable TEBD adjacency validation while keeping the Rust telemetry-kernel

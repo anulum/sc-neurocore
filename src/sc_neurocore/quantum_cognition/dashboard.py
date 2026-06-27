@@ -201,6 +201,7 @@ class TerminalDashboard:
         print("\n".join(lines))
 
     def __repr__(self) -> str:
+        """Return a concise representation of the dashboard window size."""
         return f"TerminalDashboard(max_raster={self.max_raster_steps})"
 
 
