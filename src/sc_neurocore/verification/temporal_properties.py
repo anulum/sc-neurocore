@@ -31,6 +31,8 @@ import numpy as np
 
 
 class PropertyResult(Enum):
+    """Outcome states returned by temporal property verification checks."""
+
     VERIFIED = "verified"
     VIOLATED = "violated"
     UNKNOWN = "unknown"
@@ -56,6 +58,7 @@ class VerificationResult:
     message: str = ""
 
     def summary(self) -> str:
+        """Format the verification outcome and optional counterexample."""
         icon = {"verified": "PASS", "violated": "FAIL", "unknown": "?"}[self.result.value]
         line = f"[{icon}] {self.property_name}: {self.message}"
         if self.counterexample:

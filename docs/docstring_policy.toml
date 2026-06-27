@@ -7,7 +7,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 168
+expected_file_count = 169
 
 [[file]]
 path = "scripts/generate_docs.py"
@@ -652,6 +652,10 @@ rationale = "Public hierarchical predictive-coding layer with HDC symbol encodin
 [[file]]
 path = "src/sc_neurocore/neuro_symbolic/self_verification.py"
 rationale = "Public machine-checkable self-verification traces for neuro-symbolic inference."
+
+[[file]]
+path = "src/sc_neurocore/verification/temporal_properties.py"
+rationale = "Public temporal spike-train property verifier documented in the formal verification API guide."
 
 [[file]]
 path = "src/sc_neurocore/experimental/examples.py"
