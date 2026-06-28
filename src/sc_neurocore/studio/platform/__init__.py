@@ -215,6 +215,7 @@ from sc_neurocore.studio.platform.analysis_limits import (
     enforce_analysis_budget,
     evaluate_analysis_cost,
     evaluate_multi_config_cost,
+    evaluate_nullcline_grid_cost,
     resolve_request_timestep,
     simulation_step_count,
 )
@@ -327,6 +328,7 @@ __all__ = [
     "enforce_analysis_budget",
     "evaluate_analysis_cost",
     "evaluate_multi_config_cost",
+    "evaluate_nullcline_grid_cost",
     "resolve_request_timestep",
     "simulation_step_count",
     "DEFAULT_STUDIO_ALLOWED_HOSTS",

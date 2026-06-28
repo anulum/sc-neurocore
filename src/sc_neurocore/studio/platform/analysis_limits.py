@@ -290,6 +290,46 @@ def evaluate_multi_config_cost(configs: Sequence[tuple[float, float]]) -> Analys
     )
 
 
+def evaluate_nullcline_grid_cost(*, grid_size: int, equation_count: int) -> AnalysisCost:
+    """Project the synchronous point-evaluation cost of a nullcline grid.
+
+    Parameters
+    ----------
+    grid_size:
+        Number of points per axis in the square nullcline grid.
+    equation_count:
+        Number of ODE right-hand-side expressions evaluated at each grid point.
+
+    Returns
+    -------
+    AnalysisCost
+        Cost projection where each grid point is treated as one synchronous
+        unit of work and ``steps_per_simulation`` records the equation
+        evaluations performed at that point.
+
+    Raises
+    ------
+    AnalysisBudgetError
+        If either count is non-positive. The ``"simulations"`` limit is used
+        because the grid point count is checked against the same synchronous
+        request fan-out ceiling as parameter sweeps.
+    """
+
+    if grid_size <= 0 or equation_count <= 0:
+        raise AnalysisBudgetError(
+            limit="simulations",
+            projected=0,
+            allowed=1,
+            message="Nullcline grid size and equation count must be positive.",
+        )
+    grid_points = grid_size * grid_size
+    return AnalysisCost(
+        simulation_count=grid_points,
+        steps_per_simulation=equation_count,
+        total_steps=grid_points * equation_count,
+    )
+
+
 def enforce_analysis_budget(cost: AnalysisCost, budget: AnalysisBudget) -> None:
     """Reject a projected analysis cost that exceeds the configured budget.
 
@@ -353,6 +393,7 @@ __all__ = [
     "enforce_analysis_budget",
     "evaluate_analysis_cost",
     "evaluate_multi_config_cost",
+    "evaluate_nullcline_grid_cost",
     "resolve_request_timestep",
     "simulation_step_count",
 ]

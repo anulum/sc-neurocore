@@ -255,10 +255,11 @@ runtime features:
   `process`, allowing operators to verify isolation coverage without reading
   local worker directories.
 - Synchronous analysis endpoints (simulation, f-I curve, bifurcation,
-  sensitivity, frequency response, heatmap, precision, characterisation,
-  multi-simulate, compare) run inside the request worker. A fail-closed
+  sensitivity, frequency response, heatmap, nullclines, precision,
+  characterisation, multi-simulate, compare) run inside the request worker. A fail-closed
   synchronous analysis budget projects each request's integration cost
-  (``simulation_count * ceil(duration / dt)``) and rejects an over-budget
+  (``simulation_count * ceil(duration / dt)`` for simulation-backed routes,
+  or nullcline grid points for `/api/nullclines`) and rejects an over-budget
   request with HTTP 422 before any work runs, keeping the worker responsive.
   The budget has three ceilings, configurable through
   `SC_NEUROCORE_STUDIO_MAX_SYNC_ANALYSIS_STEPS_PER_SIMULATION`,

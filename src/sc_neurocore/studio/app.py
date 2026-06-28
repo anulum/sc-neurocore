@@ -161,6 +161,7 @@ from sc_neurocore.studio.platform import (
     materialize_training_weight_payload,
     evaluate_analysis_cost,
     evaluate_multi_config_cost,
+    evaluate_nullcline_grid_cost,
     resolve_request_timestep,
     list_studio_browser_user_public_records,
     list_studio_identity_public_records,
@@ -701,6 +702,40 @@ def _guard_multi_config_analysis_request(
     try:
         cost = evaluate_multi_config_cost(
             [(duration, resolve_request_timestep(dt)) for duration, dt in configs]
+        )
+        enforce_analysis_budget(cost, budget)
+    except AnalysisBudgetError as exc:
+        raise HTTPException(status_code=422, detail=exc.to_public_detail()) from None
+
+
+def _guard_nullcline_grid_request(
+    budget: AnalysisBudget,
+    *,
+    grid_size: int,
+    equation_count: int,
+) -> None:
+    """Reject a nullcline grid that exceeds the synchronous analysis budget.
+
+    Parameters
+    ----------
+    budget:
+        Active synchronous analysis ceilings.
+    grid_size:
+        Number of points per axis in the requested nullcline grid.
+    equation_count:
+        Number of ODE right-hand-side expressions evaluated at each grid point.
+
+    Raises
+    ------
+    HTTPException
+        With status 422 and a path-free budget detail when the grid exceeds the
+        configured synchronous analysis budget.
+    """
+
+    try:
+        cost = evaluate_nullcline_grid_cost(
+            grid_size=grid_size,
+            equation_count=equation_count,
         )
         enforce_analysis_budget(cost, budget)
     except AnalysisBudgetError as exc:
@@ -2904,6 +2939,12 @@ def create_app(runtime_settings: StudioRuntimeSettings | None = None) -> FastAPI
     # --- Nullclines (#9) ---
     @app.post("/api/nullclines")
     def api_nullclines(req: NullclineRequest) -> Any:
+        _guard_nullcline_grid_request(
+            analysis_budget,
+            grid_size=req.grid_size,
+            equation_count=len(req.equations),
+        )
+
         def fn() -> dict[str, Any]:
             ranges = {k: (v[0], v[1]) for k, v in req.ranges.items()}
             payload = nullclines_2d(req.equations, req.params, req.var_names, ranges, req.grid_size)

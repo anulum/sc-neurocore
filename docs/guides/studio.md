@@ -460,10 +460,11 @@ execution models (`thread` and `process`) without exposing the job-root path.
 
 Synchronous analysis routes (`/api/simulate`, `/api/fi-curve`,
 `/api/bifurcation`, `/api/sensitivity`, `/api/freq-response`, `/api/heatmap`,
-`/api/precision`, `/api/characterize`, `/api/multi-simulate`, `/api/compare`)
+`/api/nullclines`, `/api/precision`, `/api/characterize`, `/api/multi-simulate`,
+`/api/compare`)
 execute in the request worker, so a fail-closed synchronous analysis budget
 bounds their cost. The budget projects each request's integration steps
-(`simulation_count * ceil(duration / dt)`) and returns HTTP 422 before running
+(`simulation_count * ceil(duration / dt)`) or nullcline grid points and returns HTTP 422 before running
 when the request exceeds `SC_NEUROCORE_STUDIO_MAX_SYNC_ANALYSIS_STEPS_PER_SIMULATION`,
 `SC_NEUROCORE_STUDIO_MAX_SYNC_ANALYSIS_TOTAL_STEPS`, or
 `SC_NEUROCORE_STUDIO_MAX_SYNC_ANALYSIS_SIMULATIONS`. The 422 detail names the

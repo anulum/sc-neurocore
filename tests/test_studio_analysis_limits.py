@@ -22,6 +22,7 @@ from sc_neurocore.studio.platform.analysis_limits import (
     enforce_analysis_budget,
     evaluate_analysis_cost,
     evaluate_multi_config_cost,
+    evaluate_nullcline_grid_cost,
     resolve_request_timestep,
     simulation_step_count,
 )
@@ -128,6 +129,31 @@ def test_evaluate_multi_config_cost_propagates_timestep_error() -> None:
         evaluate_multi_config_cost([(100.0, 0.1), (100.0, 0.0)])
 
     assert excinfo.value.limit == "timestep"
+
+
+def test_evaluate_nullcline_grid_cost_counts_grid_points_as_simulations() -> None:
+    cost = evaluate_nullcline_grid_cost(grid_size=60, equation_count=2)
+
+    assert cost.simulation_count == 3_600
+    assert cost.steps_per_simulation == 2
+    assert cost.total_steps == 7_200
+
+
+@pytest.mark.parametrize(
+    ("grid_size", "equation_count"),
+    [
+        (0, 2),
+        (60, 0),
+    ],
+)
+def test_evaluate_nullcline_grid_cost_rejects_invalid_counts(
+    grid_size: int,
+    equation_count: int,
+) -> None:
+    with pytest.raises(AnalysisBudgetError) as excinfo:
+        evaluate_nullcline_grid_cost(grid_size=grid_size, equation_count=equation_count)
+
+    assert excinfo.value.limit == "simulations"
 
 
 def test_enforce_analysis_budget_allows_within_limits() -> None:
