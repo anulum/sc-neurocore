@@ -36,14 +36,8 @@ def test_dense_fold_plan_rejects_negative_dimensions() -> None:
         raise AssertionError("negative dense dimensions must be rejected")
 
 
-def test_rust_dense_fold_contracts_pass() -> None:
-    completed = subprocess.run(
-        ["cargo", "test", "dense_fold", "--lib"],
-        cwd=REPO_ROOT / "engine",
-        check=True,
-        capture_output=True,
-        text=True,
-    )
+def test_rust_dense_fold_contracts_pass(cargo_lib_test) -> None:
+    completed = cargo_lib_test("dense_fold")
     assert completed.returncode == 0
 
 

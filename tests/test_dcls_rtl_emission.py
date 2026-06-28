@@ -15,14 +15,8 @@ HDL_FILES = [
 ]
 
 
-def test_dcls_rust_reference_and_systemverilog_emitter_contracts() -> None:
-    subprocess.run(
-        ["cargo", "test", "dcls", "--lib"],
-        cwd=REPO_ROOT / "engine",
-        check=True,
-        capture_output=True,
-        text=True,
-    )
+def test_dcls_rust_reference_and_systemverilog_emitter_contracts(cargo_lib_test) -> None:
+    cargo_lib_test("dcls")
 
 
 def test_dcls_layer_core_elaborates_with_yosys() -> None:

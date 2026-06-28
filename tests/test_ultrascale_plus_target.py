@@ -5,7 +5,6 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
-import subprocess
 import sys
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
@@ -14,14 +13,8 @@ sys.path.insert(0, str(REPO_ROOT / "tools"))
 from gen_vivado_project import generate_tcl, load_manifest
 
 
-def test_ultrascale_plus_rust_target_contracts() -> None:
-    completed = subprocess.run(
-        ["cargo", "test", "ultrascale_plus", "--lib"],
-        cwd=REPO_ROOT / "engine",
-        check=True,
-        capture_output=True,
-        text=True,
-    )
+def test_ultrascale_plus_rust_target_contracts(cargo_lib_test) -> None:
+    completed = cargo_lib_test("ultrascale_plus")
     assert completed.returncode == 0
 
 
