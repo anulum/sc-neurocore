@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useStudioStore } from "./stores/studio";
 import type { ViewTab } from "./stores/studio";
 import { panelCapabilityState } from "./capabilityShell";
@@ -35,6 +35,7 @@ import StudioReadinessPanel from "./components/StudioReadinessPanel";
 import { buildProjectEvidenceModel } from "./projectEvidence";
 import { computeGuidedFlowState } from "./guidedFlowState";
 import type { GuidedFlowCapabilityMap, GuidedFlowInputs } from "./guidedFlowState";
+import { buildGuidedRunController } from "./guidedRunController";
 import { buildOperatorWorkbenchState } from "./operatorWorkbenchState";
 import type { OperatorWorkbenchEvidenceTarget } from "./operatorWorkbenchState";
 import { buildStudioReadinessModel } from "./studioReadiness";
@@ -88,6 +89,7 @@ function CapabilityUnavailable({ state }: { state: PanelCapabilityState }) {
 }
 
 export default function App() {
+  const [guidedTrainingSkipped, setGuidedTrainingSkipped] = useState(false);
   const s = useStudioStore();
   const loadCapabilities = s.loadCapabilities;
   const loadAuditStatus = s.loadAuditStatus;
@@ -104,7 +106,7 @@ export default function App() {
   const panelUnavailable = (panelKey: PanelKey) => !panelState(panelKey).available;
 
   const guidedFlowInputs: GuidedFlowInputs = {
-    modelSelected: s.selectedModelName.length > 0,
+    modelSelected: s.sourceMode === "ode" ? s.equations.length > 0 : s.selectedModelName.length > 0,
     simulationComplete: s.result !== null,
     analysisComplete: [
       s.fiResult,
@@ -118,7 +120,7 @@ export default function App() {
       s.charResult,
     ].some((analysis) => analysis !== null),
     trainingComplete: s.trainingEpochs.length > 0,
-    trainingSkipped: false,
+    trainingSkipped: guidedTrainingSkipped,
     compileComplete: s.compileTraceability !== null,
     synthesisComplete: s.synthResult !== null || s.multiTargetResult !== null,
     evidenceExported: s.evidenceBundle !== null
@@ -264,6 +266,40 @@ export default function App() {
         return;
     }
   };
+  const guidedRun = buildGuidedRunController({
+    capabilityMessages: {
+      analyse: panelState("fi-curve").message,
+      compile: panelState("verilog").message,
+      simulate: panelState("trace").message,
+      synthesise: panelState("synth").message,
+      train: panelState("train").message,
+    },
+    exportReady: operatorWorkbench.evidenceActionEnabled,
+    flow: guidedFlow,
+    sourceMode: s.sourceMode,
+  }, {
+    exportEvidence: async () => {
+      if (operatorWorkbench.evidenceExportTarget === null) {
+        throw new Error("No evidence export target is available.");
+      }
+      operateWorkbenchEvidenceBundle(operatorWorkbench.evidenceExportTarget);
+    },
+    runAnalysis: async () => {
+      await s.runFICurve();
+    },
+    runCompile: async () => {
+      await s.runEmitSV();
+    },
+    runSimulation: async () => {
+      await s.runSimulation();
+    },
+    runSynthesis: async () => {
+      await s.runSynthesis();
+    },
+    skipTraining: async () => {
+      setGuidedTrainingSkipped(true);
+    },
+  });
   const refreshStudioReadiness = () => {
     void loadCapabilities();
     void loadOperatorStatus();
@@ -514,7 +550,7 @@ export default function App() {
             />
           </div>
           <div className="panel-section">
-            <GuidedFlowPanel state={guidedFlow} />
+            <GuidedFlowPanel controller={guidedRun} state={guidedFlow} />
           </div>
           {s.sourceMode === "model" ? (
             <>

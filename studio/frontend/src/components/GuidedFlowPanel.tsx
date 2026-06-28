@@ -5,9 +5,13 @@
 // ORCID: 0009-0009-3560-0851
 // Contact: www.anulum.li | protoscience@anulum.li
 // SC-NeuroCore — Studio guided default-flow panel
+import { useState } from "react";
+
+import type { GuidedRunController } from "../guidedRunController";
 import type { GuidedFlowState, GuidedFlowStepStatus } from "../guidedFlowState";
 
 export interface GuidedFlowPanelProps {
+  controller?: GuidedRunController;
   state: GuidedFlowState;
 }
 
@@ -25,7 +29,25 @@ const STATUS_COLOR: Record<GuidedFlowStepStatus, string> = {
   blocked: "#c98a8a",
 };
 
-export default function GuidedFlowPanel({ state }: GuidedFlowPanelProps) {
+export default function GuidedFlowPanel({ controller, state }: GuidedFlowPanelProps) {
+  const [actionError, setActionError] = useState<string | null>(null);
+  const [actionRunning, setActionRunning] = useState(false);
+  const actionDisabled = controller === undefined
+    || actionRunning
+    || controller.nextActionKey === "blocked"
+    || controller.nextActionKey === "complete";
+  const completedEvidence = controller?.completedEvidence ?? [];
+  const runNextStep = async () => {
+    if (controller === undefined || actionDisabled) return;
+    setActionRunning(true);
+    setActionError(null);
+    const result = await controller.runNextStep();
+    setActionRunning(false);
+    if (!result.ok) {
+      setActionError(result.error ?? "Guided run action failed");
+    }
+  };
+
   return (
     <div
       className="guided-flow-panel"
@@ -47,6 +69,40 @@ export default function GuidedFlowPanel({ state }: GuidedFlowPanelProps) {
           {state.completedCount}/{state.totalCount}
         </span>
       </div>
+      {controller !== undefined && (
+        <div className="guided-run-controller" style={{ marginBottom: 8 }}>
+          <button
+            aria-label="Run next guided step"
+            disabled={actionDisabled}
+            onClick={() => { void runNextStep(); }}
+            style={{
+              background: actionDisabled ? "var(--bg-tertiary)" : "var(--accent)",
+              border: "1px solid var(--border)",
+              color: actionDisabled ? "var(--text-muted)" : "var(--bg-primary)",
+              cursor: actionDisabled ? "not-allowed" : "pointer",
+              fontSize: 10,
+              padding: "2px 6px",
+              width: "100%",
+            }}
+            type="button"
+          >
+            {actionRunning ? "Running" : `Run next step: ${controller.nextActionLabel}`}
+          </button>
+          <div style={{ display: "flex", justifyContent: "space-between", marginTop: 4 }}>
+            <span>{controller.exportReady ? "Evidence ready" : "Evidence pending"}</span>
+            <span>{completedEvidence.length} completed</span>
+          </div>
+          {completedEvidence.length > 0 && (
+            <div title={completedEvidence.join(", ")}>
+              Completed evidence: {completedEvidence.join(", ")}
+            </div>
+          )}
+          {controller.blockerReason !== null && (
+            <div style={{ color: "#c98a8a" }}>{controller.blockerReason}</div>
+          )}
+          {actionError !== null && <div style={{ color: "#c98a8a" }}>{actionError}</div>}
+        </div>
+      )}
       <ol style={{ listStyle: "none", margin: 0, padding: 0 }}>
         {state.steps.map((step) => (
           <li
