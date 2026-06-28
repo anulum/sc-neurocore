@@ -202,6 +202,9 @@ results/vertex/
 # Stale lowercase-name symlink to this repo root (deleted on cleanup)
 sc-neurocore
 
+# Z3 solver trace artefacts (debug output, regenerable, not source)
+.z3-trace
+
 # Community benchmark contributions (runtime data, not source)
 benchmarks/databank/
 
