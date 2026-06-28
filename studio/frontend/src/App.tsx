@@ -31,11 +31,13 @@ import AuthControl from "./components/AuthControl";
 import ProjectEvidenceStrip from "./components/ProjectEvidenceStrip";
 import GuidedFlowPanel from "./components/GuidedFlowPanel";
 import OperatorWorkbenchPanel from "./components/OperatorWorkbenchPanel";
+import StudioReadinessPanel from "./components/StudioReadinessPanel";
 import { buildProjectEvidenceModel } from "./projectEvidence";
 import { computeGuidedFlowState } from "./guidedFlowState";
 import type { GuidedFlowCapabilityMap, GuidedFlowInputs } from "./guidedFlowState";
 import { buildOperatorWorkbenchState } from "./operatorWorkbenchState";
 import type { OperatorWorkbenchEvidenceTarget } from "./operatorWorkbenchState";
+import { buildStudioReadinessModel } from "./studioReadiness";
 
 function Tab({ active, color, label, onClick, disabled, title }: {
   active: boolean; color: string; label: string; onClick: () => void; disabled?: boolean; title?: string;
@@ -134,6 +136,7 @@ export default function App() {
     export: true,
   };
   const guidedFlow = computeGuidedFlowState(guidedFlowInputs, guidedFlowCapabilities);
+  const studioReadiness = buildStudioReadinessModel(s.operatorStatus);
   const operatorWorkbench = buildOperatorWorkbenchState({
     compileBundleExported: s.compileEvidenceBundle !== null,
     compileComplete: s.compileTraceability !== null,
@@ -260,6 +263,10 @@ export default function App() {
         exportSynthesisEvidenceBundle();
         return;
     }
+  };
+  const refreshStudioReadiness = () => {
+    void loadCapabilities();
+    void loadOperatorStatus();
   };
 
   useEffect(() => {
@@ -500,6 +507,13 @@ export default function App() {
             />
           </div>
           <div className="panel-section">
+            <StudioReadinessPanel
+              model={studioReadiness}
+              onOpenAdmin={() => activatePanel("admin")}
+              onRefresh={refreshStudioReadiness}
+            />
+          </div>
+          <div className="panel-section">
             <GuidedFlowPanel state={guidedFlow} />
           </div>
           {s.sourceMode === "model" ? (
@@ -537,7 +551,7 @@ export default function App() {
           <div className="panel-section">
             <div className="panel-header">Projects</div>
             <div style={{ display: "flex", gap: 4, marginBottom: 4 }}>
-              <button onClick={() => {
+              <button aria-label="Save project" onClick={() => {
                 const name = prompt("Project name:");
                 if (name) s.saveProjectToServer(name);
               }} style={{
@@ -545,7 +559,7 @@ export default function App() {
                 color: "var(--text-secondary)", border: "1px solid var(--border)",
                 borderRadius: 3, cursor: "pointer",
               }}>Save</button>
-              <button onClick={() => s.listServerProjects()} style={{
+              <button aria-label="Refresh projects" onClick={() => s.listServerProjects()} style={{
                 fontSize: 10, padding: "2px 6px", background: "var(--bg-tertiary)",
                 color: "var(--text-secondary)", border: "1px solid var(--border)",
                 borderRadius: 3, cursor: "pointer",
@@ -582,7 +596,7 @@ export default function App() {
           <div className="panel-section">
             <div className="panel-header">Sessions</div>
             <div style={{ display: "flex", gap: 4, marginBottom: 4 }}>
-              <button onClick={() => {
+              <button aria-label="Save session" onClick={() => {
                 const name = prompt("Session name:");
                 if (name) s.saveSession(name);
               }} style={{

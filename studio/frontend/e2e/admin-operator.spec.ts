@@ -526,14 +526,22 @@ test("admin panel renders aggregate operator status", async ({ page }) => {
   await page.getByRole("button", { name: "Admin" }).first().click();
 
   await expect(page.getByRole("heading", { name: "Operator" })).toBeVisible();
-  await expect(page.getByText("production")).toBeVisible();
-  await expect(page.getByText("enforced")).toBeVisible();
+  const operatorSection = page.locator("section.admin-section").filter({
+    has: page.getByRole("heading", { name: "Operator" }),
+  });
+  await expect(operatorSection.getByText("production", { exact: true }).first()).toBeVisible();
+  await expect(operatorSection.getByText("enforced", { exact: true }).first()).toBeVisible();
   await expect(page.getByText("93 total / 71 protected")).toBeVisible();
   await expect(page.getByText("audited")).toBeVisible();
-  await expect(page.getByText("service_account")).toBeVisible();
+  await expect(operatorSection.getByText("service_account", { exact: true }).first()).toBeVisible();
+  await expect(operatorSection.getByText("Ready for configured profile")).toBeVisible();
+  await expect(operatorSection.getByText("0 blockers / 0 warnings")).toBeVisible();
   await expect(page.getByText("studio.operator.status.v1")).toBeVisible();
   await expect(page.getByRole("heading", { exact: true, name: "Audit" })).toBeVisible();
-  await expect(page.getByText("jsonl")).toBeVisible();
+  const auditSection = page.locator("section.admin-section").filter({
+    has: page.getByRole("heading", { exact: true, name: "Audit" }),
+  });
+  await expect(auditSection.getByText("jsonl", { exact: true })).toBeVisible();
   await expect(page.getByRole("heading", { name: "Jobs" })).toBeVisible();
   await expect(page.getByText("compiler, synthesis, training")).toBeVisible();
   await expect(page.getByRole("heading", { name: "Capabilities" })).toBeVisible();
@@ -607,13 +615,20 @@ test("admin panel refreshes operator, audit, export, and job status", async ({ p
   await page.getByRole("button", { name: "Admin" }).first().click();
 
   await page.getByRole("button", { name: "Refresh operator status" }).click();
-  await expect(page.getByText("development")).toBeVisible();
-  await expect(page.getByText("disabled")).toBeVisible();
-  await expect(page.getByText("incomplete")).toBeVisible();
+  const operatorSection = page.locator("section.admin-section").filter({
+    has: page.getByRole("heading", { name: "Operator" }),
+  });
+  await expect(operatorSection.getByText("development", { exact: true }).first()).toBeVisible();
+  await expect(operatorSection.getByText("disabled", { exact: true }).first()).toBeVisible();
+  await expect(operatorSection.getByText("incomplete", { exact: true }).first()).toBeVisible();
+  await expect(operatorSection.getByText("Readiness blocked")).toBeVisible();
   await expect(page.getByText("studio.operator.status.v2")).toBeVisible();
 
   await page.getByRole("button", { name: "Refresh audit status" }).click();
-  await expect(page.getByText("unhealthy")).toBeVisible();
+  const auditSection = page.locator("section.admin-section").filter({
+    has: page.getByRole("heading", { exact: true, name: "Audit" }),
+  });
+  await expect(auditSection.getByText("unhealthy", { exact: true }).first()).toBeVisible();
   await expect(page.getByText("AuditPathPermissionDenied")).toBeVisible();
 
   await page.getByRole("button", { name: "Export audit events" }).click();
@@ -847,7 +862,7 @@ test("project evidence strip exports saved project bundles", async ({ page }) =>
   });
   await page.goto("/");
 
-  await page.getByRole("button", { name: "Save" }).first().click();
+  await page.getByLabel("Save project", { exact: true }).click();
   await expect(page.getByText("project_workspace")).toBeVisible();
   await expect(page.getByText("state sha aaaaaaaaaaaa")).toBeVisible();
   await expect(page.getByText("project sha bbbbbbbbbbbb")).toBeVisible();
@@ -954,7 +969,7 @@ test("project evidence strip ignores admin bundle artifacts", async ({ page }) =
   await expect(page.getByText("seb_admin")).toBeVisible();
   await expect(page.getByText("evidence/admin/audit.json", { exact: true })).toHaveCount(2);
 
-  await page.getByRole("button", { name: "Save" }).first().click();
+  await page.getByLabel("Save project", { exact: true }).click();
   await expect(page.getByText("project_workspace")).toBeVisible();
   await expect(page.getByText("evidence/admin/audit.json", { exact: true })).toHaveCount(2);
   await expect(page.getByText("evidence/projects/saved-network.json", { exact: true })).toHaveCount(0);

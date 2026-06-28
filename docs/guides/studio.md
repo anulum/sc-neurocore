@@ -29,7 +29,11 @@ state, audit/capability evidence health, compile/synthesis readiness, and
 evidence-bundle export availability. The export card targets synthesis evidence
 first, then compile evidence, then saved-project evidence, and opens the owning
 surface when that scoped bundle is already available for artifact download.
-Each card links to the production Studio surface that owns the action.
+Each card links to the production Studio surface that owns the action. The next
+left-panel section is a readiness panel derived from
+`/api/studio/operator/status`; it turns route-policy, identity, audit, job
+root, runtime-limit, and capability gaps into `ready`, `warning`, and
+`blocked` rows before the operator opens Admin or runs release preflight.
 
 To use a different port:
 
@@ -613,6 +617,13 @@ route-policy enforcement, route inventory counts, protected-route audit
 coverage, identity mode, audit health plus retained-chain integrity, worker
 health, resource-limit posture, browser-login lockout limits, and capability
 counts without exposing local paths or token material.
+
+The first-screen readiness panel and the Admin Operator section render the same
+operator-status posture. Browser readiness is an operator activation aid: it
+shows disabled route-policy enforcement, header-principal fallback, memory-only
+audit sinks, missing job roots, incomplete runtime ceilings, unhealthy jobs, and
+unavailable capabilities early, while `sc-neurocore studio-preflight` remains
+the release promotion gate.
 
 For production deployments, set
 `SC_NEUROCORE_STUDIO_DEPLOYMENT_PROFILE=production`. That profile fails closed

@@ -16,6 +16,7 @@ import type {
   StudioOperatorStatus,
 } from "./api/client";
 import { summarizeAuditExport } from "./auditShell";
+import { buildStudioReadinessModel, type StudioReadinessModel } from "./studioReadiness";
 
 export interface AdminShellInput {
   auditError: string | null;
@@ -200,6 +201,7 @@ export interface AdminShellModel {
   identityBrowserUsers: AdminIdentityBrowserUserModel[];
   identityAccounts: AdminIdentityAccountModel[];
   operator: AdminOperatorModel;
+  readiness: StudioReadinessModel;
   recentAuditEvents: StudioAuditEvent[];
   unhealthyCapabilities: StudioCapability[];
 }
@@ -256,6 +258,7 @@ export function buildAdminShellModel(input: AdminShellInput): AdminShellModel {
     identityBrowserUsers: buildIdentityBrowserUsers(input.identityBrowserUsers),
     identityAccounts: buildIdentityAccounts(input.identityServiceAccounts),
     operator: buildOperatorModel(input.operatorStatus),
+    readiness: buildStudioReadinessModel(input.operatorStatus),
     recentAuditEvents,
     unhealthyCapabilities,
   };

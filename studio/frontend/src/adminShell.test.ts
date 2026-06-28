@@ -549,6 +549,22 @@ describe("admin shell model", () => {
       routePolicyLabel: "enforced",
       schemaVersion: "studio.operator.status.v1",
     });
+    expect(model.readiness).toMatchObject({
+      blockingCount: 0,
+      headline: "Readiness has warnings",
+      posture: "warning",
+      readyCount: 4,
+      warningCount: 3,
+    });
+    expect(model.readiness.items.map((item) => [item.key, item.status])).toEqual([
+      ["profile", "ready"],
+      ["routes", "ready"],
+      ["identity", "ready"],
+      ["audit", "warning"],
+      ["jobs", "warning"],
+      ["resources", "ready"],
+      ["capabilities", "warning"],
+    ]);
     expect(model.unhealthyCapabilities).toHaveLength(1);
     expect(model.recentAuditEvents.map((event) => event.action)).toEqual([
       "studio.audit.export",

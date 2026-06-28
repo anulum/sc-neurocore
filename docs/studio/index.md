@@ -54,6 +54,16 @@ The workbench keeps the first screen operational:
   exists, the action opens the owning surface for artifact download instead of
   creating a duplicate bundle.
 
+The next left-panel section is the Studio readiness panel. It derives from the
+same `/api/studio/operator/status` payload and turns deployment profile, route
+policy enforcement, identity mode, audit persistence, job-root configuration,
+runtime ceilings, and capability health into explicit `ready`, `warning`, or
+`blocked` rows. The panel is intentionally a UI projection rather than a second
+preflight authority: promotion still uses `sc-neurocore studio-preflight`, while
+the browser shows the same gaps early enough for a local operator to act on
+them. The Admin Operator section renders the same readiness rows beside the raw
+operator metrics.
+
 ## Model Browser
 
 Browse built-in neuron models by category, search by name, and run the model
@@ -443,6 +453,12 @@ runtime features:
   payload for the Admin panel. It also reports path-free worker and EDA process
   resource ceilings so operators can verify runtime bounds without reading
   environment files.
+- The browser readiness panel derives its promotion rows from the same
+  operator-status payload. It highlights disabled route-policy enforcement,
+  header-principal fallback, memory-only audit sinks, missing job roots,
+  incomplete runtime ceilings, unhealthy jobs, and unavailable capabilities as
+  visible operator actions, but it does not replace the fail-closed
+  `studio-preflight` gate used for deployment promotion.
 - Deployments can set `SC_NEUROCORE_STUDIO_AUDIT_ROTATION_BYTES` to rotate the
   active JSONL audit file before the next append once it reaches the configured
   byte limit. `SC_NEUROCORE_STUDIO_AUDIT_RETAINED_FILES` controls how many

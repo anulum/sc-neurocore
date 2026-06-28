@@ -3,6 +3,7 @@ import { useState, type FormEvent } from "react";
 import type { AdminShellModel } from "../adminShell";
 import type { StudioEvidenceBundleRequest } from "../api/client";
 import AdminAuditArchiveSection from "./AdminAuditArchiveSection";
+import StudioReadinessPanel from "./StudioReadinessPanel";
 
 export interface AdminPanelViewProps {
   auditLoading: boolean;
@@ -253,6 +254,12 @@ export default function AdminPanelView({
           <div><span>Login locked</span><span style={{ fontWeight: 700 }}>{model.operator.browserLoginLockedBuckets}</span></div>
           <div><span>Max retry</span><span style={{ fontWeight: 700 }}>{model.operator.browserLoginMaxRetryAfter}</span></div>
         </div>
+        <StudioReadinessPanel
+          model={model.readiness}
+          onOpenAdmin={() => void onLoadOperatorStatus()}
+          onRefresh={() => void onLoadOperatorStatus()}
+          primaryActionLabel="Refresh status"
+        />
         <div className="admin-audit-list">
           <div className="admin-audit-row">
             <span>schema</span>

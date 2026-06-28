@@ -686,6 +686,108 @@ body {
 .operator-workbench-status-ready { color: var(--success); }
 .operator-workbench-status-warning { color: var(--warning); }
 
+.studio-readiness {
+  display: grid;
+  gap: 8px;
+}
+
+.studio-readiness-heading {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 8px;
+  align-items: start;
+}
+
+.studio-readiness-title {
+  color: var(--text-secondary);
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.studio-readiness-headline {
+  color: var(--text-primary);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.studio-readiness-subhead,
+.studio-readiness-heading span {
+  color: var(--text-secondary);
+  font-size: 10px;
+}
+
+.studio-readiness-heading span {
+  white-space: nowrap;
+}
+
+.studio-readiness-list {
+  display: grid;
+  gap: 5px;
+}
+
+.studio-readiness-row {
+  display: grid;
+  grid-template-columns: 58px minmax(68px, 0.7fr) minmax(76px, 1fr) minmax(94px, 1.2fr);
+  gap: 6px;
+  align-items: center;
+  min-width: 0;
+  padding: 6px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--bg-secondary);
+  font-size: 10px;
+}
+
+.studio-readiness-row strong,
+.studio-readiness-row small,
+.studio-readiness-row em {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.studio-readiness-row strong {
+  color: var(--text-primary);
+}
+
+.studio-readiness-row small {
+  color: var(--text-secondary);
+}
+
+.studio-readiness-row em {
+  color: var(--text-muted);
+  font-style: normal;
+}
+
+.studio-readiness-actions {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.studio-readiness-actions button {
+  padding: 2px 7px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--bg-tertiary);
+  color: var(--text-secondary);
+  cursor: pointer;
+  font-size: 10px;
+}
+
+.studio-readiness-status-blocked,
+.studio-readiness-status-ready,
+.studio-readiness-status-warning {
+  font-family: var(--font-mono);
+  font-size: 9px;
+}
+
+.studio-readiness-status-blocked { color: var(--error); }
+.studio-readiness-status-ready { color: var(--success); }
+.studio-readiness-status-warning { color: var(--warning); }
+
 /* Right panel */
 .right-panel {
   display: flex;

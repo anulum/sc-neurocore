@@ -416,6 +416,13 @@ describe("AdminPanel", () => {
     expect(html).toContain("Login buckets");
     expect(html).toContain("Login locked");
     expect(html).toContain("Max retry");
+    expect(html).toContain("Readiness");
+    expect(html).toContain("Readiness has warnings");
+    expect(html).toContain("0 blockers / 3 warnings");
+    expect(html).toContain("Repair audit sink");
+    expect(html).toContain("Review timed-out jobs");
+    expect(html).toContain("Resolve unavailable capability");
+    expect(html).toContain("Refresh status");
     expect(html).toContain("900s");
     expect(html).toContain("Audit");
     expect(html).toContain("Browser auth");
