@@ -233,8 +233,12 @@ def compile_to_verilog(
         "",
         f"module {safe_module_name} #(",
     ]
-    lines.append(",\n".join(param_decls))
-    lines.append(")(")
+    if param_decls:
+        lines.append(",\n".join(param_decls))
+        lines.append(")(")
+    else:
+        # No parameters: an empty #() clause is malformed; drop it entirely.
+        lines[-1] = f"module {safe_module_name} ("
     lines.append("    input wire clk,")
     lines.append("    input wire rst_n,")
     lines.append(f"    input wire signed [{data_width - 1}:0] I_t,")

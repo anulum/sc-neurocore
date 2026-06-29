@@ -70,6 +70,15 @@ _INPUT_CURRENT = 50.0  # Higher than Python needs — overcomes Q8.8 precision l
 # All 5 models achieve 0% Python↔Verilog spike count gap.
 _COSIM_MODELS = ["lif", "lapicque", "quadratic_if", "izhikevich", "resonate_fire"]
 
+# Transcendental models reachable through the auto model→RTL path once the emitter
+# lowers negative LUT entries correctly, supports cosh, and omits an empty parameter
+# list. `theta` (phase oscillator) co-simulates near bit-true; `glif` and
+# `morris_lecar` lower to valid Verilog but Q8.8 + 16-entry LUTs are too coarse for a
+# spike-count parity claim, so they are validated at compile level only (honest).
+_TRANSCENDENTAL_COSIM_MODELS = ["theta"]
+_TRANSCENDENTAL_TOLERANCE_PCT = 5.0
+_TRANSCENDENTAL_COMPILE_MODELS = ["glif", "theta", "morris_lecar"]
+
 
 def _python_spike_count(model_name: str, n_steps: int, current: float) -> int:
     """Run a model in Python and return the spike count."""
@@ -636,3 +645,67 @@ class TestMultiPrecision:
             # Precision report must not crash
             report = q.precision_report(dt=0.01, params={"test": 1.0})
             assert "Fixed-point format" in report
+
+
+def _verilog_compiles(model_name: str) -> bool:
+    """Return whether a model's generated Verilog is accepted by iverilog."""
+    neuron = UniversalNeuron.from_schema(model_name)
+    module_name = f"sc_{model_name}"
+    verilog = neuron.to_verilog(module_name=module_name)
+    with tempfile.TemporaryDirectory() as tmpdir:
+        rtl_path = Path(tmpdir) / f"{module_name}.v"
+        out_path = Path(tmpdir) / f"{module_name}.out"
+        rtl_path.write_text(verilog)
+        result = subprocess.run(
+            ["iverilog", "-g2012", "-o", str(out_path), str(rtl_path)],
+            capture_output=True,
+            text=True,
+            timeout=30,
+        )
+        return result.returncode == 0
+
+
+@pytest.mark.skipif(not HAS_IVERILOG, reason="Icarus Verilog not available")
+class TestTranscendentalCoSimulation:
+    """Auto model→RTL for transcendental models (exp/tanh/cosh via LUTs).
+
+    Extends the polynomial cosim set: these models exercise the emitter's
+    negative-LUT-literal handling, cosh support, and empty-parameter-list fix.
+    """
+
+    @pytest.mark.parametrize("model_name", _TRANSCENDENTAL_COSIM_MODELS)
+    def test_both_produce_spikes(self, model_name: str) -> None:
+        assert _python_spike_count(model_name, _N_STEPS, _INPUT_CURRENT) > 0
+        assert _verilog_spike_count(model_name, _N_STEPS, _INPUT_CURRENT) > 0
+
+    @pytest.mark.parametrize("model_name", _TRANSCENDENTAL_COSIM_MODELS)
+    def test_spike_count_within_lut_tolerance(self, model_name: str) -> None:
+        py_spikes = _python_spike_count(model_name, _N_STEPS, _INPUT_CURRENT)
+        vlog_spikes = _verilog_spike_count(model_name, _N_STEPS, _INPUT_CURRENT)
+        assert py_spikes > 0 and vlog_spikes > 0
+        gap_pct = abs(py_spikes - vlog_spikes) / max(py_spikes, 1) * 100
+        assert gap_pct <= _TRANSCENDENTAL_TOLERANCE_PCT, (
+            f"{model_name} transcendental co-sim gap {gap_pct:.1f}% exceeds "
+            f"{_TRANSCENDENTAL_TOLERANCE_PCT}% (Python={py_spikes}, Verilog={vlog_spikes})"
+        )
+
+    @pytest.mark.parametrize("model_name", _TRANSCENDENTAL_COMPILE_MODELS)
+    def test_transcendental_model_lowers_to_valid_verilog(self, model_name: str) -> None:
+        """Transcendental models lower to iverilog-valid Verilog (no malformed literals).
+
+        This is the emitter-fix verification: before the negative-LUT-literal,
+        cosh, and empty-parameter fixes these models either raised
+        "Unsupported function" or emitted malformed `W'sd-N` literals. Q8.8 +
+        16-entry LUTs can be too coarse for a spike-count parity claim (glif,
+        morris_lecar), so this asserts valid synthesisable RTL, not spike parity.
+        """
+        verilog = UniversalNeuron.from_schema(model_name).to_verilog(module_name=f"sc_{model_name}")
+        assert "'sd-" not in verilog  # no malformed negative literals
+        assert _verilog_compiles(model_name)
+
+    def test_morris_lecar_lowers_cosh_to_a_lut(self) -> None:
+        """Morris-Lecar's cosh is lowered to a LUT, not left as an unsupported call."""
+        verilog = UniversalNeuron.from_schema("morris_lecar").to_verilog(
+            module_name="sc_morris_lecar"
+        )
+        assert "_cosh_lut" in verilog

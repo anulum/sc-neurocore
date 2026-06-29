@@ -266,6 +266,8 @@ class _VerilogExprEmitter(ast.NodeVisitor):
             return self._emit_lut_call("_sqrt_lut", arg, self._sqrt_lut_entries())
         elif fname == "tanh":
             return self._emit_lut_call("_tanh_lut", arg, self._tanh_lut_entries())
+        elif fname == "cosh":
+            return self._emit_lut_call("_cosh_lut", arg, self._cosh_lut_entries())
         elif fname in ("sigmoid", "expit"):
             return self._emit_lut_call("_sigmoid_lut", arg, self._sigmoid_lut_entries())
         elif fname == "sin":
@@ -306,7 +308,9 @@ class _VerilogExprEmitter(ast.NodeVisitor):
         lines = [f"reg signed [{dw - 1}:0] {result_wire};"]
         lines.append(f"always @(*) case ({idx_wire})")
         for i, val in enumerate(entries):
-            lines.append(f"    4'd{i}: {result_wire} = {dw}'sd{val};")
+            # A negative value must be written -W'sdN, not W'sd-N (malformed Verilog).
+            literal = f"-{dw}'sd{-val}" if val < 0 else f"{dw}'sd{val}"
+            lines.append(f"    4'd{i}: {result_wire} = {literal};")
         lines.append(f"    default: {result_wire} = {dw}'sd0;")
         lines.append("endcase")
         for line in lines:
@@ -337,6 +341,14 @@ class _VerilogExprEmitter(ast.NodeVisitor):
 
         points = [(-8 + i) for i in range(16)]
         return [int(round(math.tanh(x) * (1 << self.q.fraction))) for x in points]
+
+    def _cosh_lut_entries(self) -> list[int]:
+        import math
+
+        # cosh grows fast; saturate at the signed 16-bit max like the exp LUT so
+        # large arguments clamp rather than overflow the fixed-point word.
+        points = [(-8 + i) for i in range(16)]
+        return [min(int(round(math.cosh(x) * (1 << self.q.fraction))), 32767) for x in points]
 
     def _sigmoid_lut_entries(self) -> list[int]:
         import math
