@@ -707,6 +707,36 @@ class SCAvgPool2dNode:
         return summed / area
 
 
+def _resolve_conv_padding(spec: int | str, *, kernel: int, dilation: int, stride: int) -> int:
+    """Resolve a NIR convolution padding spec to a symmetric integer pad per side.
+
+    Integer specs pass through. ``"valid"`` maps to 0. ``"same"`` returns the
+    symmetric padding that preserves the spatial size; it requires stride 1 and an
+    even effective kernel span (``dilation * (kernel - 1)``), which holds for every
+    odd kernel. Even-kernel ``"same"`` would need asymmetric padding that this
+    symmetric path cannot represent, so it is rejected with an explicit message.
+    """
+    if isinstance(spec, str):
+        mode = spec.lower()
+        if mode == "valid":
+            return 0
+        if mode == "same":
+            if stride != 1:
+                raise ValueError("Conv 'same' padding requires stride 1")
+            span = dilation * (kernel - 1)
+            if span % 2 != 0:
+                raise ValueError(
+                    "Conv 'same' padding needs an even effective kernel span "
+                    "(dilation * (kernel - 1)); use explicit integer padding for "
+                    "this kernel/dilation"
+                )
+            return span // 2
+        raise ValueError(
+            f"Unsupported conv padding mode {spec!r}; use 'same', 'valid', or an integer"
+        )
+    return int(spec)
+
+
 @dataclass
 class SCConv1dNode:
     """1D convolution: y = conv1d(x, weight) + bias."""
@@ -722,11 +752,12 @@ class SCConv1dNode:
 
     @classmethod
     def from_nir(cls, name: str, node: nir.Conv1d) -> SCConv1dNode:
-        if isinstance(node.padding, str):
-            raise NotImplementedError(
-                f"String padding '{node.padding}' not supported; use integer padding"
-            )
-        padding = int(node.padding)
+        padding = _resolve_conv_padding(
+            node.padding,
+            kernel=int(node.weight.shape[2]),
+            dilation=node.dilation,
+            stride=node.stride,
+        )
         return cls(
             name=name,
             weight=node.weight,
@@ -780,13 +811,14 @@ class SCConv2dNode:
     @classmethod
     def from_nir(cls, name: str, node: nir.Conv2d) -> SCConv2dNode:
         stride = node.stride if isinstance(node.stride, tuple) else (node.stride, node.stride)
-        padding = node.padding if isinstance(node.padding, tuple) else (node.padding, node.padding)
-        if isinstance(padding[0], str):
-            raise NotImplementedError(
-                f"String padding '{padding[0]}' not supported; use integer padding"
-            )
         dilation = (
             node.dilation if isinstance(node.dilation, tuple) else (node.dilation, node.dilation)
+        )
+        kh, kw = int(node.weight.shape[2]), int(node.weight.shape[3])
+        raw_padding = node.padding if isinstance(node.padding, tuple) else (node.padding, node.padding)
+        padding = (
+            _resolve_conv_padding(raw_padding[0], kernel=kh, dilation=dilation[0], stride=stride[0]),
+            _resolve_conv_padding(raw_padding[1], kernel=kw, dilation=dilation[1], stride=stride[1]),
         )
         return cls(
             name=name,
