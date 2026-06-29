@@ -608,6 +608,11 @@ impl MarderSTGNeuron {
         for i in 0..13 {
             nxt[i] = y[i] + (dt / 6.0) * (k1[i] + 2.0 * k2[i] + 2.0 * k3[i] + k4[i]);
         }
+        // Fail closed: an out-of-regime drive/timestep can drive the stiff RK4
+        // step non-finite; keep the last finite state instead of propagating it.
+        if !nxt.iter().all(|value| value.is_finite()) {
+            return 0;
+        }
         self.v = nxt[0];
         self.m_na = nxt[1].clamp(0.0, 1.0);
         self.h_na = nxt[2].clamp(0.0, 1.0);

@@ -66,8 +66,12 @@ init = 0.05
 
 [parameters.cm]
 default = 1.0
-unit = ""
-meaning = ""
+unit = "uF/cm^2"
+meaning = "membrane capacitance"
+range = [
+    0.1,
+    10.0,
+]
 
 [parameters.g_na]
 default = 200.0
@@ -179,32 +183,48 @@ range = [
 
 [parameters.ca_out]
 default = 3000.0
-unit = ""
-meaning = ""
+unit = "uM"
+meaning = "extracellular calcium concentration for the Nernst reversal"
+range = [
+    100.0,
+    10000.0,
+]
 
 [parameters.ca_rest]
 default = 0.05
-unit = ""
-meaning = ""
+unit = "uM"
+meaning = "resting intracellular calcium concentration"
+range = [
+    0.0,
+    1.0,
+]
 
 [parameters.tau_ca]
 default = 20.0
-unit = ""
-meaning = ""
+unit = "ms"
+meaning = "calcium relaxation time constant"
+range = [
+    1.0,
+    1000.0,
+]
 
 [parameters.f_ca]
 default = 0.94
 unit = "cm^2/(uA*ms)"
 meaning = "calcium influx coefficient converting calcium current into concentration change"
 range = [
-    0.0001,
-    0.01,
+    0.0,
+    5.0,
 ]
 
 [parameters.celsius]
 default = 10.0
-unit = ""
-meaning = ""
+unit = "degC"
+meaning = "temperature for the Nernst calcium reversal"
+range = [
+    0.0,
+    40.0,
+]
 
 [parameters.v_threshold]
 default = -20.0
