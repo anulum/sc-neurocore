@@ -325,8 +325,9 @@ class _VerilogExprEmitter(ast.NodeVisitor):
     def _exp_lut_entries(self) -> list[int]:
         import math
 
+        cap = (1 << (self.q.data_width - 1)) - 1  # signed max for the word; not a fixed 32767
         points = [(-8 + i) for i in range(16)]
-        return [min(int(round(math.exp(x) * (1 << self.q.fraction))), 32767) for x in points]
+        return [min(int(round(math.exp(x) * (1 << self.q.fraction))), cap) for x in points]
 
     def _log_lut_entries(self) -> list[int]:
         import math
@@ -350,10 +351,11 @@ class _VerilogExprEmitter(ast.NodeVisitor):
     def _cosh_lut_entries(self) -> list[int]:
         import math
 
-        # cosh grows fast; saturate at the signed 16-bit max like the exp LUT so
-        # large arguments clamp rather than overflow the fixed-point word.
+        # cosh grows fast; saturate at the word's signed max (width-aware, not a
+        # fixed 32767) so large arguments clamp rather than overflow.
+        cap = (1 << (self.q.data_width - 1)) - 1
         points = [(-8 + i) for i in range(16)]
-        return [min(int(round(math.cosh(x) * (1 << self.q.fraction))), 32767) for x in points]
+        return [min(int(round(math.cosh(x) * (1 << self.q.fraction))), cap) for x in points]
 
     def _sigmoid_lut_entries(self) -> list[int]:
         import math

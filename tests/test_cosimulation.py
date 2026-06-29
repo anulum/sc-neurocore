@@ -422,6 +422,34 @@ class TestQ1616Precision:
         vlog_spikes = _verilog_spike_count_q1616("lif", 50, 0.0)
         assert vlog_spikes == 0
 
+    def test_glif_q1616_parity(self) -> None:
+        """GLIF (transcendental) co-simulates near bit-true at Q16.16.
+
+        At Q8.8 the gap is large/coarse; the wider word plus the width-aware exp LUT
+        cap (no longer a fixed 32767) close it to ~0% over the baseline window.
+        """
+        py_spikes = _python_spike_count("glif", _N_STEPS, _INPUT_CURRENT)
+        vlog_spikes = _verilog_spike_count_q1616("glif", _N_STEPS, _INPUT_CURRENT)
+        assert py_spikes > 0 and vlog_spikes > 0
+        gap_pct = abs(py_spikes - vlog_spikes) / max(py_spikes, 1) * 100
+        assert gap_pct <= 2.0, (
+            f"GLIF Q16.16 gap {gap_pct:.1f}% (Python={py_spikes}, Verilog={vlog_spikes})"
+        )
+
+    def test_morris_lecar_q1616_fires(self) -> None:
+        """Morris-Lecar (cosh gating) now fires at Q16.16.
+
+        At Q8.8 the exp/cosh LUTs saturated at the old fixed 32767 cap and the model
+        never spiked; the width-aware cap lets it fire at Q16.16. Spike-count parity
+        is still limited by the coarse 16-entry transcendental LUTs (a finer-LUT
+        follow-up), so this asserts firing, not a tight count match.
+        """
+        py_spikes = _python_spike_count("morris_lecar", 300, 120.0)
+        vlog_spikes = _verilog_spike_count_q1616("morris_lecar", 300, 120.0)
+        assert py_spikes > 0 and vlog_spikes > 0, (
+            f"Morris-Lecar must fire at Q16.16 (Python={py_spikes}, Verilog={vlog_spikes})"
+        )
+
 
 # ══════════════════════════════════════════════════════════════════════
 # Generic multi-precision co-simulation infrastructure
