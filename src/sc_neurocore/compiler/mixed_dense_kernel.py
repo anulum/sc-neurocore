@@ -38,6 +38,7 @@ import numpy as np
 import numpy.typing as npt
 
 from sc_neurocore.accel.backend_order import FASTEST_FIRST_BACKENDS
+from sc_neurocore.accel.backend_selection import select_backend_order
 
 if TYPE_CHECKING:
     from collections.abc import Callable, Mapping
@@ -280,7 +281,7 @@ def mixed_dense_forward_batch(
                 f"unknown backend {backend!r}; choose from {('auto', *FASTEST_FIRST_BACKENDS)}"
             )
         return _BACKEND_DISPATCH[backend](weights_q88, inputs_q1616, n_outputs, n_inputs)
-    for name in FASTEST_FIRST_BACKENDS:
+    for name in select_backend_order("mixed_dense_forward_batch_q88_q1616"):
         if name == "python":
             break
         try:

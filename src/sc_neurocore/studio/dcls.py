@@ -26,6 +26,7 @@ from typing import Any
 
 import numpy as np
 
+from sc_neurocore.accel.backend_selection import select_backend_order
 from sc_neurocore.scpn.dcls_tent_kernel import (
     DEFAULT_FRACTION,
     FASTEST_FIRST_BACKENDS,
@@ -156,7 +157,7 @@ def dcls_kernel_info() -> dict[str, Any]:
             "parity": "bit-exact (tolerance 0)",
         },
         "backends": probe_backends(),
-        "backend_order": list(FASTEST_FIRST_BACKENDS),
+        "backend_order": list(select_backend_order("dcls_max_forward_batch_q88")),
         "rtl_modules": [f for f in _RTL_FILES if (_REPO_ROOT / f).is_file()],
         "synthesis_target": "Xilinx Zynq UltraScale+ ZU3EG",
     }

@@ -32,6 +32,7 @@ import numpy as np
 import numpy.typing as npt
 
 from sc_neurocore.accel.backend_order import FASTEST_FIRST_BACKENDS
+from sc_neurocore.accel.backend_selection import select_backend_order
 
 if TYPE_CHECKING:
     from collections.abc import Callable, Mapping
@@ -343,7 +344,7 @@ def adc_to_spike_windows(
                 f"unknown backend {backend!r}; choose from {('auto', *FASTEST_FIRST_BACKENDS)}"
             )
         return _BACKEND_DISPATCH[backend](samples, cfg)
-    for name in FASTEST_FIRST_BACKENDS:
+    for name in select_backend_order("adc_to_spike_windows_q"):
         if name == "python":
             break
         try:

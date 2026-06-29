@@ -44,6 +44,7 @@ import numpy as np
 import numpy.typing as npt
 
 from sc_neurocore.accel.backend_order import FASTEST_FIRST_BACKENDS
+from sc_neurocore.accel.backend_selection import select_backend_order
 
 if TYPE_CHECKING:
     from collections.abc import Callable, Mapping
@@ -486,7 +487,7 @@ def dcls_max_forward_batch(
                 f"unknown backend {backend!r}; choose from {('auto', *FASTEST_FIRST_BACKENDS)}"
             )
         return _BACKEND_DISPATCH[backend](spikes, weights_q88, centres_q88, sigmas_q88, n_taps)
-    for name in FASTEST_FIRST_BACKENDS:
+    for name in select_backend_order("dcls_max_forward_batch_q88"):
         if name == "python":
             break
         try:
