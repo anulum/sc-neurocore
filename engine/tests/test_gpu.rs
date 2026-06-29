@@ -12,8 +12,9 @@
 
 #![cfg(feature = "gpu")]
 
-use sc_neurocore_engine::gpu::{is_available, GpuDenseLayer};
+use sc_neurocore_engine::gpu::{is_available, GpuDenseLayer, GpuLifBatch};
 use sc_neurocore_engine::layer::DenseLayer;
+use sc_neurocore_engine::neuron::FixedPointLif;
 
 /// Skip-guard: all tests in this file require a real GPU.
 fn require_gpu() -> bool {
@@ -228,6 +229,140 @@ fn gpu_one_inputs_match_cpu() {
         max_diff < tolerance,
         "All-ones: GPU and CPU differ by {max_diff:.6} (tolerance {tolerance:.3})"
     );
+}
+
+// ---- Fixed-point LIF batch: GPU vs CPU bit-exact parity ----
+
+/// CPU reference: run `n_neurons` LIF neurons (constant current, zero noise) for
+/// `n_steps`, mirroring `batch_lif_run_multi`. Returns row-major spikes/voltages.
+#[allow(clippy::too_many_arguments)]
+fn cpu_lif_batch(
+    n_neurons: usize,
+    n_steps: usize,
+    leak_k: i16,
+    gain_k: i16,
+    currents: &[i32],
+    data_width: u32,
+    fraction: u32,
+    v_rest: i16,
+    v_reset: i16,
+    v_threshold: i16,
+    refractory_period: i32,
+) -> (Vec<i32>, Vec<i32>) {
+    let mut spikes = vec![0i32; n_neurons * n_steps];
+    let mut voltages = vec![0i32; n_neurons * n_steps];
+    for neuron in 0..n_neurons {
+        let mut lif = FixedPointLif::new(
+            data_width,
+            fraction,
+            v_rest,
+            v_reset,
+            v_threshold,
+            refractory_period,
+        );
+        for step in 0..n_steps {
+            let (s, v) = lif.step(leak_k, gain_k, currents[neuron] as i16, 0);
+            spikes[neuron * n_steps + step] = s;
+            voltages[neuron * n_steps + step] = v as i32;
+        }
+    }
+    (spikes, voltages)
+}
+
+#[test]
+fn gpu_lif_creation() {
+    if !require_gpu() {
+        return;
+    }
+    let batch = GpuLifBatch::try_new();
+    assert!(batch.is_some(), "GpuLifBatch::try_new should succeed");
+    assert!(!batch.unwrap().gpu_name().is_empty());
+}
+
+#[test]
+fn gpu_lif_bit_exact_with_cpu() {
+    if !require_gpu() {
+        return;
+    }
+    let n_neurons = 64;
+    let n_steps = 50;
+    let leak_k: i16 = 16;
+    let gain_k: i16 = 256; // Q8.8 unit gain.
+    let (data_width, fraction) = (16u32, 8u32);
+    let (v_rest, v_reset, v_threshold, refractory) = (0i16, 0i16, 256i16, 2i32);
+    // Current sweep: some neurons stay sub-threshold, some spike and enter refractory.
+    let currents: Vec<i32> = (0..n_neurons as i32).map(|n| n * 10).collect();
+
+    let gpu = GpuLifBatch::try_new().unwrap();
+    let result = gpu.run(
+        n_neurons,
+        n_steps,
+        leak_k,
+        gain_k,
+        &currents,
+        data_width,
+        fraction,
+        v_rest,
+        v_reset,
+        v_threshold,
+        refractory,
+        0,
+    );
+    let (cpu_spikes, cpu_volts) = cpu_lif_batch(
+        n_neurons,
+        n_steps,
+        leak_k,
+        gain_k,
+        &currents,
+        data_width,
+        fraction,
+        v_rest,
+        v_reset,
+        v_threshold,
+        refractory,
+    );
+
+    assert_eq!(result.spikes, cpu_spikes, "spikes must be bit-exact");
+    assert_eq!(result.voltages, cpu_volts, "voltages must be bit-exact");
+    // Sanity: the workload actually spikes (otherwise parity is vacuous).
+    assert!(
+        result.spikes.contains(&1),
+        "test workload should produce spikes"
+    );
+}
+
+#[test]
+fn gpu_lif_negative_rest_bit_exact() {
+    if !require_gpu() {
+        return;
+    }
+    // Negative resting potential exercises the signed leak/diff path.
+    let n_neurons = 32;
+    let n_steps = 40;
+    let currents: Vec<i32> = (0..n_neurons as i32).map(|n| 200 + n * 20).collect();
+    let gpu = GpuLifBatch::try_new().unwrap();
+    let result = gpu.run(
+        n_neurons, n_steps, 32, 256, &currents, 16, 8, -64, -64, 300, 3, 0,
+    );
+    let (cpu_spikes, cpu_volts) = cpu_lif_batch(
+        n_neurons, n_steps, 32, 256, &currents, 16, 8, -64, -64, 300, 3,
+    );
+    assert_eq!(result.spikes, cpu_spikes);
+    assert_eq!(result.voltages, cpu_volts);
+}
+
+#[test]
+fn gpu_lif_shape_and_empty() {
+    if !require_gpu() {
+        return;
+    }
+    let gpu = GpuLifBatch::try_new().unwrap();
+    let result = gpu.run(8, 5, 16, 256, &[100; 8], 16, 8, 0, 0, 256, 2, 0);
+    assert_eq!(result.spikes.len(), 40);
+    assert_eq!(result.voltages.len(), 40);
+    // Zero-sized batch returns empty without dispatching.
+    let empty = gpu.run(0, 5, 16, 256, &[], 16, 8, 0, 0, 256, 2, 0);
+    assert!(empty.spikes.is_empty());
 }
 
 #[test]

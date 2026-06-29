@@ -4,11 +4,13 @@
 // ORCID: 0009-0009-3560-0851
 // Contact: www.anulum.li | protoscience@anulum.li
 
-//! GPU vs CPU benchmark comparison for DenseLayer forward pass.
+//! GPU vs CPU benchmark comparison for DenseLayer forward pass and LIF batches.
 
 use criterion::{criterion_group, criterion_main, BenchmarkId, Criterion};
-use sc_neurocore_engine::gpu::GpuDenseLayer;
+use rayon::prelude::*;
+use sc_neurocore_engine::gpu::{GpuDenseLayer, GpuLifBatch};
 use sc_neurocore_engine::layer::DenseLayer;
+use sc_neurocore_engine::neuron::FixedPointLif;
 
 fn bench_gpu_vs_cpu(c: &mut Criterion) {
     let configs: &[(usize, usize)] = &[(64, 32), (128, 64), (256, 128), (512, 256), (1000, 500)];
@@ -79,5 +81,46 @@ fn bench_gpu_batch(c: &mut Criterion) {
     group.finish();
 }
 
-criterion_group!(benches, bench_gpu_vs_cpu, bench_gpu_batch);
+/// CPU reference for the LIF batch: rayon-parallel over neurons, mirroring the
+/// `batch_lif_run_multi` hot path. Returns total spikes to defeat dead-code elision.
+fn cpu_lif_batch(n_neurons: usize, n_steps: usize, currents: &[i32]) -> usize {
+    (0..n_neurons)
+        .into_par_iter()
+        .map(|n| {
+            let mut lif = FixedPointLif::new(16, 8, 0, 0, 256, 2);
+            let mut spikes = 0usize;
+            for _ in 0..n_steps {
+                let (s, _) = lif.step(16, 256, currents[n] as i16, 0);
+                spikes += s as usize;
+            }
+            spikes
+        })
+        .sum()
+}
+
+/// LIF batch: GPU (one thread per neuron, time loop in-kernel) vs rayon CPU, across
+/// neuron counts — used to locate the crossover where the GPU overtakes the CPU.
+fn bench_gpu_lif(c: &mut Criterion) {
+    let sizes: &[usize] = &[256, 1024, 4096, 16_384, 65_536];
+    let n_steps = 100;
+    let mut group = c.benchmark_group("gpu_lif_batch");
+
+    for &n in sizes {
+        let currents: Vec<i32> = (0..n as i32).map(|i| 100 + (i % 500)).collect();
+
+        group.bench_with_input(BenchmarkId::new("cpu", n), &currents, |b, curr| {
+            b.iter(|| cpu_lif_batch(n, n_steps, curr));
+        });
+
+        if let Some(gpu) = GpuLifBatch::try_new() {
+            group.bench_with_input(BenchmarkId::new("gpu", n), &currents, |b, curr| {
+                b.iter(|| gpu.run(n, n_steps, 16, 256, curr, 16, 8, 0, 0, 256, 2, 0));
+            });
+        }
+    }
+
+    group.finish();
+}
+
+criterion_group!(benches, bench_gpu_vs_cpu, bench_gpu_batch, bench_gpu_lif);
 criterion_main!(benches);

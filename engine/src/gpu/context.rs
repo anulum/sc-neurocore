@@ -18,8 +18,10 @@ pub struct GpuContext {
     pub queue: wgpu::Queue,
     pub encode_pipeline: wgpu::ComputePipeline,
     pub accumulate_pipeline: wgpu::ComputePipeline,
+    pub lif_pipeline: wgpu::ComputePipeline,
     pub encode_bind_group_layout: wgpu::BindGroupLayout,
     pub accumulate_bind_group_layout: wgpu::BindGroupLayout,
+    pub lif_bind_group_layout: wgpu::BindGroupLayout,
     pub adapter_name: String,
 }
 
@@ -82,6 +84,12 @@ impl GpuContext {
             source: wgpu::ShaderSource::Wgsl(include_str!("shaders/accumulate.wgsl").into()),
         });
 
+        // Compile fixed-point LIF batch-step shader.
+        let lif_shader = device.create_shader_module(wgpu::ShaderModuleDescriptor {
+            label: Some("lif_step"),
+            source: wgpu::ShaderSource::Wgsl(include_str!("shaders/lif_step.wgsl").into()),
+        });
+
         // Bind group layouts.
         let encode_bgl = device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
             label: Some("encode_bgl"),
@@ -98,6 +106,16 @@ impl GpuContext {
                 bgl_storage_ro(0), // packed_weights
                 bgl_storage_ro(1), // packed_inputs
                 bgl_storage_rw(2), // output
+                bgl_uniform(3),    // params
+            ],
+        });
+
+        let lif_bgl = device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
+            label: Some("lif_bgl"),
+            entries: &[
+                bgl_storage_ro(0), // currents
+                bgl_storage_rw(1), // spikes_out
+                bgl_storage_rw(2), // voltages_out
                 bgl_uniform(3),    // params
             ],
         });
@@ -132,13 +150,29 @@ impl GpuContext {
                 cache: None,
             });
 
+        let lif_pl = device.create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
+            label: Some("lif_pl"),
+            bind_group_layouts: &[Some(&lif_bgl)],
+            immediate_size: 0,
+        });
+        let lif_pipeline = device.create_compute_pipeline(&wgpu::ComputePipelineDescriptor {
+            label: Some("lif_pipeline"),
+            layout: Some(&lif_pl),
+            module: &lif_shader,
+            entry_point: Some("lif_step_main"),
+            compilation_options: Default::default(),
+            cache: None,
+        });
+
         Some(GpuContext {
             device,
             queue,
             encode_pipeline,
             accumulate_pipeline,
+            lif_pipeline,
             encode_bind_group_layout: encode_bgl,
             accumulate_bind_group_layout: accum_bgl,
+            lif_bind_group_layout: lif_bgl,
             adapter_name,
         })
     }
