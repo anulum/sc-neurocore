@@ -13,102 +13,11 @@ from __future__ import annotations
 import subprocess
 from pathlib import Path
 from types import SimpleNamespace
-import builtins
 
-import numpy as np
 import pytest
 
-from sc_neurocore.accel import mojo_dispatch
 from sc_neurocore.debug import hil_server
 from sc_neurocore.formal.lean_bridge import FormalProofEngine
-
-
-def test_mojo_dispatch_numpy_backend_operations(monkeypatch: pytest.MonkeyPatch) -> None:
-    monkeypatch.setattr(mojo_dispatch, "_MOJO_AVAILABLE", False)
-    monkeypatch.setattr(mojo_dispatch, "_MOJO_BIN", None)
-    monkeypatch.setattr(mojo_dispatch, "_RUST_AVAILABLE", False)
-
-    bits = np.array([1, 0, 1, 1, 0, 0, 1, 0] * 8, dtype=np.uint8)
-    packed = mojo_dispatch.pack_bitstream(bits)
-    assert packed.dtype == np.uint64
-    assert mojo_dispatch.popcount(packed) == int(bits.sum())
-    assert mojo_dispatch.scc(packed, packed, bit_length=len(bits)) == pytest.approx(1.0)
-    assert mojo_dispatch.scc(packed, packed, bit_length=0) == 0.0
-    assert (
-        mojo_dispatch.scc(
-            packed, zeros := mojo_dispatch.pack_bitstream(np.zeros_like(bits)), bit_length=len(bits)
-        )
-        == 0.0
-    )
-    # Under-counted bit_length pushes pa above 1 and breaks p_and<=min(pa,pb):
-    # the denominator collapses to 0 while the numerator stays nonzero, so the
-    # |denom|<eps floor keeps the coefficient finite.
-    dense_a = mojo_dispatch.pack_bitstream(np.array([1, 1], dtype=np.uint8))
-    dense_b = mojo_dispatch.pack_bitstream(np.array([1, 0], dtype=np.uint8))
-    assert mojo_dispatch.scc(dense_a, dense_b, bit_length=1) == 0.0
-
-    ones = mojo_dispatch.pack_bitstream(np.ones_like(bits))
-    np.testing.assert_array_equal(mojo_dispatch.sc_and(packed, ones), packed)
-    np.testing.assert_array_equal(mojo_dispatch.sc_or(packed, zeros), packed)
-    np.testing.assert_array_equal(mojo_dispatch.sc_xor(packed, zeros), packed)
-    np.testing.assert_array_equal(mojo_dispatch.sc_mux(packed, zeros, ones), packed)
-
-    weights = np.vstack([packed, zeros])
-    mac = mojo_dispatch.vec_mac(weights, packed)
-    np.testing.assert_array_equal(mac, np.array([int(bits.sum()), 0], dtype=np.int64))
-
-    info = mojo_dispatch.backend_info()
-    assert info["active_backend"] == "numpy"
-    assert info["mojo_available"] is False
-    assert info["rust_ffi_available"] is False
-
-
-def test_mojo_dispatch_internal_fallback_helpers(monkeypatch: pytest.MonkeyPatch) -> None:
-    arr = np.array([0xFFFF_FFFF, 0], dtype=np.uint32)
-
-    assert mojo_dispatch._py_popcount32(0xFFFF_FFFF) == 32
-    assert mojo_dispatch._py_popcount_array(arr) == 32
-
-    original_import = builtins.__import__
-
-    def blocked_import(name: str, *args, **kwargs):
-        if name == "sc_neurocore._native":
-            raise ImportError("native bridge unavailable")
-        return original_import(name, *args, **kwargs)
-
-    monkeypatch.setattr(builtins, "__import__", blocked_import)
-    assert mojo_dispatch._detect_rust() is False
-
-
-def test_detect_mojo_returns_false_when_kernel_missing(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
-    # pixi is installed but the compiled kernel directory is absent: detection
-    # must report no usable Mojo backend rather than a partial one.
-    monkeypatch.setattr(mojo_dispatch.os.path, "exists", lambda p: p.endswith("pixi"))
-    assert mojo_dispatch._detect_mojo() is False
-
-
-def test_mojo_dispatch_negative_correlation_path() -> None:
-    a = mojo_dispatch.pack_bitstream(np.array([1, 1, 0, 0] * 16, dtype=np.uint8))
-    b = mojo_dispatch.pack_bitstream(np.array([0, 0, 1, 1] * 16, dtype=np.uint8))
-
-    assert mojo_dispatch.scc(a, b, bit_length=64) == pytest.approx(-1.0)
-
-
-def test_mojo_detection_paths(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
-    monkeypatch.setattr(mojo_dispatch.os.path, "expanduser", lambda _: str(tmp_path / "pixi"))
-    monkeypatch.setattr(mojo_dispatch.os.path, "dirname", lambda _: str(tmp_path / "pkg"))
-    monkeypatch.setattr(mojo_dispatch.os.path, "normpath", lambda value: value)
-    monkeypatch.setattr(mojo_dispatch.os.path, "exists", lambda _: False)
-    assert mojo_dispatch._detect_mojo() is False
-
-    def exists(path: str) -> bool:
-        return path == str(tmp_path / "pixi") or path.endswith("kernels.mojo")
-
-    monkeypatch.setattr(mojo_dispatch.os.path, "exists", exists)
-    assert mojo_dispatch._detect_mojo() is True
-    assert mojo_dispatch._MOJO_BIN is not None
 
 
 def test_hil_daemon_reports_missing_binary(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:

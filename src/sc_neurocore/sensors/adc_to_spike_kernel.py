@@ -31,11 +31,10 @@ from typing import TYPE_CHECKING
 import numpy as np
 import numpy.typing as npt
 
+from sc_neurocore.accel.backend_order import FASTEST_FIRST_BACKENDS
+
 if TYPE_CHECKING:
     from collections.abc import Callable, Mapping
-
-#: Acceleration backends in fastest-measured-first dispatch order.
-FASTEST_FIRST_BACKENDS = ("rust", "mojo", "julia", "go", "python")
 
 
 @dataclass(frozen=True)

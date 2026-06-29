@@ -23,10 +23,9 @@ from abc import ABC, abstractmethod
 import numpy as np
 import numpy.typing as npt
 
+from .backend_order import ACCELERATORS
 from .sc_inference import sc_forward_numpy
 
-#: Accelerator backends in fastest-measured-first order (numpy is the floor).
-ACCELERATORS = ("rust", "mojo", "julia", "go")
 #: Full probe order including the always-available numpy fallback.
 PRIORITY = (*ACCELERATORS, "numpy")
 

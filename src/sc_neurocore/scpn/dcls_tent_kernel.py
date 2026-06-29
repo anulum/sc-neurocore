@@ -43,6 +43,8 @@ from typing import TYPE_CHECKING
 import numpy as np
 import numpy.typing as npt
 
+from sc_neurocore.accel.backend_order import FASTEST_FIRST_BACKENDS
+
 if TYPE_CHECKING:
     from collections.abc import Callable, Mapping
 
@@ -57,9 +59,6 @@ _I32_MIN = -(1 << 31)
 #: Accumulator magnitudes at which the Q8.8 output saturates.
 I16_MAX_Q16_16 = _I16_MAX << DEFAULT_FRACTION
 I16_MIN_Q16_16 = _I16_MIN << DEFAULT_FRACTION
-
-#: Acceleration backends in fastest-measured-first dispatch order.
-FASTEST_FIRST_BACKENDS = ("rust", "mojo", "julia", "go", "python")
 
 
 @dataclass(frozen=True)
