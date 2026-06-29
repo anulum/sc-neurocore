@@ -14,7 +14,7 @@ import sys
 
 if sys.version_info >= (3, 11):
     from importlib.resources.abc import Traversable
-else:
+else:  # pragma: no cover - import path exercised only on Python < 3.11
     from importlib.abc import Traversable
 
 BASELINE_PRIMITIVE_RTL: tuple[str, ...] = (

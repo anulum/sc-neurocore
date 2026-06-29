@@ -10,7 +10,9 @@
 
 from __future__ import annotations
 
+import logging
 import os
+import subprocess
 import tempfile
 
 import pytest
@@ -76,3 +78,59 @@ def test_compiler_pipeline_rejects_unknown_synthesis_target() -> None:
 
         with pytest.raises(ValueError, match="Unknown target FPGA"):
             pipeline.run_synthesis(verilog_path, target_fpga="nope")
+
+
+def test_compiler_pipeline_deletes_partial_verilog_on_firtool_failure(monkeypatch) -> None:
+    """A partial Verilog file left behind by a failed firtool run is removed."""
+
+    def fake_firtool(cmd, check):
+        out_path = cmd[cmd.index("-o") + 1]
+        with open(out_path, "w") as handle:
+            handle.write("// partial broken output\n")
+        raise subprocess.CalledProcessError(1, cmd)
+
+    with tempfile.TemporaryDirectory() as tmp:
+        monkeypatch.setattr("subprocess.run", fake_firtool)
+        pipeline = CompilerPipeline(work_dir=tmp)
+        partial = os.path.join(pipeline.work_dir, "broken.v")
+
+        with pytest.raises(SCCompilerError, match="firtool failed"):
+            pipeline.compile_mlir_to_verilog("module test();", output_name="broken")
+
+        assert not os.path.exists(partial)
+
+
+def test_compiler_pipeline_tolerates_missing_yosys(monkeypatch, caplog) -> None:
+    """A missing or failing yosys is logged, not raised, and the json path is returned."""
+
+    def fake_yosys(cmd, check):
+        raise FileNotFoundError("yosys")
+
+    with tempfile.TemporaryDirectory() as tmp:
+        monkeypatch.setattr("subprocess.run", fake_yosys)
+        pipeline = CompilerPipeline(work_dir=tmp)
+        v_path = os.path.join(pipeline.work_dir, "design.v")
+
+        with caplog.at_level(logging.WARNING):
+            json_path = pipeline.run_synthesis(v_path, target_fpga="ice40")
+
+        assert json_path == os.path.join(pipeline.work_dir, "design.json")
+        assert any("yosys failed or not found" in record.message for record in caplog.records)
+
+
+def test_compiler_pipeline_tolerates_missing_nextpnr(monkeypatch, caplog) -> None:
+    """A missing or failing nextpnr is logged, not raised, and the asc path is returned."""
+
+    def fake_nextpnr(cmd, check):
+        raise subprocess.CalledProcessError(127, cmd)
+
+    with tempfile.TemporaryDirectory() as tmp:
+        monkeypatch.setattr("subprocess.run", fake_nextpnr)
+        pipeline = CompilerPipeline(work_dir=tmp)
+        json_path = os.path.join(pipeline.work_dir, "design.json")
+
+        with caplog.at_level(logging.WARNING):
+            asc_path = pipeline.run_pnr(json_path, target_device="up5k")
+
+        assert asc_path == os.path.join(pipeline.work_dir, "design.asc")
+        assert any("nextpnr failed or not found" in record.message for record in caplog.records)

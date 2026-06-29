@@ -28,6 +28,18 @@ def test_generate_bernoulli_bitstream():
     assert np.isclose(p_hat, p, atol=0.05)  # Statistical check
 
 
+def test_rng_uniform_is_bounded_shaped_and_deterministic():
+    low, high, size = -2.0, 3.0, 5000
+    samples = RNG(seed=7).uniform(low=low, high=high, size=size)
+
+    assert samples.shape == (size,)
+    assert samples.min() >= low
+    assert samples.max() < high
+    # Same seed reproduces the stream; a scalar draw returns a Python float.
+    assert np.array_equal(samples, RNG(seed=7).uniform(low=low, high=high, size=size))
+    assert isinstance(float(RNG(seed=7).uniform(low=low, high=high)), float)
+
+
 def test_conversions():
     x_min = 0.0
     x_max = 10.0
