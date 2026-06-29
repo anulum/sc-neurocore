@@ -152,5 +152,16 @@ class TestMLIRExport(unittest.TestCase):
         self.assertEqual(mlir.count("scpn.and"), 100)
 
 
+class TestMlirTypeFormatting(unittest.TestCase):
+    def test_scalar_shapes_use_the_bare_element_type(self):
+        exporter = CompilerExporter()
+        self.assertEqual(exporter._format_mlir_type((), "i1"), "i1")
+        self.assertEqual(exporter._format_mlir_type((1,), "i8"), "i8")
+
+    def test_multidimensional_shapes_use_a_tensor_type(self):
+        exporter = CompilerExporter()
+        self.assertEqual(exporter._format_mlir_type((2, 3), "i1"), "tensor<2x3xi1>")
+
+
 if __name__ == "__main__":
     unittest.main()

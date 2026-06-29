@@ -105,7 +105,7 @@ def scale_free(n: int, m: int, weight: float, seed: int = 42) -> CSR:
         total = probs.sum()
         if total > 0:
             probs /= total
-        else:
+        else:  # pragma: no cover - unreachable: the m seed nodes always carry degree, so total > 0 for m >= 1
             probs[:] = 1.0 / src
         chosen = rng.choice(src, size=min(m, src), replace=False, p=probs)
         for tgt in chosen:

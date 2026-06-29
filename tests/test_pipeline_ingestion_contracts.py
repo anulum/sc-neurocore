@@ -33,3 +33,12 @@ def test_multimodal_dataset_returns_named_sample_mapping() -> None:
 
     assert isinstance(sample, dict)
     assert {"eeg", "emg"} <= set(sample)
+
+
+def test_data_ingestor_zeros_a_constant_modality() -> None:
+    # A modality with no dynamic range cannot be min-max normalised; it must
+    # collapse to zeros rather than divide by a zero range.
+    dataset = DataIngestor().prepare_dataset({"flat": [5.0, 5.0, 5.0], "varied": [0.0, 1.0, 2.0]})
+
+    assert np.array_equal(dataset.data["flat"], np.zeros(3))
+    assert dataset.data["varied"].max() == 1.0 and dataset.data["varied"].min() == 0.0
