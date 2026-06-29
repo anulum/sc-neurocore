@@ -131,17 +131,70 @@ _NEURON_TEMPLATES: dict[str, dict[str, Any]] = {
 }
 
 
-def _require_homogeneous_param(values: np.ndarray[Any, Any], label: str) -> float:
-    """Return the scalar value of a per-neuron parameter or fail closed."""
+def _representative_param(values: np.ndarray[Any, Any], label: str) -> float:
+    """Return the reference (first-neuron) value of a per-neuron parameter.
+
+    This value becomes the default of the shared, parameterised RTL neuron module.
+    A heterogeneous population is no longer rejected: every neuron whose own
+    quantised parameter differs from this default is instantiated with an explicit
+    Verilog parameter override at the top level (see :func:`_neuron_param_override`).
+    """
     arr = np.asarray(values, dtype=np.float64).reshape(-1)
     if arr.size == 0:
         raise ValueError(f"Empty parameter array for {label}")
-    if not np.allclose(arr, arr[0], rtol=0.0, atol=1e-12):
-        raise ValueError(
-            f"Heterogeneous per-neuron parameter {label} cannot be represented "
-            "by a shared RTL neuron module"
-        )
     return float(arr[0])
+
+
+def _type_default_qparams(pops: Sequence[NeuronSpec], data_width: int) -> dict[str, dict[str, int]]:
+    """First-population, first-neuron quantised parameters per neuron type.
+
+    Values are stored as the unsigned two's-complement bit pattern the neuron
+    module declares as its parameter default, so the top level only overrides a
+    neuron whose quantised parameter differs.
+    """
+    mask = (1 << data_width) - 1
+    defaults: dict[str, dict[str, int]] = {}
+    for pop in pops:
+        if pop.neuron_type in defaults:
+            continue
+        entry: dict[str, int] = {}
+        for pname, pval in pop.params.items():
+            arr = np.atleast_1d(np.asarray(pval).reshape(-1))
+            entry[pname] = int(arr[0]) & mask
+        defaults[pop.neuron_type] = entry
+    return defaults
+
+
+def _neuron_param_override(
+    pop: NeuronSpec,
+    neuron_idx: int,
+    type_defaults: dict[str, dict[str, int]],
+    data_width: int,
+) -> str:
+    """Return a Verilog parameter-override clause for a single neuron instance.
+
+    Empty when this neuron's per-neuron quantised parameters all equal the shared
+    module defaults (the homogeneous case, so the emitted RTL is unchanged).
+    Otherwise emits ``#(.P_X(W'sdN), ...)`` so a heterogeneous population reuses
+    the same parameterised module with each neuron's own quantised parameters. The
+    literal is the unsigned two's-complement bit pattern, matching how the module
+    declares each parameter default (negative fixed-point values included).
+    """
+    mask = (1 << data_width) - 1
+    defaults = type_defaults.get(pop.neuron_type, {})
+    fragments: list[str] = []
+    for pname in sorted(pop.params):
+        if pname not in defaults:
+            continue
+        arr = np.atleast_1d(np.asarray(pop.params[pname]).reshape(-1))
+        raw = int(arr[neuron_idx]) if arr.shape[0] == pop.n_neurons else int(arr[0])
+        qval = raw & mask
+        if qval != defaults[pname]:
+            vname = f"P_{sanitize_ident(pname, context='parameter name').upper()}"
+            fragments.append(f".{vname}({data_width}'sd{qval})")
+    if not fragments:
+        return ""
+    return " #(" + ", ".join(fragments) + ")"
 
 
 def _resolved_population_params(neuron_type: str, pop: NeuronSpec) -> dict[str, float]:
@@ -159,7 +212,7 @@ def _resolved_population_params(neuron_type: str, pop: NeuronSpec) -> dict[str, 
                 f"Parameter {pop.name}.{pname} is not supported by the "
                 f"{neuron_type!r} FPGA template"
             )
-        params[pname] = _require_homogeneous_param(pval, f"{pop.name}.{pname}")
+        params[pname] = _representative_param(pval, f"{pop.name}.{pname}")
     return params
 
 
@@ -801,6 +854,7 @@ def _build_top_direct(
     """
     pops = qgraph.populations
     conns = qgraph.connections
+    type_defaults = _type_default_qparams(pops, data_width)
     safe_module = sanitize_ident(module_name, context="module name")
     pop_by_name = {pop.name: pop for pop in pops}
     pop_index = {pop.name: idx for idx, pop in enumerate(pops)}
@@ -953,7 +1007,7 @@ def _build_top_direct(
                     f"    wire signed [DATA_WIDTH - 1:0] {prefix}_I;",
                     f"    wire {prefix}_spike;",
                     f"    wire signed [DATA_WIDTH - 1:0] {prefix}_v;",
-                    f"    {mod} {prefix}_inst (",
+                    f"    {mod}{_neuron_param_override(pop, neuron_idx, type_defaults, data_width)} {prefix}_inst (",
                     "        .clk(clk),",
                     "        .rst_n(rst_n),",
                     f"        .I_t({prefix}_I),",
@@ -1193,6 +1247,7 @@ def _build_top_aer(
     """
     pops = qgraph.populations
     conns = qgraph.connections
+    type_defaults = _type_default_qparams(pops, data_width)
     safe_module = sanitize_ident(module_name, context="module name")
     pop_by_name = {pop.name: pop for pop in pops}
     pop_index = {pop.name: idx for idx, pop in enumerate(pops)}
@@ -1325,7 +1380,7 @@ def _build_top_aer(
                     f"    wire signed [DATA_WIDTH - 1:0] {prefix}_I;",
                     f"    wire {prefix}_spike;",
                     f"    wire signed [DATA_WIDTH - 1:0] {prefix}_v;",
-                    f"    {mod} {prefix}_inst (",
+                    f"    {mod}{_neuron_param_override(pop, neuron_idx, type_defaults, data_width)} {prefix}_inst (",
                     "        .clk(clk),",
                     "        .rst_n(rst_n),",
                     f"        .I_t({prefix}_I),",
