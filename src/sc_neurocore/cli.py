@@ -128,6 +128,16 @@ def main() -> int:
         action="store_true",
         help="For compile-nir, validate emitted SC-NIR HDL artefacts and write an audit report",
     )
+    parser.add_argument(
+        "--interconnect",
+        choices=["auto", "direct", "folded"],
+        default="auto",
+        help=(
+            "compile-nir top-level interconnect: 'auto' (direct/AER by size), 'direct' (force "
+            "per-neuron wiring), or 'folded' (time-multiplexed shared datapath; single "
+            "population with external-weighted/recurrent fan-in)"
+        ),
+    )
     parser.add_argument("--port", type=int, default=8001, help="Port for serve command")
     parser.add_argument(
         "--identity-file",
@@ -541,6 +551,7 @@ def _cmd_compile_nir(args: Any) -> int:
     print(f"  Types: {', '.join(sorted(neuron_graph.neuron_types))}")
 
     print(f"[3/4] Compiling to Verilog (Q{data_width - fraction}.{fraction})...")
+    interconnect = None if args.interconnect == "auto" else args.interconnect
     result = compile_network_to_fpga(
         neuron_graph,
         module_name=args.module_name,
@@ -550,10 +561,19 @@ def _cmd_compile_nir(args: Any) -> int:
         source_kind=args.source_kind,
         base_seed=args.base_seed,
         target=args.target,
+        interconnect=interconnect,
     )
     print(f"  Interconnect: {result.interconnect}")
     print(f"  Neuron modules: {len(result.neuron_modules)}")
     print(f"  SC-NIR source modules: {len(result.scnir_source_modules)}")
+    if result.folded_metrics is not None:
+        fm = result.folded_metrics
+        print(
+            f"  Folded datapath: {fm.pe_instances} PE + {fm.shared_multipliers} shared "
+            f"multiplier(s) + {fm.state_ram_bits}-bit state BRAM, "
+            f"{fm.cycles_per_tick} cycles/tick "
+            f"(collapses {fm.direct_neuron_instances} direct neuron instances)"
+        )
 
     # Write output files
     out_dir = args.output
@@ -618,6 +638,12 @@ def _cmd_compile_nir(args: Any) -> int:
             sort_keys=True,
         )
         f.write("\n")
+
+    if result.folded_metrics is not None:
+        folded_path = os.path.join(out_dir, "folded_metrics.json")
+        with open(folded_path, "w", encoding="utf-8") as f:
+            json.dump(result.folded_metrics.as_dict(), f, indent=2, sort_keys=True)
+            f.write("\n")
 
     if getattr(args, "audit_handoff", False):
         from sc_neurocore.ir import write_scnir_hdl_handoff_audit

@@ -431,6 +431,59 @@ class SCNIRExternalInputManifestEntry:
         }
 
 
+@dataclass(frozen=True)
+class FoldedResourceMetrics:
+    """Architectural resource summary of a folded (time-multiplexed) interconnect.
+
+    Quantifies what the shared-datapath fold buys versus the direct interconnect's
+    one-module-instance-per-neuron unrolling: a single processing element and one
+    multiplier set are reused across every neuron, with per-neuron state held in a
+    BRAM, at the cost of ``cycles_per_tick`` cycles to advance the whole population
+    by one timestep.
+
+    Attributes
+    ----------
+    neurons : int
+        Number of neurons sharing the datapath.
+    state_vars_per_neuron : int
+        State variables per neuron (BRAM word = ``state_vars_per_neuron`` × data width).
+    pe_instances : int
+        Physical processing elements instantiated (1 for a single homogeneous population).
+    shared_multipliers : int
+        Multipliers in the shared weighted fan-in, reused across all neurons. Zero for
+        connection-less or purely spiking-recurrent populations (those use no multiplier).
+    state_ram_bits : int
+        Total BRAM-backed neuron-state storage, in bits
+        (``neurons`` × ``state_vars_per_neuron`` × data width).
+    cycles_per_tick : int
+        Clock cycles to advance the whole population by one timestep
+        (``neurons`` process cycles + 1 commit cycle).
+    direct_neuron_instances : int
+        Neuron module instances the direct interconnect would unroll (= ``neurons``);
+        the count the fold collapses to ``pe_instances``.
+    """
+
+    neurons: int
+    state_vars_per_neuron: int
+    pe_instances: int
+    shared_multipliers: int
+    state_ram_bits: int
+    cycles_per_tick: int
+    direct_neuron_instances: int
+
+    def as_dict(self) -> dict[str, int]:
+        """Return a deterministic plain-``int`` mapping for manifests/JSON."""
+        return {
+            "neurons": self.neurons,
+            "state_vars_per_neuron": self.state_vars_per_neuron,
+            "pe_instances": self.pe_instances,
+            "shared_multipliers": self.shared_multipliers,
+            "state_ram_bits": self.state_ram_bits,
+            "cycles_per_tick": self.cycles_per_tick,
+            "direct_neuron_instances": self.direct_neuron_instances,
+        }
+
+
 @dataclass
 class NetworkCompilationResult:
     """All artefacts from a network-level FPGA compilation.
@@ -452,7 +505,10 @@ class NetworkCompilationResult:
     q_format : str
         Q-format label (e.g. ``"Q8.8"``).
     interconnect : str
-        ``"direct"`` or ``"aer"``.
+        ``"direct"``, ``"aer"``, or ``"folded"`` (the time-multiplexed shared datapath).
+    folded_metrics : FoldedResourceMetrics | None
+        Architectural fold resource summary when ``interconnect == "folded"``; ``None``
+        for the direct/AER paths.
     warnings : list[str]
         Quantisation and compilation warnings.
     scnir_document : SCNIRDocument
@@ -480,6 +536,7 @@ class NetworkCompilationResult:
     scnir_source_manifest: tuple[SCNIRHDLSourceManifestEntry, ...]
     scnir_external_inputs: tuple[SCNIRExternalInputManifestEntry, ...]
     scnir_hierarchy_modules: dict[str, str]
+    folded_metrics: FoldedResourceMetrics | None = None
     warnings: list[str] = field(default_factory=list)
 
 
@@ -1242,7 +1299,9 @@ def _can_fold(qgraph: QuantisedGraph) -> bool:
             return False  # inter-population (different source population) not yet folded
         if src_is_self and _connection_sources_are_analogue(pop):
             return False  # analogue recurrence (li/cuba_li) needs the v_out path, not yet folded
-        if conn.bias is not None or conn.source_threshold is not None:
+        if conn.bias is not None and bool(np.any(np.asarray(conn.bias))):
+            return False  # a non-zero bias term is not folded yet (zero bias is a no-op)
+        if conn.source_threshold is not None:
             return False
         if _connection_has_thresholds(conn):
             return False
@@ -1255,6 +1314,45 @@ def _can_fold(qgraph: QuantisedGraph) -> bool:
         ):
             return False
     return True
+
+
+def _folded_resource_metrics(qgraph: QuantisedGraph, *, data_width: int) -> FoldedResourceMetrics:
+    """Summarise the shared-datapath resources of a foldable single-population graph.
+
+    Counts one PE, the shared weighted-fan-in multipliers (external connections only —
+    spiking-recurrent fan-in is spike-gated and uses none), the BRAM state-word storage,
+    and the cycles-per-tick, plus the direct-path instance count the fold collapses.
+
+    Parameters
+    ----------
+    qgraph : QuantisedGraph
+        A graph satisfying :func:`_can_fold`.
+    data_width : int
+        Fixed-point data width (BRAM word sizing).
+
+    Returns
+    -------
+    FoldedResourceMetrics
+        The architectural fold summary.
+    """
+    pop = qgraph.populations[0]
+    neuron = _population_neuron(pop.neuron_type, pop)
+    n_vars = len(neuron.equations)
+    n = pop.n_neurons
+    shared_multipliers = sum(
+        int(np.asarray(conn.weights).shape[1])
+        for conn in qgraph.connections
+        if conn.dst == pop.name and conn.src != pop.name
+    )
+    return FoldedResourceMetrics(
+        neurons=n,
+        state_vars_per_neuron=n_vars,
+        pe_instances=1,
+        shared_multipliers=shared_multipliers,
+        state_ram_bits=n * n_vars * data_width,
+        cycles_per_tick=n + 1,
+        direct_neuron_instances=n,
+    )
 
 
 def _build_top_folded(
@@ -1928,20 +2026,23 @@ def compile_network_to_fpga(
         for conn in qgraph.connections
     )
     has_threshold_connections = any(_connection_has_thresholds(conn) for conn in qgraph.connections)
+    folded_metrics: FoldedResourceMetrics | None = None
 
     if interconnect == "folded":
         # Opt-in time-multiplexed interconnect; never auto-selected. Restricted to
-        # the _can_fold subset (single connection-less population) for now.
+        # the _can_fold subset (single population, external-weighted / recurrent fan-in).
         if not _can_fold(qgraph):
             raise ValueError(
-                "interconnect='folded' supports only a single connection-less population of a "
-                "supported neuron type (the v1 folded subset); use 'direct' or auto otherwise"
+                "interconnect='folded' supports only a single population of a supported neuron "
+                "type with external-weighted or recurrent connections (the folded subset); use "
+                "'direct' or auto otherwise"
             )
         selected_interconnect = "folded"
         pe_source, top_module = _build_top_folded(
             module_name, qgraph, data_width=data_width, fraction=fraction
         )
         neuron_modules[f"{qgraph.populations[0].neuron_type}_pe"] = pe_source
+        folded_metrics = _folded_resource_metrics(qgraph, data_width=data_width)
     elif interconnect not in (None, "direct"):
         raise ValueError(
             f"unknown interconnect {interconnect!r}; choose 'folded', 'direct', or None (auto)"
@@ -2007,6 +2108,7 @@ def compile_network_to_fpga(
             scnir_document,
             weight_literals=hierarchy_weight_literals,
         ),
+        folded_metrics=folded_metrics,
         warnings=warnings,
     )
 

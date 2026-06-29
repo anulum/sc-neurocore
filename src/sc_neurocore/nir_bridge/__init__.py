@@ -55,6 +55,7 @@ from .quantise_params import (
     quantise_graph,
 )
 from .fpga_compiler import (
+    FoldedResourceMetrics,
     NetworkCompilationResult,
     compile_network_to_fpga,
 )
@@ -104,6 +105,7 @@ __all__ = [
     "ConnectionSpec",
     "NeuronGraph",
     "NeuronSpec",
+    "FoldedResourceMetrics",
     "NetworkCompilationResult",
     "QuantisedGraph",
     "compile_network_to_fpga",

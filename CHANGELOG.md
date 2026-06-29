@@ -4,6 +4,19 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+### Added
+- Folded (time-multiplexed) FPGA interconnect for `compile_network_to_fpga`,
+  opt-in via `interconnect="folded"` and the `sc-neurocore compile-nir
+  --interconnect folded` flag. One combinational processing element and one
+  multiplier set are shared across all neurons of a single population, with
+  per-neuron state in a BRAM, advancing the population in `neurons + 1` cycles
+  per timestep — bit-exact with the direct path (golden co-simulation parity for
+  connection-less, external-weighted, and recurrent-spiking fan-in). Reports a
+  `FoldedResourceMetrics` summary (processing elements, shared multipliers,
+  state-RAM bits, cycles per tick, collapsed direct instances) on the result, in
+  the CLI output, and as a `folded_metrics.json` artefact. Never auto-selected; the
+  direct/AER paths and the SC-NIR source-handoff manifest are unchanged.
+
 ### Physics and mathematics hardening
 - Rebuilt `MarderSTGNeuron` (Liu, Golowasch, Marder & Abbott 1998 stomatogastric
   ganglion neuron) as a faithful thirteen-state model integrated with

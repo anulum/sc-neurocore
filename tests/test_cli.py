@@ -2355,6 +2355,42 @@ class TestCompileNirCommand:
         assert "sample0 8042 1 1" in stdout
         assert f"{first['module_name']}.v" in capsys.readouterr().out
 
+    def test_compile_nir_folded_interconnect_reports_metrics(self, tmp_path, capsys):
+        nir = pytest.importorskip("nir")
+        model_path = tmp_path / "folded_fixture.nir"
+        nir.write(str(model_path), _small_lif_nir_graph())
+
+        out_dir = tmp_path / "folded"
+        rc = _run_main(
+            "compile-nir",
+            str(model_path),
+            "--module-name",
+            "folded_net",
+            "--interconnect",
+            "folded",
+            "-o",
+            str(out_dir),
+        )
+
+        assert rc == 0
+        out = capsys.readouterr().out
+        assert "Interconnect: folded" in out
+        assert "Folded datapath: 1 PE" in out
+        assert "collapses 2 direct neuron instances" in out
+        # The shared datapath PE module is emitted alongside the top.
+        assert (out_dir / "folded_net.v").exists()
+        assert (out_dir / "sc_nir_lif_pe.v").exists()
+        # The source-handoff manifest keeps its versioned schema (no metrics pollution).
+        manifest = json.loads((out_dir / "scnir_source_manifest.json").read_text(encoding="utf-8"))
+        assert manifest["interconnect"] == "folded"
+        assert "folded_metrics" not in manifest
+        # Folded metrics are persisted to their own machine-readable artefact.
+        metrics = json.loads((out_dir / "folded_metrics.json").read_text(encoding="utf-8"))
+        assert metrics["pe_instances"] == 1
+        assert metrics["neurons"] == 2
+        assert metrics["direct_neuron_instances"] == 2
+        assert metrics["shared_multipliers"] == 2
+
     def test_compile_nir_writes_valid_dense_scnir_document(self, tmp_path, capsys):
         nir = pytest.importorskip("nir")
         model_path = tmp_path / "dense_fixture.nir"

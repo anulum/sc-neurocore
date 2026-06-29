@@ -140,12 +140,39 @@ flowchart TB
 | Xilinx COE | `.coe` | Xilinx/AMD | Vivado Block Memory Gen |
 | Intel MIF | `.mif` | Intel/Altera | Quartus IP Catalog |
 
-### 3.3 Interconnect Auto-Selection
+### 3.3 Interconnect Selection
+
+By default the interconnect is auto-selected by neuron count:
 
 | Neuron Count | Interconnect | Topology |
 |:------------:|:------------:|----------|
 | ≤64 | Direct wiring | Point-to-point |
 | >64 | AER bus | Address-event arbitrated |
+
+A third, opt-in **folded** (time-multiplexed) interconnect is available for a single
+population. It shares one combinational processing element and one multiplier set
+across every neuron, holding per-neuron state in a BRAM and advancing the whole
+population in `neurons + 1` cycles per timestep — collapsing the direct path's one
+module instance per neuron to a single shared datapath. It is bit-exact with the
+direct path (the same fixed-point arithmetic, time-multiplexed) and is never
+auto-selected; request it explicitly:
+
+```bash
+sc-neurocore compile-nir model.nir --interconnect folded -o build/
+```
+
+```python
+result = compile_network_to_fpga(graph, interconnect="folded")
+result.folded_metrics  # FoldedResourceMetrics: pe_instances, shared_multipliers,
+                       # state_ram_bits, cycles_per_tick, direct_neuron_instances
+```
+
+The folded subset currently covers a single population (connection-less, or fed by
+external-weighted and/or recurrent spiking connections); graphs outside it raise and
+should use `direct`/auto. `compile_network_to_fpga` attaches a
+[`FoldedResourceMetrics`](../API_REFERENCE.md) summary on the result only for the folded
+path; the CLI prints it and writes a machine-readable `folded_metrics.json` artefact
+(the versioned `scnir_source_manifest.json` is left to its SC-NIR source-handoff role).
 
 ---
 
