@@ -57,6 +57,33 @@ class _VerilogExprEmitter(ast.NodeVisitor):
         self._pipeline_points: set[str] = set()  # user-specified insertion points
         self._pipeline_regs: list[str] = []  # registered intermediates
 
+    @staticmethod
+    def _const_float(node: ast.AST) -> float | None:
+        """Constant-fold a literal or simple literal arithmetic node to a float.
+
+        Used to recognise fractional exponents such as ``1.0 / 3.0`` in ``x ** p``.
+        Returns ``None`` if the node is not a compile-time constant.
+        """
+        if isinstance(node, ast.Constant) and isinstance(node.value, (int, float)):
+            return float(node.value)
+        if isinstance(node, ast.UnaryOp) and isinstance(node.op, ast.USub):
+            inner = _VerilogExprEmitter._const_float(node.operand)
+            return None if inner is None else -inner
+        if isinstance(node, ast.BinOp):
+            a = _VerilogExprEmitter._const_float(node.left)
+            b = _VerilogExprEmitter._const_float(node.right)
+            if a is None or b is None:
+                return None
+            if isinstance(node.op, ast.Div):
+                return a / b if b != 0 else None
+            if isinstance(node.op, ast.Mult):
+                return a * b
+            if isinstance(node.op, ast.Add):
+                return a + b
+            if isinstance(node.op, ast.Sub):
+                return a - b
+        return None
+
     def _trunc(self, wide_name: str) -> str:
         """Emit an intermediate wire for fixed-point truncation with rounding."""
         trunc_name = f"_t{self._trunc_count}"
@@ -206,8 +233,16 @@ class _VerilogExprEmitter(ast.NodeVisitor):
                     )
                     prev = self._trunc(tmp)
                 return prev
+            frac_exp = self._const_float(node.right)
+            if frac_exp is not None and abs(frac_exp - 1.0 / 3.0) < 1e-6:
+                return self._emit_lut_call("_cbrt_lut", left, self._cbrt_lut_entries())
+            if frac_exp is not None and abs(frac_exp - 0.5) < 1e-6:
+                return self._emit_lut_call(
+                    "_sqrt_lut", left, self._sqrt_lut_entries(), lut_min=-8.0, lut_step=1.0
+                )
             raise ValueError(
-                f"Only integer powers 2-8 supported in Verilog, got {ast.dump(node.right)}"
+                f"Only integer powers 2-8 and 1/2, 1/3 supported in Verilog, "
+                f"got {ast.dump(node.right)}"
             )
         raise ValueError(f"Unsupported binary op: {type(node.op).__name__}")
 
@@ -405,6 +440,14 @@ class _VerilogExprEmitter(ast.NodeVisitor):
         return [
             min(int(round(math.cosh(x) * (1 << self.q.fraction))), cap) for x in self._sym_points()
         ]
+
+    def _cbrt_lut_entries(self) -> list[int]:
+        import math
+
+        def cbrt(z: float) -> float:
+            return math.copysign(abs(z) ** (1.0 / 3.0), z)
+
+        return [int(round(cbrt(x) * (1 << self.q.fraction))) for x in self._sym_points()]
 
     def _exprel_lut_entries(self) -> list[int]:
         import math

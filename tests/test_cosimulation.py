@@ -488,6 +488,20 @@ class TestQ1616Precision:
             f"Wang-Buzsaki Q16.16 gap {gap_pct:.1f}% (Python={py_spikes}, Verilog={vlog_spikes})"
         )
 
+    def test_connor_stevens_q1616_parity(self) -> None:
+        """Connor-Stevens (A-current, cube-root a-gate) co-simulates at Q16.16.
+
+        Exercises both the cube-root power lowering (a_inf = (...)**(1/3)) and the
+        exprel rewrite of its singular alpha_m / alpha_n rate functions.
+        """
+        py_spikes = _python_spike_count("connor_stevens", 300, 50.0)
+        vlog_spikes = _verilog_spike_count_q1616("connor_stevens", 300, 50.0)
+        assert py_spikes > 0 and vlog_spikes > 0
+        gap_pct = abs(py_spikes - vlog_spikes) / max(py_spikes, 1) * 100
+        assert gap_pct <= 10.0, (
+            f"Connor-Stevens Q16.16 gap {gap_pct:.1f}% (Python={py_spikes}, Verilog={vlog_spikes})"
+        )
+
 
 # ══════════════════════════════════════════════════════════════════════
 # Generic multi-precision co-simulation infrastructure
