@@ -11,7 +11,12 @@
 Maps SC-NeuroCore networks to Lava Processes for deployment
 on Intel Loihi 2 neuromorphic hardware or Lava CPU simulation.
 
-Requires: pip install lava-nc (optional dependency)
+Requires: pip install lava-nc (optional dependency).
+
+Note: Intel's Lava (``lava-nc``) is archived and no longer actively maintained,
+and the package targets Python < 3.11, so this bridge is a best-effort path on a
+frozen SDK. The vendor-neutral Loihi 2 target description lives in
+``nir_bridge/silicon_mapping.py`` and does not depend on Lava.
 
 Usage:
     from sc_neurocore.integrations.lava_bridge import (
