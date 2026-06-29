@@ -77,7 +77,7 @@ _COSIM_MODELS = ["lif", "lapicque", "quadratic_if", "izhikevich", "resonate_fire
 # spike-count parity claim, so they are validated at compile level only (honest).
 _TRANSCENDENTAL_COSIM_MODELS = ["theta"]
 _TRANSCENDENTAL_TOLERANCE_PCT = 5.0
-_TRANSCENDENTAL_COMPILE_MODELS = ["glif", "theta", "morris_lecar"]
+_TRANSCENDENTAL_COMPILE_MODELS = ["glif", "theta", "morris_lecar", "hodgkin_huxley"]
 
 
 def _python_spike_count(model_name: str, n_steps: int, current: float) -> int:

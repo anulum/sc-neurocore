@@ -148,10 +148,15 @@ class _VerilogExprEmitter(ast.NodeVisitor):
             frac = self.q.fraction
             wide = 2 * dw
             num_wire = f"_dop{self._mul_count}"
+            den_wire = f"_dden{self._mul_count}"
             ext_name = f"_dnum{self._mul_count}"
             div_tmp = f"_div{self._mul_count}"
             self._mul_count += 1
+            # Hoist both operands to named wires: a bit-select (msb for sign
+            # extension) is only valid on a net/reg, not on a compound expression
+            # such as ``(a - b)``, so ``right`` must be assigned before extension.
             self.intermediates.append(f"wire signed [{dw - 1}:0] {num_wire} = {left};")
+            self.intermediates.append(f"wire signed [{dw - 1}:0] {den_wire} = {right};")
             self.intermediates.append(
                 f"wire signed [{wide - 1}:0] {ext_name} = "
                 f"$signed({{{{{dw}{{{num_wire}[{dw - 1}]}}}}, {num_wire}}}) <<< {frac};"
@@ -159,7 +164,7 @@ class _VerilogExprEmitter(ast.NodeVisitor):
             res_name = f"_dres{self._mul_count - 1}"
             self.intermediates.append(
                 f"wire signed [{wide - 1}:0] {div_tmp} = "
-                f"{ext_name} / $signed({{{{{dw}{{{right}[{dw - 1}]}}}}, {right}}});"
+                f"{ext_name} / $signed({{{{{dw}{{{den_wire}[{dw - 1}]}}}}, {den_wire}}});"
             )
             self.intermediates.append(
                 f"wire signed [{dw - 1}:0] {res_name} = {div_tmp}[{dw - 1}:0];"
