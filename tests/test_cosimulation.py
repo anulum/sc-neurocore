@@ -436,18 +436,19 @@ class TestQ1616Precision:
             f"GLIF Q16.16 gap {gap_pct:.1f}% (Python={py_spikes}, Verilog={vlog_spikes})"
         )
 
-    def test_morris_lecar_q1616_fires(self) -> None:
-        """Morris-Lecar (cosh gating) now fires at Q16.16.
+    def test_morris_lecar_q1616_parity(self) -> None:
+        """Morris-Lecar (cosh/tanh gating) co-simulates within tolerance at Q16.16.
 
-        At Q8.8 the exp/cosh LUTs saturated at the old fixed 32767 cap and the model
-        never spiked; the width-aware cap lets it fire at Q16.16. Spike-count parity
-        is still limited by the coarse 16-entry transcendental LUTs (a finer-LUT
-        follow-up), so this asserts firing, not a tight count match.
+        The width-aware exp/cosh cap let it fire; the 256-entry [-16, 16) LUTs (vs the
+        old 16-entry [-8, 8) tables) then bring spike-count parity into the conductance
+        tolerance band (~4-5% over the baseline window).
         """
         py_spikes = _python_spike_count("morris_lecar", 300, 120.0)
         vlog_spikes = _verilog_spike_count_q1616("morris_lecar", 300, 120.0)
-        assert py_spikes > 0 and vlog_spikes > 0, (
-            f"Morris-Lecar must fire at Q16.16 (Python={py_spikes}, Verilog={vlog_spikes})"
+        assert py_spikes > 0 and vlog_spikes > 0
+        gap_pct = abs(py_spikes - vlog_spikes) / max(py_spikes, 1) * 100
+        assert gap_pct <= 15.0, (
+            f"Morris-Lecar Q16.16 gap {gap_pct:.1f}% (Python={py_spikes}, Verilog={vlog_spikes})"
         )
 
 

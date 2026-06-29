@@ -266,9 +266,13 @@ class _VerilogExprEmitter(ast.NodeVisitor):
         if fname == "exp":
             return self._emit_lut_call("_exp_lut", arg, self._exp_lut_entries())
         elif fname == "log":
-            return self._emit_lut_call("_log_lut", arg, self._log_lut_entries())
+            return self._emit_lut_call(
+                "_log_lut", arg, self._log_lut_entries(), lut_min=-8.0, lut_step=1.0
+            )
         elif fname == "sqrt":
-            return self._emit_lut_call("_sqrt_lut", arg, self._sqrt_lut_entries())
+            return self._emit_lut_call(
+                "_sqrt_lut", arg, self._sqrt_lut_entries(), lut_min=-8.0, lut_step=1.0
+            )
         elif fname == "tanh":
             return self._emit_lut_call("_tanh_lut", arg, self._tanh_lut_entries())
         elif fname == "cosh":
@@ -296,18 +300,53 @@ class _VerilogExprEmitter(ast.NodeVisitor):
             return arg
         raise ValueError(f"Unsupported function '{fname}' in Verilog compilation.")
 
-    def _emit_lut_call(self, lut_name: str, arg: str, entries: list[int]) -> str:
-        """Emit a 16-entry LUT indexed by top 4 bits of the input."""
+    def _emit_lut_call(
+        self,
+        lut_name: str,
+        arg: str,
+        entries: list[int],
+        *,
+        lut_min: float = -16.0,
+        lut_step: float = 0.125,
+    ) -> str:
+        """Emit an ``len(entries)``-entry LUT over ``[lut_min, lut_min + N*step)``.
+
+        ``lut_step`` must be a power of two so the index reduces to a shift. The
+        index saturates to ``[0, N-1]``, so arguments outside the table clamp to its
+        endpoints instead of wrapping (essential for steep functions whose argument
+        leaves the tabulated range, e.g. Hodgkin-Huxley gating).
+        """
+        import math
+
+        n = len(entries)
+        idx_bits = max(1, (n - 1).bit_length())
         lut_id = f"{lut_name}{self._mul_count}"
         self._mul_count += 1
         dw = self.q.data_width
+        frac = self.q.fraction
+        s = round(-math.log2(lut_step))  # lut_step == 2**(-s)
+        shift = frac - s
+        min_q = round(lut_min * (1 << frac))
         self.intermediates.append(
-            f"// {lut_name} lookup table (16 entries, Q{dw - self.q.fraction}.{self.q.fraction})"
+            f"// {lut_name} lookup table ({n} entries over "
+            f"[{lut_min}, {lut_min + n * lut_step}), step {lut_step})"
         )
-        offset = 8 << self.q.fraction
+        # Hoist the argument to a wire so the sign-extension bit-select is valid even
+        # when the argument is a compound expression.
+        arg_w = f"{lut_id}_arg"
+        self.intermediates.append(f"wire signed [{dw - 1}:0] {arg_w} = {arg};")
+        ext = f"{{{arg_w}[{dw - 1}]}}, {arg_w}"  # (dw+1)-bit sign extension
+        op = "-" if min_q >= 0 else "+"
+        shift_op = f">>> {shift}" if shift >= 0 else f"<<< {-shift}"
+        raw = f"{lut_id}_raw"
+        self.intermediates.append(
+            f"wire signed [{dw}:0] {raw} = (({{{ext}}}) {op} {dw + 1}'sd{abs(min_q)}) {shift_op};"
+        )
         idx_wire = f"{lut_id}_idx"
         self.intermediates.append(
-            f"wire [3:0] {idx_wire} = ({arg} + {dw}'sd{offset}) >>> {self.q.fraction + 4 - 4};"
+            f"wire [{idx_bits - 1}:0] {idx_wire} = "
+            f"({raw} < 0) ? {idx_bits}'d0 : "
+            f"(({raw} > {dw + 1}'sd{n - 1}) ? {idx_bits}'d{n - 1} : {raw}[{idx_bits - 1}:0]);"
         )
         result_wire = f"{lut_id}_out"
         lines = [f"reg signed [{dw - 1}:0] {result_wire};"]
@@ -315,19 +354,27 @@ class _VerilogExprEmitter(ast.NodeVisitor):
         for i, val in enumerate(entries):
             # A negative value must be written -W'sdN, not W'sd-N (malformed Verilog).
             literal = f"-{dw}'sd{-val}" if val < 0 else f"{dw}'sd{val}"
-            lines.append(f"    4'd{i}: {result_wire} = {literal};")
+            lines.append(f"    {idx_bits}'d{i}: {result_wire} = {literal};")
         lines.append(f"    default: {result_wire} = {dw}'sd0;")
         lines.append("endcase")
         for line in lines:
             self.intermediates.append(line)
         return result_wire
 
+    def _sym_points(self) -> list[float]:
+        """256 sample points over [-16, 16) at 0.125 spacing for symmetric LUTs.
+
+        Must match the :func:`_emit_lut_call` defaults (lut_min=-16, step=0.125).
+        """
+        return [-16.0 + i * 0.125 for i in range(256)]
+
     def _exp_lut_entries(self) -> list[int]:
         import math
 
         cap = (1 << (self.q.data_width - 1)) - 1  # signed max for the word; not a fixed 32767
-        points = [(-8 + i) for i in range(16)]
-        return [min(int(round(math.exp(x) * (1 << self.q.fraction))), cap) for x in points]
+        return [
+            min(int(round(math.exp(x) * (1 << self.q.fraction))), cap) for x in self._sym_points()
+        ]
 
     def _log_lut_entries(self) -> list[int]:
         import math
@@ -345,8 +392,7 @@ class _VerilogExprEmitter(ast.NodeVisitor):
     def _tanh_lut_entries(self) -> list[int]:
         import math
 
-        points = [(-8 + i) for i in range(16)]
-        return [int(round(math.tanh(x) * (1 << self.q.fraction))) for x in points]
+        return [int(round(math.tanh(x) * (1 << self.q.fraction))) for x in self._sym_points()]
 
     def _cosh_lut_entries(self) -> list[int]:
         import math
@@ -354,26 +400,27 @@ class _VerilogExprEmitter(ast.NodeVisitor):
         # cosh grows fast; saturate at the word's signed max (width-aware, not a
         # fixed 32767) so large arguments clamp rather than overflow.
         cap = (1 << (self.q.data_width - 1)) - 1
-        points = [(-8 + i) for i in range(16)]
-        return [min(int(round(math.cosh(x) * (1 << self.q.fraction))), cap) for x in points]
+        return [
+            min(int(round(math.cosh(x) * (1 << self.q.fraction))), cap) for x in self._sym_points()
+        ]
 
     def _sigmoid_lut_entries(self) -> list[int]:
         import math
 
-        points = [(-8 + i) for i in range(16)]
-        return [int(round(1.0 / (1.0 + math.exp(-x)) * (1 << self.q.fraction))) for x in points]
+        return [
+            int(round(1.0 / (1.0 + math.exp(-x)) * (1 << self.q.fraction)))
+            for x in self._sym_points()
+        ]
 
     def _sin_lut_entries(self) -> list[int]:
         import math
 
-        points = [(-8 + i) for i in range(16)]
-        return [int(round(math.sin(x) * (1 << self.q.fraction))) for x in points]
+        return [int(round(math.sin(x) * (1 << self.q.fraction))) for x in self._sym_points()]
 
     def _cos_lut_entries(self) -> list[int]:
         import math
 
-        points = [(-8 + i) for i in range(16)]
-        return [int(round(math.cos(x) * (1 << self.q.fraction))) for x in points]
+        return [int(round(math.cos(x) * (1 << self.q.fraction))) for x in self._sym_points()]
 
     def generic_visit(self, node: ast.AST) -> str:
         """Raise an error for any unsupported AST node type."""
