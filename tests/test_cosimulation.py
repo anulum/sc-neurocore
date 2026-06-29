@@ -451,6 +451,23 @@ class TestQ1616Precision:
             f"Morris-Lecar Q16.16 gap {gap_pct:.1f}% (Python={py_spikes}, Verilog={vlog_spikes})"
         )
 
+    def test_hodgkin_huxley_q1616_parity(self) -> None:
+        """The full 4-state Hodgkin-Huxley co-simulates bit-true at Q16.16.
+
+        HH never fired in fixed point until the alpha_m / alpha_n rate functions were
+        rewritten with exprel: their a*(V-V0)/(1-exp(-(V-V0)/k)) form divides by zero
+        when the exp LUT returns exactly 1 at the removable singularity (V=V0). The
+        exprel(z)=(exp(z)-1)/z form has the finite limit there, so the gating evolves
+        and the model spikes — matching Python exactly at Q16.16.
+        """
+        py_spikes = _python_spike_count("hodgkin_huxley", 300, 50.0)
+        vlog_spikes = _verilog_spike_count_q1616("hodgkin_huxley", 300, 50.0)
+        assert py_spikes > 0 and vlog_spikes > 0
+        gap_pct = abs(py_spikes - vlog_spikes) / max(py_spikes, 1) * 100
+        assert gap_pct <= 5.0, (
+            f"Hodgkin-Huxley Q16.16 gap {gap_pct:.1f}% (Python={py_spikes}, Verilog={vlog_spikes})"
+        )
+
 
 # ══════════════════════════════════════════════════════════════════════
 # Generic multi-precision co-simulation infrastructure

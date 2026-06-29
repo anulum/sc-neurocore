@@ -114,6 +114,16 @@ class EquationNeuron:
                 raise ValueError("sqrt domain error")
             return np.sqrt(x)
 
+        def _exprel(x: Any) -> Any:
+            """(exp(x) - 1) / x with the removable-singularity limit exprel(0) = 1.
+
+            Lets conductance rate functions of the form a*(V-V0)/(1-exp(-(V-V0)/k))
+            be written without the 0/0 singularity at V = V0 (it becomes a*k/exprel).
+            """
+            arr = np.asarray(x, dtype=float)
+            safe = np.where(arr == 0.0, 1.0, arr)
+            return np.where(np.abs(arr) < 1e-9, 1.0 + arr / 2.0, np.expm1(arr) / safe)
+
         self._namespace = {
             "exp": np.exp,
             "log": np.log,
@@ -124,6 +134,7 @@ class EquationNeuron:
             "tanh": np.tanh,
             "cosh": np.cosh,
             "sinh": np.sinh,
+            "exprel": _exprel,
             "sigmoid": _sigmoid,
             "pi": math.pi,
             "clip": np.clip,

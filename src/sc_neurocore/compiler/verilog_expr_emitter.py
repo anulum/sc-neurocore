@@ -277,6 +277,8 @@ class _VerilogExprEmitter(ast.NodeVisitor):
             return self._emit_lut_call("_tanh_lut", arg, self._tanh_lut_entries())
         elif fname == "cosh":
             return self._emit_lut_call("_cosh_lut", arg, self._cosh_lut_entries())
+        elif fname == "exprel":
+            return self._emit_lut_call("_exprel_lut", arg, self._exprel_lut_entries())
         elif fname in ("sigmoid", "expit"):
             return self._emit_lut_call("_sigmoid_lut", arg, self._sigmoid_lut_entries())
         elif fname == "sin":
@@ -402,6 +404,20 @@ class _VerilogExprEmitter(ast.NodeVisitor):
         cap = (1 << (self.q.data_width - 1)) - 1
         return [
             min(int(round(math.cosh(x) * (1 << self.q.fraction))), cap) for x in self._sym_points()
+        ]
+
+    def _exprel_lut_entries(self) -> list[int]:
+        import math
+
+        # exprel(z) = (exp(z) - 1) / z, with the removable-singularity limit 1 at 0.
+        # Grows like exp(z)/z for large z, so saturate at the word's signed max.
+        cap = (1 << (self.q.data_width - 1)) - 1
+
+        def exprel(z: float) -> float:
+            return 1.0 if abs(z) < 1e-9 else math.expm1(z) / z
+
+        return [
+            min(int(round(exprel(x) * (1 << self.q.fraction))), cap) for x in self._sym_points()
         ]
 
     def _sigmoid_lut_entries(self) -> list[int]:
