@@ -45,6 +45,7 @@ from sc_neurocore.studio.analysis import (
 )
 from sc_neurocore.studio.characterize import characterize_model
 from sc_neurocore.studio.model_scan import scan_all_models
+from sc_neurocore.studio.nir_compile import compile_nir_file_bytes
 from sc_neurocore.studio.network import simulate_ei_network
 from sc_neurocore.studio.codegen import (
     classify_firing_pattern,
@@ -3037,6 +3038,21 @@ def create_app(runtime_settings: StudioRuntimeSettings | None = None) -> FastAPI
                 task_path=COMPILE_PROCESS_TASK,
                 payload=req.model_dump(),
             )
+        )
+
+    # --- NIR -> FPGA Verilog ingest ---
+    # Accepts the raw bytes of a standard .nir (HDF5) document as the request body
+    # (Content-Type application/octet-stream), avoiding a multipart dependency.
+    @app.post("/api/nir/compile")
+    async def api_nir_compile(
+        request: Request,
+        module_name: str = Query("sc_nir_network"),
+        source_kind: str = Query("lfsr"),
+    ) -> Any:
+        data = await request.body()
+        kind = source_kind if source_kind in ("lfsr", "sobol") else "lfsr"
+        return _safe(
+            lambda: compile_nir_file_bytes(data, module_name=module_name, source_kind=kind)
         )
 
     # --- Frequency Response (#11) ---
