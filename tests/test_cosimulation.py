@@ -468,6 +468,26 @@ class TestQ1616Precision:
             f"Hodgkin-Huxley Q16.16 gap {gap_pct:.1f}% (Python={py_spikes}, Verilog={vlog_spikes})"
         )
 
+    def test_adex_q1616_parity(self) -> None:
+        """Adaptive-exponential IF (exp spike + adaptation + reset) is bit-true at Q16.16."""
+        py_spikes = _python_spike_count("adex", 500, 1000.0)
+        vlog_spikes = _verilog_spike_count_q1616("adex", 500, 1000.0)
+        assert py_spikes > 0 and vlog_spikes > 0
+        gap_pct = abs(py_spikes - vlog_spikes) / max(py_spikes, 1) * 100
+        assert gap_pct <= 2.0, (
+            f"AdEx Q16.16 gap {gap_pct:.1f}% (Python={py_spikes}, Verilog={vlog_spikes})"
+        )
+
+    def test_wang_buzsaki_q1616_parity(self) -> None:
+        """Wang-Buzsaki fast-spiking interneuron (conductance-based) at Q16.16."""
+        py_spikes = _python_spike_count("wang_buzsaki", 300, 10.0)
+        vlog_spikes = _verilog_spike_count_q1616("wang_buzsaki", 300, 10.0)
+        assert py_spikes > 0 and vlog_spikes > 0
+        gap_pct = abs(py_spikes - vlog_spikes) / max(py_spikes, 1) * 100
+        assert gap_pct <= 15.0, (
+            f"Wang-Buzsaki Q16.16 gap {gap_pct:.1f}% (Python={py_spikes}, Verilog={vlog_spikes})"
+        )
+
 
 # ══════════════════════════════════════════════════════════════════════
 # Generic multi-precision co-simulation infrastructure
