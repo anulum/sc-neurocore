@@ -1,0 +1,43 @@
+name: NIR Spec Canary
+
+# Early-warning canary for upstream NIR drift. Installs the absolute latest `nir`
+# release (deliberately bypassing the `nir>=1.0,<2.0` cap in pyproject) and runs
+# the NIR spec-conformance drift detector. It goes red when a new nir release adds
+# a primitive SC-NeuroCore does not cover or breaks the NIRNode API, so we learn
+# about it from a scheduled run instead of from a user. Not a merge gate; the
+# pinned matrix in ci.yml remains the authoritative test.
+
+on:
+  schedule:
+    - cron: "0 6 * * 1" # Mondays 06:00 UTC
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - "src/sc_neurocore/nir_bridge/**"
+      - "tests/test_nir_spec_conformance.py"
+      - ".github/workflows/nir-canary.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  nir-latest-canary:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+
+      - uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Install package and the latest nir release
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -e .
+          # Override the pyproject cap on purpose to test the newest nir.
+          python -m pip install --upgrade nir
+          python -c "import nir; print('canary nir version:', nir.__version__)"
+
+      - name: NIR spec conformance against latest nir
+        run: pytest tests/test_nir_spec_conformance.py -q

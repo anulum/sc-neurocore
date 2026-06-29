@@ -76,7 +76,7 @@ full = [
   "networkx",
   "onnx",
   "torch>=2.0",
-  "nir>=1.0",
+  "nir>=1.0,<2.0",
   "fastapi>=0.100",
   "uvicorn[standard]>=0.20",
   "httpx>=0.27",
@@ -101,7 +101,7 @@ jax = ["jax", "jaxlib"]
 julia = ["juliacall>=0.9"]
 quantum = ["qiskit", "pennylane", "qiskit-aer", "qiskit-ibm-runtime"]
 quantum-cognition = ["sc-neurocore[quantum]"]  # Fisher-Posner experimental layer
-nir = ["nir>=1.0"]
+nir = ["nir>=1.0,<2.0"]
 mpi = ["mpi4py>=3.0"]
 lava = ["lava-nc; python_version < '3.11'"]
 studio = ["fastapi>=0.100", "uvicorn[standard]>=0.20", "httpx>=0.27"]
