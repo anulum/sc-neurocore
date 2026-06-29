@@ -70,9 +70,11 @@ Browse built-in neuron models by category, search by name, and run the model
 scan workflow to classify firing patterns across the catalogue. The scan uses
 the configured constant-current and duration pair as evidence input, caches
 results by that pair only, and returns a path-free `studio.model-scan.v1`
-metadata object. After scanning, the browser shows the evidence class,
-terminal status, model count, and shortened input/result digests beside the
-pattern filters.
+metadata object. Because this preview scan still runs synchronously, the route
+projects one simulation per catalogue model against the configured Studio
+analysis budget before any scan work starts. After scanning, the browser shows
+the evidence class, terminal status, model count, and shortened input/result
+digests beside the pattern filters.
 
 ## Launch
 
@@ -330,8 +332,10 @@ runtime features:
   contains classified model behaviours plus scan metadata with the configured
   current, duration, model count, pattern counts, `analysis` evidence
   classification, completed terminal status, and input/result SHA-256 digests.
-  The Model Browser renders those labels after a scan completes, so the
-  operator can distinguish a cached scan from an unclassified model list.
+  The route is bounded by the same synchronous analysis budget as sweeps, using
+  the current catalogue size as the projected simulation count. The Model
+  Browser renders those labels after a scan completes, so the operator can
+  distinguish a cached scan from an unclassified model list.
 - Those worker-backed compile, synthesis, PnR, and pipeline routes also write
   `studio.action-evidence.v1` manifests beside the result artifacts. These
   manifests record action kind, replay route, job ID, evidence classification,

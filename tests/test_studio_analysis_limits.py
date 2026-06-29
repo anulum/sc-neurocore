@@ -22,6 +22,7 @@ from sc_neurocore.studio.platform.analysis_limits import (
     enforce_analysis_budget,
     evaluate_analysis_cost,
     evaluate_multi_config_cost,
+    evaluate_model_scan_cost,
     evaluate_nullcline_grid_cost,
     resolve_request_timestep,
     simulation_step_count,
@@ -154,6 +155,38 @@ def test_evaluate_nullcline_grid_cost_rejects_invalid_counts(
         evaluate_nullcline_grid_cost(grid_size=grid_size, equation_count=equation_count)
 
     assert excinfo.value.limit == "simulations"
+
+
+def test_evaluate_model_scan_cost_counts_catalogue_runs() -> None:
+    """Model scan cost is one bounded simulation per catalogue model."""
+
+    cost = evaluate_model_scan_cost(
+        model_count=12,
+        duration=100.0,
+        dt=0.1,
+    )
+
+    assert cost.to_public_dict() == {
+        "simulation_count": 12,
+        "steps_per_simulation": 1_000,
+        "total_steps": 12_000,
+    }
+
+
+@pytest.mark.parametrize("model_count", [0, -1])
+def test_evaluate_model_scan_cost_rejects_empty_catalogues(model_count: int) -> None:
+    """The model-scan guard fails closed if the catalogue count is invalid."""
+
+    with pytest.raises(AnalysisBudgetError) as excinfo:
+        evaluate_model_scan_cost(
+            model_count=model_count,
+            duration=100.0,
+            dt=0.1,
+        )
+
+    assert excinfo.value.limit == "simulations"
+    assert excinfo.value.projected == model_count
+    assert "catalogue" in str(excinfo.value)
 
 
 def test_enforce_analysis_budget_allows_within_limits() -> None:

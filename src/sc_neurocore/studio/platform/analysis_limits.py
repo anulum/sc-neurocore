@@ -330,6 +330,47 @@ def evaluate_nullcline_grid_cost(*, grid_size: int, equation_count: int) -> Anal
     )
 
 
+def evaluate_model_scan_cost(*, model_count: int, duration: float, dt: float) -> AnalysisCost:
+    """Project the synchronous simulation cost of a Studio model scan.
+
+    Parameters
+    ----------
+    model_count:
+        Number of catalogue models the scan will simulate.
+    duration:
+        Shared simulated time span in milliseconds.
+    dt:
+        Timestep in milliseconds used for budget projection. Model-scan calls
+        currently defer to model defaults at execution time, so the route uses
+        :data:`STUDIO_ANALYSIS_REFERENCE_TIMESTEP_MS` for this projection.
+
+    Returns
+    -------
+    AnalysisCost
+        Cost projection where each catalogue model contributes one synchronous
+        simulation.
+
+    Raises
+    ------
+    AnalysisBudgetError
+        If ``model_count`` is non-positive (``"simulations"`` limit) or the
+        timestep is invalid (``"timestep"`` limit).
+    """
+
+    if model_count <= 0:
+        raise AnalysisBudgetError(
+            limit="simulations",
+            projected=model_count,
+            allowed=1,
+            message="Model-scan catalogue count must be positive.",
+        )
+    return evaluate_analysis_cost(
+        simulation_count=model_count,
+        duration=duration,
+        dt=dt,
+    )
+
+
 def enforce_analysis_budget(cost: AnalysisCost, budget: AnalysisBudget) -> None:
     """Reject a projected analysis cost that exceeds the configured budget.
 
@@ -393,6 +434,7 @@ __all__ = [
     "enforce_analysis_budget",
     "evaluate_analysis_cost",
     "evaluate_multi_config_cost",
+    "evaluate_model_scan_cost",
     "evaluate_nullcline_grid_cost",
     "resolve_request_timestep",
     "simulation_step_count",

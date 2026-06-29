@@ -887,7 +887,7 @@ Parameters derived from Paper 7 and Metatron's Cube geometry.
 
 
 ### Class `L7_SymbolicAdapter`
-JAX-traceable adapter for the SCPN Geometrical-Symbolic layer.
+JAX-traceable adapter for the SCPN geometrical-symbolic layer.
 
 - **__init__**(params, seed)
 - **_init_metatron_matrix**()
@@ -895,15 +895,15 @@ JAX-traceable adapter for the SCPN Geometrical-Symbolic layer.
 - **_metatron_coordinates**(n_nodes)
 - **_validate_params**(params)
 - **encode**(domain_state)
-  - Maps symbolic phases to stochastic bitstreams.
+  - Map symbolic phases to stochastic bitstreams.
 - **_symbolic_kernel**(phases, metatron, inputs, dt)
-  - Solves the Symbolic routing dynamics:
+  - Solve the symbolic routing dynamics.
 - **step_jax**(dt, inputs)
   - Advances the L7 holonomic dynamics using JAX.
 - **decode**(bitstreams)
-  - Maps bitstreams back to Symbolic Coherence.
+  - Map bitstreams back to symbolic coherence telemetry.
 - **get_metrics**()
-  - Returns L7-specific metrics like Routing Density.
+  - Return L7-specific routing and phase-stability metrics.
 
 ---
 
@@ -25639,6 +25639,7 @@ clear_screen : bool
 - **draw**(brain)
   - Render a single dashboard frame.
 - **__repr__**()
+  - Return a concise representation of the dashboard window size.
 
 ### Function `_heat_char(value, max_val)`
 Map a value to a coloured block character.
@@ -25809,6 +25810,7 @@ seed : int or None
 - **reset**()
   - Reset all neurons, spin pool, and history.
 - **__repr__**()
+  - Return a concise representation of the brain learning state.
 
 ---
 
@@ -25865,6 +25867,7 @@ topology : str
 - **get_constraints**(n_sites)
   - Return design constraints for a register of given size.
 - **__repr__**()
+  - Return a concise constructor-style mapper description.
 
 ---
 
@@ -25924,6 +25927,7 @@ params : RadicalPairParams, optional
 - **get_state**()
   - Return parameters as a dict for serialisation.
 - **__repr__**()
+  - Return a concise representation of the active RPM parameters.
 
 ---
 
@@ -25941,7 +25945,7 @@ model constants.
 ### Class `SpinPoolMPS`
 Non-local spin storage using true Matrix Product States.
 
-Simulates entangled :sup:`31`\ P nuclear spins in Posner molecules.
+Simulates entangled :sup:`31`\\ P nuclear spins in Posner molecules.
 Each site corresponds to a phosphorus nuclear spin represented as a
 rank-3 tensor A&#91;α, σ, β&#93; where:
 - α, β are bond indices (dimension ``bond_dim``)
@@ -26003,6 +26007,7 @@ update_rate : float
 - **to_scpn_payload**()
   - Produce metadata compatible with SCPNDatastream format.
 - **__repr__**()
+  - Return a concise diagnostic summary for logs and dashboards.
 
 ---
 
@@ -26039,6 +26044,42 @@ bridge : FisherPosnerQuantumBridge
 - **to_json_event**(event_type)
   - Produce a JSON event string for external frontend streaming.
 - **__repr__**()
+
+---
+
+## Module `quantum_cognition.tests.test_dashboard`
+
+### Class `FakeNeuron`
+Minimal neuron telemetry record consumed by the dashboard renderer.
+
+
+### Class `FakePool`
+Minimal spin-pool telemetry record consumed by the dashboard renderer.
+
+- **__init__**(entanglement_map)
+  - Store a deterministic entanglement map for dashboard rendering.
+
+### Class `FakeBrain`
+Small dashboard-compatible brain fixture exercising the public draw path.
+
+- **__init__**(history)
+  - Initialise deterministic dashboard telemetry.
+- **get_learning_state**()
+  - Return the state dictionary read by the dashboard header.
+- **get_history**()
+  - Return spike and directive history entries for raster rendering.
+
+### Function `test_dashboard_draw_covers_terminal_fallback_and_history_bands(monkeypatch, capsys)`
+Draw uses fallback terminal size and renders all spike-raster bands.
+
+### Function `test_dashboard_draw_reports_hidden_neuron_count(monkeypatch, capsys)`
+Draw reports hidden neuron counts when the terminal is narrow.
+
+### Function `test_bar_handles_non_positive_scale()`
+Bar renderer returns an empty-scale bar for non-positive maxima.
+
+### Function `test_dashboard_repr_reports_raster_window()`
+The dashboard repr includes the configured raster window.
 
 ---
 
@@ -26093,23 +26134,63 @@ bridge : FisherPosnerQuantumBridge
 
 ---
 
+## Module `quantum_cognition.tests.test_gotm_brain_llm_contracts`
+
+### Class `_GotmBrainModule`
+Typed view of the dynamically reloaded GOTM brain module.
+
+
+### Class `_MutableLLMModule`
+Typed view of the fake local llm module used for re-import tests.
+
+
+### Function `_fake_llm_module(chat)`
+Build a local llm module matching the production import contract.
+
+### Function `_reload_gotm_with_llm(monkeypatch, llm_module)`
+Reload gotm_brain against a supplied local llm module.
+
+### Function `_restore_gotm_module()`
+Restore the canonical module after dynamic import contract tests.
+
+### Function `test_gotm_brain_import_detects_local_llm(monkeypatch)`
+Importing with a local llm module enables the LLM directive path.
+
+### Function `test_gotm_brain_invalid_llm_directive_falls_back(monkeypatch)`
+Unknown local LLM replies fall back to the stable directive.
+
+### Function `test_gotm_brain_llm_exception_falls_back(monkeypatch)`
+Local LLM runtime errors fall back to the stable directive.
+
+---
+
 ## Module `quantum_cognition.tests.test_kane_mapper`
 
 ### Class `TestKaneSiliconMapper`
+Contract tests for the Kane silicon register mapper.
+
 - **test_linear_positions**()
   - Linear topology should place qubits in a line.
 - **test_grid_positions**()
   - Grid topology should place qubits in a 2D arrangement.
+- **test_triangular_positions_stagger_odd_rows**()
+  - Triangular topology staggers every odd row by half a spacing.
+- **test_hexagonal_positions_stop_after_requested_site_count**()
+  - Hexagonal topology fills only the requested number of donor sites.
 - **test_coupling_matrix_symmetry**()
   - Coupling matrix must be symmetric with zero diagonal.
 - **test_coupling_decay**()
   - Coupling should decay with distance.
 - **test_coupling_positive**()
   - All coupling values should be non-negative.
+- **test_exchange_coupling_returns_prefactor_at_zero_distance**()
+  - Co-located donors use the Kane exchange prefactor directly.
 - **test_t2_budget**()
   - T₂ budget must be positive.
 - **test_single_qubit**()
   - Single qubit register should work.
+- **test_zero_sites_are_rejected**()
+  - Zero-site registers are invalid because no donor can be placed.
 - **test_constraints**()
   - Constraints dict should contain all expected fields.
 - **test_constraints_infeasible**()
@@ -26117,8 +26198,11 @@ bridge : FisherPosnerQuantumBridge
 - **test_serialisation**()
   - to_dict should produce JSON-compatible output.
 - **test_invalid_spacing**()
+  - Non-positive donor spacing is rejected.
 - **test_invalid_topology**()
+  - Unknown lattice topology names are rejected.
 - **test_repr**()
+  - The repr reports spacing and topology for diagnostics.
 
 ---
 
@@ -26149,10 +26233,35 @@ bridge : FisherPosnerQuantumBridge
 
 ---
 
+## Module `quantum_cognition.tests.test_radical_pair_contracts`
+
+### Function `test_rejects_invalid_quadrature_order()`
+Constructor rejects quadrature rules that cannot integrate an interval.
+
+### Function `test_explicit_hyperfine_tensor_state_counts()`
+Explicit tensor construction records nuclei on both radicals.
+
+### Function `test_invalid_hyperfine_tensor_shape_is_rejected()`
+Tensor validation reports the exact radical-side tensor index.
+
+### Function `test_zero_nucleus_singlet_density_has_electron_dimension()`
+The no-bath helper returns pure electron singlet density matrices.
+
+### Function `test_dense_hamiltonian_rejects_oversized_nuclear_bath()`
+Dense exact evolution fail-closes before allocating huge spin operators.
+
+### Function `test_singlet_yield_rejects_non_positive_rates(params, message)`
+Singlet-yield validation rejects non-positive kinetic parameters.
+
+---
+
 ## Module `quantum_cognition.tests.test_spin_pool`
 
 ### Class `TestSpinPoolMPS`
+Contract tests for the exact spin-pool MPS publication path.
+
 - **test_init_defaults**()
+  - Default construction creates an eight-site product-state pool.
 - **test_entanglement_map_normalised**()
   - Entanglement map should sum to 1 after init.
 - **test_measurement_updates_map**()
@@ -26162,22 +26271,45 @@ bridge : FisherPosnerQuantumBridge
 - **test_atp_efficiency_range**()
   - ATP efficiency is a singlet probability in &#91;0, 1&#93;.
 - **test_invalid_site_index**()
+  - Measurement rejects negative and out-of-range spin-site indices.
 - **test_negative_intensity**()
+  - Measurement intensity must be non-negative.
 - **test_reset**()
+  - Reset restores the product state and clears measurement metadata.
 - **test_state_roundtrip**()
   - get_state → set_state should preserve state.
 - **test_scpn_payload**()
+  - SCPN payload exposes entanglement and ATP observable arrays.
 - **test_invalid_params**()
+  - Constructor rejects invalid site, bond, and update parameters.
 - **test_singlet_statevector_roundtrip_preserves_atp_observable**()
+  - Singlet import/export preserves the ATP singlet observable.
 - **test_statevector_import_rejects_invalid_public_contracts**()
+  - Statevector import/export rejects invalid public contracts.
 - **test_statevector_import_rejects_silent_bond_truncation**()
+  - Statevector import rejects states exceeding configured bond rank.
 - **test_checkpoint_without_map_recomputes_quantum_diagnostics**()
+  - Checkpoint restore recomputes diagnostics when the map is absent.
 - **test_corrupted_checkpoint_zero_norm_fails_on_statevector_export**()
+  - Corrupted zero-norm checkpoint tensors fail on exact export.
 - **test_single_site_pool_rejects_two_site_atp_observable**()
+  - A one-site pool cannot expose the two-site ATP observable.
+- **test_atp_observable_rejects_out_of_range_public_site**()
+  - ATP observable rejects public site indices outside the spin pool.
 - **test_exact_evolution_rejects_invalid_coupling_contracts**()
+  - Exact dense evolution rejects invalid time, size, and couplings.
+- **test_exact_evolution_preserves_norm_for_valid_public_coupling**()
+  - Exact dense evolution accepts a valid coupling tensor and stays unitary.
+- **test_status_and_repr_report_public_telemetry**()
+  - Status and repr expose stable telemetry fields for dashboards.
 - **test_internal_heisenberg_same_site_is_noop**()
+  - Internal same-site Heisenberg routing leaves the state unchanged.
+- **test_internal_tebd_gate_rejects_non_adjacent_sites**()
+  - Internal TEBD gate rejects non-adjacent site pairs explicitly.
 - **test_internal_heisenberg_adjacent_gate_preserves_state_norm**()
+  - Internal adjacent Heisenberg routing preserves state norm.
 - **test_internal_heisenberg_nonadjacent_swap_network_preserves_state_norm**()
+  - Internal non-adjacent Heisenberg routing preserves state norm.
 
 ---
 
@@ -29489,6 +29621,42 @@ HTTPException
     With status 422 and a path-free budget detail when the request exceeds
     the configured synchronous analysis budget.
 
+### Function `_guard_nullcline_grid_request(budget)`
+Reject a nullcline grid that exceeds the synchronous analysis budget.
+
+Parameters
+----------
+budget:
+    Active synchronous analysis ceilings.
+grid_size:
+    Number of points per axis in the requested nullcline grid.
+equation_count:
+    Number of ODE right-hand-side expressions evaluated at each grid point.
+
+Raises
+------
+HTTPException
+    With status 422 and a path-free budget detail when the grid exceeds the
+    configured synchronous analysis budget.
+
+### Function `_guard_model_scan_request(budget)`
+Reject a catalogue model scan whose projected synchronous cost is over budget.
+
+Parameters
+----------
+budget:
+    Active synchronous analysis ceilings.
+model_count:
+    Number of catalogue models the scan will simulate.
+duration:
+    Shared model-scan duration in milliseconds.
+
+Raises
+------
+HTTPException
+    With status 422 and a path-free budget detail when the scan exceeds the
+    configured synchronous analysis budget.
+
 ### Function `_config_duration_dt(config)`
 Extract a ``(duration, dt)`` cost pair from a free-form simulate config.
 
@@ -30239,6 +30407,56 @@ Raises
 AnalysisBudgetError
     If ``configs`` is empty (``"simulations"`` limit) or any pair has an
     invalid timestep (``"timestep"`` limit).
+
+### Function `evaluate_nullcline_grid_cost()`
+Project the synchronous point-evaluation cost of a nullcline grid.
+
+Parameters
+----------
+grid_size:
+    Number of points per axis in the square nullcline grid.
+equation_count:
+    Number of ODE right-hand-side expressions evaluated at each grid point.
+
+Returns
+-------
+AnalysisCost
+    Cost projection where each grid point is treated as one synchronous
+    unit of work and ``steps_per_simulation`` records the equation
+    evaluations performed at that point.
+
+Raises
+------
+AnalysisBudgetError
+    If either count is non-positive. The ``"simulations"`` limit is used
+    because the grid point count is checked against the same synchronous
+    request fan-out ceiling as parameter sweeps.
+
+### Function `evaluate_model_scan_cost()`
+Project the synchronous simulation cost of a Studio model scan.
+
+Parameters
+----------
+model_count:
+    Number of catalogue models the scan will simulate.
+duration:
+    Shared simulated time span in milliseconds.
+dt:
+    Timestep in milliseconds used for budget projection. Model-scan calls
+    currently defer to model defaults at execution time, so the route uses
+    :data:`STUDIO_ANALYSIS_REFERENCE_TIMESTEP_MS` for this projection.
+
+Returns
+-------
+AnalysisCost
+    Cost projection where each catalogue model contributes one synchronous
+    simulation.
+
+Raises
+------
+AnalysisBudgetError
+    If ``model_count`` is non-positive (``"simulations"`` limit) or the
+    timestep is invalid (``"timestep"`` limit).
 
 ### Function `enforce_analysis_budget(cost, budget)`
 Reject a projected analysis cost that exceeds the configured budget.

@@ -161,6 +161,7 @@ from sc_neurocore.studio.platform import (
     materialize_training_weight_payload,
     evaluate_analysis_cost,
     evaluate_multi_config_cost,
+    evaluate_model_scan_cost,
     evaluate_nullcline_grid_cost,
     resolve_request_timestep,
     list_studio_browser_user_public_records,
@@ -736,6 +737,41 @@ def _guard_nullcline_grid_request(
         cost = evaluate_nullcline_grid_cost(
             grid_size=grid_size,
             equation_count=equation_count,
+        )
+        enforce_analysis_budget(cost, budget)
+    except AnalysisBudgetError as exc:
+        raise HTTPException(status_code=422, detail=exc.to_public_detail()) from None
+
+
+def _guard_model_scan_request(
+    budget: AnalysisBudget,
+    *,
+    model_count: int,
+    duration: float,
+) -> None:
+    """Reject a catalogue model scan whose projected synchronous cost is over budget.
+
+    Parameters
+    ----------
+    budget:
+        Active synchronous analysis ceilings.
+    model_count:
+        Number of catalogue models the scan will simulate.
+    duration:
+        Shared model-scan duration in milliseconds.
+
+    Raises
+    ------
+    HTTPException
+        With status 422 and a path-free budget detail when the scan exceeds the
+        configured synchronous analysis budget.
+    """
+
+    try:
+        cost = evaluate_model_scan_cost(
+            model_count=model_count,
+            duration=duration,
+            dt=resolve_request_timestep(None),
         )
         enforce_analysis_budget(cost, budget)
     except AnalysisBudgetError as exc:
@@ -2259,7 +2295,13 @@ def create_app(runtime_settings: StudioRuntimeSettings | None = None) -> FastAPI
     # --- Model scan (behavior classification) — must precede /api/models/{name} ---
     @app.get("/api/models/scan")
     def api_model_scan() -> Any:
-        return _safe(lambda: scan_all_models(current=10.0, duration=100.0))
+        duration = 100.0
+        _guard_model_scan_request(
+            analysis_budget,
+            model_count=len(list_models()),
+            duration=duration,
+        )
+        return _safe(lambda: scan_all_models(current=10.0, duration=duration))
 
     # --- Catalogue facets (family taxonomy) — must precede /api/models/{name} ---
     @app.get("/api/models/facets")
