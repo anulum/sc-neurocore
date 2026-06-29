@@ -213,6 +213,66 @@ def test_folded_weighted_external_matches_direct() -> None:
     assert any("1" in row for row in direct_raster), "weighted workload should spike"
 
 
+def _recurrent_graph() -> tuple[NeuronGraph, list[float], int]:
+    """Single LIF population: external drive + a recurrent (self) spiking connection.
+
+    The recurrent term reads prior-tick spikes; folding it exercises the spike_bus
+    double-buffer. Returns ``(graph, external_currents, n_dst)``.
+    """
+    import numpy as np
+
+    n_dst, n_src = 5, 3
+    ext_rows = [[0.5, 0.3, 0.2], [0.6, 0.3, 0.2], [0.7, 0.3, 0.2], [0.4, 0.4, 0.3], [0.3, 0.2, 0.1]]
+    ext_w = np.array(ext_rows, dtype=np.float32)
+    # Ring excitation: neuron i feeds neuron (i+1) mod N on a spike.
+    rec_w = np.zeros((n_dst, n_dst), dtype=np.float32)
+    for i in range(n_dst):
+        rec_w[(i + 1) % n_dst, i] = 0.4
+    pop = NeuronSpec(name="pop0", neuron_type="lif", n_neurons=n_dst, params={}, dt=1.0)
+    ext_conn = ConnectionSpec(src="stim", dst="pop0", weights=ext_w)
+    rec_conn = ConnectionSpec(src="pop0", dst="pop0", weights=rec_w)
+    ng = NeuronGraph(
+        populations=[pop],
+        connections=[ext_conn, rec_conn],
+        input_pop="stim",
+        output_pop="pop0",
+        dt=1.0,
+    )
+    return ng, [2.0, 1.5, 1.0], n_dst
+
+
+def test_folded_recurrent_matches_direct() -> None:
+    ng, currents, n_dst = _recurrent_graph()
+    q = Q88(data_width=_DW, fraction=_FR)
+    qgraph = quantise_graph(ng, q)
+
+    mask = (1 << _DW) - 1
+    packed = 0
+    for k, cur in enumerate(currents):
+        packed |= (q.encode(cur) & mask) << (k * _DW)
+    flat = f"{len(currents) * _DW}'h{packed:x}"
+
+    direct_top = _build_top_direct("sc_fold_test", qgraph, data_width=_DW, fraction=_FR)
+    lif_module = _build_neuron_module("lif", qgraph.populations[0], data_width=_DW, fraction=_FR)
+    pe_source, folded_top = _build_top_folded(
+        "sc_fold_test_folded", qgraph, data_width=_DW, fraction=_FR
+    )
+
+    direct_raster = _cosim(
+        {"lif": lif_module, "top": direct_top, "tb": _direct_tb(flat, n_dst)}, "direct"
+    )
+    folded_raster = _cosim(
+        {"pe": pe_source, "top": folded_top, "tb": _folded_tb(flat, n_dst)}, "folded"
+    )
+
+    assert len(direct_raster) == _STEPS and len(folded_raster) == _STEPS
+    assert folded_raster == direct_raster, (
+        "folded recurrent raster diverged from direct at step "
+        f"{next((i for i, (a, b) in enumerate(zip(direct_raster, folded_raster)) if a != b), None)}"
+    )
+    assert any("1" in row for row in direct_raster), "recurrent workload should spike"
+
+
 def test_folded_state_is_bram_backed_and_shares_one_pe() -> None:
     ng = _single_lif_graph()
     q = Q88(data_width=_DW, fraction=_FR)

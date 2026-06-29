@@ -1234,8 +1234,14 @@ def _can_fold(qgraph: QuantisedGraph) -> bool:
         return False
     pop_names = {p.name for p in qgraph.populations}
     for conn in qgraph.connections:
-        if conn.src in pop_names or conn.dst != pop.name:
-            return False  # recurrent / inter-population fan-in not yet folded
+        if conn.dst != pop.name:
+            return False
+        src_is_self = conn.src == pop.name
+        src_is_external = conn.src not in pop_names
+        if not (src_is_self or src_is_external):
+            return False  # inter-population (different source population) not yet folded
+        if src_is_self and _connection_sources_are_analogue(pop):
+            return False  # analogue recurrence (li/cuba_li) needs the v_out path, not yet folded
         if conn.bias is not None or conn.source_threshold is not None:
             return False
         if _connection_has_thresholds(conn):
@@ -1360,21 +1366,29 @@ def _build_top_folded(
         term_names: list[str] = []
         for ci, conn in enumerate(feeding):
             weights = np.asarray(conn.weights, dtype=np.int64)
+            is_recurrent = conn.src == pop.name
             off = ext_offsets.get(conn.src, 0)
             for src in range(weights.shape[1]):
                 rw = f"rw_{ci}_{src}"
                 rw_regs.append(f"    reg signed [DATA_WIDTH - 1:0] {rw};")
                 for nrow in range(n):
                     rows[nrow].append(f"{rw} = {_signed_hex(int(weights[nrow, src]), data_width)};")
-                mul = f"fmul_{ci}_{src}"
-                term = f"fterm_{ci}_{src}"
-                term_lines.append(
-                    f"    wire signed [{product_width - 1}:0] {mul} = ext_input_{off + src} * {rw};"
-                )
-                term_lines.append(
-                    f"    wire signed [ACC_WIDTH - 1:0] {term} = {mul} >>> {fraction};"
-                )
-                term_names.append(term)
+                if is_recurrent:
+                    # Spiking recurrent fan-in: the prior-tick spike (spike_bus holds the last
+                    # committed tick) gates the full weight, sign-extended to ACC_WIDTH —
+                    # identical to direct's `(src_spike ? weight : 0)` with registered spikes.
+                    rw_sext = f"{{{{(ACC_WIDTH - DATA_WIDTH){{{rw}[DATA_WIDTH - 1]}}}}, {rw}}}"
+                    term_names.append(f"(spike_bus[{src}] ? {rw_sext} : {acc_width}'sd0)")
+                else:
+                    mul = f"fmul_{ci}_{src}"
+                    term = f"fterm_{ci}_{src}"
+                    term_lines.append(
+                        f"    wire signed [{product_width - 1}:0] {mul} = ext_input_{off + src} * {rw};"
+                    )
+                    term_lines.append(
+                        f"    wire signed [ACC_WIDTH - 1:0] {term} = {mul} >>> {fraction};"
+                    )
+                    term_names.append(term)
         input_decls.extend(rw_regs)
         default_assigns = " ".join(
             f"{rw.split()[-1].rstrip(';')} = {data_width}'sd0;" for rw in rw_regs
