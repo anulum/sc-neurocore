@@ -17,6 +17,7 @@ from .testbench_gen import (
     generate_testbench,
 )
 from .verilog_compiler import (
+    compile_to_datapath,
     compile_to_verilog,
 )
 from .verilog_compiler_config import (
@@ -29,6 +30,7 @@ from .verilog_expr_emitter import (
 __all__ = [
     "Q88",
     "_VerilogExprEmitter",
+    "compile_to_datapath",
     "compile_to_verilog",
     "equation_to_fpga",
     "generate_testbench",

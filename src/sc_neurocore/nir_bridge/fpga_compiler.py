@@ -44,14 +44,14 @@ from typing import Any, Literal, Mapping, Sequence
 import numpy as np
 
 from ..hdl_gen._ident import sanitize_ident
-from ..compiler.equation_compiler import Q88, compile_to_verilog
+from ..compiler.equation_compiler import Q88, compile_to_datapath, compile_to_verilog
 from ..ir.scnir_convert import SCNIRConversionConfig, build_scnir_from_neuron_graph
 from ..ir.scnir_hdl import (
     SCNIRHDLSourceManifestEntry,
     build_scnir_source_bundle,
 )
 from ..ir.scnir_schema import SCNIRDocument, SCNIRHierarchyInstance, SCNIRHierarchyPort
-from ..neurons.equation_builder import from_equations
+from ..neurons.equation_builder import EquationNeuron, from_equations
 from .neuron_graph import ConnectionSpec, NeuronGraph, NeuronSpec
 from .quantise_params import QuantisedGraph, quantise_graph
 
@@ -676,6 +676,22 @@ def _build_neuron_module(
     str
         Synthesisable Verilog module source.
     """
+    neuron = _population_neuron(neuron_type, pop)
+    return compile_to_verilog(
+        neuron,
+        module_name=f"sc_nir_{neuron_type}",
+        data_width=data_width,
+        fraction=fraction,
+    )
+
+
+def _population_neuron(neuron_type: str, pop: NeuronSpec) -> EquationNeuron:
+    """Build the canonical :class:`EquationNeuron` for one population's type.
+
+    Single source of truth for the ODE/threshold/reset/params/init/dt used by
+    both the per-instance module (:func:`_build_neuron_module`) and the folded
+    datapath PE (:func:`_build_top_folded`), so the two share identical dynamics.
+    """
     template = _NEURON_TEMPLATES.get(neuron_type)
     if template is None:
         raise ValueError(f"No ODE template for neuron type: {neuron_type!r}")
@@ -685,7 +701,6 @@ def _build_neuron_module(
     # and are rejected rather than averaged.
     params = _resolved_population_params(neuron_type, pop)
 
-    # Build initial state
     init: dict[str, float] = {}
     for eq_str in template["equations"]:
         var_name = eq_str.split("/")[0].replace("d", "", 1).strip()
@@ -694,22 +709,13 @@ def _build_neuron_module(
         else:
             init[var_name] = 0.0
 
-    module_name = f"sc_nir_{neuron_type}"
-
-    neuron = from_equations(
+    return from_equations(
         *template["equations"],
         threshold=template["threshold"],
         reset=template["reset"],
         params=params,
         init=init,
         dt=pop.dt,
-    )
-
-    return compile_to_verilog(
-        neuron,
-        module_name=module_name,
-        data_width=data_width,
-        fraction=fraction,
     )
 
 
@@ -1207,6 +1213,150 @@ def _build_top_direct(
     return "\n".join(lines)
 
 
+def _can_fold(qgraph: QuantisedGraph) -> bool:
+    """Return True if the graph is in the folded interconnect's supported subset.
+
+    First folded mode (v1): a single connection-less population of a supported
+    neuron type, externally driven (one ``I_ext`` lane per neuron). This is the
+    common input/sensory-layer shape; the shared datapath + state BRAM replace one
+    module instance per neuron. Weighted/recurrent fan-in folding is future work,
+    so any connection or extra population falls back to the direct interconnect.
+    """
+    return (
+        len(qgraph.populations) == 1
+        and len(qgraph.connections) == 0
+        and qgraph.populations[0].neuron_type in _NEURON_TEMPLATES
+    )
+
+
+def _build_top_folded(
+    module_name: str,
+    qgraph: QuantisedGraph,
+    *,
+    data_width: int = 16,
+    fraction: int = 8,
+) -> tuple[str, str]:
+    """Generate a time-multiplexed (folded) top + its shared datapath PE.
+
+    One combinational PE (:func:`compile_to_datapath`) and one BRAM-backed state
+    array are shared across all neurons: a sequencer steps one neuron per cycle,
+    reading its packed state from BRAM, driving the PE with that state and the
+    neuron's external current, and writing the next state back. Spikes accumulate
+    over a tick and commit to ``spike_bus`` in a dedicated cycle (``tick_done``
+    pulses), so the bus is race-free and stable for one tick.
+
+    Restricted to the :func:`_can_fold` subset (single connection-less population).
+    Returns ``(pe_module_source, top_module_source)``.
+    """
+    if not _can_fold(qgraph):
+        raise ValueError("graph is outside the folded interconnect's supported subset")
+
+    pop = qgraph.populations[0]
+    neuron = _population_neuron(pop.neuron_type, pop)
+    q = Q88(data_width=data_width, fraction=fraction)
+
+    safe_module = sanitize_ident(module_name, context="module name")
+    pe_module = sanitize_ident(f"sc_nir_{pop.neuron_type}_pe", context="module name")
+    pe_source = compile_to_datapath(
+        neuron, module_name=pe_module, data_width=data_width, fraction=fraction
+    )
+
+    svars = [sanitize_ident(v, context="state variable") for v in neuron.equations]
+    n_vars = len(svars)
+    n = pop.n_neurons
+    idx_w = max(1, (n - 1).bit_length())
+    state_w = n_vars * data_width
+
+    # Packed init literal (MSB = last var) and per-var bit slices.
+    init_words = []
+    for var in neuron.equations:
+        enc = q.encode(neuron.initial_state.get(var, 0.0))
+        init_words.append(
+            f"{data_width}'h{enc & ((1 << data_width) - 1):0{max(1, data_width // 4)}x}"
+        )
+    init_packed = "{" + ", ".join(reversed(init_words)) + "}"
+
+    def slice_of(k: int) -> str:
+        return f"[{k * data_width} +: {data_width}]"
+
+    pe_cur_ports = [f"        .{svars[k]}_reg(cur_state{slice_of(k)})," for k in range(n_vars)]
+    pe_next_ports = [
+        f"        .{svars[k]}_next_out(next_state{slice_of(k)})," for k in range(n_vars)
+    ]
+
+    lines = [
+        f"// Auto-generated folded (time-multiplexed) top-level network: {safe_module}",
+        "// SC-NeuroCore NIR → FPGA compiler — shared datapath PE + BRAM state.",
+        f"// Population: {pop.name} ({pop.neuron_type} x {n}); one neuron per cycle.",
+        "`timescale 1ns / 1ps",
+        "",
+        f"module {safe_module} (",
+        "    input  wire clk,",
+        "    input  wire rst_n,",
+        "    input  wire en,",
+        f"    input  wire signed [{n * data_width - 1}:0] I_ext_flat,",
+        f"    output reg  [{n - 1}:0] spike_bus,",
+        "    output reg  tick_done",
+        ");",
+        "",
+        f"    localparam integer DATA_WIDTH = {data_width};",
+        f"    localparam integer N_NEURONS = {n};",
+        f"    localparam integer STATE_W = {state_w};",
+        "",
+        '    (* ram_style = "block" *)',
+        f"    reg [STATE_W - 1:0] state_bram [0:{n - 1}];",
+        f"    reg [{idx_w - 1}:0] nidx;",
+        "    reg phase;  // 0 = process one neuron, 1 = commit tick",
+        f"    reg [{n - 1}:0] spike_acc;",
+        "",
+        "    wire [STATE_W - 1:0] cur_state = state_bram[nidx];",
+        f"    wire signed [DATA_WIDTH - 1:0] cur_I = I_ext_flat[nidx * {data_width} +: {data_width}];",
+        "    wire [STATE_W - 1:0] next_state;",
+        "    wire pe_spike;",
+        "",
+        f"    {pe_module} pe_inst (",
+        "        .I_t(cur_I),",
+        *pe_cur_ports,
+        "        .spike_out(pe_spike),",
+        *pe_next_ports,
+    ]
+    lines[-1] = lines[-1].rstrip(",")
+    lines.extend(
+        [
+            "    );",
+            "",
+            "    integer i;",
+            "    always @(posedge clk or negedge rst_n) begin",
+            "        if (!rst_n) begin",
+            "            nidx <= 0;",
+            "            phase <= 1'b0;",
+            "            spike_acc <= 0;",
+            "            spike_bus <= 0;",
+            "            tick_done <= 1'b0;",
+            f"            for (i = 0; i < {n}; i = i + 1) state_bram[i] <= {init_packed};",
+            "        end else if (en) begin",
+            "            if (phase == 1'b0) begin",
+            "                spike_acc[nidx] <= pe_spike;",
+            "                state_bram[nidx] <= next_state;",
+            "                tick_done <= 1'b0;",
+            f"                if (nidx == {idx_w}'d{n - 1}) phase <= 1'b1;",
+            "                else nidx <= nidx + 1'b1;",
+            "            end else begin",
+            "                spike_bus <= spike_acc;",
+            "                tick_done <= 1'b1;",
+            "                phase <= 1'b0;",
+            "                nidx <= 0;",
+            "            end",
+            "        end",
+            "    end",
+            "",
+            "endmodule",
+            "",
+        ]
+    )
+    return pe_source, "\n".join(lines)
+
+
 def _build_top_aer(
     module_name: str,
     qgraph: QuantisedGraph,
@@ -1532,6 +1682,7 @@ def compile_network_to_fpga(
     base_seed: int = 1,
     target: str = "artix7",
     online_learning: Mapping[str, Mapping[str, Any]] | None = None,
+    interconnect: str | None = None,
 ) -> NetworkCompilationResult:
     """Compile a NeuronGraph to synthesisable Verilog RTL.
 
@@ -1563,6 +1714,11 @@ def compile_network_to_fpga(
     online_learning : Mapping[str, Mapping[str, Any]] | None
         Optional validated per-weight-stream SC-NIR online-learning annotations,
         keyed by deterministic stream id such as ``"conn.src_to_dst.weight"``.
+    interconnect : str | None
+        ``None`` (default) auto-selects direct (small) or AER (large) wiring;
+        ``"direct"`` forces direct; ``"folded"`` opts into the time-multiplexed
+        shared-datapath interconnect (one PE + BRAM state across all neurons),
+        which currently supports only a single connection-less population.
 
     Returns
     -------
@@ -1638,7 +1794,6 @@ def compile_network_to_fpga(
     # wiring.  Larger networks use weighted address-event fan-out while
     # preserving dense affine accumulation semantics.
     total_neurons = graph.total_neurons
-    interconnect = "direct"
     has_delayed_connections = any(
         any(
             _normalise_connection_delay_steps(
@@ -1650,12 +1805,31 @@ def compile_network_to_fpga(
         for conn in qgraph.connections
     )
     has_threshold_connections = any(_connection_has_thresholds(conn) for conn in qgraph.connections)
-    if (
-        total_neurons > _AER_THRESHOLD
+
+    if interconnect == "folded":
+        # Opt-in time-multiplexed interconnect; never auto-selected. Restricted to
+        # the _can_fold subset (single connection-less population) for now.
+        if not _can_fold(qgraph):
+            raise ValueError(
+                "interconnect='folded' supports only a single connection-less population of a "
+                "supported neuron type (the v1 folded subset); use 'direct' or auto otherwise"
+            )
+        selected_interconnect = "folded"
+        pe_source, top_module = _build_top_folded(
+            module_name, qgraph, data_width=data_width, fraction=fraction
+        )
+        neuron_modules[f"{qgraph.populations[0].neuron_type}_pe"] = pe_source
+    elif interconnect not in (None, "direct"):
+        raise ValueError(
+            f"unknown interconnect {interconnect!r}; choose 'folded', 'direct', or None (auto)"
+        )
+    elif (
+        interconnect is None
+        and total_neurons > _AER_THRESHOLD
         and not has_delayed_connections
         and not has_threshold_connections
     ):
-        interconnect = "aer"
+        selected_interconnect = "aer"
         top_module = _build_top_aer(
             module_name,
             qgraph,
@@ -1668,12 +1842,13 @@ def compile_network_to_fpga(
             scnir_semantic_hierarchy_stream_ids=frozenset(hierarchy_weight_literals),
         )
     else:
-        if total_neurons > _AER_THRESHOLD and has_delayed_connections:
+        selected_interconnect = "direct"
+        if interconnect is None and total_neurons > _AER_THRESHOLD and has_delayed_connections:
             warnings.append(
                 "Using direct interconnect because delayed recurrent connections require "
                 "registered one-step source semantics"
             )
-        if total_neurons > _AER_THRESHOLD and has_threshold_connections:
+        if interconnect is None and total_neurons > _AER_THRESHOLD and has_threshold_connections:
             warnings.append(
                 "Using direct interconnect because NIR Threshold transforms require exact "
                 "fixed-point comparator semantics"
@@ -1700,7 +1875,7 @@ def compile_network_to_fpga(
         total_neurons=total_neurons,
         total_synapses=graph.total_synapses,
         q_format=q_label,
-        interconnect=interconnect,
+        interconnect=selected_interconnect,
         scnir_document=scnir_document,
         scnir_source_modules=dict(scnir_source_bundle.modules),
         scnir_source_manifest=scnir_source_bundle.manifest,
