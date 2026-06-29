@@ -6,9 +6,23 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore — Verilog compiler implementation
 
-"""Compile EquationNeuron to synthesizable Verilog RTL."""
+"""Compile EquationNeuron to synthesizable Verilog RTL.
+
+Two emitters share one combinational core (:func:`_build_neuron_core`):
+
+* :func:`compile_to_verilog` — the per-instance module: internal state registers
+  advanced in an ``always`` block. This is the bit-true, golden path used by the
+  direct/AER interconnects.
+* :func:`compile_to_datapath` — the same arithmetic as a **combinational
+  processing element** with state carried on ports (``<var>_reg`` inputs,
+  ``<var>_next_out`` outputs). One PE is time-multiplexed across many neurons in
+  the folded interconnect, so the next-state arithmetic must be — and is, by
+  construction — identical to the per-instance module.
+"""
 
 from __future__ import annotations
+
+from dataclasses import dataclass
 
 from ..hdl_gen._ident import sanitize_ident
 from ..neurons.equation_builder import EquationNeuron
@@ -16,62 +30,48 @@ from .verilog_compiler_config import Q88
 from .verilog_expr_emitter import _emit_expr
 
 
-def compile_to_verilog(
-    neuron: EquationNeuron,
-    module_name: str = "sc_equation_neuron",
-    data_width: int = 16,
-    fraction: int = 8,
-    *,
-    signed: bool = True,
-    overflow: str = "saturate",
-    rounding: str = "truncate",
-    pipeline_stages: int = 0,
-    pipeline_points: list[str] | None = None,
-) -> str:
-    """Compile an EquationNeuron to synthesizable Verilog RTL.
+@dataclass
+class _NeuronCore:
+    """Shared combinational building blocks for one neuron's step.
 
-    Parameters
-    ----------
-    neuron : EquationNeuron
-        The neuron defined by arbitrary ODE strings.
-    module_name : str
-        Name of the generated Verilog module.
-    data_width : int
-        Bit width for fixed-point arithmetic (default 16 = Q8.8).
-    fraction : int
-        Number of fractional bits (default 8).
-    signed : bool
-        True for signed two's complement (default), False for unsigned.
-    overflow : str
-        Overflow mode: ``"saturate"`` (default), ``"wrap"``, or ``"trap"``.
-    rounding : str
-        Rounding mode: ``"truncate"`` (default), ``"nearest"``,
-        ``"bankers"``, or ``"stochastic"``.
-    pipeline_stages : int
-        Number of pipeline register stages to insert at multiply outputs.
-    pipeline_points : list[str], optional
-        Explicit list of intermediate signal names.
+    Both the registered per-instance module and the combinational datapath PE are
+    assembled from these identical fragments, so their arithmetic is bit-for-bit
+    the same. State variables are referenced as ``<safe_var>_reg`` throughout
+    (the per-instance module declares those as registers; the datapath PE declares
+    them as input ports).
     """
-    q = Q88(
-        data_width=data_width,
-        fraction=fraction,
-        signed=signed,
-        overflow=overflow,
-        rounding=rounding,
-    )
 
-    if neuron.dt != 0.0:
-        dt_quantised = int(round(neuron.dt * (1 << fraction)))
-        if dt_quantised == 0:
-            min_representable = 1.0 / (1 << fraction)
-            raise ValueError(
-                f"dt={neuron.dt} underflows in Q{data_width - fraction}.{fraction}: "
-                f"smallest representable non-zero value is {min_representable}. "
-                f"Use dt=1.0 or another value >= {min_representable}, "
-                "or increase fractional precision, e.g. fraction=12."
-            )
+    state_var_map: dict[str, str]
+    param_map: dict[str, str]
+    param_decls: list[str]
+    intermediates: list[str]
+    pipeline_regs: list[str]
+    deriv_wires: list[str]
+    next_wires: list[str]
+    threshold_verilog: str
+    reset_assignments: list[str]
 
-    safe_module_name = sanitize_ident(module_name, context="module name")
+    @property
+    def total_pipeline_latency(self) -> int:
+        return len(self.pipeline_regs)
+
+
+def _build_neuron_core(
+    neuron: EquationNeuron,
+    q: Q88,
+    *,
+    data_width: int,
+    fraction: int,
+    pipeline_stages: int,
+    pipeline_points: list[str] | None,
+) -> _NeuronCore:
+    """Emit the combinational next-state + threshold + reset fragments.
+
+    This is the logic shared verbatim by :func:`compile_to_verilog` and
+    :func:`compile_to_datapath`; neither wraps nor mutates it differently, which
+    is what guarantees bit-exact agreement between the per-instance module and the
+    folded datapath.
+    """
     state_var_map = {var: sanitize_ident(var, context="state variable") for var in neuron.equations}
 
     param_map: dict[str, str] = {}
@@ -223,7 +223,92 @@ def compile_to_verilog(
         all_pipeline_regs.extend(r_pregs)
         reset_assignments.append(f"            {safe_var}_reg <= {rexpr};")
 
-    total_pipeline_latency = len(all_pipeline_regs)
+    return _NeuronCore(
+        state_var_map=state_var_map,
+        param_map=param_map,
+        param_decls=param_decls,
+        intermediates=all_intermediates,
+        pipeline_regs=all_pipeline_regs,
+        deriv_wires=deriv_wires,
+        next_wires=next_wires,
+        threshold_verilog=threshold_verilog,
+        reset_assignments=reset_assignments,
+    )
+
+
+def compile_to_verilog(
+    neuron: EquationNeuron,
+    module_name: str = "sc_equation_neuron",
+    data_width: int = 16,
+    fraction: int = 8,
+    *,
+    signed: bool = True,
+    overflow: str = "saturate",
+    rounding: str = "truncate",
+    pipeline_stages: int = 0,
+    pipeline_points: list[str] | None = None,
+) -> str:
+    """Compile an EquationNeuron to synthesizable Verilog RTL.
+
+    Parameters
+    ----------
+    neuron : EquationNeuron
+        The neuron defined by arbitrary ODE strings.
+    module_name : str
+        Name of the generated Verilog module.
+    data_width : int
+        Bit width for fixed-point arithmetic (default 16 = Q8.8).
+    fraction : int
+        Number of fractional bits (default 8).
+    signed : bool
+        True for signed two's complement (default), False for unsigned.
+    overflow : str
+        Overflow mode: ``"saturate"`` (default), ``"wrap"``, or ``"trap"``.
+    rounding : str
+        Rounding mode: ``"truncate"`` (default), ``"nearest"``,
+        ``"bankers"``, or ``"stochastic"``.
+    pipeline_stages : int
+        Number of pipeline register stages to insert at multiply outputs.
+    pipeline_points : list[str], optional
+        Explicit list of intermediate signal names.
+    """
+    q = Q88(
+        data_width=data_width,
+        fraction=fraction,
+        signed=signed,
+        overflow=overflow,
+        rounding=rounding,
+    )
+
+    if neuron.dt != 0.0:
+        dt_quantised = int(round(neuron.dt * (1 << fraction)))
+        if dt_quantised == 0:
+            min_representable = 1.0 / (1 << fraction)
+            raise ValueError(
+                f"dt={neuron.dt} underflows in Q{data_width - fraction}.{fraction}: "
+                f"smallest representable non-zero value is {min_representable}. "
+                f"Use dt=1.0 or another value >= {min_representable}, "
+                "or increase fractional precision, e.g. fraction=12."
+            )
+
+    safe_module_name = sanitize_ident(module_name, context="module name")
+    core = _build_neuron_core(
+        neuron,
+        q,
+        data_width=data_width,
+        fraction=fraction,
+        pipeline_stages=pipeline_stages,
+        pipeline_points=pipeline_points,
+    )
+    state_var_map = core.state_var_map
+    param_decls = core.param_decls
+    all_intermediates = core.intermediates
+    all_pipeline_regs = core.pipeline_regs
+    deriv_wires = core.deriv_wires
+    next_wires = core.next_wires
+    threshold_verilog = core.threshold_verilog
+    reset_assignments = core.reset_assignments
+    total_pipeline_latency = core.total_pipeline_latency
 
     lines = [
         "// Auto-generated by SC-NeuroCore equation compiler",
@@ -333,6 +418,127 @@ def compile_to_verilog(
 
     lines.append("    end")
     lines.append("end")
+    lines.append("")
+    lines.append("endmodule")
+
+    return "\n".join(lines)
+
+
+def compile_to_datapath(
+    neuron: EquationNeuron,
+    module_name: str = "sc_equation_neuron_pe",
+    data_width: int = 16,
+    fraction: int = 8,
+    *,
+    signed: bool = True,
+    overflow: str = "saturate",
+    rounding: str = "truncate",
+) -> str:
+    """Compile an EquationNeuron to a **combinational** processing element.
+
+    State is carried on ports — ``<var>_reg`` inputs and ``<var>_next_out``
+    outputs — instead of internal registers, so one PE can be time-multiplexed
+    across many neurons (the folded interconnect stores per-neuron state in BRAM
+    and streams it through this PE one neuron per cycle). ``spike_out`` and each
+    ``<var>_next_out`` are the post-threshold, post-reset next values, computed by
+    the same fragments as :func:`compile_to_verilog` — so the folded datapath is
+    bit-for-bit identical to the per-instance module.
+
+    Pipelining is not supported here (a combinational PE has no register stages);
+    the folded sequencer provides the one-cycle-per-neuron timing instead.
+    """
+    q = Q88(
+        data_width=data_width,
+        fraction=fraction,
+        signed=signed,
+        overflow=overflow,
+        rounding=rounding,
+    )
+
+    if neuron.dt != 0.0:
+        dt_quantised = int(round(neuron.dt * (1 << fraction)))
+        if dt_quantised == 0:
+            min_representable = 1.0 / (1 << fraction)
+            raise ValueError(
+                f"dt={neuron.dt} underflows in Q{data_width - fraction}.{fraction}: "
+                f"smallest representable non-zero value is {min_representable}."
+            )
+
+    safe_module_name = sanitize_ident(module_name, context="module name")
+    core = _build_neuron_core(
+        neuron,
+        q,
+        data_width=data_width,
+        fraction=fraction,
+        pipeline_stages=0,
+        pipeline_points=None,
+    )
+    state_var_map = core.state_var_map
+
+    lines = [
+        "// Auto-generated by SC-NeuroCore equation compiler (folded datapath PE)",
+        f"// Source: {neuron!r}",
+        f"// Fixed-point: Q{data_width - fraction}.{fraction} ({data_width}-bit signed)",
+        "// Combinational next-state: state carried on <var>_reg inputs / <var>_next_out outputs.",
+        "`timescale 1ns / 1ps",
+        "",
+        f"module {safe_module_name} #(",
+    ]
+    if core.param_decls:
+        lines.append(",\n".join(core.param_decls))
+        lines.append(")(")
+    else:
+        lines[-1] = f"module {safe_module_name} ("
+    lines.append(f"    input wire signed [{data_width - 1}:0] I_t,")
+    # State carried in on ports (named <var>_reg so the shared core wires match).
+    for var in neuron.equations:
+        safe_var = state_var_map[var]
+        lines.append(f"    input wire signed [{data_width - 1}:0] {safe_var}_reg,")
+    lines.append("    output wire spike_out,")
+    for var in neuron.equations:
+        safe_var = state_var_map[var]
+        lines.append(f"    output wire signed [{data_width - 1}:0] {safe_var}_next_out,")
+    lines[-1] = lines[-1].rstrip(",")
+    lines.append(");")
+    lines.append("")
+
+    for wire in core.intermediates:
+        lines.append(wire)
+    lines.append("")
+    for wire in core.deriv_wires:
+        lines.append(wire)
+    lines.append("")
+    for wire in core.next_wires:
+        lines.append(wire)
+    lines.append("")
+
+    # Spike is the combinational threshold over the candidate next state.
+    if core.threshold_verilog:
+        lines.append(f"assign spike_out = ({core.threshold_verilog});")
+    else:
+        lines.append("assign spike_out = 1'b0;")
+
+    # Next-state output: on spike, apply reset rules (or hold <var>_next when the
+    # variable has no reset rule); otherwise advance to <var>_next. This mirrors
+    # the per-instance always block exactly.
+    reset_map: dict[str, str] = {}
+    for assign in core.reset_assignments:
+        # Each entry is "            <safe_var>_reg <= <expr>;"
+        body = assign.strip().rstrip(";")
+        lhs, rhs = body.split("<=", 1)
+        safe_var = lhs.strip().removesuffix("_reg")
+        reset_map[safe_var] = rhs.strip()
+
+    for var in neuron.equations:
+        safe_var = state_var_map[var]
+        on_spike = reset_map.get(safe_var, f"{safe_var}_next")
+        if core.threshold_verilog:
+            lines.append(
+                f"assign {safe_var}_next_out = spike_out ? ({on_spike}) : {safe_var}_next;"
+            )
+        else:
+            lines.append(f"assign {safe_var}_next_out = {safe_var}_next;")
+
     lines.append("")
     lines.append("endmodule")
 
