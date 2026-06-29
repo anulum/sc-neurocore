@@ -239,8 +239,37 @@ _PROFILES: dict[str, HardwareProfile] = {}
 _DISCOVERY_HOOKS: list[Callable[[], list[HardwareProfile]]] = []
 
 
-def _reg(p: HardwareProfile) -> HardwareProfile:
-    """Register a profile in the global registry."""
+def _reg(p: HardwareProfile, *, allow_override: bool = False) -> HardwareProfile:
+    """Register a profile in the global registry.
+
+    Parameters
+    ----------
+    p : HardwareProfile
+        The profile to register, keyed by its ``name``.
+    allow_override : bool, optional
+        When ``False`` (the default) a name already present in the registry
+        raises :class:`ValueError`. This guards the built-in profile modules
+        against the silent last-wins overwrite that previously let one
+        platform be registered several times with conflicting fields. Set to
+        ``True`` for the user-extension paths (e.g. loading a TOML profile
+        that deliberately overrides a built-in target).
+
+    Returns
+    -------
+    HardwareProfile
+        The registered profile (``p`` unchanged), for convenient chaining.
+
+    Raises
+    ------
+    ValueError
+        If ``p.name`` is already registered and ``allow_override`` is ``False``.
+    """
+    if not allow_override and p.name in _PROFILES:
+        raise ValueError(
+            f"Duplicate hardware-profile registration for '{p.name}'. "
+            "Each built-in profile name must be registered exactly once; "
+            "pass allow_override=True to intentionally replace a profile."
+        )
     _PROFILES[p.name] = p
     return p
 
@@ -382,7 +411,8 @@ def load_toml_profile(path: str) -> HardwareProfile:
         dsp_mult_b=int(p.get("dsp_mult_b", 0)),
         notes=p.get("notes", "User-defined profile."),
     )
-    _reg(profile)
+    # User-defined profiles may deliberately replace a built-in target.
+    _reg(profile, allow_override=True)
     return profile
 
 

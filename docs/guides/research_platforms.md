@@ -145,8 +145,8 @@ demonstrated game-playing biological neural networks.
 
 | Profile | Vendor | Family | Width |
 |---------|--------|--------|------:|
-| `finalspark_neuroplatform` | FinalSpark | Neuroplatform | 16-bit |
-| `cortical_labs_dishbrain` | Cortical Labs | DishBrain | 16-bit |
+| `finalspark_neuroplatform` | FinalSpark | Neuroplatform | 8-bit |
+| `cortical_labs_dishbrain` | Cortical Labs | DishBrain | 8-bit |
 
 **Compilation notes**:
 - Output is stimulation protocol, not RTL

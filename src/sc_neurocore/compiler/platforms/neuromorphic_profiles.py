@@ -44,34 +44,6 @@ _reg(
 
 _reg(
     HardwareProfile(
-        name="brainscales2",
-        vendor="Heidelberg",
-        family="BrainScaleS-2",
-        platform_class="neuromorphic",
-        data_width=8,
-        fraction=4,
-        overflow="saturate",
-        rounding="nearest",
-        notes="Analog VLSI with 8-bit DAC/ADC. Q4.4 for digital calibration.",
-    )
-)
-
-_reg(
-    HardwareProfile(
-        name="spinnaker2",
-        vendor="TU Dresden",
-        family="SpiNNaker 2",
-        platform_class="neuromorphic",
-        data_width=16,
-        fraction=15,
-        overflow="saturate",
-        rounding="nearest",
-        notes="ARM Cortex-M4 with CMSIS-DSP. Q1.15 is the native format.",
-    )
-)
-
-_reg(
-    HardwareProfile(
         name="akida",
         vendor="BrainChip",
         family="Akida 2.0",

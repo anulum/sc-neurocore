@@ -6,7 +6,20 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore
 
-"""Register non-CMOS and research hardware-profile targets."""
+"""Register non-CMOS and research hardware-profile targets.
+
+Every profile here is registered exactly once through :func:`registry._reg`,
+which rejects a duplicate name at import time. The targets are grouped by
+physical substrate: superconducting/cryogenic, wetware (living neurons),
+electrochemical/memristive, wafer-scale, quantum-neuromorphic, optical I/O,
+acoustic/phononic, fluidic, space-qualified, magnonic, organic-bioelectronic,
+RISC-V sovereign, thermodynamic, probabilistic (p-bit), polariton, metamaterial,
+molecular/chemical, reversible/adiabatic, and microfluidic/mechanical.
+
+Where a substrate has no meaningful binary word (continuous-time wetware,
+single-molecule chemistry), ``data_width``/``fraction`` encode the host-side
+stimulation/encoding word used to drive the device, not an on-device register.
+"""
 
 from __future__ import annotations
 
@@ -57,20 +70,20 @@ _reg(
     )
 )
 
-# ── Biological / Wetware ─────────────────────────────────────────────
+# ── Wetware / Biological ─────────────────────────────────────────────
+# Living neural substrates: the host word encodes the electrode stimulation
+# protocol, not an on-device register. Continuous-time, asynchronous.
 
 _reg(
     HardwareProfile(
         name="finalspark_neuroplatform",
         vendor="FinalSpark",
         family="Neuroplatform",
-        platform_class="biological",
-        data_width=16,
-        fraction=8,
-        overflow="saturate",
-        rounding="nearest",
-        notes="FinalSpark Neuroplatform: living organoid co-processor. "
-        "Output = electrode stimulation protocol.",
+        platform_class="wetware",
+        data_width=8,
+        fraction=0,
+        max_freq_mhz=0,
+        notes="Organoid biocomputing platform with electrophysiological API.",
     )
 )
 _reg(
@@ -78,13 +91,11 @@ _reg(
         name="cortical_labs_dishbrain",
         vendor="Cortical Labs",
         family="DishBrain",
-        platform_class="biological",
-        data_width=16,
-        fraction=8,
-        overflow="saturate",
-        rounding="nearest",
-        notes="Cortical Labs DishBrain: in-vitro biological neural network. "
-        "Output = MEA stimulation pattern.",
+        platform_class="wetware",
+        data_width=8,
+        fraction=0,
+        max_freq_mhz=0,
+        notes="Biological neuronal network in closed-loop MEA array. Asynchronous continuous time.",
     )
 )
 
@@ -369,7 +380,7 @@ _reg(
     )
 )
 
-# ── Wave 10: Magnonic / Skyrmion ─────────────────────────────────────
+# ── Magnonic / Skyrmion ──────────────────────────────────────────────
 
 _reg(
     HardwareProfile(
@@ -385,7 +396,6 @@ _reg(
         "Topological stability enables ultra-low-power edge AI.",
     )
 )
-
 _reg(
     HardwareProfile(
         name="kaist_spinwave",
@@ -400,7 +410,6 @@ _reg(
         "SOT bilayer nanostructures.",
     )
 )
-
 _reg(
     HardwareProfile(
         name="imec_mtj_reservoir",
@@ -416,7 +425,7 @@ _reg(
     )
 )
 
-# ── Wave 10: Organic Bioelectronic ───────────────────────────────────
+# ── Organic Bioelectronic ────────────────────────────────────────────
 
 _reg(
     HardwareProfile(
@@ -432,7 +441,6 @@ _reg(
         "channel for in-vivo bioelectronic neural interfaces.",
     )
 )
-
 _reg(
     HardwareProfile(
         name="linkoping_organic",
@@ -448,7 +456,7 @@ _reg(
     )
 )
 
-# ── Wave 10: RISC-V Sovereign AI ─────────────────────────────────────
+# ── RISC-V Sovereign AI ──────────────────────────────────────────────
 
 _reg(
     HardwareProfile(
@@ -465,7 +473,6 @@ _reg(
         "Open ISA, no ITAR restrictions, sovereign compute.",
     )
 )
-
 _reg(
     HardwareProfile(
         name="esperanto_et_soc",
@@ -481,7 +488,6 @@ _reg(
         "AI inference. No export control dependencies.",
     )
 )
-
 _reg(
     HardwareProfile(
         name="ventana_veyron_ai",
@@ -497,7 +503,6 @@ _reg(
         "Chiplet-based, UCIe-compatible.",
     )
 )
-
 _reg(
     HardwareProfile(
         name="tenstorrent_ascalon",
@@ -513,7 +518,6 @@ _reg(
         "Open-source ISA for data-sovereign deployments.",
     )
 )
-
 _reg(
     HardwareProfile(
         name="andes_ax45mpv",
@@ -530,7 +534,7 @@ _reg(
     )
 )
 
-# ── Wave 11: Thermodynamic Computing ─────────────────────────────────
+# ── Thermodynamic Computing ──────────────────────────────────────────
 
 _reg(
     HardwareProfile(
@@ -546,7 +550,6 @@ _reg(
         "via controlled thermal fluctuations. Room-temperature.",
     )
 )
-
 _reg(
     HardwareProfile(
         name="normal_cn101",
@@ -562,7 +565,7 @@ _reg(
     )
 )
 
-# ── Wave 11: Probabilistic / p-Bit ───────────────────────────────────
+# ── Probabilistic / p-Bit ────────────────────────────────────────────
 
 _reg(
     HardwareProfile(
@@ -578,7 +581,6 @@ _reg(
         "computing. Boltzmann machine substrate.",
     )
 )
-
 _reg(
     HardwareProfile(
         name="tohoku_sot_pbit",
@@ -594,7 +596,7 @@ _reg(
     )
 )
 
-# ── Wave 11: Polariton / Exciton ─────────────────────────────────────
+# ── Polariton / Exciton ──────────────────────────────────────────────
 
 _reg(
     HardwareProfile(
@@ -610,7 +612,6 @@ _reg(
         "active devices for ultrafast optical neural compute.",
     )
 )
-
 _reg(
     HardwareProfile(
         name="stanford_polariton",
@@ -626,7 +627,7 @@ _reg(
     )
 )
 
-# ── Wave 11: Metamaterial / Programmable Matter ──────────────────────
+# ── Metamaterial / Programmable Matter ───────────────────────────────
 
 _reg(
     HardwareProfile(
@@ -642,7 +643,6 @@ _reg(
         "unit-cell phases perform analog matrix-vector multiply.",
     )
 )
-
 _reg(
     HardwareProfile(
         name="penn_acoustic_meta",
@@ -658,54 +658,7 @@ _reg(
     )
 )
 
-# ── Wave 12: Wetware / Biological ──────────────────────────────────────
-
-_reg(
-    HardwareProfile(
-        name="cortical_labs_dishbrain",
-        vendor="Cortical Labs",
-        family="DishBrain",
-        platform_class="wetware",
-        data_width=8,
-        fraction=4,
-        overflow="saturate",
-        rounding="truncate",
-        notes="Living human brain cells on a high-density multi-electrode array (MEA). "
-        "Compiles network topologies into precise spatio-temporal electrical stimulations.",
-    )
-)
-
-_reg(
-    HardwareProfile(
-        name="finalspark_neuroplatform",
-        vendor="FinalSpark",
-        family="Neuroplatform",
-        platform_class="wetware",
-        data_width=8,
-        fraction=4,
-        overflow="saturate",
-        rounding="truncate",
-        notes="Biocomputing platform utilizing living spherical brain organoids. "
-        "Targeting life-support interfaces and closed-loop dopamine-based reward signals.",
-    )
-)
-
-# ── Wave 12: Molecular / Chemical ────────────────────────────────────
-
-_reg(
-    HardwareProfile(
-        name="biomemory_dna",
-        vendor="Biomemory",
-        family="DNA-Storage",
-        platform_class="molecular",
-        data_width=8,
-        fraction=4,
-        overflow="saturate",
-        rounding="truncate",
-        notes="Biomemory Prime rack-mounted synthetic DNA data storage. "
-        "Maps massive synaptic weight matrices into base-pair encoding for ultra-cold retention.",
-    )
-)
+# ── Molecular / Chemical ─────────────────────────────────────────────
 
 _reg(
     HardwareProfile(
@@ -721,8 +674,33 @@ _reg(
         "into parallel molecular search operations and enzymatic reactions.",
     )
 )
+_reg(
+    HardwareProfile(
+        name="biomemory_dna",
+        vendor="Biomemory",
+        family="DNA-Drive",
+        platform_class="molecular",
+        data_width=2,
+        fraction=0,
+        max_freq_mhz=0,
+        notes="DNA storage mapped to compute-in-memory sequences. "
+        "Ultra-high latency, exabyte capacity.",
+    )
+)
+_reg(
+    HardwareProfile(
+        name="belousov_zhabotinsky",
+        vendor="Academic",
+        family="BZ Reaction",
+        platform_class="molecular",
+        data_width=1,
+        fraction=0,
+        max_freq_mhz=0,
+        notes="Chemical oscillator networks for reaction-diffusion computation.",
+    )
+)
 
-# ── Wave 12: Reversible / Adiabatic ──────────────────────────────────
+# ── Reversible / Adiabatic ───────────────────────────────────────────
 
 _reg(
     HardwareProfile(
@@ -738,7 +716,6 @@ _reg(
         "via multi-phase resonant clocking. Zero static power dissipation.",
     )
 )
-
 _reg(
     HardwareProfile(
         name="scrl_logic",
@@ -753,8 +730,34 @@ _reg(
         "gates for thermodynamically reversible CMOS neural computation.",
     )
 )
+_reg(
+    HardwareProfile(
+        name="fujitsu_digital_annealer",
+        vendor="Fujitsu",
+        family="Digital Annealer",
+        platform_class="reversible",
+        data_width=64,
+        fraction=0,
+        max_freq_mhz=1000,
+        notes="CMOS-based reversible logic for combinatorial optimization. "
+        "Landauer limit approximation.",
+    )
+)
+_reg(
+    HardwareProfile(
+        name="rl_toffoli_asic",
+        vendor="Custom",
+        family="Reversible ASIC",
+        platform_class="reversible",
+        data_width=32,
+        fraction=16,
+        max_freq_mhz=500,
+        notes="Standard cell library mapped strictly to Toffoli and Fredkin gates "
+        "for zero dissipation.",
+    )
+)
 
-# ── Wave 12: Microfluidic / Mechanical ───────────────────────────────
+# ── Microfluidic / Mechanical ────────────────────────────────────────
 
 _reg(
     HardwareProfile(
@@ -770,7 +773,6 @@ _reg(
         "Simulates biological ion dynamics directly using physical water/ion flow.",
     )
 )
-
 _reg(
     HardwareProfile(
         name="mems_neuromorphic",
@@ -785,98 +787,6 @@ _reg(
         "Nonlinear mechanical resonance implements spiking neuron membranes.",
     )
 )
-
-# ═══════════════════════════════════════════════════════════════════════
-# Public API
-# ═══════════════════════════════════════════════════════════════════════
-
-
-# ── Wave 12: Wetware / Biological ────────────────────────────────────
-
-_reg(
-    HardwareProfile(
-        name="cortical_labs_dishbrain",
-        vendor="Cortical Labs",
-        family="DishBrain",
-        platform_class="wetware",
-        data_width=8,
-        fraction=0,
-        max_freq_mhz=0,
-        notes="Biological neuronal network in closed-loop MEA array. Asynchronous continuous time.",
-    )
-)
-
-_reg(
-    HardwareProfile(
-        name="finalspark_neuroplatform",
-        vendor="FinalSpark",
-        family="Neuroplatform",
-        platform_class="wetware",
-        data_width=8,
-        fraction=0,
-        max_freq_mhz=0,
-        notes="Organoid biocomputing platform with electrophysiological API.",
-    )
-)
-
-# ── Wave 12: Molecular / Chemical ────────────────────────────────────
-
-_reg(
-    HardwareProfile(
-        name="biomemory_dna",
-        vendor="Biomemory",
-        family="DNA-Drive",
-        platform_class="molecular",
-        data_width=2,
-        fraction=0,
-        max_freq_mhz=0,
-        notes="DNA storage mapped to compute-in-memory sequences. Ultra-high latency, exabyte capacity.",
-    )
-)
-
-_reg(
-    HardwareProfile(
-        name="belousov_zhabotinsky",
-        vendor="Academic",
-        family="BZ Reaction",
-        platform_class="molecular",
-        data_width=1,
-        fraction=0,
-        max_freq_mhz=0,
-        notes="Chemical oscillator networks for reaction-diffusion computation.",
-    )
-)
-
-# ── Wave 12: Reversible / Adiabatic ──────────────────────────────────
-
-_reg(
-    HardwareProfile(
-        name="fujitsu_digital_annealer",
-        vendor="Fujitsu",
-        family="Digital Annealer",
-        platform_class="reversible",
-        data_width=64,
-        fraction=0,
-        max_freq_mhz=1000,
-        notes="CMOS-based reversible logic for combinatorial optimization. Landauer limit approximation.",
-    )
-)
-
-_reg(
-    HardwareProfile(
-        name="rl_toffoli_asic",
-        vendor="Custom",
-        family="Reversible ASIC",
-        platform_class="reversible",
-        data_width=32,
-        fraction=16,
-        max_freq_mhz=500,
-        notes="Standard cell library mapped strictly to Toffoli and Fredkin gates for zero dissipation.",
-    )
-)
-
-# ── Wave 12: Microfluidic / Mechanical ───────────────────────────────
-
 _reg(
     HardwareProfile(
         name="ibm_microfluidic",
@@ -889,119 +799,6 @@ _reg(
         notes="Fluidic redox batteries driving micro-scale continuous flow logic.",
     )
 )
-
-_reg(
-    HardwareProfile(
-        name="mems_resonator",
-        vendor="SiTime",
-        family="MEMS Logic",
-        platform_class="microfluidic",
-        data_width=12,
-        fraction=0,
-        max_freq_mhz=50,
-        notes="Coupled mechanical oscillators simulating non-linear dynamic states.",
-    )
-)
-
-# ── Wave 12: Wetware / Biological ────────────────────────────────────
-
-_reg(
-    HardwareProfile(
-        name="cortical_labs_dishbrain",
-        vendor="Cortical Labs",
-        family="DishBrain",
-        platform_class="wetware",
-        data_width=8,
-        fraction=0,
-        max_freq_mhz=0,
-        notes="Biological neuronal network in closed-loop MEA array. Asynchronous continuous time.",
-    )
-)
-
-_reg(
-    HardwareProfile(
-        name="finalspark_neuroplatform",
-        vendor="FinalSpark",
-        family="Neuroplatform",
-        platform_class="wetware",
-        data_width=8,
-        fraction=0,
-        max_freq_mhz=0,
-        notes="Organoid biocomputing platform with electrophysiological API.",
-    )
-)
-
-# ── Wave 12: Molecular / Chemical ────────────────────────────────────
-
-_reg(
-    HardwareProfile(
-        name="biomemory_dna",
-        vendor="Biomemory",
-        family="DNA-Drive",
-        platform_class="molecular",
-        data_width=2,
-        fraction=0,
-        max_freq_mhz=0,
-        notes="DNA storage mapped to compute-in-memory sequences. Ultra-high latency, exabyte capacity.",
-    )
-)
-
-_reg(
-    HardwareProfile(
-        name="belousov_zhabotinsky",
-        vendor="Academic",
-        family="BZ Reaction",
-        platform_class="molecular",
-        data_width=1,
-        fraction=0,
-        max_freq_mhz=0,
-        notes="Chemical oscillator networks for reaction-diffusion computation.",
-    )
-)
-
-# ── Wave 12: Reversible / Adiabatic ──────────────────────────────────
-
-_reg(
-    HardwareProfile(
-        name="fujitsu_digital_annealer",
-        vendor="Fujitsu",
-        family="Digital Annealer",
-        platform_class="reversible",
-        data_width=64,
-        fraction=0,
-        max_freq_mhz=1000,
-        notes="CMOS-based reversible logic for combinatorial optimization. Landauer limit approximation.",
-    )
-)
-
-_reg(
-    HardwareProfile(
-        name="rl_toffoli_asic",
-        vendor="Custom",
-        family="Reversible ASIC",
-        platform_class="reversible",
-        data_width=32,
-        fraction=16,
-        max_freq_mhz=500,
-        notes="Standard cell library mapped strictly to Toffoli and Fredkin gates for zero dissipation.",
-    )
-)
-
-# ── Wave 12: Microfluidic / Mechanical ───────────────────────────────
-
-_reg(
-    HardwareProfile(
-        name="ibm_microfluidic",
-        vendor="IBM",
-        family="Electronic Blood",
-        platform_class="microfluidic",
-        data_width=4,
-        fraction=0,
-        max_freq_mhz=0,
-        notes="Fluidic redox batteries driving micro-scale continuous flow logic.",
-    )
-)
-
 _reg(
     HardwareProfile(
         name="mems_resonator",

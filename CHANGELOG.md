@@ -17,6 +17,18 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
   the CLI output, and as a `folded_metrics.json` artefact. Never auto-selected; the
   direct/AER paths and the SC-NIR source-handoff manifest are unchanged.
 
+### Fixed
+- Removed duplicate hardware-profile registrations in the built-in platform
+  modules: `cortical_labs_dishbrain` and `finalspark_neuroplatform` were each
+  registered four times, `biomemory_dna` three times, and `belousov_zhabotinsky`,
+  `fujitsu_digital_annealer`, `rl_toffoli_asic`, `ibm_microfluidic`,
+  `mems_resonator`, `brainscales2` and `spinnaker2` twice — with conflicting
+  fields silently resolved by last-registration-wins. Each profile name now
+  registers exactly once with its previously-effective values (behaviour
+  unchanged); `_reg` rejects a duplicate name unless `allow_override=True`, and
+  the `hardware_profiles`/`research_platforms` guides now match the registered
+  values.
+
 ### Physics and mathematics hardening
 - Rebuilt `MarderSTGNeuron` (Liu, Golowasch, Marder & Abbott 1998 stomatogastric
   ganglion neuron) as a faithful thirteen-state model integrated with

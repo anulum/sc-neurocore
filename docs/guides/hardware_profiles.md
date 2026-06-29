@@ -111,8 +111,8 @@ for p in list_profiles(vendor="Xilinx"):
 |---------|--------|------|--------|:----:|----------|----------|-------|
 | `loihi2` | Intel | Loihi 2 | Q12.12 | 24 | **wrap** | truncate | 24-bit membrane; hardware wraps on overflow |
 | `truenorth` | IBM | TrueNorth | Q1.7 | 8 | saturate | truncate | 1-bit stochastic neurons |
-| `brainscales2` | Heidelberg | BrainScaleS-2 | Q4.4 | 8 | saturate | **nearest** | 8-bit DAC/ADC interface |
-| `spinnaker2` | TU Dresden | SpiNNaker 2 | Q1.15 | 16 | saturate | **nearest** | ARM CMSIS-DSP Q1.15 |
+| `brainscales2` | Heidelberg | BrainScaleS-2 | Q3.4 | 8 | **wrap** | truncate | Analog accelerated neuro; 1000× bio realtime |
+| `spinnaker2` | SpiNNcloud | SpiNNaker 2 | Q15.16 | 32 | **wrap** | truncate | ARM-based massively parallel GALS |
 | `akida` | BrainChip | Akida 2.0 | Q1.7 | 8 | saturate | truncate | Event-driven neural processor |
 | `dynap_se2` | SynSense | DYNAP-SE2 | Q8.8 | 16 | saturate | truncate | Mixed-signal neuromorphic |
 | `xylo` | SynSense | Xylo | Q8.8 | 16 | saturate | truncate | Digital SNN processor |
@@ -487,8 +487,8 @@ sva = generate_sva(["v", "u"], data_width=16, fraction=8,
 
 | Profile | Vendor | Family | Width |
 |---------|--------|--------|------:|
-| `finalspark_neuroplatform` | FinalSpark | Neuroplatform | 16-bit |
-| `cortical_labs_dishbrain` | Cortical Labs | DishBrain | 16-bit |
+| `finalspark_neuroplatform` | FinalSpark | Neuroplatform | 8-bit |
+| `cortical_labs_dishbrain` | Cortical Labs | DishBrain | 8-bit |
 
 ### Electrochemical / Memristive
 
