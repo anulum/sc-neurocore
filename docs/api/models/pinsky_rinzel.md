@@ -1,144 +1,121 @@
 # PinskyRinzelNeuron
 
 **Module:** `sc_neurocore.neurons.models.pinsky_rinzel`
-**Reference:** Pinsky & Rinzel 1994
-**Family:** Conductance-based (2-compartment pyramidal)
-**State variables:** `v_s`, `v_d`, `h`, `n`, `s`, `c` (Ca²⁺), `q`
+**Reference:** Pinsky & Rinzel 1994, *J. Comput. Neurosci.* 1:39–60 (doi:10.1007/BF00962717); reference channel kinetics: ModelDB 35358
+**Family:** Conductance-based (2-compartment CA3 pyramidal)
+**State variables:** `v_s`, `v_d`, `h`, `n`, `s`, `c`, `q`, `ca`
+**Integrator:** fourth-order Runge-Kutta (RK4)
+
+## State
+
+| State | Meaning |
+|-------|---------|
+| `v_s`, `v_d` | Somatic / dendritic membrane potential (mV) |
+| `h` | Na⁺ inactivation gate |
+| `n` | Delayed-rectifier K⁺ activation gate |
+| `s` | Ca²⁺ activation gate |
+| `c` | Voltage/Ca-dependent K⁺ (K-C) activation gate |
+| `q` | Ca-dependent afterhyperpolarisation (K-AHP) gate |
+| `ca` | Dendritic calcium concentration (dimensionless, ≥ 0) |
+
+Voltages use the physiological convention (rest ≈ −60 mV); reversal potentials
+`e_na=60`, `e_k=−75`, `e_ca=80`, `e_l=−60` equal the original rest=0 mV
+formulation (120, −15, 140, 0) shifted by −60 mV.
 
 ## Equations
 
 **Soma:**
-$$C \frac{dV_s}{dt} = -I_{Na} - I_{KDR} - I_L - \frac{g_c}{p}(V_s - V_d) + I_s/p$$
+$$C_m \frac{dV_s}{dt} = -I_L - I_{Na} - I_{KDR} + \frac{g_c}{p}(V_d - V_s) + I_s/p$$
 
 **Dendrite:**
-$$C \frac{dV_d}{dt} = -I_{Ca} - I_{KAHP} - I_{KC} - I_L - \frac{g_c}{1-p}(V_d - V_s) + I_d/(1-p)$$
+$$C_m \frac{dV_d}{dt} = -I_L - I_{Ca} - I_{KAHP} - I_{KC} - \frac{g_c}{1-p}(V_d - V_s) + I_d/(1-p)$$
 
-**Ca dynamics:** $dCa/dt = -0.13 \cdot I_{Ca} - 0.075 \cdot Ca$, clamped ≥ 0.
+with $I_{Na}=g_{Na}\,m_\infty^2 h\,(V_s-E_{Na})$, $I_{KDR}=g_{KDR}\,n\,(V_s-E_K)$,
+$I_{Ca}=g_{Ca}\,s^2\,(V_d-E_{Ca})$, $I_{KAHP}=g_{KAHP}\,q\,(V_d-E_K)$, and
+$I_{KC}=g_{KC}\,c\,\chi(\mathrm{Ca})\,(V_d-E_K)$.
 
-Spike: upward crossing of $V_s$ through $V_\theta = -20$ mV.
+**Calcium-dependent K-C scaling:** $\chi(\mathrm{Ca}) = \min(\mathrm{Ca}/250, 1)$.
+
+**Ca dynamics:** $d\mathrm{Ca}/dt = -0.13\,I_{Ca} - 0.075\,\mathrm{Ca}$, clamped ≥ 0.
+
+The Na⁺ activation `m` is taken at its instantaneous steady state $m_\infty$. The
+eight-state vector is advanced one `dt` with classical RK4. Spike: upward
+crossing of $V_s$ through $V_\theta = -20$ mV.
 
 ## Parameters
 
 | Parameter | Default | Description |
 |-----------|---------|-------------|
-| `v_s`, `v_d` | −60.0 | Soma / dendrite voltage (mV) |
-| `gc` | 2.1 | Compartment coupling conductance |
-| `p` | 0.5 | Soma area fraction |
+| `cm` | 3.0 | Membrane capacitance (µF/cm²) |
+| `gc` | 2.1 | Compartment coupling conductance (mS/cm²) |
+| `p` | 0.5 | Somatic membrane-area fraction |
 | `g_na` | 30.0 | Sodium conductance |
+| `g_kdr` | 15.0 | Delayed-rectifier K⁺ conductance |
 | `g_ca` | 10.0 | Calcium conductance |
-| `g_kahp` | 0.8 | Ca-activated K conductance |
+| `g_kahp` | 0.8 | Ca-dependent K-AHP conductance |
+| `g_kc` | 15.0 | Voltage/Ca-dependent K-C conductance |
+| `g_l` | 0.1 | Leak conductance |
 | `dt` | 0.02 | Time step (ms) |
 
 ## Behaviour
 
-- **2-compartment model:** Soma (fast Na/K) coupled to dendrite (Ca, KAHP, KC).
-  Coupling strength gc controls synchronisation between compartments.
-- **Non-monotonic f–I curve:** Peak firing at I≈50, then depolarisation block
-  at I≥200. Characteristic of compartmental models with Na inactivation.
-- **Dual input:** `step(current_soma, current_dend)` — somatic drive is more
-  effective for triggering spikes than dendritic input.
-- **Calcium dynamics:** Dendritic Ca accumulates during spiking, activates KAHP
-  and KC currents (spike-frequency adaptation). Ca clamped ≥ 0.
-- **Warm-up transient:** First ~10 ISIs are longer than steady-state.
-- **Deterministic:** No stochastic element.
-- **Fail-closed integration:** Python, Go, Julia, and Rust validate finite
-  soma/dendrite state, positive conductances, compartment fraction
-  `p in (0, 1)`, timestep, calcium non-negativity, and gate envelopes before
-  mutation. Candidate updates that would leave `h`, `n`, `s`, or `q` outside
-  `[0, 1]`, make calcium negative, or produce non-finite state are rejected
-  without poisoning the stored state.
+- **Two-compartment coupling:** Soma (fast Na/K-DR) coupled to dendrite (Ca,
+  K-AHP, K-C) by `gc`. Stronger coupling reduces the soma–dendrite voltage gap.
+- **Non-monotonic f–I with depolarisation block:** repetitive firing at low
+  somatic drive (peak rate near `I_s ≈ 5 µA/cm²`); at high drive sustained
+  depolarisation inactivates Na⁺ (`h → 0`) and firing collapses (≤ a few spikes
+  at `I_s = 200`). Hence `f(5) > f(200)`.
+- **Dendritic drive is effective:** dendritic current recruits the Ca²⁺
+  compartment and evokes sustained spiking via the coupling term.
+- **Spike-frequency adaptation:** dendritic Ca²⁺ accumulates during firing and
+  recruits the K-AHP/K-C currents, so inter-spike intervals lengthen over a
+  train.
+- **Deterministic:** no stochastic element; bit-exact reproducible.
+- **Fail-closed + clamped integration:** all language surfaces validate finite
+  soma/dendrite state, positive `cm`/conductances, `p ∈ (0, 1)`, positive
+  timestep, `ca ≥ 0`, and gate envelopes before mutation; non-finite integrated
+  state is rejected without poisoning the stored state, and gates are clamped to
+  `[0, 1]` and calcium to `≥ 0` after each RK4 step.
 
-## Dynamic Regimes
+## Dynamic Regimes (somatic drive, measured over 1000 ms)
 
-| Current (soma) | Regime | Description |
-|-----------------|--------|-------------|
-| I < 10 | Subthreshold | No spikes |
-| I ∈ [10, 50] | Oscillatory | Sustained spiking, ISI ~150 steps |
-| I ∈ [50, 100] | High rate | Peak firing rate region |
-| I ≥ 200 | Depolarisation block | Na inactivation → ≤1 spike |
+| Current `I_s` | Regime | Description |
+|---------------|--------|-------------|
+| ≈ 0 | Quiescent | Resting, ≤ a few spikes |
+| 2 – 20 | Repetitive firing | Sustained spiking, peak rate near `I_s ≈ 5` |
+| 30 – 100 | Onset of block | Firing declines as Na⁺ inactivates |
+| ≥ 200 | Depolarisation block | Na⁺ inactivation → ≤ a few spikes |
 
-## Infrastructure Pipeline
+## Polyglot surfaces
 
-```
-PinskyRinzelNeuron
-├── step(I_soma, I_dend) → int {0,1} (deterministic)
-├── Population: PoissonInput(weight=30, rate=500Hz)
-├── Verilog: 7 Euler integrators + HH rate functions, ~300 LUTs
-├── Go service: two-input-safe StepDend plus single-input Step adapter
-├── Julia kernel: two-input-safe step! with dendritic keyword drive
-└── Rust safety: two-input-safe step_dend plus single-input step adapter
-```
+| Surface | File | Notes |
+|---------|------|-------|
+| Python (reference) | `neurons/models/pinsky_rinzel.py` | RK4, 8 states |
+| Rust engine | `engine/src/neurons/multi_compartment.rs` | RK4; Python↔Rust spike-count parity |
+| Rust safety mirror | `accel/rust/safety/pinsky_rinzel.rs` | RK4, fail-closed |
+| Julia | `accel/julia/neurons/pinsky_rinzel.jl` | RK4 |
+| Go | `accel/go/services/pinsky_rinzel.go` | RK4, dual-input `StepDend` + `Step` |
+| Mojo | `accel/mojo/kernels/pinsky_rinzel.mojo` | reference pseudocode kernel |
+
+All compute surfaces integrate the same eight-state RK4 system with identical
+kinetics, clamp gates to `[0, 1]` and calcium to `≥ 0`, and register a spike on
+the upward `V_s` threshold crossing.
 
 ## Test Coverage
 
-| Category | Tests | What is verified |
-|----------|------:|-----------------|
-| Isolation | 6 | defaults, binary, dual input, 7-var evolution, finite 50k, reset |
-| Compartments | 4 | coupling (gc comparison), soma vs dend drive, Ca accumulation, Ca ≥ 0 |
-| f–I curve | 4 | subthreshold, oscillation, non-monotonic peak, depolarisation block |
-| ISI | 2 | steady-state regularity (CV<0.05), transient shortening |
-| Gating | 2 | bounded [0,1], Na inactivation at high I |
-| Parameters | 8 | invalid physical configuration, runtime corruption no-mutation, non-finite input no-mutation, gate candidate rejection, gc coupling strength, dt stability |
-| Determinism | 1 | bit-exact reproducibility |
-| Network | 2 | population, spikes |
-| Analysis | 2 | spike_count, consistency |
-| **Total** | **31** | |
+`tests/test_model_pinsky_rinzel.py` — 54 tests:
 
-Key finding: non-monotonic f–I curve confirmed — f(50) > f(200) due to
-Na inactivation. Dendritic K currents hyperpolarise v_d despite somatic
-depolarisation (KAHP/KC dominate over coupling current).
+| Category | What is verified |
+|----------|-----------------|
+| Isolation | defaults, binary return, dual input, 8-variable evolution, finite 50k-step run, reset |
+| Compartments | coupling gap (gc comparison), dendritic-drive spiking, Ca accumulation, Ca ≥ 0, coupling-strength gap reduction |
+| f–I | quiescent near rest, repetitive firing at low/moderate drive, non-monotonic depolarisation block (`f(5) > f(200)`) |
+| Adaptation | inter-spike intervals lengthen, bounded ISI coefficient of variation |
+| Gating | gates bounded `[0, 1]`, Na⁺ inactivation at high drive |
+| Rate branches | removable singular limits of `α_m`, `β_m`, `α_n`, `β_s`; depolarised-dendrite K-C branch |
+| Safety | invalid configuration rejected, runtime corruption + non-finite input fail before mutation, extreme timestep fails closed, candidate-state non-finite/clamp contracts |
+| Numerics | bit-exact reproducibility, time-step stability |
+| Network / Analysis | population, network spiking, spike-count consistency |
 
-
----
-
-## Measured Performance (2026-04-04)
-
-| Metric | Value |
-|--------|-------|
-| Python throughput | ~23K steps/s |
-| Spikes (10K steps, I=5.0) | 0 |
-| State stability (20K steps) | PASS |
-| Rust parity | PASS |
-
----
-
-## Pipeline Verification (End-to-End)
-
-### 1. Construction
-`PinskyRinzelNeuron()` instantiates with documented defaults.
-**Status: PASS**
-
-### 2. step() → correct type
-Returns `int` (spike indicator) or `float` (rate/potential).
-**Status: PASS**
-
-### 3. Spiking behaviour
-No spikes at I=5.0 (model requires different drive or is sub-threshold at this current).
-**Status: PASS**
-
-### 4. State stability (20,000 steps)
-All state variables remain finite after extended simulation.
-**Status: PASS**
-
-### 5. reset()
-State returns to initial values after `reset()`.
-**Status: PASS**
-
-### 6. Population
-`Population(PinskyRinzelNeuron, n=10)` creates correct instances.
-**Status: PASS**
-
-### 7. Rust parity
-**PASS** — spike counts within 15% tolerance.
-
----
-
-## Findings (measured 2026-04-04)
-
-1. Throughput: ~23K steps/s (Python, single-thread)
-2. All pipeline stages verified green
-3. Go, Julia, and Rust safety companions implement the same candidate-state
-   validation contract for finite state, gate envelopes, calcium
-   non-negativity, compartment fraction, conductances, and timestep.
-4. Numerical stability confirmed over 20K steps; invalid candidate updates
-   fail before mutation.
+Python↔Rust spike-count parity is covered by
+`tests/test_rust_python_neuron_parity.py::test_parity[PinskyRinzelNeuron]`.

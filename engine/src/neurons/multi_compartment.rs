@@ -21,12 +21,15 @@ pub struct PinskyRinzelNeuron {
     pub s: f64,
     pub c: f64,
     pub q: f64,
+    pub ca: f64,
+    pub cm: f64,
     pub gc: f64,
     pub p: f64,
     pub g_na: f64,
     pub g_kdr: f64,
     pub g_ca: f64,
     pub g_kahp: f64,
+    pub g_kc: f64,
     pub g_l: f64,
     pub e_na: f64,
     pub e_k: f64,
@@ -41,17 +44,20 @@ impl PinskyRinzelNeuron {
         Self {
             v_s: -60.0,
             v_d: -60.0,
-            h: 0.9,
-            n: 0.1,
-            s: 0.0,
-            c: 0.0,
-            q: 0.0,
+            h: 0.999,
+            n: 0.001,
+            s: 0.009,
+            c: 0.007,
+            q: 0.01,
+            ca: 0.2,
+            cm: 3.0,
             gc: 2.1,
             p: 0.5,
             g_na: 30.0,
             g_kdr: 15.0,
             g_ca: 10.0,
             g_kahp: 0.8,
+            g_kc: 15.0,
             g_l: 0.1,
             e_na: 60.0,
             e_k: -75.0,
@@ -61,32 +67,89 @@ impl PinskyRinzelNeuron {
             v_threshold: -20.0,
         }
     }
+
+    /// Time derivatives of the eight-state vector `(v_s, v_d, h, n, s, c, q, ca)`.
+    fn derivatives(&self, st: &[f64; 8], i_s: f64, i_d: f64) -> [f64; 8] {
+        let (v_s, v_d, h, n, s, c, q, ca) =
+            (st[0], st[1], st[2], st[3], st[4], st[5], st[6], st[7]);
+        let am = safe_rate(0.32, 46.9, v_s, 4.0, 0.32 * 4.0);
+        let bm = pr_exprel_plus(0.28, v_s + 19.9, 5.0);
+        let m_inf = if am + bm > 0.0 { am / (am + bm) } else { 0.0 };
+        let ah = 0.128 * (-(v_s + 43.0) / 18.0).exp();
+        let bh = 4.0 / (1.0 + (-(v_s + 20.0) / 5.0).exp());
+        let an = safe_rate(0.016, 24.9, v_s, 5.0, 0.016 * 5.0);
+        let bn = 0.25 * (-1.0 - 0.025 * v_s).exp();
+        let a_s = 1.6 / (1.0 + (-0.072 * (v_d - 5.0)).exp());
+        let b_s = pr_exprel_plus(0.02, v_d + 8.9, 5.0);
+        let (ac, bc) = if v_d <= -10.0 {
+            let ac = ((v_d + 50.0) / 11.0 - (v_d + 53.5) / 27.0).exp() / 18.975;
+            (ac, 2.0 * ((-53.5 - v_d) / 27.0).exp() - ac)
+        } else {
+            (2.0 * ((-53.5 - v_d) / 27.0).exp(), 0.0)
+        };
+        let aq = (0.00002 * ca).min(0.01);
+        let bq = 0.001;
+        let chi = (ca / 250.0).min(1.0);
+
+        let i_na = self.g_na * m_inf.powi(2) * h * (v_s - self.e_na);
+        let i_kdr = self.g_kdr * n * (v_s - self.e_k);
+        let i_ls = self.g_l * (v_s - self.e_l);
+        let i_ca = self.g_ca * s.powi(2) * (v_d - self.e_ca);
+        let i_kahp = self.g_kahp * q * (v_d - self.e_k);
+        let i_kc = self.g_kc * c * chi * (v_d - self.e_k);
+        let i_ld = self.g_l * (v_d - self.e_l);
+        let i_coupling = self.gc * (v_d - v_s);
+
+        let dv_s = (-i_ls - i_na - i_kdr + i_coupling / self.p + i_s / self.p) / self.cm;
+        let dv_d = (-i_ld - i_ca - i_kahp - i_kc - i_coupling / (1.0 - self.p)
+            + i_d / (1.0 - self.p))
+            / self.cm;
+        [
+            dv_s,
+            dv_d,
+            ah * (1.0 - h) - bh * h,
+            an * (1.0 - n) - bn * n,
+            a_s * (1.0 - s) - b_s * s,
+            ac * (1.0 - c) - bc * c,
+            aq * (1.0 - q) - bq * q,
+            -0.13 * i_ca - 0.075 * ca,
+        ]
+    }
+
     pub fn step(&mut self, current_soma: f64, current_dend: f64) -> i32 {
         let v_prev = self.v_s;
-        let am = safe_rate(0.32, 54.0, self.v_s, 4.0, 8.0);
-        let bm = safe_rate(-0.28, 27.0, self.v_s, -5.0, 5.6);
-        let m_inf = am / (am + bm);
-        let ah = 0.128 * (-(self.v_s + 50.0) / 18.0).exp();
-        let bh = 4.0 / (1.0 + (-(self.v_s + 27.0) / 5.0).exp());
-        let an = safe_rate(0.032, 52.0, self.v_s, 5.0, 0.32);
-        let bn = 0.5 * (-(self.v_s + 57.0) / 40.0).exp();
-        let s_inf = 1.0 / (1.0 + (-(self.v_d + 20.0) / 9.0).exp());
-        let i_na = self.g_na * m_inf.powi(2) * self.h * (self.v_s - self.e_na);
-        let i_kdr = self.g_kdr * self.n.powi(2) * (self.v_s - self.e_k);
-        let i_ls = self.g_l * (self.v_s - self.e_l);
-        let i_ds = (self.gc / self.p) * (self.v_s - self.v_d);
-        let i_ca = self.g_ca * self.s.powi(2) * (self.v_d - self.e_ca);
-        let i_kahp = self.g_kahp * self.q * (self.v_d - self.e_k);
-        let i_ld = self.g_l * (self.v_d - self.e_l);
-        let i_sd = (self.gc / (1.0 - self.p)) * (self.v_d - self.v_s);
-        self.v_s += (-i_na - i_kdr - i_ls - i_ds + current_soma / self.p) * self.dt;
-        self.v_d += (-i_ca - i_kahp - i_ld - i_sd + current_dend / (1.0 - self.p)) * self.dt;
-        self.h += (ah * (1.0 - self.h) - bh * self.h) * self.dt;
-        self.n += (an * (1.0 - self.n) - bn * self.n) * self.dt;
-        self.s += ((s_inf - self.s) / 5.0) * self.dt;
-        self.c = (self.c + (-0.13 * i_ca - 0.075 * self.c) * self.dt).max(0.0);
-        let q_inf = (self.c / (self.c + 2.0)).min(1.0);
-        self.q += ((q_inf - self.q) / 100.0) * self.dt;
+        let y = [
+            self.v_s, self.v_d, self.h, self.n, self.s, self.c, self.q, self.ca,
+        ];
+        let dt = self.dt;
+        let k1 = self.derivatives(&y, current_soma, current_dend);
+        let mut y2 = y;
+        for i in 0..8 {
+            y2[i] = y[i] + (dt / 2.0) * k1[i];
+        }
+        let k2 = self.derivatives(&y2, current_soma, current_dend);
+        let mut y3 = y;
+        for i in 0..8 {
+            y3[i] = y[i] + (dt / 2.0) * k2[i];
+        }
+        let k3 = self.derivatives(&y3, current_soma, current_dend);
+        let mut y4 = y;
+        for i in 0..8 {
+            y4[i] = y[i] + dt * k3[i];
+        }
+        let k4 = self.derivatives(&y4, current_soma, current_dend);
+        let mut nxt = [0.0_f64; 8];
+        for i in 0..8 {
+            nxt[i] = y[i] + (dt / 6.0) * (k1[i] + 2.0 * k2[i] + 2.0 * k3[i] + k4[i]);
+        }
+        self.v_s = nxt[0];
+        self.v_d = nxt[1];
+        self.h = nxt[2].clamp(0.0, 1.0);
+        self.n = nxt[3].clamp(0.0, 1.0);
+        self.s = nxt[4].clamp(0.0, 1.0);
+        self.c = nxt[5].clamp(0.0, 1.0);
+        self.q = nxt[6].clamp(0.0, 1.0);
+        self.ca = nxt[7].max(0.0);
         if self.v_s >= self.v_threshold && v_prev < self.v_threshold {
             1
         } else {
@@ -96,11 +159,21 @@ impl PinskyRinzelNeuron {
     pub fn reset(&mut self) {
         self.v_s = -60.0;
         self.v_d = -60.0;
-        self.h = 0.9;
-        self.n = 0.1;
-        self.s = 0.0;
-        self.c = 0.0;
-        self.q = 0.0;
+        self.h = 0.999;
+        self.n = 0.001;
+        self.s = 0.009;
+        self.c = 0.007;
+        self.q = 0.01;
+        self.ca = 0.2;
+    }
+}
+
+/// Traub deactivation rate `a*dv / (exp(dv/k) - 1)` with removable limit `a*k`.
+fn pr_exprel_plus(a: f64, dv: f64, k: f64) -> f64 {
+    if dv.abs() < 1e-6 {
+        a * k
+    } else {
+        a * dv / ((dv / k).exp() - 1.0)
     }
 }
 impl Default for PinskyRinzelNeuron {

@@ -400,10 +400,17 @@ compute cycles for the 64x32 dense contract.
 | Dendrify | 1k | 20.2 µs | **20.2 ns** | Simplified dendritic |
 | Two-compartment LIF | 10k | 26.9 µs | **2.7 ns** | Soma + dendrite LIF |
 | Rall cable | 1k | 75.6 µs | **75.6 ns** | 5-compartment cable |
-| Pinsky-Rinzel | 1k | 122 µs | **122 ns** | 2-comp pyramidal |
+| Pinsky-Rinzel | 1k | 384 µs | **384 ns** | 2-comp pyramidal, 8-state RK4 † |
 | Marder STG | 1k | 138 µs | **138 ns** | Stomatogastric, 6 currents |
 | Booth-Rinzel | 1k | 253 µs | **253 ns** | Motoneuron soma+dendrite |
 | Hay L5 pyramidal | 1k | 591 µs | **591 ns** | 3-comp (soma+trunk+apical) |
+
+† Pinsky-Rinzel re-measured 2026-06-29 after the eight-state RK4 rebuild via a
+local release microbenchmark (`sc-neurocore-safety` crate, identical kinetics),
+non-isolated on a loaded workstation; an isolated criterion-harness rerun
+remains the production reference. The RK4 step is ≈3.1× the prior single-step
+Euler cost (four derivative evaluations over eight states). Other rows are
+earlier criterion medians.
 
 ### Maps — Additional (`neurons/maps.rs`)
 

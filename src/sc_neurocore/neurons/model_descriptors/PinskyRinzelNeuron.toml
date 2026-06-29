@@ -32,19 +32,31 @@ init = -60.0
 init = -60.0
 
 [state.h]
-init = 0.9
+init = 0.999
 
 [state.n]
-init = 0.1
+init = 0.001
 
 [state.s]
-init = 0.0
+init = 0.009
 
 [state.c]
-init = 0.0
+init = 0.007
 
 [state.q]
-init = 0.0
+init = 0.01
+
+[state.ca]
+init = 0.2
+
+[parameters.cm]
+default = 3.0
+unit = "uF/cm^2"
+meaning = "membrane capacitance"
+range = [
+    0.1,
+    10.0,
+]
 
 [parameters.gc]
 default = 2.1
@@ -165,7 +177,7 @@ range = [
 
 [integration]
 dt = 0.02
-method = "euler"
+method = "rk4"
 
 [dynamics]
 

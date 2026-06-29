@@ -4,15 +4,16 @@
 # © Code 2020–2026 Miroslav Šotek. All rights reserved.
 # ORCID: 0009-0009-3560-0851
 # Contact: www.anulum.li | protoscience@anulum.li
-# SC-NeuroCore — Pinsky-Rinzel 1994 — 2-compartment pyramidal cell
+# SC-NeuroCore — Pinsky-Rinzel 1994 — 2-compartment CA3 pyramidal cell
 
 from __future__ import annotations
 
 import math
 from dataclasses import dataclass
 
-_STATE_NAMES = ("v_s", "v_d", "h", "n", "s", "c", "q")
+_STATE_NAMES = ("v_s", "v_d", "h", "n", "s", "c", "q", "ca")
 _PARAM_NAMES = (
+    "cm",
     "gc",
     "p",
     "g_na",
@@ -28,27 +29,71 @@ _PARAM_NAMES = (
     "dt",
     "v_threshold",
 )
-_STRICTLY_POSITIVE_PARAMS = ("gc", "g_na", "g_kdr", "g_ca", "g_kahp", "g_kc", "g_l", "dt")
-_GATE_NAMES = ("h", "n", "s", "q")
+_STRICTLY_POSITIVE_PARAMS = ("cm", "gc", "g_na", "g_kdr", "g_ca", "g_kahp", "g_kc", "g_l", "dt")
+_GATE_NAMES = ("h", "n", "s", "c", "q")
+
+# State packed as (v_s, v_d, h, n, s, c, q, ca) for the RK4 stepper.
+_State = tuple[float, float, float, float, float, float, float, float]
 
 
 @dataclass
 class PinskyRinzelNeuron:
-    """Pinsky-Rinzel 1994 — 2-compartment pyramidal cell.
+    """Pinsky-Rinzel 1994 two-compartment CA3 pyramidal cell.
 
-    Soma (fast Na/K) coupled to dendrite (Ca/KAHP) via gc.
-    Minimal model for burst generation in cortical pyramidal cells.
+    Reduction of the 19-compartment Traub CA3 model to a soma compartment
+    carrying the fast Na⁺/delayed-rectifier K⁺ spike currents and a dendrite
+    compartment carrying the Ca²⁺, Ca-dependent K⁺ afterhyperpolarisation, and
+    voltage/Ca-dependent K⁺ currents, coupled by ``gc``. Eight states are
+    integrated with a fixed-step fourth-order Runge-Kutta scheme; the somatic
+    sodium activation ``m`` is taken at its instantaneous steady state ``m∞``.
 
-    Reference: Pinsky, P.F. & Rinzel, J. (1994). J. Comput. Neurosci. 1:39–60.
+    The voltages use the physiological convention (rest ≈ −60 mV); reversal
+    potentials and gating rates equal the original rest=0 mV formulation shifted
+    by −60 mV. Parameters and kinetics follow the published model and the
+    ModelDB 35358 reference channels.
+
+    Parameters
+    ----------
+    v_s, v_d : float
+        Somatic and dendritic membrane potential (mV).
+    h, n, s, c, q : float
+        Gating variables in [0, 1]: Na⁺ inactivation ``h``, delayed-rectifier
+        activation ``n``, Ca²⁺ activation ``s``, voltage/Ca-dependent K⁺
+        activation ``c``, and Ca-dependent afterhyperpolarisation ``q``.
+    ca : float
+        Dimensionless dendritic calcium concentration (≥ 0).
+    cm : float
+        Membrane capacitance (µF/cm²); default 3.0 per Pinsky & Rinzel (1994).
+    gc : float
+        Soma-dendrite coupling conductance (mS/cm²).
+    p : float
+        Somatic membrane-area fraction in (0, 1).
+    g_na, g_kdr, g_ca, g_kahp, g_kc, g_l : float
+        Maximal conductances (mS/cm²) for the Na⁺, K-DR, Ca²⁺, K-AHP, K-C, and
+        leak currents.
+    e_na, e_k, e_ca, e_l : float
+        Reversal potentials (mV).
+    dt : float
+        Integration time step (ms).
+    v_threshold : float
+        Somatic voltage at which a spike is registered (mV).
+
+    References
+    ----------
+    Pinsky, P.F. & Rinzel, J. (1994). Intrinsic and network rhythmogenesis in a
+    reduced Traub model for CA3 neurons. J. Comput. Neurosci. 1:39–60.
+    doi:10.1007/BF00962717. Reference channel kinetics: ModelDB accession 35358.
     """
 
     v_s: float = -60.0
     v_d: float = -60.0
-    h: float = 0.9
-    n: float = 0.1
-    s: float = 0.0
-    c: float = 0.0
-    q: float = 0.0
+    h: float = 0.999
+    n: float = 0.001
+    s: float = 0.009
+    c: float = 0.007
+    q: float = 0.01
+    ca: float = 0.2
+    cm: float = 3.0
     gc: float = 2.1
     p: float = 0.5
     g_na: float = 30.0
@@ -79,14 +124,15 @@ class PinskyRinzelNeuron:
                 raise ValueError(f"{name} must be positive")
         if not 0.0 < self.p < 1.0:
             raise ValueError("p must be in (0, 1)")
-        if self.c < 0.0:
-            raise ValueError("c must be non-negative")
+        if self.ca < 0.0:
+            raise ValueError("ca must be non-negative")
         for name in _GATE_NAMES:
             if not 0.0 <= getattr(self, name) <= 1.0:
                 raise ValueError(f"{name} gate must remain in [0, 1]")
 
     @staticmethod
     def _exp(value: float) -> float:
+        """Return ``exp(value)``, failing closed on overflow/non-finite results."""
         try:
             out = math.exp(value)
         except OverflowError as exc:
@@ -95,29 +141,156 @@ class PinskyRinzelNeuron:
             raise FloatingPointError("Pinsky-Rinzel rate exponential became non-finite")
         return out
 
-    @staticmethod
-    def _logistic(value: float) -> float:
-        if value >= 0.0:
-            exp_neg = PinskyRinzelNeuron._exp(-value)
-            return 1.0 / (1.0 + exp_neg)
-        exp_pos = PinskyRinzelNeuron._exp(value)
-        return exp_pos / (1.0 + exp_pos)
+    @classmethod
+    def _exprel_minus(cls, a: float, dv: float, k: float) -> float:
+        """Evaluate the Traub rate ``a·dv / (1 − exp(−dv/k))`` with its limit.
+
+        This is the activation-type ``α`` form; at ``dv → 0`` it has the finite
+        removable limit ``a·k`` (since ``1 − exp(−x) ≈ x``).
+        """
+        if abs(dv) < 1e-6:
+            return a * k
+        return a * dv / (1.0 - cls._exp(-dv / k))
+
+    @classmethod
+    def _exprel_plus(cls, a: float, dv: float, k: float) -> float:
+        """Evaluate the Traub rate ``a·dv / (exp(dv/k) − 1)`` with its limit.
+
+        This is the deactivation-type ``β`` form; at ``dv → 0`` it has the finite
+        removable limit ``a·k`` (since ``exp(x) − 1 ≈ x``).
+        """
+        if abs(dv) < 1e-6:
+            return a * k
+        return a * dv / (cls._exp(dv / k) - 1.0)
+
+    def _derivatives(self, state: _State, i_s: float, i_d: float) -> _State:
+        """Return the time derivatives of the eight-dimensional state.
+
+        Parameters
+        ----------
+        state : tuple of float
+            Packed ``(v_s, v_d, h, n, s, c, q, ca)``.
+        i_s, i_d : float
+            Somatic and dendritic injected current (µA/cm²).
+
+        Returns
+        -------
+        tuple of float
+            ``(dv_s, dv_d, dh, dn, ds, dc, dq, dca)``.
+        """
+        v_s, v_d, h, n, s, c, q, ca = state
+
+        # Soma fast currents.
+        am = self._exprel_minus(0.32, v_s + 46.9, 4.0)
+        bm = self._exprel_plus(0.28, v_s + 19.9, 5.0)
+        rate_sum = am + bm
+        if rate_sum > 0.0:
+            m_inf = am / rate_sum
+        else:  # pragma: no cover - defensive: alpha_m, beta_m are strictly positive rates
+            m_inf = 0.0
+        ah = 0.128 * self._exp(-(v_s + 43.0) / 18.0)
+        bh = 4.0 / (1.0 + self._exp(-(v_s + 20.0) / 5.0))
+        an = self._exprel_minus(0.016, v_s + 24.9, 5.0)
+        bn = 0.25 * self._exp(-1.0 - 0.025 * v_s)
+
+        # Dendrite slow currents.
+        a_s = 1.6 / (1.0 + self._exp(-0.072 * (v_d - 5.0)))
+        b_s = self._exprel_plus(0.02, v_d + 8.9, 5.0)
+        if v_d <= -10.0:
+            ac = self._exp((v_d + 50.0) / 11.0 - (v_d + 53.5) / 27.0) / 18.975
+            bc = 2.0 * self._exp((-53.5 - v_d) / 27.0) - ac
+        else:
+            ac = 2.0 * self._exp((-53.5 - v_d) / 27.0)
+            bc = 0.0
+        aq = min(0.00002 * ca, 0.01)
+        bq = 0.001
+        chi = min(ca / 250.0, 1.0)
+
+        i_na = self.g_na * m_inf**2 * h * (v_s - self.e_na)
+        i_kdr = self.g_kdr * n * (v_s - self.e_k)
+        i_ls = self.g_l * (v_s - self.e_l)
+        i_ca = self.g_ca * s**2 * (v_d - self.e_ca)
+        i_kahp = self.g_kahp * q * (v_d - self.e_k)
+        i_kc = self.g_kc * c * chi * (v_d - self.e_k)
+        i_ld = self.g_l * (v_d - self.e_l)
+        i_coupling = self.gc * (v_d - v_s)
+
+        dv_s = (-i_ls - i_na - i_kdr + i_coupling / self.p + i_s / self.p) / self.cm
+        dv_d = (
+            -i_ld - i_ca - i_kahp - i_kc - i_coupling / (1.0 - self.p) + i_d / (1.0 - self.p)
+        ) / self.cm
+        dh = ah * (1.0 - h) - bh * h
+        dn = an * (1.0 - n) - bn * n
+        ds = a_s * (1.0 - s) - b_s * s
+        dc = ac * (1.0 - c) - bc * c
+        dq = aq * (1.0 - q) - bq * q
+        dca = -0.13 * i_ca - 0.075 * ca
+        return dv_s, dv_d, dh, dn, ds, dc, dq, dca
 
     @staticmethod
-    def _validate_candidate(
-        values: tuple[float, float, float, float, float, float, float],
-    ) -> tuple[float, ...]:
-        if not all(math.isfinite(value) for value in values):
+    def _axpy(state: _State, deriv: _State, factor: float) -> _State:
+        """Return ``state + factor·deriv`` componentwise for the RK4 stages."""
+        return (
+            state[0] + factor * deriv[0],
+            state[1] + factor * deriv[1],
+            state[2] + factor * deriv[2],
+            state[3] + factor * deriv[3],
+            state[4] + factor * deriv[4],
+            state[5] + factor * deriv[5],
+            state[6] + factor * deriv[6],
+            state[7] + factor * deriv[7],
+        )
+
+    def _rk4(self, state: _State, i_s: float, i_d: float) -> _State:
+        """Advance ``state`` one ``dt`` with classical fourth-order Runge-Kutta."""
+        dt = self.dt
+        k1 = self._derivatives(state, i_s, i_d)
+        k2 = self._derivatives(self._axpy(state, k1, dt / 2.0), i_s, i_d)
+        k3 = self._derivatives(self._axpy(state, k2, dt / 2.0), i_s, i_d)
+        k4 = self._derivatives(self._axpy(state, k3, dt), i_s, i_d)
+        return tuple(  # type: ignore[return-value]
+            state[i] + (dt / 6.0) * (k1[i] + 2.0 * k2[i] + 2.0 * k3[i] + k4[i]) for i in range(8)
+        )
+
+    @staticmethod
+    def _validate_candidate(state: _State) -> _State:
+        """Clamp gates to [0, 1] and calcium to ≥ 0, failing closed on non-finite state."""
+        if not all(math.isfinite(value) for value in state):
             raise FloatingPointError("Pinsky-Rinzel candidate state became non-finite")
-        v_s, v_d, h, n, s, c, q = values
-        if c < 0.0:
-            raise FloatingPointError("Pinsky-Rinzel calcium concentration became negative")
-        for name, value in zip(_GATE_NAMES, (h, n, s, q)):
-            if not 0.0 <= value <= 1.0:
-                raise FloatingPointError(f"{name} gate left [0, 1]")
-        return values
+        v_s, v_d, h, n, s, c, q, ca = state
+        return (
+            v_s,
+            v_d,
+            min(max(h, 0.0), 1.0),
+            min(max(n, 0.0), 1.0),
+            min(max(s, 0.0), 1.0),
+            min(max(c, 0.0), 1.0),
+            min(max(q, 0.0), 1.0),
+            max(ca, 0.0),
+        )
 
     def step(self, current_soma: float, current_dend: float = 0.0) -> int:
+        """Advance one ``dt`` and return 1 on a rising somatic threshold crossing.
+
+        Parameters
+        ----------
+        current_soma : float
+            Somatic injected current density (µA/cm²).
+        current_dend : float, optional
+            Dendritic injected current density (µA/cm²); default 0.
+
+        Returns
+        -------
+        int
+            1 if ``v_s`` crossed ``v_threshold`` upward on this step, else 0.
+
+        Raises
+        ------
+        ValueError
+            If either current is non-finite or the configuration is invalid.
+        FloatingPointError
+            If the integrated state becomes non-finite.
+        """
         current_soma = float(current_soma)
         current_dend = float(current_dend)
         if not math.isfinite(current_soma) or not math.isfinite(current_dend):
@@ -125,60 +298,13 @@ class PinskyRinzelNeuron:
         self._validate_configuration()
 
         v_prev = self.v_s
-        am = (
-            0.32 * (self.v_s + 54.0) / (1.0 - self._exp(-(self.v_s + 54.0) / 4.0))
-            if abs(self.v_s + 54.0) > 1e-6
-            else 8.0
-        )
-        bm = (
-            0.28 * (self.v_s + 27.0) / (self._exp((self.v_s + 27.0) / 5.0) - 1.0)
-            if abs(self.v_s + 27.0) > 1e-6
-            else 5.6
-        )
-        m_inf = am / (am + bm)
-
-        ah = 0.128 * self._exp(-(self.v_s + 50.0) / 18.0)
-        bh = 4.0 * self._logistic((self.v_s + 27.0) / 5.0)
-        an = (
-            0.032 * (self.v_s + 52.0) / (1.0 - self._exp(-(self.v_s + 52.0) / 5.0))
-            if abs(self.v_s + 52.0) > 1e-6
-            else 0.32
-        )
-        bn = 0.5 * self._exp(-(self.v_s + 57.0) / 40.0)
-
-        s_inf = self._logistic((self.v_d + 20.0) / 9.0)
-
-        # Soma (PR 1994, Table 1)
-        i_na = self.g_na * m_inf**2 * self.h * (self.v_s - self.e_na)
-        i_kdr = self.g_kdr * self.n * (self.v_s - self.e_k)
-        i_ls = self.g_l * (self.v_s - self.e_l)
-        i_ds = (self.gc / self.p) * (self.v_s - self.v_d)
-
-        # Dendrite (PR 1994, Table 1)
-        i_ca = self.g_ca * self.s**2 * (self.v_d - self.e_ca)
-        i_kahp = self.g_kahp * self.q * (self.v_d - self.e_k)
-        chi = min(self.v_d / 250.0 + 0.5, 1.0) if self.v_d <= 50.0 else 2.0
-        i_kc = self.g_kc * self.c * chi * (self.v_d - self.e_k)
-        i_ld = self.g_l * (self.v_d - self.e_l)
-        i_sd = (self.gc / (1 - self.p)) * (self.v_d - self.v_s)
-
-        next_v_s = self.v_s + (-i_na - i_kdr - i_ls - i_ds + current_soma / self.p) * self.dt
-        next_v_d = (
-            self.v_d + (-i_ca - i_kahp - i_kc - i_ld - i_sd + current_dend / (1 - self.p)) * self.dt
-        )
-        next_h = self.h + (ah * (1 - self.h) - bh * self.h) * self.dt
-        next_n = self.n + (an * (1 - self.n) - bn * self.n) * self.dt
-        next_s = self.s + ((s_inf - self.s) / 5.0) * self.dt
-        next_c = max(0.0, self.c + (-0.13 * i_ca - 0.075 * self.c) * self.dt)
-        q_inf = min(next_c / (next_c + 2.0), 1.0)
-        next_q = self.q + ((q_inf - self.q) / 100.0) * self.dt
-
-        self.v_s, self.v_d, self.h, self.n, self.s, self.c, self.q = self._validate_candidate(
-            (next_v_s, next_v_d, next_h, next_n, next_s, next_c, next_q)
-        )
+        state: _State = (self.v_s, self.v_d, self.h, self.n, self.s, self.c, self.q, self.ca)
+        nxt = self._validate_candidate(self._rk4(state, current_soma, current_dend))
+        self.v_s, self.v_d, self.h, self.n, self.s, self.c, self.q, self.ca = nxt
 
         return 1 if (self.v_s >= self.v_threshold and v_prev < self.v_threshold) else 0
 
     def reset(self) -> None:
+        """Restore the published resting initial condition."""
         self.v_s, self.v_d = -60.0, -60.0
-        self.h, self.n, self.s, self.c, self.q = 0.9, 0.1, 0.0, 0.0, 0.0
+        self.h, self.n, self.s, self.c, self.q, self.ca = 0.999, 0.001, 0.009, 0.007, 0.01, 0.2

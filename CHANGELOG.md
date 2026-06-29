@@ -4,6 +4,22 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+### Physics and mathematics hardening
+- Rebuilt `PinskyRinzelNeuron` (Pinsky & Rinzel 1994, 2-compartment CA3
+  pyramidal cell) as a faithful eight-state model integrated with fourth-order
+  Runge-Kutta, replacing the prior single-step forward-Euler approximation.
+  Restored the separate voltage/Ca-dependent K-C activation gate `c` and the
+  dendritic calcium state `ca` (previously conflated), added the membrane
+  capacitance `cm = 3`, corrected `chi(Ca) = min(Ca/250, 1)` (previously a
+  voltage expression), and aligned the Na/K-DR/Ca/K-C rate functions and
+  reversal convention with the published kinetics (ModelDB 35358). Propagated
+  the same RK4 model across the Rust engine, Rust safety mirror, Julia, and Go
+  surfaces with Python-Rust spike-count parity and a reference Mojo kernel;
+  refreshed the model descriptor (RK4, `ca`, `cm`), the model documentation, the
+  Rust benchmark figure, and the test suite to 54 multi-angle tests. The model
+  fires repetitively at low somatic drive and enters depolarisation block at
+  high drive (non-monotonic f-I).
+
 ### Fixed
 - Expanded GOTM brain coverage to 100% exact-file evidence, covering the local
   LLM import-success path, valid directive parsing, invalid directive fallback,

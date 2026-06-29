@@ -8,9 +8,13 @@
 
 """Full pipeline test for PinskyRinzelNeuron (Pinsky & Rinzel 1994).
 
-2-compartment pyramidal cell: soma (fast Na/K) + dendrite (Ca/KAHP/KC).
-Non-monotonic f–I curve with depolarisation block at high current.
-step() takes (current_soma, current_dend) — dual-input signature."""
+Two-compartment CA3 pyramidal cell integrated with fourth-order Runge-Kutta:
+soma (fast Na/K-DR) coupled to dendrite (Ca, K-AHP, K-C). Eight states
+``(v_s, v_d, h, n, s, c, q, ca)``; ``step(current_soma, current_dend)`` has a
+dual-input signature. The model fires repetitively at low somatic drive and
+enters depolarisation block (Na inactivation) at high drive, giving a
+non-monotonic f-I relation. Reference: PR1994 / ModelDB 35358.
+"""
 
 from __future__ import annotations
 
@@ -25,20 +29,15 @@ from sc_neurocore.network.stimulus import PoissonInput
 from sc_neurocore.analysis.spike_stats.basic import spike_count
 
 
-# ---------------------------------------------------------------------------
-# Helpers
-# ---------------------------------------------------------------------------
-
-
 def _run(
     neuron: PinskyRinzelNeuron, current_soma: float, steps: int, current_dend: float = 0.0
 ) -> list[int]:
-    """Return spike times."""
+    """Return the indices of steps on which a somatic spike was registered."""
     return [t for t in range(steps) if neuron.step(current_soma, current_dend) == 1]
 
 
 # ---------------------------------------------------------------------------
-# 1. Isolation — construction, state evolution, compartments
+# 1. Isolation — construction, state evolution, reset
 # ---------------------------------------------------------------------------
 
 
@@ -47,206 +46,177 @@ class TestPinskyRinzelIsolation:
         n = PinskyRinzelNeuron()
         assert n.v_s == -60.0
         assert n.v_d == -60.0
-        assert n.h == 0.9
-        assert n.n == 0.1
+        assert (n.h, n.n, n.s, n.c, n.q, n.ca) == (0.999, 0.001, 0.009, 0.007, 0.01, 0.2)
+        assert n.cm == 3.0
         assert n.gc == 2.1
         assert n.p == 0.5
         assert n.dt == 0.02
 
     def test_step_returns_binary(self):
-        n = PinskyRinzelNeuron()
-        assert n.step(0.0) in (0, 1)
+        assert PinskyRinzelNeuron().step(0.0) in (0, 1)
 
     def test_dual_input_signature(self):
-        """step() accepts both somatic and dendritic current."""
-        n = PinskyRinzelNeuron()
-        s = n.step(5.0, 3.0)
-        assert s in (0, 1)
+        assert PinskyRinzelNeuron().step(5.0, 3.0) in (0, 1)
 
-    def test_seven_state_variables_evolve(self):
-        """All 7 state variables (v_s, v_d, h, n, s, c, q) should change."""
+    def test_eight_state_variables_evolve(self):
         n = PinskyRinzelNeuron()
-        initial = (n.v_s, n.v_d, n.h, n.n, n.s, n.c, n.q)
-        for _ in range(500):
+        initial = (n.v_s, n.v_d, n.h, n.n, n.s, n.c, n.q, n.ca)
+        for _ in range(2000):
             n.step(20.0)
-        final = (n.v_s, n.v_d, n.h, n.n, n.s, n.c, n.q)
+        final = (n.v_s, n.v_d, n.h, n.n, n.s, n.c, n.q, n.ca)
         diffs = [abs(f - i) for f, i in zip(final, initial)]
-        assert all(d > 1e-10 for d in diffs), f"Some variables didn't evolve: {diffs}"
+        assert all(d > 1e-10 for d in diffs), f"Some variables did not evolve: {diffs}"
 
     def test_state_finite_long_run(self):
-        """No divergence over 50k steps at moderate drive."""
         n = PinskyRinzelNeuron()
         for _ in range(50000):
             n.step(30.0)
-        for var in [n.v_s, n.v_d, n.h, n.n, n.s, n.c, n.q]:
-            assert np.isfinite(var), f"Non-finite state: {var}"
+        for var in (n.v_s, n.v_d, n.h, n.n, n.s, n.c, n.q, n.ca):
+            assert np.isfinite(var)
 
     def test_reset_restores_initial(self):
         n = PinskyRinzelNeuron()
         for _ in range(1000):
             n.step(30.0)
         n.reset()
-        assert n.v_s == -60.0
-        assert n.v_d == -60.0
-        assert n.h == 0.9
-        assert n.n == 0.1
-        assert n.s == 0.0
-        assert n.c == 0.0
-        assert n.q == 0.0
+        assert (n.v_s, n.v_d) == (-60.0, -60.0)
+        assert (n.h, n.n, n.s, n.c, n.q, n.ca) == (0.999, 0.001, 0.009, 0.007, 0.01, 0.2)
 
 
 # ---------------------------------------------------------------------------
-# 2. Compartmental coupling
+# 2. Compartmental coupling and calcium
 # ---------------------------------------------------------------------------
 
 
 class TestPinskyRinzelCompartments:
     def test_soma_dendrite_coupling(self):
-        """Somatic drive should affect dendritic voltage via gc coupling.
-
-        Note: v_d may hyperpolarise due to strong K currents (KAHP, KC)
-        activated by Ca accumulation. The key test is that v_d differs
-        between coupled (gc=2.1) and uncoupled (gc=0) conditions.
-        """
-        n_coupled = PinskyRinzelNeuron(gc=2.1)
-        n_uncoupled = PinskyRinzelNeuron(gc=0.001)  # near-zero coupling
+        coupled = PinskyRinzelNeuron(gc=2.1)
+        uncoupled = PinskyRinzelNeuron(gc=0.001)
         for _ in range(5000):
-            n_coupled.step(30.0, 0.0)
-            n_uncoupled.step(30.0, 0.0)
-        assert abs(n_coupled.v_d - n_uncoupled.v_d) > 1.0, (
-            f"coupled v_d={n_coupled.v_d:.2f}, uncoupled v_d={n_uncoupled.v_d:.2f}"
-        )
+            coupled.step(20.0, 0.0)
+            uncoupled.step(20.0, 0.0)
+        assert abs(coupled.v_d - uncoupled.v_d) > 1.0
 
-    def test_somatic_drive_more_effective(self):
-        """Soma input drives spikes more effectively than dendrite input."""
-        n_soma = PinskyRinzelNeuron()
-        n_dend = PinskyRinzelNeuron()
-        s_soma = _run(n_soma, current_soma=30.0, steps=50000)
-        s_dend = _run(n_dend, current_soma=0.0, steps=50000, current_dend=30.0)
-        assert len(s_soma) > len(s_dend), (
-            f"Soma: {len(s_soma)}, dend: {len(s_dend)} — expected soma > dend"
-        )
+    def test_dendritic_drive_evokes_spiking(self):
+        n = PinskyRinzelNeuron()
+        assert len(_run(n, current_soma=0.0, steps=50000, current_dend=20.0)) > 0
 
-    def test_calcium_accumulation(self):
-        """Dendritic calcium (c) should accumulate during spiking."""
+    def test_calcium_accumulates_during_spiking(self):
         n = PinskyRinzelNeuron()
         for _ in range(50000):
             n.step(20.0)
-        assert n.c > 0.01, f"Ca = {n.c:.6f}, expected accumulation"
+        assert n.ca > 1.0
 
-    def test_calcium_non_negative(self):
-        """Calcium concentration is clamped ≥ 0."""
+    def test_calcium_non_negative_without_drive(self):
         n = PinskyRinzelNeuron()
         for _ in range(50000):
-            n.step(0.0)  # No drive → no Ca production
-        assert n.c >= 0.0
+            n.step(0.0)
+        assert n.ca >= 0.0
+
+    def test_gc_coupling_strength_reduces_gap(self):
+        weak = PinskyRinzelNeuron(gc=0.5)
+        strong = PinskyRinzelNeuron(gc=5.0)
+        for _ in range(10000):
+            weak.step(20.0)
+            strong.step(20.0)
+        assert abs(strong.v_s - strong.v_d) < abs(weak.v_s - weak.v_d)
 
 
 # ---------------------------------------------------------------------------
-# 3. f–I curve — non-monotonic (key property)
+# 3. f-I relation — repetitive firing then depolarisation block
 # ---------------------------------------------------------------------------
 
 
 class TestPinskyRinzelFI:
-    def test_subthreshold_no_spikes(self):
-        """Low current (I<10) produces no spikes."""
-        n = PinskyRinzelNeuron()
-        spike_times = _run(n, current_soma=5.0, steps=50000)
-        assert len(spike_times) == 0
+    def test_quiescent_near_rest(self):
+        assert len(_run(PinskyRinzelNeuron(), current_soma=0.0, steps=50000)) <= 5
 
-    def test_moderate_current_oscillation(self):
-        """I=20–50 drives sustained spiking."""
-        for I in [20.0, 30.0, 50.0]:
-            n = PinskyRinzelNeuron()
-            spike_times = _run(n, current_soma=I, steps=50000)
-            assert len(spike_times) >= 10, f"I={I}: only {len(spike_times)} spikes"
+    @pytest.mark.parametrize("drive", [2.0, 5.0, 20.0])
+    def test_low_drive_fires_repetitively(self, drive: float):
+        assert len(_run(PinskyRinzelNeuron(), current_soma=drive, steps=50000)) >= 10
 
-    def test_non_monotonic_fi(self):
-        """f–I curve is non-monotonic: peak around I≈50, then decline.
-
-        This is a hallmark of 2-compartment models — somatic depolarisation
-        inactivates Na at very high currents.
-        """
-        rates: dict[float, int] = {}
-        for I in [20.0, 50.0, 200.0]:
-            n = PinskyRinzelNeuron()
-            rates[I] = len(_run(n, current_soma=I, steps=50000))
-        # Peak at I=50 > I=200 (depolarisation block)
-        assert rates[50.0] > rates[200.0], (
-            f"Expected non-monotonic f-I: f(50)={rates[50.0]} > f(200)={rates[200.0]}"
-        )
-
-    def test_depolarisation_block(self):
-        """Very high current (I≥200) suppresses firing."""
-        n = PinskyRinzelNeuron()
-        spike_times = _run(n, current_soma=200.0, steps=50000)
-        assert len(spike_times) <= 5, (
-            f"{len(spike_times)} spikes at I=200 — expected depolarisation block"
-        )
+    def test_non_monotonic_depolarisation_block(self):
+        low = len(_run(PinskyRinzelNeuron(), current_soma=5.0, steps=50000))
+        high = len(_run(PinskyRinzelNeuron(), current_soma=200.0, steps=50000))
+        assert low > high
+        assert high <= 5
 
 
 # ---------------------------------------------------------------------------
-# 4. ISI regularity at peak firing
+# 4. Spike-frequency adaptation
 # ---------------------------------------------------------------------------
 
 
-class TestPinskyRinzelISI:
-    def test_isi_stabilises(self):
-        """After transient, ISI should stabilise (limit cycle)."""
-        n = PinskyRinzelNeuron()
-        spike_times = _run(n, current_soma=50.0, steps=50000)
+class TestPinskyRinzelAdaptation:
+    def test_isis_lengthen_with_adaptation(self):
+        spike_times = _run(PinskyRinzelNeuron(), current_soma=5.0, steps=50000)
         assert len(spike_times) >= 20
-        # Skip first 10 spikes (transient)
-        steady_isis = np.diff(spike_times[10:]).astype(float)
-        cv = np.std(steady_isis) / np.mean(steady_isis)
-        assert cv < 0.05, f"CV(ISI) = {cv:.4f} in steady state"
+        isis = np.diff(spike_times)
+        assert np.mean(isis[:5]) <= np.mean(isis[-5:])
 
-    def test_isi_shortens_with_transient(self):
-        """Initial ISIs are longer than steady-state (warm-up transient)."""
-        n = PinskyRinzelNeuron()
-        spike_times = _run(n, current_soma=50.0, steps=50000)
-        if len(spike_times) >= 20:
-            isis = np.diff(spike_times)
-            first_5_mean = np.mean(isis[:5])
-            last_5_mean = np.mean(isis[-5:])
-            assert first_5_mean >= last_5_mean, (
-                f"First ISI mean {first_5_mean:.1f} < last {last_5_mean:.1f}"
-            )
+    def test_isi_coefficient_of_variation_bounded(self):
+        spike_times = _run(PinskyRinzelNeuron(), current_soma=5.0, steps=50000)
+        isis = np.diff(spike_times[10:]).astype(float)
+        assert np.std(isis) / np.mean(isis) < 0.2
 
 
 # ---------------------------------------------------------------------------
-# 5. Gating variable constraints
+# 5. Gating variables
 # ---------------------------------------------------------------------------
 
 
 class TestPinskyRinzelGating:
     def test_gating_variables_bounded(self):
-        """h, n, s, q should stay in [0, 1] (biological constraint)."""
         n = PinskyRinzelNeuron()
         for _ in range(50000):
             n.step(50.0)
-        for name, val in [("h", n.h), ("n", n.n), ("s", n.s), ("q", n.q)]:
-            assert -0.01 <= val <= 1.01, f"{name} = {val:.6f}, outside [0, 1]"
+        for name, value in (("h", n.h), ("n", n.n), ("s", n.s), ("c", n.c), ("q", n.q)):
+            assert 0.0 <= value <= 1.0, f"{name} = {value}"
 
-    def test_h_inactivation_at_high_current(self):
-        """Na inactivation gate h should decrease under sustained depolarisation."""
+    def test_sodium_inactivates_at_high_drive(self):
         n = PinskyRinzelNeuron()
         h_initial = n.h
         for _ in range(50000):
             n.step(100.0)
-        assert n.h < h_initial, f"h = {n.h:.4f} >= {h_initial} — expected Na inactivation"
+        assert n.h < h_initial
 
 
 # ---------------------------------------------------------------------------
-# 6. Parameter sensitivity
+# 6. Rate-function limit branches (removable singularities) and αc regime
 # ---------------------------------------------------------------------------
 
 
-class TestPinskyRinzelParameters:
+class TestPinskyRinzelRateBranches:
+    @pytest.mark.parametrize("v_s", [-46.9, -19.9, -24.9])
+    def test_somatic_rate_singularities_are_finite(self, v_s: float):
+        """αm/βm/αn evaluate their removable limit at the singular voltage."""
+        n = PinskyRinzelNeuron(v_s=v_s)
+        n.step(0.0)
+        assert np.isfinite(n.v_s)
+
+    def test_dendritic_beta_s_singularity_is_finite(self):
+        n = PinskyRinzelNeuron(v_d=-8.9)
+        n.step(0.0)
+        assert np.isfinite(n.v_d)
+
+    def test_depolarised_dendrite_uses_alternate_c_branch(self):
+        """Vd > −10 mV selects the βc = 0 branch of the K-C activation rate."""
+        n = PinskyRinzelNeuron(v_d=0.0)
+        n.step(0.0)
+        assert np.isfinite(n.v_d)
+
+
+# ---------------------------------------------------------------------------
+# 7. Fail-closed safety contracts
+# ---------------------------------------------------------------------------
+
+
+class TestPinskyRinzelSafety:
     @pytest.mark.parametrize(
         ("field", "value"),
         [
             ("dt", 0.0),
+            ("cm", 0.0),
             ("gc", 0.0),
             ("p", 0.0),
             ("p", 1.0),
@@ -259,56 +229,65 @@ class TestPinskyRinzelParameters:
             ("h", -0.01),
             ("n", 1.01),
             ("s", float("nan")),
-            ("c", -0.01),
+            ("c", 1.01),
             ("q", 1.01),
+            ("ca", -0.01),
         ],
     )
-    def test_rejects_invalid_physical_configuration(self, field: str, value: float):
+    def test_rejects_invalid_configuration(self, field: str, value: float):
         with pytest.raises(ValueError):
             PinskyRinzelNeuron(**{field: value})
 
     def test_rejects_runtime_parameter_corruption_before_mutation(self):
         n = PinskyRinzelNeuron()
         n.p = 1.0
-        before = (n.v_s, n.v_d, n.h, n.n, n.s, n.c, n.q)
-
+        before = (n.v_s, n.v_d, n.h, n.n, n.s, n.c, n.q, n.ca)
         with pytest.raises(ValueError):
             n.step(30.0)
-
-        assert (n.v_s, n.v_d, n.h, n.n, n.s, n.c, n.q) == before
+        assert (n.v_s, n.v_d, n.h, n.n, n.s, n.c, n.q, n.ca) == before
 
     def test_rejects_non_finite_input_before_mutation(self):
         n = PinskyRinzelNeuron()
-        before = (n.v_s, n.v_d, n.h, n.n, n.s, n.c, n.q)
-
+        before = (n.v_s, n.v_d, n.h, n.n, n.s, n.c, n.q, n.ca)
         with pytest.raises(ValueError):
             n.step(float("nan"))
+        assert (n.v_s, n.v_d, n.h, n.n, n.s, n.c, n.q, n.ca) == before
+        with pytest.raises(ValueError):
+            n.step(0.0, float("inf"))
+        assert (n.v_s, n.v_d, n.h, n.n, n.s, n.c, n.q, n.ca) == before
 
-        assert (n.v_s, n.v_d, n.h, n.n, n.s, n.c, n.q) == before
+    def test_extreme_timestep_fails_closed(self):
+        with pytest.raises(FloatingPointError):
+            PinskyRinzelNeuron(dt=10.0).step(30.0)
 
-    def test_gate_candidate_excursion_fails_before_mutation(self):
-        n = PinskyRinzelNeuron(dt=10.0)
-        before = (n.v_s, n.v_d, n.h, n.n, n.s, n.c, n.q)
+    def test_validate_candidate_rejects_non_finite_state(self):
+        with pytest.raises(FloatingPointError):
+            PinskyRinzelNeuron._validate_candidate(
+                (float("nan"), -60.0, 0.5, 0.5, 0.5, 0.5, 0.5, 0.2)
+            )
 
-        with pytest.raises(FloatingPointError, match="gate"):
-            n.step(30.0)
+    def test_validate_candidate_clamps_gates_and_calcium(self):
+        v_s, v_d, h, n, s, c, q, ca = PinskyRinzelNeuron._validate_candidate(
+            (-60.0, -60.0, 1.5, -0.2, 0.5, 2.0, -0.3, -4.0)
+        )
+        assert (h, n, s, c, q, ca) == (1.0, 0.0, 0.5, 1.0, 0.0, 0.0)
 
-        assert (n.v_s, n.v_d, n.h, n.n, n.s, n.c, n.q) == before
 
-    def test_gc_coupling_strength(self):
-        """Stronger coupling (gc) should synchronise compartments better."""
-        n_weak = PinskyRinzelNeuron(gc=0.5)
-        n_strong = PinskyRinzelNeuron(gc=5.0)
-        for _ in range(10000):
-            n_weak.step(20.0)
-            n_strong.step(20.0)
-        gap_weak = abs(n_weak.v_s - n_weak.v_d)
-        gap_strong = abs(n_strong.v_s - n_strong.v_d)
-        assert gap_strong < gap_weak, f"Strong coupling gap {gap_strong:.2f} >= weak {gap_weak:.2f}"
+# ---------------------------------------------------------------------------
+# 8. Determinism and time-step stability
+# ---------------------------------------------------------------------------
+
+
+class TestPinskyRinzelNumerics:
+    def test_bit_exact_reproducibility(self):
+        def trace() -> list[tuple[int, float]]:
+            n = PinskyRinzelNeuron()
+            return [(n.step(30.0), n.v_s) for _ in range(500)]
+
+        assert trace() == trace()
 
     @pytest.mark.parametrize("dt", [0.01, 0.02, 0.05])
     def test_dt_stability(self, dt: float):
-        """Model stays finite across time-step sizes."""
         n = PinskyRinzelNeuron(dt=dt)
         for _ in range(20000):
             n.step(30.0)
@@ -316,22 +295,7 @@ class TestPinskyRinzelParameters:
 
 
 # ---------------------------------------------------------------------------
-# 7. Determinism
-# ---------------------------------------------------------------------------
-
-
-class TestPinskyRinzelDeterminism:
-    def test_bit_exact_reproducibility(self):
-        traces = []
-        for _ in range(2):
-            n = PinskyRinzelNeuron()
-            trace = [(n.step(30.0), n.v_s) for _ in range(500)]
-            traces.append(trace)
-        assert traces[0] == traces[1]
-
-
-# ---------------------------------------------------------------------------
-# 8. Network
+# 9. Network wiring and analysis
 # ---------------------------------------------------------------------------
 
 
@@ -342,25 +306,16 @@ class TestPinskyRinzelNetwork:
 
     def test_network_spikes(self):
         pop = Population(PinskyRinzelNeuron, n=5, label="pr")
-        drive = PoissonInput(n=5, rate_hz=500.0, weight=30.0, dt=0.001, seed=42)
+        drive = PoissonInput(n=5, rate_hz=500.0, weight=5.0, dt=0.001, seed=42)
         mon = SpikeMonitor(pop)
         net = Network(pop, drive, mon)
         net.run(duration=2.0, dt=0.001, backend="python")
         assert mon.count > 0
 
 
-# ---------------------------------------------------------------------------
-# 9. Analysis
-# ---------------------------------------------------------------------------
-
-
 class TestPinskyRinzelAnalysis:
-    def test_spike_count(self):
+    def test_spike_count_matches_train_sum(self):
         n = PinskyRinzelNeuron()
-        train = np.array([float(n.step(30.0)) for _ in range(50000)])
+        train = np.array([float(n.step(5.0)) for _ in range(50000)])
         assert spike_count(train) >= 5
-
-    def test_spike_count_consistency(self):
-        n = PinskyRinzelNeuron()
-        train = np.array([float(n.step(30.0)) for _ in range(50000)])
         assert spike_count(train) == int(train.sum())
