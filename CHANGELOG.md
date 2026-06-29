@@ -28,6 +28,10 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
   unchanged); `_reg` rejects a duplicate name unless `allow_override=True`, and
   the `hardware_profiles`/`research_platforms` guides now match the registered
   values.
+- Corrected the `online_learning` package docstring, which advertised "e-prop,
+  RTRL, and forward-gradient methods" though only e-prop (`EpropTrainer`) and an
+  eligibility-based online trainer (`OnlineTrainer`/`OnlineLIFLayer`) are
+  implemented. The docstring now lists only the shipped methods.
 
 ### Physics and mathematics hardening
 - Rebuilt `MarderSTGNeuron` (Liu, Golowasch, Marder & Abbott 1998 stomatogastric
