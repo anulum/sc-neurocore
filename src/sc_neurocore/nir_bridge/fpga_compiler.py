@@ -1216,17 +1216,39 @@ def _build_top_direct(
 def _can_fold(qgraph: QuantisedGraph) -> bool:
     """Return True if the graph is in the folded interconnect's supported subset.
 
-    First folded mode (v1): a single connection-less population of a supported
-    neuron type, externally driven (one ``I_ext`` lane per neuron). This is the
-    common input/sensory-layer shape; the shared datapath + state BRAM replace one
-    module instance per neuron. Weighted/recurrent fan-in folding is future work,
-    so any connection or extra population falls back to the direct interconnect.
+    Folded modes so far, all a single population of a supported type sharing one
+    datapath PE + BRAM state:
+
+    * **connection-less** — each neuron driven by its own external ``I_ext`` lane
+      (input/sensory layer);
+    * **external-weighted** — fed by external-source connections only (a weighted
+      feedforward projection), no bias / thresholds / delays / source thresholds.
+
+    Recurrent or inter-population (spiking) fan-in needs a double-buffered spike
+    register and is still future work, so those fall back to the direct interconnect.
     """
-    return (
-        len(qgraph.populations) == 1
-        and len(qgraph.connections) == 0
-        and qgraph.populations[0].neuron_type in _NEURON_TEMPLATES
-    )
+    if len(qgraph.populations) != 1:
+        return False
+    pop = qgraph.populations[0]
+    if pop.neuron_type not in _NEURON_TEMPLATES:
+        return False
+    pop_names = {p.name for p in qgraph.populations}
+    for conn in qgraph.connections:
+        if conn.src in pop_names or conn.dst != pop.name:
+            return False  # recurrent / inter-population fan-in not yet folded
+        if conn.bias is not None or conn.source_threshold is not None:
+            return False
+        if _connection_has_thresholds(conn):
+            return False
+        if any(
+            _normalise_connection_delay_steps(
+                getattr(conn, "delay_steps", 0),
+                int(np.asarray(conn.weights).shape[1]),
+                f"Connection {conn.src}->{conn.dst}",
+            )
+        ):
+            return False
+    return True
 
 
 def _build_top_folded(
@@ -1284,6 +1306,91 @@ def _build_top_folded(
         f"        .{svars[k]}_next_out(next_state{slice_of(k)})," for k in range(n_vars)
     ]
 
+    # ----- per-neuron external input (shared across all neurons via nidx) -----
+    pop_by_name = {p.name: p for p in qgraph.populations}
+    ext_width, ext_offsets, _ext_src_widths = _external_input_layout(
+        qgraph.connections, pop_by_name, qgraph.populations
+    )
+    feeding = [conn for conn in qgraph.connections if conn.dst == pop.name]
+    input_bus_width = max(1, ext_width * data_width)
+    product_width = 2 * data_width
+
+    input_decls: list[str] = []
+    if not feeding:
+        # Connection-less: one external lane per neuron (sat_acc(sign-extend) = identity).
+        cur_i_expr = f"I_ext_flat[nidx * {data_width} +: {data_width}]"
+    else:
+        # External-weighted feedforward: I = sat_acc(sum_src (ext_input[src] * w[nidx, src]) >>> frac).
+        # One shared multiplier set + a row-weight ROM (case over nidx) replaces the direct
+        # path's per-(neuron, source) multiplier; the sum order matches direct bit-for-bit.
+        max_terms = max(int(np.asarray(conn.weights).shape[1]) for conn in feeding)
+        acc_width = max(data_width + 2, (2 * data_width) + _ceil_log2_at_least_one(max_terms + 1))
+        input_decls.append(f"    localparam integer ACC_WIDTH = {acc_width};")
+        input_decls.append(
+            "    localparam signed [DATA_WIDTH - 1:0] Q_MAX = {1'b0, {(DATA_WIDTH - 1){1'b1}}};"
+        )
+        input_decls.append(
+            "    localparam signed [DATA_WIDTH - 1:0] Q_MIN = {1'b1, {(DATA_WIDTH - 1){1'b0}}};"
+        )
+        input_decls.extend(
+            [
+                "    function signed [DATA_WIDTH - 1:0] sat_acc;",
+                "        input signed [ACC_WIDTH - 1:0] x;",
+                "        begin",
+                "            if (x > $signed({{(ACC_WIDTH - DATA_WIDTH){Q_MAX[DATA_WIDTH - 1]}}, Q_MAX}))",
+                "                sat_acc = Q_MAX;",
+                "            else if (x < $signed({{(ACC_WIDTH - DATA_WIDTH){Q_MIN[DATA_WIDTH - 1]}}, Q_MIN}))",
+                "                sat_acc = Q_MIN;",
+                "            else",
+                "                sat_acc = x[DATA_WIDTH - 1:0];",
+                "        end",
+                "    endfunction",
+                "",
+            ]
+        )
+        for k in range(ext_width):
+            input_decls.append(
+                f"    wire signed [DATA_WIDTH - 1:0] ext_input_{k} = "
+                f"I_ext_flat[{k * data_width} +: {data_width}];"
+            )
+        # Row-weight ROM: one always@* selects the current neuron's weight row.
+        rw_regs: list[str] = []
+        rows: dict[int, list[str]] = {nrow: [] for nrow in range(n)}
+        term_lines: list[str] = []
+        term_names: list[str] = []
+        for ci, conn in enumerate(feeding):
+            weights = np.asarray(conn.weights, dtype=np.int64)
+            off = ext_offsets.get(conn.src, 0)
+            for src in range(weights.shape[1]):
+                rw = f"rw_{ci}_{src}"
+                rw_regs.append(f"    reg signed [DATA_WIDTH - 1:0] {rw};")
+                for nrow in range(n):
+                    rows[nrow].append(f"{rw} = {_signed_hex(int(weights[nrow, src]), data_width)};")
+                mul = f"fmul_{ci}_{src}"
+                term = f"fterm_{ci}_{src}"
+                term_lines.append(
+                    f"    wire signed [{product_width - 1}:0] {mul} = ext_input_{off + src} * {rw};"
+                )
+                term_lines.append(
+                    f"    wire signed [ACC_WIDTH - 1:0] {term} = {mul} >>> {fraction};"
+                )
+                term_names.append(term)
+        input_decls.extend(rw_regs)
+        default_assigns = " ".join(
+            f"{rw.split()[-1].rstrip(';')} = {data_width}'sd0;" for rw in rw_regs
+        )
+        input_decls.append("    always @(*) begin")
+        input_decls.append("        case (nidx)")
+        for nrow in range(n):
+            input_decls.append(f"            {idx_w}'d{nrow}: begin {' '.join(rows[nrow])} end")
+        input_decls.append(f"            default: begin {default_assigns} end")
+        input_decls.append("        endcase")
+        input_decls.append("    end")
+        input_decls.extend(term_lines)
+        acc_expr = " + ".join(term_names) if term_names else f"{acc_width}'sd0"
+        input_decls.append(f"    wire signed [ACC_WIDTH - 1:0] fold_i_acc = {acc_expr};")
+        cur_i_expr = "sat_acc(fold_i_acc)"
+
     lines = [
         f"// Auto-generated folded (time-multiplexed) top-level network: {safe_module}",
         "// SC-NeuroCore NIR → FPGA compiler — shared datapath PE + BRAM state.",
@@ -1294,7 +1401,7 @@ def _build_top_folded(
         "    input  wire clk,",
         "    input  wire rst_n,",
         "    input  wire en,",
-        f"    input  wire signed [{n * data_width - 1}:0] I_ext_flat,",
+        f"    input  wire signed [{input_bus_width - 1}:0] I_ext_flat,",
         f"    output reg  [{n - 1}:0] spike_bus,",
         "    output reg  tick_done",
         ");",
@@ -1309,8 +1416,10 @@ def _build_top_folded(
         "    reg phase;  // 0 = process one neuron, 1 = commit tick",
         f"    reg [{n - 1}:0] spike_acc;",
         "",
+        *input_decls,
+        "",
         "    wire [STATE_W - 1:0] cur_state = state_bram[nidx];",
-        f"    wire signed [DATA_WIDTH - 1:0] cur_I = I_ext_flat[nidx * {data_width} +: {data_width}];",
+        f"    wire signed [DATA_WIDTH - 1:0] cur_I = {cur_i_expr};",
         "    wire [STATE_W - 1:0] next_state;",
         "    wire pe_spike;",
         "",
