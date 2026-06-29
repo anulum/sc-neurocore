@@ -19,6 +19,7 @@ import pytest
 pytest.importorskip("nir")
 
 from sc_neurocore.ir import (
+    SCNIRCompatibilityRow,
     scnir_compatibility_matrix,
     scnir_compatibility_matrix_dicts,
     validate_scnir_compatibility_matrix,
@@ -270,3 +271,62 @@ def test_scnir_compatibility_matrix_records_weight_and_recurrent_delay_semantics
     linear = rows["Linear"]
     assert "delay_steps=0_or_1" in linear.scnir_stream_metadata
     assert "recurrent unit-delay" in linear.limitation
+
+
+class _Foo:  # parser primitive stand-in; __name__ drives the matrix comparison
+    pass
+
+
+def _row(
+    primitive: str,
+    *,
+    support_level: str = "boundary",
+    stream_metadata: tuple[str, ...] = ("signal_kind=spike",),
+    audit_evidence: tuple[str, ...] = ("tests/test_scnir_compatibility.py",),
+) -> SCNIRCompatibilityRow:
+    return SCNIRCompatibilityRow(
+        nir_primitive=primitive,
+        support_level=support_level,  # type: ignore[arg-type]
+        parser_node="node",
+        neuron_graph_lowering="lowering",
+        scnir_stream_metadata=stream_metadata,
+        source_metadata=(),
+        hdl_support="none",
+        audit_evidence=audit_evidence,
+        limitation="",
+    )
+
+
+def _patch_matrix(monkeypatch, rows: tuple[SCNIRCompatibilityRow, ...]) -> None:
+    monkeypatch.setattr("sc_neurocore.nir_bridge.node_map.NODE_MAP", {_Foo: None})
+    monkeypatch.setattr("sc_neurocore.ir.scnir_compatibility._MATRIX", rows)
+
+
+def test_validate_matrix_flags_missing_parser_primitive(monkeypatch) -> None:
+    _patch_matrix(monkeypatch, ())
+    with pytest.raises(ValueError, match="misses parser primitives"):
+        validate_scnir_compatibility_matrix()
+
+
+def test_validate_matrix_flags_stale_primitive(monkeypatch) -> None:
+    _patch_matrix(monkeypatch, (_row("_Foo"), _row("Ghost")))
+    with pytest.raises(ValueError, match="stale primitives"):
+        validate_scnir_compatibility_matrix()
+
+
+def test_validate_matrix_flags_duplicate_row(monkeypatch) -> None:
+    _patch_matrix(monkeypatch, (_row("_Foo"), _row("_Foo")))
+    with pytest.raises(ValueError, match="duplicate SC-NIR compatibility row"):
+        validate_scnir_compatibility_matrix()
+
+
+def test_validate_matrix_flags_hdl_support_without_metadata(monkeypatch) -> None:
+    _patch_matrix(monkeypatch, (_row("_Foo", support_level="metadata_and_hdl", stream_metadata=()),))
+    with pytest.raises(ValueError, match="claims HDL support without stream metadata"):
+        validate_scnir_compatibility_matrix()
+
+
+def test_validate_matrix_flags_missing_audit_evidence(monkeypatch) -> None:
+    _patch_matrix(monkeypatch, (_row("_Foo", audit_evidence=()),))
+    with pytest.raises(ValueError, match="no audit evidence pointer"):
+        validate_scnir_compatibility_matrix()
