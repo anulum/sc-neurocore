@@ -5,6 +5,20 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 ## [Unreleased]
 
 ### Physics and mathematics hardening
+- Rebuilt `MarderSTGNeuron` (Liu, Golowasch, Marder & Abbott 1998 stomatogastric
+  ganglion neuron) as a faithful thirteen-state model integrated with
+  fourth-order Runge-Kutta, replacing the prior single-step forward-Euler
+  approximation. Restored the CaS inactivation gate and the K-C activation gate
+  (`h_cas`, `m_kca`), replaced the constant gate time constants with the
+  published voltage-dependent `tau(V)` functions, made the K-C activation
+  voltage- and calcium-dependent, switched the calcium reversal to the Nernst
+  equation, and corrected the calcium dynamics to the published 20 ms relaxation
+  form (transcribed from ModelDB 93321). Propagated the same RK4 model across the
+  Rust engine, Rust safety mirror, Julia, and Go surfaces with bit-exact
+  Python-Rust spike-count parity and a reference Mojo kernel; refreshed the model
+  descriptor, the model documentation, the Rust benchmark figure, and the test
+  suite to 49 multi-angle tests. The neuron is an endogenous burster (fires at
+  zero injected current).
 - Rebuilt `PinskyRinzelNeuron` (Pinsky & Rinzel 1994, 2-compartment CA3
   pyramidal cell) as a faithful eight-state model integrated with fourth-order
   Runge-Kutta, replacing the prior single-step forward-Euler approximation.

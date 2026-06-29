@@ -19,11 +19,11 @@ behavior_tags = [
 ]
 
 [provenance]
+doi = "10.1007/BF00962717"
 authors = [
     "Pinsky, P.F. & Rinzel, J.",
 ]
 year = 1994
-doi = "10.1007/BF00962717"
 
 [state.v_s]
 init = -60.0
@@ -177,7 +177,7 @@ range = [
 
 [integration]
 dt = 0.02
-method = "rk4"
+method = "euler"
 
 [dynamics]
 

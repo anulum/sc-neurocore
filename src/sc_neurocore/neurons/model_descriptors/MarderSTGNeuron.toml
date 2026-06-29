@@ -32,22 +32,28 @@ init = -60.0
 init = 0.0
 
 [state.h_na]
-init = 0.9
+init = 1.0
 
 [state.m_cat]
 init = 0.0
 
 [state.h_cat]
-init = 0.9
+init = 1.0
 
 [state.m_cas]
 init = 0.0
+
+[state.h_cas]
+init = 1.0
 
 [state.m_a]
 init = 0.0
 
 [state.h_a]
-init = 0.9
+init = 1.0
+
+[state.m_kca]
+init = 0.0
 
 [state.m_kd]
 init = 0.0
@@ -57,6 +63,11 @@ init = 0.0
 
 [state.ca]
 init = 0.05
+
+[parameters.cm]
+default = 1.0
+unit = ""
+meaning = ""
 
 [parameters.g_na]
 default = 200.0
@@ -139,15 +150,6 @@ range = [
     70.0,
 ]
 
-[parameters.e_ca]
-default = 80.0
-unit = "mV"
-meaning = "calcium reversal potential"
-range = [
-    60.0,
-    150.0,
-]
-
 [parameters.e_k]
 default = -80.0
 unit = "mV"
@@ -175,23 +177,34 @@ range = [
     -30.0,
 ]
 
-[parameters.ca_decay]
-default = 0.02
-unit = "1/ms"
-meaning = "calcium efflux (removal) rate"
-range = [
-    0.001,
-    1.0,
-]
+[parameters.ca_out]
+default = 3000.0
+unit = ""
+meaning = ""
+
+[parameters.ca_rest]
+default = 0.05
+unit = ""
+meaning = ""
+
+[parameters.tau_ca]
+default = 20.0
+unit = ""
+meaning = ""
 
 [parameters.f_ca]
-default = 0.0003
+default = 0.94
 unit = "cm^2/(uA*ms)"
 meaning = "calcium influx coefficient converting calcium current into concentration change"
 range = [
     0.0001,
     0.01,
 ]
+
+[parameters.celsius]
+default = 10.0
+unit = ""
+meaning = ""
 
 [parameters.v_threshold]
 default = -20.0

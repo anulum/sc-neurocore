@@ -4,9 +4,14 @@
 // © Code 2020–2026 Miroslav Šotek. All rights reserved.
 // ORCID: 0009-0009-3560-0851
 // Contact: www.anulum.li | protoscience@anulum.li
-// SC-NeuroCore — Rust safety for marder_stg
+// SC-NeuroCore — Rust safety mirror for marder_stg (LGMA98 STG, RK4)
 
-#![allow(unused_variables, dead_code, non_snake_case)]
+#![allow(dead_code, non_snake_case)]
+
+// Liu-Golowasch-Marder-Abbott 1998 stomatogastric ganglion neuron, RK4.
+// Bit-for-bit mirror of neurons/models/marder_stg.py: thirteen states
+// (v, m_na, h_na, m_cat, h_cat, m_cas, h_cas, m_a, h_a, m_kca, m_kd, m_h, ca),
+// voltage-dependent time constants, Nernst calcium reversal. ModelDB 93321.
 
 #[derive(Debug, Clone)]
 pub struct MarderSTGNeuron {
@@ -16,11 +21,14 @@ pub struct MarderSTGNeuron {
     pub m_cat: f64,
     pub h_cat: f64,
     pub m_cas: f64,
+    pub h_cas: f64,
     pub m_a: f64,
     pub h_a: f64,
+    pub m_kca: f64,
     pub m_kd: f64,
     pub m_h: f64,
     pub ca: f64,
+    pub cm: f64,
     pub g_na: f64,
     pub g_cat: f64,
     pub g_cas: f64,
@@ -30,92 +38,233 @@ pub struct MarderSTGNeuron {
     pub g_h: f64,
     pub g_l: f64,
     pub e_na: f64,
-    pub e_ca: f64,
     pub e_k: f64,
     pub e_h: f64,
     pub e_l: f64,
-    pub ca_decay: f64,
+    pub ca_out: f64,
+    pub ca_rest: f64,
+    pub tau_ca: f64,
     pub f_ca: f64,
+    pub celsius: f64,
     pub dt: f64,
     pub v_threshold: f64,
+}
+
+impl Default for MarderSTGNeuron {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+fn ms_exp(x: f64) -> f64 {
+    x.clamp(-700.0, 700.0).exp()
+}
+
+fn ms_sig(v: f64, vh: f64, s: f64) -> f64 {
+    1.0 / (1.0 + ms_exp((vh - v) / s))
 }
 
 impl MarderSTGNeuron {
     pub fn new() -> Self {
         Self {
-            v: -60.0_f64,
-            m_na: 0.0_f64,
-            h_na: 0.9_f64,
-            m_cat: 0.0_f64,
-            h_cat: 0.9_f64,
-            m_cas: 0.0_f64,
-            m_a: 0.0_f64,
-            h_a: 0.9_f64,
-            m_kd: 0.0_f64,
-            m_h: 0.0_f64,
-            ca: 0.05_f64,
-            g_na: 200.0_f64,
-            g_cat: 2.5_f64,
-            g_cas: 4.0_f64,
-            g_a: 50.0_f64,
-            g_kca: 25.0_f64,
-            g_kd: 75.0_f64,
-            g_h: 0.01_f64,
-            g_l: 0.01_f64,
-            e_na: 50.0_f64,
-            e_ca: 80.0_f64,
-            e_k: -80.0_f64,
-            e_h: -20.0_f64,
-            e_l: -50.0_f64,
-            ca_decay: 0.02_f64,
-            f_ca: 0.0003_f64,
-            dt: 0.05_f64,
-            v_threshold: -20.0_f64,
+            v: -60.0,
+            m_na: 0.0,
+            h_na: 1.0,
+            m_cat: 0.0,
+            h_cat: 1.0,
+            m_cas: 0.0,
+            h_cas: 1.0,
+            m_a: 0.0,
+            h_a: 1.0,
+            m_kca: 0.0,
+            m_kd: 0.0,
+            m_h: 0.0,
+            ca: 0.05,
+            cm: 1.0,
+            g_na: 200.0,
+            g_cat: 2.5,
+            g_cas: 4.0,
+            g_a: 50.0,
+            g_kca: 25.0,
+            g_kd: 75.0,
+            g_h: 0.01,
+            g_l: 0.01,
+            e_na: 50.0,
+            e_k: -80.0,
+            e_h: -20.0,
+            e_l: -50.0,
+            ca_out: 3000.0,
+            ca_rest: 0.05,
+            tau_ca: 20.0,
+            f_ca: 0.94,
+            celsius: 10.0,
+            dt: 0.05,
+            v_threshold: -20.0,
         }
     }
 
-    pub fn _boltz(&self, v: f64, v_half: f64, k: f64) -> f64 {
-        // return 1.0 / (1.0 + ((v_half - v_f64).exp() / k))
-        0.0
+    fn nernst_e_ca(&self, ca: f64) -> f64 {
+        let rt_zf = 1000.0 * 8.314462618 * (self.celsius + 273.15) / (2.0 * 96485.33212);
+        rt_zf * (self.ca_out / ca.max(1e-9)).ln()
     }
 
-    pub fn step(&mut self, i_ext: f64) -> i32 {
-        // v_prev = self.v
-        // m_na_inf = self._boltz(self.v, -25.5, 5.29)
-        // h_na_inf = self._boltz(self.v, -48.9, -5.18)
-        // m_cat_inf = self._boltz(self.v, -27.1, 7.2)
-        // h_cat_inf = self._boltz(self.v, -32.1, -5.5)
-        // m_cas_inf = self._boltz(self.v, -33.0, 8.1)
-        // m_a_inf = self._boltz(self.v, -27.2, 8.7)
-        // h_a_inf = self._boltz(self.v, -56.9, -4.9)
-        // m_kd_inf = self._boltz(self.v, -12.3, 11.8)
-        // m_h_inf = self._boltz(self.v, -70.0, -6.0)
-        // self.m_na = m_na_inf
-        // self.h_na += (h_na_inf - self.h_na) / 1.5 * self.dt
-        // self.m_cat += (m_cat_inf - self.m_cat) / 7.2 * self.dt
-        // self.h_cat += (h_cat_inf - self.h_cat) / 55.0 * self.dt
-        // self.m_cas += (m_cas_inf - self.m_cas) / 14.0 * self.dt
-        0 // spike indicator
+    fn derivatives(&self, st: &[f64; 13], current: f64) -> [f64; 13] {
+        let v = st[0];
+        let (m_na, h_na) = (st[1], st[2]);
+        let (m_cat, h_cat) = (st[3], st[4]);
+        let (m_cas, h_cas) = (st[5], st[6]);
+        let (m_a, h_a) = (st[7], st[8]);
+        let (m_kca, m_kd, m_h, ca) = (st[9], st[10], st[11], st[12]);
+
+        let tau_m_na = 1.32 - 1.26 / (1.0 + ms_exp(-(v + 120.0) / 25.0));
+        let tau_h_na = (0.67 / (1.0 + ms_exp(-(v + 62.9) / 10.0)))
+            * (1.5 + 1.0 / (1.0 + ms_exp((v + 34.9) / 3.6)));
+        let tau_m_cat = 21.7 - 21.3 / (1.0 + ms_exp(-(v + 68.1) / 20.5));
+        let tau_h_cat = 105.0 - 89.8 / (1.0 + ms_exp(-(v + 55.0) / 16.9));
+        let tau_m_cas = 1.4 + 7.0 / (ms_exp((v + 27.0) / 10.0) + ms_exp(-(v + 70.0) / 13.0));
+        let tau_h_cas = 60.0 + 150.0 / (ms_exp((v + 55.0) / 9.0) + ms_exp(-(v + 65.0) / 16.0));
+        let tau_m_a = 11.6 - 10.4 / (1.0 + ms_exp(-(v + 32.9) / 15.2));
+        let tau_h_a = 38.6 - 29.2 / (1.0 + ms_exp(-(v + 38.9) / 26.5));
+        let tau_m_kca = 90.3 - 75.1 / (1.0 + ms_exp(-(v + 46.0) / 22.7));
+        let tau_m_kd = 7.2 - 6.4 / (1.0 + ms_exp(-(v + 28.3) / 19.2));
+        let tau_m_h = 272.0 + 1499.0 / (1.0 + ms_exp(-(v + 42.2) / 8.73));
+
+        let m_kca_inf = (ca / (ca + 3.0)) * ms_sig(v, -28.3, 12.6);
+        let e_ca = self.nernst_e_ca(ca);
+        let i_na = self.g_na * m_na.powi(3) * h_na * (v - self.e_na);
+        let i_cat = self.g_cat * m_cat.powi(3) * h_cat * (v - e_ca);
+        let i_cas = self.g_cas * m_cas.powi(3) * h_cas * (v - e_ca);
+        let i_a = self.g_a * m_a.powi(3) * h_a * (v - self.e_k);
+        let i_kca = self.g_kca * m_kca.powi(4) * (v - self.e_k);
+        let i_kd = self.g_kd * m_kd.powi(4) * (v - self.e_k);
+        let i_h = self.g_h * m_h * (v - self.e_h);
+        let i_l = self.g_l * (v - self.e_l);
+
+        let dv = (current - i_na - i_cat - i_cas - i_a - i_kca - i_kd - i_h - i_l) / self.cm;
+        let dca = (-self.f_ca * (i_cat + i_cas) - (ca - self.ca_rest)) / self.tau_ca;
+        [
+            dv,
+            (ms_sig(v, -25.5, 5.29) - m_na) / tau_m_na,
+            (ms_sig(v, -48.9, -5.18) - h_na) / tau_h_na,
+            (ms_sig(v, -27.1, 7.2) - m_cat) / tau_m_cat,
+            (ms_sig(v, -32.1, -5.5) - h_cat) / tau_h_cat,
+            (ms_sig(v, -33.0, 8.1) - m_cas) / tau_m_cas,
+            (ms_sig(v, -60.0, -6.2) - h_cas) / tau_h_cas,
+            (ms_sig(v, -27.2, 8.7) - m_a) / tau_m_a,
+            (ms_sig(v, -56.9, -4.9) - h_a) / tau_h_a,
+            (m_kca_inf - m_kca) / tau_m_kca,
+            (ms_sig(v, -12.3, 11.8) - m_kd) / tau_m_kd,
+            (ms_sig(v, -70.0, -6.0) - m_h) / tau_m_h,
+            dca,
+        ]
+    }
+
+    pub fn step(&mut self, current: f64) -> i32 {
+        if !(validate_marder_stg(self) && current.is_finite()) {
+            return -1;
+        }
+        let v_prev = self.v;
+        let y = [
+            self.v, self.m_na, self.h_na, self.m_cat, self.h_cat, self.m_cas, self.h_cas, self.m_a,
+            self.h_a, self.m_kca, self.m_kd, self.m_h, self.ca,
+        ];
+        let dt = self.dt;
+        let k1 = self.derivatives(&y, current);
+        let mut y2 = y;
+        let mut y3 = y;
+        let mut y4 = y;
+        for i in 0..13 {
+            y2[i] = y[i] + (dt / 2.0) * k1[i];
+        }
+        let k2 = self.derivatives(&y2, current);
+        for i in 0..13 {
+            y3[i] = y[i] + (dt / 2.0) * k2[i];
+        }
+        let k3 = self.derivatives(&y3, current);
+        for i in 0..13 {
+            y4[i] = y[i] + dt * k3[i];
+        }
+        let k4 = self.derivatives(&y4, current);
+        let mut nxt = [0.0_f64; 13];
+        for i in 0..13 {
+            nxt[i] = y[i] + (dt / 6.0) * (k1[i] + 2.0 * k2[i] + 2.0 * k3[i] + k4[i]);
+        }
+        if !nxt.iter().all(|value| value.is_finite()) {
+            return -1;
+        }
+        self.v = nxt[0];
+        self.m_na = nxt[1].clamp(0.0, 1.0);
+        self.h_na = nxt[2].clamp(0.0, 1.0);
+        self.m_cat = nxt[3].clamp(0.0, 1.0);
+        self.h_cat = nxt[4].clamp(0.0, 1.0);
+        self.m_cas = nxt[5].clamp(0.0, 1.0);
+        self.h_cas = nxt[6].clamp(0.0, 1.0);
+        self.m_a = nxt[7].clamp(0.0, 1.0);
+        self.h_a = nxt[8].clamp(0.0, 1.0);
+        self.m_kca = nxt[9].clamp(0.0, 1.0);
+        self.m_kd = nxt[10].clamp(0.0, 1.0);
+        self.m_h = nxt[11].clamp(0.0, 1.0);
+        self.ca = nxt[12].max(0.0);
+        if self.v >= self.v_threshold && v_prev < self.v_threshold {
+            1
+        } else {
+            0
+        }
     }
 
     pub fn reset(&mut self) {
-        // self.v = -60.0
-        // self.m_na, self.h_na = 0.0, 0.9
-        // self.m_cat, self.h_cat = 0.0, 0.9
-        // self.m_cas = 0.0
-        // self.m_a, self.h_a = 0.0, 0.9
-        // self.m_kd, self.m_h = 0.0, 0.0
-        // self.ca = 0.05
-        self.v = -60.0_f64;
-        self.m_na = 0.0_f64;
-        self.h_na = 0.9_f64;
-        self.m_cat = 0.0_f64;
-        self.h_cat = 0.9_f64;
+        self.v = -60.0;
+        self.m_na = 0.0;
+        self.h_na = 1.0;
+        self.m_cat = 0.0;
+        self.h_cat = 1.0;
+        self.m_cas = 0.0;
+        self.h_cas = 1.0;
+        self.m_a = 0.0;
+        self.h_a = 1.0;
+        self.m_kca = 0.0;
+        self.m_kd = 0.0;
+        self.m_h = 0.0;
+        self.ca = 0.05;
     }
+}
+
+fn gate(value: f64) -> bool {
+    value.is_finite() && (0.0..=1.0).contains(&value)
 }
 
 pub fn validate_marder_stg(state: &MarderSTGNeuron) -> bool {
     state.v.is_finite()
+        && gate(state.m_na)
+        && gate(state.h_na)
+        && gate(state.m_cat)
+        && gate(state.h_cat)
+        && gate(state.m_cas)
+        && gate(state.h_cas)
+        && gate(state.m_a)
+        && gate(state.h_a)
+        && gate(state.m_kca)
+        && gate(state.m_kd)
+        && gate(state.m_h)
+        && state.ca.is_finite()
+        && state.ca >= 0.0
+        && state.cm.is_finite()
+        && state.cm > 0.0
+        && state.tau_ca.is_finite()
+        && state.tau_ca > 0.0
+        && state.ca_out.is_finite()
+        && state.ca_out > 0.0
+        && state.dt.is_finite()
+        && state.dt > 0.0
+        && [
+            state.g_na, state.g_cat, state.g_cas, state.g_a, state.g_kca, state.g_kd, state.g_h,
+            state.g_l,
+        ]
+        .iter()
+        .all(|g| g.is_finite() && *g >= 0.0)
+        && [state.e_na, state.e_k, state.e_h, state.e_l, state.f_ca, state.celsius, state.v_threshold]
+            .iter()
+            .all(|x| x.is_finite())
 }
 
 #[cfg(test)]
@@ -125,7 +274,6 @@ mod tests {
     #[test]
     fn test_marder_stg_new() {
         let state = MarderSTGNeuron::new();
-        assert!(state.v.is_finite());
         assert!(validate_marder_stg(&state));
     }
 
@@ -134,5 +282,24 @@ mod tests {
         let mut state = MarderSTGNeuron::new();
         let spike = state.step(10.0);
         assert!(spike == 0 || spike == 1);
+    }
+
+    #[test]
+    fn test_marder_stg_bursts_endogenously() {
+        let mut state = MarderSTGNeuron::new();
+        let mut spikes = 0;
+        for _ in 0..100_000 {
+            spikes += state.step(0.0).max(0);
+        }
+        assert!(spikes > 0, "LGMA98 STG neuron must burst endogenously");
+    }
+
+    #[test]
+    fn test_marder_stg_rejects_invalid_without_mutation() {
+        let mut state = MarderSTGNeuron::new();
+        state.cm = 0.0;
+        let before = state.v;
+        assert_eq!(state.step(0.0), -1);
+        assert_eq!(state.v, before);
     }
 }
