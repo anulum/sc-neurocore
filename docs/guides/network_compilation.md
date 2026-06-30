@@ -179,9 +179,11 @@ weighted sum with one spike-magnitude when it exceeds the per-neuron threshold),
 per-destination-neuron **connection biases** (a constant added to the connection's fan-in,
 inside any destination threshold), and **analogue source populations** (`li`/`cuba_li`/
 `integrator`, whose membrane voltage is committed to a global voltage bus once per tick and
-multiplied, or threshold-gated, by the weight). The folded subset now covers every direct
-fan-in shape except a *delayed* analogue source connection (which would need a voltage-bus
-history register), which is not folded yet; such graphs raise and should use `direct`/auto.
+multiplied, or threshold-gated, by the weight; a delayed analogue source reads a depth-`d`
+voltage-bus history register). The folded subset now covers every direct fan-in shape except
+a delayed *external* (non-population) source connection — a synaptic delay has registered
+semantics only from a neuron population — which is not folded; such graphs raise and should
+use `direct`/auto.
 `compile_network_to_fpga` attaches a [`FoldedResourceMetrics`](../API_REFERENCE.md) summary
 on the result only for the folded path; the CLI prints it and writes a machine-readable
 `folded_metrics.json` artefact (the versioned `scnir_source_manifest.json` is left to its

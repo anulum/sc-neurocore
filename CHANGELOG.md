@@ -24,18 +24,20 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
   An analogue source population (`li`/`cuba_li`/`integrator`, whose output is the membrane
   voltage) folds via a global voltage bus — one `DATA_WIDTH` word per analogue source
   neuron, committed once per tick like the spike bus — that the destination multiplies by
-  the weight (or threshold-gates), mirroring the direct path's registered `v_out`.
-  Bit-exact with the direct path (golden co-simulation parity for connection-less,
-  external-weighted, recurrent-spiking, two-population feedforward/recurrent, delayed
-  recurrent / mixed-per-column-delay two-population, external/spiking source-threshold,
-  mixed destination-threshold, inter-population source-threshold, external-bias,
-  biased destination-threshold, analogue-source, and analogue source-threshold fan-in).
-  Reports a `FoldedResourceMetrics` summary (populations, processing elements, shared
-  multipliers, state-RAM bits, cycles per tick, collapsed direct instances) on the result,
-  in the CLI output, and as a `folded_metrics.json` artefact. The folded subset now covers
-  every direct fan-in shape except a *delayed* analogue source connection, which falls back
-  to direct. Never auto-selected; the direct/AER paths and the SC-NIR source-handoff
-  manifest are unchanged.
+  the weight (or threshold-gates), mirroring the direct path's registered `v_out`; a
+  delayed analogue source reads a depth-`d` voltage-bus history register, the analogue of
+  the spike-bus history. Bit-exact with the direct path (golden co-simulation parity for
+  connection-less, external-weighted, recurrent-spiking, two-population
+  feedforward/recurrent, delayed recurrent / mixed-per-column-delay two-population,
+  external/spiking source-threshold, mixed destination-threshold, inter-population
+  source-threshold, external-bias, biased destination-threshold, analogue-source, analogue
+  source-threshold, and delayed-analogue fan-in). Reports a `FoldedResourceMetrics` summary
+  (populations, processing elements, shared multipliers, state-RAM bits, cycles per tick,
+  collapsed direct instances) on the result, in the CLI output, and as a
+  `folded_metrics.json` artefact. The folded subset now covers every direct fan-in shape
+  except a delayed *external* (non-population) source connection, which falls back to
+  direct. Never auto-selected; the direct/AER paths and the SC-NIR source-handoff manifest
+  are unchanged.
 
 ### Fixed
 - Fixed the direct FPGA interconnect emitting an assignment to an undeclared

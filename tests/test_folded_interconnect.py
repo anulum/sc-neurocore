@@ -487,23 +487,23 @@ def test_compile_network_folded_analogue_source() -> None:
 def test_compile_network_folded_rejects_unsupported_graph() -> None:
     from sc_neurocore.nir_bridge.fpga_compiler import compile_network_to_fpga
 
-    # A *delayed* analogue source connection is the only remaining fan-in shape outside
-    # the folded subset (it would need a voltage-bus history register) → direct fallback.
-    # An undelayed analogue source folds, so the delay is what triggers the rejection.
+    # A *delayed external* source connection is outside the folded subset: a synaptic
+    # delay has registered semantics only from a neuron population (spike_bus_hist or
+    # v_bus_hist), so a delayed non-population input falls back to direct. Delayed
+    # spiking and delayed analogue population sources both fold.
     import numpy as np
 
-    pop_a = NeuronSpec(name="a", neuron_type="li", n_neurons=4, params={}, dt=1.0)
-    pop_b = NeuronSpec(name="b", neuron_type="lif", n_neurons=4, params={}, dt=1.0)
-    delayed_analogue = ConnectionSpec(
-        src="a",
+    pop = NeuronSpec(name="b", neuron_type="lif", n_neurons=4, params={}, dt=1.0)
+    delayed_external = ConnectionSpec(
+        src="stim",
         dst="b",
-        weights=np.ones((4, 4), np.float32) * 0.4,
+        weights=np.ones((4, 3), np.float32) * 0.4,
         delay_steps=2,
     )
     ng = NeuronGraph(
-        populations=[pop_a, pop_b],
-        connections=[delayed_analogue],
-        input_pop="a",
+        populations=[pop],
+        connections=[delayed_external],
+        input_pop="stim",
         output_pop="b",
         dt=1.0,
     )
@@ -884,3 +884,37 @@ def test_folded_analogue_source_threshold_matches_direct() -> None:
         f"{next((i for i, (a, b) in enumerate(zip(direct_raster, folded_raster)) if a != b), None)}"
     )
     assert any("1" in row for row in direct_raster), "gated analogue-fed lif should spike"
+
+
+def test_folded_delayed_analogue_source_matches_direct() -> None:
+    import numpy as np
+
+    # A *delayed* analogue li source feeding a lif population: a delay of d ticks reads
+    # v_bus_hist_d (the voltage bus committed d ticks ago), the exact double-buffer
+    # analogue of spike_bus_hist for delayed spikes, mirroring direct's v_d{d} chain.
+    n_a, n_b = 3, 3
+    li = NeuronSpec(name="a", neuron_type="li", n_neurons=n_a, params={}, dt=1.0)
+    lif = NeuronSpec(name="b", neuron_type="lif", n_neurons=n_b, params={}, dt=1.0)
+    weights = np.full((n_b, n_a), 0.5, dtype=np.float32)
+    ng = NeuronGraph(
+        populations=[li, lif],
+        connections=[ConnectionSpec(src="a", dst="b", weights=weights, delay_steps=2)],
+        input_pop="a",
+        output_pop="b",
+        dt=1.0,
+    )
+    # A depth-2 analogue delay materialises a depth-2 voltage-bus history shift-register.
+    q = Q88(data_width=_DW, fraction=_FR)
+    _pe_modules, folded_top = _build_top_folded(
+        "sc_fold_test_folded", quantise_graph(ng, q), data_width=_DW, fraction=_FR
+    )
+    assert "v_bus_hist_2" in folded_top
+    assert "v_bus_hist_3" not in folded_top
+
+    direct_raster, folded_raster = _parity_rasters(ng, [4.0, 3.5, 3.0], n_a + n_b)
+    assert len(direct_raster) == _STEPS and len(folded_raster) == _STEPS
+    assert folded_raster == direct_raster, (
+        "folded delayed-analogue raster diverged from direct at step "
+        f"{next((i for i, (a, b) in enumerate(zip(direct_raster, folded_raster)) if a != b), None)}"
+    )
+    assert any("1" in row for row in direct_raster), "delayed analogue-fed lif should spike"
