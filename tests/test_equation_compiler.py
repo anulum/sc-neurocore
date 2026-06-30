@@ -402,58 +402,63 @@ class TestTranscendentalFunctions:
         assert "_tanh_lut" in verilog
 
     def test_all_lut_entries_are_integers(self):
-        """Verify all LUT helper methods return integer lists."""
+        """Each LUT helper returns integer entries of its expected length.
+
+        The symmetric LUTs (exp/tanh/sigmoid/sin/cos) sample 256 points over
+        [-16, 16); the log/sqrt LUTs keep their 16-entry tables.
+        """
         from sc_neurocore.compiler.equation_compiler import _VerilogExprEmitter, Q88
 
         q = Q88()
         emitter = _VerilogExprEmitter(set(), {}, q)
-        for method in [
-            emitter._exp_lut_entries,
-            emitter._log_lut_entries,
-            emitter._sqrt_lut_entries,
-            emitter._tanh_lut_entries,
-            emitter._sigmoid_lut_entries,
-            emitter._sin_lut_entries,
-            emitter._cos_lut_entries,
-        ]:
+        expected_len = {
+            emitter._exp_lut_entries: 256,
+            emitter._log_lut_entries: 16,
+            emitter._sqrt_lut_entries: 16,
+            emitter._tanh_lut_entries: 256,
+            emitter._sigmoid_lut_entries: 256,
+            emitter._sin_lut_entries: 256,
+            emitter._cos_lut_entries: 256,
+        }
+        for method, length in expected_len.items():
             entries = method()
-            assert len(entries) == 16
+            assert len(entries) == length
             assert all(isinstance(e, int) for e in entries)
 
     def test_lut_exp_boundary_values(self):
-        """exp(-8) ≈ 0, exp(0) = 256 in Q8.8, exp(7) capped at 32767."""
+        """exp over the 256-point [-16, 16) grid: ≈0 at the low end, 256 at x=0
+        (index 128), saturated at the Q8.8 signed max (32767) at the high end."""
         from sc_neurocore.compiler.equation_compiler import _VerilogExprEmitter, Q88
 
         q = Q88()
         emitter = _VerilogExprEmitter(set(), {}, q)
         entries = emitter._exp_lut_entries()
-        assert entries[0] < 1  # exp(-8) ≈ 0.000335 → 0 in Q8.8
-        assert entries[8] == 256  # exp(0) = 1.0 → 256 in Q8.8
-        assert entries[15] == 32767  # exp(7) capped
+        assert entries[0] < 1  # exp(-16) ≈ 1.1e-7 → 0 in Q8.8
+        assert entries[128] == 256  # exp(0) = 1.0 → 256 in Q8.8 (x=0 at index 128)
+        assert entries[255] == 32767  # exp(15.875) saturated at the signed max
 
     def test_lut_tanh_symmetry(self):
-        """tanh is odd: tanh(-x) = -tanh(x)."""
+        """tanh is odd: ≈-1 at the low end, ≈+1 at the high end, ≈0 at x=0 (index 128)."""
         from sc_neurocore.compiler.equation_compiler import _VerilogExprEmitter, Q88
 
         q = Q88()
         emitter = _VerilogExprEmitter(set(), {}, q)
         entries = emitter._tanh_lut_entries()
-        # tanh(-8) ≈ -1.0 → -256, tanh(7) ≈ 1.0 → 256
+        # tanh(-16) ≈ -1.0 → -256, tanh(15.875) ≈ 1.0 → 256
         assert entries[0] < 0
-        assert entries[15] > 0
-        # Approximate symmetry around index 8 (x=0)
-        assert abs(entries[8]) < 5  # tanh(0) ≈ 0
+        assert entries[255] > 0
+        assert abs(entries[128]) < 5  # tanh(0) ≈ 0 at index 128
 
     def test_lut_sigmoid_range(self):
-        """sigmoid output in [0, 1] → [0, 256] in Q8.8."""
+        """sigmoid output in [0, 1] → [0, 256] in Q8.8 over the 256-point grid."""
         from sc_neurocore.compiler.equation_compiler import _VerilogExprEmitter, Q88
 
         q = Q88()
         emitter = _VerilogExprEmitter(set(), {}, q)
         entries = emitter._sigmoid_lut_entries()
         assert all(0 <= e <= 256 for e in entries)
-        assert entries[0] < 5  # sigmoid(-8) ≈ 0
-        assert entries[15] > 250  # sigmoid(7) ≈ 1
+        assert entries[0] < 5  # sigmoid(-16) ≈ 0
+        assert entries[255] > 250  # sigmoid(15.875) ≈ 1
 
     def test_saturating_arithmetic(self):
         _, verilog = equation_to_fpga(
@@ -468,12 +473,13 @@ class TestTranscendentalFunctions:
     def test_unsupported_function_raises(self):
         import pytest
 
+        # cosh/exprel/cbrt are now supported LUT calls; sinh has no Verilog lowering.
         neuron = EquationNeuron(
-            equations={"v": "cosh(v)"},
+            equations={"v": "sinh(v)"},
             state={"v": 0.0},
             dt=1.0,
         )
-        with pytest.raises(ValueError, match="cosh"):
+        with pytest.raises(ValueError, match="sinh"):
             compile_to_verilog(neuron)
 
 

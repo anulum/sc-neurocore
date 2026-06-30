@@ -51,7 +51,10 @@ def test_fuzz_equation_to_fpga_accepts_valid_module_names(module_name: str) -> N
         module_name=module_name,
     )
 
-    assert f"module {module_name} #(" in verilog
+    # `dv/dt = I` declares no parameters, so the header has no `#(...)` clause (an
+    # empty one is malformed Verilog and is dropped); a parameterised neuron would emit
+    # `module <name> #(`. Accept either valid header form.
+    assert f"module {module_name} (" in verilog or f"module {module_name} #(" in verilog
     assert "endmodule" in verilog
 
 

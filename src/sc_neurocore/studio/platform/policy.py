@@ -1099,6 +1099,12 @@ def build_default_studio_route_policy_registry() -> RoutePolicyRegistry:
             ("POST", "/api/compile", RouteVisibility.AUTHENTICATED, "studio.compiler.compile"),
             (
                 "POST",
+                "/api/nir/compile",
+                RouteVisibility.AUTHENTICATED,
+                "studio.compiler.nir_compile",
+            ),
+            (
+                "POST",
                 "/api/adaptive-precision/auto-tune",
                 RouteVisibility.AUTHENTICATED,
                 "studio.compiler.adaptive_precision.auto_tune",
