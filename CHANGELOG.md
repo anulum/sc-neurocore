@@ -13,16 +13,24 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
   walks each population in turn, advancing the whole network in `neurons + 1`
   cycles per timestep. A single global spike bus committed at the end of each tick
   gives recurrent and inter-population spiking fan-in a stable prior-tick
-  double-buffer. Bit-exact with the direct path (golden co-simulation parity for
-  connection-less, external-weighted, recurrent-spiking, and two-population
-  feedforward/recurrent fan-in). Reports a `FoldedResourceMetrics` summary
+  double-buffer. Per-source synaptic delays fold via a depth-`d` `spike_bus` history
+  shift-register (a delay of `d` ticks reads the bus committed `d` ticks ago). Bit-exact
+  with the direct path (golden co-simulation parity for connection-less, external-weighted,
+  recurrent-spiking, two-population feedforward/recurrent, and delayed recurrent /
+  mixed-per-column-delay two-population fan-in). Reports a `FoldedResourceMetrics` summary
   (populations, processing elements, shared multipliers, state-RAM bits, cycles per
   tick, collapsed direct instances) on the result, in the CLI output, and as a
-  `folded_metrics.json` artefact. Connections with bias, thresholds, synaptic
-  delays, or analogue source populations fall back to direct. Never auto-selected;
-  the direct/AER paths and the SC-NIR source-handoff manifest are unchanged.
+  `folded_metrics.json` artefact. Connections with bias, thresholds, or analogue source
+  populations fall back to direct. Never auto-selected; the direct/AER paths and the
+  SC-NIR source-handoff manifest are unchanged.
 
 ### Fixed
+- Fixed the direct FPGA interconnect emitting an assignment to an undeclared
+  delay register when a connection mixed zero and non-zero per-source-column
+  synaptic delays: a delayed source's register chain was registered (and its
+  `*_spike_d1 <= *_spike` shift emitted) even for columns with delay zero, which
+  have no declared chain, so the generated RTL failed to elaborate. Undelayed
+  columns are no longer given a register chain.
 - Removed duplicate hardware-profile registrations in the built-in platform
   modules: `cortical_labs_dishbrain` and `finalspark_neuroplatform` were each
   registered four times, `biomemory_dna` three times, and `belousov_zhabotinsky`,

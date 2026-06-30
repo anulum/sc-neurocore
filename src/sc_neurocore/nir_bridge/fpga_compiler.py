@@ -984,6 +984,8 @@ def _build_top_direct(
         if any(delay_vector) and src_pop is not None:
             for src_idx in range(src_pop.n_neurons):
                 delay_steps = delay_vector[src_idx]
+                if delay_steps <= 0:
+                    continue  # an undelayed column needs no register chain
                 key = (src_pop.name, src_idx)
                 delayed_source_depths[key] = max(delayed_source_depths.get(key, 0), delay_steps)
         if conn.bias is not None and np.asarray(conn.bias).reshape(-1).size != dst_pop.n_neurons:
@@ -1320,10 +1322,14 @@ def _folded_population_input(
       row (selected from a ``case`` ROM over ``idx_signal``), shifted by ``fraction``;
     * **spiking fan-in** — recurrent (self) or inter-population spikes read the
       prior-tick global ``spike_bus`` at the source population's bit offset and gate
-      the sign-extended weight, exactly like the direct path's registered spikes.
+      the sign-extended weight, exactly like the direct path's registered spikes. A
+      per-source synaptic delay of ``d`` ticks instead reads ``spike_bus_hist_d`` (the
+      ``spike_bus`` committed ``d`` ticks ago), mirroring direct's ``*_spike_d{d}``
+      register chain.
 
-    The accumulator width (``ACC_WIDTH``), the saturating cast (``sat_acc``), and the
-    ``ext_input_*`` lane wires are module-scope and emitted once by the caller.
+    The accumulator width (``ACC_WIDTH``), the saturating cast (``sat_acc``), the
+    ``ext_input_*`` lane wires, and the ``spike_bus_hist_*`` delay shift-register are
+    module-scope and emitted once by the caller.
     """
     n = pop.n_neurons
     product_width = 2 * data_width
@@ -1342,6 +1348,11 @@ def _folded_population_input(
         src_is_pop = conn.src in pop_names
         ext_off = ext_offsets.get(conn.src, 0)
         spike_base = spike_offsets.get(conn.src, 0)
+        delay_vector = _normalise_connection_delay_steps(
+            getattr(conn, "delay_steps", 0),
+            int(weights.shape[1]),
+            f"Connection {conn.src}->{conn.dst}",
+        )
         for src in range(weights.shape[1]):
             rw = f"rw{suffix}_{ci}_{src}"
             rw_regs.append(f"    reg signed [DATA_WIDTH - 1:0] {rw};")
@@ -1350,8 +1361,13 @@ def _folded_population_input(
             if src_is_pop:
                 # Prior-tick spike (committed in spike_bus) gates the full weight,
                 # sign-extended to ACC_WIDTH — identical to direct's `(src_spike ? w : 0)`.
+                # A delay of d ticks reads the d-tick-old snapshot spike_bus_hist_d.
+                delay = delay_vector[src]
+                spike_signal = "spike_bus" if delay == 0 else f"spike_bus_hist_{delay}"
                 rw_sext = f"{{{{(ACC_WIDTH - DATA_WIDTH){{{rw}[DATA_WIDTH - 1]}}}}, {rw}}}"
-                term_names.append(f"(spike_bus[{spike_base + src}] ? {rw_sext} : {acc_width}'sd0)")
+                term_names.append(
+                    f"({spike_signal}[{spike_base + src}] ? {rw_sext} : {acc_width}'sd0)"
+                )
             else:
                 mul = f"fmul{suffix}_{ci}_{src}"
                 term = f"fterm{suffix}_{ci}_{src}"
@@ -1415,13 +1431,14 @@ def _can_fold(qgraph: QuantisedGraph) -> bool:
             return False
         if _connection_has_thresholds(conn):
             return False
-        if any(
-            _normalise_connection_delay_steps(
-                getattr(conn, "delay_steps", 0),
-                int(np.asarray(conn.weights).shape[1]),
-                f"Connection {conn.src}->{conn.dst}",
-            )
-        ):
+        delay_vector = _normalise_connection_delay_steps(
+            getattr(conn, "delay_steps", 0),
+            int(np.asarray(conn.weights).shape[1]),
+            f"Connection {conn.src}->{conn.dst}",
+        )
+        if any(delay_vector) and src_pop is None:
+            # A synaptic delay only has registered spike semantics from a neuron
+            # population source; a delayed external input is left to the direct path.
             return False
     return True
 
@@ -1528,6 +1545,19 @@ def _build_top_folded(
         max_terms = max(max_terms, int(np.asarray(conn.weights).shape[1]))
     acc_width = max(data_width + 2, (2 * data_width) + _ceil_log2_at_least_one(max_terms + 1))
 
+    # Deepest synaptic delay over all spiking connections. A delay of d ticks reads the
+    # spike_bus snapshot from d ticks ago, so a depth-D shift-register of committed buses
+    # is held; D == 0 means no delayed connection and no history register is emitted.
+    max_delay = 0
+    for conn in conns:
+        delay_vector = _normalise_connection_delay_steps(
+            getattr(conn, "delay_steps", 0),
+            int(np.asarray(conn.weights).shape[1]),
+            f"Connection {conn.src}->{conn.dst}",
+        )
+        if delay_vector:
+            max_delay = max(max_delay, max(delay_vector))
+
     idx_w = max(1, (max(p.n_neurons for p in pops) - 1).bit_length())
     pidx_w = max(1, (len(pops) - 1).bit_length())
 
@@ -1602,6 +1632,13 @@ def _build_top_folded(
         f"    reg [{n_total - 1}:0] spike_acc;",
         "",
     ]
+
+    # Delayed spiking fan-in: a depth-`max_delay` shift-register of committed spike buses,
+    # so a connection delayed by d ticks reads the bus from d ticks ago.
+    for d in range(1, max_delay + 1):
+        lines.append(f"    reg [{n_total - 1}:0] spike_bus_hist_{d};")
+    if max_delay:
+        lines.append("")
 
     # Per-population state BRAMs (word width set by the population's neuron type).
     for pi, pop in enumerate(pops):
@@ -1709,6 +1746,8 @@ def _build_top_folded(
             "            tick_done <= 1'b0;",
         ]
     )
+    for d in range(1, max_delay + 1):
+        lines.append(f"            spike_bus_hist_{d} <= 0;")
     for pi, pop in enumerate(pops):
         lines.append(
             f"            for (i = 0; i < {pop.n_neurons}; i = i + 1) "
@@ -1745,6 +1784,15 @@ def _build_top_folded(
             "                phase <= 1'b0;",
             "                pidx <= 0;",
             "                nidx <= 0;",
+        ]
+    )
+    # Advance the delay shift-register on the same commit edge (nonblocking, so every
+    # stage samples its old source): hist_d <- hist_{d-1}, hist_1 <- the bus being retired.
+    for d in range(max_delay, 0, -1):
+        source = "spike_bus" if d == 1 else f"spike_bus_hist_{d - 1}"
+        lines.append(f"                spike_bus_hist_{d} <= {source};")
+    lines.extend(
+        [
             "            end",
             "        end",
             "    end",

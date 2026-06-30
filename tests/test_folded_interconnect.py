@@ -461,21 +461,151 @@ def test_compile_network_folded_opt_in() -> None:
 def test_compile_network_folded_rejects_unsupported_graph() -> None:
     from sc_neurocore.nir_bridge.fpga_compiler import compile_network_to_fpga
 
-    # A synaptic delay on the inter-population projection is outside the folded subset
-    # (registered one-step source semantics are not folded yet → direct fallback).
+    # A source-threshold transform on the inter-population projection is outside the
+    # folded subset (the comparator semantics are not folded yet → direct fallback).
     import numpy as np
 
     pop_a = NeuronSpec(name="a", neuron_type="lif", n_neurons=4, params={}, dt=1.0)
     pop_b = NeuronSpec(name="b", neuron_type="lif", n_neurons=4, params={}, dt=1.0)
-    delayed = ConnectionSpec(
-        src="a", dst="b", weights=np.ones((4, 4), np.float32) * 0.4, delay_steps=2
+    thresholded = ConnectionSpec(
+        src="a",
+        dst="b",
+        weights=np.ones((4, 4), np.float32) * 0.4,
+        source_threshold=np.full(4, 0.5, np.float32),
     )
     ng = NeuronGraph(
         populations=[pop_a, pop_b],
-        connections=[delayed],
+        connections=[thresholded],
         input_pop="a",
         output_pop="b",
         dt=1.0,
     )
     with pytest.raises(ValueError, match="folded"):
         compile_network_to_fpga(ng, interconnect="folded")
+
+
+def _delayed_recurrent_graph() -> tuple[NeuronGraph, list[float], int]:
+    """Single LIF population with external drive and a DELAYED recurrent ring.
+
+    The recurrent self-connection carries a two-tick synaptic delay, so folding it
+    exercises the spike_bus history shift-register. Returns ``(graph, currents, n)``.
+    """
+    import numpy as np
+
+    n_dst, n_src = 5, 3
+    ext_rows = [[0.5, 0.3, 0.2], [0.6, 0.3, 0.2], [0.7, 0.3, 0.2], [0.4, 0.4, 0.3], [0.3, 0.2, 0.1]]
+    ext_w = np.array(ext_rows, dtype=np.float32)
+    rec_w = np.zeros((n_dst, n_dst), dtype=np.float32)
+    for i in range(n_dst):
+        rec_w[(i + 1) % n_dst, i] = 0.4
+    pop = NeuronSpec(name="pop0", neuron_type="lif", n_neurons=n_dst, params={}, dt=1.0)
+    ext_conn = ConnectionSpec(src="stim", dst="pop0", weights=ext_w)
+    rec_conn = ConnectionSpec(src="pop0", dst="pop0", weights=rec_w, delay_steps=2)
+    ng = NeuronGraph(
+        populations=[pop],
+        connections=[ext_conn, rec_conn],
+        input_pop="stim",
+        output_pop="pop0",
+        dt=1.0,
+    )
+    return ng, [2.0, 1.5, 1.0], n_dst
+
+
+def test_folded_delayed_recurrent_matches_direct() -> None:
+    ng, currents, n_dst = _delayed_recurrent_graph()
+    q = Q88(data_width=_DW, fraction=_FR)
+    qgraph = quantise_graph(ng, q)
+
+    mask = (1 << _DW) - 1
+    packed = 0
+    for k, cur in enumerate(currents):
+        packed |= (q.encode(cur) & mask) << (k * _DW)
+    flat = f"{len(currents) * _DW}'h{packed:x}"
+
+    direct_top = _build_top_direct("sc_fold_test", qgraph, data_width=_DW, fraction=_FR)
+    lif_module = _build_neuron_module("lif", qgraph.populations[0], data_width=_DW, fraction=_FR)
+    pe_modules, folded_top = _build_top_folded(
+        "sc_fold_test_folded", qgraph, data_width=_DW, fraction=_FR
+    )
+    pe_source = "\n\n".join(pe_modules.values())
+    # The two-tick delay materialises a depth-2 spike-bus history shift-register.
+    assert "spike_bus_hist_2" in folded_top
+    assert "spike_bus_hist_3" not in folded_top
+
+    direct_raster = _cosim(
+        {"lif": lif_module, "top": direct_top, "tb": _direct_tb(flat, n_dst)}, "direct"
+    )
+    folded_raster = _cosim(
+        {"pe": pe_source, "top": folded_top, "tb": _folded_tb(flat, n_dst)}, "folded"
+    )
+
+    assert len(direct_raster) == _STEPS and len(folded_raster) == _STEPS
+    assert folded_raster == direct_raster, (
+        "folded delayed-recurrent raster diverged from direct at step "
+        f"{next((i for i, (a, b) in enumerate(zip(direct_raster, folded_raster)) if a != b), None)}"
+    )
+    assert any("1" in row for row in direct_raster), "delayed recurrent workload should spike"
+
+
+def _two_pop_delayed_ff_graph() -> tuple[NeuronGraph, list[float], int]:
+    """Two-population feedforward net with a delayed inter-population projection.
+
+    pop ``inp`` is external-weighted; the ``inp → out`` projection carries per-column
+    synaptic delays (mixed 0/1/2 ticks), exercising the folded history register on an
+    inter-population edge. Returns ``(graph, currents, total_neurons)``.
+    """
+    import numpy as np
+
+    n_in, n_out = 4, 3
+    ext = np.array([[1.4, 1.0], [1.6, 0.8], [1.2, 1.2], [1.8, 0.6]], dtype=np.float32)
+    ff = np.array(
+        [[2.0, 0.0, 1.8, 1.2], [1.2, 2.0, 0.0, 1.8], [1.6, 1.6, 1.4, 0.0]], dtype=np.float32
+    )
+    inp = NeuronSpec(name="inp", neuron_type="lif", n_neurons=n_in, params={}, dt=1.0)
+    out = NeuronSpec(name="out", neuron_type="lif", n_neurons=n_out, params={}, dt=1.0)
+    ext_conn = ConnectionSpec(src="stim", dst="inp", weights=ext)
+    # Per-source-column delays: input neuron 0 undelayed, 1 by one tick, 2 by two, 3 by one.
+    ff_conn = ConnectionSpec(
+        src="inp", dst="out", weights=ff, delay_steps=np.array([0, 1, 2, 1], dtype=np.int64)
+    )
+    ng = NeuronGraph(
+        populations=[inp, out],
+        connections=[ext_conn, ff_conn],
+        input_pop="stim",
+        output_pop="out",
+        dt=1.0,
+    )
+    return ng, [4.0, 3.5], n_in + n_out
+
+
+def test_folded_two_population_delayed_feedforward_matches_direct() -> None:
+    ng, currents, n_total = _two_pop_delayed_ff_graph()
+    q = Q88(data_width=_DW, fraction=_FR)
+    qgraph = quantise_graph(ng, q)
+
+    mask = (1 << _DW) - 1
+    packed = 0
+    for k, cur in enumerate(currents):
+        packed |= (q.encode(cur) & mask) << (k * _DW)
+    flat = f"{len(currents) * _DW}'h{packed:x}"
+
+    direct_top = _build_top_direct("sc_fold_test", qgraph, data_width=_DW, fraction=_FR)
+    lif_module = _build_neuron_module("lif", qgraph.populations[0], data_width=_DW, fraction=_FR)
+    pe_modules, folded_top = _build_top_folded(
+        "sc_fold_test_folded", qgraph, data_width=_DW, fraction=_FR
+    )
+    pe_source = "\n\n".join(pe_modules.values())
+
+    direct_raster = _cosim(
+        {"lif": lif_module, "top": direct_top, "tb": _direct_tb(flat, n_total)}, "direct"
+    )
+    folded_raster = _cosim(
+        {"pe": pe_source, "top": folded_top, "tb": _folded_tb(flat, n_total)}, "folded"
+    )
+
+    assert len(direct_raster) == _STEPS and len(folded_raster) == _STEPS
+    assert folded_raster == direct_raster, (
+        "folded delayed two-population raster diverged from direct at step "
+        f"{next((i for i, (a, b) in enumerate(zip(direct_raster, folded_raster)) if a != b), None)}"
+    )
+    assert any("1" in row[:3] for row in direct_raster), "output population should spike"

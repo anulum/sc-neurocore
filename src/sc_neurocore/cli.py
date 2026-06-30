@@ -135,7 +135,7 @@ def main() -> int:
         help=(
             "compile-nir top-level interconnect: 'auto' (direct/AER by size), 'direct' (force "
             "per-neuron wiring), or 'folded' (time-multiplexed per-type PE pool; populations "
-            "with external-weighted, recurrent, or inter-population spiking fan-in)"
+            "with external-weighted, recurrent, inter-population, or delayed spiking fan-in)"
         ),
     )
     parser.add_argument("--port", type=int, default=8001, help="Port for serve command")
