@@ -321,7 +321,9 @@ def test_validate_matrix_flags_duplicate_row(monkeypatch) -> None:
 
 
 def test_validate_matrix_flags_hdl_support_without_metadata(monkeypatch) -> None:
-    _patch_matrix(monkeypatch, (_row("_Foo", support_level="metadata_and_hdl", stream_metadata=()),))
+    _patch_matrix(
+        monkeypatch, (_row("_Foo", support_level="metadata_and_hdl", stream_metadata=()),)
+    )
     with pytest.raises(ValueError, match="claims HDL support without stream metadata"):
         validate_scnir_compatibility_matrix()
 

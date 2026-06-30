@@ -815,10 +815,16 @@ class SCConv2dNode:
             node.dilation if isinstance(node.dilation, tuple) else (node.dilation, node.dilation)
         )
         kh, kw = int(node.weight.shape[2]), int(node.weight.shape[3])
-        raw_padding = node.padding if isinstance(node.padding, tuple) else (node.padding, node.padding)
+        raw_padding = (
+            node.padding if isinstance(node.padding, tuple) else (node.padding, node.padding)
+        )
         padding = (
-            _resolve_conv_padding(raw_padding[0], kernel=kh, dilation=dilation[0], stride=stride[0]),
-            _resolve_conv_padding(raw_padding[1], kernel=kw, dilation=dilation[1], stride=stride[1]),
+            _resolve_conv_padding(
+                raw_padding[0], kernel=kh, dilation=dilation[0], stride=stride[0]
+            ),
+            _resolve_conv_padding(
+                raw_padding[1], kernel=kw, dilation=dilation[1], stride=stride[1]
+            ),
         )
         return cls(
             name=name,

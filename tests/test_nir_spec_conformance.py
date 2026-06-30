@@ -65,8 +65,7 @@ def test_node_map_has_no_stale_entries() -> None:
     installed = set(_installed_nir_primitives().values())
     stale = sorted(cls.__name__ for cls in NODE_MAP if cls not in installed)
     assert not stale, (
-        f"NODE_MAP maps classes the installed nir {nir.__version__} no longer "
-        f"defines: {stale}"
+        f"NODE_MAP maps classes the installed nir {nir.__version__} no longer defines: {stale}"
     )
 
 
@@ -84,6 +83,5 @@ def test_parser_handled_names_are_real_nir_primitives() -> None:
     installed = set(_installed_nir_primitives())
     missing = sorted(_PARSER_HANDLED - installed)
     assert not missing, (
-        f"_PARSER_HANDLED references primitives not present in nir {nir.__version__}: "
-        f"{missing}"
+        f"_PARSER_HANDLED references primitives not present in nir {nir.__version__}: {missing}"
     )

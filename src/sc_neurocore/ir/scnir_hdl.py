@@ -99,7 +99,9 @@ def build_scnir_source_bundle(document: SCNIRDocument) -> SCNIRHDLSourceBundle:
     for index, stream in enumerate(document.streams):
         module_name = _module_name_for_stream(stream, index)
         entry, verilog = _emit_stream_source(stream, module_name=module_name)
-        if module_name in modules:  # pragma: no cover - unreachable: the per-stream index makes every module name unique
+        if (
+            module_name in modules
+        ):  # pragma: no cover - unreachable: the per-stream index makes every module name unique
             raise ValueError(f"duplicate SC-NIR source module name {module_name!r}")
         modules[module_name] = verilog
         manifest.append(entry)
