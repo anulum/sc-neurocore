@@ -75,10 +75,31 @@ The conversion pipeline:
 5. **Rate coding**: input values become Poisson spike trains over T steps.
    ANN activation a maps to spike count a*T/threshold.
 
-## 5. QCFS Activation for Training
+## 5. QCFS Conversion-Aware Fine-Tuning (Near-Lossless)
 
-For higher accuracy, replace ReLU with QCFS during ANN training. QCFS
-quantizes activations to T+1 levels, matching achievable SNN spike rates:
+For higher accuracy, replace ReLU with QCFS so the ANN trains against the same
+quantized activation grid the SNN can reproduce. `convert` then detects the
+QCFS layers automatically: it uses each layer's *learned* threshold directly
+(no calibration pass) and pre-loads each IF neuron to `theta / 2` — the optimal
+shift from Bu et al. 2022 that cancels the quantization flooring bias.
+
+Swap the activations of an already-trained ReLU model and fine-tune:
+
+```python
+from sc_neurocore.conversion import replace_relu_with_qcfs, convert
+
+# `model` is a trained ReLU network; substitute QCFS in place, then fine-tune.
+replace_relu_with_qcfs(model, T=8)
+# ... a few fine-tuning epochs so the learnable thresholds settle ...
+
+model.eval()
+snn = convert(model)        # QCFS route: learned thresholds, theta/2 shift,
+                            # T inferred from the QCFS layers (here 8)
+print(f"Converted: {snn.n_layers} layers, T={snn.T}, "
+      f"shift={snn.initial_membrane_fraction}")
+```
+
+Or build the network with QCFS activations from the start:
 
 ```python
 from sc_neurocore.conversion import QCFSActivation
@@ -88,8 +109,8 @@ model = nn.Sequential(
     QCFSActivation(T=16),
     nn.Linear(256, 10),
 )
-# Train with QCFS — accuracy will be slightly lower than ReLU
-# but conversion to SNN will be nearly lossless
+# Train with QCFS — accuracy is slightly lower than ReLU, but conversion to an
+# SNN is nearly lossless at the matching timestep budget.
 ```
 
 ## 6. Deploy to FPGA

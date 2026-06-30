@@ -10520,6 +10520,11 @@ thresholds : list of float
     Per-layer firing thresholds after normalization.
 T : int
     Number of simulation timesteps.
+initial_membrane_fraction : float
+    Fraction of each layer's threshold pre-loaded into the IF membrane
+    potential before the first timestep. ``0.0`` reproduces the
+    threshold-balancing route; ``0.5`` applies the QCFS optimal shift
+    (Bu et al. 2022) that cancels the quantisation flooring bias.
 n_layers : int
     Number of layers.
 
@@ -10536,20 +10541,70 @@ Extract (weight, bias) pairs from a PyTorch Sequential model.
 ### Function `_compute_max_activations(model, calibration_data, percentile)`
 Run calibration data through model, record per-layer max activation.
 
-### Function `convert(model, calibration_data, T, percentile)`
-Convert a trained PyTorch ANN to a rate-coded SNN.
+### Function `_extract_qcfs_layers(model)`
+Collect the (theta, T) of each QCFS activation in forward order.
 
 Parameters
 ----------
 model : nn.Module
-    Trained PyTorch model (Sequential with Linear + ReLU).
-calibration_data : Tensor, optional
-    Sample input batch for threshold calibration. If None, uses
-    default threshold of 1.0 per layer.
+    Model possibly containing :class:`QCFSActivation` layers.
+
+Returns
+-------
+list of (float, int)
+    Per-QCFS-layer ``(theta, T)`` pairs in module-traversal order. Empty
+    when the model carries no QCFS activations (the ReLU route is used).
+
+### Function `replace_relu_with_qcfs(model, T, theta, learn_theta)`
+Swap every ReLU/ReLU6 in a model for a QCFS activation, in place.
+
+This prepares a trained or fresh ANN for conversion-aware fine-tuning:
+after substitution the network is retrained for a few epochs so the QCFS
+thresholds settle, after which :func:`convert` produces a near-lossless
+SNN (Bu et al. 2022).
+
+Parameters
+----------
+model : nn.Module
+    Model whose ReLU/ReLU6 activations are replaced. Mutated in place,
+    recursing through every submodule.
 T : int
-    Number of simulation timesteps (higher = more accurate, slower).
+    Quantisation step budget for each inserted QCFS layer.
+theta : float
+    Initial firing threshold for each inserted QCFS layer.
+learn_theta : bool
+    Whether each inserted threshold is a trainable parameter (the QCFS
+    fine-tuning default).
+
+Returns
+-------
+nn.Module
+    The same ``model`` instance, returned for chaining.
+
+### Function `convert(model, calibration_data, T, percentile)`
+Convert a trained PyTorch ANN to a rate-coded SNN.
+
+The conversion route is selected from the model's activations: a model
+carrying :class:`QCFSActivation` layers takes the QCFS route (learned
+thresholds, ``theta / 2`` membrane shift, no calibration); any other
+model takes the threshold-balancing route (calibrated or unit
+thresholds, rest-state membrane).
+
+Parameters
+----------
+model : nn.Module
+    Trained PyTorch model with Linear/Conv2d layers and either ReLU or
+    QCFS activations.
+calibration_data : Tensor, optional
+    Sample input batch for threshold calibration on the ReLU route. If
+    None, the ReLU route uses a default threshold of 1.0 per layer.
+    Ignored on the QCFS route, whose thresholds are already learned.
+T : int, optional
+    Number of simulation timesteps (higher = more accurate, slower). If
+    None, the QCFS route adopts the layers' trained step budget and the
+    ReLU route defaults to 16.
 percentile : float
-    Activation percentile for threshold normalization.
+    Activation percentile for threshold normalization on the ReLU route.
 
 Returns
 -------

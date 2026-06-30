@@ -5,6 +5,16 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 ## [Unreleased]
 
 ### Added
+- QCFS conversion route in `sc_neurocore.conversion.convert`. When the source
+  model carries `QCFSActivation` layers, conversion now uses their learned
+  per-layer thresholds directly (no calibration pass), adopts the layers'
+  trained timestep budget when `T` is unset, and pre-loads each IF neuron to a
+  membrane potential of `theta / 2` — the optimal shift (Bu et al. 2022) that
+  cancels the quantisation flooring bias, giving near-lossless conversion of a
+  QCFS-trained ANN. `ConvertedSNN` gained an `initial_membrane_fraction` field
+  carrying this shift (`0.0` reproduces the threshold-balancing route). A new
+  `replace_relu_with_qcfs` helper substitutes every `ReLU`/`ReLU6` in a model
+  for a `QCFSActivation`, preparing it for conversion-aware fine-tuning.
 - Pre-synthesis area, latency, and power estimate for the folded interconnect
   (`sc_neurocore.energy.estimate_folded_area` → `FoldedAreaEstimate`). It maps a folded
   compile's `FoldedResourceMetrics` onto the existing Yosys-calibrated per-block costs in

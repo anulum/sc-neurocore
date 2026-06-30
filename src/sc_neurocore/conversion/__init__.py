@@ -34,10 +34,14 @@ def __getattr__(name: str) -> object:
     ImportError
         If the requested symbol requires PyTorch and PyTorch is unavailable.
     """
-    if name in ("convert", "ConvertedSNN"):
-        from .ann_to_snn import ConvertedSNN, convert
+    if name in ("convert", "ConvertedSNN", "replace_relu_with_qcfs"):
+        from .ann_to_snn import ConvertedSNN, convert, replace_relu_with_qcfs
 
-        return {"convert": convert, "ConvertedSNN": ConvertedSNN}[name]
+        return {
+            "convert": convert,
+            "ConvertedSNN": ConvertedSNN,
+            "replace_relu_with_qcfs": replace_relu_with_qcfs,
+        }[name]
     if name == "QCFSActivation":
         try:
             from .qcfs import QCFSActivation
@@ -49,4 +53,4 @@ def __getattr__(name: str) -> object:
     raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
 
 
-__all__ = ["convert", "ConvertedSNN", "QCFSActivation"]
+__all__ = ["convert", "ConvertedSNN", "QCFSActivation", "replace_relu_with_qcfs"]
