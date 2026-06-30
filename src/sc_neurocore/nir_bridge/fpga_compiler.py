@@ -1303,6 +1303,7 @@ def _folded_population_input(
     acc_width: int,
     ext_offsets: dict[str, int],
     spike_offsets: dict[str, int],
+    analogue_offsets: dict[str, int],
     pop_names: set[str],
     is_first_pop: bool,
     idx_signal: str,
@@ -1326,6 +1327,13 @@ def _folded_population_input(
       per-source synaptic delay of ``d`` ticks instead reads ``spike_bus_hist_d`` (the
       ``spike_bus`` committed ``d`` ticks ago), mirroring direct's ``*_spike_d{d}``
       register chain.
+    * **analogue fan-in** — a source population of an analogue type (``li`` /
+      ``cuba_li`` / ``integrator``, whose output is the membrane voltage rather than a
+      spike) reads the prior-tick global ``v_bus`` (one ``DATA_WIDTH`` word per analogue
+      source neuron, committed once per tick like ``spike_bus``) at the source's word
+      offset and multiplies it by the per-neuron weight (shifted by ``fraction``), or
+      threshold-gates the sign-extended weight on that voltage, exactly like the direct
+      path's registered ``v_out``.
 
     NIR ``Threshold`` transforms fold too: a **source threshold** gates the full
     sign-extended weight on the source value (spike magnitude or external input)
@@ -1357,9 +1365,11 @@ def _folded_population_input(
     spike_mag = _signed_hex(1 << fraction, data_width)
     for ci, conn in enumerate(feeding):
         weights = np.asarray(conn.weights, dtype=np.int64)
-        src_is_pop = conn.src in pop_names
+        src_is_analogue = conn.src in analogue_offsets
+        src_is_pop = conn.src in pop_names and not src_is_analogue
         ext_off = ext_offsets.get(conn.src, 0)
         spike_base = spike_offsets.get(conn.src, 0)
+        analogue_base = analogue_offsets.get(conn.src, 0)
         delay_vector = _normalise_connection_delay_steps(
             getattr(conn, "delay_steps", 0),
             int(weights.shape[1]),
@@ -1396,7 +1406,27 @@ def _folded_population_input(
             # Full weight, sign-extended to ACC_WIDTH (gated paths contribute the whole
             # weight; only the un-thresholded external path multiplies by the input).
             rw_sext = f"{{{{(ACC_WIDTH - DATA_WIDTH){{{rw}[DATA_WIDTH - 1]}}}}, {rw}}}"
-            if src_is_pop:
+            if src_is_analogue:
+                # Analogue source: the prior-tick committed membrane voltage from the
+                # global v_bus (one DATA_WIDTH word per analogue source neuron). It
+                # multiplies the weight (shifted) or, under a source threshold, gates the
+                # sign-extended weight on the voltage — exactly like the direct path's
+                # registered v_out term.
+                v_word = f"v_bus[{(analogue_base + src) * data_width} +: DATA_WIDTH]"
+                if source_thresholds is not None:
+                    thr = _signed_hex(int(source_thresholds[src]), data_width)
+                    conn_terms.append(f"({v_word} > {thr} ? {rw_sext} : {acc_width}'sd0)")
+                else:
+                    mul = f"vmul{suffix}_{ci}_{src}"
+                    term = f"vterm{suffix}_{ci}_{src}"
+                    term_lines.append(
+                        f"    wire signed [{product_width - 1}:0] {mul} = {v_word} * {rw};"
+                    )
+                    term_lines.append(
+                        f"    wire signed [ACC_WIDTH - 1:0] {term} = {mul} >>> {fraction};"
+                    )
+                    conn_terms.append(term)
+            elif src_is_pop:
                 # A delay of d ticks reads the d-tick-old snapshot spike_bus_hist_d.
                 delay = delay_vector[src]
                 spike_signal = "spike_bus" if delay == 0 else f"spike_bus_hist_{delay}"
@@ -1469,12 +1499,14 @@ def _can_fold(qgraph: QuantisedGraph) -> bool:
     * **external-weighted** — fed by external (non-population) source columns;
     * **spiking fan-in** — recurrent (self) or inter-population spikes from another
       population, read from the prior-tick global spike bus, optionally delayed or
-      gated by a source/destination NIR ``Threshold`` transform.
+      gated by a source/destination NIR ``Threshold`` transform;
+    * **analogue fan-in** — an analogue source population (``li``/``cuba_li``/
+      ``integrator``, whose output is the membrane voltage), read from the prior-tick
+      global voltage bus and multiplied (or threshold-gated) by the weight.
 
     Connections may also carry a per-destination-neuron bias constant. Only a
-    connection from an analogue source population (``li``/``cuba_li``/``integrator``,
-    whose fan-in is the membrane voltage rather than spikes) is not folded yet and
-    falls back to the direct interconnect.
+    *delayed* analogue source connection is not folded yet (it would need a voltage-bus
+    history register) and falls back to the direct interconnect.
     """
     pops = qgraph.populations
     if not pops:
@@ -1487,16 +1519,16 @@ def _can_fold(qgraph: QuantisedGraph) -> bool:
         if conn.dst not in pop_names:
             return False
         src_pop = pop_by_name.get(conn.src)
-        if src_pop is not None and _connection_sources_are_analogue(src_pop):
-            return False  # analogue (li/cuba_li) source fan-in needs the v_out path
+        src_is_analogue = src_pop is not None and _connection_sources_are_analogue(src_pop)
         delay_vector = _normalise_connection_delay_steps(
             getattr(conn, "delay_steps", 0),
             int(np.asarray(conn.weights).shape[1]),
             f"Connection {conn.src}->{conn.dst}",
         )
-        if any(delay_vector) and src_pop is None:
-            # A synaptic delay only has registered spike semantics from a neuron
-            # population source; a delayed external input is left to the direct path.
+        if any(delay_vector) and (src_pop is None or src_is_analogue):
+            # A synaptic delay has registered semantics only from a spiking population
+            # source: a delayed external input, or a delayed analogue source (which would
+            # need a voltage-bus history register), is left to the direct path.
             return False
     return True
 
@@ -1505,10 +1537,10 @@ def _folded_resource_metrics(qgraph: QuantisedGraph, *, data_width: int) -> Fold
     """Summarise the shared-datapath resources of a foldable graph.
 
     Counts one PE per distinct neuron type (the per-type pool), the shared
-    weighted-fan-in multipliers (external-source columns only — spiking recurrent or
-    inter-population fan-in is spike-gated and uses none), the BRAM state-word storage
-    summed over populations, the cycles-per-tick, and the direct-path instance count
-    the fold collapses.
+    weighted-fan-in multipliers (external-source and analogue-voltage-source columns —
+    spiking recurrent or inter-population fan-in is spike-gated and uses none), the BRAM
+    state-word storage summed over populations, the cycles-per-tick, and the direct-path
+    instance count the fold collapses.
 
     Parameters
     ----------
@@ -1532,10 +1564,13 @@ def _folded_resource_metrics(qgraph: QuantisedGraph, *, data_width: int) -> Fold
         n_vars = len(neuron.equations)
         max_state_vars = max(max_state_vars, n_vars)
         state_ram_bits += pop.n_neurons * n_vars * data_width
+    analogue_src_names = {p.name for p in pops if _connection_sources_are_analogue(p)}
     shared_multipliers = sum(
         int(np.asarray(conn.weights).shape[1])
         for conn in qgraph.connections
-        if conn.src not in pop_names  # external-weighted only; spiking sources use no multiplier
+        # External-weighted and analogue (voltage) sources multiply; spiking sources are
+        # spike-gated and use no multiplier.
+        if conn.src not in pop_names or conn.src in analogue_src_names
     )
     distinct_types = len({pop.neuron_type for pop in pops})
     return FoldedResourceMetrics(
@@ -1568,7 +1603,10 @@ def _build_top_folded(
     ``spike_bus`` in a dedicated cycle (``tick_done`` pulses), so the bus is race-free
     and stable for the whole next tick. Recurrent and inter-population spiking fan-in
     read that prior-tick ``spike_bus`` at the source population's bit offset — the same
-    double-buffer the direct interconnect's registered spikes provide.
+    double-buffer the direct interconnect's registered spikes provide. An analogue
+    source population's membrane voltage is committed the same way to a global ``v_bus``
+    (one ``DATA_WIDTH`` word per analogue source neuron), so analogue fan-in reads the
+    prior-tick voltage exactly like the direct path's registered ``v_out``.
 
     Restricted to the :func:`_can_fold` subset. Returns
     ``({neuron_module_key: pe_source}, top_module_source)`` with one PE source per
@@ -1592,6 +1630,22 @@ def _build_top_folded(
         spike_offsets[pop.name] = cursor
         cursor += pop.n_neurons
     n_total = cursor
+
+    # Global voltage-bus layout: each analogue source population (one whose membrane
+    # voltage feeds another population) owns a contiguous DATA_WIDTH-word slice. Empty
+    # when no analogue source is used, in which case no v_bus is emitted.
+    analogue_src_names = {
+        conn.src
+        for conn in conns
+        if (sp := pop_by_name.get(conn.src)) is not None and _connection_sources_are_analogue(sp)
+    }
+    analogue_offsets: dict[str, int] = {}
+    v_cursor = 0
+    for pop in pops:
+        if pop.name in analogue_src_names:
+            analogue_offsets[pop.name] = v_cursor
+            v_cursor += pop.n_neurons
+    v_total = v_cursor
 
     ext_width, ext_offsets, _ext_src_widths = _external_input_layout(conns, pop_by_name, pops)
     input_bus_width = max(1, ext_width * data_width)
@@ -1698,6 +1752,14 @@ def _build_top_folded(
     if max_delay:
         lines.append("")
 
+    # Global analogue voltage bus: one DATA_WIDTH word per analogue source neuron, the
+    # membrane voltage committed once per tick (double-buffered through v_acc), so an
+    # analogue fan-in reads the prior-tick voltage exactly like the direct path's v_out.
+    if v_total:
+        lines.append(f"    reg signed [{v_total * data_width - 1}:0] v_bus;")
+        lines.append(f"    reg signed [{v_total * data_width - 1}:0] v_acc;")
+        lines.append("")
+
     # Per-population state BRAMs (word width set by the population's neuron type).
     for pi, pop in enumerate(pops):
         sw = type_state_w[pop.neuron_type]
@@ -1731,6 +1793,7 @@ def _build_top_folded(
             acc_width=acc_width,
             ext_offsets=ext_offsets,
             spike_offsets=spike_offsets,
+            analogue_offsets=analogue_offsets,
             pop_names=pop_names,
             is_first_pop=(pi == 0),
             idx_signal="nidx",
@@ -1806,6 +1869,9 @@ def _build_top_folded(
     )
     for d in range(1, max_delay + 1):
         lines.append(f"            spike_bus_hist_{d} <= 0;")
+    if v_total:
+        lines.append("            v_bus <= 0;")
+        lines.append("            v_acc <= 0;")
     for pi, pop in enumerate(pops):
         lines.append(
             f"            for (i = 0; i < {pop.n_neurons}; i = i + 1) "
@@ -1823,11 +1889,21 @@ def _build_top_folded(
         ntype = pop.neuron_type
         off = spike_offsets[pop.name]
         bus_idx = "nidx" if off == 0 else f"{off} + nidx"
-        lines.append(
-            f"                    {pidx_w}'d{pi}: begin "
+        writeback = (
             f"spike_acc[{bus_idx}] <= pe_spike_{ntype}; "
-            f"state_bram_{pi}[nidx] <= next_state_{ntype}; end"
+            f"state_bram_{pi}[nidx] <= next_state_{ntype};"
         )
+        if pop.name in analogue_offsets:
+            # Snapshot this analogue source neuron's next membrane voltage into v_acc;
+            # it commits to v_bus at the tick boundary for the next tick's readers.
+            voff = analogue_offsets[pop.name]
+            v_word_off = type_svars[ntype].index("v") * data_width
+            v_base = "nidx" if voff == 0 else f"({voff} + nidx)"
+            writeback += (
+                f" v_acc[{v_base} * DATA_WIDTH +: DATA_WIDTH] <= "
+                f"next_state_{ntype}[{v_word_off} +: DATA_WIDTH];"
+            )
+        lines.append(f"                    {pidx_w}'d{pi}: begin {writeback} end")
     lines.extend(
         [
             "                    default: ;",
@@ -1844,6 +1920,9 @@ def _build_top_folded(
             "                nidx <= 0;",
         ]
     )
+    if v_total:
+        # Commit the analogue voltage snapshot alongside the spike bus.
+        lines.append("                v_bus <= v_acc;")
     # Advance the delay shift-register on the same commit edge (nonblocking, so every
     # stage samples its old source): hist_d <- hist_{d-1}, hist_1 <- the bus being retired.
     for d in range(max_delay, 0, -1):
@@ -2317,14 +2396,14 @@ def compile_network_to_fpga(
     if interconnect == "folded":
         # Opt-in time-multiplexed interconnect; never auto-selected. Restricted to the
         # _can_fold subset (any number of populations of supported types with
-        # external-weighted, recurrent, inter-population, delayed, thresholded, or biased
-        # spiking fan-in).
+        # external-weighted, recurrent, inter-population, delayed, thresholded, biased
+        # spiking, or analogue-voltage fan-in).
         if not _can_fold(qgraph):
             raise ValueError(
                 "interconnect='folded' supports populations of supported neuron types with "
-                "external-weighted, recurrent, inter-population, delayed, NIR-thresholded, or "
-                "biased spiking connections (the folded subset); analogue source populations "
-                "are not folded yet — use 'direct' or auto otherwise"
+                "external-weighted, recurrent, inter-population, delayed, NIR-thresholded, "
+                "biased spiking, or analogue source connections (the folded subset); a delayed "
+                "analogue source connection is not folded yet — use 'direct' or auto otherwise"
             )
         selected_interconnect = "folded"
         pe_modules, top_module = _build_top_folded(

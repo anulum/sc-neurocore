@@ -458,23 +458,51 @@ def test_compile_network_folded_opt_in() -> None:
     assert "state_bram" in result.top_module
 
 
+def test_compile_network_folded_analogue_source() -> None:
+    import numpy as np
+
+    from sc_neurocore.nir_bridge.fpga_compiler import compile_network_to_fpga
+
+    # An analogue li source feeding a lif population folds, emitting the global voltage
+    # bus; the source's three columns are counted as shared multipliers (v * weight).
+    li = NeuronSpec(name="a", neuron_type="li", n_neurons=3, params={}, dt=1.0)
+    lif = NeuronSpec(name="b", neuron_type="lif", n_neurons=3, params={}, dt=1.0)
+    ng = NeuronGraph(
+        populations=[li, lif],
+        connections=[ConnectionSpec(src="a", dst="b", weights=np.full((3, 3), 0.5, np.float32))],
+        input_pop="a",
+        output_pop="b",
+        dt=1.0,
+    )
+    result = compile_network_to_fpga(ng, interconnect="folded")
+    assert result.interconnect == "folded"
+    assert "v_bus" in result.top_module  # the analogue voltage double-buffer was emitted
+    assert {"li_pe", "lif_pe"} <= set(result.neuron_modules)
+    assert result.folded_metrics is not None
+    assert result.folded_metrics.populations == 2
+    assert result.folded_metrics.pe_instances == 2  # distinct types: li + lif
+    assert result.folded_metrics.shared_multipliers == 3  # the analogue source's 3 columns
+
+
 def test_compile_network_folded_rejects_unsupported_graph() -> None:
     from sc_neurocore.nir_bridge.fpga_compiler import compile_network_to_fpga
 
-    # An analogue source population (``li`` outputs membrane voltage, not spikes) is
-    # the only remaining fan-in shape outside the folded subset → direct fallback.
+    # A *delayed* analogue source connection is the only remaining fan-in shape outside
+    # the folded subset (it would need a voltage-bus history register) → direct fallback.
+    # An undelayed analogue source folds, so the delay is what triggers the rejection.
     import numpy as np
 
     pop_a = NeuronSpec(name="a", neuron_type="li", n_neurons=4, params={}, dt=1.0)
     pop_b = NeuronSpec(name="b", neuron_type="lif", n_neurons=4, params={}, dt=1.0)
-    analogue = ConnectionSpec(
+    delayed_analogue = ConnectionSpec(
         src="a",
         dst="b",
         weights=np.ones((4, 4), np.float32) * 0.4,
+        delay_steps=2,
     )
     ng = NeuronGraph(
         populations=[pop_a, pop_b],
-        connections=[analogue],
+        connections=[delayed_analogue],
         input_pop="a",
         output_pop="b",
         dt=1.0,
@@ -620,13 +648,21 @@ def _parity_rasters(ng: NeuronGraph, currents: list[float], n_total: int) -> tup
         packed |= (q.encode(cur) & mask) << (k * _DW)
     flat = f"{len(currents) * _DW}'h{packed:x}"
     direct_top = _build_top_direct("sc_fold_test", qgraph, data_width=_DW, fraction=_FR)
-    lif_module = _build_neuron_module("lif", qgraph.populations[0], data_width=_DW, fraction=_FR)
+    # One per-instance module per distinct neuron type — a multi-type graph (e.g. an
+    # analogue li source feeding a lif population) instantiates each type's module.
+    type_pop: dict[str, NeuronSpec] = {}
+    for pop in qgraph.populations:
+        type_pop.setdefault(pop.neuron_type, pop)
+    direct_modules = {
+        f"mod_{ntype}": _build_neuron_module(ntype, pop, data_width=_DW, fraction=_FR)
+        for ntype, pop in type_pop.items()
+    }
     pe_modules, folded_top = _build_top_folded(
         "sc_fold_test_folded", qgraph, data_width=_DW, fraction=_FR
     )
     pe_source = "\n\n".join(pe_modules.values())
     direct_raster = _cosim(
-        {"lif": lif_module, "top": direct_top, "tb": _direct_tb(flat, n_total)}, "direct"
+        {**direct_modules, "top": direct_top, "tb": _direct_tb(flat, n_total)}, "direct"
     )
     folded_raster = _cosim(
         {"pe": pe_source, "top": folded_top, "tb": _folded_tb(flat, n_total)}, "folded"
@@ -791,3 +827,60 @@ def test_folded_bias_with_destination_threshold_matches_direct() -> None:
         f"{next((i for i, (a, b) in enumerate(zip(direct_raster, folded_raster)) if a != b), None)}"
     )
     assert any("1" in row for row in direct_raster), "biased threshold workload should spike"
+
+
+def test_folded_analogue_source_matches_direct() -> None:
+    import numpy as np
+
+    # An analogue li source population (membrane voltage, no spikes) feeds a lif
+    # population: the lif input multiplies each source voltage by a weight (>> fraction),
+    # reading the prior-tick committed voltage from the global v_bus — exactly the direct
+    # path's registered v_out term. The li pop (pop 0) is driven by per-neuron external
+    # current; its voltage rises toward I so the lif fan-in eventually crosses threshold.
+    n_a, n_b = 3, 3
+    li = NeuronSpec(name="a", neuron_type="li", n_neurons=n_a, params={}, dt=1.0)
+    lif = NeuronSpec(name="b", neuron_type="lif", n_neurons=n_b, params={}, dt=1.0)
+    weights = np.full((n_b, n_a), 0.5, dtype=np.float32)
+    ng = NeuronGraph(
+        populations=[li, lif],
+        connections=[ConnectionSpec(src="a", dst="b", weights=weights)],
+        input_pop="a",
+        output_pop="b",
+        dt=1.0,
+    )
+    # External lanes drive the li pop (the connection-less first population).
+    direct_raster, folded_raster = _parity_rasters(ng, [4.0, 3.5, 3.0], n_a + n_b)
+    assert len(direct_raster) == _STEPS and len(folded_raster) == _STEPS
+    assert folded_raster == direct_raster, (
+        "folded analogue-source raster diverged from direct at step "
+        f"{next((i for i, (a, b) in enumerate(zip(direct_raster, folded_raster)) if a != b), None)}"
+    )
+    assert any("1" in row for row in direct_raster), "analogue-fed lif population should spike"
+
+
+def test_folded_analogue_source_threshold_matches_direct() -> None:
+    import numpy as np
+
+    # An analogue li source gated by a per-column source Threshold: a column contributes
+    # its (un-multiplied) sign-extended weight only while the source voltage exceeds the
+    # column threshold. The thresholds straddle the per-neuron steady-state voltages so
+    # the gates toggle as the li voltages rise (column 2's threshold is never reached).
+    n_a, n_b = 3, 3
+    li = NeuronSpec(name="a", neuron_type="li", n_neurons=n_a, params={}, dt=1.0)
+    lif = NeuronSpec(name="b", neuron_type="lif", n_neurons=n_b, params={}, dt=1.0)
+    weights = np.full((n_b, n_a), 0.8, dtype=np.float32)  # gated weight ≈ 0.8 per passing column
+    src_thr = np.array([1.0, 2.5, 5.0], dtype=np.float32)  # col 0 early, col 1 later, col 2 never
+    ng = NeuronGraph(
+        populations=[li, lif],
+        connections=[ConnectionSpec(src="a", dst="b", weights=weights, source_threshold=src_thr)],
+        input_pop="a",
+        output_pop="b",
+        dt=1.0,
+    )
+    direct_raster, folded_raster = _parity_rasters(ng, [4.0, 3.0, 2.0], n_a + n_b)
+    assert len(direct_raster) == _STEPS and len(folded_raster) == _STEPS
+    assert folded_raster == direct_raster, (
+        "folded analogue source-threshold raster diverged from direct at step "
+        f"{next((i for i, (a, b) in enumerate(zip(direct_raster, folded_raster)) if a != b), None)}"
+    )
+    assert any("1" in row for row in direct_raster), "gated analogue-fed lif should spike"
