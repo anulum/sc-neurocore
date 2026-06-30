@@ -18,16 +18,19 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
   `Threshold` transforms fold too: a source threshold gates each sign-extended weight on
   the source value (spike magnitude or external input); a destination threshold replaces a
   connection's per-neuron weighted sum with one spike-magnitude when it exceeds the
-  threshold (selected from the per-neuron weight ROM). Bit-exact with the direct path
-  (golden co-simulation parity for connection-less, external-weighted, recurrent-spiking,
-  two-population feedforward/recurrent, delayed recurrent / mixed-per-column-delay
-  two-population, external/spiking source-threshold, mixed destination-threshold, and
-  inter-population source-threshold fan-in). Reports a `FoldedResourceMetrics` summary
+  threshold (selected from the per-neuron weight ROM). A per-destination-neuron connection
+  bias folds as a constant ACC_WIDTH term added to that connection's fan-in (held in the
+  same per-neuron ROM), so a destination threshold wraps the bias along with the weights.
+  Bit-exact with the direct path (golden co-simulation parity for connection-less,
+  external-weighted, recurrent-spiking, two-population feedforward/recurrent, delayed
+  recurrent / mixed-per-column-delay two-population, external/spiking source-threshold,
+  mixed destination-threshold, inter-population source-threshold, external-bias, and
+  biased destination-threshold fan-in). Reports a `FoldedResourceMetrics` summary
   (populations, processing elements, shared multipliers, state-RAM bits, cycles per
   tick, collapsed direct instances) on the result, in the CLI output, and as a
-  `folded_metrics.json` artefact. Connections with a non-zero bias or an analogue source
-  population fall back to direct. Never auto-selected; the direct/AER paths and the
-  SC-NIR source-handoff manifest are unchanged.
+  `folded_metrics.json` artefact. The folded subset now covers every direct fan-in shape
+  except an analogue source population, which falls back to direct. Never auto-selected;
+  the direct/AER paths and the SC-NIR source-handoff manifest are unchanged.
 
 ### Fixed
 - Fixed the direct FPGA interconnect emitting an assignment to an undeclared

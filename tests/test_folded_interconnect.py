@@ -461,21 +461,20 @@ def test_compile_network_folded_opt_in() -> None:
 def test_compile_network_folded_rejects_unsupported_graph() -> None:
     from sc_neurocore.nir_bridge.fpga_compiler import compile_network_to_fpga
 
-    # A non-zero connection bias is outside the folded subset (bias terms are not
-    # folded yet → direct fallback).
+    # An analogue source population (``li`` outputs membrane voltage, not spikes) is
+    # the only remaining fan-in shape outside the folded subset → direct fallback.
     import numpy as np
 
-    pop_a = NeuronSpec(name="a", neuron_type="lif", n_neurons=4, params={}, dt=1.0)
+    pop_a = NeuronSpec(name="a", neuron_type="li", n_neurons=4, params={}, dt=1.0)
     pop_b = NeuronSpec(name="b", neuron_type="lif", n_neurons=4, params={}, dt=1.0)
-    biased = ConnectionSpec(
+    analogue = ConnectionSpec(
         src="a",
         dst="b",
         weights=np.ones((4, 4), np.float32) * 0.4,
-        bias=np.full(4, 0.3, np.float32),
     )
     ng = NeuronGraph(
         populations=[pop_a, pop_b],
-        connections=[biased],
+        connections=[analogue],
         input_pop="a",
         output_pop="b",
         dt=1.0,
@@ -726,3 +725,69 @@ def test_folded_two_population_source_threshold_matches_direct() -> None:
         f"{next((i for i, (a, b) in enumerate(zip(direct_raster, folded_raster)) if a != b), None)}"
     )
     assert any("1" in row[:3] for row in direct_raster), "output population should spike"
+
+
+def test_folded_external_bias_matches_direct() -> None:
+    import numpy as np
+
+    # External-weighted input plus a per-destination-neuron bias constant. The bias is
+    # added in ACC_WIDTH to the connection's term sum, so the steady-state LIF current
+    # (≈ weighted input + bias) crosses the threshold for some neurons and not others —
+    # the per-neuron bias ROM toggles which spike (positive, near-zero, and negative
+    # biases all exercised).
+    n_dst, n_src = 4, 2
+    weights = np.full((n_dst, n_src), 0.2, dtype=np.float32)  # weighted ≈ 0.4 per neuron
+    bias = np.array([1.0, 0.7, 0.3, -0.5], dtype=np.float32)  # I ≈ [1.4, 1.1, 0.7, -0.1]
+    pop = NeuronSpec(name="pop0", neuron_type="lif", n_neurons=n_dst, params={}, dt=1.0)
+    conn = ConnectionSpec(src="stim", dst="pop0", weights=weights, bias=bias)
+    ng = NeuronGraph(
+        populations=[pop], connections=[conn], input_pop="stim", output_pop="pop0", dt=1.0
+    )
+    direct_raster, folded_raster = _parity_rasters(ng, [1.0, 1.0], n_dst)
+    assert len(direct_raster) == _STEPS and len(folded_raster) == _STEPS
+    assert folded_raster == direct_raster, (
+        "folded bias raster diverged from direct at step "
+        f"{next((i for i, (a, b) in enumerate(zip(direct_raster, folded_raster)) if a != b), None)}"
+    )
+    assert any("1" in row for row in direct_raster), "biased workload should spike"
+
+
+def test_folded_bias_with_destination_threshold_matches_direct() -> None:
+    import numpy as np
+
+    # A destination-thresholded connection whose per-neuron bias participates in the
+    # ``raw`` accumulator (raw = weighted sum + bias, compared against the per-neuron
+    # destination threshold), mixed with a plain baseline connection. Equal weights
+    # leave the bias as the discriminator: with raw ≈ 1.75 + bias and a threshold of
+    # 2.0, neurons whose bias lifts raw above 2.0 emit a spike-magnitude that — together
+    # with the sub-threshold baseline — pushes the LIF over, while the others stay quiet.
+    n_dst = 4
+    thr_w = np.full((n_dst, 2), 0.5, dtype=np.float32)  # weighted ≈ (2.0+1.5)*0.5 = 1.75
+    bias = np.array([0.5, 0.0, -1.0, 0.3], dtype=np.float32)  # raw ≈ [2.25,1.75,0.75,2.05]
+    dst_thr = np.full(n_dst, 2.0, dtype=np.float32)  # neurons 0,3 fire; 1,2 do not
+    base_w = np.full((n_dst, 2), 0.3, dtype=np.float32)  # baseline ≈ 0.6, sub-threshold alone
+    pop = NeuronSpec(name="pop0", neuron_type="lif", n_neurons=n_dst, params={}, dt=1.0)
+    ng = NeuronGraph(
+        populations=[pop],
+        connections=[
+            ConnectionSpec(
+                src="stim",
+                dst="pop0",
+                weights=thr_w,
+                bias=bias,
+                destination_threshold=dst_thr,
+            ),
+            ConnectionSpec(src="base", dst="pop0", weights=base_w),
+        ],
+        input_pop="stim",
+        output_pop="pop0",
+        dt=1.0,
+    )
+    # External bus layout follows connection order: stim (2 lanes) then base (2 lanes).
+    direct_raster, folded_raster = _parity_rasters(ng, [2.0, 1.5, 1.0, 1.0], n_dst)
+    assert len(direct_raster) == _STEPS and len(folded_raster) == _STEPS
+    assert folded_raster == direct_raster, (
+        "folded bias+destination-threshold raster diverged from direct at step "
+        f"{next((i for i, (a, b) in enumerate(zip(direct_raster, folded_raster)) if a != b), None)}"
+    )
+    assert any("1" in row for row in direct_raster), "biased threshold workload should spike"

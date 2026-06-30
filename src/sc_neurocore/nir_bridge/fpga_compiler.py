@@ -1334,6 +1334,10 @@ def _folded_population_input(
     fixed spike-magnitude term when ``raw`` exceeds the per-neuron threshold (selected
     from the same ``case`` ROM over ``idx_signal``).
 
+    A connection **bias** adds a per-destination-neuron constant (held in the same
+    per-neuron ``case`` ROM, ACC_WIDTH) to that connection's term list before its
+    weighted fan-in, so a destination threshold wraps the bias along with the weights.
+
     The accumulator width (``ACC_WIDTH``), the saturating cast (``sat_acc``), the
     ``ext_input_*`` lane wires, and the ``spike_bus_hist_*`` delay shift-register are
     module-scope and emitted once by the caller.
@@ -1372,6 +1376,18 @@ def _folded_population_input(
             else np.asarray(conn.destination_threshold, dtype=np.int64).reshape(-1)
         )
         conn_terms: list[str] = []
+        if conn.bias is not None:
+            # A per-destination-neuron constant, held in the same per-neuron case ROM
+            # (ACC_WIDTH, like a destination threshold) and added to the connection's
+            # term list before the weighted fan-in, exactly like the direct path. When
+            # the connection is destination-thresholded the bias therefore participates
+            # in the per-neuron ``raw`` sum.
+            biases = np.asarray(conn.bias, dtype=np.int64).reshape(-1)
+            rb = f"rb{suffix}_{ci}"
+            rom_regs.append((rb, acc_width))
+            for nrow in range(n):
+                rows[nrow].append(f"{rb} = {_signed_hex(int(biases[nrow]), acc_width)};")
+            conn_terms.append(rb)
         for src in range(weights.shape[1]):
             rw = f"rw{suffix}_{ci}_{src}"
             rom_regs.append((rw, data_width))
@@ -1455,9 +1471,10 @@ def _can_fold(qgraph: QuantisedGraph) -> bool:
       population, read from the prior-tick global spike bus, optionally delayed or
       gated by a source/destination NIR ``Threshold`` transform.
 
-    Connections carrying a non-zero bias or an analogue source population
-    (``li``/``cuba_li``/``integrator``, whose fan-in is the membrane voltage rather
-    than spikes) are not folded yet and fall back to the direct interconnect.
+    Connections may also carry a per-destination-neuron bias constant. Only a
+    connection from an analogue source population (``li``/``cuba_li``/``integrator``,
+    whose fan-in is the membrane voltage rather than spikes) is not folded yet and
+    falls back to the direct interconnect.
     """
     pops = qgraph.populations
     if not pops:
@@ -1472,8 +1489,6 @@ def _can_fold(qgraph: QuantisedGraph) -> bool:
         src_pop = pop_by_name.get(conn.src)
         if src_pop is not None and _connection_sources_are_analogue(src_pop):
             return False  # analogue (li/cuba_li) source fan-in needs the v_out path
-        if conn.bias is not None and bool(np.any(np.asarray(conn.bias))):
-            return False  # a non-zero bias term is not folded yet (zero bias is a no-op)
         delay_vector = _normalise_connection_delay_steps(
             getattr(conn, "delay_steps", 0),
             int(np.asarray(conn.weights).shape[1]),
@@ -2302,14 +2317,14 @@ def compile_network_to_fpga(
     if interconnect == "folded":
         # Opt-in time-multiplexed interconnect; never auto-selected. Restricted to the
         # _can_fold subset (any number of populations of supported types with
-        # external-weighted, recurrent, inter-population, delayed, or thresholded spiking
-        # fan-in).
+        # external-weighted, recurrent, inter-population, delayed, thresholded, or biased
+        # spiking fan-in).
         if not _can_fold(qgraph):
             raise ValueError(
                 "interconnect='folded' supports populations of supported neuron types with "
-                "external-weighted, recurrent, inter-population, delayed, or NIR-thresholded "
-                "spiking connections (the folded subset); a non-zero bias and analogue source "
-                "populations are not folded yet — use 'direct' or auto otherwise"
+                "external-weighted, recurrent, inter-population, delayed, NIR-thresholded, or "
+                "biased spiking connections (the folded subset); analogue source populations "
+                "are not folded yet — use 'direct' or auto otherwise"
             )
         selected_interconnect = "folded"
         pe_modules, top_module = _build_top_folded(
