@@ -134,8 +134,8 @@ def main() -> int:
         default="auto",
         help=(
             "compile-nir top-level interconnect: 'auto' (direct/AER by size), 'direct' (force "
-            "per-neuron wiring), or 'folded' (time-multiplexed shared datapath; single "
-            "population with external-weighted/recurrent fan-in)"
+            "per-neuron wiring), or 'folded' (time-multiplexed per-type PE pool; populations "
+            "with external-weighted, recurrent, or inter-population spiking fan-in)"
         ),
     )
     parser.add_argument("--port", type=int, default=8001, help="Port for serve command")
@@ -569,8 +569,8 @@ def _cmd_compile_nir(args: Any) -> int:
     if result.folded_metrics is not None:
         fm = result.folded_metrics
         print(
-            f"  Folded datapath: {fm.pe_instances} PE + {fm.shared_multipliers} shared "
-            f"multiplier(s) + {fm.state_ram_bits}-bit state BRAM, "
+            f"  Folded datapath: {fm.populations} population(s), {fm.pe_instances} PE + "
+            f"{fm.shared_multipliers} shared multiplier(s) + {fm.state_ram_bits}-bit state BRAM, "
             f"{fm.cycles_per_tick} cycles/tick "
             f"(collapses {fm.direct_neuron_instances} direct neuron instances)"
         )

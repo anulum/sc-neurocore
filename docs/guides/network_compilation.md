@@ -149,13 +149,16 @@ By default the interconnect is auto-selected by neuron count:
 | ≤64 | Direct wiring | Point-to-point |
 | >64 | AER bus | Address-event arbitrated |
 
-A third, opt-in **folded** (time-multiplexed) interconnect is available for a single
-population. It shares one combinational processing element and one multiplier set
-across every neuron, holding per-neuron state in a BRAM and advancing the whole
-population in `neurons + 1` cycles per timestep — collapsing the direct path's one
-module instance per neuron to a single shared datapath. It is bit-exact with the
-direct path (the same fixed-point arithmetic, time-multiplexed) and is never
-auto-selected; request it explicitly:
+A third, opt-in **folded** (time-multiplexed) interconnect is available for multi-layer
+networks. It shares one combinational processing element per neuron type (a per-type PE
+pool) across every neuron of that type, holds per-neuron state in a per-population BRAM,
+and a single sequencer walks each population in turn — advancing the whole network in
+`neurons + 1` cycles per timestep and collapsing the direct path's one module instance
+per neuron to a handful of shared datapaths. A single global `spike_bus` is committed at
+the end of each tick, so recurrent and inter-population spiking fan-in read it as a
+stable prior-tick double-buffer. It is bit-exact with the direct path (the same
+fixed-point arithmetic, time-multiplexed) and is never auto-selected; request it
+explicitly:
 
 ```bash
 sc-neurocore compile-nir model.nir --interconnect folded -o build/
@@ -163,16 +166,19 @@ sc-neurocore compile-nir model.nir --interconnect folded -o build/
 
 ```python
 result = compile_network_to_fpga(graph, interconnect="folded")
-result.folded_metrics  # FoldedResourceMetrics: pe_instances, shared_multipliers,
+result.folded_metrics  # FoldedResourceMetrics: populations, pe_instances, shared_multipliers,
                        # state_ram_bits, cycles_per_tick, direct_neuron_instances
 ```
 
-The folded subset currently covers a single population (connection-less, or fed by
-external-weighted and/or recurrent spiking connections); graphs outside it raise and
-should use `direct`/auto. `compile_network_to_fpga` attaches a
-[`FoldedResourceMetrics`](../API_REFERENCE.md) summary on the result only for the folded
-path; the CLI prints it and writes a machine-readable `folded_metrics.json` artefact
-(the versioned `scnir_source_manifest.json` is left to its SC-NIR source-handoff role).
+The folded subset covers any number of populations of supported neuron types whose
+connections are connection-less, external-weighted, recurrent spiking, or inter-population
+spiking. Connections carrying a non-zero bias, source/destination thresholds, synaptic
+delays, or an analogue source population (whose fan-in is the membrane voltage rather than
+spikes) are not folded yet; such graphs raise and should use `direct`/auto.
+`compile_network_to_fpga` attaches a [`FoldedResourceMetrics`](../API_REFERENCE.md) summary
+on the result only for the folded path; the CLI prints it and writes a machine-readable
+`folded_metrics.json` artefact (the versioned `scnir_source_manifest.json` is left to its
+SC-NIR source-handoff role).
 
 ---
 

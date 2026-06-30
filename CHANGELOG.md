@@ -7,15 +7,20 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 ### Added
 - Folded (time-multiplexed) FPGA interconnect for `compile_network_to_fpga`,
   opt-in via `interconnect="folded"` and the `sc-neurocore compile-nir
-  --interconnect folded` flag. One combinational processing element and one
-  multiplier set are shared across all neurons of a single population, with
-  per-neuron state in a BRAM, advancing the population in `neurons + 1` cycles
-  per timestep — bit-exact with the direct path (golden co-simulation parity for
-  connection-less, external-weighted, and recurrent-spiking fan-in). Reports a
-  `FoldedResourceMetrics` summary (processing elements, shared multipliers,
-  state-RAM bits, cycles per tick, collapsed direct instances) on the result, in
-  the CLI output, and as a `folded_metrics.json` artefact. Never auto-selected; the
-  direct/AER paths and the SC-NIR source-handoff manifest are unchanged.
+  --interconnect folded` flag. Multi-layer networks share one combinational
+  processing element per neuron type (a per-type PE pool) across every neuron of
+  that type, hold per-neuron state in a per-population BRAM, and a single sequencer
+  walks each population in turn, advancing the whole network in `neurons + 1`
+  cycles per timestep. A single global spike bus committed at the end of each tick
+  gives recurrent and inter-population spiking fan-in a stable prior-tick
+  double-buffer. Bit-exact with the direct path (golden co-simulation parity for
+  connection-less, external-weighted, recurrent-spiking, and two-population
+  feedforward/recurrent fan-in). Reports a `FoldedResourceMetrics` summary
+  (populations, processing elements, shared multipliers, state-RAM bits, cycles per
+  tick, collapsed direct instances) on the result, in the CLI output, and as a
+  `folded_metrics.json` artefact. Connections with bias, thresholds, synaptic
+  delays, or analogue source populations fall back to direct. Never auto-selected;
+  the direct/AER paths and the SC-NIR source-handoff manifest are unchanged.
 
 ### Fixed
 - Removed duplicate hardware-profile registrations in the built-in platform

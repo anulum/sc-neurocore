@@ -144,9 +144,10 @@ def test_folded_matches_direct_spike_raster() -> None:
 
     direct_top = _build_top_direct("sc_fold_test", qgraph, data_width=_DW, fraction=_FR)
     lif_module = _build_neuron_module("lif", qgraph.populations[0], data_width=_DW, fraction=_FR)
-    pe_source, folded_top = _build_top_folded(
+    pe_modules, folded_top = _build_top_folded(
         "sc_fold_test_folded", qgraph, data_width=_DW, fraction=_FR
     )
+    pe_source = "\n\n".join(pe_modules.values())
 
     direct_raster = _cosim({"lif": lif_module, "top": direct_top, "tb": _direct_tb(flat)}, "direct")
     folded_raster = _cosim({"pe": pe_source, "top": folded_top, "tb": _folded_tb(flat)}, "folded")
@@ -194,9 +195,10 @@ def test_folded_weighted_external_matches_direct() -> None:
 
     direct_top = _build_top_direct("sc_fold_test", qgraph, data_width=_DW, fraction=_FR)
     lif_module = _build_neuron_module("lif", qgraph.populations[0], data_width=_DW, fraction=_FR)
-    pe_source, folded_top = _build_top_folded(
+    pe_modules, folded_top = _build_top_folded(
         "sc_fold_test_folded", qgraph, data_width=_DW, fraction=_FR
     )
+    pe_source = "\n\n".join(pe_modules.values())
 
     direct_raster = _cosim(
         {"lif": lif_module, "top": direct_top, "tb": _direct_tb(flat, n_dst)}, "direct"
@@ -254,9 +256,10 @@ def test_folded_recurrent_matches_direct() -> None:
 
     direct_top = _build_top_direct("sc_fold_test", qgraph, data_width=_DW, fraction=_FR)
     lif_module = _build_neuron_module("lif", qgraph.populations[0], data_width=_DW, fraction=_FR)
-    pe_source, folded_top = _build_top_folded(
+    pe_modules, folded_top = _build_top_folded(
         "sc_fold_test_folded", qgraph, data_width=_DW, fraction=_FR
     )
+    pe_source = "\n\n".join(pe_modules.values())
 
     direct_raster = _cosim(
         {"lif": lif_module, "top": direct_top, "tb": _direct_tb(flat, n_dst)}, "direct"
@@ -277,12 +280,173 @@ def test_folded_state_is_bram_backed_and_shares_one_pe() -> None:
     ng = _single_lif_graph()
     q = Q88(data_width=_DW, fraction=_FR)
     qgraph = quantise_graph(ng, q)
-    _pe, folded_top = _build_top_folded("sc_fold_test_folded", qgraph, data_width=_DW, fraction=_FR)
+    pe_modules, folded_top = _build_top_folded(
+        "sc_fold_test_folded", qgraph, data_width=_DW, fraction=_FR
+    )
     # Shared datapath: exactly one PE instance, BRAM state, a sequencer — no per-neuron unroll.
     assert folded_top.count("pe_inst") == 1
     assert 'ram_style = "block"' in folded_top
     assert "state_bram" in folded_top
     assert "p0_n0_inst" not in folded_top  # the direct per-neuron instance name must be absent
+    assert set(pe_modules) == {"lif_pe"}  # one PE module per distinct neuron type
+
+
+def _two_pop_ff_graph() -> tuple[NeuronGraph, list[float], int]:
+    """Two-population feedforward net: external-weighted input pop → spiking output pop.
+
+    pop ``inp`` is fed by a weighted external projection; pop ``out`` is driven only
+    by ``inp``'s spikes (inter-population fan-in). Both share one LIF PE under the
+    fold. Returns ``(graph, external_currents, total_neurons)``.
+    """
+    import numpy as np
+
+    n_in, n_out, n_src = 4, 3, 2
+    ext = np.array([[1.4, 1.0], [1.6, 0.8], [1.2, 1.2], [1.8, 0.6]], dtype=np.float32)
+    # Each output neuron pools several input spikes with strong weight so the inter-pop
+    # fan-in drives the downstream LIF above threshold.
+    ff = np.array(
+        [[2.0, 0.0, 1.8, 1.2], [1.2, 2.0, 0.0, 1.8], [1.6, 1.6, 1.4, 0.0]], dtype=np.float32
+    )
+    inp = NeuronSpec(name="inp", neuron_type="lif", n_neurons=n_in, params={}, dt=1.0)
+    out = NeuronSpec(name="out", neuron_type="lif", n_neurons=n_out, params={}, dt=1.0)
+    ext_conn = ConnectionSpec(src="stim", dst="inp", weights=ext)
+    ff_conn = ConnectionSpec(src="inp", dst="out", weights=ff)
+    ng = NeuronGraph(
+        populations=[inp, out],
+        connections=[ext_conn, ff_conn],
+        input_pop="stim",
+        output_pop="out",
+        dt=1.0,
+    )
+    return ng, [4.0, 3.5], n_in + n_out
+
+
+def test_folded_two_population_feedforward_matches_direct() -> None:
+    ng, currents, n_total = _two_pop_ff_graph()
+    q = Q88(data_width=_DW, fraction=_FR)
+    qgraph = quantise_graph(ng, q)
+
+    mask = (1 << _DW) - 1
+    packed = 0
+    for k, cur in enumerate(currents):
+        packed |= (q.encode(cur) & mask) << (k * _DW)
+    flat = f"{len(currents) * _DW}'h{packed:x}"
+
+    direct_top = _build_top_direct("sc_fold_test", qgraph, data_width=_DW, fraction=_FR)
+    lif_module = _build_neuron_module("lif", qgraph.populations[0], data_width=_DW, fraction=_FR)
+    pe_modules, folded_top = _build_top_folded(
+        "sc_fold_test_folded", qgraph, data_width=_DW, fraction=_FR
+    )
+    pe_source = "\n\n".join(pe_modules.values())
+
+    direct_raster = _cosim(
+        {"lif": lif_module, "top": direct_top, "tb": _direct_tb(flat, n_total)}, "direct"
+    )
+    folded_raster = _cosim(
+        {"pe": pe_source, "top": folded_top, "tb": _folded_tb(flat, n_total)}, "folded"
+    )
+
+    assert len(direct_raster) == _STEPS and len(folded_raster) == _STEPS
+    assert folded_raster == direct_raster, (
+        "folded two-population feedforward raster diverged from direct at step "
+        f"{next((i for i, (a, b) in enumerate(zip(direct_raster, folded_raster)) if a != b), None)}"
+    )
+    # Both layers must be exercised. spike_bus is [6:0] printed MSB-first: the output
+    # pop occupies bits [4:6] (the leading 3 chars), the input pop bits [0:3] (trailing 4).
+    assert any("1" in row[3:] for row in direct_raster), "input population should spike"
+    assert any("1" in row[:3] for row in direct_raster), "output population should spike"
+
+
+def _two_pop_recurrent_graph() -> tuple[NeuronGraph, list[float], int]:
+    """Two LIF populations with external drive, inter-pop fan-in, and self-recurrence.
+
+    Exercises every folded fan-in source at once: external-weighted (pop ``a``), an
+    ``a → b`` inter-population spiking projection, and a ``b → b`` recurrent ring.
+    """
+    import numpy as np
+
+    n_a, n_b = 3, 4
+    ext = np.array([[0.8, 0.4], [0.6, 0.5], [0.7, 0.3]], dtype=np.float32)
+    a_to_b = np.array(
+        [[0.6, 0.0, 0.6], [0.0, 0.6, 0.0], [0.6, 0.0, 0.0], [0.0, 0.0, 0.6]], dtype=np.float32
+    )
+    rec_b = np.zeros((n_b, n_b), dtype=np.float32)
+    for i in range(n_b):
+        rec_b[(i + 1) % n_b, i] = 0.3
+    pop_a = NeuronSpec(name="a", neuron_type="lif", n_neurons=n_a, params={}, dt=1.0)
+    pop_b = NeuronSpec(name="b", neuron_type="lif", n_neurons=n_b, params={}, dt=1.0)
+    ng = NeuronGraph(
+        populations=[pop_a, pop_b],
+        connections=[
+            ConnectionSpec(src="stim", dst="a", weights=ext),
+            ConnectionSpec(src="a", dst="b", weights=a_to_b),
+            ConnectionSpec(src="b", dst="b", weights=rec_b),
+        ],
+        input_pop="stim",
+        output_pop="b",
+        dt=1.0,
+    )
+    return ng, [3.5, 3.0], n_a + n_b
+
+
+def test_folded_two_population_recurrent_matches_direct() -> None:
+    ng, currents, n_total = _two_pop_recurrent_graph()
+    q = Q88(data_width=_DW, fraction=_FR)
+    qgraph = quantise_graph(ng, q)
+
+    mask = (1 << _DW) - 1
+    packed = 0
+    for k, cur in enumerate(currents):
+        packed |= (q.encode(cur) & mask) << (k * _DW)
+    flat = f"{len(currents) * _DW}'h{packed:x}"
+
+    direct_top = _build_top_direct("sc_fold_test", qgraph, data_width=_DW, fraction=_FR)
+    lif_module = _build_neuron_module("lif", qgraph.populations[0], data_width=_DW, fraction=_FR)
+    pe_modules, folded_top = _build_top_folded(
+        "sc_fold_test_folded", qgraph, data_width=_DW, fraction=_FR
+    )
+    pe_source = "\n\n".join(pe_modules.values())
+
+    direct_raster = _cosim(
+        {"lif": lif_module, "top": direct_top, "tb": _direct_tb(flat, n_total)}, "direct"
+    )
+    folded_raster = _cosim(
+        {"pe": pe_source, "top": folded_top, "tb": _folded_tb(flat, n_total)}, "folded"
+    )
+
+    assert len(direct_raster) == _STEPS and len(folded_raster) == _STEPS
+    assert folded_raster == direct_raster, (
+        "folded two-population recurrent raster diverged from direct at step "
+        f"{next((i for i, (a, b) in enumerate(zip(direct_raster, folded_raster)) if a != b), None)}"
+    )
+    assert any("1" in row for row in direct_raster), "recurrent workload should spike"
+
+
+def test_folded_multi_population_shares_one_pe_per_type() -> None:
+    ng, _currents, _n = _two_pop_ff_graph()
+    q = Q88(data_width=_DW, fraction=_FR)
+    qgraph = quantise_graph(ng, q)
+    pe_modules, folded_top = _build_top_folded(
+        "sc_fold_test_folded", qgraph, data_width=_DW, fraction=_FR
+    )
+    # Two LIF populations collapse to one shared PE instance and a per-population BRAM.
+    assert set(pe_modules) == {"lif_pe"}
+    assert folded_top.count("pe_inst_lif") == 1
+    assert "state_bram_0" in folded_top and "state_bram_1" in folded_top
+    assert "p0_n0_inst" not in folded_top  # no direct per-neuron unrolling
+
+
+def test_compile_network_folded_two_populations() -> None:
+    from sc_neurocore.nir_bridge.fpga_compiler import compile_network_to_fpga
+
+    ng, _currents, n_total = _two_pop_ff_graph()
+    result = compile_network_to_fpga(ng, interconnect="folded")
+    assert result.interconnect == "folded"
+    assert "lif_pe" in result.neuron_modules
+    assert result.folded_metrics is not None
+    assert result.folded_metrics.populations == 2
+    assert result.folded_metrics.neurons == n_total
+    assert result.folded_metrics.pe_instances == 1  # one PE shared across both LIF pops
 
 
 def test_compile_network_folded_opt_in() -> None:
@@ -297,11 +461,21 @@ def test_compile_network_folded_opt_in() -> None:
 def test_compile_network_folded_rejects_unsupported_graph() -> None:
     from sc_neurocore.nir_bridge.fpga_compiler import compile_network_to_fpga
 
-    # Two populations are outside the v1 folded subset.
+    # A synaptic delay on the inter-population projection is outside the folded subset
+    # (registered one-step source semantics are not folded yet → direct fallback).
+    import numpy as np
+
     pop_a = NeuronSpec(name="a", neuron_type="lif", n_neurons=4, params={}, dt=1.0)
     pop_b = NeuronSpec(name="b", neuron_type="lif", n_neurons=4, params={}, dt=1.0)
+    delayed = ConnectionSpec(
+        src="a", dst="b", weights=np.ones((4, 4), np.float32) * 0.4, delay_steps=2
+    )
     ng = NeuronGraph(
-        populations=[pop_a, pop_b], connections=[], input_pop="a", output_pop="b", dt=1.0
+        populations=[pop_a, pop_b],
+        connections=[delayed],
+        input_pop="a",
+        output_pop="b",
+        dt=1.0,
     )
     with pytest.raises(ValueError, match="folded"):
         compile_network_to_fpga(ng, interconnect="folded")

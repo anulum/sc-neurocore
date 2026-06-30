@@ -112,7 +112,53 @@ def test_as_dict_round_trips_all_fields() -> None:
         "state_ram_bits": 256,
         "cycles_per_tick": 9,
         "direct_neuron_instances": 8,
+        "populations": 1,
     }
+
+
+def test_two_population_metrics_share_one_pe() -> None:
+    # Two LIF populations: an external-weighted input pop feeding a spiking output pop.
+    inp = _lif_pop(4, name="inp")
+    out = _lif_pop(3, name="out")
+    ng = NeuronGraph(
+        populations=[inp, out],
+        connections=[
+            ConnectionSpec(src="stim", dst="inp", weights=np.ones((4, 2), np.float32)),
+            ConnectionSpec(src="inp", dst="out", weights=np.ones((3, 4), np.float32)),
+        ],
+        input_pop="stim",
+        output_pop="out",
+        dt=1.0,
+    )
+    m = _folded_resource_metrics(_quantised(ng), data_width=_DW)
+    assert m.populations == 2
+    assert m.neurons == 7 and m.direct_neuron_instances == 7
+    assert m.pe_instances == 1  # both populations are LIF → one shared PE
+    assert m.cycles_per_tick == 8  # 7 process cycles + 1 commit
+    assert m.state_ram_bits == 7 * 1 * _DW
+    # Only the external projection contributes multipliers; the inter-pop spiking fan-in does not.
+    assert m.shared_multipliers == 2
+
+
+def test_mixed_type_metrics_count_one_pe_per_type() -> None:
+    # An LIF input pop feeding a two-state cuba_lif output pop → two distinct PEs.
+    inp = _lif_pop(4, name="inp")
+    out = _lif_pop(2, name="out", ntype="cuba_lif")
+    ng = NeuronGraph(
+        populations=[inp, out],
+        connections=[
+            ConnectionSpec(src="stim", dst="inp", weights=np.ones((4, 2), np.float32)),
+            ConnectionSpec(src="inp", dst="out", weights=np.ones((2, 4), np.float32)),
+        ],
+        input_pop="stim",
+        output_pop="out",
+        dt=1.0,
+    )
+    m = _folded_resource_metrics(_quantised(ng), data_width=_DW)
+    assert m.populations == 2
+    assert m.pe_instances == 2  # lif + cuba_lif
+    assert m.state_vars_per_neuron == 2  # widest state-var count (cuba_lif)
+    assert m.state_ram_bits == (4 * 1 + 2 * 2) * _DW
 
 
 def test_compile_network_attaches_metrics_only_when_folded() -> None:

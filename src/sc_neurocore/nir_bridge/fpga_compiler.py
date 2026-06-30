@@ -436,31 +436,37 @@ class FoldedResourceMetrics:
     """Architectural resource summary of a folded (time-multiplexed) interconnect.
 
     Quantifies what the shared-datapath fold buys versus the direct interconnect's
-    one-module-instance-per-neuron unrolling: a single processing element and one
-    multiplier set are reused across every neuron, with per-neuron state held in a
-    BRAM, at the cost of ``cycles_per_tick`` cycles to advance the whole population
-    by one timestep.
+    one-module-instance-per-neuron unrolling: one processing element per distinct
+    neuron type is reused across every neuron of that type (a per-type PE pool), with
+    per-neuron state held in BRAM, at the cost of ``cycles_per_tick`` cycles to advance
+    the whole network by one timestep.
 
     Attributes
     ----------
     neurons : int
-        Number of neurons sharing the datapath.
+        Total neurons sharing the datapath across all folded populations.
     state_vars_per_neuron : int
-        State variables per neuron (BRAM word = ``state_vars_per_neuron`` × data width).
+        Widest per-neuron state-variable count across the folded types (the largest
+        BRAM word = ``state_vars_per_neuron`` × data width). Equal to the single type's
+        count for a homogeneous network.
     pe_instances : int
-        Physical processing elements instantiated (1 for a single homogeneous population).
+        Physical processing elements instantiated: one per distinct neuron type. A
+        single population, or several populations all of one type, share one PE.
     shared_multipliers : int
-        Multipliers in the shared weighted fan-in, reused across all neurons. Zero for
-        connection-less or purely spiking-recurrent populations (those use no multiplier).
+        Multipliers in the shared weighted fan-in, summed over external-source columns
+        across all populations and reused across each population's neurons. Spiking
+        fan-in (recurrent or inter-population) is spike-gated and uses none.
     state_ram_bits : int
-        Total BRAM-backed neuron-state storage, in bits
-        (``neurons`` × ``state_vars_per_neuron`` × data width).
+        Total BRAM-backed neuron-state storage, in bits, summed over populations
+        (each population contributes ``neurons`` × its type's state-var count × data width).
     cycles_per_tick : int
-        Clock cycles to advance the whole population by one timestep
+        Clock cycles to advance the whole network by one timestep
         (``neurons`` process cycles + 1 commit cycle).
     direct_neuron_instances : int
         Neuron module instances the direct interconnect would unroll (= ``neurons``);
         the count the fold collapses to ``pe_instances``.
+    populations : int
+        Number of folded populations sharing the one sequencer and the global spike bus.
     """
 
     neurons: int
@@ -470,6 +476,7 @@ class FoldedResourceMetrics:
     state_ram_bits: int
     cycles_per_tick: int
     direct_neuron_instances: int
+    populations: int = 1
 
     def as_dict(self) -> dict[str, int]:
         """Return a deterministic plain-``int`` mapping for manifests/JSON."""
@@ -481,6 +488,7 @@ class FoldedResourceMetrics:
             "state_ram_bits": self.state_ram_bits,
             "cycles_per_tick": self.cycles_per_tick,
             "direct_neuron_instances": self.direct_neuron_instances,
+            "populations": self.populations,
         }
 
 
@@ -1270,35 +1278,137 @@ def _build_top_direct(
     return "\n".join(lines)
 
 
+def _cond_mux(terms: Sequence[tuple[str, str]], default: str) -> str:
+    """Fold ``(condition, value)`` pairs into a nested Verilog ternary expression.
+
+    The pairs are evaluated in order — the first true condition wins — so
+    ``[("s==0", "a"), ("s==1", "b")]`` with default ``"z"`` becomes
+    ``(s==0 ? a : (s==1 ? b : z))``. A single term still emits the ternary so the
+    selector stays in the expression even when only one population is folded.
+    """
+    expr = default
+    for cond, value in reversed(list(terms)):
+        expr = f"({cond} ? {value} : {expr})"
+    return expr
+
+
+def _folded_population_input(
+    pop: NeuronSpec,
+    feeding: list[ConnectionSpec],
+    *,
+    data_width: int,
+    fraction: int,
+    acc_width: int,
+    ext_offsets: dict[str, int],
+    spike_offsets: dict[str, int],
+    pop_names: set[str],
+    is_first_pop: bool,
+    idx_signal: str,
+    idx_w: int,
+    suffix: str,
+) -> tuple[list[str], str]:
+    """Build one folded population's per-neuron input-current datapath.
+
+    Returns ``(decl_lines, cur_i_expr)``, where ``cur_i_expr`` is the input current
+    for the neuron currently addressed by ``idx_signal`` and ``decl_lines`` declare
+    the supporting wires/registers. Three fan-in shapes are emitted, matching the
+    direct interconnect bit-for-bit:
+
+    * **connection-less** — the first population draws one external ``I_ext`` lane
+      per neuron; any other connection-less population has no drive (zero current);
+    * **external-weighted** — external-source columns multiply a per-neuron weight
+      row (selected from a ``case`` ROM over ``idx_signal``), shifted by ``fraction``;
+    * **spiking fan-in** — recurrent (self) or inter-population spikes read the
+      prior-tick global ``spike_bus`` at the source population's bit offset and gate
+      the sign-extended weight, exactly like the direct path's registered spikes.
+
+    The accumulator width (``ACC_WIDTH``), the saturating cast (``sat_acc``), and the
+    ``ext_input_*`` lane wires are module-scope and emitted once by the caller.
+    """
+    n = pop.n_neurons
+    product_width = 2 * data_width
+    if not feeding:
+        if is_first_pop:
+            return [], f"I_ext_flat[{idx_signal} * {data_width} +: {data_width}]"
+        return [], f"{data_width}'sd0"
+
+    decls: list[str] = []
+    rw_regs: list[str] = []
+    rows: dict[int, list[str]] = {nrow: [] for nrow in range(n)}
+    term_lines: list[str] = []
+    term_names: list[str] = []
+    for ci, conn in enumerate(feeding):
+        weights = np.asarray(conn.weights, dtype=np.int64)
+        src_is_pop = conn.src in pop_names
+        ext_off = ext_offsets.get(conn.src, 0)
+        spike_base = spike_offsets.get(conn.src, 0)
+        for src in range(weights.shape[1]):
+            rw = f"rw{suffix}_{ci}_{src}"
+            rw_regs.append(f"    reg signed [DATA_WIDTH - 1:0] {rw};")
+            for nrow in range(n):
+                rows[nrow].append(f"{rw} = {_signed_hex(int(weights[nrow, src]), data_width)};")
+            if src_is_pop:
+                # Prior-tick spike (committed in spike_bus) gates the full weight,
+                # sign-extended to ACC_WIDTH — identical to direct's `(src_spike ? w : 0)`.
+                rw_sext = f"{{{{(ACC_WIDTH - DATA_WIDTH){{{rw}[DATA_WIDTH - 1]}}}}, {rw}}}"
+                term_names.append(f"(spike_bus[{spike_base + src}] ? {rw_sext} : {acc_width}'sd0)")
+            else:
+                mul = f"fmul{suffix}_{ci}_{src}"
+                term = f"fterm{suffix}_{ci}_{src}"
+                term_lines.append(
+                    f"    wire signed [{product_width - 1}:0] {mul} = ext_input_{ext_off + src} * {rw};"
+                )
+                term_lines.append(
+                    f"    wire signed [ACC_WIDTH - 1:0] {term} = {mul} >>> {fraction};"
+                )
+                term_names.append(term)
+    decls.extend(rw_regs)
+    default_assigns = " ".join(
+        f"{rw.split()[-1].rstrip(';')} = {data_width}'sd0;" for rw in rw_regs
+    )
+    decls.append("    always @(*) begin")
+    decls.append(f"        case ({idx_signal})")
+    for nrow in range(n):
+        decls.append(f"            {idx_w}'d{nrow}: begin {' '.join(rows[nrow])} end")
+    decls.append(f"            default: begin {default_assigns} end")
+    decls.append("        endcase")
+    decls.append("    end")
+    decls.extend(term_lines)
+    acc_expr = " + ".join(term_names) if term_names else f"{acc_width}'sd0"
+    decls.append(f"    wire signed [ACC_WIDTH - 1:0] fold_i_acc{suffix} = {acc_expr};")
+    return decls, f"sat_acc(fold_i_acc{suffix})"
+
+
 def _can_fold(qgraph: QuantisedGraph) -> bool:
     """Return True if the graph is in the folded interconnect's supported subset.
 
-    Folded modes so far, all a single population of a supported type sharing one
-    datapath PE + BRAM state:
+    The folded interconnect time-multiplexes any number of populations of supported
+    neuron types over a per-type PE pool and one global spike bus. A graph folds when
+    every population has an ODE template and every connection is one of:
 
-    * **connection-less** — each neuron driven by its own external ``I_ext`` lane
-      (input/sensory layer);
-    * **external-weighted** — fed by external-source connections only (a weighted
-      feedforward projection), no bias / thresholds / delays / source thresholds.
+    * **connection-less** — neurons driven only by their own external ``I_ext`` lane;
+    * **external-weighted** — fed by external (non-population) source columns;
+    * **spiking fan-in** — recurrent (self) or inter-population spikes from another
+      population, read from the prior-tick global spike bus.
 
-    Recurrent or inter-population (spiking) fan-in needs a double-buffered spike
-    register and is still future work, so those fall back to the direct interconnect.
+    Connections carrying a non-zero bias, source/destination thresholds, synaptic
+    delays, or an analogue source population (``li``/``cuba_li``/``integrator``, whose
+    fan-in is the membrane voltage rather than spikes) are not folded yet and fall
+    back to the direct interconnect.
     """
-    if len(qgraph.populations) != 1:
+    pops = qgraph.populations
+    if not pops:
         return False
-    pop = qgraph.populations[0]
-    if pop.neuron_type not in _NEURON_TEMPLATES:
+    pop_by_name = {p.name: p for p in pops}
+    pop_names = set(pop_by_name)
+    if any(p.neuron_type not in _NEURON_TEMPLATES for p in pops):
         return False
-    pop_names = {p.name for p in qgraph.populations}
     for conn in qgraph.connections:
-        if conn.dst != pop.name:
+        if conn.dst not in pop_names:
             return False
-        src_is_self = conn.src == pop.name
-        src_is_external = conn.src not in pop_names
-        if not (src_is_self or src_is_external):
-            return False  # inter-population (different source population) not yet folded
-        if src_is_self and _connection_sources_are_analogue(pop):
-            return False  # analogue recurrence (li/cuba_li) needs the v_out path, not yet folded
+        src_pop = pop_by_name.get(conn.src)
+        if src_pop is not None and _connection_sources_are_analogue(src_pop):
+            return False  # analogue (li/cuba_li) source fan-in needs the v_out path
         if conn.bias is not None and bool(np.any(np.asarray(conn.bias))):
             return False  # a non-zero bias term is not folded yet (zero bias is a no-op)
         if conn.source_threshold is not None:
@@ -1317,11 +1427,13 @@ def _can_fold(qgraph: QuantisedGraph) -> bool:
 
 
 def _folded_resource_metrics(qgraph: QuantisedGraph, *, data_width: int) -> FoldedResourceMetrics:
-    """Summarise the shared-datapath resources of a foldable single-population graph.
+    """Summarise the shared-datapath resources of a foldable graph.
 
-    Counts one PE, the shared weighted-fan-in multipliers (external connections only —
-    spiking-recurrent fan-in is spike-gated and uses none), the BRAM state-word storage,
-    and the cycles-per-tick, plus the direct-path instance count the fold collapses.
+    Counts one PE per distinct neuron type (the per-type pool), the shared
+    weighted-fan-in multipliers (external-source columns only — spiking recurrent or
+    inter-population fan-in is spike-gated and uses none), the BRAM state-word storage
+    summed over populations, the cycles-per-tick, and the direct-path instance count
+    the fold collapses.
 
     Parameters
     ----------
@@ -1335,23 +1447,31 @@ def _folded_resource_metrics(qgraph: QuantisedGraph, *, data_width: int) -> Fold
     FoldedResourceMetrics
         The architectural fold summary.
     """
-    pop = qgraph.populations[0]
-    neuron = _population_neuron(pop.neuron_type, pop)
-    n_vars = len(neuron.equations)
-    n = pop.n_neurons
+    pops = qgraph.populations
+    pop_names = {p.name for p in pops}
+    n_total = sum(p.n_neurons for p in pops)
+    state_ram_bits = 0
+    max_state_vars = 0
+    for pop in pops:
+        neuron = _population_neuron(pop.neuron_type, pop)
+        n_vars = len(neuron.equations)
+        max_state_vars = max(max_state_vars, n_vars)
+        state_ram_bits += pop.n_neurons * n_vars * data_width
     shared_multipliers = sum(
         int(np.asarray(conn.weights).shape[1])
         for conn in qgraph.connections
-        if conn.dst == pop.name and conn.src != pop.name
+        if conn.src not in pop_names  # external-weighted only; spiking sources use no multiplier
     )
+    distinct_types = len({pop.neuron_type for pop in pops})
     return FoldedResourceMetrics(
-        neurons=n,
-        state_vars_per_neuron=n_vars,
-        pe_instances=1,
+        neurons=n_total,
+        state_vars_per_neuron=max_state_vars,
+        pe_instances=distinct_types,
         shared_multipliers=shared_multipliers,
-        state_ram_bits=n * n_vars * data_width,
-        cycles_per_tick=n + 1,
-        direct_neuron_instances=n,
+        state_ram_bits=state_ram_bits,
+        cycles_per_tick=n_total + 1,
+        direct_neuron_instances=n_total,
+        populations=len(pops),
     )
 
 
@@ -1361,152 +1481,92 @@ def _build_top_folded(
     *,
     data_width: int = 16,
     fraction: int = 8,
-) -> tuple[str, str]:
-    """Generate a time-multiplexed (folded) top + its shared datapath PE.
+) -> tuple[dict[str, str], str]:
+    """Generate a time-multiplexed (folded) top plus its per-type datapath PE pool.
 
-    One combinational PE (:func:`compile_to_datapath`) and one BRAM-backed state
-    array are shared across all neurons: a sequencer steps one neuron per cycle,
-    reading its packed state from BRAM, driving the PE with that state and the
-    neuron's external current, and writing the next state back. Spikes accumulate
-    over a tick and commit to ``spike_bus`` in a dedicated cycle (``tick_done``
-    pulses), so the bus is race-free and stable for one tick.
+    One combinational PE (:func:`compile_to_datapath`) per distinct neuron type and
+    one BRAM-backed state array per population are shared across every neuron: a
+    single sequencer steps one neuron per cycle, walking each population in turn,
+    reading the addressed neuron's packed state from its BRAM, driving the population's
+    PE with that state and the neuron's input current, and writing the next state back.
+    Spikes accumulate over a tick into a global accumulator and commit to a single
+    ``spike_bus`` in a dedicated cycle (``tick_done`` pulses), so the bus is race-free
+    and stable for the whole next tick. Recurrent and inter-population spiking fan-in
+    read that prior-tick ``spike_bus`` at the source population's bit offset — the same
+    double-buffer the direct interconnect's registered spikes provide.
 
-    Restricted to the :func:`_can_fold` subset (single connection-less population).
-    Returns ``(pe_module_source, top_module_source)``.
+    Restricted to the :func:`_can_fold` subset. Returns
+    ``({neuron_module_key: pe_source}, top_module_source)`` with one PE source per
+    distinct neuron type, keyed ``"{neuron_type}_pe"`` for the compilation artefacts.
     """
     if not _can_fold(qgraph):
         raise ValueError("graph is outside the folded interconnect's supported subset")
 
-    pop = qgraph.populations[0]
-    neuron = _population_neuron(pop.neuron_type, pop)
+    pops = list(qgraph.populations)
+    conns = list(qgraph.connections)
+    pop_by_name = {p.name: p for p in pops}
+    pop_names = set(pop_by_name)
+    safe_module = sanitize_ident(module_name, context="module name")
     q = Q88(data_width=data_width, fraction=fraction)
 
-    safe_module = sanitize_ident(module_name, context="module name")
-    pe_module = sanitize_ident(f"sc_nir_{pop.neuron_type}_pe", context="module name")
-    pe_source = compile_to_datapath(
-        neuron, module_name=pe_module, data_width=data_width, fraction=fraction
-    )
+    # Global spike-bus layout: each population owns a contiguous slice, matching the
+    # direct interconnect's pop_offsets so the golden raster compares bit-for-bit.
+    spike_offsets: dict[str, int] = {}
+    cursor = 0
+    for pop in pops:
+        spike_offsets[pop.name] = cursor
+        cursor += pop.n_neurons
+    n_total = cursor
 
-    svars = [sanitize_ident(v, context="state variable") for v in neuron.equations]
-    n_vars = len(svars)
-    n = pop.n_neurons
-    idx_w = max(1, (n - 1).bit_length())
-    state_w = n_vars * data_width
+    ext_width, ext_offsets, _ext_src_widths = _external_input_layout(conns, pop_by_name, pops)
+    input_bus_width = max(1, ext_width * data_width)
 
-    # Packed init literal (MSB = last var) and per-var bit slices.
-    init_words = []
-    for var in neuron.equations:
-        enc = q.encode(neuron.initial_state.get(var, 0.0))
-        init_words.append(
-            f"{data_width}'h{enc & ((1 << data_width) - 1):0{max(1, data_width // 4)}x}"
-        )
-    init_packed = "{" + ", ".join(reversed(init_words)) + "}"
+    # Global accumulator width chosen exactly as the direct path (seeded by the external
+    # vector width, widened by the largest single connection) so saturation matches.
+    max_terms = ext_width if pops else 1
+    for conn in conns:
+        max_terms = max(max_terms, int(np.asarray(conn.weights).shape[1]))
+    acc_width = max(data_width + 2, (2 * data_width) + _ceil_log2_at_least_one(max_terms + 1))
+
+    idx_w = max(1, (max(p.n_neurons for p in pops) - 1).bit_length())
+    pidx_w = max(1, (len(pops) - 1).bit_length())
 
     def slice_of(k: int) -> str:
         return f"[{k * data_width} +: {data_width}]"
 
-    pe_cur_ports = [f"        .{svars[k]}_reg(cur_state{slice_of(k)})," for k in range(n_vars)]
-    pe_next_ports = [
-        f"        .{svars[k]}_next_out(next_state{slice_of(k)})," for k in range(n_vars)
-    ]
+    # One PE module per distinct neuron type (params are uniform per type within a
+    # compile, so same-type populations instantiate the same module — a true PE pool).
+    pe_modules: dict[str, str] = {}
+    pe_module_name: dict[str, str] = {}
+    type_neuron: dict[str, EquationNeuron] = {}
+    type_svars: dict[str, list[str]] = {}
+    type_state_w: dict[str, int] = {}
+    type_init_packed: dict[str, str] = {}
+    for pop in pops:
+        ntype = pop.neuron_type
+        if ntype in pe_module_name:
+            continue
+        neuron = _population_neuron(ntype, pop)
+        type_neuron[ntype] = neuron
+        mod = sanitize_ident(f"sc_nir_{ntype}_pe", context="module name")
+        pe_module_name[ntype] = mod
+        pe_modules[f"{ntype}_pe"] = compile_to_datapath(
+            neuron, module_name=mod, data_width=data_width, fraction=fraction
+        )
+        svars = [sanitize_ident(v, context="state variable") for v in neuron.equations]
+        type_svars[ntype] = svars
+        type_state_w[ntype] = len(svars) * data_width
+        init_words = [
+            f"{data_width}'h{q.encode(neuron.initial_state.get(var, 0.0)) & ((1 << data_width) - 1):0{max(1, data_width // 4)}x}"
+            for var in neuron.equations
+        ]
+        type_init_packed[ntype] = "{" + ", ".join(reversed(init_words)) + "}"
 
-    # ----- per-neuron external input (shared across all neurons via nidx) -----
-    pop_by_name = {p.name: p for p in qgraph.populations}
-    ext_width, ext_offsets, _ext_src_widths = _external_input_layout(
-        qgraph.connections, pop_by_name, qgraph.populations
-    )
-    feeding = [conn for conn in qgraph.connections if conn.dst == pop.name]
-    input_bus_width = max(1, ext_width * data_width)
-    product_width = 2 * data_width
-
-    input_decls: list[str] = []
-    if not feeding:
-        # Connection-less: one external lane per neuron (sat_acc(sign-extend) = identity).
-        cur_i_expr = f"I_ext_flat[nidx * {data_width} +: {data_width}]"
-    else:
-        # External-weighted feedforward: I = sat_acc(sum_src (ext_input[src] * w[nidx, src]) >>> frac).
-        # One shared multiplier set + a row-weight ROM (case over nidx) replaces the direct
-        # path's per-(neuron, source) multiplier; the sum order matches direct bit-for-bit.
-        max_terms = max(int(np.asarray(conn.weights).shape[1]) for conn in feeding)
-        acc_width = max(data_width + 2, (2 * data_width) + _ceil_log2_at_least_one(max_terms + 1))
-        input_decls.append(f"    localparam integer ACC_WIDTH = {acc_width};")
-        input_decls.append(
-            "    localparam signed [DATA_WIDTH - 1:0] Q_MAX = {1'b0, {(DATA_WIDTH - 1){1'b1}}};"
-        )
-        input_decls.append(
-            "    localparam signed [DATA_WIDTH - 1:0] Q_MIN = {1'b1, {(DATA_WIDTH - 1){1'b0}}};"
-        )
-        input_decls.extend(
-            [
-                "    function signed [DATA_WIDTH - 1:0] sat_acc;",
-                "        input signed [ACC_WIDTH - 1:0] x;",
-                "        begin",
-                "            if (x > $signed({{(ACC_WIDTH - DATA_WIDTH){Q_MAX[DATA_WIDTH - 1]}}, Q_MAX}))",
-                "                sat_acc = Q_MAX;",
-                "            else if (x < $signed({{(ACC_WIDTH - DATA_WIDTH){Q_MIN[DATA_WIDTH - 1]}}, Q_MIN}))",
-                "                sat_acc = Q_MIN;",
-                "            else",
-                "                sat_acc = x[DATA_WIDTH - 1:0];",
-                "        end",
-                "    endfunction",
-                "",
-            ]
-        )
-        for k in range(ext_width):
-            input_decls.append(
-                f"    wire signed [DATA_WIDTH - 1:0] ext_input_{k} = "
-                f"I_ext_flat[{k * data_width} +: {data_width}];"
-            )
-        # Row-weight ROM: one always@* selects the current neuron's weight row.
-        rw_regs: list[str] = []
-        rows: dict[int, list[str]] = {nrow: [] for nrow in range(n)}
-        term_lines: list[str] = []
-        term_names: list[str] = []
-        for ci, conn in enumerate(feeding):
-            weights = np.asarray(conn.weights, dtype=np.int64)
-            is_recurrent = conn.src == pop.name
-            off = ext_offsets.get(conn.src, 0)
-            for src in range(weights.shape[1]):
-                rw = f"rw_{ci}_{src}"
-                rw_regs.append(f"    reg signed [DATA_WIDTH - 1:0] {rw};")
-                for nrow in range(n):
-                    rows[nrow].append(f"{rw} = {_signed_hex(int(weights[nrow, src]), data_width)};")
-                if is_recurrent:
-                    # Spiking recurrent fan-in: the prior-tick spike (spike_bus holds the last
-                    # committed tick) gates the full weight, sign-extended to ACC_WIDTH —
-                    # identical to direct's `(src_spike ? weight : 0)` with registered spikes.
-                    rw_sext = f"{{{{(ACC_WIDTH - DATA_WIDTH){{{rw}[DATA_WIDTH - 1]}}}}, {rw}}}"
-                    term_names.append(f"(spike_bus[{src}] ? {rw_sext} : {acc_width}'sd0)")
-                else:
-                    mul = f"fmul_{ci}_{src}"
-                    term = f"fterm_{ci}_{src}"
-                    term_lines.append(
-                        f"    wire signed [{product_width - 1}:0] {mul} = ext_input_{off + src} * {rw};"
-                    )
-                    term_lines.append(
-                        f"    wire signed [ACC_WIDTH - 1:0] {term} = {mul} >>> {fraction};"
-                    )
-                    term_names.append(term)
-        input_decls.extend(rw_regs)
-        default_assigns = " ".join(
-            f"{rw.split()[-1].rstrip(';')} = {data_width}'sd0;" for rw in rw_regs
-        )
-        input_decls.append("    always @(*) begin")
-        input_decls.append("        case (nidx)")
-        for nrow in range(n):
-            input_decls.append(f"            {idx_w}'d{nrow}: begin {' '.join(rows[nrow])} end")
-        input_decls.append(f"            default: begin {default_assigns} end")
-        input_decls.append("        endcase")
-        input_decls.append("    end")
-        input_decls.extend(term_lines)
-        acc_expr = " + ".join(term_names) if term_names else f"{acc_width}'sd0"
-        input_decls.append(f"    wire signed [ACC_WIDTH - 1:0] fold_i_acc = {acc_expr};")
-        cur_i_expr = "sat_acc(fold_i_acc)"
-
-    lines = [
+    # ----- module header + saturating accumulator (module-scope, shared) -----
+    lines: list[str] = [
         f"// Auto-generated folded (time-multiplexed) top-level network: {safe_module}",
-        "// SC-NeuroCore NIR → FPGA compiler — shared datapath PE + BRAM state.",
-        f"// Population: {pop.name} ({pop.neuron_type} x {n}); one neuron per cycle.",
+        "// SC-NeuroCore NIR → FPGA compiler — per-type shared datapath PE pool + BRAM state.",
+        f"// Populations: {len(pops)} ({n_total} neurons); one neuron per cycle, shared spike bus.",
         "`timescale 1ns / 1ps",
         "",
         f"module {safe_module} (",
@@ -1514,58 +1574,176 @@ def _build_top_folded(
         "    input  wire rst_n,",
         "    input  wire en,",
         f"    input  wire signed [{input_bus_width - 1}:0] I_ext_flat,",
-        f"    output reg  [{n - 1}:0] spike_bus,",
+        f"    output reg  [{n_total - 1}:0] spike_bus,",
         "    output reg  tick_done",
         ");",
         "",
         f"    localparam integer DATA_WIDTH = {data_width};",
-        f"    localparam integer N_NEURONS = {n};",
-        f"    localparam integer STATE_W = {state_w};",
+        f"    localparam integer ACC_WIDTH = {acc_width};",
+        f"    localparam integer N_TOTAL = {n_total};",
+        "    localparam signed [DATA_WIDTH - 1:0] Q_MAX = {1'b0, {(DATA_WIDTH - 1){1'b1}}};",
+        "    localparam signed [DATA_WIDTH - 1:0] Q_MIN = {1'b1, {(DATA_WIDTH - 1){1'b0}}};",
         "",
-        '    (* ram_style = "block" *)',
-        f"    reg [STATE_W - 1:0] state_bram [0:{n - 1}];",
-        f"    reg [{idx_w - 1}:0] nidx;",
+        "    function signed [DATA_WIDTH - 1:0] sat_acc;",
+        "        input signed [ACC_WIDTH - 1:0] x;",
+        "        begin",
+        "            if (x > $signed({{(ACC_WIDTH - DATA_WIDTH){Q_MAX[DATA_WIDTH - 1]}}, Q_MAX}))",
+        "                sat_acc = Q_MAX;",
+        "            else if (x < $signed({{(ACC_WIDTH - DATA_WIDTH){Q_MIN[DATA_WIDTH - 1]}}, Q_MIN}))",
+        "                sat_acc = Q_MIN;",
+        "            else",
+        "                sat_acc = x[DATA_WIDTH - 1:0];",
+        "        end",
+        "    endfunction",
+        "",
+        f"    reg [{pidx_w - 1}:0] pidx;  // active population",
+        f"    reg [{idx_w - 1}:0] nidx;  // neuron within the active population",
         "    reg phase;  // 0 = process one neuron, 1 = commit tick",
-        f"    reg [{n - 1}:0] spike_acc;",
+        f"    reg [{n_total - 1}:0] spike_acc;",
         "",
-        *input_decls,
-        "",
-        "    wire [STATE_W - 1:0] cur_state = state_bram[nidx];",
-        f"    wire signed [DATA_WIDTH - 1:0] cur_I = {cur_i_expr};",
-        "    wire [STATE_W - 1:0] next_state;",
-        "    wire pe_spike;",
-        "",
-        f"    {pe_module} pe_inst (",
-        "        .I_t(cur_I),",
-        *pe_cur_ports,
-        "        .spike_out(pe_spike),",
-        *pe_next_ports,
     ]
-    lines[-1] = lines[-1].rstrip(",")
+
+    # Per-population state BRAMs (word width set by the population's neuron type).
+    for pi, pop in enumerate(pops):
+        sw = type_state_w[pop.neuron_type]
+        lines.extend(
+            [
+                f"    // Population {pi}: {pop.name} ({pop.neuron_type} x {pop.n_neurons}); "
+                f"spike_bus[{spike_offsets[pop.name]} +: {pop.n_neurons}]",
+                '    (* ram_style = "block" *)',
+                f"    reg [{sw - 1}:0] state_bram_{pi} [0:{pop.n_neurons - 1}];",
+            ]
+        )
+    lines.append("")
+
+    # Shared external-input lane wires (only when external sources exist).
+    if ext_offsets:
+        for k in range(ext_width):
+            lines.append(
+                f"    wire signed [DATA_WIDTH - 1:0] ext_input_{k} = "
+                f"I_ext_flat[{k * data_width} +: {data_width}];"
+            )
+        lines.append("")
+
+    # Per-population input current, addressed by the shared sequencer index nidx.
+    for pi, pop in enumerate(pops):
+        feeding = [conn for conn in conns if conn.dst == pop.name]
+        decls, cur_i_expr = _folded_population_input(
+            pop,
+            feeding,
+            data_width=data_width,
+            fraction=fraction,
+            acc_width=acc_width,
+            ext_offsets=ext_offsets,
+            spike_offsets=spike_offsets,
+            pop_names=pop_names,
+            is_first_pop=(pi == 0),
+            idx_signal="nidx",
+            idx_w=idx_w,
+            suffix=f"_{pi}",
+        )
+        lines.append(f"    // --- population {pi} ({pop.name}) input current ---")
+        lines.extend(decls)
+        lines.append(f"    wire signed [DATA_WIDTH - 1:0] cur_I_{pi} = {cur_i_expr};")
+    active_i_mux = _cond_mux(
+        [(f"pidx == {pidx_w}'d{pi}", f"cur_I_{pi}") for pi in range(len(pops))],
+        default=f"{data_width}'sd0",
+    )
+    lines.append("")
+    lines.append(f"    wire signed [DATA_WIDTH - 1:0] active_I = {active_i_mux};")
+    lines.append("")
+
+    # Per-type PE pool. Each PE's current state is the active same-type population's
+    # BRAM word; only the active population's PE outputs are written back each cycle.
+    for ntype, mod in pe_module_name.items():
+        svars = type_svars[ntype]
+        sw = type_state_w[ntype]
+        same_type = [pi for pi, pop in enumerate(pops) if pop.neuron_type == ntype]
+        state_mux = _cond_mux(
+            [(f"pidx == {pidx_w}'d{pi}", f"state_bram_{pi}[nidx]") for pi in same_type],
+            default=f"state_bram_{same_type[0]}[nidx]",
+        )
+        lines.extend(
+            [
+                f"    // PE for neuron type '{ntype}' (shared across {len(same_type)} population(s))",
+                f"    wire [{sw - 1}:0] cur_state_{ntype} = {state_mux};",
+                f"    wire [{sw - 1}:0] next_state_{ntype};",
+                f"    wire pe_spike_{ntype};",
+                f"    {mod} pe_inst_{ntype} (",
+                "        .I_t(active_I),",
+            ]
+        )
+        lines.extend(
+            f"        .{svars[k]}_reg(cur_state_{ntype}{slice_of(k)})," for k in range(len(svars))
+        )
+        lines.append(f"        .spike_out(pe_spike_{ntype}),")
+        lines.extend(
+            f"        .{svars[k]}_next_out(next_state_{ntype}{slice_of(k)}),"
+            for k in range(len(svars))
+        )
+        lines[-1] = lines[-1].rstrip(",")
+        lines.extend(["    );", ""])
+
+    # Last-neuron index of the active population (sequencer roll-over bound).
+    last_mux = _cond_mux(
+        [
+            (f"pidx == {pidx_w}'d{pi}", f"{idx_w}'d{pop.n_neurons - 1}")
+            for pi, pop in enumerate(pops)
+        ],
+        default=f"{idx_w}'d{pops[-1].n_neurons - 1}",
+    )
+    lines.append(f"    wire [{idx_w - 1}:0] cur_pop_last = {last_mux};")
+    lines.append("")
+
+    # ----- sequencer FSM -----
     lines.extend(
         [
-            "    );",
-            "",
             "    integer i;",
             "    always @(posedge clk or negedge rst_n) begin",
             "        if (!rst_n) begin",
+            "            pidx <= 0;",
             "            nidx <= 0;",
             "            phase <= 1'b0;",
             "            spike_acc <= 0;",
             "            spike_bus <= 0;",
             "            tick_done <= 1'b0;",
-            f"            for (i = 0; i < {n}; i = i + 1) state_bram[i] <= {init_packed};",
+        ]
+    )
+    for pi, pop in enumerate(pops):
+        lines.append(
+            f"            for (i = 0; i < {pop.n_neurons}; i = i + 1) "
+            f"state_bram_{pi}[i] <= {type_init_packed[pop.neuron_type]};"
+        )
+    lines.extend(
+        [
             "        end else if (en) begin",
             "            if (phase == 1'b0) begin",
-            "                spike_acc[nidx] <= pe_spike;",
-            "                state_bram[nidx] <= next_state;",
             "                tick_done <= 1'b0;",
-            f"                if (nidx == {idx_w}'d{n - 1}) phase <= 1'b1;",
-            "                else nidx <= nidx + 1'b1;",
+            "                case (pidx)",
+        ]
+    )
+    for pi, pop in enumerate(pops):
+        ntype = pop.neuron_type
+        off = spike_offsets[pop.name]
+        bus_idx = "nidx" if off == 0 else f"{off} + nidx"
+        lines.append(
+            f"                    {pidx_w}'d{pi}: begin "
+            f"spike_acc[{bus_idx}] <= pe_spike_{ntype}; "
+            f"state_bram_{pi}[nidx] <= next_state_{ntype}; end"
+        )
+    lines.extend(
+        [
+            "                    default: ;",
+            "                endcase",
+            "                if (nidx == cur_pop_last) begin",
+            f"                    if (pidx == {pidx_w}'d{len(pops) - 1}) phase <= 1'b1;",
+            "                    else begin pidx <= pidx + 1'b1; nidx <= 0; end",
+            "                end else nidx <= nidx + 1'b1;",
             "            end else begin",
             "                spike_bus <= spike_acc;",
             "                tick_done <= 1'b1;",
             "                phase <= 1'b0;",
+            "                pidx <= 0;",
             "                nidx <= 0;",
             "            end",
             "        end",
@@ -1575,7 +1753,7 @@ def _build_top_folded(
             "",
         ]
     )
-    return pe_source, "\n".join(lines)
+    return pe_modules, "\n".join(lines)
 
 
 def _build_top_aer(
@@ -1938,8 +2116,10 @@ def compile_network_to_fpga(
     interconnect : str | None
         ``None`` (default) auto-selects direct (small) or AER (large) wiring;
         ``"direct"`` forces direct; ``"folded"`` opts into the time-multiplexed
-        shared-datapath interconnect (one PE + BRAM state across all neurons),
-        which currently supports only a single connection-less population.
+        shared-datapath interconnect (one PE per neuron type + per-population BRAM
+        state, swept by a single sequencer), which supports the :func:`_can_fold`
+        subset: any number of populations with external-weighted, recurrent, or
+        inter-population spiking fan-in.
 
     Returns
     -------
@@ -2029,19 +2209,21 @@ def compile_network_to_fpga(
     folded_metrics: FoldedResourceMetrics | None = None
 
     if interconnect == "folded":
-        # Opt-in time-multiplexed interconnect; never auto-selected. Restricted to
-        # the _can_fold subset (single population, external-weighted / recurrent fan-in).
+        # Opt-in time-multiplexed interconnect; never auto-selected. Restricted to the
+        # _can_fold subset (any number of populations of supported types with
+        # external-weighted, recurrent, or inter-population spiking fan-in).
         if not _can_fold(qgraph):
             raise ValueError(
-                "interconnect='folded' supports only a single population of a supported neuron "
-                "type with external-weighted or recurrent connections (the folded subset); use "
-                "'direct' or auto otherwise"
+                "interconnect='folded' supports populations of supported neuron types with "
+                "external-weighted, recurrent, or inter-population spiking connections (the "
+                "folded subset); bias, thresholds, synaptic delays, and analogue source "
+                "populations are not folded yet — use 'direct' or auto otherwise"
             )
         selected_interconnect = "folded"
-        pe_source, top_module = _build_top_folded(
+        pe_modules, top_module = _build_top_folded(
             module_name, qgraph, data_width=data_width, fraction=fraction
         )
-        neuron_modules[f"{qgraph.populations[0].neuron_type}_pe"] = pe_source
+        neuron_modules.update(pe_modules)
         folded_metrics = _folded_resource_metrics(qgraph, data_width=data_width)
     elif interconnect not in (None, "direct"):
         raise ValueError(

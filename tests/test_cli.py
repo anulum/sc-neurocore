@@ -2375,7 +2375,7 @@ class TestCompileNirCommand:
         assert rc == 0
         out = capsys.readouterr().out
         assert "Interconnect: folded" in out
-        assert "Folded datapath: 1 PE" in out
+        assert "Folded datapath: 1 population(s), 1 PE" in out
         assert "collapses 2 direct neuron instances" in out
         # The shared datapath PE module is emitted alongside the top.
         assert (out_dir / "folded_net.v").exists()
@@ -2390,6 +2390,7 @@ class TestCompileNirCommand:
         assert metrics["neurons"] == 2
         assert metrics["direct_neuron_instances"] == 2
         assert metrics["shared_multipliers"] == 2
+        assert metrics["populations"] == 1
 
     def test_compile_nir_writes_valid_dense_scnir_document(self, tmp_path, capsys):
         nir = pytest.importorskip("nir")
