@@ -461,21 +461,21 @@ def test_compile_network_folded_opt_in() -> None:
 def test_compile_network_folded_rejects_unsupported_graph() -> None:
     from sc_neurocore.nir_bridge.fpga_compiler import compile_network_to_fpga
 
-    # A source-threshold transform on the inter-population projection is outside the
-    # folded subset (the comparator semantics are not folded yet → direct fallback).
+    # A non-zero connection bias is outside the folded subset (bias terms are not
+    # folded yet → direct fallback).
     import numpy as np
 
     pop_a = NeuronSpec(name="a", neuron_type="lif", n_neurons=4, params={}, dt=1.0)
     pop_b = NeuronSpec(name="b", neuron_type="lif", n_neurons=4, params={}, dt=1.0)
-    thresholded = ConnectionSpec(
+    biased = ConnectionSpec(
         src="a",
         dst="b",
         weights=np.ones((4, 4), np.float32) * 0.4,
-        source_threshold=np.full(4, 0.5, np.float32),
+        bias=np.full(4, 0.3, np.float32),
     )
     ng = NeuronGraph(
         populations=[pop_a, pop_b],
-        connections=[thresholded],
+        connections=[biased],
         input_pop="a",
         output_pop="b",
         dt=1.0,
@@ -606,6 +606,123 @@ def test_folded_two_population_delayed_feedforward_matches_direct() -> None:
     assert len(direct_raster) == _STEPS and len(folded_raster) == _STEPS
     assert folded_raster == direct_raster, (
         "folded delayed two-population raster diverged from direct at step "
+        f"{next((i for i, (a, b) in enumerate(zip(direct_raster, folded_raster)) if a != b), None)}"
+    )
+    assert any("1" in row[:3] for row in direct_raster), "output population should spike"
+
+
+def _parity_rasters(ng: NeuronGraph, currents: list[float], n_total: int) -> tuple[list, list]:
+    """Co-simulate ``ng`` through both interconnects and return ``(direct, folded)`` rasters."""
+    q = Q88(data_width=_DW, fraction=_FR)
+    qgraph = quantise_graph(ng, q)
+    mask = (1 << _DW) - 1
+    packed = 0
+    for k, cur in enumerate(currents):
+        packed |= (q.encode(cur) & mask) << (k * _DW)
+    flat = f"{len(currents) * _DW}'h{packed:x}"
+    direct_top = _build_top_direct("sc_fold_test", qgraph, data_width=_DW, fraction=_FR)
+    lif_module = _build_neuron_module("lif", qgraph.populations[0], data_width=_DW, fraction=_FR)
+    pe_modules, folded_top = _build_top_folded(
+        "sc_fold_test_folded", qgraph, data_width=_DW, fraction=_FR
+    )
+    pe_source = "\n\n".join(pe_modules.values())
+    direct_raster = _cosim(
+        {"lif": lif_module, "top": direct_top, "tb": _direct_tb(flat, n_total)}, "direct"
+    )
+    folded_raster = _cosim(
+        {"pe": pe_source, "top": folded_top, "tb": _folded_tb(flat, n_total)}, "folded"
+    )
+    return direct_raster, folded_raster
+
+
+def test_folded_external_source_threshold_matches_direct() -> None:
+    import numpy as np
+
+    # External-weighted input gated per-column by a NIR source Threshold: a column
+    # contributes its (un-multiplied) weight only when its external input exceeds the
+    # threshold. Currents straddle the thresholds so the gates toggle.
+    n_dst, n_src = 5, 3
+    weights = np.array(
+        [[1.2, 0.8, 0.6], [1.0, 0.9, 0.7], [1.3, 0.5, 0.4], [0.9, 1.0, 0.6], [1.1, 0.7, 0.5]],
+        dtype=np.float32,
+    )
+    src_thr = np.array([1.0, 1.2, 0.8], dtype=np.float32)
+    pop = NeuronSpec(name="pop0", neuron_type="lif", n_neurons=n_dst, params={}, dt=1.0)
+    conn = ConnectionSpec(src="stim", dst="pop0", weights=weights, source_threshold=src_thr)
+    ng = NeuronGraph(
+        populations=[pop], connections=[conn], input_pop="stim", output_pop="pop0", dt=1.0
+    )
+    direct_raster, folded_raster = _parity_rasters(ng, [1.5, 1.1, 1.3], n_dst)
+    assert len(direct_raster) == _STEPS and len(folded_raster) == _STEPS
+    assert folded_raster == direct_raster, (
+        "folded external source-threshold raster diverged from direct at step "
+        f"{next((i for i, (a, b) in enumerate(zip(direct_raster, folded_raster)) if a != b), None)}"
+    )
+    assert any("1" in row for row in direct_raster), "source-threshold workload should spike"
+
+
+def test_folded_destination_threshold_matches_direct() -> None:
+    import numpy as np
+
+    # Mixed fan-in into one population: a destination-thresholded external connection
+    # (the whole weighted sum, gated per neuron, emits one spike-magnitude) plus a plain
+    # baseline external connection. The baseline alone stays sub-threshold; only neurons
+    # whose thresholded connection also fires reach the LIF threshold, so the per-neuron
+    # destination threshold toggles which neurons spike.
+    n_dst = 4
+    thr_w = np.full((n_dst, 3), 0.8, dtype=np.float32)  # raw ≈ (2.0+1.5+1.0)*0.8 = 3.6
+    dst_thr = np.array([1.0, 3.0, 4.0, 5.0], dtype=np.float32)  # neurons 0,1 fire; 2,3 do not
+    base_w = np.full((n_dst, 2), 0.3, dtype=np.float32)  # baseline ≈ 0.6, sub-threshold alone
+    pop = NeuronSpec(name="pop0", neuron_type="lif", n_neurons=n_dst, params={}, dt=1.0)
+    ng = NeuronGraph(
+        populations=[pop],
+        connections=[
+            ConnectionSpec(src="stim", dst="pop0", weights=thr_w, destination_threshold=dst_thr),
+            ConnectionSpec(src="base", dst="pop0", weights=base_w),
+        ],
+        input_pop="stim",
+        output_pop="pop0",
+        dt=1.0,
+    )
+    # External bus layout follows connection order: stim (3 lanes) then base (2 lanes).
+    direct_raster, folded_raster = _parity_rasters(ng, [2.0, 1.5, 1.0, 1.0, 1.0], n_dst)
+    assert len(direct_raster) == _STEPS and len(folded_raster) == _STEPS
+    assert folded_raster == direct_raster, (
+        "folded destination-threshold raster diverged from direct at step "
+        f"{next((i for i, (a, b) in enumerate(zip(direct_raster, folded_raster)) if a != b), None)}"
+    )
+    assert any("1" in row for row in direct_raster), "destination-threshold workload should spike"
+
+
+def test_folded_two_population_source_threshold_matches_direct() -> None:
+    import numpy as np
+
+    # Inter-population spiking fan-in gated by a source Threshold: the spike magnitude
+    # (1.0 in Q8.8) is compared against the per-column threshold before the weight gates.
+    n_in, n_out = 4, 3
+    ext = np.array([[1.4, 1.0], [1.6, 0.8], [1.2, 1.2], [1.8, 0.6]], dtype=np.float32)
+    ff = np.array(
+        [[2.0, 0.0, 1.8, 1.2], [1.2, 2.0, 0.0, 1.8], [1.6, 1.6, 1.4, 0.0]], dtype=np.float32
+    )
+    # Thresholds below the 1.0 spike magnitude so a spike passes the gate (column 1 above
+    # it, so that column never contributes — exercising both sides of the comparator).
+    src_thr = np.array([0.5, 1.5, 0.5, 0.5], dtype=np.float32)
+    inp = NeuronSpec(name="inp", neuron_type="lif", n_neurons=n_in, params={}, dt=1.0)
+    out = NeuronSpec(name="out", neuron_type="lif", n_neurons=n_out, params={}, dt=1.0)
+    ng = NeuronGraph(
+        populations=[inp, out],
+        connections=[
+            ConnectionSpec(src="stim", dst="inp", weights=ext),
+            ConnectionSpec(src="inp", dst="out", weights=ff, source_threshold=src_thr),
+        ],
+        input_pop="stim",
+        output_pop="out",
+        dt=1.0,
+    )
+    direct_raster, folded_raster = _parity_rasters(ng, [4.0, 3.5], n_in + n_out)
+    assert len(direct_raster) == _STEPS and len(folded_raster) == _STEPS
+    assert folded_raster == direct_raster, (
+        "folded inter-pop source-threshold raster diverged from direct at step "
         f"{next((i for i, (a, b) in enumerate(zip(direct_raster, folded_raster)) if a != b), None)}"
     )
     assert any("1" in row[:3] for row in direct_raster), "output population should spike"

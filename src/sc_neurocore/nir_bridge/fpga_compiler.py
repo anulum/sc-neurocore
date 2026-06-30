@@ -1327,6 +1327,13 @@ def _folded_population_input(
       ``spike_bus`` committed ``d`` ticks ago), mirroring direct's ``*_spike_d{d}``
       register chain.
 
+    NIR ``Threshold`` transforms fold too: a **source threshold** gates the full
+    sign-extended weight on the source value (spike magnitude or external input)
+    exceeding the per-column threshold; a **destination threshold** sums the
+    connection's terms into a per-neuron ``raw`` accumulator and replaces them with a
+    fixed spike-magnitude term when ``raw`` exceeds the per-neuron threshold (selected
+    from the same ``case`` ROM over ``idx_signal``).
+
     The accumulator width (``ACC_WIDTH``), the saturating cast (``sat_acc``), the
     ``ext_input_*`` lane wires, and the ``spike_bus_hist_*`` delay shift-register are
     module-scope and emitted once by the caller.
@@ -1339,10 +1346,11 @@ def _folded_population_input(
         return [], f"{data_width}'sd0"
 
     decls: list[str] = []
-    rw_regs: list[str] = []
+    rom_regs: list[tuple[str, int]] = []  # (reg name, bit width) for the per-neuron ROM
     rows: dict[int, list[str]] = {nrow: [] for nrow in range(n)}
     term_lines: list[str] = []
-    term_names: list[str] = []
+    pop_term_names: list[str] = []
+    spike_mag = _signed_hex(1 << fraction, data_width)
     for ci, conn in enumerate(feeding):
         weights = np.asarray(conn.weights, dtype=np.int64)
         src_is_pop = conn.src in pop_names
@@ -1353,35 +1361,74 @@ def _folded_population_input(
             int(weights.shape[1]),
             f"Connection {conn.src}->{conn.dst}",
         )
+        source_thresholds = (
+            None
+            if conn.source_threshold is None
+            else np.asarray(conn.source_threshold, dtype=np.int64).reshape(-1)
+        )
+        destination_thresholds = (
+            None
+            if conn.destination_threshold is None
+            else np.asarray(conn.destination_threshold, dtype=np.int64).reshape(-1)
+        )
+        conn_terms: list[str] = []
         for src in range(weights.shape[1]):
             rw = f"rw{suffix}_{ci}_{src}"
-            rw_regs.append(f"    reg signed [DATA_WIDTH - 1:0] {rw};")
+            rom_regs.append((rw, data_width))
             for nrow in range(n):
                 rows[nrow].append(f"{rw} = {_signed_hex(int(weights[nrow, src]), data_width)};")
+            # Full weight, sign-extended to ACC_WIDTH (gated paths contribute the whole
+            # weight; only the un-thresholded external path multiplies by the input).
+            rw_sext = f"{{{{(ACC_WIDTH - DATA_WIDTH){{{rw}[DATA_WIDTH - 1]}}}}, {rw}}}"
             if src_is_pop:
-                # Prior-tick spike (committed in spike_bus) gates the full weight,
-                # sign-extended to ACC_WIDTH — identical to direct's `(src_spike ? w : 0)`.
                 # A delay of d ticks reads the d-tick-old snapshot spike_bus_hist_d.
                 delay = delay_vector[src]
                 spike_signal = "spike_bus" if delay == 0 else f"spike_bus_hist_{delay}"
-                rw_sext = f"{{{{(ACC_WIDTH - DATA_WIDTH){{{rw}[DATA_WIDTH - 1]}}}}, {rw}}}"
-                term_names.append(
-                    f"({spike_signal}[{spike_base + src}] ? {rw_sext} : {acc_width}'sd0)"
-                )
+                spike_bit = f"{spike_signal}[{spike_base + src}]"
+                if source_thresholds is not None:
+                    thr = _signed_hex(int(source_thresholds[src]), data_width)
+                    spike_value = f"({spike_bit} ? {spike_mag} : {data_width}'sd0)"
+                    conn_terms.append(f"({spike_value} > {thr} ? {rw_sext} : {acc_width}'sd0)")
+                else:
+                    conn_terms.append(f"({spike_bit} ? {rw_sext} : {acc_width}'sd0)")
             else:
-                mul = f"fmul{suffix}_{ci}_{src}"
-                term = f"fterm{suffix}_{ci}_{src}"
-                term_lines.append(
-                    f"    wire signed [{product_width - 1}:0] {mul} = ext_input_{ext_off + src} * {rw};"
+                ext_in = f"ext_input_{ext_off + src}"
+                if source_thresholds is not None:
+                    thr = _signed_hex(int(source_thresholds[src]), data_width)
+                    conn_terms.append(f"({ext_in} > {thr} ? {rw_sext} : {acc_width}'sd0)")
+                else:
+                    mul = f"fmul{suffix}_{ci}_{src}"
+                    term = f"fterm{suffix}_{ci}_{src}"
+                    term_lines.append(
+                        f"    wire signed [{product_width - 1}:0] {mul} = {ext_in} * {rw};"
+                    )
+                    term_lines.append(
+                        f"    wire signed [ACC_WIDTH - 1:0] {term} = {mul} >>> {fraction};"
+                    )
+                    conn_terms.append(term)
+
+        if destination_thresholds is not None:
+            # The connection's whole fan-in is thresholded per destination neuron: a
+            # per-neuron threshold ROM, then the connection emits a fixed spike-magnitude.
+            dthr = f"dthr{suffix}_{ci}"
+            rom_regs.append((dthr, acc_width))
+            for nrow in range(n):
+                rows[nrow].append(
+                    f"{dthr} = {_signed_hex(int(destination_thresholds[nrow]), acc_width)};"
                 )
-                term_lines.append(
-                    f"    wire signed [ACC_WIDTH - 1:0] {term} = {mul} >>> {fraction};"
-                )
-                term_names.append(term)
-    decls.extend(rw_regs)
-    default_assigns = " ".join(
-        f"{rw.split()[-1].rstrip(';')} = {data_width}'sd0;" for rw in rw_regs
-    )
+            raw = f"raw{suffix}_{ci}"
+            out = f"thr_out{suffix}_{ci}"
+            raw_expr = " + ".join(conn_terms) if conn_terms else f"{acc_width}'sd0"
+            term_lines.append(f"    wire signed [ACC_WIDTH - 1:0] {raw} = {raw_expr};")
+            term_lines.append(f"    wire {out} = ({raw} > {dthr});")
+            pop_term_names.append(
+                f"({out} ? {_signed_hex(1 << fraction, acc_width)} : {acc_width}'sd0)"
+            )
+        else:
+            pop_term_names.extend(conn_terms)
+
+    decls.extend(f"    reg signed [{w - 1}:0] {name};" for name, w in rom_regs)
+    default_assigns = " ".join(f"{name} = {w}'sd0;" for name, w in rom_regs)
     decls.append("    always @(*) begin")
     decls.append(f"        case ({idx_signal})")
     for nrow in range(n):
@@ -1390,7 +1437,7 @@ def _folded_population_input(
     decls.append("        endcase")
     decls.append("    end")
     decls.extend(term_lines)
-    acc_expr = " + ".join(term_names) if term_names else f"{acc_width}'sd0"
+    acc_expr = " + ".join(pop_term_names) if pop_term_names else f"{acc_width}'sd0"
     decls.append(f"    wire signed [ACC_WIDTH - 1:0] fold_i_acc{suffix} = {acc_expr};")
     return decls, f"sat_acc(fold_i_acc{suffix})"
 
@@ -1405,12 +1452,12 @@ def _can_fold(qgraph: QuantisedGraph) -> bool:
     * **connection-less** — neurons driven only by their own external ``I_ext`` lane;
     * **external-weighted** — fed by external (non-population) source columns;
     * **spiking fan-in** — recurrent (self) or inter-population spikes from another
-      population, read from the prior-tick global spike bus.
+      population, read from the prior-tick global spike bus, optionally delayed or
+      gated by a source/destination NIR ``Threshold`` transform.
 
-    Connections carrying a non-zero bias, source/destination thresholds, synaptic
-    delays, or an analogue source population (``li``/``cuba_li``/``integrator``, whose
-    fan-in is the membrane voltage rather than spikes) are not folded yet and fall
-    back to the direct interconnect.
+    Connections carrying a non-zero bias or an analogue source population
+    (``li``/``cuba_li``/``integrator``, whose fan-in is the membrane voltage rather
+    than spikes) are not folded yet and fall back to the direct interconnect.
     """
     pops = qgraph.populations
     if not pops:
@@ -1427,10 +1474,6 @@ def _can_fold(qgraph: QuantisedGraph) -> bool:
             return False  # analogue (li/cuba_li) source fan-in needs the v_out path
         if conn.bias is not None and bool(np.any(np.asarray(conn.bias))):
             return False  # a non-zero bias term is not folded yet (zero bias is a no-op)
-        if conn.source_threshold is not None:
-            return False
-        if _connection_has_thresholds(conn):
-            return False
         delay_vector = _normalise_connection_delay_steps(
             getattr(conn, "delay_steps", 0),
             int(np.asarray(conn.weights).shape[1]),
@@ -2259,12 +2302,13 @@ def compile_network_to_fpga(
     if interconnect == "folded":
         # Opt-in time-multiplexed interconnect; never auto-selected. Restricted to the
         # _can_fold subset (any number of populations of supported types with
-        # external-weighted, recurrent, or inter-population spiking fan-in).
+        # external-weighted, recurrent, inter-population, delayed, or thresholded spiking
+        # fan-in).
         if not _can_fold(qgraph):
             raise ValueError(
                 "interconnect='folded' supports populations of supported neuron types with "
-                "external-weighted, recurrent, or inter-population spiking connections (the "
-                "folded subset); bias, thresholds, synaptic delays, and analogue source "
+                "external-weighted, recurrent, inter-population, delayed, or NIR-thresholded "
+                "spiking connections (the folded subset); a non-zero bias and analogue source "
                 "populations are not folded yet — use 'direct' or auto otherwise"
             )
         selected_interconnect = "folded"

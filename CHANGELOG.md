@@ -14,14 +14,19 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
   cycles per timestep. A single global spike bus committed at the end of each tick
   gives recurrent and inter-population spiking fan-in a stable prior-tick
   double-buffer. Per-source synaptic delays fold via a depth-`d` `spike_bus` history
-  shift-register (a delay of `d` ticks reads the bus committed `d` ticks ago). Bit-exact
-  with the direct path (golden co-simulation parity for connection-less, external-weighted,
-  recurrent-spiking, two-population feedforward/recurrent, and delayed recurrent /
-  mixed-per-column-delay two-population fan-in). Reports a `FoldedResourceMetrics` summary
+  shift-register (a delay of `d` ticks reads the bus committed `d` ticks ago). NIR
+  `Threshold` transforms fold too: a source threshold gates each sign-extended weight on
+  the source value (spike magnitude or external input); a destination threshold replaces a
+  connection's per-neuron weighted sum with one spike-magnitude when it exceeds the
+  threshold (selected from the per-neuron weight ROM). Bit-exact with the direct path
+  (golden co-simulation parity for connection-less, external-weighted, recurrent-spiking,
+  two-population feedforward/recurrent, delayed recurrent / mixed-per-column-delay
+  two-population, external/spiking source-threshold, mixed destination-threshold, and
+  inter-population source-threshold fan-in). Reports a `FoldedResourceMetrics` summary
   (populations, processing elements, shared multipliers, state-RAM bits, cycles per
   tick, collapsed direct instances) on the result, in the CLI output, and as a
-  `folded_metrics.json` artefact. Connections with bias, thresholds, or analogue source
-  populations fall back to direct. Never auto-selected; the direct/AER paths and the
+  `folded_metrics.json` artefact. Connections with a non-zero bias or an analogue source
+  population fall back to direct. Never auto-selected; the direct/AER paths and the
   SC-NIR source-handoff manifest are unchanged.
 
 ### Fixed
