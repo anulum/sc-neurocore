@@ -5,6 +5,17 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 ## [Unreleased]
 
 ### Added
+- Pre-synthesis area, latency, and power estimate for the folded interconnect
+  (`sc_neurocore.energy.estimate_folded_area` → `FoldedAreaEstimate`). It maps a folded
+  compile's `FoldedResourceMetrics` onto the existing Yosys-calibrated per-block costs in
+  `energy/fpga_models.py` — one combinational PE per neuron type, one DSP (or a LUT-based
+  multiply on a DSP-less target) per shared multiplier, a `data_width`-wide weight/threshold
+  /bias ROM mux per multiplier column, the per-neuron spike-bus double-buffer flip-flops, the
+  sequencer counters, and `state_ram_bits` of state BRAM — and turns `cycles_per_tick` into
+  latency, time, and energy per tick. `sc-neurocore compile-nir --interconnect folded` prints
+  the estimate and persists it under an `area_estimate` block in `folded_metrics.json` (skipped
+  for the non-FPGA `web` target). The estimate inherits the underlying primitives' ~20%
+  accuracy and introduces no new uncalibrated coefficients.
 - Folded (time-multiplexed) FPGA interconnect for `compile_network_to_fpga`,
   opt-in via `interconnect="folded"` and the `sc-neurocore compile-nir
   --interconnect folded` flag. Multi-layer networks share one combinational

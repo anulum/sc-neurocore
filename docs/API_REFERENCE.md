@@ -202,6 +202,42 @@ RuntimeError
 
 ---
 
+## Module `accel.backend_order`
+
+### Function `with_floor(floor)`
+Return :data:`ACCELERATORS` with ``floor`` appended as the always-available tier.
+
+---
+
+## Module `accel.backend_selection`
+
+### Function `current_cpu()`
+Return the host CPU model string, matching the benchmark harness convention.
+
+Mirrors ``benchmarks/bench_*.py::_cpu_model`` so a live host matches a stored
+``meta.cpu`` exactly: the ``/proc/cpuinfo`` ``model name`` line, else
+:func:`platform.processor`, else ``"unknown"``.
+
+### Function `_backend_speed_order(backends)`
+Return backend names that ran, sorted by ascending ``median_call_ms``.
+
+### Function `measured_orders()`
+Build ``{cpu: {kernel: (backends fastest-measured-first)}}`` from the JSONs.
+
+Cached: the on-disk benchmarks are immutable for the life of the process.
+Malformed or non-comparison files (no ``backends`` / ``kernel`` / ``meta.cpu``)
+are skipped silently — they are simply not a usable measurement.
+
+### Function `select_backend_order(kernel)`
+Return the dispatch order for ``kernel``, reordered from measured benchmarks.
+
+Compiled backends measured on this host's CPU lead, fastest-first; any backend
+in ``static`` without a measurement keeps its static position after them; the
+floor (``static&#91;-1&#93;``) is always last. With no matching measurement the static
+order is returned verbatim.
+
+---
+
 ## Module `accel.gpu_backend`
 
 ### Class `_BackendProxy`
@@ -310,71 +346,6 @@ Manages execution and telemetry gathering for the underlying monolithic Mojo sui
   - Call the Mojo SIMD kernel directly or fall back to Python.
 - **lfsr_encode**(seed, threshold, bits)
   - Call the Mojo LFSR-16 encoder directly or fall back to Python.
-
----
-
-## Module `accel.mojo_dispatch`
-
-### Function `_detect_mojo()`
-Check if Mojo is available via pixi.
-
-### Function `_detect_rust()`
-Check if Rust FFI .so is available.
-
-### Function `_py_popcount32(word)`
-### Function `_py_popcount_array(arr)`
-### Function `_np_popcount64(packed)`
-Wilkes-Wheeler-Gill popcount over uint64 array.
-
-### Function `_np_pack_bitstream(bits)`
-Pack uint8 {0,1} array into uint64 words.
-
-### Function `_np_sc_and(a, b)`
-### Function `_np_sc_xor(a, b)`
-### Function `_np_sc_or(a, b)`
-### Function `_np_sc_mux(a, b, sel)`
-### Function `_np_popcount(packed)`
-### Function `_np_scc(a, b, bit_length)`
-### Function `pack_bitstream(bits)`
-Pack a uint8 {0,1} bitstream into uint64 packed words.
-
-Uses the fastest available backend.
-
-### Function `popcount(packed)`
-Count total set bits in a packed uint64 array.
-
-### Function `sc_and(a, b)`
-SC multiply (bitwise AND) on packed bitstreams.
-
-### Function `sc_or(a, b)`
-SC saturating addition (bitwise OR) on packed bitstreams.
-
-### Function `sc_xor(a, b)`
-SC absolute difference (bitwise XOR) on packed bitstreams.
-
-### Function `sc_mux(a, b, sel)`
-SC scaled addition (2:1 MUX) on packed bitstreams.
-
-### Function `scc(a, b, bit_length)`
-Stochastic correlation coefficient between two packed bitstreams.
-
-### Function `vec_mac(weights, inputs)`
-SC multiply-accumulate: popcount(weights AND inputs) per row.
-
-Parameters
-----------
-weights : np.ndarray&#91;Any, Any&#93;
-    Shape (N, W) packed uint64 weight matrix.
-inputs : np.ndarray&#91;Any, Any&#93;
-    Shape (W,) packed uint64 input vector.
-
-Returns
--------
-np.ndarray&#91;Any, Any&#93;
-    Shape (N,) int array of popcount results.
-
-### Function `backend_info()`
-Return info about available acceleration backends.
 
 ---
 
@@ -9110,6 +9081,28 @@ notes : str
 ### Function `_reg(p)`
 Register a profile in the global registry.
 
+Parameters
+----------
+p : HardwareProfile
+    The profile to register, keyed by its ``name``.
+allow_override : bool, optional
+    When ``False`` (the default) a name already present in the registry
+    raises :class:`ValueError`. This guards the built-in profile modules
+    against the silent last-wins overwrite that previously let one
+    platform be registered several times with conflicting fields. Set to
+    ``True`` for the user-extension paths (e.g. loading a TOML profile
+    that deliberately overrides a built-in target).
+
+Returns
+-------
+HardwareProfile
+    The registered profile (``p`` unchanged), for convenient chaining.
+
+Raises
+------
+ValueError
+    If ``p.name`` is already registered and ``allow_override`` is ``False``.
+
 ### Function `get_profile(name)`
 Look up a hardware profile by name.
 
@@ -9864,6 +9857,25 @@ Validate adaptive-precision hysteresis thresholds.
 
 ## Module `compiler.verilog_compiler`
 
+### Class `_NeuronCore`
+Shared combinational building blocks for one neuron's step.
+
+Both the registered per-instance module and the combinational datapath PE are
+assembled from these identical fragments, so their arithmetic is bit-for-bit
+the same. State variables are referenced as ``<safe_var>_reg`` throughout
+(the per-instance module declares those as registers; the datapath PE declares
+them as input ports).
+
+- **total_pipeline_latency**()
+
+### Function `_build_neuron_core(neuron, q)`
+Emit the combinational next-state + threshold + reset fragments.
+
+This is the logic shared verbatim by :func:`compile_to_verilog` and
+:func:`compile_to_datapath`; neither wraps nor mutates it differently, which
+is what guarantees bit-exact agreement between the per-instance module and the
+folded datapath.
+
 ### Function `compile_to_verilog(neuron, module_name, data_width, fraction)`
 Compile an EquationNeuron to synthesizable Verilog RTL.
 
@@ -9888,6 +9900,20 @@ pipeline_stages : int
     Number of pipeline register stages to insert at multiply outputs.
 pipeline_points : list&#91;str&#93;, optional
     Explicit list of intermediate signal names.
+
+### Function `compile_to_datapath(neuron, module_name, data_width, fraction)`
+Compile an EquationNeuron to a **combinational** processing element.
+
+State is carried on ports — ``<var>_reg`` inputs and ``<var>_next_out``
+outputs — instead of internal registers, so one PE can be time-multiplexed
+across many neurons (the folded interconnect stores per-neuron state in BRAM
+and streams it through this PE one neuron per cycle). ``spike_out`` and each
+``<var>_next_out`` are the post-threshold, post-reset next values, computed by
+the same fragments as :func:`compile_to_verilog` — so the folded datapath is
+bit-for-bit identical to the per-instance module.
+
+Pipelining is not supported here (a combinational PE has no register stages);
+the folded sequencer provides the one-cycle-per-neuron timing instead.
 
 ---
 
@@ -9950,6 +9976,8 @@ Multiplications emit wide product with arithmetic right shift.
 
 - **__init__**(state_vars, param_map, q)
   - Initialise the Verilog expression emitter.
+- **_const_float**(node)
+  - Constant-fold a literal or simple literal arithmetic node to a float.
 - **_trunc**(wide_name)
   - Emit an intermediate wire for fixed-point truncation with rounding.
 - **visit_BinOp**(node)
@@ -9965,11 +9993,16 @@ Multiplications emit wide product with arithmetic right shift.
 - **visit_Call**(node)
   - Emit Verilog for function calls.
 - **_emit_lut_call**(lut_name, arg, entries)
-  - Emit a 16-entry LUT indexed by top 4 bits of the input.
+  - Emit an ``len(entries)``-entry LUT over ``&#91;lut_min, lut_min + N*step)``.
+- **_sym_points**()
+  - 256 sample points over &#91;-16, 16) at 0.125 spacing for symmetric LUTs.
 - **_exp_lut_entries**()
 - **_log_lut_entries**()
 - **_sqrt_lut_entries**()
 - **_tanh_lut_entries**()
+- **_cosh_lut_entries**()
+- **_cbrt_lut_entries**()
+- **_exprel_lut_entries**()
 - **_sigmoid_lut_entries**()
 - **_sin_lut_entries**()
 - **_cos_lut_entries**()
@@ -12143,6 +12176,54 @@ Returns
 -------
 EnergyReport
     Complete resource and power estimate.
+
+---
+
+## Module `energy.folded_estimator`
+
+### Class `FoldedAreaEstimate`
+Area, latency, and power estimate for a folded-interconnect network.
+
+All counts are pre-synthesis estimates derived from Yosys-calibrated per-block
+costs; treat them as ~20%-accurate architectural guidance, not synthesis truth.
+
+- **__post_init__**()
+- **as_dict**()
+  - Return a plain mapping of the estimate (for JSON artefacts).
+- **summary**()
+  - Human-readable one-block summary.
+
+### Function `estimate_folded_area(metrics)`
+Estimate folded-interconnect FPGA resources, latency, and power.
+
+Parameters
+----------
+metrics : FoldedResourceMetrics
+    The architectural summary attached to a folded compile
+    (``NetworkCompilationResult.folded_metrics``).
+target : str
+    FPGA target key in :data:`sc_neurocore.energy.fpga_models.TARGETS`
+    (``'ice40'``, ``'ecp5'``, ``'artix7'``, ``'zynq'``).
+data_width : int
+    Fixed-point data width (the multiply and ROM-mux widths).
+clock_mhz : float
+    Target clock frequency, used to turn cycles into time and energy.
+event_driven : bool
+    Charge the event-driven neuron cost and AER infrastructure instead of the
+    clock-driven LIF cost.
+include_infra : bool
+    Add the AXI-Lite register-file (and AER, when ``event_driven``) infrastructure
+    LUTs.
+
+Returns
+-------
+FoldedAreaEstimate
+    The folded area, latency, and power estimate.
+
+Raises
+------
+ValueError
+    If ``target`` is not a known FPGA target.
 
 ---
 
@@ -21462,16 +21543,77 @@ Reference: Mainen, Z.F. & Sejnowski, T.J. (1996). Nature 382:363–366.
 ## Module `neurons.models.marder_stg`
 
 ### Class `MarderSTGNeuron`
-Marder & Selverston 1992 — stomatogastric ganglion neuron.
+Liu-Golowasch-Marder-Abbott 1998 stomatogastric ganglion neuron.
 
-7 currents: I_Na, I_CaT, I_CaS, I_A, I_KCa, I_Kd, I_H, I_L.
-LP-like model from the pyloric CPG.
+Single-compartment crustacean STG model with seven voltage-gated currents
+(Na, CaT, CaS, A, KCa, Kd, H) plus a leak, in the Prinz/LGMA unit convention
+(conductances in mS/cm², capacitance in µF/cm², calcium in µM, voltage in mV,
+time in ms). All gates use the published voltage-dependent steady states and
+time constants; the calcium reversal is computed from the Nernst equation,
+and intracellular calcium relaxes towards rest with a 20 ms time constant
+driven by the two calcium currents. The thirteen-state vector is integrated
+with classical fourth-order Runge-Kutta.
 
-Reference: Marder, E. & Calabrese, R.L. (1996). Physiol. Rev. 76:687–717.
+Parameters
+----------
+v : float
+    Membrane potential (mV).
+m_na, h_na, m_cat, h_cat, m_cas, h_cas, m_a, h_a, m_kca, m_kd, m_h : float
+    Gating variables in &#91;0, 1&#93;.
+ca : float
+    Intracellular calcium concentration (µM, ≥ 0).
+cm : float
+    Specific membrane capacitance (µF/cm²).
+g_na, g_cat, g_cas, g_a, g_kca, g_kd, g_h, g_l : float
+    Maximal conductances (mS/cm²).
+e_na, e_k, e_h, e_l : float
+    Reversal potentials (mV). The calcium reversal is Nernst-derived.
+ca_out : float
+    Extracellular calcium concentration (µM) for the Nernst equation.
+ca_rest : float
+    Resting calcium concentration (µM).
+tau_ca : float
+    Calcium relaxation time constant (ms).
+f_ca : float
+    Calcium-current-to-concentration coupling (µM·cm²/µA).
+celsius : float
+    Temperature (°C) for the Nernst equation.
+dt : float
+    Integration time step (ms).
+v_threshold : float
+    Voltage at which a spike is registered (mV).
 
-- **_boltz**(v, v_half, k)
+References
+----------
+Liu, Z., Golowasch, J., Marder, E. & Abbott, L.F. (1998). A model neuron with
+activity-dependent conductances regulated by multiple calcium sensors.
+J. Neurosci. 18(7):2309–2320. Channel kinetics: ModelDB accession 93321.
+
+- **__post_init__**()
+- **_validate_configuration**()
+- **_sigmoid**(v, v_half, slope)
+  - Boltzmann steady state ``1 / (1 + exp((v_half − v)/slope))``.
+- **_nernst_e_ca**(ca)
+  - Nernst calcium reversal (mV) at the configured temperature.
+- **_derivatives**(state, current)
+  - Return d/dt of the thirteen-state vector under injected ``current``.
+- **_axpy**(state, deriv, factor)
+  - Return ``state + factor·deriv`` componentwise for the RK4 stages.
+- **_rk4**(state, current)
+  - Advance ``state`` one ``dt`` with classical fourth-order Runge-Kutta.
+- **_commit**(state)
+  - Clamp gates to &#91;0, 1&#93; and calcium to ≥ 0, failing closed on non-finite state.
 - **step**(current)
+  - Advance one ``dt`` and return 1 on an upward threshold crossing.
 - **reset**()
+  - Restore the resting initial condition.
+
+### Function `_exp(x)`
+Overflow-safe ``exp``: the argument is clamped to ``&#91;-700, 700&#93;``.
+
+Rate and steady-state functions saturate well within this range, so clamping
+keeps intermediate Runge-Kutta evaluations at extreme voltages finite (the
+step then fails closed on any genuinely non-finite committed state).
 
 ---
 
@@ -21993,20 +22135,72 @@ French et al. (1990) Neuroscience 42:363.
 ## Module `neurons.models.pinsky_rinzel`
 
 ### Class `PinskyRinzelNeuron`
-Pinsky-Rinzel 1994 — 2-compartment pyramidal cell.
+Pinsky-Rinzel 1994 two-compartment CA3 pyramidal cell.
 
-Soma (fast Na/K) coupled to dendrite (Ca/KAHP) via gc.
-Minimal model for burst generation in cortical pyramidal cells.
+Reduction of the 19-compartment Traub CA3 model to a soma compartment
+carrying the fast Na⁺/delayed-rectifier K⁺ spike currents and a dendrite
+compartment carrying the Ca²⁺, Ca-dependent K⁺ afterhyperpolarisation, and
+voltage/Ca-dependent K⁺ currents, coupled by ``gc``. Eight states are
+integrated with a fixed-step fourth-order Runge-Kutta scheme; the somatic
+sodium activation ``m`` is taken at its instantaneous steady state ``m∞``.
 
-Reference: Pinsky, P.F. & Rinzel, J. (1994). J. Comput. Neurosci. 1:39–60.
+The voltages use the physiological convention (rest ≈ −60 mV); reversal
+potentials and gating rates equal the original rest=0 mV formulation shifted
+by −60 mV. Parameters and kinetics follow the published model and the
+ModelDB 35358 reference channels.
+
+Parameters
+----------
+v_s, v_d : float
+    Somatic and dendritic membrane potential (mV).
+h, n, s, c, q : float
+    Gating variables in &#91;0, 1&#93;: Na⁺ inactivation ``h``, delayed-rectifier
+    activation ``n``, Ca²⁺ activation ``s``, voltage/Ca-dependent K⁺
+    activation ``c``, and Ca-dependent afterhyperpolarisation ``q``.
+ca : float
+    Dimensionless dendritic calcium concentration (≥ 0).
+cm : float
+    Membrane capacitance (µF/cm²); default 3.0 per Pinsky & Rinzel (1994).
+gc : float
+    Soma-dendrite coupling conductance (mS/cm²).
+p : float
+    Somatic membrane-area fraction in (0, 1).
+g_na, g_kdr, g_ca, g_kahp, g_kc, g_l : float
+    Maximal conductances (mS/cm²) for the Na⁺, K-DR, Ca²⁺, K-AHP, K-C, and
+    leak currents.
+e_na, e_k, e_ca, e_l : float
+    Reversal potentials (mV).
+dt : float
+    Integration time step (ms).
+v_threshold : float
+    Somatic voltage at which a spike is registered (mV).
+
+References
+----------
+Pinsky, P.F. & Rinzel, J. (1994). Intrinsic and network rhythmogenesis in a
+reduced Traub model for CA3 neurons. J. Comput. Neurosci. 1:39–60.
+doi:10.1007/BF00962717. Reference channel kinetics: ModelDB accession 35358.
 
 - **__post_init__**()
 - **_validate_configuration**()
 - **_exp**(value)
-- **_logistic**(value)
-- **_validate_candidate**(values)
+  - Return ``exp(value)``, failing closed on overflow/non-finite results.
+- **_exprel_minus**(cls, a, dv, k)
+  - Evaluate the Traub rate ``a·dv / (1 − exp(−dv/k))`` with its limit.
+- **_exprel_plus**(cls, a, dv, k)
+  - Evaluate the Traub rate ``a·dv / (exp(dv/k) − 1)`` with its limit.
+- **_derivatives**(state, i_s, i_d)
+  - Return the time derivatives of the eight-dimensional state.
+- **_axpy**(state, deriv, factor)
+  - Return ``state + factor·deriv`` componentwise for the RK4 stages.
+- **_rk4**(state, i_s, i_d)
+  - Advance ``state`` one ``dt`` with classical fourth-order Runge-Kutta.
+- **_validate_candidate**(state)
+  - Clamp gates to &#91;0, 1&#93; and calcium to ≥ 0, failing closed on non-finite state.
 - **step**(current_soma, current_dend)
+  - Advance one ``dt`` and return 1 on a rising somatic threshold crossing.
 - **reset**()
+  - Restore the published resting initial condition.
 
 ---
 
@@ -23387,6 +23581,45 @@ Stable flattened input-bus layout entry for one external source.
 - **as_dict**()
   - Return deterministic JSON-ready external input metadata.
 
+### Class `FoldedResourceMetrics`
+Architectural resource summary of a folded (time-multiplexed) interconnect.
+
+Quantifies what the shared-datapath fold buys versus the direct interconnect's
+one-module-instance-per-neuron unrolling: one processing element per distinct
+neuron type is reused across every neuron of that type (a per-type PE pool), with
+per-neuron state held in BRAM, at the cost of ``cycles_per_tick`` cycles to advance
+the whole network by one timestep.
+
+Attributes
+----------
+neurons : int
+    Total neurons sharing the datapath across all folded populations.
+state_vars_per_neuron : int
+    Widest per-neuron state-variable count across the folded types (the largest
+    BRAM word = ``state_vars_per_neuron`` × data width). Equal to the single type's
+    count for a homogeneous network.
+pe_instances : int
+    Physical processing elements instantiated: one per distinct neuron type. A
+    single population, or several populations all of one type, share one PE.
+shared_multipliers : int
+    Multipliers in the shared weighted fan-in, summed over external-source columns
+    across all populations and reused across each population's neurons. Spiking
+    fan-in (recurrent or inter-population) is spike-gated and uses none.
+state_ram_bits : int
+    Total BRAM-backed neuron-state storage, in bits, summed over populations
+    (each population contributes ``neurons`` × its type's state-var count × data width).
+cycles_per_tick : int
+    Clock cycles to advance the whole network by one timestep
+    (``neurons`` process cycles + 1 commit cycle).
+direct_neuron_instances : int
+    Neuron module instances the direct interconnect would unroll (= ``neurons``);
+    the count the fold collapses to ``pe_instances``.
+populations : int
+    Number of folded populations sharing the one sequencer and the global spike bus.
+
+- **as_dict**()
+  - Return a deterministic plain-``int`` mapping for manifests/JSON.
+
 ### Class `NetworkCompilationResult`
 All artefacts from a network-level FPGA compilation.
 
@@ -23407,7 +23640,10 @@ total_synapses : int
 q_format : str
     Q-format label (e.g. ``"Q8.8"``).
 interconnect : str
-    ``"direct"`` or ``"aer"``.
+    ``"direct"``, ``"aer"``, or ``"folded"`` (the time-multiplexed shared datapath).
+folded_metrics : FoldedResourceMetrics | None
+    Architectural fold resource summary when ``interconnect == "folded"``; ``None``
+    for the direct/AER paths.
 warnings : list&#91;str&#93;
     Quantisation and compilation warnings.
 scnir_document : SCNIRDocument
@@ -23422,8 +23658,30 @@ scnir_hierarchy_modules : dict&#91;str, str&#93;
     Standalone SC-NIR hierarchy boundary modules keyed by module name.
 
 
-### Function `_require_homogeneous_param(values, label)`
-Return the scalar value of a per-neuron parameter or fail closed.
+### Function `_representative_param(values, label)`
+Return the reference (first-neuron) value of a per-neuron parameter.
+
+This value becomes the default of the shared, parameterised RTL neuron module.
+A heterogeneous population is no longer rejected: every neuron whose own
+quantised parameter differs from this default is instantiated with an explicit
+Verilog parameter override at the top level (see :func:`_neuron_param_override`).
+
+### Function `_type_default_qparams(pops, data_width)`
+First-population, first-neuron quantised parameters per neuron type.
+
+Values are stored as the unsigned two's-complement bit pattern the neuron
+module declares as its parameter default, so the top level only overrides a
+neuron whose quantised parameter differs.
+
+### Function `_neuron_param_override(pop, neuron_idx, type_defaults, data_width)`
+Return a Verilog parameter-override clause for a single neuron instance.
+
+Empty when this neuron's per-neuron quantised parameters all equal the shared
+module defaults (the homogeneous case, so the emitted RTL is unchanged).
+Otherwise emits ``#(.P_X(W'sdN), ...)`` so a heterogeneous population reuses
+the same parameterised module with each neuron's own quantised parameters. The
+literal is the unsigned two's-complement bit pattern, matching how the module
+declares each parameter default (negative fixed-point values included).
 
 ### Function `_resolved_population_params(neuron_type, pop)`
 Resolve population parameters without averaging per-neuron values.
@@ -23495,6 +23753,13 @@ Returns
 str
     Synthesisable Verilog module source.
 
+### Function `_population_neuron(neuron_type, pop)`
+Build the canonical :class:`EquationNeuron` for one population's type.
+
+Single source of truth for the ODE/threshold/reset/params/init/dt used by
+both the per-instance module (:func:`_build_neuron_module`) and the folded
+datapath PE (:func:`_build_top_folded`), so the two share identical dynamics.
+
 ### Function `_build_weight_rom(qgraph)`
 Generate a combined weight ROM for all connections.
 
@@ -23540,6 +23805,121 @@ Returns
 -------
 str
     Verilog top-level module source.
+
+### Function `_cond_mux(terms, default)`
+Fold ``(condition, value)`` pairs into a nested Verilog ternary expression.
+
+The pairs are evaluated in order — the first true condition wins — so
+``&#91;("s==0", "a"), ("s==1", "b")&#93;`` with default ``"z"`` becomes
+``(s==0 ? a : (s==1 ? b : z))``. A single term still emits the ternary so the
+selector stays in the expression even when only one population is folded.
+
+### Function `_folded_population_input(pop, feeding)`
+Build one folded population's per-neuron input-current datapath.
+
+Returns ``(decl_lines, cur_i_expr)``, where ``cur_i_expr`` is the input current
+for the neuron currently addressed by ``idx_signal`` and ``decl_lines`` declare
+the supporting wires/registers. Three fan-in shapes are emitted, matching the
+direct interconnect bit-for-bit:
+
+* **connection-less** — the first population draws one external ``I_ext`` lane
+  per neuron; any other connection-less population has no drive (zero current);
+* **external-weighted** — external-source columns multiply a per-neuron weight
+  row (selected from a ``case`` ROM over ``idx_signal``), shifted by ``fraction``;
+* **spiking fan-in** — recurrent (self) or inter-population spikes read the
+  prior-tick global ``spike_bus`` at the source population's bit offset and gate
+  the sign-extended weight, exactly like the direct path's registered spikes. A
+  per-source synaptic delay of ``d`` ticks instead reads ``spike_bus_hist_d`` (the
+  ``spike_bus`` committed ``d`` ticks ago), mirroring direct's ``*_spike_d{d}``
+  register chain.
+* **analogue fan-in** — a source population of an analogue type (``li`` /
+  ``cuba_li`` / ``integrator``, whose output is the membrane voltage rather than a
+  spike) reads the prior-tick global ``v_bus`` (one ``DATA_WIDTH`` word per analogue
+  source neuron, committed once per tick like ``spike_bus``) at the source's word
+  offset and multiplies it by the per-neuron weight (shifted by ``fraction``), or
+  threshold-gates the sign-extended weight on that voltage, exactly like the direct
+  path's registered ``v_out``. A delay of ``d`` ticks instead reads
+  ``v_bus_hist_d`` (the voltage bus committed ``d`` ticks ago), mirroring direct's
+  ``*_v_d{d}`` register chain.
+
+NIR ``Threshold`` transforms fold too: a **source threshold** gates the full
+sign-extended weight on the source value (spike magnitude or external input)
+exceeding the per-column threshold; a **destination threshold** sums the
+connection's terms into a per-neuron ``raw`` accumulator and replaces them with a
+fixed spike-magnitude term when ``raw`` exceeds the per-neuron threshold (selected
+from the same ``case`` ROM over ``idx_signal``).
+
+A connection **bias** adds a per-destination-neuron constant (held in the same
+per-neuron ``case`` ROM, ACC_WIDTH) to that connection's term list before its
+weighted fan-in, so a destination threshold wraps the bias along with the weights.
+
+The accumulator width (``ACC_WIDTH``), the saturating cast (``sat_acc``), the
+``ext_input_*`` lane wires, and the ``spike_bus_hist_*`` delay shift-register are
+module-scope and emitted once by the caller.
+
+### Function `_can_fold(qgraph)`
+Return True if the graph is in the folded interconnect's supported subset.
+
+The folded interconnect time-multiplexes any number of populations of supported
+neuron types over a per-type PE pool and one global spike bus. A graph folds when
+every population has an ODE template and every connection is one of:
+
+* **connection-less** — neurons driven only by their own external ``I_ext`` lane;
+* **external-weighted** — fed by external (non-population) source columns;
+* **spiking fan-in** — recurrent (self) or inter-population spikes from another
+  population, read from the prior-tick global spike bus, optionally delayed or
+  gated by a source/destination NIR ``Threshold`` transform;
+* **analogue fan-in** — an analogue source population (``li``/``cuba_li``/
+  ``integrator``, whose output is the membrane voltage), read from the prior-tick
+  global voltage bus (optionally delayed via a voltage-bus history register) and
+  multiplied (or threshold-gated) by the weight.
+
+Connections may also carry a per-destination-neuron bias constant. Only a *delayed
+external* (non-population) source connection is not folded — a synaptic delay has
+registered semantics only from a neuron population — and falls back to the direct
+interconnect.
+
+### Function `_folded_resource_metrics(qgraph)`
+Summarise the shared-datapath resources of a foldable graph.
+
+Counts one PE per distinct neuron type (the per-type pool), the shared
+weighted-fan-in multipliers (external-source and analogue-voltage-source columns —
+spiking recurrent or inter-population fan-in is spike-gated and uses none), the BRAM
+state-word storage summed over populations, the cycles-per-tick, and the direct-path
+instance count the fold collapses.
+
+Parameters
+----------
+qgraph : QuantisedGraph
+    A graph satisfying :func:`_can_fold`.
+data_width : int
+    Fixed-point data width (BRAM word sizing).
+
+Returns
+-------
+FoldedResourceMetrics
+    The architectural fold summary.
+
+### Function `_build_top_folded(module_name, qgraph)`
+Generate a time-multiplexed (folded) top plus its per-type datapath PE pool.
+
+One combinational PE (:func:`compile_to_datapath`) per distinct neuron type and
+one BRAM-backed state array per population are shared across every neuron: a
+single sequencer steps one neuron per cycle, walking each population in turn,
+reading the addressed neuron's packed state from its BRAM, driving the population's
+PE with that state and the neuron's input current, and writing the next state back.
+Spikes accumulate over a tick into a global accumulator and commit to a single
+``spike_bus`` in a dedicated cycle (``tick_done`` pulses), so the bus is race-free
+and stable for the whole next tick. Recurrent and inter-population spiking fan-in
+read that prior-tick ``spike_bus`` at the source population's bit offset — the same
+double-buffer the direct interconnect's registered spikes provide. An analogue
+source population's membrane voltage is committed the same way to a global ``v_bus``
+(one ``DATA_WIDTH`` word per analogue source neuron), so analogue fan-in reads the
+prior-tick voltage exactly like the direct path's registered ``v_out``.
+
+Restricted to the :func:`_can_fold` subset. Returns
+``({neuron_module_key: pe_source}, top_module_source)`` with one PE source per
+distinct neuron type, keyed ``"{neuron_type}_pe"`` for the compilation artefacts.
 
 ### Function `_build_top_aer(module_name, qgraph)`
 Generate weighted event-bus top-level interconnect.
@@ -23599,6 +23979,13 @@ target : str
 online_learning : Mapping&#91;str, Mapping&#91;str, Any&#93;&#93; | None
     Optional validated per-weight-stream SC-NIR online-learning annotations,
     keyed by deterministic stream id such as ``"conn.src_to_dst.weight"``.
+interconnect : str | None
+    ``None`` (default) auto-selects direct (small) or AER (large) wiring;
+    ``"direct"`` forces direct; ``"folded"`` opts into the time-multiplexed
+    shared-datapath interconnect (one PE per neuron type + per-population BRAM
+    state, swept by a single sequencer), which supports the :func:`_can_fold`
+    subset: any number of populations with external-weighted, recurrent, or
+    inter-population spiking fan-in.
 
 Returns
 -------
@@ -24026,6 +24413,15 @@ Return a positive integer shape tuple from a NIR type map.
 
 ### Function `_shape3_tuple_from_type(type_map, key)`
 Return a rank-3 positive integer shape tuple from a NIR type map.
+
+### Function `_resolve_conv_padding(spec)`
+Resolve a NIR convolution padding spec to a symmetric integer pad per side.
+
+Integer specs pass through. ``"valid"`` maps to 0. ``"same"`` returns the
+symmetric padding that preserves the spatial size; it requires stride 1 and an
+even effective kernel span (``dilation * (kernel - 1)``), which holds for every
+odd kernel. Even-kernel ``"same"`` would need asymmetric padding that this
+symmetric path cannot represent, so it is rejected with an explicit message.
 
 ### Function `map_node(name, node)`
 Convert a single NIR node to its SC-NeuroCore equivalent.
@@ -30216,6 +30612,18 @@ Export network graph to NIR-compatible format.
 
 ### Function `nir_to_graph(nir_data)`
 Import NIR-compatible format to network graph.
+
+---
+
+## Module `studio.nir_compile`
+
+### Function `compile_nir_graph(graph)`
+Lower a parsed NIR graph to synthesisable Verilog and return the artefacts.
+
+### Function `compile_nir_file_bytes(data)`
+Compile a standard ``.nir`` (HDF5) document supplied as raw bytes.
+
+Options are forwarded to :func:`compile_nir_graph`.
 
 ---
 

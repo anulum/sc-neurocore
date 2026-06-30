@@ -9,5 +9,6 @@
 """Pre-silicon energy estimation for FPGA SNN deployment."""
 
 from .estimator import estimate, EnergyReport
+from .folded_estimator import estimate_folded_area, FoldedAreaEstimate
 
-__all__ = ["estimate", "EnergyReport"]
+__all__ = ["estimate", "EnergyReport", "estimate_folded_area", "FoldedAreaEstimate"]

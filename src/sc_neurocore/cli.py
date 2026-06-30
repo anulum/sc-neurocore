@@ -567,6 +567,7 @@ def _cmd_compile_nir(args: Any) -> int:
     print(f"  Interconnect: {result.interconnect}")
     print(f"  Neuron modules: {len(result.neuron_modules)}")
     print(f"  SC-NIR source modules: {len(result.scnir_source_modules)}")
+    folded_area = None
     if result.folded_metrics is not None:
         fm = result.folded_metrics
         print(
@@ -575,6 +576,21 @@ def _cmd_compile_nir(args: Any) -> int:
             f"{fm.cycles_per_tick} cycles/tick "
             f"(collapses {fm.direct_neuron_instances} direct neuron instances)"
         )
+        # Map the folded resource counts onto the Yosys-calibrated per-block costs to
+        # report a pre-synthesis area/latency/power estimate (skips the non-FPGA 'web'
+        # target, which has no resource model).
+        from sc_neurocore.energy import estimate_folded_area
+        from sc_neurocore.energy.fpga_models import TARGETS
+
+        if args.target in TARGETS:
+            folded_area = estimate_folded_area(fm, target=args.target, data_width=data_width)
+            print(
+                f"  Folded area (~est. {args.target}): {folded_area.total_luts} LUTs, "
+                f"{folded_area.dsps} DSP, {folded_area.total_bram_kb:.2f} KB BRAM, "
+                f"{folded_area.dynamic_power_mw:.2f} mW @ {folded_area.clock_freq_mhz:.0f} MHz "
+                f"({folded_area.lut_utilisation_pct:.1f}% LUTs, "
+                f"fits={'yes' if folded_area.fits_on_target else 'no'})"
+            )
 
     # Write output files
     out_dir = args.output
@@ -642,8 +658,11 @@ def _cmd_compile_nir(args: Any) -> int:
 
     if result.folded_metrics is not None:
         folded_path = os.path.join(out_dir, "folded_metrics.json")
+        folded_payload: dict[str, Any] = dict(result.folded_metrics.as_dict())
+        if folded_area is not None:
+            folded_payload["area_estimate"] = folded_area.as_dict()
         with open(folded_path, "w", encoding="utf-8") as f:
-            json.dump(result.folded_metrics.as_dict(), f, indent=2, sort_keys=True)
+            json.dump(folded_payload, f, indent=2, sort_keys=True)
             f.write("\n")
 
     if getattr(args, "audit_handoff", False):

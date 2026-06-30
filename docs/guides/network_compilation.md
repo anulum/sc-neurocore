@@ -189,6 +189,15 @@ on the result only for the folded path; the CLI prints it and writes a machine-r
 `folded_metrics.json` artefact (the versioned `scnir_source_manifest.json` is left to its
 SC-NIR source-handoff role).
 
+`sc_neurocore.energy.estimate_folded_area(metrics, target=...)` turns that summary into a
+pre-synthesis area/latency/power estimate (`FoldedAreaEstimate`): it maps the folded counts
+onto the Yosys-calibrated per-block costs in `energy/fpga_models.py` — one PE per neuron type,
+a DSP (or LUT multiply on a DSP-less target) per shared multiplier, the weight-ROM mux, the
+spike-bus flip-flops, and `state_ram_bits` of BRAM — and converts `cycles_per_tick` into
+latency, time, and energy per tick. `compile-nir --interconnect folded` prints this estimate
+and records it under an `area_estimate` block in `folded_metrics.json` (skipped for the
+non-FPGA `web` target). It inherits the underlying primitives' ~20% accuracy.
+
 ---
 
 ## 4. Python API

@@ -2377,6 +2377,9 @@ class TestCompileNirCommand:
         assert "Interconnect: folded" in out
         assert "Folded datapath: 1 population(s), 1 PE" in out
         assert "collapses 2 direct neuron instances" in out
+        # The folded resource counts are mapped onto a pre-synthesis area estimate.
+        assert "Folded area (~est. ice40)" in out
+        assert "LUTs" in out and "DSP" in out
         # The shared datapath PE module is emitted alongside the top.
         assert (out_dir / "folded_net.v").exists()
         assert (out_dir / "sc_nir_lif_pe.v").exists()
@@ -2391,6 +2394,12 @@ class TestCompileNirCommand:
         assert metrics["direct_neuron_instances"] == 2
         assert metrics["shared_multipliers"] == 2
         assert metrics["populations"] == 1
+        # The pre-synthesis area estimate is persisted alongside the raw counts.
+        area = metrics["area_estimate"]
+        assert area["target"] == "ice40"
+        assert area["latency_cycles"] == metrics["cycles_per_tick"]
+        assert area["total_luts"] > 0
+        assert "fits_on_target" in area
 
     def test_compile_nir_writes_valid_dense_scnir_document(self, tmp_path, capsys):
         nir = pytest.importorskip("nir")
