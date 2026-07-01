@@ -5810,6 +5810,73 @@ Reconstruct floats from block-floating mantissas and exponents.
 
 ---
 
+## Module `compiler.c_expr_emitter`
+
+### Class `CExprEmitter`
+Lower a Python expression AST to a C++ (``ap_fixed``) expression string.
+
+Parameters
+----------
+state_vars : set of str
+    ODE state-variable names; emitted verbatim (they are struct members /
+    locals in the generated function).
+param_map : dict, optional
+    Mapping from parameter names to their C++ identifiers.
+math_ns : str
+    Namespace prefix for transcendental calls (``"hls"`` for Vitis HLS math,
+    ``"std"`` for a portable ``<cmath>`` build).
+fp_type : str
+    Fixed-point type name used to cast numeric literals.
+
+Attributes
+----------
+free_vars : list of str
+    Identifiers referenced by the expression that are not state variables,
+    parameters, or the input current — collected in first-seen order for the
+    exporter to declare as inputs.
+
+- **__init__**(state_vars, param_map)
+- **visit_BinOp**(node)
+  - Emit C++ for a binary operation (add, sub, mul, div, pow).
+- **_emit_pow**(node, left)
+  - Emit C++ for a power: integer 2-8 as repeated multiply, 1/2, 1/3 as roots.
+- **visit_UnaryOp**(node)
+  - Emit C++ for a unary operation (negate, positive).
+- **visit_Name**(node)
+  - Resolve a Python name to its C++ identifier, recording free variables.
+- **visit_Constant**(node)
+  - Emit a numeric constant cast to the fixed-point type.
+- **visit_Compare**(node)
+  - Emit C++ for comparison operators (>, >=, <, <=).
+- **visit_Call**(node)
+  - Emit C++ for a supported function call.
+- **generic_visit**(node)
+  - Raise for any unsupported AST node type.
+
+### Function `emit_c_expr(expr_str, state_vars, param_map)`
+Parse an ODE expression and return its C++ form plus its free variables.
+
+Parameters
+----------
+expr_str : str
+    Python-syntax ODE expression.
+state_vars : set of str
+    ODE state-variable names.
+param_map : dict, optional
+    Parameter-name to C++-identifier mapping.
+math_ns : str
+    Namespace prefix for transcendental calls.
+fp_type : str
+    Fixed-point type used to cast numeric literals.
+
+Returns
+-------
+tuple of (str, list of str)
+    The C++ expression string and the free identifiers it references (in
+    first-seen order).
+
+---
+
 ## Module `compiler.certification_gen`
 
 ### Class `CertificationItem`
@@ -7032,26 +7099,38 @@ Generate hardware-in-the-loop calibration protocol.
 
 ## Module `compiler.intelligence.hls_export`
 
+### Function `_preamble(module_name, data_width, fraction, hls_tool)`
+Emit the include guard, headers, and fixed-point typedef.
+
+### Function `_helpers(used)`
+Emit inline fixed-point helpers for any non-library transcendentals used.
+
 ### Function `generate_hls_cpp(module_name, equations)`
 Translate compiled neuron equations to Vitis/Catapult HLS C++.
 
-Generates a synthesisable C++ function with ``#pragma HLS`` directives
-for Xilinx Vitis HLS or Siemens Catapult. Enables HW/SW co-design
-workflows where the neuron runs as an HLS IP block alongside a
-MicroBlaze or RISC-V soft processor.
+Generates a synthesisable ``ap_fixed`` C++ function with ``#pragma HLS``
+directives for Xilinx Vitis HLS or Siemens Catapult. Each equation is a
+derivative that is Euler-integrated (``<var>_next = <var> + dt * d<var>``);
+the first state variable is treated as the membrane potential and reset by
+subtracting the threshold when it spikes. Free identifiers in the equations
+become function inputs so the generated unit is self-contained.
 
 Parameters
 ----------
 module_name : str
     Function/module name.
-equations : dict&#91;str, str&#93;
-    ODE equations (state_var → C-style expression).
+equations : dict
+    Mapping ``state_var -> derivative expression`` (Python syntax).
 data_width : int
     Fixed-point total width.
 fraction : int
     Fractional bits.
 hls_tool : str
     ``"vitis"`` or ``"catapult"``.
+dt : float
+    Euler integration timestep.
+threshold : float
+    Membrane spike threshold.
 
 Returns
 -------

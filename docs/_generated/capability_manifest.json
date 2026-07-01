@@ -965,7 +965,7 @@
     "python_model_classes": 158,
     "python_model_source_modules": 152,
     "rust_pyo3_model_wrappers": 175,
-    "test_files": 921
+    "test_files": 923
   },
   "documentation": {
     "public_pages": [
@@ -2886,6 +2886,7 @@
       "tests/test_brunel_translator.py",
       "tests/test_bus_interface_live_control.py",
       "tests/test_bus_mixed_precision.py",
+      "tests/test_c_expr_emitter.py",
       "tests/test_callbacks.py",
       "tests/test_cazelles_map_backends.py",
       "tests/test_certification_gen.py",
@@ -3081,6 +3082,7 @@
       "tests/test_hdl_gen/test_verilog_generator.py",
       "tests/test_hh_validation.py",
       "tests/test_hindmarsh_rose_backends.py",
+      "tests/test_hls_export.py",
       "tests/test_holonomic_adapter_stack_contract.py",
       "tests/test_holonomic_l7_sym_contracts.py",
       "tests/test_homeostasis.py",

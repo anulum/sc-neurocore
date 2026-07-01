@@ -73,6 +73,16 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
   are unchanged.
 
 ### Changed
+- Rebuilt the HLS C++ export (`sc_neurocore.compiler.intelligence.generate_hls_cpp`)
+  onto a real AST-based lowering. A new `sc_neurocore.compiler.c_expr_emitter`
+  (`CExprEmitter` / `emit_c_expr`) parses each ODE expression and emits valid
+  `ap_fixed` C++ — translating Python operators, integer powers, roots, and the
+  supported transcendentals (via `hls_math` and inline sigmoid/exprel helpers)
+  instead of embedding the raw expression string. Equations are now Euler-integrated
+  (`<var>_next = <var> + dt * d<var>`, matching the Verilog backend), the membrane
+  variable resets by subtracting a configurable threshold on a spike, and free
+  identifiers become function inputs so the generated unit is self-contained. The
+  output is verified to compile with a host C++ compiler.
 - Extracted the target-independent expression-lowering numerics — the
   compile-time constant folder, the 256-point symmetric sample grid, and the
   quantised transcendental LUT generators (exp, log, sqrt, tanh, cosh, exprel,
