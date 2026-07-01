@@ -23,14 +23,18 @@ Covers:
 from __future__ import annotations
 
 import json
+import sys
 from pathlib import Path
+from typing import Any
 
 import pytest
+from _pytest.monkeypatch import MonkeyPatch
 
 from sc_neurocore.neurons.universal_dsl import (
     UniversalNeuron,
     list_bundled_schemas,
     load_schema,
+    schema_to_toml,
 )
 
 
@@ -89,6 +93,36 @@ class TestSchemaLoading:
         with pytest.raises(ValueError, match="Unsupported schema format"):
             load_schema(path)
         Path(path).unlink()
+
+    def test_explicit_missing_schema_path_raises(self, tmp_path: Path) -> None:
+        with pytest.raises(FileNotFoundError, match="Schema file not found"):
+            load_schema(tmp_path / "missing.json")
+
+    def test_toml_loader_uses_tomli_on_python_pre_311(
+        self,
+        monkeypatch: MonkeyPatch,
+        tmp_path: Path,
+    ) -> None:
+        schema_path = tmp_path / "fallback.toml"
+        schema_path.write_text(
+            "\n".join(
+                (
+                    "[metadata]",
+                    "schema_version = 1",
+                    'name = "Fallback"',
+                    "[state]",
+                    "v = 0.0",
+                    "[dynamics]",
+                    'v = "I"',
+                )
+            ),
+            encoding="utf-8",
+        )
+        monkeypatch.setattr(sys, "version_info", (3, 10))
+
+        schema = load_schema(schema_path)
+
+        assert schema["metadata"]["name"] == "Fallback"
 
 
 class TestListBundledSchemas:
@@ -242,6 +276,20 @@ class TestSchemaExport:
         assert "[dynamics]" in toml_str
         assert "[threshold]" in toml_str
 
+    def test_to_toml_serializes_bool_and_structured_values(self) -> None:
+        toml_str = schema_to_toml(
+            {
+                "metadata": {"schema_version": 1, "name": "Structured"},
+                "extensions": {
+                    "enabled": True,
+                    "backend_tags": ["python", "verilog"],
+                },
+            }
+        )
+
+        assert "enabled = true" in toml_str
+        assert 'backend_tags = ["python", "verilog"]' in toml_str
+
     def test_schema_property_returns_copy(self) -> None:
         neuron = UniversalNeuron.from_schema("lif")
         schema1 = neuron.schema
@@ -301,6 +349,36 @@ class TestIntrospection:
         neuron = UniversalNeuron.from_schema("lif")
         eq_neuron = neuron.to_equation_neuron()
         assert isinstance(eq_neuron, EquationNeuron)
+
+    def test_to_verilog_sanitizes_default_module_name(
+        self,
+        monkeypatch: MonkeyPatch,
+    ) -> None:
+        captured: dict[str, object] = {}
+
+        def fake_compile_to_verilog(
+            neuron: object,
+            *,
+            module_name: str,
+            **kwargs: Any,
+        ) -> str:
+            captured["neuron"] = neuron
+            captured["module_name"] = module_name
+            captured["kwargs"] = kwargs
+            return f"module {module_name}; endmodule"
+
+        monkeypatch.setattr(
+            "sc_neurocore.compiler.equation_compiler.compile_to_verilog",
+            fake_compile_to_verilog,
+        )
+        neuron = UniversalNeuron.from_schema("fitzhugh_nagumo")
+
+        verilog = neuron.to_verilog(data_width=12)
+
+        assert verilog == "module sc_fitzhugh_nagumo; endmodule"
+        assert captured["neuron"] is neuron.to_equation_neuron()
+        assert captured["module_name"] == "sc_fitzhugh_nagumo"
+        assert captured["kwargs"] == {"data_width": 12}
 
 
 # ---------------------------------------------------------------------------

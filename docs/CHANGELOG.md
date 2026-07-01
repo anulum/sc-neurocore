@@ -11,6 +11,12 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
   absolute paths before subprocess launch, and the public pipeline surface is
   covered by strict-typed contract tests plus the scoped NumPy docstring policy.
 
+### Universal DSL contract hardening
+- Covered the schema loader's explicit missing-path and Python pre-3.11 TOML
+  fallback branches, TOML bool/list serialization, and default Verilog module
+  name sanitization at 100% exact-file coverage. Added the Universal DSL public
+  surface to the scoped NumPy docstring policy.
+
 ### Neuron package facade hardening
 - Covered the `sc_neurocore.neurons` lazy facade at 100%, including optional
   Rust-dispatch opt-out, cache reuse, pure-Python model fallback, cached
