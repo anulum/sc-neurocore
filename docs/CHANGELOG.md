@@ -22,6 +22,13 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
   validator at 100% exact-file coverage, and promoted the public compatibility
   audit surface into the scoped NumPy docstring policy.
 
+### ONNX graph export hardening
+- Fixed dependency-free `ONNXExporter` final-output metadata so a terminal
+  `SC_POPCOUNT` emits an `int32` tensor instead of a bitstream bool tensor, and
+  mapped operators without shape inference rules now fail closed. Covered the
+  exporter at 100% exact-file coverage, strict-typed the focused tests, and
+  documented the file exporter versus graph exporter split.
+
 ### Neuron package facade hardening
 - Covered the `sc_neurocore.neurons` lazy facade at 100%, including optional
   Rust-dispatch opt-out, cache reuse, pure-Python model fallback, cached

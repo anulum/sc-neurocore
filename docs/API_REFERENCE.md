@@ -14348,22 +14348,73 @@ Infers tensor shapes dynamically across the SNN graph.
 ## Module `export.onnx_export`
 
 ### Class `ONNXTensorType`
+Tensor element type and static shape for the JSON ONNX model.
+
+Parameters
+----------
+elem_type:
+    ONNX tensor element type id.
+shape:
+    Static tensor dimensions.
+
 - **to_dict**()
+  - Return the ONNX tensor-type dictionary representation.
 
 ### Class `ONNXNode`
+Custom-domain ONNX node for a lowered stochastic-computing operation.
+
+Parameters
+----------
+op_type:
+    ONNX operator type.
+domain:
+    Operator domain.
+inputs:
+    Input tensor names.
+outputs:
+    Output tensor names.
+name:
+    Stable node name.
+attributes:
+    Optional scalar operator attributes.
+
 - **to_dict**()
+  - Return the ONNX node dictionary representation.
 
 ### Class `ONNXGraph`
+JSON-serializable ONNX model envelope.
+
+Parameters
+----------
+name:
+    ONNX graph name.
+nodes:
+    Lowered ONNX nodes.
+inputs:
+    Named graph inputs and tensor types.
+outputs:
+    Named graph outputs and tensor types.
+metadata:
+    String metadata entries attached to the model.
+
 - **to_dict**()
+  - Return the complete ONNX model dictionary representation.
 - **to_json**(indent)
+  - Return the complete ONNX model as formatted JSON.
 
 ### Class `ONNXExporter`
-Exports SC-NeuroCore IR graphs to ONNX-compatible representation.
+Export SC-NeuroCore IR graphs to ONNX-compatible dictionaries.
+
+Parameters
+----------
+graph_name:
+    Name assigned to the emitted ONNX graph.
 
 - **__init__**(graph_name)
 - **_infer_type**(node_type, shape)
+- **_infer_shape**(node_type, inputs, shapes)
 - **export**(ir_graph, input_shapes, metadata)
-  - Convert SC-IR graph to ONNX graph representation.
+  - Convert an SC-IR graph to an ONNX graph representation.
 
 ---
 

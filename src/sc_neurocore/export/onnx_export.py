@@ -18,7 +18,7 @@ from __future__ import annotations
 
 import json
 from dataclasses import dataclass, field
-from typing import Any, Dict, List, Tuple
+from typing import Any
 
 ONNX_OPSET_VERSION = 18
 SCPN_DOMAIN = "sc.neurocore"
@@ -27,10 +27,21 @@ SCPN_OPSET_VERSION = 1
 
 @dataclass
 class ONNXTensorType:
-    elem_type: int  # 1=float, 2=uint8, 3=int8, 6=int32, 7=int64, 9=bool
-    shape: Tuple[int, ...]
+    """Tensor element type and static shape for the JSON ONNX model.
 
-    def to_dict(self) -> Dict[str, Any]:
+    Parameters
+    ----------
+    elem_type:
+        ONNX tensor element type id.
+    shape:
+        Static tensor dimensions.
+    """
+
+    elem_type: int  # 1=float, 2=uint8, 3=int8, 6=int32, 7=int64, 9=bool
+    shape: tuple[int, ...]
+
+    def to_dict(self) -> dict[str, Any]:
+        """Return the ONNX tensor-type dictionary representation."""
         return {
             "elem_type": self.elem_type,
             "shape": {"dim": [{"dim_value": d} for d in self.shape]},
@@ -39,15 +50,34 @@ class ONNXTensorType:
 
 @dataclass
 class ONNXNode:
+    """Custom-domain ONNX node for a lowered stochastic-computing operation.
+
+    Parameters
+    ----------
+    op_type:
+        ONNX operator type.
+    domain:
+        Operator domain.
+    inputs:
+        Input tensor names.
+    outputs:
+        Output tensor names.
+    name:
+        Stable node name.
+    attributes:
+        Optional scalar operator attributes.
+    """
+
     op_type: str
     domain: str
-    inputs: List[str]
-    outputs: List[str]
+    inputs: list[str]
+    outputs: list[str]
     name: str
-    attributes: Dict[str, Any] = field(default_factory=dict)
+    attributes: dict[str, Any] = field(default_factory=dict)
 
-    def to_dict(self) -> Dict[str, Any]:
-        d: Dict[str, Any] = {
+    def to_dict(self) -> dict[str, Any]:
+        """Return the ONNX node dictionary representation."""
+        d: dict[str, Any] = {
             "op_type": self.op_type,
             "domain": self.domain,
             "input": self.inputs,
@@ -64,13 +94,30 @@ class ONNXNode:
 
 @dataclass
 class ONNXGraph:
-    name: str
-    nodes: List[ONNXNode] = field(default_factory=list)
-    inputs: List[Tuple[str, ONNXTensorType]] = field(default_factory=list)
-    outputs: List[Tuple[str, ONNXTensorType]] = field(default_factory=list)
-    metadata: Dict[str, str] = field(default_factory=dict)
+    """JSON-serializable ONNX model envelope.
 
-    def to_dict(self) -> Dict[str, Any]:
+    Parameters
+    ----------
+    name:
+        ONNX graph name.
+    nodes:
+        Lowered ONNX nodes.
+    inputs:
+        Named graph inputs and tensor types.
+    outputs:
+        Named graph outputs and tensor types.
+    metadata:
+        String metadata entries attached to the model.
+    """
+
+    name: str
+    nodes: list[ONNXNode] = field(default_factory=list)
+    inputs: list[tuple[str, ONNXTensorType]] = field(default_factory=list)
+    outputs: list[tuple[str, ONNXTensorType]] = field(default_factory=list)
+    metadata: dict[str, str] = field(default_factory=dict)
+
+    def to_dict(self) -> dict[str, Any]:
+        """Return the complete ONNX model dictionary representation."""
         return {
             "ir_version": 9,
             "opset_import": [
@@ -93,6 +140,7 @@ class ONNXGraph:
         }
 
     def to_json(self, indent: int = 2) -> str:
+        """Return the complete ONNX model as formatted JSON."""
         return json.dumps(self.to_dict(), indent=indent)
 
 
@@ -106,23 +154,62 @@ SC_OP_MAP = {
 
 
 class ONNXExporter:
-    """Exports SC-NeuroCore IR graphs to ONNX-compatible representation."""
+    """Export SC-NeuroCore IR graphs to ONNX-compatible dictionaries.
 
-    def __init__(self, graph_name: str = "sc_network"):
+    Parameters
+    ----------
+    graph_name:
+        Name assigned to the emitted ONNX graph.
+    """
+
+    def __init__(self, graph_name: str = "sc_network") -> None:
         self.graph_name = graph_name
 
-    def _infer_type(self, node_type: str, shape: Tuple[int, ...]) -> ONNXTensorType:
+    def _infer_type(self, node_type: str, shape: tuple[int, ...]) -> ONNXTensorType:
         if node_type == "SC_POPCOUNT":
             return ONNXTensorType(elem_type=6, shape=shape)  # int32
         return ONNXTensorType(elem_type=9, shape=shape)  # bool for SC bitstreams
 
+    def _infer_shape(
+        self,
+        node_type: str,
+        inputs: list[str],
+        shapes: dict[str, tuple[int, ...]],
+    ) -> tuple[int, ...]:
+        if node_type in ("SC_AND", "SC_MUX", "LIF_MEMBRANE"):
+            return shapes.get(inputs[0], (1,))
+        if node_type == "SC_POPCOUNT":
+            in_shape = shapes.get(inputs[0], (1,))
+            return in_shape[:-1] + (1,) if len(in_shape) > 1 else (1,)
+        raise ValueError(f"No ONNX shape rule for mapped SC-IR node type {node_type!r}")
+
     def export(
         self,
         ir_graph: Any,
-        input_shapes: Dict[str, Tuple[int, ...]],
-        metadata: Dict[str, str] | None = None,
+        input_shapes: dict[str, tuple[int, ...]],
+        metadata: dict[str, str] | None = None,
     ) -> ONNXGraph:
-        """Convert SC-IR graph to ONNX graph representation."""
+        """Convert an SC-IR graph to an ONNX graph representation.
+
+        Parameters
+        ----------
+        ir_graph:
+            SC-IR graph-like object with a ``nodes`` sequence.
+        input_shapes:
+            Mapping from input tensor names to static dimensions.
+        metadata:
+            Optional string metadata to attach to the emitted graph.
+
+        Returns
+        -------
+        ONNXGraph
+            JSON-serializable ONNX graph envelope.
+
+        Raises
+        ------
+        ValueError
+            If a mapped SC-IR operator has no shape inference rule.
+        """
         from sc_neurocore.export.compiler_export import CompilerExporter
 
         exporter = CompilerExporter()
@@ -135,28 +222,21 @@ class ONNXExporter:
             graph.inputs.append((inp_name, ONNXTensorType(elem_type=9, shape=shape)))
 
         # Track shapes for inference
-        shapes: Dict[str, Tuple[int, ...]] = dict(input_shapes)
+        shapes: dict[str, tuple[int, ...]] = dict(input_shapes)
 
         # Convert nodes
         last_output = ""
+        last_node_type = ""
         for node in sorted_nodes:
             op = SC_OP_MAP.get(node.type)
             if op is None:
                 continue
 
-            # Shape inference
-            if node.type in ("SC_AND", "SC_MUX", "LIF_MEMBRANE"):
-                out_shape = shapes.get(node.inputs[0], (1,))
-            elif node.type == "SC_POPCOUNT":
-                in_shape = shapes.get(node.inputs[0], (1,))
-                out_shape = in_shape[:-1] + (1,) if len(in_shape) > 1 else (1,)
-            else:
-                out_shape = (1,)
-
+            out_shape = self._infer_shape(node.type, list(node.inputs), shapes)
             shapes[node.output] = out_shape
 
             # Build ONNX node
-            attrs = {}
+            attrs: dict[str, Any] = {}
             if node.type == "LIF_MEMBRANE":
                 attrs["threshold"] = getattr(node, "threshold", 1.0)
                 attrs["leak"] = getattr(node, "leak", 0.9)
@@ -171,11 +251,12 @@ class ONNXExporter:
             )
             graph.nodes.append(onnx_node)
             last_output = node.output
+            last_node_type = node.type
 
         # Register final output
         if last_output and last_output in shapes:
             graph.outputs.append(
-                (last_output, self._infer_type("LIF_MEMBRANE", shapes[last_output]))
+                (last_output, self._infer_type(last_node_type, shapes[last_output]))
             )
 
         return graph

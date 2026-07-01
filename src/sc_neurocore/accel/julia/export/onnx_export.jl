@@ -105,6 +105,7 @@ function export(s::ONNXExporterState)
     shapes: Dict[str, Tuple[int, ...]] = dict(input_shapes)
     # Convert nodes
     last_output = ""
+    last_node_type = ""
     for node in sorted_nodes
         op = SC_OP_MAP.get(node.type)
         if op is nothing
@@ -116,7 +117,7 @@ function export(s::ONNXExporterState)
             in_shape = shapes.get(node.inputs[0], (1,))
             out_shape = in_shape[:-1] + (1,) if length(in_shape) > 1 else (1,)
         else
-            out_shape = (1,)
+            raise(ValueError("No ONNX shape rule for mapped SC-IR node type"))
         shapes[node.output] = out_shape
         # Build ONNX node
         attrs = {}
@@ -133,10 +134,11 @@ function export(s::ONNXExporterState)
         )
         graph.nodes = push!(, onnx_node)
         last_output = node.output
+        last_node_type = node.type
     # Register final output
     if last_output && last_output in shapes
         graph.outputs = push!(,
-            (last_output, s._infer_type("LIF_MEMBRANE", shapes[last_output]))
+            (last_output, s._infer_type(last_node_type, shapes[last_output]))
         )
     return graph
 end

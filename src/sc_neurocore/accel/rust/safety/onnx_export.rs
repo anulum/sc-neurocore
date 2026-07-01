@@ -76,6 +76,9 @@ impl ONNXExporter {
         // (inp_name, ONNXTensorType(elem_type=9, shape=shape))
         // )
         // # Track shapes for inference
+        // last_node_type follows the final emitted ONNX node; SC_POPCOUNT
+        // graph outputs keep int32 tensor metadata instead of being forced
+        // through the LifNeuron bool-output contract.
         0.0
     }
 }
