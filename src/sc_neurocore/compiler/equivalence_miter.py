@@ -121,7 +121,7 @@ def _eval_width_expr(expr: str, params: dict[str, int]) -> int:
     try:
         tree = ast.parse(expr.strip(), mode="eval")
     except SyntaxError as exc:  # pragma: no cover - defensive
-        raise ValueError(f"unparseable width expression: {expr!r}") from exc
+        raise ValueError(f"unparsable width expression: {expr!r}") from exc
     return _eval(tree)
 
 
