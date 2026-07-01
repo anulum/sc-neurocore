@@ -25515,6 +25515,258 @@ Internal: accumulates per-step data for one layer.
 
 ---
 
+## Module `qat.lsq`
+
+### Class `_LSQQuantize`
+Autograd op implementing the LSQ forward quantiser and step gradient.
+
+- **forward**(ctx, v, step, qmin, qmax, grad_scale)
+  - Quantise ``v`` at learned ``step`` onto ``&#91;qmin, qmax&#93;``.
+- **backward**(ctx, grad_output)
+  - Return gradients w.r.t. ``v`` (STE-in-range) and ``step`` (LSQ).
+
+### Class `LSQQuantizer`
+Learned-step-size fake quantiser for signed weights.
+
+Parameters
+----------
+n_bits : int
+    Quantiser bit width (``>= 2``). The signed grid is
+    ``&#91;-2**(n_bits-1), 2**(n_bits-1) - 1&#93;``.
+per_channel : bool
+    Learn one step per channel along ``ch_axis`` instead of a single
+    scalar step.
+ch_axis : int
+    Channel axis used when ``per_channel`` is set.
+num_channels : int, optional
+    Channel count; required when ``per_channel`` is set.
+
+Attributes
+----------
+step : torch.nn.Parameter
+    The learned step size(s). Lazily initialised from the first input.
+
+- **__init__**(n_bits)
+- **_init_step_from**(x)
+  - Initialise the step to ``2*mean(|x|)/sqrt(qmax)`` (Esser et al. 2020).
+- **_broadcast_step**(ndim)
+  - Reshape the per-channel step for broadcasting over ``ndim`` dims.
+- **forward**(x)
+  - Fake-quantise ``x`` at the learned step, with the LSQ gradient.
+- **integer_weights**(x)
+  - Return integer codes and the step(s) for hardware export.
+
+### Class `LSQLinear`
+Linear layer whose weights are quantised by a learned step size.
+
+Per-channel (per output neuron) quantisation is the default, matching the
+granularity that recovers most of the accuracy lost to low-bit weights.
+
+Parameters
+----------
+in_features, out_features : int
+    Layer dimensions.
+n_bits : int
+    Weight quantiser bit width.
+per_channel : bool
+    Learn one step per output neuron (default) or a single scalar step.
+bias : bool
+    Whether to include a full-precision bias.
+
+- **__init__**(in_features, out_features)
+- **forward**(x)
+  - Apply the layer with LSQ-quantised weights.
+- **export_quantized**()
+  - Export integer weights, the learned step(s), and the bias.
+
+### Function `_sum_to(grad, shape)`
+Reduce ``grad`` by summation to broadcast-target ``shape``.
+
+Sums every axis where the target shape has extent 1 (or is absent),
+inverting the broadcast that produced ``grad`` from a parameter of
+``shape``. Used to fold a per-element step-size gradient back onto a scalar
+or per-channel step.
+
+Parameters
+----------
+grad : torch.Tensor
+    Per-element gradient.
+shape : tuple of int
+    Target parameter shape.
+
+Returns
+-------
+torch.Tensor
+    Gradient reduced to ``shape``.
+
+---
+
+## Module `qat.observers`
+
+### Class `MinMaxObserver`
+Per-tensor running min/max range observer.
+
+Parameters
+----------
+n_bits : int
+    Quantiser bit width the derived scale targets.
+symmetric : bool
+    Use a symmetric (zero-centred) mapping — the default for weights.
+unsigned : bool
+    Target an unsigned integer grid (e.g. non-negative activations).
+eps : float
+    Scale floor guarding against a zero-width observed range.
+
+- **__init__**(n_bits)
+- **observe**(x)
+  - Fold ``x`` into the running range and return it unchanged.
+- **calculate_qparams**()
+  - Return the ``(scale, zero_point)`` for the observed range.
+- **quantize**(x)
+  - Fake-quantise ``x`` with the currently observed scale.
+
+### Class `PerChannelMinMaxObserver`
+Per-channel running min/max range observer.
+
+Tracks an independent min/max — and therefore an independent scale — for
+every slice along ``ch_axis``. For a weight tensor shaped
+``(out_features, in_features)`` the default ``ch_axis=0`` yields one scale
+per output neuron.
+
+Parameters
+----------
+n_bits : int
+    Quantiser bit width the derived scales target.
+ch_axis : int
+    Axis whose length is the channel count.
+symmetric : bool
+    Use a symmetric (zero-centred) mapping — the default for weights.
+unsigned : bool
+    Target an unsigned integer grid.
+eps : float
+    Scale floor guarding against a zero-width observed range.
+
+- **__init__**(n_bits)
+- **_per_channel_min_max**(x)
+  - Collapse every axis except ``ch_axis`` to per-channel min and max.
+- **observe**(x)
+  - Fold ``x`` into the running per-channel range and return it unchanged.
+- **calculate_qparams**()
+  - Return the per-channel ``(scale, zero_point)`` vectors.
+- **_broadcast_shape**(ndim)
+  - Shape that reshapes a per-channel vector for broadcasting over ``ndim`` dims.
+- **quantize**(x)
+  - Fake-quantise ``x`` with the observed per-channel scales.
+
+### Function `_quant_bounds(n_bits)`
+Return the ``(qmin, qmax)`` integer grid bounds for a bit width.
+
+Parameters
+----------
+n_bits : int
+    Quantiser bit width (``>= 2``).
+unsigned : bool
+    When ``True`` the grid is ``&#91;0, 2**n_bits - 1&#93;`` (e.g. post-ReLU
+    activations); when ``False`` it is the signed range
+    ``&#91;-2**(n_bits-1), 2**(n_bits-1) - 1&#93;`` (e.g. weights).
+
+Returns
+-------
+tuple of (int, int)
+    The inclusive lower and upper integer codes.
+
+### Function `_qparams_from_range(min_val, max_val)`
+Derive ``(scale, zero_point)`` from an observed value range.
+
+Parameters
+----------
+min_val, max_val : torch.Tensor
+    Observed minimum and maximum. Scalars for the per-tensor case or
+    1-D per-channel vectors; the returned tensors match their shape.
+n_bits : int
+    Quantiser bit width.
+symmetric : bool
+    When ``True`` the range is symmetrised about zero and the zero point
+    is pinned to the grid centre (``0`` for signed, the mid-code for
+    unsigned); when ``False`` an affine mapping of ``&#91;min, max&#93;`` is used.
+unsigned : bool
+    Whether the integer grid is unsigned (see :func:`_quant_bounds`).
+eps : float
+    Floor applied to the scale so a degenerate (zero-width) range cannot
+    produce a zero or non-finite scale.
+
+Returns
+-------
+tuple of (torch.Tensor, torch.Tensor)
+    The per-element ``scale`` (float) and ``zero_point`` (float-valued but
+    integral) broadcastable against the quantised tensor.
+
+### Function `fake_quantize(x, scale, zero_point)`
+Quantise then de-quantise ``x`` (simulated quantisation, no STE).
+
+This is the inference-time / calibration-time fake-quant used to evaluate
+an observer's scales; for training use the learned-step quantisers in
+:mod:`sc_neurocore.qat.lsq`. ``scale`` and ``zero_point`` broadcast against
+``x``, so per-channel parameters must already be reshaped onto the channel
+axis by the caller.
+
+Parameters
+----------
+x : torch.Tensor
+    Tensor to fake-quantise.
+scale, zero_point : torch.Tensor
+    Quantiser parameters, broadcastable to ``x``.
+n_bits : int
+    Quantiser bit width.
+unsigned : bool
+    Whether the integer grid is unsigned.
+
+Returns
+-------
+torch.Tensor
+    The de-quantised approximation of ``x`` on the integer grid.
+
+---
+
+## Module `qat.pact`
+
+### Class `_PACTClip`
+Clip to ``&#91;0, alpha&#93;`` with the PACT gradient to ``alpha``.
+
+- **forward**(ctx, x, alpha)
+  - Return ``clip(x, 0, alpha)``.
+- **backward**(ctx, grad_output)
+  - Gradient: pass-through in ``(0, alpha)``; to ``alpha`` where ``x >= alpha``.
+
+### Class `PACTActivation`
+Parameterised clipping activation with uniform quantisation.
+
+Parameters
+----------
+n_bits : int
+    Activation quantiser bit width (``>= 2``). The activation grid has
+    ``2**n_bits - 1`` positive levels over ``&#91;0, alpha&#93;``.
+alpha_init : float
+    Initial clipping bound.
+
+Attributes
+----------
+alpha : torch.nn.Parameter
+    The learned clipping bound.
+
+- **__init__**(n_bits, alpha_init)
+- **forward**(x)
+  - Clip ``x`` to ``&#91;0, alpha&#93;`` and quantise to ``n_bits`` levels.
+- **quantize**(x)
+  - Return integer activation codes and the scale for export.
+- **extra_repr**()
+  - Return the compact module representation.
+
+### Function `_round_ste(x)`
+Round with a straight-through (identity) gradient.
+
+---
+
 ## Module `qat.quantize`
 
 ### Class `TernaryWeights`
@@ -25638,6 +25890,48 @@ Example
   - x: (T, batch, n_input). Returns (spike_counts, membrane_acc).
 - **export_bipolar_weights**()
   - Export weights clamped to &#91;-1, 1&#93; for bipolar SC deployment.
+
+### Class `LSQPACTLIFNet`
+Feedforward SNN with LSQ weights and a PACT-quantised analogue input.
+
+Combines the learned-step per-channel weight quantiser
+(:class:`~sc_neurocore.qat.lsq.LSQLinear`) with the parameterised-clipping
+activation quantiser (:class:`~sc_neurocore.qat.pact.PACTActivation`): the
+continuous input current is clipped and quantised by a learned bound before
+the first layer, and every dense layer's weights carry an independently
+learned per-output-neuron step size. Inter-layer signals are binary spikes,
+so only the input needs activation quantisation.
+
+Parameters
+----------
+n_input, n_hidden, n_output : int
+    Layer dimensions.
+n_layers : int
+    Number of hidden layers.
+weight_bits : int
+    Bit width of the LSQ weight quantiser.
+act_bits : int
+    Bit width of the PACT input-activation quantiser.
+beta : float
+    LIF membrane decay.
+surrogate_fn : Callable
+    Surrogate-gradient spike function.
+per_channel : bool
+    Learn a per-output-neuron weight step (default) or a single scalar step.
+
+Example
+-------
+>>> net = LSQPACTLIFNet(784, 128, 10, weight_bits=4, act_bits=4)
+>>> x = torch.randn(25, 32, 784)  # (T, batch, features)
+>>> spikes, mem = net(x)
+>>> spikes.shape
+torch.Size(&#91;32, 10&#93;)
+
+- **__init__**(n_input, n_hidden, n_output, n_layers, weight_bits, act_bits, beta, surrogate_fn, per_channel)
+- **forward**(x)
+  - x: (T, batch, n_input). Returns (spike_counts, membrane_acc).
+- **export_quantized**()
+  - Export LSQ integer weights per layer plus the PACT input scale.
 
 ### Function `ste_quantize(x, n_bits, symmetric)`
 Quantize tensor with straight-through estimator.

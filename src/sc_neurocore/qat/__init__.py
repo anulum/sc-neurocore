@@ -17,7 +17,15 @@ __all__ = [
 ]
 
 try:  # pragma: no cover — torch optional
+    from .lsq import LSQLinear, LSQQuantizer  # pragma: no cover
+    from .observers import (  # pragma: no cover
+        MinMaxObserver,
+        PerChannelMinMaxObserver,
+        fake_quantize,
+    )
+    from .pact import PACTActivation  # pragma: no cover
     from .torch_qat import (  # pragma: no cover
+        LSQPACTLIFNet,
         QuantizedLIFNet,
         QuantizedLinear,
         SCAwareLIFNet,
@@ -26,10 +34,17 @@ try:  # pragma: no cover — torch optional
     )
 
     __all__ += [  # pragma: no cover
+        "LSQLinear",
+        "LSQQuantizer",
+        "LSQPACTLIFNet",
+        "MinMaxObserver",
+        "PACTActivation",
+        "PerChannelMinMaxObserver",
         "QuantizedLIFNet",
         "QuantizedLinear",
         "SCAwareLIFNet",
         "SCAwareLinear",
+        "fake_quantize",
         "ste_quantize",
     ]
 except ImportError:

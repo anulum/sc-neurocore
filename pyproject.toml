@@ -158,6 +158,9 @@ omit = [
     "*/training/*",                     # PyTorch training pipeline
     "*/conversion/*",                   # ANN-to-SNN (torch)
     "*/qat/torch_qat.py",              # PyTorch QAT (requires torch)
+    "*/qat/lsq.py",                    # Learned Step Size Quantization (requires torch)
+    "*/qat/pact.py",                   # PACT clipping activation (requires torch)
+    "*/qat/observers.py",              # Quantisation observers (requires torch)
     "*/core/bipolar.py",               # SC bipolar primitives
     "*/adapters/neuroml.py",           # NeuroML 2 importer
     "*/adapters/sonata.py",            # SONATA HDF5 importer

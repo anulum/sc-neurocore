@@ -7,7 +7,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 194
+expected_file_count = 197
 
 [[file]]
 path = "src/sc_neurocore/__init__.py"
@@ -136,6 +136,18 @@ rationale = "Public ANN-to-SNN conversion engine used by conversion tutorials an
 [[file]]
 path = "src/sc_neurocore/conversion/qcfs.py"
 rationale = "Public QCFS activation module for conversion-aware ANN-to-SNN workflows."
+
+[[file]]
+path = "src/sc_neurocore/qat/observers.py"
+rationale = "Public per-tensor and per-channel quantisation observers used by QAT weight quantisers."
+
+[[file]]
+path = "src/sc_neurocore/qat/lsq.py"
+rationale = "Public learned-step-size (LSQ) weight quantiser for quantisation-aware training."
+
+[[file]]
+path = "src/sc_neurocore/qat/pact.py"
+rationale = "Public PACT parameterised-clipping activation quantiser for quantisation-aware training."
 
 [[file]]
 path = "src/sc_neurocore/_native/__init__.py"

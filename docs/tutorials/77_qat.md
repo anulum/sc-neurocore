@@ -143,6 +143,72 @@ for i, layer in enumerate(layers):
     print(f"Layer {i}: {hw.shape}, {len(np.unique(hw))} unique values")
 ```
 
+## Learned Quantisers: LSQ, PACT, and Per-Channel Observers
+
+STE with a fixed per-tensor scale leaves accuracy on the table at low bit
+widths. Three PyTorch quantisers close most of the remaining gap and compose
+with the surrogate-gradient SNN modules.
+
+### LSQ — learned step size
+
+`LSQLinear` learns the quantiser step size jointly with the weights instead of
+deriving it from the running weight range (Esser et al. 2020). Per-output-neuron
+(per-channel) steps are the default.
+
+```python
+import torch
+from sc_neurocore.qat import LSQLinear
+
+layer = LSQLinear(784, 128, n_bits=4, per_channel=True)
+out = layer(torch.randn(32, 784))
+out.sum().backward()                 # gradients reach both weights and the step
+export = layer.export_quantized()    # int32 codes + per-channel step for FPGA
+print(export["weight_int"].shape, export["step"].shape)  # (128, 784) (128,)
+```
+
+### PACT — parameterised activation clipping
+
+`PACTActivation` learns the activation clipping bound `alpha` (Choi et al. 2018),
+so low-bit activation quantisation no longer needs a hand-tuned range. Useful for
+the continuous input current feeding the first layer.
+
+```python
+from sc_neurocore.qat import PACTActivation
+
+act = PACTActivation(n_bits=4, alpha_init=6.0)
+y = act(torch.randn(32, 784) * 3)    # clipped to [0, alpha] then quantised
+codes, scale = act.quantize(torch.randn(32, 784))
+```
+
+### Per-channel observers
+
+Observers derive quantiser scales from calibration statistics. A per-channel
+observer gives each output neuron its own scale, which recovers the accuracy a
+single per-tensor scale loses when channels have very different magnitudes.
+
+```python
+from sc_neurocore.qat import PerChannelMinMaxObserver
+
+obs = PerChannelMinMaxObserver(n_bits=4, ch_axis=0, symmetric=True)
+for batch in calibration_weights:
+    obs.observe(batch)
+scale, zero_point = obs.calculate_qparams()   # one scale per output channel
+w_fake_quant = obs.quantize(weight)
+```
+
+### End-to-end: `LSQPACTLIFNet`
+
+`LSQPACTLIFNet` wires LSQ per-channel weight quantisation and a PACT-quantised
+analogue input into a feedforward LIF SNN:
+
+```python
+from sc_neurocore.qat import LSQPACTLIFNet
+
+net = LSQPACTLIFNet(784, 128, 10, weight_bits=4, act_bits=4)
+spikes, mem = net(torch.randn(25, 32, 784))   # (T, batch, features)
+export = net.export_quantized()                # per-layer LSQ codes + input scale
+```
+
 ## Integration with Studio
 
 In the Visual SNN Studio:
@@ -161,6 +227,9 @@ In the Visual SNN Studio:
 | STE training | Yes | No | No | Yes (ANN) |
 | Ternary weights | Yes | No | No | Yes (ANN) |
 | Binary weights | Yes | No | No | Yes (ANN) |
+| LSQ (learned step) | Yes | No | No | Yes (ANN) |
+| PACT (learned clip) | Yes | No | No | Yes (ANN) |
+| Per-channel observers | Yes | No | No | Yes (ANN) |
 | FPGA-aware | Yes | No | No | Partial |
 | SNN-specific | Yes | — | — | No (ANN only) |
 
@@ -175,3 +244,6 @@ specifically for spiking neural networks with direct FPGA deployment.
   for Efficient Integer-Arithmetic-Only Inference." CVPR 2018.
 - Deng et al. (2021). "Comprehensive SNN Compressed Accelerator on
   FPGA." IEEE TCAS-I 68(7):2889-2901.
+- Esser et al. (2020). "Learned Step Size Quantization." ICLR 2020.
+- Choi et al. (2018). "PACT: Parameterized Clipping Activation for
+  Quantized Neural Networks." arXiv:1805.06085.

@@ -25,6 +25,8 @@ import torch
 import torch.nn as nn
 
 from ..training.snn_modules import LIFCell, atan_surrogate  # type: ignore[attr-defined]
+from .lsq import LSQLinear
+from .pact import PACTActivation
 
 
 class _STEQuantize(torch.autograd.Function):
@@ -258,3 +260,108 @@ class SCAwareLIFNet(nn.Module):
                 entry["bias"] = lin_typed.linear.bias.detach().cpu().numpy()
             layers.append(entry)
         return layers
+
+
+class LSQPACTLIFNet(nn.Module):
+    """Feedforward SNN with LSQ weights and a PACT-quantised analogue input.
+
+    Combines the learned-step per-channel weight quantiser
+    (:class:`~sc_neurocore.qat.lsq.LSQLinear`) with the parameterised-clipping
+    activation quantiser (:class:`~sc_neurocore.qat.pact.PACTActivation`): the
+    continuous input current is clipped and quantised by a learned bound before
+    the first layer, and every dense layer's weights carry an independently
+    learned per-output-neuron step size. Inter-layer signals are binary spikes,
+    so only the input needs activation quantisation.
+
+    Parameters
+    ----------
+    n_input, n_hidden, n_output : int
+        Layer dimensions.
+    n_layers : int
+        Number of hidden layers.
+    weight_bits : int
+        Bit width of the LSQ weight quantiser.
+    act_bits : int
+        Bit width of the PACT input-activation quantiser.
+    beta : float
+        LIF membrane decay.
+    surrogate_fn : Callable
+        Surrogate-gradient spike function.
+    per_channel : bool
+        Learn a per-output-neuron weight step (default) or a single scalar step.
+
+    Example
+    -------
+    >>> net = LSQPACTLIFNet(784, 128, 10, weight_bits=4, act_bits=4)
+    >>> x = torch.randn(25, 32, 784)  # (T, batch, features)
+    >>> spikes, mem = net(x)
+    >>> spikes.shape
+    torch.Size([32, 10])
+    """
+
+    def __init__(
+        self,
+        n_input: int,
+        n_hidden: int,
+        n_output: int,
+        n_layers: int = 2,
+        weight_bits: int = 4,
+        act_bits: int = 4,
+        beta: float = 0.9,
+        surrogate_fn: Callable[..., torch.Tensor] = atan_surrogate,
+        per_channel: bool = True,
+    ):
+        super().__init__()
+        self.n_output = n_output
+        self.weight_bits = weight_bits
+        self.act_bits = act_bits
+
+        self.input_quant = PACTActivation(n_bits=act_bits)
+        sizes = [n_input] + [n_hidden] * n_layers + [n_output]
+        self.linears = nn.ModuleList(
+            LSQLinear(sizes[i], sizes[i + 1], n_bits=weight_bits, per_channel=per_channel)
+            for i in range(len(sizes) - 1)
+        )
+        self.lifs = nn.ModuleList(
+            LIFCell(beta=beta, surrogate_fn=surrogate_fn) for _ in range(len(sizes) - 1)
+        )
+
+    def forward(self, x: torch.Tensor) -> Tuple[torch.Tensor, torch.Tensor]:
+        """x: (T, batch, n_input). Returns (spike_counts, membrane_acc)."""
+        T, batch, _ = x.shape
+        device = x.device
+        v = [
+            torch.zeros(batch, cast(LSQLinear, lin).linear.out_features, device=device)
+            for lin in self.linears
+        ]
+
+        spike_sum = torch.zeros(batch, self.n_output, device=device)
+        mem_sum = torch.zeros(batch, self.n_output, device=device)
+
+        for t in range(T):
+            h = self.input_quant(x[t])
+            for i in range(len(self.linears)):
+                h = cast(LSQLinear, self.linears[i])(h)
+                spike, v[i] = cast(LIFCell, self.lifs[i])(h, v[i])
+                h = spike
+            spike_sum = spike_sum + spike
+            mem_sum = mem_sum + v[-1]
+
+        return spike_sum, mem_sum
+
+    def export_quantized(self) -> dict[str, Any]:
+        """Export LSQ integer weights per layer plus the PACT input scale.
+
+        Returns
+        -------
+        dict
+            ``layers`` (per-layer LSQ export dicts), ``input_scale`` (the PACT
+            activation step), and ``act_bits``.
+        """
+        in_features = cast(LSQLinear, self.linears[0]).linear.in_features
+        _, input_scale = self.input_quant.quantize(torch.zeros(1, in_features))
+        return {
+            "layers": [cast(LSQLinear, lin).export_quantized() for lin in self.linears],
+            "input_scale": input_scale,
+            "act_bits": self.act_bits,
+        }

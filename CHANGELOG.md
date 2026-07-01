@@ -5,6 +5,18 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 ## [Unreleased]
 
 ### Added
+- Learned quantisers for quantisation-aware training in `sc_neurocore.qat`,
+  extending the previous straight-through/ternary support. `LSQLinear` /
+  `LSQQuantizer` implement Learned Step Size Quantization (Esser et al. 2020):
+  the quantiser step size is a trainable parameter — per-tensor or
+  per-output-channel — learned jointly with the weights, with the paper's
+  step-size gradient and `2*mean(|w|)/sqrt(qmax)` initialisation.
+  `PACTActivation` implements PACT (Choi et al. 2018): a learnable clipping
+  bound bounds the activation range before uniform quantisation.
+  `MinMaxObserver` and `PerChannelMinMaxObserver` derive per-tensor or
+  per-channel `(scale, zero_point)` from calibration statistics (with a
+  `fake_quantize` helper). `LSQPACTLIFNet` wires LSQ per-channel weights and a
+  PACT-quantised analogue input into a feedforward LIF SNN end to end.
 - QCFS conversion route in `sc_neurocore.conversion.convert`. When the source
   model carries `QCFSActivation` layers, conversion now uses their learned
   per-layer thresholds directly (no calibration pass), adopts the layers'

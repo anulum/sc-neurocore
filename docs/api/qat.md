@@ -27,6 +27,16 @@ This trains weights to be robust to their own quantization noise. At export time
 - **`quantize_aware_train_step`** — One QAT training step with STE gradient flow. Returns `{'output', 'loss'}`.
 - **`_ste_quantize`** — Core quantization function. Supports symmetric and asymmetric modes.
 
+### Learned quantisers (PyTorch)
+
+Higher-accuracy quantisers that learn their parameters during training instead of fixing them from the running range:
+
+- **`LSQLinear` / `LSQQuantizer`** — Learned Step Size Quantization (Esser et al. 2020). The quantiser step size is a trainable parameter, per-tensor or per-output-channel, learned jointly with the weights. `export_quantized()` returns integer codes plus the learned step(s).
+- **`PACTActivation`** — PArameterized Clipping acTivation (Choi et al. 2018). A learnable clipping bound `alpha` bounds the activation range before uniform quantisation, so low-bit activations no longer need a hand-tuned clip.
+- **`MinMaxObserver` / `PerChannelMinMaxObserver`** — Range observers that turn calibration statistics into `(scale, zero_point)`, per-tensor or per-channel. Per-channel weight scales recover the accuracy a single per-tensor scale loses across channels of differing magnitude.
+- **`fake_quantize`** — Quantise/de-quantise helper (no STE) used to evaluate observer scales.
+- **`LSQPACTLIFNet`** — Feedforward LIF SNN wiring LSQ per-channel weight quantisation and a PACT-quantised analogue input end to end.
+
 ## Usage
 
 ```python
@@ -61,3 +71,30 @@ See [Tutorial 77: QAT](../tutorials/77_qat.md).
         - QuantizedSNNLayer
         - TernaryWeights
         - quantize_aware_train_step
+
+## Learned Step Size Quantization
+
+::: sc_neurocore.qat.lsq
+    options:
+      show_root_heading: true
+      members:
+        - LSQLinear
+        - LSQQuantizer
+
+## PACT Activation
+
+::: sc_neurocore.qat.pact
+    options:
+      show_root_heading: true
+      members:
+        - PACTActivation
+
+## Quantisation Observers
+
+::: sc_neurocore.qat.observers
+    options:
+      show_root_heading: true
+      members:
+        - MinMaxObserver
+        - PerChannelMinMaxObserver
+        - fake_quantize
