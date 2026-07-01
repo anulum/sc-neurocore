@@ -12,9 +12,11 @@
 
 #![cfg(feature = "gpu")]
 
-use sc_neurocore_engine::gpu::{is_available, GpuDenseLayer, GpuKuramoto, GpuLifBatch};
+use sc_neurocore_engine::gpu::{
+    is_available, GpuDenseLayer, GpuIzhikevichBatch, GpuKuramoto, GpuLifBatch,
+};
 use sc_neurocore_engine::layer::DenseLayer;
-use sc_neurocore_engine::neuron::FixedPointLif;
+use sc_neurocore_engine::neuron::{FixedPointLif, Izhikevich};
 use sc_neurocore_engine::scpn::kuramoto::KuramotoSolver;
 
 /// Skip-guard: all tests in this file require a real GPU.
@@ -522,4 +524,161 @@ fn gpu_kuramoto_synchronises_under_strong_coupling() {
         r_end > 0.9,
         "strong coupling should nearly synchronise: R = {r_end}"
     );
+}
+
+// ── GPU Izhikevich neuron kernel ────────────────────────────────────────
+
+/// CPU oracle: run `n_neurons` independent `Izhikevich` neurons for `n_steps`
+/// with per-neuron constant currents, returning row-major `[n_neurons × n_steps]`
+/// spikes (i32) and voltages (f32, cast from the f64 model). Mirrors the GPU
+/// kernel's per-neuron contract and shared `(a, b, c, d, dt)` parameters.
+#[allow(clippy::too_many_arguments)]
+fn cpu_izhikevich_batch(
+    n_neurons: usize,
+    n_steps: usize,
+    currents: &[f32],
+    a: f32,
+    b: f32,
+    c: f32,
+    d: f32,
+    dt: f32,
+) -> (Vec<i32>, Vec<f32>) {
+    let mut spikes = Vec::with_capacity(n_neurons * n_steps);
+    let mut voltages = Vec::with_capacity(n_neurons * n_steps);
+    for &current in currents.iter().take(n_neurons) {
+        let mut neuron = Izhikevich::new(a as f64, b as f64, c as f64, d as f64, dt as f64);
+        for _ in 0..n_steps {
+            let spike = neuron.step(current as f64);
+            spikes.push(spike);
+            voltages.push(neuron.v as f32);
+        }
+    }
+    (spikes, voltages)
+}
+
+#[test]
+fn gpu_izhikevich_creation() {
+    if !require_gpu() {
+        return;
+    }
+    let batch = GpuIzhikevichBatch::try_new();
+    assert!(
+        batch.is_some(),
+        "GpuIzhikevichBatch::try_new should succeed"
+    );
+    assert!(!batch.unwrap().gpu_name().is_empty());
+}
+
+#[test]
+fn gpu_izhikevich_shape_and_empty() {
+    if !require_gpu() {
+        return;
+    }
+    let gpu = GpuIzhikevichBatch::try_new().unwrap();
+    // Regular-spiking parameters; shape must be exactly n_neurons × n_steps.
+    let result = gpu.run(8, 5, &[5.0; 8], 0.02, 0.2, -65.0, 8.0, 1.0, 30.0);
+    assert_eq!(result.spikes.len(), 40);
+    assert_eq!(result.voltages.len(), 40);
+    // Zero-sized batch returns empty without dispatching.
+    let empty = gpu.run(0, 5, &[], 0.02, 0.2, -65.0, 8.0, 1.0, 30.0);
+    assert!(empty.spikes.is_empty());
+    assert!(empty.voltages.is_empty());
+    // Zero steps also returns empty rows.
+    let no_steps = gpu.run(4, 0, &[5.0; 4], 0.02, 0.2, -65.0, 8.0, 1.0, 30.0);
+    assert!(no_steps.spikes.is_empty());
+}
+
+#[test]
+fn gpu_izhikevich_subthreshold_trace_matches_cpu() {
+    if !require_gpu() {
+        return;
+    }
+    // A weak constant current keeps the regular-spiking neuron below threshold, so
+    // there is no spike/reset discontinuity — the full voltage trace is smooth and
+    // the f32 GPU integration must track the f64 CPU model tightly.
+    let n_neurons = 16;
+    let n_steps = 100;
+    let (a, b, c, d, dt) = (0.02, 0.2, -65.0, 8.0, 1.0);
+    // 2 pA sits comfortably below the regular-spiking rheobase (~4 pA), clear of
+    // the saddle-node ghost where coarse Euler would overshoot into a spike.
+    let currents = vec![2.0_f32; n_neurons];
+
+    let gpu = GpuIzhikevichBatch::try_new().unwrap();
+    let result = gpu.run(n_neurons, n_steps, &currents, a, b, c, d, dt, 30.0);
+    let (cpu_spikes, cpu_volts) =
+        cpu_izhikevich_batch(n_neurons, n_steps, &currents, a, b, c, d, dt);
+
+    // No spikes expected — parity of the raw trace is meaningful.
+    assert!(
+        !cpu_spikes.contains(&1),
+        "chosen current should stay sub-threshold on the CPU oracle"
+    );
+    assert_eq!(result.spikes, cpu_spikes, "sub-threshold spikes must match");
+    let max_dv = result
+        .voltages
+        .iter()
+        .zip(cpu_volts.iter())
+        .map(|(&g, &c)| (g - c).abs())
+        .fold(0.0_f32, f32::max);
+    assert!(
+        max_dv < 0.5,
+        "sub-threshold voltage trace diverged: max |Δv| = {max_dv} mV"
+    );
+}
+
+#[test]
+fn gpu_izhikevich_spike_count_matches_cpu() {
+    if !require_gpu() {
+        return;
+    }
+    // A supra-threshold current drives regular spiking. f32 vs f64 can shift the
+    // exact reset step by a tick, so the spike count agrees within a small margin
+    // rather than bit-exactly (unlike the fixed-point LIF kernel).
+    let n_neurons = 32;
+    let n_steps = 300;
+    let (a, b, c, d, dt) = (0.02, 0.2, -65.0, 8.0, 1.0);
+    let currents = vec![10.0_f32; n_neurons];
+
+    let gpu = GpuIzhikevichBatch::try_new().unwrap();
+    let result = gpu.run(n_neurons, n_steps, &currents, a, b, c, d, dt, 30.0);
+    let (cpu_spikes, _) = cpu_izhikevich_batch(n_neurons, n_steps, &currents, a, b, c, d, dt);
+
+    let gpu_count: i32 = result.spikes.iter().sum();
+    let cpu_count: i32 = cpu_spikes.iter().sum();
+    assert!(cpu_count > 0, "workload should spike on the CPU oracle");
+    assert!(
+        (gpu_count - cpu_count).abs() <= 2,
+        "spike count diverged: GPU {gpu_count} vs CPU {cpu_count}"
+    );
+    // Every voltage after a reset must sit at or below the peak threshold.
+    assert!(
+        result.voltages.iter().all(|&v| v <= 30.0),
+        "no voltage should exceed the peak threshold after reset"
+    );
+}
+
+#[test]
+fn gpu_izhikevich_firing_rate_monotonic_in_current() {
+    if !require_gpu() {
+        return;
+    }
+    // Behavioural check: a stronger drive must produce at least as many spikes —
+    // confirms the current term is wired, not just that two numbers coincide.
+    let (a, b, c, d, dt) = (0.02, 0.2, -65.0, 8.0, 1.0);
+    let n_steps = 300;
+    let gpu = GpuIzhikevichBatch::try_new().unwrap();
+    let count_for = |i: f32| -> i32 {
+        gpu.run(1, n_steps, &[i], a, b, c, d, dt, 30.0)
+            .spikes
+            .iter()
+            .sum()
+    };
+    let low = count_for(5.0);
+    let mid = count_for(10.0);
+    let high = count_for(20.0);
+    assert!(
+        low <= mid && mid <= high,
+        "firing rate should be monotonic in current: {low} <= {mid} <= {high}"
+    );
+    assert!(high > 0, "strong drive should spike");
 }

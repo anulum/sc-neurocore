@@ -5,6 +5,18 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 ## [Unreleased]
 
 ### Added
+- GPU Izhikevich neuron batch runner (`sc_neurocore_engine.GpuIzhikevichBatch`, behind
+  the Rust `gpu` feature), extending the GPU neuron-dynamics path. A wgpu/WGSL compute
+  shader runs one thread per neuron, each looping all steps internally with a constant
+  current and applying the two half-steps of the Euler update then the `v ≥ v_peak`
+  threshold with reset `v ← c`, `u ← u + d`; it returns row-major `[n_neurons × n_steps]`
+  spikes (`int32`) and voltages (`float32`). It mirrors the CPU `neuron::Izhikevich`
+  model; because WGSL has no `f64` the arithmetic is `f32`, so GPU tests check agreement
+  with the `f64` CPU oracle by tolerance — a tight sub-threshold voltage trace, spike
+  count within a small margin, and firing-rate monotonicity in the drive current. Like
+  the LIF kernel this is O(N) per-neuron work with no inter-neuron coupling, so the rayon
+  CPU stays ahead across the benchmarked range; a Criterion benchmark records the measured
+  CPU/GPU order. Tests and benches self-skip when no GPU adapter is present.
 - GPU Kuramoto oscillator integrator (`sc_neurocore_engine.GpuKuramoto`, behind the
   Rust `gpu` feature), extending the GPU neuron-dynamics path beyond the LIF batch
   kernel. A wgpu/WGSL compute shader runs one thread per oscillator, each summing its

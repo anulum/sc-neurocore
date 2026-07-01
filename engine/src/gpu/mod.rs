@@ -28,11 +28,13 @@
 pub mod buffers;
 pub mod context;
 pub mod dense;
+pub mod izhikevich;
 pub mod kuramoto;
 pub mod lif;
 
 pub use context::is_available;
 pub use dense::GpuDenseLayer;
+pub use izhikevich::GpuIzhikevichBatch;
 pub use kuramoto::GpuKuramoto;
 pub use lif::GpuLifBatch;
 
@@ -215,6 +217,95 @@ impl PyGpuLifBatch {
         let spikes = Array2::from_shape_vec((n_neurons, n_steps), result.spikes)
             .map_err(|e| PyValueError::new_err(format!("spike reshape: {e}")))?;
         let voltages = Array2::from_shape_vec((n_neurons, n_steps), voltages_i16)
+            .map_err(|e| PyValueError::new_err(format!("voltage reshape: {e}")))?;
+        Ok((spikes.into_pyarray(py), voltages.into_pyarray(py)))
+    }
+
+    /// Name of the GPU adapter.
+    fn gpu_name(&self) -> String {
+        self.inner.gpu_name().to_string()
+    }
+
+    /// Check if a GPU is available (class method).
+    #[staticmethod]
+    fn is_gpu_available() -> bool {
+        is_available()
+    }
+}
+
+/// Python-facing GPU-accelerated Izhikevich neuron batch runner.
+///
+/// Mirrors the CPU ``neuron::Izhikevich``: ``n_neurons`` independent neurons
+/// sharing ``(a, b, c, d, dt)``, each with a constant current, advanced
+/// ``n_steps`` from the initial state ``v = c``, ``u = b·c``. Returns
+/// ``(spikes[n_neurons, n_steps] int32, voltages[n_neurons, n_steps] float32)``.
+/// The GPU math is f32, so results agree with the f64 CPU model within tolerance.
+#[pyclass(
+    name = "GpuIzhikevichBatch",
+    module = "sc_neurocore_engine.sc_neurocore_engine"
+)]
+pub struct PyGpuIzhikevichBatch {
+    inner: GpuIzhikevichBatch,
+}
+
+#[pymethods]
+impl PyGpuIzhikevichBatch {
+    #[new]
+    fn new() -> PyResult<Self> {
+        let inner = GpuIzhikevichBatch::try_new().ok_or_else(|| {
+            pyo3::exceptions::PyRuntimeError::new_err(
+                "No GPU available. Check Vulkan/Metal drivers.",
+            )
+        })?;
+        Ok(PyGpuIzhikevichBatch { inner })
+    }
+
+    /// Run the batch. ``currents`` has length ``n_neurons`` (one constant current
+    /// per neuron). Returns ``(spikes, voltages)`` as ``[n_neurons, n_steps]``
+    /// arrays. Defaults are the regular-spiking preset (a=0.02, b=0.2, c=-65,
+    /// d=8, dt=1.0) with the standard ``v_peak = 30`` reset threshold.
+    #[pyo3(signature = (
+        n_neurons,
+        n_steps,
+        currents,
+        a=0.02,
+        b=0.2,
+        c=-65.0,
+        d=8.0,
+        dt=1.0,
+        v_peak=30.0
+    ))]
+    #[allow(clippy::too_many_arguments)]
+    #[allow(clippy::type_complexity)]
+    fn run<'py>(
+        &self,
+        py: Python<'py>,
+        n_neurons: usize,
+        n_steps: usize,
+        currents: PyReadonlyArray1<'py, f32>,
+        a: f32,
+        b: f32,
+        c: f32,
+        d: f32,
+        dt: f32,
+        v_peak: f32,
+    ) -> PyResult<(Bound<'py, PyArray2<i32>>, Bound<'py, PyArray2<f32>>)> {
+        let curr = currents
+            .as_slice()
+            .map_err(|e| PyValueError::new_err(format!("Cannot read currents: {e}")))?;
+        if curr.len() != n_neurons {
+            return Err(PyValueError::new_err(format!(
+                "currents length {} does not match n_neurons {}",
+                curr.len(),
+                n_neurons
+            )));
+        }
+        let result = self
+            .inner
+            .run(n_neurons, n_steps, curr, a, b, c, d, dt, v_peak);
+        let spikes = Array2::from_shape_vec((n_neurons, n_steps), result.spikes)
+            .map_err(|e| PyValueError::new_err(format!("spike reshape: {e}")))?;
+        let voltages = Array2::from_shape_vec((n_neurons, n_steps), result.voltages)
             .map_err(|e| PyValueError::new_err(format!("voltage reshape: {e}")))?;
         Ok((spikes.into_pyarray(py), voltages.into_pyarray(py)))
     }

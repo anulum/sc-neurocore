@@ -20,10 +20,12 @@ pub struct GpuContext {
     pub accumulate_pipeline: wgpu::ComputePipeline,
     pub lif_pipeline: wgpu::ComputePipeline,
     pub kuramoto_pipeline: wgpu::ComputePipeline,
+    pub izhikevich_pipeline: wgpu::ComputePipeline,
     pub encode_bind_group_layout: wgpu::BindGroupLayout,
     pub accumulate_bind_group_layout: wgpu::BindGroupLayout,
     pub lif_bind_group_layout: wgpu::BindGroupLayout,
     pub kuramoto_bind_group_layout: wgpu::BindGroupLayout,
+    pub izhikevich_bind_group_layout: wgpu::BindGroupLayout,
     pub adapter_name: String,
 }
 
@@ -98,6 +100,12 @@ impl GpuContext {
             source: wgpu::ShaderSource::Wgsl(include_str!("shaders/kuramoto_step.wgsl").into()),
         });
 
+        // Compile Izhikevich batch-step shader.
+        let izhikevich_shader = device.create_shader_module(wgpu::ShaderModuleDescriptor {
+            label: Some("izhikevich_step"),
+            source: wgpu::ShaderSource::Wgsl(include_str!("shaders/izhikevich_step.wgsl").into()),
+        });
+
         // Bind group layouts.
         let encode_bgl = device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
             label: Some("encode_bgl"),
@@ -136,6 +144,16 @@ impl GpuContext {
                 bgl_storage_ro(2), // phase_in
                 bgl_storage_rw(3), // phase_out
                 bgl_uniform(4),    // params
+            ],
+        });
+
+        let izhikevich_bgl = device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
+            label: Some("izhikevich_bgl"),
+            entries: &[
+                bgl_storage_ro(0), // currents
+                bgl_storage_rw(1), // spikes_out
+                bgl_storage_rw(2), // voltages_out
+                bgl_uniform(3),    // params
             ],
         });
 
@@ -197,6 +215,21 @@ impl GpuContext {
             cache: None,
         });
 
+        let izhikevich_pl = device.create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
+            label: Some("izhikevich_pl"),
+            bind_group_layouts: &[Some(&izhikevich_bgl)],
+            immediate_size: 0,
+        });
+        let izhikevich_pipeline =
+            device.create_compute_pipeline(&wgpu::ComputePipelineDescriptor {
+                label: Some("izhikevich_pipeline"),
+                layout: Some(&izhikevich_pl),
+                module: &izhikevich_shader,
+                entry_point: Some("izhikevich_step_main"),
+                compilation_options: Default::default(),
+                cache: None,
+            });
+
         Some(GpuContext {
             device,
             queue,
@@ -204,10 +237,12 @@ impl GpuContext {
             accumulate_pipeline,
             lif_pipeline,
             kuramoto_pipeline,
+            izhikevich_pipeline,
             encode_bind_group_layout: encode_bgl,
             accumulate_bind_group_layout: accum_bgl,
             lif_bind_group_layout: lif_bgl,
             kuramoto_bind_group_layout: kuramoto_bgl,
+            izhikevich_bind_group_layout: izhikevich_bgl,
             adapter_name,
         })
     }

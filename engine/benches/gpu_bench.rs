@@ -8,9 +8,9 @@
 
 use criterion::{criterion_group, criterion_main, BenchmarkId, Criterion};
 use rayon::prelude::*;
-use sc_neurocore_engine::gpu::{GpuDenseLayer, GpuKuramoto, GpuLifBatch};
+use sc_neurocore_engine::gpu::{GpuDenseLayer, GpuIzhikevichBatch, GpuKuramoto, GpuLifBatch};
 use sc_neurocore_engine::layer::DenseLayer;
-use sc_neurocore_engine::neuron::FixedPointLif;
+use sc_neurocore_engine::neuron::{FixedPointLif, Izhikevich};
 use sc_neurocore_engine::scpn::kuramoto::KuramotoSolver;
 
 fn bench_gpu_vs_cpu(c: &mut Criterion) {
@@ -158,11 +158,55 @@ fn bench_gpu_kuramoto(c: &mut Criterion) {
     group.finish();
 }
 
+/// CPU reference for the Izhikevich batch: rayon-parallel over neurons, mirroring
+/// the per-neuron kernel contract. Returns total spikes to defeat dead-code elision.
+fn cpu_izhikevich_batch(n_neurons: usize, n_steps: usize, currents: &[f32]) -> usize {
+    (0..n_neurons)
+        .into_par_iter()
+        .map(|n| {
+            let mut neuron = Izhikevich::regular_spiking();
+            let mut spikes = 0usize;
+            for _ in 0..n_steps {
+                spikes += neuron.step(currents[n] as f64) as usize;
+            }
+            spikes
+        })
+        .sum()
+}
+
+/// Izhikevich batch: GPU (one thread per neuron, time loop in-kernel) vs rayon CPU,
+/// across neuron counts. Like the LIF kernel this is O(N) per-neuron work with no
+/// inter-neuron coupling, so the rayon CPU is expected to stay ahead at these sizes;
+/// the GPU's value is keeping the state resident inside a larger GPU pipeline. The
+/// bench records the honest measured order rather than presuming a GPU win.
+fn bench_gpu_izhikevich(c: &mut Criterion) {
+    let sizes: &[usize] = &[256, 1024, 4096, 16_384, 65_536];
+    let n_steps = 300;
+    let mut group = c.benchmark_group("gpu_izhikevich_batch");
+
+    for &n in sizes {
+        let currents: Vec<f32> = (0..n).map(|i| 5.0 + (i % 20) as f32).collect();
+
+        group.bench_with_input(BenchmarkId::new("cpu", n), &currents, |b, curr| {
+            b.iter(|| cpu_izhikevich_batch(n, n_steps, curr));
+        });
+
+        if let Some(gpu) = GpuIzhikevichBatch::try_new() {
+            group.bench_with_input(BenchmarkId::new("gpu", n), &currents, |b, curr| {
+                b.iter(|| gpu.run(n, n_steps, curr, 0.02, 0.2, -65.0, 8.0, 1.0, 30.0));
+            });
+        }
+    }
+
+    group.finish();
+}
+
 criterion_group!(
     benches,
     bench_gpu_vs_cpu,
     bench_gpu_batch,
     bench_gpu_lif,
-    bench_gpu_kuramoto
+    bench_gpu_kuramoto,
+    bench_gpu_izhikevich
 );
 criterion_main!(benches);

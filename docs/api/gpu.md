@@ -312,6 +312,55 @@ if let Some(solver) = GpuKuramoto::try_new() {
 }
 ```
 
+### Python: GPU Izhikevich neurons
+
+```python
+import numpy as np
+from sc_neurocore_engine import GpuIzhikevichBatch
+
+n_neurons = 1024
+n_steps = 300
+currents = np.full(n_neurons, 10.0, dtype=np.float32)   # supra-threshold drive
+
+batch = GpuIzhikevichBatch()
+# Regular-spiking preset: a=0.02, b=0.2, c=-65, d=8, dt=1.0, v_peak=30.
+spikes, voltages = batch.run(n_neurons, n_steps, currents)
+
+print(f"spikes shape {spikes.shape}, total {int(spikes.sum())} on {batch.gpu_name()}")
+print(f"voltage trace of neuron 0: {voltages[0, :5]}")
+```
+
+Each GPU thread owns one neuron and loops all `n_steps` internally, applying the
+two half-steps of the Euler update (for stability on the `0.04·v²` term) then the
+`v ≥ v_peak` threshold with reset `v ← c`, `u ← u + d`. It returns row-major
+`[n_neurons × n_steps]` arrays of spikes (`int32`) and voltages (`float32`).
+Because WGSL has no `f64`, the GPU math is `f32`, so agreement with the `f64` CPU
+`Izhikevich` model is tolerance-based (spike counts and the sub-threshold trace),
+not bit-for-bit — unlike the fixed-point LIF kernel.
+
+Like LIF, this is O(N) per-neuron work with no inter-neuron coupling, so the rayon
+CPU stays ahead across the measured range (256–65 536 neurons the CPU is ~5–9×
+faster; see `cargo bench --bench gpu_bench gpu_izhikevich`). The GPU kernel's value
+is not a standalone speed win but keeping the neuron state resident on the GPU
+inside a larger pipeline (e.g. coupled to the O(N²) Kuramoto kernel, which *does*
+overtake the CPU), avoiding host round-trips.
+
+### Rust: GPU Izhikevich neurons
+
+```rust
+use sc_neurocore_engine::gpu::GpuIzhikevichBatch;
+
+if let Some(batch) = GpuIzhikevichBatch::try_new() {
+    let n_neurons = 1024;
+    let n_steps = 300;
+    let currents = vec![10.0f32; n_neurons];
+    // (a, b, c, d, dt, v_peak) — regular-spiking preset.
+    let result = batch.run(n_neurons, n_steps, &currents, 0.02, 0.2, -65.0, 8.0, 1.0, 30.0);
+    let total: i32 = result.spikes.iter().sum();
+    println!("total spikes {total} on {}", batch.gpu_name());
+}
+```
+
 ### GPU adapter selection
 
 ```bash

@@ -786,6 +786,8 @@ fn sc_neurocore_engine(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_class::<gpu::PyGpuLifBatch>()?;
     #[cfg(feature = "gpu")]
     m.add_class::<gpu::PyGpuKuramoto>()?;
+    #[cfg(feature = "gpu")]
+    m.add_class::<gpu::PyGpuIzhikevichBatch>()?;
     m.add_class::<StdpSynapse>()?;
     m.add_class::<PySurrogateLif>()?;
     m.add_class::<PyDifferentiableDenseLayer>()?;
