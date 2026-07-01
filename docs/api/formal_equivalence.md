@@ -1,0 +1,142 @@
+<!-- SPDX-License-Identifier: AGPL-3.0-or-later -->
+<!-- Commercial license available -->
+<!-- © Concepts 1996–2026 Miroslav Šotek. All rights reserved. -->
+<!-- © Code 2020–2026 Miroslav Šotek. All rights reserved. -->
+<!-- ORCID: 0009-0009-3560-0851 -->
+
+# Machine-Checked RTL Equivalence
+
+**Modules:** `sc_neurocore.compiler.equivalence_miter`,
+`sc_neurocore.compiler.equivalence_check`
+**Tools:** [SymbiYosys](https://github.com/YosysHQ/sby) (`sby`) + Yosys + an SMT
+engine (`z3` by default)
+
+This flow proves that the compiler's **generated Verilog** computes the same
+function as an **independent reference** module — not for a sampled set of
+stimuli, but for *every* input sequence up to a bounded depth. It replaces the
+prior text-only equivalence *sketch* (`intelligence.equivalence_sketch`) and the
+standalone `.sby` script generator (`sby_formal`) with a runnable proof that
+returns a real verdict.
+
+---
+
+## 1. Method — sequential miter + bounded model checking
+
+A **miter** instantiates the device-under-test (DUT) and the reference side by
+side, drives both with identical free inputs and a shared reset, and asserts
+that their outputs agree on every post-reset cycle:
+
+```
+        ┌──────────── free inputs (checker explores all values) ────────────┐
+   clk ─┤                                                                    │
+        │   ┌───────────┐  outputs_dut                                       │
+        ├──▶│    DUT     ├──────────────┐                                    │
+        │   └───────────┘               ▼                                    │
+ rst_n ─┤                          assert(==) ── every post-reset cycle      │
+ (gen.) │   ┌───────────┐               ▲                                    │
+        └──▶│ reference  ├──────────────┘                                    │
+            └───────────┘  outputs_ref                                       │
+```
+
+Feeding the miter to bounded model checking (BMC) asks the SMT solver whether
+*any* input sequence of up to `depth` cycles can drive the two outputs apart.
+`PASS` means none can — a proof of equivalence to that depth. `FAIL` returns a
+concrete counterexample trace.
+
+### Reset discipline
+
+The miter uses neither an `initial` block nor a simulation-only `always #5 clk`
+construct — both over-constrain the formal initial state into `PREUNSAT`.
+Instead a free-running counter (initialised to zero, the one initial value the
+checker honours) holds the active-low reset asserted for `reset_cycles` clocks,
+and the equivalence assertions are gated on the post-reset window so the two
+modules are compared only once both have been driven into their reset state.
+
+### Bounded vs unbounded
+
+BMC establishes equivalence up to `depth` cycles from reset. Unbounded proof by
+k-induction (`mode="prove"`) is available but is **not** the default: for
+datapaths with wide signed multipliers (the fixed-point neuron update) the
+induction step reports spurious counterexamples from unreachable mid-states
+unless the reachable-state invariant is supplied, so a bounded proof to a
+solver-tractable depth is the honest default. On the fixed-point LIF datapath
+`z3` proves the miter quickly to depth ≈ 4 and slows sharply beyond that.
+
+---
+
+## 2. Usage
+
+```python
+from sc_neurocore.compiler.equivalence_miter import parse_module_interface
+from sc_neurocore.compiler.equivalence_check import (
+    formal_tools_available,
+    prove_equivalence,
+)
+
+dut_verilog = open("hdl/sc_lif_neuron.v").read()
+ref_verilog = open("hdl/equiv/sc_lif_reference.v").read()
+
+# Resolve the shared interface (parameter-dependent widths need their values).
+ports = parse_module_interface(ref_verilog, "sc_lif_reference", params={"DATA_WIDTH": 16})
+
+if formal_tools_available():
+    result = prove_equivalence(
+        dut_verilog,
+        ref_verilog,
+        ports,
+        dut_top="sc_lif_neuron",
+        ref_top="sc_lif_reference",
+        dut_params={"DATA_WIDTH": 16, "FRACTION": 8, "V_THRESHOLD": 256, "REFRACTORY_PERIOD": 0},
+        ref_params={"DATA_WIDTH": 16, "FRACTION": 8, "V_THRESHOLD": 256},
+        depth=4,
+    )
+    if result.proven:
+        print(f"equivalent to depth {result.depth}")
+    else:
+        print(f"counterexample: {result.counterexample}\ntrace: {result.trace_path}")
+```
+
+`parse_module_interface` also accepts an explicit `list[MiterPort]` if you prefer
+not to parse the header; `build_equivalence_miter` returns the miter Verilog
+directly for inspection or a custom flow.
+
+---
+
+## 3. Reference
+
+### `equivalence_miter` (pure)
+
+| Symbol | Description |
+|--------|-------------|
+| `MiterPort(name, width, signed, direction)` | One port of the shared interface. |
+| `parse_module_interface(verilog, top, *, params=None)` | Parse the ANSI port list; resolve parameter-dependent widths. |
+| `build_equivalence_miter(dut_top, ref_top, io_ports, *, ...)` | Emit the sequential-equivalence miter Verilog. |
+
+### `equivalence_check` (runner)
+
+| Symbol | Description |
+|--------|-------------|
+| `formal_tools_available()` | `True` when `sby` and `yosys` are on `PATH`. |
+| `prove_equivalence(dut_verilog, ref_verilog, io_ports, *, ...)` | Build the miter, run `sby`, return an `EquivalenceResult`. |
+| `EquivalenceResult` | `proven`, `verdict`, `mode`, `depth`, `engine`, `returncode`, `counterexample`, `trace_path`, `summary`. |
+
+A `PASS` sets `proven=True`; a `FAIL` sets `proven=False` with the failing
+assertion and counterexample-trace path. An `sby` tool/setup failure (as opposed
+to a disproof) raises `RuntimeError`, as does a timeout or absent toolchain.
+
+---
+
+## 4. Limitations
+
+1. **Bounded depth.** BMC proves equivalence only up to `depth` cycles; deeper
+   proof needs more solver time or an invariant for k-induction.
+2. **Interface-compatible modules.** DUT and reference must share the same I/O
+   ports (parameters may differ per instance).
+3. **Toolchain required.** Proofs need `sby` + `yosys`; without them
+   `formal_tools_available()` is `False` and the proof functions raise.
+4. **SMT tractability.** Wide-multiplier datapaths bound the practical depth on
+   general-purpose SMT engines.
+
+---
+
+*© 2020–2026 Miroslav Šotek / ANULUM. AGPL-3.0-or-later.*

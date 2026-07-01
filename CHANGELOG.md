@@ -5,6 +5,20 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 ## [Unreleased]
 
 ### Added
+- Machine-checked Python↔RTL equivalence flow for generated models
+  (`sc_neurocore.compiler.equivalence_miter` + `equivalence_check`). Given the
+  compiler's generated Verilog and an independent reference module,
+  `prove_equivalence` builds a sequential miter — both instances driven by
+  identical free inputs and a shared counter-derived reset, asserting output
+  agreement on every post-reset cycle — runs it through SymbiYosys bounded model
+  checking, and returns a real verdict (`proven` with the checked depth, or a
+  counterexample with its failing assertion and trace path). This replaces the
+  prior text-only equivalence sketch and the standalone `.sby` script generator,
+  which are now cross-referenced to the runnable flow. Bounded model checking
+  proves equivalence to a configurable depth; unbounded k-induction is available
+  but not the default (wide-multiplier datapaths need an invariant to converge).
+  The proof functions raise when `sby`/`yosys` are absent, and the tests skip in
+  that case.
 - GPU Izhikevich neuron batch runner (`sc_neurocore_engine.GpuIzhikevichBatch`, behind
   the Rust `gpu` feature), extending the GPU neuron-dynamics path. A wgpu/WGSL compute
   shader runs one thread per neuron, each looping all steps internally with a constant

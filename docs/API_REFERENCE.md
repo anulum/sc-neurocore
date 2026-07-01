@@ -6091,6 +6091,176 @@ str
 
 ---
 
+## Module `compiler.equivalence_check`
+
+### Class `EquivalenceResult`
+Outcome of a machine-checked equivalence proof.
+
+Attributes
+----------
+proven : bool
+    ``True`` when the checker proved output equivalence to ``depth`` cycles.
+verdict : str
+    The raw SymbiYosys verdict (``"PASS"``, ``"FAIL"``, ``"ERROR"``, ...).
+mode : str
+    ``"bmc"`` (bounded) or ``"prove"`` (k-induction).
+depth : int
+    Checked depth in clock cycles.
+engine : str
+    SMT engine used (e.g. ``"z3"``).
+returncode : int
+    ``sby`` process exit code.
+counterexample : str or None
+    Failing-assertion description on a ``FAIL`` verdict, else ``None``.
+trace_path : str or None
+    Path to the counterexample VCD trace on ``FAIL``, else ``None``.
+summary : list&#91;str&#93;
+    The ``sby`` summary lines, retained for diagnostics.
+
+
+### Function `formal_tools_available()`
+Return ``True`` when both ``sby`` and ``yosys`` are on ``PATH``.
+
+### Function `_generate_sby(miter_top, source_files)`
+Render a ``.sby`` script that reads the sources and checks the miter.
+
+### Function `_parse_verdict(stdout)`
+Extract the ``(verdict, rc)`` from the ``sby`` summary, or ``("UNKNOWN", -1)``.
+
+### Function `prove_equivalence(dut_verilog, ref_verilog, io_ports)`
+Prove ``dut_verilog`` equivalent to ``ref_verilog`` via SymbiYosys.
+
+Parameters
+----------
+dut_verilog, ref_verilog : str
+    Verilog sources defining ``dut_top`` and ``ref_top`` respectively.
+io_ports : list&#91;MiterPort&#93;
+    Shared interface passed to :func:`build_equivalence_miter`.
+dut_top, ref_top : str
+    Module names under verification (must differ).
+dut_params, ref_params : dict&#91;str, int&#93;, optional
+    Per-instance parameter overrides.
+depth : int
+    BMC / induction depth in clock cycles.
+engine : str
+    SMT engine (``"z3"`` by default; the ``smtbmc`` backend).
+mode : {"bmc", "prove"}
+    Bounded model checking or k-induction.
+reset_cycles : int
+    Leading clocks to hold reset before comparing.
+clock, reset_n : str
+    Clock and active-low reset port names.
+timeout_s : float
+    Wall-clock limit for the ``sby`` process.
+workdir : str or Path, optional
+    Directory for the generated sources and ``sby`` run tree. A temporary
+    directory is created and left in place if omitted (caller cleans up).
+
+Returns
+-------
+EquivalenceResult
+    The parsed verdict.
+
+Raises
+------
+RuntimeError
+    If the formal tools are absent, the ``sby`` run errors out (a tool or
+    setup failure, distinct from a ``FAIL`` disproof), or times out.
+
+---
+
+## Module `compiler.equivalence_miter`
+
+### Class `MiterPort`
+One port of the module interface shared by the DUT and the reference.
+
+Attributes
+----------
+name : str
+    Port identifier.
+width : int
+    Bit width (``1`` for a scalar port).
+signed : bool
+    Whether the port is declared ``signed``.
+direction : str
+    ``"input"`` or ``"output"``.
+
+- **declaration**(suffix)
+  - Return a Verilog ``wire`` declaration for this port.
+
+### Function `_eval_width_expr(expr, params)`
+Evaluate a bit-index expression to an integer, substituting parameters.
+
+Supports integer literals, the parameter names in ``params``, and the
+``+ - * // << >>`` operators — enough for the ``&#91;DATA_WIDTH-1:0&#93;`` bounds the
+compiler emits. Raises :class:`ValueError` on any unsupported construct so a
+malformed or parameter-dependent width can never silently resolve wrong.
+
+### Function `_module_header(verilog, top)`
+Return the port-list body of ``module top ( ... );``.
+
+Skips an optional ``#( ... )`` parameter block. Raises :class:`ValueError`
+if the module or its port list cannot be located.
+
+### Function `parse_module_interface(verilog, top)`
+Parse the ANSI port interface of a Verilog module.
+
+Parameters
+----------
+verilog : str
+    Verilog source containing the module.
+top : str
+    Module name whose interface to parse.
+params : dict&#91;str, int&#93;, optional
+    Values for any parameters used in port width expressions (e.g.
+    ``{"DATA_WIDTH": 16}``). Widths that reference an unlisted parameter
+    raise :class:`ValueError`.
+
+Returns
+-------
+list&#91;MiterPort&#93;
+    The ports in declaration order.
+
+### Function `_params_block(params)`
+Render a ``#(.NAME(value), ...)`` override block, or ``""`` if empty.
+
+### Function `_instance(top, inst, params, connections)`
+Render a single module instantiation.
+
+### Function `build_equivalence_miter(dut_top, ref_top, io_ports)`
+Build a sequential-equivalence miter for two interface-compatible modules.
+
+Both ``dut_top`` and ``ref_top`` are instantiated with the same ``io_ports``;
+the miter exposes the clock and every non-reset input as free top-level
+inputs (the model checker explores all their values), derives an active-low
+reset held for ``reset_cycles`` clocks from a counter, and asserts that every
+output agrees between the two instances once reset is released.
+
+Parameters
+----------
+dut_top, ref_top : str
+    Module names of the device-under-test and the reference. Must differ so
+    both sources can be read into one design.
+io_ports : list&#91;MiterPort&#93;
+    The shared interface. Must contain ``clock`` and ``reset_n`` inputs and
+    at least one output.
+miter_name : str
+    Name of the generated miter module.
+dut_params, ref_params : dict&#91;str, int&#93;, optional
+    Parameter overrides applied to the respective instance (the two modules
+    may take different parameter sets).
+reset_cycles : int
+    Number of leading clocks to hold reset asserted before comparing.
+clock, reset_n : str
+    Port names of the clock and active-low reset.
+
+Returns
+-------
+str
+    The complete miter Verilog module.
+
+---
+
 ## Module `compiler.expr_lut_tables`
 
 ### Function `const_float(node)`

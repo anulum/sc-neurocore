@@ -961,11 +961,11 @@
     "model_documentation_pages": 175,
     "optional_extras": 25,
     "public_api_exports": 44,
-    "public_documentation_pages": 559,
+    "public_documentation_pages": 560,
     "python_model_classes": 158,
     "python_model_source_modules": 152,
     "rust_pyo3_model_wrappers": 175,
-    "test_files": 927
+    "test_files": 929
   },
   "documentation": {
     "public_pages": [
@@ -1041,6 +1041,7 @@
       "docs/api/federation.md",
       "docs/api/few_shot.md",
       "docs/api/formal.md",
+      "docs/api/formal_equivalence.md",
       "docs/api/formal_network_verification.md",
       "docs/api/fusion.md",
       "docs/api/gamma_oscillation.md",
@@ -2989,6 +2990,8 @@
       "tests/test_equation_compiler.py",
       "tests/test_equation_units.py",
       "tests/test_equilibrium_propagation.py",
+      "tests/test_equivalence_check.py",
+      "tests/test_equivalence_miter.py",
       "tests/test_ermentrout_kopell_map_backends.py",
       "tests/test_event_driven.py",
       "tests/test_evo_substrate/test_evo_substrate.py",

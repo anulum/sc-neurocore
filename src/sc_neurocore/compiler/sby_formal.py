@@ -10,6 +10,11 @@
 
 Generates .sby configuration files for bounded model checking (BMC),
 induction proofs, and reachability (cover) analysis.
+
+For an end-to-end *machine-checked* equivalence proof — building the miter,
+invoking ``sby``, and parsing the verdict — use
+:func:`sc_neurocore.compiler.equivalence_check.prove_equivalence`, which drives
+this flow to completion rather than only emitting the script.
 """
 
 from __future__ import annotations

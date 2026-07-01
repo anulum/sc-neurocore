@@ -32,6 +32,8 @@ can change without a deprecation window.
 | `constraint_gen` | direct public module | Timing constraint generator has direct tests and documentation. |
 | `deployment` | direct public module | Deployment facade aggregates constraints, drivers, evidence, and multi-target helpers. |
 | `equation_compiler` | public facade | Package-level exports provide equation-to-FPGA helpers. |
+| `equivalence_check` | internal build tool | SymbiYosys equivalence runner behind the hardware evidence pipeline. |
+| `equivalence_miter` | internal build tool | Sequential-equivalence miter builder feeding the equivalence runner. |
 | `expr_lut_tables` | internal build tool | Shared transcendental look-up tables for the expression emitters. |
 | `fixed_point_quantization` | direct public module | Fixed-point quantization primitives back direct quantization workflows. |
 | `formal_evidence` | internal build tool | Evidence writer used by hardware audit pipelines. |

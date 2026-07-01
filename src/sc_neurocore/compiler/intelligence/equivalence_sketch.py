@@ -6,7 +6,15 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore — Formal equivalence sketch
 
-"""Formal equivalence proof skeleton between ODE and RTL."""
+"""Formal equivalence proof skeleton between ODE and RTL.
+
+This produces the analytic argument (quantisation-error bound + SVA assertion
+strings) that a compiled module tracks its source ODE within fixed-point error.
+For a *machine-checked* RTL↔RTL proof that a generated module matches an
+independent reference for every input up to a bounded depth — actually running a
+miter through SymbiYosys — use
+:func:`sc_neurocore.compiler.equivalence_check.prove_equivalence`.
+"""
 
 from __future__ import annotations
 

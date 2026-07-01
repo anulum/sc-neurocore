@@ -430,6 +430,7 @@ nav:
       - Formal + Safety:
           - Lean 4 Safety Proofs: api/formal.md
           - Network Formal Verification: api/formal_network_verification.md
+          - Machine-Checked RTL Equivalence: api/formal_equivalence.md
       - Edge + Wire Protocol:
           - AER Interconnect Router: api/edge.md
           - Protobuf Schemas: api/proto.md
