@@ -40,6 +40,14 @@ empty, private, and path-like names fail before filesystem access. Studio uses
 the same `load_descriptor()` surface when it renders model detail pages, so the
 descriptor guard protects the browser-facing catalogue and maintenance tools.
 
+`tools/generate_model_descriptors.py` refreshes the corpus through
+`generate_descriptor_payload()` and `merge_descriptor_payloads()`. The generator
+uses the same public-class-name boundary as the catalogue: invalid identifiers
+fail before registry lookup, while valid but unregistered names remain registry
+misses. Missing legacy v1 schemas are allowed so new models can receive honest
+empty curation fields, but malformed curated schemas abort the refresh instead
+of being silently discarded.
+
 ### Trivial IF Variants (18 models)
 
 | Python Class | Rust Class | Reference |

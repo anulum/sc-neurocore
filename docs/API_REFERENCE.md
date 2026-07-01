@@ -19529,11 +19529,31 @@ dict&#91;str, Any&#93;
 
 Raises
 ------
+ValueError
+    If ``class_name`` is not a public Python identifier.
 KeyError
     If ``class_name`` is not registered.
 
 ### Function `generate_descriptor(class_name)`
 Return a validated :class:`ModelDescriptor` skeleton for a model.
+
+Parameters
+----------
+class_name:
+    Registered public model class name to introspect.
+
+Returns
+-------
+ModelDescriptor
+    Parsed descriptor generated from the model code and any curated v1
+    schema fields.
+
+Raises
+------
+ValueError
+    If ``class_name`` is not a public Python identifier.
+KeyError
+    If ``class_name`` is not registered.
 
 ### Function `merge_descriptor_payloads(curated, regenerated)`
 Merge a curated descriptor onto a freshly regenerated one.
@@ -19545,7 +19565,7 @@ from the implementation. Curation fields (parameter units/ranges/meaning,
 state semantics, taxonomy, the backend matrix, reproducibility, notes, and
 any richer provenance, dynamics, or display fields) are preserved from the
 curated payload. The result is the regenerated payload with curation
-overlaid, ready to be re-serialized.
+overlaid, ready to be re-serialised.
 
 Parameters
 ----------

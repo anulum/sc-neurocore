@@ -5,6 +5,13 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+### Descriptor generator hardening
+- Added a fail-closed class-name guard to the model descriptor generator and
+  narrowed legacy v1 schema fallback so missing schemas remain allowed while
+  malformed curated schemas abort corpus refresh. Covered plain-constructor
+  filtering, source-inspection fallbacks, merge curation preservation, and
+  brought `neurons.descriptor_generator` into the scoped NumPy docstring policy.
+
 ### Descriptor catalogue hardening
 - Added a fail-closed class-name guard for model descriptor lookup so the
   public descriptor helpers accept only public Python identifiers before

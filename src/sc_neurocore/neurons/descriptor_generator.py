@@ -1,10 +1,10 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Commercial license available
-# Copyright (c) Concepts 1996-2026 Miroslav Sotek. All rights reserved.
-# Copyright (c) Code 2020-2026 Miroslav Sotek. All rights reserved.
+# © Concepts 1996–2026 Miroslav Šotek. All rights reserved.
+# © Code 2020–2026 Miroslav Šotek. All rights reserved.
 # ORCID: 0009-0009-3560-0851
 # Contact: www.anulum.li | protoscience@anulum.li
-# SC-NeuroCore - Model descriptor skeleton generator
+# SC-NeuroCore — Model descriptor skeleton generator
 
 """Generate a v2 model descriptor skeleton from a registered model.
 
@@ -78,7 +78,6 @@ def _load_class(class_name: str) -> type:
 
 def _field_specs(cls: type) -> list[tuple[str, float]]:
     """Return ``(name, numeric-default)`` for a dataclass or plain model class."""
-
     if dataclasses.is_dataclass(cls):
         specs: list[tuple[str, float]] = []
         for f in dataclasses.fields(cls):
@@ -160,7 +159,6 @@ def _dynamic_state_fields(cls: type) -> frozenset[str]:
     guessing from the field name, which the name heuristics cannot do reliably for
     internal currents (i1, i2), traces (inh_trace), and adaptation variables.
     """
-
     try:
         source = textwrap.dedent(inspect.getsource(cls))
         tree = ast.parse(source)
@@ -194,12 +192,11 @@ def _dynamic_state_fields(cls: type) -> frozenset[str]:
 
 def _load_v1_schema(module: str) -> dict[str, Any]:
     """Return the curated v1 schema for a module, or an empty mapping."""
+    from sc_neurocore.neurons.universal_dsl import load_schema
 
     try:
-        from sc_neurocore.neurons.universal_dsl import load_schema
-
         return load_schema(module)
-    except Exception:
+    except FileNotFoundError:
         return {}
 
 
@@ -229,10 +226,13 @@ def generate_descriptor_payload(class_name: str) -> dict[str, Any]:
 
     Raises
     ------
+    ValueError
+        If ``class_name`` is not a public Python identifier.
     KeyError
         If ``class_name`` is not registered.
     """
-
+    if not class_name.isidentifier() or class_name.startswith("_"):
+        raise ValueError("model class name must be a public Python identifier")
     if class_name not in _CLASS_TO_MODULE:
         raise KeyError(class_name)
     module = _CLASS_TO_MODULE[class_name]
@@ -331,8 +331,26 @@ def generate_descriptor_payload(class_name: str) -> dict[str, Any]:
 
 
 def generate_descriptor(class_name: str) -> ModelDescriptor:
-    """Return a validated :class:`ModelDescriptor` skeleton for a model."""
+    """Return a validated :class:`ModelDescriptor` skeleton for a model.
 
+    Parameters
+    ----------
+    class_name:
+        Registered public model class name to introspect.
+
+    Returns
+    -------
+    ModelDescriptor
+        Parsed descriptor generated from the model code and any curated v1
+        schema fields.
+
+    Raises
+    ------
+    ValueError
+        If ``class_name`` is not a public Python identifier.
+    KeyError
+        If ``class_name`` is not registered.
+    """
     return parse_model_descriptor(generate_descriptor_payload(class_name))
 
 
@@ -361,7 +379,7 @@ def merge_descriptor_payloads(
     state semantics, taxonomy, the backend matrix, reproducibility, notes, and
     any richer provenance, dynamics, or display fields) are preserved from the
     curated payload. The result is the regenerated payload with curation
-    overlaid, ready to be re-serialized.
+    overlaid, ready to be re-serialised.
 
     Parameters
     ----------
@@ -375,7 +393,6 @@ def merge_descriptor_payloads(
     dict[str, Any]
         The merged descriptor payload.
     """
-
     merged: dict[str, Any] = {key: _copy(value) for key, value in regenerated.items()}
     cur_meta = _mapping(curated.get("metadata"))
     merged_meta = merged.setdefault("metadata", {})

@@ -1,10 +1,10 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Commercial license available
-# Copyright (c) Concepts 1996-2026 Miroslav Sotek. All rights reserved.
-# Copyright (c) Code 2020-2026 Miroslav Sotek. All rights reserved.
+# © Concepts 1996–2026 Miroslav Šotek. All rights reserved.
+# © Code 2020–2026 Miroslav Šotek. All rights reserved.
 # ORCID: 0009-0009-3560-0851
 # Contact: www.anulum.li | protoscience@anulum.li
-# SC-NeuroCore - Model descriptor contract and generator tests
+# SC-NeuroCore — Model descriptor contract and generator tests
 
 """Tests for the declarative model descriptor (schema v2) and its generator."""
 
@@ -13,12 +13,18 @@ from __future__ import annotations
 import dataclasses
 import importlib
 import inspect
+from pathlib import Path
+import sys
+import types
+from typing import Any, Callable
 
 import pytest
 
+from sc_neurocore.neurons import universal_dsl
 from sc_neurocore.neurons.descriptor_generator import (
     generate_descriptor,
     generate_descriptor_payload,
+    merge_descriptor_payloads,
 )
 from sc_neurocore.neurons.model_descriptor import (
     MODEL_DESCRIPTOR_SCHEMA_VERSION,
@@ -29,7 +35,7 @@ from sc_neurocore.neurons.model_descriptor import (
 from sc_neurocore.neurons.models import _CLASS_TO_MODULE
 
 
-def _minimal_payload() -> dict[str, object]:
+def _minimal_payload() -> dict[str, Any]:
     return {
         "metadata": {
             "schema_version": 2,
@@ -57,14 +63,14 @@ def test_parse_minimal_descriptor() -> None:
 
 def test_parse_rejects_missing_class_name() -> None:
     payload = _minimal_payload()
-    del payload["metadata"]["class_name"]  # type: ignore[index]
+    del payload["metadata"]["class_name"]
     with pytest.raises(ModelDescriptorError, match="class_name"):
         parse_model_descriptor(payload)
 
 
 def test_parse_rejects_unknown_schema_version() -> None:
     payload = _minimal_payload()
-    payload["metadata"]["schema_version"] = 1  # type: ignore[index]
+    payload["metadata"]["schema_version"] = 1
     with pytest.raises(ModelDescriptorError, match="schema_version"):
         parse_model_descriptor(payload)
 
@@ -85,7 +91,10 @@ def test_parse_rejects_unknown_schema_version() -> None:
         ),
     ],
 )
-def test_parse_rejects_invalid_controlled_fields(mutate, match) -> None:
+def test_parse_rejects_invalid_controlled_fields(
+    mutate: Callable[[dict[str, Any]], None],
+    match: str,
+) -> None:
     payload = _minimal_payload()
     mutate(payload)
     with pytest.raises(ModelDescriptorError, match=match):
@@ -96,9 +105,7 @@ def test_completeness_tiers_rise_with_curation() -> None:
     """Each curation column lifts the descriptor to the next tier."""
 
     payload = _minimal_payload()
-    payload["metadata"].update(  # type: ignore[union-attr]
-        {"family": "Integrate-and-Fire", "category": "adaptive"}
-    )
+    payload["metadata"].update({"family": "Integrate-and-Fire", "category": "adaptive"})
     assert descriptor_completeness_tier(parse_model_descriptor(payload)) == 1
 
     # Tier 2 — scientifically curated: citeable provenance + every parameter curated.
@@ -147,6 +154,200 @@ def test_generate_descriptor_handles_non_dataclass_model() -> None:
     param_names = {p.name for p in descriptor.parameters}
     assert "tau_m" in param_names
     assert descriptor.class_name == "HybridFisherPosnerLIFNeuron"
+
+
+@pytest.mark.parametrize(
+    "class_name",
+    ["", "_HiddenNeuron", "../AdExNeuron", "models/AdExNeuron", "AdExNeuron.toml"],
+)
+def test_generator_rejects_non_public_class_names_before_registry_lookup(
+    class_name: str,
+) -> None:
+    """Descriptor generation fails closed before accepting path-like class names."""
+
+    with pytest.raises(ValueError, match="public Python identifier"):
+        generate_descriptor_payload(class_name)
+
+
+def test_generator_reports_unknown_public_model_as_registry_miss() -> None:
+    """Valid public identifiers that are absent from the registry remain registry misses."""
+
+    with pytest.raises(KeyError, match="NotRegisteredNeuron"):
+        generate_descriptor_payload("NotRegisteredNeuron")
+
+
+def test_generator_preserves_missing_v1_schema_fallback(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """A model with no curated v1 schema still yields an honest generated descriptor."""
+
+    def missing_schema(_source: str | Path) -> dict[str, Any]:
+        raise FileNotFoundError("no curated schema")
+
+    monkeypatch.setattr(universal_dsl, "load_schema", missing_schema)
+
+    payload = generate_descriptor_payload("HybridFisherPosnerLIFNeuron")
+
+    assert payload["metadata"]["class_name"] == "HybridFisherPosnerLIFNeuron"
+    assert payload["provenance"] == {}
+
+
+def test_generator_propagates_malformed_v1_schema(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Malformed curated schemas must fail the corpus refresh instead of being hidden."""
+
+    def malformed_schema(_source: str | Path) -> dict[str, Any]:
+        raise ValueError("unsupported curated schema")
+
+    monkeypatch.setattr(universal_dsl, "load_schema", malformed_schema)
+
+    with pytest.raises(ValueError, match="unsupported curated schema"):
+        generate_descriptor_payload("AdExNeuron")
+
+
+def test_generator_filters_plain_constructor_fields_from_registry_module(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Plain constructors keep numeric public defaults and skip non-parameters."""
+
+    module_name = "sc_neurocore.neurons.models.synthetic_plain_descriptor"
+    module = types.ModuleType(module_name)
+
+    class SyntheticPlainNeuron:
+        """Synthetic plain model for descriptor-generator contract coverage."""
+
+        def __init__(
+            self,
+            tau: float = 1.0,
+            *args: object,
+            gain: float = 2.0,
+            _hidden: float = 3.0,
+            enabled: bool = True,
+            label: str = "demo",
+            **kwargs: object,
+        ) -> None:
+            self.tau = tau
+            self.gain = gain
+            self.args = args
+            self.kwargs = kwargs
+            self.enabled = enabled
+            self.label = label
+
+    module.__dict__["SyntheticPlainNeuron"] = SyntheticPlainNeuron
+    monkeypatch.setitem(sys.modules, module_name, module)
+    monkeypatch.setitem(_CLASS_TO_MODULE, "SyntheticPlainNeuron", "synthetic_plain_descriptor")
+
+    payload = generate_descriptor_payload("SyntheticPlainNeuron")
+
+    assert payload["parameters"] == {
+        "tau": {"default": 1.0, "unit": "", "meaning": ""},
+        "gain": {"default": 2.0, "unit": "", "meaning": ""},
+    }
+    assert payload["state"] == {}
+
+
+def test_generator_keeps_empty_structure_when_plain_signature_is_unavailable(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Uninspectable plain classes do not receive invented descriptor fields."""
+
+    module_name = "sc_neurocore.neurons.models.synthetic_bad_signature"
+    module = types.ModuleType(module_name)
+
+    class BadSignatureNeuron:
+        """Synthetic plain model whose constructor signature cannot be inspected."""
+
+    type.__setattr__(BadSignatureNeuron, "__signature__", "not-a-signature")
+    module.__dict__["BadSignatureNeuron"] = BadSignatureNeuron
+    monkeypatch.setitem(sys.modules, module_name, module)
+    monkeypatch.setitem(_CLASS_TO_MODULE, "BadSignatureNeuron", "synthetic_bad_signature")
+
+    payload = generate_descriptor_payload("BadSignatureNeuron")
+
+    assert payload["parameters"] == {}
+    assert payload["state"] == {}
+
+
+def test_generator_treats_unavailable_source_as_no_dynamic_state(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Source-inspection failures leave state classification to field names."""
+
+    def unavailable_source(_cls: type) -> str:
+        raise OSError("source unavailable")
+
+    monkeypatch.setattr(inspect, "getsource", unavailable_source)
+
+    payload = generate_descriptor_payload("AdExNeuron")
+
+    assert list(payload["state"]) == ["v", "w"]
+    assert "b" in payload["parameters"]
+
+
+def test_generator_handles_source_without_class_definition(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """A source loader returning no class definition yields no dynamic-state hints."""
+
+    def source_without_class(_cls: type) -> str:
+        return "def not_a_model():\n    return None\n"
+
+    monkeypatch.setattr(inspect, "getsource", source_without_class)
+
+    payload = generate_descriptor_payload("AdExNeuron")
+
+    assert list(payload["state"]) == ["v", "w"]
+    assert "b" in payload["parameters"]
+
+
+def test_merge_descriptor_payloads_preserves_curation_without_structural_drift() -> None:
+    """The corpus merge keeps human curation without accepting stale structure."""
+
+    regenerated = generate_descriptor_payload("AdExNeuron")
+    curated: dict[str, Any] = {
+        "metadata": {
+            "schema_version": 999,
+            "class_name": "WrongNeuron",
+            "display_name": "Adaptive exponential IF",
+            "summary": "Curated AdEx descriptor.",
+            "maturity": "validated",
+            "intended_use": ["adaptive-spiking-reference"],
+        },
+        "parameters": {
+            "tau": {
+                "default": -1.0,
+                "unit": "ms",
+                "range": [1.0, 100.0],
+                "meaning": "membrane time constant",
+            },
+            "stale_parameter": {"unit": "arb"},
+        },
+        "state": {"v": {"init": 0.0, "unit": "mV", "meaning": "membrane potential"}},
+        "provenance": {"authors": ["Brette", "Gerstner"], "year": 2005},
+        "dynamics": {"v": "curated membrane equation"},
+        "backends": {"python": {"status": "implemented"}, "rust": {"status": "implemented"}},
+        "reproducibility": {"reference_config": "golden/adex.json"},
+        "documentation": {"notes": "Preserved reviewer note."},
+    }
+
+    merged = merge_descriptor_payloads(curated, regenerated)
+
+    assert merged["metadata"]["schema_version"] == MODEL_DESCRIPTOR_SCHEMA_VERSION
+    assert merged["metadata"]["class_name"] == "AdExNeuron"
+    assert merged["metadata"]["display_name"] == "Adaptive exponential IF"
+    assert merged["metadata"]["summary"] == "Curated AdEx descriptor."
+    assert merged["metadata"]["intended_use"] == ["adaptive-spiking-reference"]
+    assert merged["parameters"]["tau"]["default"] == regenerated["parameters"]["tau"]["default"]
+    assert merged["parameters"]["tau"]["unit"] == "ms"
+    assert "stale_parameter" not in merged["parameters"]
+    assert merged["state"]["v"]["init"] == regenerated["state"]["v"]["init"]
+    assert merged["state"]["v"]["unit"] == "mV"
+    assert merged["provenance"]["authors"] == ["Brette", "Gerstner"]
+    assert merged["dynamics"]["v"] == "curated membrane equation"
+    assert "rust" in merged["backends"]
+    assert merged["reproducibility"]["reference_config"] == "golden/adex.json"
+    assert merged["documentation"]["notes"] == "Preserved reviewer note."
 
 
 @pytest.mark.parametrize("class_name", sorted(_CLASS_TO_MODULE))
