@@ -965,7 +965,7 @@
     "python_model_classes": 158,
     "python_model_source_modules": 152,
     "rust_pyo3_model_wrappers": 175,
-    "test_files": 920
+    "test_files": 921
   },
   "documentation": {
     "public_pages": [
@@ -3005,6 +3005,7 @@
       "tests/test_export/test_pipeline_contract.py",
       "tests/test_export/test_tvm_lowering.py",
       "tests/test_export_file_write_contracts.py",
+      "tests/test_expr_lut_tables.py",
       "tests/test_extended_neurons.py",
       "tests/test_fault_injection/test_fault_injection.py",
       "tests/test_fault_injection/test_fault_injection_public_api.py",

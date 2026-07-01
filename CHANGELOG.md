@@ -72,6 +72,16 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
   direct. Never auto-selected; the direct/AER paths and the SC-NIR source-handoff manifest
   are unchanged.
 
+### Changed
+- Extracted the target-independent expression-lowering numerics — the
+  compile-time constant folder, the 256-point symmetric sample grid, and the
+  quantised transcendental LUT generators (exp, log, sqrt, tanh, cosh, exprel,
+  sigmoid, sin, cos, cbrt) plus the supported-function vocabulary — into a new
+  `sc_neurocore.compiler.expr_lut_tables` module. The Verilog expression emitter
+  now delegates to it, so the generated RTL is byte-for-byte unchanged; the
+  shared tables give future C/C++/Rust lowering backends a single bit-exact
+  source of truth.
+
 ### Fixed
 - Fixed the direct FPGA interconnect emitting an assignment to an undeclared
   delay register when a connection mixed zero and non-zero per-source-column

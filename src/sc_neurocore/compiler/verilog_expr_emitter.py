@@ -13,6 +13,7 @@ from __future__ import annotations
 import ast
 
 from ..hdl_gen._ident import sanitize_ident
+from . import expr_lut_tables
 from .verilog_compiler_config import Q88
 
 
@@ -61,28 +62,10 @@ class _VerilogExprEmitter(ast.NodeVisitor):
     def _const_float(node: ast.AST) -> float | None:
         """Constant-fold a literal or simple literal arithmetic node to a float.
 
-        Used to recognise fractional exponents such as ``1.0 / 3.0`` in ``x ** p``.
-        Returns ``None`` if the node is not a compile-time constant.
+        Delegates to the shared :func:`expr_lut_tables.const_float` so every
+        backend recognises the same compile-time constants (e.g. ``1.0 / 3.0``).
         """
-        if isinstance(node, ast.Constant) and isinstance(node.value, (int, float)):
-            return float(node.value)
-        if isinstance(node, ast.UnaryOp) and isinstance(node.op, ast.USub):
-            inner = _VerilogExprEmitter._const_float(node.operand)
-            return None if inner is None else -inner
-        if isinstance(node, ast.BinOp):
-            a = _VerilogExprEmitter._const_float(node.left)
-            b = _VerilogExprEmitter._const_float(node.right)
-            if a is None or b is None:
-                return None
-            if isinstance(node.op, ast.Div):
-                return a / b if b != 0 else None
-            if isinstance(node.op, ast.Mult):
-                return a * b
-            if isinstance(node.op, ast.Add):
-                return a + b
-            if isinstance(node.op, ast.Sub):
-                return a - b
-        return None
+        return expr_lut_tables.const_float(node)
 
     def _trunc(self, wide_name: str) -> str:
         """Emit an intermediate wire for fixed-point truncation with rounding."""
@@ -399,87 +382,48 @@ class _VerilogExprEmitter(ast.NodeVisitor):
         return result_wire
 
     def _sym_points(self) -> list[float]:
-        """256 sample points over [-16, 16) at 0.125 spacing for symmetric LUTs.
-
-        Must match the :func:`_emit_lut_call` defaults (lut_min=-16, step=0.125).
-        """
-        return [-16.0 + i * 0.125 for i in range(256)]
+        """Return the shared 256-point symmetric sample grid over [-16, 16)."""
+        return expr_lut_tables.symmetric_sample_points()
 
     def _exp_lut_entries(self) -> list[int]:
-        import math
-
-        cap = (1 << (self.q.data_width - 1)) - 1  # signed max for the word; not a fixed 32767
-        return [
-            min(int(round(math.exp(x) * (1 << self.q.fraction))), cap) for x in self._sym_points()
-        ]
+        """Quantised ``exp`` LUT for this word's width and fraction."""
+        return expr_lut_tables.exp_lut_entries(self.q.data_width, self.q.fraction)
 
     def _log_lut_entries(self) -> list[int]:
-        import math
-
-        return [
-            int(round(math.log(max(0.06 + i * 0.5, 0.001)) * (1 << self.q.fraction)))
-            for i in range(16)
-        ]
+        """Quantised ``log`` LUT for this word's fraction."""
+        return expr_lut_tables.log_lut_entries(self.q.fraction)
 
     def _sqrt_lut_entries(self) -> list[int]:
-        import math
-
-        return [int(round(math.sqrt(max(i * 0.5, 0)) * (1 << self.q.fraction))) for i in range(16)]
+        """Quantised ``sqrt`` LUT for this word's fraction."""
+        return expr_lut_tables.sqrt_lut_entries(self.q.fraction)
 
     def _tanh_lut_entries(self) -> list[int]:
-        import math
-
-        return [int(round(math.tanh(x) * (1 << self.q.fraction))) for x in self._sym_points()]
+        """Quantised ``tanh`` LUT for this word's fraction."""
+        return expr_lut_tables.tanh_lut_entries(self.q.fraction)
 
     def _cosh_lut_entries(self) -> list[int]:
-        import math
-
-        # cosh grows fast; saturate at the word's signed max (width-aware, not a
-        # fixed 32767) so large arguments clamp rather than overflow.
-        cap = (1 << (self.q.data_width - 1)) - 1
-        return [
-            min(int(round(math.cosh(x) * (1 << self.q.fraction))), cap) for x in self._sym_points()
-        ]
+        """Quantised ``cosh`` LUT for this word's width and fraction."""
+        return expr_lut_tables.cosh_lut_entries(self.q.data_width, self.q.fraction)
 
     def _cbrt_lut_entries(self) -> list[int]:
-        import math
-
-        def cbrt(z: float) -> float:
-            return math.copysign(abs(z) ** (1.0 / 3.0), z)
-
-        return [int(round(cbrt(x) * (1 << self.q.fraction))) for x in self._sym_points()]
+        """Quantised cube-root LUT for this word's fraction."""
+        return expr_lut_tables.cbrt_lut_entries(self.q.fraction)
 
     def _exprel_lut_entries(self) -> list[int]:
-        import math
-
-        # exprel(z) = (exp(z) - 1) / z, with the removable-singularity limit 1 at 0.
-        # Grows like exp(z)/z for large z, so saturate at the word's signed max.
-        cap = (1 << (self.q.data_width - 1)) - 1
-
-        def exprel(z: float) -> float:
-            return 1.0 if abs(z) < 1e-9 else math.expm1(z) / z
-
-        return [
-            min(int(round(exprel(x) * (1 << self.q.fraction))), cap) for x in self._sym_points()
-        ]
+        """Quantised ``exprel`` LUT for this word's width and fraction."""
+        return expr_lut_tables.exprel_lut_entries(self.q.data_width, self.q.fraction)
 
     def _sigmoid_lut_entries(self) -> list[int]:
-        import math
-
-        return [
-            int(round(1.0 / (1.0 + math.exp(-x)) * (1 << self.q.fraction)))
-            for x in self._sym_points()
-        ]
+        """Quantised logistic-sigmoid LUT for this word's fraction."""
+        return expr_lut_tables.sigmoid_lut_entries(self.q.fraction)
 
     def _sin_lut_entries(self) -> list[int]:
-        import math
-
-        return [int(round(math.sin(x) * (1 << self.q.fraction))) for x in self._sym_points()]
+        """Quantised ``sin`` LUT for this word's fraction."""
+        return expr_lut_tables.sin_lut_entries(self.q.fraction)
 
     def _cos_lut_entries(self) -> list[int]:
-        import math
-
-        return [int(round(math.cos(x) * (1 << self.q.fraction))) for x in self._sym_points()]
+        """Quantised ``cos`` LUT for this word's fraction."""
+        return expr_lut_tables.cos_lut_entries(self.q.fraction)
 
     def generic_visit(self, node: ast.AST) -> str:
         """Raise an error for any unsupported AST node type."""

@@ -5913,6 +5913,182 @@ str
 
 ---
 
+## Module `compiler.expr_lut_tables`
+
+### Function `const_float(node)`
+Constant-fold a literal or simple literal-arithmetic node to a float.
+
+Recognises fractional exponents such as ``1.0 / 3.0`` in ``x ** p`` by
+folding compile-time-constant expressions built from literals and ``+``,
+``-``, ``*``, ``/`` (and unary minus).
+
+Parameters
+----------
+node : ast.AST
+    Expression node to fold.
+
+Returns
+-------
+float or None
+    The folded value, or ``None`` if the node is not a compile-time
+    constant.
+
+### Function `symmetric_sample_points()`
+Return the 256 sample points over ``&#91;-16, 16)`` at 0.125 spacing.
+
+The symmetric transcendental LUTs (exp, tanh, sigmoid, sin, cos, cosh,
+exprel, cbrt) are tabulated on this grid; the value ``x == 0`` falls at
+index 128. Must match the LUT-call defaults (``lut_min=-16``, ``step=0.125``)
+in the emitting backends.
+
+Returns
+-------
+list of float
+    The 256 tabulation points.
+
+### Function `_signed_cap(data_width)`
+Return the largest signed value representable in ``data_width`` bits.
+
+### Function `exp_lut_entries(data_width, fraction)`
+Quantised ``exp`` LUT over the symmetric grid, saturated to the word max.
+
+Parameters
+----------
+data_width : int
+    Fixed-point word width; sets the signed saturation cap.
+fraction : int
+    Number of fractional bits (the Q-format scale ``1 << fraction``).
+
+Returns
+-------
+list of int
+    256 integer Q-format entries.
+
+### Function `log_lut_entries(fraction)`
+Quantised ``log`` LUT (16 entries over ``&#91;0.06, 7.56)`` at 0.5 spacing).
+
+Parameters
+----------
+fraction : int
+    Number of fractional bits.
+
+Returns
+-------
+list of int
+    16 integer Q-format entries.
+
+### Function `sqrt_lut_entries(fraction)`
+Quantised ``sqrt`` LUT (16 entries over ``&#91;0, 7.5&#93;`` at 0.5 spacing).
+
+Parameters
+----------
+fraction : int
+    Number of fractional bits.
+
+Returns
+-------
+list of int
+    16 integer Q-format entries.
+
+### Function `tanh_lut_entries(fraction)`
+Quantised ``tanh`` LUT over the symmetric grid.
+
+Parameters
+----------
+fraction : int
+    Number of fractional bits.
+
+Returns
+-------
+list of int
+    256 integer Q-format entries.
+
+### Function `cosh_lut_entries(data_width, fraction)`
+Quantised ``cosh`` LUT over the symmetric grid, saturated to the word max.
+
+Parameters
+----------
+data_width : int
+    Fixed-point word width; sets the signed saturation cap (cosh grows fast).
+fraction : int
+    Number of fractional bits.
+
+Returns
+-------
+list of int
+    256 integer Q-format entries.
+
+### Function `cbrt_lut_entries(fraction)`
+Quantised cube-root LUT over the symmetric grid (odd, sign-preserving).
+
+Parameters
+----------
+fraction : int
+    Number of fractional bits.
+
+Returns
+-------
+list of int
+    256 integer Q-format entries.
+
+### Function `exprel_lut_entries(data_width, fraction)`
+Quantised ``exprel(z) = (exp(z)-1)/z`` LUT, with the removable limit 1 at 0.
+
+Grows like ``exp(z)/z`` for large ``z``, so entries saturate to the word max.
+
+Parameters
+----------
+data_width : int
+    Fixed-point word width; sets the signed saturation cap.
+fraction : int
+    Number of fractional bits.
+
+Returns
+-------
+list of int
+    256 integer Q-format entries.
+
+### Function `sigmoid_lut_entries(fraction)`
+Quantised logistic-sigmoid LUT over the symmetric grid.
+
+Parameters
+----------
+fraction : int
+    Number of fractional bits.
+
+Returns
+-------
+list of int
+    256 integer Q-format entries.
+
+### Function `sin_lut_entries(fraction)`
+Quantised ``sin`` LUT over the symmetric grid.
+
+Parameters
+----------
+fraction : int
+    Number of fractional bits.
+
+Returns
+-------
+list of int
+    256 integer Q-format entries.
+
+### Function `cos_lut_entries(fraction)`
+Quantised ``cos`` LUT over the symmetric grid.
+
+Parameters
+----------
+fraction : int
+    Number of fractional bits.
+
+Returns
+-------
+list of int
+    256 integer Q-format entries.
+
+---
+
 ## Module `compiler.fixed_point_quantization`
 
 ### Function `_fixed_integer_bounds(q)`
@@ -9995,17 +10171,27 @@ Multiplications emit wide product with arithmetic right shift.
 - **_emit_lut_call**(lut_name, arg, entries)
   - Emit an ``len(entries)``-entry LUT over ``&#91;lut_min, lut_min + N*step)``.
 - **_sym_points**()
-  - 256 sample points over &#91;-16, 16) at 0.125 spacing for symmetric LUTs.
+  - Return the shared 256-point symmetric sample grid over &#91;-16, 16).
 - **_exp_lut_entries**()
+  - Quantised ``exp`` LUT for this word's width and fraction.
 - **_log_lut_entries**()
+  - Quantised ``log`` LUT for this word's fraction.
 - **_sqrt_lut_entries**()
+  - Quantised ``sqrt`` LUT for this word's fraction.
 - **_tanh_lut_entries**()
+  - Quantised ``tanh`` LUT for this word's fraction.
 - **_cosh_lut_entries**()
+  - Quantised ``cosh`` LUT for this word's width and fraction.
 - **_cbrt_lut_entries**()
+  - Quantised cube-root LUT for this word's fraction.
 - **_exprel_lut_entries**()
+  - Quantised ``exprel`` LUT for this word's width and fraction.
 - **_sigmoid_lut_entries**()
+  - Quantised logistic-sigmoid LUT for this word's fraction.
 - **_sin_lut_entries**()
+  - Quantised ``sin`` LUT for this word's fraction.
 - **_cos_lut_entries**()
+  - Quantised ``cos`` LUT for this word's fraction.
 - **generic_visit**(node)
   - Raise an error for any unsupported AST node type.
 
