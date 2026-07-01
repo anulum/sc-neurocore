@@ -18,6 +18,18 @@ from hypothesis import strategies as st
 
 from sc_neurocore.hdl_gen import emit_sources_from_ir
 from sc_neurocore.hdl_gen._ident import sanitize_ident
+from sc_neurocore.hdl_gen.verilog_generator import (
+    _HALTON_SOURCE_TYPES,
+    _LFSR_SOURCE_TYPES,
+    _SOBOL_SOURCE_TYPES,
+    _normalise,
+)
+
+# Every alias the lowerer actually accepts (lfsr/sobol/halton and their
+# ``*_source`` / ``sc_*_source`` forms). The unknown-kind fuzz test skips any
+# generated string that normalises into this set, so its expectation can never
+# drift from the emitter's accepted vocabulary again.
+_KNOWN_SOURCE_TYPES = _LFSR_SOURCE_TYPES | _SOBOL_SOURCE_TYPES | _HALTON_SOURCE_TYPES
 
 _VALID_IDENT = st.from_regex(r"[A-Za-z_][A-Za-z0-9_]{0,30}", fullmatch=True).filter(
     lambda value: _is_valid_identifier(value)
@@ -119,8 +131,7 @@ def test_fuzz_emit_sources_from_ir_rejects_non_integer_seeds(
 )
 @settings(max_examples=80, deadline=None)
 def test_fuzz_emit_sources_from_ir_rejects_unknown_source_kinds(source_kind: str) -> None:
-    normalised = source_kind.strip().lower().replace("-", "_")
-    if normalised in {"lfsr", "lfsr16", "lfsr_16", "sobol", "sobol16", "sobol_16"}:
+    if _normalise(source_kind) in _KNOWN_SOURCE_TYPES:
         return
 
     with pytest.raises(ValueError, match="unsupported stochastic source type"):
