@@ -777,7 +777,23 @@ print('All deployment: PASS')
 python -m pytest tests/e2e/test_e2e_pipeline.py -v
 ```
 
-### 8.9 Troubleshooting
+### 8.9 CompilerPipeline Boundary Contract
+
+`CompilerPipeline` is the lightweight Python orchestrator for the external EDA
+chain. It writes MLIR, Verilog, Yosys scripts, JSON netlists, and nextpnr ASC
+artifacts only under its configured `work_dir`; paths are checked with
+`commonpath` semantics so sibling directories with matching prefixes are
+rejected. `firtool`, `yosys`, and `nextpnr-ice40` are resolved through `PATH` to
+absolute executable paths before subprocess launch.
+
+MLIR lowering is fail-closed: missing or failing `firtool` raises
+`SCCompilerError`, and any partial Verilog output is deleted. Yosys synthesis and
+nextpnr place-and-route keep their evidence-gathering contract: missing or
+failing tools are logged, and the expected artifact path is returned so callers
+can decide whether to treat the missing artifact as a soft local-toolchain gap or
+a release blocker.
+
+### 8.10 Troubleshooting
 
 | Symptom | Cause | Fix |
 |---------|-------|-----|
@@ -786,6 +802,7 @@ python -m pytest tests/e2e/test_e2e_pipeline.py -v
 | Yosys synthesis fails | Unsupported Verilog construct | Check target compatibility |
 | Power estimate zero | Empty Verilog source | Verify compilation output |
 | MLIR bundle missing firtool | firtool not installed | Install CIRCT toolchain |
+| Pipeline path rejected | Artifact path escapes `work_dir` | Write artifacts beneath the configured work directory |
 
 ---
 

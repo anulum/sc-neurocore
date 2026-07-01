@@ -5,6 +5,12 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+### Compiler pipeline hardening
+- Hardened `CompilerPipeline` path and tool boundaries: artifact paths now use
+  `commonpath` work-directory validation, EDA executables are resolved to
+  absolute paths before subprocess launch, and the public pipeline surface is
+  covered by strict-typed contract tests plus the scoped NumPy docstring policy.
+
 ### Neuron package facade hardening
 - Covered the `sc_neurocore.neurons` lazy facade at 100%, including optional
   Rust-dispatch opt-out, cache reuse, pure-Python model fallback, cached

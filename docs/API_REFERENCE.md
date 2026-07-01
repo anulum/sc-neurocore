@@ -9593,19 +9593,23 @@ OverflowProofResult
 ## Module `compiler.pipeline`
 
 ### Class `CompilerPipeline`
-Automated hardware synthesis pipeline.
+Coordinate MLIR lowering, synthesis, and place-and-route tool steps.
+
+The pipeline writes generated artifacts under ``work_dir`` and validates
+artifact paths before invoking the external EDA toolchain.
 
 - **__init__**(work_dir)
+- **_resolve_tool**(tool_name)
 - **_sanitize_name**(name)
   - Restrict output_name to alphanumeric + underscore.
 - **compile_mlir_to_verilog**(mlir_content, output_name)
-  - Invokes 'firtool' to lower MLIR to Verilog.
+  - Lower MLIR text to Verilog with CIRCT ``firtool``.
 - **_validate_path**(path)
   - Ensure path resolves inside work_dir.
 - **run_synthesis**(v_path, target_fpga)
-  - Invokes 'yosys' for synthesis.
+  - Run Yosys synthesis and return the expected JSON netlist path.
 - **run_pnr**(json_path, target_device)
-  - Invokes 'nextpnr' for place and route.
+  - Run nextpnr place-and-route and return the expected ASC path.
 
 ---
 
