@@ -48,7 +48,6 @@ class SCNIRCompatibilityRow:
 
     def as_dict(self) -> dict[str, object]:
         """Return a deterministic JSON-ready row."""
-
         payload = asdict(self)
         payload["scnir_stream_metadata"] = list(self.scnir_stream_metadata)
         payload["source_metadata"] = list(self.source_metadata)
@@ -334,13 +333,11 @@ _MATRIX: tuple[SCNIRCompatibilityRow, ...] = (
 
 def scnir_compatibility_matrix() -> tuple[SCNIRCompatibilityRow, ...]:
     """Return the deterministic SC-NIR compatibility matrix."""
-
     return _MATRIX
 
 
 def scnir_compatibility_matrix_dicts() -> tuple[dict[str, object], ...]:
     """Return the matrix as deterministic JSON-ready dictionaries."""
-
     return tuple(row.as_dict() for row in _MATRIX)
 
 
@@ -351,7 +348,6 @@ def build_scnir_compatibility_audit(evidence_root: str | Path) -> dict[str, obje
     validation, so release automation consumes the same data that enforces
     parser coverage and evidence-path freshness.
     """
-
     root = Path(evidence_root).resolve()
     validate_scnir_compatibility_matrix(evidence_root=root)
 
@@ -423,7 +419,6 @@ def validate_scnir_compatibility_matrix(evidence_root: str | Path | None = None)
         Optional repository root used to verify that every ``audit_evidence``
         path in the matrix resolves to an existing file.
     """
-
     from sc_neurocore.nir_bridge.node_map import NODE_MAP
 
     matrix_primitives = {row.nir_primitive for row in _MATRIX}

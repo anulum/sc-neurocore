@@ -13,6 +13,7 @@ from __future__ import annotations
 import json
 import hashlib
 from pathlib import Path
+from typing import cast
 
 import pytest
 
@@ -66,7 +67,8 @@ def test_scnir_compatibility_audit_report_summarises_evidence() -> None:
     assert report["status"] == "valid"
     assert report["evidence_root"] == str(REPO_ROOT.resolve())
     assert report["primitive_count"] == len(matrix)
-    assert report["support_level_counts"]["metadata_and_hdl"] >= 1
+    support_level_counts = cast(dict[str, int], report["support_level_counts"])
+    assert support_level_counts["metadata_and_hdl"] >= 1
     assert report["closure_status"] == "closed_for_local_handoff"
     assert report["closure_blocker_count"] == 0
     assert report["parser_only_primitives"] == []
@@ -82,7 +84,8 @@ def test_scnir_compatibility_audit_report_summarises_evidence() -> None:
     assert report["audit_evidence_file_count"] == len(evidence_paths)
     assert report["audit_evidence_paths"] == evidence_paths
     assert report["matrix_sha256"] == matrix_digest
-    assert report["audit_evidence_files"][0] == {
+    audit_evidence_files = cast(list[dict[str, object]], report["audit_evidence_files"])
+    assert audit_evidence_files[0] == {
         "path": evidence_paths[0],
         "sha256": first_digest,
         "size_bytes": first_evidence.stat().st_size,
@@ -297,30 +300,37 @@ def _row(
     )
 
 
-def _patch_matrix(monkeypatch, rows: tuple[SCNIRCompatibilityRow, ...]) -> None:
+def _patch_matrix(
+    monkeypatch: pytest.MonkeyPatch,
+    rows: tuple[SCNIRCompatibilityRow, ...],
+) -> None:
     monkeypatch.setattr("sc_neurocore.nir_bridge.node_map.NODE_MAP", {_Foo: None})
     monkeypatch.setattr("sc_neurocore.ir.scnir_compatibility._MATRIX", rows)
 
 
-def test_validate_matrix_flags_missing_parser_primitive(monkeypatch) -> None:
+def test_validate_matrix_flags_missing_parser_primitive(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     _patch_matrix(monkeypatch, ())
     with pytest.raises(ValueError, match="misses parser primitives"):
         validate_scnir_compatibility_matrix()
 
 
-def test_validate_matrix_flags_stale_primitive(monkeypatch) -> None:
+def test_validate_matrix_flags_stale_primitive(monkeypatch: pytest.MonkeyPatch) -> None:
     _patch_matrix(monkeypatch, (_row("_Foo"), _row("Ghost")))
     with pytest.raises(ValueError, match="stale primitives"):
         validate_scnir_compatibility_matrix()
 
 
-def test_validate_matrix_flags_duplicate_row(monkeypatch) -> None:
+def test_validate_matrix_flags_duplicate_row(monkeypatch: pytest.MonkeyPatch) -> None:
     _patch_matrix(monkeypatch, (_row("_Foo"), _row("_Foo")))
     with pytest.raises(ValueError, match="duplicate SC-NIR compatibility row"):
         validate_scnir_compatibility_matrix()
 
 
-def test_validate_matrix_flags_hdl_support_without_metadata(monkeypatch) -> None:
+def test_validate_matrix_flags_hdl_support_without_metadata(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     _patch_matrix(
         monkeypatch, (_row("_Foo", support_level="metadata_and_hdl", stream_metadata=()),)
     )
@@ -328,7 +338,7 @@ def test_validate_matrix_flags_hdl_support_without_metadata(monkeypatch) -> None
         validate_scnir_compatibility_matrix()
 
 
-def test_validate_matrix_flags_missing_audit_evidence(monkeypatch) -> None:
+def test_validate_matrix_flags_missing_audit_evidence(monkeypatch: pytest.MonkeyPatch) -> None:
     _patch_matrix(monkeypatch, (_row("_Foo", audit_evidence=()),))
     with pytest.raises(ValueError, match="no audit evidence pointer"):
         validate_scnir_compatibility_matrix()

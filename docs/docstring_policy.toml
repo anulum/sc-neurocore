@@ -7,7 +7,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 203
+expected_file_count = 204
 
 [[file]]
 path = "src/sc_neurocore/__init__.py"
@@ -100,6 +100,10 @@ rationale = "Public tensor stream conversion type used across probability, bitst
 [[file]]
 path = "src/sc_neurocore/core/orchestrator.py"
 rationale = "Public pipeline orchestrator that wires TensorStream-aware modules together."
+
+[[file]]
+path = "src/sc_neurocore/ir/scnir_compatibility.py"
+rationale = "Public executable SC-NIR compatibility matrix and release-audit validation surface."
 
 [[file]]
 path = "src/sc_neurocore/core/bipolar.py"

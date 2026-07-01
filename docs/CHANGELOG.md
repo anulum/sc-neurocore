@@ -17,6 +17,11 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
   name sanitization at 100% exact-file coverage. Added the Universal DSL public
   surface to the scoped NumPy docstring policy.
 
+### SC-NIR compatibility hardening
+- Strict-typed the SC-NIR compatibility matrix contract tests, kept the matrix
+  validator at 100% exact-file coverage, and promoted the public compatibility
+  audit surface into the scoped NumPy docstring policy.
+
 ### Neuron package facade hardening
 - Covered the `sc_neurocore.neurons` lazy facade at 100%, including optional
   Rust-dispatch opt-out, cache reuse, pure-Python model fallback, cached
