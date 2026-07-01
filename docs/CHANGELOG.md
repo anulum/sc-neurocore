@@ -5,6 +5,13 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+### Descriptor catalogue hardening
+- Added a fail-closed class-name guard for model descriptor lookup so the
+  public descriptor helpers accept only public Python identifiers before
+  filesystem access. Covered valid-absent descriptor branches, the aggregate
+  catalogue coverage summary, and added `neurons.model_catalogue` to the scoped
+  NumPy docstring policy.
+
 ### Physics and mathematics hardening
 - Promoted `DendriticNMDANeuron` (two-compartment Jahr-Stevens NMDA Mg2+ block
   neuron) from raw dendrite-first Euler to candidate-first RK4 over

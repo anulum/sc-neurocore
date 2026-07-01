@@ -1,10 +1,10 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Commercial license available
-# Copyright (c) Concepts 1996-2026 Miroslav Sotek. All rights reserved.
-# Copyright (c) Code 2020-2026 Miroslav Sotek. All rights reserved.
+# © Concepts 1996–2026 Miroslav Šotek. All rights reserved.
+# © Code 2020–2026 Miroslav Šotek. All rights reserved.
 # ORCID: 0009-0009-3560-0851
 # Contact: www.anulum.li | protoscience@anulum.li
-# SC-NeuroCore - On-disk model descriptor corpus access and coverage
+# SC-NeuroCore — On-disk model descriptor corpus access and coverage
 
 """Load committed model descriptors and report curation coverage.
 
@@ -38,14 +38,47 @@ DESCRIPTOR_DIR = Path(__file__).resolve().parent / "model_descriptors"
 
 
 def descriptor_path(class_name: str) -> Path:
-    """Return the on-disk descriptor path for a model class."""
+    """Return the committed descriptor path for a model class.
 
+    Parameters
+    ----------
+    class_name:
+        Public Python class identifier for the model descriptor.
+
+    Returns
+    -------
+    pathlib.Path
+        Absolute path under ``neurons/model_descriptors``.
+
+    Raises
+    ------
+    ValueError
+        If ``class_name`` is empty, private, dotted, or path-like.
+    """
+    if not class_name.isidentifier() or class_name.startswith("_"):
+        raise ValueError("model class name must be a public Python identifier")
     return DESCRIPTOR_DIR / f"{class_name}.toml"
 
 
 def load_descriptor_payload(class_name: str) -> dict[str, Any] | None:
-    """Return the raw committed descriptor payload, or ``None`` when absent."""
+    """Return the raw committed descriptor payload.
 
+    Parameters
+    ----------
+    class_name:
+        Public Python class identifier for the model descriptor.
+
+    Returns
+    -------
+    dict[str, Any] | None
+        Parsed TOML payload when the descriptor is committed, otherwise
+        ``None``.
+
+    Raises
+    ------
+    ValueError
+        If ``class_name`` is empty, private, dotted, or path-like.
+    """
     path = descriptor_path(class_name)
     if not path.is_file():
         return None
@@ -55,8 +88,23 @@ def load_descriptor_payload(class_name: str) -> dict[str, Any] | None:
 
 
 def load_descriptor(class_name: str) -> ModelDescriptor | None:
-    """Return the validated committed descriptor for a model, or ``None``."""
+    """Return the validated committed descriptor for a model.
 
+    Parameters
+    ----------
+    class_name:
+        Public Python class identifier for the model descriptor.
+
+    Returns
+    -------
+    ModelDescriptor | None
+        Validated descriptor when the TOML file exists, otherwise ``None``.
+
+    Raises
+    ------
+    ValueError
+        If ``class_name`` is empty, private, dotted, or path-like.
+    """
     payload = load_descriptor_payload(class_name)
     if payload is None:
         return None
@@ -89,8 +137,14 @@ class CatalogueCoverage:
     fully_curated_parameters: int
 
     def to_public_dict(self) -> dict[str, object]:
-        """Return a JSON-compatible coverage summary."""
+        """Return a JSON-compatible coverage summary.
 
+        Returns
+        -------
+        dict[str, object]
+            Stable public summary with sorted tier-count keys and an
+            ``undescribed`` derived count.
+        """
         return {
             "total_models": self.total_models,
             "described": self.described,
@@ -102,8 +156,14 @@ class CatalogueCoverage:
 
 
 def catalogue_descriptor_coverage() -> CatalogueCoverage:
-    """Return descriptor coverage over every registered model."""
+    """Return descriptor coverage over every registered model.
 
+    Returns
+    -------
+    CatalogueCoverage
+        Aggregate coverage over the current model registry and committed
+        descriptor corpus.
+    """
     tier_counts = {0: 0, 1: 0, 2: 0, 3: 0}
     described = 0
     citeable = 0

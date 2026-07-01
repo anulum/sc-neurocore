@@ -33,6 +33,13 @@ Backends use identical class names where parity wrappers exist (for example,
 
 ## Model Catalogue
 
+The descriptor corpus lives under
+`src/sc_neurocore/neurons/model_descriptors/<ClassName>.toml`. Public catalogue
+helpers accept only public Python class identifiers such as `AdExNeuron`; dotted,
+empty, private, and path-like names fail before filesystem access. Studio uses
+the same `load_descriptor()` surface when it renders model detail pages, so the
+descriptor guard protects the browser-facing catalogue and maintenance tools.
+
 ### Trivial IF Variants (18 models)
 
 | Python Class | Rust Class | Reference |

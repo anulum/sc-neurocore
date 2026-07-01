@@ -24,9 +24,13 @@ from sc_neurocore.neurons.descriptor_generator import (
     generate_descriptor_payload,
     merge_descriptor_payloads,
 )
+from sc_neurocore.neurons import model_catalogue as model_catalogue_module
 from sc_neurocore.neurons.model_catalogue import (
+    CatalogueCoverage,
     catalogue_descriptor_coverage,
+    descriptor_path,
     load_descriptor,
+    load_descriptor_payload,
 )
 from sc_neurocore.neurons.models import _CLASS_TO_MODULE
 
@@ -71,6 +75,63 @@ def test_coverage_describes_every_model() -> None:
     assert coverage.tier_counts[1] + coverage.tier_counts[2] + coverage.tier_counts[3] == (
         coverage.described
     )
+
+
+def test_descriptor_access_rejects_path_like_class_names() -> None:
+    """Descriptor lookup fails closed before path-like names reach the filesystem."""
+
+    invalid_names = ("../AdExNeuron", "nested/AdExNeuron", "AdExNeuron.toml", "")
+
+    for class_name in invalid_names:
+        with pytest.raises(ValueError, match="model class name"):
+            descriptor_path(class_name)
+        with pytest.raises(ValueError, match="model class name"):
+            load_descriptor_payload(class_name)
+        with pytest.raises(ValueError, match="model class name"):
+            load_descriptor(class_name)
+
+
+def test_missing_descriptor_branch_and_public_summary_are_stable() -> None:
+    """Valid absent descriptors return ``None`` and summaries stay JSON-safe."""
+
+    assert load_descriptor_payload("DescriptorAbsentForCoverage") is None
+    assert load_descriptor("DescriptorAbsentForCoverage") is None
+
+    coverage = CatalogueCoverage(
+        total_models=3,
+        described=2,
+        tier_counts={3: 1, 1: 1, 0: 0, 2: 0},
+        citeable=1,
+        fully_curated_parameters=1,
+    )
+
+    assert coverage.to_public_dict() == {
+        "total_models": 3,
+        "described": 2,
+        "undescribed": 1,
+        "tier_counts": {0: 0, 1: 1, 2: 0, 3: 1},
+        "citeable": 1,
+        "fully_curated_parameters": 1,
+    }
+
+
+def test_catalogue_coverage_counts_valid_absent_descriptors(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """The aggregate coverage report counts registered models without descriptors."""
+
+    monkeypatch.setattr(
+        model_catalogue_module,
+        "_CLASS_TO_MODULE",
+        {"AdExNeuron": "adex", "DescriptorAbsentForCoverage": "missing"},
+    )
+
+    coverage = catalogue_descriptor_coverage()
+
+    assert coverage.total_models == 2
+    assert coverage.described == 1
+    assert sum(coverage.tier_counts.values()) == 1
+    assert coverage.to_public_dict()["undescribed"] == 1
 
 
 def test_every_parameter_has_a_complete_schema() -> None:

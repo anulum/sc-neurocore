@@ -19769,16 +19769,68 @@ fully_curated_parameters:
   - Return a JSON-compatible coverage summary.
 
 ### Function `descriptor_path(class_name)`
-Return the on-disk descriptor path for a model class.
+Return the committed descriptor path for a model class.
+
+Parameters
+----------
+class_name:
+    Public Python class identifier for the model descriptor.
+
+Returns
+-------
+pathlib.Path
+    Absolute path under ``neurons/model_descriptors``.
+
+Raises
+------
+ValueError
+    If ``class_name`` is empty, private, dotted, or path-like.
 
 ### Function `load_descriptor_payload(class_name)`
-Return the raw committed descriptor payload, or ``None`` when absent.
+Return the raw committed descriptor payload.
+
+Parameters
+----------
+class_name:
+    Public Python class identifier for the model descriptor.
+
+Returns
+-------
+dict&#91;str, Any&#93; | None
+    Parsed TOML payload when the descriptor is committed, otherwise
+    ``None``.
+
+Raises
+------
+ValueError
+    If ``class_name`` is empty, private, dotted, or path-like.
 
 ### Function `load_descriptor(class_name)`
-Return the validated committed descriptor for a model, or ``None``.
+Return the validated committed descriptor for a model.
+
+Parameters
+----------
+class_name:
+    Public Python class identifier for the model descriptor.
+
+Returns
+-------
+ModelDescriptor | None
+    Validated descriptor when the TOML file exists, otherwise ``None``.
+
+Raises
+------
+ValueError
+    If ``class_name`` is empty, private, dotted, or path-like.
 
 ### Function `catalogue_descriptor_coverage()`
 Return descriptor coverage over every registered model.
+
+Returns
+-------
+CatalogueCoverage
+    Aggregate coverage over the current model registry and committed
+    descriptor corpus.
 
 ---
 
