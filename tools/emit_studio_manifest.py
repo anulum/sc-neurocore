@@ -7,13 +7,11 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore — studio schema-A CapabilityManifest emitter
 
-"""Emit (or check) the SC-NeuroCore schema-A studio CapabilityManifest artifact.
+"""Emit (or check) the SC-NeuroCore studio federation envelope artifact.
 
 This is the federation-gate artifact the SCPN-STUDIO keeper consumes — the schema-A
-manifest carrying ``contract_era`` + ``evidence_types`` + ``verbs`` + ``content_digest``.
-It is distinct from ``docs/_generated/capability_manifest.json`` (the repo-inventory
-manifest with its ``architecture_map`` block); this one is the canonical product of
-:func:`sc_neurocore.federation.manifest.build_manifest`.
+manifest carrying ``contract_era`` + ``evidence_types`` + ``verbs`` + ``content_digest``,
+wrapped with the repository's real ``architecture-map.v2`` block for hub federation.
 
 Requires the optional ``federation`` extra (``scpn-studio-platform``). ``--check`` fails
 if the committed artifact has drifted from the producer, so a verb or evidence-schema
@@ -23,25 +21,67 @@ change cannot silently leave a stale federation manifest behind.
 from __future__ import annotations
 
 import argparse
+import importlib.util
 import json
 import sys
 from pathlib import Path
+from typing import Any, Protocol, cast
 
 from sc_neurocore.federation.manifest import build_manifest
 
 _ARTIFACT = Path(__file__).resolve().parents[1] / "docs" / "_generated" / "studio_manifest.json"
 
 
+class _CapabilityManifestModule(Protocol):
+    """Typed subset loaded from ``tools/capability_manifest.py``."""
+
+    def build_architecture_map(self, repo: Path) -> dict[str, Any]:
+        """Build the checked architecture-map block for the repository."""
+
+
+def _load_capability_manifest_module() -> _CapabilityManifestModule:
+    """Load the repository capability-manifest helper without requiring ``tools`` as a package."""
+
+    path = Path(__file__).resolve().with_name("capability_manifest.py")
+    spec = importlib.util.spec_from_file_location("_sc_neurocore_capability_manifest", path)
+    if spec is None or spec.loader is None:  # pragma: no cover - importlib contract guard.
+        raise RuntimeError(f"cannot load capability manifest helper from {path}")
+    module = importlib.util.module_from_spec(spec)
+    sys.modules[spec.name] = module
+    spec.loader.exec_module(module)
+    return cast(_CapabilityManifestModule, module)
+
+
+def build_architecture_map_extension() -> dict[str, Any]:
+    """Return the real architecture-map.v2 block used by the Studio federation envelope."""
+
+    repo = Path(__file__).resolve().parents[1]
+    return _load_capability_manifest_module().build_architecture_map(repo)
+
+
+def _normalise_env_dependent_fields(payload: dict[str, Any]) -> dict[str, Any]:
+    """Remove environment-stamped fields that do not affect the Studio contract digest."""
+
+    schema_a = payload.get("schema_a")
+    if isinstance(schema_a, dict):
+        schema_a.pop("studio_version", None)
+    return payload
+
+
 def render() -> str:
-    """Return the deterministic schema-A manifest JSON (sorted, trailing newline).
+    """Return the deterministic Studio federation envelope JSON.
 
     Returns
     -------
     str
         The schema-A :class:`~scpn_studio_platform.manifest.CapabilityManifest`
-        serialised as sorted-key JSON with a trailing newline.
+        and architecture-map block serialised as sorted-key JSON with a trailing
+        newline.
     """
-    payload = build_manifest().to_dict()
+    payload = {
+        "schema_a": build_manifest().to_dict(),
+        "architecture_map": build_architecture_map_extension(),
+    }
     return json.dumps(payload, indent=2, ensure_ascii=False, sort_keys=True) + "\n"
 
 
@@ -71,14 +111,12 @@ def main(argv: list[str] | None = None) -> int:
         if not _ARTIFACT.exists():
             print(f"{_ARTIFACT} is missing; run `python tools/emit_studio_manifest.py`.")
             return 1
-        # ``studio_version`` is an environment-dependent stamp (the installed
+        # ``schema_a.studio_version`` is an environment-dependent stamp (the installed
         # distribution version vs "0+unknown" from a source tree), excluded so the
         # check is env-stable; content_digest covers the verbs+evidence contract.
         committed = json.loads(_ARTIFACT.read_text(encoding="utf-8"))
         produced = json.loads(rendered)
-        committed.pop("studio_version", None)
-        produced.pop("studio_version", None)
-        if committed != produced:
+        if _normalise_env_dependent_fields(committed) != _normalise_env_dependent_fields(produced):
             print(f"{_ARTIFACT} is stale; run `python tools/emit_studio_manifest.py`.")
             return 1
         return 0

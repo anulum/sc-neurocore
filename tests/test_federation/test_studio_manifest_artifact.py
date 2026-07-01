@@ -6,14 +6,13 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore — studio schema-A manifest artifact drift guard
 
-"""Drift guard + schema-A shape checks for the emitted studio CapabilityManifest.
+"""Drift guard + envelope shape checks for the emitted studio CapabilityManifest.
 
-The committed ``docs/_generated/studio_manifest.json`` is the federation-gate artifact
+The committed ``docs/_generated/studio_manifest.json`` is the federation-gate envelope
 the SCPN-STUDIO keeper reviews. These tests keep it in lock-step with
-:func:`sc_neurocore.federation.manifest.build_manifest` (so a verb or evidence-schema
-change cannot leave a stale federation manifest) and assert the schema-A shape the Hub
-gate requires. Guarded by ``pytest.importorskip`` so they skip cleanly without the
-optional ``federation`` extra.
+:func:`sc_neurocore.federation.manifest.build_manifest` plus the real architecture-map
+generator and assert the envelope shape the Hub split gate requires. Guarded by
+``pytest.importorskip`` so they skip cleanly without the optional ``federation`` extra.
 """
 
 from __future__ import annotations
@@ -63,10 +62,12 @@ def test_manifest_default_version_matches_source_package() -> None:
     assert STUDIO_VERSION == SOURCE_VERSION
 
 
-def test_artifact_is_schema_a_well_formed() -> None:
-    payload = json.loads(
+def test_artifact_is_schema_a_envelope_well_formed() -> None:
+    envelope = json.loads(
         (_repo_root() / "docs" / "_generated" / "studio_manifest.json").read_text()
     )
+    assert set(envelope) == {"architecture_map", "schema_a"}
+    payload = envelope["schema_a"]
     assert payload["studio"] == "sc-neurocore"
     assert payload["studio_version"] == SOURCE_VERSION
     assert payload["contract_era"].startswith("v")
@@ -77,3 +78,12 @@ def test_artifact_is_schema_a_well_formed() -> None:
     evidence_types = payload["evidence_types"]
     assert all(schema.endswith(".v1") for schema in evidence_types)
     assert len(evidence_types) == len(set(evidence_types)) == 7
+
+    architecture_map = envelope["architecture_map"]
+    assert architecture_map["version"] == "architecture-map.v2"
+    assert {"backends", "capabilities", "interfaces", "cross_repo", "boundaries"} <= set(
+        architecture_map
+    )
+    assert any(backend["name"] == "rust" for backend in architecture_map["backends"])
+    assert any(interface["kind"] == "rest" for interface in architecture_map["interfaces"])
+    assert any(edge["sibling"] == "SCPN-CONTROL" for edge in architecture_map["cross_repo"])
