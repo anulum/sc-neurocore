@@ -5877,6 +5877,117 @@ tuple of (str, list of str)
 
 ---
 
+## Module `compiler.c_fixed_emitter`
+
+### Class `_CFixedExprEmitter`
+Walk a Python AST and emit a bit-exact integer C/Rust expression.
+
+Every ``visit_*`` returns a source string that evaluates to a 64-bit signed
+integer holding a Q-format value. Multiplies, divisions, powers and LUT calls
+collapse to the word width through the generated ``fxmul`` / ``sc_wrap``
+helpers, so the composed expression reproduces the RTL datapath verbatim.
+
+Parameters
+----------
+state_map : dict
+    Maps ODE variable names to the source lvalue that reads their current
+    register value (e.g. ``"s->v"`` in C, ``"self.v"`` in Rust).
+param_map : dict
+    Maps parameter names to their already-Q-encoded *signed* integer value.
+q : Q88
+    Fixed-point configuration (width, fraction, rounding).
+lang : str
+    ``"c"`` or ``"rust"`` — selects the small syntactic differences (cast,
+    conditional expression, array index).
+input_ref : str
+    Source expression that reads the input current ``I`` (default ``"I_t"``).
+
+Attributes
+----------
+statements : list of str
+    Helper statements (LUT argument/index locals) that must be emitted before
+    the returned expression is used, in order.
+tables : dict
+    LUT variable name to its integer entries, for the generator to declare.
+free_vars : list of str
+    Identifiers that are neither state, parameter nor input, in first-seen
+    order — the generator declares them as extra function arguments.
+
+- **__init__**(state_map, param_map, q)
+- **_wide**(expr)
+  - Cast a source expression to the 64-bit signed accumulator type.
+- **_tern**(cond, when_true, when_false)
+  - Emit a conditional expression (C ``?:`` / Rust ``if``-expression).
+- **_index**(table, idx)
+  - Index a LUT table (Rust needs a ``usize`` cast).
+- **_local**(name, expr)
+  - Declare a 64-bit signed local holding ``expr`` (no indentation).
+- **_q_signed**(value)
+  - Encode ``value`` as the signed integer its Verilog ``'sd`` literal denotes.
+- **_fxmul**(left, right)
+  - Multiply two wide operands with RTL wrap-truncate semantics.
+- **visit_BinOp**(node)
+  - Emit a binary op (add, sub, mul, div, pow).
+- **_emit_div**(node, left)
+  - Emit division: by a constant it becomes a reciprocal multiply, else a shift-divide.
+- **_emit_pow**(node, left)
+  - Emit a power: integer 2-8 as repeated wrap-multiply, 1/2 and 1/3 as LUT roots.
+- **visit_UnaryOp**(node)
+  - Emit a unary op (negate, positive).
+- **visit_Name**(node)
+  - Resolve a name to a wide read expression, recording free variables.
+- **visit_Constant**(node)
+  - Emit a numeric constant as its signed Q-format integer.
+- **visit_Compare**(node)
+  - Emit comparison operators (>, >=, <, <=), chained with logical AND.
+- **visit_Call**(node)
+  - Emit a supported function call (transcendental LUT, abs, clip, max/min).
+- **_lut_entries**(name)
+  - Return the quantised LUT entries for ``name`` at this word/fraction.
+- **_emit_lut**(name, arg)
+  - Emit a LUT lookup mirroring ``_VerilogExprEmitter._emit_lut_call``.
+- **generic_visit**(node)
+  - Raise for any unsupported AST node type.
+
+### Function `signed_q(q, value)`
+Encode ``value`` as the signed integer its Verilog ``'sd`` literal denotes.
+
+This is the two's-complement bit pattern of ``round(value * 2**fraction)``
+truncated to ``data_width`` bits, reinterpreted as a signed integer — exactly
+what :meth:`Q88.encode_signed_literal` writes into the RTL, but as a Python
+``int`` suitable for a C/Rust literal.
+
+### Function `emit_c_fixed_expr(expr_str, state_map, param_map, q)`
+Lower an ODE expression to a bit-exact integer C/Rust expression.
+
+Parameters
+----------
+expr_str : str
+    Python-syntax ODE right-hand-side expression.
+state_map : dict
+    ODE variable name to its register-read source lvalue.
+param_map : dict
+    Parameter name to its signed Q-format integer value.
+q : Q88
+    Fixed-point configuration.
+lang : str
+    ``"c"`` or ``"rust"``.
+input_ref : str
+    Source expression reading the input current ``I``.
+lut_start : int
+    Starting index for LUT table naming, so several expressions of one kernel
+    get unique table names.
+
+Returns
+-------
+tuple
+    ``(expr, statements, tables, free_vars, lut_count, input_used)`` — the
+    64-bit-integer expression string, the helper statements it depends on, the
+    LUT tables it references, the free identifiers it introduced (first-seen
+    order), the next free LUT index, and whether the input current was read.
+
+---
+
 ## Module `compiler.certification_gen`
 
 ### Class `CertificationItem`
@@ -6454,29 +6565,118 @@ str
 
 ## Module `compiler.intelligence.bit_true_kernel`
 
-### Function `generate_bittrue_kernel(module_name, equations)`
-Generate a bit-true simulation kernel matching RTL arithmetic.
+### Class `_KernelContext`
+Everything the neuron-kernel renderers need, assembled once per generation.
 
-Produces C (or Rust) code that computes exactly the same
-fixed-point results as the generated Verilog.
+- **__init__**()
+
+### Function `_ctype(data_width)`
+C integer type name holding a ``data_width``-bit word (native or widened).
+
+### Function `_rtype(data_width)`
+Rust integer type name holding a ``data_width``-bit word (native or widened).
+
+### Function `_validate_modes(q)`
+Reject overflow / rounding modes the bit-true kernel does not mirror.
+
+### Function `_preamble_c(q)`
+Emit the shared C helpers: ``sc_wrap``, ``sat``, ``fxmul`` and constants.
+
+### Function `_preamble_rust(q)`
+Emit the shared Rust helpers: ``sc_wrap``, ``sat``, ``fxmul`` and constants.
+
+### Function `_format_tables_c(tables, data_width)`
+Declare each accumulated LUT as a ``static const`` C array.
+
+### Function `_format_tables_rust(tables, data_width)`
+Declare each accumulated LUT as a Rust ``const`` array.
+
+### Function `_accumulate_bias(x, overflow)`
+Wrap a raw ``reg + d`` accumulate expression per the overflow mode.
+
+### Function `generate_bittrue_kernel(module_name, equations)`
+Generate a bit-true fixed-point kernel from a ``{var: derivative}`` mapping.
+
+Each state variable advances by one unit-``dt`` explicit-Euler step using the
+same wrap-truncate multiply and saturating accumulate as the RTL datapath.
+Identifiers in the derivatives that are not state variables become step
+arguments (the input current ``I`` maps to ``I_t`` when referenced), so the
+kernel exercises the bit-true primitives without a per-instance I/O contract.
+For a whole-neuron kernel proven bit-identical to the generated Verilog, use
+:func:`generate_bittrue_kernel_from_neuron`.
 
 Parameters
 ----------
 module_name : str
-    Module name.
-equations : dict&#91;str, str&#93;
-    ODE equations.
+    Base name for the generated struct / functions.
+equations : dict
+    Mapping from state-variable name to its derivative expression string.
 data_width : int
-    Fixed-point total width.
+    Fixed-point total width (default 16 → Q8.8).
 fraction : int
-    Fractional bits.
+    Fractional bits (default 8).
 language : str
-    ``"c"`` or ``"rust"``.
+    ``"c"`` (default) or ``"rust"``.
 
 Returns
 -------
 str
-    Bit-true source code.
+    Bit-true kernel source code.
+
+### Function `_step_args_c(input_used, free_vars, data_width)`
+Comma-joined C parameter list for a simple kernel's extra inputs.
+
+### Function `_emit_simple_c(module_name, equations, safe, q, dt_q, derivs, stmts, tables, free_vars, input_used)`
+Render the simple mapping kernel as C.
+
+### Function `_emit_simple_rust(module_name, equations, safe, q, dt_q, derivs, stmts, tables, free_vars, input_used)`
+Render the simple mapping kernel as Rust.
+
+### Function `generate_bittrue_kernel_from_neuron(neuron, module_name)`
+Generate a whole-neuron kernel bit-identical to the compiled Verilog.
+
+Mirrors :func:`sc_neurocore.compiler.verilog_compiler.compile_to_verilog`
+exactly — parameter/constant Q-encoding, dt-scaled explicit Euler with
+wrap-truncate multiply, the same overflow handling, and the threshold / reset
+/ spike sequencing of the RTL ``always`` block (on a spike the output ports
+hold the pre-update register value while the registers take the reset/next
+value). The resulting ``<module>_step`` therefore produces the identical
+per-cycle state trace as the RTL, which the iverilog co-simulation proves.
+
+Parameters
+----------
+neuron : EquationNeuron
+    The neuron whose ODEs, parameters, threshold and reset rules are lowered.
+module_name : str
+    Base name for the generated struct / functions.
+data_width, fraction : int
+    Fixed-point format (default Q8.8).
+signed : bool
+    Signed two's complement (only ``True`` is supported; unsigned neuron state
+    is not part of the RTL contract).
+overflow : str
+    ``"saturate"`` (default) or ``"wrap"``.
+rounding : str
+    ``"truncate"`` (default) or ``"nearest"``.
+language : str
+    ``"c"`` (default) or ``"rust"``.
+
+Returns
+-------
+str
+    Bit-true whole-neuron kernel source code.
+
+### Function `_emit_neuron_c(ctx)`
+Render the whole-neuron kernel as C, mirroring the RTL always block.
+
+### Function `_neuron_commit_c(ctx)`
+Emit the threshold / reset / spike commit block for the C kernel.
+
+### Function `_emit_neuron_rust(ctx)`
+Render the whole-neuron kernel as Rust, mirroring the RTL always block.
+
+### Function `_neuron_commit_rust(ctx)`
+Emit the threshold / reset / spike commit block for the Rust kernel.
 
 ---
 

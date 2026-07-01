@@ -18,6 +18,7 @@ from .aging_reliability import (
 )
 from .bit_true_kernel import (
     generate_bittrue_kernel,
+    generate_bittrue_kernel_from_neuron,
 )
 from .cdc_analyzer import (
     CDCReport,
@@ -71,6 +72,7 @@ __all__ = [
     "check_regression",
     "format_compliance_report",
     "generate_bittrue_kernel",
+    "generate_bittrue_kernel_from_neuron",
     "generate_compliance_matrix",
     "generate_equivalence_sketch",
     "generate_fault_tree",

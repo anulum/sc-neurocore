@@ -24,12 +24,15 @@ can change without a deprecation window.
 | `auto_tune` | internal build tool | Internal heuristic helper used by precision planning workflows. |
 | `block_floating` | direct public module | Shared-exponent format types are imported directly by quantization workflows. |
 | `block_floating_quantization` | direct public module | Block-floating dense compilation helpers are direct quantization surfaces. |
+| `c_expr_emitter` | internal build tool | C/C++ (`ap_fixed`) expression emitter behind the HLS exporter. |
+| `c_fixed_emitter` | internal build tool | Bit-exact integer C/Rust expression emitter behind the bit-true kernel. |
 | `certification_gen` | internal build tool | Deployment evidence generator reached through `deployment`. |
 | `cocotb_gen` | internal build tool | Testbench generator reached through `deployment`. |
 | `compiler_impl` | internal build tool | Legacy implementation module behind documented compiler entry points. |
 | `constraint_gen` | direct public module | Timing constraint generator has direct tests and documentation. |
 | `deployment` | direct public module | Deployment facade aggregates constraints, drivers, evidence, and multi-target helpers. |
 | `equation_compiler` | public facade | Package-level exports provide equation-to-FPGA helpers. |
+| `expr_lut_tables` | internal build tool | Shared transcendental look-up tables for the expression emitters. |
 | `fixed_point_quantization` | direct public module | Fixed-point quantization primitives back direct quantization workflows. |
 | `formal_evidence` | internal build tool | Evidence writer used by hardware audit pipelines. |
 | `fpga_wrapper` | internal build tool | Wrapper generator behind compiler and deployment paths. |

@@ -73,6 +73,21 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
   are unchanged.
 
 ### Changed
+- Rebuilt the bit-true simulation kernel
+  (`sc_neurocore.compiler.intelligence.generate_bittrue_kernel`) onto a real
+  integer fixed-point lowering. The previous C/Rust ``step`` was a no-op that
+  only carried the equation in a comment while claiming identity with the RTL;
+  it now advances each state variable with a genuine wrap-truncate multiply and
+  saturating explicit-Euler accumulate via the new
+  `sc_neurocore.compiler.c_fixed_emitter`, and its documentation no longer
+  overstates the guarantee. A new
+  `generate_bittrue_kernel_from_neuron` emits a whole-neuron C or Rust kernel —
+  dt scaling, parameter encoding, threshold, reset rules and spike sequencing —
+  that reproduces `compile_to_verilog` bit-for-bit; the identity is proven by an
+  iverilog co-simulation that drives the compiled RTL and the kernel with the
+  same stimulus and requires equal per-cycle state traces (LIF, Izhikevich,
+  FitzHugh-Nagumo, a tanh cell and an integrate-and-fire, at Q8.8 and Q16.16),
+  with the Rust kernel checked against the C kernel for the same guarantee.
 - Rebuilt the HLS C++ export (`sc_neurocore.compiler.intelligence.generate_hls_cpp`)
   onto a real AST-based lowering. A new `sc_neurocore.compiler.c_expr_emitter`
   (`CExprEmitter` / `emit_c_expr`) parses each ODE expression and emits valid
