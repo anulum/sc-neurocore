@@ -28,16 +28,18 @@
 pub mod buffers;
 pub mod context;
 pub mod dense;
+pub mod kuramoto;
 pub mod lif;
 
 pub use context::is_available;
 pub use dense::GpuDenseLayer;
+pub use kuramoto::GpuKuramoto;
 pub use lif::GpuLifBatch;
 
 // ---- PyO3 wrapper ----
 
 use numpy::ndarray::Array2;
-use numpy::{IntoPyArray, PyArray2, PyReadonlyArray1};
+use numpy::{IntoPyArray, PyArray1, PyArray2, PyReadonlyArray1};
 use pyo3::exceptions::PyValueError;
 use pyo3::prelude::*;
 
@@ -215,6 +217,98 @@ impl PyGpuLifBatch {
         let voltages = Array2::from_shape_vec((n_neurons, n_steps), voltages_i16)
             .map_err(|e| PyValueError::new_err(format!("voltage reshape: {e}")))?;
         Ok((spikes.into_pyarray(py), voltages.into_pyarray(py)))
+    }
+
+    /// Name of the GPU adapter.
+    fn gpu_name(&self) -> String {
+        self.inner.gpu_name().to_string()
+    }
+
+    /// Check if a GPU is available (class method).
+    #[staticmethod]
+    fn is_gpu_available() -> bool {
+        is_available()
+    }
+}
+
+/// Python-facing GPU-accelerated Kuramoto oscillator integrator.
+///
+/// Mirrors the noise-free baseline of ``scpn::kuramoto::KuramotoSolver``: one GPU
+/// thread per oscillator sums its coupling row over all others, so the O(N²)
+/// all-to-all coupling runs in parallel. ``run`` advances ``n_steps`` Euler steps
+/// and returns the final phase vector (float64), wrapped to ``[0, 2π)``. The GPU
+/// math is f32, so results agree with the f64 CPU solver within tolerance.
+#[pyclass(
+    name = "GpuKuramoto",
+    module = "sc_neurocore_engine.sc_neurocore_engine"
+)]
+pub struct PyGpuKuramoto {
+    inner: GpuKuramoto,
+}
+
+#[pymethods]
+impl PyGpuKuramoto {
+    #[new]
+    fn new() -> PyResult<Self> {
+        let inner = GpuKuramoto::try_new().ok_or_else(|| {
+            pyo3::exceptions::PyRuntimeError::new_err(
+                "No GPU available. Check Vulkan/Metal drivers.",
+            )
+        })?;
+        Ok(PyGpuKuramoto { inner })
+    }
+
+    /// Integrate the oscillators. ``omega`` and ``initial_phases`` have length
+    /// ``n_osc``; ``coupling`` is row-major ``[n_osc × n_osc]``. Returns the final
+    /// phase vector as a float64 array of length ``n_osc``.
+    #[pyo3(signature = (n_osc, omega, coupling, initial_phases, n_steps, dt=0.01))]
+    fn run<'py>(
+        &self,
+        py: Python<'py>,
+        n_osc: usize,
+        omega: PyReadonlyArray1<'py, f64>,
+        coupling: PyReadonlyArray1<'py, f64>,
+        initial_phases: PyReadonlyArray1<'py, f64>,
+        n_steps: usize,
+        dt: f64,
+    ) -> PyResult<Bound<'py, PyArray1<f64>>> {
+        let omega = omega
+            .as_slice()
+            .map_err(|e| PyValueError::new_err(format!("Cannot read omega: {e}")))?;
+        let coupling = coupling
+            .as_slice()
+            .map_err(|e| PyValueError::new_err(format!("Cannot read coupling: {e}")))?;
+        let phases = initial_phases
+            .as_slice()
+            .map_err(|e| PyValueError::new_err(format!("Cannot read initial_phases: {e}")))?;
+        if omega.len() != n_osc || phases.len() != n_osc {
+            return Err(PyValueError::new_err(format!(
+                "omega ({}) and initial_phases ({}) must both have length n_osc {}",
+                omega.len(),
+                phases.len(),
+                n_osc
+            )));
+        }
+        if coupling.len() != n_osc * n_osc {
+            return Err(PyValueError::new_err(format!(
+                "coupling length {} does not match n_osc^2 {}",
+                coupling.len(),
+                n_osc * n_osc
+            )));
+        }
+        let omega_f32: Vec<f32> = omega.iter().map(|&x| x as f32).collect();
+        let coupling_f32: Vec<f32> = coupling.iter().map(|&x| x as f32).collect();
+        let phases_f32: Vec<f32> = phases.iter().map(|&x| x as f32).collect();
+        let result = self.inner.run(
+            n_osc,
+            &omega_f32,
+            &coupling_f32,
+            &phases_f32,
+            n_steps,
+            dt as f32,
+        );
+        let result_f64: Vec<f64> = result.iter().map(|&x| x as f64).collect();
+        Ok(PyArray1::from_vec(py, result_f64))
     }
 
     /// Name of the GPU adapter.

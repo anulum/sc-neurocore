@@ -12,9 +12,10 @@
 
 #![cfg(feature = "gpu")]
 
-use sc_neurocore_engine::gpu::{is_available, GpuDenseLayer, GpuLifBatch};
+use sc_neurocore_engine::gpu::{is_available, GpuDenseLayer, GpuKuramoto, GpuLifBatch};
 use sc_neurocore_engine::layer::DenseLayer;
 use sc_neurocore_engine::neuron::FixedPointLif;
+use sc_neurocore_engine::scpn::kuramoto::KuramotoSolver;
 
 /// Skip-guard: all tests in this file require a real GPU.
 fn require_gpu() -> bool {
@@ -382,4 +383,143 @@ fn gpu_different_seeds_produce_different_output() {
         .zip(out2.iter())
         .any(|(a, b)| (a - b).abs() > 1e-6);
     assert!(any_diff, "Different seeds should produce different outputs");
+}
+
+// ── GPU Kuramoto oscillator kernel ──────────────────────────────────────
+
+/// Deterministic all-to-all Kuramoto system used for GPU↔CPU parity checks.
+fn kuramoto_system(n: usize, k: f64) -> (Vec<f64>, Vec<f64>, Vec<f64>) {
+    let omega: Vec<f64> = (0..n).map(|i| 0.2 * ((i as f64) * 0.3).sin()).collect();
+    // Uniform positive coupling K on every edge — drives synchronisation.
+    let coupling: Vec<f64> = vec![k; n * n];
+    let phases: Vec<f64> = (0..n).map(|i| (i as f64) * 0.5).collect();
+    (omega, coupling, phases)
+}
+
+/// Kuramoto order parameter R = |mean(exp(i·θ))|.
+fn order_parameter(phases: &[f64]) -> f64 {
+    let n_inv = 1.0 / phases.len() as f64;
+    let c: f64 = phases.iter().map(|t| t.cos()).sum::<f64>() * n_inv;
+    let s: f64 = phases.iter().map(|t| t.sin()).sum::<f64>() * n_inv;
+    (c * c + s * s).sqrt()
+}
+
+/// Smallest circular distance between two angles, in [0, π].
+fn circular_distance(a: f64, b: f64) -> f64 {
+    let two_pi = std::f64::consts::TAU;
+    let d = (a - b).rem_euclid(two_pi);
+    d.min(two_pi - d)
+}
+
+#[test]
+fn gpu_kuramoto_creation() {
+    if !require_gpu() {
+        return;
+    }
+    let solver = GpuKuramoto::try_new();
+    assert!(
+        solver.is_some(),
+        "GpuKuramoto::try_new should succeed on a GPU"
+    );
+    assert!(!solver.unwrap().gpu_name().is_empty());
+}
+
+#[test]
+fn gpu_kuramoto_empty_and_zero_steps() {
+    if !require_gpu() {
+        return;
+    }
+    let gpu = GpuKuramoto::try_new().unwrap();
+    assert!(gpu.run(0, &[], &[], &[], 10, 0.01).is_empty());
+    // Zero steps returns the initial phases unchanged.
+    let phases = vec![0.1_f32, 0.2, 0.3];
+    let coupling = vec![0.0_f32; 9];
+    let out = gpu.run(3, &[0.0; 3], &coupling, &phases, 0, 0.01);
+    assert_eq!(out, phases);
+}
+
+#[test]
+fn gpu_kuramoto_matches_cpu_within_tolerance() {
+    if !require_gpu() {
+        return;
+    }
+    let n = 128;
+    let dt = 0.01;
+    let steps = 200;
+    let (omega, coupling, phases) = kuramoto_system(n, 1.5);
+
+    // CPU oracle: noise-free baseline (seed=0 disables the PRNG term).
+    let mut solver = KuramotoSolver::new(omega.clone(), coupling.clone(), phases.clone(), 0.0);
+    solver.run(steps, dt, 0);
+    let cpu_phases = solver.get_phases().to_vec();
+
+    // GPU: same system in f32.
+    let gpu = GpuKuramoto::try_new().unwrap();
+    let omega_f: Vec<f32> = omega.iter().map(|&x| x as f32).collect();
+    let coupling_f: Vec<f32> = coupling.iter().map(|&x| x as f32).collect();
+    let phases_f: Vec<f32> = phases.iter().map(|&x| x as f32).collect();
+    let gpu_phases: Vec<f64> = gpu
+        .run(n, &omega_f, &coupling_f, &phases_f, steps, dt as f32)
+        .iter()
+        .map(|&x| x as f64)
+        .collect();
+
+    assert_eq!(gpu_phases.len(), n);
+    // Every GPU phase must be finite and wrapped into [0, 2π).
+    for &p in &gpu_phases {
+        assert!(
+            p.is_finite() && (0.0..std::f64::consts::TAU).contains(&p),
+            "phase out of range: {p}"
+        );
+    }
+    // The order parameter (a smooth aggregate) must agree closely.
+    let r_cpu = order_parameter(&cpu_phases);
+    let r_gpu = order_parameter(&gpu_phases);
+    assert!(
+        (r_cpu - r_gpu).abs() < 1e-3,
+        "order parameter diverged: CPU {r_cpu} vs GPU {r_gpu}"
+    );
+    // Per-oscillator circular agreement (f32 vs f64 + libm sin over 200 steps).
+    let max_circ = gpu_phases
+        .iter()
+        .zip(cpu_phases.iter())
+        .map(|(&g, &c)| circular_distance(g, c))
+        .fold(0.0_f64, f64::max);
+    assert!(
+        max_circ < 1e-2,
+        "max circular phase divergence {max_circ} too large"
+    );
+}
+
+#[test]
+fn gpu_kuramoto_synchronises_under_strong_coupling() {
+    if !require_gpu() {
+        return;
+    }
+    // Strong uniform coupling with identical natural frequencies must pull the
+    // order parameter towards 1 (phase locking) — a behavioural sanity check that
+    // the coupling term is wired, not just that two numbers match.
+    let n = 64;
+    let coupling = vec![4.0_f32; n * n];
+    let omega = vec![0.0_f32; n];
+    let phases: Vec<f32> = (0..n).map(|i| (i as f32) * 0.4).collect();
+    let r_start = {
+        let p: Vec<f64> = phases.iter().map(|&x| x as f64).collect();
+        order_parameter(&p)
+    };
+    let gpu = GpuKuramoto::try_new().unwrap();
+    let out: Vec<f64> = gpu
+        .run(n, &omega, &coupling, &phases, 500, 0.02)
+        .iter()
+        .map(|&x| x as f64)
+        .collect();
+    let r_end = order_parameter(&out);
+    assert!(
+        r_end > r_start,
+        "coupling should raise R: {r_start} -> {r_end}"
+    );
+    assert!(
+        r_end > 0.9,
+        "strong coupling should nearly synchronise: R = {r_end}"
+    );
 }

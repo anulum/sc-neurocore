@@ -19,9 +19,11 @@ pub struct GpuContext {
     pub encode_pipeline: wgpu::ComputePipeline,
     pub accumulate_pipeline: wgpu::ComputePipeline,
     pub lif_pipeline: wgpu::ComputePipeline,
+    pub kuramoto_pipeline: wgpu::ComputePipeline,
     pub encode_bind_group_layout: wgpu::BindGroupLayout,
     pub accumulate_bind_group_layout: wgpu::BindGroupLayout,
     pub lif_bind_group_layout: wgpu::BindGroupLayout,
+    pub kuramoto_bind_group_layout: wgpu::BindGroupLayout,
     pub adapter_name: String,
 }
 
@@ -90,6 +92,12 @@ impl GpuContext {
             source: wgpu::ShaderSource::Wgsl(include_str!("shaders/lif_step.wgsl").into()),
         });
 
+        // Compile Kuramoto oscillator step shader.
+        let kuramoto_shader = device.create_shader_module(wgpu::ShaderModuleDescriptor {
+            label: Some("kuramoto_step"),
+            source: wgpu::ShaderSource::Wgsl(include_str!("shaders/kuramoto_step.wgsl").into()),
+        });
+
         // Bind group layouts.
         let encode_bgl = device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
             label: Some("encode_bgl"),
@@ -117,6 +125,17 @@ impl GpuContext {
                 bgl_storage_rw(1), // spikes_out
                 bgl_storage_rw(2), // voltages_out
                 bgl_uniform(3),    // params
+            ],
+        });
+
+        let kuramoto_bgl = device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
+            label: Some("kuramoto_bgl"),
+            entries: &[
+                bgl_storage_ro(0), // omega
+                bgl_storage_ro(1), // coupling
+                bgl_storage_ro(2), // phase_in
+                bgl_storage_rw(3), // phase_out
+                bgl_uniform(4),    // params
             ],
         });
 
@@ -164,15 +183,31 @@ impl GpuContext {
             cache: None,
         });
 
+        let kuramoto_pl = device.create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
+            label: Some("kuramoto_pl"),
+            bind_group_layouts: &[Some(&kuramoto_bgl)],
+            immediate_size: 0,
+        });
+        let kuramoto_pipeline = device.create_compute_pipeline(&wgpu::ComputePipelineDescriptor {
+            label: Some("kuramoto_pipeline"),
+            layout: Some(&kuramoto_pl),
+            module: &kuramoto_shader,
+            entry_point: Some("kuramoto_step_main"),
+            compilation_options: Default::default(),
+            cache: None,
+        });
+
         Some(GpuContext {
             device,
             queue,
             encode_pipeline,
             accumulate_pipeline,
             lif_pipeline,
+            kuramoto_pipeline,
             encode_bind_group_layout: encode_bgl,
             accumulate_bind_group_layout: accum_bgl,
             lif_bind_group_layout: lif_bgl,
+            kuramoto_bind_group_layout: kuramoto_bgl,
             adapter_name,
         })
     }

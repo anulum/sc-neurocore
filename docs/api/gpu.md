@@ -270,6 +270,48 @@ if let Some(layer) = GpuDenseLayer::try_new(256, 128, 1024, 42, 256) {
 }
 ```
 
+### Python: GPU Kuramoto oscillators
+
+```python
+import numpy as np
+from sc_neurocore_engine import GpuKuramoto
+
+n = 512
+omega = np.zeros(n)                      # identical natural frequencies
+coupling = np.full(n * n, 4.0)           # strong uniform all-to-all coupling
+phases = (np.arange(n) * 0.4) % (2 * np.pi)
+
+solver = GpuKuramoto()
+final = solver.run(n, omega, coupling, phases, n_steps=500, dt=0.02)
+
+# Kuramoto order parameter R -> ~1 under strong coupling (phase locking).
+r = abs(np.mean(np.exp(1j * final)))
+print(f"R = {r:.3f} on {solver.gpu_name()}")
+```
+
+The GPU kernel reproduces the noise-free baseline of the CPU `KuramotoSolver`.
+Because WGSL has no `f64`, the GPU math is `f32`, so results agree with the `f64`
+CPU solver within tolerance rather than bit-for-bit (unlike the fixed-point LIF
+kernel). One thread per oscillator sums its coupling row over all others, so the
+O(N²) all-to-all coupling parallelises — this is where the GPU overtakes the
+rayon CPU path (see `cargo bench --bench gpu_bench gpu_kuramoto` for the measured
+crossover; simple per-neuron LIF, by contrast, stays CPU-favoured).
+
+### Rust: GPU Kuramoto oscillators
+
+```rust
+use sc_neurocore_engine::gpu::GpuKuramoto;
+
+if let Some(solver) = GpuKuramoto::try_new() {
+    let n = 512;
+    let omega = vec![0.0f32; n];
+    let coupling = vec![4.0f32; n * n];
+    let phases: Vec<f32> = (0..n).map(|i| (i as f32) * 0.4).collect();
+    let final_phases = solver.run(n, &omega, &coupling, &phases, 500, 0.02);
+    println!("final[0..3] = {:?} on {}", &final_phases[..3], solver.gpu_name());
+}
+```
+
 ### GPU adapter selection
 
 ```bash

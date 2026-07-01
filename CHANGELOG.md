@@ -5,6 +5,17 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 ## [Unreleased]
 
 ### Added
+- GPU Kuramoto oscillator integrator (`sc_neurocore_engine.GpuKuramoto`, behind the
+  Rust `gpu` feature), extending the GPU neuron-dynamics path beyond the LIF batch
+  kernel. A wgpu/WGSL compute shader runs one thread per oscillator, each summing its
+  coupling row `K_nm·sin(θ_m − θ_n)` over all others, so the O(N²) all-to-all coupling
+  is fully parallel; the host ping-pongs two phase buffers across the Euler steps in a
+  single command encoder. It mirrors the noise-free baseline of the CPU
+  `KuramotoSolver`; because WGSL has no `f64` the arithmetic is `f32`, so a GPU test
+  checks agreement with the `f64` CPU solver within tolerance (order parameter and
+  per-oscillator circular distance) plus a phase-locking sanity check, and a Criterion
+  benchmark sweeps oscillator counts for the CPU/GPU crossover. Tests and benches
+  self-skip when no GPU adapter is present.
 - Learned quantisers for quantisation-aware training in `sc_neurocore.qat`,
   extending the previous straight-through/ternary support. `LSQLinear` /
   `LSQQuantizer` implement Learned Step Size Quantization (Esser et al. 2020):

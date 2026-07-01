@@ -8,9 +8,10 @@
 
 use criterion::{criterion_group, criterion_main, BenchmarkId, Criterion};
 use rayon::prelude::*;
-use sc_neurocore_engine::gpu::{GpuDenseLayer, GpuLifBatch};
+use sc_neurocore_engine::gpu::{GpuDenseLayer, GpuKuramoto, GpuLifBatch};
 use sc_neurocore_engine::layer::DenseLayer;
 use sc_neurocore_engine::neuron::FixedPointLif;
+use sc_neurocore_engine::scpn::kuramoto::KuramotoSolver;
 
 fn bench_gpu_vs_cpu(c: &mut Criterion) {
     let configs: &[(usize, usize)] = &[(64, 32), (128, 64), (256, 128), (512, 256), (1000, 500)];
@@ -122,5 +123,46 @@ fn bench_gpu_lif(c: &mut Criterion) {
     group.finish();
 }
 
-criterion_group!(benches, bench_gpu_vs_cpu, bench_gpu_batch, bench_gpu_lif);
+/// Kuramoto integration: GPU (one thread per oscillator, O(N) coupling row each)
+/// vs the rayon CPU solver, across oscillator counts — the O(N²) all-to-all
+/// coupling is where the GPU is expected to overtake the CPU.
+fn bench_gpu_kuramoto(c: &mut Criterion) {
+    let sizes: &[usize] = &[64, 256, 1024, 4096];
+    let n_steps = 50;
+    let dt = 0.01;
+    let mut group = c.benchmark_group("gpu_kuramoto");
+
+    for &n in sizes {
+        let omega: Vec<f64> = (0..n).map(|i| 0.2 * ((i as f64) * 0.3).sin()).collect();
+        let coupling: Vec<f64> = vec![1.5; n * n];
+        let phases: Vec<f64> = (0..n).map(|i| (i as f64) * 0.5).collect();
+
+        group.bench_with_input(BenchmarkId::new("cpu", n), &n, |b, _| {
+            b.iter(|| {
+                let mut solver =
+                    KuramotoSolver::new(omega.clone(), coupling.clone(), phases.clone(), 0.0);
+                solver.run(n_steps, dt, 0)
+            });
+        });
+
+        if let Some(gpu) = GpuKuramoto::try_new() {
+            let omega_f: Vec<f32> = omega.iter().map(|&x| x as f32).collect();
+            let coupling_f: Vec<f32> = coupling.iter().map(|&x| x as f32).collect();
+            let phases_f: Vec<f32> = phases.iter().map(|&x| x as f32).collect();
+            group.bench_with_input(BenchmarkId::new("gpu", n), &n, |b, _| {
+                b.iter(|| gpu.run(n, &omega_f, &coupling_f, &phases_f, n_steps, dt as f32));
+            });
+        }
+    }
+
+    group.finish();
+}
+
+criterion_group!(
+    benches,
+    bench_gpu_vs_cpu,
+    bench_gpu_batch,
+    bench_gpu_lif,
+    bench_gpu_kuramoto
+);
 criterion_main!(benches);
