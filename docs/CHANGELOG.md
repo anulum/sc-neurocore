@@ -5,6 +5,12 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+### Neuron package facade hardening
+- Covered the `sc_neurocore.neurons` lazy facade at 100%, including optional
+  Rust-dispatch opt-out, cache reuse, pure-Python model fallback, cached
+  package-level model exports, and unknown-symbol `AttributeError` handling.
+  Added the package facade to the scoped NumPy docstring policy.
+
 ### Descriptor schema contract hardening
 - Covered the v2 model descriptor parser's defensive contract branches at 100%:
   missing and non-table sections, empty structural descriptors, scalar legacy

@@ -198,9 +198,9 @@ def __getattr__(name: str) -> type:
     """Lazy-load neuron models and apply Rust auto-dispatch on first access."""
     if name in _MODEL_NAMES:
         _load_rust_map()
-        assert _rust_map is not None
-        if name in _rust_map:  # pragma: no cover
-            obj = _rust_map[name]
+        rust_map = _rust_map if _rust_map is not None else {}
+        if name in rust_map:  # pragma: no cover
+            obj = rust_map[name]
         else:
             from . import models
 

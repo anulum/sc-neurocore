@@ -31,6 +31,12 @@ Backends use identical class names where parity wrappers exist (for example,
 `HodgkinHuxleyNeuron`). The Rust engine provides 175 Rust PyO3 model wrappers,
 161 of which are wired into the NetworkRunner pipeline.
 
+The package-level `sc_neurocore.neurons` facade remains lazy: core neuron
+symbols are available immediately, while model classes are resolved on first
+attribute access. Setting `SC_NEUROCORE_NO_RUST=1` forces the pure-Python model
+registry even when the optional Rust engine is installed, and the fallback path
+caches the resolved Python class for later imports.
+
 ## Model Catalogue
 
 The descriptor corpus lives under
