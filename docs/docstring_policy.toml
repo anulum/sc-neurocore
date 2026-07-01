@@ -7,7 +7,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 199
+expected_file_count = 200
 
 [[file]]
 path = "src/sc_neurocore/__init__.py"
@@ -36,6 +36,10 @@ rationale = "Public descriptor-corpus access surface used by Studio catalogue br
 [[file]]
 path = "src/sc_neurocore/neurons/descriptor_generator.py"
 rationale = "Public descriptor-corpus generator used by the corpus refresh tool and model descriptor validation tests."
+
+[[file]]
+path = "src/sc_neurocore/neurons/model_descriptor.py"
+rationale = "Public descriptor schema contract used by generated model metadata, catalogue validation, and Studio model browsing."
 
 [[file]]
 path = "src/sc_neurocore/generative/three_d_gen.py"

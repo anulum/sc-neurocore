@@ -75,6 +75,50 @@ def test_parse_rejects_unknown_schema_version() -> None:
         parse_model_descriptor(payload)
 
 
+def test_completeness_tier_zero_for_descriptor_without_structure() -> None:
+    """Descriptors with no parameters and no state remain at tier zero."""
+
+    payload = _minimal_payload()
+    payload["state"] = {}
+    payload["parameters"] = {}
+
+    descriptor = parse_model_descriptor(payload)
+
+    assert descriptor.parameters == ()
+    assert descriptor.state == ()
+    assert descriptor_completeness_tier(descriptor) == 0
+
+
+def test_parse_rejects_missing_required_metadata_section() -> None:
+    """The metadata table is mandatory for every model descriptor."""
+
+    payload = _minimal_payload()
+    del payload["metadata"]
+
+    with pytest.raises(ModelDescriptorError, match=r"missing the \[metadata\] section"):
+        parse_model_descriptor(payload)
+
+
+def test_parse_rejects_non_table_sections() -> None:
+    """Section values must be TOML-style tables, not sequences or scalars."""
+
+    payload = _minimal_payload()
+    payload["state"] = ["v"]
+
+    with pytest.raises(ModelDescriptorError, match=r"\[state\] must be a table"):
+        parse_model_descriptor(payload)
+
+
+def test_parse_rejects_string_tag_fields() -> None:
+    """Discovery tag fields must be lists so scalar strings do not split silently."""
+
+    payload = _minimal_payload()
+    payload["metadata"]["intended_use"] = "simulation"
+
+    with pytest.raises(ModelDescriptorError, match="tag fields"):
+        parse_model_descriptor(payload)
+
+
 @pytest.mark.parametrize(
     ("mutate", "match"),
     [
@@ -99,6 +143,60 @@ def test_parse_rejects_invalid_controlled_fields(
     mutate(payload)
     with pytest.raises(ModelDescriptorError, match=match):
         parse_model_descriptor(payload)
+
+
+@pytest.mark.parametrize(
+    ("mutate", "match"),
+    [
+        (lambda m: m.__setitem__("integration", {"dt": True}), "expected a number"),
+        (
+            lambda m: m.__setitem__(
+                "parameters",
+                {"tau": {"default": 20.0, "range": [1.0]}},
+            ),
+            "range",
+        ),
+        (lambda m: m.__setitem__("provenance", {"authors": ["Brette"], "year": True}), "year"),
+    ],
+)
+def test_parse_rejects_invalid_shape_and_numeric_fields(
+    mutate: Callable[[dict[str, Any]], None],
+    match: str,
+) -> None:
+    """Malformed numeric and structured fields fail with descriptor errors."""
+
+    payload = _minimal_payload()
+    mutate(payload)
+
+    with pytest.raises(ModelDescriptorError, match=match):
+        parse_model_descriptor(payload)
+
+
+def test_parse_accepts_legacy_scalar_and_mapping_forms() -> None:
+    """Legacy scalar fields and compact backend forms normalize deterministically."""
+
+    payload = _minimal_payload()
+    payload["provenance"] = {"author": "Brette"}
+    payload["state"] = {"v": -65.0}
+    payload["parameters"] = {"tau": 20}
+    payload["dynamics"] = {
+        "v": {"expr": "(-v + input) / tau"},
+        "w": {"expr": 3.0},
+        "u": "du/dt",
+    }
+    payload["backends"] = {"python": "implemented"}
+
+    descriptor = parse_model_descriptor(payload)
+
+    assert descriptor.provenance.authors == ("Brette",)
+    assert [(state.name, state.init) for state in descriptor.state] == [("v", -65.0)]
+    assert [(parameter.name, parameter.default) for parameter in descriptor.parameters] == [
+        ("tau", 20.0)
+    ]
+    assert descriptor.dynamics == {"v": "(-v + input) / tau", "w": "", "u": "du/dt"}
+    assert [(backend.name, backend.status, backend.parity) for backend in descriptor.backends] == [
+        ("python", "implemented", "n/a")
+    ]
 
 
 def test_completeness_tiers_rise_with_curation() -> None:

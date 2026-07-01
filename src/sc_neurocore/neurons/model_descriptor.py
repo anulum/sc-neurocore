@@ -71,7 +71,6 @@ class ParameterSpec:
     @property
     def is_curated(self) -> bool:
         """True when the parameter has a unit, a range, and a meaning."""
-
         return bool(self.unit) and self.value_range is not None and bool(self.meaning)
 
 
@@ -99,7 +98,6 @@ class Provenance:
     @property
     def is_citeable(self) -> bool:
         """True when authors, a year, and a valid DOI are all present."""
-
         return bool(self.authors) and self.year is not None and bool(self.doi)
 
 
@@ -124,7 +122,6 @@ class Reproducibility:
     @property
     def is_reproducible(self) -> bool:
         """True when a reference config and a golden trace digest are present."""
-
         return bool(self.reference_config) and bool(self.golden_trace_sha256)
 
 
@@ -169,7 +166,6 @@ def descriptor_completeness_tier(descriptor: ModelDescriptor) -> int:
     Tier 3 — engineering-verified: at least two implemented backends and a
              reproducibility anchor (reference config + golden trace digest).
     """
-
     if not descriptor.parameters and not descriptor.state:
         return 0
     tier = 0
@@ -213,7 +209,6 @@ def parse_model_descriptor(payload: Mapping[str, object]) -> ModelDescriptor:
         If any required identifier is missing or a controlled-vocabulary field
         carries an unknown value.
     """
-
     metadata = _section(payload, "metadata")
     version = metadata.get("schema_version", 1)
     if version != MODEL_DESCRIPTOR_SCHEMA_VERSION:

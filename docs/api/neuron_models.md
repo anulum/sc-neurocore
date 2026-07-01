@@ -48,6 +48,13 @@ misses. Missing legacy v1 schemas are allowed so new models can receive honest
 empty curation fields, but malformed curated schemas abort the refresh instead
 of being silently discarded.
 
+The v2 descriptor parser accepts both compact legacy scalar forms and expanded
+tables, then normalises them into `ModelDescriptor`, `ParameterSpec`,
+`StateVariableSpec`, `BackendSupport`, and reproducibility records. It rejects
+missing metadata, non-table sections, scalar tag fields, non-numeric values,
+malformed ranges, invalid provenance years, and invalid digest formats before a
+descriptor reaches the catalogue or Studio browser surface.
+
 ### Trivial IF Variants (18 models)
 
 | Python Class | Rust Class | Reference |

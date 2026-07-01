@@ -5,6 +5,13 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+### Descriptor schema contract hardening
+- Covered the v2 model descriptor parser's defensive contract branches at 100%:
+  missing and non-table sections, empty structural descriptors, scalar legacy
+  state/parameter forms, string backend statuses, dynamics expression tables,
+  invalid tag/range/year/numeric shapes, and single-author provenance fallback.
+  Added `neurons.model_descriptor` to the scoped NumPy docstring policy.
+
 ### Descriptor generator hardening
 - Added a fail-closed class-name guard to the model descriptor generator and
   narrowed legacy v1 schema fallback so missing schemas remain allowed while
