@@ -965,7 +965,7 @@
     "python_model_classes": 158,
     "python_model_source_modules": 152,
     "rust_pyo3_model_wrappers": 175,
-    "test_files": 926
+    "test_files": 927
   },
   "documentation": {
     "public_pages": [
@@ -3354,6 +3354,7 @@
       "tests/test_nir_fpga_pipeline.py",
       "tests/test_nir_hardware_targets.py",
       "tests/test_nir_heterogeneous_neuron_params.py",
+      "tests/test_nir_import.py",
       "tests/test_nir_neuromorphic_adapters.py",
       "tests/test_nir_silicon_mapping.py",
       "tests/test_nir_spec_conformance.py",

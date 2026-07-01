@@ -73,6 +73,21 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
   are unchanged.
 
 ### Changed
+- Reconciled the lightweight dict-form NIR importer
+  (`sc_neurocore.compiler.intelligence.import_nir_graph`) with the authoritative
+  `nir_bridge`. It previously mapped only two node types to hand-written,
+  divergent ODE strings; it now derives every equation from the shared canonical
+  templates (extracted to `sc_neurocore.nir_bridge.neuron_templates`, the single
+  source of truth also used by the FPGA back-end) and covers the six NIR
+  point-neuron types (LIF, IF, LI, CuBa-LIF, CuBa-LI, integrator) plus an
+  explicit Izhikevich extension, resolving framework/case aliases and falling
+  back to a leaky integrator for unknown types. `NIRGraph` now also carries the
+  full multi-compartment `state_equations`, `thresholds`, `resets`, resolved
+  `parameters` and `node_types`. The docstring no longer overstates the module's
+  role: it is a dependency-free convenience front-end, and
+  `sc_neurocore.nir_bridge.from_nir` remains the authoritative typed importer for
+  real `nir.*` graphs, affine/convolutional layers, subgraphs and hardware
+  lowering.
 - Rebuilt the bit-true simulation kernel
   (`sc_neurocore.compiler.intelligence.generate_bittrue_kernel`) onto a real
   integer fixed-point lowering. The previous C/Rust ``step`` was a no-op that

@@ -7688,37 +7688,72 @@ TopologyPlan
 ## Module `compiler.intelligence.nir_import`
 
 ### Class `NIRGraph`
-Imported NIR/ONNX-SNN graph representation.
+Imported dict-form NIR graph representation.
 
 Attributes
 ----------
 nodes : dict&#91;str, dict&#93;
-    Node name → parameters.
+    Node name → its raw input parameters.
 edges : list&#91;tuple&#91;str, str&#93;&#93;
-    Directed edges (source, target).
+    Directed edges ``(source, target)``.
 equations : dict&#91;str, str&#93;
-    Extracted ODE equations per node.
+    Node name → the membrane (``dv/dt``) right-hand side, with parameters
+    substituted to concrete values. Kept as a flat ``str`` per node for
+    back-compatibility and stability analysis.
 framework : str
-    Source framework.
+    Source framework label.
+node_types : dict&#91;str, str&#93;
+    Node name → the canonical template type it resolved to.
+state_equations : dict&#91;str, dict&#91;str, str&#93;&#93;
+    Node name → ``{state_variable: right-hand side}`` for the full (possibly
+    multi-compartment) model, so nothing is lost for multi-state neurons.
+thresholds : dict&#91;str, str | None&#93;
+    Node name → its spike threshold expression (``None`` if the type has no
+    threshold, e.g. leaky/plain integrators).
+resets : dict&#91;str, str | None&#93;
+    Node name → its reset rule expression (``None`` if the type has none).
+parameters : dict&#91;str, dict&#91;str, float&#93;&#93;
+    Node name → the resolved numeric parameters (template defaults overlaid
+    with the node's own values).
 
+
+### Function `_canonical_type(raw)`
+Resolve a free-form node-type tag to a canonical template key.
+
+### Function `_template_for(ntype)`
+Return the ODE template for a canonical type (Izhikevich is the extension).
+
+### Function `_format_value(value)`
+Render a resolved parameter as a concrete numeric literal.
+
+### Function `_substitute(expr, params)`
+Substitute parameter names with their numeric values (longest name first).
+
+### Function `_resolve_node(ntype, raw_params)`
+Instantiate a template for one node: concrete state equations, params, threshold, reset.
 
 ### Function `import_nir_graph(nir_data)`
-Import a Neuromorphic Intermediate Representation graph.
+Import a dict-form Neuromorphic Intermediate Representation graph.
 
-Converts NIR node definitions into ODE equations suitable
-for the SC-NeuroCore compilation pipeline.
+Each node's ``type`` selects a canonical ODE template (shared with the FPGA
+back-end); the node's parameters overlay the template defaults and are
+substituted into concrete equations, thresholds and reset rules. Node types
+outside the recognised set fall back to a leaky integrator.
 
 Parameters
 ----------
 nir_data : dict
-    NIR graph as dictionary with 'nodes' and 'edges'.
+    Graph as ``{"nodes": {name: {"type": ..., <params>}}, "edges": &#91;...&#93;}``.
+    A node without a ``type`` defaults to ``LIF``.
 framework : str
-    Source framework name.
+    Source framework label recorded on the result.
 
 Returns
 -------
 NIRGraph
-    Imported graph with extracted equations.
+    Imported graph with per-node equations, state equations, thresholds,
+    reset rules and resolved parameters. For the authoritative typed import
+    use :func:`sc_neurocore.nir_bridge.from_nir`.
 
 ---
 
