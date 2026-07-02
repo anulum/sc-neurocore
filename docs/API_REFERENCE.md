@@ -19104,13 +19104,18 @@ EquivResult
 ## Module `nas.sc_nas_engine`
 
 ### Class `DecorrelationStrategy`
+Supported bitstream decorrelation generators for SC-NAS candidates.
+
 
 ### Class `NeuronType`
+Neuron model families available to the hardware-aware NAS search.
+
 
 ### Class `FPGAResourceBudget`
 Hardware resource constraints for the target FPGA.
 
 - **utilisation**(luts, ffs, bram, dsp)
+  - Return per-resource utilisation ratios for a candidate design.
 
 ### Class `NASObjective`
 Search objectives and constraints.
@@ -19120,17 +19125,25 @@ Search objectives and constraints.
 Configuration for a single network layer.
 
 - **lut_cost**()
+  - Return estimated LUT cost for this layer.
 - **ff_cost**()
+  - Return estimated flip-flop cost for this layer.
 - **dsp_cost**()
+  - Return estimated DSP block cost for this layer.
 - **bram_cost_kb**()
+  - Return estimated BRAM storage cost in kibibytes.
 - **power_cost**()
+  - Return estimated dynamic power cost in milliwatts.
 
 ### Class `SCCandidate`
 A candidate SC network architecture.
 
 - **evaluate_resources**()
+  - Update aggregate resource estimates from the candidate layers.
 - **meets_budget**(budget)
+  - Return whether this candidate fits within an FPGA resource budget.
 - **fingerprint**()
+  - Return a deterministic non-cryptographic architecture fingerprint.
 
 ### Class `SCFitnessEvaluator`
 Pure-Python SC simulation fitness evaluator.
@@ -19161,8 +19174,11 @@ as 1 − mean_variance across all layers.
 Summary report from an SC-NAS search.
 
 - **best_accuracy**()
+  - Return the best accuracy in the Pareto front, or zero when empty.
 - **most_efficient**()
+  - Return the lowest-LUT candidate in the Pareto front, if present.
 - **summary**()
+  - Return a deterministic human-readable search summary.
 
 ### Class `NASVerilogEmitter`
 Emits SystemVerilog for Pareto-optimal SC-NAS candidates.
@@ -19181,7 +19197,7 @@ Maximises accuracy, minimises resource usage.
 Assign NSGA-II crowding distance to Pareto front members.
 
 ### Function `run_nas(objective, budget, population_size, num_generations, seed, convergence_patience, surrogate_optimizer)`
-Convenience entry point for SC-NAS search.
+Run an SC-NAS search and return its report.
 
 ---
 

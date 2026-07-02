@@ -38,6 +38,8 @@ except ImportError:
 
 
 class DecorrelationStrategy(Enum):
+    """Supported bitstream decorrelation generators for SC-NAS candidates."""
+
     LFSR = "lfsr"
     SOBOL = "sobol"
     HALTON = "halton"
@@ -45,6 +47,8 @@ class DecorrelationStrategy(Enum):
 
 
 class NeuronType(Enum):
+    """Neuron model families available to the hardware-aware NAS search."""
+
     LIF = "LIF"
     IZHIKEVICH = "Izhikevich"
     ADEX = "AdEx"
@@ -77,6 +81,7 @@ class FPGAResourceBudget:
     max_power_mw: float = 5000.0
 
     def utilisation(self, luts: int, ffs: int, bram: int, dsp: int) -> Dict[str, float]:
+        """Return per-resource utilisation ratios for a candidate design."""
         return {
             "luts": luts / self.max_luts,
             "ffs": ffs / self.max_ffs,
@@ -109,6 +114,7 @@ class LayerConfig:
 
     @property
     def lut_cost(self) -> int:
+        """Return estimated LUT cost for this layer."""
         base = self.neurons * 12
         length_factor = int(math.log2(max(64, self.bitstream_length))) * 5
         type_mult = NEURON_LUT_MULTIPLIER.get(self.neuron_type, 1.0)
@@ -116,20 +122,24 @@ class LayerConfig:
 
     @property
     def ff_cost(self) -> int:
+        """Return estimated flip-flop cost for this layer."""
         return self.neurons * (self.bitstream_length // 64 + 8)
 
     @property
     def dsp_cost(self) -> int:
+        """Return estimated DSP block cost for this layer."""
         per_neuron = NEURON_DSP_COST.get(self.neuron_type, 0)
         return self.neurons * per_neuron
 
     @property
     def bram_cost_kb(self) -> float:
+        """Return estimated BRAM storage cost in kibibytes."""
         # Weight storage: neurons × bitstream_length bits → KB
         return (self.neurons * self.bitstream_length) / 8192.0
 
     @property
     def power_cost(self) -> float:
+        """Return estimated dynamic power cost in milliwatts."""
         type_mult = NEURON_LUT_MULTIPLIER.get(self.neuron_type, 1.0)
         return self.neurons * 0.01 * (self.bitstream_length / 256.0) * type_mult
 
@@ -150,6 +160,7 @@ class SCCandidate:
     crowding_distance: float = 0.0
 
     def evaluate_resources(self) -> None:
+        """Update aggregate resource estimates from the candidate layers."""
         self.total_luts = sum(l.lut_cost for l in self.layers)
         self.total_ffs = sum(l.ff_cost for l in self.layers)
         self.total_dsp = sum(l.dsp_cost for l in self.layers)
@@ -157,6 +168,7 @@ class SCCandidate:
         self.total_power_mw = sum(l.power_cost for l in self.layers)
 
     def meets_budget(self, budget: FPGAResourceBudget) -> bool:
+        """Return whether this candidate fits within an FPGA resource budget."""
         self.evaluate_resources()
         return (
             self.total_luts <= budget.max_luts
@@ -168,6 +180,7 @@ class SCCandidate:
 
     @property
     def fingerprint(self) -> str:
+        """Return a deterministic non-cryptographic architecture fingerprint."""
         desc = "|".join(
             f"{l.neurons}-{l.neuron_type.value}-{l.bitstream_length}-{l.decorrelation.value}"
             for l in self.layers
@@ -454,17 +467,20 @@ class NASReport:
 
     @property
     def best_accuracy(self) -> float:
+        """Return the best accuracy in the Pareto front, or zero when empty."""
         if not self.pareto_front:
             return 0.0
         return max(c.accuracy for c in self.pareto_front)
 
     @property
     def most_efficient(self) -> Optional[SCCandidate]:
+        """Return the lowest-LUT candidate in the Pareto front, if present."""
         if not self.pareto_front:
             return None
         return min(self.pareto_front, key=lambda c: c.total_luts)
 
     def summary(self) -> str:
+        """Return a deterministic human-readable search summary."""
         lines = [
             "SC-NAS Report",
             f"  Pareto front size: {len(self.pareto_front)}",
@@ -486,7 +502,7 @@ def run_nas(
     convergence_patience: int = 0,
     surrogate_optimizer: Any | None = None,
 ) -> NASReport:
-    """Convenience entry point for SC-NAS search."""
+    """Run an SC-NAS search and return its report."""
     obj = objective or NASObjective()
     bgt = budget or FPGAResourceBudget()
     engine = EvolutionaryNAS(

@@ -5,6 +5,14 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+### SC-NAS engine docstring and coverage hardening
+- Promoted `nas.sc_nas_engine` into the scoped NumPy docstring policy, added
+  compliant public docstrings for the hardware-aware search/report surface,
+  strict-typed the focused NAS engine tests, covered the optional Rust
+  tournament import branch through the module import boundary, and refreshed
+  the public NAS docs plus generated API reference. No runtime contract,
+  polyglot mirror, or benchmark-dispatched path changed.
+
 ### SCConv layer docstring and test hardening
 - Promoted `layers.sc_conv_layer.SCConv2DLayer` into the scoped NumPy
   docstring policy, added compliant module, initialization, and forward
