@@ -83,6 +83,16 @@ class TestFormalToolsAvailable:
         )
         assert formal_tools_available() is False
 
+    def test_false_when_solver_missing(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        # sby + yosys present but the SMT solver absent (the CI-image case).
+        monkeypatch.setattr(
+            equivalence_check.shutil,
+            "which",
+            lambda name: None if name == "z3" else "/usr/bin/x",
+        )
+        assert formal_tools_available("z3") is False
+        assert formal_tools_available("boolector") is True
+
     def test_raises_when_tools_absent(self, monkeypatch: pytest.MonkeyPatch) -> None:
         monkeypatch.setattr(equivalence_check.shutil, "which", lambda name: None)
         with pytest.raises(RuntimeError, match="must be on PATH"):

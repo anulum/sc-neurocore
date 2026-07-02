@@ -83,9 +83,21 @@ class EquivalenceResult:
     summary: list[str] = field(default_factory=list)
 
 
-def formal_tools_available() -> bool:
-    """Return ``True`` when both ``sby`` and ``yosys`` are on ``PATH``."""
-    return shutil.which("sby") is not None and shutil.which("yosys") is not None
+def formal_tools_available(engine: str = "z3") -> bool:
+    """Return ``True`` when the full proof toolchain is on ``PATH``.
+
+    Checks ``sby`` and ``yosys`` plus the SMT solver binary for ``engine`` — for
+    the ``smtbmc`` backend the engine name is also the solver executable name
+    (``z3``, ``boolector``, ``yices`` …). A runner may have ``sby`` and ``yosys``
+    installed yet lack the solver (as on a CI image that ships only the HDL
+    toolchain), in which case a proof would error out at the engine stage; this
+    guard reports that case as unavailable so callers and tests can skip cleanly.
+    """
+    return (
+        shutil.which("sby") is not None
+        and shutil.which("yosys") is not None
+        and shutil.which(engine) is not None
+    )
 
 
 def _generate_sby(
@@ -184,8 +196,10 @@ def prove_equivalence(
         If the formal tools are absent, the ``sby`` run errors out (a tool or
         setup failure, distinct from a ``FAIL`` disproof), or times out.
     """
-    if not formal_tools_available():
-        raise RuntimeError("SymbiYosys ('sby') and Yosys ('yosys') must be on PATH")
+    if not formal_tools_available(engine):
+        raise RuntimeError(
+            f"SymbiYosys ('sby'), Yosys ('yosys') and the '{engine}' SMT solver must be on PATH"
+        )
 
     miter_top = "equiv_miter"
     miter = build_equivalence_miter(
