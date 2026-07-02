@@ -6,6 +6,14 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore — SC 2D convolutional layer using stochastic probability encodings
 
+"""Stochastic-computing 2D convolution over channel-first image tensors.
+
+The layer maps unipolar or bipolar probability encodings to deterministic
+NumPy convolution accumulations. It validates construction parameters, input
+rank, channel count, finite values, stochastic domains, and output geometry
+before extracting im2col patches.
+"""
+
 from __future__ import annotations
 from dataclasses import dataclass
 from typing import Any, Literal
@@ -46,6 +54,7 @@ class SCConv2DLayer:
     sc_mode: SCMode = "unipolar"
 
     def __post_init__(self) -> None:
+        """Validate the layer configuration and initialise stochastic kernels."""
         self._validate_configuration()
         low, high = (-1.0, 1.0) if self.sc_mode == "bipolar" else (0.0, 1.0)
         # Kernels: (out_channels, in_channels, k, k)
@@ -93,9 +102,28 @@ class SCConv2DLayer:
         return height_out, width_out
 
     def forward(self, input_image: NDArray[Any]) -> NDArray[np.float64]:
-        """
-        input_image: (in_channels, H, W)
-        Returns: (out_channels, H_out, W_out) as accumulated rates.
+        """Apply the stochastic convolution to a channel-first image tensor.
+
+        Parameters
+        ----------
+        input_image:
+            Input tensor shaped ``(in_channels, height, width)``. Values must
+            be finite and belong to ``[0, 1]`` in unipolar mode or
+            ``[-1, 1]`` in bipolar mode.
+
+        Returns
+        -------
+        numpy.ndarray
+            Accumulated convolution rates shaped
+            ``(out_channels, height_out, width_out)``.
+
+        Raises
+        ------
+        ValueError
+            If the input rank, numeric domain, spatial dimensions, or output
+            geometry is invalid.
+        IndexError
+            If the input channel count does not match ``in_channels``.
         """
         input_array = np.asarray(input_image, dtype=np.float64)
         self._validate_input(input_array)

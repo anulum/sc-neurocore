@@ -17755,11 +17755,12 @@ Example
 (2, 8, 8)
 
 - **__post_init__**()
+  - Validate the layer configuration and initialise stochastic kernels.
 - **_validate_configuration**()
 - **_validate_input**(input_image)
 - **_output_shape**(height, width)
 - **forward**(input_image)
-  - input_image: (in_channels, H, W)
+  - Apply the stochastic convolution to a channel-first image tensor.
 
 ---
 

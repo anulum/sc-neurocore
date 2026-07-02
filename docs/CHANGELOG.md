@@ -5,6 +5,14 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+### SCConv layer docstring and test hardening
+- Promoted `layers.sc_conv_layer.SCConv2DLayer` into the scoped NumPy
+  docstring policy, added compliant module, initialization, and forward
+  docstrings, strict-typed the focused SCConv tests, refreshed the public layer
+  docs and generated API reference, and verified the production file at 100%
+  exact-file coverage. No runtime contract, polyglot mirror, or
+  benchmark-dispatched path changed.
+
 ### Compiler MLIR export hardening
 - Hardened `export.compiler_export.CompilerExporter` with explicit `mlir`
   target validation, empty-graph rejection, duplicate node/output detection,

@@ -35,6 +35,13 @@ per output neuron.
 
 ## Convolutional Layer
 
+`SCConv2DLayer` applies deterministic NumPy accumulation over stochastic
+probability encodings. Unipolar mode accepts finite channel-first tensors in
+`[0, 1]`; bipolar mode accepts finite tensors in `[-1, 1]`. Construction and
+runtime validation fail closed for invalid channel counts, kernel geometry,
+stride, padding, bitstream length, input rank, input domain, and empty output
+geometry before the im2col convolution path runs.
+
 ::: sc_neurocore.layers.sc_conv_layer.SCConv2DLayer
 
 ## Recurrent / Reservoir Layer
