@@ -6,7 +6,7 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore — Granger causality and directed connectivity measures
 
-"""Granger causality and directed connectivity measures."""
+"""Granger causality and directed connectivity measures for binned spike trains."""
 
 from __future__ import annotations
 
@@ -17,10 +17,64 @@ import numpy as np
 from .basic import bin_spike_train
 
 
+def _require_positive_int(name: str, value: int) -> int:
+    """Return ``value`` after enforcing a positive integer public contract."""
+    if isinstance(value, bool) or not isinstance(value, int) or value <= 0:
+        raise ValueError(f"{name} must be a positive integer")
+    return value
+
+
+def _as_finite_train(train: np.ndarray[Any, Any], *, name: str) -> np.ndarray[Any, Any]:
+    """Coerce a spike train to a one-dimensional finite ``float64`` array."""
+    try:
+        values = np.asarray(train, dtype=np.float64)
+    except (TypeError, ValueError) as exc:
+        raise ValueError(f"{name} must contain numeric spike values") from exc
+    if values.ndim != 1:
+        raise ValueError(f"{name} must be one-dimensional")
+    if not bool(np.all(np.isfinite(values))):
+        raise ValueError(f"{name} must contain only finite values")
+    return values
+
+
+def _binned_train(train: np.ndarray[Any, Any], bin_size: int, *, name: str) -> np.ndarray[Any, Any]:
+    """Validate and bin a spike train into finite ``float64`` spike counts."""
+    values = _as_finite_train(train, name=name)
+    return bin_spike_train(values, bin_size).astype(np.float64)
+
+
+def _binned_population(trains: list[np.ndarray[Any, Any]], bin_size: int) -> np.ndarray[Any, Any]:
+    """Validate and stack a population of binned spike trains."""
+    if not trains:
+        raise ValueError("trains must contain at least one spike train")
+    binned = [
+        _binned_train(train, bin_size, name=f"trains[{idx}]") for idx, train in enumerate(trains)
+    ]
+    n_bins = binned[0].size
+    if any(train.size != n_bins for train in binned):
+        raise ValueError("all trains must have the same number of bins")
+    return np.vstack(binned)
+
+
 def _var_coefficients(
     trains_binned: np.ndarray[Any, Any], order: int
 ) -> tuple[np.ndarray[Any, Any], np.ndarray[Any, Any]]:
-    """Fit VAR(order) model. Returns (coefficients [order*d x d], residual covariance)."""
+    """Fit a regularised VAR model.
+
+    Parameters
+    ----------
+    trains_binned:
+        Population spike-count matrix with shape ``(n_neurons, n_bins)``.
+    order:
+        Positive autoregressive order.
+
+    Returns
+    -------
+    tuple[np.ndarray, np.ndarray]
+        Coefficient matrix with shape ``(order * n_neurons, n_neurons)`` and
+        residual covariance with shape ``(n_neurons, n_neurons)``. Too-short
+        histories return a zero-coefficient identity-covariance fallback.
+    """
     d, t = trains_binned.shape
     if t <= order + 1:
         return np.zeros((order * d, d)), np.eye(d)
@@ -37,19 +91,40 @@ def _var_coefficients(
 def pairwise_granger_causality(
     source: np.ndarray[Any, Any], target: np.ndarray[Any, Any], bin_size: int = 10, order: int = 5
 ) -> float:
-    """Pairwise Granger causality. Granger 1969.
+    """Return pairwise Granger causality from ``source`` to ``target``.
 
-    Tests if past source spike counts reduce prediction error for target.
-    Returns log-likelihood ratio. Positive = source Granger-causes target.
+    Parameters
+    ----------
+    source:
+        One-dimensional binary or count-valued source spike train.
+    target:
+        One-dimensional binary or count-valued target spike train.
+    bin_size:
+        Positive number of samples per spike-count bin.
+    order:
+        Positive autoregressive model order.
+
+    Returns
+    -------
+    float
+        Log-likelihood ratio. Positive values indicate that past source counts
+        reduce target prediction error under the regularised Granger model.
+
+    Raises
+    ------
+    ValueError
+        If ``bin_size`` or ``order`` is not positive, or if either train is not
+        one-dimensional and finite.
     """
-    cs = bin_spike_train(source, bin_size).astype(np.float64)
-    ct = bin_spike_train(target, bin_size).astype(np.float64)
+    bin_size = _require_positive_int("bin_size", bin_size)
+    order = _require_positive_int("order", order)
+    cs = _binned_train(source, bin_size, name="source")
+    ct = _binned_train(target, bin_size, name="target")
     n = min(cs.size, ct.size)
     if n <= 2 * order:
         return 0.0
     cs, ct = cs[:n], ct[:n]
     y = ct[order:]
-    n_pts = y.size
     x_r = np.column_stack([ct[order - k - 1 : n - k - 1] for k in range(order)])
     x_f = np.column_stack([x_r] + [cs[order - k - 1 : n - k - 1] for k in range(order)])
 
@@ -74,13 +149,42 @@ def conditional_granger_causality(
     bin_size: int = 10,
     order: int = 5,
 ) -> float:
-    """Conditional Granger causality. Geweke 1984.
+    """Return conditional Granger causality from ``source`` to ``target``.
 
-    Tests if source Granger-causes target controlling for condition.
+    The reduced model predicts ``target`` from its own history and the
+    ``condition`` history. The full model adds ``source`` history, following the
+    Geweke conditional Granger construction.
+
+    Parameters
+    ----------
+    source:
+        One-dimensional binary or count-valued source spike train.
+    target:
+        One-dimensional binary or count-valued target spike train.
+    condition:
+        One-dimensional binary or count-valued conditioning spike train.
+    bin_size:
+        Positive number of samples per spike-count bin.
+    order:
+        Positive autoregressive model order.
+
+    Returns
+    -------
+    float
+        Log-likelihood ratio after controlling for ``condition``. Positive
+        values indicate source-specific predictive information.
+
+    Raises
+    ------
+    ValueError
+        If ``bin_size`` or ``order`` is not positive, or if any train is not
+        one-dimensional and finite.
     """
-    cs = bin_spike_train(source, bin_size).astype(np.float64)
-    ct = bin_spike_train(target, bin_size).astype(np.float64)
-    cc = bin_spike_train(condition, bin_size).astype(np.float64)
+    bin_size = _require_positive_int("bin_size", bin_size)
+    order = _require_positive_int("order", order)
+    cs = _binned_train(source, bin_size, name="source")
+    ct = _binned_train(target, bin_size, name="target")
+    cc = _binned_train(condition, bin_size, name="condition")
     n = min(cs.size, ct.size, cc.size)
     if n <= 2 * order:
         return 0.0
@@ -107,11 +211,37 @@ def conditional_granger_causality(
 def spectral_granger_causality(
     trains: list[np.ndarray[Any, Any]], bin_size: int = 10, order: int = 5, n_freqs: int = 64
 ) -> np.ndarray[Any, Any]:
-    """Spectral Granger causality. Geweke 1982.
+    """Return frequency-domain Granger causality for a spike-train population.
 
-    Returns (n_neurons x n_neurons x n_freqs) array of frequency-domain GC values.
+    Parameters
+    ----------
+    trains:
+        Non-empty list of one-dimensional spike trains. All trains must produce
+        the same number of bins.
+    bin_size:
+        Positive number of samples per spike-count bin.
+    order:
+        Positive autoregressive model order.
+    n_freqs:
+        Positive number of frequencies in the closed interval ``[0, 0.5]``.
+
+    Returns
+    -------
+    np.ndarray
+        Array with shape ``(n_neurons, n_neurons, n_freqs)``. Singular transfer
+        matrices are skipped and leave the corresponding frequency slice at
+        zero rather than raising during the inverse.
+
+    Raises
+    ------
+    ValueError
+        If any domain parameter is not positive, if the population is empty, if
+        any train is not one-dimensional and finite, or if binned lengths differ.
     """
-    binned = np.array([bin_spike_train(t, bin_size).astype(np.float64) for t in trains])
+    bin_size = _require_positive_int("bin_size", bin_size)
+    order = _require_positive_int("order", order)
+    n_freqs = _require_positive_int("n_freqs", n_freqs)
+    binned = _binned_population(trains, bin_size)
     d = binned.shape[0]
     beta, sigma = _var_coefficients(binned, order)
     freqs = np.linspace(0, 0.5, n_freqs)
@@ -143,11 +273,35 @@ def spectral_granger_causality(
 def partial_directed_coherence(
     trains: list[np.ndarray[Any, Any]], bin_size: int = 10, order: int = 5, n_freqs: int = 64
 ) -> np.ndarray[Any, Any]:
-    """Partial directed coherence (PDC). Baccala & Sameshima 2001.
+    """Return partial directed coherence for a spike-train population.
 
-    Returns (n_neurons x n_neurons x n_freqs) normalized PDC values.
+    Parameters
+    ----------
+    trains:
+        Non-empty list of one-dimensional spike trains. All trains must produce
+        the same number of bins.
+    bin_size:
+        Positive number of samples per spike-count bin.
+    order:
+        Positive autoregressive model order.
+    n_freqs:
+        Positive number of frequencies in the closed interval ``[0, 0.5]``.
+
+    Returns
+    -------
+    np.ndarray
+        Normalised PDC tensor with shape ``(n_neurons, n_neurons, n_freqs)``.
+
+    Raises
+    ------
+    ValueError
+        If any domain parameter is not positive, if the population is empty, if
+        any train is not one-dimensional and finite, or if binned lengths differ.
     """
-    binned = np.array([bin_spike_train(t, bin_size).astype(np.float64) for t in trains])
+    bin_size = _require_positive_int("bin_size", bin_size)
+    order = _require_positive_int("order", order)
+    n_freqs = _require_positive_int("n_freqs", n_freqs)
+    binned = _binned_population(trains, bin_size)
     d = binned.shape[0]
     beta, _ = _var_coefficients(binned, order)
     freqs = np.linspace(0, 0.5, n_freqs)
@@ -168,11 +322,37 @@ def partial_directed_coherence(
 def directed_transfer_function(
     trains: list[np.ndarray[Any, Any]], bin_size: int = 10, order: int = 5, n_freqs: int = 64
 ) -> np.ndarray[Any, Any]:
-    """Directed transfer function (DTF). Kaminski & Blinowska 1991.
+    """Return the directed transfer function for a spike-train population.
 
-    Returns (n_neurons x n_neurons x n_freqs) normalized DTF values.
+    Parameters
+    ----------
+    trains:
+        Non-empty list of one-dimensional spike trains. All trains must produce
+        the same number of bins.
+    bin_size:
+        Positive number of samples per spike-count bin.
+    order:
+        Positive autoregressive model order.
+    n_freqs:
+        Positive number of frequencies in the closed interval ``[0, 0.5]``.
+
+    Returns
+    -------
+    np.ndarray
+        Normalised DTF tensor with shape ``(n_neurons, n_neurons, n_freqs)``.
+        Singular transfer matrices are skipped and leave the corresponding
+        frequency slice at zero.
+
+    Raises
+    ------
+    ValueError
+        If any domain parameter is not positive, if the population is empty, if
+        any train is not one-dimensional and finite, or if binned lengths differ.
     """
-    binned = np.array([bin_spike_train(t, bin_size).astype(np.float64) for t in trains])
+    bin_size = _require_positive_int("bin_size", bin_size)
+    order = _require_positive_int("order", order)
+    n_freqs = _require_positive_int("n_freqs", n_freqs)
+    binned = _binned_population(trains, bin_size)
     d = binned.shape[0]
     beta, sigma = _var_coefficients(binned, order)
     freqs = np.linspace(0, 0.5, n_freqs)

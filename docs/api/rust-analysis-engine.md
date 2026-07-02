@@ -55,12 +55,15 @@ external LAPACK/BLAS dependencies:
 - **Jacobi eigendecomposition** (`dimensionality.rs`): symmetric
   eigenvalues + eigenvectors via iterative rotations, O(n^3) per sweep.
 - **Gauss-Jordan inverse** (`sorting_quality.rs`, `gpfa.rs`,
-  `dimensionality.rs`, `causality.rs`): partial-pivot elimination on
+  `dimensionality.rs`): partial-pivot elimination on
   augmented [A|I] matrix.
-- **Gaussian elimination solver** (`gpfa.rs`, `causality.rs`,
-  `decoding.rs`): solves Ax = b with partial pivoting.
-- **Complex matrix ops** (`causality.rs`): `C64` type with inverse,
-  determinant, multiply for spectral Granger.
+- **Gaussian elimination solver** (`gpfa.rs`, `decoding.rs`): solves Ax = b
+  with partial pivoting.
+
+The current Rust analysis crate does not export a benchmark-dispatched
+causality backend. The generated `accel/rust/safety/causality.rs` file is a
+non-authoritative safety-note surface; Granger, PDC, and DTF runtime behavior is
+owned by the Python reference in `analysis/spike_stats/causality.py`.
 
 ## PyO3 Bindings
 
@@ -286,9 +289,8 @@ Last measured: **2026-05-02** (`cargo bench --bench analysis_bench`)
 
 ### causality
 
-| Function | 100 | 5K |
-|----------|----:|---:|
-| pairwise_granger | 102 ns | 81.7 µs |
+No current Rust causality benchmark is dispatched. Use the Python reference for
+Granger causality, partial directed coherence, and directed transfer functions.
 
 ### decoding
 

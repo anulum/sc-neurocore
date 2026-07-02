@@ -33,6 +33,8 @@ def test_authoritative_julia_entrypoints_exist() -> None:
 
 
 def test_non_authoritative_julia_patterns_declared() -> None:
+    assert "analysis/*.jl" in NON_AUTHORITATIVE_JULIA_MIRROR_GLOBS
+    assert "analysis_spike_stats/*.jl" in NON_AUTHORITATIVE_JULIA_MIRROR_GLOBS
     assert "studio/*.jl" in NON_AUTHORITATIVE_JULIA_MIRROR_GLOBS
     assert "model_zoo/*.jl" in NON_AUTHORITATIVE_JULIA_MIRROR_GLOBS
 

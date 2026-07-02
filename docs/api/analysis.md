@@ -191,7 +191,12 @@ Information-theoretic measures for spike trains.
 
 ### Causality (`spike_stats.causality`)
 
-Granger causality and directed connectivity.
+Granger causality and directed connectivity. The Python reference validates
+positive `bin_size`, `order`, and `n_freqs` domains, rejects non-finite or
+non-one-dimensional spike trains before fitting, and requires equal binned
+population lengths for frequency-domain estimators. Short VAR histories return
+a stable zero-coefficient fallback; singular frequency-domain transfer matrices
+leave the affected frequency slice at zero instead of failing during inversion.
 
 | Function | Description |
 |----------|-------------|
@@ -200,6 +205,11 @@ Granger causality and directed connectivity.
 | `spectral_granger_causality(trains, bin_size, order, ...)` | Frequency-domain GC via VAR model (Geweke 1982) |
 | `partial_directed_coherence(trains, ...)` | PDC: normalised directed connectivity (Baccala & Sameshima 2001) |
 | `directed_transfer_function(trains, ...)` | DTF: normalised transfer function (Kaminski & Blinowska 1991) |
+
+**Polyglot boundary.** The maintained runtime path for these estimators is the
+Python/NumPy reference above. Generated Julia, Mojo, and Rust safety-note files
+near the analysis tree are not benchmark-dispatched causality backends, so this
+contract update does not create a new cross-language benchmark artefact.
 
 ### Dimensionality Reduction (`spike_stats.dimensionality`)
 

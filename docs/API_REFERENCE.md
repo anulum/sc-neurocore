@@ -1376,34 +1376,174 @@ Bin a binary spike train into spike counts per bin.
 
 ## Module `analysis.spike_stats.causality`
 
+### Function `_require_positive_int(name, value)`
+Return ``value`` after enforcing a positive integer public contract.
+
+### Function `_as_finite_train(train)`
+Coerce a spike train to a one-dimensional finite ``float64`` array.
+
+### Function `_binned_train(train, bin_size)`
+Validate and bin a spike train into finite ``float64`` spike counts.
+
+### Function `_binned_population(trains, bin_size)`
+Validate and stack a population of binned spike trains.
+
 ### Function `_var_coefficients(trains_binned, order)`
-Fit VAR(order) model. Returns (coefficients &#91;order*d x d&#93;, residual covariance).
+Fit a regularised VAR model.
+
+Parameters
+----------
+trains_binned:
+    Population spike-count matrix with shape ``(n_neurons, n_bins)``.
+order:
+    Positive autoregressive order.
+
+Returns
+-------
+tuple&#91;np.ndarray, np.ndarray&#93;
+    Coefficient matrix with shape ``(order * n_neurons, n_neurons)`` and
+    residual covariance with shape ``(n_neurons, n_neurons)``. Too-short
+    histories return a zero-coefficient identity-covariance fallback.
 
 ### Function `pairwise_granger_causality(source, target, bin_size, order)`
-Pairwise Granger causality. Granger 1969.
+Return pairwise Granger causality from ``source`` to ``target``.
 
-Tests if past source spike counts reduce prediction error for target.
-Returns log-likelihood ratio. Positive = source Granger-causes target.
+Parameters
+----------
+source:
+    One-dimensional binary or count-valued source spike train.
+target:
+    One-dimensional binary or count-valued target spike train.
+bin_size:
+    Positive number of samples per spike-count bin.
+order:
+    Positive autoregressive model order.
+
+Returns
+-------
+float
+    Log-likelihood ratio. Positive values indicate that past source counts
+    reduce target prediction error under the regularised Granger model.
+
+Raises
+------
+ValueError
+    If ``bin_size`` or ``order`` is not positive, or if either train is not
+    one-dimensional and finite.
 
 ### Function `conditional_granger_causality(source, target, condition, bin_size, order)`
-Conditional Granger causality. Geweke 1984.
+Return conditional Granger causality from ``source`` to ``target``.
 
-Tests if source Granger-causes target controlling for condition.
+The reduced model predicts ``target`` from its own history and the
+``condition`` history. The full model adds ``source`` history, following the
+Geweke conditional Granger construction.
+
+Parameters
+----------
+source:
+    One-dimensional binary or count-valued source spike train.
+target:
+    One-dimensional binary or count-valued target spike train.
+condition:
+    One-dimensional binary or count-valued conditioning spike train.
+bin_size:
+    Positive number of samples per spike-count bin.
+order:
+    Positive autoregressive model order.
+
+Returns
+-------
+float
+    Log-likelihood ratio after controlling for ``condition``. Positive
+    values indicate source-specific predictive information.
+
+Raises
+------
+ValueError
+    If ``bin_size`` or ``order`` is not positive, or if any train is not
+    one-dimensional and finite.
 
 ### Function `spectral_granger_causality(trains, bin_size, order, n_freqs)`
-Spectral Granger causality. Geweke 1982.
+Return frequency-domain Granger causality for a spike-train population.
 
-Returns (n_neurons x n_neurons x n_freqs) array of frequency-domain GC values.
+Parameters
+----------
+trains:
+    Non-empty list of one-dimensional spike trains. All trains must produce
+    the same number of bins.
+bin_size:
+    Positive number of samples per spike-count bin.
+order:
+    Positive autoregressive model order.
+n_freqs:
+    Positive number of frequencies in the closed interval ``&#91;0, 0.5&#93;``.
+
+Returns
+-------
+np.ndarray
+    Array with shape ``(n_neurons, n_neurons, n_freqs)``. Singular transfer
+    matrices are skipped and leave the corresponding frequency slice at
+    zero rather than raising during the inverse.
+
+Raises
+------
+ValueError
+    If any domain parameter is not positive, if the population is empty, if
+    any train is not one-dimensional and finite, or if binned lengths differ.
 
 ### Function `partial_directed_coherence(trains, bin_size, order, n_freqs)`
-Partial directed coherence (PDC). Baccala & Sameshima 2001.
+Return partial directed coherence for a spike-train population.
 
-Returns (n_neurons x n_neurons x n_freqs) normalized PDC values.
+Parameters
+----------
+trains:
+    Non-empty list of one-dimensional spike trains. All trains must produce
+    the same number of bins.
+bin_size:
+    Positive number of samples per spike-count bin.
+order:
+    Positive autoregressive model order.
+n_freqs:
+    Positive number of frequencies in the closed interval ``&#91;0, 0.5&#93;``.
+
+Returns
+-------
+np.ndarray
+    Normalised PDC tensor with shape ``(n_neurons, n_neurons, n_freqs)``.
+
+Raises
+------
+ValueError
+    If any domain parameter is not positive, if the population is empty, if
+    any train is not one-dimensional and finite, or if binned lengths differ.
 
 ### Function `directed_transfer_function(trains, bin_size, order, n_freqs)`
-Directed transfer function (DTF). Kaminski & Blinowska 1991.
+Return the directed transfer function for a spike-train population.
 
-Returns (n_neurons x n_neurons x n_freqs) normalized DTF values.
+Parameters
+----------
+trains:
+    Non-empty list of one-dimensional spike trains. All trains must produce
+    the same number of bins.
+bin_size:
+    Positive number of samples per spike-count bin.
+order:
+    Positive autoregressive model order.
+n_freqs:
+    Positive number of frequencies in the closed interval ``&#91;0, 0.5&#93;``.
+
+Returns
+-------
+np.ndarray
+    Normalised DTF tensor with shape ``(n_neurons, n_neurons, n_freqs)``.
+    Singular transfer matrices are skipped and leave the corresponding
+    frequency slice at zero.
+
+Raises
+------
+ValueError
+    If any domain parameter is not positive, if the population is empty, if
+    any train is not one-dimensional and finite, or if binned lengths differ.
 
 ---
 
@@ -17824,6 +17964,7 @@ Genetic algorithm for evolving SNN weights and parameters.
 Hardware-bounded configuration for local reward-modulated STDP.
 
 - **__post_init__**()
+  - Validate and normalize fixed-point fields after dataclass initialization.
 - **max_weight**()
   - Maximum unsigned fixed-point weight.
 - **max_trace**()
@@ -17849,6 +17990,7 @@ Immutable synapse state snapshot after one online update.
 One fixed-point reward-modulated STDP synapse with O(1) state.
 
 - **__post_init__**()
+  - Initialize bounded mutable synapse state from a validated configuration.
 - **state_fields**()
   - Names of state fields retained between timesteps.
 - **state_bit_count**()

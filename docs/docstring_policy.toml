@@ -7,7 +7,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 217
+expected_file_count = 218
 
 [[file]]
 path = "src/sc_neurocore/__init__.py"
@@ -680,6 +680,10 @@ rationale = "Public Gaussian-process factor analysis for spike trains."
 [[file]]
 path = "src/sc_neurocore/analysis/spike_stats/stimulus.py"
 rationale = "Public stimulus-locked spike analysis."
+
+[[file]]
+path = "src/sc_neurocore/analysis/spike_stats/causality.py"
+rationale = "Public Granger causality, PDC, and DTF spike-train connectivity estimators with audited fail-closed input contracts."
 
 [[file]]
 path = "src/sc_neurocore/analysis/spike_stats/neural_decoders.py"
