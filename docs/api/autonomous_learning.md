@@ -13,6 +13,11 @@ The engine supports 4 primary rules, identified via C-FFI integer enumerations:
 
 ## Python Integration
 
+The Python bridge now keeps the public Rust, Rust-WGPU, and Torch wrapper
+methods inside the scoped docstring policy. Single-step calls, batched calls,
+state dictionaries, weight reads, resets, and the PyTorch-unavailable fallback
+are covered by the dedicated native bridge tests.
+
 ```python
 from sc_neurocore._native.learning_bridge import RustPlasticityRule, RULE_STDP
 

@@ -8,8 +8,10 @@
 
 from __future__ import annotations
 
+import builtins
 import ctypes as ct
-from collections.abc import Generator
+import importlib.util
+from collections.abc import Generator, Mapping, Sequence
 from pathlib import Path
 from typing import Any, cast
 
@@ -54,6 +56,10 @@ class _FakeLearningLib:
         self.destroyed_layers: list[int] = []
         self.destroyed_wgpu_layers: list[int] = []
         self.saved_buffers: list[bytes] = []
+        self.rule_steps: list[tuple[bool, bool, float, float]] = []
+        self.learner_steps: list[tuple[bool, bool, float, float]] = []
+        self.layer_steps: list[float] = []
+        self.reset_layers: list[int] = []
         self.analog_seeds: list[int] = []
         self.wgpu_seeds: list[int] = []
         self.save_success = True
@@ -63,7 +69,15 @@ class _FakeLearningLib:
     def create_rule(self, *_args: object) -> int:
         return 101
 
-    def step_rule(self, *_args: object) -> None:
+    def step_rule(
+        self,
+        _ptr: int,
+        pre_spike: bool,
+        post_spike: bool,
+        reward: ct.c_float,
+        dt: ct.c_float,
+    ) -> None:
+        self.rule_steps.append((pre_spike, post_spike, float(reward.value), float(dt.value)))
         return None
 
     def get_rule_weight(self, _ptr: int) -> float:
@@ -90,7 +104,15 @@ class _FakeLearningLib:
     def create_learner(self, *_args: object) -> int:
         return 202
 
-    def step_learner(self, *_args: object) -> None:
+    def step_learner(
+        self,
+        _ptr: int,
+        fired: bool,
+        pre_spike: bool,
+        global_reward: ct.c_float,
+        dt: ct.c_float,
+    ) -> None:
+        self.learner_steps.append((fired, pre_spike, float(global_reward.value), float(dt.value)))
         return None
 
     def destroy_learner(self, ptr: int) -> None:
@@ -105,7 +127,15 @@ class _FakeLearningLib:
     def create_rule_layer(self, *_args: object) -> int:
         return 303
 
-    def step_rule_layer(self, *_args: object) -> None:
+    def step_rule_layer(
+        self,
+        _ptr: int,
+        _pre_ptr: Any,
+        _post_ptr: Any,
+        _rew_ptr: Any,
+        dt: ct.c_float,
+    ) -> None:
+        self.layer_steps.append(float(dt.value))
         return None
 
     def get_rule_layer_weights(self, _ptr: int, out_ptr: Any) -> None:
@@ -115,7 +145,8 @@ class _FakeLearningLib:
     def destroy_rule_layer(self, ptr: int) -> None:
         self.destroyed_layers.append(int(ptr))
 
-    def reset_rule_layer(self, *_args: object) -> None:
+    def reset_rule_layer(self, ptr: int) -> None:
+        self.reset_layers.append(int(ptr))
         return None
 
     def save_rule_layer_batched(self, *_args: object) -> bool:
@@ -350,6 +381,25 @@ def test_rule_and_learner_valid_batched_paths_and_reset() -> None:
     rule.reset()
 
 
+def test_rule_and_learner_single_step_forward_dt_to_native() -> None:
+    fake = _FakeLearningLib()
+    lb._HAS_LEARNING = True
+    _set_native_lib(fake)
+
+    rule = lb.RustPlasticityRule()
+    learner = lb.RustEligentLearner()
+
+    rule.step(pre_spike=True, post_spike=False, dt=0.003, reward=-0.25)
+    learner.step(fired=False, pre_spike=True, global_reward=0.75, dt=0.004)
+
+    assert fake.rule_steps[0][:2] == (True, False)
+    assert fake.rule_steps[0][2] == pytest.approx(-0.25)
+    assert fake.rule_steps[0][3] == pytest.approx(0.003)
+    assert fake.learner_steps[0][:2] == (False, True)
+    assert fake.learner_steps[0][2] == pytest.approx(0.75)
+    assert fake.learner_steps[0][3] == pytest.approx(0.004)
+
+
 def test_rule_destructors_release_handles() -> None:
     fake = _FakeLearningLib()
     lb._HAS_LEARNING = True
@@ -447,6 +497,22 @@ def test_rule_layer_state_roundtrip_and_file_paths(
     restored_missing = object.__new__(lb.RustRuleLayer)
     with pytest.raises(RuntimeError, match="not available"):
         restored_missing.__setstate__(state)
+
+
+def test_rule_layer_step_and_reset_forward_to_native() -> None:
+    fake = _FakeLearningLib()
+    lb._HAS_LEARNING = True
+    _set_native_lib(fake)
+
+    layer = lb.RustRuleLayer(count=3)
+    spikes = np.array([True, False, True])
+    rewards = np.array([0.1, -0.2, 0.3], dtype=np.float32)
+
+    layer.step(spikes, spikes, rewards, dt=0.007)
+    layer.reset()
+
+    assert fake.layer_steps == [pytest.approx(0.007)]
+    assert fake.reset_layers == [303]
 
 
 def test_rule_layer_step_analog_seed_paths() -> None:
@@ -576,6 +642,15 @@ def test_torch_precision_rejects_sub_two_bits_and_non_positive_clips() -> None:
             weight_bits=[1, 2, 3, 4],
         )
 
+    with pytest.raises(ValueError, match="weight_bits must be scalar or have length 4"):
+        lb.create_plasticity_layer(
+            count=4,
+            rule_type=lb.RULE_STDP,
+            backend="torch",
+            autograd=False,
+            weight_bits=[2, 3, 4],
+        )
+
     with pytest.raises(ValueError, match="weight_clip"):
         lb.create_plasticity_layer(
             count=4,
@@ -584,6 +659,47 @@ def test_torch_precision_rejects_sub_two_bits_and_non_positive_clips() -> None:
             autograd=False,
             weight_clip=0.0,
         )
+
+
+@pytest.mark.parametrize(
+    "rule_type",
+    [lb.RULE_STDP, lb.RULE_REWARD_STDP, lb.RULE_BCM, lb.RULE_ELIGENT],
+)
+def test_torch_rule_layer_reset_matches_native_rule_scope(rule_type: int) -> None:
+    torch = pytest.importorskip("torch")
+
+    layer = lb.create_plasticity_layer(
+        count=3,
+        rule_type=rule_type,
+        backend="torch",
+        autograd=False,
+    )
+
+    with torch.no_grad():
+        layer.pre_trace.fill_(0.2)
+        layer.post_trace.fill_(0.3)
+        layer.eligibility.fill_(0.4)
+        layer.theta_m.fill_(0.9)
+        layer.act_avg.fill_(0.8)
+
+    layer.reset()
+
+    if rule_type == lb.RULE_STDP:
+        assert torch.count_nonzero(layer.pre_trace).item() == 0
+        assert torch.count_nonzero(layer.post_trace).item() == 0
+        assert torch.all(layer.eligibility == 0.4)
+    elif rule_type == lb.RULE_REWARD_STDP:
+        assert torch.count_nonzero(layer.pre_trace).item() == 0
+        assert torch.count_nonzero(layer.post_trace).item() == 0
+        assert torch.count_nonzero(layer.eligibility).item() == 0
+    elif rule_type == lb.RULE_BCM:
+        assert torch.count_nonzero(layer.act_avg).item() == 0
+        assert torch.all(layer.theta_m == 0.5)
+        assert torch.all(layer.pre_trace == 0.2)
+    else:
+        assert torch.count_nonzero(layer.eligibility).item() == 0
+        assert torch.all(layer.pre_trace == 0.2)
+        assert torch.all(layer.post_trace == 0.3)
 
 
 @pytest.mark.parametrize(
@@ -613,3 +729,32 @@ def test_torch_autograd_backward_routes_rule_specific_gradients(rule_type: int) 
         assert post.grad is not None
     if rule_type in (lb.RULE_REWARD_STDP, lb.RULE_ELIGENT):
         assert rewards.grad is not None
+
+
+def test_learning_bridge_torch_unavailable_factory_reports_install_path(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    module_path = Path(lb.__file__)
+    spec = importlib.util.spec_from_file_location("_learning_bridge_no_torch", module_path)
+    assert spec is not None
+    assert spec.loader is not None
+
+    module = importlib.util.module_from_spec(spec)
+    real_import = builtins.__import__
+
+    def reject_torch(
+        name: str,
+        global_vars: Mapping[str, object] | None = None,
+        local_vars: Mapping[str, object] | None = None,
+        fromlist: Sequence[str] | None = (),
+        level: int = 0,
+    ) -> object:
+        if name == "torch" or name.startswith("torch."):
+            raise ImportError("torch blocked for fallback test")
+        return real_import(name, global_vars, local_vars, fromlist, level)
+
+    monkeypatch.setattr(builtins, "__import__", reject_torch)
+    spec.loader.exec_module(module)
+
+    with pytest.raises(ImportError, match="requires PyTorch"):
+        module.create_plasticity_layer(count=1)

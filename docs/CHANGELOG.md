@@ -5,6 +5,14 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+### Native learning bridge docstring hardening
+- Promoted `_native.learning_bridge` into the scoped NumPy docstring policy,
+  documented the public Rust, Rust-WGPU, and Torch bridge methods, covered the
+  single-step FFI, layer reset, Torch reset-scope, bit-spec length, and
+  PyTorch-unavailable fallback paths, and refreshed the autonomous-learning docs
+  plus generated API reference. No FFI contract, polyglot mirror, or benchmark
+  path changed.
+
 ### DARTS NAS docstring hardening
 - Promoted `nas.darts_sc_nas` into the scoped NumPy docstring policy, added
   public docstrings for the differentiable bitstream-selection methods,

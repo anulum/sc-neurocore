@@ -338,7 +338,6 @@ class RustOnlineO1Synapse:
 
     def step(self, *, pre_spike: bool, post_spike: bool, reward: int) -> OnlineO1SnapshotFFI:
         """Advance one timestep and return the bounded fixed-point state."""
-
         validated_reward = _saturate(
             _require_integral(name="reward", value=reward), _MIN_I32, _MAX_I32
         )
@@ -352,6 +351,7 @@ class RustOnlineO1Synapse:
 
     @property
     def per_synapse_state_bits(self) -> int:
+        """Return the Rust-reported fixed-point state footprint in bits."""
         return int(_get_lib().online_o1_per_synapse_state_bits(self._ptr))
 
     def __del__(self) -> None:
@@ -364,7 +364,6 @@ class RustOnlineO1Synapse:
 
 def _require_integral(*, name: str, value: object) -> int:
     """Return ``value`` as ``int`` after rejecting bool and non-integral input."""
-
     if isinstance(value, bool) or not isinstance(value, Integral):
         raise TypeError(f"{name} must be an integer and must not be bool")
     return int(value)
@@ -372,7 +371,6 @@ def _require_integral(*, name: str, value: object) -> int:
 
 def _require_non_negative_integral(*, name: str, value: object) -> int:
     """Return a non-negative integer for unsigned FFI argument domains."""
-
     integral = _require_integral(name=name, value=value)
     if integral < 0:
         raise ValueError(f"{name} must be >= 0")
@@ -381,7 +379,6 @@ def _require_non_negative_integral(*, name: str, value: object) -> int:
 
 def _require_integral_range(*, name: str, value: object, lower: int, upper: int) -> int:
     """Return an integer inside the inclusive Rust Online O(1) domain."""
-
     integral = _require_integral(name=name, value=value)
     if integral < lower or integral > upper:
         raise ValueError(f"{name} must be in {lower}..={upper}")
@@ -390,7 +387,6 @@ def _require_integral_range(*, name: str, value: object, lower: int, upper: int)
 
 def _saturate(value: int, lower: int, upper: int) -> int:
     """Clamp an already validated integer into the requested inclusive bounds."""
-
     return min(upper, max(lower, value))
 
 
@@ -422,6 +418,7 @@ class RustPlasticityRule:
     def step(
         self, pre_spike: bool, post_spike: bool, dt: float = 0.001, reward: float = 0.0
     ) -> None:
+        """Advance one plasticity-rule timestep through the Rust FFI."""
         _get_lib().step_rule(self._ptr, pre_spike, post_spike, _ct.c_float(reward), _ct.c_float(dt))
 
     def step_batched(
@@ -452,9 +449,11 @@ class RustPlasticityRule:
 
     @property
     def weight(self) -> float:
+        """Return the current Rust-managed rule weight."""
         return float(_get_lib().get_rule_weight(self._ptr))
 
     def reset(self) -> None:
+        """Reset rule traces while preserving the Rust rule handle."""
         _get_lib().reset_rule(self._ptr)
 
     def __del__(self) -> None:
@@ -482,6 +481,7 @@ class RustEligentLearner:
     def step(
         self, fired: bool, pre_spike: bool, global_reward: float = 0.0, dt: float = 0.001
     ) -> None:
+        """Advance one ELIGENT learner timestep through the Rust FFI."""
         _get_lib().step_learner(
             self._ptr, fired, pre_spike, _ct.c_float(global_reward), _ct.c_float(dt)
         )
@@ -493,6 +493,7 @@ class RustEligentLearner:
         rewards: np.ndarray[Any, Any],
         dt: float = 0.001,
     ) -> None:
+        """Process batched ELIGENT learner events in one FFI call."""
         if len(fired_slice) != len(pre_spikes) or len(fired_slice) != len(rewards):
             raise ValueError("Arrays must be identically sized")
         fired_slice = np.ascontiguousarray(fired_slice, dtype=np.bool_)
@@ -564,6 +565,7 @@ class RustRuleLayer:
         }
 
     def get_state_dict(self) -> dict[str, Any]:
+        """Return a Python state dictionary with Rust serialization bytes."""
         return self.__getstate__()
 
     def __setstate__(self, state: dict[str, Any]) -> None:
@@ -591,6 +593,7 @@ class RustRuleLayer:
             _get_lib().set_rule_layer_state_mem(self._ptr, buf)
 
     def load_state_dict(self, state_dict: dict[str, Any]) -> None:
+        """Restore a Rust rule layer from a Python state dictionary."""
         self.__setstate__(state_dict)
 
     def step(
@@ -643,6 +646,7 @@ class RustRuleLayer:
         )
 
     def get_weights(self) -> np.ndarray[Any, Any]:
+        """Return layer weights copied from the Rust rule layer."""
         out = np.zeros(self._count, dtype=np.float32)
         out_ptr = out.ctypes.data_as(_ct.POINTER(_ct.c_float))
         _get_lib().get_rule_layer_weights(self._ptr, out_ptr)
@@ -730,6 +734,7 @@ class RustWgpuRuleLayer:
         rewards: np.ndarray[Any, Any] | None = None,
         dt: float = 0.001,
     ) -> None:
+        """Advance one Rust-WGPU rule-layer step."""
         # Convert deterministically to 1.0 or 0.0 floats matching hardware probabilities natively
         pre_spikes = np.ascontiguousarray(pre_spikes, dtype=np.float32)
         post_spikes = np.ascontiguousarray(post_spikes, dtype=np.float32)
@@ -752,23 +757,22 @@ class RustWgpuRuleLayer:
         dt: float = 0.001,
         seed: int | None = None,
     ) -> None:
-        """
-        Native true analog probabilistic emulation via WGSL.
-        Float probabilities are passed directly down to the deterministic WGSL kernel
-        which executes continuous uniform random thresholds per synapse.
-        """
+        """Advance analog probabilities through the Rust-WGPU step path."""
         self.step(pre_probs, post_probs, rewards, dt)
 
     def get_weights(self) -> np.ndarray[Any, Any]:
+        """Return weights copied from the Rust-WGPU layer."""
         out = np.zeros(self._count, dtype=np.float32)
         out_ptr = out.ctypes.data_as(_ct.POINTER(_ct.c_float))
         _get_lib().get_wgpu_weights(self._ptr, out_ptr)
         return out
 
     def get_state_dict(self) -> dict[str, Any]:
+        """Return the minimal serializable Rust-WGPU weight state."""
         return {"weights": self.get_weights()}
 
     def load_state_dict(self, state_dict: dict[str, Any]) -> None:
+        """Warn that Rust-WGPU state restore relies on reinitialization."""
         import warnings
 
         warnings.warn(
@@ -1291,31 +1295,36 @@ try:
         autograd: bool = True,
         **kwargs: Any,
     ) -> Any:
-        """
-        High-level SC-NeuroCore plasticity layer factory.
+        """Create a plasticity layer for the requested backend.
 
-        Backends:
-        - "torch": Highly-optimized C++ autograd surrogate bindings. Primary training accelerator.
-        - "rust": Parallel CPU execution over Rayon bounds natively.
-        - "rust-wgpu": pure-Rust GPU for cross-platform edge deployment where CUDA is unavailable. Not primary training accelerator.
+        Parameters
+        ----------
+        count : int
+            Number of neurons or synapses in the layer.
+        rule_type : int
+            One of ``RULE_ELIGENT``, ``RULE_STDP``, ``RULE_REWARD_STDP``, or
+            ``RULE_BCM``.
+        backend : str
+            Backend selector: ``"torch"``, ``"rust"``, or ``"rust-wgpu"``.
+        autograd : bool
+            Whether the Torch backend tracks gradients through the biological
+            update approximation.
+        **kwargs : Any
+            Extra backend parameters such as ``param_a``, ``param_b``, or
+            precision-control fields.
 
-        Args:
-            count: Number of neurons/synapses in the layer.
-            rule_type: One of RULE_ELIGENT, RULE_STDP, RULE_REWARD_STDP, RULE_BCM.
-            backend: 'torch' for GPU autograd, 'rust' for Exascale CPU/Analog MTJ execution.
-            autograd: Explicit tracking metric when running under Torch backend.
-            **kwargs: Extra parameters passed down to the backend components (e.g. param_a, param_b).
+        Returns
+        -------
+        Any
+            ``TorchRuleLayer``, ``RustRuleLayer``, or ``RustWgpuRuleLayer`` for
+            the selected backend.
 
-        Note:
-            To achieve bit-identical mathematical matching between frameworks when resolving analog stochastics,
-            call `set_deterministic_mode(seed)` before executing forward pathways.
-
-            When executing RULE_ELIGENT under PyTorch autograd tracking, the normalization scaler explicitly acts as
-            a parallel tensor approximation (`target / act_avg`). Exact bit-for-bit Rust logic applies conditional
-            scalar bounds internally ensuring absolute limit zeroing which diverges slightly during stochastic boundary conditions.
-
-        Returns:
-            Either TorchRuleLayer, RustRuleLayer, or RustWgpuRuleLayer
+        Notes
+        -----
+        Call :func:`set_deterministic_mode` before analog stochastic paths when
+        bit-identical cross-backend comparisons are required. Under
+        ``RULE_ELIGENT`` with Torch autograd, normalization uses a tensor
+        approximation while the Rust path applies scalar bounds internally.
         """
         if backend.lower() == "torch":
             return TorchRuleLayer(count=count, rule_type=rule_type, autograd=autograd, **kwargs)

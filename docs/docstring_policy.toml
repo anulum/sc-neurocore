@@ -7,7 +7,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 230
+expected_file_count = 231
 
 [[file]]
 path = "src/sc_neurocore/__init__.py"
@@ -52,6 +52,10 @@ rationale = "Public pretrained model-zoo loader with audited archive validation 
 [[file]]
 path = "src/sc_neurocore/model_zoo/model_zoo.py"
 rationale = "Public legacy model-zoo plugin API with audited simulation validation, built-in neuron plugins, Verilog emission, and documentation generation."
+
+[[file]]
+path = "src/sc_neurocore/_native/learning_bridge.py"
+rationale = "Public native autonomous-learning bridge for Rust, Rust-WGPU, and Torch plasticity layers."
 
 [[file]]
 path = "src/sc_neurocore/nas/sc_nas_engine.py"

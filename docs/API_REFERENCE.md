@@ -65,6 +65,7 @@ RAII wrapper for the Rust bounded fixed-point online O(1) learner.
 - **step**()
   - Advance one timestep and return the bounded fixed-point state.
 - **per_synapse_state_bits**()
+  - Return the Rust-reported fixed-point state footprint in bits.
 - **__del__**()
 
 ### Class `RustPlasticityRule`
@@ -74,10 +75,13 @@ rule_type: RULE_STDP(0), RULE_BCM(1), RULE_REWARD_STDP(2), RULE_ELIGENT(3)
 
 - **__init__**(rule_type, weight, param_a, param_b)
 - **step**(pre_spike, post_spike, dt, reward)
+  - Advance one plasticity-rule timestep through the Rust FFI.
 - **step_batched**(pre_spikes, post_spikes, rewards, dt)
   - Process Numpy arrays in a single FFI boundary crossing.
 - **weight**()
+  - Return the current Rust-managed rule weight.
 - **reset**()
+  - Reset rule traces while preserving the Rust rule handle.
 - **__del__**()
 
 ### Class `RustEligentLearner`
@@ -85,7 +89,9 @@ RAII wrapper around a Rust ELIGENT learner handle.
 
 - **__init__**(threshold, target_rate, weight)
 - **step**(fired, pre_spike, global_reward, dt)
+  - Advance one ELIGENT learner timestep through the Rust FFI.
 - **step_batched**(fired_slice, pre_spikes, rewards, dt)
+  - Process batched ELIGENT learner events in one FFI call.
 - **__del__**()
 
 ### Class `RustRuleLayer`
@@ -94,13 +100,16 @@ RAII wrapper around a Rust RuleLayerHandle for parallelized spatial (layer) exec
 - **__init__**(count, rule_type, weight, param_a, param_b)
 - **__getstate__**()
 - **get_state_dict**()
+  - Return a Python state dictionary with Rust serialization bytes.
 - **__setstate__**(state)
 - **load_state_dict**(state_dict)
+  - Restore a Rust rule layer from a Python state dictionary.
 - **step**(pre_spikes, post_spikes, rewards, dt)
   - Process spatial Numpy arrays natively across Rayon Rust threads.
 - **step_analog**(pre_probs, post_probs, rewards, dt, seed)
   - Process MTJ analogue probability states directly into sampled stochastic spikes using Rayon RNG.
 - **get_weights**()
+  - Return layer weights copied from the Rust rule layer.
 - **save**(path)
   - Serialize the internal traces and weights to a binary file natively.
 - **load**(path)
@@ -114,11 +123,15 @@ RAII wrapper around explicit Rust WGPU execution instances computing via WGSL bi
 
 - **__init__**(count, rule_type, weight, param_a, param_b, tau_e, target_sum_weights)
 - **step**(pre_spikes, post_spikes, rewards, dt)
+  - Advance one Rust-WGPU rule-layer step.
 - **step_analog**(pre_probs, post_probs, rewards, dt, seed)
-  - Native true analog probabilistic emulation via WGSL.
+  - Advance analog probabilities through the Rust-WGPU step path.
 - **get_weights**()
+  - Return weights copied from the Rust-WGPU layer.
 - **get_state_dict**()
+  - Return the minimal serializable Rust-WGPU weight state.
 - **load_state_dict**(state_dict)
+  - Warn that Rust-WGPU state restore relies on reinitialization.
 - **reset**()
   - Zero WGSL plasticity traces; weights preserved. See `WgpuRuleLayer::reset`.
 - **__del__**()
