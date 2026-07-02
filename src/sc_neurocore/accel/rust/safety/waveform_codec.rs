@@ -8,6 +8,15 @@
 
 #![allow(unused_variables, dead_code, non_snake_case)]
 
+pub const WAVEFORM_CODEC_MIN_SNIPPET_SAMPLES: f64 = 1.0;
+pub const WAVEFORM_CODEC_MAX_SNIPPET_SAMPLES: f64 = 255.0;
+pub const WAVEFORM_CODEC_MIN_TEMPLATES: f64 = 1.0;
+pub const WAVEFORM_CODEC_MAX_HEADER_COUNT: f64 = 65535.0;
+pub const WAVEFORM_CODEC_MAX_TEMPLATES: f64 = WAVEFORM_CODEC_MAX_HEADER_COUNT;
+pub const WAVEFORM_CODEC_MIN_QUANTIZE_BITS: f64 = 1.0;
+pub const WAVEFORM_CODEC_MAX_QUANTIZE_BITS: f64 = 8.0;
+pub const WAVEFORM_CODEC_VALID_MODES: [f64; 3] = [0.0, 1.0, 2.0];
+
 #[derive(Debug, Clone)]
 pub struct WaveformCodec {
     pub original_bytes: f64,
@@ -44,17 +53,20 @@ impl WaveformCodec {
             snippet_bytes: 0.0_f64,
             background_bytes: 0.0_f64,
             lossless_spikes: 0.0_f64,
-            threshold_sigma: 0.0_f64,
-            snippet_samples: 0.0_f64,
-            max_templates: 0.0_f64,
-            template_threshold: 0.0_f64,
-            quantize_bits: 0.0_f64,
+            threshold_sigma: 4.5_f64,
+            snippet_samples: 48.0_f64,
+            max_templates: 16.0_f64,
+            template_threshold: 0.9_f64,
+            quantize_bits: 6.0_f64,
             mode: 0.0_f64,
             spike_codec: 0.0_f64,
         }
     }
 
     pub fn compress(&self, waveform: f64) -> f64 {
+        if !validate_waveform_codec(self) || !waveform.is_finite() {
+            return f64::NAN;
+        }
         // waveform = np.asarray(waveform, dtype=np.float32)
         // T, N = waveform.shape
         // original_bytes = T * N * 2  # 16-bit raw
@@ -188,8 +200,32 @@ impl WaveformCodec {
     }
 }
 
+fn finite_integer_in_range(value: f64, min: f64, max: f64) -> bool {
+    value.is_finite() && value.fract() == 0.0 && value >= min && value <= max
+}
+
 pub fn validate_waveform_codec(state: &WaveformCodec) -> bool {
-    true
+    state.threshold_sigma.is_finite()
+        && state.threshold_sigma > 0.0
+        && finite_integer_in_range(
+            state.snippet_samples,
+            WAVEFORM_CODEC_MIN_SNIPPET_SAMPLES,
+            WAVEFORM_CODEC_MAX_SNIPPET_SAMPLES,
+        )
+        && finite_integer_in_range(
+            state.max_templates,
+            WAVEFORM_CODEC_MIN_TEMPLATES,
+            WAVEFORM_CODEC_MAX_TEMPLATES,
+        )
+        && state.template_threshold.is_finite()
+        && (0.0..=1.0).contains(&state.template_threshold)
+        && finite_integer_in_range(
+            state.quantize_bits,
+            WAVEFORM_CODEC_MIN_QUANTIZE_BITS,
+            WAVEFORM_CODEC_MAX_QUANTIZE_BITS,
+        )
+        && finite_integer_in_range(state.mode, 0.0, 2.0)
+        && WAVEFORM_CODEC_VALID_MODES.contains(&state.mode)
 }
 
 #[cfg(test)]
@@ -200,5 +236,46 @@ mod tests {
     fn test_waveform_codec_new() {
         let state = WaveformCodec::new();
         assert!(validate_waveform_codec(&state));
+    }
+
+    #[test]
+    fn test_waveform_codec_rejects_invalid_header_ranges() {
+        let mut state = WaveformCodec::new();
+        state.threshold_sigma = 0.0;
+        assert!(!validate_waveform_codec(&state));
+
+        let mut state = WaveformCodec::new();
+        state.snippet_samples = WAVEFORM_CODEC_MAX_SNIPPET_SAMPLES + 1.0;
+        assert!(!validate_waveform_codec(&state));
+
+        let mut state = WaveformCodec::new();
+        state.max_templates = WAVEFORM_CODEC_MAX_TEMPLATES + 1.0;
+        assert!(!validate_waveform_codec(&state));
+
+        let mut state = WaveformCodec::new();
+        state.template_threshold = 1.01;
+        assert!(!validate_waveform_codec(&state));
+
+        let mut state = WaveformCodec::new();
+        state.quantize_bits = WAVEFORM_CODEC_MAX_QUANTIZE_BITS + 1.0;
+        assert!(!validate_waveform_codec(&state));
+    }
+
+    #[test]
+    fn test_waveform_codec_rejects_non_integer_wire_fields() {
+        let mut state = WaveformCodec::new();
+        state.snippet_samples = 48.5;
+        assert!(!validate_waveform_codec(&state));
+
+        let mut state = WaveformCodec::new();
+        state.mode = 1.5;
+        assert!(!validate_waveform_codec(&state));
+    }
+
+    #[test]
+    fn test_compress_fails_closed_for_invalid_state() {
+        let mut state = WaveformCodec::new();
+        state.quantize_bits = 0.0;
+        assert!(state.compress(0.0).is_nan());
     }
 }

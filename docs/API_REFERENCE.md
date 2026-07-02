@@ -30577,9 +30577,13 @@ Compression result with predictive coding metrics.
 Per-channel EMA rate predictor (legacy, kept for reference).
 
 - **__init__**(n_channels, alpha, threshold)
+  - Initialize per-channel rates and threshold parameters.
 - **predict**()
+  - Predict active channels from the current EMA rate estimates.
 - **update**(actual)
+  - Update EMA rates from one observed spike vector.
 - **reset**()
+  - Reset all channel rates to zero.
 
 ### Class `PredictiveSpikeCodec`
 Predictive spike codec: compress prediction errors, not raw spikes.
@@ -30769,15 +30773,19 @@ Parameters
 ----------
 threshold_sigma : float
     Spike detection threshold in units of per-channel noise sigma.
-    Typical: 4.0-5.0 (4 sigma catches ~99.99% of noise).
+    Must be finite and positive. Typical: 4.0-5.0 (4 sigma catches
+    ~99.99% of noise).
 snippet_samples : int
     Waveform samples to extract around each spike (before + after peak).
+    Must fit the one-byte wire header: 1-255 samples.
 max_templates : int
     Maximum number of spike waveform templates to maintain.
+    Must fit the two-byte wire header: 1-65535 templates.
 template_threshold : float
-    Correlation threshold for template matching (0-1).
+    Correlation threshold for template matching, inclusive range 0-1.
 quantize_bits : int
-    Background signal quantization (fewer bits = more compression).
+    Background signal quantization, inclusive range 1-8. Fewer bits
+    increase compression.
 mode : str
     Compression mode controlling what is preserved:
     - ``"full"``: spike timing + waveform templates + background LFP (~137x)
@@ -30785,8 +30793,16 @@ mode : str
     - ``"spike"``: spike timing only, Neuralink-equivalent (~4500x)
 
 - **__init__**(threshold_sigma, snippet_samples, max_templates, template_threshold, quantize_bits, mode)
+- **_require_positive_float**(name, value)
+  - Return a finite positive float or raise a field-specific error.
+- **_require_float_range**(name, value)
+  - Return a finite float inside an inclusive range.
+- **_require_int_range**(name, value)
+  - Return an integer inside an inclusive range.
 - **compress**(waveform)
   - Compress raw electrode waveform.
+- **_validate_waveform**(waveform)
+  - Return a finite non-empty ``(time, channel)`` waveform matrix.
 - **_detect_spikes**(waveform, thresholds)
   - Threshold-crossing spike detection with refractory period.
 - **_extract_snippets**(waveform, times_per_ch, N)
@@ -36953,7 +36969,9 @@ x_rec = encoder.decode(bitstream)
 
 - **__post_init__**()
 - **encode**(x)
+  - Encode one scalar into a stochastic bitstream.
 - **decode**(bitstream)
+  - Decode a stochastic bitstream back into the configured value range.
 
 ### Class `BitstreamAverager`
 Sliding-window probability estimator for bitstreams.
@@ -36971,8 +36989,11 @@ True
 
 - **__post_init__**()
 - **push**(bit)
+  - Add one binary sample to the sliding window.
 - **estimate**()
+  - Return the current sliding-window probability estimate.
 - **reset**()
+  - Clear all buffered samples and reset the estimator state.
 
 ### Function `generate_bernoulli_bitstream(p, length, rng)`
 Generate a Bernoulli bitstream of given length with probability p of '1'.

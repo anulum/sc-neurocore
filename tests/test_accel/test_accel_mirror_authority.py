@@ -38,6 +38,7 @@ def test_non_authoritative_julia_patterns_declared() -> None:
     assert "edge/*.jl" in NON_AUTHORITATIVE_JULIA_MIRROR_GLOBS
     assert "studio/*.jl" in NON_AUTHORITATIVE_JULIA_MIRROR_GLOBS
     assert "model_zoo/*.jl" in NON_AUTHORITATIVE_JULIA_MIRROR_GLOBS
+    assert "spike_codec/*.jl" in NON_AUTHORITATIVE_JULIA_MIRROR_GLOBS
 
 
 def test_authoritative_mojo_entrypoints_exist() -> None:

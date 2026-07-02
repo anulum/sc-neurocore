@@ -6,6 +6,16 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore — Mojo SIMD acceleration for waveform_codec
 
+# Non-authoritative transcript mirror contract:
+# WAVEFORM_CODEC_MIN_SNIPPET_SAMPLES = 1
+# WAVEFORM_CODEC_MAX_SNIPPET_SAMPLES = 255
+# WAVEFORM_CODEC_MIN_TEMPLATES = 1
+# WAVEFORM_CODEC_MAX_HEADER_COUNT = 65535
+# WAVEFORM_CODEC_MAX_TEMPLATES = WAVEFORM_CODEC_MAX_HEADER_COUNT
+# WAVEFORM_CODEC_MIN_QUANTIZE_BITS = 1
+# WAVEFORM_CODEC_MAX_QUANTIZE_BITS = 8
+# WAVEFORM_CODEC_VALID_MODES = ("full", "waveform", "spike")
+
 fn compress(waveform: Int) -> Int:
     var _compress_line = 'waveform = asarray(waveform, dtype=float32)'
     var _compress_line = 'T, N = waveform.shape'

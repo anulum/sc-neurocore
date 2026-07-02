@@ -80,7 +80,12 @@ timestamps. Compatible with `comm.aer_udp` protocol. O(n_spikes) bytes.
 
 End-to-end raw waveform compression: spike detection + template matching +
 background LFP compression. 24x on 1024-channel Neuralink-scale data.
-Spike timing is lossless. Fits in Bluetooth uplink.
+Spike timing is lossless. Fits in Bluetooth uplink. The codec validates inputs
+before telemetry sections are built: raw samples must be a finite, non-empty
+`(time, channel)` matrix, `snippet_samples` must fit the one-byte header
+(1-255), `max_templates` must fit the two-byte template count (1-65535),
+`template_threshold` must be in `[0, 1]`, and `quantize_bits` must be in
+`[1, 8]`.
 
 ::: sc_neurocore.spike_codec.waveform_codec
     options:

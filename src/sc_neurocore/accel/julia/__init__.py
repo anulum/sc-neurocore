@@ -31,6 +31,7 @@ NON_AUTHORITATIVE_JULIA_MIRROR_GLOBS: tuple[str, ...] = (
     "analysis_spike_stats/*.jl",
     "edge/*.jl",
     "model_zoo/*.jl",
+    "spike_codec/*.jl",
 )
 
 __all__ = [

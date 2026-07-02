@@ -26,11 +26,22 @@ from __future__ import annotations
 
 import struct
 from dataclasses import dataclass
+from math import isfinite
 from typing import Any
 
 import numpy as np
 
 from .codec import SpikeCodec
+
+WAVEFORM_CODEC_MIN_SNIPPET_SAMPLES = 1
+WAVEFORM_CODEC_MAX_SNIPPET_SAMPLES = 255
+WAVEFORM_CODEC_MIN_TEMPLATES = 1
+WAVEFORM_CODEC_MAX_HEADER_COUNT = 65535
+WAVEFORM_CODEC_MAX_TEMPLATES = WAVEFORM_CODEC_MAX_HEADER_COUNT
+WAVEFORM_CODEC_MIN_QUANTIZE_BITS = 1
+WAVEFORM_CODEC_MAX_QUANTIZE_BITS = 8
+WAVEFORM_CODEC_VALID_MODES = ("full", "waveform", "spike")
+WAVEFORM_CODEC_MODE_BYTES = {"full": 0, "waveform": 1, "spike": 2}
 
 
 @dataclass
@@ -59,15 +70,19 @@ class WaveformCodec:
     ----------
     threshold_sigma : float
         Spike detection threshold in units of per-channel noise sigma.
-        Typical: 4.0-5.0 (4 sigma catches ~99.99% of noise).
+        Must be finite and positive. Typical: 4.0-5.0 (4 sigma catches
+        ~99.99% of noise).
     snippet_samples : int
         Waveform samples to extract around each spike (before + after peak).
+        Must fit the one-byte wire header: 1-255 samples.
     max_templates : int
         Maximum number of spike waveform templates to maintain.
+        Must fit the two-byte wire header: 1-65535 templates.
     template_threshold : float
-        Correlation threshold for template matching (0-1).
+        Correlation threshold for template matching, inclusive range 0-1.
     quantize_bits : int
-        Background signal quantization (fewer bits = more compression).
+        Background signal quantization, inclusive range 1-8. Fewer bits
+        increase compression.
     mode : str
         Compression mode controlling what is preserved:
         - ``"full"``: spike timing + waveform templates + background LFP (~137x)
@@ -86,15 +101,77 @@ class WaveformCodec:
         quantize_bits: int = 6,
         mode: str = "full",
     ):
-        if mode not in ("full", "waveform", "spike"):
+        if mode not in WAVEFORM_CODEC_VALID_MODES:
             raise ValueError(f"mode must be 'full', 'waveform', or 'spike', got {mode!r}")
-        self.threshold_sigma = threshold_sigma
-        self.snippet_samples = snippet_samples
-        self.max_templates = max_templates
-        self.template_threshold = template_threshold
-        self.quantize_bits = quantize_bits
+        self.threshold_sigma = self._require_positive_float("threshold_sigma", threshold_sigma)
+        self.snippet_samples = self._require_int_range(
+            "snippet_samples",
+            snippet_samples,
+            minimum=WAVEFORM_CODEC_MIN_SNIPPET_SAMPLES,
+            maximum=WAVEFORM_CODEC_MAX_SNIPPET_SAMPLES,
+        )
+        self.max_templates = self._require_int_range(
+            "max_templates",
+            max_templates,
+            minimum=WAVEFORM_CODEC_MIN_TEMPLATES,
+            maximum=WAVEFORM_CODEC_MAX_TEMPLATES,
+        )
+        self.template_threshold = self._require_float_range(
+            "template_threshold", template_threshold, minimum=0.0, maximum=1.0
+        )
+        self.quantize_bits = self._require_int_range(
+            "quantize_bits",
+            quantize_bits,
+            minimum=WAVEFORM_CODEC_MIN_QUANTIZE_BITS,
+            maximum=WAVEFORM_CODEC_MAX_QUANTIZE_BITS,
+        )
         self.mode = mode
         self.spike_codec = SpikeCodec(entropy="auto")
+
+    @staticmethod
+    def _require_positive_float(name: str, value: float) -> float:
+        """Return a finite positive float or raise a field-specific error."""
+        if isinstance(value, bool):
+            raise ValueError(f"{name} must be a finite positive float, got {value!r}")
+        numeric = float(value)
+        if not isfinite(numeric) or numeric <= 0.0:
+            raise ValueError(f"{name} must be a finite positive float, got {value!r}")
+        return numeric
+
+    @staticmethod
+    def _require_float_range(
+        name: str,
+        value: float,
+        *,
+        minimum: float,
+        maximum: float,
+    ) -> float:
+        """Return a finite float inside an inclusive range."""
+        if isinstance(value, bool):
+            raise ValueError(
+                f"{name} must be a finite float in [{minimum}, {maximum}], got {value!r}"
+            )
+        numeric = float(value)
+        if not isfinite(numeric) or numeric < minimum or numeric > maximum:
+            raise ValueError(
+                f"{name} must be a finite float in [{minimum}, {maximum}], got {value!r}"
+            )
+        return numeric
+
+    @staticmethod
+    def _require_int_range(
+        name: str,
+        value: int,
+        *,
+        minimum: int,
+        maximum: int,
+    ) -> int:
+        """Return an integer inside an inclusive range."""
+        if isinstance(value, bool) or not isinstance(value, int):
+            raise ValueError(f"{name} must be an integer in [{minimum}, {maximum}], got {value!r}")
+        if value < minimum or value > maximum:
+            raise ValueError(f"{name} must be an integer in [{minimum}, {maximum}], got {value!r}")
+        return value
 
     def compress(self, waveform: np.ndarray[Any, Any]) -> tuple[bytes, WaveformCompressionResult]:
         """Compress raw electrode waveform.
@@ -109,6 +186,7 @@ class WaveformCodec:
         (compressed_bytes, WaveformCompressionResult)
         """
         waveform = np.asarray(waveform, dtype=np.float32)
+        waveform = self._validate_waveform(waveform)
         T, N = waveform.shape
         original_bytes = T * N * 2  # 16-bit raw
 
@@ -146,7 +224,9 @@ class WaveformCodec:
             bg_data = b""
 
         # Pack everything
-        mode_byte = {"full": 0, "waveform": 1, "spike": 2}[self.mode]
+        if len(snippet_indices) > WAVEFORM_CODEC_MAX_HEADER_COUNT:
+            raise ValueError("spike snippet count exceeds WaveformCodec header capacity")
+        mode_byte = WAVEFORM_CODEC_MODE_BYTES[self.mode]
         header = self.HEADER_MAGIC + struct.pack(
             "!IIHHBBBB",
             T,
@@ -185,6 +265,18 @@ class WaveformCodec:
             background_bytes=len(bg_data),
             lossless_spikes=True,
         )
+
+    @staticmethod
+    def _validate_waveform(waveform: np.ndarray[Any, Any]) -> np.ndarray[Any, Any]:
+        """Return a finite non-empty ``(time, channel)`` waveform matrix."""
+        if waveform.ndim != 2 or waveform.shape[0] == 0 or waveform.shape[1] == 0:
+            raise ValueError(
+                "waveform must be a finite two-dimensional array with at least "
+                "one sample and one channel"
+            )
+        if not bool(np.isfinite(waveform).all()):
+            raise ValueError("waveform samples must be finite")
+        return waveform
 
     def _detect_spikes(
         self, waveform: np.ndarray[Any, Any], thresholds: np.ndarray[Any, Any]

@@ -35,16 +35,20 @@ Raw ADC (T, N, 10-bit)
 from sc_neurocore.spike_codec import WaveformCodec
 
 codec = WaveformCodec(
-    threshold_sigma=4.5,   # spike detection (4.5 sigma)
-    snippet_samples=48,    # waveform clip size
-    max_templates=16,      # template library size
-    quantize_bits=4,       # background quantization
+    threshold_sigma=4.5,   # finite positive spike threshold
+    snippet_samples=48,    # waveform clip size, 1-255 samples
+    max_templates=16,      # template library size, 1-65535 entries
+    quantize_bits=4,       # background quantization, 1-8 bits
 )
 
 # Compress raw electrode data
 data, result = codec.compress(raw_waveform)  # (T, N) int16/float
 print(f"{result.compression_ratio:.1f}x, {result.n_spikes_detected} spikes detected")
 ```
+
+`raw_waveform` must be a finite, non-empty two-dimensional array with time on
+axis 0 and channels on axis 1. NaN/Inf samples, vectors, empty recordings, and
+header-unsafe constructor ranges fail before compression state is derived.
 
 ### Measured Results (synthetic 1024-channel, 1 second at 20 kHz)
 
