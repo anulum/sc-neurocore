@@ -5,6 +5,14 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+### Fisher-Posner LIF contract hardening
+- Hardened `quantum_cognition.fisher_posner` with fail-closed neuron-id,
+  timestep, voltage, membrane-time-constant, ATP-domain, and step-current
+  validation before state mutation. Invalid input current now fails without
+  advancing counters, membrane voltage, ATP, or spin-pool measurement state.
+  The public Fisher-Posner LIF surface is covered at 100% exact-file coverage
+  under strict mypy plus the scoped NumPy docstring policy.
+
 ### RNG utility contract hardening
 - Hardened `utils.rng.RNG` with fail-closed seed, normal, uniform, and
   Bernoulli parameter validation before generator state advances. Scalar draws

@@ -27369,7 +27369,9 @@ atp_basal_regeneration : float
 - **v**()
   - Membrane voltage alias for Population compatibility.
 - **v**(value)
+  - Assign a finite membrane voltage through the Population alias.
 - **__repr__**()
+  - Return compact debug telemetry for the coupled neuron.
 
 ### Class `HybridFisherPosnerLIFNeuron`
 Population-compatible wrapper for HybridFisherPosnerLIF.
@@ -27385,15 +27387,41 @@ Population via class-level pool management.
 - **step**(I_in)
   - Advance one timestep, return 1 if spiked else 0.
 - **v**()
+  - Return the inner neuron's membrane voltage.
 - **v**(value)
+  - Assign a finite membrane voltage through the wrapper alias.
 - **v_threshold**()
+  - Return the inner neuron's spike threshold.
 - **v_rest**()
+  - Return the inner neuron's resting membrane potential.
 - **get_state**()
+  - Return the inner neuron's checkpointable state.
 - **reset**()
+  - Reset the wrapped neuron state for NeuronProtocol compatibility.
 - **reset_state**()
+  - Reset the wrapped neuron state to rest and full ATP.
 - **__repr__**()
+  - Return compact debug telemetry for the population wrapper.
 - **_reset_pools**(cls)
   - Reset shared pool registry (for testing).
+
+### Function `_finite_float(value, name)`
+Return a finite floating-point model parameter.
+
+### Function `_positive_float(value, name)`
+Return a finite, strictly positive floating-point model parameter.
+
+### Function `_nonnegative_float(value, name)`
+Return a finite, non-negative floating-point model parameter.
+
+### Function `_unit_interval_float(value, name)`
+Return a finite floating-point value in the closed unit interval.
+
+### Function `_positive_unit_float(value, name)`
+Return a finite floating-point value in the interval ``(0, 1&#93;``.
+
+### Function `_validate_neuron_id(neuron_id, n_sites)`
+Return a concrete spin-pool site index for a public neuron id.
 
 ---
 

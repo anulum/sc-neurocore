@@ -46,9 +46,61 @@ References
 
 from __future__ import annotations
 
+import math
 from typing import Any
 
 from .spin_pool import SpinPoolMPS
+
+
+def _finite_float(value: float, name: str) -> float:
+    """Return a finite floating-point model parameter."""
+    result = float(value)
+    if not math.isfinite(result):
+        raise ValueError(f"{name} must be finite")
+    return result
+
+
+def _positive_float(value: float, name: str) -> float:
+    """Return a finite, strictly positive floating-point model parameter."""
+    result = _finite_float(value, name)
+    if result <= 0.0:
+        raise ValueError(f"{name} must be > 0")
+    return result
+
+
+def _nonnegative_float(value: float, name: str) -> float:
+    """Return a finite, non-negative floating-point model parameter."""
+    result = _finite_float(value, name)
+    if result < 0.0:
+        raise ValueError(f"{name} must be >= 0")
+    return result
+
+
+def _unit_interval_float(value: float, name: str) -> float:
+    """Return a finite floating-point value in the closed unit interval."""
+    result = _finite_float(value, name)
+    if not 0.0 <= result <= 1.0:
+        raise ValueError(f"{name} must be in [0, 1]")
+    return result
+
+
+def _positive_unit_float(value: float, name: str) -> float:
+    """Return a finite floating-point value in the interval ``(0, 1]``."""
+    result = _finite_float(value, name)
+    if not 0.0 < result <= 1.0:
+        raise ValueError(f"{name} must be in (0, 1]")
+    return result
+
+
+def _validate_neuron_id(neuron_id: int, n_sites: int) -> int:
+    """Return a concrete spin-pool site index for a public neuron id."""
+    if not isinstance(neuron_id, int) or isinstance(neuron_id, bool):
+        raise TypeError("neuron_id must be an integer spin-pool site index")
+    if neuron_id < 0:
+        raise ValueError(f"neuron_id must be >= 0, got {neuron_id}")
+    if neuron_id >= n_sites:
+        raise ValueError(f"neuron_id {neuron_id} exceeds spin_pool.n_sites ({n_sites})")
+    return neuron_id
 
 
 class HybridFisherPosnerLIF:
@@ -93,32 +145,30 @@ class HybridFisherPosnerLIF:
         atp_consumption: float = 0.05,
         atp_basal_regeneration: float = 0.001,
     ) -> None:
-        if neuron_id < 0:
-            raise ValueError(f"neuron_id must be >= 0, got {neuron_id}")
         if not isinstance(spin_pool, SpinPoolMPS):
             raise TypeError(f"spin_pool must be SpinPoolMPS, got {type(spin_pool).__name__}")
-        if neuron_id >= spin_pool.n_sites:
-            raise ValueError(
-                f"neuron_id {neuron_id} exceeds spin_pool.n_sites ({spin_pool.n_sites})"
-            )
+        neuron_id = _validate_neuron_id(neuron_id, spin_pool.n_sites)
 
         self.id = neuron_id
         self.spin_pool = spin_pool
-        self.dt = dt
+        self.dt = _positive_float(dt, "dt")
 
         # Classical membrane parameters
-        self.v_rest = v_rest
-        self.v_threshold = v_threshold
-        self.v_reset = v_reset
-        self.tau_m = tau_m
-        self.Vm = v_rest
+        self.v_rest = _finite_float(v_rest, "v_rest")
+        self.v_threshold = _finite_float(v_threshold, "v_threshold")
+        self.v_reset = _finite_float(v_reset, "v_reset")
+        self.tau_m = _positive_float(tau_m, "tau_m")
+        self.Vm = self.v_rest
 
         # Alias for Population compatibility (Population reads neuron.v)
 
         # Metabolic parameters
-        self.atp_level = atp_initial
-        self.atp_consumption = atp_consumption
-        self.atp_basal_regeneration = atp_basal_regeneration
+        self.atp_level = _unit_interval_float(atp_initial, "atp_initial")
+        self.atp_consumption = _positive_unit_float(atp_consumption, "atp_consumption")
+        self.atp_basal_regeneration = _nonnegative_float(
+            atp_basal_regeneration,
+            "atp_basal_regeneration",
+        )
         self.is_spiking = False
 
         # Counters for telemetry
@@ -139,10 +189,11 @@ class HybridFisherPosnerLIF:
         tuple[float, bool]
             ``(Vm, is_spiking)`` — membrane voltage and spike flag.
         """
-        self._total_steps += 1
+        current = _finite_float(I_in, "I_in")
 
         # 1. Quantum-modulated ATP regeneration
         eff = self.spin_pool.get_local_atp_efficiency(self.id)
+        self._total_steps += 1
         r_atp = self.atp_basal_regeneration + eff * 0.01
         self.atp_level = min(1.0, self.atp_level + r_atp * (1.0 - self.atp_level))
 
@@ -152,7 +203,7 @@ class HybridFisherPosnerLIF:
         i_pump = (eff - 0.5) * 2.0 * self.atp_level
 
         # 3. Classical LIF integration with metabolic pump
-        dv = (-(self.Vm - self.v_rest) + I_in + i_pump) / self.tau_m * self.dt
+        dv = (-(self.Vm - self.v_rest) + current + i_pump) / self.tau_m * self.dt
         self.Vm += dv
 
         # 4. Spiking logic with metabolic gate
@@ -209,9 +260,11 @@ class HybridFisherPosnerLIF:
 
     @v.setter
     def v(self, value: float) -> None:
-        self.Vm = value
+        """Assign a finite membrane voltage through the Population alias."""
+        self.Vm = _finite_float(value, "v")
 
     def __repr__(self) -> str:
+        """Return compact debug telemetry for the coupled neuron."""
         return (
             f"HybridFisherPosnerLIF(id={self.id}, Vm={self.Vm:.2f}, "
             f"ATP={self.atp_level:.3f}, spikes={self._total_spikes})"
@@ -277,30 +330,38 @@ class HybridFisherPosnerLIFNeuron:
 
     @property
     def v(self) -> float:
+        """Return the inner neuron's membrane voltage."""
         return self._inner.Vm
 
     @v.setter
     def v(self, value: float) -> None:
-        self._inner.Vm = value
+        """Assign a finite membrane voltage through the wrapper alias."""
+        self._inner.v = value
 
     @property
     def v_threshold(self) -> float:
+        """Return the inner neuron's spike threshold."""
         return self._inner.v_threshold
 
     @property
     def v_rest(self) -> float:
+        """Return the inner neuron's resting membrane potential."""
         return self._inner.v_rest
 
     def get_state(self) -> dict[str, Any]:
+        """Return the inner neuron's checkpointable state."""
         return self._inner.get_state()
 
     def reset(self) -> None:
+        """Reset the wrapped neuron state for NeuronProtocol compatibility."""
         self._inner.reset_state()
 
     def reset_state(self) -> None:
+        """Reset the wrapped neuron state to rest and full ATP."""
         self._inner.reset_state()
 
     def __repr__(self) -> str:
+        """Return compact debug telemetry for the population wrapper."""
         return f"HybridFisherPosnerLIFNeuron({self._inner!r})"
 
     @classmethod

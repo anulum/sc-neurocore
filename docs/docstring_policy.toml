@@ -7,7 +7,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 213
+expected_file_count = 214
 
 [[file]]
 path = "src/sc_neurocore/__init__.py"
@@ -148,6 +148,10 @@ rationale = "Public analysis package entry point that re-exports spike statistic
 [[file]]
 path = "src/sc_neurocore/quantum_cognition/studio_hook.py"
 rationale = "Public quantum cognition telemetry hook used by Studio dashboards and generated API documentation."
+
+[[file]]
+path = "src/sc_neurocore/quantum_cognition/fisher_posner.py"
+rationale = "Public Fisher-Posner quantum-metabolic LIF neuron surface with validated physical parameter domains."
 
 [[file]]
 path = "src/sc_neurocore/plasticity.py"

@@ -169,10 +169,16 @@ HybridFisherPosnerLIF(
     tau_m: float = 20.0,
     atp_initial: float = 1.0,
     atp_consumption: float = 0.05,
+    atp_basal_regeneration: float = 0.001,
 )
 ```
 
-`neuron_id` must be a valid site index in the provided `spin_pool`.
+`neuron_id` must be an integer site index in the provided `spin_pool`;
+booleans and non-integer aliases are rejected. Voltage parameters and input
+currents must be finite, `dt` and `tau_m` must be strictly positive,
+`atp_initial` must be in `[0, 1]`, `atp_consumption` must be in `(0, 1]`,
+and `atp_basal_regeneration` must be non-negative. Invalid `step(I_in)` calls
+fail before membrane voltage, ATP, counters, or spin-pool measurements mutate.
 
 ### 4.2 `step` — integrate one timestep
 
