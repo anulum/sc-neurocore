@@ -54,6 +54,21 @@ available at import time.
         - run_nas
         - NASVerilogEmitter
 
+## Differentiable SC-NAS
+
+`sc_neurocore.nas.darts_sc_nas` provides the DARTS relaxation used to train
+bitstream-length choices through Gumbel-Softmax architecture weights. Its public
+surface documents candidate variance injection, mixed-operation resource costs,
+optimal bitstream extraction, and network-level hardware penalties.
+
+::: sc_neurocore.nas.darts_sc_nas
+    options:
+      show_root_heading: true
+      members:
+        - BitstreamCandidate
+        - SCMixedOp
+        - SCNASNetwork
+
 ## Formal Equivalence
 
 ::: sc_neurocore.nas.equiv

@@ -19041,26 +19041,31 @@ variant for variable-length audio sequences is not yet implemented.
 ## Module `nas.darts_sc_nas`
 
 ### Class `BitstreamCandidate`
-Represents an operation simulated with a specific SC bitstream length.
-In a forward pass, this acts as an identity/quantizer (simulating SC variance).
+SC bitstream candidate that injects variance for one stream length.
 
 - **__init__**(length, lut_cost, power_cost)
 - **forward**(x)
+  - Return the candidate output with training-time SC variance noise.
 
 ### Class `SCMixedOp`
 Continuous relaxation over discrete SC bitstream configurations.
 
 - **__init__**(c_in, c_out, kernel_size, stride, padding)
 - **forward**(x)
+  - Return the mixed convolution output under DARTS bitstream weights.
 - **expected_resource_cost**()
+  - Return expected LUT and power costs from architecture weights.
 - **extract_optimal_config**()
+  - Return the bitstream length with the largest architecture logit.
 
 ### Class `SCNASNetwork`
-A small hardware-aware search network representing a deep SNN.
+Small differentiable hardware-aware search network for SC-NAS.
 
 - **__init__**()
 - **forward**(x)
+  - Return class logits from the differentiable SC-NAS network.
 - **hardware_penalty**()
+  - Return expected LUT and power penalties across search layers.
 
 ---
 

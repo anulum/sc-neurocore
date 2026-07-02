@@ -5,6 +5,13 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+### DARTS NAS docstring hardening
+- Promoted `nas.darts_sc_nas` into the scoped NumPy docstring policy, added
+  public docstrings for the differentiable bitstream-selection methods,
+  strict-typed the focused DARTS NAS tests, refreshed the NAS API guide and
+  generated API reference, and preserved the torch-gated runtime behavior. No
+  polyglot mirror or benchmark-dispatched path changed.
+
 ### NAS search surface docstring hardening
 - Promoted `nas.search_space`, `nas.search`, and `nas.equiv` into the scoped
   NumPy docstring policy, added missing public summary/property docstrings,

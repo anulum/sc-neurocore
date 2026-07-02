@@ -11,7 +11,6 @@
 from __future__ import annotations
 
 import math
-from typing import Tuple
 
 import torch
 import torch.nn as nn
@@ -19,10 +18,7 @@ import torch.nn.functional as F
 
 
 class BitstreamCandidate(nn.Module):
-    """
-    Represents an operation simulated with a specific SC bitstream length.
-    In a forward pass, this acts as an identity/quantizer (simulating SC variance).
-    """
+    """SC bitstream candidate that injects variance for one stream length."""
 
     def __init__(self, length: int, lut_cost: float, power_cost: float):
         super().__init__()
@@ -31,6 +27,7 @@ class BitstreamCandidate(nn.Module):
         self.power_cost = power_cost
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
+        """Return the candidate output with training-time SC variance noise."""
         # Simulate the SC variance introduced by limited bitstream length
         # SC variance for independent streams is roughly p*(1-p)/N
         # During training, we inject this as Gaussian noise scaled by the expected variance
@@ -44,9 +41,7 @@ class BitstreamCandidate(nn.Module):
 
 
 class SCMixedOp(nn.Module):
-    """
-    Continuous relaxation over discrete SC bitstream configurations.
-    """
+    """Continuous relaxation over discrete SC bitstream configurations."""
 
     def __init__(self, c_in: int, c_out: int, kernel_size: int, stride: int, padding: int):
         super().__init__()
@@ -70,6 +65,7 @@ class SCMixedOp(nn.Module):
             self.ops.append(BitstreamCandidate(length, lut_cost, power_cost))
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
+        """Return the mixed convolution output under DARTS bitstream weights."""
         # Compute the baseline conv operation (assumes inputs are probabilities)
         conv_out = self.conv(x)
         # Apply Gumbel-Softmax for differentiable, discrete selection during forward
@@ -78,7 +74,8 @@ class SCMixedOp(nn.Module):
         mixed: torch.Tensor = sum(w * op(conv_out) for w, op in zip(weights, self.ops))
         return mixed
 
-    def expected_resource_cost(self) -> Tuple[torch.Tensor, torch.Tensor]:
+    def expected_resource_cost(self) -> tuple[torch.Tensor, torch.Tensor]:
+        """Return expected LUT and power costs from architecture weights."""
         # Expected LUT and Power costs based on current architecture weights
         weights = F.softmax(self.alphas, dim=0)
         exp_luts = sum(w * op.lut_cost for w, op in zip(weights, self.ops))
@@ -86,14 +83,13 @@ class SCMixedOp(nn.Module):
         return exp_luts, exp_power
 
     def extract_optimal_config(self) -> int:
+        """Return the bitstream length with the largest architecture logit."""
         idx = int(torch.argmax(self.alphas).item())
         return self.lengths[idx]
 
 
 class SCNASNetwork(nn.Module):
-    """
-    A small hardware-aware search network representing a deep SNN.
-    """
+    """Small differentiable hardware-aware search network for SC-NAS."""
 
     def __init__(self) -> None:
         super().__init__()
@@ -104,6 +100,7 @@ class SCNASNetwork(nn.Module):
         self.fc = nn.Linear(64, 10)
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
+        """Return class logits from the differentiable SC-NAS network."""
         x = torch.relu(self.layer1(x))
         x = torch.relu(self.layer2(x))
         x = torch.relu(self.layer3(x))
@@ -112,14 +109,15 @@ class SCNASNetwork(nn.Module):
         logits: torch.Tensor = self.fc(x)
         return logits
 
-    def hardware_penalty(self) -> Tuple[torch.Tensor, torch.Tensor]:
+    def hardware_penalty(self) -> tuple[torch.Tensor, torch.Tensor]:
+        """Return expected LUT and power penalties across search layers."""
         l1, p1 = self.layer1.expected_resource_cost()
         l2, p2 = self.layer2.expected_resource_cost()
         l3, p3 = self.layer3.expected_resource_cost()
         return l1 + l2 + l3, p1 + p2 + p3
 
 
-if __name__ == "__main__":
+if __name__ == "__main__":  # pragma: no cover
     net = SCNASNetwork()
     x = torch.rand(4, 1, 28, 28)
 

@@ -7,7 +7,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 229
+expected_file_count = 230
 
 [[file]]
 path = "src/sc_neurocore/__init__.py"
@@ -68,6 +68,10 @@ rationale = "Public NSGA-II hardware-aware NAS search loop and result-summary su
 [[file]]
 path = "src/sc_neurocore/nas/equiv.py"
 rationale = "Public formal-equivalence helper surface for NAS-generated hardware models."
+
+[[file]]
+path = "src/sc_neurocore/nas/darts_sc_nas.py"
+rationale = "Public differentiable SC-NAS network and bitstream-selection surface included in generated NAS API docs."
 
 [[file]]
 path = "src/sc_neurocore/neurons/universal_dsl.py"
