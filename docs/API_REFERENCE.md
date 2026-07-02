@@ -14006,6 +14006,15 @@ Create a registry with the built-in demo route.
 
 ## Module `experimental.memory_routes`
 
+### Function `_validated_delay_steps(delay_steps)`
+Return a simulation delay after rejecting bool or negative values.
+
+### Function `_validated_positive_count(name, value)`
+Return a strictly positive integer count for route dimensions or seeds.
+
+### Function `_validated_cue_matrix(cues)`
+Return a finite binary two-dimensional cue matrix for recall trials.
+
 ### Function `_make_memory_neurons(n_neurons, seed)`
 ### Function `_run_delayed_recall_trial(cue)`
 ### Function `_run_delayed_recall_suite(delay_steps)`
@@ -14596,6 +14605,9 @@ End-to-end explainability: replay + decision tree + provenance.
   - Compute causal attribution for a decision.
 - **explain_spike_with_local_llm**(neuron_id, threshold_q16, bitstream_length, spike_threshold_count)
   - Run the deterministic explainability path, then enhance it locally.
+
+### Function `_validate_replay_parameters()`
+Validate deterministic replay parameters before replay side effects.
 
 ---
 

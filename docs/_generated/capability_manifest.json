@@ -965,7 +965,7 @@
     "python_model_classes": 158,
     "python_model_source_modules": 152,
     "rust_pyo3_model_wrappers": 175,
-    "test_files": 941
+    "test_files": 942
   },
   "documentation": {
     "public_pages": [
@@ -3009,6 +3009,7 @@
       "tests/test_experiments_convergence_bundle_contract.py",
       "tests/test_explain.py",
       "tests/test_explainability/test_explainability.py",
+      "tests/test_explainability/test_explainability_validation.py",
       "tests/test_export/test_compiler_export.py",
       "tests/test_export/test_onnx_export.py",
       "tests/test_export/test_onnx_exporter.py",

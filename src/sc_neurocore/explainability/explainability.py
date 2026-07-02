@@ -25,6 +25,32 @@ from typing import Any, Dict, List, Optional, Tuple
 import numpy as np
 
 
+_Q16_MIN = 0
+_Q16_MAX = 0xFFFF
+
+
+def _validate_replay_parameters(
+    *,
+    threshold_q16: int,
+    bitstream_length: int,
+    spike_threshold_count: Optional[int] = None,
+    length_name: str = "bitstream_length",
+) -> None:
+    """Validate deterministic replay parameters before replay side effects."""
+    if isinstance(threshold_q16, bool) or not _Q16_MIN <= threshold_q16 <= _Q16_MAX:
+        raise ValueError("threshold_q16 must be an integer in [0, 65535]")
+    if isinstance(bitstream_length, bool) or bitstream_length <= 0:
+        raise ValueError(f"{length_name} must be positive")
+    if spike_threshold_count is None:
+        return
+    if (
+        isinstance(spike_threshold_count, bool)
+        or spike_threshold_count < 0
+        or spike_threshold_count > bitstream_length
+    ):
+        raise ValueError("spike_threshold_count must be between 0 and bitstream_length")
+
+
 # ── LFSR Replay Engine ───────────────────────────────────────────────
 
 
@@ -700,6 +726,12 @@ class ExplainabilityEngine:
         Replays the LFSR from the current seed state, generates the
         exact bitstream, and records the decision in the tree and trace.
         """
+        _validate_replay_parameters(
+            threshold_q16=threshold_q16,
+            bitstream_length=bitstream_length,
+            spike_threshold_count=spike_threshold_count,
+        )
+
         self.provenance.add_step(
             "input",
             f"Neuron {neuron_id}: threshold_q16={threshold_q16}, length={bitstream_length}",
@@ -790,6 +822,11 @@ class ExplainabilityEngine:
         length: int,
     ) -> np.ndarray[Any, Any]:
         """Replay a bitstream from the engine's seed (for external comparison)."""
+        _validate_replay_parameters(
+            threshold_q16=threshold_q16,
+            bitstream_length=length,
+            length_name="length",
+        )
         replay = LFSRReplay(self.seed)
         return replay.encode(threshold_q16, length)
 
