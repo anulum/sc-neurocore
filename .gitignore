@@ -105,6 +105,10 @@ site/
 # Downloaded datasets
 data/
 
+# Local model checkpoints and trained weights. Reproducibility manifests should
+# point at curated artifact locations, not raw root-level binary weights.
+MODELS/
+
 # Experimental / speculative code (AI-generated, not production)
 experimental/
 # ...except the packaged `alternative_path` harness which ships as a
