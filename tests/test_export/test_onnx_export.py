@@ -161,7 +161,9 @@ class TestONNXExporter(unittest.TestCase):
         exp = ONNXExporter()
         result = exp.export(graph, {"input_a": (128, 1024)})
 
-        self.assertEqual(result.outputs, [("count_out", ONNXTensorType(elem_type=6, shape=(128, 1)))])
+        self.assertEqual(
+            result.outputs, [("count_out", ONNXTensorType(elem_type=6, shape=(128, 1)))]
+        )
 
     def test_unknown_nodes_are_skipped_without_becoming_outputs(self) -> None:
         graph = MockGraph(

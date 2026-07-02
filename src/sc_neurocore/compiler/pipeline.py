@@ -20,6 +20,7 @@ the MLIREmitter and compile it down to a bitstream using open-source FPGA tools:
 import logging
 import os
 import shutil
+
 # External EDA tools are invoked with fixed argv lists and shell=False.
 import subprocess  # nosec B404
 
