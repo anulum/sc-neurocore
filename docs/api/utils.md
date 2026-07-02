@@ -103,6 +103,18 @@ Multi-dimensional low-discrepancy sequences for per-synapse decorrelation.
 
 ::: sc_neurocore.utils.rng.RNG
 
+#### `RNG` contract
+
+- `RNG(seed=None)` delegates entropy selection to NumPy; integer seeds must be
+  non-negative. Boolean seeds are rejected because they alias integer seeds.
+- Scalar `random`, `normal`, `uniform`, and `bernoulli` calls return Python
+  `float`/`bool` values. Calls with `size` return dtype-stable NumPy arrays.
+- `normal` requires finite `mean` and strictly positive finite `std`.
+- `uniform` requires finite bounds with `low < high`.
+- `bernoulli` requires finite `p` in the closed interval `[0, 1]`.
+- Invalid distribution parameters fail before a draw, so rejected calls do not
+  advance the instance stream.
+
 ## Adaptive Utilities
 
 ::: sc_neurocore.utils.adaptive

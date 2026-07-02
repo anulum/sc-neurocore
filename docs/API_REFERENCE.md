@@ -37036,7 +37036,12 @@ Thread-safe component registry with namespace support.
 ## Module `utils.rng`
 
 ### Class `RNG`
-Thin wrapper around NumPy RNG for reproducible per-neuron streams.
+Deterministic wrapper around NumPy's per-instance random generator.
+
+The wrapper is intentionally small: it exposes the distributions used by
+stochastic-computing utilities while enforcing scalar parameter domains
+before NumPy mutates generator state. Scalar draws return Python scalars;
+shaped draws return dtype-stable NumPy arrays.
 
 Example
 -------
@@ -37048,11 +37053,32 @@ Example
 array(&#91; True,  True,  True,  True,  True&#93;)
 
 - **__init__**(seed)
+  - Create an independent stream from a non-negative integer seed.
 - **normal**(mean, std, size)
+  - Draw samples from a normal distribution.
 - **uniform**(low, high, size)
+  - Draw samples from a bounded uniform distribution.
 - **bernoulli**(p, size)
+  - Draw Bernoulli samples from a validated probability.
 - **random**(size)
+  - Draw uniform samples from the half-open interval ``&#91;0, 1)``.
 - **shuffle**(x)
+  - Shuffle an array in place using this instance's random stream.
+
+### Function `_validate_seed(seed)`
+Return a seed accepted by NumPy without implicit bool or negative aliases.
+
+### Function `_finite_float(value, name)`
+Coerce a scalar distribution parameter and reject non-finite values.
+
+### Function `_positive_std(std)`
+Return a strictly positive normal-distribution standard deviation.
+
+### Function `_uniform_bounds(low, high)`
+Return finite, strictly ordered uniform-distribution bounds.
+
+### Function `_probability(p)`
+Return a finite Bernoulli probability in the closed unit interval.
 
 ---
 

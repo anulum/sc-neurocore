@@ -5,6 +5,13 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+### RNG utility contract hardening
+- Hardened `utils.rng.RNG` with fail-closed seed, normal, uniform, and
+  Bernoulli parameter validation before generator state advances. Scalar draws
+  now expose Python scalar types, shaped draws return dtype-stable NumPy
+  arrays, and the public utility is covered at 100% exact-file coverage under
+  strict mypy plus the scoped NumPy docstring policy.
+
 ### L13 holonomic source-field adapter hardening
 - Hardened `adapters.holonomic.l13_source` with fail-closed parameter,
   timestep, feedback-rank, feedback-emptiness, finite-value, decode, and

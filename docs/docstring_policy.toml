@@ -7,7 +7,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 212
+expected_file_count = 213
 
 [[file]]
 path = "src/sc_neurocore/__init__.py"
@@ -128,6 +128,10 @@ rationale = "Public Mind Description Language parser for serialising orchestrato
 [[file]]
 path = "src/sc_neurocore/core/__init__.py"
 rationale = "Public core package entry point that re-exports TensorStream and core primitives."
+
+[[file]]
+path = "src/sc_neurocore/utils/rng.py"
+rationale = "Public reproducible random-stream wrapper used by stochastic-computing utilities and bitstream generation."
 
 [[file]]
 path = "src/sc_neurocore/analysis/explainability.py"
