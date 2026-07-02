@@ -19070,6 +19070,7 @@ A small hardware-aware search network representing a deep SNN.
 Result of a formal equivalence check.
 
 - **summary**()
+  - Return a one-line verdict for the equivalence proof result.
 
 ### Function `generate_miter(dut_module, ref_module, top_name, data_width, fraction)`
 Generate a Verilog miter circuit for two modules.
@@ -19211,12 +19212,13 @@ Result of a NAS run.
 - **best_efficiency**()
   - Architecture with lowest energy on the Pareto front.
 - **summary**()
+  - Return a line-oriented summary of the Pareto front.
 
 ### Function `_evaluate(arch, target, accuracy_fn)`
 Evaluate one architecture: hardware cost + optional accuracy.
 
 ### Function `_dominates(a, b)`
-True if a Pareto-dominates b (higher accuracy AND lower energy).
+Return whether ``a`` Pareto-dominates ``b``.
 
 ### Function `_non_dominated_sort(population)`
 NSGA-II non-dominated sorting. Returns list of fronts.
@@ -19262,8 +19264,11 @@ NASResult
 One point in the NAS search space.
 
 - **n_layers**()
+  - Return the number of layers encoded by this architecture.
 - **layer_sizes**()
+  - Return adjacent layer dimensions for hardware cost estimation.
 - **total_params**()
+  - Return the dense connection count across all encoded layers.
 
 ### Class `SearchSpace`
 Configurable NAS search space.

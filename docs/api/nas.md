@@ -5,6 +5,11 @@ NSGA-II evolutionary search over SNN architectures under FPGA resource budgets.
 Searches {neuron model, layer width, bitstream length, delay range} jointly —
 the first NAS that optimizes hardware parameters alongside topology.
 
+The public surface exposes derived architecture helpers for layer count,
+compiler-facing layer dimensions, and dense connection counts. Search and
+equivalence result objects also provide compact textual summaries for logs,
+reports, and CI artifacts.
+
 ## Search Space
 
 ::: sc_neurocore.nas.search_space

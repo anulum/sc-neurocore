@@ -7,7 +7,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 226
+expected_file_count = 229
 
 [[file]]
 path = "src/sc_neurocore/__init__.py"
@@ -56,6 +56,18 @@ rationale = "Public legacy model-zoo plugin API with audited simulation validati
 [[file]]
 path = "src/sc_neurocore/nas/sc_nas_engine.py"
 rationale = "Public hardware-aware SC-NAS evolutionary search, report, and Verilog-emission surface."
+
+[[file]]
+path = "src/sc_neurocore/nas/search_space.py"
+rationale = "Public hardware-aware NAS architecture and search-space surface included in the generated NAS API guide."
+
+[[file]]
+path = "src/sc_neurocore/nas/search.py"
+rationale = "Public NSGA-II hardware-aware NAS search loop and result-summary surface included in the generated NAS API guide."
+
+[[file]]
+path = "src/sc_neurocore/nas/equiv.py"
+rationale = "Public formal-equivalence helper surface for NAS-generated hardware models."
 
 [[file]]
 path = "src/sc_neurocore/neurons/universal_dsl.py"

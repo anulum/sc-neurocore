@@ -5,6 +5,13 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+### NAS search surface docstring hardening
+- Promoted `nas.search_space`, `nas.search`, and `nas.equiv` into the scoped
+  NumPy docstring policy, added missing public summary/property docstrings,
+  strict-typed the focused NAS tests, refreshed the NAS API guide and generated
+  API reference, and removed local NAS type-ignore escapes. No runtime contract,
+  polyglot mirror, or benchmark-dispatched path changed.
+
 ### SC-NAS engine docstring and coverage hardening
 - Promoted `nas.sc_nas_engine` into the scoped NumPy docstring policy, added
   compliant public docstrings for the hardware-aware search/report surface,

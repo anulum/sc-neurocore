@@ -37,6 +37,7 @@ class EquivResult:
     log: str
 
     def summary(self) -> str:
+        """Return a one-line verdict for the equivalence proof result."""
         status = "PROVED" if self.passed else "FAILED"
         return (
             f"Equivalence [{self.module}]: {status} (BMC depth={self.depth}, engine={self.engine})"

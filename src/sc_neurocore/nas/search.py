@@ -19,6 +19,7 @@ alongside network topology.
 
 from __future__ import annotations
 
+from collections.abc import Callable
 from dataclasses import dataclass
 
 import numpy as np
@@ -26,6 +27,8 @@ import numpy as np
 from sc_neurocore.energy.estimator import estimate
 
 from .search_space import Architecture, SearchSpace
+
+AccuracyFn = Callable[[Architecture], float]
 
 
 @dataclass
@@ -50,6 +53,7 @@ class NASResult:
         return min(self.pareto_front, key=lambda a: a.fitness_energy_nj)
 
     def summary(self) -> str:
+        """Return a line-oriented summary of the Pareto front."""
         lines = [
             f"NAS Result: {self.generations} generations, {self.total_evaluations} evaluations",
             f"Pareto front: {len(self.pareto_front)} architectures",
@@ -63,10 +67,10 @@ class NASResult:
         return "\n".join(lines)
 
 
-def _evaluate(  # type: ignore[no-untyped-def]
+def _evaluate(
     arch: Architecture,
     target: str,
-    accuracy_fn=None,
+    accuracy_fn: AccuracyFn | None = None,
 ) -> Architecture:
     """Evaluate one architecture: hardware cost + optional accuracy."""
     avg_L = int(np.mean(arch.bitstream_lengths))
@@ -87,7 +91,7 @@ def _evaluate(  # type: ignore[no-untyped-def]
 
 
 def _dominates(a: Architecture, b: Architecture) -> bool:
-    """True if a Pareto-dominates b (higher accuracy AND lower energy)."""
+    """Return whether ``a`` Pareto-dominates ``b``."""
     better_acc = a.fitness_accuracy >= b.fitness_accuracy
     better_energy = a.fitness_energy_nj <= b.fitness_energy_nj
     strictly = a.fitness_accuracy > b.fitness_accuracy or a.fitness_energy_nj < b.fitness_energy_nj
@@ -158,7 +162,7 @@ def _tournament_select(
 ) -> Architecture:
     """Binary tournament selection using front rank + crowding distance."""
     # Build rank map
-    rank_map = {}
+    rank_map: dict[int, int] = {}
     for rank, front in enumerate(fronts):
         for arch in front:
             rank_map[id(arch)] = rank
@@ -175,13 +179,13 @@ def _tournament_select(
     return a if rng.random() < 0.5 else b
 
 
-def nas(  # type: ignore[no-untyped-def]
+def nas(
     space: SearchSpace,
     target: str = "ice40",
     population_size: int = 50,
     generations: int = 20,
     max_luts: int | None = None,
-    accuracy_fn=None,
+    accuracy_fn: AccuracyFn | None = None,
     seed: int = 42,
 ) -> NASResult:
     """Run hardware-aware NAS using NSGA-II.
@@ -220,7 +224,7 @@ def nas(  # type: ignore[no-untyped-def]
 
     # Initialize population
     population = [space.random_architecture(rng) for _ in range(population_size)]
-    all_evaluated = []
+    all_evaluated: list[Architecture] = []
 
     for gen in range(generations):
         # Evaluate
@@ -237,7 +241,7 @@ def nas(  # type: ignore[no-untyped-def]
         fronts = _non_dominated_sort(population)
 
         # Generate offspring
-        offspring = []  # type: ignore[var-annotated]
+        offspring: list[Architecture] = []
         while len(offspring) < population_size:
             parent_a = _tournament_select(population, fronts, rng)
             parent_b = _tournament_select(population, fronts, rng)
@@ -262,7 +266,7 @@ def nas(  # type: ignore[no-untyped-def]
         combined = population + offspring
         combined_fronts = _non_dominated_sort(combined)
 
-        next_pop = []  # type: ignore[var-annotated]
+        next_pop: list[Architecture] = []
         for front in combined_fronts:
             if len(next_pop) + len(front) <= population_size:
                 next_pop.extend(front)

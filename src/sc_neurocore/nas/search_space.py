@@ -42,11 +42,13 @@ class Architecture:
 
     @property
     def n_layers(self) -> int:
+        """Return the number of layers encoded by this architecture."""
         return len(self.layer_widths)
 
     @property
     def layer_sizes(self) -> list[tuple[int, int]]:
-        sizes = []
+        """Return adjacent layer dimensions for hardware cost estimation."""
+        sizes: list[tuple[int, int]] = []
         prev = self.n_inputs
         for w in self.layer_widths:
             sizes.append((prev, w))
@@ -55,6 +57,7 @@ class Architecture:
 
     @property
     def total_params(self) -> int:
+        """Return the dense connection count across all encoded layers."""
         return sum(n_in * n_out for n_in, n_out in self.layer_sizes)
 
 
