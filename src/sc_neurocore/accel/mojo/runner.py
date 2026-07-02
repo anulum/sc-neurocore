@@ -25,21 +25,42 @@ from __future__ import annotations
 import os
 import re
 import subprocess
-import time
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Dict
 
 
 @dataclass
 class MojoKernelRunner:
-    """Manages execution and telemetry gathering for the underlying monolithic Mojo suite."""
+    """Run the maintained monolithic Mojo kernel suite from Python.
+
+    The runner is a subprocess façade over ``kernels.mojo``. It discovers the
+    kernel bundle at construction time, invokes the pixi-managed Mojo toolchain
+    for builds and benchmark runs, and keeps Python fallbacks for scalar helper
+    methods until direct Mojo IPC is promoted into the supported runtime
+    contract.
+
+    Parameters
+    ----------
+    _mojo_dir:
+        Directory expected to contain ``kernels.mojo``. The default is the
+        installed package directory.
+    _pixi_bin:
+        Absolute pixi executable used to launch the Mojo toolchain.
+    """
 
     _mojo_dir: Path = Path(__file__).parent
     _pixi_bin: str = field(default_factory=lambda: os.path.expanduser("~/.pixi/bin/pixi"))
 
     def __post_init__(self) -> None:
-        # Prefer source-tree location, then installed package
+        """Validate the configured Mojo kernel directory.
+
+        Raises
+        ------
+        FileNotFoundError
+            Raised when neither the configured directory nor the installed
+            package directory contains ``kernels.mojo``.
+        """
+        # Prefer source-tree location, then installed package.
         mojo_file = self._mojo_dir / "kernels.mojo"
         if mojo_file.exists():
             return
@@ -51,7 +72,14 @@ class MojoKernelRunner:
         raise FileNotFoundError("kernels.mojo not found. Run: pixi install && pixi run mojo build")
 
     def build(self) -> bool:
-        """Helper to invoke `mojo build` natively across the active working directory."""
+        """Build ``kernels.mojo`` through pixi.
+
+        Returns
+        -------
+        bool
+            ``True`` when ``pixi run mojo build kernels.mojo`` exits cleanly;
+            ``False`` when the toolchain invocation raises.
+        """
         try:
             subprocess.run(
                 [self._pixi_bin, "run", "mojo", "build", "kernels.mojo"],
@@ -63,10 +91,22 @@ class MojoKernelRunner:
             print(f"[Mojo Runner] Build failed: {e}")
             return False
 
-    def run_benchmark(self, timeout_sec: int = 60) -> Dict[str, float]:
-        """Runs the entire kernel suite and parses output times natively in MS."""
+    def run_benchmark(self, timeout_sec: int = 60) -> dict[str, float]:
+        """Run the kernel benchmark suite and parse millisecond timings.
+
+        Parameters
+        ----------
+        timeout_sec:
+            Hard timeout in seconds for the Mojo subprocess.
+
+        Returns
+        -------
+        dict[str, float]
+            Mapping from benchmark labels printed by ``kernels.mojo`` to their
+            measured millisecond durations. Returns an empty mapping when the
+            subprocess fails, times out, or cannot be launched.
+        """
         try:
-            start_time = time.time()
             result = subprocess.run(
                 [self._pixi_bin, "run", "mojo", "run", "kernels.mojo"],
                 capture_output=True,
@@ -76,7 +116,7 @@ class MojoKernelRunner:
                 cwd=str(self._mojo_dir),
             )
 
-            timings = {}
+            timings: dict[str, float] = {}
             for line in result.stdout.splitlines():
                 if "ms" in line.lower() and ":" in line:
                     parts = line.split(":", 1)
@@ -103,7 +143,19 @@ class MojoKernelRunner:
             return {}
 
     def popcount(self, data: list[int]) -> int:
-        """Call the Mojo SIMD kernel directly or fall back to Python."""
+        """Return the Hamming weight of packed stochastic-computing words.
+
+        Parameters
+        ----------
+        data:
+            Packed integer words whose set bits are counted.
+
+        Returns
+        -------
+        int
+            Total number of set bits. The current maintained runtime path uses
+            the Python implementation while Mojo IPC bindings remain pending.
+        """
         try:
             # Mojo C-FFI pipeline target
             raise NotImplementedError("Mojo IPC bindings pending v4.0")
@@ -113,7 +165,23 @@ class MojoKernelRunner:
             return popcount_slice(data)
 
     def lfsr_encode(self, seed: int, threshold: int, bits: int) -> list[int]:
-        """Call the Mojo LFSR-16 encoder directly or fall back to Python."""
+        """Encode a threshold stream with the maintained LFSR-16 fallback.
+
+        Parameters
+        ----------
+        seed:
+            Non-zero 16-bit LFSR seed.
+        threshold:
+            Comparator threshold used to generate stochastic bits.
+        bits:
+            Number of output bits to generate.
+
+        Returns
+        -------
+        list[int]
+            Packed words generated by the Python LFSR implementation while
+            direct Mojo IPC bindings remain pending.
+        """
         try:
             raise NotImplementedError("Mojo IPC bindings pending v4.0")
         except Exception:

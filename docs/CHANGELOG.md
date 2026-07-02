@@ -5,6 +5,13 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+### Mojo runner contract hardening
+- Covered `accel.mojo.runner` at 100% exact-file coverage, including the
+  fail-closed missing-`kernels.mojo` constructor path. Promoted the runner to
+  the scoped NumPy docstring policy and corrected the Mojo acceleration docs so
+  `build`, `run_benchmark`, `popcount`, and `lfsr_encode` describe the current
+  fallback and failure contracts exactly.
+
 ### Quantum Studio telemetry hardening
 - Covered `QuantumStudioHook` snapshot, compact JSON event, and debug
   representation contracts at 100% exact-file coverage under strict mypy.

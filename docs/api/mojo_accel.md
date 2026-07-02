@@ -12,7 +12,7 @@ from sc_neurocore.accel.mojo import MojoKernelRunner, _HAS_MOJO
 if _HAS_MOJO:
     runner = MojoKernelRunner()
     ok = runner.build()                          # pixi run mojo build
-    pop = runner.popcount([0xFF00, 0x0FF0])      # FFI round-trip
+    pop = runner.popcount([0xFF00, 0x0FF0])      # maintained Python fallback
 ```
 
 The ``sc_neurocore.accel.mojo`` import never raises. ``_HAS_MOJO`` is
@@ -235,8 +235,8 @@ r = MojoKernelRunner()
 print(f"kernel dir : {r._mojo_dir}")
 print(f"pixi bin   : {r._pixi_bin}")
 
-# Popcount a small batch.  The kernel iterates popcount_slice over the
-# packed List[UInt32], returning the total Hamming weight.
+# Popcount a small batch. The current maintained runtime uses the Python
+# fallback until direct Mojo IPC bindings are promoted.
 bits = [0xFF00, 0x0FF0, 0xCAFEBABE]
 v = r.popcount(bits)
 print(f"popcount({bits}) = {v}")   # 8 + 8 + 22 = 38
@@ -253,7 +253,8 @@ popcount([65280, 4080, 3405691582]) = 38
 
 The popcount number matches the expected $\mathrm{popcount}(0xFF00) +
 \mathrm{popcount}(0x0FF0) + \mathrm{popcount}(0xCAFEBABE) = 8 + 8 + 22
-= 38$ — the round-trip through the Mojo subprocess is bit-exact.
+= 38$. This helper is intentionally kept bit-exact with the Python fallback
+while direct Mojo IPC bindings remain pending.
 
 ---
 
@@ -277,13 +278,14 @@ class MojoKernelRunner:
 | Method                                              | Semantic                                                                                       |
 | --------------------------------------------------- | ---------------------------------------------------------------------------------------------- |
 | `__post_init__`                                     | Locates `kernels.mojo` (source-tree first, then installed package). Raises on neither present. |
-| `build() -> bool`                                   | `pixi run mojo build kernels.mojo` in the kernel directory. Returns success.                   |
-| `run_benchmark(timeout_sec=60) -> dict[str, float]` | Runs the full kernel benchmark (STDP + R-STDP + MAC + popcount) once, parses stdout.          |
-| `popcount(data) -> int`                             | Spawns a Mojo process that invokes `popcount_slice` on `List[UInt32]` of length `len(data)`.   |
-| `lfsr_encode(seed, threshold, bits) -> list[int]`   | Generates an LFSR-encoded 16-bit bitstream of length `bits` for the given threshold.           |
+| `build() -> bool`                                   | `pixi run mojo build kernels.mojo` in the kernel directory. Returns `False` on launch or build failure. |
+| `run_benchmark(timeout_sec=60) -> dict[str, float]` | Runs the full kernel benchmark once and parses stdout. Returns `{}` on failure, timeout, or missing toolchain. |
+| `popcount(data) -> int`                             | Returns the total Hamming weight through the maintained Python fallback while Mojo IPC is pending. |
+| `lfsr_encode(seed, threshold, bits) -> list[int]`   | Generates an LFSR-encoded 16-bit stream through the maintained Python fallback while Mojo IPC is pending. |
 
-All methods degrade gracefully when Mojo / pixi are absent — the
-``_HAS_MOJO`` flag must be checked before use.
+Construction fails closed when ``kernels.mojo`` is unavailable. Build and
+benchmark calls degrade to ``False`` / ``{}`` when Mojo or pixi cannot run, and
+callers still gate default runtime dispatch on ``_HAS_MOJO``.
 
 ### 6.2 Kernel inventory (`kernels.mojo`)
 
@@ -326,9 +328,10 @@ points.
 | Condition                              | Behaviour                                                         |
 | -------------------------------------- | ----------------------------------------------------------------- |
 | `kernels.mojo` missing entirely        | `__init__` raises `FileNotFoundError` with install instructions   |
-| `pixi` not on `PATH`                   | `build()` subprocess raises `FileNotFoundError`                   |
-| Mojo compilation fails                 | `build()` returns `False`, prints Mojo's stderr                   |
-| Subprocess timeout                     | `run_benchmark` raises `subprocess.TimeoutExpired` after the budget |
+| `pixi` not on `PATH` during build      | `build()` returns `False` and prints the failure                  |
+| Mojo compilation fails                 | `build()` returns `False` and prints the failure                  |
+| Benchmark subprocess timeout           | `run_benchmark()` returns `{}` after printing the timeout         |
+| Benchmark subprocess launch failure    | `run_benchmark()` returns `{}` after printing the missing-toolchain path |
 | `_HAS_MOJO == False` at import time    | Call sites should skip; `from sc_neurocore.accel.mojo import ...` stays safe |
 
 ---
@@ -547,10 +550,9 @@ Mojo-backed kernels into the default ``accel/`` dispatch path.
 
 ## 9. Limitations
 
-- **Subprocess model.** Every ``MojoKernelRunner`` method pays a
+- **Subprocess model.** ``build`` and ``run_benchmark`` pay a
   Mojo-interpreter start-up cost (~18 ms on reference host). Batch
-  operations through ``run_benchmark`` rather than per-call
-  ``popcount`` for tight loops.
+  benchmark work rather than invoking the toolchain repeatedly in tight loops.
 - **No ctypes FFI yet.** The Mojo ABI (as of 2026-04) is not yet
   stable across versions. When Modular releases a stable ABI (tracker
   milestone 2026 Q3), the subprocess façade will be replaced with a

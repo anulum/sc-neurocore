@@ -13,6 +13,7 @@ from pathlib import Path
 
 import pytest
 
+from sc_neurocore.accel.mojo import runner as mojo_runner_module
 from sc_neurocore.accel.mojo.runner import MojoKernelRunner
 
 
@@ -25,6 +26,19 @@ def test_post_init_falls_back_to_installed_package_dir(tmp_path: Path) -> None:
     runner = MojoKernelRunner(_mojo_dir=tmp_path)
     assert runner._mojo_dir != tmp_path
     assert (runner._mojo_dir / "kernels.mojo").exists()
+
+
+def test_post_init_raises_when_source_and_package_kernels_are_missing(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    source_dir = tmp_path / "source"
+    package_dir = tmp_path / "package"
+    source_dir.mkdir()
+    package_dir.mkdir()
+    monkeypatch.setattr(mojo_runner_module, "__file__", str(package_dir / "runner.py"))
+
+    with pytest.raises(FileNotFoundError, match="kernels\\.mojo not found"):
+        MojoKernelRunner(_mojo_dir=source_dir)
 
 
 def test_build_success_invokes_pixi(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:

@@ -335,17 +335,32 @@ outputs : numpy.ndarray of shape (n_neurons,)
 ## Module `accel.mojo.runner`
 
 ### Class `MojoKernelRunner`
-Manages execution and telemetry gathering for the underlying monolithic Mojo suite.
+Run the maintained monolithic Mojo kernel suite from Python.
+
+The runner is a subprocess façade over ``kernels.mojo``. It discovers the
+kernel bundle at construction time, invokes the pixi-managed Mojo toolchain
+for builds and benchmark runs, and keeps Python fallbacks for scalar helper
+methods until direct Mojo IPC is promoted into the supported runtime
+contract.
+
+Parameters
+----------
+_mojo_dir:
+    Directory expected to contain ``kernels.mojo``. The default is the
+    installed package directory.
+_pixi_bin:
+    Absolute pixi executable used to launch the Mojo toolchain.
 
 - **__post_init__**()
+  - Validate the configured Mojo kernel directory.
 - **build**()
-  - Helper to invoke `mojo build` natively across the active working directory.
+  - Build ``kernels.mojo`` through pixi.
 - **run_benchmark**(timeout_sec)
-  - Runs the entire kernel suite and parses output times natively in MS.
+  - Run the kernel benchmark suite and parse millisecond timings.
 - **popcount**(data)
-  - Call the Mojo SIMD kernel directly or fall back to Python.
+  - Return the Hamming weight of packed stochastic-computing words.
 - **lfsr_encode**(seed, threshold, bits)
-  - Call the Mojo LFSR-16 encoder directly or fall back to Python.
+  - Encode a threshold stream with the maintained LFSR-16 fallback.
 
 ---
 

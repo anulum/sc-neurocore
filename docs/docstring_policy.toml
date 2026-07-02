@@ -7,7 +7,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 208
+expected_file_count = 209
 
 [[file]]
 path = "src/sc_neurocore/__init__.py"
@@ -252,6 +252,10 @@ rationale = "Public packed-bitstream vector operations used by stochastic-comput
 [[file]]
 path = "src/sc_neurocore/accel/mpi_driver.py"
 rationale = "Public MPI workload scatter/gather driver for distributed stochastic-computing execution."
+
+[[file]]
+path = "src/sc_neurocore/accel/mojo/runner.py"
+rationale = "Public Mojo kernel-suite subprocess runner and Python fallback facade."
 
 [[file]]
 path = "src/sc_neurocore/explainability/__init__.py"

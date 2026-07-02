@@ -22,6 +22,7 @@ documentation all name that path explicitly.
 | `jax_backend` | JAX JIT-compiled LIF step for TPU/GPU scaling |
 | `jit_kernels` | Numba-accelerated inner loops |
 | `mpi_driver` | MPI-based distributed simulation |
+| `mojo.runner` | Optional pixi-launched Mojo kernel-suite build/benchmark runner with Python helper fallbacks |
 
 ## Rust Safety Mirrors
 
