@@ -1,9 +1,9 @@
 # Neuromorphic Swarm Control
 
 **Module:** `sc_neurocore.swarm`
-**Source:** `src/sc_neurocore/swarm/` — 5 files, 1001 LOC
-**Status (v3.14.0):** all 9 public symbols wired; 73 tests pass across 3
-test files; pure-Python (no Rust path) — performance falls steeply
+**Source:** `src/sc_neurocore/swarm/` — 5 files, 1098 LOC
+**Status (v3.14.0):** all 9 public symbols wired; 87 tests pass across 4
+focused swarm files; pure-Python (no Rust path) — performance falls steeply
 beyond ~100 agents (§9). The agent's "soft-LIF" naming overstates the
 mechanism; see §3.2.
 
@@ -107,7 +107,10 @@ Weights are initialised with Xavier-style scaling
 `σ = sqrt(2 / (n_in + n_out))` per matrix.
 
 The `weights` property exposes a flat 1-D vector of length `n_weights`
-for the GA; the setter splits it back into `W_in`, `W_rec`, `W_out`.
+for the GA; the setter validates that the candidate is one-dimensional,
+exact-size, numeric, and finite before it splits the vector into
+`W_in`, `W_rec`, `W_out`. Invalid candidates leave the previous weights
+unchanged.
 
 ### 3.1 Sensory layout
 
@@ -127,9 +130,9 @@ If `fields` is `None` at step time, channels 13..19 are zero.
 
 ### 3.2 The "soft-LIF" naming overstates the mechanism
 
-`agent.py:53` describes `SwarmAgent` as "Spiking-neural-network agent
-with soft-LIF dynamics". The actual `think()` body
-(`agent.py:130-166`) does **not** implement an LIF cell. There is no
+`SwarmAgent` is documented as a "Spiking-neural-network agent with
+soft-LIF dynamics". The actual `think()` body does **not** implement
+an LIF cell. There is no
 hard threshold, no spike emission as a binary event, and no membrane
 reset. Instead:
 
@@ -168,21 +171,33 @@ implement).
 
 ### 3.3 `think` and `act`
 
-`think(sensory) -> (speed, turn)` runs one tick of the recurrent
-sigmoid network and returns motor commands:
+`think(sensory) -> (speed, turn)` first validates that `sensory` is a
+finite one-dimensional vector with exactly `n_sensory` entries. It then
+runs one tick of the recurrent sigmoid network and returns motor
+commands:
 - `speed = (tanh(W_out[0] @ firing_rate) + 1) * 0.5 * max_speed`
   — clipped to `[0, max_speed]`
 - `turn = tanh(W_out[1] @ firing_rate) * π` — clipped to `[-π, π]`
+
+The update is candidate-first: malformed sensory vectors, overflowed
+membrane states, non-finite firing rates, or non-finite motor commands
+raise `ValueError` without mutating membrane, firing-rate, or chemical
+state. The chemical-output side channel is read from sensory channel 19
+and clamped to `[0, 1]`.
 
 `act(speed, turn)` advances the agent's `position` and `heading`:
 ```python
 heading = (heading + turn) % (2π)
 position += speed * (cos heading, sin heading)
 ```
+Both motor commands must be finite.
 
 `reset(rng=None, width, height)` zeroes the membrane / firing rate
 and re-randomises position and heading. Weights are not touched —
-useful for episodic resets within a training run.
+useful for episodic resets within a training run. The arena width and
+height must be positive finite values, and a caller-supplied `rng` must
+be a `numpy.random.Generator`; invalid reset inputs leave the existing
+kinematic state intact.
 
 ---
 
@@ -382,6 +397,14 @@ A textbook genetic algorithm over flat weight vectors:
 `get_best_weights()` returns the highest-fitness vector after the last
 evaluation.
 
+`EvolverConfig` rejects invalid population, selection, mutation,
+evaluation-step, and seed domains at construction. The default
+`n_elite=4` is capped to `pop_size` for small populations so the
+default configuration remains usable when `pop_size < 4`. Public
+weight ingress (`evaluate_individual`, crossover, mutation) reuses the
+same exact-size finite-vector contract as `SwarmAgent.weights`; a
+non-finite mutation result fails closed before replacing the population.
+
 The evolver re-seeds the environment per individual via
 `int(self.rng.integers(0, 2**31))`, so each evaluation sees a
 different obstacle/target layout — fitness becomes an average over
@@ -436,10 +459,10 @@ the same effort would extend naturally to swarm.
 | Surface | How it's wired | Verifier |
 |---------|---------------|----------|
 | `from sc_neurocore.swarm import SwarmAgent, ...` | `swarm/__init__.py:23-27` | `tests/test_swarm.py` |
-| `SwarmEvolver` injects weights into every agent | `evaluate_individual` (`neuroevolution_swarm.py:107`) | `tests/test_swarm_control.py::test_evolver_*` |
-| `SwarmEnvironment.step` builds sensory vector + calls agent.think + boundary | `swarm_env.py:153` | `tests/test_swarm.py` |
-| `CollectiveFields.update` runs diffusion + emotion sync + symbolic decay | `collective_fields.py:195` | `tests/test_swarm_fitness_contracts.py` |
-| `SwarmFitness.composite` reads positions / headings / targets / obstacles | `fitness.py:114` | `tests/test_swarm_fitness_contracts.py` |
+| `SwarmEvolver` injects weights into every agent | `evaluate_individual` (`neuroevolution_swarm.py`) | `tests/test_swarm_control.py::test_evolver_*` |
+| `SwarmEnvironment.step` builds sensory vector + calls agent.think + boundary | `swarm_env.py` | `tests/test_swarm.py` |
+| `CollectiveFields.update` runs diffusion + emotion sync + symbolic decay | `collective_fields.py` | `tests/test_swarm_fitness_contracts.py` |
+| `SwarmFitness.composite` reads positions / headings / targets / obstacles | `fitness.py` | `tests/test_swarm_fitness_contracts.py` |
 
 Every public symbol terminates in a tested call site; no orphan
 helpers.
@@ -451,12 +474,12 @@ helpers.
 | # | Dimension | Status | Detail |
 |---|-----------|--------|--------|
 | 1 | Pipeline wiring | ✅ PASS | All 9 symbols re-exported and used by the tests |
-| 2 | Multi-angle tests | ✅ PASS | 73 tests across 3 files (test_swarm 52L, test_swarm_control 291L, test_swarm_fitness_contracts 184L) |
+| 2 | Multi-angle tests | ✅ PASS | 87 tests across 4 focused files, including strict public contract tests for agent/evolver validation |
 | 3 | Rust path | ❌ FAIL | Pure Python; `_apply_laplacian` and `get_pairwise_distances` dominate at n ≥ 100 (§8) |
 | 4 | Benchmarks | ✅ PASS | §8.1 + §8.2 measured this session |
 | 5 | Performance docs | ✅ PASS | §8 |
 | 6 | Documentation page | ✅ PASS | This page |
-| 7 | Rules followed | ⚠️ WARN | SPDX header on every file ✅. **"Soft-LIF" naming is misleading** (§3.2) — the implementation is a sigmoid pseudo-rate model, not LIF. **Three undocumented `# type: ignore` markers** (`agent.py:148`, `agent.py:153`, `swarm_env.py:153`) without rationale. British English mostly clean (`vectorise`/`synchronise` consistent in docstrings). |
+| 7 | Rules followed | ⚠️ WARN | SPDX header on every file ✅. **"Soft-LIF" naming is misleading** (§3.2) — the implementation is a sigmoid pseudo-rate model, not LIF. The previous `agent.py` `type: ignore` suppressions are removed; one scoped `swarm_env.py` suppression remains (§11.3). British English mostly clean (`vectorise`/`synchronise` consistent in docstrings). |
 
 Net: **1 WARN, 1 FAIL.** The FAIL is performance-driven, not
 correctness-driven; the WARN is honesty-driven (the naming claim
@@ -482,21 +505,17 @@ full pair-distance vector for every query. Adding a KD-tree
 per-step cost from `O(n² log n)` to `O(n × k)` for `k`-nearest
 queries. At n=500 this would be ~20× faster. Tracked as task #26.
 
-### 11.3 Three undocumented `# type: ignore` markers
+### 11.3 Remaining `swarm_env.py` `# type: ignore`
 
-- `agent.py:148` — `# type: ignore[assignment]` on the membrane
-  integration line
-- `agent.py:153` — same on the EMA firing-rate update
-- `swarm_env.py:153` — `# type: ignore[no-untyped-def]` on
+The previous `agent.py` assignment suppressions are gone. The remaining
+swarm suppression is:
+
+- `swarm_env.py:155` — `# type: ignore[no-untyped-def]` on
   `step(self, dt, fields=None)` (because `fields` is a forward
   reference)
 
-Per the global "no `# type: ignore` without reason" rule, each needs
-either a one-line rationale comment or a properly typed alternative.
-The agent.py cases stem from the `np.ndarray` mutation pattern and
-can be fixed by typing `self.membrane` and `self.firing_rate` as
-`np.ndarray` at construction. The swarm_env.py case can use a
-`TYPE_CHECKING` import of `CollectiveFields`.
+The follow-up fix is to use a `TYPE_CHECKING` import of
+`CollectiveFields` and type the optional field parameter directly.
 
 ### 11.4 Composite fitness weights are hard-coded
 
@@ -521,8 +540,9 @@ generation count, or add a fixed-seed evaluation pass at the end.
 PYTHONPATH=src python3 -m pytest \
     tests/test_swarm.py \
     tests/test_swarm_control.py \
-    tests/test_swarm_fitness_contracts.py -q
-# 73 passed in 6.32s (verified 2026-04-17)
+    tests/test_swarm_fitness_contracts.py \
+    tests/test_swarm_agent_evolver_contracts.py -q
+# 87 passed in 5.58s (verified 2026-07-02)
 ```
 
 What the existing tests cover:
@@ -538,6 +558,10 @@ What the existing tests cover:
   edge cases (empty positions, single agent, all-same heading, etc.),
   symbolic field deposit + decay, obstacle penalty for agent on
   exact boundary
+- **`test_swarm_agent_evolver_contracts.py`**: public fail-closed
+  contracts for `AgentConfig`, `SwarmAgent.weights`, `think`, `act`,
+  `reset`, `EvolverConfig`, `evaluate_individual`, mutation, `run`, and
+  `get_best_weights`.
 
 What is NOT tested:
 

@@ -35449,6 +35449,12 @@ Read complete JSONL Training Monitor events appended by a process worker.
 ### Class `AgentConfig`
 Hyper-parameters for a single swarm agent.
 
+The sensory layout reserves 20 channels for neighbour, obstacle, target,
+field, emotional, and chemical inputs. Motor output must include at least
+speed and turn channels.
+
+- **__post_init__**()
+  - Validate neural dimensions, dynamics, actuation, and seed domains.
 
 ### Class `SwarmAgent`
 Spiking-neural-network agent with soft-LIF dynamics.
@@ -35462,15 +35468,32 @@ agent_id : int
 
 - **__init__**(cfg, agent_id)
 - **n_weights**()
+  - Return the flat trainable-weight vector length.
 - **weights**()
   - Return all trainable weights as a flat 1-D vector.
 - **weights**(flat)
+  - Replace trainable weights from a finite exact-size vector.
 - **think**(sensory)
   - Run one SNN tick and return ``(speed, turn_angle)``.
 - **act**(speed, turn)
-  - Update position and heading given motor commands.
+  - Update position and heading given finite motor commands.
 - **reset**(rng, width, height)
-  - Reset kinematic and neural state (weights untouched).
+  - Reset kinematic and neural state while preserving trainable weights.
+
+### Function `_ensure_positive_int(value, name)`
+Return an integer value after rejecting bools and low values.
+
+### Function `_ensure_finite_float(value, name)`
+Return a finite float value, optionally requiring strict positivity.
+
+### Function `_ensure_seed(value, name)`
+Return a seed after rejecting bools and negative integers.
+
+### Function `_validate_weight_vector(weights, expected_size)`
+Return a finite one-dimensional copy with the expected weight count.
+
+### Function `_validate_sensory_vector(sensory, expected_size)`
+Return a finite one-dimensional sensory copy with the expected width.
 
 ---
 
@@ -35547,8 +35570,10 @@ Static fitness functions for swarm evaluation.
 ## Module `swarm.neuroevolution_swarm`
 
 ### Class `EvolverConfig`
-Neuroevolution hyper-parameters.
+Neuroevolution hyper-parameters for homogeneous swarm agents.
 
+- **__post_init__**()
+  - Validate population, selection, mutation, evaluation, and seed domains.
 
 ### Class `SwarmEvolver`
 Genetic algorithm that evolves SNN weights for swarm control.

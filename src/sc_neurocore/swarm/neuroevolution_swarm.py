@@ -6,11 +6,7 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore — SwarmEvolver -- genetic algorithm over SNN weight vectors
 
-from __future__ import annotations
-from typing import Any, Optional
-
-"""
-SwarmEvolver -- genetic algorithm over SNN weight vectors.
+"""SwarmEvolver -- genetic algorithm over SNN weight vectors.
 
 Each individual in the population is a flat weight vector that gets
 injected into every agent of a SwarmEnvironment.  Fitness is evaluated
@@ -21,12 +17,15 @@ Selection uses truncation (elite) selection.  Offspring are produced by
 uniform crossover of two random elite parents plus Gaussian mutation.
 """
 
+from __future__ import annotations
 
 from dataclasses import dataclass
+import math
+from typing import Any, Optional
 
 import numpy as np
 
-from .agent import AgentConfig, SwarmAgent
+from .agent import AgentConfig, SwarmAgent, _ensure_seed, _validate_weight_vector
 from .swarm_env import EnvConfig, SwarmEnvironment
 from .collective_fields import FieldConfig, CollectiveFields
 from .fitness import SwarmFitness
@@ -34,7 +33,7 @@ from .fitness import SwarmFitness
 
 @dataclass
 class EvolverConfig:
-    """Neuroevolution hyper-parameters."""
+    """Neuroevolution hyper-parameters for homogeneous swarm agents."""
 
     pop_size: int = 20
     n_elite: int = 4
@@ -45,6 +44,34 @@ class EvolverConfig:
     env_config: Optional[EnvConfig] = None
     agent_config: Optional[AgentConfig] = None
     seed: Optional[int] = None
+
+    def __post_init__(self) -> None:
+        """Validate population, selection, mutation, evaluation, and seed domains."""
+        if (
+            not isinstance(self.pop_size, int)
+            or isinstance(self.pop_size, bool)
+            or self.pop_size < 2
+        ):
+            raise ValueError("pop_size must be an integer >= 2")
+        if not isinstance(self.n_elite, int) or isinstance(self.n_elite, bool):
+            raise ValueError("n_elite must be an integer")
+        if self.n_elite == 4 and self.pop_size < 4:
+            self.n_elite = self.pop_size
+        if self.n_elite < 1 or self.n_elite > self.pop_size:
+            raise ValueError("n_elite must be in [1, pop_size]")
+        self.mutation_rate = float(self.mutation_rate)
+        if not math.isfinite(self.mutation_rate) or not 0.0 <= self.mutation_rate <= 1.0:
+            raise ValueError("mutation_rate must be finite and in [0, 1]")
+        self.mutation_std = float(self.mutation_std)
+        if not math.isfinite(self.mutation_std) or self.mutation_std < 0.0:
+            raise ValueError("mutation_std must be finite and non-negative")
+        if (
+            not isinstance(self.n_eval_steps, int)
+            or isinstance(self.n_eval_steps, bool)
+            or self.n_eval_steps <= 0
+        ):
+            raise ValueError("n_eval_steps must be a positive integer")
+        self.seed = _ensure_seed(self.seed, "seed")
 
 
 class SwarmEvolver:
@@ -104,11 +131,12 @@ class SwarmEvolver:
         -------
         fitness : float
         """
+        validated_weights = _validate_weight_vector(weights, self.n_weights)
         env = self._make_env()
 
         # Inject same weights into all agents (homogeneous swarm)
         for agent in env.agents:
-            agent.weights = weights
+            agent.weights = validated_weights
 
         fields: CollectiveFields | None = None
         if self.cfg.use_fields:
@@ -137,16 +165,21 @@ class SwarmEvolver:
         self, parent_a: np.ndarray[Any, Any], parent_b: np.ndarray[Any, Any]
     ) -> np.ndarray[Any, Any]:
         """Uniform crossover: each gene randomly from either parent."""
+        validated_parent_a = _validate_weight_vector(parent_a, self.n_weights)
+        validated_parent_b = _validate_weight_vector(parent_b, self.n_weights)
         mask = self.rng.random(self.n_weights) < 0.5
-        child = np.where(mask, parent_a, parent_b)
+        child = np.where(mask, validated_parent_a, validated_parent_b)
         return child
 
     def _mutate(self, individual: np.ndarray[Any, Any]) -> np.ndarray[Any, Any]:
         """Gaussian mutation applied to a random subset of genes."""
+        candidate = _validate_weight_vector(individual, self.n_weights)
         mask = self.rng.random(self.n_weights) < self.cfg.mutation_rate
         noise = self.rng.normal(0, self.cfg.mutation_std, self.n_weights)
-        individual[mask] += noise[mask]
-        return individual
+        candidate[mask] += noise[mask]
+        if not np.all(np.isfinite(candidate)):
+            raise ValueError("mutation produced non-finite weights")
+        return candidate
 
     # ------------------------------------------------------------------
     # Evolution
@@ -188,6 +221,12 @@ class SwarmEvolver:
 
     def run(self, n_generations: int) -> list[float]:
         """Run *n_generations* of evolution.  Return list of best fitnesses."""
+        if (
+            not isinstance(n_generations, int)
+            or isinstance(n_generations, bool)
+            or n_generations < 0
+        ):
+            raise ValueError("n_generations must be a non-negative integer")
         for _ in range(n_generations):
             self.evolve_generation()
         return list(self.best_fitness_history)

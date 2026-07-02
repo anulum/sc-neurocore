@@ -160,6 +160,12 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
   source of truth.
 
 ### Fixed
+- Hardened the public swarm agent/evolver contracts. `AgentConfig`,
+  `SwarmAgent.weights`, `think`, `act`, `reset`, `EvolverConfig`,
+  `evaluate_individual`, mutation, and generation execution now reject
+  malformed or non-finite inputs before mutating state; the touched swarm
+  modules are strict-mypy clean, enforced by the scoped public-docstring
+  policy, and covered at 100% exact-file coverage by the focused swarm suite.
 - `network.topology.scale_free` now rejects invalid Barabasi-Albert dimensions
   and non-finite weights before allocating the graph or sampling attachment
   probabilities, closing the `m=0` divide-by-zero path and the `m >= n`

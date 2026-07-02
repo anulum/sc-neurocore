@@ -7,7 +7,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 221
+expected_file_count = 223
 
 [[file]]
 path = "src/sc_neurocore/__init__.py"
@@ -404,6 +404,14 @@ rationale = "Public residual SNN block package entry point."
 [[file]]
 path = "src/sc_neurocore/robotics/swarm.py"
 rationale = "Public robotics swarm-coupling module documented in the robotics API guide."
+
+[[file]]
+path = "src/sc_neurocore/swarm/agent.py"
+rationale = "Public swarm-agent control surface with audited fail-closed sensory, weight, reset, and actuation contracts."
+
+[[file]]
+path = "src/sc_neurocore/swarm/neuroevolution_swarm.py"
+rationale = "Public swarm neuroevolution surface with audited population, mutation, and weight-vector validation contracts."
 
 [[file]]
 path = "src/sc_neurocore/resilience/__init__.py"
