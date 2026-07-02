@@ -13,6 +13,22 @@ and accessible via the `create_adapter(layer)` factory.
 
 ::: sc_neurocore.adapters.holonomic
 
+### L6 Planetary Adapter Contract
+
+`sc_neurocore.adapters.holonomic.l6_plan.L6_PlanetaryAdapter` accepts optional
+rank-2 upstream bitstream batches shaped `(N, bitstream_length)`. The adapter
+validates positive integer region dimensions, positive finite Schumann
+frequency, cavity quality, Gaia coupling, bounded percolation threshold,
+positive finite `dt`, non-empty input rows, exact bitstream width, and finite
+input values before mutating planetary field state. If `N` differs from
+`n_regions`, the mean regional drive is broadcast deterministically across all
+configured regions.
+
+The Python/JAX adapter owns the runtime Gaia-field update. The Rust safety
+mirror, Julia mirror, and Mojo validation shim expose the same parameter,
+timestep, and input-projection boundaries for downstream generated-kernel
+checks; they are not benchmark-dispatched acceleration paths.
+
 ### L9 Memory Adapter Contract
 
 `sc_neurocore.adapters.holonomic.l9_mem.L9_MemoryAdapter` accepts optional

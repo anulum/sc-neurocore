@@ -846,24 +846,49 @@ JAX-traceable adapter for the SCPN Organismal-Psychoemotional layer.
 ## Module `adapters.holonomic.l6_plan`
 
 ### Class `L6_HolonomicParameters`
-Parameters derived from Paper 6 and Gaia-field specifications.
+Configuration for the Layer 6 Gaia-field adapter.
+
+Parameters
+----------
+n_regions:
+    Number of regional planetary field nodes.
+bitstream_length:
+    Number of stochastic bits emitted per region.
+f_schumann:
+    Positive finite Schumann resonance frequency in hertz.
+q_factor:
+    Positive finite cavity quality factor.
+alpha_gaia:
+    Positive finite regional-to-planetary coupling strength.
+p_percolation:
+    Critical percolation threshold in the open interval ``(0, 1)``.
 
 
 ### Class `L6_PlanetaryAdapter`
-JAX-traceable adapter for the SCPN Planetary-Biospheric layer.
+JAX-traceable adapter for the SCPN planetary-biospheric layer.
 
 - **__init__**(params, seed)
+  - Initialise the Layer 6 planetary adapter.
 - **encode**(domain_state)
-  - Maps planetary coherence to stochastic bitstreams.
+  - Map planetary coherence to stochastic regional bitstreams.
 - **_gaia_kernel**(phi, sync_inputs, alpha, freq, q_factor, p_percolation, t, dt)
-  - Solves the Planetary Gaia-field dynamics:
-- **_validate_params**(params)
+  - Solve the planetary Gaia-field dynamics.
+- **_validate_positive_int**(name, value)
+  - Validate a strict positive integer configuration field.
+- **_validate_params**(cls, params)
+  - Validate Layer 6 parameters before allocating backend arrays.
+- **_validate_dt**(dt)
+  - Validate a positive finite simulation timestep.
+- **_validate_input_batch**(inputs)
+  - Validate and normalise an upstream L6 bitstream batch.
+- **_project_sync_drive**(inputs)
+  - Project optional upstream bitstreams onto the configured L6 regions.
 - **step_jax**(dt, inputs)
-  - Advances the L6 holonomic dynamics using JAX.
+  - Advance the L6 holonomic dynamics using JAX-compatible arrays.
 - **decode**(bitstreams)
-  - Maps bitstreams back to Global Consciousness Index.
+  - Map bitstreams back to the global coherence index.
 - **get_metrics**()
-  - Returns L6-specific metrics like Gaia Potential and Schumann Alignment.
+  - Return L6-specific Gaia and Schumann telemetry.
 
 ---
 

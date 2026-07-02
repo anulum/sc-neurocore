@@ -123,8 +123,8 @@ impl L6_PlanetaryAdapter {
         if !dt.is_finite() || dt <= 0.0 {
             return Err("dt must be finite and positive.".to_string());
         }
+        let sync_drive = project_inputs(inputs, self.n_regions, self.bitstream_length)?;
         self.t += dt;
-        let sync_drive = project_inputs(inputs, self.n_regions)?;
         let (phi, coherence) = Self::gaia_kernel(
             &self.phi_planetary,
             &sync_drive,
@@ -219,18 +219,22 @@ fn validate_kernel_inputs(
     Ok(())
 }
 
-fn project_inputs(inputs: Option<&[Vec<f64>]>, n_regions: usize) -> Result<Vec<f64>, String> {
+fn project_inputs(
+    inputs: Option<&[Vec<f64>]>,
+    n_regions: usize,
+    bitstream_length: usize,
+) -> Result<Vec<f64>, String> {
     let Some(rows) = inputs else {
         return Ok(vec![0.0; n_regions]);
     };
     if rows.is_empty() {
-        return Ok(vec![0.0; n_regions]);
+        return Err("inputs must contain at least one row.".to_string());
     }
 
     let mut raw = Vec::with_capacity(rows.len());
     for row in rows {
-        if row.is_empty() {
-            return Err("input rows must not be empty.".to_string());
+        if row.len() != bitstream_length {
+            return Err("inputs bitstream_length must match adapter parameters.".to_string());
         }
         if row.iter().any(|value| !value.is_finite()) {
             return Err("inputs must contain only finite values.".to_string());
@@ -348,5 +352,37 @@ mod tests {
             .regional_coherence
             .iter()
             .all(|value| (0.0..=1.0).contains(value)));
+    }
+
+    #[test]
+    fn test_l6_plan_broadcasts_mismatched_input_regions() {
+        let mut state = L6_PlanetaryAdapter::try_new(4, 6, 7.83, 4.0, 0.05, 0.592).unwrap();
+        let inputs = vec![vec![0.0; 6], vec![1.0; 6]];
+
+        let encoded = state.step_jax(0.05, Some(&inputs)).unwrap();
+
+        assert_eq!(encoded.len(), 4);
+        assert!(state
+            .phi_planetary
+            .windows(2)
+            .all(|pair| (pair[0] - pair[1]).abs() < 1.0e-12));
+    }
+
+    #[test]
+    fn test_l6_plan_rejects_malformed_inputs_without_mutation() {
+        let mut state = L6_PlanetaryAdapter::try_new(3, 4, 7.83, 4.0, 0.05, 0.592).unwrap();
+        let before_phi = state.phi_planetary.clone();
+        let before_coherence = state.regional_coherence.clone();
+
+        assert!(state.step_jax(0.0, Some(&vec![vec![1.0; 4]])).is_err());
+        assert!(state.step_jax(0.05, Some(&Vec::<Vec<f64>>::new())).is_err());
+        assert!(state.step_jax(0.05, Some(&vec![vec![1.0; 3]])).is_err());
+        assert!(state
+            .step_jax(0.05, Some(&vec![vec![f64::NAN; 4]]))
+            .is_err());
+
+        assert_eq!(state.t, 0.0);
+        assert_eq!(state.phi_planetary, before_phi);
+        assert_eq!(state.regional_coherence, before_coherence);
     }
 }

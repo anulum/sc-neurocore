@@ -7,7 +7,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 210
+expected_file_count = 211
 
 [[file]]
 path = "src/sc_neurocore/__init__.py"
@@ -756,6 +756,10 @@ rationale = "Public SCPN framework parameters and inter-layer coupling matrix bu
 [[file]]
 path = "src/sc_neurocore/scpn/layers/l5_organismal.py"
 rationale = "Public SCPN L5 organismal-psychoemotional layer."
+
+[[file]]
+path = "src/sc_neurocore/adapters/holonomic/l6_plan.py"
+rationale = "Public SCPN L6 holonomic planetary adapter with validated Gaia-field bitstream inputs."
 
 [[file]]
 path = "src/sc_neurocore/scpn/layers/l7_symbolic.py"

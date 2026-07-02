@@ -5,6 +5,17 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+### L6 holonomic planetary adapter hardening
+- Hardened `adapters.holonomic.l6_plan` with fail-closed parameter, timestep,
+  input-rank, input-width, non-empty-row, and finite-value validation before
+  Gaia-field state mutation. Mismatched upstream region counts now broadcast a
+  deterministic mean regional drive across configured planetary regions, and
+  the public adapter is covered at 100% exact-file coverage under strict mypy
+  plus the scoped NumPy docstring policy. The Rust safety mirror now enforces
+  the same no-mutation input contract, the Julia mirror is callable, and the
+  Mojo contract shim builds as a shared library with callable validation
+  helpers.
+
 ### L9 holonomic memory adapter hardening
 - Hardened `adapters.holonomic.l9_mem` with fail-closed parameter, timestep,
   input-rank, input-width, non-empty-row, and finite-value validation before

@@ -4,55 +4,66 @@
 # © Code 2020–2026 Miroslav Šotek. All rights reserved.
 # ORCID: 0009-0009-3560-0851
 # Contact: www.anulum.li | protoscience@anulum.li
-# SC-NeuroCore — Mojo SIMD acceleration for l6_plan
+# SC-NeuroCore — Mojo validation shim for the L6 holonomic planetary adapter
 
-fn encode(domain_state: Int) -> Int:
-    var _encode_line = 'rng_key, subkey = split_rng(rng_key)'
-    var _encode_line = 'rands = uniform(subkey, (params.n_regions, params.bitstream_'
-    var _encode_line = 'bitstreams = (rands < regional_coherence[:, 0]).astype(juint'
-    return 0  # return bitstreams
+# This shim is deliberately narrow: the Python adapter owns the traced Gaia-field
+# update, while Mojo provides an FFI-checkable validation/projection contract for
+# downstream generated-kernel dispatchers. It replaces the old non-parsing
+# generated pseudo-code stub.
 
-fn _gaia_kernel(phi: Int, sync_inputs: Int, alpha: Int, freq: Int, t: Int, dt: Int) -> Int:
-    var __gaia_kernel_line = 'phi: jndarray, sync_inputs: jndarray, alpha: float, freq: fl'
-    var __gaia_kernel_line = ') -> Tuple[jndarray, jndarray]:'
-    var __gaia_kernel_line = '# Schumann resonance driving term'
-    var __gaia_kernel_line = 'driver = jcos(2.0 * jpi * freq * t)'
-    var __gaia_kernel_line = 'd_phi = alpha * sync_inputs * driver - 0.05 * phi'
-    var __gaia_kernel_line = '# Superradiant scaling (simplified)'
-    var __gaia_kernel_line = 'phi_next = phi + d_phi * dt'
-    var __gaia_kernel_line = '# Calculate resulting coherence (Percolation transition prox'
-    var __gaia_kernel_line = '# Regional coherence increases when field potential is high'
-    var __gaia_kernel_line = 'coherence_next = jclip(jabs(phi_next) * 2.0, 0.0, 1.0)'
-    return 0  # return phi_next, coherence_next
 
-fn step_jax(dt: Int, inputs: Int) -> Int:
-    var _step_jax_line = 't += dt'
-    var _step_jax_line = '# 1. Extract Organismal Synchronization (L5 -> L6)'
-    var _step_jax_line = 'if inputs is not 0:'
-    var _step_jax_line = 'sync_drive = jmean(inputs.astype(jfloat32), axis=1)'
-    var _step_jax_line = '# Map input dimensions to regional count'
-    var _step_jax_line = 'if sync_drive.shape[0] != params.n_regions:'
-    var _step_jax_line = 'sync_drive = jfull((params.n_regions,), jmean(sync_drive))'
-    var _step_jax_line = 'else:'
-    var _step_jax_line = 'sync_drive = jzeros((params.n_regions,))'
-    var _step_jax_line = '# 2. Execute Gaia Kernel'
-    var _step_jax_line = 'phi_planetary, regional_coherence = _gaia_kernel('
-    var _step_jax_line = 'phi_planetary,'
-    var _step_jax_line = 'sync_drive,'
-    var _step_jax_line = 'params.alpha_gaia,'
-    var _step_jax_line = 'params.f_schumann,'
-    var _step_jax_line = 't,'
-    var _step_jax_line = 'dt,'
-    var _step_jax_line = ')'
-    return 0  # # 3. Return encoded bitstreams
-    return 0  # return encode(0)
+def _finite(x: Float64) -> Bool:
+    return x == x and x <= 1.7976931348623157e308 and x >= -1.7976931348623157e308
 
-fn decode(bitstreams: Int) -> Int:
-    return 0  # return {"global_coherence_index": float(jmean(bits
 
-fn get_metrics() -> Int:
-    return 0  # return {
-    var _get_metrics_line = '"gaia_potential": float(jmean(phi_planetary)),'
-    var _get_metrics_line = '"percolation_index": float(jmean(regional_coherence)),'
-    var _get_metrics_line = '"schumann_phase": float(t * params.f_schumann % 1.0),'
-    var _get_metrics_line = '}'
+@export
+def l6_plan_params_valid_c(
+    n_regions: Int,
+    bitstream_length: Int,
+    f_schumann: Float64,
+    q_factor: Float64,
+    alpha_gaia: Float64,
+    p_percolation: Float64,
+) -> Int64:
+    if n_regions <= 0:
+        return 0
+    if bitstream_length <= 0:
+        return 0
+    if not (_finite(f_schumann) and f_schumann > 0.0):
+        return 0
+    if not (_finite(q_factor) and q_factor > 0.0):
+        return 0
+    if not (_finite(alpha_gaia) and alpha_gaia > 0.0):
+        return 0
+    if not (_finite(p_percolation) and p_percolation > 0.0 and p_percolation < 1.0):
+        return 0
+    return 1
+
+
+@export
+def l6_plan_dt_valid_c(dt: Float64) -> Int64:
+    if _finite(dt) and dt > 0.0:
+        return 1
+    return 0
+
+
+@export
+def l6_plan_input_shape_valid_c(
+    input_rows: Int,
+    input_cols: Int,
+    bitstream_length: Int,
+) -> Int64:
+    if input_rows <= 0:
+        return 0
+    if bitstream_length <= 0:
+        return 0
+    if input_cols != bitstream_length:
+        return 0
+    return 1
+
+
+@export
+def l6_plan_projected_region_count_c(input_rows: Int, n_regions: Int) -> Int64:
+    if input_rows <= 0 or n_regions <= 0:
+        return -1
+    return Int64(n_regions)
