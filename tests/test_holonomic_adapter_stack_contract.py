@@ -46,6 +46,12 @@ def test_compiler_pipeline_invokes_real_lowering(monkeypatch):
             raise AssertionError(f"unexpected tool command: {cmd}")
 
     monkeypatch.setattr("subprocess.run", fake_tool)
+    # The hardened pipeline resolves each tool via ``shutil.which`` before invoking
+    # it; on a runner without the EDA toolchain (e.g. CI, which ships no firtool)
+    # resolution raises before the mocked ``subprocess.run`` is reached. Stub
+    # resolution to the bare tool name so the command-construction contract below
+    # is still exercised and ``fake_tool`` matches on ``cmd[0]``.
+    monkeypatch.setattr(CompilerPipeline, "_resolve_tool", staticmethod(lambda name: name))
     pipeline = CompilerPipeline(work_dir=".tmp/test_compiler")
     mlir = "hw.module @test() { hw.output }"
     v_path = pipeline.compile_mlir_to_verilog(mlir, "test")
