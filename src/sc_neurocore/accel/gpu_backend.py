@@ -16,7 +16,7 @@ and running stochastic vector operations with a deterministic NumPy fallback.
 from __future__ import annotations
 
 import warnings
-from typing import Any
+from typing import Any, cast
 
 import numpy as np
 
@@ -113,8 +113,14 @@ def _numpy_pack_bitstream(bits: np.ndarray[Any, Any]) -> np.ndarray[Any, Any]:
             bits_1d = np.concatenate([bits_1d, np.zeros(pad, dtype=np.uint8)])
         chunks = bits_1d.reshape(-1, 64)
         powers = np.uint64(1) << np.arange(64, dtype=np.uint64)
-        packed_1d: np.ndarray[Any, Any] = (chunks.astype(np.uint64) * powers).sum(
-            axis=1, dtype=np.uint64
+        packed_1d = cast(
+            np.ndarray[Any, Any],
+            np.sum(
+                chunks.astype(np.uint64) * powers,
+                axis=1,
+                dtype=np.uint64,
+                initial=np.uint64(0),
+            ),
         )
         return packed_1d
 
@@ -127,8 +133,14 @@ def _numpy_pack_bitstream(bits: np.ndarray[Any, Any]) -> np.ndarray[Any, Any]:
         n_words = bits_2d.shape[1] // 64
         chunks_2d: np.ndarray[Any, Any] = bits_2d.reshape(batch, n_words, 64)
         powers = np.uint64(1) << np.arange(64, dtype=np.uint64)
-        packed_2d: np.ndarray[Any, Any] = (chunks_2d.astype(np.uint64) * powers).sum(
-            axis=2, dtype=np.uint64
+        packed_2d = cast(
+            np.ndarray[Any, Any],
+            np.sum(
+                chunks_2d.astype(np.uint64) * powers,
+                axis=2,
+                dtype=np.uint64,
+                initial=np.uint64(0),
+            ),
         )
         return packed_2d
 
@@ -263,4 +275,4 @@ def gpu_vec_mac(
     inputs_np = to_host(packed_inputs)
     products = np.bitwise_and(weights_np, inputs_np[None, :, :])
     counts = _numpy_popcount(products)
-    return counts.sum(axis=(1, 2))
+    return np.sum(counts, axis=(1, 2), dtype=np.uint64, initial=np.uint64(0))

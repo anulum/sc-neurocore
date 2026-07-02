@@ -458,8 +458,9 @@ Pack a uint8 bitstream into uint64 words for 64-way parallel processing.
 
 Parameters
 ----------
-bitstream : numpy.ndarray of shape (N,) or (Batch, N), uint8
-    Input bits valued in ``{0, 1}``.
+bitstream : numpy.ndarray of shape (N,) or (Batch, N), uint8, or list&#91;int&#93;
+    Input bits valued in ``{0, 1}``. Python lists are accepted for the
+    one-dimensional compatibility path and are converted to ``uint8``.
 
 Returns
 -------

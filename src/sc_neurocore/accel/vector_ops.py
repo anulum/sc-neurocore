@@ -15,57 +15,74 @@ and popcount accumulation for tests, CPU execution, and parity checks.
 
 from __future__ import annotations
 
-from typing import Any, Optional
+from typing import Any, Optional, cast
 
 import numpy as np
 
 
-def pack_bitstream(bitstream: np.ndarray[Any, Any]) -> np.ndarray[Any, Any]:
+def pack_bitstream(bitstream: np.ndarray[Any, Any] | list[int]) -> np.ndarray[Any, Any]:
     """Pack a uint8 bitstream into uint64 words for 64-way parallel processing.
 
     Parameters
     ----------
-    bitstream : numpy.ndarray of shape (N,) or (Batch, N), uint8
-        Input bits valued in ``{0, 1}``.
+    bitstream : numpy.ndarray of shape (N,) or (Batch, N), uint8, or list[int]
+        Input bits valued in ``{0, 1}``. Python lists are accepted for the
+        one-dimensional compatibility path and are converted to ``uint8``.
 
     Returns
     -------
     numpy.ndarray of shape (ceil(N / 64),) or (Batch, ceil(N / 64)), uint64
         The packed 64-bit words.
     """
-    bitstream = np.asarray(bitstream, dtype=np.uint8)
+    bits_np = np.asarray(bitstream, dtype=np.uint8)
 
-    if bitstream.ndim == 1:
+    if bits_np.ndim == 1:
         # 1D case: single bitstream
-        length = bitstream.size
+        length = bits_np.size
         pad_len = (64 - (length % 64)) % 64
         if pad_len > 0:
-            bitstream = np.append(bitstream, np.zeros(pad_len, dtype=np.uint8))
+            bits_np = np.append(bits_np, np.zeros(pad_len, dtype=np.uint8))
 
-        chunks = bitstream.reshape(-1, 64)
+        chunks = bits_np.reshape(-1, 64)
         powers = 1 << np.arange(64, dtype=np.uint64)
-        packed: np.ndarray[Any, Any] = (chunks * powers).sum(axis=1, dtype=np.uint64)
+        packed = cast(
+            np.ndarray[Any, Any],
+            np.sum(
+                chunks * powers,
+                axis=1,
+                dtype=np.uint64,
+                initial=np.uint64(0),
+            ),
+        )
         return packed
 
-    elif bitstream.ndim == 2:
+    elif bits_np.ndim == 2:
         # 2D case: batch of bitstreams
-        batch_size, length = bitstream.shape
+        batch_size, length = bits_np.shape
         pad_len = (64 - (length % 64)) % 64
 
         if pad_len > 0:
             padding = np.zeros((batch_size, pad_len), dtype=np.uint8)
-            bitstream = np.concatenate([bitstream, padding], axis=1)
+            bits_np = np.concatenate([bits_np, padding], axis=1)
 
         # Reshape to (batch, num_chunks, 64)
-        num_chunks = bitstream.shape[1] // 64
-        chunks: np.ndarray[Any, Any] = bitstream.reshape(batch_size, num_chunks, 64)  # type: ignore[no-redef]
+        num_chunks = bits_np.shape[1] // 64
+        chunks_2d: np.ndarray[Any, Any] = bits_np.reshape(batch_size, num_chunks, 64)
 
         powers = 1 << np.arange(64, dtype=np.uint64)
-        packed_2d: np.ndarray[Any, Any] = (chunks * powers).sum(axis=2, dtype=np.uint64)
+        packed_2d = cast(
+            np.ndarray[Any, Any],
+            np.sum(
+                chunks_2d * powers,
+                axis=2,
+                dtype=np.uint64,
+                initial=np.uint64(0),
+            ),
+        )
         return packed_2d
 
     else:
-        raise ValueError(f"Expected 1D or 2D array, got {bitstream.ndim}D")
+        raise ValueError(f"Expected 1D or 2D array, got {bits_np.ndim}D")
 
 
 def unpack_bitstream(
@@ -161,4 +178,4 @@ def vec_popcount(packed: np.ndarray[Any, Any]) -> int:
     x = (x & 0x3333333333333333) + ((x >> 2) & 0x3333333333333333)
     x = (x + (x >> 4)) & 0x0F0F0F0F0F0F0F0F
     x = (x * 0x0101010101010101) >> 56
-    return int(np.sum(x))
+    return int(np.sum(x, dtype=np.uint64, initial=np.uint64(0)))

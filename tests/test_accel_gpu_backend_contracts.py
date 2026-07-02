@@ -10,8 +10,40 @@
 
 from __future__ import annotations
 
+import importlib.machinery
+import importlib.util
+from pathlib import Path
+import sys
+from types import ModuleType
+from typing import Any, cast
+
 import numpy as np
 import pytest
+
+
+def _load_gpu_backend_without_cupy(monkeypatch: pytest.MonkeyPatch) -> ModuleType:
+    source_path = (
+        Path(__file__).resolve().parents[1] / "src" / "sc_neurocore" / "accel" / "gpu_backend.py"
+    )
+    monkeypatch.setitem(sys.modules, "cupy", None)
+    spec = importlib.util.spec_from_file_location("gpu_backend_no_cupy_contract", source_path)
+    assert spec is not None
+    loader = spec.loader
+    assert isinstance(loader, importlib.machinery.SourceFileLoader)
+    module = importlib.util.module_from_spec(spec)
+    loader.exec_module(module)
+    return module
+
+
+def test_gpu_backend_import_without_cupy_selects_numpy_fallback(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    module = _load_gpu_backend_without_cupy(monkeypatch)
+    backend_xp = cast(Any, module.__dict__["xp"])
+    has_cupy = cast(bool, module.__dict__["HAS_CUPY"])
+
+    assert has_cupy is False
+    np.testing.assert_array_equal(backend_xp.arange(3), np.arange(3))
 
 
 def test_gpu_pack_bitstream_pads_1d_and_2d_inputs() -> None:

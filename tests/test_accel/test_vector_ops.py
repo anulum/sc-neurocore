@@ -29,7 +29,7 @@ def _perf_enabled() -> bool:
     return os.environ.get("SC_NEUROCORE_PERF") == "1"
 
 
-def test_pack_unpack_roundtrip_1d():
+def test_pack_unpack_roundtrip_1d() -> None:
     """Pack/unpack should preserve 1D bitstream."""
     bits = np.array([1, 0, 1, 1, 0, 0, 1], dtype=np.uint8)
     packed = pack_bitstream(bits)
@@ -37,7 +37,7 @@ def test_pack_unpack_roundtrip_1d():
     assert np.array_equal(bits, unpacked)
 
 
-def test_pack_unpack_roundtrip_2d():
+def test_pack_unpack_roundtrip_2d() -> None:
     """Pack/unpack should preserve 2D bitstream."""
     bits = np.array([[1, 0, 1], [0, 1, 0]], dtype=np.uint8)
     packed = pack_bitstream(bits)
@@ -46,7 +46,7 @@ def test_pack_unpack_roundtrip_2d():
     assert np.array_equal(bits, unpacked)
 
 
-def test_pack_bitstream_padding():
+def test_pack_bitstream_padding() -> None:
     """Padding should not affect unpacked length."""
     bits = np.random.randint(0, 2, size=70, dtype=np.uint8)
     packed = pack_bitstream(bits)
@@ -54,21 +54,21 @@ def test_pack_bitstream_padding():
     assert unpacked.size == bits.size
 
 
-def test_pack_bitstream_dtype():
+def test_pack_bitstream_dtype() -> None:
     """Packed output should be uint64."""
     bits = np.random.randint(0, 2, size=64, dtype=np.uint8)
     packed = pack_bitstream(bits)
     assert packed.dtype == np.uint64
 
 
-def test_pack_bitstream_empty():
+def test_pack_bitstream_empty() -> None:
     """Empty input should produce empty packed array."""
     bits = np.array([], dtype=np.uint8)
     packed = pack_bitstream(bits)
     assert packed.size == 0
 
 
-def test_vec_and_basic():
+def test_vec_and_basic() -> None:
     """vec_and should compute bitwise AND on packed arrays."""
     a = pack_bitstream(np.array([1, 0, 1, 0], dtype=np.uint8))
     b = pack_bitstream(np.array([1, 1, 0, 0], dtype=np.uint8))
@@ -77,7 +77,7 @@ def test_vec_and_basic():
     assert np.array_equal(unpacked, np.array([1, 0, 0, 0], dtype=np.uint8))
 
 
-def test_vec_popcount_known():
+def test_vec_popcount_known() -> None:
     """vec_popcount should count total set bits."""
     bits = np.array([1, 0, 1, 1, 0, 1], dtype=np.uint8)
     packed = pack_bitstream(bits)
@@ -85,14 +85,14 @@ def test_vec_popcount_known():
     assert count == 4
 
 
-def test_vec_popcount_zero():
+def test_vec_popcount_zero() -> None:
     """Popcount of all-zero input should be zero."""
     bits = np.zeros(128, dtype=np.uint8)
     packed = pack_bitstream(bits)
     assert vec_popcount(packed) == 0
 
 
-def test_pack_bitstream_accepts_list():
+def test_pack_bitstream_accepts_list() -> None:
     """pack_bitstream should accept Python lists."""
     bits = [1, 0, 1, 0, 1]
     packed = pack_bitstream(bits)
@@ -100,7 +100,7 @@ def test_pack_bitstream_accepts_list():
     assert np.array_equal(np.array(bits, dtype=np.uint8), unpacked)
 
 
-def test_vec_xnor_matches_equality_per_bit():
+def test_vec_xnor_matches_equality_per_bit() -> None:
     """vec_xnor sets a bit where the two streams agree (SC bipolar multiply)."""
     a = pack_bitstream(np.array([1, 0, 1, 0], dtype=np.uint8))
     b = pack_bitstream(np.array([1, 1, 0, 0], dtype=np.uint8))
@@ -109,7 +109,7 @@ def test_vec_xnor_matches_equality_per_bit():
     assert np.array_equal(unpacked, np.array([1, 0, 0, 1], dtype=np.uint8))
 
 
-def test_vec_not_complements_each_bit():
+def test_vec_not_complements_each_bit() -> None:
     """vec_not flips every packed bit (SC complement 1 - P(A))."""
     a = pack_bitstream(np.array([1, 0, 1, 0], dtype=np.uint8))
     out = vec_not(a)
@@ -117,7 +117,7 @@ def test_vec_not_complements_each_bit():
     assert np.array_equal(unpacked, np.array([0, 1, 0, 1], dtype=np.uint8))
 
 
-def test_vec_mux_selects_per_bit():
+def test_vec_mux_selects_per_bit() -> None:
     """vec_mux routes A where select is 1 and B where select is 0."""
     select = pack_bitstream(np.array([1, 1, 0, 0], dtype=np.uint8))
     a = pack_bitstream(np.array([1, 1, 1, 1], dtype=np.uint8))
@@ -127,7 +127,7 @@ def test_vec_mux_selects_per_bit():
     assert np.array_equal(unpacked, np.array([1, 1, 0, 0], dtype=np.uint8))
 
 
-def test_unpack_2d_without_shape_splits_evenly_per_batch():
+def test_unpack_2d_without_shape_splits_evenly_per_batch() -> None:
     """A 2D unpack with no original_shape recovers original_length // batch bits per row."""
     bits = np.array([[1, 0, 1], [0, 1, 0]], dtype=np.uint8)
     packed = pack_bitstream(bits)
@@ -135,20 +135,20 @@ def test_unpack_2d_without_shape_splits_evenly_per_batch():
     assert np.array_equal(unpacked, bits)
 
 
-def test_pack_bitstream_rejects_3d_input():
+def test_pack_bitstream_rejects_3d_input() -> None:
     """pack_bitstream accepts only 1D or 2D arrays."""
     with pytest.raises(ValueError, match="Expected 1D or 2D array"):
         pack_bitstream(np.zeros((2, 2, 2), dtype=np.uint8))
 
 
-def test_unpack_bitstream_rejects_3d_packed():
+def test_unpack_bitstream_rejects_3d_packed() -> None:
     """unpack_bitstream accepts only 1D or 2D packed arrays."""
     with pytest.raises(ValueError, match="Expected 1D or 2D packed array"):
         unpack_bitstream(np.zeros((2, 2, 2), dtype=np.uint64), 8)
 
 
 @pytest.mark.skipif(not _perf_enabled(), reason="Set SC_NEUROCORE_PERF=1 to enable perf checks.")
-def test_vector_ops_perf_pack():
+def test_vector_ops_perf_pack() -> None:
     """Benchmark packing a large bitstream."""
     bits = np.random.randint(0, 2, size=100_000, dtype=np.uint8)
     start = time.perf_counter()

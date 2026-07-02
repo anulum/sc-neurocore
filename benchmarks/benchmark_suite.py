@@ -36,13 +36,14 @@ import os
 import time
 import tracemalloc
 from dataclasses import dataclass
-from typing import List
+from typing import Callable, List
 
 import numpy as np
 
 # Add src to path
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "src"))
 
+import sc_neurocore.accel.gpu_backend as gpu_backend
 from sc_neurocore.accel.vector_ops import pack_bitstream, vec_and, vec_popcount
 from sc_neurocore.accel.gpu_backend import (
     xp,
@@ -88,12 +89,35 @@ class BenchResult:
         )
 
 
-def _timer(func, n_iters: int) -> float:
+def _timer(func: Callable[[], object], n_iters: int) -> float:
     """Time *func()* over *n_iters* calls, return total seconds."""
     start = time.perf_counter()
     for _ in range(n_iters):
         func()
     return time.perf_counter() - start
+
+
+def _gpu_runtime_available() -> bool:
+    """Return whether CuPy is installed and its runtime has not failed closed."""
+    return HAS_CUPY and not gpu_backend._GPU_RUNTIME_BROKEN
+
+
+def _gpu_backend_label() -> str:
+    """Return a benchmark label for the currently usable GPU backend."""
+    return "CuPy" if _gpu_runtime_available() else "NumPy fallback"
+
+
+def _gpu_banner_label() -> str:
+    """Return a top-level backend label without claiming CUDA before first use."""
+    if HAS_CUPY and not gpu_backend._GPU_RUNTIME_BROKEN:
+        return "CuPy import detected; runtime checked lazily"
+    return "NumPy (CPU only)"
+
+
+def _synchronize_gpu_if_available() -> None:
+    """Synchronize CUDA streams only while the backend is still genuinely live."""
+    if _gpu_runtime_available():
+        xp.cuda.Stream.null.synchronize()
 
 
 # ---------------------------------------------------------------------------
@@ -112,7 +136,7 @@ def bench_encoder(n_iters: int) -> BenchResult:
     enc = FixedPointBitstreamEncoder(seed_init=0xACE1)
     x = 32768
 
-    def step():
+    def step() -> None:
         enc.step(x)
 
     t = _timer(step, n_iters)
@@ -123,7 +147,7 @@ def bench_encoder(n_iters: int) -> BenchResult:
 def bench_pack_1d(length: int, n_iters: int) -> BenchResult:
     bits = np.random.randint(0, 2, size=length, dtype=np.uint8)
 
-    def run():
+    def run() -> None:
         pack_bitstream(bits)
 
     t = _timer(run, n_iters)
@@ -134,7 +158,7 @@ def bench_pack_1d(length: int, n_iters: int) -> BenchResult:
 def bench_pack_2d(batch: int, length: int, n_iters: int) -> BenchResult:
     bits = np.random.randint(0, 2, size=(batch, length), dtype=np.uint8)
 
-    def run():
+    def run() -> None:
         pack_bitstream(bits)
 
     t = _timer(run, n_iters)
@@ -146,7 +170,7 @@ def bench_vec_and(n_words: int, n_iters: int) -> BenchResult:
     a = np.random.randint(0, 2**63, size=n_words, dtype=np.uint64)
     b = np.random.randint(0, 2**63, size=n_words, dtype=np.uint64)
 
-    def run():
+    def run() -> None:
         vec_and(a, b)
 
     t = _timer(run, n_iters)
@@ -157,7 +181,7 @@ def bench_vec_and(n_words: int, n_iters: int) -> BenchResult:
 def bench_popcount(n_words: int, n_iters: int) -> BenchResult:
     a = np.random.randint(0, 2**63, size=n_words, dtype=np.uint64)
 
-    def run():
+    def run() -> None:
         vec_popcount(a)
 
     t = _timer(run, n_iters)
@@ -168,7 +192,7 @@ def bench_popcount(n_words: int, n_iters: int) -> BenchResult:
 def bench_lif(n_iters: int) -> BenchResult:
     neuron = FixedPointLIFNeuron()
 
-    def run():
+    def run() -> None:
         neuron.step(20, 256, 128, 0)
 
     t = _timer(run, n_iters)
@@ -182,7 +206,7 @@ def bench_dense_forward(n_neurons: int, n_inputs: int, length: int, n_iters: int
     layer = VectorizedSCLayer(n_inputs=n_inputs, n_neurons=n_neurons, length=length)
     x = np.random.uniform(0, 1, n_inputs).tolist()
 
-    def run():
+    def run() -> None:
         layer.forward(x)
 
     t = _timer(run, n_iters)
@@ -199,7 +223,7 @@ def bench_dense_forward(n_neurons: int, n_inputs: int, length: int, n_iters: int
 def bench_pipeline(n_inputs: int, n_steps: int, n_iters: int) -> BenchResult:
     """Full pipeline: LFSR encode -> AND synapse -> popcount -> LIF."""
 
-    def run():
+    def run() -> None:
         input_encs = [FixedPointBitstreamEncoder(seed_init=0xACE1 + i * 7) for i in range(n_inputs)]
         weight_encs = [
             FixedPointBitstreamEncoder(seed_init=0xBEEF + i * 13) for i in range(n_inputs)
@@ -235,10 +259,9 @@ def bench_pipeline(n_inputs: int, n_steps: int, n_iters: int) -> BenchResult:
 def bench_gpu_pack(length: int, n_iters: int) -> BenchResult:
     bits = xp.random.randint(0, 2, size=length, dtype=xp.uint8)
 
-    def run():
+    def run() -> None:
         gpu_pack_bitstream(bits)
-        if HAS_CUPY:
-            xp.cuda.Stream.null.synchronize()
+        _synchronize_gpu_if_available()
 
     t = _timer(run, n_iters)
     gbps = (length * n_iters) / t / 1e9
@@ -247,7 +270,7 @@ def bench_gpu_pack(length: int, n_iters: int) -> BenchResult:
         n_iters,
         t,
         f"{gbps:.2f} Gbit/s",
-        backend="gpu" if HAS_CUPY else "cpu",
+        backend="gpu" if _gpu_runtime_available() else "cpu",
     )
 
 
@@ -255,10 +278,9 @@ def bench_gpu_mac(n_neurons: int, n_inputs: int, n_words: int, n_iters: int) -> 
     w = xp.random.randint(0, 2**63, size=(n_neurons, n_inputs, n_words), dtype=xp.uint64)
     inp = xp.random.randint(0, 2**63, size=(n_inputs, n_words), dtype=xp.uint64)
 
-    def run():
+    def run() -> None:
         gpu_vec_mac(w, inp)
-        if HAS_CUPY:
-            xp.cuda.Stream.null.synchronize()
+        _synchronize_gpu_if_available()
 
     t = _timer(run, n_iters)
     ops = n_neurons * n_inputs * n_words * 64 * n_iters
@@ -268,7 +290,7 @@ def bench_gpu_mac(n_neurons: int, n_inputs: int, n_words: int, n_iters: int) -> 
         n_iters,
         t,
         f"{gops:.2f} GOP/s",
-        backend="gpu" if HAS_CUPY else "cpu",
+        backend="gpu" if _gpu_runtime_available() else "cpu",
     )
 
 
@@ -299,13 +321,13 @@ def bench_bitstream_length_scaling(n_runs: int = 5) -> List[BenchResult]:
         # warmup
         layer.forward(x)
 
-        times = []
+        times: list[float] = []
         for _ in range(n_runs):
             t0 = time.perf_counter()
             layer.forward(x)
             times.append(time.perf_counter() - t0)
 
-        mean_s = np.mean(times)
+        mean_s = float(np.mean(times))
         total_bits = N_NEURONS * N_INPUTS * L
         throughput_mbps = total_bits / mean_s / 1e6
 
@@ -393,7 +415,7 @@ def run_benchmarks(full: bool = False) -> List[BenchResult]:
 
     print("=" * 80)
     print("  SC-NeuroCore Benchmark Suite")
-    print(f"  Backend: {'CuPy (CUDA)' if HAS_CUPY else 'NumPy (CPU only)'}")
+    print(f"  Backend: {_gpu_banner_label()}")
     print(f"  Mode: {'full' if full else 'quick'}")
     print("=" * 80)
 
@@ -438,7 +460,7 @@ def run_benchmarks(full: bool = False) -> List[BenchResult]:
         print(b)
 
     # 5. GPU / dual-path
-    print(f"\n--- GPU Backend ({'CuPy' if HAS_CUPY else 'NumPy fallback'}) ---")
+    print(f"\n--- GPU Backend ({_gpu_backend_label()}) ---")
     for b in [
         bench_gpu_pack(65536, 200 * s),
         bench_gpu_mac(64, 32, 16, 100 * s),
@@ -458,12 +480,12 @@ def run_benchmarks(full: bool = False) -> List[BenchResult]:
     return results
 
 
-def write_markdown(results: List[BenchResult], path: str = "BENCHMARKS.md"):
+def write_markdown(results: List[BenchResult], path: str = "BENCHMARKS.md") -> None:
     lines = [
         "# SC-NeuroCore Performance Benchmarks",
         "",
         f"Generated on: {time.strftime('%Y-%m-%d %H:%M:%S')}",
-        f"Backend: {'CuPy (CUDA)' if HAS_CUPY else 'NumPy (CPU only)'}",
+        f"Backend: {'CuPy (CUDA)' if _gpu_runtime_available() else 'NumPy (CPU only)'}",
         "",
         "| Benchmark | Backend | Iterations | Avg Latency | Throughput |",
         "|-----------|---------|------------|-------------|------------|",
@@ -472,12 +494,12 @@ def write_markdown(results: List[BenchResult], path: str = "BENCHMARKS.md"):
         lines.append(r.md_row())
     lines.append("")
 
-    with open(path, "w") as f:
+    with open(path, "w", encoding="utf-8") as f:
         f.write("\n".join(lines))
     print(f"\nWrote benchmark results to {path}")
 
 
-def write_json(results: List[BenchResult], path: str = "benchmark_results.json"):
+def write_json(results: List[BenchResult], path: str = "benchmark_results.json") -> None:
     import json
 
     entries = [
@@ -489,12 +511,12 @@ def write_json(results: List[BenchResult], path: str = "benchmark_results.json")
         }
         for r in results
     ]
-    with open(path, "w") as f:
+    with open(path, "w", encoding="utf-8") as f:
         json.dump(entries, f, indent=2)
     print(f"\nWrote JSON results to {path}")
 
 
-def main():
+def main() -> None:
     parser = argparse.ArgumentParser(description="SC-NeuroCore Benchmark Suite")
     parser.add_argument(
         "--full", action="store_true", help="Run thorough benchmarks (10x iterations)"

@@ -5,6 +5,15 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+### GPU fallback reduction hardening
+- Hardened the CuPy/NumPy GPU fallback and shared packed-bitstream vector
+  reductions against coverage-time NumPy reloads by routing reductions through
+  the active NumPy module with explicit zero initials. Covered the CuPy-absent
+  import branch, GPU CPU fallback, and vector pack/unpack paths at 100%
+  exact-file coverage under strict mypy. The benchmark suite now synchronizes
+  CUDA only while the GPU runtime is still live, so the GPU section completes
+  under the NumPy fallback when local CUDA discovery fails.
+
 ### Mojo runner contract hardening
 - Covered `accel.mojo.runner` at 100% exact-file coverage, including the
   fail-closed missing-`kernels.mojo` constructor path. Promoted the runner to
