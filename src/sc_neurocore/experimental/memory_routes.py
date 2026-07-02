@@ -34,6 +34,34 @@ _DEFAULT_CUES = np.array(
 )
 
 
+def _validated_delay_steps(delay_steps: int) -> int:
+    """Return a simulation delay after rejecting bool or negative values."""
+    if isinstance(delay_steps, bool) or delay_steps < 0:
+        raise ValueError("delay_steps must be non-negative")
+    return int(delay_steps)
+
+
+def _validated_positive_count(name: str, value: int) -> int:
+    """Return a strictly positive integer count for route dimensions or seeds."""
+    if isinstance(value, bool) or value <= 0:
+        raise ValueError(f"{name} must be positive")
+    return int(value)
+
+
+def _validated_cue_matrix(cues: np.ndarray[Any, Any] | None) -> npt.NDArray[np.float64]:
+    """Return a finite binary two-dimensional cue matrix for recall trials."""
+    cue_matrix = np.asarray(cues if cues is not None else _DEFAULT_CUES, dtype=np.float64)
+    if cue_matrix.ndim != 2:
+        raise ValueError("cues must be a finite 2D matrix")
+    if cue_matrix.shape[0] == 0 or cue_matrix.shape[1] == 0:
+        raise ValueError("cues must contain at least one cue and one neuron")
+    if not np.all(np.isfinite(cue_matrix)):
+        raise ValueError("cues must be finite")
+    if not np.all((cue_matrix == 0.0) | (cue_matrix == 1.0)):
+        raise ValueError("cues must contain only binary 0.0 or 1.0 values")
+    return cue_matrix
+
+
 def _make_memory_neurons(n_neurons: int, seed: int) -> list[StochasticLIFNeuron]:
     return [
         StochasticLIFNeuron(
@@ -156,7 +184,10 @@ def _run_delayed_recall_suite(
     cues: np.ndarray[Any, Any] | None = None,
     seed_count: int = 12,
 ) -> dict[str, Any]:
-    cue_matrix = np.asarray(cues if cues is not None else _DEFAULT_CUES, dtype=np.float64)
+    delay_steps = _validated_delay_steps(delay_steps)
+    shared_state_dim = _validated_positive_count("shared_state_dim", shared_state_dim)
+    seed_count = _validated_positive_count("seed_count", seed_count)
+    cue_matrix = _validated_cue_matrix(cues)
     n_neurons = cue_matrix.shape[1]
     accuracies: list[float] = []
     per_cue_accuracies = np.zeros(cue_matrix.shape[0], dtype=np.float64)
@@ -205,7 +236,9 @@ def _delayed_recall_local_baseline(
     shared_state_dim: int = 3,
 ) -> dict[str, Any]:
     del shared_state_dim
-    cue_matrix = np.asarray(cues if cues is not None else _DEFAULT_CUES, dtype=np.float64)
+    delay_steps = _validated_delay_steps(delay_steps)
+    seed_count = _validated_positive_count("seed_count", seed_count)
+    cue_matrix = _validated_cue_matrix(cues)
     accuracies: list[float] = []
     per_cue_accuracies = np.zeros(cue_matrix.shape[0], dtype=np.float64)
     first_recalled: np.ndarray[Any, Any] | None = None

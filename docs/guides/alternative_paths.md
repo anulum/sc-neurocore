@@ -295,6 +295,10 @@ What to expect:
   baseline
 - on longer delays, the candidate should show a material recall gain rather
   than merely reproducing the baseline
+- route inputs are validated before simulation: delays must be non-negative,
+  seed counts and shared-state dimensions must be positive, and cue matrices
+  must be finite two-dimensional binary matrices with at least one cue and one
+  neuron
 - the route is *quantum-inspired* only at the architectural level; it does not
   claim to model ATP, Posner molecules, CISS, or validated in-vivo
   non-locality

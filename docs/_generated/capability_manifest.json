@@ -965,7 +965,7 @@
     "python_model_classes": 158,
     "python_model_source_modules": 152,
     "rust_pyo3_model_wrappers": 175,
-    "test_files": 940
+    "test_files": 941
   },
   "documentation": {
     "public_pages": [
@@ -3003,6 +3003,7 @@
       "tests/test_examples_nir_to_fpga.py",
       "tests/test_examples_pretrained_checkpoint_contract.py",
       "tests/test_exceptions.py",
+      "tests/test_experimental_memory_routes.py",
       "tests/test_experimental_runner.py",
       "tests/test_experiments_bitstream_drive_contract.py",
       "tests/test_experiments_convergence_bundle_contract.py",
