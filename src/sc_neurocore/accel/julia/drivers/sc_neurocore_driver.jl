@@ -24,7 +24,7 @@ end
 
 function _connect_to_fpga(s::SC_NeuroCore_DriverState)
     try
-        from pynq import Overlay, allocate  # type: ignore  # noqa: F401
+        from pynq import Overlay, allocate  # type: ignore[import-not-found]  # noqa: F401
         if ! os.path.exists(s.bitstream_path)
             # Look in standard install location if ! local
             fallback_path = f"/usr/local/lib/pynq/overlays/sc_neurocore/{s.bitstream_path}"

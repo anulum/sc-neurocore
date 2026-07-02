@@ -298,7 +298,8 @@ class FisherPosnerQuantumBridge:
             if tools_dir.is_dir() and str(tools_dir) not in sys.path:
                 sys.path.insert(0, str(tools_dir))
                 try:
-                    from verify_ibm_heron import build_posner_circuit  # type: ignore
+                    mod = importlib.import_module("verify_ibm_heron")
+                    build_posner_circuit = mod.build_posner_circuit
                 except ImportError:
                     logger.error(
                         "Cannot import build_posner_circuit. "

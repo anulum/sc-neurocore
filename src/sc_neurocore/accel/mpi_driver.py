@@ -13,16 +13,14 @@ available, while exposing the same workload partitioning, result collection, and
 barrier interface used by multi-node stochastic-computing deployments.
 """
 
+import importlib
 import warnings
 from typing import Any
 
 import numpy as np
 
 try:
-    from mpi4py import MPI as _MPI  # pragma: no cover  # type: ignore
-
-    MPI: Any = _MPI  # pragma: no cover
-
+    MPI: Any = importlib.import_module("mpi4py.MPI")  # pragma: no cover
     HAS_MPI = True  # pragma: no cover
 except ImportError:
     MPI = None

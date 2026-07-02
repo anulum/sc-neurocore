@@ -143,7 +143,7 @@ class TestRegisterMap:
     def test_invalid_bus(self) -> None:
         """Should raise on invalid bus protocol."""
         with pytest.raises(ValueError, match="Unsupported bus"):
-            generate_bus_wrapper("sc_lif", LIF_PARAMS, bus="spi")  # type: ignore
+            generate_bus_wrapper("sc_lif", LIF_PARAMS, bus="spi")  # type: ignore[arg-type]
 
 
 # ═══════════════════════════════════════════════════════════════════════

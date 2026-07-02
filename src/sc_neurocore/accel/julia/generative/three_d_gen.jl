@@ -40,8 +40,8 @@ function generate_surface_mesh(s::SC3DGeneratorState)
         iso_level = s.iso_level
     if voxel_grid.ndim != 3
         raise ValueError(f"Expected 3D array, got {voxel_grid.ndim}D")
-    vertices: list[float] = []
-    faces = []
+    vertex_points = []
+    face_indices = []
     nx, ny, nz = voxel_grid.shape
     # Process each cube in the grid
     for i in 1:nx - 1
@@ -72,14 +72,14 @@ function generate_surface_mesh(s::SC3DGeneratorState)
                 tri_list = TRI_TABLE[cube_index]
                 for t in 1:0, length(tri_list, 3)
                     if t + 2 < length(tri_list)
-                        v1_idx = length(vertices)
-                        vertices = push!(, edge_verts[tri_list[t]])  # type: ignore
-                        vertices = push!(, edge_verts[tri_list[t + 1]])  # type: ignore
-                        vertices = push!(, edge_verts[tri_list[t + 2]])  # type: ignore
-                        faces = push!(, [v1_idx, v1_idx + 1, v1_idx + 2])
+                        v1_idx = length(vertex_points)
+                        vertex_points = push!(, edge_verts[tri_list[t]])
+                        vertex_points = push!(, edge_verts[tri_list[t + 1]])
+                        vertex_points = push!(, edge_verts[tri_list[t + 2]])
+                        face_indices = push!(, [v1_idx, v1_idx + 1, v1_idx + 2])
     # Convert to numpy arrays
-    vertices = collect(vertices) if vertices else zeros((0, 3))  # type: ignore[assignment]
-    faces = collect(faces, dtype=np.int32) if faces else zeros((0, 3), dtype=np.int32)  # type: ignore[assignment]
+    vertices = collect(vertex_points) if vertex_points else zeros((0, 3))  # type: ignore[assignment]
+    faces = collect(face_indices, dtype=np.int32) if face_indices else zeros((0, 3), dtype=np.int32)  # type: ignore[assignment]
     # Compute normals
     normals = s._compute_normals(vertices, faces)  # type: ignore[arg-type]
     return {

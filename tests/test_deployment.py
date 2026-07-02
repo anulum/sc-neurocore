@@ -249,7 +249,7 @@ class TestHostDriverGen:
     def test_invalid_language(self) -> None:
         """Should raise on invalid language."""
         with pytest.raises(ValueError, match="Unsupported language"):
-            generate_host_driver("sc_lif", LIF_PARAMS, language="rust")  # type: ignore
+            generate_host_driver("sc_lif", LIF_PARAMS, language="rust")  # type: ignore[arg-type]
 
     def test_python_driver_sanitises_module_and_parameter_identifiers(self) -> None:
         """Generated Python drivers should be valid for unsafe source names."""

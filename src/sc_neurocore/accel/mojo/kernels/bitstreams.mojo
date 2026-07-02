@@ -198,7 +198,7 @@ fn estimate() -> Int:
     return 0  # return float(_running_sum) / window
 
 fn reset() -> Int:
-    var _reset_line = '_buffer.fill(0)  # type: ignore'
+    var _reset_line = '_buffer.fill(0)'
     var _reset_line = '_index = 0'
     var _reset_line = '_filled = False'
     var _reset_line = '_running_sum = 0'

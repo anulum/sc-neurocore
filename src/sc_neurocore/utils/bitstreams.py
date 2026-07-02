@@ -44,8 +44,7 @@ def generate_bernoulli_bitstream(
         raise SCEncodingError(f"Probability p must be in [0,1], got {p}.")
     if rng is None:
         rng = RNG()
-    bits = rng.bernoulli(p, size=length)
-    encoded: np.ndarray[Any, Any] = bits.astype(np.uint8)
+    encoded: np.ndarray[Any, Any] = np.asarray(rng.bernoulli(p, size=length), dtype=np.uint8)
     return encoded
 
 
@@ -330,6 +329,7 @@ class BitstreamEncoder:
             raise SCEncodingError(f"Unknown mode: {self.mode}")
 
     def encode(self, x: float) -> np.ndarray[Any, Any]:
+        """Encode one scalar into a stochastic bitstream."""
         if self.mode == "bipolar":
             # Map x from [x_min, x_max] to [-1, 1], then bipolar encode
             if self.x_min >= self.x_max:
@@ -345,6 +345,7 @@ class BitstreamEncoder:
         return generate_bernoulli_bitstream(p, self.length, rng=self._rng)
 
     def decode(self, bitstream: np.ndarray[Any, Any]) -> float:
+        """Decode a stochastic bitstream back into the configured value range."""
         if self.mode == "bipolar":
             bipolar_val = bipolar_to_value(bitstream)
             # Map [-1, 1] back to [x_min, x_max]
@@ -381,6 +382,7 @@ class BitstreamAverager:
         self._running_sum = 0
 
     def push(self, bit: int) -> None:
+        """Add one binary sample to the sliding window."""
         if bit not in (0, 1):
             raise SCEncodingError("Bit must be 0 or 1.")
 
@@ -399,6 +401,7 @@ class BitstreamAverager:
             self._filled = True
 
     def estimate(self) -> float:
+        """Return the current sliding-window probability estimate."""
         if not self._filled:
             # Estimate over the filled portion only
             count = self._index
@@ -408,7 +411,9 @@ class BitstreamAverager:
         return float(self._running_sum) / self.window
 
     def reset(self) -> None:
-        self._buffer.fill(0)  # type: ignore
+        """Clear all buffered samples and reset the estimator state."""
+        assert self._buffer is not None
+        self._buffer.fill(0)
         self._index = 0
         self._filled = False
         self._running_sum = 0

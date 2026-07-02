@@ -16,7 +16,7 @@ and running stochastic vector operations with a deterministic NumPy fallback.
 from __future__ import annotations
 
 import warnings
-from typing import Any, cast
+from typing import Any, TypeAlias, cast
 
 import numpy as np
 
@@ -61,6 +61,7 @@ def _mark_gpu_runtime_broken(exc: RuntimeError) -> None:
 
 
 xp = _BackendProxy()
+BackendArray: TypeAlias = Any
 
 
 def _warn_cpu_fallback() -> None:
@@ -80,7 +81,7 @@ def _warn_cpu_fallback() -> None:
 # ---------------------------------------------------------------------------
 
 
-def to_device(arr: np.ndarray[Any, Any]) -> xp.ndarray:  # type: ignore
+def to_device(arr: np.ndarray[Any, Any]) -> BackendArray:
     """Move a NumPy array to the active backend (GPU copy or no-op)."""
     if _gpu_enabled():  # pragma: no cover
         try:
@@ -165,7 +166,7 @@ def _numpy_popcount(packed: np.ndarray[Any, Any]) -> np.ndarray[Any, Any]:
 # ---------------------------------------------------------------------------
 
 
-def gpu_pack_bitstream(bits: xp.ndarray) -> xp.ndarray:  # type: ignore
+def gpu_pack_bitstream(bits: BackendArray) -> BackendArray:
     """
     Pack uint8 {0,1} array into uint64 words.
 
@@ -209,7 +210,7 @@ def gpu_pack_bitstream(bits: xp.ndarray) -> xp.ndarray:  # type: ignore
     return _numpy_pack_bitstream(to_host(bits))
 
 
-def gpu_vec_and(a: xp.ndarray, b: xp.ndarray) -> xp.ndarray:  # type: ignore
+def gpu_vec_and(a: BackendArray, b: BackendArray) -> BackendArray:
     """Bitwise AND on packed uint64 arrays (SC multiplication)."""
     if _gpu_enabled():  # pragma: no cover
         try:
@@ -220,7 +221,7 @@ def gpu_vec_and(a: xp.ndarray, b: xp.ndarray) -> xp.ndarray:  # type: ignore
     return np.bitwise_and(to_host(a), to_host(b))
 
 
-def gpu_popcount(packed: xp.ndarray) -> xp.ndarray:  # type: ignore
+def gpu_popcount(packed: BackendArray) -> BackendArray:
     """
     Vectorised SWAR popcount on uint64 arrays — returns per-element counts.
 
@@ -248,9 +249,9 @@ def gpu_popcount(packed: xp.ndarray) -> xp.ndarray:  # type: ignore
 
 
 def gpu_vec_mac(
-    packed_weights: xp.ndarray,  # type: ignore
-    packed_inputs: xp.ndarray,  # type: ignore
-) -> xp.ndarray:  # type: ignore
+    packed_weights: BackendArray,
+    packed_inputs: BackendArray,
+) -> BackendArray:
     """
     GPU-accelerated multiply-accumulate for a dense SC layer.
 

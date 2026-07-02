@@ -8,7 +8,7 @@
 
 fn _connect_to_fpga() -> Int:
     var __connect_to_fpga_line = 'try:'
-    var __connect_to_fpga_line = 'from pynq import Overlay, allocate  # type: ignore  # noqa: '
+    var __connect_to_fpga_line = 'from pynq import Overlay, allocate  # type: ignore[import-not-found]  # noqa: F401'
     var __connect_to_fpga_line = 'if not os.path.exists(bitstream_path):'
     var __connect_to_fpga_line = '# Look in standard install location if not local'
     var __connect_to_fpga_line = 'fallback_path = f"/usr/local/lib/pynq/overlays/sc_neurocore/'

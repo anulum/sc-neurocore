@@ -14,29 +14,31 @@ from sc_neurocore.quantum_cognition.fisher_posner import (
 )
 from sc_neurocore.quantum_cognition.spin_pool import SpinPoolMPS
 
+PoolAndNeuron = tuple[SpinPoolMPS, HybridFisherPosnerLIF]
+
 
 @pytest.fixture
-def pool_and_neuron() -> tuple[SpinPoolMPS, HybridFisherPosnerLIF]:
+def pool_and_neuron() -> PoolAndNeuron:
     pool = SpinPoolMPS(n_sites=8)
     neuron = HybridFisherPosnerLIF(neuron_id=0, spin_pool=pool)
     return pool, neuron
 
 
 class TestHybridFisherPosnerLIF:
-    def test_resting_state(self, pool_and_neuron: tuple) -> None:
+    def test_resting_state(self, pool_and_neuron: PoolAndNeuron) -> None:
         _, neuron = pool_and_neuron
         assert neuron.Vm == -70.0
         assert neuron.atp_level == 1.0
         assert not neuron.is_spiking
 
-    def test_subthreshold_no_spike(self, pool_and_neuron: tuple) -> None:
+    def test_subthreshold_no_spike(self, pool_and_neuron: PoolAndNeuron) -> None:
         """Small input should not trigger a spike."""
         _, neuron = pool_and_neuron
         vm, spiked = neuron.step(5.0)
         assert not spiked
         assert vm > -70.0  # slight depolarisation
 
-    def test_suprathreshold_spike(self, pool_and_neuron: tuple) -> None:
+    def test_suprathreshold_spike(self, pool_and_neuron: PoolAndNeuron) -> None:
         """Large input should trigger a spike."""
         _, neuron = pool_and_neuron
         for _ in range(50):
@@ -45,7 +47,7 @@ class TestHybridFisherPosnerLIF:
                 break
         assert neuron._total_spikes > 0
 
-    def test_metabolic_failure(self, pool_and_neuron: tuple) -> None:
+    def test_metabolic_failure(self, pool_and_neuron: PoolAndNeuron) -> None:
         """Depleted ATP should prevent spiking (metabolic failure)."""
         _, neuron = pool_and_neuron
         neuron.atp_level = 0.0
@@ -54,7 +56,7 @@ class TestHybridFisherPosnerLIF:
         assert not spiked
         assert neuron._metabolic_failures > 0
 
-    def test_atp_regeneration(self, pool_and_neuron: tuple) -> None:
+    def test_atp_regeneration(self, pool_and_neuron: PoolAndNeuron) -> None:
         """ATP should regenerate over time via quantum efficiency."""
         _, neuron = pool_and_neuron
         neuron.atp_level = 0.5
@@ -62,7 +64,7 @@ class TestHybridFisherPosnerLIF:
             neuron.step(0.0)
         assert neuron.atp_level > 0.5
 
-    def test_spike_feeds_back_to_pool(self, pool_and_neuron: tuple) -> None:
+    def test_spike_feeds_back_to_pool(self, pool_and_neuron: PoolAndNeuron) -> None:
         """Spiking should call apply_measurement on the spin pool."""
         pool, neuron = pool_and_neuron
         initial_count = pool._measurement_count
@@ -74,7 +76,7 @@ class TestHybridFisherPosnerLIF:
         if neuron._total_spikes > 0:
             assert pool._measurement_count > initial_count
 
-    def test_v_property(self, pool_and_neuron: tuple) -> None:
+    def test_v_property(self, pool_and_neuron: PoolAndNeuron) -> None:
         """v property should alias Vm."""
         _, neuron = pool_and_neuron
         neuron.Vm = -55.0
@@ -82,7 +84,7 @@ class TestHybridFisherPosnerLIF:
         neuron.v = -60.0
         assert neuron.Vm == -60.0
 
-    def test_reset(self, pool_and_neuron: tuple) -> None:
+    def test_reset(self, pool_and_neuron: PoolAndNeuron) -> None:
         _, neuron = pool_and_neuron
         neuron.step(100.0)
         neuron.reset_state()
@@ -90,7 +92,7 @@ class TestHybridFisherPosnerLIF:
         assert neuron.atp_level == 1.0
         assert neuron._total_spikes == 0
 
-    def test_get_state(self, pool_and_neuron: tuple) -> None:
+    def test_get_state(self, pool_and_neuron: PoolAndNeuron) -> None:
         _, neuron = pool_and_neuron
         state = neuron.get_state()
         assert "neuron_id" in state
@@ -104,7 +106,7 @@ class TestHybridFisherPosnerLIF:
 
     def test_invalid_type(self) -> None:
         with pytest.raises(TypeError):
-            HybridFisherPosnerLIF(neuron_id=0, spin_pool="not a pool")  # type: ignore
+            HybridFisherPosnerLIF(neuron_id=0, spin_pool="not a pool")  # type: ignore[arg-type]
 
 
 class TestHybridFisherPosnerLIFNeuron:

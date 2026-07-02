@@ -363,8 +363,8 @@ class SC3DGenerator:
         if voxel_grid.ndim != 3:
             raise ValueError(f"Expected 3D array, got {voxel_grid.ndim}D")
 
-        vertices: list[float] = []
-        faces = []
+        vertex_points: list[np.ndarray[Any, Any]] = []
+        face_indices: list[list[int]] = []
 
         nx, ny, nz = voxel_grid.shape
 
@@ -401,18 +401,26 @@ class SC3DGenerator:
                     tri_list = TRI_TABLE[cube_index]
                     for t in range(0, len(tri_list), 3):
                         if t + 2 < len(tri_list):
-                            v1_idx = len(vertices)
-                            vertices.append(edge_verts[tri_list[t]])  # type: ignore
-                            vertices.append(edge_verts[tri_list[t + 1]])  # type: ignore
-                            vertices.append(edge_verts[tri_list[t + 2]])  # type: ignore
-                            faces.append([v1_idx, v1_idx + 1, v1_idx + 2])
+                            v1_idx = len(vertex_points)
+                            vertex_points.append(edge_verts[tri_list[t]])
+                            vertex_points.append(edge_verts[tri_list[t + 1]])
+                            vertex_points.append(edge_verts[tri_list[t + 2]])
+                            face_indices.append([v1_idx, v1_idx + 1, v1_idx + 2])
 
         # Convert to numpy arrays
-        vertices = np.array(vertices) if vertices else np.zeros((0, 3))  # type: ignore[assignment]
-        faces = np.array(faces, dtype=np.int32) if faces else np.zeros((0, 3), dtype=np.int32)  # type: ignore[assignment]
+        vertices = (
+            np.asarray(vertex_points, dtype=np.float64)
+            if vertex_points
+            else np.zeros((0, 3), dtype=np.float64)
+        )
+        faces = (
+            np.asarray(face_indices, dtype=np.int32)
+            if face_indices
+            else np.zeros((0, 3), dtype=np.int32)
+        )
 
         # Compute normals
-        normals = self._compute_normals(vertices, faces)  # type: ignore[arg-type]
+        normals = self._compute_normals(vertices, faces)
 
         return {
             "vertices": vertices,

@@ -232,7 +232,7 @@ function estimate(s::BitstreamAveragerState)
 end
 
 function reset(s::BitstreamAveragerState)
-    s._buffer.fill(0)  # type: ignore
+    s._buffer.fill(0)
     s._index = 0
     s._filled = false
     s._running_sum = 0
