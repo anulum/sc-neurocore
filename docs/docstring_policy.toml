@@ -7,7 +7,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 218
+expected_file_count = 219
 
 [[file]]
 path = "src/sc_neurocore/__init__.py"
@@ -136,6 +136,10 @@ rationale = "Public core package entry point that re-exports TensorStream and co
 [[file]]
 path = "src/sc_neurocore/utils/rng.py"
 rationale = "Public reproducible random-stream wrapper used by stochastic-computing utilities and bitstream generation."
+
+[[file]]
+path = "src/sc_neurocore/edge/sc_network.py"
+rationale = "Public edge stochastic-computing network runner with fail-closed probability, bitstream, weight, and configuration contracts."
 
 [[file]]
 path = "src/sc_neurocore/analysis/explainability.py"

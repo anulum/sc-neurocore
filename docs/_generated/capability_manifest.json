@@ -965,7 +965,7 @@
     "python_model_classes": 158,
     "python_model_source_modules": 152,
     "rust_pyo3_model_wrappers": 175,
-    "test_files": 937
+    "test_files": 938
   },
   "documentation": {
     "public_pages": [
@@ -2976,6 +2976,7 @@
       "tests/test_edge/test_aer_router_daemon.py",
       "tests/test_edge/test_edge.py",
       "tests/test_edge/test_power_thermal.py",
+      "tests/test_edge/test_sc_network_contracts.py",
       "tests/test_edge/test_tinysc_ports.py",
       "tests/test_edge/test_web_deploy.py",
       "tests/test_edge_neuron_and_online_o1.py",

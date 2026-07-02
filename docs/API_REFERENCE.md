@@ -12856,9 +12856,11 @@ Write report-derived FPGA power/thermal JSON beside deployable artefacts.
 Single dense SC layer: weights × inputs via AND + popcount threshold.
 
 - **__post_init__**()
+  - Validate and normalise layer configuration after dataclass construction.
 - **_validate_configuration**()
 - **_validate_weights**()
 - **words_per_input**()
+  - Return packed weight words required to cover all layer inputs.
 - **forward**(input_words, bit_length)
   - Run SC inference: AND each weight row with input, threshold popcount.
 
@@ -12873,7 +12875,9 @@ Usage::
     output = net.run(&#91;0.5&#93; * 32)
 
 - **__post_init__**()
+  - Validate network-level stochastic-computing execution parameters.
 - **add_layer**(layer)
+  - Append a layer after validating stochastic-mode compatibility.
 - **encode_inputs**(probabilities)
   - Encode float probabilities into per-input packed bitstreams.
 - **_spikes_to_bitstreams**(spikes, lfsr)
@@ -12887,7 +12891,24 @@ Usage::
 - **from_weights**(cls, layers_data, bit_length, lfsr_seed)
   - Construct network from deserialized weight data.
 - **layer_count**()
+  - Return the number of layers currently registered in the network.
 - **total_neurons**()
+  - Return the total output-neuron count across all registered layers.
+
+### Function `_require_integer(value, name)`
+Return ``value`` as ``int`` after rejecting bool and non-integral aliases.
+
+### Function `_require_positive_integer(value, name)`
+Return a positive integer bounded by ``max_value`` when provided.
+
+### Function `_require_nonnegative_integer(value, name)`
+Return a non-negative integer suitable for popcount thresholds.
+
+### Function `_require_u32_word(value, name)`
+Return an unsigned 32-bit word after rejecting lossy numeric aliases.
+
+### Function `_require_probability(value)`
+Return a finite unipolar probability in the inclusive ``&#91;0, 1&#93;`` range.
 
 ---
 

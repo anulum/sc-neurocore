@@ -363,6 +363,13 @@ net.add_layer(SCLayer(n_inputs=16, n_outputs=8))
 spikes = net.run([0.5] * 32)    # bool[8]
 ```
 
+`SCNetwork` rejects non-integral bit lengths, non-finite or non-real input
+probabilities, malformed encoded bitstream widths, and words outside the
+unsigned 32-bit domain before layer execution. `SCLayer` applies the same
+integer and u32-domain checks to configuration, weights, and input words, so
+corrupted blobs or subclassed encoders fail at the Python boundary rather than
+falling through to bitwise operations.
+
 ### 6.2 Export + reload weights
 
 ```python
@@ -552,6 +559,11 @@ counterpart because they are R&D-only: :class:`SobolGenerator`
 / :func:`generate_memory_x` (cross-compilation aids). These never ship
 to the MCU.
 
+The generated Julia file under `accel/julia/edge/` and Mojo files under
+`accel/mojo/kernels/` are non-authoritative mirror transcripts. The Python
+`sc_neurocore.edge.sc_network` module owns the runtime validation contract
+unless a maintained loader explicitly dispatches to another language.
+
 ---
 
 ## 11. Reproducibility
@@ -623,7 +635,7 @@ data travels as JSON over UART or WebSocket.
   - `src/sc_neurocore/edge/lfsr.py` (66 LOC)
   - `src/sc_neurocore/edge/sobol.py` (91 LOC)
   - `src/sc_neurocore/edge/neuron.py` (107 LOC, LIF + Izhikevich)
-  - `src/sc_neurocore/edge/sc_network.py` (154 LOC)
+  - `src/sc_neurocore/edge/sc_network.py` (266 LOC)
   - `src/sc_neurocore/edge/weights.py` (129 LOC, SCWL format)
   - `src/sc_neurocore/edge/telemetry.py` (133 LOC)
   - `src/sc_neurocore/edge/power_estimator.py` (113 LOC)
