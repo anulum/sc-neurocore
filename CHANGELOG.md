@@ -160,6 +160,11 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
   source of truth.
 
 ### Fixed
+- `network.topology.scale_free` now rejects invalid Barabasi-Albert dimensions
+  and non-finite weights before allocating the graph or sampling attachment
+  probabilities, closing the `m=0` divide-by-zero path and the `m >= n`
+  empty-graph path. The existing topology generator tests are strict-typed and
+  cover the fail-closed parameter boundary at 100% exact-file coverage.
 - Fixed the direct FPGA interconnect emitting an assignment to an undeclared
   delay register when a connection mixed zero and non-zero per-source-column
   synaptic delays: a delayed source's register chain was registered (and its

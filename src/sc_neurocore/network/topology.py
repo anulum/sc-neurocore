@@ -30,6 +30,7 @@ See :doc:`docs/api/network` §6 for the generator catalogue and
 
 from __future__ import annotations
 
+from numbers import Integral, Real
 from typing import Any
 import numpy as np
 
@@ -91,8 +92,56 @@ def small_world(n: int, k: int, p_rewire: float, weight: float, seed: int = 42) 
     return _to_csr(n, n, rows, cols, weights)
 
 
+def _validate_scale_free_parameters(n: int, m: int, weight: float) -> tuple[int, int, float]:
+    """Validate Barabasi-Albert graph dimensions and edge weights."""
+    if isinstance(n, bool) or not isinstance(n, Integral):
+        raise ValueError("n must be an integer")
+    if isinstance(m, bool) or not isinstance(m, Integral):
+        raise ValueError("m must be an integer")
+
+    n_int = int(n)
+    m_int = int(m)
+    if n_int < 2:
+        raise ValueError("n must be at least 2 for scale-free topology")
+    if m_int < 1:
+        raise ValueError("m must be at least 1 for scale-free topology")
+    if m_int >= n_int:
+        raise ValueError("m must be smaller than n for scale-free topology")
+    if isinstance(weight, bool) or not isinstance(weight, Real):
+        raise ValueError("weight must be finite")
+
+    weight_float = float(weight)
+    if not np.isfinite(weight_float):
+        raise ValueError("weight must be finite")
+    return n_int, m_int, weight_float
+
+
 def scale_free(n: int, m: int, weight: float, seed: int = 42) -> CSR:
-    """Barabasi-Albert preferential attachment (n-by-n adjacency)."""
+    """Generate a Barabasi-Albert preferential-attachment graph.
+
+    Parameters
+    ----------
+    n : int
+        Number of source and target nodes. Must be at least two.
+    m : int
+        Number of existing nodes sampled for each new node. Must satisfy
+        ``1 <= m < n``.
+    weight : float
+        Finite synaptic weight assigned to every emitted edge.
+    seed : int, default=42
+        Seed for deterministic preferential-attachment sampling.
+
+    Returns
+    -------
+    tuple of ndarray
+        CSR ``(indptr, indices, data)`` arrays for the symmetric adjacency.
+
+    Raises
+    ------
+    ValueError
+        If ``n``, ``m``, or ``weight`` falls outside the Barabasi-Albert domain.
+    """
+    n, m, weight = _validate_scale_free_parameters(n, m, weight)
     rng = np.random.default_rng(seed)
     degree = np.zeros(n, dtype=np.float64)
     row_list: list[int] = []
@@ -102,11 +151,8 @@ def scale_free(n: int, m: int, weight: float, seed: int = 42) -> CSR:
         degree[t] = 1.0
     for src in range(m, n):
         probs = degree[:src].copy()
-        total = probs.sum()
-        if total > 0:
-            probs /= total
-        else:  # pragma: no cover - unreachable: the m seed nodes always carry degree, so total > 0 for m >= 1
-            probs[:] = 1.0 / src
+        total = float(probs.sum())
+        probs /= total
         chosen = rng.choice(src, size=min(m, src), replace=False, p=probs)
         for tgt in chosen:
             row_list.append(src)

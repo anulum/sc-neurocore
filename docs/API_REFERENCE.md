@@ -19663,8 +19663,33 @@ Erdos-Renyi random connectivity.
 ### Function `small_world(n, k, p_rewire, weight, seed)`
 Watts-Strogatz small-world graph (n-by-n adjacency).
 
+### Function `_validate_scale_free_parameters(n, m, weight)`
+Validate Barabasi-Albert graph dimensions and edge weights.
+
 ### Function `scale_free(n, m, weight, seed)`
-Barabasi-Albert preferential attachment (n-by-n adjacency).
+Generate a Barabasi-Albert preferential-attachment graph.
+
+Parameters
+----------
+n : int
+    Number of source and target nodes. Must be at least two.
+m : int
+    Number of existing nodes sampled for each new node. Must satisfy
+    ``1 <= m < n``.
+weight : float
+    Finite synaptic weight assigned to every emitted edge.
+seed : int, default=42
+    Seed for deterministic preferential-attachment sampling.
+
+Returns
+-------
+tuple of ndarray
+    CSR ``(indptr, indices, data)`` arrays for the symmetric adjacency.
+
+Raises
+------
+ValueError
+    If ``n``, ``m``, or ``weight`` falls outside the Barabasi-Albert domain.
 
 ### Function `ring_topology(n, k, weight)`
 Ring topology with k nearest neighbours in each direction.

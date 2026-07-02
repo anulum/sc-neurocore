@@ -271,6 +271,11 @@ tuple ready to feed into `Projection(..., topology=tuple)`.
 | `grid_topology` | 2-D lattice within Manhattan radius | — | no (loops add both directions only when within radius) |
 | `all_to_all` | Dense | — | yes when `n_src == n_tgt` |
 
+`scale_free(n, m, weight, seed=...)` enforces the Barabasi-Albert domain before
+allocation or random sampling: `n` and `m` must be non-boolean integers,
+`n >= 2`, `1 <= m < n`, and `weight` must be finite. Invalid values raise
+`ValueError` before any CSR arrays are emitted.
+
 ### 6.1 Performance (this workstation, 2026-04-17)
 
 Measured directly by calling each generator and timing with
