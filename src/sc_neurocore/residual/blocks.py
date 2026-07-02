@@ -38,15 +38,15 @@ class MembraneShortcutBlock:
 
     def __init__(
         self, n_features: int, threshold: float = 1.0, tau_mem: float = 10.0, seed: int = 42
-    ):
+    ) -> None:
         self.n_features = n_features
         self.threshold = threshold
         self.tau_mem = tau_mem
         rng = np.random.RandomState(seed)
         scale = np.sqrt(2.0 / n_features)
-        self.W1 = rng.randn(n_features, n_features) * scale
-        self.W2 = rng.randn(n_features, n_features) * scale
-        self._v = np.zeros(n_features)
+        self.W1: np.ndarray[Any, Any] = rng.randn(n_features, n_features) * scale
+        self.W2: np.ndarray[Any, Any] = rng.randn(n_features, n_features) * scale
+        self._v: np.ndarray[Any, Any] = np.zeros(n_features)
 
     def forward(self, x: np.ndarray[Any, Any]) -> np.ndarray[Any, Any]:
         """Forward pass: x -> W1 -> LIF -> W2 -> add residual -> LIF -> spikes."""
@@ -84,12 +84,12 @@ class SEWBlock:
     threshold : float
     """
 
-    def __init__(self, n_features: int, threshold: float = 1.0, seed: int = 42):
+    def __init__(self, n_features: int, threshold: float = 1.0, seed: int = 42) -> None:
         self.n_features = n_features
         self.threshold = threshold
         rng = np.random.RandomState(seed)
-        self.W = rng.randn(n_features, n_features) * np.sqrt(2.0 / n_features)
-        self._v = np.zeros(n_features)
+        self.W: np.ndarray[Any, Any] = rng.randn(n_features, n_features) * np.sqrt(2.0 / n_features)
+        self._v: np.ndarray[Any, Any] = np.zeros(n_features)
 
     def forward(self, x: np.ndarray[Any, Any]) -> np.ndarray[Any, Any]:
         """Forward: spike(W@x) + x (element-wise, clamped to [0,1])."""
@@ -100,7 +100,7 @@ class SEWBlock:
         output: np.ndarray[Any, Any] = np.clip(spikes + x, 0, 1)
         return output
 
-    def reset(self) -> None:  # pragma: no cover
+    def reset(self) -> None:
         """Reset the block membrane potential to zero."""
         self._v = np.zeros(self.n_features)
 
@@ -116,13 +116,13 @@ class DeepSNNStack:
         'ms' for MembraneShortcut, 'sew' for SEW.
     """
 
-    def __init__(self, n_features: int, n_blocks: int = 10, block_type: str = "ms"):
-        self.blocks = []
+    def __init__(self, n_features: int, n_blocks: int = 10, block_type: str = "ms") -> None:
+        self.blocks: list[MembraneShortcutBlock | SEWBlock] = []
         for i in range(n_blocks):
             if block_type == "ms":
                 self.blocks.append(MembraneShortcutBlock(n_features, seed=42 + i))
             else:
-                self.blocks.append(SEWBlock(n_features, seed=42 + i))  # type: ignore[arg-type]
+                self.blocks.append(SEWBlock(n_features, seed=42 + i))
 
     def forward(self, x: np.ndarray[Any, Any]) -> np.ndarray[Any, Any]:
         """Propagate the input through every residual block in sequence."""
@@ -131,13 +131,13 @@ class DeepSNNStack:
             h = block.forward(h)
         return h
 
-    def reset(self) -> None:  # pragma: no cover
+    def reset(self) -> None:
         """Reset the membrane potential of every block in the stack."""
         for block in self.blocks:
             block.reset()
 
     @property
-    def n_blocks(self) -> int:  # pragma: no cover
+    def n_blocks(self) -> int:
         """Return the number of residual blocks in the stack."""
         return len(self.blocks)
 

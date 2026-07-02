@@ -69,22 +69,26 @@ class PredictiveCompressionResult(CompressionResult):
     predictor_type: str = "ema"
 
 
-class _RatePredictor:  # pragma: no cover — superseded by _predict_and_xor inline
+class _RatePredictor:
     """Per-channel EMA rate predictor (legacy, kept for reference)."""
 
-    def __init__(self, n_channels: int, alpha: float = 0.005, threshold: float = 0.5):
+    def __init__(self, n_channels: int, alpha: float = 0.005, threshold: float = 0.5) -> None:
+        """Initialize per-channel rates and threshold parameters."""
         self.n_channels = n_channels
         self.alpha = alpha
         self.threshold = threshold
         self.rates = np.zeros(n_channels, dtype=np.float64)
 
     def predict(self) -> np.ndarray[Any, Any]:
+        """Predict active channels from the current EMA rate estimates."""
         return (self.rates > self.threshold).astype(np.int8)
 
     def update(self, actual: np.ndarray[Any, Any]) -> None:
+        """Update EMA rates from one observed spike vector."""
         self.rates += self.alpha * (actual.astype(np.float64) - self.rates)
 
     def reset(self) -> None:
+        """Reset all channel rates to zero."""
         self.rates[:] = 0.0
 
 

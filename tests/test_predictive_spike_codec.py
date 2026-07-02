@@ -13,7 +13,7 @@ from sc_neurocore.spike_codec import PredictiveSpikeCodec, PredictiveCompression
 class TestPredictiveSpikeCodecRoundtrip:
     """Lossless roundtrip: compress → decompress must recover exact input."""
 
-    def test_roundtrip_sparse_spikes(self):
+    def test_roundtrip_sparse_spikes(self) -> None:
         rng = np.random.RandomState(42)
         spikes = (rng.random((500, 32)) < 0.02).astype(np.int8)
         codec = PredictiveSpikeCodec(alpha=0.005)
@@ -22,7 +22,7 @@ class TestPredictiveSpikeCodecRoundtrip:
         np.testing.assert_array_equal(recovered, spikes)
         assert result.lossless
 
-    def test_roundtrip_dense_spikes(self):
+    def test_roundtrip_dense_spikes(self) -> None:
         rng = np.random.RandomState(7)
         spikes = (rng.random((100, 16)) < 0.3).astype(np.int8)
         codec = PredictiveSpikeCodec(alpha=0.01)
@@ -30,7 +30,7 @@ class TestPredictiveSpikeCodecRoundtrip:
         recovered = codec.decompress(data, 100, 16)
         np.testing.assert_array_equal(recovered, spikes)
 
-    def test_roundtrip_silent_channels(self):
+    def test_roundtrip_silent_channels(self) -> None:
         spikes = np.zeros((200, 10), dtype=np.int8)
         codec = PredictiveSpikeCodec()
         data, result = codec.compress(spikes)
@@ -38,14 +38,14 @@ class TestPredictiveSpikeCodecRoundtrip:
         np.testing.assert_array_equal(recovered, spikes)
         assert result.n_spikes == 0
 
-    def test_roundtrip_all_firing(self):
+    def test_roundtrip_all_firing(self) -> None:
         spikes = np.ones((50, 8), dtype=np.int8)
         codec = PredictiveSpikeCodec(alpha=0.1, threshold=0.5)
         data, _ = codec.compress(spikes)
         recovered = codec.decompress(data, 50, 8)
         np.testing.assert_array_equal(recovered, spikes)
 
-    def test_roundtrip_single_spike(self):
+    def test_roundtrip_single_spike(self) -> None:
         spikes = np.zeros((100, 4), dtype=np.int8)
         spikes[42, 2] = 1
         codec = PredictiveSpikeCodec()
@@ -53,7 +53,7 @@ class TestPredictiveSpikeCodecRoundtrip:
         recovered = codec.decompress(data, 100, 4)
         np.testing.assert_array_equal(recovered, spikes)
 
-    def test_roundtrip_single_channel(self):
+    def test_roundtrip_single_channel(self) -> None:
         rng = np.random.RandomState(99)
         spikes = (rng.random((300, 1)) < 0.05).astype(np.int8)
         codec = PredictiveSpikeCodec()
@@ -65,7 +65,7 @@ class TestPredictiveSpikeCodecRoundtrip:
 class TestPredictiveSpikeCodecCompression:
     """Verify compression properties."""
 
-    def test_beats_raw_isi_on_bursty_data(self):
+    def test_beats_raw_isi_on_bursty_data(self) -> None:
         """Bursty firing (periodic oscillation) should compress better
         with prediction than without."""
         rng = np.random.RandomState(42)
@@ -89,14 +89,14 @@ class TestPredictiveSpikeCodecCompression:
         # Predictive should achieve higher compression on structured data
         assert pred_result.compression_ratio > raw_result.compression_ratio * 0.8
 
-    def test_compression_ratio_above_one(self):
+    def test_compression_ratio_above_one(self) -> None:
         rng = np.random.RandomState(42)
         spikes = (rng.random((1000, 50)) < 0.01).astype(np.int8)
         codec = PredictiveSpikeCodec()
         _, result = codec.compress(spikes)
         assert result.compression_ratio > 1.0
 
-    def test_prediction_accuracy_increases(self):
+    def test_prediction_accuracy_increases(self) -> None:
         """On stationary data, prediction accuracy should be reasonable."""
         rng = np.random.RandomState(42)
         spikes = (rng.random((5000, 20)) < 0.01).astype(np.int8)
@@ -106,7 +106,7 @@ class TestPredictiveSpikeCodecCompression:
         # → accuracy should be ~99% (since 99% of bins are 0)
         assert result.prediction_accuracy > 0.95
 
-    def test_error_sparsity_reported(self):
+    def test_error_sparsity_reported(self) -> None:
         rng = np.random.RandomState(42)
         spikes = (rng.random((200, 10)) < 0.05).astype(np.int8)
         codec = PredictiveSpikeCodec()
@@ -118,12 +118,12 @@ class TestPredictiveSpikeCodecCompression:
 class TestPredictiveSpikeCodecEdgeCases:
     """Edge cases and error handling."""
 
-    def test_invalid_magic_raises(self):
+    def test_invalid_magic_raises(self) -> None:
         codec = PredictiveSpikeCodec()
         with pytest.raises(ValueError, match="Invalid header magic"):
             codec.decompress(b"XXXX" + b"\x00" * 100, 10, 5)
 
-    def test_bool_input_accepted(self):
+    def test_bool_input_accepted(self) -> None:
         rng = np.random.RandomState(42)
         spikes = rng.random((100, 8)) < 0.05
         codec = PredictiveSpikeCodec()
@@ -131,7 +131,7 @@ class TestPredictiveSpikeCodecEdgeCases:
         recovered = codec.decompress(data, 100, 8)
         np.testing.assert_array_equal(recovered, spikes.astype(np.int8))
 
-    def test_different_alpha_values(self):
+    def test_different_alpha_values(self) -> None:
         rng = np.random.RandomState(42)
         spikes = (rng.random((200, 10)) < 0.05).astype(np.int8)
         for alpha in [0.001, 0.01, 0.1, 0.5]:
@@ -140,7 +140,7 @@ class TestPredictiveSpikeCodecEdgeCases:
             recovered = codec.decompress(data, 200, 10)
             np.testing.assert_array_equal(recovered, spikes)
 
-    def test_different_thresholds(self):
+    def test_different_thresholds(self) -> None:
         rng = np.random.RandomState(42)
         spikes = (rng.random((200, 10)) < 0.05).astype(np.int8)
         for threshold in [0.01, 0.1, 0.5, 0.9]:
@@ -149,13 +149,13 @@ class TestPredictiveSpikeCodecEdgeCases:
             recovered = codec.decompress(data, 200, 10)
             np.testing.assert_array_equal(recovered, spikes)
 
-    def test_result_is_predictive_type(self):
+    def test_result_is_predictive_type(self) -> None:
         spikes = np.zeros((10, 2), dtype=np.int8)
         codec = PredictiveSpikeCodec()
         _, result = codec.compress(spikes)
         assert isinstance(result, PredictiveCompressionResult)
 
-    def test_large_channel_count(self):
+    def test_large_channel_count(self) -> None:
         """1024 channels — Neuralink N1 scale."""
         rng = np.random.RandomState(42)
         spikes = (rng.random((100, 1024)) < 0.005).astype(np.int8)
@@ -169,7 +169,7 @@ class TestPredictiveSpikeCodecEdgeCases:
 class TestLFSRPredictor:
     """SC-native LFSR predictor: bit-true with sc_bitstream_encoder.v."""
 
-    def test_lfsr_roundtrip(self):
+    def test_lfsr_roundtrip(self) -> None:
         rng = np.random.RandomState(42)
         spikes = (rng.random((500, 32)) < 0.02).astype(np.int8)
         codec = PredictiveSpikeCodec(predictor="lfsr", alpha_q8=1, seed=0xACE1)
@@ -178,26 +178,26 @@ class TestLFSRPredictor:
         np.testing.assert_array_equal(recovered, spikes)
         assert result.predictor_type == "lfsr"
 
-    def test_lfsr_1024ch(self):
+    def test_lfsr_1024ch(self) -> None:
         rng = np.random.RandomState(42)
         spikes = (rng.random((100, 1024)) < 0.005).astype(np.int8)
         codec = PredictiveSpikeCodec(predictor="lfsr", alpha_q8=2, seed=0x1234)
         data, _ = codec.compress(spikes)
         np.testing.assert_array_equal(codec.decompress(data, 100, 1024), spikes)
 
-    def test_lfsr_silent(self):
+    def test_lfsr_silent(self) -> None:
         spikes = np.zeros((200, 10), dtype=np.int8)
         codec = PredictiveSpikeCodec(predictor="lfsr")
         data, _ = codec.compress(spikes)
         np.testing.assert_array_equal(codec.decompress(data, 200, 10), spikes)
 
-    def test_lfsr_all_firing(self):
+    def test_lfsr_all_firing(self) -> None:
         spikes = np.ones((50, 8), dtype=np.int8)
         codec = PredictiveSpikeCodec(predictor="lfsr", alpha_q8=50, seed=0xBEEF)
         data, _ = codec.compress(spikes)
         np.testing.assert_array_equal(codec.decompress(data, 50, 8), spikes)
 
-    def test_lfsr_deterministic(self):
+    def test_lfsr_deterministic(self) -> None:
         """Same seed → same output, always."""
         rng = np.random.RandomState(42)
         spikes = (rng.random((100, 16)) < 0.05).astype(np.int8)
@@ -207,7 +207,7 @@ class TestLFSRPredictor:
         d2, _ = c2.compress(spikes)
         assert d1 == d2
 
-    def test_cross_mode_auto_detect(self):
+    def test_cross_mode_auto_detect(self) -> None:
         """Decoder auto-detects predictor type from header magic."""
         rng = np.random.RandomState(42)
         spikes = (rng.random((100, 16)) < 0.05).astype(np.int8)
@@ -219,7 +219,7 @@ class TestLFSRPredictor:
         np.testing.assert_array_equal(codec_lfsr.decompress(data_ema, 100, 16), spikes)
         np.testing.assert_array_equal(codec_ema.decompress(data_lfsr, 100, 16), spikes)
 
-    def test_different_alpha_q8(self):
+    def test_different_alpha_q8(self) -> None:
         rng = np.random.RandomState(42)
         spikes = (rng.random((200, 10)) < 0.05).astype(np.int8)
         for aq8 in [1, 5, 20, 100]:
@@ -231,7 +231,7 @@ class TestLFSRPredictor:
 class TestContextPredictor:
     """Markov context model predictor tests."""
 
-    def test_context_roundtrip(self):
+    def test_context_roundtrip(self) -> None:
         rng = np.random.RandomState(42)
         spikes = (rng.random((500, 16)) < 0.05).astype(np.int8)
         codec = PredictiveSpikeCodec(predictor="context", context_bits=8)
@@ -240,20 +240,20 @@ class TestContextPredictor:
         np.testing.assert_array_equal(recovered, spikes)
         assert result.predictor_type == "context"
 
-    def test_context_roundtrip_silent(self):
+    def test_context_roundtrip_silent(self) -> None:
         spikes = np.zeros((200, 8), dtype=np.int8)
         codec = PredictiveSpikeCodec(predictor="context")
         data, _ = codec.compress(spikes)
         np.testing.assert_array_equal(codec.decompress(data, 200, 8), spikes)
 
-    def test_context_roundtrip_dense(self):
+    def test_context_roundtrip_dense(self) -> None:
         rng = np.random.RandomState(42)
         spikes = (rng.random((100, 8)) < 0.3).astype(np.int8)
         codec = PredictiveSpikeCodec(predictor="context", context_bits=4)
         data, _ = codec.compress(spikes)
         np.testing.assert_array_equal(codec.decompress(data, 100, 8), spikes)
 
-    def test_context_beats_ema_on_bursty(self):
+    def test_context_beats_ema_on_bursty(self) -> None:
         """Context model should outperform EMA on periodic bursts."""
         rng = np.random.RandomState(42)
         T, N = 2000, 16
@@ -268,7 +268,7 @@ class TestContextPredictor:
         _, r_ctx = PredictiveSpikeCodec(predictor="context", context_bits=8).compress(bursty)
         assert r_ctx.prediction_accuracy > r_ema.prediction_accuracy
 
-    def test_context_different_bits(self):
+    def test_context_different_bits(self) -> None:
         rng = np.random.RandomState(42)
         spikes = (rng.random((200, 8)) < 0.05).astype(np.int8)
         for bits in [2, 4, 8, 12]:
@@ -276,7 +276,7 @@ class TestContextPredictor:
             data, _ = codec.compress(spikes)
             np.testing.assert_array_equal(codec.decompress(data, 200, 8), spikes)
 
-    def test_cross_mode_context_decode(self):
+    def test_cross_mode_context_decode(self) -> None:
         """Any codec instance can decompress context-encoded data."""
         rng = np.random.RandomState(42)
         spikes = (rng.random((100, 8)) < 0.05).astype(np.int8)
@@ -289,7 +289,7 @@ class TestContextPredictor:
 class TestWorldModelPredictor:
     """Learnable autoregressive world model predictor."""
 
-    def test_world_model_roundtrip(self):
+    def test_world_model_roundtrip(self) -> None:
         rng = np.random.RandomState(42)
         spikes = (rng.random((500, 16)) < 0.05).astype(np.int8)
         codec = PredictiveSpikeCodec(predictor="world_model", alpha=0.01, context_bits=8, seed=42)
@@ -298,13 +298,13 @@ class TestWorldModelPredictor:
         np.testing.assert_array_equal(recovered, spikes)
         assert result.predictor_type == "world_model"
 
-    def test_world_model_silent(self):
+    def test_world_model_silent(self) -> None:
         spikes = np.zeros((200, 8), dtype=np.int8)
         codec = PredictiveSpikeCodec(predictor="world_model")
         data, _ = codec.compress(spikes)
         np.testing.assert_array_equal(codec.decompress(data, 200, 8), spikes)
 
-    def test_world_model_bursty(self):
+    def test_world_model_bursty(self) -> None:
         rng = np.random.RandomState(42)
         T, N = 1000, 16
         bursty = np.zeros((T, N), dtype=np.int8)
@@ -319,7 +319,7 @@ class TestWorldModelPredictor:
         np.testing.assert_array_equal(codec.decompress(data, T, N), bursty)
         assert result.prediction_accuracy > 0.95
 
-    def test_world_model_beats_ema_on_bursty(self):
+    def test_world_model_beats_ema_on_bursty(self) -> None:
         rng = np.random.RandomState(42)
         T, N = 2000, 16
         bursty = np.zeros((T, N), dtype=np.int8)
@@ -335,7 +335,7 @@ class TestWorldModelPredictor:
         ).compress(bursty)
         assert r_wm.prediction_accuracy > r_ema.prediction_accuracy
 
-    def test_world_model_cross_decode(self):
+    def test_world_model_cross_decode(self) -> None:
         rng = np.random.RandomState(42)
         spikes = (rng.random((100, 8)) < 0.05).astype(np.int8)
         data, _ = PredictiveSpikeCodec(predictor="world_model").compress(spikes)
@@ -351,7 +351,7 @@ class TestPythonFallbackFunctions:
     Testing them directly validates Python fallback behaviour regardless of Rust availability.
     """
 
-    def test_predict_and_xor_roundtrip(self):
+    def test_predict_and_xor_roundtrip(self) -> None:
         from sc_neurocore.spike_codec.predictive_codec import (
             _predict_and_xor,
             _xor_and_recover,
@@ -365,7 +365,7 @@ class TestPythonFallbackFunctions:
         recovered = _xor_and_recover(errors, 16, 0.005, 0.5)
         np.testing.assert_array_equal(recovered, spikes)
 
-    def test_predict_and_xor_silent(self):
+    def test_predict_and_xor_silent(self) -> None:
         from sc_neurocore.spike_codec.predictive_codec import (
             _predict_and_xor,
             _xor_and_recover,
@@ -377,7 +377,7 @@ class TestPythonFallbackFunctions:
         recovered = _xor_and_recover(errors, 8, 0.01, 0.5)
         np.testing.assert_array_equal(recovered, spikes)
 
-    def test_lfsr16_step(self):
+    def test_lfsr16_step(self) -> None:
         from sc_neurocore.spike_codec.predictive_codec import _lfsr16_step
 
         reg = 0xACE1
@@ -388,7 +388,7 @@ class TestPythonFallbackFunctions:
             seen.add(reg)
         assert len(seen) == 100  # no short cycle
 
-    def test_predict_and_xor_lfsr_roundtrip(self):
+    def test_predict_and_xor_lfsr_roundtrip(self) -> None:
         from sc_neurocore.spike_codec.predictive_codec import (
             _predict_and_xor_lfsr,
             _xor_and_recover_lfsr,
@@ -402,7 +402,7 @@ class TestPythonFallbackFunctions:
         recovered = _xor_and_recover_lfsr(errors, 16, 1, 0xACE1)
         np.testing.assert_array_equal(recovered, spikes)
 
-    def test_predict_and_xor_lfsr_all_firing(self):
+    def test_predict_and_xor_lfsr_all_firing(self) -> None:
         from sc_neurocore.spike_codec.predictive_codec import (
             _predict_and_xor_lfsr,
             _xor_and_recover_lfsr,
@@ -413,11 +413,27 @@ class TestPythonFallbackFunctions:
         recovered = _xor_and_recover_lfsr(errors, 4, 50, 0xBEEF)
         np.testing.assert_array_equal(recovered, spikes)
 
+    def test_legacy_rate_predictor_contract(self) -> None:
+        """Legacy EMA predictor should update, predict, and reset deterministically."""
+        from sc_neurocore.spike_codec.predictive_codec import _RatePredictor
+
+        predictor = _RatePredictor(n_channels=3, alpha=0.5, threshold=0.25)
+        np.testing.assert_array_equal(predictor.predict(), np.zeros(3, dtype=np.int8))
+
+        predictor.update(np.array([1, 0, 1], dtype=np.int8))
+
+        np.testing.assert_allclose(predictor.rates, np.array([0.5, 0.0, 0.5]))
+        np.testing.assert_array_equal(predictor.predict(), np.array([1, 0, 1], dtype=np.int8))
+
+        predictor.reset()
+
+        np.testing.assert_allclose(predictor.rates, np.zeros(3, dtype=np.float64))
+
 
 class TestPythonFallbackPath:
     """Force Python path through the class by monkeypatching _HAS_RUST."""
 
-    def test_ema_python_path(self, monkeypatch):
+    def test_ema_python_path(self, monkeypatch: pytest.MonkeyPatch) -> None:
         import sc_neurocore.spike_codec.predictive_codec as mod
 
         monkeypatch.setattr(mod, "_HAS_RUST", False)
@@ -429,7 +445,7 @@ class TestPythonFallbackPath:
         np.testing.assert_array_equal(recovered, spikes)
         assert result.predictor_type == "ema"
 
-    def test_lfsr_python_path(self, monkeypatch):
+    def test_lfsr_python_path(self, monkeypatch: pytest.MonkeyPatch) -> None:
         import sc_neurocore.spike_codec.predictive_codec as mod
 
         monkeypatch.setattr(mod, "_HAS_RUST", False)
