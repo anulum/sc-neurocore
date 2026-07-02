@@ -7,7 +7,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 211
+expected_file_count = 212
 
 [[file]]
 path = "src/sc_neurocore/__init__.py"
@@ -788,6 +788,10 @@ rationale = "Public SCPN L11 morphic resonance / noospheric layer."
 [[file]]
 path = "src/sc_neurocore/scpn/layers/l13_temporal.py"
 rationale = "Public SCPN L13 source / temporal binding layer."
+
+[[file]]
+path = "src/sc_neurocore/adapters/holonomic/l13_source.py"
+rationale = "Public SCPN L13 holonomic source-field adapter with validated L16 feedback inputs."
 
 [[file]]
 path = "src/sc_neurocore/scpn/layers/l14_integration.py"

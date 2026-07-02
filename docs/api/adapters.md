@@ -45,6 +45,22 @@ Julia mirror, and Mojo validation shim expose the same parameter, timestep, and
 input-projection boundaries for downstream generated-kernel checks; they are
 not benchmark-dispatched acceleration paths.
 
+### L13 Source-Field Adapter Contract
+
+`sc_neurocore.adapters.holonomic.l13_source.L13_SourceAdapter` accepts optional
+L16 cybernetic-closure feedback as a scalar, rank-1 vector, or rank-2 batch.
+The adapter validates positive integer vacuum dimensions, finite primordial
+coupling and source bias, finite non-negative scission drive, positive finite
+`dt`, non-empty feedback vectors/batches, rank at most 2, and finite input
+values before mutating vacuum or Fisher-metric state. Scalars broadcast across
+all nodes; mismatched vector lengths or batch row counts broadcast the mean
+feedback drive deterministically across the configured vacuum lattice.
+
+The Python/JAX adapter owns the runtime source-field update. The Rust safety
+mirror, Julia mirror, and Mojo validation shim expose the same parameter,
+timestep, feedback-projection, and decode boundaries for downstream
+generated-kernel checks; they are not benchmark-dispatched acceleration paths.
+
 ## SpikeInterface / Neo Adapter
 
 Import experimental spike data into SC-NeuroCore. Converts between

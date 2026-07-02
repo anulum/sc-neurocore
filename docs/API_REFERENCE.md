@@ -632,28 +632,45 @@ JAX-traceable adapter for the SCPN Ecological-Gaian layer.
 ## Module `adapters.holonomic.l13_source`
 
 ### Class `L13_HolonomicParameters`
-Parameters derived from Paper 13 and Vacuum Lattice specs.
+Configuration for the Layer 13 source-field adapter.
+
+Parameters
+----------
+n_vacuum_nodes:
+    Number of nodes in the one-dimensional vacuum lattice.
+bitstream_length:
+    Number of stochastic bits emitted per vacuum node.
+j_primordial_coupling:
+    Finite nearest-neighbour primordial lattice coupling.
+h_potential_bias:
+    Finite scalar source-field bias applied to each node.
+lambda_scission:
+    Finite non-negative symmetry-breaking drive.
 
 
 ### Class `L13_SourceAdapter`
-JAX-traceable adapter for the SCPN Source-Field layer.
+JAX-traceable adapter for the SCPN source-field layer.
 
 - **__init__**(params, seed)
+  - Initialise the Layer 13 source-field adapter.
 - **_validate_positive_int**(name, value)
+  - Validate a strict positive integer configuration field.
 - **_validate_params**(cls, params)
+  - Validate Layer 13 parameters before allocating backend arrays.
 - **encode**(domain_state)
-  - Maps vacuum potential to stochastic bitstreams.
-- **_vacuum_kernel**(state, coupling, bias, dt)
-  - Advances local spin-like vacuum lattice dynamics.
+  - Map vacuum potential to stochastic source-field bitstreams.
 - **_vacuum_lattice_kernel**(state, coupling, bias, scission_rate, feedback_drive, dt)
-  - Advances local spin-like vacuum lattice dynamics.
+  - Advance local spin-like vacuum lattice dynamics.
+- **_validate_dt**(dt)
+  - Validate a positive finite simulation timestep.
 - **_project_feedback**(inputs)
+  - Project optional L16 feedback onto the configured vacuum lattice.
 - **step_jax**(dt, inputs)
-  - Advances the L13 holonomic dynamics using JAX.
+  - Advance the L13 holonomic dynamics using JAX-compatible arrays.
 - **decode**(bitstreams)
-  - Maps bitstreams back to Primordial Coherence.
+  - Map bitstreams back to primordial source coherence.
 - **get_metrics**()
-  - Returns L13-specific metrics.
+  - Return L13-specific vacuum and Fisher-metric telemetry.
 
 ---
 

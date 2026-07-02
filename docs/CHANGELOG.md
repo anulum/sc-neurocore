@@ -5,6 +5,17 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+### L13 holonomic source-field adapter hardening
+- Hardened `adapters.holonomic.l13_source` with fail-closed parameter,
+  timestep, feedback-rank, feedback-emptiness, finite-value, decode, and
+  no-mutation validation before vacuum/Fisher state updates. Scalar feedback
+  now broadcasts across the vacuum lattice, and mismatched vector or batch
+  feedback projects deterministically by mean drive. The public adapter is
+  covered at 100% exact-file coverage under strict mypy plus the scoped NumPy
+  docstring policy. The Rust safety mirror now validates real state, the Julia
+  mirror is callable, and the Mojo contract shim builds as a shared library
+  with callable validation helpers.
+
 ### L6 holonomic planetary adapter hardening
 - Hardened `adapters.holonomic.l6_plan` with fail-closed parameter, timestep,
   input-rank, input-width, non-empty-row, and finite-value validation before
