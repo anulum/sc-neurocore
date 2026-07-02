@@ -8,6 +8,8 @@
 
 from __future__ import annotations
 
+from typing import Any
+
 import pytest
 
 from sc_neurocore.learning.online_o1 import (
@@ -78,12 +80,63 @@ def test_online_o1_memory_proof_is_independent_of_sequence_length() -> None:
 def test_online_o1_config_rejects_non_hardware_bounded_parameters() -> None:
     with pytest.raises(ValueError, match="weight_bits"):
         OnlineO1Config(weight_bits=0)
+    with pytest.raises(ValueError, match="weight_bits"):
+        OnlineO1Config(weight_bits=32)
     with pytest.raises(ValueError, match="trace_bits"):
         OnlineO1Config(trace_bits=1)
+    with pytest.raises(ValueError, match="trace_bits"):
+        OnlineO1Config(trace_bits=31)
+    with pytest.raises(ValueError, match="reward_bits"):
+        OnlineO1Config(reward_bits=0)
+    with pytest.raises(ValueError, match="reward_bits"):
+        OnlineO1Config(reward_bits=31)
     with pytest.raises(ValueError, match="learning_shift"):
         OnlineO1Config(learning_shift=-1)
+    with pytest.raises(ValueError, match="learning_shift"):
+        OnlineO1Config(learning_shift=31)
     with pytest.raises(ValueError, match="trace_decay_shift"):
         OnlineO1Config(trace_decay_shift=-1)
+    with pytest.raises(ValueError, match="trace_decay_shift"):
+        OnlineO1Config(trace_decay_shift=31)
+
+
+@pytest.mark.parametrize(
+    "kwargs",
+    [
+        {"weight_bits": True},
+        {"trace_bits": False},
+        {"reward_bits": 4.0},
+        {"learning_shift": 2.0},
+        {"trace_decay_shift": "2"},
+    ],
+)
+def test_online_o1_config_rejects_bool_and_non_integral_domains(
+    kwargs: dict[str, Any],
+) -> None:
+    with pytest.raises(TypeError):
+        OnlineO1Config(**kwargs)
+
+
+def test_online_o1_synapse_rejects_non_integral_state_inputs() -> None:
+    config = OnlineO1Config(weight_bits=8, trace_bits=6, reward_bits=4)
+
+    with pytest.raises(TypeError, match="initial_weight"):
+        OnlineO1Synapse(config=config, initial_weight=True)
+    non_integral_initial_weight: Any = 1.5
+    with pytest.raises(TypeError, match="initial_weight"):
+        OnlineO1Synapse(config=config, initial_weight=non_integral_initial_weight)
+    with pytest.raises(ValueError, match="initial_weight"):
+        OnlineO1Synapse(config=config, initial_weight=-1)
+    invalid_config: Any = "not-a-config"
+    with pytest.raises(TypeError, match="config"):
+        OnlineO1Synapse(config=invalid_config, initial_weight=0)
+
+    synapse = OnlineO1Synapse(config=config, initial_weight=12)
+    with pytest.raises(TypeError, match="reward"):
+        synapse.step(pre_spike=True, post_spike=False, reward=False)
+    non_integral_reward: Any = 2.5
+    with pytest.raises(TypeError, match="reward"):
+        synapse.step(pre_spike=True, post_spike=False, reward=non_integral_reward)
 
 
 def test_online_o1_scnir_annotation_is_deterministic_and_claim_bounded() -> None:
@@ -106,3 +159,71 @@ def test_online_o1_scnir_annotation_is_deterministic_and_claim_bounded() -> None
         "hidden_history_fields": [],
         "sequence_length_independent": True,
     }
+
+
+def test_online_o1_rejects_unknown_rule_family_and_empty_annotation_id() -> None:
+    invalid_rule_family: Any = "not-supported"
+    with pytest.raises(ValueError, match="rule_family"):
+        OnlineO1Config(rule_family=invalid_rule_family)
+
+    with pytest.raises(ValueError, match="rule_id"):
+        OnlineO1Config().to_scnir_annotation(rule_id="")
+
+
+def test_online_o1_zero_decay_shift_preserves_traces_and_eligibility() -> None:
+    config = OnlineO1Config(
+        weight_bits=8,
+        trace_bits=6,
+        reward_bits=4,
+        learning_shift=3,
+        trace_decay_shift=0,
+    )
+    synapse = OnlineO1Synapse(config=config, initial_weight=10)
+
+    synapse.step(pre_spike=True, post_spike=False, reward=0)
+    positive = synapse.step(pre_spike=False, post_spike=True, reward=1)
+    repeated = synapse.step(pre_spike=False, post_spike=False, reward=1)
+
+    assert positive.pre_trace == config.max_trace
+    assert positive.post_trace == config.max_trace
+    assert positive.eligibility == config.max_eligibility
+    assert repeated.pre_trace == positive.pre_trace
+    assert repeated.post_trace == positive.post_trace
+    assert repeated.eligibility == positive.eligibility
+
+
+@pytest.mark.parametrize(
+    ("n_synapses", "sequence_length"),
+    [
+        (-1, None),
+        (0, -1),
+    ],
+)
+def test_online_o1_memory_proof_rejects_negative_domains(
+    n_synapses: int, sequence_length: int | None
+) -> None:
+    config = OnlineO1Config()
+    with pytest.raises(ValueError):
+        build_online_o1_memory_proof(
+            n_synapses=n_synapses, config=config, sequence_length=sequence_length
+        )
+
+
+@pytest.mark.parametrize(
+    ("n_synapses", "sequence_length"),
+    [
+        (True, None),
+        (0, False),
+        (1.0, None),
+        (0, 1.0),
+    ],
+)
+def test_online_o1_memory_proof_rejects_bool_and_non_integral_domains(
+    n_synapses: Any,
+    sequence_length: Any,
+) -> None:
+    config = OnlineO1Config()
+    with pytest.raises(TypeError):
+        build_online_o1_memory_proof(
+            n_synapses=n_synapses, config=config, sequence_length=sequence_length
+        )

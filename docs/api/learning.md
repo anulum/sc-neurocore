@@ -65,8 +65,12 @@ sequence length and reports the exact per-synapse bit count used by the HDL
 emitter.
 
 The first supported rule family is reward-modulated STDP with fixed-point
-saturation. `OnlineO1Config.to_scnir_annotation(...)` emits deterministic
-SC-NIR metadata for online-learning-capable synapses, and
+saturation. The Python reference and optional Rust C-FFI wrapper share the same
+hardware domain: `weight_bits` is `1..=31`, `trace_bits` is `2..=30`,
+`reward_bits` is `1..=30`, learning and decay shifts are `0..=30`, and bool or
+non-integral aliases are rejected before state mutation or ctypes conversion.
+Runtime rewards remain saturating fixed-point inputs. `OnlineO1Config.to_scnir_annotation(...)`
+emits deterministic SC-NIR metadata for online-learning-capable synapses, and
 `sc_neurocore.hdl_gen.OnlineO1LearningEmitter` emits a one-lane Verilog update
 block with the same bounded state fields and saturation policy. This software
 and RTL contract is local handoff evidence; it does not claim board synthesis
@@ -88,6 +92,8 @@ pre/post reward-pairing adaptation speed, records Python/Rust parity when the
 native library is present, and marks `hardware_measurement_claimed=false`.
 
 ::: sc_neurocore.learning.online_o1.OnlineO1Config
+
+::: sc_neurocore.learning.online_o1.OnlineO1Snapshot
 
 ::: sc_neurocore.learning.online_o1.OnlineO1Synapse
 

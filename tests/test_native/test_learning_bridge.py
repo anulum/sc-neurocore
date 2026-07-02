@@ -11,12 +11,39 @@ from __future__ import annotations
 import ctypes as ct
 from collections.abc import Generator
 from pathlib import Path
-from typing import Any
+from typing import Any, cast
 
 import numpy as np
 import pytest
 
 from sc_neurocore._native import learning_bridge as lb
+
+
+class _FakeCFunction:
+    def __init__(self) -> None:
+        self.argtypes: list[Any] = []
+        self.restype: Any = None
+
+    def __call__(self, *_args: object) -> object:
+        return None
+
+
+class _FakeCdllWithoutOnlineO1:
+    _ONLINE_SYMBOLS = {
+        "create_online_o1_synapse",
+        "step_online_o1_synapse",
+        "online_o1_per_synapse_state_bits",
+        "destroy_online_o1_synapse",
+    }
+
+    def __init__(self) -> None:
+        self.functions: dict[str, _FakeCFunction] = {}
+
+    def __getattr__(self, name: str) -> _FakeCFunction:
+        if name in self._ONLINE_SYMBOLS:
+            raise AttributeError(name)
+        function = self.functions.setdefault(name, _FakeCFunction())
+        return function
 
 
 class _FakeLearningLib:
@@ -51,7 +78,7 @@ class _FakeLearningLib:
     def create_online_o1_synapse(self, *_args: object) -> int:
         return 404
 
-    def step_online_o1_synapse(self, *_args: object):
+    def step_online_o1_synapse(self, *_args: object) -> lb.OnlineO1SnapshotFFI:
         return lb.OnlineO1SnapshotFFI(weight=22, pre_trace=48, post_trace=63, eligibility=31)
 
     def online_o1_per_synapse_state_bits(self, _ptr: int) -> int:
@@ -160,6 +187,10 @@ def _restore_learning_bridge_state() -> Generator[None, None, None]:
         del old_env
 
 
+def _set_native_lib(fake: object | None) -> None:
+    lb._lib = cast(Any, fake)
+
+
 def test_get_lib_raises_when_unloaded() -> None:
     lb._lib = None
     with pytest.raises(RuntimeError, match="not loaded"):
@@ -170,7 +201,7 @@ def test_load_native_library_returns_false_for_missing_env_path(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     lb._HAS_LEARNING = True
-    lb._lib = object()
+    _set_native_lib(object())
     monkeypatch.setenv("SC_NEUROCORE_LIB_PATH", "/definitely/missing/libautonomous_learning.so")
     assert lb._load_native_library() is False
     assert lb.is_available() is False
@@ -183,9 +214,25 @@ def test_load_native_library_returns_false_on_cdll_oserror(
     fake_lib = tmp_path / "libautonomous_learning.so"
     fake_lib.write_bytes(b"not-a-real-library")
     monkeypatch.setenv("SC_NEUROCORE_LIB_PATH", str(fake_lib))
-    monkeypatch.setattr(lb._ct, "CDLL", lambda _path: (_ for _ in ()).throw(OSError("boom")))
+    monkeypatch.setattr(ct, "CDLL", lambda _path: (_ for _ in ()).throw(OSError("boom")))
     assert lb._load_native_library() is False
     assert lb.is_available() is False
+
+
+def test_load_native_library_accepts_legacy_library_without_online_o1_symbols(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    fake_lib = tmp_path / "libautonomous_learning.so"
+    fake_lib.write_bytes(b"")
+    fake_cdll = _FakeCdllWithoutOnlineO1()
+    monkeypatch.setenv("SC_NEUROCORE_LIB_PATH", str(fake_lib))
+    monkeypatch.setattr(ct, "CDLL", lambda _path: fake_cdll)
+
+    assert lb._load_native_library() is True
+    assert lb.is_available() is True
+    assert cast(object, lb._lib) is fake_cdll
+    assert "create_rule" in fake_cdll.functions
+    assert "create_online_o1_synapse" not in fake_cdll.functions
 
 
 def test_rule_constructors_raise_when_native_unavailable() -> None:
@@ -204,20 +251,65 @@ def test_rule_constructors_raise_when_native_unavailable() -> None:
 
 def test_online_o1_constructor_rejects_missing_symbols_and_null_handles() -> None:
     lb._HAS_LEARNING = True
-    lb._lib = _FakeLearningLibNoOnlineO1()
+    _set_native_lib(_FakeLearningLibNoOnlineO1())
     with pytest.raises(RuntimeError, match="lacks online O\\(1\\) symbols"):
         lb.RustOnlineO1Synapse()
 
     fake = _FakeLearningLib()
     fake.create_online_o1_synapse = lambda *_args: 0  # type: ignore[method-assign]
-    lb._lib = fake
+    _set_native_lib(fake)
     with pytest.raises(ValueError, match="invalid online O\\(1\\)"):
         lb.RustOnlineO1Synapse()
 
 
+@pytest.mark.parametrize(
+    "kwargs",
+    [
+        {"weight_bits": 0},
+        {"weight_bits": 32},
+        {"trace_bits": 1},
+        {"trace_bits": 31},
+        {"reward_bits": 0},
+        {"reward_bits": 31},
+        {"learning_shift": 31},
+        {"trace_decay_shift": 31},
+        {"initial_weight": -1},
+    ],
+)
+def test_online_o1_bridge_rejects_out_of_range_domains_before_ctypes(
+    kwargs: dict[str, Any],
+) -> None:
+    lb._HAS_LEARNING = True
+    _set_native_lib(_FakeLearningLib())
+
+    with pytest.raises(ValueError):
+        lb.RustOnlineO1Synapse(**kwargs)
+
+
+@pytest.mark.parametrize(
+    "kwargs",
+    [
+        {"weight_bits": True},
+        {"trace_bits": False},
+        {"reward_bits": 4.0},
+        {"learning_shift": 2.0},
+        {"trace_decay_shift": "2"},
+        {"initial_weight": 1.5},
+    ],
+)
+def test_online_o1_bridge_rejects_bool_and_non_integral_domains_before_ctypes(
+    kwargs: dict[str, Any],
+) -> None:
+    lb._HAS_LEARNING = True
+    _set_native_lib(_FakeLearningLib())
+
+    with pytest.raises(TypeError):
+        lb.RustOnlineO1Synapse(**kwargs)
+
+
 def test_rule_and_learner_batched_length_guards() -> None:
     lb._HAS_LEARNING = True
-    lb._lib = _FakeLearningLib()
+    _set_native_lib(_FakeLearningLib())
 
     rule = lb.RustPlasticityRule()
     with pytest.raises(ValueError, match="mismatch"):
@@ -238,7 +330,7 @@ def test_rule_and_learner_batched_length_guards() -> None:
 
 def test_rule_and_learner_valid_batched_paths_and_reset() -> None:
     lb._HAS_LEARNING = True
-    lb._lib = _FakeLearningLib()
+    _set_native_lib(_FakeLearningLib())
 
     rule = lb.RustPlasticityRule()
     learner = lb.RustEligentLearner()
@@ -261,7 +353,7 @@ def test_rule_and_learner_valid_batched_paths_and_reset() -> None:
 def test_rule_destructors_release_handles() -> None:
     fake = _FakeLearningLib()
     lb._HAS_LEARNING = True
-    lb._lib = fake
+    _set_native_lib(fake)
 
     rule = lb.RustPlasticityRule()
     learner = lb.RustEligentLearner()
@@ -277,7 +369,7 @@ def test_rule_destructors_release_handles() -> None:
 def test_online_o1_bridge_wraps_bounded_rust_kernel() -> None:
     fake = _FakeLearningLib()
     lb._HAS_LEARNING = True
-    lb._lib = fake
+    _set_native_lib(fake)
 
     synapse = lb.RustOnlineO1Synapse(
         weight_bits=8,
@@ -300,12 +392,25 @@ def test_online_o1_bridge_wraps_bounded_rust_kernel() -> None:
     assert fake.destroyed_online_o1 == [404]
 
 
+@pytest.mark.parametrize("reward", [True, 1.5, "2"])
+def test_online_o1_bridge_rejects_non_integral_reward_before_ctypes(reward: Any) -> None:
+    lb._HAS_LEARNING = True
+    _set_native_lib(_FakeLearningLib())
+
+    synapse = lb.RustOnlineO1Synapse()
+    try:
+        with pytest.raises(TypeError, match="reward"):
+            synapse.step(pre_spike=True, post_spike=False, reward=reward)
+    finally:
+        synapse.__del__()
+
+
 def test_rule_layer_state_roundtrip_and_file_paths(
     monkeypatch: pytest.MonkeyPatch, tmp_path: Path
 ) -> None:
     fake = _FakeLearningLib()
     lb._HAS_LEARNING = True
-    lb._lib = fake
+    _set_native_lib(fake)
 
     layer = lb.RustRuleLayer(count=3)
     state = layer.get_state_dict()
@@ -338,7 +443,7 @@ def test_rule_layer_state_roundtrip_and_file_paths(
 
     monkeypatch.setattr(lb, "_load_native_library", lambda: False)
     lb._HAS_LEARNING = False
-    lb._lib = None
+    _set_native_lib(None)
     restored_missing = object.__new__(lb.RustRuleLayer)
     with pytest.raises(RuntimeError, match="not available"):
         restored_missing.__setstate__(state)
@@ -347,7 +452,7 @@ def test_rule_layer_state_roundtrip_and_file_paths(
 def test_rule_layer_step_analog_seed_paths() -> None:
     fake = _FakeLearningLib()
     lb._HAS_LEARNING = True
-    lb._lib = fake
+    _set_native_lib(fake)
 
     layer = lb.RustRuleLayer(count=3)
     probs = np.array([0.1, 0.2, 0.3], dtype=np.float32)
@@ -365,7 +470,7 @@ def test_rule_layer_step_analog_seed_paths() -> None:
 def test_wgpu_layer_paths_and_factory(monkeypatch: pytest.MonkeyPatch) -> None:
     fake = _FakeLearningLib()
     lb._HAS_LEARNING = True
-    lb._lib = fake
+    _set_native_lib(fake)
     lb.set_deterministic_mode(77)
 
     layer = lb.RustWgpuRuleLayer(count=3)
@@ -429,6 +534,56 @@ def test_torch_non_autograd_step_state_and_reward_warning() -> None:
 
     assert np.all(np.isfinite(layer.get_weights()))
     assert np.allclose(clone.get_weights(), layer.get_weights())
+
+
+def test_torch_precision_accepts_tensor_and_numpy_bit_specs() -> None:
+    torch = pytest.importorskip("torch")
+
+    layer = lb.create_plasticity_layer(
+        count=4,
+        rule_type=lb.RULE_REWARD_STDP,
+        backend="torch",
+        autograd=False,
+        weight=0.41,
+        weight_bits=torch.tensor([2, 3, 4, 5]),
+        trace_bits=np.array([3, 4, 5, 6]),
+        eligibility_bits=4,
+        weight_clip=1.0,
+        trace_clip=1.0,
+        eligibility_clip=1.0,
+    )
+
+    pre = torch.tensor([1.0, 0.0, 1.0, 0.0])
+    post = torch.tensor([0.0, 1.0, 0.0, 1.0])
+    rewards = torch.ones(4)
+    layer.forward(pre, post, rewards, dt=1.0)
+
+    assert torch.all(torch.isfinite(layer.weights))
+    assert torch.all(torch.isfinite(layer.pre_trace))
+    assert torch.all(torch.isfinite(layer.post_trace))
+    assert torch.all(torch.isfinite(layer.eligibility))
+
+
+def test_torch_precision_rejects_sub_two_bits_and_non_positive_clips() -> None:
+    pytest.importorskip("torch")
+
+    with pytest.raises(ValueError, match="weight_bits entries"):
+        lb.create_plasticity_layer(
+            count=4,
+            rule_type=lb.RULE_STDP,
+            backend="torch",
+            autograd=False,
+            weight_bits=[1, 2, 3, 4],
+        )
+
+    with pytest.raises(ValueError, match="weight_clip"):
+        lb.create_plasticity_layer(
+            count=4,
+            rule_type=lb.RULE_STDP,
+            backend="torch",
+            autograd=False,
+            weight_clip=0.0,
+        )
 
 
 @pytest.mark.parametrize(

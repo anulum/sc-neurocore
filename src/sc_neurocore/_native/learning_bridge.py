@@ -19,12 +19,20 @@ import ctypes as _ct
 import os
 import pathlib as _pl
 from collections.abc import Mapping
+from numbers import Integral
 from typing import Any, Sequence
 
 import numpy as np
 
 _HAS_LEARNING = False
 _lib: _ct.CDLL | None = None
+_MAX_ONLINE_O1_WEIGHT_BITS = 31
+_MAX_ONLINE_O1_TRACE_BITS = 30
+_MAX_ONLINE_O1_REWARD_BITS = 30
+_MAX_ONLINE_O1_SHIFT = 30
+_MAX_U32 = (1 << 32) - 1
+_MIN_I32 = -(1 << 31)
+_MAX_I32 = (1 << 31) - 1
 
 
 class OnlineO1SnapshotFFI(_ct.Structure):
@@ -283,13 +291,47 @@ class RustOnlineO1Synapse:
         lib = _get_lib()
         if not hasattr(lib, "create_online_o1_synapse"):
             raise RuntimeError("libautonomous_learning.so lacks online O(1) symbols")
+        validated_weight_bits = _require_integral_range(
+            name="weight_bits",
+            value=weight_bits,
+            lower=1,
+            upper=_MAX_ONLINE_O1_WEIGHT_BITS,
+        )
+        validated_trace_bits = _require_integral_range(
+            name="trace_bits",
+            value=trace_bits,
+            lower=2,
+            upper=_MAX_ONLINE_O1_TRACE_BITS,
+        )
+        validated_reward_bits = _require_integral_range(
+            name="reward_bits",
+            value=reward_bits,
+            lower=1,
+            upper=_MAX_ONLINE_O1_REWARD_BITS,
+        )
+        validated_learning_shift = _require_integral_range(
+            name="learning_shift",
+            value=learning_shift,
+            lower=0,
+            upper=_MAX_ONLINE_O1_SHIFT,
+        )
+        validated_trace_decay_shift = _require_integral_range(
+            name="trace_decay_shift",
+            value=trace_decay_shift,
+            lower=0,
+            upper=_MAX_ONLINE_O1_SHIFT,
+        )
+        validated_initial_weight = min(
+            _require_non_negative_integral(name="initial_weight", value=initial_weight),
+            _MAX_U32,
+        )
         self._ptr = lib.create_online_o1_synapse(
-            _ct.c_uint8(weight_bits),
-            _ct.c_uint8(trace_bits),
-            _ct.c_uint8(reward_bits),
-            _ct.c_uint8(learning_shift),
-            _ct.c_uint8(trace_decay_shift),
-            _ct.c_uint32(initial_weight),
+            _ct.c_uint8(validated_weight_bits),
+            _ct.c_uint8(validated_trace_bits),
+            _ct.c_uint8(validated_reward_bits),
+            _ct.c_uint8(validated_learning_shift),
+            _ct.c_uint8(validated_trace_decay_shift),
+            _ct.c_uint32(validated_initial_weight),
         )
         if not self._ptr:
             raise ValueError("invalid online O(1) fixed-point configuration")
@@ -297,11 +339,14 @@ class RustOnlineO1Synapse:
     def step(self, *, pre_spike: bool, post_spike: bool, reward: int) -> OnlineO1SnapshotFFI:
         """Advance one timestep and return the bounded fixed-point state."""
 
+        validated_reward = _saturate(
+            _require_integral(name="reward", value=reward), _MIN_I32, _MAX_I32
+        )
         snapshot: OnlineO1SnapshotFFI = _get_lib().step_online_o1_synapse(
             self._ptr,
             pre_spike,
             post_spike,
-            _ct.c_int32(reward),
+            _ct.c_int32(validated_reward),
         )
         return snapshot
 
@@ -315,6 +360,38 @@ class RustOnlineO1Synapse:
             if hasattr(lib, "destroy_online_o1_synapse"):
                 lib.destroy_online_o1_synapse(self._ptr)
             self._ptr = None
+
+
+def _require_integral(*, name: str, value: object) -> int:
+    """Return ``value`` as ``int`` after rejecting bool and non-integral input."""
+
+    if isinstance(value, bool) or not isinstance(value, Integral):
+        raise TypeError(f"{name} must be an integer and must not be bool")
+    return int(value)
+
+
+def _require_non_negative_integral(*, name: str, value: object) -> int:
+    """Return a non-negative integer for unsigned FFI argument domains."""
+
+    integral = _require_integral(name=name, value=value)
+    if integral < 0:
+        raise ValueError(f"{name} must be >= 0")
+    return integral
+
+
+def _require_integral_range(*, name: str, value: object, lower: int, upper: int) -> int:
+    """Return an integer inside the inclusive Rust Online O(1) domain."""
+
+    integral = _require_integral(name=name, value=value)
+    if integral < lower or integral > upper:
+        raise ValueError(f"{name} must be in {lower}..={upper}")
+    return integral
+
+
+def _saturate(value: int, lower: int, upper: int) -> int:
+    """Clamp an already validated integer into the requested inclusive bounds."""
+
+    return min(upper, max(lower, value))
 
 
 class RustPlasticityRule:

@@ -145,6 +145,18 @@ Force exact random generator seeds for bit-true SC formal verification.
 ### Function `is_available()`
 Return True if the Rust learning engine is loaded.
 
+### Function `_require_integral()`
+Return ``value`` as ``int`` after rejecting bool and non-integral input.
+
+### Function `_require_non_negative_integral()`
+Return a non-negative integer for unsigned FFI argument domains.
+
+### Function `_require_integral_range()`
+Return an integer inside the inclusive Rust Online O(1) domain.
+
+### Function `_saturate(value, lower, upper)`
+Clamp an already validated integer into the requested inclusive bounds.
+
 ---
 
 ## Module `accel.backend`
@@ -17849,9 +17861,24 @@ One fixed-point reward-modulated STDP synapse with O(1) state.
 ### Function `build_online_o1_memory_proof()`
 Return a sequence-length independent memory proof for the rule.
 
+### Function `_require_integral()`
+Return ``value`` as ``int`` after rejecting bool and non-integral input.
+
+### Function `_require_non_negative_integral()`
+Return a non-negative integer for unsigned fixed-point domains.
+
+### Function `_require_integral_range()`
+Return an integer inside the requested inclusive fixed-point domain.
+
 ### Function `_decay_unsigned(value, shift, max_value)`
+Apply bounded unsigned trace decay with saturating totality.
+
 ### Function `_decay_signed(value, shift)`
+Apply arithmetic-magnitude decay to a signed eligibility trace.
+
 ### Function `_saturate(value, lower, upper)`
+Clamp an integer into inclusive fixed-point bounds.
+
 ---
 
 ## Module `learning.schedulers`

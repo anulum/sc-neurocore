@@ -7,7 +7,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 216
+expected_file_count = 217
 
 [[file]]
 path = "src/sc_neurocore/__init__.py"
@@ -832,6 +832,10 @@ rationale = "Public training callbacks for logging metrics to TensorBoard, W&B, 
 [[file]]
 path = "src/sc_neurocore/learning/schedulers.py"
 rationale = "Public learning-rate scheduler facade for SNN training loops."
+
+[[file]]
+path = "src/sc_neurocore/learning/online_o1.py"
+rationale = "Public bounded O(1) online-learning contract shared by SC-NIR annotations, HDL emission, and the optional Rust FFI bridge."
 
 [[file]]
 path = "src/sc_neurocore/neuro_symbolic/predictive_coding.py"
