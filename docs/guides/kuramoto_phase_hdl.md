@@ -76,6 +76,12 @@ The emitted module currently exposes:
 `phase_bus` is the concatenated fixed-point phase-register state for all
 oscillators in the emitted core.
 
+The Python reference helpers `fixed_point_step()` and `fixed_state_to_float()`
+only accept canonical fixed-point phase vectors with exactly one integer entry
+per oscillator and `0 <= phase < 2π_fixed`. This mirrors the emitted RTL reset
+and one-step wrap invariant and rejects booleans, floats, negative phases, and
+modulus-or-larger values instead of silently coercing them.
+
 ## Numerical model
 
 The emitted HDL performs one bounded fixed-point Kuramoto phase step:

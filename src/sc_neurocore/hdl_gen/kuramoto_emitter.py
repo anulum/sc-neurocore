@@ -40,6 +40,7 @@ class KuramotoEmitter:
         fraction: int = 16,
         lut_size: int = 64,
     ) -> None:
+        """Initialize a bounded research Kuramoto HDL emitter configuration."""
         if n_oscillators < 1:
             raise ValueError("n_oscillators must be >= 1")
         if data_width < 16:
@@ -77,9 +78,15 @@ class KuramotoEmitter:
         self._validate_single_step_wrap_bound()
 
     def _fixed_int(self, value: float) -> int:
+        """Quantize a real-valued scalar into the configured fixed-point format."""
         return int(round(value * (1 << self.fraction)))
 
+    def _phase_modulus_fixed(self) -> int:
+        """Return the fixed-point representation of the ``2pi`` phase modulus."""
+        return self._fixed_int(2.0 * math.pi)
+
     def _require_representable_fixed(self, value: float, name: str) -> None:
+        """Reject fixed-point constants that exceed the signed data-path range."""
         fixed = self._fixed_int(value)
         min_signed = -(1 << (self.data_width - 1))
         max_signed = (1 << (self.data_width - 1)) - 1
@@ -90,6 +97,7 @@ class KuramotoEmitter:
             )
 
     def _validate_fixed_point_format(self) -> None:
+        """Validate that constants and configured inputs fit the fixed-point format."""
         try:
             self._require_representable_fixed(2.0 * math.pi, "phase modulus")
         except ValueError as exc:
@@ -103,6 +111,7 @@ class KuramotoEmitter:
             self._require_representable_fixed(phase % (2.0 * math.pi), f"initial_phases[{idx}]")
 
     def _validate_single_step_wrap_bound(self) -> None:
+        """Reject configurations that could require multiple wraps in one RTL step."""
         max_omega = max(abs(omega) for omega in self.omegas)
         max_coupling_term = abs(self.coupling) * max(0, self.n_oscillators - 1) / self.n_oscillators
         max_phase_advance = self.dt * (max_omega + max_coupling_term)
@@ -110,6 +119,7 @@ class KuramotoEmitter:
             raise ValueError("single-step phase advance must stay below 2pi")
 
     def _signed_literal(self, value: int) -> str:
+        """Format a signed fixed-point integer as a Verilog decimal literal."""
         magnitude = abs(value)
         if value < 0:
             return f"-{self.data_width}'sd{magnitude}"
@@ -121,10 +131,8 @@ class KuramotoEmitter:
 
     def fixed_point_step(self, phase_state: list[int] | tuple[int, ...]) -> list[int]:
         """Mirror one generated RTL phase step in integer fixed-point arithmetic."""
-        if len(phase_state) != self.n_oscillators:
-            raise ValueError("phase_state length must equal n_oscillators")
-        phases = [int(phase) for phase in phase_state]
-        phase_modulus = self._fixed_int(2.0 * math.pi)
+        phases = self._validate_phase_state(phase_state)
+        phase_modulus = self._phase_modulus_fixed()
         half_phase_modulus = self._fixed_int(math.pi)
         dt_fixed = self._fixed_int(self.dt)
         coupling_fixed = self._fixed_int(self.coupling / self.n_oscillators)
@@ -189,12 +197,26 @@ class KuramotoEmitter:
 
     def fixed_state_to_float(self, phase_state: list[int] | tuple[int, ...]) -> list[float]:
         """Convert integer fixed-point phase state to radians."""
+        phases = self._validate_phase_state(phase_state)
+        scale = float(1 << self.fraction)
+        return [phase / scale for phase in phases]
+
+    def _validate_phase_state(self, phase_state: list[int] | tuple[int, ...]) -> list[int]:
+        """Return a canonical fixed-point phase vector for public mirror helpers."""
         if len(phase_state) != self.n_oscillators:
             raise ValueError("phase_state length must equal n_oscillators")
-        scale = float(1 << self.fraction)
-        return [int(phase) / scale for phase in phase_state]
+        phase_modulus = self._phase_modulus_fixed()
+        phases: list[int] = []
+        for phase in phase_state:
+            if not isinstance(phase, int) or isinstance(phase, bool):
+                raise ValueError("phase_state entries must be integers")
+            if phase < 0 or phase >= phase_modulus:
+                raise ValueError("phase_state entries must satisfy 0 <= phase < phase modulus")
+            phases.append(phase)
+        return phases
 
     def _float_step(self, phases: list[float]) -> list[float]:
+        """Advance the bounded noiseless Kuramoto system with float Euler arithmetic."""
         next_phases: list[float] = []
         for row, row_phase in enumerate(phases):
             coupling_sum = 0.0
@@ -208,18 +230,17 @@ class KuramotoEmitter:
 
     @staticmethod
     def _circular_phase_error(actual: float, expected: float) -> float:
+        """Return signed circular phase error in ``[-pi, pi)`` radians."""
         return ((actual - expected + math.pi) % (2.0 * math.pi)) - math.pi
 
     @staticmethod
     def _wrap_phase_fixed(phase_value: int, phase_modulus: int) -> int:
-        if phase_value >= phase_modulus:
-            return phase_value - phase_modulus
-        if phase_value < 0:
-            return phase_value + phase_modulus
-        return phase_value
+        """Wrap a fixed-point phase into the canonical ``[0, phase_modulus)`` range."""
+        return phase_value % phase_modulus
 
     @staticmethod
     def _wrap_delta_fixed(delta_value: int, *, phase_modulus: int, half_phase_modulus: int) -> int:
+        """Wrap a phase difference into the generated RTL's one-step signed range."""
         if delta_value > half_phase_modulus:
             return delta_value - phase_modulus
         if delta_value < -half_phase_modulus:
@@ -227,13 +248,13 @@ class KuramotoEmitter:
         return delta_value
 
     def _sin_lut_fixed(self, phase_value: int, *, phase_modulus: int) -> int:
+        """Evaluate the same fixed-point sine lookup used by emitted RTL."""
         wrapped_phase = self._wrap_phase_fixed(phase_value, phase_modulus)
         lut_index = (wrapped_phase * self.lut_size) // phase_modulus
-        if lut_index < 0 or lut_index >= self.lut_size:
-            return 0
         return self._fixed_int(math.sin((2.0 * math.pi * lut_index) / self.lut_size))
 
     def _lut_lines(self) -> list[str]:
+        """Render the Verilog sine lookup table with width-safe case labels."""
         index_width = max(1, math.ceil(math.log2(self.lut_size)))
         lines = [
             "    function automatic signed [DATA_WIDTH-1:0] sin_lut;",
@@ -261,7 +282,8 @@ class KuramotoEmitter:
         return lines
 
     def generate(self) -> str:
-        phase_modulus = self._fixed_int(2.0 * math.pi)
+        """Emit deterministic Verilog for the configured research Kuramoto core."""
+        phase_modulus = self._phase_modulus_fixed()
         half_phase_modulus = self._fixed_int(math.pi)
         dt_fixed = self._fixed_int(self.dt)
         coupling_fixed = self._fixed_int(self.coupling / self.n_oscillators)

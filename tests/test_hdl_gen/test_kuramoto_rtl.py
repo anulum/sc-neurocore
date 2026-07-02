@@ -9,10 +9,12 @@
 from __future__ import annotations
 
 import json
+import math
 from pathlib import Path
 import shutil
 import subprocess
 import sys
+from typing import Any, cast
 
 import pytest
 
@@ -52,6 +54,28 @@ def test_kuramoto_emitter_rejects_configuration_mismatch() -> None:
 @pytest.mark.parametrize(
     ("kwargs", "message"),
     [
+        ({"n_oscillators": 0}, "n_oscillators must be >= 1"),
+        ({"data_width": 15}, "data_width must be >= 16"),
+        ({"fraction": 0}, "fraction must satisfy 0 < fraction < data_width"),
+        ({"fraction": 24}, "fraction must satisfy 0 < fraction < data_width"),
+        ({"lut_size": 8}, "lut_size must be a power of two >= 16"),
+        ({"lut_size": 48}, "lut_size must be a power of two >= 16"),
+        (
+            {"n_oscillators": 2, "initial_phases": [0.0]},
+            "initial_phases length must equal n_oscillators",
+        ),
+    ],
+)
+def test_kuramoto_emitter_rejects_invalid_structural_configuration(
+    kwargs: dict[str, Any], message: str
+) -> None:
+    with pytest.raises(ValueError, match=message):
+        KuramotoEmitter(**kwargs)
+
+
+@pytest.mark.parametrize(
+    ("kwargs", "message"),
+    [
         ({"dt": 0.0}, "dt must be finite and positive"),
         ({"dt": float("nan")}, "dt must be finite and positive"),
         ({"coupling": float("inf")}, "coupling must be finite"),
@@ -63,9 +87,9 @@ def test_kuramoto_emitter_rejects_configuration_mismatch() -> None:
     ],
 )
 def test_kuramoto_emitter_rejects_invalid_numerical_configuration(
-    kwargs: dict[str, object], message: str
+    kwargs: dict[str, Any], message: str
 ) -> None:
-    base_kwargs = {
+    base_kwargs: dict[str, Any] = {
         "n_oscillators": 2,
         "omegas": [1.0, 1.1],
         "initial_phases": [0.0, 0.2],
@@ -102,6 +126,50 @@ def test_kuramoto_emitter_fixed_point_reference_matches_known_coupled_step() -> 
     assert emitter.fixed_point_step(emitter.initial_phase_state_fixed()) == [327, 102618]
 
 
+@pytest.mark.parametrize(
+    ("phase_state", "message"),
+    [
+        ([0], "phase_state length must equal n_oscillators"),
+        ([True, 0], "phase_state entries must be integers"),
+        ([0.25, 0], "phase_state entries must be integers"),
+        ([-1, 0], "phase_state entries must satisfy 0 <= phase < phase modulus"),
+        (
+            [int(round(2.0 * math.pi * (1 << 16))), 0],
+            "phase_state entries must satisfy 0 <= phase < phase modulus",
+        ),
+    ],
+)
+def test_kuramoto_emitter_fixed_point_step_rejects_noncanonical_phase_state(
+    phase_state: list[object], message: str
+) -> None:
+    emitter = KuramotoEmitter(n_oscillators=2, fraction=16)
+
+    with pytest.raises(ValueError, match=message):
+        emitter.fixed_point_step(cast(list[int], phase_state))
+
+
+@pytest.mark.parametrize(
+    ("phase_state", "message"),
+    [
+        ([0], "phase_state length must equal n_oscillators"),
+        ([False, 0], "phase_state entries must be integers"),
+        ([1.5, 0], "phase_state entries must be integers"),
+        ([-1, 0], "phase_state entries must satisfy 0 <= phase < phase modulus"),
+        (
+            [int(round(2.0 * math.pi * (1 << 16))), 0],
+            "phase_state entries must satisfy 0 <= phase < phase modulus",
+        ),
+    ],
+)
+def test_kuramoto_emitter_fixed_state_to_float_rejects_noncanonical_phase_state(
+    phase_state: list[object], message: str
+) -> None:
+    emitter = KuramotoEmitter(n_oscillators=2, fraction=16)
+
+    with pytest.raises(ValueError, match=message):
+        emitter.fixed_state_to_float(cast(list[int], phase_state))
+
+
 def test_kuramoto_emitter_characterises_fixed_point_error_against_float_reference() -> None:
     emitter = KuramotoEmitter(
         n_oscillators=4,
@@ -118,8 +186,8 @@ def test_kuramoto_emitter_characterises_fixed_point_error_against_float_referenc
 
     assert summary["steps"] == 32
     assert summary["oscillator_count"] == 4
-    assert summary["max_abs_phase_error_rad"] < 0.01
-    assert summary["rms_phase_error_rad"] < 0.005
+    assert cast(float, summary["max_abs_phase_error_rad"]) < 0.01
+    assert cast(float, summary["rms_phase_error_rad"]) < 0.005
     assert summary["final_fixed_phases_rad"] != summary["final_float_phases_rad"]
 
 
@@ -130,7 +198,7 @@ def test_kuramoto_emitter_fixed_point_error_summary_requires_positive_steps() ->
         emitter.fixed_point_error_summary(steps=0)
 
 
-def test_kuramoto_rtl_error_report_cli_writes_deterministic_gate(tmp_path) -> None:
+def test_kuramoto_rtl_error_report_cli_writes_deterministic_gate(tmp_path: Path) -> None:
     output = tmp_path / "kuramoto_rtl_fixed_point_error.json"
 
     result = subprocess.run(
@@ -239,7 +307,7 @@ def test_verilog_generator_can_emit_kuramoto_phase() -> None:
     assert "wire signed [DATA_WIDTH-1:0] phase_velocity_0" in code
 
 
-def test_kuramoto_emitter_smoke_compiles_with_iverilog(tmp_path) -> None:
+def test_kuramoto_emitter_smoke_compiles_with_iverilog(tmp_path: Path) -> None:
     iverilog = shutil.which("iverilog")
     if iverilog is None:
         raise AssertionError("iverilog must be available for HDL smoke tests")
@@ -264,7 +332,7 @@ def test_kuramoto_emitter_smoke_compiles_with_iverilog(tmp_path) -> None:
     assert result.returncode == 0, result.stderr
 
 
-def test_kuramoto_emitter_large_lut_compiles_without_index_truncation(tmp_path) -> None:
+def test_kuramoto_emitter_large_lut_compiles_without_index_truncation(tmp_path: Path) -> None:
     iverilog = shutil.which("iverilog")
     if iverilog is None:
         raise AssertionError("iverilog must be available for HDL smoke tests")
@@ -287,7 +355,7 @@ def test_kuramoto_emitter_large_lut_compiles_without_index_truncation(tmp_path) 
     assert "Numeric constant truncated" not in result.stderr
 
 
-def test_kuramoto_emitter_hdl_matches_no_coupling_fixed_point_step(tmp_path) -> None:
+def test_kuramoto_emitter_hdl_matches_no_coupling_fixed_point_step(tmp_path: Path) -> None:
     iverilog = shutil.which("iverilog")
     vvp = shutil.which("vvp")
     if iverilog is None or vvp is None:
@@ -378,7 +446,7 @@ endmodule
 
 
 def test_kuramoto_emitter_hdl_matches_coupled_two_oscillator_fixed_point_step(
-    tmp_path,
+    tmp_path: Path,
 ) -> None:
     iverilog = shutil.which("iverilog")
     vvp = shutil.which("vvp")

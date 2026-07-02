@@ -16228,11 +16228,19 @@ This is a synthesis exploration scaffold, not a drop-in replacement for
 the production Kuramoto solvers.
 
 - **__init__**(module_name)
+  - Initialize a bounded research Kuramoto HDL emitter configuration.
 - **_fixed_int**(value)
+  - Quantize a real-valued scalar into the configured fixed-point format.
+- **_phase_modulus_fixed**()
+  - Return the fixed-point representation of the ``2pi`` phase modulus.
 - **_require_representable_fixed**(value, name)
+  - Reject fixed-point constants that exceed the signed data-path range.
 - **_validate_fixed_point_format**()
+  - Validate that constants and configured inputs fit the fixed-point format.
 - **_validate_single_step_wrap_bound**()
+  - Reject configurations that could require multiple wraps in one RTL step.
 - **_signed_literal**(value)
+  - Format a signed fixed-point integer as a Verilog decimal literal.
 - **initial_phase_state_fixed**()
   - Return the emitted fixed-point reset state for each oscillator.
 - **fixed_point_step**(phase_state)
@@ -16241,13 +16249,22 @@ the production Kuramoto solvers.
   - Characterise fixed-point drift against the float Kuramoto Euler step.
 - **fixed_state_to_float**(phase_state)
   - Convert integer fixed-point phase state to radians.
+- **_validate_phase_state**(phase_state)
+  - Return a canonical fixed-point phase vector for public mirror helpers.
 - **_float_step**(phases)
+  - Advance the bounded noiseless Kuramoto system with float Euler arithmetic.
 - **_circular_phase_error**(actual, expected)
+  - Return signed circular phase error in ``&#91;-pi, pi)`` radians.
 - **_wrap_phase_fixed**(phase_value, phase_modulus)
+  - Wrap a fixed-point phase into the canonical ``&#91;0, phase_modulus)`` range.
 - **_wrap_delta_fixed**(delta_value)
+  - Wrap a phase difference into the generated RTL's one-step signed range.
 - **_sin_lut_fixed**(phase_value)
+  - Evaluate the same fixed-point sine lookup used by emitted RTL.
 - **_lut_lines**()
+  - Render the Verilog sine lookup table with width-safe case labels.
 - **generate**()
+  - Emit deterministic Verilog for the configured research Kuramoto core.
 
 ---
 
