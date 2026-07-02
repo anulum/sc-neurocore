@@ -41,6 +41,7 @@ Supported population models:
 Not supported yet:
 
 - embedded `TimedArray`, `PoissonInput`, or `StepCurrent`
+- closed recurrent graphs with no population that can receive external input
 - plastic projections
 - delayed projections
 - population models whose state updates do not map cleanly to the current
@@ -90,3 +91,8 @@ The forward path returns spike counts for output populations, where output
 means populations with zero outgoing projections. If every population has an
 outgoing projection, the bridge falls back to returning counts for all
 populations.
+
+The input surface is stricter: at least one population must have no incoming
+projection so the `(T, batch, input_dim)` current tensor has a deterministic
+target. A closed recurrent graph must be wrapped with an explicit input-facing
+population before it can be converted.

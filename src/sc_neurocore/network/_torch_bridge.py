@@ -207,8 +207,11 @@ class NetworkTorchBridge(_TorchModuleBase):
             self.population_specs[pid].population.n for pid in self._output_population_ids
         )
         if self.input_dim <= 0:
-            raise ValueError("Network.to_torch() resolved an empty input surface")
-        if self.output_dim <= 0:
+            raise ValueError(
+                "Network.to_torch() requires at least one input population with no incoming "
+                "projections; closed recurrent graphs need an explicit input surface"
+            )
+        if self.output_dim <= 0:  # pragma: no cover - population width validation guards this.
             raise ValueError("Network.to_torch() resolved an empty output surface")
         output_labels = [self.population_specs[pid].label for pid in self._output_population_ids]
         if len(output_labels) != len(set(output_labels)):
@@ -251,7 +254,9 @@ class NetworkTorchBridge(_TorchModuleBase):
         weight = getattr(self, f"{name}_weight")
         mask = getattr(self, f"{name}_mask")
         if not isinstance(weight, torch.Tensor) or not isinstance(mask, torch.Tensor):
-            raise TypeError("registered projection tensors are corrupted")
+            raise TypeError(
+                f"registered projection tensors are corrupted for {name}_weight/{name}_mask"
+            )
         return weight * mask
 
     def _initial_state(

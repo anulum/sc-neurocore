@@ -8,10 +8,13 @@
 
 from __future__ import annotations
 
+from typing import Any, cast
+
 import numpy as np
 import pytest
 import torch
 
+from sc_neurocore.network._torch_bridge import NetworkTorchBridge
 from sc_neurocore.network import Network, Population, Projection
 from sc_neurocore.neurons.stochastic_lif import StochasticLIFNeuron
 from sc_neurocore.training.surrogate import atan_surrogate_custom_op
@@ -19,7 +22,7 @@ from sc_neurocore.training.surrogate import atan_surrogate_custom_op
 
 def _all_to_all_topology(
     n_src: int, n_tgt: int, weight: float
-) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
+) -> tuple[np.ndarray[Any, Any], np.ndarray[Any, Any], np.ndarray[Any, Any]]:
     indptr = np.arange(0, n_src * n_tgt + 1, n_tgt, dtype=np.int64)
     indices = np.tile(np.arange(n_tgt, dtype=np.int64), n_src)
     data = np.full(n_src * n_tgt, weight, dtype=np.float64)
@@ -59,7 +62,9 @@ def _manual_counts(
     return torch.from_numpy(counts)
 
 
-def _projection_edge_values_from_bridge(bridge, projection: Projection, name: str) -> np.ndarray:
+def _projection_edge_values_from_bridge(
+    bridge: Any, projection: Projection, name: str
+) -> np.ndarray[Any, Any]:
     dense = getattr(bridge, f"{name}_weight").detach().cpu().numpy()
     values = []
     for src_idx in range(projection.source.n):
@@ -69,7 +74,7 @@ def _projection_edge_values_from_bridge(bridge, projection: Projection, name: st
     return np.asarray(values, dtype=np.float64)
 
 
-def test_network_to_torch_matches_manual_numpy_semantics_for_lapicque_chain():
+def test_network_to_torch_matches_manual_numpy_semantics_for_lapicque_chain() -> None:
     src = Population("LapicqueNeuron", 2, params={"tau": 5.0, "dt": 1.0}, label="src")
     hid = Population("LapicqueNeuron", 3, params={"tau": 5.0, "dt": 1.0}, label="hid")
     out = Population("LapicqueNeuron", 2, params={"tau": 5.0, "dt": 1.0}, label="out")
@@ -96,7 +101,7 @@ def test_network_to_torch_matches_manual_numpy_semantics_for_lapicque_chain():
     assert torch.equal(bridge_counts, manual_counts)
 
 
-def test_network_to_torch_training_loss_decreases_on_simple_dataset():
+def test_network_to_torch_training_loss_decreases_on_simple_dataset() -> None:
     src = Population("LapicqueNeuron", 2, params={"tau": 2.0, "dt": 1.0}, label="src")
     hid = Population("LapicqueNeuron", 4, params={"tau": 2.0, "dt": 1.0}, label="hid")
     out = Population("LapicqueNeuron", 2, params={"tau": 2.0, "dt": 1.0}, label="out")
@@ -129,7 +134,7 @@ def test_network_to_torch_training_loss_decreases_on_simple_dataset():
         loss = torch.nn.functional.cross_entropy(counts, targets)
         if initial_loss is None:
             initial_loss = float(loss.detach())
-        loss.backward()
+        cast(Any, loss).backward()
         optimizer.step()
         final_loss = float(loss.detach())
 
@@ -146,7 +151,7 @@ def test_network_to_torch_training_loss_decreases_on_simple_dataset():
     )
 
 
-def test_network_to_torch_rejects_unsupported_population_model():
+def test_network_to_torch_rejects_unsupported_population_model() -> None:
     pop = Population("AdaptiveThresholdIFNeuron", 2)
     net = Network(pop)
 
@@ -158,7 +163,7 @@ def test_network_to_torch_rejects_unsupported_population_model():
         raise AssertionError("Expected NotImplementedError for unsupported model")
 
 
-def test_network_to_torch_validates_input_rank_and_dimension():
+def test_network_to_torch_validates_input_rank_and_dimension() -> None:
     pop = Population("LapicqueNeuron", 2, params={"tau": 5.0, "dt": 1.0}, label="src")
     net = Network(pop)
     bridge = net.to_torch()
@@ -178,7 +183,7 @@ def test_network_to_torch_validates_input_rank_and_dimension():
         raise AssertionError("Expected ValueError for wrong input_dim")
 
 
-def test_network_to_torch_validates_input_time_dtype_and_finiteness():
+def test_network_to_torch_validates_input_time_dtype_and_finiteness() -> None:
     pop = Population("LapicqueNeuron", 2, params={"tau": 5.0, "dt": 1.0}, label="src")
     bridge = Network(pop).to_torch()
 
@@ -194,14 +199,20 @@ def test_network_to_torch_validates_input_time_dtype_and_finiteness():
         bridge(bad)
 
 
-def test_network_to_torch_rejects_empty_populations():
+def test_network_to_torch_rejects_empty_populations() -> None:
     pop = Population("LapicqueNeuron", 0, params={"tau": 5.0, "dt": 1.0}, label="empty")
 
     with pytest.raises(ValueError, match="n > 0"):
         Network(pop).to_torch()
 
 
-def test_network_to_torch_rejects_projection_endpoint_outside_network():
+def test_network_torch_bridge_direct_empty_population_list_fails() -> None:
+    """The bridge constructor rejects direct construction without populations."""
+    with pytest.raises(ValueError, match="at least one population"):
+        NetworkTorchBridge([], [])
+
+
+def test_network_to_torch_rejects_projection_endpoint_outside_network() -> None:
     src = Population("LapicqueNeuron", 1, params={"tau": 5.0, "dt": 1.0}, label="src")
     out = Population("LapicqueNeuron", 1, params={"tau": 5.0, "dt": 1.0}, label="out")
     outsider = Population("LapicqueNeuron", 1, params={"tau": 5.0, "dt": 1.0}, label="outsider")
@@ -272,7 +283,10 @@ def test_network_to_torch_rejects_projection_endpoint_outside_network():
         ),
     ],
 )
-def test_network_to_torch_rejects_malformed_projection_csr(topology, message):
+def test_network_to_torch_rejects_malformed_projection_csr(
+    topology: tuple[np.ndarray[Any, Any], np.ndarray[Any, Any], np.ndarray[Any, Any]],
+    message: str,
+) -> None:
     src = Population("LapicqueNeuron", 2, params={"tau": 5.0, "dt": 1.0}, label="src")
     out = Population("LapicqueNeuron", 2, params={"tau": 5.0, "dt": 1.0}, label="out")
     projection = Projection(src, out, weight=0.0, topology=_all_to_all_topology(2, 2, 0.0))
@@ -282,7 +296,7 @@ def test_network_to_torch_rejects_malformed_projection_csr(topology, message):
         Network(src, out, projection).to_torch()
 
 
-def test_network_to_torch_rejects_duplicate_output_trace_labels():
+def test_network_to_torch_rejects_duplicate_output_trace_labels() -> None:
     left = Population("LapicqueNeuron", 1, params={"tau": 5.0, "dt": 1.0}, label="out")
     right = Population("LapicqueNeuron", 1, params={"tau": 5.0, "dt": 1.0}, label="out")
 
@@ -290,7 +304,18 @@ def test_network_to_torch_rejects_duplicate_output_trace_labels():
         Network(left, right).to_torch()
 
 
-def test_network_to_torch_return_traces_returns_output_label_trace_stack():
+def test_network_to_torch_rejects_recurrent_graph_without_input_surface() -> None:
+    """A closed recurrent graph cannot infer an external current input surface."""
+    left = Population("LapicqueNeuron", 1, params={"tau": 5.0, "dt": 1.0}, label="left")
+    right = Population("LapicqueNeuron", 1, params={"tau": 5.0, "dt": 1.0}, label="right")
+    left_to_right = Projection(left, right, weight=1.0)
+    right_to_left = Projection(right, left, weight=1.0)
+
+    with pytest.raises(ValueError, match="at least one input population"):
+        Network(left, right, left_to_right, right_to_left).to_torch()
+
+
+def test_network_to_torch_return_traces_returns_output_label_trace_stack() -> None:
     pop = Population("LapicqueNeuron", 1, params={"tau": 2.0, "dt": 1.0}, label="out")
     net = Network(pop)
     bridge = net.to_torch()
@@ -305,7 +330,7 @@ def test_network_to_torch_return_traces_returns_output_label_trace_stack():
     assert traces["out"].shape == (3, 1, 1)
 
 
-def test_network_to_torch_supports_deterministic_stochastic_lif():
+def test_network_to_torch_supports_deterministic_stochastic_lif() -> None:
     pop = Population(
         StochasticLIFNeuron,
         2,
@@ -328,7 +353,19 @@ def test_network_to_torch_supports_deterministic_stochastic_lif():
     assert counts.shape == (1, 2)
 
 
-def test_network_to_torch_rejects_stochastic_lif_with_noise():
+def test_network_to_torch_rejects_registered_projection_tensor_corruption() -> None:
+    """Corrupted registered tensors report the affected projection parameter."""
+    src = Population("LapicqueNeuron", 1, params={"tau": 5.0, "dt": 1.0}, label="src")
+    out = Population("LapicqueNeuron", 1, params={"tau": 5.0, "dt": 1.0}, label="out")
+    projection = Projection(src, out, weight=1.0)
+    bridge = Network(src, out, projection).to_torch()
+    bridge.register_parameter("proj_0_weight", None)
+
+    with pytest.raises(TypeError, match="proj_0_weight"):
+        bridge(torch.ones((1, 1, 1), dtype=torch.float32))
+
+
+def test_network_to_torch_rejects_stochastic_lif_with_noise() -> None:
     pop = Population(
         StochasticLIFNeuron,
         1,
@@ -340,7 +377,7 @@ def test_network_to_torch_rejects_stochastic_lif_with_noise():
         net.to_torch()
 
 
-def test_network_to_torch_rejects_stochastic_lif_with_refractory_period():
+def test_network_to_torch_rejects_stochastic_lif_with_refractory_period() -> None:
     pop = Population(
         StochasticLIFNeuron,
         1,
@@ -352,7 +389,7 @@ def test_network_to_torch_rejects_stochastic_lif_with_refractory_period():
         net.to_torch()
 
 
-def test_network_to_torch_rejects_stochastic_lif_with_entropy_source():
+def test_network_to_torch_rejects_stochastic_lif_with_entropy_source() -> None:
     pop = Population(
         StochasticLIFNeuron,
         1,
@@ -370,7 +407,7 @@ def test_network_to_torch_rejects_stochastic_lif_with_entropy_source():
         net.to_torch()
 
 
-def test_network_to_torch_rejects_stochastic_lif_when_reset_differs_from_rest():
+def test_network_to_torch_rejects_stochastic_lif_when_reset_differs_from_rest() -> None:
     pop = Population(
         StochasticLIFNeuron,
         1,
@@ -382,7 +419,7 @@ def test_network_to_torch_rejects_stochastic_lif_when_reset_differs_from_rest():
         net.to_torch()
 
 
-def test_network_to_torch_rejects_plastic_and_delayed_projections():
+def test_network_to_torch_rejects_plastic_and_delayed_projections() -> None:
     src = Population("LapicqueNeuron", 1, params={"tau": 5.0, "dt": 1.0}, label="src")
     out = Population("LapicqueNeuron", 1, params={"tau": 5.0, "dt": 1.0}, label="out")
 
