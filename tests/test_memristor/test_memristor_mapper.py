@@ -34,54 +34,54 @@ from sc_neurocore.memristor.memristor_mapper import (
 
 
 class TestConductanceModel:
-    def test_defaults_from_technology(self):
+    def test_defaults_from_technology(self) -> None:
         m = ConductanceModel(MemristorTechnology.RERAM_HFOX)
         assert m.g_on == 100e-6
         assert m.g_off == 1e-6
         assert m.sigma_g == 0.05
 
-    def test_dynamic_range(self):
+    def test_dynamic_range(self) -> None:
         m = ConductanceModel(MemristorTechnology.RERAM_HFOX)
         assert m.dynamic_range == pytest.approx(100.0)
 
-    def test_level_step_positive(self):
+    def test_level_step_positive(self) -> None:
         m = ConductanceModel(MemristorTechnology.GENERIC)
         assert m.level_step > 0
 
-    def test_target_conductance_bounds(self):
+    def test_target_conductance_bounds(self) -> None:
         m = ConductanceModel(MemristorTechnology.PCM)
         assert m.target_conductance(0) == m.g_off
         assert m.target_conductance(m.num_levels - 1) == pytest.approx(m.g_on)
 
-    def test_target_conductance_clamps(self):
+    def test_target_conductance_clamps(self) -> None:
         m = ConductanceModel(MemristorTechnology.GENERIC)
         assert m.target_conductance(-1) == m.g_off
         assert m.target_conductance(9999) == pytest.approx(m.g_on)
 
-    def test_sample_d2d_different_each_call(self):
+    def test_sample_d2d_different_each_call(self) -> None:
         m = ConductanceModel(MemristorTechnology.RERAM_HFOX)
         rng = np.random.default_rng(42)
         s1 = m.sample_d2d(8, rng)
         s2 = m.sample_d2d(8, rng)
         assert s1 != s2
 
-    def test_sample_rw_adds_noise(self):
+    def test_sample_rw_adds_noise(self) -> None:
         m = ConductanceModel(MemristorTechnology.GENERIC)
         rng = np.random.default_rng(42)
         vals = [m.sample_rw(50e-6, rng) for _ in range(100)]
         assert np.std(vals) > 0
 
-    def test_all_technologies_load(self):
+    def test_all_technologies_load(self) -> None:
         for tech in MemristorTechnology:
             m = ConductanceModel(tech)
             assert m.g_on > m.g_off
             assert m.num_levels >= 1
 
-    def test_mythic_high_levels(self):
+    def test_mythic_high_levels(self) -> None:
         m = ConductanceModel(MemristorTechnology.MYTHIC_AMP)
         assert m.num_levels == 256
 
-    def test_2d_material_higher_endurance_model(self):
+    def test_2d_material_higher_endurance_model(self) -> None:
         m = ConductanceModel(MemristorTechnology.RERAM_2D)
         assert m.sigma_g == 0.08
 
@@ -90,15 +90,15 @@ class TestConductanceModel:
 
 
 class TestCrossbarArray:
-    def test_num_devices_standard(self):
+    def test_num_devices_standard(self) -> None:
         xbar = CrossbarArray(64, 64)
         assert xbar.num_devices == 4096
 
-    def test_num_devices_differential(self):
+    def test_num_devices_differential(self) -> None:
         xbar = CrossbarArray(32, 32, CrossbarTopology.DIFFERENTIAL)
         assert xbar.num_devices == 2048
 
-    def test_conductance_model(self):
+    def test_conductance_model(self) -> None:
         xbar = CrossbarArray(16, 16, technology=MemristorTechnology.PCM)
         m = xbar.conductance_model
         assert m.technology == MemristorTechnology.PCM
@@ -108,7 +108,7 @@ class TestCrossbarArray:
 
 
 class TestVariabilityInjector:
-    def test_quantize_weights(self):
+    def test_quantize_weights(self) -> None:
         m = ConductanceModel(MemristorTechnology.GENERIC)
         inj = VariabilityInjector(m, seed=42)
         w = np.array([[0.0, 0.5, 1.0]])
@@ -116,21 +116,21 @@ class TestVariabilityInjector:
         assert levels[0, 0] == 0
         assert levels[0, 2] == m.num_levels - 1
 
-    def test_inject_d2d_changes_values(self):
+    def test_inject_d2d_changes_values(self) -> None:
         m = ConductanceModel(MemristorTechnology.RERAM_HFOX)
         inj = VariabilityInjector(m, seed=42)
         levels = np.array([[8, 8, 8]])
         g = inj.inject_d2d(levels)
         assert not np.all(g == g[0, 0])
 
-    def test_inject_rw_adds_noise(self):
+    def test_inject_rw_adds_noise(self) -> None:
         m = ConductanceModel(MemristorTechnology.GENERIC)
         inj = VariabilityInjector(m, seed=42)
         g = np.full((4, 4), 50e-6)
         noisy = inj.inject_rw(g)
         assert not np.allclose(g, noisy)
 
-    def test_inject_full_pipeline(self):
+    def test_inject_full_pipeline(self) -> None:
         m = ConductanceModel(MemristorTechnology.GENERIC)
         inj = VariabilityInjector(m, seed=42)
         w = np.random.default_rng(0).random((4, 4))
@@ -140,7 +140,7 @@ class TestVariabilityInjector:
         assert np.all(levels >= 0)
         assert np.all(levels < m.num_levels)
 
-    def test_compute_error_positive(self):
+    def test_compute_error_positive(self) -> None:
         m = ConductanceModel(MemristorTechnology.GENERIC)
         inj = VariabilityInjector(m, seed=42)
         w = np.random.default_rng(0).random((4, 4))
@@ -149,7 +149,7 @@ class TestVariabilityInjector:
         assert err["mae"] >= 0
         assert err["mean_rel_err"] >= 0
 
-    def test_deterministic_with_same_seed(self):
+    def test_deterministic_with_same_seed(self) -> None:
         m = ConductanceModel(MemristorTechnology.GENERIC)
         w = np.random.default_rng(0).random((3, 3))
         inj1 = VariabilityInjector(m, seed=42)
@@ -163,23 +163,23 @@ class TestVariabilityInjector:
 
 
 class TestCompensationLUT:
-    def test_build_nominal(self):
+    def test_build_nominal(self) -> None:
         m = ConductanceModel(MemristorTechnology.GENERIC)
         lut = CompensationLUT.build((0, 0), m)
         assert len(lut.compensated_thresholds) == m.num_levels
 
-    def test_nominal_no_compensation(self):
+    def test_nominal_no_compensation(self) -> None:
         m = ConductanceModel(MemristorTechnology.GENERIC)
         lut = CompensationLUT.build((0, 0), m)
         assert lut.max_compensation < 0.01
 
-    def test_measured_applies_compensation(self):
+    def test_measured_applies_compensation(self) -> None:
         m = ConductanceModel(MemristorTechnology.GENERIC)
         measured = np.array([m.target_conductance(i) * 0.9 for i in range(m.num_levels)])
         lut = CompensationLUT.build((0, 0), m, measured)
         assert lut.max_compensation > 0.05
 
-    def test_device_id_stored(self):
+    def test_device_id_stored(self) -> None:
         m = ConductanceModel(MemristorTechnology.GENERIC)
         lut = CompensationLUT.build((3, 7), m)
         assert lut.device_id == (3, 7)
@@ -189,52 +189,52 @@ class TestCompensationLUT:
 
 
 class TestMemristorMapper:
-    def test_map_small_matrix(self):
+    def test_map_small_matrix(self) -> None:
         mapper = MemristorMapper(seed=42)
         w = np.random.default_rng(0).random((8, 8))
         result = mapper.map_weights(w)
         assert result.total_crossbars == 1
         assert result.total_devices == 64
 
-    def test_map_tiled(self):
+    def test_map_tiled(self) -> None:
         mapper = MemristorMapper(max_crossbar_size=4, seed=42)
         w = np.random.default_rng(0).random((8, 8))
         result = mapper.map_weights(w)
         assert result.total_crossbars == 4
 
-    def test_map_1d_vector(self):
+    def test_map_1d_vector(self) -> None:
         mapper = MemristorMapper(seed=42)
         w = np.random.default_rng(0).random(16)
         result = mapper.map_weights(w)
         assert result.total_crossbars == 1
 
-    def test_error_stats_present(self):
+    def test_error_stats_present(self) -> None:
         mapper = MemristorMapper(seed=42)
         w = np.random.default_rng(0).random((4, 4))
         result = mapper.map_weights(w)
         assert result.mean_rel_error >= 0
         assert result.max_rel_error >= 0
 
-    def test_compensation_luts_generated(self):
+    def test_compensation_luts_generated(self) -> None:
         mapper = MemristorMapper(compensation=CompensationStrategy.LUT, seed=42)
         w = np.random.default_rng(0).random((4, 4))
         result = mapper.map_weights(w)
         assert len(result.mappings[0].compensation_luts) > 0
 
-    def test_no_compensation(self):
+    def test_no_compensation(self) -> None:
         mapper = MemristorMapper(compensation=CompensationStrategy.NONE, seed=42)
         w = np.random.default_rng(0).random((4, 4))
         result = mapper.map_weights(w)
         assert len(result.mappings[0].compensation_luts) == 0
 
-    def test_all_technologies(self):
+    def test_all_technologies(self) -> None:
         for tech in MemristorTechnology:
             mapper = MemristorMapper(technology=tech, seed=42)
             w = np.random.default_rng(0).random((4, 4))
             result = mapper.map_weights(w)
             assert result.total_devices > 0
 
-    def test_differential_topology(self):
+    def test_differential_topology(self) -> None:
         mapper = MemristorMapper(topology=CrossbarTopology.DIFFERENTIAL, seed=42)
         w = np.random.default_rng(0).random((4, 4))
         result = mapper.map_weights(w)
@@ -246,7 +246,7 @@ class TestMemristorMapper:
 
 
 class TestMonteCarloSimulator:
-    def test_simulate_mac(self):
+    def test_simulate_mac(self) -> None:
         m = ConductanceModel(MemristorTechnology.GENERIC)
         sim = MonteCarloSimulator(m, num_trials=50, seed=42)
         w = np.random.default_rng(0).random((4, 4))
@@ -255,7 +255,7 @@ class TestMonteCarloSimulator:
         assert report.num_trials == 50
         assert report.mean_output_error >= 0
 
-    def test_yield_bounded(self):
+    def test_yield_bounded(self) -> None:
         m = ConductanceModel(MemristorTechnology.MYTHIC_AMP)
         sim = MonteCarloSimulator(m, num_trials=50, tolerance=0.5, seed=42)
         w = np.random.default_rng(0).random((4, 4))
@@ -263,7 +263,7 @@ class TestMonteCarloSimulator:
         report = sim.simulate_mac(w, inp)
         assert 0.0 <= report.yield_fraction <= 1.0
 
-    def test_low_variability_high_yield(self):
+    def test_low_variability_high_yield(self) -> None:
         m = ConductanceModel(MemristorTechnology.MYTHIC_AMP)
         sim = MonteCarloSimulator(m, num_trials=100, tolerance=0.20, seed=42)
         w = np.ones((2, 2)) * 0.5
@@ -271,7 +271,7 @@ class TestMonteCarloSimulator:
         report = sim.simulate_mac(w, inp)
         assert report.yield_fraction > 0.5
 
-    def test_error_histogram_shape(self):
+    def test_error_histogram_shape(self) -> None:
         m = ConductanceModel(MemristorTechnology.GENERIC)
         sim = MonteCarloSimulator(m, num_trials=30, seed=42)
         w = np.random.default_rng(0).random((3, 3))
@@ -279,7 +279,7 @@ class TestMonteCarloSimulator:
         report = sim.simulate_mac(w, inp)
         assert len(report.error_histogram) == 50
 
-    def test_output_distribution_shape(self):
+    def test_output_distribution_shape(self) -> None:
         m = ConductanceModel(MemristorTechnology.GENERIC)
         sim = MonteCarloSimulator(m, num_trials=20, seed=42)
         w = np.random.default_rng(0).random((3, 4))
@@ -292,7 +292,7 @@ class TestMonteCarloSimulator:
 
 
 class TestVerilogEmitter:
-    def test_emit_crossbar_module(self):
+    def test_emit_crossbar_module(self) -> None:
         mapper = MemristorMapper(seed=42)
         w = np.random.default_rng(0).random((4, 4))
         result = mapper.map_weights(w)
@@ -301,7 +301,7 @@ class TestVerilogEmitter:
         assert "module sc_memristor_crossbar" in sv
         assert "endmodule" in sv
 
-    def test_emit_contains_spdx(self):
+    def test_emit_contains_spdx(self) -> None:
         mapper = MemristorMapper(seed=42)
         w = np.random.default_rng(0).random((4, 4))
         result = mapper.map_weights(w)
@@ -309,7 +309,7 @@ class TestVerilogEmitter:
         sv = emitter.emit_crossbar(result.mappings[0])
         assert "SPDX-License-Identifier" in sv
 
-    def test_emit_weight_parameters(self):
+    def test_emit_weight_parameters(self) -> None:
         mapper = MemristorMapper(seed=42)
         w = np.random.default_rng(0).random((4, 4))
         result = mapper.map_weights(w)
@@ -318,7 +318,7 @@ class TestVerilogEmitter:
         assert "W_0_0" in sv
         assert "W_3_3" in sv
 
-    def test_emit_compensation_lut(self):
+    def test_emit_compensation_lut(self) -> None:
         mapper = MemristorMapper(compensation=CompensationStrategy.LUT, seed=42)
         w = np.random.default_rng(0).random((4, 4))
         result = mapper.map_weights(w)
@@ -326,7 +326,7 @@ class TestVerilogEmitter:
         sv = emitter.emit_crossbar(result.mappings[0])
         assert "comp_lut" in sv
 
-    def test_emit_no_comp_when_none(self):
+    def test_emit_no_comp_when_none(self) -> None:
         mapper = MemristorMapper(compensation=CompensationStrategy.NONE, seed=42)
         w = np.random.default_rng(0).random((4, 4))
         result = mapper.map_weights(w)
@@ -334,7 +334,7 @@ class TestVerilogEmitter:
         sv = emitter.emit_crossbar(result.mappings[0])
         assert "No compensation LUT" in sv
 
-    def test_emit_top_module(self):
+    def test_emit_top_module(self) -> None:
         mapper = MemristorMapper(max_crossbar_size=4, seed=42)
         w = np.random.default_rng(0).random((8, 8))
         result = mapper.map_weights(w)
@@ -344,7 +344,7 @@ class TestVerilogEmitter:
         assert "tile_0" in sv
         assert "tile_1" in sv
 
-    def test_custom_bit_width(self):
+    def test_custom_bit_width(self) -> None:
         mapper = MemristorMapper(seed=42)
         w = np.random.default_rng(0).random((2, 2))
         result = mapper.map_weights(w)
@@ -352,7 +352,7 @@ class TestVerilogEmitter:
         sv = emitter.emit_crossbar(result.mappings[0])
         assert "[31:0]" in sv
 
-    def test_emit_technology_in_header(self):
+    def test_emit_technology_in_header(self) -> None:
         mapper = MemristorMapper(technology=MemristorTechnology.PCM, seed=42)
         w = np.random.default_rng(0).random((4, 4))
         result = mapper.map_weights(w)
@@ -365,21 +365,21 @@ class TestVerilogEmitter:
 
 
 class TestSneakPathModel:
-    def test_worst_case_sneak(self):
+    def test_worst_case_sneak(self) -> None:
         sneak = SneakPathModel.worst_case_sneak(64, 64, 1e-6, 0.2)
         assert sneak > 0
         assert sneak == pytest.approx(126 * 1e-6 * 0.2)
 
-    def test_larger_array_more_sneak(self):
+    def test_larger_array_more_sneak(self) -> None:
         s1 = SneakPathModel.worst_case_sneak(32, 32, 1e-6)
         s2 = SneakPathModel.worst_case_sneak(128, 128, 1e-6)
         assert s2 > s1
 
-    def test_signal_to_sneak_ratio(self):
+    def test_signal_to_sneak_ratio(self) -> None:
         ratio = SneakPathModel.signal_to_sneak_ratio(100e-6, 1e-6, 64, 64)
         assert ratio > 0
 
-    def test_1t1r_no_sneak_needed(self):
+    def test_1t1r_no_sneak_needed(self) -> None:
         ratio = SneakPathModel.signal_to_sneak_ratio(100e-6, 1e-6, 4, 4)
         assert ratio > 0
 
@@ -388,23 +388,23 @@ class TestSneakPathModel:
 
 
 class TestIRDropModel:
-    def test_corner_no_drop(self):
+    def test_corner_no_drop(self) -> None:
         ir = IRDropModel()
         assert ir.voltage_drop(0, 0) == 0.0
 
-    def test_drop_increases_with_position(self):
+    def test_drop_increases_with_position(self) -> None:
         ir = IRDropModel()
         d1 = ir.voltage_drop(10, 10)
         d2 = ir.voltage_drop(50, 50)
         assert d2 > d1
 
-    def test_effective_conductance_reduced(self):
+    def test_effective_conductance_reduced(self) -> None:
         ir = IRDropModel(r_wire_per_cell=5.0)
         g_nom = 50e-6
         g_eff = ir.effective_conductance(g_nom, 100, 100, v_read=0.2)
         assert g_eff < g_nom
 
-    def test_zero_drop_at_corner(self):
+    def test_zero_drop_at_corner(self) -> None:
         ir = IRDropModel()
         g_nom = 50e-6
         g_eff = ir.effective_conductance(g_nom, 0, 0)
@@ -415,22 +415,22 @@ class TestIRDropModel:
 
 
 class TestStuckFaultMap:
-    def test_generate_faults(self):
+    def test_generate_faults(self) -> None:
         fm = StuckFaultMap.generate(100, 100, fault_rate=0.01, seed=42)
         assert fm.num_faults > 0
         assert fm.fault_rate > 0
 
-    def test_is_stuck(self):
+    def test_is_stuck(self) -> None:
         fm = StuckFaultMap(10, 10, stuck_on=[(0, 0)], stuck_off=[(1, 1)])
         assert fm.is_stuck(0, 0) == "on"
         assert fm.is_stuck(1, 1) == "off"
         assert fm.is_stuck(5, 5) is None
 
-    def test_zero_rate_no_faults(self):
+    def test_zero_rate_no_faults(self) -> None:
         fm = StuckFaultMap.generate(10, 10, fault_rate=0.0, seed=42)
         assert fm.num_faults == 0
 
-    def test_fault_rate_property(self):
+    def test_fault_rate_property(self) -> None:
         fm = StuckFaultMap(10, 10, stuck_on=[(0, 0)], stuck_off=[(1, 1)])
         assert fm.fault_rate == pytest.approx(0.02)
 
@@ -439,18 +439,18 @@ class TestStuckFaultMap:
 
 
 class TestAgingSimulator:
-    def test_drift_reduces_conductance(self):
+    def test_drift_reduces_conductance(self) -> None:
         m = ConductanceModel(MemristorTechnology.GENERIC)
         g0 = 50e-6
         g_drifted = m.drift(g0, elapsed_s=3.15e7)
         assert g_drifted < g0
 
-    def test_no_drift_at_t0(self):
+    def test_no_drift_at_t0(self) -> None:
         m = ConductanceModel(MemristorTechnology.GENERIC)
         g0 = 50e-6
         assert m.drift(g0, elapsed_s=0.5) == g0
 
-    def test_aging_simulator(self):
+    def test_aging_simulator(self) -> None:
         m = ConductanceModel(MemristorTechnology.GENERIC)
         inj = VariabilityInjector(m, seed=42)
         w = np.ones((4, 4)) * 0.5
@@ -460,7 +460,7 @@ class TestAgingSimulator:
         assert report.mean_drift_fraction > 0
         assert np.all(drifted <= g)
 
-    def test_short_time_no_shift(self):
+    def test_short_time_no_shift(self) -> None:
         m = ConductanceModel(MemristorTechnology.GENERIC)
         g = np.full((2, 2), 50e-6)
         sim = AgingSimulator(m)
@@ -472,13 +472,13 @@ class TestAgingSimulator:
 
 
 class TestThermalShift:
-    def test_higher_temp_shifts(self):
+    def test_higher_temp_shifts(self) -> None:
         m = ConductanceModel(MemristorTechnology.GENERIC)
         g0 = 50e-6
         g_hot = m.thermal_shift(g0, temp_c=85.0)
         assert g_hot != g0
 
-    def test_ref_temp_no_shift(self):
+    def test_ref_temp_no_shift(self) -> None:
         m = ConductanceModel(MemristorTechnology.GENERIC)
         g0 = 50e-6
         g_ref = m.thermal_shift(g0, temp_c=25.0)
@@ -489,7 +489,7 @@ class TestThermalShift:
 
 
 class TestSCAbsorbEncoder:
-    def test_adjusted_thresholds_shape(self):
+    def test_adjusted_thresholds_shape(self) -> None:
         m = ConductanceModel(MemristorTechnology.GENERIC)
         inj = VariabilityInjector(m, seed=42)
         w = np.random.default_rng(0).random((4, 4))
@@ -497,14 +497,14 @@ class TestSCAbsorbEncoder:
         thresholds = SCAbsorbEncoder.compute_adjusted_thresholds(w, g, m)
         assert thresholds.shape == (4, 4)
 
-    def test_ideal_gives_256(self):
+    def test_ideal_gives_256(self) -> None:
         m = ConductanceModel(MemristorTechnology.GENERIC)
         w = np.ones((2, 2)) * 0.5
         g_ideal = np.array([[m.target_conductance(int(round(0.5 * (m.num_levels - 1))))] * 2] * 2)
         thresholds = SCAbsorbEncoder.compute_adjusted_thresholds(w, g_ideal, m)
         assert np.all(thresholds == 256)
 
-    def test_deviated_compensates(self):
+    def test_deviated_compensates(self) -> None:
         m = ConductanceModel(MemristorTechnology.GENERIC)
         w = np.ones((2, 2)) * 0.5
         g_deviated = (
@@ -518,14 +518,14 @@ class TestSCAbsorbEncoder:
 
 
 class TestWriteVerifyProtocol:
-    def test_converges(self):
+    def test_converges(self) -> None:
         m = ConductanceModel(MemristorTechnology.GENERIC)
         wv = WriteVerifyProtocol(m, max_iterations=20, tolerance=0.05, seed=42)
         result = wv.program_cell(8)
         assert result.iterations > 0
         assert result.target_level == 8
 
-    def test_low_tolerance_may_need_more_iterations(self):
+    def test_low_tolerance_may_need_more_iterations(self) -> None:
         m = ConductanceModel(MemristorTechnology.GENERIC)
         wv1 = WriteVerifyProtocol(m, max_iterations=20, tolerance=0.10, seed=42)
         wv2 = WriteVerifyProtocol(m, max_iterations=20, tolerance=0.001, seed=42)
@@ -538,21 +538,21 @@ class TestWriteVerifyProtocol:
 
 
 class TestCrossbarEstimator:
-    def test_estimate_standard(self):
+    def test_estimate_standard(self) -> None:
         xbar = CrossbarArray(64, 64, technology=MemristorTechnology.RERAM_HFOX)
         est = CrossbarEstimator.estimate(xbar)
         assert est.read_power_uw > 0
         assert est.write_power_uw > est.read_power_uw
         assert est.area_um2 > 0
 
-    def test_2d_lower_area(self):
+    def test_2d_lower_area(self) -> None:
         xbar_hfox = CrossbarArray(64, 64, technology=MemristorTechnology.RERAM_HFOX)
         xbar_2d = CrossbarArray(64, 64, technology=MemristorTechnology.RERAM_2D)
         e1 = CrossbarEstimator.estimate(xbar_hfox)
         e2 = CrossbarEstimator.estimate(xbar_2d)
         assert e2.area_um2 < e1.area_um2
 
-    def test_all_technologies(self):
+    def test_all_technologies(self) -> None:
         for tech in MemristorTechnology:
             xbar = CrossbarArray(16, 16, technology=tech)
             est = CrossbarEstimator.estimate(xbar)
