@@ -33,10 +33,31 @@ while stochastic bitstream outputs remain `bool` tensors (`elem_type=9`).
 Mapped SC-IR node types that do not have a shape inference rule fail closed
 instead of silently emitting a guessed `(1,)` output.
 
+For MLIR/SSA lowering, use the compiler exporter on the same graph-style
+surface:
+
+```python
+from sc_neurocore.export.compiler_export import CompilerExporter
+
+mlir_text = CompilerExporter().export_to_mlir(ir_graph, {"input_a": (128, 1024)})
+```
+
+`CompilerExporter` supports the `mlir` target and validates the graph before
+emission. Empty graphs, duplicate node IDs, duplicate output edges, unsupported
+node types, wrong node arity, missing external input shapes, non-positive tensor
+dimensions, and output names that collide with graph inputs raise `ValueError`
+before SSA text is emitted. MLIR-facing input names are validated with the
+shared HDL identifier guard; invalid identifiers fail closed instead of being
+rewritten.
+
 ::: sc_neurocore.export.onnx_exporter
     options:
       show_root_heading: true
 
 ::: sc_neurocore.export.onnx_export
+    options:
+      show_root_heading: true
+
+::: sc_neurocore.export.compiler_export
     options:
       show_root_heading: true

@@ -14618,21 +14618,32 @@ Manages Static Single Assignment (SSA) registers for MLIR/Relay.
 
 - **__init__**()
 - **allocate**(edge_name)
+  - Allocate and bind the next SSA register for an SC-IR edge.
 - **get**(edge_name)
+  - Return an allocated register or validate an external input register.
 
 ### Class `ShapeInference`
 Infers tensor shapes dynamically across the SNN graph.
 
 - **__init__**(input_shapes)
 - **infer**(node)
+  - Infer and store the output shape for one supported SC-IR node.
+- **_shape_for**(node, edge_name)
 
 ### Class `CompilerExporter`
+Export SC-IR graph-like objects to strict SSA MLIR text.
+
 - **__init__**(target)
+  - Create an exporter for a supported compiler backend target.
 - **_topological_sort**(nodes)
   - Kahn's algorithm for topological sorting of the DAG.
 - **_format_mlir_type**(shape, dtype)
+  - Render an MLIR scalar or tensor type for a validated static shape.
 - **export_to_mlir**(ir_graph, input_shapes)
-  - Emits strict SSA MLIR text via topological traversal.
+  - Emit strict SSA MLIR text via topological traversal.
+- **_validate_unique_edges**(nodes)
+- **_validate_output_input_collisions**(nodes, input_shapes)
+- **_validate_export_contract**(nodes, input_shapes)
 
 ---
 

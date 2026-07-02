@@ -5,6 +5,15 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+### Compiler MLIR export hardening
+- Hardened `export.compiler_export.CompilerExporter` with explicit `mlir`
+  target validation, empty-graph rejection, duplicate node/output detection,
+  wrong-arity and unsupported-node failures, missing external shape checks,
+  graph-input/output collision rejection, and positive tensor-dimension
+  validation before SSA MLIR emission. Removed the embedded demo path, covered
+  the module at 100% exact-file coverage, strict-typed the focused tests, and
+  promoted the compiler exporter into the scoped NumPy docstring policy.
+
 ### DVS input contract hardening
 - Hardened `interfaces.dvs_input.DVSInputLayer` with fail-closed dimension,
   decay, AER address, timestamp, polarity, and bitstream-length validation
