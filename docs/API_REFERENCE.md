@@ -16532,6 +16532,18 @@ duration_fraction : float
   - Determine if this epoch should include a sleep phase.
 - **_validate_weights**(weights)
 
+### Function `_validate_real_scalar(name, value)`
+Return a finite real scalar after rejecting bool aliases and bounds drift.
+
+### Function `_validate_finite_numeric_array(name, value)`
+Return a finite numeric array after enforcing shape and value contracts.
+
+### Function `_max_abs_weight(weight)`
+Return the maximum absolute weight without relying on ndarray reductions.
+
+### Function `_validate_seed(seed)`
+Return a NumPy RandomState seed after rejecting bool aliases and wraparound.
+
 ---
 
 ## Module `hub.bundle`

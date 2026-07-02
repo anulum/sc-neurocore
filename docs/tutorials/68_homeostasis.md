@@ -5,7 +5,7 @@ manual tuning. Homeostasis adjusts thresholds, learning rates, and
 synaptic weights to keep firing rates in a target range — even as
 inputs change or the network learns new tasks.
 
-Deploy and forget: the network regulates itself.
+The regulator provides bounded feedback for training or deployment loops.
 
 ## Why Homeostasis
 
@@ -25,14 +25,15 @@ from sc_neurocore.homeostasis import NetworkRegulator
 
 reg = NetworkRegulator(
     target_rate=0.1,       # target: 10% of neurons active per timestep
+    rate_tolerance=0.5,    # acceptable population-rate band around target
     threshold_step=0.01,   # how much to adjust thresholds per step
-    lr_scale_range=(0.5, 2.0),  # allowed learning rate scaling range
+    lr_scale_factor=0.95,  # high variance multiplies LR by this factor
 )
 
 # Simulated network state
 rng = np.random.default_rng(42)
 n_neurons = 128
-firing_rates = rng.random(n_neurons).astype(np.float32) * 0.3  # some too high
+firing_rates = rng.random(n_neurons).astype(np.float32) * 0.2 + 0.16
 thresholds = np.ones(n_neurons, dtype=np.float32)
 learning_rate = 0.001
 model_weights = [rng.standard_normal((64, 128)).astype(np.float32) * 0.1]
@@ -43,29 +44,31 @@ new_thresholds, new_lr, metrics = reg.regulate(
 )
 
 print(metrics.summary())
-# Mean rate: 0.15 (target: 0.10)
-# Neurons above target: 72/128 (56%)
-# Neurons below target: 56/128 (44%)
-# Threshold adjustment: +0.006 mean (raising to reduce activity)
-# LR scale: 0.85 (reduced to slow weight changes)
+# Network Stability: UNSTABLE
+#   Mean firing rate: 0.2578
+#   Rate variance: 0.0030
+#   E/I ratio: 1.00
+#   Weight norm: 9.0837
+#   Adjustments: thresholds +0.010
 ```
 
 ### How It Works
 
 Three regulation mechanisms, matching biology:
 
-1. **Threshold homeostasis:** Neurons that fire too much get higher
-   thresholds. Neurons that are too silent get lower thresholds.
+1. **Threshold homeostasis:** Populations above the target band get higher
+   thresholds. Populations below the target band get lower thresholds.
    ```
-   threshold[i] += step * (firing_rate[i] - target_rate)
+   thresholds += threshold_step        # overactive population
+   thresholds -= threshold_step        # quiet population
    ```
 
 2. **Learning rate scaling:** If the network is unstable (high rate
    variance), the learning rate is reduced to slow weight changes.
 
-3. **Synaptic scaling:** Scale all weights connected to overactive
-   neurons down, and weights to underactive neurons up. Preserves
-   relative weight structure while adjusting overall excitability.
+3. **Weight monitoring:** Optional weight matrices are validated and summarised
+   as a mean norm in the returned metrics. Direct synaptic scaling lives in the
+   sleep-consolidation path below.
 
 ## Sleep Consolidation
 
@@ -78,8 +81,8 @@ from sc_neurocore.homeostasis import SleepConsolidation
 
 sleep = SleepConsolidation(
     decay_exponent=0.5,       # power-law synapse pruning
+    noise_amplitude=0.01,     # spontaneous replay noise
     duration_fraction=0.1,    # sleep duration as fraction of training
-    consolidation_strength=0.8,
 )
 
 for epoch in range(100):
@@ -88,27 +91,32 @@ for epoch in range(100):
 
     # Check if it's time to sleep
     if sleep.should_sleep(epoch, total_epochs=100):
-        model_weights = sleep.apply(model_weights)
+        model_weights = sleep.apply(model_weights, seed=epoch)
         print(f"Epoch {epoch}: sleep consolidation applied")
-        print(f"  Pruned {sleep.pruned_fraction:.1%} of synapses")
-        print(f"  Remaining weight magnitude: {sleep.remaining_magnitude:.3f}")
+        print(f"  Consolidated {len(model_weights)} weight arrays")
 ```
 
 ### Sleep Schedule
 
-The consolidation occurs at logarithmically-spaced intervals:
-- After epoch 10 (early consolidation)
-- After epoch 32 (mid-training)
-- After epoch 100 (final consolidation)
+The consolidation interval is derived from `duration_fraction`:
+
+```
+interval = max(1, int(1.0 / duration_fraction))
+```
+
+With `duration_fraction=0.1`, sleep runs at positive epoch multiples of 10
+(`10`, `20`, `30`, ...).
 
 Each sleep cycle applies power-law decay to weak synapses:
 ```
-w_new = w_old * (|w_old| / max(|w|))^decay_exponent
+relative = abs(w_old) / max(abs(w_old))
+decay_factor = clip(1 - duration_fraction * relative^decay_exponent, 0.5, 1.0)
+w_new = w_old * decay_factor + replay_noise
 ```
 
-Weak synapses decay faster. Strong synapses are preserved. This
-mimics the biological observation that sleep preferentially prunes
-synapses formed during recent waking activity.
+Larger-magnitude synapses receive proportionally stronger down-scaling while
+small weights are relatively preserved. The optional replay noise is
+deterministic for a validated seed.
 
 ## Integration with Training
 

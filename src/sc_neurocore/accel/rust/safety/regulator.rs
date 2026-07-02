@@ -34,13 +34,13 @@ impl SleepConsolidation {
             weight_norm: 0.0_f64,
             is_stable: 1.0_f64,
             adjustments_made: 0.0_f64,
-            target_rate: 0.0_f64,
-            rate_tolerance: 0.0_f64,
-            threshold_step: 0.0_f64,
-            lr_scale_factor: 0.0_f64,
-            decay_exponent: 0.0_f64,
-            noise_amplitude: 0.0_f64,
-            duration_fraction: 0.0_f64,
+            target_rate: 0.1_f64,
+            rate_tolerance: 0.5_f64,
+            threshold_step: 0.01_f64,
+            lr_scale_factor: 0.95_f64,
+            decay_exponent: 0.5_f64,
+            noise_amplitude: 0.01_f64,
+            duration_fraction: 0.1_f64,
         }
     }
 
@@ -110,8 +110,32 @@ impl SleepConsolidation {
     }
 }
 
+fn finite_non_negative(value: f64) -> bool {
+    value.is_finite() && value >= 0.0
+}
+
+fn finite_closed_unit(value: f64) -> bool {
+    value.is_finite() && (0.0..=1.0).contains(&value)
+}
+
+fn finite_open_closed_unit(value: f64) -> bool {
+    value.is_finite() && value > 0.0 && value <= 1.0
+}
+
 pub fn validate_regulator(state: &SleepConsolidation) -> bool {
-    true
+    state.mean_firing_rate.is_finite()
+        && state.rate_variance.is_finite()
+        && state.ei_ratio.is_finite()
+        && state.weight_norm.is_finite()
+        && (state.is_stable == 0.0 || state.is_stable == 1.0)
+        && state.adjustments_made.is_finite()
+        && finite_non_negative(state.target_rate)
+        && finite_closed_unit(state.rate_tolerance)
+        && finite_non_negative(state.threshold_step)
+        && finite_open_closed_unit(state.lr_scale_factor)
+        && finite_non_negative(state.decay_exponent)
+        && finite_non_negative(state.noise_amplitude)
+        && finite_open_closed_unit(state.duration_fraction)
 }
 
 #[cfg(test)]
@@ -122,5 +146,35 @@ mod tests {
     fn test_regulator_new() {
         let state = SleepConsolidation::new();
         assert!(validate_regulator(&state));
+    }
+
+    #[test]
+    fn test_regulator_rejects_invalid_network_parameters() {
+        let mut state = SleepConsolidation::new();
+        state.target_rate = -0.1;
+        assert!(!validate_regulator(&state));
+
+        let mut state = SleepConsolidation::new();
+        state.rate_tolerance = 1.1;
+        assert!(!validate_regulator(&state));
+
+        let mut state = SleepConsolidation::new();
+        state.lr_scale_factor = 0.0;
+        assert!(!validate_regulator(&state));
+    }
+
+    #[test]
+    fn test_regulator_rejects_invalid_sleep_parameters() {
+        let mut state = SleepConsolidation::new();
+        state.decay_exponent = f64::NAN;
+        assert!(!validate_regulator(&state));
+
+        let mut state = SleepConsolidation::new();
+        state.noise_amplitude = -0.01;
+        assert!(!validate_regulator(&state));
+
+        let mut state = SleepConsolidation::new();
+        state.duration_fraction = 1.1;
+        assert!(!validate_regulator(&state));
     }
 }

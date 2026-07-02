@@ -25,6 +25,72 @@ from typing import Any
 import numpy as np
 
 
+_MAX_RANDOM_SEED = 2**32 - 1
+
+
+def _validate_real_scalar(
+    name: str,
+    value: object,
+    *,
+    minimum: float | None = None,
+    maximum: float | None = None,
+    lower_open: bool = False,
+    upper_open: bool = False,
+) -> float:
+    """Return a finite real scalar after rejecting bool aliases and bounds drift."""
+    if isinstance(value, (bool, np.bool_)) or not isinstance(
+        value, (int, float, np.integer, np.floating)
+    ):
+        raise ValueError(f"{name} must be a finite real scalar")
+
+    scalar = float(value)
+    if not np.isfinite(scalar):
+        raise ValueError(f"{name} must be finite")
+    if minimum is not None and (scalar <= minimum if lower_open else scalar < minimum):
+        qualifier = "greater than" if lower_open else "at least"
+        raise ValueError(f"{name} must be {qualifier} {minimum:g}")
+    if maximum is not None and (scalar >= maximum if upper_open else scalar > maximum):
+        qualifier = "less than" if upper_open else "at most"
+        raise ValueError(f"{name} must be {qualifier} {maximum:g}")
+    return scalar
+
+
+def _validate_finite_numeric_array(
+    name: str,
+    value: object,
+    *,
+    ndim: int | None = None,
+    non_empty: bool = False,
+    non_negative: bool = False,
+) -> np.ndarray[Any, Any]:
+    """Return a finite numeric array after enforcing shape and value contracts."""
+    if not isinstance(value, np.ndarray):
+        raise ValueError(f"{name} must be a numpy array")
+    if ndim is not None and value.ndim != ndim:
+        raise ValueError(f"{name} must be a {ndim}-dimensional array")
+    if non_empty and value.size == 0:
+        raise ValueError(f"{name} must be a non-empty array")
+    if np.issubdtype(value.dtype, np.bool_) or not np.issubdtype(value.dtype, np.number):
+        raise ValueError(f"{name} must be a finite numeric array")
+    if not bool(np.all(np.isfinite(value))):
+        raise ValueError(f"{name} must be finite")
+    if non_negative and bool(np.any(value < 0.0)):
+        raise ValueError(f"{name} must be non-negative")
+    return value
+
+
+def _max_abs_weight(weight: np.ndarray[Any, Any]) -> float:
+    """Return the maximum absolute weight without relying on ndarray reductions."""
+    return max(float(abs(value)) for value in weight.flat)
+
+
+def _validate_seed(seed: int) -> int:
+    """Return a NumPy RandomState seed after rejecting bool aliases and wraparound."""
+    if type(seed) is not int or not 0 <= seed <= _MAX_RANDOM_SEED:
+        raise ValueError("seed must be an integer in [0, 4294967295]")
+    return seed
+
+
 @dataclass
 class StabilityMetrics:
     """Network stability measurements."""
@@ -37,7 +103,14 @@ class StabilityMetrics:
     adjustments_made: list[str] = field(default_factory=list)
 
     def summary(self) -> str:
-        """Render a multi-line human-readable network-stability report."""
+        """Render a multi-line human-readable network-stability report.
+
+        Returns
+        -------
+        str
+            Text report containing stability status, firing-rate statistics,
+            E/I ratio, weight norm, and any applied regulation actions.
+        """
         status = "STABLE" if self.is_stable else "UNSTABLE"
         lines = [
             f"Network Stability: {status}",
@@ -75,20 +148,26 @@ class NetworkRegulator:
         rate_tolerance: float = 0.5,
         threshold_step: float = 0.01,
         lr_scale_factor: float = 0.95,
-    ):
-        if not np.isfinite(target_rate) or target_rate < 0.0:
-            raise ValueError("target_rate must be finite and non-negative")
-        if not np.isfinite(rate_tolerance) or not 0.0 <= rate_tolerance <= 1.0:
-            raise ValueError("rate_tolerance must be finite and within [0, 1]")
-        if not np.isfinite(threshold_step) or threshold_step < 0.0:
-            raise ValueError("threshold_step must be finite and non-negative")
-        if not np.isfinite(lr_scale_factor) or not 0.0 < lr_scale_factor <= 1.0:
-            raise ValueError("lr_scale_factor must be finite and within (0, 1]")
-
-        self.target_rate = target_rate
-        self.rate_tolerance = rate_tolerance
-        self.threshold_step = threshold_step
-        self.lr_scale_factor = lr_scale_factor
+    ) -> None:
+        self.target_rate = _validate_real_scalar("target_rate", target_rate, minimum=0.0)
+        self.rate_tolerance = _validate_real_scalar(
+            "rate_tolerance",
+            rate_tolerance,
+            minimum=0.0,
+            maximum=1.0,
+        )
+        self.threshold_step = _validate_real_scalar(
+            "threshold_step",
+            threshold_step,
+            minimum=0.0,
+        )
+        self.lr_scale_factor = _validate_real_scalar(
+            "lr_scale_factor",
+            lr_scale_factor,
+            minimum=0.0,
+            maximum=1.0,
+            lower_open=True,
+        )
 
     def regulate(
         self,
@@ -124,7 +203,8 @@ class NetworkRegulator:
         )
 
         if weights:
-            metrics.weight_norm = float(np.mean([np.linalg.norm(w) for w in weights]))
+            norms = [float(np.linalg.norm(w)) for w in weights]
+            metrics.weight_norm = float(np.mean(norms))
 
         new_thresholds = thresholds.copy()
         new_lr = learning_rate
@@ -158,22 +238,29 @@ class NetworkRegulator:
         learning_rate: float,
         weights: list[np.ndarray[Any, Any]] | None,
     ) -> None:
-        if not isinstance(firing_rates, np.ndarray) or firing_rates.ndim != 1:
-            raise ValueError("regulate firing_rates must be a one-dimensional array")
-        if not np.all(np.isfinite(firing_rates)) or np.any(firing_rates < 0.0):
-            raise ValueError("regulate firing_rates must be finite and non-negative")
-        if not isinstance(thresholds, np.ndarray) or thresholds.ndim != 1:
-            raise ValueError("regulate thresholds must be a one-dimensional array")
+        _validate_finite_numeric_array(
+            "regulate firing_rates",
+            firing_rates,
+            ndim=1,
+            non_empty=True,
+            non_negative=True,
+        )
+        _validate_finite_numeric_array(
+            "regulate thresholds",
+            thresholds,
+            ndim=1,
+            non_empty=True,
+        )
         if thresholds.shape != firing_rates.shape:
             raise ValueError("regulate thresholds must match firing_rates shape")
-        if not np.all(np.isfinite(thresholds)):
-            raise ValueError("regulate thresholds must be finite")
-        if not np.isfinite(learning_rate) or learning_rate < 0.0:
-            raise ValueError("regulate learning_rate must be finite and non-negative")
+        _validate_real_scalar("regulate learning_rate", learning_rate, minimum=0.0)
         if weights is not None:
             for weight in weights:
-                if not isinstance(weight, np.ndarray) or not np.all(np.isfinite(weight)):
-                    raise ValueError("weights must be finite numpy arrays")
+                _validate_finite_numeric_array(
+                    "weights",
+                    weight,
+                    non_empty=True,
+                )
 
 
 class SleepConsolidation:
@@ -199,17 +286,24 @@ class SleepConsolidation:
         decay_exponent: float = 0.5,
         noise_amplitude: float = 0.01,
         duration_fraction: float = 0.1,
-    ):
-        if not np.isfinite(decay_exponent) or decay_exponent < 0.0:
-            raise ValueError("decay_exponent must be finite and non-negative")
-        if not np.isfinite(noise_amplitude) or noise_amplitude < 0.0:
-            raise ValueError("noise_amplitude must be finite and non-negative")
-        if not np.isfinite(duration_fraction) or not 0.0 < duration_fraction <= 1.0:
-            raise ValueError("duration_fraction must be finite and within (0, 1]")
-
-        self.decay_exponent = decay_exponent
-        self.noise_amplitude = noise_amplitude
-        self.duration_fraction = duration_fraction
+    ) -> None:
+        self.decay_exponent = _validate_real_scalar(
+            "decay_exponent",
+            decay_exponent,
+            minimum=0.0,
+        )
+        self.noise_amplitude = _validate_real_scalar(
+            "noise_amplitude",
+            noise_amplitude,
+            minimum=0.0,
+        )
+        self.duration_fraction = _validate_real_scalar(
+            "duration_fraction",
+            duration_fraction,
+            minimum=0.0,
+            maximum=1.0,
+            lower_open=True,
+        )
 
     def apply(
         self,
@@ -224,6 +318,9 @@ class SleepConsolidation:
         Parameters
         ----------
         weights : list of ndarray
+            Non-empty finite numeric weight arrays.
+        seed : int, default=42
+            Deterministic NumPy ``RandomState`` seed in ``[0, 2**32 - 1]``.
 
         Returns
         -------
@@ -231,13 +328,13 @@ class SleepConsolidation:
             Renormalized weights.
         """
         self._validate_weights(weights)
+        rng = np.random.RandomState(_validate_seed(seed))
 
-        rng = np.random.RandomState(seed)
         consolidated = []
         for w in weights:
             abs_w = np.abs(w)
             # Power-law decay: larger weights decay more
-            max_w = max(abs_w.max(), 1e-8)
+            max_w = max(_max_abs_weight(w), 1e-8)
             relative = abs_w / max_w
             decay_factor = 1.0 - self.duration_fraction * (relative**self.decay_exponent)
             decay_factor = np.clip(decay_factor, 0.5, 1.0)
@@ -252,7 +349,21 @@ class SleepConsolidation:
         return consolidated
 
     def should_sleep(self, epoch: int, total_epochs: int) -> bool:
-        """Determine if this epoch should include a sleep phase."""
+        """Determine if this epoch should include a sleep phase.
+
+        Parameters
+        ----------
+        epoch : int
+            Zero-based epoch index.
+        total_epochs : int
+            Positive total epoch count for caller-side schedule validation.
+
+        Returns
+        -------
+        bool
+            ``True`` when the epoch is a positive multiple of the interval
+            implied by ``duration_fraction``.
+        """
         if type(epoch) is not int or epoch < 0:
             raise ValueError("epoch must be a non-negative integer")
         if type(total_epochs) is not int or total_epochs <= 0:
@@ -266,7 +377,6 @@ class SleepConsolidation:
         if not isinstance(weights, list) or len(weights) == 0:
             raise ValueError("weights must be a non-empty list of numpy arrays")
         for weight in weights:
-            if not isinstance(weight, np.ndarray):
-                raise ValueError("weights must contain only numpy arrays")
-            if not np.all(np.isfinite(weight)):
-                raise ValueError("weights must be finite")
+            if isinstance(weight, np.ndarray) and weight.size == 0:
+                raise ValueError("weights must contain non-empty arrays")
+            _validate_finite_numeric_array("weights", weight, non_empty=True)
