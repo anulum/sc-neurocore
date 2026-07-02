@@ -40,6 +40,25 @@ bitstream and an explicit hardware feedback sink.
 
 ::: sc_neurocore.interfaces.dvs_input
 
+`DVSInputLayer` validates sensor dimensions, decay constants, AER event
+addresses, event timestamps, polarities, and generated bitstream lengths before
+mutating the event-density surface. Rejected event batches leave
+`surface` and `last_update_time` unchanged. Empty batches return the current
+probability frame without exposing mutable internal state.
+
+Event coordinates outside the configured frame are ignored as sparse
+out-of-field sensor noise, but malformed coordinate types are rejected. Valid
+events are integrated in timestamp order, decayed by `decay_tau`, converted
+through `tanh(surface)`, and exposed as `[0, 1]` probabilities for stochastic
+bitstream generation.
+
+The Rust safety mirror (`accel/rust/safety/dvs_input.rs`), Julia validation
+mirror (`accel/julia/interfaces/dvs_input.jl`), and Mojo FFI validation shim
+(`accel/mojo/kernels/dvs_input.mojo`) enforce the same geometry, decay,
+timestamp, polarity, and bitstream-length boundaries. The Python benchmark in
+`benchmarks/benchmark_advanced_modules.py` uses monotonic precomputed DVS event
+batches so the measured path respects the same layer-clock contract.
+
 ## Real World
 
 ::: sc_neurocore.interfaces.real_world

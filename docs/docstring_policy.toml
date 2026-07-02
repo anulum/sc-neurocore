@@ -7,7 +7,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 214
+expected_file_count = 215
 
 [[file]]
 path = "src/sc_neurocore/__init__.py"
@@ -280,6 +280,10 @@ rationale = "Public root exception hierarchy documented in the API reference and
 [[file]]
 path = "src/sc_neurocore/industrial_applications.py"
 rationale = "Public industrial-readiness profile API documented for buyer-facing diligence workflows."
+
+[[file]]
+path = "src/sc_neurocore/interfaces/dvs_input.py"
+rationale = "Public Dynamic Vision Sensor AER ingress layer that converts event-camera activity into stochastic bitstream frames."
 
 [[file]]
 path = "src/sc_neurocore/autofit/__init__.py"

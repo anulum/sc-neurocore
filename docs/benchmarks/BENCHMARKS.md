@@ -555,8 +555,8 @@ engine (planned) targets this gap.
 | Quantum-Classical Hybrid | 64 qubits, L=1024 | 76.8 ms | 0.77 ms | cos²(θ/2) error < 0.03 |
 | Event-Based GNN | 100 nodes, 5% density | 6.6 ms | 0.07 ms | 17× sparse reduction |
 | Stochastic Transformer | d=64, 4 heads, L=512 | 1,691 ms | 16.9 ms | 196× energy vs FP32 MAC |
-| BCI Decoder | 64 ch, 1s signal | 19.5 ms | 0.20 ms | Native bitstream encoding |
-| DVS Input Layer | 128×128, 1000 events | 1,249 ms | 12.5 ms | 492× data reduction |
+| BCI Decoder | 64 ch, 1s signal | 53.1 ms | 0.53 ms | Native bitstream encoding |
+| DVS Input Layer | 128×128, 1000 events | 1,953 ms | 19.5 ms | 492× data reduction |
 | Chaotic RNG | 100K samples | 13.5 ms | — | 7.42 Msample/s |
 | Predictive World Model | 32-dim state, 50-step | 34.5 ms | 0.34 ms | 1000× sample efficiency |
 

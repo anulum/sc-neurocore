@@ -4,34 +4,66 @@
 # © Code 2020–2026 Miroslav Šotek. All rights reserved.
 # ORCID: 0009-0009-3560-0851
 # Contact: www.anulum.li | protoscience@anulum.li
-# SC-NeuroCore — Mojo SIMD acceleration for dvs_input
+# SC-NeuroCore — Mojo validation shim for interfaces/dvs_input
 
-fn process_events(events: Int) -> Int:
-    var _process_events_line = 'if not events:'
-    return 0  # return surface
-    var _process_events_line = 'current_time = events[-1][2]'
-    var _process_events_line = 'dt = current_time - last_update_time'
-    var _process_events_line = '# Exponential decay of old activity'
-    var _process_events_line = '# V_new = V_old * exp(-dt/tau)'
-    var _process_events_line = 'decay_factor = exp(-dt / decay_tau)'
-    var _process_events_line = 'surface *= decay_factor'
-    var _process_events_line = '# Add new events'
-    var _process_events_line = 'for x, y, t, p in events:'
-    var _process_events_line = 'if 0 <= x < width and 0 <= y < height:'
-    var _process_events_line = '# Polarity is usually -1 or 1.'
-    var _process_events_line = "# We want activity map. Let's just accumulate magnitude or p"
-    var _process_events_line = '# For simplified SC vision, we map events to "Probability of'
-    var _process_events_line = 'surface[y, x] += 1.0'
-    var _process_events_line = '# Clip/Sigmoid to [0, 1] for SC generation'
-    var _process_events_line = '# Simple saturation'
-    var _process_events_line = 'output_probs = tanh(surface)  # Maps 0->0, High->1'
-    var _process_events_line = 'last_update_time = current_time'
-    return 0  # return output_probs
+# This shim is deliberately narrow: the Python DVSInputLayer owns the event
+# surface update and stochastic frame generation, while Mojo exposes
+# FFI-checkable validation helpers for generated-kernel dispatchers.
 
-fn generate_bitstream_frame(length: Int) -> Int:
-    var _generate_bitstream_frame_line = 'probs = tanh(surface)'
-    var _generate_bitstream_frame_line = '# Vectorized generation'
-    var _generate_bitstream_frame_line = '# (H, W, Length)'
-    var _generate_bitstream_frame_line = 'rands = random.random((height, width, length))'
-    var _generate_bitstream_frame_line = 'bits = (rands < probs[:, :, 0]).astype(uint8)'
-    return 0  # return bits
+
+def _finite(x: Float64) -> Bool:
+    return x == x and x <= 1.7976931348623157e308 and x >= -1.7976931348623157e308
+
+
+@export
+def dvs_input_params_valid_c(height: Int, width: Int, decay_tau: Float64) -> Int64:
+    if height <= 0:
+        return 0
+    if width <= 0:
+        return 0
+    if not (_finite(decay_tau) and decay_tau > 0.0):
+        return 0
+    return 1
+
+
+@export
+def dvs_input_timestamp_valid_c(
+    timestamp_ms: Float64,
+    previous_timestamp_ms: Float64,
+    has_previous: Int,
+    last_update_time: Float64,
+) -> Int64:
+    if not (_finite(timestamp_ms) and _finite(last_update_time)):
+        return 0
+    if last_update_time < 0.0:
+        return 0
+    if has_previous != 0 and timestamp_ms < previous_timestamp_ms:
+        return 0
+    if timestamp_ms < last_update_time:
+        return 0
+    return 1
+
+
+@export
+def dvs_input_polarity_valid_c(polarity: Int) -> Int64:
+    if polarity == -1 or polarity == 0 or polarity == 1:
+        return 1
+    return 0
+
+
+@export
+def dvs_input_coordinate_status_c(x: Int, y: Int, height: Int, width: Int) -> Int64:
+    if height <= 0 or width <= 0:
+        return -1
+    if x < 0 or y < 0:
+        return 0
+    if x >= width or y >= height:
+        return 0
+    return 1
+
+
+@export
+def dvs_input_bitstream_length_valid_c(length: Int) -> Int64:
+    if length > 0:
+        return 1
+    return 0

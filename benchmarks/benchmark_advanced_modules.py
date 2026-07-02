@@ -37,7 +37,7 @@ from sc_neurocore.chaos.rng import ChaoticRNG
 from sc_neurocore.world_model.predictive_model import PredictiveWorldModel
 
 
-def benchmark_quantum_hybrid():
+def benchmark_quantum_hybrid() -> float:
     """Benchmark quantum-classical hybrid layer."""
     print("\n" + "=" * 60)
     print("QUANTUM-CLASSICAL HYBRID BENCHMARK")
@@ -83,7 +83,7 @@ def benchmark_quantum_hybrid():
     return elapsed
 
 
-def benchmark_gnn():
+def benchmark_gnn() -> float:
     """Benchmark event-based graph neural network."""
     print("\n" + "=" * 60)
     print("EVENT-BASED GNN BENCHMARK")
@@ -127,7 +127,7 @@ def benchmark_gnn():
     return elapsed
 
 
-def benchmark_transformer():
+def benchmark_transformer() -> float:
     """Benchmark stochastic transformer block."""
     print("\n" + "=" * 60)
     print("STOCHASTIC TRANSFORMER (S-FORMER) BENCHMARK")
@@ -170,7 +170,7 @@ def benchmark_transformer():
     return elapsed
 
 
-def benchmark_bci_dvs():
+def benchmark_bci_dvs() -> tuple[float, float]:
     """Benchmark BCI and DVS interfaces."""
     print("\n" + "=" * 60)
     print("BCI/DVS INTERFACE BENCHMARK")
@@ -198,20 +198,28 @@ def benchmark_bci_dvs():
     height, width = 128, 128
     dvs = DVSInputLayer(height=height, width=width)
 
-    # Simulate events (1000 events)
-    events = [
-        (np.random.randint(0, width), np.random.randint(0, height), float(i), 1)
-        for i in range(1000)
+    # Simulate 100 monotonic DVS event frames outside the timed region.
+    events_per_frame = 1000
+    coords = [
+        (int(np.random.randint(0, width)), int(np.random.randint(0, height)))
+        for _ in range(events_per_frame)
+    ]
+    event_batches = [
+        [
+            (x, y, float(batch_idx * events_per_frame + event_idx), 1)
+            for event_idx, (x, y) in enumerate(coords)
+        ]
+        for batch_idx in range(100)
     ]
 
     start = time.perf_counter()
-    for _ in range(100):
+    for events in event_batches:
         dvs.process_events(events)
         frame = dvs.generate_bitstream_frame(length=64)
     dvs_elapsed = time.perf_counter() - start
 
     print(f"\nDVS Resolution: {height}x{width}")
-    print(f"Events per frame: {len(events)}")
+    print(f"Events per frame: {events_per_frame}")
     print(f"Output shape: {frame.shape}")
     print(f"DVS process latency (100 runs): {dvs_elapsed * 1000:.2f} ms")
 
@@ -219,7 +227,7 @@ def benchmark_bci_dvs():
     # Frame camera: captures all pixels continuously
     # DVS: only events (sparse)
     frame_pixels = height * width * 30  # 30 fps
-    dvs_events = len(events)
+    dvs_events = events_per_frame
 
     print("\nSPARSITY IMPROVEMENT (DVS vs Frame):")
     print(f"  Frame camera data: {frame_pixels:,} pixels/sec")
@@ -230,7 +238,7 @@ def benchmark_bci_dvs():
     return bci_elapsed, dvs_elapsed
 
 
-def benchmark_chaotic_rng():
+def benchmark_chaotic_rng() -> float:
     """Benchmark chaotic random number generator."""
     print("\n" + "=" * 60)
     print("CHAOTIC RNG BENCHMARK")
@@ -276,7 +284,7 @@ def benchmark_chaotic_rng():
     return elapsed
 
 
-def benchmark_predictive_model():
+def benchmark_predictive_model() -> float:
     """Benchmark predictive world model."""
     print("\n" + "=" * 60)
     print("PREDICTIVE WORLD MODEL BENCHMARK")
@@ -321,13 +329,13 @@ def benchmark_predictive_model():
     return elapsed
 
 
-def main():
+def main() -> dict[str, float]:
     print("=" * 60)
     print("SC-NEUROCORE ADVANCED MODULE BENCHMARK SUITE")
     print("=" * 60)
     print(f"Date: {time.strftime('%Y-%m-%d %H:%M:%S')}")
 
-    results = {}
+    results: dict[str, float] = {}
 
     results["quantum"] = benchmark_quantum_hybrid()
     results["gnn"] = benchmark_gnn()

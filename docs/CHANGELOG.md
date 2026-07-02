@@ -5,6 +5,18 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+### DVS input contract hardening
+- Hardened `interfaces.dvs_input.DVSInputLayer` with fail-closed dimension,
+  decay, AER address, timestamp, polarity, and bitstream-length validation
+  before event-surface mutation. Empty event batches now return probability
+  frames instead of exposing the mutable internal surface, and invalid
+  cross-batch timestamp rewinds leave `surface` and `last_update_time`
+  unchanged. The Rust safety mirror, Julia validation mirror, and Mojo FFI
+  validation shim now enforce the same DVS boundaries, and the advanced-module
+  DVS benchmark now uses monotonic precomputed event batches. The public DVS
+  input surface is covered at 100% exact-file coverage under strict mypy plus
+  the scoped NumPy docstring policy.
+
 ### Fisher-Posner LIF contract hardening
 - Hardened `quantum_cognition.fisher_posner` with fail-closed neuron-id,
   timestep, voltage, membrane-time-constant, ATP-domain, and step-current

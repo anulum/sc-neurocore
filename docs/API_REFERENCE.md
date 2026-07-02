@@ -16944,16 +16944,28 @@ Factory function to create a CCW bridge instance.
 ## Module `interfaces.dvs_input`
 
 ### Class `DVSInputLayer`
-Interface for Dynamic Vision Sensors (Event Cameras).
-Converts AER events (x, y, t, p) into SC Bitstreams.
+Convert Dynamic Vision Sensor AER events into stochastic bitstreams.
+
+Parameters
+----------
+height:
+    Positive number of pixel rows in the event-camera frame.
+width:
+    Positive number of pixel columns in the event-camera frame.
+decay_tau:
+    Positive finite exponential-decay time constant in milliseconds.
 
 - **__post_init__**()
+  - Validate sensor geometry and allocate the internal event surface.
 - **process_events**(events)
-  - Integrate a batch of events.
+  - Integrate a timestamp-ordered batch of DVS events.
 - **_validate_events**(events)
 - **generate_bitstream_frame**(length)
-  - Generate a HxWxLength bitstream cube from current surface state.
+  - Generate a stochastic bitstream cube from the current DVS surface.
 
+### Function `_positive_integer(value, message)`
+### Function `_positive_finite_float(value, message)`
+### Function `_probability_surface(surface)`
 ---
 
 ## Module `interfaces.real_world`

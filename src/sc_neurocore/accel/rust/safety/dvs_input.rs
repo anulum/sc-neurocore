@@ -63,9 +63,9 @@ impl DVSInputLayer {
 
     pub fn process_events(&mut self, events: &[DVSEvent]) -> Result<Vec<Vec<f64>>, String> {
         if events.is_empty() {
-            return Ok(self.surface.clone());
+            return Ok(self.output_probabilities());
         }
-        validate_events(events)?;
+        self.validate_events(events)?;
 
         let current_time = events[events.len() - 1].timestamp_ms;
         let dt = current_time - self.last_update_time;
@@ -119,6 +119,26 @@ impl DVSInputLayer {
         x >= 0 && y >= 0 && (x as usize) < self.width && (y as usize) < self.height
     }
 
+    fn validate_events(&self, events: &[DVSEvent]) -> Result<(), String> {
+        let mut previous_time: Option<f64> = None;
+        for event in events {
+            if !event.timestamp_ms.is_finite() {
+                return Err("event timestamp must be finite".to_string());
+            }
+            if previous_time.is_some_and(|previous| event.timestamp_ms < previous) {
+                return Err("event timestamps must be monotonically non-decreasing".to_string());
+            }
+            if event.timestamp_ms < self.last_update_time {
+                return Err("event timestamp cannot be earlier than last update time".to_string());
+            }
+            if !matches!(event.polarity, -1 | 0 | 1) {
+                return Err("event polarity must be -1, 0, or 1".to_string());
+            }
+            previous_time = Some(event.timestamp_ms);
+        }
+        Ok(())
+    }
+
     fn next_unit_interval(&mut self) -> f64 {
         self.rng_state = self
             .rng_state
@@ -141,28 +161,11 @@ fn validate_params(height: usize, width: usize, decay_tau: f64) -> Result<(), St
     Ok(())
 }
 
-fn validate_events(events: &[DVSEvent]) -> Result<(), String> {
-    let mut previous_time: Option<f64> = None;
-    for event in events {
-        if !event.timestamp_ms.is_finite() {
-            return Err("event timestamp must be finite".to_string());
-        }
-        if previous_time.is_some_and(|previous| event.timestamp_ms < previous) {
-            return Err("event timestamps must be monotonically non-decreasing".to_string());
-        }
-        if !matches!(event.polarity, -1 | 0 | 1) {
-            return Err("event polarity must be -1, 0, or 1".to_string());
-        }
-        previous_time = Some(event.timestamp_ms);
-    }
-    Ok(())
-}
-
 pub fn validate_dvs_input(state: &DVSInputLayer) -> bool {
     if validate_params(state.height, state.width, state.decay_tau).is_err() {
         return false;
     }
-    if !state.last_update_time.is_finite() {
+    if !state.last_update_time.is_finite() || state.last_update_time < 0.0 {
         return false;
     }
     if state.surface.len() != state.height
@@ -206,6 +209,23 @@ mod tests {
     }
 
     #[test]
+    fn test_dvs_empty_batch_returns_probabilities_without_mutating_surface() {
+        let mut layer = DVSInputLayer::try_new(1, 1, 100.0, Some(18)).unwrap();
+        let _ = layer
+            .process_events(&[DVSEvent::new(0, 0, 0.0, 1), DVSEvent::new(0, 0, 0.0, -1)])
+            .unwrap();
+        let surface_before = layer.surface.clone();
+        let last_update_before = layer.last_update_time;
+
+        let output = layer.process_events(&[]).unwrap();
+
+        assert!((output[0][0] - surface_before[0][0].tanh()).abs() < 1.0e-12);
+        assert!(output[0][0] < surface_before[0][0]);
+        assert_eq!(layer.surface, surface_before);
+        assert_eq!(layer.last_update_time, last_update_before);
+    }
+
+    #[test]
     fn test_dvs_ignores_out_of_bounds_events_and_preserves_shape() {
         let mut layer = DVSInputLayer::try_new(2, 3, 100.0, Some(19)).unwrap();
         let output = layer
@@ -233,6 +253,22 @@ mod tests {
         assert!(layer
             .process_events(&[DVSEvent::new(0, 0, 2.0, 1), DVSEvent::new(1, 1, 1.0, -1),])
             .is_err());
+    }
+
+    #[test]
+    fn test_dvs_rejects_cross_batch_timestamp_rewind_without_mutation() {
+        let mut layer = DVSInputLayer::try_new(2, 2, 100.0, None).unwrap();
+        let _ = layer
+            .process_events(&[DVSEvent::new(0, 0, 5.0, 1)])
+            .unwrap();
+        let surface_before = layer.surface.clone();
+        let last_update_before = layer.last_update_time;
+
+        let result = layer.process_events(&[DVSEvent::new(1, 1, 4.0, 1)]);
+
+        assert!(result.is_err());
+        assert_eq!(layer.surface, surface_before);
+        assert_eq!(layer.last_update_time, last_update_before);
     }
 
     #[test]
