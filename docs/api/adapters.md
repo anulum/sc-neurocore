@@ -13,6 +13,22 @@ and accessible via the `create_adapter(layer)` factory.
 
 ::: sc_neurocore.adapters.holonomic
 
+### L9 Memory Adapter Contract
+
+`sc_neurocore.adapters.holonomic.l9_mem.L9_MemoryAdapter` accepts optional
+rank-2 upstream bitstream batches shaped `(N, bitstream_length)`. The adapter
+now validates positive integer memory dimensions, finite non-negative retrieval
+gain, bounded weak-measurement strength, positive finite `dt`, non-empty input
+rows, exact bitstream width, and finite input values before mutating its
+forward/backward TSVF state. If `N` differs from `n_memory_slots`, rows are
+tiled deterministically by slot index instead of relying on backend modulo or
+broadcasting errors.
+
+The Python/JAX adapter owns the runtime TSVF update. The Rust safety mirror,
+Julia mirror, and Mojo validation shim expose the same parameter, timestep, and
+input-projection boundaries for downstream generated-kernel checks; they are
+not benchmark-dispatched acceleration paths.
+
 ## SpikeInterface / Neo Adapter
 
 Import experimental spike data into SC-NeuroCore. Converts between

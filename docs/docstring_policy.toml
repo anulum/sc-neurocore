@@ -7,7 +7,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 209
+expected_file_count = 210
 
 [[file]]
 path = "src/sc_neurocore/__init__.py"
@@ -768,6 +768,10 @@ rationale = "Public SCPN L8 cosmic phase-locking layer."
 [[file]]
 path = "src/sc_neurocore/scpn/layers/l9_memory.py"
 rationale = "Public SCPN L9 holographic memory layer."
+
+[[file]]
+path = "src/sc_neurocore/adapters/holonomic/l9_mem.py"
+rationale = "Public SCPN L9 holonomic memory adapter with validated TSVF bitstream inputs."
 
 [[file]]
 path = "src/sc_neurocore/scpn/layers/l10_boundary.py"

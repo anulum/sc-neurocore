@@ -920,23 +920,45 @@ JAX-traceable adapter for the SCPN Cosmic Phase-Locking layer.
 ## Module `adapters.holonomic.l9_mem`
 
 ### Class `L9_HolonomicParameters`
-Parameters derived from Paper 9 and TSVF specifications.
+Configuration for the Layer 9 TSVF memory adapter.
+
+Parameters
+----------
+n_memory_slots:
+    Number of holographic memory rows retained by the adapter.
+bitstream_length:
+    Number of stochastic bits carried by each memory row.
+retrieval_gain:
+    Non-negative multiplier applied to the total TSVF overlap.
+weak_measurement_strength:
+    Bounded measurement coupling reserved for the TSVF update kernel.
+temporal_window:
+    Positive temporal-memory window used by downstream Layer 9 consumers.
 
 
 ### Class `L9_MemoryAdapter`
-JAX-traceable adapter for the SCPN Existential Memory layer.
+JAX-traceable adapter for the SCPN existential-memory layer.
 
 - **__init__**(params, seed)
+  - Initialise the Layer 9 memory adapter.
+- **_validate_positive_int**(name, value)
+  - Validate a strict positive integer configuration field.
+- **_validate_params**(cls, params)
+  - Validate Layer 9 parameters before allocating backend arrays.
+- **_validate_dt**(dt)
+  - Validate a positive finite simulation timestep.
+- **_validate_input_batch**(inputs)
+  - Validate and normalise an upstream L9 bitstream batch.
 - **encode**(domain_state)
-  - Maps memory imprints to stochastic bitstreams via TSVF overlap.
+  - Map memory imprints to stochastic bitstreams via TSVF overlap.
 - **_tsvf_kernel**(psi, phi, inputs, strength, dt)
-  - Updates the forward/backward holographic imprints.
+  - Update the forward and backward holographic imprints.
 - **step_jax**(dt, inputs)
-  - Advances the L9 holonomic dynamics using JAX.
+  - Advance the L9 holonomic dynamics using JAX-compatible arrays.
 - **decode**(bitstreams)
-  - Maps bitstreams back to Memory Retrieval quality.
+  - Map bitstreams back to memory-retrieval quality.
 - **get_metrics**()
-  - Returns L9-specific metrics.
+  - Return L9-specific overlap and imprint-density metrics.
 
 ---
 

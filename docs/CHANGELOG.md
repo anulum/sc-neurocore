@@ -5,6 +5,16 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+### L9 holonomic memory adapter hardening
+- Hardened `adapters.holonomic.l9_mem` with fail-closed parameter, timestep,
+  input-rank, input-width, non-empty-row, and finite-value validation before
+  TSVF state mutation. Mismatched upstream slot counts now tile
+  deterministically across configured memory slots, and the public adapter is
+  covered at 100% exact-file coverage under strict mypy plus the scoped NumPy
+  docstring policy. The Rust safety mirror now validates real L9 state, the
+  Julia mirror is callable, and the Mojo contract shim builds as a shared
+  library with callable validation helpers.
+
 ### GPU fallback reduction hardening
 - Hardened the CuPy/NumPy GPU fallback and shared packed-bitstream vector
   reductions against coverage-time NumPy reloads by routing reductions through
