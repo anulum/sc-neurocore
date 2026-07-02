@@ -29,6 +29,14 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
   exporter at 100% exact-file coverage, strict-typed the focused tests, and
   documented the file exporter versus graph exporter split.
 
+### Pipeline ingestion hardening
+- Hardened `DataIngestor` so the reserved `labels` key is preserved as labels
+  instead of normalized as a modality, modality arrays must be finite and share
+  a sample axis, and scalar/empty inputs fail closed. Covered
+  `pipeline.ingestion` at 100% exact-file coverage, strict-typed the focused
+  tests, corrected public pipeline docs, and added the surface to the scoped
+  NumPy docstring policy.
+
 ### Neuron package facade hardening
 - Covered the `sc_neurocore.neurons` lazy facade at 100%, including optional
   Rust-dispatch opt-out, cache reuse, pure-Python model fallback, cached

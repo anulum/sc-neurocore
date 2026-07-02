@@ -7,7 +7,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 205
+expected_file_count = 206
 
 [[file]]
 path = "src/sc_neurocore/__init__.py"
@@ -108,6 +108,10 @@ rationale = "Public executable SC-NIR compatibility matrix and release-audit val
 [[file]]
 path = "src/sc_neurocore/export/onnx_export.py"
 rationale = "Public dependency-free ONNXGraph export surface for stochastic-computing IR graphs."
+
+[[file]]
+path = "src/sc_neurocore/pipeline/ingestion.py"
+rationale = "Public multimodal ingestion contract that normalizes modality arrays and preserves labels for training pipelines."
 
 [[file]]
 path = "src/sc_neurocore/core/bipolar.py"

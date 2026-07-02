@@ -26020,15 +26020,42 @@ Universe is a set of relations (Hyperedges).
 ## Module `pipeline.ingestion`
 
 ### Class `MultimodalDataset`
-A container for multimodal training data.
+Validated multimodal training dataset.
 
+Parameters
+----------
+data:
+    Mapping from modality names to normalized arrays. The first axis is the
+    sample axis and must have the same length for every modality.
+labels:
+    Label array whose first axis matches the modality sample count.
+
+- **__post_init__**()
+  - Validate dataset shape invariants after construction.
 - **get_sample**(idx)
+  - Return the per-modality arrays for one sample index.
 
 ### Class `DataIngestor`
-Ingests and normalizes multimodal datasets for SC training.
+Normalize raw multimodal arrays into a `MultimodalDataset`.
 
+Parameters
+----------
+label_key:
+    Reserved key used to extract labels from the raw input mapping.
+
+- **__init__**(label_key)
+  - Initialize the ingestor with the reserved label key.
 - **prepare_dataset**(raw_data)
-  - Normalizes and packages raw multimodal data.
+  - Normalize and package raw multimodal data.
+
+### Function `_ensure_sample_axis(name, values)`
+Return the sample count after rejecting scalar or empty arrays.
+
+### Function `_normalize_modality(name, values)`
+Return a finite float array normalized across its observed range.
+
+### Function `_validate_dataset_shapes(data, labels)`
+Validate shared modality and label sample-axis lengths.
 
 ---
 
