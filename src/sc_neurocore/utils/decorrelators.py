@@ -74,8 +74,10 @@ class LFSRRegenDecorrelator(Decorrelator):
 
     def process(self, bitstream: np.ndarray[Any, Any]) -> np.ndarray[Any, Any]:
         p_est = bitstream.mean()
-        # Regenerate
-        regenerated: np.ndarray[Any, Any] = self._rng.bernoulli(p_est, size=len(bitstream)).astype(
-            np.uint8
+        # Regenerate. ``bernoulli`` is typed ``bool | ndarray`` (scalar for a
+        # scalar draw); ``np.asarray`` narrows the sized draw to an array before
+        # the dtype cast so the ``.astype`` union-attr does not reach mypy.
+        regenerated: np.ndarray[Any, Any] = np.asarray(
+            self._rng.bernoulli(p_est, size=len(bitstream)), dtype=np.uint8
         )
         return regenerated
