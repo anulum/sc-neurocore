@@ -965,7 +965,7 @@
     "python_model_classes": 158,
     "python_model_source_modules": 152,
     "rust_pyo3_model_wrappers": 175,
-    "test_files": 935
+    "test_files": 936
   },
   "documentation": {
     "public_pages": [
@@ -3325,6 +3325,7 @@
       "tests/test_model_yamada.py",
       "tests/test_model_zoo/test_model_zoo.py",
       "tests/test_model_zoo.py",
+      "tests/test_model_zoo_pretrained_contracts.py",
       "tests/test_mojo_rk4_neuron_parity.py",
       "tests/test_mpi_runner.py",
       "tests/test_mpi_runner_real.py",

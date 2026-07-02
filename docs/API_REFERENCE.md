@@ -18688,14 +18688,39 @@ Convert dense weight matrix (fan_in, fan_out) to CSR arrays.
 ### Function `_apply_weights(proj, dense)`
 Overwrite a Projection's CSR data with a dense weight matrix.
 
-### Function `_validate_archive_members(name, archive)`
+### Function `_weight_spec_for(name)`
+Return the archive schema for a registered pretrained model.
+
+### Function `_validate_projection_layout(name, net, specs)`
+Validate the built network before applying pretrained archive weights.
+
+### Function `_validate_archive_members(name, archive, specs)`
+Validate archive keys against the registered pretrained schema.
+
 ### Function `_load_weight_matrix(name, archive, key, expected_shape)`
 ### Function `load_pretrained(name)`
-Load a network with pre-initialised weights.
+Build a model-zoo network and load its shipped pretrained weights.
 
-Supported names: ``'mnist'``, ``'shd'``, ``'dvs_gesture'``.
+Parameters
+----------
+name:
+    Registered pretrained model name. Supported values are ``"mnist"``,
+    ``"shd"``, and ``"dvs_gesture"``.
 
-Raises ``ValueError`` for unknown names.
+Returns
+-------
+Network
+    A freshly built network whose projection CSR arrays were replaced by
+    validated arrays from the matching ``.npz`` archive.
+
+Raises
+------
+ValueError
+    If the name is unknown, the registry/schema wiring is inconsistent, the
+    built network projection layout does not match the archive schema, or
+    any archive member is malformed.
+FileNotFoundError
+    If the expected pretrained archive is missing.
 
 ---
 

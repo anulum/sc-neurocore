@@ -386,6 +386,18 @@ loader rejects missing or unexpected archive members, non-2-D arrays,
 shape mismatches, complex or object arrays, and non-finite values before
 overwriting projection weights.
 
+The Python loader also validates model-zoo wiring before archive data is
+applied: the built network must expose exactly the expected number of
+projections, and each projection's source/target population sizes must match
+the registered archive matrix shape. These checks fail closed before any CSR
+arrays are overwritten, so a stale builder or registry entry cannot partially
+mutate a network.
+
+The generated Julia and Mojo mirror files under `src/sc_neurocore/accel/` are
+not dispatched pretrained-weight loaders. The supported runtime boundary for
+pretrained archives is this Python API, backed by the committed `.npz` files
+and the contract tests documented here.
+
 **Spiking correction:** Weights use Xavier/Glorot with spiking correction
 factor 0.5 (Zenke & Ganguli 2018). This accounts for the fact that SNN
 gradients are noisier than ANN gradients due to the non-differentiable
@@ -402,6 +414,7 @@ print(net.spike_monitors[0].count)
 **Error handling:**
 - Unknown name → `ValueError` with list of available models
 - Missing weight file → `FileNotFoundError`
+- Registry/schema or projection-layout mismatch → `ValueError` before weight mutation
 
 ---
 

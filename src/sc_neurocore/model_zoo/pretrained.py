@@ -15,6 +15,7 @@ subdirectory.
 
 from __future__ import annotations
 
+from collections.abc import Callable
 from pathlib import Path
 from typing import Any
 
@@ -27,13 +28,17 @@ from .configs import dvs_gesture_classifier, mnist_classifier, shd_speech_classi
 
 _WEIGHTS_DIR = Path(__file__).parent / "weights"
 
-_REGISTRY: dict[str, tuple[object, str]] = {
+_PretrainedBuilder = Callable[[], Network]
+_ProjectionSpec = tuple[str, tuple[int, int]]
+_WeightSpec = tuple[_ProjectionSpec, ...]
+
+_REGISTRY: dict[str, tuple[_PretrainedBuilder, str]] = {
     "mnist": (mnist_classifier, "mnist_784_128_10.npz"),
     "shd": (shd_speech_classifier, "shd_700_256_20.npz"),
     "dvs_gesture": (dvs_gesture_classifier, "dvs_256_256_11.npz"),
 }
 
-_WEIGHT_SPECS: dict[str, tuple[tuple[str, tuple[int, int]], ...]] = {
+_WEIGHT_SPECS: dict[str, _WeightSpec] = {
     "mnist": (("W0", (784, 128)), ("W1", (128, 10))),
     "shd": (("W0", (700, 256)), ("W_rec", (256, 256)), ("W1", (256, 20))),
     "dvs_gesture": (("W0", (256, 256)), ("W1", (256, 11))),
@@ -60,8 +65,42 @@ def _apply_weights(proj: object, dense: np.ndarray[Any, Any]) -> None:
     proj.data = data  # type: ignore[attr-defined]
 
 
-def _validate_archive_members(name: str, archive: np.lib.npyio.NpzFile) -> None:
-    expected = {key for key, _shape in _WEIGHT_SPECS[name]}
+def _weight_spec_for(name: str) -> _WeightSpec:
+    """Return the archive schema for a registered pretrained model."""
+    try:
+        return _WEIGHT_SPECS[name]
+    except KeyError as exc:
+        raise ValueError(
+            f"Invalid pretrained registry entry for '{name}': missing weight schema"
+        ) from exc
+
+
+def _validate_projection_layout(name: str, net: Network, specs: _WeightSpec) -> None:
+    """Validate the built network before applying pretrained archive weights."""
+    expected_count = len(specs)
+    actual_count = len(net.projections)
+    if actual_count != expected_count:
+        raise ValueError(
+            f"Invalid pretrained model wiring for '{name}': projection count "
+            f"{actual_count} does not match archive schema count {expected_count}"
+        )
+
+    for index, (projection, (key, expected_shape)) in enumerate(
+        zip(net.projections, specs, strict=True)
+    ):
+        actual_shape = (projection.source.n, projection.target.n)
+        if actual_shape != expected_shape:
+            raise ValueError(
+                f"Invalid pretrained model wiring for '{name}': projection {index} "
+                f"for archive member '{key}' has topology "
+                f"{actual_shape[0]}->{actual_shape[1]}, expected "
+                f"{expected_shape[0]}->{expected_shape[1]}"
+            )
+
+
+def _validate_archive_members(name: str, archive: np.lib.npyio.NpzFile, specs: _WeightSpec) -> None:
+    """Validate archive keys against the registered pretrained schema."""
+    expected = {key for key, _shape in specs}
     actual = set(archive.files)
     missing = sorted(expected - actual)
     extra = sorted(actual - expected)
@@ -114,27 +153,47 @@ def _load_weight_matrix(
 
 
 def load_pretrained(name: str) -> Network:
-    """Load a network with pre-initialised weights.
+    """Build a model-zoo network and load its shipped pretrained weights.
 
-    Supported names: ``'mnist'``, ``'shd'``, ``'dvs_gesture'``.
+    Parameters
+    ----------
+    name:
+        Registered pretrained model name. Supported values are ``"mnist"``,
+        ``"shd"``, and ``"dvs_gesture"``.
 
-    Raises ``ValueError`` for unknown names.
+    Returns
+    -------
+    Network
+        A freshly built network whose projection CSR arrays were replaced by
+        validated arrays from the matching ``.npz`` archive.
+
+    Raises
+    ------
+    ValueError
+        If the name is unknown, the registry/schema wiring is inconsistent, the
+        built network projection layout does not match the archive schema, or
+        any archive member is malformed.
+    FileNotFoundError
+        If the expected pretrained archive is missing.
     """
     if name not in _REGISTRY:
         raise ValueError(f"Unknown pretrained model '{name}'. Available: {sorted(_REGISTRY)}")
 
     builder, weight_file = _REGISTRY[name]
-    path = _WEIGHTS_DIR / weight_file
+    specs = _weight_spec_for(name)
+    path = Path(_WEIGHTS_DIR) / weight_file
     if not path.exists():
-        raise FileNotFoundError(f"Weight file not found: {path}")
+        raise FileNotFoundError(
+            f"Weights for pretrained model '{name}' not found: expected "
+            f"{weight_file!r} under {Path(_WEIGHTS_DIR)}"
+        )
 
-    net: Network = builder()  # type: ignore[operator]
+    net = builder()
+    _validate_projection_layout(name, net, specs)
 
     with np.load(path, allow_pickle=False) as data:
-        _validate_archive_members(name, data)
-        for projection, (key, expected_shape) in zip(
-            net.projections, _WEIGHT_SPECS[name], strict=True
-        ):
+        _validate_archive_members(name, data, specs)
+        for projection, (key, expected_shape) in zip(net.projections, specs, strict=True):
             weights = _load_weight_matrix(name, data, key, expected_shape)
             _apply_weights(projection, weights)
 

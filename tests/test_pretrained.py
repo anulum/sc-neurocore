@@ -17,13 +17,13 @@ from sc_neurocore.model_zoo.pretrained import load_pretrained
 from sc_neurocore.network import Network
 
 
-def test_load_mnist_returns_network():
+def test_load_mnist_returns_network() -> None:
     net = load_pretrained("mnist")
     assert isinstance(net, Network)
     assert len(net.populations) >= 3
 
 
-def test_mnist_weight_shapes():
+def test_mnist_weight_shapes() -> None:
     net = load_pretrained("mnist")
     # input->hidden: 784->128, hidden->output: 128->10
     proj_ih = net.projections[0]
@@ -34,7 +34,7 @@ def test_mnist_weight_shapes():
     assert proj_ho.target.n == 10
 
 
-def test_weights_in_expected_range():
+def test_weights_in_expected_range() -> None:
     """Xavier/Glorot + 0.5 spiking correction keeps weights small."""
     net = load_pretrained("mnist")
     for proj in net.projections:
@@ -43,13 +43,13 @@ def test_weights_in_expected_range():
         assert max_abs < 0.15, f"Weight magnitude {max_abs} exceeds expected range"
 
 
-def test_network_runs_after_loading():
+def test_network_runs_after_loading() -> None:
     net = load_pretrained("dvs_gesture")
     net.run(0.01, dt=0.001)
     total_spikes = sum(m.count for m in net.spike_monitors)
     assert total_spikes >= 0
 
 
-def test_unknown_name_raises():
+def test_unknown_name_raises() -> None:
     with pytest.raises(ValueError, match="Unknown pretrained model"):
         load_pretrained("nonexistent_model_xyz")

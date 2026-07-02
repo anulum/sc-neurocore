@@ -28,7 +28,7 @@ _SAFE_EXTRA_KEY = st.from_regex(r"[A-Za-z][A-Za-z0-9_]{0,10}", fullmatch=True).f
 )
 
 
-def _write_archive(directory: Path, name: str, arrays: Mapping[str, np.ndarray]) -> None:
+def _write_archive(directory: Path, name: str, arrays: Mapping[str, np.ndarray[Any, Any]]) -> None:
     _builder, filename = _pt._REGISTRY[name]
     np.savez(directory / filename, **cast(Any, arrays))
 
@@ -92,7 +92,7 @@ def test_fuzz_load_pretrained_rejects_nonfinite_weights(nonfinite: float) -> Non
     ],
 )
 def test_load_pretrained_rejects_bad_weight_matrix_schema(
-    arrays: Mapping[str, np.ndarray], message: str
+    arrays: Mapping[str, np.ndarray[Any, Any]], message: str
 ) -> None:
     with tempfile.TemporaryDirectory() as tmpdir:
         weight_dir = Path(tmpdir)
