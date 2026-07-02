@@ -5,6 +5,12 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+### Quantum Studio telemetry hardening
+- Covered `QuantumStudioHook` snapshot, compact JSON event, and debug
+  representation contracts at 100% exact-file coverage under strict mypy.
+  Added the telemetry hook to the scoped NumPy docstring policy and refreshed
+  the quantum cognition API documentation for the Studio streaming surface.
+
 ### Host driver generator hardening
 - Hardened generated Python and C host drivers so module names, parameter
   registers, setters, include guards, and C function prefixes are sanitized into

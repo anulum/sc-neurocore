@@ -154,6 +154,7 @@ class QuantumStudioHook:
         return json.dumps(event, separators=(",", ":"))
 
     def __repr__(self) -> str:
+        """Return debug representation with observed pool and bridge handles."""
         return f"QuantumStudioHook(spin_pool={self.spin_pool!r}, bridge={self.bridge!r})"
 
 

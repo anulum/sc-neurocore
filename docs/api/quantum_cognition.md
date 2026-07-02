@@ -317,6 +317,8 @@ QuantumStudioHook(
 | `get_layer_metadata()` | `QuantumCognitionLayerMetadata` | Frozen dataclass for UI layer panel |
 | `get_layer_metadata_dict()` | `dict` | JSON-serialisable version |
 | `get_realtime_data()` | `dict` | Streaming entanglement map + ATP efficiencies |
+| `get_entanglement_snapshot()` | `dict` | Timestamped archive/stream snapshot with status summary |
+| `to_json_event()` | `str` | Compact single-line JSON event for NDJSON or SSE bridges |
 
 ### 7.3 `QuantumCognitionLayerMetadata` Dataclass
 
@@ -642,6 +644,10 @@ print(meta["visual_config"])  # {"color": "#00f2ff", "node_style": "glow"}
 data = hook.get_realtime_data()
 print(data["entanglement_map"])   # [0.25, 0.25, 0.25, 0.25]
 print(data["atp_efficiencies"])   # [0.625, 0.625, 0.625, 0.625]
+
+# Single-line telemetry event for NDJSON/SSE transport
+event = hook.to_json_event("quantum_snapshot")
+assert "\n" not in event
 ```
 
 ---
@@ -649,9 +655,9 @@ print(data["atp_efficiencies"])   # [0.625, 0.625, 0.625, 0.625]
 ## 12. Tests
 
 ```bash
-# Full quantum cognition + GOTM brain suite
-PYTHONPATH=src python -m pytest tests/test_quantum_cognition.py tests/test_gotm_brain.py -v
-# 74 passed in 13.66s  (verified 2026-05-02)
+# Focused quantum cognition suite
+PYTHONPATH=src python -m pytest tests/test_quantum_cognition.py -q
+# 43 passed  (verified 2026-07-02)
 ```
 
 | Test file | Test class | Tests | What's covered |
@@ -660,7 +666,7 @@ PYTHONPATH=src python -m pytest tests/test_quantum_cognition.py tests/test_gotm_
 | | `TestHybridFisherPosnerLIF` | 9 | Spiking, metabolic failure, ATP regeneration, spike feedback, state, repr |
 | | `TestNonLocality` | 2 | Distal efficiency change, proximity gradient |
 | | `TestFisherPosnerQuantumBridge` | 9 | Emulated + PennyLane backends, sync, gradient, validation |
-| | `TestQuantumStudioHook` | 3 | Metadata, metadata dict, realtime data |
+| | `TestQuantumStudioHook` | 6 | Metadata, realtime data, snapshot payload, compact JSON event, repr |
 | | `TestPackageImport` | 2 | All symbols importable, tier label |
 | `test_gotm_brain.py` | `TestContentChunk` | 2 | Create, to_dict |
 | | `TestTextExtraction` | 5 | Python docstrings, Rust doc comments, chunking, skip dirs |

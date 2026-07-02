@@ -7,7 +7,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 207
+expected_file_count = 208
 
 [[file]]
 path = "src/sc_neurocore/__init__.py"
@@ -140,6 +140,10 @@ rationale = "Public integrated-information estimators used by analysis workflows
 [[file]]
 path = "src/sc_neurocore/analysis/__init__.py"
 rationale = "Public analysis package entry point that re-exports spike statistics and explainability helpers."
+
+[[file]]
+path = "src/sc_neurocore/quantum_cognition/studio_hook.py"
+rationale = "Public quantum cognition telemetry hook used by Studio dashboards and generated API documentation."
 
 [[file]]
 path = "src/sc_neurocore/plasticity.py"

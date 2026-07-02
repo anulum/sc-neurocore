@@ -6118,8 +6118,15 @@ summary : list&#91;str&#93;
     The ``sby`` summary lines, retained for diagnostics.
 
 
-### Function `formal_tools_available()`
-Return ``True`` when both ``sby`` and ``yosys`` are on ``PATH``.
+### Function `formal_tools_available(engine)`
+Return ``True`` when the full proof toolchain is on ``PATH``.
+
+Checks ``sby`` and ``yosys`` plus the SMT solver binary for ``engine`` — for
+the ``smtbmc`` backend the engine name is also the solver executable name
+(``z3``, ``boolector``, ``yices`` …). A runner may have ``sby`` and ``yosys``
+installed yet lack the solver (as on a CI image that ships only the HDL
+toolchain), in which case a proof would error out at the engine stage; this
+guard reports that case as unavailable so callers and tests can skip cleanly.
 
 ### Function `_generate_sby(miter_top, source_files)`
 Render a ``.sby`` script that reads the sources and checks the miter.
@@ -27632,6 +27639,7 @@ bridge : FisherPosnerQuantumBridge
 - **to_json_event**(event_type)
   - Produce a JSON event string for external frontend streaming.
 - **__repr__**()
+  - Return debug representation with observed pool and bridge handles.
 
 ---
 

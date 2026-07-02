@@ -14,6 +14,7 @@ QuantumStudioHook, and cross-module non-locality verification.
 
 from __future__ import annotations
 
+import json
 import numpy as np
 import pytest
 
@@ -359,6 +360,32 @@ class TestQuantumStudioHook:
         assert len(data["entanglement_map"]) == 4
         assert len(data["atp_efficiencies"]) == 4
         assert data["bridge_backend"] == "emulated"
+
+    def test_entanglement_snapshot_payload(self, hook: QuantumStudioHook) -> None:
+        snapshot = hook.get_entanglement_snapshot()
+        assert snapshot["n_sites"] == 4
+        assert len(snapshot["entanglement_map"]) == 4
+        assert len(snapshot["atp_efficiencies"]) == 4
+        assert snapshot["measurement_count"] == 0
+        assert snapshot["coherence_status"] == "stable"
+        assert snapshot["bridge_backend"] == "emulated"
+        assert isinstance(snapshot["timestamp"], float)
+
+    def test_json_event_is_compact_ndjson_payload(self, hook: QuantumStudioHook) -> None:
+        payload = hook.to_json_event("quantum_snapshot")
+        assert "\n" not in payload
+
+        event = json.loads(payload)
+        assert event["event"] == "quantum_snapshot"
+        assert event["timestamp"] == event["data"]["timestamp"]
+        assert event["data"]["n_sites"] == 4
+        assert event["data"]["bridge_backend"] == "emulated"
+
+    def test_repr(self, hook: QuantumStudioHook) -> None:
+        rendered = repr(hook)
+        assert "QuantumStudioHook" in rendered
+        assert "SpinPoolMPS" in rendered
+        assert "FisherPosnerQuantumBridge" in rendered
 
 
 # ───────── Package import ─────────
