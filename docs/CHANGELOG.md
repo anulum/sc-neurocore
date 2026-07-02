@@ -5,6 +5,14 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+### Cortical column coverage hardening
+- Added strict-typed cortical-column coverage contract tests for static scale
+  validation, auto-backend single Rust SpMV fallback, and delayed per-bin
+  injection. `network.cortical_column` now reaches 100% exact-file coverage
+  under the focused fast selector, and the generated capability inventory was
+  refreshed. No runtime contract, polyglot mirror, or benchmark-dispatched path
+  changed.
+
 ### Native learning bridge docstring hardening
 - Promoted `_native.learning_bridge` into the scoped NumPy docstring policy,
   documented the public Rust, Rust-WGPU, and Torch bridge methods, covered the
