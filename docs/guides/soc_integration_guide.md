@@ -130,6 +130,9 @@ Available presets: `q17`, `q44`, `q88`, `q412`, `q115`, `q99`, `q1212`,
 
 Auto-generate C/Python host-side drivers that match the bus wrapper register
 map. Includes Q-format encoding/decoding.
+Module and parameter names are sanitized before source emission. Names that
+sanitize to empty or collide after sanitization are rejected, preserving valid
+Python classes, C include guards, register constants, and setter functions.
 
 ### Python Driver
 
@@ -180,6 +183,9 @@ Generated C usage:
 
 sc_lif_reset();
 sc_lif_set_current(50.0f);
+sc_lif_set_v_rest(-65.0f);
+sc_lif_set_v_thresh(-50.0f);
+sc_lif_set_tau_m(10.0f);
 sc_lif_enable();
 uint32_t spikes = sc_lif_get_spikes();
 ```

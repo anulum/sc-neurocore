@@ -7,9 +7,11 @@
 
 from __future__ import annotations
 
+from collections.abc import Callable
 from pathlib import Path
 import shutil
 import subprocess
+from typing import Protocol, cast
 
 import pytest
 
@@ -40,6 +42,63 @@ endmodule
 """
 
 LIF_PARAMS = {"P_V_REST": 16, "P_V_THRESH": 16, "P_TAU_M": 16}
+
+
+class _GeneratedUnsafeHostDriver(Protocol):
+    """Protocol for the dynamically generated unsafe-name test driver."""
+
+    def set_tau_m(self, value: float) -> None:
+        """Set the generated tau parameter register."""
+
+    def set_v_thresh(self, value: float) -> None:
+        """Set the generated voltage-threshold parameter register."""
+
+
+class _GeneratedUnsafeHostDriverFactory(Protocol):
+    """Constructor protocol for the dynamically executed test driver class."""
+
+    def __call__(
+        self,
+        read_fn: Callable[[int], int],
+        write_fn: Callable[[int, int], None],
+    ) -> _GeneratedUnsafeHostDriver:
+        """Create a generated driver instance."""
+
+
+class _GeneratedLiveHostDriver(Protocol):
+    """Protocol for generated live-control host driver methods under test."""
+
+    def verify_live_weights_w0_encoded(self, encoded_word: int) -> bool:
+        """Update and verify the generated live-control weight slot."""
+
+    def update_live_weights_w0_encoded(self, encoded_word: int) -> None:
+        """Update the generated live-control weight slot."""
+
+    def read_live_status(self) -> int:
+        """Read the generated live-control status register."""
+
+    def read_live_trap_status(self) -> int:
+        """Read the generated live-control trap status register."""
+
+    def rollback_live_shadow(self) -> None:
+        """Rollback the generated live-control shadow bank."""
+
+    def clear_selected_live_traps(self, trap_mask: int | bool) -> None:
+        """Clear selected generated live-control traps."""
+
+    def clear_live_traps(self) -> None:
+        """Clear all generated live-control traps."""
+
+
+class _GeneratedLiveHostDriverFactory(Protocol):
+    """Constructor protocol for the dynamically executed live-control class."""
+
+    def __call__(
+        self,
+        read_fn: Callable[[int], int],
+        write_fn: Callable[[int, int], None],
+    ) -> _GeneratedLiveHostDriver:
+        """Create a generated live-control driver instance."""
 
 
 # ═══════════════════════════════════════════════════════════════════════
@@ -192,6 +251,62 @@ class TestHostDriverGen:
         with pytest.raises(ValueError, match="Unsupported language"):
             generate_host_driver("sc_lif", LIF_PARAMS, language="rust")  # type: ignore
 
+    def test_python_driver_sanitises_module_and_parameter_identifiers(self) -> None:
+        """Generated Python drivers should be valid for unsafe source names."""
+        source = generate_host_driver(
+            "12 lif/core",
+            {"tau-m": 16, "P v thresh": 16},
+            language="python",
+        )
+        namespace: dict[str, object] = {}
+        exec(source, namespace)
+
+        driver_factory = cast(_GeneratedUnsafeHostDriverFactory, namespace["P12LifCoreDriver"])
+        writes: list[tuple[int, int]] = []
+        driver = driver_factory(
+            lambda _address: 0,
+            lambda address, value: writes.append((address, value)),
+        )
+
+        driver.set_tau_m(1.25)
+        driver.set_v_thresh(2.0)
+
+        assert "REG_TAU_M" in source
+        assert "REG_P_V_THRESH" in source
+        assert not any(fragment in source for fragment in ("tau-m", "P v thresh"))
+        assert writes == [(0x4000_000C, 320), (0x4000_0010, 512)]
+
+    def test_c_driver_sanitises_module_and_parameter_identifiers(self) -> None:
+        """Generated C drivers should sanitize guards, macros, and functions."""
+        source = generate_host_driver(
+            "12 lif/core",
+            {"tau-m": 16, "P v thresh": 16},
+            language="c",
+        )
+
+        assert "#ifndef P_12_LIF_CORE_DRIVER_H" in source
+        assert "#define P_12_LIF_CORE_BASE" in source
+        assert "#define REG_TAU_M" in source
+        assert "#define REG_P_V_THRESH" in source
+        assert "static inline void p_12_lif_core_set_tau_m" in source
+        assert "static inline void p_12_lif_core_set_v_thresh" in source
+        assert "tau-m" not in source
+
+    def test_host_driver_rejects_empty_generated_module_identifier(self) -> None:
+        """Generated drivers should fail closed when module names sanitize empty."""
+        with pytest.raises(ValueError, match="module_name"):
+            generate_host_driver("!!!", {"tau": 16}, language="python")
+
+    def test_host_driver_rejects_colliding_parameter_identifiers(self) -> None:
+        """Generated drivers should fail closed on sanitized parameter collisions."""
+        with pytest.raises(ValueError, match="parameter identifier collision"):
+            generate_host_driver("sc_lif", {"tau-m": 16, "tau m": 16}, language="c")
+
+    def test_host_driver_rejects_colliding_parameter_setters(self) -> None:
+        """Generated drivers should reject duplicate setters after P-prefix folding."""
+        with pytest.raises(ValueError, match="parameter identifier collision"):
+            generate_host_driver("sc_lif", {"P v": 16, "v": 16}, language="python")
+
     def test_python_live_control_driver_zeroes_high_word_and_verifies_readback(self) -> None:
         """Generated Python driver should use the full CRC/readback live-control contract."""
         spec = MMIOUpdateSpec(
@@ -216,7 +331,7 @@ class TestHostDriverGen:
         )
         namespace: dict[str, object] = {}
         exec(source, namespace)
-        driver_cls = namespace["ScLiveDriver"]
+        driver_factory = cast(_GeneratedLiveHostDriverFactory, namespace["ScLiveDriver"])
         writes: list[tuple[int, int]] = []
 
         def read_fn(address: int) -> int:
@@ -229,7 +344,7 @@ class TestHostDriverGen:
         def write_fn(address: int, value: int) -> None:
             writes.append((address, value))
 
-        driver = driver_cls(read_fn, write_fn)
+        driver = driver_factory(read_fn, write_fn)
 
         assert driver.verify_live_weights_w0_encoded(0x1234) is True
         assert (0x8000_0114, 0) in writes
@@ -262,8 +377,11 @@ class TestHostDriverGen:
         source = generate_host_driver("sc_live", {}, language="python", live_update_spec=spec)
         namespace: dict[str, object] = {}
         exec(source, namespace)
-        driver_cls = namespace["ScLiveDriver"]
-        driver = driver_cls(lambda _address: spec.status_bits["trap_latched"], lambda _a, _v: None)
+        driver_factory = cast(_GeneratedLiveHostDriverFactory, namespace["ScLiveDriver"])
+        driver = driver_factory(
+            lambda _address: spec.status_bits["trap_latched"],
+            lambda _address, _value: None,
+        )
 
         with pytest.raises(RuntimeError, match="hardware trap"):
             driver.update_live_weights_w0_encoded(0x1234)
@@ -292,7 +410,7 @@ class TestHostDriverGen:
         )
         namespace: dict[str, object] = {}
         exec(source, namespace)
-        driver_cls = namespace["ScLiveDriver"]
+        driver_factory = cast(_GeneratedLiveHostDriverFactory, namespace["ScLiveDriver"])
         writes: list[tuple[int, int]] = []
 
         def read_fn(address: int) -> int:
@@ -305,7 +423,7 @@ class TestHostDriverGen:
         def write_fn(address: int, value: int) -> None:
             writes.append((address, value))
 
-        driver = driver_cls(read_fn, write_fn)
+        driver = driver_factory(read_fn, write_fn)
 
         assert driver.read_live_status() == 0xA5
         assert driver.read_live_trap_status() == 0x5A

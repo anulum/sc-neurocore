@@ -6548,6 +6548,10 @@ dict
 
 ## Module `compiler.host_driver_gen`
 
+### Class `_ParameterBinding`
+Sanitized generated-driver identifiers for one module parameter.
+
+
 ### Function `generate_host_driver(module_name, params)`
 Generate host-side driver code for a bus-wrapped neuron.
 
@@ -6580,10 +6584,25 @@ str
 ### Function `_driver_identifier(value)`
 Return a safe generated-driver identifier fragment.
 
-### Function `_gen_python_driver(module_name, params, base_address, data_width, fraction, live_update_spec)`
+### Function `_module_identifier(module_name)`
+Return the safe generated-driver identifier for a module name.
+
+### Function `_parameter_identifier(parameter_name)`
+Return the safe register identifier for a generated parameter.
+
+### Function `_setter_identifier(parameter_name)`
+Return the safe Python/C setter suffix for a generated parameter.
+
+### Function `_parameter_bindings(params)`
+Return collision-free generated identifiers for all parameters.
+
+### Function `_python_class_name(module_identifier)`
+Return the generated Python driver class name.
+
+### Function `_gen_python_driver(module_identifier, params, base_address, data_width, fraction, live_update_spec)`
 Generate Python MMIO driver.
 
-### Function `_gen_c_driver(module_name, params, base_address, data_width, fraction, live_update_spec)`
+### Function `_gen_c_driver(module_identifier, params, base_address, data_width, fraction, live_update_spec)`
 Generate C MMIO driver header.
 
 ---

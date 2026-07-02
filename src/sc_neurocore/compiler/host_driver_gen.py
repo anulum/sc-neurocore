@@ -14,9 +14,17 @@ Auto-generates C/Python drivers for memory-mapped bus wrappers.
 from __future__ import annotations
 
 import re
-from typing import Literal
+from typing import Literal, NamedTuple
 
 from .live_control import MMIOUpdateSpec
+
+
+class _ParameterBinding(NamedTuple):
+    """Sanitized generated-driver identifiers for one module parameter."""
+
+    source_name: str
+    register_identifier: str
+    setter_identifier: str
 
 
 def generate_host_driver(
@@ -58,9 +66,10 @@ def generate_host_driver(
     str
         Complete driver source code.
     """
+    module_identifier = _module_identifier(module_name)
     if language == "python":
         return _gen_python_driver(
-            module_name,
+            module_identifier,
             params,
             base_address,
             data_width,
@@ -69,7 +78,7 @@ def generate_host_driver(
         )
     elif language == "c":
         return _gen_c_driver(
-            module_name,
+            module_identifier,
             params,
             base_address,
             data_width,
@@ -89,8 +98,75 @@ def _driver_identifier(value: str) -> str:
     return safe
 
 
+def _module_identifier(module_name: str) -> str:
+    """Return the safe generated-driver identifier for a module name."""
+    try:
+        return _driver_identifier(module_name)
+    except ValueError as exc:
+        msg = "module_name must contain at least one alphanumeric identifier character"
+        raise ValueError(msg) from exc
+
+
+def _parameter_identifier(parameter_name: str) -> str:
+    """Return the safe register identifier for a generated parameter."""
+    return _driver_identifier(parameter_name)
+
+
+def _setter_identifier(parameter_name: str) -> str:
+    """Return the safe Python/C setter suffix for a generated parameter."""
+    parameter_identifier = _parameter_identifier(parameter_name)
+    has_symbolic_parameter_prefix = re.match(
+        r"^\s*p(?:[^0-9a-zA-Z]+|_+)",
+        parameter_name,
+        flags=re.IGNORECASE,
+    )
+    if (
+        has_symbolic_parameter_prefix is not None
+        and parameter_identifier.startswith("p_")
+        and len(parameter_identifier) > 2
+        and not parameter_identifier[2].isdigit()
+    ):
+        return parameter_identifier[2:]
+    return parameter_identifier
+
+
+def _parameter_bindings(params: dict[str, int]) -> list[_ParameterBinding]:
+    """Return collision-free generated identifiers for all parameters."""
+    bindings: list[_ParameterBinding] = []
+    seen: dict[str, str] = {}
+    for source_name in params:
+        register_identifier = _parameter_identifier(source_name)
+        setter_identifier = _setter_identifier(source_name)
+        for category, identifier in (
+            ("register", register_identifier),
+            ("setter", setter_identifier),
+        ):
+            generated_key = f"{category}:{identifier}"
+            existing_source = seen.get(generated_key)
+            if existing_source is not None:
+                msg = (
+                    "parameter identifier collision after sanitization: "
+                    f"{existing_source!r} and {source_name!r} both map to {identifier!r}"
+                )
+                raise ValueError(msg)
+            seen[generated_key] = source_name
+        bindings.append(
+            _ParameterBinding(
+                source_name=source_name,
+                register_identifier=register_identifier,
+                setter_identifier=setter_identifier,
+            )
+        )
+    return bindings
+
+
+def _python_class_name(module_identifier: str) -> str:
+    """Return the generated Python driver class name."""
+    return "".join(part.capitalize() for part in module_identifier.split("_")) + "Driver"
+
+
 def _gen_python_driver(
-    module_name: str,
+    module_identifier: str,
     params: dict[str, int],
     base_address: int,
     data_width: int,
@@ -98,9 +174,10 @@ def _gen_python_driver(
     live_update_spec: MMIOUpdateSpec | None,
 ) -> str:
     """Generate Python MMIO driver."""
-    class_name = "".join(w.capitalize() for w in module_name.split("_")) + "Driver"
+    class_name = _python_class_name(module_identifier)
+    param_bindings = _parameter_bindings(params)
     lines = [
-        f'"""Auto-generated Python driver for {module_name}.',
+        f'"""Auto-generated Python driver for {module_identifier}.',
         "",
         "SC-NeuroCore deployment utilities.",
         f"Bus: memory-mapped I/O at 0x{base_address:08X}.",
@@ -117,7 +194,7 @@ def _gen_python_driver(
         [
             "",
             f"class {class_name}:",
-            f'    """Memory-mapped driver for {module_name}."""',
+            f'    """Memory-mapped driver for {module_identifier}."""',
             "",
             f"    BASE = 0x{base_address:08X}",
             f"    FRACTION = {fraction}",
@@ -129,8 +206,9 @@ def _gen_python_driver(
         ]
     )
 
-    for i, pname in enumerate(params):
-        lines.append(f"    REG_{pname.upper():16s}= 0x{0x0C + i * 4:02X}")
+    for i, binding in enumerate(param_bindings):
+        register_name = binding.register_identifier.upper()
+        lines.append(f"    REG_{register_name:16s}= 0x{0x0C + i * 4:02X}")
 
     if live_update_spec is not None:
         addresses = live_update_spec.control_register_addresses
@@ -161,9 +239,13 @@ def _gen_python_driver(
             bank_id = _driver_identifier(bank.bank_name).upper()
             lines.append(f"    LIVE_BANK_{bank_id} = {bank_index}")
             for parameter in bank.parameter_names:
-                param_id = _driver_identifier(parameter).upper()
-                lines.append(f"    LIVE_{bank_id}_{param_id}_INDEX = {bank.entry_index(parameter)}")
-                lines.append(f"    LIVE_{bank_id}_{param_id}_WIDTH_BITS = {bank.entry_width_bits}")
+                live_param_id = _driver_identifier(parameter).upper()
+                lines.append(
+                    f"    LIVE_{bank_id}_{live_param_id}_INDEX = {bank.entry_index(parameter)}"
+                )
+                lines.append(
+                    f"    LIVE_{bank_id}_{live_param_id}_WIDTH_BITS = {bank.entry_width_bits}"
+                )
 
     lines.extend(
         [
@@ -304,14 +386,14 @@ def _gen_python_driver(
         ]
     )
 
-    for pname in params:
-        fn_name = pname.lower().replace("p_", "")
+    for binding in param_bindings:
+        register_name = binding.register_identifier.upper()
         lines.extend(
             [
                 "",
-                f"    def set_{fn_name}(self, value: float) -> None:",
-                f'        """Set {pname}."""',
-                f"        self._wr(self.REG_{pname.upper()}, self.encode_q(value))",
+                f"    def set_{binding.setter_identifier}(self, value: float) -> None:",
+                f'        """Set register {register_name}."""',
+                f"        self._wr(self.REG_{register_name}, self.encode_q(value))",
             ]
         )
 
@@ -328,7 +410,7 @@ def _gen_python_driver(
                     [
                         "",
                         f"    def update_live_{suffix}_encoded(self, encoded_word: int) -> None:",
-                        f'        """Update committed active parameter {bank.bank_name}.{parameter}."""',
+                        f'        """Update committed active parameter {bank_id}.{param_id}."""',
                         "        self._live_update_encoded(",
                         f"            self.LIVE_BANK_{bank_const},",
                         f"            self.LIVE_{bank_const}_{param_const}_INDEX,",
@@ -337,7 +419,7 @@ def _gen_python_driver(
                         "        )",
                         "",
                         f"    def read_live_{suffix}_encoded(self) -> int:",
-                        f'        """Read committed active parameter {bank.bank_name}.{parameter}."""',
+                        f'        """Read committed active parameter {bank_id}.{param_id}."""',
                         "        return self._live_read_encoded(",
                         f"            self.LIVE_BANK_{bank_const},",
                         f"            self.LIVE_{bank_const}_{param_const}_INDEX,",
@@ -345,7 +427,7 @@ def _gen_python_driver(
                         "        )",
                         "",
                         f"    def verify_live_{suffix}_encoded(self, encoded_word: int) -> bool:",
-                        f'        """Update {bank.bank_name}.{parameter} and verify committed readback."""',
+                        f'        """Update {bank_id}.{param_id} and verify committed readback."""',
                         f"        self.update_live_{suffix}_encoded(encoded_word)",
                         f"        return self.read_live_{suffix}_encoded() == encoded_word",
                     ]
@@ -356,7 +438,7 @@ def _gen_python_driver(
 
 
 def _gen_c_driver(
-    module_name: str,
+    module_identifier: str,
     params: dict[str, int],
     base_address: int,
     data_width: int,
@@ -364,9 +446,11 @@ def _gen_c_driver(
     live_update_spec: MMIOUpdateSpec | None,
 ) -> str:
     """Generate C MMIO driver header."""
-    guard = module_name.upper() + "_DRIVER_H"
+    module_macro = module_identifier.upper()
+    guard = module_macro + "_DRIVER_H"
+    param_bindings = _parameter_bindings(params)
     lines = [
-        f"/* Auto-generated C driver for {module_name} */",
+        f"/* Auto-generated C driver for {module_identifier} */",
         "/* SC-NeuroCore deployment utilities */",
         f"/* Bus: MMIO at 0x{base_address:08X} */",
         "",
@@ -375,8 +459,8 @@ def _gen_c_driver(
         "",
         "#include <stdint.h>",
         "",
-        f"#define {module_name.upper()}_BASE       0x{base_address:08X}U",
-        f"#define {module_name.upper()}_FRACTION    {fraction}",
+        f"#define {module_macro}_BASE       0x{base_address:08X}U",
+        f"#define {module_macro}_FRACTION    {fraction}",
         "",
         "/* Register offsets */",
         "#define REG_CTRL        0x00",
@@ -384,8 +468,8 @@ def _gen_c_driver(
         "#define REG_SPIKE_COUNT 0x08",
     ]
 
-    for i, pname in enumerate(params):
-        lines.append(f"#define REG_{pname.upper():16s} 0x{0x0C + i * 4:02X}")
+    for i, binding in enumerate(param_bindings):
+        lines.append(f"#define REG_{binding.register_identifier.upper():16s} 0x{0x0C + i * 4:02X}")
 
     if live_update_spec is not None:
         addresses = live_update_spec.control_register_addresses
@@ -466,43 +550,43 @@ def _gen_c_driver(
                 "    uint32_t data_lo = (uint32_t)(encoded_word & 0xFFFFFFFFULL);",
                 "    uint32_t data_hi = (uint32_t)((encoded_word >> 32U) & 0xFFFFFFFFULL);",
                 "    uint32_t checksum = live_update_crc32(bank_select, entry_index, data_lo, data_hi);",
-                f"    mmio_write({module_name.upper()}_BASE + LIVE_REG_BANK_SELECT, bank_select);",
-                f"    mmio_write({module_name.upper()}_BASE + LIVE_REG_ENTRY_INDEX, entry_index);",
-                f"    mmio_write({module_name.upper()}_BASE + LIVE_REG_WRITE_DATA_LO, data_lo);",
-                f"    mmio_write({module_name.upper()}_BASE + LIVE_REG_WRITE_DATA_HI, data_hi);",
-                f"    mmio_write({module_name.upper()}_BASE + LIVE_REG_WRITE_CHECKSUM, checksum);",
-                f"    mmio_write({module_name.upper()}_BASE + LIVE_REG_CONTROL, LIVE_CTRL_UPDATE_VALID);",
-                f"    mmio_write({module_name.upper()}_BASE + LIVE_REG_CONTROL, LIVE_CTRL_COMMIT);",
-                f"    return (mmio_read({module_name.upper()}_BASE + LIVE_REG_STATUS) & LIVE_STATUS_TRAP_LATCHED) ? -2 : 0;",
+                f"    mmio_write({module_macro}_BASE + LIVE_REG_BANK_SELECT, bank_select);",
+                f"    mmio_write({module_macro}_BASE + LIVE_REG_ENTRY_INDEX, entry_index);",
+                f"    mmio_write({module_macro}_BASE + LIVE_REG_WRITE_DATA_LO, data_lo);",
+                f"    mmio_write({module_macro}_BASE + LIVE_REG_WRITE_DATA_HI, data_hi);",
+                f"    mmio_write({module_macro}_BASE + LIVE_REG_WRITE_CHECKSUM, checksum);",
+                f"    mmio_write({module_macro}_BASE + LIVE_REG_CONTROL, LIVE_CTRL_UPDATE_VALID);",
+                f"    mmio_write({module_macro}_BASE + LIVE_REG_CONTROL, LIVE_CTRL_COMMIT);",
+                f"    return (mmio_read({module_macro}_BASE + LIVE_REG_STATUS) & LIVE_STATUS_TRAP_LATCHED) ? -2 : 0;",
                 "}",
                 "",
                 "static inline uint64_t live_read_encoded(uint32_t bank_select, uint32_t entry_index, uint32_t width_bits) {",
-                f"    mmio_write({module_name.upper()}_BASE + LIVE_REG_BANK_SELECT, bank_select);",
-                f"    mmio_write({module_name.upper()}_BASE + LIVE_REG_ENTRY_INDEX, entry_index);",
-                f"    uint64_t data_lo = (uint64_t)mmio_read({module_name.upper()}_BASE + LIVE_REG_READ_DATA_LO);",
-                f"    uint64_t data_hi = width_bits > 32U ? (uint64_t)mmio_read({module_name.upper()}_BASE + LIVE_REG_READ_DATA_HI) : 0ULL;",
+                f"    mmio_write({module_macro}_BASE + LIVE_REG_BANK_SELECT, bank_select);",
+                f"    mmio_write({module_macro}_BASE + LIVE_REG_ENTRY_INDEX, entry_index);",
+                f"    uint64_t data_lo = (uint64_t)mmio_read({module_macro}_BASE + LIVE_REG_READ_DATA_LO);",
+                f"    uint64_t data_hi = width_bits > 32U ? (uint64_t)mmio_read({module_macro}_BASE + LIVE_REG_READ_DATA_HI) : 0ULL;",
                 "    uint64_t mask = width_bits == 64U ? 0xFFFFFFFFFFFFFFFFULL : ((1ULL << width_bits) - 1ULL);",
                 "    return ((data_hi << 32U) | data_lo) & mask;",
                 "}",
                 "",
                 "static inline uint32_t live_read_status(void) {",
-                f"    return mmio_read({module_name.upper()}_BASE + LIVE_REG_STATUS);",
+                f"    return mmio_read({module_macro}_BASE + LIVE_REG_STATUS);",
                 "}",
                 "",
                 "static inline uint32_t live_read_trap_status(void) {",
-                f"    return mmio_read({module_name.upper()}_BASE + LIVE_REG_TRAP_STATUS);",
+                f"    return mmio_read({module_macro}_BASE + LIVE_REG_TRAP_STATUS);",
                 "}",
                 "",
                 "static inline void live_rollback_shadow(void) {",
-                f"    mmio_write({module_name.upper()}_BASE + LIVE_REG_CONTROL, LIVE_CTRL_ROLLBACK);",
+                f"    mmio_write({module_macro}_BASE + LIVE_REG_CONTROL, LIVE_CTRL_ROLLBACK);",
                 "}",
                 "",
                 "static inline int live_clear_selected_traps(uint32_t trap_mask) {",
                 "    if ((trap_mask & ~LIVE_TRAP_CLEAR_MASK) != 0U) {",
                 "        return -1;",
                 "    }",
-                f"    mmio_write({module_name.upper()}_BASE + LIVE_REG_TRAP_CLEAR, trap_mask);",
-                f"    mmio_write({module_name.upper()}_BASE + LIVE_REG_CONTROL, LIVE_CTRL_CLEAR_TRAP);",
+                f"    mmio_write({module_macro}_BASE + LIVE_REG_TRAP_CLEAR, trap_mask);",
+                f"    mmio_write({module_macro}_BASE + LIVE_REG_CONTROL, LIVE_CTRL_CLEAR_TRAP);",
                 "    return 0;",
                 "}",
                 "",
@@ -515,29 +599,41 @@ def _gen_c_driver(
 
     lines.extend(
         [
-            f"static inline int32_t {module_name}_encode_q(float val) {{",
+            f"static inline int32_t {module_identifier}_encode_q(float val) {{",
             f"    return (int32_t)(val * (1 << {fraction}));",
             "}",
             "",
-            f"static inline void {module_name}_enable(void) {{",
-            f"    mmio_write({module_name.upper()}_BASE + REG_CTRL, 0x01);",
+            f"static inline void {module_identifier}_enable(void) {{",
+            f"    mmio_write({module_macro}_BASE + REG_CTRL, 0x01);",
             "}",
             "",
-            f"static inline void {module_name}_reset(void) {{",
-            f"    mmio_write({module_name.upper()}_BASE + REG_CTRL, 0x02);",
-            f"    mmio_write({module_name.upper()}_BASE + REG_CTRL, 0x01);",
+            f"static inline void {module_identifier}_reset(void) {{",
+            f"    mmio_write({module_macro}_BASE + REG_CTRL, 0x02);",
+            f"    mmio_write({module_macro}_BASE + REG_CTRL, 0x01);",
             "}",
             "",
-            f"static inline void {module_name}_set_current(float I) {{",
-            f"    mmio_write({module_name.upper()}_BASE + REG_I_T, "
-            f"(uint32_t){module_name}_encode_q(I));",
+            f"static inline void {module_identifier}_set_current(float I) {{",
+            f"    mmio_write({module_macro}_BASE + REG_I_T, "
+            f"(uint32_t){module_identifier}_encode_q(I));",
             "}",
             "",
-            f"static inline uint32_t {module_name}_get_spikes(void) {{",
-            f"    return mmio_read({module_name.upper()}_BASE + REG_SPIKE_COUNT);",
+            f"static inline uint32_t {module_identifier}_get_spikes(void) {{",
+            f"    return mmio_read({module_macro}_BASE + REG_SPIKE_COUNT);",
             "}",
         ]
     )
+
+    for binding in param_bindings:
+        register_name = binding.register_identifier.upper()
+        lines.extend(
+            [
+                "",
+                f"static inline void {module_identifier}_set_{binding.setter_identifier}(float value) {{",
+                f"    mmio_write({module_macro}_BASE + REG_{register_name}, "
+                f"(uint32_t){module_identifier}_encode_q(value));",
+                "}",
+            ]
+        )
 
     if live_update_spec is not None:
         for bank in live_update_spec.banks:
@@ -548,7 +644,7 @@ def _gen_c_driver(
                 lines.extend(
                     [
                         "",
-                        f"static inline int {module_name}_update_live_{suffix}_encoded(uint64_t encoded_word) {{",
+                        f"static inline int {module_identifier}_update_live_{suffix}_encoded(uint64_t encoded_word) {{",
                         "    return live_update_encoded(",
                         f"        LIVE_BANK_{bank_id},",
                         f"        LIVE_{bank_id}_{param_id}_INDEX,",
@@ -557,7 +653,7 @@ def _gen_c_driver(
                         "    );",
                         "}",
                         "",
-                        f"static inline uint64_t {module_name}_read_live_{suffix}_encoded(void) {{",
+                        f"static inline uint64_t {module_identifier}_read_live_{suffix}_encoded(void) {{",
                         "    return live_read_encoded(",
                         f"        LIVE_BANK_{bank_id},",
                         f"        LIVE_{bank_id}_{param_id}_INDEX,",
@@ -565,12 +661,12 @@ def _gen_c_driver(
                         "    );",
                         "}",
                         "",
-                        f"static inline int {module_name}_verify_live_{suffix}_encoded(uint64_t encoded_word) {{",
-                        f"    int rc = {module_name}_update_live_{suffix}_encoded(encoded_word);",
+                        f"static inline int {module_identifier}_verify_live_{suffix}_encoded(uint64_t encoded_word) {{",
+                        f"    int rc = {module_identifier}_update_live_{suffix}_encoded(encoded_word);",
                         "    if (rc != 0) {",
                         "        return rc;",
                         "    }",
-                        f"    return {module_name}_read_live_{suffix}_encoded() == encoded_word ? 0 : -3;",
+                        f"    return {module_identifier}_read_live_{suffix}_encoded() == encoded_word ? 0 : -3;",
                         "}",
                     ]
                 )

@@ -489,6 +489,7 @@ pe_vcd = estimate_power(
 from sc_neurocore.compiler.deployment import (
     generate_constraints,
     generate_cocotb_testbench,
+    generate_host_driver,
     generate_riscv_driver,
     generate_sby_script,
     compile_multi_target,
@@ -501,6 +502,13 @@ xdc = generate_constraints("sc_lif", freq_mhz=200)
 
 # Cocotb testbench
 tb = generate_cocotb_testbench("sc_lif", data_width=16, fraction=8)
+
+# Python/C MMIO host drivers
+host_driver = generate_host_driver(
+    "sc_lif",
+    params={"P_V_REST": 16, "P_V_THRESH": 16, "P_TAU_M": 16},
+    language="python",
+)
 
 # RISC-V driver
 driver = generate_riscv_driver(
@@ -516,6 +524,13 @@ sby = generate_sby_script("sc_lif", mode="bmc", depth=20)
 res = estimate_resources("sc_lif", verilog)
 print(f"LUTs: {res.estimated_luts}, DSPs: {res.estimated_dsps}")
 ```
+
+Generated Python and C host drivers sanitize module and parameter names before
+emitting source. Module identifiers that sanitize to empty fail closed, and
+parameter names that collide after sanitization are rejected instead of
+generating ambiguous register constants or setter functions. Hardware-style
+parameter names such as `P_V_REST` keep their `REG_P_V_REST` constants while
+Python and C setter names use `set_v_rest`/`sc_lif_set_v_rest` suffixes.
 
 ---
 

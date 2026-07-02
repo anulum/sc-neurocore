@@ -5,6 +5,15 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+### Host driver generator hardening
+- Hardened generated Python and C host drivers so module names, parameter
+  registers, setters, include guards, and C function prefixes are sanitized into
+  valid identifiers before source emission. Empty module identifiers and
+  sanitized parameter collisions now fail closed, C drivers expose parameter
+  setters matching the Python surface, and `compiler.host_driver_gen` is covered
+  at 100% exact-file coverage under strict mypy plus the scoped NumPy docstring
+  policy.
+
 ### Compiler pipeline hardening
 - Hardened `CompilerPipeline` path and tool boundaries: artifact paths now use
   `commonpath` work-directory validation, EDA executables are resolved to

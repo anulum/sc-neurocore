@@ -327,6 +327,10 @@ open('sc_lif_driver.py', 'w').write(drv)
 vivado -mode batch -source build.tcl
 ```
 
+Host-driver generation sanitizes module names and parameter names before
+emitting Python or C source. Empty sanitized module names and sanitized
+parameter-name collisions are rejected before any driver text is returned.
+
 ---
 
 ## Cross-References
