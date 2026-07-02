@@ -418,6 +418,40 @@ print(net.spike_monitors[0].count)
 
 ---
 
+## Legacy Plugin API
+
+**Module:** `sc_neurocore.model_zoo.model_zoo`
+**Classes:** `NeuronPlugin`, `LIFPlugin`, `IzhikevichPlugin`, `AdExPlugin`,
+`HodgkinHuxleyPlugin`, `PluginRegistry`, `VerilogGenerator`, `DocGenerator`
+
+The legacy plugin API remains the supported extension point for lightweight
+single-neuron dynamics and generated plugin documentation. `NeuronPlugin`
+subclasses expose metadata, default state, default parameters, one-step ODE
+dynamics, threshold checks, reset behaviour, and a public `simulate()` helper
+for one-dimensional current traces.
+
+`simulate()` now validates the public runtime contract before integration:
+
+- `current_trace` must be a one-dimensional numeric `numpy.ndarray`;
+- all current samples must be finite;
+- `dt` must be finite and positive;
+- parameter mappings must have string keys and finite real values.
+
+Invalid input raises `ValueError` before neuron state is advanced, so malformed
+traces or parameters cannot partially mutate a simulation. The built-in plugin
+tests cover LIF input validation, AdEx dynamics/threshold/reset behaviour, and
+Hodgkin-Huxley threshold/reset copy semantics through the public plugin classes.
+
+The plugin API is Python-owned. `VerilogGenerator` emits a synthesisable wrapper
+from plugin metadata and default state, but the generated module intentionally
+keeps the ODE integration point explicit for downstream synthesis passes. No
+Rust, Go, Julia, or Mojo runtime dispatch path consumes these plugin objects, and
+this lane does not change benchmark-dispatched execution.
+
+See `tests/test_model_zoo_plugin_contracts.py`.
+
+---
+
 ## Infrastructure Pipeline
 
 All 10 architectures produce a `Network` object with the standard pipeline:

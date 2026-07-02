@@ -18795,9 +18795,13 @@ Reference: Hubel & Wiesel, J. Physiol. 160, 1962;
 Generic state container for neuron models.
 
 - **__getitem__**(key)
+  - Return a state variable by name.
 - **__setitem__**(key, value)
+  - Assign a state variable by name.
 - **copy**()
+  - Return an independent copy of this neuron state.
 - **as_dict**()
+  - Return state variables as a plain dictionary.
 
 ### Class `PluginMeta`
 Metadata carried by every neuron plugin.
@@ -18807,8 +18811,11 @@ Metadata carried by every neuron plugin.
 Abstract base class for pluggable neuron models.
 
 - **meta**()
+  - Return metadata describing this neuron plugin.
 - **default_state**()
+  - Return the default state for a new neuron instance.
 - **default_params**()
+  - Return default parameters for the neuron dynamics.
 - **ode_dynamics**(state, current, params, dt)
   - Advance the neuron state by one timestep *dt*.
 - **threshold_check**(state, params)
@@ -18816,57 +18823,87 @@ Abstract base class for pluggable neuron models.
 - **reset**(state, params)
   - Reset state after a spike.
 - **simulate**(current_trace, dt, params)
-  - Convenience: simulate a full current trace.
+  - Simulate the neuron response to a current trace.
 
 ### Class `LIFPlugin`
 Leaky Integrate-and-Fire neuron model.
 
 - **meta**()
+  - Return LIF plugin metadata and parameter documentation.
 - **default_state**()
+  - Return the resting LIF membrane state.
 - **default_params**()
+  - Return default SI-valued LIF parameters.
 - **ode_dynamics**(state, current, params, dt)
+  - Advance LIF membrane voltage by one Euler step.
 - **threshold_check**(state, params)
+  - Return whether the LIF voltage crosses threshold.
 - **reset**(state, params)
+  - Reset LIF membrane voltage after a spike.
 
 ### Class `IzhikevichPlugin`
 Izhikevich (2003) simple model of spiking neurons.
 
 - **meta**()
+  - Return Izhikevich plugin metadata and parameter documentation.
 - **default_state**()
+  - Return regular-spiking Izhikevich default state.
 - **default_params**()
+  - Return regular-spiking Izhikevich default parameters.
 - **ode_dynamics**(state, current, params, dt)
+  - Advance Izhikevich membrane and recovery variables.
 - **threshold_check**(state, params)
+  - Return whether the Izhikevich spike cutoff is crossed.
 - **reset**(state, params)
+  - Apply Izhikevich post-spike reset to voltage and recovery.
 
 ### Class `AdExPlugin`
 Adaptive Exponential Integrate-and-Fire (Brette & Gerstner 2005).
 
 - **meta**()
+  - Return AdEx plugin metadata and parameter documentation.
 - **default_state**()
+  - Return the default AdEx voltage and adaptation state.
 - **default_params**()
+  - Return Brette-Gerstner style AdEx default parameters.
 - **ode_dynamics**(state, current, params, dt)
+  - Advance AdEx voltage and adaptation current by one Euler step.
 - **threshold_check**(state, params)
+  - Return whether the AdEx spike cutoff is crossed.
 - **reset**(state, params)
+  - Apply AdEx spike reset and adaptation increment.
 
 ### Class `HodgkinHuxleyPlugin`
 Hodgkin–Huxley conductance-based model (1952).
 
 - **meta**()
+  - Return Hodgkin-Huxley plugin metadata and parameter documentation.
 - **default_state**()
+  - Return resting Hodgkin-Huxley voltage and gating variables.
 - **default_params**()
+  - Return canonical Hodgkin-Huxley conductance parameters.
 - **ode_dynamics**(state, current, params, dt)
+  - Advance Hodgkin-Huxley voltage and gating variables.
 - **threshold_check**(state, params)
+  - Return whether the Hodgkin-Huxley voltage threshold is crossed.
 - **reset**(state, params)
+  - Return an independent no-op reset copy for Hodgkin-Huxley.
 
 ### Class `PluginRegistry`
 Discovers and manages neuron model plugins.
 
 - **__init__**()
+  - Create an empty plugin registry.
 - **register**(plugin)
+  - Register a neuron plugin under its metadata name.
 - **get**(name)
+  - Return a registered plugin by name, if present.
 - **list_plugins**()
+  - Return registered plugin names in deterministic order.
 - **__len__**()
+  - Return the number of registered plugins.
 - **__contains__**(name)
+  - Return whether a plugin name is registered.
 - **with_builtins**(cls)
   - Create a registry pre-loaded with all built-in neuron models.
 
@@ -18874,16 +18911,28 @@ Discovers and manages neuron model plugins.
 Generates synthesisable SystemVerilog from a NeuronPlugin.
 
 - **__init__**(bit_width, frac_bits)
+  - Configure fixed-point width for generated plugin modules.
 - **generate**(plugin)
   - Produce a complete SystemVerilog module for the given plugin.
 - **_to_fixed**(value)
+  - Convert a real-valued scalar into generator fixed-point format.
 
 ### Class `DocGenerator`
 Generates markdown documentation from plugin metadata.
 
 - **generate**(plugin)
+  - Generate Markdown documentation for one plugin.
 - **generate_index**(registry)
   - Generate a summary index for all registered plugins.
+
+### Function `_validate_simulation_timestep(dt)`
+Return a finite positive simulation timestep.
+
+### Function `_validate_current_trace(current_trace)`
+Return a finite one-dimensional numeric current trace.
+
+### Function `_validate_simulation_params(params)`
+Return finite real-valued simulation parameters keyed by strings.
 
 ---
 

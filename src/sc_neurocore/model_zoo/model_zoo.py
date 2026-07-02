@@ -21,10 +21,57 @@ from __future__ import annotations
 import math
 import textwrap
 from abc import ABC, abstractmethod
+from collections.abc import Mapping
 from dataclasses import dataclass, field
-from typing import Any, Dict, List, Optional, Tuple
+from numbers import Real
+from typing import Any, Dict, List, Optional, Tuple, cast
 
 import numpy as np
+
+
+def _validate_simulation_timestep(dt: float) -> float:
+    """Return a finite positive simulation timestep."""
+    if (
+        not isinstance(dt, Real)
+        or isinstance(dt, bool)
+        or not math.isfinite(float(dt))
+        or dt <= 0.0
+    ):
+        raise ValueError("dt must be finite and positive")
+    return float(dt)
+
+
+def _validate_current_trace(current_trace: object) -> np.ndarray[Any, Any]:
+    """Return a finite one-dimensional numeric current trace."""
+    if not isinstance(current_trace, np.ndarray):
+        raise ValueError("current_trace must be a numpy array")
+    if current_trace.ndim != 1:
+        raise ValueError("current_trace must be one-dimensional")
+    if not np.issubdtype(current_trace.dtype, np.number):
+        raise ValueError("current_trace must be numeric")
+    normalized = np.asarray(current_trace, dtype=np.float64)
+    if not np.all(np.isfinite(normalized)):
+        raise ValueError("current_trace must contain finite values")
+    return normalized
+
+
+def _validate_simulation_params(params: object) -> Dict[str, float]:
+    """Return finite real-valued simulation parameters keyed by strings."""
+    if not isinstance(params, Mapping):
+        raise ValueError("params must be a mapping")
+    params_mapping = cast(Mapping[object, object], params)
+    normalized: Dict[str, float] = {}
+    for key, value in params_mapping.items():
+        if not isinstance(key, str):
+            raise ValueError("params keys must be strings")
+        if (
+            not isinstance(value, Real)
+            or isinstance(value, bool)
+            or not math.isfinite(float(value))
+        ):
+            raise ValueError("params must contain finite real values")
+        normalized[key] = float(value)
+    return normalized
 
 
 @dataclass
@@ -34,15 +81,19 @@ class NeuronState:
     variables: Dict[str, float] = field(default_factory=dict)
 
     def __getitem__(self, key: str) -> float:
+        """Return a state variable by name."""
         return self.variables[key]
 
     def __setitem__(self, key: str, value: float) -> None:
+        """Assign a state variable by name."""
         self.variables[key] = value
 
     def copy(self) -> NeuronState:
+        """Return an independent copy of this neuron state."""
         return NeuronState(variables=dict(self.variables))
 
     def as_dict(self) -> Dict[str, float]:
+        """Return state variables as a plain dictionary."""
         return dict(self.variables)
 
 
@@ -63,13 +114,19 @@ class NeuronPlugin(ABC):
     """Abstract base class for pluggable neuron models."""
 
     @abstractmethod
-    def meta(self) -> PluginMeta: ...
+    def meta(self) -> PluginMeta:
+        """Return metadata describing this neuron plugin."""
+        ...
 
     @abstractmethod
-    def default_state(self) -> NeuronState: ...
+    def default_state(self) -> NeuronState:
+        """Return the default state for a new neuron instance."""
+        ...
 
     @abstractmethod
-    def default_params(self) -> Dict[str, float]: ...
+    def default_params(self) -> Dict[str, float]:
+        """Return default parameters for the neuron dynamics."""
+        ...
 
     @abstractmethod
     def ode_dynamics(
@@ -98,16 +155,36 @@ class NeuronPlugin(ABC):
         dt: float = 0.001,
         params: Optional[Dict[str, float]] = None,
     ) -> Tuple[np.ndarray[Any, Any], List[int]]:
-        """Convenience: simulate a full current trace.
+        """Simulate the neuron response to a current trace.
 
-        Returns (voltage_trace, spike_indices).
+        Parameters
+        ----------
+        current_trace:
+            One-dimensional numeric current samples. Values must be finite.
+        dt:
+            Positive integration timestep in seconds.
+        params:
+            Optional finite real-valued parameter mapping. Defaults to the
+            plugin's canonical parameters.
+
+        Returns
+        -------
+        tuple[numpy.ndarray, list[int]]
+            Membrane-voltage trace and spike indices.
+
+        Raises
+        ------
+        ValueError
+            If the current trace, timestep, or parameter mapping is malformed.
         """
-        p = params or self.default_params()
+        step = _validate_simulation_timestep(dt)
+        trace = _validate_current_trace(current_trace)
+        p = _validate_simulation_params(params if params is not None else self.default_params())
         state = self.default_state()
-        voltages = np.zeros(len(current_trace), dtype=np.float64)
+        voltages = np.zeros(len(trace), dtype=np.float64)
         spikes: List[int] = []
-        for i, I_ext in enumerate(current_trace):
-            state = self.ode_dynamics(state, float(I_ext), p, dt)
+        for i, I_ext in enumerate(trace):
+            state = self.ode_dynamics(state, float(I_ext), p, step)
             if self.threshold_check(state, p):
                 spikes.append(i)
                 state = self.reset(state, p)
@@ -122,6 +199,7 @@ class LIFPlugin(NeuronPlugin):
     """Leaky Integrate-and-Fire neuron model."""
 
     def meta(self) -> PluginMeta:
+        """Return LIF plugin metadata and parameter documentation."""
         return PluginMeta(
             name="LIF",
             version="1.0.0",
@@ -139,9 +217,11 @@ class LIFPlugin(NeuronPlugin):
         )
 
     def default_state(self) -> NeuronState:
+        """Return the resting LIF membrane state."""
         return NeuronState({"V": -0.070})
 
     def default_params(self) -> Dict[str, float]:
+        """Return default SI-valued LIF parameters."""
         return {
             "tau_m": 0.020,
             "V_rest": -0.070,
@@ -153,6 +233,7 @@ class LIFPlugin(NeuronPlugin):
     def ode_dynamics(
         self, state: NeuronState, current: float, params: Dict[str, float], dt: float
     ) -> NeuronState:
+        """Advance LIF membrane voltage by one Euler step."""
         s = state.copy()
         tau = params["tau_m"]
         V = s["V"]
@@ -161,9 +242,11 @@ class LIFPlugin(NeuronPlugin):
         return s
 
     def threshold_check(self, state: NeuronState, params: Dict[str, float]) -> bool:
+        """Return whether the LIF voltage crosses threshold."""
         return state["V"] >= params["V_thresh"]
 
     def reset(self, state: NeuronState, params: Dict[str, float]) -> NeuronState:
+        """Reset LIF membrane voltage after a spike."""
         s = state.copy()
         s["V"] = params["V_reset"]
         return s
@@ -173,6 +256,7 @@ class IzhikevichPlugin(NeuronPlugin):
     """Izhikevich (2003) simple model of spiking neurons."""
 
     def meta(self) -> PluginMeta:
+        """Return Izhikevich plugin metadata and parameter documentation."""
         return PluginMeta(
             name="Izhikevich",
             version="1.0.0",
@@ -190,14 +274,17 @@ class IzhikevichPlugin(NeuronPlugin):
         )
 
     def default_state(self) -> NeuronState:
+        """Return regular-spiking Izhikevich default state."""
         return NeuronState({"V": -65.0, "u": -14.0})
 
     def default_params(self) -> Dict[str, float]:
+        """Return regular-spiking Izhikevich default parameters."""
         return {"a": 0.02, "b": 0.2, "c": -65.0, "d": 8.0, "V_thresh": 30.0}
 
     def ode_dynamics(
         self, state: NeuronState, current: float, params: Dict[str, float], dt: float
     ) -> NeuronState:
+        """Advance Izhikevich membrane and recovery variables."""
         s = state.copy()
         V, u = s["V"], s["u"]
         dt_ms = dt * 1000.0
@@ -208,9 +295,11 @@ class IzhikevichPlugin(NeuronPlugin):
         return s
 
     def threshold_check(self, state: NeuronState, params: Dict[str, float]) -> bool:
+        """Return whether the Izhikevich spike cutoff is crossed."""
         return state["V"] >= params["V_thresh"]
 
     def reset(self, state: NeuronState, params: Dict[str, float]) -> NeuronState:
+        """Apply Izhikevich post-spike reset to voltage and recovery."""
         s = state.copy()
         s["V"] = params["c"]
         s["u"] = s["u"] + params["d"]
@@ -221,6 +310,7 @@ class AdExPlugin(NeuronPlugin):
     """Adaptive Exponential Integrate-and-Fire (Brette & Gerstner 2005)."""
 
     def meta(self) -> PluginMeta:
+        """Return AdEx plugin metadata and parameter documentation."""
         return PluginMeta(
             name="AdEx",
             version="1.0.0",
@@ -243,9 +333,11 @@ class AdExPlugin(NeuronPlugin):
         )
 
     def default_state(self) -> NeuronState:
+        """Return the default AdEx voltage and adaptation state."""
         return NeuronState({"V": -70.0, "w": 0.0})
 
     def default_params(self) -> Dict[str, float]:
+        """Return Brette-Gerstner style AdEx default parameters."""
         return {
             "C": 0.281,
             "gL": 0.030,
@@ -262,6 +354,7 @@ class AdExPlugin(NeuronPlugin):
     def ode_dynamics(
         self, state: NeuronState, current: float, params: Dict[str, float], dt: float
     ) -> NeuronState:
+        """Advance AdEx voltage and adaptation current by one Euler step."""
         s = state.copy()
         V, w = s["V"], s["w"]
         dt_ms = dt * 1000.0
@@ -277,9 +370,11 @@ class AdExPlugin(NeuronPlugin):
         return s
 
     def threshold_check(self, state: NeuronState, params: Dict[str, float]) -> bool:
+        """Return whether the AdEx spike cutoff is crossed."""
         return state["V"] >= params["V_peak"]
 
     def reset(self, state: NeuronState, params: Dict[str, float]) -> NeuronState:
+        """Apply AdEx spike reset and adaptation increment."""
         s = state.copy()
         s["V"] = params["V_reset"]
         s["w"] = s["w"] + params["b"]
@@ -290,6 +385,7 @@ class HodgkinHuxleyPlugin(NeuronPlugin):
     """Hodgkin–Huxley conductance-based model (1952)."""
 
     def meta(self) -> PluginMeta:
+        """Return Hodgkin-Huxley plugin metadata and parameter documentation."""
         return PluginMeta(
             name="Hodgkin-Huxley",
             version="1.0.0",
@@ -310,9 +406,11 @@ class HodgkinHuxleyPlugin(NeuronPlugin):
         )
 
     def default_state(self) -> NeuronState:
+        """Return resting Hodgkin-Huxley voltage and gating variables."""
         return NeuronState({"V": -65.0, "m": 0.05, "h": 0.6, "n": 0.32})
 
     def default_params(self) -> Dict[str, float]:
+        """Return canonical Hodgkin-Huxley conductance parameters."""
         return {
             "C_m": 1.0,
             "g_Na": 120.0,
@@ -327,6 +425,7 @@ class HodgkinHuxleyPlugin(NeuronPlugin):
     def ode_dynamics(
         self, state: NeuronState, current: float, params: Dict[str, float], dt: float
     ) -> NeuronState:
+        """Advance Hodgkin-Huxley voltage and gating variables."""
         s = state.copy()
         V, m, h, n = s["V"], s["m"], s["h"], s["n"]
         dt_ms = dt * 1000.0
@@ -365,9 +464,11 @@ class HodgkinHuxleyPlugin(NeuronPlugin):
         return s
 
     def threshold_check(self, state: NeuronState, params: Dict[str, float]) -> bool:
+        """Return whether the Hodgkin-Huxley voltage threshold is crossed."""
         return state["V"] >= params["V_thresh"]
 
     def reset(self, state: NeuronState, params: Dict[str, float]) -> NeuronState:
+        """Return an independent no-op reset copy for Hodgkin-Huxley."""
         return state.copy()
 
 
@@ -378,22 +479,28 @@ class PluginRegistry:
     """Discovers and manages neuron model plugins."""
 
     def __init__(self) -> None:
+        """Create an empty plugin registry."""
         self._plugins: Dict[str, NeuronPlugin] = {}
 
     def register(self, plugin: NeuronPlugin) -> None:
+        """Register a neuron plugin under its metadata name."""
         name = plugin.meta().name
         self._plugins[name] = plugin
 
     def get(self, name: str) -> Optional[NeuronPlugin]:
+        """Return a registered plugin by name, if present."""
         return self._plugins.get(name)
 
     def list_plugins(self) -> List[str]:
+        """Return registered plugin names in deterministic order."""
         return sorted(self._plugins.keys())
 
     def __len__(self) -> int:
+        """Return the number of registered plugins."""
         return len(self._plugins)
 
     def __contains__(self, name: str) -> bool:
+        """Return whether a plugin name is registered."""
         return name in self._plugins
 
     @classmethod
@@ -412,6 +519,7 @@ class VerilogGenerator:
     """Generates synthesisable SystemVerilog from a NeuronPlugin."""
 
     def __init__(self, bit_width: int = 16, frac_bits: int = 8) -> None:
+        """Configure fixed-point width for generated plugin modules."""
         self.bit_width = bit_width
         self.frac_bits = frac_bits
 
@@ -499,6 +607,7 @@ class VerilogGenerator:
         return header + body
 
     def _to_fixed(self, value: float) -> int:
+        """Convert a real-valued scalar into generator fixed-point format."""
         return int(round(value * (1 << self.frac_bits)))
 
 
@@ -509,6 +618,7 @@ class DocGenerator:
     """Generates markdown documentation from plugin metadata."""
 
     def generate(self, plugin: NeuronPlugin) -> str:
+        """Generate Markdown documentation for one plugin."""
         meta = plugin.meta()
         lines = [
             f"# {meta.name}",

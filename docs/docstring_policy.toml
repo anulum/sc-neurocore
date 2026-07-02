@@ -7,7 +7,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 219
+expected_file_count = 220
 
 [[file]]
 path = "src/sc_neurocore/__init__.py"
@@ -48,6 +48,10 @@ rationale = "Public neuron package lazy facade that exposes core models and opti
 [[file]]
 path = "src/sc_neurocore/model_zoo/pretrained.py"
 rationale = "Public pretrained model-zoo loader with audited archive validation and fail-closed projection wiring checks."
+
+[[file]]
+path = "src/sc_neurocore/model_zoo/model_zoo.py"
+rationale = "Public legacy model-zoo plugin API with audited simulation validation, built-in neuron plugins, Verilog emission, and documentation generation."
 
 [[file]]
 path = "src/sc_neurocore/neurons/universal_dsl.py"
