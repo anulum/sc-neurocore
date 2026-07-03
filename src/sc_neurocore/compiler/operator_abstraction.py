@@ -76,14 +76,23 @@ class LiftedSignal:
 
 
 def _drop_signal_definition(verilog: str, name: str) -> str:
-    """Remove ``name``'s ``wire``/``reg`` declaration and its ``assign`` driver.
+    """Remove ``name``'s declaration and its continuous-assign driver.
 
-    Both must be single-statement forms (one signal per declaration, one
-    continuous assign), which is how the compiler emits them. Raises
-    :class:`ValueError` if either cannot be located.
+    Handles both single-statement forms the compiler and hand-written references
+    emit: an inline ``wire NAME = EXPR;`` (declaration *is* the driver), or a bare
+    ``wire NAME;`` paired with a separate ``assign NAME = EXPR;``. The name is
+    anchored as the declared/driven identifier (before ``=`` or ``;``), so a use of
+    ``name`` in another statement's right-hand side is never matched. Raises
+    :class:`ValueError` when neither form is found.
     """
-    decl_re = re.compile(rf"[ \t]*(?:wire|reg)\b[^;\n]*\b{re.escape(name)}\b[^;\n]*;\n?")
-    assign_re = re.compile(rf"[ \t]*assign\s+{re.escape(name)}\s*=[^;]*;\n?")
+    esc = re.escape(name)
+    inline_re = re.compile(rf"[ \t]*(?:wire|reg)\b[^;\n]*\b{esc}\s*=[^;\n]*;\n?")
+    decl_re = re.compile(rf"[ \t]*(?:wire|reg)\b[^;\n]*\b{esc}\s*;\n?")
+    assign_re = re.compile(rf"[ \t]*assign\s+{esc}\s*=[^;]*;\n?")
+
+    if inline_re.search(verilog) is not None:
+        # ``wire NAME = EXPR;`` — the declaration carries the driver.
+        return inline_re.sub("", verilog, count=1)
     if decl_re.search(verilog) is None:
         raise ValueError(f"no single-signal declaration found for {name!r}")
     if assign_re.search(verilog) is None:

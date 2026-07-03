@@ -70,6 +70,55 @@ _TINY_PORTS = [
 
 _needs_formal = pytest.mark.skipif(not _HAS_FORMAL, reason="SymbiYosys / Yosys not available")
 
+# Quadratic integrate-and-fire (Lo et al. 2021): v <- max(V_MIN, v + (v*v >> K) + I);
+# spike + reset when v >= V_THRESHOLD. A second neuron shape for the formal toolkit —
+# a v*v SELF-multiply (the LIF only had state x free-input) and an inline ``wire = expr``.
+# The golden reference and a structurally-distinct hardware DUT, proven equivalent.
+_QIF_REF = """`timescale 1ns/1ps
+module sc_qif_reference #(
+    parameter integer DATA_WIDTH = 16, parameter integer K_SHIFT = 6,
+    parameter signed [DATA_WIDTH-1:0] V_THRESHOLD = 1024,
+    parameter signed [DATA_WIDTH-1:0] V_RESET = -1024,
+    parameter signed [DATA_WIDTH-1:0] V_MIN = -2048
+)(
+    input wire clk, input wire rst_n, input wire signed [DATA_WIDTH-1:0] I_t,
+    output reg spike_out, output reg signed [DATA_WIDTH-1:0] v_out
+);
+    reg signed [DATA_WIDTH-1:0] v;
+    wire signed [2*DATA_WIDTH-1:0] v_sq = v * v;
+    wire signed [DATA_WIDTH-1:0] dv = v_sq >>> K_SHIFT;
+    wire signed [DATA_WIDTH-1:0] v_tmp = v + dv + I_t;
+    wire signed [DATA_WIDTH-1:0] v_clamped = (v_tmp < V_MIN) ? V_MIN : v_tmp;
+    always @(posedge clk or negedge rst_n) begin
+        if (!rst_n) begin v <= 0; v_out <= 0; spike_out <= 1'b0; end
+        else if (v_clamped >= V_THRESHOLD) begin spike_out <= 1'b1; v <= V_RESET; v_out <= V_RESET; end
+        else begin spike_out <= 1'b0; v <= v_clamped; v_out <= v_clamped; end
+    end
+endmodule
+"""
+_QIF_DUT = """`timescale 1ns/1ps
+module sc_qif_dut #(
+    parameter integer DATA_WIDTH = 16, parameter integer K_SHIFT = 6,
+    parameter signed [DATA_WIDTH-1:0] V_THRESHOLD = 1024,
+    parameter signed [DATA_WIDTH-1:0] V_RESET = -1024,
+    parameter signed [DATA_WIDTH-1:0] V_MIN = -2048
+)(
+    input wire clk, input wire rst_n, input wire signed [DATA_WIDTH-1:0] I_t,
+    output reg spike_out, output reg signed [DATA_WIDTH-1:0] v_out
+);
+    reg signed [DATA_WIDTH-1:0] v_reg;
+    wire signed [2*DATA_WIDTH-1:0] v_squared = v_reg * v_reg;
+    wire signed [DATA_WIDTH-1:0] quad_term = v_squared >>> K_SHIFT;
+    wire signed [DATA_WIDTH-1:0] v_int = (v_reg + quad_term) + I_t;
+    wire signed [DATA_WIDTH-1:0] v_floor = (v_int >= V_MIN) ? v_int : V_MIN;
+    always @(posedge clk or negedge rst_n) begin
+        if (!rst_n) begin v_reg <= 0; v_out <= 0; spike_out <= 1'b0; end
+        else if (v_floor >= V_THRESHOLD) begin spike_out <= 1'b1; v_reg <= V_RESET; v_out <= V_RESET; end
+        else begin spike_out <= 1'b0; v_reg <= v_floor; v_out <= v_floor; end
+    end
+endmodule
+"""
+
 
 class TestFormalToolsAvailable:
     """Availability probe."""
@@ -482,6 +531,66 @@ class TestEquivalenceProof:
             dut_top="sc_lif_neuron",
             ref_top="sc_lif_reference",
             dut_params={**common, "REFRACTORY_PERIOD": 0},
+            ref_params=common,
+            mode="prove",
+            depth=6,
+            workdir=tmp_path,
+        )
+        assert result.proven is True
+        assert result.verdict == "PASS"
+        assert result.mode == "prove"
+
+    def test_toolkit_generalises_to_quadratic_qif_unbounded(self, tmp_path: Path) -> None:
+        """The whitebox-tap + multiplier-abstraction flow generalises to the QIF.
+
+        A quadratic integrate-and-fire is a second neuron shape: its state update
+        contains a ``v*v`` self-multiply (the LIF only multiplied state by a free
+        input) declared inline as ``wire = expr``. Abstracting that product to a
+        shared free input and tapping the single membrane state proves the
+        structurally-distinct DUT and golden reference equivalent unbounded.
+        """
+        from sc_neurocore.compiler.equivalence_miter import parse_module_interface
+        from sc_neurocore.compiler.operator_abstraction import (
+            LiftedSignal,
+            abstract_to_free_inputs,
+        )
+        from sc_neurocore.compiler.whitebox_taps import StateTap, expose_state_taps
+
+        dut = abstract_to_free_inputs(
+            _QIF_DUT,
+            top="sc_qif_dut",
+            signals=[LiftedSignal("v_squared", "v_sq_in", msb="2*DATA_WIDTH-1", signed=True)],
+        )
+        ref = abstract_to_free_inputs(
+            _QIF_REF,
+            top="sc_qif_reference",
+            signals=[LiftedSignal("v_sq", "v_sq_in", msb="2*DATA_WIDTH-1", signed=True)],
+        )
+        dut = expose_state_taps(
+            dut,
+            top="sc_qif_dut",
+            taps=[StateTap("v_state", "v_reg", msb="DATA_WIDTH-1", signed=True)],
+        )
+        ref = expose_state_taps(
+            ref,
+            top="sc_qif_reference",
+            taps=[StateTap("v_state", "v", msb="DATA_WIDTH-1", signed=True)],
+        )
+        common = {
+            "DATA_WIDTH": 16,
+            "K_SHIFT": 6,
+            "V_THRESHOLD": 1024,
+            "V_RESET": -1024,
+            "V_MIN": -2048,
+        }
+        ports = parse_module_interface(ref, "sc_qif_reference", params={"DATA_WIDTH": 16})
+        result = prove_equivalence(
+            dut,
+            ref,
+            ports,
+            dut_top="sc_qif_dut",
+            ref_top="sc_qif_reference",
+            dut_params=common,
             ref_params=common,
             mode="prove",
             depth=6,

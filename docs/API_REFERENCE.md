@@ -10121,11 +10121,14 @@ signed : bool
   - Return the ``input wire`` port declaration for the module header.
 
 ### Function `_drop_signal_definition(verilog, name)`
-Remove ``name``'s ``wire``/``reg`` declaration and its ``assign`` driver.
+Remove ``name``'s declaration and its continuous-assign driver.
 
-Both must be single-statement forms (one signal per declaration, one
-continuous assign), which is how the compiler emits them. Raises
-:class:`ValueError` if either cannot be located.
+Handles both single-statement forms the compiler and hand-written references
+emit: an inline ``wire NAME = EXPR;`` (declaration *is* the driver), or a bare
+``wire NAME;`` paired with a separate ``assign NAME = EXPR;``. The name is
+anchored as the declared/driven identifier (before ``=`` or ``;``), so a use of
+``name`` in another statement's right-hand side is never matched. Raises
+:class:`ValueError` when neither form is found.
 
 ### Function `abstract_to_free_inputs(verilog)`
 Abstract each signal's driver away and expose it as a free input port.
@@ -20674,7 +20677,7 @@ validation before the expressions are compiled for runtime.
   - Human-readable representation of the neuron equations.
 
 ### Function `from_equations()`
-Factory: build EquationNeuron from Brian2-style equation strings.
+Build an EquationNeuron from Brian2-style equation strings.
 
 Example:
     lif = from_equations(

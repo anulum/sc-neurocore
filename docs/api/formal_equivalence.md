@@ -111,6 +111,18 @@ With the multipliers abstracted and the state tapped, the LIF proves equivalent
 (`z3`, k-induction). The residual growth is the datapath adders and comparators,
 not the (now-abstracted) multiplier.
 
+### Beyond the LIF — a second neuron shape
+
+The same flow generalises to the **quadratic integrate-and-fire** (QIF), a second
+neuron shape whose update carries a ``v*v`` *self*-multiply (the LIF only
+multiplied state by a free input). Abstracting that product to a shared free input
+— both instances see the same value, so the self-multiply drops out by congruence
+— and tapping the single membrane state proves a structurally-distinct QIF DUT and
+golden reference equivalent unbounded. The QIF declares its product inline
+(``wire v_sq = v * v;``) rather than as a separate ``assign``, so
+`abstract_to_free_inputs` handles both the inline-initialiser and the
+declaration-plus-``assign`` forms.
+
 ---
 
 ## 2. Usage

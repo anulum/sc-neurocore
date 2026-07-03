@@ -5,6 +5,16 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 ## [Unreleased]
 
 ### Added
+- Formal equivalence toolkit generalised to a second neuron shape — the quadratic
+  integrate-and-fire (QIF). Its state update carries a ``v*v`` *self*-multiply
+  (the LIF only multiplied state by a free input) declared inline as
+  ``wire v_sq = v * v;``. `operator_abstraction.abstract_to_free_inputs` now
+  handles both that inline-initialiser form and the declaration-plus-``assign``
+  form, and anchors the lifted name as the declared identifier so a use in another
+  statement's right-hand side is never matched. With the self-multiply abstracted
+  to a shared free input and the single membrane state tapped, a structurally
+  distinct QIF DUT and golden reference prove equivalent unbounded by k-induction —
+  demonstrating the whitebox-tap + multiplier-abstraction flow is not LIF-specific.
 - Multiplier abstraction for full-width unbounded equivalence proofs
   (`sc_neurocore.compiler.operator_abstraction`). Whitebox taps make k-induction
   converge, but bit-blasting the fixed-point multiplier keeps it tractable only at

@@ -35,6 +35,20 @@ module foo #(parameter integer W = 8)(
 endmodule
 """
 
+# Same module with the product declared and driven inline (``wire NAME = EXPR;``),
+# the form hand-written references and many generators emit.
+_MODULE_INLINE = """`timescale 1ns/1ps
+module baz #(parameter integer W = 8)(
+    input wire clk,
+    input wire signed [W-1:0] a,
+    output reg signed [W-1:0] y
+);
+    wire signed [2*W-1:0] sq = a * a;
+    wire signed [W-1:0] scaled = sq >>> 2;
+    always @(posedge clk) y <= scaled;
+endmodule
+"""
+
 
 class TestLiftedSignal:
     """The lifted-signal value type."""
@@ -65,6 +79,20 @@ class TestAbstractToFreeInputs:
         assert "assign prod" not in out
         # Downstream uses were rewired to the new port name.
         assert "assign scaled = prod_in >>> 2;" in out
+
+    def test_lifts_inline_wire_initializer(self) -> None:
+        # ``wire NAME = EXPR;`` — the declaration itself is the driver (QIF style).
+        out = abstract_to_free_inputs(
+            _MODULE_INLINE,
+            top="baz",
+            signals=[LiftedSignal("sq", "sq_in", msb="2*W-1", signed=True)],
+        )
+        ports = parse_module_interface(out, "baz", params={"W": 8})
+        assert any(p.name == "sq_in" and p.direction == "input" for p in ports)
+        assert "a * a" not in out
+        # The inline declaration is gone; the downstream use is rewired to the port.
+        assert "sq_in = " not in out
+        assert "scaled = sq_in >>> 2" in out
 
     def test_lifts_without_rename(self) -> None:
         out = abstract_to_free_inputs(
