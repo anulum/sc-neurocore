@@ -429,6 +429,45 @@ def test_package_boundary_decision_covers_current_metadata() -> None:
     assert "todo" not in decision_compact
 
 
+def test_v4_product_boundary_names_core_and_research_extensions() -> None:
+    """Keep the v4 product boundary explicit for core and research surfaces."""
+    decision = (_repo_root() / _PACKAGE_BOUNDARY_DECISION_DOC).read_text(encoding="utf-8")
+    decision_compact = _compact_whitespace(decision).lower()
+    decision_lines = tuple(_compact_whitespace(line).lower() for line in decision.splitlines())
+    core_surfaces = (
+        "python package",
+        "rust engine",
+        "stochastic bitstreams",
+        "verilog/rtl export",
+        "nir",
+    )
+    research_surfaces = (
+        "quantum",
+        "bioware/mea",
+        "photonic",
+        "robotics",
+        "world-model",
+        "audio",
+        "sleep",
+        "swarm",
+    )
+
+    assert "v4 product boundary" in decision_compact
+    assert "sc-neurocore-core" in decision_compact
+    for surface in core_surfaces:
+        assert surface in decision_compact
+    assert "same evidence, coverage, docs, and packaging gates" in decision_compact
+
+    missing_research_rows: list[str] = []
+    for surface in research_surfaces:
+        surface_row = next((line for line in decision_lines if f"`{surface}`" in line), "")
+        if not surface_row or "research/experimental extension" not in surface_row:
+            missing_research_rows.append(surface)
+    assert missing_research_rows == [], (
+        f"missing v4 research-extension classifications: {missing_research_rows}"
+    )
+
+
 def test_public_claim_language_excludes_unbounded_marketing_slogans() -> None:
     """Reject unbounded slogans and detached 512x-class speedup prose."""
     banned_literals = (

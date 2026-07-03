@@ -28,6 +28,35 @@ The root Cargo workspace keeps `engine` as the only default Rust member. Other
 Rust crates remain separate crate workspaces or retired candidates until their
 release ownership and verification gates are explicit.
 
+## v4 Product Boundary
+
+`sc-neurocore-core` is the planned small product boundary for the v4 split. The
+minimal install is focused on the surfaces below; everything outside this set is
+kept as an optional, source-checkout, or separately owned research path until it
+meets the same evidence, coverage, docs, and packaging gates as the core.
+
+| Surface | Boundary decision | Required evidence before promotion |
+| --- | --- | --- |
+| `python package` | core package | Typed public facade, NumPy/SciPy runtime compatibility, packaged resources, and real-surface tests. |
+| `rust engine` | core package | Maintained PyO3 `engine` workspace member with focused Rust and Python integration evidence. |
+| `stochastic bitstreams` | core package | Documented bitstream APIs, deterministic fixtures, and cross-check tests against Python behavior. |
+| `verilog/rtl export` | core package | Packaged HDL resources, export examples, and simulator/formal evidence that matches public claims. |
+| `nir` | core-adjacent optional extra | Neuromorphic Intermediate Representation import/export remains optional until release fixtures and compatibility coverage are promoted. |
+
+The following named extensions are explicitly outside `sc-neurocore-core` until
+they satisfy the same promotion gate:
+
+| Surface | Boundary decision | Required evidence before promotion |
+| --- | --- | --- |
+| `quantum` | research/experimental extension; optional extra | Reproducible backend fixtures, bounded public API, dependency gate, and benchmark evidence. |
+| `bioware/MEA` | research/experimental extension | Biological-signal safety boundaries, data provenance, validation fixtures, and clinical-facing documentation controls. |
+| `photonic` | research/experimental extension | Layout-tool dependency gate, hardware assumptions, generated artefact fixtures, and comparison evidence. |
+| `robotics` | research/experimental extension | Hardware safety boundary, simulator or device fixtures, ownership split, and failure-mode documentation. |
+| `world-model` | research/experimental extension | Public API selection, model/data provenance, bounded dependencies, and reproducible evaluation fixtures. |
+| `audio` | research/experimental extension | Latency fixtures, dependency gate, sample-rate compatibility coverage, and documented runtime limits. |
+| `sleep` | research/experimental extension | Protocol validation fixtures, safety boundary, bounded dependencies, and evidence traceability. |
+| `swarm` | research/experimental extension | Runtime ownership split, coordination fixtures, safety invariants, and benchmark evidence for promoted workflows. |
+
 ## Optional Dependency Groups
 
 | Metadata token | Decision | Rationale |
