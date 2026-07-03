@@ -82,6 +82,7 @@ can change without a deprecation window.
 | `verilog_compiler` | internal build tool | Backend implementation reached through `equation_compiler`. |
 | `verilog_compiler_config` | internal build tool | Backend configuration record for Verilog emission. |
 | `verilog_expr_emitter` | internal build tool | Expression emitter behind the equation compiler. |
+| `whitebox_taps` | internal build tool | Instruments a module to expose internal state as taps for unbounded equivalence proofs. |
 
 ## Enforcement
 

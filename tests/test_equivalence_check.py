@@ -369,3 +369,54 @@ class TestEquivalenceProof:
         )
         assert result.proven is False
         assert result.verdict == "FAIL"
+
+    def test_whitebox_taps_make_lif_provable_unbounded(self, tmp_path: Path) -> None:
+        """Exposing internal state as taps lets k-induction prove the LIF unbounded.
+
+        Naive k-induction on the miter is intractable (the fixed-point multiplier
+        diverges from unreachable start states). Instrumenting both modules to
+        expose the membrane register and refractory counter turns the miter's
+        output-equality asserts into the state-matching invariant, which makes
+        ``mode="prove"`` converge. A narrow 4-bit datapath keeps the multiplier
+        tractable for the SMT solver.
+        """
+        dut_path = _REPO_ROOT / "hdl" / "sc_lif_neuron.v"
+        ref_path = _REPO_ROOT / "hdl" / "equiv" / "sc_lif_reference.v"
+        if not dut_path.exists() or not ref_path.exists():
+            pytest.skip("committed LIF DUT / reference not present")
+        from sc_neurocore.compiler.equivalence_miter import parse_module_interface
+        from sc_neurocore.compiler.whitebox_taps import StateTap, expose_state_taps
+
+        dut_wb = expose_state_taps(
+            dut_path.read_text(encoding="utf-8"),
+            top="sc_lif_neuron",
+            taps=[
+                StateTap("v_state", "v_reg", msb="DATA_WIDTH-1", signed=True),
+                StateTap("refr_state", "refractory_counter", msb="31"),
+            ],
+        )
+        ref_wb = expose_state_taps(
+            ref_path.read_text(encoding="utf-8"),
+            top="sc_lif_reference",
+            taps=[
+                StateTap("v_state", "v", msb="DATA_WIDTH-1", signed=True),
+                StateTap("refr_state", "32'd0", msb="31"),
+            ],
+        )
+        common = {"DATA_WIDTH": 4, "FRACTION": 2, "V_REST": 0, "V_RESET": 0, "V_THRESHOLD": 4}
+        ports = parse_module_interface(ref_wb, "sc_lif_reference", params={"DATA_WIDTH": 4})
+        result = prove_equivalence(
+            dut_wb,
+            ref_wb,
+            ports,
+            dut_top="sc_lif_neuron",
+            ref_top="sc_lif_reference",
+            dut_params={**common, "REFRACTORY_PERIOD": 0},
+            ref_params=common,
+            mode="prove",
+            depth=4,
+            workdir=tmp_path,
+        )
+        assert result.proven is True
+        assert result.verdict == "PASS"
+        assert result.mode == "prove"

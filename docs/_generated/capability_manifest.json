@@ -965,7 +965,7 @@
     "python_model_classes": 158,
     "python_model_source_modules": 152,
     "rust_pyo3_model_wrappers": 175,
-    "test_files": 947
+    "test_files": 948
   },
   "documentation": {
     "public_pages": [
@@ -3732,6 +3732,7 @@
       "tests/test_viz_web_viz.py",
       "tests/test_waveform_codec.py",
       "tests/test_waveform_codec_polyglot_contracts.py",
+      "tests/test_whitebox_taps.py",
       "tests/test_wilson_cowan_accel_dispatch_contracts.py",
       "tests/test_wilson_cowan_dynamics.py",
       "tests/test_wilson_cowan_go_parity.py",

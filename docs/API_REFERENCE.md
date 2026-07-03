@@ -6588,6 +6588,13 @@ Supports integer literals, the parameter names in ``params``, and the
 compiler emits. Raises :class:`ValueError` on any unsupported construct so a
 malformed or parameter-dependent width can never silently resolve wrong.
 
+### Function `_port_list_bounds(verilog, top)`
+Return ``(open, close)`` indices of ``module top ( ... )``'s port-list parens.
+
+``verilog&#91;open&#93; == "("`` and ``verilog&#91;close&#93; == ")"`` bracket the ANSI port
+list, with an optional ``#( ... )`` parameter block skipped first. Raises
+:class:`ValueError` if the module or its port list cannot be located.
+
 ### Function `_module_header(verilog, top)`
 Return the port-list body of ``module top ( ... );``.
 
@@ -11271,6 +11278,64 @@ Multiplications emit wide product with arithmetic right shift.
 
 ### Function `_emit_expr(expr_str, state_vars, param_map, q)`
 Parse a Python expression string and return Verilog.
+
+---
+
+## Module `compiler.whitebox_taps`
+
+### Class `StateTap`
+One observation tap exposing an internal signal as an output port.
+
+Attributes
+----------
+port : str
+    Name of the new ``output wire`` port.
+source : str
+    Verilog expression assigned to the port — typically an internal register
+    name (``"v_reg"``) or a constant (``"32'd0"``) that pins a tap a peer
+    module lacks.
+msb : str or None
+    The most-significant bit-index expression of the port width, so a
+    parameter-dependent width is preserved (``"DATA_WIDTH-1"`` renders
+    ``&#91;DATA_WIDTH-1:0&#93;``). ``None`` declares a scalar (1-bit) port.
+signed : bool
+    Whether the port is declared ``signed``.
+
+- **declaration**()
+  - Return the ``output wire`` port declaration for the module header.
+- **assignment**()
+  - Return the continuous ``assign`` that drives the tap from its source.
+
+### Function `expose_state_taps(verilog)`
+Instrument ``top`` to expose internal signals as observation output ports.
+
+Adds each tap's ``output wire`` port to the module's ANSI port list and a
+continuous ``assign`` before ``endmodule``. The result is behaviourally
+identical to the original on its original ports; the new ports let a miter
+assert the state-matching invariant an unbounded k-induction proof needs (see
+the module docstring for why hierarchical references and ``bind`` do not work
+with yosys 0.33).
+
+Parameters
+----------
+verilog : str
+    Verilog source containing ``top``.
+top : str
+    Module to instrument.
+taps : list&#91;StateTap&#93;
+    The taps to add. Must be non-empty; port names must be unique and must
+    not collide with an existing port.
+
+Returns
+-------
+str
+    The instrumented Verilog source.
+
+Raises
+------
+ValueError
+    If ``taps`` is empty, a tap port is duplicated or already declared, or the
+    module / its ``endmodule`` cannot be located.
 
 ---
 

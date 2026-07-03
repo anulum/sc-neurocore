@@ -125,11 +125,12 @@ def _eval_width_expr(expr: str, params: dict[str, int]) -> int:
     return _eval(tree)
 
 
-def _module_header(verilog: str, top: str) -> str:
-    """Return the port-list body of ``module top ( ... );``.
+def _port_list_bounds(verilog: str, top: str) -> tuple[int, int]:
+    """Return ``(open, close)`` indices of ``module top ( ... )``'s port-list parens.
 
-    Skips an optional ``#( ... )`` parameter block. Raises :class:`ValueError`
-    if the module or its port list cannot be located.
+    ``verilog[open] == "("`` and ``verilog[close] == ")"`` bracket the ANSI port
+    list, with an optional ``#( ... )`` parameter block skipped first. Raises
+    :class:`ValueError` if the module or its port list cannot be located.
     """
     match = re.search(rf"\bmodule\s+{re.escape(top)}\b", verilog)
     if match is None:
@@ -163,9 +164,19 @@ def _module_header(verilog: str, top: str) -> str:
         elif verilog[i] == ")":
             depth -= 1
             if depth == 0:
-                return verilog[paren_idx + 1 : i]
+                return paren_idx, i
         i += 1
     raise ValueError(f"unterminated port list for module {top!r}")
+
+
+def _module_header(verilog: str, top: str) -> str:
+    """Return the port-list body of ``module top ( ... );``.
+
+    Skips an optional ``#( ... )`` parameter block. Raises :class:`ValueError`
+    if the module or its port list cannot be located.
+    """
+    open_idx, close_idx = _port_list_bounds(verilog, top)
+    return verilog[open_idx + 1 : close_idx]
 
 
 def parse_module_interface(

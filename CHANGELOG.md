@@ -5,6 +5,22 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 ## [Unreleased]
 
 ### Added
+- Unbounded equivalence proofs via whitebox state taps
+  (`sc_neurocore.compiler.whitebox_taps`). Naive k-induction on the equivalence
+  miter is intractable — the induction step starts from unreachable states where
+  the outputs agree but the hidden state differs, and the fixed-point multiplier
+  compounds it. `expose_state_taps` instruments a module to surface its internal
+  registers as observation output ports (an `output wire` plus one continuous
+  `assign`, adding no register and rewriting no logic, so behaviour on the original
+  ports is unchanged); a tap whose source is a constant lets two structurally
+  different modules present the same tap interface. The miter then compares the
+  taps like any other output, and that tap equality is the reachable-state
+  invariant that makes `prove_equivalence(mode="prove")` converge — the LIF
+  primitive is proven equivalent to its reference *unbounded*, not just to a
+  bounded depth. (yosys 0.33 resolves neither hierarchical references nor
+  SystemVerilog `bind`, so exposing the state is the route to reference it.) The
+  remaining bound is SMT tractability, not soundness: the proof closes for a narrow
+  4-bit datapath and slows as the multiplier widens.
 - Machine-checked Python↔RTL equivalence flow for generated models
   (`sc_neurocore.compiler.equivalence_miter` + `equivalence_check`). Given the
   compiler's generated Verilog and an independent reference module,

@@ -65,12 +65,34 @@ modules are compared only once both have been driven into their reset state.
 ### Bounded vs unbounded
 
 BMC establishes equivalence up to `depth` cycles from reset. Unbounded proof by
-k-induction (`mode="prove"`) is available but is **not** the default: for
-datapaths with wide signed multipliers (the fixed-point neuron update) the
-induction step reports spurious counterexamples from unreachable mid-states
-unless the reachable-state invariant is supplied, so a bounded proof to a
-solver-tractable depth is the honest default. On the fixed-point LIF datapath
-`z3` proves the miter quickly to depth ≈ 4 and slows sharply beyond that.
+k-induction (`mode="prove"`) is available but is **not** the default: the
+induction step starts from an arbitrary state where the outputs agree yet the two
+instances' *hidden* state may differ (an unreachable configuration), and then
+diverges. It converges only when a **reachable-state invariant** ties the internal
+states together.
+
+### Unbounded equivalence via whitebox state taps
+
+The invariant one wants is a hierarchical reference — `dut.v_reg == ref.v`. yosys
+0.33 does not resolve hierarchical references (it parses `dut.v_reg` as one
+escaped, undriven identifier) and silently ignores SystemVerilog `bind`, so
+neither route reaches an instance's internal state. The working alternative is to
+**expose** that state: `whitebox_taps.expose_state_taps` instruments each module
+with continuous-assign taps that surface the relevant registers as extra output
+ports. The miter then compares those taps like any other output, and the tap
+equality *is* the state-matching invariant that makes k-induction converge.
+
+Taps are pure observation (an `output wire` plus one `assign`; no new register, no
+rewritten logic), so the instrumented module is behaviourally identical on its
+original ports; a tap whose source is a constant lets two structurally different
+modules (e.g. one with a refractory counter, one without) present the same tap
+interface. With the membrane register and refractory counter tapped, the LIF miter
+proves **unbounded** by k-induction.
+
+The remaining bound is SMT tractability, not soundness: `z3` closes the induction
+step for a narrow (4-bit) fixed-point datapath in seconds but slows sharply as the
+multiplier widens — abstracting the multiplier (uninterpreted-function reasoning by
+congruence) is the lever for wide datapaths and remains future work.
 
 ---
 
@@ -217,15 +239,18 @@ the equivalence runner.
    k-induction with an inductive invariant.
 2. **k-induction needs an invariant.** k-induction is unbounded but only converges
    with an inductive invariant. The precision monitor ships the strengthening
-   lemma it needs; the equivalence miter's wide-multiplier datapaths do **not**
-   converge on naive induction and would need a hand-supplied reachable-state
-   invariant (an open lane), so BMC stays the equivalence default.
+   lemma it needs; the equivalence miter needs a reachable-state invariant, which
+   is supplied by exposing the internal state as whitebox taps (yosys 0.33 cannot
+   reference an instance's internals directly). BMC stays the equivalence default
+   because the taps require instrumenting the modules.
 3. **Interface-compatible modules.** DUT and reference must share the same I/O
    ports (parameters may differ per instance).
 4. **Toolchain required.** Proofs need `sby` + `yosys` + a solver; without them
    `formal_tools_available()` is `False` and the proof functions raise.
-5. **SMT tractability.** Wide-multiplier datapaths bound the practical depth on
-   general-purpose SMT engines.
+5. **SMT tractability.** Wide-multiplier datapaths bound the practical depth (BMC)
+   and the practical width (k-induction) on general-purpose SMT engines; the LIF
+   miter proves unbounded at a narrow 4-bit datapath and slows sharply as the
+   fixed-point multiplier widens.
 
 ---
 
