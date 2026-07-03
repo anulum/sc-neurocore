@@ -24,6 +24,7 @@ The defensive guards covered here:
 
 from __future__ import annotations
 
+import pytest
 
 from sc_neurocore.chiplet import (
     ChipletDie,
@@ -38,6 +39,7 @@ from sc_neurocore.chiplet.chiplet_gen import (
     CongestionReport,
     DieThermal,
     PartitionAssignment,
+    PowerDomain,
     adaptive_route,
     bandwidth_aware_route,
     compute_cdc_configs,
@@ -248,3 +250,9 @@ class TestPartitionAssignmentCrossDieSkip:
         assert tables[0].entries[0].dst_die == 1
         assert tables[0].entries[0].src_neuron == 0
         assert tables[0].entries[0].dst_neuron == 2
+
+
+class TestPowerDomainValidation:
+    def test_duplicate_die_ids_are_rejected(self) -> None:
+        with pytest.raises(ValueError, match="duplicates"):
+            PowerDomain(domain_id=0, die_ids=[1, 1], voltage_mv=800)
