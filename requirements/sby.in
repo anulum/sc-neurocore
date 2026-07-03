@@ -6,4 +6,4 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore SymbiYosys CI requirements
 
-click==8.4.1
+click==8.4.2
