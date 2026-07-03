@@ -227,7 +227,7 @@ def _fallback_secondary_structure(sequence: str) -> tuple[float, str, list[tuple
         if i >= j:
             return
         step = trace[i][j]
-        if step is None:
+        if step is None:  # pragma: no cover - every i < j cell is initialised above.
             return
         kind, a, b = step
         if kind == "skip_i" or kind == "skip_j":
@@ -609,7 +609,7 @@ class SequenceDesigner:
                     weights = [1.0 if n in allowed else 0.0 for n in nucs]
 
                 total = sum(weights)
-                if total == 0:
+                if total == 0:  # pragma: no cover - allowed nucleotides always retain weight.
                     weights = [1.0 / len(nucs)] * len(nucs)
                     total = 1.0
                 probs = [w / total for w in weights]
@@ -2840,7 +2840,7 @@ class HairpinChecker:
                     min(10, n - loop_start - stem_len + 1),
                 ):
                     j = loop_start + loop_len
-                    if j + stem_len > n:
+                    if j + stem_len > n:  # pragma: no cover - range bound enforces this.
                         break
                     # Check complementarity of stem
                     matches = 0

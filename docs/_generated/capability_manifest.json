@@ -965,7 +965,7 @@
     "python_model_classes": 158,
     "python_model_source_modules": 152,
     "rust_pyo3_model_wrappers": 175,
-    "test_files": 954
+    "test_files": 955
   },
   "documentation": {
     "public_pages": [
@@ -2879,6 +2879,7 @@
       "tests/test_bit_true_kernel.py",
       "tests/test_block_floating_dense_hdl.py",
       "tests/test_bridges/test_dna_mapper.py",
+      "tests/test_bridges/test_dna_mapper_fallback_contracts.py",
       "tests/test_bridges/test_local_llm.py",
       "tests/test_bridges/test_photonic_codesign.py",
       "tests/test_bridges/test_photonic_noc.py",
