@@ -7,7 +7,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 235
+expected_file_count = 236
 
 [[file]]
 path = "src/sc_neurocore/__init__.py"
@@ -292,6 +292,10 @@ rationale = "Validated adaptive-precision layer-length planner exposed through t
 [[file]]
 path = "src/sc_neurocore/compiler/synapse_planner.py"
 rationale = "Validated adaptive-precision synapse planner exposed through the public adaptive precision facade and Studio auto-tuning flow."
+
+[[file]]
+path = "src/sc_neurocore/compiler/q_format.py"
+rationale = "Public fixed-point Q-format value object used by compiler quantization, precision manifests, and generated API documentation."
 
 [[file]]
 path = "src/sc_neurocore/accel/gpu_backend.py"

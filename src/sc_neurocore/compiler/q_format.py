@@ -20,12 +20,21 @@ _ROUNDING_MODES: set[str] = {"nearest", "stochastic", "floor"}
 
 @dataclass(frozen=True)
 class QFormat:
-    """Fixed-point Q-format specification."""
+    """Signed fixed-point Q-format specification.
+
+    Attributes
+    ----------
+    integer_bits:
+        Number of signed integer bits, including the sign bit.
+    fraction_bits:
+        Number of fractional bits below the binary point.
+    """
 
     integer_bits: int
     fraction_bits: int
 
     def __post_init__(self) -> None:
+        """Validate the fixed-point width fields after construction."""
         if type(self.integer_bits) is not int:
             raise TypeError("integer_bits must be an integer")
         if type(self.fraction_bits) is not int:
@@ -37,18 +46,22 @@ class QFormat:
 
     @property
     def total_bits(self) -> int:
+        """Total signed fixed-point storage width in bits."""
         return self.integer_bits + self.fraction_bits
 
     @property
     def scale(self) -> int:
+        """Integer scale factor used to encode real values."""
         return 1 << self.fraction_bits
 
     @property
     def min_val(self) -> float:
+        """Smallest representable signed fixed-point value."""
         return -(1 << (self.total_bits - 1)) / self.scale
 
     @property
     def max_val(self) -> float:
+        """Largest representable signed fixed-point value."""
         return ((1 << (self.total_bits - 1)) - 1) / self.scale
 
     @property
@@ -88,7 +101,19 @@ Q16_16 = QFormat(16, 16)
 
 @dataclass(frozen=True)
 class QFormatMixed:
-    """Mixed fixed-point contract for Q-format weights and wider accumulators."""
+    """Mixed fixed-point contract for Q-format weights and wider accumulators.
+
+    Attributes
+    ----------
+    weight_fmt:
+        Stored weight format.
+    accum_fmt:
+        Wider accumulator format used by mixed-precision dense kernels.
+    scale_per_tensor:
+        Whether one scale is shared by the tensor instead of per-channel scale.
+    rounding:
+        Rounding policy applied by the quantizer.
+    """
 
     weight_fmt: QFormat = Q8_8
     accum_fmt: QFormat = Q16_16
@@ -96,6 +121,7 @@ class QFormatMixed:
     rounding: RoundingMode = "nearest"
 
     def __post_init__(self) -> None:
+        """Validate mixed-format compatibility after construction."""
         if not isinstance(self.weight_fmt, QFormat):
             raise TypeError("weight_fmt must be a QFormat")
         if not isinstance(self.accum_fmt, QFormat):

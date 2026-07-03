@@ -10791,13 +10791,25 @@ MixedPrecisionSpec
 ## Module `compiler.q_format`
 
 ### Class `QFormat`
-Fixed-point Q-format specification.
+Signed fixed-point Q-format specification.
+
+Attributes
+----------
+integer_bits:
+    Number of signed integer bits, including the sign bit.
+fraction_bits:
+    Number of fractional bits below the binary point.
 
 - **__post_init__**()
+  - Validate the fixed-point width fields after construction.
 - **total_bits**()
+  - Total signed fixed-point storage width in bits.
 - **scale**()
+  - Integer scale factor used to encode real values.
 - **min_val**()
+  - Smallest representable signed fixed-point value.
 - **max_val**()
+  - Largest representable signed fixed-point value.
 - **min_value**()
   - Minimum representable fixed-point value.
 - **max_value**()
@@ -10810,7 +10822,19 @@ Fixed-point Q-format specification.
 ### Class `QFormatMixed`
 Mixed fixed-point contract for Q-format weights and wider accumulators.
 
+Attributes
+----------
+weight_fmt:
+    Stored weight format.
+accum_fmt:
+    Wider accumulator format used by mixed-precision dense kernels.
+scale_per_tensor:
+    Whether one scale is shared by the tensor instead of per-channel scale.
+rounding:
+    Rounding policy applied by the quantizer.
+
 - **__post_init__**()
+  - Validate mixed-format compatibility after construction.
 - **accumulator_guard_bits**()
   - Extra accumulator bits available above the stored weight width.
 - **metadata**()
