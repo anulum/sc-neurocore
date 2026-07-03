@@ -10068,6 +10068,68 @@ str
 
 ---
 
+## Module `compiler.operator_abstraction`
+
+### Class `LiftedSignal`
+One internal result abstracted to a free input port.
+
+Attributes
+----------
+internal : str
+    Name of the internal signal to abstract (e.g. a multiplier product wire).
+port : str
+    Name of the free input port to expose it as. It may differ from
+    ``internal`` so two modules that name the product differently can present
+    the same abstracted interface for the miter to share.
+msb : str or None
+    Most-significant bit-index expression of the port width, preserving a
+    parameter-dependent width (``"2*DATA_WIDTH-1"``). ``None`` declares a
+    scalar (1-bit) port.
+signed : bool
+    Whether the port is declared ``signed``.
+
+- **declaration**()
+  - Return the ``input wire`` port declaration for the module header.
+
+### Function `_drop_signal_definition(verilog, name)`
+Remove ``name``'s ``wire``/``reg`` declaration and its ``assign`` driver.
+
+Both must be single-statement forms (one signal per declaration, one
+continuous assign), which is how the compiler emits them. Raises
+:class:`ValueError` if either cannot be located.
+
+### Function `abstract_to_free_inputs(verilog)`
+Abstract each signal's driver away and expose it as a free input port.
+
+For every :class:`LiftedSignal` the internal name is renamed to the target
+port name, its declaration and continuous-assign driver are removed, and the
+port is added to ``top``'s ANSI interface. The result over-approximates the
+original: the abstracted result is unconstrained, so a miter proof that
+survives it is sound for the concrete design (see the module docstring).
+
+Parameters
+----------
+verilog : str
+    Single-module Verilog source containing ``top``.
+top : str
+    Module to transform.
+signals : list&#91;LiftedSignal&#93;
+    The internal results to abstract. Must be non-empty with unique port
+    names that do not collide with an existing port.
+
+Returns
+-------
+str
+    The transformed Verilog source.
+
+Raises
+------
+ValueError
+    If ``signals`` is empty, a port name is duplicated or already declared, or
+    a signal's declaration / driver cannot be located.
+
+---
+
 ## Module `compiler.overflow_proof`
 
 ### Class `Interval`

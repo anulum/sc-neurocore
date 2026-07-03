@@ -89,10 +89,27 @@ modules (e.g. one with a refractory counter, one without) present the same tap
 interface. With the membrane register and refractory counter tapped, the LIF miter
 proves **unbounded** by k-induction.
 
-The remaining bound is SMT tractability, not soundness: `z3` closes the induction
-step for a narrow (4-bit) fixed-point datapath in seconds but slows sharply as the
-multiplier widens — abstracting the multiplier (uninterpreted-function reasoning by
-congruence) is the lever for wide datapaths and remains future work.
+### Multiplier abstraction for full-width proofs
+
+Taps make k-induction *converge*, but bit-blasting the fixed-point multiplier
+keeps it tractable only at a narrow (4-bit) datapath — `z3` stalls as the
+multiplier widens. `operator_abstraction.abstract_to_free_inputs` removes the
+multiplier from the solver: it drops the signal that carries a product and exposes
+it as a free input port. When the device-under-test and the reference lift the
+same product to the same input name, the miter drives both instances from one
+shared free wire, so the two products are equal by construction (congruence) and
+the solver never reasons about multiplication.
+
+The abstraction is a sound over-approximation *for a `PASS`*: proving equivalence
+for every value of the free product proves it for the real product in particular.
+(A `FAIL` may be spurious, so abstraction is opt-in.) A blackbox uninterpreted
+function would be the textbook route, but yosys 0.33's `smtbmc` crashes on a
+blackbox submodule — lifting to a free input is the working alternative here.
+
+With the multipliers abstracted and the state tapped, the LIF proves equivalent
+**unbounded at full width**: ≈1 s at 16-bit, ≈4 s at 32-bit, ≈22 s at 64-bit
+(`z3`, k-induction). The residual growth is the datapath adders and comparators,
+not the (now-abstracted) multiplier.
 
 ---
 
@@ -247,10 +264,12 @@ the equivalence runner.
    ports (parameters may differ per instance).
 4. **Toolchain required.** Proofs need `sby` + `yosys` + a solver; without them
    `formal_tools_available()` is `False` and the proof functions raise.
-5. **SMT tractability.** Wide-multiplier datapaths bound the practical depth (BMC)
-   and the practical width (k-induction) on general-purpose SMT engines; the LIF
-   miter proves unbounded at a narrow 4-bit datapath and slows sharply as the
-   fixed-point multiplier widens.
+5. **SMT tractability.** A bit-blasted fixed-point multiplier bounds the practical
+   depth (BMC) and, without abstraction, the practical width (k-induction) on
+   general-purpose SMT engines. Abstracting the multipliers to free inputs removes
+   that bound: the LIF proves unbounded at full width (≈1/4/22 s at 16/32/64-bit),
+   after which the datapath adders and comparators — not the multiplier — set the
+   residual growth.
 
 ---
 

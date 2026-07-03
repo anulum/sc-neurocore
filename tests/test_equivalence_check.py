@@ -420,3 +420,73 @@ class TestEquivalenceProof:
         assert result.proven is True
         assert result.verdict == "PASS"
         assert result.mode == "prove"
+
+    def test_multiplier_abstraction_proves_lif_unbounded_full_width(self, tmp_path: Path) -> None:
+        """Abstracting the multipliers lets k-induction prove the LIF at full width.
+
+        Whitebox taps alone make k-induction *converge*, but bit-blasting the
+        16-bit fixed-point multiplier keeps it intractable for the SMT solver.
+        Lifting each product to a shared free input removes the multiplier from
+        the solver entirely (the two instances see the same free product, so the
+        abstraction is sound for a PASS), and the full 16-bit LIF proves unbounded.
+        """
+        dut_path = _REPO_ROOT / "hdl" / "sc_lif_neuron.v"
+        ref_path = _REPO_ROOT / "hdl" / "equiv" / "sc_lif_reference.v"
+        if not dut_path.exists() or not ref_path.exists():
+            pytest.skip("committed LIF DUT / reference not present")
+        from sc_neurocore.compiler.equivalence_miter import parse_module_interface
+        from sc_neurocore.compiler.operator_abstraction import (
+            LiftedSignal,
+            abstract_to_free_inputs,
+        )
+        from sc_neurocore.compiler.whitebox_taps import StateTap, expose_state_taps
+
+        dut = abstract_to_free_inputs(
+            dut_path.read_text(encoding="utf-8"),
+            top="sc_lif_neuron",
+            signals=[
+                LiftedSignal("leak_mul", "leak_product", msb="2*DATA_WIDTH-1", signed=True),
+                LiftedSignal("in_mul", "input_product", msb="2*DATA_WIDTH-1", signed=True),
+            ],
+        )
+        ref = abstract_to_free_inputs(
+            ref_path.read_text(encoding="utf-8"),
+            top="sc_lif_reference",
+            signals=[
+                LiftedSignal("leak_product", "leak_product", msb="2*DATA_WIDTH-1", signed=True),
+                LiftedSignal("input_product", "input_product", msb="2*DATA_WIDTH-1", signed=True),
+            ],
+        )
+        dut = expose_state_taps(
+            dut,
+            top="sc_lif_neuron",
+            taps=[
+                StateTap("v_state", "v_reg", msb="DATA_WIDTH-1", signed=True),
+                StateTap("refr_state", "refractory_counter", msb="31"),
+            ],
+        )
+        ref = expose_state_taps(
+            ref,
+            top="sc_lif_reference",
+            taps=[
+                StateTap("v_state", "v", msb="DATA_WIDTH-1", signed=True),
+                StateTap("refr_state", "32'd0", msb="31"),
+            ],
+        )
+        common = {"DATA_WIDTH": 16, "FRACTION": 8, "V_REST": 0, "V_RESET": 0, "V_THRESHOLD": 256}
+        ports = parse_module_interface(ref, "sc_lif_reference", params={"DATA_WIDTH": 16})
+        result = prove_equivalence(
+            dut,
+            ref,
+            ports,
+            dut_top="sc_lif_neuron",
+            ref_top="sc_lif_reference",
+            dut_params={**common, "REFRACTORY_PERIOD": 0},
+            ref_params=common,
+            mode="prove",
+            depth=6,
+            workdir=tmp_path,
+        )
+        assert result.proven is True
+        assert result.verdict == "PASS"
+        assert result.mode == "prove"

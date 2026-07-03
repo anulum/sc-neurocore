@@ -56,6 +56,7 @@ can change without a deprecation window.
 | `mixed_precision_spec` | internal build tool | Data model behind the mixed-precision facade. |
 | `mlir_emitter` | public facade | Package-level exports provide MLIR bundle emission. |
 | `multi_target` | internal build tool | Multi-target comparison helper reached through `deployment`. |
+| `operator_abstraction` | internal build tool | Lifts an internal result to a free input to abstract a multiplier for tractable unbounded proofs. |
 | `overflow_proof` | internal build tool | Static-analysis proof primitive reached through `static_analysis`. |
 | `pipeline` | public facade | Package-level exports provide the compiler pipeline. |
 | `pipeline_analysis` | internal build tool | Static-analysis primitive reached through `static_analysis`. |

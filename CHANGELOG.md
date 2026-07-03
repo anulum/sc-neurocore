@@ -5,6 +5,22 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 ## [Unreleased]
 
 ### Added
+- Multiplier abstraction for full-width unbounded equivalence proofs
+  (`sc_neurocore.compiler.operator_abstraction`). Whitebox taps make k-induction
+  converge, but bit-blasting the fixed-point multiplier keeps it tractable only at
+  a narrow (4-bit) datapath. `abstract_to_free_inputs` drops the signal carrying a
+  product and exposes it as a free input port; when the device-under-test and the
+  reference lift the same product to the same input name, the miter drives both
+  instances from one shared free wire, so the products are equal by construction
+  (congruence) and the solver never reasons about multiplication. The abstraction
+  is a sound over-approximation for a `PASS` (equivalence for every product value
+  implies it for the real product); a blackbox uninterpreted function would be the
+  textbook route but yosys 0.33's `smtbmc` crashes on a blackbox submodule. With
+  the multipliers abstracted and the state tapped, the LIF proves equivalent to
+  its reference **unbounded at full width** — about 1 s at 16-bit, 4 s at 32-bit,
+  and 22 s at 64-bit under `z3` k-induction, where before it was intractable past
+  4-bit; the residual growth is the datapath adders and comparators, not the
+  (now-abstracted) multiplier.
 - Unbounded equivalence proofs via whitebox state taps
   (`sc_neurocore.compiler.whitebox_taps`). Naive k-induction on the equivalence
   miter is intractable — the induction step starts from unreachable states where
