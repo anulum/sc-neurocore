@@ -208,6 +208,13 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
   are unchanged.
 
 ### Changed
+- The engine's Z3-backed safety-verification supervisor is now behind an optional
+  `z3` Cargo feature, on by default so the published wheel and CI test matrix are
+  unchanged. Building the engine with `--no-default-features` skips the bundled-Z3
+  C++ compile (and omits the `PySpikingControllerPool` class), cutting a from-scratch
+  engine check from minutes to ~30 s for fast or instrumented builds (e.g. `cargo-fuzz`
+  targets) that do not need the verifier. `z3::` was already contained to
+  `engine/src/supervisor.rs`; a CI step guards that the no-Z3 build stays compilable.
 - Reconciled the lightweight dict-form NIR importer
   (`sc_neurocore.compiler.intelligence.import_nir_graph`) with the authoritative
   `nir_bridge`. It previously mapped only two node types to hand-written,

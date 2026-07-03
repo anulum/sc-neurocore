@@ -64,6 +64,7 @@ pub mod sc_inference;
 pub mod scpn;
 pub mod simd;
 pub mod sobol;
+#[cfg(feature = "z3")]
 pub mod supervisor;
 pub mod synapses;
 pub mod topology;
@@ -810,6 +811,7 @@ fn sc_neurocore_engine(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_class::<PyLapicqueNeuron>()?;
     pyo3_neurons::register_neuron_classes(m)?;
     m.add_class::<PyNetworkRunner>()?;
+    #[cfg(feature = "z3")]
     m.add_class::<supervisor::PySpikingControllerPool>()?;
     m.add_function(wrap_pyfunction!(py_simulate_ei_network, m)?)?;
     m.add_function(wrap_pyfunction!(py_batch_simulate, m)?)?;

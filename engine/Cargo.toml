@@ -37,8 +37,12 @@ name = "sc_neurocore_engine"
 crate-type = ["cdylib", "rlib"]
 
 [features]
-default = []
+default = ["z3"]
 gpu = ["dep:wgpu", "dep:pollster", "dep:bytemuck"]
+# The Z3-backed safety-verification supervisor (engine/src/supervisor.rs). On by
+# default for the Python wheel; disable with --no-default-features to skip the heavy
+# bundled-Z3 C++ build for fast/instrumented (fuzz) builds that do not need it.
+z3 = ["dep:z3"]
 
 [dependencies]
 crossbeam-channel = "0.5"
@@ -56,7 +60,7 @@ rustfft = "6.2"
 wgpu = { version = "29", optional = true }
 pollster = { version = "0.4", optional = true }
 bytemuck = { version = "1.21", features = ["derive"], optional = true }
-z3 = { version = "0.20", features = ["bundled"] }
+z3 = { version = "0.20", features = ["bundled"], optional = true }
 
 [dev-dependencies]
 criterion = { version = "0.8", features = ["html_reports"] }

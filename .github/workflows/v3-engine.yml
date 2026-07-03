@@ -55,6 +55,9 @@ jobs:
       - name: Rust clippy
         run: cargo clippy --manifest-path engine/Cargo.toml -- -D warnings
 
+      - name: Engine builds without optional Z3 (feature-gate guard)
+        run: cargo check --manifest-path engine/Cargo.toml --no-default-features
+
       - name: Install cargo-audit
         run: cargo install cargo-audit@0.22.1
 
