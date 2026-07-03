@@ -15,6 +15,11 @@ from pathlib import Path
 from types import ModuleType
 from typing import Any, cast
 
+if sys.version_info >= (3, 11):
+    import tomllib
+else:
+    import tomli as tomllib
+
 
 _HISTORICAL_LIF_REPORT = "docs/benchmarks/BENCHMARK_REPORT.md"
 _ADC_KERNEL_REPORT = "benchmarks/results/bench_adc_to_spike_kernel.json"
@@ -129,6 +134,22 @@ def _load_json_object(path: Path) -> dict[str, Any]:
     payload = json.loads(path.read_text(encoding="utf-8"))
     assert isinstance(payload, dict)
     return cast(dict[str, Any], payload)
+
+
+def _project_classifiers() -> tuple[str, ...]:
+    """Return package classifiers from the live ``pyproject.toml`` metadata."""
+    with (_repo_root() / "pyproject.toml").open("rb") as config_file:
+        metadata = tomllib.load(config_file)
+    project = metadata["project"]
+    assert isinstance(project, dict)
+    raw_classifiers = project["classifiers"]
+    assert isinstance(raw_classifiers, list)
+
+    classifiers: list[str] = []
+    for classifier in raw_classifiers:
+        assert isinstance(classifier, str)
+        classifiers.append(classifier)
+    return tuple(classifiers)
 
 
 def test_public_capability_snapshots_are_current() -> None:
@@ -259,6 +280,33 @@ def test_conda_forge_claims_are_recipe_draft_until_published() -> None:
     assert "recipe ready for conda-forge distribution" not in compact
     assert "conda-forge recipe | **ready**" not in compact
     assert "conda install conda-forge::sc-neurocore" not in compact
+
+
+def test_public_maturity_classifier_stays_beta_until_v4_release() -> None:
+    """Keep package maturity below stable until public release evidence catches up."""
+    root = _repo_root()
+    classifiers = _project_classifiers()
+    pyproject = (root / "pyproject.toml").read_text(encoding="utf-8")
+    bounded_surfaces = [
+        root / "docs" / "index.md",
+        root / "docs" / "architecture" / "architecture.md",
+        root / "docs" / "architecture" / "AUTONOMOUS_LEARNING_ZENITH.md",
+        root / "src" / "sc_neurocore" / "__init__.py",
+        root / "src" / "sc_neurocore" / "bioware" / "bioware.py",
+        root / "docs" / "API_REFERENCE.md",
+    ]
+    combined = "\n".join(path.read_text(encoding="utf-8") for path in bounded_surfaces)
+    compact = _compact_whitespace(combined).lower()
+
+    assert "Development Status :: 4 - Beta" in classifiers
+    assert "Development Status :: 5 - Production/Stable" not in classifiers
+    assert "Development Status :: 5 - Production/Stable" not in pyproject
+    assert "broad research surface" in compact
+    assert "stable public api freeze" in compact
+    assert "beta maturity" in compact
+    assert "beta package surface" in compact
+    assert "production-ready" not in compact
+    assert "production ready" not in compact
 
 
 def test_public_claim_language_excludes_unbounded_marketing_slogans() -> None:

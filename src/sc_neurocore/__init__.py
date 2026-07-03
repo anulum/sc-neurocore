@@ -19,7 +19,7 @@ For hardware-level bit-true models::
 
 Module Tiers
 ------------
-- **core**     — Production-ready: neurons, synapses, layers, sources, utils,
+- **core**     — Beta package surface: neurons, synapses, layers, sources, utils,
   recorders, accel.  Imported by default.
 - **research** -- Functional but experimental: hdc, solvers, transformers,
   quantum, robotics, bio, physics, etc.  Import explicitly, e.g.

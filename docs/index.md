@@ -26,7 +26,7 @@ Start here if you need to understand what the software is for:
 | Consuming APIs | [API Reference Index](api/API_REFERENCE.md) | Prefer public package surfaces first; source-only research modules require a checkout. |
 
 !!! note "v4.0 transition"
-    Until v4.0, this repository intentionally keeps a broad research surface in one checkout while experimental verification campaigns determine which runtime, compiler, hardware, bridge, and research paths are promoted. v4.0 is planned as the stable public API freeze and the point where the source tree is split into several focused repositories.
+    Until v4.0, this repository intentionally keeps a broad research surface in one checkout while experimental verification campaigns determine which runtime, compiler, hardware, bridge, and research paths are promoted. The public package metadata therefore stays at beta maturity, not Production/Stable. v4.0 is planned as the stable public API freeze and the point where the source tree is split into several focused repositories.
 
 ![SC-NeuroCore train-to-hardware pipeline](assets/pipeline.png)
 *Train in PyTorch -> quantise to Q8.8 -> simulate with stochastic bitstreams -> compile to SystemVerilog -> synthesise for FPGA. The optional Rust engine accelerates selected stages when installed.*

@@ -1,6 +1,6 @@
 # Autonomous Learning Engine: "Project Zenith" Core
 
-The Autonomous Learning Engine within SC-NEUROCORE represents a production-ready, highly synchronized C-FFI pipeline mapping low-level physical Rust biological models into deep learning infrastructures and external hardware persistence. Following the "Zenith" update, this toolchain provides strong execution parity bridging PyTorch optimizations with asynchronous neuromorphic hardware constraints.
+The Autonomous Learning Engine within SC-NEUROCORE represents a beta-grade research-to-runtime C-FFI pipeline mapping low-level physical Rust biological models into deep learning infrastructures and external hardware persistence. Following the "Zenith" update, this toolchain provides strong execution parity bridging PyTorch optimizations with asynchronous neuromorphic hardware constraints.
 
 ## 1. What This Solves
 

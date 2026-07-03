@@ -11,7 +11,7 @@
 
 ```
 sc_neurocore/
-├── Core Tier (Production-Ready — ships in pip install sc-neurocore)
+├── Core Tier (Beta package surface — ships in pip install sc-neurocore)
 │   ├── neurons/       158 Python classes / 175 Rust PyO3 wrappers (161 NetworkRunner names)
 │   ├── synapses/      4 synapse types (bitstream, dot product, STDP, R-STDP)
 │   ├── layers/        8 layer types (dense, conv, learning, vectorized, recurrent, memristive, fusion, attention)

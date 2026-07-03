@@ -594,7 +594,7 @@ class BioHybridSession:
 
 @dataclass
 class SpikeSorter:
-    """Production-ready spike sorter utilizing PCA feature extraction and K-Means clustering.
+    """Research spike sorter using PCA feature extraction and K-Means clustering.
 
     Extracts the dominant principal components from the input raw waveforms, and cleanly
     separates units. Handles missing datasets explicitly natively. Requires `scikit-learn` to execute correctly.
