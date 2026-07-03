@@ -518,6 +518,13 @@ class TestSCNASEngineEdgeBranches:
         rust_extension.py_evo_tournament = _fake_evo
         monkeypatch.setitem(sys.modules, "sc_neurocore_engine", rust_extension)
 
+        # importlib.reload rebinds every class the module defines (DecorrelationStrategy,
+        # LayerConfig, ...), so a reloaded — or a second, restoring — reload leaves those
+        # classes with fresh identities that leak to other tests in the session (a
+        # LayerConfig.decorrelation built afterwards would no longer be `is`/`==` the
+        # DecorrelationStrategy those tests imported at collection time). Snapshot the
+        # pre-reload module dict and restore the exact original objects afterwards.
+        _original_attrs = dict(nas_module.__dict__)
         importlib.reload(nas_module)
         try:
             assert nas_module._HAS_RUST_EVO is True
@@ -536,4 +543,5 @@ class TestSCNASEngineEdgeBranches:
             assert captured["fitness"] == [candidate.fitness for candidate in population]
         finally:
             monkeypatch.delitem(sys.modules, "sc_neurocore_engine", raising=False)
-            importlib.reload(nas_module)
+            nas_module.__dict__.clear()
+            nas_module.__dict__.update(_original_attrs)
