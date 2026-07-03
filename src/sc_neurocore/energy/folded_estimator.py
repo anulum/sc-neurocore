@@ -212,6 +212,12 @@ def estimate_folded_area(
     # rows for each multiplier column (the popcount-mux convention from estimate()).
     rom_mux_depth = max(1, math.ceil(math.log2(max(metrics.neurons, 2))))
     rom_luts = metrics.shared_multipliers * data_width * rom_mux_depth
+    # Per-neuron parameter ROM (heterogeneous populations): a data_width-wide mux over the
+    # addressed neuron for each varying parameter, the same distributed-ROM cost as the
+    # weight ROM. Approximate the varying-parameter column count from the stored bits (exact
+    # for a single folded population). Zero when every population has uniform parameters.
+    param_rom_columns = metrics.param_rom_bits // max(metrics.neurons * data_width, 1)
+    rom_luts += param_rom_columns * data_width * rom_mux_depth
 
     # Spike accumulator + committed spike bus: one flip-flop per neuron each.
     spike_bus_ffs = 2 * metrics.neurons

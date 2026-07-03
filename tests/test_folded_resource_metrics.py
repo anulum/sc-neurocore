@@ -113,6 +113,7 @@ def test_as_dict_round_trips_all_fields() -> None:
         "cycles_per_tick": 9,
         "direct_neuron_instances": 8,
         "populations": 1,
+        "param_rom_bits": 0,
     }
 
 

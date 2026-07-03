@@ -4,17 +4,18 @@
 # © Code 2020–2026 Miroslav Šotek. All rights reserved.
 # ORCID: 0009-0009-3560-0851
 # Contact: www.anulum.li | protoscience@anulum.li
-# SC-NeuroCore — Tests for folded-interconnect rejection of heterogeneous parameters
+# SC-NeuroCore — Tests for folded-interconnect heterogeneous per-neuron parameters
 
-"""The folded interconnect must refuse a heterogeneous population, not fold it incorrectly.
+"""The folded interconnect streams heterogeneous per-neuron parameters from a parameter ROM.
 
-The shared per-type processing element bakes one representative parameter set (there
-is no per-neuron parameter RAM), so a population whose neurons carry different
-quantised parameters cannot fold — the fold would apply the first neuron's parameters
-to the whole population, diverging from the direct path, which emits a per-neuron
-``#(.P_X(...))`` override. These tests pin that ``interconnect="folded"`` raises a
-clear error for a heterogeneous population while the direct path keeps emitting the
-correct per-neuron overrides, and that a homogeneous population still folds.
+A population whose neurons carry different quantised parameters cannot bake one shared
+value into the per-type processing element, so the folded interconnect exposes those
+parameters as PE input ports and drives them from a per-neuron ``case(nidx)`` ROM — the
+parameter-space analogue of the state BRAM. These tests pin the parameter-uniformity
+predicate, the ``_can_fold`` gate, the generated ROM and PE ports, the resource metric,
+and — critically — that the PE bakes the *real* parameter value (a regression guard for
+the double-encoding that baked ``tau = 0`` into the folded PE for every real graph).
+The bit-exact co-simulation against the direct path lives in ``test_folded_interconnect``.
 """
 
 from __future__ import annotations
@@ -35,6 +36,8 @@ from sc_neurocore.nir_bridge import (
 )
 from sc_neurocore.nir_bridge.fpga_compiler import (
     _can_fold,
+    _dequantised_pop,
+    _heterogeneous_param_names,
     _population_params_are_uniform,
 )
 
@@ -72,81 +75,107 @@ def _compile(taus, interconnect, *, v_leak=None):
     )
 
 
+class TestHeterogeneousParamNames:
+    """Which parameters vary per neuron."""
+
+    def test_homogeneous_population_has_no_heterogeneous_params(self) -> None:
+        assert _heterogeneous_param_names(_qgraph([10.0, 10.0, 10.0]).populations[0], 16) == []
+
+    def test_varying_tau_is_reported(self) -> None:
+        assert _heterogeneous_param_names(_qgraph([10.0, 20.0, 30.0]).populations[0], 16) == ["tau"]
+
+    def test_multiple_varying_parameters_are_sorted(self) -> None:
+        pop = _qgraph([10.0, 20.0], v_leak=[0.0, -1.0]).populations[0]
+        assert _heterogeneous_param_names(pop, 16) == ["tau", "v_leak"]
+
+    def test_values_that_quantise_equal_are_not_heterogeneous(self) -> None:
+        step = 1.0 / (1 << 8)
+        pop = _qgraph([10.0, 10.0 + step / 4.0]).populations[0]
+        assert _heterogeneous_param_names(pop, 16) == []
+
+
 class TestPopulationParamsAreUniform:
     """The per-population parameter-uniformity predicate."""
 
     def test_homogeneous_population_is_uniform(self) -> None:
-        pop = _qgraph([10.0, 10.0, 10.0]).populations[0]
-        assert _population_params_are_uniform(pop, 16) is True
+        assert (
+            _population_params_are_uniform(_qgraph([10.0, 10.0, 10.0]).populations[0], 16) is True
+        )
 
     def test_heterogeneous_tau_is_not_uniform(self) -> None:
+        assert (
+            _population_params_are_uniform(_qgraph([10.0, 20.0, 30.0]).populations[0], 16) is False
+        )
+
+
+class TestDequantisePop:
+    """De-quantising a population's parameters for real-valued PE compilation."""
+
+    def test_rescales_quantised_integers_back_to_real_values(self) -> None:
         pop = _qgraph([10.0, 20.0, 30.0]).populations[0]
-        assert _population_params_are_uniform(pop, 16) is False
+        # pop.params['tau'] holds q.encode(10/20/30) = 2560/5120/7680; de-quantising divides
+        # by 2**fraction, recovering 10/20/30 (which re-encode losslessly).
+        rescaled = _dequantised_pop(pop, 8)
+        np.testing.assert_allclose(
+            np.asarray(rescaled.params["tau"]).reshape(-1), [10.0, 20.0, 30.0]
+        )
+        # Round-trips: encoding the rescaled value returns the original quantised integer.
+        assert [_Q.encode(v) for v in [10.0, 20.0, 30.0]] == [2560, 5120, 7680]
 
-    def test_heterogeneity_in_a_second_parameter_is_detected(self) -> None:
-        # tau uniform but v_leak differs — still heterogeneous.
-        pop = _qgraph([10.0, 10.0], v_leak=[0.0, -1.0]).populations[0]
-        assert _population_params_are_uniform(pop, 16) is False
-
-    def test_values_that_quantise_equal_count_as_uniform(self) -> None:
-        # Two floats a fraction apart round to the same Q8.8 literal → uniform.
-        step = 1.0 / (1 << 8)
-        pop = _qgraph([10.0, 10.0 + step / 4.0]).populations[0]
-        assert _population_params_are_uniform(pop, 16) is True
-
-    def test_scalar_shared_parameter_is_uniform(self) -> None:
-        # A parameter stored as a single shared value (a length-1 array, not a
-        # per-neuron array) is uniform by construction regardless of population size.
-        pop = _qgraph([10.0, 10.0, 10.0]).populations[0]
-        first_key = next(iter(pop.params))
-        shared = dict(pop.params)
-        shared[first_key] = np.asarray([np.asarray(shared[first_key]).reshape(-1)[0]])
-
-        class _SharedParamPopulation:
-            n_neurons = pop.n_neurons
-            params = shared
-
-        assert _population_params_are_uniform(_SharedParamPopulation(), 16) is True
+    def test_empty_params_returns_population_unchanged(self) -> None:
+        pop = _qgraph([10.0, 10.0]).populations[0]
+        pop.params.clear()
+        assert _dequantised_pop(pop, 8) is pop
 
 
 class TestCanFoldHeterogeneity:
-    """``_can_fold`` gates on parameter uniformity."""
+    """``_can_fold`` accepts heterogeneous datapath parameters."""
 
     def test_homogeneous_graph_folds(self) -> None:
         assert _can_fold(_qgraph([10.0, 10.0, 10.0]), data_width=16) is True
 
-    def test_heterogeneous_graph_does_not_fold(self) -> None:
-        assert _can_fold(_qgraph([10.0, 20.0, 30.0]), data_width=16) is False
+    def test_heterogeneous_graph_folds(self) -> None:
+        assert _can_fold(_qgraph([10.0, 20.0, 30.0]), data_width=16) is True
 
 
-class TestFoldedSelectionRejectsHeterogeneous:
-    """The public compiler entry point refuses to fold a heterogeneous population wrongly."""
+class TestFoldedHeterogeneousParams:
+    """The folded interconnect streams per-neuron parameters through a ROM."""
 
-    def test_folded_raises_for_heterogeneous_population(self) -> None:
-        with pytest.raises(ValueError, match="uniform|heterogeneous"):
-            _compile([10.0, 20.0, 30.0], "folded")
-
-    def test_folded_error_points_to_the_direct_path(self) -> None:
-        with pytest.raises(ValueError, match="direct"):
-            _compile([10.0, 20.0, 30.0], "folded")
-
-    def test_homogeneous_population_still_folds(self) -> None:
-        result = _compile([10.0, 10.0, 10.0], "folded")
+    def test_heterogeneous_population_folds(self) -> None:
+        result = _compile([10.0, 20.0, 30.0], "folded")
         assert result.interconnect == "folded"
+
+    def test_folded_pe_exposes_the_varying_parameter_as_a_port(self) -> None:
+        result = _compile([10.0, 20.0, 30.0], "folded")
+        assert any("input wire signed [15:0] P_TAU" in m for m in result.neuron_modules.values())
+        assert ".P_TAU(param_tau_lif)" in result.top_module
+
+    def test_folded_emits_a_per_neuron_parameter_rom(self) -> None:
+        result = _compile([10.0, 20.0, 30.0], "folded")
+        top = result.top_module
+        # The ROM carries each neuron's own quantised tau (2560/5120/7680), addressed by nidx.
+        assert f"= {16}'sd{_Q.encode(20.0)}" in top
+        assert f"= {16}'sd{_Q.encode(30.0)}" in top
+        assert "case (nidx)" in top
+
+    def test_folded_reports_parameter_rom_bits(self) -> None:
+        result = _compile([10.0, 20.0, 30.0], "folded")
         assert result.folded_metrics is not None
+        # 3 neurons × 1 varying parameter × 16 bits.
+        assert result.folded_metrics.param_rom_bits == 3 * 1 * 16
+        assert result.folded_metrics.as_dict()["param_rom_bits"] == 48
 
-    def test_direct_path_still_emits_per_neuron_overrides(self) -> None:
-        # The correct fallback: the direct interconnect reproduces heterogeneity
-        # exactly, so refusing to fold loses no capability.
-        result = _compile([10.0, 20.0, 30.0], "direct")
-        assert f"16'sd{_Q.encode(20.0)}" in result.top_module
-        assert f"16'sd{_Q.encode(30.0)}" in result.top_module
-        overrides = [ln for ln in result.top_module.splitlines() if "#(" in ln and "_inst" in ln]
-        assert len(overrides) == 2
+    def test_homogeneous_population_has_no_parameter_rom(self) -> None:
+        result = _compile([10.0, 10.0, 10.0], "folded")
+        assert "param_tau" not in result.top_module
+        assert result.folded_metrics is not None
+        assert result.folded_metrics.param_rom_bits == 0
 
-    def test_auto_path_is_unaffected_by_heterogeneity(self) -> None:
-        # ``auto`` never selects folded, so a heterogeneous population compiles as
-        # before (direct here, well under the AER threshold).
-        result = _compile([10.0, 20.0, 30.0], None)
-        assert result.interconnect == "direct"
-        assert f"16'sd{_Q.encode(30.0)}" in result.top_module
+    def test_folded_pe_bakes_the_real_parameter_not_a_double_encoded_zero(self) -> None:
+        # Regression: the folded PE built the per-type neuron from the *quantised* population,
+        # so Q88.encode ran twice and baked tau = 5120 × 256 mod 2**16 = 0 into the shared PE
+        # for every real graph. A uniform explicit tau must bake q.encode(20) = 5120, not 0.
+        result = _compile([20.0, 20.0, 20.0], "folded")
+        pe = next(src for key, src in result.neuron_modules.items() if key.endswith("_pe"))
+        assert f"P_TAU = 16'sd{_Q.encode(20.0)}" in pe
+        assert "P_TAU = 16'sd0" not in pe

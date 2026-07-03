@@ -5,6 +5,16 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 ## [Unreleased]
 
 ### Added
+- The folded FPGA interconnect now folds populations with **heterogeneous per-neuron
+  parameters**. Each parameter that varies across a population's neurons is exposed on a
+  processing-element input port (`compile_to_datapath(param_ports=...)`) and streamed from
+  a per-neuron ``case(nidx)`` ROM — the parameter-space analogue of the state BRAM — so
+  every neuron receives its own parameters, bit-for-bit the direct path's per-neuron
+  ``#(.P_X(...))`` overrides (golden co-simulation parity for heterogeneous firing
+  thresholds and membrane time constants). `FoldedResourceMetrics` gains `param_rom_bits`
+  and the folded area estimator charges the parameter ROM. Populations with uniform
+  parameters are unchanged (the PE bakes them). This removes the former restriction that a
+  folded population be parameter-uniform.
 - Formal equivalence toolkit generalised to a two-state neuron shape — the
   Izhikevich model, the first with two coupled state registers (membrane ``v`` and
   recovery ``u``). The quadratic ``(v-VR)*(v-VT)`` product drives ``v`` and a spike
@@ -248,15 +258,17 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
   source of truth.
 
 ### Fixed
-- The opt-in folded FPGA interconnect (`interconnect="folded"`) now rejects a
-  population with heterogeneous per-neuron parameters instead of silently baking the
-  first neuron's parameters into the shared processing element for the whole
-  population. The shared per-type PE has no per-neuron parameter RAM, so a
-  heterogeneous population — one the direct path reproduces exactly via per-neuron
-  `#(.P_X(...))` overrides — cannot fold; `_can_fold` now gates on per-population
-  parameter uniformity (decided at the quantised data width) and the compiler raises a
-  clear error pointing to the direct interconnect. The direct and `auto` paths are
-  unchanged (`auto` never selects the folded interconnect).
+- The opt-in folded FPGA interconnect (`interconnect="folded"`) built its shared
+  processing element from the *quantised* population, so `Q88.encode` ran a second time
+  over already-quantised parameters and baked a corrupt value into the PE for every graph
+  carrying explicit parameters (a 16-bit `tau = 5120` re-encoded to
+  `5120 × 256 mod 2**16 = 0`). Real NIR networks always carry explicit parameters, so the
+  folded PE was silently generated with `tau = 0`. Folded PE parameters are now built from
+  the real-valued parameters (`_dequantised_pop`, a lossless rescale for fixed-point
+  values), matching the per-instance module the direct interconnect emits. The
+  double-encoding had gone undetected because the folded co-simulation suites used
+  template-default (already real-valued) parameters; a co-simulation of a real
+  explicit-parameter network now guards it.
 - Hardened the public swarm agent/evolver contracts. `AgentConfig`,
   `SwarmAgent.weights`, `think`, `act`, `reset`, `EvolverConfig`,
   `evaluate_individual`, mutation, and generation execution now reject

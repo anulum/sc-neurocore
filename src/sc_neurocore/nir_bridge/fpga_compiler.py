@@ -38,7 +38,7 @@ from __future__ import annotations
 import logging
 import math
 import re
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 from typing import Any, Literal, Mapping, Sequence
 
 import numpy as np
@@ -141,29 +141,74 @@ def _neuron_param_override(
     return " #(" + ", ".join(fragments) + ")"
 
 
-def _population_params_are_uniform(pop: NeuronSpec, data_width: int) -> bool:
-    """Return True when every per-neuron quantised parameter is identical across ``pop``.
+def _heterogeneous_param_names(pop: NeuronSpec, data_width: int) -> list[str]:
+    """Return the sorted parameter names whose per-neuron quantised values vary in ``pop``.
 
-    The folded interconnect bakes one representative parameter set into the shared
-    per-type PE — there is no per-neuron parameter RAM — so it can only reproduce a
-    population whose neurons carry identical quantised parameters. A *heterogeneous*
-    population (one the direct path emits per-neuron ``#(.P_X(...))`` overrides for, see
-    :func:`_neuron_param_override`) cannot fold: the fold would silently apply the first
-    neuron's parameters to the whole population, diverging from the direct path.
+    A name is heterogeneous when its per-neuron array (length ``n_neurons``) holds more
+    than one distinct value at the quantised data width — exactly the set the direct path
+    emits per-neuron ``#(.P_X(...))`` overrides for (see :func:`_neuron_param_override`),
+    and the set the folded interconnect must stream through a per-neuron parameter ROM.
 
-    Uniformity is decided at the *quantised* data-width (the same mask the override
+    Uniformity is decided at the *quantised* data width (the same mask the override
     detection uses), so two float parameters that round to the same fixed-point literal
-    count as uniform. A scalar / population-shared parameter (an array that is not
-    per-neuron) is uniform by construction.
+    are not heterogeneous. A scalar / population-shared parameter (an array that is not
+    per-neuron) is never heterogeneous.
     """
     mask = (1 << data_width) - 1
-    for pval in pop.params.values():
+    names: list[str] = []
+    for pname, pval in pop.params.items():
         arr = np.atleast_1d(np.asarray(pval).reshape(-1))
         if arr.shape[0] != pop.n_neurons:
             continue  # scalar / shared parameter — identical for every neuron
         if len({int(v) & mask for v in arr}) > 1:
-            return False
-    return True
+            names.append(pname)
+    return sorted(names)
+
+
+def _population_params_are_uniform(pop: NeuronSpec, data_width: int) -> bool:
+    """Return True when every per-neuron quantised parameter is identical across ``pop``.
+
+    Equivalent to ``not _heterogeneous_param_names(pop, data_width)``. A heterogeneous
+    population — one the direct path reproduces via per-neuron ``#(.P_X(...))`` overrides —
+    folds only when the folded interconnect streams its varying parameters through a
+    per-neuron parameter ROM (see :func:`_build_top_folded`).
+    """
+    return not _heterogeneous_param_names(pop, data_width)
+
+
+def _param_neuron_literal(pop: NeuronSpec, pname: str, neuron_idx: int, data_width: int) -> str:
+    """Return the Verilog signed literal of ``pop``'s ``pname`` for one neuron (quantised).
+
+    The literal is the unsigned two's-complement bit pattern the module declares its
+    parameter default with — the same form the direct path's per-neuron overrides use
+    (see :func:`_neuron_param_override`) — so the folded parameter ROM feeds the PE the
+    identical value the direct instance would receive.
+    """
+    mask = (1 << data_width) - 1
+    arr = np.atleast_1d(np.asarray(pop.params[pname]).reshape(-1))
+    raw = int(arr[neuron_idx]) if arr.shape[0] == pop.n_neurons else int(arr[0])
+    return f"{data_width}'sd{raw & mask}"
+
+
+def _dequantised_pop(pop: NeuronSpec, fraction: int) -> NeuronSpec:
+    """Return ``pop`` with its quantised parameter values scaled back to real units.
+
+    A :class:`QuantisedGraph` population stores fixed-point *integer* parameters
+    (``value × 2**fraction``). The folded PE and the per-instance module both encode
+    real-valued parameters with :meth:`Q88.encode`, so they must be handed the *real*
+    value — feeding the already-quantised integer encodes it a second time (a 16-bit
+    ``tau = 5120`` re-encodes to ``5120 × 256 mod 2**16 = 0``, silently baking a broken
+    parameter into the shared PE). The rescale is lossless for genuine fixed-point values
+    (``5120 / 256 = 20.0`` re-encodes to ``5120``). Parameters absent from ``pop.params``
+    are untouched (they fall back to the template default, already a real value).
+    """
+    if not pop.params:
+        return pop
+    scale = float(1 << fraction)
+    rescaled = {
+        name: np.asarray(values, dtype=np.float64) / scale for name, values in pop.params.items()
+    }
+    return replace(pop, params=rescaled)
 
 
 def _resolved_population_params(neuron_type: str, pop: NeuronSpec) -> dict[str, float]:
@@ -436,6 +481,11 @@ class FoldedResourceMetrics:
         the count the fold collapses to ``pe_instances``.
     populations : int
         Number of folded populations sharing the one sequencer and the global spike bus.
+    param_rom_bits : int
+        Total per-neuron parameter-ROM storage, in bits, for heterogeneous populations
+        (each contributes ``neurons`` × its count of per-neuron-varying parameters × data
+        width). Zero for a network whose populations all have uniform parameters (the PE
+        bakes them). The parameter-space analogue of ``state_ram_bits``.
     """
 
     neurons: int
@@ -446,6 +496,7 @@ class FoldedResourceMetrics:
     cycles_per_tick: int
     direct_neuron_instances: int
     populations: int = 1
+    param_rom_bits: int = 0
 
     def as_dict(self) -> dict[str, int]:
         """Return a deterministic plain-``int`` mapping for manifests/JSON."""
@@ -458,6 +509,7 @@ class FoldedResourceMetrics:
             "cycles_per_tick": self.cycles_per_tick,
             "direct_neuron_instances": self.direct_neuron_instances,
             "populations": self.populations,
+            "param_rom_bits": self.param_rom_bits,
         }
 
 
@@ -1467,10 +1519,11 @@ def _can_fold(qgraph: QuantisedGraph, *, data_width: int) -> bool:
 
     The folded interconnect time-multiplexes any number of populations of supported
     neuron types over a per-type PE pool and one global spike bus. A graph folds when
-    every population has an ODE template, every population's per-neuron parameters are
-    uniform (the shared PE bakes one representative parameter set — a heterogeneous
-    population must use the direct path, see :func:`_population_params_are_uniform`), and
-    every connection is one of:
+    every population has an ODE template, every population's heterogeneous per-neuron
+    parameters are datapath parameters the PE can carry on a port (streamed from a
+    per-neuron parameter ROM — a parameter varying in something other than an ODE
+    parameter cannot be streamed and falls back to the direct path), and every
+    connection is one of:
 
     * **connection-less** — neurons driven only by their own external ``I_ext`` lane;
     * **external-weighted** — fed by external (non-population) source columns;
@@ -1494,10 +1547,17 @@ def _can_fold(qgraph: QuantisedGraph, *, data_width: int) -> bool:
     pop_names = set(pop_by_name)
     if any(p.neuron_type not in _NEURON_TEMPLATES for p in pops):
         return False
-    if any(not _population_params_are_uniform(p, data_width) for p in pops):
-        # A heterogeneous population's per-neuron parameters cannot be baked into the
-        # shared PE; fold would silently apply the first neuron's parameters to all.
-        return False
+    for pop in pops:
+        het = _heterogeneous_param_names(pop, data_width)
+        if het:
+            # Heterogeneous parameters stream through a per-neuron parameter ROM into the
+            # PE's ports (see :func:`_build_top_folded`), but only datapath parameters can
+            # be carried on a port; a parameter varying in something the PE does not take
+            # (not in its ODE parameters/constants) cannot be streamed — use the direct path.
+            neuron = _population_neuron(pop.neuron_type, pop)
+            pe_params = set(neuron.parameters) | set(neuron.constants)
+            if not set(het) <= pe_params:
+                return False
     for conn in qgraph.connections:
         if conn.dst not in pop_names:
             return False
@@ -1521,8 +1581,9 @@ def _folded_resource_metrics(qgraph: QuantisedGraph, *, data_width: int) -> Fold
     Counts one PE per distinct neuron type (the per-type pool), the shared
     weighted-fan-in multipliers (external-source and analogue-voltage-source columns —
     spiking recurrent or inter-population fan-in is spike-gated and uses none), the BRAM
-    state-word storage summed over populations, the cycles-per-tick, and the direct-path
-    instance count the fold collapses.
+    state-word storage summed over populations, the per-neuron parameter-ROM storage for
+    heterogeneous populations, the cycles-per-tick, and the direct-path instance count the
+    fold collapses.
 
     Parameters
     ----------
@@ -1555,6 +1616,13 @@ def _folded_resource_metrics(qgraph: QuantisedGraph, *, data_width: int) -> Fold
         if conn.src not in pop_names or conn.src in analogue_src_names
     )
     distinct_types = len({pop.neuron_type for pop in pops})
+    # Per-neuron parameter ROM: each population contributes one data-width word per neuron
+    # for every parameter that varies across its neurons (a uniform parameter is baked, no
+    # ROM). The parameter-space analogue of the state BRAM.
+    param_rom_bits = sum(
+        pop.n_neurons * len(_heterogeneous_param_names(pop, data_width)) * data_width
+        for pop in pops
+    )
     return FoldedResourceMetrics(
         neurons=n_total,
         state_vars_per_neuron=max_state_vars,
@@ -1564,6 +1632,7 @@ def _folded_resource_metrics(qgraph: QuantisedGraph, *, data_width: int) -> Fold
         cycles_per_tick=n_total + 1,
         direct_neuron_instances=n_total,
         populations=len(pops),
+        param_rom_bits=param_rom_bits,
     )
 
 
@@ -1671,16 +1740,33 @@ def _build_top_folded(
     type_svars: dict[str, list[str]] = {}
     type_state_w: dict[str, int] = {}
     type_init_packed: dict[str, str] = {}
+    # Parameters heterogeneous in ANY population of a type become that type's PE input
+    # ports, streamed per-neuron from a parameter ROM (the parameter-space analogue of the
+    # state BRAM); a type whose populations are all uniform keeps every parameter baked.
+    type_het_params: dict[str, list[str]] = {}
+    for pop in pops:
+        for pname in _heterogeneous_param_names(pop, data_width):
+            names = type_het_params.setdefault(pop.neuron_type, [])
+            if pname not in names:
+                names.append(pname)
+    for names in type_het_params.values():
+        names.sort()
     for pop in pops:
         ntype = pop.neuron_type
         if ntype in pe_module_name:
             continue
-        neuron = _population_neuron(ntype, pop)
+        # Build the PE from real-valued parameters: the population carries quantised
+        # integers, which Q88.encode would encode a second time (see _dequantised_pop).
+        neuron = _population_neuron(ntype, _dequantised_pop(pop, fraction))
         type_neuron[ntype] = neuron
         mod = sanitize_ident(f"sc_nir_{ntype}_pe", context="module name")
         pe_module_name[ntype] = mod
         pe_modules[f"{ntype}_pe"] = compile_to_datapath(
-            neuron, module_name=mod, data_width=data_width, fraction=fraction
+            neuron,
+            module_name=mod,
+            data_width=data_width,
+            fraction=fraction,
+            param_ports=type_het_params.get(ntype, []),
         )
         svars = [sanitize_ident(v, context="state variable") for v in neuron.equations]
         type_svars[ntype] = svars
@@ -1764,6 +1850,43 @@ def _build_top_folded(
         )
     lines.append("")
 
+    # Per-neuron parameter ROMs — the parameter-space analogue of the state BRAM. For each
+    # parameter carried on a type's PE ports, every population of that type supplies a
+    # per-neuron value addressed by `nidx`: a combinational case-ROM when the population is
+    # heterogeneous in that parameter, a constant when it is uniform. The active population's
+    # value is selected by `pidx` (exactly like the state read) and drives the shared PE port,
+    # so each neuron sees its own parameters — bit-for-bit the direct path's per-instance
+    # ``#(.P_X(...))`` overrides.
+    for ntype, het_names in type_het_params.items():
+        same_type = [pi for pi, pop in enumerate(pops) if pop.neuron_type == ntype]
+        for pname in het_names:
+            pkey = sanitize_ident(pname, context="parameter name").lower()
+            for pi in same_type:
+                pop = pops[pi]
+                sig = f"param_{pkey}_{pi}"
+                if pname in _heterogeneous_param_names(pop, data_width):
+                    lines.append(f"    reg signed [DATA_WIDTH - 1:0] {sig};")
+                    lines.append(f"    always @(*) begin  // {pop.name}.{pname} per-neuron ROM")
+                    lines.append("        case (nidx)")
+                    for j in range(pop.n_neurons):
+                        lit = _param_neuron_literal(pop, pname, j, data_width)
+                        lines.append(f"            {idx_w}'d{j}: {sig} = {lit};")
+                    lines.append(
+                        f"            default: {sig} = {_param_neuron_literal(pop, pname, 0, data_width)};"
+                    )
+                    lines.append("        endcase")
+                    lines.append("    end")
+                else:
+                    lit = _param_neuron_literal(pop, pname, 0, data_width)
+                    lines.append(f"    wire signed [DATA_WIDTH - 1:0] {sig} = {lit};")
+            mux = _cond_mux(
+                [(f"pidx == {pidx_w}'d{pi}", f"param_{pkey}_{pi}") for pi in same_type],
+                default=f"param_{pkey}_{same_type[0]}",
+            )
+            lines.append(f"    wire signed [DATA_WIDTH - 1:0] param_{pkey}_{ntype} = {mux};")
+    if type_het_params:
+        lines.append("")
+
     # Shared external-input lane wires (only when external sources exist).
     if ext_offsets:
         for k in range(ext_width):
@@ -1822,6 +1945,11 @@ def _build_top_folded(
                 "        .I_t(active_I),",
             ]
         )
+        # Heterogeneous parameters streamed from the per-neuron ROM into the PE's ports.
+        for pname in type_het_params.get(ntype, []):
+            pkey = sanitize_ident(pname, context="parameter name").lower()
+            vname = f"P_{sanitize_ident(pname, context='parameter name').upper()}"
+            lines.append(f"        .{vname}(param_{pkey}_{ntype}),")
         lines.extend(
             f"        .{svars[k]}_reg(cur_state_{ntype}{slice_of(k)})," for k in range(len(svars))
         )

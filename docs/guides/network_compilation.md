@@ -167,7 +167,7 @@ sc-neurocore compile-nir model.nir --interconnect folded -o build/
 ```python
 result = compile_network_to_fpga(graph, interconnect="folded")
 result.folded_metrics  # FoldedResourceMetrics: populations, pe_instances, shared_multipliers,
-                       # state_ram_bits, cycles_per_tick, direct_neuron_instances
+                       # state_ram_bits, param_rom_bits, cycles_per_tick, direct_neuron_instances
 ```
 
 The folded subset covers any number of populations of supported neuron types whose
@@ -184,6 +184,15 @@ voltage-bus history register). The folded subset now covers every direct fan-in 
 a delayed *external* (non-population) source connection — a synaptic delay has registered
 semantics only from a neuron population — which is not folded; such graphs raise and should
 use `direct`/auto.
+
+**Heterogeneous per-neuron parameters** fold too: a population whose neurons carry different
+parameters (a real NIR network almost always does) cannot bake one shared value into the
+per-type PE, so each varying parameter is carried on a PE input port and streamed from a
+per-neuron `case(nidx)` ROM — the parameter-space analogue of the state BRAM. Every neuron
+then sees its own parameters, identical to the direct path's per-neuron `#(.P_X(...))`
+overrides (verified by golden co-simulation). Uniform parameters stay baked into the PE.
+`FoldedResourceMetrics.param_rom_bits` reports the parameter-ROM storage.
+
 `compile_network_to_fpga` attaches a [`FoldedResourceMetrics`](../API_REFERENCE.md) summary
 on the result only for the folded path; the CLI prints it and writes a machine-readable
 `folded_metrics.json` artefact (the versioned `scnir_source_manifest.json` is left to its

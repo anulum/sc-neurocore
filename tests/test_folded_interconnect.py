@@ -33,6 +33,7 @@ from sc_neurocore.nir_bridge.fpga_compiler import (
     _build_neuron_module,
     _build_top_direct,
     _build_top_folded,
+    _dequantised_pop,
 )
 from sc_neurocore.nir_bridge.neuron_graph import ConnectionSpec, NeuronGraph, NeuronSpec
 
@@ -654,7 +655,9 @@ def _parity_rasters(ng: NeuronGraph, currents: list[float], n_total: int) -> tup
     for pop in qgraph.populations:
         type_pop.setdefault(pop.neuron_type, pop)
     direct_modules = {
-        f"mod_{ntype}": _build_neuron_module(ntype, pop, data_width=_DW, fraction=_FR)
+        f"mod_{ntype}": _build_neuron_module(
+            ntype, _dequantised_pop(pop, _FR), data_width=_DW, fraction=_FR
+        )
         for ntype, pop in type_pop.items()
     }
     pe_modules, folded_top = _build_top_folded(
@@ -918,3 +921,84 @@ def test_folded_delayed_analogue_source_matches_direct() -> None:
         f"{next((i for i, (a, b) in enumerate(zip(direct_raster, folded_raster)) if a != b), None)}"
     )
     assert any("1" in row for row in direct_raster), "delayed analogue-fed lif should spike"
+
+
+def test_folded_heterogeneous_v_threshold_matches_direct() -> None:
+    import numpy as np
+
+    # A population whose neurons carry different firing thresholds: the folded PE exposes
+    # P_V_THRESHOLD on a port and streams each neuron's own value from a per-neuron ROM.
+    # The thresholds straddle the reachable membrane range — neuron 0 (0.3) and 1 (0.5)
+    # fire, neuron 2 (50.0) never does — so a fold that applied one shared threshold would
+    # diverge. (Before the parameter ROM the fold baked only the first neuron's value.)
+    pop = NeuronSpec(
+        name="pop0",
+        neuron_type="lif",
+        n_neurons=3,
+        params={"v_threshold": np.array([0.3, 0.5, 50.0])},
+        dt=1.0,
+    )
+    ng = NeuronGraph(
+        populations=[pop],
+        connections=[
+            ConnectionSpec(src="stim", dst="pop0", weights=np.full((3, 1), 1.0, np.float32))
+        ],
+        input_pop="stim",
+        output_pop="pop0",
+        dt=1.0,
+    )
+    q = Q88(data_width=_DW, fraction=_FR)
+    _pe, folded_top = _build_top_folded(
+        "sc_fold_test_folded", quantise_graph(ng, q), data_width=_DW, fraction=_FR
+    )
+    assert ".P_V_THRESHOLD(param_v_threshold_lif)" in folded_top  # streamed from the ROM
+
+    direct_raster, folded_raster = _parity_rasters(ng, [1.5], 3)
+    assert len(direct_raster) == _STEPS and len(folded_raster) == _STEPS
+    assert folded_raster == direct_raster, (
+        "folded heterogeneous-threshold raster diverged from direct at step "
+        f"{next((i for i, (a, b) in enumerate(zip(direct_raster, folded_raster)) if a != b), None)}"
+    )
+    assert any("1" in row for row in direct_raster), "low-threshold neurons should spike"
+    # Neuron 2 (threshold 50.0, LSB-most in the MSB-first raster) must never fire.
+    assert all(row[0] == "0" for row in direct_raster), "the high-threshold neuron must stay silent"
+
+
+def test_folded_heterogeneous_tau_matches_direct() -> None:
+    import numpy as np
+
+    # Heterogeneous membrane time constants: a larger tau leaks more slowly and integrates
+    # more input, so the neurons reach threshold at different times. The folded PE streams
+    # each neuron's own tau from the parameter ROM; a shared tau would desynchronise them.
+    pop = NeuronSpec(
+        name="pop0",
+        neuron_type="lif",
+        n_neurons=3,
+        params={"tau": np.array([4.0, 12.0, 40.0])},
+        dt=1.0,
+    )
+    ng = NeuronGraph(
+        populations=[pop],
+        connections=[
+            ConnectionSpec(src="stim", dst="pop0", weights=np.full((3, 1), 1.0, np.float32))
+        ],
+        input_pop="stim",
+        output_pop="pop0",
+        dt=1.0,
+    )
+    q = Q88(data_width=_DW, fraction=_FR)
+    _pe, folded_top = _build_top_folded(
+        "sc_fold_test_folded", quantise_graph(ng, q), data_width=_DW, fraction=_FR
+    )
+    assert ".P_TAU(param_tau_lif)" in folded_top
+
+    direct_raster, folded_raster = _parity_rasters(ng, [1.5], 3)
+    assert len(direct_raster) == _STEPS and len(folded_raster) == _STEPS
+    # The three time constants produce three distinct spike trains, so the ROM genuinely
+    # feeds each neuron its own tau (a shared tau would collapse them).
+    assert len({"".join(row[k] for row in direct_raster) for k in range(3)}) == 3
+    assert folded_raster == direct_raster, (
+        "folded heterogeneous-tau raster diverged from direct at step "
+        f"{next((i for i, (a, b) in enumerate(zip(direct_raster, folded_raster)) if a != b), None)}"
+    )
+    assert any("1" in row for row in direct_raster), "the tau workload should spike"
