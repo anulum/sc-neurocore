@@ -99,6 +99,8 @@ def test_agent_weights_reject_malformed_vectors_without_mutating() -> None:
 
     with pytest.raises(ValueError, match="one-dimensional"):
         agent.weights = np.zeros((1, agent.n_weights), dtype=np.float64)
+    with pytest.raises(ValueError, match=f"Expected {agent.n_weights} weights"):
+        agent.weights = np.zeros(agent.n_weights - 1, dtype=np.float64)
     with pytest.raises(ValueError, match="weights"):
         agent.weights = cast(NDArray[np.float64], np.array([object()] * agent.n_weights))
     with pytest.raises(ValueError, match="finite"):
@@ -124,6 +126,19 @@ def test_agent_reset_rejects_invalid_arena_without_mutating_state() -> None:
 
     np.testing.assert_array_equal(agent.position, position_before)
     assert agent.heading == heading_before
+
+
+def test_agent_reset_default_rng_preserves_weight_vector() -> None:
+    agent = SwarmAgent(AgentConfig(n_hidden=4, seed=4))
+    weights_before = agent.weights.copy()
+
+    agent.reset(width=10.0, height=5.0)
+
+    assert agent.position.shape == (2,)
+    assert 0.0 <= agent.position[0] <= 10.0
+    assert 0.0 <= agent.position[1] <= 5.0
+    assert 0.0 <= agent.heading <= 2 * np.pi
+    np.testing.assert_array_equal(agent.weights, weights_before)
 
 
 def test_evolver_config_rejects_invalid_domains() -> None:
