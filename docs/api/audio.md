@@ -51,4 +51,10 @@ JSON-compatible dictionary.
 
 ## User Profile
 
+`UserProfile` persists chronotype defaults, preferred target frequency,
+per-band baseline powers, SSGF cost weights, and sensitivity multipliers as a
+JSON-compatible profile dictionary. Focused contract tests cover explicit target
+overrides, high-EVS target adoption and smoothing, baseline band-power updates,
+and package-facade exports.
+
 ::: sc_neurocore.audio.user_profile

@@ -3132,12 +3132,15 @@ preferred_target_hz : float, optional
     Explicitly set target frequency (overrides chronotype default).
 
 - **__post_init__**()
+  - Populate chronotype-derived defaults for omitted profile maps.
 - **get_best_target_hz**()
   - Return the best entrainment target for this user.
 - **update_from_session**(avg_evs, peak_evs, best_target_hz, band_powers)
   - Update profile after a completed session.
 - **to_dict**()
+  - Serialise the profile into JSON-compatible primitive values.
 - **from_dict**(cls, data)
+  - Build a profile from a dictionary produced by :meth:`to_dict`.
 
 ---
 

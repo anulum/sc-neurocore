@@ -965,7 +965,7 @@
     "python_model_classes": 158,
     "python_model_source_modules": 152,
     "rust_pyo3_model_wrappers": 175,
-    "test_files": 950
+    "test_files": 951
   },
   "documentation": {
     "public_pages": [
@@ -2852,6 +2852,7 @@
       "tests/test_astrocyte_adapter.py",
       "tests/test_audio_package_api.py",
       "tests/test_audio_ssgf_mapping_contracts.py",
+      "tests/test_audio_user_profile_contracts.py",
       "tests/test_augmentation.py",
       "tests/test_autofit.py",
       "tests/test_backend_selection.py",

@@ -13,7 +13,7 @@ from __future__ import annotations
 import logging
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any, Dict, Optional
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -34,7 +34,7 @@ class Chronotype(str, Enum):
 
 
 # Default target Hz by chronotype
-_CHRONOTYPE_TARGET_HZ: Dict[Chronotype, float] = {
+_CHRONOTYPE_TARGET_HZ: dict[Chronotype, float] = {
     Chronotype.LION: 10.0,  # Alpha (relaxed focus)
     Chronotype.BEAR: 10.0,  # Alpha (balanced)
     Chronotype.WOLF: 6.0,  # Theta (creative flow)
@@ -42,7 +42,7 @@ _CHRONOTYPE_TARGET_HZ: Dict[Chronotype, float] = {
 }
 
 # Preferred cost weight profiles
-_CHRONOTYPE_WEIGHTS: Dict[Chronotype, Dict[str, float]] = {
+_CHRONOTYPE_WEIGHTS: dict[Chronotype, dict[str, float]] = {
     Chronotype.LION: {
         "w_micro": 1.0,
         "w_reg": 0.01,
@@ -93,13 +93,14 @@ class UserProfile:
 
     user_id: str = "anonymous"
     chronotype: Chronotype = Chronotype.BEAR
-    baseline_band_powers: Dict[str, float] = field(default_factory=dict)
-    preferred_cost_weights: Dict[str, float] = field(default_factory=dict)
-    sensitivity_map: Dict[str, float] = field(default_factory=dict)
+    baseline_band_powers: dict[str, float] = field(default_factory=dict)
+    preferred_cost_weights: dict[str, float] = field(default_factory=dict)
+    sensitivity_map: dict[str, float] = field(default_factory=dict)
     session_count: int = 0
-    preferred_target_hz: Optional[float] = None
+    preferred_target_hz: float | None = None
 
     def __post_init__(self) -> None:
+        """Populate chronotype-derived defaults for omitted profile maps."""
         # Populate defaults from chronotype if not provided
         if not self.preferred_cost_weights:
             self.preferred_cost_weights = dict(
@@ -131,8 +132,8 @@ class UserProfile:
         self,
         avg_evs: float,
         peak_evs: float,
-        best_target_hz: Optional[float] = None,
-        band_powers: Optional[Dict[str, float]] = None,
+        best_target_hz: float | None = None,
+        band_powers: dict[str, float] | None = None,
     ) -> None:
         """Update profile after a completed session.
 
@@ -180,6 +181,15 @@ class UserProfile:
     # ── Serialisation ────────────────────────────────────────────────
 
     def to_dict(self) -> dict[str, Any]:
+        """Serialise the profile into JSON-compatible primitive values.
+
+        Returns
+        -------
+        dict[str, Any]
+            Snapshot containing the user identifier, chronotype value,
+            per-band baselines, preferred SSGF cost weights, sensitivity map,
+            completed session count, and optional preferred target frequency.
+        """
         return {
             "user_id": self.user_id,
             "chronotype": self.chronotype.value,
@@ -192,6 +202,20 @@ class UserProfile:
 
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> UserProfile:
+        """Build a profile from a dictionary produced by :meth:`to_dict`.
+
+        Parameters
+        ----------
+        data:
+            JSON-compatible profile snapshot. Missing fields fall back to the
+            same defaults used by the dataclass constructor.
+
+        Returns
+        -------
+        UserProfile
+            Reconstructed user profile with chronotype defaults populated in
+            ``__post_init__`` when optional maps are absent.
+        """
         chrono = data.get("chronotype", "bear")
         return cls(
             user_id=data.get("user_id", "anonymous"),
