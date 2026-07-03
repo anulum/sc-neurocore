@@ -88,7 +88,7 @@ class EquationNeuron:
         method: str = "euler",
         units: str = "none",
         input_unit: Any | None = None,
-    ):
+    ) -> None:
         """Initialise an equation-defined neuron from ODE strings."""
         if units not in {"none", "strict"}:
             raise ValueError("units must be 'none' or 'strict'")
@@ -529,7 +529,7 @@ def from_equations(
     units: str = "none",
     input_unit: Any | None = None,
 ) -> EquationNeuron:
-    """Factory: build EquationNeuron from Brian2-style equation strings.
+    """Build an EquationNeuron from Brian2-style equation strings.
 
     Example:
         lif = from_equations(

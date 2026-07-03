@@ -965,7 +965,7 @@
     "python_model_classes": 158,
     "python_model_source_modules": 152,
     "rust_pyo3_model_wrappers": 175,
-    "test_files": 949
+    "test_files": 950
   },
   "documentation": {
     "public_pages": [
@@ -2990,6 +2990,7 @@
       "tests/test_ensembles_and_model_zoo.py",
       "tests/test_equation_builder.py",
       "tests/test_equation_builder_adversarial.py",
+      "tests/test_equation_builder_coverage_contracts.py",
       "tests/test_equation_compiler.py",
       "tests/test_equation_units.py",
       "tests/test_equilibrium_propagation.py",

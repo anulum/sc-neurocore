@@ -201,6 +201,25 @@ verilog = compile_to_verilog(
 | Operators | `+`, `-`, `*`, `/` (by constant), unary `-` |
 | Comparison | `>`, `>=`, `<`, `<=` |
 
+The equation builder validates every equation, threshold, and reset expression
+through an AST allowlist before compilation. Runtime helpers cover clipped
+`sigmoid`, `exprel`, checked `sqrt`, and strict pint-backed unit conversion.
+The focused verification gate is:
+
+```bash
+PYTHONPATH=src .venv/bin/python -m coverage run --rcfile=/dev/null \
+    --source=src/sc_neurocore/neurons -m pytest \
+    tests/test_equation_builder.py \
+    tests/test_equation_builder_adversarial.py \
+    tests/test_equation_units.py \
+    tests/test_equation_builder_coverage_contracts.py -q
+PYTHONPATH=src .venv/bin/python -m coverage report --rcfile=/dev/null \
+    --include=src/sc_neurocore/neurons/equation_builder.py --fail-under=100 -m
+PYTHONPATH=src .venv/bin/python -m mypy --strict \
+    src/sc_neurocore/neurons/equation_builder.py \
+    tests/test_equation_builder_coverage_contracts.py
+```
+
 ### 4.2 MLIR Emitter
 
 ```python
