@@ -6,26 +6,25 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore — SSGF Engine -- Lightweight Stochastic Synthesis of
 
-from __future__ import annotations
-from typing import Any, Optional
-
 """
-SSGF Engine -- Lightweight Stochastic Synthesis of Geometric Fields
-=====================================================================
+SSGF geometry-to-audio solver.
 
 Pure-NumPy solver that couples Kuramoto phase oscillators with a
-learned geometry matrix W(t), producing real-time audio-mapping
-observables (binaural Hz, spatial angle, intensity, theurgic mode).
+learned geometry matrix, producing real-time audio-mapping observables
+for binaural frequency, pulse rate, spatial angle, intensity, and
+spectral connectivity.
 
-The architecture mirrors the full SSGF stack in SCPN-CODEBASE but is
-self-contained: no JAX, no PyTorch, no ripser -- just numpy.
+The implementation is self-contained and intentionally dependency-light:
+it uses NumPy plus the SC-NeuroCore parameter table so the adaptive audio
+controller can run without JAX, PyTorch, or topology packages.
 
 """
 
+from __future__ import annotations
 
 import logging
 from dataclasses import dataclass
-from typing import Dict
+from typing import Any
 
 import numpy as np
 
@@ -39,7 +38,36 @@ logger = logging.getLogger(__name__)
 
 @dataclass
 class SSGFConfig:
-    """All tuneable knobs for SSGFEngine."""
+    """Configuration for the SSGF geometry-coupled oscillator engine.
+
+    Attributes
+    ----------
+    N:
+        Number of oscillators in the Kuramoto field.
+    z_dim:
+        Length of the latent geometry vector decoded into the symmetric
+        coupling matrix.
+    lr_z:
+        Gradient-descent step size for the latent geometry vector.
+    sigma_g:
+        Scale applied to geometry-derived phase coupling.
+    micro_steps:
+        Number of Kuramoto integration steps per outer geometry update.
+    dt:
+        Integration timestep in seconds.
+    noise:
+        Standard deviation of phase noise injected during each micro-step.
+    K_base:
+        Baseline Kuramoto coupling retained for compatibility with profile
+        tuning surfaces.
+    K_alpha:
+        Adaptive coupling multiplier retained for compatibility with profile
+        tuning surfaces.
+    field_pressure:
+        Cosine field pressure applied as a global steering term.
+    seed:
+        Deterministic NumPy random seed for reproducible initial conditions.
+    """
 
     N: int = 16
     z_dim: int = 120
@@ -66,7 +94,15 @@ class SSGFEngine:
     from the resulting phase dynamics and spectral properties of W.
     """
 
-    def __init__(self, cfg: Optional[SSGFConfig] = None):
+    def __init__(self, cfg: SSGFConfig | None = None) -> None:
+        """Initialise the SSGF state from a deterministic configuration.
+
+        Parameters
+        ----------
+        cfg:
+            Optional engine configuration. When omitted, ``SSGFConfig`` supplies
+            the default oscillator count, integration constants, and seed.
+        """
         self.cfg = cfg or SSGFConfig()
         c = self.cfg
         self._rng = np.random.RandomState(c.seed)
@@ -105,8 +141,12 @@ class SSGFEngine:
     # ── Decoder: z -> W ──────────────────────────────────────────────
 
     def _decode(self, z: np.ndarray[Any, Any]) -> np.ndarray[Any, Any]:
-        """Decode latent vector into a symmetric, non-negative weight
-        matrix with zero diagonal via softplus on a symmetric shell."""
+        """Decode a latent vector into a symmetric non-negative weight matrix.
+
+        The decoder tiles or truncates ``z`` across the upper-triangular shell,
+        mirrors the shell, applies a stable softplus transform, and forces a
+        zero diagonal so the geometry matrix has no self-coupling.
+        """
         N = self.N
         # Number of unique off-diagonal upper-triangle entries
         n_upper = N * (N - 1) // 2
@@ -178,9 +218,16 @@ class SSGFEngine:
     # ── Outer Cycle ──────────────────────────────────────────────────
 
     def outer_step(self) -> float:
-        """One outer-cycle step: micro-cycle -> spectral -> grad update on z.
+        """Advance one SSGF outer cycle.
 
-        Returns the cost after the step.
+        The step runs the configured Kuramoto micro-cycle, refreshes the
+        spectral bridge, estimates a finite-difference gradient for the latent
+        geometry vector, and stores the cost history used by state snapshots.
+
+        Returns
+        -------
+        float
+            Composite cost before the latent-vector update.
         """
         c = self.cfg
 
@@ -220,19 +267,15 @@ class SSGFEngine:
 
     # ── Audio Mapping ────────────────────────────────────────────────
 
-    def get_audio_mapping(self) -> Dict[str, float]:
+    def get_audio_mapping(self) -> dict[str, float | bool]:
         """Derive CCW audio parameters from current SSGF state.
 
         Returns
         -------
-        dict with keys:
-            binaural_hz      -- 0.5-40 Hz (from layer-2 phase velocity)
-            pulse_rate        -- isochronic pulse rate (layer-4 coherence)
-            spatial_angle     -- 0-360 degrees (layer-7 phase)
-            intensity         -- 0-1 (from R_global)
-            fiedler           -- algebraic connectivity of W
-            spectral_gap      -- lambda_1 / lambda_2
-            theurgic_mode     -- bool, True when R > 0.95
+        dict[str, float | bool]
+            JSON-compatible audio mapping containing ``binaural_hz``,
+            ``pulse_rate``, ``spatial_angle``, ``intensity``, ``fiedler``,
+            ``spectral_gap``, and ``theurgic_mode``.
         """
         R = self.R_global
 
@@ -279,8 +322,16 @@ class SSGFEngine:
 
     # ── State ────────────────────────────────────────────────────────
 
-    def get_state(self) -> Dict[str, Any]:
-        """Full engine state snapshot."""
+    def get_state(self) -> dict[str, Any]:
+        """Return a JSON-compatible snapshot of the current SSGF state.
+
+        Returns
+        -------
+        dict[str, Any]
+            Snapshot containing step counters, coherence, phase vector,
+            geometry statistics, spectral values, latest cost, and the current
+            audio mapping.
+        """
         return {
             "outer_step": self.outer_step_count,
             "R_global": round(self.R_global, 6),

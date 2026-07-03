@@ -7,7 +7,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 232
+expected_file_count = 233
 
 [[file]]
 path = "src/sc_neurocore/__init__.py"
@@ -512,6 +512,10 @@ rationale = "Public ASIC flow package entry point that re-exports one-command bu
 [[file]]
 path = "src/sc_neurocore/audio/__init__.py"
 rationale = "Public adaptive-audio package entry point that re-exports SSGF, EVS, session, and profile APIs."
+
+[[file]]
+path = "src/sc_neurocore/audio/ssgf_engine.py"
+rationale = "Public SSGF geometry-to-audio solver documented in the Audio API guide and exercised by adaptive-audio contract tests."
 
 [[file]]
 path = "src/sc_neurocore/temporal_hierarchy/__init__.py"

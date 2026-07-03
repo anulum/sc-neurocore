@@ -3042,7 +3042,35 @@ Map a frequency in Hz to its canonical EEG band name.
 ## Module `audio.ssgf_engine`
 
 ### Class `SSGFConfig`
-All tuneable knobs for SSGFEngine.
+Configuration for the SSGF geometry-coupled oscillator engine.
+
+Attributes
+----------
+N:
+    Number of oscillators in the Kuramoto field.
+z_dim:
+    Length of the latent geometry vector decoded into the symmetric
+    coupling matrix.
+lr_z:
+    Gradient-descent step size for the latent geometry vector.
+sigma_g:
+    Scale applied to geometry-derived phase coupling.
+micro_steps:
+    Number of Kuramoto integration steps per outer geometry update.
+dt:
+    Integration timestep in seconds.
+noise:
+    Standard deviation of phase noise injected during each micro-step.
+K_base:
+    Baseline Kuramoto coupling retained for compatibility with profile
+    tuning surfaces.
+K_alpha:
+    Adaptive coupling multiplier retained for compatibility with profile
+    tuning surfaces.
+field_pressure:
+    Cosine field pressure applied as a global steering term.
+seed:
+    Deterministic NumPy random seed for reproducible initial conditions.
 
 
 ### Class `SSGFEngine`
@@ -3054,8 +3082,9 @@ higher global coherence R.  Audio-mapping observables are derived
 from the resulting phase dynamics and spectral properties of W.
 
 - **__init__**(cfg)
+  - Initialise the SSGF state from a deterministic configuration.
 - **_decode**(z)
-  - Decode latent vector into a symmetric, non-negative weight
+  - Decode a latent vector into a symmetric non-negative weight matrix.
 - **_micro_step**()
   - One Kuramoto + geometry-feedback timestep (vectorised).
 - **_spectral**()
@@ -3065,11 +3094,11 @@ from the resulting phase dynamics and spectral properties of W.
 - **_cost**()
   - Composite cost: minimise negative coherence + regularise W.
 - **outer_step**()
-  - One outer-cycle step: micro-cycle -> spectral -> grad update on z.
+  - Advance one SSGF outer cycle.
 - **get_audio_mapping**()
   - Derive CCW audio parameters from current SSGF state.
 - **get_state**()
-  - Full engine state snapshot.
+  - Return a JSON-compatible snapshot of the current SSGF state.
 
 ---
 
