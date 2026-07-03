@@ -239,9 +239,7 @@ def test_512x_class_speedup_claims_are_artifact_anchored() -> None:
     assert "512.4x" in discrepancy
     assert "525.51x" in discrepancy
     assert "653.28x" in discrepancy
-    assert "| LIF multi (100x100K) | 12911.296 | 25.196 | 512.4x | 400x |" in (
-        historical_report
-    )
+    assert "| LIF multi (100x100K) | 12911.296 | 25.196 | 512.4x | 400x |" in (historical_report)
     assert backends["rust"]["speedup_over_python"] == 525.51
     assert backends["mojo"]["speedup_over_python"] == 653.28
 
