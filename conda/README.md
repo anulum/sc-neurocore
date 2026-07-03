@@ -1,6 +1,11 @@
-# Conda-Forge Recipe
+# Conda-Forge Recipe Draft
 
-This directory contains the conda-forge recipe for `sc-neurocore`.
+This directory contains a local conda-forge recipe draft for `sc-neurocore`.
+The package is not yet published on conda-forge: the Anaconda package API and
+the `conda-forge/sc-neurocore-feedstock` repository check returned 404 on
+2026-07-03, and `meta.yaml` still carries a `sha256: PLACEHOLDER` source hash.
+Do not advertise a conda-forge install command until the staged recipe has been
+accepted and the feedstock publishes packages.
 
 ## Submission Steps
 

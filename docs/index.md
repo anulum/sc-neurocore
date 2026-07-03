@@ -67,7 +67,8 @@ Start here if you need to understand what the software is for:
 - **Mixed-precision SC** — per-layer adaptive bitstream length (Hoeffding/sensitivity-based)
 - **Event-driven FPGA** — AER encoder, event neuron, spike router (power proportional to spike rate)
 - **Neural data compression** — waveform and spike-raster codecs, learnable predictors, Rust acceleration, and benchmark artefacts
-- **conda-forge recipe** — ready for conda-forge distribution
+- **conda-forge recipe draft** — prepared for staged-recipes submission; not
+  yet published on conda-forge
 
 The default `pip install sc-neurocore` wheel ships the public
 core/simulation/domain-bridge package surface under the `sc-neurocore`

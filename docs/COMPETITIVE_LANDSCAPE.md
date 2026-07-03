@@ -65,7 +65,7 @@ numbers in the JOSS paper, README headline, or external outreach.
 | Neural data compression | **6 codecs** (ISI, predictive, delta, streaming, AER, waveform) | — | — | — | — |
 | Trainable per-synapse delays | **Yes** (DelayLinear, differentiable) | — | — | — | — |
 | [NIR](https://neuroir.org/) support | **Yes** (FPGA backend) | Yes | Yes | Yes | — |
-| conda-forge recipe | **Ready** | Yes | — | — | Yes |
+| conda-forge recipe draft | Draft only; not published | Yes | — | — | Yes |
 | PyPI package | Yes | Yes | Yes | Yes | Yes |
 
 ### Capability coverage map

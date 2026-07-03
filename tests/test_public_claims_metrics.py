@@ -238,6 +238,29 @@ def test_adaptive_runtime_positioning_stays_bounded() -> None:
     assert "zero overhead polymorphism" not in compact
 
 
+def test_conda_forge_claims_are_recipe_draft_until_published() -> None:
+    """Keep conda-forge claims gated until upstream package publication exists."""
+    root = _repo_root()
+    public_claim_surfaces = [
+        root / "ROADMAP.md",
+        root / "docs" / "index.md",
+        root / "docs" / "COMPETITIVE_LANDSCAPE.md",
+        root / "docs" / "CHANGELOG.md",
+        root / "conda" / "README.md",
+    ]
+    combined = "\n".join(path.read_text(encoding="utf-8") for path in public_claim_surfaces)
+    compact = _compact_whitespace(combined).lower()
+    recipe = (root / "conda" / "meta.yaml").read_text(encoding="utf-8")
+
+    assert "conda-forge recipe draft" in compact
+    assert "not yet published on conda-forge" in compact
+    assert "sha256: PLACEHOLDER" in recipe
+    assert "ready for conda-forge distribution" not in compact
+    assert "recipe ready for conda-forge distribution" not in compact
+    assert "conda-forge recipe | **ready**" not in compact
+    assert "conda install conda-forge::sc-neurocore" not in compact
+
+
 def test_public_claim_language_excludes_unbounded_marketing_slogans() -> None:
     """Reject unbounded slogans and detached 512x-class speedup prose."""
     banned_literals = (

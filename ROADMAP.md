@@ -158,7 +158,8 @@ New in this release:
 - **Model zoo**: 10 configurations + 3 pre-trained weight sets (MNIST, SHD, DVS)
 - **12 visualization plots**, **13 advanced plasticity rules**, **6 topology generators**
 - **125 analysis functions** across 23 modules
-- **conda-forge recipe** ready for distribution
+- **conda-forge recipe draft** prepared for staged-recipes submission; not yet
+  published on conda-forge
 
 ## v3.13 — NIR Interop, Equation Compiler, Import Speed ✓ (current)
 
@@ -328,9 +329,11 @@ Population-Projection-Network with Python, Rust, MPI backends. Moved to v3.12.
 
 10 configurations + 3 pre-trained weight sets. Moved to v3.12.
 
-### ~~conda-forge recipe~~ ✓
+### ~~conda-forge recipe draft~~ ✓
 
-Recipe ready for distribution. Moved to v3.12.
+Recipe draft prepared for staged-recipes submission. The package is not yet
+published on conda-forge, so public install claims stay gated until a feedstock
+and Anaconda package page exist. Moved to v3.12.
 
 ### Mixed-precision plasticity (Zenith)
 

@@ -1949,7 +1949,8 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 - 3 pre-trained weight sets: MNIST (784-128-10), SHD (700-256-20), DVS gesture (256-256-11)
 
 ### conda-forge
-- Recipe ready for conda-forge distribution
+- Recipe draft prepared for staged-recipes submission; not yet published on
+  conda-forge
 
 ### Analysis Toolkit
 - 126 spike train analysis functions across 23 modules (22 spike_stats + 1 explainability)
