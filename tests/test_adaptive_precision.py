@@ -18,6 +18,7 @@ from typing import cast
 import numpy as np
 import pytest
 
+from sc_neurocore.compiler import formal_property_check
 from sc_neurocore.compiler.adaptive_precision import (
     auto_tune_synapse_precisions,
     LayerPrecision,
@@ -27,6 +28,12 @@ from sc_neurocore.compiler.adaptive_precision import (
     assign_synapse_precisions,
     precision_plan_manifest,
     write_precision_formal_evidence_bundle,
+)
+from sc_neurocore.compiler.formal_property_check import PropertyProofResult
+
+_needs_formal = pytest.mark.skipif(
+    not formal_property_check.formal_tools_available(),
+    reason="SymbiYosys / Yosys / solver not available",
 )
 
 
@@ -466,16 +473,133 @@ class TestAdaptivePrecisionAPISurface:
         assert manifest["formal_claim"]["symbiyosys_executed"] is False
         assert manifest["formal_claim"]["formal_proof_passed"] is False
         assert manifest["formal_claim"]["hardware_measurement_claimed"] is False
+        assert manifest["evidence_boundary"] == (
+            "bundle_generation_only_no_symbiyosys_execution_no_silicon_claim"
+        )
+        # The RTL monitor is now materialised alongside the checker (it used to be
+        # named in the manifest but never written).
+        assert (tmp_path / "adaptive_precision_plan.v").is_file()
         assert (tmp_path / "adaptive_precision_plan_sva.sv").is_file()
         assert (tmp_path / "adaptive_precision_plan.sby").is_file()
         manifest_path = tmp_path / "adaptive_precision_plan_formal_manifest.json"
         payload = json.loads(manifest_path.read_text(encoding="utf-8"))
         assert payload == manifest
-        assert "mode prove" in (tmp_path / "adaptive_precision_plan.sby").read_text(
-            encoding="utf-8"
-        )
+        # The checker carries real proof obligations, not placeholder comments.
+        sva_text = (tmp_path / "adaptive_precision_plan_sva.sv").read_text(encoding="utf-8")
+        assert "assert (" in sva_text
+        assert "assume (" in sva_text
+        # The emitted script is a complete BMC (k-induction would spuriously fail
+        # the non-inductive accumulator bound).
+        sby_text = (tmp_path / "adaptive_precision_plan.sby").read_text(encoding="utf-8")
+        assert "mode bmc" in sby_text
 
     def test_write_formal_bundle_rejects_empty_assignments(self, tmp_path: Path) -> None:
         """Formal evidence bundle writing rejects empty assignment lists."""
         with np.testing.assert_raises_regex(ValueError, "assignments must not be empty"):
             write_precision_formal_evidence_bundle(tmp_path, [])
+
+    def test_execute_records_real_verdict_when_proof_passes(
+        self, monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+    ) -> None:
+        """execute=True with a passing proof records the machine-checked verdict."""
+        assignments = assign_synapse_precisions(
+            [np.array([[0.25, 0.75]])],
+            target_error=0.05,
+            min_bits=2,
+            max_bits=8,
+            min_length=8,
+            max_length=16,
+        )
+        monkeypatch.setattr(
+            formal_property_check, "formal_tools_available", lambda engine="z3": True
+        )
+        monkeypatch.setattr(
+            formal_property_check,
+            "prove_property",
+            lambda *a, **k: PropertyProofResult(
+                proven=True, verdict="PASS", mode="bmc", depth=18, engine="z3", returncode=0
+            ),
+        )
+        manifest = write_precision_formal_evidence_bundle(tmp_path, assignments, execute=True)
+        claim = manifest["formal_claim"]
+        assert claim["symbiyosys_executed"] is True
+        assert claim["formal_proof_passed"] is True
+        assert claim["proof_verdict"] == "PASS"
+        assert claim["proof_mode"] == "bmc"
+        assert "proof_counterexample" not in claim
+        assert manifest["evidence_boundary"] == "symbiyosys_bmc_executed_no_silicon_claim"
+
+    def test_execute_records_disproof_with_counterexample(
+        self, monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+    ) -> None:
+        """execute=True with a failing proof records the counterexample, not a pass."""
+        assignments = assign_synapse_precisions(
+            [np.array([[0.25, 0.75]])],
+            target_error=0.05,
+            min_bits=2,
+            max_bits=8,
+            min_length=8,
+            max_length=16,
+        )
+        monkeypatch.setattr(
+            formal_property_check, "formal_tools_available", lambda engine="z3": True
+        )
+        monkeypatch.setattr(
+            formal_property_check,
+            "prove_property",
+            lambda *a, **k: PropertyProofResult(
+                proven=False,
+                verdict="FAIL",
+                mode="bmc",
+                depth=18,
+                engine="z3",
+                returncode=2,
+                counterexample="failed assertion at step 4",
+            ),
+        )
+        manifest = write_precision_formal_evidence_bundle(tmp_path, assignments, execute=True)
+        claim = manifest["formal_claim"]
+        assert claim["symbiyosys_executed"] is True
+        assert claim["formal_proof_passed"] is False
+        assert claim["proof_counterexample"] == "failed assertion at step 4"
+
+    def test_execute_records_skip_when_toolchain_absent(
+        self, monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+    ) -> None:
+        """execute=True without tools records a skip reason, never a fabricated pass."""
+        assignments = assign_synapse_precisions(
+            [np.array([[0.25, 0.75]])],
+            target_error=0.05,
+            min_bits=2,
+            max_bits=8,
+            min_length=8,
+            max_length=16,
+        )
+        monkeypatch.setattr(
+            formal_property_check, "formal_tools_available", lambda engine="z3": False
+        )
+        manifest = write_precision_formal_evidence_bundle(tmp_path, assignments, execute=True)
+        claim = manifest["formal_claim"]
+        assert claim["symbiyosys_executed"] is False
+        assert claim["formal_proof_passed"] is False
+        assert "sby" in claim["execution_skipped_reason"]
+        assert manifest["evidence_boundary"] == (
+            "bundle_generation_only_no_symbiyosys_execution_no_silicon_claim"
+        )
+
+    @_needs_formal
+    def test_execute_runs_real_proof_end_to_end(self, tmp_path: Path) -> None:
+        """With the toolchain present, execute=True machine-checks the real bundle."""
+        assignments = assign_synapse_precisions(
+            [np.array([[0.25, 0.75]])],
+            target_error=0.05,
+            min_bits=2,
+            max_bits=8,
+            min_length=8,
+            max_length=16,
+        )
+        manifest = write_precision_formal_evidence_bundle(tmp_path, assignments, execute=True)
+        claim = manifest["formal_claim"]
+        assert claim["symbiyosys_executed"] is True
+        assert claim["formal_proof_passed"] is True
+        assert claim["proof_verdict"] == "PASS"

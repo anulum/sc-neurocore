@@ -5962,6 +5962,125 @@ timeout : float
 
 ---
 
+## Module `compiler._sby_runner`
+
+### Class `SbyRun`
+The raw outcome of one :func:`run_sby_task` invocation.
+
+Attributes
+----------
+verdict : str
+    The parsed SymbiYosys verdict (``"PASS"``, ``"FAIL"``, ``"ERROR"``, ...).
+rc : int
+    The return code reported inside the ``DONE (..., rc=N)`` summary line.
+returncode : int
+    The ``sby`` process exit code (distinct from ``rc``: the process may exit
+    non-zero on a ``FAIL`` while ``rc`` classifies the proof outcome).
+counterexample : str or None
+    The failing-assertion description when the output carries one, else
+    ``None``.
+trace_path : str or None
+    Absolute path to the counterexample trace (resolved against the work
+    directory) when the output names one, else ``None``.
+summary : list&#91;str&#93;
+    The ``sby`` ``summary:`` lines, retained for diagnostics.
+stdout : str
+    The full captured standard output, retained for error reporting.
+
+
+### Function `formal_tools_available(engine)`
+Return ``True`` when the full proof toolchain is on ``PATH``.
+
+Checks ``sby`` and ``yosys`` plus the SMT solver binary for ``engine`` — for
+the ``smtbmc`` backend the engine name is also the solver executable name
+(``z3``, ``boolector``, ``yices`` …). A runner may have ``sby`` and ``yosys``
+installed yet lack the solver (as on a CI image that ships only the HDL
+toolchain), in which case a proof would error out at the engine stage; this
+guard reports that case as unavailable so callers and tests can skip cleanly.
+
+Parameters
+----------
+engine : str
+    The ``smtbmc`` SMT engine whose solver binary must also be present.
+
+Returns
+-------
+bool
+    ``True`` only when ``sby``, ``yosys``, and the ``engine`` solver all
+    resolve on ``PATH``.
+
+### Function `parse_verdict(stdout)`
+Extract the ``(verdict, rc)`` from the ``sby`` summary.
+
+SymbiYosys prints one ``DONE (<verdict>, rc=<n>)`` line per finished task; the
+last such line is the authoritative outcome (an earlier ``DONE (ERROR, ...)``
+can precede a retried task). Returns ``("UNKNOWN", -1)`` when no ``DONE`` line
+is present at all — a truncated or crashed run.
+
+Parameters
+----------
+stdout : str
+    The captured ``sby`` standard output.
+
+Returns
+-------
+tuple&#91;str, int&#93;
+    The verdict token and the ``sby`` return code it reported.
+
+### Function `run_sby_task(workdir, sby_name)`
+Run one already-written ``.sby`` task in ``workdir`` and read its verdict.
+
+The ``.sby`` script and every source file it reads must already exist in
+``workdir``; this call only invokes ``sby -f <sby_name>`` there, captures the
+output, and parses it into an :class:`SbyRun`. Counterexample text and trace
+path are extracted opportunistically — they are populated regardless of
+verdict when present, and the caller decides which fields matter for its
+result type.
+
+Parameters
+----------
+workdir : Path
+    Directory holding the ``.sby`` script and its sources; also the ``sby``
+    run tree and the base for resolving a relative counterexample trace path.
+sby_name : str
+    File name of the ``.sby`` script within ``workdir``.
+timeout_s : float
+    Wall-clock limit for the ``sby`` process.
+
+Returns
+-------
+SbyRun
+    The parsed run outcome.
+
+Raises
+------
+RuntimeError
+    If the ``sby`` process exceeds ``timeout_s``.
+
+### Function `raise_for_incomplete(run)`
+Raise when the verdict is neither ``PASS`` nor ``FAIL``.
+
+A ``PASS`` (proved) or ``FAIL`` (disproved with a counterexample) is a real
+outcome about the checked property; any other verdict — ``ERROR``,
+``UNKNOWN``, ``TIMEOUT`` — is a tool or setup failure and must not be read as
+a claim about the design. Callers invoke this before interpreting a
+``PASS`` / ``FAIL`` result so a broken run never masquerades as a verdict.
+
+Parameters
+----------
+run : SbyRun
+    The raw run to inspect.
+what : str
+    Short label for the check (``"equivalence proof"``, ``"property proof"``)
+    used in the raised message.
+
+Raises
+------
+RuntimeError
+    When ``run.verdict`` is neither ``"PASS"`` nor ``"FAIL"``.
+
+---
+
 ## Module `compiler.auto_tune`
 
 ### Function `precision_plan_manifest(assignments)`
@@ -6363,21 +6482,17 @@ summary : list&#91;str&#93;
     The ``sby`` summary lines, retained for diagnostics.
 
 
-### Function `formal_tools_available(engine)`
-Return ``True`` when the full proof toolchain is on ``PATH``.
-
-Checks ``sby`` and ``yosys`` plus the SMT solver binary for ``engine`` — for
-the ``smtbmc`` backend the engine name is also the solver executable name
-(``z3``, ``boolector``, ``yices`` …). A runner may have ``sby`` and ``yosys``
-installed yet lack the solver (as on a CI image that ships only the HDL
-toolchain), in which case a proof would error out at the engine stage; this
-guard reports that case as unavailable so callers and tests can skip cleanly.
-
 ### Function `_generate_sby(miter_top, source_files)`
 Render a ``.sby`` script that reads the sources and checks the miter.
 
-### Function `_parse_verdict(stdout)`
-Extract the ``(verdict, rc)`` from the ``sby`` summary, or ``("UNKNOWN", -1)``.
+### Function `_result_from_run(run)`
+Map a raw :class:`SbyRun` onto an :class:`EquivalenceResult`.
+
+Raises
+------
+RuntimeError
+    On an ``ERROR`` / ``UNKNOWN`` verdict — a tool or setup failure, which is
+    not a verdict about equivalence.
 
 ### Function `prove_equivalence(dut_verilog, ref_verilog, io_ports)`
 Prove ``dut_verilog`` equivalent to ``ref_verilog`` via SymbiYosys.
@@ -6728,10 +6843,175 @@ Compute quantization error statistics.
 
 ## Module `compiler.formal_evidence`
 
-### Function `write_precision_formal_evidence_bundle(output_dir, assignments)`
-Write a deterministic SymbiYosys evidence bundle for precision claims.
+### Class `_MonitorParameters`
+Derived RTL parameters for the adaptive-precision bounded-error monitor.
 
-### Function `_adaptive_precision_sva()`
+Attributes
+----------
+max_total_error_q16 : int
+    The claimed total error bound in Q16.16 fixed point.
+max_bit_width : int
+    The largest synapse operand bit width in the plan.
+max_bitstream_length : int
+    The longest stochastic bitstream in the plan (the sequencer bound and the
+    number of accumulation steps).
+per_step_bound_q16 : int
+    The per-tick error budget in Q16 — ``floor(max_total_error_q16 /
+    max_bitstream_length)`` — so that ``length * per_step <= total`` by
+    construction, which the assumption on ``err_step`` then enforces.
+acc_width : int
+    Error-accumulator width in bits, sized to hold the bound plus one further
+    step with a guard bit so the no-overflow obligation is faithful.
+len_width : int
+    Length-counter width in bits, sized to represent ``max_bitstream_length``.
+complete_bmc_depth : int
+    A BMC depth (``max_bitstream_length + 2``) at which the accumulator has
+    stopped updating, so bounded checking to this depth exhausts the reachable
+    state space and the proof is complete rather than merely bounded.
+
+- **as_substitution**(module_name)
+  - Return the template substitution mapping for ``module_name``.
+
+### Function `_monitor_parameters(max_total_error_bound, max_bit_width, max_bitstream_length)`
+Derive the monitor's fixed-point widths and bounds from a precision plan.
+
+Parameters
+----------
+max_total_error_bound : float
+    The largest per-synapse total error bound in the plan (fractional).
+max_bit_width : int
+    The largest synapse operand bit width in the plan.
+max_bitstream_length : int
+    The longest stochastic bitstream in the plan (guaranteed positive by
+    :class:`~sc_neurocore.compiler.synapse_precision.SynapsePrecision`).
+
+Returns
+-------
+_MonitorParameters
+    The derived, self-consistent RTL parameter set.
+
+### Function `_precision_monitor_rtl(module_name, params)`
+Render the synthesisable bounded-error monitor RTL for ``module_name``.
+
+### Function `_precision_monitor_sva(module_name, params)`
+Render the bound assertion checker for ``module_name``.
+
+### Function `_execute_precision_proof(module_name, rtl, sva, params, formal_claim, proof_workdir)`
+Run the property proof if the toolchain is present; update ``formal_claim``.
+
+The proof runs inside ``proof_workdir`` (a subdirectory of the bundle output),
+so the ``sby`` run tree stays contained with the bundle rather than polluting
+the caller's working directory.
+
+Returns the evidence boundary string reflecting what actually happened —
+an executed proof or a recorded skip — never a fabricated pass.
+
+### Function `write_precision_formal_evidence_bundle(output_dir, assignments)`
+Write a SymbiYosys evidence bundle for adaptive-precision claims.
+
+Renders the bounded-error monitor RTL, the bound assertion checker, a runnable
+``.sby`` script, and a manifest describing the claim. The bundle is
+deterministic: identical assignments produce byte-identical artefacts.
+
+Parameters
+----------
+output_dir : str or Path
+    Directory to write the bundle into (created if absent).
+assignments : list&#91;SynapsePrecision&#93;
+    The precision plan. Must be non-empty.
+module_name : str
+    Top-level module name for the generated RTL and SVA.
+execute : bool
+    When ``False`` (default) the bundle is only written and the manifest
+    records ``symbiyosys_executed = False`` — no external tools are invoked,
+    keeping the call deterministic and CI-safe. When ``True`` and the formal
+    toolchain (``sby`` / ``yosys`` / ``z3``) is on ``PATH``, the proof is run
+    and the real verdict recorded; when the toolchain is absent, a skip reason
+    is recorded instead of a fabricated pass.
+
+Returns
+-------
+dict&#91;str, Any&#93;
+    The manifest that was written.
+
+Raises
+------
+ValueError
+    If ``assignments`` is empty.
+
+---
+
+## Module `compiler.formal_property_check`
+
+### Class `PropertyProofResult`
+Outcome of a machine-checked RTL property proof.
+
+Attributes
+----------
+proven : bool
+    ``True`` when the checker proved every bound assertion holds to ``depth``
+    cycles under the SVA environment assumptions.
+verdict : str
+    The raw SymbiYosys verdict (``"PASS"``, ``"FAIL"``, ``"ERROR"``, ...).
+mode : str
+    ``"bmc"`` (bounded) or ``"prove"`` (k-induction).
+depth : int
+    Checked depth in clock cycles.
+engine : str
+    SMT engine used (e.g. ``"z3"``).
+returncode : int
+    ``sby`` process exit code.
+counterexample : str or None
+    Failing-assertion description on a ``FAIL`` verdict, else ``None``.
+trace_path : str or None
+    Path to the counterexample VCD trace on ``FAIL``, else ``None``.
+summary : list&#91;str&#93;
+    The ``sby`` summary lines, retained for diagnostics.
+
+
+### Function `_generate_property_sby(top, rtl_file, sva_file)`
+Render a ``.sby`` script that reads the RTL and its bound SVA and checks it.
+
+The RTL is read first so the ``bind`` statement in the SystemVerilog assertion
+file resolves against an already-elaborated target module; ``prep -top`` then
+keeps the bound checker instance in the design handed to ``smtbmc``.
+
+### Function `prove_property(rtl_verilog, sva_verilog)`
+Prove ``rtl_verilog`` satisfies the assertions in ``sva_verilog`` via SymbiYosys.
+
+Parameters
+----------
+rtl_verilog : str
+    Synthesisable Verilog source defining ``top``.
+sva_verilog : str
+    SystemVerilog source carrying the environment ``assume`` constraints and
+    the ``assert`` obligations, bound onto ``top`` with a ``bind`` statement.
+top : str
+    The RTL module name under verification.
+mode : {"bmc", "prove"}
+    Bounded model checking (default, complete for state-stationary designs) or
+    k-induction.
+depth : int
+    BMC / induction depth in clock cycles.
+engine : str
+    SMT engine (``"z3"`` by default; the ``smtbmc`` backend).
+timeout_s : float
+    Wall-clock limit for the ``sby`` process.
+workdir : str or Path, optional
+    Directory for the generated sources and ``sby`` run tree. A temporary
+    directory is created and left in place if omitted (caller cleans up).
+
+Returns
+-------
+PropertyProofResult
+    The parsed verdict.
+
+Raises
+------
+RuntimeError
+    If the formal tools are absent, the ``sby`` run errors out (a tool or
+    setup failure, distinct from a ``FAIL`` disproof), or times out.
+
 ---
 
 ## Module `compiler.fpga_wrapper`

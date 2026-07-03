@@ -19,6 +19,26 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
   but not the default (wide-multiplier datapaths need an invariant to converge).
   The proof functions raise when `sby`/`yosys` are absent, and the tests skip in
   that case.
+- Machine-checked RTL property proofs for adaptive-precision evidence bundles
+  (`sc_neurocore.compiler.formal_property_check` + a shared
+  `sc_neurocore.compiler._sby_runner`). `write_precision_formal_evidence_bundle`
+  now renders a real synthesisable bounded-error monitor (the RTL `.v`, which the
+  previous bundle named but never wrote) and a bound assertion checker whose
+  immediate `assert`/`assume` statements encode the plan's safety obligations —
+  accumulated error within the claimed total bound, sequencer within the declared
+  bitstream length, and an accumulator wide enough that it never wraps — in place
+  of the earlier placeholder comments. `prove_property` proves the RTL satisfies
+  those obligations via SymbiYosys bounded model checking and returns a real
+  verdict; because the accumulator stops updating after the bitstream length, the
+  bounded proof to `length + 2` cycles is complete, not merely bounded. The
+  bundle gains an `execute` flag: `execute=False` (default) writes the artefacts
+  deterministically with no external tools, while `execute=True` runs the proof
+  when the toolchain (`sby`/`yosys`/`z3`) is present and records the machine-checked
+  verdict — or a skip reason when it is absent, never a fabricated pass. The
+  equivalence and property runners now share one audited `sby` invocation and
+  verdict-parse boundary. (yosys 0.33 silently ignores SystemVerilog `bind`, so
+  the checker is instantiated explicitly under `` `ifdef FORMAL `` rather than
+  bound in.)
 - GPU Izhikevich neuron batch runner (`sc_neurocore_engine.GpuIzhikevichBatch`, behind
   the Rust `gpu` feature), extending the GPU neuron-dynamics path. A wgpu/WGSL compute
   shader runs one thread per neuron, each looping all steps internally with a constant

@@ -18,7 +18,7 @@ from pathlib import Path
 
 import pytest
 
-from sc_neurocore.compiler import equivalence_check
+from sc_neurocore.compiler import _sby_runner, equivalence_check
 from sc_neurocore.compiler.equivalence_check import (
     EquivalenceResult,
     formal_tools_available,
@@ -79,14 +79,14 @@ class TestFormalToolsAvailable:
 
     def test_false_when_sby_missing(self, monkeypatch: pytest.MonkeyPatch) -> None:
         monkeypatch.setattr(
-            equivalence_check.shutil, "which", lambda name: None if name == "sby" else "/usr/bin/x"
+            _sby_runner.shutil, "which", lambda name: None if name == "sby" else "/usr/bin/x"
         )
         assert formal_tools_available() is False
 
     def test_false_when_solver_missing(self, monkeypatch: pytest.MonkeyPatch) -> None:
         # sby + yosys present but the SMT solver absent (the CI-image case).
         monkeypatch.setattr(
-            equivalence_check.shutil,
+            _sby_runner.shutil,
             "which",
             lambda name: None if name == "z3" else "/usr/bin/x",
         )
@@ -94,7 +94,7 @@ class TestFormalToolsAvailable:
         assert formal_tools_available("boolector") is True
 
     def test_raises_when_tools_absent(self, monkeypatch: pytest.MonkeyPatch) -> None:
-        monkeypatch.setattr(equivalence_check.shutil, "which", lambda name: None)
+        monkeypatch.setattr(_sby_runner.shutil, "which", lambda name: None)
         with pytest.raises(RuntimeError, match="must be on PATH"):
             prove_equivalence(
                 _TINY_DUT,
@@ -138,12 +138,12 @@ class TestRunnerErrors:
     ) -> None:
         import subprocess
 
-        monkeypatch.setattr(equivalence_check.shutil, "which", lambda name: "/usr/bin/x")
+        monkeypatch.setattr(_sby_runner.shutil, "which", lambda name: "/usr/bin/x")
 
         def _raise_timeout(*args: object, **kwargs: object) -> None:
             raise subprocess.TimeoutExpired(cmd="sby", timeout=1.0)
 
-        monkeypatch.setattr(equivalence_check.subprocess, "run", _raise_timeout)
+        monkeypatch.setattr(_sby_runner.subprocess, "run", _raise_timeout)
         with pytest.raises(RuntimeError, match="timed out"):
             prove_equivalence(
                 _TINY_DUT,
@@ -152,6 +152,89 @@ class TestRunnerErrors:
                 dut_top="tiny_dut",
                 ref_top="tiny_ref",
                 timeout_s=1.0,
+                workdir=tmp_path,
+            )
+
+
+class TestVerdictMapping:
+    """Map a raw ``sby`` run onto an :class:`EquivalenceResult` without a solver."""
+
+    def _patch(self, monkeypatch: pytest.MonkeyPatch, run: object) -> None:
+        monkeypatch.setattr(equivalence_check, "formal_tools_available", lambda engine="z3": True)
+        monkeypatch.setattr(equivalence_check, "run_sby_task", lambda *a, **k: run)
+
+    def test_pass_maps_to_proven(self, monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
+        from sc_neurocore.compiler._sby_runner import SbyRun
+
+        self._patch(
+            monkeypatch, SbyRun(verdict="PASS", rc=0, returncode=0, summary=["summary: ok"])
+        )
+        result = prove_equivalence(
+            _TINY_DUT,
+            _TINY_REF,
+            _TINY_PORTS,
+            dut_top="tiny_dut",
+            ref_top="tiny_ref",
+            workdir=tmp_path,
+        )
+        assert result.proven is True
+        assert result.verdict == "PASS"
+        assert result.summary == ["summary: ok"]
+
+    def test_fail_maps_to_disproven(self, monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
+        from sc_neurocore.compiler._sby_runner import SbyRun
+
+        self._patch(
+            monkeypatch,
+            SbyRun(
+                verdict="FAIL",
+                rc=2,
+                returncode=2,
+                counterexample="failed assertion",
+                trace_path=str(tmp_path / "t.vcd"),
+            ),
+        )
+        result = prove_equivalence(
+            _TINY_DUT,
+            _TINY_REF_BAD,
+            _TINY_PORTS,
+            dut_top="tiny_dut",
+            ref_top="tiny_ref",
+            workdir=tmp_path,
+        )
+        assert result.proven is False
+        assert result.counterexample == "failed assertion"
+        assert result.trace_path == str(tmp_path / "t.vcd")
+
+    def test_fail_without_counterexample_gets_default(
+        self, monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+    ) -> None:
+        from sc_neurocore.compiler._sby_runner import SbyRun
+
+        self._patch(monkeypatch, SbyRun(verdict="FAIL", rc=2, returncode=2))
+        result = prove_equivalence(
+            _TINY_DUT,
+            _TINY_REF_BAD,
+            _TINY_PORTS,
+            dut_top="tiny_dut",
+            ref_top="tiny_ref",
+            workdir=tmp_path,
+        )
+        assert result.counterexample == "assertion failed"
+
+    def test_incomplete_verdict_raises(
+        self, monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+    ) -> None:
+        from sc_neurocore.compiler._sby_runner import SbyRun
+
+        self._patch(monkeypatch, SbyRun(verdict="ERROR", rc=16, returncode=16, stdout="boom"))
+        with pytest.raises(RuntimeError, match="equivalence proof did not complete"):
+            prove_equivalence(
+                _TINY_DUT,
+                _TINY_REF,
+                _TINY_PORTS,
+                dut_top="tiny_dut",
+                ref_top="tiny_ref",
                 workdir=tmp_path,
             )
 

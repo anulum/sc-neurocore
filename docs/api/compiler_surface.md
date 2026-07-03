@@ -20,6 +20,7 @@ can change without a deprecation window.
 
 | Module | Status | Decision |
 | --- | --- | --- |
+| `_sby_runner` | internal build tool | Shared SymbiYosys task runner behind the equivalence and property proof runners. |
 | `adaptive_precision` | public facade | Package-level exports provide the adaptive precision planning API. |
 | `auto_tune` | internal build tool | Internal heuristic helper used by precision planning workflows. |
 | `block_floating` | direct public module | Shared-exponent format types are imported directly by quantization workflows. |
@@ -37,6 +38,7 @@ can change without a deprecation window.
 | `expr_lut_tables` | internal build tool | Shared transcendental look-up tables for the expression emitters. |
 | `fixed_point_quantization` | direct public module | Fixed-point quantization primitives back direct quantization workflows. |
 | `formal_evidence` | internal build tool | Evidence writer used by hardware audit pipelines. |
+| `formal_property_check` | internal build tool | SymbiYosys RTL-property runner behind the hardware evidence pipeline. |
 | `fpga_wrapper` | internal build tool | Wrapper generator behind compiler and deployment paths. |
 | `guard_bits` | internal build tool | Static-analysis primitive reached through `static_analysis`. |
 | `host_driver_gen` | internal build tool | Host driver generator reached through `deployment`. |
