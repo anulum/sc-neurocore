@@ -51,7 +51,9 @@ def test_empty_multi_layer_rate_is_zero() -> None:
 def test_verify_reports_mismatched_replay_evidence() -> None:
     """Public verification fails closed when stored replay evidence is tampered."""
     engine = ExplainabilityEngine(seed=0xACE1)
-    node = engine.explain_spike("n0", threshold_q16=32768, bitstream_length=32, spike_threshold_count=16)
+    node = engine.explain_spike(
+        "n0", threshold_q16=32768, bitstream_length=32, spike_threshold_count=16
+    )
     stored = cast(npt.NDArray[np.uint8], engine._replayed_bitstreams[node.neuron_id])
     tampered = stored.copy()
     tampered[0] = np.uint8(1 - int(tampered[0]))
@@ -90,7 +92,9 @@ def test_explain_spike_rejects_spike_threshold_outside_stream_bounds() -> None:
     """Spike-count thresholds must be reachable within the replayed stream."""
     engine = ExplainabilityEngine(seed=0xACE1)
 
-    with pytest.raises(ValueError, match="spike_threshold_count must be between 0 and bitstream_length"):
+    with pytest.raises(
+        ValueError, match="spike_threshold_count must be between 0 and bitstream_length"
+    ):
         engine.explain_spike("n0", threshold_q16=32768, bitstream_length=8, spike_threshold_count=9)
 
     assert engine.provenance.num_steps == 0
