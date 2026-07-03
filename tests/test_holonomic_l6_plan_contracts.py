@@ -96,3 +96,32 @@ def test_l6_rejects_invalid_input_shape_without_mutating_state(inputs: Any, mess
     assert adapter.t == 0.0
     np.testing.assert_array_equal(np.asarray(adapter.phi_planetary), before_phi)
     np.testing.assert_array_equal(np.asarray(adapter.regional_coherence), before_coherence)
+
+
+def test_l6_step_without_inputs_uses_zero_sync_drive() -> None:
+    """Absent upstream bitstreams advance time through a zero synchrony drive."""
+    adapter = L6_PlanetaryAdapter(L6_HolonomicParameters(n_regions=3, bitstream_length=4))
+
+    output = adapter.step_jax(0.05)
+
+    assert output.shape == (3, 4)
+    assert adapter.t == pytest.approx(0.05)
+    np.testing.assert_array_equal(np.asarray(adapter.phi_planetary), np.zeros(3))
+    np.testing.assert_array_equal(np.asarray(adapter.regional_coherence), np.zeros(3))
+    np.testing.assert_array_equal(np.asarray(output), np.zeros((3, 4), dtype=np.uint8))
+
+
+def test_l6_decode_reports_global_coherence_mean() -> None:
+    """Decode returns the mean bitstream occupancy as global coherence."""
+    adapter = L6_PlanetaryAdapter(L6_HolonomicParameters(n_regions=2, bitstream_length=4))
+    bitstreams = jnp.array(
+        [
+            [0, 1, 1, 0],
+            [1, 1, 1, 1],
+        ],
+        dtype=jnp.uint8,
+    )
+
+    telemetry = adapter.decode(bitstreams)
+
+    assert telemetry["global_coherence_index"] == pytest.approx(0.75)
