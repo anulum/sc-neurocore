@@ -433,6 +433,10 @@ similar.
 | :func:`dominates`              | Pareto relation $\succ$                                              |
 | :func:`shared_fitness`         | Goldberg–Richardson niching                                          |
 
+`TournamentSelector.select()` fails closed on empty populations before RNG
+sampling, and `select_n()` propagates the same validation boundary for batched
+selection.
+
 ### 6.4 Population control
 
 | Symbol                          | Purpose                                                             |
