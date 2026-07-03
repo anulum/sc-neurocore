@@ -174,10 +174,11 @@ fundamentally different computational models**:
 2. **Symbolic** (Module B): XOR bind + majority bundle + rotate permute = HDC/VSA
 3. **Logical** (Module A + C): Incidence matrix multiply + threshold firing = Petri nets / Boolean logic
 
-This is not merely feature aggregation. It is evidence that **packed Bernoulli
-bitstreams are a universal computational medium** that can efficiently support
-neural, symbolic, and logical reasoning within a single hardware-accelerated
-runtime. The "polymorphic engine" designation reflects this capability.
+This is not merely feature aggregation. It is evidence, for the implemented
+v3.7 workloads, that **packed Bernoulli bitstreams can share one runtime
+substrate** across neural, symbolic, and logical kernels. Broader performance
+or hardware claims still require the benchmark JSON, HDL report, or synthesis
+artefact named with the claim.
 
 ### 3.2 Connection to SCPN Layers
 
@@ -319,19 +320,20 @@ SC-NeuroCore v3.7 is, to our knowledge, the first engine where:
 2. The same `BitStreamTensor` used for Bernoulli encoding also stores HDC hypervectors
 3. SIMD XOR+popcount serves both stochastic multiplication (AND+popcount) and HDC similarity (XOR+popcount) through the same dispatch infrastructure
 
-### 5.2 Zero Overhead Polymorphism
+### 5.2 Shared Runtime Substrate
 
-The "polymorphic" designation is not metaphorical. The three compute paradigms
-share:
+The v3.7 implementation shares the following concrete runtime components across
+the three compute paradigms:
 - The same `Vec<u64>` packed data layout
 - The same SIMD dispatch infrastructure (AVX-512/AVX2/NEON/portable)
 - The same rayon thread pool for parallelism
 - The same PyO3 FFI bridge for Python interop
 - The same numpy zero-copy data path
 
-No new data types, allocators, or threading models were introduced. The entire
-v3.7 Rust delta is **~130 lines of new code** (5 methods + 1 SIMD kernel +
-PyO3 wrapper), yet it enables an entirely new class of computation.
+No new data types, allocators, or threading models were introduced for this
+research slice. The code delta is implementation evidence only; it is not a
+blanket claim that every neural, symbolic, or logical workload has zero
+conversion overhead.
 
 ### 5.3 Formal HDC Properties on Bitstreams
 
@@ -366,8 +368,8 @@ symbolic thought (HDC) and executive control (Petri nets).
 
 SC-NeuroCore already has an IR compiler and SystemVerilog emitter (`ir_emit_sv`).
 The HDC operations (XOR, rotate, popcount) are **trivially synthesisable** to
-digital logic -- they map 1:1 to standard cells. This means an FPGA or ASIC
-implementation of the polymorphic engine could execute:
+digital logic -- they map 1:1 to standard cells. This means a future FPGA or
+ASIC implementation of this shared bitstream runtime could execute:
 - Neural forward passes (AND gates + popcount trees)
 - HDC bind/bundle (XOR gates + majority voters)
 - Petri net transitions (same AND+popcount pipeline, different semantics)
@@ -495,7 +497,7 @@ closer to a self-contained SCPN simulation engine.
 
 ### 9.3 Long Term
 
-- **Full SCPN Stack on FPGA**: Synthesise the polymorphic engine to a single
+- **Full SCPN Stack on FPGA**: Synthesise the shared bitstream runtime to a single
   FPGA bitstream that switches between neural/symbolic/logical modes
 - **Consciousness-Grade HDC**: Map the full 16-layer SCPN hierarchy to HDC
   with each layer as a bound role-filler structure in 10k-bit space

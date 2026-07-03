@@ -8,18 +8,37 @@
 from __future__ import annotations
 
 import importlib.util
+import json
 import re
 import sys
 from pathlib import Path
 from types import ModuleType
-from typing import Any
+from typing import Any, cast
+
+
+_HISTORICAL_LIF_REPORT = "docs/benchmarks/BENCHMARK_REPORT.md"
+_ADC_KERNEL_REPORT = "benchmarks/results/bench_adc_to_spike_kernel.json"
+_SPEEDUP_512_PATTERN = re.compile(
+    r"\b512(?:\.\d+)?\s*[x×](?:[-\s\w]{0,48})?(?:speedup|faster|real-time)",
+    re.IGNORECASE,
+)
+_SPEEDUP_512_ANCHORS = (
+    _HISTORICAL_LIF_REPORT,
+    _ADC_KERNEL_REPORT,
+    "SC_NeuroCore_v3.6_WhitePaper_512x_Benchmarks.pdf",
+    "512.4x",
+    "525.51x",
+    "653.28x",
+)
 
 
 def _repo_root() -> Path:
+    """Return the repository root for path-stable public claim checks."""
     return Path(__file__).resolve().parents[1]
 
 
 def _load_capability_manifest() -> ModuleType:
+    """Load the generated-capability manifest tool from the live checkout."""
     tool_path = _repo_root() / "tools" / "capability_manifest.py"
     spec = importlib.util.spec_from_file_location("capability_manifest", tool_path)
     assert spec is not None
@@ -31,6 +50,7 @@ def _load_capability_manifest() -> ModuleType:
 
 
 def _manifest_counts() -> dict[str, int]:
+    """Return manifest inventory counts used in public documentation claims."""
     tool = _load_capability_manifest()
     manifest: dict[str, Any] = tool.build_capability_manifest(_repo_root())
     counts = manifest["counts"]
@@ -44,6 +64,7 @@ def _manifest_counts() -> dict[str, int]:
 
 
 def _rust_networkrunner_model_count() -> int:
+    """Count Rust NetworkRunner models advertised by the live engine source."""
     source = (_repo_root() / "engine/src/network_runner.rs").read_text(encoding="utf-8")
     match = re.search(
         r"pub\s+fn\s+supported_models\s*\([^)]*\)\s*->\s*[^{]+\{(?P<body>.*?)\n\s*\}",
@@ -55,6 +76,7 @@ def _rust_networkrunner_model_count() -> int:
 
 
 def _formal_inventory() -> tuple[int, dict[str, int]]:
+    """Count formal proof jobs and statement types from committed HDL sources."""
     formal_root = _repo_root() / "hdl/formal"
     statements = {"assert": 0, "assume": 0, "cover": 0}
     formal_sources = [
@@ -71,16 +93,53 @@ def _formal_inventory() -> tuple[int, dict[str, int]]:
 
 
 def _compact_whitespace(text: str) -> str:
+    """Collapse arbitrary whitespace for resilient prose comparisons."""
     return " ".join(text.split())
 
 
+def _public_markdown_files() -> list[Path]:
+    """Return tracked public Markdown claim surfaces for slogan checks."""
+    root = _repo_root()
+    candidates = [root / "README.md", root / "ROADMAP.md"]
+    candidates.extend((root / "docs").rglob("*.md"))
+    candidates.extend((root / "paper").rglob("*.md"))
+    excluded_parts = {
+        ".git",
+        "docs/internal",
+        "docs/_generated",
+        "docs/assets",
+        "docs/reports/generated",
+    }
+    public_files: list[Path] = []
+    for path in sorted(candidates, key=lambda candidate: candidate.relative_to(root).as_posix()):
+        relative = path.relative_to(root).as_posix()
+        if any(relative == part or relative.startswith(f"{part}/") for part in excluded_parts):
+            continue
+        public_files.append(path)
+    return public_files
+
+
+def _claim_window(text: str, start: int, end: int, *, radius: int = 320) -> str:
+    """Return nearby prose around a matched claim for local anchor checks."""
+    return text[max(0, start - radius) : min(len(text), end + radius)]
+
+
+def _load_json_object(path: Path) -> dict[str, Any]:
+    """Read a committed JSON artefact as an object for benchmark claim checks."""
+    payload = json.loads(path.read_text(encoding="utf-8"))
+    assert isinstance(payload, dict)
+    return cast(dict[str, Any], payload)
+
+
 def test_public_capability_snapshots_are_current() -> None:
+    """Keep generated public capability snapshots in sync with repo inventory."""
     tool = _load_capability_manifest()
 
     tool.assert_outputs_current(_repo_root())
 
 
 def test_current_public_entrypoints_use_generated_inventory_terms() -> None:
+    """Ensure public entry points use generated inventory counts, not stale prose."""
     counts = _manifest_counts()
     rust_models = _rust_networkrunner_model_count()
     readme = (_repo_root() / "README.md").read_text(encoding="utf-8")
@@ -108,6 +167,7 @@ def test_current_public_entrypoints_use_generated_inventory_terms() -> None:
 
 
 def test_public_formal_claims_match_hdl_inventory() -> None:
+    """Ensure formal-method public claims match committed HDL inventory."""
     proof_jobs, statements = _formal_inventory()
     total = sum(statements.values())
     expected_summary = (
@@ -128,6 +188,7 @@ def test_public_formal_claims_match_hdl_inventory() -> None:
 
 
 def test_rust_speedup_claims_are_artifact_anchored() -> None:
+    """Ensure Rust speedup claims name the committed benchmark evidence."""
     readme = (_repo_root() / "README.md").read_text(encoding="utf-8")
     faq = (_repo_root() / "docs/guides/faq.md").read_text(encoding="utf-8")
     landscape = (_repo_root() / "docs/COMPETITIVE_LANDSCAPE.md").read_text(encoding="utf-8")
@@ -139,3 +200,61 @@ def test_rust_speedup_claims_are_artifact_anchored() -> None:
     assert "Brunel balanced-network" in readme
     assert "39-202x faster" not in readme
     assert "39–202× faster" not in readme
+
+
+def test_512x_class_speedup_claims_are_artifact_anchored() -> None:
+    """Preserve verified 512x-class evidence while requiring exact artefacts."""
+    root = _repo_root()
+    discrepancy = (
+        root / "docs" / "reports" / "SC_NEUROCORE_DISCREPANCY_REMEDIATION_PLAN_2026-02-11.md"
+    ).read_text(encoding="utf-8")
+    historical_report = (root / _HISTORICAL_LIF_REPORT).read_text(encoding="utf-8")
+    adc_report = _load_json_object(root / _ADC_KERNEL_REPORT)
+    backends = cast(dict[str, dict[str, Any]], adc_report["backends"])
+
+    assert _HISTORICAL_LIF_REPORT in discrepancy
+    assert _ADC_KERNEL_REPORT in discrepancy
+    assert "`512x`-class speedup evidence is real" in discrepancy
+    assert "512.4x" in discrepancy
+    assert "525.51x" in discrepancy
+    assert "653.28x" in discrepancy
+    assert "| LIF multi (100x100K) | 12911.296 | 25.196 | 512.4x | 400x |" in (
+        historical_report
+    )
+    assert backends["rust"]["speedup_over_python"] == 525.51
+    assert backends["mojo"]["speedup_over_python"] == 653.28
+
+
+def test_adaptive_runtime_positioning_stays_bounded() -> None:
+    """Keep v3.7 positioning tied to implemented runtime-substrate evidence."""
+    study = (
+        _repo_root() / "docs" / "research" / "SC_NEUROCORE_V3.7_ADAPTIVE_RUNTIME_ENGINE_STUDY.md"
+    ).read_text(encoding="utf-8")
+    compact = _compact_whitespace(study).lower()
+
+    assert "shared runtime substrate" in compact
+    assert "implemented v3.7 workloads" in compact
+    assert "blanket claim" in compact
+    assert "zero overhead polymorphism" not in compact
+
+
+def test_public_claim_language_excludes_unbounded_marketing_slogans() -> None:
+    """Reject unbounded slogans and detached 512x-class speedup prose."""
+    banned_literals = (
+        "zero competitive gaps",
+        "zero gaps",
+    )
+    offenders: list[str] = []
+    for path in _public_markdown_files():
+        relative = path.relative_to(_repo_root()).as_posix()
+        text = path.read_text(encoding="utf-8")
+        compact = _compact_whitespace(text).lower()
+        for phrase in banned_literals:
+            if phrase in compact:
+                offenders.append(f"{relative}: banned phrase {phrase!r}")
+        for match in _SPEEDUP_512_PATTERN.finditer(text):
+            context = _claim_window(text, match.start(), match.end())
+            if not any(anchor in context for anchor in _SPEEDUP_512_ANCHORS):
+                offenders.append(f"{relative}: unanchored 512x-class speedup claim")
+
+    assert offenders == []

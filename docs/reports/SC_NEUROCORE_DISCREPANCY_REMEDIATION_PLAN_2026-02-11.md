@@ -17,8 +17,14 @@ Commercial Licensing: Available
 Impact: latency-critical usage (interactive or control loops) regresses.
 
 2. **Benchmark narrative is incomplete**
-Claims like `512x` are not fully anchored to external baselines.
-Impact: numbers look strong but remain challengeable.
+The historical `512x`-class speedup evidence is real, but it must stay attached
+to the measured workload, baseline, and artefact. `docs/benchmarks/BENCHMARK_REPORT.md`
+records `512.4x` for the `LIF multi (100x100K)` row against the SC-NeuroCore v2
+Python reference path; `benchmarks/results/bench_adc_to_spike_kernel.json`
+records later polyglot ADC-to-spike rows at `525.51x` (Rust vs Python) and
+`653.28x` (Mojo vs Python).
+Impact: numbers look strong but remain challengeable when detached from their
+exact benchmark artefacts.
 
 3. **Hardware target evidence is missing**
 Most published numbers are CPU timings.
@@ -92,7 +98,7 @@ toggle-rate based estimate + TODO hooks for vendor timing/power reports.
 `python examples/03_benchmark_report.py`.
 3. Add FAQ entries:
 - "Why is fused slower on one sample?"
-- "What does 512x compare against?"
+- "What does the `512x`-class speedup compare against, and which artefact anchors it?"
 - "How do I get hardware-relevant metrics?"
 4. Add a one-page index:
 `docs/SC_NEUROCORE_PERFORMANCE_INDEX.md` linking all benchmark/hardware docs.
