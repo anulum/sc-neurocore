@@ -17773,12 +17773,58 @@ Publishes motor commands from sc-neurocore to robots.
 ### Class `ZenithBCILoopConfig`
 Configuration for deterministic closed-loop stream processing.
 
+Attributes
+----------
+n_channels:
+    Number of neural acquisition channels in each waveform window.
+sampling_rate_hz:
+    Sample rate used to convert window length into ingest latency.
+gpu_lanes:
+    Parallel codec/decode lanes available for latency estimation.
+latency_budget_ms:
+    Maximum allowed end-to-end closed-loop latency in milliseconds.
+threshold_sigma:
+    Spike-detection threshold multiplier passed to the BCI template.
+snippet_samples:
+    Number of waveform samples captured around each detected event.
+waveform_mode:
+    Closed-loop waveform codec mode forwarded to the BCI template.
+quantize_bits:
+    Bit width used by the waveform quantizer.
+timestamp_bits:
+    Bit width reserved for encoded event timestamps.
+
 - **__post_init__**()
+  - Validate strictly positive loop sizing and latency parameters.
 
 ### Class `ZenithBCILoopResult`
 Single-step closed-loop output with latency budget evidence.
 
+Attributes
+----------
+command:
+    Integer control action emitted for the processed waveform window.
+feedback_active_channels:
+    Number of channels that received active feedback.
+spike_count:
+    Total detected spikes in the processed window.
+decoded_rates:
+    Per-channel decoded spike-rate estimates.
+latency_breakdown_ms:
+    Stage-level latency ledger keyed by processing stage name.
+total_latency_ms:
+    Sum of all estimated stage latencies in milliseconds.
+latency_budget_ms:
+    Budget the closed-loop step was checked against.
+latency_budget_met:
+    Whether ``total_latency_ms`` stayed within ``latency_budget_ms``.
+pathway_name:
+    Human-readable identifier for the acquisition/control pathway.
+schema_version:
+    Stable serializer schema emitted by :meth:`to_dict`.
+
 - **to_dict**()
+  - Return the stable JSON-compatible result payload.
 
 ### Class `ZenithBCILoop`
 Closed-loop primitive for continuous BCI streams with latency guarantees.

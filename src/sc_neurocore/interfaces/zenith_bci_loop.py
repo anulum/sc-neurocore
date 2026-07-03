@@ -25,7 +25,29 @@ from sc_neurocore.interfaces.bci_closed_loop import ClosedLoopBCIConfig, ClosedL
 
 @dataclass(frozen=True)
 class ZenithBCILoopConfig:
-    """Configuration for deterministic closed-loop stream processing."""
+    """Configuration for deterministic closed-loop stream processing.
+
+    Attributes
+    ----------
+    n_channels:
+        Number of neural acquisition channels in each waveform window.
+    sampling_rate_hz:
+        Sample rate used to convert window length into ingest latency.
+    gpu_lanes:
+        Parallel codec/decode lanes available for latency estimation.
+    latency_budget_ms:
+        Maximum allowed end-to-end closed-loop latency in milliseconds.
+    threshold_sigma:
+        Spike-detection threshold multiplier passed to the BCI template.
+    snippet_samples:
+        Number of waveform samples captured around each detected event.
+    waveform_mode:
+        Closed-loop waveform codec mode forwarded to the BCI template.
+    quantize_bits:
+        Bit width used by the waveform quantizer.
+    timestamp_bits:
+        Bit width reserved for encoded event timestamps.
+    """
 
     n_channels: int
     sampling_rate_hz: int = 30_000
@@ -38,6 +60,7 @@ class ZenithBCILoopConfig:
     timestamp_bits: int = 16
 
     def __post_init__(self) -> None:
+        """Validate strictly positive loop sizing and latency parameters."""
         if self.n_channels <= 0:
             raise ValueError("n_channels must be positive")
         if self.sampling_rate_hz <= 0:
@@ -50,7 +73,31 @@ class ZenithBCILoopConfig:
 
 @dataclass(frozen=True)
 class ZenithBCILoopResult:
-    """Single-step closed-loop output with latency budget evidence."""
+    """Single-step closed-loop output with latency budget evidence.
+
+    Attributes
+    ----------
+    command:
+        Integer control action emitted for the processed waveform window.
+    feedback_active_channels:
+        Number of channels that received active feedback.
+    spike_count:
+        Total detected spikes in the processed window.
+    decoded_rates:
+        Per-channel decoded spike-rate estimates.
+    latency_breakdown_ms:
+        Stage-level latency ledger keyed by processing stage name.
+    total_latency_ms:
+        Sum of all estimated stage latencies in milliseconds.
+    latency_budget_ms:
+        Budget the closed-loop step was checked against.
+    latency_budget_met:
+        Whether ``total_latency_ms`` stayed within ``latency_budget_ms``.
+    pathway_name:
+        Human-readable identifier for the acquisition/control pathway.
+    schema_version:
+        Stable serializer schema emitted by :meth:`to_dict`.
+    """
 
     command: int
     feedback_active_channels: int
@@ -64,6 +111,7 @@ class ZenithBCILoopResult:
     schema_version: str = "sc-neurocore.zenith-bci-loop.v1"
 
     def to_dict(self) -> dict[str, Any]:
+        """Return the stable JSON-compatible result payload."""
         return {
             "schema_version": self.schema_version,
             "command": self.command,
