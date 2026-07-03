@@ -2993,13 +2993,50 @@ Map verified percentage to letter grade.
 ## Module `audio.evs_engine`
 
 ### Class `EVSConfig`
-Tuneable parameters for the EVS engine.
+Configuration for FFT-based entrainment scoring.
+
+Attributes
+----------
+sample_rate:
+    EEG sample rate in hertz.
+fft_window:
+    Number of samples retained in the ring buffer for FFT scoring.
+baseline_duration_s:
+    Baseline collection duration in seconds.
+update_interval_samples:
+    Nominal sample interval between external EVS updates.
 
 
 ### Class `EVSSnapshot`
-Single-tick EVS observation.
+Single-tick entrainment verification observation.
+
+Attributes
+----------
+evs_score:
+    Composite entrainment score in the inclusive range 0 to 100.
+relative_increase:
+    Target-band power increase relative to baseline.
+peak_alignment:
+    Alignment between the spectral peak and target frequency.
+band_dominance:
+    Fraction of total spectral power in the target band.
+temporal_consistency:
+    Stability score computed from recent EVS values.
+is_verified:
+    Whether score and confidence clear the verification threshold.
+confidence:
+    Confidence score derived from the number of scoring updates.
+target_hz:
+    Target entrainment frequency in hertz.
+peak_hz:
+    Dominant measured frequency in hertz.
+band_powers:
+    Per-band FFT power estimates.
+timestamp:
+    Snapshot creation time from ``time.time()``.
 
 - **to_dict**()
+  - Serialise the snapshot into JSON-compatible telemetry.
 
 ### Class `EVSEngine`
 FFT-based Entrainment Verification Score engine.
@@ -3013,6 +3050,7 @@ Workflow
 5. ``compute()`` returns ``EVSSnapshot`` every *update_interval_samples*
 
 - **__init__**(cfg)
+  - Initialise the EVS ring buffer and scoring state.
 - **start_baseline**()
   - Begin baseline EEG collection.
 - **_finalise_baseline**()
@@ -3030,9 +3068,11 @@ Workflow
 - **compute**()
   - Compute current EVS snapshot.
 - **baseline_done**()
+  - Whether baseline EEG collection has been finalised.
 - **score_history**()
+  - Return a copy of accumulated EVS scores.
 - **reset**()
-  - Full reset.
+  - Clear buffers, baseline state, and score history.
 
 ### Function `_hz_to_band(hz)`
 Map a frequency in Hz to its canonical EEG band name.

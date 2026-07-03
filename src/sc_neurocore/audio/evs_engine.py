@@ -6,15 +6,11 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore — EVS Engine -- Entrainment Verification Score
 
-from __future__ import annotations
-from typing import Any, Optional
-
 """
-EVS Engine -- Entrainment Verification Score
-==============================================
+Entrainment Verification Score engine for adaptive audio.
 
 Real-time composite score (0-100) proving that CCW audio entrainment is
-actually working on a per-session basis.  Measures the correlation
+working on a per-session basis. Measures the correlation
 between the target brainwave frequency and actual EEG spectral power
 via FFT-based band analysis.
 
@@ -28,11 +24,13 @@ Verified = (score >= 50) AND (confidence >= 0.6)
 
 """
 
+from __future__ import annotations
 
+import math
 import logging
 import time
 from dataclasses import dataclass, field
-from typing import Dict, List
+from typing import Any
 
 import numpy as np
 
@@ -40,7 +38,7 @@ logger = logging.getLogger(__name__)
 
 # ── EEG Frequency Bands ─────────────────────────────────────────────
 
-BANDS: Dict[str, tuple[Any, ...]] = {
+BANDS: dict[str, tuple[float, float]] = {
     "delta": (0.5, 4.0),
     "theta": (4.0, 8.0),
     "alpha": (8.0, 13.0),
@@ -54,9 +52,7 @@ def _hz_to_band(hz: float) -> str:
     for name, (lo, hi) in BANDS.items():
         if lo <= hz < hi:
             return name
-    if hz >= 45.0:
-        return "gamma"
-    return "delta"
+    return "gamma"
 
 
 # ── Configuration ────────────────────────────────────────────────────
@@ -64,7 +60,19 @@ def _hz_to_band(hz: float) -> str:
 
 @dataclass
 class EVSConfig:
-    """Tuneable parameters for the EVS engine."""
+    """Configuration for FFT-based entrainment scoring.
+
+    Attributes
+    ----------
+    sample_rate:
+        EEG sample rate in hertz.
+    fft_window:
+        Number of samples retained in the ring buffer for FFT scoring.
+    baseline_duration_s:
+        Baseline collection duration in seconds.
+    update_interval_samples:
+        Nominal sample interval between external EVS updates.
+    """
 
     sample_rate: int = 256
     fft_window: int = 512
@@ -77,7 +85,33 @@ class EVSConfig:
 
 @dataclass
 class EVSSnapshot:
-    """Single-tick EVS observation."""
+    """Single-tick entrainment verification observation.
+
+    Attributes
+    ----------
+    evs_score:
+        Composite entrainment score in the inclusive range 0 to 100.
+    relative_increase:
+        Target-band power increase relative to baseline.
+    peak_alignment:
+        Alignment between the spectral peak and target frequency.
+    band_dominance:
+        Fraction of total spectral power in the target band.
+    temporal_consistency:
+        Stability score computed from recent EVS values.
+    is_verified:
+        Whether score and confidence clear the verification threshold.
+    confidence:
+        Confidence score derived from the number of scoring updates.
+    target_hz:
+        Target entrainment frequency in hertz.
+    peak_hz:
+        Dominant measured frequency in hertz.
+    band_powers:
+        Per-band FFT power estimates.
+    timestamp:
+        Snapshot creation time from ``time.time()``.
+    """
 
     evs_score: float = 0.0
     relative_increase: float = 0.0
@@ -88,10 +122,18 @@ class EVSSnapshot:
     confidence: float = 0.0
     target_hz: float = 10.0
     peak_hz: float = 0.0
-    band_powers: Dict[str, float] = field(default_factory=dict)
+    band_powers: dict[str, float] = field(default_factory=dict)
     timestamp: float = 0.0
 
     def to_dict(self) -> dict[str, Any]:
+        """Serialise the snapshot into JSON-compatible telemetry.
+
+        Returns
+        -------
+        dict[str, Any]
+            Rounded score components, verification flags, target and peak
+            frequencies, per-band powers, and timestamp.
+        """
         return {
             "evs_score": round(self.evs_score, 2),
             "relative_increase": round(self.relative_increase, 4),
@@ -122,7 +164,15 @@ class EVSEngine:
     5. ``compute()`` returns ``EVSSnapshot`` every *update_interval_samples*
     """
 
-    def __init__(self, cfg: Optional[EVSConfig] = None):
+    def __init__(self, cfg: EVSConfig | None = None) -> None:
+        """Initialise the EVS ring buffer and scoring state.
+
+        Parameters
+        ----------
+        cfg:
+            Optional FFT and baseline configuration. Defaults to ``EVSConfig``
+            when omitted.
+        """
         self.cfg = cfg or EVSConfig()
         c = self.cfg
 
@@ -136,7 +186,7 @@ class EVSEngine:
         self._baseline_active: bool = False
         self._baseline_done: bool = False
         self._baseline_samples: list[float] = []
-        self._baseline_powers: Dict[str, float] = {}
+        self._baseline_powers: dict[str, float] = {}
 
         # Target
         self._target_hz: float = 10.0
@@ -185,7 +235,21 @@ class EVSEngine:
                 self._finalise_baseline()
 
     def set_target(self, hz: float) -> None:
-        """Set the entrainment target frequency."""
+        """Set the entrainment target frequency.
+
+        Parameters
+        ----------
+        hz:
+            Finite target frequency in hertz. Values outside the supported EEG
+            range are clipped to 0.5-45.0 Hz.
+
+        Raises
+        ------
+        ValueError
+            If ``hz`` is not finite.
+        """
+        if not math.isfinite(hz):
+            raise ValueError("target frequency must be finite")
         self._target_hz = float(np.clip(hz, 0.5, 45.0))
 
     # ── FFT Helpers ──────────────────────────────────────────────────
@@ -196,7 +260,7 @@ class EVSEngine:
             return self._buf[: self._buf_idx].copy()
         return np.concatenate([self._buf[self._buf_idx :], self._buf[: self._buf_idx]])
 
-    def _band_powers(self, signal: np.ndarray[Any, Any]) -> Dict[str, float]:
+    def _band_powers(self, signal: np.ndarray[Any, Any]) -> dict[str, float]:
         """Compute power in each canonical EEG band via FFT."""
         n = len(signal)
         if n < 4:
@@ -207,7 +271,7 @@ class EVSEngine:
         spectrum = np.abs(np.fft.rfft(windowed)) ** 2
         freqs = np.fft.rfftfreq(n, d=1.0 / self.cfg.sample_rate)
 
-        powers: Dict[str, float] = {}
+        powers: dict[str, float] = {}
         for name, (lo, hi) in BANDS.items():
             mask = (freqs >= lo) & (freqs < hi)
             powers[name] = float(np.mean(spectrum[mask])) if mask.any() else 0.0
@@ -229,10 +293,14 @@ class EVSEngine:
 
     # ── Compute EVS ──────────────────────────────────────────────────
 
-    def compute(self) -> Optional[EVSSnapshot]:
+    def compute(self) -> EVSSnapshot | None:
         """Compute current EVS snapshot.
 
-        Returns None if insufficient data or baseline not done.
+        Returns
+        -------
+        EVSSnapshot | None
+            Current EVS telemetry, or ``None`` until baseline collection is
+            complete and enough samples are available.
         """
         if not self._baseline_done:
             return None
@@ -260,10 +328,7 @@ class EVSEngine:
         # 2. Peak alignment (30%)
         band_lo, band_hi = BANDS[target_band]
         band_width = band_hi - band_lo
-        if band_width > 0:
-            alignment = 1.0 - abs(peak_hz - self._target_hz) / band_width
-        else:
-            alignment = 0.0
+        alignment = 1.0 - abs(peak_hz - self._target_hz) / band_width
         peak_alignment = float(np.clip(alignment, 0.0, 1.0))
 
         # 3. Band dominance (20%)
@@ -311,14 +376,16 @@ class EVSEngine:
 
     @property
     def baseline_done(self) -> bool:
+        """Whether baseline EEG collection has been finalised."""
         return self._baseline_done
 
     @property
-    def score_history(self) -> List[float]:
+    def score_history(self) -> list[float]:
+        """Return a copy of accumulated EVS scores."""
         return list(self._score_history)
 
     def reset(self) -> None:
-        """Full reset."""
+        """Clear buffers, baseline state, and score history."""
         self._buf[:] = 0.0
         self._buf_idx = 0
         self._buf_full = False

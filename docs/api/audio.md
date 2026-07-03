@@ -43,6 +43,13 @@ JSON-compatible dictionary.
 
 ## EVS Engine
 
+`EVSEngine` verifies whether an audio session is tracking its target band by
+combining target-band power increase, spectral peak alignment, band dominance,
+and recent score stability. Focused EVS contract tests cover baseline gating,
+finite target validation, tiny-window fail-closed FFT behaviour, zero-baseline
+relative-increase handling, score-history copying, snapshot serialisation, and
+reset semantics.
+
 ::: sc_neurocore.audio.evs_engine
 
 ## SSGF Engine
