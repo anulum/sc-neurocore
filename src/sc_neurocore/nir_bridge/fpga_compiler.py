@@ -141,6 +141,31 @@ def _neuron_param_override(
     return " #(" + ", ".join(fragments) + ")"
 
 
+def _population_params_are_uniform(pop: NeuronSpec, data_width: int) -> bool:
+    """Return True when every per-neuron quantised parameter is identical across ``pop``.
+
+    The folded interconnect bakes one representative parameter set into the shared
+    per-type PE — there is no per-neuron parameter RAM — so it can only reproduce a
+    population whose neurons carry identical quantised parameters. A *heterogeneous*
+    population (one the direct path emits per-neuron ``#(.P_X(...))`` overrides for, see
+    :func:`_neuron_param_override`) cannot fold: the fold would silently apply the first
+    neuron's parameters to the whole population, diverging from the direct path.
+
+    Uniformity is decided at the *quantised* data-width (the same mask the override
+    detection uses), so two float parameters that round to the same fixed-point literal
+    count as uniform. A scalar / population-shared parameter (an array that is not
+    per-neuron) is uniform by construction.
+    """
+    mask = (1 << data_width) - 1
+    for pval in pop.params.values():
+        arr = np.atleast_1d(np.asarray(pval).reshape(-1))
+        if arr.shape[0] != pop.n_neurons:
+            continue  # scalar / shared parameter — identical for every neuron
+        if len({int(v) & mask for v in arr}) > 1:
+            return False
+    return True
+
+
 def _resolved_population_params(neuron_type: str, pop: NeuronSpec) -> dict[str, float]:
     """Resolve population parameters without averaging per-neuron values."""
     template = _NEURON_TEMPLATES.get(neuron_type)
@@ -1437,12 +1462,15 @@ def _folded_population_input(
     return decls, f"sat_acc(fold_i_acc{suffix})"
 
 
-def _can_fold(qgraph: QuantisedGraph) -> bool:
+def _can_fold(qgraph: QuantisedGraph, *, data_width: int) -> bool:
     """Return True if the graph is in the folded interconnect's supported subset.
 
     The folded interconnect time-multiplexes any number of populations of supported
     neuron types over a per-type PE pool and one global spike bus. A graph folds when
-    every population has an ODE template and every connection is one of:
+    every population has an ODE template, every population's per-neuron parameters are
+    uniform (the shared PE bakes one representative parameter set — a heterogeneous
+    population must use the direct path, see :func:`_population_params_are_uniform`), and
+    every connection is one of:
 
     * **connection-less** — neurons driven only by their own external ``I_ext`` lane;
     * **external-weighted** — fed by external (non-population) source columns;
@@ -1465,6 +1493,10 @@ def _can_fold(qgraph: QuantisedGraph) -> bool:
     pop_by_name = {p.name: p for p in pops}
     pop_names = set(pop_by_name)
     if any(p.neuron_type not in _NEURON_TEMPLATES for p in pops):
+        return False
+    if any(not _population_params_are_uniform(p, data_width) for p in pops):
+        # A heterogeneous population's per-neuron parameters cannot be baked into the
+        # shared PE; fold would silently apply the first neuron's parameters to all.
         return False
     for conn in qgraph.connections:
         if conn.dst not in pop_names:
@@ -1562,7 +1594,7 @@ def _build_top_folded(
     ``({neuron_module_key: pe_source}, top_module_source)`` with one PE source per
     distinct neuron type, keyed ``"{neuron_type}_pe"`` for the compilation artefacts.
     """
-    if not _can_fold(qgraph):
+    if not _can_fold(qgraph, data_width=data_width):
         raise ValueError("graph is outside the folded interconnect's supported subset")
 
     pops = list(qgraph.populations)
@@ -2362,13 +2394,14 @@ def compile_network_to_fpga(
         # _can_fold subset (any number of populations of supported types with
         # external-weighted, recurrent, inter-population, delayed, thresholded, biased
         # spiking, or analogue-voltage fan-in).
-        if not _can_fold(qgraph):
+        if not _can_fold(qgraph, data_width=data_width):
             raise ValueError(
                 "interconnect='folded' supports populations of supported neuron types with "
                 "external-weighted, recurrent, inter-population, delayed, NIR-thresholded, "
-                "biased spiking, or analogue source connections (the folded subset); a delayed "
-                "external (non-population) source connection is not folded — use 'direct' or auto "
-                "otherwise"
+                "biased spiking, or analogue source connections (the folded subset), and only "
+                "when every population's per-neuron parameters are uniform (the shared PE has no "
+                "per-neuron parameter RAM); a delayed external (non-population) source connection "
+                "or a heterogeneous population is not folded — use 'direct' or auto otherwise"
             )
         selected_interconnect = "folded"
         pe_modules, top_module = _build_top_folded(

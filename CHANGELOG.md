@@ -248,6 +248,15 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
   source of truth.
 
 ### Fixed
+- The opt-in folded FPGA interconnect (`interconnect="folded"`) now rejects a
+  population with heterogeneous per-neuron parameters instead of silently baking the
+  first neuron's parameters into the shared processing element for the whole
+  population. The shared per-type PE has no per-neuron parameter RAM, so a
+  heterogeneous population — one the direct path reproduces exactly via per-neuron
+  `#(.P_X(...))` overrides — cannot fold; `_can_fold` now gates on per-population
+  parameter uniformity (decided at the quantised data width) and the compiler raises a
+  clear error pointing to the direct interconnect. The direct and `auto` paths are
+  unchanged (`auto` never selects the folded interconnect).
 - Hardened the public swarm agent/evolver contracts. `AgentConfig`,
   `SwarmAgent.weights`, `think`, `act`, `reset`, `EvolverConfig`,
   `evaluate_individual`, mutation, and generation execution now reject
