@@ -118,6 +118,13 @@ accelerators.  If a wheel exposes only the compiled extension module and not
 `.photonics`, the Python implementation remains importable and the Rust path is
 disabled until the corresponding engine submodule is present.
 
+The core-engine C-FFI bridge follows the same fail-closed boundary.  Python
+fallbacks remain importable when `libcore_engine.so` is absent or raises during
+dynamic loading.  Native LFSR dispatch rejects null handles, unexpected output
+word counts, and null bitstream pointers before exposing data to NumPy, while
+the pure-Python fallback preserves deterministic recovery from an invalid zero
+LFSR state.
+
 ## Performance Results
 
 | Operation | NumPy (µs) | Rust C-FFI (µs) | Speedup |
