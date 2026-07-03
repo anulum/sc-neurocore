@@ -7,7 +7,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 237
+expected_file_count = 238
 
 [[file]]
 path = "src/sc_neurocore/__init__.py"
@@ -944,6 +944,10 @@ rationale = "Public ODE-solver comparison routes for the alternative-path harnes
 [[file]]
 path = "src/sc_neurocore/experimental/physics_routes.py"
 rationale = "Public physics-solver comparison routes for the alternative-path harness."
+
+[[file]]
+path = "src/sc_neurocore/experimental/reporting.py"
+rationale = "Public report-path and JSON-writer helpers for the alternative-path harness."
 
 [[file]]
 path = "src/sc_neurocore/memristor/memristor_mapper.py"

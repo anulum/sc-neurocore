@@ -25621,6 +25621,21 @@ the same parameterised module with each neuron's own quantised parameters. The
 literal is the unsigned two's-complement bit pattern, matching how the module
 declares each parameter default (negative fixed-point values included).
 
+### Function `_population_params_are_uniform(pop, data_width)`
+Return True when every per-neuron quantised parameter is identical across ``pop``.
+
+The folded interconnect bakes one representative parameter set into the shared
+per-type PE — there is no per-neuron parameter RAM — so it can only reproduce a
+population whose neurons carry identical quantised parameters. A *heterogeneous*
+population (one the direct path emits per-neuron ``#(.P_X(...))`` overrides for, see
+:func:`_neuron_param_override`) cannot fold: the fold would silently apply the first
+neuron's parameters to the whole population, diverging from the direct path.
+
+Uniformity is decided at the *quantised* data-width (the same mask the override
+detection uses), so two float parameters that round to the same fixed-point literal
+count as uniform. A scalar / population-shared parameter (an array that is not
+per-neuron) is uniform by construction.
+
 ### Function `_resolved_population_params(neuron_type, pop)`
 Resolve population parameters without averaging per-neuron values.
 
@@ -25800,7 +25815,10 @@ Return True if the graph is in the folded interconnect's supported subset.
 
 The folded interconnect time-multiplexes any number of populations of supported
 neuron types over a per-type PE pool and one global spike bus. A graph folds when
-every population has an ODE template and every connection is one of:
+every population has an ODE template, every population's per-neuron parameters are
+uniform (the shared PE bakes one representative parameter set — a heterogeneous
+population must use the direct path, see :func:`_population_params_are_uniform`), and
+every connection is one of:
 
 * **connection-less** — neurons driven only by their own external ``I_ext`` lane;
 * **external-weighted** — fed by external (non-population) source columns;
