@@ -172,6 +172,10 @@ the standard user install. It deliberately does not pull GPU-, MPI-, Lava-,
 Julia-, or JAX-specific stacks because those depend on local hardware, drivers,
 or external runtimes.
 
+For the architecture-level classification of every optional extra, package
+discovery exclude, and Cargo workspace exclude, see the
+[Package Boundary Decision](../architecture/package_boundary_decision.md).
+
 Heavy backends are always opt-in. Qiskit, PennyLane, CuPy, JAX, Lava, MPI,
 Julia, Go, Mojo, and WGSL tooling are research-grade integration surfaces until
 their target environment, install profile, and verification artefacts are named

@@ -35,6 +35,15 @@ _SPEEDUP_512_ANCHORS = (
     "525.51x",
     "653.28x",
 )
+_PACKAGE_BOUNDARY_DECISION_DOC = "docs/architecture/package_boundary_decision.md"
+_PACKAGE_BOUNDARY_DECISIONS = (
+    "core package",
+    "optional extra",
+    "contributor extra",
+    "source-checkout research surface",
+    "separate crate",
+    "retired candidate",
+)
 
 
 def _repo_root() -> Path:
@@ -136,10 +145,17 @@ def _load_json_object(path: Path) -> dict[str, Any]:
     return cast(dict[str, Any], payload)
 
 
+def _load_toml_object(path: Path) -> dict[str, Any]:
+    """Read a committed TOML artefact as an object for metadata claim checks."""
+    with path.open("rb") as config_file:
+        payload = tomllib.load(config_file)
+    assert isinstance(payload, dict)
+    return payload
+
+
 def _project_classifiers() -> tuple[str, ...]:
     """Return package classifiers from the live ``pyproject.toml`` metadata."""
-    with (_repo_root() / "pyproject.toml").open("rb") as config_file:
-        metadata = tomllib.load(config_file)
+    metadata = _load_toml_object(_repo_root() / "pyproject.toml")
     project = metadata["project"]
     assert isinstance(project, dict)
     raw_classifiers = project["classifiers"]
@@ -150,6 +166,76 @@ def _project_classifiers() -> tuple[str, ...]:
         assert isinstance(classifier, str)
         classifiers.append(classifier)
     return tuple(classifiers)
+
+
+def _project_optional_extra_names() -> tuple[str, ...]:
+    """Return optional dependency group names from package metadata."""
+    metadata = _load_toml_object(_repo_root() / "pyproject.toml")
+    project = metadata["project"]
+    assert isinstance(project, dict)
+    optional_dependencies = project["optional-dependencies"]
+    assert isinstance(optional_dependencies, dict)
+
+    extra_names: list[str] = []
+    for extra_name in optional_dependencies:
+        assert isinstance(extra_name, str)
+        extra_names.append(extra_name)
+    return tuple(sorted(extra_names))
+
+
+def _setuptools_excluded_package_roots() -> tuple[str, ...]:
+    """Return top-level package roots excluded from wheel discovery."""
+    metadata = _load_toml_object(_repo_root() / "pyproject.toml")
+    tool = metadata["tool"]
+    assert isinstance(tool, dict)
+    setuptools = tool["setuptools"]
+    assert isinstance(setuptools, dict)
+    packages = setuptools["packages"]
+    assert isinstance(packages, dict)
+    finder = packages["find"]
+    assert isinstance(finder, dict)
+    raw_excludes = finder["exclude"]
+    assert isinstance(raw_excludes, list)
+
+    package_roots: set[str] = set()
+    for raw_exclude in raw_excludes:
+        assert isinstance(raw_exclude, str)
+        package_root = raw_exclude.removesuffix(".*")
+        if package_root.startswith("sc_neurocore."):
+            package_roots.add(package_root)
+    return tuple(sorted(package_roots))
+
+
+def _cargo_workspace_excludes() -> tuple[str, ...]:
+    """Return Cargo workspace excludes from the root manifest."""
+    manifest = _load_toml_object(_repo_root() / "Cargo.toml")
+    workspace = manifest["workspace"]
+    assert isinstance(workspace, dict)
+    raw_excludes = workspace["exclude"]
+    assert isinstance(raw_excludes, list)
+
+    excludes: list[str] = []
+    for raw_exclude in raw_excludes:
+        assert isinstance(raw_exclude, str)
+        excludes.append(raw_exclude)
+    return tuple(sorted(excludes))
+
+
+def _assert_boundary_rows_cover_tokens(
+    *,
+    lines: tuple[str, ...],
+    tokens: tuple[str, ...],
+    token_kind: str,
+) -> None:
+    """Assert package-boundary decision rows classify every metadata token."""
+    missing_tokens: list[str] = []
+    for token in tokens:
+        token_row = next((line for line in lines if f"`{token}`" in line), "")
+        if not token_row or not any(
+            decision in token_row for decision in _PACKAGE_BOUNDARY_DECISIONS
+        ):
+            missing_tokens.append(token)
+    assert missing_tokens == [], f"missing {token_kind} package-boundary rows: {missing_tokens}"
 
 
 def test_public_capability_snapshots_are_current() -> None:
@@ -166,7 +252,8 @@ def test_current_public_entrypoints_use_generated_inventory_terms() -> None:
     readme = (_repo_root() / "README.md").read_text(encoding="utf-8")
     docs_index = (_repo_root() / "docs/index.md").read_text(encoding="utf-8")
     neuron_reference = (_repo_root() / "docs/api/neuron_models.md").read_text(encoding="utf-8")
-    all_entrypoints = "\n".join((readme, docs_index, neuron_reference))
+    mkdocs_metadata = (_repo_root() / "mkdocs.yml").read_text(encoding="utf-8")
+    all_entrypoints = "\n".join((readme, docs_index, neuron_reference, mkdocs_metadata))
 
     assert f"{counts['python_model_source_modules']} Python model source modules" in all_entrypoints
     assert f"{counts['python_model_classes']} lazy-loaded Python model classes" in all_entrypoints
@@ -305,6 +392,41 @@ def test_public_maturity_classifier_stays_beta_until_v4_release() -> None:
     assert "beta package surface" in compact
     assert "production-ready" not in compact
     assert "production ready" not in compact
+
+
+def test_package_boundary_decision_covers_current_metadata() -> None:
+    """Keep package, extras, and Rust workspace boundary decisions synchronized."""
+    root = _repo_root()
+    decision_path = root / _PACKAGE_BOUNDARY_DECISION_DOC
+    decision = decision_path.read_text(encoding="utf-8")
+    decision_lines = tuple(_compact_whitespace(line).lower() for line in decision.splitlines())
+    decision_compact = _compact_whitespace(decision).lower()
+    install_profiles = (root / "docs" / "guides" / "install_profiles.md").read_text(
+        encoding="utf-8"
+    )
+    mkdocs_nav = (root / "mkdocs.yml").read_text(encoding="utf-8")
+
+    assert "v4 package boundary decision" in decision_compact
+    assert "base wheel stays the core package surface" in decision_compact
+    assert "architecture/package_boundary_decision.md" in mkdocs_nav
+    assert "../architecture/package_boundary_decision.md" in install_profiles
+    _assert_boundary_rows_cover_tokens(
+        lines=decision_lines,
+        tokens=_project_optional_extra_names(),
+        token_kind="optional-extra",
+    )
+    _assert_boundary_rows_cover_tokens(
+        lines=decision_lines,
+        tokens=_setuptools_excluded_package_roots(),
+        token_kind="setuptools-exclude",
+    )
+    _assert_boundary_rows_cover_tokens(
+        lines=decision_lines,
+        tokens=_cargo_workspace_excludes(),
+        token_kind="cargo-workspace-exclude",
+    )
+    assert "tbd" not in decision_compact
+    assert "todo" not in decision_compact
 
 
 def test_public_claim_language_excludes_unbounded_marketing_slogans() -> None:

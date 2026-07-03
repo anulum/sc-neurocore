@@ -105,7 +105,9 @@ print(output)  # array of firing-rate probabilities
 | **Research** | robotics, physics, bio, optics, chaos, sleep, interfaces | Source only |
 | **Frontier** | analysis, viz, audio, dashboard, generative, world_model, swarm | Source only |
 
-See [Architecture](architecture/architecture.md) for the full package map.
+See [Architecture](architecture/architecture.md) for the full package map and
+[Package Boundary Decision](architecture/package_boundary_decision.md) for the
+current optional-extra, source-checkout, and Rust workspace decisions.
 
 ## Tutorials
 
