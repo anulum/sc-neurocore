@@ -63,6 +63,7 @@ Discussions = "https://github.com/anulum/sc-neurocore/discussions"
 sc-neurocore = "sc_neurocore.cli:main"
 
 [project.optional-dependencies]
+minimal = []
 core = []
 dev = ["pytest", "pytest-cov", "pytest-xdist", "filelock", "hypothesis", "mypy", "ruff", "bandit", "pyyaml", "onnx", "pint>=0.23", "mojo>=0.26.2.0; platform_system != 'Windows'", "tomli; python_version < '3.11'"]
 dev-full = ["sc-neurocore[dev]", "jax", "jaxlib", "qiskit", "pennylane", "qiskit-aer", "qiskit-ibm-runtime"]

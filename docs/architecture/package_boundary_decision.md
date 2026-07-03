@@ -61,6 +61,7 @@ they satisfy the same promotion gate:
 
 | Metadata token | Decision | Rationale |
 | --- | --- | --- |
+| `minimal` | core package | Explicit v4 alias for the base dependency set; it adds no package beyond the base wheel. |
 | `core` | core package | Alias for the base dependency set; it adds no package beyond the base wheel. |
 | `dev` | contributor extra | Contributor lint, type, test, audit, and documentation tooling. |
 | `dev-full` | contributor extra | Full contributor research stack for local validation, not a user install profile. |

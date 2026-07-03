@@ -96,7 +96,7 @@ SC-NeuroCore is positioned for neuromorphic R&D, stochastic accelerator design, 
 | Python model classes | 158 |
 | Model documentation pages | 175 |
 | Rust PyO3 model wrappers | 175 |
-| Optional extras | 25 |
+| Optional extras | 26 |
 | Python test files | 955 |
 | Public documentation pages | 561 |
 | GitHub Actions workflows | 15 |
@@ -148,6 +148,7 @@ See the full end-to-end integration demo in [`examples/zenith_hybrid_resnet.py`]
 
 ```bash
 # Add only the extras needed for the current workflow.
+pip install "sc-neurocore[minimal]"   # explicit v4 minimal profile
 pip install "sc-neurocore[core]"      # explicit base profile
 pip install "sc-neurocore[nir]"       # NIR interop
 pip install "sc-neurocore[training]"  # PyTorch-backed training
@@ -549,12 +550,18 @@ hardware toolchains.
 
 ```bash
 pip install sc-neurocore              # base package: core simulation, compiler, HDL scaffold
+pip install sc-neurocore[minimal]     # explicit v4 minimal profile
 pip install sc-neurocore[core]        # explicit base profile
 pip install sc-neurocore[training]    # PyTorch-backed training
 pip install sc-neurocore[nir]         # NIR import/export
 pip install sc-neurocore[studio]      # local web studio
 pip install sc-neurocore[bioware]     # biological closed-loop prototypes
 ```
+
+Run the dependency-light smoke path with `python examples/minimal_smoke_demo.py`.
+It exercises root public imports, stochastic bitstreams, one LIF bitstream pass,
+and packaged Verilog primitive discovery without quantum, Lava, gdsfactory,
+PyTorch, JAX, or hardware-only dependencies.
 
 Acceleration and research extras are intentionally opt-in:
 

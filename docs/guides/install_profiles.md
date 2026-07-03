@@ -20,9 +20,11 @@ pip install sc-neurocore
 ```
 
 For scripts, Dockerfiles, or lab SOPs that want every install command to name a
-profile explicitly, `core` is a stable alias for the same base dependency set:
+profile explicitly, `minimal` and `core` are stable aliases for the same base
+dependency set:
 
 ```bash
+pip install "sc-neurocore[minimal]"
 pip install "sc-neurocore[core]"
 ```
 
@@ -51,6 +53,7 @@ Current measured evidence:
 | Field | Value |
 | --- | --- |
 | Command | `python -m pip install <repo>` |
+| Explicit profile command | `pip install "sc-neurocore[minimal]"` |
 | Elapsed time | 12.942 s |
 | Installed packages | `defusedxml`, `numpy`, `pip`, `sc-neurocore`, `scipy` |
 | Heavy optional packages installed | None |
@@ -63,6 +66,18 @@ mypy, `11 passed` public API tests, and 100% isolated coverage for
 facade, invalid attribute handling, `dir()` membership, version metadata,
 install extras, packaged HDL resources, and exclusion of research-only
 polyglot source trees from the base wheel.
+
+The 30-second smoke path is:
+
+```bash
+python examples/minimal_smoke_demo.py
+```
+
+It uses the same dependency-light surface as `pip install
+"sc-neurocore[minimal]"`: root public API imports, deterministic stochastic
+bitstream generation, a `StochasticLIFNeuron` bitstream pass, and packaged
+Verilog primitive discovery. It does not import quantum, Lava, gdsfactory,
+PyTorch, JAX, or hardware-only dependencies.
 
 ## Rust engine
 
@@ -104,6 +119,7 @@ refreshed rather than ignored.
 
 | Install command | Use when | Adds |
 | --- | --- | --- |
+| `pip install "sc-neurocore[minimal]"` | Explicit v4 minimal install for 30-second smoke demos, Dockerfiles, and lab SOPs | No additional packages beyond base `numpy` / `scipy` |
 | `pip install "sc-neurocore[core]"` | Explicit base install for reproducible scripts and Dockerfiles | No additional packages beyond base `numpy` / `scipy` |
 | `pip install "sc-neurocore[training]"` | Training PyTorch-backed models | `torch` |
 | `pip install "sc-neurocore[nir]"` | Importing/exporting Neuromorphic Intermediate Representation graphs | `nir` |

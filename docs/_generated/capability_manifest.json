@@ -959,7 +959,7 @@
   "counts": {
     "github_workflows": 15,
     "model_documentation_pages": 175,
-    "optional_extras": 25,
+    "optional_extras": 26,
     "public_api_exports": 44,
     "public_documentation_pages": 561,
     "python_model_classes": 158,
@@ -2757,6 +2757,7 @@
       "julia",
       "lava",
       "license",
+      "minimal",
       "mpi",
       "nir",
       "optics",

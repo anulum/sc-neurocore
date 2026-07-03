@@ -9,8 +9,9 @@
 """Verify all __all__ exports are importable and no regressions occur."""
 
 from pathlib import Path
+import runpy
 import sys
-from typing import Any
+from typing import Any, cast
 
 if sys.version_info >= (3, 11):
     import tomllib
@@ -21,15 +22,20 @@ import pytest
 import sc_neurocore
 
 
+def _repo_root() -> Path:
+    """Return the repository root used by install-profile contract checks."""
+    return Path(__file__).resolve().parents[1]
+
+
 def _project_metadata() -> dict[str, Any]:
     """Load the project metadata from the repository pyproject file."""
-    pyproject = Path(__file__).resolve().parents[1] / "pyproject.toml"
+    pyproject = _repo_root() / "pyproject.toml"
     return tomllib.loads(pyproject.read_text(encoding="utf-8"))
 
 
 def _package_root() -> Path:
     """Return the source-tree package root used by package-data tests."""
-    return Path(__file__).resolve().parents[1] / "src" / "sc_neurocore"
+    return _repo_root() / "src" / "sc_neurocore"
 
 
 def test_all_symbols_importable() -> None:
@@ -75,7 +81,9 @@ def test_install_extras_cover_documented_workflow_groups() -> None:
     extras = _project_metadata()["project"]["optional-dependencies"]
     dependencies = _project_metadata()["project"]["dependencies"]
 
+    assert extras["minimal"] == []
     assert extras["core"] == []
+    assert extras["minimal"] == extras["core"]
     assert extras["hdl"] == ["pint>=0.23"]
     assert extras["license"] == ["httpx>=0.27"]
     assert all(
@@ -104,6 +112,50 @@ def test_install_extras_cover_documented_workflow_groups() -> None:
         "pennylane",
         "qiskit-aer",
     } <= full
+
+
+def test_minimal_install_profile_is_documented_and_dependency_light() -> None:
+    """The minimal profile stays documented, empty, and free of opt-in stacks."""
+    root = _repo_root()
+    extras = _project_metadata()["project"]["optional-dependencies"]
+    readme = (root / "README.md").read_text(encoding="utf-8")
+    install_profiles = (root / "docs" / "guides" / "install_profiles.md").read_text(
+        encoding="utf-8"
+    )
+    package_boundary = (root / "docs" / "architecture" / "package_boundary_decision.md").read_text(
+        encoding="utf-8"
+    )
+    demo_source = (root / "examples" / "minimal_smoke_demo.py").read_text(encoding="utf-8")
+    documented_surfaces = "\n".join((readme, install_profiles, package_boundary))
+    banned_imports = (
+        "import torch",
+        "import jax",
+        "import qiskit",
+        "import pennylane",
+        "import lava",
+        "import gdsfactory",
+    )
+
+    assert extras["minimal"] == []
+    assert 'pip install "sc-neurocore[minimal]"' in documented_surfaces
+    assert "examples/minimal_smoke_demo.py" in documented_surfaces
+    for banned_import in banned_imports:
+        assert banned_import not in demo_source
+
+
+def test_minimal_smoke_demo_runs_under_profile_budget() -> None:
+    """The minimal smoke demo runs quickly without loading opt-in stacks."""
+    heavy_modules = ("torch", "jax", "qiskit", "pennylane", "lava", "gdsfactory")
+    loaded_before = {module for module in heavy_modules if module in sys.modules}
+    namespace = runpy.run_path(str(_repo_root() / "examples" / "minimal_smoke_demo.py"))
+    main = namespace["main"]
+
+    assert callable(main)
+    payload = cast(dict[str, Any], main())
+    assert cast(float, payload["elapsed_seconds"]) < 30.0
+    assert cast(int, payload["hdl_primitive_count"]) >= 1
+    assert cast(int, payload["spike_count"]) >= 0
+    assert set(cast(list[str], payload["heavy_modules_loaded"])) <= loaded_before
 
 
 def test_hdl_install_profile_packages_source_artefacts() -> None:
