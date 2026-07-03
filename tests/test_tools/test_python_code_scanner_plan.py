@@ -74,13 +74,26 @@ def _manifest_with_scanners(root: Path, *, missing_required: bool = False) -> di
             },
             {
                 "name": "semgrep",
-                "command": "semgrep scan --config p/ci",
+                "command": (
+                    "semgrep scan --config .semgrep.yml --json --error "
+                    "--output security/semgrep.json src tools"
+                ),
                 "inputs": [
+                    {
+                        "path": ".semgrep.yml",
+                        "purpose": "semgrep policy",
+                        "required": True,
+                    },
                     {
                         "path": "src",
                         "purpose": "python code",
-                        "required": False,
-                    }
+                        "required": True,
+                    },
+                    {
+                        "path": "tools",
+                        "purpose": "tooling code",
+                        "required": True,
+                    },
                 ],
             },
             {
@@ -126,6 +139,8 @@ def test_python_code_plan_includes_expected_scanners_and_is_deterministic(
     (tmp_path / "requirements").mkdir()
     (tmp_path / "requirements" / "release.txt").write_text("", encoding="utf-8")
     (tmp_path / "src").mkdir()
+    (tmp_path / "tools").mkdir()
+    (tmp_path / ".semgrep.yml").write_text("rules: []\n", encoding="utf-8")
     (tmp_path / "pyrightconfig.json").write_text("{}", encoding="utf-8")
 
     monkeypatch.setattr(tool, "_input_exists", exists)
@@ -153,6 +168,8 @@ def test_plan_does_not_execute_scanner_commands(
     (tmp_path / "requirements").mkdir()
     (tmp_path / "requirements" / "release.txt").write_text("", encoding="utf-8")
     (tmp_path / "src").mkdir()
+    (tmp_path / "tools").mkdir()
+    (tmp_path / ".semgrep.yml").write_text("rules: []\n", encoding="utf-8")
     (tmp_path / "pyrightconfig.json").write_text("{}", encoding="utf-8")
 
     monkeypatch.setattr(tool, "_input_exists", lambda _path: True)

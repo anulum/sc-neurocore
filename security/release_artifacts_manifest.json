@@ -63,6 +63,11 @@
       "required": false
     },
     {
+      "id": "hypothesis_fuzz_summary",
+      "path": "security/hypothesis_fuzz_summary.json",
+      "required": false
+    },
+    {
       "id": "lightweight_scanner_summary",
       "path": "security/lightweight_scanner_summary.json",
       "required": false
@@ -108,8 +113,18 @@
       "required": false
     },
     {
+      "id": "release_security_sweep_summary",
+      "path": "security/release_security_sweep_summary.json",
+      "required": false
+    },
+    {
       "id": "ruff",
       "path": "security/ruff.json",
+      "required": false
+    },
+    {
+      "id": "rust_proptest_summary",
+      "path": "security/rust_proptest_summary.json",
       "required": false
     },
     {
@@ -128,6 +143,11 @@
       "required": false
     },
     {
+      "id": "semgrep_summary",
+      "path": "security/semgrep_summary.json",
+      "required": false
+    },
+    {
       "id": "syft_cyclonedx",
       "path": "security/sbom.cdx.json",
       "required": false
@@ -135,6 +155,11 @@
     {
       "id": "syft_cyclonedx_summary",
       "path": "security/syft_cyclonedx_summary.json",
+      "required": false
+    },
+    {
+      "id": "supply_chain_audit",
+      "path": "security/supply_chain_audit.json",
       "required": false
     },
     {

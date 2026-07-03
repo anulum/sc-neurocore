@@ -31,6 +31,32 @@ jobs:
         with:
           python-version: "3.12"
 
+      - uses: actions/setup-go@4a3601121dd01d1626a1e23e37211e3254c1c06c # v6.4.0
+        with:
+          go-version: "1.26.3"
+
+      - uses: dtolnay/rust-toolchain@631a55b12751854ce901bb631d5902ceb48146f7 # stable
+
+      - uses: dtolnay/rust-toolchain@631a55b12751854ce901bb631d5902ceb48146f7 # nightly
+        with:
+          toolchain: nightly
+
+      - name: Install release security sweep tools
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq shellcheck
+          python -m pip install --require-hashes -r requirements/security-scanners.txt
+          python -m pip install --require-hashes -r requirements/semgrep.txt
+          python -m pip install --require-hashes -r requirements/fuzz.txt
+          go install github.com/rhysd/actionlint/cmd/actionlint@v1.7.12
+          go install github.com/google/osv-scanner/v2/cmd/osv-scanner@v2.3.8
+          go install github.com/anchore/syft/cmd/syft@v1.20.0
+          echo "$(go env GOPATH)/bin" >> "$GITHUB_PATH"
+          cargo install cargo-audit --version 0.22.1 --locked
+          cargo install cargo-deny --version 0.19.6 --locked
+          cargo +stable install cargo-fuzz --version 0.13.1 --locked
+          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
+
       - name: Build sdist
         run: |
           pip install --require-hashes -r requirements/release.txt
@@ -42,9 +68,10 @@ jobs:
       - name: Generate release security packet
         run: |
           mkdir -p security/ci-security-packet
-          python tools/security_scan/ci_security_packet.py \
+          python tools/security_scan/release_security_sweep.py \
             --output-dir security/ci-security-packet \
-            --fail-on-missing-required
+            --include-fuzz \
+            --fuzz-max-total-time 300
 
       - name: Extract changelog for this tag
         id: changelog
@@ -68,3 +95,4 @@ jobs:
             dist/sc_neurocore-*
             sbom.json
             security/ci-security-packet/release_security_artifact_index.json
+            security/ci-security-packet/security/release_security_sweep_summary.json

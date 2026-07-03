@@ -10,8 +10,13 @@ SC-NeuroCore - Security scanner CI packet
 
 # Security Scanner CI Packet
 
-The current security-scanner CI packet is an offline dry-run planning layer.
-It does not execute heavyweight scanner binaries in CI yet.
+The security-scanner CI packet combines deterministic planning with executable
+scanner lanes. The scheduled scanner workflow keeps the heavier fuzz and
+benchmark lanes separate from push and pull-request CI. The tag release workflow
+uses `tools/security_scan/release_security_sweep.py` to run the release packet,
+scanner lanes, repository-owned Semgrep policy, supply-chain audit, bounded
+Hypothesis subset, Rust proptest subset, bounded cargo-fuzz subset, and final
+artifact index in one sequence.
 
 ## What the current workflow generates
 
@@ -21,6 +26,11 @@ It does not execute heavyweight scanner binaries in CI yet.
 - A model/data licence matrix copy at `security/model_data_license_matrix.json`.
 - A release security artifact index from `security/release_artifacts_manifest.json` with
   `tools/security_scan/release_security_artifact_index.py`.
+- A release sweep summary at `security/release_security_sweep_summary.json`
+  when the tag workflow runs `tools/security_scan/release_security_sweep.py`.
+- A Semgrep summary at `security/semgrep_summary.json` when the tag workflow
+  runs the release-only `tools/security_scan/run_semgrep_scanners.py` lane
+  against `.semgrep.yml`.
 - A lightweight scanner lane summary at
   `security/lightweight_scanner_summary.json` when CI runs the executable
   `ruff`, `bandit`, and `actionlint` lane.
@@ -55,6 +65,15 @@ It does not execute heavyweight scanner binaries in CI yet.
   default workflow yet.
 - Syft/CycloneDX SBOM generation writes `security/sbom.cdx.json` and validates
   the output with `security/syft_cyclonedx_summary.json`.
+- The tag release sweep writes `security/semgrep.json` and
+  `security/semgrep_summary.json` from pinned `requirements/semgrep.txt` and
+  the repository-owned `.semgrep.yml` policy.
+- The tag release sweep writes `security/supply_chain_audit.json` after checking
+  the generated SBOM and release requirement hashes with
+  `tools/supply_chain_audit.py`.
+- The tag release sweep writes `security/hypothesis_fuzz_summary.json` for the
+  bounded Python fuzz subset and `security/rust_proptest_summary.json` for the
+  Rust proptest subset.
 - The nightly/manual cargo-fuzz lane writes `security/cargo_fuzz_summary.json`
   plus per-target reports such as `security/cargo_fuzz_ir_parser.json`; it runs
   outside push and pull-request CI with a bounded total time budget and installs
@@ -76,8 +95,9 @@ It does not execute heavyweight scanner binaries in CI yet.
 
 ## What the packet is and is not
 
-This packet checks availability and planning consistency (manifest shape, required input
-paths, and required artifact presence) before binaries are launched.
+This packet checks availability and planning consistency (manifest shape,
+required input paths, and required artifact presence) before release binaries are
+launched.
 
 It is therefore a mixed execution/planning envelope:
 
@@ -93,14 +113,20 @@ It is therefore a mixed execution/planning envelope:
   the repo-wide type baseline is triaged,
 - Syft/CycloneDX SBOM generation is executed in the main packet lane and fails
   closed if the SBOM is missing or not a CycloneDX JSON document,
+- Semgrep is executed by the tag release sweep from `.semgrep.yml` and fails
+  closed on findings because the lane uses `--error`,
 - cargo-fuzz commands are executed by the separate scheduled/manual
-  `nightly-cargo-fuzz` workflow job,
+  `nightly-cargo-fuzz` workflow job and by the tag release sweep when
+  `--include-fuzz` is set,
+- bounded Hypothesis and Rust proptest subsets are executed by the tag release
+  sweep,
 - benchmark-regression commands are executed by the separate scheduled/manual
   `nightly-benchmark-regression` workflow job,
-- heavier scanner commands are represented as entries in the plan,
-- heavy binaries are intentionally deferred, and
-- no direct `trivy fs`, `cargo-fuzz`, `gitleaks`, `semgrep`, or similar
-  heavyweight commands are executed in this stage.
+- heavier scanner commands such as Trivy FS and Gitleaks remain represented as
+  manifest entries until their pinned install lanes are promoted,
+  and
+- no direct `trivy fs`, `cargo-fuzz`, `gitleaks`, or similar heavyweight
+  commands are executed in push or pull-request CI.
 
 After the lightweight lane runs, the workflow regenerates
 `release_security_artifact_index.json` against `security/ci-security-packet` so
@@ -117,6 +143,8 @@ the uploaded index reflects the scanner artefacts that were actually produced.
 - `python tools/security_scan/run_osv_scanners.py --output-dir security/ci-security-packet`
 - `python tools/security_scan/run_typing_scanners.py --output-dir security/ci-security-packet`
 - `python tools/security_scan/run_syft_cyclonedx_scanners.py --output-dir security/ci-security-packet`
+- `python tools/security_scan/run_semgrep_scanners.py --output-dir security/ci-security-packet`
+- `python tools/security_scan/release_security_sweep.py --output-dir security/ci-security-packet --include-fuzz --fuzz-max-total-time 300`
 - `python tools/security_scan/run_cargo_fuzz_scanners.py --output-dir security/cargo-fuzz-packet --target all --max-total-time 300 --build-timeout 900`
 - `python tools/security_scan/run_benchmark_regression_scanners.py --baseline benchmarks/baselines/security_side_channel_benchmark.json --current security/benchmark-current/security_side_channel_benchmark.json --output security/benchmark-regression-packet/security/benchmark_regression.json --max-regression-pct 5.0`
 - `python tools/security_scan/python_code_scanner_plan.py`
@@ -135,7 +163,8 @@ The only OSV exception is a bounded `RUSTSEC-2024-0436` entry for the transitive
 `wgpu -> metal -> paste` path; `cargo audit` classifies that item as an
 unmaintained warning, and the exception expires on 2026-08-31 unless the GPU
 backend dependency path is upgraded or replaced earlier.
-On tagged releases, `.github/workflows/release.yml` builds the same packet with
-`--fail-on-missing-required` and attaches
-`security/ci-security-packet/release_security_artifact_index.json` to the
-GitHub Release assets.
+On tagged releases, `.github/workflows/release.yml` runs the release security
+sweep and attaches both
+`security/ci-security-packet/release_security_artifact_index.json` and
+`security/ci-security-packet/security/release_security_sweep_summary.json` to
+the GitHub Release assets.

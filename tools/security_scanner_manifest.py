@@ -158,18 +158,21 @@ _MANDATORY_SCANNERS = (
         ecosystem="code",
         cadence="on-push",
         blocking_policy="blocking",
-        command="semgrep scan --config p/ci --config p/python --config p/security-audit --json --output=security/semgrep.json",
+        command=(
+            "semgrep scan --config .semgrep.yml --json --error "
+            "--output security/semgrep.json src tools"
+        ),
         inputs=(
             _input(
                 path=".semgrep.yml",
-                purpose="Optional project-specific Semgrep policy override",
-                required=False,
+                purpose="Repository-owned Semgrep release policy",
             ),
-            _input(path="src", purpose="Python and Rust source trees", required=False),
+            _input(path="src", purpose="Python source tree"),
+            _input(path="tools", purpose="Security and release tooling"),
         ),
         owner="SC-NeuroCore security lane owner",
         noise="low",
-        pinned_version="semgrep==1.56.0",
+        pinned_version="semgrep==1.168.0",
         allowed_to_fail_rationale=None,
     ),
     ScannerManifestEntry(

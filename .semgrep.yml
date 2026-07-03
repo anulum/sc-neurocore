@@ -1,0 +1,29 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Commercial license available
+# Copyright (c) Concepts 1996-2026 Miroslav Sotek. All rights reserved.
+# Copyright (c) Code 2020-2026 Miroslav Sotek. All rights reserved.
+# ORCID: 0009-0009-3560-0851
+# Contact: www.anulum.li | protoscience@anulum.li
+# SC-NeuroCore Semgrep release policy
+
+rules:
+  - id: sc-neurocore.python-subprocess-shell-true
+    message: Avoid shell=True in subprocess calls; pass argv lists and explicit cwd/env instead.
+    severity: ERROR
+    languages:
+      - python
+    pattern-either:
+      - pattern: subprocess.run(..., shell=True, ...)
+      - pattern: subprocess.call(..., shell=True, ...)
+      - pattern: subprocess.check_call(..., shell=True, ...)
+      - pattern: subprocess.check_output(..., shell=True, ...)
+      - pattern: subprocess.Popen(..., shell=True, ...)
+
+  - id: sc-neurocore.python-unsafe-yaml-load
+    message: Use yaml.safe_load for untrusted YAML.
+    severity: ERROR
+    languages:
+      - python
+    pattern-either:
+      - pattern: yaml.load(...)
+      - pattern: ruamel.yaml.load(...)

@@ -30,6 +30,17 @@ Run the focused Python fuzz/property suite:
 pytest tests/test_fuzz_*.py -q
 ```
 
+Tagged releases run a bounded Hypothesis subset through the release security
+sweep:
+
+```bash
+python -m pip install --require-hashes -r requirements/fuzz.txt
+python tools/security_scan/release_security_sweep.py \
+  --output-dir security/ci-security-packet \
+  --include-fuzz \
+  --fuzz-max-total-time 300
+```
+
 Dedicated Rust `cargo-fuzz` targets now start under `fuzz/` for the SC IR
 parser and core bitstream operations. Rust parser and SIMD safety evidence also
 comes from the existing Rust tests, property sweeps, and the documented
@@ -53,6 +64,9 @@ python tools/supply_chain_audit.py --strict
 
 Use `--strict` before publishing release artifacts so SBOM metadata drift,
 unhashed release requirements, and dependency-audit failures block the release.
+The tag workflow runs this check after Syft writes
+`security/ci-security-packet/security/sbom.cdx.json` and records
+`security/ci-security-packet/security/supply_chain_audit.json`.
 
 ### Static analysis
 
@@ -60,6 +74,15 @@ Run Bandit on Python sources:
 
 ```bash
 bandit -r src/sc_neurocore/ -c pyproject.toml -q
+```
+
+Tagged releases also run Semgrep from the repository-owned `.semgrep.yml`
+policy instead of registry-hosted rule packs:
+
+```bash
+python -m pip install --require-hashes -r requirements/semgrep.txt
+python tools/security_scan/run_semgrep_scanners.py \
+  --output-dir security/ci-security-packet
 ```
 
 CI also carries the broader quality gates documented in the release process.
