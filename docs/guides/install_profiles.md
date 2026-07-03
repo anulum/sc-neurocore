@@ -86,12 +86,23 @@ build is present, SC-NeuroCore detects `sc_neurocore_engine` at import time and
 uses it for supported hot paths. If it is absent, Python/NumPy fallbacks remain
 available.
 
-Use a source checkout when building the engine locally:
+Release automation builds pre-built `sc_neurocore_engine` wheels with `maturin`
+for Python 3.10-3.14 on Linux x86_64/aarch64, macOS, and Windows. Prefer a
+matching release wheel:
+
+```bash
+python -m pip install sc_neurocore_engine
+```
+
+If no matching wheel exists for the active platform or Python version, use a
+source checkout and a local Rust toolchain:
 
 ```bash
 git clone https://github.com/anulum/sc-neurocore.git
 cd sc-neurocore
-maturin develop
+python -m pip install --require-hashes -r requirements/maturin.txt
+cd bridge
+python -m maturin develop --release
 ```
 
 Check what the current environment can use:

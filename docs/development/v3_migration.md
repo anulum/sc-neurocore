@@ -152,11 +152,22 @@ tests skip gracefully.
 
 ### Distributable Wheels
 
-Pre-built wheels available for:
-- Linux (x86_64, aarch64)
-- macOS (x86_64, arm64)
-- Windows (x86_64)
-- Python 3.10, 3.11, 3.12, 3.13, 3.14
+Release automation builds pre-built `sc_neurocore_engine` wheels with
+`maturin` for Python 3.10-3.14 on Linux x86_64/aarch64, macOS, and Windows.
+Prefer a matching release wheel:
+
+```bash
+python -m pip install sc_neurocore_engine
+```
+
+If no wheel exists for the active platform or Python version, build from the
+source checkout with a local Rust toolchain:
+
+```bash
+python -m pip install --require-hashes -r requirements/maturin.txt
+cd bridge
+python -m maturin develop --release
+```
 
 ## NumPy Zero-Copy Interop and Batch Operations (February 2026)
 

@@ -163,8 +163,22 @@ dependency matrix and research-only boundaries.
 
 The optional Rust engine provides SIMD-accelerated simulation, 175 Rust PyO3
 model wrappers, a 161-model NetworkRunner dispatch list, and fused E-I network
-simulation. Pre-built wheels are available through repository release assets or
-source builds when present in the local environment.
+simulation. Release automation builds pre-built `sc_neurocore_engine` wheels
+with `maturin` for Python 3.10-3.14 on Linux x86_64/aarch64, macOS, and Windows.
+Use a matching release wheel first:
+
+```bash
+python -m pip install sc_neurocore_engine
+```
+
+If no matching wheel exists for your platform or Python version, build the local
+bridge from a source checkout with a local Rust toolchain:
+
+```bash
+python -m pip install --require-hashes -r requirements/maturin.txt
+cd bridge
+python -m maturin develop --release
+```
 
 The committed Brunel balanced-network scaling artefact
 `benchmarks/results/rust_scaling_benchmark.json` records 39-202x speedups
