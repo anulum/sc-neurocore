@@ -25,10 +25,13 @@ Bounded model checking (``mode="bmc"``) is the default and is *complete* for a
 design that reaches a stationary state within the checked depth — for a bounded
 accumulator that stops updating after a fixed number of steps, a BMC depth past
 that step count exhausts the reachable state space. k-induction (``mode="prove"``)
-is offered for genuinely unbounded designs but is not the default: an accumulator
-invariant such as ``acc <= BOUND`` is not inductive on its own (the successor
-state ``acc + step`` can exceed ``BOUND`` from an unreachable predecessor), so it
-reports spurious counterexamples without a strengthening reachable-state invariant.
+proves an *unbounded* property in a way that does not scale with the step count,
+but needs an inductive invariant: ``acc <= BOUND`` alone is not inductive (the
+successor ``acc + step`` can exceed ``BOUND`` from an unreachable predecessor), so
+without a strengthening reachable-state invariant such as
+``acc <= step_count * per_step`` the induction step does not converge and the run
+comes back *inconclusive* (``proven=False``, ``verdict="UNKNOWN"``, no
+counterexample) rather than proved or disproved.
 """
 
 from __future__ import annotations
@@ -192,6 +195,20 @@ def prove_property(
             returncode=run.returncode,
             summary=run.summary,
         )
+    if run.verdict == "FAIL":
+        return PropertyProofResult(
+            proven=False,
+            verdict=run.verdict,
+            mode=mode,
+            depth=depth,
+            engine=engine,
+            returncode=run.returncode,
+            counterexample=run.counterexample or "assertion failed",
+            trace_path=run.trace_path,
+            summary=run.summary,
+        )
+    # Inconclusive k-induction: the base case held but induction did not converge,
+    # so nothing was proved and no counterexample exists — the property may hold.
     return PropertyProofResult(
         proven=False,
         verdict=run.verdict,
@@ -199,7 +216,5 @@ def prove_property(
         depth=depth,
         engine=engine,
         returncode=run.returncode,
-        counterexample=run.counterexample or "assertion failed",
-        trace_path=run.trace_path,
         summary=run.summary,
     )

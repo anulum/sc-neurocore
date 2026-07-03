@@ -34,10 +34,17 @@ from pathlib import Path
 __all__ = [
     "SbyRun",
     "formal_tools_available",
+    "is_inconclusive",
     "parse_verdict",
     "raise_for_incomplete",
     "run_sby_task",
 ]
+
+# SymbiYosys return code for an inconclusive task: the outcome is neither a proof
+# nor a counterexample. In particular a k-induction (``mode prove``) run whose base
+# case holds but whose induction step does not converge reports ``UNKNOWN`` with
+# this code — the property may hold yet was not proved.
+_INCONCLUSIVE_RC = 4
 
 _SUMMARY_RE = re.compile(
     r"DONE \((?P<verdict>PASS|FAIL|ERROR|UNKNOWN|TIMEOUT|[A-Z]+), rc=(?P<rc>\d+)\)"
@@ -194,14 +201,37 @@ def run_sby_task(workdir: Path, sby_name: str, *, timeout_s: float) -> SbyRun:
     )
 
 
-def raise_for_incomplete(run: SbyRun, *, what: str) -> None:
-    """Raise when the verdict is neither ``PASS`` nor ``FAIL``.
+def is_inconclusive(run: SbyRun) -> bool:
+    """Return ``True`` for an inconclusive result — proved nothing, disproved nothing.
 
-    A ``PASS`` (proved) or ``FAIL`` (disproved with a counterexample) is a real
-    outcome about the checked property; any other verdict — ``ERROR``,
-    ``UNKNOWN``, ``TIMEOUT`` — is a tool or setup failure and must not be read as
-    a claim about the design. Callers invoke this before interpreting a
-    ``PASS`` / ``FAIL`` result so a broken run never masquerades as a verdict.
+    A k-induction (``mode prove``) run whose base case holds but whose induction
+    step does not converge reports ``UNKNOWN`` with :data:`_INCONCLUSIVE_RC`: the
+    property may well be true, but was not proved and no counterexample was found
+    (the induction step reached the goal from an *unreachable* predecessor). This
+    is a real, honest outcome distinct from both a disproof and a tool failure.
+
+    Parameters
+    ----------
+    run : SbyRun
+        The raw run to inspect.
+
+    Returns
+    -------
+    bool
+        ``True`` only for the ``UNKNOWN`` / inconclusive-return-code signature.
+    """
+    return run.verdict == "UNKNOWN" and run.rc == _INCONCLUSIVE_RC
+
+
+def raise_for_incomplete(run: SbyRun, *, what: str) -> None:
+    """Raise when the run is a tool or setup failure, not a verdict about the design.
+
+    A ``PASS`` (proved) or ``FAIL`` (disproved with a counterexample) is a
+    conclusive outcome, and an inconclusive k-induction result
+    (:func:`is_inconclusive`) is a real — if unhelpful — outcome; none of these
+    raise. Any *other* verdict — ``ERROR``, a crash with no ``DONE`` line, a
+    timeout — is a tool or setup failure that must not be read as a claim about
+    the design, so callers invoke this before interpreting a result.
 
     Parameters
     ----------
@@ -214,9 +244,9 @@ def raise_for_incomplete(run: SbyRun, *, what: str) -> None:
     Raises
     ------
     RuntimeError
-        When ``run.verdict`` is neither ``"PASS"`` nor ``"FAIL"``.
+        When the run neither proved, disproved, nor came back inconclusive.
     """
-    if run.verdict in ("PASS", "FAIL"):
+    if run.verdict in ("PASS", "FAIL") or is_inconclusive(run):
         return
     tail = "\n".join(run.stdout.splitlines()[-15:])
     raise RuntimeError(f"{what} did not complete (verdict={run.verdict}, rc={run.rc}):\n{tail}")

@@ -39,6 +39,18 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
   verdict-parse boundary. (yosys 0.33 silently ignores SystemVerilog `bind`, so
   the checker is instantiated explicitly under `` `ifdef FORMAL `` rather than
   bound in.)
+- Unbounded k-induction for the adaptive-precision property proof. The bounded
+  monitor's assertion checker now carries a strengthening lemma
+  (`err_acc <= step_count * per_step`) that is 1-inductive, so
+  `write_precision_formal_evidence_bundle(..., unbounded=True)` (and
+  `prove_property(mode="prove")`) prove the obligations by k-induction — an
+  unbounded proof whose depth is a small constant independent of the bitstream
+  length, where bounded model checking's completeness depth scales with it. The
+  lemma is trivially true under BMC, so both modes share one checker. k-induction
+  adds a third outcome to the runners: an *inconclusive* result (the base case
+  holds but the induction step does not converge) is recorded as `proven=False`
+  with an `UNKNOWN` verdict and no counterexample — never a fabricated pass — and
+  is distinguished from a tool failure, which still raises.
 - GPU Izhikevich neuron batch runner (`sc_neurocore_engine.GpuIzhikevichBatch`, behind
   the Rust `gpu` feature), extending the GPU neuron-dynamics path. A wgpu/WGSL compute
   shader runs one thread per neuron, each looping all steps internally with a constant

@@ -57,6 +57,43 @@ module bad_sva(input logic clk, input logic [3:0] c);
 endmodule
 """
 
+# A bounded accumulator: adds a per-step-bounded increment for a fixed number of
+# steps. ``acc <= 128`` is true but not 1-inductive, so k-induction needs the
+# strengthening ``acc <= sc * 8``.
+_ACC_RTL = """`timescale 1ns/1ps
+module acc(input wire clk, input wire [9:0] step, output wire [9:0] acc_o, output wire [4:0] sc_o);
+    reg [9:0] acc = 10'd0;
+    reg [4:0] sc = 5'd0;
+    always @(posedge clk) if (sc < 5'd16) begin acc <= acc + step; sc <= sc + 5'd1; end
+    assign acc_o = acc;
+    assign sc_o = sc;
+`ifdef FORMAL
+    acc_sva sva_i (.clk(clk), .step(step), .acc(acc), .sc(sc));
+`endif
+endmodule
+"""
+# Strengthened checker: the ``acc <= sc * 8`` lemma makes k-induction converge.
+_ACC_SVA_STRONG = """`timescale 1ns/1ps
+module acc_sva(input logic clk, input logic [9:0] step, input logic [9:0] acc, input logic [4:0] sc);
+    always @(posedge clk) begin
+        assume (step <= 10'd8);
+        assert (acc <= sc * 8);
+        assert (sc <= 5'd16);
+        assert (acc <= 10'd128);
+    end
+endmodule
+"""
+# Weak checker: the target bound alone — true, but not 1-inductive, so k-induction
+# comes back inconclusive (base case holds, induction does not converge).
+_ACC_SVA_WEAK = """`timescale 1ns/1ps
+module acc_sva(input logic clk, input logic [9:0] step, input logic [9:0] acc, input logic [4:0] sc);
+    always @(posedge clk) begin
+        assume (step <= 10'd8);
+        assert (acc <= 10'd128);
+    end
+endmodule
+"""
+
 
 def _fake_run(**fields: object) -> SbyRun:
     base = {"verdict": "PASS", "rc": 0, "returncode": 0}
@@ -171,6 +208,23 @@ class TestProvePropertyPureMapping:
         with pytest.raises(RuntimeError, match="property proof did not complete"):
             prove_property(_CAP_RTL, _CAP_SVA, top="cap", workdir=tmp_path)
 
+    def test_inconclusive_kinduction_maps_to_unproven_without_counterexample(
+        self, monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+    ) -> None:
+        monkeypatch.setattr(
+            formal_property_check, "formal_tools_available", lambda engine="z3": True
+        )
+        monkeypatch.setattr(
+            formal_property_check,
+            "run_sby_task",
+            lambda *a, **k: _fake_run(verdict="UNKNOWN", rc=4, returncode=4),
+        )
+        result = prove_property(_ACC_RTL, _ACC_SVA_WEAK, top="acc", mode="prove", workdir=tmp_path)
+        assert result.proven is False
+        assert result.verdict == "UNKNOWN"
+        assert result.counterexample is None
+        assert result.trace_path is None
+
 
 @_needs_formal
 class TestProvePropertyEndToEnd:
@@ -204,3 +258,22 @@ class TestProvePropertyEndToEnd:
         result = prove_property(_CAP_RTL, _CAP_SVA, top="cap", depth=6)
         assert result.proven is True
         assert (tmp_path / "cap_property_work").is_dir()
+
+    def test_kinduction_with_strengthening_proves_unbounded(self, tmp_path: Path) -> None:
+        # The strengthening lemma makes the accumulator bound 1-inductive, so
+        # k-induction proves it unboundedly at a small depth independent of length.
+        result = prove_property(
+            _ACC_RTL, _ACC_SVA_STRONG, top="acc", mode="prove", depth=8, workdir=tmp_path
+        )
+        assert result.proven is True
+        assert result.verdict == "PASS"
+
+    def test_kinduction_without_strengthening_is_inconclusive(self, tmp_path: Path) -> None:
+        # The target bound alone is true but not inductive: base case holds, the
+        # induction step does not converge -> inconclusive, not disproved.
+        result = prove_property(
+            _ACC_RTL, _ACC_SVA_WEAK, top="acc", mode="prove", depth=8, workdir=tmp_path
+        )
+        assert result.proven is False
+        assert result.verdict == "UNKNOWN"
+        assert result.counterexample is None

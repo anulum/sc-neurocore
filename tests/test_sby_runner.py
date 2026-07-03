@@ -25,6 +25,7 @@ from sc_neurocore.compiler import _sby_runner
 from sc_neurocore.compiler._sby_runner import (
     SbyRun,
     formal_tools_available,
+    is_inconclusive,
     parse_verdict,
     raise_for_incomplete,
     run_sby_task,
@@ -87,6 +88,24 @@ class TestParseVerdict:
         assert parse_verdict("DONE (FAIL, rc=2)") == ("FAIL", 2)
 
 
+class TestIsInconclusive:
+    """The inconclusive k-induction signature (UNKNOWN, rc == 4)."""
+
+    def test_unknown_rc4_is_inconclusive(self) -> None:
+        assert is_inconclusive(SbyRun(verdict="UNKNOWN", rc=4, returncode=4)) is True
+
+    def test_pass_is_not_inconclusive(self) -> None:
+        assert is_inconclusive(SbyRun(verdict="PASS", rc=0, returncode=0)) is False
+
+    def test_error_is_not_inconclusive(self) -> None:
+        assert is_inconclusive(SbyRun(verdict="ERROR", rc=16, returncode=16)) is False
+
+    def test_unknown_without_rc4_is_not_inconclusive(self) -> None:
+        # A crashed run with no DONE line parses to (UNKNOWN, -1) — a tool failure,
+        # not an inconclusive proof.
+        assert is_inconclusive(SbyRun(verdict="UNKNOWN", rc=-1, returncode=1)) is False
+
+
 class TestRaiseForIncomplete:
     """The verdict-completeness guard."""
 
@@ -96,12 +115,16 @@ class TestRaiseForIncomplete:
     def test_fail_does_not_raise(self) -> None:
         raise_for_incomplete(SbyRun(verdict="FAIL", rc=2, returncode=2), what="property proof")
 
+    def test_inconclusive_does_not_raise(self) -> None:
+        # A base-case-passed / induction-inconclusive k-induction is a real outcome.
+        raise_for_incomplete(SbyRun(verdict="UNKNOWN", rc=4, returncode=4), what="property proof")
+
     def test_error_raises_with_label_and_tail(self) -> None:
         run = SbyRun(verdict="ERROR", rc=16, returncode=16, stdout="line1\nboom\n")
         with pytest.raises(RuntimeError, match="property proof did not complete"):
             raise_for_incomplete(run, what="property proof")
 
-    def test_unknown_raises(self) -> None:
+    def test_crash_without_done_line_raises(self) -> None:
         with pytest.raises(RuntimeError, match="verdict=UNKNOWN"):
             raise_for_incomplete(SbyRun(verdict="UNKNOWN", rc=-1, returncode=1), what="proof")
 

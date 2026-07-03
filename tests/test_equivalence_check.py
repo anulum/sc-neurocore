@@ -238,6 +238,25 @@ class TestVerdictMapping:
                 workdir=tmp_path,
             )
 
+    def test_inconclusive_kinduction_maps_to_unproven(
+        self, monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+    ) -> None:
+        from sc_neurocore.compiler._sby_runner import SbyRun
+
+        self._patch(monkeypatch, SbyRun(verdict="UNKNOWN", rc=4, returncode=4))
+        result = prove_equivalence(
+            _TINY_DUT,
+            _TINY_REF,
+            _TINY_PORTS,
+            dut_top="tiny_dut",
+            ref_top="tiny_ref",
+            mode="prove",
+            workdir=tmp_path,
+        )
+        assert result.proven is False
+        assert result.verdict == "UNKNOWN"
+        assert result.counterexample is None
+
 
 @_needs_formal
 class TestEquivalenceProof:

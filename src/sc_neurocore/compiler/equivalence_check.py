@@ -122,11 +122,16 @@ def _generate_sby(
 def _result_from_run(run: SbyRun, *, mode: str, depth: int, engine: str) -> EquivalenceResult:
     """Map a raw :class:`SbyRun` onto an :class:`EquivalenceResult`.
 
+    A ``PASS`` yields ``proven=True``; a ``FAIL`` yields ``proven=False`` with the
+    counterexample; an inconclusive k-induction result (``mode="prove"`` whose
+    induction step did not converge) yields ``proven=False`` with the ``UNKNOWN``
+    verdict and *no* counterexample — the modules may still be equivalent.
+
     Raises
     ------
     RuntimeError
-        On an ``ERROR`` / ``UNKNOWN`` verdict — a tool or setup failure, which is
-        not a verdict about equivalence.
+        On a tool or setup failure (``ERROR`` / crash), which is not a verdict
+        about equivalence.
     """
     raise_for_incomplete(run, what="equivalence proof")
     if run.verdict == "PASS":
@@ -139,6 +144,18 @@ def _result_from_run(run: SbyRun, *, mode: str, depth: int, engine: str) -> Equi
             returncode=run.returncode,
             summary=run.summary,
         )
+    if run.verdict == "FAIL":
+        return EquivalenceResult(
+            proven=False,
+            verdict=run.verdict,
+            mode=mode,
+            depth=depth,
+            engine=engine,
+            returncode=run.returncode,
+            counterexample=run.counterexample or "assertion failed",
+            trace_path=run.trace_path,
+            summary=run.summary,
+        )
     return EquivalenceResult(
         proven=False,
         verdict=run.verdict,
@@ -146,8 +163,6 @@ def _result_from_run(run: SbyRun, *, mode: str, depth: int, engine: str) -> Equi
         depth=depth,
         engine=engine,
         returncode=run.returncode,
-        counterexample=run.counterexample or "assertion failed",
-        trace_path=run.trace_path,
         summary=run.summary,
     )
 

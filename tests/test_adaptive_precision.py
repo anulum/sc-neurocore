@@ -603,3 +603,89 @@ class TestAdaptivePrecisionAPISurface:
         assert claim["symbiyosys_executed"] is True
         assert claim["formal_proof_passed"] is True
         assert claim["proof_verdict"] == "PASS"
+
+    def test_unbounded_emits_kinduction_script_and_records_mode(
+        self, monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+    ) -> None:
+        """unbounded=True emits a k-induction script and records the unbounded proof."""
+        assignments = assign_synapse_precisions(
+            [np.array([[0.25, 0.75]])],
+            target_error=0.05,
+            min_bits=2,
+            max_bits=8,
+            min_length=8,
+            max_length=16,
+        )
+        monkeypatch.setattr(
+            formal_property_check, "formal_tools_available", lambda engine="z3": True
+        )
+        monkeypatch.setattr(
+            formal_property_check,
+            "prove_property",
+            lambda *a, **k: PropertyProofResult(
+                proven=True, verdict="PASS", mode="prove", depth=8, engine="z3", returncode=0
+            ),
+        )
+        manifest = write_precision_formal_evidence_bundle(
+            tmp_path, assignments, execute=True, unbounded=True
+        )
+        claim = manifest["formal_claim"]
+        assert claim["formal_proof_passed"] is True
+        assert claim["proof_mode"] == "prove"
+        assert claim["proof_unbounded"] is True
+        assert manifest["evidence_boundary"] == "symbiyosys_kinduction_executed_no_silicon_claim"
+        assert "mode prove" in (tmp_path / "adaptive_precision_plan.sby").read_text(
+            encoding="utf-8"
+        )
+
+    def test_unbounded_records_inconclusive_without_fabricating_pass(
+        self, monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+    ) -> None:
+        """An inconclusive k-induction is recorded as unproven, not a pass."""
+        assignments = assign_synapse_precisions(
+            [np.array([[0.25, 0.75]])],
+            target_error=0.05,
+            min_bits=2,
+            max_bits=8,
+            min_length=8,
+            max_length=16,
+        )
+        monkeypatch.setattr(
+            formal_property_check, "formal_tools_available", lambda engine="z3": True
+        )
+        monkeypatch.setattr(
+            formal_property_check,
+            "prove_property",
+            lambda *a, **k: PropertyProofResult(
+                proven=False, verdict="UNKNOWN", mode="prove", depth=8, engine="z3", returncode=4
+            ),
+        )
+        manifest = write_precision_formal_evidence_bundle(
+            tmp_path, assignments, execute=True, unbounded=True
+        )
+        claim = manifest["formal_claim"]
+        assert claim["symbiyosys_executed"] is True
+        assert claim["formal_proof_passed"] is False
+        assert claim["proof_verdict"] == "UNKNOWN"
+        assert "converge" in claim["proof_inconclusive_reason"]
+        assert "proof_counterexample" not in claim
+
+    @_needs_formal
+    def test_unbounded_runs_real_kinduction_end_to_end(self, tmp_path: Path) -> None:
+        """With the toolchain present, unbounded=True proves the bundle by k-induction."""
+        assignments = assign_synapse_precisions(
+            [np.array([[0.25, 0.75]])],
+            target_error=0.05,
+            min_bits=2,
+            max_bits=8,
+            min_length=8,
+            max_length=16,
+        )
+        manifest = write_precision_formal_evidence_bundle(
+            tmp_path, assignments, execute=True, unbounded=True
+        )
+        claim = manifest["formal_claim"]
+        assert claim["symbiyosys_executed"] is True
+        assert claim["formal_proof_passed"] is True
+        assert claim["proof_mode"] == "prove"
+        assert claim["proof_unbounded"] is True

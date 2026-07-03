@@ -41,6 +41,12 @@ from .synapse_precision import SynapsePrecision
 
 _Q16_ONE = 65536.0
 
+# k-induction window for the unbounded proof. The monitor's strengthening lemma
+# (``err_acc <= step_count * per_step``) is 1-inductive, so a small fixed depth
+# converges regardless of bitstream length — unlike BMC completeness, which scales
+# with the length.
+_KINDUCTION_DEPTH = 8
+
 # The RTL is a synthesisable datapath; the checker is instantiated only under the
 # ``FORMAL`` macro (defined by SymbiYosys' ``read -formal``), so plain synthesis
 # strips it. This is the textbook SymbiYosys structure — yosys 0.33 silently
@@ -119,8 +125,14 @@ module ${module_name}_sva #(
         // Environment assumption: each per-tick error increment stays within the
         // adaptive-precision plan's per-step budget (quantisation + stochastic).
         assume (err_step <= PER_STEP_BOUND_Q16[ACC_WIDTH-1:0]);
+        // Inductive lemma: accumulated error tracks the steps taken times the
+        // per-step budget. This is 1-inductive (unlike obligation 1 on its own),
+        // so it makes k-induction (mode prove) converge to an unbounded proof
+        // instead of an inconclusive result; it is trivially true under BMC too.
+        assert (err_acc <= step_count * PER_STEP_BOUND_Q16);
         // Obligation 1 (bounded error): accumulated error never exceeds the
-        // claimed total error bound across the bitstream length.
+        // claimed total error bound across the bitstream length. Follows from the
+        // lemma and obligation 2: err_acc <= length * per_step <= total.
         assert (err_acc <= MAX_TOTAL_ERROR_Q16[ACC_WIDTH-1:0]);
         // Obligation 2 (bounded length): the sequencer never runs past the
         // declared bitstream length.
@@ -233,15 +245,19 @@ def _execute_precision_proof(
     module_name: str,
     rtl: str,
     sva: str,
-    params: _MonitorParameters,
     formal_claim: dict[str, Any],
     proof_workdir: Path,
+    *,
+    mode: str,
+    depth: int,
 ) -> str:
     """Run the property proof if the toolchain is present; update ``formal_claim``.
 
-    The proof runs inside ``proof_workdir`` (a subdirectory of the bundle output),
-    so the ``sby`` run tree stays contained with the bundle rather than polluting
-    the caller's working directory.
+    ``mode`` selects bounded model checking (``"bmc"``, complete for the saturating
+    monitor) or k-induction (``"prove"``, an unbounded proof). The proof runs inside
+    ``proof_workdir`` (a subdirectory of the bundle output), so the ``sby`` run tree
+    stays contained with the bundle rather than polluting the caller's working
+    directory.
 
     Returns the evidence boundary string reflecting what actually happened —
     an executed proof or a recorded skip — never a fabricated pass.
@@ -258,8 +274,8 @@ def _execute_precision_proof(
         rtl,
         sva,
         top=module_name,
-        mode="bmc",
-        depth=params.complete_bmc_depth,
+        mode=mode,  # type: ignore[arg-type]
+        depth=depth,
         workdir=proof_workdir,
     )
     formal_claim["symbiyosys_executed"] = True
@@ -268,8 +284,17 @@ def _execute_precision_proof(
     formal_claim["proof_depth"] = result.depth
     formal_claim["proof_engine"] = result.engine
     formal_claim["proof_verdict"] = result.verdict
+    formal_claim["proof_unbounded"] = result.mode == "prove"
     if result.counterexample is not None:
         formal_claim["proof_counterexample"] = result.counterexample
+    elif not result.proven:
+        # A non-passing proof with no counterexample is an inconclusive k-induction:
+        # the base case held but the induction step did not converge.
+        formal_claim["proof_inconclusive_reason"] = (
+            "k-induction base case held but the induction step did not converge"
+        )
+    if result.mode == "prove":
+        return "symbiyosys_kinduction_executed_no_silicon_claim"
     return "symbiyosys_bmc_executed_no_silicon_claim"
 
 
@@ -279,12 +304,13 @@ def write_precision_formal_evidence_bundle(
     *,
     module_name: str = "adaptive_precision_plan",
     execute: bool = False,
+    unbounded: bool = False,
 ) -> dict[str, Any]:
     """Write a SymbiYosys evidence bundle for adaptive-precision claims.
 
     Renders the bounded-error monitor RTL, the bound assertion checker, a runnable
     ``.sby`` script, and a manifest describing the claim. The bundle is
-    deterministic: identical assignments produce byte-identical artefacts.
+    deterministic: identical arguments produce byte-identical artefacts.
 
     Parameters
     ----------
@@ -301,6 +327,14 @@ def write_precision_formal_evidence_bundle(
         toolchain (``sby`` / ``yosys`` / ``z3``) is on ``PATH``, the proof is run
         and the real verdict recorded; when the toolchain is absent, a skip reason
         is recorded instead of a fabricated pass.
+    unbounded : bool
+        Selects the proof method for both the emitted ``.sby`` and the executed
+        proof. ``False`` (default) uses bounded model checking to ``length + 2``
+        cycles — complete because the accumulator saturates. ``True`` uses
+        k-induction (``mode prove``), an *unbounded* proof whose depth does not
+        scale with the bitstream length (the monitor carries the 1-inductive
+        strengthening lemma the induction needs). k-induction can come back
+        inconclusive, which is recorded honestly rather than as a pass.
 
     Returns
     -------
@@ -321,6 +355,8 @@ def write_precision_formal_evidence_bundle(
     max_bits = max(item.bit_width for item in assignments)
     max_length = max(item.bitstream_length for item in assignments)
     params = _monitor_parameters(max_error, max_bits, max_length)
+    proof_mode = "prove" if unbounded else "bmc"
+    proof_depth = _KINDUCTION_DEPTH if unbounded else params.complete_bmc_depth
 
     rtl_file = f"{module_name}.v"
     sva_file = f"{module_name}_sva.sv"
@@ -338,8 +374,8 @@ def write_precision_formal_evidence_bundle(
         generate_sby_script(
             module_name,
             sva_file=sva_file,
-            mode="bmc",
-            depth=params.complete_bmc_depth,
+            mode=proof_mode,  # type: ignore[arg-type]
+            depth=proof_depth,
             engine="z3",
         ),
         encoding="utf-8",
@@ -356,7 +392,13 @@ def write_precision_formal_evidence_bundle(
     evidence_boundary = "bundle_generation_only_no_symbiyosys_execution_no_silicon_claim"
     if execute:
         evidence_boundary = _execute_precision_proof(
-            module_name, rtl, sva, params, formal_claim, out / f"{module_name}_proof_work"
+            module_name,
+            rtl,
+            sva,
+            formal_claim,
+            out / f"{module_name}_proof_work",
+            mode=proof_mode,
+            depth=proof_depth,
         )
 
     manifest = {

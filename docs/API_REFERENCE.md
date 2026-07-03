@@ -6057,14 +6057,34 @@ Raises
 RuntimeError
     If the ``sby`` process exceeds ``timeout_s``.
 
-### Function `raise_for_incomplete(run)`
-Raise when the verdict is neither ``PASS`` nor ``FAIL``.
+### Function `is_inconclusive(run)`
+Return ``True`` for an inconclusive result — proved nothing, disproved nothing.
 
-A ``PASS`` (proved) or ``FAIL`` (disproved with a counterexample) is a real
-outcome about the checked property; any other verdict — ``ERROR``,
-``UNKNOWN``, ``TIMEOUT`` — is a tool or setup failure and must not be read as
-a claim about the design. Callers invoke this before interpreting a
-``PASS`` / ``FAIL`` result so a broken run never masquerades as a verdict.
+A k-induction (``mode prove``) run whose base case holds but whose induction
+step does not converge reports ``UNKNOWN`` with :data:`_INCONCLUSIVE_RC`: the
+property may well be true, but was not proved and no counterexample was found
+(the induction step reached the goal from an *unreachable* predecessor). This
+is a real, honest outcome distinct from both a disproof and a tool failure.
+
+Parameters
+----------
+run : SbyRun
+    The raw run to inspect.
+
+Returns
+-------
+bool
+    ``True`` only for the ``UNKNOWN`` / inconclusive-return-code signature.
+
+### Function `raise_for_incomplete(run)`
+Raise when the run is a tool or setup failure, not a verdict about the design.
+
+A ``PASS`` (proved) or ``FAIL`` (disproved with a counterexample) is a
+conclusive outcome, and an inconclusive k-induction result
+(:func:`is_inconclusive`) is a real — if unhelpful — outcome; none of these
+raise. Any *other* verdict — ``ERROR``, a crash with no ``DONE`` line, a
+timeout — is a tool or setup failure that must not be read as a claim about
+the design, so callers invoke this before interpreting a result.
 
 Parameters
 ----------
@@ -6077,7 +6097,7 @@ what : str
 Raises
 ------
 RuntimeError
-    When ``run.verdict`` is neither ``"PASS"`` nor ``"FAIL"``.
+    When the run neither proved, disproved, nor came back inconclusive.
 
 ---
 
@@ -6488,11 +6508,16 @@ Render a ``.sby`` script that reads the sources and checks the miter.
 ### Function `_result_from_run(run)`
 Map a raw :class:`SbyRun` onto an :class:`EquivalenceResult`.
 
+A ``PASS`` yields ``proven=True``; a ``FAIL`` yields ``proven=False`` with the
+counterexample; an inconclusive k-induction result (``mode="prove"`` whose
+induction step did not converge) yields ``proven=False`` with the ``UNKNOWN``
+verdict and *no* counterexample — the modules may still be equivalent.
+
 Raises
 ------
 RuntimeError
-    On an ``ERROR`` / ``UNKNOWN`` verdict — a tool or setup failure, which is
-    not a verdict about equivalence.
+    On a tool or setup failure (``ERROR`` / crash), which is not a verdict
+    about equivalence.
 
 ### Function `prove_equivalence(dut_verilog, ref_verilog, io_ports)`
 Prove ``dut_verilog`` equivalent to ``ref_verilog`` via SymbiYosys.
@@ -6896,12 +6921,14 @@ Render the synthesisable bounded-error monitor RTL for ``module_name``.
 ### Function `_precision_monitor_sva(module_name, params)`
 Render the bound assertion checker for ``module_name``.
 
-### Function `_execute_precision_proof(module_name, rtl, sva, params, formal_claim, proof_workdir)`
+### Function `_execute_precision_proof(module_name, rtl, sva, formal_claim, proof_workdir)`
 Run the property proof if the toolchain is present; update ``formal_claim``.
 
-The proof runs inside ``proof_workdir`` (a subdirectory of the bundle output),
-so the ``sby`` run tree stays contained with the bundle rather than polluting
-the caller's working directory.
+``mode`` selects bounded model checking (``"bmc"``, complete for the saturating
+monitor) or k-induction (``"prove"``, an unbounded proof). The proof runs inside
+``proof_workdir`` (a subdirectory of the bundle output), so the ``sby`` run tree
+stays contained with the bundle rather than polluting the caller's working
+directory.
 
 Returns the evidence boundary string reflecting what actually happened —
 an executed proof or a recorded skip — never a fabricated pass.
@@ -6911,7 +6938,7 @@ Write a SymbiYosys evidence bundle for adaptive-precision claims.
 
 Renders the bounded-error monitor RTL, the bound assertion checker, a runnable
 ``.sby`` script, and a manifest describing the claim. The bundle is
-deterministic: identical assignments produce byte-identical artefacts.
+deterministic: identical arguments produce byte-identical artefacts.
 
 Parameters
 ----------
@@ -6928,6 +6955,14 @@ execute : bool
     toolchain (``sby`` / ``yosys`` / ``z3``) is on ``PATH``, the proof is run
     and the real verdict recorded; when the toolchain is absent, a skip reason
     is recorded instead of a fabricated pass.
+unbounded : bool
+    Selects the proof method for both the emitted ``.sby`` and the executed
+    proof. ``False`` (default) uses bounded model checking to ``length + 2``
+    cycles — complete because the accumulator saturates. ``True`` uses
+    k-induction (``mode prove``), an *unbounded* proof whose depth does not
+    scale with the bitstream length (the monitor carries the 1-inductive
+    strengthening lemma the induction needs). k-induction can come back
+    inconclusive, which is recorded honestly rather than as a pass.
 
 Returns
 -------

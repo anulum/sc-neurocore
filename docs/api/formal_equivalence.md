@@ -157,10 +157,28 @@ same way the equivalence runner proves a miter: emit a `.sby`, run it through
 `max_bitstream_length` steps, a BMC to `max_bitstream_length + 2` cycles exhausts
 the reachable state space — the bounded proof is *complete*, not merely bounded.
 
+### Unbounded k-induction
+
+The checker also carries a **strengthening lemma**,
+`err_acc <= step_count * per_step`, which — unlike the bound `err_acc <= total`
+on its own — is **1-inductive**. With it, `unbounded=True` (or
+`prove_property(mode="prove")`) proves the obligations by **k-induction**, an
+*unbounded* proof whose depth is a small constant **independent of the bitstream
+length** (BMC completeness, by contrast, scales with the length). The lemma is
+trivially true under BMC too, so both modes share one checker.
+
+k-induction has a third outcome besides proved and disproved: when the base case
+holds but the induction step does not converge, the run is **inconclusive** —
+`proven=False`, `verdict="UNKNOWN"`, no counterexample — the property may well
+hold but was not proved. This is recorded honestly (never as a pass); it is *not*
+a `RuntimeError` (which is reserved for tool/setup failures).
+
 > **Toolchain note.** yosys 0.33 silently ignores SystemVerilog `bind`
 > directives, so the checker is instantiated explicitly inside the monitor under
 > `` `ifdef FORMAL `` (a macro `read -formal` defines) rather than bound in. Plain
-> synthesis strips it; formal builds elaborate it.
+> synthesis strips it; formal builds elaborate it. The yosys frontend also rejects
+> concurrent `assert property (@(posedge clk) …)`, so the obligations are written
+> as **immediate** `assert`/`assume` in a clocked `always` block.
 
 ```python
 from sc_neurocore.compiler.adaptive_precision import (
@@ -174,7 +192,10 @@ assignments = assign_synapse_precisions(layer_weights, target_error=0.05)
 # execute=True: machine-check it when sby/yosys/z3 are present, and record the
 # real verdict (a skip reason is recorded instead when the toolchain is absent —
 # never a fabricated pass).
-manifest = write_precision_formal_evidence_bundle(out_dir, assignments, execute=True)
+# unbounded=True: prove by k-induction (mode prove) instead of bounded BMC.
+manifest = write_precision_formal_evidence_bundle(
+    out_dir, assignments, execute=True, unbounded=True
+)
 claim = manifest["formal_claim"]
 print(claim["symbiyosys_executed"], claim["formal_proof_passed"], claim["proof_verdict"])
 ```
@@ -182,20 +203,28 @@ print(claim["symbiyosys_executed"], claim["formal_proof_passed"], claim["proof_v
 `prove_property(rtl_verilog, sva_verilog, *, top, mode="bmc", depth=..., ...)`
 returns a `PropertyProofResult` (`proven`, `verdict`, `mode`, `depth`, `engine`,
 `returncode`, `counterexample`, `trace_path`, `summary`) with the same
-`PASS → proven`, `FAIL → counterexample`, tool-failure → `RuntimeError` contract
-as the equivalence runner.
+`PASS → proven`, `FAIL → counterexample`, inconclusive → `proven=False` with an
+`UNKNOWN` verdict and no counterexample, tool-failure → `RuntimeError` contract as
+the equivalence runner.
 
 ---
 
 ## 5. Limitations
 
-1. **Bounded depth.** BMC proves equivalence only up to `depth` cycles; deeper
-   proof needs more solver time or an invariant for k-induction.
-2. **Interface-compatible modules.** DUT and reference must share the same I/O
+1. **Bounded depth (BMC).** BMC proves a property only up to `depth` cycles. It
+   is *complete* when the design reaches a stationary state within that depth (the
+   precision monitor's saturating accumulator); otherwise unbounded proof needs
+   k-induction with an inductive invariant.
+2. **k-induction needs an invariant.** k-induction is unbounded but only converges
+   with an inductive invariant. The precision monitor ships the strengthening
+   lemma it needs; the equivalence miter's wide-multiplier datapaths do **not**
+   converge on naive induction and would need a hand-supplied reachable-state
+   invariant (an open lane), so BMC stays the equivalence default.
+3. **Interface-compatible modules.** DUT and reference must share the same I/O
    ports (parameters may differ per instance).
-3. **Toolchain required.** Proofs need `sby` + `yosys`; without them
+4. **Toolchain required.** Proofs need `sby` + `yosys` + a solver; without them
    `formal_tools_available()` is `False` and the proof functions raise.
-4. **SMT tractability.** Wide-multiplier datapaths bound the practical depth on
+5. **SMT tractability.** Wide-multiplier datapaths bound the practical depth on
    general-purpose SMT engines.
 
 ---
