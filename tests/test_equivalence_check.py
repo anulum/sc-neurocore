@@ -119,6 +119,73 @@ module sc_qif_dut #(
 endmodule
 """
 
+# Izhikevich (2007) integer form — the first TWO-state neuron for the formal toolkit.
+# Two coupled registers: membrane v and recovery u. The v-nullcline carries the
+# quadratic product (v-VR)*(v-VT) (the multiplier to abstract); the recovery adds
+# the linear u <- u + ((2*(v-VR) - u) >> KA). A spike resets BOTH (v <- C, u <- u + D),
+# so proving it unbounded needs a coordinated two-register state-matching invariant —
+# tapping only v is insufficient because u feeds v_next. The golden reference and a
+# structurally-distinct hardware DUT (commuted product operands, regrouped v update,
+# threshold as ``!(<)`` vs ``>=``, ``+`` vs ``<<< 1``), proven equivalent.
+_IZH_REF = """`timescale 1ns/1ps
+module sc_izh_reference #(
+    parameter integer DATA_WIDTH = 16, parameter integer KQ_SHIFT = 6, parameter integer KA_SHIFT = 5,
+    parameter signed [DATA_WIDTH-1:0] VR = -60,
+    parameter signed [DATA_WIDTH-1:0] VT = -40,
+    parameter signed [DATA_WIDTH-1:0] VPEAK = 30,
+    parameter signed [DATA_WIDTH-1:0] C_RESET = -50,
+    parameter signed [DATA_WIDTH-1:0] D_STEP = 6
+)(
+    input wire clk, input wire rst_n, input wire signed [DATA_WIDTH-1:0] I_t,
+    output reg spike_out, output reg signed [DATA_WIDTH-1:0] v_out
+);
+    reg signed [DATA_WIDTH-1:0] v;
+    reg signed [DATA_WIDTH-1:0] u;
+    wire signed [DATA_WIDTH-1:0] v_mvr = v - VR;
+    wire signed [DATA_WIDTH-1:0] v_mvt = v - VT;
+    wire signed [2*DATA_WIDTH-1:0] q_prod = v_mvr * v_mvt;
+    wire signed [DATA_WIDTH-1:0] q_scaled = q_prod >>> KQ_SHIFT;
+    wire signed [DATA_WIDTH-1:0] dv = q_scaled - u + I_t;
+    wire signed [DATA_WIDTH-1:0] v_next = v + dv;
+    wire signed [DATA_WIDTH-1:0] bvr = v_mvr <<< 1;
+    wire signed [DATA_WIDTH-1:0] du = (bvr - u) >>> KA_SHIFT;
+    wire signed [DATA_WIDTH-1:0] u_next = u + du;
+    always @(posedge clk or negedge rst_n) begin
+        if (!rst_n) begin v <= VR; u <= 0; v_out <= VR; spike_out <= 1'b0; end
+        else if (v_next >= VPEAK) begin spike_out <= 1'b1; v <= C_RESET; v_out <= C_RESET; u <= u_next + D_STEP; end
+        else begin spike_out <= 1'b0; v <= v_next; v_out <= v_next; u <= u_next; end
+    end
+endmodule
+"""
+_IZH_DUT = """`timescale 1ns/1ps
+module sc_izh_dut #(
+    parameter integer DATA_WIDTH = 16, parameter integer KQ_SHIFT = 6, parameter integer KA_SHIFT = 5,
+    parameter signed [DATA_WIDTH-1:0] VR = -60,
+    parameter signed [DATA_WIDTH-1:0] VT = -40,
+    parameter signed [DATA_WIDTH-1:0] VPEAK = 30,
+    parameter signed [DATA_WIDTH-1:0] C_RESET = -50,
+    parameter signed [DATA_WIDTH-1:0] D_STEP = 6
+)(
+    input wire clk, input wire rst_n, input wire signed [DATA_WIDTH-1:0] I_t,
+    output reg spike_out, output reg signed [DATA_WIDTH-1:0] v_out
+);
+    reg signed [DATA_WIDTH-1:0] v_reg;
+    reg signed [DATA_WIDTH-1:0] u_reg;
+    wire signed [DATA_WIDTH-1:0] vr_diff = v_reg - VR;
+    wire signed [DATA_WIDTH-1:0] vt_diff = v_reg - VT;
+    wire signed [2*DATA_WIDTH-1:0] p_prod = vt_diff * vr_diff;
+    wire signed [DATA_WIDTH-1:0] p_scaled = p_prod >>> KQ_SHIFT;
+    wire signed [DATA_WIDTH-1:0] v_adv = (v_reg + p_scaled) - u_reg + I_t;
+    wire signed [DATA_WIDTH-1:0] recover = ((vr_diff + vr_diff) - u_reg) >>> KA_SHIFT;
+    wire signed [DATA_WIDTH-1:0] u_adv = u_reg + recover;
+    always @(posedge clk or negedge rst_n) begin
+        if (!rst_n) begin v_reg <= VR; u_reg <= 0; v_out <= VR; spike_out <= 1'b0; end
+        else if (!(v_adv < VPEAK)) begin spike_out <= 1'b1; v_reg <= C_RESET; v_out <= C_RESET; u_reg <= u_adv + D_STEP; end
+        else begin spike_out <= 1'b0; v_reg <= v_adv; v_out <= v_adv; u_reg <= u_adv; end
+    end
+endmodule
+"""
+
 
 class TestFormalToolsAvailable:
     """Availability probe."""
@@ -599,3 +666,141 @@ class TestEquivalenceProof:
         assert result.proven is True
         assert result.verdict == "PASS"
         assert result.mode == "prove"
+
+    def test_toolkit_generalises_to_two_state_izhikevich_unbounded(self, tmp_path: Path) -> None:
+        """The whitebox-tap + multiplier-abstraction flow generalises to two coupled states.
+
+        Izhikevich is the first two-state neuron: membrane ``v`` and recovery ``u``
+        evolve together, the quadratic ``(v-VR)*(v-VT)`` product drives ``v`` and a
+        spike resets *both* (``v <- C``, ``u <- u + D``). Because ``u`` feeds
+        ``v``'s next value, the unbounded proof needs the *coordinated* two-register
+        state-matching invariant: tapping only ``v`` leaves the induction step free
+        to start from a state where ``v`` agrees but ``u`` does not, and it diverges.
+        Tapping *both* registers — plus abstracting the one quadratic product — proves
+        the structurally-distinct DUT and golden reference equivalent unbounded.
+        """
+        from sc_neurocore.compiler.equivalence_miter import parse_module_interface
+        from sc_neurocore.compiler.operator_abstraction import (
+            LiftedSignal,
+            abstract_to_free_inputs,
+        )
+        from sc_neurocore.compiler.whitebox_taps import StateTap, expose_state_taps
+
+        dut = abstract_to_free_inputs(
+            _IZH_DUT,
+            top="sc_izh_dut",
+            signals=[LiftedSignal("p_prod", "q_in", msb="2*DATA_WIDTH-1", signed=True)],
+        )
+        ref = abstract_to_free_inputs(
+            _IZH_REF,
+            top="sc_izh_reference",
+            signals=[LiftedSignal("q_prod", "q_in", msb="2*DATA_WIDTH-1", signed=True)],
+        )
+        dut = expose_state_taps(
+            dut,
+            top="sc_izh_dut",
+            taps=[
+                StateTap("v_state", "v_reg", msb="DATA_WIDTH-1", signed=True),
+                StateTap("u_state", "u_reg", msb="DATA_WIDTH-1", signed=True),
+            ],
+        )
+        ref = expose_state_taps(
+            ref,
+            top="sc_izh_reference",
+            taps=[
+                StateTap("v_state", "v", msb="DATA_WIDTH-1", signed=True),
+                StateTap("u_state", "u", msb="DATA_WIDTH-1", signed=True),
+            ],
+        )
+        common = {
+            "DATA_WIDTH": 16,
+            "KQ_SHIFT": 6,
+            "KA_SHIFT": 5,
+            "VR": -60,
+            "VT": -40,
+            "VPEAK": 30,
+            "C_RESET": -50,
+            "D_STEP": 6,
+        }
+        ports = parse_module_interface(ref, "sc_izh_reference", params={"DATA_WIDTH": 16})
+        result = prove_equivalence(
+            dut,
+            ref,
+            ports,
+            dut_top="sc_izh_dut",
+            ref_top="sc_izh_reference",
+            dut_params=common,
+            ref_params=common,
+            mode="prove",
+            depth=6,
+            workdir=tmp_path,
+        )
+        assert result.proven is True
+        assert result.verdict == "PASS"
+        assert result.mode == "prove"
+
+    def test_two_state_needs_both_taps_to_converge(self, tmp_path: Path) -> None:
+        """Tapping only ``v`` leaves the two-state induction incomplete.
+
+        The companion to ``test_toolkit_generalises_to_two_state_izhikevich_unbounded``:
+        it exposes *why* both coupled registers must be tapped. With the same
+        abstraction but only the ``v`` tap, the reachable-state invariant omits
+        ``u``; the induction step may start from a state where the membranes agree
+        but the recovery variables differ, and since ``u`` feeds ``v``'s next value
+        the k-induction cannot close. The verdict is ``UNKNOWN`` (inconclusive —
+        base case holds, induction does not converge), not ``FAIL``: the modules are
+        genuinely equivalent, the invariant is merely too weak to prove it. This is
+        an inconclusive proof, not a tool failure, so it does not raise.
+        """
+        from sc_neurocore.compiler.equivalence_miter import parse_module_interface
+        from sc_neurocore.compiler.operator_abstraction import (
+            LiftedSignal,
+            abstract_to_free_inputs,
+        )
+        from sc_neurocore.compiler.whitebox_taps import StateTap, expose_state_taps
+
+        dut = abstract_to_free_inputs(
+            _IZH_DUT,
+            top="sc_izh_dut",
+            signals=[LiftedSignal("p_prod", "q_in", msb="2*DATA_WIDTH-1", signed=True)],
+        )
+        ref = abstract_to_free_inputs(
+            _IZH_REF,
+            top="sc_izh_reference",
+            signals=[LiftedSignal("q_prod", "q_in", msb="2*DATA_WIDTH-1", signed=True)],
+        )
+        dut = expose_state_taps(
+            dut,
+            top="sc_izh_dut",
+            taps=[StateTap("v_state", "v_reg", msb="DATA_WIDTH-1", signed=True)],
+        )
+        ref = expose_state_taps(
+            ref,
+            top="sc_izh_reference",
+            taps=[StateTap("v_state", "v", msb="DATA_WIDTH-1", signed=True)],
+        )
+        common = {
+            "DATA_WIDTH": 16,
+            "KQ_SHIFT": 6,
+            "KA_SHIFT": 5,
+            "VR": -60,
+            "VT": -40,
+            "VPEAK": 30,
+            "C_RESET": -50,
+            "D_STEP": 6,
+        }
+        ports = parse_module_interface(ref, "sc_izh_reference", params={"DATA_WIDTH": 16})
+        result = prove_equivalence(
+            dut,
+            ref,
+            ports,
+            dut_top="sc_izh_dut",
+            ref_top="sc_izh_reference",
+            dut_params=common,
+            ref_params=common,
+            mode="prove",
+            depth=6,
+            workdir=tmp_path,
+        )
+        assert result.proven is False
+        assert result.verdict == "UNKNOWN"

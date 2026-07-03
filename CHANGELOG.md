@@ -5,6 +5,20 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 ## [Unreleased]
 
 ### Added
+- Formal equivalence toolkit generalised to a two-state neuron shape — the
+  Izhikevich model, the first with two coupled state registers (membrane ``v`` and
+  recovery ``u``). The quadratic ``(v-VR)*(v-VT)`` product drives ``v`` and a spike
+  resets both (``v <- C``, ``u <- u + D``). Proving it equivalent unbounded needs
+  the coordinated two-register state-matching invariant: a `StateTap` for ``v`` and
+  ``u``. The point is empirically pinned by a companion proof that taps only ``v``
+  and returns `UNKNOWN` (inconclusive — the modules are equivalent, the invariant is
+  merely too weak) rather than `PASS`, establishing that every coupled state register
+  must be tapped, not just the observable output. With the one product abstracted and
+  both states tapped, a structurally distinct DUT and golden reference prove
+  equivalent unbounded by k-induction (≈8 s at 16-bit under `z3`). No toolkit code
+  change — the existing multi-tap `expose_state_taps` and `abstract_to_free_inputs`
+  already carry the two-state case, confirming the flow spans linear (LIF), quadratic
+  single-state (QIF) and quadratic two-state (Izhikevich) neurons.
 - Formal equivalence toolkit generalised to a second neuron shape — the quadratic
   integrate-and-fire (QIF). Its state update carries a ``v*v`` *self*-multiply
   (the LIF only multiplied state by a free input) declared inline as

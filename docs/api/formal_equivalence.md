@@ -111,7 +111,7 @@ With the multipliers abstracted and the state tapped, the LIF proves equivalent
 (`z3`, k-induction). The residual growth is the datapath adders and comparators,
 not the (now-abstracted) multiplier.
 
-### Beyond the LIF — a second neuron shape
+### Beyond the LIF — two more neuron shapes
 
 The same flow generalises to the **quadratic integrate-and-fire** (QIF), a second
 neuron shape whose update carries a ``v*v`` *self*-multiply (the LIF only
@@ -122,6 +122,19 @@ golden reference equivalent unbounded. The QIF declares its product inline
 (``wire v_sq = v * v;``) rather than as a separate ``assign``, so
 `abstract_to_free_inputs` handles both the inline-initialiser and the
 declaration-plus-``assign`` forms.
+
+**Izhikevich** is the third shape and the first with **two coupled states**:
+membrane ``v`` and recovery ``u`` evolve together, the quadratic ``(v-VR)*(v-VT)``
+product drives ``v``, and a spike resets *both* (``v <- C``, ``u <- u + D``). One
+product still abstracts away, but the state-matching invariant now needs *both*
+registers: because ``u`` feeds ``v``'s next value, tapping only ``v`` lets the
+induction step start from a state where the membranes agree but the recovery
+variables differ, and it cannot converge. Passing a `StateTap` for ``v`` **and**
+``u`` supplies the coordinated two-register invariant, and the structurally-distinct
+DUT and reference prove equivalent unbounded (≈8 s, `z3`). The point is empirically
+pinned: with only the ``v`` tap the same proof returns `UNKNOWN` (inconclusive — the
+modules are equivalent, the invariant is merely too weak), not `PASS`. The lesson
+generalises — tap every coupled state register, not just the observable output.
 
 ---
 
@@ -270,7 +283,10 @@ the equivalence runner.
    with an inductive invariant. The precision monitor ships the strengthening
    lemma it needs; the equivalence miter needs a reachable-state invariant, which
    is supplied by exposing the internal state as whitebox taps (yosys 0.33 cannot
-   reference an instance's internals directly). BMC stays the equivalence default
+   reference an instance's internals directly). The invariant must cover *every*
+   coupled state register: for the two-state Izhikevich, tapping only the observable
+   membrane leaves the induction unable to converge (an `UNKNOWN`, not a proof) —
+   the recovery variable must be tapped too. BMC stays the equivalence default
    because the taps require instrumenting the modules.
 3. **Interface-compatible modules.** DUT and reference must share the same I/O
    ports (parameters may differ per instance).
