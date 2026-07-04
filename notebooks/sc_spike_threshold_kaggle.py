@@ -1,3 +1,11 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Commercial license available
+# © Concepts 1996–2026 Miroslav Šotek. All rights reserved.
+# © Code 2020–2026 Miroslav Šotek. All rights reserved.
+# ORCID: 0009-0009-3560-0851
+# Contact: www.anulum.li | protoscience@anulum.li
+# SC-NeuroCore — Kaggle spike-threshold notebook export
+
 # SC MNIST: Fix 5 — LIF spike thresholding between SC layers
 # The float network uses LIF(spike/no-spike) between layers.
 # SC inference was passing continuous [-1,1] values — wrong representation.
@@ -238,8 +246,6 @@ def main():
 
     print("\n--- Compare: SC inference WITHOUT LIF (previous method) ---")
     prev_results = {}
-    from pathlib import Path as _P
-
     # Quick comparison at L=1024 only using old method (no LIF between layers)
     layers_raw = extract_layers(model)
     rng = np.random.default_rng(42)
@@ -277,7 +283,7 @@ def main():
     print("RESULTS")
     print("=" * 70)
     print(f"  Float: {float_acc:.2%}")
-    print(f"  SC with LIF dynamics:")
+    print("  SC with LIF dynamics:")
     for L, r in sorted(results.items()):
         print(f"    L={L:5d}: {r['accuracy']:.2%}")
     print(f"  SC without LIF (L=1024): {no_lif_acc:.2%}")

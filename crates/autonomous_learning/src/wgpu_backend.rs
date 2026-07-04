@@ -1,3 +1,11 @@
+// SPDX-License-Identifier: AGPL-3.0-or-later
+// Commercial license available
+// © Concepts 1996–2026 Miroslav Šotek. All rights reserved.
+// © Code 2020–2026 Miroslav Šotek. All rights reserved.
+// ORCID: 0009-0009-3560-0851
+// Contact: www.anulum.li | protoscience@anulum.li
+// SC-NeuroCore — Autonomous learning WGPU backend
+
 use bytemuck::{Pod, Zeroable};
 use std::borrow::Cow;
 use std::sync::OnceLock;
@@ -233,8 +241,6 @@ impl WgpuRuleLayer {
             entry_point: "main",
             compilation_options: Default::default(),
         });
-
-        let vec_bytes = count * std::mem::size_of::<f32>();
 
         let create_storage_buf = |device: &wgpu::Device, contents: &[f32]| {
             device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
