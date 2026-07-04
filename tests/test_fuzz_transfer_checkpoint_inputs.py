@@ -17,6 +17,7 @@ from pathlib import Path
 from typing import Any, cast
 
 import numpy as np
+from numpy.typing import NDArray
 import pytest
 from hypothesis import given, settings
 from hypothesis import strategies as st
@@ -42,7 +43,7 @@ _JSON_VALUE = st.recursive(
 def _write_checkpoint_pair(
     base_path: Path,
     meta: object,
-    arrays: Mapping[str, np.ndarray],
+    arrays: Mapping[str, NDArray[Any]],
 ) -> None:
     (base_path.with_suffix(".json")).write_text(json.dumps(meta), encoding="utf-8")
     np.savez_compressed(base_path.with_suffix(".npz"), **cast(Any, arrays))
