@@ -77,7 +77,9 @@ def test_scorecard_workflow_uploads_stable_release_evidence_artifact() -> None:
         "security/scorecard-results.sarif"
     )
     assert scorecard_steps[0].get("with", {}).get("results_format") == "sarif"
-    assert "mkdir -p security" in run_text
+    # The scorecard-action's webapp verification rejects a job that has any non-`uses`
+    # step, so the analysis job must contain no `run` steps (security/ is already tracked).
+    assert run_text == ""
 
     assert any(
         str(step.get("uses", "")).startswith("actions/upload-artifact@")
