@@ -5,16 +5,17 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 ## [Unreleased]
 
 ### Added
-- `cargo-fuzz` targets for the SC IR text format (`engine/fuzz`): `parse_ir` fuzzes
-  `ir::parser::parse` (arbitrary input — exposed to Python as `ir_parse` — must only ever
-  return `Err`, never panic), and `roundtrip_ir` asserts the parser and `printer::print`
-  are inverse (`parse(print(g)) == g`, and a printed graph always re-parses). The fuzz
-  crate depends on the engine with `default-features = false`, so the build skips the
-  bundled-Z3 compile (made optional in the same release) and the pyo3 module dead-strips
-  out, keeping the instrumented build fast; `fuzz/Cargo.lock` is committed so NumPy/ndarray
-  resolve to the engine's versions. A scheduled weekly `SC-NeuroCore Fuzz` workflow runs
-  both (not a per-PR gate). First sessions found no panic or round-trip divergence
-  (3.5M and 1.8M runs).
+- `cargo-fuzz` targets (`engine/fuzz`): `parse_ir` fuzzes `ir::parser::parse` (arbitrary
+  input — exposed to Python as `ir_parse` — must only ever return `Err`, never panic);
+  `roundtrip_ir` asserts the parser and `printer::print` are inverse (`parse(print(g)) == g`,
+  and a printed graph always re-parses); and `bitstream` differentially checks that
+  `bitstream::pack` and `pack_fast` agree bit-for-bit on arbitrary bytes and that
+  `unpack` round-trips. The fuzz crate depends on the engine with `default-features = false`,
+  so the build skips the bundled-Z3 compile (made optional in the same release) and the
+  pyo3 module dead-strips out, keeping the instrumented build fast; `fuzz/Cargo.lock` is
+  committed so NumPy/ndarray resolve to the engine's versions. A scheduled weekly
+  `SC-NeuroCore Fuzz` workflow runs all three (not a per-PR gate). First sessions found no
+  panic, round-trip divergence or pack mismatch (3.5M, 1.8M and 1.5M runs).
 - The folded FPGA interconnect now folds populations with **heterogeneous per-neuron
   parameters**. Each parameter that varies across a population's neurons is exposed on a
   processing-element input port (`compile_to_datapath(param_ports=...)`) and streamed from

@@ -31,6 +31,13 @@ test = false
 doc = false
 bench = false
 
+[[bin]]
+name = "bitstream"
+path = "fuzz_targets/bitstream.rs"
+test = false
+doc = false
+bench = false
+
 # Own workspace root: the repository root is a Cargo workspace and the fuzz crate is not
 # one of its members, so it must declare its own empty workspace.
 [workspace]
