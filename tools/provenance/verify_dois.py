@@ -131,6 +131,28 @@ def resolve_doi(doi: str) -> dict[str, Any]:
     return {"registry": registry, "resolves": True, **resolved}
 
 
+def classify_match(
+    claimed_first: str, claimed_year: int | None, outcome: dict[str, Any]
+) -> dict[str, bool]:
+    """Decide author/year/verified verdicts from a claimed pair and a registry outcome.
+
+    Successful resolution and an exact first-author surname are the fabrication
+    catchers and stay exact; the publication year is a weak, ambiguous signal (a
+    registry's online date routinely trails a book's or preprint's cited print year
+    by a year), so it is confirmed within +/-1. A wrong DOI that resolves to a
+    different paper still fails on the author check.
+    """
+    author_match = bool(claimed_first) and claimed_first == outcome.get("first_author")
+    registry_year = outcome.get("year")
+    year_match = (
+        claimed_year is not None
+        and registry_year is not None
+        and abs(int(claimed_year) - int(registry_year)) <= 1
+    )
+    verified = bool(outcome.get("resolves")) and author_match and year_match
+    return {"author_match": author_match, "year_match": year_match, "verified": verified}
+
+
 def build_ledger() -> dict[str, dict[str, Any]]:
     """Resolve and cross-check every descriptor provenance DOI, keyed by DOI."""
     stamp = datetime.now(timezone.utc).replace(microsecond=0).isoformat()
@@ -147,24 +169,14 @@ def build_ledger() -> dict[str, dict[str, Any]]:
         outcome = resolve_doi(doi)
         if outcome["registry"] == "crossref":
             time.sleep(_CROSSREF_POLITE_DELAY_S)
-        author_match = bool(claimed_first) and claimed_first == outcome.get("first_author")
-        # The first author and successful resolution are the fabrication catchers and stay
-        # exact; the publication year is a weak, ambiguous signal (a registry's online date
-        # routinely trails a book's or preprint's cited print year by a year), so it is
-        # confirmed within +/-1 rather than exactly. A wrong DOI still fails on author_match.
-        registry_year = outcome.get("year")
-        year_match = (
-            claimed_year is not None
-            and registry_year is not None
-            and abs(int(claimed_year) - int(registry_year)) <= 1
-        )
+        match = classify_match(claimed_first, claimed_year, outcome)
         ledger[doi] = {
             "model": toml_path.stem,
             "registry": outcome["registry"],
             "resolves": outcome["resolves"],
-            "author_match": author_match,
-            "year_match": year_match,
-            "verified": outcome["resolves"] and author_match and year_match,
+            "author_match": match["author_match"],
+            "year_match": match["year_match"],
+            "verified": match["verified"],
             "registry_first_author": outcome.get("first_author"),
             "registry_year": outcome.get("year"),
             "title": outcome.get("title", "")[:120],
