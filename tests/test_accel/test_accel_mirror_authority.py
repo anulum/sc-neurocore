@@ -10,6 +10,11 @@ from __future__ import annotations
 
 from pathlib import Path
 
+from sc_neurocore.accel.go import (
+    BROAD_GO_SERVICE_NAMESPACE_GLOBS,
+    MAINTAINED_GO_PYTHON_ENTRYPOINTS,
+)
+import sc_neurocore.accel.go as go_module
 from sc_neurocore.accel.julia import (
     AUTHORITATIVE_JULIA_ENTRYPOINTS,
     NON_AUTHORITATIVE_JULIA_MIRROR_GLOBS,
@@ -22,8 +27,25 @@ import sc_neurocore.accel.mojo as mojo_module
 
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
+GO_ROOT = REPO_ROOT / "src" / "sc_neurocore" / "accel" / "go"
 JULIA_ROOT = REPO_ROOT / "src" / "sc_neurocore" / "accel" / "julia"
 MOJO_ROOT = REPO_ROOT / "src" / "sc_neurocore" / "accel" / "mojo"
+
+
+def test_maintained_go_python_entrypoints_exist() -> None:
+    assert MAINTAINED_GO_PYTHON_ENTRYPOINTS
+    for rel_path in MAINTAINED_GO_PYTHON_ENTRYPOINTS:
+        assert (GO_ROOT / rel_path).exists(), rel_path
+
+
+def test_broad_go_service_namespace_patterns_declared() -> None:
+    assert "services/*.go" in BROAD_GO_SERVICE_NAMESPACE_GLOBS
+    assert "services/*/__init__.py" in BROAD_GO_SERVICE_NAMESPACE_GLOBS
+
+
+def test_go_module_public_contract_shape() -> None:
+    assert "BROAD_GO_SERVICE_NAMESPACE_GLOBS" in go_module.__all__
+    assert "MAINTAINED_GO_PYTHON_ENTRYPOINTS" in go_module.__all__
 
 
 def test_authoritative_julia_entrypoints_exist() -> None:

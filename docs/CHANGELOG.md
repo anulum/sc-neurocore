@@ -5,6 +5,14 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+### Go acceleration namespace docstring ratchet
+- Promoted `accel.go` into the scoped NumPy docstring policy, added an
+  AST-visible package docstring, declared the maintained Python ctypes loader
+  entry points and broad Go service namespace globs, and extended the
+  acceleration mirror-authority tests to cover the Go namespace at 100%
+  exact-file coverage. No Go runtime, polyglot mirror, or benchmark-dispatched
+  path changed.
+
 ### Precision solver width and budget hardening
 - Hardened `compiler.precision_solver` with sign-inclusive integer-width
   calculation, finite/range validation, unsigned-negative range rejection,
