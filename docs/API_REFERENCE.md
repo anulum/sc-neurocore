@@ -9675,12 +9675,16 @@ Map neuron populations to wetware Multi-Electrode Array (MEA) sites.
 ## Module `compiler.ir_type_checker`
 
 ### Class `SignalType`
+Signal domains accepted by the stochastic IR compatibility checker.
+
 
 ### Class `IRNode`
 A typed node in the Stochastic IR graph.
 
 
 ### Class `IREdge`
+Connection record from one typed IR node port to another.
+
 
 ### Class `IRTypeError`
 A type mismatch found during checking.
@@ -11329,6 +11333,15 @@ and streams it through this PE one neuron per cycle). ``spike_out`` and each
 ``<var>_next_out`` are the post-threshold, post-reset next values, computed by
 the same fragments as :func:`compile_to_verilog` — so the folded datapath is
 bit-for-bit identical to the per-instance module.
+
+``param_ports`` names the parameters to carry on **input ports** instead of
+baking them as module ``parameter`` defaults. A folded population whose neurons
+have heterogeneous parameters drives these ports from a per-neuron parameter ROM
+(one value per neuron, streamed by the sequencer), the parameter-space analogue of
+the state BRAM. Because the arithmetic body references each parameter by the same
+``P_<NAME>`` identifier whether it is a ``parameter`` or an ``input wire``, moving a
+parameter to a port changes only its declaration — the datapath stays bit-for-bit
+identical. Every name must be a real neuron parameter/constant; the rest stay baked.
 
 Pipelining is not supported here (a combinational PE has no register stages);
 the folded sequencer provides the one-cycle-per-neuron timing instead.
@@ -25554,6 +25567,11 @@ direct_neuron_instances : int
     the count the fold collapses to ``pe_instances``.
 populations : int
     Number of folded populations sharing the one sequencer and the global spike bus.
+param_rom_bits : int
+    Total per-neuron parameter-ROM storage, in bits, for heterogeneous populations
+    (each contributes ``neurons`` × its count of per-neuron-varying parameters × data
+    width). Zero for a network whose populations all have uniform parameters (the PE
+    bakes them). The parameter-space analogue of ``state_ram_bits``.
 
 - **as_dict**()
   - Return a deterministic plain-``int`` mapping for manifests/JSON.
@@ -25621,20 +25639,46 @@ the same parameterised module with each neuron's own quantised parameters. The
 literal is the unsigned two's-complement bit pattern, matching how the module
 declares each parameter default (negative fixed-point values included).
 
+### Function `_heterogeneous_param_names(pop, data_width)`
+Return the sorted parameter names whose per-neuron quantised values vary in ``pop``.
+
+A name is heterogeneous when its per-neuron array (length ``n_neurons``) holds more
+than one distinct value at the quantised data width — exactly the set the direct path
+emits per-neuron ``#(.P_X(...))`` overrides for (see :func:`_neuron_param_override`),
+and the set the folded interconnect must stream through a per-neuron parameter ROM.
+
+Uniformity is decided at the *quantised* data width (the same mask the override
+detection uses), so two float parameters that round to the same fixed-point literal
+are not heterogeneous. A scalar / population-shared parameter (an array that is not
+per-neuron) is never heterogeneous.
+
 ### Function `_population_params_are_uniform(pop, data_width)`
 Return True when every per-neuron quantised parameter is identical across ``pop``.
 
-The folded interconnect bakes one representative parameter set into the shared
-per-type PE — there is no per-neuron parameter RAM — so it can only reproduce a
-population whose neurons carry identical quantised parameters. A *heterogeneous*
-population (one the direct path emits per-neuron ``#(.P_X(...))`` overrides for, see
-:func:`_neuron_param_override`) cannot fold: the fold would silently apply the first
-neuron's parameters to the whole population, diverging from the direct path.
+Equivalent to ``not _heterogeneous_param_names(pop, data_width)``. A heterogeneous
+population — one the direct path reproduces via per-neuron ``#(.P_X(...))`` overrides —
+folds only when the folded interconnect streams its varying parameters through a
+per-neuron parameter ROM (see :func:`_build_top_folded`).
 
-Uniformity is decided at the *quantised* data-width (the same mask the override
-detection uses), so two float parameters that round to the same fixed-point literal
-count as uniform. A scalar / population-shared parameter (an array that is not
-per-neuron) is uniform by construction.
+### Function `_param_neuron_literal(pop, pname, neuron_idx, data_width)`
+Return the Verilog signed literal of ``pop``'s ``pname`` for one neuron (quantised).
+
+The literal is the unsigned two's-complement bit pattern the module declares its
+parameter default with — the same form the direct path's per-neuron overrides use
+(see :func:`_neuron_param_override`) — so the folded parameter ROM feeds the PE the
+identical value the direct instance would receive.
+
+### Function `_dequantised_pop(pop, fraction)`
+Return ``pop`` with its quantised parameter values scaled back to real units.
+
+A :class:`QuantisedGraph` population stores fixed-point *integer* parameters
+(``value × 2**fraction``). The folded PE and the per-instance module both encode
+real-valued parameters with :meth:`Q88.encode`, so they must be handed the *real*
+value — feeding the already-quantised integer encodes it a second time (a 16-bit
+``tau = 5120`` re-encodes to ``5120 × 256 mod 2**16 = 0``, silently baking a broken
+parameter into the shared PE). The rescale is lossless for genuine fixed-point values
+(``5120 / 256 = 20.0`` re-encodes to ``5120``). Parameters absent from ``pop.params``
+are untouched (they fall back to the template default, already a real value).
 
 ### Function `_resolved_population_params(neuron_type, pop)`
 Resolve population parameters without averaging per-neuron values.
@@ -25815,10 +25859,11 @@ Return True if the graph is in the folded interconnect's supported subset.
 
 The folded interconnect time-multiplexes any number of populations of supported
 neuron types over a per-type PE pool and one global spike bus. A graph folds when
-every population has an ODE template, every population's per-neuron parameters are
-uniform (the shared PE bakes one representative parameter set — a heterogeneous
-population must use the direct path, see :func:`_population_params_are_uniform`), and
-every connection is one of:
+every population has an ODE template, every population's heterogeneous per-neuron
+parameters are datapath parameters the PE can carry on a port (streamed from a
+per-neuron parameter ROM — a parameter varying in something other than an ODE
+parameter cannot be streamed and falls back to the direct path), and every
+connection is one of:
 
 * **connection-less** — neurons driven only by their own external ``I_ext`` lane;
 * **external-weighted** — fed by external (non-population) source columns;
@@ -25841,8 +25886,9 @@ Summarise the shared-datapath resources of a foldable graph.
 Counts one PE per distinct neuron type (the per-type pool), the shared
 weighted-fan-in multipliers (external-source and analogue-voltage-source columns —
 spiking recurrent or inter-population fan-in is spike-gated and uses none), the BRAM
-state-word storage summed over populations, the cycles-per-tick, and the direct-path
-instance count the fold collapses.
+state-word storage summed over populations, the per-neuron parameter-ROM storage for
+heterogeneous populations, the cycles-per-tick, and the direct-path instance count the
+fold collapses.
 
 Parameters
 ----------

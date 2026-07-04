@@ -35,6 +35,8 @@ from enum import Enum, auto
 
 
 class SignalType(Enum):
+    """Signal domains accepted by the stochastic IR compatibility checker."""
+
     BITSTREAM = auto()
     RATE = auto()
     SPIKE = auto()
@@ -72,6 +74,8 @@ class IRNode:
 
 @dataclass
 class IREdge:
+    """Connection record from one typed IR node port to another."""
+
     src: str
     dst: str
     src_port: int = 0

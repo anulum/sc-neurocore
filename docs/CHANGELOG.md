@@ -5,6 +5,14 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+### IR type checker docstring ratchet
+- Promoted `compiler.ir_type_checker` into the scoped NumPy docstring policy,
+  added compliant public class docstrings for the signal-domain enum and edge
+  record, strict-typed the focused IR type-checker tests, and refreshed the
+  generated API reference. The existing focused selector keeps the module at
+  100% exact-file coverage. No runtime contract, polyglot mirror, or
+  benchmark-dispatched path changed.
+
 ### Cortical column coverage hardening
 - Added strict-typed cortical-column coverage contract tests for static scale
   validation, auto-backend single Rust SpMV fallback, and delayed per-bin
