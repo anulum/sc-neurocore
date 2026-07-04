@@ -89,6 +89,14 @@ def test_zero_residual_granger_returns_no_signal() -> None:
     assert conditional_granger_causality(zero, zero, zero, bin_size=1, order=2) == 0.0
 
 
+def test_short_history_granger_returns_no_signal() -> None:
+    """Too-short histories return no signal before constructing regressions."""
+    train = _binary_train(length=4)
+
+    assert pairwise_granger_causality(train, train, bin_size=1, order=2) == 0.0
+    assert conditional_granger_causality(train, train, train, bin_size=1, order=2) == 0.0
+
+
 def test_short_population_uses_stable_var_fallback() -> None:
     """Very short populations return finite zero-valued frequency tensors."""
     trains = [np.array([0.0, 1.0]), np.array([1.0, 0.0])]
