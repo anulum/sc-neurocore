@@ -8,7 +8,7 @@
 
 """Offline gate on the integrity of every neuron-descriptor provenance DOI.
 
-Fabricated, mistyped, or mis-attributed DOIs have repeatedly reached the model
+Fabricated, mistyped, or misattributed DOIs have repeatedly reached the model
 catalogue via generated descriptors (a non-existent "Kilinc & Bhatt 2023", the
 recurring phantom "Bhatt" co-author, digit-transposed DOIs, and one DOI that
 resolved to an unrelated paper on endotoxin shock). These tests turn that into a
