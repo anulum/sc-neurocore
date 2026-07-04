@@ -65,7 +65,48 @@ DelayVector = tuple[int, ...]
 # implemented and verified.
 _AER_THRESHOLD = 64
 _MAX_SYNTHESISABLE_DELAY_STEPS = 1024
+# Fail-closed synthesis-resource guards, checked before any RTL is emitted. The direct and
+# AER interconnects instantiate one module per neuron, so an unbounded neuron count would
+# inflate the netlist without limit (a synthesis-time denial of service); the folded
+# interconnect shares one processing element and is bounded instead by its state- and
+# parameter-RAM depth, so it is allowed a higher ceiling. Fixed-point data paths wider than
+# 64 bits are not hardware-plausible for these kernels.
+_MAX_UNROLLED_NEURONS = 8192
+_MAX_FOLDED_NEURONS = 262144
+_MAX_SYNTHESISABLE_DATA_WIDTH = 64
 _SCNIR_STREAM_FRAGMENT_RE = re.compile(r"[^A-Za-z0-9_.:-]+")
+
+
+def _check_synthesis_resource_bounds(
+    *, total_neurons: int, data_width: int, interconnect: str | None
+) -> None:
+    """Reject IR that would exhaust synthesis resources, before any RTL is emitted.
+
+    ``data_width`` must fit a hardware-plausible fixed-point datapath. The direct and AER
+    interconnects instantiate one module per neuron, so their neuron count is capped at
+    ``_MAX_UNROLLED_NEURONS``; the folded interconnect shares a single processing element
+    and is capped higher at ``_MAX_FOLDED_NEURONS`` (its state-RAM depth). Raising here
+    means a pathological network fails closed rather than exhausting memory or the
+    downstream synthesis tool.
+    """
+    if not 1 <= data_width <= _MAX_SYNTHESISABLE_DATA_WIDTH:
+        raise ValueError(
+            f"data_width {data_width} is outside the synthesisable range "
+            f"[1, {_MAX_SYNTHESISABLE_DATA_WIDTH}]"
+        )
+    if interconnect == "folded":
+        if total_neurons > _MAX_FOLDED_NEURONS:
+            raise ValueError(
+                f"network has {total_neurons} neurons, exceeding the folded synthesis "
+                f"guard {_MAX_FOLDED_NEURONS} (the shared processing element's state-RAM "
+                f"depth)"
+            )
+    elif total_neurons > _MAX_UNROLLED_NEURONS:
+        raise ValueError(
+            f"network has {total_neurons} neurons, exceeding the per-neuron synthesis "
+            f"guard {_MAX_UNROLLED_NEURONS} for the direct/AER interconnect; use "
+            f"interconnect='folded' to share one processing element across neurons"
+        )
 
 
 # ═══════════════════════════════════════════════════════════════════════
@@ -2440,6 +2481,11 @@ def compile_network_to_fpga(
     ValueError
         If the graph is empty or contains unsupported neuron types.
     """
+    _check_synthesis_resource_bounds(
+        total_neurons=graph.total_neurons,
+        data_width=data_width,
+        interconnect=interconnect,
+    )
     q = Q88(data_width=data_width, fraction=fraction)
     if source_kind == "lfsr" or source_kind == "sobol":
         resolved_source_kind: Literal["lfsr", "sobol"] = source_kind
