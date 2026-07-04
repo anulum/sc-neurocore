@@ -50,13 +50,16 @@ from .fisher_posner import HybridFisherPosnerLIF
 from .spin_pool import SpinPoolMPS
 
 logger = logging.getLogger(__name__)
+_GOTM_ROOT = "/media/anulum/GOTM/aaa_God_of_the_Math_Collection"
+_AGENTIC_SHARED_PATH = f"{_GOTM_ROOT}/agentic-shared"
 
 # Attempt to import the local LLM adapter
 try:
     import sys as _sys
 
     # The agentic-shared llm module is available on the GOTM workstation
-    _sys.path.insert(0, "/media/anulum/724AA8E84AA8AA75/agentic-shared")
+    if _AGENTIC_SHARED_PATH not in _sys.path:
+        _sys.path.insert(0, _AGENTIC_SHARED_PATH)
     from llm import Endpoint as _LLMEndpoint
     from llm import chat as _llm_chat
 

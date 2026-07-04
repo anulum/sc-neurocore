@@ -42,38 +42,66 @@ from .gotm_brain import HAS_LLM, GOTMBrain
 
 logger = logging.getLogger("sc_neurocore.quantum_cognition")
 
-# GOTM collection master path (NTFS, never SAS mirror)
-_DEFAULT_GOTM_PATH = "/media/anulum/724AA8E84AA8AA75/aaa_God_of_the_Math_Collection"
+# GOTM collection master path on the Samsung ext4 working drive.
+_DEFAULT_GOTM_PATH = "/media/anulum/GOTM/aaa_God_of_the_Math_Collection"
+_AGENTIC_SHARED_PATH = os.path.join(_DEFAULT_GOTM_PATH, "agentic-shared")
 _DEFAULT_STATE_FILE = "gotm_brain_state.json"
 _DEFAULT_SNN_DIR = os.path.join(_DEFAULT_GOTM_PATH, "04_ARCANE_SAPIENCE", "snn_stimuli")
 
 
 def _emit_snn_stimulus(snn_dir: str, chunk_summary: str, directive: str, step_index: int) -> None:
-    """Write an SNN stimulus JSON file for downstream orchestration."""
+    """Write a canonical Remanentia SNN stimulus record.
+
+    Parameters
+    ----------
+    snn_dir
+        Directory that receives the JSON stimulus file.
+    chunk_summary
+        Summary of the indexed content chunk that drove the learning step.
+    directive
+        Learning directive selected for the step.
+    step_index
+        Monotonic learning-step index from :class:`~.gotm_brain.LearningStep`.
+    """
     os.makedirs(snn_dir, exist_ok=True)
-    ts = int(time.time())
+    timestamp = datetime.now(timezone.utc)
     payload = {
-        "text": f"QC step {step_index}: {directive} — {chunk_summary[:100]}",
-        "source": "quantum_cognition",
+        "content": f"QC step {step_index}: {directive} - {chunk_summary[:100]}",
         "project": "SC-NEUROCORE",
-        "timestamp": datetime.now(timezone.utc).isoformat(),
+        "actor": "system",
+        "timestamp": timestamp.isoformat(),
+        "entities": ["SC-NEUROCORE", "quantum_cognition"],
+        "kind": "event",
+        "source_ref": "sc_neurocore.quantum_cognition.__main__:_emit_snn_stimulus",
     }
-    path = os.path.join(snn_dir, f"qc_{ts}.json")
+    path = os.path.join(snn_dir, f"qc_{timestamp.strftime('%Y%m%dT%H%M%S%fZ')}_{step_index}.json")
     try:
-        with open(path, "w") as f:
-            json.dump(payload, f)
+        with open(path, "w", encoding="utf-8") as f:
+            json.dump(payload, f, sort_keys=True)
     except OSError as exc:
         logger.warning("SNN stimulus write failed: %s", exc)
 
 
 def _make_llm_endpoint(model: str | None) -> Any:
-    """Create an agentic-shared Endpoint if model override requested."""
+    """Create an agentic-shared endpoint for an explicit local model override.
+
+    Parameters
+    ----------
+    model
+        Local model alias passed through ``--model``. ``None`` keeps LLM guidance
+        disabled for deterministic offline CLI runs.
+
+    Returns
+    -------
+    Any
+        An ``agentic-shared`` endpoint object when the local library is importable;
+        otherwise ``None`` after logging a warning.
+    """
     if model is None:
         return None
     try:
-        _sys_path = "/media/anulum/724AA8E84AA8AA75/agentic-shared"
-        if _sys_path not in sys.path:
-            sys.path.insert(0, _sys_path)
+        if _AGENTIC_SHARED_PATH not in sys.path:
+            sys.path.insert(0, _AGENTIC_SHARED_PATH)
         from llm import Endpoint
 
         return Endpoint(model=model)
@@ -83,7 +111,20 @@ def _make_llm_endpoint(model: str | None) -> Any:
 
 
 def cmd_learn(args: argparse.Namespace) -> int:
-    """One-shot learning from a repository."""
+    """Run one bounded learning pass over a repository.
+
+    Parameters
+    ----------
+    args
+        Parsed ``learn`` sub-command arguments, including the repository path,
+        state-file path, model override, and SNN stimulus directory.
+
+    Returns
+    -------
+    int
+        Process-style exit code, ``0`` after the learning pass and state write
+        complete.
+    """
     endpoint = _make_llm_endpoint(args.model)
     brain = GOTMBrain(
         n_neurons=args.n_neurons,
@@ -127,7 +168,20 @@ def cmd_learn(args: argparse.Namespace) -> int:
 
 
 def cmd_daemon(args: argparse.Namespace) -> int:
-    """Continuous learning daemon — shuffles GOTM, learns in cycles."""
+    """Run the continuous repository-learning daemon.
+
+    Parameters
+    ----------
+    args
+        Parsed ``daemon`` sub-command arguments, including cycle size, sleep
+        interval, state-file path, optional dashboard flag, and stimulus directory.
+
+    Returns
+    -------
+    int
+        Process-style exit code, ``0`` after graceful shutdown and final state
+        persistence.
+    """
     endpoint = _make_llm_endpoint(args.model)
     brain = GOTMBrain(
         n_neurons=args.n_neurons,
@@ -221,7 +275,19 @@ def cmd_daemon(args: argparse.Namespace) -> int:
 
 
 def cmd_status(args: argparse.Namespace) -> int:
-    """Print saved learning state."""
+    """Print a saved learning-state summary.
+
+    Parameters
+    ----------
+    args
+        Parsed ``status`` sub-command arguments containing the state-file path.
+
+    Returns
+    -------
+    int
+        ``0`` when a readable state file is summarised, ``1`` when the file is
+        absent, empty, or unreadable.
+    """
     if not args.state_file or not os.path.exists(args.state_file):
         print("No saved state found.")
         print(f"  Expected: {args.state_file}")
@@ -280,7 +346,20 @@ def cmd_status(args: argparse.Namespace) -> int:
 
 
 def main(argv: list[str] | None = None) -> int:
-    """CLI entry point."""
+    """Dispatch the quantum-cognition CLI.
+
+    Parameters
+    ----------
+    argv
+        Optional argument vector. ``None`` uses ``sys.argv`` through
+        :mod:`argparse`.
+
+    Returns
+    -------
+    int
+        Process-style exit code from the selected sub-command, or ``0`` after
+        printing help when no sub-command is provided.
+    """
     parser = argparse.ArgumentParser(
         prog="python -m sc_neurocore.quantum_cognition",
         description="GOTM Quantum Cognition Brain — learning system CLI",

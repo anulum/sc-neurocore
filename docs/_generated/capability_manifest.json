@@ -965,7 +965,7 @@
     "python_model_classes": 158,
     "python_model_source_modules": 152,
     "rust_pyo3_model_wrappers": 175,
-    "test_files": 963
+    "test_files": 964
   },
   "documentation": {
     "public_pages": [
@@ -3466,6 +3466,7 @@
       "tests/test_quantum/test_hybrid.py",
       "tests/test_quantum_bridge.py",
       "tests/test_quantum_cognition.py",
+      "tests/test_quantum_cognition_cli_memory_discipline.py",
       "tests/test_quantum_cognition_docs.py",
       "tests/test_quantum_hybrid.py",
       "tests/test_quantum_qec_contracts.py",

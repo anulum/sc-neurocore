@@ -458,6 +458,37 @@ No cross-repo code changes were required — the existing bridges already suppor
 
 ---
 
+## 8B. CLI SNN Stimuli
+
+The module CLI writes optional SNN stimulus records when `learn` or `daemon`
+processes content:
+
+```bash
+python -m sc_neurocore.quantum_cognition learn /path/to/repo --snn-dir ./snn_stimuli
+```
+
+The default repository root and stimulus directory point at the Samsung ext4
+GOTM working tree:
+
+- `/media/anulum/GOTM/aaa_God_of_the_Math_Collection`
+- `/media/anulum/GOTM/aaa_God_of_the_Math_Collection/04_ARCANE_SAPIENCE/snn_stimuli`
+
+Every emitted `qc_*.json` stimulus uses the fleet memory-write schema:
+
+| Field | Meaning |
+|-------|---------|
+| `content` | Human-readable learning-step summary, prefixed with `QC step <n>`. |
+| `project` | Fixed uppercase project slug: `SC-NEUROCORE`. |
+| `actor` | Controlled producer role: `system`. |
+| `timestamp` | UTC ISO-8601 timestamp from the writing process. |
+| `entities` | Stable linking entities: `SC-NEUROCORE`, `quantum_cognition`. |
+| `kind` | Event classification, currently `event`. |
+| `source_ref` | Producing code surface: `sc_neurocore.quantum_cognition.__main__:_emit_snn_stimulus`. |
+
+The stimulus writer no longer emits the legacy `text` or `source` aliases.
+
+---
+
 ## 8A. `ContentChunk` & Content Indexer
 
 ### 8A.1 `ContentChunk` Dataclass

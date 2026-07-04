@@ -7,7 +7,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 245
+expected_file_count = 246
 
 [[file]]
 path = "src/sc_neurocore/__init__.py"
@@ -208,6 +208,10 @@ rationale = "Public quantum cognition telemetry hook used by Studio dashboards a
 [[file]]
 path = "src/sc_neurocore/quantum_cognition/fisher_posner.py"
 rationale = "Public Fisher-Posner quantum-metabolic LIF neuron surface with validated physical parameter domains."
+
+[[file]]
+path = "src/sc_neurocore/quantum_cognition/__main__.py"
+rationale = "Public quantum cognition CLI surface that emits SNN memory stimuli and learning-state summaries."
 
 [[file]]
 path = "src/sc_neurocore/plasticity.py"
