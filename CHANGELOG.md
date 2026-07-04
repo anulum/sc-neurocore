@@ -11,6 +11,8 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
   neuron, so an unbounded count is a synthesis-time denial of service) and higher, 262144,
   for the folded interconnect (which shares one processing element and is bounded by its
   state-RAM depth). A network over the direct/AER cap is pointed at `interconnect="folded"`.
+  The total synapse count is capped too (at 1048576), since every interconnect flattens all
+  weight matrices into one shared ROM — a blow-up axis independent of the neuron count.
 - `cargo-fuzz` targets (`engine/fuzz`): `parse_ir` fuzzes `ir::parser::parse` (arbitrary
   input — exposed to Python as `ir_parse` — must only ever return `Err`, never panic);
   `roundtrip_ir` asserts the parser and `printer::print` are inverse (`parse(print(g)) == g`,

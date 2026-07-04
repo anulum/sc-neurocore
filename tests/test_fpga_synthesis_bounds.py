@@ -17,11 +17,12 @@ must raise before any RTL is emitted, so these tests need no HDL toolchain.
 
 from __future__ import annotations
 
+import numpy as np
 import pytest
 
 from sc_neurocore.nir_bridge import fpga_compiler
 from sc_neurocore.nir_bridge.fpga_compiler import compile_network_to_fpga
-from sc_neurocore.nir_bridge.neuron_graph import NeuronGraph, NeuronSpec
+from sc_neurocore.nir_bridge.neuron_graph import ConnectionSpec, NeuronGraph, NeuronSpec
 
 
 def _lif_graph(n_neurons: int) -> NeuronGraph:
@@ -29,6 +30,16 @@ def _lif_graph(n_neurons: int) -> NeuronGraph:
     pop = NeuronSpec(name="pop0", neuron_type="lif", n_neurons=n_neurons, params={}, dt=1.0)
     return NeuronGraph(
         populations=[pop], connections=[], input_pop="pop0", output_pop="pop0", dt=1.0
+    )
+
+
+def _connected_graph(n_dst: int, n_src: int) -> NeuronGraph:
+    """A population driven by one external connection with an ``n_dst x n_src`` weight ROM."""
+    weights = np.ones((n_dst, n_src), dtype=np.float32)
+    pop = NeuronSpec(name="pop0", neuron_type="lif", n_neurons=n_dst, params={}, dt=1.0)
+    conn = ConnectionSpec(src="stim", dst="pop0", weights=weights)
+    return NeuronGraph(
+        populations=[pop], connections=[conn], input_pop="stim", output_pop="pop0", dt=1.0
     )
 
 
@@ -71,8 +82,29 @@ def test_rejects_folded_neuron_count_over_ceiling(monkeypatch: pytest.MonkeyPatc
         compile_network_to_fpga(_lif_graph(4), interconnect="folded")
 
 
+def test_rejects_synapse_count_over_ceiling(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(fpga_compiler, "_MAX_SYNTHESISABLE_SYNAPSES", 3)
+    # A 2 x 2 weight matrix is 4 synapses, over the patched cap.
+    with pytest.raises(ValueError, match="weight-ROM synthesis guard"):
+        compile_network_to_fpga(_connected_graph(2, 2), interconnect="direct")
+
+
+def test_synapse_guard_is_interconnect_independent(monkeypatch: pytest.MonkeyPatch) -> None:
+    # The weight ROM is shared, so the synapse cap fires for folded too, not only direct/AER.
+    monkeypatch.setattr(fpga_compiler, "_MAX_SYNTHESISABLE_SYNAPSES", 3)
+    with pytest.raises(ValueError, match="weight-ROM synthesis guard"):
+        compile_network_to_fpga(_connected_graph(2, 2), interconnect="folded")
+
+
 def test_valid_small_network_passes_the_guard() -> None:
     # A normal small net compiles — the guard does not false-fire.
     result = compile_network_to_fpga(_lif_graph(4), data_width=16, fraction=8)
     assert result.total_neurons == 4
+    assert result.top_module
+
+
+def test_valid_connected_network_passes_the_guard() -> None:
+    # A small connected net compiles — the synapse guard does not false-fire.
+    result = compile_network_to_fpga(_connected_graph(3, 2), interconnect="direct")
+    assert result.total_synapses == 6
     assert result.top_module

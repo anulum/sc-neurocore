@@ -74,18 +74,24 @@ _MAX_SYNTHESISABLE_DELAY_STEPS = 1024
 _MAX_UNROLLED_NEURONS = 8192
 _MAX_FOLDED_NEURONS = 262144
 _MAX_SYNTHESISABLE_DATA_WIDTH = 64
+# Every interconnect flattens all connection weight matrices into one shared weight ROM, so
+# the total synapse count is a second blow-up axis independent of the neuron count: a dense
+# N x N connection is N**2 ROM entries. Cap it so pathological connectivity fails closed.
+_MAX_SYNTHESISABLE_SYNAPSES = 1_048_576
 _SCNIR_STREAM_FRAGMENT_RE = re.compile(r"[^A-Za-z0-9_.:-]+")
 
 
 def _check_synthesis_resource_bounds(
-    *, total_neurons: int, data_width: int, interconnect: str | None
+    *, total_neurons: int, total_synapses: int, data_width: int, interconnect: str | None
 ) -> None:
     """Reject IR that would exhaust synthesis resources, before any RTL is emitted.
 
     ``data_width`` must fit a hardware-plausible fixed-point datapath. The direct and AER
     interconnects instantiate one module per neuron, so their neuron count is capped at
     ``_MAX_UNROLLED_NEURONS``; the folded interconnect shares a single processing element
-    and is capped higher at ``_MAX_FOLDED_NEURONS`` (its state-RAM depth). Raising here
+    and is capped higher at ``_MAX_FOLDED_NEURONS`` (its state-RAM depth). Independently,
+    every interconnect flattens all weight matrices into one ROM, so the total synapse count
+    is capped at ``_MAX_SYNTHESISABLE_SYNAPSES`` regardless of interconnect. Raising here
     means a pathological network fails closed rather than exhausting memory or the
     downstream synthesis tool.
     """
@@ -93,6 +99,11 @@ def _check_synthesis_resource_bounds(
         raise ValueError(
             f"data_width {data_width} is outside the synthesisable range "
             f"[1, {_MAX_SYNTHESISABLE_DATA_WIDTH}]"
+        )
+    if total_synapses > _MAX_SYNTHESISABLE_SYNAPSES:
+        raise ValueError(
+            f"network has {total_synapses} synapses, exceeding the weight-ROM synthesis "
+            f"guard {_MAX_SYNTHESISABLE_SYNAPSES}; reduce connection density or fan-out"
         )
     if interconnect == "folded":
         if total_neurons > _MAX_FOLDED_NEURONS:
@@ -2483,6 +2494,7 @@ def compile_network_to_fpga(
     """
     _check_synthesis_resource_bounds(
         total_neurons=graph.total_neurons,
+        total_synapses=graph.total_synapses,
         data_width=data_width,
         interconnect=interconnect,
     )
