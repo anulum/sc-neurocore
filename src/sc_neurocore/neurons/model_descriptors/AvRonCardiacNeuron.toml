@@ -18,6 +18,14 @@ behavior_tags = [
 ]
 
 [provenance]
+authors = [
+    "Av-Ron, E.",
+    "Parnas, H.",
+    "Segel, L. A.",
+]
+year = 1993
+doi = "10.1007/BF00201411"
+paper_title = "A basic biophysical model for bursting neurons"
 
 [state.v]
 init = -60.0
