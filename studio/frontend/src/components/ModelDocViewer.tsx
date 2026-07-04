@@ -8,6 +8,22 @@ type DocState =
   | { status: "ready"; doc: ModelDoc }
   | { status: "absent" };
 
+export function ModelDocMarkdown({ markdown }: { markdown: string }) {
+  return (
+    <pre
+      style={{
+        maxHeight: 320, overflowY: "auto", margin: 0, padding: 8,
+        fontSize: 10, lineHeight: 1.5, whiteSpace: "pre-wrap", wordBreak: "break-word",
+        background: "var(--bg-primary)", color: "var(--text-secondary)",
+        border: "1px solid var(--border)", borderRadius: "var(--radius)",
+        fontFamily: "var(--font-mono)",
+      }}
+    >
+      {markdown}
+    </pre>
+  );
+}
+
 export default function ModelDocViewer() {
   const { sourceMode, selectedModelName } = useStudioStore();
   const [open, setOpen] = useState(false);
@@ -61,17 +77,7 @@ export default function ModelDocViewer() {
             </div>
           )}
           {state.status === "ready" && (
-            <pre
-              style={{
-                maxHeight: 320, overflowY: "auto", margin: 0, padding: 8,
-                fontSize: 10, lineHeight: 1.5, whiteSpace: "pre-wrap", wordBreak: "break-word",
-                background: "var(--bg-primary)", color: "var(--text-secondary)",
-                border: "1px solid var(--border)", borderRadius: "var(--radius)",
-                fontFamily: "var(--font-mono)",
-              }}
-            >
-              {state.doc.markdown}
-            </pre>
+            <ModelDocMarkdown markdown={state.doc.markdown} />
           )}
         </div>
       )}
