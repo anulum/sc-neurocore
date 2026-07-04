@@ -965,7 +965,7 @@
     "python_model_classes": 158,
     "python_model_source_modules": 152,
     "rust_pyo3_model_wrappers": 175,
-    "test_files": 958
+    "test_files": 960
   },
   "documentation": {
     "public_pages": [
@@ -3055,6 +3055,7 @@
       "tests/test_formal_network_properties.py",
       "tests/test_formal_proofs.py",
       "tests/test_formal_property_check.py",
+      "tests/test_fpga_synthesis_bounds.py",
       "tests/test_frontiers.py",
       "tests/test_fusion/test_sensor_fusion.py",
       "tests/test_fusion.py",
@@ -3114,6 +3115,7 @@
       "tests/test_holonomic_l9_mem_contracts.py",
       "tests/test_homeostasis.py",
       "tests/test_homeostatic_lif.py",
+      "tests/test_host_driver_bounds.py",
       "tests/test_hub_bundle.py",
       "tests/test_hypervisor/test_hypervisor.py",
       "tests/test_hypothesis_fuzz.py",
