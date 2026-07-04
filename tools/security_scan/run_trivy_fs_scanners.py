@@ -147,9 +147,7 @@ def run_trivy_fs_scanner(
     validation_errors, vulnerability_count, vulnerability_ids = _validate_trivy_report(report_path)
     summary = {
         "schema_version": TRIVY_FS_SCANNER_SCHEMA_VERSION,
-        "passed": (
-            result.returncode == 0 and not validation_errors and vulnerability_count == 0
-        ),
+        "passed": (result.returncode == 0 and not validation_errors and vulnerability_count == 0),
         "command": command,
         "artifact": str(report_path),
         "returncode": result.returncode,
