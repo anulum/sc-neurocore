@@ -1,0 +1,53 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+name: SC-NeuroCore Fuzz
+
+# Fuzzing is scheduled (and manually dispatchable), not per-PR: the instrumented build
+# is non-trivial even with Z3 skipped, so it is not a merge gate.
+on:
+  schedule:
+    - cron: "0 6 * * 1" # Mondays 06:00 UTC
+  workflow_dispatch:
+    inputs:
+      max_total_time:
+        description: "Seconds to fuzz each target"
+        default: "300"
+
+permissions:
+  contents: read
+
+jobs:
+  fuzz:
+    name: Fuzz IR parser
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+
+      - uses: dtolnay/rust-toolchain@631a55b12751854ce901bb631d5902ceb48146f7 # pinned action
+        with:
+          toolchain: nightly
+
+      - uses: Swatinem/rust-cache@c19371144df3bb44fab255c43d04cbc2ab54d1c4 # v2.9.1
+        with:
+          workspaces: engine/fuzz
+
+      - name: Install cargo-fuzz
+        run: cargo install cargo-fuzz --version 0.13.1 --locked
+
+      # The fuzz crate depends on the engine with default-features = false, so the
+      # bundled-Z3 build is skipped (ir::parser::parse needs neither Z3 nor NumPy/pyo3,
+      # which is dead-stripped from the target). fuzz/Cargo.lock is committed so NumPy
+      # and ndarray resolve to the engine's versions (a fresh resolve splits ndarray and
+      # breaks into_pyarray).
+      - name: Fuzz ir::parser::parse
+        working-directory: engine
+        run: >
+          cargo fuzz run parse_ir --
+          -max_total_time=${{ github.event.inputs.max_total_time || '300' }}
+          -max_len=8192
+
+      - name: Report crash reproducers
+        if: failure()
+        working-directory: engine
+        run: |
+          echo "::error::Fuzzing found a crash — reproducers under engine/fuzz/artifacts/"
+          ls -R fuzz/artifacts/ || true

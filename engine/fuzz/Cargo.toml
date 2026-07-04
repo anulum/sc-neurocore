@@ -1,0 +1,29 @@
+[package]
+name = "sc_neurocore_engine-fuzz"
+version = "0.0.0"
+publish = false
+edition = "2021"
+
+[package.metadata]
+cargo-fuzz = true
+
+[dependencies]
+libfuzzer-sys = "0.4"
+
+# Depend on the engine WITHOUT default features so the fuzz build skips the bundled-Z3
+# C++ compile (and the Z3 supervisor): the IR parser needs neither. See the `z3`
+# feature in ../Cargo.toml, made optional so instrumented builds like this one stay fast.
+[dependencies.sc_neurocore_engine]
+path = ".."
+default-features = false
+
+[[bin]]
+name = "parse_ir"
+path = "fuzz_targets/parse_ir.rs"
+test = false
+doc = false
+bench = false
+
+# Own workspace root: the repository root is a Cargo workspace and the fuzz crate is not
+# one of its members, so it must declare its own empty workspace.
+[workspace]
