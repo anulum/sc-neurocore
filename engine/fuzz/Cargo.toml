@@ -24,6 +24,13 @@ test = false
 doc = false
 bench = false
 
+[[bin]]
+name = "roundtrip_ir"
+path = "fuzz_targets/roundtrip_ir.rs"
+test = false
+doc = false
+bench = false
+
 # Own workspace root: the repository root is a Cargo workspace and the fuzz crate is not
 # one of its members, so it must declare its own empty workspace.
 [workspace]
