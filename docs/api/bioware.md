@@ -244,7 +244,7 @@ has something to condition on when the MEA returns waveforms.
 The overall bioware contract is stricter than typical research code:
 every public surface is typed, exception-free for empty inputs,
 deterministic under a fixed seed, and round-trippable between
-dataclass and dict views. The contract is enforced by 40+ tests in
+dataclass and dict views. The contract is enforced by 121 focused tests in
 ``tests/test_bioware/test_bioware.py``.
 
 ---
@@ -322,7 +322,7 @@ caller concern.
 | BioHybridFrameResult dual interface            | Dataclass attribute access + mapping ``result["key"]`` + ``in``        |
 | Audit log                                      | :class:`BioAuditLog` timestamp + entry record for every session        |
 | Multi-well plate support                       | :class:`MultiWellPlate` for parallel experiments                       |
-| 40+ tests                                      | Spike detection + AER + SC + Opto + STDP + BCM + Culture + Homeostasis |
+| 121 focused tests                              | Spike detection + AER + SC + Opto + STDP + BCM + Culture + Homeostasis |
 
 ---
 
@@ -738,7 +738,7 @@ reference host.
 ## Reference
 
 - Module: `src/sc_neurocore/bioware/bioware.py`.
-- Tests: `tests/test_bioware/test_bioware.py` (40+ tests incl.
+- Tests: `tests/test_bioware/test_bioware.py` (121 focused tests incl.
   TestMEAConfig, TestSpikeDetector, TestMEAToAERTranscoder,
   TestAERToSCConverter, TestSCToOptoEncoder, TestBiologicalSTDP,
   TestBCMPlasticity, TestCultureHealth, TestBioHybridSession,

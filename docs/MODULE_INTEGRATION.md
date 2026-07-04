@@ -190,7 +190,7 @@ and integrated into the production `SC-NEUROCORE` tree. Each module has been:
 
 #### bioware — Biological-Hardware Interface
 - **Source:** `src/sc_neurocore/bioware/bioware.py`
-- **Tests:** `tests/test_bioware/test_bioware.py` — **79 tests**
+- **Tests:** `tests/test_bioware/test_bioware.py` — **121 tests**
 - **Key Classes:**
   - `BiowareInterface` — Wet-lab / in-silico bridge
   - `OrganoidModel` — Cerebral organoid abstraction
@@ -267,7 +267,7 @@ and integrated into the production `SC-NEUROCORE` tree. Each module has been:
 | chiplet | `tests/test_chiplet/` | 94 |
 | memristor | `tests/test_memristor/` | 70 |
 | analog_bridge | `tests/test_analog_bridge/` | 27 |
-| bioware | `tests/test_bioware/` | 79 |
+| bioware | `tests/test_bioware/` | 121 |
 | meta_plasticity | `tests/test_meta_plasticity/` | 72 |
 | evo_substrate | `tests/test_evo_substrate/` | 91 |
 | federated | `tests/test_federated/` | 93 |

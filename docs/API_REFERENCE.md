@@ -3713,6 +3713,7 @@ Standard MEA electrode layouts.
 Multi-electrode array configuration.
 
 - **from_layout**(cls, layout)
+  - Create a configuration preset for a standard MEA layout.
 
 ### Class `DetectedSpike`
 One detected spike event from MEA data.
@@ -3801,6 +3802,7 @@ biological firing rates to Q8.8 weight deltas.
 - **compute_dw**(pre_rate_hz, post_rate_hz)
   - BCM weight change: ΔW = η * x * y * (y - θ).
 - **update_weight**(current_q88, pre_rate, post_rate)
+  - Apply the BCM update to a saturated Q8.8 synaptic weight.
 
 ### Class `CultureHealth`
 Monitor organoid/culture viability from MEA activity.
@@ -3817,8 +3819,11 @@ fields (``result&#91;"round"&#93;``, ``"latency_us" in result``,
 ``dict(result)``). The mapping surface is read-only.
 
 - **__getitem__**(key)
+  - Return a dataclass field through the legacy mapping interface.
 - **__contains__**(key)
+  - Return whether ``key`` names a public result field.
 - **keys**()
+  - Return the mapping-view field names in dataclass declaration order.
 
 ### Class `BioHybridSession`
 Manages a complete bio-hybrid experiment session.
@@ -3850,8 +3855,11 @@ Tracks and enforces closed-loop latency requirements.
 - **record**(latency_us)
   - Record a latency measurement. Returns True if within budget.
 - **mean_latency_us**()
+  - Return the arithmetic mean of recorded loop latencies.
 - **p99_latency_us**()
+  - Return the 99th percentile closed-loop latency.
 - **compliance_ratio**()
+  - Return the fraction of samples inside the latency budget.
 
 ### Class `PharmModel`
 Simulates effect of pharmacological agents on spike rate.
@@ -3860,7 +3868,9 @@ Models excitatory (e.g., bicuculline) or inhibitory (e.g., TTX) agents
 as gain factors on firing rate.
 
 - **apply**(t_current_s)
+  - Mark the pharmacological agent as applied at the current time.
 - **effective_gain**(t_current_s)
+  - Return the active firing-rate gain at an experiment timestamp.
 - **modulate_spikes**(spike_counts, t_current_s)
   - Modulate spike counts by pharmacological gain.
 - **modulate_spike_events**(spikes, t_current_s)
@@ -3870,14 +3880,19 @@ as gain factors on firing rate.
 One well in a multi-well MEA plate.
 
 - **label**()
+  - Return the stable plate label for this well.
 
 ### Class `MultiWellPlate`
 Multi-well plate (e.g., 6/24/48/96-well MEA plate).
 
 - **add_well**(well)
+  - Append a well configuration to the plate.
 - **standard_6_well**(cls, layout)
+  - Construct a six-well plate with uniform MEA layout presets.
 - **num_wells**()
+  - Return the number of configured wells.
 - **get_well**(well_id)
+  - Return a well by identifier.
 
 ### Class `NetworkBurst`
 Detected network-wide synchronised burst event.
@@ -3899,8 +3914,11 @@ One audit entry for a bio-hybrid session.
 Regulatory-grade audit log for bio-hybrid experiments.
 
 - **log**(entry)
+  - Append one audit entry to the session log.
 - **total_rounds**()
+  - Return the number of recorded audit entries.
 - **to_list**()
+  - Serialise audit entries to deterministic dictionaries.
 - **checksum**()
   - SHA-256 of log contents for tamper detection.
 

@@ -69,6 +69,20 @@ class MEAConfig:
 
     @classmethod
     def from_layout(cls, layout: MEALayout) -> MEAConfig:
+        """Create a configuration preset for a standard MEA layout.
+
+        Parameters
+        ----------
+        layout:
+            Standard electrode layout whose channel count and pitch should seed
+            the returned configuration.
+
+        Returns
+        -------
+        MEAConfig
+            Configuration with the requested layout and canonical channel/pitch
+            preset while retaining the default sampling and detector gains.
+        """
         presets: Dict[MEALayout, Dict[str, Any]] = {
             MEALayout.MEA_60: dict(num_channels=60, electrode_pitch_um=200.0),
             MEALayout.MEA_120: dict(num_channels=120, electrode_pitch_um=100.0),
@@ -413,6 +427,22 @@ class BCMPlasticity:
         return self.learning_rate * pre_rate_hz * post_rate_hz * (post_rate_hz - self.theta)
 
     def update_weight(self, current_q88: int, pre_rate: float, post_rate: float) -> int:
+        """Apply the BCM update to a saturated Q8.8 synaptic weight.
+
+        Parameters
+        ----------
+        current_q88:
+            Current synaptic weight encoded as Q8.8.
+        pre_rate:
+            Presynaptic firing rate in hertz.
+        post_rate:
+            Postsynaptic firing rate in hertz.
+
+        Returns
+        -------
+        int
+            Updated Q8.8 weight clamped to ``[w_min_q88, w_max_q88]``.
+        """
         dw = self.compute_dw(pre_rate, post_rate)
         dw_q88 = int(dw * 256)
         new_w = current_q88 + dw_q88
@@ -482,6 +512,24 @@ class BioHybridFrameResult:
     opto_pulses: List[OptogeneticPulse]
 
     def __getitem__(self, key: str) -> Any:
+        """Return a dataclass field through the legacy mapping interface.
+
+        Parameters
+        ----------
+        key:
+            Public dataclass field name to read.
+
+        Returns
+        -------
+        Any
+            The underlying field value, preserving object identity for mutable
+            payloads such as ``health`` and ``bitstreams``.
+
+        Raises
+        ------
+        KeyError
+            If ``key`` is not a public field name.
+        """
         if not isinstance(key, str) or key.startswith("_"):
             raise KeyError(key)
         try:
@@ -490,11 +538,30 @@ class BioHybridFrameResult:
             raise KeyError(key) from exc
 
     def __contains__(self, key: object) -> bool:
+        """Return whether ``key`` names a public result field.
+
+        Parameters
+        ----------
+        key:
+            Candidate mapping key.
+
+        Returns
+        -------
+        bool
+            ``True`` only for string keys matching declared dataclass fields.
+        """
         if not isinstance(key, str):
             return False
         return key in {f.name for f in fields(self)}
 
     def keys(self) -> List[str]:
+        """Return the mapping-view field names in dataclass declaration order.
+
+        Returns
+        -------
+        list[str]
+            Public field names accepted by ``__getitem__`` and ``__contains__``.
+        """
         return [f.name for f in fields(self)]
 
 
@@ -729,14 +796,37 @@ class LatencyBudget:
 
     @property
     def mean_latency_us(self) -> float:
+        """Return the arithmetic mean of recorded loop latencies.
+
+        Returns
+        -------
+        float
+            Mean latency in microseconds, or ``0.0`` before any samples exist.
+        """
         return float(np.mean(self.history)) if self.history else 0.0
 
     @property
     def p99_latency_us(self) -> float:
+        """Return the 99th percentile closed-loop latency.
+
+        Returns
+        -------
+        float
+            99th percentile latency in microseconds, or ``0.0`` for an empty
+            history.
+        """
         return float(np.percentile(self.history, 99)) if self.history else 0.0
 
     @property
     def compliance_ratio(self) -> float:
+        """Return the fraction of samples inside the latency budget.
+
+        Returns
+        -------
+        float
+            Ratio in ``[0.0, 1.0]``; an empty history is defined as fully
+            compliant.
+        """
         if not self.history:
             return 1.0
         return 1.0 - self.violations / len(self.history)
@@ -760,9 +850,31 @@ class PharmModel:
     _applied_at: float = -1.0
 
     def apply(self, t_current_s: float) -> None:
+        """Mark the pharmacological agent as applied at the current time.
+
+        Parameters
+        ----------
+        t_current_s:
+            Experiment time in seconds used as the onset reference for
+            subsequent gain interpolation.
+        """
         self._applied_at = t_current_s
 
     def effective_gain(self, t_current_s: float) -> float:
+        """Return the active firing-rate gain at an experiment timestamp.
+
+        Parameters
+        ----------
+        t_current_s:
+            Experiment time in seconds.
+
+        Returns
+        -------
+        float
+            ``1.0`` before application, a linearly interpolated onset gain
+            during ``onset_delay_s``, or the configured steady-state gain after
+            onset.
+        """
         if self._applied_at < 0:
             return 1.0
         elapsed = t_current_s - self._applied_at
@@ -862,6 +974,13 @@ class WellConfig:
 
     @property
     def label(self) -> str:
+        """Return the stable plate label for this well.
+
+        Returns
+        -------
+        str
+            Identifier combining well ID, culture type, and passage number.
+        """
         return f"{self.well_id}_{self.culture_type}_P{self.passage_number}"
 
 
@@ -872,10 +991,29 @@ class MultiWellPlate:
     wells: List[WellConfig] = field(default_factory=list)
 
     def add_well(self, well: WellConfig) -> None:
+        """Append a well configuration to the plate.
+
+        Parameters
+        ----------
+        well:
+            Well metadata and MEA configuration to append.
+        """
         self.wells.append(well)
 
     @classmethod
     def standard_6_well(cls, layout: MEALayout = MEALayout.MEA_60) -> MultiWellPlate:
+        """Construct a six-well plate with uniform MEA layout presets.
+
+        Parameters
+        ----------
+        layout:
+            MEA layout preset used for each generated well.
+
+        Returns
+        -------
+        MultiWellPlate
+            Plate containing wells ``W1`` through ``W6``.
+        """
         plate = cls()
         for i in range(6):
             plate.add_well(
@@ -888,9 +1026,29 @@ class MultiWellPlate:
 
     @property
     def num_wells(self) -> int:
+        """Return the number of configured wells.
+
+        Returns
+        -------
+        int
+            Length of the plate's well list.
+        """
         return len(self.wells)
 
     def get_well(self, well_id: str) -> Optional[WellConfig]:
+        """Return a well by identifier.
+
+        Parameters
+        ----------
+        well_id:
+            Identifier such as ``"W1"``.
+
+        Returns
+        -------
+        WellConfig | None
+            Matching well configuration, or ``None`` when the plate does not
+            contain ``well_id``.
+        """
         return next((w for w in self.wells if w.well_id == well_id), None)
 
 
@@ -1011,13 +1169,35 @@ class BioAuditLog:
     experiment_id: str = ""
 
     def log(self, entry: BioAuditEntry) -> None:
+        """Append one audit entry to the session log.
+
+        Parameters
+        ----------
+        entry:
+            Timestamped closed-loop session summary to retain in append order.
+        """
         self.entries.append(entry)
 
     @property
     def total_rounds(self) -> int:
+        """Return the number of recorded audit entries.
+
+        Returns
+        -------
+        int
+            Count of entries currently stored in the log.
+        """
         return len(self.entries)
 
     def to_list(self) -> List[Dict[str, Any]]:
+        """Serialise audit entries to deterministic dictionaries.
+
+        Returns
+        -------
+        list[dict[str, Any]]
+            JSON-compatible records used by ``checksum`` and external evidence
+            sinks.
+        """
         return [
             {
                 "round": e.round_number,

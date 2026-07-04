@@ -220,3 +220,5 @@ benchmarks/databank/
 docs/source_papers/pdfs/
 docs/source_papers/**/*.pdf
 docs/external_papers/
+.env
+TODO
