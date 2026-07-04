@@ -10709,46 +10709,100 @@ PowerEstimate
 ### Class `BlockFloatingPrecisionConfig`
 Block-floating specification for a single variable.
 
+Attributes
+----------
+mantissa_bits:
+    Number of signed mantissa bits emitted on the fixed datapath.
+exponent_bits:
+    Number of bits stored for each shared block exponent code.
+block_size:
+    Number of flattened parameters that share one exponent code.
+signed:
+    Whether the mantissa stream uses signed two's-complement values.
+
 - **__post_init__**()
+  - Validate block-floating width and layout invariants.
 - **data_width**()
+  - Mantissa datapath width emitted for hardware and manifest payloads.
 - **fraction**()
+  - Conservative fractional width used by fixed-datapath fallbacks.
 - **emit_fraction**()
+  - Fractional width advertised to downstream fixed-datapath emitters.
 - **kind**()
+  - Stable manifest kind for block-floating precision contracts.
 - **int_bits**()
+  - Signed mantissa magnitude bits excluding shared exponent metadata.
 - **exponent_bias**()
+  - Bias that maps stored exponent codes to unbiased exponents.
 - **exponent_code_min**()
+  - Smallest encoded shared-exponent code.
 - **exponent_code_max**()
+  - Largest encoded shared-exponent code.
 - **mantissa_abs_max**()
+  - Largest signed mantissa magnitude before applying the block exponent.
 - **max_exponent**()
+  - Largest unbiased exponent represented by the exponent stream.
 - **min_exponent**()
+  - Smallest unbiased exponent represented by the exponent stream.
 - **max_value**()
+  - Largest positive value representable by mantissa and exponent fields.
 - **min_value**()
+  - Smallest signed value representable by mantissa and exponent fields.
 - **resolution**()
+  - Smallest positive exponent quantum available to the block stream.
 - **q_label**()
+  - Canonical block-floating label including mantissa, exponent, and block size.
 - **is_block_floating**()
+  - Whether this precision contract requires shared exponent metadata.
 - **can_represent**(value)
+  - Return whether ``value`` lies inside the coarse block-floating range.
 - **encode**(value)
+  - Reject scalar encoding when block exponent metadata is unavailable.
 - **manifest**()
+  - Return the parameter-count-independent block-floating manifest.
 - **block_exponent_count**(parameter_count)
+  - Return the number of shared exponents needed for ``parameter_count``.
 - **block_exponent_layout**(parameter_count)
+  - Return the flattened exponent-vector layout for ``parameter_count``.
 - **validate_exponents**(exponents)
+  - Validate and normalise encoded block exponents for a parameter payload.
 - **manifest_for_parameter_count**(parameter_count)
+  - Return a deterministic manifest with optional concrete layout metadata.
 
 ### Class `PrecisionConfig`
 Fixed-point configuration for a single variable.
 
+Attributes
+----------
+data_width:
+    Total fixed-point storage width in bits.
+fraction:
+    Number of fractional bits below the binary point.
+signed:
+    Whether encoded values use signed two's-complement storage.
+
 - **int_bits**()
+  - Integer magnitude bits available above the configured fraction.
 - **max_value**()
+  - Largest fixed-point value representable by this configuration.
 - **min_value**()
+  - Smallest fixed-point value representable by this configuration.
 - **resolution**()
+  - Quantisation step represented by one least-significant bit.
 - **q_label**()
-  - Standard sign-inclusive Q-format label (``Q8.8`` for 16-bit, ``Q16.16``
+  - Standard sign-inclusive Q-format label.
 - **emit_fraction**()
+  - Fractional width advertised to downstream fixed-point emitters.
 - **kind**()
+  - Stable manifest kind for fixed-point precision contracts.
 - **is_block_floating**()
+  - Whether this precision contract requires shared exponent metadata.
 - **manifest**()
+  - Return a deterministic fixed-point manifest for compilers and telemetry.
 - **can_represent**(value)
+  - Return whether ``value`` lies inside the fixed-point dynamic range.
 - **encode**(value)
+  - Quantise ``value`` to the nearest clamped fixed-point integer code.
 
 ---
 

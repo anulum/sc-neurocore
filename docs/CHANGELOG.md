@@ -5,6 +5,15 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+### Precision config docstring and coverage ratchet
+- Promoted `compiler.precision_config` into the scoped NumPy docstring policy,
+  added compliant public docstrings for fixed-point and block-floating
+  precision value-object properties and manifest helpers, and expanded the
+  focused compiler precision tests to cover validation, range maths, manifest
+  payloads, exponent-layout delegation, and saturating fixed-point encoding at
+  100% exact-file coverage. The generated API reference was refreshed. No
+  runtime contract, polyglot mirror, or benchmark-dispatched path changed.
+
 ### MLIR emitter docstring and coverage ratchet
 - Promoted `compiler.mlir_emitter` into the scoped NumPy docstring policy,
   added compliant docstrings for the MLIR node, bundle, emitter, wire, and
