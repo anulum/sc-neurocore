@@ -1,7 +1,7 @@
 # SC-NeuroCore Hardware Benchmark Report
 
 **Date:** 2026-06-06
-**Version:** 3.15.35
+**Version:** 3.16.0
 **Status:** VALIDATED (All 19 gates passed)
 
 ## Executive Summary

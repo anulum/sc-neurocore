@@ -57,7 +57,7 @@ Current measured evidence:
 | Elapsed time | 12.942 s |
 | Installed packages | `defusedxml`, `numpy`, `pip`, `sc-neurocore`, `scipy` |
 | Heavy optional packages installed | None |
-| Public import smoke | `sc_neurocore.__version__ == "3.15.35"` and 44 public exports |
+| Public import smoke | `sc_neurocore.__version__ == "3.16.0"` and 44 public exports |
 
 The root package import contract is enforced by `tests/test_public_api.py`.
 The 2026-06-27 scoped verification passed Ruff, Ruff docstring checks, strict

@@ -4,6 +4,19 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+## [3.16.0] - 2026-07-05
+
+### Provenance and citation integrity
+- Verified every neuron-descriptor DOI against its registry (Crossref, or DataCite
+  for arXiv preprints) and corrected misstated and fabricated citations: a
+  non-existent "Kilinc & Bhatt (2023)" (the model is the Nagumo-Sato/Aihara sigmoid
+  map), a fabricated "Jahns et al. (2025)", a recurring phantom "Bhatt" co-author
+  across several cerebellar models, an arXiv identifier that pointed at an unrelated
+  paper, and several digit-transposed or wrong DOIs. Added `tools/provenance/verify_dois.py`
+  and a committed DOI ledger checked offline by `tests/test_provenance_doi_integrity.py`,
+  so a fabricated or mistyped descriptor DOI now fails CI. Descriptor citeable coverage
+  rose from 119 to 131 models.
+
 ### Added
 - `compile_network_to_fpga` now fails closed on IR that would exhaust synthesis resources,
   before any RTL is emitted: `data_width` must lie in `[1, 64]` and `fraction` must satisfy

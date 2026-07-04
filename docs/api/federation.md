@@ -81,7 +81,7 @@ result = ScInferenceResult(
 bundle = sc_inference_evidence(
     result,
     operator="opaque:tenant-1",
-    studio_version="3.15.35",
+    studio_version="3.16.0",
     started="2026-06-26T00:00:00Z",
     ended="2026-06-26T00:00:01Z",
 )

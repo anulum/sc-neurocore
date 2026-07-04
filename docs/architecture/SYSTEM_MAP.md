@@ -1,6 +1,6 @@
 # SC-NeuroCore — System Architecture Map
 
-> Canonical architecture map. Package version `3.15.35`; mapped against tree at
+> Canonical architecture map. Package version `3.16.0`; mapped against tree at
 > commit `8591449d8` (2026-06-23). Supersedes the earlier `architecture.md` and
 > `COMPONENT_INVENTORY.md` in this directory, which are stale (see *Provenance*).
 >

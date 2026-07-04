@@ -586,6 +586,6 @@ special handling during backpropagation.
 
 ---
 
-*SC-NeuroCore v3.15.35 — Stochastic Computing Spiking Neural Network Framework*
+*SC-NeuroCore v3.16.0 — Stochastic Computing Spiking Neural Network Framework*
 
 *© 2020–2026 Miroslav Šotek. AGPL-3.0-or-later.*
