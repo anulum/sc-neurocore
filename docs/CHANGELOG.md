@@ -5,6 +5,13 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+### Go services namespace docstring ratchet
+- Promoted `accel.go.services` into the scoped NumPy docstring policy, added
+  an AST-visible package docstring, declared the checked-in Go service file and
+  package-boundary globs, and extended the acceleration mirror-authority tests
+  to cover the services namespace at 100% exact-file coverage. No Go runtime,
+  polyglot mirror, or benchmark-dispatched path changed.
+
 ### Go acceleration namespace docstring ratchet
 - Promoted `accel.go` into the scoped NumPy docstring policy, added an
   AST-visible package docstring, declared the maintained Python ctypes loader

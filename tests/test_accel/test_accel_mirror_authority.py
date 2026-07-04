@@ -15,6 +15,11 @@ from sc_neurocore.accel.go import (
     MAINTAINED_GO_PYTHON_ENTRYPOINTS,
 )
 import sc_neurocore.accel.go as go_module
+from sc_neurocore.accel.go.services import (
+    GO_SERVICE_FILE_GLOBS,
+    GO_SERVICE_PACKAGE_INIT_GLOB,
+)
+import sc_neurocore.accel.go.services as go_services_module
 from sc_neurocore.accel.julia import (
     AUTHORITATIVE_JULIA_ENTRYPOINTS,
     NON_AUTHORITATIVE_JULIA_MIRROR_GLOBS,
@@ -28,6 +33,7 @@ import sc_neurocore.accel.mojo as mojo_module
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 GO_ROOT = REPO_ROOT / "src" / "sc_neurocore" / "accel" / "go"
+GO_SERVICES_ROOT = GO_ROOT / "services"
 JULIA_ROOT = REPO_ROOT / "src" / "sc_neurocore" / "accel" / "julia"
 MOJO_ROOT = REPO_ROOT / "src" / "sc_neurocore" / "accel" / "mojo"
 
@@ -46,6 +52,19 @@ def test_broad_go_service_namespace_patterns_declared() -> None:
 def test_go_module_public_contract_shape() -> None:
     assert "BROAD_GO_SERVICE_NAMESPACE_GLOBS" in go_module.__all__
     assert "MAINTAINED_GO_PYTHON_ENTRYPOINTS" in go_module.__all__
+
+
+def test_go_service_namespace_patterns_cover_real_tree() -> None:
+    assert GO_SERVICE_FILE_GLOBS == ("*.go", "*/*.go")
+    assert GO_SERVICE_PACKAGE_INIT_GLOB == "*/__init__.py"
+    for pattern in GO_SERVICE_FILE_GLOBS:
+        assert list(GO_SERVICES_ROOT.glob(pattern)), pattern
+    assert list(GO_SERVICES_ROOT.glob(GO_SERVICE_PACKAGE_INIT_GLOB))
+
+
+def test_go_services_module_public_contract_shape() -> None:
+    assert "GO_SERVICE_FILE_GLOBS" in go_services_module.__all__
+    assert "GO_SERVICE_PACKAGE_INIT_GLOB" in go_services_module.__all__
 
 
 def test_authoritative_julia_entrypoints_exist() -> None:
