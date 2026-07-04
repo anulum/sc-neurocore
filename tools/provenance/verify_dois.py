@@ -66,11 +66,17 @@ def fold_surname(name: str) -> str:
 
 
 def _http_json(url: str) -> dict[str, Any] | None:
+    # Only ever open the hardcoded https Crossref/DataCite API endpoints; reject any other
+    # scheme so a crafted DOI can never turn this into a file:// or custom-scheme read (B310).
+    if not url.startswith("https://"):
+        raise ValueError(f"refusing to open a non-HTTPS URL: {url!r}")
     request = urllib.request.Request(
         url, headers={"User-Agent": f"sc-neurocore-doi-verify ({MAILTO})"}
     )
     try:
-        with urllib.request.urlopen(request, timeout=_REQUEST_TIMEOUT_S) as response:
+        with urllib.request.urlopen(  # nosec B310 - scheme guarded to https above
+            request, timeout=_REQUEST_TIMEOUT_S
+        ) as response:
             if response.status != 200:
                 return None
             parsed = json.loads(response.read().decode())
