@@ -40,8 +40,7 @@ def test_cli_default_paths_use_samsung_working_tree() -> None:
     """Default GOTM paths target the Samsung ext4 working checkout."""
     assert qc_cli._DEFAULT_GOTM_PATH == "/media/anulum/GOTM/aaa_God_of_the_Math_Collection"
     assert qc_cli._DEFAULT_SNN_DIR == (
-        "/media/anulum/GOTM/aaa_God_of_the_Math_Collection/"
-        "04_ARCANE_SAPIENCE/snn_stimuli"
+        "/media/anulum/GOTM/aaa_God_of_the_Math_Collection/04_ARCANE_SAPIENCE/snn_stimuli"
     )
     assert gotm_brain._AGENTIC_SHARED_PATH == (
         "/media/anulum/GOTM/aaa_God_of_the_Math_Collection/agentic-shared"
