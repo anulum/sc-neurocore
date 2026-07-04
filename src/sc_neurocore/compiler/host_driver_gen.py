@@ -18,6 +18,12 @@ from typing import Literal, NamedTuple
 
 from .live_control import MMIOUpdateSpec
 
+# Fail-closed bounds for driver generation: data_width must fit a hardware-plausible
+# fixed-point datapath and fraction must leave an integer or sign bit; each memory-mapped
+# parameter register has a positive, bounded bit width; the base address is non-negative.
+_MAX_DRIVER_DATA_WIDTH = 64
+_MAX_PARAMETER_WIDTH_BITS = 4096
+
 
 class _ParameterBinding(NamedTuple):
     """Sanitized generated-driver identifiers for one module parameter."""
@@ -25,6 +31,34 @@ class _ParameterBinding(NamedTuple):
     source_name: str
     register_identifier: str
     setter_identifier: str
+
+
+def _validate_driver_inputs(
+    params: dict[str, int], *, base_address: int, data_width: int, fraction: int
+) -> None:
+    """Reject malformed driver inputs before any code is generated.
+
+    ``data_width``/``fraction`` must form a valid signed Q-format (mirroring the FPGA
+    compiler guard), the memory-mapped ``base_address`` must be non-negative, and every
+    parameter register width must be positive and bounded — a zero, negative or absurd width
+    would emit a driver whose runtime ``1 << width`` masks are degenerate or unbounded.
+    """
+    if not 1 <= data_width <= _MAX_DRIVER_DATA_WIDTH:
+        raise ValueError(
+            f"data_width {data_width} is outside the supported range [1, {_MAX_DRIVER_DATA_WIDTH}]"
+        )
+    if not 0 <= fraction < data_width:
+        raise ValueError(
+            f"fraction {fraction} must satisfy 0 <= fraction < data_width ({data_width})"
+        )
+    if base_address < 0:
+        raise ValueError(f"base_address {base_address} must be non-negative")
+    for name, width in params.items():
+        if not 1 <= width <= _MAX_PARAMETER_WIDTH_BITS:
+            raise ValueError(
+                f"parameter {name!r} width {width} is outside the range "
+                f"[1, {_MAX_PARAMETER_WIDTH_BITS}]"
+            )
 
 
 def generate_host_driver(
@@ -67,6 +101,9 @@ def generate_host_driver(
         Complete driver source code.
     """
     module_identifier = _module_identifier(module_name)
+    _validate_driver_inputs(
+        params, base_address=base_address, data_width=data_width, fraction=fraction
+    )
     if language == "python":
         return _gen_python_driver(
             module_identifier,

@@ -15,6 +15,11 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
   state-RAM depth). A network over the direct/AER cap is pointed at `interconnect="folded"`.
   The total synapse count is capped too (at 1048576), since every interconnect flattens all
   weight matrices into one shared ROM — a blow-up axis independent of the neuron count.
+- `generate_host_driver` now validates its inputs before emitting any driver code: the
+  `data_width`/`fraction` Q-format (as the FPGA compiler does), a non-negative memory-mapped
+  `base_address`, and a positive, bounded bit width (`[1, 4096]`) for every parameter
+  register — so a malformed AXI-Lite/Wishbone driver request fails closed instead of
+  emitting a driver with degenerate or unbounded runtime masks.
 - `cargo-fuzz` targets (`engine/fuzz`): `parse_ir` fuzzes `ir::parser::parse` (arbitrary
   input — exposed to Python as `ir_parse` — must only ever return `Err`, never panic);
   `roundtrip_ir` asserts the parser and `printer::print` are inverse (`parse(print(g)) == g`,
