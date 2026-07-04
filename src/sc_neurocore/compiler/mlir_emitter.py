@@ -27,6 +27,8 @@ from ..hdl_gen._ident import sanitize_ident
 
 @dataclass
 class MLIRNode:
+    """Operation record emitted into the dependency-free MLIR text builder."""
+
     op_type: str
     inputs: List[str]
     output: str
@@ -46,13 +48,12 @@ class MLIRBundle:
     firtool_path: str | None
 
     def to_dict(self) -> dict[str, Any]:
+        """Return a JSON-serialisable manifest representation."""
         return asdict(self)
 
 
 class MLIREmitter:
-    """
-    Translates sc-neurocore objects into MLIR text formatted for CIRCT.
-    """
+    """Translate sc-neurocore objects into MLIR text formatted for CIRCT."""
 
     def __init__(self, module_name: str = "sc_neurocore_top"):
         self.module_name = module_name
@@ -60,6 +61,7 @@ class MLIREmitter:
         self._wire_counter = 0
 
     def get_wire(self) -> str:
+        """Allocate the next SSA wire name for emitted MLIR operations."""
         self._wire_counter += 1
         return f"%w{self._wire_counter}"
 
@@ -68,13 +70,13 @@ class MLIREmitter:
         return f"%{sanitize_ident(ident, context=context)}"
 
     def emit_and(self, lhs: str, rhs: str) -> str:
-        """Emits a comb.and operation for stochastic multiplication."""
+        """Emit a comb.and operation for stochastic multiplication."""
         out = self.get_wire()
         self.nodes.append(MLIRNode("comb.and", [lhs, rhs], out, {}))
         return out
 
     def emit_lfsr(self, width: int, seed: int) -> str:
-        """Emits an LFSR instantiation."""
+        """Emit an LFSR instance placeholder for CIRCT lowering."""
         out = self.get_wire()
         self.nodes.append(
             MLIRNode(
@@ -91,19 +93,19 @@ class MLIREmitter:
         return out
 
     def emit_xor(self, lhs: str, rhs: str) -> str:
-        """Emits a comb.xor operation."""
+        """Emit a comb.xor operation."""
         out = self.get_wire()
         self.nodes.append(MLIRNode("comb.xor", [lhs, rhs], out, {}))
         return out
 
     def emit_mux(self, cond: str, true_val: str, false_val: str) -> str:
-        """Emits a comb.mux operation (used for SC scaled addition)."""
+        """Emit a comb.mux operation for SC scaled addition."""
         out = self.get_wire()
         self.nodes.append(MLIRNode("comb.mux", [cond, true_val, false_val], out, {}))
         return out
 
     def generate(self) -> str:
-        """Generates the final MLIR string for the module."""
+        """Generate the final MLIR string for the module."""
         lines = []
         safe_module_name = sanitize_ident(self.module_name, context="module name")
         # Modern CIRCT / MLIR HW dialect syntax

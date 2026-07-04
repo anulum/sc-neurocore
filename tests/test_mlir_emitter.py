@@ -7,13 +7,14 @@
 # SC-NeuroCore — Tests for MLIR Emitter
 
 import json
+from pathlib import Path
 
 import pytest
 
 from sc_neurocore.compiler.mlir_emitter import MLIREmitter, generate_mlir_bundle
 
 
-def test_mlir_emitter_basic():
+def test_mlir_emitter_basic() -> None:
     emitter = MLIREmitter("sc_neuron")
 
     # Simulate a small SC circuit: (X AND Y) MUX Z
@@ -36,7 +37,7 @@ def test_mlir_emitter_basic():
     # print(mlir)
 
 
-def test_mlir_emitter_emits_xor_operation():
+def test_mlir_emitter_emits_xor_operation() -> None:
     emitter = MLIREmitter("test_xor")
     lhs_and_rhs = emitter.emit_and("in1", "in2")
 
@@ -45,7 +46,7 @@ def test_mlir_emitter_emits_xor_operation():
     assert "comb.xor" in emitter.generate()
 
 
-def test_mlir_emitter_emits_mux_operation():
+def test_mlir_emitter_emits_mux_operation() -> None:
     emitter = MLIREmitter("test_mux")
 
     emitter.emit_mux("cond", "t", "f")
@@ -53,7 +54,7 @@ def test_mlir_emitter_emits_mux_operation():
     assert "comb.mux" in emitter.generate()
 
 
-def test_mlir_bundle_writes_manifest(tmp_path):
+def test_mlir_bundle_writes_manifest(tmp_path: Path) -> None:
     emitter = MLIREmitter("native_sc_top")
     lhs = emitter.emit_lfsr(8, 0x5A)
     rhs = emitter.emit_lfsr(8, 0xC3)
@@ -65,6 +66,7 @@ def test_mlir_bundle_writes_manifest(tmp_path):
     assert bundle.node_count == 3
     assert bundle.op_counts == {"comb.and": 1, "hw.instance": 2}
     assert bundle.firtool_path is None
+    assert bundle.to_dict()["module_name"] == "native_sc_top"
     assert (tmp_path / "native_sc_top.mlir").is_file()
     assert (tmp_path / "mlir_bundle_manifest.json").is_file()
 
@@ -76,7 +78,7 @@ def test_mlir_bundle_writes_manifest(tmp_path):
     assert manifest["claim_status"]["verilog_generated_from_mlir"] is False
 
 
-def test_mlir_bundle_rejects_unsafe_module_name(tmp_path):
+def test_mlir_bundle_rejects_unsafe_module_name(tmp_path: Path) -> None:
     emitter = MLIREmitter("native-sc/top")
     emitter.emit_and("%lhs", "%rhs")
 
@@ -84,7 +86,7 @@ def test_mlir_bundle_rejects_unsafe_module_name(tmp_path):
         generate_mlir_bundle(emitter, tmp_path)
 
 
-def test_mlir_bundle_method_rejects_implicit_external_execution(tmp_path):
+def test_mlir_bundle_method_rejects_implicit_external_execution(tmp_path: Path) -> None:
     emitter = MLIREmitter("safe_top")
     emitter.emit_xor("%a", "%b")
 

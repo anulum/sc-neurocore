@@ -7,7 +7,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 239
+expected_file_count = 240
 
 [[file]]
 path = "src/sc_neurocore/__init__.py"
@@ -128,6 +128,10 @@ rationale = "Deployment-reached Python/C host driver generator with audited iden
 [[file]]
 path = "src/sc_neurocore/compiler/ir_type_checker.py"
 rationale = "Public stochastic IR compatibility checker used by compiler facades, notebook examples, and generated API documentation."
+
+[[file]]
+path = "src/sc_neurocore/compiler/mlir_emitter.py"
+rationale = "Public MLIR bundle emitter and evidence-manifest surface for compiler and notebook workflows."
 
 [[file]]
 path = "src/sc_neurocore/compiler/platforms/__init__.py"

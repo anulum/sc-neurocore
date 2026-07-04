@@ -5,6 +5,14 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+### MLIR emitter docstring and coverage ratchet
+- Promoted `compiler.mlir_emitter` into the scoped NumPy docstring policy,
+  added compliant docstrings for the MLIR node, bundle, emitter, wire, and
+  operation helpers, strict-typed the focused MLIR tests, and covered
+  `MLIRBundle.to_dict()` so the emitter reaches 100% exact-file coverage under
+  the focused selector. The generated API reference was refreshed. No runtime
+  contract, polyglot mirror, or benchmark-dispatched path changed.
+
 ### IR type checker docstring ratchet
 - Promoted `compiler.ir_type_checker` into the scoped NumPy docstring policy,
   added compliant public class docstrings for the signal-domain enum and edge

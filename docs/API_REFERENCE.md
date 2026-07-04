@@ -10051,28 +10051,32 @@ var_configs : dict&#91;str, PrecisionConfig&#93;
 ## Module `compiler.mlir_emitter`
 
 ### Class `MLIRNode`
+Operation record emitted into the dependency-free MLIR text builder.
+
 
 ### Class `MLIRBundle`
 Generated MLIR file and evidence manifest.
 
 - **to_dict**()
+  - Return a JSON-serialisable manifest representation.
 
 ### Class `MLIREmitter`
-Translates sc-neurocore objects into MLIR text formatted for CIRCT.
+Translate sc-neurocore objects into MLIR text formatted for CIRCT.
 
 - **__init__**(module_name)
 - **get_wire**()
+  - Allocate the next SSA wire name for emitted MLIR operations.
 - **_sanitize_ssa_name**(name, context)
 - **emit_and**(lhs, rhs)
-  - Emits a comb.and operation for stochastic multiplication.
+  - Emit a comb.and operation for stochastic multiplication.
 - **emit_lfsr**(width, seed)
-  - Emits an LFSR instantiation.
+  - Emit an LFSR instance placeholder for CIRCT lowering.
 - **emit_xor**(lhs, rhs)
-  - Emits a comb.xor operation.
+  - Emit a comb.xor operation.
 - **emit_mux**(cond, true_val, false_val)
-  - Emits a comb.mux operation (used for SC scaled addition).
+  - Emit a comb.mux operation for SC scaled addition.
 - **generate**()
-  - Generates the final MLIR string for the module.
+  - Generate the final MLIR string for the module.
 - **write_bundle**(output_dir)
   - Write MLIR plus a manifest describing CIRCT lowering readiness.
 
