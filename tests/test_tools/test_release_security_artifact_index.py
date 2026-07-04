@@ -25,7 +25,9 @@ EXPECTED_ARTIFACT_IDS = {
     "cargo_audit",
     "cargo_deny",
     "cargo_fuzz_summary",
+    "codeql_results",
     "gitleaks",
+    "gitleaks_summary",
     "hypothesis_fuzz_summary",
     "lightweight_scanner_summary",
     "model_data_license_matrix",
@@ -43,10 +45,12 @@ EXPECTED_ARTIFACT_IDS = {
     "scanner_manifest",
     "semgrep",
     "semgrep_summary",
+    "scorecard_results",
     "syft_cyclonedx",
     "syft_cyclonedx_summary",
     "supply_chain_audit",
     "trivy_fs",
+    "trivy_fs_summary",
     "typing_scanner_summary",
 }
 

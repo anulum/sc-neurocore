@@ -34,4 +34,14 @@ jobs:
         with:
           languages: python
 
+      - run: mkdir -p security/codeql-results
+
       - uses: github/codeql-action/analyze@8aad20d150bbac5944a9f9d289da16a4b0d87c1e # v4
+        with:
+          output: security/codeql-results
+
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: codeql-results
+          path: security/codeql-results
+          retention-days: 30

@@ -14,9 +14,10 @@ The security-scanner CI packet combines deterministic planning with executable
 scanner lanes. The scheduled scanner workflow keeps the heavier fuzz and
 benchmark lanes separate from push and pull-request CI. The tag release workflow
 uses `tools/security_scan/release_security_sweep.py` to run the release packet,
-scanner lanes, repository-owned Semgrep policy, supply-chain audit, bounded
-Hypothesis subset, Rust proptest subset, bounded cargo-fuzz subset, and final
-artifact index in one sequence.
+scanner lanes, repository-owned Semgrep policy, Gitleaks evidence, Trivy
+filesystem vulnerability checks, supply-chain audit, bounded Hypothesis subset,
+Rust proptest subset, bounded cargo-fuzz subset, and final artifact index in one
+sequence.
 
 ## What the current workflow generates
 
@@ -31,6 +32,17 @@ artifact index in one sequence.
 - A Semgrep summary at `security/semgrep_summary.json` when the tag workflow
   runs the release-only `tools/security_scan/run_semgrep_scanners.py` lane
   against `.semgrep.yml`.
+- A Gitleaks summary at `security/gitleaks_summary.json` when CI or the tag
+  workflow runs `tools/security_scan/run_gitleaks_scanners.py`; the lane records
+  findings in release evidence while preserving the manifest's non-blocking
+  policy for false-positive triage.
+- A Trivy filesystem summary at `security/trivy_fs_summary.json` when CI or the
+  tag workflow runs `tools/security_scan/run_trivy_fs_scanners.py`; the lane is
+  blocking for fixed high and critical vulnerabilities.
+- CodeQL SARIF output under `security/codeql-results` and Scorecard SARIF output
+  at `security/scorecard-results.sarif` are optional release-evidence slots in
+  `security/release_artifacts_manifest.json`; dedicated workflows upload those
+  artifacts with stable paths.
 - A lightweight scanner lane summary at
   `security/lightweight_scanner_summary.json` when CI runs the executable
   `ruff`, `bandit`, and `actionlint` lane.
@@ -113,20 +125,23 @@ It is therefore a mixed execution/planning envelope:
   the repo-wide type baseline is triaged,
 - Syft/CycloneDX SBOM generation is executed in the main packet lane and fails
   closed if the SBOM is missing or not a CycloneDX JSON document,
-- Semgrep is executed by the tag release sweep from `.semgrep.yml` and fails
-  closed on findings because the lane uses `--error`,
+- Semgrep is executed in the main packet lane and by the tag release sweep from
+  `.semgrep.yml`, failing closed on findings because the lane uses `--error`,
+- Gitleaks is executed in the main packet lane and by the tag release sweep,
+  writing `security/gitleaks.json` and `security/gitleaks_summary.json` while
+  remaining non-blocking according to the manifest triage policy,
+- Trivy FS is executed in the main packet lane and by the tag release sweep,
+  writing `security/trivy_fs.json` and `security/trivy_fs_summary.json` while
+  failing closed on fixed high and critical vulnerabilities,
 - cargo-fuzz commands are executed by the separate scheduled/manual
   `nightly-cargo-fuzz` workflow job and by the tag release sweep when
   `--include-fuzz` is set,
 - bounded Hypothesis and Rust proptest subsets are executed by the tag release
   sweep,
 - benchmark-regression commands are executed by the separate scheduled/manual
-  `nightly-benchmark-regression` workflow job,
-- heavier scanner commands such as Trivy FS and Gitleaks remain represented as
-  manifest entries until their pinned install lanes are promoted,
-  and
-- no direct `trivy fs`, `cargo-fuzz`, `gitleaks`, or similar heavyweight
-  commands are executed in push or pull-request CI.
+  `nightly-benchmark-regression` workflow job, and
+- CodeQL and Scorecard run in their dedicated workflows, upload stable SARIF
+  evidence, and remain indexed as optional release artifacts.
 
 After the lightweight lane runs, the workflow regenerates
 `release_security_artifact_index.json` against `security/ci-security-packet` so
@@ -144,6 +159,8 @@ the uploaded index reflects the scanner artefacts that were actually produced.
 - `python tools/security_scan/run_typing_scanners.py --output-dir security/ci-security-packet`
 - `python tools/security_scan/run_syft_cyclonedx_scanners.py --output-dir security/ci-security-packet`
 - `python tools/security_scan/run_semgrep_scanners.py --output-dir security/ci-security-packet`
+- `python tools/security_scan/run_gitleaks_scanners.py --output-dir security/ci-security-packet`
+- `python tools/security_scan/run_trivy_fs_scanners.py --output-dir security/ci-security-packet`
 - `python tools/security_scan/release_security_sweep.py --output-dir security/ci-security-packet --include-fuzz --fuzz-max-total-time 300`
 - `python tools/security_scan/run_cargo_fuzz_scanners.py --output-dir security/cargo-fuzz-packet --target all --max-total-time 300 --build-timeout 900`
 - `python tools/security_scan/run_benchmark_regression_scanners.py --baseline benchmarks/baselines/security_side_channel_benchmark.json --current security/benchmark-current/security_side_channel_benchmark.json --output security/benchmark-regression-packet/security/benchmark_regression.json --max-regression-pct 5.0`
@@ -151,10 +168,9 @@ the uploaded index reflects the scanner artefacts that were actually produced.
 - `python tools/security_scan/rust_supply_chain_scanner_plan.py`
 - `python tools/security_scan/release_security_artifact_index.py --manifest security/release_artifacts_manifest.json --root . --output security/release_security_artifact_index.json`
 
-The packet is used as a compliance aid for security and release workflows before
-heavyweight scanners are enabled in the normal runtime chain. Both the security
-packet workflow and tagged release workflow use `--fail-on-missing-required` so
-missing required packet artefacts fail closed.
+The packet is used as a compliance aid for security and release workflows. Both
+the security packet workflow and tagged release workflow use
+`--fail-on-missing-required` so missing required packet artefacts fail closed.
 
 REUSE lint is intentionally non-blocking in this lane while the repository-wide
 legacy SPDX coverage debt is remediated. The JSON report is still uploaded in

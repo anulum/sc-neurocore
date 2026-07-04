@@ -183,6 +183,28 @@ def run_semgrep(*, repo_root: Path, output_dir: Path) -> dict[str, Any]:
     )
 
 
+def run_gitleaks(*, repo_root: Path, output_dir: Path) -> dict[str, Any]:
+    """Run the Gitleaks release secret-detection lane."""
+    module = _load_module(
+        "gitleaks_scanner_for_release_sweep",
+        _script_root() / "tools" / "security_scan" / "run_gitleaks_scanners.py",
+    )
+    return cast(
+        dict[str, Any], module.run_gitleaks_scanner(repo_root=repo_root, output_dir=output_dir)
+    )
+
+
+def run_trivy_fs(*, repo_root: Path, output_dir: Path) -> dict[str, Any]:
+    """Run the Trivy filesystem vulnerability release lane."""
+    module = _load_module(
+        "trivy_fs_scanner_for_release_sweep",
+        _script_root() / "tools" / "security_scan" / "run_trivy_fs_scanners.py",
+    )
+    return cast(
+        dict[str, Any], module.run_trivy_fs_scanner(repo_root=repo_root, output_dir=output_dir)
+    )
+
+
 def run_supply_chain_audit(*, repo_root: Path, output_dir: Path) -> dict[str, Any]:
     """Audit the generated SBOM and release dependency metadata offline."""
     module = _load_module(
@@ -342,6 +364,8 @@ def run_release_security_sweep(
     run_rust: RunLane = run_rust,
     run_syft: RunLane = run_syft,
     run_semgrep: RunLane = run_semgrep,
+    run_gitleaks: RunLane = run_gitleaks,
+    run_trivy_fs: RunLane = run_trivy_fs,
     run_supply_chain_audit: RunLane = run_supply_chain_audit,
     run_hypothesis_fuzz: RunLane = run_hypothesis_fuzz,
     run_cargo_fuzz: RunLane = run_cargo_fuzz,
@@ -365,6 +389,8 @@ def run_release_security_sweep(
     _append_lane(lanes, name="rust-security-scanners", runner=run_rust, kwargs=common)
     _append_lane(lanes, name="syft-cyclonedx-scanner", runner=run_syft, kwargs=common)
     _append_lane(lanes, name="semgrep-scanner", runner=run_semgrep, kwargs=common)
+    _append_lane(lanes, name="gitleaks-scanner", runner=run_gitleaks, kwargs=common)
+    _append_lane(lanes, name="trivy-fs-scanner", runner=run_trivy_fs, kwargs=common)
     _append_lane(lanes, name="supply-chain-audit", runner=run_supply_chain_audit, kwargs=common)
     _append_lane(lanes, name="hypothesis-fuzz-subset", runner=run_hypothesis_fuzz, kwargs=common)
     _append_lane(lanes, name="rust-proptest-subset", runner=run_rust_proptest, kwargs=common)

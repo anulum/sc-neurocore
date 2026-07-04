@@ -10,20 +10,24 @@ from __future__ import annotations
 
 import re
 from pathlib import Path
+from typing import Any, cast
 
 import yaml
 
 
-def _load_workflow() -> dict:
+def _load_workflow() -> dict[str, Any]:
     workflow_path = (
         Path(__file__).resolve().parents[2] / ".github" / "workflows" / "security-scanners.yml"
     )
     assert workflow_path.exists()
-    return yaml.safe_load(workflow_path.read_text(encoding="utf-8"))
+    return cast(dict[str, Any], yaml.safe_load(workflow_path.read_text(encoding="utf-8")))
 
 
-def _workflow_events(workflow: dict) -> dict:
-    return workflow.get("on", workflow.get(True, {}))
+def _workflow_events(workflow: dict[str, Any]) -> dict[str, Any]:
+    raw_events = workflow.get("on")
+    if raw_events is None:
+        raw_events = cast(dict[Any, Any], workflow).get(True, {})
+    return cast(dict[str, Any], raw_events)
 
 
 def test_security_scanner_workflow_triggers_and_scope() -> None:
@@ -42,6 +46,8 @@ def test_security_scanner_workflow_triggers_and_scope() -> None:
         "security/**",
         "tools/security_scan/**",
         "requirements/**",
+        "tests/test_tools/test_run_gitleaks_scanners.py",
+        "tests/test_tools/test_run_trivy_fs_scanners.py",
     }:
         assert required in push_paths
         assert required in pull_request_paths
@@ -135,6 +141,31 @@ def test_security_scanner_workflow_runs_syft_cyclonedx_lane() -> None:
     assert "security/ci-security-packet/security/syft_cyclonedx_summary.json" in run_text
 
 
+def test_security_scanner_workflow_runs_source_policy_scanner_lanes() -> None:
+    workflow = _load_workflow()
+    steps = workflow["jobs"]["security-scanner-manifest"]["steps"]
+
+    run_text = "\n".join(step["run"] for step in steps if isinstance(step, dict) and "run" in step)
+
+    assert (
+        "python -m pip install --require-hashes -r requirements/semgrep.txt" in run_text
+    )
+    assert "go install github.com/gitleaks/gitleaks/v8@v8.20.1" in run_text
+    assert "go install github.com/aquasecurity/trivy/cmd/trivy@v0.58.1" in run_text
+
+    assert "tools/security_scan/run_semgrep_scanners.py" in run_text
+    assert "security/ci-security-packet/security/semgrep.json" in run_text
+    assert "security/ci-security-packet/security/semgrep_summary.json" in run_text
+
+    assert "tools/security_scan/run_gitleaks_scanners.py" in run_text
+    assert "security/ci-security-packet/security/gitleaks.json" in run_text
+    assert "security/ci-security-packet/security/gitleaks_summary.json" in run_text
+
+    assert "tools/security_scan/run_trivy_fs_scanners.py" in run_text
+    assert "security/ci-security-packet/security/trivy_fs.json" in run_text
+    assert "security/ci-security-packet/security/trivy_fs_summary.json" in run_text
+
+
 def test_security_scanner_workflow_avoids_unpinned_pip_and_curl_installers() -> None:
     workflow = _load_workflow()
     steps = workflow["jobs"]["security-scanner-manifest"]["steps"]
@@ -203,9 +234,6 @@ def test_security_scanner_workflow_checks_manifest_consistency_if_present() -> N
 
     run_text = "\n".join(all_runs)
     for banned in {
-        "gitleaks",
-        "semgrep",
-        "trivy",
         "pyright",
         "mypy",
     }:

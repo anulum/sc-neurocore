@@ -31,18 +31,20 @@ jobs:
         with:
           persist-credentials: false
 
+      - run: mkdir -p security
+
       - uses: ossf/scorecard-action@4eaacf0543bb3f2c246792bd56e8cdeffafb205a # v2.4.3
         with:
-          results_file: results.sarif
+          results_file: security/scorecard-results.sarif
           results_format: sarif
           publish_results: true
 
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         with:
           name: scorecard-results
-          path: results.sarif
+          path: security/scorecard-results.sarif
           retention-days: 5
 
       - uses: github/codeql-action/upload-sarif@8aad20d150bbac5944a9f9d289da16a4b0d87c1e # v4
         with:
-          sarif_file: results.sarif
+          sarif_file: security/scorecard-results.sarif

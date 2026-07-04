@@ -139,12 +139,16 @@ _MANDATORY_SCANNERS = (
         ecosystem="code",
         cadence="on-push",
         blocking_policy="allowed_to_fail",
-        command="gitleaks detect --report-format json --report-path security/gitleaks.json",
+        command="python tools/security_scan/run_gitleaks_scanners.py --output-dir .",
         inputs=(
             _input(
                 path=".gitleaks.toml",
                 purpose="Optional allowed secret-pattern baseline",
                 required=False,
+            ),
+            _input(
+                path="tools/security_scan/run_gitleaks_scanners.py",
+                purpose="Owned Gitleaks release-evidence runner",
             ),
             _input(path=".", purpose="Tracked repository content"),
         ),
@@ -158,14 +162,15 @@ _MANDATORY_SCANNERS = (
         ecosystem="code",
         cadence="on-push",
         blocking_policy="blocking",
-        command=(
-            "semgrep scan --config .semgrep.yml --json --error "
-            "--output security/semgrep.json src tools"
-        ),
+        command="python tools/security_scan/run_semgrep_scanners.py --output-dir .",
         inputs=(
             _input(
                 path=".semgrep.yml",
                 purpose="Repository-owned Semgrep release policy",
+            ),
+            _input(
+                path="tools/security_scan/run_semgrep_scanners.py",
+                purpose="Owned Semgrep release-evidence runner",
             ),
             _input(path="src", purpose="Python source tree"),
             _input(path="tools", purpose="Security and release tooling"),
@@ -178,10 +183,14 @@ _MANDATORY_SCANNERS = (
     ScannerManifestEntry(
         name="trivy fs",
         ecosystem="containers",
-        cadence="nightly",
+        cadence="on-push",
         blocking_policy="blocking",
-        command="trivy fs . --format json --output security/trivy_fs.json",
+        command="python tools/security_scan/run_trivy_fs_scanners.py --output-dir .",
         inputs=(
+            _input(
+                path="tools/security_scan/run_trivy_fs_scanners.py",
+                purpose="Owned Trivy filesystem release-evidence runner",
+            ),
             _input(
                 path=".",
                 purpose="Repository tree for filesystem vulnerability scan",

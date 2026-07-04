@@ -58,8 +58,18 @@
       "required": false
     },
     {
+      "id": "codeql_results",
+      "path": "security/codeql-results",
+      "required": false
+    },
+    {
       "id": "gitleaks",
       "path": "security/gitleaks.json",
+      "required": false
+    },
+    {
+      "id": "gitleaks_summary",
+      "path": "security/gitleaks_summary.json",
       "required": false
     },
     {
@@ -148,6 +158,11 @@
       "required": false
     },
     {
+      "id": "scorecard_results",
+      "path": "security/scorecard-results.sarif",
+      "required": false
+    },
+    {
       "id": "syft_cyclonedx",
       "path": "security/sbom.cdx.json",
       "required": false
@@ -165,6 +180,11 @@
     {
       "id": "trivy_fs",
       "path": "security/trivy_fs.json",
+      "required": false
+    },
+    {
+      "id": "trivy_fs_summary",
+      "path": "security/trivy_fs_summary.json",
       "required": false
     },
     {

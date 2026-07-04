@@ -25,6 +25,8 @@ on:
       - "tests/test_tools/test_run_lightweight_security_scanners.py"
       - "tests/test_tools/test_run_cargo_fuzz_scanners.py"
       - "tests/test_tools/test_run_benchmark_regression_scanners.py"
+      - "tests/test_tools/test_run_gitleaks_scanners.py"
+      - "tests/test_tools/test_run_trivy_fs_scanners.py"
       - "tests/test_tools/test_security_scanner_workflow.py"
   pull_request:
     paths:
@@ -35,6 +37,8 @@ on:
       - "tests/test_tools/test_run_lightweight_security_scanners.py"
       - "tests/test_tools/test_run_cargo_fuzz_scanners.py"
       - "tests/test_tools/test_run_benchmark_regression_scanners.py"
+      - "tests/test_tools/test_run_gitleaks_scanners.py"
+      - "tests/test_tools/test_run_trivy_fs_scanners.py"
       - "tests/test_tools/test_security_scanner_workflow.py"
       - "tools/security_scanner_manifest.py"
 
@@ -58,10 +62,13 @@ jobs:
           sudo apt-get update -qq
           sudo apt-get install -y -qq shellcheck
           python -m pip install --require-hashes -r requirements/security-scanners.txt
+          python -m pip install --require-hashes -r requirements/semgrep.txt
           go install github.com/rhysd/actionlint/cmd/actionlint@v1.7.12
           echo "$(go env GOPATH)/bin" >> "$GITHUB_PATH"
           go install github.com/google/osv-scanner/v2/cmd/osv-scanner@v2.3.8
           go install github.com/anchore/syft/cmd/syft@v1.20.0
+          go install github.com/gitleaks/gitleaks/v8@v8.20.1
+          go install github.com/aquasecurity/trivy/cmd/trivy@v0.58.1
           cargo install cargo-audit --version 0.22.1 --locked
           cargo install cargo-deny --version 0.19.6 --locked
           echo "$HOME/.local/bin" >> "$GITHUB_PATH"
@@ -96,6 +103,18 @@ jobs:
             --output-dir security/ci-security-packet
           test -f security/ci-security-packet/security/sbom.cdx.json
           test -f security/ci-security-packet/security/syft_cyclonedx_summary.json
+          python tools/security_scan/run_semgrep_scanners.py \
+            --output-dir security/ci-security-packet
+          test -f security/ci-security-packet/security/semgrep.json
+          test -f security/ci-security-packet/security/semgrep_summary.json
+          python tools/security_scan/run_gitleaks_scanners.py \
+            --output-dir security/ci-security-packet
+          test -f security/ci-security-packet/security/gitleaks.json
+          test -f security/ci-security-packet/security/gitleaks_summary.json
+          python tools/security_scan/run_trivy_fs_scanners.py \
+            --output-dir security/ci-security-packet
+          test -f security/ci-security-packet/security/trivy_fs.json
+          test -f security/ci-security-packet/security/trivy_fs_summary.json
           python tools/security_scan/release_security_artifact_index.py \
             --manifest security/release_artifacts_manifest.json \
             --root security/ci-security-packet \

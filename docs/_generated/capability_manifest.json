@@ -965,7 +965,7 @@
     "python_model_classes": 158,
     "python_model_source_modules": 152,
     "rust_pyo3_model_wrappers": 175,
-    "test_files": 960
+    "test_files": 963
   },
   "documentation": {
     "public_pages": [
@@ -3685,14 +3685,17 @@
       "tests/test_tools/test_release_workflow_security_packet.py",
       "tests/test_tools/test_run_benchmark_regression_scanners.py",
       "tests/test_tools/test_run_cargo_fuzz_scanners.py",
+      "tests/test_tools/test_run_gitleaks_scanners.py",
       "tests/test_tools/test_run_lightweight_security_scanners.py",
       "tests/test_tools/test_run_osv_scanners.py",
       "tests/test_tools/test_run_python_compliance_scanners.py",
       "tests/test_tools/test_run_rust_security_scanners.py",
       "tests/test_tools/test_run_semgrep_scanners.py",
       "tests/test_tools/test_run_syft_cyclonedx_scanners.py",
+      "tests/test_tools/test_run_trivy_fs_scanners.py",
       "tests/test_tools/test_run_typing_scanners.py",
       "tests/test_tools/test_rust_supply_chain_scanner_plan.py",
+      "tests/test_tools/test_security_provider_workflows.py",
       "tests/test_tools/test_security_scanner_manifest.py",
       "tests/test_tools/test_security_scanner_workflow.py",
       "tests/test_tools/test_side_channel_benchmark.py",

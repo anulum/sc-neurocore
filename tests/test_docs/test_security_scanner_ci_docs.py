@@ -36,11 +36,16 @@ def test_security_scanner_ci_doc_contains_required_packet_phrases() -> None:
         "release_security_sweep.py",
         "semgrep summary",
         "run_semgrep_scanners.py",
+        "gitleaks summary",
+        "trivy filesystem summary",
+        "scorecard-results.sarif",
+        "codeql-results",
         "hypothesis_fuzz_summary.json",
         "rust_proptest_summary.json",
         "security/release_artifacts_manifest.json",
         "mixed execution/planning envelope",
-        "no direct `trivy fs`, `cargo-fuzz`, `gitleaks`, or similar",
+        "gitleaks is executed in the main packet lane",
+        "trivy fs is executed in the main packet lane",
     ]
 
     for phrase in required_phrases:
@@ -55,6 +60,8 @@ def test_security_scanner_ci_doc_points_to_relevant_tools() -> None:
         "tools/security_scan/ci_security_packet.py",
         "tools/security_scan/release_security_sweep.py",
         "tools/security_scan/run_semgrep_scanners.py",
+        "tools/security_scan/run_gitleaks_scanners.py",
+        "tools/security_scan/run_trivy_fs_scanners.py",
         "tools/security_scan/python_code_scanner_plan.py",
         "tools/security_scan/rust_supply_chain_scanner_plan.py",
         "tools/security_scan/release_security_artifact_index.py",
