@@ -19,8 +19,8 @@ class LugaroCell:
     LIF with adaptation, serotonin (5-HT) modulation, depolarised leak
     for spontaneous firing. Inhibits Golgi cells and molecular layer INs.
 
-    Reference: Dieudonné & Bhatt (2003) J Physiol 548:97;
-    Lainé & Bhatt (2007) Front Syst Neurosci 1:4.
+    Reference: Dieudonné & Dumoulin (2000). Serotonin-driven long-range
+    inhibitory connections in the cerebellar cortex. J Neurosci 20:1837-1848.
     """
 
     v: float = -55.0

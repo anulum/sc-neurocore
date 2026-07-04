@@ -4,7 +4,7 @@
 # © Code 2020–2026 Miroslav Šotek. All rights reserved.
 # ORCID: 0009-0009-3560-0851
 # Contact: www.anulum.li | protoscience@anulum.li
-# SC-NeuroCore — Destexhe 1993 — thalamocortical relay with T-current and I_h
+# SC-NeuroCore — Destexhe et al. 1996 — thalamocortical relay with T-current and I_h
 
 from __future__ import annotations
 
@@ -15,11 +15,13 @@ import numpy as np
 
 @dataclass
 class DestexheThalamicNeuron:
-    """Destexhe 1993 — thalamocortical relay with T-current and I_h.
+    """Destexhe et al. 1996 — thalamocortical relay with T-current and I_h.
 
     6 ODEs: V, m_Na, h_Na, n_K, m_T, h_T (+ optional h-current).
 
-    Reference: Destexhe, A. et al. (1996). J. Comput. Neurosci. 3:19–46.
+    Reference: Destexhe, Bal, McCormick & Sejnowski (1996). Ionic mechanisms
+    underlying synchronized oscillations and propagating waves in a model of
+    ferret thalamic slices. J Neurophysiol 76:2049-2070.
     """
 
     v: float = -65.0

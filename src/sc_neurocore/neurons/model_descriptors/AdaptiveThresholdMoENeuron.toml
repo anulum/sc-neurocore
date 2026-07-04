@@ -18,6 +18,14 @@ behavior_tags = [
 ]
 
 [provenance]
+authors = [
+    "Pan, Y.",
+    "Feng, Y.",
+    "Zhuang, J.",
+]
+year = 2025
+doi = "10.48550/arXiv.2509.05276"
+paper_title = "SpikingBrain: Spiking Brain-inspired Large Models"
 
 [state.v]
 init = 0.0

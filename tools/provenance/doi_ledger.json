@@ -8,7 +8,7 @@
     "resolves": true,
     "title": "Quantitative Golgi study of the rat cerebellar molecular layer interneurons using principal component analysis",
     "verified": true,
-    "verified_utc": "2026-07-04T14:53:16+00:00",
+    "verified_utc": "2026-07-04T15:23:26+00:00",
     "year_match": true
   },
   "10.1006/jtbi.1999.1002": {
@@ -20,7 +20,7 @@
     "resolves": true,
     "title": "Simplified Dynamics of Human and Mammalian Neocortical Neurons",
     "verified": true,
-    "verified_utc": "2026-07-04T14:53:16+00:00",
+    "verified_utc": "2026-07-04T15:23:26+00:00",
     "year_match": true
   },
   "10.1007/978-3-642-93360-8_26": {
@@ -32,7 +32,7 @@
     "resolves": true,
     "title": "A Formal Classification of Bursting Mechanisms in Excitable Systems",
     "verified": true,
-    "verified_utc": "2026-07-04T14:53:16+00:00",
+    "verified_utc": "2026-07-04T15:23:26+00:00",
     "year_match": true
   },
   "10.1007/BF00199471": {
@@ -44,7 +44,7 @@
     "resolves": true,
     "title": "Electroencephalogram and visual evoked potential generation in a mathematical model of coupled cortical columns",
     "verified": true,
-    "verified_utc": "2026-07-04T14:53:16+00:00",
+    "verified_utc": "2026-07-04T15:23:26+00:00",
     "year_match": true
   },
   "10.1007/BF00201411": {
@@ -56,7 +56,7 @@
     "resolves": true,
     "title": "A basic biophysical model for bursting neurons",
     "verified": true,
-    "verified_utc": "2026-07-04T14:53:16+00:00",
+    "verified_utc": "2026-07-04T15:23:26+00:00",
     "year_match": true
   },
   "10.1007/BF00337259": {
@@ -68,7 +68,7 @@
     "resolves": true,
     "title": "Dynamics of pattern formation in lateral-inhibition type neural fields",
     "verified": true,
-    "verified_utc": "2026-07-04T14:53:16+00:00",
+    "verified_utc": "2026-07-04T15:23:26+00:00",
     "year_match": true
   },
   "10.1007/BF00961442": {
@@ -80,7 +80,7 @@
     "resolves": true,
     "title": "A minimal, compartmental model for a dendritic origin of bistability of motoneuron firing patterns",
     "verified": true,
-    "verified_utc": "2026-07-04T14:53:16+00:00",
+    "verified_utc": "2026-07-04T15:23:26+00:00",
     "year_match": true
   },
   "10.1007/BF00962717": {
@@ -92,7 +92,7 @@
     "resolves": true,
     "title": "Intrinsic and network rhythmogenesis in a reduced traub model for CA3 neurons",
     "verified": true,
-    "verified_utc": "2026-07-04T14:53:16+00:00",
+    "verified_utc": "2026-07-04T15:23:26+00:00",
     "year_match": true
   },
   "10.1007/BF02478259": {
@@ -104,7 +104,7 @@
     "resolves": true,
     "title": "A logical calculus of the ideas immanent in nervous activity",
     "verified": true,
-    "verified_utc": "2026-07-04T14:53:16+00:00",
+    "verified_utc": "2026-07-04T15:23:26+00:00",
     "year_match": true
   },
   "10.1007/s00422-008-0263-8": {
@@ -116,7 +116,19 @@
     "resolves": true,
     "title": "Minimal Hodgkin–Huxley type models for different classes of cortical and thalamic neurons",
     "verified": true,
-    "verified_utc": "2026-07-04T14:53:16+00:00",
+    "verified_utc": "2026-07-04T15:23:26+00:00",
+    "year_match": true
+  },
+  "10.1007/s10827-006-7074-5": {
+    "author_match": true,
+    "model": "LearnableNeuronModel",
+    "registry": "crossref",
+    "registry_first_author": "jolivet",
+    "registry_year": 2006,
+    "resolves": true,
+    "title": "Predicting spike timing of neocortical pyramidal neurons by simple threshold models",
+    "verified": true,
+    "verified_utc": "2026-07-04T15:23:26+00:00",
     "year_match": true
   },
   "10.1007/s10955-013-0733-9": {
@@ -128,7 +140,7 @@
     "resolves": true,
     "title": "Infinite Systems of Interacting Chains with Memory of Variable Length—A Stochastic Model for Biological Neural Nets",
     "verified": true,
-    "verified_utc": "2026-07-04T14:53:16+00:00",
+    "verified_utc": "2026-07-04T15:23:26+00:00",
     "year_match": true
   },
   "10.1016/0001-8708(70)90023-X": {
@@ -140,7 +152,7 @@
     "resolves": true,
     "title": "Nagumo's equation",
     "verified": true,
-    "verified_utc": "2026-07-04T14:53:16+00:00",
+    "verified_utc": "2026-07-04T15:23:26+00:00",
     "year_match": true
   },
   "10.1016/0014-4886(59)90046-9": {
@@ -152,7 +164,7 @@
     "resolves": true,
     "title": "Branching dendritic trees and motoneuron membrane resistivity",
     "verified": true,
-    "verified_utc": "2026-07-04T14:53:16+00:00",
+    "verified_utc": "2026-07-04T15:23:26+00:00",
     "year_match": true
   },
   "10.1016/0167-2789(85)90060-0": {
@@ -164,7 +176,7 @@
     "resolves": true,
     "title": "Chaos in a three-variable model of an excitable cell",
     "verified": true,
-    "verified_utc": "2026-07-04T14:53:16+00:00",
+    "verified_utc": "2026-07-04T15:23:26+00:00",
     "year_match": true
   },
   "10.1016/0167-2789(94)00205-5": {
@@ -176,7 +188,7 @@
     "resolves": true,
     "title": "Global competition and local cooperation in a network of neural oscillators",
     "verified": true,
-    "verified_utc": "2026-07-04T14:53:16+00:00",
+    "verified_utc": "2026-07-04T15:23:26+00:00",
     "year_match": true
   },
   "10.1016/0301-0082(96)00023-8": {
@@ -188,7 +200,7 @@
     "resolves": true,
     "title": "ON THE ROLE OF RECURRENT INHIBITORY FEEDBACK IN MOTOR CONTROL",
     "verified": true,
-    "verified_utc": "2026-07-04T14:53:16+00:00",
+    "verified_utc": "2026-07-04T15:23:26+00:00",
     "year_match": true
   },
   "10.1016/0375-9601(90)90136-C": {
@@ -200,7 +212,7 @@
     "resolves": true,
     "title": "Chaotic neural networks",
     "verified": true,
-    "verified_utc": "2026-07-04T14:53:16+00:00",
+    "verified_utc": "2026-07-04T15:23:26+00:00",
     "year_match": true
   },
   "10.1016/0375-9601(90)90136-c": {
@@ -212,7 +224,7 @@
     "resolves": true,
     "title": "Chaotic neural networks",
     "verified": true,
-    "verified_utc": "2026-07-04T14:53:16+00:00",
+    "verified_utc": "2026-07-04T15:23:26+00:00",
     "year_match": true
   },
   "10.1016/0960-0779(93)E0056-H": {
@@ -224,7 +236,7 @@
     "resolves": true,
     "title": "Generic excitable dynamics on a two-dimensional map",
     "verified": true,
-    "verified_utc": "2026-07-04T14:53:16+00:00",
+    "verified_utc": "2026-07-04T15:23:26+00:00",
     "year_match": true
   },
   "10.1016/S0006-3495(00)76525-8": {
@@ -236,7 +248,7 @@
     "resolves": true,
     "title": "The Phantom Burster Model for Pancreatic β-Cells",
     "verified": true,
-    "verified_utc": "2026-07-04T14:53:16+00:00",
+    "verified_utc": "2026-07-04T15:23:26+00:00",
     "year_match": true
   },
   "10.1016/S0006-3495(61)86902-6": {
@@ -248,7 +260,7 @@
     "resolves": true,
     "title": "Impulses and Physiological States in Theoretical Models of Nerve Membrane",
     "verified": true,
-    "verified_utc": "2026-07-04T14:53:16+00:00",
+    "verified_utc": "2026-07-04T15:23:26+00:00",
     "year_match": true
   },
   "10.1016/S0006-3495(72)86068-5": {
@@ -260,7 +272,7 @@
     "resolves": true,
     "title": "Excitatory and Inhibitory Interactions in Localized Populations of Model Neurons",
     "verified": true,
-    "verified_utc": "2026-07-04T14:53:16+00:00",
+    "verified_utc": "2026-07-04T15:23:26+00:00",
     "year_match": true
   },
   "10.1016/S0006-3495(76)85683-4": {
@@ -272,7 +284,7 @@
     "resolves": true,
     "title": "Mathematical description of a bursting pacemaker neuron by a modification of the Hodgkin-Huxley equations",
     "verified": true,
-    "verified_utc": "2026-07-04T14:53:16+00:00",
+    "verified_utc": "2026-07-04T15:23:26+00:00",
     "year_match": true
   },
   "10.1016/S0006-3495(81)84782-0": {
@@ -284,7 +296,7 @@
     "resolves": true,
     "title": "Voltage oscillations in the barnacle giant muscle fiber",
     "verified": true,
-    "verified_utc": "2026-07-04T14:53:16+00:00",
+    "verified_utc": "2026-07-04T15:23:26+00:00",
     "year_match": true
   },
   "10.1016/S0006-3495(83)84384-7": {
@@ -296,7 +308,7 @@
     "resolves": true,
     "title": "Minimal model for membrane oscillations in the pancreatic beta-cell",
     "verified": true,
-    "verified_utc": "2026-07-04T14:53:16+00:00",
+    "verified_utc": "2026-07-04T15:23:26+00:00",
     "year_match": true
   },
   "10.1016/S0006-3495(88)82975-8": {
@@ -308,7 +320,7 @@
     "resolves": true,
     "title": "Emergence of organized bursting in clusters of pancreatic beta-cells by channel sharing",
     "verified": true,
-    "verified_utc": "2026-07-04T14:53:16+00:00",
+    "verified_utc": "2026-07-04T15:23:26+00:00",
     "year_match": true
   },
   "10.1016/S0893-6080(01)00078-8": {
@@ -320,7 +332,7 @@
     "resolves": true,
     "title": "Resonate-and-fire neurons",
     "verified": true,
-    "verified_utc": "2026-07-04T14:53:16+00:00",
+    "verified_utc": "2026-07-04T15:23:26+00:00",
     "year_match": true
   },
   "10.1016/S0896-6273(01)00322-1": {
@@ -332,7 +344,7 @@
     "resolves": true,
     "title": "Predicting Every Spike",
     "verified": true,
-    "verified_utc": "2026-07-04T14:53:16+00:00",
+    "verified_utc": "2026-07-04T15:23:26+00:00",
     "year_match": true
   },
   "10.1016/j.mbs.2023.109085": {
@@ -344,7 +356,7 @@
     "resolves": true,
     "title": "Deconstructing the integrated oscillator model for pancreatic <mml:math xmlns:mml=\"http://www.w3.org/1998/Math/MathML\" a",
     "verified": true,
-    "verified_utc": "2026-07-04T14:53:16+00:00",
+    "verified_utc": "2026-07-04T15:23:26+00:00",
     "year_match": true
   },
   "10.1016/j.neuron.2007.02.012": {
@@ -356,7 +368,7 @@
     "resolves": true,
     "title": "Disynaptic Inhibition between Neocortical Pyramidal Cells Mediated by Martinotti Cells",
     "verified": true,
-    "verified_utc": "2026-07-04T14:53:16+00:00",
+    "verified_utc": "2026-07-04T15:23:26+00:00",
     "year_match": true
   },
   "10.1016/j.physd.2005.01.021": {
@@ -368,7 +380,7 @@
     "resolves": true,
     "title": "Reduction of a model of an excitable cell to a one-dimensional map",
     "verified": true,
-    "verified_utc": "2026-07-04T14:53:16+00:00",
+    "verified_utc": "2026-07-04T15:23:26+00:00",
     "year_match": true
   },
   "10.1016/j.physrep.2010.12.003": {
@@ -380,7 +392,7 @@
     "resolves": true,
     "title": "Map-based models in neuronal dynamics",
     "verified": true,
-    "verified_utc": "2026-07-04T14:53:16+00:00",
+    "verified_utc": "2026-07-04T15:23:26+00:00",
     "year_match": true
   },
   "10.1016/j.tins.2009.05.001": {
@@ -392,7 +404,7 @@
     "resolves": true,
     "title": "Tripartite synapses: astrocytes process and control synaptic information",
     "verified": true,
-    "verified_utc": "2026-07-04T14:53:16+00:00",
+    "verified_utc": "2026-07-04T15:23:26+00:00",
     "year_match": true
   },
   "10.1016/s0306-4522(01)00344-x": {
@@ -404,7 +416,7 @@
     "resolves": true,
     "title": "Fluctuating synaptic conductances recreate in vivo-like activity in neocortical neurons",
     "verified": true,
-    "verified_utc": "2026-07-04T14:53:16+00:00",
+    "verified_utc": "2026-07-04T15:23:26+00:00",
     "year_match": true
   },
   "10.1017/CBO9780511623202": {
@@ -416,7 +428,7 @@
     "resolves": true,
     "title": "Introduction to Theoretical Neurobiology",
     "verified": true,
-    "verified_utc": "2026-07-04T14:53:16+00:00",
+    "verified_utc": "2026-07-04T15:23:26+00:00",
     "year_match": true
   },
   "10.1017/CBO9780511815706": {
@@ -428,7 +440,7 @@
     "resolves": true,
     "title": "Spiking Neuron Models",
     "verified": true,
-    "verified_utc": "2026-07-04T14:53:16+00:00",
+    "verified_utc": "2026-07-04T15:23:26+00:00",
     "year_match": true
   },
   "10.1017/CBO9780511895401": {
@@ -440,7 +452,7 @@
     "resolves": true,
     "title": "Neuronal Networks of the Hippocampus",
     "verified": true,
-    "verified_utc": "2026-07-04T14:53:16+00:00",
+    "verified_utc": "2026-07-04T15:23:26+00:00",
     "year_match": true
   },
   "10.1017/CBO9781107447615": {
@@ -452,7 +464,7 @@
     "resolves": true,
     "title": "Neuronal Dynamics",
     "verified": true,
-    "verified_utc": "2026-07-04T14:53:16+00:00",
+    "verified_utc": "2026-07-04T15:23:26+00:00",
     "year_match": true
   },
   "10.1023/A:1011204814320": {
@@ -464,7 +476,7 @@
     "resolves": true,
     "title": "Effects of Neuromodulation in a Cortical Network Model of Object Working Memory Dominated by Recurrent Inhibition",
     "verified": true,
-    "verified_utc": "2026-07-04T14:53:16+00:00",
+    "verified_utc": "2026-07-04T15:23:26+00:00",
     "year_match": true
   },
   "10.1038/382363a0": {
@@ -476,7 +488,7 @@
     "resolves": true,
     "title": "Influence of dendritic structure on firing pattern in model neocortical neurons",
     "verified": true,
-    "verified_utc": "2026-07-04T14:53:16+00:00",
+    "verified_utc": "2026-07-04T15:23:26+00:00",
     "year_match": true
   },
   "10.1038/nature07140": {
@@ -488,7 +500,7 @@
     "resolves": true,
     "title": "Spatio-temporal correlations and visual signalling in a complete neuronal population",
     "verified": true,
-    "verified_utc": "2026-07-04T14:53:16+00:00",
+    "verified_utc": "2026-07-04T15:23:26+00:00",
     "year_match": true
   },
   "10.1038/nn.2212": {
@@ -500,7 +512,7 @@
     "resolves": true,
     "title": "Fractional differentiation by neocortical pyramidal neurons",
     "verified": true,
-    "verified_utc": "2026-07-04T14:53:16+00:00",
+    "verified_utc": "2026-07-04T15:23:26+00:00",
     "year_match": true
   },
   "10.1038/nrn1516": {
@@ -512,7 +524,7 @@
     "resolves": true,
     "title": "Ca2+-activated K+ channels: molecular determinants and function of the SK family",
     "verified": true,
-    "verified_utc": "2026-07-04T14:53:16+00:00",
+    "verified_utc": "2026-07-04T15:23:26+00:00",
     "year_match": true
   },
   "10.1038/s41467-017-02717-4": {
@@ -524,7 +536,7 @@
     "resolves": true,
     "title": "Generalized leaky integrate-and-fire models classify multiple neuron types",
     "verified": true,
-    "verified_utc": "2026-07-04T14:53:16+00:00",
+    "verified_utc": "2026-07-04T15:23:26+00:00",
     "year_match": true
   },
   "10.1038/s41467-020-17236-y": {
@@ -536,7 +548,7 @@
     "resolves": true,
     "title": "A solution to the learning dilemma for recurrent networks of spiking neurons",
     "verified": true,
-    "verified_utc": "2026-07-04T14:53:16+00:00",
+    "verified_utc": "2026-07-04T15:23:26+00:00",
     "year_match": true
   },
   "10.1038/s41467-022-35747-8": {
@@ -548,7 +560,7 @@
     "resolves": true,
     "title": "Introducing the Dendrify framework for incorporating dendrites to spiking neural networks",
     "verified": true,
-    "verified_utc": "2026-07-04T14:53:16+00:00",
+    "verified_utc": "2026-07-04T15:23:26+00:00",
     "year_match": true
   },
   "10.1038/s42256-022-00556-7": {
@@ -560,7 +572,7 @@
     "resolves": true,
     "title": "Closed-form continuous-time neural networks",
     "verified": true,
-    "verified_utc": "2026-07-04T14:53:16+00:00",
+    "verified_utc": "2026-07-04T15:23:26+00:00",
     "year_match": true
   },
   "10.1046/j.1460-9568.1998.00367.x": {
@@ -572,7 +584,7 @@
     "resolves": true,
     "title": "Properties of bipolar VIPergic interneurons and their excitation by pyramidal neurons in the rat neocortex",
     "verified": true,
-    "verified_utc": "2026-07-04T14:53:16+00:00",
+    "verified_utc": "2026-07-04T15:23:26+00:00",
     "year_match": true
   },
   "10.1046/j.1460-9568.2002.01985.x": {
@@ -584,7 +596,7 @@
     "resolves": true,
     "title": "Epileptic fast activity can be explained by a model of impaired GABAergic dendritic inhibition",
     "verified": true,
-    "verified_utc": "2026-07-04T14:53:16+00:00",
+    "verified_utc": "2026-07-04T15:23:26+00:00",
     "year_match": true
   },
   "10.1063/1.166453": {
@@ -596,7 +608,7 @@
     "resolves": true,
     "title": "A coupled ordinary differential equation lattice model for the simulation of epileptic seizures",
     "verified": true,
-    "verified_utc": "2026-07-04T14:53:16+00:00",
+    "verified_utc": "2026-07-04T15:23:26+00:00",
     "year_match": true
   },
   "10.1063/1.2795435": {
@@ -608,7 +620,7 @@
     "resolves": true,
     "title": "Chaotic oscillations in a map-based model of neural activity",
     "verified": true,
-    "verified_utc": "2026-07-04T14:53:16+00:00",
+    "verified_utc": "2026-07-04T15:23:26+00:00",
     "year_match": true
   },
   "10.1093/cercor/10.9.910": {
@@ -620,7 +632,7 @@
     "resolves": true,
     "title": "Synaptic Mechanisms and Network Dynamics Underlying Spatial Working Memory in a Cortical Network Model",
     "verified": true,
-    "verified_utc": "2026-07-04T14:53:16+00:00",
+    "verified_utc": "2026-07-04T15:23:26+00:00",
     "year_match": true
   },
   "10.1098/rspb.1984.0024": {
@@ -632,7 +644,7 @@
     "resolves": true,
     "title": "A model of neuronal bursting using three coupled first order differential equations",
     "verified": true,
-    "verified_utc": "2026-07-04T14:53:16+00:00",
+    "verified_utc": "2026-07-04T15:23:26+00:00",
     "year_match": true
   },
   "10.1103/PhysRev.81.617": {
@@ -644,7 +656,7 @@
     "resolves": true,
     "title": "On the First Passage Time Probability Problem",
     "verified": true,
-    "verified_utc": "2026-07-04T14:53:16+00:00",
+    "verified_utc": "2026-07-04T15:23:26+00:00",
     "year_match": true
   },
   "10.1103/PhysRevE.51.738": {
@@ -656,7 +668,7 @@
     "resolves": true,
     "title": "Time structure of the activity in neural network models",
     "verified": true,
-    "verified_utc": "2026-07-04T14:53:16+00:00",
+    "verified_utc": "2026-07-04T15:23:26+00:00",
     "year_match": true
   },
   "10.1103/PhysRevE.65.041922": {
@@ -668,7 +680,7 @@
     "resolves": true,
     "title": "Modeling of spiking-bursting neural behavior using two-dimensional map",
     "verified": true,
-    "verified_utc": "2026-07-04T14:53:16+00:00",
+    "verified_utc": "2026-07-04T15:23:26+00:00",
     "year_match": true
   },
   "10.1109/AICAS51828.2021.9458572": {
@@ -680,7 +692,7 @@
     "resolves": true,
     "title": "Integer Quadratic Integrate-and-Fire (IQIF): A Neuron Model for Digital Neuromorphic Systems",
     "verified": true,
-    "verified_utc": "2026-07-04T14:53:16+00:00",
+    "verified_utc": "2026-07-04T15:23:26+00:00",
     "year_match": true
   },
   "10.1109/ICASSP40776.2020.9053856": {
@@ -692,7 +704,7 @@
     "resolves": true,
     "title": "Temporal Coding in Spiking Neural Networks with Alpha Synaptic Function",
     "verified": true,
-    "verified_utc": "2026-07-04T14:53:16+00:00",
+    "verified_utc": "2026-07-04T15:23:26+00:00",
     "year_match": true
   },
   "10.1109/ICCV48922.2021.00266": {
@@ -704,7 +716,7 @@
     "resolves": true,
     "title": "Incorporating Learnable Membrane Time Constant to Enhance Learning of Spiking Neural Networks",
     "verified": true,
-    "verified_utc": "2026-07-04T14:53:16+00:00",
+    "verified_utc": "2026-07-04T15:23:26+00:00",
     "year_match": true
   },
   "10.1109/ISCAS.2010.5536970": {
@@ -716,7 +728,7 @@
     "resolves": true,
     "title": "A wafer-scale neuromorphic hardware system for large-scale neural modeling",
     "verified": true,
-    "verified_utc": "2026-07-04T14:53:16+00:00",
+    "verified_utc": "2026-07-04T15:23:26+00:00",
     "year_match": true
   },
   "10.1109/JPROC.2014.2304638": {
@@ -728,7 +740,7 @@
     "resolves": true,
     "title": "The SpiNNaker Project",
     "verified": true,
-    "verified_utc": "2026-07-04T14:53:16+00:00",
+    "verified_utc": "2026-07-04T15:23:26+00:00",
     "year_match": true
   },
   "10.1109/JPROC.2014.2313565": {
@@ -740,7 +752,7 @@
     "resolves": true,
     "title": "Neurogrid: A Mixed-Analog-Digital Multichip System for Large-Scale Neural Simulations",
     "verified": true,
-    "verified_utc": "2026-07-04T14:53:16+00:00",
+    "verified_utc": "2026-07-04T15:23:26+00:00",
     "year_match": true
   },
   "10.1109/MM.2018.112130359": {
@@ -752,7 +764,19 @@
     "resolves": true,
     "title": "Loihi: A Neuromorphic Manycore Processor with On-Chip Learning",
     "verified": true,
-    "verified_utc": "2026-07-04T14:53:16+00:00",
+    "verified_utc": "2026-07-04T15:23:26+00:00",
+    "year_match": true
+  },
+  "10.1109/tnnls.2016.2526029": {
+    "author_match": true,
+    "model": "SigmaDeltaNeuron",
+    "registry": "crossref",
+    "registry_first_author": "yoon",
+    "registry_year": 2017,
+    "resolves": true,
+    "title": "LIF and Simplified SRM Neurons Encode Signals Into Spikes via a Form of Asynchronous Pulse Sigma–Delta Modulation",
+    "verified": true,
+    "verified_utc": "2026-07-04T15:23:26+00:00",
     "year_match": true
   },
   "10.1113/jphysiol.1952.sp004764": {
@@ -764,7 +788,7 @@
     "resolves": true,
     "title": "A quantitative description of membrane current and its application to conduction and excitation in nerve",
     "verified": true,
-    "verified_utc": "2026-07-04T14:53:16+00:00",
+    "verified_utc": "2026-07-04T15:23:26+00:00",
     "year_match": true
   },
   "10.1113/jphysiol.1971.sp009366": {
@@ -776,7 +800,7 @@
     "resolves": true,
     "title": "Prediction of repetitive firing behaviour from voltage clamp data on an isolated neurone soma",
     "verified": true,
-    "verified_utc": "2026-07-04T14:53:16+00:00",
+    "verified_utc": "2026-07-04T15:23:26+00:00",
     "year_match": true
   },
   "10.1113/jphysiol.1988.sp017288": {
@@ -788,7 +812,7 @@
     "resolves": true,
     "title": "Electrophysiology of guinea‐pig cerebellar nuclear cells in the in vitro brain stem‐cerebellar preparation.",
     "verified": true,
-    "verified_utc": "2026-07-04T14:53:16+00:00",
+    "verified_utc": "2026-07-04T15:23:26+00:00",
     "year_match": true
   },
   "10.1121/1.3238250": {
@@ -800,7 +824,7 @@
     "resolves": true,
     "title": "A phenomenological model of the synapse between the inner hair cell and auditory nerve: Long-term adaptation with power-",
     "verified": true,
-    "verified_utc": "2026-07-04T14:53:16+00:00",
+    "verified_utc": "2026-07-04T15:23:26+00:00",
     "year_match": true
   },
   "10.1126/science.1254642": {
@@ -812,7 +836,7 @@
     "resolves": true,
     "title": "A million spiking-neuron integrated circuit with a scalable communication network and interface",
     "verified": true,
-    "verified_utc": "2026-07-04T14:53:16+00:00",
+    "verified_utc": "2026-07-04T15:23:26+00:00",
     "year_match": true
   },
   "10.1137/0146017": {
@@ -824,7 +848,7 @@
     "resolves": true,
     "title": "Parabolic Bursting in an Excitable System Coupled with a Slow Oscillation",
     "verified": true,
-    "verified_utc": "2026-07-04T14:53:16+00:00",
+    "verified_utc": "2026-07-04T15:23:26+00:00",
     "year_match": true
   },
   "10.1137/S003613999223449X": {
@@ -836,7 +860,7 @@
     "resolves": true,
     "title": "Fast Subsystem Bifurcations in a Slowly Varying Liénard System Exhibiting Bursting",
     "verified": true,
-    "verified_utc": "2026-07-04T14:53:16+00:00",
+    "verified_utc": "2026-07-04T15:23:26+00:00",
     "year_match": true
   },
   "10.1142/S0218127498000681": {
@@ -848,7 +872,7 @@
     "resolves": true,
     "title": "Computer Simulations of Neuronal Signal Transduction: The Role of Nonlinear Dynamics and Noise",
     "verified": true,
-    "verified_utc": "2026-07-04T14:53:16+00:00",
+    "verified_utc": "2026-07-04T15:23:26+00:00",
     "year_match": true
   },
   "10.1146/annurev.ph.58.030196.001553": {
@@ -860,7 +884,7 @@
     "resolves": true,
     "title": "Low-Threshold Calcium Currents in Central Nervous System Neurons",
     "verified": true,
-    "verified_utc": "2026-07-04T14:53:16+00:00",
+    "verified_utc": "2026-07-04T15:23:26+00:00",
     "year_match": true
   },
   "10.1146/annurev.physiol.58.1.349": {
@@ -872,7 +896,7 @@
     "resolves": true,
     "title": "Persistent Sodium Current in Mammalian Central Neurons",
     "verified": true,
-    "verified_utc": "2026-07-04T14:53:16+00:00",
+    "verified_utc": "2026-07-04T15:23:26+00:00",
     "year_match": true
   },
   "10.1146/annurev.physiol.65.092101.142734": {
@@ -884,7 +908,7 @@
     "resolves": true,
     "title": "Hyperpolarization-Activated Cation Currents: From Molecules to Physiological Function",
     "verified": true,
-    "verified_utc": "2026-07-04T14:53:16+00:00",
+    "verified_utc": "2026-07-04T15:23:26+00:00",
     "year_match": true
   },
   "10.1152/jn.00190.2004": {
@@ -896,7 +920,7 @@
     "resolves": true,
     "title": "Generalized Integrate-and-Fire Models of Neuronal Activity Approximate Spike Trains of a Detailed Model to a High Degree",
     "verified": true,
-    "verified_utc": "2026-07-04T14:53:16+00:00",
+    "verified_utc": "2026-07-04T15:23:26+00:00",
     "year_match": true
   },
   "10.1152/jn.00408.2011": {
@@ -908,7 +932,7 @@
     "resolves": true,
     "title": "Parameter extraction and classification of three cortical neuron types reveals two distinct adaptation mechanisms",
     "verified": true,
-    "verified_utc": "2026-07-04T14:53:16+00:00",
+    "verified_utc": "2026-07-04T15:23:26+00:00",
     "year_match": true
   },
   "10.1152/jn.00686.2005": {
@@ -920,7 +944,7 @@
     "resolves": true,
     "title": "Adaptive Exponential Integrate-and-Fire Model as an Effective Description of Neuronal Activity",
     "verified": true,
-    "verified_utc": "2026-07-04T14:53:16+00:00",
+    "verified_utc": "2026-07-04T15:23:26+00:00",
     "year_match": true
   },
   "10.1152/jn.00915.2004": {
@@ -932,7 +956,7 @@
     "resolves": true,
     "title": "Modeling Sleep and Wakefulness in the Thalamocortical System",
     "verified": true,
-    "verified_utc": "2026-07-04T14:53:16+00:00",
+    "verified_utc": "2026-07-04T15:23:26+00:00",
     "year_match": true
   },
   "10.1152/jn.1993.70.6.2470": {
@@ -944,7 +968,7 @@
     "resolves": true,
     "title": "Models of recruitment and rate coding organization in motor-unit pools",
     "verified": true,
-    "verified_utc": "2026-07-04T14:53:16+00:00",
+    "verified_utc": "2026-07-04T15:23:26+00:00",
     "year_match": true
   },
   "10.1152/jn.1994.71.1.375": {
@@ -956,7 +980,19 @@
     "resolves": true,
     "title": "An active membrane model of the cerebellar Purkinje cell. I. Simulation of current clamps in slice",
     "verified": true,
-    "verified_utc": "2026-07-04T14:53:16+00:00",
+    "verified_utc": "2026-07-04T15:23:26+00:00",
+    "year_match": true
+  },
+  "10.1152/jn.1996.76.3.2049": {
+    "author_match": true,
+    "model": "DestexheThalamicNeuron",
+    "registry": "crossref",
+    "registry_first_author": "destexhe",
+    "registry_year": 1996,
+    "resolves": true,
+    "title": "Ionic mechanisms underlying synchronized oscillations and propagating waves in a model of ferret thalamic slices",
+    "verified": true,
+    "verified_utc": "2026-07-04T15:23:26+00:00",
     "year_match": true
   },
   "10.1152/jn.1999.82.1.382": {
@@ -968,7 +1004,7 @@
     "resolves": true,
     "title": "Models of Respiratory Rhythm Generation in the Pre-Bötzinger Complex. I. Bursting Pacemaker Neurons",
     "verified": true,
-    "verified_utc": "2026-07-04T14:53:16+00:00",
+    "verified_utc": "2026-07-04T15:23:26+00:00",
     "year_match": true
   },
   "10.1152/jn.2000.83.2.808": {
@@ -980,7 +1016,7 @@
     "resolves": true,
     "title": "Intrinsic Dynamics in Neuronal Networks. I. Theory",
     "verified": true,
-    "verified_utc": "2026-07-04T14:53:16+00:00",
+    "verified_utc": "2026-07-04T15:23:26+00:00",
     "year_match": true
   },
   "10.1152/jn.2000.83.3.1733": {
@@ -992,7 +1028,7 @@
     "resolves": true,
     "title": "Dopamine-Mediated Stabilization of Delay-Period Activity in a Network Model of Prefrontal Cortex",
     "verified": true,
-    "verified_utc": "2026-07-04T14:53:16+00:00",
+    "verified_utc": "2026-07-04T15:23:26+00:00",
     "year_match": true
   },
   "10.1152/physrev.1996.76.3.687": {
@@ -1004,7 +1040,7 @@
     "resolves": true,
     "title": "Principles of rhythmic motor pattern generation",
     "verified": true,
-    "verified_utc": "2026-07-04T14:53:16+00:00",
+    "verified_utc": "2026-07-04T15:23:26+00:00",
     "year_match": true
   },
   "10.1162/089976600300015899": {
@@ -1016,7 +1052,7 @@
     "resolves": true,
     "title": "Population Dynamics of Spiking Neurons: Fast Transients, Asynchronous States, and Locking",
     "verified": true,
-    "verified_utc": "2026-07-04T14:53:16+00:00",
+    "verified_utc": "2026-07-04T15:23:26+00:00",
     "year_match": true
   },
   "10.1162/089976603322385063": {
@@ -1028,7 +1064,7 @@
     "resolves": true,
     "title": "A Universal Model for Spike-Frequency Adaptation",
     "verified": true,
-    "verified_utc": "2026-07-04T14:53:16+00:00",
+    "verified_utc": "2026-07-04T15:23:26+00:00",
     "year_match": true
   },
   "10.1162/089976698300017331": {
@@ -1040,7 +1076,7 @@
     "resolves": true,
     "title": "Dynamics of Membrane Excitability Determine Interspike Interval Variability: A Link Between Spike Generation Mechanisms ",
     "verified": true,
-    "verified_utc": "2026-07-04T14:53:16+00:00",
+    "verified_utc": "2026-07-04T15:23:26+00:00",
     "year_match": true
   },
   "10.1162/089976698300017502": {
@@ -1052,7 +1088,7 @@
     "resolves": true,
     "title": "Neural Networks with Dynamic Synapses",
     "verified": true,
-    "verified_utc": "2026-07-04T14:53:16+00:00",
+    "verified_utc": "2026-07-04T15:23:26+00:00",
     "year_match": true
   },
   "10.1162/neco.2008.12-07-680": {
@@ -1064,7 +1100,7 @@
     "resolves": true,
     "title": "A Generalized Linear Integrate-and-Fire Neural Model Produces Diverse Spiking Behaviors",
     "verified": true,
-    "verified_utc": "2026-07-04T14:53:16+00:00",
+    "verified_utc": "2026-07-04T15:23:26+00:00",
     "year_match": true
   },
   "10.1162/neco.2009.07-08-829": {
@@ -1076,7 +1112,7 @@
     "resolves": true,
     "title": "Computation with Spikes in a Winner-Take-All Network",
     "verified": true,
-    "verified_utc": "2026-07-04T14:53:16+00:00",
+    "verified_utc": "2026-07-04T15:23:26+00:00",
     "year_match": true
   },
   "10.1162/neco_a_01086": {
@@ -1088,7 +1124,7 @@
     "resolves": true,
     "title": "SuperSpike: Supervised Learning in Multilayer Spiking Neural Networks",
     "verified": true,
-    "verified_utc": "2026-07-04T14:53:16+00:00",
+    "verified_utc": "2026-07-04T15:23:26+00:00",
     "year_match": true
   },
   "10.1162/neco_a_01712": {
@@ -1100,7 +1136,7 @@
     "resolves": true,
     "title": "KLIF: An Optimized Spiking Neuron Unit for Tuning Surrogate Gradient Function",
     "verified": true,
-    "verified_utc": "2026-07-04T14:53:16+00:00",
+    "verified_utc": "2026-07-04T15:23:26+00:00",
     "year_match": true
   },
   "10.1209/epl/i2001-00548-y": {
@@ -1112,7 +1148,7 @@
     "resolves": true,
     "title": "Anti-phase regularization of coupled chaotic maps modelling bursting neurons",
     "verified": true,
-    "verified_utc": "2026-07-04T14:53:16+00:00",
+    "verified_utc": "2026-07-04T15:23:26+00:00",
     "year_match": true
   },
   "10.1371/journal.pcbi.0030156": {
@@ -1124,7 +1160,7 @@
     "resolves": true,
     "title": "Mechanisms of Firing Patterns in Fast-Spiking Cortical Interneurons",
     "verified": true,
-    "verified_utc": "2026-07-04T14:53:16+00:00",
+    "verified_utc": "2026-07-04T15:23:26+00:00",
     "year_match": true
   },
   "10.1371/journal.pcbi.1000198": {
@@ -1136,7 +1172,7 @@
     "resolves": true,
     "title": "Biophysical Basis for Three Distinct Dynamical Mechanisms of Action Potential Initiation",
     "verified": true,
-    "verified_utc": "2026-07-04T14:53:16+00:00",
+    "verified_utc": "2026-07-04T15:23:26+00:00",
     "year_match": true
   },
   "10.1371/journal.pcbi.1000850": {
@@ -1148,7 +1184,7 @@
     "resolves": true,
     "title": "A Threshold Equation for Action Potential Initiation",
     "verified": true,
-    "verified_utc": "2026-07-04T14:53:16+00:00",
+    "verified_utc": "2026-07-04T15:23:26+00:00",
     "year_match": true
   },
   "10.1371/journal.pcbi.1002107": {
@@ -1160,7 +1196,7 @@
     "resolves": true,
     "title": "Models of Neocortical Layer 5b Pyramidal Cells Capturing a Wide Range of Dendritic and Perisomatic Active Properties",
     "verified": true,
-    "verified_utc": "2026-07-04T14:53:16+00:00",
+    "verified_utc": "2026-07-04T15:23:26+00:00",
     "year_match": true
   },
   "10.1371/journal.pcbi.1008503": {
@@ -1172,7 +1208,7 @@
     "resolves": true,
     "title": "Simple models including energy and spike constraints reproduce complex activity patterns and metabolic disruptions",
     "verified": true,
-    "verified_utc": "2026-07-04T14:53:16+00:00",
+    "verified_utc": "2026-07-04T15:23:26+00:00",
     "year_match": true
   },
   "10.1523/JNEUROSCI.16-20-06402.1996": {
@@ -1184,7 +1220,7 @@
     "resolves": true,
     "title": "Gamma Oscillation by Synaptic Inhibition in a Hippocampal Interneuronal Network Model",
     "verified": true,
-    "verified_utc": "2026-07-04T14:53:16+00:00",
+    "verified_utc": "2026-07-04T15:23:26+00:00",
     "year_match": true
   },
   "10.1523/JNEUROSCI.21-03-00759.2001": {
@@ -1196,7 +1232,7 @@
     "resolves": true,
     "title": "Theta-Frequency Bursting and Resonance in Cerebellar Granule Cells: Experimental Evidence and Modeling of a Slow K<sup>+",
     "verified": true,
-    "verified_utc": "2026-07-04T14:53:16+00:00",
+    "verified_utc": "2026-07-04T15:23:26+00:00",
     "year_match": true
   },
   "10.1523/JNEUROSCI.23-37-11628.2003": {
@@ -1208,7 +1244,7 @@
     "resolves": true,
     "title": "How Spike Generation Mechanisms Determine the Neuronal Response to Fluctuating Inputs",
     "verified": true,
-    "verified_utc": "2026-07-04T14:53:16+00:00",
+    "verified_utc": "2026-07-04T15:23:26+00:00",
     "year_match": true
   },
   "10.1523/JNEUROSCI.3733-05.2006": {
@@ -1220,7 +1256,7 @@
     "resolves": true,
     "title": "A Recurrent Network Mechanism of Time Integration in Perceptual Decisions",
     "verified": true,
-    "verified_utc": "2026-07-04T14:53:16+00:00",
+    "verified_utc": "2026-07-04T15:23:26+00:00",
     "year_match": true
   },
   "10.1523/jneurosci.10-09-03178.1990": {
@@ -1232,7 +1268,19 @@
     "resolves": true,
     "title": "Voltage dependence of NMDA-activated macroscopic conductances predicted by single-channel kinetics",
     "verified": true,
-    "verified_utc": "2026-07-04T14:53:16+00:00",
+    "verified_utc": "2026-07-04T15:23:26+00:00",
+    "year_match": true
+  },
+  "10.1523/jneurosci.20-05-01837.2000": {
+    "author_match": true,
+    "model": "LugaroCell",
+    "registry": "crossref",
+    "registry_first_author": "dieudonne",
+    "registry_year": 2000,
+    "resolves": true,
+    "title": "Serotonin-Driven Long-Range Inhibitory Connections in the Cerebellar Cortex",
+    "verified": true,
+    "verified_utc": "2026-07-04T15:23:26+00:00",
     "year_match": true
   },
   "10.1523/jneurosci.4719-06.2007": {
@@ -1244,7 +1292,7 @@
     "resolves": true,
     "title": "T-Type and L-Type Ca<sup>2+</sup>Conductances Define and Encode the Bimodal Firing Pattern of Vestibulocerebellar Unipol",
     "verified": true,
-    "verified_utc": "2026-07-04T14:53:16+00:00",
+    "verified_utc": "2026-07-04T15:23:26+00:00",
     "year_match": true
   },
   "10.1609/aaai.v35i9.16936": {
@@ -1256,7 +1304,7 @@
     "resolves": true,
     "title": "Liquid Time-constant Networks",
     "verified": true,
-    "verified_utc": "2026-07-04T14:53:16+00:00",
+    "verified_utc": "2026-07-04T15:23:26+00:00",
     "year_match": true
   },
   "10.1609/aaai.v38i15.29625": {
@@ -1268,7 +1316,7 @@
     "resolves": true,
     "title": "TC-LIF: A Two-Compartment Spiking Neuron Model for Long-Term Sequential Modelling",
     "verified": true,
-    "verified_utc": "2026-07-04T14:53:16+00:00",
+    "verified_utc": "2026-07-04T15:23:26+00:00",
     "year_match": true
   },
   "10.3389/fnins.2011.00073": {
@@ -1280,7 +1328,7 @@
     "resolves": true,
     "title": "Neuromorphic Silicon Neuron Circuits",
     "verified": true,
-    "verified_utc": "2026-07-04T14:53:16+00:00",
+    "verified_utc": "2026-07-04T15:23:26+00:00",
     "year_match": true
   },
   "10.3389/neuro.03.002.2007": {
@@ -1292,7 +1340,7 @@
     "resolves": true,
     "title": "Computational reconstruction of pacemaking and intrinsic electroresponsiveness in cerebellar golgi cells",
     "verified": true,
-    "verified_utc": "2026-07-04T14:53:16+00:00",
+    "verified_utc": "2026-07-04T15:23:26+00:00",
     "year_match": true
   },
   "10.3389/neuro.10.009.2009": {
@@ -1304,7 +1352,7 @@
     "resolves": true,
     "title": "Made-to-order spiking neuron model equipped with a multi-timescale adaptive threshold",
     "verified": true,
-    "verified_utc": "2026-07-04T14:53:16+00:00",
+    "verified_utc": "2026-07-04T15:23:26+00:00",
     "year_match": true
   },
   "10.48550/arXiv.2402.14603": {
@@ -1316,7 +1364,19 @@
     "resolves": true,
     "title": "Balanced Resonate-and-Fire Neurons",
     "verified": true,
-    "verified_utc": "2026-07-04T14:53:16+00:00",
+    "verified_utc": "2026-07-04T15:23:26+00:00",
+    "year_match": true
+  },
+  "10.48550/arXiv.2509.05276": {
+    "author_match": true,
+    "model": "AdaptiveThresholdMoENeuron",
+    "registry": "datacite",
+    "registry_first_author": "pan",
+    "registry_year": 2025,
+    "resolves": true,
+    "title": "SpikingBrain: Spiking Brain-inspired Large Models",
+    "verified": true,
+    "verified_utc": "2026-07-04T15:23:26+00:00",
     "year_match": true
   },
   "10.52202/068431-2330": {
@@ -1328,7 +1388,7 @@
     "resolves": true,
     "title": "GLIF: A Unified Gated Leaky Integrate-And-Fire Neuron for Spiking Neural Networks",
     "verified": true,
-    "verified_utc": "2026-07-04T14:53:16+00:00",
+    "verified_utc": "2026-07-04T15:23:26+00:00",
     "year_match": true
   },
   "10.7551/mitpress/2526.001.0001": {
@@ -1340,7 +1400,7 @@
     "resolves": true,
     "title": "Dynamical Systems in Neuroscience",
     "verified": true,
-    "verified_utc": "2026-07-04T14:53:16+00:00",
+    "verified_utc": "2026-07-04T15:23:26+00:00",
     "year_match": true
   }
 }

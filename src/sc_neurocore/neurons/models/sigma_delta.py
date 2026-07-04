@@ -16,7 +16,9 @@ from dataclasses import dataclass
 class SigmaDeltaNeuron:
     """Yoon 2017 — event-driven sigma-delta encoding.
 
-    Reference: Yoon, Y.J. (2016). LIF and simplified SRM as APSDM. arXiv:1605.02226.
+    Reference: Yoon, Y. C. (2017). LIF and simplified SRM neurons encode
+    signals into spikes via a form of asynchronous pulse sigma-delta
+    modulation. IEEE Trans. Neural Netw. Learn. Syst. (DOI 10.1109/tnnls.2016.2526029).
     """
 
     sigma: float = 0.0

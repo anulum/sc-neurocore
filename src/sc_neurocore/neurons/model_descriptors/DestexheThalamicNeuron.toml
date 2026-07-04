@@ -4,7 +4,7 @@ name = "DestexheThalamicNeuron"
 class_name = "DestexheThalamicNeuron"
 module = "destexhe_thalamic"
 display_name = ""
-summary = "Destexhe 1993 — thalamocortical relay with T-current and I_h."
+summary = "Destexhe et al. 1996 — thalamocortical relay with T-current and I_h."
 family = "Conductance-based"
 category = "conductance-based"
 biophysical_detail = "point"
@@ -17,6 +17,15 @@ behavior_tags = [
 ]
 
 [provenance]
+authors = [
+    "Destexhe, A.",
+    "Bal, T.",
+    "McCormick, D. A.",
+    "Sejnowski, T. J.",
+]
+year = 1996
+doi = "10.1152/jn.1996.76.3.2049"
+paper_title = "Ionic mechanisms underlying synchronized oscillations and propagating waves in a model of ferret thalamic slices"
 
 [state.v]
 init = -65.0

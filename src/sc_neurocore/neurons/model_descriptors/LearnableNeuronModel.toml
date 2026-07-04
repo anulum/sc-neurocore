@@ -4,7 +4,7 @@ name = "LearnableNeuronModel"
 class_name = "LearnableNeuronModel"
 module = "lnm"
 display_name = ""
-summary = "Jahns et al. 2025 — fully parameterized learnable neuron."
+summary = "Fully parameterized learnable neuron."
 family = "AI-optimized"
 category = "ai-optimized"
 biophysical_detail = "point"
@@ -18,6 +18,15 @@ behavior_tags = [
 ]
 
 [provenance]
+authors = [
+    "Jolivet, R.",
+    "Rauch, A.",
+    "Lüscher, H.-R.",
+    "Gerstner, W.",
+]
+year = 2006
+doi = "10.1007/s10827-006-7074-5"
+paper_title = "Predicting spike timing of neocortical pyramidal neurons by simple threshold models"
 
 [state.v]
 init = 0.0

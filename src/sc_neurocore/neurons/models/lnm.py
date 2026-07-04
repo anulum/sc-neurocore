@@ -4,7 +4,7 @@
 # © Code 2020–2026 Miroslav Šotek. All rights reserved.
 # ORCID: 0009-0009-3560-0851
 # Contact: www.anulum.li | protoscience@anulum.li
-# SC-NeuroCore — Jahns et al. 2025 — fully parameterized learnable neuron
+# SC-NeuroCore — Fully parameterized learnable neuron (Jolivet et al. 2006 threshold models)
 
 from __future__ import annotations
 
@@ -14,13 +14,16 @@ from dataclasses import dataclass
 
 @dataclass
 class LearnableNeuronModel:
-    """Jahns et al. 2025 — fully parameterized learnable neuron.
+    """Fully parameterized learnable neuron.
 
     V[t+1] = alpha * V[t] + beta * I[t] + gamma * f(V[t])
     where alpha, beta, gamma are trainable scalars and f is a
-    learnable activation (here sigmoid).
+    learnable activation (here sigmoid) — a trainable generalisation of
+    the simple threshold models fitted to cortical recordings by Jolivet et al.
 
-    Reference: Jolivet, R. et al. (2006). J. Comput. Neurosci. 21:35–45.
+    Reference: Jolivet, Rauch, Lüscher & Gerstner (2006). Predicting spike
+    timing of neocortical pyramidal neurons by simple threshold models.
+    J Comput Neurosci 21:35-49.
     """
 
     v: float = 0.0
