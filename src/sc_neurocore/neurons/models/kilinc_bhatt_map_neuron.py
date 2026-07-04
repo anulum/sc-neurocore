@@ -4,7 +4,7 @@
 # © Code 2020–2026 Miroslav Šotek. All rights reserved.
 # ORCID: 0009-0009-3560-0851
 # Contact: www.anulum.li | protoscience@anulum.li
-# SC-NeuroCore — Kilinc-Bhatt Sigmoid Map Neuron
+# SC-NeuroCore — Nagumo-Sato / Aihara sigmoid map neuron with dynamic threshold
 
 from __future__ import annotations
 
@@ -14,7 +14,7 @@ from dataclasses import dataclass
 
 @dataclass
 class KilincBhattMapNeuron:
-    """Kilinc-Bhatt 2023 sigmoid map with adaptive threshold.
+    """Nagumo-Sato / Aihara sigmoid map neuron with a dynamic threshold.
 
     Minimal 2D map with built-in spike frequency adaptation via a slow
     threshold variable. Designed for efficient hardware implementation
@@ -23,9 +23,14 @@ class KilincBhattMapNeuron:
     x(n+1) = -x(n) + k · σ(4·(x(n) - θ(n))) + I
     θ(n+1) = β · θ(n) + γ · H(x(n) - θ_spike)
 
-    where σ(z) = 1 / (1 + exp(-z)), H() is Heaviside.
+    where σ(z) = 1 / (1 + exp(-z)) and H() is Heaviside. This is the
+    Nagumo-Sato (1972) discrete-time neuron with an accumulated dynamic
+    threshold, using the Aihara, Takabe & Toyoda (1990) sigmoid firing in
+    place of the hard Heaviside so that spiking is graded rather than
+    all-or-nothing.
 
-    Reference: Kilinc & Bhatt (2023).
+    References: Nagumo & Sato (1972) Kybernetik 10:155-164;
+    Aihara, Takabe & Toyoda (1990) Phys Lett A 144:333-340.
     """
 
     x: float = 0.0
