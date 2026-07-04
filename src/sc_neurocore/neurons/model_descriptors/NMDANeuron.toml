@@ -23,7 +23,7 @@ authors = [
     "Jahr, C.E. & Stevens, C.F.",
 ]
 year = 1990
-doi = "10.1523/JNEUROSCI.10-09-3178.1990"
+doi = "10.1523/jneurosci.10-09-03178.1990"
 
 [state.v]
 init = -65.0

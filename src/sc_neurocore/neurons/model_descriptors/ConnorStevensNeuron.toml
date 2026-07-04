@@ -23,7 +23,7 @@ authors = [
     "Connor, J.A. & Stevens, C.F.",
 ]
 year = 1971
-doi = "10.1113/jphysiol.1971.sp009368"
+doi = "10.1113/jphysiol.1971.sp009366"
 
 [state.v]
 init = -68.0

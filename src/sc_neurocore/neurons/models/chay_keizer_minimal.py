@@ -35,8 +35,8 @@ class ChayKeizerMinimalNeuron:
     Reference: Bertram, R., Marinelli, I., Fletcher, P.A., Satin, L.S. &
     Sherman, A.S. (2023). Deconstructing the integrated oscillator model for
     pancreatic beta-cells. Mathematical Biosciences 365:109085, Table 1
-    (DOI 10.1016/j.mbs.2023.109015); the reduced model of Chay & Keizer (1983),
-    Biophys. J. 42:181-190.
+    (DOI 10.1016/j.mbs.2023.109085); the reduced model of Chay & Keizer (1983),
+    Biophys. J. 42:181-189.
     """
 
     v: float = -60.0
