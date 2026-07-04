@@ -965,7 +965,7 @@
     "python_model_classes": 158,
     "python_model_source_modules": 152,
     "rust_pyo3_model_wrappers": 175,
-    "test_files": 957
+    "test_files": 958
   },
   "documentation": {
     "public_pages": [
@@ -2924,6 +2924,7 @@
       "tests/test_compiler_neurons_small_batch.py",
       "tests/test_compiler_pipeline_contracts.py",
       "tests/test_compiler_precision_config.py",
+      "tests/test_compiler_precision_solver.py",
       "tests/test_compiler_service.py",
       "tests/test_compiler_small_coverage_batch.py",
       "tests/test_compiler_surface_policy.py",

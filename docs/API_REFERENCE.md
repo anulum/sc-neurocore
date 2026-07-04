@@ -10819,15 +10819,18 @@ Create a MixedPrecisionSpec from named presets.
 ## Module `compiler.precision_solver`
 
 ### Function `_min_bits_for_range(lo, hi, signed)`
-Compute minimum integer bits to cover a value range.
+Return a conservative integer-bit count for a closed value range.
 
 ### Function `_min_frac_for_resolution(resolution)`
-Compute minimum fractional bits for a target resolution.
+Return fractional bits needed for a target resolution quantum.
 
 ### Function `solve_precision(bounds)`
-Automatically solve for optimal per-variable precision.
+Solve a deterministic per-variable fixed-point precision assignment.
 
-Uses a constraint-based approach to select data widths and fractions.
+The solver derives integer bits from each value range and fractional bits
+from the requested resolution. Optional total-bit budgets reduce the largest
+fractional fields first until the budget is met or every reduced variable is
+already at one fractional bit.
 
 Parameters
 ----------
@@ -10846,7 +10849,8 @@ align_to : int
 Returns
 -------
 MixedPrecisionSpec
-    Optimal per-variable precision configuration.
+    Per-variable precision configuration derived from range, resolution,
+    alignment, signedness, and optional total-bit budget constraints.
 
 ---
 

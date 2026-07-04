@@ -5,6 +5,17 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+### Precision solver width and budget hardening
+- Hardened `compiler.precision_solver` with sign-inclusive integer-width
+  calculation, finite/range validation, unsigned-negative range rejection,
+  invalid budget/alignment rejection, and aligned budget reductions that
+  recompute datapath width from the integer floor and reduced fraction. Added a
+  dedicated strict-typed precision-solver test module with 100% exact-file
+  coverage, promoted the solver into the scoped NumPy docstring policy,
+  refreshed generated API documentation, and regenerated capability snapshots
+  for the new test-file count. No polyglot mirror or benchmark-dispatched path
+  changed.
+
 ### Precision config docstring and coverage ratchet
 - Promoted `compiler.precision_config` into the scoped NumPy docstring policy,
   added compliant public docstrings for fixed-point and block-floating

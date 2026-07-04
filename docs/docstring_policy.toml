@@ -7,7 +7,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 241
+expected_file_count = 242
 
 [[file]]
 path = "src/sc_neurocore/__init__.py"
@@ -308,6 +308,10 @@ rationale = "Public fixed-point Q-format value object used by compiler quantizat
 [[file]]
 path = "src/sc_neurocore/compiler/precision_config.py"
 rationale = "Public fixed-point and block-floating precision value objects used by mixed-precision manifests and compiler emission metadata."
+
+[[file]]
+path = "src/sc_neurocore/compiler/precision_solver.py"
+rationale = "Public precision-budget solver used by mixed-precision compiler planning and documented direct compiler imports."
 
 [[file]]
 path = "src/sc_neurocore/accel/gpu_backend.py"

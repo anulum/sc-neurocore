@@ -6,7 +6,7 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore — Precision solver
 
-"""Constraint-based solver for optimal per-variable precision."""
+"""Heuristic solver for per-variable fixed-point precision budgets."""
 
 from __future__ import annotations
 
@@ -17,16 +17,27 @@ from .precision_config import BlockFloatingPrecisionConfig, PrecisionConfig
 
 
 def _min_bits_for_range(lo: float, hi: float, signed: bool = True) -> int:
-    """Compute minimum integer bits to cover a value range."""
-    abs_max = max(abs(lo), abs(hi))
-    if abs_max == 0:
-        return 1
-    return math.ceil(math.log2(abs_max + 1)) + (1 if signed else 0)
+    """Return a conservative integer-bit count for a closed value range."""
+    if not math.isfinite(lo) or not math.isfinite(hi):
+        raise ValueError("range bounds must be finite")
+    if lo > hi:
+        raise ValueError("range lower bound must not exceed upper bound")
+    if signed:
+        bits = 1
+        while lo < -(1 << (bits - 1)) or hi >= (1 << (bits - 1)):
+            bits += 1
+        return bits
+    if lo < 0:
+        raise ValueError("unsigned precision cannot represent a negative range")
+    bits = 1
+    while hi >= (1 << bits):
+        bits += 1
+    return bits
 
 
 def _min_frac_for_resolution(resolution: float) -> int:
-    """Compute minimum fractional bits for a target resolution."""
-    if resolution <= 0:
+    """Return fractional bits needed for a target resolution quantum."""
+    if not math.isfinite(resolution) or resolution <= 0:
         return 16  # Default to high precision
     return math.ceil(math.log2(1.0 / resolution))
 
@@ -39,9 +50,12 @@ def solve_precision(
     signed: bool = True,
     align_to: int = 1,
 ) -> MixedPrecisionSpec:
-    """Automatically solve for optimal per-variable precision.
+    """Solve a deterministic per-variable fixed-point precision assignment.
 
-    Uses a constraint-based approach to select data widths and fractions.
+    The solver derives integer bits from each value range and fractional bits
+    from the requested resolution. Optional total-bit budgets reduce the largest
+    fractional fields first until the budget is met or every reduced variable is
+    already at one fractional bit.
 
     Parameters
     ----------
@@ -60,21 +74,32 @@ def solve_precision(
     Returns
     -------
     MixedPrecisionSpec
-        Optimal per-variable precision configuration.
+        Per-variable precision configuration derived from range, resolution,
+        alignment, signedness, and optional total-bit budget constraints.
     """
+    if not isinstance(align_to, int) or isinstance(align_to, bool):
+        raise TypeError("align_to must be an integer")
+    if align_to < 1:
+        raise ValueError("align_to must be positive")
+    if max_total_bits is not None:
+        if not isinstance(max_total_bits, int) or isinstance(max_total_bits, bool):
+            raise TypeError("max_total_bits must be an integer or None")
+        if max_total_bits < 1:
+            raise ValueError("max_total_bits must be positive")
+
     if min_resolution is None:
         min_resolution = {v: 0.01 for v in bounds}
 
     configs: dict[str, PrecisionConfig | BlockFloatingPrecisionConfig] = {}
+    integer_widths: dict[str, int] = {}
 
     for var, (lo, hi) in bounds.items():
         int_bits = _min_bits_for_range(lo, hi, signed)
+        integer_widths[var] = int_bits
         res = min_resolution.get(var, 0.01)
         frac_bits = _min_frac_for_resolution(res)
 
-        # Sign bit
-        sign_bits = 1 if signed else 0
-        total = sign_bits + int_bits + frac_bits
+        total = int_bits + frac_bits
 
         # Align
         if align_to > 1:
@@ -100,7 +125,7 @@ def solve_precision(
             if old.fraction <= 1:
                 break  # Can't reduce further
             new_frac = old.fraction - 1
-            new_dw = old.data_width - 1
+            new_dw = integer_widths[worst] + new_frac
             if align_to > 1:
                 new_dw = math.ceil(new_dw / align_to) * align_to
             spec.var_configs[worst] = PrecisionConfig(
