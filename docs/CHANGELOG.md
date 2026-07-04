@@ -5,6 +5,19 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+### Verification safety screen hardening
+- Hardened `verification.safety.CodeSafetyVerifier` to reject AST-visible
+  filesystem, process, network, relative-import, dynamic-import,
+  dynamic-execution, and reflection escape routes including `open(...)`,
+  `Path(...).write_text(...)`, `socket.socket()`, `__builtins__.eval(...)`,
+  `__builtins__['eval'](...)`, and `getattr(__builtins__, 'eval')`. Promoted
+  the verifier into the scoped NumPy docstring policy, strict-typed the focused
+  tests, refreshed the verification guide and generated API reference, and kept
+  `verification/safety.py` at 100% exact-file coverage. The generated
+  capability manifest, snapshot, and README capability block were also refreshed
+  after the public-claims selector exposed a stale tracked-test count. No
+  polyglot mirror or benchmark-dispatched path changed.
+
 ### Go services namespace docstring ratchet
 - Promoted `accel.go.services` into the scoped NumPy docstring policy, added
   an AST-visible package docstring, declared the checked-in Go service file and

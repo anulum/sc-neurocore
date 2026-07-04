@@ -44,6 +44,22 @@ probability/state bounds, implementation-equivalence evidence, and an external
 formal proof log. Missing evidence is reported explicitly; the standard does not
 claim unbounded semantic correctness without a passing external proof artefact.
 
+## Generated Code Safety Screen
+
+`CodeSafetyVerifier` performs a conservative AST pass over generated Python
+snippets before they are accepted by higher-level verification workflows. It
+rejects parse failures, relative imports, direct imports of file/process/network
+and dynamic-execution modules such as `os`, `pathlib`, `socket`, `subprocess`,
+`importlib`, and `ctypes`, and AST-visible calls to file mutation, process,
+network, reflection, dynamic import, and dynamic execution helpers.
+
+The screen is intentionally fail-closed for visible escape routes such as
+`open(...)`, `Path(...).write_text(...)`, `socket.socket()`, `eval(...)`,
+`__builtins__.eval(...)`, `__builtins__['eval'](...)`, and
+`getattr(__builtins__, 'eval')`. Pure local helper calls and allowed scientific
+imports such as NumPy remain permitted when no blocked import or call is visible.
+This is a preflight screen, not a sandbox or proof of semantic safety.
+
 ::: sc_neurocore.verification
     options:
       show_root_heading: true

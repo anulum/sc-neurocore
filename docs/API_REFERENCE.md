@@ -38403,14 +38403,18 @@ filesystem mutation, process spawning, network access, code execution,
 and unrestricted imports.
 
 Limitations: this is a static blocklist, not a sandbox. It catches
-common dangerous patterns but cannot prevent all malicious code.
-Obfuscated calls (getattr chains, importlib indirection) may bypass it.
-Do not use as a security boundary without additional sandboxing.
+common dangerous patterns but cannot prove semantic safety, model data
+flow, or reason about values assembled before screening. Do not use as a
+security boundary without additional sandboxing.
 
 - **verify_code_safety**(source_code)
-  - Static analysis of source code for dangerous patterns.
+  - Return whether ``source_code`` passes the static blocklist.
 - **verify_logic_invariant**(func, input_sample, expected_condition)
-  - Dynamic verification: run func and check output against condition.
+  - Return whether a dynamic invariant holds for one input sample.
+- **_blocked_call_name**(func)
+  - Return the blocked call name exposed by ``func``, if any.
+- **_import_roots**(node)
+  - Return top-level module names imported by ``node``.
 
 ---
 

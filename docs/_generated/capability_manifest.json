@@ -965,7 +965,7 @@
     "python_model_classes": 158,
     "python_model_source_modules": 152,
     "rust_pyo3_model_wrappers": 175,
-    "test_files": 964
+    "test_files": 967
   },
   "documentation": {
     "public_pages": [
@@ -3449,6 +3449,7 @@
       "tests/test_profiler_platform.py",
       "tests/test_profiling.py",
       "tests/test_proto_schema_surface.py",
+      "tests/test_provenance_doi_integrity.py",
       "tests/test_public_api.py",
       "tests/test_public_claims_metrics.py",
       "tests/test_public_docstring_policy.py",
@@ -3562,6 +3563,7 @@
       "tests/test_sources/test_bitstream_current_source.py",
       "tests/test_sources_and_profiling.py",
       "tests/test_spade_gpfa.py",
+      "tests/test_spdx_header_policy.py",
       "tests/test_spike_alu.py",
       "tests/test_spike_codec.py",
       "tests/test_spike_dsp.py",
@@ -3743,6 +3745,7 @@
       "tests/test_validate_experimental_reports.py",
       "tests/test_variability_edge_cases.py",
       "tests/test_verification_safety_contracts.py",
+      "tests/test_verify_dois.py",
       "tests/test_verify_hardware_link.py",
       "tests/test_verilog_integration.py",
       "tests/test_version_surface_audit.py",
