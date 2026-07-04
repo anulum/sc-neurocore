@@ -18,6 +18,15 @@ behavior_tags = [
 ]
 
 [provenance]
+authors = [
+    "Destexhe, A.",
+    "Rudolph, M.",
+    "Fellous, J.-M.",
+    "Sejnowski, T. J.",
+]
+year = 2001
+doi = "10.1016/s0306-4522(01)00344-x"
+paper_title = "Fluctuating synaptic conductances recreate in vivo-like activity in neocortical neurons"
 
 [state.v]
 init = -65.0

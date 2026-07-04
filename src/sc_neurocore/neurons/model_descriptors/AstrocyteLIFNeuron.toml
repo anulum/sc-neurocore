@@ -18,6 +18,14 @@ behavior_tags = [
 ]
 
 [provenance]
+authors = [
+    "Perea, G.",
+    "Navarrete, M.",
+    "Araque, A.",
+]
+year = 2009
+doi = "10.1016/j.tins.2009.05.001"
+paper_title = "Tripartite synapses: astrocytes process and control synaptic information"
 
 [state.theta]
 init = -50.0

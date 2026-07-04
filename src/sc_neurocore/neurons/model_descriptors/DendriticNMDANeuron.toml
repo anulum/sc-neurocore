@@ -14,6 +14,13 @@ hardware_fit = []
 behavior_tags = []
 
 [provenance]
+authors = [
+    "Jahr, C. E.",
+    "Stevens, C. F.",
+]
+year = 1990
+doi = "10.1523/jneurosci.10-09-03178.1990"
+paper_title = "Voltage dependence of NMDA-activated macroscopic conductances predicted by single-channel kinetics"
 
 [state.theta]
 init = -50.0
