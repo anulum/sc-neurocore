@@ -6,7 +6,9 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ### Added
 - `compile_network_to_fpga` now fails closed on IR that would exhaust synthesis resources,
-  before any RTL is emitted: `data_width` must lie in `[1, 64]`, and the neuron count is
+  before any RTL is emitted: `data_width` must lie in `[1, 64]` and `fraction` must satisfy
+  `0 <= fraction < data_width` (so the signed Q-format keeps at least one integer or sign
+  bit — otherwise it would silently emit broken RTL); the neuron count is
   capped — at 8192 for the direct/AER interconnects (which instantiate one module per
   neuron, so an unbounded count is a synthesis-time denial of service) and higher, 262144,
   for the folded interconnect (which shares one processing element and is bounded by its

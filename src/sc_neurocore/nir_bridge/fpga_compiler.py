@@ -82,11 +82,19 @@ _SCNIR_STREAM_FRAGMENT_RE = re.compile(r"[^A-Za-z0-9_.:-]+")
 
 
 def _check_synthesis_resource_bounds(
-    *, total_neurons: int, total_synapses: int, data_width: int, interconnect: str | None
+    *,
+    total_neurons: int,
+    total_synapses: int,
+    data_width: int,
+    fraction: int,
+    interconnect: str | None,
 ) -> None:
-    """Reject IR that would exhaust synthesis resources, before any RTL is emitted.
+    """Reject IR that would exhaust synthesis resources or is malformed, before any RTL.
 
-    ``data_width`` must fit a hardware-plausible fixed-point datapath. The direct and AER
+    ``data_width`` must fit a hardware-plausible fixed-point datapath and ``fraction`` must
+    leave at least one integer or sign bit, so the signed Q-format is well formed (a
+    ``fraction >= data_width`` would give negative integer bits and silently emit broken
+    RTL). The direct and AER
     interconnects instantiate one module per neuron, so their neuron count is capped at
     ``_MAX_UNROLLED_NEURONS``; the folded interconnect shares a single processing element
     and is capped higher at ``_MAX_FOLDED_NEURONS`` (its state-RAM depth). Independently,
@@ -99,6 +107,11 @@ def _check_synthesis_resource_bounds(
         raise ValueError(
             f"data_width {data_width} is outside the synthesisable range "
             f"[1, {_MAX_SYNTHESISABLE_DATA_WIDTH}]"
+        )
+    if not 0 <= fraction < data_width:
+        raise ValueError(
+            f"fraction {fraction} must satisfy 0 <= fraction < data_width ({data_width}); "
+            f"a signed Q-format needs at least one integer or sign bit"
         )
     if total_synapses > _MAX_SYNTHESISABLE_SYNAPSES:
         raise ValueError(
@@ -2496,6 +2509,7 @@ def compile_network_to_fpga(
         total_neurons=graph.total_neurons,
         total_synapses=graph.total_synapses,
         data_width=data_width,
+        fraction=fraction,
         interconnect=interconnect,
     )
     q = Q88(data_width=data_width, fraction=fraction)

@@ -53,6 +53,17 @@ def test_rejects_zero_data_width() -> None:
         compile_network_to_fpga(_lif_graph(4), data_width=0, fraction=0)
 
 
+def test_rejects_fraction_not_below_data_width() -> None:
+    # fraction == data_width leaves no integer or sign bit (negative integer bits).
+    with pytest.raises(ValueError, match="0 <= fraction < data_width"):
+        compile_network_to_fpga(_lif_graph(4), data_width=16, fraction=16)
+
+
+def test_rejects_negative_fraction() -> None:
+    with pytest.raises(ValueError, match="0 <= fraction < data_width"):
+        compile_network_to_fpga(_lif_graph(4), data_width=16, fraction=-1)
+
+
 def test_rejects_unrolled_neuron_count_over_ceiling(monkeypatch: pytest.MonkeyPatch) -> None:
     # Patch the ceiling small so the guard is exercised without emitting thousands of modules.
     monkeypatch.setattr(fpga_compiler, "_MAX_UNROLLED_NEURONS", 3)
