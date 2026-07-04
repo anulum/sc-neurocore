@@ -46,7 +46,6 @@ class SCNIRHDLSourceManifestEntry:
 
     def as_dict(self) -> dict[str, object]:
         """Return a deterministic JSON-ready representation."""
-
         return {
             "stream_id": self.stream_id,
             "layer": self.layer,
@@ -80,7 +79,6 @@ class SCNIRHDLSourceBundle:
 
     def manifest_dicts(self) -> tuple[dict[str, object], ...]:
         """Return deterministic JSON-ready manifest rows."""
-
         return tuple(entry.as_dict() for entry in self.manifest)
 
 
@@ -91,7 +89,6 @@ def build_scnir_source_bundle(document: SCNIRDocument) -> SCNIRHDLSourceBundle:
     materialised here. Unsupported SC-NIR source kinds fail closed instead of
     being lowered to semantically incompatible RTL.
     """
-
     scnir_to_dict(document)
     modules: dict[str, str] = {}
     manifest: list[SCNIRHDLSourceManifestEntry] = []

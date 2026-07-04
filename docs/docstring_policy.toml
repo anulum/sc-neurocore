@@ -7,7 +7,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 244
+expected_file_count = 245
 
 [[file]]
 path = "src/sc_neurocore/__init__.py"
@@ -152,6 +152,10 @@ rationale = "Public pipeline orchestrator that wires TensorStream-aware modules 
 [[file]]
 path = "src/sc_neurocore/ir/scnir_compatibility.py"
 rationale = "Public executable SC-NIR compatibility matrix and release-audit validation surface."
+
+[[file]]
+path = "src/sc_neurocore/ir/scnir_hdl.py"
+rationale = "Public SC-NIR HDL source-bundle materialisation surface used by NIR-to-FPGA compile handoffs and generated API documentation."
 
 [[file]]
 path = "src/sc_neurocore/export/onnx_export.py"
