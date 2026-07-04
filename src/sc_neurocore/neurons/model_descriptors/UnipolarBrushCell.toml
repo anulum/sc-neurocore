@@ -18,6 +18,17 @@ behavior_tags = [
 ]
 
 [provenance]
+authors = [
+    "Diana, M. A.",
+    "Otsu, Y.",
+    "Maton, G.",
+    "Collin, T.",
+    "Chat, M.",
+    "Dieudonné, S.",
+]
+year = 2007
+doi = "10.1523/jneurosci.4719-06.2007"
+paper_title = "T-type and L-type Ca2+ conductances define and encode the bimodal firing pattern of vestibulocerebellar unipolar brush cells"
 
 [state.v]
 init = -65.0

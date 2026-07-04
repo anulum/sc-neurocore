@@ -19,8 +19,9 @@ class UnipolarBrushCell:
     LIF with slow NMDA-like persistent current that prolongs mossy fibre
     bursts into sustained granule cell activation. Giant 1:1 synapse.
 
-    Reference: Bhatt et al. (1994) J Comp Neurol 349:560;
-    Diana et al. (2007) J Neurosci 27:4374.
+    Reference: Mugnaini & Floris (1994) J Comp Neurol 339:174-180
+    (discovery/anatomy); Diana et al. (2007) J Neurosci 27:3823-3838
+    (bimodal firing physiology).
     """
 
     v: float = -65.0
