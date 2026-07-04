@@ -957,7 +957,7 @@
     ]
   },
   "counts": {
-    "github_workflows": 15,
+    "github_workflows": 16,
     "model_documentation_pages": 175,
     "optional_extras": 26,
     "public_api_exports": 44,
@@ -2792,6 +2792,7 @@
       ".github/workflows/codeql.yml",
       ".github/workflows/docker.yml",
       ".github/workflows/docs.yml",
+      ".github/workflows/fuzz.yml",
       ".github/workflows/nir-canary.yml",
       ".github/workflows/pre-commit.yml",
       ".github/workflows/publish.yml",
