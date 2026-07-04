@@ -56,6 +56,25 @@ impl CsrMatrix {
                 nnz
             ));
         }
+        // Row offsets must start at 0 and be non-decreasing, so every row slice
+        // row_offsets[i]..row_offsets[i + 1] is a valid, in-bounds range of the value array.
+        if row_offsets[0] != 0 {
+            return Err(format!(
+                "row_offsets must start at 0, got {}",
+                row_offsets[0]
+            ));
+        }
+        if let Some(pair) = row_offsets.windows(2).find(|w| w[0] > w[1]) {
+            return Err(format!(
+                "row_offsets must be non-decreasing, got {} then {}",
+                pair[0], pair[1]
+            ));
+        }
+        // Every column index must be in range so consumers (e.g. to_dense) cannot index
+        // out of bounds. Without this a malformed CSR was accepted and panicked on use.
+        if let Some(&col) = col_indices.iter().find(|&&c| c >= n_cols) {
+            return Err(format!("col_index {col} out of range for n_cols {n_cols}"));
+        }
         Ok(Self {
             row_offsets,
             col_indices,

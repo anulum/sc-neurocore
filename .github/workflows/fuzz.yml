@@ -38,10 +38,10 @@ jobs:
       # which is dead-stripped from the target). fuzz/Cargo.lock is committed so NumPy
       # and ndarray resolve to the engine's versions (a fresh resolve splits ndarray and
       # breaks into_pyarray).
-      - name: Fuzz the IR parser, printer round-trip and bitstream primitives
+      - name: Fuzz the IR parser, printer round-trip, bitstream and sparse matrix
         working-directory: engine
         run: |
-          for target in parse_ir roundtrip_ir bitstream; do
+          for target in parse_ir roundtrip_ir bitstream csr_matrix; do
             echo "::group::fuzz $target"
             cargo fuzz run "$target" -- \
               -max_total_time=${{ github.event.inputs.max_total_time || '300' }} \

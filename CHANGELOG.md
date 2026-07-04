@@ -8,14 +8,15 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 - `cargo-fuzz` targets (`engine/fuzz`): `parse_ir` fuzzes `ir::parser::parse` (arbitrary
   input — exposed to Python as `ir_parse` — must only ever return `Err`, never panic);
   `roundtrip_ir` asserts the parser and `printer::print` are inverse (`parse(print(g)) == g`,
-  and a printed graph always re-parses); and `bitstream` differentially checks that
+  and a printed graph always re-parses); `bitstream` differentially checks that
   `bitstream::pack` and `pack_fast` agree bit-for-bit on arbitrary bytes and that
-  `unpack` round-trips. The fuzz crate depends on the engine with `default-features = false`,
-  so the build skips the bundled-Z3 compile (made optional in the same release) and the
-  pyo3 module dead-strips out, keeping the instrumented build fast; `fuzz/Cargo.lock` is
-  committed so NumPy/ndarray resolve to the engine's versions. A scheduled weekly
-  `SC-NeuroCore Fuzz` workflow runs all three (not a per-PR gate). First sessions found no
-  panic, round-trip divergence or pack mismatch (3.5M, 1.8M and 1.5M runs).
+  `unpack` round-trips; and `csr_matrix` builds a CSR matrix from `arbitrary` vectors and
+  expands it, checking that a matrix `CsrMatrix::new` accepts cannot panic on use (it found
+  a real out-of-bounds — see Fixed). The fuzz crate depends on the engine with
+  `default-features = false`, so the build skips the bundled-Z3 compile (made optional in the
+  same release) and the pyo3 module dead-strips out, keeping the instrumented build fast;
+  `fuzz/Cargo.lock` is committed so NumPy/ndarray resolve to the engine's versions. A
+  scheduled weekly `SC-NeuroCore Fuzz` workflow runs all four (not a per-PR gate).
 - The folded FPGA interconnect now folds populations with **heterogeneous per-neuron
   parameters**. Each parameter that varies across a population's neurons is exposed on a
   processing-element input port (`compile_to_datapath(param_ports=...)`) and streamed from
@@ -276,6 +277,13 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
   source of truth.
 
 ### Fixed
+- `graph::CsrMatrix::new` validated only the lengths of the CSR arrays, not that
+  `row_offsets` is non-decreasing and starts at 0 or that every column index is `< n_cols`.
+  A malformed CSR (reachable from Python via the sparse graph constructor) was therefore
+  accepted and later panicked with an index-out-of-bounds when expanded by `to_dense`.
+  `new` now rejects a non-monotonic offset array, a non-zero first offset and any
+  out-of-range column index, so a constructed matrix is always safe to use. Found by the
+  new `csr_matrix` fuzz target.
 - The opt-in folded FPGA interconnect (`interconnect="folded"`) built its shared
   processing element from the *quantised* population, so `Q88.encode` ran a second time
   over already-quantised parameters and baked a corrupt value into the PE for every graph

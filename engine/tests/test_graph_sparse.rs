@@ -115,3 +115,34 @@ fn sc_sparse_matches_dense() {
         assert!(approx_eq(*a, *b, 0.1), "dense={} sparse={}", a, b);
     }
 }
+
+#[test]
+fn csr_new_rejects_out_of_range_column_index() {
+    // A column index >= n_cols would index out of bounds in to_dense; new must reject it.
+    let err = CsrMatrix::new(vec![0, 1], vec![5], vec![1.0], 1, 3).unwrap_err();
+    assert!(err.contains("col_index"), "unexpected error: {err}");
+}
+
+#[test]
+fn csr_new_rejects_non_monotonic_row_offsets() {
+    // Lengths and nnz (= last offset = 0) are consistent, so the monotonicity check is
+    // what rejects the 1 -> 0 drop.
+    let err = CsrMatrix::new(vec![0, 1, 0], vec![], vec![], 2, 2).unwrap_err();
+    assert!(err.contains("non-decreasing"), "unexpected error: {err}");
+}
+
+#[test]
+fn csr_new_rejects_nonzero_first_offset() {
+    // Lengths and nnz (= last = 1 = one column index) are consistent, so the first-offset
+    // check is what rejects it.
+    let err = CsrMatrix::new(vec![1, 1], vec![0], vec![1.0], 1, 2).unwrap_err();
+    assert!(err.contains("start at 0"), "unexpected error: {err}");
+}
+
+#[test]
+fn csr_new_accepts_valid_matrix() {
+    // A well-formed CSR still constructs and expands without error.
+    let csr = CsrMatrix::new(vec![0, 1, 2], vec![1, 0], vec![2.0, 3.0], 2, 2).unwrap();
+    let dense = csr.to_dense();
+    assert!(approx_eq(dense[1], 2.0, 1e-15) && approx_eq(dense[2], 3.0, 1e-15));
+}
