@@ -36,27 +36,36 @@ def test_compiler_pipeline_creates_nested_work_directory() -> None:
         assert os.path.isdir(work_dir)
 
 
-def test_compiler_pipeline_fails_closed_when_firtool_does_not_lower() -> None:
+def test_compiler_pipeline_fails_closed_when_circt_does_not_lower() -> None:
     with tempfile.TemporaryDirectory() as tmp:
         pipeline = CompilerPipeline(work_dir=tmp)
 
-        with pytest.raises(SCCompilerError, match="firtool failed"):
+        # Non-MLIR input: circt-opt (if installed) rejects it, and a missing
+        # circt-opt raises FileNotFoundError; both fail closed with no Verilog.
+        with pytest.raises(SCCompilerError, match="circt-opt --export-verilog failed"):
             pipeline.compile_mlir_to_verilog("module test();", output_name="no_stub")
 
         assert not os.path.exists(os.path.join(tmp, "no_stub.v"))
 
 
-def test_compiler_pipeline_uses_real_firtool_output(monkeypatch: MonkeyPatch) -> None:
-    def fake_firtool(cmd: list[str], check: bool) -> None:
+def test_compiler_pipeline_uses_real_circt_output(monkeypatch: MonkeyPatch) -> None:
+    def fake_circt(
+        cmd: list[str], check: bool, capture_output: bool, text: bool
+    ) -> subprocess.CompletedProcess[str]:
         assert check is True
-        assert cmd[0] == _fake_tool_path("firtool")
-        out_path = cmd[cmd.index("-o") + 1]
-        with open(out_path, "w", encoding="utf-8") as handle:
-            handle.write("module real_lowered(); endmodule\n")
+        assert capture_output is True
+        assert text is True
+        assert cmd[0] == _fake_tool_path("circt-opt")
+        assert cmd[1] == "--export-verilog"
+        # The exported Verilog arrives on stdout; the -o sink is discarded.
+        assert cmd[cmd.index("-o") + 1] == os.devnull
+        return subprocess.CompletedProcess(
+            cmd, 0, stdout="module real_lowered(); endmodule\n", stderr=""
+        )
 
     with tempfile.TemporaryDirectory() as tmp:
         monkeypatch.setattr("shutil.which", _fake_tool_path)
-        monkeypatch.setattr("subprocess.run", fake_firtool)
+        monkeypatch.setattr("subprocess.run", fake_circt)
         pipeline = CompilerPipeline(work_dir=tmp)
 
         verilog_path = pipeline.compile_mlir_to_verilog("module test();", output_name="real")
@@ -97,28 +106,27 @@ def test_compiler_pipeline_rejects_unknown_synthesis_target() -> None:
             pipeline.run_synthesis(verilog_path, target_fpga="nope")
 
 
-def test_compiler_pipeline_deletes_partial_verilog_on_firtool_failure(
+def test_compiler_pipeline_deletes_stale_verilog_on_circt_failure(
     monkeypatch: MonkeyPatch,
 ) -> None:
-    """A partial Verilog file left behind by a failed firtool run is removed."""
+    """A stale Verilog file from a prior run is removed when circt-opt fails."""
 
-    def fake_firtool(cmd: list[str], check: bool) -> None:
+    def fake_circt(cmd: list[str], check: bool, capture_output: bool, text: bool) -> None:
         assert check is True
-        out_path = cmd[cmd.index("-o") + 1]
-        with open(out_path, "w", encoding="utf-8") as handle:
-            handle.write("// partial broken output\n")
         raise subprocess.CalledProcessError(1, cmd)
 
     with tempfile.TemporaryDirectory() as tmp:
         monkeypatch.setattr("shutil.which", _fake_tool_path)
-        monkeypatch.setattr("subprocess.run", fake_firtool)
+        monkeypatch.setattr("subprocess.run", fake_circt)
         pipeline = CompilerPipeline(work_dir=tmp)
-        partial = os.path.join(pipeline.work_dir, "broken.v")
+        stale = os.path.join(pipeline.work_dir, "broken.v")
+        with open(stale, "w", encoding="utf-8") as handle:
+            handle.write("// stale output from a previous run\n")
 
-        with pytest.raises(SCCompilerError, match="firtool failed"):
+        with pytest.raises(SCCompilerError, match="circt-opt --export-verilog failed"):
             pipeline.compile_mlir_to_verilog("module test();", output_name="broken")
 
-        assert not os.path.exists(partial)
+        assert not os.path.exists(stale)
 
 
 def test_compiler_pipeline_tolerates_missing_yosys(

@@ -11,7 +11,7 @@ Orchestration Pipeline for sc-neurocore's Hardware Compiler.
 
 This module provides the automated workflow to take a stochastic graph from
 the MLIREmitter and compile it down to a bitstream using open-source FPGA tools:
-1. CIRCT (firtool) -> Verilog
+1. CIRCT (circt-opt --export-verilog) -> Verilog
 2. Yosys -> Synthesis (BLIF/JSON)
 3. NextPNR -> Place & Route
 4. IcePack / Project Xray -> Bitstream
@@ -56,7 +56,14 @@ class CompilerPipeline:
         return sanitized
 
     def compile_mlir_to_verilog(self, mlir_content: str, output_name: str = "top") -> str:
-        """Lower MLIR text to Verilog with CIRCT ``firtool``.
+        """Lower ``hw``/``comb`` dialect MLIR to Verilog with ``circt-opt``.
+
+        The emitter (``compiler.mlir_emitter.MLIREmitter``) produces core
+        ``hw``/``comb`` dialect MLIR, which ``circt-opt --export-verilog`` lowers
+        directly to Verilog. (``firtool`` consumes FIRRTL, not core ``hw``/``comb``,
+        so it is not the right entry point for this emitter's output.) The
+        exported Verilog is emitted on stdout; the ``-o`` sink receives the
+        residual MLIR module and is discarded.
 
         Parameters
         ----------
@@ -73,8 +80,8 @@ class CompilerPipeline:
         Raises
         ------
         SCCompilerError
-            If the output stem is invalid, ``firtool`` is missing, ``firtool``
-            exits unsuccessfully, or a partial Verilog output must be removed.
+            If the output stem is invalid, ``circt-opt`` is missing, or it exits
+            unsuccessfully (for example on unverifiable MLIR).
         """
         output_name = self._sanitize_name(output_name)
         mlir_path = os.path.join(self.work_dir, f"{output_name}.mlir")
@@ -83,17 +90,25 @@ class CompilerPipeline:
         with open(mlir_path, "w", encoding="utf-8") as f:
             f.write(mlir_content)
 
-        logger.info("Lowering %s to Verilog...", mlir_path)
+        logger.info("Lowering %s to Verilog with circt-opt --export-verilog...", mlir_path)
         try:
-            firtool = self._resolve_tool("firtool")
-            subprocess.run([firtool, mlir_path, "-o", v_path], check=True)  # nosec B603
+            circt_opt = self._resolve_tool("circt-opt")
+            completed = subprocess.run(  # nosec B603
+                [circt_opt, "--export-verilog", mlir_path, "-o", os.devnull],
+                check=True,
+                capture_output=True,
+                text=True,
+            )
         except (subprocess.CalledProcessError, FileNotFoundError) as e:
             if os.path.exists(v_path):
                 os.remove(v_path)
             raise SCCompilerError(
-                "firtool failed; refusing to emit fallback Verilog. "
-                "Install CIRCT firtool or run MLIR bundle generation for evidence-only output."
+                "circt-opt --export-verilog failed; refusing to emit fallback Verilog. "
+                "Install CIRCT circt-opt or run MLIR bundle generation for evidence-only output."
             ) from e
+
+        with open(v_path, "w", encoding="utf-8") as f:
+            f.write(completed.stdout)
 
         return v_path
 

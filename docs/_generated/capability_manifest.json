@@ -965,7 +965,7 @@
     "python_model_classes": 158,
     "python_model_source_modules": 152,
     "rust_pyo3_model_wrappers": 175,
-    "test_files": 967
+    "test_files": 968
   },
   "documentation": {
     "public_pages": [
@@ -3190,6 +3190,7 @@
       "tests/test_mixed_dense_kernel_parity.py",
       "tests/test_mixed_precision.py",
       "tests/test_mixed_precision_dense_hdl.py",
+      "tests/test_mlir_circt_roundtrip.py",
       "tests/test_mlir_emitter.py",
       "tests/test_mlperf_sc_report.py",
       "tests/test_mlperf_sc_runner.py",

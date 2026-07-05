@@ -59,6 +59,7 @@ class MLIREmitter:
         self.module_name = module_name
         self.nodes: List[MLIRNode] = []
         self._wire_counter = 0
+        self._instance_counter = 0
 
     def get_wire(self) -> str:
         """Allocate the next SSA wire name for emitted MLIR operations."""
@@ -76,15 +77,23 @@ class MLIREmitter:
         return out
 
     def emit_lfsr(self, width: int, seed: int) -> str:
-        """Emit an LFSR instance placeholder for CIRCT lowering."""
+        """Emit a clocked, parametric ``sc_lfsr`` instance for CIRCT lowering.
+
+        Each call produces a uniquely named ``hw.instance`` of the parametric
+        ``sc_lfsr`` extern (``WIDTH``/``SEED`` as ``i32`` module parameters,
+        ``clk``/``rst`` wired from the enclosing module). Uniqueness of the
+        instance symbol is required — CIRCT rejects duplicate instance names in
+        one module.
+        """
         out = self.get_wire()
+        self._instance_counter += 1
         self.nodes.append(
             MLIRNode(
                 "hw.instance",
                 [],
                 out,
                 {
-                    "sym_name": "lfsr",
+                    "sym_name": f"lfsr{self._instance_counter}",
                     "module": "sc_lfsr",
                     "parameters": {"WIDTH": width, "SEED": seed},
                 },
@@ -105,10 +114,36 @@ class MLIREmitter:
         return out
 
     def generate(self) -> str:
-        """Generate the final MLIR string for the module."""
-        lines = []
+        """Generate CIRCT-consumable ``hw``/``comb`` dialect MLIR for the module.
+
+        The emitted text is valid, ``circt-opt``-verifiable MLIR: every
+        instantiated sub-module is declared as a parametric ``hw.module.extern``
+        before the top module, ``comb`` operations carry explicit ``i1`` types,
+        and each ``hw.instance`` names its result port and binds ``clk``/``rst``
+        plus its ``i32`` parameters. ``circt-opt --export-verilog`` lowers the
+        result directly to Verilog (see ``tests/test_mlir_circt_roundtrip.py``).
+        """
+        lines: list[str] = []
         safe_module_name = sanitize_ident(self.module_name, context="module name")
-        # Modern CIRCT / MLIR HW dialect syntax
+
+        # Declare each instantiated sub-module as a parametric extern exactly
+        # once, so the emitted module is self-contained and CIRCT can resolve
+        # every ``hw.instance`` reference. Emitting instances of an undeclared
+        # symbol makes the MLIR unverifiable.
+        extern_signatures: dict[str, str] = {}
+        for node in self.nodes:
+            if node.op_type != "hw.instance":
+                continue
+            module = sanitize_ident(node.attributes["module"], context="module name")
+            if module in extern_signatures:
+                continue
+            param_decl = ", ".join(f"{name}: i32" for name in node.attributes["parameters"])
+            generic = f"<{param_decl}>" if param_decl else ""
+            extern_signatures[module] = (
+                f"hw.module.extern @{module}{generic}(in %clk: i1, in %rst: i1, out out: i1)"
+            )
+        lines.extend(extern_signatures.values())
+
         lines.append(f"hw.module @{safe_module_name}(in %clk: i1, in %rst: i1, out out: i1) {{")
 
         for node in self.nodes:
@@ -131,15 +166,24 @@ class MLIREmitter:
             elif node.op_type == "hw.instance":
                 sym_name = sanitize_ident(node.attributes["sym_name"], context="signal name")
                 module_name = sanitize_ident(node.attributes["module"], context="module name")
-                lines.append(f'  {safe_output} = hw.instance "{sym_name}" @{module_name}() -> (i1)')
+                param_bind = ", ".join(
+                    f"{name}: i32 = {value}"
+                    for name, value in node.attributes["parameters"].items()
+                )
+                generic = f"<{param_bind}>" if param_bind else ""
+                lines.append(
+                    f'  {safe_output} = hw.instance "{sym_name}" @{module_name}{generic}'
+                    "(clk: %clk: i1, rst: %rst: i1) -> (out: i1)"
+                )
 
-        # Final output assignment (taking the last node's output as an example)
-        last_wire = (
-            self._sanitize_ssa_name(self.nodes[-1].output, context="signal name")
-            if self.nodes
-            else "0"
-        )
-        lines.append(f"  hw.output {last_wire} : i1")
+        if self.nodes:
+            last_wire = self._sanitize_ssa_name(self.nodes[-1].output, context="signal name")
+            lines.append(f"  hw.output {last_wire} : i1")
+        else:
+            # An empty pipeline still has to drive its single output port with a
+            # typed constant — ``hw.output`` cannot reference a bare literal.
+            lines.append("  %c0_i1 = hw.constant false")
+            lines.append("  hw.output %c0_i1 : i1")
         lines.append("}")
         return "\n".join(lines)
 
