@@ -8,6 +8,8 @@
 
 """Workflow contract tests for the L1-L16 holonomic adapter stack."""
 
+import subprocess
+
 import pytest
 import numpy as np
 from sc_neurocore.accel.jax_backend import jnp
@@ -31,19 +33,23 @@ from sc_neurocore.adapters.holonomic.neuromodulation import NeuromodulatorSystem
 
 
 def test_compiler_pipeline_invokes_real_lowering(monkeypatch):
-    def fake_tool(cmd, check):
+    def fake_tool(cmd, check, capture_output=False, text=False):
         assert check is True
-        if cmd[0] == "firtool":
-            out_path = cmd[cmd.index("-o") + 1]
-            with open(out_path, "w") as f:
-                f.write("module test(); endmodule\n")
-        elif cmd[0] == "yosys":
+        if cmd[0] == "circt-opt":
+            # compile_mlir_to_verilog runs circt-opt --export-verilog and captures
+            # the exported Verilog from stdout (the -o sink is discarded).
+            assert "--export-verilog" in cmd
+            return subprocess.CompletedProcess(
+                cmd, 0, stdout="module test(); endmodule\n", stderr=""
+            )
+        if cmd[0] == "yosys":
             assert "-s" in cmd
         elif cmd[0] == "nextpnr-ice40":
             assert "--json" in cmd
             assert "--asc" in cmd
         else:
             raise AssertionError(f"unexpected tool command: {cmd}")
+        return subprocess.CompletedProcess(cmd, 0)
 
     monkeypatch.setattr("subprocess.run", fake_tool)
     # The hardened pipeline resolves each tool via ``shutil.which`` before invoking
