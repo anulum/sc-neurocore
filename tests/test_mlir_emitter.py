@@ -7,11 +7,15 @@
 # SC-NeuroCore — Tests for MLIR Emitter
 
 import json
+import shutil
 from pathlib import Path
 
 import pytest
 
 from sc_neurocore.compiler.mlir_emitter import MLIREmitter, generate_mlir_bundle
+from sc_neurocore.exceptions import SCCompilerError
+
+_CIRCT_OPT = shutil.which("circt-opt")
 
 
 def test_mlir_emitter_basic() -> None:
@@ -60,12 +64,13 @@ def test_mlir_bundle_writes_manifest(tmp_path: Path) -> None:
     rhs = emitter.emit_lfsr(8, 0xC3)
     emitter.emit_and(lhs, rhs)
 
-    bundle = generate_mlir_bundle(emitter, tmp_path, firtool="definitely_missing_firtool")
+    bundle = generate_mlir_bundle(emitter, tmp_path, circt_opt="definitely_missing_circt_opt")
 
     assert bundle.module_name == "native_sc_top"
     assert bundle.node_count == 3
     assert bundle.op_counts == {"comb.and": 1, "hw.instance": 2}
-    assert bundle.firtool_path is None
+    assert bundle.circt_opt_path is None
+    assert bundle.verilog_path is None
     assert bundle.to_dict()["module_name"] == "native_sc_top"
     assert (tmp_path / "native_sc_top.mlir").is_file()
     assert (tmp_path / "mlir_bundle_manifest.json").is_file()
@@ -86,12 +91,34 @@ def test_mlir_bundle_rejects_unsafe_module_name(tmp_path: Path) -> None:
         generate_mlir_bundle(emitter, tmp_path)
 
 
-def test_mlir_bundle_method_rejects_implicit_external_execution(tmp_path: Path) -> None:
+def test_write_bundle_run_circt_without_tool_fails_closed(tmp_path: Path) -> None:
+    """``run_circt=True`` with no circt-opt fails closed rather than faking it."""
     emitter = MLIREmitter("safe_top")
     emitter.emit_xor("%a", "%b")
 
-    with pytest.raises(NotImplementedError, match="CIRCT execution"):
-        emitter.write_bundle(tmp_path, run_circt=True)
+    with pytest.raises(SCCompilerError, match="requires .* on PATH"):
+        emitter.write_bundle(tmp_path, circt_opt="no_such_circt_opt", run_circt=True)
+
+
+@pytest.mark.skipif(_CIRCT_OPT is None, reason="circt-opt not installed")
+def test_bundle_run_circt_lowers_and_records_execution(tmp_path: Path) -> None:
+    """``run_circt=True`` with circt-opt lowers to Verilog and records the run."""
+    emitter = MLIREmitter("executed_top")
+    lfsr_a = emitter.emit_lfsr(16, 0xACE1)
+    lfsr_b = emitter.emit_lfsr(16, 0x1234)
+    emitter.emit_and(lfsr_a, lfsr_b)
+
+    bundle = generate_mlir_bundle(emitter, tmp_path, run_circt=True)
+
+    assert bundle.verilog_path is not None
+    verilog = Path(bundle.verilog_path)
+    assert verilog.is_file()
+    assert "module executed_top(" in verilog.read_text(encoding="utf-8")
+
+    manifest = json.loads((tmp_path / "mlir_bundle_manifest.json").read_text(encoding="utf-8"))
+    assert manifest["circt"]["executed"] is True
+    assert manifest["claim_status"]["circt_lowering_executed"] is True
+    assert manifest["claim_status"]["verilog_generated_from_mlir"] is True
 
 
 if __name__ == "__main__":

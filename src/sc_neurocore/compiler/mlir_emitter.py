@@ -16,12 +16,17 @@ FPGA bitstream synthesis, skipping string-based Verilog generation.
 """
 
 import json
+import os
 import shutil
+
+# External CIRCT tools are invoked with fixed argv lists and shell=False.
+import subprocess  # nosec B404
 from collections import Counter
 from dataclasses import asdict, dataclass
 from pathlib import Path
 from typing import Any, List
 
+from ..exceptions import SCCompilerError
 from ..hdl_gen._ident import sanitize_ident
 
 
@@ -37,7 +42,7 @@ class MLIRNode:
 
 @dataclass(frozen=True)
 class MLIRBundle:
-    """Generated MLIR file and evidence manifest."""
+    """Generated MLIR file, optional lowered Verilog, and evidence manifest."""
 
     output_dir: str
     mlir_path: str
@@ -45,7 +50,8 @@ class MLIRBundle:
     module_name: str
     node_count: int
     op_counts: dict[str, int]
-    firtool_path: str | None
+    circt_opt_path: str | None
+    verilog_path: str | None = None
 
     def to_dict(self) -> dict[str, Any]:
         """Return a JSON-serialisable manifest representation."""
@@ -191,32 +197,65 @@ class MLIREmitter:
         self,
         output_dir: str | Path,
         *,
-        firtool: str = "firtool",
+        circt_opt: str = "circt-opt",
         run_circt: bool = False,
     ) -> MLIRBundle:
         """Write MLIR plus a manifest describing CIRCT lowering readiness.
 
-        The helper is intentionally evidence-first: by default it records
-        whether ``firtool`` is available, but does not run it. Set
-        ``run_circt=True`` only after wiring a controlled external-tool runner.
+        The helper is evidence-first: by default (``run_circt=False``) it records
+        whether ``circt-opt`` is available but does not run it. Set
+        ``run_circt=True`` to verify and lower the module through ``circt-opt``,
+        emitting Verilog and recording genuine execution evidence; it fails
+        closed if the tool is missing or rejects the MLIR.
         """
-        return generate_mlir_bundle(self, output_dir, firtool=firtool, run_circt=run_circt)
+        return generate_mlir_bundle(self, output_dir, circt_opt=circt_opt, run_circt=run_circt)
+
+
+def _lower_with_circt(circt_opt: str, mlir_path: Path, verilog_path: Path) -> None:
+    """Verify then lower MLIR to Verilog with ``circt-opt``, failing closed.
+
+    Runs ``circt-opt --verify-diagnostics`` followed by ``circt-opt
+    --export-verilog`` (the exported Verilog arrives on stdout; the ``-o`` sink
+    is discarded). Raises :class:`SCCompilerError` if either step fails, so a
+    bundle never records a lowering that did not actually succeed.
+    """
+    verify = subprocess.run(  # nosec B603 - circt_opt from shutil.which, literal flags
+        [circt_opt, "--verify-diagnostics", str(mlir_path)],
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    if verify.returncode != 0:
+        raise SCCompilerError(
+            f"circt-opt --verify-diagnostics rejected the emitted MLIR:\n{verify.stderr}"
+        )
+    export = subprocess.run(  # nosec B603 - circt_opt from shutil.which, literal flags
+        [circt_opt, "--export-verilog", str(mlir_path), "-o", os.devnull],
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    if export.returncode != 0:
+        raise SCCompilerError(f"circt-opt --export-verilog failed:\n{export.stderr}")
+    verilog_path.write_text(export.stdout, encoding="utf-8")
 
 
 def generate_mlir_bundle(
     emitter: MLIREmitter,
     output_dir: str | Path,
     *,
-    firtool: str = "firtool",
+    circt_opt: str = "circt-opt",
     run_circt: bool = False,
 ) -> MLIRBundle:
-    """Write a CIRCT-ready MLIR file and reproducibility manifest."""
-    if run_circt:
-        raise NotImplementedError(
-            "CIRCT execution is not launched by generate_mlir_bundle yet; "
-            "use the manifest firtool_path to run external lowering explicitly."
-        )
+    """Write a CIRCT-ready MLIR file, a manifest, and optionally lowered Verilog.
 
+    With ``run_circt=False`` (default) the bundle is evidence-first: it records
+    whether ``circt-opt`` is available but does not execute it. With
+    ``run_circt=True`` it verifies the module and lowers it to Verilog through
+    ``circt-opt``, writing ``<module>.v`` and recording genuine execution
+    evidence in the manifest; it raises :class:`SCCompilerError` if ``circt-opt``
+    is missing or rejects the MLIR, rather than claiming an un-run lowering.
+    """
     out = Path(output_dir).expanduser()
     out.mkdir(parents=True, exist_ok=True)
     safe_module_name = sanitize_ident(emitter.module_name, context="module name")
@@ -227,7 +266,19 @@ def generate_mlir_bundle(
     mlir_path.write_text(mlir_text + "\n", encoding="utf-8")
 
     op_counts = dict(sorted(Counter(node.op_type for node in emitter.nodes).items()))
-    firtool_path = shutil.which(firtool)
+    circt_opt_path = shutil.which(circt_opt)
+
+    verilog_path: Path | None = None
+    if run_circt:
+        if circt_opt_path is None:
+            raise SCCompilerError(
+                f"run_circt=True requires {circt_opt!r} on PATH; refusing to "
+                "record a CIRCT lowering that was never executed."
+            )
+        verilog_path = out / f"{safe_module_name}.v"
+        _lower_with_circt(circt_opt_path, mlir_path, verilog_path)
+
+    executed = verilog_path is not None
     manifest = {
         "schema": "sc-neurocore.mlir_bundle_manifest.v1",
         "module_name": safe_module_name,
@@ -236,19 +287,20 @@ def generate_mlir_bundle(
         "op_counts": op_counts,
         "dialects": ["hw", "comb", "seq"],
         "circt": {
-            "firtool": firtool,
-            "firtool_path": firtool_path,
-            "available": firtool_path is not None,
-            "executed": False,
+            "tool": circt_opt,
+            "tool_path": circt_opt_path,
+            "available": circt_opt_path is not None,
+            "executed": executed,
         },
         "claim_status": {
             "mlir_emitted": True,
-            "circt_lowering_executed": False,
-            "verilog_generated_from_mlir": False,
+            "circt_lowering_executed": executed,
+            "verilog_generated_from_mlir": executed,
             "reason": (
-                "Bundle contains CIRCT-ready MLIR text and tool availability "
-                "metadata; downstream Verilog/EDA claims require an attached "
-                "firtool/OpenROAD execution record."
+                f"circt-opt verified the MLIR and exported Verilog to {verilog_path}."
+                if executed
+                else "Bundle contains CIRCT-ready MLIR text and tool-availability "
+                "metadata; set run_circt=True to verify and lower it with circt-opt."
             ),
         },
     }
@@ -264,5 +316,6 @@ def generate_mlir_bundle(
         module_name=safe_module_name,
         node_count=len(emitter.nodes),
         op_counts=op_counts,
-        firtool_path=firtool_path,
+        circt_opt_path=circt_opt_path,
+        verilog_path=str(verilog_path) if verilog_path is not None else None,
     )
