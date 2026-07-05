@@ -1109,6 +1109,52 @@ def test_info_command(capsys):
     assert "JAX: 0.0-test" in out
 
 
+def test_compile_emit_hls_writes_ap_fixed_cpp(tmp_path):
+    """``compile --emit-hls`` lowers the ODE to synthesisable ap_fixed HLS C++."""
+    out_dir = tmp_path / "hls"
+    rc = _run_main(
+        "compile",
+        "dv/dt = (-v + I) / 10.0",
+        "--module-name",
+        "lif_hls",
+        "--emit-hls",
+        "--hls-tool",
+        "vitis",
+        "--hls-threshold",
+        "2.5",
+        "--output",
+        str(out_dir),
+    )
+    assert rc == 0
+
+    hls_path = out_dir / "lif_hls.hls.cpp"
+    assert hls_path.is_file()
+    text = hls_path.read_text(encoding="utf-8")
+    assert "ap_fixed<16,8>" in text
+    assert "#pragma HLS PIPELINE II=1" in text
+    assert "void lif_hls(" in text
+    # The threshold flows through to the emitted spike comparison.
+    assert "2.5" in text
+    # The Verilog RTL is still emitted alongside the HLS C++.
+    assert (out_dir / "lif_hls.v").is_file()
+
+
+def test_compile_without_emit_hls_skips_cpp(tmp_path):
+    """Without ``--emit-hls`` no HLS C++ is written; the Verilog path is unchanged."""
+    out_dir = tmp_path / "novhls"
+    rc = _run_main(
+        "compile",
+        "dv/dt = (-v + I) / 10.0",
+        "--module-name",
+        "plain_neuron",
+        "--output",
+        str(out_dir),
+    )
+    assert rc == 0
+    assert not (out_dir / "plain_neuron.hls.cpp").exists()
+    assert (out_dir / "plain_neuron.v").is_file()
+
+
 def test_no_command_prints_help(capsys):
     rc = _run_main()
     assert rc == 0

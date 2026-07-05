@@ -242,6 +242,23 @@ def main() -> int:
     parser.add_argument(
         "--synthesize", action="store_true", help="Run Yosys synthesis after compilation"
     )
+    parser.add_argument(
+        "--emit-hls",
+        action="store_true",
+        help="For compile, also emit synthesisable ap_fixed HLS C++ from the ODE",
+    )
+    parser.add_argument(
+        "--hls-tool",
+        choices=["vitis", "catapult"],
+        default="vitis",
+        help="HLS pragma flavour for --emit-hls (default: vitis)",
+    )
+    parser.add_argument(
+        "--hls-threshold",
+        type=float,
+        default=1.0,
+        help="Membrane spike threshold for the emitted HLS C++ (default: 1.0)",
+    )
     parser.add_argument("--design", help="JSON compiler-design metadata for collect-synthesis")
     parser.add_argument(
         "--utilisation",
@@ -828,6 +845,22 @@ def _cmd_compile(args: Any) -> int:
         f.write(verilog)
     print(f"[2/4] Verilog written: {v_path}")
 
+    # Optional synthesisable HLS C++ from the same ODE (Vitis/Catapult ap_fixed).
+    if args.emit_hls:
+        from sc_neurocore.compiler.intelligence.hls_export import generate_hls_cpp
+
+        hls_src = generate_hls_cpp(
+            args.module_name,
+            neuron.equations,
+            hls_tool=args.hls_tool,
+            dt=args.dt,
+            threshold=args.hls_threshold,
+        )
+        hls_path = os.path.join(out_dir, f"{args.module_name}.hls.cpp")
+        with open(hls_path, "w") as f:
+            f.write(hls_src)
+        print(f"      HLS C++ written: {hls_path}")
+
     # Testbench
     if args.testbench:
         tb_src = generate_testbench(neuron, module_name=args.module_name)
@@ -855,6 +888,8 @@ def _cmd_compile(args: Any) -> int:
     print()
     print(f"Output: {out_dir}/")
     print(f"  {args.module_name}.v — synthesizable Verilog RTL")
+    if args.emit_hls:
+        print(f"  {args.module_name}.hls.cpp — synthesisable Vitis/Catapult HLS C++")
     if args.testbench:
         print(f"  tb_{args.module_name}.v — simulation testbench")
         print(f"  Run: iverilog -o sim {args.module_name}.v tb_{args.module_name}.v && vvp sim")
