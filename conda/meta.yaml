@@ -1,4 +1,4 @@
-{% set version = "3.15.35" %}
+{% set version = "3.16.0" %}
 
 package:
   name: sc-neurocore
