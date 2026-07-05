@@ -1,0 +1,69 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later | Commercial license available
+# © Concepts 1996–2026 Miroslav Šotek. All rights reserved.
+# © Code 2020–2026 Miroslav Šotek. All rights reserved.
+# ORCID: 0009-0009-3560-0851
+# Contact: www.anulum.li | protoscience@anulum.li
+# SC-NeuroCore — MLIR / CIRCT round-trip validation
+
+name: MLIR CIRCT Validation
+
+permissions: {}
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - "src/sc_neurocore/compiler/mlir_emitter.py"
+      - "src/sc_neurocore/compiler/pipeline.py"
+      - "tests/test_mlir_circt_roundtrip.py"
+      - "tests/test_mlir_emitter.py"
+      - "tests/test_compiler_pipeline_contracts.py"
+      - ".github/workflows/mlir-circt.yml"
+  pull_request:
+    paths:
+      - "src/sc_neurocore/compiler/mlir_emitter.py"
+      - "src/sc_neurocore/compiler/pipeline.py"
+      - "tests/test_mlir_circt_roundtrip.py"
+      - "tests/test_mlir_emitter.py"
+      - "tests/test_compiler_pipeline_contracts.py"
+      - ".github/workflows/mlir-circt.yml"
+
+concurrency:
+  group: mlir-circt-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  circt-roundtrip:
+    # Skip on release-tag pushes; the round-trip belongs to source changes.
+    if: github.event_name != 'push' || github.ref_type != 'tag'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+
+      - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
+        with:
+          python-version: "3.12"
+
+      - name: Install CIRCT (circt-opt)
+        run: |
+          url="https://github.com/llvm/circt/releases/download/firtool-1.152.0/circt-full-shared-linux-x64.tar.gz"
+          curl -fsSL -o /tmp/circt.tar.gz "$url"
+          echo "767cd4347462e7c2f1df2f6937443f74470437e58c18fd4363956e9b639d41fa  /tmp/circt.tar.gz" \
+            | sha256sum -c -
+          mkdir -p "$HOME/circt"
+          tar -xzf /tmp/circt.tar.gz -C "$HOME/circt"
+          echo "$HOME/circt/firtool-1.152.0/bin" >> "$GITHUB_PATH"
+
+      - name: Verify circt-opt
+        run: circt-opt --version
+
+      - name: Install package
+        run: python tools/ci_install_dev.py
+
+      - name: Run MLIR CIRCT round-trip tests
+        run: |
+          pytest tests/test_mlir_circt_roundtrip.py \
+                 tests/test_mlir_emitter.py \
+                 tests/test_compiler_pipeline_contracts.py -q
