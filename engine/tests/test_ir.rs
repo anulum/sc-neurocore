@@ -282,3 +282,70 @@ fn new_ops_verify() {
     let g = b.build();
     assert!(verify::verify(&g).is_ok());
 }
+
+// --- Parse/print round-trip regressions (found by the roundtrip_ir fuzz target) ---
+
+/// A whole-number `f64` scalar constant must survive `parse . print`.
+///
+/// Regression: `format!("{}", 5.0)` is `"5"`, so a `F64(5.0)` with a non-`rate` type used
+/// to re-parse to an integer variant (`U64(5)`), silently changing the graph.
+#[test]
+fn whole_number_float_scalar_constant_round_trips() {
+    let text = "sc.graph @whole_scalar {\n  %0 = sc.constant 5.0 : u64\n}\n";
+    let g = parser::parse(text).expect("parse whole-number float constant");
+    let g2 = parser::parse(&printer::print(&g)).expect("re-parse printed graph");
+    assert_eq!(
+        g, g2,
+        "parse . print changed a whole-number float scalar constant"
+    );
+    match &g2.ops[0] {
+        ScOp::Constant {
+            value: ScConst::F64(v),
+            ..
+        } => assert_eq!(*v, 5.0),
+        other => panic!("expected an F64 constant after round trip, got {other:?}"),
+    }
+}
+
+/// An all-whole-number `f64` vector constant must survive `parse . print`.
+///
+/// Regression: `[5.0, 6.0]` printed as `"[5, 6]"`, which re-parsed to `I64Vec`.
+#[test]
+fn whole_number_float_vector_constant_round_trips() {
+    let text = "sc.graph @whole_vec {\n  %0 = sc.constant [1.0, 2.0, 3.0] : rate\n}\n";
+    let g = parser::parse(text).expect("parse whole-number float vector");
+    let g2 = parser::parse(&printer::print(&g)).expect("re-parse printed graph");
+    assert_eq!(
+        g, g2,
+        "parse . print changed a whole-number float vector constant"
+    );
+    match &g2.ops[0] {
+        ScOp::Constant {
+            value: ScConst::F64Vec(v),
+            ..
+        } => assert_eq!(v, &vec![1.0, 2.0, 3.0]),
+        other => panic!("expected an F64Vec constant after round trip, got {other:?}"),
+    }
+}
+
+/// Non-finite float literals are rejected at parse time.
+///
+/// `NaN` breaks the round trip (`NaN != NaN`) and is meaningless as an SC constant; `inf`
+/// is likewise rejected. This keeps the text format total under `parse . print`.
+#[test]
+fn non_finite_float_constants_are_rejected() {
+    for literal in ["NaN", "inf", "-inf"] {
+        let text = format!("sc.graph @nf {{\n  %0 = sc.constant {literal} : rate\n}}\n");
+        assert!(
+            parser::parse(&text).is_err(),
+            "parser must reject the non-finite constant '{literal}'"
+        );
+    }
+    // The same guard applies to float-valued op parameters (e.g. sc.scale factor).
+    let scale_nan =
+        "sc.graph @nf2 {\n  %0 = sc.input \"x\" : rate\n  %1 = sc.scale %0, factor=NaN : rate\n}\n";
+    assert!(
+        parser::parse(scale_nan).is_err(),
+        "parser must reject a non-finite scale factor"
+    );
+}

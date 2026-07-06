@@ -186,12 +186,25 @@ fn make_err(line: usize, msg: impl Into<String>) -> ParseError {
     }
 }
 
+/// Parse a floating-point literal, rejecting non-finite values (`NaN`, `inf`, `-inf`).
+///
+/// Non-finite values are meaningless as SC constants/parameters, and `NaN` in particular
+/// breaks the parse/print round-trip because `NaN != NaN`: a graph carrying `NaN` can never
+/// compare equal to its own re-parse. Rejecting them at parse time keeps the text format
+/// total under round-tripping.
+fn parse_finite_f64(s: &str, line: usize) -> Result<f64, ParseError> {
+    let value: f64 = s
+        .parse()
+        .map_err(|e: std::num::ParseFloatError| make_err(line, e.to_string()))?;
+    if !value.is_finite() {
+        return Err(make_err(line, format!("non-finite float literal '{s}'")));
+    }
+    Ok(value)
+}
+
 fn parse_scalar_constant(val_str: &str, ty: &ScType, line: usize) -> Result<ScConst, ParseError> {
     if val_str.contains('.') || matches!(ty, ScType::Rate) {
-        return val_str
-            .parse::<f64>()
-            .map(ScConst::F64)
-            .map_err(|e| make_err(line, e.to_string()));
+        return parse_finite_f64(val_str, line).map(ScConst::F64);
     }
     match ty {
         ScType::FixedPoint { .. } | ScType::SInt { .. } => val_str
@@ -217,12 +230,7 @@ fn parse_vector_constant(val_str: &str, line: usize) -> Result<ScConst, ParseErr
     if is_float {
         let mut out = Vec::new();
         for token in inner.split(',') {
-            out.push(
-                token
-                    .trim()
-                    .parse::<f64>()
-                    .map_err(|e| make_err(line, e.to_string()))?,
-            );
+            out.push(parse_finite_f64(token.trim(), line)?);
         }
         Ok(ScConst::F64Vec(out))
     } else {
@@ -520,9 +528,7 @@ fn parse_scale(text: &str, graph: &mut ScGraph, line: usize) -> Result<(), Parse
     .map_err(|e| make_err(line, e))?;
 
     let factor_str = extract_kv(rest, "factor").ok_or_else(|| make_err(line, "missing factor"))?;
-    let factor = factor_str
-        .parse::<f64>()
-        .map_err(|e| make_err(line, e.to_string()))?;
+    let factor = parse_finite_f64(&factor_str, line)?;
 
     graph.next_id = graph.next_id.max(id.0 + 1);
     graph.push(ScOp::Scale { id, input, factor });
@@ -546,9 +552,7 @@ fn parse_offset(text: &str, graph: &mut ScGraph, line: usize) -> Result<(), Pars
     .map_err(|e| make_err(line, e))?;
 
     let offset_str = extract_kv(rest, "offset").ok_or_else(|| make_err(line, "missing offset"))?;
-    let offset = offset_str
-        .parse::<f64>()
-        .map_err(|e| make_err(line, e.to_string()))?;
+    let offset = parse_finite_f64(&offset_str, line)?;
 
     graph.next_id = graph.next_id.max(id.0 + 1);
     graph.push(ScOp::Offset { id, input, offset });
@@ -689,9 +693,10 @@ fn parse_kuramoto_step(text: &str, graph: &mut ScGraph, line: usize) -> Result<(
     let k_str = extract_kv(rest, "K").ok_or_else(|| make_err(line, "missing K"))?;
     let coupling = parse_value_id(&k_str).map_err(|e| make_err(line, e))?;
 
-    let dt = extract_kv(rest, "dt")
-        .and_then(|s| s.parse::<f64>().ok())
-        .unwrap_or(0.01);
+    let dt = match extract_kv(rest, "dt") {
+        Some(s) => parse_finite_f64(&s, line)?,
+        None => 0.01,
+    };
 
     graph.next_id = graph.next_id.max(id.0 + 1);
     graph.push(ScOp::KuramotoStep {

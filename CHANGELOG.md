@@ -89,6 +89,16 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
   three modules to 100 %.
 
 ### Fixed
+- The SC IR text format was not idempotent under `parse . print` (found by the
+  `roundtrip_ir` fuzz target once the fuzz workflow was repaired). Two float-handling
+  asymmetries are corrected: (1) the printer formatted whole-number `f64` constants without a
+  decimal point (`5.0` → `"5"`, `[5.0, 6.0]` → `"[5, 6]"`), so they re-parsed to integer
+  variants (`U64`/`I64Vec`) — the printer now appends `.0` so such values re-read as floats;
+  and (2) the parser accepted non-finite float literals (`NaN`, `inf`), and a `NaN` constant
+  can never round-trip because `NaN != NaN` — the parser now rejects non-finite literals at
+  every float site (constants, vector elements, and the `scale`/`offset`/`kuramoto_step`
+  parameters). Regression tests cover whole-number scalar/vector round-tripping and non-finite
+  rejection.
 - The NeuroML 2 importer produced an unusable Adaptive-Exponential (AdEx) cell:
   `_import_adex_cell` emitted the NeuroML attribute names (`C`, `g_L`, `E_L`, `V_T`,
   `delta_T`, `V_reset`, `V_thresh`) rather than the `AdExNeuron` constructor names, so

@@ -24,6 +24,24 @@
 
 use crate::ir::graph::*;
 
+/// Format an `f64` constant so the parser reads it back as a float, not an integer.
+///
+/// The scalar/vector constant parser decides the `ScConst` variant from a `.` in the text
+/// (or a `rate` type). A whole-number `f64` such as `5.0` formats as `"5"` via `{}`, which
+/// would re-parse to an integer variant (`U64`/`I64`), and an all-digit vector like
+/// `[5.0, 6.0]` prints `"[5, 6]"` and re-parses to `I64Vec` — either breaks the round trip.
+/// Appending `.0` when the shortest form carries no fractional/exponent marker keeps the
+/// value a float across `parse . print`. (`{}` never emits an exponent for `f64`, so a plain
+/// digit run — optionally signed — is exactly the whole-number case.)
+fn fmt_f64(v: f64) -> String {
+    let s = format!("{v}");
+    if !s.is_empty() && s.bytes().all(|b| b.is_ascii_digit() || b == b'-') {
+        format!("{s}.0")
+    } else {
+        s
+    }
+}
+
 /// Print a graph to its text representation.
 pub fn print(graph: &ScGraph) -> String {
     let mut out = String::new();
@@ -40,15 +58,12 @@ pub fn print(graph: &ScGraph) -> String {
             }
             ScOp::Constant { id, value, ty } => {
                 let val_str = match value {
-                    ScConst::F64(v) => format!("{v}"),
+                    ScConst::F64(v) => fmt_f64(*v),
                     ScConst::I64(v) => format!("{v}"),
                     ScConst::U64(v) => format!("{v}"),
                     ScConst::F64Vec(v) => format!(
                         "[{}]",
-                        v.iter()
-                            .map(|x| format!("{x}"))
-                            .collect::<Vec<_>>()
-                            .join(", ")
+                        v.iter().map(|x| fmt_f64(*x)).collect::<Vec<_>>().join(", ")
                     ),
                     ScConst::I64Vec(v) => format!(
                         "[{}]",
