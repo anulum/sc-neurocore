@@ -28,6 +28,7 @@ from .sobol16_emitter import Sobol16Emitter
 from .quasirandom_emitter import QuasiRandomEmitter, Halton16Emitter
 from .tmr_wrapper import generate_tmr_wrapper
 from .bus_interface import generate_live_parameter_bank
+from .ip_xact import generate_ip_xact
 
 __all__ = [
     "VerilogGenerator",
@@ -47,4 +48,5 @@ __all__ = [
     "Halton16Emitter",
     "generate_tmr_wrapper",
     "generate_live_parameter_bank",
+    "generate_ip_xact",
 ]

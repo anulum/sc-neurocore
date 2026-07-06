@@ -40,6 +40,12 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
   passthrough. The Python IR builder gains `softmax_attention`. With this, all three IR ops
   that previously had no synthesisable RTL (KuramotoStep, GraphForward, SoftmaxAttention)
   now lower to co-simulated fixed-point cores.
+- `generate_ip_xact` is now re-exported from the `sc_neurocore.hdl_gen` package namespace
+  alongside the other `generate_*` HDL emitters, so the IP-XACT (IEEE 1685) component-XML
+  generator can be imported without reaching into the submodule. The generator gained a
+  dedicated structural test suite (`tests/test_ip_xact.py`) that parses the emitted
+  component tree — the AXI-Lite slave interface, the optional parameter block, and the
+  port-vector geometry — and it is no longer excluded from coverage measurement (now 100 %).
 
 ### Fixed
 - The SystemVerilog emitter wrote malformed signed literals (`16'sd-51`) for negative

@@ -195,7 +195,7 @@ omit = [
     "*/neurons/dsl_cli.py",
     "*/quantum_cognition/__main__.py",
     # --- Hardware/IP packaging tooling ---
-    "*/hdl_gen/ip_xact.py",
+    # ip_xact.py is now covered (tests/test_ip_xact.py, 100%); no longer omitted.
     # --- Research and extended source modules ---
     "*/experiments/*",
     "*/drivers/*",
