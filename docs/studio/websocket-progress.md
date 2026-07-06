@@ -10,7 +10,7 @@ showing the current step, percentage, and description.
 |-----------|:-----:|:----------------:|-------------|
 | `characterize` | ~50 | 5-30s | f-I curve (20 pts) + sensitivity (15 params × 2) |
 | `heatmap` | N×M | 10-60s | Two-parameter sweep (e.g. 15×15 = 225 sims) |
-| `scan` | 118 | 30-120s | Classify all 118 models by firing pattern |
+| `scan` | 159 | 30-120s | Classify all runtime catalogue entries by firing pattern |
 
 ## Protocol
 
@@ -89,7 +89,7 @@ session token through the `studio-bearer.<token>` subprotocol.
 **Operations:**
 - `characterize` — full model characterisation with f-I + sensitivity
 - `heatmap` — 2D parameter sweep (requires `param_x`, `param_y`, `x_min`/`x_max`/`x_steps`, `y_min`/`y_max`/`y_steps` in config)
-- `scan` — scan all 118 models (no config needed)
+- `scan` — scan all 159 runtime catalogue entries (no config needed)
 
 ## Implementation
 

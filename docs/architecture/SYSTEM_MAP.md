@@ -1,7 +1,7 @@
 # SC-NeuroCore — System Architecture Map
 
-> Canonical architecture map. Package version `3.16.0`; mapped against tree at
-> commit `8591449d8` (2026-06-23). Supersedes the earlier `architecture.md` and
+> Canonical architecture map. Package version `3.16.0`; refreshed against the
+> current tree on 2026-07-06. Supersedes the earlier `architecture.md` and
 > `COMPONENT_INVENTORY.md` in this directory, which are stale (see *Provenance*).
 >
 > Purpose: a single, factual reference to SC-NeuroCore's capabilities, data flow,
@@ -21,7 +21,7 @@ a network defined in Python down to bit-true RTL on FPGA/ASIC silicon:
 |------|----------|-----------|
 | **Software simulation** | `src/sc_neurocore/` (121 subpackages, ~57k LoC Python) | Neuron/synapse models, SC arithmetic, network engine, learning, analysis |
 | **Compiled engine** | `engine/` (Rust + PyO3 → `sc_neurocore_engine`), `crates/` (7 research crates), `src/sc_neurocore/accel/` (Julia/Go/Mojo/JAX kernels) | SIMD SC inference, fixed-point integrators, spike-train analysis, IR emit |
-| **Hardware** | `hdl/` (Verilog RTL, 25 modules), `hdl_gen/`, `compiler/`, `asic_flow/` | Synthesisable RTL, FPGA bitstreams, ASIC flow |
+| **Hardware** | `hdl/` (Verilog RTL, 43 top-level non-testbench modules), `hdl_gen/`, `compiler/`, `asic_flow/` | Synthesisable RTL, FPGA bitstreams, ASIC flow |
 
 The defining design choice is **stochastic computing**: values are encoded as
 Bernoulli/quasi-random bitstreams, so arithmetic becomes single-gate logic

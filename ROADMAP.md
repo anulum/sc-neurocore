@@ -1,9 +1,9 @@
 # Roadmap
 
-> Last updated: 2026-05-25. Priorities may shift based on
+> Last updated: 2026-07-06. Priorities may shift based on
 > validation results and community feedback.
 
-## Current Maintenance Snapshot — 2026-05-25
+## Current Maintenance Snapshot — 2026-07-06
 
 - Mainline CI was verified green on 2026-05-25 at `edc35c11934f`;
   obsolete completed failed/cancelled repair-sequence Actions runs were purged
@@ -13,8 +13,9 @@
   release deployments were retained as evidence.
 - Dependabot, code-scanning, and secret-scanning alert surfaces were rechecked
   on 2026-05-25 and reported zero open alerts.
-- Coverage is being recovered in staged slices. The active branch raises the
-  Python gate to 96%; 100% remains the target, not the current release claim.
+- Coverage is being recovered in staged slices. The current CI configuration
+  enforces a Python coverage gate of 98%; 100% remains the target, not the
+  current release claim.
 - Open production blockers are tracked in internal audit and roadmap files.
   Do not use public docs as the source of truth for detailed task queues.
 - Cross-repository validation must confirm the SCPN datastream contract with
@@ -161,7 +162,7 @@ New in this release:
 - **conda-forge recipe draft** prepared for staged-recipes submission; not yet
   published on conda-forge
 
-## v3.13 — NIR Interop, Equation Compiler, Import Speed ✓ (current)
+## v3.13 — NIR Interop, Equation Compiler, Import Speed ✓
 
 - **NIR bridge**: 18/18 primitives (was 11), full roundtrip verified
 - **Cross-framework interop**: verified with Norse, snnTorch, SpikingJelly, Sinabs, Rockpool
@@ -174,7 +175,7 @@ New in this release:
 - **Hardware**: AXI-Stream interface, DMA controller, parameterized AXI-Lite, CDC primitives
 - **Deep audit**: 15 bugs + 7 concerns fixed across 942 files
 
-## v3.14 — SHD FPGA Deployment + GPU Backend ✓ (current)
+## v3.14 — SHD FPGA Deployment + GPU Backend ✓
 
 ### SHD end-to-end FPGA pipeline
 
@@ -233,7 +234,7 @@ Rust + Verilog paths, bit-true guarantees, mode parameter (background/snippet).
 ruff 0.15.9, mkdocs strict mode, typos exceptions, Vivado gitignore,
 dependabot PRs merged.
 
-## v3.14 — ArcaneZenith Cognitive Core & Hardened Interfaces (ship now) ✓
+## v3.14 — ArcaneZenith Cognitive Core & Hardened Interfaces ✓
 
 ### ~~ArcaneZenith Cognitive Core Primitive~~ ✓
 
@@ -262,6 +263,18 @@ dependabot PRs merged.
 - GOTM Brain self-learning module with local LLM guidance loop.
 - API documentation updated with experimental scope and hardware-validation boundaries.
 - Cross-repo bridges verified: SCPN-QUANTUM-CONTROL, SCPN-PHASE-ORCHESTRATOR.
+
+## v3.16 — Current Release Baseline ✓ (current)
+
+- Package metadata, generated capability snapshot, and public docs report
+  version 3.16.0.
+- Current generated static inventory: 44 public exports, 152 Python model
+  source modules, 158 Python model classes, 175 Rust PyO3 model wrappers,
+  976 Python files under `tests/`, 561 public documentation pages, and
+  17 GitHub Actions workflows.
+- Current HDL static inventory: 43 top-level non-testbench Verilog RTL modules
+  and 16 `tb_sc_*.v` simulation testbenches.
+- Current CI coverage gate is 98%; 100% remains the programme target.
 
 ## v4.0 — Physical FPGA Demos + Production (target: Q3 2026)
 

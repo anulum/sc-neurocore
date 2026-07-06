@@ -1,11 +1,11 @@
 # Architecture
 
-> **Canonical map: [`docs/architecture/SYSTEM_MAP.md`](docs/architecture/SYSTEM_MAP.md) (2026-06-23).**
-> This file is retained for the SHD FPGA pipeline detail but its package figures
-> are stale (e.g. "122 neuron models"; the verified count is 152 model source
-> modules, matching `docs/_generated/capability_manifest.json`). Use SYSTEM_MAP.md.
+> **Canonical map: [`docs/architecture/SYSTEM_MAP.md`](docs/architecture/SYSTEM_MAP.md) (2026-07-06).**
+> This file is retained for the SHD FPGA pipeline detail. Inventory figures were
+> refreshed from `tools/capability_manifest.py` and live `hdl/` counts on
+> 2026-07-06; use SYSTEM_MAP.md as the canonical package map.
 
-> Last updated: 2026-04-13 (v3.14.0)
+> Last updated: 2026-07-06 (v3.16.0)
 
 SC-NeuroCore is a three-tier stochastic computing framework: a Rust SIMD
 engine, a Python simulation layer, and Verilog RTL for FPGA deployment.
@@ -39,7 +39,7 @@ sc-neurocore/
 ├── bridge/                 PyO3 Python ↔ Rust bridge (maturin build)
 │
 ├── src/sc_neurocore/       Python package (pip install -e ".[dev]")
-│   ├── neurons/            122 neuron models (models/ subdir) + core SC neurons
+│   ├── neurons/            152 model source modules (models/ subdir) + core SC neurons
 │   ├── synapses/           Bitstream synapses (static, STDP, R-STDP)
 │   ├── layers/             SC dense, conv2d, recurrent, vectorized, fusion, attention
 │   ├── sources/            Current sources (bitstream, Poisson)
@@ -85,9 +85,9 @@ sc-neurocore/
 │   ├── cli/                Command-line interface (info, deploy, benchmark)
 │   └── ...                 Additional research modules
 │
-├── tests/                  Python test suite (8 598+ tests, 100% core coverage)
+├── tests/                  Python test suite (976 .py files; 21 940 collected tests; 98% CI gate)
 │
-├── hdl/                    Verilog RTL — 25 modules, 5 455 lines
+├── hdl/                    Verilog RTL — 43 top-level non-testbench modules, 5 431 lines
 │   ├── sc_neurocore_top.v  AXI-Lite top-level wrapper (generic SC network)
 │   ├── sc_shd_top.v        SHD 3-stage pipelined inference core
 │   ├── sc_shd_axi_wrapper.v  AXI4-Lite slave for Zynq PS-PL
@@ -105,7 +105,7 @@ sc-neurocore/
 │   ├── constraints/        XDC timing constraints (PYNQ-Z2)
 │   ├── reports/            Vivado synthesis reports (committed)
 │   ├── pynq/               PYNQ-Z2 deployment (driver, demo, Tcl)
-│   └── tb_*.v              Co-simulation testbenches (12 files)
+│   └── tb_*.v              Co-simulation testbenches (18 files; 16 tb_sc_*.v)
 │
 ├── data/masquelier_shd/    SHD training scripts + cloud results + FPGA artifacts
 ├── examples/               20 runnable demo scripts (SC, MNIST, NIR, JAX, snnTorch)
@@ -113,7 +113,7 @@ sc-neurocore/
 ├── benchmarks/             Python benchmark suite
 ├── scripts/                Co-simulation + utility scripts
 ├── paper/                  JOSS paper source
-└── docs/                   MkDocs site source (122 model doc pages in progress)
+└── docs/                   MkDocs site source (175 model documentation pages)
 ```
 
 ## Data Flow
@@ -121,7 +121,7 @@ sc-neurocore/
 ```
                     +---------------------------------------------+
                     |           Python API                        |
-                    |  (122 neuron models, training, analysis)    |
+                    |  (152 model modules, training, analysis)      |
                     +----------+------------------+---------------+
                                |                  |
                                v                  v

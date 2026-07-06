@@ -1,6 +1,6 @@
 {
   "title": "SC-NeuroCore: Universal Stochastic Computing Framework for Neuromorphic Hardware",
-  "description": "A high-performance neuromorphic computing framework combining stochastic computing with spiking neural networks. 122 neuron models (1943-2026), Rust SIMD engine (111 models, 41.3 Gbit/s AVX-512, PyO3 bindings), bit-true Verilog RTL co-simulation, FPGA synthesis via IR compiler (SystemVerilog + MLIR/CIRCT), equation-to-Verilog compiler, formal verification (SymbiYosys, 7 modules, 65 properties), NIR bridge (18/18 primitives, interop with Norse/snnTorch/SpikingJelly), quantum hybrid computing (Qiskit + PennyLane), hyper-dimensional computing (HDC/VSA), Petri net simulation, CuPy GPU acceleration, JAX JIT training, MPI distributed simulation, identity continuity substrate, and 125-function spike train analysis toolkit.",
+  "description": "A high-performance neuromorphic computing framework combining stochastic computing with spiking neural networks. Current static inventory from the repository records 152 Python model source modules, 158 Python model classes, 175 Rust PyO3 model wrappers, 44 public package exports, 43 top-level non-testbench Verilog RTL modules, 16 tb_sc_* simulation testbenches, and 17 SHA-pinned GitHub Actions workflows. The framework includes bit-true Verilog RTL co-simulation, FPGA synthesis via IR compiler (SystemVerilog + MLIR/CIRCT), equation-to-Verilog compiler, formal verification tooling, NIR bridge interoperability, quantum hybrid computing, hyper-dimensional computing (HDC/VSA), Petri net simulation, CuPy GPU acceleration, JAX JIT training, MPI distributed simulation, and identity continuity substrate.",
   "creators": [
     {
       "name": "Sotek, Miroslav",
@@ -8,7 +8,7 @@
       "orcid": "0009-0009-3560-0851"
     }
   ],
-  "version": "3.13.3",
+  "version": "3.16.0",
   "upload_type": "software",
   "access_right": "open",
   "license": "AGPL-3.0-or-later",

@@ -4,7 +4,7 @@
 # © Code 2020–2026 Miroslav Šotek. All rights reserved.
 # ORCID: 0009-0009-3560-0851
 # Contact: www.anulum.li | protoscience@anulum.li
-# SC-NeuroCore — Model browser for Studio (all 118 neuron models)
+# SC-NeuroCore — Model browser for Studio runtime catalogue entries
 
 from __future__ import annotations
 

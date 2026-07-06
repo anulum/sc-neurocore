@@ -104,6 +104,12 @@ SC-NeuroCore is positioned for neuromorphic R&D, stochastic accelerator design, 
 Evidence boundary: this snapshot is a static inventory. Performance, coverage, hardware, and scientific-fidelity claims require their own committed evidence artefacts.
 <!-- capability-snapshot:end -->
 
+Snapshot definitions: **Python test files** counts every `.py` support or test
+module under `tests/`; **Python model classes** counts non-private top-level
+classes in `src/sc_neurocore/neurons/models/*.py`; **Public documentation
+pages** counts Markdown under `docs/` after excluding `docs/internal/` and
+`docs/_generated/`.
+
 ## Quick Start
 
 ```bash
@@ -294,10 +300,10 @@ Research and extended modules are available from source (`pip install -e ".[dev]
 
 | Tier | Modules | Ships in wheel | Status |
 |------|---------|:--------------:|--------|
-| **Core** | neurons, synapses, layers, sources, utils, recorders, accel, compiler, hdl_gen, hardware, cli, exceptions | Yes | Production path; current CI coverage gate is 96%, with 100% retained as the target. |
+| **Core** | neurons, synapses, layers, sources, utils, recorders, accel, compiler, hdl_gen, hardware, cli, exceptions | Yes | Production path; current CI coverage gate is 98%, with 100% retained as the target. |
 | **Simulation** | hdc, solvers, transformers, learning, graphs, ensembles, export, pipeline, profiling, models, math, spatial, verification, security | Yes | Stable. Import explicitly. |
-| **Industrial** | safety_cert, asic_flow, fault_injection, uvm_gen, hypervisor, digital_twin, chiplet, spintronic, memristor, analog_bridge | No | 1,173 tests. Available from source. |
-| **Extended research** | evo_substrate, meta_plasticity, bioware, federated, bci_studio, explainability, neuro_symbolic, stochastic_doctor, model_zoo | No | 1,173 tests. Available from source. |
+| **Industrial** | safety_cert, asic_flow, fault_injection, uvm_gen, hypervisor, digital_twin, chiplet, spintronic, memristor, analog_bridge | No | Source-only; see `docs/MODULE_INTEGRATION.md` for the historical 19-module integration slice. |
+| **Extended research** | evo_substrate, meta_plasticity, bioware, federated, bci_studio, explainability, neuro_symbolic, stochastic_doctor, model_zoo | No | Source-only; see `docs/MODULE_INTEGRATION.md` for the historical 19-module integration slice. |
 | **Domain bridges** | quantum (Qiskit/PennyLane), adapters/holonomic (JAX), scpn (Petri nets) | Yes | Requires `pip install sc-neurocore[quantum]` or `[jax]` |
 | **Research** | robotics, physics, bio, optics, chaos, sleep, interfaces | No | Tested. Available from source. |
 | **Speculative** | `research/` (eschaton, exotic, meta, post_silicon, transcendent) | No | Theoretical. See `research/README.md`. |
@@ -347,7 +353,7 @@ graph TD
     style V fill:#004d40,color:#fff
 ```
 
-### Core API (28 symbols)
+### Core API subset (28 of 44 public exports)
 
 ```python
 from sc_neurocore import (
@@ -394,7 +400,7 @@ hdl/
   sc_aer_encoder.v            -- AER spike encoder (event-driven output)
   sc_event_neuron.v           -- Event-triggered LIF (power ∝ spike rate)
   sc_aer_router.v             -- AER event distribution to target neurons
-  tb_sc_*.v (7 testbenches)   -- Self-checking simulation testbenches
+  tb_sc_*.v (16 testbenches)  -- Self-checking simulation testbenches
   formal/ (18 proof jobs)     -- 130 formal statements (100 assert, 7 assume, 23 cover)
 ```
 
@@ -441,7 +447,7 @@ Co-simulation traces are generated deterministically from fixed LFSR seeds.
 To reproduce a published benchmark:
 
 ```bash
-git checkout v3.13.3
+git checkout v3.16.0
 pip install -e ".[dev]"
 python benchmarks/benchmark_suite.py --markdown > BENCHMARKS.md
 ```
@@ -496,7 +502,7 @@ bridge install. For source-tree runs against local bridge code, use
 
 ## CI/CD
 
-14 GitHub Actions workflows (`.github/workflows/`), all SHA-pinned:
+17 GitHub Actions workflows (`.github/workflows/`), all SHA-pinned:
 
 | Workflow | Purpose |
 |----------|---------|
@@ -509,7 +515,11 @@ bridge install. For source-tree runs against local bridge code, use
 | **release.yml** | Python wheel + sdist + changelog extraction → GitHub Release |
 | **benchmark.yml** | Performance regression tracking |
 | **codeql.yml** | CodeQL security analysis (weekly + on push) |
+| **fuzz.yml** | Rust engine fuzzing with nightly cargo-fuzz targets |
+| **mlir-circt.yml** | MLIR/CIRCT canary for compiler lowering paths |
+| **nir-canary.yml** | Latest NIR compatibility canary |
 | **scorecard.yml** | OpenSSF Scorecard |
+| **security-scanners.yml** | pip-audit, cargo-audit, Semgrep, and release security scans |
 | **pre-commit.yml** | Pre-commit hook validation |
 | **yosys-synth.yml** | Yosys HDL synthesis verification |
 | **stale.yml** | Auto-label and close stale issues |

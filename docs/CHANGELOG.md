@@ -969,6 +969,22 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 - Added a notebooks README with recommended reading order and reproducibility rules.
 - Bumped Python package, public docs, capability metadata, and Rust engine package version references from 3.15.0 to 3.15.1.
 
+### NIR Bridge
+- Roundtrip tests for all 18/18 NIR primitives (was 7/18)
+- Auto-broadcast scalar neuron params to input size (Norse/snnTorch export 0-dim tensors)
+- Threshold fix: `>=` to `>` matching NIR spec and snnTorch behavior
+- `reset_mode="subtract"` for snnTorch compatibility (subtract-reset vs zero-reset)
+- IF subtract-reset test and unknown `reset_mode` fallback handling
+- Cross-framework interop tests: Sinabs LIF/IAF/ExpLeak, Rockpool LIF/CubaLIF/LI, snnTorch RSynaptic subgraph
+- Cross-framework r-encoding test documenting per-framework dt conventions
+- SpikingJelly NIR roundtrip demo (`examples/spikingjelly_nir_roundtrip.py`)
+- Norse NIR roundtrip demo with real Norse weights (`examples/norse_nir_roundtrip.py`)
+- NIR roundtrip demo: stronger input to produce visible spikes
+- Documentation: added SpikingJelly, Rockpool, Sinabs, snnTorch RSynaptic sections to `docs/guides/nir_integration.md`
+- Documentation: framework dt/r quick reference table
+- Documented Norse tau observation (export/import roundtrip discrepancy in Norse code)
+- Removed unverified "first FPGA backend" claim from 6 files
+
 ### Physics and mathematics hardening
 - Promoted `LeakyCompeteFireNeuron` from raw Euler vector updates to exact
   first-order relaxation across the Python reference, Go service, Julia
@@ -1806,30 +1822,6 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 - PnR added to typos dictionary
 - tsconfig.tsbuildinfo gitignored
 - uvicorn skip guard for studio optional extra
-
-## [3.15.1] - 2026-06-01
-
-### Documentation and release polish
-- Added public Product Overview and Applications and Market pages so new users, evaluators, and commercial readers can understand the project scope, evidence boundary, potential applications, and market position without reverse-engineering the API inventory.
-- Refreshed the README, documentation home page, learning path, getting-started guide, notebook guide, API index, industrial-applications page, benchmark index, and cross-framework benchmark evidence page for clearer onboarding and claim traceability.
-- Added a notebooks README with recommended reading order and reproducibility rules.
-- Bumped Python package, public docs, capability metadata, and Rust engine package version references from 3.15.0 to 3.15.1.
-
-### NIR Bridge
-- Roundtrip tests for all 18/18 NIR primitives (was 7/18)
-- Auto-broadcast scalar neuron params to input size (Norse/snnTorch export 0-dim tensors)
-- Threshold fix: `>=` to `>` matching NIR spec and snnTorch behavior
-- `reset_mode="subtract"` for snnTorch compatibility (subtract-reset vs zero-reset)
-- IF subtract-reset test and unknown `reset_mode` fallback handling
-- Cross-framework interop tests: Sinabs LIF/IAF/ExpLeak, Rockpool LIF/CubaLIF/LI, snnTorch RSynaptic subgraph
-- Cross-framework r-encoding test documenting per-framework dt conventions
-- SpikingJelly NIR roundtrip demo (`examples/spikingjelly_nir_roundtrip.py`)
-- Norse NIR roundtrip demo with real Norse weights (`examples/norse_nir_roundtrip.py`)
-- NIR roundtrip demo: stronger input to produce visible spikes
-- Documentation: added SpikingJelly, Rockpool, Sinabs, snnTorch RSynaptic sections to `docs/guides/nir_integration.md`
-- Documentation: framework dt/r quick reference table
-- Documented Norse tau observation (export/import roundtrip discrepancy in Norse code)
-- Removed unverified "first FPGA backend" claim from 6 files
 
 ### ANN-to-SNN Conversion Engine
 - `sc_neurocore.conversion.convert()`: automated PyTorch ANN to rate-coded SNN conversion
