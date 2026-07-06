@@ -56,6 +56,10 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
   `check_and_adapt` before a session starts), the None-detection fallback to WAKE, and the
   re-induction branch (two consecutive unwanted awakenings arm a gentle N1 re-induction)
   gained tests, taking the module from 91 % to 100 %.
+- The post-session sleep report generator (`sleep/report_generator.py`) is no longer excluded
+  from coverage measurement: the grade bands (A/B/D/F), the sleep-onset-latency scoring tiers,
+  the mid-session wakeup counter, and the N3/REM/latency/wakeup recommendation branches gained
+  tests over a controlled tick history, taking the module from 84 % to 100 %.
 
 ### Fixed
 - The SystemVerilog emitter wrote malformed signed literals (`16'sd-51`) for negative

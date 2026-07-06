@@ -203,8 +203,8 @@ omit = [
     "*/quantum_cognition/tests/*",        # package-local tests are not source modules
     "*/audio/adaptive_engine.py",
     "*/audio/evs_engine.py",
-    "*/sleep/report_generator.py",
-    # sleep/sleep_optimizer.py is now covered (tests/test_sleep_optimizer.py, 100%); no longer omitted.
+    # sleep/report_generator.py + sleep/sleep_optimizer.py are now covered
+    # (tests/test_sleep_optimizer.py, 100%); no longer omitted.
     "*/viz/plots.py",
     # --- Studio web UI (requires fastapi, tested separately) ---
     "*/studio/*",
