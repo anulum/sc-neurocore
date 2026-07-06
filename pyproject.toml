@@ -200,7 +200,9 @@ omit = [
     # ip_xact.py is now covered (tests/test_ip_xact.py, 100%); no longer omitted.
     # --- Research and extended source modules ---
     "*/experiments/*",
-    "*/drivers/*",
+    # drivers/*.py are pure-Python PYNQ/twin drivers, now covered
+    # (tests/test_pynq_driver.py, test_physical_twin.py, test_verify_hardware_link.py, 100%);
+    # no longer omitted.
     "*/quantum_cognition/fs_watcher.py",  # filesystem daemon, integration-tested outside unit CI
     "*/quantum_cognition/tests/*",        # package-local tests are not source modules
     # audio/adaptive_engine.py + audio/evs_engine.py are now covered

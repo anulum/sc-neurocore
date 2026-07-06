@@ -9,8 +9,31 @@
 """Tests for PhysicalTwinBridge (mock-based, no real FPGA)."""
 
 import numpy as np
+import pytest
 
 from sc_neurocore.drivers.physical_twin import PhysicalTwinBridge
+
+
+class _FakeSocket:
+    """Minimal ``socket.create_connection`` context-manager stand-in."""
+
+    def __init__(self, reply_lines):
+        self._reply_lines = reply_lines
+        self.sent: list[bytes] = []
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exc_type, exc, tb):
+        return False
+
+    def sendall(self, data):
+        self.sent.append(data)
+
+    def makefile(self, mode, encoding):
+        assert mode == "r"
+        assert encoding == "utf-8"
+        return iter(self._reply_lines)
 
 
 def test_import():
@@ -58,3 +81,63 @@ def test_has_expected_attributes():
     assert hasattr(bridge, "connected")
     assert hasattr(bridge, "ip")
     assert hasattr(bridge, "port")
+
+
+def test_rejects_unknown_mode():
+    with pytest.raises(ValueError, match="'EMULATION' or 'TCP'"):
+        PhysicalTwinBridge(mode="BOGUS")
+
+
+def test_rejects_non_positive_timeout():
+    with pytest.raises(ValueError, match="timeout_s must be positive"):
+        PhysicalTwinBridge(timeout_s=0.0)
+
+
+def test_rejects_negative_noise_sigma():
+    with pytest.raises(ValueError, match="noise_sigma must be non-negative"):
+        PhysicalTwinBridge(noise_sigma=-0.1)
+
+
+def test_rejects_non_positive_divergence_threshold():
+    with pytest.raises(ValueError, match="divergence_threshold must be positive"):
+        PhysicalTwinBridge(divergence_threshold=0.0)
+
+
+def test_tcp_connection_failure_marks_disconnected(monkeypatch):
+    def refuse(address, timeout):
+        raise OSError("connection refused")
+
+    monkeypatch.setattr("socket.create_connection", refuse)
+    bridge = PhysicalTwinBridge(mode="TCP")
+    with pytest.raises(ConnectionError, match="hardware twin connection failed"):
+        bridge.sync_step(0.5, 1)
+    assert bridge.connected is False
+
+
+def test_tcp_empty_reply_marks_disconnected(monkeypatch):
+    # makefile yields no line -> next() raises StopIteration inside sync.
+    monkeypatch.setattr("socket.create_connection", lambda *a, **k: _FakeSocket(reply_lines=[]))
+    bridge = PhysicalTwinBridge(mode="TCP")
+    with pytest.raises(ConnectionError, match="closed connection without a reply"):
+        bridge.sync_step(0.5, 1)
+    assert bridge.connected is False
+
+
+def test_tcp_non_json_reply_raises_value_error(monkeypatch):
+    monkeypatch.setattr(
+        "socket.create_connection",
+        lambda *a, **k: _FakeSocket(reply_lines=["definitely not json\n"]),
+    )
+    bridge = PhysicalTwinBridge(mode="TCP")
+    with pytest.raises(ValueError, match="not valid JSON"):
+        bridge.sync_step(0.5, 1)
+
+
+def test_tcp_successful_exchange_marks_connected(monkeypatch):
+    sock = _FakeSocket(reply_lines=['{"v_mem": 0.5}\n'])
+    monkeypatch.setattr("socket.create_connection", lambda *a, **k: sock)
+    bridge = PhysicalTwinBridge(mode="TCP")
+    result = bridge.sync_step(0.5, 1)
+    assert result == pytest.approx(0.5)
+    assert bridge.connected is True
+    # Software and hardware agree, so no divergence path is exercised here.

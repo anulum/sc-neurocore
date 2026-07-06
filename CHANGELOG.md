@@ -78,6 +78,15 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
   configs) with no live-system dependency, so every mapping, mode-selection branch, metric
   smoothing path, glyph-length guard, and the optional JSON file-export sink are now
   covered at 100 %.
+- The PYNQ/hardware-in-the-loop drivers (`drivers/physical_twin.py`,
+  `drivers/sc_neurocore_driver.py`, `drivers/verify_hardware_link.py`) are no longer
+  excluded from coverage measurement — the whole `*/drivers/*` omit glob is removed. They
+  are pure-Python and already tested with mocked PYNQ overlays and sockets (no real FPGA);
+  added tests close the remaining branches — the twin's constructor validation guards, its
+  TCP connection-failure / empty-reply / non-JSON-reply error paths, the driver's
+  missing-bitstream failure, and the hardware-link diagnostic's FPGA success/unexpected-error
+  branches plus the present-but-unreachable Evo 2 and Opentrons probe outcomes — taking all
+  three modules to 100 %.
 
 ### Fixed
 - The NeuroML 2 importer produced an unusable Adaptive-Exponential (AdEx) cell:
