@@ -7,7 +7,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 249
+expected_file_count = 250
 
 [[file]]
 path = "src/sc_neurocore/__init__.py"
@@ -280,6 +280,10 @@ rationale = "Public Numba acceleration module for packed bitstream and stochasti
 [[file]]
 path = "src/sc_neurocore/accel/backend.py"
 rationale = "Public acceleration-backend selector for stochastic-computing inference."
+
+[[file]]
+path = "src/sc_neurocore/accel/backend_selection.py"
+rationale = "Public benchmark-driven polyglot backend ordering selector used by kernel auto-dispatch paths."
 
 [[file]]
 path = "src/sc_neurocore/accel/go/__init__.py"

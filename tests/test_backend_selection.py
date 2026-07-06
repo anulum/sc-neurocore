@@ -15,7 +15,12 @@ recorded benchmarks live in ``benchmarks/results/`` and are read read-only.
 
 from __future__ import annotations
 
+from pathlib import Path
+import platform
+from typing import Protocol, cast
+
 import numpy.testing as npt
+import pytest
 
 from sc_neurocore.accel import backend_selection as bs
 from sc_neurocore.accel.backend_order import FASTEST_FIRST_BACKENDS
@@ -27,9 +32,61 @@ _ADC = "adc_to_spike_windows_q"
 _MIXED = "mixed_dense_forward_batch_q88_q1616"
 
 
+class _MeasuredOrdersCache(Protocol):
+    """Protocol for the cache controls installed by ``functools.cache``."""
+
+    def cache_clear(self) -> None:
+        """Clear the cached benchmark-order table."""
+
+
+def _clear_measured_orders_cache() -> None:
+    """Clear benchmark-order cache entries after path monkeypatching."""
+    cast(_MeasuredOrdersCache, bs.measured_orders).cache_clear()
+
+
 def test_current_cpu_is_nonempty_string() -> None:
     cpu = bs.current_cpu()
     assert isinstance(cpu, str) and cpu
+
+
+def test_current_cpu_uses_platform_processor_without_proc_model(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Host detection falls back to ``platform.processor`` without model-name data."""
+
+    def read_cpuinfo_without_model(
+        _path: Path,
+        encoding: str | None = None,
+        errors: str | None = None,
+    ) -> str:
+        assert encoding == "utf-8"
+        assert errors is None
+        return "processor\t: 0\nvendor_id\t: GenuineIntel\n"
+
+    monkeypatch.setattr(Path, "read_text", read_cpuinfo_without_model)
+    monkeypatch.setattr(platform, "processor", lambda: "portable-cpu")
+
+    assert bs.current_cpu() == "portable-cpu"
+
+
+def test_current_cpu_returns_unknown_when_proc_and_platform_empty(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Host detection keeps a deterministic fallback when CPU probes fail."""
+
+    def raise_cpuinfo_oserror(
+        _path: Path,
+        encoding: str | None = None,
+        errors: str | None = None,
+    ) -> str:
+        assert encoding == "utf-8"
+        assert errors is None
+        raise OSError("cpuinfo unavailable")
+
+    monkeypatch.setattr(Path, "read_text", raise_cpuinfo_oserror)
+    monkeypatch.setattr(platform, "processor", lambda: "")
+
+    assert bs.current_cpu() == "unknown"
 
 
 def test_measured_orders_indexes_recorded_host_and_kernels() -> None:
@@ -51,6 +108,31 @@ def test_backend_speed_order_filters_unavailable_and_sorts_ascending() -> None:
         "stray": "not-a-dict",
     }
     assert bs._backend_speed_order(backends) == ["go", "rust", "python"]
+
+
+def test_measured_orders_returns_empty_when_results_dir_is_absent(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    """Missing benchmark-results directories leave the static fallback in force."""
+    monkeypatch.setattr(bs, "_RESULTS_DIR", tmp_path / "missing-results")
+    _clear_measured_orders_cache()
+
+    assert bs.measured_orders() == {}
+
+    _clear_measured_orders_cache()
+
+
+def test_measured_orders_skips_malformed_json(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    """Malformed benchmark files are ignored rather than breaking dispatch."""
+    (tmp_path / "broken.json").write_text("{not-json", encoding="utf-8")
+    monkeypatch.setattr(bs, "_RESULTS_DIR", tmp_path)
+    _clear_measured_orders_cache()
+
+    assert bs.measured_orders() == {}
+
+    _clear_measured_orders_cache()
 
 
 def test_select_uses_measured_order_for_recorded_host() -> None:

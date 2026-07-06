@@ -5,6 +5,13 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+### Backend selector coverage ratchet
+- Extended the benchmark-driven backend selector tests to cover CPU probe
+  fallback, missing benchmark directories, and malformed benchmark JSON files,
+  bringing `accel.backend_selection` to 100% exact-file coverage. Promoted the
+  selector into the scoped NumPy docstring policy. No dispatch order, benchmark
+  artefact, polyglot runtime, or kernel implementation changed.
+
 ### Constants ledger audit hardening
 - Added dedicated constants-ledger regression tests for the 44 public constants,
   scalar types, physical ranges, Q8.8 invariants, maintained-source import map,
