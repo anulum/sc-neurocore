@@ -154,7 +154,8 @@ omit = [
     "*/quantum/hardware_bridge.py",     # IBM Quantum hardware
     "*/quantum_cognition/bridge_adapter.py",  # Optional PennyLane
     "*/integrations/lava_bridge.py",    # Intel Loihi hardware
-    "*/interfaces/ccw_bridge.py",       # CCW system bridge
+    # interfaces/ccw_bridge.py is a pure-stdlib+numpy data-transformation bridge,
+    # now covered (tests/test_ccw_bridge.py, 100%); no longer omitted.
     # --- Requires optional heavy deps (torch, JAX, nir) ---
     "*/training/*",                     # PyTorch training pipeline
     "*/conversion/*",                   # ANN-to-SNN (torch)

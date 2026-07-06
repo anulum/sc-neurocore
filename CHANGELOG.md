@@ -70,6 +70,14 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
   dependency, and the unit/current parsers' missing-value and dimensionless fall-through
   paths, the `iafTauRefCell` refractory branch, and the `create_neuron` AdEx and
   unknown-cell-type branches gained tests, taking the module from 91 % to 100 %.
+- The CCW/VIBRANA bridge (`interfaces/ccw_bridge.py`) gained a dedicated behavioural test
+  suite (`tests/test_ccw_bridge.py`, 45 tests) and is no longer excluded from coverage
+  measurement. Despite the "CCW system bridge" label it is a self-contained,
+  pure-standard-library-and-numpy data transformation (SCPN metrics → binaural-audio
+  parameters, L7 glyph vectors → VIBRANA visualisation states, plus metadata and session
+  configs) with no live-system dependency, so every mapping, mode-selection branch, metric
+  smoothing path, glyph-length guard, and the optional JSON file-export sink are now
+  covered at 100 %.
 
 ### Fixed
 - The NeuroML 2 importer produced an unusable Adaptive-Exponential (AdEx) cell:
