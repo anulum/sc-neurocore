@@ -1054,10 +1054,13 @@ Remove XML namespace prefix.
 ### Function `_parse_unit_value(s)`
 Parse NeuroML unit string like '10nS', '-65mV', '100pF' to SI-ish float.
 
-Returns value in base NeuroML units (mV, nS, pF, ms, nA).
+Returns value in base NeuroML units (mV, nS, pF, ms, nA); a missing (``None``)
+attribute value parses to ``0.0``.
 
 ### Function `_parse_current_pa(s)`
 Parse a NeuroML current string into pA for biophysical IF equations.
+
+A missing (``None``) attribute value parses to ``0.0``.
 
 ### Function `_import_iaf_cell(elem)`
 Import <iafCell> or <iafRefCell>.
@@ -1074,7 +1077,15 @@ Import <izhikevich2007Cell> (biophysical units).
 Preserve the NeuroML 2 biophysical parameterisation.
 
 ### Function `_import_adex_cell(elem)`
-Import <adExIaFCell>.
+Import <adExIaFCell> (Brette & Gerstner 2005 AdEx).
+
+Maps the NeuroML biophysical attributes onto the ``AdExNeuron`` constructor
+parameter names in its native, self-consistent unit system (mV, ms, pF, pA,
+nS): the leak reversal becomes ``v_rest``, the exponential threshold ``V_T``
+becomes ``v_rh``, the membrane time constant is ``tau = C / g_L`` (pF/nS = ms)
+with the capacitance kept as ``c_m`` (pF), and the spike-triggered adaptation
+``b`` is parsed as a *current* in pA — ``w`` and the injected current share the
+pA unit that keeps ``w / c_m`` a rate in mV/ms.
 
 ### Function `import_neuroml(path)`
 Parse a NeuroML 2 XML file and return imported cell definitions.
@@ -7216,6 +7227,14 @@ dict
 Sanitized generated-driver identifiers for one module parameter.
 
 
+### Function `_validate_driver_inputs(params)`
+Reject malformed driver inputs before any code is generated.
+
+``data_width``/``fraction`` must form a valid signed Q-format (mirroring the FPGA
+compiler guard), the memory-mapped ``base_address`` must be non-negative, and every
+parameter register width must be positive and bounded — a zero, negative or absurd width
+would emit a driver whose runtime ``1 << width`` masks are degenerate or unbounded.
+
 ### Function `generate_host_driver(module_name, params)`
 Generate host-side driver code for a bus-wrapped neuron.
 
@@ -10073,7 +10092,7 @@ Operation record emitted into the dependency-free MLIR text builder.
 
 
 ### Class `MLIRBundle`
-Generated MLIR file and evidence manifest.
+Generated MLIR file, optional lowered Verilog, and evidence manifest.
 
 - **to_dict**()
   - Return a JSON-serialisable manifest representation.
@@ -10088,18 +10107,33 @@ Translate sc-neurocore objects into MLIR text formatted for CIRCT.
 - **emit_and**(lhs, rhs)
   - Emit a comb.and operation for stochastic multiplication.
 - **emit_lfsr**(width, seed)
-  - Emit an LFSR instance placeholder for CIRCT lowering.
+  - Emit a clocked, parametric ``sc_lfsr`` instance for CIRCT lowering.
 - **emit_xor**(lhs, rhs)
   - Emit a comb.xor operation.
 - **emit_mux**(cond, true_val, false_val)
   - Emit a comb.mux operation for SC scaled addition.
 - **generate**()
-  - Generate the final MLIR string for the module.
+  - Generate CIRCT-consumable ``hw``/``comb`` dialect MLIR for the module.
 - **write_bundle**(output_dir)
   - Write MLIR plus a manifest describing CIRCT lowering readiness.
 
+### Function `_lower_with_circt(circt_opt, mlir_path, verilog_path)`
+Verify then lower MLIR to Verilog with ``circt-opt``, failing closed.
+
+Runs ``circt-opt --verify-diagnostics`` followed by ``circt-opt
+--export-verilog`` (the exported Verilog arrives on stdout; the ``-o`` sink
+is discarded). Raises :class:`SCCompilerError` if either step fails, so a
+bundle never records a lowering that did not actually succeed.
+
 ### Function `generate_mlir_bundle(emitter, output_dir)`
-Write a CIRCT-ready MLIR file and reproducibility manifest.
+Write a CIRCT-ready MLIR file, a manifest, and optionally lowered Verilog.
+
+With ``run_circt=False`` (default) the bundle is evidence-first: it records
+whether ``circt-opt`` is available but does not execute it. With
+``run_circt=True`` it verifies the module and lowers it to Verilog through
+``circt-opt``, writing ``<module>.v`` and recording genuine execution
+evidence in the manifest; it raises :class:`SCCompilerError` if ``circt-opt``
+is missing or rejects the MLIR, rather than claiming an un-run lowering.
 
 ---
 
@@ -10359,7 +10393,7 @@ artifact paths before invoking the external EDA toolchain.
 - **_sanitize_name**(name)
   - Restrict output_name to alphanumeric + underscore.
 - **compile_mlir_to_verilog**(mlir_content, output_name)
-  - Lower MLIR text to Verilog with CIRCT ``firtool``.
+  - Lower ``hw``/``comb`` dialect MLIR to Verilog with ``circt-opt``.
 - **_validate_path**(path)
   - Ensure path resolves inside work_dir.
 - **run_synthesis**(v_path, target_fpga)
@@ -22022,8 +22056,8 @@ a silent phase near -65 mV, while cytosolic calcium traces a slow sawtooth.
 Reference: Bertram, R., Marinelli, I., Fletcher, P.A., Satin, L.S. &
 Sherman, A.S. (2023). Deconstructing the integrated oscillator model for
 pancreatic beta-cells. Mathematical Biosciences 365:109085, Table 1
-(DOI 10.1016/j.mbs.2023.109015); the reduced model of Chay & Keizer (1983),
-Biophys. J. 42:181-190.
+(DOI 10.1016/j.mbs.2023.109085); the reduced model of Chay & Keizer (1983),
+Biophys. J. 42:181-189.
 
 - **_finite**(value, name)
 - **_positive**(cls, value, name)
@@ -22363,11 +22397,13 @@ integrator : {"rk4", "baseline_euler"}
 ## Module `neurons.models.destexhe_thalamic`
 
 ### Class `DestexheThalamicNeuron`
-Destexhe 1993 — thalamocortical relay with T-current and I_h.
+Destexhe et al. 1996 — thalamocortical relay with T-current and I_h.
 
 6 ODEs: V, m_Na, h_Na, n_K, m_T, h_T (+ optional h-current).
 
-Reference: Destexhe, A. et al. (1996). J. Comput. Neurosci. 3:19–46.
+Reference: Destexhe, Bal, McCormick & Sejnowski (1996). Ionic mechanisms
+underlying synchronized oscillations and propagating waves in a model of
+ferret thalamic slices. J Neurophysiol 76:2049-2070.
 
 - **step**(current)
 - **reset**()
@@ -23377,7 +23413,7 @@ Reference: Jansen, B.H. & Rit, V.G. (1995). Biol. Cybern. 73:357–366.
 ## Module `neurons.models.kilinc_bhatt_map_neuron`
 
 ### Class `KilincBhattMapNeuron`
-Kilinc-Bhatt 2023 sigmoid map with adaptive threshold.
+Nagumo-Sato / Aihara sigmoid map neuron with a dynamic threshold.
 
 Minimal 2D map with built-in spike frequency adaptation via a slow
 threshold variable. Designed for efficient hardware implementation
@@ -23386,9 +23422,14 @@ while retaining biologically relevant dynamics.
 x(n+1) = -x(n) + k · σ(4·(x(n) - θ(n))) + I
 θ(n+1) = β · θ(n) + γ · H(x(n) - θ_spike)
 
-where σ(z) = 1 / (1 + exp(-z)), H() is Heaviside.
+where σ(z) = 1 / (1 + exp(-z)) and H() is Heaviside. This is the
+Nagumo-Sato (1972) discrete-time neuron with an accumulated dynamic
+threshold, using the Aihara, Takabe & Toyoda (1990) sigmoid firing in
+place of the hard Heaviside so that spiking is graded rather than
+all-or-nothing.
 
-Reference: Kilinc & Bhatt (2023).
+References: Nagumo & Sato (1972) Kybernetik 10:155-164;
+Aihara, Takabe & Toyoda (1990) Phys Lett A 144:333-340.
 
 - **step**(current)
 - **reset**()
@@ -23475,13 +23516,16 @@ Reference: Oster, M. et al. (2009). Neural Comput. 21(9):2437–2465.
 ## Module `neurons.models.lnm`
 
 ### Class `LearnableNeuronModel`
-Jahns et al. 2025 — fully parameterized learnable neuron.
+Fully parameterized learnable neuron.
 
 V&#91;t+1&#93; = alpha * V&#91;t&#93; + beta * I&#91;t&#93; + gamma * f(V&#91;t&#93;)
 where alpha, beta, gamma are trainable scalars and f is a
-learnable activation (here sigmoid).
+learnable activation (here sigmoid) — a trainable generalisation of
+the simple threshold models fitted to cortical recordings by Jolivet et al.
 
-Reference: Jolivet, R. et al. (2006). J. Comput. Neurosci. 21:35–45.
+Reference: Jolivet, Rauch, Lüscher & Gerstner (2006). Predicting spike
+timing of neocortical pyramidal neurons by simple threshold models.
+J Comput Neurosci 21:35-49.
 
 - **__post_init__**()
 - **_sigmoid**(value)
@@ -23542,8 +23586,8 @@ Cerebellar Lugaro cell — rare fusiform granular layer interneuron.
 LIF with adaptation, serotonin (5-HT) modulation, depolarised leak
 for spontaneous firing. Inhibits Golgi cells and molecular layer INs.
 
-Reference: Dieudonné & Bhatt (2003) J Physiol 548:97;
-Lainé & Bhatt (2007) Front Syst Neurosci 1:4.
+Reference: Dieudonné & Dumoulin (2000). Serotonin-driven long-range
+inhibitory connections in the cerebellar cortex. J Neurosci 20:1837-1848.
 
 - **__post_init__**()
 - **with_serotonin**(cls, level)
@@ -24682,7 +24726,9 @@ Abramowitz & Stegun 7.1.26 rational approximation.
 ### Class `SigmaDeltaNeuron`
 Yoon 2017 — event-driven sigma-delta encoding.
 
-Reference: Yoon, Y.J. (2016). LIF and simplified SRM as APSDM. arXiv:1605.02226.
+Reference: Yoon, Y. C. (2017). LIF and simplified SRM neurons encode
+signals into spikes via a form of asynchronous pulse sigma-delta
+modulation. IEEE Trans. Neural Netw. Learn. Syst. (DOI 10.1109/tnnls.2016.2526029).
 
 - **__post_init__**()
 - **step**(current)
@@ -25145,8 +25191,9 @@ Unipolar brush cell (UBC) — excitatory vestibular cerebellum interneuron.
 LIF with slow NMDA-like persistent current that prolongs mossy fibre
 bursts into sustained granule cell activation. Giant 1:1 synapse.
 
-Reference: Bhatt et al. (1994) J Comp Neurol 349:560;
-Diana et al. (2007) J Neurosci 27:4374.
+Reference: Mugnaini & Floris (1994) J Comp Neurol 339:174-180
+(discovery/anatomy); Diana et al. (2007) J Neurosci 27:3823-3838
+(bimodal firing physiology).
 
 - **__post_init__**()
 - **_first_order_relaxation**(previous, steady_state, dt, tau)
@@ -25693,6 +25740,21 @@ scnir_external_inputs : tuple&#91;SCNIRExternalInputManifestEntry, ...&#93;
 scnir_hierarchy_modules : dict&#91;str, str&#93;
     Standalone SC-NIR hierarchy boundary modules keyed by module name.
 
+
+### Function `_check_synthesis_resource_bounds()`
+Reject IR that would exhaust synthesis resources or is malformed, before any RTL.
+
+``data_width`` must fit a hardware-plausible fixed-point datapath and ``fraction`` must
+leave at least one integer or sign bit, so the signed Q-format is well formed (a
+``fraction >= data_width`` would give negative integer bits and silently emit broken
+RTL). The direct and AER
+interconnects instantiate one module per neuron, so their neuron count is capped at
+``_MAX_UNROLLED_NEURONS``; the folded interconnect shares a single processing element
+and is capped higher at ``_MAX_FOLDED_NEURONS`` (its state-RAM depth). Independently,
+every interconnect flattens all weight matrices into one ROM, so the total synapse count
+is capped at ``_MAX_SYNTHESISABLE_SYNAPSES`` regardless of interconnect. Raising here
+means a pathological network fails closed rather than exhausting memory or the
+downstream synthesis tool.
 
 ### Function `_representative_param(values, label)`
 Return the reference (first-neuron) value of a per-neuron parameter.
@@ -28193,22 +28255,92 @@ list of dicts, one per neuron, each containing:
 ## Module `quantum_cognition.__main__`
 
 ### Function `_emit_snn_stimulus(snn_dir, chunk_summary, directive, step_index)`
-Write an SNN stimulus JSON file for downstream orchestration.
+Write a canonical Remanentia SNN stimulus record.
+
+Parameters
+----------
+snn_dir
+    Directory that receives the JSON stimulus file.
+chunk_summary
+    Summary of the indexed content chunk that drove the learning step.
+directive
+    Learning directive selected for the step.
+step_index
+    Monotonic learning-step index from :class:`~.gotm_brain.LearningStep`.
 
 ### Function `_make_llm_endpoint(model)`
-Create an agentic-shared Endpoint if model override requested.
+Create an agentic-shared endpoint for an explicit local model override.
+
+Parameters
+----------
+model
+    Local model alias passed through ``--model``. ``None`` keeps LLM guidance
+    disabled for deterministic offline CLI runs.
+
+Returns
+-------
+Any
+    An ``agentic-shared`` endpoint object when the local library is importable;
+    otherwise ``None`` after logging a warning.
 
 ### Function `cmd_learn(args)`
-One-shot learning from a repository.
+Run one bounded learning pass over a repository.
+
+Parameters
+----------
+args
+    Parsed ``learn`` sub-command arguments, including the repository path,
+    state-file path, model override, and SNN stimulus directory.
+
+Returns
+-------
+int
+    Process-style exit code, ``0`` after the learning pass and state write
+    complete.
 
 ### Function `cmd_daemon(args)`
-Continuous learning daemon — shuffles GOTM, learns in cycles.
+Run the continuous repository-learning daemon.
+
+Parameters
+----------
+args
+    Parsed ``daemon`` sub-command arguments, including cycle size, sleep
+    interval, state-file path, optional dashboard flag, and stimulus directory.
+
+Returns
+-------
+int
+    Process-style exit code, ``0`` after graceful shutdown and final state
+    persistence.
 
 ### Function `cmd_status(args)`
-Print saved learning state.
+Print a saved learning-state summary.
+
+Parameters
+----------
+args
+    Parsed ``status`` sub-command arguments containing the state-file path.
+
+Returns
+-------
+int
+    ``0`` when a readable state file is summarised, ``1`` when the file is
+    absent, empty, or unreadable.
 
 ### Function `main(argv)`
-CLI entry point.
+Dispatch the quantum-cognition CLI.
+
+Parameters
+----------
+argv
+    Optional argument vector. ``None`` uses ``sys.argv`` through
+    :mod:`argparse`.
+
+Returns
+-------
+int
+    Process-style exit code from the selected sub-command, or ``0`` after
+    printing help when no sub-command is provided.
 
 ---
 
