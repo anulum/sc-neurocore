@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from typing import Any
 
+from sc_neurocore.utils.adapter_discovery import discover_adapters
 from sc_neurocore.utils.registry import registry
 
 from .l1_quantum import L1_QuantumAdapter
@@ -52,6 +53,8 @@ _ADAPTERS = {
 
 for _name, _cls in _ADAPTERS.items():
     registry.register("adapter", _name)(_cls)
+
+discover_adapters(include_entry_points=False)
 
 _LAYER_MAP = {i + 1: cls for i, cls in enumerate(_ADAPTERS.values())}
 

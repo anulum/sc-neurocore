@@ -6,6 +6,18 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore — SCPN stochastic adapter package
 
-"""SCPN stochastic adapter package."""
+"""SCPN stochastic adapter package and discovery entry point."""
 
-__all__ = ["base", "holonomic"]
+from sc_neurocore.utils.adapter_discovery import (
+    ADAPTER_ENTRY_POINT_GROUP,
+    FIRST_PARTY_ADAPTERS,
+    discover_adapters,
+)
+
+__all__ = [
+    "ADAPTER_ENTRY_POINT_GROUP",
+    "FIRST_PARTY_ADAPTERS",
+    "base",
+    "discover_adapters",
+    "holonomic",
+]

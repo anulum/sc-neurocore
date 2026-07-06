@@ -71,7 +71,19 @@ SpikeInterface sorting results and SC-NeuroCore representations
 
 ## Plugin Discovery
 
-Community-contributed adapters can be discovered via `importlib.metadata`
-entry points in group `sc_neurocore.adapters`.
+Adapter discovery is backed by Python packaging entry points in group
+`sc_neurocore.adapters`. SC-NeuroCore declares first-party entry points for the
+class-oriented NeuroML, SONATA, SpikeInterface, DNA storage, genetic-regulatory,
+and neuromodulation adapter surfaces in `pyproject.toml`; editable source
+checkouts also register the same first-party classes through
+`discover_adapters(include_entry_points=False)` when the adapter registry is
+lazy-loaded. Third-party entry points are loaded only when callers explicitly
+run `discover_adapters()` with the default `include_entry_points=True`.
+
+The global `ComponentRegistry` stores adapter classes. Historical importer
+functions remain available from their original modules, while registry discovery
+uses thin classes in `sc_neurocore.adapters.importers`.
 
 ::: sc_neurocore.utils.adapter_discovery
+
+::: sc_neurocore.adapters.importers

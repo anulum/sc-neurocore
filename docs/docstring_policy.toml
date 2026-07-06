@@ -7,7 +7,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 250
+expected_file_count = 252
 
 [[file]]
 path = "src/sc_neurocore/__init__.py"
@@ -240,6 +240,14 @@ rationale = "Public experiments package entry point with an intentionally empty 
 [[file]]
 path = "src/sc_neurocore/adapters/__init__.py"
 rationale = "Public adapter package entry point for stochastic adapter modules."
+
+[[file]]
+path = "src/sc_neurocore/adapters/importers.py"
+rationale = "Public class-oriented adapter importer surfaces registered through adapter entry points."
+
+[[file]]
+path = "src/sc_neurocore/utils/adapter_discovery.py"
+rationale = "Public adapter entry-point discovery and first-party adapter registration surface."
 
 [[file]]
 path = "src/sc_neurocore/conversion/__init__.py"

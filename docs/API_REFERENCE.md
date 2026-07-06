@@ -1042,6 +1042,34 @@ Modulates neuron parameters based on Dopamine (DA), Serotonin (5HT), Norepinephr
 
 ---
 
+## Module `adapters.importers`
+
+### Class `NeuroMLImporter`
+Class-oriented registry surface for NeuroML 2 cell imports.
+
+- **import_cells**(path)
+  - Parse a NeuroML 2 XML file into imported cell definitions.
+- **create_neuron**(cell)
+  - Instantiate a neuron from a parsed NeuroML cell definition.
+
+### Class `SONATAImporter`
+Class-oriented registry surface for SONATA network imports.
+
+- **import_network**(nodes_path, edges_path)
+  - Import a SONATA network from nodes and optional edges files.
+
+### Class `SpikeInterfaceImporter`
+Class-oriented registry surface for spike-train conversion imports.
+
+- **to_bitstreams**(spike_times, duration_ms, dt)
+  - Convert spike times to a binary bitstream matrix.
+- **to_population_input**(spike_times, duration_ms, dt)
+  - Convert spike times to ``Population.step_all`` input.
+- **to_probabilities**(spike_times, duration_ms, max_rate_hz)
+  - Convert spike trains into bounded stochastic-computing probabilities.
+
+---
+
 ## Module `adapters.neuroml`
 
 ### Class `ImportedCell`
@@ -37925,11 +37953,28 @@ max_len : int
 
 ## Module `utils.adapter_discovery`
 
+### Function `_resolve_target(target)`
+### Function `_entry_points(group)`
+### Function `_register_adapter(name, adapter_type)`
+### Function `_ensure_holonomic_adapters_loaded()`
 ### Function `discover_adapters()`
-Auto-discover adapter plugins via importlib.metadata entry points.
+Discover adapter classes and register them in the global registry.
 
-Looks for entry points in group ``sc_neurocore.adapters``.
-Each entry point should point to a class inheriting BaseStochasticAdapter.
+Parameters
+----------
+include_first_party : bool, default=True
+    Register the built-in adapter importers declared by
+    :data:`FIRST_PARTY_ADAPTERS`.  This source-level path keeps editable
+    checkouts wired even before packaging metadata is installed.
+include_entry_points : bool, default=True
+    Load installed third-party plugins from
+    :data:`ADAPTER_ENTRY_POINT_GROUP` through ``importlib.metadata``.
+
+Returns
+-------
+dict&#91;str, type&#93;
+    Mapping from registry name to the discovered adapter class. Duplicate
+    registry entries are tolerated so repeated discovery is idempotent.
 
 ---
 

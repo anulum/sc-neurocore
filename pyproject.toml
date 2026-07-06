@@ -62,6 +62,14 @@ Discussions = "https://github.com/anulum/sc-neurocore/discussions"
 [project.scripts]
 sc-neurocore = "sc_neurocore.cli:main"
 
+[project.entry-points."sc_neurocore.adapters"]
+neuroml = "sc_neurocore.adapters.importers:NeuroMLImporter"
+sonata = "sc_neurocore.adapters.importers:SONATAImporter"
+spikeinterface = "sc_neurocore.adapters.importers:SpikeInterfaceImporter"
+holonomic_dna_storage = "sc_neurocore.adapters.holonomic.dna_storage:DNAEncoder"
+holonomic_grn = "sc_neurocore.adapters.holonomic.grn:GeneticRegulatoryLayer"
+holonomic_neuromodulation = "sc_neurocore.adapters.holonomic.neuromodulation:NeuromodulatorSystem"
+
 [project.optional-dependencies]
 minimal = []
 core = []

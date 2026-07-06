@@ -8,23 +8,28 @@
 
 module AdapterDiscoveryAccel
 
-using Statistics, LinearAlgebra
+const ADAPTER_ENTRY_POINT_GROUP = "sc_neurocore.adapters"
 
-function discover_adapters()
-    found = {}
-    try
-        eps = importlib.metadata.entry_points(group="sc_neurocore.adapters")
-    except TypeError
-        eps = importlib.metadata.entry_points().get("sc_neurocore.adapters", [])  # type: ignore[attr-defined]
-    for ep in eps
-        try
-            cls = ep.load()
-            name = ep.name
-            registry.register("adapter", name)(cls)
-            found[name] = cls
-        except (ImportError, KeyError, AttributeError)
-            continue
-    return found
+const FIRST_PARTY_ADAPTERS = Dict{String,String}(
+    "neuroml" => "sc_neurocore.adapters.importers:NeuroMLImporter",
+    "sonata" => "sc_neurocore.adapters.importers:SONATAImporter",
+    "spikeinterface" => "sc_neurocore.adapters.importers:SpikeInterfaceImporter",
+    "holonomic_dna_storage" => "sc_neurocore.adapters.holonomic.dna_storage:DNAEncoder",
+    "holonomic_grn" => "sc_neurocore.adapters.holonomic.grn:GeneticRegulatoryLayer",
+    "holonomic_neuromodulation" => "sc_neurocore.adapters.holonomic.neuromodulation:NeuromodulatorSystem",
+)
+
+function adapter_entry_point_group()::String
+    return ADAPTER_ENTRY_POINT_GROUP
+end
+
+function first_party_adapters()::Dict{String,String}
+    return copy(FIRST_PARTY_ADAPTERS)
+end
+
+function discover_adapters()::Dict{String,String}
+    # Python owns importlib.metadata loading and ComponentRegistry mutation.
+    return first_party_adapters()
 end
 
 end # module AdapterDiscoveryAccel

@@ -80,7 +80,7 @@ import sc_neurocore.adapters.holonomic
 
 # List all registered adapters
 print(registry.list("adapter"))
-# ['L10_Firewall', 'L11_Noospheric', ..., 'L9_Memory']
+# ['L10_Firewall', 'L11_Noospheric', ..., 'L9_Memory', 'neuroml', ...]
 
 # Retrieve by name
 cls = registry.get("adapter", "L7_Symbolic")
@@ -120,8 +120,18 @@ registry.register("adapter", "MyCustom")(MyCustomAdapter)
 
 ## Plugin Discovery
 
-Third-party adapters can be discovered automatically via Python
-entry points. Add to your package's `pyproject.toml`:
+First-party importer adapter classes are declared in SC-NeuroCore's
+`pyproject.toml` under the same entry-point group used by third-party plugins:
+
+```python
+from sc_neurocore.utils.adapter_discovery import discover_adapters
+
+found = discover_adapters(include_entry_points=False)
+print(found["neuroml"])  # sc_neurocore.adapters.importers.NeuroMLImporter
+```
+
+Third-party adapters can be discovered via Python entry points. Add to your
+package's `pyproject.toml`:
 
 ```toml
 [project.entry-points."sc_neurocore.adapters"]
@@ -131,10 +141,11 @@ MyAdapter = "my_package.adapters:MyCustomAdapter"
 Then discover at runtime:
 
 ```python
-from sc_neurocore.utils.adapter_discovery import discover_adapters
-
 found = discover_adapters()  # auto-registers into global registry
 ```
+
+Discovery is idempotent: repeated calls return the discovered classes and leave
+existing registry entries intact.
 
 ## Benchmarking
 
