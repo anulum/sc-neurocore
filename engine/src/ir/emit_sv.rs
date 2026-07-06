@@ -141,13 +141,7 @@ pub fn emit_systemverilog_with_target(
                     id.0
                 ));
             }
-            ScOp::SoftmaxAttention {
-                id,
-                q,
-                k,
-                v,
-                dim_k,
-            } => {
+            ScOp::SoftmaxAttention { id, q, k, v, dim_k } => {
                 let width = softmax_attention_shape(graph, *q, *k, *v, *dim_k)
                     .map(|(qr, _, vc)| qr * vc * ATTN_DATA_WIDTH)
                     .unwrap_or(64);
@@ -392,17 +386,18 @@ pub fn emit_systemverilog_with_target(
                 n_features,
             } => {
                 emit_graph_forward(
-                    &mut sv, graph, inst_idx, *id, *features, *adjacency, *n_nodes, *n_features,
+                    &mut sv,
+                    graph,
+                    inst_idx,
+                    *id,
+                    *features,
+                    *adjacency,
+                    *n_nodes,
+                    *n_features,
                 )?;
                 inst_idx += 1;
             }
-            ScOp::SoftmaxAttention {
-                id,
-                q,
-                k,
-                v,
-                dim_k,
-            } => {
+            ScOp::SoftmaxAttention { id, q, k, v, dim_k } => {
                 emit_softmax_attention(&mut sv, graph, inst_idx, *id, *q, *k, *v, *dim_k)?;
                 inst_idx += 1;
             }
@@ -490,11 +485,11 @@ fn find_value_width(graph: &ScGraph, id: ValueId) -> usize {
                 ScOp::KuramotoStep { phases, .. } => kuramoto_osc_count(graph, *phases)
                     .map(|n| n * KURAMOTO_DATA_WIDTH)
                     .unwrap_or(64),
-                ScOp::SoftmaxAttention {
-                    q, k, v, dim_k, ..
-                } => softmax_attention_shape(graph, *q, *k, *v, *dim_k)
-                    .map(|(qr, _, vc)| qr * vc * ATTN_DATA_WIDTH)
-                    .unwrap_or(64),
+                ScOp::SoftmaxAttention { q, k, v, dim_k, .. } => {
+                    softmax_attention_shape(graph, *q, *k, *v, *dim_k)
+                        .map(|(qr, _, vc)| qr * vc * ATTN_DATA_WIDTH)
+                        .unwrap_or(64)
+                }
                 ScOp::Scale { .. } | ScOp::Offset { .. } | ScOp::DivConst { .. } => 64,
                 ScOp::Output { source, .. } => find_value_width(graph, *source),
             };
@@ -793,8 +788,12 @@ fn emit_graph_forward(
             feat_vals.len()
         ));
     }
-    let adj_vals = const_f64_vec(graph, adjacency)
-        .ok_or_else(|| format!("GraphForward (v{}) requires a constant adjacency matrix", id.0))?;
+    let adj_vals = const_f64_vec(graph, adjacency).ok_or_else(|| {
+        format!(
+            "GraphForward (v{}) requires a constant adjacency matrix",
+            id.0
+        )
+    })?;
     if adj_vals.len() != n_nodes * n_nodes {
         return Err(format!(
             "GraphForward (v{}) adjacency length {} is not {n_nodes}×{n_nodes}",
@@ -881,14 +880,25 @@ fn emit_softmax_attention(
     dim_k: usize,
 ) -> Result<(), String> {
     if dim_k == 0 {
-        return Err(format!("SoftmaxAttention (v{}) needs a positive dim_k", id.0));
+        return Err(format!(
+            "SoftmaxAttention (v{}) needs a positive dim_k",
+            id.0
+        ));
     }
-    let q_vals = const_f64_vec(graph, q)
-        .ok_or_else(|| format!("SoftmaxAttention (v{}) requires constant query values", id.0))?;
+    let q_vals = const_f64_vec(graph, q).ok_or_else(|| {
+        format!(
+            "SoftmaxAttention (v{}) requires constant query values",
+            id.0
+        )
+    })?;
     let k_vals = const_f64_vec(graph, k)
         .ok_or_else(|| format!("SoftmaxAttention (v{}) requires constant key values", id.0))?;
-    let v_vals = const_f64_vec(graph, v)
-        .ok_or_else(|| format!("SoftmaxAttention (v{}) requires constant value values", id.0))?;
+    let v_vals = const_f64_vec(graph, v).ok_or_else(|| {
+        format!(
+            "SoftmaxAttention (v{}) requires constant value values",
+            id.0
+        )
+    })?;
     if q_vals.len() % dim_k != 0 {
         return Err(format!(
             "SoftmaxAttention (v{}) query length {} is not a multiple of dim_k {dim_k}",
