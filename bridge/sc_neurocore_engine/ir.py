@@ -74,6 +74,21 @@ class ScGraphBuilder:
         """
         return self._builder.kuramoto_step(phases_id, omega_id, coupling_id, dt)
 
+    def graph_forward(
+        self,
+        features_id: int,
+        adjacency_id: int,
+        n_nodes: int,
+        n_features: int,
+    ) -> int:
+        """Add a degree-normalised graph aggregation over an adjacency matrix.
+
+        ``features_id`` is the ``n_nodes × n_features`` (node-major) vector constant
+        and ``adjacency_id`` the row-major ``n_nodes × n_nodes`` matrix. The result is
+        ``agg[i][f] = (Σ_j adj[i][j]·feat[j][f]) / degree[i]``.
+        """
+        return self._builder.graph_forward(features_id, adjacency_id, n_nodes, n_features)
+
     def encode(self, prob_id: int, length: int = 1024, seed: int = 0xACE1) -> int:
         """Add Bernoulli bitstream encoding."""
         return self._builder.encode(prob_id, length, seed)

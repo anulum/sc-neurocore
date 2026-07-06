@@ -133,12 +133,23 @@ pub fn emit(graph: &ScGraph) -> Result<String, String> {
                 let inp = value_wire(graph, *input);
                 mlir.push_str(&format!("  %v{} = comb.popcount {inp} : i64\n", id.0));
             }
-            ScOp::GraphForward { id, features, .. } => {
-                let inp = value_wire(graph, *features);
+            ScOp::GraphForward {
+                id,
+                features,
+                adjacency,
+                n_nodes,
+                n_features,
+            } => {
+                let features_w = value_wire(graph, *features);
+                let adjacency_w = value_wire(graph, *adjacency);
                 mlir.push_str(&format!(
-                    "  // GraphForward: SC AND-popcount aggregation\n  %v{} = {inp} : i64\n",
-                    id.0
+                    "  %v{id} = hw.instance \"graph_{id}\" @sc_graph_forward<\
+                     N_NODES: i32 = {n_nodes}, N_FEATURES: i32 = {n_features}>(\
+                     features: {features_w}: i64, adjacency: {adjacency_w}: i64) \
+                     -> (agg: i64)\n",
+                    id = id.0,
                 ));
+                last_output = format!("%v{}", id.0);
             }
             ScOp::SoftmaxAttention { id, v, .. } => {
                 let inp = value_wire(graph, *v);

@@ -128,10 +128,16 @@ pub fn emit_systemverilog_with_target(
             ScOp::Reduce { id, .. } => {
                 sv.push_str(&format!("    wire [63:0] v{};\n", id.0));
             }
-            ScOp::GraphForward { id, n_features, .. } => {
+            ScOp::GraphForward {
+                id,
+                n_nodes,
+                n_features,
+                ..
+            } => {
+                let width = n_nodes * n_features * GRAPH_DATA_WIDTH;
                 sv.push_str(&format!(
-                    "    wire [{}:0] v{};\n",
-                    n_features.saturating_sub(1),
+                    "    wire signed [{}:0] v{};\n",
+                    width.saturating_sub(1),
                     id.0
                 ));
             }
@@ -371,15 +377,15 @@ pub fn emit_systemverilog_with_target(
             }
             ScOp::GraphForward {
                 id,
-                features: _,
-                adjacency: _,
+                features,
+                adjacency,
                 n_nodes,
                 n_features,
             } => {
-                return Err(format!(
-                    "GraphForward (v{}, {} nodes × {} features) has no synthesizable RTL implementation yet",
-                    id.0, n_nodes, n_features
-                ));
+                emit_graph_forward(
+                    &mut sv, graph, inst_idx, *id, *features, *adjacency, *n_nodes, *n_features,
+                )?;
+                inst_idx += 1;
             }
             ScOp::SoftmaxAttention { id, dim_k, .. } => {
                 return Err(format!(
@@ -463,7 +469,11 @@ fn find_value_width(graph: &ScGraph, id: ValueId) -> usize {
                 ScOp::LifStep { params, .. } => params.data_width as usize,
                 ScOp::DenseForward { params, .. } => params.n_neurons,
                 ScOp::DclsLayer { params, .. } => params.data_width as usize,
-                ScOp::GraphForward { n_features, .. } => *n_features,
+                ScOp::GraphForward {
+                    n_nodes,
+                    n_features,
+                    ..
+                } => n_nodes * n_features * GRAPH_DATA_WIDTH,
                 ScOp::KuramotoStep { phases, .. } => kuramoto_osc_count(graph, *phases)
                     .map(|n| n * KURAMOTO_DATA_WIDTH)
                     .unwrap_or(64),
@@ -521,6 +531,23 @@ const KURAMOTO_DATA_WIDTH: usize = 24;
 const KURAMOTO_FRACTION: usize = 16;
 const KURAMOTO_LUT_SIZE: usize = 64;
 
+// Fixed-point contract of the `sc_graph_forward` aggregation core
+// (see hdl/sc_graph_forward.v). Signed Q8.16, 24-bit, matching the phase core.
+const GRAPH_DATA_WIDTH: usize = 24;
+const GRAPH_FRACTION: usize = 16;
+
+/// Quantise a finite real into signed Q(`frac`) of `width` bits, or `None` when the
+/// value is non-finite or falls outside the representable two's-complement range.
+fn q_fixed(value: f64, frac: usize, width: usize) -> Option<i64> {
+    if !value.is_finite() {
+        return None;
+    }
+    let scaled = (value * (1i64 << frac) as f64).round() as i64;
+    let min = -(1i64 << (width - 1));
+    let max = (1i64 << (width - 1)) - 1;
+    (min..=max).contains(&scaled).then_some(scaled)
+}
+
 /// Q(FRACTION) representation of the `2*pi` phase modulus.
 fn kuramoto_phase_modulus() -> i64 {
     (std::f64::consts::TAU * (1i64 << KURAMOTO_FRACTION) as f64).round() as i64
@@ -531,33 +558,34 @@ fn kuramoto_half_phase_modulus() -> i64 {
     (std::f64::consts::PI * (1i64 << KURAMOTO_FRACTION) as f64).round() as i64
 }
 
-/// Quantise a real value into the signed Q8.16 datapath, rejecting out-of-range constants.
+/// Quantise a real value into the signed Q8.16 Kuramoto datapath, rejecting out-of-range constants.
 fn kuramoto_fixed(value: f64, name: &str, id: ValueId) -> Result<i64, String> {
-    if !value.is_finite() {
-        return Err(format!(
-            "KuramotoStep (v{}) {} value {} is not finite",
+    q_fixed(value, KURAMOTO_FRACTION, KURAMOTO_DATA_WIDTH).ok_or_else(|| {
+        format!(
+            "KuramotoStep (v{}) {} value {} is not representable in signed Q8.16 (24-bit)",
             id.0, name, value
-        ));
-    }
-    let scaled = (value * (1i64 << KURAMOTO_FRACTION) as f64).round() as i64;
-    let min = -(1i64 << (KURAMOTO_DATA_WIDTH - 1));
-    let max = (1i64 << (KURAMOTO_DATA_WIDTH - 1)) - 1;
-    if scaled < min || scaled > max {
-        return Err(format!(
-            "KuramotoStep (v{}) {} value {} maps to {} outside signed Q8.16 range [{}, {}]",
-            id.0, name, value, scaled, min, max
-        ));
-    }
-    Ok(scaled)
+        )
+    })
 }
 
-/// Pack signed Q8.16 words into a Verilog concatenation with element 0 at the LSB.
-fn pack_q16_bus(values: &[i64]) -> String {
-    let mask = (1i64 << KURAMOTO_DATA_WIDTH) - 1;
+/// Quantise a real value into the signed Q8.16 graph datapath, rejecting out-of-range constants.
+fn graph_fixed(value: f64, name: &str, id: ValueId) -> Result<i64, String> {
+    q_fixed(value, GRAPH_FRACTION, GRAPH_DATA_WIDTH).ok_or_else(|| {
+        format!(
+            "GraphForward (v{}) {} value {} is not representable in signed Q8.16 (24-bit)",
+            id.0, name, value
+        )
+    })
+}
+
+/// Pack signed Q(FRACTION) words of `width` bits into a Verilog concatenation with
+/// element 0 at the LSB.
+fn pack_q_bus(values: &[i64], width: usize) -> String {
+    let mask = (1i64 << width) - 1;
     let fields: Vec<String> = values
         .iter()
         .rev()
-        .map(|v| format!("{}'d{}", KURAMOTO_DATA_WIDTH, v & mask))
+        .map(|v| format!("{}'d{}", width, v & mask))
         .collect();
     format!("{{{}}}", fields.join(", "))
 }
@@ -695,9 +723,79 @@ fn emit_kuramoto_step(
         lut = KURAMOTO_LUT_SIZE,
         modulus = kuramoto_phase_modulus(),
         half = kuramoto_half_phase_modulus(),
-        phases_bus = pack_q16_bus(&phase_fixed),
-        omega_bus = pack_q16_bus(&omega_fixed),
-        coupling_bus = pack_q16_bus(&coupling_fixed),
+        phases_bus = pack_q_bus(&phase_fixed, KURAMOTO_DATA_WIDTH),
+        omega_bus = pack_q_bus(&omega_fixed, KURAMOTO_DATA_WIDTH),
+        coupling_bus = pack_q_bus(&coupling_fixed, KURAMOTO_DATA_WIDTH),
+        result = id.0,
+    ));
+    Ok(())
+}
+
+/// Instantiate the fixed-point `sc_graph_forward` core for a single graph aggregation.
+///
+/// The `features` (`n_nodes × n_features`, node-major) and `adjacency`
+/// (`n_nodes × n_nodes`, row-major) operands must be constants. Values are baked
+/// into the signed Q8.16 datapath and the core emits the degree-normalised
+/// neighbourhood aggregate `agg[i][f] = (Σ_j adj[i][j]·feat[j][f]) / degree[i]`.
+fn emit_graph_forward(
+    sv: &mut String,
+    graph: &ScGraph,
+    inst_idx: u32,
+    id: ValueId,
+    features: ValueId,
+    adjacency: ValueId,
+    n_nodes: usize,
+    n_features: usize,
+) -> Result<(), String> {
+    if n_nodes == 0 || n_features == 0 {
+        return Err(format!(
+            "GraphForward (v{}) needs at least one node and one feature",
+            id.0
+        ));
+    }
+    let feat_vals = const_f64_vec(graph, features)
+        .ok_or_else(|| format!("GraphForward (v{}) requires constant feature values", id.0))?;
+    if feat_vals.len() != n_nodes * n_features {
+        return Err(format!(
+            "GraphForward (v{}) feature length {} is not {n_nodes}×{n_features}",
+            id.0,
+            feat_vals.len()
+        ));
+    }
+    let adj_vals = const_f64_vec(graph, adjacency)
+        .ok_or_else(|| format!("GraphForward (v{}) requires a constant adjacency matrix", id.0))?;
+    if adj_vals.len() != n_nodes * n_nodes {
+        return Err(format!(
+            "GraphForward (v{}) adjacency length {} is not {n_nodes}×{n_nodes}",
+            id.0,
+            adj_vals.len()
+        ));
+    }
+
+    let feat_fixed = feat_vals
+        .iter()
+        .map(|x| graph_fixed(*x, "feature", id))
+        .collect::<Result<Vec<_>, _>>()?;
+    let adj_fixed = adj_vals
+        .iter()
+        .map(|x| graph_fixed(*x, "adjacency", id))
+        .collect::<Result<Vec<_>, _>>()?;
+
+    sv.push_str(&format!(
+        "    sc_graph_forward #(\n\
+         \x20       .N_NODES({n_nodes}),\n\
+         \x20       .N_FEATURES({n_features}),\n\
+         \x20       .DATA_WIDTH({dw}),\n\
+         \x20       .FRACTION({frac})\n\
+         \x20   ) u_graph_{inst_idx} (\n\
+         \x20       .features({feat_bus}),\n\
+         \x20       .adjacency({adj_bus}),\n\
+         \x20       .agg(v{result})\n\
+         \x20   );\n\n",
+        dw = GRAPH_DATA_WIDTH,
+        frac = GRAPH_FRACTION,
+        feat_bus = pack_q_bus(&feat_fixed, GRAPH_DATA_WIDTH),
+        adj_bus = pack_q_bus(&adj_fixed, GRAPH_DATA_WIDTH),
         result = id.0,
     ));
     Ok(())

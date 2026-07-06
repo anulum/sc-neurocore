@@ -15,6 +15,16 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
   resolution, and the MLIR emitter now instantiates the same core instead of a
   passthrough. The Python IR builder gains `constant_f64_vec` and `kuramoto_step` so
   the graph can be constructed, emitted, and simulated end to end.
+- The `sc.graph_forward` IR operation now lowers to synthesisable RTL, replacing the
+  previous hard error. The SystemVerilog emitter instantiates a new
+  `hdl/sc_graph_forward.v` fixed-point aggregation core (signed Q8.16) that computes the
+  degree-normalised neighbourhood aggregation `agg[i][f] = (Σ_j A[i][j]·X[j][f]) / deg[i]`
+  — the graph-structural half of the reference `StochasticGraphLayer` rate-mode forward
+  pass — over an explicit adjacency matrix, deferring rounding to a single signed division.
+  The core is co-simulated against a bit-exact fixed-point oracle with Icarus Verilog and
+  checked against the ideal float aggregation within fixed-point resolution, and the MLIR
+  emitter now instantiates the same core instead of a passthrough. The Python IR builder
+  gains `graph_forward`.
 
 ### Fixed
 - The SystemVerilog emitter wrote malformed signed literals (`16'sd-51`) for negative

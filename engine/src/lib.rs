@@ -3083,6 +3083,28 @@ impl PyScGraphBuilder {
             .0)
     }
 
+    /// Add a degree-normalised graph aggregation over an explicit adjacency matrix.
+    ///
+    /// `features_id` is the `n_nodes × n_features` (node-major) constant vector and
+    /// `adjacency_id` the row-major `n_nodes × n_nodes` matrix.
+    fn graph_forward(
+        &mut self,
+        features_id: u32,
+        adjacency_id: u32,
+        n_nodes: usize,
+        n_features: usize,
+    ) -> PyResult<u32> {
+        Ok(self
+            .builder_mut()?
+            .graph_forward(
+                ir::graph::ValueId(features_id),
+                ir::graph::ValueId(adjacency_id),
+                n_nodes,
+                n_features,
+            )
+            .0)
+    }
+
     /// Add a Bernoulli encode operation.
     fn encode(&mut self, prob_id: u32, length: usize, seed: u64) -> PyResult<u32> {
         let seed = u16::try_from(seed)
