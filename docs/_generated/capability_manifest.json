@@ -965,7 +965,7 @@
     "python_model_classes": 158,
     "python_model_source_modules": 152,
     "rust_pyo3_model_wrappers": 175,
-    "test_files": 970
+    "test_files": 971
   },
   "documentation": {
     "public_pages": [
@@ -3561,6 +3561,7 @@
       "tests/test_snn_optimizer.py",
       "tests/test_snn_verification_standard.py",
       "tests/test_sobol_attention.py",
+      "tests/test_softmax_attention_rtl_cosim.py",
       "tests/test_solvers/test_ising.py",
       "tests/test_solvers_ode.py",
       "tests/test_sonata_import.py",

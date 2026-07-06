@@ -141,8 +141,17 @@ pub fn emit_systemverilog_with_target(
                     id.0
                 ));
             }
-            ScOp::SoftmaxAttention { id, .. } => {
-                sv.push_str(&format!("    wire [63:0] v{};\n", id.0));
+            ScOp::SoftmaxAttention {
+                id,
+                q,
+                k,
+                v,
+                dim_k,
+            } => {
+                let width = softmax_attention_shape(graph, *q, *k, *v, *dim_k)
+                    .map(|(qr, _, vc)| qr * vc * ATTN_DATA_WIDTH)
+                    .unwrap_or(64);
+                sv.push_str(&format!("    wire signed [{}:0] v{};\n", width - 1, id.0));
             }
             ScOp::KuramotoStep { id, phases, .. } => {
                 let width = kuramoto_osc_count(graph, *phases)
@@ -387,11 +396,15 @@ pub fn emit_systemverilog_with_target(
                 )?;
                 inst_idx += 1;
             }
-            ScOp::SoftmaxAttention { id, dim_k, .. } => {
-                return Err(format!(
-                    "SoftmaxAttention (v{}, dim_k={}) has no synthesizable RTL implementation yet",
-                    id.0, dim_k
-                ));
+            ScOp::SoftmaxAttention {
+                id,
+                q,
+                k,
+                v,
+                dim_k,
+            } => {
+                emit_softmax_attention(&mut sv, graph, inst_idx, *id, *q, *k, *v, *dim_k)?;
+                inst_idx += 1;
             }
             ScOp::KuramotoStep {
                 id,
@@ -477,10 +490,12 @@ fn find_value_width(graph: &ScGraph, id: ValueId) -> usize {
                 ScOp::KuramotoStep { phases, .. } => kuramoto_osc_count(graph, *phases)
                     .map(|n| n * KURAMOTO_DATA_WIDTH)
                     .unwrap_or(64),
-                ScOp::SoftmaxAttention { .. }
-                | ScOp::Scale { .. }
-                | ScOp::Offset { .. }
-                | ScOp::DivConst { .. } => 64,
+                ScOp::SoftmaxAttention {
+                    q, k, v, dim_k, ..
+                } => softmax_attention_shape(graph, *q, *k, *v, *dim_k)
+                    .map(|(qr, _, vc)| qr * vc * ATTN_DATA_WIDTH)
+                    .unwrap_or(64),
+                ScOp::Scale { .. } | ScOp::Offset { .. } | ScOp::DivConst { .. } => 64,
                 ScOp::Output { source, .. } => find_value_width(graph, *source),
             };
         }
@@ -536,6 +551,12 @@ const KURAMOTO_LUT_SIZE: usize = 64;
 const GRAPH_DATA_WIDTH: usize = 24;
 const GRAPH_FRACTION: usize = 16;
 
+// Fixed-point contract of the `sc_softmax_attention` core
+// (see hdl/sc_softmax_attention.v). Signed Q8.16, 24-bit, 256-entry exp LUT over
+// the symmetric [-16, 16) grid at 0.125 spacing.
+const ATTN_DATA_WIDTH: usize = 24;
+const ATTN_FRACTION: usize = 16;
+
 /// Quantise a finite real into signed Q(`frac`) of `width` bits, or `None` when the
 /// value is non-finite or falls outside the representable two's-complement range.
 fn q_fixed(value: f64, frac: usize, width: usize) -> Option<i64> {
@@ -573,6 +594,16 @@ fn graph_fixed(value: f64, name: &str, id: ValueId) -> Result<i64, String> {
     q_fixed(value, GRAPH_FRACTION, GRAPH_DATA_WIDTH).ok_or_else(|| {
         format!(
             "GraphForward (v{}) {} value {} is not representable in signed Q8.16 (24-bit)",
+            id.0, name, value
+        )
+    })
+}
+
+/// Quantise a real value into the signed Q8.16 attention datapath, rejecting out-of-range constants.
+fn attn_fixed(value: f64, name: &str, id: ValueId) -> Result<i64, String> {
+    q_fixed(value, ATTN_FRACTION, ATTN_DATA_WIDTH).ok_or_else(|| {
+        format!(
+            "SoftmaxAttention (v{}) {} value {} is not representable in signed Q8.16 (24-bit)",
             id.0, name, value
         )
     })
@@ -796,6 +827,147 @@ fn emit_graph_forward(
         frac = GRAPH_FRACTION,
         feat_bus = pack_q_bus(&feat_fixed, GRAPH_DATA_WIDTH),
         adj_bus = pack_q_bus(&adj_fixed, GRAPH_DATA_WIDTH),
+        result = id.0,
+    ));
+    Ok(())
+}
+
+/// Infer the `(q_rows, k_rows, v_cols)` attention shape from the constant operand
+/// lengths and `dim_k`, or `None` when the operands are non-constant or ill-shaped.
+///
+/// `q` is `q_rows × dim_k`, `k` is `k_rows × dim_k` and `v` is `k_rows × v_cols`.
+fn softmax_attention_shape(
+    graph: &ScGraph,
+    q: ValueId,
+    k: ValueId,
+    v: ValueId,
+    dim_k: usize,
+) -> Option<(usize, usize, usize)> {
+    if dim_k == 0 {
+        return None;
+    }
+    let q_vals = const_f64_vec(graph, q)?;
+    let k_vals = const_f64_vec(graph, k)?;
+    let v_vals = const_f64_vec(graph, v)?;
+    if q_vals.len() % dim_k != 0 || k_vals.len() % dim_k != 0 {
+        return None;
+    }
+    let q_rows = q_vals.len() / dim_k;
+    let k_rows = k_vals.len() / dim_k;
+    if k_rows == 0 || v_vals.len() % k_rows != 0 {
+        return None;
+    }
+    let v_cols = v_vals.len() / k_rows;
+    if q_rows == 0 || v_cols == 0 {
+        return None;
+    }
+    Some((q_rows, k_rows, v_cols))
+}
+
+/// Instantiate the fixed-point `sc_softmax_attention` core for a single attention op.
+///
+/// The `q` (`q_rows × dim_k`), `k` (`k_rows × dim_k`) and `v` (`k_rows × v_cols`)
+/// operands must be constants; shapes are inferred from their lengths and `dim_k`.
+/// Values are baked into the signed Q8.16 datapath and the softmax scaling
+/// `1/sqrt(dim_k)` and exp-LUT geometry are baked as instance parameters.
+fn emit_softmax_attention(
+    sv: &mut String,
+    graph: &ScGraph,
+    inst_idx: u32,
+    id: ValueId,
+    q: ValueId,
+    k: ValueId,
+    v: ValueId,
+    dim_k: usize,
+) -> Result<(), String> {
+    if dim_k == 0 {
+        return Err(format!("SoftmaxAttention (v{}) needs a positive dim_k", id.0));
+    }
+    let q_vals = const_f64_vec(graph, q)
+        .ok_or_else(|| format!("SoftmaxAttention (v{}) requires constant query values", id.0))?;
+    let k_vals = const_f64_vec(graph, k)
+        .ok_or_else(|| format!("SoftmaxAttention (v{}) requires constant key values", id.0))?;
+    let v_vals = const_f64_vec(graph, v)
+        .ok_or_else(|| format!("SoftmaxAttention (v{}) requires constant value values", id.0))?;
+    if q_vals.len() % dim_k != 0 {
+        return Err(format!(
+            "SoftmaxAttention (v{}) query length {} is not a multiple of dim_k {dim_k}",
+            id.0,
+            q_vals.len()
+        ));
+    }
+    if k_vals.len() % dim_k != 0 {
+        return Err(format!(
+            "SoftmaxAttention (v{}) key length {} is not a multiple of dim_k {dim_k}",
+            id.0,
+            k_vals.len()
+        ));
+    }
+    let q_rows = q_vals.len() / dim_k;
+    let k_rows = k_vals.len() / dim_k;
+    if k_rows == 0 {
+        return Err(format!(
+            "SoftmaxAttention (v{}) needs at least one key row",
+            id.0
+        ));
+    }
+    if v_vals.len() % k_rows != 0 {
+        return Err(format!(
+            "SoftmaxAttention (v{}) value length {} is not {k_rows} rows",
+            id.0,
+            v_vals.len()
+        ));
+    }
+    let v_cols = v_vals.len() / k_rows;
+    if q_rows == 0 || v_cols == 0 {
+        return Err(format!(
+            "SoftmaxAttention (v{}) needs at least one query row and value column",
+            id.0
+        ));
+    }
+
+    let inv_temp = 1.0 / (dim_k as f64).sqrt();
+    let q_fixed = q_vals
+        .iter()
+        .map(|x| attn_fixed(*x, "query", id))
+        .collect::<Result<Vec<_>, _>>()?;
+    let k_fixed = k_vals
+        .iter()
+        .map(|x| attn_fixed(*x, "key", id))
+        .collect::<Result<Vec<_>, _>>()?;
+    let v_fixed = v_vals
+        .iter()
+        .map(|x| attn_fixed(*x, "value", id))
+        .collect::<Result<Vec<_>, _>>()?;
+    let inv_temp_fixed = attn_fixed(inv_temp, "inv_temp", id)?;
+
+    // exp LUT geometry (mirrors hdl/sc_softmax_attention.v): 0.125 grid over [-16, 16).
+    let exp_shift = ATTN_FRACTION - 3;
+    let exp_min_abs = (16.0 * (1i64 << ATTN_FRACTION) as f64).round() as i64;
+
+    sv.push_str(&format!(
+        "    sc_softmax_attention #(\n\
+         \x20       .Q_ROWS({q_rows}),\n\
+         \x20       .K_ROWS({k_rows}),\n\
+         \x20       .DIM_K({dim_k}),\n\
+         \x20       .V_COLS({v_cols}),\n\
+         \x20       .DATA_WIDTH({dw}),\n\
+         \x20       .FRACTION({frac}),\n\
+         \x20       .INV_TEMP({inv_temp_lit}),\n\
+         \x20       .EXP_SHIFT({exp_shift}),\n\
+         \x20       .EXP_MIN_ABS({exp_min_abs})\n\
+         \x20   ) u_softmax_{inst_idx} (\n\
+         \x20       .q_in({q_bus}),\n\
+         \x20       .k_in({k_bus}),\n\
+         \x20       .v_in({v_bus}),\n\
+         \x20       .attn_out(v{result})\n\
+         \x20   );\n\n",
+        dw = ATTN_DATA_WIDTH,
+        frac = ATTN_FRACTION,
+        inv_temp_lit = signed_q_literal(inv_temp_fixed, ATTN_DATA_WIDTH),
+        q_bus = pack_q_bus(&q_fixed, ATTN_DATA_WIDTH),
+        k_bus = pack_q_bus(&k_fixed, ATTN_DATA_WIDTH),
+        v_bus = pack_q_bus(&v_fixed, ATTN_DATA_WIDTH),
         result = id.0,
     ));
     Ok(())

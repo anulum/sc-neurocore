@@ -89,6 +89,15 @@ class ScGraphBuilder:
         """
         return self._builder.graph_forward(features_id, adjacency_id, n_nodes, n_features)
 
+    def softmax_attention(self, q_id: int, k_id: int, v_id: int, dim_k: int) -> int:
+        """Add single-head scaled-dot-product softmax attention.
+
+        ``q_id`` is ``q_rows × dim_k``, ``k_id`` is ``k_rows × dim_k`` and ``v_id`` is
+        ``k_rows × v_cols`` (row-major vector constants). The result is
+        ``softmax(Q·Kᵀ / sqrt(dim_k)) · V`` with shapes inferred from the operand lengths.
+        """
+        return self._builder.softmax_attention(q_id, k_id, v_id, dim_k)
+
     def encode(self, prob_id: int, length: int = 1024, seed: int = 0xACE1) -> int:
         """Add Bernoulli bitstream encoding."""
         return self._builder.encode(prob_id, length, seed)

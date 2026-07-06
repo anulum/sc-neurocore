@@ -246,6 +246,79 @@ fn graph_forward_rejects_mismatched_adjacency() {
 }
 
 #[test]
+fn emit_softmax_attention() {
+    let mut b = ScGraphBuilder::new("test_attn");
+    let ty4 = ScType::Vec {
+        element: Box::new(ScType::FixedPoint {
+            width: 24,
+            frac: 16,
+        }),
+        count: 4,
+    };
+    // dim_k = 2: q,k are 2×2 (2 rows), v is 2×2 (v_cols = 2).
+    let q = b.constant(ScConst::F64Vec(vec![1.0, 0.0, 0.0, 1.0]), ty4.clone());
+    let k = b.constant(ScConst::F64Vec(vec![1.0, 0.0, 0.0, 1.0]), ty4.clone());
+    let v = b.constant(ScConst::F64Vec(vec![5.0, 1.0, 1.0, 5.0]), ty4);
+    let attn = b.softmax_attention(q, k, v, 2);
+    b.output("attn_out", attn);
+    let g = b.build();
+
+    assert!(verify::verify(&g).is_ok());
+    let sv = emit_sv::emit(&g).expect("SoftmaxAttention must emit synthesizable RTL");
+
+    assert!(sv.contains("module test_attn"));
+    assert!(sv.contains("sc_softmax_attention"));
+    assert!(sv.contains(".Q_ROWS(2)"));
+    assert!(sv.contains(".K_ROWS(2)"));
+    assert!(sv.contains(".DIM_K(2)"));
+    assert!(sv.contains(".V_COLS(2)"));
+    // inv_temp = 1/sqrt(2) -> round(0.70710678 * 2^16) = 46341 in Q8.16.
+    assert!(sv.contains(".INV_TEMP(24'sd46341)"));
+    // exp LUT geometry: FRACTION-3 and 16*2^16.
+    assert!(sv.contains(".EXP_SHIFT(13)"));
+    assert!(sv.contains(".EXP_MIN_ABS(1048576)"));
+    assert!(sv.contains("u_softmax_"));
+    // Result bus is the packed 2*2*24-bit attention output wired to the output.
+    assert!(sv.contains("wire signed [95:0] v"));
+    assert!(sv.contains("output wire [95:0] attn_out"));
+    // The retired placeholder must be gone.
+    assert!(!sv.contains("no synthesizable RTL implementation yet"));
+    assert!(sv.contains("endmodule"));
+}
+
+#[test]
+fn softmax_attention_rejects_mismatched_shapes() {
+    let mut b = ScGraphBuilder::new("bad_attn");
+    let ty4 = ScType::Vec {
+        element: Box::new(ScType::FixedPoint {
+            width: 24,
+            frac: 16,
+        }),
+        count: 4,
+    };
+    let ty3 = ScType::Vec {
+        element: Box::new(ScType::FixedPoint {
+            width: 24,
+            frac: 16,
+        }),
+        count: 3,
+    };
+    // dim_k = 2 but the query holds 3 elements — not a whole number of rows.
+    let q = b.constant(ScConst::F64Vec(vec![1.0, 0.0, 1.0]), ty3);
+    let k = b.constant(ScConst::F64Vec(vec![1.0, 0.0, 0.0, 1.0]), ty4.clone());
+    let v = b.constant(ScConst::F64Vec(vec![5.0, 1.0, 1.0, 5.0]), ty4);
+    let attn = b.softmax_attention(q, k, v, 2);
+    b.output("attn_out", attn);
+    let g = b.build();
+
+    let err = emit_sv::emit(&g).expect_err("mismatched attention shapes must be rejected");
+    assert!(
+        err.contains("query length 3 is not a multiple of dim_k 2"),
+        "{err}"
+    );
+}
+
+#[test]
 fn emitted_sv_has_timescale() {
     let mut b = ScGraphBuilder::new("ts_check");
     let x = b.input("x", ScType::Bool);

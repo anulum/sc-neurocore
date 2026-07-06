@@ -151,12 +151,18 @@ pub fn emit(graph: &ScGraph) -> Result<String, String> {
                 ));
                 last_output = format!("%v{}", id.0);
             }
-            ScOp::SoftmaxAttention { id, v, .. } => {
-                let inp = value_wire(graph, *v);
+            ScOp::SoftmaxAttention { id, q, k, v, dim_k } => {
+                let q_w = value_wire(graph, *q);
+                let k_w = value_wire(graph, *k);
+                let v_w = value_wire(graph, *v);
                 mlir.push_str(&format!(
-                    "  // SoftmaxAttention: SC bitstream attention\n  %v{} = {inp} : i64\n",
-                    id.0
+                    "  %v{id} = hw.instance \"softmax_{id}\" @sc_softmax_attention<\
+                     DIM_K: i32 = {dim_k}>(\
+                     q_in: {q_w}: i64, k_in: {k_w}: i64, v_in: {v_w}: i64) \
+                     -> (attn_out: i64)\n",
+                    id = id.0,
                 ));
+                last_output = format!("%v{}", id.0);
             }
             ScOp::KuramotoStep {
                 id,

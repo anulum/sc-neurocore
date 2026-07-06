@@ -25,6 +25,21 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
   checked against the ideal float aggregation within fixed-point resolution, and the MLIR
   emitter now instantiates the same core instead of a passthrough. The Python IR builder
   gains `graph_forward`.
+- The `sc.softmax_attention` IR operation now lowers to synthesisable RTL, replacing the
+  previous hard error. The SystemVerilog emitter instantiates a new
+  `hdl/sc_softmax_attention.v` fixed-point single-head scaled-dot-product attention core
+  (signed Q8.16) that computes `softmax(Q·Kᵀ / sqrt(dim_k)) · V` — the reference
+  `StochasticAttention::forward_softmax` — with a numerically stable row-max subtraction,
+  a 256-entry exp lookup over the symmetric [-16, 16) grid at 0.125 spacing (mirroring the
+  `expr_lut_tables` / `c_fixed_emitter` transcendental machinery), and a single integer
+  division per softmax weight. Query/key/value shapes are inferred from the constant
+  operand lengths and `dim_k`, and the `1/sqrt(dim_k)` scaling plus exp-LUT geometry are
+  baked as instance parameters. The core is co-simulated against a bit-exact fixed-point
+  oracle with Icarus Verilog and checked against the ideal float softmax attention within
+  the exp-LUT resolution, and the MLIR emitter now instantiates the same core instead of a
+  passthrough. The Python IR builder gains `softmax_attention`. With this, all three IR ops
+  that previously had no synthesisable RTL (KuramotoStep, GraphForward, SoftmaxAttention)
+  now lower to co-simulated fixed-point cores.
 
 ### Fixed
 - The SystemVerilog emitter wrote malformed signed literals (`16'sd-51`) for negative

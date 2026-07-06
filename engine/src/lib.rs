@@ -3105,6 +3105,29 @@ impl PyScGraphBuilder {
             .0)
     }
 
+    /// Add a single-head scaled-dot-product softmax attention op.
+    ///
+    /// `q_id` is `q_rows × dim_k`, `k_id` is `k_rows × dim_k` and `v_id` is
+    /// `k_rows × v_cols` (row-major constant vectors); shapes are inferred from
+    /// their lengths and `dim_k` at emit time.
+    fn softmax_attention(
+        &mut self,
+        q_id: u32,
+        k_id: u32,
+        v_id: u32,
+        dim_k: usize,
+    ) -> PyResult<u32> {
+        Ok(self
+            .builder_mut()?
+            .softmax_attention(
+                ir::graph::ValueId(q_id),
+                ir::graph::ValueId(k_id),
+                ir::graph::ValueId(v_id),
+                dim_k,
+            )
+            .0)
+    }
+
     /// Add a Bernoulli encode operation.
     fn encode(&mut self, prob_id: u32, length: usize, seed: u64) -> PyResult<u32> {
         let seed = u16::try_from(seed)
