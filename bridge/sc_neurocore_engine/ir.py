@@ -56,6 +56,24 @@ class ScGraphBuilder:
         """Add an integer constant."""
         return self._builder.constant_i64(value, ty)
 
+    def constant_f64_vec(self, values: list[float], ty: str = "rate") -> int:
+        """Add a float-vector constant."""
+        return self._builder.constant_f64_vec(values, ty)
+
+    def kuramoto_step(
+        self,
+        phases_id: int,
+        omega_id: int,
+        coupling_id: int,
+        dt: float = 0.01,
+    ) -> int:
+        """Add a single Kuramoto integration step over an N×N coupling matrix.
+
+        ``phases_id`` and ``omega_id`` are length-``N`` vector constants and
+        ``coupling_id`` is the row-major ``N×N`` matrix ``K_nm``.
+        """
+        return self._builder.kuramoto_step(phases_id, omega_id, coupling_id, dt)
+
     def encode(self, prob_id: int, length: int = 1024, seed: int = 0xACE1) -> int:
         """Add Bernoulli bitstream encoding."""
         return self._builder.encode(prob_id, length, seed)

@@ -138,8 +138,11 @@ pub fn emit_systemverilog_with_target(
             ScOp::SoftmaxAttention { id, .. } => {
                 sv.push_str(&format!("    wire [63:0] v{};\n", id.0));
             }
-            ScOp::KuramotoStep { id, .. } => {
-                sv.push_str(&format!("    wire [63:0] v{};\n", id.0));
+            ScOp::KuramotoStep { id, phases, .. } => {
+                let width = kuramoto_osc_count(graph, *phases)
+                    .map(|n| n * KURAMOTO_DATA_WIDTH)
+                    .unwrap_or(64);
+                sv.push_str(&format!("    wire signed [{}:0] v{};\n", width - 1, id.0));
             }
             ScOp::Scale { id, .. } | ScOp::Offset { id, .. } | ScOp::DivConst { id, .. } => {
                 sv.push_str(&format!("    wire [63:0] v{};\n", id.0));
@@ -384,11 +387,17 @@ pub fn emit_systemverilog_with_target(
                     id.0, dim_k
                 ));
             }
-            ScOp::KuramotoStep { id, .. } => {
-                return Err(format!(
-                    "KuramotoStep (v{}) has no synthesizable RTL implementation yet",
-                    id.0
-                ));
+            ScOp::KuramotoStep {
+                id,
+                phases,
+                omega,
+                coupling,
+                dt,
+            } => {
+                emit_kuramoto_step(
+                    &mut sv, graph, inst_idx, *id, *phases, *omega, *coupling, *dt,
+                )?;
+                inst_idx += 1;
             }
             ScOp::Output { name, source, .. } => {
                 let src_wire = value_to_wire(graph, *source);
@@ -455,8 +464,10 @@ fn find_value_width(graph: &ScGraph, id: ValueId) -> usize {
                 ScOp::DenseForward { params, .. } => params.n_neurons,
                 ScOp::DclsLayer { params, .. } => params.data_width as usize,
                 ScOp::GraphForward { n_features, .. } => *n_features,
+                ScOp::KuramotoStep { phases, .. } => kuramoto_osc_count(graph, *phases)
+                    .map(|n| n * KURAMOTO_DATA_WIDTH)
+                    .unwrap_or(64),
                 ScOp::SoftmaxAttention { .. }
-                | ScOp::KuramotoStep { .. }
                 | ScOp::Scale { .. }
                 | ScOp::Offset { .. }
                 | ScOp::DivConst { .. } => 64,
@@ -504,6 +515,194 @@ fn emit_concat_u32(values: &[u32], width: u32) -> Result<String, String> {
     Ok(format!("{{{}}}", fields.join(", ")))
 }
 
+// Fixed-point contract of the `sc_kuramoto_step` phase core (see hdl/sc_kuramoto_step.v).
+// Q8.16 signed, 24-bit, 64-entry sine LUT — fixed by the baked hardware LUT.
+const KURAMOTO_DATA_WIDTH: usize = 24;
+const KURAMOTO_FRACTION: usize = 16;
+const KURAMOTO_LUT_SIZE: usize = 64;
+
+/// Q(FRACTION) representation of the `2*pi` phase modulus.
+fn kuramoto_phase_modulus() -> i64 {
+    (std::f64::consts::TAU * (1i64 << KURAMOTO_FRACTION) as f64).round() as i64
+}
+
+/// Q(FRACTION) representation of the `pi` half-phase modulus.
+fn kuramoto_half_phase_modulus() -> i64 {
+    (std::f64::consts::PI * (1i64 << KURAMOTO_FRACTION) as f64).round() as i64
+}
+
+/// Quantise a real value into the signed Q8.16 datapath, rejecting out-of-range constants.
+fn kuramoto_fixed(value: f64, name: &str, id: ValueId) -> Result<i64, String> {
+    if !value.is_finite() {
+        return Err(format!(
+            "KuramotoStep (v{}) {} value {} is not finite",
+            id.0, name, value
+        ));
+    }
+    let scaled = (value * (1i64 << KURAMOTO_FRACTION) as f64).round() as i64;
+    let min = -(1i64 << (KURAMOTO_DATA_WIDTH - 1));
+    let max = (1i64 << (KURAMOTO_DATA_WIDTH - 1)) - 1;
+    if scaled < min || scaled > max {
+        return Err(format!(
+            "KuramotoStep (v{}) {} value {} maps to {} outside signed Q8.16 range [{}, {}]",
+            id.0, name, value, scaled, min, max
+        ));
+    }
+    Ok(scaled)
+}
+
+/// Pack signed Q8.16 words into a Verilog concatenation with element 0 at the LSB.
+fn pack_q16_bus(values: &[i64]) -> String {
+    let mask = (1i64 << KURAMOTO_DATA_WIDTH) - 1;
+    let fields: Vec<String> = values
+        .iter()
+        .rev()
+        .map(|v| format!("{}'d{}", KURAMOTO_DATA_WIDTH, v & mask))
+        .collect();
+    format!("{{{}}}", fields.join(", "))
+}
+
+/// Resolve a constant vector operand to its `f64` values, if present.
+fn const_f64_vec(graph: &ScGraph, id: ValueId) -> Option<Vec<f64>> {
+    for op in &graph.ops {
+        if op.result_id() == id {
+            return match op {
+                ScOp::Constant {
+                    value: ScConst::F64Vec(v),
+                    ..
+                } => Some(v.clone()),
+                ScOp::Constant {
+                    value: ScConst::I64Vec(v),
+                    ..
+                } => Some(v.iter().map(|x| *x as f64).collect()),
+                _ => None,
+            };
+        }
+    }
+    None
+}
+
+/// Infer the oscillator count from the phase operand's vector length.
+fn kuramoto_osc_count(graph: &ScGraph, phases: ValueId) -> Option<usize> {
+    for op in &graph.ops {
+        if op.result_id() == phases {
+            return match op {
+                ScOp::Constant {
+                    value: ScConst::F64Vec(v),
+                    ..
+                } => Some(v.len()),
+                ScOp::Constant {
+                    value: ScConst::I64Vec(v),
+                    ..
+                } => Some(v.len()),
+                ScOp::Input {
+                    ty: ScType::Vec { count, .. },
+                    ..
+                }
+                | ScOp::Constant {
+                    ty: ScType::Vec { count, .. },
+                    ..
+                } => Some(*count),
+                _ => None,
+            };
+        }
+    }
+    None
+}
+
+/// Instantiate the fixed-point `sc_kuramoto_step` core for a single Kuramoto IR step.
+///
+/// The `phases`, `omega` and `coupling` operands must be constants: `phases` and
+/// `omega` are length-`N` vectors and `coupling` is the row-major `N×N` matrix
+/// `K_nm`. Values are baked into the signed Q8.16 datapath contract of the core;
+/// initial phases are wrapped into `[0, 2*pi)` before quantisation.
+#[allow(clippy::too_many_arguments)]
+fn emit_kuramoto_step(
+    sv: &mut String,
+    graph: &ScGraph,
+    inst_idx: u32,
+    id: ValueId,
+    phases: ValueId,
+    omega: ValueId,
+    coupling: ValueId,
+    dt: f64,
+) -> Result<(), String> {
+    let phase_vals = const_f64_vec(graph, phases)
+        .ok_or_else(|| format!("KuramotoStep (v{}) requires constant phase values", id.0))?;
+    let n = phase_vals.len();
+    if n == 0 {
+        return Err(format!(
+            "KuramotoStep (v{}) needs at least one oscillator",
+            id.0
+        ));
+    }
+    let omega_vals = const_f64_vec(graph, omega)
+        .ok_or_else(|| format!("KuramotoStep (v{}) requires constant omega values", id.0))?;
+    if omega_vals.len() != n {
+        return Err(format!(
+            "KuramotoStep (v{}) omega length {} does not match {} oscillators",
+            id.0,
+            omega_vals.len(),
+            n
+        ));
+    }
+    let coupling_vals = const_f64_vec(graph, coupling).ok_or_else(|| {
+        format!(
+            "KuramotoStep (v{}) requires a constant coupling matrix",
+            id.0
+        )
+    })?;
+    if coupling_vals.len() != n * n {
+        return Err(format!(
+            "KuramotoStep (v{}) coupling length {} is not {n}×{n}",
+            id.0,
+            coupling_vals.len()
+        ));
+    }
+
+    let two_pi = std::f64::consts::TAU;
+    let phase_fixed = phase_vals
+        .iter()
+        .map(|theta| kuramoto_fixed(theta.rem_euclid(two_pi), "phase", id))
+        .collect::<Result<Vec<_>, _>>()?;
+    let omega_fixed = omega_vals
+        .iter()
+        .map(|w| kuramoto_fixed(*w, "omega", id))
+        .collect::<Result<Vec<_>, _>>()?;
+    let coupling_fixed = coupling_vals
+        .iter()
+        .map(|k| kuramoto_fixed(*k, "coupling", id))
+        .collect::<Result<Vec<_>, _>>()?;
+    let dt_fixed = kuramoto_fixed(dt, "dt", id)?;
+
+    let dw = KURAMOTO_DATA_WIDTH;
+    sv.push_str(&format!(
+        "    sc_kuramoto_step #(\n\
+         \x20       .N_OSC({n}),\n\
+         \x20       .DATA_WIDTH({dw}),\n\
+         \x20       .FRACTION({frac}),\n\
+         \x20       .LUT_SIZE({lut}),\n\
+         \x20       .DT_FIXED({dw}'sd{dt_fixed}),\n\
+         \x20       .PHASE_MODULUS({dw}'sd{modulus}),\n\
+         \x20       .HALF_PHASE_MODULUS({dw}'sd{half})\n\
+         \x20   ) u_kuramoto_{inst_idx} (\n\
+         \x20       .phases_in({phases_bus}),\n\
+         \x20       .omega({omega_bus}),\n\
+         \x20       .coupling({coupling_bus}),\n\
+         \x20       .phases_out(v{result})\n\
+         \x20   );\n\n",
+        frac = KURAMOTO_FRACTION,
+        lut = KURAMOTO_LUT_SIZE,
+        modulus = kuramoto_phase_modulus(),
+        half = kuramoto_half_phase_modulus(),
+        phases_bus = pack_q16_bus(&phase_fixed),
+        omega_bus = pack_q16_bus(&omega_fixed),
+        coupling_bus = pack_q16_bus(&coupling_fixed),
+        result = id.0,
+    ));
+    Ok(())
+}
+
 fn emit_target_dsp_attribute(sv: &mut String, target: &SvTarget) {
     if let Some(attribute) = target.dsp_attribute() {
         sv.push_str("    ");
@@ -536,19 +735,33 @@ fn emit_ram_style_attribute(sv: &mut String, target: &SvTarget, bits: u64) {
     }
 }
 
+/// Format a signed fixed-point value as a Verilog literal (sign outside the sized base).
+///
+/// Verilog rejects `16'sd-51`; the negative sign must precede the sized literal as
+/// `-16'sd51`.
+fn signed_q_literal(value: i64, width: usize) -> String {
+    if value < 0 {
+        format!("-{}'sd{}", width, value.unsigned_abs())
+    } else {
+        format!("{}'sd{}", width, value)
+    }
+}
+
 fn emit_constant(sv: &mut String, id: ValueId, value: &ScConst, target: &SvTarget) {
     match value {
         ScConst::F64(v) => {
             let fp = (*v * 256.0) as i64; // Q8.8
             sv.push_str(&format!(
-                "    localparam signed [15:0] c{} = 16'sd{};\n",
-                id.0, fp
+                "    localparam signed [15:0] c{} = {};\n",
+                id.0,
+                signed_q_literal(fp, 16)
             ));
         }
         ScConst::I64(v) => {
             sv.push_str(&format!(
-                "    localparam signed [15:0] c{} = 16'sd{};\n",
-                id.0, v
+                "    localparam signed [15:0] c{} = {};\n",
+                id.0,
+                signed_q_literal(*v, 16)
             ));
         }
         ScConst::U64(v) => {
@@ -565,10 +778,10 @@ fn emit_constant(sv: &mut String, id: ValueId, value: &ScConst, target: &SvTarge
             for (i, v) in vec.iter().enumerate() {
                 let fp = (*v * 256.0) as i64;
                 sv.push_str(&format!(
-                    "    assign c{}[{} +: 16] = 16'sd{};\n",
+                    "    assign c{}[{} +: 16] = {};\n",
                     id.0,
                     i * 16,
-                    fp
+                    signed_q_literal(fp, 16)
                 ));
             }
         }
@@ -582,10 +795,10 @@ fn emit_constant(sv: &mut String, id: ValueId, value: &ScConst, target: &SvTarge
             sv.push_str(&format!("    wire [{}:0] c{};\n", width - 1, id.0));
             for (i, v) in vec.iter().enumerate() {
                 sv.push_str(&format!(
-                    "    assign c{}[{} +: 16] = 16'sd{};\n",
+                    "    assign c{}[{} +: 16] = {};\n",
                     id.0,
                     i * 16,
-                    v
+                    signed_q_literal(*v, 16)
                 ));
             }
         }

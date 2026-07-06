@@ -94,6 +94,89 @@ fn emit_lif_neuron() {
 }
 
 #[test]
+fn emit_kuramoto_step() {
+    let mut b = ScGraphBuilder::new("test_kuramoto");
+    let fp = ScType::Vec {
+        element: Box::new(ScType::FixedPoint {
+            width: 24,
+            frac: 16,
+        }),
+        count: 2,
+    };
+    let phases = b.constant(ScConst::F64Vec(vec![0.0, 1.5]), fp.clone());
+    let omega = b.constant(ScConst::F64Vec(vec![0.3, -0.2]), fp);
+    let coupling = b.constant(
+        ScConst::F64Vec(vec![0.0, 0.5, 0.5, 0.0]),
+        ScType::Vec {
+            element: Box::new(ScType::FixedPoint {
+                width: 24,
+                frac: 16,
+            }),
+            count: 4,
+        },
+    );
+    let next = b.kuramoto_step(phases, omega, coupling, 0.01);
+    b.output("phases_next", next);
+    let g = b.build();
+
+    assert!(verify::verify(&g).is_ok());
+    let sv = emit_sv::emit(&g).expect("KuramotoStep must emit synthesizable RTL");
+
+    assert!(sv.contains("module test_kuramoto"));
+    assert!(sv.contains("sc_kuramoto_step"));
+    assert!(sv.contains(".N_OSC(2)"));
+    assert!(sv.contains(".DATA_WIDTH(24)"));
+    assert!(sv.contains(".FRACTION(16)"));
+    assert!(sv.contains(".LUT_SIZE(64)"));
+    // dt=0.01 -> round(0.01 * 2^16) = 655; 2*pi and pi moduli in Q8.16.
+    assert!(sv.contains(".DT_FIXED(24'sd655)"));
+    assert!(sv.contains(".PHASE_MODULUS(24'sd411775)"));
+    assert!(sv.contains(".HALF_PHASE_MODULUS(24'sd205887)"));
+    assert!(sv.contains("u_kuramoto_"));
+    // Result bus is the packed 2*24-bit next-phase vector wired to the output.
+    assert!(sv.contains("wire signed [47:0] v"));
+    assert!(sv.contains("output wire [47:0] phases_next"));
+    // The retired placeholder must be gone.
+    assert!(!sv.contains("no synthesizable RTL implementation yet"));
+    // The omega constant vector holds -0.2, so its packed wire must use a
+    // well-formed signed literal (sign outside the sized base, not `16'sd-51`).
+    assert!(sv.contains("-16'sd51"));
+    assert!(!sv.contains("16'sd-"));
+    assert!(sv.contains("endmodule"));
+}
+
+#[test]
+fn kuramoto_step_rejects_mismatched_coupling() {
+    let mut b = ScGraphBuilder::new("bad_kuramoto");
+    let fp = ScType::Vec {
+        element: Box::new(ScType::FixedPoint {
+            width: 24,
+            frac: 16,
+        }),
+        count: 2,
+    };
+    let phases = b.constant(ScConst::F64Vec(vec![0.0, 1.5]), fp.clone());
+    let omega = b.constant(ScConst::F64Vec(vec![0.3, -0.2]), fp);
+    // A 2-oscillator step needs a 4-entry coupling matrix; supply 3.
+    let coupling = b.constant(
+        ScConst::F64Vec(vec![0.1, 0.2, 0.3]),
+        ScType::Vec {
+            element: Box::new(ScType::FixedPoint {
+                width: 24,
+                frac: 16,
+            }),
+            count: 3,
+        },
+    );
+    let next = b.kuramoto_step(phases, omega, coupling, 0.01);
+    b.output("phases_next", next);
+    let g = b.build();
+
+    let err = emit_sv::emit(&g).expect_err("mismatched coupling must be rejected");
+    assert!(err.contains("coupling length 3 is not 2×2"), "{err}");
+}
+
+#[test]
 fn emitted_sv_has_timescale() {
     let mut b = ScGraphBuilder::new("ts_check");
     let x = b.input("x", ScType::Bool);

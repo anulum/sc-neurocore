@@ -965,7 +965,7 @@
     "python_model_classes": 158,
     "python_model_source_modules": 152,
     "rust_pyo3_model_wrappers": 175,
-    "test_files": 968
+    "test_files": 969
   },
   "documentation": {
     "public_pages": [
@@ -3156,6 +3156,7 @@
       "tests/test_julia_rk4_neuron_parity.py",
       "tests/test_kuramoto_python.py",
       "tests/test_kuramoto_ssgf_python.py",
+      "tests/test_kuramoto_step_rtl_cosim.py",
       "tests/test_lava_integration.py",
       "tests/test_layer_count_derivation.py",
       "tests/test_layers/test_attention.py",

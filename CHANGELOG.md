@@ -4,6 +4,23 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+### Added
+- The `sc.kuramoto_step` IR operation now lowers to synthesisable RTL, replacing the
+  previous hard error. The SystemVerilog emitter instantiates a new
+  `hdl/sc_kuramoto_step.v` fixed-point phase core (signed Q8.16, 64-entry sine LUT)
+  that computes one Euler step
+  `theta_n += dt * (omega_n + sum_m K_nm sin(theta_m - theta_n))` over an explicit
+  N×N coupling matrix. The core is co-simulated against a bit-exact fixed-point oracle
+  with Icarus Verilog and checked against the ideal float step within the LUT
+  resolution, and the MLIR emitter now instantiates the same core instead of a
+  passthrough. The Python IR builder gains `constant_f64_vec` and `kuramoto_step` so
+  the graph can be constructed, emitted, and simulated end to end.
+
+### Fixed
+- The SystemVerilog emitter wrote malformed signed literals (`16'sd-51`) for negative
+  fixed-point constants; the sign is now placed outside the sized base (`-16'sd51`),
+  so graphs with negative vector or scalar constants emit valid Verilog.
+
 ## [3.16.0] - 2026-07-05
 
 ### Provenance and citation integrity

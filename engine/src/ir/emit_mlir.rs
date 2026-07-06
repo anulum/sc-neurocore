@@ -147,12 +147,26 @@ pub fn emit(graph: &ScGraph) -> Result<String, String> {
                     id.0
                 ));
             }
-            ScOp::KuramotoStep { id, phases, .. } => {
-                let inp = value_wire(graph, *phases);
+            ScOp::KuramotoStep {
+                id,
+                phases,
+                omega,
+                coupling,
+                dt,
+            } => {
+                let phases_w = value_wire(graph, *phases);
+                let omega_w = value_wire(graph, *omega);
+                let coupling_w = value_wire(graph, *coupling);
+                let dt_fixed = (*dt * 65536.0).round() as i64;
                 mlir.push_str(&format!(
-                    "  // KuramotoStep: phase accumulator with coupling\n  %v{} = {inp} : i64\n",
-                    id.0
+                    "  %v{id} = hw.instance \"kuramoto_{id}\" @sc_kuramoto_step<\
+                     DT_FIXED: i32 = {dt}>(\
+                     phases_in: {phases_w}: i64, omega: {omega_w}: i64, \
+                     coupling: {coupling_w}: i64) -> (phases_out: i64)\n",
+                    id = id.0,
+                    dt = dt_fixed,
                 ));
+                last_output = format!("%v{}", id.0);
             }
             ScOp::Scale { id, input, factor } => {
                 let inp = value_wire(graph, *input);

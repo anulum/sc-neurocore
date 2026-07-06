@@ -3052,6 +3052,37 @@ impl PyScGraphBuilder {
             .0)
     }
 
+    /// Add a float-vector constant.
+    fn constant_f64_vec(&mut self, values: Vec<f64>, ty: &str) -> PyResult<u32> {
+        let sc_type = parse_sc_type(ty)?;
+        Ok(self
+            .builder_mut()?
+            .constant(ir::graph::ScConst::F64Vec(values), sc_type)
+            .0)
+    }
+
+    /// Add a single Kuramoto integration step over an explicit coupling matrix.
+    ///
+    /// `phases_id` and `omega_id` are length-`N` vector constants; `coupling_id`
+    /// is the row-major `N×N` matrix `K_nm`. `dt` is the Euler step.
+    fn kuramoto_step(
+        &mut self,
+        phases_id: u32,
+        omega_id: u32,
+        coupling_id: u32,
+        dt: f64,
+    ) -> PyResult<u32> {
+        Ok(self
+            .builder_mut()?
+            .kuramoto_step(
+                ir::graph::ValueId(phases_id),
+                ir::graph::ValueId(omega_id),
+                ir::graph::ValueId(coupling_id),
+                dt,
+            )
+            .0)
+    }
+
     /// Add a Bernoulli encode operation.
     fn encode(&mut self, prob_id: u32, length: usize, seed: u64) -> PyResult<u32> {
         let seed = u16::try_from(seed)
