@@ -51,6 +51,11 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
   non-binary bitstreams, wrong-dimensional MAC operands), the default-RNG path of
   `bipolar_encode`, and the SC-layer optional-bias and `tanh` branches gained tests,
   taking the module from 84 % to 100 %.
+- The closed-loop sleep optimiser (`sleep/sleep_optimizer.py`) is no longer excluded from
+  coverage measurement: the inactive-session guards (`add_sample` / `add_samples` /
+  `check_and_adapt` before a session starts), the None-detection fallback to WAKE, and the
+  re-induction branch (two consecutive unwanted awakenings arm a gentle N1 re-induction)
+  gained tests, taking the module from 91 % to 100 %.
 
 ### Fixed
 - The SystemVerilog emitter wrote malformed signed literals (`16'sd-51`) for negative

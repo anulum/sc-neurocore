@@ -204,7 +204,7 @@ omit = [
     "*/audio/adaptive_engine.py",
     "*/audio/evs_engine.py",
     "*/sleep/report_generator.py",
-    "*/sleep/sleep_optimizer.py",
+    # sleep/sleep_optimizer.py is now covered (tests/test_sleep_optimizer.py, 100%); no longer omitted.
     "*/viz/plots.py",
     # --- Studio web UI (requires fastapi, tested separately) ---
     "*/studio/*",
