@@ -12,15 +12,25 @@ pure-Python FIM / plasticity / torch-bridge paths."""
 
 from __future__ import annotations
 
+import builtins
+from pathlib import Path
+import sys
+from typing import Any
+
 import numpy as np
 import pytest
 
 import sc_neurocore.network.network as network_module
-from sc_neurocore.network.monitor import SpikeMonitor, StateMonitor
+from sc_neurocore.network.monitor import RateMonitor, SpikeMonitor, StateMonitor
 from sc_neurocore.network.network import Network
 from sc_neurocore.network.population import Population
 from sc_neurocore.network.projection import Projection
 from sc_neurocore.network.stimulus import StepCurrent
+
+if sys.version_info >= (3, 11):
+    import tomllib
+else:
+    import tomli as tomllib
 
 _MODEL = "AdExNeuron"
 
@@ -35,6 +45,49 @@ def test_engine_detection_helpers_after_cache_reset() -> None:
     # A "...Neuron"-suffixed name matches via the suffix-stripped lookup.
     assert network_module._rust_supports_model("AdExNeuron") is True
     assert network_module._rust_supports_model("DefinitelyNotARealModelNeuron") is False
+
+
+def test_engine_loader_falls_back_to_top_level_network_runner(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    original_import = builtins.__import__
+
+    def fake_import(name: str, *args: Any, **kwargs: Any) -> Any:
+        if name == "sc_neurocore_engine.network":
+            raise ImportError("bridge helper unavailable")
+        return original_import(name, *args, **kwargs)
+
+    monkeypatch.setattr(builtins, "__import__", fake_import)
+
+    assert network_module._load_network_runner_class().__name__ == "NetworkRunner"
+
+
+def test_engine_loader_reports_missing_network_runner(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    original_import = builtins.__import__
+
+    def fake_import(name: str, *args: Any, **kwargs: Any) -> Any:
+        if name in {"sc_neurocore_engine.network", "sc_neurocore_engine"}:
+            raise ImportError("engine unavailable")
+        return original_import(name, *args, **kwargs)
+
+    monkeypatch.setattr(builtins, "__import__", fake_import)
+
+    with pytest.raises(ImportError, match="NetworkRunner is unavailable"):
+        network_module._load_network_runner_class()
+
+
+def test_get_rust_engine_caches_false_when_loader_fails(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    def fake_loader() -> Any:
+        raise ImportError("engine unavailable")
+
+    monkeypatch.setattr(network_module, "_RUST_ENGINE", None)
+    monkeypatch.setattr(network_module, "_load_network_runner_class", fake_loader)
+
+    assert network_module._get_rust_engine() is False
 
 
 def test_rust_supports_model_returns_false_without_engine(
@@ -152,7 +205,18 @@ class _FakeNetworkRunner:
     """Stand-in Rust runner returning crafted voltages and packed spike events,
     so the Rust result-decode body runs deterministically without the engine."""
 
+    instances: list[_FakeNetworkRunner] = []
+
+    def __init__(self) -> None:
+        self.added_models: list[str] = []
+        type(self).instances.append(self)
+
+    @staticmethod
+    def supported_models() -> set[str]:
+        return {_MODEL}
+
     def add_population(self, model_name: str, n: int) -> int:
+        self.added_models.append(model_name)
         return 0
 
     def add_projection(self, *args: object) -> None:
@@ -164,11 +228,123 @@ class _FakeNetworkRunner:
         return {"voltages": [[0.1, 0.2, 0.3]], "spike_data": [[(1 << 32) | 2]]}
 
 
+def _install_fake_rust_engine(monkeypatch: pytest.MonkeyPatch) -> type[_FakeNetworkRunner]:
+    """Install a deterministic fake Rust runner for Python-side dispatch tests."""
+    _FakeNetworkRunner.instances.clear()
+    monkeypatch.setattr(network_module, "_get_rust_engine", lambda: _FakeNetworkRunner)
+    return _FakeNetworkRunner
+
+
+def _load_toml(path: Path) -> dict[str, Any]:
+    """Load a TOML manifest through the Python-version appropriate parser."""
+    with path.open("rb") as manifest_file:
+        return tomllib.load(manifest_file)
+
+
+def test_auto_backend_uses_python_for_state_monitors(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    fake_runner = _install_fake_rust_engine(monkeypatch)
+    pop = Population(_MODEL, 2)
+    monitor = StateMonitor(pop, ["v"])
+
+    Network(pop, monitor).run(0.003, dt=0.001, backend="auto")
+
+    assert fake_runner.instances == []
+    assert monitor.traces["v"].shape == (3, 2)
+    assert monitor.t.tolist() == [0, 1, 2]
+
+
+def test_forced_rust_rejects_state_monitors_until_step_traces_exist(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    _install_fake_rust_engine(monkeypatch)
+    pop = Population(_MODEL, 2)
+    monitor = StateMonitor(pop, ["v"])
+
+    with pytest.raises(NotImplementedError, match="StateMonitor"):
+        Network(pop, monitor).run(0.003, dt=0.001, backend="rust")
+
+
+def test_forced_rust_rejects_rate_monitors_until_step_traces_exist(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    _install_fake_rust_engine(monkeypatch)
+    pop = Population(_MODEL, 2)
+    monitor = RateMonitor(pop)
+
+    with pytest.raises(NotImplementedError, match="RateMonitor"):
+        Network(pop, monitor).run(0.003, dt=0.001, backend="rust")
+
+
+def test_auto_backend_uses_python_for_spike_gating(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    fake_runner = _install_fake_rust_engine(monkeypatch)
+    pop = Population(_MODEL, 2)
+
+    Network(pop).run(0.003, dt=0.001, backend="auto", spike_gating=True)
+
+    assert fake_runner.instances == []
+
+
+def test_forced_rust_rejects_spike_gating(monkeypatch: pytest.MonkeyPatch) -> None:
+    _install_fake_rust_engine(monkeypatch)
+    pop = Population(_MODEL, 2)
+
+    with pytest.raises(NotImplementedError, match="spike_gating"):
+        Network(pop).run(0.003, dt=0.001, backend="rust", spike_gating=True)
+
+
+def test_auto_backend_uses_python_for_fim_feedback(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    fake_runner = _install_fake_rust_engine(monkeypatch)
+    pop = Population(_MODEL, 2)
+
+    Network(pop, fim_lambda=1.0).run(0.003, dt=0.001, backend="auto")
+
+    assert fake_runner.instances == []
+
+
+def test_forced_rust_rejects_fim_feedback(monkeypatch: pytest.MonkeyPatch) -> None:
+    _install_fake_rust_engine(monkeypatch)
+    pop = Population(_MODEL, 2)
+
+    with pytest.raises(NotImplementedError, match="fim_lambda"):
+        Network(pop, fim_lambda=1.0).run(0.003, dt=0.001, backend="rust")
+
+
+def test_auto_rust_dispatch_uses_model_identity_not_population_label(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    fake_runner = _install_fake_rust_engine(monkeypatch)
+    pop = Population(_MODEL, 2, label="exc")
+
+    Network(pop).run(0.003, dt=0.001, backend="auto")
+
+    assert len(fake_runner.instances) == 1
+    assert fake_runner.instances[0].added_models == [_MODEL]
+
+
+def test_workspace_release_profile_uses_abort_panic() -> None:
+    project_root = Path(__file__).resolve().parents[1]
+    manifest = _load_toml(project_root / "Cargo.toml")
+    profile = manifest.get("profile")
+    assert isinstance(profile, dict)
+    release = profile.get("release")
+    assert isinstance(release, dict)
+    assert release["panic"] == "abort"
+
+    engine_manifest = _load_toml(project_root / "engine" / "Cargo.toml")
+    assert "profile" not in engine_manifest
+
+
 def test_run_rust_decodes_voltages_and_spike_events(monkeypatch: pytest.MonkeyPatch) -> None:
     pop = Population(_MODEL, 3)
     monitor = SpikeMonitor(pop)
     net = Network(pop, monitor)
-    monkeypatch.setattr(network_module, "_get_rust_engine", lambda: _FakeNetworkRunner)
+    _install_fake_rust_engine(monkeypatch)
     net.run(0.005, dt=0.001, backend="rust")
     # The crafted spike event (neuron 1 at step 2) is decoded into the monitor.
     assert 1 in monitor._neuron_ids

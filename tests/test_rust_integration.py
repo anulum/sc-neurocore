@@ -19,7 +19,7 @@ engine = pytest.importorskip("sc_neurocore_engine")
 
 
 class TestNetworkRunner:
-    def test_create_and_run(self):
+    def test_create_and_run(self) -> None:
         r = engine.NetworkRunner()
         idx = r.add_population("Izhikevich", 10)
         assert idx == 0
@@ -28,7 +28,7 @@ class TestNetworkRunner:
         assert "voltages" in results
         assert "spike_counts" in results
 
-    def test_multiple_populations(self):
+    def test_multiple_populations(self) -> None:
         r = engine.NetworkRunner()
         i0 = r.add_population("Izhikevich", 5)
         i1 = r.add_population("AdEx", 5)
@@ -38,7 +38,7 @@ class TestNetworkRunner:
         assert len(results["spike_data"]) == 2
         assert len(results["voltages"]) == 2
 
-    def test_spike_data_u64_format(self):
+    def test_spike_data_u64_format(self) -> None:
         r = engine.NetworkRunner()
         r.add_population("Lapicque", 20)
         results = r.run(200)
@@ -48,14 +48,14 @@ class TestNetworkRunner:
             assert 0 <= nid < 20
             assert 0 <= t < 200
 
-    def test_voltages_returned(self):
+    def test_voltages_returned(self) -> None:
         r = engine.NetworkRunner()
         r.add_population("HodgkinHuxley", 3)
         results = r.run(50)
         v = results["voltages"][0]
         assert len(v) == 3
 
-    def test_projection_csr(self):
+    def test_projection_csr(self) -> None:
         r = engine.NetworkRunner()
         r.add_population("Izhikevich", 3)
         r.add_population("Izhikevich", 3)
@@ -67,7 +67,7 @@ class TestNetworkRunner:
         results = r.run(100)
         assert len(results["spike_data"]) == 2
 
-    def test_spike_counts(self):
+    def test_spike_counts(self) -> None:
         r = engine.NetworkRunner()
         r.add_population("Izhikevich", 10)
         results = r.run(100)
@@ -86,20 +86,20 @@ class TestRustNeurons:
             ("LapicqueNeuron", 15.0),
         ],
     )
-    def test_neuron_produces_spikes(self, model, current):
+    def test_neuron_produces_spikes(self, model: str, current: float) -> None:
         cls = getattr(engine, model)
         neuron = cls()
         spikes = sum(neuron.step(current) for _ in range(500))
         assert spikes > 0
 
-    def test_izhikevich_deterministic(self):
+    def test_izhikevich_deterministic(self) -> None:
         a = engine.Izhikevich()
         b = engine.Izhikevich()
         sa = [a.step(10.0) for _ in range(100)]
         sb = [b.step(10.0) for _ in range(100)]
         assert sa == sb
 
-    def test_izhikevich_reset(self):
+    def test_izhikevich_reset(self) -> None:
         n = engine.Izhikevich()
         for _ in range(100):
             n.step(10.0)
@@ -107,14 +107,14 @@ class TestRustNeurons:
         fresh = engine.Izhikevich()
         assert n.step(0.0) == fresh.step(0.0)
 
-    def test_arcane_neuron_exists(self):
+    def test_arcane_neuron_exists(self) -> None:
         n = engine.ArcaneNeuron()
         spike = n.step(5.0)
         assert spike in (0, 1)
 
 
 class TestIRCompiler:
-    def test_build_verify_emit(self):
+    def test_build_verify_emit(self) -> None:
         b = engine.ScGraphBuilder("test_lif")
         i_in = b.input("current", "bool")
         leak = b.constant_i64(200, "i16")
@@ -127,7 +127,7 @@ class TestIRCompiler:
         sv = graph.emit_sv()
         assert "module" in sv
 
-    def test_ir_print(self):
+    def test_ir_print(self) -> None:
         b = engine.ScGraphBuilder("print_test")
         v = b.input("x", "bool")
         b.output("y", v)

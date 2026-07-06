@@ -90,7 +90,10 @@ class Network:
             raise TypeError(f"Unknown object type: {type(obj).__name__}")
 
     def _can_use_rust(self) -> bool:
+        """Return whether this network can preserve semantics on the Rust backend."""
         if self.stimuli:
+            return False
+        if self._rust_incompatibilities():
             return False
         if _get_rust_engine() is False:
             return False
@@ -98,6 +101,28 @@ class Network:
             if not _rust_supports_model(pop.model_name):
                 return False
         return not any(p.plasticity for p in self.projections)
+
+    def _rust_incompatibilities(self) -> list[str]:
+        """List Python-only dynamics that the Rust backend would silently skip."""
+        incompatible: list[str] = []
+        if self._spike_gating:
+            incompatible.append("spike_gating")
+        if self.fim_lambda > 0:
+            incompatible.append("fim_lambda")
+        if self.state_monitors:
+            incompatible.append("StateMonitor")
+        if self.rate_monitors:
+            incompatible.append("RateMonitor")
+        return incompatible
+
+    def _raise_for_rust_incompatibilities(self) -> None:
+        """Fail fast when a caller forces Rust for Python-only semantics."""
+        incompatible = self._rust_incompatibilities()
+        if incompatible:
+            names = ", ".join(incompatible)
+            raise NotImplementedError(
+                f"Rust backend does not support {names}; use backend='python' or backend='auto'"
+            )
 
     def run(
         self,
@@ -117,11 +142,19 @@ class Network:
         *spike_gating*: skip neurons with zero input and near-rest voltage.
         Makes compute roughly proportional to active neuron count. Python
         backend only.
+
+        The Rust backend preserves spike events and final population voltages.
+        Per-step traces from ``StateMonitor`` and ``RateMonitor``, FIM
+        feedback, and ``spike_gating`` remain Python-only; ``'auto'`` falls
+        back to Python for those cases and forced ``'rust'`` raises.
         """
         self._spike_gating = spike_gating
         if backend == "mpi":
             return self._run_mpi(duration, dt)
-        if backend == "rust" or (backend == "auto" and self._can_use_rust()):
+        if backend == "rust":
+            self._raise_for_rust_incompatibilities()
+            return self._run_rust(duration, dt)
+        if backend == "auto" and self._can_use_rust():
             return self._run_rust(duration, dt)
         return self._run_python(duration, dt, progress)
 
@@ -159,6 +192,7 @@ class Network:
         runner.run(n_steps, dt)
 
     def _run_rust(self, duration: float, dt: float) -> None:
+        self._raise_for_rust_incompatibilities()
         engine_cls = _get_rust_engine()
         if engine_cls is False:
             raise RuntimeError("Rust engine not available")

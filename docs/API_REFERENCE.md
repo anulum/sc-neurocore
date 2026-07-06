@@ -20323,6 +20323,11 @@ Declarative network: collects objects, runs the simulation loop.
 - **add**(obj)
   - Register a simulation object by type.
 - **_can_use_rust**()
+  - Return whether this network can preserve semantics on the Rust backend.
+- **_rust_incompatibilities**()
+  - List Python-only dynamics that the Rust backend would silently skip.
+- **_raise_for_rust_incompatibilities**()
+  - Fail fast when a caller forces Rust for Python-only semantics.
 - **run**(duration, dt, progress, backend, spike_gating)
   - Run the simulation for *duration* seconds at timestep *dt*.
 - **_run_mpi**(duration, dt)

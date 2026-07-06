@@ -176,9 +176,3 @@ harness = false
 name = "gpu_bench"
 harness = false
 required-features = ["gpu"]
-
-[profile.release]
-opt-level = 3
-lto = "fat"
-codegen-units = 1
-panic = "abort"

@@ -784,6 +784,14 @@ pub struct SimResults {
     pub voltages: Vec<Vec<f64>>,
 }
 
+fn pack_spike_event(neuron_id: usize, timestep: usize) -> u64 {
+    assert!(
+        timestep <= u32::MAX as usize,
+        "spike event timestep exceeds 32-bit packing lane"
+    );
+    ((neuron_id as u64) << 32) | (timestep as u64)
+}
+
 // ── NetworkRunner ───────────────────────────────────────────────────
 
 pub struct NetworkRunner {
@@ -860,7 +868,7 @@ impl NetworkRunner {
                 for (nid, &spike) in pop.spikes.iter().enumerate() {
                     if spike != 0 {
                         spike_counts[pop_idx] += 1;
-                        spike_data[pop_idx].push(((nid as u64) << 32) | (t as u64));
+                        spike_data[pop_idx].push(pack_spike_event(nid, t));
                     }
                 }
             }
@@ -1457,6 +1465,23 @@ mod tests {
 
         assert!((tgt_currents[0] - 5.0).abs() < 1e-10);
         assert!((tgt_currents[1] - 3.0).abs() < 1e-10);
+    }
+
+    #[test]
+    fn spike_event_pack_preserves_high_neuron_and_timestep_bits() {
+        let packed = pack_spike_event(100_000, 70_000);
+        assert_eq!((packed >> 32) as usize, 100_000);
+        assert_eq!((packed & u32::MAX as u64) as usize, 70_000);
+    }
+
+    #[test]
+    fn spike_event_pack_rejects_timestep_overflow() {
+        if usize::BITS > 32 {
+            let result = std::panic::catch_unwind(|| {
+                let _ = pack_spike_event(0, u32::MAX as usize + 1);
+            });
+            assert!(result.is_err());
+        }
     }
 
     #[test]

@@ -2,7 +2,7 @@
 
 **Module:** `sc_neurocore.network` (re-exported from `sc_neurocore.network.__init__`)
 **Source:** `src/sc_neurocore/network/` — 12 files, 4065 LOC
-**Status (v3.14.0):** core orchestrator + Population/Projection/topology/monitors fully wired; Rust network dispatch and MPI per-rank Rust dispatch are implemented, with Python fallback when the engine wheel is absent; `MPIRunner` has 12 mocked-mpi4py tests; topology/projection compute paths are still pure-Python (no Rust path yet).
+**Status (v3.14.0):** core orchestrator + Population/Projection/topology/monitors fully wired; Rust network dispatch and MPI per-rank Rust dispatch are implemented, with Python fallback when the engine wheel is absent; the local `sc_neurocore_engine==3.16.0` wheel was installed and verified for the 2026-07-07 WC-E1 audit closure; `MPIRunner` has 12 mocked-mpi4py tests; topology/projection compute paths are still pure-Python (no Rust path yet).
 
 This page covers the **simulation engine** — the declarative `Network`
 container, populations of neurons, sparse `Projection` connectivity (with
@@ -38,7 +38,7 @@ each timestep t:
 - `'python'` — the pure-Python loop above
 - `'rust'` — delegates to `sc_neurocore_engine.NetworkRunner` (PyO3) when
   every population's `model_name` is in `NetworkRunner.supported_models()`
-  *and* there are no stimuli *and* no plasticity
+  *and* there are no Python-only dynamics
 - `'mpi'` — partitions populations round-robin across MPI ranks and
   exchanges spikes via `Allgatherv`
 
@@ -113,27 +113,32 @@ def run(
 - `duration` is in seconds; `dt` is the timestep in seconds. `n_steps` is
   `int(round(duration/dt))`.
 - `backend` ∈ `{"auto", "python", "rust", "mpi"}`. `"rust"` raises if the
-  engine wheel is not importable; `"auto"` silently falls back to Python.
+  engine wheel is not importable or Python-only semantics are present;
+  `"auto"` silently falls back to Python.
 - `spike_gating` (Python backend only) skips neurons with zero input current
   whose voltage is within 1 % of resting potential. Useful for sparse
   networks where most neurons are silent.
 
-The Python loop (`_run_python`, `network.py:165`) is the reference
-implementation; the Rust loop (`_run_rust`, `network.py:123`) round-trips
-populations and projections through `NetworkRunner.add_population` /
-`add_projection`, runs `n_steps`, then decodes packed spike events
+The Python loop (`_run_python`) is the reference implementation; the Rust
+loop (`_run_rust`) round-trips populations and projections through
+`NetworkRunner.add_population` / `add_projection`, runs `n_steps`, syncs
+final voltages back into each `Population`, then decodes packed spike events
 (`u64 = neuron_id<<32 | timestep`) back into Python `SpikeMonitor` records.
 
 ### 3.3 Rust dispatch criteria (`_can_use_rust`)
 
-`Network._can_use_rust` (line 80) returns `True` only when:
+`Network._can_use_rust` returns `True` only when:
 
 1. `len(self.stimuli) == 0` — no `TimedArray`/`PoissonInput`/`StepCurrent`
    in this network.
-2. The Rust engine import succeeded (`_get_rust_engine()` is not `False`).
-3. Every `pop.model_name` (or its `*Neuron`-stripped form) is in
+2. `spike_gating` is disabled.
+3. `fim_lambda == 0.0`.
+4. No `StateMonitor` or `RateMonitor` is attached, because those require
+   per-step traces the Rust runner does not export yet.
+5. The Rust engine import succeeded (`_get_rust_engine()` is not `False`).
+6. Every `pop.model_name` (or its `*Neuron`-stripped form) is in
    `NetworkRunner.supported_models()`.
-4. No projection has a non-empty `plasticity` field.
+7. No projection has a non-empty `plasticity` field.
 
 When any of these fails and `backend="auto"`, the network falls back to
 Python without warning. Pass `backend="python"` explicitly when you need
@@ -147,6 +152,8 @@ deterministic dispatch.
 | Stimuli | ✅ all | ❌ disqualifies Rust | ✅ rank 0 |
 | STDP / plasticity | ✅ | ❌ disqualifies Rust | ✅ |
 | Per-synapse delays | ✅ | ⚠️ uniform only via `add_projection(... max_delay)` | ✅ |
+| SpikeMonitor | ✅ per step | ✅ decoded events after run | ✅ rank-local |
+| StateMonitor / RateMonitor | ✅ per step | ❌ disqualifies Rust | ⚠️ partial |
 | Spike gating | ✅ | ❌ | ❌ |
 | FIM feedback (`fim_lambda > 0`) | ✅ | ❌ | ❌ |
 | Multi-rank | ❌ | ❌ | ✅ |
@@ -493,7 +500,7 @@ runtime check. There are no orphan helpers.
 |---|-----------|--------|--------|
 | 1 | Pipeline wiring | ✅ PASS | All 18 public symbols wired; backend dispatcher complete |
 | 2 | Multi-angle tests | ⚠️ WARN | Network tests cover the orchestrator, monitors, topology, cortical column, gamma circuit, and 12 mocked-mpi4py MPIRunner paths including per-rank Rust dispatch. Real multi-rank coverage is still missing (task #17). `export.py` is not directly covered. |
-| 3 | Rust path | ⚠️ WARN | `Network._run_rust` and MPIRunner per-rank Rust dispatch exist and are tested logically; **engine wheel not installed in this environment** so empirical Rust numbers in §11 are not available. `topology.py`, `_csr_matvec`/`_csr_delayed_matvec`, `update_plasticity` are pure Python — task #13 tracks the Rustification. |
+| 3 | Rust path | ✅ PASS | `Network._run_rust` and the installed `sc_neurocore_engine==3.16.0` wheel are covered by `tests/test_rust_integration.py` plus the WC-E1 execution-path tests. Rust dispatch rejects `StateMonitor`, `RateMonitor`, `spike_gating`, and `fim_lambda` instead of silently skipping those Python-only semantics. `topology.py`, `_csr_matvec`/`_csr_delayed_matvec`, `update_plasticity` remain pure Python — task #13 tracks that separate Rustification gap. |
 | 4 | Benchmarks | ✅ PASS | §6.1, §11, §11.1 measured this session. `benchmarks/sc_network_benchmark.py` exists (306 lines) but covers SC pipeline (encode/MAC/decode), not network orchestration — that gap is now filled by §11. |
 | 5 | Performance docs | ✅ PASS | §11 + §6.1 + §11.1 |
 | 6 | Documentation page | ✅ PASS | This page |

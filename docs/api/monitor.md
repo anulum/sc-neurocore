@@ -4,8 +4,9 @@
 **Source:** `src/sc_neurocore/network/monitor.py` (173 LOC) +
 `src/sc_neurocore/network/stimulus.py` (68 LOC)
 **Status (v3.14.0):** all six classes (3 monitors + 3 stimuli) wired into
-`Network.run`; 21 dedicated tests pass; pure-Python — no Rust path needed
-(simple data containers).
+`Network.run`; 21 dedicated monitor/stimulus tests pass. `SpikeMonitor`
+has a Rust event-ingestion boundary; `StateMonitor` and `RateMonitor` require
+the Python backend until Rust exports per-step traces.
 
 This page covers the **recording side** (`SpikeMonitor`, `StateMonitor`,
 `RateMonitor`) and the **stimulus side** (`TimedArray`, `PoissonInput`,
@@ -125,8 +126,7 @@ StateMonitor(
 ```
 
 Captures snapshots of named state variables every time the network calls
-`monitor.snapshot(t_step)` (which is once per timestep when the monitor is
-attached to a population that fires at least one neuron in that step).
+`monitor.snapshot(t_step)` (once per timestep for each attached population).
 
 `variables` lists state names to record. The monitor reads them by calling
 `population.get_states()`, which itself uses (in order):
@@ -303,17 +303,19 @@ Observations:
   doesn't pay full Python overhead three times — the network's
   `_record` pass walks each monitor list once.
 
-These overheads are pure-Python; the Rust backend records via
-`record_event` once per spike at the end of the run, so the per-step
-cost evaporates.
+These overheads are pure-Python. The Rust backend records `SpikeMonitor`
+events via `record_event` once per spike at the end of the run, but
+`StateMonitor` and `RateMonitor` disqualify Rust dispatch until the engine
+exports per-step trace data.
 
-### 8.1 No Rust path
+### 8.1 Rust boundary
 
 `monitor.py` and `stimulus.py` are intentionally pure-Python data
-containers. `SpikeMonitor.record_event` is the only method called from
-Rust; it is a one-line append. There is no compute kernel to Rustify
-(unlike `projection.py` or `topology.py`, both of which have planned
-Rust paths in task #13).
+containers. `SpikeMonitor.record_event` is the only monitor ingestion method
+called from Rust; it appends decoded `(neuron_id, timestep)` events after
+the Rust runner returns. `StateMonitor` and `RateMonitor` need per-step
+observations, so `backend="auto"` falls back to Python when either is
+attached and forced `backend="rust"` raises `NotImplementedError`.
 
 `PoissonInput.get_current` does call `rng.random(self.n)` per step.
 For very large `n` (>10 000) at high `rate_hz × dt`, the Bernoulli draw
@@ -329,7 +331,8 @@ currently not on the roadmap.
 | `from sc_neurocore.network import SpikeMonitor, ...` | `network/__init__.py:13-25` | `tests/test_network_monitors_stimulus.py` |
 | `Network(..., spike_monitor)` registration | `Network.add` `isinstance` chain (`network.py:65`) | `TestSpikeMonitor::test_record_*` |
 | Python backend invokes `mon.record(spikes, t)` | `Network._record` (`network.py:229`) | `test_records_voltage` |
-| Rust backend invokes `mon.record_event(nid, t)` | `Network._run_rust` decode loop (`network.py:155`) | (not test-covered without Rust wheel) |
+| Rust backend invokes `mon.record_event(nid, t)` | `Network._run_rust` decode loop | `test_run_rust_decodes_voltages_and_spike_events` |
+| Rust rejects per-step monitors | `Network._raise_for_rust_incompatibilities` | `test_forced_rust_rejects_state_monitors_until_step_traces_exist`, `test_forced_rust_rejects_rate_monitors_until_step_traces_exist` |
 | Stimulus targeting | `stim.target = pop` then `Network.add(stim)` | `apply_stimuli` (`network.py:199`) |
 | `cross_correlation` | imports `analysis.spike_stats.cross_correlation` lazily | `test_network_basic.py` indirectly |
 
@@ -344,7 +347,7 @@ into the simulation loop; none are orphan helpers.
 |---|-----------|--------|--------|
 | 1 | Pipeline wiring | ✅ PASS | All six classes wired via `Network.add` dispatch |
 | 2 | Multi-angle tests | ✅ PASS | 21 tests across 6 `Test*` classes covering construction, recording, edge cases (empty, off-window, clamp), label, default variables, bin accumulation, deterministic seeding |
-| 3 | Rust path | N/A | Pure-Python data containers; `record_event` is the only Rust ingestion point and trivial |
+| 3 | Rust path | ⚠️ WARN | `SpikeMonitor.record_event` is covered through a fake Rust runner; `StateMonitor` and `RateMonitor` correctly reject forced Rust until native per-step traces exist. |
 | 4 | Benchmarks | ✅ PASS | §8 measured this session; 3-run median per config |
 | 5 | Performance docs | ✅ PASS | §8 + §8.1 |
 | 6 | Documentation page | ✅ PASS | This page |
@@ -378,14 +381,13 @@ Final bin is silently lost if the simulation ends mid-window. Either pad
 the run to a multiple of `bin_ms`, or accept that `len(rm.rate)` is
 `floor(n_steps / steps_per_bin)`.
 
-### 11.4 No `record_event` test coverage
+### 11.4 Rust has no per-step monitor trace export
 
-`SpikeMonitor.record_event` (the Rust ingestion path) is exercised only
-when the Rust engine wheel is installed. With the wheel absent (current
-environment), no test verifies the decode of the `u64 = nid<<32 | t`
-packed events. Tracked alongside MPIRunner tests as part of the broader
-testing gap (task #17 adds real `mpirun` MPIRunner coverage; consider
-extending the same test scope to `record_event`).
+`SpikeMonitor.record_event` is exercised with a fake Rust runner, including
+decode of `u64 = nid<<32 | t` packed events and final-voltage sync. The real
+Rust wheel integration path is still environment-dependent. `StateMonitor`
+and `RateMonitor` remain Python-only until the Rust engine exposes per-step
+state and spike-bin trace data.
 
 ---
 
@@ -411,7 +413,7 @@ Covered (per `Test*` class):
 
 Not covered:
 
-- `record_event` (Rust ingestion path) — see §11.4
+- Real Rust wheel integration for `record_event` — see §11.4
 - High-throughput stress (e.g. `n=10 000`, 60 Hz, 10 s) — would surface
   the StateMonitor list-copy cost
 - Mixing multiple monitors of the same type on the same population —

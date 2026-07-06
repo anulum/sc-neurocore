@@ -5,6 +5,17 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+### Network Rust backend contract hardening
+- Reverified the DEEP_AUDIT network/Rust findings against the current tree:
+  spike events use `u64` packing with 32-bit neuron/timestep lanes, population
+  dispatch uses `Population.model_name` rather than labels, Rust final voltages
+  sync back into populations, and the effective workspace release profile now
+  owns `panic = "abort"`. Added regression tests for those contracts and made
+  forced Rust fail fast for `StateMonitor`, `RateMonitor`, `spike_gating`, and
+  `fim_lambda`, while `backend="auto"` falls back to Python for those
+  Python-only semantics. No benchmark-dispatched path, polyglot mirror, or
+  benchmark artefact changed.
+
 ### Release provenance and publish retry hardening
 - Added manual tagged-release backfill support to the release workflow,
   retained the release security packet as a workflow artifact even when the
