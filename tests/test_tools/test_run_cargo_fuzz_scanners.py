@@ -48,7 +48,7 @@ def test_manifest_cargo_fuzz_command_uses_packet_runner() -> None:
         "python tools/security_scan/run_cargo_fuzz_scanners.py "
         "--output-dir security/ci-security-packet --target all --max-total-time 300"
     )
-    assert scanners["cargo-fuzz-nightly"]["pinned_version"] == "cargo-fuzz==0.13.1"
+    assert scanners["cargo-fuzz-nightly"]["pinned_version"] == "cargo-fuzz==0.13.2"
 
 
 def test_discovers_fuzz_targets_from_cargo_manifest() -> None:

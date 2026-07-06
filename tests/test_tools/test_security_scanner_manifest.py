@@ -9,12 +9,15 @@ from __future__ import annotations
 
 import importlib.util
 import json
+import runpy
 import subprocess
 import sys
 import tempfile
 from contextlib import contextmanager
 from pathlib import Path
 from typing import Any, Iterator
+
+import pytest
 
 
 def _load_tool() -> Any:
@@ -91,6 +94,63 @@ def test_manifest_validation_and_deterministic_json() -> None:
     report = tool.validate_scanner_manifest(payload)
     assert report["passed"]
     assert not any(finding["level"] == "error" for finding in report["findings"])
+
+
+def test_manifest_validation_reports_schema_and_scanner_list_errors() -> None:
+    tool = _load_tool()
+
+    report = tool.validate_scanner_manifest(
+        {"schema_version": "wrong-version", "scanners": "not-a-list"}
+    )
+
+    messages = {finding["message"] for finding in report["findings"]}
+    assert not report["passed"]
+    assert "schema_version is missing or not equal to expected version" in messages
+    assert "scanners must be a list" in messages
+
+
+def test_manifest_validation_reports_malformed_scanner_entries() -> None:
+    tool = _load_tool()
+    payload = tool.build_scanner_manifest()
+    payload["scanners"] = [
+        "not-an-object",
+        {
+            "name": "pip-audit",
+            "ecosystem": "python",
+            "cadence": "on-demand",
+            "blocking_policy": "allowed_to_fail",
+            "command": "pip-audit",
+            "inputs": [],
+            "owner": "owner",
+            "noise": "low",
+            "pinned_version": "pip-audit==2.9.0",
+        },
+        {
+            "name": "pip-audit",
+            "ecosystem": "python",
+            "cadence": "on-demand",
+            "blocking_policy": "blocking",
+            "command": "pip-audit",
+            "inputs": ["bad-input", {"path": 42}],
+            "owner": "owner",
+            "noise": "low",
+            "pinned_version": "pip-audit==2.9.0",
+        },
+        {"name": "custom", "inputs": [{"path": "pyproject.toml"}]},
+    ]
+
+    report = tool.validate_scanner_manifest(payload)
+    messages = "\n".join(finding["message"] for finding in report["findings"])
+
+    assert not report["passed"]
+    assert "scanner entry must be an object" in messages
+    assert "scanner custom missing fields:" in messages
+    assert "duplicate scanner name pip-audit" in messages
+    assert "uses allowed_to_fail but has no rationale" in messages
+    assert "scanner pip-audit has no declared inputs" in messages
+    assert "scanner pip-audit input entry must be object" in messages
+    assert "scanner pip-audit input.path must be string" in messages
+    assert "required scanner missing from manifest: cargo-fuzz-nightly" in messages
 
 
 def test_required_scanner_contract_includes_every_manifest_scanner() -> None:
@@ -187,6 +247,43 @@ def test_cli_writes_manifest_and_can_validate() -> None:
             check=False,
         )
         assert validate.returncode == 0
+
+
+def test_main_prints_writes_and_validates_manifest(
+    tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    tool = _load_tool()
+    manifest_path = tmp_path / "manifest.json"
+    invalid_path = tmp_path / "invalid.json"
+
+    assert tool.main([]) == 0
+    stdout = capsys.readouterr().out
+    assert "cargo-fuzz-nightly" in stdout
+
+    assert tool.main(["--output", str(manifest_path)]) == 0
+    assert manifest_path.exists()
+    assert tool.main(["--validate", str(manifest_path)]) == 0
+    valid_report = capsys.readouterr().out
+    assert '"passed": true' in valid_report
+
+    invalid_path.write_text(json.dumps({"scanners": []}), encoding="utf-8")
+    assert tool.main(["--validate", str(invalid_path)]) == 1
+    invalid_report = capsys.readouterr().out
+    assert "schema_version is missing or not equal to expected version" in invalid_report
+
+
+def test_script_entrypoint_runs_main(
+    monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    repo_root = Path(__file__).resolve().parents[2]
+    tool_path = repo_root / "tools" / "security_scanner_manifest.py"
+    monkeypatch.setattr(sys, "argv", [str(tool_path)])
+
+    with pytest.raises(SystemExit) as exit_info:
+        runpy.run_path(str(tool_path), run_name="__main__")
+
+    assert exit_info.value.code == 0
+    assert "cargo-fuzz-nightly" in capsys.readouterr().out
 
 
 @contextmanager

@@ -511,8 +511,8 @@ bridge install. For source-tree runs against local bridge code, use
 | **v3-wheels.yml** | Cross-platform wheels (Linux, macOS, Windows × Python 3.10–3.14) |
 | **docker.yml** | Build & push Docker image to GHCR on release tags |
 | **docs.yml** | MkDocs → GitHub Pages |
-| **publish.yml** | Publish `sc-neurocore` to PyPI and `engine/` to crates.io on release tags |
-| **release.yml** | Python wheel + sdist + changelog extraction → GitHub Release |
+| **publish.yml** | Publish `sc-neurocore`, engine wheels, and `engine/` crate releases; retries skip already-published PyPI/crates.io versions |
+| **release.yml** | Build sdist/SBOM/security packet, support tagged-release backfills, and attach release assets to GitHub Release |
 | **benchmark.yml** | Performance regression tracking |
 | **codeql.yml** | CodeQL security analysis (weekly + on push) |
 | **fuzz.yml** | Rust engine fuzzing with nightly cargo-fuzz targets |

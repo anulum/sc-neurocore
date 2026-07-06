@@ -194,7 +194,8 @@ def test_security_scanner_workflow_runs_cargo_fuzz_only_on_nightly() -> None:
     ]
 
     assert "nightly" in toolchains
-    assert "cargo +stable install cargo-fuzz --version 0.13.1 --locked" in run_text
+    assert "cargo install cargo-fuzz --version 0.13.2" in run_text
+    assert "cargo-fuzz --version 0.13.1 --locked" not in run_text
     assert "tools/security_scan/run_cargo_fuzz_scanners.py" in run_text
     assert "--target all" in run_text
     assert "--max-total-time 300" in run_text

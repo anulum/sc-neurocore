@@ -10,6 +10,12 @@ name: Release
 on:
   push:
     tags: ["v*"]
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Existing release tag to backfill, for example v3.16.0"
+        required: true
+        type: string
 
 permissions: {}
 
@@ -26,6 +32,16 @@ jobs:
       - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
         with:
           fetch-depth: 0
+          ref: ${{ github.event_name == 'workflow_dispatch' && inputs.tag || github.ref }}
+
+      - name: Resolve release tag
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            RELEASE_TAG="${{ inputs.tag }}"
+          else
+            RELEASE_TAG="${GITHUB_REF#refs/tags/}"
+          fi
+          echo "RELEASE_TAG=${RELEASE_TAG}" >> "$GITHUB_ENV"
 
       - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
         with:
@@ -54,7 +70,7 @@ jobs:
           echo "$(go env GOPATH)/bin" >> "$GITHUB_PATH"
           cargo install cargo-audit --version 0.22.1 --locked
           cargo install cargo-deny --version 0.19.6 --locked
-          cargo +stable install cargo-fuzz --version 0.13.1 --locked
+          cargo install cargo-fuzz --version 0.13.2
           echo "$HOME/.local/bin" >> "$GITHUB_PATH"
 
       - name: Build sdist
@@ -73,10 +89,18 @@ jobs:
             --include-fuzz \
             --fuzz-max-total-time 300
 
+      - name: Upload release security packet artifact
+        if: ${{ always() }}
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: release-security-packet
+          path: security/ci-security-packet
+          retention-days: 30
+
       - name: Extract changelog for this tag
         id: changelog
         run: |
-          TAG="${GITHUB_REF#refs/tags/}"
+          TAG="$RELEASE_TAG"
           VERSION="${TAG#v}"
           awk -v version="${VERSION}" '
             $0 ~ "^## \\[?" version "\\]" { in_section = 1; print; next }
@@ -89,6 +113,7 @@ jobs:
       - name: Create GitHub Release
         uses: softprops/action-gh-release@718ea10b132b3b2eba29c1007bb80653f286566b # v2
         with:
+          tag_name: ${{ env.RELEASE_TAG }}
           body_path: ${{ steps.changelog.outputs.notes_file }}
           generate_release_notes: false
           files: |

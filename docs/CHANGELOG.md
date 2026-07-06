@@ -5,6 +5,15 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+### Release provenance and publish retry hardening
+- Added manual tagged-release backfill support to the release workflow,
+  retained the release security packet as a workflow artifact even when the
+  sweep fails, and aligned release/security scanner cargo-fuzz installation on
+  the validated `cargo-fuzz==0.13.2` pin. Made PyPI and crates.io publish
+  retries idempotent for already-published versions while preserving manual
+  dry-run validation. No runtime package, polyglot kernel, or benchmark path
+  changed.
+
 ### Mojo helper contract honesty
 - Removed the hidden `NotImplementedError` IPC stub from
   `accel.mojo.runner.MojoKernelRunner.popcount` and `lfsr_encode`, exported

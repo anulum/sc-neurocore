@@ -179,8 +179,10 @@ The only OSV exception is a bounded `RUSTSEC-2024-0436` entry for the transitive
 `wgpu -> metal -> paste` path; `cargo audit` classifies that item as an
 unmaintained warning, and the exception expires on 2026-08-31 unless the GPU
 backend dependency path is upgraded or replaced earlier.
-On tagged releases, `.github/workflows/release.yml` runs the release security
-sweep and attaches both
+On tagged releases and manual tag backfills, `.github/workflows/release.yml`
+runs the release security sweep and uploads the retained
+`release-security-packet` workflow artifact even when a sweep step fails. When
+the release reaches the GitHub Release step, it attaches both
 `security/ci-security-packet/release_security_artifact_index.json` and
 `security/ci-security-packet/security/release_security_sweep_summary.json` to
 the GitHub Release assets.

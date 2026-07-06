@@ -49,7 +49,7 @@ comes from the existing Rust tests, property sweeps, and the documented
 Run the initial native fuzz targets:
 
 ```bash
-cargo install cargo-fuzz
+cargo install cargo-fuzz --version 0.13.2
 cargo fuzz run ir_parser
 cargo fuzz run bitstream_ops
 ```

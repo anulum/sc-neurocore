@@ -33,6 +33,18 @@ def _run_text(job: dict[str, Any]) -> str:
     return "\n".join(step["run"] for step in steps if isinstance(step, dict) and "run" in step)
 
 
+def _uses_step(job: dict[str, Any], action_prefix: str) -> dict[str, Any]:
+    steps = job["steps"]
+    assert isinstance(steps, list)
+    matches = [
+        step
+        for step in steps
+        if isinstance(step, dict) and str(step.get("uses", "")).startswith(action_prefix)
+    ]
+    assert len(matches) == 1
+    return cast(dict[str, Any], matches[0])
+
+
 def test_python_and_engine_pypi_publish_use_oidc_trusted_publishing() -> None:
     jobs = _workflow()["jobs"]
 
@@ -48,6 +60,27 @@ def test_python_and_engine_pypi_publish_use_oidc_trusted_publishing() -> None:
     assert "PYPI_ENGINE_TOKEN" in engine_publish_text
     assert "password" in engine_publish_text
     assert "attestations: false" not in engine_publish_text
+
+
+def test_pypi_publish_steps_are_idempotent_for_tag_retries() -> None:
+    jobs = _workflow()["jobs"]
+
+    for job_name in ("publish-python-pypi", "publish-engine-pypi"):
+        publish_step = _uses_step(jobs[job_name], "pypa/gh-action-pypi-publish@")
+        assert publish_step["with"]["skip-existing"] is True
+
+
+def test_crates_publish_skips_existing_engine_version_before_upload() -> None:
+    jobs = _workflow()["jobs"]
+    publish_text = _run_text(jobs["publish-crate"])
+
+    assert "CRATE_NAME=" in publish_text
+    assert "CRATE_VERSION=" in publish_text
+    assert "https://crates.io/api/v1/crates/${CRATE_NAME}/${CRATE_VERSION}" in publish_text
+    assert "HTTP_STATUS" in publish_text
+    assert '"200")' in publish_text
+    assert "already exists on crates.io" in publish_text
+    assert "cargo publish --manifest-path engine/Cargo.toml" in publish_text
 
 
 def test_publish_workflow_builds_and_smoke_tests_engine_wheels_before_upload() -> None:

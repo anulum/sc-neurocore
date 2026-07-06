@@ -24,6 +24,13 @@ def _load_release_workflow() -> dict[str, Any]:
     return cast(dict[str, Any], workflow)
 
 
+def _workflow_events(workflow: dict[str, Any]) -> dict[str, Any]:
+    workflow_by_yaml_key = cast(dict[object, Any], workflow)
+    events = workflow.get("on", workflow_by_yaml_key.get(True))
+    assert isinstance(events, dict)
+    return cast(dict[str, Any], events)
+
+
 def test_release_workflow_builds_security_packet_before_release() -> None:
     workflow = _load_release_workflow()
     steps = workflow["jobs"]["release"]["steps"]
@@ -34,6 +41,29 @@ def test_release_workflow_builds_security_packet_before_release() -> None:
         "--output-dir" in step and "security/ci-security-packet" in step for step in run_steps
     )
     assert any("--include-fuzz" in step for step in run_steps)
+
+
+def test_release_workflow_supports_manual_tag_backfill() -> None:
+    workflow = _load_release_workflow()
+    events = _workflow_events(workflow)
+    dispatch = events["workflow_dispatch"]
+    assert dispatch["inputs"]["tag"]["required"] is True
+
+    steps = workflow["jobs"]["release"]["steps"]
+    checkout = steps[0]
+    assert checkout["with"]["ref"] == "${{ github.event_name == 'workflow_dispatch' && inputs.tag || github.ref }}"
+
+    run_text = "\n".join(step["run"] for step in steps if isinstance(step, dict) and "run" in step)
+    assert "RELEASE_TAG=\"${{ inputs.tag }}\"" in run_text
+    assert "TAG=\"$RELEASE_TAG\"" in run_text
+
+    release_step = [
+        step
+        for step in steps
+        if isinstance(step, dict)
+        and str(step.get("uses", "")).startswith("softprops/action-gh-release@")
+    ][0]
+    assert release_step["with"]["tag_name"] == "${{ env.RELEASE_TAG }}"
 
 
 def test_release_workflow_installs_real_release_sweep_tools() -> None:
@@ -51,7 +81,26 @@ def test_release_workflow_installs_real_release_sweep_tools() -> None:
     assert "go install github.com/anchore/syft/cmd/syft@v1.20.0" in run_text
     assert "cargo install cargo-audit --version 0.22.1 --locked" in run_text
     assert "cargo install cargo-deny --version 0.19.6 --locked" in run_text
-    assert "cargo +stable install cargo-fuzz --version 0.13.1 --locked" in run_text
+    assert "cargo install cargo-fuzz --version 0.13.2" in run_text
+    assert "cargo-fuzz --version 0.13.1 --locked" not in run_text
+
+
+def test_release_workflow_uploads_security_packet_even_on_failure() -> None:
+    workflow = _load_release_workflow()
+    steps = workflow["jobs"]["release"]["steps"]
+    upload_steps = [
+        step
+        for step in steps
+        if isinstance(step, dict)
+        and step.get("name") == "Upload release security packet artifact"
+    ]
+
+    assert len(upload_steps) == 1
+    upload = upload_steps[0]
+    assert upload["if"] == "${{ always() }}"
+    assert str(upload["uses"]).startswith("actions/upload-artifact@")
+    assert upload["with"]["name"] == "release-security-packet"
+    assert upload["with"]["path"] == "security/ci-security-packet"
 
 
 def test_release_workflow_attaches_cve_status_to_github_release() -> None:
