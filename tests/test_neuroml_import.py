@@ -14,10 +14,14 @@ from textwrap import dedent
 import pytest
 
 from sc_neurocore.adapters.neuroml import (
+    ImportedCell,
+    _parse_current_pa,
+    _parse_unit_value,
     create_neuron,
     import_neuroml,
 )
 from sc_neurocore.neurons.models import Izhikevich2007Neuron
+from sc_neurocore.neurons.models.adex import AdExNeuron
 
 FIXTURES = Path(__file__).parent / "fixtures" / "neuroml"
 
@@ -79,6 +83,18 @@ class TestImportIAFCell:
         cells = import_neuroml(f)
         assert cells[0].params["tau_mem"] == 20.0
 
+    def test_tau_ref_cell_carries_refractory_period(self, tmp_path):
+        f = _write_nml(
+            tmp_path / "tau_ref.nml",
+            dedent("""\
+            <iafTauRefCell id="tau_ref0" tau="20ms" leakReversal="-65mV"
+                           thresh="-55mV" reset="-70mV" refract="3ms"/>
+        """),
+        )
+        cells = import_neuroml(f)
+        assert cells[0].params["tau_mem"] == 20.0
+        assert cells[0].params["refractory_period"] == 3
+
 
 class TestImportIzhikevich:
     def test_2003_dimensionless(self, tmp_path):
@@ -136,8 +152,15 @@ class TestImportAdEx:
         cells = import_neuroml(f)
         c = cells[0]
         assert c.cell_type == "AdExNeuron"
-        assert c.params["C"] == pytest.approx(281.0, rel=0.01)
+        # Attributes map onto AdExNeuron's own constructor names / units.
+        assert c.params["c_m"] == pytest.approx(281.0, rel=0.01)
         assert c.params["tau_w"] == pytest.approx(144.0, rel=0.01)
+        # tau = C / g_L (pF / nS = ms).
+        assert c.params["tau"] == pytest.approx(281.0 / 30.0, rel=0.01)
+        assert c.params["v_rest"] == pytest.approx(-70.6, rel=0.01)
+        assert c.params["v_rh"] == pytest.approx(-50.4, rel=0.01)
+        # b is a spike-triggered adaptation *current*: 0.0805 nA = 80.5 pA.
+        assert c.params["b"] == pytest.approx(80.5, rel=0.01)
 
 
 class TestMultipleCells:
@@ -204,6 +227,55 @@ class TestCreateNeuron:
 
         assert isinstance(neuron, Izhikevich2007Neuron)
         assert neuron.get_state() == {"v": pytest.approx(-60.0), "u": pytest.approx(0.0)}
+
+    def test_adex_instantiation_adapts(self, tmp_path):
+        # Regression: the imported AdEx parameters must map onto AdExNeuron's own
+        # constructor names/units (previously they used NeuroML names and crashed
+        # with TypeError), and the pA-unit spike-triggered adaptation must produce
+        # a lengthening inter-spike interval under a sustained supra-rheobase drive.
+        f = _write_nml(
+            tmp_path / "adex.nml",
+            dedent("""\
+            <adExIaFCell id="adex0" C="281pF" gL="30nS" EL="-70.6mV"
+                         VT="-50.4mV" thresh="-40mV" reset="-70.6mV"
+                         delT="2mV" tauw="144ms" a="4nS" b="0.0805nA"/>
+        """),
+        )
+        cells = import_neuroml(f)
+        neuron = create_neuron(cells[0])
+        assert isinstance(neuron, AdExNeuron)
+
+        spikes = [neuron.step(1000.0) for _ in range(3000)]
+        fire_idx = [i for i, s in enumerate(spikes) if s]
+        assert len(fire_idx) >= 4
+        intervals = [fire_idx[k + 1] - fire_idx[k] for k in range(len(fire_idx) - 1)]
+        # Spike-frequency adaptation: later intervals exceed the first.
+        assert intervals[-1] > intervals[0]
+
+    def test_unknown_cell_type_raises(self):
+        bogus = ImportedCell(
+            cell_id="mystery",
+            cell_type="NotARealNeuron",
+            params={},
+            source_tag="mysteryCell",
+        )
+        with pytest.raises(ValueError, match="Unknown cell type: NotARealNeuron"):
+            create_neuron(bogus)
+
+
+class TestParseHelpers:
+    def test_parse_unit_value_none_is_zero(self):
+        assert _parse_unit_value(None) == 0.0
+
+    def test_parse_unit_value_dimensionless_falls_through(self):
+        # No recognised unit suffix -> parsed as a bare float.
+        assert _parse_unit_value("0.7") == pytest.approx(0.7)
+
+    def test_parse_current_pa_none_is_zero(self):
+        assert _parse_current_pa(None) == 0.0
+
+    def test_parse_current_pa_dimensionless_falls_through(self):
+        assert _parse_current_pa("42") == pytest.approx(42.0)
 
 
 class TestIzhikevich2007Neuron:

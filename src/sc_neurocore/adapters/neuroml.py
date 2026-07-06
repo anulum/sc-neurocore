@@ -32,10 +32,11 @@ def _strip_ns(tag: str) -> str:
     return tag.split("}")[-1] if "}" in tag else tag
 
 
-def _parse_unit_value(s: str) -> float:
+def _parse_unit_value(s: str | None) -> float:
     """Parse NeuroML unit string like '10nS', '-65mV', '100pF' to SI-ish float.
 
-    Returns value in base NeuroML units (mV, nS, pF, ms, nA).
+    Returns value in base NeuroML units (mV, nS, pF, ms, nA); a missing (``None``)
+    attribute value parses to ``0.0``.
     """
     if s is None:
         return 0.0
@@ -73,8 +74,11 @@ def _parse_unit_value(s: str) -> float:
     return float(s)
 
 
-def _parse_current_pa(s: str) -> float:
-    """Parse a NeuroML current string into pA for biophysical IF equations."""
+def _parse_current_pa(s: str | None) -> float:
+    """Parse a NeuroML current string into pA for biophysical IF equations.
+
+    A missing (``None``) attribute value parses to ``0.0``.
+    """
     if s is None:
         return 0.0
     text = s.strip()
@@ -222,22 +226,36 @@ def _import_izhikevich2007_cell(elem: Any) -> ImportedCell:
 
 
 def _import_adex_cell(elem: Any) -> ImportedCell:
-    """Import <adExIaFCell>."""
+    """Import <adExIaFCell> (Brette & Gerstner 2005 AdEx).
+
+    Maps the NeuroML biophysical attributes onto the ``AdExNeuron`` constructor
+    parameter names in its native, self-consistent unit system (mV, ms, pF, pA,
+    nS): the leak reversal becomes ``v_rest``, the exponential threshold ``V_T``
+    becomes ``v_rh``, the membrane time constant is ``tau = C / g_L`` (pF/nS = ms)
+    with the capacitance kept as ``c_m`` (pF), and the spike-triggered adaptation
+    ``b`` is parsed as a *current* in pA — ``w`` and the injected current share the
+    pA unit that keeps ``w / c_m`` a rate in mV/ms.
+    """
     cell_id = elem.get("id", "unnamed")
+    C = _parse_unit_value(elem.get("C", "281pF"))
+    g_L = _parse_unit_value(elem.get("gL", "30nS"))
+    E_L = _parse_unit_value(elem.get("EL", "-70.6mV"))
     return ImportedCell(
         cell_id,
         "AdExNeuron",
         {
-            "C": _parse_unit_value(elem.get("C", "281pF")),
-            "g_L": _parse_unit_value(elem.get("gL", "30nS")),
-            "E_L": _parse_unit_value(elem.get("EL", "-70.6mV")),
-            "V_T": _parse_unit_value(elem.get("VT", "-50.4mV")),
-            "delta_T": _parse_unit_value(elem.get("delT", "2mV")),
+            "v": E_L,
+            "v_rest": E_L,
+            "v_reset": _parse_unit_value(elem.get("reset", "-70.6mV")),
+            "v_threshold": _parse_unit_value(elem.get("thresh", "-40mV")),
+            "v_rh": _parse_unit_value(elem.get("VT", "-50.4mV")),
+            "delta_t": _parse_unit_value(elem.get("delT", "2mV")),
+            "tau": C / max(g_L, 1e-12),
             "tau_w": _parse_unit_value(elem.get("tauw", "144ms")),
             "a": _parse_unit_value(elem.get("a", "4nS")),
-            "b": _parse_unit_value(elem.get("b", "0.0805nA")),
-            "V_reset": _parse_unit_value(elem.get("reset", "-70.6mV")),
-            "V_thresh": _parse_unit_value(elem.get("thresh", "-40mV")),
+            "b": _parse_current_pa(elem.get("b", "0.0805nA")),
+            "c_m": C,
+            "dt": 0.1,
         },
         "adExIaFCell",
     )

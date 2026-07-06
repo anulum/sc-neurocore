@@ -65,8 +65,24 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
   statement coverage by the existing behaviour and contract suites (`test_adaptive_audio`,
   `test_audio_evs_contracts`, and the audio package/mapping/profile contracts); the omit
   entries were stale, so removing them simply lets that measured coverage count.
+- The NeuroML 2 importer (`adapters/neuroml.py`) is no longer excluded from coverage
+  measurement. It is a pure-standard-library (`xml.etree`) importer with no optional
+  dependency, and the unit/current parsers' missing-value and dimensionless fall-through
+  paths, the `iafTauRefCell` refractory branch, and the `create_neuron` AdEx and
+  unknown-cell-type branches gained tests, taking the module from 91 % to 100 %.
 
 ### Fixed
+- The NeuroML 2 importer produced an unusable Adaptive-Exponential (AdEx) cell:
+  `_import_adex_cell` emitted the NeuroML attribute names (`C`, `g_L`, `E_L`, `V_T`,
+  `delta_T`, `V_reset`, `V_thresh`) rather than the `AdExNeuron` constructor names, so
+  `create_neuron` raised `TypeError: unexpected keyword argument 'C'` for every imported
+  AdEx cell. The importer now maps the attributes onto the model's own parameters in its
+  native unit system — leak reversal to `v_rest`, exponential threshold `V_T` to `v_rh`,
+  `tau = C / g_L` (pF/nS = ms) with the capacitance kept as `c_m` — and, critically,
+  parses the spike-triggered adaptation `b` as a *current* in pA (`0.0805 nA = 80.5 pA`)
+  rather than in nA, since `b`, the adaptation state `w`, and the injected current share
+  the pA unit. The correction is validated against the Brette & Gerstner (2005) hallmark
+  of spike-frequency adaptation (a lengthening inter-spike interval under sustained drive).
 - The SystemVerilog emitter wrote malformed signed literals (`16'sd-51`) for negative
   fixed-point constants; the sign is now placed outside the sized base (`-16'sd51`),
   so graphs with negative vector or scalar constants emit valid Verilog.

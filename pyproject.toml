@@ -163,8 +163,9 @@ omit = [
     "*/qat/pact.py",                   # PACT clipping activation (requires torch)
     "*/qat/observers.py",              # Quantisation observers (requires torch)
     # core/bipolar.py is now covered (tests/test_bipolar_sc.py, 100%); no longer omitted.
-    "*/adapters/neuroml.py",           # NeuroML 2 importer
-    "*/adapters/sonata.py",            # SONATA HDF5 importer
+    # adapters/neuroml.py is a pure-stdlib (xml.etree) importer, now covered
+    # (tests/test_neuroml_import.py, 100%); no longer omitted.
+    "*/adapters/sonata.py",            # SONATA HDF5 importer (requires optional h5py)
     "*/nir_bridge/*",                   # NIR interop (nir package)
     "*/accel/jax_backend.py",           # JAX GPU backend
     "*/layers/jax_dense_layer.py",      # JAX dense layer
