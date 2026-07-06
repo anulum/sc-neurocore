@@ -31,7 +31,10 @@ jobs:
           workspaces: engine/fuzz
 
       - name: Install cargo-fuzz
-        run: cargo install cargo-fuzz --version 0.13.1 --locked
+        # 0.13.1 --locked pinned rustix 0.36.5, which no longer compiles on current
+        # nightly ("cannot find attribute rustc_layout_scalar_valid_range_end"). Use
+        # the latest cargo-fuzz and let cargo resolve a nightly-compatible dep tree.
+        run: cargo install cargo-fuzz --version 0.13.2
 
       # The fuzz crate depends on the engine with default-features = false, so the
       # bundled-Z3 build is skipped (ir::parser::parse needs neither Z3 nor NumPy/pyo3,
