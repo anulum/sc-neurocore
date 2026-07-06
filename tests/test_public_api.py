@@ -11,6 +11,7 @@
 from pathlib import Path
 import runpy
 import sys
+from types import ModuleType
 from typing import Any, cast
 
 if sys.version_info >= (3, 11):
@@ -49,6 +50,20 @@ def test_unknown_lazy_symbol_raises_attribute_error() -> None:
     missing_name = "not_a_public_symbol"
     with pytest.raises(AttributeError, match="has no attribute 'not_a_public_symbol'"):
         getattr(sc_neurocore, missing_name)
+
+
+def test_lazy_submodule_resolves_after_cache_eviction(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Public lazy submodules resolve through the package facade after eviction."""
+    module_name = "sc_neurocore.datasets"
+    monkeypatch.delitem(sc_neurocore.__dict__, "datasets", raising=False)
+    monkeypatch.delitem(sys.modules, module_name, raising=False)
+
+    resolved = sc_neurocore.datasets
+
+    assert isinstance(resolved, ModuleType)
+    assert resolved is sys.modules[module_name]
+    assert sc_neurocore.__dict__["datasets"] is resolved
+    assert "load_shd" in cast(list[str], resolved.__dict__["__all__"])
 
 
 def test_dir_lists_lazy_public_api() -> None:
