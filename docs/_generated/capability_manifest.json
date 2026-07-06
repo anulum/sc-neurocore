@@ -965,7 +965,7 @@
     "python_model_classes": 158,
     "python_model_source_modules": 152,
     "rust_pyo3_model_wrappers": 175,
-    "test_files": 973
+    "test_files": 974
   },
   "documentation": {
     "public_pages": [
@@ -2932,6 +2932,7 @@
       "tests/test_compiler_surface_policy.py",
       "tests/test_compiler_validation_units.py",
       "tests/test_compression_toolkit.py",
+      "tests/test_constants.py",
       "tests/test_continual.py",
       "tests/test_contrastive.py",
       "tests/test_control.py",

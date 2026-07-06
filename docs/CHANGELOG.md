@@ -5,6 +5,15 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+### Constants ledger audit hardening
+- Added dedicated constants-ledger regression tests for the 44 public constants,
+  scalar types, physical ranges, Q8.8 invariants, maintained-source import map,
+  module-docstring honesty, and Izhikevich spike-threshold wording. Corrected
+  the constants module docstring to state the current 16-module Python adoption
+  boundary, promoted it into the scoped NumPy docstring policy, and refreshed
+  the constants audit page. No constant values, Rust mirror values, or
+  benchmark-dispatched paths changed.
+
 ## [3.16.0] - 2026-07-05
 
 ### Provenance and citation integrity

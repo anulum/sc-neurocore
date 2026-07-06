@@ -8,9 +8,11 @@
 
 """Named physical and model constants for SC-NeuroCore.
 
-Every default parameter in the library traces back to either a textbook
-reference, a hardware design choice, or an explicitly documented convention.
-Modules import from here instead of using bare numeric literals.
+This module is the citation ledger for 44 named constants that trace to
+textbook references, hardware design choices, or documented conventions.
+Current adoption is explicit and tested: 16 maintained source modules import
+all 44 named constants from this ledger. See ``docs/api/constants.md`` for the
+Python import boundary and the separate Rust parity note.
 """
 
 # ---------------------------------------------------------------------------
@@ -37,7 +39,7 @@ IZH_A = 0.02  # 1/ms — recovery time constant
 IZH_B = 0.2  # 1/ms — sensitivity of recovery to subthreshold v
 IZH_C = -65.0  # mV — post-spike reset potential
 IZH_D = 8.0  # mV — post-spike recovery increment
-IZH_SPIKE_THRESHOLD = 30.0  # mV — Izhikevich 2003, Eq. 1
+IZH_SPIKE_THRESHOLD = 30.0  # mV — spike-detect peak, not an adaptive membrane threshold
 
 # ---------------------------------------------------------------------------
 # Homeostatic threshold adaptation

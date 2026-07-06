@@ -7,11 +7,15 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 248
+expected_file_count = 249
 
 [[file]]
 path = "src/sc_neurocore/__init__.py"
 rationale = "Public root package entry point that exposes the lazy import facade, version surface, and audited API exports."
+
+[[file]]
+path = "src/sc_neurocore/constants.py"
+rationale = "Public constants ledger with audited citation values, source adoption boundary, and Rust parity warning."
 
 [[file]]
 path = "scripts/generate_docs.py"

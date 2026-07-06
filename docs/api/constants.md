@@ -1,14 +1,13 @@
 # Named Physical and Model Constants
 
 **Module:** `sc_neurocore.constants`
-**Source:** `src/sc_neurocore/constants.py` — 100 LOC, 44 module-level
+**Source:** `src/sc_neurocore/constants.py` — 103 LOC, 44 module-level
 constants
-**Status (v3.14.0):** module exists with 44 named constants; **only
-1 of the ~250 source files in `src/` actually imports from it**, and
-only 8 of the 44 constants are referenced anywhere outside the module.
-The docstring claims "Modules import from here instead of using bare
-numeric literals" but this convention is not adopted in the wider
-codebase (§3 honesty notice).
+**Status (v3.16.0):** module exists with 44 named constants. All 44 are
+imported by the 16 maintained Python source modules listed in §3 and guarded
+by `tests/test_constants.py`. Task #37 is closed for Python adoption honesty,
+dedicated tests, and the Izhikevich threshold comment. Rust parity automation
+remains a separate open follow-up (§7.3, task #38).
 
 This page lists every constant, its provenance citation, and which
 ones are actually used.
@@ -17,17 +16,17 @@ ones are actually used.
 
 ## 1. Purpose (per the module docstring)
 
-> Every default parameter in the library traces back to either a
-> textbook reference, a hardware design choice, or an explicitly
-> documented convention. Modules import from here instead of using
-> bare numeric literals.
+> This module is the citation ledger for 44 named constants that trace
+> to textbook references, hardware design choices, or documented
+> conventions. Current adoption is explicit and tested: 16 maintained
+> source modules import all 44 named constants from this ledger. See
+> `docs/api/constants.md` for the Python import boundary and the
+> separate Rust parity note.
 
-The intent is sound: a single audit-able source for every default
-in the library, with each value traceable to a publication or a
-design decision. The implementation matches the intent inside this
-file (every value carries a comment naming its source). What is
-not implemented is the second sentence — adoption across the rest
-of `src/`.
+The purpose is a single auditable Python source for model defaults and
+hardware-facing constants. The current guarantee is deliberately scoped:
+Python source adoption is tested, while Rust-side values are still maintained
+manually and tracked separately as task #38.
 
 ---
 
@@ -62,7 +61,7 @@ of `src/`.
 | `IZH_B` | `0.2` | 1/ms |
 | `IZH_C` | `-65.0` | mV |
 | `IZH_D` | `8.0` | mV |
-| `IZH_SPIKE_THRESHOLD` | `30.0` | mV |
+| `IZH_SPIKE_THRESHOLD` | `30.0` | mV spike-detect peak, not an adaptive membrane threshold |
 
 ### 2.3 Homeostatic threshold adaptation — Turrigiano 2012
 
@@ -155,76 +154,52 @@ of `src/`.
 
 ---
 
-## 3. Honesty notice — adoption gap
+## 3. Honesty notice — current Python adoption boundary
 
-The module docstring states:
+The earlier v3.14 audit reported one Python consumer and 36 unused constants.
+That is stale in the current tree. As of v3.16.0, `tests/test_constants.py`
+parses maintained source under `src/sc_neurocore`, excludes nested build/cache
+trees such as `.pixi`, and asserts this import boundary:
 
-> Modules import from here instead of using bare numeric literals.
+| Source file | Imported constants |
+|-------------|--------------------|
+| `src/sc_neurocore/layers/fusion.py` | `LAYER_DEFAULT_LENGTH` |
+| `src/sc_neurocore/layers/jax_dense_layer.py` | `LAYER_DEFAULT_LENGTH`, `LIF_DT`, `LIF_LAYER_NOISE_STD`, `LIF_RESISTANCE`, `LIF_TAU_MEM`, `LIF_V_RESET`, `LIF_V_REST`, `LIF_V_THRESHOLD` |
+| `src/sc_neurocore/layers/memristive.py` | `MEMRISTIVE_STUCK_RATE`, `MEMRISTIVE_VARIABILITY` |
+| `src/sc_neurocore/layers/recurrent.py` | `LAYER_DEFAULT_LENGTH`, `RESERVOIR_FEEDBACK_STRENGTH`, `RESERVOIR_INPUT_STRENGTH`, `RESERVOIR_SPECTRAL_RADIUS` |
+| `src/sc_neurocore/layers/sc_conv_layer.py` | `LAYER_CONV_LENGTH` |
+| `src/sc_neurocore/layers/sc_dense_layer.py` | `DENSE_LAYER_LENGTH`, `DENSE_Y_MAX`, `DENSE_Y_MIN`, `LIF_DT`, `LIF_LAYER_NOISE_STD`, `LIF_RESISTANCE`, `LIF_TAU_MEM`, `LIF_V_RESET`, `LIF_V_REST`, `LIF_V_THRESHOLD`, `NEURON_SEED_OFFSET` |
+| `src/sc_neurocore/layers/sc_learning_layer.py` | `LAYER_DEFAULT_LENGTH`, `STDP_LEARNING_RATE`, `STDP_LTD_RATIO` |
+| `src/sc_neurocore/layers/vectorized_layer.py` | `LAYER_DEFAULT_LENGTH` |
+| `src/sc_neurocore/neurons/dendritic.py` | `DENDRITIC_THRESHOLD` |
+| `src/sc_neurocore/neurons/fixed_point_lif.py` | `FP_DATA_WIDTH`, `FP_FRACTION`, `FP_LFSR_SEED`, `FP_LFSR_WIDTH`, `FP_REFRACTORY_PERIOD`, `FP_V_THRESHOLD` |
+| `src/sc_neurocore/neurons/homeostatic_lif.py` | `HOMEOSTATIC_ADAPTATION_RATE`, `HOMEOSTATIC_TARGET_RATE`, `HOMEOSTATIC_THRESHOLD_CEILING_MULT`, `HOMEOSTATIC_THRESHOLD_FLOOR`, `HOMEOSTATIC_TRACE_DECAY` |
+| `src/sc_neurocore/neurons/sc_izhikevich.py` | `IZH_A`, `IZH_B`, `IZH_C`, `IZH_D`, `IZH_SPIKE_THRESHOLD`, `LIF_DT` |
+| `src/sc_neurocore/neurons/stochastic_lif.py` | `LIF_DT`, `LIF_NOISE_STD`, `LIF_REFRACTORY_PERIOD`, `LIF_RESISTANCE`, `LIF_TAU_MEM`, `LIF_V_RESET`, `LIF_V_REST`, `LIF_V_THRESHOLD` |
+| `src/sc_neurocore/synapses/r_stdp.py` | `RSTDP_ANTI_HEBBIAN_SCALE`, `RSTDP_TRACE_DECAY` |
+| `src/sc_neurocore/synapses/sc_synapse.py` | `SYNAPSE_DEFAULT_LENGTH`, `SYNAPSE_DEFAULT_WEIGHT` |
+| `src/sc_neurocore/synapses/stochastic_stdp.py` | `STDP_LEARNING_RATE`, `STDP_LTD_RATIO`, `STDP_WINDOW_SIZE` |
 
-In v3.14.0 this is **not the case**. A grep across `src/` finds only
-**one file** that imports from `sc_neurocore.constants`:
-
-```
-src/sc_neurocore/layers/jax_dense_layer.py
-```
-
-That file imports 8 of the 44 constants:
-`LAYER_DEFAULT_LENGTH`, `LIF_DT`, `LIF_V_REST`, `LIF_V_RESET`,
-`LIF_V_THRESHOLD`, `LIF_TAU_MEM`, `LIF_RESISTANCE`,
-`LIF_LAYER_NOISE_STD`.
-
-The other **36 constants are declared but unused outside this
-module**. Examples:
-
-- `IZH_A/B/C/D` — duplicated as inline literals in
-  `src/sc_neurocore/neurons/models/izhikevich.py`
-- `STDP_LEARNING_RATE` — duplicated in synapse / plasticity files
-- `FP_DATA_WIDTH`, `FP_FRACTION` — the equation compiler hard-codes
-  16 and 8 instead (`compiler/equation_compiler.py:39-40`)
-- `LIF_TAU_MEM = 20.0` — inline in `LapicqueNeuron(tau=20.0)` and
-  many other neuron defaults
-
-This is **not behavioural breakage** — the constants in `constants.py`
-agree with the inline literals — but it does mean:
-
-1. Updating `LIF_TAU_MEM` in `constants.py` does **not** change the
-   behaviour of any neuron model unless the model is rebuilt to
-   import it.
-2. Auditors cannot trust that the citation comments in this file
-   actually describe the running code; they describe the module's
-   **intended** values.
-
-Tracked as task #37.
+Together these consumers import all 44 names. The guarantee is a Python source
+guarantee only; Rust engine parity remains manual until task #38 adds an
+automated sync or parity gate.
 
 ---
 
 ## 4. Recommended path forward
 
-Three options, in order of effort:
+Task #37 is closed for the Python constants ledger:
 
-1. **Document the reserved-vocabulary status.** Add a paragraph to
-   the module docstring stating "v3.14.0 status: only LIF defaults
-   are imported by `jax_dense_layer.py`; the other 36 constants
-   document intent but are not currently the source of truth for
-   any module. See `docs/api/constants.md` §3."
+1. The module docstring now states the current 16-module / 44-constant
+   adoption boundary instead of a blanket codebase-wide claim.
+2. `tests/test_constants.py` guards exact values, scalar types, physical
+   ranges, Q8.8 self-consistency, the source import map, and the Izhikevich
+   spike-threshold comment.
+3. The scoped public docstring policy now includes `src/sc_neurocore/constants.py`.
 
-2. **Migrate inline literals to constants imports.** For each
-   module that uses a value declared here, replace the literal with
-   the named import. Order of effort:
-   - LIF defaults: handful of files
-   - Izhikevich: 1 file
-   - Homeostatic: 1-2 files
-   - FP_ hardware: compiler + RTL
-   - STDP/plasticity: ~5 files
-   - Reservoir: 1 file
-   - Memristive: 1 file
-   The migration is mechanical but touches ~12-15 files. Each
-   change must be a separate commit per task-completion protocol.
-
-3. **Delete the unused 36.** Risky — they document intent. Only do
-   this if option 2 is rejected and option 1 is judged misleading.
-
-Tracked as task #37.
+The next related task is #38: add an automated Python/Rust parity gate for
+constants mirrored in `engine/src/` before any future cross-language value
+change is accepted.
 
 ---
 
@@ -232,8 +207,10 @@ Tracked as task #37.
 
 | Surface | How it's wired | Verifier |
 |---------|---------------|----------|
-| `from sc_neurocore.constants import LIF_V_THRESHOLD, ...` | flat module export | `src/sc_neurocore/layers/jax_dense_layer.py` (only consumer) |
-| Other 36 constants | declared but no importers | n/a |
+| Python constants ledger | flat module export from `sc_neurocore.constants` | `tests/test_constants.py::test_public_constant_ledger_matches_documented_values` |
+| Python source adoption map | direct imports from 16 maintained modules | `tests/test_constants.py::test_source_import_map_matches_current_adoption_boundary` |
+| Physical range and Q8.8 invariants | value-level assertions | `tests/test_constants.py::test_dimensionless_constants_remain_in_physical_ranges`; `tests/test_constants.py::test_fixed_point_q88_constants_are_self_consistent` |
+| Rust engine parity | manual review only | task #38 |
 
 ---
 
@@ -241,17 +218,16 @@ Tracked as task #37.
 
 | # | Dimension | Status | Detail |
 |---|-----------|--------|--------|
-| 1 | Pipeline wiring | ⚠️ WARN | Only 1 consumer of 8 constants; 36 constants declared with no consumer in src/ |
-| 2 | Multi-angle tests | ❌ FAIL | **No `tests/test_constants.py` file exists.** The constants change project behaviour only via `jax_dense_layer.py` (covered transitively); no test asserts the citation values themselves. |
-| 3 | Rust path | N/A | Plain Python data; the Rust engine has its own constants in `engine/src/`. The two need to be kept in sync manually — if `LIF_V_THRESHOLD` here changes, `engine/src/neurons/lif.rs` must update too. No automated check exists. |
+| 1 | Pipeline wiring | ✅ PASS | 16 maintained Python source modules import all 44 constants; the import map is tested. |
+| 2 | Multi-angle tests | ✅ PASS | `tests/test_constants.py` asserts exact values, scalar types, ranges, Q8.8 consistency, source import adoption, the module docstring boundary, and the Izhikevich threshold comment. |
+| 3 | Rust path | ⚠️ WARN | Plain Python data; the Rust engine has its own constants in `engine/src/`. The two need to be kept in sync manually — if `LIF_V_THRESHOLD` here changes, `engine/src/neurons/lif.rs` must update too. No automated check exists. |
 | 4 | Benchmarks | N/A | Constants do not run code |
 | 5 | Performance docs | N/A | Same |
 | 6 | Documentation page | ✅ PASS | This page |
-| 7 | Rules followed | ⚠️ WARN | SPDX header ✅. **Module docstring overstates adoption** (§3). Citations are present and correct as far as `git blame` shows. British English clean. No `# noqa`, no `# type: ignore`. |
+| 7 | Rules followed | ✅ PASS | SPDX header ✅. Module docstring is scoped to the tested Python adoption boundary. Citations are present. British English clean. No `# noqa`, no `# type: ignore`. |
 
-Net: **2 WARN, 1 FAIL.** The FAIL is a missing test file; the WARNs
-are the docstring overstatement and the orphan-constant adoption
-gap.
+Net: **1 WARN, 0 FAIL.** The remaining WARN is the open Rust parity
+automation gap tracked as task #38.
 
 ---
 
@@ -259,18 +235,19 @@ gap.
 
 ### 7.1 Adoption gap (task #37)
 
-See §3-§4. This is the headline issue.
+Closed for maintained Python source. The current import map covers all 44
+constants across the 16 source consumers listed in §3.
 
-### 7.2 No `tests/test_constants.py`
+### 7.2 Dedicated constants tests
 
-A constants module with 44 declared values warrants at least:
-- Type assertion (every constant has the documented dtype)
-- Range assertion (e.g. `0 < HOMEOSTATIC_TARGET_RATE < 1`)
-- Unit-citation cross-check (does each constant's value match its
-  comment's claimed paper?)
+Closed. `tests/test_constants.py` now provides direct tests for:
 
-The cross-check would catch silent drift if someone edits a
-constant without updating its citation. Tracked as part of task #37.
+- exact 44-value ledger contents and scalar types;
+- normalised ranges and positive physical parameters;
+- fixed-point Q8.8 self-consistency;
+- maintained-source import boundary;
+- module docstring honesty;
+- Izhikevich spike-detect threshold wording.
 
 ### 7.3 Rust-side constants are not synchronised
 
@@ -283,50 +260,20 @@ Rust value via PyO3) would close this.
 
 Tracked as task #38.
 
-### 7.4 `IZH_SPIKE_THRESHOLD = 30.0` is the spike-detect threshold,
-not the membrane threshold
+### 7.4 `IZH_SPIKE_THRESHOLD = 30.0` is the spike-detect peak,
+not an adaptive membrane threshold
 
-A reader scanning the file might assume `IZH_SPIKE_THRESHOLD`
-governs when an Izhikevich neuron fires. It actually marks the
-**post-spike voltage** at which the spike is detected and reset
-applied — a distinction Izhikevich 2003 makes explicit but the
-constant name does not. Add a one-line comment.
+Closed. The source comment now identifies `30.0` mV as the spike-detect peak
+and explicitly says it is not an adaptive membrane threshold.
 
 ---
 
 ## 8. Tests
 
-There is no `tests/test_constants.py`. The constants are exercised
-indirectly via `tests/test_layers.py` (which tests `JaxSCDenseLayer`,
-the only consumer).
-
-Recommended minimal test (not yet written):
-
-```python
-# tests/test_constants.py
-from sc_neurocore import constants
-
-
-def test_lif_threshold_is_normalised():
-    assert constants.LIF_V_THRESHOLD == 1.0
-
-
-def test_izh_spike_threshold_matches_paper():
-    # Izhikevich 2003 Table 1: v_peak = +30 mV
-    assert constants.IZH_SPIKE_THRESHOLD == 30.0
-
-
-def test_fp_q88_is_self_consistent():
-    assert constants.FP_DATA_WIDTH == 16
-    assert constants.FP_FRACTION == 8
-    assert constants.FP_V_THRESHOLD == 1 << constants.FP_FRACTION
-
-
-def test_homeostatic_target_rate_in_unit_interval():
-    assert 0 < constants.HOMEOSTATIC_TARGET_RATE < 1
-```
-
-Tracked as part of task #37.
+`tests/test_constants.py` is the dedicated regression suite for this module.
+It is intentionally source-aware: the adoption-boundary test parses maintained
+Python source instead of relying on a free-text grep, so nested build/cache
+trees do not pollute the evidence.
 
 ---
 

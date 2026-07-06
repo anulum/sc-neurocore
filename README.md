@@ -97,7 +97,7 @@ SC-NeuroCore is positioned for neuromorphic R&D, stochastic accelerator design, 
 | Model documentation pages | 175 |
 | Rust PyO3 model wrappers | 175 |
 | Optional extras | 26 |
-| Python test files | 973 |
+| Python test files | 974 |
 | Public documentation pages | 561 |
 | GitHub Actions workflows | 17 |
 
