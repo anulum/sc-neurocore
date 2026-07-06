@@ -60,6 +60,11 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
   from coverage measurement: the grade bands (A/B/D/F), the sleep-onset-latency scoring tiers,
   the mid-session wakeup counter, and the N3/REM/latency/wakeup recommendation branches gained
   tests over a controlled tick history, taking the module from 84 % to 100 %.
+- The closed-loop adaptive audio engines (`audio/adaptive_engine.py` and `audio/evs_engine.py`)
+  are no longer excluded from coverage measurement. Both were already exercised to 100 %
+  statement coverage by the existing behaviour and contract suites (`test_adaptive_audio`,
+  `test_audio_evs_contracts`, and the audio package/mapping/profile contracts); the omit
+  entries were stale, so removing them simply lets that measured coverage count.
 
 ### Fixed
 - The SystemVerilog emitter wrote malformed signed literals (`16'sd-51`) for negative
