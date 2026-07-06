@@ -5,6 +5,10 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 ## [Unreleased]
 
 ### Added
+- Compiler coverage-contract tests now lock the MLIR bundle fail-closed CIRCT
+  paths, pipeline tool-resolution failures, folded Verilog datapath guard paths,
+  and split expression-emitter LUT/error branches that keep the compiler core at
+  100% exact-file coverage under its focused selector.
 - The `sc.kuramoto_step` IR operation now lowers to synthesisable RTL, replacing the
   previous hard error. The SystemVerilog emitter instantiates a new
   `hdl/sc_kuramoto_step.v` fixed-point phase core (signed Q8.16, 64-entry sine LUT)

@@ -85,6 +85,16 @@ def test_compiler_pipeline_rejects_empty_or_escaping_names() -> None:
         pipeline._validate_path("/etc/passwd")
 
 
+def test_compiler_pipeline_resolve_tool_fails_for_missing_binary(
+    monkeypatch: MonkeyPatch,
+) -> None:
+    """Tool resolution fails before constructing a subprocess command."""
+    monkeypatch.setattr("shutil.which", lambda _tool: None)
+
+    with pytest.raises(FileNotFoundError, match="circt-opt"):
+        CompilerPipeline._resolve_tool("circt-opt")
+
+
 def test_compiler_pipeline_rejects_sibling_work_directory_prefix() -> None:
     with tempfile.TemporaryDirectory() as tmp:
         work_dir = os.path.join(tmp, "safe")

@@ -8,6 +8,7 @@
 
 import json
 import shutil
+import subprocess
 from pathlib import Path
 
 import pytest
@@ -58,6 +59,14 @@ def test_mlir_emitter_emits_mux_operation() -> None:
     assert "comb.mux" in emitter.generate()
 
 
+def test_mlir_emitter_empty_pipeline_drives_typed_false_constant() -> None:
+    """An empty MLIR pipeline still emits a typed false constant output."""
+    mlir = MLIREmitter("empty_pipeline").generate()
+
+    assert "%c0_i1 = hw.constant false" in mlir
+    assert "hw.output %c0_i1 : i1" in mlir
+
+
 def test_mlir_bundle_writes_manifest(tmp_path: Path) -> None:
     emitter = MLIREmitter("native_sc_top")
     lhs = emitter.emit_lfsr(8, 0x5A)
@@ -98,6 +107,70 @@ def test_write_bundle_run_circt_without_tool_fails_closed(tmp_path: Path) -> Non
 
     with pytest.raises(SCCompilerError, match="requires .* on PATH"):
         emitter.write_bundle(tmp_path, circt_opt="no_such_circt_opt", run_circt=True)
+
+
+def test_bundle_run_circt_verify_failure_fails_closed(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """A CIRCT verifier rejection is reported before any Verilog claim is written."""
+
+    def fake_run(
+        cmd: list[str],
+        *,
+        capture_output: bool,
+        text: bool,
+        check: bool,
+    ) -> subprocess.CompletedProcess[str]:
+        assert capture_output is True
+        assert text is True
+        assert check is False
+        return subprocess.CompletedProcess(cmd, 1, stdout="", stderr="verify failed")
+
+    emitter = MLIREmitter("verify_reject")
+    emitter.emit_xor("%a", "%b")
+    monkeypatch.setattr("shutil.which", lambda _tool: "/toolchain/circt-opt")
+    monkeypatch.setattr("subprocess.run", fake_run)
+
+    with pytest.raises(SCCompilerError, match="verify-diagnostics rejected"):
+        generate_mlir_bundle(emitter, tmp_path, run_circt=True)
+
+    assert not (tmp_path / "verify_reject.v").exists()
+
+
+def test_bundle_run_circt_export_failure_fails_closed(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """A CIRCT export failure is reported without writing a stale Verilog claim."""
+    calls: list[list[str]] = []
+
+    def fake_run(
+        cmd: list[str],
+        *,
+        capture_output: bool,
+        text: bool,
+        check: bool,
+    ) -> subprocess.CompletedProcess[str]:
+        assert capture_output is True
+        assert text is True
+        assert check is False
+        calls.append(cmd)
+        if "--verify-diagnostics" in cmd:
+            return subprocess.CompletedProcess(cmd, 0, stdout="", stderr="")
+        return subprocess.CompletedProcess(cmd, 1, stdout="", stderr="export failed")
+
+    emitter = MLIREmitter("export_reject")
+    emitter.emit_xor("%a", "%b")
+    monkeypatch.setattr("shutil.which", lambda _tool: "/toolchain/circt-opt")
+    monkeypatch.setattr("subprocess.run", fake_run)
+
+    with pytest.raises(SCCompilerError, match="export-verilog failed"):
+        generate_mlir_bundle(emitter, tmp_path, run_circt=True)
+
+    assert any("--verify-diagnostics" in call for call in calls)
+    assert any("--export-verilog" in call for call in calls)
+    assert not (tmp_path / "export_reject.v").exists()
 
 
 @pytest.mark.skipif(_CIRCT_OPT is None, reason="circt-opt not installed")
