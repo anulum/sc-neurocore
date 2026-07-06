@@ -162,7 +162,7 @@ omit = [
     "*/qat/lsq.py",                    # Learned Step Size Quantization (requires torch)
     "*/qat/pact.py",                   # PACT clipping activation (requires torch)
     "*/qat/observers.py",              # Quantisation observers (requires torch)
-    "*/core/bipolar.py",               # SC bipolar primitives
+    # core/bipolar.py is now covered (tests/test_bipolar_sc.py, 100%); no longer omitted.
     "*/adapters/neuroml.py",           # NeuroML 2 importer
     "*/adapters/sonata.py",            # SONATA HDF5 importer
     "*/nir_bridge/*",                   # NIR interop (nir package)

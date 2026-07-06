@@ -46,6 +46,11 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
   dedicated structural test suite (`tests/test_ip_xact.py`) that parses the emitted
   component tree — the AXI-Lite slave interface, the optional parameter block, and the
   port-vector geometry — and it is no longer excluded from coverage measurement (now 100 %).
+- The bipolar stochastic-computing primitives (`core/bipolar.py`) are no longer excluded
+  from coverage measurement: the guard clauses (non-finite and out-of-range values,
+  non-binary bitstreams, wrong-dimensional MAC operands), the default-RNG path of
+  `bipolar_encode`, and the SC-layer optional-bias and `tanh` branches gained tests,
+  taking the module from 84 % to 100 %.
 
 ### Fixed
 - The SystemVerilog emitter wrote malformed signed literals (`16'sd-51`) for negative

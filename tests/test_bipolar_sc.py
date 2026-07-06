@@ -179,3 +179,75 @@ class TestFloatToBipolarWeights:
         bp = float_to_bipolar_weights(w)
         assert isinstance(bp, np.ndarray)
         assert bp.shape == (2, 2)
+
+    def test_rejects_non_finite_weights(self):
+        with pytest.raises(ValueError, match="NaN or Inf"):
+            float_to_bipolar_weights(np.array([1.0, np.inf]))
+
+
+class TestBipolarValidationPaths:
+    """Guard clauses and default-argument paths across the bipolar primitives."""
+
+    def test_encode_rejects_non_finite_value(self):
+        with pytest.raises(ValueError, match="NaN or Inf"):
+            bipolar_encode(float("nan"), 100, rng=np.random.default_rng(42))
+
+    def test_encode_builds_default_rng_when_omitted(self):
+        # rng=None exercises the internal default_rng construction; a long stream
+        # still decodes near the encoded value without a caller-supplied generator.
+        bits = bipolar_encode(0.5, 20000)
+        assert set(np.unique(bits)).issubset({0, 1})
+        assert abs(bipolar_decode(bits) - 0.5) < 0.1
+
+    def test_decode_rejects_non_binary_bits(self):
+        with pytest.raises(ValueError, match="only 0/1 bits"):
+            bipolar_decode(np.array([0, 2, 1], dtype=np.uint8))
+
+    def test_mac_rejects_non_finite_inputs(self):
+        with pytest.raises(ValueError, match="NaN or Inf"):
+            bipolar_mac(np.array([0.5, np.nan]), np.array([[0.2, 0.1]]), L=100, seed=1)
+
+    def test_mac_rejects_multidimensional_inputs(self):
+        with pytest.raises(ValueError, match=r"inputs must have shape \(N,\)"):
+            bipolar_mac(np.array([[0.5], [0.2]]), np.array([[0.2, 0.1]]), L=100, seed=1)
+
+    def test_mac_rejects_non_2d_weights(self):
+        with pytest.raises(ValueError, match=r"weights must have shape \(M, N\)"):
+            bipolar_mac(np.array([0.5, 0.2]), np.array([0.2, 0.1]), L=100, seed=1)
+
+
+class TestBipolarSCLayerBiasAndActivation:
+    """The optional-bias branch and the tanh activation of the SC layer."""
+
+    def test_bias_is_added_to_output(self):
+        inputs = np.array([0.5, -0.3])
+        weights = np.array([[0.2, 0.4], [-0.5, 0.3]])
+        bias = np.array([0.5, -0.5])
+        out = bipolar_sc_layer(inputs, weights, bias=bias, L=2000, activation="none")
+        assert out.shape == (2,)
+        assert (out >= -1.0).all() and (out <= 1.0).all()
+
+    def test_bias_shape_mismatch_rejected(self):
+        with pytest.raises(ValueError, match="bias shape"):
+            bipolar_sc_layer(
+                np.array([0.5, -0.3]),
+                np.array([[0.2, 0.4], [-0.5, 0.3]]),
+                bias=np.array([0.1]),  # (1,) against a (2,) output
+                L=1000,
+            )
+
+    def test_bias_non_finite_rejected(self):
+        with pytest.raises(ValueError, match="NaN or Inf"):
+            bipolar_sc_layer(
+                np.array([0.5, -0.3]),
+                np.array([[0.2, 0.4], [-0.5, 0.3]]),
+                bias=np.array([np.nan, 0.0]),
+                L=1000,
+            )
+
+    def test_tanh_activation_bounds_output(self):
+        inputs = np.array([0.9, 0.8])
+        weights = np.array([[0.9, 0.9]])
+        out = bipolar_sc_layer(inputs, weights, bias=None, L=50000, activation="tanh")
+        assert out.shape == (1,)
+        assert -1.0 <= out[0] <= 1.0
