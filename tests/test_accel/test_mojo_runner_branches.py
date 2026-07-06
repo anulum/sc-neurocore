@@ -8,11 +8,13 @@
 
 from __future__ import annotations
 
+import ast
 import subprocess
 from pathlib import Path
 
 import pytest
 
+from sc_neurocore.accel import mojo as mojo_namespace
 from sc_neurocore.accel.mojo import runner as mojo_runner_module
 from sc_neurocore.accel.mojo.runner import MojoKernelRunner
 
@@ -20,6 +22,45 @@ from sc_neurocore.accel.mojo.runner import MojoKernelRunner
 def _make_runner(tmp_path: Path) -> MojoKernelRunner:
     (tmp_path / "kernels.mojo").write_text("// test kernel file\n", encoding="utf-8")
     return MojoKernelRunner(_mojo_dir=tmp_path, _pixi_bin="/fake/pixi")
+
+
+def _runner_helper_methods() -> dict[str, ast.FunctionDef]:
+    module_file = mojo_runner_module.__file__
+    assert module_file is not None
+    source_path = Path(module_file).resolve()
+    module = ast.parse(source_path.read_text(encoding="utf-8"))
+    for node in module.body:
+        if isinstance(node, ast.ClassDef) and node.name == "MojoKernelRunner":
+            return {
+                child.name: child
+                for child in node.body
+                if isinstance(child, ast.FunctionDef)
+                and child.name in {"popcount", "lfsr_encode"}
+            }
+    raise AssertionError("MojoKernelRunner class not found")
+
+
+def test_helper_contract_declares_python_fallback_not_mojo_ipc() -> None:
+    assert mojo_runner_module.MOJO_HELPER_BACKEND == "python-fallback"
+    assert mojo_runner_module.MOJO_HELPER_IPC_AVAILABLE is False
+    assert mojo_namespace.MOJO_HELPER_BACKEND == mojo_runner_module.MOJO_HELPER_BACKEND
+    assert mojo_namespace.MOJO_HELPER_IPC_AVAILABLE is False
+
+
+def test_helper_methods_do_not_hide_mojo_ipc_stubs() -> None:
+    helper_methods = _runner_helper_methods()
+    assert set(helper_methods) == {"popcount", "lfsr_encode"}
+
+    for method in helper_methods.values():
+        assert not any(isinstance(node, ast.Raise) for node in ast.walk(method))
+        assert not any(
+            isinstance(node, ast.ExceptHandler)
+            and (
+                node.type is None
+                or (isinstance(node.type, ast.Name) and node.type.id == "Exception")
+            )
+            for node in ast.walk(method)
+        )
 
 
 def test_post_init_falls_back_to_installed_package_dir(tmp_path: Path) -> None:

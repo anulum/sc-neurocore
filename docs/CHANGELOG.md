@@ -5,6 +5,16 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+### Mojo helper contract honesty
+- Removed the hidden `NotImplementedError` IPC stub from
+  `accel.mojo.runner.MojoKernelRunner.popcount` and `lfsr_encode`, exported
+  `MOJO_HELPER_BACKEND="python-fallback"` plus
+  `MOJO_HELPER_IPC_AVAILABLE=False`, and added AST regression coverage so scalar
+  helpers cannot silently present a fake Mojo path. Refreshed the Mojo docs to
+  separate actual build/benchmark subprocess execution from Python helper
+  fallbacks. No Mojo kernel, benchmark-dispatched path, Rust path, or polyglot
+  mirror implementation changed.
+
 ### Backend selector coverage ratchet
 - Extended the benchmark-driven backend selector tests to cover CPU probe
   fallback, missing benchmark directories, and malformed benchmark JSON files,

@@ -31,7 +31,7 @@ def test_mojo_namespace_keeps_runner_symbol_when_runner_import_fails() -> None:
         fromlist: Sequence[str] | None = (),
         level: int = 0,
     ) -> ModuleType:
-        if name == "runner" and level == 1 and tuple(fromlist or ()) == ("MojoKernelRunner",):
+        if name == "runner" and level == 1 and "MojoKernelRunner" in set(fromlist or ()):
             raise RuntimeError("controlled Mojo runner load failure")
         imported = real_import(name, globals, locals, fromlist, level)
         if not isinstance(imported, ModuleType):
@@ -45,6 +45,8 @@ def test_mojo_namespace_keeps_runner_symbol_when_runner_import_fails() -> None:
         assert failed_namespace._HAS_MOJO is False
         assert failed_namespace._mojo_import_reason is not None
         assert "controlled Mojo runner load failure" in failed_namespace._mojo_import_reason
+        assert failed_namespace.MOJO_HELPER_BACKEND == "unavailable"
+        assert failed_namespace.MOJO_HELPER_IPC_AVAILABLE is False
         assert "MojoKernelRunner" in failed_namespace.__all__
         with pytest.raises(RuntimeError, match="Mojo runner unavailable"):
             failed_namespace.MojoKernelRunner()

@@ -3,8 +3,9 @@
 Optional Mojo acceleration layer for stochastic-computing hot paths.
 A pure-Mojo kernel bundle (``kernels.mojo``, 1 747 LOC) provides
 vector-lane SC primitives; a Python façade
-(:class:`MojoKernelRunner`) launches them through the pixi-managed
-Mojo toolchain as a subprocess.
+(:class:`MojoKernelRunner`) launches the build and whole-suite benchmark
+through the pixi-managed Mojo toolchain as a subprocess. Scalar helper
+methods are explicit Python fallbacks today, not hidden Mojo IPC calls.
 
 ```python
 from sc_neurocore.accel.mojo import MojoKernelRunner, _HAS_MOJO
@@ -142,14 +143,14 @@ leaving the Python dev loop is possible.
 
 **Why subprocess, not FFI.** The Mojo ABI (2026-04) is not yet stable
 enough to safely `ctypes.CDLL` a Mojo-produced shared library from
-CPython across Mojo versions. The subprocess model trades per-call
-latency (tens of ms, dominated by Mojo interpreter startup) for a
-stable interface: the Python side invokes ``pixi run mojo
-kernels.mojo <op> <args>`` and parses the printed result. This means
-Mojo is useful for **batched** calls (hundreds of operations) but
-**not** for per-tick FFI. See §7 for measured numbers — single-call
-popcount is three orders of magnitude slower than pure Python
-because startup dominates; batched whole-network MAC reverses that.
+CPython across Mojo versions. The maintained subprocess interface is
+therefore limited to build and whole-suite benchmark execution:
+``pixi run mojo build kernels.mojo`` and
+``pixi run mojo run kernels.mojo``. Scalar helper methods such as
+``popcount`` and ``lfsr_encode`` deliberately stay on the Python
+reference path; ``MOJO_HELPER_IPC_AVAILABLE`` is ``False`` and
+``MOJO_HELPER_BACKEND`` is ``"python-fallback"``. See §7 for measured
+numbers from the amortised benchmark suite.
 
 **Design parallels.** The kernel bundle structure mirrors the Rust
 engine's SIMD module (`engine/src/simd/`): each SC primitive has a
@@ -195,8 +196,9 @@ Users pick one via configuration; defaults remain Rust.
 converts to the Mojo-friendly format (typically ``List[UInt32]``).
 
 **Outputs** — Python ``int`` / ``list[int]``. The subprocess writes
-results to stdout in a regex-parseable line (``RESULT: <value>``)
-which the façade extracts.
+benchmark timings to stdout in regex-parseable millisecond lines, which
+the façade extracts as ``dict[str, float]``. Scalar helper outputs come
+from the Python fallback path and do not launch Mojo.
 
 **Dispatch policy** — Mojo is **opt-in** via explicit instantiation
 of :class:`MojoKernelRunner`. No SC-NeuroCore core component silently
@@ -221,6 +223,7 @@ Mojo-level SC primitives.
 | Graceful degradation (`_HAS_MOJO`)                 | Import never raises when Mojo/pixi missing                              |
 | Benchmark harness (``bench_mojo_vs_rust.py``)      | Mojo vs Rust parity + timing, pure-text output                         |
 | Build helper (`build()`)                           | Thin `pixi run mojo build kernels.mojo` wrapper                         |
+| Helper capability flags                            | `MOJO_HELPER_BACKEND="python-fallback"` and `MOJO_HELPER_IPC_AVAILABLE=False` |
 
 ---
 
@@ -235,8 +238,8 @@ r = MojoKernelRunner()
 print(f"kernel dir : {r._mojo_dir}")
 print(f"pixi bin   : {r._pixi_bin}")
 
-# Popcount a small batch. The current maintained runtime uses the Python
-# fallback until direct Mojo IPC bindings are promoted.
+# Popcount a small batch. The maintained scalar helper uses the Python
+# fallback and does not attempt direct Mojo IPC.
 bits = [0xFF00, 0x0FF0, 0xCAFEBABE]
 v = r.popcount(bits)
 print(f"popcount({bits}) = {v}")   # 8 + 8 + 22 = 38
@@ -254,7 +257,7 @@ popcount([65280, 4080, 3405691582]) = 38
 The popcount number matches the expected $\mathrm{popcount}(0xFF00) +
 \mathrm{popcount}(0x0FF0) + \mathrm{popcount}(0xCAFEBABE) = 8 + 8 + 22
 = 38$. This helper is intentionally kept bit-exact with the Python fallback
-while direct Mojo IPC bindings remain pending.
+while direct Mojo IPC is unavailable for scalar helper calls.
 
 ---
 
@@ -263,6 +266,9 @@ while direct Mojo IPC bindings remain pending.
 ### 6.1 `MojoKernelRunner`
 
 ```python
+MOJO_HELPER_BACKEND = "python-fallback"
+MOJO_HELPER_IPC_AVAILABLE = False
+
 @dataclass
 class MojoKernelRunner:
     _mojo_dir: Path = field(...)
@@ -280,8 +286,8 @@ class MojoKernelRunner:
 | `__post_init__`                                     | Locates `kernels.mojo` (source-tree first, then installed package). Raises on neither present. |
 | `build() -> bool`                                   | `pixi run mojo build kernels.mojo` in the kernel directory. Returns `False` on launch or build failure. |
 | `run_benchmark(timeout_sec=60) -> dict[str, float]` | Runs the full kernel benchmark once and parses stdout. Returns `{}` on failure, timeout, or missing toolchain. |
-| `popcount(data) -> int`                             | Returns the total Hamming weight through the maintained Python fallback while Mojo IPC is pending. |
-| `lfsr_encode(seed, threshold, bits) -> list[int]`   | Generates an LFSR-encoded 16-bit stream through the maintained Python fallback while Mojo IPC is pending. |
+| `popcount(data) -> int`                             | Returns the total Hamming weight through the maintained Python fallback; no Mojo IPC is attempted. |
+| `lfsr_encode(seed, threshold, bits) -> list[int]`   | Generates an LFSR-encoded 16-bit stream through the maintained Python fallback; no Mojo IPC is attempted. |
 
 Construction fails closed when ``kernels.mojo`` is unavailable. Build and
 benchmark calls degrade to ``False`` / ``{}`` when Mojo or pixi cannot run, and
@@ -332,6 +338,7 @@ points.
 | Mojo compilation fails                 | `build()` returns `False` and prints the failure                  |
 | Benchmark subprocess timeout           | `run_benchmark()` returns `{}` after printing the timeout         |
 | Benchmark subprocess launch failure    | `run_benchmark()` returns `{}` after printing the missing-toolchain path |
+| Scalar helper capability check         | `MOJO_HELPER_IPC_AVAILABLE` is `False`; helpers use `MOJO_HELPER_BACKEND` |
 | `_HAS_MOJO == False` at import time    | Call sites should skip; `from sc_neurocore.accel.mojo import ...` stays safe |
 
 ---
@@ -392,13 +399,13 @@ because the bench suite amortises the startup over ~10 M kernel
 invocations.
 
 The Python façade's ``popcount`` / ``lfsr_encode`` methods are
-currently **not** wired to the Mojo path — they raise
-``NotImplementedError("Mojo IPC bindings pending v4.0")`` and fall
-back to the pure-Python reference in
-``sc_neurocore.edge.bitstream``. Expect that roadmap item to land
-when the Mojo ABI stabilises (Modular milestone 2026 Q3); until then
-the way to exercise Mojo kernels is through the bench harness
-above, not per-call API.
+currently **not** wired to the Mojo path. They do not launch a Mojo
+subprocess, do not hide an unimplemented IPC stub, and return through
+the pure-Python references in ``sc_neurocore.edge.bitstream`` and
+``sc_neurocore.edge.lfsr``. Expect that roadmap item to require an
+explicit capability change when the Mojo ABI stabilises; until then
+the way to exercise Mojo kernels is through the bench harness above,
+not the scalar helper API.
 
 ### 7.3 Reproducer
 

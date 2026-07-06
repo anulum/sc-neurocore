@@ -37,6 +37,8 @@ NON_AUTHORITATIVE_MOJO_MIRROR_GLOBS: tuple[str, ...] = (
 
 _HAS_MOJO = False
 _mojo_import_reason: str | None = None
+MOJO_HELPER_BACKEND: str = "unavailable"
+MOJO_HELPER_IPC_AVAILABLE: bool = False
 
 if TYPE_CHECKING:
     from .runner import MojoKernelRunner
@@ -51,9 +53,15 @@ else:
             raise RuntimeError(f"Mojo runner unavailable: {reason}")
 
     try:
-        from .runner import MojoKernelRunner as _LoadedMojoKernelRunner
+        from .runner import (
+            MOJO_HELPER_BACKEND as _LOADED_MOJO_HELPER_BACKEND,
+            MOJO_HELPER_IPC_AVAILABLE as _LOADED_MOJO_HELPER_IPC_AVAILABLE,
+            MojoKernelRunner as _LoadedMojoKernelRunner,
+        )
 
         MojoKernelRunner = _LoadedMojoKernelRunner
+        MOJO_HELPER_BACKEND = _LOADED_MOJO_HELPER_BACKEND
+        MOJO_HELPER_IPC_AVAILABLE = _LOADED_MOJO_HELPER_IPC_AVAILABLE
         _HAS_MOJO = True
     except Exception as _mojo_import_error:  # noqa: BLE001
         # Mojo toolchain missing or runner refused to import — record why so
@@ -65,6 +73,8 @@ else:
 
 __all__ = [
     "AUTHORITATIVE_MOJO_ENTRYPOINTS",
+    "MOJO_HELPER_BACKEND",
+    "MOJO_HELPER_IPC_AVAILABLE",
     "MojoKernelRunner",
     "NON_AUTHORITATIVE_MOJO_MIRROR_GLOBS",
     "_HAS_MOJO",

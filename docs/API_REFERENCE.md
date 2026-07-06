@@ -365,8 +365,8 @@ Run the maintained monolithic Mojo kernel suite from Python.
 The runner is a subprocess façade over ``kernels.mojo``. It discovers the
 kernel bundle at construction time, invokes the pixi-managed Mojo toolchain
 for builds and benchmark runs, and keeps Python fallbacks for scalar helper
-methods until direct Mojo IPC is promoted into the supported runtime
-contract.
+methods. Those scalar helpers do not attempt hidden Mojo IPC; benchmark
+execution remains the explicit Mojo subprocess surface.
 
 Parameters
 ----------
@@ -383,7 +383,7 @@ _pixi_bin:
 - **run_benchmark**(timeout_sec)
   - Run the kernel benchmark suite and parse millisecond timings.
 - **popcount**(data)
-  - Return the Hamming weight of packed stochastic-computing words.
+  - Return the Python Hamming weight of packed stochastic words.
 - **lfsr_encode**(seed, threshold, bits)
   - Encode a threshold stream with the maintained LFSR-16 fallback.
 
