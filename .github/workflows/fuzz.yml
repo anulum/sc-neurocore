@@ -43,10 +43,13 @@ jobs:
       # breaks into_pyarray).
       - name: Fuzz the IR parser, printer round-trip, bitstream and sparse matrix
         working-directory: engine
+        # engine/rust-toolchain.toml pins the stable channel, which would otherwise
+        # override the nightly installed above; cargo-fuzz needs nightly for the
+        # -Z sanitizer flags, so select it explicitly with `+nightly`.
         run: |
           for target in parse_ir roundtrip_ir bitstream csr_matrix; do
             echo "::group::fuzz $target"
-            cargo fuzz run "$target" -- \
+            cargo +nightly fuzz run "$target" -- \
               -max_total_time=${{ github.event.inputs.max_total_time || '300' }} \
               -max_len=8192
             echo "::endgroup::"

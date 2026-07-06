@@ -34,9 +34,9 @@ jobs:
       - name: Install package and the latest nir release
         run: |
           python -m pip install --upgrade pip
-          python -m pip install -e .
-          # The conformance step runs under pytest, which is not a runtime dep.
-          python -m pip install pytest
+          # The [dev] extra brings the test toolchain (pytest + filelock, both used by
+          # tests/conftest.py) that the conformance step needs but that are not runtime deps.
+          python -m pip install -e '.[dev]'
           # Override the pyproject cap on purpose to test the newest nir.
           python -m pip install --upgrade nir
           python -c "import nir; print('canary nir version:', nir.__version__)"
