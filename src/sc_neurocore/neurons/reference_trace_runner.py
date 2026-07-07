@@ -52,9 +52,7 @@ def simulate_reference_trace(spec_or_name: ReferenceTraceSpec | str) -> TraceSim
         for variable in spec.protocol.state_variables:
             recorded[variable].append(float(neuron.state[variable]))
 
-    trace = MappingProxyType(
-        {variable: tuple(values) for variable, values in recorded.items()}
-    )
+    trace = MappingProxyType({variable: tuple(values) for variable, values in recorded.items()})
     spike_tuple = tuple(spikes)
     return TraceSimulationResult(
         name=spec.name,

@@ -34,8 +34,7 @@ def _runner_helper_methods() -> dict[str, ast.FunctionDef]:
             return {
                 child.name: child
                 for child in node.body
-                if isinstance(child, ast.FunctionDef)
-                and child.name in {"popcount", "lfsr_encode"}
+                if isinstance(child, ast.FunctionDef) and child.name in {"popcount", "lfsr_encode"}
             }
     raise AssertionError("MojoKernelRunner class not found")
 

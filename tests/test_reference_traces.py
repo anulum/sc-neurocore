@@ -35,8 +35,7 @@ def _closed_form_features(
     steps: int,
 ) -> dict[str, float]:
     values = [
-        steady + (initial - steady) * math.exp(-(step * dt) / tau)
-        for step in range(1, steps + 1)
+        steady + (initial - steady) * math.exp(-(step * dt) / tau) for step in range(1, steps + 1)
     ]
     return {
         "spike_count": 0.0,

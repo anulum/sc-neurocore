@@ -51,11 +51,14 @@ def test_release_workflow_supports_manual_tag_backfill() -> None:
 
     steps = workflow["jobs"]["release"]["steps"]
     checkout = steps[0]
-    assert checkout["with"]["ref"] == "${{ github.event_name == 'workflow_dispatch' && inputs.tag || github.ref }}"
+    assert (
+        checkout["with"]["ref"]
+        == "${{ github.event_name == 'workflow_dispatch' && inputs.tag || github.ref }}"
+    )
 
     run_text = "\n".join(step["run"] for step in steps if isinstance(step, dict) and "run" in step)
-    assert "RELEASE_TAG=\"${{ inputs.tag }}\"" in run_text
-    assert "TAG=\"$RELEASE_TAG\"" in run_text
+    assert 'RELEASE_TAG="${{ inputs.tag }}"' in run_text
+    assert 'TAG="$RELEASE_TAG"' in run_text
 
     release_step = [
         step
@@ -91,8 +94,7 @@ def test_release_workflow_uploads_security_packet_even_on_failure() -> None:
     upload_steps = [
         step
         for step in steps
-        if isinstance(step, dict)
-        and step.get("name") == "Upload release security packet artifact"
+        if isinstance(step, dict) and step.get("name") == "Upload release security packet artifact"
     ]
 
     assert len(upload_steps) == 1
