@@ -200,6 +200,25 @@ def test_hdl_install_profile_packages_source_artefacts() -> None:
     assert "hdl_gen/openroad_flow/run_asic_flow.sh" in matched
 
 
+def test_dsl_schema_assets_are_packaged() -> None:
+    """The wheel ships UniversalNeuron schema assets used by bare-name loading."""
+    package_data = _project_metadata()["tool"]["setuptools"]["package-data"]["sc_neurocore"]
+
+    assert "neurons/model_schemas/*.json" in package_data
+    assert "neurons/model_schemas/*.toml" in package_data
+
+    package_root = _package_root()
+    matched = {
+        str(path.relative_to(package_root))
+        for pattern in package_data
+        for path in package_root.glob(pattern)
+    }
+
+    assert "neurons/model_schemas/perfect_integrator.json" in matched
+    assert "neurons/model_schemas/perfect_integrator.toml" in matched
+    assert "neurons/model_schemas/lif.toml" in matched
+
+
 def test_hdl_resource_helper_rejects_unknown_primitive_names() -> None:
     """The HDL resource helper rejects traversal and unknown primitive names."""
     from sc_neurocore.hdl.resources import (

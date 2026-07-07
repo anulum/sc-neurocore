@@ -23,7 +23,7 @@ Test Classes
 TestCoSimulation
     Q8.8 baseline: spike production, accuracy (<1%), zero-current silence,
     determinism.  Covers LIF, Lapicque, Quadratic IF, Izhikevich,
-    Resonate-and-Fire.
+    Resonate-and-Fire, Perfect Integrator.
 
 TestQ412Precision
     Q4.12 (16-bit, 12 fractional): precision vs Q8.8, range xfail.
@@ -39,7 +39,7 @@ TestSchemaGapModelCosim
 
 Verified Results (2026-05-01)
 -----------------------------
-All 5 models: 0.0% spike count gap at Q8.8 (I=50.0, 200 steps).
+All 6 Q8.8 baseline models: 0.0% spike count gap at Q8.8 (I=50.0, 200 steps).
 All 3 precision modes (Q8.8, Q4.12, Q16.16): 0.0% gap for LIF.
 FitzHugh-Nagumo (2026-07-07): 0.0% gap at Q16.16, I=0.8, 300 steps (7 spikes).
 
@@ -60,6 +60,7 @@ from pathlib import Path
 import pytest
 
 from sc_neurocore.neurons.universal_dsl import UniversalNeuron
+from sc_neurocore.neurons.models.perfect_integrator import PerfectIntegratorNeuron
 from sc_neurocore.compiler.equation_compiler import (
     generate_testbench,
 )
@@ -74,8 +75,15 @@ _N_STEPS = 200
 _INPUT_CURRENT = 50.0  # Higher than Python needs — overcomes Q8.8 precision loss
 
 # Models suitable for co-simulation (polynomial/linear, no transcendental functions).
-# All 5 models achieve 0% Python↔Verilog spike count gap.
-_COSIM_MODELS = ["lif", "lapicque", "quadratic_if", "izhikevich", "resonate_fire"]
+# All 6 models achieve 0% Python↔Verilog spike count gap.
+_COSIM_MODELS = [
+    "lif",
+    "lapicque",
+    "quadratic_if",
+    "izhikevich",
+    "resonate_fire",
+    "perfect_integrator",
+]
 
 # Transcendental models reachable through the auto model→RTL path once the emitter
 # lowers negative LUT entries correctly, supports cosh, and omits an empty parameter
@@ -146,6 +154,12 @@ def _verilog_spike_count(model_name: str, n_steps: int, current: float) -> int:
         return int(match.group(1))
 
 
+def _perfect_integrator_hand_spike_count(n_steps: int, current: float) -> int:
+    """Return the hand-authored perfect-integrator spike count for comparison."""
+    neuron = PerfectIntegratorNeuron()
+    return sum(neuron.step(current) for _ in range(n_steps))
+
+
 @pytest.mark.skipif(not HAS_IVERILOG, reason="Icarus Verilog not available")
 class TestCoSimulation:
     """Python ↔ Verilog co-simulation: validate spike behaviour equivalence."""
@@ -211,6 +225,28 @@ class TestCoSimulation:
         a = _verilog_spike_count("lif", _N_STEPS, _INPUT_CURRENT)
         b = _verilog_spike_count("lif", _N_STEPS, _INPUT_CURRENT)
         assert a == b
+
+
+class TestTierBModelCosim:
+    """WC-A5 Tier-B model enrollment beyond the original schema set."""
+
+    def test_perfect_integrator_schema_matches_hand_model_sequence(self) -> None:
+        """The schema mirrors the hand-authored non-leaky integrator step law."""
+        hand = PerfectIntegratorNeuron()
+        schema = UniversalNeuron.from_schema("perfect_integrator")
+
+        for current in (0.0, 2.0, 5.0, 3.0, 10.0, 1.0):
+            assert schema.step(I=current) == hand.step(current)
+            assert schema.state["v"] == hand.v
+
+    @pytest.mark.skipif(not HAS_IVERILOG, reason="Icarus Verilog not available")
+    def test_perfect_integrator_q88_matches_hand_model_and_verilog(self) -> None:
+        """Perfect Integrator has Q8.8 spike-count parity across all three paths."""
+        hand_spikes = _perfect_integrator_hand_spike_count(_N_STEPS, _INPUT_CURRENT)
+        schema_spikes = _python_spike_count("perfect_integrator", _N_STEPS, _INPUT_CURRENT)
+        verilog_spikes = _verilog_spike_count("perfect_integrator", _N_STEPS, _INPUT_CURRENT)
+
+        assert hand_spikes == schema_spikes == verilog_spikes == _N_STEPS
 
 
 def _verilog_spike_count_q412(model_name: str, n_steps: int, current: float) -> int:

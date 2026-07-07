@@ -2776,6 +2776,8 @@
       "hdl/primitives/*.v",
       "hdl_gen/safety/*.sv",
       "hdl_gen/openroad_flow/*.sh",
+      "neurons/model_schemas/*.json",
+      "neurons/model_schemas/*.toml",
       "neurons/reference_trace_data/*.json"
     ]
   },

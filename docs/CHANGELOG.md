@@ -5,6 +5,14 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+### Perfect-integrator co-simulation schema
+- Added the DOI-backed `perfect_integrator` UniversalNeuron schema in TOML and
+  JSON form, packaged bundled schema assets into the wheel, and enrolled the
+  model in deterministic Q8.8 Python-to-Verilog co-simulation. New tests compare
+  the schema against the hand-authored `PerfectIntegratorNeuron` and assert
+  emitted-RTL spike-count parity. No polyglot mirror implementation or
+  benchmark-dispatched path changed.
+
 ### Compiler proof-transform wiring
 - Added an explicit opt-in `proof_transforms` compiler facade for whitebox state
   taps and operator abstraction. The package root now exposes registry lookup and

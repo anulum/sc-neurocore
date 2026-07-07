@@ -66,9 +66,9 @@ The co-simulation suite is organized into four test classes:
 
 | Test | Description | Assertion |
 |------|-------------|-----------|
-| `test_both_produce_spikes` | Both Python and Verilog spike (5 models) | `spikes > 0` |
-| `test_spike_count_accuracy` | Spike counts match within 1% (5 models) | `gap < 1%` |
-| `test_no_current_no_spikes` | Zero current → zero spikes (4 models) | `spikes == 0` |
+| `test_both_produce_spikes` | Both Python and Verilog spike (6 models) | `spikes > 0` |
+| `test_spike_count_accuracy` | Spike counts match within 1% (6 models) | `gap < 1%` |
+| `test_no_current_no_spikes` | Zero current → zero spikes (5 models) | `spikes == 0` |
 | `test_python_sim_is_deterministic` | Python gives same result twice | `a == b` |
 | `test_verilog_sim_is_deterministic` | Verilog gives same result twice | `a == b` |
 
@@ -91,7 +91,7 @@ The co-simulation suite is organized into four test classes:
 
 ## Verified Models
 
-Five models are verified across all precision modes:
+Six deterministic Q8.8 baseline models are verified in the spike-parity set:
 
 | Model | State Variables | Complexity | Spikes (I=50, 200 steps) |
 |-------|:-:|:-:|:-:|
@@ -100,6 +100,7 @@ Five models are verified across all precision modes:
 | **Quadratic IF** | v | Quadratic | 50 |
 | **Izhikevich** | v, u | Quadratic (2-var) | 25 |
 | **Resonate-and-Fire** | v, w | Linear (2-var) | 200 |
+| **Perfect Integrator** | v | Linear ramp | 200 |
 
 ## Adding a New Model to Co-Simulation
 
@@ -113,7 +114,7 @@ Five models are verified across all precision modes:
 ```python
 # Example: adding a new model to co-sim
 _COSIM_MODELS = ["lif", "lapicque", "quadratic_if", "izhikevich",
-                 "resonate_fire", "your_new_model"]
+                 "resonate_fire", "perfect_integrator", "your_new_model"]
 ```
 
 ## Testbench Architecture

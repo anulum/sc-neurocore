@@ -1,0 +1,36 @@
+{
+  "metadata": {
+    "schema_version": 1,
+    "name": "Perfect Integrator",
+    "author": "Gerstner, W., Kistler, W.M., Naud, R. & Paninski, L.",
+    "year": 2014,
+    "doi": "10.1017/CBO9781107447615",
+    "description": "Non-leaky integrate-and-fire model with linear voltage accumulation"
+  },
+  "state": {
+    "v": 0.0
+  },
+  "parameters": {
+    "c_m": 1.0,
+    "v_threshold": 1.0,
+    "v_reset": 0.0
+  },
+  "integration": {
+    "dt": 0.1,
+    "method": "euler"
+  },
+  "dynamics": {
+    "v": "I / c_m"
+  },
+  "threshold": {
+    "condition": "v >= v_threshold",
+    "detection": "level"
+  },
+  "reset": {
+    "v": "v_reset"
+  },
+  "extensions": {
+    "family": "integrate-and-fire",
+    "source_module": "sc_neurocore.neurons.models.perfect_integrator"
+  }
+}
