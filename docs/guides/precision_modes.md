@@ -185,6 +185,14 @@ signed mantissa magnitude `32767`, minimum quantum `0.125`, maximum absolute
 value `524272.0`, and the contiguous flattened block-alignment rule that
 downstream emitters must preserve.
 
+Scalar parameter encoding remains fixed-point only. `BlockFloatingPrecisionConfig`
+raises `BlockFloatingScalarEncodingError` from `encode()` because one scalar
+storage word cannot carry the detached shared-exponent stream. Use
+`from_preset(..., scalar_only=True)` or `encode_scalar_value(...)` for
+scalar-only consumers so BFP selections fail during configuration, and use
+`quantize_block_floating(...)` or `compile_dense_block_floating(...)` when the
+consumer carries mantissas plus exponent metadata.
+
 ### Block-Floating Dense Deployment Path
 
 Dense layers can be compiled into block-floating weights with fixed-point
@@ -284,12 +292,14 @@ The HDL `abs_bounds_q1616` vector uses the same lane order and carries unsigned
 `PrecisionEnvelopeReport.abs_bound_codes` and Rust `abs_bounds_q1616` telemetry.
 
 For live hardware deployments, the same Q8.8, Q16.16, and block-floating
-encoded words can be placed behind `MMIOUpdateSpec` parameter banks instead of
-being hardcoded into logic. The control window stages `bank_select`,
-`entry_index`, `write_data_lo`, and optional `write_data_hi`, then commits with
-one `update_valid|commit` write. This keeps precision updates reproducible and
-lets a controller adjust weights or phase-coupling parameters without a new
-FPGA synthesis run.
+payload entries can be placed behind `MMIOUpdateSpec` parameter banks instead
+of being hardcoded into logic. BFP entries must be produced by a metadata-aware
+quantizer or bank packer that preserves mantissa and shared-exponent fields; the
+scalar `encode()` helper is intentionally rejected for this case. The control
+window stages `bank_select`, `entry_index`, `write_data_lo`, and optional
+`write_data_hi`, then commits with one `update_valid|commit` write. This keeps
+precision updates reproducible and lets a controller adjust weights or
+phase-coupling parameters without a new FPGA synthesis run.
 
 ### Precision Trap Reports and Hardware Latch
 

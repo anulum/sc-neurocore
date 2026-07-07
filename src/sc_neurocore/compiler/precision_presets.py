@@ -63,8 +63,15 @@ def _parse_precision_spec(
 
 def from_preset(
     var_presets: dict[str, PrecisionSpecLike],
+    *,
+    scalar_only: bool = False,
 ) -> MixedPrecisionSpec:
-    """Create a MixedPrecisionSpec from named presets."""
+    """Create a MixedPrecisionSpec from named presets.
+
+    Set ``scalar_only`` when the downstream consumer cannot carry detached
+    block-exponent metadata. Block-floating selections then fail during preset
+    resolution instead of later scalar encoding.
+    """
     configs: dict[str, PrecisionConfig | BlockFloatingPrecisionConfig] = {}
     for var, preset_name in var_presets.items():
         if isinstance(preset_name, (PrecisionConfig, BlockFloatingPrecisionConfig)):
@@ -86,4 +93,7 @@ def from_preset(
             raise KeyError(f"Unknown preset '{preset_name}'. Available: {available}")
         preset_cfg = PRECISION_PRESETS[key]
         configs[var] = preset_cfg
-    return MixedPrecisionSpec(configs)
+    spec = MixedPrecisionSpec(configs)
+    if scalar_only:
+        spec.require_scalar_encoding(consumer="from_preset(scalar_only=True)")
+    return spec

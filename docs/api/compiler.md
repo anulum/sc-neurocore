@@ -408,6 +408,14 @@ with `parameter_count`, `block_size`, `exponent_count`, `last_block_size`, and
 the exponent-index formula.  The Python and Rust BFP surfaces reject mismatched
 exponent-vector lengths before accumulation, preventing an emitter from
 silently applying a shared exponent to the wrong parameter block.
+
+Scalar parameter encoding is fixed-point only. `BlockFloatingPrecisionConfig`
+raises `BlockFloatingScalarEncodingError` when `encode()` is called without the
+required shared-exponent stream. Scalar-only consumers should resolve presets
+with `from_preset(..., scalar_only=True)` or use `encode_scalar_value(...)` so
+block-floating selections fail before metadata can be dropped. Metadata-aware
+BFP consumers should continue to use `quantize_block_floating(...)`,
+`compile_dense_block_floating(...)`, or manifests carrying `block_exponent_layout`.
 The maintained comparison benchmark also exercises a seeded `BFP16E3X2`
 edge-sweep contract: exponent codes `[0, 7, 0, 7]` must produce exact safe
 Q16.16 codes `[1056736, -1069024]` with zero overflow/underflow, while a

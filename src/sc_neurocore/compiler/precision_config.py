@@ -11,11 +11,15 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Any
+from typing import Any, NoReturn
 
 import numpy as np
 
 from .block_floating import BlockExponentLayout, BlockFloatingMode
+
+
+class BlockFloatingScalarEncodingError(ValueError):
+    """Raised when block-floating precision is used by a scalar-only encoder."""
 
 
 @dataclass(frozen=True)
@@ -136,6 +140,26 @@ class BlockFloatingPrecisionConfig:
         """Whether this precision contract requires shared exponent metadata."""
         return True
 
+    @property
+    def supports_scalar_encoding(self) -> bool:
+        """Whether ``encode`` can produce a complete scalar storage word."""
+        return False
+
+    def require_scalar_encoding(
+        self,
+        *,
+        variable: str | None = None,
+        consumer: str = "scalar encoder",
+    ) -> NoReturn:
+        """Reject scalar consumers before block exponent metadata is lost."""
+        variable_text = f" for variable {variable!r}" if variable is not None else ""
+        raise BlockFloatingScalarEncodingError(
+            f"{consumer}{variable_text} cannot scalar-encode {self.q_label}; "
+            "block-floating precision requires per-block exponent metadata. "
+            "Use quantize_block_floating() or compile_dense_block_floating(), "
+            "or select a fixed Q-format for scalar parameter encoding."
+        )
+
     def can_represent(self, value: float) -> bool:
         """Return whether ``value`` lies inside the coarse block-floating range."""
         return self.min_value <= value <= self.max_value
@@ -143,7 +167,7 @@ class BlockFloatingPrecisionConfig:
     def encode(self, value: float) -> int:
         """Reject scalar encoding when block exponent metadata is unavailable."""
         del value
-        raise NotImplementedError("Block-floating encoding requires per-block exponent metadata.")
+        self.require_scalar_encoding(consumer="BlockFloatingPrecisionConfig.encode()")
 
     def manifest(self) -> dict[str, object]:
         """Return the parameter-count-independent block-floating manifest."""
@@ -288,6 +312,20 @@ class PrecisionConfig:
         """Whether this precision contract requires shared exponent metadata."""
         return False
 
+    @property
+    def supports_scalar_encoding(self) -> bool:
+        """Whether ``encode`` can produce a complete scalar storage word."""
+        return True
+
+    def require_scalar_encoding(
+        self,
+        *,
+        variable: str | None = None,
+        consumer: str = "scalar encoder",
+    ) -> None:
+        """Validate that this fixed-point config is scalar-encodable."""
+        del variable, consumer
+
     def manifest(self) -> dict[str, bool | float | int | str]:
         """Return a deterministic fixed-point manifest for compilers and telemetry."""
         return {
@@ -320,3 +358,16 @@ class PrecisionConfig:
 
 
 PrecisionSpecLike = str | PrecisionConfig | BlockFloatingPrecisionConfig
+
+
+def encode_scalar_value(
+    config: PrecisionConfig | BlockFloatingPrecisionConfig,
+    value: float,
+    *,
+    variable: str | None = None,
+    consumer: str = "scalar encoder",
+) -> int:
+    """Encode one scalar value or reject precision modes requiring exponent metadata."""
+    if isinstance(config, BlockFloatingPrecisionConfig):
+        config.require_scalar_encoding(variable=variable, consumer=consumer)
+    return config.encode(value)

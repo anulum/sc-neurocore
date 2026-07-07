@@ -5,6 +5,14 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+### Block-floating scalar guard
+- Added an explicit `BlockFloatingScalarEncodingError` and scalar-only preset
+  guard for mixed-precision configs. Block-floating precision remains available
+  for metadata-aware dense, adaptive, and manifest paths, while scalar parameter
+  encoders can now call `from_preset(..., scalar_only=True)` or
+  `encode_scalar_value(...)` to fail closed before detached exponent metadata is
+  lost. No polyglot kernel, HDL datapath, or benchmark-dispatched path changed.
+
 ### Reference trace validation harness
 - Added a schema-driven neuron reference-trace validation harness with immutable
   corpus contracts, fail-closed JSON payload parsing, package-data loading,

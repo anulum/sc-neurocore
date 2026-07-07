@@ -15,8 +15,10 @@ from .mixed_precision_spec import (
 )
 from .precision_config import (
     BlockFloatingPrecisionConfig,
+    BlockFloatingScalarEncodingError,
     PrecisionConfig,
     PrecisionSpecLike,
+    encode_scalar_value,
 )
 from .precision_presets import (
     PRECISION_PRESETS,
@@ -28,10 +30,12 @@ from .precision_solver import (
 
 __all__ = [
     "BlockFloatingPrecisionConfig",
+    "BlockFloatingScalarEncodingError",
     "MixedPrecisionSpec",
     "PRECISION_PRESETS",
     "PrecisionConfig",
     "PrecisionSpecLike",
+    "encode_scalar_value",
     "from_preset",
     "solve_precision",
 ]

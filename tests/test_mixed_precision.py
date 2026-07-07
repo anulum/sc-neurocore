@@ -14,6 +14,7 @@ import pytest
 
 from sc_neurocore.compiler.mixed_precision import (
     BlockFloatingPrecisionConfig,
+    BlockFloatingScalarEncodingError,
     from_preset,
 )
 
@@ -88,7 +89,11 @@ def test_mixed_precision_spec_manifest_rejects_unknown_parameter_counts() -> Non
 
     spec = from_preset({"v": "bfp16e3x32"})
 
-    assert spec.manifest(parameter_counts={"v": 65})["variables"]["v"]["block_exponent_count"] == 3
+    variables = cast(
+        dict[str, dict[str, object]],
+        spec.manifest(parameter_counts={"v": 65})["variables"],
+    )
+    assert variables["v"]["block_exponent_count"] == 3
     with pytest.raises(KeyError, match="unknown"):
         spec.manifest(parameter_counts={"unknown": 65})
 
@@ -133,6 +138,17 @@ def test_mixed_precision_spec_manifest_rejects_malformed_bfp_parameter_count() -
 
     with pytest.raises(TypeError, match="parameter_count"):
         spec.manifest(parameter_counts={"v": cast(Any, 1.5)})
+
+
+def test_mixed_precision_spec_rejects_bfp_for_scalar_only_consumers() -> None:
+    """Scalar-only consumers reject BFP selections before scalar encode calls."""
+    spec = from_preset({"fixed": "q88", "weights": "bfp16e3x32"})
+
+    with pytest.raises(BlockFloatingScalarEncodingError, match="weights"):
+        spec.require_scalar_encoding(consumer="scalar parameter emitter")
+
+    with pytest.raises(BlockFloatingScalarEncodingError, match="scalar_only"):
+        from_preset({"weights": "bfp16e3x32"}, scalar_only=True)
 
 
 def test_from_preset_block_floating_preserves_exact_metadata() -> None:

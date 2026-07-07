@@ -10106,6 +10106,8 @@ var_configs : dict&#91;str, PrecisionConfig&#93;
   - List of variable names.
 - **get**(var)
   - Get the precision config for a variable.
+- **require_scalar_encoding**()
+  - Reject variables whose precision needs detached block exponents.
 - **summary**()
   - Return a human-readable summary of the precision allocation.
 - **manifest**()
@@ -10786,6 +10788,10 @@ PowerEstimate
 
 ## Module `compiler.precision_config`
 
+### Class `BlockFloatingScalarEncodingError`
+Raised when block-floating precision is used by a scalar-only encoder.
+
+
 ### Class `BlockFloatingPrecisionConfig`
 Block-floating specification for a single variable.
 
@@ -10834,6 +10840,10 @@ signed:
   - Canonical block-floating label including mantissa, exponent, and block size.
 - **is_block_floating**()
   - Whether this precision contract requires shared exponent metadata.
+- **supports_scalar_encoding**()
+  - Whether ``encode`` can produce a complete scalar storage word.
+- **require_scalar_encoding**()
+  - Reject scalar consumers before block exponent metadata is lost.
 - **can_represent**(value)
   - Return whether ``value`` lies inside the coarse block-floating range.
 - **encode**(value)
@@ -10877,12 +10887,19 @@ signed:
   - Stable manifest kind for fixed-point precision contracts.
 - **is_block_floating**()
   - Whether this precision contract requires shared exponent metadata.
+- **supports_scalar_encoding**()
+  - Whether ``encode`` can produce a complete scalar storage word.
+- **require_scalar_encoding**()
+  - Validate that this fixed-point config is scalar-encodable.
 - **manifest**()
   - Return a deterministic fixed-point manifest for compilers and telemetry.
 - **can_represent**(value)
   - Return whether ``value`` lies inside the fixed-point dynamic range.
 - **encode**(value)
   - Quantise ``value`` to the nearest clamped fixed-point integer code.
+
+### Function `encode_scalar_value(config, value)`
+Encode one scalar value or reject precision modes requiring exponent metadata.
 
 ---
 
@@ -10893,6 +10910,10 @@ Parse legacy and explicit precision specs.
 
 ### Function `from_preset(var_presets)`
 Create a MixedPrecisionSpec from named presets.
+
+Set ``scalar_only`` when the downstream consumer cannot carry detached
+block-exponent metadata. Block-floating selections then fail during preset
+resolution instead of later scalar encoding.
 
 ---
 

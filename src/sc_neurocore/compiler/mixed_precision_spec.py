@@ -49,6 +49,15 @@ class MixedPrecisionSpec:
             )
         return self.var_configs[var]
 
+    def require_scalar_encoding(
+        self,
+        *,
+        consumer: str = "scalar precision consumer",
+    ) -> None:
+        """Reject variables whose precision needs detached block exponents."""
+        for var, cfg in self.var_configs.items():
+            cfg.require_scalar_encoding(variable=var, consumer=consumer)
+
     def summary(self) -> str:
         """Return a human-readable summary of the precision allocation."""
         lines = [f"Mixed-Precision Allocation ({self.total_bits} bits total):"]

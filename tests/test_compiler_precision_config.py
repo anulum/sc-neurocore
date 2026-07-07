@@ -17,7 +17,9 @@ import pytest
 
 from sc_neurocore.compiler.precision_config import (
     BlockFloatingPrecisionConfig,
+    BlockFloatingScalarEncodingError,
     PrecisionConfig,
+    encode_scalar_value,
 )
 
 
@@ -69,6 +71,7 @@ def test_block_floating_config_properties_and_range() -> None:
     assert bfp.resolution == pytest.approx(0.125)
     assert bfp.q_label == "BFP16E3X32"
     assert bfp.is_block_floating is True
+    assert bfp.supports_scalar_encoding is False
     assert bfp.can_represent(bfp.max_value)
     assert bfp.can_represent(bfp.min_value)
     assert not bfp.can_represent(bfp.max_value + bfp.resolution)
@@ -133,10 +136,18 @@ def test_block_floating_config_manifest_contracts() -> None:
     }
 
 
-def test_block_floating_config_encode_is_unsupported() -> None:
-    """Block-floating encoding without per-block exponents is unsupported."""
-    with pytest.raises(NotImplementedError):
+def test_block_floating_config_rejects_scalar_encoding_with_domain_error() -> None:
+    """Block-floating scalar encoding fails before metadata-free quantisation."""
+    with pytest.raises(BlockFloatingScalarEncodingError, match="BFP16E3X32"):
         _bfp().encode(1.0)
+
+    with pytest.raises(BlockFloatingScalarEncodingError, match="weights"):
+        encode_scalar_value(
+            _bfp(),
+            1.0,
+            variable="weights",
+            consumer="scalar parameter emitter",
+        )
 
 
 def test_precision_config_signed_and_unsigned_ranges() -> None:
@@ -152,6 +163,7 @@ def test_precision_config_signed_and_unsigned_ranges() -> None:
     assert signed.emit_fraction == 7
     assert signed.kind == "fixed"
     assert signed.is_block_floating is False
+    assert signed.supports_scalar_encoding is True
     assert signed.can_represent(-1.0)
     assert signed.can_represent(127 / 128)
     assert not signed.can_represent(1.0)
@@ -164,6 +176,7 @@ def test_precision_config_signed_and_unsigned_ranges() -> None:
     assert unsigned.emit_fraction == 7
     assert unsigned.kind == "fixed"
     assert unsigned.is_block_floating is False
+    assert unsigned.supports_scalar_encoding is True
     assert unsigned.can_represent(255 / 128)
     assert not unsigned.can_represent(-1 / 128)
 
@@ -186,6 +199,7 @@ def test_precision_config_manifest_and_saturating_encode() -> None:
         "datapath_contract": "fixed_point_twos_complement",
     }
     assert signed.encode(0.5) == 64
+    assert encode_scalar_value(signed, 0.5, variable="v") == 64
     assert signed.encode(2.0) == 127
     assert signed.encode(-2.0) == -128
 
