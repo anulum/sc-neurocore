@@ -21,6 +21,7 @@ import numpy as np
 import pytest
 
 import sc_neurocore.bridges.dna_mapper as dna_mapper
+from tests.module_reload import restore_module_namespace, snapshot_module_namespace
 
 
 class _BlockingFinder(importlib.abc.MetaPathFinder):
@@ -58,6 +59,7 @@ def _restore_modules(saved: dict[str, ModuleType | None]) -> None:
 def test_missing_rust_engine_import_installs_false_backend_probe() -> None:
     """Reload with the optional Rust DNA module absent and restore state."""
     saved = _save_modules(("sc_neurocore_engine.dna",))
+    saved_namespace = snapshot_module_namespace(dna_mapper)
     finder = _BlockingFinder("sc_neurocore_engine.dna")
     sys.modules.pop("sc_neurocore_engine.dna", None)
     sys.meta_path.insert(0, finder)
@@ -71,12 +73,13 @@ def test_missing_rust_engine_import_installs_false_backend_probe() -> None:
     finally:
         sys.meta_path.remove(finder)
         _restore_modules(saved)
-        importlib.reload(dna_mapper)
+        restore_module_namespace(dna_mapper, saved_namespace)
 
 
 def test_import_records_present_nupack_and_rust_probe_import_error() -> None:
     """Reload with a present NUPACK module and a failing Rust backend probe."""
     saved = _save_modules(("nupack", "sc_neurocore_engine", "sc_neurocore_engine.dna"))
+    saved_namespace = snapshot_module_namespace(dna_mapper)
     fake_nupack = ModuleType("nupack")
     fake_engine = ModuleType("sc_neurocore_engine")
     fake_dna = ModuleType("sc_neurocore_engine.dna")
@@ -98,7 +101,7 @@ def test_import_records_present_nupack_and_rust_probe_import_error() -> None:
         assert vars(reloaded)["_HAS_RUST_DNA"] is False
     finally:
         _restore_modules(saved)
-        importlib.reload(dna_mapper)
+        restore_module_namespace(dna_mapper, saved_namespace)
 
 
 def test_bitstream_validate_delegates_to_thermodynamic_validator() -> None:

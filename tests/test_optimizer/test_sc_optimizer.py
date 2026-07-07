@@ -198,20 +198,24 @@ def test_module_detects_rust_engine_when_importable():
 
     import sc_neurocore.optimizer.sc_optimizer as mod
 
+    from tests.module_reload import preserve_module_identity
+
     fake = types.ModuleType("sc_neurocore_engine")
     fake.py_opt_sa_search = lambda *a, **k: {}  # type: ignore[attr-defined]
     fake.py_opt_extract_pareto = lambda *a, **k: {}  # type: ignore[attr-defined]
     had = sys.modules.get("sc_neurocore_engine")
     sys.modules["sc_neurocore_engine"] = fake
     try:
-        reloaded = importlib.reload(mod)
-        assert reloaded._HAS_RUST is True
+        # Restore the module's original class identities on exit; a bare reload-to-restore
+        # leaks fresh classes that sibling tests' by-value imports fail isinstance on.
+        with preserve_module_identity(mod):
+            reloaded = importlib.reload(mod)
+            assert reloaded._HAS_RUST is True
     finally:
         if had is not None:
             sys.modules["sc_neurocore_engine"] = had
         else:
             sys.modules.pop("sc_neurocore_engine", None)
-        importlib.reload(mod)
 
 
 if __name__ == "__main__":

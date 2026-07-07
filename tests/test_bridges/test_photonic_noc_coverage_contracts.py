@@ -16,6 +16,7 @@ from types import ModuleType
 import pytest
 
 import sc_neurocore.bridges.photonic_noc as photonic_noc
+from tests.module_reload import preserve_module_identity
 
 
 def test_optional_gdstk_import_branch_records_available_exporter(
@@ -25,14 +26,13 @@ def test_optional_gdstk_import_branch_records_available_exporter(
     fake_gdstk = ModuleType("gdstk")
     monkeypatch.setitem(sys.modules, "gdstk", fake_gdstk)
 
-    try:
+    # Restore the module's original class identities on exit; a bare reload-to-restore
+    # would leave fresh classes that sibling modules' by-value imports fail isinstance on.
+    with preserve_module_identity(photonic_noc):
         importlib.reload(photonic_noc)
 
         assert photonic_noc._HAS_GDSTK is True
         assert vars(photonic_noc)["gdstk"] is fake_gdstk
-    finally:
-        monkeypatch.delitem(sys.modules, "gdstk", raising=False)
-        importlib.reload(photonic_noc)
 
 
 def test_power_budget_counts_failed_detector_paths() -> None:
