@@ -128,6 +128,16 @@ _APPROVED_NOTIMPLEMENTED_GUARDS = {
         "CompilationResult.to_gdsii",
         "num_modulators > 0",
     ),
+    _RaiseSite(
+        "src/sc_neurocore/compiler/verilog_compiler.py",
+        "_build_neuron_core",
+        "RK4 Verilog emission does not support pipelining yet; use pipeline_stages=0",
+    ),
+    _RaiseSite(
+        "src/sc_neurocore/compiler/verilog_compiler.py",
+        "_build_neuron_core",
+        "exp_euler Verilog emission does not support pipelining yet; use pipeline_stages=0",
+    ),
 }
 
 
@@ -218,9 +228,7 @@ def test_message_fragment_fallbacks_are_explicit() -> None:
     """The audit helper exposes stable labels for nonliteral raise arguments."""
     assert _message_fragment(ast.parse("errors[0]", mode="eval").body) == "<unknown>"
     assert _message_fragment(_raise_expression("raise NotImplementedError()")) == "<abstract>"
-    assert _message_fragment(
-        _raise_expression("raise NotImplementedError(reason)")
-    ) == "<dynamic>"
+    assert _message_fragment(_raise_expression("raise NotImplementedError(reason)")) == "<dynamic>"
 
 
 def test_raise_expression_requires_raise_statement() -> None:
@@ -242,9 +250,7 @@ def test_notimplemented_errors_are_approved_fail_fast_guards() -> None:
             for approved in _APPROVED_NOTIMPLEMENTED_GUARDS
         )
     }
-    all_sites = {
-        site for path in _tracked_python_sources() for site in _notimplemented_sites(path)
-    }
+    all_sites = {site for path in _tracked_python_sources() for site in _notimplemented_sites(path)}
 
     assert all_sites == observed
     assert len(all_sites) == len(_APPROVED_NOTIMPLEMENTED_GUARDS)
