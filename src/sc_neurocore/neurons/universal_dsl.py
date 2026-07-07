@@ -76,8 +76,13 @@ from sc_neurocore.neurons.equation_builder import EquationNeuron
 
 logger = logging.getLogger(__name__)
 
-# Schema version this module understands
-_SUPPORTED_SCHEMA_VERSIONS = {1}
+# Schema versions this module understands.
+# v1: core sections (metadata/state/parameters/integration/dynamics/threshold/reset/extensions).
+# v2: adds the OPTIONAL layered science-knowledge sections (science/validation/provenance/hints)
+#     that make the catalogue an auditable scientific record — see the catalogue-to-silicon
+#     master plan §4A / invariant I7. Every section is optional, so every v1 schema is already a
+#     valid v2 schema and keeps loading unchanged (backward-compatible, no migration).
+_SUPPORTED_SCHEMA_VERSIONS = {1, 2}
 
 # Directory containing bundled TOML/JSON schemas
 _SCHEMA_DIR = Path(__file__).parent / "model_schemas"
@@ -276,6 +281,13 @@ class UniversalNeuron:
 
         # Extensions (stored for future use, not consumed by EquationNeuron)
         self._extensions = self._schema.get("extensions", {})
+        # schema_version 2 optional layered sections. All default to empty so v1
+        # schemas are completely unaffected; these are the authored science/knowledge
+        # layers (master plan §4A, invariant I7 — science authored, engineering derived).
+        self._science = self._schema.get("science", {})
+        self._validation = self._schema.get("validation", {})
+        self._provenance = self._schema.get("provenance", {})
+        self._hints = self._schema.get("hints", {})
 
         # Create the underlying EquationNeuron
         self._neuron = EquationNeuron(
@@ -360,6 +372,44 @@ class UniversalNeuron:
     def extensions(self) -> dict[str, Any]:
         """Forward-compatible extension fields."""
         return dict(self._extensions)
+
+    @property
+    def science(self) -> dict[str, Any]:
+        """Authored science layer (schema v2), empty for v1 schemas.
+
+        As-published equations, derivation note, parameter units/sources,
+        assumptions, validity range, known limitations and references —
+        author-owned and auditable. Engineering artefacts (RTL, polyglot source,
+        PPA) are derived elsewhere and never stored here (master plan I7).
+        """
+        return dict(self._science)
+
+    @property
+    def validation(self) -> dict[str, Any]:
+        """Authored validation layer (schema v2), empty for v1 schemas.
+
+        Model class, the class-correct validation metric, the cited reference,
+        tolerance, the committed evidence artefact and the audit record — what a
+        scientific auditor checks.
+        """
+        return dict(self._validation)
+
+    @property
+    def provenance(self) -> dict[str, Any]:
+        """Authored provenance layer (schema v2), empty for v1 schemas.
+
+        The per-model changelog and the contributor/credit ledger.
+        """
+        return dict(self._provenance)
+
+    @property
+    def hints(self) -> dict[str, Any]:
+        """Optional engineering hints (schema v2), empty for v1 schemas.
+
+        Advisory only (e.g. recommended precision, integrator rationale) — never
+        derived artefacts.
+        """
+        return dict(self._hints)
 
     # --- Export ---
 

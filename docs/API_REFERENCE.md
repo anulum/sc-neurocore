@@ -26280,6 +26280,14 @@ method_override : str, optional
   - Return a deep copy of the underlying schema.
 - **extensions**()
   - Forward-compatible extension fields.
+- **science**()
+  - Authored science layer (schema v2), empty for v1 schemas.
+- **validation**()
+  - Authored validation layer (schema v2), empty for v1 schemas.
+- **provenance**()
+  - Authored provenance layer (schema v2), empty for v1 schemas.
+- **hints**()
+  - Optional engineering hints (schema v2), empty for v1 schemas.
 - **to_json**()
   - Export the model schema as JSON (Studio interchange format).
 - **to_toml**()
