@@ -12375,6 +12375,252 @@ through them in execution order.
 
 ---
 
+## Module `core.sc_error_bounds`
+
+### Class `SCErrorBound`
+Summary of the accuracy of one encoded SC value.
+
+Attributes
+----------
+value : float
+    The encoded value.
+length : int
+    Bitstream length :math:`N`.
+bipolar : bool
+    Whether the value is in the bipolar domain.
+variance : float
+    Estimator variance.
+std_error : float
+    Estimator standard error :math:`\sqrt{\text{variance}}`.
+ci95_halfwidth : float
+    Half-width of the 95% normal-approximation confidence interval
+    (:math:`1.959964 \times \text{std\_error}`).
+
+
+### Function `_validate_length(length)`
+### Function `_validate_probability(value, name)`
+### Function `_validate_bipolar(value, name)`
+### Function `bernoulli_variance(value, length)`
+Variance of the decoded unipolar SC estimate :math:`\hat p = k/N`.
+
+Parameters
+----------
+value : float
+    The encoded probability :math:`p \in &#91;0, 1&#93;`.
+length : int
+    Bitstream length :math:`N` (positive).
+
+Returns
+-------
+float
+    :math:`p (1 - p) / N`.
+
+### Function `bernoulli_std_error(value, length)`
+Return the standard error :math:`\sqrt{p(1-p)/N}` of a unipolar SC estimate.
+
+### Function `bipolar_variance(value, length)`
+Variance of the decoded bipolar SC estimate for :math:`v \in &#91;-1, 1&#93;`.
+
+With :math:`p = (v + 1)/2` and :math:`\hat v = 2 \hat p - 1`,
+:math:`\operatorname{Var}(\hat v) = 4 \operatorname{Var}(\hat p)
+= (1 - v^2)/N`.
+
+Parameters
+----------
+value : float
+    Bipolar value :math:`v \in &#91;-1, 1&#93;`.
+length : int
+    Bitstream length :math:`N` (positive).
+
+Returns
+-------
+float
+    :math:`(1 - v^2)/N`.
+
+### Function `bipolar_std_error(value, length)`
+Return the standard error :math:`\sqrt{(1 - v^2)/N}` of a bipolar SC estimate.
+
+### Function `multiply_variance(value_a, value_b, length)`
+Variance of a unipolar ``AND`` product of two *independent* streams.
+
+The output stream is Bernoulli with value :math:`p_a p_b`, so its decoded
+estimate has variance :math:`p_a p_b (1 - p_a p_b) / N`.
+
+Parameters
+----------
+value_a, value_b : float
+    Encoded probabilities in :math:`&#91;0, 1&#93;`.
+length : int
+    Bitstream length :math:`N` (positive).
+
+Returns
+-------
+float
+    :math:`p_a p_b (1 - p_a p_b) / N`.
+
+### Function `multiply_correlation_bias(value_a, value_b, scc)`
+Signed bias of a unipolar ``AND`` from stochastic cross-correlation.
+
+For independent streams :math:`E&#91;\text{AND}&#93; = p_a p_b`. With stochastic
+cross-correlation :math:`\rho \in &#91;-1, 1&#93;` (Alaghi & Hayes), the joint
+one-probability moves linearly toward its comonotone bound
+:math:`\min(p_a, p_b)` for :math:`\rho > 0` and its countermonotone bound
+:math:`\max(0, p_a + p_b - 1)` for :math:`\rho < 0`:
+
+.. math::
+    E&#91;\text{AND}&#93; = p_a p_b + \begin{cases}
+        \rho\,(\min(p_a, p_b) - p_a p_b) & \rho \ge 0 \\
+        \rho\,(p_a p_b - \max(0, p_a + p_b - 1)) & \rho < 0.
+    \end{cases}
+
+Parameters
+----------
+value_a, value_b : float
+    Encoded probabilities in :math:`&#91;0, 1&#93;`.
+scc : float
+    Stochastic cross-correlation :math:`\rho \in &#91;-1, 1&#93;`.
+
+Returns
+-------
+float
+    The signed bias :math:`E&#91;\text{AND}&#93; - p_a p_b`.
+
+### Function `mux_add_variance(value_a, value_b, length)`
+Variance of a fair-select ``MUX`` scaled adder of two streams.
+
+A 2:1 multiplexer with select :math:`s \sim \mathrm{Bernoulli}(1/2)` emits a
+stream of value :math:`q = (p_a + p_b)/2`, whose estimate has variance
+:math:`q (1 - q) / N`.
+
+Parameters
+----------
+value_a, value_b : float
+    Encoded probabilities in :math:`&#91;0, 1&#93;`.
+length : int
+    Bitstream length :math:`N` (positive).
+
+Returns
+-------
+float
+    :math:`q (1 - q) / N` with :math:`q = (p_a + p_b)/2`.
+
+### Function `dot_product_variance(values_a, values_b, length)`
+Variance of a MUX-tree unipolar dot product of two independent vectors.
+
+The scaled dot product :math:`\frac{1}{K}\sum_k \text{AND}(a_k, b_k)` of
+length :math:`K` has variance
+:math:`\frac{1}{K^2 N}\sum_k a_k b_k (1 - a_k b_k)`, whose standard error
+grows as :math:`O(1/\sqrt{K N})` — the SC analogue of the
+:math:`\sqrt{K}\,u` inner-product growth of Connolly & Higham (2025).
+
+Parameters
+----------
+values_a, values_b : list of float
+    Equal-length vectors of probabilities in :math:`&#91;0, 1&#93;`.
+length : int
+    Bitstream length :math:`N` (positive).
+
+Returns
+-------
+float
+    Variance of the scaled dot-product estimate.
+
+### Function `low_discrepancy_error_bound(length)`
+Deterministic error bound :math:`1/N` for a low-discrepancy SC source.
+
+Sobol/Halton bitstreams are deterministic: a value representable at
+resolution :math:`1/N` is encoded exactly, and any value is within
+:math:`1/N`. This replaces the pseudo-random :math:`O(1/\sqrt N)` standard
+error with a hard :math:`O(1/N)` bound (Najafi, Lilja & Riedel 2018).
+
+Parameters
+----------
+length : int
+    Bitstream length :math:`N` (positive).
+
+Returns
+-------
+float
+    :math:`1 / N`.
+
+### Function `hoeffding_confidence(length, epsilon)`
+Distribution-free confidence that :math:`|\hat p - p| < \epsilon`.
+
+Hoeffding's inequality gives
+:math:`P(|\hat p - p| \ge \epsilon) \le 2 e^{-2 N \epsilon^2}`, so the
+confidence is :math:`\max(0, 1 - 2 e^{-2 N \epsilon^2})`.
+
+Parameters
+----------
+length : int
+    Bitstream length :math:`N` (positive).
+epsilon : float
+    Absolute error tolerance in :math:`(0, 1&#93;`.
+
+Returns
+-------
+float
+    The confidence lower bound in :math:`&#91;0, 1&#93;`.
+
+### Function `hoeffding_min_length(epsilon, confidence)`
+Smallest :math:`N` guaranteeing ``confidence`` at tolerance ``epsilon``.
+
+Inverting Hoeffding's bound,
+:math:`N \ge \lceil \ln(2 / (1 - c)) / (2 \epsilon^2) \rceil`.
+
+Parameters
+----------
+epsilon : float
+    Absolute error tolerance in :math:`(0, 1&#93;`.
+confidence : float
+    Target confidence :math:`c \in &#91;0, 1)`.
+
+Returns
+-------
+int
+    The minimum distribution-free bitstream length.
+
+### Function `min_length_for_std_error(value, target_std)`
+Smallest :math:`N` whose SC standard error is at most ``target_std``.
+
+Unipolar: :math:`N \ge \lceil p(1-p) / \sigma^2 \rceil`; bipolar:
+:math:`N \ge \lceil (1 - v^2) / \sigma^2 \rceil`.
+
+Parameters
+----------
+value : float
+    Encoded value: :math:`p \in &#91;0, 1&#93;` (unipolar) or :math:`v \in &#91;-1, 1&#93;`
+    (bipolar).
+target_std : float
+    Target standard error :math:`\sigma > 0`.
+bipolar : bool, optional
+    Interpret ``value`` in the bipolar domain (default ``False``).
+
+Returns
+-------
+int
+    The minimum bitstream length (at least 1).
+
+### Function `sc_error_bound(value, length)`
+Summarise the SC accuracy of one encoded value as an :class:`SCErrorBound`.
+
+Parameters
+----------
+value : float
+    Encoded value: :math:`p \in &#91;0, 1&#93;` (unipolar) or :math:`v \in &#91;-1, 1&#93;`
+    (bipolar).
+length : int
+    Bitstream length :math:`N` (positive).
+bipolar : bool, optional
+    Interpret ``value`` in the bipolar domain (default ``False``).
+
+Returns
+-------
+SCErrorBound
+    Variance, standard error, and 95% confidence half-width.
+
+---
+
 ## Module `core.tensor_stream`
 
 ### Class `TensorStream`

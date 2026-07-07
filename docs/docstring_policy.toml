@@ -7,7 +7,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 256
+expected_file_count = 257
 
 [[file]]
 path = "src/sc_neurocore/__init__.py"
@@ -1032,3 +1032,7 @@ rationale = "Public automatic FPGA resource optimizer that fits an SNN to a targ
 [[file]]
 path = "src/sc_neurocore/optimizer/surrogate_sc_optimizer.py"
 rationale = "Public surrogate-model compiler optimiser over stochastic-computing design points."
+
+[[file]]
+path = "src/sc_neurocore/core/sc_error_bounds.py"
+rationale = "Public analytic stochastic-computing error-bound calculators (variance, correlation bias, Hoeffding min-length) with cited closed forms."
