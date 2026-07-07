@@ -9,9 +9,9 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 - Added a schema-driven neuron reference-trace validation harness with immutable
   corpus contracts, fail-closed JSON payload parsing, package-data loading,
   `UniversalNeuron` execution, and feature-level validation reports. The seed
-  corpus covers analytic closed-form `lif` and `lapicque` traces and is covered
-  by strict mypy checks plus 100% exact-file focused coverage; no polyglot
-  kernel or benchmark-dispatched runtime path changed.
+  corpus covers analytic closed-form `lif`, `lapicque`, and `quadratic_if`
+  traces and is covered by strict mypy checks plus 100% exact-file focused
+  coverage; no polyglot kernel or benchmark-dispatched runtime path changed.
 
 ### Network Rust backend contract hardening
 - Reverified the DEEP_AUDIT network/Rust findings against the current tree:

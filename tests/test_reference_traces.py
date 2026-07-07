@@ -47,14 +47,27 @@ def _closed_form_features(
     }
 
 
-def test_seeded_corpus_has_analytic_lif_family_entries() -> None:
-    """The seed corpus must expose deterministic LIF-family analytic references."""
+def _quadratic_if_zero_current_features(*, dt: float, steps: int) -> dict[str, float]:
+    values = [-1.0 / (1.0 + step * dt) for step in range(1, steps + 1)]
+    return {
+        "spike_count": 0.0,
+        "first_spike_step": -1.0,
+        "final.v": values[-1],
+        "min.v": min(values),
+        "max.v": max(values),
+        "mean.v": math.fsum(values) / len(values),
+    }
+
+
+def test_seeded_corpus_has_analytic_schema_entries() -> None:
+    """The seed corpus must expose deterministic analytic schema references."""
     names = list_reference_trace_specs()
 
     assert names == tuple(sorted(names))
     assert {
         "lif_constant_current_closed_form",
         "lapicque_constant_current_closed_form",
+        "quadratic_if_zero_current_analytic",
     } <= set(names)
 
     spec = load_reference_trace_spec("lif_constant_current_closed_form")
@@ -77,6 +90,21 @@ def test_lif_seed_features_match_independent_closed_form_solution() -> None:
         steps=spec.protocol.steps,
     )
 
+    for feature_name, feature_value in expected.items():
+        assert spec.expected_features[feature_name] == pytest.approx(feature_value, abs=1e-12)
+
+
+def test_quadratic_if_trace_features_match_independent_analytic_solution() -> None:
+    """Committed QIF features must match the analytic zero-current Riccati flow."""
+    spec = load_reference_trace_spec("quadratic_if_zero_current_analytic")
+
+    expected = _quadratic_if_zero_current_features(
+        dt=spec.protocol.dt,
+        steps=spec.protocol.steps,
+    )
+
+    assert spec.schema_name == "quadratic_if"
+    assert spec.provenance.citation == "doi:10.1152/jn.2000.83.2.808"
     for feature_name, feature_value in expected.items():
         assert spec.expected_features[feature_name] == pytest.approx(feature_value, abs=1e-12)
 

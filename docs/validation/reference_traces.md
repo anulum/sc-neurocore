@@ -8,23 +8,26 @@ tolerances. The production validator loads those JSON entries from the package,
 executes the same `UniversalNeuron` runner used by public schema workflows, and
 reports feature-level mismatches without falling back to another trace.
 
-This page documents the WC-A1 seed corpus. It does not claim that the full
-external NEST, Brian2, NEURON, or published-figure corpus is complete.
+This page documents the WC-A1 seed and first expansion corpus. It does not
+claim that the full external NEST, Brian2, NEURON, or published-figure corpus
+is complete.
 
 ## Current Corpus
 
-The committed seed entries are analytic closed-form references for deterministic
-LIF-family schema models:
+The committed entries are analytic references for deterministic schema models:
 
 | Trace | Schema | Runner | Provenance |
 |-------|--------|--------|------------|
 | `lif_constant_current_closed_form` | `lif` | `universal_dsl` | Closed-form RC solution from `neurons/model_schemas/lif.toml` |
 | `lapicque_constant_current_closed_form` | `lapicque` | `universal_dsl` | Closed-form RC solution from `neurons/model_schemas/lapicque.toml` |
+| `quadratic_if_zero_current_analytic` | `quadratic_if` | `universal_dsl` | Analytic zero-current Riccati solution from `neurons/model_schemas/quadratic_if.toml` with DOI-backed schema provenance |
 
-Both entries record the membrane variable `v`, spike count, first spike step,
+All entries record the membrane variable `v`, spike count, first spike step,
 and final/min/max/mean voltage features. The tests independently recompute the
-LIF closed-form solution so the committed feature values are not merely copied
-from the runner output.
+LIF and QIF analytic solutions so the committed feature values are not merely
+copied from the runner output. The QIF tolerance is intentionally wider than
+the exact-feature precision because the current schema runner declares explicit
+Euler integration while the reference is the continuous zero-current solution.
 
 ## Public API
 
@@ -60,4 +63,4 @@ PYTHONPATH=src python -m coverage report --rcfile=/dev/null --include='src/sc_ne
 The next corpus expansion should add external or simulator-backed references for
 the remaining deterministic schema-DSL models. Each new entry should carry
 source-level provenance, independent feature derivation where possible, and a
-focused parity test before the TODO item is closed.
+focused parity test before the wider WC-A1 item is closed.

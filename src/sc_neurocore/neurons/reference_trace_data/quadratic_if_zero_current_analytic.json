@@ -1,0 +1,46 @@
+{
+  "schema_version": "sc-neurocore.reference-trace.v1",
+  "name": "quadratic_if_zero_current_analytic",
+  "model": {
+    "schema_name": "quadratic_if",
+    "runner": "universal_dsl"
+  },
+  "protocol": {
+    "dt": 0.01,
+    "steps": 120,
+    "inputs": {
+      "I": 0.0
+    },
+    "state_variables": [
+      "v"
+    ]
+  },
+  "provenance": {
+    "kind": "analytic_closed_form",
+    "source": "src/sc_neurocore/neurons/model_schemas/quadratic_if.toml",
+    "equation": "For dv/dt=v^2 at I=0 and v0=-1, v(t)=v0/(1-v0*t)=-1/(1+t); tolerance admits the schema runner's explicit-Euler discretisation error.",
+    "citation": "doi:10.1152/jn.2000.83.2.808"
+  },
+  "expected_features": {
+    "spike_count": 0.0,
+    "first_spike_step": -1.0,
+    "final.v": -0.45454545454545453,
+    "min.v": -0.9900990099009901,
+    "max.v": -0.45454545454545453,
+    "mean.v": -0.6547805826062277
+  },
+  "tolerances": {
+    "default": {
+      "absolute": 0.0025,
+      "relative": 0.0
+    },
+    "spike_count": {
+      "absolute": 0.0,
+      "relative": 0.0
+    },
+    "first_spike_step": {
+      "absolute": 0.0,
+      "relative": 0.0
+    }
+  }
+}
