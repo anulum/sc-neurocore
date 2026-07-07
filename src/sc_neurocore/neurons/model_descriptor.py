@@ -17,16 +17,24 @@ vocabularies so the metadata cannot drift into free text.
 
 The descriptor is intentionally tolerant of partially-curated content: every
 curation field is optional, and :func:`descriptor_completeness_tier` reports how
-complete a descriptor is (0-3) so coverage can grow as the library is tuned
-without blocking early authoring. No field is ever fabricated — uncurated values
-are simply absent.
+complete a descriptor is on the science axis (0-3) so coverage can grow as the
+library is tuned without blocking early authoring. No field is ever fabricated —
+uncurated values are simply absent.
+
+Two evidence facets — :class:`Validation` (the class-correct dynamics check) and
+:class:`Silicon` (the realisation ladder from compile-clean RTL to signed PPA) —
+carry the committed proof anchors for the deeper science and silicon tiers. They
+are recorded outcomes, never derived: the dual-axis scoring that reads them
+(``science_tier`` S0-S5, ``silicon_tier`` H0-H5) lives in
+:mod:`sc_neurocore.neurons.descriptor_tiers`, so a tier can never be inflated
+ahead of the evidence in the descriptor (master plan invariant I7).
 """
 
 from __future__ import annotations
 
 import re
 from collections.abc import Mapping, Sequence
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 
 MODEL_DESCRIPTOR_SCHEMA_VERSION = 2
 
@@ -35,6 +43,16 @@ MATURITIES = frozenset({"reference", "experimental", "validated"})
 BACKEND_NAMES = ("python", "rust", "julia", "go", "mojo")
 BACKEND_STATUSES = frozenset({"implemented", "planned", "unsupported"})
 BACKEND_PARITIES = frozenset({"exact", "ulp-bounded", "approximate", "n/a"})
+
+# The metric by which a model is validated against its publication, chosen for the
+# model's class (§4 of the catalogue-to-silicon master plan): spike-count parity
+# for deterministic point neurons, distributional agreement for stochastic models,
+# trajectory error for smooth ODEs, per-compartment agreement for multicompartment.
+VALIDATION_METRICS = frozenset({"none", "parity", "statistical", "trajectory", "per_compartment"})
+# Terminal silicon tier a model's deployability class is expected to reach; empty
+# means the class has not been declared yet (so the model cannot be certified
+# perfect). H0-H5 mirror the silicon axis in :mod:`descriptor_tiers`.
+SILICON_TARGET_TIERS = frozenset({"", "H0", "H1", "H2", "H3", "H4", "H5"})
 
 _SLUG = re.compile(r"^[a-z0-9][a-z0-9_-]*$")
 _DOI = re.compile(r"^10\.\d{4,9}/\S+$")
@@ -126,6 +144,108 @@ class Reproducibility:
 
 
 @dataclass(frozen=True, slots=True)
+class Validation:
+    """Class-correct validation evidence for a model's dynamics.
+
+    Records the outcome of two checks (§3-§4 of the catalogue-to-silicon master
+    plan): whether the model's discretised dynamics were confirmed faithful to
+    the publication (``dynamics_faithful`` — the three-way schema/class/paper
+    agreement), and by which metric the model was validated for its class, with
+    committed evidence. Every field is a recorded outcome, never derived, so the
+    science tier can read them as ground truth.
+
+    Parameters
+    ----------
+    dynamics_faithful:
+        True when the schema-DSL equations, parameters, dt, threshold, and reset
+        were confirmed to match the publication (and the hand class where one
+        exists). Gates the faithful-dynamics tier S4.
+    metric:
+        The class-appropriate validation metric from :data:`VALIDATION_METRICS`
+        (``"none"`` until validated).
+    operating_point:
+        Human-readable statement of the operating point the validation used
+        (for example an input drive or a parameter regime).
+    tolerance:
+        The honest agreement tolerance achieved (for example ``"0 spikes"`` or a
+        distributional distance), as a citeable string.
+    evidence:
+        A path, citation, or digest pointing at the committed validation evidence.
+        Together with a non-``"none"`` metric this gates the validated tier S5.
+    """
+
+    dynamics_faithful: bool = False
+    metric: str = "none"
+    operating_point: str = ""
+    tolerance: str = ""
+    evidence: str = ""
+
+    @property
+    def is_class_validated(self) -> bool:
+        """True when a non-trivial metric and committed evidence are both present."""
+        return self.metric != "none" and bool(self.evidence)
+
+
+@dataclass(frozen=True, slots=True)
+class Silicon:
+    """Ladder of committed silicon-realisation evidence for a model.
+
+    Each rung of the silicon axis (H0-H5) is only credited when its evidence
+    anchor is recorded, so a silicon tier can never be claimed ahead of proof
+    (master plan invariant I7). ``compiles`` is the H0 anchor (iverilog-valid
+    RTL); each higher boolean requires its companion report to count.
+
+    Parameters
+    ----------
+    compiles:
+        RTL lowers to iverilog-valid Verilog (compile-clean). The H0 anchor.
+    cosim_validated:
+        Python<->Verilog agreement by the class-correct metric was demonstrated;
+        credited for H1 only alongside ``cosim_evidence``.
+    synthesised:
+        Passes a real synthesis flow (for example Yosys); credited for H2 only
+        alongside ``synth_report``.
+    timing_closed:
+        Meets a stated clock on a target device with reported resources;
+        credited for H3 only alongside ``timing_report`` and ``clock_mhz``.
+    formally_equivalent:
+        Machine-checked Python-semantics<->RTL equivalence in CI; credited for H4
+        only alongside ``equivalence_proof``.
+    ppa_signed:
+        Tool-level RTL->GDSII signoff (open PDK) with clean DRC/LVS/STA; credited
+        for H5 only alongside ``ppa_report``.
+    cosim_evidence, synth_report, timing_report, equivalence_proof, ppa_report:
+        Paths, citations, or digests pointing at the committed proof for each rung.
+    target_device:
+        The device the timing/resource numbers were characterised on.
+    clock_mhz:
+        The clock the design closes at (MHz); required for the H3 credit.
+    target_tier:
+        The terminal H-tier this model's deployability class is expected to reach,
+        from :data:`SILICON_TARGET_TIERS` (``""`` until declared).
+    terminal_reason:
+        Why the model terminates at ``target_tier`` (for example a research
+        multicompartment model that need not reach signed PPA).
+    """
+
+    compiles: bool = False
+    cosim_validated: bool = False
+    synthesised: bool = False
+    timing_closed: bool = False
+    formally_equivalent: bool = False
+    ppa_signed: bool = False
+    cosim_evidence: str = ""
+    synth_report: str = ""
+    timing_report: str = ""
+    equivalence_proof: str = ""
+    ppa_report: str = ""
+    target_device: str = ""
+    clock_mhz: float | None = None
+    target_tier: str = ""
+    terminal_reason: str = ""
+
+
+@dataclass(frozen=True, slots=True)
 class ModelDescriptor:
     """The full declarative descriptor for one neuron model."""
 
@@ -151,11 +271,19 @@ class ModelDescriptor:
     reproducibility: Reproducibility
     documentation_slug: str = ""
     notes: str = ""
+    validation: Validation = field(default_factory=Validation)
+    silicon: Silicon = field(default_factory=Silicon)
     schema_version: int = MODEL_DESCRIPTOR_SCHEMA_VERSION
 
 
 def descriptor_completeness_tier(descriptor: ModelDescriptor) -> int:
-    """Return the completeness tier (0-3) a descriptor satisfies.
+    """Return the science-axis completeness kernel (0-3) a descriptor satisfies.
+
+    This is the S0-S3 base of the science axis — the discovery-and-curation
+    tiers that need no execution evidence. The full science axis (adding the
+    faithful-dynamics tier S4 and the class-validated tier S5) and the silicon
+    axis (H0-H5) are derived from this kernel plus the descriptor's evidence
+    facets by :mod:`sc_neurocore.neurons.descriptor_tiers`.
 
     Tier 0 — exists and identifies a real model (class, module, params, state).
     Tier 1 — discovery taxonomy declared (family and category). Behaviour tags
@@ -249,6 +377,8 @@ def parse_model_descriptor(payload: Mapping[str, object]) -> ModelDescriptor:
         ),
         documentation_slug=_opt_str(_section(payload, "documentation", required=False), "slug"),
         notes=_opt_str(_section(payload, "documentation", required=False), "notes"),
+        validation=_parse_validation(_section(payload, "validation", required=False)),
+        silicon=_parse_silicon(_section(payload, "silicon", required=False)),
     )
     return descriptor
 
@@ -282,6 +412,13 @@ def _opt_slug(section: Mapping[str, object], key: str) -> str:
     value = _opt_str(section, key)
     if value and not _SLUG.fullmatch(value):
         raise ModelDescriptorError(f"descriptor {key!r} must be a slug, got {value!r}")
+    return value
+
+
+def _opt_bool(section: Mapping[str, object], key: str) -> bool:
+    value = section.get(key, False)
+    if not isinstance(value, bool):
+        raise ModelDescriptorError(f"descriptor {key!r} must be a boolean")
     return value
 
 
@@ -410,6 +547,45 @@ def _parse_reproducibility(section: Mapping[str, object]) -> Reproducibility:
     )
 
 
+def _parse_validation(section: Mapping[str, object]) -> Validation:
+    metric = _vocab(section.get("metric", "none"), VALIDATION_METRICS, "validation metric")
+    return Validation(
+        dynamics_faithful=_opt_bool(section, "dynamics_faithful"),
+        metric=metric,
+        operating_point=_opt_str(section, "operating_point"),
+        tolerance=_opt_str(section, "tolerance"),
+        evidence=_opt_str(section, "evidence"),
+    )
+
+
+def _parse_silicon(section: Mapping[str, object]) -> Silicon:
+    target = section.get("target_tier", "")
+    if not isinstance(target, str) or target not in SILICON_TARGET_TIERS:
+        raise ModelDescriptorError(
+            f"silicon target_tier must be one of {sorted(SILICON_TARGET_TIERS)}, got {target!r}"
+        )
+    clock = section.get("clock_mhz")
+    if clock is not None and (isinstance(clock, bool) or not isinstance(clock, (int, float))):
+        raise ModelDescriptorError("silicon clock_mhz must be a number")
+    return Silicon(
+        compiles=_opt_bool(section, "compiles"),
+        cosim_validated=_opt_bool(section, "cosim_validated"),
+        synthesised=_opt_bool(section, "synthesised"),
+        timing_closed=_opt_bool(section, "timing_closed"),
+        formally_equivalent=_opt_bool(section, "formally_equivalent"),
+        ppa_signed=_opt_bool(section, "ppa_signed"),
+        cosim_evidence=_opt_str(section, "cosim_evidence"),
+        synth_report=_opt_str(section, "synth_report"),
+        timing_report=_opt_str(section, "timing_report"),
+        equivalence_proof=_opt_str(section, "equivalence_proof"),
+        ppa_report=_opt_str(section, "ppa_report"),
+        target_device=_opt_str(section, "target_device"),
+        clock_mhz=float(clock) if clock is not None else None,
+        target_tier=target,
+        terminal_reason=_opt_str(section, "terminal_reason"),
+    )
+
+
 __all__ = [
     "BACKEND_NAMES",
     "BACKEND_PARITIES",
@@ -417,13 +593,17 @@ __all__ = [
     "BIOPHYSICAL_DETAILS",
     "MATURITIES",
     "MODEL_DESCRIPTOR_SCHEMA_VERSION",
+    "SILICON_TARGET_TIERS",
+    "VALIDATION_METRICS",
     "BackendSupport",
     "ModelDescriptor",
     "ModelDescriptorError",
     "ParameterSpec",
     "Provenance",
     "Reproducibility",
+    "Silicon",
     "StateVariableSpec",
+    "Validation",
     "descriptor_completeness_tier",
     "parse_model_descriptor",
 ]

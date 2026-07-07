@@ -29,6 +29,8 @@ from sc_neurocore.neurons.descriptor_generator import (
 from sc_neurocore.neurons.model_descriptor import (
     MODEL_DESCRIPTOR_SCHEMA_VERSION,
     ModelDescriptorError,
+    Silicon,
+    Validation,
     descriptor_completeness_tier,
     parse_model_descriptor,
 )
@@ -223,6 +225,115 @@ def test_completeness_tiers_rise_with_curation() -> None:
         "golden_trace_sha256": "a" * 64,
     }
     assert descriptor_completeness_tier(parse_model_descriptor(payload)) == 3
+
+
+def test_validation_defaults_are_empty_and_unvalidated() -> None:
+    """An absent [validation] section yields an empty, unvalidated facet."""
+    descriptor = parse_model_descriptor(_minimal_payload())
+    assert descriptor.validation == Validation()
+    assert descriptor.validation.metric == "none"
+    assert descriptor.validation.dynamics_faithful is False
+    assert descriptor.validation.is_class_validated is False
+
+
+def test_validation_is_class_validated_needs_metric_and_evidence() -> None:
+    """The validated predicate requires both a non-trivial metric and evidence."""
+    assert Validation(metric="parity", evidence="trace.json").is_class_validated is True
+    assert Validation(metric="parity").is_class_validated is False
+    assert Validation(metric="none", evidence="trace.json").is_class_validated is False
+
+
+def test_parse_validation_section_reads_every_field() -> None:
+    """The [validation] section round-trips its recorded evidence fields."""
+    payload = _minimal_payload()
+    payload["validation"] = {
+        "dynamics_faithful": True,
+        "metric": "statistical",
+        "operating_point": "Poisson drive 20 Hz",
+        "tolerance": "KS < 0.05",
+        "evidence": "golden/adex_stats.json",
+    }
+    validation = parse_model_descriptor(payload).validation
+    assert validation.dynamics_faithful is True
+    assert validation.metric == "statistical"
+    assert validation.operating_point == "Poisson drive 20 Hz"
+    assert validation.tolerance == "KS < 0.05"
+    assert validation.evidence == "golden/adex_stats.json"
+    assert validation.is_class_validated is True
+
+
+def test_parse_rejects_unknown_validation_metric() -> None:
+    payload = _minimal_payload()
+    payload["validation"] = {"metric": "vibes"}
+    with pytest.raises(ModelDescriptorError, match="validation metric"):
+        parse_model_descriptor(payload)
+
+
+def test_parse_rejects_non_boolean_evidence_flag() -> None:
+    payload = _minimal_payload()
+    payload["validation"] = {"dynamics_faithful": "yes"}
+    with pytest.raises(ModelDescriptorError, match="dynamics_faithful"):
+        parse_model_descriptor(payload)
+
+
+def test_silicon_defaults_are_empty() -> None:
+    """An absent [silicon] section yields the below-H0 default facet."""
+    descriptor = parse_model_descriptor(_minimal_payload())
+    assert descriptor.silicon == Silicon()
+    assert descriptor.silicon.compiles is False
+    assert descriptor.silicon.clock_mhz is None
+    assert descriptor.silicon.target_tier == ""
+
+
+def test_parse_silicon_section_reads_every_field() -> None:
+    """The [silicon] section carries the realisation ladder and its anchors."""
+    payload = _minimal_payload()
+    payload["silicon"] = {
+        "compiles": True,
+        "cosim_validated": True,
+        "synthesised": True,
+        "timing_closed": True,
+        "formally_equivalent": True,
+        "ppa_signed": True,
+        "cosim_evidence": "cosim.log",
+        "synth_report": "yosys.json",
+        "timing_report": "sta.rpt",
+        "equivalence_proof": "miter.smt2",
+        "ppa_report": "openlane.json",
+        "target_device": "xc7a35t",
+        "clock_mhz": 125,
+        "target_tier": "H3",
+        "terminal_reason": "point neuron, deployable to H3",
+    }
+    silicon = parse_model_descriptor(payload).silicon
+    assert silicon.compiles is True
+    assert silicon.cosim_validated is True
+    assert silicon.target_device == "xc7a35t"
+    assert silicon.clock_mhz == pytest.approx(125.0)
+    assert isinstance(silicon.clock_mhz, float)
+    assert silicon.target_tier == "H3"
+    assert silicon.terminal_reason == "point neuron, deployable to H3"
+
+
+def test_parse_rejects_unknown_silicon_target_tier() -> None:
+    payload = _minimal_payload()
+    payload["silicon"] = {"target_tier": "H9"}
+    with pytest.raises(ModelDescriptorError, match="target_tier"):
+        parse_model_descriptor(payload)
+
+
+def test_parse_rejects_non_numeric_clock() -> None:
+    payload = _minimal_payload()
+    payload["silicon"] = {"clock_mhz": "fast"}
+    with pytest.raises(ModelDescriptorError, match="clock_mhz"):
+        parse_model_descriptor(payload)
+
+
+def test_parse_rejects_boolean_clock() -> None:
+    payload = _minimal_payload()
+    payload["silicon"] = {"clock_mhz": True}
+    with pytest.raises(ModelDescriptorError, match="clock_mhz"):
+        parse_model_descriptor(payload)
 
 
 def test_generate_descriptor_reads_real_fields_and_provenance() -> None:

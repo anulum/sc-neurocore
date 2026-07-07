@@ -21347,6 +21347,105 @@ dict&#91;str, Any&#93;
 ### Function `_copy(value)`
 ---
 
+## Module `neurons.descriptor_tiers`
+
+### Class `CompletenessTiers`
+A model's readiness on both catalogue-to-silicon axes.
+
+Parameters
+----------
+science:
+    Science-axis tier in ``0``-``5`` (S0-S5).
+silicon:
+    Silicon-axis tier in ``0``-``5`` (H0-H5), or ``None`` when the model has
+    no committed silicon evidence yet.
+
+- **science_label**()
+  - The science tier as an ``S<n>`` label.
+- **silicon_label**()
+  - The silicon tier as an ``H<n>`` label, or ``"none"`` when unattempted.
+
+### Function `science_tier(descriptor)`
+Return the science-axis tier (0-5) the descriptor reaches.
+
+S0-S3 are the curation kernel from
+:func:`~sc_neurocore.neurons.model_descriptor.descriptor_completeness_tier`.
+A descriptor only climbs above S3 when its evidence facets carry the proof:
+
+* **S4** — faithful dynamics: declared dynamics plus a confirmed three-way
+  agreement with the publication (``validation.dynamics_faithful``).
+* **S5** — class-validated: a non-trivial metric and committed evidence
+  (``validation.is_class_validated``).
+
+Parameters
+----------
+descriptor:
+    The model descriptor to score.
+
+Returns
+-------
+int
+    The science tier in ``0``-``5``.
+
+### Function `silicon_tier(descriptor)`
+Return the silicon-axis tier (0-5) the descriptor reaches, or ``None``.
+
+``None`` means the model has no compile-clean RTL yet (no silicon evidence).
+Otherwise the ladder climbs one rung at a time, each rung credited only when
+both its boolean flag and its proof anchor are present:
+
+* **H0** — ``silicon.compiles`` (iverilog-valid RTL).
+* **H1** — Python<->Verilog validated (``cosim_validated`` + ``cosim_evidence``).
+* **H2** — synthesisable (``synthesised`` + ``synth_report``).
+* **H3** — timing-closed and resource-characterised (``timing_closed`` +
+  ``timing_report`` + ``clock_mhz``).
+* **H4** — formally equivalent (``formally_equivalent`` + ``equivalence_proof``).
+* **H5** — tool-level signed PPA (``ppa_signed`` + ``ppa_report``).
+
+Parameters
+----------
+descriptor:
+    The model descriptor to score.
+
+Returns
+-------
+int | None
+    The silicon tier in ``0``-``5``, or ``None`` when no RTL compiles.
+
+### Function `completeness_tiers(descriptor)`
+Return both axis tiers for a descriptor.
+
+Parameters
+----------
+descriptor:
+    The model descriptor to score.
+
+Returns
+-------
+CompletenessTiers
+    The science (0-5) and silicon (0-5 or ``None``) tiers together.
+
+### Function `is_perfect(descriptor)`
+Return whether a model is *perfect* by the master-plan acceptance contract.
+
+A model is perfect when it reaches S5 on the science axis and meets the
+terminal silicon tier its deployability class declares
+(``silicon.target_tier``). A model whose terminal tier is undeclared cannot
+be certified perfect: without the deployability class the required silicon
+tier is unknown, so this returns ``False`` rather than guessing.
+
+Parameters
+----------
+descriptor:
+    The model descriptor to judge.
+
+Returns
+-------
+bool
+    ``True`` only when S5 is reached and the declared terminal H-tier is met.
+
+---
+
 ## Module `neurons.dsl_cli`
 
 ### Function `cmd_list(args)`
@@ -21660,6 +21759,79 @@ Reference-run reproducibility anchors for a model.
 - **is_reproducible**()
   - True when a reference config and a golden trace digest are present.
 
+### Class `Validation`
+Class-correct validation evidence for a model's dynamics.
+
+Records the outcome of two checks (§3-§4 of the catalogue-to-silicon master
+plan): whether the model's discretised dynamics were confirmed faithful to
+the publication (``dynamics_faithful`` — the three-way schema/class/paper
+agreement), and by which metric the model was validated for its class, with
+committed evidence. Every field is a recorded outcome, never derived, so the
+science tier can read them as ground truth.
+
+Parameters
+----------
+dynamics_faithful:
+    True when the schema-DSL equations, parameters, dt, threshold, and reset
+    were confirmed to match the publication (and the hand class where one
+    exists). Gates the faithful-dynamics tier S4.
+metric:
+    The class-appropriate validation metric from :data:`VALIDATION_METRICS`
+    (``"none"`` until validated).
+operating_point:
+    Human-readable statement of the operating point the validation used
+    (for example an input drive or a parameter regime).
+tolerance:
+    The honest agreement tolerance achieved (for example ``"0 spikes"`` or a
+    distributional distance), as a citeable string.
+evidence:
+    A path, citation, or digest pointing at the committed validation evidence.
+    Together with a non-``"none"`` metric this gates the validated tier S5.
+
+- **is_class_validated**()
+  - True when a non-trivial metric and committed evidence are both present.
+
+### Class `Silicon`
+Ladder of committed silicon-realisation evidence for a model.
+
+Each rung of the silicon axis (H0-H5) is only credited when its evidence
+anchor is recorded, so a silicon tier can never be claimed ahead of proof
+(master plan invariant I7). ``compiles`` is the H0 anchor (iverilog-valid
+RTL); each higher boolean requires its companion report to count.
+
+Parameters
+----------
+compiles:
+    RTL lowers to iverilog-valid Verilog (compile-clean). The H0 anchor.
+cosim_validated:
+    Python<->Verilog agreement by the class-correct metric was demonstrated;
+    credited for H1 only alongside ``cosim_evidence``.
+synthesised:
+    Passes a real synthesis flow (for example Yosys); credited for H2 only
+    alongside ``synth_report``.
+timing_closed:
+    Meets a stated clock on a target device with reported resources;
+    credited for H3 only alongside ``timing_report`` and ``clock_mhz``.
+formally_equivalent:
+    Machine-checked Python-semantics<->RTL equivalence in CI; credited for H4
+    only alongside ``equivalence_proof``.
+ppa_signed:
+    Tool-level RTL->GDSII signoff (open PDK) with clean DRC/LVS/STA; credited
+    for H5 only alongside ``ppa_report``.
+cosim_evidence, synth_report, timing_report, equivalence_proof, ppa_report:
+    Paths, citations, or digests pointing at the committed proof for each rung.
+target_device:
+    The device the timing/resource numbers were characterised on.
+clock_mhz:
+    The clock the design closes at (MHz); required for the H3 credit.
+target_tier:
+    The terminal H-tier this model's deployability class is expected to reach,
+    from :data:`SILICON_TARGET_TIERS` (``""`` until declared).
+terminal_reason:
+    Why the model terminates at ``target_tier`` (for example a research
+    multicompartment model that need not reach signed PPA).
+
+
 ### Class `ModelDescriptor`
 The full declarative descriptor for one neuron model.
 
@@ -21669,7 +21841,13 @@ Raised when a descriptor payload violates the schema contract.
 
 
 ### Function `descriptor_completeness_tier(descriptor)`
-Return the completeness tier (0-3) a descriptor satisfies.
+Return the science-axis completeness kernel (0-3) a descriptor satisfies.
+
+This is the S0-S3 base of the science axis — the discovery-and-curation
+tiers that need no execution evidence. The full science axis (adding the
+faithful-dynamics tier S4 and the class-validated tier S5) and the silicon
+axis (H0-H5) are derived from this kernel plus the descriptor's evidence
+facets by :mod:`sc_neurocore.neurons.descriptor_tiers`.
 
 Tier 0 — exists and identifies a real model (class, module, params, state).
 Tier 1 — discovery taxonomy declared (family and category). Behaviour tags
@@ -21706,6 +21884,7 @@ ModelDescriptorError
 ### Function `_required_str(section, key)`
 ### Function `_opt_str(section, key)`
 ### Function `_opt_slug(section, key)`
+### Function `_opt_bool(section, key)`
 ### Function `_vocab(value, allowed, field_name)`
 ### Function `_str_tuple(value)`
 ### Function `_float(value)`
@@ -21716,6 +21895,8 @@ ModelDescriptorError
 ### Function `_parse_dynamics(section)`
 ### Function `_parse_backends(section)`
 ### Function `_parse_reproducibility(section)`
+### Function `_parse_validation(section)`
+### Function `_parse_silicon(section)`
 ---
 
 ## Module `neurons.model_taxonomy`
