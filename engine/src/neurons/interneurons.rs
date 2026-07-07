@@ -951,6 +951,7 @@ mod tests {
     }
 
     #[test]
+    #[ignore = "wall-clock performance smoke; use Criterion benches for timing evidence"]
     fn pv_performance_5k_steps() {
         let mut n = PVFastSpikingNeuron::new();
         let start = std::time::Instant::now();
@@ -1017,6 +1018,7 @@ mod tests {
     }
 
     #[test]
+    #[ignore = "wall-clock performance smoke; use Criterion benches for timing evidence"]
     fn sst_performance_10k_steps() {
         let mut n = SSTNeuron::new();
         let start = std::time::Instant::now();
@@ -1090,6 +1092,7 @@ mod tests {
     }
 
     #[test]
+    #[ignore = "wall-clock performance smoke; use Criterion benches for timing evidence"]
     fn vip_performance_10k_steps() {
         let mut n = VIPNeuron::new();
         let start = std::time::Instant::now();
@@ -1155,6 +1158,7 @@ mod tests {
     }
 
     #[test]
+    #[ignore = "wall-clock performance smoke; use Criterion benches for timing evidence"]
     fn chandelier_performance_5k_steps() {
         let mut n = ChandelierNeuron::new();
         let start = std::time::Instant::now();
@@ -1232,6 +1236,7 @@ mod tests {
     }
 
     #[test]
+    #[ignore = "wall-clock performance smoke; use Criterion benches for timing evidence"]
     fn basket_performance_5k_steps() {
         let mut n = CerebellarBasketNeuron::new();
         let start = std::time::Instant::now();
@@ -1310,6 +1315,7 @@ mod tests {
     }
 
     #[test]
+    #[ignore = "wall-clock performance smoke; use Criterion benches for timing evidence"]
     fn martinotti_performance_10k_steps() {
         let mut n = MartinottiNeuron::new();
         let start = std::time::Instant::now();

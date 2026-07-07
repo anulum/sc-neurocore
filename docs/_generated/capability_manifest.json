@@ -965,7 +965,7 @@
     "python_model_classes": 158,
     "python_model_source_modules": 152,
     "rust_pyo3_model_wrappers": 175,
-    "test_files": 980
+    "test_files": 981
   },
   "documentation": {
     "public_pages": [
@@ -3000,6 +3000,7 @@
       "tests/test_energy_estimator.py",
       "tests/test_engine_lif_vector_run.py",
       "tests/test_engine_probability_array_encoding.py",
+      "tests/test_engine_rust_performance_guards.py",
       "tests/test_ensembles_and_model_zoo.py",
       "tests/test_equation_builder.py",
       "tests/test_equation_builder_adversarial.py",

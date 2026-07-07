@@ -5,6 +5,13 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+### Rust interneuron performance-test gating
+- Marked the Rust interneuron wall-clock smoke tests for PV, SST, VIP,
+  Chandelier, cerebellar basket, and Martinotti neurons as opt-in ignored tests
+  so default `cargo test` no longer fails under host CPU contention. Timing
+  evidence remains owned by the Criterion benchmark surfaces; no neuron
+  dynamics, Python surface, polyglot mirror, or benchmark artefact changed.
+
 ### Block-floating scalar guard
 - Added an explicit `BlockFloatingScalarEncodingError` and scalar-only preset
   guard for mixed-precision configs. Block-floating precision remains available
