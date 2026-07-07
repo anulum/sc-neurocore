@@ -57,44 +57,31 @@ class _NeuronCore:
         return len(self.pipeline_regs)
 
 
-def _build_neuron_core(
+def _emit_euler_deriv_wires(
     neuron: EquationNeuron,
+    state_var_map: dict[str, str],
+    param_map: dict[str, str],
     q: Q88,
     *,
     data_width: int,
     fraction: int,
-    pipeline_stages: int,
-    pipeline_points: list[str] | None,
-) -> _NeuronCore:
-    """Emit the combinational next-state + threshold + reset fragments.
+    use_pipeline: bool,
+    pp_set: set[str],
+    mul_start: int,
+    trunc_start: int,
+) -> tuple[list[str], list[str], list[str], int, int]:
+    """Emit the per-variable ``d<var> = f(state)·dt`` forward-Euler increment wires.
 
-    This is the logic shared verbatim by :func:`compile_to_verilog` and
-    :func:`compile_to_datapath`; neither wraps nor mutates it differently, which
-    is what guarantees bit-exact agreement between the per-instance module and the
-    folded datapath.
+    This is the original single-step update path, extracted verbatim so the method
+    dispatch in :func:`_build_neuron_core` can select it or the RK4 path without
+    changing its byte-for-byte output. Returns ``(deriv_wires, intermediates,
+    pipeline_regs, mul_count, trunc_count)``.
     """
-    state_var_map = {var: sanitize_ident(var, context="state variable") for var in neuron.equations}
-
-    param_map: dict[str, str] = {}
-    param_decls: list[str] = []
-    for pname, pval in {**neuron.parameters, **neuron.constants}.items():
-        safe_pname = sanitize_ident(pname, context="parameter name")
-        vname = f"P_{safe_pname.upper()}"
-        param_map[pname] = vname
-        q_val = q.encode(pval)
-        param_decls.append(
-            f"    parameter signed [{data_width - 1}:0] {vname} = {data_width}'sd{q_val}"
-        )
-
     deriv_wires: list[str] = []
     all_intermediates: list[str] = []
     all_pipeline_regs: list[str] = []
-    _mc = 0
-    _tc = 0
-
-    use_pipeline = pipeline_stages > 0
-    pp_set = set(pipeline_points) if pipeline_points and not use_pipeline else set()
-
+    _mc = mul_start
+    _tc = trunc_start
     for var, expr_str in neuron.equations.items():
         safe_var = state_var_map[var]
         vexpr, intermediates, _mc, _tc, p_regs = _emit_expr(
@@ -130,6 +117,169 @@ def _build_neuron_core(
                 f"wire signed [{data_width - 1}:0] {deriv_trunc} = ({dt_tmp} >>> {fraction});"
             )
         deriv_wires.append(f"wire signed [{data_width - 1}:0] {deriv_name} = {deriv_trunc};")
+    return deriv_wires, all_intermediates, all_pipeline_regs, _mc, _tc
+
+
+def _emit_rk4_deriv_wires(
+    neuron: EquationNeuron,
+    state_var_map: dict[str, str],
+    param_map: dict[str, str],
+    q: Q88,
+    *,
+    data_width: int,
+    fraction: int,
+    mul_start: int,
+    trunc_start: int,
+) -> tuple[list[str], list[str], list[str], int, int]:
+    """Emit the per-variable ``d<var>`` increment wires for one classical RK4 step.
+
+    Mirrors the Python golden in :meth:`EquationNeuron.step` (``method="rk4"``)::
+
+        k1 = f(s0);   s1 = s0 + k1·dt/2
+        k2 = f(s1);   s2 = s0 + k2·dt/2
+        k3 = f(s2);   s3 = s0 + k3·dt
+        k4 = f(s3)
+        d<var> = (k1 + 2·k2 + 2·k3 + k4)·dt/6
+
+    Every derivative evaluation reuses :func:`_emit_expr` — the same fixed-point
+    expression emitter the Euler path uses — so the whole RK4 stage graph is emitted
+    in whatever ``q`` format is requested. The integrator is therefore agnostic to
+    the number representation: all Q-formats, rounding modes and overflow handling
+    are inherited without special-casing (one integrator × N representations). The
+    state at each stage is supplied through ``param_map`` (state variables render as
+    the stage wire names), exactly as the threshold emitter substitutes ``<var>_next``.
+    Targets deterministic models (no stochastic ``xi`` term). Returns
+    ``(deriv_wires, intermediates, pipeline_regs, mul_count, trunc_count)``.
+    """
+    inter: list[str] = []
+    regs: list[str] = []
+    mc, tc = mul_start, trunc_start
+    variables = list(neuron.equations)
+    dt2_lit = q.encode_signed_literal(neuron.dt / 2.0)
+    dt_lit = q.encode_signed_literal(neuron.dt)
+    dt6_lit = q.encode_signed_literal(neuron.dt / 6.0)
+
+    def eval_stage(stage_map: dict[str, str], tag: str) -> dict[str, str]:
+        """Emit ``k<tag>_<var> = f_<var>(stage state)`` for every variable."""
+        nonlocal mc, tc
+        k_wires: dict[str, str] = {}
+        for var in variables:
+            safe_var = state_var_map[var]
+            vexpr, ints, mc, tc, pregs = _emit_expr(
+                neuron.equations[var], {}, stage_map, q, mul_start=mc, trunc_start=tc
+            )
+            inter.extend(ints)
+            regs.extend(pregs)
+            k_name = f"_k{tag}_{safe_var}"
+            inter.append(f"wire signed [{data_width - 1}:0] {k_name} = {vexpr};")
+            k_wires[var] = k_name
+        return k_wires
+
+    def advance(k_wires: dict[str, str], scale_lit: str, tag: str) -> dict[str, str]:
+        """Emit ``s<tag>_<var> = s0_<var> + k·scale`` and return the stage state map."""
+        stage_map = dict(param_map)
+        for var in variables:
+            safe_var = state_var_map[var]
+            mul = f"_rk{tag}mul_{safe_var}"
+            inter.append(
+                f"wire signed [{2 * data_width - 1}:0] {mul} = {k_wires[var]} * {scale_lit};"
+            )
+            trunc = f"_rk{tag}tr_{safe_var}"
+            inter.append(f"wire signed [{data_width - 1}:0] {trunc} = ({mul} >>> {fraction});")
+            s_wire = f"_s{tag}_{safe_var}"
+            inter.append(f"wire signed [{data_width - 1}:0] {s_wire} = {safe_var}_reg + {trunc};")
+            stage_map[var] = s_wire
+        return stage_map
+
+    s0_map = {**param_map, **{var: f"{state_var_map[var]}_reg" for var in variables}}
+    k1 = eval_stage(s0_map, "1")
+    k2 = eval_stage(advance(k1, dt2_lit, "1"), "2")
+    k3 = eval_stage(advance(k2, dt2_lit, "2"), "3")
+    k4 = eval_stage(advance(k3, dt_lit, "3"), "4")
+
+    deriv_wires: list[str] = []
+    for var in variables:
+        safe_var = state_var_map[var]
+        weighted = f"_rkw_{safe_var}"
+        inter.append(
+            f"wire signed [{data_width + 2}:0] {weighted} = "
+            f"{k1[var]} + {k2[var]} + {k2[var]} + {k3[var]} + {k3[var]} + {k4[var]};"
+        )
+        scaled = f"_rk6mul_{safe_var}"
+        inter.append(f"wire signed [{2 * data_width + 2}:0] {scaled} = {weighted} * {dt6_lit};")
+        deriv_wires.append(
+            f"wire signed [{data_width - 1}:0] d{safe_var} = ({scaled} >>> {fraction});"
+        )
+    return deriv_wires, inter, regs, mc, tc
+
+
+def _build_neuron_core(
+    neuron: EquationNeuron,
+    q: Q88,
+    *,
+    data_width: int,
+    fraction: int,
+    pipeline_stages: int,
+    pipeline_points: list[str] | None,
+) -> _NeuronCore:
+    """Emit the combinational next-state + threshold + reset fragments.
+
+    This is the logic shared verbatim by :func:`compile_to_verilog` and
+    :func:`compile_to_datapath`; neither wraps nor mutates it differently, which
+    is what guarantees bit-exact agreement between the per-instance module and the
+    folded datapath.
+    """
+    state_var_map = {var: sanitize_ident(var, context="state variable") for var in neuron.equations}
+
+    param_map: dict[str, str] = {}
+    param_decls: list[str] = []
+    for pname, pval in {**neuron.parameters, **neuron.constants}.items():
+        safe_pname = sanitize_ident(pname, context="parameter name")
+        vname = f"P_{safe_pname.upper()}"
+        param_map[pname] = vname
+        q_val = q.encode(pval)
+        param_decls.append(
+            f"    parameter signed [{data_width - 1}:0] {vname} = {data_width}'sd{q_val}"
+        )
+
+    all_intermediates: list[str] = []
+    all_pipeline_regs: list[str] = []
+    _mc = 0
+    _tc = 0
+
+    use_pipeline = pipeline_stages > 0
+    pp_set = set(pipeline_points) if pipeline_points and not use_pipeline else set()
+
+    if getattr(neuron, "method", "euler") == "rk4":
+        if use_pipeline or pp_set:
+            raise NotImplementedError(
+                "RK4 Verilog emission does not support pipelining yet; use pipeline_stages=0"
+            )
+        deriv_wires, deriv_intermediates, deriv_regs, _mc, _tc = _emit_rk4_deriv_wires(
+            neuron,
+            state_var_map,
+            param_map,
+            q,
+            data_width=data_width,
+            fraction=fraction,
+            mul_start=_mc,
+            trunc_start=_tc,
+        )
+    else:
+        deriv_wires, deriv_intermediates, deriv_regs, _mc, _tc = _emit_euler_deriv_wires(
+            neuron,
+            state_var_map,
+            param_map,
+            q,
+            data_width=data_width,
+            fraction=fraction,
+            use_pipeline=use_pipeline,
+            pp_set=pp_set,
+            mul_start=_mc,
+            trunc_start=_tc,
+        )
+    all_intermediates.extend(deriv_intermediates)
+    all_pipeline_regs.extend(deriv_regs)
 
     sign_kw = "signed " if q.signed else ""
     if q.signed:

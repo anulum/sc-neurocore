@@ -11542,6 +11542,35 @@ them as input ports).
 
 - **total_pipeline_latency**()
 
+### Function `_emit_euler_deriv_wires(neuron, state_var_map, param_map, q)`
+Emit the per-variable ``d<var> = f(state)·dt`` forward-Euler increment wires.
+
+This is the original single-step update path, extracted verbatim so the method
+dispatch in :func:`_build_neuron_core` can select it or the RK4 path without
+changing its byte-for-byte output. Returns ``(deriv_wires, intermediates,
+pipeline_regs, mul_count, trunc_count)``.
+
+### Function `_emit_rk4_deriv_wires(neuron, state_var_map, param_map, q)`
+Emit the per-variable ``d<var>`` increment wires for one classical RK4 step.
+
+Mirrors the Python golden in :meth:`EquationNeuron.step` (``method="rk4"``)::
+
+    k1 = f(s0);   s1 = s0 + k1·dt/2
+    k2 = f(s1);   s2 = s0 + k2·dt/2
+    k3 = f(s2);   s3 = s0 + k3·dt
+    k4 = f(s3)
+    d<var> = (k1 + 2·k2 + 2·k3 + k4)·dt/6
+
+Every derivative evaluation reuses :func:`_emit_expr` — the same fixed-point
+expression emitter the Euler path uses — so the whole RK4 stage graph is emitted
+in whatever ``q`` format is requested. The integrator is therefore agnostic to
+the number representation: all Q-formats, rounding modes and overflow handling
+are inherited without special-casing (one integrator × N representations). The
+state at each stage is supplied through ``param_map`` (state variables render as
+the stage wire names), exactly as the threshold emitter substitutes ``<var>_next``.
+Targets deterministic models (no stochastic ``xi`` term). Returns
+``(deriv_wires, intermediates, pipeline_regs, mul_count, trunc_count)``.
+
 ### Function `_build_neuron_core(neuron, q)`
 Emit the combinational next-state + threshold + reset fragments.
 

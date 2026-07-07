@@ -919,3 +919,150 @@ class TestSchemaGapModelCosim:
         assert model_name not in _COSIM_MODELS
         assert model_name not in _TRANSCENDENTAL_COSIM_MODELS
         assert model_name not in _SCHEMA_GAP_COMPILE_ONLY
+
+
+# ══════════════════════════════════════════════════════════════════════
+# WC-A5 emitter unlock — RK4 integrator lowering in the schema→Verilog path
+# ══════════════════════════════════════════════════════════════════════
+
+
+def _spike_count_method(model_name: str, n_steps: int, current: float, method: str) -> int:
+    """Python golden spike count with an explicit integrator ``method`` override."""
+    neuron = UniversalNeuron.from_schema(model_name, method_override=method)
+    return sum(1 for _ in range(n_steps) if neuron.step(I=current))
+
+
+def _verilog_spike_count_method(
+    model_name: str,
+    n_steps: int,
+    current: float,
+    data_width: int,
+    fraction: int,
+    method: str,
+) -> int:
+    """Compile at ``method``/``(data_width, fraction)`` and simulate, returning spikes."""
+    neuron = UniversalNeuron.from_schema(model_name, method_override=method)
+    eq_neuron = neuron.to_equation_neuron()
+    module_name = f"sc_{model_name}_{method}_q{data_width - fraction}_{fraction}"
+
+    verilog = neuron.to_verilog(module_name=module_name, data_width=data_width, fraction=fraction)
+    tb = generate_testbench(
+        eq_neuron,
+        module_name=module_name,
+        n_steps=n_steps,
+        input_current=current,
+        data_width=data_width,
+        fraction=fraction,
+    )
+
+    with tempfile.TemporaryDirectory() as tmpdir:
+        rtl_path = Path(tmpdir) / f"{module_name}.v"
+        tb_path = Path(tmpdir) / f"tb_{module_name}.v"
+        out_path = Path(tmpdir) / f"tb_{module_name}"
+
+        rtl_path.write_text(verilog)
+        tb_path.write_text(tb)
+
+        result = subprocess.run(
+            ["iverilog", "-g2012", "-o", str(out_path), str(rtl_path), str(tb_path)],
+            capture_output=True,
+            text=True,
+            timeout=30,
+        )
+        if result.returncode != 0:
+            raise RuntimeError(f"iverilog compile failed:\n{result.stderr}")
+
+        result = subprocess.run(
+            ["vvp", str(out_path)],
+            capture_output=True,
+            text=True,
+            timeout=30,
+        )
+        if result.returncode != 0:
+            raise RuntimeError(f"vvp simulation failed:\n{result.stderr}")
+
+        match = re.search(r"(\d+) spikes", result.stdout)
+        if not match:
+            raise RuntimeError(f"Could not parse spike count from:\n{result.stdout}")
+        return int(match.group(1))
+
+
+# Smooth-ODE models whose emitted RK4 reproduces the Python RK4 golden exactly at Q16.16.
+# (izhikevich is excluded: its 0.04·v² spike explosion is a stiff-hybrid range limit,
+# already special-cased for the same reason in the Euler baseline set.)
+_RK4_EXACT_MODELS = [
+    ("quadratic_if", 50.0, 300),
+    ("theta", 50.0, 300),
+    ("adex", 1000.0, 500),
+]
+# Q-format menu proving the RK4 lowering is agnostic to the number representation
+# (the integrator is a graph rewrite; the Q-format is a separate emission parameter).
+_RK4_Q_FORMATS = [("Q16.16", 32, 16), ("Q12.12", 24, 12), ("Q18.18", 36, 18), ("Q20.12", 32, 12)]
+
+
+@pytest.mark.skipif(not HAS_IVERILOG, reason="Icarus Verilog not available")
+class TestRK4Emitter:
+    """The schema→Verilog emitter lowers a full classical RK4 step, not only Euler.
+
+    When a schema declares ``method="rk4"`` the emitter now emits the four-stage
+    RK4 graph (k1..k4 with the s0 + k·dt/2 / +k·dt stage states and the
+    (k1+2k2+2k3+k4)·dt/6 increment), reusing the same fixed-point expression
+    emitter as the Euler path. That reuse makes the integrator agnostic to the
+    number representation, so RK4 inherits every Q-format for free. Faithfulness
+    holds for smooth ODEs; the stiff hybrid izhikevich (0.04·v² spike explosion)
+    remains a documented per-model range limit, not an emitter defect.
+    """
+
+    @pytest.mark.parametrize("model_name,current,n_steps", _RK4_EXACT_MODELS)
+    def test_rk4_tracks_python_rk4_golden(
+        self, model_name: str, current: float, n_steps: int
+    ) -> None:
+        """Emitted RK4 reproduces the Python RK4 golden spike count exactly (Q16.16)."""
+        py_spikes = _spike_count_method(model_name, n_steps, current, "rk4")
+        vlog_spikes = _verilog_spike_count_method(model_name, n_steps, current, 32, 16, "rk4")
+        assert py_spikes > 0, f"Python RK4 {model_name} must spike"
+        assert vlog_spikes == py_spikes, (
+            f"{model_name} RK4 mismatch: Python={py_spikes}, Verilog={vlog_spikes}"
+        )
+
+    def test_rk4_path_is_distinct_from_euler(self) -> None:
+        """The RK4 emitter is a genuine four-stage step, not aliased to Euler.
+
+        FitzHugh-Nagumo at I=5.0 is nonlinear enough that RK4 and Euler diverge:
+        the emitted RK4 differs from the emitted Euler and still tracks the Python
+        RK4 golden within the same fixed-point band the Euler path achieves.
+        """
+        py_rk4 = _spike_count_method("fitzhugh_nagumo", 300, 5.0, "rk4")
+        vlog_rk4 = _verilog_spike_count_method("fitzhugh_nagumo", 300, 5.0, 32, 16, "rk4")
+        vlog_euler = _verilog_spike_count_method("fitzhugh_nagumo", 300, 5.0, 32, 16, "euler")
+        assert vlog_rk4 != vlog_euler, "RK4 output must differ from Euler for a nonlinear model"
+        gap_pct = abs(py_rk4 - vlog_rk4) / max(py_rk4, 1) * 100
+        assert gap_pct <= 6.0, f"RK4 gap {gap_pct:.1f}% (Python={py_rk4}, Verilog={vlog_rk4})"
+
+    @pytest.mark.parametrize("mode_name,data_width,fraction", _RK4_Q_FORMATS)
+    def test_rk4_is_representation_agnostic(
+        self, mode_name: str, data_width: int, fraction: int
+    ) -> None:
+        """RK4 inherits every Q-format for free (integrator ⟂ number representation)."""
+        py_spikes = _spike_count_method("quadratic_if", 300, 50.0, "rk4")
+        vlog_spikes = _verilog_spike_count_method(
+            "quadratic_if", 300, 50.0, data_width, fraction, "rk4"
+        )
+        assert vlog_spikes == py_spikes, (
+            f"{mode_name} RK4 mismatch: Python={py_spikes}, Verilog={vlog_spikes}"
+        )
+
+
+def test_rk4_pipelining_is_rejected() -> None:
+    """RK4 emission fails fast on pipelining (unsupported) rather than emit silently-wrong RTL."""
+    from sc_neurocore.compiler.equation_compiler import compile_to_verilog
+
+    neuron = UniversalNeuron.from_schema(
+        "fitzhugh_nagumo", method_override="rk4"
+    ).to_equation_neuron()
+    with pytest.raises(
+        NotImplementedError, match="RK4 Verilog emission does not support pipelining"
+    ):
+        compile_to_verilog(
+            neuron, module_name="sc_fhn_rk4", data_width=32, fraction=16, pipeline_stages=1
+        )

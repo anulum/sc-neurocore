@@ -50,6 +50,21 @@ def test_compile_to_datapath_rejects_unknown_parameter_ports() -> None:
         compile_to_datapath(neuron, param_ports=("not_a_parameter",))
 
 
+def test_compile_to_datapath_carries_named_parameters_on_ports() -> None:
+    """A valid ``param_ports`` name is exposed on an input port, not baked as a default.
+
+    A folded population with heterogeneous parameters streams each neuron's value
+    through this port from a per-neuron ROM; the same ``P_<NAME>`` identifier is used
+    whether baked or ported, so only the declaration moves.
+    """
+    verilog = compile_to_datapath(
+        _lif_without_threshold(), module_name="hetero_pe", param_ports=("tau",)
+    )
+
+    assert "input wire signed [15:0] P_TAU," in verilog
+    assert "parameter signed [15:0] P_TAU" not in verilog
+
+
 def test_compile_to_datapath_without_threshold_uses_passthrough_state() -> None:
     """A non-spiking folded datapath drives no spike and passes through next state."""
     verilog = compile_to_datapath(_lif_without_threshold(), module_name="plain_pe")
