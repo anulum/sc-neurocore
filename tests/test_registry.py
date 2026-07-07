@@ -82,7 +82,12 @@ def test_singleton_list_lazy_loads_holonomic_adapters():
     try:
         adapters = registry.list("adapter")
 
-        assert len(adapters) == 16
+        # The 16 holonomic L-layer adapters lazy-load on first listing. The registry now also
+        # carries the entry-point-discovered adapters (importers + holonomic sub-adapters), so
+        # assert the holonomic set is present rather than an exact total that grows whenever a
+        # new `sc_neurocore.adapters` entry point is registered.
+        holonomic = [a for a in adapters if a[:1] == "L" and a[1:].split("_", 1)[0].isdigit()]
+        assert len(holonomic) == 16
         assert adapters[0] == "L10_Firewall"
         assert "L1_Quantum" in adapters
         assert "L16_Meta" in adapters

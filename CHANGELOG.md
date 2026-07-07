@@ -99,6 +99,11 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
   three modules to 100 %.
 
 ### Fixed
+- Capped the `nir` dependency to `<1.0.8`. nir 1.0.8 makes `Flatten.input_type` a required
+  constructor argument, which broke the NIR bridge's `Flatten` construction and turned the
+  test suite red once the release reached CI (the pinned 1.0.7 in `requirements/hub.txt` was
+  overridden when the package was built and installed with extras). The extras now match the
+  tested 1.0.7 line; the NIR canary continues to track the latest nir separately.
 - The SC IR text format was not idempotent under `parse . print` (found by the
   `roundtrip_ir` fuzz target once the fuzz workflow was repaired). Two float-handling
   asymmetries are corrected: (1) the printer formatted whole-number `f64` constants without a
