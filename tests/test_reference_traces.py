@@ -94,6 +94,26 @@ def _perfect_integrator_sawtooth_features(
     }
 
 
+def _theta_constant_current_features(*, current: float, dt: float, steps: int) -> dict[str, float]:
+    """Return continuous theta-neuron phase features for constant positive current."""
+    if current <= 0.0:
+        msg = "theta analytic helper requires positive current"
+        raise ValueError(msg)
+    root_current = math.sqrt(current)
+    values = [
+        2.0 * math.atan(root_current * math.tan(root_current * step * dt))
+        for step in range(1, steps + 1)
+    ]
+    return {
+        "spike_count": 0.0,
+        "first_spike_step": -1.0,
+        "final.theta": values[-1],
+        "min.theta": min(values),
+        "max.theta": max(values),
+        "mean.theta": math.fsum(values) / len(values),
+    }
+
+
 def test_seeded_corpus_has_analytic_schema_entries() -> None:
     """The seed corpus must expose deterministic analytic schema references."""
     names = list_reference_trace_specs()
@@ -104,6 +124,7 @@ def test_seeded_corpus_has_analytic_schema_entries() -> None:
         "lapicque_constant_current_closed_form",
         "perfect_integrator_constant_current_sawtooth",
         "quadratic_if_zero_current_analytic",
+        "theta_constant_current_phase_analytic",
     } <= set(names)
 
     spec = load_reference_trace_spec("lif_constant_current_closed_form")
@@ -158,6 +179,23 @@ def test_perfect_integrator_trace_features_match_independent_sawtooth_solution()
     assert spec.schema_name == "perfect_integrator"
     assert spec.provenance.kind == "analytic_sawtooth"
     assert spec.provenance.citation == "doi:10.1017/CBO9781107447615"
+    for feature_name, feature_value in expected.items():
+        assert spec.expected_features[feature_name] == pytest.approx(feature_value, abs=1e-12)
+
+
+def test_theta_trace_features_match_independent_phase_solution() -> None:
+    """Committed theta features must match the tangent half-angle phase solution."""
+    spec = load_reference_trace_spec("theta_constant_current_phase_analytic")
+
+    expected = _theta_constant_current_features(
+        current=spec.protocol.inputs["I"],
+        dt=spec.protocol.dt,
+        steps=spec.protocol.steps,
+    )
+
+    assert spec.schema_name == "theta"
+    assert spec.provenance.kind == "analytic_closed_form"
+    assert spec.provenance.citation == "doi:10.1137/0146017"
     for feature_name, feature_value in expected.items():
         assert spec.expected_features[feature_name] == pytest.approx(feature_value, abs=1e-12)
 

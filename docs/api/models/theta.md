@@ -59,6 +59,12 @@ phase state into `NaN` while preserving the theta/QIF phase-map semantics.
 Native Go and Rust mirrors return explicit errors for invalid scalar state,
 Julia throws `DomainError`, and Mojo returns `-1` as the invalid sentinel.
 
+The schema-level reference-trace corpus pins
+`theta_constant_current_phase_analytic`, a constant-current protocol derived
+with the tangent half-angle transform. That trace validates final/min/max/mean
+phase features and silent spike features through the public `UniversalNeuron`
+runner while keeping the Euler discretisation tolerance explicit.
+
 ## Behaviour
 
 ### Saddle-node bifurcation at I=0

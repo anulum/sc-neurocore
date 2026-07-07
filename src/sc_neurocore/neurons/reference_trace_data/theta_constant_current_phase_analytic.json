@@ -1,0 +1,46 @@
+{
+  "schema_version": "sc-neurocore.reference-trace.v1",
+  "name": "theta_constant_current_phase_analytic",
+  "model": {
+    "schema_name": "theta",
+    "runner": "universal_dsl"
+  },
+  "protocol": {
+    "dt": 0.01,
+    "steps": 100,
+    "inputs": {
+      "I": 0.25
+    },
+    "state_variables": [
+      "theta"
+    ]
+  },
+  "provenance": {
+    "kind": "analytic_closed_form",
+    "source": "src/sc_neurocore/neurons/model_schemas/theta.toml",
+    "equation": "For dtheta/dt=(1-cos(theta))+(1+cos(theta))*I and theta0=0, x=tan(theta/2) gives dx/dt=x^2+I, so theta(t)=2*atan(sqrt(I)*tan(sqrt(I)*t)); tolerance admits the schema runner's explicit-Euler discretisation error.",
+    "citation": "doi:10.1137/0146017"
+  },
+  "expected_features": {
+    "spike_count": 0.0,
+    "first_spike_step": -1.0,
+    "final.theta": 0.5332932538759526,
+    "min.theta": 0.0050000312501953135,
+    "max.theta": 0.5332932538759526,
+    "mean.theta": 0.2608166131202867
+  },
+  "tolerances": {
+    "default": {
+      "absolute": 0.001,
+      "relative": 0.0
+    },
+    "spike_count": {
+      "absolute": 0.0,
+      "relative": 0.0
+    },
+    "first_spike_step": {
+      "absolute": 0.0,
+      "relative": 0.0
+    }
+  }
+}
