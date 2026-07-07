@@ -20,6 +20,12 @@ from .bipolar import (
 )
 from .mdl_parser import MindDescriptionLanguage, MDLSpecification
 from .orchestrator import CognitiveOrchestrator
+from .sc_correlation import (
+    CorrelationDiagnostic,
+    correlation_diagnostic,
+    estimate_scc,
+    observed_and_bias,
+)
 from .sc_error_bounds import (
     SCErrorBound,
     bernoulli_std_error,
@@ -48,6 +54,10 @@ __all__ = [
     "MindDescriptionLanguage",
     "MDLSpecification",
     "CognitiveOrchestrator",
+    "CorrelationDiagnostic",
+    "estimate_scc",
+    "observed_and_bias",
+    "correlation_diagnostic",
     "SCErrorBound",
     "bernoulli_variance",
     "bernoulli_std_error",

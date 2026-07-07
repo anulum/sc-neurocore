@@ -12375,6 +12375,83 @@ through them in execution order.
 
 ---
 
+## Module `core.sc_correlation`
+
+### Class `CorrelationDiagnostic`
+Result of a two-stream SC correlation check.
+
+Attributes
+----------
+value_a, value_b : float
+    Decoded one-probabilities of the two streams.
+scc : float
+    Estimated stochastic cross-correlation in &#91;-1, 1&#93;.
+predicted_and_bias : float
+    AND bias the SCC implies via ``multiply_correlation_bias``.
+observed_and_bias : float
+    AND bias measured directly from the streams.
+flagged : bool
+    Whether ``abs(predicted_and_bias)`` exceeds the configured threshold.
+
+
+### Function `_as_bit_array(bits, name)`
+### Function `_overlap_counts(bits_a, bits_b)`
+### Function `estimate_scc(bits_a, bits_b)`
+Estimate the stochastic cross-correlation of two equal-length bitstreams.
+
+Parameters
+----------
+bits_a, bits_b : array-like of {0, 1}
+    Equal-length observed SC bitstreams.
+
+Returns
+-------
+float
+    SCC in :math:`&#91;-1, 1&#93;`. Returns ``0.0`` for a degenerate stream (all-zero
+    or all-one), where correlation is not identifiable.
+
+Raises
+------
+ValueError
+    If the streams are empty, non-binary, or of unequal length.
+
+### Function `observed_and_bias(bits_a, bits_b)`
+Return the measured ``AND`` bias :math:`a/N - p_a p_b` of two streams.
+
+Parameters
+----------
+bits_a, bits_b : array-like of {0, 1}
+    Equal-length observed SC bitstreams.
+
+Returns
+-------
+float
+    The signed deviation of the observed one-probability of ``AND`` from the
+    independent product :math:`p_a p_b`.
+
+### Function `correlation_diagnostic(bits_a, bits_b)`
+Diagnose ``AND``-composition correlation bias between two SC bitstreams.
+
+Estimates the SCC, converts it to the predicted AND bias through
+:func:`sc_neurocore.core.sc_error_bounds.multiply_correlation_bias`, compares
+it with the directly-measured bias, and flags streams whose predicted bias
+exceeds ``bias_threshold``.
+
+Parameters
+----------
+bits_a, bits_b : array-like of {0, 1}
+    Equal-length observed SC bitstreams.
+bias_threshold : float, optional
+    Absolute predicted-bias magnitude above which the pair is flagged
+    (default ``0.01``). Must be non-negative.
+
+Returns
+-------
+CorrelationDiagnostic
+    Decoded values, SCC, predicted and observed AND bias, and the flag.
+
+---
+
 ## Module `core.sc_error_bounds`
 
 ### Class `SCErrorBound`

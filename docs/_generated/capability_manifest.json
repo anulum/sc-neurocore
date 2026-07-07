@@ -965,7 +965,7 @@
     "python_model_classes": 158,
     "python_model_source_modules": 152,
     "rust_pyo3_model_wrappers": 175,
-    "test_files": 979
+    "test_files": 980
   },
   "documentation": {
     "public_pages": [
@@ -3506,6 +3506,7 @@
       "tests/test_sby_formal.py",
       "tests/test_sby_runner.py",
       "tests/test_sc_convergence.py",
+      "tests/test_sc_correlation.py",
       "tests/test_sc_division.py",
       "tests/test_sc_error_bounds.py",
       "tests/test_sc_forward.py",

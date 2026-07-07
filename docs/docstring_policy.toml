@@ -7,7 +7,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 257
+expected_file_count = 258
 
 [[file]]
 path = "src/sc_neurocore/__init__.py"
@@ -1036,3 +1036,7 @@ rationale = "Public surrogate-model compiler optimiser over stochastic-computing
 [[file]]
 path = "src/sc_neurocore/core/sc_error_bounds.py"
 rationale = "Public analytic stochastic-computing error-bound calculators (variance, correlation bias, Hoeffding min-length) with cited closed forms."
+
+[[file]]
+path = "src/sc_neurocore/core/sc_correlation.py"
+rationale = "Public stochastic cross-correlation (SCC) diagnostic that estimates bitstream correlation and predicts the AND-composition bias."
