@@ -959,13 +959,13 @@
   "counts": {
     "github_workflows": 17,
     "model_documentation_pages": 175,
-    "optional_extras": 26,
+    "optional_extras": 27,
     "public_api_exports": 44,
     "public_documentation_pages": 562,
     "python_model_classes": 158,
     "python_model_source_modules": 152,
     "rust_pyo3_model_wrappers": 175,
-    "test_files": 984
+    "test_files": 986
   },
   "documentation": {
     "public_pages": [
@@ -2766,6 +2766,7 @@
       "quantum-cognition",
       "research",
       "studio",
+      "symbolic",
       "training",
       "units"
     ],
@@ -3024,6 +3025,7 @@
       "tests/test_examples_nir_to_fpga.py",
       "tests/test_examples_pretrained_checkpoint_contract.py",
       "tests/test_exceptions.py",
+      "tests/test_exp_euler_golden.py",
       "tests/test_experimental_memory_routes.py",
       "tests/test_experimental_runner.py",
       "tests/test_experiments_bitstream_drive_contract.py",
@@ -3038,6 +3040,7 @@
       "tests/test_export/test_tvm_lowering.py",
       "tests/test_export_file_write_contracts.py",
       "tests/test_expr_lut_tables.py",
+      "tests/test_expression_derivative.py",
       "tests/test_extended_neurons.py",
       "tests/test_fault_injection/test_fault_injection.py",
       "tests/test_fault_injection/test_fault_injection_public_api.py",

@@ -64,6 +64,8 @@ from sc_neurocore.neurons._units import (
     validate_quantity_expression,
 )
 
+SUPPORTED_METHODS = ("euler", "rk4", "exp_euler")
+
 
 class EquationNeuron:
     """Neuron defined by arbitrary ODE equations as strings.
@@ -92,6 +94,8 @@ class EquationNeuron:
         """Initialise an equation-defined neuron from ODE strings."""
         if units not in {"none", "strict"}:
             raise ValueError("units must be 'none' or 'strict'")
+        if method not in SUPPORTED_METHODS:
+            raise ValueError(f"method must be one of {list(SUPPORTED_METHODS)}, got {method!r}")
 
         self.equations = equations
         self.threshold_expr = threshold
@@ -124,7 +128,7 @@ class EquationNeuron:
             safe = np.where(arr == 0.0, 1.0, arr)
             return np.where(np.abs(arr) < 1e-9, 1.0 + arr / 2.0, np.expm1(arr) / safe)
 
-        self._namespace = {
+        self._namespace: dict[str, Any] = {
             "exp": np.exp,
             "log": np.log,
             "sqrt": _sqrt,
@@ -177,6 +181,36 @@ class EquationNeuron:
         self._compiled_reset = {
             var: compile(expr, f"<reset:{var}>", "eval") for var, expr in self.reset_rules.items()
         }
+        self._compiled_jacobian = self._build_jacobian() if self.method == "exp_euler" else {}
+
+    def _build_jacobian(self) -> dict[str, Any]:
+        """Compile the diagonal Jacobian ``∂f/∂x`` for each equation.
+
+        Exponential Euler linearises ``dx/dt = f(x, …)`` around the current state
+        via ``A = ∂f/∂x``; this differentiates each right-hand-side symbolically
+        (:func:`~sc_neurocore.neurons.expression_derivative.differentiate`),
+        validates the result against the same expression grammar, and compiles it.
+        A model whose dynamics cannot be faithfully differentiated with respect to
+        their own variable cannot use exponential Euler, and the differentiator
+        raises to say so rather than integrate through a non-smooth term.
+
+        The symbolic differentiator (and its SymPy backend) is imported lazily so
+        that only exponential-Euler models pull the optional dependency in; forward
+        Euler and RK4 never touch it.
+        """
+        try:
+            from sc_neurocore.neurons.expression_derivative import differentiate
+        except ImportError as exc:  # pragma: no cover - exercised only without SymPy
+            raise ImportError(
+                "method='exp_euler' requires SymPy for the symbolic Jacobian; "
+                "install sc-neurocore[symbolic]"
+            ) from exc
+        compiled: dict[str, Any] = {}
+        for var, expr in self.equations.items():
+            derivative = differentiate(expr, var)
+            self._validate_expr(derivative)
+            compiled[var] = compile(derivative, f"<jac:{var}>", "eval")
+        return compiled
 
     _ALLOWED_AST_NODES = {
         ast.Expression,
@@ -484,6 +518,24 @@ class EquationNeuron:
             k4 = eval_derivs(s3)
             for v in self.equations:
                 self.state[v] = s0[v] + (k1[v] + 2 * k2[v] + 2 * k3[v] + k4[v]) * self.dt / 6
+
+        elif self.method == "exp_euler":
+            # Linearised exponential Euler (Rush-Larsen): for each dx/dt = f(x),
+            # linearise A = ∂f/∂x and take the exact update of x' = A x + b,
+            #     x <- x + f(x) * dt * exprel(A dt),   exprel(z) = (exp(z) - 1)/z.
+            # exprel carries the removable singularity (exprel(0) = 1), so A -> 0
+            # is the Euler limit; for the gating form f = (x_inf - x)/tau this is
+            # the exact x <- x_inf + (x - x_inf) exp(-dt/tau), stable at stiff dt.
+            exprel = self._namespace["exprel"]
+            increments = {}
+            for var in self.equations:
+                # nosec B307: AST-whitelisted compiled equation / Jacobian
+                # (see the euler branch comment for the full sandbox rationale).
+                f_val = float(eval(self._compiled_eqs[var], self._EVAL_GLOBALS, env))  # nosec B307
+                a_val = float(eval(self._compiled_jacobian[var], self._EVAL_GLOBALS, env))  # nosec B307
+                increments[var] = f_val * self.dt * float(exprel(a_val * self.dt))
+            for var in self.equations:
+                self.state[var] += increments[var]
 
         spike = 0
         if self._compiled_threshold:

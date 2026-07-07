@@ -73,11 +73,12 @@ holonomic_neuromodulation = "sc_neurocore.adapters.holonomic.neuromodulation:Neu
 [project.optional-dependencies]
 minimal = []
 core = []
-dev = ["pytest", "pytest-cov", "pytest-xdist", "filelock", "hypothesis", "mypy", "ruff", "bandit", "pyyaml", "onnx", "pint>=0.23", "mojo>=0.26.2.0; platform_system != 'Windows'", "tomli; python_version < '3.11'"]
+dev = ["pytest", "pytest-cov", "pytest-xdist", "filelock", "hypothesis", "mypy", "ruff", "bandit", "pyyaml", "onnx", "pint>=0.23", "sympy>=1.12", "mojo>=0.26.2.0; platform_system != 'Windows'", "tomli; python_version < '3.11'"]
 dev-full = ["sc-neurocore[dev]", "jax", "jaxlib", "qiskit", "pennylane", "qiskit-aer", "qiskit-ibm-runtime"]
 accel = ["numba>=0.56"]
 gpu = ["cupy-cuda12x>=12.0"]
 hdl = ["pint>=0.23"]
+symbolic = ["sympy>=1.12"]  # exponential-Euler symbolic Jacobian (method="exp_euler")
 license = ["httpx>=0.27"]
 full = [
   "numba>=0.56",
@@ -96,6 +97,7 @@ full = [
   "zstandard>=0.22",
   "scikit-learn>=1.3",
   "pint>=0.23",
+  "sympy>=1.12",
   "qiskit",
   "pennylane",
   "qiskit-aer",
@@ -300,7 +302,7 @@ exclude = [
 
 # External untyped third-party dependencies — no upstream stubs available.
 [[tool.mypy.overrides]]
-module = ['cupy.*', 'cupyx.*', 'mpi4py.*', 'numba.*', 'matplotlib.*', 'scipy.*', 'sklearn.*', 'networkx.*', 'onnx.*', 'torch.*', 'torchvision.*', 'gym.*', 'flask.*', 'scpn_evo2_real_interface.*', 'scpn_opentrions_verify.*', 'scpn_cross_layer_integration_L1_L7.*', 'jax.*', 'qiskit.*', 'pennylane.*', 'qiskit_aer.*', 'qiskit_ibm_runtime.*', 'psutil.*', 'watchdog.*', 'pytest.*', 'llm.*', 'fastapi.*', 'uvicorn.*', 'starlette.*', 'pydantic.*', 'httpx.*', 'nir.*', 'h5py.*', 'orjson.*', 'sc_neurocore_engine.*', 'tonic.*', 'lava.*', 'wandb.*', 'yaml.*', 'serial.*', 'usb.*', 'zstandard.*', 'pywt.*', 'juliacall.*', 'gdsfactory.*', 'meep.*', 'gdstk.*', 'dimod.*', 'dwave.*', 'nupack.*']
+module = ['cupy.*', 'cupyx.*', 'mpi4py.*', 'numba.*', 'matplotlib.*', 'scipy.*', 'sklearn.*', 'networkx.*', 'onnx.*', 'torch.*', 'torchvision.*', 'gym.*', 'flask.*', 'scpn_evo2_real_interface.*', 'scpn_opentrions_verify.*', 'scpn_cross_layer_integration_L1_L7.*', 'jax.*', 'qiskit.*', 'pennylane.*', 'qiskit_aer.*', 'qiskit_ibm_runtime.*', 'psutil.*', 'watchdog.*', 'pytest.*', 'llm.*', 'fastapi.*', 'uvicorn.*', 'starlette.*', 'pydantic.*', 'httpx.*', 'nir.*', 'h5py.*', 'orjson.*', 'sc_neurocore_engine.*', 'tonic.*', 'lava.*', 'wandb.*', 'yaml.*', 'serial.*', 'usb.*', 'zstandard.*', 'pywt.*', 'juliacall.*', 'gdsfactory.*', 'meep.*', 'gdstk.*', 'dimod.*', 'dwave.*', 'nupack.*', 'sympy.*']
 ignore_missing_imports = true
 
 # Strict-typing burn-down ledger — COMPLETE (2026-06-21). Package-wide

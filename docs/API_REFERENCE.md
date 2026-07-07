@@ -21491,6 +21491,8 @@ validation before the expressions are compiled for runtime.
 
 - **__init__**(equations, parameters, state, threshold, reset, constants, dt, method, units, input_unit)
   - Initialise an equation-defined neuron from ODE strings.
+- **_build_jacobian**()
+  - Compile the diagonal Jacobian ``∂f/∂x`` for each equation.
 - **_validate_expr**(expr)
   - Validate an expression against the AST whitelist.
 - **_ast_depth**(node)
@@ -21524,6 +21526,72 @@ Example:
 
 Use ``units="strict"`` with pint quantities to validate the
 equation dimensions before runtime compilation.
+
+---
+
+## Module `neurons.expression_derivative`
+
+### Class `exprel`
+SymPy image of the DSL ``exprel(x) = (exp(x) - 1) / x`` (exprel(0) = 1).
+
+- **fdiff**(argindex)
+  - Return d/dx (exp(x) - 1)/x = (exp(x)·(x - 1) + 1) / x².
+
+### Class `sigmoid`
+SymPy image of the DSL logistic ``sigmoid(x) = 1/(1 + exp(-x))``.
+
+- **fdiff**(argindex)
+  - Return sigmoid(x)·(1 - sigmoid(x)).
+
+### Class `ExpressionDifferentiationError`
+Raised when an expression cannot be faithfully differentiated in-grammar.
+
+
+### Class `_Converter`
+Convert a validated DSL AST to SymPy and back, tracking opaque terms.
+
+A non-smooth sub-expression that does not depend on the differentiation
+variable is replaced by a fresh placeholder symbol whose original source text
+is remembered, so it round-trips verbatim when it survives as a coefficient.
+
+- **__init__**(wrt)
+- **convert**(node)
+  - Return the SymPy image of a DSL AST node.
+- **_opaque**(node)
+  - Stand an opaque sub-expression in as a constant, if it is one.
+- **render**(expr)
+  - Render a differentiated SymPy expression back to a DSL string.
+
+### Class `_GrammarPrinter`
+Print SymPy expressions using DSL-grammar tokens and opaque source text.
+
+- **__init__**(sources)
+- **_print_Symbol**(expr)
+
+### Function `differentiate(expr, wrt)`
+Return ``∂expr/∂wrt`` as an equation string in the DSL grammar.
+
+Parameters
+----------
+expr:
+    The right-hand-side of ``d(wrt)/dt`` — an equation string already valid
+    under the neuron-DSL grammar.
+wrt:
+    The state-variable name to differentiate with respect to.
+
+Returns
+-------
+str
+    The partial derivative as a new equation string using only DSL-grammar
+    tokens. ``"0"`` when the expression does not depend on ``wrt``.
+
+Raises
+------
+ExpressionDifferentiationError
+    If the expression depends on ``wrt`` through a construct whose derivative
+    is not expressible in the smooth grammar (``abs``/``clip``/``min``/
+    ``max``, a comparison, a conditional, ``%``, ``//``, or an unknown
+    function).
 
 ---
 
