@@ -35,15 +35,19 @@ try:
 except ImportError:
 
     def get_crosstalk_analyzer() -> object:
+        """Return the optional Rust scalar crosstalk analyzer or raise."""
         raise ImportError("Rust photonic crosstalk backend unavailable")
 
     def get_crosstalk_bank_analyzer() -> object:
+        """Return the optional Rust crosstalk-bank analyzer or raise."""
         raise ImportError("Rust photonic crosstalk bank backend unavailable")
 
     def get_crosstalk_pair_analyzer() -> object:
+        """Return the optional Rust crosstalk-pair analyzer or raise."""
         raise ImportError("Rust photonic crosstalk pair backend unavailable")
 
     def has_full_photonic_crosstalk_backend() -> bool:
+        """Return whether all optional Rust photonic crosstalk kernels are available."""
         return False
 
 
@@ -64,6 +68,7 @@ except ImportError:
 
 class PhotonicEmitter:
     """Industrial-grade Photonic Emitter.
+
     Uses topological sorting to ensure optical ports are defined before being coupled.
     """
 
@@ -94,6 +99,7 @@ class PhotonicEmitter:
         return sorted_nodes
 
     def emit_lumerical_netlist(self, ir_graph: Any) -> str:
+        """Emit a Lumerical-compatible photonic netlist from an IR graph."""
         sorted_nodes = self._topological_sort(ir_graph.nodes)
         netlist = ["# SC-NeuroCore Photonic Design", f"# PDK: {self.target_pdk}", ""]
 
@@ -140,14 +146,17 @@ class PhotonicTarget:
 
     @classmethod
     def lightmatter(cls) -> PhotonicTarget:
+        """Return a Lightmatter-style photonic target profile."""
         return cls("Lightmatter", 1550.0, OpticalModulation.PHASE, "MZI", 20000.0, 0.3)
 
     @classmethod
     def silicon_photonics(cls) -> PhotonicTarget:
+        """Return a generic silicon-photonics target profile."""
         return cls("SiPh-Generic", 1310.0, OpticalModulation.AMPLITUDE, "Microring", 12000.0, 0.8)
 
     @classmethod
     def two_d_waveguide(cls) -> PhotonicTarget:
+        """Return a two-dimensional-material waveguide target profile."""
         return cls("2D-Material", 850.0, OpticalModulation.HYBRID, "MZI", 5000.0, 1.2)
 
 
@@ -919,6 +928,7 @@ class CrosstalkModel:
         self.pairs: List[WaveguidePair] = []
 
     def add_pair(self, pair: WaveguidePair) -> None:
+        """Append one waveguide pair to the analyzer batch."""
         self.pairs.append(pair)
 
     def transfer_matrix(self, pair: WaveguidePair) -> np.ndarray[Any, Any]:
@@ -967,8 +977,8 @@ class CrosstalkModel:
         available; a Python fallback using :class:`WaveguidePair` matches
         the Rust result to within 1e-9.
 
-        References:
-
+        References
+        ----------
         - Marcatili, Bell Syst. Tech. J. 48(7):2071-2102, 1969.
         - Okamoto, *Fundamentals of Optical Waveguides*, 2006, Ch. 4.
         """

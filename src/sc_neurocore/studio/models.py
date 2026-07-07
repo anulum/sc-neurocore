@@ -6,6 +6,8 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore — Model browser for Studio runtime catalogue entries
 
+"""Model catalogue, descriptor, and simulation helpers for Studio."""
+
 from __future__ import annotations
 
 import dataclasses
@@ -19,6 +21,7 @@ try:
 except ImportError:
 
     def get_batch_simulate() -> object:
+        """Return the optional Rust batch simulator or raise when unavailable."""
         raise ImportError("Studio Rust batch simulator unavailable")
 
 
@@ -31,7 +34,6 @@ from sc_neurocore.neurons.model_descriptor import (
 
 def _evidence_kind(tier: int) -> str:
     """Map a completeness tier to the SCPN-Studio evidence modality."""
-
     if tier >= 3:
         return "measured"
     if tier == 2:
@@ -105,7 +107,6 @@ def _model_field_specs(cls: type) -> list[tuple[str, float]]:
     pools, flags) are skipped for plain classes; missing or non-numeric dataclass
     defaults are reported as ``0.0`` to preserve the historical contract.
     """
-
     if dataclasses.is_dataclass(cls):
         specs: list[tuple[str, float]] = []
         for f in dataclasses.fields(cls):
@@ -137,7 +138,6 @@ def _model_field_specs(cls: type) -> list[tuple[str, float]]:
 
 def _extract_dt(cls: type) -> float:
     """Return the model's default timestep, or ``0.1`` when undeclared."""
-
     for name, default in _model_field_specs(cls):
         if name == "dt":
             return default
@@ -269,7 +269,6 @@ class ModelMetadataError(RuntimeError):
 
 def _provenance_summary(descriptor: ModelDescriptor) -> dict[str, Any] | None:
     """Return a path-free provenance summary, or ``None`` when uncited."""
-
     prov = descriptor.provenance
     if not (prov.authors or prov.year or prov.doi):
         return None
@@ -285,7 +284,6 @@ def _provenance_summary(descriptor: ModelDescriptor) -> dict[str, Any] | None:
 
 def _descriptor_summary(descriptor: ModelDescriptor) -> dict[str, Any]:
     """Build a catalogue list entry from a declared descriptor."""
-
     tier = descriptor_completeness_tier(descriptor)
     return {
         "name": descriptor.class_name,
@@ -314,7 +312,6 @@ def _descriptor_summary(descriptor: ModelDescriptor) -> dict[str, Any]:
 
 def _descriptor_detail(descriptor: ModelDescriptor) -> dict[str, Any]:
     """Build a full catalogue detail view from a declared descriptor."""
-
     detail = _descriptor_summary(descriptor)
     detail.update(
         {
@@ -354,7 +351,6 @@ def _descriptor_detail(descriptor: ModelDescriptor) -> dict[str, Any]:
 
 def _introspected_summary(name: str) -> dict[str, Any]:
     """Fallback catalogue entry for a model with no committed descriptor."""
-
     cls = _load_class(name)
     state_vars, params = _classify_fields(cls)
     return {
@@ -433,7 +429,6 @@ def get_model_detail(name: str) -> dict[str, Any] | None:
 
 def model_facets() -> dict[str, Any]:
     """Return the catalogue facet taxonomy and counts for discovery UX."""
-
     from collections import Counter
 
     models = list_models()
@@ -472,7 +467,6 @@ def model_documentation(name: str) -> dict[str, Any] | None:
     Studio serves its Markdown so the documentation is browsable inline next to
     the live model rather than only in the built docs site.
     """
-
     if name not in _CLASS_TO_MODULE:
         return None
     module = _CLASS_TO_MODULE[name]
@@ -495,7 +489,7 @@ def _load_rust_batch_simulate() -> Any:
 
 
 def _is_rust_unsupported_model_error(exc: Exception) -> bool:
-    """True when the Rust backend rejected a model as unsupported."""
+    """Return whether the Rust backend rejected a model as unsupported."""
     return isinstance(exc, ValueError) and "Unsupported model:" in str(exc)
 
 

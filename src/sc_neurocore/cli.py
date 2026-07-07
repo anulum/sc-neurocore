@@ -46,6 +46,7 @@ def _is_valid_sha256_digest(value: str) -> bool:
 
 
 def main() -> int:
+    """Run the command-line interface and return a process exit status."""
     parser = argparse.ArgumentParser(
         prog="sc-neurocore",
         description="SC-NeuroCore — Universal Stochastic Computing Framework",
@@ -969,7 +970,6 @@ def _cmd_collect_synthesis(args: Any) -> int:
 
 def _cmd_scnir(args: Any) -> int:
     """Validate or export SC-aware NIR metadata documents."""
-
     from pathlib import Path
 
     from sc_neurocore.ir import (
@@ -1115,7 +1115,6 @@ def _cmd_scnir(args: Any) -> int:
 
 def _cmd_formal(args: Any) -> int:
     """Compile and replay network-level formal verification artefacts."""
-
     from dataclasses import asdict
     from pathlib import Path
 

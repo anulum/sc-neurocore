@@ -6,6 +6,8 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore — Utils Package Init
 
+"""Expose shared utility helpers for stochastic-computing workflows."""
+
 from .rng import RNG
 from .bitstreams import (
     BitstreamEncoder,

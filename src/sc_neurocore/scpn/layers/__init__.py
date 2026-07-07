@@ -6,11 +6,7 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore — SCPN Layers Module — Full 16-Layer Hierarchy
 
-from typing import Any, Optional
-
-"""
-SCPN Layers Module — Full 16-Layer Hierarchy
-=============================================
+"""Expose stochastic implementations for the full 16-layer SCPN hierarchy.
 
 Stochastic (pure NumPy) implementations of all 16 SCPN layers.
 
@@ -19,6 +15,8 @@ L8-L10: Cosmic/memory/boundary control
 L11-L13: Informational/ecological/temporal binding
 L14-L16: Integration, meta-cognition, cybernetic closure
 """
+
+from typing import Any, Optional
 
 from .l1_quantum import L1_QuantumLayer, L1_StochasticParameters
 from .l2_neurochemical import L2_NeurochemicalLayer, L2_StochasticParameters
@@ -105,9 +103,7 @@ def create_full_stack(params: Optional[dict[str, Any]] = None) -> dict[str, Any]
 def run_integrated_step(
     layers: dict[str, Any], dt: float, inputs: Optional[dict[str, Any]] = None
 ) -> dict[str, Any]:
-    """
-    Run one integrated time step across all SCPN layers with inter-layer coupling.
-    """
+    """Run one integrated time step across all SCPN layers with inter-layer coupling."""
     inputs = inputs or {}
     outputs = {}
 

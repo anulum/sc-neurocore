@@ -58,15 +58,19 @@ try:
 except ImportError:
 
     def get_ising_energy() -> object:
+        """Return the optional Rust Ising-energy kernel or raise when unavailable."""
         raise ImportError("Rust quantum annealing energy backend unavailable")
 
     def get_batch_ising_energy() -> object:
+        """Return the optional Rust batch Ising-energy kernel or raise when unavailable."""
         raise ImportError("Rust quantum annealing batch backend unavailable")
 
     def get_simulated_annealing() -> object:
+        """Return the optional Rust simulated-annealing solver or raise when unavailable."""
         raise ImportError("Rust quantum annealing solver backend unavailable")
 
     def has_full_quantum_annealing_backend() -> bool:
+        """Return whether all optional Rust quantum-annealing kernels are available."""
         return False
 
 # ── Constants ─────────────────────────────────────────────────────────
@@ -1135,7 +1139,7 @@ class AnnealingSchedule:
         self._points: list[tuple[float, float]] = []
 
     def linear(self, duration_us: float = 20.0) -> "AnnealingSchedule":
-        """Standard linear anneal from s=0 to s=1."""
+        """Configure a standard linear anneal from s=0 to s=1."""
         self._points = [(0.0, 0.0), (duration_us, 1.0)]
         return self
 

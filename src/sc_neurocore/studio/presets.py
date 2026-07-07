@@ -6,6 +6,8 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore — Curated preset experiments for Studio
 
+"""Curated Studio preset experiments and preset action lookup helpers."""
+
 from __future__ import annotations
 
 from typing import Any
@@ -175,6 +177,7 @@ PRESETS: list[dict[str, Any]] = [
 
 
 def list_presets() -> list[dict[str, Any]]:
+    """Return public metadata for all curated Studio presets."""
     return [
         {
             "id": p["id"],
@@ -187,10 +190,12 @@ def list_presets() -> list[dict[str, Any]]:
 
 
 def get_preset(preset_id: str) -> dict[str, Any] | None:
+    """Return one curated Studio preset by identifier."""
     return next((p for p in PRESETS if p["id"] == preset_id), None)
 
 
 def get_preset_actions(preset_id: str) -> list[dict[str, Any]]:
+    """Return validated action definitions for one curated Studio preset."""
     preset = get_preset(preset_id)
     if not preset:
         return []
@@ -201,11 +206,13 @@ def get_preset_actions(preset_id: str) -> list[dict[str, Any]]:
 
 
 def get_preset_action(preset_id: str, action_id: str) -> dict[str, Any] | None:
+    """Return one action definition for a curated Studio preset."""
     actions = get_preset_actions(preset_id)
     return next((action for action in actions if action.get("id") == action_id), None)
 
 
 def list_preset_action_catalog() -> list[dict[str, Any]]:
+    """Return the route-facing catalogue of preset action identifiers."""
     rows: list[dict[str, Any]] = []
     for preset in PRESETS:
         preset_id = preset.get("id")

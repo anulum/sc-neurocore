@@ -6,6 +6,8 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore — Layers Package Init
 
+"""Expose stochastic-computing layer primitives for package consumers."""
+
 from .sc_dense_layer import SCDenseLayer
 from .sc_conv_layer import SCConv2DLayer
 from .sc_learning_layer import SCLearningLayer

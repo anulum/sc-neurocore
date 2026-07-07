@@ -7,7 +7,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 258
+expected_file_count = 273
 
 [[file]]
 path = "src/sc_neurocore/__init__.py"
@@ -1040,3 +1040,63 @@ rationale = "Public analytic stochastic-computing error-bound calculators (varia
 [[file]]
 path = "src/sc_neurocore/core/sc_correlation.py"
 rationale = "Public stochastic cross-correlation (SCC) diagnostic that estimates bitstream correlation and predicts the AND-composition bias."
+
+[[file]]
+path = "src/sc_neurocore/layers/__init__.py"
+rationale = "Public layer package entry point that re-exports stochastic-computing layer primitives."
+
+[[file]]
+path = "src/sc_neurocore/synapses/__init__.py"
+rationale = "Public synapse package entry point that re-exports stochastic synapse and plasticity primitives."
+
+[[file]]
+path = "src/sc_neurocore/utils/__init__.py"
+rationale = "Public utility package entry point that re-exports bitstream, registry, logging, profiling, and RNG helpers."
+
+[[file]]
+path = "src/sc_neurocore/datasets/__init__.py"
+rationale = "Public dataset package entry point that exposes event-dataset loaders and spike encoders."
+
+[[file]]
+path = "src/sc_neurocore/formal/__init__.py"
+rationale = "Public formal-verification package entry point for network-property compilation and counterexample replay."
+
+[[file]]
+path = "src/sc_neurocore/scpn/layers/__init__.py"
+rationale = "Public SCPN layer-stack package entry point with integrated 16-layer helper functions."
+
+[[file]]
+path = "src/sc_neurocore/cli.py"
+rationale = "Public command-line entry point for SC-NeuroCore build, compile, Studio, and formal workflows."
+
+[[file]]
+path = "src/sc_neurocore/bridges/dna_mapper.py"
+rationale = "Public DNA-computing bridge with strand, gate, circuit, and thermodynamic analysis helpers."
+
+[[file]]
+path = "src/sc_neurocore/bridges/quantum_annealing.py"
+rationale = "Public quantum-annealing bridge and Ising/QUBO helper surface with optional Rust acceleration."
+
+[[file]]
+path = "src/sc_neurocore/optics/photonic_emitter.py"
+rationale = "Public photonic-emitter and crosstalk-analysis surface with optional Rust acceleration."
+
+[[file]]
+path = "src/sc_neurocore/studio/app.py"
+rationale = "Public Visual SNN Studio FastAPI application factory and request-schema surface."
+
+[[file]]
+path = "src/sc_neurocore/studio/models.py"
+rationale = "Public Studio model catalogue, descriptor, and simulation helper surface."
+
+[[file]]
+path = "src/sc_neurocore/studio/network.py"
+rationale = "Public Studio balanced E-I network simulation helper with optional Rust acceleration."
+
+[[file]]
+path = "src/sc_neurocore/studio/templates.py"
+rationale = "Public Studio equation-template lookup surface."
+
+[[file]]
+path = "src/sc_neurocore/studio/presets.py"
+rationale = "Public Studio preset and preset-action lookup surface."

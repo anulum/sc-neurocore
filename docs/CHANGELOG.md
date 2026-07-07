@@ -5,6 +5,16 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+### Public docstring quick wins
+- Closed the AB-DOC-1 quick-win set by documenting the public package entry
+  points for layers, synapses, utils, datasets, formal verification, and SCPN
+  layers; the CLI entrypoint; optional Rust fallback surfaces for DNA,
+  quantum-annealing, photonic, and Studio helpers; Studio preset/template
+  helpers; and Studio request schemas. The cleaned files are now locked in
+  `docs/docstring_policy.toml`, raising the scoped public-docstring gate from
+  258 to 273 files. Generated API docs were refreshed. No runtime path,
+  polyglot mirror, benchmark dispatch, or benchmark artefact changed.
+
 ### NotImplemented guard audit
 - Added a tracked source audit for executable Python `NotImplementedError`
   sites. The audit allows only explicit fail-fast guards for unsupported MPI,

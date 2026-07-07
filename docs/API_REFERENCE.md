@@ -4077,9 +4077,13 @@ concentration_nM : float
     Initial concentration in nanomolar.
 
 - **length**()
+  - Return the nucleotide length of this strand.
 - **gc_content**()
+  - Return the fraction of nucleotides that are G or C bases.
 - **complement**()
+  - Return the reverse-complement strand sequence.
 - **max_homopolymer_run**()
+  - Return the longest repeated-base run in the strand.
 - **delta_g_37**()
   - Nearest-neighbour ΔG° at 37 °C (kcal/mol).
 - **melting_temperature**(na_conc_M, strand_conc_M)
@@ -4107,6 +4111,7 @@ leak_rate : float
     Estimated spurious activation rate (per second).
 
 - **strand_count**()
+  - Return the number of strands implementing this gate.
 
 ### Class `DNACircuitDesign`
 Complete compiled DNA circuit.
@@ -4134,8 +4139,11 @@ na_concentration_M : float
     Sodium concentration for thermodynamic calculations.
 
 - **total_strands**()
+  - Return the total strand count across circuit inputs, outputs, fuel, and gates.
 - **total_gates**()
+  - Return the number of DNA logic gates in the circuit.
 - **total_nucleotides**()
+  - Return the total nucleotide count across all circuit strands.
 - **validate**()
   - Run design rule checks. Returns list of warnings.
 
@@ -4234,6 +4242,7 @@ na_concentration_M : float
 
 - **__init__**(temperature_c, na_concentration_M)
 - **has_nupack**()
+  - Return whether optional NUPACK thermodynamic analysis is installed.
 - **compute_mfe**(sequence)
   - Compute minimum free energy and structure.
 - **compute_pair_probabilities**(sequence)
@@ -5185,7 +5194,7 @@ is the anneal fraction (0 = transverse field dominant,
 
 - **__init__**()
 - **linear**(duration_us)
-  - Standard linear anneal from s=0 to s=1.
+  - Configure a standard linear anneal from s=0 to s=1.
 - **pause_and_quench**(ramp_time_us, pause_at_s, pause_duration_us, quench_time_us)
   - Pause-and-quench: ramp to s, hold, then quench to s=1.
 - **reverse**(initial_s, reverse_to_s, ramp_time_us, hold_time_us, forward_time_us)
@@ -5969,6 +5978,8 @@ Track whether ``--output`` was supplied explicitly.
 
 ### Function `_is_valid_sha256_digest(value)`
 ### Function `main()`
+Run the command-line interface and return a process exit status.
+
 ### Function `_cmd_compile_nir(args)`
 Compile NIR/ONNX model to Verilog RTL artefacts.
 
@@ -27468,11 +27479,13 @@ lr : float
 
 ### Class `PhotonicEmitter`
 Industrial-grade Photonic Emitter.
+
 Uses topological sorting to ensure optical ports are defined before being coupled.
 
 - **__init__**(target_pdk)
 - **_topological_sort**(nodes)
 - **emit_lumerical_netlist**(ir_graph)
+  - Emit a Lumerical-compatible photonic netlist from an IR graph.
 
 ### Class `OpticalModulation`
 Optical modulation scheme.
@@ -27482,8 +27495,11 @@ Optical modulation scheme.
 Hardware target specification for a photonic backend.
 
 - **lightmatter**(cls)
+  - Return a Lightmatter-style photonic target profile.
 - **silicon_photonics**(cls)
+  - Return a generic silicon-photonics target profile.
 - **two_d_waveguide**(cls)
+  - Return a two-dimensional-material waveguide target profile.
 
 ### Class `OpticalPulse`
 Single optical pulse with phase and amplitude.
@@ -27605,6 +27621,7 @@ parallel waveguide runs on a photonic chip.
 
 - **__init__**()
 - **add_pair**(pair)
+  - Append one waveguide pair to the analyzer batch.
 - **transfer_matrix**(pair)
   - 2×2 transfer matrix for a directional coupler.
 - **compute_crosstalk**(pair, input_power)
@@ -33047,44 +33064,84 @@ Return a stable SHA-256 digest over portable canonical JSON.
 ## Module `studio.app`
 
 ### Class `SimulateRequest`
+Request body for direct ODE simulation in Studio.
+
 
 ### Class `ModelSimulateRequest`
+Request body for model-catalogue simulation in Studio.
+
 
 ### Class `FICurveRequest`
+Request body for firing-rate versus current sweeps.
+
 
 ### Class `DclsEvaluateRequest`
+Request body for DCLS kernel parity evaluation.
+
 
 ### Class `BenchmarkRunRequest`
+Request body for local Studio benchmark runs.
+
 
 ### Class `BenchmarkContributeRequest`
+Request body for benchmark-databank contribution uploads.
+
 
 ### Class `CompileRequest`
+Request body for equation-to-SystemVerilog compilation.
+
 
 ### Class `BifurcationRequest`
+Request body for one-parameter bifurcation sweeps.
+
 
 ### Class `SensitivityRequest`
+Request body for Studio model sensitivity analysis.
+
 
 ### Class `NullclineRequest`
+Request body for two-dimensional nullcline analysis.
+
 
 ### Class `PrecisionRequest`
+Request body for float versus fixed-point precision comparisons.
+
 
 ### Class `AdaptivePrecisionAutoTuneRequest`
+Request body for adaptive synapse-precision auto-tuning.
+
 
 ### Class `AdaptivePrecisionFormalBundleRequest`
+Request body for adaptive-precision formal evidence bundles.
+
 
 ### Class `PresetActionResolveRequest`
+Request body for resolving one preset action template.
+
 
 ### Class `PresetActionsExecuteAllRequest`
+Request body for executing all actions attached to a preset.
+
 
 ### Class `PresetDefaultFlowRunRequest`
+Request body for running a preset's default action flow.
+
 
 ### Class `PresetDefaultFlowVerifyRequest`
+Request body for verifying a preset default-flow plan.
+
 
 ### Class `PresetDefaultFlowGuardedRunRequest`
+Request body for running a preset flow with fingerprint guards.
+
 
 ### Class `PresetDefaultFlowRunFromContractRequest`
+Request body for running a preset flow from a stored contract.
+
 
 ### Class `PresetDefaultFlowAttestRequest`
+Request body for attesting a completed preset flow run.
+
 
 ### Class `StudioIdentityServiceAccountUpdateRequest`
 Request body for admin service-account metadata updates.
@@ -33139,16 +33196,28 @@ Request body for admin training weight-restore live attach.
 
 
 ### Class `PresetDefaultFlowAttestationVerifyRequest`
+Request body for verifying a preset flow attestation.
+
 
 ### Class `CompareRequest`
+Request body for comparing two Studio simulation configurations.
+
 
 ### Class `FreqResponseRequest`
+Request body for frequency-response analysis.
+
 
 ### Class `HeatmapRequest`
+Request body for two-parameter response heatmap analysis.
+
 
 ### Class `NetworkRequest`
+Request body for balanced excitatory-inhibitory network simulation.
+
 
 ### Class `CodegenRequest`
+Request body for Studio script and one-liner generation.
+
 
 ### Class `_SimCache`
 LRU cache for simulation results keyed by JSON hash.
@@ -33277,6 +33346,8 @@ Attach path-free analysis metadata to one Studio analysis response.
 ### Function `_studio_websocket_accept_subprotocol(headers)`
 ### Function `_studio_route_signature(app, request)`
 ### Function `create_app(runtime_settings)`
+Create and configure the Visual SNN Studio FastAPI application.
+
 ---
 
 ## Module `studio.behavior_probe`
@@ -33738,7 +33809,7 @@ Import failure means the backend is unavailable; it must not be conflated
 with runtime failure inside an otherwise available backend.
 
 ### Function `_is_rust_unsupported_model_error(exc)`
-True when the Rust backend rejected a model as unsupported.
+Return whether the Rust backend rejected a model as unsupported.
 
 ### Function `_detect_step_kwarg(cls)`
 Figure out what keyword the .step() method uses for current injection.
@@ -36338,10 +36409,20 @@ Return a required non-empty string value.
 ## Module `studio.presets`
 
 ### Function `list_presets()`
+Return public metadata for all curated Studio presets.
+
 ### Function `get_preset(preset_id)`
+Return one curated Studio preset by identifier.
+
 ### Function `get_preset_actions(preset_id)`
+Return validated action definitions for one curated Studio preset.
+
 ### Function `get_preset_action(preset_id, action_id)`
+Return one action definition for a curated Studio preset.
+
 ### Function `list_preset_action_catalog()`
+Return the route-facing catalogue of preset action identifiers.
+
 ---
 
 ## Module `studio.progress`
@@ -36777,7 +36858,11 @@ Return a stable SHA-256 digest over canonical JSON.
 ## Module `studio.templates`
 
 ### Function `list_templates()`
+Return all curated Studio equation templates.
+
 ### Function `get_template(name)`
+Return one curated Studio equation template by name.
+
 ---
 
 ## Module `studio.training`

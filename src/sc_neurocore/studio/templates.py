@@ -6,6 +6,8 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore — Neuron ODE templates for Studio Equation Playground
 
+"""Curated ODE templates for the Studio equation playground."""
+
 from __future__ import annotations
 
 from typing import Any
@@ -106,8 +108,10 @@ TEMPLATES: dict[str, dict[str, Any]] = {
 
 
 def list_templates() -> list[dict[str, Any]]:
+    """Return all curated Studio equation templates."""
     return list(TEMPLATES.values())
 
 
 def get_template(name: str) -> dict[str, Any] | None:
+    """Return one curated Studio equation template by name."""
     return TEMPLATES.get(name)

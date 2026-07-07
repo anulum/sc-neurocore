@@ -6,6 +6,8 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore — Network simulation for Studio (Rust engine backend)
 
+"""Balanced E-I network simulation helpers for Studio dashboards."""
+
 from __future__ import annotations
 
 from typing import Any
@@ -16,6 +18,7 @@ try:
 except ImportError:
 
     def get_ei_network_simulator() -> object:
+        """Return the optional Rust E-I network simulator or raise when unavailable."""
         raise ImportError("Studio Rust E-I network simulator unavailable")
 
 

@@ -6,6 +6,8 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore — Synapses Package Init
 
+"""Expose synapse and plasticity primitives for stochastic networks."""
+
 from .sc_synapse import BitstreamSynapse
 from .dot_product import BitstreamDotProduct
 from .stochastic_stdp import StochasticSTDPSynapse

@@ -61,6 +61,7 @@ try:
 except ImportError:
 
     def has_full_dna_backend() -> bool:
+        """Return whether the optional Rust DNA backend is available."""
         return False
 
 # ── Soft imports ──────────────────────────────────────────────────────
@@ -328,10 +329,12 @@ class DNAStrand:
 
     @property
     def length(self) -> int:
+        """Return the nucleotide length of this strand."""
         return len(self.sequence)
 
     @property
     def gc_content(self) -> float:
+        """Return the fraction of nucleotides that are G or C bases."""
         if not self.sequence:
             return 0.0
         gc = sum(1 for c in self.sequence if c in "GC")
@@ -339,11 +342,13 @@ class DNAStrand:
 
     @property
     def complement(self) -> str:
+        """Return the reverse-complement strand sequence."""
         table = str.maketrans("ACGT", "TGCA")
         return self.sequence.translate(table)[::-1]
 
     @property
     def max_homopolymer_run(self) -> int:
+        """Return the longest repeated-base run in the strand."""
         if not self.sequence:
             return 0
         max_run = 1
@@ -436,6 +441,7 @@ class DNAGate:
 
     @property
     def strand_count(self) -> int:
+        """Return the number of strands implementing this gate."""
         return len(self.strands)
 
 
@@ -477,6 +483,7 @@ class DNACircuitDesign:
 
     @property
     def total_strands(self) -> int:
+        """Return the total strand count across circuit inputs, outputs, fuel, and gates."""
         return (
             len(self.input_strands)
             + len(self.output_strands)
@@ -486,10 +493,12 @@ class DNACircuitDesign:
 
     @property
     def total_gates(self) -> int:
+        """Return the number of DNA logic gates in the circuit."""
         return len(self.gates)
 
     @property
     def total_nucleotides(self) -> int:
+        """Return the total nucleotide count across all circuit strands."""
         count = 0
         for s in self.input_strands + self.output_strands + self.fuel_strands:
             count += s.length
@@ -1253,6 +1262,7 @@ class NUPACKInterface:
 
     @property
     def has_nupack(self) -> bool:
+        """Return whether optional NUPACK thermodynamic analysis is installed."""
         return _HAS_NUPACK
 
     def compute_mfe(self, sequence: str) -> Tuple[float, str]:

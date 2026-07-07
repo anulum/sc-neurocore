@@ -6,6 +6,8 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore — FastAPI backend for Visual SNN Design Studio
 
+"""FastAPI application factory and request schemas for Visual SNN Studio."""
+
 from __future__ import annotations
 
 import hashlib
@@ -202,6 +204,8 @@ DEFAULT_STUDIO_JOB_KINDS = frozenset({"compiler", "evidence", "synthesis", "trai
 
 
 class SimulateRequest(BaseModel):
+    """Request body for direct ODE simulation in Studio."""
+
     equations: list[str]
     threshold: str | None = None
     reset: str | None = None
@@ -214,6 +218,8 @@ class SimulateRequest(BaseModel):
 
 
 class ModelSimulateRequest(BaseModel):
+    """Request body for model-catalogue simulation in Studio."""
+
     # Accept ``model_name`` as well so the field matches the rest of the model API
     # surface (fi-curve, characterize, sensitivity, …) and the Studio frontend,
     # which sends ``model_name`` consistently.
@@ -226,6 +232,8 @@ class ModelSimulateRequest(BaseModel):
 
 
 class FICurveRequest(BaseModel):
+    """Request body for firing-rate versus current sweeps."""
+
     equations: list[str] | None = None
     model_name: str | None = None
     threshold: str | None = None
@@ -240,6 +248,8 @@ class FICurveRequest(BaseModel):
 
 
 class DclsEvaluateRequest(BaseModel):
+    """Request body for DCLS kernel parity evaluation."""
+
     centre_q88: int = Field(default=512, ge=0, le=65535)
     sigma_q88: int = Field(default=512, gt=0, le=65535)
     n_taps: int = Field(default=8, ge=1, le=256)
@@ -248,17 +258,23 @@ class DclsEvaluateRequest(BaseModel):
 
 
 class BenchmarkRunRequest(BaseModel):
+    """Request body for local Studio benchmark runs."""
+
     n_channels: int = Field(default=512, ge=16, le=8192)
     n_taps: int = Field(default=32, ge=4, le=256)
     repeats: int = Field(default=12, ge=3, le=50)
 
 
 class BenchmarkContributeRequest(BaseModel):
+    """Request body for benchmark-databank contribution uploads."""
+
     submission: dict[str, Any]
     handle: str = Field(default="", max_length=40)
 
 
 class CompileRequest(BaseModel):
+    """Request body for equation-to-SystemVerilog compilation."""
+
     equations: list[str] = Field(min_length=1)
     threshold: str | None = None
     reset: str | None = None
@@ -268,6 +284,8 @@ class CompileRequest(BaseModel):
 
 
 class BifurcationRequest(BaseModel):
+    """Request body for one-parameter bifurcation sweeps."""
+
     equations: list[str] | None = None
     model_name: str | None = None
     threshold: str | None = None
@@ -284,6 +302,8 @@ class BifurcationRequest(BaseModel):
 
 
 class SensitivityRequest(BaseModel):
+    """Request body for Studio model sensitivity analysis."""
+
     equations: list[str] | None = None
     model_name: str | None = None
     threshold: str | None = None
@@ -296,6 +316,8 @@ class SensitivityRequest(BaseModel):
 
 
 class NullclineRequest(BaseModel):
+    """Request body for two-dimensional nullcline analysis."""
+
     equations: list[str]
     params: dict[str, float]
     var_names: list[str]
@@ -304,6 +326,8 @@ class NullclineRequest(BaseModel):
 
 
 class PrecisionRequest(BaseModel):
+    """Request body for float versus fixed-point precision comparisons."""
+
     equations: list[str]
     threshold: str | None = None
     reset: str | None = None
@@ -315,6 +339,8 @@ class PrecisionRequest(BaseModel):
 
 
 class AdaptivePrecisionAutoTuneRequest(BaseModel):
+    """Request body for adaptive synapse-precision auto-tuning."""
+
     layer_weights: list[list[list[float]] | list[float]]
     layer_names: list[str] | None = None
     target_error_percent: float = Field(default=0.1, gt=0.0, le=10.0)
@@ -326,6 +352,8 @@ class AdaptivePrecisionAutoTuneRequest(BaseModel):
 
 
 class AdaptivePrecisionFormalBundleRequest(BaseModel):
+    """Request body for adaptive-precision formal evidence bundles."""
+
     layer_weights: list[list[list[float]] | list[float]]
     layer_names: list[str] | None = None
     target_error_percent: float = Field(default=0.1, gt=0.0, le=10.0)
@@ -338,18 +366,26 @@ class AdaptivePrecisionFormalBundleRequest(BaseModel):
 
 
 class PresetActionResolveRequest(BaseModel):
+    """Request body for resolving one preset action template."""
+
     overrides: dict[str, Any] = Field(default_factory=dict)
 
 
 class PresetActionsExecuteAllRequest(BaseModel):
+    """Request body for executing all actions attached to a preset."""
+
     action_overrides: dict[str, dict[str, Any]] = Field(default_factory=dict)
 
 
 class PresetDefaultFlowRunRequest(BaseModel):
+    """Request body for running a preset's default action flow."""
+
     action_overrides: dict[str, dict[str, Any]] = Field(default_factory=dict)
 
 
 class PresetDefaultFlowVerifyRequest(BaseModel):
+    """Request body for verifying a preset default-flow plan."""
+
     action_order: list[str]
     template_fingerprints: dict[str, Annotated[str, StringConstraints(pattern=r"^[0-9a-f]{64}$")]]
     plan_fingerprint_sha256: Annotated[str | None, StringConstraints(pattern=r"^[0-9a-f]{64}$")] = (
@@ -358,6 +394,8 @@ class PresetDefaultFlowVerifyRequest(BaseModel):
 
 
 class PresetDefaultFlowGuardedRunRequest(BaseModel):
+    """Request body for running a preset flow with fingerprint guards."""
+
     action_order: list[str]
     template_fingerprints: dict[str, Annotated[str, StringConstraints(pattern=r"^[0-9a-f]{64}$")]]
     plan_fingerprint_sha256: Annotated[str, StringConstraints(pattern=r"^[0-9a-f]{64}$")]
@@ -365,11 +403,15 @@ class PresetDefaultFlowGuardedRunRequest(BaseModel):
 
 
 class PresetDefaultFlowRunFromContractRequest(BaseModel):
+    """Request body for running a preset flow from a stored contract."""
+
     contract: dict[str, Any]
     action_overrides: dict[str, dict[str, Any]] = Field(default_factory=dict)
 
 
 class PresetDefaultFlowAttestRequest(BaseModel):
+    """Request body for attesting a completed preset flow run."""
+
     run_result: dict[str, Any]
 
 
@@ -489,16 +531,22 @@ class StudioTrainingWeightLiveAttachRequest(BaseModel):
 
 
 class PresetDefaultFlowAttestationVerifyRequest(BaseModel):
+    """Request body for verifying a preset flow attestation."""
+
     run_result: dict[str, Any]
     attestation: dict[str, Any]
 
 
 class CompareRequest(BaseModel):
+    """Request body for comparing two Studio simulation configurations."""
+
     config_a: dict[str, Any]
     config_b: dict[str, Any]
 
 
 class FreqResponseRequest(BaseModel):
+    """Request body for frequency-response analysis."""
+
     equations: list[str] | None = None
     model_name: str | None = None
     threshold: str | None = None
@@ -514,6 +562,8 @@ class FreqResponseRequest(BaseModel):
 
 
 class HeatmapRequest(BaseModel):
+    """Request body for two-parameter response heatmap analysis."""
+
     equations: list[str] | None = None
     model_name: str | None = None
     threshold: str | None = None
@@ -534,6 +584,8 @@ class HeatmapRequest(BaseModel):
 
 
 class NetworkRequest(BaseModel):
+    """Request body for balanced excitatory-inhibitory network simulation."""
+
     n_exc: int = Field(default=80, ge=10, le=500)
     n_inh: int = Field(default=20, ge=5, le=200)
     w_ee: float = 0.1
@@ -547,6 +599,8 @@ class NetworkRequest(BaseModel):
 
 
 class CodegenRequest(BaseModel):
+    """Request body for Studio script and one-liner generation."""
+
     mode: str = "model"
     model_name: str | None = None
     equations: list[str] | None = None
@@ -594,13 +648,11 @@ _cache = _SimCache()
 
 def _serialize_studio_worker_result(result: dict[str, Any]) -> str:
     """Serialize a Studio worker result into a stable artifact payload."""
-
     return json.dumps(result, sort_keys=True, default=str)
 
 
 def _validate_synthesis_verilog(verilog: Any) -> str:
     """Return validated Verilog source for bounded synthesis worker routes."""
-
     if not isinstance(verilog, str):
         raise HTTPException(422, "verilog source must be a string")
     if not verilog.strip():
@@ -612,7 +664,6 @@ def _validate_synthesis_verilog(verilog: Any) -> str:
 
 def _validate_synthesis_target(target: Any) -> str:
     """Return a validated synthesis target identifier."""
-
     targets = supported_targets()
     if not isinstance(target, str) or target not in targets:
         raise HTTPException(422, f"unknown synthesis target; supported targets: {list(targets)}")
@@ -633,7 +684,6 @@ def _safe(fn: Callable[..., Any]) -> Any:
 
 def _analysis_budget_from_settings(settings: StudioRuntimeSettings) -> AnalysisBudget:
     """Build the synchronous analysis execution budget from runtime settings."""
-
     return AnalysisBudget(
         max_steps_per_simulation=settings.max_sync_analysis_steps_per_simulation,
         max_total_steps=settings.max_sync_analysis_total_steps,
@@ -668,7 +718,6 @@ def _guard_analysis_request(
         With status 422 and a path-free budget detail when the request exceeds
         the configured synchronous analysis budget.
     """
-
     try:
         cost = evaluate_analysis_cost(
             simulation_count=simulation_count,
@@ -700,7 +749,6 @@ def _guard_multi_config_analysis_request(
         With status 422 and a path-free budget detail when the request exceeds
         the configured synchronous analysis budget.
     """
-
     try:
         cost = evaluate_multi_config_cost(
             [(duration, resolve_request_timestep(dt)) for duration, dt in configs]
@@ -733,7 +781,6 @@ def _guard_nullcline_grid_request(
         With status 422 and a path-free budget detail when the grid exceeds the
         configured synchronous analysis budget.
     """
-
     try:
         cost = evaluate_nullcline_grid_cost(
             grid_size=grid_size,
@@ -767,7 +814,6 @@ def _guard_model_scan_request(
         With status 422 and a path-free budget detail when the scan exceeds the
         configured synchronous analysis budget.
     """
-
     try:
         cost = evaluate_model_scan_cost(
             model_count=model_count,
@@ -786,7 +832,6 @@ def _config_duration_dt(config: dict[str, Any]) -> tuple[float, float | None]:
     model-default timestep when absent). Non-numeric values fall back to the
     defaults; the simulate call validates the real payload downstream.
     """
-
     raw_duration = config.get("duration", 200.0)
     raw_dt = config.get("dt")
     duration = float(raw_duration) if isinstance(raw_duration, (int, float)) else 200.0
@@ -836,7 +881,6 @@ def _attach_analysis_metadata(
     result_payload: dict[str, Any],
 ) -> dict[str, Any]:
     """Attach path-free analysis metadata to one Studio analysis response."""
-
     return attach_analysis_result_manifest(
         analysis_type=analysis_type,
         source=infer_analysis_source(request_payload),
@@ -1195,6 +1239,7 @@ def _studio_route_signature(app: FastAPI, request: Request) -> tuple[str, str] |
 
 
 def create_app(runtime_settings: StudioRuntimeSettings | None = None) -> FastAPI:
+    """Create and configure the Visual SNN Studio FastAPI application."""
     app = FastAPI(title="SC-NeuroCore Studio", version="1.0.0")
     settings = runtime_settings or build_default_studio_runtime_settings()
     analysis_budget = _analysis_budget_from_settings(settings)
@@ -1370,7 +1415,6 @@ def create_app(runtime_settings: StudioRuntimeSettings | None = None) -> FastAPI
         payload: StudioProcessJobPayload,
     ) -> dict[str, Any]:
         """Run one importable task through the bounded process worker."""
-
         submitted = studio_job_manager.submit_process_task(
             kind=kind,
             owner=owner,
@@ -1413,25 +1457,21 @@ def create_app(runtime_settings: StudioRuntimeSettings | None = None) -> FastAPI
     @app.get("/api/studio/audit/status")
     def api_studio_audit_status() -> dict[str, bool | int | str | None]:
         """Return path-free health for the configured Studio audit sink."""
-
         return studio_audit_sink.status().to_public_dict()
 
     @app.get("/api/studio/jobs/status")
     def api_studio_jobs_status() -> dict[str, object]:
         """Return path-free local worker health for operator dashboards."""
-
         return studio_job_manager.status().to_public_dict()
 
     @app.get("/api/studio/jobs")
     def api_studio_jobs() -> dict[str, object]:
         """Return path-free local job records for administrators."""
-
         return studio_job_manager.list_snapshot().to_public_dict()
 
     @app.get("/api/studio/jobs/{job_id}")
     def api_studio_job(job_id: str) -> dict[str, object]:
         """Return one path-free local job record for administrators."""
-
         try:
             return studio_job_manager.record(job_id).to_public_dict()
         except KeyError as exc:
@@ -1440,7 +1480,6 @@ def create_app(runtime_settings: StudioRuntimeSettings | None = None) -> FastAPI
     @app.get("/api/studio/jobs/{job_id}/artifacts/{artifact_path:path}")
     def api_studio_job_artifact(job_id: str, artifact_path: str) -> Response:
         """Download one declared Studio job artifact after integrity validation."""
-
         try:
             artifact_payload = studio_job_manager.read_artifact(job_id, artifact_path)
         except KeyError as exc:
@@ -1461,7 +1500,6 @@ def create_app(runtime_settings: StudioRuntimeSettings | None = None) -> FastAPI
     @app.get("/api/studio/operator/status")
     def api_studio_operator_status() -> dict[str, object]:
         """Return aggregate, path-free Studio operator control-plane health."""
-
         return build_studio_operator_status(
             settings=settings,
             capabilities=tuple(studio_capabilities.health_all()),
@@ -1474,7 +1512,6 @@ def create_app(runtime_settings: StudioRuntimeSettings | None = None) -> FastAPI
     @app.get("/api/studio/audit/export")
     def api_studio_audit_export(limit: int = 100) -> dict[str, AuditExportValue]:
         """Return a bounded, path-free audit export for Studio administrators."""
-
         if not isinstance(studio_audit_sink, JsonlAuditSink):
             raise HTTPException(status_code=409, detail="audit_export_unavailable")
         if limit < 1 or limit > 1000:
@@ -1489,7 +1526,6 @@ def create_app(runtime_settings: StudioRuntimeSettings | None = None) -> FastAPI
         limit: int = 100,
     ) -> dict[str, AuditExportValue]:
         """Return path-free quarantined audit rows for incident handoff."""
-
         if not isinstance(studio_audit_sink, JsonlAuditSink):
             raise HTTPException(status_code=409, detail="audit_export_unavailable")
         if limit < 1 or limit > 1000:
@@ -1511,7 +1547,6 @@ def create_app(runtime_settings: StudioRuntimeSettings | None = None) -> FastAPI
         request: Request,
     ) -> dict[str, object]:
         """Write quarantined audit rows into a confined Studio evidence job."""
-
         if not isinstance(studio_audit_sink, JsonlAuditSink):
             raise HTTPException(status_code=409, detail="audit_export_unavailable")
         try:
@@ -1558,7 +1593,6 @@ def create_app(runtime_settings: StudioRuntimeSettings | None = None) -> FastAPI
         validate_request: StudioAuditQuarantineArchiveValidateRequest,
     ) -> dict[str, object]:
         """Validate a path-free quarantine archive before import handling."""
-
         result = validate_studio_audit_quarantine_archive(
             validate_request.archive,
             manifest_payload=validate_request.manifest,
@@ -1570,7 +1604,6 @@ def create_app(runtime_settings: StudioRuntimeSettings | None = None) -> FastAPI
         retain_latest: int = Query(default=10, ge=1, le=1000),
     ) -> dict[str, object]:
         """Return a path-free quarantine archive retention plan."""
-
         result = build_studio_audit_quarantine_archive_retention_plan(
             studio_job_manager.list_records(),
             retain_latest=retain_latest,
@@ -1583,7 +1616,6 @@ def create_app(runtime_settings: StudioRuntimeSettings | None = None) -> FastAPI
         request: Request,
     ) -> dict[str, object]:
         """Materialize a validated archive as confined restore artifacts."""
-
         validation = validate_studio_audit_quarantine_archive(
             restore_request.archive,
             manifest_payload=restore_request.manifest,
@@ -1632,7 +1664,6 @@ def create_app(runtime_settings: StudioRuntimeSettings | None = None) -> FastAPI
         purge_request: StudioAuditQuarantineArchivePurgeRequest,
     ) -> dict[str, object]:
         """Purge archive jobs marked as retention prune candidates."""
-
         result = purge_studio_audit_quarantine_archive_prune_candidates(
             studio_job_manager.list_records(),
             purge_job=studio_job_manager.purge_terminal_record,
@@ -1646,7 +1677,6 @@ def create_app(runtime_settings: StudioRuntimeSettings | None = None) -> FastAPI
         request: Request,
     ) -> dict[str, object]:
         """Create a path-confined evidence bundle as a Studio worker artifact."""
-
         project_payload: dict[str, Any] | None = None
         if export_request.project_name is not None:
             project_name = export_request.project_name
@@ -1727,7 +1757,6 @@ def create_app(runtime_settings: StudioRuntimeSettings | None = None) -> FastAPI
         verified digests and loaded-key totals; the in-memory tensor state
         dictionary never leaves the worker.
         """
-
         source_job_id = restore_request.source_job_id
         status_payload = get_training_status(source_job_id, studio_job_manager)
         if "status" not in status_payload:
@@ -1825,7 +1854,6 @@ def create_app(runtime_settings: StudioRuntimeSettings | None = None) -> FastAPI
         worker writes a path-free ``studio.training.weight-restore-attach.v1``
         evidence artifact; the deserialized tensors never reach the response.
         """
-
         try:
             result = start_training_attach(
                 attach_request.source_job_id,
@@ -1864,7 +1892,6 @@ def create_app(runtime_settings: StudioRuntimeSettings | None = None) -> FastAPI
         artifact. An incompatible attach is rejected without interrupting the
         running job. The response is returned immediately on delivery.
         """
-
         try:
             result = request_live_training_weight_attach(
                 attach_request.target_job_id,
@@ -1897,7 +1924,6 @@ def create_app(runtime_settings: StudioRuntimeSettings | None = None) -> FastAPI
         request: Request,
     ) -> dict[str, list[str] | str]:
         """Authenticate a browser user and issue an expiring bearer session."""
-
         if studio_identity_authenticator is None:
             raise HTTPException(status_code=409, detail="identity_store_unavailable")
         throttle_decision = studio_browser_login_throttle.check(login.username)
@@ -1991,13 +2017,11 @@ def create_app(runtime_settings: StudioRuntimeSettings | None = None) -> FastAPI
     @app.get("/api/studio/auth/session")
     def api_studio_auth_session(request: Request) -> dict[str, bool | list[str] | str | None]:
         """Return the current browser bearer-session principal."""
-
         return studio_browser_session_manager.public_session(request.headers.get("authorization"))
 
     @app.post("/api/studio/auth/logout")
     def api_studio_auth_logout(request: Request) -> dict[str, bool]:
         """Revoke the current browser bearer session."""
-
         revoked = studio_browser_session_manager.revoke_authorization_header(
             request.headers.get("authorization")
         )
@@ -2022,7 +2046,6 @@ def create_app(runtime_settings: StudioRuntimeSettings | None = None) -> FastAPI
     @app.get("/api/studio/identity/service-accounts")
     def api_studio_identity_service_accounts() -> dict[str, object]:
         """Return token-free persistent service accounts for administrators."""
-
         if settings.identity_file_path is None:
             raise HTTPException(status_code=409, detail="identity_store_unavailable")
         try:
@@ -2037,7 +2060,6 @@ def create_app(runtime_settings: StudioRuntimeSettings | None = None) -> FastAPI
     @app.get("/api/studio/identity/browser-users")
     def api_studio_identity_browser_users() -> dict[str, object]:
         """Return password-free persistent browser users for administrators."""
-
         if settings.identity_file_path is None:
             raise HTTPException(status_code=409, detail="identity_store_unavailable")
         try:
@@ -2055,7 +2077,6 @@ def create_app(runtime_settings: StudioRuntimeSettings | None = None) -> FastAPI
         request: Request,
     ) -> dict[str, bool | list[str] | str | None]:
         """Create one persistent browser user for administrators."""
-
         nonlocal studio_identity_authenticator
         if settings.identity_file_path is None:
             raise HTTPException(status_code=409, detail="identity_store_unavailable")
@@ -2100,7 +2121,6 @@ def create_app(runtime_settings: StudioRuntimeSettings | None = None) -> FastAPI
         username: str,
     ) -> dict[str, bool | list[str] | str | None]:
         """Return one password-free persistent browser user for administrators."""
-
         if settings.identity_file_path is None:
             raise HTTPException(status_code=409, detail="identity_store_unavailable")
         try:
@@ -2117,7 +2137,6 @@ def create_app(runtime_settings: StudioRuntimeSettings | None = None) -> FastAPI
         principal_id: str,
     ) -> dict[str, bool | list[str] | str | None]:
         """Return one token-free persistent service account for administrators."""
-
         if settings.identity_file_path is None:
             raise HTTPException(status_code=409, detail="identity_store_unavailable")
         try:
@@ -2136,7 +2155,6 @@ def create_app(runtime_settings: StudioRuntimeSettings | None = None) -> FastAPI
         request: Request,
     ) -> dict[str, bool | list[str] | str | None]:
         """Update persistent service-account role metadata for administrators."""
-
         nonlocal studio_identity_authenticator
         if settings.identity_file_path is None:
             raise HTTPException(status_code=409, detail="identity_store_unavailable")
@@ -2186,7 +2204,6 @@ def create_app(runtime_settings: StudioRuntimeSettings | None = None) -> FastAPI
         request: Request,
     ) -> dict[str, bool | list[str] | str | None]:
         """Update persistent browser-user role metadata for administrators."""
-
         nonlocal studio_identity_authenticator
         if settings.identity_file_path is None:
             raise HTTPException(status_code=409, detail="identity_store_unavailable")
@@ -2236,7 +2253,6 @@ def create_app(runtime_settings: StudioRuntimeSettings | None = None) -> FastAPI
         request: Request,
     ) -> dict[str, bool | list[str] | str | None]:
         """Rotate one persistent browser-user password verifier."""
-
         nonlocal studio_identity_authenticator
         if settings.identity_file_path is None:
             raise HTTPException(status_code=409, detail="identity_store_unavailable")
@@ -3534,7 +3550,6 @@ def create_app(runtime_settings: StudioRuntimeSettings | None = None) -> FastAPI
     @app.get("/api/training/checkpoint/{job_id}")
     def api_training_checkpoint_export(job_id: str) -> Any:
         """Export one portable Training Monitor checkpoint."""
-
         result = export_training_checkpoint(job_id, studio_job_manager)
         if result.get("error"):
             raise HTTPException(404, result["error"])
@@ -3543,7 +3558,6 @@ def create_app(runtime_settings: StudioRuntimeSettings | None = None) -> FastAPI
     @app.post("/api/training/checkpoint/import")
     def api_training_checkpoint_import(data: dict[str, Any]) -> Any:
         """Validate an imported Training Monitor checkpoint."""
-
         return _safe(lambda: import_training_checkpoint(data))
 
     @app.get("/api/training/stream/{job_id}")

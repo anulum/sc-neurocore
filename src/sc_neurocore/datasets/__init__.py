@@ -6,6 +6,8 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore — Datasets Package Init
 
+"""Expose event-dataset loaders and spike-encoding helpers."""
+
 from .encoding import latency_encode, poisson_encode
 from .loaders import load_dvs_cifar10, load_nmnist, load_shd
 

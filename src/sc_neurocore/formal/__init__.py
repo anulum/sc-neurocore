@@ -6,6 +6,8 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore — Formal verification package (Lean 4 bridge)
 
+"""Expose formal network-property compilation and replay helpers."""
+
 from .counterexample_replay import (
     AntagonisticReplayResult,
     PopulationCoactivationReplayResult,
