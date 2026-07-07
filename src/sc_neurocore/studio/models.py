@@ -25,6 +25,7 @@ except ImportError:
         raise ImportError("Studio Rust batch simulator unavailable")
 
 
+from sc_neurocore.neurons.descriptor_tiers import completeness_tiers, is_perfect
 from sc_neurocore.neurons.model_catalogue import load_descriptor
 from sc_neurocore.neurons.model_descriptor import (
     ModelDescriptor,
@@ -285,11 +286,16 @@ def _provenance_summary(descriptor: ModelDescriptor) -> dict[str, Any] | None:
 def _descriptor_summary(descriptor: ModelDescriptor) -> dict[str, Any]:
     """Build a catalogue list entry from a declared descriptor."""
     tier = descriptor_completeness_tier(descriptor)
+    tiers = completeness_tiers(descriptor)
     return {
         "name": descriptor.class_name,
         "module": descriptor.module,
         "tier": tier,
         "evidence_kind": _evidence_kind(tier),
+        "science_tier": tiers.science,
+        "science_label": tiers.science_label,
+        "silicon_tier": tiers.silicon,
+        "silicon_label": tiers.silicon_label,
         # ``category`` carries the family display name so existing clients group
         # by the curated family; the fine slug is exposed separately.
         "category": descriptor.family,
@@ -343,10 +349,47 @@ def _descriptor_detail(descriptor: ModelDescriptor) -> dict[str, Any]:
                 "golden_trace_sha256": descriptor.reproducibility.golden_trace_sha256,
                 "reproducible": descriptor.reproducibility.is_reproducible,
             },
+            "readiness": _readiness_detail(descriptor),
             "documentation_slug": descriptor.documentation_slug,
         }
     )
     return detail
+
+
+def _readiness_detail(descriptor: ModelDescriptor) -> dict[str, Any]:
+    """Build the auditable dual-axis readiness view for a declared descriptor.
+
+    Surfaces the science (S0-S5) and silicon (H0-H5) tiers together with the raw
+    evidence facets that justify them, so a reviewer can see exactly why a model
+    sits where it does — and whether it meets its declared deployability class.
+    """
+    tiers = completeness_tiers(descriptor)
+    return {
+        "science_tier": tiers.science,
+        "science_label": tiers.science_label,
+        "silicon_tier": tiers.silicon,
+        "silicon_label": tiers.silicon_label,
+        "is_perfect": is_perfect(descriptor),
+        "terminal_silicon_tier": descriptor.silicon.target_tier,
+        "terminal_reason": descriptor.silicon.terminal_reason,
+        "validation": {
+            "dynamics_faithful": descriptor.validation.dynamics_faithful,
+            "metric": descriptor.validation.metric,
+            "operating_point": descriptor.validation.operating_point,
+            "tolerance": descriptor.validation.tolerance,
+            "evidence": descriptor.validation.evidence,
+        },
+        "silicon": {
+            "compiles": descriptor.silicon.compiles,
+            "cosim_validated": descriptor.silicon.cosim_validated,
+            "synthesised": descriptor.silicon.synthesised,
+            "timing_closed": descriptor.silicon.timing_closed,
+            "formally_equivalent": descriptor.silicon.formally_equivalent,
+            "ppa_signed": descriptor.silicon.ppa_signed,
+            "target_device": descriptor.silicon.target_device,
+            "clock_mhz": descriptor.silicon.clock_mhz,
+        },
+    }
 
 
 def _introspected_summary(name: str) -> dict[str, Any]:
@@ -358,6 +401,10 @@ def _introspected_summary(name: str) -> dict[str, Any]:
         "module": _CLASS_TO_MODULE[name],
         "tier": 0,
         "evidence_kind": "",
+        "science_tier": 0,
+        "science_label": "S0",
+        "silicon_tier": None,
+        "silicon_label": "none",
         "category": _categorize(name),
         "category_slug": "",
         "category_source": "inferred",

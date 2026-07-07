@@ -34081,6 +34081,13 @@ Build a catalogue list entry from a declared descriptor.
 ### Function `_descriptor_detail(descriptor)`
 Build a full catalogue detail view from a declared descriptor.
 
+### Function `_readiness_detail(descriptor)`
+Build the auditable dual-axis readiness view for a declared descriptor.
+
+Surfaces the science (S0-S5) and silicon (H0-H5) tiers together with the raw
+evidence facets that justify them, so a reviewer can see exactly why a model
+sits where it does — and whether it meets its declared deployability class.
+
 ### Function `_introspected_summary(name)`
 Fallback catalogue entry for a model with no committed descriptor.
 

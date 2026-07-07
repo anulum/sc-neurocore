@@ -57,6 +57,42 @@ def test_summary_exposes_completeness_tier_and_evidence_kind() -> None:
     assert lapicque["evidence_kind"] == ""
 
 
+def test_summary_exposes_dual_readiness_axes() -> None:
+    """The catalogue list carries both the science (S0-S5) and silicon axes."""
+    adex = _adex_summary()
+    # The full science axis never sits below the legacy kernel tier.
+    assert cast(int, adex["science_tier"]) >= cast(int, adex["tier"])
+    assert adex["science_label"] == f"S{adex['science_tier']}"
+    # No committed descriptor carries silicon evidence yet.
+    assert adex["silicon_tier"] is None
+    assert adex["silicon_label"] == "none"
+
+
+def test_introspected_summary_defaults_to_below_readiness() -> None:
+    """A descriptor-less catalogue entry reports S0 and no silicon tier."""
+    summary = _introspected_summary("AdExNeuron")
+    assert summary["science_tier"] == 0
+    assert summary["science_label"] == "S0"
+    assert summary["silicon_tier"] is None
+    assert summary["silicon_label"] == "none"
+
+
+def test_detail_readiness_block_is_auditable() -> None:
+    """Model detail exposes the dual-axis readiness with its evidence facets."""
+    detail = get_model_detail("AdExNeuron")
+    assert detail is not None
+    readiness = cast(dict[str, object], detail["readiness"])
+    assert readiness["science_label"] == f"S{readiness['science_tier']}"
+    assert readiness["silicon_tier"] is None
+    assert readiness["silicon_label"] == "none"
+    assert readiness["is_perfect"] is False
+    validation = cast(dict[str, object], readiness["validation"])
+    assert validation["metric"] == "none"
+    silicon = cast(dict[str, object], readiness["silicon"])
+    assert silicon["compiles"] is False
+    assert silicon["clock_mhz"] is None
+
+
 def test_no_model_falls_into_an_other_bucket() -> None:
     """Every model now declares a real family — the 'Other' bucket is gone."""
 
