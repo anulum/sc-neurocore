@@ -181,6 +181,7 @@ class EquationNeuron:
         self._compiled_reset = {
             var: compile(expr, f"<reset:{var}>", "eval") for var, expr in self.reset_rules.items()
         }
+        self.jacobian_expressions: dict[str, str] = {}
         self._compiled_jacobian = self._build_jacobian() if self.method == "exp_euler" else {}
 
     def _build_jacobian(self) -> dict[str, Any]:
@@ -193,6 +194,12 @@ class EquationNeuron:
         A model whose dynamics cannot be faithfully differentiated with respect to
         their own variable cannot use exponential Euler, and the differentiator
         raises to say so rather than integrate through a non-smooth term.
+
+        Each derivative string is also kept in :attr:`jacobian_expressions` so the
+        Verilog emitter lowers the *same* ``A`` expression the golden compiles — one
+        derivative drives both backends, which is what keeps the hardware step
+        consistent with the golden by construction rather than by a parallel
+        re-derivation.
 
         The symbolic differentiator (and its SymPy backend) is imported lazily so
         that only exponential-Euler models pull the optional dependency in; forward
@@ -209,6 +216,7 @@ class EquationNeuron:
         for var, expr in self.equations.items():
             derivative = differentiate(expr, var)
             self._validate_expr(derivative)
+            self.jacobian_expressions[var] = derivative
             compiled[var] = compile(derivative, f"<jac:{var}>", "eval")
         return compiled
 

@@ -213,6 +213,62 @@ def _emit_rk4_deriv_wires(
     return deriv_wires, inter, regs, mc, tc
 
 
+def _emit_exp_euler_deriv_wires(
+    neuron: EquationNeuron,
+    state_var_map: dict[str, str],
+    param_map: dict[str, str],
+    q: Q88,
+    *,
+    data_width: int,
+    mul_start: int,
+    trunc_start: int,
+) -> tuple[list[str], list[str], list[str], int, int]:
+    """Emit the per-variable ``d<var>`` increment wires for one exponential-Euler step.
+
+    Mirrors the Python golden in :meth:`EquationNeuron.step` (``method="exp_euler"``),
+    the linearised exponential Euler (Rush–Larsen) update::
+
+        d<var> = f(state) · dt · exprel(A·dt),   A = ∂f/∂x
+
+    ``exprel(z) = (e**z − 1)/z`` is reused so the zero-Jacobian limit ``A→0`` collapses
+    to the exact forward-Euler increment ``f·dt``, and the update is exact on the gating
+    form ``dx/dt = (x_inf − x)/tau`` where forward Euler drifts. The diagonal Jacobian
+    ``A`` is the *same* symbolic derivative string the golden compiled
+    (``neuron.jacobian_expressions[var]``): one derivative expression drives the golden
+    and the Verilog, so the two stay consistent by construction rather than by a parallel
+    re-derivation.
+
+    The whole increment — ``f``, ``A``, both ``dt`` scalings and the ``exprel`` hardware
+    LUT — is lowered by the same :func:`_emit_expr` the Euler and RK4 paths use, applied
+    to a single composed expression per variable, so exp-Euler inherits every Q-format and
+    the transcendental LUT for free (one integrator × N representations). State renders as
+    ``<var>_reg`` — the pre-step value — so all increments are computed from the pre-step
+    state (a forward, not Gauss–Seidel, update), exactly as the golden applies them.
+    Targets deterministic models (no stochastic ``xi`` term). Returns
+    ``(deriv_wires, intermediates, pipeline_regs, mul_count, trunc_count)``.
+    """
+    inter: list[str] = []
+    regs: list[str] = []
+    mc, tc = mul_start, trunc_start
+    # repr keeps the exact float; const_float quantises it in Q-format like every literal,
+    # so the dt scaling matches the rest of the emitted arithmetic.
+    dt_lit = repr(neuron.dt)
+    deriv_wires: list[str] = []
+    for var, f_expr in neuron.equations.items():
+        safe_var = state_var_map[var]
+        a_expr = neuron.jacobian_expressions[var]
+        # increment = (f · dt) · exprel(A · dt); the parentheses fix the golden's
+        # associativity ((f*dt)*exprel(A*dt)) and isolate f/A as their own sub-trees.
+        increment_expr = f"(({f_expr}) * {dt_lit}) * exprel((({a_expr})) * {dt_lit})"
+        vexpr, ints, mc, tc, pregs = _emit_expr(
+            increment_expr, state_var_map, param_map, q, mul_start=mc, trunc_start=tc
+        )
+        inter.extend(ints)
+        regs.extend(pregs)
+        deriv_wires.append(f"wire signed [{data_width - 1}:0] d{safe_var} = {vexpr};")
+    return deriv_wires, inter, regs, mc, tc
+
+
 def _build_neuron_core(
     neuron: EquationNeuron,
     q: Q88,
@@ -250,7 +306,8 @@ def _build_neuron_core(
     use_pipeline = pipeline_stages > 0
     pp_set = set(pipeline_points) if pipeline_points and not use_pipeline else set()
 
-    if getattr(neuron, "method", "euler") == "rk4":
+    method = getattr(neuron, "method", "euler")
+    if method == "rk4":
         if use_pipeline or pp_set:
             raise NotImplementedError(
                 "RK4 Verilog emission does not support pipelining yet; use pipeline_stages=0"
@@ -262,6 +319,20 @@ def _build_neuron_core(
             q,
             data_width=data_width,
             fraction=fraction,
+            mul_start=_mc,
+            trunc_start=_tc,
+        )
+    elif method == "exp_euler":
+        if use_pipeline or pp_set:
+            raise NotImplementedError(
+                "exp_euler Verilog emission does not support pipelining yet; use pipeline_stages=0"
+            )
+        deriv_wires, deriv_intermediates, deriv_regs, _mc, _tc = _emit_exp_euler_deriv_wires(
+            neuron,
+            state_var_map,
+            param_map,
+            q,
+            data_width=data_width,
             mul_start=_mc,
             trunc_start=_tc,
         )

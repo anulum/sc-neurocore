@@ -11571,6 +11571,31 @@ the stage wire names), exactly as the threshold emitter substitutes ``<var>_next
 Targets deterministic models (no stochastic ``xi`` term). Returns
 ``(deriv_wires, intermediates, pipeline_regs, mul_count, trunc_count)``.
 
+### Function `_emit_exp_euler_deriv_wires(neuron, state_var_map, param_map, q)`
+Emit the per-variable ``d<var>`` increment wires for one exponential-Euler step.
+
+Mirrors the Python golden in :meth:`EquationNeuron.step` (``method="exp_euler"``),
+the linearised exponential Euler (Rush–Larsen) update::
+
+    d<var> = f(state) · dt · exprel(A·dt),   A = ∂f/∂x
+
+``exprel(z) = (e**z − 1)/z`` is reused so the zero-Jacobian limit ``A→0`` collapses
+to the exact forward-Euler increment ``f·dt``, and the update is exact on the gating
+form ``dx/dt = (x_inf − x)/tau`` where forward Euler drifts. The diagonal Jacobian
+``A`` is the *same* symbolic derivative string the golden compiled
+(``neuron.jacobian_expressions&#91;var&#93;``): one derivative expression drives the golden
+and the Verilog, so the two stay consistent by construction rather than by a parallel
+re-derivation.
+
+The whole increment — ``f``, ``A``, both ``dt`` scalings and the ``exprel`` hardware
+LUT — is lowered by the same :func:`_emit_expr` the Euler and RK4 paths use, applied
+to a single composed expression per variable, so exp-Euler inherits every Q-format and
+the transcendental LUT for free (one integrator × N representations). State renders as
+``<var>_reg`` — the pre-step value — so all increments are computed from the pre-step
+state (a forward, not Gauss–Seidel, update), exactly as the golden applies them.
+Targets deterministic models (no stochastic ``xi`` term). Returns
+``(deriv_wires, intermediates, pipeline_regs, mul_count, trunc_count)``.
+
 ### Function `_build_neuron_core(neuron, q)`
 Emit the combinational next-state + threshold + reset fragments.
 

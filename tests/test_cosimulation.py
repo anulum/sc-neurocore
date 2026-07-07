@@ -1066,3 +1066,120 @@ def test_rk4_pipelining_is_rejected() -> None:
         compile_to_verilog(
             neuron, module_name="sc_fhn_rk4", data_width=32, fraction=16, pipeline_stages=1
         )
+
+
+# ══════════════════════════════════════════════════════════════════════
+# Exponential-Euler (Rush–Larsen) integrator lowering in the schema→Verilog path
+# ══════════════════════════════════════════════════════════════════════
+
+# Models whose emitted exp-Euler step reproduces the Python golden spike count exactly
+# at Q16.16. The set spans the linearisation's regimes: constant-Jacobian gating
+# (lif, lapicque — the canonical d/dt=(x_inf−x)/tau exponential-Euler win), a linear
+# multi-variable oscillator (resonate_fire, exercising the simultaneous forward update),
+# and a transcendental, state-dependent Jacobian (adex A = (exp(...)−1)/tau; theta
+# A = (1−I)·… via the sin LUT) — proving the A datapath and the exprel/exp hardware LUTs
+# lower bit-true where the golden's exprel path lands on a tabulated point. The stiff
+# hybrids (quadratic_if, izhikevich — the 0.04·v² / v² spike explosion) are a documented
+# per-model range limit at this word length, the same limit the Euler and RK4 baselines
+# carry, not an emitter defect.
+_EXP_EULER_EXACT_MODELS = [
+    ("lif", 50.0, 300),
+    ("lapicque", 50.0, 300),
+    ("resonate_fire", 5.0, 300),
+    ("adex", 1000.0, 500),
+    ("theta", 50.0, 300),
+]
+# Same Q-format menu as RK4 — the integrator is a graph rewrite, the Q-format a separate
+# emission parameter, so exp-Euler inherits every representation for free.
+_EXP_EULER_Q_FORMATS = [
+    ("Q16.16", 32, 16),
+    ("Q12.12", 24, 12),
+    ("Q18.18", 36, 18),
+    ("Q20.12", 32, 12),
+]
+
+
+@pytest.mark.skipif(not HAS_IVERILOG, reason="Icarus Verilog not available")
+class TestExpEulerEmitter:
+    """The schema→Verilog emitter lowers a linearised exponential-Euler step.
+
+    When a schema declares ``method="exp_euler"`` the emitter emits, per variable,
+    ``d<var> = f·dt·exprel(A·dt)`` with ``A = ∂f/∂x`` — the *same* symbolic derivative
+    string the golden compiled (``EquationNeuron.jacobian_expressions``) lowered by the
+    same fixed-point expression emitter as the Euler and RK4 paths, reusing the ``exprel``
+    hardware LUT. That reuse makes the integrator agnostic to the number representation,
+    so exp-Euler inherits every Q-format for free, and collapses to forward Euler in the
+    zero-Jacobian limit (``exprel(0)=1``). Exact spike-count parity holds for the gating,
+    linear and transcendental-Jacobian models above; the stiff hybrids (izhikevich,
+    quadratic_if) remain a documented per-model range limit, not an emitter defect.
+    """
+
+    @pytest.mark.parametrize("model_name,current,n_steps", _EXP_EULER_EXACT_MODELS)
+    def test_exp_euler_tracks_python_golden(
+        self, model_name: str, current: float, n_steps: int
+    ) -> None:
+        """Emitted exp-Euler reproduces the Python golden spike count exactly (Q16.16)."""
+        py_spikes = _spike_count_method(model_name, n_steps, current, "exp_euler")
+        vlog_spikes = _verilog_spike_count_method(model_name, n_steps, current, 32, 16, "exp_euler")
+        assert py_spikes > 0, f"Python exp-Euler {model_name} must spike"
+        assert vlog_spikes == py_spikes, (
+            f"{model_name} exp-Euler mismatch: Python={py_spikes}, Verilog={vlog_spikes}"
+        )
+
+    def test_exp_euler_collapses_to_forward_euler_at_zero_jacobian(self) -> None:
+        """With A=0 (perfect integrator) exprel(0)=1, so exp-Euler *is* forward Euler.
+
+        The emitted exp-Euler datapath still multiplies by the tabulated ``exprel(0)``,
+        so this proves the zero-Jacobian limit survives the LUT: the exp-Euler RTL, the
+        Euler RTL and the Python golden all agree exactly.
+        """
+        py_spikes = _spike_count_method("perfect_integrator", 300, 5.0, "exp_euler")
+        vlog_exp = _verilog_spike_count_method("perfect_integrator", 300, 5.0, 32, 16, "exp_euler")
+        vlog_euler = _verilog_spike_count_method("perfect_integrator", 300, 5.0, 32, 16, "euler")
+        assert py_spikes > 0
+        assert vlog_exp == vlog_euler == py_spikes, (
+            f"A=0 limit broke: exp={vlog_exp}, euler={vlog_euler}, py={py_spikes}"
+        )
+
+    def test_exp_euler_path_is_distinct_from_euler(self) -> None:
+        """The exp-Euler emitter is a genuine linearised step, not aliased to Euler.
+
+        FitzHugh-Nagumo at I=5.0 is nonlinear enough that the exponential correction
+        moves the spike count: the emitted exp-Euler differs from the emitted Euler and
+        still tracks the Python exp-Euler golden within the same fixed-point band the
+        Euler path achieves.
+        """
+        py_exp = _spike_count_method("fitzhugh_nagumo", 300, 5.0, "exp_euler")
+        vlog_exp = _verilog_spike_count_method("fitzhugh_nagumo", 300, 5.0, 32, 16, "exp_euler")
+        vlog_euler = _verilog_spike_count_method("fitzhugh_nagumo", 300, 5.0, 32, 16, "euler")
+        assert vlog_exp != vlog_euler, (
+            "exp-Euler output must differ from Euler for a nonlinear model"
+        )
+        gap_pct = abs(py_exp - vlog_exp) / max(py_exp, 1) * 100
+        assert gap_pct <= 6.0, f"exp-Euler gap {gap_pct:.1f}% (Python={py_exp}, Verilog={vlog_exp})"
+
+    @pytest.mark.parametrize("mode_name,data_width,fraction", _EXP_EULER_Q_FORMATS)
+    def test_exp_euler_is_representation_agnostic(
+        self, mode_name: str, data_width: int, fraction: int
+    ) -> None:
+        """exp-Euler inherits every Q-format for free (integrator ⟂ number representation)."""
+        py_spikes = _spike_count_method("lif", 300, 50.0, "exp_euler")
+        vlog_spikes = _verilog_spike_count_method(
+            "lif", 300, 50.0, data_width, fraction, "exp_euler"
+        )
+        assert vlog_spikes == py_spikes, (
+            f"{mode_name} exp-Euler mismatch: Python={py_spikes}, Verilog={vlog_spikes}"
+        )
+
+
+def test_exp_euler_pipelining_is_rejected() -> None:
+    """exp-Euler emission fails fast on pipelining (unsupported) rather than emit wrong RTL."""
+    from sc_neurocore.compiler.equation_compiler import compile_to_verilog
+
+    neuron = UniversalNeuron.from_schema("lif", method_override="exp_euler").to_equation_neuron()
+    with pytest.raises(
+        NotImplementedError, match="exp_euler Verilog emission does not support pipelining"
+    ):
+        compile_to_verilog(
+            neuron, module_name="sc_lif_exp_euler", data_width=32, fraction=16, pipeline_stages=1
+        )
