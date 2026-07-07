@@ -31,10 +31,17 @@ TestQ412Precision
 TestQ1616Precision
     Q16.16 (32-bit): gold standard fidelity, zero-current silence.
 
+TestSchemaGapModelCosim
+    WC-A5 Tier A: honest cosim status for the six schema-gap models —
+    FitzHugh-Nagumo spike-parity at Q16.16; exp_if / Hindmarsh-Rose / Rulkov
+    compile-valid only (stiff exp, chaos, map instability); poisson /
+    escape_rate stochastic and excluded from deterministic parity.
+
 Verified Results (2026-05-01)
 -----------------------------
 All 5 models: 0.0% spike count gap at Q8.8 (I=50.0, 200 steps).
 All 3 precision modes (Q8.8, Q4.12, Q16.16): 0.0% gap for LIF.
+FitzHugh-Nagumo (2026-07-07): 0.0% gap at Q16.16, I=0.8, 300 steps (7 spikes).
 
 Prerequisites
 -------------
@@ -502,6 +509,25 @@ class TestQ1616Precision:
             f"Connor-Stevens Q16.16 gap {gap_pct:.1f}% (Python={py_spikes}, Verilog={vlog_spikes})"
         )
 
+    def test_fitzhugh_nagumo_q1616_parity(self) -> None:
+        """FitzHugh-Nagumo relaxation oscillator co-simulates bit-true at Q16.16.
+
+        FHN (FitzHugh 1961) is a two-variable cubic relaxation oscillator with no
+        biophysical reset; the schema imposes a ``v > 1.0`` spike detector plus
+        reset. At Q8.8 the cubic ``v**3 / 3`` term quantises too coarsely (40-67%
+        gap), but Q16.16 reproduces the limit cycle exactly: ``I=0.8`` yields 7
+        spikes in both Python and Verilog over the 300-step window, deterministically
+        (verified 2026-07-07, WC-A5 Tier A). This closes the last cleanly
+        deterministic schema-gap model into the spike-parity set.
+        """
+        py_spikes = _python_spike_count("fitzhugh_nagumo", 300, 0.8)
+        vlog_spikes = _verilog_spike_count_q1616("fitzhugh_nagumo", 300, 0.8)
+        assert py_spikes > 0 and vlog_spikes > 0
+        gap_pct = abs(py_spikes - vlog_spikes) / max(py_spikes, 1) * 100
+        assert gap_pct <= 5.0, (
+            f"FitzHugh-Nagumo Q16.16 gap {gap_pct:.1f}% (Python={py_spikes}, Verilog={vlog_spikes})"
+        )
+
 
 # ══════════════════════════════════════════════════════════════════════
 # Generic multi-precision co-simulation infrastructure
@@ -789,3 +815,71 @@ class TestTranscendentalCoSimulation:
             module_name="sc_morris_lecar"
         )
         assert "_cosh_lut" in verilog
+
+
+# ══════════════════════════════════════════════════════════════════════
+# WC-A5 Tier A — honest cosim classification of the schema-gap models
+# ══════════════════════════════════════════════════════════════════════
+#
+# Six schema-DSL models had no spike-parity coverage. Empirical Python↔Verilog
+# probing (2026-07-07) classifies each by what can be *honestly* validated,
+# rather than forcing a green test at a flattering operating point:
+#
+#   fitzhugh_nagumo  → spike-parity at Q16.16 — promoted into TestQ1616Precision.
+#   exp_if           → compile-valid RTL only. delta_t·exp((v−v_th)/delta_t)
+#                      saturates the exp LUT near threshold; Q8.8 never fires and
+#                      Q16.16 matches only in a narrow drive band (exact at I=500,
+#                      50% gap at I=1000), so no robust parity claim.
+#   hindmarsh_rose   → compile-valid RTL only. Chaotic burster: subthreshold
+#                      (0 spikes) for n≤80, then sensitive dependence makes the
+#                      fixed-point and float trains diverge (422%→1000% gap) once
+#                      bursting starts — bit-true parity is undefined for chaos.
+#   rulkov_map       → compile-valid RTL only. Deterministic discrete map, but the
+#                      float reference itself overflows on long windows in the
+#                      bursting regime (numerically unstable), so no long-window
+#                      spike-count parity is claimable.
+#   poisson,         → stochastic (schema `stochastic = true`, threshold
+#   escape_rate        `condition = "stochastic"`): spike emission is a random
+#                      process, so deterministic spike-count parity is not defined.
+#
+# Full evidence: docs/internal (WC-A5 Tier-A report).
+_SCHEMA_GAP_COMPILE_ONLY = ["exp_if", "hindmarsh_rose", "rulkov_map"]
+_SCHEMA_GAP_STOCHASTIC = ["poisson", "escape_rate"]
+
+
+@pytest.mark.skipif(not HAS_IVERILOG, reason="Icarus Verilog not available")
+class TestSchemaGapModelCosim:
+    """WC-A5 Tier-A closure: every schema-gap model has an explicit cosim status.
+
+    ``fitzhugh_nagumo`` is spike-parity validated in ``TestQ1616Precision``. The
+    remaining five are classified here: deterministic-but-not-parity models are
+    asserted to lower to valid RTL (the honest compile-only precedent used for
+    glif/morris_lecar at Q8.8), and stochastic models are asserted to be excluded
+    from every deterministic cosim set with their schema stochastic flag confirmed.
+    """
+
+    @pytest.mark.parametrize("model_name", _SCHEMA_GAP_COMPILE_ONLY)
+    def test_compile_valid_but_not_spike_parity(self, model_name: str) -> None:
+        """exp_if / hindmarsh_rose / rulkov_map lower to iverilog-valid Verilog.
+
+        Spike-count parity is not scientifically claimable for these (stiff exp
+        saturation, chaotic sensitive-dependence, map instability — see module
+        notes), so this asserts the fixed-point *path* is valid rather than a
+        spike count, matching the honest compile-only precedent for coarse-LUT
+        transcendental models.
+        """
+        assert _verilog_compiles(model_name)
+
+    @pytest.mark.parametrize("model_name", _SCHEMA_GAP_STOCHASTIC)
+    def test_stochastic_models_excluded_from_deterministic_cosim(self, model_name: str) -> None:
+        """poisson / escape_rate are stochastic, so bit-true spike parity is undefined.
+
+        Assert the schema declares the model stochastic and that it appears in no
+        deterministic cosim set, so the exclusion is explicit and audited rather
+        than an accidental omission.
+        """
+        neuron = UniversalNeuron.from_schema(model_name)
+        assert neuron.extensions.get("stochastic") is True
+        assert model_name not in _COSIM_MODELS
+        assert model_name not in _TRANSCENDENTAL_COSIM_MODELS
+        assert model_name not in _SCHEMA_GAP_COMPILE_ONLY
