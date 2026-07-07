@@ -2,7 +2,9 @@
 
 """Generate the maintained Markdown API reference from Python docstrings."""
 
+import argparse
 import ast
+from collections.abc import Sequence
 from pathlib import Path
 from typing import TypedDict
 
@@ -106,10 +108,20 @@ def _markdown_text(text: str) -> str:
     return text.replace("[", "&#91;").replace("]", "&#93;")
 
 
-def generate_markdown(src_dir: str | Path, output_file: str | Path) -> None:
-    """Generate the Markdown API reference for a source directory."""
+def build_markdown(src_dir: str | Path) -> str:
+    """Build and return the Markdown API reference for a source directory.
+
+    Parameters
+    ----------
+    src_dir : str or pathlib.Path
+        Root of the ``sc_neurocore`` package source tree.
+
+    Returns
+    -------
+    str
+        The full Markdown document, terminated by a single trailing newline.
+    """
     src_path = Path(src_dir)
-    output_path = Path(output_file)
     md = "# SC-NeuroCore API Reference\n\n"
 
     for filepath in _iter_source_files(src_path):
@@ -143,12 +155,79 @@ def generate_markdown(src_dir: str | Path, output_file: str | Path) -> None:
 
         md += "---\n\n"
 
-    output_path.write_text(f"{md.rstrip()}\n", encoding="utf-8")
+    return f"{md.rstrip()}\n"
+
+
+def generate_markdown(src_dir: str | Path, output_file: str | Path) -> None:
+    """Generate the Markdown API reference for a source directory."""
+    output_path = Path(output_file)
+    output_path.write_text(build_markdown(src_dir), encoding="utf-8")
     print(f"Generated {output_path}")
 
 
-if __name__ == "__main__":
+def check_markdown(src_dir: str | Path, output_file: str | Path) -> bool:
+    """Return whether ``output_file`` matches freshly generated documentation.
+
+    Parameters
+    ----------
+    src_dir : str or pathlib.Path
+        Root of the ``sc_neurocore`` package source tree.
+    output_file : str or pathlib.Path
+        The committed Markdown API reference to compare against.
+
+    Returns
+    -------
+    bool
+        ``True`` when the committed file exists and is byte-identical to the
+        freshly generated document, ``False`` otherwise.
+    """
+    output_path = Path(output_file)
+    if not output_path.exists():
+        return False
+    return output_path.read_text(encoding="utf-8") == build_markdown(src_dir)
+
+
+def _default_paths() -> tuple[Path, Path]:
     repo_root = Path(__file__).resolve().parents[1]
-    src = repo_root / "src" / "sc_neurocore"
-    out = repo_root / "docs" / "API_REFERENCE.md"
+    return repo_root / "src" / "sc_neurocore", repo_root / "docs" / "API_REFERENCE.md"
+
+
+def main(argv: Sequence[str] | None = None) -> int:
+    """Regenerate the Markdown API reference or check that it is up to date.
+
+    Parameters
+    ----------
+    argv : sequence of str, optional
+        Command-line arguments (defaults to ``sys.argv``). ``--check`` verifies
+        freshness without writing; the default action regenerates the file.
+
+    Returns
+    -------
+    int
+        Process exit code: ``0`` on success, ``1`` when ``--check`` finds the
+        committed reference stale.
+    """
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument(
+        "--check",
+        action="store_true",
+        help="Fail if docs/API_REFERENCE.md is stale instead of regenerating it.",
+    )
+    args = parser.parse_args(argv)
+
+    src, out = _default_paths()
+    if args.check:
+        if check_markdown(src, out):
+            print(f"{out} is up to date")
+            return 0
+        print(
+            f"::error::{out} is stale; run `python scripts/generate_docs.py` and commit the result"
+        )
+        return 1
+
     generate_markdown(src, out)
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())
