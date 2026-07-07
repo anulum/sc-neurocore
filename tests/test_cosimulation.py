@@ -65,6 +65,14 @@ from sc_neurocore.compiler.equation_compiler import (
     generate_testbench,
 )
 
+# Method-based spike-count primitives are shared with the pipelined co-simulation suite
+# (``tests/test_pipeline_cosim.py``); they live in ``tests/cosim_support.py``. Imported under
+# the module-local underscore names so the existing RK4 / exp-Euler call sites are unchanged.
+from tests.cosim_support import (
+    spike_count_method as _spike_count_method,
+    verilog_spike_count_method as _verilog_spike_count_method,
+)
+
 HAS_IVERILOG = shutil.which("iverilog") is not None
 
 # Co-simulation parameters
@@ -926,67 +934,6 @@ class TestSchemaGapModelCosim:
 # ══════════════════════════════════════════════════════════════════════
 
 
-def _spike_count_method(model_name: str, n_steps: int, current: float, method: str) -> int:
-    """Python golden spike count with an explicit integrator ``method`` override."""
-    neuron = UniversalNeuron.from_schema(model_name, method_override=method)
-    return sum(1 for _ in range(n_steps) if neuron.step(I=current))
-
-
-def _verilog_spike_count_method(
-    model_name: str,
-    n_steps: int,
-    current: float,
-    data_width: int,
-    fraction: int,
-    method: str,
-) -> int:
-    """Compile at ``method``/``(data_width, fraction)`` and simulate, returning spikes."""
-    neuron = UniversalNeuron.from_schema(model_name, method_override=method)
-    eq_neuron = neuron.to_equation_neuron()
-    module_name = f"sc_{model_name}_{method}_q{data_width - fraction}_{fraction}"
-
-    verilog = neuron.to_verilog(module_name=module_name, data_width=data_width, fraction=fraction)
-    tb = generate_testbench(
-        eq_neuron,
-        module_name=module_name,
-        n_steps=n_steps,
-        input_current=current,
-        data_width=data_width,
-        fraction=fraction,
-    )
-
-    with tempfile.TemporaryDirectory() as tmpdir:
-        rtl_path = Path(tmpdir) / f"{module_name}.v"
-        tb_path = Path(tmpdir) / f"tb_{module_name}.v"
-        out_path = Path(tmpdir) / f"tb_{module_name}"
-
-        rtl_path.write_text(verilog)
-        tb_path.write_text(tb)
-
-        result = subprocess.run(
-            ["iverilog", "-g2012", "-o", str(out_path), str(rtl_path), str(tb_path)],
-            capture_output=True,
-            text=True,
-            timeout=30,
-        )
-        if result.returncode != 0:
-            raise RuntimeError(f"iverilog compile failed:\n{result.stderr}")
-
-        result = subprocess.run(
-            ["vvp", str(out_path)],
-            capture_output=True,
-            text=True,
-            timeout=30,
-        )
-        if result.returncode != 0:
-            raise RuntimeError(f"vvp simulation failed:\n{result.stderr}")
-
-        match = re.search(r"(\d+) spikes", result.stdout)
-        if not match:
-            raise RuntimeError(f"Could not parse spike count from:\n{result.stdout}")
-        return int(match.group(1))
-
-
 # Smooth-ODE models whose emitted RK4 reproduces the Python RK4 golden exactly at Q16.16.
 # (izhikevich is excluded: its 0.04·v² spike explosion is a stiff-hybrid range limit,
 # already special-cased for the same reason in the Euler baseline set.)
@@ -1053,19 +1000,8 @@ class TestRK4Emitter:
         )
 
 
-def test_rk4_pipelining_is_rejected() -> None:
-    """RK4 emission fails fast on pipelining (unsupported) rather than emit silently-wrong RTL."""
-    from sc_neurocore.compiler.equation_compiler import compile_to_verilog
-
-    neuron = UniversalNeuron.from_schema(
-        "fitzhugh_nagumo", method_override="rk4"
-    ).to_equation_neuron()
-    with pytest.raises(
-        NotImplementedError, match="RK4 Verilog emission does not support pipelining"
-    ):
-        compile_to_verilog(
-            neuron, module_name="sc_fhn_rk4", data_width=32, fraction=16, pipeline_stages=1
-        )
+# The latency-aware pipelined co-simulation (SR-2) lives in ``tests/test_pipeline_cosim.py``,
+# using the shared primitives in ``tests/cosim_support.py``.
 
 
 # ══════════════════════════════════════════════════════════════════════
@@ -1172,14 +1108,4 @@ class TestExpEulerEmitter:
         )
 
 
-def test_exp_euler_pipelining_is_rejected() -> None:
-    """exp-Euler emission fails fast on pipelining (unsupported) rather than emit wrong RTL."""
-    from sc_neurocore.compiler.equation_compiler import compile_to_verilog
-
-    neuron = UniversalNeuron.from_schema("lif", method_override="exp_euler").to_equation_neuron()
-    with pytest.raises(
-        NotImplementedError, match="exp_euler Verilog emission does not support pipelining"
-    ):
-        compile_to_verilog(
-            neuron, module_name="sc_lif_exp_euler", data_width=32, fraction=16, pipeline_stages=1
-        )
+# The pipelined exp-Euler golden-parity test lives in ``tests/test_pipeline_cosim.py``.

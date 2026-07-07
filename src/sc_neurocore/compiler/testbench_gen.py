@@ -21,11 +21,12 @@ def generate_testbench(
     input_current: float = 1.0,
     data_width: int = 16,
     fraction: int = 8,
+    cycles_per_step: int = 1,
 ) -> str:
     """Generate a Verilog testbench for a compiled equation neuron.
 
-    Drives the module with constant current for n_steps clock cycles,
-    monitors spike_out and state outputs, and produces a VCD waveform.
+    Drives the module with constant current for ``n_steps`` logical steps and
+    monitors spike_out and state outputs, producing a VCD waveform.
 
     Parameters
     ----------
@@ -34,19 +35,28 @@ def generate_testbench(
     module_name : str
         Must match the module name used in compile_to_verilog.
     n_steps : int
-        Number of simulation clock cycles.
+        Number of logical integration steps to drive.
     input_current : float
         Constant input current (Q-encoded internally).
     data_width : int
         Bit width matching the compiled module.
     fraction : int
         Fractional bits matching the compiled module.
+    cycles_per_step : int
+        Clock cycles per logical step. Combinational modules advance one logical
+        step per clock (``1``, the default). A pipelined module advances one
+        logical step every ``latency + 1`` clocks and gates ``spike_out`` to pulse
+        only on that valid cycle, so pass ``latency + 1`` here to drive ``n_steps``
+        logical steps; the spike count over the run is unchanged by the padding.
 
     Returns
     -------
     str
         Verilog testbench source code.
     """
+    if cycles_per_step < 1:
+        raise ValueError(f"cycles_per_step must be >= 1, got {cycles_per_step}")
+    total_cycles = n_steps * cycles_per_step
     q = Q88(data_width=data_width, fraction=fraction)
     i_val = q.encode_signed_literal(input_current)
 
@@ -98,15 +108,15 @@ def generate_testbench(
     lines.append("    rst_n = 1;")
     lines.append("    @(posedge clk);  // 1 settling cycle after reset")
     lines.append("")
-    lines.append(f"    // Run {n_steps} cycles")
-    lines.append(f"    repeat ({n_steps}) begin")
+    lines.append(f"    // Run {n_steps} logical step(s) × {cycles_per_step} cycle(s)/step")
+    lines.append(f"    repeat ({total_cycles}) begin")
     lines.append("        @(posedge clk);")
     lines.append("        #1;  // let combinational outputs settle")
     lines.append("        if (spike_out) spike_count = spike_count + 1;")
     lines.append("    end")
     lines.append("")
     lines.append(
-        f'    $display("Simulation complete: %0d spikes in {n_steps} cycles", spike_count);'
+        f'    $display("Simulation complete: %0d spikes in {total_cycles} cycles", spike_count);'
     )
     for var in state_vars:
         lines.append(

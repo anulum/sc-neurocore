@@ -965,7 +965,7 @@
     "python_model_classes": 158,
     "python_model_source_modules": 152,
     "rust_pyo3_model_wrappers": 175,
-    "test_files": 986
+    "test_files": 989
   },
   "documentation": {
     "public_pages": [
@@ -2814,6 +2814,7 @@
       "tests/__init__.py",
       "tests/_mpi_helpers/mpi_runner_worker.py",
       "tests/conftest.py",
+      "tests/cosim_support.py",
       "tests/e2e/__init__.py",
       "tests/e2e/conftest.py",
       "tests/e2e/test_e2e_pipeline.py",
@@ -2824,6 +2825,7 @@
       "tests/equivalence/test_gnn_equiv.py",
       "tests/equivalence/test_layer_equiv.py",
       "tests/equivalence/test_neuron_equiv.py",
+      "tests/module_reload.py",
       "tests/performance_guard.py",
       "tests/studio_job_tasks.py",
       "tests/test_accel/test_accel_mirror_authority.py",
@@ -3449,6 +3451,7 @@
       "tests/test_physics/test_heat.py",
       "tests/test_physics.py",
       "tests/test_pipeline_analysis.py",
+      "tests/test_pipeline_cosim.py",
       "tests/test_pipeline_ingestion_contracts.py",
       "tests/test_pipeline_stages.py",
       "tests/test_pipeline_training.py",

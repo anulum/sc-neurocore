@@ -128,6 +128,8 @@ def _emit_rk4_deriv_wires(
     *,
     data_width: int,
     fraction: int,
+    use_pipeline: bool,
+    pp_set: set[str],
     mul_start: int,
     trunc_start: int,
 ) -> tuple[list[str], list[str], list[str], int, int]:
@@ -148,7 +150,11 @@ def _emit_rk4_deriv_wires(
     are inherited without special-casing (one integrator × N representations). The
     state at each stage is supplied through ``param_map`` (state variables render as
     the stage wire names), exactly as the threshold emitter substitutes ``<var>_next``.
-    Targets deterministic models (no stochastic ``xi`` term). Returns
+    Targets deterministic models (no stochastic ``xi`` term). When ``use_pipeline`` (or an
+    explicit ``pp_set``) is set, every derivative-evaluation multiply across the four stages is
+    registered by :func:`_emit_expr` (the cheap constant ``dt``-scalings stay combinational); the
+    fill-counter FSM in :func:`compile_to_verilog` holds the state steady until the whole stage
+    graph drains, so the recurrence stays bit-true regardless of pipeline depth. Returns
     ``(deriv_wires, intermediates, pipeline_regs, mul_count, trunc_count)``.
     """
     inter: list[str] = []
@@ -166,7 +172,14 @@ def _emit_rk4_deriv_wires(
         for var in variables:
             safe_var = state_var_map[var]
             vexpr, ints, mc, tc, pregs = _emit_expr(
-                neuron.equations[var], {}, stage_map, q, mul_start=mc, trunc_start=tc
+                neuron.equations[var],
+                {},
+                stage_map,
+                q,
+                mul_start=mc,
+                trunc_start=tc,
+                pipeline=use_pipeline,
+                pipeline_points=pp_set,
             )
             inter.extend(ints)
             regs.extend(pregs)
@@ -220,6 +233,8 @@ def _emit_exp_euler_deriv_wires(
     q: Q88,
     *,
     data_width: int,
+    use_pipeline: bool,
+    pp_set: set[str],
     mul_start: int,
     trunc_start: int,
 ) -> tuple[list[str], list[str], list[str], int, int]:
@@ -244,8 +259,11 @@ def _emit_exp_euler_deriv_wires(
     the transcendental LUT for free (one integrator × N representations). State renders as
     ``<var>_reg`` — the pre-step value — so all increments are computed from the pre-step
     state (a forward, not Gauss–Seidel, update), exactly as the golden applies them.
-    Targets deterministic models (no stochastic ``xi`` term). Returns
-    ``(deriv_wires, intermediates, pipeline_regs, mul_count, trunc_count)``.
+    Targets deterministic models (no stochastic ``xi`` term). When ``use_pipeline`` (or an
+    explicit ``pp_set``) is set every multiply in the composed increment is registered by
+    :func:`_emit_expr`; the fill-counter FSM in :func:`compile_to_verilog` holds the state
+    steady until those stages drain, so the recurrence stays bit-true regardless of depth.
+    Returns ``(deriv_wires, intermediates, pipeline_regs, mul_count, trunc_count)``.
     """
     inter: list[str] = []
     regs: list[str] = []
@@ -261,7 +279,14 @@ def _emit_exp_euler_deriv_wires(
         # associativity ((f*dt)*exprel(A*dt)) and isolate f/A as their own sub-trees.
         increment_expr = f"(({f_expr}) * {dt_lit}) * exprel((({a_expr})) * {dt_lit})"
         vexpr, ints, mc, tc, pregs = _emit_expr(
-            increment_expr, state_var_map, param_map, q, mul_start=mc, trunc_start=tc
+            increment_expr,
+            state_var_map,
+            param_map,
+            q,
+            mul_start=mc,
+            trunc_start=tc,
+            pipeline=use_pipeline,
+            pipeline_points=pp_set,
         )
         inter.extend(ints)
         regs.extend(pregs)
@@ -308,10 +333,6 @@ def _build_neuron_core(
 
     method = getattr(neuron, "method", "euler")
     if method == "rk4":
-        if use_pipeline or pp_set:
-            raise NotImplementedError(
-                "RK4 Verilog emission does not support pipelining yet; use pipeline_stages=0"
-            )
         deriv_wires, deriv_intermediates, deriv_regs, _mc, _tc = _emit_rk4_deriv_wires(
             neuron,
             state_var_map,
@@ -319,20 +340,20 @@ def _build_neuron_core(
             q,
             data_width=data_width,
             fraction=fraction,
+            use_pipeline=use_pipeline,
+            pp_set=pp_set,
             mul_start=_mc,
             trunc_start=_tc,
         )
     elif method == "exp_euler":
-        if use_pipeline or pp_set:
-            raise NotImplementedError(
-                "exp_euler Verilog emission does not support pipelining yet; use pipeline_stages=0"
-            )
         deriv_wires, deriv_intermediates, deriv_regs, _mc, _tc = _emit_exp_euler_deriv_wires(
             neuron,
             state_var_map,
             param_map,
             q,
             data_width=data_width,
+            use_pipeline=use_pipeline,
+            pp_set=pp_set,
             mul_start=_mc,
             trunc_start=_tc,
         )
@@ -594,13 +615,62 @@ def compile_to_verilog(
     lines.append("")
 
     if all_pipeline_regs:
-        lines.append("// Pipeline register stage — register multiply outputs")
-        lines.append("always @(posedge clk) begin")
+        # Reset the staging registers to 0 so an unfilled pipeline never injects X into the
+        # state feedback; the fill counter below guarantees the state only advances once these
+        # stages have drained, so the reset value is never read as a live increment.
+        lines.append("// Pipeline register stage — register multiply outputs (reset to 0)")
+        lines.append("always @(posedge clk or negedge rst_n) begin")
+        lines.append("    if (!rst_n) begin")
+        for reg_decl in all_pipeline_regs:
+            reg_name = reg_decl.split()[-1].rstrip(";")
+            lines.append(f"        {reg_name} <= 0;")
+        lines.append("    end else begin")
         for reg_decl in all_pipeline_regs:
             reg_name = reg_decl.split()[-1].rstrip(";")
             wire_name = reg_name[:-2] if reg_name.endswith("_r") else reg_name
-            lines.append(f"    {reg_name} <= {wire_name};")
+            lines.append(f"        {reg_name} <= {wire_name};")
+        lines.append("    end")
         lines.append("end")
+        lines.append("")
+
+    # Build the single-step body once (8-space base indent). When pipelined it is gated behind
+    # the fill counter so the recurrence only advances after the register stages have drained.
+    step_lines: list[str] = []
+    if threshold_verilog:
+        step_lines.append(f"        if ({threshold_verilog}) begin")
+        step_lines.append("            spike_out <= 1'b1;")
+        for assign in reset_assignments:
+            step_lines.append(assign)
+        for var in neuron.equations:
+            safe_var = state_var_map[var]
+            if var not in neuron.reset_rules:
+                step_lines.append(f"            {safe_var}_reg <= {safe_var}_next;")
+        for var in neuron.equations:
+            safe_var = state_var_map[var]
+            step_lines.append(f"            {safe_var}_out <= {safe_var}_reg;")
+        step_lines.append("        end else begin")
+        step_lines.append("            spike_out <= 1'b0;")
+        for var in neuron.equations:
+            safe_var = state_var_map[var]
+            step_lines.append(f"            {safe_var}_reg <= {safe_var}_next;")
+            step_lines.append(f"            {safe_var}_out <= {safe_var}_next;")
+        step_lines.append("        end")
+    else:
+        step_lines.append("        spike_out <= 1'b0;")
+        for var in neuron.equations:
+            step_lines.append(f"        {var}_reg <= {var}_next;")
+            step_lines.append(f"        {var}_out <= {var}_next;")
+
+    # Fill counter: a self-recurrent step whose increment takes ``total_pipeline_latency``
+    # register stages must hold the state steady for that many cycles, else the increment
+    # applied would reflect stale (mid-fill) products and break bit-exactness with the golden.
+    # ``total_pipeline_latency`` (the register count) upper-bounds the true pipeline depth, so
+    # holding for that many cycles guarantees every stage has drained before the state advances
+    # — one logical step every ``latency + 1`` clocks, spikes only on the valid cycle.
+    if total_pipeline_latency > 0:
+        cnt_w = max(1, total_pipeline_latency.bit_length())
+        lines.append(f"reg [{cnt_w - 1}:0] _pl_cnt;")
+        lines.append(f"wire _pl_valid = (_pl_cnt == {cnt_w}'d{total_pipeline_latency});")
         lines.append("")
 
     lines.append("always @(posedge clk or negedge rst_n) begin")
@@ -611,32 +681,20 @@ def compile_to_verilog(
         lines.append(f"        {safe_var}_reg <= {init_val};")
         lines.append(f"        {safe_var}_out <= {init_val};")
     lines.append("        spike_out <= 1'b0;")
+    if total_pipeline_latency > 0:
+        lines.append(f"        _pl_cnt <= {cnt_w}'d0;")
     lines.append("    end else begin")
 
-    if threshold_verilog:
-        lines.append(f"        if ({threshold_verilog}) begin")
-        lines.append("            spike_out <= 1'b1;")
-        for assign in reset_assignments:
-            lines.append(assign)
-        for var in neuron.equations:
-            safe_var = state_var_map[var]
-            if var not in neuron.reset_rules:
-                lines.append(f"            {safe_var}_reg <= {safe_var}_next;")
-        for var in neuron.equations:
-            safe_var = state_var_map[var]
-            lines.append(f"            {safe_var}_out <= {safe_var}_reg;")
+    if total_pipeline_latency > 0:
+        lines.append(f"        _pl_cnt <= _pl_valid ? {cnt_w}'d0 : (_pl_cnt + {cnt_w}'d1);")
+        lines.append("        if (_pl_valid) begin")
+        for sline in step_lines:
+            lines.append("    " + sline)
         lines.append("        end else begin")
         lines.append("            spike_out <= 1'b0;")
-        for var in neuron.equations:
-            safe_var = state_var_map[var]
-            lines.append(f"            {safe_var}_reg <= {safe_var}_next;")
-            lines.append(f"            {safe_var}_out <= {safe_var}_next;")
         lines.append("        end")
     else:
-        lines.append("        spike_out <= 1'b0;")
-        for var in neuron.equations:
-            lines.append(f"        {var}_reg <= {var}_next;")
-            lines.append(f"        {var}_out <= {var}_next;")
+        lines.extend(step_lines)
 
     lines.append("    end")
     lines.append("end")

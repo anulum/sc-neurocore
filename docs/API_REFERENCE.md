@@ -11488,11 +11488,11 @@ Reject non-numeric, non-finite, or negative error-bound fields.
 
 ## Module `compiler.testbench_gen`
 
-### Function `generate_testbench(neuron, module_name, n_steps, input_current, data_width, fraction)`
+### Function `generate_testbench(neuron, module_name, n_steps, input_current, data_width, fraction, cycles_per_step)`
 Generate a Verilog testbench for a compiled equation neuron.
 
-Drives the module with constant current for n_steps clock cycles,
-monitors spike_out and state outputs, and produces a VCD waveform.
+Drives the module with constant current for ``n_steps`` logical steps and
+monitors spike_out and state outputs, producing a VCD waveform.
 
 Parameters
 ----------
@@ -11501,13 +11501,19 @@ neuron : EquationNeuron
 module_name : str
     Must match the module name used in compile_to_verilog.
 n_steps : int
-    Number of simulation clock cycles.
+    Number of logical integration steps to drive.
 input_current : float
     Constant input current (Q-encoded internally).
 data_width : int
     Bit width matching the compiled module.
 fraction : int
     Fractional bits matching the compiled module.
+cycles_per_step : int
+    Clock cycles per logical step. Combinational modules advance one logical
+    step per clock (``1``, the default). A pipelined module advances one
+    logical step every ``latency + 1`` clocks and gates ``spike_out`` to pulse
+    only on that valid cycle, so pass ``latency + 1`` here to drive ``n_steps``
+    logical steps; the spike count over the run is unchanged by the padding.
 
 Returns
 -------
@@ -11568,7 +11574,11 @@ the number representation: all Q-formats, rounding modes and overflow handling
 are inherited without special-casing (one integrator × N representations). The
 state at each stage is supplied through ``param_map`` (state variables render as
 the stage wire names), exactly as the threshold emitter substitutes ``<var>_next``.
-Targets deterministic models (no stochastic ``xi`` term). Returns
+Targets deterministic models (no stochastic ``xi`` term). When ``use_pipeline`` (or an
+explicit ``pp_set``) is set, every derivative-evaluation multiply across the four stages is
+registered by :func:`_emit_expr` (the cheap constant ``dt``-scalings stay combinational); the
+fill-counter FSM in :func:`compile_to_verilog` holds the state steady until the whole stage
+graph drains, so the recurrence stays bit-true regardless of pipeline depth. Returns
 ``(deriv_wires, intermediates, pipeline_regs, mul_count, trunc_count)``.
 
 ### Function `_emit_exp_euler_deriv_wires(neuron, state_var_map, param_map, q)`
@@ -11593,8 +11603,11 @@ to a single composed expression per variable, so exp-Euler inherits every Q-form
 the transcendental LUT for free (one integrator × N representations). State renders as
 ``<var>_reg`` — the pre-step value — so all increments are computed from the pre-step
 state (a forward, not Gauss–Seidel, update), exactly as the golden applies them.
-Targets deterministic models (no stochastic ``xi`` term). Returns
-``(deriv_wires, intermediates, pipeline_regs, mul_count, trunc_count)``.
+Targets deterministic models (no stochastic ``xi`` term). When ``use_pipeline`` (or an
+explicit ``pp_set``) is set every multiply in the composed increment is registered by
+:func:`_emit_expr`; the fill-counter FSM in :func:`compile_to_verilog` holds the state
+steady until those stages drain, so the recurrence stays bit-true regardless of depth.
+Returns ``(deriv_wires, intermediates, pipeline_regs, mul_count, trunc_count)``.
 
 ### Function `_build_neuron_core(neuron, q)`
 Emit the combinational next-state + threshold + reset fragments.

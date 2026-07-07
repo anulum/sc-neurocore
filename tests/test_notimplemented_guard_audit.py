@@ -128,16 +128,6 @@ _APPROVED_NOTIMPLEMENTED_GUARDS = {
         "CompilationResult.to_gdsii",
         "num_modulators > 0",
     ),
-    _RaiseSite(
-        "src/sc_neurocore/compiler/verilog_compiler.py",
-        "_build_neuron_core",
-        "RK4 Verilog emission does not support pipelining yet; use pipeline_stages=0",
-    ),
-    _RaiseSite(
-        "src/sc_neurocore/compiler/verilog_compiler.py",
-        "_build_neuron_core",
-        "exp_euler Verilog emission does not support pipelining yet; use pipeline_stages=0",
-    ),
 }
 
 
