@@ -12,11 +12,16 @@ from __future__ import annotations
 
 from collections.abc import Mapping
 from importlib import resources
-from importlib.resources.abc import Traversable
 import json
 import math
+import sys
 from types import MappingProxyType
 from typing import cast
+
+if sys.version_info >= (3, 11):
+    from importlib.resources.abc import Traversable
+else:  # pragma: no cover - Python 3.10 exposes Traversable via importlib.abc
+    from importlib.abc import Traversable
 
 from sc_neurocore.neurons.reference_trace_contracts import (
     REFERENCE_TRACE_SCHEMA_VERSION,
