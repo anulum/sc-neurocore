@@ -21640,7 +21640,14 @@ total_models:
 described:
     Number of models with a committed descriptor.
 tier_counts:
-    Count of described models at each completeness tier (keys ``0``-``3``).
+    Count of described models at each science-kernel tier (keys ``0``-``3``);
+    the legacy curation view, retained for backward compatibility.
+science_tier_counts:
+    Count of described models at each full science-axis tier (keys ``0``-``5``,
+    S0-S5).
+silicon_tier_counts:
+    Count of described models at each silicon-axis tier, keyed by label
+    (``"none"`` for no compile-clean RTL, then ``"H0"``-``"H5"``).
 citeable:
     Number of described models with citeable provenance.
 fully_curated_parameters:

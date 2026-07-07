@@ -27,6 +27,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
+from sc_neurocore.neurons.descriptor_tiers import SILICON_RUNGS, completeness_tiers
 from sc_neurocore.neurons.model_descriptor import (
     ModelDescriptor,
     descriptor_completeness_tier,
@@ -122,7 +123,14 @@ class CatalogueCoverage:
     described:
         Number of models with a committed descriptor.
     tier_counts:
-        Count of described models at each completeness tier (keys ``0``-``3``).
+        Count of described models at each science-kernel tier (keys ``0``-``3``);
+        the legacy curation view, retained for backward compatibility.
+    science_tier_counts:
+        Count of described models at each full science-axis tier (keys ``0``-``5``,
+        S0-S5).
+    silicon_tier_counts:
+        Count of described models at each silicon-axis tier, keyed by label
+        (``"none"`` for no compile-clean RTL, then ``"H0"``-``"H5"``).
     citeable:
         Number of described models with citeable provenance.
     fully_curated_parameters:
@@ -133,6 +141,8 @@ class CatalogueCoverage:
     total_models: int
     described: int
     tier_counts: dict[int, int]
+    science_tier_counts: dict[int, int]
+    silicon_tier_counts: dict[str, int]
     citeable: int
     fully_curated_parameters: int
 
@@ -142,14 +152,16 @@ class CatalogueCoverage:
         Returns
         -------
         dict[str, object]
-            Stable public summary with sorted tier-count keys and an
-            ``undescribed`` derived count.
+            Stable public summary with sorted tier-count keys, both readiness
+            axes, and an ``undescribed`` derived count.
         """
         return {
             "total_models": self.total_models,
             "described": self.described,
             "undescribed": self.total_models - self.described,
             "tier_counts": dict(sorted(self.tier_counts.items())),
+            "science_tier_counts": dict(sorted(self.science_tier_counts.items())),
+            "silicon_tier_counts": dict(self.silicon_tier_counts),
             "citeable": self.citeable,
             "fully_curated_parameters": self.fully_curated_parameters,
         }
@@ -165,6 +177,8 @@ def catalogue_descriptor_coverage() -> CatalogueCoverage:
         descriptor corpus.
     """
     tier_counts = {0: 0, 1: 0, 2: 0, 3: 0}
+    science_counts = {tier: 0 for tier in range(6)}
+    silicon_counts = {label: 0 for label in ("none", *SILICON_RUNGS)}
     described = 0
     citeable = 0
     fully_curated = 0
@@ -174,6 +188,9 @@ def catalogue_descriptor_coverage() -> CatalogueCoverage:
             continue
         described += 1
         tier_counts[descriptor_completeness_tier(descriptor)] += 1
+        tiers = completeness_tiers(descriptor)
+        science_counts[tiers.science] += 1
+        silicon_counts[tiers.silicon_label] += 1
         if descriptor.provenance.is_citeable:
             citeable += 1
         if descriptor.parameters and all(p.is_curated for p in descriptor.parameters):
@@ -182,6 +199,8 @@ def catalogue_descriptor_coverage() -> CatalogueCoverage:
         total_models=len(_CLASS_TO_MODULE),
         described=described,
         tier_counts=tier_counts,
+        science_tier_counts=science_counts,
+        silicon_tier_counts=silicon_counts,
         citeable=citeable,
         fully_curated_parameters=fully_curated,
     )

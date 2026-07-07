@@ -77,6 +77,30 @@ def test_coverage_describes_every_model() -> None:
     )
 
 
+def test_coverage_reports_both_readiness_axes_consistently() -> None:
+    """Science (S0-S5) and silicon (H0-H5) axes cover every described model and
+    agree with the legacy kernel on S0-S3."""
+
+    coverage = catalogue_descriptor_coverage()
+
+    # Both axes are total over the described corpus.
+    assert set(coverage.science_tier_counts) == {0, 1, 2, 3, 4, 5}
+    assert set(coverage.silicon_tier_counts) == {"none", "H0", "H1", "H2", "H3", "H4", "H5"}
+    assert sum(coverage.science_tier_counts.values()) == coverage.described
+    assert sum(coverage.silicon_tier_counts.values()) == coverage.described
+
+    # The legacy kernel is exactly the science axis truncated at S3:
+    # descriptor_completeness_tier(d) == min(science_tier(d), 3).
+    assert coverage.tier_counts[0] == coverage.science_tier_counts[0]
+    assert coverage.tier_counts[1] == coverage.science_tier_counts[1]
+    assert coverage.tier_counts[2] == coverage.science_tier_counts[2]
+    assert coverage.tier_counts[3] == (
+        coverage.science_tier_counts[3]
+        + coverage.science_tier_counts[4]
+        + coverage.science_tier_counts[5]
+    )
+
+
 def test_descriptor_access_rejects_path_like_class_names() -> None:
     """Descriptor lookup fails closed before path-like names reach the filesystem."""
 
@@ -101,6 +125,8 @@ def test_missing_descriptor_branch_and_public_summary_are_stable() -> None:
         total_models=3,
         described=2,
         tier_counts={3: 1, 1: 1, 0: 0, 2: 0},
+        science_tier_counts={5: 0, 4: 0, 3: 1, 2: 0, 1: 1, 0: 0},
+        silicon_tier_counts={"none": 2, "H0": 0, "H1": 0, "H2": 0, "H3": 0, "H4": 0, "H5": 0},
         citeable=1,
         fully_curated_parameters=1,
     )
@@ -110,6 +136,8 @@ def test_missing_descriptor_branch_and_public_summary_are_stable() -> None:
         "described": 2,
         "undescribed": 1,
         "tier_counts": {0: 0, 1: 1, 2: 0, 3: 1},
+        "science_tier_counts": {0: 0, 1: 1, 2: 0, 3: 1, 4: 0, 5: 0},
+        "silicon_tier_counts": {"none": 2, "H0": 0, "H1": 0, "H2": 0, "H3": 0, "H4": 0, "H5": 0},
         "citeable": 1,
         "fully_curated_parameters": 1,
     }
