@@ -87,6 +87,7 @@ they satisfy the same promotion gate:
 | `optics` | optional extra | Photonic-layout experiments through `gdsfactory`. |
 | `bioware` | optional extra | Spike-sorting and biological closed-loop prototype dependencies. |
 | `units` | optional extra | Pint-backed dimensional analysis. |
+| `symbolic` | optional extra | SymPy symbolic differentiation for the exponential-Euler diagonal Jacobian; only `exp_euler` models pull it in. |
 
 ## Python Package Discovery Excludes
 
