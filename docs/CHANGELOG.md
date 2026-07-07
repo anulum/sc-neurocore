@@ -5,6 +5,14 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+### Compiler proof-transform wiring
+- Added an explicit opt-in `proof_transforms` compiler facade for whitebox state
+  taps and operator abstraction. The package root now exposes registry lookup and
+  dispatch helpers, docs classify the transforms as proof-only rather than
+  production compiler flags, and compatibility coverage keeps `quantize_core`
+  anchored to the canonical quantizer surface. No polyglot kernel,
+  benchmark-dispatched path, or benchmark artifact changed.
+
 ### Public docstring quick wins
 - Closed the AB-DOC-1 quick-win set by documenting the public package entry
   points for layers, synapses, utils, datasets, formal verification, and SCPN

@@ -7,7 +7,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 273
+expected_file_count = 274
 
 [[file]]
 path = "src/sc_neurocore/__init__.py"
@@ -140,6 +140,10 @@ rationale = "Public compiler package entry point that defines the exported compi
 [[file]]
 path = "src/sc_neurocore/compiler/pipeline.py"
 rationale = "Public hardware compiler orchestration surface for firtool, Yosys, and nextpnr artifact generation."
+
+[[file]]
+path = "src/sc_neurocore/compiler/proof_transforms.py"
+rationale = "Public opt-in formal-proof transform registry that dispatches proof-only RTL rewrites without changing ordinary compiler emission."
 
 [[file]]
 path = "src/sc_neurocore/compiler/host_driver_gen.py"

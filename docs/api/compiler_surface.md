@@ -65,6 +65,7 @@ can change without a deprecation window.
 | `precision_pairs` | internal build tool | Preset/configuration helper behind precision planning. |
 | `precision_presets` | internal build tool | Preset registry behind mixed-precision facade. |
 | `precision_solver` | direct public module | Constraint solver has direct tests and documented usage. |
+| `proof_transforms` | public facade | Package-level exports provide the opt-in formal-proof transform registry. |
 | `q_format` | direct public module | Q-format types are direct quantization surfaces. |
 | `quantization_reports` | internal build tool | Report records are re-exported through quantization surfaces. |
 | `quantize_core` | compatibility facade | Backward-compatible import surface for `quantizer`. |
@@ -91,3 +92,10 @@ can change without a deprecation window.
 each run. A new root compiler module must either join the package facade, become
 a direct public or compatibility module, or appear here as an internal build
 tool with a clear reason.
+
+`operator_abstraction` and `whitebox_taps` are intentionally proof-only build
+tools, not production compiler flags. Proof pipelines select them through
+`sc_neurocore.compiler.proof_transforms` or the package-level
+`apply_proof_transform` / `list_proof_transforms` facade. `quantize_core` remains
+a compatibility facade for legacy quantizer imports and is pinned by
+`tests/test_compiler_compat_facades.py`.

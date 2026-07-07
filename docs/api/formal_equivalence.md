@@ -106,6 +106,11 @@ for every value of the free product proves it for the real product in particular
 function would be the textbook route, but yosys 0.33's `smtbmc` crashes on a
 blackbox submodule — lifting to a free input is the working alternative here.
 
+Proof pipelines discover and dispatch both proof-only transforms through
+`sc_neurocore.compiler.list_proof_transforms()` and
+`sc_neurocore.compiler.apply_proof_transform(...)`. Ordinary compiler emission
+does not enable either transform by default.
+
 With the multipliers abstracted and the state tapped, the LIF proves equivalent
 **unbounded at full width**: ≈1 s at 16-bit, ≈4 s at 32-bit, ≈22 s at 64-bit
 (`z3`, k-induction). The residual growth is the datapath adders and comparators,

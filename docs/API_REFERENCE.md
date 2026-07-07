@@ -10966,6 +10966,84 @@ MixedPrecisionSpec
 
 ---
 
+## Module `compiler.proof_transforms`
+
+### Class `ProofTransform`
+Metadata for one selectable formal-proof RTL transform.
+
+Attributes
+----------
+kind : ProofTransformKind
+    Stable dispatch key accepted by :func:`apply_proof_transform`.
+module : str
+    Import path that owns the concrete transform implementation.
+entrypoint : str
+    Public callable name inside ``module``.
+purpose : str
+    Human-readable reason the proof pipeline may select the transform.
+default_enabled : bool
+    Whether ordinary compiler emission enables the transform by default.
+    Proof transforms remain opt-in, so current registry entries are false.
+
+
+### Function `list_proof_transforms()`
+Return the formal-proof transforms available to opt-in proof pipelines.
+
+Returns
+-------
+tuple&#91;ProofTransform, ...&#93;
+    Immutable registry entries. Every entry is disabled by default for
+    ordinary compilation and must be selected explicitly by proof tooling.
+
+### Function `get_proof_transform(kind)`
+Return the registry entry for ``kind``.
+
+Parameters
+----------
+kind : str
+    Stable transform key, such as ``"whitebox_taps"`` or
+    ``"operator_abstraction"``.
+
+Returns
+-------
+ProofTransform
+    Registry metadata for the requested transform.
+
+Raises
+------
+KeyError
+    If ``kind`` is not registered.
+
+### Function `apply_proof_transform(kind, verilog)`
+Apply one registered proof-only RTL transform.
+
+Parameters
+----------
+kind : ProofTransformKind
+    Transform dispatch key.
+verilog : str
+    Verilog source containing ``top``.
+top : str
+    Module name passed to the selected transform.
+taps : sequence of StateTap, optional
+    State taps required when ``kind`` is ``"whitebox_taps"``.
+signals : sequence of LiftedSignal, optional
+    Lifted signals required when ``kind`` is ``"operator_abstraction"``.
+
+Returns
+-------
+str
+    Transformed Verilog source.
+
+Raises
+------
+KeyError
+    If ``kind`` is not registered.
+ValueError
+    If the selected transform's required payload is missing.
+
+---
+
 ## Module `compiler.q_format`
 
 ### Class `QFormat`

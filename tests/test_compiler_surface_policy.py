@@ -26,6 +26,7 @@ PUBLIC_FACADE_MODULES = {
     "live_control",
     "mlir_emitter",
     "pipeline",
+    "proof_transforms",
     "quantizer",
 }
 

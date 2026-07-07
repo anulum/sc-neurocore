@@ -33,6 +33,18 @@ from .live_control import (
 )
 from .mlir_emitter import MLIRBundle, MLIREmitter, generate_mlir_bundle
 from .pipeline import CompilerPipeline
+from .proof_transforms import (
+    PROOF_TRANSFORMS,
+    LiftedSignal,
+    ProofTransform,
+    ProofTransformKind,
+    StateTap,
+    abstract_to_free_inputs,
+    apply_proof_transform,
+    expose_state_taps,
+    get_proof_transform,
+    list_proof_transforms,
+)
 from .quantizer import (
     Q8_8,
     Q16_16,
@@ -87,6 +99,16 @@ __all__ = [
     "auto_tune_synapse_precisions",
     "precision_plan_manifest",
     "write_precision_formal_evidence_bundle",
+    "ProofTransform",
+    "ProofTransformKind",
+    "PROOF_TRANSFORMS",
+    "StateTap",
+    "LiftedSignal",
+    "abstract_to_free_inputs",
+    "apply_proof_transform",
+    "expose_state_taps",
+    "get_proof_transform",
+    "list_proof_transforms",
     "MMIOUpdateSpec",
     "ParameterBankSpec",
     "TrapSpec",
