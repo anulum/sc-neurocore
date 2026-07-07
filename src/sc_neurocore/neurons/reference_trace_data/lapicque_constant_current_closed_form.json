@@ -1,0 +1,46 @@
+{
+  "schema_version": "sc-neurocore.reference-trace.v1",
+  "name": "lapicque_constant_current_closed_form",
+  "model": {
+    "schema_name": "lapicque",
+    "runner": "universal_dsl"
+  },
+  "protocol": {
+    "dt": 0.1,
+    "steps": 200,
+    "inputs": {
+      "I": 0.5
+    },
+    "state_variables": [
+      "v"
+    ]
+  },
+  "provenance": {
+    "kind": "analytic_closed_form",
+    "source": "src/sc_neurocore/neurons/model_schemas/lapicque.toml",
+    "equation": "v(t)=v_inf+(v0-v_inf)*exp(-t/tau), v_inf=v_rest+resistance*I",
+    "citation": "Lapicque 1907 schema metadata"
+  },
+  "expected_features": {
+    "spike_count": 0.0,
+    "first_spike_step": -1.0,
+    "final.v": 0.31606027941427883,
+    "min.v": 0.00249376040365884,
+    "max.v": 0.31606027941427883,
+    "mean.v": 0.1847292128256158
+  },
+  "tolerances": {
+    "default": {
+      "absolute": 0.001,
+      "relative": 0.0
+    },
+    "spike_count": {
+      "absolute": 0.0,
+      "relative": 0.0
+    },
+    "first_spike_step": {
+      "absolute": 0.0,
+      "relative": 0.0
+    }
+  }
+}

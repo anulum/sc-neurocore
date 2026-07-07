@@ -5,6 +5,12 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 ## [Unreleased]
 
 ### Added
+- Added a schema-driven neuron reference-trace validation harness with immutable
+  corpus contracts, fail-closed JSON payload parsing, package-data loading,
+  `UniversalNeuron` execution, and feature-level validation reports. The seed
+  corpus covers analytic closed-form `lif` and `lapicque` traces and is covered
+  by strict mypy checks plus 100% exact-file focused coverage; no polyglot
+  kernel or benchmark-dispatched runtime path changed.
 - Compiler coverage-contract tests now lock the MLIR bundle fail-closed CIRCT
   paths, pipeline tool-resolution failures, folded Verilog datapath guard paths,
   and split expression-emitter LUT/error branches that keep the compiler core at

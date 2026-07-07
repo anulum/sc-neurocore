@@ -37,6 +37,15 @@ attribute access. Setting `SC_NEUROCORE_NO_RUST=1` forces the pure-Python model
 registry even when the optional Rust engine is installed, and the fallback path
 caches the resolved Python class for later imports.
 
+## Reference Trace Validation
+
+The schema-driven validation harness in `sc_neurocore.neurons.reference_traces`
+loads committed JSON corpus entries, executes the `UniversalNeuron` runner, and
+compares scalar trace features with explicit per-feature tolerances. The current
+seed corpus covers deterministic `lif` and `lapicque` schema traces via analytic
+closed-form RC solutions. It is a reusable harness and seed corpus, not a claim
+that every model listed below has external simulator parity evidence yet.
+
 ## Model Catalogue
 
 The descriptor corpus lives under

@@ -1,0 +1,46 @@
+{
+  "schema_version": "sc-neurocore.reference-trace.v1",
+  "name": "lif_constant_current_closed_form",
+  "model": {
+    "schema_name": "lif",
+    "runner": "universal_dsl"
+  },
+  "protocol": {
+    "dt": 0.1,
+    "steps": 120,
+    "inputs": {
+      "I": 1.0
+    },
+    "state_variables": [
+      "v"
+    ]
+  },
+  "provenance": {
+    "kind": "analytic_closed_form",
+    "source": "src/sc_neurocore/neurons/model_schemas/lif.toml",
+    "equation": "v(t)=v_inf+(v0-v_inf)*exp(-t/tau_m), v_inf=v_rest+tau_m*R*I/C",
+    "citation": "Lapicque 1907 schema metadata"
+  },
+  "expected_features": {
+    "spike_count": 0.0,
+    "first_spike_step": -1.0,
+    "final.v": -58.01194211912202,
+    "min.v": -64.90049833749168,
+    "max.v": -58.01194211912202,
+    "mean.v": -60.79431318766017
+  },
+  "tolerances": {
+    "default": {
+      "absolute": 0.025,
+      "relative": 0.0
+    },
+    "spike_count": {
+      "absolute": 0.0,
+      "relative": 0.0
+    },
+    "first_spike_step": {
+      "absolute": 0.0,
+      "relative": 0.0
+    }
+  }
+}

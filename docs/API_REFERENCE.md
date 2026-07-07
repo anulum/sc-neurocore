@@ -25443,6 +25443,241 @@ Reference: Yamada, W.M. et al. (1989). In: Methods in Neuronal Modeling. MIT Pre
 ### Function `_tau_n(v)`
 ---
 
+## Module `neurons.reference_trace_contracts`
+
+### Class `FeatureTolerance`
+Absolute and relative tolerance for one scalar trace feature.
+
+Parameters
+----------
+absolute:
+    Absolute error allowed between simulated and reference feature values.
+relative:
+    Relative error allowed as a fraction of the reference value magnitude.
+
+- **accepts**(actual, expected)
+  - Return whether ``actual`` lies inside the configured tolerance.
+
+### Class `ReferenceTraceProvenance`
+Provenance attached to one reference trace.
+
+Parameters
+----------
+kind:
+    Reference class, for example ``analytic_closed_form``.
+source:
+    Human-readable source for the reference values.
+equation:
+    Equation or feature-generation statement used to derive the values.
+citation:
+    Optional publication or DOI string when the trace is external.
+
+
+### Class `ReferenceTraceProtocol`
+Simulation protocol for one reference trace.
+
+Parameters
+----------
+dt:
+    Simulation timestep in the units used by the model schema.
+steps:
+    Number of timesteps to execute.
+inputs:
+    Constant keyword inputs passed to ``UniversalNeuron.step``.
+state_variables:
+    State variables to record after each timestep.
+
+
+### Class `ReferenceTraceSpec`
+Committed reference-trace specification.
+
+Parameters
+----------
+name:
+    Stable corpus identifier.
+schema_name:
+    Bundled UniversalNeuron schema name.
+runner:
+    Production runner name. The v1 corpus supports ``universal_dsl``.
+protocol:
+    Deterministic simulation protocol.
+provenance:
+    Reference source and derivation metadata.
+expected_features:
+    Scalar reference features keyed by stable feature names.
+tolerances:
+    Per-feature tolerance map.
+
+
+### Class `TraceSimulationResult`
+Trace and feature values produced by the current implementation.
+
+Parameters
+----------
+name:
+    Reference-trace name that was simulated.
+steps:
+    Number of executed timesteps.
+trace:
+    Recorded state values after each timestep.
+spikes:
+    Spike indicator emitted by each timestep.
+features:
+    Scalar feature map extracted from ``trace`` and ``spikes``.
+
+
+### Class `FeatureMismatch`
+One failed scalar-feature comparison.
+
+Parameters
+----------
+feature:
+    Feature name whose value drifted.
+expected:
+    Reference feature value.
+actual:
+    Current simulation feature value.
+tolerance:
+    Tolerance that was applied.
+absolute_error:
+    Absolute difference between ``actual`` and ``expected``.
+
+
+### Class `TraceValidationReport`
+Validation report for one reference trace.
+
+Parameters
+----------
+name:
+    Reference-trace name.
+passed:
+    Whether every expected feature matched within tolerance.
+simulation:
+    Trace produced by the current implementation.
+mismatches:
+    Failed feature comparisons, empty on success.
+
+
+---
+
+## Module `neurons.reference_trace_io`
+
+### Function `reference_trace_spec_from_payload(payload)`
+Parse and validate a reference-trace corpus payload.
+
+Parameters
+----------
+payload:
+    JSON-compatible mapping using schema
+    ``sc-neurocore.reference-trace.v1``.
+
+Returns
+-------
+ReferenceTraceSpec
+    Validated immutable reference-trace specification.
+
+Raises
+------
+ValueError
+    If any required field is missing, malformed, non-finite, or references
+    an unsupported runner or bundled neuron schema.
+
+### Function `list_reference_trace_specs()`
+Return all committed reference-trace names.
+
+Returns
+-------
+tuple&#91;str, ...&#93;
+    Sorted stable identifiers for every JSON payload in the corpus.
+
+### Function `load_reference_trace_spec(name)`
+Load one committed reference-trace specification.
+
+Parameters
+----------
+name:
+    Stable corpus identifier.
+
+Returns
+-------
+ReferenceTraceSpec
+    Validated reference-trace specification.
+
+Raises
+------
+ValueError
+    If ``name`` is not present in the committed corpus.
+
+### Function `_load_all_specs()`
+### Function `_load_spec_file(path)`
+### Function `_reference_trace_data_dir()`
+### Function `_field(payload, key)`
+### Function `_string_field(payload, key)`
+### Function `_optional_string_field(payload, key)`
+### Function `_mapping_field(payload, key)`
+### Function `_float_field(payload, key)`
+### Function `_positive_float_field(payload, key)`
+### Function `_positive_int_field(payload, key)`
+### Function `_float_mapping_field(payload, key)`
+### Function `_string_tuple_field(payload, key)`
+### Function `_tolerances_from_payload(payload, features)`
+### Function `_mapping_value(value, label)`
+### Function `_tolerance_from_payload(label, payload)`
+---
+
+## Module `neurons.reference_trace_runner`
+
+### Function `simulate_reference_trace(spec_or_name)`
+Run a reference-trace protocol through ``UniversalNeuron``.
+
+Parameters
+----------
+spec_or_name:
+    Reference-trace specification or committed corpus name.
+
+Returns
+-------
+TraceSimulationResult
+    Recorded state trace, spike sequence, and extracted feature map.
+
+### Function `validate_reference_trace(name)`
+Validate one committed reference trace by name.
+
+Parameters
+----------
+name:
+    Stable corpus identifier.
+
+Returns
+-------
+TraceValidationReport
+    Feature-level validation report.
+
+### Function `validate_reference_trace_spec(spec)`
+Validate one in-memory reference-trace specification.
+
+Parameters
+----------
+spec:
+    Reference-trace specification to simulate and compare.
+
+Returns
+-------
+TraceValidationReport
+    Feature-level validation report.
+
+### Function `validate_all_reference_traces()`
+Validate every committed reference trace.
+
+Returns
+-------
+tuple&#91;TraceValidationReport, ...&#93;
+    Sorted reports for the current corpus.
+
+### Function `_coerce_spec(spec_or_name)`
+### Function `_extract_features(trace, spikes)`
+---
+
 ## Module `neurons.sc_izhikevich`
 
 ### Class `SCIzhikevichNeuron`

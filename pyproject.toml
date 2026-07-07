@@ -150,6 +150,7 @@ sc_neurocore = [
   "hdl/primitives/*.v",
   "hdl_gen/safety/*.sv",
   "hdl_gen/openroad_flow/*.sh",
+  "neurons/reference_trace_data/*.json",
 ]
 
 [tool.pytest.ini_options]

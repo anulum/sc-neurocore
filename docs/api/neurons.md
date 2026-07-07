@@ -15,6 +15,30 @@ from sc_neurocore.neurons import HodgkinHuxleyNeuron, AdExNeuron
 from sc_neurocore.neurons.models.hodgkin_huxley import HodgkinHuxleyNeuron
 ```
 
+## Reference Trace Validation
+
+Schema-driven models can be checked against committed reference-trace feature
+contracts through `sc_neurocore.neurons.reference_traces`. The current seed
+corpus covers deterministic `lif` and `lapicque` schema entries with analytic
+closed-form features; external NEST, Brian2, NEURON, and published-figure traces
+remain a separate corpus-expansion task.
+
+```python
+from sc_neurocore.neurons.reference_traces import validate_all_reference_traces
+
+reports = validate_all_reference_traces()
+assert all(report.passed for report in reports)
+```
+
+See [Reference Trace Harness](../validation/reference_traces.md) for corpus
+format, validation commands, and remaining WC-A1 scope.
+
+::: sc_neurocore.neurons.reference_trace_contracts
+
+::: sc_neurocore.neurons.reference_trace_io
+
+::: sc_neurocore.neurons.reference_trace_runner
+
 ## Core SC Neurons (bitstream-capable)
 
 | Class | Domain |

@@ -7,7 +7,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 252
+expected_file_count = 256
 
 [[file]]
 path = "src/sc_neurocore/__init__.py"
@@ -88,6 +88,22 @@ rationale = "Public differentiable SC-NAS network and bitstream-selection surfac
 [[file]]
 path = "src/sc_neurocore/neurons/universal_dsl.py"
 rationale = "Public schema-driven neuron model loader and export surface for Studio, JSON, TOML, and Verilog workflows."
+
+[[file]]
+path = "src/sc_neurocore/neurons/reference_trace_contracts.py"
+rationale = "Public immutable contracts for schema-driven neuron reference-trace validation reports and corpus entries."
+
+[[file]]
+path = "src/sc_neurocore/neurons/reference_trace_io.py"
+rationale = "Public reference-trace corpus parser and package-data loader used by validation and maintenance workflows."
+
+[[file]]
+path = "src/sc_neurocore/neurons/reference_trace_runner.py"
+rationale = "Public UniversalNeuron reference-trace execution and feature-comparison surface."
+
+[[file]]
+path = "src/sc_neurocore/neurons/reference_traces.py"
+rationale = "Public compatibility facade for reference-trace validation imports."
 
 [[file]]
 path = "src/sc_neurocore/generative/three_d_gen.py"

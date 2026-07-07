@@ -110,6 +110,7 @@ nav:
       - NeuroML Import: guides/neuroml_import.md
       - NAS Guide: guides/nas_guide.md
   - Validation:
+      - Reference Trace Harness: validation/reference_traces.md
       - LIF f-I Curve: validation/lif_fi_curve.md
       - Izhikevich 20 Patterns: validation/izhikevich_patterns.md
       - Hodgkin-Huxley 1952: validation/hodgkin_huxley.md

@@ -961,11 +961,11 @@
     "model_documentation_pages": 175,
     "optional_extras": 26,
     "public_api_exports": 44,
-    "public_documentation_pages": 561,
+    "public_documentation_pages": 562,
     "python_model_classes": 158,
     "python_model_source_modules": 152,
     "rust_pyo3_model_wrappers": 175,
-    "test_files": 976
+    "test_files": 978
   },
   "documentation": {
     "public_pages": [
@@ -1529,7 +1529,8 @@
       "docs/validation/hodgkin_huxley.md",
       "docs/validation/izhikevich_patterns.md",
       "docs/validation/lif_fi_curve.md",
-      "docs/validation/neurobench_shd.md"
+      "docs/validation/neurobench_shd.md",
+      "docs/validation/reference_traces.md"
     ]
   },
   "evidence_boundary": "Counts are file-system and static-source inventory only; benchmark, coverage, hardware, and scientific-fidelity claims remain governed by their dedicated evidence artefacts.",
@@ -2774,7 +2775,8 @@
       "hardware/*.v",
       "hdl/primitives/*.v",
       "hdl_gen/safety/*.sv",
-      "hdl_gen/openroad_flow/*.sh"
+      "hdl_gen/openroad_flow/*.sh",
+      "neurons/reference_trace_data/*.json"
     ]
   },
   "project": {
@@ -3482,6 +3484,8 @@
       "tests/test_quasirandom_emitter.py",
       "tests/test_rall_dendrite.py",
       "tests/test_recorders/test_spike_recorder.py",
+      "tests/test_reference_trace_payloads.py",
+      "tests/test_reference_traces.py",
       "tests/test_registry.py",
       "tests/test_release_surface_consistency.py",
       "tests/test_reservoir.py",

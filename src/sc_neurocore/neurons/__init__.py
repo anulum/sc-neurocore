@@ -31,6 +31,10 @@ from .fixed_point_lif import FixedPointBitstreamEncoder as FixedPointBitstreamEn
 from .fixed_point_lif import FixedPointLFSR as FixedPointLFSR
 from .fixed_point_lif import FixedPointLIFNeuron as FixedPointLIFNeuron
 from .homeostatic_lif import HomeostaticLIFNeuron as HomeostaticLIFNeuron
+from .reference_traces import ReferenceTraceSpec as ReferenceTraceSpec
+from .reference_traces import TraceValidationReport as TraceValidationReport
+from .reference_traces import validate_all_reference_traces as validate_all_reference_traces
+from .reference_traces import validate_reference_trace as validate_reference_trace
 from .sc_izhikevich import SCIzhikevichNeuron as SCIzhikevichNeuron
 from .stochastic_lif import StochasticLIFNeuron as StochasticLIFNeuron
 from .universal_dsl import UniversalNeuron as UniversalNeuron
@@ -43,10 +47,14 @@ _CORE_NAMES = {
     "FixedPointLFSR",
     "FixedPointBitstreamEncoder",
     "HomeostaticLIFNeuron",
+    "ReferenceTraceSpec",
     "StochasticDendriticNeuron",
     "SCIzhikevichNeuron",
     "UniversalNeuron",
+    "TraceValidationReport",
     "list_bundled_schemas",
+    "validate_all_reference_traces",
+    "validate_reference_trace",
 }
 
 _MODEL_NAMES = {
