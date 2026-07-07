@@ -5,6 +5,14 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+### NotImplemented guard audit
+- Added a tracked source audit for executable Python `NotImplementedError`
+  sites. The audit allows only explicit fail-fast guards for unsupported MPI,
+  forced-Rust, Torch bridge, NIR node-map, optics GDSII, hardware-DMA, and
+  abstract-neuron boundaries, preventing hidden selectable stubs from entering
+  tracked Python sources. No runtime path, polyglot mirror, or benchmark
+  artefact changed.
+
 ### Rust interneuron performance-test gating
 - Marked the Rust interneuron wall-clock smoke tests for PV, SST, VIP,
   Chandelier, cerebellar basket, and Martinotti neurons as opt-in ignored tests
