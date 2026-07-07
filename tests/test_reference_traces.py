@@ -59,6 +59,41 @@ def _quadratic_if_zero_current_features(*, dt: float, steps: int) -> dict[str, f
     }
 
 
+def _perfect_integrator_sawtooth_features(
+    *,
+    current: float,
+    dt: float,
+    steps: int,
+    c_m: float = 1.0,
+    v_threshold: float = 1.0,
+    v_reset: float = 0.0,
+) -> dict[str, float]:
+    """Return exact post-reset features for constant-current perfect integration."""
+    values: list[float] = []
+    spikes: list[int] = []
+    voltage = v_reset
+    increment = current * dt / c_m
+    for _ in range(steps):
+        voltage += increment
+        if voltage >= v_threshold:
+            spikes.append(1)
+            voltage = v_reset
+        else:
+            spikes.append(0)
+        values.append(voltage)
+
+    return {
+        "spike_count": float(math.fsum(spikes)),
+        "first_spike_step": float(
+            next((index for index, spike in enumerate(spikes, start=1) if spike), -1)
+        ),
+        "final.v": values[-1],
+        "min.v": min(values),
+        "max.v": max(values),
+        "mean.v": math.fsum(values) / len(values),
+    }
+
+
 def test_seeded_corpus_has_analytic_schema_entries() -> None:
     """The seed corpus must expose deterministic analytic schema references."""
     names = list_reference_trace_specs()
@@ -67,6 +102,7 @@ def test_seeded_corpus_has_analytic_schema_entries() -> None:
     assert {
         "lif_constant_current_closed_form",
         "lapicque_constant_current_closed_form",
+        "perfect_integrator_constant_current_sawtooth",
         "quadratic_if_zero_current_analytic",
     } <= set(names)
 
@@ -105,6 +141,23 @@ def test_quadratic_if_trace_features_match_independent_analytic_solution() -> No
 
     assert spec.schema_name == "quadratic_if"
     assert spec.provenance.citation == "doi:10.1152/jn.2000.83.2.808"
+    for feature_name, feature_value in expected.items():
+        assert spec.expected_features[feature_name] == pytest.approx(feature_value, abs=1e-12)
+
+
+def test_perfect_integrator_trace_features_match_independent_sawtooth_solution() -> None:
+    """Committed perfect-integrator features must match the exact reset sawtooth."""
+    spec = load_reference_trace_spec("perfect_integrator_constant_current_sawtooth")
+
+    expected = _perfect_integrator_sawtooth_features(
+        current=spec.protocol.inputs["I"],
+        dt=spec.protocol.dt,
+        steps=spec.protocol.steps,
+    )
+
+    assert spec.schema_name == "perfect_integrator"
+    assert spec.provenance.kind == "analytic_sawtooth"
+    assert spec.provenance.citation == "doi:10.1017/CBO9781107447615"
     for feature_name, feature_value in expected.items():
         assert spec.expected_features[feature_name] == pytest.approx(feature_value, abs=1e-12)
 

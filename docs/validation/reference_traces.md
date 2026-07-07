@@ -8,7 +8,7 @@ tolerances. The production validator loads those JSON entries from the package,
 executes the same `UniversalNeuron` runner used by public schema workflows, and
 reports feature-level mismatches without falling back to another trace.
 
-This page documents the WC-A1 seed and first expansion corpus. It does not
+This page documents the WC-A1 seed and early expansion corpus. It does not
 claim that the full external NEST, Brian2, NEURON, or published-figure corpus
 is complete.
 
@@ -20,14 +20,18 @@ The committed entries are analytic references for deterministic schema models:
 |-------|--------|--------|------------|
 | `lif_constant_current_closed_form` | `lif` | `universal_dsl` | Closed-form RC solution from `neurons/model_schemas/lif.toml` |
 | `lapicque_constant_current_closed_form` | `lapicque` | `universal_dsl` | Closed-form RC solution from `neurons/model_schemas/lapicque.toml` |
+| `perfect_integrator_constant_current_sawtooth` | `perfect_integrator` | `universal_dsl` | Analytic post-reset sawtooth solution from `neurons/model_schemas/perfect_integrator.toml` |
 | `quadratic_if_zero_current_analytic` | `quadratic_if` | `universal_dsl` | Analytic zero-current Riccati solution from `neurons/model_schemas/quadratic_if.toml` with DOI-backed schema provenance |
 
 All entries record the membrane variable `v`, spike count, first spike step,
 and final/min/max/mean voltage features. The tests independently recompute the
-LIF and QIF analytic solutions so the committed feature values are not merely
-copied from the runner output. The QIF tolerance is intentionally wider than
-the exact-feature precision because the current schema runner declares explicit
-Euler integration while the reference is the continuous zero-current solution.
+LIF, QIF, and perfect-integrator analytic solutions so the committed feature
+values are not merely copied from the runner output. The perfect-integrator
+entry is intentionally spike-bearing; it validates the schema runner's
+post-threshold reset state and first-spike feature, not only a quiet voltage
+trajectory. The QIF tolerance is intentionally wider than the exact-feature
+precision because the current schema runner declares explicit Euler integration
+while the reference is the continuous zero-current solution.
 
 ## Public API
 

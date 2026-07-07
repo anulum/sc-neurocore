@@ -41,6 +41,12 @@ overflowing currents or capacitance scales from poisoning the state.
 Native Go and Rust mirrors return explicit errors for invalid scalar state,
 Julia throws `DomainError`, and Mojo returns `-1` as the invalid scalar sentinel.
 
+The schema-level reference-trace corpus also pins a spike-bearing constant-current
+protocol, `perfect_integrator_constant_current_sawtooth`. That trace records
+post-reset states from the analytic sawtooth solution and validates spike count,
+first-spike step, and final/min/max/mean voltage through the public
+`UniversalNeuron` runner.
+
 ## Behaviour
 
 - **No leak:** Voltage accumulates indefinitely — zero-input steps leave V unchanged.
