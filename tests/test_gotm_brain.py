@@ -10,7 +10,13 @@
 
 from __future__ import annotations
 
+import importlib
+import importlib.abc
+import importlib.machinery
+import sys
+import types
 from pathlib import Path
+from typing import Protocol, cast
 
 import numpy as np
 import pytest
@@ -30,6 +36,46 @@ from sc_neurocore.quantum_cognition.gotm_brain import (
     GOTMBrain,
     LearningStep,
 )
+from sc_neurocore.quantum_cognition.fisher_posner import HybridFisherPosnerLIF
+
+
+_GOTM_MODULE = "sc_neurocore.quantum_cognition.gotm_brain"
+
+
+class _GotmBrainModule(Protocol):
+    """Typed view of a dynamically reloaded GOTM brain module."""
+
+    HAS_LLM: bool
+    GOTMBrain: type[GOTMBrain]
+    _LLMEndpoint: type[object] | None
+
+
+class _BlockingLLMFinder(importlib.abc.MetaPathFinder):
+    """Import hook that makes the local ``llm`` module unavailable."""
+
+    def find_spec(
+        self,
+        fullname: str,
+        path: object | None,
+        target: types.ModuleType | None = None,
+    ) -> importlib.machinery.ModuleSpec | None:
+        """Raise on ``llm`` and ignore every other import."""
+        if fullname == "llm":
+            raise ModuleNotFoundError("blocked test llm module")
+        return None
+
+
+class _FixedSpikeNeuron:
+    """Minimal neuron stub that returns a configured spike flag."""
+
+    def __init__(self, spiked: bool) -> None:
+        """Store the spike flag returned by ``step``."""
+        self._spiked = spiked
+        self.atp_level = 1.0
+
+    def step(self, _current: float) -> tuple[float, bool]:
+        """Return a deterministic voltage/spike pair."""
+        return 0.0, self._spiked
 
 
 # ───────── Fixtures ─────────
@@ -410,6 +456,42 @@ class TestGOTMBrain:
         assert isinstance(spikes, list)
         for s in spikes:
             assert 0 <= s < 8
+
+    def test_process_content_returns_indices_for_spiking_neurons(self) -> None:
+        """Spiking neuron steps are returned as their stable indices."""
+        brain = GOTMBrain(n_neurons=3, bridge_backend="emulated")
+        brain.neurons = cast(
+            list[HybridFisherPosnerLIF],
+            [
+                _FixedSpikeNeuron(False),
+                _FixedSpikeNeuron(True),
+                _FixedSpikeNeuron(True),
+            ],
+        )
+
+        assert brain.process_content(np.ones(3), "STABILIZE") == [1, 2]
+
+    def test_import_marks_missing_local_llm_unavailable(
+        self,
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        """Importing without a local llm module leaves the fallback path enabled."""
+        import sc_neurocore.quantum_cognition.gotm_brain as canonical_gotm
+
+        monkeypatch.delitem(sys.modules, "llm", raising=False)
+        sys.meta_path.insert(0, _BlockingLLMFinder())
+        sys.modules.pop(_GOTM_MODULE, None)
+        try:
+            module = importlib.import_module(_GOTM_MODULE)
+        finally:
+            sys.meta_path = [
+                finder for finder in sys.meta_path if not isinstance(finder, _BlockingLLMFinder)
+            ]
+            sys.modules[_GOTM_MODULE] = canonical_gotm
+
+        gotm = cast(_GotmBrainModule, module)
+        assert gotm.HAS_LLM is False
+        assert gotm._LLMEndpoint is None
 
     def test_process_content_padding(self) -> None:
         brain = GOTMBrain(n_neurons=8, bridge_backend="emulated")

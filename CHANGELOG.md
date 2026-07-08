@@ -5,6 +5,11 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 ## [Unreleased]
 
 ### Added
+- Quantum-cognition coverage contracts now exercise GOTM brain local-LLM import
+  fallback and spike-index accumulation, lifting the focused `dashboard.py`,
+  `gotm_brain.py`, and `radical_pair.py` selector to 100% exact-file coverage.
+  No runtime path, polyglot mirror, benchmark dispatch, generated API surface,
+  or benchmark artefact changed.
 - The generated public API reference now excludes single-underscore classes,
   functions, and methods while retaining public and dunder surfaces. The
   generator contract, committed `docs/API_REFERENCE.md`, and documentation
