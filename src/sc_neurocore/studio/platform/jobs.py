@@ -871,8 +871,12 @@ class StudioJobManager:
             )
         except ValueError as exc:
             raise StudioJobArtifactUnavailable(str(exc)) from exc
+        # Runtime confinement occurs in _resolve_confined_child before probing the artifact.
+        # codeql[py/path-injection]
         if not artifact_path.is_file():
             return b"", offset
+        # Runtime confinement occurs in _resolve_confined_child before opening the artifact.
+        # codeql[py/path-injection]
         with artifact_path.open("rb") as handle:
             handle.seek(offset)
             payload = handle.read(max_bytes)
@@ -1147,7 +1151,11 @@ def _is_confined_path(*, root: Path, child: Path) -> bool:
 
 def _resolve_confined_child(*, root: Path, relative_path: str, error_message: str) -> Path:
     candidate = _relative_path_candidate(relative_path, error_message=error_message)
+    # Canonicalization is the confinement check; callers pass configured roots or generated job dirs.
+    # codeql[py/path-injection]
     resolved_root = root.resolve()
+    # The child path rejected absolute paths and traversal segments before this canonicalization.
+    # codeql[py/path-injection]
     resolved = (resolved_root / candidate).resolve()
     if not _is_confined_path(root=resolved_root, child=resolved):
         raise ValueError(error_message)
