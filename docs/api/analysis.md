@@ -373,7 +373,9 @@ benchmark.
 
 ## Integrated Information (Phi*)
 
-`phi_star(...)` estimates geometric integrated information following
+`phi_star(...)` and `phi_from_spike_trains(...)` are exported from
+`sc_neurocore.analysis` as the public analysis package surface. `phi_star(...)`
+estimates geometric integrated information following
 Barrett and Seth (2011). It compares Gaussian mutual information between
 past and future whole-system states against contiguous bipartitions and
 returns a non-negative reducibility estimate in nats. This is a tractable

@@ -5,6 +5,12 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 ## [Unreleased]
 
 ### Added
+- The analysis package namespace now exports the maintained Phi* estimator
+  functions `phi_star` and `phi_from_spike_trains`, making the existing
+  NumPy/Rust/Julia/Go/Mojo-backed integrated-information surface selectable
+  without importing the submodule path. Tests and curated analysis docs were
+  updated, and generated API freshness was verified; no backend kernel,
+  benchmark dispatch, or benchmark artefact changed.
 - Quantum-cognition coverage contracts now exercise GOTM brain local-LLM import
   fallback and spike-index accumulation, lifting the focused `dashboard.py`,
   `gotm_brain.py`, and `radical_pair.py` selector to 100% exact-file coverage.

@@ -11,6 +11,7 @@
 __tier__ = "research"
 
 from .explainability import SpikeToConceptMapper
+from .phi_estimation import phi_from_spike_trains, phi_star
 from .spike_stats import (
     spike_times,
     isi,
@@ -141,6 +142,8 @@ from .spike_stats import (
 
 __all__ = [
     "SpikeToConceptMapper",
+    "phi_from_spike_trains",
+    "phi_star",
     "spike_times",
     "isi",
     "firing_rate",

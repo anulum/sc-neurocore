@@ -16,6 +16,7 @@ NumPy / Rust / Julia / Go / Mojo backend dispatch contract.
 from __future__ import annotations
 
 import importlib
+from typing import Any
 
 import numpy as np
 import numpy.testing as npt
@@ -33,6 +34,7 @@ from sc_neurocore.analysis.phi_estimation import (
     phi_from_spike_trains,
     phi_star,
 )
+import sc_neurocore.analysis as analysis
 
 _RUST_AVAILABLE = _rust_phi is not None
 _JULIA_AVAILABLE = importlib.util.find_spec("juliacall") is not None
@@ -44,7 +46,11 @@ def _raise_oserror(_path: str) -> object:
     raise OSError("library load failed")
 
 
-def _correlated(n_channels: int = 3, n_samples: int = 200, seed: int = 7) -> np.ndarray:
+def _correlated(
+    n_channels: int = 3,
+    n_samples: int = 200,
+    seed: int = 7,
+) -> np.ndarray[Any, Any]:
     """Channels sharing a latent drive (positive integration)."""
     rng = np.random.RandomState(seed)
     shared = rng.randn(n_samples)
@@ -145,6 +151,20 @@ def test_dispatch_python_matches_reference() -> None:
     direct = _phi_star_python(data, 1)
     routed = _phi_star_dispatch(data, 1, "python")
     npt.assert_array_equal(direct, routed)
+
+
+def test_phi_estimators_are_public_analysis_exports() -> None:
+    """The analysis package exposes the maintained Phi estimator surface."""
+    data = _correlated(n_channels=3, seed=31)
+
+    assert analysis.phi_star(data, tau=1, backend="python") == phi_star(
+        data,
+        tau=1,
+        backend="python",
+    )
+    assert analysis.phi_from_spike_trains(np.zeros((3, 30), dtype=np.uint8)) == 0.0
+    assert "phi_star" in analysis.__all__
+    assert "phi_from_spike_trains" in analysis.__all__
 
 
 @pytest.mark.skipif(not _RUST_AVAILABLE, reason="Rust Phi backend not built")

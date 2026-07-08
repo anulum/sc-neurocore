@@ -5,6 +5,13 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+### Analysis package exports
+- Exported `phi_star` and `phi_from_spike_trains` from
+  `sc_neurocore.analysis`, so the maintained Phi* integrated-information
+  estimator is selectable from the public analysis namespace. The curated
+  analysis guide was updated and generated API freshness was verified. No
+  backend kernel, benchmark dispatch, or benchmark artefact changed.
+
 ### Quantum cognition coverage
 - Added focused GOTM brain contracts for local-LLM import fallback and
   spike-index accumulation. The focused selector for `dashboard.py`,
