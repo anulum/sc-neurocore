@@ -5,6 +5,15 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+### JAX dense layer exports
+- Exported `JaxSCDenseLayer` through the lazy package facades as
+  `sc_neurocore.JaxSCDenseLayer` and
+  `sc_neurocore.layers.JaxSCDenseLayer`. The optional backend remains
+  construction-time gated by the `jax` extra, and package import stays
+  lightweight. Public API tests, layer docs, and generated capability surfaces
+  were updated. No JAX kernel, polyglot mirror, benchmark dispatch, or benchmark
+  artefact changed.
+
 ### Analysis package exports
 - Exported `phi_star` and `phi_from_spike_trains` from
   `sc_neurocore.analysis`, so the maintained Phi* integrated-information

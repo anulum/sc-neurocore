@@ -71,7 +71,28 @@ def test_dir_lists_lazy_public_api() -> None:
     public_names = dir(sc_neurocore)
     assert "StochasticLIFNeuron" in public_names
     assert "BitstreamEncoder" in public_names
+    assert "JaxSCDenseLayer" in public_names
     assert "not_a_public_symbol" not in public_names
+
+
+def test_jax_dense_layer_resolves_from_public_facades() -> None:
+    """The optional JAX dense layer class resolves without constructing JAX state."""
+    from sc_neurocore import layers
+    from sc_neurocore.layers.jax_dense_layer import JaxSCDenseLayer
+
+    assert sc_neurocore.JaxSCDenseLayer is JaxSCDenseLayer
+    assert layers.JaxSCDenseLayer is JaxSCDenseLayer
+    assert "JaxSCDenseLayer" in layers.__all__
+
+
+def test_layers_lazy_facade_lists_exports_and_rejects_unknown_symbols() -> None:
+    """The layer package lazy facade exposes directory entries and standard errors."""
+    from sc_neurocore import layers
+
+    missing_name = "not_a_layer_symbol"
+    assert "JaxSCDenseLayer" in dir(layers)
+    with pytest.raises(AttributeError, match=missing_name):
+        getattr(layers, missing_name)
 
 
 def test_version_string() -> None:
@@ -81,7 +102,7 @@ def test_version_string() -> None:
 
 def test_all_count() -> None:
     """The root public API keeps its audited export count."""
-    assert len(sc_neurocore.__all__) == 44, f"Public API count changed: {len(sc_neurocore.__all__)}"
+    assert len(sc_neurocore.__all__) == 45, f"Public API count changed: {len(sc_neurocore.__all__)}"
 
 
 def test_project_does_not_require_separate_engine_pypi_package() -> None:

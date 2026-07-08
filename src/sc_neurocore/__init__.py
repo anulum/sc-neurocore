@@ -62,6 +62,7 @@ if TYPE_CHECKING:
         SCRecurrentLayer,
         StochasticAttention,
         VectorizedSCLayer,
+        JaxSCDenseLayer,
     )
     from .license import (
         CommercialLicenseStatus,
@@ -124,6 +125,7 @@ _SYMBOL_SOURCES: dict[str, str] = {
     "MemristiveDenseLayer": "layers",
     "SCFusionLayer": "layers",
     "StochasticAttention": "layers",
+    "JaxSCDenseLayer": "layers",
     "BitstreamCurrentSource": "sources",
     "RNG": "utils",
     "BitstreamEncoder": "utils",
@@ -200,6 +202,7 @@ __all__ = [
     "MemristiveDenseLayer",
     "SCFusionLayer",
     "StochasticAttention",
+    "JaxSCDenseLayer",
     # Sources
     "BitstreamCurrentSource",
     # Utilities

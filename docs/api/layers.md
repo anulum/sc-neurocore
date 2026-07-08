@@ -101,6 +101,11 @@ It also accepts direct current vectors shaped `(n_neurons,)` or
 validate dimensions, finite values, dense weight shape, known neuron parameter
 keys, and JAX PRNG seed range before backend execution.
 
+The class is exported through the lazy package facades as
+`sc_neurocore.JaxSCDenseLayer` and `sc_neurocore.layers.JaxSCDenseLayer`.
+Importing the symbol does not construct backend state; constructing the class
+still requires the `jax` optional dependency group.
+
 ::: sc_neurocore.layers.jax_dense_layer.JaxSCDenseLayer
 
 ## Hardware-Aware SC Layer
