@@ -9,9 +9,6 @@ Validate array layout before a zero-copy native call.
 
 ## Module `_native.core_engine_bridge`
 
-### Function `_get_lib()`
-Return the loaded Rust core-engine library or raise if absent.
-
 ### Function `is_available()`
 Return True if the Rust core engine is loaded.
 
@@ -45,11 +42,6 @@ Encode an LFSR-16 stochastic bitstream as packed little-endian u64 words.
 ### Function `lfsr_encode_bits()`
 Encode an LFSR-16 stochastic bitstream as a uint8 0/1 numpy array.
 
-### Function `_logical_bit_length(word_count, bit_length)`
-### Function `_mask_trailing_words(words, bit_length)`
-### Function `_validate_lfsr_contract()`
-### Function `_python_lfsr_encode_packed()`
-### Function `_python_scc_packed(a, b)`
 ---
 
 ## Module `_native.learning_bridge`
@@ -136,39 +128,11 @@ RAII wrapper around explicit Rust WGPU execution instances computing via WGSL bi
   - Zero WGSL plasticity traces; weights preserved. See `WgpuRuleLayer::reset`.
 - **__del__**()
 
-### Function `_get_lib()`
-Return the loaded Rust learning library or raise if absent.
-
-Narrows ``_lib`` from ``CDLL | None`` to ``CDLL`` at every call site so
-mypy does not need per-method ``assert _lib is not None`` in each class
-method. Kept intentionally cheap: one pointer-equality check per call.
-
-### Function `_load_native_library()`
-Load libautonomous_learning if present. Returns True on success, False if absent.
-
-A missing shared library is a legitimate state: the Rust plasticity backend is
-optional. Consumers must gate runtime use behind ``is_available()`` — the class
-constructors below raise on construction when the library is absent. Raising at
-import time couples every ``sc_neurocore`` import to a Rust build artefact and
-breaks 398 unrelated tests when the crate has not yet been compiled.
-
 ### Function `set_deterministic_mode(seed)`
 Force exact random generator seeds for bit-true SC formal verification.
 
 ### Function `is_available()`
 Return True if the Rust learning engine is loaded.
-
-### Function `_require_integral()`
-Return ``value`` as ``int`` after rejecting bool and non-integral input.
-
-### Function `_require_non_negative_integral()`
-Return a non-negative integer for unsigned FFI argument domains.
-
-### Function `_require_integral_range()`
-Return an integer inside the inclusive Rust Online O(1) domain.
-
-### Function `_saturate(value, lower, upper)`
-Clamp an already validated integer into the requested inclusive bounds.
 
 ---
 
@@ -191,9 +155,6 @@ Rust-accelerated backend over the compiled engine.
 
 - **sc_forward**(weights_packed, input_probs)
   - Run the compiled Rust stochastic forward pass.
-
-### Function `_probe(name)`
-Return a working backend handle for ``name``, or ``None`` if unavailable.
 
 ### Function `available_backends()`
 Report which SC inference backends resolve, in fastest-first order.
@@ -243,9 +204,6 @@ Mirrors ``benchmarks/bench_*.py::_cpu_model`` so a live host matches a stored
 ``meta.cpu`` exactly: the ``/proc/cpuinfo`` ``model name`` line, else
 :func:`platform.processor`, else ``"unknown"``.
 
-### Function `_backend_speed_order(backends)`
-Return backend names that ran, sorted by ascending ``median_call_ms``.
-
 ### Function `measured_orders()`
 Build ``{cpu: {kernel: (backends fastest-measured-first)}}`` from the JSONs.
 
@@ -265,22 +223,12 @@ order is returned verbatim.
 
 ## Module `accel.gpu_backend`
 
-### Class `_BackendProxy`
-Runtime-switching array namespace proxy.
-
-- **__getattr__**(name)
-
-### Function `_gpu_enabled()`
-### Function `_mark_gpu_runtime_broken(exc)`
-### Function `_warn_cpu_fallback()`
 ### Function `to_device(arr)`
 Move a NumPy array to the active backend (GPU copy or no-op).
 
 ### Function `to_host(arr)`
 Bring an array back to host RAM as a NumPy array.
 
-### Function `_numpy_pack_bitstream(bits)`
-### Function `_numpy_popcount(packed)`
 ### Function `gpu_pack_bitstream(bits)`
 Pack uint8 {0,1} array into uint64 words.
 
@@ -408,19 +356,6 @@ nodes.
 ---
 
 ## Module `accel.sc_inference`
-
-### Function `_input_seeds(base_seed, n_inputs)`
-Per-input non-zero 16-bit LFSR seeds derived from ``base_seed``.
-
-### Function `_lfsr_encode_bits(input_probs, length, base_seed)`
-Encode each input probability into a ``length``-bit LFSR comparator stream.
-
-Returns an ``(n_inputs, length)`` ``uint8`` array of 0/1 bits. The register
-advance and comparison reproduce :class:`engine::encoder::Lfsr16` exactly, so
-the result is bit-identical to the Rust backend.
-
-### Function `_validate_packed_weights(weights_packed, input_probs, length)`
-Validate shapes and return ``(n_out, n_in, n_words)``.
 
 ### Function `sc_forward_numpy(weights_packed, input_probs, length, seed)`
 NumPy reference for :func:`sc_forward` — the bit-true floor.
@@ -597,8 +532,6 @@ JAX-traceable adapter for the SCPN Topological Firewall layer.
 - **__init__**(params, seed)
 - **encode**(domain_state)
   - Maps firewall strength to stochastic bitstreams.
-- **_firewall_kernel**(strength, intention, noise_inputs, gain, dt)
-  - Solves the Firewall / Topological dynamics:
 - **step_jax**(dt, inputs)
   - Advances the L10 holonomic dynamics using JAX.
 - **decode**(bitstreams)
@@ -620,8 +553,6 @@ JAX-traceable adapter for the SCPN Noospheric layer.
 - **__init__**(params, seed)
 - **encode**(domain_state)
   - Maps cultural spins to stochastic bitstreams.
-- **_nths_kernel**(spins, field_input, j_avg, h_bias, dt)
-  - Solves the NTHS Spin-Glass dynamics:
 - **step_jax**(dt, inputs)
   - Advances the L11 holonomic dynamics using JAX.
 - **decode**(bitstreams)
@@ -643,8 +574,6 @@ JAX-traceable adapter for the SCPN Ecological-Gaian layer.
 - **__init__**(params, seed)
 - **encode**(domain_state)
   - Maps ecological coherence to stochastic bitstreams.
-- **_enaqt_kernel**(coherence, flow, j_coupling, noise_gain, dt)
-  - Solves the ENAQT transport dynamics:
 - **step_jax**(dt, inputs)
   - Advances the L12 holonomic dynamics using JAX.
 - **decode**(bitstreams)
@@ -678,18 +607,8 @@ JAX-traceable adapter for the SCPN source-field layer.
 
 - **__init__**(params, seed)
   - Initialise the Layer 13 source-field adapter.
-- **_validate_positive_int**(name, value)
-  - Validate a strict positive integer configuration field.
-- **_validate_params**(cls, params)
-  - Validate Layer 13 parameters before allocating backend arrays.
 - **encode**(domain_state)
   - Map vacuum potential to stochastic source-field bitstreams.
-- **_vacuum_lattice_kernel**(state, coupling, bias, scission_rate, feedback_drive, dt)
-  - Advance local spin-like vacuum lattice dynamics.
-- **_validate_dt**(dt)
-  - Validate a positive finite simulation timestep.
-- **_project_feedback**(inputs)
-  - Project optional L16 feedback onto the configured vacuum lattice.
 - **step_jax**(dt, inputs)
   - Advance the L13 holonomic dynamics using JAX-compatible arrays.
 - **decode**(bitstreams)
@@ -711,8 +630,6 @@ JAX-traceable adapter for the SCPN Transdimensional layer.
 - **__init__**(params, seed)
 - **encode**(domain_state)
   - Maps resonance alignment to stochastic bitstreams.
-- **_resonance_kernel**(alignment, pta_input, keystone_f, dt)
-  - Solves the Inter-brane Resonance dynamics:
 - **step_jax**(dt, inputs)
   - Advances the L14 holonomic dynamics using JAX.
 - **decode**(bitstreams)
@@ -734,8 +651,6 @@ JAX-traceable adapter for the SCPN Consilium layer.
 - **__init__**(params, seed)
 - **encode**(domain_state)
   - Maps executive optimization state to stochastic bitstreams.
-- **_umo_kernel**(metric, layer_coherences, target, lr, dt)
-  - Solves the UMO / SEC optimization:
 - **step_jax**(dt, inputs)
   - Advances the L15 holonomic dynamics using JAX.
 - **decode**(bitstreams)
@@ -757,8 +672,6 @@ JAX-traceable adapter for the SCPN Cybernetic Closure layer (The Director).
 - **__init__**(params, seed)
 - **encode**(domain_state)
   - Maps director's will to stochastic bitstreams.
-- **_director_kernel**(will, gci_input, entropy, threshold, dt)
-  - Solves the Recursive Closure dynamics:
 - **step_jax**(dt, inputs)
   - Advances the L16 holonomic dynamics using JAX.
 - **decode**(bitstreams)
@@ -780,8 +693,6 @@ JAX-traceable adapter for the SCPN Quantum Biological layer.
 - **__init__**(params, seed)
 - **encode**(domain_state)
   - Maps coherence probabilities to stochastic bitstreams.
-- **_ignition_kernel**(coherence, s_pump, s_crit, gamma, f_prot, dt)
-  - Solves the Ignition / Metabolic Coherence dynamics:
 - **step_jax**(dt, inputs)
   - Advances the L1 holonomic dynamics using JAX.
 - **decode**(bitstreams)
@@ -801,12 +712,8 @@ Parameters derived from Paper 2 and Monograph 28.
 JAX-traceable adapter for the SCPN Neurochemical layer.
 
 - **__init__**(params, seed)
-- **_validate_positive_int**(name, value)
-- **_validate_params**(cls, params)
 - **encode**(domain_state)
   - Maps neurochemical concentrations to stochastic bitstreams.
-- **_iiief_kernel**(phi, velocity, integrated_info, alpha, c_info, dt)
-  - Advances the damped finite-difference IIIEF wave equation.
 - **step_jax**(dt, inputs)
   - Advances the L2 holonomic dynamics using JAX.
 - **decode**(bitstreams)
@@ -828,8 +735,6 @@ JAX-traceable adapter for the SCPN Genomic/Epigenomic layer.
 - **__init__**(params, seed)
 - **encode**(domain_state)
   - Maps accessibility states to stochastic bitstreams.
-- **_cbc_kernel**(v_bio, p_spin, alpha_b, g_op, dt)
-  - Solves the CBC Bridge transduction:
 - **step_jax**(dt, inputs)
   - Advances the L3 CBC bridge dynamics using JAX.
 - **decode**(bitstreams)
@@ -851,8 +756,6 @@ JAX-traceable adapter for the SCPN Cellular-Tissue layer.
 - **__init__**(params, seed)
 - **encode**(domain_state)
   - Maps synchronization activity to stochastic bitstreams.
-- **_kuramoto_kernel**(phases, omega, k, dt, noise)
-  - Solves the Kuramoto-UPDE interaction:
 - **step_jax**(dt, inputs)
   - Advances the L4 holonomic dynamics using JAX.
 - **decode**(bitstreams)
@@ -874,8 +777,6 @@ JAX-traceable adapter for the SCPN Organismal-Psychoemotional layer.
 - **__init__**(params, seed)
 - **encode**(domain_state)
   - Maps organismal state to stochastic bitstreams.
-- **_autonomic_kernel**(current, target, tau, dt)
-  - Euler-integration of autonomic homeostasis.
 - **step_jax**(dt, inputs)
   - Advances the L5 holonomic dynamics using JAX.
 - **decode**(bitstreams)
@@ -913,18 +814,6 @@ JAX-traceable adapter for the SCPN planetary-biospheric layer.
   - Initialise the Layer 6 planetary adapter.
 - **encode**(domain_state)
   - Map planetary coherence to stochastic regional bitstreams.
-- **_gaia_kernel**(phi, sync_inputs, alpha, freq, q_factor, p_percolation, t, dt)
-  - Solve the planetary Gaia-field dynamics.
-- **_validate_positive_int**(name, value)
-  - Validate a strict positive integer configuration field.
-- **_validate_params**(cls, params)
-  - Validate Layer 6 parameters before allocating backend arrays.
-- **_validate_dt**(dt)
-  - Validate a positive finite simulation timestep.
-- **_validate_input_batch**(inputs)
-  - Validate and normalise an upstream L6 bitstream batch.
-- **_project_sync_drive**(inputs)
-  - Project optional upstream bitstreams onto the configured L6 regions.
 - **step_jax**(dt, inputs)
   - Advance the L6 holonomic dynamics using JAX-compatible arrays.
 - **decode**(bitstreams)
@@ -944,14 +833,8 @@ Parameters derived from Paper 7 and Metatron's Cube geometry.
 JAX-traceable adapter for the SCPN geometrical-symbolic layer.
 
 - **__init__**(params, seed)
-- **_init_metatron_matrix**()
-  - Initialise a symmetric bounded Metatron routing topology.
-- **_metatron_coordinates**(n_nodes)
-- **_validate_params**(params)
 - **encode**(domain_state)
   - Map symbolic phases to stochastic bitstreams.
-- **_symbolic_kernel**(phases, metatron, inputs, dt)
-  - Solve the symbolic routing dynamics.
 - **step_jax**(dt, inputs)
   - Advances the L7 holonomic dynamics using JAX.
 - **decode**(bitstreams)
@@ -973,8 +856,6 @@ JAX-traceable adapter for the SCPN Cosmic Phase-Locking layer.
 - **__init__**(params, seed)
 - **encode**(domain_state)
   - Maps cosmic phases to stochastic bitstreams.
-- **_cosmic_kernel**(phases, pulsar_omegas, k_cosmic, dt)
-  - Solves the Cosmic Phase-Locking dynamics:
 - **step_jax**(dt, inputs)
   - Advances the L8 holonomic dynamics using JAX.
 - **decode**(bitstreams)
@@ -1008,18 +889,8 @@ JAX-traceable adapter for the SCPN existential-memory layer.
 
 - **__init__**(params, seed)
   - Initialise the Layer 9 memory adapter.
-- **_validate_positive_int**(name, value)
-  - Validate a strict positive integer configuration field.
-- **_validate_params**(cls, params)
-  - Validate Layer 9 parameters before allocating backend arrays.
-- **_validate_dt**(dt)
-  - Validate a positive finite simulation timestep.
-- **_validate_input_batch**(inputs)
-  - Validate and normalise an upstream L9 bitstream batch.
 - **encode**(domain_state)
   - Map memory imprints to stochastic bitstreams via TSVF overlap.
-- **_tsvf_kernel**(psi, phi, inputs, strength, dt)
-  - Update the forward and backward holographic imprints.
 - **step_jax**(dt, inputs)
   - Advance the L9 holonomic dynamics using JAX-compatible arrays.
 - **decode**(bitstreams)
@@ -1075,45 +946,6 @@ Class-oriented registry surface for spike-train conversion imports.
 ### Class `ImportedCell`
 Result of importing a NeuroML cell definition.
 
-
-### Function `_strip_ns(tag)`
-Remove XML namespace prefix.
-
-### Function `_parse_unit_value(s)`
-Parse NeuroML unit string like '10nS', '-65mV', '100pF' to SI-ish float.
-
-Returns value in base NeuroML units (mV, nS, pF, ms, nA); a missing (``None``)
-attribute value parses to ``0.0``.
-
-### Function `_parse_current_pa(s)`
-Parse a NeuroML current string into pA for biophysical IF equations.
-
-A missing (``None``) attribute value parses to ``0.0``.
-
-### Function `_import_iaf_cell(elem)`
-Import <iafCell> or <iafRefCell>.
-
-### Function `_import_iaf_tau_cell(elem)`
-Import <iafTauCell> or <iafTauRefCell>.
-
-### Function `_import_izhikevich_cell(elem)`
-Import <izhikevichCell> (2003 dimensionless).
-
-### Function `_import_izhikevich2007_cell(elem)`
-Import <izhikevich2007Cell> (biophysical units).
-
-Preserve the NeuroML 2 biophysical parameterisation.
-
-### Function `_import_adex_cell(elem)`
-Import <adExIaFCell> (Brette & Gerstner 2005 AdEx).
-
-Maps the NeuroML biophysical attributes onto the ``AdExNeuron`` constructor
-parameter names in its native, self-consistent unit system (mV, ms, pF, pA,
-nS): the leak reversal becomes ``v_rest``, the exponential threshold ``V_T``
-becomes ``v_rh``, the membrane time constant is ``tau = C / g_L`` (pF/nS = ms)
-with the capacitance kept as ``c_m`` (pF), and the spike-triggered adaptation
-``b`` is parsed as a *current* in pA — ``w`` and the injected current share the
-pA unit that keeps ``w / c_m`` a rate in mV/ms.
 
 ### Function `import_neuroml(path)`
 Parse a NeuroML 2 XML file and return imported cell definitions.
@@ -1269,8 +1101,6 @@ Address-Event Representation spike event.
 Quantize stochastic weights and thresholds for analog substrates.
 
 - **__init__**(g_range, v_range, dac_res, profile)
-- **_quantize**(val, v_min, v_max)
-  - Return ``(dac_value, actual_analog_value)`` after quantization.
 - **emit_analog_config**(nodes)
   - Emit DAC configuration dictionaries for SC weights and LIF nodes.
 
@@ -1310,58 +1140,6 @@ Map spike-vector activity to human-readable semantic concepts.
 ---
 
 ## Module `analysis.phi_estimation`
-
-### Function `_accel_path()`
-Absolute path to a backend asset under the ``accel`` tree.
-
-### Function `_logdet_spd(a)`
-Natural log-determinant of an SPD matrix via Cholesky (``2 Σ log Lᵢᵢ``).
-
-### Function `_gaussian_mi(x, y)`
-Gaussian mutual information ``MI(X;Y)`` between two channel blocks.
-
-``MI = 0.5 (log|Cov_X| + log|Cov_Y| - log|Cov_XY|)``. The covariances use the
-unbiased (``ddof=1``) estimator and a ``1e-10`` diagonal jitter, so each is SPD
-and its log-determinant comes from a Cholesky factor. Summing log-determinants
-is the numerically stable form of the determinant ratio.
-
-### Function `_phi_star_python(data, tau)`
-NumPy reference: geometric Phi* via Gaussian mutual information.
-
-``Phi* = MI(past; future) - min_partition Σ_k MI(past_k; future_k)`` over the
-contiguous bipartitions ``{0..k} | {k..n}``.
-
-### Function `_load_rust_phi()`
-Return the Rust ``phi_star`` entry point, or ``None`` when absent.
-
-### Function `_ensure_julia_phi()`
-Lazy-load the Julia Phi module, returning ``True`` when available.
-
-### Function `_ensure_go_phi()`
-Lazy-load the Go Phi c-shared library, returning ``True`` when available.
-
-### Function `_ensure_mojo_phi()`
-Lazy-load the Mojo Phi shared library, returning ``True`` when available.
-
-### Function `_run_rust_phi(data, tau)`
-Dispatch Phi* to the Rust engine.
-
-### Function `_run_julia_phi(data, tau)`
-Dispatch Phi* to the Julia backend.
-
-### Function `_run_go_phi(data, tau)`
-Dispatch Phi* to the Go c-shared backend.
-
-### Function `_run_mojo_phi(data, tau)`
-Dispatch Phi* to the Mojo c-shared backend (raw ``int64`` addresses).
-
-### Function `_phi_star_dispatch(data, tau, backend)`
-Run Phi* on the requested backend; ``auto`` selects the fastest available.
-
-Every backend computes the same Gaussian geometric estimator with the
-Cholesky log-determinant form and agrees with the NumPy reference up to
-floating-point round-off. ``auto`` prefers the Rust engine when present and
-falls back to the NumPy reference otherwise; Julia, Go and Mojo run on request.
 
 ### Function `phi_star(data, tau, backend)`
 Geometric integrated information Phi* (Barrett & Seth 2011).
@@ -1427,35 +1205,6 @@ Bin a binary spike train into spike counts per bin.
 ---
 
 ## Module `analysis.spike_stats.causality`
-
-### Function `_require_positive_int(name, value)`
-Return ``value`` after enforcing a positive integer public contract.
-
-### Function `_as_finite_train(train)`
-Coerce a spike train to a one-dimensional finite ``float64`` array.
-
-### Function `_binned_train(train, bin_size)`
-Validate and bin a spike train into finite ``float64`` spike counts.
-
-### Function `_binned_population(trains, bin_size)`
-Validate and stack a population of binned spike trains.
-
-### Function `_var_coefficients(trains_binned, order)`
-Fit a regularised VAR model.
-
-Parameters
-----------
-trains_binned:
-    Population spike-count matrix with shape ``(n_neurons, n_bins)``.
-order:
-    Positive autoregressive order.
-
-Returns
--------
-tuple&#91;np.ndarray, np.ndarray&#93;
-    Coefficient matrix with shape ``(order * n_neurons, n_neurons)`` and
-    residual covariance with shape ``(n_neurons, n_neurons)``. Too-short
-    histories return a zero-coefficient identity-covariance fallback.
 
 ### Function `pairwise_granger_causality(source, target, bin_size, order)`
 Return pairwise Granger causality from ``source`` to ``target``.
@@ -1688,57 +1437,6 @@ Assumes feature independence. Returns predicted class label.
 
 ## Module `analysis.spike_stats.dimensionality`
 
-### Function `_accel_path()`
-Absolute path to a backend asset under the ``accel`` tree.
-
-### Function `_canonical_sign(components)`
-Flip each column so its largest-magnitude entry is positive.
-
-Eigenvectors are defined only up to sign; fixing the sign by the dominant
-entry makes the projections identical across every backend.
-
-### Function `_pca_matrix(trains, bin_size)`
-Mean-centred binned count matrix ``(n_neurons, min_bins)`` for PCA / FA.
-
-Callers guarantee a non-empty train list, and ``bin_spike_train`` always
-yields at least one bin, so ``min_bins`` is always positive here.
-
-### Function `_demixed_matrix(trains_by_condition, bin_size)`
-Grand-mean-centred condition-mean matrix ``(n_conditions, min_bins)``.
-
-### Function `_pca_from_matrix(mat, n_components)`
-PCA of a centred ``(n_neurons, n_bins)`` matrix → ``(projected, explained)``.
-
-The covariance is the unbiased (``ddof=1``) sample covariance of the already
-mean-centred rows; callers handle the single-neuron case before dispatch.
-
-### Function `_demixed_from_matrix(mean_mat, n_components)`
-Demixed PCA of a centred ``(n_conditions, n_bins)`` matrix.
-
-### Function `_fa_from_matrix(mat, n_factors, n_iter)`
-Factor analysis EM of a centred ``(n_neurons, n_bins)`` matrix.
-
-The loadings start from a deterministic PCA initialisation (top eigenvectors
-of the sample covariance scaled by ``sqrt`` of the eigenvalues, sign-fixed),
-and each EM step solves its symmetric positive-definite ``M`` and ``E&#91;zzᵀ&#93;``
-systems through Cholesky factorisations rather than explicit inverses.
-
-### Function `_load_rust_dim(name)`
-Return a Rust dimensionality entry point, or ``None`` when absent.
-
-### Function `_ensure_julia_dim()`
-Lazy-load the Julia dimensionality module, ``True`` when available.
-
-### Function `_ensure_go_dim()`
-Lazy-load the Go dimensionality c-shared library, ``True`` when available.
-
-### Function `_ensure_mojo_dim()`
-Lazy-load the Mojo dimensionality shared library, ``True`` when available.
-
-### Function `_check_backend(backend)`
-### Function `_pca_dispatch(mat, n_components, backend)`
-### Function `_demixed_dispatch(mean_mat, n_components, backend)`
-### Function `_fa_dispatch(mat, n_factors, n_iter, backend)`
 ### Function `spike_train_pca(trains, n_components, bin_size, backend)`
 PCA on a binned spike-count matrix (neurons × time bins).
 
@@ -1828,9 +1526,6 @@ ISI-distance (Kreuz et al. 2007) -- ratio-based ISI comparison.
 ### Function `spike_distance(times_a, times_b, t_start, t_end)`
 SPIKE-distance. Kreuz et al. 2013.
 
-### Function `_local_isi(times, idx)`
-Nearest-neighbour ISI at index idx.
-
 ### Function `spike_sync(times_a, times_b, t_start, t_end)`
 SPIKE-synchronization. Kreuz et al. 2015.
 
@@ -1876,80 +1571,6 @@ metric: 'spike_distance', 'spike_sync', 'victor_purpura'.
 ---
 
 ## Module `analysis.spike_stats.gpfa`
-
-### Function `_accel_path()`
-Absolute path to a backend asset under the ``accel`` tree.
-
-### Function `_as_double_ptr(arr)`
-Return a ``ctypes`` double pointer to a contiguous float64 array.
-
-### Function `_load_rust_gpfa_em()`
-Return the Rust GPFA EM entry point, or ``None`` when the engine is absent.
-
-### Function `_ensure_julia_gpfa()`
-Lazy-load the Julia GPFA module, returning ``True`` when available.
-
-### Function `_ensure_go_gpfa()`
-Lazy-load the Go GPFA c-shared library, returning ``True`` when available.
-
-### Function `_ensure_mojo_gpfa()`
-Lazy-load the Mojo GPFA shared library, returning ``True`` when available.
-
-Built once via::
-
-    cd src/sc_neurocore/accel/mojo/kernels
-    mojo build --emit shared-lib -o libgpfa.so gpfa.mojo
-
-Per ``feedback_mojo_026_ffi_pattern``, the ``@export`` signature accepts no
-parametric pointer types, so every array is passed as a raw ``int64`` address
-(``numpy.ndarray.ctypes.data``) and the lone ``tol`` scalar as a ``c_double``.
-
-### Function `_gp_kernel(n_bins, tau, sigma)`
-Squared-exponential kernel matrix for *n_bins* time points.
-
-### Function `_gpfa_precision(C, R_diag, K_all, n_bins)`
-Assemble the posterior precision and the GP prior log-determinant.
-
-Returns ``(M, log|K|)`` where ``M = blkdiag(K_j^{-1}) + AᵀR⁻¹A`` is the
-symmetric positive-definite ``n_state × n_state`` precision (``n_state =
-n_latents · n_bins``) and ``log|K|`` is the log-determinant of the block-diagonal
-GP prior. Each GP kernel is factored once via Cholesky and reused for both the
-block inverse and its log-determinant, so the likelihood need not refactor them.
-``AᵀR⁻¹A`` has the Kronecker form ``δ_{s,t} (CᵀR⁻¹C)&#91;j,k&#93;``, adding the constant
-``(CᵀR⁻¹C)&#91;j,k&#93;`` along the time-diagonal of each ``(j, k)`` block. Each kernel
-carries a ``1e-6`` jitter so the regularised kernel is the model kernel
-everywhere (E-step and likelihood stay mutually consistent).
-
-### Function `_gpfa_e_step(Y, C, d, R, K_all)`
-Joint Gaussian posterior ``p(x|y)`` over all latents and time points.
-
-The posterior precision ``M`` (see :func:`_gpfa_precision`) is Cholesky-factored
-once via LAPACK; the same factor yields the posterior mean (``M⁻¹`` applied to
-``AᵀR⁻¹ y``) and the posterior covariance (``M⁻¹``). Working on the
-``n_state``-dimensional state rather than the ``n_obs``-dimensional observation
-avoids the dense ``(n_neurons·n_bins)²`` solve of the naive form.
-
-### Function `_gpfa_m_step(Y, x_post, xx_post)`
-Update C, d, R from sufficient statistics.
-
-### Function `_gpfa_log_likelihood(Y, C, d, R, K_all)`
-Exact marginal Gaussian log likelihood via the Woodbury identity.
-
-The marginal covariance is :math:`\Sigma = A K A^\top + (I_T \otimes R)` with
-:math:`A` the block design matrix, :math:`K` the block-diagonal GP prior and
-:math:`R` diagonal. Forming :math:`\Sigma` densely is :math:`O(n_\text{obs}^3)`;
-instead the Woodbury identity and the matrix-determinant lemma express both the
-quadratic form and the log-determinant through the ``n_state × n_state``
-posterior precision :math:`M = K^{-1} + A^\top R^{-1} A` (Cholesky-factored):
-
-.. math::
-    y^\top \Sigma^{-1} y &= y^\top R^{-1} y - (A^\top R^{-1} y)^\top M^{-1}
-        (A^\top R^{-1} y) \\
-    \log|\Sigma| &= \log|M| + \log|K| + \log|R_\text{big}|
-
-This is the structured estimator of Yu et al. (2009); it is the exact marginal
-likelihood of the regularised model (each GP kernel carries the same ``1e-6``
-jitter as the E-step), not an approximation.
 
 ### Function `gpfa_pca_init(Y, n_latents, bin_ms)`
 Deterministic PCA initialisation of the GPFA parameters.
@@ -2000,41 +1621,6 @@ Returns
 -------
 tuple
     ``(trajectories, C, d, R, log_likelihoods)``.
-
-### Function `_run_rust_gpfa_em(Y, C0, d0, R0, tau, max_iter, tol)`
-Dispatch the EM loop to the Rust engine and rebuild NumPy outputs.
-
-### Function `_run_julia_gpfa_em(Y, C0, d0, R0, tau, max_iter, tol)`
-Dispatch the EM loop to the Julia backend and rebuild NumPy outputs.
-
-### Function `_run_go_gpfa_em(Y, C0, d0, R0, tau, max_iter, tol)`
-Dispatch the EM loop to the Go c-shared backend and rebuild NumPy outputs.
-
-### Function `_run_mojo_gpfa_em(Y, C0, d0, R0, tau, max_iter, tol)`
-Dispatch the EM loop to the Mojo c-shared backend and rebuild NumPy outputs.
-
-Mirrors :func:`_run_go_gpfa_em` but, per the Mojo 0.26 FFI rules, hands every
-buffer to the kernel as a raw ``int64`` address rather than a typed pointer.
-
-### Function `_gpfa_em_dispatch(Y, C0, d0, R0, tau, max_iter, tol, backend)`
-Run the GPFA EM loop on the requested backend; ``auto`` selects the fastest.
-
-The deterministic initialisation (see :func:`gpfa_pca_init`) lets every backend
-share an identical starting point. The Rust, Julia, Go and Mojo backends bind the
-same ``gpfa_em`` contract and agree with the NumPy reference up to floating-point
-round-off.
-
-Backend selection under ``auto`` is data-driven (see
-``benchmarks/results/bench_gpfa.json``). Every backend uses the structured
-Cholesky estimator (Woodbury identity + matrix-determinant lemma) on the
-``n_state``-dimensional precision rather than the dense ``n_obs`` covariance, so
-the compiled paths are no longer bottlenecked on a large general solve: the Rust
-backend (``nalgebra`` Cholesky, no Python dispatch overhead) is the fastest
-measured path. ``auto`` therefore prefers Rust when the engine is present and
-falls back to the NumPy reference otherwise; Julia, Go and Mojo run on request.
-
-### Function `_bin_trains(trains, bin_ms, dt)`
-Bin parallel spike trains into an aligned ``(n_neurons, n_bins)`` matrix.
 
 ### Function `gpfa(trains, n_latents, bin_ms, dt, max_iter, tol, seed, backend)`
 Extract smooth latent trajectories from parallel spike trains via EM.
@@ -2171,7 +1757,6 @@ Output queries decode from the latent representation.
 
 - **__post_init__**()
   - Initialise the POYO decoder weights from the seed.
-- **_unit_embedding**(unit_id)
 - **encode**(spike_trains, dt)
   - Encode population activity to latent representation.
 - **decode**(latents, output_queries)
@@ -2250,10 +1835,6 @@ where sim(a, b) = a · b / (||a|| ||b||)   (cosine similarity)
   - Pairwise cosine similarity matrix.
 - **infonce_loss**(anchors, positives)
   - InfoNCE contrastive loss. van den Oord et al. (2018).
-- **_forward_and_loss**(anchors, positives)
-  - Forward pass with cached intermediates for backprop.
-- **_backward**(cache)
-  - Analytical backprop through InfoNCE + MLP.
 - **fit**(data, n_steps, time_offset)
   - Train encoder with time-contrastive learning.
 - **transform**(data)
@@ -2351,50 +1932,6 @@ Returns (rates_hz, bin_centers_ms).
 
 ## Module `analysis.spike_stats.sorting_quality`
 
-### Function `_accel_path()`
-Absolute path to a backend asset under the ``accel`` tree.
-
-### Function `_cluster_mahalanobis_sq(cluster, noise)`
-Squared Mahalanobis distances of each ``noise`` row from the cluster mean.
-
-The cluster covariance ``Σ`` is the unbiased (``ddof=1``) feature covariance
-with a ``1e-8`` diagonal jitter, so it is SPD. The quadratic form
-``(x-μ)ᵀ Σ⁻¹ (x-μ)`` is computed from the Cholesky factor ``Σ = L Lᵀ`` via a
-triangular solve ``L z = (x-μ)`` followed by ``Σ z²``; ``Σ`` is never
-inverted explicitly.
-
-### Function `_isolation_distance_python(cluster, noise)`
-NumPy reference for :func:`isolation_distance` (inputs pre-validated).
-
-### Function `_l_ratio_python(cluster, noise)`
-NumPy reference for :func:`l_ratio` (inputs pre-validated).
-
-### Function `_load_rust_metric(name)`
-Return a Rust sorting-quality entry point, or ``None`` when absent.
-
-### Function `_ensure_julia_sq()`
-Lazy-load the Julia sorting-quality module, ``True`` when available.
-
-### Function `_ensure_go_sq()`
-Lazy-load the Go sorting-quality c-shared library, ``True`` when available.
-
-### Function `_ensure_mojo_sq()`
-Lazy-load the Mojo sorting-quality shared library, ``True`` when available.
-
-### Function `_run_go_metric(fn, cluster, noise)`
-Dispatch a sorting-quality metric to the Go c-shared backend.
-
-### Function `_run_mojo_metric(fn, cluster, noise)`
-Dispatch a sorting-quality metric to the Mojo backend (raw ``int64`` addresses).
-
-### Function `_sq_dispatch(metric, cluster, noise, backend)`
-Run a Mahalanobis sorting-quality metric on the requested backend.
-
-``metric`` is ``"isolation_distance"`` or ``"l_ratio"``. Every backend shares
-the Cholesky-solve kernel and agrees with the NumPy reference up to
-floating-point round-off. ``auto`` prefers the Rust engine when present and
-falls back to the NumPy reference; Julia, Go and Mojo run on request.
-
 ### Function `isolation_distance(cluster, noise, backend)`
 Isolation distance (Harris et al. 2001).
 
@@ -2479,12 +2016,6 @@ Measures change in mean waveform amplitude over time.
 ---
 
 ## Module `analysis.spike_stats.spade`
-
-### Function `_find_frequent_itemsets(binary_matrix, min_support, max_size)`
-Apriori-style frequent itemset mining on a binary neuron x time matrix.
-
-### Function `_extend_to_spatiotemporal(trains, itemsets, bin_ms, dt, max_lag_bins)`
-Extend synchronous itemsets to spatiotemporal patterns with lags.
 
 ### Function `spade_detect(trains, bin_ms, dt, min_support, max_pattern_size, n_surrogates, alpha, seed)`
 Detect repeated spatiotemporal spike patterns with significance testing.
@@ -2721,17 +2252,12 @@ Example:
     >>> print(f"drift={core.neuron.identity_drift:.4f}")
 
 - **__init__**(backend)
-- **_map_to_range**(w, min_val, max_val)
-  - Smooth sigmoid mapping centered at 0.5 to prevent edge explosions.
 - **step**(current)
   - Step the unified physical simulation one tick forward.
-- **_level**(value)
-- **_trend**(delta)
 - **step_from_bio_rates**(rates)
   - Modulate phenomenological bounds leveraging a multi-channel biological firing rate map.
 - **evaluate_bio_pathway_resilience**(rates)
   - Run deterministic fault-injection resilience over biological pathways.
-- **_pathway_bitstreams**(rates)
 - **run_meta_learning_episode**(currents)
   - Run a full outer-loop adaptation episode over a current sequence.
 - **export_reasoning_trace**()
@@ -2780,8 +2306,6 @@ Resolve Sky130/GF180 file locations without requiring OpenLane at import time.
 
 - **resolve**(pdk, pdk_root, require_existing)
   - Bind ``$PDK_ROOT`` and report missing PDK artefacts.
-- **_file_manifest**(pdk)
-- **_pdk_root_from_path**(path, marker)
 
 ### Class `SCASICOptimisationConfig`
 SC-specific synthesis settings for stochastic neuromorphic datapaths.
@@ -2848,7 +2372,6 @@ Complete output of the ASIC tape-out flow.
 Top-level generator for the complete ASIC tape-out pipeline.
 
 - **generate**(pdk, design)
-- **_generate_makefile**(design)
 
 ### Class `ASICFlowBundle`
 Generated ASIC flow files plus the evidence manifest path.
@@ -2960,11 +2483,6 @@ scripts, resolves the requested PDK paths, records missing artefacts, and
 adds a pre-synthesis estimate so Python API users can inspect the bundle
 before launching external EDA tools.
 
-### Function `_normalise_pdk_type(pdk_type)`
-### Function `_pdk_to_manifest(pdk)`
-### Function `_design_to_manifest(design)`
-### Function `_build_asic_flow_manifest()`
-### Function `_formal_evidence_status(formal_evidence_artifacts)`
 ### Function `validate_pdk(pdk)`
 Check PDK configuration for obvious errors.
 
@@ -2977,10 +2495,6 @@ Check whether the resolved open-source PDK files are present locally.
 
 ### Class `SessionPhase`
 Adaptive audio control phase for a closed-loop session.
-
-
-### Class `_AdaptationRecord`
-Single parameter adaptation event.
 
 
 ### Class `AdaptiveSessionReport`
@@ -3002,19 +2516,8 @@ profile : UserProfile, optional
     User preferences for chronotype-aware adaptation.
 
 - **__init__**(ssgf, evs, profile)
-- **_update_phase**()
-  - Transition between session phases based on tick count.
-- **_evs_trend**()
-  - Return recent EVS trend: positive = improving, negative = declining.
 - **on_evs_update**(snapshot)
   - Process one EVS update and return adapted audio parameters.
-- **_adapt_discovery**(snap, trend)
-  - Discovery phase: gentle frequency sweep, widen geometry.
-- **_adapt_lock_on**(snap, trend)
-  - Lock-On phase: responsive frequency tracking, tighten geometry.
-- **_adapt_deepening**(snap, trend)
-  - Deepening phase: push toward theurgic coherence.
-- **_log_adaptation**(param, old, new, reason)
 - **get_session_report**()
   - Generate summary report of the current session.
 - **current_phase**()
@@ -3023,9 +2526,6 @@ profile : UserProfile, optional
   - Return the number of processed EVS updates.
 - **reset**()
   - Reset session state (does not reset SSGF or EVS).
-
-### Function `_compute_grade(verified_pct)`
-Map verified percentage to letter grade.
 
 ---
 
@@ -3092,18 +2592,10 @@ Workflow
   - Initialise the EVS ring buffer and scoring state.
 - **start_baseline**()
   - Begin baseline EEG collection.
-- **_finalise_baseline**()
-  - Compute baseline band powers from collected samples.
 - **add_sample**(voltage)
   - Feed one raw EEG voltage sample.
 - **set_target**(hz)
   - Set the entrainment target frequency.
-- **_ordered_buf**()
-  - Return the ring buffer in time-order.
-- **_band_powers**(signal)
-  - Compute power in each canonical EEG band via FFT.
-- **_peak_frequency**(signal)
-  - Dominant frequency in the signal.
 - **compute**()
   - Compute current EVS snapshot.
 - **baseline_done**()
@@ -3112,9 +2604,6 @@ Workflow
   - Return a copy of accumulated EVS scores.
 - **reset**()
   - Clear buffers, baseline state, and score history.
-
-### Function `_hz_to_band(hz)`
-Map a frequency in Hz to its canonical EEG band name.
 
 ---
 
@@ -3162,16 +2651,6 @@ from the resulting phase dynamics and spectral properties of W.
 
 - **__init__**(cfg)
   - Initialise the SSGF state from a deterministic configuration.
-- **_decode**(z)
-  - Decode a latent vector into a symmetric non-negative weight matrix.
-- **_micro_step**()
-  - One Kuramoto + geometry-feedback timestep (vectorised).
-- **_spectral**()
-  - Compute eigendecomposition of the normalised Laplacian of W.
-- **_compute_R**()
-  - Kuramoto order parameter R = |<exp(i*theta)>|.
-- **_cost**()
-  - Composite cost: minimise negative coherence + regularise W.
 - **outer_step**()
   - Advance one SSGF outer cycle.
 - **get_audio_mapping**()
@@ -3247,8 +2726,6 @@ end_noise : float
 warmup_fraction : float
     Fraction of epochs for linear warmup (0.0-1.0).
 
-- **_progress**(epoch)
-  - Compute curriculum progress in &#91;0, 1&#93;.
 - **timesteps**(epoch)
   - Sequence length for this epoch.
 - **rate_scale**(epoch)
@@ -3286,12 +2763,6 @@ seed : int
 
 - **__call__**(spikes)
   - Apply all augmentations to a spike tensor.
-- **_temporal_jitter**(spikes, rng)
-- **_spike_dropout**(spikes, rng)
-- **_rate_scaling**(spikes, rng)
-- **_polarity_flip**(spikes, rng)
-- **_background_noise**(spikes, rng)
-- **_hot_pixel**(spikes, rng)
 
 ---
 
@@ -3314,21 +2785,6 @@ Returns dict with:
 ### Class `FittedModel`
 Result of fitting one model to experimental data.
 
-
-### Function `_get_model_class(name)`
-Resolve model name to class.
-
-### Function `_simulate(model_class, params, current, dt)`
-Run a model with given params and current injection.
-
-### Function `_cost_rmse(voltage_target, voltage_model)`
-Root mean squared error between two voltage traces.
-
-### Function `_cost_features(target_feats, model_feats)`
-Feature-based cost: compare spike count, rate, ISI statistics.
-
-### Function `_fit_single_model(model_class, model_name, voltage_target, current, dt, threshold)`
-Fit one model to the target recording.
 
 ### Function `fit(voltage, current, dt, threshold, candidates, top_k)`
 Fit neuron models to an experimental voltage recording.
@@ -3390,12 +2846,6 @@ Deterministic raw-signal to feedback primitive with audit trace.
 
 - **__init__**(config)
 - **process_frame**(frame)
-- **_next_frame_id**(explicit)
-- **_validate_samples**(samples)
-- **_extract_spikes**(samples)
-- **_score**(channel_counts, n_samples)
-- **_build_command**(score, timestamp_us)
-- **_adapt**(channel_counts, command, reward)
 
 ### Class `BCIClosedLoopEngine`
 Backward-compatible wrapper around :class:`BCIClosedLoopPrimitive`.
@@ -3513,11 +2963,6 @@ Aggregate validated MLPerf-SC result files into a deterministic report.
 ### Function `run_mlperf_sc_fixture()`
 Run the deterministic synthetic MLPerf-SC fixture and return result path.
 
-### Function `_synthetic_xor_raw_payload()`
-### Function `_fixture_baseline(model)`
-### Function `_environment_payload()`
-### Function `_write_canonical_json(path, payload)`
-### Function `_sha256_file(path)`
 ---
 
 ## Module `benchmarks.mlperf_sc_schema`
@@ -3560,28 +3005,9 @@ Validate a decoded MLPerf-SC result and return a typed result.
 ### Function `mlperf_sc_result_to_dict(result)`
 Serialise a typed MLPerf-SC result to the canonical dictionary shape.
 
-### Function `_run_from_mapping(payload)`
-### Function `_execution_from_mapping(payload)`
-### Function `_metrics_from_mapping(payload)`
-### Function `_area_from_mapping(payload)`
-### Function `_evidence_from_mapping(payload)`
-### Function `_artifact_from_mapping(payload)`
-### Function `_validate_relative_artifact_path(path)`
-### Function `_validate_evidence_metrics(evidence, metrics)`
-### Function `_expect_keys(payload, expected, label)`
-### Function `_expect_mapping(value, label)`
-### Function `_expect_sequence(value, label)`
-### Function `_expect_non_empty_string(value, label)`
-### Function `_expect_int(value, label)`
-### Function `_expect_optional_non_negative_int(value, label)`
-### Function `_expect_float(value, label)`
-### Function `_expect_optional_positive_float(value, label)`
 ---
 
 ## Module `benchmarks.online_o1_adaptation`
-
-### Class `_OnlineO1Runner`
-- **step**()
 
 ### Function `build_online_o1_adaptation_benchmark()`
 Return a deterministic Python/Rust adaptation benchmark report.
@@ -3589,8 +3015,6 @@ Return a deterministic Python/Rust adaptation benchmark report.
 ### Function `write_online_o1_adaptation_benchmark(path)`
 Write a canonical benchmark report and return the output path.
 
-### Function `_rust_pairing_protocol(config)`
-### Function `_run_pairing_protocol(runner)`
 ---
 
 ## Module `benchmarks.stochastic_backprop`
@@ -3607,13 +3031,6 @@ Return seeded estimator-family variance evidence across bitstream lengths.
 ### Function `write_stochastic_backprop_estimator_regression_manifest(path)`
 Write seeded estimator-family regression evidence to canonical JSON.
 
-### Function `_design_length_options(bitstream_length)`
-### Function `_validate_bitstream_length_grid(bitstream_lengths)`
-### Function `_joint_design_snapshot(report)`
-### Function `_estimator_variance_evidence()`
-### Function `_gradient_estimator_stats(estimates)`
-### Function `_all_estimator_variances_are_finite_nonnegative(row)`
-### Function `_round_nested(value)`
 ---
 
 ## Module `benchmarks.tasks`
@@ -3785,7 +3202,6 @@ converting real-time timestamps to hardware clock ticks.
 
 - **transcode**(spikes, t_start_s)
   - Convert detected spikes to AER events.
-- **_map_channel**(channel)
 
 ### Class `AERToSCConverter`
 Converts AER event streams to SC bitstreams.
@@ -3795,8 +3211,6 @@ then LFSR-encode the resulting firing probabilities.
 
 - **convert**(events)
   - Convert AER events to per-neuron SC bitstreams.
-- **_lfsr_encode**(probability, neuron_id)
-  - LFSR-16 encoding (bit-compatible with core_engine).
 
 ### Class `StimProtocol`
 Optogenetic stimulation protocols.
@@ -3977,8 +3391,6 @@ Extract per-channel power in each LFP band.
 Uses FFT-based power spectral density estimation.
 Returns dict of band_name → per-channel power array.
 
-### Function `_quantile_indices(n_items, target_count)`
-### Function `_clone_spike(template)`
 ### Function `detect_network_bursts(spikes, bin_width_s, threshold_sigma, min_channels)`
 Detect network-wide synchronised bursts.
 
@@ -4006,7 +3418,6 @@ supplied closed-loop measurement, the first response latency after
 ``stimulus_time_s``, or the first spike timestamp relative to frame
 start.
 
-### Function `_mea_response_latency_ms(detected_spikes)`
 ---
 
 ## Module `bridges.aer_router`
@@ -4201,10 +3612,6 @@ temperature_c : float
   - Compile a catalytic signal amplifier.
 - **compile_buffer**(input_name, output)
   - Compile a signal restoration buffer.
-- **_estimate_leak_rate**(strand, blocker)
-  - Estimate spurious strand displacement rate.
-- **_strongest_blocker_delta_g**(strand, blocker)
-  - Return the most stable contiguous blocker-binding ΔG° at 37 °C.
 
 ### Class `EnzymaticGateCompiler`
 Compile SC gates into enzyme-mediated DNA logic circuits.
@@ -4269,10 +3676,6 @@ integrator : str
     Integration method: ``"euler"`` or ``"rk4"``.
 
 - **__init__**(rate_hybridization, rate_displacement, temperature_c, integrator)
-- **_arrhenius_scale**(k_ref, ea_kcal)
-  - Scale rate constant from 37°C to operating temperature via Arrhenius.
-- **_compute_k_eff**(gate, input_concentrations)
-  - Compute effective rate constant for a gate.
 - **simulate**(design, input_concentrations, duration_s, dt)
   - Simulate circuit kinetics.
 
@@ -4317,8 +3720,6 @@ Examples
   - Simulate the compiled circuit.
 - **validate**(design)
   - Validate design using NUPACK (or fallback).
-- **_compile_displacement_gate**(gate_type, inputs, output, spec)
-- **_compile_enzymatic_gate**(gate_type, inputs, output, spec)
 
 ### Class `GF4ErrorCorrection`
 Reed–Solomon-like error correction over GF(4) for DNA sequences.
@@ -4339,8 +3740,6 @@ block_size : int
   - Add error-correction parity nucleotides to a sequence.
 - **decode**(encoded_sequence)
   - Decode and correct errors. Returns (corrected_data, n_corrections).
-- **_compute_parity**(symbols)
-  - Compute parity symbols over GF(4).
 
 ### Class `CrossHybridizationChecker`
 Detect unwanted cross-hybridization between circuit strands.
@@ -4357,8 +3756,6 @@ max_complementary_run : int
 - **__init__**(max_complementary_run)
 - **check**(design)
   - Check all strand pairs for cross-hybridization.
-- **_longest_common_substring**(a, b)
-  - Length of the longest common substring.
 
 ### Class `NoiseModel`
 Monte Carlo noise injection for robustness analysis.
@@ -4410,8 +3807,6 @@ This provides single-fault detection for each signal.
   - Convert a single-rail circuit to dual-rail.
 - **check_faults**(result, threshold_nM)
   - Detect faults in dual-rail simulation results.
-- **_complement_gate_type**(gate_type)
-  - De Morgan complement gate type.
 
 ### Class `ConcentrationOptimizer`
 Gradient-free optimization of strand concentrations.
@@ -4509,10 +3904,6 @@ temperature_c : float
     Operating temperature in Celsius.
 
 - **__init__**(half_life_hr, temperature_c)
-- **_length_factor**(length)
-  - Longer strands degrade faster (more nuclease attack sites).
-- **_temp_factor**()
-  - Higher temperature accelerates degradation.
 - **predict_concentration**(initial_nM, strand_length, time_hr)
   - Predict remaining concentration after time_hr hours.
 - **analyze_design**(design, time_hr)
@@ -4534,12 +3925,6 @@ n_wells : int
 - **layout**(design)
   - Generate plate layout for a circuit design.
 
-### Function `_canonical_sequence(sequence)`
-### Function `_can_pair(left, right)`
-### Function `_hairpin_loop_penalty(loop_nt)`
-### Function `_fallback_pair_energy(sequence, i, j)`
-### Function `_fallback_secondary_structure(sequence)`
-### Function `_fallback_pair_probability_matrix(sequence, temperature_c)`
 ### Function `export_genbank(design, path)`
 Export circuit design to GenBank format.
 
@@ -4685,9 +4070,6 @@ Convert spike activity into compact text suitable for local LLM prompts.
 Thin client for local LLM chat endpoints.
 
 - **__init__**(config)
-- **_endpoint**()
-- **_validate_endpoint**(url)
-- **_post_json**(payload)
 - **chat**(user_prompt)
   - Send a prompt to the configured local LLM chat endpoint.
 - **analyse_spike_raster**(raster)
@@ -4722,22 +4104,12 @@ End-to-end stochastic bitstream, photonic NoC, and FDTD loop.
 - **__init__**(config)
 - **compile**(adjacency)
   - Run the full co-design loop for one SC connectivity matrix.
-- **_collect_blockers**()
-
-### Function `_unpack_words(words, bit_length)`
-### Function `_transition_count(bits)`
-### Function `_density_tolerance(bitstream_length, alpha)`
-Two-sided Hoeffding density tolerance for a Bernoulli bitstream.
 
 ### Function `derive_probabilities_from_adjacency(adjacency, floor, ceiling)`
 Derive per-node SC probabilities from inbound absolute weight mass.
 
 ### Function `encode_bitstream_bank(probabilities)`
 Encode probabilities into deterministic LFSR-backed SC bitstreams.
-
-### Function `_scc_matrix(bitstreams)`
-### Function `_layout_manifest(design)`
-Create a PDA handoff manifest without claiming foundry DRC/LVS.
 
 ---
 
@@ -5093,10 +4465,6 @@ seed : int
 - **__init__**(n_sweeps, beta_start, beta_end, seed)
 - **solve_ising**(model, num_reads)
   - Solve an Ising model via simulated annealing.
-- **_solve_ising_rust**(model, num_reads)
-  - Rust-accelerated SA path.
-- **_solve_ising_python**(model, num_reads)
-  - Pure-Python SA fallback.
 - **solve_qubo**(model, num_reads)
   - Solve a QUBO model via simulated annealing.
 
@@ -5130,8 +4498,6 @@ partition function (for small models).
 
 - **analyze**(model, samples)
   - Run landscape analysis.
-- **_enumerate_all**(n)
-  - Enumerate all 2^n spin configurations.
 
 ### Class `EmbeddingAnalyzer`
 Analyze embedding requirements for D-Wave hardware.
@@ -5425,7 +4791,6 @@ x : float
     Initial condition in (0, 1).
 
 - **__post_init__**()
-- **_step**(s)
 - **random**(size)
   - Generate *size* chaotic floats in (0, 1).
 - **generate_bitstream**(p, length)
@@ -5474,18 +4839,6 @@ analog_noise_cv : float
 ### Function `load_chip_spec(path)`
 Load and validate a chip spec from a JSON file.
 
-### Function `_validate_chip_payload(payload)`
-### Function `_validate_core_payload(value)`
-### Function `_validate_key_set(payload)`
-### Function `_required_str(payload, key, source)`
-### Function `_required_bool(payload, key, source)`
-### Function `_required_str_list(payload, key, source)`
-### Function `_required_positive_int(payload, key, source)`
-### Function `_required_non_negative_int(payload, key, source)`
-### Function `_required_int(payload, key, source)`
-### Function `_required_positive_float(payload, key, source)`
-### Function `_required_non_negative_float(payload, key, source)`
-### Function `_required_float(payload, key, source)`
 ---
 
 ## Module `chip_compiler.compiler`
@@ -5584,11 +4937,6 @@ Generated output files for one chiplet topology.
 Generates multi-die routing RTL from a chiplet topology.
 
 - **generate**(topology, routing)
-- **_emit_die_wrapper**(die, topo)
-- **_emit_bridge**(link, decor_seed)
-- **_emit_routing_table**(table, die)
-- **_emit_top**(topo)
-- **_emit_constraints**(topo)
 
 ### Class `TimingSimResult`
 Result of interposer timing simulation.
@@ -5663,9 +5011,6 @@ Assign independent LFSR seeds per link for bitstream decorrelation.
 Uses golden-ratio hashing to ensure maximal separation between
 LFSR sequences across dies (avoids correlated bitstreams).
 
-### Function `_require_sv_identifier(value, field_name)`
-Validate a generated SystemVerilog identifier fragment.
-
 ### Function `link_energy_pj(link, bits)`
 Estimate total energy (pJ) for transmitting 'bits' over a link.
 
@@ -5684,9 +5029,6 @@ Find up to max_paths link-disjoint paths between two dies.
 Uses iterative BFS with link exclusion to find alternative routes
 for fault-tolerant routing.
 
-### Function `_bfs_path(topology, src, dst, excluded)`
-BFS shortest path avoiding excluded links.
-
 ### Function `simulate_timing(topology, src_die, dst_die)`
 BFS shortest-path timing simulation between two dies.
 
@@ -5695,43 +5037,6 @@ Create a 2D torus topology (mesh with wrap-around edges).
 
 ### Function `compute_cdc_configs(topology)`
 Auto-compute per-link CDC configs from die clock frequencies.
-
-### Function `_build_conductance_matrix(topology, die_state)`
-Build (G, g_amb, die_id_order) for the thermal network.
-
-G is the off-diagonal conductance matrix (W/K) for inter-die
-couplings. g_amb is the per-die conductance to ambient.
-die_id_order is the row → die_id mapping used by the solver.
-
-For each link (i, j) in `topology.links` with technology
-`tech`, the bond resistance is
-    R_bond(i,j) = R_THERMAL&#91;tech&#93; + R_spread(i) + R_spread(j)
-so the off-diagonal conductance is
-    G&#91;i,j&#93; = G&#91;j,i&#93; = 1 / R_bond(i,j)
-
-Per-die ambient conductance:
-    g_amb&#91;i&#93; = 1 / R_to_ambient(i)
-
-### Function `_solve_steady_state(G_off, g_amb, p_w, t_amb_c)`
-Solve `(D - G_off) · T = P + g_amb · T_amb` for T.
-
-where D is the diagonal of row-sums (Kirchhoff's current law
-for the thermal network).
-
-Returns the per-die steady-state temperature in °C.
-
-### Function `_solve_transient(G_off, g_amb, capacities, p_w, t_amb_c, initial_t_c, dt_s, n_steps)`
-Implicit-Euler integration of `C · dT/dt = -A · T + b`.
-
-A and b are the same matrices as in `_solve_steady_state`.
-Implicit Euler is unconditionally stable for the stiff
-thermal system and converges to the steady-state solution
-as t → ∞.
-
-Per step: `(C/dt + A) · T_new = C/dt · T_old + b`.
-
-Returns array of shape (n_steps, n_dies) with the temperature
-trajectory.
 
 ### Function `simulate_thermal(topology, power_per_die_mw, ambient_c)`
 Solve the full chiplet thermal network.
@@ -5816,7 +5121,6 @@ Edge lookups (`edge_weight`, `edge_scc`) are O(1) via a cached
 access. Was O(E) per call (linear scan), which made the
 partitioner O(V²·E) on V vertices — see commit notes for #65.
 
-- **_ensure_edge_cache**()
 - **adjacency**()
 - **edge_weight**(u, v)
 - **edge_scc**(u, v)
@@ -5841,34 +5145,6 @@ Multi-level graph partitioner with correlation awareness.
 - **__init__**(num_partitions, coarsen_threshold, kl_iterations, correlation_penalty, seed, refine_backend)
 - **partition**(graph)
   - Partition the graph. Returns (partitions, seeds).
-- **_dispatch_refine**(partitions, adj, graph)
-  - Backend dispatch for the KL refinement step.
-- **_recursive_bisect**(vertices, adj, graph, k)
-  - Recursively bisect until we have k partitions.
-- **_coarsen**(vertices, adj, graph)
-  - Heavy-edge matching coarsening (merge low-SCC edges first).
-- **_uncoarsen**(partition, mapping)
-  - Expand coarsened partition back to original vertices.
-- **_spectral_bisect**(vertices, adj, graph)
-  - Spectral-heuristic bisection with correlation penalty.
-- **_encode_csr**(partitions, adj, graph)
-  - Pack the per-partition state into the flat CSR-style buffers
-- **_decode_part_map**(part_map, n_parts)
-  - Decode flat part_map&#91;V&#93; back into List&#91;List&#91;int&#93;&#93;.
-- **_refine_rust**(partitions, adj, graph)
-  - Rust dispatch for `_refine` — bit-exact parity with Python.
-- **_refine_julia**(partitions, adj, graph)
-  - Julia dispatch — bit-exact parity with Python + Rust.
-- **_refine_go**(partitions, adj, graph)
-  - Go dispatch via cgo + ctypes — bit-exact parity.
-- **_refine_mojo**(partitions, adj, graph)
-  - Mojo dispatch via raw-Int-addr ctypes — bit-exact parity.
-- **_refine**(partitions, adj, graph)
-  - Kernighan-Lin inspired local refinement.
-- **_per_partition_cost**(v, n_parts, part_map, adj, graph)
-  - Length-`n_parts` cost vector: `costs&#91;p&#93;` = cost of placing
-- **_boundary_cost**(v, partition_id, part_map, adj, graph)
-  - Cost of placing vertex v in partition_id (legacy single-target API).
 - **repartition_incremental**(graph, partitions, max_moves)
   - Incremental repartitioning: migrate high-cost boundary vertices.
 
@@ -5934,16 +5210,6 @@ Report from a partitioning run.
 
 - **summary**()
 
-### Function `_ensure_julia_kl_refine_loaded()`
-Lazy-load the Julia KL refine module on first use.
-
-### Function `_ensure_go_kl_refine_loaded()`
-Lazy-load the Go KL refine shared library on first use.
-
-### Function `_ensure_mojo_kl_refine_loaded()`
-Lazy-load the Mojo KL refine shared library on first use.
-
-### Function `_build_part_map(partitions)`
 ### Function `calculate_edge_cut(graph, partitions)`
 Count cross-partition edges.
 
@@ -5971,91 +5237,9 @@ Build a complete partition report.
 
 ## Module `cli`
 
-### Class `_OutputAction`
-Track whether ``--output`` was supplied explicitly.
-
-- **__call__**(parser, namespace, values, option_string)
-
-### Function `_is_valid_sha256_digest(value)`
 ### Function `main()`
 Run the command-line interface and return a process exit status.
 
-### Function `_cmd_compile_nir(args)`
-Compile NIR/ONNX model to Verilog RTL artefacts.
-
-### Function `_scnir_signal_kind_counts(document)`
-### Function `_scnir_signal_routes(document)`
-### Function `_scnir_hierarchy_port_count(document)`
-### Function `_cmd_compile(args)`
-Compile ODE equation string to Verilog RTL + optional synthesis.
-
-Supports three compilation modes via CLI flags:
-
-1. **Standard** (default): combinational datapath at the configured
-   precision (``--data-width`` / ``--fraction``).
-2. **Pipelined** (``--pipeline auto|N``): insert register stages at
-   multiply outputs for high-frequency targets.  ``auto`` uses
-   ``critical_path_depth()`` + ``pipeline_stages_needed()`` from
-   ``static_analysis.py``.  ``--pipeline-points`` selects individual
-   signals to register.
-3. **Adaptive precision** (``--adaptive-precision``): generate a
-   dual-datapath module with LP and HP sub-modules, hysteresis-based
-   precision switching, and clock gating.  Configure LP/HP widths via
-   ``--lp-width`` / ``--lp-frac`` and ``--hp-width`` / ``--hp-frac`` or
-   precision strings via ``--lp-precision`` / ``--hp-precision``.
-
-### Function `_cmd_serve(model_path, port, dt)`
-Start streaming inference server.
-
-### Function `_cmd_info()`
-### Function `_cmd_collect_synthesis(args)`
-Collect synthesis reports into optimiser evidence JSON.
-
-### Function `_cmd_scnir(args)`
-Validate or export SC-aware NIR metadata documents.
-
-### Function `_cmd_formal(args)`
-Compile and replay network-level formal verification artefacts.
-
-### Function `_parse_antagonistic_pair(value)`
-### Function `_parse_temporal_separation(value)`
-### Function `_parse_population_silence(value)`
-### Function `_print_optional_dependency_version(module_name, label)`
-### Function `_format_engine_status(expected_version)`
-### Function `_safe_simd_tier(engine)`
-### Function `_cmd_benchmark()`
-### Function `_cmd_deploy(model_path, target, output_dir, dt, bitstream_length)`
-Deploy a model to FPGA or browser artefacts.
-
-### Function `_cmd_map_nir(model_path, output_dir, hardware_targets, dt, bitstream_length)`
-Generate deterministic silicon-mapping reports for a NIR graph.
-
-### Function `_cmd_hub_init(output_dir, port, bind_host, image, offline)`
-Generate a local self-hosted hub Compose bundle.
-
-### Function `_auto_synthesize(output_dir, target, top_module, cfg)`
-Run Yosys synthesis automatically if yosys is installed. Returns True on success.
-
-### Function `_generate_project(output_dir, target, top_module)`
-### Function `_cmd_studio(port)`
-Launch the Visual SNN Design Studio (Equation Playground).
-
-### Function `_cmd_studio_backup_plan(args)`
-Emit the Studio durable-state backup and restore plan.
-
-### Function `_cmd_studio_bootstrap_admin(args)`
-Create the first local Studio service-account identity file.
-
-### Function `_cmd_studio_deployment_profile(args)`
-Emit a Studio local, lab, or server deployment profile package.
-
-### Function `_cmd_studio_preflight(args)`
-Run the Studio release-readiness preflight and emit JSON.
-
-### Function `_cmd_studio_add_browser_user(args)`
-Add a persistent browser-login user to a Studio identity file.
-
-### Function `_cmd_preflight()`
 ---
 
 ## Module `comm.aer_udp`
@@ -6304,15 +5488,12 @@ Dense operator compiled with shared-exponent block-floating weights.
   - Number of dense output channels.
 - **input_size**()
   - Number of dense input channels.
-- **_reconstruct_weight_values**(mantissas, exponents)
 - **reconstructed_weights**()
   - Float reconstruction of the compiled block-floating weight matrix.
 - **manifest**()
   - Deterministic deployment metadata for block-floating dense weights.
-- **_input_values**(inputs)
 - **forward_float**(inputs)
   - Return dense outputs from BFP weights and quantised fixed-point inputs.
-- **_forward_anomaly_masks**(inputs)
 - **forward_with_overflow**(inputs)
   - Return saturated fixed-point output codes and per-output overflow flags.
 - **forward_accumulator_codes**(inputs)
@@ -6325,7 +5506,6 @@ Dense operator compiled with shared-exponent block-floating weights.
 ### Function `compile_dense_block_floating(weights, fmt)`
 Compile a dense matrix into block-floating weights with Q-format inputs.
 
-### Function `_encode_bfp_block(values, mode)`
 ### Function `quantize_block_floating(weights, fmt)`
 Quantize float weights into shared-exponent block-floating blocks.
 
@@ -6362,8 +5542,6 @@ free_vars : list of str
 - **__init__**(state_vars, param_map)
 - **visit_BinOp**(node)
   - Emit C++ for a binary operation (add, sub, mul, div, pow).
-- **_emit_pow**(node, left)
-  - Emit C++ for a power: integer 2-8 as repeated multiply, 1/2, 1/3 as roots.
 - **visit_UnaryOp**(node)
   - Emit C++ for a unary operation (negate, positive).
 - **visit_Name**(node)
@@ -6402,76 +5580,6 @@ tuple of (str, list of str)
 ---
 
 ## Module `compiler.c_fixed_emitter`
-
-### Class `_CFixedExprEmitter`
-Walk a Python AST and emit a bit-exact integer C/Rust expression.
-
-Every ``visit_*`` returns a source string that evaluates to a 64-bit signed
-integer holding a Q-format value. Multiplies, divisions, powers and LUT calls
-collapse to the word width through the generated ``fxmul`` / ``sc_wrap``
-helpers, so the composed expression reproduces the RTL datapath verbatim.
-
-Parameters
-----------
-state_map : dict
-    Maps ODE variable names to the source lvalue that reads their current
-    register value (e.g. ``"s->v"`` in C, ``"self.v"`` in Rust).
-param_map : dict
-    Maps parameter names to their already-Q-encoded *signed* integer value.
-q : Q88
-    Fixed-point configuration (width, fraction, rounding).
-lang : str
-    ``"c"`` or ``"rust"`` — selects the small syntactic differences (cast,
-    conditional expression, array index).
-input_ref : str
-    Source expression that reads the input current ``I`` (default ``"I_t"``).
-
-Attributes
-----------
-statements : list of str
-    Helper statements (LUT argument/index locals) that must be emitted before
-    the returned expression is used, in order.
-tables : dict
-    LUT variable name to its integer entries, for the generator to declare.
-free_vars : list of str
-    Identifiers that are neither state, parameter nor input, in first-seen
-    order — the generator declares them as extra function arguments.
-
-- **__init__**(state_map, param_map, q)
-- **_wide**(expr)
-  - Cast a source expression to the 64-bit signed accumulator type.
-- **_tern**(cond, when_true, when_false)
-  - Emit a conditional expression (C ``?:`` / Rust ``if``-expression).
-- **_index**(table, idx)
-  - Index a LUT table (Rust needs a ``usize`` cast).
-- **_local**(name, expr)
-  - Declare a 64-bit signed local holding ``expr`` (no indentation).
-- **_q_signed**(value)
-  - Encode ``value`` as the signed integer its Verilog ``'sd`` literal denotes.
-- **_fxmul**(left, right)
-  - Multiply two wide operands with RTL wrap-truncate semantics.
-- **visit_BinOp**(node)
-  - Emit a binary op (add, sub, mul, div, pow).
-- **_emit_div**(node, left)
-  - Emit division: by a constant it becomes a reciprocal multiply, else a shift-divide.
-- **_emit_pow**(node, left)
-  - Emit a power: integer 2-8 as repeated wrap-multiply, 1/2 and 1/3 as LUT roots.
-- **visit_UnaryOp**(node)
-  - Emit a unary op (negate, positive).
-- **visit_Name**(node)
-  - Resolve a name to a wide read expression, recording free variables.
-- **visit_Constant**(node)
-  - Emit a numeric constant as its signed Q-format integer.
-- **visit_Compare**(node)
-  - Emit comparison operators (>, >=, <, <=), chained with logical AND.
-- **visit_Call**(node)
-  - Emit a supported function call (transcendental LUT, abs, clip, max/min).
-- **_lut_entries**(name)
-  - Return the quantised LUT entries for ``name`` at this word/fraction.
-- **_emit_lut**(name, arg)
-  - Emit a LUT lookup mirroring ``_VerilogExprEmitter._emit_lut_call``.
-- **generic_visit**(node)
-  - Raise for any unsupported AST node type.
 
 ### Function `signed_q(q, value)`
 Encode ``value`` as the signed integer its Verilog ``'sd`` literal denotes.
@@ -6642,23 +5750,6 @@ summary : list&#91;str&#93;
     The ``sby`` summary lines, retained for diagnostics.
 
 
-### Function `_generate_sby(miter_top, source_files)`
-Render a ``.sby`` script that reads the sources and checks the miter.
-
-### Function `_result_from_run(run)`
-Map a raw :class:`SbyRun` onto an :class:`EquivalenceResult`.
-
-A ``PASS`` yields ``proven=True``; a ``FAIL`` yields ``proven=False`` with the
-counterexample; an inconclusive k-induction result (``mode="prove"`` whose
-induction step did not converge) yields ``proven=False`` with the ``UNKNOWN``
-verdict and *no* counterexample — the modules may still be equivalent.
-
-Raises
-------
-RuntimeError
-    On a tool or setup failure (``ERROR`` / crash), which is not a verdict
-    about equivalence.
-
 ### Function `prove_equivalence(dut_verilog, ref_verilog, io_ports)`
 Prove ``dut_verilog`` equivalent to ``ref_verilog`` via SymbiYosys.
 
@@ -6720,27 +5811,6 @@ direction : str
 - **declaration**(suffix)
   - Return a Verilog ``wire`` declaration for this port.
 
-### Function `_eval_width_expr(expr, params)`
-Evaluate a bit-index expression to an integer, substituting parameters.
-
-Supports integer literals, the parameter names in ``params``, and the
-``+ - * // << >>`` operators — enough for the ``&#91;DATA_WIDTH-1:0&#93;`` bounds the
-compiler emits. Raises :class:`ValueError` on any unsupported construct so a
-malformed or parameter-dependent width can never silently resolve wrong.
-
-### Function `_port_list_bounds(verilog, top)`
-Return ``(open, close)`` indices of ``module top ( ... )``'s port-list parens.
-
-``verilog&#91;open&#93; == "("`` and ``verilog&#91;close&#93; == ")"`` bracket the ANSI port
-list, with an optional ``#( ... )`` parameter block skipped first. Raises
-:class:`ValueError` if the module or its port list cannot be located.
-
-### Function `_module_header(verilog, top)`
-Return the port-list body of ``module top ( ... );``.
-
-Skips an optional ``#( ... )`` parameter block. Raises :class:`ValueError`
-if the module or its port list cannot be located.
-
 ### Function `parse_module_interface(verilog, top)`
 Parse the ANSI port interface of a Verilog module.
 
@@ -6759,12 +5829,6 @@ Returns
 -------
 list&#91;MiterPort&#93;
     The ports in declaration order.
-
-### Function `_params_block(params)`
-Render a ``#(.NAME(value), ...)`` override block, or ``""`` if empty.
-
-### Function `_instance(top, inst, params, connections)`
-Render a single module instantiation.
 
 ### Function `build_equivalence_miter(dut_top, ref_top, io_ports)`
 Build a sequential-equivalence miter for two interface-compatible modules.
@@ -6832,9 +5896,6 @@ Returns
 -------
 list of float
     The 256 tabulation points.
-
-### Function `_signed_cap(data_width)`
-Return the largest signed value representable in ``data_width`` bits.
 
 ### Function `exp_lut_entries(data_width, fraction)`
 Quantised ``exp`` LUT over the symmetric grid, saturated to the word max.
@@ -6978,13 +6039,6 @@ list of int
 
 ## Module `compiler.fixed_point_quantization`
 
-### Function `_fixed_integer_bounds(q)`
-### Function `_coerce_q_format(fmt)`
-### Function `_finite_float_array(values)`
-### Function `_round_scaled(scaled, rounding)`
-### Function `_quantize_fixed_array(weights, q)`
-### Function `_mixed_tensor_scale(weights, fmt)`
-### Function `_quantize_mixed_precision_weights(weights, fmt)`
 ### Function `quantize_weights(weights, fmt, rounding, clip)`
 Quantize float weights to fixed-point integers.
 
@@ -7014,71 +6068,6 @@ Compute quantization error statistics.
 ---
 
 ## Module `compiler.formal_evidence`
-
-### Class `_MonitorParameters`
-Derived RTL parameters for the adaptive-precision bounded-error monitor.
-
-Attributes
-----------
-max_total_error_q16 : int
-    The claimed total error bound in Q16.16 fixed point.
-max_bit_width : int
-    The largest synapse operand bit width in the plan.
-max_bitstream_length : int
-    The longest stochastic bitstream in the plan (the sequencer bound and the
-    number of accumulation steps).
-per_step_bound_q16 : int
-    The per-tick error budget in Q16 — ``floor(max_total_error_q16 /
-    max_bitstream_length)`` — so that ``length * per_step <= total`` by
-    construction, which the assumption on ``err_step`` then enforces.
-acc_width : int
-    Error-accumulator width in bits, sized to hold the bound plus one further
-    step with a guard bit so the no-overflow obligation is faithful.
-len_width : int
-    Length-counter width in bits, sized to represent ``max_bitstream_length``.
-complete_bmc_depth : int
-    A BMC depth (``max_bitstream_length + 2``) at which the accumulator has
-    stopped updating, so bounded checking to this depth exhausts the reachable
-    state space and the proof is complete rather than merely bounded.
-
-- **as_substitution**(module_name)
-  - Return the template substitution mapping for ``module_name``.
-
-### Function `_monitor_parameters(max_total_error_bound, max_bit_width, max_bitstream_length)`
-Derive the monitor's fixed-point widths and bounds from a precision plan.
-
-Parameters
-----------
-max_total_error_bound : float
-    The largest per-synapse total error bound in the plan (fractional).
-max_bit_width : int
-    The largest synapse operand bit width in the plan.
-max_bitstream_length : int
-    The longest stochastic bitstream in the plan (guaranteed positive by
-    :class:`~sc_neurocore.compiler.synapse_precision.SynapsePrecision`).
-
-Returns
--------
-_MonitorParameters
-    The derived, self-consistent RTL parameter set.
-
-### Function `_precision_monitor_rtl(module_name, params)`
-Render the synthesisable bounded-error monitor RTL for ``module_name``.
-
-### Function `_precision_monitor_sva(module_name, params)`
-Render the bound assertion checker for ``module_name``.
-
-### Function `_execute_precision_proof(module_name, rtl, sva, formal_claim, proof_workdir)`
-Run the property proof if the toolchain is present; update ``formal_claim``.
-
-``mode`` selects bounded model checking (``"bmc"``, complete for the saturating
-monitor) or k-induction (``"prove"``, an unbounded proof). The proof runs inside
-``proof_workdir`` (a subdirectory of the bundle output), so the ``sby`` run tree
-stays contained with the bundle rather than polluting the caller's working
-directory.
-
-Returns the evidence boundary string reflecting what actually happened —
-an executed proof or a recorded skip — never a fabricated pass.
 
 ### Function `write_precision_formal_evidence_bundle(output_dir, assignments)`
 Write a SymbiYosys evidence bundle for adaptive-precision claims.
@@ -7151,13 +6140,6 @@ summary : list&#91;str&#93;
     The ``sby`` summary lines, retained for diagnostics.
 
 
-### Function `_generate_property_sby(top, rtl_file, sva_file)`
-Render a ``.sby`` script that reads the RTL and its bound SVA and checks it.
-
-The RTL is read first so the ``bind`` statement in the SystemVerilog assertion
-file resolves against an already-elaborated target module; ``prep -top`` then
-keeps the bound checker instance in the design handed to ``smtbmc``.
-
 ### Function `prove_property(rtl_verilog, sva_verilog)`
 Prove ``rtl_verilog`` satisfies the assertions in ``sva_verilog`` via SymbiYosys.
 
@@ -7205,19 +6187,6 @@ One-liner: ODE string → (Python neuron, Verilog RTL).
 
 ## Module `compiler.guard_bits`
 
-### Function `_count_additions(expr_str)`
-Count the number of addition/subtraction nodes in an expression AST.
-
-Parameters
-----------
-expr_str : str
-    A Python-syntax arithmetic expression.
-
-Returns
--------
-int
-    Number of Add/Sub operations in the AST.
-
 ### Function `compute_guard_bits(expr_str)`
 Compute the number of guard bits needed for safe accumulation.
 
@@ -7262,18 +6231,6 @@ dict
 
 ## Module `compiler.host_driver_gen`
 
-### Class `_ParameterBinding`
-Sanitized generated-driver identifiers for one module parameter.
-
-
-### Function `_validate_driver_inputs(params)`
-Reject malformed driver inputs before any code is generated.
-
-``data_width``/``fraction`` must form a valid signed Q-format (mirroring the FPGA
-compiler guard), the memory-mapped ``base_address`` must be non-negative, and every
-parameter register width must be positive and bounded — a zero, negative or absurd width
-would emit a driver whose runtime ``1 << width`` masks are degenerate or unbounded.
-
 ### Function `generate_host_driver(module_name, params)`
 Generate host-side driver code for a bus-wrapped neuron.
 
@@ -7302,30 +6259,6 @@ Returns
 -------
 str
     Complete driver source code.
-
-### Function `_driver_identifier(value)`
-Return a safe generated-driver identifier fragment.
-
-### Function `_module_identifier(module_name)`
-Return the safe generated-driver identifier for a module name.
-
-### Function `_parameter_identifier(parameter_name)`
-Return the safe register identifier for a generated parameter.
-
-### Function `_setter_identifier(parameter_name)`
-Return the safe Python/C setter suffix for a generated parameter.
-
-### Function `_parameter_bindings(params)`
-Return collision-free generated identifiers for all parameters.
-
-### Function `_python_class_name(module_identifier)`
-Return the generated Python driver class name.
-
-### Function `_gen_python_driver(module_identifier, params, base_address, data_width, fraction, live_update_spec)`
-Generate Python MMIO driver.
-
-### Function `_gen_c_driver(module_identifier, params, base_address, data_width, fraction, live_update_spec)`
-Generate C MMIO driver header.
 
 ---
 
@@ -7389,9 +6322,6 @@ Predict MTTF from voltage, temperature, and technology node.
 ### Function `predict_aging(initial_fmax_mhz)`
 Predict end-of-life Fmax after transistor aging.
 
-### Function `_require_finite_positive(value, name)`
-### Function `_require_finite_non_negative(value, name)`
-### Function `_require_celsius_above_absolute_zero(value, name)`
 ---
 
 ## Module `compiler.intelligence.approximate_computing`
@@ -7476,35 +6406,6 @@ str
 
 ## Module `compiler.intelligence.bit_true_kernel`
 
-### Class `_KernelContext`
-Everything the neuron-kernel renderers need, assembled once per generation.
-
-- **__init__**()
-
-### Function `_ctype(data_width)`
-C integer type name holding a ``data_width``-bit word (native or widened).
-
-### Function `_rtype(data_width)`
-Rust integer type name holding a ``data_width``-bit word (native or widened).
-
-### Function `_validate_modes(q)`
-Reject overflow / rounding modes the bit-true kernel does not mirror.
-
-### Function `_preamble_c(q)`
-Emit the shared C helpers: ``sc_wrap``, ``sat``, ``fxmul`` and constants.
-
-### Function `_preamble_rust(q)`
-Emit the shared Rust helpers: ``sc_wrap``, ``sat``, ``fxmul`` and constants.
-
-### Function `_format_tables_c(tables, data_width)`
-Declare each accumulated LUT as a ``static const`` C array.
-
-### Function `_format_tables_rust(tables, data_width)`
-Declare each accumulated LUT as a Rust ``const`` array.
-
-### Function `_accumulate_bias(x, overflow)`
-Wrap a raw ``reg + d`` accumulate expression per the overflow mode.
-
 ### Function `generate_bittrue_kernel(module_name, equations)`
 Generate a bit-true fixed-point kernel from a ``{var: derivative}`` mapping.
 
@@ -7533,15 +6434,6 @@ Returns
 -------
 str
     Bit-true kernel source code.
-
-### Function `_step_args_c(input_used, free_vars, data_width)`
-Comma-joined C parameter list for a simple kernel's extra inputs.
-
-### Function `_emit_simple_c(module_name, equations, safe, q, dt_q, derivs, stmts, tables, free_vars, input_used)`
-Render the simple mapping kernel as C.
-
-### Function `_emit_simple_rust(module_name, equations, safe, q, dt_q, derivs, stmts, tables, free_vars, input_used)`
-Render the simple mapping kernel as Rust.
 
 ### Function `generate_bittrue_kernel_from_neuron(neuron, module_name)`
 Generate a whole-neuron kernel bit-identical to the compiled Verilog.
@@ -7576,18 +6468,6 @@ Returns
 -------
 str
     Bit-true whole-neuron kernel source code.
-
-### Function `_emit_neuron_c(ctx)`
-Render the whole-neuron kernel as C, mirroring the RTL always block.
-
-### Function `_neuron_commit_c(ctx)`
-Emit the threshold / reset / spike commit block for the C kernel.
-
-### Function `_emit_neuron_rust(ctx)`
-Render the whole-neuron kernel as Rust, mirroring the RTL always block.
-
-### Function `_neuron_commit_rust(ctx)`
-Emit the threshold / reset / spike commit block for the Rust kernel.
 
 ---
 
@@ -7758,7 +6638,6 @@ Keyed by ``(equations_hash, target, data_width, fraction)``.
 Avoids redundant recompilation when re-targeting.
 
 - **__init__**()
-- **_key**(equations, target, data_width, fraction)
 - **get**(equations, target, data_width, fraction)
   - Look up a cached compilation result.
 - **put**(equations, target, data_width, fraction, result)
@@ -8200,21 +7079,12 @@ num_parameters : int
 sweep_ranges : dict&#91;str, tuple&#91;float, float&#93;&#93;
 
 
-### Function `_validate_hil_contract(module_name, equations, parameters, sample_points, repetitions, settle_cycles, acceptance_tolerance)`
-### Function `_coprime_stride(sample_points, start)`
-### Function `_latin_hypercube_design(parameters, sample_points)`
 ### Function `generate_hil_calibration(module_name, equations)`
 Generate hardware-in-the-loop calibration protocol.
 
 ---
 
 ## Module `compiler.intelligence.hls_export`
-
-### Function `_preamble(module_name, data_width, fraction, hls_tool)`
-Emit the include guard, headers, and fixed-point typedef.
-
-### Function `_helpers(used)`
-Emit inline fixed-point helpers for any non-library transcendentals used.
 
 ### Function `generate_hls_cpp(module_name, equations)`
 Translate compiled neuron equations to Vitis/Catapult HLS C++.
@@ -8627,21 +7497,6 @@ parameters : dict&#91;str, dict&#91;str, float&#93;&#93;
     Node name → the resolved numeric parameters (template defaults overlaid
     with the node's own values).
 
-
-### Function `_canonical_type(raw)`
-Resolve a free-form node-type tag to a canonical template key.
-
-### Function `_template_for(ntype)`
-Return the ODE template for a canonical type (Izhikevich is the extension).
-
-### Function `_format_value(value)`
-Render a resolved parameter as a concrete numeric literal.
-
-### Function `_substitute(expr, params)`
-Substitute parameter names with their numeric values (longest name first).
-
-### Function `_resolve_node(ntype, raw_params)`
-Instantiate a template for one node: concrete state equations, params, threshold, reset.
 
 ### Function `import_nir_graph(nir_data)`
 Import a dict-form Neuromorphic Intermediate Representation graph.
@@ -9321,12 +8176,6 @@ Returns
 str
     Complete TCL script.
 
-### Function `_gen_vivado_tcl(module_name, part, verilog_files, constraint_file)`
-Generate Xilinx Vivado project TCL.
-
-### Function `_gen_quartus_tcl(module_name, part, verilog_files, constraint_file)`
-Generate Intel Quartus project TCL.
-
 ---
 
 ## Module `compiler.intelligence.telemetry_ingestion`
@@ -9406,9 +8255,6 @@ Predict junction temperature from power dissipation.
 ### Function `generate_thermal_constraints(module_name, analysis)`
 Generate XDC constraints for thermal-aware DSP placement.
 
-### Function `_require_finite(value, name)`
-### Function `_require_finite_positive(value, name)`
-### Function `_require_finite_non_negative(value, name)`
 ---
 
 ## Module `compiler.intelligence.timescale_partitioner`
@@ -9807,15 +8653,6 @@ sensitivity:
 - **to_dict**()
   - Return a JSON-serializable adaptive-precision manifest row.
 
-### Function `_validate_non_negative_int(value, name)`
-Reject non-integer or negative manifest index fields.
-
-### Function `_validate_positive_int(value, name)`
-Reject non-integer or non-positive manifest length fields.
-
-### Function `_validate_non_negative_float(value, name)`
-Reject non-numeric, non-finite, or negative manifest scalar fields.
-
 ---
 
 ## Module `compiler.length_planner`
@@ -9854,12 +8691,6 @@ Raises
 ValueError
     If planner bounds, method, names, or weight tensors are invalid.
 
-### Function `_validate_planner_bounds(min_length, max_length, target_error)`
-Validate scalar bounds shared by layer-length planners.
-
-### Function `_as_weight_array(weights)`
-Return a finite 1D/2D layer-weight array for planning.
-
 ---
 
 ## Module `compiler.live_control_ops`
@@ -9873,9 +8704,6 @@ One deterministic memory-mapped write in a live-update transaction.
 One deterministic memory-mapped read in a live-control transaction.
 
 - **__post_init__**()
-
-### Function `_crc32_update_guard(bank_select, entry_index, data_lo, data_hi)`
-Return IEEE CRC32 over four little-endian 32-bit update words.
 
 ---
 
@@ -9958,23 +8786,6 @@ Contract for dynamic updates through bus-mapped control registers.
 - **from_dict**(cls, payload)
   - Rehydrate contract from serialized mapping.
 
-### Function `_normalise_bus_protocol(protocol)`
-### Function `_validate_banks_do_not_overlap(banks)`
-Return True if any two bank ranges overlap.
-
-### Function `_ranges_overlap(ranges, candidate)`
-Return True when any half-open range overlaps the candidate range.
-
----
-
-## Module `compiler.manifest_gen`
-
-### Function `_precision_label(parsed)`
-Return a deterministic textual label for telemetry.
-
-### Function `_precision_manifest(parsed, source, resolved_width, emitted_fraction)`
-Build deterministic metadata for precision contracts.
-
 ---
 
 ## Module `compiler.mixed_dense_kernel`
@@ -9994,9 +8805,6 @@ underflow : numpy.ndarray
     ``True`` where a non-zero contraction rounded to zero without
     overflowing, ``bool_``.
 
-
-### Function `_validate_and_shape(weights_q88, inputs_q1616, n_outputs, n_inputs)`
-Validate shapes and the accumulation bound; return (weights, inputs) int64.
 
 ### Function `mixed_dense_forward_batch_q88_q1616(weights_q88, inputs_q1616, n_outputs, n_inputs)`
 Pure-Python batched mixed-precision dense MAC — the bit-true floor reference.
@@ -10022,15 +8830,6 @@ Raises
 ValueError
     If shapes are inconsistent or the accumulation can exceed ``int64``.
 
-### Function `_result_from_mapping(payload, n_batch, n_outputs)`
-Convert a backend dict payload into a typed result with ``(n_batch, n_outputs)`` arrays.
-
-### Function `_backend_python(weights_q88, inputs_q1616, n_outputs, n_inputs)`
-### Function `_n_batch(inputs_q1616, n_inputs)`
-### Function `_backend_rust(weights_q88, inputs_q1616, n_outputs, n_inputs)`
-### Function `_backend_julia(weights_q88, inputs_q1616, n_outputs, n_inputs)`
-### Function `_backend_go(weights_q88, inputs_q1616, n_outputs, n_inputs)`
-### Function `_backend_mojo(weights_q88, inputs_q1616, n_outputs, n_inputs)`
 ### Function `available_backends()`
 Probe which acceleration backends can run the mixed-dense kernel.
 
@@ -10079,9 +8878,6 @@ Bit-true mixed fixed-point dense operator compiled from float weights.
   - Raw-product divisor that converts Qw*Qa products into Qa codes.
 - **manifest**()
   - Deterministic deployment metadata for host, Rust, and HDL emitters.
-- **_input_codes**(inputs)
-- **_raw_accumulator_products**(input_codes)
-- **_forward_anomaly_masks**(inputs)
 - **forward_with_overflow**(inputs)
   - Return saturated Q-accumulator codes and per-output overflow flags.
 - **forward_accumulator_codes**(inputs)
@@ -10144,7 +8940,6 @@ Translate sc-neurocore objects into MLIR text formatted for CIRCT.
 - **__init__**(module_name)
 - **get_wire**()
   - Allocate the next SSA wire name for emitted MLIR operations.
-- **_sanitize_ssa_name**(name, context)
 - **emit_and**(lhs, rhs)
   - Emit a comb.and operation for stochastic multiplication.
 - **emit_lfsr**(width, seed)
@@ -10157,14 +8952,6 @@ Translate sc-neurocore objects into MLIR text formatted for CIRCT.
   - Generate CIRCT-consumable ``hw``/``comb`` dialect MLIR for the module.
 - **write_bundle**(output_dir)
   - Write MLIR plus a manifest describing CIRCT lowering readiness.
-
-### Function `_lower_with_circt(circt_opt, mlir_path, verilog_path)`
-Verify then lower MLIR to Verilog with ``circt-opt``, failing closed.
-
-Runs ``circt-opt --verify-diagnostics`` followed by ``circt-opt
---export-verilog`` (the exported Verilog arrives on stdout; the ``-o`` sink
-is discarded). Raises :class:`SCCompilerError` if either step fails, so a
-bundle never records a lowering that did not actually succeed.
 
 ### Function `generate_mlir_bundle(emitter, output_dir)`
 Write a CIRCT-ready MLIR file, a manifest, and optionally lowered Verilog.
@@ -10264,16 +9051,6 @@ signed : bool
 - **declaration**()
   - Return the ``input wire`` port declaration for the module header.
 
-### Function `_drop_signal_definition(verilog, name)`
-Remove ``name``'s declaration and its continuous-assign driver.
-
-Handles both single-statement forms the compiler and hand-written references
-emit: an inline ``wire NAME = EXPR;`` (declaration *is* the driver), or a bare
-``wire NAME;`` paired with a separate ``assign NAME = EXPR;``. The name is
-anchored as the declared/driven identifier (before ``=`` or ``;``), so a use of
-``name`` in another statement's right-hand side is never matched. Raises
-:class:`ValueError` when neither form is found.
-
 ### Function `abstract_to_free_inputs(verilog)`
 Abstract each signal's driver away and expose it as a free input port.
 
@@ -10324,22 +9101,6 @@ A closed interval &#91;lo, hi&#93; for interval arithmetic.
 - **contains**(lo, hi)
   - Check if this interval is contained within &#91;lo, hi&#93;.
 
-### Class `_IntervalEvaluator`
-Evaluate an AST expression using interval arithmetic.
-
-- **__init__**(bounds)
-  - Initialise with variable bounds.
-- **visit_BinOp**(node)
-  - Evaluate a binary operation on intervals.
-- **visit_UnaryOp**(node)
-  - Evaluate a unary operation on an interval.
-- **visit_Name**(node)
-  - Look up the interval for a variable name.
-- **visit_Constant**(node)
-  - A constant is a point interval &#91;c, c&#93;.
-- **generic_visit**(node)
-  - Raise for unsupported nodes.
-
 ### Class `OverflowProofResult`
 Result of a formal overflow proof.
 
@@ -10370,9 +9131,6 @@ exceeds the signed Q-format capacity.
 
 - **manifest**()
   - Return a stable JSON-serialisable proof manifest.
-
-### Function `_required_total_bits_for_bound(abs_bound_code)`
-Return the minimum total bit width needed by a non-negative code bound.
 
 ### Function `prove_fixed_point_envelope(bound_codes)`
 Prove whether conservative Q-code bounds fit a fixed-point format.
@@ -10430,13 +9188,8 @@ The pipeline writes generated artifacts under ``work_dir`` and validates
 artifact paths before invoking the external EDA toolchain.
 
 - **__init__**(work_dir)
-- **_resolve_tool**(tool_name)
-- **_sanitize_name**(name)
-  - Restrict output_name to alphanumeric + underscore.
 - **compile_mlir_to_verilog**(mlir_content, output_name)
   - Lower ``hw``/``comb`` dialect MLIR to Verilog with ``circt-opt``.
-- **_validate_path**(path)
-  - Ensure path resolves inside work_dir.
 - **run_synthesis**(v_path, target_fpga)
   - Run Yosys synthesis and return the expected JSON netlist path.
 - **run_pnr**(json_path, target_device)
@@ -10445,19 +9198,6 @@ artifact paths before invoking the external EDA toolchain.
 ---
 
 ## Module `compiler.pipeline_analysis`
-
-### Function `_mul_div_depth(node)`
-Return the longest chain of Mult/Div operations from root to leaf.
-
-Parameters
-----------
-node : ast.AST
-    Root AST node.
-
-Returns
--------
-int
-    Maximum multiplicative depth.
 
 ### Function `critical_path_depth(expr_str)`
 Count the longest chain of Mult/Div nodes in an expression.
@@ -10572,31 +9312,6 @@ notes : str
   - Smallest representable step.
 - **from_constraints**(cls, name)
   - Auto-construct an optimal profile from spec-sheet constraints.
-
-### Function `_reg(p)`
-Register a profile in the global registry.
-
-Parameters
-----------
-p : HardwareProfile
-    The profile to register, keyed by its ``name``.
-allow_override : bool, optional
-    When ``False`` (the default) a name already present in the registry
-    raises :class:`ValueError`. This guards the built-in profile modules
-    against the silent last-wins overwrite that previously let one
-    platform be registered several times with conflicting fields. Set to
-    ``True`` for the user-extension paths (e.g. loading a TOML profile
-    that deliberately overrides a built-in target).
-
-Returns
--------
-HardwareProfile
-    The registered profile (``p`` unchanged), for convenient chaining.
-
-Raises
-------
-ValueError
-    If ``p.name`` is already registered and ``allow_override`` is ``False``.
 
 ### Function `get_profile(name)`
 Look up a hardware profile by name.
@@ -10757,11 +9472,6 @@ toggle_rate : float
     Average toggle rate (transitions per clock per bit).
 
 
-### Function `_load_vcd_text(activity_vcd)`
-### Function `_bit_toggle_count(previous, current, width)`
-### Function `_parse_vcd_activity(activity_vcd, time_units_per_cycle)`
-Return measured toggles per cycle and average bit toggle rate from VCD.
-
 ### Function `estimate_power(verilog)`
 Estimate power consumption from generated Verilog.
 
@@ -10916,9 +9626,6 @@ Encode one scalar value or reject precision modes requiring exponent metadata.
 
 ## Module `compiler.precision_presets`
 
-### Function `_parse_precision_spec(spec)`
-Parse legacy and explicit precision specs.
-
 ### Function `from_preset(var_presets)`
 Create a MixedPrecisionSpec from named presets.
 
@@ -10929,12 +9636,6 @@ resolution instead of later scalar encoding.
 ---
 
 ## Module `compiler.precision_solver`
-
-### Function `_min_bits_for_range(lo, hi, signed)`
-Return a conservative integer-bit count for a closed value range.
-
-### Function `_min_frac_for_resolution(resolution)`
-Return fractional bits needed for a target resolution quantum.
 
 ### Function `solve_precision(bounds)`
 Solve a deterministic per-variable fixed-point precision assignment.
@@ -11160,7 +9861,6 @@ Conservative fixed-point output-envelope report for deployment checks.
 - **manifest**()
   - Deterministic envelope metadata for predeployment gates.
 
-### Function `_fixed_integer_bounds(q)`
 ---
 
 ## Module `compiler.quantizer`
@@ -11304,12 +10004,6 @@ Raises
 ValueError
     If trial count, candidate lengths, or layer weight arrays are invalid.
 
-### Function `_validate_lengths(lengths)`
-Return positive integer candidate bitstream lengths.
-
-### Function `_as_weight_matrix(weights)`
-Return finite vector or matrix weights as a two-dimensional matrix.
-
 ---
 
 ## Module `compiler.slr_placement`
@@ -11387,18 +10081,6 @@ str
 
 ## Module `compiler.synapse_planner`
 
-### Function `_select_bit_width(sensitivity, target, min_bits, max_bits)`
-Return the smallest bit width whose quantization bound meets target.
-
-### Function `_quantization_error_bound(sensitivity, bits)`
-Return a conservative fixed-point quantization error bound.
-
-### Function `_hoeffding_radius(length, confidence)`
-Return the Hoeffding radius for a stochastic bitstream length.
-
-### Function `_precision_cost_summary(assignments)`
-Summarize relative LUT cost for a synapse precision assignment list.
-
 ### Function `assign_synapse_precisions(layer_weights, layer_names, sensitivity_maps, target_error, min_bits, max_bits, min_length, max_length, confidence)`
 Assign per-synapse bit widths and SC lengths with error bounds.
 
@@ -11437,9 +10119,6 @@ ValueError
     If planner bounds, names, sensitivity maps, or weight tensors are
     invalid.
 
-### Function `_as_weight_array(weights)`
-Return a finite 1D/2D synapse-weight array for planning.
-
 ---
 
 ## Module `compiler.synapse_precision`
@@ -11474,15 +10153,6 @@ total_error_bound:
   - Validate per-synapse precision-row invariants.
 - **to_dict**()
   - Return a JSON-serialisable precision-plan row.
-
-### Function `_validate_non_negative_int(value, name)`
-Reject non-integer or negative manifest index fields.
-
-### Function `_validate_positive_int(value, name)`
-Reject non-integer or non-positive precision fields.
-
-### Function `_validate_non_negative_float(value, name)`
-Reject non-numeric, non-finite, or negative error-bound fields.
 
 ---
 
@@ -11522,100 +10192,7 @@ str
 
 ---
 
-## Module `compiler.validation`
-
-### Function `_coerce_precision(precision)`
-Resolve concrete fixed-point datapath parameters and telemetry metadata.
-
-### Function `_validate_lp_hp(lp_width, lp_frac, hp_width, hp_frac)`
-Validate that the LP/HP pair is sensible.
-
-### Function `_validate_hysteresis(threshold_up_pct, threshold_down_pct, max_lp_code)`
-Validate adaptive-precision hysteresis thresholds.
-
----
-
 ## Module `compiler.verilog_compiler`
-
-### Class `_NeuronCore`
-Shared combinational building blocks for one neuron's step.
-
-Both the registered per-instance module and the combinational datapath PE are
-assembled from these identical fragments, so their arithmetic is bit-for-bit
-the same. State variables are referenced as ``<safe_var>_reg`` throughout
-(the per-instance module declares those as registers; the datapath PE declares
-them as input ports).
-
-- **total_pipeline_latency**()
-
-### Function `_emit_euler_deriv_wires(neuron, state_var_map, param_map, q)`
-Emit the per-variable ``d<var> = f(state)·dt`` forward-Euler increment wires.
-
-This is the original single-step update path, extracted verbatim so the method
-dispatch in :func:`_build_neuron_core` can select it or the RK4 path without
-changing its byte-for-byte output. Returns ``(deriv_wires, intermediates,
-pipeline_regs, mul_count, trunc_count)``.
-
-### Function `_emit_rk4_deriv_wires(neuron, state_var_map, param_map, q)`
-Emit the per-variable ``d<var>`` increment wires for one classical RK4 step.
-
-Mirrors the Python golden in :meth:`EquationNeuron.step` (``method="rk4"``)::
-
-    k1 = f(s0);   s1 = s0 + k1·dt/2
-    k2 = f(s1);   s2 = s0 + k2·dt/2
-    k3 = f(s2);   s3 = s0 + k3·dt
-    k4 = f(s3)
-    d<var> = (k1 + 2·k2 + 2·k3 + k4)·dt/6
-
-Every derivative evaluation reuses :func:`_emit_expr` — the same fixed-point
-expression emitter the Euler path uses — so the whole RK4 stage graph is emitted
-in whatever ``q`` format is requested. The integrator is therefore agnostic to
-the number representation: all Q-formats, rounding modes and overflow handling
-are inherited without special-casing (one integrator × N representations). The
-state at each stage is supplied through ``param_map`` (state variables render as
-the stage wire names), exactly as the threshold emitter substitutes ``<var>_next``.
-Targets deterministic models (no stochastic ``xi`` term). When ``use_pipeline`` (or an
-explicit ``pp_set``) is set, every derivative-evaluation multiply across the four stages is
-registered by :func:`_emit_expr` (the cheap constant ``dt``-scalings stay combinational); the
-fill-counter FSM in :func:`compile_to_verilog` holds the state steady until the whole stage
-graph drains, so the recurrence stays bit-true regardless of pipeline depth. Returns
-``(deriv_wires, intermediates, pipeline_regs, mul_count, trunc_count)``.
-
-### Function `_emit_exp_euler_deriv_wires(neuron, state_var_map, param_map, q)`
-Emit the per-variable ``d<var>`` increment wires for one exponential-Euler step.
-
-Mirrors the Python golden in :meth:`EquationNeuron.step` (``method="exp_euler"``),
-the linearised exponential Euler (Rush–Larsen) update::
-
-    d<var> = f(state) · dt · exprel(A·dt),   A = ∂f/∂x
-
-``exprel(z) = (e**z − 1)/z`` is reused so the zero-Jacobian limit ``A→0`` collapses
-to the exact forward-Euler increment ``f·dt``, and the update is exact on the gating
-form ``dx/dt = (x_inf − x)/tau`` where forward Euler drifts. The diagonal Jacobian
-``A`` is the *same* symbolic derivative string the golden compiled
-(``neuron.jacobian_expressions&#91;var&#93;``): one derivative expression drives the golden
-and the Verilog, so the two stay consistent by construction rather than by a parallel
-re-derivation.
-
-The whole increment — ``f``, ``A``, both ``dt`` scalings and the ``exprel`` hardware
-LUT — is lowered by the same :func:`_emit_expr` the Euler and RK4 paths use, applied
-to a single composed expression per variable, so exp-Euler inherits every Q-format and
-the transcendental LUT for free (one integrator × N representations). State renders as
-``<var>_reg`` — the pre-step value — so all increments are computed from the pre-step
-state (a forward, not Gauss–Seidel, update), exactly as the golden applies them.
-Targets deterministic models (no stochastic ``xi`` term). When ``use_pipeline`` (or an
-explicit ``pp_set``) is set every multiply in the composed increment is registered by
-:func:`_emit_expr`; the fill-counter FSM in :func:`compile_to_verilog` holds the state
-steady until those stages drain, so the recurrence stays bit-true regardless of depth.
-Returns ``(deriv_wires, intermediates, pipeline_regs, mul_count, trunc_count)``.
-
-### Function `_build_neuron_core(neuron, q)`
-Emit the combinational next-state + threshold + reset fragments.
-
-This is the logic shared verbatim by :func:`compile_to_verilog` and
-:func:`compile_to_datapath`; neither wraps nor mutates it differently, which
-is what guarantees bit-exact agreement between the per-instance module and the
-folded datapath.
 
 ### Function `compile_to_verilog(neuron, module_name, data_width, fraction)`
 Compile an EquationNeuron to synthesizable Verilog RTL.
@@ -11713,64 +10290,6 @@ Rounding Modes
   - Check if a value fits in the integer range. Returns warnings.
 - **precision_report**(dt, params)
   - Generate a human-readable precision diagnostics report.
-
----
-
-## Module `compiler.verilog_expr_emitter`
-
-### Class `_VerilogExprEmitter`
-Walk a Python AST and emit equivalent Verilog fixed-point expressions.
-
-Handles: +, -, *, /, **, unary minus, comparisons, names, constants.
-Multiplications emit wide product with arithmetic right shift.
-
-- **__init__**(state_vars, param_map, q)
-  - Initialise the Verilog expression emitter.
-- **_const_float**(node)
-  - Constant-fold a literal or simple literal arithmetic node to a float.
-- **_trunc**(wide_name)
-  - Emit an intermediate wire for fixed-point truncation with rounding.
-- **visit_BinOp**(node)
-  - Emit Verilog for a binary operation (add, sub, mul, div).
-- **visit_UnaryOp**(node)
-  - Emit Verilog for a unary operation (negate, positive).
-- **visit_Name**(node)
-  - Resolve a Python name to its Verilog equivalent.
-- **visit_Constant**(node)
-  - Encode a numeric constant as a Verilog signed literal in Q-format.
-- **visit_Compare**(node)
-  - Emit Verilog for comparison operators (>, >=, <, <=).
-- **visit_Call**(node)
-  - Emit Verilog for function calls.
-- **_emit_lut_call**(lut_name, arg, entries)
-  - Emit an ``len(entries)``-entry LUT over ``&#91;lut_min, lut_min + N*step)``.
-- **_sym_points**()
-  - Return the shared 256-point symmetric sample grid over &#91;-16, 16).
-- **_exp_lut_entries**()
-  - Quantised ``exp`` LUT for this word's width and fraction.
-- **_log_lut_entries**()
-  - Quantised ``log`` LUT for this word's fraction.
-- **_sqrt_lut_entries**()
-  - Quantised ``sqrt`` LUT for this word's fraction.
-- **_tanh_lut_entries**()
-  - Quantised ``tanh`` LUT for this word's fraction.
-- **_cosh_lut_entries**()
-  - Quantised ``cosh`` LUT for this word's width and fraction.
-- **_cbrt_lut_entries**()
-  - Quantised cube-root LUT for this word's fraction.
-- **_exprel_lut_entries**()
-  - Quantised ``exprel`` LUT for this word's width and fraction.
-- **_sigmoid_lut_entries**()
-  - Quantised logistic-sigmoid LUT for this word's fraction.
-- **_sin_lut_entries**()
-  - Quantised ``sin`` LUT for this word's fraction.
-- **_cos_lut_entries**()
-  - Quantised ``cos`` LUT for this word's fraction.
-- **generic_visit**(node)
-  - Raise an error for any unsupported AST node type.
-
-### Function `_emit_expr(expr_str, state_vars, param_map, q)`
-Parse a Python expression string and return Verilog.
 
 ---
 
@@ -11881,13 +10400,6 @@ Classify a request into a live-update package.
 ### Function `build_compiler_service_response(request)`
 Build a response without invoking a network service or toolchain.
 
-### Function `_response_diagnostics(update_package)`
-### Function `_target_key(target)`
-### Function `_target_to_dict(target)`
-### Function `_budget_to_dict(budget)`
-### Function `_layer_to_dict(layer)`
-### Function `_report_to_dict(report)`
-### Function `_surrogate_layer_config_to_dict(config)`
 ---
 
 ## Module `compression.pruning`
@@ -12111,12 +10623,7 @@ decay : float
   - Apply one positive phase followed by one negative phase.
 - **goodness**(activations)
   - Compute 'goodness' score (sum of squared activations).
-- **_validate_update_inputs**(weights, pre_spikes, post_spikes)
 
-### Function `_finite_scalar(value, name)`
-### Function `_as_float_matrix(values, name)`
-### Function `_as_float_vector(values, name)`
-### Function `_as_weight_matrix(values)`
 ---
 
 ## Module `control.adaptive_loop`
@@ -12217,8 +10724,6 @@ Q : ndarray (n, n) — state cost
 R : ndarray (m, m) — control cost
 
 - **__init__**(A, B, Q, R)
-- **_solve_dare**(max_iter)
-  - Solve discrete algebraic Riccati equation iteratively.
 - **control**(x)
   - Compute optimal control: u = -K @ x.
 - **gain_matrix**()
@@ -12252,7 +10757,6 @@ drift detection.
 - **__init__**(window_size, drift_threshold)
 - **observe**(bitstream, reference)
   - Record one observation.
-- **_compute_scc**(a, b)
 - **mean_density**()
 - **mean_scc**()
 - **drift_active**()
@@ -12292,8 +10796,6 @@ Rules for runtime bitstream adaptation.
 - **__init__**(scc_high, scc_low, min_length, max_length, ecc_trigger_length, enable_decorrelator_cascade)
 - **decide**(config, metrics)
   - Evaluate metrics and return (new_config, trigger_reason_or_None).
-- **_next_decorrelator**(current)
-  - Get next decorrelator in escalation cascade.
 
 ### Class `RuntimeReport`
 Summary report from a runtime session.
@@ -12352,26 +10854,6 @@ n_layers : int
   - Run the converted SNN for T timesteps on input x.
 - **classify**(x)
   - Run SNN and return predicted class indices.
-
-### Function `_extract_layers(model)`
-Extract (weight, bias) pairs from a PyTorch Sequential model.
-
-### Function `_compute_max_activations(model, calibration_data, percentile)`
-Run calibration data through model, record per-layer max activation.
-
-### Function `_extract_qcfs_layers(model)`
-Collect the (theta, T) of each QCFS activation in forward order.
-
-Parameters
-----------
-model : nn.Module
-    Model possibly containing :class:`QCFSActivation` layers.
-
-Returns
--------
-list of (float, int)
-    Per-QCFS-layer ``(theta, T)`` pairs in module-traversal order. Empty
-    when the model carries no QCFS activations (the ReLU route is used).
 
 ### Function `replace_relu_with_qcfs(model, T, theta, learn_theta)`
 Swap every ReLU/ReLU6 in a model for a QCFS activation, in place.
@@ -12461,9 +10943,6 @@ learn_theta : bool
 
 ## Module `core.bipolar`
 
-### Function `_validate_bitstream_length(length)`
-### Function `_as_float_array(values, name)`
-### Function `_as_bit_array(bits, name)`
 ### Function `bipolar_encode(value, L, rng)`
 Encode a bipolar value in &#91;-1, 1&#93; as a Bernoulli bitstream.
 
@@ -12571,8 +11050,6 @@ flagged : bool
     Whether ``abs(predicted_and_bias)`` exceeds the configured threshold.
 
 
-### Function `_as_bit_array(bits, name)`
-### Function `_overlap_counts(bits_a, bits_b)`
 ### Function `estimate_scc(bits_a, bits_b)`
 Estimate the stochastic cross-correlation of two equal-length bitstreams.
 
@@ -12651,9 +11128,6 @@ ci95_halfwidth : float
     (:math:`1.959964 \times \text{std\_error}`).
 
 
-### Function `_validate_length(length)`
-### Function `_validate_probability(value, name)`
-### Function `_validate_bipolar(value, name)`
 ### Function `bernoulli_variance(value, length)`
 Variance of the decoded unipolar SC estimate :math:`\hat p = k/N`.
 
@@ -12949,7 +11423,6 @@ Simple CLI dashboard for monitoring SC simulation rates.
   - Create a dashboard with one rolling history per neuron.
 - **update**(firing_rates, step)
   - Append one frame of firing rates and render the dashboard.
-- **_render**(step)
 
 ---
 
@@ -13007,15 +11480,6 @@ ValueError
 
 ## Module `datasets.loaders`
 
-### Function `_synthetic_event_dataset(n_samples, spatial_size, n_classes, T, dt_ms, seed)`
-Generate synthetic Poisson-encoded event samples.
-
-Each class gets a distinct random rate template. Events are returned
-as (N_events, 4) arrays with columns &#91;x, y, polarity, timestamp_ms&#93;.
-
-### Function `_check_root(root, dataset_name, url)`
-Raise FileNotFoundError if *root* does not exist.
-
 ### Function `load_nmnist(root, train, dt_ms, T, synthetic, n_samples, seed)`
 Load N-MNIST spiking vision dataset.
 
@@ -13047,9 +11511,6 @@ Returns
 samples : list of ndarray, each shape (N_events, 4)
     Columns: &#91;x, y, polarity, timestamp_ms&#93;.
 labels : ndarray of int
-
-### Function `_parse_nmnist_bin(path, dt_ms)`
-Parse a single N-MNIST .bin file into (N, 4) event array.
 
 ### Function `load_shd(root, train, dt_ms, T, synthetic, n_samples, seed)`
 Load Spiking Heidelberg Digits (SHD) dataset.
@@ -13083,7 +11544,6 @@ samples : list of ndarray, each shape (T, 700) dtype bool
     Binned spike trains.
 labels : ndarray of int
 
-### Function `_synthetic_shd(n_samples, T, dt_ms, seed)`
 ### Function `load_dvs_cifar10(root, train, dt_ms, T, synthetic, n_samples, seed)`
 Load DVS-CIFAR10 event-camera dataset.
 
@@ -13284,7 +11744,6 @@ Manages the background execution of the Go HIL Debugger service.
 - **__post_init__**()
 - **start**(build)
   - Compile and start the standalone HIL Debugger service.
-- **_wait_for_ready**(timeout_sec)
 - **stop**()
   - Gracefully terminate the background HIL debugger process.
 - **is_running**()
@@ -13332,8 +11791,6 @@ and development.
 - **disconnect**()
 - **read_bitstream**(num_words, layer_id)
   - Read packed bitstream words from the target.
-- **_sim_read**(num_words, layer_id)
-  - Generate simulated bitstream data.
 
 ### Class `BitstreamSample`
 One timestamped bitstream capture.
@@ -13419,9 +11876,6 @@ Text-mode rendering of live scope data for CLI output.
 - **render_layer_summary**(cls, layer_id, stats)
 - **render_session**(cls, session)
   - Render full session status as text.
-
-### Function `_compute_scc_python(a, b)`
-Pure-Python Alaghi-Hayes SCC (reference implementation + fallback).
 
 ### Function `compute_scc(a, b)`
 Stochastic Computing Correlation between two u32-packed bitstreams.
@@ -13590,8 +12044,6 @@ SC neuromorphic simulation:
   - Inject an event into the simulation.
 - **process_next**()
   - Process the next event from the queue.
-- **_rollback**(node, target_time_ns)
-  - Roll back a node to a checkpoint at or before target_time.
 - **compute_gvt**()
   - Compute Global Virtual Time (minimum of all LVTs + in-transit).
 - **fossil_collect**()
@@ -13762,7 +12214,6 @@ entropy_weight : float
 - **__init__**(temperature, alpha, entropy_weight)
 - **compute**(student_logits, teacher_logits, targets)
   - Compute distillation loss.
-- **_softmax**(x)
 
 ### Class `SelfDistiller`
 Self-distillation: use extended-T model as implicit teacher.
@@ -13780,7 +12231,6 @@ temperature : float
 
 - **generate_targets**(run_fn, inputs)
   - Run model at T_teacher steps to generate soft targets.
-- **_softmax**(x)
 
 ---
 
@@ -13819,11 +12269,6 @@ Returns
 -------
 DiagnosticReport
 
-### Function `_check_hardware(report, layer_sizes, target, bitstream_length)`
-### Function `_check_weights(report, weights)`
-### Function `_check_spike_rates(report, spike_rates)`
-### Function `_check_architecture(report, layer_sizes)`
-### Function `_check_coding_efficiency(report, layer_sizes, bitstream_length)`
 ---
 
 ## Module `drivers.physical_twin`
@@ -13839,9 +12284,6 @@ physical hardware unless a TCP exchange actually succeeds.
 - **__init__**(ip, port)
 - **sync_step**(sw_v_mem, sw_spike)
   - Send software state and return the twin membrane voltage.
-- **_sync_step_tcp**(sw_v_mem, sw_spike)
-- **_parse_reply**(response)
-- **_log_divergence**(sw_v_mem, hw_v_mem)
 
 ---
 
@@ -13859,8 +12301,6 @@ unless explicitly in 'EMULATION' mode.
 
 - **__init__**(bitstream_path, mode, seed)
   - Construct a driver in HARDWARE or EMULATION mode.
-- **_connect_to_fpga**()
-  - Attempts to load the PYNQ libraries and flash the bitstream.
 - **write_layer_params**(layer_id, params)
   - Writes parameters to a specific layer's AXI-Lite registers.
 - **run_step**(input_vector)
@@ -14051,12 +12491,6 @@ Write `power_thermal_model.json` beside generated FPGA artefacts.
 ### Function `write_power_thermal_model_from_vivado_reports(report_dir, output_dir, config)`
 Write report-derived FPGA power/thermal JSON beside deployable artefacts.
 
-### Function `_target_payload(target)`
-### Function `_resource_payload(report)`
-### Function `_extract_header(text, label)`
-### Function `_extract_summary_float(text, label)`
-### Function `_extract_summary_text(text, label)`
-### Function `_extract_utilisation_row(text, label)`
 ---
 
 ## Module `edge.sc_network`
@@ -14066,8 +12500,6 @@ Single dense SC layer: weights × inputs via AND + popcount threshold.
 
 - **__post_init__**()
   - Validate and normalise layer configuration after dataclass construction.
-- **_validate_configuration**()
-- **_validate_weights**()
 - **words_per_input**()
   - Return packed weight words required to cover all layer inputs.
 - **forward**(input_words, bit_length)
@@ -14089,10 +12521,6 @@ Usage::
   - Append a layer after validating stochastic-mode compatibility.
 - **encode_inputs**(probabilities)
   - Encode float probabilities into per-input packed bitstreams.
-- **_spikes_to_bitstreams**(spikes, lfsr)
-  - Re-encode spike booleans as bitstreams for the next layer.
-- **_flatten_bitstreams**(streams)
-  - Interleave per-input bitstreams into a flat word array.
 - **run**(input_probabilities)
   - Full inference: encode → cascaded layer inference → spike output.
 - **export_weights**()
@@ -14103,21 +12531,6 @@ Usage::
   - Return the number of layers currently registered in the network.
 - **total_neurons**()
   - Return the total output-neuron count across all registered layers.
-
-### Function `_require_integer(value, name)`
-Return ``value`` as ``int`` after rejecting bool and non-integral aliases.
-
-### Function `_require_positive_integer(value, name)`
-Return a positive integer bounded by ``max_value`` when provided.
-
-### Function `_require_nonnegative_integer(value, name)`
-Return a non-negative integer suitable for popcount thresholds.
-
-### Function `_require_u32_word(value, name)`
-Return an unsigned 32-bit word after rejecting lossy numeric aliases.
-
-### Function `_require_probability(value)`
-Return a finite unipolar probability in the inclusive ``&#91;0, 1&#93;`` range.
 
 ---
 
@@ -14185,9 +12598,6 @@ Manifest consumed by the generated browser runtime.
 ### Function `build_web_deployment(model_path, output_dir, config)`
 Generate a static browser deployment scaffold for a model artefact.
 
-### Function `_render_index_html()`
-### Function `_render_runtime_js()`
-### Function `_render_webgpu_shader()`
 ---
 
 ## Module `edge.weights`
@@ -14349,10 +12759,6 @@ T : int
   - Compute data statistics relevant to encoding selection.
 - **recommend**(data)
   - Recommend encoding schemes ranked by suitability.
-- **_info_score**(original, encoded)
-  - Estimate how well encoding preserves input information.
-- **_encodings**()
-- **_reason**(name, stats)
 
 ---
 
@@ -14577,9 +12983,6 @@ Optimises SC deployment for net-zero energy operation.
 - **__init__**(fpga, carbon, embodied, thermal)
 - **analyze**(harvest, target_hours)
   - Run full sustainability analysis.
-- **_optimize_duty_cycle**(total_power, harvest_power)
-  - Compute optimal duty-cycle to match harvest.
-- **_generate_suggestions**(total, harvest, deficit)
 - **hourly_profile**(harvest, hours)
   - Generate an hourly power-balance profile.
 - **simulate_storage**(harvest, storage, hours)
@@ -14714,10 +13117,6 @@ Applies mutations to genomes.
 - **__init__**(config, rng_seed)
 - **mutate**(genome)
   - Apply a random mutation and return the mutated child.
-- **_point_mutation**(genome)
-- **_structural_mutation**(genome)
-- **_duplication_mutation**(genome)
-- **_swap_mutation**(genome)
 
 ### Class `CrossoverEngine`
 Uniform crossover between two parent genomes.
@@ -14783,8 +13182,6 @@ Selection → Replication → Mutation → Safety Check → Deploy
   - Evaluate fitness for all living organisms.
 - **verify_runtime_faults**(organism, config)
   - Run seeded runtime fault diagnosis and apply bounded degradation.
-- **_runtime_bitstreams**(genome, config)
-- **_apply_runtime_fault_plan**(organism, plan, config)
 - **select_and_cull**(survival_fraction)
   - Select fittest organisms, cull the rest. Elitism preserved.
 - **evolve_generation**(metrics_fn)
@@ -14949,7 +13346,6 @@ Compositional Pattern Producing Network for developmental encoding.
 - **__init__**()
 - **query**(x, y)
   - Query the CPPN at coordinates (x, y).
-- **_activate**(x, func)
 - **generate_weight_matrix**(rows, cols)
   - Generate a weight matrix by querying CPPN at grid positions.
 - **num_nodes**()
@@ -15181,14 +13577,9 @@ Registry for named alternative execution paths.
 - **run**(name, config)
 - **evaluate**(name, cases, config)
 
-### Function `_safe_stringify_error(exc)`
-### Function `_numeric_comparison(baseline, candidate, config, context)`
-### Function `_combine_stats(stats, context)`
 ### Function `compare_outputs(baseline, candidate, config, context)`
 Compare outputs from baseline and candidate implementations.
 
-### Function `_call_timed(fn)`
-### Function `_median_runtime_ns(values)`
 ---
 
 ## Module `experimental.builtins`
@@ -15203,8 +13594,6 @@ Return the default case set for a built-in route.
 
 ## Module `experimental.examples`
 
-### Function `_baseline_affine_sigmoid(x, bias)`
-### Function `_candidate_affine_sigmoid(x, bias)`
 ### Function `make_demo_sigmoid_route()`
 Create a self-contained demo route for benchmarking and comparison.
 
@@ -15215,21 +13604,6 @@ Create a registry with the built-in demo route.
 
 ## Module `experimental.memory_routes`
 
-### Function `_validated_delay_steps(delay_steps)`
-Return a simulation delay after rejecting bool or negative values.
-
-### Function `_validated_positive_count(name, value)`
-Return a strictly positive integer count for route dimensions or seeds.
-
-### Function `_validated_cue_matrix(cues)`
-Return a finite binary two-dimensional cue matrix for recall trials.
-
-### Function `_make_memory_neurons(n_neurons, seed)`
-### Function `_run_delayed_recall_trial(cue)`
-### Function `_run_delayed_recall_suite(delay_steps)`
-### Function `_delayed_recall_local_baseline(delay_steps)`
-### Function `_delayed_recall_shared_state_candidate(delay_steps)`
-### Function `_compare_delayed_recall_gain(baseline, candidate, config)`
 ### Function `make_delayed_recall_shared_state_route()`
 Route a bounded delayed-recall task against a shared-memory candidate.
 
@@ -15242,27 +13616,12 @@ memory.
 
 ## Module `experimental.physics_routes`
 
-### Function `_heat_cosine_mode_baseline(x_0, horizon, mode_index)`
-### Function `_heat_cosine_mode_candidate(x_0, horizon, mode_index)`
 ### Function `make_heat_cosine_mode_route()`
 Route Monte Carlo heat evolution against an exact Neumann cosine mode.
 
-### Function `_harmonic_oscillator_rhs(_t, y)`
-### Function `_harmonic_energy(y)`
-### Function `_validate_harmonic_inputs(q0, p0, horizon, dt)`
-### Function `_integrate_harmonic(solver, q0, p0, horizon)`
-### Function `_harmonic_rk4_baseline(q0, p0, horizon)`
-### Function `_harmonic_stormer_verlet_candidate(q0, p0, horizon)`
 ### Function `make_harmonic_symplectic_route()`
 Route harmonic-oscillator integration against the symplectic solver.
 
-### Function `_kuramoto_phase_velocity(phases, omegas, coupling)`
-### Function `_kuramoto_order_parameter(phases)`
-### Function `_kuramoto_interaction_energy(phases, coupling)`
-### Function `_validate_kuramoto_route_inputs(initial_phases, horizon, omegas, coupling, dt)`
-### Function `_wrap_phases(phases)`
-### Function `_kuramoto_euler_baseline(initial_phases, horizon)`
-### Function `_kuramoto_xy_lift_candidate(initial_phases, horizon)`
 ### Function `make_kuramoto_noiseless_symplectic_lift_route()`
 Route a bounded noiseless Kuramoto regime against a symplectic XY lift.
 
@@ -15280,12 +13639,6 @@ Write a batch summary to a JSON report file.
 
 ## Module `experimental.solver_routes`
 
-### Function `_finite_scalar(name, value)`
-### Function `_positive_scalar(name, value)`
-### Function `_validate_lif_subthreshold_contract(v0, current, horizon)`
-### Function `_lif_rhs(_t, y)`
-### Function `_lif_rk4_baseline(v0, current, horizon)`
-### Function `_lif_exact_candidate(v0, current, horizon)`
 ### Function `make_lif_subthreshold_exact_route()`
 Route subthreshold LIF integration against the analytical solution.
 
@@ -15337,28 +13690,6 @@ p_fire : float
 ---
 
 ## Module `experiments.demo_adaptive_audio`
-
-### Function `_generate_eeg_chunk(rng, n_samples, target_hz, sample_rate, entrained_strength, noise_level)`
-Generate simulated EEG with a target-frequency component + noise.
-
-Parameters
-----------
-rng : RandomState
-    Random number generator.
-n_samples : int
-    Number of samples to produce.
-target_hz : float
-    Entrainment target frequency.
-sample_rate : int
-    Sampling rate in Hz.
-entrained_strength : float
-    Amplitude of the entrained sinusoidal component (0-1).
-noise_level : float
-    Amplitude of background noise.
-
-Returns
--------
-np.ndarray of shape (n_samples,)
 
 ### Function `run_demo()`
 ---
@@ -15444,19 +13775,10 @@ components : np.ndarray
 ### Function `generate_eeg_epoch(stage, n_samples, sample_rate, rng)`
 Return *n_samples* of simulated EEG voltage for *stage*.
 
-### Function `_night_schedule(n_epochs)`
-Return a realistic stage sequence for *n_epochs* epochs.
-
-Follows a simplified 90-minute cycle pattern:
-WAKE -> N1 -> N2 -> N3 -> N2 -> REM -> repeat
-
 ### Function `run_demo()`
 ---
 
 ## Module `experiments.demo_swarm_control`
-
-### Function `_bar(value, width)`
-Tiny ASCII bar chart helper.
 
 ### Function `run_demo()`
 ---
@@ -15468,7 +13790,6 @@ Tiny ASCII bar chart helper.
 
 ## Module `experiments.demonstration_convergence`
 
-### Function `_emit_hardware_evidence(mlir_str)`
 ### Function `run_demonstration()`
 ---
 
@@ -15561,15 +13882,6 @@ Orchestrates TCBO consciousness detection scenarios.
 - **get_state**()
 - **get_history**(last_n)
 - **reset**()
-
-### Function `_compute_order_parameter(theta)`
-Kuramoto order parameter R = |<e^(i*theta)>|.
-
-### Function `_compute_p_h1_lightweight(phase_history, tau_h1, beta)`
-Lightweight p_h1 proxy using phase-locking statistics.
-
-Computes average PLV across pairs from recent history,
-then applies logistic squash.
 
 ### Function `get_tcbo_demo_engine()`
 ### Function `reset_tcbo_demo_engine()`
@@ -15677,7 +13989,6 @@ Captures "why this spike fired" as a verifiable decision tree.
 - **add_decision**(neuron_id, bitstream, threshold, scc, parent, timestep, layer_id, contributing_neurons, threshold_q16)
   - Record a spike decision from bitstream observation.
 - **depth**()
-- **_compute_depth**(node)
 - **num_spikes**()
 - **num_nodes**()
 - **nodes_at_layer**(layer_id)
@@ -15688,9 +13999,7 @@ Captures "why this spike fired" as a verifiable decision tree.
   - Look up a node by neuron ID.
 - **spike_path**()
   - Return the chain of spiking nodes from root down.
-- **_collect_spike_path**(node, path)
 - **to_dict**()
-- **_node_to_dict**(node)
 
 ### Class `ProvenanceStep`
 One step in a full provenance chain.
@@ -15815,9 +14124,6 @@ End-to-end explainability: replay + decision tree + provenance.
 - **explain_spike_with_local_llm**(neuron_id, threshold_q16, bitstream_length, spike_threshold_count)
   - Run the deterministic explainability path, then enhance it locally.
 
-### Function `_validate_replay_parameters()`
-Validate deterministic replay parameters before replay side effects.
-
 ---
 
 ## Module `export.compiler_export`
@@ -15837,22 +14143,14 @@ Infers tensor shapes dynamically across the SNN graph.
 - **__init__**(input_shapes)
 - **infer**(node)
   - Infer and store the output shape for one supported SC-IR node.
-- **_shape_for**(node, edge_name)
 
 ### Class `CompilerExporter`
 Export SC-IR graph-like objects to strict SSA MLIR text.
 
 - **__init__**(target)
   - Create an exporter for a supported compiler backend target.
-- **_topological_sort**(nodes)
-  - Kahn's algorithm for topological sorting of the DAG.
-- **_format_mlir_type**(shape, dtype)
-  - Render an MLIR scalar or tensor type for a validated static shape.
 - **export_to_mlir**(ir_graph, input_shapes)
   - Emit strict SSA MLIR text via topological traversal.
-- **_validate_unique_edges**(nodes)
-- **_validate_output_input_collisions**(nodes, input_shapes)
-- **_validate_export_contract**(nodes, input_shapes)
 
 ---
 
@@ -15922,8 +14220,6 @@ graph_name:
     Name assigned to the emitted ONNX graph.
 
 - **__init__**(graph_name)
-- **_infer_type**(node_type, shape)
-- **_infer_shape**(node_type, inputs, shapes)
 - **export**(ir_graph, input_shapes, metadata)
   - Convert an SC-IR graph to an ONNX graph representation.
 
@@ -15936,10 +14232,7 @@ Export SC networks to ONNX protobuf or legacy JSON.
 
 - **export**(layers, filename)
   - Export *layers* to *filename*.
-- **_export_protobuf**(layers, filename)
-- **_export_json**(layers, filename)
 
-### Function `_classify_op(layer)`
 ---
 
 ## Module `export.pipeline`
@@ -15970,19 +14263,6 @@ Usage::
 - **__init__**(registry, target)
 - **run**(neuron_name, n_neurons, bitstream_length, module_name)
   - Execute the full export pipeline for a neuron model.
-- **_stage_model_zoo**(neuron_name, n_neurons, bitstream_length)
-  - Stage 1: Look up neuron plugin and validate.
-- **_stage_verilog**(neuron_name, n_neurons, bitstream_length, module_name)
-  - Stage 2: Generate SystemVerilog.
-- **_stage_onnx**(ir_graph, n_neurons, bitstream_length)
-  - Stage 3: Export to ONNX graph.
-- **_stage_tvm**(ir_graph, n_neurons, bitstream_length)
-  - Stage 4: Lower to TVM Relay.
-- **_stage_mlir**(ir_graph, n_neurons, bitstream_length)
-  - Stage 5: Export to MLIR/SSA.
-
-### Function `_build_ir_graph(neuron_name, n_neurons, bitstream_length, meta)`
-Build a lightweight IR graph from neuron plugin metadata.
 
 ---
 
@@ -16002,9 +14282,6 @@ Build a lightweight IR graph from neuron plugin metadata.
 Lowers SC-NeuroCore IR to TVM Relay IR text representation.
 
 - **__init__**(schedule)
-- **_shape_str**(shape, dtype)
-- **_lower_node**(node, shapes)
-  - Returns (relay_line, output_type_str).
 - **lower**(ir_graph, input_shapes, func_name)
   - Lower SC-IR graph to Relay IR text.
 - **emit_build_script**(relay_text)
@@ -16048,8 +14325,6 @@ Applies configurable faults to SC bitstreams.
 Monte-Carlo resilience benchmarking harness.
 
 - **__init__**(seed)
-- **_generate_bitstream**(length, probability)
-  - Generate a random SC bitstream encoding a given probability.
 - **run**()
   - Run Monte-Carlo fault injection trials.
 - **sweep_ber**()
@@ -16086,8 +14361,6 @@ Run seeded fault-injection trials and degradation policy together.
 - **__init__**(config)
 - **run**(bitstreams)
   - Evaluate resilience for a binary ``(neurons, bits)`` layer.
-- **_run_fault_model**(streams, flat, fault_model, model_index)
-- **_validate_bitstreams**(bitstreams)
 
 ---
 
@@ -16115,10 +14388,6 @@ Combine seeded fault injection with stochastic-doctor diagnosis.
 - **__post_init__**()
 - **evaluate**(bitstreams)
   - Inject seeded faults, audit the layer, and recommend degradation.
-- **_inject_layer**(bitstreams, fault_model, ber, seed)
-- **_plan**(observation)
-- **_make_plan**(action, observation, multiplier, reason)
-- **_validate_bitstreams**(bitstreams)
 
 ---
 
@@ -16278,9 +14547,6 @@ Per-round provenance record for regulatory compliance.
 - **max_epsilon**()
   - Return the maximum epsilon recorded across all rounds.
 
-### Function `_lfsr16_step(reg)`
-Single step of LFSR-16 (polynomial x^16+x^14+x^13+x^11+1).
-
 ### Function `lfsr_encode(value, seed, length)`
 Encode a probability &#91;0,1&#93; into a packed bitstream using LFSR-16.
 
@@ -16362,12 +14628,6 @@ ValueError
 - **to_dict**()
   - Return the JSON-serialisable mapping of the artifact.
 
-### Function `_sorted_artifacts(artifacts)`
-Return the artifacts as deterministically-ordered dicts (stable digest).
-
-### Function `_sc_inference_unit(result)`
-Build the signed unit for an sc-inference result (recompute-verifiable).
-
 ### Function `regrade_sc_inference(unit)`
 Recompute the sc-inference grade from the signed unit.
 
@@ -16390,12 +14650,6 @@ Returns
 HonestyEnvelope
     A recompute-verifiable envelope: the WASM/NumPy kernel re-derives the result and
     its digest must match.
-
-### Function `_fpga_unit(result, artifacts)`
-Build the signed unit for an FPGA deployment (attestation-verifiable).
-
-### Function `_has_cosim_transcript(unit)`
-Whether a ``cosim-transcript`` artifact is present to back a bit-exactness claim.
 
 ### Function `regrade_fpga(unit)`
 Recompute the FPGA grade from the signed unit.
@@ -16562,16 +14816,6 @@ EvidenceBundle
 
 ## Module `federation.manifest`
 
-### Function `_resolve_studio_version()`
-Return the source ``sc-neurocore`` version, or an installed fallback.
-
-Returns
--------
-str
-    The package source version when importable, the installed distribution
-    version otherwise, or ``"0+unknown"`` so the manifest never carries a
-    fabricated version.
-
 ### Function `declared_surface()`
 Return the content-addressable declared surface of the SC-NeuroCore studio.
 
@@ -16678,13 +14922,7 @@ metric : {"cosine", "euclidean", "hamming"}, default="cosine"
   - Classify query patterns from support-set prototypes.
 - **export_prototypes**()
   - Return defensive copies of the most recently computed prototypes.
-- **_build_prototypes**(support_x, support_y)
 
-### Function `_validate_positive_int(value, name)`
-### Function `_as_feature_vector(pattern, n_features)`
-### Function `_validate_label(label, n_classes)`
-### Function `_cosine_score(lhs, rhs)`
-### Function `_metric_score(metric, query, prototype)`
 ---
 
 ## Module `formal.counterexample_replay`
@@ -16738,9 +14976,6 @@ Replay a spike trace against a post-coactivation global silence contract.
 ### Function `replay_population_inactivity_counterexample(spike_trace, inactivity)`
 Replay a spike trace against a bounded consecutive-inactivity contract.
 
-### Function `_select_binary_spike(sample, output_index)`
-### Function `_count_binary_spikes(sample)`
-### Function `_as_binary_bool(value)`
 ---
 
 ## Module `formal.lean_bridge`
@@ -16810,8 +15045,6 @@ Bound consecutive valid cycles with no active network outputs.
 ### Function `validate_systemverilog_identifier(value)`
 Return ``value`` after checking it is a plain SystemVerilog identifier.
 
-### Function `_validate_positive_int(value)`
-### Function `_validate_non_negative_int(value)`
 ---
 
 ## Module `formal.property_compiler`
@@ -16851,22 +15084,6 @@ Raised when a formal network verification report violates its schema.
 ### Function `validate_formal_network_report(payload)`
 Validate a formal network verification report without external dependencies.
 
-### Function `_validate_artifacts(artifacts)`
-### Function `_validate_rate_replay(value, field)`
-### Function `_validate_refractory_replay(value, field)`
-### Function `_validate_antagonistic_replay(value, field)`
-### Function `_validate_temporal_replay(value, field)`
-### Function `_validate_population_replay(value, field)`
-### Function `_validate_population_silence_replay(value, field)`
-### Function `_validate_population_inactivity_replay(value, field)`
-### Function `_expect_artifact_path(artifacts, key)`
-### Function `_expect_mapping(value, field)`
-### Function `_expect_equal(value, expected, field)`
-### Function `_expect_str(value, field)`
-### Function `_expect_string(value, field)`
-### Function `_expect_bool(value, field)`
-### Function `_expect_non_negative_int(value, field)`
-### Function `_expect_optional_non_negative_int(value, field)`
 ---
 
 ## Module `fusion.multimodal`
@@ -16921,9 +15138,6 @@ proximity.
 - **__init__**(seed)
 - **decorrelate**(streams, method)
   - Decorrelate a list of bitstream matrices.
-- **_generate_mask**(shape, seed, method)
-- **_lfsr_mask**(shape, seed)
-- **_sobol_mask**(shape, seed)
 - **measure_scc**(a, b)
   - Compute stochastic cross-correlation between two bitstreams.
 
@@ -16935,11 +15149,8 @@ Implements query-key-value attention using stochastic arithmetic:
   - Weighted V: SC-MUX (bitwise multiplexer = scaled addition)
 
 - **__init__**(num_channels, seed)
-- **_sc_and**(a, b)
-- **_sc_mux**(a, b, sel)
 - **attend**(query_stream, key_stream, value_stream)
   - Compute cross-modal attention in SC domain.
-- **_project**(stream, weights)
 
 ### Class `FusionMetrics`
 Metrics from a sensor fusion pass.
@@ -17067,10 +15278,6 @@ Implements Marching Cubes algorithm for isosurface extraction.
   - Export a point cloud to JSON format.
 - **generate_surface_mesh**(voxel_grid, iso_level)
   - Generate a surface mesh from a voxel grid using Marching Cubes.
-- **_get_edge_vertices**(i, j, k, cube_vals, iso_level)
-  - Compute vertex positions along cube edges.
-- **_compute_normals**(vertices, faces)
-  - Compute vertex normals from face normals.
 - **export_mesh_obj**(mesh, filename)
   - Export mesh to OBJ format.
 - **export_mesh_json**(mesh, filename)
@@ -17146,8 +15353,6 @@ Create and validate deployment packages.
   - Validate a deployment package for consistency.
 - **summary**(package)
   - Human-readable deployment summary.
-- **_build_config**(weights, placements, device)
-  - Build binary configuration blob.
 
 ---
 
@@ -17285,7 +15490,6 @@ Finite AER strict-priority queue with hardware-equivalent traps.
   - Drain the queue according to the strict-priority contract.
 - **extend**(events)
   - Enqueue all events that fit and return the accepted count.
-- **_best_index**()
 
 ---
 
@@ -17321,11 +15525,6 @@ interface. It is not a QDI async network replacement.
 - **__init__**(module_name, bus_width)
 - **add_layer**(layer_type, name, params)
 - **generate**()
-- **_require_positive_int**(value, name)
-- **_validate_layers**()
-- **_dense_input_width**(params, previous_width)
-- **_dense_output_width**(params)
-- **_dense_layer_widths**()
 
 ---
 
@@ -17384,21 +15583,6 @@ Both protocol paths stage low/high data words, commit updates only after a
 checksum-valid update/apply handshake, and export a flattened
 ``parameter_words`` bus for downstream dense, BFP, or phase-coupling RTL.
 
-### Function `_generate_pcie_live_parameter_bank(spec)`
-Generate a PCIe-MMIO adapter around the AXI4-Lite parameter-bank core.
-
-### Function `_generate_axi_lite(inner_module, params, data_width, addr_width, bus_data_width)`
-Generate an AXI4-Lite slave wrapper.
-
-### Function `_validate_sv_identifier(name, label)`
-Validate a SystemVerilog identifier fragment before emission.
-
-### Function `_ram_style_for_bank(total_bits, block_ram_threshold_bits)`
-Return a deterministic RAM style hint for one parameter bank.
-
-### Function `_generate_wishbone(inner_module, params, data_width, addr_width, bus_data_width)`
-Generate a Wishbone B4 pipelined slave wrapper.
-
 ---
 
 ## Module `hdl_gen.ip_xact`
@@ -17428,20 +15612,6 @@ Returns
 str
     IP-XACT XML string.
 
-### Function `_add_port(parent, name, direction, width)`
-Add a port element to the ports section.
-
-Parameters
-----------
-parent : Element
-    Parent ports element.
-name : str
-    Port name.
-direction : str
-    ``"in"`` or ``"out"``.
-width : int
-    Bit width.
-
 ---
 
 ## Module `hdl_gen.kuramoto_emitter`
@@ -17461,18 +15631,6 @@ the production Kuramoto solvers.
 
 - **__init__**(module_name)
   - Initialize a bounded research Kuramoto HDL emitter configuration.
-- **_fixed_int**(value)
-  - Quantize a real-valued scalar into the configured fixed-point format.
-- **_phase_modulus_fixed**()
-  - Return the fixed-point representation of the ``2pi`` phase modulus.
-- **_require_representable_fixed**(value, name)
-  - Reject fixed-point constants that exceed the signed data-path range.
-- **_validate_fixed_point_format**()
-  - Validate that constants and configured inputs fit the fixed-point format.
-- **_validate_single_step_wrap_bound**()
-  - Reject configurations that could require multiple wraps in one RTL step.
-- **_signed_literal**(value)
-  - Format a signed fixed-point integer as a Verilog decimal literal.
 - **initial_phase_state_fixed**()
   - Return the emitted fixed-point reset state for each oscillator.
 - **fixed_point_step**(phase_state)
@@ -17481,20 +15639,6 @@ the production Kuramoto solvers.
   - Characterise fixed-point drift against the float Kuramoto Euler step.
 - **fixed_state_to_float**(phase_state)
   - Convert integer fixed-point phase state to radians.
-- **_validate_phase_state**(phase_state)
-  - Return a canonical fixed-point phase vector for public mirror helpers.
-- **_float_step**(phases)
-  - Advance the bounded noiseless Kuramoto system with float Euler arithmetic.
-- **_circular_phase_error**(actual, expected)
-  - Return signed circular phase error in ``&#91;-pi, pi)`` radians.
-- **_wrap_phase_fixed**(phase_value, phase_modulus)
-  - Wrap a fixed-point phase into the canonical ``&#91;0, phase_modulus)`` range.
-- **_wrap_delta_fixed**(delta_value)
-  - Wrap a phase difference into the generated RTL's one-step signed range.
-- **_sin_lut_fixed**(phase_value)
-  - Evaluate the same fixed-point sine lookup used by emitted RTL.
-- **_lut_lines**()
-  - Render the Verilog sine lookup table with width-safe case labels.
 - **generate**()
   - Emit deterministic Verilog for the configured research Kuramoto core.
 
@@ -17508,7 +15652,6 @@ Emit a synthesisable standalone LFSR-16 Verilog module.
 - **__init__**(module_name, seed)
 - **generate**()
   - Return the standalone LFSR-16 Verilog module.
-- **_advance**(state)
 
 ---
 
@@ -17576,7 +15719,6 @@ Emit a synthesisable ROM-style wrapper for one protected encoding record.
 - **manifest**()
   - Return transport metadata linking the HDL hook to analytic evidence.
 
-### Function `_bits_literal(bits)`
 ---
 
 ## Module `hdl_gen.sobol16_emitter`
@@ -17634,14 +15776,6 @@ Generates Top-Level Verilog for a defined SC Network.
   - Add a layer definition to the network.
 - **generate**(mode)
   - Emits Verilog code.
-- **_validate_sync_layers**()
-  - Reject sync RTL configurations that cannot be emitted faithfully.
-- **_require_positive_int**(value, name)
-  - Return value as int after rejecting booleans and non-positive values.
-- **_dense_input_width**(params, previous_width)
-- **_dense_output_width**(params)
-- **_sync_layer_widths**()
-  - Return per-layer ``(input_width, output_width)`` and reject mismatches.
 - **emit_lfsr16_source**(module_name, seed)
   - Emit a standalone LFSR-16 stochastic source module.
 - **emit_sobol16_source**(module_name, seed)
@@ -17675,27 +15809,6 @@ Non-source nodes are ignored. Source nodes must identify their generator
 through ``source_type``, ``decorrelator``, ``generator``, ``strategy``, or
 the node ``type``/``node_type`` itself.
 
-### Function `_iter_ir_nodes(ir)`
-Iterate IR nodes, yielding (node_id, node) pairs.
-
-### Function `_source_kind(node)`
-Determine the stochastic source kind from an IR node.
-
-### Function `_source_module_name(node)`
-Extract or generate a unique module name for a stochastic source.
-
-### Function `_source_seed(node)`
-Extract the PRNG seed from an IR node.
-
-### Function `_node_params(node)`
-Extract the params/attributes sub-mapping from an IR node.
-
-### Function `_node_value(node)`
-Look up the first matching key in a node mapping or object.
-
-### Function `_normalise(value)`
-Normalise a node type string to lowercase with underscores.
-
 ---
 
 ## Module `homeostasis.regulator`
@@ -17726,7 +15839,6 @@ lr_scale_factor : float
 - **__init__**(target_rate, rate_tolerance, threshold_step, lr_scale_factor)
 - **regulate**(firing_rates, thresholds, learning_rate, weights)
   - Apply homeostatic regulation.
-- **_validate_regulate_inputs**(firing_rates, thresholds, learning_rate, weights)
 
 ### Class `SleepConsolidation`
 Sleep-phase synaptic renormalization for memory consolidation.
@@ -17750,19 +15862,6 @@ duration_fraction : float
   - Apply sleep consolidation to weights.
 - **should_sleep**(epoch, total_epochs)
   - Determine if this epoch should include a sleep phase.
-- **_validate_weights**(weights)
-
-### Function `_validate_real_scalar(name, value)`
-Return a finite real scalar after rejecting bool aliases and bounds drift.
-
-### Function `_validate_finite_numeric_array(name, value)`
-Return a finite numeric array after enforcing shape and value contracts.
-
-### Function `_max_abs_weight(weight)`
-Return the maximum absolute weight without relying on ndarray reductions.
-
-### Function `_validate_seed(seed)`
-Return a NumPy RandomState seed after rejecting bool aliases and wraparound.
 
 ---
 
@@ -17785,17 +15884,6 @@ Build a deterministic manifest for a self-hosted hub bundle.
 ### Function `write_hub_bundle(output_dir, config)`
 Write a local Docker Compose hub bundle and return generated paths.
 
-### Function `_compose_yaml(config, repo_context)`
-### Function `_env_example(config)`
-### Function `_readme(config)`
-### Function `_offline_environment(config)`
-### Function `_studio_container_command(config)`
-### Function `_ingress_scope(bind_host)`
-### Function `_json(payload)`
-### Function `_relative_repo_context(output_dir)`
-### Function `_repo_root()`
-### Function `_validate_relative_path(label, value)`
-### Function `_validate_bind_host(value)`
 ---
 
 ## Module `hypervisor.hypervisor`
@@ -17840,7 +15928,6 @@ Any cross-region access is blocked and logged as a violation.
 - **remove_tenant_rules**(tenant_id)
 - **check_access**(tenant_id, addr, is_write)
   - Check if a tenant can access an address.
-- **_log_violation**(tenant_id, addr, reason)
 - **violation_count**()
 - **clear_violations**()
 
@@ -17859,10 +15946,6 @@ Supports priority-based, round-robin, fair-share, and EDF scheduling.
 - **__init__**(policy)
 - **generate_schedule**(tenants, num_cycles)
   - Generate a schedule for the given tenants.
-- **_round_robin**(tenants, total)
-- **_priority**(tenants, total)
-- **_fair_share**(tenants, total)
-- **_edf**(tenants, total)
 
 ### Class `MigrationRequest`
 Request to migrate a tenant between regions.
@@ -18034,9 +16117,6 @@ Save and restore complete IdentitySubstrate state.
 - **merge**(paths)
   - Merge multiple checkpoints by averaging weights and concatenating history.
 
-### Function `_restore_voltages(population, voltages)`
-Write voltage array back into individual neuron objects.
-
 ---
 
 ## Module `identity.decoder`
@@ -18045,8 +16125,6 @@ Write voltage array back into individual neuron objects.
 Extract cognitive state from spiking network for session priming.
 
 - **__init__**(substrate)
-- **_recent_trains**(n_neurons, window)
-  - Get recent binary spike trains for the first n_neurons.
 - **extract_dominant_patterns**(n_components)
   - PCA on recent spike trains -> dominant activity patterns.
 - **extract_attractor_states**(threshold)
@@ -18073,18 +16151,6 @@ L16 self-monitoring and self-regulation for the identity substrate.
 - **report**()
   - Generate human-readable health report.
 
-### Function `_add_weight_noise(data, scale)`
-Add Gaussian noise to nonzero weights, clip to non-negative.
-
-### Function `_homeostatic_scale(data, factor)`
-Scale all weights toward the mean. Turrigiano 2008.
-
-### Function `_prune_weak(data, threshold)`
-Zero out weights below threshold.
-
-### Function `_grow_synapses(data, fraction, seed)`
-Reinitialize a fraction of zero weights to small positive values.
-
 ---
 
 ## Module `identity.encoder`
@@ -18096,24 +16162,10 @@ LSH maps text chunks to neuron groups. Poisson spike trains
 weighted by chunk salience deliver the encoded signal.
 
 - **__init__**(n_neurons, hash_dims, seed)
-- **_hash_to_neurons**(text)
-  - Map text to an activation vector over neurons via LSH.
 - **encode**(text, duration_ms, dt)
   - Convert text to spike pattern array (n_neurons, n_steps).
 - **encode_key_value**(key, value)
   - Encode a key-value pair as a combined spike pattern.
-
-### Function `_tokenize(text)`
-Split text into sentence-like chunks on punctuation boundaries.
-
-### Function `_word_set(chunk)`
-Extract lowercased alphanumeric tokens.
-
-### Function `_salience(chunk, position, total)`
-Salience score based on position and lexical density.
-
-First and last sentences score higher (inverted-U weighting).
-Longer chunks with more unique words score higher.
 
 ---
 
@@ -18130,9 +16182,6 @@ Three populations:
 Connectivity: small-world E->E with STDP, random E->I, I->E, E->M, M->E.
 
 - **__init__**(n_cortical, n_inhibitory, n_memory, seed)
-- **_build_projections**(seed)
-- **_build_monitors**()
-- **_build_network**()
 - **step**(stimuli, dt)
   - Advance one timestep. Inject external current into cortical neurons.
 - **run**(duration, dt, stimuli_sequence)
@@ -18197,8 +16246,6 @@ Return conservative built-in industrial application profiles.
 ### Function `assess_industrial_readiness(domain, evidence_bag)`
 Assess readiness for a built-in industrial application domain.
 
-### Function `_requirements()`
-### Function `_normalise_evidence_categories(categories)`
 ---
 
 ## Module `integrations.lava_bridge`
@@ -18250,8 +16297,6 @@ seed : int
   - Encode a signal block into spike trains via rate coding.
 - **encode_stream**(signal)
   - Encode a multi-window signal stream.
-- **_normalize**(values)
-  - Normalize to &#91;0, 1&#93; for probability encoding.
 - **normalize_signal**(signal)
   - Normalize signal to &#91;0, 1&#93;. Legacy API — use _normalize().
 - **encode_to_bitstream**(signal, length)
@@ -18306,8 +16351,6 @@ WaveformCodec + AER + telemetry closed-loop BCI scaffold.
 - **__post_init__**()
 - **process_window**(waveform)
   - Process one raw electrode window through the closed-loop template.
-- **_validate_waveform**(waveform)
-- **_detect_spike_raster**(waveform)
 
 ---
 
@@ -18331,7 +16374,6 @@ Build a deterministic closed-loop BCI/HIL reference manifest.
 ### Function `create_bci_hil_template(profile_id)`
 Create a `ClosedLoopBCITemplate` from a reference profile.
 
-### Function `_profile_to_config(profile)`
 ---
 
 ## Module `interfaces.ccw_bridge`
@@ -18393,13 +16435,9 @@ decay_tau:
   - Validate sensor geometry and allocate the internal event surface.
 - **process_events**(events)
   - Integrate a timestamp-ordered batch of DVS events.
-- **_validate_events**(events)
 - **generate_bitstream_frame**(length)
   - Generate a stochastic bitstream cube from the current DVS surface.
 
-### Function `_positive_integer(value, message)`
-### Function `_positive_finite_float(value, message)`
-### Function `_probability_surface(surface)`
 ---
 
 ## Module `interfaces.real_world`
@@ -18487,7 +16525,6 @@ Closed-loop primitive for continuous BCI streams with latency guarantees.
 - **__init__**(config)
 - **process_stream**(waveform)
   - Process one continuous stream window into a closed-loop control action.
-- **_estimate_latency_ms**()
 
 ---
 
@@ -18535,29 +16572,9 @@ Configuration for deterministic SC-NIR metadata export.
 ### Function `build_scnir_from_neuron_graph(neuron_graph)`
 Build an SC-NIR document from an existing NIR-derived NeuronGraph.
 
-### Function `_hierarchy_from_graph(neuron_graph, streams)`
-Materialise SC-NIR hierarchy metadata from inlined NeuronGraph provenance.
-
-### Function `_hierarchy_stream_ids(neuron_graph, instance)`
-Return deterministic stream ids generated by one inlined hierarchy instance.
-
-### Function `_hierarchy_port_prefix(signal_kind)`
-### Function `_connection_transforms(conn)`
-Return explicit SC-NIR transform metadata for a weighted connection.
-
-### Function `_online_learning_annotation(config, stream_id)`
-### Function `_connection_delay_steps(conn)`
 ### Function `export_scnir_from_nir(model_path)`
 Read a NIR model, export SC-NIR metadata, and write it to JSON.
 
-### Function `_precision(config)`
-### Function `_source(config, stream_index)`
-### Function `_population_encoding(neuron_type)`
-### Function `_population_signal_kind(neuron_type)`
-### Function `_population_stream_id(name)`
-### Function `_connection_stream_id(src, dst)`
-### Function `_stream_fragment(value)`
-### Function `_nth_prime(index)`
 ---
 
 ## Module `ir.scnir_handoff_audit`
@@ -18583,27 +16600,6 @@ SC-NIR localparams must agree with the JSON handoff metadata.
 ### Function `write_scnir_hdl_handoff_audit(directory, output_path)`
 Validate a handoff directory and write the JSON audit report.
 
-### Function `_load_manifest(path)`
-### Function `_verify_manifest_header(manifest)`
-### Function `_external_inputs(manifest)`
-### Function `_verify_source_rows(root, document, sources)`
-### Function `_verify_hierarchy_modules(root, document)`
-### Function `_verify_hierarchy_top_instances(verilog, document)`
-### Function `_verify_source_row_keys(row, index)`
-### Function `_verify_source_row_matches_stream(row, stream, index)`
-### Function `_stream_transform_rows(stream)`
-### Function `_delay_steps_for_row(delay_steps)`
-### Function `_signal_kind_counts(document)`
-### Function `_signal_routes(document)`
-### Function `_hierarchy_instances(document)`
-### Function `_expect_top_localparam(verilog, name, value)`
-### Function `_expect_equal(actual, expected, field)`
-### Function `_require_file(path, label)`
-### Function `_expect_mapping_sequence(manifest, key)`
-### Function `_expect_non_empty_string(mapping, key)`
-### Function `_expect_int(mapping, key)`
-### Function `_expect_positive_int(mapping, key)`
-### Function `_expect_non_negative_int(mapping, key)`
 ---
 
 ## Module `ir.scnir_hdl`
@@ -18627,10 +16623,6 @@ Only source kinds with the standard threshold-bit output contract are
 materialised here. Unsupported SC-NIR source kinds fail closed instead of
 being lowered to semantically incompatible RTL.
 
-### Function `_emit_stream_source(stream)`
-### Function `_manifest_entry(stream)`
-### Function `_require_seed(stream)`
-### Function `_module_name_for_stream(stream, index)`
 ---
 
 ## Module `ir.scnir_schema`
@@ -18700,37 +16692,6 @@ annotations.  Legacy upgrades insert the missing fields before validating
 through the typed schema.  Current documents are canonicalised through the
 same deterministic writer.
 
-### Function `_validate_stream(stream, path)`
-### Function `_validate_online_learning_annotation(annotation, path)`
-### Function `_validate_transform(transform, parent_path)`
-### Function `_validate_precision(precision, parent_path)`
-### Function `_validate_source(source, parent_path)`
-### Function `_validate_correlation(constraint, path)`
-### Function `_validate_hierarchy(hierarchy, stream_signal_kinds)`
-### Function `_stream_from_dict(stream)`
-### Function `_transform_from_dict(transform)`
-### Function `_correlation_from_dict(constraint)`
-### Function `_hierarchy_instance_from_dict(instance)`
-### Function `_hierarchy_port_from_dict(port)`
-### Function `_stream_to_dict(stream)`
-### Function `_hierarchy_instance_to_dict(instance)`
-### Function `_hierarchy_port_to_dict(port)`
-### Function `_infer_legacy_signal_kind(stream_id)`
-### Function `_expect_keys(payload, allowed, path)`
-### Function `_expect_mapping(value, path)`
-### Function `_expect_sequence(value, path)`
-### Function `_expect_non_empty_string(value, path)`
-### Function `_expect_stream_id(value, path)`
-### Function `_expect_hdl_identifier(value, path)`
-### Function `_expect_positive_int(value, path)`
-### Function `_expect_non_negative_int(value, path)`
-### Function `_expect_delay_steps(value, path)`
-Validate scalar or per-source-column stream delay metadata.
-
-### Function `_delay_steps_from_value(value, path)`
-### Function `_delay_steps_to_json(value)`
-### Function `_expect_enum(value, allowed, path)`
-### Function `_is_prime(value)`
 ---
 
 ## Module `layers.attention`
@@ -18755,8 +16716,6 @@ Example
 (4, 5)
 
 - **__post_init__**()
-- **_ensure_2d**(Q, K, V)
-- **_validate_unipolar_bitstream_inputs**(Q, K, V, length)
 - **forward**(Q, K, V)
   - Row-sum normalised attention (SC-native, no exp).
 - **forward_softmax**(Q, K, V)
@@ -18855,7 +16814,6 @@ seed : int
 
 - **__post_init__**()
   - Build the backing layer and inject stuck-at and variability defects.
-- **_apply_defects**()
 - **forward**(input_values)
   - Run a forward pass through the defect-injected stochastic layer.
 - **update_weights**(gradient, lr)
@@ -18883,15 +16841,6 @@ Example
 (10,)
 
 - **__post_init__**()
-- **_positive_int**(name, value)
-- **_finite_param**(name, value)
-- **_positive_param**(cls, name, value)
-- **_nonnegative_param**(cls, name, value)
-- **_validate_config**()
-- **_initialise_weights**()
-- **_validate_current_vector**(currents)
-- **_current_from_step_input**(values)
-- **_validate_current_sequence**(currents)
 - **step**(I_t)
   - Advance the entire layer by one time step.
 - **run**(currents)
@@ -19011,9 +16960,6 @@ Example
 
 - **__post_init__**()
   - Validate the layer configuration and initialise stochastic kernels.
-- **_validate_configuration**()
-- **_validate_input**(input_image)
-- **_output_shape**(height, width)
 - **forward**(input_image)
   - Apply the stochastic convolution to a channel-first image tensor.
 
@@ -19041,7 +16987,6 @@ Example
 (4, 100)
 
 - **__post_init__**()
-- **_normalise_weight_values**()
 - **reset**()
 - **run**(T)
   - Run the layer for T time steps, updating all neurons.
@@ -19090,29 +17035,9 @@ True
 - **__post_init__**()
 - **from_exported_weights**(cls, exported_layer)
   - Build a packed SC inference layer from ``to_sc_weights()`` output.
-- **_random**(size)
-- **_uniform**(low, high, size)
-- **_choice**(n_items, size)
-- **_apply_bias**(outputs)
-- **_refresh_packed_weights**()
-- **_init_sparse**()
-- **_pack_sparse_weights**()
-  - Pack bitstreams only for non-zero synapses, stored in a flat array.
 - **forward**(input_values)
   - Compute output firing rates for the layer.
-- **_forward_dense**(in_probs)
-- **_forward_sparse**(in_probs)
-- **_forward_sparse_gpu**(packed_inputs)
-  - CuPy CSR matmul path for sparse connectivity on GPU.
 
-### Function `_get_scipy_sparse()`
-### Function `_has_scipy_sparse()`
-### Function `_popcount_rows(packed)`
-Vectorized Hamming-weight popcount across rows of a uint64 array.
-
-### Function `_bipolar_prob(values)`
-### Function `_mask_unused_tail_bits(packed, length)`
-### Function `_as_float_array(value, name)`
 ---
 
 ## Module `learning.advanced`
@@ -19156,7 +17081,6 @@ Maintains per-synapse eligibility traces and applies weight updates
 scaled by a global reward signal.
 
 - **__init__**(network, tau_reward)
-- **_init_traces**()
 - **step**(reward)
   - Apply reward-modulated weight update.
 
@@ -19167,8 +17091,6 @@ Finn et al. 2017. Inner loop: fast adaptation on a task.
 Outer loop: meta-gradient across tasks.
 
 - **__init__**(network, inner_lr, outer_lr)
-- **_snapshot_weights**()
-- **_restore_weights**(snapshot)
 - **inner_loop**(task_data, n_steps)
   - Fast adaptation: n_steps of gradient descent on task_data.
 - **outer_step**(tasks)
@@ -19202,11 +17124,6 @@ Grows new synapses between correlated neurons and prunes weak ones.
 - **__init__**(growth_rate, prune_threshold)
 - **update**(projection)
   - Grow or prune synapses in a Projection based on activity.
-
-### Function `_fast_sigmoid_surrogate(v, threshold)`
-Surrogate gradient: d/dv of fast-sigmoid spike function.
-
-Neftci et al. 2019, Eq. 5.
 
 ---
 
@@ -19282,8 +17199,6 @@ Genetic algorithm for evolving SNN weights and parameters.
 - **__init__**(layer_factory, fitness_func)
 - **evolve**(generations)
   - Run the GA for the given number of generations and return the best individual.
-- **_crossover**(p1, p2)
-- **_mutate**(ind)
 
 ---
 
@@ -19331,24 +17246,6 @@ One fixed-point reward-modulated STDP synapse with O(1) state.
 
 ### Function `build_online_o1_memory_proof()`
 Return a sequence-length independent memory proof for the rule.
-
-### Function `_require_integral()`
-Return ``value`` as ``int`` after rejecting bool and non-integral input.
-
-### Function `_require_non_negative_integral()`
-Return a non-negative integer for unsigned fixed-point domains.
-
-### Function `_require_integral_range()`
-Return an integer inside the requested inclusive fixed-point domain.
-
-### Function `_decay_unsigned(value, shift, max_value)`
-Apply bounded unsigned trace decay with saturating totality.
-
-### Function `_decay_signed(value, shift)`
-Apply arithmetic-magnitude decay to a signed eligibility trace.
-
-### Function `_saturate(value, lower, upper)`
-Clamp an integer into inclusive fixed-point bounds.
 
 ---
 
@@ -19419,10 +17316,6 @@ Validation is opt-in. AGPL users who never call this function, never call
 ``set_license_key()``, and do not set ``SC_NEUROCORE_LICENSE_KEY`` are not
 blocked and do not need the HTTP dependency.
 
-### Function `_status_from_polar_response(response)`
-### Function `_post_json_with_httpx(endpoint, payload)`
-### Function `_string_value(value)`
-### Function `_optional_string(value)`
 ---
 
 ## Module `math.category_theory`
@@ -19454,38 +17347,6 @@ Functors mapping between the stochastic, quantum, and bio domains.
 
 ## Module `math.topology`
 
-### Function `_load_rust_ollivier()`
-### Function `_ensure_julia_loaded()`
-Lazy-load the Julia `TopologyAccel` module on first request.
-
-Julia startup latency is ~5 s — never paid unless ``backend='julia'``
-is requested or selected by ``auto``.
-
-### Function `_ensure_go_loaded()`
-Lazy-load the Go topology shared library on first request.
-
-Built once via::
-
-    cd src/sc_neurocore/accel/go/topology
-    go build -buildmode=c-shared -o libtopology.so topology.go
-
-### Function `_ensure_mojo_loaded()`
-Lazy-load the Mojo topology shared library on first request.
-
-Built once via::
-
-    cd src/sc_neurocore/accel/mojo/math
-    mojo build --emit shared-lib -o libtopology.so topology.mojo
-
-Per ``feedback_mojo_026_ffi_pattern``, the coupling matrix is passed
-as a raw int64 address (numpy ``arr.ctypes.data``) and the Mojo side
-reconstructs ``UnsafePointer&#91;Float64, MutAnyOrigin&#93;`` internally.
-
-### Function `_validate_coupling_graph(knm)`
-### Function `_validate_node_index(name, index, n_nodes)`
-### Function `_shortest_path_distances(graph)`
-### Function `_lazy_random_walk(graph, node)`
-### Function `_minimum_transport_cost(source, target, distances)`
 ### Function `winding_number(phases)`
 Compute the winding number of a phase trajectory around S^1.
 
@@ -19503,13 +17364,6 @@ Returns
 int
     Number of complete windings (positive = counterclockwise).
 
-### Function `_ollivier_ricci_python(graph, i, j)`
-Pure-NumPy Ollivier-Ricci curvature on a validated coupling graph.
-
-### Function `_ollivier_ricci_rust(graph, i, j)`
-### Function `_ollivier_ricci_julia(graph, i, j)`
-### Function `_ollivier_ricci_go(graph, i, j)`
-### Function `_ollivier_ricci_mojo(graph, i, j)`
 ### Function `ollivier_ricci_curvature(knm, i, j, backend)`
 Compute Ollivier-Ricci curvature between nodes i and j on the coupling graph.
 
@@ -20205,8 +18059,6 @@ Generates synthesisable SystemVerilog from a NeuronPlugin.
   - Configure fixed-point width for generated plugin modules.
 - **generate**(plugin)
   - Produce a complete SystemVerilog module for the given plugin.
-- **_to_fixed**(value)
-  - Convert a real-valued scalar into generator fixed-point format.
 
 ### Class `DocGenerator`
 Generates markdown documentation from plugin metadata.
@@ -20216,35 +18068,10 @@ Generates markdown documentation from plugin metadata.
 - **generate_index**(registry)
   - Generate a summary index for all registered plugins.
 
-### Function `_validate_simulation_timestep(dt)`
-Return a finite positive simulation timestep.
-
-### Function `_validate_current_trace(current_trace)`
-Return a finite one-dimensional numeric current trace.
-
-### Function `_validate_simulation_params(params)`
-Return finite real-valued simulation parameters keyed by strings.
-
 ---
 
 ## Module `model_zoo.pretrained`
 
-### Function `_dense_to_csr(dense)`
-Convert dense weight matrix (fan_in, fan_out) to CSR arrays.
-
-### Function `_apply_weights(proj, dense)`
-Overwrite a Projection's CSR data with a dense weight matrix.
-
-### Function `_weight_spec_for(name)`
-Return the archive schema for a registered pretrained model.
-
-### Function `_validate_projection_layout(name, net, specs)`
-Validate the built network before applying pretrained archive weights.
-
-### Function `_validate_archive_members(name, archive, specs)`
-Validate archive keys against the registered pretrained schema.
-
-### Function `_load_weight_matrix(name, archive, key, expected_shape)`
 ### Function `load_pretrained(name)`
 Build a model-zoo network and load its shipped pretrained weights.
 
@@ -20421,13 +18248,6 @@ as 1 − mean_variance across all layers.
 µ+λ evolutionary search with tournament selection.
 
 - **__init__**(objective, budget, population_size, num_generations, mutation_rate, seed, convergence_patience, surrogate_optimizer)
-- **_random_layer**()
-- **_random_candidate**(gen)
-- **_mutate**(candidate, gen)
-- **_crossover**(a, b, gen)
-- **_tournament_select**(population, k)
-- **_evaluate_candidate**(candidate)
-  - Evaluate a candidate through the configured NAS scoring path.
 - **search**()
   - Run the evolutionary search. Returns the final Pareto front.
 
@@ -20454,9 +18274,6 @@ Extract the Pareto-optimal front (NSGA-II non-dominated sorting).
 
 Maximises accuracy, minimises resource usage.
 
-### Function `_assign_crowding_distance(front)`
-Assign NSGA-II crowding distance to Pareto front members.
-
 ### Function `run_nas(objective, budget, population_size, num_generations, seed, convergence_patience, surrogate_optimizer)`
 Run an SC-NAS search and return its report.
 
@@ -20473,21 +18290,6 @@ Result of a NAS run.
   - Architecture with lowest energy on the Pareto front.
 - **summary**()
   - Return a line-oriented summary of the Pareto front.
-
-### Function `_evaluate(arch, target, accuracy_fn)`
-Evaluate one architecture: hardware cost + optional accuracy.
-
-### Function `_dominates(a, b)`
-Return whether ``a`` Pareto-dominates ``b``.
-
-### Function `_non_dominated_sort(population)`
-NSGA-II non-dominated sorting. Returns list of fronts.
-
-### Function `_crowding_distance(front)`
-Compute NSGA-II crowding distance for a front.
-
-### Function `_tournament_select(population, fronts, rng)`
-Binary tournament selection using front rank + crowding distance.
 
 ### Function `nas(space, target, population_size, generations, max_luts, accuracy_fn, seed)`
 Run hardware-aware NAS using NSGA-II.
@@ -20596,32 +18398,19 @@ Project a surrogate optimiser report onto a NAS candidate.
 ### Function `apply_surrogate_policy(candidate, report)`
 Return a candidate copy with compatible bitstream/decorrelator settings.
 
-### Function `_layer_ids(candidate, layer_ids)`
-### Function `_required_config(report, layer_id)`
-### Function `_to_nas_decorrelation(name)`
 ---
 
 ## Module `network._torch_bridge`
-
-### Class `_PopulationSpec`
 
 ### Class `NetworkTorchBridge`
 Differentiable bridge for a bounded subset of declarative ``Network`` graphs.
 
 - **__init__**(populations, projections, surrogate_fn)
-- **_find_input_populations**()
-- **_find_output_populations**()
-- **_projection_weight**(projection)
-- **_initial_state**(batch, device, dtype)
 - **forward**(inputs)
   - Run the differentiable bridge on ``(T, batch, input_dim)`` current input.
 - **sync_to_network**()
   - Copy learned bridge weights back into the underlying CSR projections.
 
-### Function `_csr_to_dense(projection)`
-### Function `_csr_mask(projection)`
-### Function `_validate_projection_csr(projection)`
-### Function `_build_population_spec(population, surrogate_fn)`
 ---
 
 ## Module `network.cortical_column`
@@ -20654,19 +18443,8 @@ seed : int or None, optional
 - **__init__**(scale, bg_rate, g_inh, scale_correction, delay_distribution, n_delay_bins, use_block_csr, seed, backend)
 - **population_sizes**(scale)
   - Return Potjans population sizes at ``scale`` without building connectivity.
-- **_stack_block**(triples, n_rows, n_cols)
-  - Concatenate per-pair (rows, cols, data) into a CSR.
-- **_init_buffers**(dt)
 - **step**(dt)
   - Advance the network by one timestep `dt` (ms).
-- **_inject_block**(dt)
-  - Inject block-CSR spikes for one step.
-- **_spmv_into**(block, x, y, arrays)
-  - Compute ``y += block @ x`` via a sparse block matrix-vector product.
-- **_inject_per_pair**(dt)
-  - Legacy per-pair injection: one mat-vec per (pair, bin).
-- **_integrate_and_detect**(dt)
-  - Per-population LIF Euler step + spike detect + buffer push.
 - **simulate**(duration_ms, dt)
   - Run the network for `duration_ms` ms.
 - **population_rates**(rasters, dt, burn_in_ms)
@@ -20680,19 +18458,9 @@ seed : int or None, optional
 - **population_names**()
   - Return the ordered cortical population names.
 
-### Function `_is_inhibitory(pop_name)`
 ---
 
 ## Module `network.export`
-
-### Function `_check_exportable(network)`
-Validate all populations use LIF-compatible models.
-
-### Function `_emit_lif_module(pop, idx)`
-Generate Verilog for one LIF population.
-
-### Function `_emit_top(network, target)`
-Emit top-level Verilog wrapper.
 
 ### Function `export_verilog(network, output_dir, target)`
 Export a LIF-based network to Verilog files.
@@ -20713,13 +18481,6 @@ gain-loop strength.
   - Validate the population sizes and initialise oscillator state.
 - **step**(dt)
   - Advance one timestep (dt in ms); return (spikes_e, spikes_i).
-- **_step_rust**(dt)
-  - Run the Rust-backed per-step kernel.
-- **_step_julia**(dt)
-- **_step_go**(dt)
-- **_step_mojo**(dt)
-- **_step_python**(dt)
-  - Run the reference Python per-step kernel.
 - **reset_state**()
   - Re-initialise voltages, conductances and refractory state.
 - **population_rate**(spike_log, dt, bin_ms)
@@ -20796,22 +18557,9 @@ and ``fim_lambda`` are unsupported by this runner — the
 either is requested with ``backend='mpi'``.
 
 - **__init__**(network)
-- **_initialize_rust_dispatch**()
-  - Prepare a rank-local Rust runner when the installed engine supports it.
-- **_partition_populations**()
-  - Round-robin assignment of populations to ranks.
-- **_identify_cross_rank_projections**()
-  - Separate projections into local and cross-rank.
-- **_exchange_spikes**(local_spikes)
-  - Allgatherv spike vectors so every rank knows who spiked.
-- **_step_local**(pop_to_currents, last_spikes)
-  - Step only this rank's populations, return local spike dict.
 - **run**(n_steps, dt)
   - Run the distributed simulation for *n_steps* timesteps.
 
-### Function `_require_mpi()`
-### Function `_get_rust_engine()`
-### Function `_rust_supports_model(model_name)`
 ---
 
 ## Module `network.network`
@@ -20822,33 +18570,11 @@ Declarative network: collects objects, runs the simulation loop.
 - **__init__**()
 - **add**(obj)
   - Register a simulation object by type.
-- **_can_use_rust**()
-  - Return whether this network can preserve semantics on the Rust backend.
-- **_rust_incompatibilities**()
-  - List Python-only dynamics that the Rust backend would silently skip.
-- **_raise_for_rust_incompatibilities**()
-  - Fail fast when a caller forces Rust for Python-only semantics.
 - **run**(duration, dt, progress, backend, spike_gating)
   - Run the simulation for *duration* seconds at timestep *dt*.
-- **_run_mpi**(duration, dt)
-- **_run_rust**(duration, dt)
-- **_run_python**(duration, dt, progress)
-- **_apply_stimuli**(pop_to_currents, t, dt)
-  - Inject stimulus currents into target populations.
-- **_apply_projections**(pop_to_currents, last_spikes)
-  - Propagate spikes through all projections.
-- **_record**(pop, spikes, t, dt)
-  - Feed spikes/states to all monitors attached to this population.
-- **_update_plasticity**(last_spikes)
-  - Apply plasticity rules to projections that have them.
-- **_apply_fim**(last_spikes)
-  - Fisher Information Metric self-observation feedback.
 - **to_torch**(surrogate_fn)
   - Build an explicit differentiable bridge without altering NumPy/Rust execution.
 
-### Function `_load_network_runner_class()`
-### Function `_get_rust_engine()`
-### Function `_rust_supports_model(model_name)`
 ---
 
 ## Module `network.population`
@@ -20858,8 +18584,6 @@ A group of N identical neurons with vectorized state access.
 
 - **__init__**(model, n, params, label)
   - Create *n* neurons of *model* (class or string name).
-- **_sync_voltages**()
-  - Pull membrane voltage from each neuron into the flat array.
 - **step_all**(currents, spike_gating)
   - Advance all neurons one timestep; return binary spike vector.
 - **reset_all**()
@@ -20870,9 +18594,6 @@ A group of N identical neurons with vectorized state access.
   - Sync voltages from an external source (e.g. Rust backend) into neurons.
 - **voltages**()
   - Current membrane voltages (read-only view).
-
-### Function `_resolve_model(model)`
-Return a model class from a string name or pass through a class.
 
 ---
 
@@ -20891,34 +18612,16 @@ delay : float, array-like, or 0
 
 - **__init__**(source, target, weight, probability, delay, topology, plasticity, seed, weight_threshold)
   - Create projection with CSR connectivity and optional delay/plasticity.
-- **_init_delays**(delay)
-  - Set up delay buffers based on delay specification.
 - **n_synapses**()
   - Number of synaptic connections.
 - **delay_mode**()
   - Delay mode: 'none', 'uniform', or 'per_synapse'.
 - **max_delay**()
   - Maximum delay in timesteps across all synapses.
-- **_build_connectivity**(topology, probability, seed)
-  - Build CSR arrays from topology name or pre-built tuple.
 - **propagate**(source_spikes)
   - Compute target currents from source spikes through CSR connectivity.
 - **update_plasticity**(src_spikes, tgt_spikes, a_plus, a_minus, tau, directional_bias)
   - Trace-based STDP weight update.
-- **_enforce_symmetry**()
-  - Symmetrise CSR weight data: W_ij = W_ji = (W_ij + W_ji) / 2.
-
-### Function `_csr_matvec(indptr, indices, data, x, n_out, weight_threshold)`
-CSR matrix-vector product: result&#91;j&#93; += data&#91;k&#93; * x&#91;i&#93; for each (i,j).
-
-Skips source neurons with x&#91;i&#93;==0 (spike-driven) and optionally
-skips synapses with |data&#91;k&#93;| <= weight_threshold (sparse weights).
-
-### Function `_csr_delayed_matvec(indptr, indices, data, delay_steps, spike_history, hist_idx, n_out)`
-CSR matrix-vector product with per-synapse delays.
-
-For each synapse k connecting source i to target j with delay d_k:
-    current&#91;j&#93; += data&#91;k&#93; * spike_history&#91;(hist_idx - d_k) % max_delay, i&#93;
 
 ### Function `validate_csr_topology(indptr, indices, data, n_source, n_target)`
 Validate and normalize CSR connectivity arrays.
@@ -20952,17 +18655,11 @@ Rectangular step current between onset and offset timesteps.
 
 ## Module `network.topology`
 
-### Function `_to_csr(n_rows, n_cols, rows, cols, weights)`
-Convert COO arrays to CSR (indptr, indices, data).
-
 ### Function `random_connectivity(n_src, n_tgt, p, weight, seed)`
 Erdos-Renyi random connectivity.
 
 ### Function `small_world(n, k, p_rewire, weight, seed)`
 Watts-Strogatz small-world graph (n-by-n adjacency).
-
-### Function `_validate_scale_free_parameters(n, m, weight)`
-Validate Barabasi-Albert graph dimensions and edge weights.
 
 ### Function `scale_free(n, m, weight, seed)`
 Generate a Barabasi-Albert preferential-attachment graph.
@@ -21033,7 +18730,6 @@ Hybrid predictive-coding agent for symbolic-spiking workflows.
   - Register additional symbolic labels.
 - **observe**(observation)
   - Run one predictive-symbolic observation pass.
-- **_validate_observation**(observation)
 
 ### Function `build_sc_error_signature(observation, prediction)`
 Build an XOR/popcount error signature from observation and prediction.
@@ -21106,7 +18802,6 @@ Deterministic symbol → hypervector mapping (mirrors Rust SymbolEncoder).
   - Bind a symbol sequence into one position-aware hypervector.
 - **vocabulary_size**()
   - Return the number of distinct symbols encoded so far.
-- **_symbol_seed**(symbol)
 
 ### Class `PredictiveCodingLayer`
 Single layer in a hierarchical predictive coding network.
@@ -21140,8 +18835,6 @@ Wraps prediction + HDC symbol matching with an auditable trace.
 - **infer**(observation, top_k)
   - Run inference: prediction → error → HDC symbol match.
 
-### Function `_unpack(hv)`
-### Function `_pack(bits, length)`
 ---
 
 ## Module `neuro_symbolic.self_verification`
@@ -21173,19 +18866,10 @@ Build checked self-verification traces for inference outputs.
   - Verify a high-level hybrid inference result against its observation.
 - **verify_trace_only**(trace)
   - Verify a trace when only symbolic evidence is available.
-- **_validate_vector**(values, name)
-- **_check_shape**(name, lhs, rhs)
-- **_check_prediction_error**(observation, prediction, error)
-- **_check_signature**(observation, prediction, signature)
-- **_check_reasoning_trace**(trace)
-- **_check_symbol_scores**(symbol_scores)
-- **_build_trace**(result, obligations)
 
 ### Function `build_self_verification_trace(result)`
 Verify a high-level neuro-symbolic inference result against its observation.
 
-### Function `_stable_digest(payload)`
-### Function `_json_default(value)`
 ---
 
 ## Module `neurons._units`
@@ -21194,17 +18878,6 @@ Verify a high-level neuro-symbolic inference result against its observation.
 ### Function `is_quantity(value)`
 ### Function `require_quantity(value, label)`
 ### Function `quantity_to_base(value)`
-### Function `_dimensionless_magnitude(value, fn_name)`
-### Function `_exp(value)`
-### Function `_log(value)`
-### Function `_sin(value)`
-### Function `_cos(value)`
-### Function `_tanh(value)`
-### Function `_sinh(value)`
-### Function `_cosh(value)`
-### Function `_sigmoid(value)`
-### Function `_sqrt(value)`
-### Function `_clip(value, low, high)`
 ### Function `build_quantity_namespace()`
 ### Function `validate_quantity_expression(expr, env)`
 ---
@@ -21262,15 +18935,6 @@ ValueError
     If ``tags`` is not an iterable of strings, names a tag outside the
     vocabulary, or carries a contradictory combination.
 
-### Function `_reject_contradictions(tags)`
-Reject mutually exclusive tag combinations.
-
-### Function `_is_iterable(value)`
-Return whether ``value`` can be iterated.
-
-Probing an arbitrary ``object`` for iterability is the point of the guard,
-so ``iter`` is deliberately called on a non-iterable static type.
-
 ---
 
 ## Module `neurons.dendritic`
@@ -21291,29 +18955,6 @@ Based on Koch, *Biophysics of Computation*, 1999, Ch. 12.
 
 ## Module `neurons.descriptor_generator`
 
-### Function `_load_class(class_name)`
-### Function `_field_specs(cls)`
-Return ``(name, numeric-default)`` for a dataclass or plain model class.
-
-### Function `_is_state_var(name)`
-### Function `_is_param(name)`
-### Function `_is_non_dynamics_method(name)`
-### Function `_dynamic_state_fields(cls)`
-Return instance fields assigned outside construction and validation.
-
-A field assigned (``self.x = ...`` or ``self.x += ...``, including tuple
-unpacking) inside a dynamics method — step, simulate, reset, or a helper they
-call — is an integration state variable. Assignments confined to
-``__init__``/``__post_init__`` or a validation/clamp helper are construction or
-sanitisation, not state. This reads the model's actual behaviour rather than
-guessing from the field name, which the name heuristics cannot do reliably for
-internal currents (i1, i2), traces (inh_trace), and adaptation variables.
-
-### Function `_load_v1_schema(module)`
-Return the curated v1 schema for a module, or an empty mapping.
-
-### Function `_summary_from_docstring(cls)`
-### Function `_doi_from_text(text)`
 ### Function `generate_descriptor_payload(class_name)`
 Return a curatable v2 descriptor payload for a registered model.
 
@@ -21380,9 +19021,6 @@ Returns
 dict&#91;str, Any&#93;
     The merged descriptor payload.
 
-### Function `_is_number(value)`
-### Function `_mapping(value)`
-### Function `_copy(value)`
 ---
 
 ## Module `neurons.descriptor_tiers`
@@ -21529,18 +19167,6 @@ validation before the expressions are compiled for runtime.
 
 - **__init__**(equations, parameters, state, threshold, reset, constants, dt, method, units, input_unit)
   - Initialise an equation-defined neuron from ODE strings.
-- **_build_jacobian**()
-  - Compile the diagonal Jacobian ``∂f/∂x`` for each equation.
-- **_validate_expr**(expr)
-  - Validate an expression against the AST whitelist.
-- **_ast_depth**(node)
-  - Return the maximum nesting depth of an AST.
-- **_prepare_strict_runtime**()
-  - Convert pint quantities to base-unit floats for runtime.
-- **_convert_runtime_value**(name, value)
-  - Convert a runtime value from pint quantity to float.
-- **_build_env**()
-  - Build the eval environment with parameters, state, and noise.
 - **step**(I)
   - Advance the neuron by one timestep; return 1 if it spikes.
 - **get_state**()
@@ -21584,27 +19210,6 @@ SymPy image of the DSL logistic ``sigmoid(x) = 1/(1 + exp(-x))``.
 ### Class `ExpressionDifferentiationError`
 Raised when an expression cannot be faithfully differentiated in-grammar.
 
-
-### Class `_Converter`
-Convert a validated DSL AST to SymPy and back, tracking opaque terms.
-
-A non-smooth sub-expression that does not depend on the differentiation
-variable is replaced by a fresh placeholder symbol whose original source text
-is remembered, so it round-trips verbatim when it survives as a coefficient.
-
-- **__init__**(wrt)
-- **convert**(node)
-  - Return the SymPy image of a DSL AST node.
-- **_opaque**(node)
-  - Stand an opaque sub-expression in as a constant, if it is one.
-- **render**(expr)
-  - Render a differentiated SymPy expression back to a DSL string.
-
-### Class `_GrammarPrinter`
-Print SymPy expressions using DSL-grammar tokens and opaque source text.
-
-- **__init__**(sources)
-- **_print_Symbol**(expr)
 
 ### Function `differentiate(expr, wrt)`
 Return ``∂expr/∂wrt`` as an equation string in the DSL grammar.
@@ -21706,9 +19311,6 @@ True
 - **step**(x_value)
   - Return 1 if LFSR < x_value, else 0 (one clock cycle).
 - **reset**()
-
-### Function `_mask(value, width)`
-Mask to DATA_WIDTH bits and interpret as signed two's complement.
 
 ---
 
@@ -21993,23 +19595,6 @@ ModelDescriptorError
     If any required identifier is missing or a controlled-vocabulary field
     carries an unknown value.
 
-### Function `_section(payload, key)`
-### Function `_required_str(section, key)`
-### Function `_opt_str(section, key)`
-### Function `_opt_slug(section, key)`
-### Function `_opt_bool(section, key)`
-### Function `_vocab(value, allowed, field_name)`
-### Function `_str_tuple(value)`
-### Function `_float(value)`
-### Function `_opt_range(value)`
-### Function `_parse_provenance(section)`
-### Function `_parse_state(section)`
-### Function `_parse_parameters(section)`
-### Function `_parse_dynamics(section)`
-### Function `_parse_backends(section)`
-### Function `_parse_reproducibility(section)`
-### Function `_parse_validation(section)`
-### Function `_parse_silicon(section)`
 ---
 
 ## Module `neurons.model_taxonomy`
@@ -22038,8 +19623,6 @@ Reference: Platkiewicz, J. & Brette, R. (2010). PLoS Comput. Biol. 6(7):e1000850
 
 - **__post_init__**()
 - **step**(current)
-- **_exact_relaxation**(state, steady_state, tau)
-- **_validate_runtime_state**()
 - **reset**()
 
 ---
@@ -22066,8 +19649,6 @@ ema_alpha : float
   - Current activation sparsity (1.0 if below threshold, 0.0 if firing).
 - **reset**()
   - Reset state to initial conditions.
-- **_validate_runtime_state**()
-- **_threshold_from_mean**(mean_abs_x)
 
 ---
 
@@ -22090,12 +19671,6 @@ Integrator options:
 
 - **__post_init__**()
 - **step**(current)
-- **_validate_runtime_state**()
-- **_validate_update**(next_v, next_w)
-- **_rhs**(_t, state, current)
-- **_step_baseline_euler**(current)
-- **_step_rk4**(current)
-- **_step_rosenbrock**(current)
 - **reset**()
 
 ---
@@ -22193,8 +19768,6 @@ Holds a continuous value (angle/position) in persistent activity.
 Output: position of the activity bump.
 
 - **__post_init__**()
-- **_build_weights**()
-- **_activation**(x)
 - **step**(current)
 - **bump_position**()
 - **reset**()
@@ -22232,8 +19805,6 @@ where σ(z) = 1 / (1 + exp(-z)).
 Reference: Aihara et al. (1990) Phys Lett A 144:333–340.
 
 - **__post_init__**()
-- **_validate_state**(x, y)
-- **_sigmoid**(z)
 - **step**(current)
 - **reset**()
 
@@ -22266,9 +19837,6 @@ Dual excitatory/inhibitory synaptic currents with alpha-function kinetics.
 Reference: Gerstner, W. & Kistler, W.M. (2002). Spiking Neuron Models. Cambridge Univ. Press, §4.1.
 
 - **__post_init__**()
-- **_validate_state**()
-- **_filter_candidates**(rise_state, current_state, drive, tau, dt)
-- **_drive_contribution**(current_delta, rise_delta, tau_drive, tau_v, dt)
 - **step**(exc_current, inh_current)
 - **reset**()
 
@@ -22286,16 +19854,9 @@ or non-finite membrane/calcium candidates fail closed without poisoning the
 neuron state.
 
 - **__post_init__**()
-- **_validate**()
-- **_validate_candidates**(values)
 - **step**(current)
 - **reset**()
 
-### Function `_checked_exp(x)`
-### Function `_safe_rate(a, vhalf, v, k, fallback)`
-### Function `_check_finite(name, value)`
-### Function `_check_probability(name, value)`
-### Function `_check_nonnegative(name, value)`
 ---
 
 ## Module `neurons.models.amari_field`
@@ -22310,7 +19871,6 @@ f(u) = max(0, u)                              (Heaviside-linear)
 Reference: Amari, S. (1977). Biol. Cybern. 27:77–87.
 
 - **__post_init__**()
-- **_build_kernel**()
 - **step**(current)
   - Advance one timestep. Returns mean activation.
 - **reset**()
@@ -22323,10 +19883,6 @@ Reference: Amari, S. (1977). Biol. Cybern. 27:77–87.
 Unified self-referential cognition neuron for persistent identity.
 
 - **step**(current)
-- **_exact_relaxation**(state, steady_state, dt, tau)
-- **_sigmoid**(x)
-- **_require_finite_candidate**(value, label)
-- **_validate_runtime_state**()
 - **reset**()
 - **identity_state**()
   - The deep compartment value — the accumulated identity.
@@ -22395,7 +19951,6 @@ and physiologically admissible, preventing corrupted glial state from
 leaking into downstream membrane dynamics.
 
 - **__post_init__**()
-- **_validate**()
 - **step_with_pre**(i_ext, pre_spike)
   - Step with external current and presynaptic spike indicator.
 - **step**(current)
@@ -22403,9 +19958,6 @@ leaking into downstream membrane dynamics.
 - **reset**()
   - Reset state to initial conditions.
 
-### Function `_finite(name, value)`
-### Function `_positive(name, value)`
-### Function `_non_negative(name, value)`
 ---
 
 ## Module `neurons.models.atype_k_neuron`
@@ -22414,17 +19966,9 @@ leaking into downstream membrane dynamics.
 A-type K+ neuron with Wang-Buzsaki core and transient IA current.
 
 - **__post_init__**()
-- **_validate**()
-- **_validate_candidates**(v, h, n, a, b)
 - **step**(current)
 - **reset**()
 
-### Function `_checked_exp(x)`
-### Function `_safe_rate(a, vhalf, v, k, fallback)`
-### Function `_finite(name, value)`
-### Function `_nonnegative(name, value)`
-### Function `_positive(name, value)`
-### Function `_probability(name, value)`
 ---
 
 ## Module `neurons.models.av_ron_cardiac`
@@ -22436,16 +19980,6 @@ The four-state conductance model uses instantaneous sodium activation,
 voltage-dependent h/n/s gate relaxation, and candidate-first RK4 integration
 so invalid states cannot partially mutate the neuron.
 
-- **_finite_values**(values)
-- **_gate_in_range**(value)
-- **_bounded_exp**(value)
-- **_sigmoid_pos**(cls, value)
-- **_sigmoid_neg**(cls, value)
-- **_valid_runtime**()
-- **_rates**(voltage)
-- **_derivatives**(state, current)
-- **_add_scaled**(state, slope, scale)
-- **_rk4_candidate**(current)
 - **step**(current)
 - **reset**()
 
@@ -22485,7 +20019,6 @@ Resonate-and-Fire Neurons", Proceedings of ICML 2024, Algorithm 1.
   - Reset membrane and refractory state to rest.
 - **state**()
   - Return a compact state snapshot for reproducibility tests.
-- **_validate_parameters**()
 
 ### Function `sustain_oscillation_boundary(omega, dt)`
 Return the BRF divergence boundary ``p(omega)``.
@@ -22507,9 +20040,6 @@ f_onset(x) = f_max / (1 + exp(-beta*(x - I_half)))
 Reference: Benda, J. & Herz, A.V.M. (2003). Neural Comput. 15:2523–2564.
 
 - **__post_init__**()
-- **_f_onset**(x)
-- **_adaptation_rhs**(a, current)
-- **_rk4_candidate**(current)
 - **step**(current)
 - **reset**()
 
@@ -22531,18 +20061,9 @@ Reference: Bertram, R., Previte, J., Sherman, A., Kinard, T.A. & Satin, L.S.
 (2000). Biophys. J. 79:2880–2892.
 
 - **__post_init__**()
-- **_validate_state**()
-- **_boltz**(v, vh, k)
-- **_derivatives**(v, s1, s2, current)
-- **_rk4_candidate**(current)
-- **_validate_candidate**(v, s1, s2)
 - **step**(current)
 - **reset**()
 
-### Function `_finite_float(name, value)`
-### Function `_positive_float(name, value)`
-### Function `_non_negative_float(name, value)`
-### Function `_gate_value(name, value)`
 ---
 
 ## Module `neurons.models.bk_neuron`
@@ -22556,21 +20077,11 @@ the documented explicit substep path while preventing non-finite calcium or
 voltage state from being silently reset after poisoning downstream currents.
 
 - **__post_init__**()
-- **_validate**()
-- **_validate_candidates**(v, h, n, ca)
 - **step**(current)
   - Advance one dt. Returns 1 if spike, 0 otherwise.
 - **reset**()
   - Reset to default initial conditions.
 
-### Function `_checked_exp(x)`
-### Function `_safe_rate(a, vhalf, v, k, fallback)`
-Rate function with safe handling of (v + vhalf) near zero.
-
-### Function `_finite(name, value)`
-### Function `_positive(name, value)`
-### Function `_nonnegative(name, value)`
-### Function `_probability(name, value)`
 ---
 
 ## Module `neurons.models.booth_rinzel`
@@ -22586,11 +20097,6 @@ dCa/dt  = -f * (alpha_Ca * I_Ca + k_Ca * Ca)
 Reference: Booth, V. & Rinzel, J. (1995). J. Neurophysiol. 73:1934–1945.
 
 - **__post_init__**()
-- **_validate_configuration**()
-- **_safe_exp**(x)
-- **_clip**(value, lower, upper)
-- **_validate_candidate**(values)
-- **_substep**(vs, vd, h, n, q, ca, current)
 - **step**(current)
 - **reset**()
 
@@ -22605,8 +20111,6 @@ Reference: Schemmel, J. et al. (2010). Proc. ISCAS 2010: 1947–1950.
 
 - **__post_init__**()
 - **step**(current)
-- **_validate_runtime_state**()
-- **_validate_update**(next_v, next_w)
 - **reset**()
 
 ---
@@ -22624,11 +20128,6 @@ Used in decision-making and working memory models. The key feature
 is the voltage-dependent NMDA conductance with Mg2+ block.
 
 - **__post_init__**()
-- **_validate_voltage**(v)
-- **_validate_nonnegative**(name, value)
-- **_validate_gate**(name, value)
-- **_nmda_voltage_dep**(v)
-  - Mg2+ block factor: 1 / (1 + &#91;Mg2+&#93;/3.57 * exp(-0.062 * V)).
 - **step**(i_ampa_ext, s_ampa_rec, s_nmda_rec, s_gaba)
   - Advance one timestep.
 - **reset**()
@@ -22648,19 +20147,6 @@ corrupted state, non-finite rates, or out-of-envelope candidates raise
 before mutating state.
 
 - **__post_init__**()
-- **_finite_float**(name, value)
-- **_positive_float**(cls, name, value)
-- **_non_negative_float**(cls, name, value)
-- **_gate_float**(cls, name, value)
-- **_checked_exp**(cls, x, name)
-- **_checked_cosh**(x, name)
-- **_sexp**(cls, x)
-- **_scosh**(cls, x)
-- **_rates**(cls, v, tau_h_base)
-- **_validate_runtime_state**()
-- **_candidate_valid**(state)
-- **_derivatives**(state, current)
-- **_rk4_candidate**(current)
 - **step**(current)
 - **reset**()
 
@@ -22683,17 +20169,8 @@ Reference: Cazelles, B., Courbage, M. & Rabinovich, M. (2001). Europhys. Lett. 5
 - **step**(current)
 - **simulate**(n_steps, current, backend)
   - Advance ``n_steps`` from the current state, returning ``(trace, spikes)``.
-- **_simulate_python**(n_steps, current)
-- **_simulate_rust**(n_steps, current)
-- **_simulate_julia**(n_steps, current)
-- **_simulate_go**(n_steps, current)
-- **_simulate_mojo**(n_steps, current)
 - **reset**()
 
-### Function `_load_rust_simulate()`
-### Function `_ensure_julia_loaded()`
-### Function `_ensure_go_loaded()`
-### Function `_ensure_mojo_loaded()`
 ---
 
 ## Module `neurons.models.cerebellar_basket_neuron`
@@ -22702,17 +20179,9 @@ Reference: Cazelles, B., Courbage, M. & Rabinovich, M. (2001). Europhys. Lett. 5
 Cerebellar basket cell with A-type and Ca-dependent K currents.
 
 - **__post_init__**()
-- **_validate**()
-- **_validate_candidates**(v, h, n, a, b, ca)
 - **step**(current)
 - **reset**()
 
-### Function `_checked_exp(x)`
-### Function `_safe_rate(a, vhalf, v, k, fallback)`
-### Function `_finite(name, value)`
-### Function `_positive(name, value)`
-### Function `_nonnegative(name, value)`
-### Function `_probability(name, value)`
 ---
 
 ## Module `neurons.models.cfc`
@@ -22727,7 +20196,6 @@ where tau_eff and f_target depend on input.
 Reference: Canavier, C.C. et al. (1993). Biophys. J. 65:2373–2382.
 
 - **__post_init__**()
-- **_sigmoid**(value)
 - **step**(current)
 - **reset**()
 
@@ -22739,17 +20207,9 @@ Reference: Canavier, C.C. et al. (1993). Biophys. J. 65:2373–2382.
 Axo-axonic fast-spiking interneuron with Kv1 and Kv3 currents.
 
 - **__post_init__**()
-- **_validate**()
-- **_validate_candidates**(v, h, n, d, p)
 - **step**(current)
 - **reset**()
 
-### Function `_checked_exp(x)`
-### Function `_safe_rate(a, vhalf, v, k, fallback)`
-### Function `_finite(name, value)`
-### Function `_positive(name, value)`
-### Function `_nonnegative(name, value)`
-### Function `_probability(name, value)`
 ---
 
 ## Module `neurons.models.chay`
@@ -22759,14 +20219,6 @@ Chay 1985 pancreatic beta-cell burster with guarded stiff integration.
 
 Reference: Chay, T.R. (1985). Physica D 16:233-242.
 
-- **_finite**(value, name)
-- **_positive**(cls, value, name)
-- **_nonnegative**(cls, value, name)
-- **_probability**(cls, value, name)
-- **_checked_exp**(cls, exponent, name)
-- **_gate_inf**(cls, exponent, name)
-- **_validated_state**()
-- **_candidate**(v, n, ca, h, current)
 - **step**(current)
   - Advance one timestep and return an upward-threshold spike flag.
 - **reset**()
@@ -22802,19 +20254,6 @@ DOI 10.1016/S0006-3495(83)84384-7. Parameters are the paper's Table I with
 the burst calcium-removal rate of Fig. 1b; cross-checked against the Wolfram
 Demonstrations reference implementation.
 
-- **_finite**(value, name)
-- **_positive**(cls, value, name)
-- **_nonnegative**(cls, value, name)
-- **_probability**(cls, value, name)
-- **_checked_exp**(cls, exponent)
-- **_alpha_m**(v)
-- **_beta_m**(v)
-- **_alpha_h**(v)
-- **_beta_h**(v)
-- **_alpha_n**(v)
-- **_beta_n**(v)
-- **_validated_state**()
-- **_candidate**(v, m, h, n, ca, current, step_dt, phi, ca_influx)
 - **step**(current)
   - Advance one timestep and return an upward-threshold spike flag.
 - **reset**()
@@ -22848,15 +20287,6 @@ pancreatic beta-cells. Mathematical Biosciences 365:109085, Table 1
 (DOI 10.1016/j.mbs.2023.109085); the reduced model of Chay & Keizer (1983),
 Biophys. J. 42:181-189.
 
-- **_finite**(value, name)
-- **_positive**(cls, value, name)
-- **_nonnegative**(cls, value, name)
-- **_probability**(cls, value, name)
-- **_checked_exp**(cls, exponent)
-- **_m_inf**(v)
-- **_n_inf**(v)
-- **_validated_state**()
-- **_candidate**(v, n, c, current, step_dt)
 - **step**(current)
   - Advance one timestep and return an upward-threshold spike flag.
 - **reset**()
@@ -22874,7 +20304,6 @@ y&#91;n+1&#93; = a·y - b·x + c
 Reference: Chialvo, D.R. (1995). Chaos, Solitons & Fractals 5:461–479.
 
 - **__post_init__**()
-- **_validate_state**(x, y)
 - **step**(current)
 - **reset**()
 
@@ -22889,10 +20318,6 @@ The public spike contract is ternary: +1 for positive-threshold crossing,
 -1 for negative-threshold crossing, and 0 for no spike.
 
 - **__post_init__**()
-- **_finite**(value, name)
-- **_positive**(cls, value, name)
-- **_validated_alpha**()
-- **_validated_state**()
 - **step**(current)
 - **reset**()
 
@@ -22911,17 +20336,10 @@ Conductance injections are applied before integration. The full
 finite-value and envelope checks pass.
 
 - **__post_init__**()
-- **_finite**(value, name)
-- **_positive**(cls, value, name)
-- **_nonnegative**(cls, value, name)
-- **_validated_state**()
 - **step**(current, delta_ge, delta_gi)
   - Advance one candidate-first RK4 timestep.
 - **reset**()
   - Restore the membrane to leak reversal and clear conductances.
-- **_derivatives**(v, g_e, g_i, current)
-- **_rk4_candidate**(v, g_e, g_i, current)
-  - Return the coupled RK4 candidate for ``(v, g_e, g_i)``.
 
 ---
 
@@ -22950,7 +20368,6 @@ dt : float
     Integration timestep (ms). Default: 0.01.
 
 - **__post_init__**()
-- **_validate_runtime_state**()
 - **p_open**(displacement)
   - Boltzmann activation of MET channels.
 - **step**(displacement)
@@ -22968,13 +20385,6 @@ dt : float
 Compte et al. NMDA-based working-memory neuron with Mg2+ block.
 
 - **__post_init__**()
-- **_finite**(value, name)
-- **_positive**(cls, value, name)
-- **_nonnegative**(cls, value, name)
-- **_decay**(cls, dt, tau, name)
-- **_validated_gate**(name)
-- **_validated_state**()
-- **_mg_block**(v)
 - **step**(current, spike_in)
 - **reset**()
 
@@ -22992,18 +20402,6 @@ public ``step`` advances the 1 ms macro-step with candidate-first RK4
 sub-steps and commits only finite, physically bounded candidates.
 
 - **__post_init__**()
-- **_finite_float**(name, value)
-- **_positive_float**(cls, name, value)
-- **_non_negative_float**(cls, name, value)
-- **_gate_float**(cls, name, value)
-- **_checked_exp**(cls, x, name)
-- **_safe_rate**(cls, scale, shift, v, denom, name)
-- **_rates**(cls, v)
-- **_validate_runtime_state**()
-- **_candidate_valid**(state)
-- **_derivatives**(state, current)
-- **_rk4_substep**(state, current)
-- **_rk4_candidate**(current)
 - **step**(current)
   - Advance one macro-step and return an upward-threshold spike flag.
 - **reset**()
@@ -23025,24 +20423,11 @@ Reference: Courbage, M., Nekorkin, V.I. & Vdovin, L.V. (2007).
 "Chaotic oscillations in a map-based model of neural activity."
 Chaos 17:043109 (arXiv:0712.2097), eqs. 3-6.
 
-- **_breakpoints**()
-  - Continuity breakpoints ``(Jmin, Jmax)`` of ``F`` (eq. 4).
-- **_f**(x)
-  - Piecewise-linear ``F(x)`` (Courbage et al. 2007, eq. 4).
 - **step**(current)
 - **simulate**(n_steps, current, backend)
   - Advance ``n_steps`` from the current state, returning ``(trace, spikes)``.
-- **_simulate_python**(n_steps, current)
-- **_simulate_rust**(n_steps, current)
-- **_simulate_julia**(n_steps, current)
-- **_simulate_go**(n_steps, current)
-- **_simulate_mojo**(n_steps, current)
 - **reset**()
 
-### Function `_load_rust_simulate()`
-### Function `_ensure_julia_loaded()`
-### Function `_ensure_go_loaded()`
-### Function `_ensure_mojo_loaded()`
 ---
 
 ## Module `neurons.models.dcn_neuron`
@@ -23059,12 +20444,7 @@ Jahnsen (1986) J Physiol 372:129.
 - **__post_init__**()
 - **step**(current)
 - **reset**()
-- **_validate_state**()
 
-### Function `_safe_rate(a, vhalf, v, k, fallback)`
-### Function `_exact_relax(value, target, tau, dt)`
-### Function `_exact_hh_gate(value, alpha, beta, phi, dt)`
-### Function `_exact_voltage_step(v, input_current, conductances, c_m, dt)`
 ---
 
 ## Module `neurons.models.de_schutter_purkinje`
@@ -23087,37 +20467,10 @@ Reference: De Schutter, E. & Bower, J.M. (1994). J. Neurophysiol. 71:375–400.
 
 - **__post_init__**()
   - Validate the selected integration method before simulation.
-- **_finite_float**(name, value)
-  - Return ``value`` as a finite float and reject booleans.
-- **_validate_configuration**()
-  - Coerce all state and parameter values to finite floats and enforce signs.
-- **_validate_runtime_configuration**()
-  - Re-check finite state and parameter signs before mutating state.
-- **_derivatives**(v, h_na, n_k, m_cap, h_cap, q_kca, ca, current)
-  - Return seven-state derivatives from one consistent state.
-- **_rk4_substep**(state, current)
-  - Return one RK4 candidate for the seven-state vector.
-- **_euler_substep**(state, current)
-  - Return one explicit Euler candidate for regression comparison.
-- **_validate_candidate**(candidate)
-  - Return a finite candidate with non-negative calcium or raise.
 - **step**(current)
   - Advance the compact conductance model and return a spike indicator.
 - **reset**()
   - Restore voltage, gates, and calcium state to their defaults.
-
-### Function `_safe_exp(value)`
-Return ``exp(value)``, yielding ``+inf`` on overflow.
-
-Parameters
-----------
-value:
-    Exponent to evaluate.
-
-Returns
--------
-float
-    Exponential value, or ``math.inf`` if the double range overflows.
 
 ---
 
@@ -23166,16 +20519,8 @@ integrator : {"rk4", "baseline_euler"}
     update as an explicit comparison path.
 
 - **__post_init__**()
-- **_finite_float**(name, value)
-  - Return ``value`` as a finite float or raise ``ValueError``.
-- **_validate_configuration**()
-  - Validate static parameters and mutable state before integration.
 - **mg_block**(v)
   - Mg2+ block factor: B(V) = 1/(1 + &#91;Mg&#93;/3.57 * exp(-0.062*V)).
-- **_mg_block_value**(voltage)
-- **_derivatives**(state, i_soma, glutamate)
-- **_rk4_substep**(state, i_soma, glutamate)
-- **_baseline_euler_substep**(i_soma, glutamate)
 - **step**(i_soma, glutamate)
   - Step with somatic input current and dendritic glutamate.
 - **reset**()
@@ -23212,8 +20557,6 @@ non-negative centre/surround weights; finite preferred direction and state.
   - Create an On-centre cell.
 - **new_off**(cls)
   - Create an Off-centre cell.
-- **_finite_non_negative**(name, value)
-- **_validate_runtime**()
 - **step_rf**(intensity, surround_mean)
   - Step with local intensity and surround mean intensity.
 - **step**(current)
@@ -23267,22 +20610,8 @@ Dopamine-mediated stabilization of delay-period activity in a network model
 of prefrontal cortex. J. Neurophysiol. 83:1733–1750.
 
 - **__post_init__**()
-- **_finite_float**(name, value)
-  - Return ``value`` as a finite float, raising ``ValueError`` otherwise.
-- **_validate_configuration**()
-  - Coerce every state and parameter to a finite float and enforce signs.
-- **_validate_runtime_configuration**()
-  - Re-check finiteness and signs before a step mutates state.
 - **mg_block**(v)
   - Jahr & Stevens (1990) Mg²⁺ block ``B(V) = 1/(1 + &#91;Mg&#93;/3.57 · exp(-0.062 V))``.
-- **_derivatives**(v, h_na, n_k, current)
-  - Return ``(dV, dh_na, dn_k)`` of the system at one consistent state.
-- **_rk4_substep**(state, current)
-  - Return one classical RK4 increment of the ``(V, h_na, n_k)`` vector.
-- **_euler_substep**(state, current)
-  - Return one forward-Euler increment of the ``(V, h_na, n_k)`` vector.
-- **_validate_candidate**(candidate)
-  - Return the candidate state, raising if any component is non-finite.
 - **step**(current)
   - Advance the neuron by one ``dt`` step and report a threshold crossing.
 - **reset**()
@@ -23316,10 +20645,6 @@ Reference: Fardet, T. & Levina, A. (2020). PLoS Comput. Biol. 16(12):e1008503.
 
 - **__post_init__**()
   - Validate the energy-LIF state before first use.
-- **_validate_state**()
-  - Reject non-physical energy-LIF state before mutation.
-- **_exact_candidate**(current)
-  - Return the exact constant-current `(v, epsilon)` candidate.
 - **step**(current)
   - Advance one exact-flow step and return `1` when a spike occurs.
 - **reset**()
@@ -23340,21 +20665,11 @@ variable θ advances on a circle; spike occurs when θ crosses π.
 Reference: Ermentrout & Kopell (1986) SIAM J Appl Math 46:233–253.
 
 - **__post_init__**()
-- **_validate_theta**(theta)
 - **step**(current)
 - **simulate**(n_steps, current, backend)
   - Advance ``n_steps`` from the current state, returning ``(trace, spikes)``.
-- **_simulate_python**(n_steps, current)
-- **_simulate_rust**(n_steps, current)
-- **_simulate_julia**(n_steps, current)
-- **_simulate_go**(n_steps, current)
-- **_simulate_mojo**(n_steps, current)
 - **reset**()
 
-### Function `_load_rust_simulate()`
-### Function `_ensure_julia_loaded()`
-### Function `_ensure_go_loaded()`
-### Function `_ensure_mojo_loaded()`
 ---
 
 ## Module `neurons.models.ermentrout_kopell_pop`
@@ -23380,11 +20695,8 @@ the finite-step escape hazard.
 Reference: Gerstner, W. (2000). Neural Comput. 12:43–89.
 
 - **__post_init__**()
-- **_validate_runtime_state**()
-- **_spike_probability**(voltage)
 - **step**(current)
 - **reset**()
-- **_exact_voltage_candidate**(current)
 
 ---
 
@@ -23396,7 +20708,6 @@ Exponential IF (no adaptation). Fourcaud-Trocmé et al. 2003.
 Reference: Fourcaud-Trocmé, N. et al. (2003). J. Neurosci. 23:11628–11640.
 
 - **__post_init__**()
-- **_rhs**(v, current)
 - **step**(current)
 - **reset**()
 
@@ -23415,29 +20726,11 @@ historical explicit-Euler path remains available only through the explicit
 ``baseline_euler`` integrator option for compatibility experiments.
 
 - **__post_init__**()
-- **_finite_float**(name, value)
-- **_validate_configuration**()
-- **_validate_runtime_configuration**()
 - **step**(current)
 - **simulate**(n_steps, current, backend)
   - Advance ``n_steps`` RK4 steps from the current state, returning ``(trace, spikes)``.
-- **_simulate_python**(n_steps, current)
-- **_simulate_rust**(n_steps, current)
-- **_simulate_julia**(n_steps, current)
-- **_simulate_go**(n_steps, current)
-- **_simulate_mojo**(n_steps, current)
-- **_validate_candidate**(v, w)
-- **_rhs_tuple**(v, w, current)
-- **_rhs**(_t, state, current)
-- **_euler_candidate**(current)
-- **_rk4_candidate**(current)
-- **_rosenbrock_candidate**(current)
 - **reset**()
 
-### Function `_load_rust_simulate()`
-### Function `_ensure_julia_loaded()`
-### Function `_ensure_go_loaded()`
-### Function `_ensure_mojo_loaded()`
 ---
 
 ## Module `neurons.models.fitzhugh_rinzel`
@@ -23453,27 +20746,12 @@ Runtime integration uses RK4 over the published three-state ODE with
 current held constant for one step.
 
 - **__post_init__**()
-- **_finite_float**(name, value)
-- **_numeric_fields**()
-- **_validate_numeric_contract**()
-- **_derivatives**(v, w, y, current)
-- **_rk4_candidate**(current)
-- **_validate_candidate**(v, w, y)
 - **step**(current)
   - Advance the model by one RK4 step.
 - **simulate**(n_steps, current, backend)
   - Advance ``n_steps`` RK4 steps from the current state, returning ``(trace, spikes)``.
-- **_simulate_python**(n_steps, current)
-- **_simulate_rust**(n_steps, current)
-- **_simulate_julia**(n_steps, current)
-- **_simulate_go**(n_steps, current)
-- **_simulate_mojo**(n_steps, current)
 - **reset**()
 
-### Function `_load_rust_simulate()`
-### Function `_ensure_julia_loaded()`
-### Function `_ensure_go_loaded()`
-### Function `_ensure_mojo_loaded()`
 ---
 
 ## Module `neurons.models.fractional_lif`
@@ -23489,7 +20767,6 @@ Lundstrom et al. 2008.
 Reference: Teka, W. et al. (2014). PLoS Comput. Biol. 10:e1003526.
 
 - **__post_init__**()
-- **_compute_gl_coefficients**()
 - **step**(current)
 - **reset**()
 
@@ -23507,7 +20784,6 @@ Purely probabilistic, no ODE.
 Reference: Galves, A. & Löcherbach, E. (2013). J. Stat. Phys. 151:896–921.
 
 - **__post_init__**()
-- **_firing_prob**()
 - **step**(weighted_input)
 - **reset**()
 
@@ -23529,7 +20805,6 @@ Taylor et al. (1999) J Physiol 519(3).
   - Static gamma — bag2/chain intrafusal fibres (length-sensitive).
 - **step**(drive)
 - **reset**()
-- **_validate_state**()
 
 ---
 
@@ -23546,12 +20821,6 @@ Reference: Gerstner, W. et al. (2014). Neuronal Dynamics. Cambridge Univ. Press,
 - **__post_init__**()
 - **step**(rate_override)
 - **reset**()
-
-### Function `_log_gamma_int(k)`
-ln(Gamma(k)) for positive integer k = ln((k-1)!).
-
-### Function `_gamma_survival(k, x)`
-P(X > x) for Gamma(k, 1) via series for upper incomplete gamma.
 
 ---
 
@@ -23570,10 +20839,6 @@ Reference: Yao, M. et al. (2022). Proc. NeurIPS 35:19606–19618.
 
 ## Module `neurons.models.gif_population`
 
-### Class `_XorShift64`
-- **__post_init__**()
-- **random**()
-
 ### Class `GIFPopulationNeuron`
 Generalized integrate-and-fire population neuron with escape-rate spiking.
 
@@ -23585,10 +20850,6 @@ Poisson interval probability.
 Reference: Mensi, S. et al. (2012). J. Neurophysiol. 107:1756-1775.
 
 - **__post_init__**()
-- **_finite_values**(values)
-- **_valid_runtime**()
-- **_advance_subthreshold**(current)
-- **_spike_probability**(voltage)
 - **step**(current)
 - **reset**()
 
@@ -23606,27 +20867,11 @@ finite and crosses the adaptive threshold.
 Reference: Teeter, C. et al. (2018). Nat. Commun. 9:709.
 
 - **__post_init__**()
-- **_finite_values**(values)
-- **_raise_if_invalid_runtime**()
-- **_derivatives**(v, theta, i_asc1, i_asc2, current)
-- **_add_scaled**(state, slope, scale)
-- **_rk4_candidate**(current)
 - **step**(current)
 - **simulate**(n_steps, current, backend)
   - Advance ``n_steps`` RK4 updates from the current state, returning ``(trace, spikes)``.
-- **_simulate_python**(n_steps, current)
-- **_scalar_args**(n_steps, current)
-- **_simulate_rust**(n_steps, current)
-- **_simulate_julia**(n_steps, current)
-- **_simulate_go**(n_steps, current)
-- **_simulate_mojo**(n_steps, current)
-- **_final_state**(trace, n_steps)
 - **reset**()
 
-### Function `_load_rust_simulate()`
-### Function `_ensure_julia_loaded()`
-### Function `_ensure_go_loaded()`
-### Function `_ensure_mojo_loaded()`
 ---
 
 ## Module `neurons.models.glm_neuron`
@@ -23659,18 +20904,9 @@ Ih (r), IL. Spontaneously active 3–10 Hz.
 
 Reference: Solinas et al. (2007) Front Cell Neurosci 1:2.
 
-- **_valid_state**()
 - **step**(current)
 - **reset**()
 
-### Function `_safe_rate(a, vhalf, v, k, fallback)`
-### Function `_boltz(v, vh, k)`
-### Function `_all_finite()`
-### Function `_probability(value)`
-### Function `_voltage(value)`
-### Function `_gate_alpha_beta(previous, alpha, beta, phi, dt)`
-### Function `_gate_inf(previous, steady, tau, dt)`
-### Function `_calcium_exact(previous, entry, tau, dt)`
 ---
 
 ## Module `neurons.models.golomb_fs`
@@ -23700,20 +20936,6 @@ Hansel, D. (2007). Mechanisms of firing patterns in fast-spiking cortical
 interneurons. J. Neurophysiol. 97:3831–3843.
 
 - **__post_init__**()
-- **_finite_float**(name, value)
-  - Return ``value`` as a finite float, raising ``ValueError`` otherwise.
-- **_validate_configuration**()
-  - Coerce every state and parameter to a finite float and enforce signs.
-- **_validate_runtime_configuration**()
-  - Re-check finiteness and signs before a step mutates state.
-- **_derivatives**(v, h, n, p, current)
-  - Return ``(dV, dh, dn, dp)`` of the four-state system at one state.
-- **_rk4_substep**(state, current)
-  - Return one classical RK4 increment of the four-state vector.
-- **_euler_substep**(state, current)
-  - Return one forward-Euler increment of the four-state vector.
-- **_validate_candidate**(candidate)
-  - Return the candidate state, raising if any component is non-finite.
 - **step**(current)
   - Advance the neuron by one ``10 * dt`` step and report a threshold crossing.
 - **reset**()
@@ -23733,14 +20955,9 @@ plus tonic GABA. Ca²⁺ dynamics with KCa half-saturation.
 Reference: D'Angelo et al. (2001) J Neurosci 21:759–770.
 
 - **__post_init__**()
-- **_boltz**(v, vh, k)
-- **_clamp01**(value)
 - **step**(current)
 - **reset**()
-- **_validate_state**()
 
-### Function `_exact_relax(value, target, tau, dt)`
-### Function `_exact_voltage_step(v, input_current, conductances, c_m, dt)`
 ---
 
 ## Module `neurons.models.gutkin_ermentrout`
@@ -23803,14 +21020,7 @@ Computation, 10(5), 1047-1065.
   - Advance one RK4 step under constant external current.
 - **reset**()
   - Restore the documented default voltage and potassium gate.
-- **_valid_static_contract**()
-- **_m_inf**(v)
-- **_n_inf**(v)
-- **_rhs**(v, n_gate, current)
-- **_rk4_candidate**(current)
 
-### Function `_finite(value)`
-### Function `_sigmoid(argument)`
 ---
 
 ## Module `neurons.models.hay_l5`
@@ -23830,38 +21040,10 @@ Reference: Hay, E. et al. (2011). PLoS Comput. Biol. 7:e1002107.
 
 - **__post_init__**()
   - Validate the selected integrator and numeric configuration.
-- **_finite_float**(name, value)
-  - Return ``value`` as a finite float and reject booleans.
-- **_validate_configuration**()
-  - Coerce state and parameters to finite floats and enforce signs.
-- **_validate_runtime_configuration**()
-  - Re-check state and parameter validity before mutating state.
-- **_derivatives**(state, current_soma, current_tuft)
-  - Return derivatives for all nine state variables.
-- **_rk4_substep**(state, current_soma, current_tuft)
-  - Return one RK4 candidate for the nine-state vector.
-- **_euler_substep**(state, current_soma, current_tuft)
-  - Return one explicit Euler candidate for regression comparison.
-- **_validate_candidate**(candidate)
-  - Return a finite candidate with non-negative calcium or raise.
 - **step**(current_soma, current_tuft)
   - Advance the model by one public step and return a spike indicator.
 - **reset**()
   - Restore voltage, gate, and calcium state to documented defaults.
-
-### Function `_safe_exp(value)`
-Return ``exp(value)`` and map overflow to ``math.inf``.
-
-Parameters
-----------
-value:
-    Exponent to evaluate.
-
-Returns
--------
-float
-    Exponential value in double precision, or positive infinity when the
-    exponent overflows.
 
 ---
 
@@ -23898,44 +21080,10 @@ Reference: Hill, S. & Tononi, G. (2005). Modeling sleep and wakefulness in
 the thalamocortical system. J. Neurophysiol. 93:1671–1698.
 
 - **__post_init__**()
-- **_finite_float**(name, value)
-  - Return ``value`` as a finite float, raising ``ValueError`` otherwise.
-- **_validate_configuration**()
-  - Coerce every state and parameter to a finite float and enforce signs.
-- **_validate_runtime_configuration**()
-  - Re-check finiteness and signs before a step mutates state.
-- **_derivatives**(v, h_na, n_k, m_h, h_t, na_i, current)
-  - Return ``(dV, dh_na, dn_k, dm_h, dh_t, dna_i)`` at one consistent state.
-- **_rk4_substep**(state, current)
-  - Return one classical RK4 increment of the six-state vector.
-- **_euler_substep**(state, current)
-  - Return one forward-Euler increment of the six-state vector.
-- **_validate_candidate**(candidate)
-  - Return the candidate with ``na_i`` clamped to be non-negative.
 - **step**(current)
   - Advance the neuron by one ``dt`` step and report a threshold crossing.
 - **reset**()
   - Restore the resting potential, gating defaults, and sodium baseline.
-
-### Function `_safe_exp(value)`
-Return ``exp(value)``, yielding ``+inf`` on overflow instead of raising.
-
-Python's ``math.exp`` raises ``OverflowError`` once the argument exceeds
-roughly ``709``, whereas the libm ``exp`` of the Rust, Julia, Go, and Mojo
-backends (and NumPy) return ``+inf``. Matching that ``+inf`` behaviour keeps
-the candidate-first finite check — rather than a Python-only exception type —
-the single fail-closed gate when an out-of-range stimulus blows the
-trajectory up.
-
-Parameters
-----------
-value:
-    The exponent.
-
-Returns
--------
-float
-    ``exp(value)``, or ``math.inf`` if that overflows the double range.
 
 ---
 
@@ -23951,24 +21099,11 @@ dz/dt = r(s(x - x_rest) - z)
 Reference: Hindmarsh, J.L. & Rose, R.M. (1984). Proc. R. Soc. Lond. B 221:87–102.
 
 - **__post_init__**()
-- **_derivatives**(x, y, z, current)
-- **_set_state**(x, y, z)
-- **_step_euler**(current)
-- **_step_rk4**(current)
 - **step**(current)
 - **simulate**(n_steps, current, backend)
   - Advance ``n_steps`` RK4 steps from the current state, returning ``(trace, spikes)``.
-- **_simulate_python**(n_steps, current)
-- **_simulate_rust**(n_steps, current)
-- **_simulate_julia**(n_steps, current)
-- **_simulate_go**(n_steps, current)
-- **_simulate_mojo**(n_steps, current)
 - **reset**()
 
-### Function `_load_rust_simulate()`
-### Function `_ensure_julia_loaded()`
-### Function `_ensure_go_loaded()`
-### Function `_ensure_mojo_loaded()`
 ---
 
 ## Module `neurons.models.hodgkin_huxley`
@@ -23991,17 +21126,7 @@ Integrator options:
   Hodgkin-Huxley ODEs
 
 - **__post_init__**()
-- **_alpha_m**(v)
-- **_beta_m**(v)
-- **_alpha_h**(v)
-- **_beta_h**(v)
-- **_alpha_n**(v)
-- **_beta_n**(v)
 - **step**(current)
-- **_rhs**(_t, state, current)
-- **_step_baseline_euler**(current)
-- **_step_rk4**(current)
-- **_step_rosenbrock**(current)
 - **reset**()
 
 ---
@@ -24035,8 +21160,6 @@ window_size : int
     Sliding window size for local attention. Default: 16.
 
 - **__post_init__**()
-- **_phi**(x)
-  - Feature map: elu(x) + 1.
 - **step_qkv**(query, key, value)
   - Step with explicit query, key, value (scalar projections).
 - **step**(current)
@@ -24060,21 +21183,11 @@ Reset x -> x_reset when x >= x_threshold.
 
 Reference: Ibarz, B. et al. (2011). Phys. Rep. 501:1–74.
 
-- **_f**(x)
 - **step**(current)
 - **simulate**(n_steps, current, backend)
   - Advance ``n_steps`` from the current state, returning ``(trace, spikes)``.
-- **_simulate_python**(n_steps, current)
-- **_simulate_rust**(n_steps, current)
-- **_simulate_julia**(n_steps, current)
-- **_simulate_go**(n_steps, current)
-- **_simulate_mojo**(n_steps, current)
 - **reset**()
 
-### Function `_load_rust_simulate()`
-### Function `_ensure_julia_loaded()`
-### Function `_ensure_go_loaded()`
-### Function `_ensure_mojo_loaded()`
 ---
 
 ## Module `neurons.models.ih_neuron`
@@ -24095,7 +21208,6 @@ Pape (1996) Annu Rev Physiol 58:299.
 - **step**(current)
 - **reset**()
 
-### Function `_safe_rate(a, vhalf, v, k, fallback)`
 ---
 
 ## Module `neurons.models.ilif`
@@ -24122,7 +21234,6 @@ Cox 1955 — doubly stochastic Poisson (time-varying rate).
 Reference: Gerstner, W. et al. (2014). Neuronal Dynamics. Cambridge Univ. Press, §7.3.
 
 - **__post_init__**()
-- **_probability**(rate_hz)
 - **step**(rate_hz)
 - **reset**()
 
@@ -24158,27 +21269,12 @@ If ``v >= vpeak`` after integration, the neuron emits one spike and applies
 importer: pF, nS, mV, ms, and pA.
 
 - **__post_init__**()
-- **_require_finite**(name, value)
-- **_require_positive**(cls, name, value)
-- **_rhs**(v, u, input_current)
 - **step**(input_current)
 - **simulate**(n_steps, current, backend)
   - Advance ``n_steps`` RK4 steps from the current state, returning ``(trace, spikes)``.
-- **_simulate_python**(n_steps, current)
-- **_simulate_rust**(n_steps, current)
-- **_simulate_julia**(n_steps, current)
-- **_simulate_go**(n_steps, current)
-- **_simulate_mojo**(n_steps, current)
-- **_step_euler**(input_current)
-- **_step_rk4**(input_current)
-- **_apply_threshold_reset**()
 - **reset_state**()
 - **get_state**()
 
-### Function `_load_rust_simulate()`
-### Function `_ensure_julia_loaded()`
-### Function `_ensure_go_loaded()`
-### Function `_ensure_mojo_loaded()`
 ---
 
 ## Module `neurons.models.jansen_rit`
@@ -24191,9 +21287,6 @@ Jansen & Rit 1995 — neural mass model for EEG generation.
 Reference: Jansen, B.H. & Rit, V.G. (1995). Biol. Cybern. 73:357–366.
 
 - **__post_init__**()
-- **_require_finite**(name, value)
-- **_validate_state**(values)
-- **_sigmoid**(x)
 - **step**(p_ext)
 - **reset**()
 
@@ -24255,7 +21348,6 @@ where V_inf = V_rest + R * I.
 Reference: Lapicque, L. (1907). J. Physiol. Pathol. Gén. 9:620–635.
 
 - **__post_init__**()
-- **_validate_runtime_state**()
 - **step**(current)
 - **reset**()
 
@@ -24273,14 +21365,6 @@ Used in The Virtual Brain (TVB) simulator.
 Reference: Larter, R. et al. (1999). Chaos 9:795–804.; Breakspear, M. et al. (2003). Cereb. Cortex 13:189–202.
 
 - **__post_init__**()
-- **_validate_configuration**()
-- **_m_ca**(v)
-- **_m_na**(v)
-- **_m_k**(v)
-- **_derivatives**(v, w, z, coupling)
-- **_set_state**(v, w, z)
-- **_step_euler**(coupling)
-- **_step_rk4**(coupling)
 - **step**(coupling)
 - **reset**()
 
@@ -24294,9 +21378,6 @@ Oster, Douglas & Liu 2009 — winner-take-all with lateral inhibition.
 Reference: Oster, M. et al. (2009). Neural Comput. 21(9):2437–2465.
 
 - **__post_init__**()
-- **_validate_parameters**()
-- **_validate_runtime_state**()
-- **_normalise_currents**(currents)
 - **step**(currents)
 - **reset**()
 
@@ -24317,7 +21398,6 @@ timing of neocortical pyramidal neurons by simple threshold models.
 J Comput Neurosci 21:35-49.
 
 - **__post_init__**()
-- **_sigmoid**(value)
 - **step**(current)
 - **reset**()
 
@@ -24382,7 +21462,6 @@ inhibitory connections in the cerebellar cortex. J Neurosci 20:1837-1848.
 - **with_serotonin**(cls, level)
 - **step**(current)
 - **reset**()
-- **_validate_state**()
 
 ---
 
@@ -24401,7 +21480,6 @@ Reference: Mainen, Z.F. & Sejnowski, T.J. (1996). Nature 382:363–366.
 - **step**(current)
 - **reset**()
 
-### Function `_safe_exp(x)`
 ---
 
 ## Module `neurons.models.marder_stg`
@@ -24454,30 +21532,10 @@ activity-dependent conductances regulated by multiple calcium sensors.
 J. Neurosci. 18(7):2309–2320. Channel kinetics: ModelDB accession 93321.
 
 - **__post_init__**()
-- **_validate_configuration**()
-- **_sigmoid**(v, v_half, slope)
-  - Boltzmann steady state ``1 / (1 + exp((v_half − v)/slope))``.
-- **_nernst_e_ca**(ca)
-  - Nernst calcium reversal (mV) at the configured temperature.
-- **_derivatives**(state, current)
-  - Return d/dt of the thirteen-state vector under injected ``current``.
-- **_axpy**(state, deriv, factor)
-  - Return ``state + factor·deriv`` componentwise for the RK4 stages.
-- **_rk4**(state, current)
-  - Advance ``state`` one ``dt`` with classical fourth-order Runge-Kutta.
-- **_commit**(state)
-  - Clamp gates to &#91;0, 1&#93; and calcium to ≥ 0, failing closed on non-finite state.
 - **step**(current)
   - Advance one ``dt`` and return 1 on an upward threshold crossing.
 - **reset**()
   - Restore the resting initial condition.
-
-### Function `_exp(x)`
-Overflow-safe ``exp``: the argument is clamped to ``&#91;-700, 700&#93;``.
-
-Rate and steady-state functions saturate well within this range, so clamping
-keeps intermediate Runge-Kutta evaluations at extreme voltages finite (the
-step then fails closed on any genuinely non-finite committed state).
 
 ---
 
@@ -24512,47 +21570,10 @@ neocortical pyramidal cells mediated by Martinotti cells. Neuron 53:735–746;
 Toledo-Rodriguez et al. (2005); Pospischil et al. (2008) Biol. Cybern. 99:427.
 
 - **__post_init__**()
-- **_finite_float**(name, value)
-  - Return ``value`` as a finite float, raising ``ValueError`` otherwise.
-- **_validate_configuration**()
-  - Coerce every state and parameter to a finite float and enforce signs.
-- **_validate_runtime_configuration**()
-  - Re-check finiteness and signs before a step mutates state.
-- **_derivatives**(v, m, h, n, p, s, current)
-  - Return ``(dV, dm, dh, dn, dp, ds)`` of the system at one state.
-- **_rk4_substep**(state, current)
-  - Return one classical RK4 increment of the six-state vector.
-- **_euler_substep**(state, current)
-  - Return one forward-Euler increment of the six-state vector.
-- **_validate_candidate**(candidate)
-  - Return the candidate state, raising if any component is non-finite.
 - **step**(current)
   - Advance the neuron by one ``4 * dt`` step and report a threshold crossing.
 - **reset**()
   - Restore the resting potential and gating defaults.
-
-### Function `_alpha_singular(numerator, slope, limit)`
-Return ``numerator / (exp(numerator/slope) - 1)`` with the removable limit.
-
-The Traub-Miles activation rates have the Hodgkin-Huxley ``x/(exp(±x/k)-1)``
-form, finite at ``x = 0`` by L'Hôpital's rule but numerically ``0/0``. Within
-``1e-6`` of the singularity the closed-form limit (equal to ``slope``) is
-returned, matching the Rust/Julia/Go/Mojo kernels exactly rather than
-perturbing the denominator with an epsilon.
-
-Parameters
-----------
-numerator:
-    The shifted-voltage numerator ``dv - c`` of the rate expression.
-slope:
-    The exponential slope (sign folded into ``numerator``).
-limit:
-    The L'Hôpital value of the ratio at ``numerator = 0`` (equal to ``slope``).
-
-Returns
--------
-float
-    The rate ratio, using ``limit`` within ``1e-6`` of the singularity.
 
 ---
 
@@ -24565,12 +21586,6 @@ Reference: Kobayashi, R. et al. (2009). Front. Comput. Neurosci. 3:9.
 
 - **__post_init__**()
   - Validate the numerical contract before the first integration step.
-- **_validate_state**()
-  - Reject invalid MAT parameters or state before mutation.
-- **_derivatives**(v, theta1, theta2, current)
-  - Return the MAT membrane and threshold right-hand side.
-- **_rk4_candidate**(current)
-  - Advance `(v, theta1, theta2)` with one candidate-first RK4 step.
 - **step**(current)
   - Advance one MAT step and return `1` only when a spike occurs.
 - **reset**()
@@ -24588,7 +21603,6 @@ y = 1 if sum(w_i * x_i) >= theta, else 0.
 Reference: McCulloch, W.S. & Pitts, W. (1943). Bull. Math. Biophys. 5:115–133.
 
 - **__post_init__**()
-- **_validate_runtime_state**()
 - **step**(weighted_input)
 - **reset**()
 
@@ -24606,26 +21620,11 @@ analytically tractable Nagumo equation.
 Reference: McKean, H.P. (1970). Advances in Mathematics, 4:209-223.
 
 - **__post_init__**()
-- **_finite_float**(name, value)
-- **_validate_runtime_contract**(current)
-- **_f**(v)
-- **_derivatives**(v, w, current)
-- **_validate_candidate**(v, w)
-- **_rk4_candidate**(current)
 - **step**(current)
 - **simulate**(n_steps, current, backend)
   - Advance ``n_steps`` RK4 updates from the current state, returning ``(trace, spikes)``.
-- **_simulate_python**(n_steps, current)
-- **_simulate_rust**(n_steps, current)
-- **_simulate_julia**(n_steps, current)
-- **_simulate_go**(n_steps, current)
-- **_simulate_mojo**(n_steps, current)
 - **reset**()
 
-### Function `_load_rust_simulate()`
-### Function `_ensure_julia_loaded()`
-### Function `_ensure_go_loaded()`
-### Function `_ensure_mojo_loaded()`
 ---
 
 ## Module `neurons.models.medvedev_map`
@@ -24638,17 +21637,8 @@ Reference: Medvedev, G.S. (2005). Physica D 202:37–59.
 - **step**(current)
 - **simulate**(n_steps, current, backend)
   - Advance ``n_steps`` from the current state, returning ``(trace, spikes)``.
-- **_simulate_python**(n_steps, current)
-- **_simulate_rust**(n_steps, current)
-- **_simulate_julia**(n_steps, current)
-- **_simulate_go**(n_steps, current)
-- **_simulate_mojo**(n_steps, current)
 - **reset**()
 
-### Function `_load_rust_simulate()`
-### Function `_ensure_julia_loaded()`
-### Function `_ensure_go_loaded()`
-### Function `_ensure_mojo_loaded()`
 ---
 
 ## Module `neurons.models.mihalas_niebur`
@@ -24662,27 +21652,11 @@ finite and crosses the adaptive threshold.
 
 Reference: Mihalas, S. & Niebur, E. (2009). Neural Comput. 21:704-718.
 
-- **_finite_values**(values)
-- **_valid_runtime**()
-- **_derivatives**(v, theta, i1, i2, current)
-- **_add_scaled**(state, slope, scale)
-- **_rk4_candidate**(current)
 - **step**(current)
 - **simulate**(n_steps, current, backend)
   - Advance ``n_steps`` RK4 updates from the current state, returning ``(trace, spikes)``.
-- **_simulate_python**(n_steps, current)
-- **_rust_args**(n_steps, current)
-- **_simulate_rust**(n_steps, current)
-- **_simulate_julia**(n_steps, current)
-- **_simulate_go**(n_steps, current)
-- **_simulate_mojo**(n_steps, current)
-- **_final_state**(trace, n_steps)
 - **reset**()
 
-### Function `_load_rust_simulate()`
-### Function `_ensure_julia_loaded()`
-### Function `_ensure_go_loaded()`
-### Function `_ensure_mojo_loaded()`
 ---
 
 ## Module `neurons.models.morris_lecar`
@@ -24702,17 +21676,7 @@ Integrator options:
   conductance equations
 
 - **__post_init__**()
-- **_validate_configuration**()
-- **_validate_runtime_configuration**()
-- **_m_inf**(v)
-- **_w_inf**(v)
-- **_lam**(v)
-- **_validate_state**(v, w)
 - **step**(current)
-- **_rhs**(_t, state, current)
-- **_step_baseline_euler**(current)
-- **_step_rk4**(current)
-- **_step_rosenbrock**(current)
 - **reset**()
 
 ---
@@ -24729,7 +21693,6 @@ damped second-order: f(t) = A · (t/τ) · exp(1 - t/τ).
 Reference: Fuglevand et al. (1993) J Neurophysiol 70(6);
 Heckman & Enoka (2012) Compr Physiol 2(4).
 
-- **_valid_state**()
 - **slow**(cls)
   - Slow motor unit (type S): small, fatigue-resistant, low force.
 - **fast**(cls)
@@ -24737,10 +21700,6 @@ Heckman & Enoka (2012) Compr Physiol 2(4).
 - **step**(drive)
 - **reset**()
 
-### Function `_all_finite()`
-### Function `_relax(previous, steady, tau, dt)`
-### Function `_valid_voltage(value)`
-### Function `_valid_force(value)`
 ---
 
 ## Module `neurons.models.multicompartment_mcn`
@@ -24775,43 +21734,12 @@ integrator : {"rk4", "baseline_euler"}
     Numerical integration path. Default: "rk4".
 
 - **__post_init__**()
-- **_finite_float**(name, value)
-  - Return ``value`` as a finite float, rejecting booleans.
-- **_validate_configuration**()
-  - Coerce every state and parameter to finite floats and enforce signs.
-- **_validate_runtime_configuration**()
-  - Re-check finite state and parameter signs before mutating state.
-- **_sigma**(x)
-  - Return the apical sigmoid gate ``1 / (1 + exp(-beta*x))``.
-- **_derivatives**(u, v_basal, v_apical, x_basal, x_apical, i_soma)
-  - Return ``(du, dv_basal, dv_apical)`` from one consistent state.
-- **_rk4_substep**(state, x_basal, x_apical, i_soma)
-  - Return one classical RK4 increment of ``(u, v_basal, v_apical)``.
-- **_euler_substep**(state, x_basal, x_apical, i_soma)
-  - Return one explicit Euler increment for baseline comparisons.
-- **_validate_candidate**(candidate)
-  - Return a finite candidate state or raise before commit.
-- **_threshold_reached**(candidate_u)
-  - Return whether ``candidate_u`` reaches the Heaviside spike boundary.
 - **step_compartments**(x_basal, x_apical, i_soma)
   - Advance one step with basal, apical, and direct somatic drives.
 - **step**(current)
   - Advance one step with ``current`` delivered to the basal dendrite.
 - **reset**()
   - Reset soma, basal, and apical state to initial conditions.
-
-### Function `_safe_exp(value)`
-Return ``exp(value)``, yielding ``+inf`` on overflow instead of raising.
-
-Parameters
-----------
-value:
-    The exponent.
-
-Returns
--------
-float
-    ``exp(value)``, or ``math.inf`` if the exponent overflows binary64.
 
 ---
 
@@ -24831,20 +21759,6 @@ Reference: Benjamin, B.V. et al. (2014). Proc. IEEE 102:699-716.
 
 - **__post_init__**()
   - Validate the integrator choice and initial numeric configuration.
-- **_finite_float**(name, value)
-  - Return ``value`` as a finite float and reject booleans.
-- **_validate_configuration**()
-  - Coerce state/parameters to finite floats and enforce signs.
-- **_validate_runtime_configuration**()
-  - Re-check state/parameter validity before mutating state.
-- **_derivatives**(state, current)
-  - Return continuous two-state derivatives for the Neurogrid flow.
-- **_rk4_substep**(state, current)
-  - Return one RK4 candidate for the two-state continuous flow.
-- **_euler_substep**(state, current)
-  - Return the historical dendrite-first Euler candidate.
-- **_validate_candidate**(candidate)
-  - Return a finite candidate or raise.
 - **step**(current)
   - Advance the neuron by one public step and return a spike indicator.
 - **reset**()
@@ -24870,15 +21784,10 @@ non-finite state, or unstable integration constants are rejected before any
 state mutation can occur.
 
 - **__post_init__**()
-- **_validate_configuration**()
 - **step**(current)
   - Advance one candidate-first RK4 step and return ``1`` on spike.
 - **reset**()
   - Restore dynamic state without changing model parameters.
-- **_derivatives**(v, w, current)
-  - Return NLIF right-hand-side derivatives at ``(v, w)``.
-- **_rk4_candidate**(current)
-  - Compute the fourth-order Runge-Kutta candidate without mutation.
 
 ---
 
@@ -24901,7 +21810,6 @@ Wang (1999) Neuron 22:409.
 - **step**(current)
 - **reset**()
 
-### Function `_safe_rate(a, vhalf, v, k, fallback)`
 ---
 
 ## Module `neurons.models.non_resetting_lif`
@@ -24920,8 +21828,6 @@ Reference: Gerstner, W. et al. (2014). Neuronal Dynamics. Cambridge Univ. Press,
 - **__post_init__**()
 - **step**(current)
 - **reset**()
-- **_exact_relaxation**(state, steady_state, tau)
-- **_validate_runtime_state**()
 
 ---
 
@@ -24937,7 +21843,6 @@ Reference: Gerstner, W. et al. (2014). Neuronal Dynamics. Cambridge Univ. Press,
 - **__post_init__**()
 - **step**(current)
 - **reset**()
-- **_validate_runtime_state**()
 
 ---
 
@@ -24954,25 +21859,11 @@ semantics without an artificial reset during normal evolution.
 Reference: Pernarowski, M. (1994). SIAM J. Appl. Math. 54:814–832.
 
 - **__post_init__**()
-- **_finite_float**(name, value)
-- **_validate_runtime_contract**(current)
-- **_derivatives**(v, w, z, current)
-- **_validate_candidate**(v, w, z)
-- **_rk4_candidate**(current)
 - **step**(current)
 - **simulate**(n_steps, current, backend)
   - Advance ``n_steps`` RK4 updates from the current state, returning ``(trace, spikes)``.
-- **_simulate_python**(n_steps, current)
-- **_simulate_rust**(n_steps, current)
-- **_simulate_julia**(n_steps, current)
-- **_simulate_go**(n_steps, current)
-- **_simulate_mojo**(n_steps, current)
 - **reset**()
 
-### Function `_load_rust_simulate()`
-### Function `_ensure_julia_loaded()`
-### Function `_ensure_go_loaded()`
-### Function `_ensure_mojo_loaded()`
 ---
 
 ## Module `neurons.models.persistent_na_neuron`
@@ -24993,7 +21884,6 @@ French et al. (1990) Neuroscience 42:363.
 - **step**(current)
 - **reset**()
 
-### Function `_safe_rate(a, vhalf, v, k, fallback)`
 ---
 
 ## Module `neurons.models.pinsky_rinzel`
@@ -25046,21 +21936,6 @@ reduced Traub model for CA3 neurons. J. Comput. Neurosci. 1:39–60.
 doi:10.1007/BF00962717. Reference channel kinetics: ModelDB accession 35358.
 
 - **__post_init__**()
-- **_validate_configuration**()
-- **_exp**(value)
-  - Return ``exp(value)``, failing closed on overflow/non-finite results.
-- **_exprel_minus**(cls, a, dv, k)
-  - Evaluate the Traub rate ``a·dv / (1 − exp(−dv/k))`` with its limit.
-- **_exprel_plus**(cls, a, dv, k)
-  - Evaluate the Traub rate ``a·dv / (exp(dv/k) − 1)`` with its limit.
-- **_derivatives**(state, i_s, i_d)
-  - Return the time derivatives of the eight-dimensional state.
-- **_axpy**(state, deriv, factor)
-  - Return ``state + factor·deriv`` componentwise for the RK4 stages.
-- **_rk4**(state, i_s, i_d)
-  - Advance ``state`` one ``dt`` with classical fourth-order Runge-Kutta.
-- **_validate_candidate**(state)
-  - Clamp gates to &#91;0, 1&#93; and calcium to ≥ 0, failing closed on non-finite state.
 - **step**(current_soma, current_dend)
   - Advance one ``dt`` and return 1 on a rising somatic threshold crossing.
 - **reset**()
@@ -25101,7 +21976,6 @@ Reference: Fang, W. et al. (2021). Proc. AAAI Conf. Artif. Intell. 35(3):2661–
 - **alpha**()
 - **step**(current)
 - **reset**()
-- **_validate_runtime_state**()
 
 ---
 
@@ -25115,8 +21989,6 @@ P(spike in dt) = 1 - exp(-λ · dt). Essential for input layer generation.
 Reference: Gerstner, W. et al. (2014). Neuronal Dynamics. Cambridge Univ. Press, §7.2.
 
 - **__post_init__**()
-- **_validate_runtime_state**()
-- **_probability**(rate_hz)
 - **step**(rate_override)
 - **reset**()
 
@@ -25150,47 +22022,10 @@ Reference: Pospischil, M. et al. (2008). Minimal Hodgkin-Huxley type models for
 different classes of cortical and thalamic neurons. Biol. Cybern. 99:427–441.
 
 - **__post_init__**()
-- **_finite_float**(name, value)
-  - Return ``value`` as a finite float, raising ``ValueError`` otherwise.
-- **_validate_configuration**()
-  - Coerce every state and parameter to a finite float and enforce signs.
-- **_validate_runtime_configuration**()
-  - Re-check finiteness and signs before a step mutates state.
-- **_derivatives**(v, m, h, n, p, current)
-  - Return ``(dV, dm, dh, dn, dp)`` of the five-state system at one state.
-- **_rk4_substep**(state, current)
-  - Return one classical RK4 increment of the five-state vector.
-- **_euler_substep**(state, current)
-  - Return one forward-Euler increment of the five-state vector.
-- **_validate_candidate**(candidate)
-  - Return the candidate state, raising if any component is non-finite.
 - **step**(current)
   - Advance the neuron by one ``4 * dt`` step and report a threshold crossing.
 - **reset**()
   - Restore the resting membrane potential and gating defaults.
-
-### Function `_alpha_singular(numerator, slope, limit)`
-Return ``numerator / (exp(-numerator/slope) - 1)`` with the removable limit.
-
-The Traub-Miles activation rates have the Hodgkin-Huxley ``x/(exp(±x/k)-1)``
-form, which is finite at ``x = 0`` by L'Hôpital's rule but evaluates to ``0/0``
-numerically. Near the singularity the closed-form limit ``limit`` is returned;
-this matches the Rust/Julia/Go/Mojo kernels exactly rather than perturbing the
-denominator with an epsilon.
-
-Parameters
-----------
-numerator:
-    The shifted-voltage numerator ``dv - c`` of the rate expression.
-slope:
-    The exponential slope ``k`` (with sign folded into ``numerator``).
-limit:
-    The L'Hôpital value ``-slope`` of the ratio at ``numerator = 0``.
-
-Returns
--------
-float
-    The rate ratio, using ``limit`` within ``1e-6`` of the singularity.
 
 ---
 
@@ -25202,12 +22037,6 @@ Prescott 2008 two-state excitability model with M-current tuning.
 Reference: Prescott, S.A. et al. (2008). PLoS Comput. Biol. 4:e1000198.
 
 - **__post_init__**()
-- **_sigmoid**(x)
-- **_validate_recovery**(value)
-- **_validate_state**(cls, v, w)
-- **_validate_configuration**()
-- **_derivatives**(v, w, current)
-- **_rk4_step**(current)
 - **step**(current)
 - **reset**()
 
@@ -25257,52 +22086,10 @@ inhibition in a hippocampal interneuronal network model. J. Neurosci.
 16:6402–6413.
 
 - **__post_init__**()
-- **_finite_float**(name, value)
-  - Return ``value`` as a finite float, raising ``ValueError`` otherwise.
-- **_validate_configuration**()
-  - Coerce every state and parameter to a finite float and enforce signs.
-- **_validate_runtime_configuration**()
-  - Re-check finiteness and signs before a step mutates state.
-- **_n_substeps**()
-  - Return the number of fixed sub-steps that tile a 0.5 ms macro-step.
-- **_derivatives**(v, h, n, p, current)
-  - Return ``(dV, dh, dn, dp)`` of the four-state system at one state.
-- **_rk4_substep**(state, current)
-  - Return one classical RK4 increment of the four-state vector.
-- **_euler_substep**(state, current)
-  - Return one forward-Euler increment of the four-state vector.
-- **_validate_candidate**(candidate)
-  - Return the candidate state, raising if any component is non-finite.
 - **step**(current)
   - Advance the neuron by one 0.5 ms step and report a threshold crossing.
 - **reset**()
   - Restore the resting membrane potential and gating defaults.
-
-### Function `_safe_rate(a, vhalf, v, k, fallback)`
-Return ``a (v+vhalf) / (1 - exp(-(v+vhalf)/k))`` with the removable limit.
-
-The Wang-Buzsáki activation rates share the Hodgkin-Huxley ``x/(1-exp(-x/k))``
-form, which is finite at ``x = 0`` by L'Hôpital's rule but evaluates to ``0/0``
-numerically. The closed-form limit ``a * k`` (passed as ``fallback``) is returned
-within ``1e-7`` of the singularity, matching every backend kernel.
-
-Parameters
-----------
-a:
-    Rate prefactor.
-vhalf:
-    Half-activation voltage offset.
-v:
-    Membrane potential.
-k:
-    Exponential slope.
-fallback:
-    The L'Hôpital value ``a * k`` of the ratio at ``v + vhalf = 0``.
-
-Returns
--------
-float
-    The activation rate, using ``fallback`` within ``1e-7`` of the singularity.
 
 ---
 
@@ -25317,7 +22104,6 @@ Reset when v >= v_peak.
 Reference: Latham, P.E. et al. (2000). J. Neurophysiol. 83:808–827.
 
 - **__post_init__**()
-- **_exact_candidate**(current)
 - **step**(current)
 - **reset**()
 
@@ -25342,8 +22128,6 @@ seed : int
     Initial RNG state for xorshift64. Default: 12345.
 
 - **__post_init__**()
-- **_xorshift64**()
-  - Xorshift64 PRNG returning uniform in &#91;0, 1).
 - **step_complex**(i_re, i_im)
   - Step with real and imaginary current components.
 - **step**(current)
@@ -25365,18 +22149,10 @@ State is committed only after the finite candidate solve succeeds.
 Reference: Rall, W. (1959). Exp. Neurol. 1:491–527.
 
 - **__post_init__**()
-- **_implicit_candidate**(current)
-  - Return the finite implicit passive-cable candidate voltage vector.
 - **step**(current)
   - Advance one implicit cable step and return the somatic spike flag.
 - **reset**()
   - Reset all compartments to the leak reversal potential.
-
-### Function `_finite_scalar(name, value)`
-Return a finite scalar or raise a descriptive validation error.
-
-### Function `_solve_tridiagonal(lower, diagonal, upper, rhs)`
-Solve a tridiagonal system using the Thomas algorithm.
 
 ---
 
@@ -25390,17 +22166,9 @@ response to motor axon collateral input.
 
 Reference: Renshaw (1941); Windhorst (1996) Prog Neurobiol 46(5).
 
-- **_valid_state**()
 - **step**(current)
 - **reset**()
 
-### Function `_safe_rate(a, vhalf, v, k, fallback)`
-### Function `_all_finite()`
-### Function `_clamp01(value)`
-### Function `_exact_gate(previous, alpha, beta, phi, dt)`
-### Function `_exact_relax(previous, steady, tau, dt)`
-### Function `_probability(value)`
-### Function `_physiological_voltage(value)`
 ---
 
 ## Module `neurons.models.resonate_and_fire`
@@ -25409,8 +22177,6 @@ Reference: Renshaw (1941); Windhorst (1996) Prog Neurobiol 46(5).
 - **__post_init__**()
 - **step**(current)
 - **reset**()
-- **_validate_runtime_state**()
-- **_exact_linear_flow**(x, y, current, b, omega, dt)
 
 ---
 
@@ -25426,21 +22192,11 @@ Fast iteration, exhibits spiking and bursting.
 Reference: Rulkov, N.F. (2002). Phys. Rev. E 65:041922.
 
 - **__post_init__**()
-- **_validate_state**(x, y)
 - **step**(current)
 - **simulate**(n_steps, current, backend)
   - Advance ``n_steps`` from the current state, returning ``(trace, spikes)``.
-- **_simulate_python**(n_steps, current)
-- **_simulate_rust**(n_steps, current)
-- **_simulate_julia**(n_steps, current)
-- **_simulate_go**(n_steps, current)
-- **_simulate_mojo**(n_steps, current)
 - **reset**()
 
-### Function `_load_rust_simulate()`
-### Function `_ensure_julia_loaded()`
-### Function `_ensure_go_loaded()`
-### Function `_ensure_mojo_loaded()`
 ---
 
 ## Module `neurons.models.sfa`
@@ -25456,17 +22212,10 @@ and envelope checks pass. A spike resets voltage and adds ``delta_g`` to
 the RK4 adaptation candidate.
 
 - **__post_init__**()
-- **_finite**(value, name)
-- **_positive**(cls, value, name)
-- **_nonnegative**(cls, value, name)
-- **_validated_state**()
 - **step**(current)
   - Advance one candidate-first RK4 timestep.
 - **reset**()
   - Restore voltage to rest and clear adaptation conductance.
-- **_derivatives**(v, g_sfa, current)
-- **_rk4_candidate**(v, g_sfa, current)
-  - Return the coupled RK4 candidate for ``(v, g_sfa)``.
 
 ---
 
@@ -25475,16 +22224,10 @@ the RK4 adaptation candidate.
 ### Class `ShermanRinzelKeizerNeuron`
 Sherman, Rinzel & Keizer 1988 reduced pancreatic beta-cell burster.
 
-- **_validate**()
-- **_derivatives**(v, n_gate, s_gate, current)
-- **_rk4_candidate**(current)
 - **step**(current)
   - Advance one constant-current RK4 step and return threshold crossing.
 - **reset**()
 
-### Function `_finite(value)`
-### Function `_gate(value)`
-### Function `_sigmoid(arg)`
 ---
 
 ## Module `neurons.models.siegert`
@@ -25503,10 +22246,6 @@ Reference: Siegert, A.J.F. (1951). Phys. Rev. 81:617–623.
 - **step**(current)
   - Return instantaneous firing rate (Hz) for given mean input current.
 - **reset**()
-- **_validate_runtime_state**()
-
-### Function `_erf_approx(x)`
-Abramowitz & Stegun 7.1.26 rational approximation.
 
 ---
 
@@ -25537,9 +22276,6 @@ Reference: Wilson, H.R. & Cowan, J.D. (1972). Biophys. J. 12:1–24.
 - **__post_init__**()
 - **step**(current)
 - **reset**()
-- **_validate_runtime_state**()
-- **_exact_relaxation**(rate, steady_state)
-- **_stable_sigmoid**(beta, current, theta)
 
 ---
 
@@ -25562,7 +22298,6 @@ Wang & Buzsáki (1996) base model.
 - **step**(current)
 - **reset**()
 
-### Function `_safe_rate(a, vhalf, v, k, fallback)`
 ---
 
 ## Module `neurons.models.spike_response`
@@ -25619,13 +22354,6 @@ IEEE, 102(5), 652-665.
   - Advance one exact-flow step and return a binary spike indicator.
 - **reset**()
   - Restore voltage and refractory state to the documented rest state.
-- **_exact_membrane_candidate**(current)
-  - Return the exact membrane solution for one constant-current step.
-- **_validate_runtime_state**()
-  - Reject corrupted runtime state before mutating the neuron.
-
-### Function `_finite_scalar(name, value)`
-Return ``value`` as a finite float or raise a typed validation error.
 
 ---
 
@@ -25682,11 +22410,7 @@ chapter 4.
   - Restore voltage, refractory kernel, and internal clock state.
 - **get_state**()
   - Return the current diagnostic SRM0 state.
-- **_validate_runtime_state**()
-- **_eta_coupling_integral**()
-- **_exact_candidate**(current)
 
-### Function `_finite_scalar(name, value)`
 ---
 
 ## Module `neurons.models.sst_neuron`
@@ -25719,47 +22443,10 @@ Reference: Pospischil, M. et al. (2008). Minimal Hodgkin-Huxley type models for
 different classes of cortical and thalamic neurons. Biol. Cybern. 99:427–441.
 
 - **__post_init__**()
-- **_finite_float**(name, value)
-  - Return ``value`` as a finite float, raising ``ValueError`` otherwise.
-- **_validate_configuration**()
-  - Coerce every state and parameter to a finite float and enforce signs.
-- **_validate_runtime_configuration**()
-  - Re-check finiteness and signs before a step mutates state.
-- **_derivatives**(v, m, h, n, p, s, r, current)
-  - Return ``(dV, dm, dh, dn, dp, ds, dr)`` of the system at one state.
-- **_rk4_substep**(state, current)
-  - Return one classical RK4 increment of the seven-state vector.
-- **_euler_substep**(state, current)
-  - Return one forward-Euler increment of the seven-state vector.
-- **_validate_candidate**(candidate)
-  - Return the candidate state, raising if any component is non-finite.
 - **step**(current)
   - Advance the neuron by one ``4 * dt`` step and report a threshold crossing.
 - **reset**()
   - Restore the resting potential and gating defaults.
-
-### Function `_alpha_singular(numerator, slope, limit)`
-Return ``numerator / (exp(numerator/slope) - 1)`` with the removable limit.
-
-The Traub-Miles activation rates have the Hodgkin-Huxley ``x/(exp(±x/k)-1)``
-form, finite at ``x = 0`` by L'Hôpital's rule but numerically ``0/0``. Within
-``1e-6`` of the singularity the closed-form limit (equal to ``slope``) is
-returned, matching the Rust/Julia/Go/Mojo kernels exactly rather than
-perturbing the denominator with an epsilon.
-
-Parameters
-----------
-numerator:
-    The shifted-voltage numerator ``dv - c`` of the rate expression.
-slope:
-    The exponential slope (sign folded into ``numerator``).
-limit:
-    The L'Hôpital value of the ratio at ``numerator = 0`` (equal to ``slope``).
-
-Returns
--------
-float
-    The rate ratio, using ``limit`` within ``1e-6`` of the singularity.
 
 ---
 
@@ -25777,14 +22464,7 @@ Häusser & Clark (1997) Neuron 19:665.
 - **__post_init__**()
 - **step**(current)
 - **reset**()
-- **_validate_state**()
 
-### Function `_safe_rate(a, vhalf, v, k, fallback)`
-### Function `_boltz(v, vh, k)`
-### Function `_safe_exp(value)`
-### Function `_exact_relax(value, target, tau, dt)`
-### Function `_exact_hh_gate(value, alpha, beta, phi, dt)`
-### Function `_exact_voltage_step(v, input_current, conductances, c_m, dt)`
 ---
 
 ## Module `neurons.models.stochastic_if`
@@ -25847,25 +22527,11 @@ state.
 Reference: Terman, D. & Wang, D.L. (1995). Physica D 81:148-176.
 
 - **__post_init__**()
-- **_finite_float**(name, value)
-- **_validate_runtime_contract**(current)
-- **_derivatives**(v, w, current)
-- **_validate_candidate**(v, w)
-- **_rk4_candidate**(current)
 - **step**(current)
 - **simulate**(n_steps, current, backend)
   - Advance ``n_steps`` RK4 updates from the current state, returning ``(trace, spikes)``.
-- **_simulate_python**(n_steps, current)
-- **_simulate_rust**(n_steps, current)
-- **_simulate_julia**(n_steps, current)
-- **_simulate_go**(n_steps, current)
-- **_simulate_mojo**(n_steps, current)
 - **reset**()
 
-### Function `_load_rust_simulate()`
-### Function `_ensure_julia_loaded()`
-### Function `_ensure_go_loaded()`
-### Function `_ensure_mojo_loaded()`
 ---
 
 ## Module `neurons.models.theta`
@@ -25880,11 +22546,8 @@ Ermentrout & Kopell 1986.
 Reference: Ermentrout, G.B. & Kopell, N. (1986). SIAM J. Appl. Math. 46:233–253.
 
 - **__post_init__**()
-- **_wrap_phase**(theta)
-- **_exact_candidate**(current)
 - **step**(current)
 - **reset**()
-- **_validate_runtime_state**()
 
 ---
 
@@ -25911,11 +22574,6 @@ Traub & Miles 1991 — reduced hippocampal CA3 pyramidal.
 Reference: Traub, R.D. & Miles, R. (1991). Neuronal Networks of the Hippocampus. Cambridge Univ. Press.
 
 - **__post_init__**()
-- **_validate_configuration**()
-- **_validate_gate**(name, value)
-- **_validate_state**(cls, v, m, h, n)
-- **_rates**(v)
-- **_derivatives**(v, m, h, n, drive)
 - **step**(current)
 - **reset**()
 
@@ -25969,7 +22627,6 @@ Destexhe et al. (1996) J Neurophysiol 76:2049.
 - **step**(current)
 - **reset**()
 
-### Function `_safe_rate(a, vhalf, v, k, fallback)`
 ---
 
 ## Module `neurons.models.unipolar_brush_cell`
@@ -25985,9 +22642,6 @@ Reference: Mugnaini & Floris (1994) J Comp Neurol 339:174-180
 (bimodal firing physiology).
 
 - **__post_init__**()
-- **_first_order_relaxation**(previous, steady_state, dt, tau)
-- **_validate_configuration**()
-- **_validate_state**()
 - **step**(current)
 - **reset**()
 
@@ -26005,12 +22659,6 @@ Reference: Pospischil et al. (2008) Biol Cybern 99:427–441;
 Larkum (2013) Trends Neurosci 36(3).
 
 - **__post_init__**()
-- **_rate_exp**(value)
-- **_gate**(previous, alpha, beta, dt)
-- **_gate_inf**(previous, steady, tau, dt)
-- **_validate_configuration**()
-- **_validate_state**()
-- **_step_candidate**(v, m, h, n, p, s, current)
 - **step**(current)
 - **reset**()
 
@@ -26044,20 +22692,6 @@ Audinat, E. (1998). Selective excitation of subtypes of neocortical interneurons
 by nicotinic receptors. J. Neurosci. 19:5228–5235; Bhatt et al. (2019).
 
 - **__post_init__**()
-- **_finite_float**(name, value)
-  - Return ``value`` as a finite float, raising ``ValueError`` otherwise.
-- **_validate_configuration**()
-  - Coerce every state and parameter to a finite float and enforce signs.
-- **_validate_runtime_configuration**()
-  - Re-check finiteness and signs before a step mutates state.
-- **_derivatives**(v, h, n, a, b, current)
-  - Return ``(dV, dh, dn, da, db)`` of the five-state system at one state.
-- **_rk4_substep**(state, current)
-  - Return one classical RK4 increment of the five-state vector.
-- **_euler_substep**(state, current)
-  - Return one forward-Euler increment of the five-state vector.
-- **_validate_candidate**(candidate)
-  - Return the candidate state, raising if any component is non-finite.
 - **step**(current)
   - Advance the neuron by one ``4 * dt`` step and report a threshold crossing.
 - **reset**()
@@ -26076,9 +22710,6 @@ Designed for gamma (30-80 Hz) oscillation modelling.
 Reference: Wang, X.-J. & Buzsáki, G. (1996). J. Neurosci. 16:6402–6413.
 
 - **__post_init__**()
-- **_safe_exp**(arg, label)
-- **_gating_rates**(cls, v)
-- **_validate_state**(v, h, n)
 - **step**(current)
 - **reset**()
 
@@ -26096,9 +22727,6 @@ Reproduces epileptiform EEG patterns.
 Reference: Wendling, F. et al. (2002). Biol. Cybern. 86:97–108.
 
 - **__post_init__**()
-- **_require_finite**(name, value)
-- **_validate_state**(values)
-- **_sigmoid**(x)
 - **step**(p_ext)
 - **reset**()
 
@@ -26116,12 +22744,6 @@ S(x) = 1/(1 + exp(-a(x-θ))) - 1/(1 + exp(aθ))
 Reference: Wilson, H.R. & Cowan, J.D. (1972). Biophys. J. 12:1–24.
 
 - **__post_init__**()
-- **_validate_configuration**()
-- **_logistic**(z)
-- **_validate_rate**(name, value)
-- **_validate_state**(e, i)
-- **_sigmoid**(x)
-- **_derivatives**(e, i, drive)
 - **step**(ext_input)
 - **reset**()
 
@@ -26140,26 +22762,11 @@ candidate-first RK4 and commits only finite candidates. Spike detection is
 a threshold event followed by Wilson-HR hard voltage reset.
 
 - **__post_init__**()
-- **_finite_float**(name, value)
-- **_validate_runtime_contract**(current)
-- **_poly**(v)
-- **_derivatives**(v, r, current)
-- **_validate_candidate**(v, r)
-- **_rk4_candidate**(current)
 - **step**(current)
 - **simulate**(n_steps, current, backend)
   - Advance ``n_steps`` RK4 updates from the current state, returning ``(trace, spikes)``.
-- **_simulate_python**(n_steps, current)
-- **_simulate_rust**(n_steps, current)
-- **_simulate_julia**(n_steps, current)
-- **_simulate_go**(n_steps, current)
-- **_simulate_mojo**(n_steps, current)
 - **reset**()
 
-### Function `_load_rust_simulate()`
-### Function `_ensure_julia_loaded()`
-### Function `_ensure_go_loaded()`
-### Function `_ensure_mojo_loaded()`
 ---
 
 ## Module `neurons.models.wong_wang`
@@ -26170,10 +22777,6 @@ Wong & Wang 2006 — reduced decision-making attractor model.
 Reference: Wong, K.-F. & Wang, X.-J. (2006). J. Neurosci. 26:1314–1328.
 
 - **__post_init__**()
-- **_validate_parameters**()
-- **_validate_state**(s1, s2)
-- **_phi**(i_syn)
-- **_derivatives**(s1, s2, drive1, drive2, noise1, noise2)
 - **step**(stim1, stim2)
 - **reset**()
 
@@ -26191,12 +22794,8 @@ Reference: Yamada, W.M. et al. (1989). In: Methods in Neuronal Modeling. MIT Pre
 
 - **__post_init__**()
 - **step**(current)
-- **_derivatives**(v, n, q, current)
-- **_rk4_candidate**(current)
 - **reset**()
 
-### Function `_sigmoid(x)`
-### Function `_tau_n(v)`
 ---
 
 ## Module `neurons.reference_trace_contracts`
@@ -26364,21 +22963,6 @@ Raises
 ValueError
     If ``name`` is not present in the committed corpus.
 
-### Function `_load_all_specs()`
-### Function `_load_spec_file(path)`
-### Function `_reference_trace_data_dir()`
-### Function `_field(payload, key)`
-### Function `_string_field(payload, key)`
-### Function `_optional_string_field(payload, key)`
-### Function `_mapping_field(payload, key)`
-### Function `_float_field(payload, key)`
-### Function `_positive_float_field(payload, key)`
-### Function `_positive_int_field(payload, key)`
-### Function `_float_mapping_field(payload, key)`
-### Function `_string_tuple_field(payload, key)`
-### Function `_tolerances_from_payload(payload, features)`
-### Function `_mapping_value(value, label)`
-### Function `_tolerance_from_payload(label, payload)`
 ---
 
 ## Module `neurons.reference_trace_runner`
@@ -26430,8 +23014,6 @@ Returns
 tuple&#91;TraceValidationReport, ...&#93;
     Sorted reports for the current corpus.
 
-### Function `_coerce_spec(spec_or_name)`
-### Function `_extract_features(trace, spikes)`
 ---
 
 ## Module `neurons.sc_izhikevich`
@@ -26457,14 +23039,7 @@ Integrator options:
 - ``rk4`` is an explicit higher-order alternative path
 
 - **__post_init__**()
-- **_require_finite**(name, value)
-- **_require_positive**(cls, name, value)
-- **_require_nonnegative**(cls, name, value)
 - **step**(input_current)
-- **_rhs**(v, u, input_current)
-- **_apply_noise_and_threshold**()
-- **_step_baseline_half_euler**(input_current)
-- **_step_rk4**(input_current)
 - **reset_state**()
 - **get_state**()
 
@@ -26527,7 +23102,6 @@ Process a bitstream as input current:
 - **step**(input_current)
 - **reset_state**()
 - **get_state**()
-- **_validate_runtime_state**()
 - **process_bitstream**(input_bits, input_scale)
   - Process a bitstream (array of 0s and 1s) as input current.
 
@@ -26599,12 +23173,6 @@ method_override : str, optional
 - **__repr__**()
   - Return a human-readable summary string.
 
-### Function `_load_toml(path)`
-Load a TOML file, using tomllib (3.11+) or tomli fallback.
-
-### Function `_load_json(path)`
-Load a JSON schema file.
-
 ### Function `load_schema(source)`
 Load a neuron model schema from a TOML or JSON file.
 
@@ -26663,9 +23231,6 @@ list of str
 ---
 
 ## Module `nir_bridge.export`
-
-### Function `_node_to_nir(name, node)`
-Convert a single SC-NeuroCore node to its NIR equivalent.
 
 ### Function `to_nir(network, path)`
 Export an SC-NeuroCore SCNetwork to NIR format.
@@ -26773,357 +23338,6 @@ scnir_hierarchy_modules : dict&#91;str, str&#93;
     Standalone SC-NIR hierarchy boundary modules keyed by module name.
 
 
-### Function `_check_synthesis_resource_bounds()`
-Reject IR that would exhaust synthesis resources or is malformed, before any RTL.
-
-``data_width`` must fit a hardware-plausible fixed-point datapath and ``fraction`` must
-leave at least one integer or sign bit, so the signed Q-format is well formed (a
-``fraction >= data_width`` would give negative integer bits and silently emit broken
-RTL). The direct and AER
-interconnects instantiate one module per neuron, so their neuron count is capped at
-``_MAX_UNROLLED_NEURONS``; the folded interconnect shares a single processing element
-and is capped higher at ``_MAX_FOLDED_NEURONS`` (its state-RAM depth). Independently,
-every interconnect flattens all weight matrices into one ROM, so the total synapse count
-is capped at ``_MAX_SYNTHESISABLE_SYNAPSES`` regardless of interconnect. Raising here
-means a pathological network fails closed rather than exhausting memory or the
-downstream synthesis tool.
-
-### Function `_representative_param(values, label)`
-Return the reference (first-neuron) value of a per-neuron parameter.
-
-This value becomes the default of the shared, parameterised RTL neuron module.
-A heterogeneous population is no longer rejected: every neuron whose own
-quantised parameter differs from this default is instantiated with an explicit
-Verilog parameter override at the top level (see :func:`_neuron_param_override`).
-
-### Function `_type_default_qparams(pops, data_width)`
-First-population, first-neuron quantised parameters per neuron type.
-
-Values are stored as the unsigned two's-complement bit pattern the neuron
-module declares as its parameter default, so the top level only overrides a
-neuron whose quantised parameter differs.
-
-### Function `_neuron_param_override(pop, neuron_idx, type_defaults, data_width)`
-Return a Verilog parameter-override clause for a single neuron instance.
-
-Empty when this neuron's per-neuron quantised parameters all equal the shared
-module defaults (the homogeneous case, so the emitted RTL is unchanged).
-Otherwise emits ``#(.P_X(W'sdN), ...)`` so a heterogeneous population reuses
-the same parameterised module with each neuron's own quantised parameters. The
-literal is the unsigned two's-complement bit pattern, matching how the module
-declares each parameter default (negative fixed-point values included).
-
-### Function `_heterogeneous_param_names(pop, data_width)`
-Return the sorted parameter names whose per-neuron quantised values vary in ``pop``.
-
-A name is heterogeneous when its per-neuron array (length ``n_neurons``) holds more
-than one distinct value at the quantised data width — exactly the set the direct path
-emits per-neuron ``#(.P_X(...))`` overrides for (see :func:`_neuron_param_override`),
-and the set the folded interconnect must stream through a per-neuron parameter ROM.
-
-Uniformity is decided at the *quantised* data width (the same mask the override
-detection uses), so two float parameters that round to the same fixed-point literal
-are not heterogeneous. A scalar / population-shared parameter (an array that is not
-per-neuron) is never heterogeneous.
-
-### Function `_population_params_are_uniform(pop, data_width)`
-Return True when every per-neuron quantised parameter is identical across ``pop``.
-
-Equivalent to ``not _heterogeneous_param_names(pop, data_width)``. A heterogeneous
-population — one the direct path reproduces via per-neuron ``#(.P_X(...))`` overrides —
-folds only when the folded interconnect streams its varying parameters through a
-per-neuron parameter ROM (see :func:`_build_top_folded`).
-
-### Function `_param_neuron_literal(pop, pname, neuron_idx, data_width)`
-Return the Verilog signed literal of ``pop``'s ``pname`` for one neuron (quantised).
-
-The literal is the unsigned two's-complement bit pattern the module declares its
-parameter default with — the same form the direct path's per-neuron overrides use
-(see :func:`_neuron_param_override`) — so the folded parameter ROM feeds the PE the
-identical value the direct instance would receive.
-
-### Function `_dequantised_pop(pop, fraction)`
-Return ``pop`` with its quantised parameter values scaled back to real units.
-
-A :class:`QuantisedGraph` population stores fixed-point *integer* parameters
-(``value × 2**fraction``). The folded PE and the per-instance module both encode
-real-valued parameters with :meth:`Q88.encode`, so they must be handed the *real*
-value — feeding the already-quantised integer encodes it a second time (a 16-bit
-``tau = 5120`` re-encodes to ``5120 × 256 mod 2**16 = 0``, silently baking a broken
-parameter into the shared PE). The rescale is lossless for genuine fixed-point values
-(``5120 / 256 = 20.0`` re-encodes to ``5120``). Parameters absent from ``pop.params``
-are untouched (they fall back to the template default, already a real value).
-
-### Function `_resolved_population_params(neuron_type, pop)`
-Resolve population parameters without averaging per-neuron values.
-
-### Function `_population_module_signature(pop)`
-Build the exact parameter signature for shared module reuse.
-
-### Function `_signed_hex(value, width)`
-Emit a width-limited signed Verilog literal.
-
-### Function `_ceil_log2_at_least_one(value)`
-Return ceil(log2(value)) with a lower bound of 1.
-
-### Function `_connection_sources_are_analogue(pop)`
-Whether a population output should be routed as an analogue state.
-
-### Function `_external_input_layout(conns, pop_by_name, pops)`
-Assign stable flattened input-bus lanes to each external source name.
-
-### Function `_external_input_manifest(graph)`
-Return the flattened input-bus layout used by generated top-level RTL.
-
-### Function `_scnir_stream_fragment(value)`
-### Function `_scnir_connection_stream_id(src, dst)`
-### Function `_hierarchy_weight_literals(document, qgraph)`
-Return flattened quantised weight literals owned by hierarchy output ports.
-
-### Function `_hierarchy_output_wires_by_stream(hierarchy)`
-Return top-level hierarchy output wire names keyed by SC-NIR stream id.
-
-### Function `_connection_has_thresholds(conn)`
-Whether a connection carries explicit NIR Threshold metadata.
-
-### Function `_normalise_connection_delay_steps(delay_steps, source_width, label)`
-Return one validated delay value per source column.
-
-### Function `_build_scnir_hierarchy_modules(document)`
-Emit standalone boundary modules for preserved SC-NIR hierarchy instances.
-
-### Function `_build_scnir_hierarchy_module(instance)`
-Emit one synthesisable hierarchy boundary module from typed SC-NIR ports.
-
-### Function `_hierarchy_port_declaration(port)`
-### Function `_hierarchy_zero_literal(port)`
-### Function `_build_scnir_hierarchy_instance_block(hierarchy)`
-Emit top-level hierarchy contract instances for preserved SC-NIR boundaries.
-
-### Function `_hierarchy_top_wire_declaration(wire_name, port)`
-### Function `_hierarchy_weight_expr(hierarchy_output_wires, stream_id)`
-### Function `_build_neuron_module(neuron_type, pop)`
-Build a Verilog module for one canonical neuron type.
-
-Uses the existing ``equation_compiler.compile_to_verilog()`` with
-canonical ODE templates.
-
-Parameters
-----------
-neuron_type : str
-    Canonical neuron type (``"lif"``, ``"if"``, etc.).
-pop : NeuronSpec
-    Representative population (for parameter defaults).
-data_width : int
-    Fixed-point data width.
-fraction : int
-    Fractional bits.
-
-Returns
--------
-str
-    Synthesisable Verilog module source.
-
-### Function `_population_neuron(neuron_type, pop)`
-Build the canonical :class:`EquationNeuron` for one population's type.
-
-Single source of truth for the ODE/threshold/reset/params/init/dt used by
-both the per-instance module (:func:`_build_neuron_module`) and the folded
-datapath PE (:func:`_build_top_folded`), so the two share identical dynamics.
-
-### Function `_build_weight_rom(qgraph)`
-Generate a combined weight ROM for all connections.
-
-All connection weight matrices are flattened into a single ROM
-addressed by a global index.  Each connection gets a base address
-offset.
-
-Parameters
-----------
-qgraph : QuantisedGraph
-    Quantised graph with integer weight matrices.
-data_width : int
-    Weight data width.
-
-Returns
--------
-str
-    Verilog weight ROM module source.
-
-### Function `_build_top_direct(module_name, qgraph)`
-Generate direct-wired per-neuron top-level interconnect.
-
-Every neuron gets its own instance of the type-specific module.  NIR
-affine weights are emitted explicitly in fixed-point arithmetic:
-
-* external analogue inputs use ``(input * weight) >>> fraction``;
-* analogue source populations use ``(v_out * weight) >>> fraction``;
-* spiking source populations contribute their fixed-point weight on
-  spikes and zero otherwise;
-* all fan-in terms and biases accumulate in a widened signed accumulator
-  before saturation back to the neuron input Q-format.
-
-Parameters
-----------
-module_name : str
-    Top-level module name.
-qgraph : QuantisedGraph
-    Quantised graph.
-data_width : int
-    Fixed-point data width.
-
-Returns
--------
-str
-    Verilog top-level module source.
-
-### Function `_cond_mux(terms, default)`
-Fold ``(condition, value)`` pairs into a nested Verilog ternary expression.
-
-The pairs are evaluated in order — the first true condition wins — so
-``&#91;("s==0", "a"), ("s==1", "b")&#93;`` with default ``"z"`` becomes
-``(s==0 ? a : (s==1 ? b : z))``. A single term still emits the ternary so the
-selector stays in the expression even when only one population is folded.
-
-### Function `_folded_population_input(pop, feeding)`
-Build one folded population's per-neuron input-current datapath.
-
-Returns ``(decl_lines, cur_i_expr)``, where ``cur_i_expr`` is the input current
-for the neuron currently addressed by ``idx_signal`` and ``decl_lines`` declare
-the supporting wires/registers. Three fan-in shapes are emitted, matching the
-direct interconnect bit-for-bit:
-
-* **connection-less** — the first population draws one external ``I_ext`` lane
-  per neuron; any other connection-less population has no drive (zero current);
-* **external-weighted** — external-source columns multiply a per-neuron weight
-  row (selected from a ``case`` ROM over ``idx_signal``), shifted by ``fraction``;
-* **spiking fan-in** — recurrent (self) or inter-population spikes read the
-  prior-tick global ``spike_bus`` at the source population's bit offset and gate
-  the sign-extended weight, exactly like the direct path's registered spikes. A
-  per-source synaptic delay of ``d`` ticks instead reads ``spike_bus_hist_d`` (the
-  ``spike_bus`` committed ``d`` ticks ago), mirroring direct's ``*_spike_d{d}``
-  register chain.
-* **analogue fan-in** — a source population of an analogue type (``li`` /
-  ``cuba_li`` / ``integrator``, whose output is the membrane voltage rather than a
-  spike) reads the prior-tick global ``v_bus`` (one ``DATA_WIDTH`` word per analogue
-  source neuron, committed once per tick like ``spike_bus``) at the source's word
-  offset and multiplies it by the per-neuron weight (shifted by ``fraction``), or
-  threshold-gates the sign-extended weight on that voltage, exactly like the direct
-  path's registered ``v_out``. A delay of ``d`` ticks instead reads
-  ``v_bus_hist_d`` (the voltage bus committed ``d`` ticks ago), mirroring direct's
-  ``*_v_d{d}`` register chain.
-
-NIR ``Threshold`` transforms fold too: a **source threshold** gates the full
-sign-extended weight on the source value (spike magnitude or external input)
-exceeding the per-column threshold; a **destination threshold** sums the
-connection's terms into a per-neuron ``raw`` accumulator and replaces them with a
-fixed spike-magnitude term when ``raw`` exceeds the per-neuron threshold (selected
-from the same ``case`` ROM over ``idx_signal``).
-
-A connection **bias** adds a per-destination-neuron constant (held in the same
-per-neuron ``case`` ROM, ACC_WIDTH) to that connection's term list before its
-weighted fan-in, so a destination threshold wraps the bias along with the weights.
-
-The accumulator width (``ACC_WIDTH``), the saturating cast (``sat_acc``), the
-``ext_input_*`` lane wires, and the ``spike_bus_hist_*`` delay shift-register are
-module-scope and emitted once by the caller.
-
-### Function `_can_fold(qgraph)`
-Return True if the graph is in the folded interconnect's supported subset.
-
-The folded interconnect time-multiplexes any number of populations of supported
-neuron types over a per-type PE pool and one global spike bus. A graph folds when
-every population has an ODE template, every population's heterogeneous per-neuron
-parameters are datapath parameters the PE can carry on a port (streamed from a
-per-neuron parameter ROM — a parameter varying in something other than an ODE
-parameter cannot be streamed and falls back to the direct path), and every
-connection is one of:
-
-* **connection-less** — neurons driven only by their own external ``I_ext`` lane;
-* **external-weighted** — fed by external (non-population) source columns;
-* **spiking fan-in** — recurrent (self) or inter-population spikes from another
-  population, read from the prior-tick global spike bus, optionally delayed or
-  gated by a source/destination NIR ``Threshold`` transform;
-* **analogue fan-in** — an analogue source population (``li``/``cuba_li``/
-  ``integrator``, whose output is the membrane voltage), read from the prior-tick
-  global voltage bus (optionally delayed via a voltage-bus history register) and
-  multiplied (or threshold-gated) by the weight.
-
-Connections may also carry a per-destination-neuron bias constant. Only a *delayed
-external* (non-population) source connection is not folded — a synaptic delay has
-registered semantics only from a neuron population — and falls back to the direct
-interconnect.
-
-### Function `_folded_resource_metrics(qgraph)`
-Summarise the shared-datapath resources of a foldable graph.
-
-Counts one PE per distinct neuron type (the per-type pool), the shared
-weighted-fan-in multipliers (external-source and analogue-voltage-source columns —
-spiking recurrent or inter-population fan-in is spike-gated and uses none), the BRAM
-state-word storage summed over populations, the per-neuron parameter-ROM storage for
-heterogeneous populations, the cycles-per-tick, and the direct-path instance count the
-fold collapses.
-
-Parameters
-----------
-qgraph : QuantisedGraph
-    A graph satisfying :func:`_can_fold`.
-data_width : int
-    Fixed-point data width (BRAM word sizing).
-
-Returns
--------
-FoldedResourceMetrics
-    The architectural fold summary.
-
-### Function `_build_top_folded(module_name, qgraph)`
-Generate a time-multiplexed (folded) top plus its per-type datapath PE pool.
-
-One combinational PE (:func:`compile_to_datapath`) per distinct neuron type and
-one BRAM-backed state array per population are shared across every neuron: a
-single sequencer steps one neuron per cycle, walking each population in turn,
-reading the addressed neuron's packed state from its BRAM, driving the population's
-PE with that state and the neuron's input current, and writing the next state back.
-Spikes accumulate over a tick into a global accumulator and commit to a single
-``spike_bus`` in a dedicated cycle (``tick_done`` pulses), so the bus is race-free
-and stable for the whole next tick. Recurrent and inter-population spiking fan-in
-read that prior-tick ``spike_bus`` at the source population's bit offset — the same
-double-buffer the direct interconnect's registered spikes provide. An analogue
-source population's membrane voltage is committed the same way to a global ``v_bus``
-(one ``DATA_WIDTH`` word per analogue source neuron), so analogue fan-in reads the
-prior-tick voltage exactly like the direct path's registered ``v_out``.
-
-Restricted to the :func:`_can_fold` subset. Returns
-``({neuron_module_key: pe_source}, top_module_source)`` with one PE source per
-distinct neuron type, keyed ``"{neuron_type}_pe"`` for the compilation artefacts.
-
-### Function `_build_top_aer(module_name, qgraph)`
-Generate weighted event-bus top-level interconnect.
-
-The emitted datapath keeps the same population instances as the direct
-interconnect but routes spike-producing source populations through an
-address-event fan-out block.  All active source spikes in a cycle contribute
-their signed fixed-point weights to every destination accumulator, so
-simultaneous events preserve the dense affine semantics of the NIR graph.
-External analogue inputs and analogue source populations remain direct
-fixed-point multiply-accumulate terms because they are not sparse events.
-
-Parameters
-----------
-module_name : str
-    Top-level module name.
-qgraph : QuantisedGraph
-    Quantised graph.
-data_width : int
-    Fixed-point data width.
-fraction : int
-    Fractional bits for analogue multiply downshift.
-
-Returns
--------
-str
-    Verilog top-level module source.
-
 ### Function `compile_network_to_fpga(graph)`
 Compile a NeuronGraph to synthesisable Verilog RTL.
 
@@ -27228,8 +23442,6 @@ Build deterministic adapter packages for multiple targets.
 ### Function `write_neuromorphic_adapter_bundle(output_dir, source, targets, config)`
 Write Loihi 2/SpiNNaker2 adapter manifests and reports to disk.
 
-### Function `_normalise_adapter_target(target_id)`
-### Function `_target_config(target, config)`
 ---
 
 ## Module `nir_bridge.neuron_graph`
@@ -27313,101 +23525,6 @@ hierarchy : tuple&#91;HierarchyInstanceSpec, ...&#93;
 - **summary**()
   - Human-readable summary of the network graph.
 
-### Function `_extract_neuron_params(node, neuron_type)`
-Extract canonical parameters from an SC neuron node.
-
-Parameters
-----------
-node : Any
-    SC node instance (e.g. ``SCLIFNode``, ``SCCubaLIFNode``).
-neuron_type : str
-    Canonical neuron type string.
-
-Returns
--------
-dict&#91;str, np.ndarray&#91;Any, Any&#93;&#93;
-    Parameter dictionary with type-appropriate keys.
-
-### Function `_topological_order(nodes, edges)`
-Return a deterministic topological order for an already cycle-broken graph.
-
-### Function `_hdl_identifier_fragment(value)`
-Return a conservative Verilog identifier fragment for generated metadata.
-
-### Function `_inline_single_port_subgraphs(network)`
-Inline parser-executable single-port subgraphs for SC-NIR/FPGA lowering.
-
-The runtime parser keeps nested NIR graphs as executable wrapper nodes.  HDL
-lowering needs a single explicit dataflow graph, so this helper namespaces
-each nested subgraph and rewires the outer edges through the nested boundary
-nodes.  Multi-port subgraphs are accepted only when the parent graph supplies
-an exact ordered one-edge-per-input and one-edge-per-output boundary mapping.
-
-### Function `_delay_steps(node, node_name)`
-Return scalar or per-source delay metadata for an explicit NIR Delay node.
-
-### Function `_delay_steps_array(delay_steps)`
-Return delay metadata as a one-dimensional integer array.
-
-### Function `_compose_delay_steps(left, right)`
-Compose adjacent delay nodes with scalar/vector broadcasting.
-
-### Function `_fit_delay_steps_to_width(delay_steps, width, label)`
-Validate scalar/vector delay metadata against a source width.
-
-### Function `_scale_vector(node, node_name)`
-Return a finite one-dimensional scale vector from an SCScaleNode.
-
-### Function `_threshold_vector(node, node_name)`
-Return a finite one-dimensional threshold vector from an SCThresholdNode.
-
-### Function `_compose_scale(left, right)`
-Compose adjacent scale vectors under NumPy broadcasting rules.
-
-### Function `_broadcast_scale(scale, size, label)`
-Broadcast a scalar/vector scale to ``size`` or fail closed.
-
-### Function `_broadcast_threshold(threshold, size, label)`
-Broadcast a scalar/vector threshold to ``size`` or fail closed.
-
-### Function `_shape_width(shape)`
-Return the element count for a finite NIR shape or fail closed.
-
-### Function `_flatten_widths(node, node_name)`
-Return input/output element counts for a shape-typed SCFlattenNode.
-
-### Function `_conv1d_to_dense_matrix(node, node_name)`
-Lower a shape-known NIR Conv1d node to an exact dense matrix.
-
-### Function `_conv2d_to_dense_matrix(node, node_name)`
-Lower a shape-known NIR Conv2d node to an exact dense matrix.
-
-### Function `_pool2d_to_dense_matrix(node, node_name)`
-Lower a shape-known NIR Pool2d node to an exact dense matrix.
-
-### Function `_weight_matrix_and_bias(node, node_name)`
-Return dense weight and bias arrays for a weight-carrying NIR node.
-
-### Function `_node_logical_width(node)`
-Return the flattened channel width for a source/destination node.
-
-### Function `_resolve_weight_source(node_name)`
-Resolve the population/input source feeding a weight node.
-
-Traverses pass-through nodes immediately upstream of ``Affine``/``Linear``
-nodes and accumulates explicit NIR Delay metadata.  Ambiguous fan-in fails
-closed so the compiler does not invent a source for hardware handoff.
-
-### Function `_resolve_weight_destination(node_name)`
-Resolve the neuron destination fed by a weight node.
-
-Traverses pass-through nodes immediately downstream of ``Affine``/``Linear``
-and accumulates post-weight Scale metadata.  The scale is later folded into
-connection rows and bias terms.
-
-### Function `_fold_connection_scales(weights, bias)`
-Fold adjacent Scale nodes into a connection's weights and bias.
-
 ### Function `from_scnetwork(network, dt)`
 Convert a parsed SCNetwork to a NeuronGraph for FPGA compilation.
 
@@ -27456,7 +23573,6 @@ Euler: v += ((v_leak - v) + R*I) * dt/tau
 
 - **from_nir**(cls, name, node, dt, reset_mode)
 - **__post_init__**()
-- **_broadcast_to**(size)
 - **forward**(x)
 - **reset**()
 
@@ -27468,7 +23584,6 @@ Euler: v += R*I*dt
 
 - **from_nir**(cls, name, node, dt, reset_mode)
 - **__post_init__**()
-- **_broadcast_to**(size)
 - **forward**(x)
 - **reset**()
 
@@ -27479,7 +23594,6 @@ NIR LI: tau*dv/dt = (v_leak - v) + R*I
 
 - **from_nir**(cls, name, node, dt)
 - **__post_init__**()
-- **_broadcast_to**(size)
 - **forward**(x)
 - **reset**()
 
@@ -27543,8 +23657,6 @@ NIR CubaLIF: tau_syn * dI_syn/dt = -I_syn + w_in * I
 
 - **from_nir**(cls, name, node, dt, reset_mode)
 - **__post_init__**()
-- **_broadcast_to**(size)
-  - Broadcast scalar params to match actual input size.
 - **forward**(x)
 - **reset**()
 
@@ -27556,7 +23668,6 @@ NIR CubaLI: tau_syn * dI_syn/dt = -I_syn + w_in * I
 
 - **from_nir**(cls, name, node, dt)
 - **__post_init__**()
-- **_broadcast_to**(size)
 - **forward**(x)
 - **reset**()
 
@@ -27584,37 +23695,12 @@ NIR CubaLI: tau_syn * dI_syn/dt = -I_syn + w_in * I
 - **from_nir**(cls, name, node)
 - **forward**(x)
 
-### Function `_shape_tuple_from_type(type_map, key)`
-Return a positive integer shape tuple from a NIR type map.
-
-### Function `_shape3_tuple_from_type(type_map, key)`
-Return a rank-3 positive integer shape tuple from a NIR type map.
-
-### Function `_resolve_conv_padding(spec)`
-Resolve a NIR convolution padding spec to a symmetric integer pad per side.
-
-Integer specs pass through. ``"valid"`` maps to 0. ``"same"`` returns the
-symmetric padding that preserves the spatial size; it requires stride 1 and an
-even effective kernel span (``dilation * (kernel - 1)``), which holds for every
-odd kernel. Even-kernel ``"same"`` would need asymmetric padding that this
-symmetric path cannot represent, so it is rejected with an explicit message.
-
 ### Function `map_node(name, node)`
 Convert a single NIR node to its SC-NeuroCore equivalent.
 
 ---
 
 ## Module `nir_bridge.parser`
-
-### Class `_UnitDelayNode`
-Implicit unit-delay inserted on recurrent (back) edges.
-
-Acts as a DAG source: outputs the previous timestep's buffered value.
-Buffer is updated externally by SCNetwork.step() after execution.
-
-- **forward**(x)
-- **update_buffer**(value)
-- **reset**()
 
 ### Class `SCSubgraphNode`
 Executable wrapper for a nested NIR subgraph (single I/O port).
@@ -27652,12 +23738,6 @@ unit-delay nodes that feed from the previous timestep.
   - Build an ``SCNetwork`` directly from a NIR graph or file path.
 - **to_hardware**()
   - Compile this parsed network to the existing FPGA artefact bundle.
-- **_find_back_edges**()
-  - DFS-based back-edge detection.
-- **_break_cycles**()
-  - Replace back edges with unit-delay source nodes.
-- **_topological_sort**()
-  - Kahn's algorithm with automatic cycle breaking via delay nodes.
 - **topo_order**()
 - **step**(inputs)
   - Execute one timestep through the graph.
@@ -27685,12 +23765,6 @@ Returns
 -------
 SCNetwork
     Executable network with topologically sorted forward pass.
-
-### Function `_validate_import_options(dt, reset_mode)`
-### Function `_read_nir_file(source)`
-### Function `_validate_nir_graph_boundary(graph, context)`
-### Function `_parse_graph(graph, dt, reset_mode)`
-Recursively parse a NIR graph into an SCNetwork.
 
 ---
 
@@ -27721,37 +23795,6 @@ total_synapses : int
     Total synapse count.
 
 
-### Function `_quantise_array(arr, q, label, warnings)`
-Quantise a float array to Q-format integers with clamping.
-
-Parameters
-----------
-arr : np.ndarray&#91;Any, Any&#93;
-    Float values to quantise.
-q : Q88
-    Fixed-point format.
-label : str
-    Label for warning messages.
-warnings : list&#91;str&#93;
-    Accumulator for overflow/underflow warnings.
-
-Returns
--------
-np.ndarray&#91;Any, Any&#93;
-    Integer array of Q-encoded values (dtype int64).
-
-### Function `_check_dt_quantisation(dt, q, warnings)`
-Verify that the timestep survives Q-format quantisation.
-
-Parameters
-----------
-dt : float
-    Simulation timestep.
-q : Q88
-    Fixed-point format.
-warnings : list&#91;str&#93;
-    Accumulator for warnings.
-
 ### Function `quantise_graph(graph, q)`
 Convert all floating-point parameters to Q-format integers.
 
@@ -27776,29 +23819,12 @@ Configuration for NIR silicon mapping report generation.
 
 - **__post_init__**()
 
-### Class `_GraphView`
-
 ### Function `build_silicon_mapping_report(source, config)`
 Build a deterministic target-mapping report for a parsed NIR network.
 
 ### Function `write_silicon_mapping_report(output_dir, source, config)`
 Write `nir_silicon_mapping_report.json` in deterministic form.
 
-### Function `_coerce_graph(source)`
-### Function `_node_payload(name, node)`
-### Function `_node_type(node)`
-### Function `_resource_estimate(node, node_type)`
-### Function `_target_report(target_id, node_payloads, edges, config)`
-### Function `_lowering_result(node_type, supported, unsupported, native_bitstream)`
-### Function `_summary(mapped_nodes, edges, native_bitstream)`
-### Function `_status(summary)`
-### Function `_fallback_requirements(mapped_nodes, native_bitstream)`
-### Function `_noise_hooks(channels)`
-### Function `_mapping_or_attr(node, key)`
-### Function `_int_attr(node, key, default)`
-### Function `_shape(value)`
-### Function `_shape_size(shape)`
-### Function `_shape_product(value)`
 ---
 
 ## Module `online_learning.eprop`
@@ -27892,7 +23918,6 @@ Industrial-grade Photonic Emitter.
 Uses topological sorting to ensure optical ports are defined before being coupled.
 
 - **__init__**(target_pdk)
-- **_topological_sort**(nodes)
 - **emit_lumerical_netlist**(ir_graph)
   - Emit a Lumerical-compatible photonic netlist from an IR graph.
 
@@ -27979,8 +24004,6 @@ Yee grid with optional PML absorbing boundaries.
 Solves for Ez, Hx, Hy on a 2D cross-section of the photonic chip.
 
 - **__init__**(nx, ny, dx_um, dy_um, dt_factor, pml_layers)
-- **_build_pml**()
-  - Construct Berenger PML conductivity profiles.
 - **set_waveguide**(y_center, width_cells, refractive_index, x_start, x_end)
   - Define a horizontal waveguide stripe.
 - **inject_source**(x, y, wavelength_nm, amplitude, sigma_cells)
@@ -28099,21 +24122,6 @@ Build one observation from raw Vivado/Quartus text reports.
 ### Function `observations_from_payload(payload)`
 Convert an in-memory benchmark/synthesis payload into observations.
 
-### Function `_metrics_from_synthesis_reports(reports)`
-### Function `_first_numeric_match(text, patterns)`
-### Function `_first_power_mw(text)`
-### Function `_extract_records(payload)`
-### Function `_observation_from_record(record)`
-### Function `_merged_views(record)`
-### Function `_mapping(value)`
-### Function `_required_int(view, key, source, index)`
-### Function `_required_int_any(view, keys, source, index)`
-### Function `_required_float_any(view, keys, source, index)`
-### Function `_required_str(view, key, source, index)`
-### Function `_required(view, key, source, index)`
-### Function `_required_any(view, keys, source, index)`
-### Function `_to_int(value, key, source, index)`
-### Function `_to_float(value, key, source, index)`
 ---
 
 ## Module `optimizer.resource_optimizer`
@@ -28174,22 +24182,10 @@ OptimizationResult
 
 ### Class `SCOptimizer`
 - **__init__**(budget)
-- **_estimate_resources**(mac_count, length, decorr, mode)
-  - Returns (LUTs, Power_mW, Accuracy_score, Latency_cycles).
-- **_generate_candidates**(layer)
-- **_is_feasible**(config)
-- **_score**(config, network)
-- **_build_report**(config, network, pareto)
 - **optimize**(network)
   - Greedy knapsack optimization maximizing weighted accuracy.
 - **optimize_annealing**(network)
   - Simulated annealing for larger design spaces.
-- **_optimize_annealing_rust**(network)
-  - Rust-accelerated SA path.
-- **_optimize_annealing_python**(network)
-  - Pure-Python SA fallback.
-- **_extract_pareto**(points)
-  - Extract non-dominated Pareto frontier from (luts, power, accuracy) tuples.
 
 ---
 
@@ -28217,36 +24213,12 @@ Budgeted per-layer compiler configuration.
 - **feasible**()
   - Whether every layer received a configuration.
 
-### Class `_Candidate`
-
-### Class `_Label`
-
-### Class `_RidgeSurrogate`
-Small multi-output ridge regressor backed by NumPy.
-
-- **__init__**(alpha)
-- **fit**(features, labels)
-- **predict**(features)
-
 ### Class `SurrogateSCOptimizer`
 Compiler optimiser using a learned surrogate over SC design points.
 
 - **__init__**(target)
 - **optimise**(network)
   - Select budgeted layer settings for ``network``.
-- **_fit_surrogate**(network)
-- **_rank_layer_candidates**(layer, remaining_luts, remaining_power)
-- **_candidate_grid**(layer)
-- **_analytical_label**(cand)
-- **_observation_label**(cand)
-- **_to_config**(cand, pred)
-- **_rebalance**(selected, network)
-- **_features**(cand)
-- **_normalise_label**(label)
-- **_denormalise_prediction**(values)
-- **_utility**(label)
-- **_polynomial_quality**(polynomial)
-- **_weighted_accuracy**(selected, network)
 
 ---
 
@@ -28311,8 +24283,6 @@ seed : int
     RNG seed for reproducibility.
 
 - **__post_init__**()
-- **_reflect_into_interval**(x, length)
-  - Reflect arbitrary real positions into ``&#91;0, length&#93;`` exactly.
 - **set_initial_distribution**(f, n_grid)
   - Sample walker positions from the initial distribution f(x).
 - **set_initial_delta**(x_0)
@@ -28337,9 +24307,6 @@ Simulates the Wolfram Physics Project Hypergraph.
 Universe is a set of relations (Hyperedges).
 
 - **__post_init__**()
-- **_validated_edges**(edges)
-- **_validated_max_node_id**(max_node_id, edges)
-- **_validated_steps**(steps)
 - **evolve**(steps)
   - Applies a rewrite rule.
 - **dimension_estimate**()
@@ -28377,15 +24344,6 @@ label_key:
   - Initialize the ingestor with the reserved label key.
 - **prepare_dataset**(raw_data)
   - Normalize and package raw multimodal data.
-
-### Function `_ensure_sample_axis(name, values)`
-Return the sample count after rejecting scalar or empty arrays.
-
-### Function `_normalize_modality(name, values)`
-Return a finite float array normalized across its observed range.
-
-### Function `_validate_dataset_shapes(data, labels)`
-Validate shared modality and label sample-axis lengths.
 
 ---
 
@@ -28549,18 +24507,6 @@ Full privacy governance contract for BCI/neural workflows.
 - **from_dict**(cls, data)
   - Build a full governance contract from a manifest mapping.
 
-### Function `_expect_mapping(value)`
-Return ``value`` as dict or raise a typed ValueError.
-
-### Function `_require_fields(payload, section, required)`
-Raise when required fields are missing from a manifest section.
-
-### Function `_ensure_positive_days(value, name)`
-Validate a duration field.
-
-### Function `_ensure_non_empty_str(value, name)`
-### Function `_ensure_bool(value, name)`
-### Function `_to_str_tuple(values, name)`
 ---
 
 ## Module `profiler.platform_profiler`
@@ -28593,15 +24539,6 @@ list of PlatformResult
 
 ### Function `format_table(results)`
 Format comparison results as a readable table.
-
-### Function `_profile_python(layer_sizes, duration, dt)`
-Measure Python/NumPy backend performance.
-
-### Function `_profile_rust(layer_sizes, duration, dt)`
-Estimate Rust NetworkRunner performance.
-
-### Function `_profile_fpga(layer_sizes, target, bitstream_length)`
-Estimate FPGA performance using energy estimator.
 
 ---
 
@@ -28658,26 +24595,10 @@ gradient_explosion_ratio : float
   - Clear all accumulated data.
 - **report**()
   - Analyze accumulated data and return a ProfileReport.
-- **_detect_pathologies**(layer_stats)
-
-### Class `_LayerAccumulator`
-Internal: accumulates per-step data for one layer.
-
-- **__init__**(name)
-- **add**(spikes, voltages, gradients)
-- **compute_stats**()
 
 ---
 
 ## Module `qat.lsq`
-
-### Class `_LSQQuantize`
-Autograd op implementing the LSQ forward quantiser and step gradient.
-
-- **forward**(ctx, v, step, qmin, qmax, grad_scale)
-  - Quantise ``v`` at learned ``step`` onto ``&#91;qmin, qmax&#93;``.
-- **backward**(ctx, grad_output)
-  - Return gradients w.r.t. ``v`` (STE-in-range) and ``step`` (LSQ).
 
 ### Class `LSQQuantizer`
 Learned-step-size fake quantiser for signed weights.
@@ -28701,10 +24622,6 @@ step : torch.nn.Parameter
     The learned step size(s). Lazily initialised from the first input.
 
 - **__init__**(n_bits)
-- **_init_step_from**(x)
-  - Initialise the step to ``2*mean(|x|)/sqrt(qmax)`` (Esser et al. 2020).
-- **_broadcast_step**(ndim)
-  - Reshape the per-channel step for broadcasting over ``ndim`` dims.
 - **forward**(x)
   - Fake-quantise ``x`` at the learned step, with the LSQ gradient.
 - **integer_weights**(x)
@@ -28732,26 +24649,6 @@ bias : bool
   - Apply the layer with LSQ-quantised weights.
 - **export_quantized**()
   - Export integer weights, the learned step(s), and the bias.
-
-### Function `_sum_to(grad, shape)`
-Reduce ``grad`` by summation to broadcast-target ``shape``.
-
-Sums every axis where the target shape has extent 1 (or is absent),
-inverting the broadcast that produced ``grad`` from a parameter of
-``shape``. Used to fold a per-element step-size gradient back onto a scalar
-or per-channel step.
-
-Parameters
-----------
-grad : torch.Tensor
-    Per-element gradient.
-shape : tuple of int
-    Target parameter shape.
-
-Returns
--------
-torch.Tensor
-    Gradient reduced to ``shape``.
 
 ---
 
@@ -28801,59 +24698,12 @@ eps : float
     Scale floor guarding against a zero-width observed range.
 
 - **__init__**(n_bits)
-- **_per_channel_min_max**(x)
-  - Collapse every axis except ``ch_axis`` to per-channel min and max.
 - **observe**(x)
   - Fold ``x`` into the running per-channel range and return it unchanged.
 - **calculate_qparams**()
   - Return the per-channel ``(scale, zero_point)`` vectors.
-- **_broadcast_shape**(ndim)
-  - Shape that reshapes a per-channel vector for broadcasting over ``ndim`` dims.
 - **quantize**(x)
   - Fake-quantise ``x`` with the observed per-channel scales.
-
-### Function `_quant_bounds(n_bits)`
-Return the ``(qmin, qmax)`` integer grid bounds for a bit width.
-
-Parameters
-----------
-n_bits : int
-    Quantiser bit width (``>= 2``).
-unsigned : bool
-    When ``True`` the grid is ``&#91;0, 2**n_bits - 1&#93;`` (e.g. post-ReLU
-    activations); when ``False`` it is the signed range
-    ``&#91;-2**(n_bits-1), 2**(n_bits-1) - 1&#93;`` (e.g. weights).
-
-Returns
--------
-tuple of (int, int)
-    The inclusive lower and upper integer codes.
-
-### Function `_qparams_from_range(min_val, max_val)`
-Derive ``(scale, zero_point)`` from an observed value range.
-
-Parameters
-----------
-min_val, max_val : torch.Tensor
-    Observed minimum and maximum. Scalars for the per-tensor case or
-    1-D per-channel vectors; the returned tensors match their shape.
-n_bits : int
-    Quantiser bit width.
-symmetric : bool
-    When ``True`` the range is symmetrised about zero and the zero point
-    is pinned to the grid centre (``0`` for signed, the mid-code for
-    unsigned); when ``False`` an affine mapping of ``&#91;min, max&#93;`` is used.
-unsigned : bool
-    Whether the integer grid is unsigned (see :func:`_quant_bounds`).
-eps : float
-    Floor applied to the scale so a degenerate (zero-width) range cannot
-    produce a zero or non-finite scale.
-
-Returns
--------
-tuple of (torch.Tensor, torch.Tensor)
-    The per-element ``scale`` (float) and ``zero_point`` (float-valued but
-    integral) broadcastable against the quantised tensor.
 
 ### Function `fake_quantize(x, scale, zero_point)`
 Quantise then de-quantise ``x`` (simulated quantisation, no STE).
@@ -28884,14 +24734,6 @@ torch.Tensor
 
 ## Module `qat.pact`
 
-### Class `_PACTClip`
-Clip to ``&#91;0, alpha&#93;`` with the PACT gradient to ``alpha``.
-
-- **forward**(ctx, x, alpha)
-  - Return ``clip(x, 0, alpha)``.
-- **backward**(ctx, grad_output)
-  - Gradient: pass-through in ``(0, alpha)``; to ``alpha`` where ``x >= alpha``.
-
 ### Class `PACTActivation`
 Parameterised clipping activation with uniform quantisation.
 
@@ -28915,9 +24757,6 @@ alpha : torch.nn.Parameter
   - Return integer activation codes and the scale for export.
 - **extra_repr**()
   - Return the compact module representation.
-
-### Function `_round_ste(x)`
-Round with a straight-through (identity) gradient.
 
 ---
 
@@ -28960,9 +24799,6 @@ tau_mem : float
   - Export quantized weights for hardware deployment.
 - **reset**()
 
-### Function `_ste_quantize(x, bits, symmetric)`
-Quantize with straight-through estimator (forward quantized, backward identity).
-
 ### Function `quantize_aware_train_step(layer, x, target, lr)`
 One QAT training step with STE.
 
@@ -28980,12 +24816,6 @@ dict with 'output', 'loss'
 ---
 
 ## Module `qat.torch_qat`
-
-### Class `_STEQuantize`
-Straight-through estimator for uniform quantization.
-
-- **forward**(ctx, x, n_bits, symmetric)
-- **backward**(ctx, grad_output)
 
 ### Class `QuantizedLinear`
 Linear layer with STE weight quantization.
@@ -29101,10 +24931,6 @@ Maps bitstream probability -> Qubit Rotation -> True Measurement.
 - **__post_init__**()
 - **forward**(input_bitstreams)
   - input_bitstreams: (n_qubits, length)
-- **_run_qiskit**(theta)
-  - Runs the circuit on Qiskit AerSimulator for `length` shots.
-- **_run_pennylane**(theta)
-  - Runs the circuit on PennyLane for `length` shots.
 
 ---
 
@@ -29133,13 +24959,6 @@ This non-linearity is useful for classification.
 - **train**(n_steps, lr)
   - VQE-style optimization: minimize ⟨Z⊗Z⟩.
 - **evaluate**(params)
-
-### Function `_ry(theta)`
-Ry rotation gate.
-
-### Function `_cnot()`
-### Function `_kron_gate(gate, qubit, n_qubits)`
-Embed single-qubit gate into n-qubit space.
 
 ---
 
@@ -29202,18 +25021,12 @@ Ref: Fowler et al., "Surface codes: Towards practical large-scale quantum
 computation", Phys. Rev. A 86, 032324 (2012).
 
 - **__init__**(distance)
-- **_build_stabilizers**(d)
-  - Build X and Z stabilizer generators for rotated surface code.
-- **_build_d3_lut**(stabilizers)
-  - Build syndrome → correction lookup for d=3 single-qubit errors.
 - **encode**(bitstream)
   - Encode logical bitstream into surface code physical qubits.
 - **measure_syndrome**(physical_bits)
   - Measure X and Z stabilizer syndromes.
 - **decode**(physical_bits)
   - Decode surface code: measure syndromes, correct single-qubit errors, majority vote.
-- **_apply_lut_correction**(physical, syndromes, lut)
-  - Apply lookup-table correction for each bitstream position.
 - **get_error_rate**(x_syn, z_syn)
   - Estimated error rate from syndrome density.
 
@@ -29252,18 +25065,6 @@ Ry rotation gate: encodes probability via rotation angle.
 ### Function `prob_to_ry_angle(p)`
 Compute Ry angle that encodes probability p: sin²(θ/2) = p.
 
-### Function `_apply_gate(state, gate, qubits, n_qubits)`
-Apply a gate to specific qubits in a full statevector.
-
-### Function `_apply_single_qubit_gate(state, gate, qubit, n_qubits)`
-Apply a 2x2 gate to one qubit in a multi-qubit state.
-
-### Function `_apply_two_qubit_gate(state, gate, q0, q1, n_qubits)`
-Apply a 4x4 gate to two qubits.
-
-### Function `_apply_single_qubit_channel(rho, noise_model, qubit, n_qubits)`
-Apply single-qubit noise channel to one qubit of a multi-qubit density matrix.
-
 ### Function `compile_sc_multiply(p_a, p_b)`
 Compile SC AND gate (multiplication) to a quantum circuit.
 
@@ -29291,35 +25092,6 @@ list of dicts, one per neuron, each containing:
 ---
 
 ## Module `quantum_cognition.__main__`
-
-### Function `_emit_snn_stimulus(snn_dir, chunk_summary, directive, step_index)`
-Write a canonical Remanentia SNN stimulus record.
-
-Parameters
-----------
-snn_dir
-    Directory that receives the JSON stimulus file.
-chunk_summary
-    Summary of the indexed content chunk that drove the learning step.
-directive
-    Learning directive selected for the step.
-step_index
-    Monotonic learning-step index from :class:`~.gotm_brain.LearningStep`.
-
-### Function `_make_llm_endpoint(model)`
-Create an agentic-shared endpoint for an explicit local model override.
-
-Parameters
-----------
-model
-    Local model alias passed through ``--model``. ``None`` keeps LLM guidance
-    disabled for deterministic offline CLI runs.
-
-Returns
--------
-Any
-    An ``agentic-shared`` endpoint object when the local library is importable;
-    otherwise ``None`` after logging a warning.
 
 ### Function `cmd_learn(args)`
 Run one bounded learning pass over a repository.
@@ -29406,30 +25178,12 @@ backend : str
     or ``"emulated"``.
 
 - **__init__**(n_qubits, backend)
-- **_init_ibm_backend**()
-  - Initialise IBM Quantum backend via qiskit-ibm-runtime.
 - **backend**()
   - Active backend name.
 - **execute_non_local_sync**(entangle_pairs)
   - Execute non-local synchronisation via entanglement.
-- **_sync_ibm_qiskit**(entangle_pairs, shots)
-  - Build and execute Bell pair circuit on IBM backend or AerSimulator.
 - **execute_posner_circuit**(shots)
   - Dispatch an actual 8q Posner Hamiltonian circuit to IBM QPU.
-- **_extract_qiskit_counts**(pub_result)
-  - Extract counts from a SamplerV2 result regardless of register name.
-- **_dispatch_qiskit_circuit**(qc, shots)
-  - Dispatch a circuit and return ⟨Z⟩ expectation values.
-- **_dispatch_qiskit_circuit_raw**(qc, shots)
-  - Dispatch a circuit and return raw bitstring counts.
-- **_sync_ibm_aer**(qc, shots)
-  - Execute circuit on explicit local AerSimulator backend.
-- **_counts_to_expvals**(counts, shots)
-  - Convert bitstring counts to ⟨Z⟩ expectation values.
-- **_sync_pennylane**(entangle_pairs)
-  - PennyLane Bell pair circuit → PauliZ expectations.
-- **_sync_emulated**(entangle_pairs)
-  - Pure-numpy emulation of Bell pair correlations.
 - **optimize_phases**(target_coherence, learning_rate, n_steps)
   - Optimise qubit phases towards target coherence.
 - **apply_orchestrator_bias**(global_phases, target_coherence, learning_rate)
@@ -29458,9 +25212,6 @@ Returns
 -------
 int
     Maximum qubit count, clamped to &#91;``_QUBIT_FLOOR``, ``_QUBIT_CEILING``&#93;.
-
-### Function `_get_available_ram()`
-Return available RAM in bytes.  psutil → /proc/meminfo fallback.
 
 ---
 
@@ -29492,18 +25243,6 @@ sha256 : str
   - First 200 characters of the chunk text.
 - **to_dict**()
   - Serialise to JSON-compatible dict.
-
-### Function `_should_skip_dir(name)`
-Check if a directory should be skipped during indexing.
-
-### Function `_extract_python_docstrings(text)`
-Extract docstrings and significant comments from Python source.
-
-### Function `_extract_rust_doc_comments(text)`
-Extract /// and //! doc comments from Rust source.
-
-### Function `_chunk_text(text, target_size)`
-Split text into chunks of approximately target_size characters.
 
 ### Function `index_file(file_path, repo_name, repo_root)`
 Index a single file into content chunks.
@@ -29610,15 +25349,6 @@ clear_screen : bool
 - **__repr__**()
   - Return a concise representation of the dashboard window size.
 
-### Function `_heat_char(value, max_val)`
-Map a value to a coloured block character.
-
-### Function `_bar(value, max_val, width)`
-Render a simple bar with fill fraction.
-
-### Function `_directive_colour(directive)`
-Return ANSI colour for a directive.
-
 ---
 
 ## Module `quantum_cognition.fisher_posner`
@@ -29696,26 +25426,6 @@ Population via class-level pool management.
   - Reset the wrapped neuron state to rest and full ATP.
 - **__repr__**()
   - Return compact debug telemetry for the population wrapper.
-- **_reset_pools**(cls)
-  - Reset shared pool registry (for testing).
-
-### Function `_finite_float(value, name)`
-Return a finite floating-point model parameter.
-
-### Function `_positive_float(value, name)`
-Return a finite, strictly positive floating-point model parameter.
-
-### Function `_nonnegative_float(value, name)`
-Return a finite, non-negative floating-point model parameter.
-
-### Function `_unit_interval_float(value, name)`
-Return a finite floating-point value in the closed unit interval.
-
-### Function `_positive_unit_float(value, name)`
-Return a finite floating-point value in the interval ``(0, 1&#93;``.
-
-### Function `_validate_neuron_id(neuron_id, n_sites)`
-Return a concrete spin-pool site index for a public neuron id.
 
 ---
 
@@ -29747,16 +25457,6 @@ use_polling : bool or None
   - Drain the chunk queue (non-blocking).
 - **is_running**()
   - Whether the watcher thread is active.
-- **_should_process**(file_path)
-  - Check debounce timer for a file.
-- **_process_file**(file_path)
-  - Index a single file and enqueue its chunks.
-- **_run**()
-  - Main watcher loop (runs in background thread).
-- **_run_polling**()
-  - Polling-based file watcher for NTFS compatibility.
-- **_run_watchdog**()
-  - Watchdog (inotify) based file watcher.
 - **__repr__**()
 
 ---
@@ -29853,14 +25553,6 @@ topology : str
 - **__init__**(spacing_nm, depth_nm, topology)
 - **map_pool_to_register**(n_sites)
   - Compute physical qubit placement and coupling matrix.
-- **_compute_positions**(n)
-  - Compute qubit positions based on topology.
-- **_compute_coupling_matrix**(positions)
-  - Compute exchange coupling J(d) between all donor pairs.
-- **_exchange_coupling**(distance_nm)
-  - Compute exchange coupling J(d) in meV.
-- **_build_gate_schedule**(n, coupling)
-  - Build a gate schedule with DAG-based parallel scheduling.
 - **get_constraints**(n_sites)
   - Return design constraints for a register of given size.
 - **__repr__**()
@@ -29908,13 +25600,8 @@ params : RadicalPairParams, optional
     not a Posner molecule parameterization.
 
 - **__init__**(params)
-- **_isotropic_tensor**(a_mhz)
 - **from_hyperfine_tensors**(cls)
   - Construct an exact RPM model from explicit 3×3 hyperfine tensors.
-- **_validated_tensors**()
-- **_spin_operator**(n_spins, target, component)
-- **_singlet_density_with_nuclear_bath**(n_nuclei)
-- **_hamiltonian**(b_local)
 - **singlet_yield**(b_local)
   - Compute singlet yield Φ_S for the current parameters.
 - **singlet_yield_field_sweep**(b_range)
@@ -29962,33 +25649,14 @@ update_rate : float
     Mixing rate α for entanglement map updates on spike events.
 
 - **__init__**(n_sites, bond_dim, correlation_length, update_rate, seed)
-- **_init_product_state**()
-  - Initialise MPS as the pure product state |00…0⟩.
 - **to_statevector**()
   - Return the exact statevector represented by this MPS.
 - **set_statevector**(statevector)
   - Load a statevector into MPS form without silent truncation.
-- **_full_spin_operator**(n_sites, site, component)
 - **evolve_exact**(couplings, time_us)
   - Evolve under explicit two-spin coupling tensors.
-- **_compute_rdm_single**(site)
-  - Compute single-site reduced density matrix by contracting MPS.
-- **_compute_rdm_two_site**(site)
-  - Compute two-site reduced density matrix for sites (site, site+1).
-- **_compute_entanglement_entropy**(site)
-  - Compute von Neumann entropy of bipartition at site.
-- **_update_entanglement_map**()
-  - Recompute entanglement map from MPS bond entropies.
 - **apply_measurement**(site_idx, intensity)
   - Apply a Born-rule projective measurement at one spin site.
-- **_apply_adjacent_unitary**(i, unitary)
-  - Apply a two-site unitary to adjacent sites ``i`` and ``i + 1``.
-- **_swap_adjacent**(i)
-  - Apply an exact adjacent SWAP gate inside the MPS.
-- **_apply_heisenberg_between**(i, j, coupling)
-  - Apply the Heisenberg gate to arbitrary sites via an exact SWAP network.
-- **_apply_tebd_gate**(i, j, coupling)
-  - Apply a two-site TEBD gate between adjacent sites i and j.
 - **get_local_atp_efficiency**(site_idx)
   - Return ATP hydrolysis probability at a given site.
 - **rho**()
@@ -30133,23 +25801,6 @@ The dashboard repr includes the configured raster window.
 ---
 
 ## Module `quantum_cognition.tests.test_gotm_brain_llm_contracts`
-
-### Class `_GotmBrainModule`
-Typed view of the dynamically reloaded GOTM brain module.
-
-
-### Class `_MutableLLMModule`
-Typed view of the fake local llm module used for re-import tests.
-
-
-### Function `_fake_llm_module(chat)`
-Build a local llm module matching the production import contract.
-
-### Function `_reload_gotm_with_llm(monkeypatch, llm_module)`
-Reload gotm_brain against a supplied local llm module.
-
-### Function `_restore_gotm_module()`
-Restore the canonical module after dynamic import contract tests.
 
 ### Function `test_gotm_brain_import_detects_local_llm(monkeypatch)`
 Importing with a local llm module enables the LLM directive path.
@@ -30328,7 +25979,6 @@ spikes:
 
 - **__post_init__**()
   - Validate seeded recorder state.
-- **_validate_spike**(spike)
 - **record**(spike)
   - Append one binary spike sample.
 - **reset**()
@@ -30536,7 +26186,6 @@ Each requirement links to:
 - **add_requirement**(req)
 - **link_implementation**(req_id, impl_ref)
 - **link_verification**(req_id, verif_ref)
-- **_update_status**(req)
 - **coverage**()
 - **open_count**()
 - **generate_report**()
@@ -30812,10 +26461,6 @@ Write a stream payload to JSON.
 ### Function `read_scpn_datastream(path)`
 Read a stream payload from JSON.
 
-### Function `_float_scalar_from_payload(value)`
-### Function `_int_scalar_from_payload(value)`
-### Function `_numeric_array_from_payload(value)`
-### Function `_validate_numeric_json_tree(value)`
 ### Function `generate_scpn_datastream_payload()`
 Generate a JSON-compatible stream payload in one call.
 
@@ -30885,9 +26530,6 @@ Raises
 ValueError
     If ``sigma_q88`` is not positive or ``tap_index`` is negative.
 
-### Function `_saturate_contraction(accumulator)`
-Saturate a raw integer accumulator into the Q16.16/Q8.8 output contract.
-
 ### Function `dcls_max_forward_q88(spikes, weights_q88, centre_q88, sigma_q88)`
 Run one DCLS-max tent contraction in bit-true Q8.8 arithmetic.
 
@@ -30912,9 +26554,6 @@ Raises
 ValueError
     If the inputs are empty, length-mismatched or ``sigma_q88`` is not
     positive.
-
-### Function `_validate_batch(spikes, weights, centres, sigmas, n_taps)`
-Validate batch shapes and return the channel count ``B``.
 
 ### Function `dcls_max_forward_batch_q88(spikes, weights_q88, centres_q88, sigmas_q88, n_taps)`
 Pure-Python batched DCLS-max contraction — the bit-true floor reference.
@@ -30945,14 +26584,6 @@ Raises
 ValueError
     If shapes are inconsistent or any ``sigma`` is non-positive.
 
-### Function `_result_from_mapping(payload)`
-Convert a backend dict payload into a typed :class:`DclsBatchResult`.
-
-### Function `_backend_python(spikes, weights_q88, centres_q88, sigmas_q88, n_taps)`
-### Function `_backend_rust(spikes, weights_q88, centres_q88, sigmas_q88, n_taps)`
-### Function `_backend_julia(spikes, weights_q88, centres_q88, sigmas_q88, n_taps)`
-### Function `_backend_go(spikes, weights_q88, centres_q88, sigmas_q88, n_taps)`
-### Function `_backend_mojo(spikes, weights_q88, centres_q88, sigmas_q88, n_taps)`
 ### Function `available_backends()`
 Probe which acceleration backends can run the DCLS batch kernel.
 
@@ -31000,16 +26631,8 @@ Topological firewall with dissonance rejection.
 - **__init__**(params)
 - **step**(dt, l9_input, external_noise)
   - Advance the firewall one timestep and return its boundary state.
-- **_integrity**()
 - **get_global_metric**()
   - Return the scalar boundary-integrity metric for this layer.
-- **_validate_params**(params)
-- **_retrieval_quality**(value)
-- **_qec_residual**(l9_input, n_boundary_nodes)
-- **_bounded_l9_vector**(value, n_boundary_nodes, name)
-- **_memory_complexity_flux**(l9_input)
-- **_boundary_context**(l9_input)
-- **_noise_vector**(external_noise, n_boundary_nodes)
 
 ---
 
@@ -31027,15 +26650,6 @@ Noospheric spin-glass with memetic spreading dynamics.
   - Advance the morphic resonance / noospheric layer one timestep and return its output state.
 - **get_global_metric**()
   - Return the scalar global metric summarising this layer's state.
-- **_validate_params**(params)
-- **_integrity_signal**(value)
-- **_l10_boundary_effect**(cls, l10_input, n_nodes)
-- **_noospheric_context**(l10_input)
-- **_project_nonnegative_vector**(value, n_nodes, name)
-- **_project_rejection_mask**(value, n_nodes)
-- **_nonnegative_scalar**(value, name)
-- **_unit_scalar**(cls, value, name)
-- **_update_info_density**(dt, transmission)
 
 ---
 
@@ -31048,14 +26662,7 @@ ENAQT-inspired ecological coherence transport.
 
 - **__init__**(params)
 - **step**(dt, l11_input)
-- **_von_neumann_entropy**()
 - **get_global_metric**()
-- **_validate_params**(params)
-- **_info_saturation**(value)
-- **_l11_noospheric_effect**(l11_input)
-- **_gaian_context**(l11_input)
-- **_nonnegative_scalar**(value, name)
-- **_unit_scalar**(cls, value, name)
 
 ---
 
@@ -31073,13 +26680,6 @@ Temporal binding via cross-correlation within a sliding window.
   - Advance the source / temporal binding layer one timestep and return its output state.
 - **get_global_metric**()
   - Return the scalar global metric summarising this layer's state.
-- **_validate_params**(params)
-- **_coherence_signal**(coherence, n_channels)
-- **_l12_source_sampling_effect**(l12_input)
-- **_source_context**(l12_input)
-- **_scalar**(value, name)
-- **_pearson**(a, b)
-- **_max_lag_binding_matrix**(history)
 
 ---
 
@@ -31099,15 +26699,6 @@ Weighted integration across SCPN layer metrics.
   - Advance the transdimensional integration layer one timestep and return its output state.
 - **get_global_metric**()
   - Return the scalar global metric summarising this layer's state.
-- **_validate_params**(params)
-- **_validate_step_inputs**(cls, dt, layer_metrics, l13_input)
-- **_normalised_weights**(weights)
-- **_metric_vector**(layer_metrics, limit)
-- **_finite_mean**(values, name)
-- **_l13_bridge_effect**(cls, l13_input)
-- **_bridge_context**(l13_input)
-- **_finite_scalar**(value, name)
-- **_unit_scalar**(cls, value, name)
 
 ---
 
@@ -31121,11 +26712,6 @@ Self-monitoring meta-cognitive layer with GCI computation.
 - **__init__**(params)
 - **step**(dt, l14_input)
 - **get_global_metric**()
-- **_validate_params**(params)
-- **_validate_step_inputs**(dt, l14_input, params)
-- **_consilium_context**(l14_input)
-- **_nonnegative_scalar**(value, name)
-- **_unit_scalar**(cls, value, name)
 
 ---
 
@@ -31133,19 +26719,12 @@ Self-monitoring meta-cognitive layer with GCI computation.
 
 ### Class `L16_StochasticParameters`
 
-### Class `_L16StepInputs`
-
 ### Class `L16_DirectorLayer`
 Cybernetic closure with PI control and Lyapunov monitoring.
 
 - **__init__**(params)
 - **step**(dt, l15_input)
 - **get_global_metric**()
-- **_validate_params**(params)
-- **_validate_step_inputs**(dt, l15_input, params)
-- **_validate_boundary_context**(l15_input)
-- **_nonnegative_scalar**(value, name)
-- **_unit_scalar**(cls, value, name)
 
 ---
 
@@ -31163,8 +26742,6 @@ Stochastic implementation of the Quantum Cellular Field.
   - Advance the layer by one time step.
 - **get_global_metric**()
   - Return the global coherence metric (Phi-like).
-- **_validate_params**(params)
-- **_validate_step_inputs**(dt, external_field, n_qubits)
 
 ---
 
@@ -31189,9 +26766,6 @@ second messenger cascades using bitstream representations.
   - Return the global neurochemical activity metric.
 - **get_neuromodulation_state**()
   - Return named neurotransmitter levels for external use.
-- **_validate_params**(params)
-- **_validate_step_inputs**(cls, dt, nt_release, l1_input, n_neurotransmitter_types)
-- **_finite_mean**(values, name)
 
 ---
 
@@ -31208,18 +26782,12 @@ Models gene expression, epigenetic modifications, and bioelectric
 pattern formation using bitstream representations.
 
 - **__init__**(params)
-- **_init_regulatory_network**()
-  - Initialize gene regulatory network with sparse connections.
 - **step**(dt, l2_input, bioelectric_signal)
   - Advance the layer by one time step.
 - **get_global_metric**()
   - Return the global genomic activity metric.
 - **get_ciss_coherence**()
   - Return CISS spin coherence metric.
-- **_validate_params**(params)
-- **_validate_step_inputs**(cls, dt, l2_input, bioelectric_signal, n_genes)
-- **_finite_mean**(values, name)
-- **_bioelectric_signal**(values, n_genes)
 
 ---
 
@@ -31236,19 +26804,12 @@ Models collective cellular behavior, gap junction coupling, and
 tissue-level pattern formation using bitstream representations.
 
 - **__init__**(params)
-- **_init_gap_junctions**()
-  - Initialize gap junction connectivity.
-- **_build_neighbor_matrix**()
-  - Build 2D grid neighbor connectivity matrix.
 - **step**(dt, l3_input, external_stimulus)
   - Advance the layer by one time step.
 - **get_global_metric**()
   - Return the global synchronization metric (Kuramoto order parameter).
 - **get_tissue_pattern**()
   - Return 2D tissue activity pattern.
-- **_validate_params**(params)
-- **_validate_step_inputs**(cls, dt, l3_input, external_stimulus, n_cells)
-- **_finite_mean**(values, name)
 
 ---
 
@@ -31265,21 +26826,12 @@ Models whole-organism integration, autonomic regulation, and
 emotional dynamics using bitstream representations.
 
 - **__init__**(params)
-- **_init_emotional_attractors**()
-  - Initialize emotional attractor states.
 - **step**(dt, l4_input, external_event)
   - Advance the layer by one time step.
-- **_compute_rmssd**()
-  - Compute RMSSD (root mean square of successive differences).
 - **get_global_metric**()
   - Return the global organismal coherence metric.
 - **get_emotional_valence**()
   - Return current emotional valence.
-- **_validate_params**(params)
-- **_validate_step_inputs**(cls, dt, l4_input, external_event)
-- **_validate_external_event**(cls, external_event)
-- **_apply_external_event**(external_event)
-- **_dimension_names**(cls)
 
 ---
 
@@ -31304,11 +26856,6 @@ and biospheric network dynamics using bitstream representations.
   - Return current Schumann resonance spectrum.
 - **get_circadian_time**()
   - Return current circadian time (0-24 hours).
-- **_validate_params**(params)
-- **_validate_step_inputs**(cls, dt, l5_input, solar_activity, lunar_phase)
-- **_finite_mean**(values, name)
-- **_l5_organismal_effect**(cls, l5_input)
-- **_unit_mean**(cls, values, name)
 
 ---
 
@@ -31335,13 +26882,6 @@ acupuncture point dynamics using bitstream representations.
   - Stimulate a specific meridian.
 - **get_acupoint_map**()
   - Return clinically common named acupoint activations.
-- **_e8_roots**()
-- **_validate_params**(params)
-- **_symbol_input**(symbol_input)
-- **_finite_mean**(value, name)
-- **_l6_symbolic_effect**(cls, l6_input)
-- **_unit_mean**(value, name)
-- **_acupoint_stimulus**(stimulus)
 
 ---
 
@@ -31359,14 +26899,8 @@ Stochastic cosmic phase-locking via Kuramoto-coupled PTA oscillators.
 - **__init__**(params)
 - **step**(dt, l7_input)
   - Advance the cosmic phase-locking layer one timestep and return its output state.
-- **_order_parameter**()
-- **_memory_imprint_drive**()
 - **get_global_metric**()
   - Return the scalar global metric summarising this layer's state.
-- **_validate_params**(params)
-- **_glyph_drive**(glyph_vector)
-- **_l7_phase_drive**(cls, l7_input)
-- **_nonnegative_scalar**(value, name)
 
 ---
 
@@ -31384,17 +26918,8 @@ Hopfield associative memory with stochastic bitstream encoding.
   - Hebbian imprint: W += pattern ⊗ pattern.
 - **step**(dt, l8_input, boundary_cue, ebs_context)
   - Advance the holographic memory layer one timestep and return its output state.
-- **_retrieval_quality**()
 - **get_global_metric**()
   - Return the scalar global metric summarising this layer's state.
-- **_validate_params**(params)
-- **_pattern_vector**(pattern)
-- **_cosmic_alignment**(value)
-- **_l8_phase_reference_drive**(cls, l8_input)
-- **_memory_imprint_drive**(payload)
-- **_boundary_cue_vector**(boundary_cue)
-- **_boundary_context**(ebs_context)
-- **_holographic_entropy**(activation)
 
 ---
 
@@ -31414,9 +26939,6 @@ cross-hierarchy boosts, symmetrisation, zero diagonal.
 Raised when a checkpoint is not present in the trusted digest set.
 
 
-### Function `_validate_trusted_map(trusted_sha256)`
-### Function `_resolve_expected_digest(checkpoint_path, trusted_sha256)`
-### Function `_checkpoint_digest(path)`
 ### Function `safe_load_checkpoint(path)`
 Load a tensor/state-dict checkpoint only after SHA-256 verification.
 
@@ -31454,7 +26976,6 @@ Detects anomalies (Non-Self) and neutralizes threats.
   - Learn a 'Self' pattern (Normal behavior).
 - **scan**(current_state)
   - Check if current state matches 'Self'.
-- **_trigger_response**()
 
 ---
 
@@ -31490,14 +27011,6 @@ Compare correlated baseline streams against activity-balanced streams.
 ### Function `write_side_channel_benchmark_report(output_path)`
 Run the analytic benchmark and write a canonical JSON artifact.
 
-### Function `_normalise_probabilities(probabilities)`
-### Function `_normalise_labels(labels)`
-### Function `_correlated_activity_fixture_stream(probability, bitstream_length)`
-### Function `_report_payload(report)`
-### Function `_with_artifact_path(report, path)`
-### Function `_deploy_manifest_payload(manifest)`
-### Function `_arm_payload(arm)`
-### Function `_class_proxy_payload(proxy)`
 ---
 
 ## Module `security.side_channel_metrics`
@@ -31524,11 +27037,6 @@ Compute per-stream switching activity for rows of binary bitstreams.
 ### Function `compute_class_activity_proxy(bitstreams_by_sample, labels)`
 Summarise class-conditioned switching activity for simulated samples.
 
-### Function `_normalise_sample_collection(bitstreams_by_sample)`
-### Function `_normalise_bitstream_matrix(bitstreams)`
-### Function `_normalise_bit(value)`
-### Function `_normalise_labels(labels)`
-### Function `_pearson_correlation(labels, rates)`
 ---
 
 ## Module `security.thermal_sc_encoding`
@@ -31559,13 +27067,6 @@ Encode one probability with distributed ones and deterministic rotation.
 ### Function `encode_activity_balanced_probabilities(probabilities, config)`
 Encode a probability batch and attach analytic class-activity evidence.
 
-### Function `_validate_config(config)`
-### Function `_validate_probability(probability)`
-### Function `_distribute_ones(ones, bitstream_length)`
-### Function `_activity_preserving_rotation_offset(bitstream, config, stream_index)`
-### Function `_build_dummy_bitstreams(config, stream_index)`
-### Function `_candidate_offsets(desired, distance, bitstream_length)`
-### Function `_rotate(bitstream, offset)`
 ---
 
 ## Module `security.watermark`
@@ -31659,9 +27160,6 @@ Returns
 int
     Saturated Q-format code.
 
-### Function `_average_window(total_q, config)`
-Sign-aware round-then-truncate window average, mirroring the golden model.
-
 ### Function `adc_to_spike_windows_q(samples, config)`
 Pure-Python ADC-to-spike window encoder — the bit-true floor reference.
 
@@ -31682,17 +27180,6 @@ Raises
 ValueError
     If the config is invalid or fewer than ``decimation`` samples are given.
 
-### Function `_config_tuple(config)`
-Flatten the config into the positional tuple the FFI backends consume.
-
-### Function `_result_from_mapping(payload)`
-Convert a backend dict payload into a typed :class:`ADCSpikeWindowResult`.
-
-### Function `_backend_python(samples, config)`
-### Function `_backend_rust(samples, config)`
-### Function `_backend_julia(samples, config)`
-### Function `_backend_go(samples, config)`
-### Function `_backend_mojo(samples, config)`
 ### Function `available_backends()`
 Probe which acceleration backends can run the ADC-to-spike kernel.
 
@@ -31908,12 +27395,6 @@ total_duration_min : float
 - **to_dict**()
   - Serialise the protocol to a plain dict.
 
-### Function `_build_insomnia_relief()`
-### Function `_build_jet_lag_reset()`
-### Function `_build_deep_sleep_boost()`
-### Function `_build_rem_enhancement()`
-### Function `_build_shift_worker()`
-### Function `_build_power_nap()`
 ### Function `get_protocol(name)`
 Look up a protocol by name.  Raises ``KeyError`` if not found.
 
@@ -32068,12 +27549,6 @@ Usage::
   - Return the most recently computed band-power dict, or ``None``.
 - **reset**()
   - Clear all internal state.
-- **_compute_band_powers**()
-  - Compute absolute band powers from the current buffer via FFT.
-- **_classify**(power_vec)
-  - Classify by cosine similarity to canonical signatures.
-- **_smooth**()
-  - Majority-vote smoothing over the recent stage history.
 
 ---
 
@@ -32158,8 +27633,6 @@ Reference: Rotter, S. & Diesmann, M. (1999). Biol. Cybern. 81:381–402.
 - **simulate**(current, t_end, v0)
   - Simulate LIF with constant current from t=0 to t=t_end.
 
-### Function `_finite_float(name, value)`
-### Function `_positive_float(name, value)`
 ---
 
 ## Module `solvers.ising`
@@ -32303,7 +27776,6 @@ Reference: Crank, J. & Nicolson, P. (1947). Proc. Camb. Phil. Soc. 43:50–67.
 - **step**(f, y, t, dt)
   - Advance one trapezoidal-rule step; return ``(y_new, dt_used)``.
 
-### Function `_finite_difference_jacobian(f, t, y, f_y, epsilon)`
 ---
 
 ## Module `solvers.symplectic`
@@ -32339,8 +27811,6 @@ Reference: Yoshida, H. (1990). Phys. Lett. A 150:262–268.
 - **step**(f, y, t, dt)
   - Advance one leapfrog (kick-drift-kick) step; return ``(y_new, dt_used)``.
 
-### Function `_validate_symplectic_inputs(y, t, dt)`
-### Function `_validated_rhs(f, t, y)`
 ---
 
 ## Module `sources.bitstream_current_source`
@@ -32360,9 +27830,6 @@ constructed with different parameters or seeds.
 
 - **__post_init__**()
   - Validate input/weight lengths and derive the input count.
-- **_apply_bipolar_xnor**()
-- **_map_bipolar_to_current**(value)
-- **_decode_current_trace**()
 - **reset**()
   - Reset the realised current trace cursor to its first timestep.
 - **current_trace**()
@@ -32385,10 +27852,6 @@ rotations, and measuring (collapsing) the state to generate noise.
 
 - **__post_init__**()
   - Initialise the RNG and reset the qubit register to ``|0>``.
-- **_hadamard**()
-  - Apply Hadamard gate H = (1/√2)&#91;&#91;1,1&#93;,&#91;1,-1&#93;&#93; to each qubit.
-- **_measure**()
-  - Apply Hadamard, measure via Born rule, collapse state.
 - **sample_normal**(mean, std)
   - Two independent measurements → Box-Muller → Gaussian sample.
 - **sample**()
@@ -32490,21 +27953,6 @@ entropy : str
   - Compress a spike raster.
 - **decompress**(data, T, N)
   - Decompress to spike raster.
-- **_quantize_timing**(spikes)
-- **_pick_entropy**(n_spikes, total_bins)
-  - Auto-select entropy backend based on data density.
-- **_encode_events**(events, T, N)
-  - Encode spike events using ISI + auto-selected entropy backend.
-- **_encode_events_huffman**(events, T, N)
-  - Encode events using Huffman-coded ISIs.
-- **_decode_events**(data, N)
-  - Decode ISI-encoded spike events (auto-detects entropy backend).
-- **_decode_events_huffman**(data, N)
-  - Decode Huffman-coded ISI events.
-- **_encode_varint**(value)
-  - Encode integer using variable-length encoding (LEB128-style).
-- **_decode_varint**(data, pos)
-  - Decode variable-length integer, return (value, new_position).
 
 ---
 
@@ -32553,19 +28001,6 @@ then encodes symbols as variable-length bit sequences.
 - **decode**(data, n_symbols)
   - Decode compressed bytes to integer list.
 
-### Function `_build_huffman_table(symbols)`
-Build Huffman codes from a symbol stream.
-
-Returns dict mapping symbol → (code_bits, code_length).
-Uses package-merge algorithm for optimal length-limited codes.
-
-### Function `_walk_tree(node, lengths, depth)`
-### Function `_canonical_codes(lengths)`
-Generate canonical Huffman codes from bit lengths.
-
-Canonical codes: sorted by (length, symbol), sequential assignment.
-Decoder only needs the length table to reconstruct codes.
-
 ---
 
 ## Module `spike_codec.predictive_codec`
@@ -32573,18 +28008,6 @@ Decoder only needs the length table to reconstruct codes.
 ### Class `PredictiveCompressionResult`
 Compression result with predictive coding metrics.
 
-
-### Class `_RatePredictor`
-Per-channel EMA rate predictor (legacy, kept for reference).
-
-- **__init__**(n_channels, alpha, threshold)
-  - Initialize per-channel rates and threshold parameters.
-- **predict**()
-  - Predict active channels from the current EMA rate estimates.
-- **update**(actual)
-  - Update EMA rates from one observed spike vector.
-- **reset**()
-  - Reset all channel rates to zero.
 
 ### Class `PredictiveSpikeCodec`
 Predictive spike codec: compress prediction errors, not raw spikes.
@@ -32631,44 +28054,6 @@ timing_precision : int
   - Compress spike raster using predictive error coding.
 - **decompress**(data, T, N)
   - Decompress to spike raster.
-
-### Function `_predict_and_xor_context(spikes, N, context_bits)`
-Context-model predict-XOR loop. Returns (errors, correct_count).
-
-Per-channel Markov predictor: hash last K spike states as context key,
-predict based on accumulated statistics for that context.
-Captures temporal patterns (bursts, oscillations, refractory periods)
-that EMA misses.
-
-### Function `_xor_and_recover_context(errors, N, context_bits)`
-Context-model XOR-recover loop for decoder.
-
-### Function `_predict_and_xor(spikes, N, alpha, threshold)`
-EMA predict-XOR loop. Returns (errors, correct_count).
-
-### Function `_xor_and_recover(errors, N, alpha, threshold)`
-EMA XOR-recover loop for decoder.
-
-### Function `_lfsr16_step(reg)`
-One step of 16-bit Galois LFSR. Matches sc_bitstream_encoder.v.
-
-### Function `_predict_and_xor_lfsr(spikes, N, alpha_q8, seed)`
-LFSR-based predict-XOR loop. Bit-true with Verilog.
-
-Uses Q8.8 fixed-point rate tracking + LFSR comparator for prediction.
-Same polynomial and step semantics as sc_bitstream_encoder.v.
-
-Parameters
-----------
-spikes : (T, N) int8
-N : int
-alpha_q8 : int
-    Q8.8 smoothing factor. 1 = 1/256 ≈ 0.004.
-seed : int
-    LFSR seed (non-zero, 16-bit).
-
-### Function `_xor_and_recover_lfsr(errors, N, alpha_q8, seed)`
-LFSR-based XOR-recover loop for decoder.
 
 ---
 
@@ -32741,22 +28126,6 @@ window_size : int
 - **decompress_frame**(frame)
   - Decompress a single frame.
 
-### Function `_pack_window(window)`
-Pack a (W, N) spike window into compact frame bytes.
-
-Format per frame:
-    n_channels: uint16
-    window_size: uint16
-    For each channel:
-        If silent (no spikes): store nothing, mark in skip bitmap
-        If active: store raw bitmask (ceil(W/8) bytes)
-
-    skip_bitmap: ceil(N/8) bytes — 1 = silent, 0 = active
-    active_bitmasks: concatenated, ceil(W/8) bytes each
-
-### Function `_unpack_window(frame, offset)`
-Unpack one frame. Returns (window, new_offset).
-
 ---
 
 ## Module `spike_codec.waveform_codec`
@@ -32794,28 +28163,8 @@ mode : str
     - ``"spike"``: spike timing only, Neuralink-equivalent (~4500x)
 
 - **__init__**(threshold_sigma, snippet_samples, max_templates, template_threshold, quantize_bits, mode)
-- **_require_positive_float**(name, value)
-  - Return a finite positive float or raise a field-specific error.
-- **_require_float_range**(name, value)
-  - Return a finite float inside an inclusive range.
-- **_require_int_range**(name, value)
-  - Return an integer inside an inclusive range.
 - **compress**(waveform)
   - Compress raw electrode waveform.
-- **_validate_waveform**(waveform)
-  - Return a finite non-empty ``(time, channel)`` waveform matrix.
-- **_detect_spikes**(waveform, thresholds)
-  - Threshold-crossing spike detection with refractory period.
-- **_extract_snippets**(waveform, times_per_ch, N)
-  - Extract waveform clips around detected spikes.
-- **_template_match**(snippets)
-  - Build template library and match snippets.
-- **_compress_snippets**(templates, template_ids, residuals)
-  - Compress templates + IDs + quantised residuals.
-- **_extract_background**(waveform, times_per_ch)
-  - Extract low-frequency background (remove spikes).
-- **_compress_background**(background)
-  - Delta-encode + quantize background signal.
 
 ---
 
@@ -33343,9 +28692,6 @@ critical_threshold : float
 - **audit_layer**(layer_id, bitstreams)
   - Audit a full layer of bitstreams.
 
-### Function `_scc_python(a, b)`
-Pure Python SCC (fallback when Rust core unavailable).
-
 ### Function `compute_scc(a, b)`
 Compute SCC between two bitstreams.
 
@@ -33464,9 +28810,6 @@ Returns
 AnalysisSource
     ``"model"`` when a model name is present, ``"ode"`` when equations are
     present, ``"mixed"`` for comparison payloads, otherwise ``"unknown"``.
-
-### Function `_sha256_json(payload)`
-Return a stable SHA-256 digest over portable canonical JSON.
 
 ---
 
@@ -33628,132 +28971,6 @@ Request body for balanced excitatory-inhibitory network simulation.
 Request body for Studio script and one-liner generation.
 
 
-### Class `_SimCache`
-LRU cache for simulation results keyed by JSON hash.
-
-- **__init__**(maxsize)
-- **_key**(data)
-- **get**(params)
-- **put**(params, result)
-
-### Function `_serialize_studio_worker_result(result)`
-Serialize a Studio worker result into a stable artifact payload.
-
-### Function `_validate_synthesis_verilog(verilog)`
-Return validated Verilog source for bounded synthesis worker routes.
-
-### Function `_validate_synthesis_target(target)`
-Return a validated synthesis target identifier.
-
-### Function `_safe(fn)`
-### Function `_analysis_budget_from_settings(settings)`
-Build the synchronous analysis execution budget from runtime settings.
-
-### Function `_guard_analysis_request(budget)`
-Reject an analysis request whose projected synchronous cost is over budget.
-
-Parameters
-----------
-budget:
-    Active synchronous analysis ceilings.
-simulation_count:
-    Number of simulations the request drives.
-duration:
-    Shared simulated time span in milliseconds.
-dt:
-    Shared timestep in milliseconds, or ``None`` when the request defers to
-    the model default.
-
-Raises
-------
-HTTPException
-    With status 422 and a path-free budget detail when the request exceeds
-    the configured synchronous analysis budget.
-
-### Function `_guard_multi_config_analysis_request(budget, configs)`
-Reject a multi-config analysis request whose projected cost is over budget.
-
-Parameters
-----------
-budget:
-    Active synchronous analysis ceilings.
-configs:
-    One ``(duration, dt)`` pair per simulation; ``dt`` may be ``None`` when
-    the simulation defers to the model default.
-
-Raises
-------
-HTTPException
-    With status 422 and a path-free budget detail when the request exceeds
-    the configured synchronous analysis budget.
-
-### Function `_guard_nullcline_grid_request(budget)`
-Reject a nullcline grid that exceeds the synchronous analysis budget.
-
-Parameters
-----------
-budget:
-    Active synchronous analysis ceilings.
-grid_size:
-    Number of points per axis in the requested nullcline grid.
-equation_count:
-    Number of ODE right-hand-side expressions evaluated at each grid point.
-
-Raises
-------
-HTTPException
-    With status 422 and a path-free budget detail when the grid exceeds the
-    configured synchronous analysis budget.
-
-### Function `_guard_model_scan_request(budget)`
-Reject a catalogue model scan whose projected synchronous cost is over budget.
-
-Parameters
-----------
-budget:
-    Active synchronous analysis ceilings.
-model_count:
-    Number of catalogue models the scan will simulate.
-duration:
-    Shared model-scan duration in milliseconds.
-
-Raises
-------
-HTTPException
-    With status 422 and a path-free budget detail when the scan exceeds the
-    configured synchronous analysis budget.
-
-### Function `_config_duration_dt(config)`
-Extract a ``(duration, dt)`` cost pair from a free-form simulate config.
-
-Mirrors the defaults used by :func:`_make_simulate_fn` (duration ``200`` ms,
-model-default timestep when absent). Non-numeric values fall back to the
-defaults; the simulate call validates the real payload downstream.
-
-### Function `_make_simulate_fn(req_dict)`
-Build a simulate callable from request params (ODE or model).
-
-### Function `_attach_analysis_metadata(analysis_type, request_payload, result_payload)`
-Attach path-free analysis metadata to one Studio analysis response.
-
-### Function `_parse_layer_weight_arrays(layer_weights)`
-### Function `_resolve_action_payload(preset_id, action_id, action, payload_template, overrides)`
-### Function `_run_adaptive_precision_auto_tune_payload(payload)`
-### Function `_run_adaptive_precision_formal_bundle_payload(payload)`
-### Function `_execute_resolved_preset_action(resolved)`
-### Function `_is_executable_preset_action_endpoint(endpoint)`
-### Function `_sha256_json(payload)`
-### Function `_default_flow_actions(preset_id)`
-### Function `_build_default_flow_plan_payload(preset_id)`
-### Function `_execute_default_flow_with_overrides(preset_id, action_overrides)`
-### Function `_studio_request_id(candidate)`
-### Function `_studio_timestamp_utc()`
-### Function `_studio_principal_from_headers(headers)`
-### Function `_studio_identity_from_headers(headers)`
-### Function `_studio_websocket_authorization_from_headers(headers)`
-### Function `_studio_identity_from_websocket_headers(headers)`
-### Function `_studio_websocket_accept_subprotocol(headers)`
-### Function `_studio_route_signature(app, request)`
 ### Function `create_app(runtime_settings)`
 Create and configure the Visual SNN Studio FastAPI application.
 
@@ -33794,20 +29011,11 @@ tuple&#91;str, ...&#93;
     The validated, sorted behaviour tags. Empty when no current could be
     driven (an honest "no measured behaviour").
 
-### Function `_is_rate_coded(observations)`
-Whether the firing rate rises monotonically with the drive current.
-
 ### Function `probe_model_behavior(name)`
 Probe one model across the current sweep and derive its behaviour tags.
 
 Never raises for a model that cannot be driven: each failed drive is
 recorded as an error observation and the profile is still returned.
-
-### Function `_observe()`
-Take one reproducibility-checked observation at a single drive.
-
-### Function `_seeded_simulation()`
-Simulate a model from a fixed RNG state.
 
 ### Function `probe_all_models()`
 Probe every catalogue model and return a recordable evidence manifest.
@@ -33816,9 +29024,6 @@ The manifest is the source the fast catalogue gate compares descriptors
 against: a per-model tag set plus the sweep configuration and digests, so a
 committed ``behavior_tags`` field can be checked for equality with the
 measurement without re-running any simulation.
-
-### Function `_sha256_json(payload)`
-Return a SHA-256 digest over canonical JSON.
 
 ### Function `load_behavior_evidence()`
 Load the recorded behaviour evidence manifest.
@@ -33838,7 +29043,6 @@ Return the recorded behaviour tags for a model (empty if unrecorded).
 ### Function `safe_environment()`
 Collect only the privacy-safe, aggregatable host facts.
 
-### Function `_make_workload(n_channels, n_taps, seed)`
 ### Function `run_local_benchmark(n_channels, n_taps, repeats, seed)`
 Time the DCLS kernel across the in-process-safe backends on this machine.
 
@@ -33846,9 +29050,6 @@ Returns a fully-formed submission (schema ``scpn.benchmark.submission.v1``)
 that the caller may inspect and, opt-in, hand to :func:`store_contribution`.
 Julia is skipped in-process (the torch/juliacall segfault) and reported as
 parity-verified offline rather than timed live.
-
-### Function `_find_forbidden(node)`
-Walk a payload and return the first machine-identifying key found.
 
 ### Function `validate_submission(payload)`
 Return a list of schema/privacy violations; empty means the payload is OK.
@@ -33963,12 +29164,6 @@ Raises
 ValueError
     If no equations are supplied.
 
-### Function `_sha256_text(value)`
-Return a SHA-256 digest for UTF-8 text.
-
-### Function `_sha256_json(payload)`
-Return a stable SHA-256 digest over canonical JSON.
-
 ---
 
 ## Module `studio.compiler`
@@ -33995,17 +29190,6 @@ Run Python float and Q8.8 fixed-point simulations side by side.
 ---
 
 ## Module `studio.dcls`
-
-### Function `_julia_unsafe()`
-The juliacall bridge segfaults if torch was imported first.
-
-The Studio loads torch through its neuron models, so a live Julia probe in
-that process would crash (pytorch/pytorch#78829). When torch is present we
-refuse to touch the Julia backend in-process; its bit-exact parity is instead
-covered by the offline ``test_dcls_tent_kernel_parity`` suite.
-
-### Function `_probe_backend(name)`
-Probe one backend with a trivial single-tap contraction.
 
 ### Function `probe_backends()`
 Report each backend's in-process status without ever crashing.
@@ -34127,21 +29311,6 @@ Simulate every model at a given current and classify its firing pattern.
 Results are cached per ``(current, duration)`` pair so a scan for one
 configuration cannot be served as evidence for another configuration.
 
-### Function `_run_model_scan()`
-Classify every model, recording per-model failures rather than aborting.
-
-A model that cannot be driven at the scan's constant current — one whose
-``step`` needs an extra synaptic input, or one whose internal stability guard
-rejects the operating point — yields an ``error`` entry instead of failing the
-whole scan. The failures are surfaced in the manifest (``error_count`` /
-``failed_models``) so the result stays honest about what was classified.
-
-### Function `_build_model_scan_manifest()`
-Build digest-backed metadata for a complete model scan.
-
-### Function `_sha256_json(payload)`
-Return a SHA-256 digest over canonical JSON.
-
 ---
 
 ## Module `studio.models`
@@ -34157,45 +29326,6 @@ Raised when the Studio Rust batch-simulation path fails at runtime.
 ### Class `ModelMetadataError`
 Raised when Studio model metadata loading fails for a known model.
 
-
-### Function `_evidence_kind(tier)`
-Map a completeness tier to the SCPN-Studio evidence modality.
-
-### Function `_load_class(name)`
-### Function `_model_field_specs(cls)`
-Return ``(name, numeric-default)`` specs for a model class.
-
-Works for dataclass models (declared fields) and plain classes (the numeric
-keyword parameters of ``__init__``) so the catalogue can browse any
-registered model, not only dataclasses. Non-numeric parameters (identifiers,
-pools, flags) are skipped for plain classes; missing or non-numeric dataclass
-defaults are reported as ``0.0`` to preserve the historical contract.
-
-### Function `_extract_dt(cls)`
-Return the model's default timestep, or ``0.1`` when undeclared.
-
-### Function `_classify_fields(cls)`
-Split model fields into state variables and parameters.
-
-### Function `_categorize(name)`
-### Function `_provenance_summary(descriptor)`
-Return a path-free provenance summary, or ``None`` when uncited.
-
-### Function `_descriptor_summary(descriptor)`
-Build a catalogue list entry from a declared descriptor.
-
-### Function `_descriptor_detail(descriptor)`
-Build a full catalogue detail view from a declared descriptor.
-
-### Function `_readiness_detail(descriptor)`
-Build the auditable dual-axis readiness view for a declared descriptor.
-
-Surfaces the science (S0-S5) and silicon (H0-H5) tiers together with the raw
-evidence facets that justify them, so a reviewer can see exactly why a model
-sits where it does — and whether it meets its declared deployability class.
-
-### Function `_introspected_summary(name)`
-Fallback catalogue entry for a model with no committed descriptor.
 
 ### Function `list_models()`
 Return declared metadata for every registered neuron model.
@@ -34218,25 +29348,6 @@ The per-model reference page lives at ``docs/api/models/<module>.md``; the
 Studio serves its Markdown so the documentation is browsable inline next to
 the live model rather than only in the built docs site.
 
-### Function `_load_rust_batch_simulate()`
-Load the Rust batch-simulation bridge entrypoint.
-
-Import failure means the backend is unavailable; it must not be conflated
-with runtime failure inside an otherwise available backend.
-
-### Function `_is_rust_unsupported_model_error(exc)`
-Return whether the Rust backend rejected a model as unsupported.
-
-### Function `_detect_step_kwarg(cls)`
-Figure out what keyword the .step() method uses for current injection.
-
-### Function `_try_rust_simulate(name, n_steps, current_trace, actual_dt)`
-Attempt Rust batch simulation.
-
-Returns ``None`` only when the backend is unavailable or the model is not
-implemented in Rust. Runtime failures in an available backend are raised so
-the caller does not silently degrade to Python.
-
 ### Function `simulate_model(name, param_overrides, dt, duration, current, protocol, frequency_hz, use_fast_path)`
 Simulate a named model. Uses Rust engine when model has default params.
 
@@ -34251,12 +29362,6 @@ be loaded (the two backends can differ for models with an internal RNG).
 
 ### Function `simulate_ei_network(n_exc, n_inh, w_ee, w_ei, w_ie, w_ii, p_conn, ext_rate, duration, dt)`
 Simulate a balanced E-I network. Uses Rust engine when available.
-
-### Function `_simulate_rust(n_exc, n_inh, w_ee, w_ei, w_ie, w_ii, p_conn, ext_rate, duration, dt)`
-Entire simulation in Rust — connectivity, Poisson input, stepping, recording.
-
-### Function `_simulate_numpy(n_exc, n_inh, w_ee, w_ei, w_ie, w_ii, p_conn, ext_rate, duration, dt)`
-Pure NumPy fallback (no Rust engine).
 
 ---
 
@@ -34352,10 +29457,6 @@ Raises
 ValueError
     If any controlled field is invalid or ``result`` is not portable JSON.
 
-### Function `_payload_sha256(result)`
-### Function `_validate_manifest_fields()`
-### Function `_is_dotted_action_kind(value)`
-### Function `_is_replay_route(value)`
 ---
 
 ## Module `studio.platform.analysis_limits`
@@ -34789,21 +29890,6 @@ Raises
 ValueError
     If ``retain_latest`` is not positive.
 
-### Function `_invalid_archive_result(archive_id, error_code)`
-### Function `_is_quarantine_archive_record(record)`
-### Function `_retention_entry_from_record(record)`
-### Function `_artifact_paths(value)`
-### Function `_restore_event_rows(export_payload)`
-### Function `_manifest_validation_errors(manifest_payload)`
-### Function `_audit_quarantine_archive_payload(payload)`
-### Function `_audit_quarantine_archive_summary(export_payload)`
-### Function `_audit_quarantine_export_payload(payload)`
-### Function `_has_archive_entry(entries)`
-### Function `_write_json_entry(context, written_paths, entry_type, relative_path, payload)`
-### Function `_write_jsonl_entry(context, written_paths, entry_type, relative_path, rows)`
-### Function `_json_object(payload, error_code)`
-### Function `_json_value(value, error_code)`
-### Function `_utc_now()`
 ---
 
 ## Module `studio.platform.auth_throttle`
@@ -34837,10 +29923,6 @@ max_retry_after_seconds:
 - **to_public_dict**()
   - Return a secret-free throttle aggregate for operator APIs.
 
-### Class `_ThrottleBucket`
-Mutable failure bucket for one normalized browser-login key.
-
-
 ### Class `StudioBrowserLoginThrottle`
 Windowed lockout guard for Studio browser-login attempts.
 
@@ -34857,10 +29939,6 @@ the bucket for the normalized key.
   - Clear the failure bucket after a successful browser login.
 - **snapshot**()
   - Return aggregate lockout state without exposing login keys.
-- **_prune**(bucket, now)
-- **_now**()
-- **_key**(username)
-- **_utc_now**()
 
 ---
 
@@ -34939,10 +30017,6 @@ Returns
 StudioBackupPlan
     Backup and restore manifest for the active Studio runtime profile.
 
-### Function `_file_item()`
-### Function `_directory_item()`
-### Function `_explicit_directory_item()`
-### Function `_configured_path(configured_path)`
 ---
 
 ## Module `studio.platform.bootstrap`
@@ -35012,15 +30086,6 @@ ValueError
 OSError
     If the destination cannot be written.
 
-### Function `_parse_principal_id(principal_id)`
-### Function `_parse_roles(roles)`
-### Function `_normalise_expiry(expires_at_utc)`
-### Function `_ensure_parent_directory(parent)`
-### Function `_build_identity_payload()`
-### Function `_write_identity_payload(destination, payload)`
-### Function `_create_identity_payload(destination, encoded)`
-### Function `_replace_identity_payload(destination, encoded)`
-### Function `_chmod_owner_only(path)`
 ---
 
 ## Module `studio.platform.capabilities`
@@ -35067,11 +30132,6 @@ Build the default capability registry for the current Studio backend.
 
 ## Module `studio.platform.compile_process`
 
-### Class `_CompileProcessRequest`
-Validated JSON payload for an isolated compiler task.
-
-- **__init__**()
-
 ### Function `run_compile_process_task(context, payload)`
 Compile one Studio ODE payload in an isolated process.
 
@@ -35092,12 +30152,6 @@ Raises
 ValueError
     If the payload does not match the JSON-serializable compile contract.
 
-### Function `_compile_request_from_payload(payload)`
-### Function `_string_list_field(payload, key)`
-### Function `_optional_string_field(payload, key)`
-### Function `_string_field(payload, key)`
-### Function `_optional_float_mapping_field(payload, key)`
-### Function `_serialize_worker_result(result)`
 ---
 
 ## Module `studio.platform.deployment_profiles`
@@ -35160,10 +30214,6 @@ ValueError
 ### Function `list_studio_deployment_profile_packages()`
 Return all supported Studio deployment-profile packages.
 
-### Function `_local_profile_package()`
-### Function `_lab_profile_package()`
-### Function `_server_profile_package()`
-### Function `_shell_quote(value)`
 ---
 
 ## Module `studio.platform.evidence_bundle`
@@ -35245,29 +30295,6 @@ ValueError
     If replay metadata is not JSON-safe or job artifacts are supplied
     without an artifact reader.
 
-### Function `_bundle_summary(entries)`
-### Function `_write_json_entry(context, written_paths, entry_type, relative_path, payload)`
-### Function `_write_classified_json_entry(context, written_paths, entry_type, relative_path, payload)`
-### Function `_json_object(payload, error_message)`
-### Function `_project_workspace_payload(payload)`
-Validate a saved Studio project payload before bundle export.
-
-### Function `_simulation_result_payload(payload)`
-### Function `_analysis_result_payload(payload)`
-### Function `_model_scan_payload(payload)`
-### Function `_weight_restore_payload(payload)`
-### Function `_weight_restore_attach_payload(payload)`
-### Function `_default_flow_run_payload(payload)`
-### Function `_default_flow_attestation_payload(payload)`
-### Function `_default_flow_key(payload)`
-### Function `_default_flow_fingerprints(payload)`
-### Function `_job_artifact_entry()`
-### Function `_is_action_evidence_artifact(relative_path)`
-### Function `_action_evidence_payload(payload)`
-### Function `_is_sha256_hex(value)`
-### Function `_json_value(value, error_message)`
-### Function `_safe_bundle_artifact_path(relative_path)`
-### Function `_utc_now()`
 ---
 
 ## Module `studio.platform.identity`
@@ -35360,8 +30387,6 @@ Authenticate Studio bearer tokens against a validated identity store.
   - Authenticate an HTTP ``Authorization`` header.
 - **authenticate_browser_user**(username, password)
   - Authenticate one browser user with username and password.
-- **_utc_now_value**()
-- **_utc_now**()
 
 ### Function `load_studio_identity_store(path)`
 Load and validate a Studio identity store from JSON.
@@ -35540,22 +30565,6 @@ str
 ### Function `verify_browser_user_password(password, encoded_verifier)`
 Verify a raw browser-user password against an encoded verifier.
 
-### Function `_parse_identity_record(index, item)`
-### Function `_parse_browser_user_record(index, item)`
-### Function `_parse_principal_id(principal_id)`
-### Function `_parse_username(username)`
-### Function `_parse_roles(roles)`
-### Function `_parse_role(role)`
-### Function `_parse_expiry(value)`
-### Function `_is_sha256_hex(value)`
-### Function `_write_identity_store(path)`
-### Function `_require_active_admin_principal()`
-### Function `_active_admin_service_account(record)`
-### Function `_active_admin_browser_user(record)`
-### Function `_record_to_json(record)`
-### Function `_browser_user_to_json(record)`
-### Function `_pbkdf2_sha256(password, salt_hex, iterations)`
-### Function `_parse_password_verifier(value)`
 ---
 
 ## Module `studio.platform.jobs`
@@ -35648,7 +30657,6 @@ Execution context passed to one local Studio job task.
   - Consume one pending control command delivered to a running job.
 - **read_control_seed**(relative_path)
   - Read one confined seed payload delivered with a control command.
-- **_artifact_path**(relative_path)
 
 ### Class `StudioJobManager`
 Manage local Studio jobs inside per-job sandbox directories.
@@ -35660,8 +30668,6 @@ Manage local Studio jobs inside per-job sandbox directories.
   - Submit an importable Studio job task to an isolated Python process.
 - **send_control_command**(job_id)
   - Deliver a control command and confined seeds to a running process job.
-- **_write_seed_inputs**(work_dir, seed_inputs)
-  - Write confined binary seed inputs into a reserved seed directory.
 - **cancel**(job_id)
   - Request cooperative cancellation for one job.
 - **wait**(job_id, timeout_seconds)
@@ -35680,27 +30686,7 @@ Manage local Studio jobs inside per-job sandbox directories.
   - Return newly appended bytes from a confined live artifact.
 - **status**()
   - Return aggregate, path-free job manager health.
-- **_run_supervised**(job_id, work_dir, cancel_event, done_event, task, timeout_seconds)
-- **_run_process_supervised**(job_id, work_dir, cancel_event, done_event, task_path, payload_path, result_path, timeout_seconds)
-- **_update**(job_id)
-- **_timestamp_utc**()
-- **_utc_now**()
 
-### Class `_ProcessWorkerResult`
-
-### Function `_find_artifact(artifacts, relative_path)`
-### Function `_normalize_artifact_lookup_path(relative_path)`
-### Function `_resolve_confined_child()`
-### Function `_process_worker_environment()`
-Return an import-stable environment for Studio process workers.
-
-### Function `_validate_process_task_path(task_path)`
-### Function `_json_payload(payload, error_message)`
-### Function `_terminate_process(process)`
-### Function `_load_process_result(result_path)`
-### Function `_load_process_artifacts(result_path)`
-### Function `_parse_process_result(payload)`
-### Function `_parse_process_artifacts(raw_artifacts)`
 ---
 
 ## Module `studio.platform.operator`
@@ -35744,19 +30730,9 @@ Path-free aggregate status for the Studio operator control plane.
 ### Function `build_studio_operator_status()`
 Build the aggregate operator status from live Studio platform components.
 
-### Function `_build_identity_status(settings)`
-### Function `_build_route_policy_status(settings)`
-### Function `_build_capability_status(capabilities)`
-### Function `_build_resource_limit_status(settings)`
-### Function `_build_browser_login_status(settings, snapshot)`
 ---
 
 ## Module `studio.platform.pipeline_process`
-
-### Class `_PipelineProcessRequest`
-Validated JSON payload for an isolated pipeline task.
-
-- **__init__**()
 
 ### Function `run_pipeline_process_task(context, payload)`
 Run one Studio graph-to-synthesis pipeline in an isolated process.
@@ -35778,14 +30754,6 @@ Raises
 ValueError
     If the payload does not match the JSON-serializable pipeline contract.
 
-### Function `_pipeline_request_from_payload(payload)`
-### Function `_graph_field(payload, key)`
-### Function `_target_field(payload, key)`
-### Function `_process_limits_from_payload(payload)`
-### Function `_optional_float_field(value, key)`
-### Function `_optional_int_field(value, key)`
-### Function `_result_mapping(raw_result)`
-### Function `_serialize_worker_result(result)`
 ---
 
 ## Module `studio.platform.policy`
@@ -35855,10 +30823,6 @@ Append-only in-memory audit sink for local Studio policy tests.
 - **status**()
   - Return status for the non-persistent in-memory audit sink.
 
-### Class `_AuditIntegrityReport`
-Path-free integrity status for retained JSONL audit rows.
-
-
 ### Class `JsonlAuditSink`
 Append-only JSONL audit sink for Studio policy decisions.
 
@@ -35873,21 +30837,6 @@ Append-only JSONL audit sink for Studio policy decisions.
   - Export the most recent persisted audit rows without exposing paths.
 - **export_quarantine**(limit)
   - Export quarantined retained audit rows without exposing local paths.
-- **_preflight_error**()
-- **_build_row**(event, previous_event_hash)
-- **_rotate_if_needed**()
-- **_rotated_path**(index)
-- **_export_paths**()
-- **_export_rows**()
-- **_raw_export_rows**()
-- **_public_export_row**(parsed)
-- **_verify_integrity**()
-- **_quarantine_export_rows**(rows)
-- **_row_quarantine_reason**(row)
-- **_quarantine_tail**(rows)
-- **_quarantine_summary**(rows)
-- **_previous_event_hash**()
-- **_event_hash**(row)
 
 ### Class `RoutePolicyRegistry`
 Registry of Studio route policies keyed by HTTP method and path.
@@ -35901,7 +30850,6 @@ Registry of Studio route policies keyed by HTTP method and path.
   - Return registered route policies in stable method/path order.
 - **missing_policies**(routes)
   - Return route signatures that have no registered Studio policy.
-- **_key**(method, path_template)
 
 ### Class `PolicyGateway`
 Fail-closed Studio route authorization gateway.
@@ -35909,12 +30857,7 @@ Fail-closed Studio route authorization gateway.
 - **__init__**(audit_sink, clock)
 - **authorize**(policy)
   - Authorize a caller against a Studio route policy.
-- **_deny**(policy, route, principal, reason, status_code, request_id)
-- **_record**(policy, route, principal, decision, request_id)
-- **_timestamp_utc**()
-- **_utc_now**()
 
-### Function `_register_routes(registry, routes)`
 ### Function `build_default_studio_route_policy_registry()`
 Build route policies for the current Studio platform API surface.
 
@@ -35980,26 +30923,6 @@ StudioPreflightReport
     Ordered path-free report. The report fails closed if settings cannot
     be parsed or any release invariant is missing.
 
-### Function `_profile_checks(settings)`
-### Function `_browser_login_lockout_check(settings)`
-### Function `_eda_limits_enforceable()`
-Return whether this host can enforce POSIX child-process resource limits.
-
-Mirrors ``sc_neurocore.studio.synthesis._eda_process_limits_supported``: the
-``resource`` rlimit primitives Studio uses for Yosys and nextpnr child
-processes are only available on POSIX hosts.
-
-### Function `_resource_limits_check(settings)`
-### Function `_route_policy_inventory_check()`
-### Function `_route_policy_mismatch(policy)`
-### Function `_identity_store_check(settings)`
-### Function `_active_admin_principal_count(store)`
-### Function `_active_admin_identity(record)`
-### Function `_active_admin_browser_user(record)`
-### Function `_path_readiness_check()`
-### Function `_file_path_readiness_check()`
-### Function `_directory_path_readiness_check()`
-### Function `_environment_variable_for_check(check_id)`
 ---
 
 ## Module `studio.platform.process_worker`
@@ -36019,11 +30942,6 @@ int
     ``0`` when the imported task completed and wrote a result; ``1`` when
     the task failed and the result file contains the public error string.
 
-### Function `_parse_args(argv)`
-### Function `_load_payload(path)`
-### Function `_load_task(task_path)`
-### Function `_write_failure_result(result_path, error)`
-### Function `_write_result(result_path)`
 ---
 
 ## Module `studio.platform.sessions`
@@ -36065,14 +30983,7 @@ Issue, authenticate, and revoke ephemeral browser bearer sessions.
   - Revoke all browser sessions for one principal identifier.
 - **public_session**(authorization)
   - Return the current session payload without token material.
-- **_purge_expired**()
-- **_now**()
-- **_utc_now**()
-- **_default_token**()
 
-### Function `_bearer_token(authorization)`
-### Function `_token_hash(token)`
-### Function `_format_utc(value)`
 ---
 
 ## Module `studio.platform.settings`
@@ -36082,36 +30993,13 @@ Runtime settings consumed by the Studio FastAPI application.
 
 - **__post_init__**()
   - Validate settings that affect Studio security boundaries.
-- **_validate_production_profile**()
-  - Validate fail-closed settings required for production deployments.
-
-### Function `_default_studio_http_security_headers()`
-Return immutable default HTTP security headers for Studio responses.
 
 ### Function `build_default_studio_runtime_settings(env)`
 Build Studio runtime settings from environment-style values.
 
-### Function `_parse_deployment_profile(raw_value)`
-### Function `_parse_int_env(raw_value)`
-### Function `_parse_bool_env(raw_value)`
 ---
 
 ## Module `studio.platform.synthesis_process`
-
-### Class `_SynthesisProcessRequest`
-Validated JSON payload for isolated synthesis tasks.
-
-- **__init__**()
-
-### Class `_MultiTargetSynthesisProcessRequest`
-Validated JSON payload for isolated multi-target synthesis tasks.
-
-- **__init__**()
-
-### Class `_PnrProcessRequest`
-Validated JSON payload for an isolated PnR task.
-
-- **__init__**()
 
 ### Function `run_synthesis_process_task(context, payload)`
 Run one Studio synthesis request in an isolated process.
@@ -36173,17 +31061,6 @@ Raises
 ValueError
     If the payload does not match the JSON-serializable PnR contract.
 
-### Function `_synthesis_request_from_payload(payload)`
-### Function `_multi_target_request_from_payload(payload)`
-### Function `_pnr_request_from_payload(payload)`
-### Function `_verilog_field(payload, key)`
-### Function `_string_field(payload, key)`
-### Function `_target_field(payload, key)`
-### Function `_process_limits_from_payload(payload)`
-### Function `_optional_float_field(value, key)`
-### Function `_optional_int_field(value, key)`
-### Function `_run_with_evidence(context)`
-### Function `_serialize_worker_result(result)`
 ---
 
 ## Module `studio.platform.training_checkpoint`
@@ -36265,24 +31142,6 @@ Raises
 ValueError
     If the checkpoint schema, hashes, or config payload are invalid.
 
-### Function `_json_object(payload, error_message)`
-Return a JSON object after recursively validating portable values.
-
-### Function `_json_value(value, error_message)`
-Return a portable JSON value or raise ``ValueError``.
-
-### Function `_sha256_json(payload)`
-Return the SHA-256 digest of a canonical JSON object.
-
-### Function `_required_non_empty_string(value, field_name)`
-Return a required non-empty string value.
-
-### Function `_required_string_field(payload, field_name)`
-Return a required string field from a checkpoint payload.
-
-### Function `_weight_checkpoint_payload(value)`
-Validate and return path-free weight checkpoint metadata.
-
 ---
 
 ## Module `studio.platform.training_evidence`
@@ -36329,36 +31188,6 @@ Raises
 ValueError
     If the summary is not verified training evidence, uses an unsupported
     status or classification, or contains malformed artifact metadata.
-
-### Function `_training_evidence_artifact(record)`
-Return the declared Training Monitor evidence artifact, if present.
-
-### Function `_training_evidence_payload(payload)`
-Decode and validate a Training Monitor evidence payload.
-
-### Function `_required_string(payload, key)`
-Return a required string field from an evidence payload.
-
-### Function `_result_artifacts(payload)`
-Return path-free result artifact metadata from an evidence payload.
-
-### Function `_json_object(payload, error_message)`
-Return a JSON object after recursively validating portable values.
-
-### Function `_json_value(value, error_message)`
-Return a portable JSON value or raise ``ValueError``.
-
-### Function `_required_json_string(payload, field_name)`
-Return a required non-empty string field from a summary payload.
-
-### Function `_validate_artifact_metadata(value)`
-Validate one path-free artifact manifest entry.
-
-### Function `_safe_relative_artifact_path(relative_path)`
-Return whether an artifact path is relative and traversal-free.
-
-### Function `_unavailable_summary(record, artifact)`
-Return a path-free summary for an unreadable declared evidence artifact.
 
 ---
 
@@ -36417,12 +31246,6 @@ Raises
 ValueError
     If the payload is malformed or the restored weights are incompatible
     with the target architecture.
-
-### Function `_required_mapping(payload, field_name)`
-Return a required JSON object field from a worker payload.
-
-### Function `_training_config_from_payload(payload)`
-Return a mutable training configuration copied from worker payload.
 
 ---
 
@@ -36755,9 +31578,6 @@ ValueError
     If the schema, classification, status, mode, target identifiers,
     fingerprint, or embedded materialization summary are invalid.
 
-### Function `_validate_materialization_summary(materialization)`
-Validate an embedded path-free weight materialization summary.
-
 ### Function `validate_training_weight_checkpoint_metadata(payload)`
 Validate imported Training Monitor weight metadata.
 
@@ -36781,45 +31601,6 @@ ValueError
     If the schema, framework, format, config digest, artifact paths,
     artifact sizes, artifact hashes, or metadata payload are invalid.
 
-### Function `_validate_restore_plan(payload)`
-Return a validated weight restore plan.
-
-### Function `_verify_artifact_payload(payload, artifact, field_name)`
-Verify one artifact payload against its path-free manifest entry.
-
-### Function `_metadata_payload_object(payload)`
-Decode a portable weight metadata payload.
-
-### Function `_loaded_state_dict(payload)`
-Validate trusted loader output as a state dictionary.
-
-### Function `_json_object(payload, error_message)`
-Return a JSON object after recursively validating portable values.
-
-### Function `_artifact_public_dict(artifact)`
-Return a JSON-compatible public artifact manifest entry.
-
-### Function `_required_artifact_dict(metadata, field_name)`
-Return one validated artifact metadata object from a checkpoint.
-
-### Function `_validate_artifact_metadata(value)`
-Validate one path-free artifact manifest entry.
-
-### Function `_json_value(value, error_message)`
-Return a portable JSON value or raise ``ValueError``.
-
-### Function `_sha256_json(payload)`
-Return the SHA-256 digest of a canonical JSON object.
-
-### Function `_sha256_bytes(payload)`
-Return the SHA-256 digest of a byte payload.
-
-### Function `_required_json_string(payload, field_name)`
-Return a required non-empty string from a JSON object.
-
-### Function `_required_non_empty_string(value, field_name)`
-Return a required non-empty string value.
-
 ---
 
 ## Module `studio.presets`
@@ -36841,33 +31622,7 @@ Return the route-facing catalogue of preset action identifiers.
 
 ---
 
-## Module `studio.progress`
-
-### Function `_characterize_with_progress(simulate_fn, base_config, q)`
-Run characterisation with progress updates pushed to queue.
-
-### Function `_heatmap_with_progress(simulate_fn, base_config, param_x, x_vals, param_y, y_vals, q)`
-Run 2D heatmap sweep with progress updates.
-
-### Function `_scan_with_progress(q)`
-Scan all models with progress updates.
-
----
-
 ## Module `studio.project`
-
-### Function `_validate_hdl_identifiers(payload)`
-Reject workspace content that would later interpolate into HDL/MLIR source.
-
-### Function `_ensure_dir()`
-### Function `_projects_root()`
-Return the resolved Studio project root.
-
-### Function `_safe_name(name)`
-Validate a project name that maps to one JSON file in the project root.
-
-### Function `_safe_path(name)`
-Build a resolved project file path confined to the Studio project root.
 
 ### Function `save_project(name, state)`
 Save full Studio state and return path-free evidence metadata.
@@ -36965,18 +31720,9 @@ The writer keeps the human-readable indentation used by existing Studio
 project files, while rejecting non-standard JSON values such as NaN and
 Infinity so saved projects remain portable across runtimes.
 
-### Function `_sha256_json(payload)`
-Return a stable SHA-256 digest over canonical JSON.
-
 ---
 
 ## Module `studio.simulation`
-
-### Function `_spike_stats(spike_indices, dt, n_steps)`
-Compute spike statistics from spike index list.
-
-### Function `_make_current_trace(protocol, current, n_steps, dt, frequency_hz, step_onset, step_offset, ramp_start, ramp_end)`
-Generate a current injection trace for the given protocol.
 
 ### Function `simulate(equations, threshold, reset, params, init, dt, duration, current, protocol, frequency_hz)`
 Run an ODE neuron simulation and return time series data.
@@ -37040,15 +31786,6 @@ Raises
 ValueError
     If request or result payloads cannot be encoded as portable JSON.
 
-### Function `_sha256_json(payload)`
-Return a stable SHA-256 digest over portable canonical JSON.
-
-### Function `_float_field(payload, key)`
-Read a numeric manifest field from a simulation result payload.
-
-### Function `_int_field(payload, key)`
-Read an integer manifest field from a simulation result payload.
-
 ---
 
 ## Module `studio.svg_export`
@@ -37059,7 +31796,6 @@ Generate publication-quality SVG from simulation traces.
 Returns a complete SVG string with axes, grid, legend, spike markers,
 and colour-coded polylines. Traces are downsampled to <=2000 points.
 
-### Function `_empty_svg(width, height)`
 ---
 
 ## Module `studio.synthesis`
@@ -37080,18 +31816,6 @@ address_space_bytes:
 
 - **__post_init__**()
   - Validate positive resource ceilings when they are configured.
-
-### Function `_resolve_eda_tool(name)`
-Resolve an allowlisted EDA executable to an absolute path.
-
-### Function `_eda_process_limits_supported()`
-Return whether this host can apply POSIX child-process limits.
-
-### Function `_build_limit_preexec(limits)`
-Build a POSIX pre-exec hook that applies configured EDA limits.
-
-### Function `_run_eda_command(command)`
-Run one allowlisted EDA command with optional child-process limits.
 
 ### Function `check_tools()`
 Detect which EDA tools are installed.
@@ -37120,9 +31844,6 @@ Returns
 dict&#91;str, Any&#93;
     Path-free synthesis result with success state, target, resource counts,
     capacity metadata, utilisation, or a bounded error message.
-
-### Function `_parse_yosys_json(json_path)`
-Extract resource counts from Yosys JSON output.
 
 ### Function `estimate_resources(ir_op_count, target)`
 Quick resource estimate from IR operation count, no Yosys needed.
@@ -37257,18 +31978,6 @@ Returns
 dict&#91;str, JsonValue&#93;
     Matrix payload keyed by target with a stable SHA-256 digest.
 
-### Function `_tool_provenance()`
-Build one tool provenance record from path-free tool status.
-
-### Function `_pnr_tool_status_key(executable)`
-Return the Studio tool-status key for a PnR executable.
-
-### Function `_optional_str(value)`
-Return a string value or ``None`` for public JSON output.
-
-### Function `_sha256_json(payload)`
-Return a stable SHA-256 digest over canonical JSON.
-
 ---
 
 ## Module `studio.templates`
@@ -37293,23 +32002,6 @@ Manage one Studio training run for thread or process execution.
   - Request cooperative cancellation for this training job.
 - **run_blocking**(context)
   - Run this training job inside a bounded Studio job context.
-- **_write_terminal_artifacts**(context)
-  - Write terminal training status and evidence artifacts.
-- **_emit**(event_type, data)
-- **_run**()
-- **_stop_requested**()
-- **_public_status**()
-- **_train**(context)
-- **_attach_initial_state_dict**(model)
-  - Load externally restored weights into the model before training.
-- **_poll_live_attach**(context, model, epoch)
-  - Consume and apply a pending live weight-attach control command.
-- **_apply_live_attach**(context, model, command, epoch)
-  - Verify and load a live weight attach, rejecting on any failure.
-- **_capture_weight_checkpoint**()
-  - Serialize terminal model weights for later job artifact publication.
-- **_publish_weight_checkpoint**(context)
-  - Publish captured terminal weights into the job artifact manifest.
 
 ### Function `list_surrogates()`
 Return available surrogate-gradient functions for the Studio UI.
@@ -37317,13 +32009,6 @@ Return available surrogate-gradient functions for the Studio UI.
 ### Function `list_cell_types()`
 Return available training cell types for the Studio UI.
 
-### Function `_make_synthetic(batch_size)`
-Generate synthetic classification data for quick demos.
-
-### Function `_load_mnist(batch_size)`
-Load MNIST via torchvision if available, else synthetic fallback.
-
-### Function `_register_job(job)`
 ### Function `start_training(config, job_manager)`
 Start a Studio training job.
 
@@ -37445,30 +32130,6 @@ ValueError
     If the checkpoint schema, config digest, or checkpoint digest is
     invalid.
 
-### Function `_sync_proxy_job(job, platform_status, platform_error, platform_result)`
-Update a parent-process proxy job from platform job terminal state.
-
-### Function `_status_from_platform_record(record)`
-Return Training Monitor status synthesized from a platform job record.
-
-### Function `_status_with_evidence_summary(status, evidence_summary)`
-Attach path-free evidence metadata to a public training status.
-
-### Function `_event_from_platform_record(platform_status, platform_error, platform_result)`
-Return an SSE event synthesized from a platform job record.
-
-### Function `_training_status_from_platform_status(platform_status)`
-Map platform job status into the Training Monitor status vocabulary.
-
-### Function `_json_event_payload(payload)`
-Return a JSON-compatible copy of a Training Monitor SSE event.
-
-### Function `_json_compatible(value)`
-Return ``value`` converted to JSON-compatible containers.
-
-### Function `_read_live_training_events(job_manager, job_id)`
-Read complete JSONL Training Monitor events appended by a process worker.
-
 ---
 
 ## Module `swarm.agent`
@@ -37507,21 +32168,6 @@ agent_id : int
 - **reset**(rng, width, height)
   - Reset kinematic and neural state while preserving trainable weights.
 
-### Function `_ensure_positive_int(value, name)`
-Return an integer value after rejecting bools and low values.
-
-### Function `_ensure_finite_float(value, name)`
-Return a finite float value, optionally requiring strict positivity.
-
-### Function `_ensure_seed(value, name)`
-Return a seed after rejecting bools and negative integers.
-
-### Function `_validate_weight_vector(weights, expected_size)`
-Return a finite one-dimensional copy with the expected weight count.
-
-### Function `_validate_sensory_vector(sensory, expected_size)`
-Return a finite one-dimensional sensory copy with the expected width.
-
 ---
 
 ## Module `swarm.collective_fields`
@@ -37545,7 +32191,6 @@ n_agents : int
     Number of agents (for emotional field sizing).
 
 - **__init__**(cfg, env_width, env_height, n_agents)
-- **_to_grid**(x, y)
 - **diffuse**(dt)
   - Apply Laplacian diffusion + exponential decay to the chemical field.
 - **deposit_chemical**(x, y, amount)
@@ -37560,17 +32205,6 @@ n_agents : int
   - Deposit into a symbolic channel at ``(x, y)``.
 - **update**(agents, env, dt)
   - Run one collective-field tick.
-
-### Function `_apply_laplacian(field)`
-Apply 3x3 Laplacian via manual convolution (zero-padded edges).
-
-Parameters
-----------
-field : ndarray, shape (H, W)
-
-Returns
--------
-lap : ndarray, shape (H, W)
 
 ---
 
@@ -37611,16 +32245,8 @@ cfg : EvolverConfig
     Evolution and evaluation parameters.
 
 - **__init__**(cfg)
-- **_make_env**()
-  - Build a fresh environment with the correct agent config.
 - **evaluate_individual**(weights)
   - Create environment, inject *weights* into every agent, run, score.
-- **_select_elite**()
-  - Return the top-N weight vectors by fitness.
-- **_crossover**(parent_a, parent_b)
-  - Uniform crossover: each gene randomly from either parent.
-- **_mutate**(individual)
-  - Gaussian mutation applied to a random subset of genes.
 - **evolve_generation**()
   - Evaluate population, select, reproduce.  Return best fitness.
 - **get_best_weights**()
@@ -37645,8 +32271,6 @@ cfg : EnvConfig
     Environment configuration.
 
 - **__init__**(cfg)
-- **_random_target_pos**()
-- **_apply_boundary**(agent)
 - **get_positions**()
   - Return (n_agents, 2) position array.
 - **get_headings**()
@@ -37884,7 +32508,6 @@ rectification : float
   - Compute gap junction current flowing INTO v_post.
 - **current_matrix**(voltages, adjacency)
   - Compute gap junction currents for a population.
-- **_validate_current_matrix_inputs**(voltages, adjacency)
 
 ---
 
@@ -37909,7 +32532,6 @@ True
 - **process_step**(pre_bit, post_bit)
 - **apply_reward**(reward)
   - Global reward signal triggers weight update.
-- **_validate_bit**(name, value)
 
 ---
 
@@ -37939,7 +32561,6 @@ True
   - Apply synapse to a pre-synaptic bitstream.
 - **effective_weight_probability**()
   - Decode the weight bitstream's probability P(weight_bit=1).
-- **_validate_weight**(w)
 
 ---
 
@@ -37996,9 +32617,6 @@ True
 - **__post_init__**()
 - **process_step**(pre_bit, post_bit)
   - Process one timestep: compute output, update trace, apply STDP.
-- **_potentiate**()
-- **_depress**()
-- **_validate_bit**(name, value)
 
 ---
 
@@ -38154,17 +32772,6 @@ n_path_samples : int
 - **__init__**(adjacency, directed, n_path_samples)
 - **analyze**()
   - Run full topology analysis.
-- **_modularity**(communities)
-  - Newman's modularity Q for the (undirected projection) graph.
-- **_connected_components**(A)
-  - Label each node with its connected-component index (BFS).
-- **_clustering**()
-  - Local clustering coefficient averaged over nodes.
-- **_avg_path_length**()
-  - Average shortest path length via BFS.
-- **_bfs**(A, src)
-- **_assortativity**(degrees)
-  - Degree assortativity coefficient.
 
 ---
 
@@ -38249,10 +32856,6 @@ rng_seed : int
     Random seed for reproducibility.
 
 - **__init__**(layer_sizes, rng_seed)
-- **_energy**(states)
-  - Compute the Hopfield energy of the network.
-- **_settle**(x)
-  - Settle the network to (near) equilibrium.
 - **train**(x_batch, y_batch)
   - Train on a mini-batch using the EP two-phase protocol.
 - **predict**(x, n_settle)
@@ -38260,18 +32863,9 @@ rng_seed : int
 - **get_params**()
   - Return serialisable parameter dict.
 
-### Function `_rho(x)`
-Hard-sigmoid activation (hardware-friendly, no exp).
-
-### Function `_rho_prime(x)`
-Derivative of hard-sigmoid.
-
 ---
 
 ## Module `training.loops`
-
-### Function `_device_usable(device)`
-Return whether a Torch device can execute a minimal tensor operation.
 
 ### Function `auto_device()`
 Select best available device: CUDA > MPS > CPU.
@@ -38311,7 +32905,6 @@ L2 penalty on mean spike rate. Penalizes high-firing neurons.
 
 ## Module `training.sc_correlation_regularizers`
 
-### Function `_require_stream_bank(streams)`
 ### Function `correlation_matrix(streams)`
 Return Pearson correlation matrix across bitstream rows.
 
@@ -38347,19 +32940,6 @@ Rate, variance, and correlation evidence for sampled bitstreams.
 Decoded sampled SC multiply result and stream statistics.
 
 
-### Function `_require_domain(name, value, lower, upper)`
-### Function `_bernoulli_product_expectation(p_input, p_weight, correlation)`
-### Function `_role_seed(config, role)`
-### Function `_probabilities_from_values(values, config)`
-### Function `_decode_probabilities(probabilities, config)`
-### Function `_sample_bernoulli_row(probability, length, seed)`
-### Function `_sample_sobol_row(probability, length, seed)`
-### Function `_radical_inverse_base2(index)`
-### Function `_sample_halton_row(probability, length, seed)`
-### Function `_lfsr16_step(state)`
-### Function `_sample_lfsr_row(probability, length, seed)`
-### Function `_sample_row(probability, length, seed, generator)`
-### Function `_sample_paired_sobol_rows(input_probability, weight_probability, length, seed)`
 ### Function `sample_sc_bitstreams(values, config)`
 Sample deterministic SC bitstreams for training-time statistics.
 
@@ -38512,14 +33092,6 @@ Conv2d(1,32,5)→LIF→AvgPool→Conv2d(32,64,5)→LIF→AvgPool→Flatten→Lin
 - **to_sc_weights**(include_bias, noise_model, encoding)
   - Export weight matrices for SC bitstream deployment.
 
-### Function `_coerce_sc_weight_noise_model(noise_model)`
-### Function `_normalise_sc_weight_tensor(weight, encoding)`
-### Function `_sc_weight_scale(weight, encoding)`
-### Function `_normalise_sc_bias_tensor(bias, scale, encoding)`
-### Function `_apply_sc_weight_noise(weight, model, layer_index, encoding)`
-### Function `_logit(p)`
-Inverse sigmoid: logit(p) = log(p / (1 - p)).
-
 ---
 
 ## Module `training.stochastic_backprop`
@@ -38549,14 +33121,9 @@ Discrete SC architecture choices exposed to differentiable joint training.
 Joint stochastic-backpropagation result with exportable SC design metadata.
 
 
-### Function `_scalar_like(reference, value)`
-### Function `_tensor_like(reference, values)`
-### Function `_require_tensor_domain(name, value, lower, upper)`
 ### Function `relaxed_sc_linear(input_value, weight, bias, sc_config)`
 Linear layer whose multiply-accumulate path uses relaxed SC products.
 
-### Function `_bernoulli_product_expectation_with_correlation_tensor(p_input, p_weight, correlation)`
-### Function `_relaxed_sc_linear_with_correlation_tensor(input_value, weight, bias, sc_config, correlation)`
 ### Function `stochastic_training_objective(task_loss)`
 Compose task loss with SC length, correlation, variance, and resource costs.
 
@@ -38575,103 +33142,16 @@ variables in the same backward pass.
 ### Function `build_stochastic_backprop_export_manifest(benchmark_report, sc_config)`
 Build a deterministic SC-NIR handoff manifest for stochastic backpropagation.
 
-### Function `_estimator_variance_export(benchmark_report)`
-### Function `_joint_design_export(benchmark_report, sc_config)`
 ### Function `write_stochastic_backprop_export_manifest(path, benchmark_report, sc_config)`
 Write a canonical stochastic backpropagation SC-NIR export manifest.
 
 ### Function `write_stochastic_backprop_handoff_bundle(export_manifest, output_dir)`
 Materialise an auditable SC-NIR HDL handoff bundle from an export manifest.
 
-### Function `_validate_benchmark_matches_config(benchmark_report, sc_config)`
-### Function `_source_rows_from_scnir(scnir_document)`
-### Function `_source_module_name(index, stream_id)`
-### Function `_shared_bitstream_length(scnir_document)`
-### Function `_signal_kind_counts(scnir_document)`
-### Function `_write_top_module(path)`
-### Function `_write_source_module(path)`
-### Function `_write_trained_design_parity_bundle(export_manifest, root)`
-### Function `_write_trained_design_module(path)`
-### Function `_q16(value)`
-### Function `_build_scnir_document(sc_config)`
-### Function `_stream()`
-### Function `_constraint()`
-### Function `_empty_source()`
-### Function `_source_kind(generator)`
-### Function `_source_specific(source_kind, sc_config)`
-### Function `_validate_manifest(manifest)`
-### Function `_mapping(value, path)`
 ---
 
 ## Module `training.surrogate`
 
-### Class `_FastSigmoidLegacy`
-Zenke & Vogels 2021 (legacy autograd path).
-
-- **forward**(ctx, x, slope)
-- **backward**(ctx, grad_output)
-
-### Class `_SuperSpikeLegacy`
-Zenke & Ganguli 2018 (legacy autograd path).
-
-- **forward**(ctx, x, beta)
-- **backward**(ctx, grad_output)
-
-### Class `_ATanLegacy`
-Fang et al. 2021 (legacy autograd path).
-
-- **forward**(ctx, x, alpha)
-- **backward**(ctx, grad_output)
-
-### Class `_SigmoidLegacy`
-Standard sigmoid surrogate (legacy autograd path).
-
-- **forward**(ctx, x, slope)
-- **backward**(ctx, grad_output)
-
-### Class `_StraightThroughLegacy`
-Straight-through estimator (legacy autograd path).
-
-- **forward**(ctx, x)
-- **backward**(ctx, grad_output)
-
-### Class `_TriangularLegacy`
-Triangular window surrogate (legacy autograd path).
-
-- **forward**(ctx, x, width)
-- **backward**(ctx, grad_output)
-
-### Function `_heaviside(x)`
-### Function `_fast_sigmoid_grad(x, slope)`
-### Function `_superspike_grad(x, beta)`
-### Function `_atan_grad(x, alpha)`
-### Function `_sigmoid_grad(x, slope)`
-### Function `_triangular_grad(x, width)`
-### Function `_fake_like_float(x)`
-### Function `_fast_sigmoid_custom_op(x, slope)`
-### Function `_fast_sigmoid_fake(x, slope)`
-### Function `_fast_sigmoid_setup_context(ctx, inputs, output)`
-### Function `_fast_sigmoid_backward(ctx, grad_output)`
-### Function `_superspike_custom_op(x, beta)`
-### Function `_superspike_fake(x, beta)`
-### Function `_superspike_setup_context(ctx, inputs, output)`
-### Function `_superspike_backward(ctx, grad_output)`
-### Function `_atan_custom_op(x, alpha)`
-### Function `_atan_fake(x, alpha)`
-### Function `_atan_setup_context(ctx, inputs, output)`
-### Function `_atan_backward(ctx, grad_output)`
-### Function `_sigmoid_custom_op(x, slope)`
-### Function `_sigmoid_fake(x, slope)`
-### Function `_sigmoid_setup_context(ctx, inputs, output)`
-### Function `_sigmoid_backward(ctx, grad_output)`
-### Function `_straight_through_custom_op(x)`
-### Function `_straight_through_fake(x)`
-### Function `_straight_through_backward(ctx, grad_output)`
-### Function `_triangular_custom_op(x, width)`
-### Function `_triangular_fake(x, width)`
-### Function `_triangular_setup_context(ctx, inputs, output)`
-### Function `_triangular_backward(ctx, grad_output)`
-### Function `_dispatch_path(path, custom_impl, legacy_impl)`
 ### Function `fast_sigmoid_custom_op(x, slope)`
 Heaviside forward, fast-sigmoid backward via ``torch.library.custom_op``.
 
@@ -38742,8 +33222,6 @@ at each layer per timestep. Useful for raster plots and diagnostics.
     monitor.reset()
 
 - **__init__**(model)
-- **_attach**()
-- **_make_hook**(name)
 - **get**(name)
   - Get recorded spikes for a named module. Returns (T, *shape) or None.
 - **layer_names**()
@@ -38790,10 +33268,6 @@ torch.Tensor
 ---
 
 ## Module `transfer.checkpoint`
-
-### Class `_Metadata`
-Validated metadata sidecar fields used to rebuild a checkpoint.
-
 
 ### Class `SNNCheckpoint`
 Complete dense-weight SNN checkpoint for transfer workflows.
@@ -38844,20 +33318,6 @@ Returns
 -------
 SNNCheckpoint:
     Reconstructed checkpoint with finite ``float64`` weight arrays.
-
-### Function `_validate_metadata(meta)`
-### Function `_require_string_list(meta, key)`
-### Function `_optional_string_list(meta, key)`
-### Function `_validate_layer_size_list(size)`
-### Function `_validate_layer_size_tuple(size)`
-### Function `_validate_weight_array(array, key, layer_size)`
-### Function `_validate_string_vector(values, label)`
-### Function `_validate_json_serializable(value)`
-### Function `_npz_path(path)`
-Return the weight archive path for a checkpoint base path.
-
-### Function `_json_path(path)`
-Return the metadata sidecar path for a checkpoint base path.
 
 ---
 
@@ -38928,14 +33388,9 @@ Returns
 tuple&#91;SNNCheckpoint, list&#91;float&#93;&#93;:
     The mutated checkpoint and one learning rate per layer.
 
-### Function `_validate_layer_names(checkpoint, layer_names)`
-### Function `_validate_until_index(checkpoint, until_index)`
 ---
 
 ## Module `transformers.block`
-
-### Class `_AttentionHead`
-- **forward**(Q, K, V)
 
 ### Class `StochasticTransformerBlock`
 Spiking transformer block (S-Former).
@@ -38947,7 +33402,6 @@ Structure: input -> multi-head attention -> add & norm -> feed forward
   - Validate the block dimensions and build the attention heads and FFN.
 - **forward**(x)
   - Run the block on input of shape (d_model,) or (seq_len, d_model).
-- **_multi_head_attention**(x)
 
 ---
 
@@ -38975,8 +33429,6 @@ threshold : float
 
 - **__post_init__**()
   - Derive the head dimension and initialise the projection weights.
-- **_spike_fn**(membrane)
-  - Integrate-and-fire: returns (spikes, new_membrane).
 - **forward**(x)
   - Forward pass: spike-driven attention over T timesteps.
 - **num_multiply_ops**()
@@ -39038,10 +33490,6 @@ max_len : int
 
 ## Module `utils.adapter_discovery`
 
-### Function `_resolve_target(target)`
-### Function `_entry_points(group)`
-### Function `_register_adapter(name, adapter_type)`
-### Function `_ensure_holonomic_adapters_loaded()`
 ### Function `discover_adapters()`
 Discover adapter classes and register them in the global registry.
 
@@ -39478,8 +33926,6 @@ dict
 Thread-safe component registry with namespace support.
 
 - **__init__**()
-- **_ensure_namespace_loaded**(namespace)
-  - Load namespace-side registration modules on first access.
 - **register**(namespace, name)
   - Decorator to register a class under *namespace*/*name*.
 - **get**(namespace, name)
@@ -39524,21 +33970,6 @@ array(&#91; True,  True,  True,  True,  True&#93;)
   - Draw uniform samples from the half-open interval ``&#91;0, 1)``.
 - **shuffle**(x)
   - Shuffle an array in place using this instance's random stream.
-
-### Function `_validate_seed(seed)`
-Return a seed accepted by NumPy without implicit bool or negative aliases.
-
-### Function `_finite_float(value, name)`
-Coerce a scalar distribution parameter and reject non-finite values.
-
-### Function `_positive_std(std)`
-Return a strictly positive normal-distribution standard deviation.
-
-### Function `_uniform_bounds(low, high)`
-Return finite, strictly ordered uniform-distribution bounds.
-
-### Function `_probability(p)`
-Return a finite Bernoulli probability in the closed unit interval.
 
 ---
 
@@ -39618,20 +34049,6 @@ Generates complete UVM verification IP from an RTL module spec.
   - Generate the complete UVM testbench for an RTL module.
 - **generate_multi**(modules)
   - Generate UVM testbenches for multiple modules.
-- **_emit_transaction**(rtl)
-- **_emit_sequence**(rtl)
-- **_emit_driver**(rtl)
-- **_emit_monitor**(rtl)
-- **_emit_scoreboard**(rtl)
-- **_emit_coverage**(rtl)
-- **_emit_agent**(rtl)
-- **_emit_env**(rtl)
-- **_emit_top**(rtl)
-- **_emit_sby**(rtl)
-- **_filelist**(rtl)
-- **_emit_bind**(rtl)
-- **_emit_makefile**(rtl, sim)
-- **_emit_regression_list**(rtl)
 - **generate_formal_links**(rtl)
   - Generate formal-to-dynamic links for existing SymbiYosys modules.
 
@@ -39673,10 +34090,6 @@ security boundary without additional sandboxing.
   - Return whether ``source_code`` passes the static blocklist.
 - **verify_logic_invariant**(func, input_sample, expected_condition)
   - Return whether a dynamic invariant holds for one input sample.
-- **_blocked_call_name**(func)
-  - Return the blocked call name exposed by ``func``, if any.
-- **_import_roots**(node)
-  - Return top-level module names imported by ``node``.
 
 ---
 
@@ -39741,7 +34154,6 @@ Evaluate SNN verification evidence against a standard profile.
 - **__init__**(profile)
 - **assess**(evidence)
   - Assess evidence against the configured profile.
-- **_assess_requirement**(requirement, evidence_items)
 
 ### Function `publication_grade_snn_standard_profile()`
 Return the default formal SNN verification standard profile.
@@ -39845,10 +34257,6 @@ Generates Art (Images) from Neural State.
 ---
 
 ## Module `viz.plots`
-
-### Function `_require_mpl()`
-### Function `_get_ax(ax)`
-Return existing axes or create a new figure+axes pair.
 
 ### Function `raster_plot(spike_monitor, ax, color, marker, s)`
 Spike raster from a SpikeMonitor.
@@ -39971,14 +34379,6 @@ controls. Algorithm: standard Kalman update equations
 - **__init__**(model)
 - **filter**(observations, controls, backend)
   - Run forward filtering on a sequence.
-- **_filter_rust**(observations, controls)
-  - Forward-pass dispatch to the Rust LGSSM Kalman filter.
-- **_filter_julia**(observations, controls)
-  - Forward-pass dispatch to the Julia LGSSM Kalman filter.
-- **_filter_go**(observations, controls)
-  - Forward-pass dispatch to the Go LGSSM Kalman filter.
-- **_filter_mojo**(observations, controls)
-  - Forward-pass dispatch to the Mojo LGSSM Kalman filter.
 
 ### Class `SmoothResult`
 Output of `RTSSmoother.smooth()`.
@@ -40046,40 +34446,6 @@ deterministic linear matmul + clip implementation was replaced
 - **forecast_with_cov**(initial_state, initial_cov, actions)
   - Multi-step probabilistic forecast (mean + cov trajectory).
 
-### Function `_missing_rust_kalman_filter()`
-### Function `_load_rust_kalman_filter()`
-### Function `_ensure_mojo_loaded()`
-Lazy-load the Mojo LGSSM shared library on first request.
-
-Built once via:
-  cd src/sc_neurocore/accel/mojo/world_model
-  mojo build --emit shared-lib -o liblgssm.so lgssm.mojo
-
-Per `feedback_mojo_026_ffi_pattern.md`, the @export signature
-accepts only non-parametric types — we pass every matrix as a
-raw `int64` address (numpy `arr.ctypes.data`) and the Mojo
-side reconstructs `UnsafePointer&#91;Float64, MutAnyOrigin&#93;`
-inside the function.
-
-### Function `_ensure_go_loaded()`
-Lazy-load the Go LGSSM shared library on first request.
-
-The .so is built once via:
-  cd src/sc_neurocore/accel/go/lgssm
-  go build -buildmode=c-shared -o liblgssm.so lgssm.go
-
-Returns True if the .so loads + has the expected symbol;
-False otherwise (with reason logged into the caller's
-`unavailable_reason` channel).
-
-### Function `_ensure_julia_loaded()`
-Lazy-load the Julia LGSSM module on first request.
-
-Returns True if Julia + the .jl module are available; False otherwise.
-Caches the loaded module in `_julia_module` for subsequent calls.
-Julia startup latency is ~5 s — never paid unless `backend='julia'`
-is explicitly requested.
-
 ---
 
 ## Module `world_model.spike_predictor`
@@ -40110,8 +34476,6 @@ seed : int
 
 - **__post_init__**()
   - Seed the RNG and initialise the predictor weights.
-- **_features**()
-  - Flatten history buffer into feature vector.
 - **predict_probs**()
   - Predict per-channel firing probabilities from history.
 - **predict**()

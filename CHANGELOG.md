@@ -5,6 +5,11 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 ## [Unreleased]
 
 ### Added
+- The generated public API reference now excludes single-underscore classes,
+  functions, and methods while retaining public and dunder surfaces. The
+  generator contract, committed `docs/API_REFERENCE.md`, and documentation
+  workflow were updated together; no runtime path, polyglot mirror, benchmark
+  dispatch, or benchmark artefact changed.
 - Quantum-cognition CLI SNN stimulus records now emit the canonical numeric
   fleet-memory `timestamp` field while preserving `content`, `project`, `actor`,
   `kind`, and `source_ref`; the focused CLI contract rejects legacy `text` and

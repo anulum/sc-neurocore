@@ -5,6 +5,14 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+### Public API reference
+- Changed the generated API reference to publish public classes, public module
+  functions, public methods, and dunder methods only. Single-underscore helper
+  classes, functions, and methods are now omitted from `docs/API_REFERENCE.md`;
+  the generator contract and documentation workflow were updated together. No
+  runtime path, polyglot mirror, benchmark dispatch, or benchmark artefact
+  changed.
+
 ### Quantum cognition memory schema
 - Changed quantum-cognition CLI SNN stimulus records to emit the canonical
   numeric fleet-memory `timestamp` field while keeping `content`, `project`,

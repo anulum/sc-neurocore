@@ -57,6 +57,11 @@ class FunctionDoc(TypedDict):
     doc: str | None
 
 
+def _is_public_name(name: str) -> bool:
+    """Return whether ``name`` belongs in the public API reference."""
+    return not name.startswith("_") or (name.startswith("__") and name.endswith("__"))
+
+
 def parse_file(filepath: str | Path) -> tuple[list[ClassDoc], list[FunctionDoc]]:
     """Parse public classes and functions from one Python source file."""
     filepath = Path(filepath)
@@ -67,9 +72,13 @@ def parse_file(filepath: str | Path) -> tuple[list[ClassDoc], list[FunctionDoc]]
 
     for node in tree.body:
         if isinstance(node, ast.ClassDef):
+            if not _is_public_name(node.name):
+                continue
             methods: list[MethodDoc] = []
             for item in node.body:
                 if isinstance(item, ast.FunctionDef):
+                    if not _is_public_name(item.name):
+                        continue
                     doc = ast.get_docstring(item)
                     methods.append(
                         {
@@ -81,6 +90,8 @@ def parse_file(filepath: str | Path) -> tuple[list[ClassDoc], list[FunctionDoc]]
             doc = ast.get_docstring(node)
             classes.append({"name": node.name, "doc": doc, "methods": methods})
         elif isinstance(node, ast.FunctionDef):
+            if not _is_public_name(node.name):
+                continue
             doc = ast.get_docstring(node)
             functions.append(
                 {"name": node.name, "args": [a.arg for a in node.args.args], "doc": doc}

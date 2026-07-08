@@ -287,7 +287,7 @@ When adding new modules:
 ## 4. API reference and documentation workflow
 
 ### 4.1 API reference
-The API reference is generated from docstrings using `scripts/generate_docs.py`. The resulting file is stored at `docs/API_REFERENCE.md`. This ensures that method signatures and short descriptions remain synchronized with code.
+The API reference is generated from docstrings using `scripts/generate_docs.py`. The resulting file is stored at `docs/API_REFERENCE.md`. This ensures that method signatures and short descriptions remain synchronized with code. The generator publishes public classes, public module functions, public methods, and Python dunder methods; single-underscore implementation helpers stay out of the public reference.
 
 When you add new classes or functions, include a clear docstring. The docstring should explain purpose, parameters, and expected shapes. The generator extracts only the first line of each method docstring, so write a concise summary sentence there.
 

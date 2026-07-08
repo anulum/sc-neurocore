@@ -88,6 +88,38 @@ def test_generate_markdown_escapes_docstring_reference_syntax(
     assert "[dst_neuron]" not in rendered
 
 
+def test_generate_markdown_excludes_private_symbols(tmp_path: Path) -> None:
+    """The public API reference must omit underscore-prefixed symbols."""
+    src_dir = tmp_path / "src" / "sc_neurocore"
+    package_dir = src_dir / "core"
+    package_dir.mkdir(parents=True)
+    (package_dir / "surface.py").write_text(
+        '"""Surface module."""\n\n'
+        "class PublicApi:\n"
+        '    """Documented public class."""\n'
+        "    def run(self) -> None:\n"
+        '        """Run the API."""\n'
+        "    def _prepare(self) -> None:\n"
+        '        """Prepare an internal state."""\n\n'
+        "class _InternalApi:\n"
+        '    """Internal class."""\n\n'
+        "def public_function() -> None:\n"
+        '    """Documented public function."""\n\n'
+        "def _private_function() -> None:\n"
+        '    """Internal function."""\n',
+        encoding="utf-8",
+    )
+
+    rendered = build_markdown(src_dir)
+
+    assert "PublicApi" in rendered
+    assert "**run**()" in rendered
+    assert "public_function" in rendered
+    assert "_prepare" not in rendered
+    assert "_InternalApi" not in rendered
+    assert "_private_function" not in rendered
+
+
 def _write_documented_source(tmp_path: Path) -> Path:
     """Create a minimal documented ``sc_neurocore`` source tree for tests."""
     src_dir = tmp_path / "src" / "sc_neurocore"
