@@ -5,6 +5,16 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+### Spintronic package exports
+- Exported the documented magnetic-domain mapper surface from
+  `sc_neurocore.spintronic`, including `SpintronicMapper`,
+  device/material models, MuMax3 helpers, racetrack/skyrmion utilities,
+  aging/radiation/defect models, and the Verilog generator. The quick-start docs
+  now use actual exported symbols, and existing submodule imports remain
+  compatible. Generated capability surfaces were refreshed for the new package
+  API test file. No mapper kernel, Julia/Rust/Mojo mirror, benchmark dispatch,
+  or benchmark artefact changed.
+
 ### Memristor package exports
 - Exported the documented memristor crossbar mapper surface from
   `sc_neurocore.memristor`, including `MemristorMapper`,

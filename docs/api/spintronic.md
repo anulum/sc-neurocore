@@ -9,9 +9,15 @@ the selected device contract rather than a fixed generic MTJ constant.
 ## Quick Start
 
 ```python
-from sc_neurocore.spintronic.spintronic_mapper import (
-    SpintronicMapper, MagneticDomainSim, SpinTorqueModel,
+from sc_neurocore.spintronic import (
+    SpintronicMapper, SpintronicTech, SpintronicDeviceConfig,
 )
 ```
+
+The package facade exports the documented mapper surface, including
+`SpintronicMapper`, device/material models, MuMax3 script/output helpers,
+racetrack and skyrmion utilities, multi-level-cell and write-verify helpers,
+aging/radiation/defect models, and the Verilog generator. The submodule path
+remains available for compatibility.
 
 ::: sc_neurocore.spintronic.spintronic_mapper
