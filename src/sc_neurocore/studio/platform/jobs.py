@@ -871,12 +871,8 @@ class StudioJobManager:
             )
         except ValueError as exc:
             raise StudioJobArtifactUnavailable(str(exc)) from exc
-        # Runtime confinement occurs in _resolve_confined_child before probing the artifact.
-        # lgtm[py/path-injection]
         if not artifact_path.is_file():
             return b"", offset
-        # Runtime confinement occurs in _resolve_confined_child before opening the artifact.
-        # lgtm[py/path-injection]
         with artifact_path.open("rb") as handle:
             handle.seek(offset)
             payload = handle.read(max_bytes)
@@ -1142,24 +1138,20 @@ def _relative_path_candidate(
     return candidate
 
 
-def _is_confined_path(*, root: Path, child: Path) -> bool:
+def _is_confined_path(*, root: str, child: str) -> bool:
     try:
-        return os.path.commonpath((os.fspath(root), os.fspath(child))) == os.fspath(root)
+        return os.path.commonpath((root, child)) == root
     except ValueError:
         return False
 
 
 def _resolve_confined_child(*, root: Path, relative_path: str, error_message: str) -> Path:
     candidate = _relative_path_candidate(relative_path, error_message=error_message)
-    # Canonicalization is the confinement check; callers pass configured roots or generated job dirs.
-    # lgtm[py/path-injection]
-    resolved_root = root.resolve()
-    # The child path rejected absolute paths and traversal segments before this canonicalization.
-    # lgtm[py/path-injection]
-    resolved = (resolved_root / candidate).resolve()
+    resolved_root = os.path.realpath(os.fspath(root))
+    resolved = os.path.realpath(os.path.join(resolved_root, os.fspath(candidate)))
     if not _is_confined_path(root=resolved_root, child=resolved):
         raise ValueError(error_message)
-    return resolved
+    return Path(resolved)
 
 
 def _process_worker_environment() -> dict[str, str]:
