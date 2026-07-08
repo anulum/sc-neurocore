@@ -8,6 +8,13 @@ synthesisable bridge in `hdl/sensors/adc_to_spike_quantiser.v` and the
 cycle-stepped golden model in `tools/adc_to_spike_reference.py` (Indiveri 2003
 rate coding); the cycle-accurate handshake/drain FSM stays in that reference,
 while this kernel is the per-window arithmetic that polyglot backends accelerate.
+The public package facade also exports the maintained surface:
+
+```python
+from sc_neurocore.sensors import ADCSpikeWindowConfig, adc_to_spike_windows
+```
+
+Existing submodule imports remain compatible.
 
 ## Contract
 

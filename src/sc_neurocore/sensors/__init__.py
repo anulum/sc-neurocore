@@ -8,6 +8,24 @@
 
 """Sensor interfaces: event cameras (DVS), audio, and other neuromorphic sensors."""
 
+from .adc_to_spike_kernel import (
+    ADCSpikeWindowConfig,
+    ADCSpikeWindowResult,
+    adc_to_spike_windows,
+    adc_to_spike_windows_q,
+    available_backends,
+    quantise_adc,
+)
 from .dvs import DVSLoader, events_to_spike_trains, events_to_frames
 
-__all__ = ["DVSLoader", "events_to_spike_trains", "events_to_frames"]
+__all__ = [
+    "ADCSpikeWindowConfig",
+    "ADCSpikeWindowResult",
+    "DVSLoader",
+    "adc_to_spike_windows",
+    "adc_to_spike_windows_q",
+    "available_backends",
+    "events_to_frames",
+    "events_to_spike_trains",
+    "quantise_adc",
+]

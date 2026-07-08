@@ -21,6 +21,7 @@ import numpy.testing as npt
 import numpy.typing as nptyping
 import pytest
 
+import sc_neurocore.sensors as sensors
 from sc_neurocore.sensors import adc_to_spike_kernel as kernel
 from sc_neurocore.sensors.adc_to_spike_kernel import (
     ADCSpikeWindowConfig,
@@ -30,6 +31,23 @@ from sc_neurocore.sensors.adc_to_spike_kernel import (
     available_backends,
     quantise_adc,
 )
+
+
+def test_sensors_package_exports_adc_to_spike_kernel_surface() -> None:
+    """The sensors package facade exposes the ADC-to-spike kernel surface."""
+    expected_names = {
+        "ADCSpikeWindowConfig",
+        "ADCSpikeWindowResult",
+        "adc_to_spike_windows",
+        "adc_to_spike_windows_q",
+        "available_backends",
+        "quantise_adc",
+    }
+
+    assert expected_names <= set(sensors.__all__)
+    assert sensors.ADCSpikeWindowConfig is ADCSpikeWindowConfig
+    assert sensors.adc_to_spike_windows is adc_to_spike_windows
+    assert sensors.adc_to_spike_windows_q is adc_to_spike_windows_q
 
 
 class TestQuantiseAdc:

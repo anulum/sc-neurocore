@@ -5,6 +5,14 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+### Sensor package exports
+- Exported the ADC-to-spike kernel surface from `sc_neurocore.sensors`,
+  including `ADCSpikeWindowConfig`, `ADCSpikeWindowResult`, backend selection,
+  the bit-true Python floor, and `quantise_adc`. Existing submodule imports
+  remain compatible. Sensor API docs, hardware docs, and module-specific tests
+  were updated. No ADC arithmetic, Rust/Julia/Go/Mojo backend, dispatch order,
+  benchmark output, or benchmark artefact changed.
+
 ### Quantum package exports
 - Exported the SC→quantum compiler surface from `sc_neurocore.quantum`,
   including `QuantumGate`, `SCQuantumCircuit`, probability/rotation helpers, and
