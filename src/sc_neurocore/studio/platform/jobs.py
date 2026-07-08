@@ -864,11 +864,18 @@ class StudioJobManager:
             raise ValueError("Studio live artifact read size must be positive.")
         requested_path = _normalize_artifact_lookup_path(relative_path)
         try:
-            artifact_path = _resolve_confined_child(
-                root=self._job_work_dir(job_id),
-                relative_path=requested_path,
+            work_dir = self._job_work_dir(job_id)
+            candidate = _relative_path_candidate(
+                requested_path,
                 error_message="Studio job artifact path escapes the job directory.",
             )
+            resolved_root = os.path.realpath(os.fspath(work_dir))
+            resolved_artifact_path = os.path.realpath(
+                os.path.join(resolved_root, os.fspath(candidate))
+            )
+            if not _is_confined_path(root=resolved_root, child=resolved_artifact_path):
+                raise ValueError("Studio job artifact path escapes the job directory.")
+            artifact_path = Path(resolved_artifact_path)
         except ValueError as exc:
             raise StudioJobArtifactUnavailable(str(exc)) from exc
         if not artifact_path.is_file():
