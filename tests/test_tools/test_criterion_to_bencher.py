@@ -9,7 +9,7 @@
 """Contract for the Criterion→bencher converter used by the Performance Benchmarks gate.
 
 The converter feeds ``benchmark-action/github-action-benchmark`` (``fail-on-alert`` at a
-500% threshold). A single mis-parsed value poisons the gh-pages baseline and red-gates every
+500% threshold). A single misread value poisons the gh-pages baseline and red-gates every
 later push, so the parse — especially the unit-boundary straddle that previously under-read
 ``[999.50 µs 1.0001 ms 1.0050 ms]`` as ``1000 ns`` instead of ``1000100 ns`` — is pinned here.
 """
