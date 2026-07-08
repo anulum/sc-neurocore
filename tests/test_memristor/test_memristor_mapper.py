@@ -9,6 +9,7 @@
 import numpy as np
 import pytest
 
+import sc_neurocore.memristor as memristor
 from sc_neurocore.memristor.memristor_mapper import (
     AgingSimulator,
     CompensationLUT,
@@ -28,6 +29,39 @@ from sc_neurocore.memristor.memristor_mapper import (
     VerilogEmitter,
     WriteVerifyProtocol,
 )
+
+
+def test_memristor_package_exports_mapper_surface() -> None:
+    """The memristor package facade exposes the documented mapper surface."""
+    expected_symbols = {
+        "AgingReport",
+        "AgingSimulator",
+        "CompensationLUT",
+        "CompensationStrategy",
+        "ConductanceModel",
+        "CrossbarArray",
+        "CrossbarEstimator",
+        "CrossbarMapping",
+        "CrossbarPowerEstimate",
+        "CrossbarTopology",
+        "IRDropModel",
+        "MappingResult",
+        "MemristorMapper",
+        "MemristorTechnology",
+        "MonteCarloReport",
+        "MonteCarloSimulator",
+        "SCAbsorbEncoder",
+        "SneakPathModel",
+        "StuckFaultMap",
+        "VariabilityInjector",
+        "VerilogEmitter",
+        "WriteVerifyProtocol",
+        "WriteVerifyResult",
+    }
+
+    assert expected_symbols == set(memristor.__all__)
+    for name in expected_symbols:
+        assert getattr(memristor, name).__name__ == name
 
 
 # ── ConductanceModel Tests ──────────────────────────────────────────

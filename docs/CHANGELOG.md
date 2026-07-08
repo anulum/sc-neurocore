@@ -5,6 +5,14 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+### Memristor package exports
+- Exported the documented memristor crossbar mapper surface from
+  `sc_neurocore.memristor`, including `MemristorMapper`,
+  conductance/crossbar models, compensation helpers, Monte Carlo reports, and
+  the SystemVerilog emitter. Existing submodule imports remain compatible. No
+  mapper kernel, Julia/Rust/Mojo mirror, benchmark dispatch, or benchmark
+  artefact changed.
+
 ### JAX dense layer exports
 - Exported `JaxSCDenseLayer` through the lazy package facades as
   `sc_neurocore.JaxSCDenseLayer` and
