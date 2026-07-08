@@ -13,6 +13,7 @@ from __future__ import annotations
 import hashlib
 import json
 import os
+import re
 import secrets
 import shutil
 
@@ -49,6 +50,7 @@ STUDIO_SEED_INPUT_DIR = ".studio_seed"
 STUDIO_CONTROL_DIR = ".studio_control"
 STUDIO_CONTROL_SEED_DIR = ".studio_control_seed"
 STUDIO_CONTROL_COMMAND_FILE = "command.json"
+STUDIO_JOB_ID_PATTERN = re.compile(r"\Asj_[0-9a-f]{16}\Z")
 
 
 class StudioJobRejected(ValueError):
@@ -376,8 +378,9 @@ class StudioJobContext:
             If the seed payload does not exist.
         """
 
-        target_path = _resolve_confined_child(
-            root=self._work_dir / STUDIO_SEED_INPUT_DIR,
+        target_path = _resolve_confined_nested_child(
+            root=self._work_dir,
+            subdirectory=STUDIO_SEED_INPUT_DIR,
             relative_path=relative_path,
             error_message="Studio job seed-input path escapes the seed directory.",
         )
@@ -444,8 +447,9 @@ class StudioJobContext:
             If the control-seed payload does not exist.
         """
 
-        target_path = _resolve_confined_child(
-            root=self._work_dir / STUDIO_CONTROL_SEED_DIR,
+        target_path = _resolve_confined_nested_child(
+            root=self._work_dir,
+            subdirectory=STUDIO_CONTROL_SEED_DIR,
             relative_path=relative_path,
             error_message="Studio job control-seed path escapes the control-seed directory.",
         )
@@ -483,7 +487,7 @@ class StudioJobManager:
             raise ValueError("Studio job timeout must be positive.")
         if max_artifact_bytes <= 0:
             raise ValueError("Studio job artifact size limit must be positive.")
-        self._root = root
+        self._root = root.resolve()
         self._allowed_kinds = frozenset(sorted(allowed_kinds))
         self._default_timeout_seconds = default_timeout_seconds
         self._max_artifact_bytes = max_artifact_bytes
@@ -511,7 +515,11 @@ class StudioJobManager:
         if timeout <= 0:
             raise StudioJobRejected("Studio job timeout must be positive.")
         job_id = f"sj_{secrets.token_hex(8)}"
-        work_dir = self._root / job_id
+        work_dir = _resolve_job_directory(
+            root=self._root,
+            job_id=job_id,
+            error_message="Studio job path escapes the job root.",
+        )
         work_dir.mkdir(parents=True, exist_ok=False)
         cancel_event = threading.Event()
         done_event = threading.Event()
@@ -592,7 +600,11 @@ class StudioJobManager:
         _validate_process_task_path(task_path)
         payload_json = _json_payload(payload, "Studio process job payload must be JSON.")
         job_id = f"sj_{secrets.token_hex(8)}"
-        work_dir = self._root / job_id
+        work_dir = _resolve_job_directory(
+            root=self._root,
+            job_id=job_id,
+            error_message="Studio job path escapes the job root.",
+        )
         work_dir.mkdir(parents=True, exist_ok=False)
         self._write_seed_inputs(work_dir, seed_inputs)
         payload_path = work_dir / ".studio_process_payload.json"
@@ -669,11 +681,18 @@ class StudioJobManager:
         if record.status != "running":
             raise StudioJobRejected("Studio job is not running.")
         command_json = _json_payload(command, "Studio job control command must be JSON.")
-        work_dir = self._root / job_id
+        try:
+            work_dir = self._job_work_dir(record.job_id)
+        except ValueError as exc:
+            raise StudioJobRejected(str(exc)) from exc
         if not work_dir.is_dir():
             raise StudioJobRejected("Studio job work directory is unavailable.")
         self._write_seed_inputs(work_dir, seed_inputs, seed_dir=STUDIO_CONTROL_SEED_DIR)
-        control_dir = work_dir / STUDIO_CONTROL_DIR
+        control_dir = _resolve_confined_child(
+            root=work_dir,
+            relative_path=STUDIO_CONTROL_DIR,
+            error_message="Studio job control path escapes the job directory.",
+        )
         control_dir.mkdir(parents=True, exist_ok=True)
         command_path = control_dir / STUDIO_CONTROL_COMMAND_FILE
         temp_path = control_dir / f".{STUDIO_CONTROL_COMMAND_FILE}.tmp"
@@ -691,7 +710,15 @@ class StudioJobManager:
 
         if not seed_inputs:
             return
-        seed_root = work_dir / seed_dir
+        try:
+            seed_root = _resolve_confined_child(
+                root=work_dir,
+                relative_path=seed_dir,
+                error_message="Studio job seed-input path escapes the seed directory.",
+            )
+        except ValueError as exc:
+            raise StudioJobRejected(str(exc)) from exc
+        seed_root.mkdir(parents=True, exist_ok=True)
         for relative_path, data in seed_inputs.items():
             if not isinstance(data, bytes | bytearray):
                 raise StudioJobRejected("Studio job seed input must be bytes.")
@@ -771,11 +798,10 @@ class StudioJobManager:
             record = self._records[job_id]
             if record.status in ("pending", "running", "cancelling"):
                 raise StudioJobRejected("Studio active jobs cannot be purged.")
-        work_dir = _resolve_confined_child(
-            root=self._root,
-            relative_path=record.job_id,
-            error_message="Studio job purge path escapes the job root.",
-        )
+        try:
+            work_dir = self._job_work_dir(record.job_id)
+        except ValueError as exc:
+            raise StudioJobRejected(str(exc)) from exc
         if work_dir.exists():
             if not work_dir.is_dir():
                 raise StudioJobRejected("Studio job purge target is not a directory.")
@@ -798,11 +824,14 @@ class StudioJobManager:
         record = self.record(job_id)
         requested_path = _normalize_artifact_lookup_path(relative_path)
         artifact = _find_artifact(record.artifacts, requested_path)
-        artifact_path = _resolve_confined_child(
-            root=self._root / job_id,
-            relative_path=artifact.relative_path,
-            error_message="Studio job artifact path escapes the job directory.",
-        )
+        try:
+            artifact_path = _resolve_confined_child(
+                root=self._job_work_dir(record.job_id),
+                relative_path=artifact.relative_path,
+                error_message="Studio job artifact path escapes the job directory.",
+            )
+        except ValueError as exc:
+            raise StudioJobArtifactUnavailable(str(exc)) from exc
         if not artifact_path.is_file():
             raise StudioJobArtifactUnavailable("Studio job artifact is unavailable.")
         payload = artifact_path.read_bytes()
@@ -834,11 +863,14 @@ class StudioJobManager:
         if max_bytes <= 0:
             raise ValueError("Studio live artifact read size must be positive.")
         requested_path = _normalize_artifact_lookup_path(relative_path)
-        artifact_path = _resolve_confined_child(
-            root=self._root / job_id,
-            relative_path=requested_path,
-            error_message="Studio job artifact path escapes the job directory.",
-        )
+        try:
+            artifact_path = _resolve_confined_child(
+                root=self._job_work_dir(job_id),
+                relative_path=requested_path,
+                error_message="Studio job artifact path escapes the job directory.",
+            )
+        except ValueError as exc:
+            raise StudioJobArtifactUnavailable(str(exc)) from exc
         if not artifact_path.is_file():
             return b"", offset
         with artifact_path.open("rb") as handle:
@@ -1036,6 +1068,13 @@ class StudioJobManager:
         timestamp = self._clock().astimezone(UTC).replace(microsecond=0)
         return timestamp.isoformat().replace("+00:00", "Z")
 
+    def _job_work_dir(self, job_id: str) -> Path:
+        return _resolve_job_directory(
+            root=self._root,
+            job_id=job_id,
+            error_message="Studio job path escapes the job root.",
+        )
+
     @staticmethod
     def _utc_now() -> datetime:
         return datetime.now(UTC)
@@ -1052,19 +1091,65 @@ def _find_artifact(
 
 
 def _normalize_artifact_lookup_path(relative_path: str) -> str:
-    candidate = Path(relative_path)
-    if candidate.is_absolute() or any(part == ".." for part in candidate.parts):
-        raise KeyError(relative_path)
+    try:
+        _relative_path_candidate(relative_path)
+    except ValueError as exc:
+        raise KeyError(relative_path) from exc
     return relative_path
 
 
-def _resolve_confined_child(*, root: Path, relative_path: str, error_message: str) -> Path:
-    candidate = Path(relative_path)
-    if candidate.is_absolute() or any(part == ".." for part in candidate.parts):
+def _resolve_job_directory(*, root: Path, job_id: str, error_message: str) -> Path:
+    if STUDIO_JOB_ID_PATTERN.fullmatch(job_id) is None:
         raise ValueError(error_message)
-    resolved = (root / candidate).resolve()
+    return _resolve_confined_child(root=root, relative_path=job_id, error_message=error_message)
+
+
+def _resolve_confined_nested_child(
+    *,
+    root: Path,
+    subdirectory: str,
+    relative_path: str,
+    error_message: str,
+) -> Path:
+    confined_root = _resolve_confined_child(
+        root=root,
+        relative_path=subdirectory,
+        error_message=error_message,
+    )
+    return _resolve_confined_child(
+        root=confined_root,
+        relative_path=relative_path,
+        error_message=error_message,
+    )
+
+
+def _relative_path_candidate(
+    relative_path: str,
+    *,
+    error_message: str = "Path must be a confined relative path.",
+) -> Path:
+    candidate = Path(relative_path)
+    if (
+        candidate.is_absolute()
+        or not candidate.parts
+        or any(part in ("", ".", "..") for part in candidate.parts)
+    ):
+        raise ValueError(error_message)
+    return candidate
+
+
+def _is_confined_path(*, root: Path, child: Path) -> bool:
+    try:
+        return os.path.commonpath((os.fspath(root), os.fspath(child))) == os.fspath(root)
+    except ValueError:
+        return False
+
+
+def _resolve_confined_child(*, root: Path, relative_path: str, error_message: str) -> Path:
+    candidate = _relative_path_candidate(relative_path, error_message=error_message)
     resolved_root = root.resolve()
-    if resolved_root != resolved and resolved_root not in resolved.parents:
+    resolved = (resolved_root / candidate).resolve()
+    if not _is_confined_path(root=resolved_root, child=resolved):
         raise ValueError(error_message)
     return resolved
 

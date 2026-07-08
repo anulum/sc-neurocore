@@ -192,6 +192,23 @@ def test_studio_job_manager_rejects_non_directory_purge_target(tmp_path: Path) -
     assert manager.record(record.job_id).job_id == record.job_id
 
 
+def test_studio_job_directory_resolution_rejects_non_generated_ids(tmp_path: Path) -> None:
+    """Job directory lookup accepts only generated job identifier shapes."""
+
+    with pytest.raises(ValueError, match="escapes the job root"):
+        jobs_module._resolve_job_directory(
+            root=tmp_path / "jobs",
+            job_id="../escape",
+            error_message="Studio job path escapes the job root.",
+        )
+    with pytest.raises(ValueError, match="escapes the job root"):
+        jobs_module._resolve_job_directory(
+            root=tmp_path / "jobs",
+            job_id="sj_not_hex",
+            error_message="Studio job path escapes the job root.",
+        )
+
+
 def test_studio_job_context_appends_and_publishes_live_event_artifact(
     tmp_path: Path,
 ) -> None:
@@ -716,6 +733,26 @@ def test_read_seed_input_rejects_escaping_path(tmp_path: Path) -> None:
         context.read_seed_input("../escape.bin")
 
 
+def test_read_seed_input_rejects_symlinked_seed_directory(tmp_path: Path) -> None:
+    """Seed reads reject reserved seed directories that resolve outside the job."""
+
+    work_dir = tmp_path / "seed-job"
+    outside_dir = tmp_path / "outside"
+    outside_dir.mkdir()
+    work_dir.mkdir()
+    (work_dir / STUDIO_SEED_INPUT_DIR).symlink_to(outside_dir, target_is_directory=True)
+    (outside_dir / "model.bin").write_bytes(b"escape")
+    context = StudioJobContext(
+        job_id="sj_seed",
+        work_dir=work_dir,
+        cancel_event=threading.Event(),
+        max_artifact_bytes=4096,
+    )
+
+    with pytest.raises(ValueError, match="escapes the seed directory"):
+        context.read_seed_input("model.bin")
+
+
 def test_poll_control_command_consumes_pending_command_once(tmp_path: Path) -> None:
     """A pending control command is decoded and consumed exactly once."""
 
@@ -765,6 +802,26 @@ def test_read_control_seed_rejects_escaping_path(tmp_path: Path) -> None:
 
     with pytest.raises(ValueError, match="escapes the control-seed directory"):
         context.read_control_seed("../escape.bin")
+
+
+def test_read_control_seed_rejects_symlinked_seed_directory(tmp_path: Path) -> None:
+    """Control seed reads reject symlinked reserved seed directories."""
+
+    work_dir = tmp_path / "ctrl-job"
+    outside_dir = tmp_path / "outside"
+    outside_dir.mkdir()
+    work_dir.mkdir()
+    (work_dir / STUDIO_CONTROL_SEED_DIR).symlink_to(outside_dir, target_is_directory=True)
+    (outside_dir / "model.bin").write_bytes(b"escape")
+    context = StudioJobContext(
+        job_id="sj_ctrl",
+        work_dir=work_dir,
+        cancel_event=threading.Event(),
+        max_artifact_bytes=4096,
+    )
+
+    with pytest.raises(ValueError, match="escapes the control-seed directory"):
+        context.read_control_seed("model.bin")
 
 
 def test_send_control_command_rejects_terminal_job(tmp_path: Path) -> None:

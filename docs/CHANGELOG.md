@@ -5,6 +5,14 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+### Studio sandbox hardening
+- Hardened Studio job sandbox path confinement so generated job directories,
+  seed/control seed inputs, live artifact reads, artifact downloads, control
+  commands, and purges validate canonical paths before filesystem access. Added
+  focused regression coverage for malformed job IDs and symlinked reserved seed
+  directories. No Studio job API, worker payload schema, polyglot mirror,
+  benchmark dispatch, or benchmark artefact changed.
+
 ### Sensor package exports
 - Exported the ADC-to-spike kernel surface from `sc_neurocore.sensors`,
   including `ADCSpikeWindowConfig`, `ADCSpikeWindowResult`, backend selection,
