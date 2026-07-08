@@ -17,6 +17,7 @@ import numpy as np
 import pytest
 
 import sc_neurocore.world_model.predictive_model as pm
+from tests.module_reload import restore_module_namespace, snapshot_module_namespace
 
 
 def _model(control_dim: int = 0) -> pm.LinearGaussianSSM:
@@ -51,13 +52,14 @@ def test_import_time_rust_probe_falls_back_when_engine_symbol_fails(
 
     monkeypatch.setattr(pm._importlib, "import_module", missing_rust_engine)
     try:
+        _saved_ns = snapshot_module_namespace(pm)
         reloaded = importlib.reload(pm)
         assert reloaded._HAS_RUST_LGSSM is False
         with pytest.raises(RuntimeError, match="Rust LGSSM backend requested"):
             reloaded.KalmanFilter(_model()).filter(np.zeros((3, 2)), backend="rust")
     finally:
         monkeypatch.undo()
-        importlib.reload(pm)
+        restore_module_namespace(pm, _saved_ns)
 
 
 def test_import_time_rust_probe_uses_world_model_submodule(
@@ -73,12 +75,13 @@ def test_import_time_rust_probe_uses_world_model_submodule(
 
     monkeypatch.setattr(pm._importlib, "import_module", submodule_rust_engine)
     try:
+        _saved_ns = snapshot_module_namespace(pm)
         reloaded = importlib.reload(pm)
         assert reloaded._HAS_RUST_LGSSM is True
         assert reloaded._rust_kalman_filter is sentinel_filter
     finally:
         monkeypatch.undo()
-        importlib.reload(pm)
+        restore_module_namespace(pm, _saved_ns)
 
 
 def test_import_time_rust_probe_uses_root_package_fallback(
@@ -96,12 +99,13 @@ def test_import_time_rust_probe_uses_root_package_fallback(
 
     monkeypatch.setattr(pm._importlib, "import_module", root_only_rust_engine)
     try:
+        _saved_ns = snapshot_module_namespace(pm)
         reloaded = importlib.reload(pm)
         assert reloaded._HAS_RUST_LGSSM is True
         assert reloaded._rust_kalman_filter is sentinel_filter
     finally:
         monkeypatch.undo()
-        importlib.reload(pm)
+        restore_module_namespace(pm, _saved_ns)
 
 
 def test_ensure_mojo_loaded_returns_true_when_already_cached() -> None:

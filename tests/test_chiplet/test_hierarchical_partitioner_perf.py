@@ -822,8 +822,11 @@ class TestImportFallback:
         import sys
         from sc_neurocore.chiplet import hierarchical_partitioner as hp_mod
 
+        from tests.module_reload import restore_module_namespace, snapshot_module_namespace
+
         # Save current state for restoration.
         saved_engine = sys.modules.get("sc_neurocore_engine")
+        saved_namespace = snapshot_module_namespace(hp_mod)
         try:
             # Mask the engine module so the next import fails.
             sys.modules["sc_neurocore_engine"] = None  # type: ignore[assignment]
@@ -831,13 +834,14 @@ class TestImportFallback:
             assert reloaded._HAS_RUST_KL_REFINE is False
             assert reloaded._rust_kl_refine is None
         finally:
-            # Restore engine + reload module so subsequent tests see real engine.
+            # Restore engine + the module's original class identities so subsequent tests
+            # (and their by-value imports) see the real engine and canonical classes.
             if saved_engine is not None:
                 sys.modules["sc_neurocore_engine"] = saved_engine
             else:
                 sys.modules.pop("sc_neurocore_engine", None)
-            restored = importlib.reload(hp_mod)
-            _refresh_package_reexports(restored)
+            restore_module_namespace(hp_mod, saved_namespace)
+            _refresh_package_reexports(hp_mod)
 
 
 class TestPreExistingEdgeCases:

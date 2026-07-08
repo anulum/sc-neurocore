@@ -27,6 +27,7 @@ import numpy as np
 import pytest
 
 from sc_neurocore.network import gamma_oscillation as gamma_oscillation_module
+from tests.module_reload import restore_module_namespace, snapshot_module_namespace
 from sc_neurocore.network.gamma_oscillation import (
     _HAS_GO_PING_STEP,
     _HAS_JULIA_PING_STEP,
@@ -262,6 +263,7 @@ class TestNativeBackendDispatch:
         monkeypatch.setattr(
             gamma_oscillation_module._importlib, "import_module", reject_rust_engine
         )
+        _saved_ns = snapshot_module_namespace(gamma_oscillation_module)
         reloaded = importlib.reload(gamma_oscillation_module)
         try:
             assert reloaded._HAS_RUST_PING_STEP is False
@@ -270,7 +272,7 @@ class TestNativeBackendDispatch:
                 reloaded.PINGCircuit(backend="rust")
         finally:
             monkeypatch.undo()
-            importlib.reload(gamma_oscillation_module)
+            restore_module_namespace(gamma_oscillation_module, _saved_ns)
 
     def test_rust_kernel_discovery_uses_root_package_fallback(
         self, monkeypatch: pytest.MonkeyPatch
@@ -286,25 +288,27 @@ class TestNativeBackendDispatch:
             return real_import_module(name)
 
         monkeypatch.setattr(importlib_module, "import_module", fallback_root_engine)
+        _saved_ns = snapshot_module_namespace(gamma_oscillation_module)
         reloaded = importlib.reload(gamma_oscillation_module)
         try:
             assert reloaded._HAS_RUST_PING_STEP is True
             assert reloaded._rust_ping_step is not None
         finally:
             monkeypatch.undo()
-            importlib.reload(gamma_oscillation_module)
+            restore_module_namespace(gamma_oscillation_module, _saved_ns)
 
     def test_julia_discovery_failure_remains_optional(
         self, monkeypatch: pytest.MonkeyPatch
     ) -> None:
         monkeypatch.setitem(sys.modules, "juliacall", None)
+        _saved_ns = snapshot_module_namespace(gamma_oscillation_module)
         reloaded = importlib.reload(gamma_oscillation_module)
         try:
             assert reloaded._HAS_JULIA_PING_STEP is False
             assert reloaded._julia_ping_step is None
         finally:
             monkeypatch.undo()
-            importlib.reload(gamma_oscillation_module)
+            restore_module_namespace(gamma_oscillation_module, _saved_ns)
 
     def test_ctypes_backend_discovery_failures_remain_optional(
         self, monkeypatch: pytest.MonkeyPatch
@@ -317,6 +321,7 @@ class TestNativeBackendDispatch:
 
         monkeypatch.setattr(os.path, "exists", fake_exists)
         monkeypatch.setattr(ctypes, "CDLL", reject_cdll)
+        _saved_ns = snapshot_module_namespace(gamma_oscillation_module)
         reloaded = importlib.reload(gamma_oscillation_module)
         try:
             assert reloaded._HAS_GO_PING_STEP is False
@@ -325,7 +330,7 @@ class TestNativeBackendDispatch:
             assert reloaded._mojo_ping_step is None
         finally:
             monkeypatch.undo()
-            importlib.reload(gamma_oscillation_module)
+            restore_module_namespace(gamma_oscillation_module, _saved_ns)
 
 
 # ── Fidelity tests vs Börgers-Kopell 2003 ────────────────────────────

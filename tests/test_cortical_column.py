@@ -25,6 +25,7 @@ import pytest
 from scipy import sparse
 
 from sc_neurocore.network import cortical_column as cortical_column_module
+from tests.module_reload import restore_module_namespace, snapshot_module_namespace
 from sc_neurocore.network.cortical_column import (
     CONN_PROBS,
     CorticalColumn,
@@ -619,13 +620,14 @@ class TestNativeDiscovery:
             return real_import_module(name)
 
         monkeypatch.setattr(cortical_column_module._importlib, "import_module", root_only_engine)
+        _saved_ns = snapshot_module_namespace(cortical_column_module)
         reloaded = importlib.reload(cortical_column_module)
         try:
             assert reloaded._HAS_RUST_CSR_SPMV is True
             assert reloaded._HAS_RUST_CSR_MULTI_SPMV is True
         finally:
             monkeypatch.undo()
-            importlib.reload(cortical_column_module)
+            restore_module_namespace(cortical_column_module, _saved_ns)
 
     def test_rust_discovery_fails_closed_without_symbols(self, monkeypatch):
         real_import_module = cortical_column_module._importlib.import_module
@@ -636,6 +638,7 @@ class TestNativeDiscovery:
             return real_import_module(name)
 
         monkeypatch.setattr(cortical_column_module._importlib, "import_module", missing_engine)
+        _saved_ns = snapshot_module_namespace(cortical_column_module)
         reloaded = importlib.reload(cortical_column_module)
         try:
             assert reloaded._HAS_RUST_CSR_SPMV is False
@@ -644,17 +647,18 @@ class TestNativeDiscovery:
             assert reloaded._rust_csr_multi_spmv_add is None
         finally:
             monkeypatch.undo()
-            importlib.reload(cortical_column_module)
+            restore_module_namespace(cortical_column_module, _saved_ns)
 
     def test_julia_discovery_failure_remains_optional(self, monkeypatch):
         monkeypatch.setitem(sys.modules, "juliacall", None)
+        _saved_ns = snapshot_module_namespace(cortical_column_module)
         reloaded = importlib.reload(cortical_column_module)
         try:
             assert reloaded._HAS_JULIA_MULTI_SPMV is False
             assert reloaded._julia_multi_spmv is None
         finally:
             monkeypatch.undo()
-            importlib.reload(cortical_column_module)
+            restore_module_namespace(cortical_column_module, _saved_ns)
 
     def test_optional_ctypes_backend_load_failures_remain_optional(self, monkeypatch):
         def fake_exists(path):
@@ -665,6 +669,7 @@ class TestNativeDiscovery:
 
         monkeypatch.setattr(cortical_column_module.os.path, "exists", fake_exists)
         monkeypatch.setattr(cortical_column_module.ctypes, "CDLL", reject_cdll)
+        _saved_ns = snapshot_module_namespace(cortical_column_module)
         reloaded = importlib.reload(cortical_column_module)
         try:
             assert reloaded._HAS_GO_MULTI_SPMV is False
@@ -673,7 +678,7 @@ class TestNativeDiscovery:
             assert reloaded._mojo_multi_spmv is None
         finally:
             monkeypatch.undo()
-            importlib.reload(cortical_column_module)
+            restore_module_namespace(cortical_column_module, _saved_ns)
 
     def test_mojo_ctypes_discovery_configures_symbol(self, monkeypatch):
         class FakeFunction:
@@ -688,6 +693,7 @@ class TestNativeDiscovery:
 
         monkeypatch.setattr(cortical_column_module.os.path, "exists", fake_exists)
         monkeypatch.setattr(cortical_column_module.ctypes, "CDLL", lambda _path: fake_lib)
+        _saved_ns = snapshot_module_namespace(cortical_column_module)
         reloaded = importlib.reload(cortical_column_module)
         try:
             assert reloaded._HAS_MOJO_MULTI_SPMV is True
@@ -695,7 +701,7 @@ class TestNativeDiscovery:
             assert fake_function.restype is None
         finally:
             monkeypatch.undo()
-            importlib.reload(cortical_column_module)
+            restore_module_namespace(cortical_column_module, _saved_ns)
 
 
 # ── Published fidelity (Potjans 2014 Table 4) ────────────────────────

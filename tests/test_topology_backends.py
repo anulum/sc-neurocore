@@ -336,9 +336,12 @@ def test_rust_import_failure_sets_flag_false() -> None:
     import sys
     import types
 
+    from tests.module_reload import restore_module_namespace, snapshot_module_namespace
+
     fake = types.ModuleType("sc_neurocore_engine")  # no py_ollivier_ricci_curvature
     had = sys.modules.get("sc_neurocore_engine")
     sys.modules["sc_neurocore_engine"] = fake
+    saved_namespace = snapshot_module_namespace(topology)
     try:
         reloaded = importlib.reload(topology)
         assert reloaded._HAS_RUST_TOPOLOGY is False
@@ -348,4 +351,4 @@ def test_rust_import_failure_sets_flag_false() -> None:
             sys.modules["sc_neurocore_engine"] = had
         else:
             sys.modules.pop("sc_neurocore_engine", None)
-        importlib.reload(topology)
+        restore_module_namespace(topology, saved_namespace)

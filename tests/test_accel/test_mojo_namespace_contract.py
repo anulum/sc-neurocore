@@ -18,11 +18,13 @@ from types import ModuleType
 import pytest
 
 import sc_neurocore.accel.mojo as mojo_namespace
+from tests.module_reload import restore_module_namespace, snapshot_module_namespace
 
 
 def test_mojo_namespace_keeps_runner_symbol_when_runner_import_fails() -> None:
     """Expose optional Mojo runner failures through the real package namespace."""
     real_import = builtins.__import__
+    saved_namespace = snapshot_module_namespace(mojo_namespace)
 
     def blocked_runner_import(
         name: str,
@@ -52,4 +54,4 @@ def test_mojo_namespace_keeps_runner_symbol_when_runner_import_fails() -> None:
             failed_namespace.MojoKernelRunner()
     finally:
         builtins.__import__ = real_import
-        importlib.reload(mojo_namespace)
+        restore_module_namespace(mojo_namespace, saved_namespace)
