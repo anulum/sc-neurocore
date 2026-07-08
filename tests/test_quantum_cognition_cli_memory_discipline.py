@@ -11,7 +11,6 @@
 from __future__ import annotations
 
 import json
-from datetime import datetime
 from pathlib import Path
 from typing import cast
 
@@ -91,7 +90,6 @@ def test_learn_cli_writes_canonical_snn_stimulus(tmp_path: Path) -> None:
     assert "text" not in payload
     assert "source" not in payload
     timestamp = payload["timestamp"]
-    assert isinstance(timestamp, str)
-    parsed = datetime.fromisoformat(timestamp)
-    assert parsed.tzinfo is not None
+    assert isinstance(timestamp, int)
+    assert timestamp > 0
     assert state_file.is_file()

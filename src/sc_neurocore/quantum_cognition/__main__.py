@@ -69,7 +69,7 @@ def _emit_snn_stimulus(snn_dir: str, chunk_summary: str, directive: str, step_in
         "content": f"QC step {step_index}: {directive} - {chunk_summary[:100]}",
         "project": "SC-NEUROCORE",
         "actor": "system",
-        "timestamp": timestamp.isoformat(),
+        "timestamp": int(timestamp.timestamp()),
         "entities": ["SC-NEUROCORE", "quantum_cognition"],
         "kind": "event",
         "source_ref": "sc_neurocore.quantum_cognition.__main__:_emit_snn_stimulus",

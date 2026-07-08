@@ -5,6 +5,11 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 ## [Unreleased]
 
 ### Added
+- Quantum-cognition CLI SNN stimulus records now emit the canonical numeric
+  fleet-memory `timestamp` field while preserving `content`, `project`, `actor`,
+  `kind`, and `source_ref`; the focused CLI contract rejects legacy `text` and
+  `source` aliases. No runtime model dynamics, polyglot kernel,
+  benchmark-dispatched path, or benchmark artefact changed.
 - Added a schema-driven neuron reference-trace validation harness with immutable
   corpus contracts, fail-closed JSON payload parsing, package-data loading,
   `UniversalNeuron` execution, and feature-level validation reports. The seed

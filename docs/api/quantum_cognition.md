@@ -480,7 +480,7 @@ Every emitted `qc_*.json` stimulus uses the fleet memory-write schema:
 | `content` | Human-readable learning-step summary, prefixed with `QC step <n>`. |
 | `project` | Fixed uppercase project slug: `SC-NEUROCORE`. |
 | `actor` | Controlled producer role: `system`. |
-| `timestamp` | UTC ISO-8601 timestamp from the writing process. |
+| `timestamp` | Unix timestamp in whole seconds from the writing process. |
 | `entities` | Stable linking entities: `SC-NEUROCORE`, `quantum_cognition`. |
 | `kind` | Event classification, currently `event`. |
 | `source_ref` | Producing code surface: `sc_neurocore.quantum_cognition.__main__:_emit_snn_stimulus`. |

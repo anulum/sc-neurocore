@@ -5,6 +5,14 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+### Quantum cognition memory schema
+- Changed quantum-cognition CLI SNN stimulus records to emit the canonical
+  numeric fleet-memory `timestamp` field while keeping `content`, `project`,
+  `actor`, `kind`, and `source_ref` stable. The CLI memory-discipline contract
+  now rejects legacy `text` and `source` aliases and locks the numeric timestamp
+  shape. No runtime model dynamics, polyglot kernel, benchmark-dispatched path,
+  or benchmark artefact changed.
+
 ### Perfect-integrator co-simulation schema
 - Added the DOI-backed `perfect_integrator` UniversalNeuron schema in TOML and
   JSON form, packaged bundled schema assets into the wheel, and enrolled the
