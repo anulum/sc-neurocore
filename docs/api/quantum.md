@@ -53,6 +53,19 @@ VQE-style quantum-classical optimisation pipeline.
 Compiles SC operations to quantum circuits. SC probability p encodes as
 Ry(2·arcsin(√p)) rotation; AND gate maps to joint measurement; Born rule
 recovers P(|1⟩) = p exactly. Includes noisy simulation via HeronR2NoiseModel.
+The maintained compiler surface is exported from `sc_neurocore.quantum` for
+direct selection:
+
+```python
+from sc_neurocore.quantum import compile_sc_layer, compile_sc_multiply
+
+circuit = compile_sc_multiply(0.6, 0.7)
+compiled_layer = compile_sc_layer(weights, inputs)
+```
+
+Existing submodule imports from `sc_neurocore.quantum.sc_quantum_compiler`
+remain compatible. This wiring does not change quantum simulation algorithms,
+polyglot safety mirrors, or benchmark-dispatched paths.
 
 ::: sc_neurocore.quantum.sc_quantum_compiler.sc_prob_to_statevector
 

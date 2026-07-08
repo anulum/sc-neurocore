@@ -23,7 +23,7 @@ computes the exact probability (no stochastic noise from finite bitstream length
 ## 1. Encode a Probability
 
 ```python
-from sc_neurocore.quantum.sc_quantum_compiler import (
+from sc_neurocore.quantum import (
     sc_prob_to_statevector, statevector_to_prob, prob_to_ry_angle, ry_gate,
 )
 
@@ -43,7 +43,7 @@ SC multiplication is an AND gate. In quantum, this becomes a controlled
 operation that entangles two qubits:
 
 ```python
-from sc_neurocore.quantum.sc_quantum_compiler import compile_sc_multiply
+from sc_neurocore.quantum import compile_sc_multiply
 
 circuit = compile_sc_multiply(0.6, 0.7)
 print(circuit.summary())
@@ -59,7 +59,7 @@ Map a full weight matrix to quantum gates:
 
 ```python
 import numpy as np
-from sc_neurocore.quantum.sc_quantum_compiler import compile_sc_layer
+from sc_neurocore.quantum import compile_sc_layer
 
 weights = np.array([[0.5, 0.3, 0.7], [0.8, 0.2, 0.4]])
 inputs = np.array([0.6, 0.4, 0.8])

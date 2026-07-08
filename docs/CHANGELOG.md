@@ -5,6 +5,14 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+### Quantum package exports
+- Exported the SC→quantum compiler surface from `sc_neurocore.quantum`,
+  including `QuantumGate`, `SCQuantumCircuit`, probability/rotation helpers, and
+  `compile_sc_multiply` / `compile_sc_layer`. Existing submodule imports remain
+  compatible. Quantum API docs, tutorial examples, and module-specific tests
+  were updated. No quantum algorithm, polyglot safety mirror, benchmark
+  dispatch, or benchmark artefact changed.
+
 ### Training package exports
 - Exported the NumPy equilibrium-propagation research surface as
   `sc_neurocore.training.EPNetwork`, so the existing two-phase
