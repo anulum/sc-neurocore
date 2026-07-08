@@ -52,7 +52,10 @@ jobs:
 
       - name: Build and merge Rustdoc
         run: |
-          # Build rustdoc (workspace target dir is at repo root)
+          # Rustdoc is best-effort: the MkDocs site is the primary deliverable, so a
+          # nightly-rustdoc build/copy hiccup (e.g. a partial doc tree from an OOM-killed
+          # run) must degrade to "MkDocs only", never fail the docs deploy. On a healthy
+          # run the full Rustdoc still merges.
           cargo +nightly doc --manifest-path engine/Cargo.toml --no-deps --document-private-items || true
           # Find the doc output (could be target/doc or engine/target/doc)
           DOC_DIR=""
@@ -63,8 +66,12 @@ jobs:
           fi
           if [ -n "$DOC_DIR" ]; then
             mkdir -p _site/rust-api
-            cp -r "$DOC_DIR"/* _site/rust-api/
-            echo "Rustdoc merged from $DOC_DIR"
+            if cp -r "$DOC_DIR"/. _site/rust-api/ 2>/dev/null; then
+              echo "Rustdoc merged from $DOC_DIR"
+            else
+              rm -rf _site/rust-api
+              echo "WARNING: Rustdoc copy failed (partial tree), deploying MkDocs only"
+            fi
           else
             echo "WARNING: Rustdoc not found, deploying MkDocs only"
           fi
