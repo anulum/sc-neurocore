@@ -14,6 +14,23 @@ All modules are `torch.nn.Module` subclasses. Train with standard PyTorch
 optimizers and loss functions, then export weights to stochastic computing
 bitstreams via `to_sc_weights()`.
 
+## Equilibrium Propagation
+
+`EPNetwork` is the NumPy research surface for the two-phase
+settle-and-nudge equilibrium-propagation protocol. It is exported from
+`sc_neurocore.training` for direct selection:
+
+```python
+from sc_neurocore.training import EPNetwork
+
+net = EPNetwork(layer_sizes=[4, 3, 2], rng_seed=42)
+prediction = net.predict(x, n_settle=20)
+```
+
+The implementation remains a research training path and does not change the
+Torch surrogate-gradient pipeline, compiler integration, polyglot kernels, or
+benchmark-dispatched training benchmarks.
+
 ### End-to-end pipeline
 
 ```mermaid

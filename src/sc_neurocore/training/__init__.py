@@ -13,6 +13,8 @@ Requires PyTorch: pip install sc-neurocore[research]
 
 from __future__ import annotations
 
+from .equilibrium_propagation import EPNetwork
+
 try:
     import torch as _torch  # noqa: F401
 
@@ -104,6 +106,8 @@ if HAS_TORCH:
 
 __all__ = [
     "HAS_TORCH",
+    # Equilibrium propagation
+    "EPNetwork",
     # Neuron cells
     "IFCell",
     "LIFCell",

@@ -5,6 +5,11 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 ## [Unreleased]
 
 ### Added
+- The training package namespace now exports the NumPy equilibrium-propagation
+  research surface as `sc_neurocore.training.EPNetwork`, making the existing
+  two-phase settle-and-nudge path selectable without importing the submodule.
+  Training docs and module-specific tests were updated. No Torch training path,
+  polyglot kernel, benchmark dispatch, or benchmark artefact changed.
 - The spintronic package namespace now exports the documented magnetic-domain
   mapper surface, including `SpintronicMapper`, device/material models, MuMax3
   helpers, racetrack/skyrmion utilities, aging/radiation/defect models, and the

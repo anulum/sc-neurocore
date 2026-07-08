@@ -10,9 +10,53 @@
 
 from __future__ import annotations
 
+import importlib
+import importlib.abc
+import sys
+
 import numpy as np
 
+import sc_neurocore.training as training
 from sc_neurocore.training.equilibrium_propagation import EPNetwork, _rho, _rho_prime
+
+
+class _BlockTorchFinder(importlib.abc.MetaPathFinder):
+    """Import hook that forces the training package through its no-Torch branch."""
+
+    def find_spec(
+        self,
+        fullname: str,
+        path: object | None,
+        target: object | None = None,
+    ) -> None:
+        if fullname == "torch":
+            raise ImportError("forced missing torch surface")
+        return None
+
+
+def test_training_package_exports_equilibrium_propagation_surface() -> None:
+    """The training package facade exposes the documented EP research surface."""
+    assert "EPNetwork" in training.__all__
+    assert training.EPNetwork is EPNetwork
+
+
+def test_training_package_exports_ep_without_torch() -> None:
+    """The NumPy EP surface remains selectable when Torch is unavailable."""
+    finder = _BlockTorchFinder()
+    original_torch = sys.modules.pop("torch", None)
+    sys.meta_path.insert(0, finder)
+
+    try:
+        reloaded = importlib.reload(training)
+
+        assert reloaded.HAS_TORCH is False
+        assert reloaded.EPNetwork is EPNetwork
+        assert "EPNetwork" in reloaded.__all__
+    finally:
+        sys.meta_path.remove(finder)
+        if original_torch is not None:
+            sys.modules["torch"] = original_torch
+        importlib.reload(training)
 
 
 class TestActivation:

@@ -5,6 +5,13 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+### Training package exports
+- Exported the NumPy equilibrium-propagation research surface as
+  `sc_neurocore.training.EPNetwork`, so the existing two-phase
+  settle-and-nudge path is selectable from the package facade. Training docs and
+  module-specific tests were updated. No Torch training path, polyglot kernel,
+  benchmark dispatch, or benchmark artefact changed.
+
 ### Spintronic package exports
 - Exported the documented magnetic-domain mapper surface from
   `sc_neurocore.spintronic`, including `SpintronicMapper`,
