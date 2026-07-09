@@ -1,0 +1,71 @@
+{
+  "schema_version": "sc-neurocore.reference-trace.v1",
+  "name": "connor_stevens_resting_gate_doi",
+  "model": {
+    "schema_name": "connor_stevens",
+    "runner": "universal_dsl"
+  },
+  "protocol": {
+    "dt": 0.01,
+    "steps": 60,
+    "inputs": {
+      "I": 0.0
+    },
+    "state_variables": [
+      "v",
+      "m",
+      "h",
+      "n",
+      "a",
+      "b"
+    ]
+  },
+  "provenance": {
+    "kind": "published_schema_euler_reference",
+    "source": "src/sc_neurocore/neurons/model_schemas/connor_stevens.toml",
+    "equation": "Short resting Connor-Stevens A-current gate trajectory from the DOI-backed schema equations.",
+    "citation": "doi:10.1113/jphysiol.1971.sp009368"
+  },
+  "expected_features": {
+    "spike_count": 0.0,
+    "first_spike_step": -1.0,
+    "final.v": -63.48167441215412,
+    "min.v": -67.888671376,
+    "max.v": -63.48167441215412,
+    "mean.v": -65.3573878182918,
+    "final.m": 0.017573359926367608,
+    "min.m": 0.010015152253754812,
+    "max.m": 0.017573359926367608,
+    "mean.m": 0.013873532882319526,
+    "final.h": 0.9765836858019379,
+    "min.h": 0.9765836858019379,
+    "max.h": 0.9898205212448654,
+    "mean.h": 0.9835612692256464,
+    "final.n": 0.11605979091774161,
+    "min.n": 0.10019207243595084,
+    "max.n": 0.11605979091774161,
+    "mean.n": 0.10752086519783434,
+    "final.a": 0.5234665841875221,
+    "min.a": 0.5003629887536913,
+    "max.a": 0.5234665841875221,
+    "mean.a": 0.5118333850283957,
+    "final.b": 0.12331014498333051,
+    "min.b": 0.10057969004740554,
+    "max.b": 0.12331014498333051,
+    "mean.b": 0.11352268970891663
+  },
+  "tolerances": {
+    "default": {
+      "absolute": 1e-09,
+      "relative": 1e-12
+    },
+    "spike_count": {
+      "absolute": 0.0,
+      "relative": 0.0
+    },
+    "first_spike_step": {
+      "absolute": 0.0,
+      "relative": 0.0
+    }
+  }
+}

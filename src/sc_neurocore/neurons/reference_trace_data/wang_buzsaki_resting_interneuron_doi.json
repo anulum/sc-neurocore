@@ -1,0 +1,56 @@
+{
+  "schema_version": "sc-neurocore.reference-trace.v1",
+  "name": "wang_buzsaki_resting_interneuron_doi",
+  "model": {
+    "schema_name": "wang_buzsaki",
+    "runner": "universal_dsl"
+  },
+  "protocol": {
+    "dt": 0.01,
+    "steps": 60,
+    "inputs": {
+      "I": 0.0
+    },
+    "state_variables": [
+      "v",
+      "h",
+      "n"
+    ]
+  },
+  "provenance": {
+    "kind": "published_schema_euler_reference",
+    "source": "src/sc_neurocore/neurons/model_schemas/wang_buzsaki.toml",
+    "equation": "Resting Wang-Buzsaki interneuron conductance-gate prefix from the DOI-backed schema equations.",
+    "citation": "doi:10.1523/JNEUROSCI.16-20-06402.1996"
+  },
+  "expected_features": {
+    "spike_count": 0.0,
+    "first_spike_step": -1.0,
+    "final.v": -65.54912280883889,
+    "min.v": -65.54912280883889,
+    "max.v": -65.02090485302591,
+    "mean.v": -65.36997504862457,
+    "final.h": 0.66658599514286,
+    "min.h": 0.6012628839255004,
+    "max.h": 0.66658599514286,
+    "mean.h": 0.6354890904432953,
+    "final.n": 0.22062509700841557,
+    "min.n": 0.22062509700841557,
+    "max.n": 0.31789686492495833,
+    "mean.n": 0.26524712029081104
+  },
+  "tolerances": {
+    "default": {
+      "absolute": 1e-09,
+      "relative": 1e-12
+    },
+    "spike_count": {
+      "absolute": 0.0,
+      "relative": 0.0
+    },
+    "first_spike_step": {
+      "absolute": 0.0,
+      "relative": 0.0
+    }
+  }
+}

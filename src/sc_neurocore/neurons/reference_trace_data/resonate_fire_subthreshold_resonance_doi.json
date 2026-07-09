@@ -1,0 +1,51 @@
+{
+  "schema_version": "sc-neurocore.reference-trace.v1",
+  "name": "resonate_fire_subthreshold_resonance_doi",
+  "model": {
+    "schema_name": "resonate_fire",
+    "runner": "universal_dsl"
+  },
+  "protocol": {
+    "dt": 0.05,
+    "steps": 80,
+    "inputs": {
+      "I": 0.2
+    },
+    "state_variables": [
+      "x",
+      "y"
+    ]
+  },
+  "provenance": {
+    "kind": "analytic_linear_euler_reference",
+    "source": "src/sc_neurocore/neurons/model_schemas/resonate_fire.toml",
+    "equation": "Damped complex-linear resonate-and-fire Euler recurrence under constant input.",
+    "citation": "doi:10.1162/089976601300014538"
+  },
+  "expected_features": {
+    "spike_count": 0.0,
+    "first_spike_step": -1.0,
+    "final.x": 0.33848251863624607,
+    "min.x": 0.010000000000000002,
+    "max.x": 0.3636752197480581,
+    "mean.x": 0.2644834120785886,
+    "final.y": 0.44902145536617116,
+    "min.y": 0.0,
+    "max.y": 0.44902145536617116,
+    "mean.y": 0.18432103275482695
+  },
+  "tolerances": {
+    "default": {
+      "absolute": 1e-09,
+      "relative": 1e-12
+    },
+    "spike_count": {
+      "absolute": 0.0,
+      "relative": 0.0
+    },
+    "first_spike_step": {
+      "absolute": 0.0,
+      "relative": 0.0
+    }
+  }
+}

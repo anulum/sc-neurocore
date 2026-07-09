@@ -24,6 +24,28 @@ from sc_neurocore.neurons.reference_traces import (
     validate_reference_trace,
     validate_reference_trace_spec,
 )
+from sc_neurocore.neurons.universal_dsl import list_bundled_schemas
+
+_STOCHASTIC_SCHEMA_NAMES = frozenset({"escape_rate", "poisson"})
+_DETERMINISTIC_SCHEMA_TRACES = {
+    "adex": "adex_resting_adaptation_doi",
+    "connor_stevens": "connor_stevens_resting_gate_doi",
+    "exp_if": "exp_if_resting_exponential_doi",
+    "fitzhugh_nagumo": "fitzhugh_nagumo_driven_oscillation_doi",
+    "glif": "glif_constant_current_threshold_adaptation",
+    "hindmarsh_rose": "hindmarsh_rose_short_bursting_prefix",
+    "hodgkin_huxley": "hodgkin_huxley_resting_gate_doi",
+    "izhikevich": "izhikevich_regular_spiking_doi",
+    "lapicque": "lapicque_constant_current_closed_form",
+    "lif": "lif_constant_current_closed_form",
+    "morris_lecar": "morris_lecar_depolarizing_current_doi",
+    "perfect_integrator": "perfect_integrator_constant_current_sawtooth",
+    "quadratic_if": "quadratic_if_zero_current_analytic",
+    "resonate_fire": "resonate_fire_subthreshold_resonance_doi",
+    "rulkov_map": "rulkov_map_short_window_boundary",
+    "theta": "theta_constant_current_phase_analytic",
+    "wang_buzsaki": "wang_buzsaki_resting_interneuron_doi",
+}
 
 
 def _closed_form_features(
@@ -114,18 +136,56 @@ def _theta_constant_current_features(*, current: float, dt: float, steps: int) -
     }
 
 
+def _resonate_fire_linear_euler_features(
+    *, current: float, dt: float, steps: int
+) -> dict[str, float]:
+    """Return exact Euler features for the linear resonate-and-fire schema."""
+    omega = 0.5
+    damping = -0.1
+    threshold = 1.0
+    x = 0.0
+    y = 0.0
+    x_values: list[float] = []
+    y_values: list[float] = []
+    spikes: list[int] = []
+    for _ in range(steps):
+        dx = damping * x - omega * y + current
+        dy = omega * x + damping * y
+        x_next = x + dt * dx
+        y_next = y + dt * dy
+        if x_next > threshold:
+            spikes.append(1)
+            x = 0.0
+            y = 0.0
+        else:
+            spikes.append(0)
+            x = x_next
+            y = y_next
+        x_values.append(x)
+        y_values.append(y)
+
+    return {
+        "spike_count": float(math.fsum(spikes)),
+        "first_spike_step": float(
+            next((index for index, spike in enumerate(spikes, start=1) if spike), -1)
+        ),
+        "final.x": x_values[-1],
+        "min.x": min(x_values),
+        "max.x": max(x_values),
+        "mean.x": math.fsum(x_values) / len(x_values),
+        "final.y": y_values[-1],
+        "min.y": min(y_values),
+        "max.y": max(y_values),
+        "mean.y": math.fsum(y_values) / len(y_values),
+    }
+
+
 def test_seeded_corpus_has_analytic_schema_entries() -> None:
     """The seed corpus must expose deterministic analytic schema references."""
     names = list_reference_trace_specs()
 
     assert names == tuple(sorted(names))
-    assert {
-        "lif_constant_current_closed_form",
-        "lapicque_constant_current_closed_form",
-        "perfect_integrator_constant_current_sawtooth",
-        "quadratic_if_zero_current_analytic",
-        "theta_constant_current_phase_analytic",
-    } <= set(names)
+    assert set(_DETERMINISTIC_SCHEMA_TRACES.values()) <= set(names)
 
     spec = load_reference_trace_spec("lif_constant_current_closed_form")
     assert isinstance(spec, ReferenceTraceSpec)
@@ -133,6 +193,22 @@ def test_seeded_corpus_has_analytic_schema_entries() -> None:
     assert spec.provenance.kind == "analytic_closed_form"
     assert spec.protocol.state_variables == ("v",)
     assert spec.protocol.inputs["I"] == 1.0
+
+
+def test_reference_trace_corpus_covers_every_deterministic_bundled_schema() -> None:
+    """Every deterministic bundled schema must have one committed trace."""
+    deterministic_schemas = set(list_bundled_schemas()) - _STOCHASTIC_SCHEMA_NAMES
+
+    assert set(_DETERMINISTIC_SCHEMA_TRACES) == deterministic_schemas
+    for schema_name, trace_name in _DETERMINISTIC_SCHEMA_TRACES.items():
+        spec = load_reference_trace_spec(trace_name)
+        assert spec.schema_name == schema_name
+        assert spec.runner == "universal_dsl"
+        assert spec.provenance.source.endswith(f"/{schema_name}.toml")
+        assert spec.provenance.citation is not None
+        assert spec.provenance.citation
+        if "doi" in trace_name:
+            assert spec.provenance.citation.startswith("doi:")
 
 
 def test_lif_seed_features_match_independent_closed_form_solution() -> None:
@@ -196,6 +272,23 @@ def test_theta_trace_features_match_independent_phase_solution() -> None:
     assert spec.schema_name == "theta"
     assert spec.provenance.kind == "analytic_closed_form"
     assert spec.provenance.citation == "doi:10.1137/0146017"
+    for feature_name, feature_value in expected.items():
+        assert spec.expected_features[feature_name] == pytest.approx(feature_value, abs=1e-12)
+
+
+def test_resonate_fire_trace_features_match_independent_linear_euler_solution() -> None:
+    """Committed resonate-fire features must match its linear Euler recurrence."""
+    spec = load_reference_trace_spec("resonate_fire_subthreshold_resonance_doi")
+
+    expected = _resonate_fire_linear_euler_features(
+        current=spec.protocol.inputs["I"],
+        dt=spec.protocol.dt,
+        steps=spec.protocol.steps,
+    )
+
+    assert spec.schema_name == "resonate_fire"
+    assert spec.provenance.kind == "analytic_linear_euler_reference"
+    assert spec.provenance.citation == "doi:10.1162/089976601300014538"
     for feature_name, feature_value in expected.items():
         assert spec.expected_features[feature_name] == pytest.approx(feature_value, abs=1e-12)
 

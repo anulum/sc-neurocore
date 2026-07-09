@@ -1,0 +1,61 @@
+{
+  "schema_version": "sc-neurocore.reference-trace.v1",
+  "name": "hodgkin_huxley_resting_gate_doi",
+  "model": {
+    "schema_name": "hodgkin_huxley",
+    "runner": "universal_dsl"
+  },
+  "protocol": {
+    "dt": 0.01,
+    "steps": 60,
+    "inputs": {
+      "I": 0.0
+    },
+    "state_variables": [
+      "v",
+      "m",
+      "h",
+      "n"
+    ]
+  },
+  "provenance": {
+    "kind": "published_schema_euler_reference",
+    "source": "src/sc_neurocore/neurons/model_schemas/hodgkin_huxley.toml",
+    "equation": "Resting Hodgkin-Huxley sodium/potassium gate prefix from the DOI-backed conductance schema.",
+    "citation": "doi:10.1113/jphysiol.1952.sp004764"
+  },
+  "expected_features": {
+    "spike_count": 0.0,
+    "first_spike_step": -1.0,
+    "final.v": -65.09521828183875,
+    "min.v": -65.09521828183875,
+    "max.v": -65.0031484832,
+    "mean.v": -65.05917627336405,
+    "final.m": 0.052285511275057234,
+    "min.m": 0.05012385538355399,
+    "max.m": 0.052285511275057234,
+    "mean.m": 0.051712104869929894,
+    "final.h": 0.5998742338779927,
+    "min.h": 0.5998742338779927,
+    "max.h": 0.5999954447609346,
+    "mean.h": 0.5999166152316405,
+    "final.n": 0.3196649378163658,
+    "min.n": 0.3196649378163658,
+    "max.n": 0.31999574416067117,
+    "mean.n": 0.31983936863164597
+  },
+  "tolerances": {
+    "default": {
+      "absolute": 1e-09,
+      "relative": 1e-12
+    },
+    "spike_count": {
+      "absolute": 0.0,
+      "relative": 0.0
+    },
+    "first_spike_step": {
+      "absolute": 0.0,
+      "relative": 0.0
+    }
+  }
+}

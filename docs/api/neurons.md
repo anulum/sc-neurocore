@@ -19,9 +19,11 @@ from sc_neurocore.neurons.models.hodgkin_huxley import HodgkinHuxleyNeuron
 
 Schema-driven models can be checked against committed reference-trace feature
 contracts through `sc_neurocore.neurons.reference_traces`. The current corpus
-covers deterministic `lif`, `lapicque`, and `quadratic_if` schema entries with
-analytic feature references; external NEST, Brian2, NEURON, and published-figure
-traces remain a separate corpus-expansion task.
+covers every deterministic bundled schema model through the package-local
+`UniversalNeuron` runner. `poisson` and `escape_rate` remain outside this
+deterministic corpus because their schemas are stochastic. External NEST,
+Brian2, NEURON, and published-figure traces remain separate simulator-backed
+validation surfaces.
 
 ```python
 from sc_neurocore.neurons.reference_traces import validate_all_reference_traces
@@ -30,8 +32,8 @@ reports = validate_all_reference_traces()
 assert all(report.passed for report in reports)
 ```
 
-See [Reference Trace Harness](../validation/reference_traces.md) for corpus
-format, validation commands, and remaining WC-A1 scope.
+See [Reference Trace Harness](../validation/reference_traces.md) for the corpus
+table, validation commands, and external simulator boundary.
 
 ::: sc_neurocore.neurons.reference_trace_contracts
 

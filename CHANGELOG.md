@@ -5,6 +5,12 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 ## [Unreleased]
 
 ### Changed
+- Completed the deterministic bundled-schema reference-trace corpus for WC-A1b:
+  all 17 deterministic schema-DSL models now have committed package data
+  entries validated through `sc_neurocore.neurons.reference_traces`, while
+  stochastic schemas and external simulator traces remain explicitly outside
+  this deterministic corpus. No runtime package code, polyglot mirror,
+  benchmark dispatch, or benchmark artefact changed.
 - Added a systematic-audit rerun contract that locks the concrete 2026-07-04
   audit findings to repeatable gitignore, internal-TODO, SPDX-header, and SNN
   memory-discipline checks. No runtime package code, polyglot mirror, benchmark

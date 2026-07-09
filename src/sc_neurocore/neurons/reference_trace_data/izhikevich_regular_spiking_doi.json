@@ -1,0 +1,51 @@
+{
+  "schema_version": "sc-neurocore.reference-trace.v1",
+  "name": "izhikevich_regular_spiking_doi",
+  "model": {
+    "schema_name": "izhikevich",
+    "runner": "universal_dsl"
+  },
+  "protocol": {
+    "dt": 1.0,
+    "steps": 80,
+    "inputs": {
+      "I": 5.0
+    },
+    "state_variables": [
+      "v",
+      "u"
+    ]
+  },
+  "provenance": {
+    "kind": "published_schema_euler_reference",
+    "source": "src/sc_neurocore/neurons/model_schemas/izhikevich.toml",
+    "equation": "Regular-spiking Izhikevich trace with one reset under the DOI-backed schema equations.",
+    "citation": "doi:10.1109/TNN.2003.820440"
+  },
+  "expected_features": {
+    "spike_count": 1.0,
+    "first_spike_step": 8.0,
+    "final.v": -62.33435674635083,
+    "min.v": -74.42698192141224,
+    "max.v": 16.136887660465298,
+    "mean.v": -66.15299146037434,
+    "final.u": -11.536948443242482,
+    "min.u": -13.98,
+    "max.u": -5.196121576966775,
+    "mean.u": -9.745881478722971
+  },
+  "tolerances": {
+    "default": {
+      "absolute": 1e-09,
+      "relative": 1e-12
+    },
+    "spike_count": {
+      "absolute": 0.0,
+      "relative": 0.0
+    },
+    "first_spike_step": {
+      "absolute": 0.0,
+      "relative": 0.0
+    }
+  }
+}

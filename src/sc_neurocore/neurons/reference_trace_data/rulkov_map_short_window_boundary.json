@@ -1,0 +1,51 @@
+{
+  "schema_version": "sc-neurocore.reference-trace.v1",
+  "name": "rulkov_map_short_window_boundary",
+  "model": {
+    "schema_name": "rulkov_map",
+    "runner": "universal_dsl"
+  },
+  "protocol": {
+    "dt": 1.0,
+    "steps": 8,
+    "inputs": {
+      "I": 0.0
+    },
+    "state_variables": [
+      "x",
+      "y"
+    ]
+  },
+  "provenance": {
+    "kind": "published_schema_short_window_reference",
+    "source": "src/sc_neurocore/neurons/model_schemas/rulkov_map.toml",
+    "equation": "Short finite Rulkov schema-runner boundary trace; long windows diverge under the current generic Euler runner.",
+    "citation": "doi:10.1103/PhysRevE.65.041922"
+  },
+  "expected_features": {
+    "spike_count": 0.0,
+    "first_spike_step": -1.0,
+    "final.x": -761.8326780950815,
+    "min.x": -761.8326780950815,
+    "max.x": -2.0,
+    "mean.x": -186.24087123912426,
+    "final.y": -766.0009684361441,
+    "min.y": -766.0009684361441,
+    "max.y": -6.0,
+    "mean.y": -190.84037889551328
+  },
+  "tolerances": {
+    "default": {
+      "absolute": 1e-09,
+      "relative": 1e-12
+    },
+    "spike_count": {
+      "absolute": 0.0,
+      "relative": 0.0
+    },
+    "first_spike_step": {
+      "absolute": 0.0,
+      "relative": 0.0
+    }
+  }
+}

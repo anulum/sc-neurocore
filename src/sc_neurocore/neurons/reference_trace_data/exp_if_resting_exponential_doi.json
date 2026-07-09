@@ -1,0 +1,46 @@
+{
+  "schema_version": "sc-neurocore.reference-trace.v1",
+  "name": "exp_if_resting_exponential_doi",
+  "model": {
+    "schema_name": "exp_if",
+    "runner": "universal_dsl"
+  },
+  "protocol": {
+    "dt": 0.1,
+    "steps": 80,
+    "inputs": {
+      "I": 0.0
+    },
+    "state_variables": [
+      "v"
+    ]
+  },
+  "provenance": {
+    "kind": "published_schema_euler_reference",
+    "source": "src/sc_neurocore/neurons/model_schemas/exp_if.toml",
+    "equation": "Zero-current exponential integrate-and-fire resting trace from the Fourcaud-Trocme schema equation.",
+    "citation": "doi:10.1523/JNEUROSCI.23-37-11628.2003"
+  },
+  "expected_features": {
+    "spike_count": 0.0,
+    "first_spike_step": -1.0,
+    "final.v": -69.99994983439869,
+    "min.v": -69.9999990920014,
+    "max.v": -69.99994983439869,
+    "mean.v": -69.99997127879661
+  },
+  "tolerances": {
+    "default": {
+      "absolute": 1e-09,
+      "relative": 1e-12
+    },
+    "spike_count": {
+      "absolute": 0.0,
+      "relative": 0.0
+    },
+    "first_spike_step": {
+      "absolute": 0.0,
+      "relative": 0.0
+    }
+  }
+}

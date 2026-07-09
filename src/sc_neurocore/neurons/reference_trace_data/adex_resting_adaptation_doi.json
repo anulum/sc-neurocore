@@ -1,0 +1,51 @@
+{
+  "schema_version": "sc-neurocore.reference-trace.v1",
+  "name": "adex_resting_adaptation_doi",
+  "model": {
+    "schema_name": "adex",
+    "runner": "universal_dsl"
+  },
+  "protocol": {
+    "dt": 0.1,
+    "steps": 80,
+    "inputs": {
+      "I": 0.0
+    },
+    "state_variables": [
+      "v",
+      "w"
+    ]
+  },
+  "provenance": {
+    "kind": "published_schema_euler_reference",
+    "source": "src/sc_neurocore/neurons/model_schemas/adex.toml",
+    "equation": "Subthreshold AdEx rest trajectory using the Brette-Gerstner schema equation at zero applied current.",
+    "citation": "doi:10.1152/jn.00686.2005"
+  },
+  "expected_features": {
+    "spike_count": 0.0,
+    "first_spike_step": -1.0,
+    "final.v": -64.99554377210069,
+    "min.v": -64.99993262053,
+    "max.v": -64.99554377210069,
+    "mean.v": -64.99759623117836,
+    "final.w": 9.144943172214718e-05,
+    "min.w": 0.0,
+    "max.w": 9.144943172214718e-05,
+    "mean.w": 3.205820781567016e-05
+  },
+  "tolerances": {
+    "default": {
+      "absolute": 1e-09,
+      "relative": 1e-12
+    },
+    "spike_count": {
+      "absolute": 0.0,
+      "relative": 0.0
+    },
+    "first_spike_step": {
+      "absolute": 0.0,
+      "relative": 0.0
+    }
+  }
+}

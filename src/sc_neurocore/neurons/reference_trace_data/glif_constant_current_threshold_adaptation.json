@@ -1,0 +1,61 @@
+{
+  "schema_version": "sc-neurocore.reference-trace.v1",
+  "name": "glif_constant_current_threshold_adaptation",
+  "model": {
+    "schema_name": "glif",
+    "runner": "universal_dsl"
+  },
+  "protocol": {
+    "dt": 1.0,
+    "steps": 60,
+    "inputs": {
+      "I": 2.0
+    },
+    "state_variables": [
+      "v",
+      "theta",
+      "i_asc1",
+      "i_asc2"
+    ]
+  },
+  "provenance": {
+    "kind": "published_schema_euler_reference",
+    "source": "src/sc_neurocore/neurons/model_schemas/glif.toml",
+    "equation": "Constant-current GLIF threshold-adaptation trace using the Allen Institute DOI-backed schema equations.",
+    "citation": "doi:10.1038/s41467-017-02717-4"
+  },
+  "expected_features": {
+    "spike_count": 0.0,
+    "first_spike_step": -1.0,
+    "final.v": -68.00359402059982,
+    "min.v": -69.8,
+    "max.v": -68.00359402059982,
+    "mean.v": -68.29946089691002,
+    "final.theta": -49.99215504314136,
+    "min.theta": -50.0,
+    "max.theta": -49.99215504314136,
+    "mean.theta": -49.99627152211577,
+    "final.i_asc1": 0.0,
+    "min.i_asc1": 0.0,
+    "max.i_asc1": 0.0,
+    "mean.i_asc1": 0.0,
+    "final.i_asc2": 0.0,
+    "min.i_asc2": 0.0,
+    "max.i_asc2": 0.0,
+    "mean.i_asc2": 0.0
+  },
+  "tolerances": {
+    "default": {
+      "absolute": 1e-09,
+      "relative": 1e-12
+    },
+    "spike_count": {
+      "absolute": 0.0,
+      "relative": 0.0
+    },
+    "first_spike_step": {
+      "absolute": 0.0,
+      "relative": 0.0
+    }
+  }
+}
