@@ -961,11 +961,11 @@
     "model_documentation_pages": 175,
     "optional_extras": 27,
     "public_api_exports": 45,
-    "public_documentation_pages": 562,
+    "public_documentation_pages": 563,
     "python_model_classes": 158,
     "python_model_source_modules": 152,
     "rust_pyo3_model_wrappers": 175,
-    "test_files": 996
+    "test_files": 997
   },
   "documentation": {
     "public_pages": [
@@ -1381,6 +1381,7 @@
       "docs/guides/nir_fpga_compilation.md",
       "docs/guides/nir_integration.md",
       "docs/guides/notebook_guide.md",
+      "docs/guides/performance_gates.md",
       "docs/guides/pipeline_adaptive_precision.md",
       "docs/guides/platform_extensibility.md",
       "docs/guides/precision_modes.md",
@@ -3712,6 +3713,7 @@
       "tests/test_tools/test_mlperf_sc_run.py",
       "tests/test_tools/test_mnist_reproducibility_manifest.py",
       "tests/test_tools/test_online_o1_adaptation_benchmark.py",
+      "tests/test_tools/test_perf_gate_contract.py",
       "tests/test_tools/test_pytest_plugin_policy.py",
       "tests/test_tools/test_python_code_scanner_plan.py",
       "tests/test_tools/test_release_security_artifact_index.py",

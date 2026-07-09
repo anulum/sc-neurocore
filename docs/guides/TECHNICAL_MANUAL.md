@@ -132,7 +132,11 @@ Examples:
 - `python -m pytest 03_CODE/sc-neurocore/tests`
 - `python -m pytest 03_CODE/sc-neurocore/tests/test_layers`
 
-Performance tests are gated by an environment variable. To enable them, set `SC_NEUROCORE_PERF=1` before running pytest. This prevents CI and quick local runs from being slowed down by performance checks.
+Performance tests are gated by an environment variable. To enable them, set
+`SC_NEUROCORE_PERF=1` before running pytest. This prevents default local and
+pull-request runs from being slowed down by wall-clock checks. The maintained
+selector and scheduled CI contract are documented in
+[Performance-Gated Tests](performance_gates.md).
 
 ### 2.4 Project structure and conventions
 Key conventions:

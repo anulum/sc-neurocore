@@ -92,6 +92,7 @@ nav:
       - Layer-by-Layer Guide: guides/LAYER_BY_LAYER_GUIDE.md
       - Advanced Usage: guides/ADVANCED_USAGE_PATTERNS.md
       - Performance Tuning: guides/PERFORMANCE_TUNING.md
+      - Performance Gates: guides/performance_gates.md
       - Integration Guide: guides/INTEGRATION_GUIDE.md
       - Examples: guides/EXAMPLES.md
       - SC for Neuroscientists: guides/SC_FOR_NEUROSCIENTISTS.md

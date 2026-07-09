@@ -4,6 +4,13 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+### Changed
+- Added a scheduled/manual `Performance Benchmarks` workflow lane for the
+  `SC_NEUROCORE_PERF=1` pytest selector and documented the perf-gate contract.
+  A focused contract test now discovers perf-gated files from the live test tree
+  and keeps the workflow selector plus public guide in sync. No runtime package
+  code, polyglot mirror, benchmark dispatch, or benchmark artefact changed.
+
 ### Fixed
 - Replaced the Q4.12 LIF zero-current co-simulation xfail with an explicit
   range-classification regression that checks the Q-format diagnostics and the

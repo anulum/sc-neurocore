@@ -10,6 +10,8 @@ name: Performance Benchmarks
 
 on:
   workflow_dispatch:
+  schedule:
+    - cron: "43 3 * * *"
   push:
     branches: [main]
     paths:
@@ -105,3 +107,49 @@ jobs:
           name: python-benchmark-results
           path: benchmarks/results/
           retention-days: 90
+
+  perf-gated-pytest:
+    name: Perf-Gated Pytest
+    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    env:
+      PYTHONPATH: "src:."
+      SC_NEUROCORE_PERF: "1"
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+
+      - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
+        with:
+          python-version: "3.12"
+
+      - name: Install package
+        run: python tools/ci_install_dev.py
+
+      - name: Run perf-gated pytest selector
+        run: |
+          python -m pytest \
+            tests/test_export/test_onnx_exporter.py \
+            tests/test_learning/test_lifelong.py \
+            tests/test_learning/test_federated.py \
+            tests/test_transformers/test_block.py \
+            tests/test_layers/test_recurrent.py \
+            tests/test_layers/test_vectorized_layer.py \
+            tests/test_layers/test_sc_conv_layer.py \
+            tests/test_layers/test_sc_dense_layer.py \
+            tests/test_layers/test_memristive.py \
+            tests/test_layers/test_sc_learning_layer.py \
+            tests/test_layers/test_fusion.py \
+            tests/test_hdc/test_base.py \
+            tests/test_accel/test_vector_ops.py \
+            tests/test_solvers/test_ising.py \
+            tests/test_optics/test_photonic_layer.py \
+            tests/test_quantum/test_hybrid.py \
+            tests/test_interfaces/test_dvs_input.py \
+            tests/test_sources/test_bitstream_current_source.py \
+            tests/test_hdl_gen/test_verilog_generator.py \
+            tests/test_hdl_gen/test_spice_generator.py \
+            tests/test_bio/test_dna_storage.py \
+            tests/test_bio/test_grn.py \
+            tests/test_graphs/test_gnn.py

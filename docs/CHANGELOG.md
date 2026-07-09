@@ -5,6 +5,13 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+### Performance-gate CI
+- Added a scheduled/manual `Performance Benchmarks` workflow lane for the
+  `SC_NEUROCORE_PERF=1` pytest selector and documented the perf-gate contract.
+  A focused contract test now discovers perf-gated files from the live test tree
+  and keeps the workflow selector plus public guide in sync. No runtime package
+  code, polyglot mirror, benchmark dispatch, or benchmark artefact changed.
+
 ### Schema-gap reporting
 - Added `tools/schema_gap_report.py` and focused tests for WC-A5 schema-DSL
   coverage planning. The report scans live model/schema files without importing

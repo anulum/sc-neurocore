@@ -1,6 +1,11 @@
 # sc-neurocore Performance Tuning Guide
 ## Optimizing the FPGA-Accelerated Consciousness Stack
 
+For pytest timing guards, use the maintained
+[Performance-Gated Tests](performance_gates.md) selector. Those tests provide
+small wall-clock regression checks; published benchmark claims still require
+raw benchmark artefacts and the benchmark evidence rules.
+
 ### 1. Precision vs. Latency Trade-offs
 
 In stochastic computing, the precision of a value is proportional to the square root of the bitstream length ($N$).
