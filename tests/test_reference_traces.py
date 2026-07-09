@@ -451,6 +451,68 @@ def _adex_subthreshold_euler_features(*, current: float, dt: float, steps: int) 
     return features
 
 
+def _exp_if_subthreshold_euler_features(
+    *, current: float, dt: float, steps: int
+) -> dict[str, float]:
+    """Return exact explicit-Euler features for the resting exponential-IF recurrence.
+
+    The Fourcaud-Trocme (2003) exponential integrate-and-fire membrane equation is
+    advanced with the same explicit-Euler update the schema runner applies. For the
+    resting zero-current protocol the ``v > 20`` peak is never reached, so the
+    ``v = v_reset`` reset stays inactive and the reference is an independent
+    re-derivation of the committed quiet trajectory.
+
+    Parameters
+    ----------
+    current:
+        Constant input current applied at every timestep.
+    dt:
+        Simulation timestep.
+    steps:
+        Number of timesteps to advance.
+
+    Returns
+    -------
+    dict of str to float
+        Reference feature map for the ``v`` state variable plus spike-count and
+        first-spike-step features.
+    """
+    v_rest = -70.0
+    v_reset = -70.0
+    v_threshold = -50.0
+    v_peak = 20.0
+    delta_t = 2.0
+    tau_m = 10.0
+    resistance = 1.0
+    v = -70.0
+    v_values: list[float] = []
+    spikes: list[int] = []
+    for _ in range(steps):
+        dv = (
+            -(v - v_rest) + delta_t * math.exp((v - v_threshold) / delta_t) + resistance * current
+        ) / tau_m
+        v_next = v + dv * dt
+        if v_next > v_peak:
+            spikes.append(1)
+            v_next = v_reset
+        else:
+            spikes.append(0)
+        v = v_next
+        v_values.append(v)
+
+    features: dict[str, float] = {
+        "spike_count": float(math.fsum(spikes)),
+        "first_spike_step": float(
+            next((index for index, spike in enumerate(spikes, start=1) if spike), -1)
+        ),
+        "final.v": v_values[-1],
+        "min.v": min(v_values),
+        "max.v": max(v_values),
+        "mean.v": math.fsum(v_values) / len(v_values),
+    }
+    return features
+
+
 def test_seeded_corpus_has_analytic_schema_entries() -> None:
     """The seed corpus must expose deterministic analytic schema references."""
     names = list_reference_trace_specs()
@@ -631,6 +693,24 @@ def test_adex_trace_features_match_independent_euler_solution() -> None:
     assert spec.schema_name == "adex"
     assert spec.provenance.kind == "independent_euler_reference"
     assert spec.provenance.citation == "doi:10.1152/jn.00686.2005"
+    assert set(expected) == set(spec.expected_features)
+    for feature_name, feature_value in expected.items():
+        assert spec.expected_features[feature_name] == pytest.approx(feature_value, abs=1e-12)
+
+
+def test_exp_if_trace_features_match_independent_euler_solution() -> None:
+    """Committed exponential-IF features must match an independent resting Euler recurrence."""
+    spec = load_reference_trace_spec("exp_if_resting_exponential_doi")
+
+    expected = _exp_if_subthreshold_euler_features(
+        current=spec.protocol.inputs["I"],
+        dt=spec.protocol.dt,
+        steps=spec.protocol.steps,
+    )
+
+    assert spec.schema_name == "exp_if"
+    assert spec.provenance.kind == "independent_euler_reference"
+    assert spec.provenance.citation == "doi:10.1523/JNEUROSCI.23-37-11628.2003"
     assert set(expected) == set(spec.expected_features)
     for feature_name, feature_value in expected.items():
         assert spec.expected_features[feature_name] == pytest.approx(feature_value, abs=1e-12)

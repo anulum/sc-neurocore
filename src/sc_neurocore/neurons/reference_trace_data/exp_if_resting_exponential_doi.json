@@ -16,9 +16,9 @@
     ]
   },
   "provenance": {
-    "kind": "published_schema_euler_reference",
+    "kind": "independent_euler_reference",
     "source": "src/sc_neurocore/neurons/model_schemas/exp_if.toml",
-    "equation": "Zero-current exponential integrate-and-fire resting trace from the Fourcaud-Trocme schema equation.",
+    "equation": "Zero-current exponential integrate-and-fire resting trace; the exponential membrane equation is advanced with the exact explicit-Euler recurrence, independently re-derived from the Fourcaud-Trocme (2003) model definition (spike peak not reached).",
     "citation": "doi:10.1523/JNEUROSCI.23-37-11628.2003"
   },
   "expected_features": {

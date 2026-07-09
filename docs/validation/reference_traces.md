@@ -22,7 +22,7 @@ table because their schemas are stochastic.
 |-------|--------|--------|------------|
 | `adex_resting_adaptation_doi` | `adex` | `universal_dsl` | Independent explicit-Euler re-derivation of the subthreshold equations from `neurons/model_schemas/adex.toml` with DOI-backed schema provenance |
 | `connor_stevens_resting_gate_doi` | `connor_stevens` | `universal_dsl` | DOI-backed resting gate prefix from `neurons/model_schemas/connor_stevens.toml` |
-| `exp_if_resting_exponential_doi` | `exp_if` | `universal_dsl` | DOI-backed resting exponential IF prefix from `neurons/model_schemas/exp_if.toml` |
+| `exp_if_resting_exponential_doi` | `exp_if` | `universal_dsl` | Independent explicit-Euler re-derivation of the resting equation from `neurons/model_schemas/exp_if.toml` with DOI-backed schema provenance |
 | `fitzhugh_nagumo_driven_oscillation_doi` | `fitzhugh_nagumo` | `universal_dsl` | Independent explicit-Euler re-derivation of the driven relaxation equations from `neurons/model_schemas/fitzhugh_nagumo.toml` with DOI-backed schema provenance |
 | `glif_constant_current_threshold_adaptation` | `glif` | `universal_dsl` | Analytic linear Euler recurrence from `neurons/model_schemas/glif.toml` with DOI-backed schema provenance |
 | `hindmarsh_rose_short_bursting_prefix` | `hindmarsh_rose` | `universal_dsl` | DOI-backed short finite prefix from `neurons/model_schemas/hindmarsh_rose.toml` |
@@ -41,8 +41,9 @@ table because their schemas are stochastic.
 All entries record spike count, first spike step, and final/min/max/mean
 features for the declared state variables. The tests independently recompute the
 LIF, QIF, perfect-integrator, resonate-fire, theta, GLIF, Izhikevich,
-FitzHugh-Nagumo, and AdEx analytic or explicit-Euler solutions so the committed
-feature values for those entries are not merely copied from the runner output. The GLIF
+FitzHugh-Nagumo, AdEx, and exponential-IF analytic or explicit-Euler solutions so
+the committed feature values for those entries are not merely copied from the
+runner output. The GLIF
 entry re-derives the exact subthreshold explicit-Euler recurrence for its linear
 membrane, adaptive threshold, and two after-spike currents; the Izhikevich entry
 re-derives the exact regular-spiking explicit-Euler recurrence including its
