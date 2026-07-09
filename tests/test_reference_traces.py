@@ -11,6 +11,7 @@
 from __future__ import annotations
 
 import math
+from collections.abc import Callable
 from dataclasses import replace
 
 import numpy as np
@@ -47,6 +48,43 @@ _DETERMINISTIC_SCHEMA_TRACES = {
     "theta": "theta_constant_current_phase_analytic",
     "wang_buzsaki": "wang_buzsaki_resting_interneuron_doi",
 }
+
+
+def _summarise(recorded: dict[str, list[float]], spikes: list[int]) -> dict[str, float]:
+    """Return the shared spike-count / first-spike-step / per-variable feature map.
+
+    Every reference helper that tracks a per-step ``spikes`` list and one or more
+    recorded state-variable trajectories reduces them to the same feature contract: a
+    total spike count, the 1-indexed first-spike step (``-1`` when silent), and the
+    final / minimum / maximum / mean of each recorded variable. Centralising the tail
+    keeps the independent-parity helpers byte-identical in how they summarise, so a
+    drift in one helper's reduction cannot silently diverge from the others.
+
+    Parameters
+    ----------
+    recorded:
+        Mapping from state-variable name to its per-step trajectory.
+    spikes:
+        Per-step spike indicators (``1`` on a spiking step, ``0`` otherwise).
+
+    Returns
+    -------
+    dict of str to float
+        The feature map keyed by ``spike_count``, ``first_spike_step``, and
+        ``final.<var>`` / ``min.<var>`` / ``max.<var>`` / ``mean.<var>`` per variable.
+    """
+    features: dict[str, float] = {
+        "spike_count": float(math.fsum(spikes)),
+        "first_spike_step": float(
+            next((index for index, spike in enumerate(spikes, start=1) if spike), -1)
+        ),
+    }
+    for variable, values in recorded.items():
+        features[f"final.{variable}"] = values[-1]
+        features[f"min.{variable}"] = min(values)
+        features[f"max.{variable}"] = max(values)
+        features[f"mean.{variable}"] = math.fsum(values) / len(values)
+    return features
 
 
 def _closed_form_features(
@@ -105,16 +143,7 @@ def _perfect_integrator_sawtooth_features(
             spikes.append(0)
         values.append(voltage)
 
-    return {
-        "spike_count": float(math.fsum(spikes)),
-        "first_spike_step": float(
-            next((index for index, spike in enumerate(spikes, start=1) if spike), -1)
-        ),
-        "final.v": values[-1],
-        "min.v": min(values),
-        "max.v": max(values),
-        "mean.v": math.fsum(values) / len(values),
-    }
+    return _summarise({"v": values}, spikes)
 
 
 def _theta_constant_current_features(*, current: float, dt: float, steps: int) -> dict[str, float]:
@@ -165,20 +194,7 @@ def _resonate_fire_linear_euler_features(
         x_values.append(x)
         y_values.append(y)
 
-    return {
-        "spike_count": float(math.fsum(spikes)),
-        "first_spike_step": float(
-            next((index for index, spike in enumerate(spikes, start=1) if spike), -1)
-        ),
-        "final.x": x_values[-1],
-        "min.x": min(x_values),
-        "max.x": max(x_values),
-        "mean.x": math.fsum(x_values) / len(x_values),
-        "final.y": y_values[-1],
-        "min.y": min(y_values),
-        "max.y": max(y_values),
-        "mean.y": math.fsum(y_values) / len(y_values),
-    }
+    return _summarise({"x": x_values, "y": y_values}, spikes)
 
 
 def _glif_subthreshold_euler_features(*, current: float, dt: float, steps: int) -> dict[str, float]:
@@ -246,18 +262,7 @@ def _glif_subthreshold_euler_features(*, current: float, dt: float, steps: int) 
         recorded["i_asc1"].append(i_asc1)
         recorded["i_asc2"].append(i_asc2)
 
-    features: dict[str, float] = {
-        "spike_count": float(math.fsum(spikes)),
-        "first_spike_step": float(
-            next((index for index, spike in enumerate(spikes, start=1) if spike), -1)
-        ),
-    }
-    for name, values in recorded.items():
-        features[f"final.{name}"] = values[-1]
-        features[f"min.{name}"] = min(values)
-        features[f"max.{name}"] = max(values)
-        features[f"mean.{name}"] = math.fsum(values) / len(values)
-    return features
+    return _summarise(recorded, spikes)
 
 
 def _izhikevich_rs_euler_features(*, current: float, dt: float, steps: int) -> dict[str, float]:
@@ -308,18 +313,7 @@ def _izhikevich_rs_euler_features(*, current: float, dt: float, steps: int) -> d
         v_values.append(v)
         u_values.append(u)
 
-    features: dict[str, float] = {
-        "spike_count": float(math.fsum(spikes)),
-        "first_spike_step": float(
-            next((index for index, spike in enumerate(spikes, start=1) if spike), -1)
-        ),
-    }
-    for name, values in (("v", v_values), ("u", u_values)):
-        features[f"final.{name}"] = values[-1]
-        features[f"min.{name}"] = min(values)
-        features[f"max.{name}"] = max(values)
-        features[f"mean.{name}"] = math.fsum(values) / len(values)
-    return features
+    return _summarise({"v": v_values, "u": u_values}, spikes)
 
 
 def _fitzhugh_nagumo_euler_features(*, current: float, dt: float, steps: int) -> dict[str, float]:
@@ -369,18 +363,7 @@ def _fitzhugh_nagumo_euler_features(*, current: float, dt: float, steps: int) ->
         v_values.append(v)
         w_values.append(w)
 
-    features: dict[str, float] = {
-        "spike_count": float(math.fsum(spikes)),
-        "first_spike_step": float(
-            next((index for index, spike in enumerate(spikes, start=1) if spike), -1)
-        ),
-    }
-    for name, values in (("v", v_values), ("w", w_values)):
-        features[f"final.{name}"] = values[-1]
-        features[f"min.{name}"] = min(values)
-        features[f"max.{name}"] = max(values)
-        features[f"mean.{name}"] = math.fsum(values) / len(values)
-    return features
+    return _summarise({"v": v_values, "w": w_values}, spikes)
 
 
 def _adex_subthreshold_euler_features(*, current: float, dt: float, steps: int) -> dict[str, float]:
@@ -438,18 +421,7 @@ def _adex_subthreshold_euler_features(*, current: float, dt: float, steps: int) 
         v_values.append(v)
         w_values.append(w)
 
-    features: dict[str, float] = {
-        "spike_count": float(math.fsum(spikes)),
-        "first_spike_step": float(
-            next((index for index, spike in enumerate(spikes, start=1) if spike), -1)
-        ),
-    }
-    for name, values in (("v", v_values), ("w", w_values)):
-        features[f"final.{name}"] = values[-1]
-        features[f"min.{name}"] = min(values)
-        features[f"max.{name}"] = max(values)
-        features[f"mean.{name}"] = math.fsum(values) / len(values)
-    return features
+    return _summarise({"v": v_values, "w": w_values}, spikes)
 
 
 def _exp_if_subthreshold_euler_features(
@@ -501,17 +473,7 @@ def _exp_if_subthreshold_euler_features(
         v = v_next
         v_values.append(v)
 
-    features: dict[str, float] = {
-        "spike_count": float(math.fsum(spikes)),
-        "first_spike_step": float(
-            next((index for index, spike in enumerate(spikes, start=1) if spike), -1)
-        ),
-        "final.v": v_values[-1],
-        "min.v": min(v_values),
-        "max.v": max(v_values),
-        "mean.v": math.fsum(v_values) / len(v_values),
-    }
-    return features
+    return _summarise({"v": v_values}, spikes)
 
 
 def _hindmarsh_rose_prefix_euler_features(
@@ -567,18 +529,7 @@ def _hindmarsh_rose_prefix_euler_features(
         y_values.append(y)
         z_values.append(z)
 
-    features: dict[str, float] = {
-        "spike_count": float(math.fsum(spikes)),
-        "first_spike_step": float(
-            next((index for index, spike in enumerate(spikes, start=1) if spike), -1)
-        ),
-    }
-    for name, values in (("x", x_values), ("y", y_values), ("z", z_values)):
-        features[f"final.{name}"] = values[-1]
-        features[f"min.{name}"] = min(values)
-        features[f"max.{name}"] = max(values)
-        features[f"mean.{name}"] = math.fsum(values) / len(values)
-    return features
+    return _summarise({"x": x_values, "y": y_values, "z": z_values}, spikes)
 
 
 def _morris_lecar_euler_features(*, current: float, dt: float, steps: int) -> dict[str, float]:
@@ -646,18 +597,7 @@ def _morris_lecar_euler_features(*, current: float, dt: float, steps: int) -> di
         v_values.append(v)
         w_values.append(w)
 
-    features: dict[str, float] = {
-        "spike_count": float(math.fsum(spikes)),
-        "first_spike_step": float(
-            next((index for index, spike in enumerate(spikes, start=1) if spike), -1)
-        ),
-    }
-    for name, values in (("v", v_values), ("w", w_values)):
-        features[f"final.{name}"] = values[-1]
-        features[f"min.{name}"] = min(values)
-        features[f"max.{name}"] = max(values)
-        features[f"mean.{name}"] = math.fsum(values) / len(values)
-    return features
+    return _summarise({"v": v_values, "w": w_values}, spikes)
 
 
 def _np_exp(x: float) -> float:
@@ -758,18 +698,7 @@ def _hodgkin_huxley_resting_euler_features(
         recorded["h"].append(h)
         recorded["n"].append(n)
 
-    features: dict[str, float] = {
-        "spike_count": float(math.fsum(spikes)),
-        "first_spike_step": float(
-            next((index for index, spike in enumerate(spikes, start=1) if spike), -1)
-        ),
-    }
-    for name, values in recorded.items():
-        features[f"final.{name}"] = values[-1]
-        features[f"min.{name}"] = min(values)
-        features[f"max.{name}"] = max(values)
-        features[f"mean.{name}"] = math.fsum(values) / len(values)
-    return features
+    return _summarise(recorded, spikes)
 
 
 def _connor_stevens_resting_euler_features(
@@ -858,18 +787,7 @@ def _connor_stevens_resting_euler_features(
         recorded["a"].append(a)
         recorded["b"].append(b)
 
-    features: dict[str, float] = {
-        "spike_count": float(math.fsum(spikes)),
-        "first_spike_step": float(
-            next((index for index, spike in enumerate(spikes, start=1) if spike), -1)
-        ),
-    }
-    for name, values in recorded.items():
-        features[f"final.{name}"] = values[-1]
-        features[f"min.{name}"] = min(values)
-        features[f"max.{name}"] = max(values)
-        features[f"mean.{name}"] = math.fsum(values) / len(values)
-    return features
+    return _summarise(recorded, spikes)
 
 
 def _wang_buzsaki_resting_euler_features(
@@ -936,18 +854,7 @@ def _wang_buzsaki_resting_euler_features(
         recorded["h"].append(h)
         recorded["n"].append(n)
 
-    features: dict[str, float] = {
-        "spike_count": float(math.fsum(spikes)),
-        "first_spike_step": float(
-            next((index for index, spike in enumerate(spikes, start=1) if spike), -1)
-        ),
-    }
-    for name, values in recorded.items():
-        features[f"final.{name}"] = values[-1]
-        features[f"min.{name}"] = min(values)
-        features[f"max.{name}"] = max(values)
-        features[f"mean.{name}"] = math.fsum(values) / len(values)
-    return features
+    return _summarise(recorded, spikes)
 
 
 def _rulkov_map_features(*, current: float, steps: int) -> dict[str, float]:
@@ -993,18 +900,7 @@ def _rulkov_map_features(*, current: float, steps: int) -> dict[str, float]:
         x_values.append(x)
         y_values.append(y)
 
-    features: dict[str, float] = {
-        "spike_count": float(math.fsum(spikes)),
-        "first_spike_step": float(
-            next((index for index, spike in enumerate(spikes, start=1) if spike), -1)
-        ),
-    }
-    for name, values in (("x", x_values), ("y", y_values)):
-        features[f"final.{name}"] = values[-1]
-        features[f"min.{name}"] = min(values)
-        features[f"max.{name}"] = max(values)
-        features[f"mean.{name}"] = math.fsum(values) / len(values)
-    return features
+    return _summarise({"x": x_values, "y": y_values}, spikes)
 
 
 def test_seeded_corpus_has_analytic_schema_entries() -> None:
@@ -1103,198 +999,136 @@ def test_theta_trace_features_match_independent_phase_solution() -> None:
         assert spec.expected_features[feature_name] == pytest.approx(feature_value, abs=1e-12)
 
 
-def test_resonate_fire_trace_features_match_independent_linear_euler_solution() -> None:
-    """Committed resonate-fire features must match its linear Euler recurrence."""
-    spec = load_reference_trace_spec("resonate_fire_subthreshold_resonance_doi")
-
-    expected = _resonate_fire_linear_euler_features(
-        current=spec.protocol.inputs["I"],
-        dt=spec.protocol.dt,
-        steps=spec.protocol.steps,
-    )
-
-    assert spec.schema_name == "resonate_fire"
-    assert spec.provenance.kind == "analytic_linear_euler_reference"
-    assert spec.provenance.citation == "doi:10.1162/089976601300014538"
-    for feature_name, feature_value in expected.items():
-        assert spec.expected_features[feature_name] == pytest.approx(feature_value, abs=1e-12)
-
-
-def test_glif_trace_features_match_independent_linear_euler_solution() -> None:
-    """Committed GLIF5 features must match an independent subthreshold Euler recurrence."""
-    spec = load_reference_trace_spec("glif_constant_current_threshold_adaptation")
-
-    expected = _glif_subthreshold_euler_features(
-        current=spec.protocol.inputs["I"],
-        dt=spec.protocol.dt,
-        steps=spec.protocol.steps,
-    )
-
-    assert spec.schema_name == "glif"
-    assert spec.provenance.kind == "analytic_linear_euler_reference"
-    assert spec.provenance.citation == "doi:10.1038/s41467-017-02717-4"
-    assert set(expected) == set(spec.expected_features)
-    for feature_name, feature_value in expected.items():
-        assert spec.expected_features[feature_name] == pytest.approx(feature_value, abs=1e-12)
-
-
-def test_izhikevich_trace_features_match_independent_euler_solution() -> None:
-    """Committed Izhikevich RS features must match an independent explicit-Euler recurrence."""
-    spec = load_reference_trace_spec("izhikevich_regular_spiking_doi")
-
-    expected = _izhikevich_rs_euler_features(
-        current=spec.protocol.inputs["I"],
-        dt=spec.protocol.dt,
-        steps=spec.protocol.steps,
-    )
-
-    assert spec.schema_name == "izhikevich"
-    assert spec.provenance.kind == "independent_euler_reference"
-    assert spec.provenance.citation == "doi:10.1109/TNN.2003.820440"
-    assert set(expected) == set(spec.expected_features)
-    for feature_name, feature_value in expected.items():
-        assert spec.expected_features[feature_name] == pytest.approx(feature_value, abs=1e-12)
-
-
-def test_fitzhugh_nagumo_trace_features_match_independent_euler_solution() -> None:
-    """Committed FitzHugh-Nagumo features must match an independent explicit-Euler recurrence."""
-    spec = load_reference_trace_spec("fitzhugh_nagumo_driven_oscillation_doi")
-
-    expected = _fitzhugh_nagumo_euler_features(
-        current=spec.protocol.inputs["I"],
-        dt=spec.protocol.dt,
-        steps=spec.protocol.steps,
-    )
-
-    assert spec.schema_name == "fitzhugh_nagumo"
-    assert spec.provenance.kind == "independent_euler_reference"
-    assert spec.provenance.citation == "doi:10.1016/S0006-3495(61)86902-6"
-    assert set(expected) == set(spec.expected_features)
-    for feature_name, feature_value in expected.items():
-        assert spec.expected_features[feature_name] == pytest.approx(feature_value, abs=1e-12)
-
-
-def test_adex_trace_features_match_independent_euler_solution() -> None:
-    """Committed AdEx features must match an independent subthreshold Euler recurrence."""
-    spec = load_reference_trace_spec("adex_resting_adaptation_doi")
-
-    expected = _adex_subthreshold_euler_features(
-        current=spec.protocol.inputs["I"],
-        dt=spec.protocol.dt,
-        steps=spec.protocol.steps,
-    )
-
-    assert spec.schema_name == "adex"
-    assert spec.provenance.kind == "independent_euler_reference"
-    assert spec.provenance.citation == "doi:10.1152/jn.00686.2005"
-    assert set(expected) == set(spec.expected_features)
-    for feature_name, feature_value in expected.items():
-        assert spec.expected_features[feature_name] == pytest.approx(feature_value, abs=1e-12)
-
-
-def test_exp_if_trace_features_match_independent_euler_solution() -> None:
-    """Committed exponential-IF features must match an independent resting Euler recurrence."""
-    spec = load_reference_trace_spec("exp_if_resting_exponential_doi")
-
-    expected = _exp_if_subthreshold_euler_features(
-        current=spec.protocol.inputs["I"],
-        dt=spec.protocol.dt,
-        steps=spec.protocol.steps,
-    )
-
-    assert spec.schema_name == "exp_if"
-    assert spec.provenance.kind == "independent_euler_reference"
-    assert spec.provenance.citation == "doi:10.1523/JNEUROSCI.23-37-11628.2003"
-    assert set(expected) == set(spec.expected_features)
-    for feature_name, feature_value in expected.items():
-        assert spec.expected_features[feature_name] == pytest.approx(feature_value, abs=1e-12)
+_PARITY_CASES: list[tuple[str, str, str, str, Callable[[ReferenceTraceSpec], dict[str, float]]]] = [
+    (
+        "resonate_fire_subthreshold_resonance_doi",
+        "resonate_fire",
+        "analytic_linear_euler_reference",
+        "doi:10.1162/089976601300014538",
+        lambda spec: _resonate_fire_linear_euler_features(
+            current=spec.protocol.inputs["I"], dt=spec.protocol.dt, steps=spec.protocol.steps
+        ),
+    ),
+    (
+        "glif_constant_current_threshold_adaptation",
+        "glif",
+        "analytic_linear_euler_reference",
+        "doi:10.1038/s41467-017-02717-4",
+        lambda spec: _glif_subthreshold_euler_features(
+            current=spec.protocol.inputs["I"], dt=spec.protocol.dt, steps=spec.protocol.steps
+        ),
+    ),
+    (
+        "izhikevich_regular_spiking_doi",
+        "izhikevich",
+        "independent_euler_reference",
+        "doi:10.1109/TNN.2003.820440",
+        lambda spec: _izhikevich_rs_euler_features(
+            current=spec.protocol.inputs["I"], dt=spec.protocol.dt, steps=spec.protocol.steps
+        ),
+    ),
+    (
+        "fitzhugh_nagumo_driven_oscillation_doi",
+        "fitzhugh_nagumo",
+        "independent_euler_reference",
+        "doi:10.1016/S0006-3495(61)86902-6",
+        lambda spec: _fitzhugh_nagumo_euler_features(
+            current=spec.protocol.inputs["I"], dt=spec.protocol.dt, steps=spec.protocol.steps
+        ),
+    ),
+    (
+        "adex_resting_adaptation_doi",
+        "adex",
+        "independent_euler_reference",
+        "doi:10.1152/jn.00686.2005",
+        lambda spec: _adex_subthreshold_euler_features(
+            current=spec.protocol.inputs["I"], dt=spec.protocol.dt, steps=spec.protocol.steps
+        ),
+    ),
+    (
+        "exp_if_resting_exponential_doi",
+        "exp_if",
+        "independent_euler_reference",
+        "doi:10.1523/JNEUROSCI.23-37-11628.2003",
+        lambda spec: _exp_if_subthreshold_euler_features(
+            current=spec.protocol.inputs["I"], dt=spec.protocol.dt, steps=spec.protocol.steps
+        ),
+    ),
+    (
+        "hindmarsh_rose_short_bursting_prefix",
+        "hindmarsh_rose",
+        "independent_euler_reference",
+        "doi:10.1098/rspb.1984.0024",
+        lambda spec: _hindmarsh_rose_prefix_euler_features(
+            current=spec.protocol.inputs["I"], dt=spec.protocol.dt, steps=spec.protocol.steps
+        ),
+    ),
+    (
+        "morris_lecar_depolarizing_current_doi",
+        "morris_lecar",
+        "independent_euler_reference",
+        "doi:10.1016/S0006-3495(81)84782-0",
+        lambda spec: _morris_lecar_euler_features(
+            current=spec.protocol.inputs["I"], dt=spec.protocol.dt, steps=spec.protocol.steps
+        ),
+    ),
+    (
+        "hodgkin_huxley_resting_gate_doi",
+        "hodgkin_huxley",
+        "independent_euler_reference",
+        "doi:10.1113/jphysiol.1952.sp004764",
+        lambda spec: _hodgkin_huxley_resting_euler_features(
+            current=spec.protocol.inputs["I"], dt=spec.protocol.dt, steps=spec.protocol.steps
+        ),
+    ),
+    (
+        "connor_stevens_resting_gate_doi",
+        "connor_stevens",
+        "independent_euler_reference",
+        "doi:10.1113/jphysiol.1971.sp009368",
+        lambda spec: _connor_stevens_resting_euler_features(
+            current=spec.protocol.inputs["I"], dt=spec.protocol.dt, steps=spec.protocol.steps
+        ),
+    ),
+    (
+        "wang_buzsaki_resting_interneuron_doi",
+        "wang_buzsaki",
+        "independent_euler_reference",
+        "doi:10.1523/JNEUROSCI.16-20-06402.1996",
+        lambda spec: _wang_buzsaki_resting_euler_features(
+            current=spec.protocol.inputs["I"], dt=spec.protocol.dt, steps=spec.protocol.steps
+        ),
+    ),
+]
 
 
-def test_hindmarsh_rose_trace_features_match_independent_euler_solution() -> None:
-    """Committed Hindmarsh-Rose prefix features must match an independent Euler recurrence."""
-    spec = load_reference_trace_spec("hindmarsh_rose_short_bursting_prefix")
+@pytest.mark.parametrize(
+    ("trace_name", "schema_name", "kind", "citation", "reference"),
+    _PARITY_CASES,
+    ids=[case[1] for case in _PARITY_CASES],
+)
+def test_trace_features_match_independent_reference(
+    trace_name: str,
+    schema_name: str,
+    kind: str,
+    citation: str,
+    reference: Callable[[ReferenceTraceSpec], dict[str, float]],
+) -> None:
+    """Each committed trace must reproduce an independent re-derivation to ``1e-12``.
 
-    expected = _hindmarsh_rose_prefix_euler_features(
-        current=spec.protocol.inputs["I"],
-        dt=spec.protocol.dt,
-        steps=spec.protocol.steps,
-    )
+    The per-case ``reference`` callable recomputes the expected feature map from the
+    model's published equations (an explicit-Euler or analytic recurrence), so a
+    passing assertion proves the committed corpus is independently reproduced rather
+    than regenerated by the schema runner itself. The committed feature set must match
+    the reference set exactly and every value to ``1e-12``.
+    """
+    spec = load_reference_trace_spec(trace_name)
 
-    assert spec.schema_name == "hindmarsh_rose"
-    assert spec.provenance.kind == "independent_euler_reference"
-    assert spec.provenance.citation == "doi:10.1098/rspb.1984.0024"
-    assert set(expected) == set(spec.expected_features)
-    for feature_name, feature_value in expected.items():
-        assert spec.expected_features[feature_name] == pytest.approx(feature_value, abs=1e-12)
+    expected = reference(spec)
 
-
-def test_morris_lecar_trace_features_match_independent_euler_solution() -> None:
-    """Committed Morris-Lecar features must match an independent explicit-Euler recurrence."""
-    spec = load_reference_trace_spec("morris_lecar_depolarizing_current_doi")
-
-    expected = _morris_lecar_euler_features(
-        current=spec.protocol.inputs["I"],
-        dt=spec.protocol.dt,
-        steps=spec.protocol.steps,
-    )
-
-    assert spec.schema_name == "morris_lecar"
-    assert spec.provenance.kind == "independent_euler_reference"
-    assert spec.provenance.citation == "doi:10.1016/S0006-3495(81)84782-0"
-    assert set(expected) == set(spec.expected_features)
-    for feature_name, feature_value in expected.items():
-        assert spec.expected_features[feature_name] == pytest.approx(feature_value, abs=1e-12)
-
-
-def test_hodgkin_huxley_trace_features_match_independent_euler_solution() -> None:
-    """Committed Hodgkin-Huxley features must match an independent resting Euler recurrence."""
-    spec = load_reference_trace_spec("hodgkin_huxley_resting_gate_doi")
-
-    expected = _hodgkin_huxley_resting_euler_features(
-        current=spec.protocol.inputs["I"],
-        dt=spec.protocol.dt,
-        steps=spec.protocol.steps,
-    )
-
-    assert spec.schema_name == "hodgkin_huxley"
-    assert spec.provenance.kind == "independent_euler_reference"
-    assert spec.provenance.citation == "doi:10.1113/jphysiol.1952.sp004764"
-    assert set(expected) == set(spec.expected_features)
-    for feature_name, feature_value in expected.items():
-        assert spec.expected_features[feature_name] == pytest.approx(feature_value, abs=1e-12)
-
-
-def test_connor_stevens_trace_features_match_independent_euler_solution() -> None:
-    """Committed Connor-Stevens features must match an independent resting Euler recurrence."""
-    spec = load_reference_trace_spec("connor_stevens_resting_gate_doi")
-
-    expected = _connor_stevens_resting_euler_features(
-        current=spec.protocol.inputs["I"],
-        dt=spec.protocol.dt,
-        steps=spec.protocol.steps,
-    )
-
-    assert spec.schema_name == "connor_stevens"
-    assert spec.provenance.kind == "independent_euler_reference"
-    assert spec.provenance.citation == "doi:10.1113/jphysiol.1971.sp009368"
-    assert set(expected) == set(spec.expected_features)
-    for feature_name, feature_value in expected.items():
-        assert spec.expected_features[feature_name] == pytest.approx(feature_value, abs=1e-12)
-
-
-def test_wang_buzsaki_trace_features_match_independent_euler_solution() -> None:
-    """Committed Wang-Buzsaki features must match an independent resting Euler recurrence."""
-    spec = load_reference_trace_spec("wang_buzsaki_resting_interneuron_doi")
-
-    expected = _wang_buzsaki_resting_euler_features(
-        current=spec.protocol.inputs["I"],
-        dt=spec.protocol.dt,
-        steps=spec.protocol.steps,
-    )
-
-    assert spec.schema_name == "wang_buzsaki"
-    assert spec.provenance.kind == "independent_euler_reference"
-    assert spec.provenance.citation == "doi:10.1523/JNEUROSCI.16-20-06402.1996"
+    assert spec.schema_name == schema_name
+    assert spec.provenance.kind == kind
+    assert spec.provenance.citation == citation
     assert set(expected) == set(spec.expected_features)
     for feature_name, feature_value in expected.items():
         assert spec.expected_features[feature_name] == pytest.approx(feature_value, abs=1e-12)
