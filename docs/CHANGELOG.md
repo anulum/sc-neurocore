@@ -5,6 +5,14 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+### Schema-gap reporting
+- Added `tools/schema_gap_report.py` and focused tests for WC-A5 schema-DSL
+  coverage planning. The report scans live model/schema files without importing
+  optional backends, distinguishes the net schema gap from exact source-module
+  alias coverage, and ranks missing-schema rows by source-evidence enrolment
+  priority. No neuron runtime, HDL logic, polyglot mirror, benchmark dispatch,
+  or benchmark artefact changed.
+
 ### Q4.12 co-simulation range classification
 - Replaced the Q4.12 LIF zero-current co-simulation xfail with an explicit
   range-classification regression that checks the Q-format diagnostics and the

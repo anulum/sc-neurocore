@@ -59,6 +59,12 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
   benchmark dispatch, or benchmark artefact changed.
 
 ### Added
+- Added `tools/schema_gap_report.py` and focused tests for WC-A5 schema-DSL
+  coverage planning. The report scans live model/schema files without importing
+  optional backends, distinguishes the net schema gap from exact source-module
+  alias coverage, and ranks missing-schema rows by source-evidence enrolment
+  priority. No neuron runtime, HDL logic, polyglot mirror, benchmark dispatch,
+  or benchmark artefact changed.
 - Added a typed Icarus Verilog dependency checker and wired the CI test matrix
   to verify `iverilog -V` and `vvp -V` against the documented 12.x
   co-simulation floor before package tests run. The FPGA toolchain guide now
