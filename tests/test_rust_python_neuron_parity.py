@@ -16,7 +16,7 @@ from pathlib import Path
 import re
 import sys
 from types import ModuleType
-from typing import Protocol, cast
+from typing import NamedTuple, Protocol, cast
 
 import pytest
 
@@ -44,6 +44,15 @@ class _RecordingStepModel:
 
         self.calls.append(args)
         return self.result
+
+
+class PythonOnlyBoundary(NamedTuple):
+    """Documented reason one registry name has no same-name PyO3 constructor."""
+
+    name: str
+    source_path: Path
+    source_token: str
+    reason_token: str
 
 
 _ENGINE: ModuleType | None
@@ -87,6 +96,39 @@ _PYTHON_ONLY_MODELS = frozenset(
     }
 )
 
+_PYTHON_ONLY_BOUNDARIES = (
+    PythonOnlyBoundary(
+        name="AstrocyteNeuron",
+        source_path=Path("src/sc_neurocore/neurons/models/astrocyte_adapter.py"),
+        source_token="Adapter that wraps :class:`AstrocyteModel`",
+        reason_token="Population adapter over `AstrocyteModel`",
+    ),
+    PythonOnlyBoundary(
+        name="ChayKeizerMinimalNeuron",
+        source_path=Path("src/sc_neurocore/neurons/models/chay_keizer_minimal.py"),
+        source_token="Reduced three-state Chay-Keizer",
+        reason_token="reduced three-state pancreatic beta-cell model",
+    ),
+    PythonOnlyBoundary(
+        name="HybridFisherPosnerLIFNeuron",
+        source_path=Path("src/sc_neurocore/neurons/models/hybrid_fisher_posner_lif.py"),
+        source_token="quantum_cognition",
+        reason_token="depends on the Python `SpinPoolMPS` quantum-metabolic state",
+    ),
+    PythonOnlyBoundary(
+        name="Izhikevich2007Neuron",
+        source_path=Path("src/sc_neurocore/neurons/models/izhikevich2007.py"),
+        source_token="py_izhikevich2007_simulate",
+        reason_token="function-level compiled accelerator",
+    ),
+    PythonOnlyBoundary(
+        name="SRM0Neuron",
+        source_path=Path("src/sc_neurocore/neurons/models/srm0.py"),
+        source_token="coupled linear system",
+        reason_token="exact-flow SRM0 membrane accumulator",
+    ),
+)
+
 _RUST_NAME_MAP = {
     "AdaptiveThresholdMoENeuron": "RustAdaptiveThresholdMoENeuron",
     "AstrocyteLIFNeuron": "RustAstrocyteLIFNeuron",
@@ -126,6 +168,7 @@ _DOC_TOKENS = (
     "145 same-name Rust constructors",
     "9 Rust-prefixed or core-only constructors",
     "5 Python-only registry names",
+    "Python-only boundary rationale",
     "HybridFisherPosnerLIFNeuron",
 )
 
@@ -252,8 +295,10 @@ def test_rust_binding_coverage_map_classifies_every_python_model() -> None:
 
     model_names = set(_all_model_names())
     mapped_names = set(_RUST_NAME_MAP)
+    boundary_names = {boundary.name for boundary in _PYTHON_ONLY_BOUNDARIES}
 
     assert model_names >= _PYTHON_ONLY_MODELS
+    assert boundary_names == _PYTHON_ONLY_MODELS
     assert mapped_names <= model_names
     assert model_names >= _STOCHASTIC
     assert model_names >= _KNOWN_PARITY_DIVERGENCE
@@ -274,6 +319,20 @@ def test_rust_binding_coverage_map_matches_committed_rust_sources() -> None:
     }
 
     assert not missing
+
+
+def test_python_only_boundaries_are_documented_from_live_sources() -> None:
+    """Lock durable Python-only decisions to source evidence and public docs."""
+
+    doc_text = (_repo_root() / _DOC_PATH).read_text(encoding="utf-8")
+    rust_names = _rust_source_names()
+
+    for boundary in _PYTHON_ONLY_BOUNDARIES:
+        source_text = (_repo_root() / boundary.source_path).read_text(encoding="utf-8")
+        assert boundary.source_token in source_text
+        assert boundary.name in doc_text
+        assert boundary.reason_token in doc_text
+        assert boundary.name not in rust_names
 
 
 @pytest.mark.skipif(not HAS_ENGINE, reason="Rust engine not built")

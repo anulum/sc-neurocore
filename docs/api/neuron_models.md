@@ -56,7 +56,7 @@ The current registry map records 145 same-name Rust constructors,
 |-------------|------:|----------|
 | Same-name Rust constructors | 145 | Python registry name matches the compiled `sc_neurocore_engine.sc_neurocore_engine` class name. |
 | Rust-prefixed or core-only constructors | 9 | A Rust binding exists, but the generic scalar parity harness uses an explicit name map. |
-| Python-only registry names | 5 | No committed PyO3 neuron constructor is claimed yet. |
+| Python-only registry names | 5 | No same-name PyO3 neuron constructor is claimed; each entry below records the durable boundary. |
 
 Rust-prefixed or core-only constructor map:
 
@@ -72,13 +72,15 @@ Rust-prefixed or core-only constructor map:
 | `MulticompartmentMCNNeuron` | `RustMulticompartmentMCNNeuron` |
 | `QuantumInspiredLIFNeuron` | `RustQuantumInspiredLIFNeuron` |
 
-Python-only registry names:
+Python-only boundary rationale:
 
-- `AstrocyteNeuron`
-- `ChayKeizerMinimalNeuron`
-- `HybridFisherPosnerLIFNeuron`
-- `Izhikevich2007Neuron`
-- `SRM0Neuron`
+| Python registry name | Boundary |
+|----------------------|----------|
+| `AstrocyteNeuron` | Population adapter over `AstrocyteModel`; the Rust engine already exposes `AstrocyteModel` and `RustAstrocyteLIFNeuron`, but this adapter threshold-converts cytosolic Ca²⁺ release into the population spike interface. |
+| `ChayKeizerMinimalNeuron` | The reduced three-state pancreatic beta-cell model is a separate published reduction from the existing five-state Chay-Keizer Rust kernel and needs its own parameter-faithful implementation before a PyO3 constructor is claimed. |
+| `HybridFisherPosnerLIFNeuron` | The population-compatible entry depends on the Python `SpinPoolMPS` quantum-metabolic state and shared-pool measurement side effects, so a same-name Rust constructor would overclaim parity until that state model is ported. |
+| `Izhikevich2007Neuron` | This model already has a function-level compiled accelerator for the RK4 `simulate()` path (`py_izhikevich2007_simulate`), but no stateful PyO3 neuron constructor is claimed for the full Python object. |
+| `SRM0Neuron` | The maintained Python model is an exact-flow SRM0 membrane accumulator; it is not equivalent to the older Rust `SpikeResponseNeuron` kernel, so the registry name stays Python-only until a faithful Rust SRM0 kernel lands. |
 
 The parity test checks this map against the Python registry, committed Rust
 PyO3 source declarations, and the built Rust engine when the optional engine is

@@ -5,6 +5,11 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 ## [Unreleased]
 
 ### Changed
+- Documented the durable Python-only boundary for the five registry names
+  without same-name PyO3 neuron constructors and locked each boundary to source
+  evidence in the Rust/Python neuron parity map. No neuron runtime, PyO3
+  implementation, polyglot mirror, benchmark dispatch, or benchmark artefact
+  changed.
 - Added optional-extra CI matrix lanes for annealing, ONNX protobuf export, and
   real MPI. The lanes install their focused extras, run the import-skipped
   production test selectors, and are locked by workflow/docs contract tests. No
