@@ -244,6 +244,12 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
   now rejects legacy `text` and `source` aliases and locks the numeric timestamp
   shape. No runtime model dynamics, polyglot kernel, benchmark-dispatched path,
   or benchmark artefact changed.
+- Added `tools/snn_memory_discipline_audit.py` to validate SC-NeuroCore SNN
+  stimulus producers and existing records against the fleet memory-write
+  schema, including canonical keys, controlled actors, timestamps, entities,
+  kinds, and source provenance. Repair mode normalizes legacy local records
+  without deleting files or changing runtime model dynamics, polyglot kernels,
+  benchmark dispatch, or benchmark artefacts.
 
 ### Perfect-integrator co-simulation schema
 - Added the DOI-backed `perfect_integrator` UniversalNeuron schema in TOML and

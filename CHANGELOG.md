@@ -185,6 +185,11 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
   `kind`, and `source_ref`; the focused CLI contract rejects legacy `text` and
   `source` aliases. No runtime model dynamics, polyglot kernel,
   benchmark-dispatched path, or benchmark artefact changed.
+- Added a repeatable SNN memory-discipline audit/repair tool for SC-NeuroCore
+  stimulus producers and records. The tool validates canonical fleet-memory
+  keys, controlled actors, timestamps, entities, kinds, and source provenance,
+  and can normalize legacy local records without changing runtime model
+  dynamics, polyglot kernels, benchmark dispatch, or benchmark artefacts.
 - Added a schema-driven neuron reference-trace validation harness with immutable
   corpus contracts, fail-closed JSON payload parsing, package-data loading,
   `UniversalNeuron` execution, and feature-level validation reports. The seed

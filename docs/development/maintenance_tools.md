@@ -27,6 +27,29 @@ Tracked files absent from base collection must declare a module-level
 `pytest.importorskip(...)` optional dependency gate. Any other uncollected
 tracked test file is a failure.
 
+### SNN memory-discipline audit
+
+`tools/snn_memory_discipline_audit.py` audits SC-NeuroCore SNN stimulus
+producers and emitted JSON records against the fleet memory-write schema from
+`BROADCAST_2026-06-29_memory_write_discipline.md`. It discovers tracked Python
+writer functions, validates every `*.json` stimulus file in the selected
+directory, and reports noncanonical keys, uncontrolled actor roles, missing
+timestamps, missing entities, and empty provenance.
+
+Run the audit against the shared SC-NeuroCore stimulus directory:
+
+```bash
+python tools/snn_memory_discipline_audit.py \
+  --repo . \
+  --stimulus-dir /media/anulum/GOTM/aaa_God_of_the_Math_Collection/04_ARCANE_SAPIENCE/snn_stimuli/SC-NEUROCORE \
+  --output docs/internal/snn_memory_discipline_audit.json
+```
+
+Use `--repair` only for schema-only normalization of legacy records. The repair
+path preserves factual content by moving legacy `summary`, `commit`,
+`todo_rows_closed`, and `evidence` fields into canonical `content` and
+`source_ref` fields; it does not delete stimulus files.
+
 ### Model documentation audit
 
 `tools/audit_model_docs.py` inventories source model modules, documentation
