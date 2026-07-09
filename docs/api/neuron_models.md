@@ -37,6 +37,57 @@ attribute access. Setting `SC_NEUROCORE_NO_RUST=1` forces the pure-Python model
 registry even when the optional Rust engine is installed, and the fallback path
 caches the resolved Python class for later imports.
 
+## Rust Binding Coverage Map
+
+`tests/test_rust_python_neuron_parity.py` is the live coverage map for the
+Python registry exposed by `sc_neurocore.neurons.models.__all__`. The generated
+capability inventory above counts 158 static classes in
+`src/sc_neurocore/neurons/models/*.py`; the registry-level map covers
+159 public Python registry names because `HybridFisherPosnerLIFNeuron` is
+re-exported from `sc_neurocore.quantum_cognition.fisher_posner` for
+population dispatch.
+
+Current binding disposition:
+
+The current registry map records 145 same-name Rust constructors,
+9 Rust-prefixed or core-only constructors, and 5 Python-only registry names.
+
+| Disposition | Count | Contract |
+|-------------|------:|----------|
+| Same-name Rust constructors | 145 | Python registry name matches the compiled `sc_neurocore_engine.sc_neurocore_engine` class name. |
+| Rust-prefixed or core-only constructors | 9 | A Rust binding exists, but the generic scalar parity harness uses an explicit name map. |
+| Python-only registry names | 5 | No committed PyO3 neuron constructor is claimed yet. |
+
+Rust-prefixed or core-only constructor map:
+
+| Python registry name | Rust constructor |
+|----------------------|------------------|
+| `AdaptiveThresholdMoENeuron` | `RustAdaptiveThresholdMoENeuron` |
+| `AstrocyteLIFNeuron` | `RustAstrocyteLIFNeuron` |
+| `CochlearHairCell` | `RustCochlearHairCell` |
+| `ContinuousAttractorNeuron` | `RustContinuousAttractorNeuron` |
+| `DendriticNMDANeuron` | `RustDendriticNMDANeuron` |
+| `DirectionSelectiveRGC` | `RustDirectionSelectiveRGC` |
+| `HybridLinearAttentionNeuron` | `RustHybridLinearAttentionNeuron` |
+| `MulticompartmentMCNNeuron` | `RustMulticompartmentMCNNeuron` |
+| `QuantumInspiredLIFNeuron` | `RustQuantumInspiredLIFNeuron` |
+
+Python-only registry names:
+
+- `AstrocyteNeuron`
+- `ChayKeizerMinimalNeuron`
+- `HybridFisherPosnerLIFNeuron`
+- `Izhikevich2007Neuron`
+- `SRM0Neuron`
+
+The parity test checks this map against the Python registry, committed Rust
+PyO3 source declarations, and the built Rust engine when the optional engine is
+installed. Stochastic models remain binding-covered but outside exact
+spike-train parity until a shared RNG contract exists. `ChayKeizerNeuron`
+remains an expected parity divergence because the Python model is the
+five-dimensional Chay-Keizer burster while the current Rust kernel is the older
+reduced form.
+
 ## Reference Trace Validation
 
 The schema-driven validation harness in `sc_neurocore.neurons.reference_traces`

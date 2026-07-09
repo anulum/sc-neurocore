@@ -4,10 +4,10 @@
 # © Code 2020–2026 Miroslav Šotek. All rights reserved.
 # ORCID: 0009-0009-3560-0851
 # Contact: www.anulum.li | protoscience@anulum.li
-# SC-NeuroCore — Engine — 112 Rust neuron re-exports + SIMD primitives + IR
+# SC-NeuroCore — Engine package re-exports, SIMD primitives, and IR
 # ruff: noqa: F401
 
-"""SC-NeuroCore Engine — 112 Rust neuron re-exports + SIMD primitives + IR compiler."""
+"""SC-NeuroCore Engine package re-exports, SIMD primitives, and IR compiler."""
 
 try:
     from sc_neurocore_engine.sc_neurocore_engine import (

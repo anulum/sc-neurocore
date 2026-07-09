@@ -5,6 +5,12 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 ## [Unreleased]
 
 ### Changed
+- Documented the Rust/Python neuron binding coverage boundary and turned
+  `tests/test_rust_python_neuron_parity.py` into a registry-level coverage map
+  for 159 public Python registry names, including same-name Rust constructors,
+  Rust-prefixed/core-only constructors, and current Python-only entries. No
+  neuron runtime, PyO3 implementation, polyglot mirror, benchmark dispatch, or
+  benchmark artefact changed.
 - Added a public Vivado CI gate guide for the `MIF_VIVADO_CI=1` ZU3EG
   synthesis-flow tests. A focused contract test now discovers the live
   Vivado-gated pytest files and keeps the guide plus MkDocs navigation in sync.
