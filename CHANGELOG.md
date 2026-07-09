@@ -5,6 +5,12 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 ## [Unreleased]
 
 ### Fixed
+- Hardened `scripts/validate_configs.py` into a typed repository configuration
+  validator, removed the unused top-level `tomli` import, aligned the required
+  user guide path with `docs/guides/USER_MANUAL.md`, and added focused CLI
+  validation tests. The generated capability surfaces were refreshed for the
+  new test file; no runtime package, polyglot mirror, benchmark dispatch, or
+  benchmark artefact changed.
 - Restored strict-mypy compliance for the neuron expression differentiator by
   isolating SymPy's partially typed constructors, differentiation, and printer
   APIs behind typed boundary helpers. The in-grammar derivative contract,
