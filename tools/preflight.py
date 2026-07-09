@@ -9,10 +9,13 @@
 """Pre-push preflight gate — mirrors CI checks locally."""
 
 import argparse
+import importlib
 import pathlib
 import subprocess
 import sys
 import tempfile
+from collections.abc import Callable
+from typing import cast
 
 try:
     import tomllib
@@ -124,25 +127,12 @@ SPDX_SKIP_PARTS = {
 
 
 def check_spdx() -> bool:
-    missing = []
-    for d in SPDX_DIRS:
-        root = pathlib.Path(d)
-        if not root.exists():
-            continue
-        for p in root.rglob("*"):
-            if p.suffix not in SPDX_EXTS:
-                continue
-            # Skip vendored / cached trees that are gitignored and not
-            # part of the project's source set (e.g. the .pixi Python
-            # environment under accel/mojo/).
-            if any(part in SPDX_SKIP_PARTS for part in p.parts):
-                continue
-            try:
-                text = p.read_text(encoding="utf-8", errors="ignore")[:2048]
-            except OSError:
-                continue
-            if SPDX_MARKER not in text:
-                missing.append(str(p))
+    try:
+        module = importlib.import_module("spdx_header_audit")
+    except ModuleNotFoundError:
+        module = importlib.import_module("tools.spdx_header_audit")
+    checker = cast(Callable[[pathlib.Path], list[str]], module.missing_direct_header_paths)
+    missing = checker(pathlib.Path("."))
     if missing:
         print("Missing SPDX headers:")
         for f in missing:

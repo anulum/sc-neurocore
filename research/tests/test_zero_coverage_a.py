@@ -1,8 +1,14 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
+# Commercial license available
+# © Concepts 1996–2026 Miroslav Šotek. All rights reserved.
+# © Code 2020–2026 Miroslav Šotek. All rights reserved.
+# ORCID: 0009-0009-3560-0851
+# Contact: www.anulum.li | protoscience@anulum.li
+# SC-NeuroCore — Source/config provenance header
+
 """Tests for 0%-coverage modules: eschaton, exotic, transcendent, meta, post_silicon."""
 
 import numpy as np
-import pytest
 
 
 # ── eschaton ─────────────────────────────────────────────────────────
@@ -60,7 +66,8 @@ class TestNestedUniverse:
 
         u = NestedUniverse(id=0, computing_resources=100.0)
         child = u.spawn_simulation(overhead=0.1)
-        assert child is not None or True  # may return None if insufficient resources
+        assert child is not None
+        assert child in u.children
         u.run_recursive_step()
 
 

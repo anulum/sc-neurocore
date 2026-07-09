@@ -1,5 +1,11 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // Commercial license available
+// © Concepts 1996–2026 Miroslav Šotek. All rights reserved.
+// © Code 2020–2026 Miroslav Šotek. All rights reserved.
+// ORCID: 0009-0009-3560-0851
+// Contact: www.anulum.li | protoscience@anulum.li
+// SC-NeuroCore — Source/config provenance header
+
 // SC-NeuroCore — On-chip STDP synapse: runtime weight adaptation on FPGA
 //
 // Implements spike-timing dependent plasticity directly in hardware.

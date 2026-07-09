@@ -249,18 +249,7 @@ jobs:
       - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
 
       - name: Check SPDX headers
-        run: |
-          MISSING=$(find src tests engine/src engine/tests engine/benches hdl bridge \
-            -type f \( -name "*.py" -o -name "*.rs" -o -name "*.v" \) \
-            ! -path "*/__pycache__/*" \
-            ! -path "src/sc_neurocore/accel/mojo/.pixi/*" \
-            ! -path "src/sc_neurocore/hdl_gen/openroad_flow/build/*" \
-            -exec grep -rL "SPDX-License-Identifier" {} +) || true
-          if [ -n "$MISSING" ]; then
-            echo "::error::Files missing SPDX header:"
-            echo "$MISSING"
-            exit 1
-          fi
+        run: python tools/spdx_header_audit.py --check
 
   build:
     runs-on: ubuntu-latest

@@ -1,7 +1,13 @@
 #!/usr/bin/env bash
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# © 1998–2026 Miroslav Šotek. All rights reserved.
+# Commercial license available
+# © Concepts 1996–2026 Miroslav Šotek. All rights reserved.
+# © Code 2020–2026 Miroslav Šotek. All rights reserved.
+# ORCID: 0009-0009-3560-0851
 # Contact: www.anulum.li | protoscience@anulum.li
+# SC-NeuroCore — Source/config provenance header
+
+# © 1998–2026 Miroslav Šotek. All rights reserved.
 #
 # SC-NeuroCore 6-phase scaling benchmark runner for UpCloud GPU servers.
 # Target: NVIDIA L40S GPU + AMD EPYC 9575F (Zen 5, AVX-512).

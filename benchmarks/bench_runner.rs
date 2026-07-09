@@ -1,4 +1,11 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
+// Commercial license available
+// © Concepts 1996–2026 Miroslav Šotek. All rights reserved.
+// © Code 2020–2026 Miroslav Šotek. All rights reserved.
+// ORCID: 0009-0009-3560-0851
+// Contact: www.anulum.li | protoscience@anulum.li
+// SC-NeuroCore — Source/config provenance header
+
 // SC-NeuroCore — Rust benchmark runner for quantum cognition kernels
 // Compile: rustc --edition 2021 -O bench_runner.rs -o bench_runner
 // Run: ./bench_runner

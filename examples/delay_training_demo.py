@@ -1,6 +1,12 @@
 #!/usr/bin/env python3
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Commercial license available
+# © Concepts 1996–2026 Miroslav Šotek. All rights reserved.
+# © Code 2020–2026 Miroslav Šotek. All rights reserved.
+# ORCID: 0009-0009-3560-0851
+# Contact: www.anulum.li | protoscience@anulum.li
+# SC-NeuroCore — Source/config provenance header
+
 # SC-NeuroCore -- Learnable delay training demo
 #
 # Usage:
@@ -12,7 +18,6 @@
 from __future__ import annotations
 
 import torch
-import torch.nn as nn
 
 from sc_neurocore.training.delay_linear import DelayLinear
 from sc_neurocore.training.surrogate import atan_surrogate
@@ -62,7 +67,7 @@ def main():
             print(f"   Epoch {epoch:3d}: spikes={total_spikes.sum().item():.1f}")
 
     # 3. Show learned delays
-    print(f"\n3. Learned delays:")
+    print("\n3. Learned delays:")
     print(f"   Float: {delay_layer.delay[0].data.numpy().round(2)}")
     print(f"   Integer: {delay_layer.delays_int[0].numpy()}")
 

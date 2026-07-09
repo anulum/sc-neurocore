@@ -1,3 +1,11 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Commercial license available
+# © Concepts 1996–2026 Miroslav Šotek. All rights reserved.
+# © Code 2020–2026 Miroslav Šotek. All rights reserved.
+# ORCID: 0009-0009-3560-0851
+# Contact: www.anulum.li | protoscience@anulum.li
+# SC-NeuroCore — Source/config provenance header
+
 site_name: SC-NeuroCore Documentation
 site_description: "Stochastic Computing Framework for Neuromorphic Hardware Design - 158 lazy-loaded Python model classes, 175 Rust PyO3 model wrappers, bit-true FPGA co-simulation"
 site_author: Miroslav Šotek
