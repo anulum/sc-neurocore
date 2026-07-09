@@ -18,9 +18,9 @@
     ]
   },
   "provenance": {
-    "kind": "published_schema_euler_reference",
+    "kind": "independent_euler_reference",
     "source": "src/sc_neurocore/neurons/model_schemas/hindmarsh_rose.toml",
-    "equation": "Short finite Hindmarsh-Rose prefix before chaotic bursting dominates long-window parity.",
+    "equation": "Short finite Hindmarsh-Rose prefix before chaotic bursting dominates; the cubic fast subsystem and slow adaptation variable are advanced with the exact explicit-Euler recurrence, independently re-derived from the Hindmarsh-Rose (1984) model definition (threshold not reached, identity reset).",
     "citation": "doi:10.1098/rspb.1984.0024"
   },
   "expected_features": {

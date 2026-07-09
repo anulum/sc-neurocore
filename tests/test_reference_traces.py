@@ -513,6 +513,73 @@ def _exp_if_subthreshold_euler_features(
     return features
 
 
+def _hindmarsh_rose_prefix_euler_features(
+    *, current: float, dt: float, steps: int
+) -> dict[str, float]:
+    """Return exact explicit-Euler features for the Hindmarsh-Rose bursting prefix.
+
+    The Hindmarsh-Rose (1984) cubic fast subsystem and slow adaptation variable are
+    advanced with the same simultaneous explicit-Euler update the schema runner
+    applies. The schema reset is the identity map, and the committed short prefix
+    stays below the ``x > 1`` threshold, so the reference is an independent
+    re-derivation of the committed pre-bursting trajectory.
+
+    Parameters
+    ----------
+    current:
+        Constant input current applied at every timestep.
+    dt:
+        Simulation timestep.
+    steps:
+        Number of timesteps to advance.
+
+    Returns
+    -------
+    dict of str to float
+        Reference feature map for the ``x``, ``y``, and ``z`` state variables plus
+        spike-count and first-spike-step features.
+    """
+    b = 3.0
+    r = 0.001
+    s = 4.0
+    x_rest = -1.6
+    x = -1.6
+    y = -10.0
+    z = 2.0
+    x_values: list[float] = []
+    y_values: list[float] = []
+    z_values: list[float] = []
+    spikes: list[int] = []
+    for _ in range(steps):
+        dx = y - x**3 + b * x**2 - z + current
+        dy = 1 - 5 * x**2 - y
+        dz = r * (s * (x - x_rest) - z)
+        x_next = x + dx * dt
+        y_next = y + dy * dt
+        z_next = z + dz * dt
+        if x_next > 1.0:
+            spikes.append(1)
+        else:
+            spikes.append(0)
+        x, y, z = x_next, y_next, z_next
+        x_values.append(x)
+        y_values.append(y)
+        z_values.append(z)
+
+    features: dict[str, float] = {
+        "spike_count": float(math.fsum(spikes)),
+        "first_spike_step": float(
+            next((index for index, spike in enumerate(spikes, start=1) if spike), -1)
+        ),
+    }
+    for name, values in (("x", x_values), ("y", y_values), ("z", z_values)):
+        features[f"final.{name}"] = values[-1]
+        features[f"min.{name}"] = min(values)
+        features[f"max.{name}"] = max(values)
+        features[f"mean.{name}"] = math.fsum(values) / len(values)
+    return features
+
+
 def test_seeded_corpus_has_analytic_schema_entries() -> None:
     """The seed corpus must expose deterministic analytic schema references."""
     names = list_reference_trace_specs()
@@ -711,6 +778,24 @@ def test_exp_if_trace_features_match_independent_euler_solution() -> None:
     assert spec.schema_name == "exp_if"
     assert spec.provenance.kind == "independent_euler_reference"
     assert spec.provenance.citation == "doi:10.1523/JNEUROSCI.23-37-11628.2003"
+    assert set(expected) == set(spec.expected_features)
+    for feature_name, feature_value in expected.items():
+        assert spec.expected_features[feature_name] == pytest.approx(feature_value, abs=1e-12)
+
+
+def test_hindmarsh_rose_trace_features_match_independent_euler_solution() -> None:
+    """Committed Hindmarsh-Rose prefix features must match an independent Euler recurrence."""
+    spec = load_reference_trace_spec("hindmarsh_rose_short_bursting_prefix")
+
+    expected = _hindmarsh_rose_prefix_euler_features(
+        current=spec.protocol.inputs["I"],
+        dt=spec.protocol.dt,
+        steps=spec.protocol.steps,
+    )
+
+    assert spec.schema_name == "hindmarsh_rose"
+    assert spec.provenance.kind == "independent_euler_reference"
+    assert spec.provenance.citation == "doi:10.1098/rspb.1984.0024"
     assert set(expected) == set(spec.expected_features)
     for feature_name, feature_value in expected.items():
         assert spec.expected_features[feature_name] == pytest.approx(feature_value, abs=1e-12)
