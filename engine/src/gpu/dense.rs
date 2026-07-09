@@ -266,7 +266,9 @@ impl GpuDenseLayer {
             timeout: None,
         });
 
-        let data = slice.get_mapped_range();
+        let data = slice
+            .get_mapped_range()
+            .expect("GPU output staging buffer is mapped for readback");
         let output_f32: &[f32] = bytemuck::cast_slice(&data);
         let result: Vec<f64> = output_f32[..n_samples * n_neurons]
             .iter()

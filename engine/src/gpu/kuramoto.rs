@@ -182,7 +182,9 @@ fn read_f32(dev: &wgpu::Device, staging: &wgpu::Buffer, size: u64, count: usize)
         submission_index: None,
         timeout: None,
     });
-    let data = slice.get_mapped_range();
+    let data = slice
+        .get_mapped_range()
+        .expect("GPU phase staging buffer is mapped for readback");
     let values: &[f32] = bytemuck::cast_slice(&data);
     let out = values[..count].to_vec();
     drop(data);
