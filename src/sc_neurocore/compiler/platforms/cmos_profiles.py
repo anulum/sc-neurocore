@@ -4,7 +4,7 @@
 # © Code 2020–2026 Miroslav Šotek. All rights reserved.
 # ORCID: 0009-0009-3560-0851
 # Contact: www.anulum.li | protoscience@anulum.li
-# SC-NeuroCore
+# SC-NeuroCore — CMOS and conventional accelerator profiles
 
 """Register CMOS, FPGA, ASIC, MCU, and conventional accelerator profiles."""
 
@@ -1058,7 +1058,7 @@ _reg(
         overflow="saturate",
         rounding="truncate",
         max_freq_mhz=480,
-        notes="STM32H7: Cortex-M7 @ 480 MHz. Best-in-class MCU for SNN.",
+        notes="STM32H7: Cortex-M7 @ 480 MHz. MCU profile for edge SNN.",
     )
 )
 _reg(

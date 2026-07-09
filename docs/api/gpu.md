@@ -96,7 +96,7 @@ so the penalty is negligible at large layer sizes.
 
 ### Problem statement
 
-SC-NeuroCore's single-neuron Rust engine is best-in-class (3.8 ns/step LIF), but
+SC-NeuroCore's single-neuron Rust engine measures 3.8 ns/step for LIF, but
 network-level stochastic computing is O(n²) in the number of neurons × inputs,
 dominated by Bernoulli encoding and AND+popcount. At 1K+ neurons, CPU performance
 is insufficient for real-time simulation:

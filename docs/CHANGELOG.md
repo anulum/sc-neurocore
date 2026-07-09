@@ -5,6 +5,13 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+### Public prose hygiene
+- Removed self-applied public superlatives from the CMOS profile notes, GPU
+  backend guide, and archived state report while preserving the underlying
+  measured values and benchmark comparison tables. No platform registry
+  behavior, GPU backend code, polyglot mirror, benchmark dispatch, or benchmark
+  artefact changed.
+
 ### Copyright spelling hygiene
 - Standardised copyright spelling across `tools/` and
   `.github/workflows/security-scanners.yml`: legacy `(c)` forms, ASCII
