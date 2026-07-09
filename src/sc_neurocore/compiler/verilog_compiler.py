@@ -360,9 +360,24 @@ def _build_neuron_core(
 
     param_map: dict[str, str] = {}
     param_decls: list[str] = []
+    used_vnames: set[str] = set()
     for pname, pval in {**neuron.parameters, **neuron.constants}.items():
         safe_pname = sanitize_ident(pname, context="parameter name")
         vname = f"P_{safe_pname.upper()}"
+        if vname in used_vnames:
+            # ``str.upper()`` is not injective, so two case-distinct parameter names
+            # (e.g. the Izhikevich 2007 capacitance ``C`` vs the reset voltage ``c``)
+            # would collapse to the same ``P_C`` port and iverilog rejects the redeclare.
+            # Verilog identifiers are case-sensitive, so fall back to a case-preserving
+            # identifier — and, only if that is also taken, a numeric suffix — keeping the
+            # parameter port map injective while leaving every single-case name unchanged.
+            candidate = f"P_{safe_pname}"
+            suffix = 2
+            while candidate in used_vnames:
+                candidate = f"P_{safe_pname}_{suffix}"
+                suffix += 1
+            vname = candidate
+        used_vnames.add(vname)
         param_map[pname] = vname
         q_val = q.encode(pval)
         param_decls.append(

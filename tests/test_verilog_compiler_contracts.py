@@ -59,6 +59,56 @@ def test_compile_to_verilog_lowers_map_method_and_piecewise_ifexp() -> None:
     assert "_reg + d" not in verilog
 
 
+def test_compile_to_verilog_disambiguates_case_colliding_parameters() -> None:
+    """Case-distinct parameter names must not collapse onto one Verilog port.
+
+    ``str.upper()`` maps both ``C`` and ``c`` to ``P_C``, which iverilog rejects as a
+    duplicate declaration. Verilog identifiers are case-sensitive, so the emitter keeps
+    the parameter port map injective by falling back to a case-preserving identifier for
+    the collision. A neuron with both a capacitance ``C`` and a reset voltage ``c`` (the
+    Izhikevich 2007 naming) must therefore lower to two distinct ports.
+    """
+    neuron = EquationNeuron(
+        equations={"v": "(C * v - c + I) / C"},
+        parameters={"C": 2.0, "c": 1.0},
+        state={"v": 0.0},
+        threshold="v > 100.0",
+        dt=1.0,
+    )
+
+    verilog = compile_to_verilog(neuron, module_name="sc_case_params")
+
+    # Both case-distinct parameters survive as separate, case-sensitive ports.
+    assert "P_C " in verilog  # capacitance, canonical upper-case identifier
+    assert "P_c " in verilog  # reset voltage, case-preserved to avoid the collision
+    # Each is declared exactly once — no redeclaration for iverilog to reject.
+    assert verilog.count("P_C =") == 1
+    assert verilog.count("P_c =") == 1
+
+
+def test_compile_to_verilog_numbers_a_case_preserved_parameter_collision() -> None:
+    """When even the case-preserved fallback is taken, a numeric suffix keeps it unique.
+
+    An already-upper-case name (``X``) collides with a lower-case sibling (``x``) on both
+    the upper-case form (``P_X``) and the case-preserved fallback (still ``P_X``), so the
+    emitter appends a numeric suffix. The pathological triple guarantees the port map is
+    injective for any case pattern, not only the common capacitance/reset (``C``/``c``)
+    case.
+    """
+    neuron = EquationNeuron(
+        equations={"v": "(x * v - X + I)"},
+        parameters={"x": 0.5, "X": 0.25},
+        state={"v": 0.0},
+        threshold="v > 100.0",
+        dt=1.0,
+    )
+
+    verilog = compile_to_verilog(neuron, module_name="sc_numbered_params")
+
+    assert verilog.count("P_X =") == 1  # first parameter keeps the canonical form
+    assert verilog.count("P_X_2 =") == 1  # the collision is disambiguated numerically
+
+
 def test_compile_to_datapath_rejects_unrepresentable_timestep() -> None:
     """The folded datapath applies the same fixed-point timestep guard."""
     neuron = _lif_without_threshold(dt=0.001)
