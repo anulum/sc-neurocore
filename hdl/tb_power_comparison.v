@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: AGPL-3.0-or-later | Commercial license available
+// SPDX-License-Identifier: AGPL-3.0-or-later
+// Commercial license available
 // SC-NeuroCore — Switching activity comparison: clock-driven vs event-driven neuron
 //
 // Measures register toggle counts over N clock cycles with sparse input events.

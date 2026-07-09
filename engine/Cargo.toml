@@ -1,14 +1,16 @@
-# SPDX-License-Identifier: AGPL-3.0-or-later | Commercial license available
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Commercial license available
 # © Concepts 1996–2026 Miroslav Šotek. All rights reserved.
 # © Code 2020–2026 Miroslav Šotek. All rights reserved.
 # ORCID: 0009-0009-3560-0851
 # Contact: www.anulum.li | protoscience@anulum.li
+# SC-NeuroCore — Rust engine package manifest
 
 [package]
 name = "sc_neurocore_engine"
 version = "3.16.0"
 edition = "2021"
-authors = ["Miroslav Sotek <protoscience@anulum.li>"]
+authors = ["Miroslav Šotek <protoscience@anulum.li>"]
 description = "High-performance SIMD backend for SC-NeuroCore stochastic neuromorphic computing"
 license = "AGPL-3.0-or-later"
 repository = "https://github.com/anulum/sc-neurocore"

@@ -5,6 +5,11 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 ## [Unreleased]
 
 ### Fixed
+- Split joined SPDX/commercial-license headers across manifests, workflow
+  YAML, HDL sources, Vivado-import HDL copies, and the Vmin-LIF LUT generator.
+  The touched TOML/Cargo manifests now retain full seven-line GOTM headers and
+  canonical author spelling. No runtime package code, HDL logic, polyglot
+  mirror, benchmark dispatch, or benchmark artefact changed.
 - Hardened `scripts/validate_configs.py` into a typed repository configuration
   validator, removed the unused top-level `tomli` import, aligned the required
   user guide path with `docs/guides/USER_MANUAL.md`, and added focused CLI

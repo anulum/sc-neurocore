@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: AGPL-3.0-or-later | Commercial license available
+// SPDX-License-Identifier: AGPL-3.0-or-later
+// Commercial license available
 // SC-NeuroCore — AER spike router: distribute events to target neurons
 //
 // Takes AER events from source populations and routes them to target

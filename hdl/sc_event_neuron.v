@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: AGPL-3.0-or-later | Commercial license available
+// SPDX-License-Identifier: AGPL-3.0-or-later
+// Commercial license available
 // SC-NeuroCore — Event-triggered LIF neuron: idle until spike event arrives
 //
 // Unlike the clock-driven sc_lif_neuron.v which updates every cycle,

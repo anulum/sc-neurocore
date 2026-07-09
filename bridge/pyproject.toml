@@ -1,4 +1,5 @@
-# SPDX-License-Identifier: AGPL-3.0-or-later | Commercial license available
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Commercial license available
 # © Concepts 1996–2026 Miroslav Šotek. All rights reserved.
 # © Code 2020–2026 Miroslav Šotek. All rights reserved.
 # ORCID: 0009-0009-3560-0851
@@ -15,7 +16,7 @@ version = "3.16.0"
 requires-python = ">=3.10"
 description = "High-performance Rust backend for SC-NeuroCore"
 license = {text = "AGPL-3.0-or-later"}
-authors = [{name = "Miroslav Sotek", email = "protoscience@anulum.li"}]
+authors = [{name = "Miroslav Šotek", email = "protoscience@anulum.li"}]
 dependencies = ["numpy>=1.24"]
 
 [tool.maturin]

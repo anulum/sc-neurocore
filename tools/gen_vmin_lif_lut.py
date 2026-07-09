@@ -34,7 +34,9 @@ in Q8.8 (step = 16/64 = 0.25 = Q8.8 64).
 from __future__ import annotations
 
 import math
+from collections.abc import Sequence
 from dataclasses import dataclass
+from pathlib import Path
 
 # Q8.8 fixed-point constants
 Q88_SCALE = 256  # 2^8
@@ -192,7 +194,8 @@ def vmin_lif_step_float(v: float, x: float, cfg: VminLifConfig = DEFAULT_CFG) ->
 def emit_lut_verilog_header(lut: list[int], cfg: VminLifConfig = DEFAULT_CFG) -> str:
     """Emit Verilog `define statements for the softplus LUT."""
     lines = [
-        "// SPDX-License-Identifier: AGPL-3.0-or-later | Commercial license available",
+        "// SPDX-License-Identifier: AGPL-3.0-or-later",
+        "// Commercial license available",
         "// © Concepts 1996–2026 Miroslav Šotek. All rights reserved.",
         "// © Code 2020–2026 Miroslav Šotek. All rights reserved.",
         "// ORCID: 0009-0009-3560-0851",
@@ -209,7 +212,8 @@ def emit_lut_verilog_header(lut: list[int], cfg: VminLifConfig = DEFAULT_CFG) ->
     return "\n".join(lines) + "\n"
 
 
-if __name__ == "__main__":
+def main(argv: Sequence[str] | None = None) -> int:
+    """Run the Vmin-LIF LUT generator command-line interface."""
     import argparse
 
     parser = argparse.ArgumentParser(description=__doc__)
@@ -218,7 +222,7 @@ if __name__ == "__main__":
     parser.add_argument(
         "--demo", action="store_true", help="Run a small demo: 100 steps with constant input"
     )
-    args = parser.parse_args()
+    args = parser.parse_args(argv)
 
     cfg = VminLifConfig()
     lut = gen_softplus_lut(cfg.beta_v_inf, LUT_SIZE, LUT_RANGE)
@@ -231,8 +235,7 @@ if __name__ == "__main__":
             print(f"  [{i:2d}]  z={z:5.2f}  softplus={decode_q88(v):8.4f}  q88={v:6d}")
 
     if args.out_vh:
-        with open(args.out_vh, "w") as f:
-            f.write(emit_lut_verilog_header(lut, cfg))
+        Path(args.out_vh).write_text(emit_lut_verilog_header(lut, cfg), encoding="utf-8")
         print(f"Written {len(lut)} LUT entries to {args.out_vh}")
 
     if args.demo:
@@ -249,3 +252,9 @@ if __name__ == "__main__":
                 f"{t:>4} {v_q88:>8} {decode_q88(v_q88):>10.4f} "
                 f"{spike:>6} {v_ref:>10.4f} {err:>+8.4f}"
             )
+
+    return 0
+
+
+if __name__ == "__main__":  # pragma: no cover - process entry point.
+    raise SystemExit(main())

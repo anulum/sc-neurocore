@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: AGPL-3.0-or-later | Commercial license available
+// SPDX-License-Identifier: AGPL-3.0-or-later
+// Commercial license available
 // SC-NeuroCore — AER spike encoder: neuron spike → address-event packet
 //
 // Converts spike outputs from a population of N neurons into

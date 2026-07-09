@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: AGPL-3.0-or-later | Commercial license available
+// SPDX-License-Identifier: AGPL-3.0-or-later
+// Commercial license available
 // SC-NeuroCore — On-chip STDP synapse: runtime weight adaptation on FPGA
 //
 // Implements spike-timing dependent plasticity directly in hardware.
