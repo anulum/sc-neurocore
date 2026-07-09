@@ -52,9 +52,11 @@ def test_compile_to_verilog_lowers_map_method_and_piecewise_ifexp() -> None:
 
     assert "module sc_map_ifexp" in verilog
     assert "?" in verilog  # the IfExp branch lowers to a Verilog ternary select
-    # Discrete-map path: the increment is `f(state) - state`, so no forward-Euler
-    # `_dt_mul_` derivative-scaling wire is emitted.
+    # Discrete-map path: the next state is `f(state)` saturated directly, so there is
+    # no forward-Euler `_dt_mul_` scaling and no `state_reg + d<var>` increment-add
+    # (adding the current state would risk a full-scale `f(state) - state` overflow).
     assert "_dt_mul_" not in verilog
+    assert "_reg + d" not in verilog
 
 
 def test_compile_to_datapath_rejects_unrepresentable_timestep() -> None:

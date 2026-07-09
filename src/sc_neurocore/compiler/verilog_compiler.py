@@ -127,21 +127,21 @@ def _emit_map_deriv_wires(
     q: Q88,
     *,
     data_width: int,
-    fraction: int,
     use_pipeline: bool,
     pp_set: set[str],
     mul_start: int,
     trunc_start: int,
 ) -> tuple[list[str], list[str], list[str], int, int]:
-    """Emit the per-variable increment wires for a discrete-time map (``method="map"``).
+    """Emit the per-variable next-state wires for a discrete-time map (``method="map"``).
 
     A map assigns ``state_{n+1} = f(state_n)`` directly — no ``dt`` scaling and no
-    ``+ state`` term — unlike the ODE integrators. The shared state update in
-    :func:`_build_neuron_core` is ``state_reg + d<var>``, so this emits
-    ``d<var> = f(state) - state``; integer fixed-point addition then recovers
-    ``state + (f(state) - state) = f(state)`` exactly, reusing the same saturation
-    path as the Euler and RK4 emitters. Returns ``(deriv_wires, intermediates,
-    pipeline_regs, mul_count, trunc_count)``.
+    ``+ state`` term — unlike the ODE integrators. Each ``d<var>`` wire therefore
+    holds the full next-step value ``f(state)`` (not an increment), exactly like the
+    exponential-Euler emitter. The map branch of the state update in
+    :func:`_build_neuron_core` feeds it straight into the saturating ``<var>_next``
+    path (``next = saturate(f(state))``) instead of adding it to the current state,
+    so no full-scale ``f(state) - state`` subtraction can overflow the data word.
+    Returns ``(deriv_wires, intermediates, pipeline_regs, mul_count, trunc_count)``.
     """
     deriv_wires: list[str] = []
     all_intermediates: list[str] = []
@@ -162,9 +162,7 @@ def _emit_map_deriv_wires(
         )
         all_intermediates.extend(intermediates)
         all_pipeline_regs.extend(p_regs)
-        deriv_wires.append(
-            f"wire signed [{data_width - 1}:0] d{safe_var} = ({vexpr}) - {safe_var}_reg;"
-        )
+        deriv_wires.append(f"wire signed [{data_width - 1}:0] d{safe_var} = {vexpr};")
     return deriv_wires, all_intermediates, all_pipeline_regs, _mc, _tc
 
 
@@ -412,7 +410,6 @@ def _build_neuron_core(
             param_map,
             q,
             data_width=data_width,
-            fraction=fraction,
             use_pipeline=use_pipeline,
             pp_set=pp_set,
             mul_start=_mc,
@@ -446,7 +443,15 @@ def _build_neuron_core(
     for var in neuron.equations:
         safe_var = state_var_map[var]
         raw = f"{safe_var}_raw"
-        next_wires.append(f"wire {sign_kw}[{data_width}:0] {raw} = {safe_var}_reg + d{safe_var};")
+        if method == "map":
+            # A discrete map's next state is f(state) itself (held in d<var>);
+            # saturate it directly rather than adding the current state, which would
+            # risk a full-scale overflow before the saturating clamp can recover it.
+            next_wires.append(f"wire {sign_kw}[{data_width}:0] {raw} = d{safe_var};")
+        else:
+            next_wires.append(
+                f"wire {sign_kw}[{data_width}:0] {raw} = {safe_var}_reg + d{safe_var};"
+            )
 
         if q.overflow == "saturate":
             abs_min = abs(min_val)
