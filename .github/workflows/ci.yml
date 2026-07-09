@@ -243,6 +243,47 @@ jobs:
       - name: Run optics tests with gdsfactory
         run: python -m pytest tests/test_optics -q -rs
 
+  test-optional-extras:
+    name: Test optional extra (${{ matrix.name }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: annealing
+            install_extra: ".[dev,annealing]"
+            apt_packages: ""
+            test_selector: tests/test_bridges/test_quantum_annealing_neal_parity.py
+          - name: onnx-protobuf
+            install_extra: ".[dev]"
+            apt_packages: ""
+            test_selector: tests/test_export/test_onnx_exporter.py
+          - name: mpi
+            install_extra: ".[dev,mpi]"
+            apt_packages: "libopenmpi-dev openmpi-bin"
+            test_selector: tests/test_mpi_runner_real.py
+    env:
+      PYTHONPATH: "src:."
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+
+      - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Install system packages
+        if: matrix.apt_packages != ''
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq ${{ matrix.apt_packages }}
+
+      - name: Install optional profile
+        run: python -m pip install -e "${{ matrix.install_extra }}"
+
+      - name: Run optional selector
+        run: python -m pytest ${{ matrix.test_selector }} -q -rs
+
   spdx-guard:
     runs-on: ubuntu-latest
     steps:

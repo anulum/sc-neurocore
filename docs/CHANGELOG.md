@@ -5,6 +5,13 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+### Optional-extra CI matrix
+- Added optional-extra CI matrix lanes for annealing, ONNX protobuf export, and
+  real MPI. The lanes install their focused extras, run the import-skipped
+  production test selectors, and are locked by workflow/docs contract tests. No
+  runtime package code, polyglot mirror, benchmark dispatch, or benchmark
+  artefact changed.
+
 ### Audit cadence
 - Added a monthly/manual `Audit Cadence` workflow that runs pytest
   collect-only, validates tracked test inventory with

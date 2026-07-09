@@ -41,7 +41,10 @@ EXPECTED_ROWS = (
         import_name="neal",
         distribution="dwave-neal",
         declared_extra="annealing",
-        test_paths=("tests/test_bridges/test_quantum_annealing_neal_parity.py",),
+        test_paths=(
+            "tests/test_bridges/test_quantum_annealing_neal_parity.py",
+            ".github/workflows/ci.yml",
+        ),
     ),
     DependencyRow(
         import_name="onnx",
@@ -50,6 +53,7 @@ EXPECTED_ROWS = (
         test_paths=(
             "tests/test_export/test_onnx_exporter.py",
             "tests/test_export/test_onnx_export.py",
+            ".github/workflows/ci.yml",
         ),
     ),
     DependencyRow(
@@ -80,7 +84,11 @@ EXPECTED_ROWS = (
         import_name="mpi4py",
         distribution="mpi4py>=3.0",
         declared_extra="mpi",
-        test_paths=("tests/test_mpi_runner_real.py", "tests/_mpi_helpers/mpi_runner_worker.py"),
+        test_paths=(
+            "tests/test_mpi_runner_real.py",
+            "tests/_mpi_helpers/mpi_runner_worker.py",
+            ".github/workflows/ci.yml",
+        ),
     ),
 )
 
