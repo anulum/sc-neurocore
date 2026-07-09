@@ -5,6 +5,14 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+### Optional dependency matrix
+- Added a public optional-dependency matrix for the audited `gdsfactory`,
+  `neal`/`dimod`, ONNX, Lava, snnTorch, SpikingJelly, CuPy, and MPI surfaces.
+  A focused contract test now checks the matrix against `pyproject.toml`, the
+  relevant skip-gated test paths, install-profile docs, and MkDocs navigation.
+  No runtime package code, dependency pins, polyglot mirror, benchmark dispatch,
+  or benchmark artefact changed.
+
 ### Performance-gate CI
 - Added a scheduled/manual `Performance Benchmarks` workflow lane for the
   `SC_NEUROCORE_PERF=1` pytest selector and documented the perf-gate contract.

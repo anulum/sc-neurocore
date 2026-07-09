@@ -202,6 +202,9 @@ or external runtimes.
 For the architecture-level classification of every optional extra, package
 discovery exclude, and Cargo workspace exclude, see the
 [Package Boundary Decision](../architecture/package_boundary_decision.md).
+For the CI/dev install boundary of optional stacks such as `gdsfactory`,
+`dwave-neal`, ONNX, Lava, snnTorch, SpikingJelly, CuPy, and MPI, see the
+[Optional Dependency Matrix](optional_dependency_matrix.md).
 
 Heavy backends are always opt-in. Qiskit, PennyLane, CuPy, JAX, Lava, MPI,
 Julia, Go, Mojo, and WGSL tooling are research-grade integration surfaces until

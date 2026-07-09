@@ -87,6 +87,7 @@ nav:
       - For Research Labs: guides/FOR_RESEARCH_LABS.md
       - Getting Started: guides/getting-started.md
       - Install Profiles: guides/install_profiles.md
+      - Optional Dependency Matrix: guides/optional_dependency_matrix.md
       - User Manual: guides/USER_MANUAL.md
       - Technical Manual: guides/TECHNICAL_MANUAL.md
       - Layer-by-Layer Guide: guides/LAYER_BY_LAYER_GUIDE.md
