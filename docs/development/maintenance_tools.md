@@ -6,6 +6,27 @@ possible, so historical audits remain reproducible.
 
 ## 2026-04-30 Tooling Baseline
 
+### Compiler HDL e2e workflow
+
+The `Compiler HDL E2E` workflow runs the `tests/e2e/` corpus for pull requests
+that touch the compiler package, HDL generator package, e2e tests, or the
+workflow itself. The lane is intentionally path-filtered and PR-only so compiler
+or HDL generator changes get full cross-surface integration coverage without
+duplicating the whole default CI matrix.
+
+Run the same selector locally after changing `src/sc_neurocore/compiler/`,
+`src/sc_neurocore/hdl_gen/`, or `tests/e2e/`:
+
+```bash
+PYTHONPATH=src:. python -m pytest tests/e2e/ -m e2e -q
+```
+
+The workflow contract is covered by:
+
+```bash
+PYTHONPATH=src:. python -m pytest tests/test_tools/test_compiler_e2e_workflow_contract.py -q
+```
+
 ### Test inventory audit
 
 `tools/test_inventory_audit.py` compares tracked `test_*.py` files with a

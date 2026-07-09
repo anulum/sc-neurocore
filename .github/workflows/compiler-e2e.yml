@@ -1,0 +1,43 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Commercial license available
+# © Concepts 1996–2026 Miroslav Šotek. All rights reserved.
+# © Code 2020–2026 Miroslav Šotek. All rights reserved.
+# ORCID: 0009-0009-3560-0851
+# Contact: www.anulum.li | protoscience@anulum.li
+# SC-NeuroCore — compiler / HDL end-to-end validation
+
+name: Compiler HDL E2E
+
+permissions: {}
+
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - "src/sc_neurocore/compiler/**"
+      - "src/sc_neurocore/hdl_gen/**"
+      - "tests/e2e/**"
+      - ".github/workflows/compiler-e2e.yml"
+
+concurrency:
+  group: compiler-e2e-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  e2e:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+
+      - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Install package
+        run: python tools/ci_install_dev.py
+
+      - name: Run compiler HDL e2e tests
+        run: python -m pytest tests/e2e/ -m e2e -q

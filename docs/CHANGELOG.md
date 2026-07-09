@@ -5,6 +5,13 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+### Compiler HDL e2e CI
+- Added a path-filtered `Compiler HDL E2E` workflow for pull requests touching
+  `src/sc_neurocore/compiler/`, `src/sc_neurocore/hdl_gen/`, or `tests/e2e/`.
+  A focused contract test locks the trigger paths and narrow e2e selector. No
+  runtime package code, polyglot mirror, benchmark dispatch, or benchmark
+  artefact changed.
+
 ### Deterministic reference-trace corpus
 - Completed the deterministic bundled-schema reference-trace corpus for WC-A1b:
   all 17 deterministic schema-DSL models now have committed package data
