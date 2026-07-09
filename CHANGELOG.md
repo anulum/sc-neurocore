@@ -5,6 +5,11 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 ## [Unreleased]
 
 ### Changed
+- Added a public Vivado CI gate guide for the `MIF_VIVADO_CI=1` ZU3EG
+  synthesis-flow tests. A focused contract test now discovers the live
+  Vivado-gated pytest files and keeps the guide plus MkDocs navigation in sync.
+  No HDL logic, runtime package code, dependency pins, polyglot mirror,
+  benchmark dispatch, or benchmark artefact changed.
 - Added a public optional-dependency matrix for the audited `gdsfactory`,
   `neal`/`dimod`, ONNX, Lava, snnTorch, SpikingJelly, CuPy, and MPI surfaces.
   A focused contract test now checks the matrix against `pyproject.toml`, the

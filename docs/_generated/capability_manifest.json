@@ -961,11 +961,11 @@
     "model_documentation_pages": 175,
     "optional_extras": 27,
     "public_api_exports": 45,
-    "public_documentation_pages": 564,
+    "public_documentation_pages": 565,
     "python_model_classes": 158,
     "python_model_source_modules": 152,
     "rust_pyo3_model_wrappers": 175,
-    "test_files": 998
+    "test_files": 999
   },
   "documentation": {
     "public_pages": [
@@ -1411,6 +1411,7 @@
       "docs/hardware/aer_priority_queue.md",
       "docs/hardware/sc_cordiv.md",
       "docs/hardware/ultrascale_plus.md",
+      "docs/hardware/vivado_ci_gates.md",
       "docs/index.md",
       "docs/pricing.md",
       "docs/product_overview.md",
@@ -3745,6 +3746,7 @@
       "tests/test_tools/test_validate_configs.py",
       "tests/test_tools/test_validate_mnist_sc_checkpoint.py",
       "tests/test_tools/test_verify_formal_network_evidence.py",
+      "tests/test_tools/test_vivado_ci_contract.py",
       "tests/test_tools/test_yosys_synth.py",
       "tests/test_topological_observables.py",
       "tests/test_topology.py",

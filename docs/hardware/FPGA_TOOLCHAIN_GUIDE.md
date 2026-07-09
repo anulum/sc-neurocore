@@ -67,6 +67,11 @@ vivado -mode batch -source deploy/fpga/vivado_synth.tcl
 python tools/fpga_deploy.py --synth vivado --part xc7a35t
 ```
 
+The opt-in Vivado pytest gate is documented separately in
+[Vivado CI Gates](vivado_ci_gates.md). That gate uses `MIF_VIVADO_CI=1` and a
+Vivado 2024.2 runner for the ZU3EG synthesis-flow tests; the release evidence
+pin above remains the current SHD / PYNQ-Z2 synthesis evidence boundary.
+
 ### Intel Quartus Prime (for Cyclone, Arria)
 
 | Item | Details |
