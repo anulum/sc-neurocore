@@ -17,9 +17,9 @@
     ]
   },
   "provenance": {
-    "kind": "published_schema_euler_reference",
+    "kind": "independent_euler_reference",
     "source": "src/sc_neurocore/neurons/model_schemas/morris_lecar.toml",
-    "equation": "Depolarizing Morris-Lecar calcium-potassium trace from the DOI-backed schema equations.",
+    "equation": "Depolarizing subthreshold Morris-Lecar calcium-potassium trace; the sigmoidal calcium activation and potassium gating equations are advanced with the exact explicit-Euler recurrence, independently re-derived from the Morris-Lecar (1981) model definition (threshold not reached, identity reset).",
     "citation": "doi:10.1016/S0006-3495(81)84782-0"
   },
   "expected_features": {

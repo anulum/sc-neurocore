@@ -13,6 +13,7 @@ from __future__ import annotations
 import math
 from dataclasses import replace
 
+import numpy as np
 import pytest
 
 from sc_neurocore.neurons.reference_traces import (
@@ -580,6 +581,85 @@ def _hindmarsh_rose_prefix_euler_features(
     return features
 
 
+def _morris_lecar_euler_features(*, current: float, dt: float, steps: int) -> dict[str, float]:
+    """Return exact explicit-Euler features for the Morris-Lecar recurrence.
+
+    The Morris-Lecar (1981) sigmoidal calcium activation and potassium gating
+    equations are advanced with the same simultaneous explicit-Euler update the
+    schema runner applies. ``numpy.tanh`` and ``numpy.cosh`` match the runner's
+    activation and rate functions bit-for-bit, and the verbatim expression order is
+    preserved so the recurrence reproduces the runner exactly. The depolarizing
+    current stays below the ``v > 0`` threshold, so the identity reset never fires
+    and the reference is an independent re-derivation of the committed trajectory.
+
+    Parameters
+    ----------
+    current:
+        Constant input current applied at every timestep.
+    dt:
+        Simulation timestep.
+    steps:
+        Number of timesteps to advance.
+
+    Returns
+    -------
+    dict of str to float
+        Reference feature map for the ``v`` and ``w`` state variables plus
+        spike-count and first-spike-step features.
+    """
+    c_m = 20.0
+    g_ca = 4.0
+    g_k = 8.0
+    g_l = 2.0
+    e_ca = 120.0
+    e_k = -84.0
+    e_l = -60.0
+    v1 = -1.2
+    v2 = 18.0
+    v3 = 12.0
+    v4 = 17.4
+    phi = 0.0667
+    v = -60.0
+    w = 0.0
+    v_values: list[float] = []
+    w_values: list[float] = []
+    spikes: list[int] = []
+    for _ in range(steps):
+        dv = (
+            -g_ca * 0.5 * (1 + float(np.tanh((v - v1) / v2))) * (v - e_ca)
+            - g_k * w * (v - e_k)
+            - g_l * (v - e_l)
+            + current
+        ) / c_m
+        dw = (
+            phi
+            * float(np.cosh((v - v3) / (2 * v4)))
+            * (0.5 * (1 + float(np.tanh((v - v3) / v4))) - w)
+        )
+        v_next = v + dv * dt
+        w_next = w + dw * dt
+        if v_next > 0:
+            spikes.append(1)
+        else:
+            spikes.append(0)
+        v, w = v_next, w_next
+        v_values.append(v)
+        w_values.append(w)
+
+    features: dict[str, float] = {
+        "spike_count": float(math.fsum(spikes)),
+        "first_spike_step": float(
+            next((index for index, spike in enumerate(spikes, start=1) if spike), -1)
+        ),
+    }
+    for name, values in (("v", v_values), ("w", w_values)):
+        features[f"final.{name}"] = values[-1]
+        features[f"min.{name}"] = min(values)
+        features[f"max.{name}"] = max(values)
+        features[f"mean.{name}"] = math.fsum(values) / len(values)
+    return features
+
+
 def test_seeded_corpus_has_analytic_schema_entries() -> None:
     """The seed corpus must expose deterministic analytic schema references."""
     names = list_reference_trace_specs()
@@ -796,6 +876,24 @@ def test_hindmarsh_rose_trace_features_match_independent_euler_solution() -> Non
     assert spec.schema_name == "hindmarsh_rose"
     assert spec.provenance.kind == "independent_euler_reference"
     assert spec.provenance.citation == "doi:10.1098/rspb.1984.0024"
+    assert set(expected) == set(spec.expected_features)
+    for feature_name, feature_value in expected.items():
+        assert spec.expected_features[feature_name] == pytest.approx(feature_value, abs=1e-12)
+
+
+def test_morris_lecar_trace_features_match_independent_euler_solution() -> None:
+    """Committed Morris-Lecar features must match an independent explicit-Euler recurrence."""
+    spec = load_reference_trace_spec("morris_lecar_depolarizing_current_doi")
+
+    expected = _morris_lecar_euler_features(
+        current=spec.protocol.inputs["I"],
+        dt=spec.protocol.dt,
+        steps=spec.protocol.steps,
+    )
+
+    assert spec.schema_name == "morris_lecar"
+    assert spec.provenance.kind == "independent_euler_reference"
+    assert spec.provenance.citation == "doi:10.1016/S0006-3495(81)84782-0"
     assert set(expected) == set(spec.expected_features)
     for feature_name, feature_value in expected.items():
         assert spec.expected_features[feature_name] == pytest.approx(feature_value, abs=1e-12)
