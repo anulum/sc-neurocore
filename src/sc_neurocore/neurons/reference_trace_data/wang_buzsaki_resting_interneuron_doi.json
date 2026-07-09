@@ -18,9 +18,9 @@
     ]
   },
   "provenance": {
-    "kind": "published_schema_euler_reference",
+    "kind": "independent_euler_reference",
     "source": "src/sc_neurocore/neurons/model_schemas/wang_buzsaki.toml",
-    "equation": "Resting Wang-Buzsaki interneuron conductance-gate prefix from the DOI-backed schema equations.",
+    "equation": "Resting Wang-Buzsaki fast-spiking interneuron gate prefix; the membrane and h/n gating equations (with instantaneous sodium activation) are advanced with the exact explicit-Euler recurrence (numpy exp matching the runner bit-for-bit), independently re-derived from the Wang-Buzsaki (1996) model definition (threshold not reached, no reset).",
     "citation": "doi:10.1523/JNEUROSCI.16-20-06402.1996"
   },
   "expected_features": {

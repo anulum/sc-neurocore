@@ -36,17 +36,18 @@ table because their schemas are stochastic.
 | `resonate_fire_subthreshold_resonance_doi` | `resonate_fire` | `universal_dsl` | Analytic linear Euler recurrence from `neurons/model_schemas/resonate_fire.toml` |
 | `rulkov_map_short_window_boundary` | `rulkov_map` | `universal_dsl` | DOI-backed short finite boundary trace from `neurons/model_schemas/rulkov_map.toml` |
 | `theta_constant_current_phase_analytic` | `theta` | `universal_dsl` | Analytic tangent half-angle phase solution from `neurons/model_schemas/theta.toml` with DOI-backed schema provenance |
-| `wang_buzsaki_resting_interneuron_doi` | `wang_buzsaki` | `universal_dsl` | DOI-backed resting interneuron conductance-gate prefix from `neurons/model_schemas/wang_buzsaki.toml` |
+| `wang_buzsaki_resting_interneuron_doi` | `wang_buzsaki` | `universal_dsl` | Independent explicit-Euler re-derivation of the resting gate equations from `neurons/model_schemas/wang_buzsaki.toml` with DOI-backed schema provenance |
 
 All entries record spike count, first spike step, and final/min/max/mean
 features for the declared state variables. The tests independently recompute the
 LIF, QIF, perfect-integrator, resonate-fire, theta, GLIF, Izhikevich,
 FitzHugh-Nagumo, AdEx, exponential-IF, Hindmarsh-Rose, Morris-Lecar,
-Hodgkin-Huxley, and Connor-Stevens analytic or explicit-Euler solutions so the
-committed feature values for those entries are not merely copied from the runner
-output. The Morris-Lecar, Hodgkin-Huxley, and Connor-Stevens re-derivations reuse
-the runner's numpy activation, exponential, and exprel functions so the
-conductance rate terms match bit-for-bit. The GLIF
+Hodgkin-Huxley, Connor-Stevens, and Wang-Buzsaki analytic or explicit-Euler
+solutions — every deterministic bundled-schema entry — so the committed feature
+values are not merely copied from the runner output. The Morris-Lecar,
+Hodgkin-Huxley, Connor-Stevens, and Wang-Buzsaki re-derivations reuse the runner's
+numpy activation, exponential, and exprel functions so the conductance rate terms
+match bit-for-bit. The GLIF
 entry re-derives the exact subthreshold explicit-Euler recurrence for its linear
 membrane, adaptive threshold, and two after-spike currents; the Izhikevich entry
 re-derives the exact regular-spiking explicit-Euler recurrence including its

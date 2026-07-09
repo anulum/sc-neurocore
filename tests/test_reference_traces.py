@@ -872,6 +872,84 @@ def _connor_stevens_resting_euler_features(
     return features
 
 
+def _wang_buzsaki_resting_euler_features(
+    *, current: float, dt: float, steps: int
+) -> dict[str, float]:
+    """Return exact explicit-Euler features for the resting Wang-Buzsaki recurrence.
+
+    The Wang-Buzsaki (1996) fast-spiking interneuron membrane and its ``h``/``n``
+    gating variables (sodium activation is instantaneous) are advanced with the same
+    simultaneous explicit-Euler update the schema runner applies, reusing
+    :func:`_np_exp` so the rate functions match the runner bit-for-bit. The verbatim
+    expression order is preserved; the resting zero-current protocol never crosses
+    the ``v > -10`` threshold and the schema declares no reset, so the reference is
+    an independent re-derivation of the committed gate trajectory.
+
+    Parameters
+    ----------
+    current:
+        Constant input current applied at every timestep.
+    dt:
+        Simulation timestep.
+    steps:
+        Number of timesteps to advance.
+
+    Returns
+    -------
+    dict of str to float
+        Reference feature map for the ``v``, ``h``, and ``n`` state variables plus
+        spike-count and first-spike-step features.
+    """
+    capacitance = 1.0
+    g_na = 35.0
+    g_k = 9.0
+    g_l = 0.1
+    e_na = 55.0
+    e_k = -90.0
+    e_l = -65.0
+    phi = 5.0
+    v = -65.0
+    h = 0.6
+    n = 0.32
+    recorded: dict[str, list[float]] = {"v": [], "h": [], "n": []}
+    spikes: list[int] = []
+    for _ in range(steps):
+        dv = (
+            -g_na * (1 / (1 + _np_exp(-(v + 35) / 10))) ** 3 * h * (v - e_na)
+            - g_k * n**4 * (v - e_k)
+            - g_l * (v - e_l)
+            + current
+        ) / capacitance
+        dh = phi * (
+            0.07 * _np_exp(-(v + 58) / 20) * (1 - h) - 1 / (1 + _np_exp(-(v + 28) / 10)) * h
+        )
+        dn = phi * (
+            0.01 * (v + 34) / (1 - _np_exp(-(v + 34) / 10)) * (1 - n)
+            - 0.125 * _np_exp(-(v + 44) / 80) * n
+        )
+        v_next = v + dv * dt
+        h_next = h + dh * dt
+        n_next = n + dn * dt
+        spikes.append(1 if v_next > -10 else 0)
+        v, h, n = v_next, h_next, n_next
+        recorded["v"].append(v)
+        recorded["h"].append(h)
+        recorded["n"].append(n)
+
+    features: dict[str, float] = {
+        "spike_count": float(math.fsum(spikes)),
+        "first_spike_step": float(
+            next((index for index, spike in enumerate(spikes, start=1) if spike), -1)
+        ),
+    }
+    for name, values in recorded.items():
+        features[f"final.{name}"] = values[-1]
+        features[f"min.{name}"] = min(values)
+        features[f"max.{name}"] = max(values)
+        features[f"mean.{name}"] = math.fsum(values) / len(values)
+    return features
+
+
 def test_seeded_corpus_has_analytic_schema_entries() -> None:
     """The seed corpus must expose deterministic analytic schema references."""
     names = list_reference_trace_specs()
@@ -1142,6 +1220,24 @@ def test_connor_stevens_trace_features_match_independent_euler_solution() -> Non
     assert spec.schema_name == "connor_stevens"
     assert spec.provenance.kind == "independent_euler_reference"
     assert spec.provenance.citation == "doi:10.1113/jphysiol.1971.sp009368"
+    assert set(expected) == set(spec.expected_features)
+    for feature_name, feature_value in expected.items():
+        assert spec.expected_features[feature_name] == pytest.approx(feature_value, abs=1e-12)
+
+
+def test_wang_buzsaki_trace_features_match_independent_euler_solution() -> None:
+    """Committed Wang-Buzsaki features must match an independent resting Euler recurrence."""
+    spec = load_reference_trace_spec("wang_buzsaki_resting_interneuron_doi")
+
+    expected = _wang_buzsaki_resting_euler_features(
+        current=spec.protocol.inputs["I"],
+        dt=spec.protocol.dt,
+        steps=spec.protocol.steps,
+    )
+
+    assert spec.schema_name == "wang_buzsaki"
+    assert spec.provenance.kind == "independent_euler_reference"
+    assert spec.provenance.citation == "doi:10.1523/JNEUROSCI.16-20-06402.1996"
     assert set(expected) == set(spec.expected_features)
     for feature_name, feature_value in expected.items():
         assert spec.expected_features[feature_name] == pytest.approx(feature_value, abs=1e-12)
