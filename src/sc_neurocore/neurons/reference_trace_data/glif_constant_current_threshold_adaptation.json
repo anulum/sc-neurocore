@@ -19,9 +19,9 @@
     ]
   },
   "provenance": {
-    "kind": "published_schema_euler_reference",
+    "kind": "analytic_linear_euler_reference",
     "source": "src/sc_neurocore/neurons/model_schemas/glif.toml",
-    "equation": "Constant-current GLIF threshold-adaptation trace using the Allen Institute DOI-backed schema equations.",
+    "equation": "Subthreshold constant-current GLIF5 trace; the linear membrane, adaptive threshold, and two after-spike currents are advanced with the exact explicit-Euler recurrence, independently re-derived from the Allen Institute GLIF5 equations with the after-spike currents quiescent at zero.",
     "citation": "doi:10.1038/s41467-017-02717-4"
   },
   "expected_features": {

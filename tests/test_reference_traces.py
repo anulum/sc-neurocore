@@ -180,6 +180,85 @@ def _resonate_fire_linear_euler_features(
     }
 
 
+def _glif_subthreshold_euler_features(*, current: float, dt: float, steps: int) -> dict[str, float]:
+    """Return exact explicit-Euler features for the subthreshold GLIF5 recurrence.
+
+    The Allen Institute GLIF5 membrane, adaptive threshold, and two after-spike
+    currents are linear, so the schema runner's simultaneous explicit-Euler update
+    has an exact independent re-derivation. For a subthreshold constant current the
+    threshold is never crossed and both after-spike currents stay quiescent at zero.
+
+    Parameters
+    ----------
+    current:
+        Constant input current applied at every timestep.
+    dt:
+        Simulation timestep.
+    steps:
+        Number of timesteps to advance.
+
+    Returns
+    -------
+    dict of str to float
+        Reference feature map for the ``v``, ``theta``, ``i_asc1``, and ``i_asc2``
+        state variables plus spike-count and first-spike-step features.
+    """
+    v_rest = -70.0
+    v_reset = -70.0
+    resistance = 1.0
+    tau_m = 10.0
+    theta_inf = -50.0
+    a_theta = 0.01
+    tau_theta = 100.0
+    tau_asc1 = 10.0
+    tau_asc2 = 200.0
+    delta_theta = 2.0
+    r_asc1 = 1.0
+    r_asc2 = 0.5
+
+    v = v_rest
+    theta = theta_inf
+    i_asc1 = 0.0
+    i_asc2 = 0.0
+    recorded: dict[str, list[float]] = {"v": [], "theta": [], "i_asc1": [], "i_asc2": []}
+    spikes: list[int] = []
+    for _ in range(steps):
+        dv = (-(v - v_rest) + resistance * current + i_asc1 + i_asc2) / tau_m
+        dtheta = (theta_inf - theta + a_theta * (v - v_rest)) / tau_theta
+        di_asc1 = -i_asc1 / tau_asc1
+        di_asc2 = -i_asc2 / tau_asc2
+        v_next = v + dv * dt
+        theta_next = theta + dtheta * dt
+        i_asc1_next = i_asc1 + di_asc1 * dt
+        i_asc2_next = i_asc2 + di_asc2 * dt
+        if v_next > theta_next:
+            spikes.append(1)
+            v_next = v_reset
+            theta_next = theta_next + delta_theta
+            i_asc1_next = i_asc1_next + r_asc1
+            i_asc2_next = i_asc2_next + r_asc2
+        else:
+            spikes.append(0)
+        v, theta, i_asc1, i_asc2 = v_next, theta_next, i_asc1_next, i_asc2_next
+        recorded["v"].append(v)
+        recorded["theta"].append(theta)
+        recorded["i_asc1"].append(i_asc1)
+        recorded["i_asc2"].append(i_asc2)
+
+    features: dict[str, float] = {
+        "spike_count": float(math.fsum(spikes)),
+        "first_spike_step": float(
+            next((index for index, spike in enumerate(spikes, start=1) if spike), -1)
+        ),
+    }
+    for name, values in recorded.items():
+        features[f"final.{name}"] = values[-1]
+        features[f"min.{name}"] = min(values)
+        features[f"max.{name}"] = max(values)
+        features[f"mean.{name}"] = math.fsum(values) / len(values)
+    return features
+
+
 def test_seeded_corpus_has_analytic_schema_entries() -> None:
     """The seed corpus must expose deterministic analytic schema references."""
     names = list_reference_trace_specs()
@@ -289,6 +368,24 @@ def test_resonate_fire_trace_features_match_independent_linear_euler_solution() 
     assert spec.schema_name == "resonate_fire"
     assert spec.provenance.kind == "analytic_linear_euler_reference"
     assert spec.provenance.citation == "doi:10.1162/089976601300014538"
+    for feature_name, feature_value in expected.items():
+        assert spec.expected_features[feature_name] == pytest.approx(feature_value, abs=1e-12)
+
+
+def test_glif_trace_features_match_independent_linear_euler_solution() -> None:
+    """Committed GLIF5 features must match an independent subthreshold Euler recurrence."""
+    spec = load_reference_trace_spec("glif_constant_current_threshold_adaptation")
+
+    expected = _glif_subthreshold_euler_features(
+        current=spec.protocol.inputs["I"],
+        dt=spec.protocol.dt,
+        steps=spec.protocol.steps,
+    )
+
+    assert spec.schema_name == "glif"
+    assert spec.provenance.kind == "analytic_linear_euler_reference"
+    assert spec.provenance.citation == "doi:10.1038/s41467-017-02717-4"
+    assert set(expected) == set(spec.expected_features)
     for feature_name, feature_value in expected.items():
         assert spec.expected_features[feature_name] == pytest.approx(feature_value, abs=1e-12)
 
