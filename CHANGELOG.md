@@ -33,6 +33,12 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
   code, polyglot mirror, benchmark dispatch, or benchmark artefact changed.
 
 ### Fixed
+- Made `sc_neurocore.training.auto_device()` skip CUDA devices whose compute
+  capability is not supported by the installed PyTorch build, avoiding noisy
+  local GTX 1060 / `sm_61` warnings while preserving fallback to MPS or CPU.
+  Public training and GPU install docs now state that explicit `device="cuda"`
+  requires a matching PyTorch CUDA architecture. No training algorithm,
+  polyglot mirror, benchmark dispatch, or benchmark artefact changed.
 - Added a dedicated CI optics-extra lane that installs `.[dev,optics]` and runs
   `tests/test_optics -q -rs`, so the `gdsfactory`-gated GDSII round-trip tests
   are exercised outside the default CPU jobs. Public optional-dependency docs

@@ -132,11 +132,11 @@ refreshed rather than ignored.
 | --- | --- | --- |
 | `pip install "sc-neurocore[minimal]"` | Explicit v4 minimal install for 30-second smoke demos, Dockerfiles, and lab SOPs | No additional packages beyond base `numpy` / `scipy` |
 | `pip install "sc-neurocore[core]"` | Explicit base install for reproducible scripts and Dockerfiles | No additional packages beyond base `numpy` / `scipy` |
-| `pip install "sc-neurocore[training]"` | Training PyTorch-backed models | `torch` |
+| `pip install "sc-neurocore[training]"` | Training PyTorch-backed models; `auto_device()` skips CUDA GPUs unsupported by the installed PyTorch build | `torch` |
 | `pip install "sc-neurocore[nir]"` | Importing/exporting Neuromorphic Intermediate Representation graphs | `nir` |
 | `pip install "sc-neurocore[hdl]"` | Equation-to-HDL workflows, unit-checked equations, packaged HDL primitives | `pint`; bundled `.v` / `.sv` / OpenROAD helper artefacts |
 | `pip install "sc-neurocore[optics]"` | Source-checkout photonic-layout and GDSII round-trip checks | `gdsfactory` |
-| `pip install "sc-neurocore[gpu]"` | Research-grade CuPy CUDA experiments; requires local CUDA compatibility | `cupy-cuda12x` |
+| `pip install "sc-neurocore[gpu]"` | Research-grade CuPy CUDA experiments; requires local CUDA compatibility and does not change PyTorch CUDA architecture support | `cupy-cuda12x` |
 | `pip install "sc-neurocore[jax]"` | Research-grade JAX experiments; requires local accelerator/runtime compatibility | `jax`, `jaxlib` |
 | `pip install "sc-neurocore[annealing]"` | D-Wave `neal` parity checks for the quantum-annealing bridge | `dwave-neal`, `dimod` |
 | `pip install "sc-neurocore[quantum]"` | Research-grade quantum-circuit experiments; Qiskit/PennyLane are optional and never installed by default | `qiskit`, `pennylane`, `qiskit-aer` |

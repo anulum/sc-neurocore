@@ -32868,7 +32868,7 @@ rng_seed : int
 ## Module `training.loops`
 
 ### Function `auto_device()`
-Select best available device: CUDA > MPS > CPU.
+Select a usable supported device in priority order: CUDA, MPS, CPU.
 
 ### Function `train_epoch(model, loader, optimizer, n_timesteps, loss_fn, device, max_grad_norm, flatten_input)`
 One training epoch. Returns (avg_loss, accuracy).

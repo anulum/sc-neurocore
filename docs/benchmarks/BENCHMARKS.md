@@ -72,6 +72,13 @@ not an FPGA throughput or latency measurement.
 | GPU (AMD) | Radeon RX 6600 XT — no ROCm on Windows, torch-directml incompatible |
 | CuPy | unavailable — CUDA Toolkit 13.1 dropped Pascal (sm_61) support |
 
+Current developer environments may run newer PyTorch wheels whose compiled CUDA
+architecture list no longer includes Pascal `sm_61`. In that case
+`sc_neurocore.training.auto_device()` falls back to CPU instead of selecting an
+unsupported CUDA device. Historical PyTorch CUDA benchmark rows remain tied to
+the PyTorch/CUDA build named in their evidence table and should not be reused
+for newer wheels without a fresh benchmark artefact.
+
 ---
 
 ## 2. Scalar Primitives (Python)

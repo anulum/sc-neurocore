@@ -634,12 +634,18 @@ total_loss = spike_count_loss(spike_counts, targets) + 0.01 * spike_l1_loss(spik
 
 ### auto_device
 
-Select the best available device: CUDA → MPS → CPU.
+Select a usable supported device in priority order: CUDA, MPS, CPU. CUDA is
+used when the installed PyTorch build advertises support for the device compute
+capability through `torch.cuda.get_arch_list()`. Unsupported local GPUs fall
+back to CPU without emitting PyTorch compute-capability warnings.
 
 ```python
 from sc_neurocore.training import auto_device
-device = auto_device()  # torch.device('cuda'), ('mps'), or ('cpu')
+device = auto_device()  # torch.device('cuda:N'), ('mps'), or ('cpu')
 ```
+
+Passing `device="cuda"` directly to `train_epoch` or `evaluate` bypasses that
+selector; use it when the PyTorch wheel supports the target GPU.
 
 ### train_epoch
 

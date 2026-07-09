@@ -23,7 +23,7 @@ tests, and the current CI/dev boundary.
 | `lava-nc` | `lava` on Python `<3.11` | `pip install "sc-neurocore[lava]"` on supported Python | Loihi/Lava adapter packages are handoff artefacts; the dependency is recorded in generated adapter manifests rather than imported by default CI. | `tests/test_nir_neuromorphic_adapters.py` |
 | `snntorch` | `snntorch` | Not declared in `pyproject.toml`; install manually for NIR interop experiments. | NIR bridge interop tests skip when snnTorch is absent. | `tests/test_nir_bridge.py`, `docs/guides/nir_integration.md` |
 | `spikingjelly` | `spikingjelly.activation_based` | Not declared in `pyproject.toml`; install manually or from the upstream repository for NIR export support. | NIR bridge round-trip tests skip when SpikingJelly is absent. | `tests/test_nir_bridge.py`, `docs/guides/nir_integration.md` |
-| `cupy-cuda12x>=12.0` | `cupy`, `cupyx` | `pip install "sc-neurocore[gpu]"` | GPU path depends on local CUDA compatibility; default and CI CPU paths must not import CuPy. | `pyproject.toml`, `docs/guides/faq.md` |
+| `cupy-cuda12x>=12.0` | `cupy`, `cupyx` | `pip install "sc-neurocore[gpu]"` | GPU path depends on local CUDA compatibility; default and CI CPU paths must not import CuPy. PyTorch training uses its separate `training` extra, and `auto_device()` falls back when the installed PyTorch build does not support the local GPU compute capability. | `pyproject.toml`, `docs/guides/faq.md`, `docs/api/training.md` |
 | `mpi4py>=3.0` | `mpi4py` | `pip install "sc-neurocore[mpi]"` | MPI tests use single-rank or import-gated paths; distributed execution requires a local MPI runtime. | `tests/test_mpi_runner_real.py`, `tests/_mpi_helpers/mpi_runner_worker.py` |
 
 ## Rules

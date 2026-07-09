@@ -10,12 +10,62 @@
 
 from __future__ import annotations
 
+from collections.abc import Sequence
 from typing import Any, Callable, Tuple
+import warnings
 
 import torch
 from torch.utils.data import DataLoader
 
 from .losses import spike_count_loss
+
+
+def _parse_cuda_arch(arch: str) -> tuple[int, int] | None:
+    """Parse a PyTorch CUDA architecture token such as ``sm_86``."""
+    if not arch.startswith("sm_"):
+        return None
+    digits = arch.removeprefix("sm_")
+    if len(digits) < 2 or not digits.isdigit():
+        return None
+    return int(digits[:-1]), int(digits[-1])
+
+
+def _cuda_arch_is_supported(
+    device_capability: tuple[int, int], build_arches: Sequence[str]
+) -> bool:
+    """Return whether the PyTorch build supports a CUDA compute capability."""
+    device_major, device_minor = device_capability
+    for arch in build_arches:
+        parsed = _parse_cuda_arch(arch)
+        if parsed is None:
+            continue
+        arch_major, arch_minor = parsed
+        if device_major == arch_major and device_minor >= arch_minor:
+            return True
+    return False
+
+
+def _cuda_device_capability(index: int) -> tuple[int, int] | None:
+    """Return CUDA compute capability without surfacing PyTorch warning noise."""
+    try:
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore")
+            properties = torch.cuda.get_device_properties(index)
+    except (AssertionError, RuntimeError):
+        return None
+    major = getattr(properties, "major", None)
+    minor = getattr(properties, "minor", None)
+    if not isinstance(major, int) or not isinstance(minor, int):
+        return None
+    return major, minor
+
+
+def _cuda_device_supported(index: int) -> bool:
+    """Return whether a CUDA device is supported by the installed PyTorch build."""
+    capability = _cuda_device_capability(index)
+    if capability is None:
+        return False
+    return _cuda_arch_is_supported(capability, torch.cuda.get_arch_list())
 
 
 def _device_usable(device: torch.device) -> bool:
@@ -31,11 +81,14 @@ def _device_usable(device: torch.device) -> bool:
 
 
 def auto_device() -> torch.device:
-    """Select best available device: CUDA > MPS > CPU."""
+    """Select a usable supported device in priority order: CUDA, MPS, CPU."""
     if torch.cuda.is_available():
-        cuda_device = torch.device("cuda")
-        if _device_usable(cuda_device):
-            return cuda_device
+        for index in range(torch.cuda.device_count()):
+            if not _cuda_device_supported(index):
+                continue
+            cuda_device = torch.device("cuda", index)
+            if _device_usable(cuda_device):
+                return cuda_device
     if hasattr(torch.backends, "mps") and torch.backends.mps.is_available():
         mps_device = torch.device("mps")
         if _device_usable(mps_device):

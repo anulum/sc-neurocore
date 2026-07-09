@@ -74,7 +74,7 @@ EXPECTED_ROWS = (
         import_name="cupy",
         distribution="cupy-cuda12x>=12.0",
         declared_extra="gpu",
-        test_paths=("pyproject.toml", "docs/guides/faq.md"),
+        test_paths=("pyproject.toml", "docs/guides/faq.md", "docs/api/training.md"),
     ),
     DependencyRow(
         import_name="mpi4py",
