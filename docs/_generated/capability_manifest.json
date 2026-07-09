@@ -965,7 +965,7 @@
     "python_model_classes": 158,
     "python_model_source_modules": 152,
     "rust_pyo3_model_wrappers": 175,
-    "test_files": 994
+    "test_files": 995
   },
   "documentation": {
     "public_pages": [
@@ -3735,6 +3735,7 @@
       "tests/test_tools/test_side_channel_benchmark.py",
       "tests/test_tools/test_side_channel_hdl_emit.py",
       "tests/test_tools/test_stochastic_backprop_benchmark.py",
+      "tests/test_tools/test_studio_dependency_profile.py",
       "tests/test_tools/test_summarise_shd_vertex_runs.py",
       "tests/test_tools/test_validate_configs.py",
       "tests/test_tools/test_validate_mnist_sc_checkpoint.py",

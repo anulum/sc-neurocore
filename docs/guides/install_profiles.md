@@ -138,7 +138,7 @@ refreshed rather than ignored.
 | `pip install "sc-neurocore[gpu]"` | Research-grade CuPy CUDA experiments; requires local CUDA compatibility | `cupy-cuda12x` |
 | `pip install "sc-neurocore[jax]"` | Research-grade JAX experiments; requires local accelerator/runtime compatibility | `jax`, `jaxlib` |
 | `pip install "sc-neurocore[quantum]"` | Research-grade quantum-circuit experiments; Qiskit/PennyLane are optional and never installed by default | `qiskit`, `pennylane`, `qiskit-aer` |
-| `pip install "sc-neurocore[studio]"` | Web studio / local design UI | `fastapi`, `uvicorn`, `httpx` |
+| `pip install "sc-neurocore[studio]"` | Web studio / local design UI | `fastapi`, `uvicorn`, `httpx`, `httpx2` |
 | `pip install "sc-neurocore[bioware]"` | Biological closed-loop and spike-sorting prototypes | `scikit-learn` |
 | `pip install "sc-neurocore[docs]"` | Building this documentation locally | `mkdocs`, `mkdocs-material`, `mkdocstrings` |
 | `pip install "sc-neurocore[dev]"` | Contributor lint/test work | `pytest`, `ruff`, `mypy`, `bandit`, docs helpers |

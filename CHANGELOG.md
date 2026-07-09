@@ -5,6 +5,11 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 ## [Unreleased]
 
 ### Fixed
+- Added `httpx2` to the Studio and full install profiles so Starlette
+  `TestClient` uses its non-deprecated transport in Studio tests. The install
+  profile guide and metadata contract tests now cover the dependency. No Studio
+  runtime endpoint, polyglot mirror, benchmark dispatch, or benchmark artefact
+  changed.
 - Disabled the ambient `pytest_nengo` plugin in the repository pytest config so
   unrelated test collection no longer imports Nengo and emits the third-party
   NumPy 2.x `numpy.core` deprecation warning before SC-NeuroCore tests run.

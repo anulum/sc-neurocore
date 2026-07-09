@@ -94,6 +94,7 @@ full = [
   "fastapi>=0.100",
   "uvicorn[standard]>=0.20",
   "httpx>=0.27",
+  "httpx2>=2.5,<3",
   "PyWavelets>=1.4",
   "zstandard>=0.22",
   "scikit-learn>=1.3",
@@ -119,7 +120,7 @@ quantum-cognition = ["sc-neurocore[quantum]"]  # Fisher-Posner experimental laye
 nir = ["nir>=1.0,<1.0.8"]  # 1.0.8 requires Flatten.input_type; see the `full` extra note
 mpi = ["mpi4py>=3.0"]
 lava = ["lava-nc; python_version < '3.11'"]
-studio = ["fastapi>=0.100", "uvicorn[standard]>=0.20", "httpx>=0.27"]
+studio = ["fastapi>=0.100", "uvicorn[standard]>=0.20", "httpx>=0.27", "httpx2>=2.5,<3"]
 federation = ["scpn-studio-platform>=0.9,<0.10"]  # Hub federation vertical (sc_neurocore.federation)
 docs = ["mkdocs>=1.6", "mkdocs-material>=9.5", "mkdocstrings[python]>=0.25"]
 compression = ["PyWavelets>=1.4", "zstandard>=0.22"]
