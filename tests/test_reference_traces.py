@@ -772,6 +772,106 @@ def _hodgkin_huxley_resting_euler_features(
     return features
 
 
+def _connor_stevens_resting_euler_features(
+    *, current: float, dt: float, steps: int
+) -> dict[str, float]:
+    """Return exact explicit-Euler features for the resting Connor-Stevens recurrence.
+
+    The Connor-Stevens (1971) membrane and its six gating variables (fast sodium
+    ``m``/``h``, delayed-rectifier ``n``, and A-type ``a``/``b``) are advanced with
+    the same simultaneous explicit-Euler update the schema runner applies, reusing
+    :func:`_np_exp` and :func:`_reference_exprel` so the rate functions match the
+    runner bit-for-bit. The verbatim expression order is preserved; the resting
+    zero-current protocol never crosses the ``v > 0`` threshold and the schema
+    declares no reset, so the reference is an independent re-derivation of the
+    committed gate trajectory.
+
+    Parameters
+    ----------
+    current:
+        Constant input current applied at every timestep.
+    dt:
+        Simulation timestep.
+    steps:
+        Number of timesteps to advance.
+
+    Returns
+    -------
+    dict of str to float
+        Reference feature map for the ``v``, ``m``, ``h``, ``n``, ``a``, and ``b``
+        state variables plus spike-count and first-spike-step features.
+    """
+    g_na = 120.0
+    g_k = 20.0
+    g_a = 47.7
+    g_l = 0.3
+    e_na = 55.0
+    e_k = -72.0
+    e_a = -75.0
+    e_l = -17.0
+    c_m = 1.0
+    v = -68.0
+    m = 0.01
+    h = 0.99
+    n = 0.1
+    a = 0.5
+    b = 0.1
+    recorded: dict[str, list[float]] = {"v": [], "m": [], "h": [], "n": [], "a": [], "b": []}
+    spikes: list[int] = []
+    for _ in range(steps):
+        dv = (
+            -g_na * m**3 * h * (v - e_na)
+            - g_k * n**4 * (v - e_k)
+            - g_a * a**3 * b * (v - e_a)
+            - g_l * (v - e_l)
+            + current
+        ) / c_m
+        dm = (
+            3.8 / _reference_exprel(-(v + 29.7) / 10) * (1 - m)
+            - 15.2 * _np_exp(-(v + 54.7) / 18) * m
+        )
+        dh = 0.266 * _np_exp(-(v + 48) / 20) * (1 - h) - 3.8 / (1 + _np_exp(-(v + 18) / 10)) * h
+        dn = (
+            0.2 / _reference_exprel(-(v + 45.7) / 10) * (1 - n)
+            - 0.25 * _np_exp(-(v + 55.7) / 80) * n
+        )
+        da = (
+            (0.0761 * _np_exp((v + 94.22) / 31.84) / (1 + _np_exp((v + 1.17) / 28.93)))
+            ** (1.0 / 3.0)
+            - a
+        ) / (0.3632 + 1.158 / (1 + _np_exp((v + 55.96) / 20.12)))
+        db = (1 / (1 + _np_exp((v + 53.3) / 14.54)) ** 4 - b) / (
+            1.24 + 2.678 / (1 + _np_exp((v + 50) / 16.027))
+        )
+        v_next = v + dv * dt
+        m_next = m + dm * dt
+        h_next = h + dh * dt
+        n_next = n + dn * dt
+        a_next = a + da * dt
+        b_next = b + db * dt
+        spikes.append(1 if v_next > 0 else 0)
+        v, m, h, n, a, b = v_next, m_next, h_next, n_next, a_next, b_next
+        recorded["v"].append(v)
+        recorded["m"].append(m)
+        recorded["h"].append(h)
+        recorded["n"].append(n)
+        recorded["a"].append(a)
+        recorded["b"].append(b)
+
+    features: dict[str, float] = {
+        "spike_count": float(math.fsum(spikes)),
+        "first_spike_step": float(
+            next((index for index, spike in enumerate(spikes, start=1) if spike), -1)
+        ),
+    }
+    for name, values in recorded.items():
+        features[f"final.{name}"] = values[-1]
+        features[f"min.{name}"] = min(values)
+        features[f"max.{name}"] = max(values)
+        features[f"mean.{name}"] = math.fsum(values) / len(values)
+    return features
+
+
 def test_seeded_corpus_has_analytic_schema_entries() -> None:
     """The seed corpus must expose deterministic analytic schema references."""
     names = list_reference_trace_specs()
@@ -1024,6 +1124,24 @@ def test_hodgkin_huxley_trace_features_match_independent_euler_solution() -> Non
     assert spec.schema_name == "hodgkin_huxley"
     assert spec.provenance.kind == "independent_euler_reference"
     assert spec.provenance.citation == "doi:10.1113/jphysiol.1952.sp004764"
+    assert set(expected) == set(spec.expected_features)
+    for feature_name, feature_value in expected.items():
+        assert spec.expected_features[feature_name] == pytest.approx(feature_value, abs=1e-12)
+
+
+def test_connor_stevens_trace_features_match_independent_euler_solution() -> None:
+    """Committed Connor-Stevens features must match an independent resting Euler recurrence."""
+    spec = load_reference_trace_spec("connor_stevens_resting_gate_doi")
+
+    expected = _connor_stevens_resting_euler_features(
+        current=spec.protocol.inputs["I"],
+        dt=spec.protocol.dt,
+        steps=spec.protocol.steps,
+    )
+
+    assert spec.schema_name == "connor_stevens"
+    assert spec.provenance.kind == "independent_euler_reference"
+    assert spec.provenance.citation == "doi:10.1113/jphysiol.1971.sp009368"
     assert set(expected) == set(spec.expected_features)
     for feature_name, feature_value in expected.items():
         assert spec.expected_features[feature_name] == pytest.approx(feature_value, abs=1e-12)
