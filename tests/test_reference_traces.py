@@ -382,6 +382,75 @@ def _fitzhugh_nagumo_euler_features(*, current: float, dt: float, steps: int) ->
     return features
 
 
+def _adex_subthreshold_euler_features(*, current: float, dt: float, steps: int) -> dict[str, float]:
+    """Return exact explicit-Euler features for the subthreshold AdEx recurrence.
+
+    The Brette-Gerstner (2005) exponential membrane and linear adaptation equations
+    are advanced with the same simultaneous explicit-Euler update the schema runner
+    applies. For the resting zero-current protocol the ``v > -50`` threshold is never
+    reached, so the ``v = v_reset``, ``w = w + b`` reset stays inactive and the
+    reference is an independent re-derivation of the committed quiet trajectory.
+
+    Parameters
+    ----------
+    current:
+        Constant input current applied at every timestep.
+    dt:
+        Simulation timestep.
+    steps:
+        Number of timesteps to advance.
+
+    Returns
+    -------
+    dict of str to float
+        Reference feature map for the ``v`` and ``w`` state variables plus
+        spike-count and first-spike-step features.
+    """
+    v_rest = -65.0
+    v_reset = -68.0
+    v_rh = -55.0
+    delta_t = 2.0
+    tau = 20.0
+    tau_w = 100.0
+    a = 0.5
+    b_adapt = 7.0
+    capacitance = 200.0
+    v = -65.0
+    w = 0.0
+    v_values: list[float] = []
+    w_values: list[float] = []
+    spikes: list[int] = []
+    for _ in range(steps):
+        dv = (-(v - v_rest) + delta_t * math.exp((v - v_rh) / delta_t)) / tau + (
+            -w + current
+        ) / capacitance
+        dw = (a * (v - v_rest) - w) / tau_w
+        v_next = v + dv * dt
+        w_next = w + dw * dt
+        if v_next > -50:
+            spikes.append(1)
+            v_next = v_reset
+            w_next = w_next + b_adapt
+        else:
+            spikes.append(0)
+        v, w = v_next, w_next
+        v_values.append(v)
+        w_values.append(w)
+
+    features: dict[str, float] = {
+        "spike_count": float(math.fsum(spikes)),
+        "first_spike_step": float(
+            next((index for index, spike in enumerate(spikes, start=1) if spike), -1)
+        ),
+    }
+    for name, values in (("v", v_values), ("w", w_values)):
+        features[f"final.{name}"] = values[-1]
+        features[f"min.{name}"] = min(values)
+        features[f"max.{name}"] = max(values)
+        features[f"mean.{name}"] = math.fsum(values) / len(values)
+    return features
+
+
 def test_seeded_corpus_has_analytic_schema_entries() -> None:
     """The seed corpus must expose deterministic analytic schema references."""
     names = list_reference_trace_specs()
@@ -544,6 +613,24 @@ def test_fitzhugh_nagumo_trace_features_match_independent_euler_solution() -> No
     assert spec.schema_name == "fitzhugh_nagumo"
     assert spec.provenance.kind == "independent_euler_reference"
     assert spec.provenance.citation == "doi:10.1016/S0006-3495(61)86902-6"
+    assert set(expected) == set(spec.expected_features)
+    for feature_name, feature_value in expected.items():
+        assert spec.expected_features[feature_name] == pytest.approx(feature_value, abs=1e-12)
+
+
+def test_adex_trace_features_match_independent_euler_solution() -> None:
+    """Committed AdEx features must match an independent subthreshold Euler recurrence."""
+    spec = load_reference_trace_spec("adex_resting_adaptation_doi")
+
+    expected = _adex_subthreshold_euler_features(
+        current=spec.protocol.inputs["I"],
+        dt=spec.protocol.dt,
+        steps=spec.protocol.steps,
+    )
+
+    assert spec.schema_name == "adex"
+    assert spec.provenance.kind == "independent_euler_reference"
+    assert spec.provenance.citation == "doi:10.1152/jn.00686.2005"
     assert set(expected) == set(spec.expected_features)
     for feature_name, feature_value in expected.items():
         assert spec.expected_features[feature_name] == pytest.approx(feature_value, abs=1e-12)
