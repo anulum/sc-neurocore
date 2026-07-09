@@ -79,7 +79,13 @@ The co-simulation suite is organized into four test classes:
 | `test_lif_q412_spikes` | Q4.12 LIF produces spikes |
 | `test_lif_q412_near_python` | Q4.12 within 5% of Python |
 | `test_q412_vs_q88_comparison` | Both Q4.12 and Q8.8 within 5% |
-| `test_q412_zero_current_silence` | Zero current (xfail: range overflow) |
+| `test_q412_zero_current_lif_is_range_classified` | LIF zero-current is excluded from Q4.12 parity by range diagnostics |
+
+Q4.12 is a narrow-range, high-resolution mode. It can track driven LIF spike
+counts in the existing test window, but it is not an mV-range LIF mode:
+`v_rest=-65.0`, initial `v=-65.0`, and `tau_m=10.0` exceed the
+[-8, +7.9998] Q4.12 range. Use `python -m sc_neurocore.neurons precision lif`
+before treating any Q4.12 LIF run as a parity claim.
 
 ### TestQ1616Precision — Q16.16 (32-bit, 16 fractional)
 

@@ -5,6 +5,12 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 ## [Unreleased]
 
 ### Fixed
+- Replaced the Q4.12 LIF zero-current co-simulation xfail with an explicit
+  range-classification regression that checks the Q-format diagnostics and the
+  public `precision lif` CLI. The co-simulation and precision docs now state
+  that Q4.12 is a normalized-dynamics mode, not a zero-current millivolt-scale
+  LIF parity mode. No HDL logic, runtime neuron dynamics, polyglot mirror,
+  benchmark dispatch, or benchmark artefact changed.
 - Added `httpx2` to the Studio and full install profiles so Starlette
   `TestClient` uses its non-deprecated transport in Studio tests. The install
   profile guide and metadata contract tests now cover the dependency. No Studio

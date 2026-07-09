@@ -78,9 +78,14 @@ verilog = neuron.to_verilog(module_name="sc_lif", data_width=8, fraction=7)
 
 ```bash
 python -m sc_neurocore.neurons compile lif -p q88 -o lif.v
-python -m sc_neurocore.neurons compile lif -p q412 -o lif_hp.v
+python -m sc_neurocore.neurons compile theta -p q412 -o theta_hp.v
 python -m sc_neurocore.neurons compile lif -p q115 -o lif_arm.v
 ```
+
+For LIF and other millivolt-scale schemas, run `precision lif` before choosing
+Q4.12. The LIF schema has `v_rest=-65.0`, initial `v=-65.0`, and `tau_m=10.0`,
+so the public precision CLI excludes Q4.12 from compatible modes even though
+the compiler can still emit a narrow-range smoke-test RTL module.
 
 ### 18-Bit Tier: Q9.9 — The Universal DSP Format
 
@@ -522,6 +527,11 @@ flowchart TD
 
 All mV-range modes achieve **0.0%** Python↔Verilog spike count gap
 at I=50.0, 200 steps for linear models:
+
+Q4.12 is intentionally absent from this table: its [-8, +7.9998] range cannot
+represent the LIF millivolt state or `tau_m=10.0`. It remains a precision mode
+for normalized dynamics and compile-smoke coverage, not a zero-current LIF
+parity mode.
 
 | Mode | LIF | Lapicque | Resonate-Fire |
 |------|:---:|:--------:|:-------------:|

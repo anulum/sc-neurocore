@@ -26,7 +26,8 @@ TestCoSimulation
     Resonate-and-Fire, Perfect Integrator.
 
 TestQ412Precision
-    Q4.12 (16-bit, 12 fractional): precision vs Q8.8, range xfail.
+    Q4.12 (16-bit, 12 fractional): precision vs Q8.8, plus range
+    classification for millivolt-scale LIF state.
 
 TestQ1616Precision
     Q16.16 (32-bit): gold standard fidelity, zero-current silence.
@@ -40,7 +41,9 @@ TestSchemaGapModelCosim
 Verified Results (2026-05-01)
 -----------------------------
 All 6 Q8.8 baseline models: 0.0% spike count gap at Q8.8 (I=50.0, 200 steps).
-All 3 precision modes (Q8.8, Q4.12, Q16.16): 0.0% gap for LIF.
+Driven LIF spike-count parity holds for Q8.8, Q4.12, and Q16.16 at
+I=50.0; zero-current LIF requires an mV-range mode because Q4.12 cannot
+represent v_rest=-65 mV or tau_m=10.
 FitzHugh-Nagumo (2026-07-07): 0.0% gap at Q16.16, I=0.8, 300 steps (7 spikes).
 
 Prerequisites
@@ -54,16 +57,19 @@ from __future__ import annotations
 import re
 import shutil
 import subprocess
+import sys
 import tempfile
 from pathlib import Path
+from typing import Mapping, cast
 
 import pytest
 
-from sc_neurocore.neurons.universal_dsl import UniversalNeuron
-from sc_neurocore.neurons.models.perfect_integrator import PerfectIntegratorNeuron
 from sc_neurocore.compiler.equation_compiler import (
+    Q88,
     generate_testbench,
 )
+from sc_neurocore.neurons.models.perfect_integrator import PerfectIntegratorNeuron
+from sc_neurocore.neurons.universal_dsl import UniversalNeuron
 
 # Method-based spike-count primitives are shared with the pipelined co-simulation suite
 # (``tests/test_pipeline_cosim.py``); they live in ``tests/cosim_support.py``. Imported under
@@ -166,6 +172,14 @@ def _perfect_integrator_hand_spike_count(n_steps: int, current: float) -> int:
     """Return the hand-authored perfect-integrator spike count for comparison."""
     neuron = PerfectIntegratorNeuron()
     return sum(neuron.step(current) for _ in range(n_steps))
+
+
+def _lif_schema_precision_values() -> dict[str, float]:
+    """Return LIF schema values checked by the public precision CLI."""
+    schema = UniversalNeuron.from_schema("lif").schema
+    parameters = cast(Mapping[str, float], schema.get("parameters", {}))
+    state = cast(Mapping[str, float], schema.get("state", {}))
+    return {**parameters, **state}
 
 
 @pytest.mark.skipif(not HAS_IVERILOG, reason="Icarus Verilog not available")
@@ -369,18 +383,37 @@ class TestQ412Precision:
         assert pct_q88 < 5.0, f"Q8.8 gap too large: {pct_q88:.1f}%"
         assert pct_q412 < 5.0, f"Q4.12 gap too large: {pct_q412:.1f}%"
 
-    @pytest.mark.xfail(reason="Q4.12 integer range [-8,+8] too narrow for LIF voltages (-65mV)")
-    def test_q412_zero_current_silence(self) -> None:
-        """Q4.12 with zero current should produce no spikes.
+    def test_q412_zero_current_lif_is_range_classified(self) -> None:
+        """Q4.12 LIF zero-current is a range mismatch, not a parity claim."""
+        params = _lif_schema_precision_values()
+        q412 = Q88(data_width=16, fraction=12)
+        incompatible = {
+            name
+            for name, value in params.items()
+            if not q412.min_value <= value <= q412.max_value
+        }
+        report = q412.precision_report(dt=1.0, params=params)
 
-        NOTE: This test is expected to fail because the LIF model uses
-        voltages in [-65, +30] mV, which exceeds Q4.12's ±8 integer
-        range. The initial voltage -65.0 wraps, causing spurious spikes.
-        This is the precision-vs-range tradeoff — Q4.12 is ideal for
-        models with normalised dynamics (e.g. FitzHugh-Nagumo, Theta).
-        """
-        vlog_spikes = _verilog_spike_count_q412("lif", 50, 0.0)
-        assert vlog_spikes == 0
+        assert q412.min_value == pytest.approx(-8.0)
+        assert q412.max_value == pytest.approx(7.999755859375)
+        assert incompatible == {"v_rest", "tau_m", "v"}
+        assert "Underflow: v_rest=-65.0 below Q4.12 min=-8.0000" in report
+        assert "Overflow: tau_m=10.0 exceeds Q4.12 max=7.9998" in report
+        assert "Underflow: v=-65.0 below Q4.12 min=-8.0000" in report
+
+        cli = subprocess.run(
+            [sys.executable, "-m", "sc_neurocore.neurons", "precision", "lif"],
+            capture_output=True,
+            check=True,
+            text=True,
+            timeout=30,
+        )
+        compatible_line = next(
+            line for line in cli.stdout.splitlines() if line.startswith("Compatible modes:")
+        )
+        assert "Q4.12" not in compatible_line
+        assert "Q8.8" in compatible_line
+        assert "Q16.16" in compatible_line
 
 
 def _verilog_spike_count_q1616(model_name: str, n_steps: int, current: float) -> int:

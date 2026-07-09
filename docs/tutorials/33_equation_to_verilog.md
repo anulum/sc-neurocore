@@ -292,13 +292,14 @@ parameter range:
 from sc_neurocore.neurons.universal_dsl import UniversalNeuron
 
 neuron = UniversalNeuron.from_schema("lif")
+theta = UniversalNeuron.from_schema("theta")
 
 # Q8.8 — default (16-bit, ±128 range)
 verilog_q88 = neuron.to_verilog(module_name="sc_lif")
 
-# Q4.12 — high precision (16-bit, ±8 range, 16× finer resolution)
-verilog_q412 = neuron.to_verilog(
-    module_name="sc_lif_hp", data_width=16, fraction=12,
+# Q4.12 — high precision for normalised dynamics (16-bit, ±8 range)
+verilog_q412 = theta.to_verilog(
+    module_name="sc_theta_hp", data_width=16, fraction=12,
 )
 
 # Q16.16 — gold standard (32-bit, ±32768 range, 1/65536 resolution)
@@ -310,16 +311,21 @@ verilog_q1616 = neuron.to_verilog(
 | Mode | Bits | Range | Resolution | Gate cost |
 |------|:----:|-------|-----------|-----------|
 | Q8.8 | 16 | ±128 | 0.004 | Baseline |
-| Q4.12 | 16 | ±8 | 0.0002 | Same |
+| Q4.12 | 16 | ±8 | 0.0002 | Same; normalised-state models only |
 | Q16.16 | 32 | ±32768 | 0.000015 | ~2× |
 
 CLI equivalents:
 
 ```bash
 python -m sc_neurocore.neurons compile lif -p q88 -o sc_lif.v
-python -m sc_neurocore.neurons compile lif -p q412 -o sc_lif_hp.v
+python -m sc_neurocore.neurons compile theta -p q412 -o sc_theta_hp.v
 python -m sc_neurocore.neurons compile lif -p q1616 -o sc_lif_hd.v
 ```
+
+Q4.12 is not an mV-range LIF mode. `python -m sc_neurocore.neurons precision
+lif` reports underflow for `v_rest=-65.0` and the initial `v=-65.0`, plus
+overflow for `tau_m=10.0`, so Q4.12 LIF output is compile-smoke evidence unless
+the model is normalized first.
 
 ## 11. Precision Diagnostics
 
