@@ -5,6 +5,14 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+### Go autonomous-learning parity
+- Fixed the autonomous-learning Go CGO setup contract: the parity test now runs
+  from the Go module root with the `github.com/anulum/sc-neurocore/accel`
+  import path, the Go bridge passes the Rust C-FFI timestep argument while
+  preserving existing convenience calls, and public docs record the local
+  `LD_LIBRARY_PATH` setup. No learning-rule dynamics, benchmark dispatch, or
+  benchmark artefact changed.
+
 ### Rust/Python neuron binding coverage
 - Documented the Rust/Python neuron binding coverage boundary and turned
   `tests/test_rust_python_neuron_parity.py` into a registry-level coverage map

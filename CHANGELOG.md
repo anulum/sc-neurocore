@@ -29,6 +29,12 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
   code, polyglot mirror, benchmark dispatch, or benchmark artefact changed.
 
 ### Fixed
+- Fixed the autonomous-learning Go CGO setup contract: the parity test now runs
+  from the Go module root with the `github.com/anulum/sc-neurocore/accel`
+  import path, the Go bridge passes the Rust C-FFI timestep argument while
+  preserving existing convenience calls, and public docs record the local
+  `LD_LIBRARY_PATH` setup. No learning-rule dynamics, benchmark dispatch, or
+  benchmark artefact changed.
 - Replaced the Q4.12 LIF zero-current co-simulation xfail with an explicit
   range-classification regression that checks the Q-format diagnostics and the
   public `precision lif` CLI. The co-simulation and precision docs now state

@@ -13,17 +13,17 @@ package autonomous_learning
 // #include <stdint.h>
 //
 // void* create_rule(uint32_t rule_type, float weight, float param_a, float param_b);
-// void step_rule(void* ptr, bool pre_spike, bool post_spike, float reward);
+// void step_rule(void* ptr, bool pre_spike, bool post_spike, float reward, float dt);
 // float get_rule_weight(void* ptr);
 // void reset_rule(void* ptr);
 // void destroy_rule(void* ptr);
 //
 // void* create_learner(float threshold, float target_rate, float weight);
-// void step_learner(void* ptr, bool fired, bool pre_spike, float global_reward);
+// void step_learner(void* ptr, bool fired, bool pre_spike, float global_reward, float dt);
 // void destroy_learner(void* ptr);
 //
 // void* create_rule_layer(size_t count, uint32_t rule_type, float weight, float param_a, float param_b);
-// void step_rule_layer(void* layer_ptr, const bool* pre_spikes, const bool* post_spikes, const float* rewards);
+// void step_rule_layer(void* layer_ptr, const bool* pre_spikes, const bool* post_spikes, const float* rewards, float dt);
 // void get_rule_layer_weights(const void* layer_ptr, float* out_weights);
 // void destroy_rule_layer(void* layer_ptr);
 import "C"
@@ -36,6 +36,9 @@ const (
 	RuleRewardStdp = 2
 	RuleBcm        = 3
 )
+
+// DefaultDt matches the Python bridge default timestep for one-step helpers.
+const DefaultDt float32 = 0.001
 
 // PlasticityRule represents a handle to the Rust plasticity engine.
 type PlasticityRule struct {
@@ -53,7 +56,12 @@ func NewPlasticityRule(ruleType uint32, weight, paramA, paramB float32) *Plastic
 
 // Step advances the rule by one timestep.
 func (r *PlasticityRule) Step(preSpike, postSpike bool, reward float32) {
-	C.step_rule(r.ptr, C.bool(preSpike), C.bool(postSpike), C.float(reward))
+	r.StepDt(preSpike, postSpike, reward, DefaultDt)
+}
+
+// StepDt advances the rule by one timestep using an explicit timestep.
+func (r *PlasticityRule) StepDt(preSpike, postSpike bool, reward, dt float32) {
+	C.step_rule(r.ptr, C.bool(preSpike), C.bool(postSpike), C.float(reward), C.float(dt))
 }
 
 // Weight gets the current computed weight from the rule.
@@ -90,7 +98,12 @@ func NewEligentLearner(threshold, targetRate, weight float32) *EligentLearner {
 
 // Step advances the learner.
 func (l *EligentLearner) Step(fired, preSpike bool, globalReward float32) {
-	C.step_learner(l.ptr, C.bool(fired), C.bool(preSpike), C.float(globalReward))
+	l.StepDt(fired, preSpike, globalReward, DefaultDt)
+}
+
+// StepDt advances the learner using an explicit timestep.
+func (l *EligentLearner) StepDt(fired, preSpike bool, globalReward, dt float32) {
+	C.step_learner(l.ptr, C.bool(fired), C.bool(preSpike), C.float(globalReward), C.float(dt))
 }
 
 // Destroy frees the memory on the Rust side.
@@ -118,6 +131,11 @@ func NewRuleLayer(count int, ruleType uint32, weight, paramA, paramB float32) *R
 
 // Step advances the entire layer concurrently.
 func (l *RuleLayer) Step(preSpikes, postSpikes []bool, rewards []float32) {
+	l.StepDt(preSpikes, postSpikes, rewards, DefaultDt)
+}
+
+// StepDt advances the entire layer concurrently using an explicit timestep.
+func (l *RuleLayer) StepDt(preSpikes, postSpikes []bool, rewards []float32, dt float32) {
 	if len(preSpikes) != l.count || len(postSpikes) != l.count || len(rewards) != l.count {
 		panic("Slice size mismatch in RuleLayer.Step")
 	}
@@ -126,6 +144,7 @@ func (l *RuleLayer) Step(preSpikes, postSpikes []bool, rewards []float32) {
 		(*C.bool)(unsafe.Pointer(&preSpikes[0])),
 		(*C.bool)(unsafe.Pointer(&postSpikes[0])),
 		(*C.float)(unsafe.Pointer(&rewards[0])),
+		C.float(dt),
 	)
 }
 

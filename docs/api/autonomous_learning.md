@@ -35,15 +35,20 @@ rule.step(pre_spike=True, post_spike=False)
 
 ## Go Integration
 
-The Go services wrap the `libautonomous_learning.so` object using `cgo`:
+The Go services wrap the `libautonomous_learning.so` object using `cgo`. Run
+local snippets from `src/sc_neurocore/accel/go` so the module
+`github.com/anulum/sc-neurocore/accel` resolves, and include
+`src/sc_neurocore/_native` on `LD_LIBRARY_PATH` when using the checked-in local
+shared library.
 
 ```go
-import "sc_neurocore/accel/go/autonomous_learning"
+import "github.com/anulum/sc-neurocore/accel/autonomous_learning"
 
 rule := autonomous_learning.NewPlasticityRule(autonomous_learning.RuleStdp, 0.5, 0.1, 0.05)
 defer rule.Destroy()
 
 rule.Step(true, false, 0.0)
+rule.StepDt(false, true, 0.0, autonomous_learning.DefaultDt)
 currWeight := rule.Weight()
 ```
 

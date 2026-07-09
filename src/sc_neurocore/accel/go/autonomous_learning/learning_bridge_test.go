@@ -27,7 +27,7 @@ func TestNewPlasticityRule(t *testing.T) {
 
 	// STDP pre-before-post should potentiate
 	rule.Step(true, false, 0.0)
-	rule.Step(false, true, 0.0)
+	rule.StepDt(false, true, 0.0, DefaultDt)
 
 	newWeight := rule.Weight()
 	if newWeight <= initialWeight {
@@ -63,6 +63,7 @@ func TestRuleLayer(t *testing.T) {
 
 	// Simulate one step for the entire layer
 	layer.Step(pre, post, rewards)
+	layer.StepDt(pre, post, rewards, DefaultDt)
 
 	weights := layer.GetWeights()
 	if len(weights) != 10 {
