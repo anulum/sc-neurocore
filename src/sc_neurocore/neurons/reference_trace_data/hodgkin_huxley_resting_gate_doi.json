@@ -19,9 +19,9 @@
     ]
   },
   "provenance": {
-    "kind": "published_schema_euler_reference",
+    "kind": "independent_euler_reference",
     "source": "src/sc_neurocore/neurons/model_schemas/hodgkin_huxley.toml",
-    "equation": "Resting Hodgkin-Huxley sodium/potassium gate prefix from the DOI-backed conductance schema.",
+    "equation": "Resting Hodgkin-Huxley sodium/potassium gate prefix; the membrane and m/h/n gating equations are advanced with the exact explicit-Euler recurrence (numpy exp and the runner's exprel replicated bit-for-bit), independently re-derived from the Hodgkin-Huxley (1952) model definition (threshold not reached, no reset).",
     "citation": "doi:10.1113/jphysiol.1952.sp004764"
   },
   "expected_features": {

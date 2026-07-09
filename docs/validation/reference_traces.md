@@ -26,7 +26,7 @@ table because their schemas are stochastic.
 | `fitzhugh_nagumo_driven_oscillation_doi` | `fitzhugh_nagumo` | `universal_dsl` | Independent explicit-Euler re-derivation of the driven relaxation equations from `neurons/model_schemas/fitzhugh_nagumo.toml` with DOI-backed schema provenance |
 | `glif_constant_current_threshold_adaptation` | `glif` | `universal_dsl` | Analytic linear Euler recurrence from `neurons/model_schemas/glif.toml` with DOI-backed schema provenance |
 | `hindmarsh_rose_short_bursting_prefix` | `hindmarsh_rose` | `universal_dsl` | Independent explicit-Euler re-derivation of the short bursting prefix from `neurons/model_schemas/hindmarsh_rose.toml` with DOI-backed schema provenance |
-| `hodgkin_huxley_resting_gate_doi` | `hodgkin_huxley` | `universal_dsl` | DOI-backed resting conductance-gate prefix from `neurons/model_schemas/hodgkin_huxley.toml` |
+| `hodgkin_huxley_resting_gate_doi` | `hodgkin_huxley` | `universal_dsl` | Independent explicit-Euler re-derivation of the resting gate equations from `neurons/model_schemas/hodgkin_huxley.toml` with DOI-backed schema provenance |
 | `izhikevich_regular_spiking_doi` | `izhikevich` | `universal_dsl` | Independent explicit-Euler re-derivation of the regular-spiking equations from `neurons/model_schemas/izhikevich.toml` with DOI-backed schema provenance |
 | `lif_constant_current_closed_form` | `lif` | `universal_dsl` | Closed-form RC solution from `neurons/model_schemas/lif.toml` |
 | `lapicque_constant_current_closed_form` | `lapicque` | `universal_dsl` | Closed-form RC solution from `neurons/model_schemas/lapicque.toml` |
@@ -41,9 +41,11 @@ table because their schemas are stochastic.
 All entries record spike count, first spike step, and final/min/max/mean
 features for the declared state variables. The tests independently recompute the
 LIF, QIF, perfect-integrator, resonate-fire, theta, GLIF, Izhikevich,
-FitzHugh-Nagumo, AdEx, exponential-IF, Hindmarsh-Rose, and Morris-Lecar analytic
-or explicit-Euler solutions so the committed feature values for those entries are
-not merely copied from the runner output. The GLIF
+FitzHugh-Nagumo, AdEx, exponential-IF, Hindmarsh-Rose, Morris-Lecar, and
+Hodgkin-Huxley analytic or explicit-Euler solutions so the committed feature values
+for those entries are not merely copied from the runner output. The Morris-Lecar
+and Hodgkin-Huxley re-derivations reuse the runner's numpy activation, exponential,
+and exprel functions so the conductance rate terms match bit-for-bit. The GLIF
 entry re-derives the exact subthreshold explicit-Euler recurrence for its linear
 membrane, adaptive threshold, and two after-spike currents; the Izhikevich entry
 re-derives the exact regular-spiking explicit-Euler recurrence including its

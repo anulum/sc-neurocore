@@ -660,6 +660,118 @@ def _morris_lecar_euler_features(*, current: float, dt: float, steps: int) -> di
     return features
 
 
+def _np_exp(x: float) -> float:
+    """Return ``exp(x)`` through the same numpy implementation the schema runner uses.
+
+    Parameters
+    ----------
+    x:
+        Exponent argument.
+
+    Returns
+    -------
+    float
+        ``numpy.exp(x)`` as a Python float, bit-identical to the runner's rate terms.
+    """
+    return float(np.exp(x))
+
+
+def _reference_exprel(x: float) -> float:
+    """Return ``exprel(x) = (exp(x) - 1) / x`` with the removable-singularity limit.
+
+    Mirrors ``EquationNeuron``'s vectorised ``exprel`` bit-for-bit: the ``|x| < 1e-9``
+    branch returns the ``exprel(0) = 1`` limit as ``1 + x / 2``, and the regular
+    branch uses ``numpy.expm1`` so conductance rate functions written as
+    ``a / exprel(...)`` reproduce the runner exactly.
+
+    Parameters
+    ----------
+    x:
+        Rate-function argument.
+
+    Returns
+    -------
+    float
+        The exprel value matching the schema runner.
+    """
+    if abs(x) < 1e-9:
+        return 1.0 + x / 2.0
+    return float(np.expm1(x)) / x
+
+
+def _hodgkin_huxley_resting_euler_features(
+    *, current: float, dt: float, steps: int
+) -> dict[str, float]:
+    """Return exact explicit-Euler features for the resting Hodgkin-Huxley recurrence.
+
+    The Hodgkin-Huxley (1952) membrane and the sodium/potassium gating variables are
+    advanced with the same simultaneous explicit-Euler update the schema runner
+    applies, reusing :func:`_np_exp` and :func:`_reference_exprel` so the sharpened
+    rate functions match the runner bit-for-bit. The verbatim expression order is
+    preserved; the resting zero-current protocol never crosses the ``v > 0``
+    threshold and the schema declares no reset, so the reference is an independent
+    re-derivation of the committed gate-relaxation trajectory.
+
+    Parameters
+    ----------
+    current:
+        Constant input current applied at every timestep.
+    dt:
+        Simulation timestep.
+    steps:
+        Number of timesteps to advance.
+
+    Returns
+    -------
+    dict of str to float
+        Reference feature map for the ``v``, ``m``, ``h``, and ``n`` state variables
+        plus spike-count and first-spike-step features.
+    """
+    capacitance = 1.0
+    g_na = 120.0
+    g_k = 36.0
+    g_l = 0.3
+    e_na = 50.0
+    e_k = -77.0
+    e_l = -54.4
+    v = -65.0
+    m = 0.05
+    h = 0.6
+    n = 0.32
+    recorded: dict[str, list[float]] = {"v": [], "m": [], "h": [], "n": []}
+    spikes: list[int] = []
+    for _ in range(steps):
+        dv = (
+            -g_na * m**3 * h * (v - e_na) - g_k * n**4 * (v - e_k) - g_l * (v - e_l) + current
+        ) / capacitance
+        dm = 1.0 / _reference_exprel(-(v + 40) / 10) * (1 - m) - 4 * _np_exp(-(v + 65) / 18) * m
+        dh = 0.07 * _np_exp(-(v + 65) / 20) * (1 - h) - 1 / (1 + _np_exp(-(v + 35) / 10)) * h
+        dn = 0.1 / _reference_exprel(-(v + 55) / 10) * (1 - n) - 0.125 * _np_exp(-(v + 65) / 80) * n
+        v_next = v + dv * dt
+        m_next = m + dm * dt
+        h_next = h + dh * dt
+        n_next = n + dn * dt
+        spikes.append(1 if v_next > 0 else 0)
+        v, m, h, n = v_next, m_next, h_next, n_next
+        recorded["v"].append(v)
+        recorded["m"].append(m)
+        recorded["h"].append(h)
+        recorded["n"].append(n)
+
+    features: dict[str, float] = {
+        "spike_count": float(math.fsum(spikes)),
+        "first_spike_step": float(
+            next((index for index, spike in enumerate(spikes, start=1) if spike), -1)
+        ),
+    }
+    for name, values in recorded.items():
+        features[f"final.{name}"] = values[-1]
+        features[f"min.{name}"] = min(values)
+        features[f"max.{name}"] = max(values)
+        features[f"mean.{name}"] = math.fsum(values) / len(values)
+    return features
+
+
 def test_seeded_corpus_has_analytic_schema_entries() -> None:
     """The seed corpus must expose deterministic analytic schema references."""
     names = list_reference_trace_specs()
@@ -894,6 +1006,24 @@ def test_morris_lecar_trace_features_match_independent_euler_solution() -> None:
     assert spec.schema_name == "morris_lecar"
     assert spec.provenance.kind == "independent_euler_reference"
     assert spec.provenance.citation == "doi:10.1016/S0006-3495(81)84782-0"
+    assert set(expected) == set(spec.expected_features)
+    for feature_name, feature_value in expected.items():
+        assert spec.expected_features[feature_name] == pytest.approx(feature_value, abs=1e-12)
+
+
+def test_hodgkin_huxley_trace_features_match_independent_euler_solution() -> None:
+    """Committed Hodgkin-Huxley features must match an independent resting Euler recurrence."""
+    spec = load_reference_trace_spec("hodgkin_huxley_resting_gate_doi")
+
+    expected = _hodgkin_huxley_resting_euler_features(
+        current=spec.protocol.inputs["I"],
+        dt=spec.protocol.dt,
+        steps=spec.protocol.steps,
+    )
+
+    assert spec.schema_name == "hodgkin_huxley"
+    assert spec.provenance.kind == "independent_euler_reference"
+    assert spec.provenance.citation == "doi:10.1113/jphysiol.1952.sp004764"
     assert set(expected) == set(spec.expected_features)
     for feature_name, feature_value in expected.items():
         assert spec.expected_features[feature_name] == pytest.approx(feature_value, abs=1e-12)
