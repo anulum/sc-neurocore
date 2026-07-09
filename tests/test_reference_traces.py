@@ -321,6 +321,67 @@ def _izhikevich_rs_euler_features(*, current: float, dt: float, steps: int) -> d
     return features
 
 
+def _fitzhugh_nagumo_euler_features(*, current: float, dt: float, steps: int) -> dict[str, float]:
+    """Return exact explicit-Euler features for the driven FitzHugh-Nagumo recurrence.
+
+    The FitzHugh (1961) cubic membrane and linear recovery equations are advanced
+    with the same simultaneous explicit-Euler update the schema runner applies, and
+    the ``v = -1`` reset (recovery ``w`` left unchanged) fires whenever the
+    post-update membrane crosses the ``v > 1`` threshold. The reference is an
+    independent re-derivation of the committed relaxation-oscillation trace, not a
+    copy of the runner.
+
+    Parameters
+    ----------
+    current:
+        Constant input current applied at every timestep.
+    dt:
+        Simulation timestep.
+    steps:
+        Number of timesteps to advance.
+
+    Returns
+    -------
+    dict of str to float
+        Reference feature map for the ``v`` and ``w`` state variables plus
+        spike-count and first-spike-step features.
+    """
+    a = 0.7
+    b = 0.8
+    epsilon = 0.08
+    v = -1.0
+    w = -0.5
+    v_values: list[float] = []
+    w_values: list[float] = []
+    spikes: list[int] = []
+    for _ in range(steps):
+        dv = v - v**3 / 3 - w + current
+        dw = epsilon * (v + a - b * w)
+        v_next = v + dv * dt
+        w_next = w + dw * dt
+        if v_next > 1.0:
+            spikes.append(1)
+            v_next = -1.0
+        else:
+            spikes.append(0)
+        v, w = v_next, w_next
+        v_values.append(v)
+        w_values.append(w)
+
+    features: dict[str, float] = {
+        "spike_count": float(math.fsum(spikes)),
+        "first_spike_step": float(
+            next((index for index, spike in enumerate(spikes, start=1) if spike), -1)
+        ),
+    }
+    for name, values in (("v", v_values), ("w", w_values)):
+        features[f"final.{name}"] = values[-1]
+        features[f"min.{name}"] = min(values)
+        features[f"max.{name}"] = max(values)
+        features[f"mean.{name}"] = math.fsum(values) / len(values)
+    return features
+
+
 def test_seeded_corpus_has_analytic_schema_entries() -> None:
     """The seed corpus must expose deterministic analytic schema references."""
     names = list_reference_trace_specs()
@@ -465,6 +526,24 @@ def test_izhikevich_trace_features_match_independent_euler_solution() -> None:
     assert spec.schema_name == "izhikevich"
     assert spec.provenance.kind == "independent_euler_reference"
     assert spec.provenance.citation == "doi:10.1109/TNN.2003.820440"
+    assert set(expected) == set(spec.expected_features)
+    for feature_name, feature_value in expected.items():
+        assert spec.expected_features[feature_name] == pytest.approx(feature_value, abs=1e-12)
+
+
+def test_fitzhugh_nagumo_trace_features_match_independent_euler_solution() -> None:
+    """Committed FitzHugh-Nagumo features must match an independent explicit-Euler recurrence."""
+    spec = load_reference_trace_spec("fitzhugh_nagumo_driven_oscillation_doi")
+
+    expected = _fitzhugh_nagumo_euler_features(
+        current=spec.protocol.inputs["I"],
+        dt=spec.protocol.dt,
+        steps=spec.protocol.steps,
+    )
+
+    assert spec.schema_name == "fitzhugh_nagumo"
+    assert spec.provenance.kind == "independent_euler_reference"
+    assert spec.provenance.citation == "doi:10.1016/S0006-3495(61)86902-6"
     assert set(expected) == set(spec.expected_features)
     for feature_name, feature_value in expected.items():
         assert spec.expected_features[feature_name] == pytest.approx(feature_value, abs=1e-12)

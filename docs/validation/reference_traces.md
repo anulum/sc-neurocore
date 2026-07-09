@@ -23,7 +23,7 @@ table because their schemas are stochastic.
 | `adex_resting_adaptation_doi` | `adex` | `universal_dsl` | DOI-backed published-schema Euler reference from `neurons/model_schemas/adex.toml` |
 | `connor_stevens_resting_gate_doi` | `connor_stevens` | `universal_dsl` | DOI-backed resting gate prefix from `neurons/model_schemas/connor_stevens.toml` |
 | `exp_if_resting_exponential_doi` | `exp_if` | `universal_dsl` | DOI-backed resting exponential IF prefix from `neurons/model_schemas/exp_if.toml` |
-| `fitzhugh_nagumo_driven_oscillation_doi` | `fitzhugh_nagumo` | `universal_dsl` | DOI-backed driven relaxation trace from `neurons/model_schemas/fitzhugh_nagumo.toml` |
+| `fitzhugh_nagumo_driven_oscillation_doi` | `fitzhugh_nagumo` | `universal_dsl` | Independent explicit-Euler re-derivation of the driven relaxation equations from `neurons/model_schemas/fitzhugh_nagumo.toml` with DOI-backed schema provenance |
 | `glif_constant_current_threshold_adaptation` | `glif` | `universal_dsl` | Analytic linear Euler recurrence from `neurons/model_schemas/glif.toml` with DOI-backed schema provenance |
 | `hindmarsh_rose_short_bursting_prefix` | `hindmarsh_rose` | `universal_dsl` | DOI-backed short finite prefix from `neurons/model_schemas/hindmarsh_rose.toml` |
 | `hodgkin_huxley_resting_gate_doi` | `hodgkin_huxley` | `universal_dsl` | DOI-backed resting conductance-gate prefix from `neurons/model_schemas/hodgkin_huxley.toml` |
@@ -40,13 +40,15 @@ table because their schemas are stochastic.
 
 All entries record spike count, first spike step, and final/min/max/mean
 features for the declared state variables. The tests independently recompute the
-LIF, QIF, perfect-integrator, resonate-fire, theta, GLIF, and Izhikevich analytic
-or explicit-Euler solutions so the committed feature values for those entries are
-not merely copied from the runner output. The GLIF entry re-derives the exact
-subthreshold explicit-Euler recurrence for its linear membrane, adaptive
-threshold, and two after-spike currents; the Izhikevich entry re-derives the exact
-regular-spiking explicit-Euler recurrence including its `v = c`, `u = u + d` reset.
-The perfect-integrator, FitzHugh-Nagumo, and Izhikevich entries are spike-bearing;
+LIF, QIF, perfect-integrator, resonate-fire, theta, GLIF, Izhikevich, and
+FitzHugh-Nagumo analytic or explicit-Euler solutions so the committed feature
+values for those entries are not merely copied from the runner output. The GLIF
+entry re-derives the exact subthreshold explicit-Euler recurrence for its linear
+membrane, adaptive threshold, and two after-spike currents; the Izhikevich entry
+re-derives the exact regular-spiking explicit-Euler recurrence including its
+`v = c`, `u = u + d` reset; and the FitzHugh-Nagumo entry re-derives its cubic
+relaxation recurrence with the `v = -1` reset. The perfect-integrator,
+FitzHugh-Nagumo, and Izhikevich entries are spike-bearing;
 they validate reset and first-spike features, not only quiet trajectories. The
 Rulkov entry is intentionally short-window because the current generic schema
 runner executes its map equation through an Euler-style path that diverges on long

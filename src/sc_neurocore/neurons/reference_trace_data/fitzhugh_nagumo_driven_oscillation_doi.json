@@ -17,9 +17,9 @@
     ]
   },
   "provenance": {
-    "kind": "published_schema_euler_reference",
+    "kind": "independent_euler_reference",
     "source": "src/sc_neurocore/neurons/model_schemas/fitzhugh_nagumo.toml",
-    "equation": "Driven FitzHugh-Nagumo relaxation trace with the schema reset rule and published cubic nullcline equations.",
+    "equation": "Driven FitzHugh-Nagumo relaxation trace with three v>1 resets; the cubic membrane and linear recovery equations are advanced with the exact explicit-Euler recurrence, independently re-derived from the FitzHugh (1961) model definition with the v=-1 (recovery-identity) reset.",
     "citation": "doi:10.1016/S0006-3495(61)86902-6"
   },
   "expected_features": {
