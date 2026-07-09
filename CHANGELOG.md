@@ -33,6 +33,12 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
   code, polyglot mirror, benchmark dispatch, or benchmark artefact changed.
 
 ### Fixed
+- Migrated the surrogate custom-op compiler regression to
+  `torch.compile(..., backend="eager")` and added a guard against deprecated
+  TorchScript `script_method` usage in the touched training lane. Public
+  surrogate docs now state that this is graph-capture evidence, not a throughput
+  benchmark. No training algorithm, polyglot mirror, benchmark dispatch, or
+  benchmark artefact changed.
 - Fixed the autonomous-learning Go CGO setup contract: the parity test now runs
   from the Go module root with the `github.com/anulum/sc-neurocore/accel`
   import path, the Go bridge passes the Rust C-FFI timestep argument while

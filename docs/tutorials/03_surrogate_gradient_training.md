@@ -62,6 +62,10 @@ The public functions default to `custom_op`, while explicit `_custom_op` and
 `_legacy` variants remain available for direct comparison. See
 [Surrogate Execution Paths](../guides/surrogate_execution_paths.md).
 
+The custom-op path is the PyTorch compiler-facing path. Local warning-hygiene
+tests use `torch.compile(..., backend="eager")` for the LIFCell custom-op
+contract; that check is graph-capture evidence, not a throughput benchmark.
+
 ## Neuron model: LIFCell
 
 ```python

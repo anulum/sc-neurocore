@@ -5,6 +5,14 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+### Surrogate compiler warning hygiene
+- Migrated the surrogate custom-op compiler regression to
+  `torch.compile(..., backend="eager")` and added a guard against deprecated
+  TorchScript `script_method` usage in the touched training lane. Public
+  surrogate docs now state that this is graph-capture evidence, not a throughput
+  benchmark. No training algorithm, polyglot mirror, benchmark dispatch, or
+  benchmark artefact changed.
+
 ### Annealing optional extra
 - Added an `annealing` optional extra for `dwave-neal` and `dimod`, updated the
   optional dependency matrix and install-profile docs, and locked the metadata

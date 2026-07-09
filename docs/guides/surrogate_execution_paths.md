@@ -78,6 +78,23 @@ cell_modern = LIFCell(surrogate_fn=atan_surrogate_custom_op)
 cell_legacy = LIFCell(surrogate_fn=atan_surrogate_legacy)
 ```
 
+## PyTorch compile boundary
+
+Use the `custom_op` path for PyTorch's compiler stack. The focused regression
+selector runs `LIFCell` through `torch.compile(..., backend="eager")` so Dynamo
+captures and replays the cell without entering deprecated TorchScript
+`script_method` internals on local developer machines:
+
+```python
+compiled_cell = torch.compile(cell_modern, backend="eager")
+spike, voltage = compiled_cell(current, voltage)
+```
+
+The eager backend is a warning-hygiene and graph-capture contract for the custom
+operator path. It does not create a performance claim; benchmark-dispatched
+training runs must use their own recorded backend, hardware, and isolation
+evidence.
+
 ## Why keep both?
 
 - the legacy path is the known historical baseline
