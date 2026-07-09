@@ -5,6 +5,12 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+### Annealing optional extra
+- Added an `annealing` optional extra for `dwave-neal` and `dimod`, updated the
+  optional dependency matrix and install-profile docs, and locked the metadata
+  contract for the quantum-annealing `neal` parity selector. No base dependency,
+  annealing runtime algorithm, benchmark dispatch, or benchmark artefact changed.
+
 ### Go autonomous-learning parity
 - Fixed the autonomous-learning Go CGO setup contract: the parity test now runs
   from the Go module root with the `github.com/anulum/sc-neurocore/accel`

@@ -115,6 +115,7 @@ chemistry = [
 training = ["torch>=2.0"]
 jax = ["jax", "jaxlib"]
 julia = ["juliacall>=0.9"]
+annealing = ["dwave-neal", "dimod"]
 quantum = ["qiskit", "pennylane", "qiskit-aer", "qiskit-ibm-runtime"]
 quantum-cognition = ["sc-neurocore[quantum]"]  # Fisher-Posner experimental layer
 nir = ["nir>=1.0,<1.0.8"]  # 1.0.8 requires Flatten.input_type; see the `full` extra note

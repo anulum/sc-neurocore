@@ -137,6 +137,7 @@ refreshed rather than ignored.
 | `pip install "sc-neurocore[hdl]"` | Equation-to-HDL workflows, unit-checked equations, packaged HDL primitives | `pint`; bundled `.v` / `.sv` / OpenROAD helper artefacts |
 | `pip install "sc-neurocore[gpu]"` | Research-grade CuPy CUDA experiments; requires local CUDA compatibility | `cupy-cuda12x` |
 | `pip install "sc-neurocore[jax]"` | Research-grade JAX experiments; requires local accelerator/runtime compatibility | `jax`, `jaxlib` |
+| `pip install "sc-neurocore[annealing]"` | D-Wave `neal` parity checks for the quantum-annealing bridge | `dwave-neal`, `dimod` |
 | `pip install "sc-neurocore[quantum]"` | Research-grade quantum-circuit experiments; Qiskit/PennyLane are optional and never installed by default | `qiskit`, `pennylane`, `qiskit-aer` |
 | `pip install "sc-neurocore[studio]"` | Web studio / local design UI | `fastapi`, `uvicorn`, `httpx`, `httpx2` |
 | `pip install "sc-neurocore[bioware]"` | Biological closed-loop and spike-sorting prototypes | `scikit-learn` |
@@ -196,8 +197,9 @@ the release contract. Current audit evidence is recorded in
 The `full` profile is the CPU-side union for training, NIR, Studio, HDL, codec,
 bioware, and quantum workflows. It is a local research environment profile, not
 the standard user install. It deliberately does not pull GPU-, MPI-, Lava-,
-Julia-, or JAX-specific stacks because those depend on local hardware, drivers,
-or external runtimes.
+Julia-, Go-, Mojo-, WGSL-, JAX-, or D-Wave-annealing-specific stacks because
+those depend on local hardware, drivers, external runtimes, or reference
+samplers used only by focused parity tests.
 
 For the architecture-level classification of every optional extra, package
 discovery exclude, and Cargo workspace exclude, see the

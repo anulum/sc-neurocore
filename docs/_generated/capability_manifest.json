@@ -959,7 +959,7 @@
   "counts": {
     "github_workflows": 17,
     "model_documentation_pages": 175,
-    "optional_extras": 27,
+    "optional_extras": 28,
     "public_api_exports": 45,
     "public_documentation_pages": 565,
     "python_model_classes": 158,
@@ -2747,6 +2747,7 @@
   "packaging": {
     "optional_extras": [
       "accel",
+      "annealing",
       "bioware",
       "chemistry",
       "compression",

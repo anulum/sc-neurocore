@@ -18,7 +18,7 @@ tests, and the current CI/dev boundary.
 | Dependency | Import surface | Install profile | CI/dev boundary | Evidence |
 | --- | --- | --- | --- | --- |
 | `gdsfactory>=9.0` | `gdsfactory` | `pip install "sc-neurocore[optics]"` | Optional optics path; GDSII round-trip tests skip unless the extra is installed. | `tests/test_optics/test_gdsii.py`, `tests/test_optics/test_photonic_emitter_branches.py` |
-| `dwave-neal` + `dimod` | `neal`, `dimod` | Not declared in `pyproject.toml`; install manually for the parity check. | Quantum-annealing parity test skips when either package is absent. This is tracked separately as an optional-extra decision. | `tests/test_bridges/test_quantum_annealing_neal_parity.py` |
+| `dwave-neal` + `dimod` | `neal`, `dimod` | `pip install "sc-neurocore[annealing]"` | Quantum-annealing parity test skips when either package is absent; install this profile to run the D-Wave sampler parity selector locally or in CI. | `tests/test_bridges/test_quantum_annealing_neal_parity.py` |
 | `onnx` | `onnx` | `dev`, `full`, `research` | JSON export tests run without ONNX; protobuf export tests skip when ONNX is absent. | `tests/test_export/test_onnx_exporter.py`, `tests/test_export/test_onnx_export.py` |
 | `lava-nc` | `lava` on Python `<3.11` | `pip install "sc-neurocore[lava]"` on supported Python | Loihi/Lava adapter packages are handoff artefacts; the dependency is recorded in generated adapter manifests rather than imported by default CI. | `tests/test_nir_neuromorphic_adapters.py` |
 | `snntorch` | `snntorch` | Not declared in `pyproject.toml`; install manually for NIR interop experiments. | NIR bridge interop tests skip when snnTorch is absent. | `tests/test_nir_bridge.py`, `docs/guides/nir_integration.md` |

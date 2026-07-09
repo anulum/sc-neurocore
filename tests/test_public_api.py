@@ -17,7 +17,7 @@ from typing import Any, cast
 if sys.version_info >= (3, 11):
     import tomllib
 else:
-    import tomli as tomllib
+    import tomli as tomllib  # pragma: no cover - Python 3.10 compatibility path.
 
 import pytest
 import sc_neurocore
@@ -122,14 +122,27 @@ def test_install_extras_cover_documented_workflow_groups() -> None:
     assert extras["minimal"] == extras["core"]
     assert extras["hdl"] == ["pint>=0.23"]
     assert extras["license"] == ["httpx>=0.27"]
+    assert extras["annealing"] == ["dwave-neal", "dimod"]
     assert all(
         dep.split(">=", maxsplit=1)[0].split("==", maxsplit=1)[0]
-        not in {"torch", "jax", "jaxlib", "qiskit", "pennylane", "fastapi", "uvicorn", "httpx"}
+        not in {
+            "dimod",
+            "dwave-neal",
+            "fastapi",
+            "httpx",
+            "jax",
+            "jaxlib",
+            "pennylane",
+            "qiskit",
+            "torch",
+            "uvicorn",
+        }
         for dep in dependencies
     )
 
     full = set(extras["full"])
     assert set(extras["hdl"]) <= full
+    assert set(extras["annealing"]).isdisjoint(full)
     assert {
         "numba>=0.56",
         "matplotlib>=3.5",

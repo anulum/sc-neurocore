@@ -39,7 +39,7 @@ EXPECTED_ROWS = (
     DependencyRow(
         import_name="neal",
         distribution="dwave-neal",
-        declared_extra=None,
+        declared_extra="annealing",
         test_paths=("tests/test_bridges/test_quantum_annealing_neal_parity.py",),
     ),
     DependencyRow(

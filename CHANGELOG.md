@@ -5,6 +5,10 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 ## [Unreleased]
 
 ### Changed
+- Added an `annealing` optional extra for `dwave-neal` and `dimod`, updated the
+  optional dependency matrix and install-profile docs, and locked the metadata
+  contract for the quantum-annealing `neal` parity selector. No base dependency,
+  annealing runtime algorithm, benchmark dispatch, or benchmark artefact changed.
 - Documented the Rust/Python neuron binding coverage boundary and turned
   `tests/test_rust_python_neuron_parity.py` into a registry-level coverage map
   for 159 public Python registry names, including same-name Rust constructors,

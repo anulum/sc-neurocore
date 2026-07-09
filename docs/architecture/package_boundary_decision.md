@@ -1,11 +1,11 @@
 <!--
 SPDX-License-Identifier: AGPL-3.0-or-later
 Commercial license available
-Copyright (c) Concepts 1996-2026 Miroslav Sotek. All rights reserved.
-Copyright (c) Code 2020-2026 Miroslav Sotek. All rights reserved.
+© Concepts 1996–2026 Miroslav Šotek. All rights reserved.
+© Code 2020–2026 Miroslav Šotek. All rights reserved.
 ORCID: 0009-0009-3560-0851
 Contact: www.anulum.li | protoscience@anulum.li
-SC-NeuroCore - Package boundary decision
+SC-NeuroCore — Package boundary decision
 -->
 
 # v4 Package Boundary Decision
@@ -75,6 +75,7 @@ they satisfy the same promotion gate:
 | `training` | optional extra | PyTorch-backed training workflows. |
 | `jax` | optional extra | JAX acceleration and autodiff research paths. |
 | `julia` | optional extra | Julia bridge support through `juliacall`. |
+| `annealing` | optional extra | D-Wave `neal` sampler parity dependencies for focused quantum-annealing bridge checks. |
 | `quantum` | optional extra | Qiskit and PennyLane quantum-circuit experiments. |
 | `quantum-cognition` | optional extra | Alias over the quantum stack for Fisher-Posner experiments. |
 | `nir` | optional extra | Neuromorphic Intermediate Representation import/export. |
