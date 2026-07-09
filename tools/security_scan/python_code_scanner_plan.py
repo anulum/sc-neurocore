@@ -1,10 +1,11 @@
 #!/usr/bin/env python3
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Commercial license available
-# Copyright (c) Concepts 1996-2026 Miroslav Sotek. All rights reserved.
-# Copyright (c) Code 2020-2026 Miroslav Sotek. All rights reserved.
+# © Concepts 1996–2026 Miroslav Šotek. All rights reserved.
+# © Code 2020–2026 Miroslav Šotek. All rights reserved.
 # ORCID: 0009-0009-3560-0851
 # Contact: www.anulum.li | protoscience@anulum.li
+# SC-NeuroCore — Python code scanner plan generator
 
 """Build an offline deterministic scanner plan for Python code scanners."""
 
@@ -17,7 +18,7 @@ import shlex
 import shutil
 import sys
 from pathlib import Path
-from typing import Any
+from typing import Any, cast
 
 
 SCAN_PLAN_SCHEMA_VERSION = "sc-neurocore.python-code-scanner-plan.v1"
@@ -65,8 +66,8 @@ def _load_manifest() -> dict[str, Any]:
 
     module = importlib.util.module_from_spec(spec)
     sys.modules[spec.name] = module
-    spec.loader.exec_module(module)  # type: ignore[misc]
-    return module.build_scanner_manifest()
+    spec.loader.exec_module(module)
+    return cast(dict[str, Any], module.build_scanner_manifest())
 
 
 def _extract_executable(command: str) -> str:

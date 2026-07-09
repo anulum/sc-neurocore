@@ -1,10 +1,11 @@
 #!/usr/bin/env python3
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Copyright (C) 2026 ANULUM
-#
-# This file is part of sc-neurocore.
-# See the LICENSE file in the project root for full license text.
-# Commercial licensing is available; contact protoscience@anulum.li.
+# Commercial license available
+# © Concepts 1996–2026 Miroslav Šotek. All rights reserved.
+# © Code 2020–2026 Miroslav Šotek. All rights reserved.
+# ORCID: 0009-0009-3560-0851
+# Contact: www.anulum.li | protoscience@anulum.li
+# SC-NeuroCore — Vertex AI SHD config generator
 """Generate Vertex AI configs for Tim/CNRS SHD follow-up experiments."""
 
 from __future__ import annotations
@@ -37,9 +38,12 @@ def _config(display_name: str, out_subdir: str, env: dict[str, str]) -> str:
         **env,
     }
     return f"""# SPDX-License-Identifier: AGPL-3.0-or-later
-# Copyright (C) 2026 ANULUM
-#
-# Internal Vertex AI custom-job config for SC-NeuroCore SHD follow-up.
+# Commercial license available
+# © Concepts 1996–2026 Miroslav Šotek. All rights reserved.
+# © Code 2020–2026 Miroslav Šotek. All rights reserved.
+# ORCID: 0009-0009-3560-0851
+# Contact: www.anulum.li | protoscience@anulum.li
+# SC-NeuroCore — internal Vertex AI custom-job config
 # Display name: {display_name}
 workerPoolSpecs:
   - machineSpec:

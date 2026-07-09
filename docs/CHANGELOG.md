@@ -5,6 +5,16 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+### Copyright spelling hygiene
+- Standardised copyright spelling across `tools/` and
+  `.github/workflows/security-scanners.yml`: legacy `(c)` forms, ASCII
+  date ranges, and `Sotek` spellings now use the canonical `©`, en dash year
+  ranges, and `Šotek`. Touched tool headers now keep full seven-line GOTM
+  descriptions, and generator string outputs were updated so emitted Vivado and
+  Vertex config artefacts keep the same spelling. Strict mypy now passes on the
+  touched tool scope. No runtime package code, HDL logic, polyglot mirror,
+  benchmark dispatch, or benchmark artefact changed.
+
 ### Header hygiene
 - Split joined SPDX/commercial-license headers across manifests, workflow
   YAML, HDL sources, Vivado-import HDL copies, and the Vmin-LIF LUT generator.

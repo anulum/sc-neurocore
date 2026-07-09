@@ -1,10 +1,11 @@
 #!/usr/bin/env python3
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Commercial license available
-# Copyright (c) Concepts 1996-2026 Miroslav Sotek. All rights reserved.
-# Copyright (c) Code 2020-2026 Miroslav Sotek. All rights reserved.
+# © Concepts 1996–2026 Miroslav Šotek. All rights reserved.
+# © Code 2020–2026 Miroslav Šotek. All rights reserved.
 # ORCID: 0009-0009-3560-0851
 # Contact: www.anulum.li | protoscience@anulum.li
+# SC-NeuroCore — CI security packet builder
 
 """Build an offline CI security packet without executing scanner binaries."""
 
@@ -16,7 +17,7 @@ import json
 import shutil
 import sys
 from pathlib import Path
-from typing import Any
+from typing import Any, cast
 
 CI_SECURITY_PACKET_SCHEMA_VERSION = "sc-neurocore.ci-security-packet.v1"
 RELEASE_SECURITY_ARTIFACT_INDEX_SCHEMA_VERSION = "sc-neurocore.release-security-artifact-index.v1"
@@ -37,7 +38,7 @@ def _load_module(module_name: str, module_path: Path) -> Any:
 
     module = importlib.util.module_from_spec(spec)
     sys.modules[spec.name] = module
-    spec.loader.exec_module(module)  # type: ignore[misc]
+    spec.loader.exec_module(module)
     return module
 
 
@@ -69,7 +70,7 @@ def build_scanner_manifest() -> dict[str, Any]:
         "security_scanner_manifest_for_packet",
         _script_root() / "tools" / "security_scanner_manifest.py",
     )
-    return module.build_scanner_manifest()
+    return cast(dict[str, Any], module.build_scanner_manifest())
 
 
 def build_scanner_plan(
@@ -80,8 +81,11 @@ def build_scanner_plan(
         _script_root() / "tools" / "security_scan" / "python_code_scanner_plan.py",
     )
     if manifest_payload is None:
-        return module.build_scanner_plan(repo_root=repo_root)
-    return module.build_scanner_plan(repo_root=repo_root, manifest_payload=manifest_payload)
+        return cast(dict[str, Any], module.build_scanner_plan(repo_root=repo_root))
+    return cast(
+        dict[str, Any],
+        module.build_scanner_plan(repo_root=repo_root, manifest_payload=manifest_payload),
+    )
 
 
 def build_rust_supply_chain_plan(
@@ -91,10 +95,13 @@ def build_rust_supply_chain_plan(
         "rust_supply_chain_scanner_plan_for_packet",
         _script_root() / "tools" / "security_scan" / "rust_supply_chain_scanner_plan.py",
     )
-    return module.build_rust_supply_chain_plan(
-        manifest_payload,
-        repo_root=repo_root,
-        include_heavy=include_heavy,
+    return cast(
+        dict[str, Any],
+        module.build_rust_supply_chain_plan(
+            manifest_payload,
+            repo_root=repo_root,
+            include_heavy=include_heavy,
+        ),
     )
 
 
@@ -103,12 +110,12 @@ def build_artifact_index(manifest_payload: dict[str, Any], *, root: Path) -> dic
         "release_security_artifact_index_for_packet",
         _script_root() / "tools" / "security_scan" / "release_security_artifact_index.py",
     )
-    return module.build_artifact_index(manifest_payload, root=root)
+    return cast(dict[str, Any], module.build_artifact_index(manifest_payload, root=root))
 
 
 def _load_release_manifest(root: Path) -> dict[str, Any]:
     manifest_path = root / "security" / "release_artifacts_manifest.json"
-    return json.loads(manifest_path.read_text(encoding="utf-8"))
+    return cast(dict[str, Any], json.loads(manifest_path.read_text(encoding="utf-8")))
 
 
 def _write_json(path: Path, payload: dict[str, Any]) -> None:

@@ -1,11 +1,11 @@
 #!/usr/bin/env bash
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Copyright (C) 2026 ANULUM
-#
-# This file is part of sc-neurocore.
-# See the LICENSE file in the project root for full license text.
-# Commercial licensing is available; contact protoscience@anulum.li.
-# Launch a local ML350 ORCA Posner optimisation/frequency run.
+# Commercial license available
+# © Concepts 1996–2026 Miroslav Šotek. All rights reserved.
+# © Code 2020–2026 Miroslav Šotek. All rights reserved.
+# ORCID: 0009-0009-3560-0851
+# Contact: www.anulum.li | protoscience@anulum.li
+# SC-NeuroCore — ML350 ORCA Posner run launcher
 
 set -euo pipefail
 
