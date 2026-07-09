@@ -5,6 +5,19 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+### Izhikevich 2007 co-simulation enrollment and Verilog parameter-collision fix
+- Enrolled `izhikevich2007` (Izhikevich 2007 biophysical quadratic IF, NeuroML
+  `izhikevich2007Cell`) into the WC-A5 Python↔Verilog co-simulation campaign: the
+  explicit-Euler discretisation co-simulates at exact Q16.16 spike-count parity
+  (three-way hand-model / schema / RTL), with a committed independent
+  Euler-parity reference trace covering the new bundled schema. The model's RK4
+  default remains a separate RK4-emitter candidate.
+- Fixed the schema→Verilog emitter to keep the parameter port map injective:
+  `str.upper()` collapsed case-distinct names (Izhikevich `C` capacitance vs `c`
+  reset voltage) onto one `P_C` port that iverilog rejected. Single-case
+  parameter names keep the canonical `P_TAU`-style ports. The schema-DSL runner
+  has no polyglot mirror; no benchmark dispatch or benchmark artefact changed.
+
 ### Discrete-map integration mode and Rulkov 2002 map fix
 - Added a `method="map"` discrete-map integration mode to `EquationNeuron`
   (iterates `state_{n+1} = f(state_n)` directly), plus Verilog `IfExp` lowering

@@ -5,6 +5,18 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 ## [Unreleased]
 
 ### Changed
+- Enrolled the Izhikevich 2007 biophysical quadratic model (`izhikevich2007`
+  schema, NeuroML `izhikevich2007Cell` parameterisation) into the WC-A5
+  Python↔Verilog co-simulation campaign at exact Q16.16 spike-count parity for
+  the explicit-Euler discretisation, with a three-way hand-model / schema / RTL
+  cross-check and a committed independent Euler-parity reference trace. The
+  schema-DSL runner is Python-only; no benchmark dispatch or benchmark artefact
+  changed.
+- Fixed the schema→Verilog emitter to keep the parameter port map injective for
+  case-distinct names: `str.upper()` collapsed a capacitance `C` and a reset
+  voltage `c` onto one `P_C` port that iverilog rejected, so the emitter now
+  falls back to a case-preserving (then numerically suffixed) identifier. The
+  canonical `P_TAU`-style ports for single-case parameter names are unchanged.
 - Added a path-filtered `Compiler HDL E2E` workflow for pull requests touching
   `src/sc_neurocore/compiler/`, `src/sc_neurocore/hdl_gen/`, or `tests/e2e/`.
   A focused contract test locks the trigger paths and narrow e2e selector. No

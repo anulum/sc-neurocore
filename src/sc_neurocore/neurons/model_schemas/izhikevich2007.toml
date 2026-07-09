@@ -1,0 +1,48 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Commercial license available
+# © Concepts 1996–2026 Miroslav Šotek. All rights reserved.
+# © Code 2020–2026 Miroslav Šotek. All rights reserved.
+# ORCID: 0009-0009-3560-0851
+# Contact: www.anulum.li | protoscience@anulum.li
+# SC-NeuroCore — Source/config provenance header
+
+[metadata]
+schema_version = 1
+name = "Izhikevich2007"
+author = "Izhikevich, E.M."
+year = 2007
+doi = "10.7551/mitpress/2526.001.0001"
+description = "Izhikevich 2007 biophysical quadratic IF (NeuroML izhikevich2007Cell) — explicit-Euler discretisation"
+
+[state]
+v = -60.0
+u = 0.0
+
+[parameters]
+C = 100.0
+k = 0.7
+vr = -60.0
+vt = -40.0
+vpeak = 35.0
+a = 0.03
+b = -2.0
+c = -50.0
+d = 100.0
+
+[integration]
+dt = 0.1
+method = "euler"
+
+[dynamics]
+v = "(k * (v - vr) * (v - vt) - u + I) / C"
+u = "a * (b * (v - vr) - u)"
+
+[threshold]
+condition = "v >= vpeak"
+detection = "level"
+
+[reset]
+v = "c"
+u = "u + d"
+
+[extensions]

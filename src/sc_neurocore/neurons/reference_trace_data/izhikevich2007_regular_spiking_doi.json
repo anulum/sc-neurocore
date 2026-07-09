@@ -1,0 +1,51 @@
+{
+  "schema_version": "sc-neurocore.reference-trace.v1",
+  "name": "izhikevich2007_regular_spiking_doi",
+  "model": {
+    "schema_name": "izhikevich2007",
+    "runner": "universal_dsl"
+  },
+  "protocol": {
+    "dt": 0.1,
+    "steps": 300,
+    "inputs": {
+      "I": 1000.0
+    },
+    "state_variables": [
+      "v",
+      "u"
+    ]
+  },
+  "provenance": {
+    "kind": "independent_euler_reference",
+    "source": "src/sc_neurocore/neurons/model_schemas/izhikevich2007.toml",
+    "equation": "Regular-spiking Izhikevich 2007 trace with five v>=vpeak resets; the quadratic membrane C dv/dt = k(v-vr)(v-vt) - u + I and linear recovery du/dt = a(b(v-vr)-u) are advanced with the exact explicit-Euler recurrence, independently re-derived from the Izhikevich (2007) izhikevich2007Cell definition including the v=c, u=u+d reset.",
+    "citation": "doi:10.7551/mitpress/2526.001.0001"
+  },
+  "expected_features": {
+    "spike_count": 5.0,
+    "first_spike_step": 57.0,
+    "final.v": -32.307032839095,
+    "min.v": -59.0,
+    "max.v": 34.292783587650206,
+    "mean.v": -24.856226013684555,
+    "final.u": 297.93434614720854,
+    "min.u": -10.023903995094063,
+    "max.u": 325.08728612639254,
+    "mean.u": 155.4075794653678
+  },
+  "tolerances": {
+    "default": {
+      "absolute": 1e-09,
+      "relative": 1e-12
+    },
+    "spike_count": {
+      "absolute": 0.0,
+      "relative": 0.0
+    },
+    "first_spike_step": {
+      "absolute": 0.0,
+      "relative": 0.0
+    }
+  }
+}

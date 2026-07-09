@@ -38,6 +38,7 @@ _DETERMINISTIC_SCHEMA_TRACES = {
     "hindmarsh_rose": "hindmarsh_rose_short_bursting_prefix",
     "hodgkin_huxley": "hodgkin_huxley_resting_gate_doi",
     "izhikevich": "izhikevich_regular_spiking_doi",
+    "izhikevich2007": "izhikevich2007_regular_spiking_doi",
     "lapicque": "lapicque_constant_current_closed_form",
     "lif": "lif_constant_current_closed_form",
     "morris_lecar": "morris_lecar_depolarizing_current_doi",
@@ -304,6 +305,64 @@ def _izhikevich_rs_euler_features(*, current: float, dt: float, steps: int) -> d
         v_next = v + dv * dt
         u_next = u + du * dt
         if v_next > 30:
+            spikes.append(1)
+            v_next = c
+            u_next = u_next + d
+        else:
+            spikes.append(0)
+        v, u = v_next, u_next
+        v_values.append(v)
+        u_values.append(u)
+
+    return _summarise({"v": v_values, "u": u_values}, spikes)
+
+
+def _izhikevich2007_euler_features(*, current: float, dt: float, steps: int) -> dict[str, float]:
+    """Return exact explicit-Euler features for the Izhikevich 2007 recurrence.
+
+    The Izhikevich (2007) biophysical quadratic membrane ``C dv/dt =
+    k (v - vr) (v - vt) - u + I`` and linear recovery ``du/dt = a (b (v - vr) - u)``
+    are advanced with the same simultaneous explicit-Euler update the schema runner
+    applies, and the ``v = c``, ``u = u + d`` reset fires whenever the post-update
+    membrane reaches the ``v >= vpeak`` peak. The right-hand side is polynomial, so
+    the recurrence reproduces the schema runner bit-for-bit — an independent
+    re-derivation of the committed regular-spiking trace, not a copy of the runner.
+
+    Parameters
+    ----------
+    current:
+        Constant input current applied at every timestep.
+    dt:
+        Simulation timestep.
+    steps:
+        Number of timesteps to advance.
+
+    Returns
+    -------
+    dict of str to float
+        Reference feature map for the ``v`` and ``u`` state variables plus
+        spike-count and first-spike-step features.
+    """
+    c_m = 100.0
+    k = 0.7
+    vr = -60.0
+    vt = -40.0
+    vpeak = 35.0
+    a = 0.03
+    b = -2.0
+    c = -50.0
+    d = 100.0
+    v = -60.0
+    u = 0.0
+    v_values: list[float] = []
+    u_values: list[float] = []
+    spikes: list[int] = []
+    for _ in range(steps):
+        dv = (k * (v - vr) * (v - vt) - u + current) / c_m
+        du = a * (b * (v - vr) - u)
+        v_next = v + dv * dt
+        u_next = u + du * dt
+        if v_next >= vpeak:
             spikes.append(1)
             v_next = c
             u_next = u_next + d
@@ -1024,6 +1083,15 @@ _PARITY_CASES: list[tuple[str, str, str, str, Callable[[ReferenceTraceSpec], dic
         "independent_euler_reference",
         "doi:10.1109/TNN.2003.820440",
         lambda spec: _izhikevich_rs_euler_features(
+            current=spec.protocol.inputs["I"], dt=spec.protocol.dt, steps=spec.protocol.steps
+        ),
+    ),
+    (
+        "izhikevich2007_regular_spiking_doi",
+        "izhikevich2007",
+        "independent_euler_reference",
+        "doi:10.7551/mitpress/2526.001.0001",
+        lambda spec: _izhikevich2007_euler_features(
             current=spec.protocol.inputs["I"], dt=spec.protocol.dt, steps=spec.protocol.steps
         ),
     ),

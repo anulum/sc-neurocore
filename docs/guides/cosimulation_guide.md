@@ -135,9 +135,9 @@ The tool scans live source modules and schema files without importing optional
 backends. It reports the net schema gap, source modules still lacking a
 same-name or alias schema, schema-only names, source-evidence classifications,
 and a ranked enrolment table. The current checkout has 152 model source modules,
-19 unique schema models, a net schema gap of 133, and 134 source-module rows
-still needing same-name or alias schema coverage because `lif` is a schema-only
-name.
+20 unique schema models, a net schema gap of 132, and 134 source-module rows
+still needing same-name or alias schema coverage because `izhikevich` and `lif`
+are schema-only names.
 
 ## Testbench Architecture
 

@@ -29,7 +29,6 @@ MODEL_DIR = Path("src/sc_neurocore/neurons/models")
 SCHEMA_DIR = Path("src/sc_neurocore/neurons/model_schemas")
 SCHEMA_SOURCE_ALIASES: dict[str, str] = {
     "expif": "exp_if",
-    "izhikevich2007": "izhikevich",
     "resonate_and_fire": "resonate_fire",
 }
 
@@ -155,13 +154,35 @@ def classify_model(repo: Path, model: str, *, schema_name: str | None) -> ModelG
 
 def classify_source(model: str, lower_source: str) -> tuple[Classification, list[str]]:
     """Classify a missing-schema source module from text evidence."""
-    if "re-exports" in lower_source or "from sc_neurocore." in lower_source and "def step" not in lower_source:
+    if (
+        "re-exports" in lower_source
+        or "from sc_neurocore." in lower_source
+        and "def step" not in lower_source
+    ):
         return "package_alias", ["module re-exports another implementation"]
-    if _has_any(model, lower_source, ("poisson", "stochastic", "random", "rng", "gaussian white noise")):
+    if _has_any(
+        model, lower_source, ("poisson", "stochastic", "random", "rng", "gaussian white noise")
+    ):
         return "stochastic_or_rate", ["source contains stochastic/rate-process evidence"]
-    if _has_any(model, lower_source, ("compartment", "dendrit", "soma", "purkinje", "pinsky", "hay_l5", "multicompartment")):
+    if _has_any(
+        model,
+        lower_source,
+        ("compartment", "dendrit", "soma", "purkinje", "pinsky", "hay_l5", "multicompartment"),
+    ):
         return "multi_compartment", ["source contains compartmental morphology evidence"]
-    if _has_any(model, lower_source, ("map", "rank-order", "integer arithmetic", "fixed-point", "sigma-delta", "buffer", "attention")):
+    if _has_any(
+        model,
+        lower_source,
+        (
+            "map",
+            "rank-order",
+            "integer arithmetic",
+            "fixed-point",
+            "sigma-delta",
+            "buffer",
+            "attention",
+        ),
+    ):
         return "event_discrete", ["source uses discrete/event-domain update evidence"]
     if _has_any(
         model,
@@ -171,13 +192,26 @@ def classify_source(model: str, lower_source: str) -> tuple[Classification, list
         if _has_any(model, lower_source, ("neural mass", "wilson-cowan", "population rate")):
             return "neural_mass_rk4", ["source uses RK4 neural-mass update evidence"]
         return "rk4_required", ["source uses RK4 / Runge-Kutta evidence"]
-    if _has_any(model, lower_source, ("exact-flow", "exact flow", "exact_linear_flow", "closed-form", "math.exp(-self.dt", "np.exp(-self.dt")):
+    if _has_any(
+        model,
+        lower_source,
+        (
+            "exact-flow",
+            "exact flow",
+            "exact_linear_flow",
+            "closed-form",
+            "math.exp(-self.dt",
+            "np.exp(-self.dt",
+        ),
+    ):
         return "exact_flow_candidate", ["source contains exact-flow decay evidence"]
     if _has_any(model, lower_source, ("exponential euler", "rush", "exprel", "alpha =")):
         return "exp_euler_candidate", ["source contains exponential-update evidence"]
     if _has_any(model, lower_source, ("neural mass", "eeg", "population", "dy0", "dy1")):
         return "neural_mass_euler", ["source contains neural-mass Euler evidence"]
-    if _has_any(model, lower_source, ("ode", "dca", "dv", "derivative", "+= ", "* self.dt", "*self.dt")):
+    if _has_any(
+        model, lower_source, ("ode", "dca", "dv", "derivative", "+= ", "* self.dt", "*self.dt")
+    ):
         return "euler_candidate", ["source contains explicit-Euler-style update evidence"]
     return "source_review_required", ["no deterministic integrator evidence matched static rules"]
 
@@ -252,7 +286,9 @@ def render_markdown(report: dict[str, Any]) -> str:
         "P5-out-of-auto-cosim": "Out of automatic single-schema co-sim path.",
         "P6-source-review-required": "Needs manual source review before enrolment.",
     }
-    for priority, count in sorted(counts["missing_priority"].items(), key=lambda item: PRIORITY_ORDER[item[0]]):
+    for priority, count in sorted(
+        counts["missing_priority"].items(), key=lambda item: PRIORITY_ORDER[item[0]]
+    ):
         lines.append(f"| `{priority}` | {count} | {meanings.get(priority, '')} |")
 
     lines.extend(
