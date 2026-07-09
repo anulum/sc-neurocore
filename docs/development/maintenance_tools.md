@@ -50,6 +50,28 @@ path preserves factual content by moving legacy `summary`, `commit`,
 `todo_rows_closed`, and `evidence` fields into canonical `content` and
 `source_ref` fields; it does not delete stimulus files.
 
+### Systematic audit rerun
+
+`tests/test_tools/test_systematic_audit_rerun_contract.py` keeps the concrete
+findings from `docs/internal/audit_2026-07-04T1156_kimi_full.md` tied to
+repeatable repository checks. It verifies the `.env`, root `TODO`, and
+`docs/internal/TODO.md` ignore rules, confirms that the internal TODO exists in
+the ignored location, reruns the direct-header SPDX audit, and reruns the
+SC-NeuroCore SNN memory-discipline audit against the shared stimulus directory.
+
+Run it after touching `.gitignore`, `docs/internal/TODO.md`,
+`tools/spdx_header_audit.py`, `tools/snn_memory_discipline_audit.py`, or the
+SC-NeuroCore SNN stimulus directory:
+
+```bash
+PYTHONPATH=src:. python -m pytest tests/test_tools/test_systematic_audit_rerun_contract.py -q
+PYTHONPATH=src:. python tools/spdx_header_audit.py --check
+PYTHONPATH=src:. python tools/snn_memory_discipline_audit.py \
+  --repo . \
+  --stimulus-dir /media/anulum/GOTM/aaa_God_of_the_Math_Collection/04_ARCANE_SAPIENCE/snn_stimuli/SC-NEUROCORE \
+  --output docs/internal/snn_memory_discipline_audit.json
+```
+
 ### Model documentation audit
 
 `tools/audit_model_docs.py` inventories source model modules, documentation
