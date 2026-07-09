@@ -5,6 +5,11 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 ## [Unreleased]
 
 ### Fixed
+- Restored strict-mypy compliance for the neuron expression differentiator by
+  isolating SymPy's partially typed constructors, differentiation, and printer
+  APIs behind typed boundary helpers. The in-grammar derivative contract,
+  finite-difference behavior, generated API surface, polyglot mirrors, and
+  benchmark-dispatched paths are unchanged.
 - Hardened Studio job sandbox path confinement so generated job directories,
   seed/control seed inputs, live artifact reads, artifact downloads, control
   commands, and purges validate canonical paths before filesystem access. Added
