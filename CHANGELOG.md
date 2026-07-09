@@ -42,6 +42,11 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
   benchmark dispatch, or benchmark artefact changed.
 
 ### Added
+- Added a typed Icarus Verilog dependency checker and wired the CI test matrix
+  to verify `iverilog -V` and `vvp -V` against the documented 12.x
+  co-simulation floor before package tests run. The FPGA toolchain guide now
+  records the same minimum and CI command. No HDL logic, runtime package code,
+  polyglot mirror, benchmark dispatch, or benchmark artefact changed.
 - The sensors package namespace now exports the ADC-to-spike kernel surface,
   including `ADCSpikeWindowConfig`, `ADCSpikeWindowResult`, backend selection,
   the bit-true Python floor, and `quantise_adc`. Existing submodule imports

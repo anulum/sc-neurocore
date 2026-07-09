@@ -128,7 +128,9 @@ quote OpenROAD physical-design numbers without those pins.
 |------|---------|
 | **Download** | [Icarus Verilog](http://iverilog.icarus.com/) or `apt install iverilog` |
 | **License** | GPL |
+| **Supported version** | Icarus Verilog 12.0 or newer |
 | **Purpose** | Behavioural simulation and Python co-sim verification |
+| **CI check** | `python tools/check_icarus_verilog.py --minimum-major 12` |
 
 ```bash
 # Run co-simulation (no FPGA needed)
@@ -136,6 +138,12 @@ iverilog -o tb_lif hdl/sc_lif_neuron.v hdl/tb_sc_lif_neuron.v
 vvp tb_lif
 python scripts/cosim_gen_and_check.py --check
 ```
+
+The `SC-NeuroCore CI` matrix installs `iverilog` from the Ubuntu runner package
+set and then runs `python tools/check_icarus_verilog.py --minimum-major 12`.
+That check runs before Python package installation and checks both `iverilog -V`
+and `vvp -V`, so co-simulation tests cannot silently skip because the simulator
+front end or runtime is missing from the runner.
 
 ### Formal RTL Checks: SymbiYosys + Yosys
 

@@ -154,6 +154,9 @@ jobs:
           sudo make -C /tmp/sby install PREFIX=/usr/local
           sby --version
 
+      - name: Verify HDL simulator versions
+        run: python tools/check_icarus_verilog.py --minimum-major 12
+
       - name: Install package
         run: python tools/ci_install_dev.py
 
