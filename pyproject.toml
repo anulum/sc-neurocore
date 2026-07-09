@@ -163,6 +163,9 @@ sc_neurocore = [
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+# Ambient pytest-nengo imports nengo during collection and triggers a NumPy 2.x
+# deprecation warning before SC-NeuroCore tests run.
+addopts = ["-p", "no:nengo"]
 
 [tool.coverage.run]
 source = ["sc_neurocore"]

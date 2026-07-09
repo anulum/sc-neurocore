@@ -5,6 +5,14 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+### Pytest warning hygiene
+- Disabled the ambient `pytest_nengo` plugin in the repository pytest config so
+  unrelated test collection no longer imports Nengo and emits the third-party
+  NumPy 2.x `numpy.core` deprecation warning before SC-NeuroCore tests run.
+  Added a policy test for the pytest configuration and active plugin registry.
+  No runtime package code, polyglot mirror, benchmark dispatch, or benchmark
+  artefact changed.
+
 ### Co-simulation toolchain gate
 - Added a typed Icarus Verilog dependency checker and wired the CI test matrix
   to verify `iverilog -V` and `vvp -V` against the documented 12.x

@@ -5,6 +5,12 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 ## [Unreleased]
 
 ### Fixed
+- Disabled the ambient `pytest_nengo` plugin in the repository pytest config so
+  unrelated test collection no longer imports Nengo and emits the third-party
+  NumPy 2.x `numpy.core` deprecation warning before SC-NeuroCore tests run.
+  Added a policy test for the pytest configuration and active plugin registry.
+  No runtime package code, polyglot mirror, benchmark dispatch, or benchmark
+  artefact changed.
 - Removed self-applied public superlatives from the CMOS profile notes, GPU
   backend guide, and archived state report while preserving the underlying
   measured values and benchmark comparison tables. No platform registry
