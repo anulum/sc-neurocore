@@ -5,6 +5,10 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 ## [Unreleased]
 
 ### Changed
+- Added a strict typing and NumPy docstring policy contract test that locks the
+  2026-06-17 broadcast wiring across `pyproject.toml`, CI, preflight, the
+  scoped docstring policy, and public maintenance docs. No runtime package code,
+  polyglot mirror, benchmark dispatch, or benchmark artefact changed.
 - Documented the durable Python-only boundary for the five registry names
   without same-name PyO3 neuron constructors and locked each boundary to source
   evidence in the Rust/Python neuron parity map. No neuron runtime, PyO3

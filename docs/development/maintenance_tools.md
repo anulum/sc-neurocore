@@ -103,6 +103,32 @@ Repeat `--batch-missing` to require multiple missing rubric keys. This is useful
 for mechanical cleanup passes, such as source-link evidence, while preserving
 the human-review gate for equations and biological interpretation.
 
+### Strict typing and docstring policy
+
+`BROADCAST_2026-06-17_strict_typing_and_docstring_enforcement.md` is enforced
+through two committed gates:
+
+- `mypy --strict src/sc_neurocore/` is configured in `pyproject.toml`, run in
+  CI, and included in `tools/preflight.py`.
+- `pytest tests/test_public_docstring_policy.py -q` validates the audited
+  public Python files listed in `docs/docstring_policy.toml`.
+
+The docstring policy uses Ruff `D` rules with the NumPy-convention pydocstyle
+setting. The maintained file list grows package-by-package as public surfaces
+are audited. Add a file to `docs/docstring_policy.toml` only after its public
+module, class, function, method, and property docstrings have been reviewed for
+accuracy. Keep the scoped policy passing until `D` can be promoted to the global
+Ruff select.
+
+Run the gate after touching policy-listed files, public docstrings, Mypy
+configuration, or CI/preflight quality commands:
+
+```bash
+PYTHONPATH=src:. python -m mypy --strict src/sc_neurocore/
+PYTHONPATH=src:. python -m pytest tests/test_public_docstring_policy.py -q
+PYTHONPATH=src:. python -m pytest tests/test_tools/test_strict_typing_docstring_policy.py -q
+```
+
 ### SHD Vertex corrected-selection summary
 
 `tools/summarise_shd_vertex_runs.py` aggregates downloaded SHD Vertex run
