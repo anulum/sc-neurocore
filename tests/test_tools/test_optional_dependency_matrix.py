@@ -34,6 +34,7 @@ EXPECTED_ROWS = (
         test_paths=(
             "tests/test_optics/test_gdsii.py",
             "tests/test_optics/test_photonic_emitter_branches.py",
+            ".github/workflows/ci.yml",
         ),
     ),
     DependencyRow(

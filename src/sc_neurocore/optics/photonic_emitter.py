@@ -394,9 +394,12 @@ class CompilationResult:
         try:
             gf.get_active_pdk()
         except (ValueError, AttributeError):
-            from gdsfactory.generic_tech import get_generic_pdk
+            try:
+                gf.gpdk.PDK.activate()
+            except AttributeError:
+                from gdsfactory.generic_tech import get_generic_pdk
 
-            get_generic_pdk().activate()
+                get_generic_pdk().activate()
 
         # kfactory backend rejects duplicate cell names in its process-wide
         # registry; pre-create the klayout cell with ``allow_duplicate`` so

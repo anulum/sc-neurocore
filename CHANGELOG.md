@@ -33,6 +33,11 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
   code, polyglot mirror, benchmark dispatch, or benchmark artefact changed.
 
 ### Fixed
+- Added a dedicated CI optics-extra lane that installs `.[dev,optics]` and runs
+  `tests/test_optics -q -rs`, so the `gdsfactory`-gated GDSII round-trip tests
+  are exercised outside the default CPU jobs. Public optional-dependency docs
+  now name that CI boundary. No optics runtime algorithm, package promotion
+  boundary, polyglot mirror, benchmark dispatch, or benchmark artefact changed.
 - Migrated the surrogate custom-op compiler regression to
   `torch.compile(..., backend="eager")` and added a guard against deprecated
   TorchScript `script_method` usage in the touched training lane. Public

@@ -17,7 +17,7 @@ tests, and the current CI/dev boundary.
 
 | Dependency | Import surface | Install profile | CI/dev boundary | Evidence |
 | --- | --- | --- | --- | --- |
-| `gdsfactory>=9.0` | `gdsfactory` | `pip install "sc-neurocore[optics]"` | Optional optics path; GDSII round-trip tests skip unless the extra is installed. | `tests/test_optics/test_gdsii.py`, `tests/test_optics/test_photonic_emitter_branches.py` |
+| `gdsfactory>=9.0` | `gdsfactory` | `pip install "sc-neurocore[optics]"` | Dedicated CI job `test-optics-extra` installs `.[dev,optics]` and runs `tests/test_optics -q -rs` so GDSII round-trip tests execute with `gdsfactory`; default CPU jobs still skip GDSII tests when the extra is absent. | `tests/test_optics/test_gdsii.py`, `tests/test_optics/test_photonic_emitter_branches.py`, `.github/workflows/ci.yml` |
 | `dwave-neal` + `dimod` | `neal`, `dimod` | `pip install "sc-neurocore[annealing]"` | Quantum-annealing parity test skips when either package is absent; install this profile to run the D-Wave sampler parity selector locally or in CI. | `tests/test_bridges/test_quantum_annealing_neal_parity.py` |
 | `onnx` | `onnx` | `dev`, `full`, `research` | JSON export tests run without ONNX; protobuf export tests skip when ONNX is absent. | `tests/test_export/test_onnx_exporter.py`, `tests/test_export/test_onnx_export.py` |
 | `lava-nc` | `lava` on Python `<3.11` | `pip install "sc-neurocore[lava]"` on supported Python | Loihi/Lava adapter packages are handoff artefacts; the dependency is recorded in generated adapter manifests rather than imported by default CI. | `tests/test_nir_neuromorphic_adapters.py` |

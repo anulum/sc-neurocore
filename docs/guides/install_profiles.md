@@ -135,6 +135,7 @@ refreshed rather than ignored.
 | `pip install "sc-neurocore[training]"` | Training PyTorch-backed models | `torch` |
 | `pip install "sc-neurocore[nir]"` | Importing/exporting Neuromorphic Intermediate Representation graphs | `nir` |
 | `pip install "sc-neurocore[hdl]"` | Equation-to-HDL workflows, unit-checked equations, packaged HDL primitives | `pint`; bundled `.v` / `.sv` / OpenROAD helper artefacts |
+| `pip install "sc-neurocore[optics]"` | Source-checkout photonic-layout and GDSII round-trip checks | `gdsfactory` |
 | `pip install "sc-neurocore[gpu]"` | Research-grade CuPy CUDA experiments; requires local CUDA compatibility | `cupy-cuda12x` |
 | `pip install "sc-neurocore[jax]"` | Research-grade JAX experiments; requires local accelerator/runtime compatibility | `jax`, `jaxlib` |
 | `pip install "sc-neurocore[annealing]"` | D-Wave `neal` parity checks for the quantum-annealing bridge | `dwave-neal`, `dimod` |
