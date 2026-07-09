@@ -1,0 +1,51 @@
+{
+  "schema_version": "sc-neurocore.reference-trace.v1",
+  "name": "rulkov_map_driven_spiking_doi",
+  "model": {
+    "schema_name": "rulkov_map",
+    "runner": "universal_dsl"
+  },
+  "protocol": {
+    "dt": 1.0,
+    "steps": 30,
+    "inputs": {
+      "I": 1.5
+    },
+    "state_variables": [
+      "x",
+      "y"
+    ]
+  },
+  "provenance": {
+    "kind": "map_iteration_reference",
+    "source": "src/sc_neurocore/neurons/model_schemas/rulkov_map.toml",
+    "equation": "Driving-current Rulkov 2002 piecewise map trace iterated with method=\"map\" (x_{n+1}=f(x_n,y_n)); every branch (rational subthreshold, spike plateau, hard reset) is exercised. Independently re-derived from the Rulkov (2002) piecewise fast/slow map with level spike detection.",
+    "citation": "doi:10.1103/PhysRevE.65.041922"
+  },
+  "expected_features": {
+    "spike_count": 20.0,
+    "first_spike_step": 1.0,
+    "final.x": -1.0,
+    "min.x": -1.0,
+    "max.x": 2.4984,
+    "mean.x": 0.6368943603376478,
+    "final.y": -3.097106830810124,
+    "min.y": -3.097106830810124,
+    "max.y": -3.0016,
+    "mean.y": -3.049180734367368
+  },
+  "tolerances": {
+    "default": {
+      "absolute": 1e-09,
+      "relative": 1e-12
+    },
+    "spike_count": {
+      "absolute": 0.0,
+      "relative": 0.0
+    },
+    "first_spike_step": {
+      "absolute": 0.0,
+      "relative": 0.0
+    }
+  }
+}

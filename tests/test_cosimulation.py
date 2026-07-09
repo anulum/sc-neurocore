@@ -911,10 +911,13 @@ class TestTranscendentalCoSimulation:
 #                      (0 spikes) for n≤80, then sensitive dependence makes the
 #                      fixed-point and float trains diverge (422%→1000% gap) once
 #                      bursting starts — bit-true parity is undefined for chaos.
-#   rulkov_map       → compile-valid RTL only. Deterministic discrete map, but the
-#                      float reference itself overflows on long windows in the
-#                      bursting regime (numerically unstable), so no long-window
-#                      spike-count parity is claimable.
+#   rulkov_map       → compile-valid RTL only. Deterministic discrete map (Rulkov
+#                      2002, `method="map"`), lowered through the IfExp/map datapath
+#                      to the correct `x_{n+1}=f(x_n,y_n)` recurrence. A map has no
+#                      integrator smoothing, so fixed-point per-step rounding
+#                      compounds and diverges from the float reference within a few
+#                      steps — no spike-count parity is claimable, but the RTL is the
+#                      faithful map (not the earlier diverging Euler-on-a-map).
 #   poisson,         → stochastic (schema `stochastic = true`, threshold
 #   escape_rate        `condition = "stochastic"`): spike emission is a random
 #                      process, so deterministic spike-count parity is not defined.

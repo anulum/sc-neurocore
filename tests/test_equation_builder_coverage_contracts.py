@@ -25,6 +25,45 @@ def test_constructor_rejects_unknown_units_mode() -> None:
         EquationNeuron(equations={"v": "I"}, state={"v": 0.0}, units="permissive")
 
 
+def test_map_method_iterates_discrete_recurrence_not_ode() -> None:
+    """``method='map'`` assigns ``state_{n+1} = f(state_n)`` directly and ignores dt."""
+    neuron = EquationNeuron(
+        equations={"x": "0.5 * x + 1.0"},
+        state={"x": 0.0},
+        dt=99.0,  # a map must ignore dt; forward Euler would use it
+        method="map",
+    )
+
+    neuron.step()
+    assert neuron.state["x"] == 1.0  # map: 0.5*0 + 1; Euler would give 0 + 99*(1) = 99
+    neuron.step()
+    assert neuron.state["x"] == 1.5  # 0.5*1 + 1
+
+    for _ in range(200):
+        neuron.step()
+    assert neuron.state["x"] == pytest.approx(2.0, abs=1e-9)  # fixed point of x <- 0.5x + 1
+
+
+def test_map_method_supports_piecewise_ifexp_and_threshold() -> None:
+    """A piecewise map (IfExp) updates simultaneously and spikes via a level threshold."""
+    neuron = EquationNeuron(
+        equations={"x": "(2.0 + y) if x <= 0 else -1.0", "y": "y"},
+        state={"x": -1.0, "y": 0.5},
+        threshold="x > 0.0",
+        dt=1.0,
+        method="map",
+    )
+
+    spike_rise = neuron.step()  # x<=0 branch: x <- 2.0 + 0.5 = 2.5 (> 0 -> spike); y unchanged
+    assert spike_rise == 1
+    assert neuron.state["x"] == 2.5
+    assert neuron.state["y"] == 0.5
+
+    spike_reset = neuron.step()  # else branch: x <- -1.0 (not > 0 -> no spike)
+    assert spike_reset == 0
+    assert neuron.state["x"] == -1.0
+
+
 def test_runtime_helper_namespace_covers_safe_math_edges() -> None:
     """Runtime helpers cover clipped sigmoid, exprel(0), and sqrt domain errors."""
     helper_neuron = EquationNeuron(

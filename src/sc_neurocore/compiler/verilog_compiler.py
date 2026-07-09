@@ -120,6 +120,54 @@ def _emit_euler_deriv_wires(
     return deriv_wires, all_intermediates, all_pipeline_regs, _mc, _tc
 
 
+def _emit_map_deriv_wires(
+    neuron: EquationNeuron,
+    state_var_map: dict[str, str],
+    param_map: dict[str, str],
+    q: Q88,
+    *,
+    data_width: int,
+    fraction: int,
+    use_pipeline: bool,
+    pp_set: set[str],
+    mul_start: int,
+    trunc_start: int,
+) -> tuple[list[str], list[str], list[str], int, int]:
+    """Emit the per-variable increment wires for a discrete-time map (``method="map"``).
+
+    A map assigns ``state_{n+1} = f(state_n)`` directly — no ``dt`` scaling and no
+    ``+ state`` term — unlike the ODE integrators. The shared state update in
+    :func:`_build_neuron_core` is ``state_reg + d<var>``, so this emits
+    ``d<var> = f(state) - state``; integer fixed-point addition then recovers
+    ``state + (f(state) - state) = f(state)`` exactly, reusing the same saturation
+    path as the Euler and RK4 emitters. Returns ``(deriv_wires, intermediates,
+    pipeline_regs, mul_count, trunc_count)``.
+    """
+    deriv_wires: list[str] = []
+    all_intermediates: list[str] = []
+    all_pipeline_regs: list[str] = []
+    _mc = mul_start
+    _tc = trunc_start
+    for var, expr_str in neuron.equations.items():
+        safe_var = state_var_map[var]
+        vexpr, intermediates, _mc, _tc, p_regs = _emit_expr(
+            expr_str,
+            state_var_map,
+            param_map,
+            q,
+            mul_start=_mc,
+            trunc_start=_tc,
+            pipeline=use_pipeline,
+            pipeline_points=pp_set,
+        )
+        all_intermediates.extend(intermediates)
+        all_pipeline_regs.extend(p_regs)
+        deriv_wires.append(
+            f"wire signed [{data_width - 1}:0] d{safe_var} = ({vexpr}) - {safe_var}_reg;"
+        )
+    return deriv_wires, all_intermediates, all_pipeline_regs, _mc, _tc
+
+
 def _emit_rk4_deriv_wires(
     neuron: EquationNeuron,
     state_var_map: dict[str, str],
@@ -352,6 +400,19 @@ def _build_neuron_core(
             param_map,
             q,
             data_width=data_width,
+            use_pipeline=use_pipeline,
+            pp_set=pp_set,
+            mul_start=_mc,
+            trunc_start=_tc,
+        )
+    elif method == "map":
+        deriv_wires, deriv_intermediates, deriv_regs, _mc, _tc = _emit_map_deriv_wires(
+            neuron,
+            state_var_map,
+            param_map,
+            q,
+            data_width=data_width,
+            fraction=fraction,
             use_pipeline=use_pipeline,
             pp_set=pp_set,
             mul_start=_mc,

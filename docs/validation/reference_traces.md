@@ -34,7 +34,7 @@ table because their schemas are stochastic.
 | `perfect_integrator_constant_current_sawtooth` | `perfect_integrator` | `universal_dsl` | Analytic post-reset sawtooth solution from `neurons/model_schemas/perfect_integrator.toml` |
 | `quadratic_if_zero_current_analytic` | `quadratic_if` | `universal_dsl` | Analytic zero-current Riccati solution from `neurons/model_schemas/quadratic_if.toml` with DOI-backed schema provenance |
 | `resonate_fire_subthreshold_resonance_doi` | `resonate_fire` | `universal_dsl` | Analytic linear Euler recurrence from `neurons/model_schemas/resonate_fire.toml` |
-| `rulkov_map_short_window_boundary` | `rulkov_map` | `universal_dsl` | DOI-backed short finite boundary trace from `neurons/model_schemas/rulkov_map.toml` |
+| `rulkov_map_driven_spiking_doi` | `rulkov_map` | `universal_dsl` | Independent piecewise-map iteration (Rulkov 2002, `method="map"`) from `neurons/model_schemas/rulkov_map.toml` with DOI-backed schema provenance |
 | `theta_constant_current_phase_analytic` | `theta` | `universal_dsl` | Analytic tangent half-angle phase solution from `neurons/model_schemas/theta.toml` with DOI-backed schema provenance |
 | `wang_buzsaki_resting_interneuron_doi` | `wang_buzsaki` | `universal_dsl` | Independent explicit-Euler re-derivation of the resting gate equations from `neurons/model_schemas/wang_buzsaki.toml` with DOI-backed schema provenance |
 
@@ -55,9 +55,12 @@ re-derives the exact regular-spiking explicit-Euler recurrence including its
 relaxation recurrence with the `v = -1` reset. The perfect-integrator,
 FitzHugh-Nagumo, and Izhikevich entries are spike-bearing;
 they validate reset and first-spike features, not only quiet trajectories. The
-Rulkov entry is intentionally short-window because the current generic schema
-runner executes its map equation through an Euler-style path that diverges on long
-windows. The QIF and theta tolerances are wider than
+Rulkov entry iterates the Rulkov 2002 piecewise fast/slow map with the
+`method = "map"` integration mode (`x_{n+1} = f(x_n, y_n)`, iterated as a discrete
+map rather than integrated as an ODE), so the trajectory is bounded and its
+committed features are independently re-derived exactly; a driving current
+exercises all three fast-map branches (rational subthreshold, spike plateau, hard
+reset). The QIF and theta tolerances are wider than
 machine-epsilon feature precision because the current schema runner declares
 explicit Euler integration while those references are continuous analytic
 solutions.

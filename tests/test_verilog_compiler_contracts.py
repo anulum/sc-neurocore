@@ -34,6 +34,29 @@ def test_compile_to_verilog_rejects_unknown_overflow_mode() -> None:
         compile_to_verilog(neuron, overflow="explode")
 
 
+def test_compile_to_verilog_lowers_map_method_and_piecewise_ifexp() -> None:
+    """A discrete-map schema with a piecewise IfExp fast branch lowers to Verilog."""
+    neuron = EquationNeuron(
+        equations={
+            "x": "(alpha / (1.0 - x) + y) if x <= 0 else (alpha + y if x < alpha + y else -1.0)",
+            "y": "y - mu * (x + 1.0)",
+        },
+        parameters={"alpha": 4.0, "mu": 0.001},
+        state={"x": -1.0, "y": -3.0},
+        threshold="x > 0.0",
+        dt=1.0,
+        method="map",
+    )
+
+    verilog = compile_to_verilog(neuron, module_name="sc_map_ifexp")
+
+    assert "module sc_map_ifexp" in verilog
+    assert "?" in verilog  # the IfExp branch lowers to a Verilog ternary select
+    # Discrete-map path: the increment is `f(state) - state`, so no forward-Euler
+    # `_dt_mul_` derivative-scaling wire is emitted.
+    assert "_dt_mul_" not in verilog
+
+
 def test_compile_to_datapath_rejects_unrepresentable_timestep() -> None:
     """The folded datapath applies the same fixed-point timestep guard."""
     neuron = _lif_without_threshold(dt=0.001)

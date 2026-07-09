@@ -12,7 +12,7 @@ name = "Rulkov Map"
 author = "Rulkov, N.F."
 year = 2002
 doi = "10.1103/PhysRevE.65.041922"
-description = "Discrete-time map neuron — fast/slow dynamics via 2D iteration"
+description = "Discrete-time map neuron — piecewise fast/slow 2D iteration (spiking-bursting)"
 
 [state]
 x = -1.0
@@ -20,17 +20,20 @@ y = -3.0
 
 [parameters]
 alpha = 4.0
-sigma = 0.001
-beta = 0.001
+sigma = -1.6
+mu = 0.001
 
 [integration]
 dt = 1.0
-method = "euler"
+method = "map"
 
 [dynamics]
-# Discrete-time map (treated as difference equation):
-x = "alpha / (1.0 + x**2) + y + I"
-y = "y - sigma * x - beta"
+# Rulkov (2002) two-dimensional map. The fast variable is a piecewise branch map
+# (subthreshold rational, spike plateau, hard reset); the slow variable drifts.
+# `method = "map"` iterates x_{n+1} = f(x_n, y_n) directly rather than integrating
+# an ODE, so the recurrence matches the published map exactly.
+x = "(alpha / (1.0 - x) + y + I) if x <= 0 else (alpha + y + I if x < alpha + y + I else -1.0)"
+y = "y - mu * (x + 1.0) + mu * sigma"
 
 [threshold]
 condition = "x > 0.0"

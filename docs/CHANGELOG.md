@@ -5,6 +5,18 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+### Discrete-map integration mode and Rulkov 2002 map fix
+- Added a `method="map"` discrete-map integration mode to `EquationNeuron`
+  (iterates `state_{n+1} = f(state_n)` directly), plus Verilog `IfExp` lowering
+  and a discrete-map RTL datapath so piecewise maps compile to
+  Icarus-Verilog-valid RTL. The `rulkov_map` schema adopts the DOI-verified
+  Rulkov (2002) piecewise fast/slow map with `method="map"`, replacing the smooth
+  variant that was integrated with explicit Euler and diverged; its reference
+  trace is a bounded driven-spiking trace with exact independent map-iteration
+  parity, so all 17 deterministic reference traces now hold independent parity.
+  The schema-DSL runner has no polyglot mirror; no benchmark dispatch or
+  benchmark artefact changed.
+
 ### Compiler HDL e2e CI
 - Added a path-filtered `Compiler HDL E2E` workflow for pull requests touching
   `src/sc_neurocore/compiler/`, `src/sc_neurocore/hdl_gen/`, or `tests/e2e/`.

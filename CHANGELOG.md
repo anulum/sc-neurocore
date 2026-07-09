@@ -145,6 +145,17 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
   benchmark dispatch, or benchmark artefact changed.
 
 ### Added
+- Added a discrete-map integration mode (`method="map"`) to `EquationNeuron` and
+  the schema-DSL runner: it iterates `state_{n+1} = f(state_n)` directly instead
+  of integrating an ODE. The Verilog compiler gained `IfExp` lowering (piecewise
+  `?:` selects) and a discrete-map datapath, so a piecewise map lowers to
+  Icarus-Verilog-valid RTL. The `rulkov_map` schema now uses the DOI-verified
+  Rulkov (2002) piecewise fast/slow map with `method="map"`, replacing the smooth
+  variant that was integrated with explicit Euler and diverged; its reference
+  trace is a bounded driven-spiking trace with exact independent map-iteration
+  parity, so all 17 deterministic reference traces now hold independent parity.
+  The schema-DSL runner has no polyglot mirror; no benchmark dispatch or
+  benchmark artefact changed.
 - Added `tools/schema_gap_report.py` and focused tests for WC-A5 schema-DSL
   coverage planning. The report scans live model/schema files without importing
   optional backends, distinguishes the net schema gap from exact source-module

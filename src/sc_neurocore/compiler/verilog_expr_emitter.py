@@ -272,6 +272,19 @@ class _VerilogExprEmitter(ast.NodeVisitor):
                 raise ValueError(f"Unsupported comparison: {type(op).__name__}")
         return " && ".join(results)
 
+    def visit_IfExp(self, node: ast.IfExp) -> str:
+        """Emit Verilog for a conditional expression ``body if test else orelse``.
+
+        Lowers a Python piecewise/ternary expression to a Verilog ``?:`` select,
+        reusing :meth:`visit_Compare` for the boolean test. This lets a schema
+        express a piecewise map branch (for example the Rulkov 2002 fast map) in the
+        same combinational datapath the arithmetic nodes already use.
+        """
+        test: str = self.visit(node.test)
+        body: str = self.visit(node.body)
+        orelse: str = self.visit(node.orelse)
+        return f"(({test}) ? ({body}) : ({orelse}))"
+
     def visit_Call(self, node: ast.Call) -> str:
         """Emit Verilog for function calls."""
         if not isinstance(node.func, ast.Name):

@@ -64,7 +64,7 @@ from sc_neurocore.neurons._units import (
     validate_quantity_expression,
 )
 
-SUPPORTED_METHODS = ("euler", "rk4", "exp_euler")
+SUPPORTED_METHODS = ("euler", "map", "rk4", "exp_euler")
 
 
 class EquationNeuron:
@@ -495,6 +495,22 @@ class EquationNeuron:
                 derivatives[var] = float(eval(code, self._EVAL_GLOBALS, env))  # nosec B307
             for var in self.equations:
                 self.state[var] += derivatives[var] * self.dt
+
+        elif self.method == "map":
+            # Discrete-time map: state_{n+1} = f(state_n) directly, with no dt scaling
+            # and no `+ state` term. Each equation right-hand side IS the next-step
+            # value (not a derivative), so a schema that declares a map (e.g. the
+            # Rulkov 2002 fast/slow recurrence) iterates exactly instead of being
+            # integrated as an ODE. Every update reads the pre-step state so the map
+            # is applied simultaneously, matching the published recurrence.
+            updates = {}
+            for var, code in self._compiled_eqs.items():
+                # nosec B307: `code` is a compiled expression that already passed
+                # `_validate_expr`'s AST whitelist and evaluates with empty
+                # `__builtins__` (see the euler branch comment for full rationale).
+                updates[var] = float(eval(code, self._EVAL_GLOBALS, env))  # nosec B307
+            for var in self.equations:
+                self.state[var] = updates[var]
 
         elif self.method == "rk4":
             s0 = deepcopy(self.state)

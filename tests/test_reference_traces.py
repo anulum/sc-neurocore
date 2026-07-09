@@ -43,7 +43,7 @@ _DETERMINISTIC_SCHEMA_TRACES = {
     "perfect_integrator": "perfect_integrator_constant_current_sawtooth",
     "quadratic_if": "quadratic_if_zero_current_analytic",
     "resonate_fire": "resonate_fire_subthreshold_resonance_doi",
-    "rulkov_map": "rulkov_map_short_window_boundary",
+    "rulkov_map": "rulkov_map_driven_spiking_doi",
     "theta": "theta_constant_current_phase_analytic",
     "wang_buzsaki": "wang_buzsaki_resting_interneuron_doi",
 }
@@ -950,6 +950,63 @@ def _wang_buzsaki_resting_euler_features(
     return features
 
 
+def _rulkov_map_features(*, current: float, steps: int) -> dict[str, float]:
+    """Return exact features for the Rulkov 2002 piecewise map iteration.
+
+    The Rulkov (2002) fast/slow model is a discrete map, so an independent
+    implementation of its three-branch fast map (rational subthreshold, spike
+    plateau, hard reset) and slow drift reproduces the runner exactly — a map has no
+    integration error, so independent parity is exact ground truth. Level spike
+    detection (post-update ``x > 0``) matches the schema runner.
+
+    Parameters
+    ----------
+    current:
+        Constant drive applied at every iteration.
+    steps:
+        Number of map iterations to advance.
+
+    Returns
+    -------
+    dict of str to float
+        Reference feature map for the ``x`` and ``y`` state variables plus
+        spike-count and first-spike-step features.
+    """
+    alpha = 4.0
+    sigma = -1.6
+    mu = 0.001
+    x = -1.0
+    y = -3.0
+    x_values: list[float] = []
+    y_values: list[float] = []
+    spikes: list[int] = []
+    for _ in range(steps):
+        if x <= 0:
+            x_next = alpha / (1.0 - x) + y + current
+        elif x < alpha + y + current:
+            x_next = alpha + y + current
+        else:
+            x_next = -1.0
+        y_next = y - mu * (x + 1.0) + mu * sigma
+        x, y = x_next, y_next
+        spikes.append(1 if x > 0.0 else 0)
+        x_values.append(x)
+        y_values.append(y)
+
+    features: dict[str, float] = {
+        "spike_count": float(math.fsum(spikes)),
+        "first_spike_step": float(
+            next((index for index, spike in enumerate(spikes, start=1) if spike), -1)
+        ),
+    }
+    for name, values in (("x", x_values), ("y", y_values)):
+        features[f"final.{name}"] = values[-1]
+        features[f"min.{name}"] = min(values)
+        features[f"max.{name}"] = max(values)
+        features[f"mean.{name}"] = math.fsum(values) / len(values)
+    return features
+
+
 def test_seeded_corpus_has_analytic_schema_entries() -> None:
     """The seed corpus must expose deterministic analytic schema references."""
     names = list_reference_trace_specs()
@@ -1238,6 +1295,24 @@ def test_wang_buzsaki_trace_features_match_independent_euler_solution() -> None:
     assert spec.schema_name == "wang_buzsaki"
     assert spec.provenance.kind == "independent_euler_reference"
     assert spec.provenance.citation == "doi:10.1523/JNEUROSCI.16-20-06402.1996"
+    assert set(expected) == set(spec.expected_features)
+    for feature_name, feature_value in expected.items():
+        assert spec.expected_features[feature_name] == pytest.approx(feature_value, abs=1e-12)
+
+
+def test_rulkov_map_trace_features_match_independent_map_iteration() -> None:
+    """Committed Rulkov features must match an independent piecewise-map iteration."""
+    spec = load_reference_trace_spec("rulkov_map_driven_spiking_doi")
+
+    expected = _rulkov_map_features(
+        current=spec.protocol.inputs["I"],
+        steps=spec.protocol.steps,
+    )
+
+    assert spec.schema_name == "rulkov_map"
+    assert spec.provenance.kind == "map_iteration_reference"
+    assert spec.provenance.citation == "doi:10.1103/PhysRevE.65.041922"
+    assert spec.expected_features["spike_count"] > 0
     assert set(expected) == set(spec.expected_features)
     for feature_name, feature_value in expected.items():
         assert spec.expected_features[feature_name] == pytest.approx(feature_value, abs=1e-12)

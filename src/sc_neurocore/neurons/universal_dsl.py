@@ -44,7 +44,7 @@ Schema format (v1):
 
     [integration]
     dt = 0.1
-    method = "euler"   # euler | rk4 | rosenbrock
+    method = "euler"   # euler | map | rk4 | exp_euler
 
     [dynamics]
     # ODE right-hand sides: dvar/dt = expression
