@@ -5,6 +5,12 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 ## [Unreleased]
 
 ### Changed
+- Added a monthly/manual `Audit Cadence` workflow that runs pytest
+  collect-only, validates tracked test inventory with
+  `tools/test_inventory_audit.py`, and uploads collection/audit artefacts. A
+  focused contract test keeps the workflow, MkDocs navigation, and public
+  development guide in sync. No runtime package code, polyglot mirror,
+  benchmark dispatch, or benchmark artefact changed.
 - Added an `annealing` optional extra for `dwave-neal` and `dimod`, updated the
   optional dependency matrix and install-profile docs, and locked the metadata
   contract for the quantum-annealing `neal` parity selector. No base dependency,

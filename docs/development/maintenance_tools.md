@@ -1,10 +1,31 @@
 # Maintenance Tools
 
 This page records repository maintenance tools that produce audit evidence but
-do not change runtime behaviour. Each tool emits timestamped artifacts where
+do not change runtime behaviour. Each tool emits timestamped artefacts where
 possible, so historical audits remain reproducible.
 
 ## 2026-04-30 Tooling Baseline
+
+### Test inventory audit
+
+`tools/test_inventory_audit.py` compares tracked `test_*.py` files with a
+pytest collect-only transcript. The monthly
+[Audit Cadence](audit_cadence.md) workflow uses it to detect test-inventory
+drift without running the full suite outside the normal CI matrix.
+
+Run it locally after adding, moving, or optional-gating test files:
+
+```bash
+PYTHONPATH=src:. python -m pytest tests/ --collect-only -q | tee audit-collect-only.txt
+python tools/test_inventory_audit.py \
+  --repo . \
+  --collect-output audit-collect-only.txt \
+  --output audit-inventory.json
+```
+
+Tracked files absent from base collection must declare a module-level
+`pytest.importorskip(...)` optional dependency gate. Any other uncollected
+tracked test file is a failure.
 
 ### Model documentation audit
 

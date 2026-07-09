@@ -957,15 +957,15 @@
     ]
   },
   "counts": {
-    "github_workflows": 17,
+    "github_workflows": 18,
     "model_documentation_pages": 175,
     "optional_extras": 28,
     "public_api_exports": 45,
-    "public_documentation_pages": 565,
+    "public_documentation_pages": 566,
     "python_model_classes": 158,
     "python_model_source_modules": 152,
     "rust_pyo3_model_wrappers": 175,
-    "test_files": 1001
+    "test_files": 1003
   },
   "documentation": {
     "public_pages": [
@@ -1330,6 +1330,7 @@
       "docs/compiler/dcls_rtl.md",
       "docs/compiler/mixed_dense_kernel.md",
       "docs/development/RELEASE_NOTES_v2.0.0.md",
+      "docs/development/audit_cadence.md",
       "docs/development/licensing.md",
       "docs/development/maintenance_tools.md",
       "docs/development/security_hardening.md",
@@ -2797,6 +2798,7 @@
   "project_label": "SC-NeuroCore",
   "quality_gates": {
     "github_workflows": [
+      ".github/workflows/audit-cadence.yml",
       ".github/workflows/benchmark.yml",
       ".github/workflows/ci.yml",
       ".github/workflows/codeql.yml",
@@ -3698,6 +3700,7 @@
       "tests/test_tensor_stream.py",
       "tests/test_terman_wang_backends.py",
       "tests/test_timing_framework.py",
+      "tests/test_tools/test_audit_cadence_contract.py",
       "tests/test_tools/test_audit_model_docs.py",
       "tests/test_tools/test_benchmark_evidence_gate.py",
       "tests/test_tools/test_capability_manifest.py",
@@ -3746,6 +3749,7 @@
       "tests/test_tools/test_stochastic_backprop_benchmark.py",
       "tests/test_tools/test_studio_dependency_profile.py",
       "tests/test_tools/test_summarise_shd_vertex_runs.py",
+      "tests/test_tools/test_test_inventory_audit.py",
       "tests/test_tools/test_validate_configs.py",
       "tests/test_tools/test_validate_mnist_sc_checkpoint.py",
       "tests/test_tools/test_verify_formal_network_evidence.py",

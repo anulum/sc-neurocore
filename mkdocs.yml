@@ -478,6 +478,7 @@ nav:
       - Remediation Plan: reports/SC_NEUROCORE_DISCREPANCY_REMEDIATION_PLAN_2026-02-11.md
       - Driver Manual: reports/SC_NEUROCORE_DRIVER_MANUAL.md
   - Development:
+      - Audit Cadence: development/audit_cadence.md
       - Maintenance Tools: development/maintenance_tools.md
       - Security Hardening: development/security_hardening.md
       - Licensing: development/licensing.md

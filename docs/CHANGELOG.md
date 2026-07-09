@@ -5,6 +5,14 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+### Audit cadence
+- Added a monthly/manual `Audit Cadence` workflow that runs pytest
+  collect-only, validates tracked test inventory with
+  `tools/test_inventory_audit.py`, and uploads collection/audit artefacts. A
+  focused contract test keeps the workflow, MkDocs navigation, and public
+  development guide in sync. No runtime package code, polyglot mirror,
+  benchmark dispatch, or benchmark artefact changed.
+
 ### Training device fallback
 - Made `sc_neurocore.training.auto_device()` skip CUDA devices whose compute
   capability is not supported by the installed PyTorch build, avoiding noisy

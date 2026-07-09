@@ -1,0 +1,60 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Commercial license available
+# © Concepts 1996–2026 Miroslav Šotek. All rights reserved.
+# © Code 2020–2026 Miroslav Šotek. All rights reserved.
+# ORCID: 0009-0009-3560-0851
+# Contact: www.anulum.li | protoscience@anulum.li
+# SC-NeuroCore — Recurring audit cadence
+
+name: Audit Cadence
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "17 4 1 * *"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: audit-cadence-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  test-inventory:
+    name: Test Inventory Audit
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    env:
+      PYTHONPATH: "src:."
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+
+      - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Install package
+        run: python tools/ci_install_dev.py
+
+      - name: Collect pytest inventory
+        run: |
+          python -m pytest tests/ --collect-only -q | tee audit-collect-only.txt
+
+      - name: Build inventory audit
+        run: |
+          python tools/test_inventory_audit.py \
+            --repo . \
+            --collect-output audit-collect-only.txt \
+            --output audit-inventory.json
+
+      - name: Upload audit evidence
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: audit-cadence-test-inventory
+          path: |
+            audit-collect-only.txt
+            audit-inventory.json
+          retention-days: 30
