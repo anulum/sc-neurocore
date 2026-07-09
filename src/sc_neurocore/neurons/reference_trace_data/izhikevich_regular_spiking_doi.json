@@ -17,9 +17,9 @@
     ]
   },
   "provenance": {
-    "kind": "published_schema_euler_reference",
+    "kind": "independent_euler_reference",
     "source": "src/sc_neurocore/neurons/model_schemas/izhikevich.toml",
-    "equation": "Regular-spiking Izhikevich trace with one reset under the DOI-backed schema equations.",
+    "equation": "Regular-spiking Izhikevich trace with one v>30 reset; the quadratic membrane and linear recovery equations are advanced with the exact explicit-Euler recurrence, independently re-derived from the Izhikevich (2003) model definition including the v=c, u=u+d reset.",
     "citation": "doi:10.1109/TNN.2003.820440"
   },
   "expected_features": {

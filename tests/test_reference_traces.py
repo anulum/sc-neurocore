@@ -259,6 +259,68 @@ def _glif_subthreshold_euler_features(*, current: float, dt: float, steps: int) 
     return features
 
 
+def _izhikevich_rs_euler_features(*, current: float, dt: float, steps: int) -> dict[str, float]:
+    """Return exact explicit-Euler features for the regular-spiking Izhikevich recurrence.
+
+    The Izhikevich (2003) quadratic membrane and linear recovery equations are
+    advanced with the same simultaneous explicit-Euler update the schema runner
+    applies, and the ``v = c``, ``u = u + d`` reset fires whenever the post-update
+    membrane crosses the ``v > 30`` peak. The reference is therefore an independent
+    re-derivation of the committed spike-bearing trace, not a copy of the runner.
+
+    Parameters
+    ----------
+    current:
+        Constant input current applied at every timestep.
+    dt:
+        Simulation timestep.
+    steps:
+        Number of timesteps to advance.
+
+    Returns
+    -------
+    dict of str to float
+        Reference feature map for the ``v`` and ``u`` state variables plus
+        spike-count and first-spike-step features.
+    """
+    a = 0.02
+    b = 0.2
+    c = -65.0
+    d = 8.0
+    v = -65.0
+    u = -14.0
+    v_values: list[float] = []
+    u_values: list[float] = []
+    spikes: list[int] = []
+    for _ in range(steps):
+        dv = 0.04 * v**2 + 5 * v + 140 - u + current
+        du = a * (b * v - u)
+        v_next = v + dv * dt
+        u_next = u + du * dt
+        if v_next > 30:
+            spikes.append(1)
+            v_next = c
+            u_next = u_next + d
+        else:
+            spikes.append(0)
+        v, u = v_next, u_next
+        v_values.append(v)
+        u_values.append(u)
+
+    features: dict[str, float] = {
+        "spike_count": float(math.fsum(spikes)),
+        "first_spike_step": float(
+            next((index for index, spike in enumerate(spikes, start=1) if spike), -1)
+        ),
+    }
+    for name, values in (("v", v_values), ("u", u_values)):
+        features[f"final.{name}"] = values[-1]
+        features[f"min.{name}"] = min(values)
+        features[f"max.{name}"] = max(values)
+        features[f"mean.{name}"] = math.fsum(values) / len(values)
+    return features
+
+
 def test_seeded_corpus_has_analytic_schema_entries() -> None:
     """The seed corpus must expose deterministic analytic schema references."""
     names = list_reference_trace_specs()
@@ -385,6 +447,24 @@ def test_glif_trace_features_match_independent_linear_euler_solution() -> None:
     assert spec.schema_name == "glif"
     assert spec.provenance.kind == "analytic_linear_euler_reference"
     assert spec.provenance.citation == "doi:10.1038/s41467-017-02717-4"
+    assert set(expected) == set(spec.expected_features)
+    for feature_name, feature_value in expected.items():
+        assert spec.expected_features[feature_name] == pytest.approx(feature_value, abs=1e-12)
+
+
+def test_izhikevich_trace_features_match_independent_euler_solution() -> None:
+    """Committed Izhikevich RS features must match an independent explicit-Euler recurrence."""
+    spec = load_reference_trace_spec("izhikevich_regular_spiking_doi")
+
+    expected = _izhikevich_rs_euler_features(
+        current=spec.protocol.inputs["I"],
+        dt=spec.protocol.dt,
+        steps=spec.protocol.steps,
+    )
+
+    assert spec.schema_name == "izhikevich"
+    assert spec.provenance.kind == "independent_euler_reference"
+    assert spec.provenance.citation == "doi:10.1109/TNN.2003.820440"
     assert set(expected) == set(spec.expected_features)
     for feature_name, feature_value in expected.items():
         assert spec.expected_features[feature_name] == pytest.approx(feature_value, abs=1e-12)
