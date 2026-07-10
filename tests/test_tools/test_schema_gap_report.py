@@ -45,13 +45,13 @@ def test_live_schema_gap_counts_match_current_checkout() -> None:
 
     assert report["schema_version"] == tool.SCHEMA_VERSION
     assert report["counts"]["model_modules"] == 152
-    assert report["counts"]["schema_models"] == 21
-    assert report["counts"]["net_missing_schema_models"] == 131
-    assert report["counts"]["source_modules_without_schema"] == 133
+    assert report["counts"]["schema_models"] == 22
+    assert report["counts"]["net_missing_schema_models"] == 130
+    assert report["counts"]["source_modules_without_schema"] == 132
     assert report["counts"]["schema_only_models"] == 2
     assert report["schema_only_models"] == ["izhikevich", "lif"]
     assert len(report["records"]) == 152
-    assert len(report["ranked_enrolment"]) == 133
+    assert len(report["ranked_enrolment"]) == 132
 
 
 def test_live_report_classifies_known_wc_a5_examples() -> None:
@@ -73,8 +73,8 @@ def test_markdown_report_contains_ranked_enrolment_table() -> None:
     tool = _load_tool()
     markdown = tool.render_markdown(tool.build_report(REPO))
 
-    assert "Net missing schema-DSL models: **131**" in markdown
-    assert "Source modules without a same-name or alias schema: **133**" in markdown
+    assert "Net missing schema-DSL models: **130**" in markdown
+    assert "Source modules without a same-name or alias schema: **132**" in markdown
     assert "| `P1-euler-schema-candidate` |" in markdown
     assert "| `P3-rk4-or-higher-order-blocked` |" in markdown
     assert "| `P5-out-of-auto-cosim` |" in markdown
@@ -121,8 +121,8 @@ def test_cli_writes_json_and_markdown_reports(tmp_path: Path) -> None:
     assert json_result.returncode == 0, json_result.stderr
     assert markdown_result.returncode == 0, markdown_result.stderr
     payload = json.loads(json_path.read_text(encoding="utf-8"))
-    assert payload["counts"]["net_missing_schema_models"] == 131
-    assert payload["counts"]["source_modules_without_schema"] == 133
+    assert payload["counts"]["net_missing_schema_models"] == 130
+    assert payload["counts"]["source_modules_without_schema"] == 132
     assert markdown_path.read_text(encoding="utf-8").startswith(
         "<!-- SPDX-License-Identifier: AGPL-3.0-or-later -->"
     )
@@ -174,7 +174,7 @@ def test_main_prints_json_to_stdout(
 
     captured = capsys.readouterr()
     payload = json.loads(captured.out)
-    assert payload["counts"]["net_missing_schema_models"] == 131
+    assert payload["counts"]["net_missing_schema_models"] == 130
 
 
 def test_script_entrypoint_writes_report(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:

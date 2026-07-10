@@ -32,6 +32,7 @@ table because their schemas are stochastic.
 | `izhikevich2007_regular_spiking_doi` | `izhikevich2007` | `universal_dsl` | Independent explicit-Euler re-derivation of the biophysical quadratic equations from `neurons/model_schemas/izhikevich2007.toml` with DOI-backed schema provenance |
 | `lif_constant_current_closed_form` | `lif` | `universal_dsl` | Closed-form RC solution from `neurons/model_schemas/lif.toml` |
 | `lapicque_constant_current_closed_form` | `lapicque` | `universal_dsl` | Closed-form RC solution from `neurons/model_schemas/lapicque.toml` |
+| `mihalas_niebur_driven_spiking_doi` | `mihalas_niebur` | `universal_dsl` | Independent fourth-order Runge-Kutta re-derivation of the four-state adaptive-threshold flow from `neurons/model_schemas/mihalas_niebur.toml` with DOI-backed schema provenance |
 | `morris_lecar_depolarizing_current_doi` | `morris_lecar` | `universal_dsl` | Independent explicit-Euler re-derivation of the depolarizing equations from `neurons/model_schemas/morris_lecar.toml` with DOI-backed schema provenance |
 | `perfect_integrator_constant_current_sawtooth` | `perfect_integrator` | `universal_dsl` | Analytic post-reset sawtooth solution from `neurons/model_schemas/perfect_integrator.toml` |
 | `quadratic_if_zero_current_analytic` | `quadratic_if` | `universal_dsl` | Analytic zero-current Riccati solution from `neurons/model_schemas/quadratic_if.toml` with DOI-backed schema provenance |
@@ -44,9 +45,10 @@ All entries record spike count, first spike step, and final/min/max/mean
 features for the declared state variables. The tests independently recompute the
 LIF, QIF, perfect-integrator, resonate-fire, theta, GLIF, Izhikevich,
 Izhikevich 2007, FitzHugh-Nagumo, AdEx, exponential-IF, Hindmarsh-Rose, Morris-Lecar,
-Hodgkin-Huxley, Connor-Stevens, Wang-Buzsaki, and DPI analytic or explicit-Euler
-solutions — every deterministic bundled-schema entry — so the committed feature
-values are not merely copied from the runner output. The Morris-Lecar,
+Hodgkin-Huxley, Connor-Stevens, Wang-Buzsaki, DPI, and Mihalas-Niebur analytic,
+explicit-Euler, or fourth-order Runge-Kutta solutions — every deterministic
+bundled-schema entry — so the committed feature values are not merely copied from
+the runner output. The Morris-Lecar,
 Hodgkin-Huxley, Connor-Stevens, and Wang-Buzsaki re-derivations reuse the runner's
 numpy activation, exponential, and exprel functions so the conductance rate terms
 match bit-for-bit. The GLIF
@@ -57,8 +59,15 @@ re-derives the exact regular-spiking explicit-Euler recurrence including its
 relaxation recurrence with the `v = -1` reset; and the DPI entry re-derives its
 current-mode leaky-integrator recurrence with the `i_mem = i_reset` reset, its
 non-negative drive keeping the source model's `max(i_mem, 0)` rectification inert.
-The perfect-integrator, FitzHugh-Nagumo, Izhikevich, Izhikevich 2007, and DPI
-entries are spike-bearing;
+The Mihalas-Niebur entry re-derives the exact classical fourth-order Runge-Kutta
+recurrence for its four linear states (membrane, adaptive threshold, and two
+spike-triggered currents), including the `v = v_reset + b*(v - v_rest)`,
+`theta = max(theta, theta_reset)`, `i1 += r1`, `i2 += r2` reset; because
+`theta_reset` exceeds `theta_inf` the `max()` threshold floor engages on every
+spike, so the state-to-state `v >= theta` comparison is a genuine adaptive
+threshold rather than a fixed level.
+The perfect-integrator, FitzHugh-Nagumo, Izhikevich, Izhikevich 2007, DPI, and
+Mihalas-Niebur entries are spike-bearing;
 they validate reset and first-spike features, not only quiet trajectories. The
 Rulkov entry iterates the Rulkov 2002 piecewise fast/slow map with the
 `method = "map"` integration mode (`x_{n+1} = f(x_n, y_n)`, iterated as a discrete

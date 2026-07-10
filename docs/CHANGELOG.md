@@ -5,6 +5,24 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+### Mihalas-Niebur RK4 co-simulation enrollment
+- Enrolled `mihalas_niebur` (Mihalaş & Niebur 2009 generalised linear
+  integrate-and-fire) into the WC-A5 schema corpus and Python↔Verilog
+  co-simulation as the first `method="rk4"` bundled model: a four-state RK4 flow
+  (membrane, adaptive threshold, two spike-triggered currents) with a
+  state-to-state `v >= theta` threshold and a `max(theta, theta_reset)`
+  adaptive-threshold reset that floors on every spike. The schema runner
+  reproduces the hand model bit-for-bit in float64, and a committed independent
+  RK4-parity reference trace covers the new bundled schema. Unlike the exact Euler
+  anchors, the Q16.16 RTL tracks the float spike train to within a single spike
+  (35 vs 36 over 300 steps) rather than bit-exactly: the state-vs-state threshold
+  compares two quantised states and the four-stage RK4 update injects four times
+  the per-step rounding, so a marginal crossing shifts by one step under
+  fixed-point rounding (timing jitter, not LUT coarseness — the right-hand side is
+  linear). The co-simulation claim is therefore an honest tolerance band, not
+  exact parity. The schema-DSL runner has no polyglot mirror; no benchmark
+  dispatch or benchmark artefact changed.
+
 ### DYNAP-SE differential-pair integrator co-simulation enrollment
 - Enrolled `dpi_neuron` (Chicca et al. 2014 DYNAP-SE differential-pair
   integrator, current-mode subthreshold LIF) into the WC-A5 Python↔Verilog

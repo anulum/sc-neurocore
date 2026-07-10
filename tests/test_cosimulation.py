@@ -70,6 +70,7 @@ from sc_neurocore.compiler.equation_compiler import (
 )
 from sc_neurocore.neurons.models.dpi_neuron import DPINeuron
 from sc_neurocore.neurons.models.izhikevich2007 import Izhikevich2007Neuron
+from sc_neurocore.neurons.models.mihalas_niebur import MihalasNieburNeuron
 from sc_neurocore.neurons.models.perfect_integrator import PerfectIntegratorNeuron
 from sc_neurocore.neurons.universal_dsl import UniversalNeuron
 
@@ -185,6 +186,31 @@ def _izhikevich2007_hand_euler_spike_count(n_steps: int, current: float) -> int:
 def _dpi_neuron_hand_spike_count(n_steps: int, current: float) -> int:
     """Return the hand-authored DPI (current-mode Euler) spike count for comparison."""
     neuron = DPINeuron()
+    return sum(neuron.step(current) for _ in range(n_steps))
+
+
+# Adaptive-threshold operating point mirrored by the bundled ``mihalas_niebur`` schema.
+# ``theta_reset`` (1.3) exceeds ``theta_inf`` (1.0), so the max() threshold floor engages
+# on every spike and the fractional taus/coefficients stress the fixed-point datapath.
+_MIHALAS_NIEBUR_PARAMS = {
+    "v_rest": 0.0,
+    "v_reset": 0.0,
+    "theta_reset": 1.3,
+    "theta_inf": 1.0,
+    "tau_v": 10.0,
+    "tau_theta": 40.0,
+    "tau_1": 15.0,
+    "tau_2": 80.0,
+    "a": 0.1,
+    "b": 0.1,
+    "r1": 0.2,
+    "r2": -0.15,
+}
+
+
+def _mihalas_niebur_hand_spike_count(n_steps: int, current: float) -> int:
+    """Return the hand-authored Mihalas-Niebur (RK4) spike count for comparison."""
+    neuron = MihalasNieburNeuron(dt=1.0, **_MIHALAS_NIEBUR_PARAMS)
     return sum(neuron.step(current) for _ in range(n_steps))
 
 
@@ -356,6 +382,53 @@ class TestTierBModelCosim:
 
         assert 0 < schema_spikes < 200  # a partial train, neither saturated nor silent
         assert hand_spikes == schema_spikes == verilog_spikes
+
+    def test_mihalas_niebur_schema_matches_hand_rk4_sequence(self) -> None:
+        """The schema mirrors the Mihalas-Niebur RK4 step law and adaptive reset over a sequence.
+
+        The bundled ``mihalas_niebur`` schema is the ``method="rk4"`` discretisation of the
+        generalised integrate-and-fire neuron (``MihalasNieburNeuron``, Mihalaş & Niebur
+        2009). This four-state (``v``, ``theta``, ``i1``, ``i2``) anchor asserts the schema
+        reproduces the hand model's spike decision *and* every state variable over a varied
+        drive, exercising the classical RK4 stage evaluation, the state-to-state
+        ``v >= theta`` threshold and the ``max(theta, theta_reset)`` adaptive-threshold reset
+        in lock-step with the canonical publication implementation.
+        """
+        hand = MihalasNieburNeuron(dt=1.0, **_MIHALAS_NIEBUR_PARAMS)
+        schema = UniversalNeuron.from_schema("mihalas_niebur")
+
+        for current in (0.0, 3.0, 5.0, 2.0, 4.0, 0.0, 6.0, 3.5):
+            assert int(bool(schema.step(I=current))) == hand.step(current)
+            assert schema.state["v"] == hand.v
+            assert schema.state["theta"] == hand.theta
+            assert schema.state["i1"] == hand.i1
+            assert schema.state["i2"] == hand.i2
+
+    @pytest.mark.skipif(not HAS_IVERILOG, reason="Icarus Verilog not available")
+    def test_mihalas_niebur_q1616_tracks_hand_within_one_spike(self) -> None:
+        """Mihalas-Niebur (RK4) Q16.16 co-simulation tracks the float train to within one spike.
+
+        Unlike the Euler perfect-integrator / DPI / Izhikevich 2007 anchors, the
+        Mihalas-Niebur neuron cannot claim *exact* fixed-point spike-count parity, and this
+        test does not pretend otherwise. The state-to-state ``v >= theta`` threshold compares
+        two evolving quantised states, and the four-stage RK4 update injects four times the
+        per-step rounding of a single Euler step, so a marginal crossing shifts by one step
+        under Q16.16 rounding — fixed-point timing jitter, not LUT coarseness (the right-hand
+        side is purely linear, so no look-up table is involved). At the ``I=3.0``, 300-step
+        operating point the hand model and schema runner agree exactly in float64 (36 of 300
+        steps, a partial train after ~5 sub-threshold steps), and the emitted Q16.16 RTL
+        tracks that train to within a single spike (35 of 300). The assertion is an honest
+        tolerance band: the fixed-point datapath follows the adaptive-threshold crossing
+        train closely but is not bit-exact.
+        """
+        hand_spikes = _mihalas_niebur_hand_spike_count(300, 3.0)
+        schema_spikes = _python_spike_count("mihalas_niebur", 300, 3.0)
+        verilog_spikes = _verilog_spike_count_q1616("mihalas_niebur", 300, 3.0)
+
+        assert hand_spikes == schema_spikes  # the float64 anchor is exact
+        assert 0 < schema_spikes < 300  # a partial train, neither saturated nor silent
+        assert 0 < verilog_spikes < 300  # the RTL also fires a partial train
+        assert abs(schema_spikes - verilog_spikes) <= 2  # Q16.16 tracks within the jitter band
 
 
 def _verilog_spike_count_q412(model_name: str, n_steps: int, current: float) -> int:
