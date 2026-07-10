@@ -6,8 +6,6 @@
 // Contact: www.anulum.li | protoscience@anulum.li
 // SC-NeuroCore — Rust safety for Terman-Wang
 
-#![allow(unused_variables, dead_code, non_snake_case)]
-
 #[derive(Debug, Clone)]
 pub struct TermanWangOscillator {
     pub v: f64,
@@ -87,11 +85,16 @@ impl TermanWangOscillator {
     }
 
     pub fn reset(&mut self) {
+        // Mirror models/terman_wang.py `reset`: restore only the state variables,
+        // never the parameters (alpha/beta/epsilon are configuration, not state).
         self.v = -1.5;
         self.w = -0.5;
-        self.alpha = 3.0;
-        self.beta = 0.2;
-        self.epsilon = 0.02;
+    }
+}
+
+impl Default for TermanWangOscillator {
+    fn default() -> Self {
+        Self::new()
     }
 }
 
@@ -182,5 +185,27 @@ mod tests {
         assert!(state.step(1.0).is_err());
         assert_eq!(state.v, before.v);
         assert_eq!(state.w, before.w);
+    }
+
+    #[test]
+    fn matches_python_golden_spike_count() {
+        // Parity with models/terman_wang.py (RK4 integrator, default parameters). The Terman-Wang
+        // 1995 relaxation oscillator has a cubic fast nullcline plus a `tanh` sigmoid recovery
+        // gate; `tanh` is the one non-exact operation, so the trajectory is not bit-for-bit across
+        // libms (on Linux the Rust engine shares Python's glibc `tanh` and IS bit-identical, but
+        // the portable, declared observable is the spike count — a 2-D autonomous flow cannot be
+        // chaotic, so a bounded per-step `tanh` gap cannot change the crossing count). The drive
+        // gates the regime cleanly: silent at I=-1.0 (hyperpolarised, no oscillation), a single
+        // upstroke at I=0.0, and a three-spike relaxation train at I=0.5, each over 8000 macro
+        // steps. Verified python-vs-rust spike counts match with max|Δ|=0 on this host; the Go,
+        // Julia and Mojo backends reproduce the same counts (ULP-bounded) via
+        // test_terman_wang_backends.py.
+        for (current, want) in [(-1.0_f64, 0_usize), (0.0, 1), (0.5, 3)] {
+            let mut state = TermanWangOscillator::new();
+            let spikes = (0..8000)
+                .filter(|_| state.step(current).expect("finite step") == 1)
+                .count();
+            assert_eq!(spikes, want, "I={current}");
+        }
     }
 }
