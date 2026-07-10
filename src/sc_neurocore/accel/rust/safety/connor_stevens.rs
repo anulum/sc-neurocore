@@ -242,6 +242,12 @@ impl ConnorStevensNeuron {
     }
 }
 
+impl Default for ConnorStevensNeuron {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 pub fn validate_connor_stevens(state: &ConnorStevensNeuron) -> bool {
     state.valid_static()
         && ConnorStevensNeuron::valid_state(state.v, state.m, state.h, state.n, state.a, state.b)
@@ -290,5 +296,19 @@ mod tests {
         state.reset();
         assert_eq!(state.b, 0.1);
         assert!(validate_connor_stevens(&state));
+    }
+
+    #[test]
+    fn matches_python_golden_spike_count() {
+        // Parity with models/connor_stevens.py (macro-step RK4, 100 sub-steps): silent at zero
+        // drive, two action potentials at I=10 over 100 macro steps, nine at I=20. Connor-Stevens
+        // gating is exp-based, so the trace is not bit-exact across libms; the spike count is the
+        // stable observable and is the parity contract — not a "spike is 0 or 1" smoke check. The
+        // Go and Julia kernels reproduce the same counts.
+        for (current, want) in [(0.0_f64, 0_usize), (10.0, 2), (20.0, 9)] {
+            let mut state = ConnorStevensNeuron::new();
+            let spikes = (0..100).filter(|_| state.step(current) == 1).count();
+            assert_eq!(spikes, want, "I={current}");
+        }
     }
 }

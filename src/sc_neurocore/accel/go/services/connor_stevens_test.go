@@ -121,3 +121,37 @@ func TestConnorStevensCorruptStatePreservesState(t *testing.T) {
 		t.Fatalf("state mutated after invalid state")
 	}
 }
+
+// TestConnorStevensMatchesPythonGolden pins the Go kernel to the Python golden
+// (models/connor_stevens.py ConnorStevensNeuron.simulate, macro-step RK4 with 100 sub-steps):
+// silent at zero drive, two action potentials at I=10 over 100 macro steps, and nine at I=20.
+// Connor-Stevens gating uses exp, so the trace is not bit-exact across libms; the spike count is
+// the stable observable and is the parity contract — not a "spike is 0 or 1" smoke test. The Rust
+// and Julia kernels reproduce the same counts.
+func TestConnorStevensMatchesPythonGolden(t *testing.T) {
+	for _, tc := range []struct {
+		current float64
+		want    int
+	}{
+		{0.0, 0},
+		{10.0, 2},
+		{20.0, 9},
+	} {
+		_, spikes := SimulateConnorStevensNeuron(100, tc.current)
+		if spikes != tc.want {
+			t.Fatalf("Connor-Stevens Go kernel must reproduce the Python golden at I=%g over 100 macro steps: want %d spikes, got %d", tc.current, tc.want, spikes)
+		}
+	}
+}
+
+// BenchmarkConnorStevensStep measures one macro step (100 candidate-first RK4 sub-steps of the
+// six-state model) so the Go backend carries an honest, runnable per-step timing.
+func BenchmarkConnorStevensStep(b *testing.B) {
+	s := NewConnorStevensNeuron()
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		if _, err := s.Step(20.0); err != nil {
+			s = NewConnorStevensNeuron()
+		}
+	}
+}

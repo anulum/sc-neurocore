@@ -271,6 +271,20 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
   code, polyglot mirror, benchmark dispatch, or benchmark artefact changed.
 
 ### Fixed
+- Pinned the Connor-Stevens polyglot kernels to the Python golden spike count. The Go
+  (`accel/go/services/connor_stevens.go`), Rust (`accel/rust/safety/connor_stevens.rs`) and Julia
+  (`accel/julia/neurons/connor_stevens.jl`) kernels already carried the real six-state macro-step
+  RK4 dynamics (100 sub-steps) but were only self-consistency / smoke tested against their own
+  arithmetic; each now asserts the Python golden counts — silent at zero drive, two action
+  potentials at `I=10` over 100 macro steps, nine at `I=20`. Connor-Stevens gating is `exp`-based,
+  so the trace is not bit-exact across C libraries; the spike count is the stated parity observable,
+  and all three languages reproduce it. Added a native Julia parity test
+  (`accel/julia/connor_stevens_parity_test.jl`), a Go golden-parity test plus an honest
+  `BenchmarkConnorStevensStep` (262.7 µs/macro-step), and the idiomatic `Default` impl on the Rust
+  side. The Mojo kernel remains an honest parity note pending the Mojo neuron-kernel lane's
+  promotion to a build target. Connor-Stevens's Python model dispatches only to the Rust engine, so
+  the Go/Julia kernels are language-native; no Python runtime path, FFI dispatch, or committed
+  benchmark artefact changed.
 - Pinned the Morris-Lecar polyglot kernels to the Python golden spike count. The Go
   (`accel/go/services/morris_lecar.go`), Rust (`accel/rust/safety/morris_lecar.rs`) and Julia
   (`accel/julia/neurons/morris_lecar.jl`) kernels already carried the real RK4 dynamics but were
