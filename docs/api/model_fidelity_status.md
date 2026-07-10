@@ -54,6 +54,7 @@ stub.
 | Connor-Stevens | ✅ | ✅ | ✅ | 🔶 parity note | spike count — 0/2/9 @ I=0/10/20 over 100 macro steps (RK4, exp) | `4776283ba` |
 | Hodgkin-Huxley | ✅ | ✅ | ✅ | 🔶 parity note | spike count — 0/6/9 @ I=0/10/20 over 100 macro steps (baseline-Euler, exp) | `0b23b5653` |
 | McKean | ✅ | ✅ | ✅ | ✅ shared-lib | bit-exact — 0/1/7 @ I=0/0.2/0.5 over 20000 steps (RK4, exact piecewise-linear RHS) | `059871140` |
+| Hindmarsh-Rose | ✅ | ✅ | ✅ | ✅ shared-lib | bit-exact — 0/26/52 @ I=0/3/5 over 2000 steps (RK4, polynomial RHS) | `45c05b1e9` |
 
 Each of the five carries a committed benchmark in its lane (Go `Benchmark*` for the models above;
 the Rust-safety per-kernel benchmark harness is a tracked open lane item, so those numbers currently
@@ -71,7 +72,7 @@ Rust engine acceleration path), but its four `accel/{rust,go,julia,mojo}` kernel
 or not yet verified** — the polyglot-stub-remediation sweep is replacing them model-by-model. Those
 models are **deliberately not ticked here**: per-model status is promoted onto this page only after a
 unit is closed and verified at source, so this table never claims completion it has not proven. As of
-the latest landed commit that is **six polyglot-complete models** out of the full catalogue; the
+the latest landed commit that is **seven polyglot-complete models** out of the full catalogue; the
 remainder are Python-faithful with an acceleration chain still under remediation.
 
 ## How a model graduates onto this page
