@@ -32,6 +32,7 @@ _STOCHASTIC_SCHEMA_NAMES = frozenset({"escape_rate", "poisson"})
 _DETERMINISTIC_SCHEMA_TRACES = {
     "adex": "adex_resting_adaptation_doi",
     "connor_stevens": "connor_stevens_resting_gate_doi",
+    "dpi_neuron": "dpi_neuron_driven_spiking_doi",
     "exp_if": "exp_if_resting_exponential_doi",
     "fitzhugh_nagumo": "fitzhugh_nagumo_driven_oscillation_doi",
     "glif": "glif_constant_current_threshold_adaptation",
@@ -373,6 +374,56 @@ def _izhikevich2007_euler_features(*, current: float, dt: float, steps: int) -> 
         u_values.append(u)
 
     return _summarise({"v": v_values, "u": u_values}, spikes)
+
+
+def _dpi_neuron_driven_euler_features(*, current: float, dt: float, steps: int) -> dict[str, float]:
+    """Return exact explicit-Euler features for the driven DPI current-mode recurrence.
+
+    The DYNAP-SE differential-pair-integrator membrane ``tau dI_mem/dt =
+    -I_mem + gain * I_syn + I_leak`` (Chicca et al. 2014) is advanced with the same
+    explicit-Euler update the schema runner applies, and the ``i_mem = i_reset`` reset
+    fires whenever the post-update current reaches the ``i_mem >= i_threshold`` level.
+    The right-hand side is linear, so the recurrence reproduces the schema runner
+    bit-for-bit — an independent re-derivation of the committed driven-spiking trace,
+    not a copy of the runner. The non-negative drive keeps ``i_mem`` non-negative, so
+    the source model's ``max(i_mem, 0)`` current rectification is inert and correctly
+    absent from this continuous update.
+
+    Parameters
+    ----------
+    current:
+        Constant input current applied at every timestep.
+    dt:
+        Simulation timestep.
+    steps:
+        Number of timesteps to advance.
+
+    Returns
+    -------
+    dict of str to float
+        Reference feature map for the ``i_mem`` state variable plus spike-count and
+        first-spike-step features.
+    """
+    i_threshold = 1.0
+    i_reset = 0.0
+    i_leak = 0.01
+    tau = 20.0
+    gain = 1.0
+    i_mem = 0.0
+    i_mem_values: list[float] = []
+    spikes: list[int] = []
+    for _ in range(steps):
+        di = (-i_mem + gain * current + i_leak) / tau
+        i_mem_next = i_mem + di * dt
+        if i_mem_next >= i_threshold:
+            spikes.append(1)
+            i_mem_next = i_reset
+        else:
+            spikes.append(0)
+        i_mem = i_mem_next
+        i_mem_values.append(i_mem)
+
+    return _summarise({"i_mem": i_mem_values}, spikes)
 
 
 def _fitzhugh_nagumo_euler_features(*, current: float, dt: float, steps: int) -> dict[str, float]:
@@ -1092,6 +1143,15 @@ _PARITY_CASES: list[tuple[str, str, str, str, Callable[[ReferenceTraceSpec], dic
         "independent_euler_reference",
         "doi:10.7551/mitpress/2526.001.0001",
         lambda spec: _izhikevich2007_euler_features(
+            current=spec.protocol.inputs["I"], dt=spec.protocol.dt, steps=spec.protocol.steps
+        ),
+    ),
+    (
+        "dpi_neuron_driven_spiking_doi",
+        "dpi_neuron",
+        "independent_euler_reference",
+        "doi:10.1109/JPROC.2014.2313954",
+        lambda spec: _dpi_neuron_driven_euler_features(
             current=spec.protocol.inputs["I"], dt=spec.protocol.dt, steps=spec.protocol.steps
         ),
     ),

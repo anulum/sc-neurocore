@@ -1,0 +1,42 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Commercial license available
+# © Concepts 1996–2026 Miroslav Šotek. All rights reserved.
+# © Code 2020–2026 Miroslav Šotek. All rights reserved.
+# ORCID: 0009-0009-3560-0851
+# Contact: www.anulum.li | protoscience@anulum.li
+# SC-NeuroCore — Source/config provenance header
+
+[metadata]
+schema_version = 1
+name = "DPINeuron"
+author = "Chicca, E.; Indiveri, G."
+year = 2014
+doi = "10.1109/JPROC.2014.2313954"
+description = "DYNAP-SE differential-pair integrator subthreshold current-mode LIF (Chicca et al. 2014) — explicit-Euler discretisation"
+
+[state]
+i_mem = 0.0
+
+[parameters]
+i_threshold = 1.0
+i_reset = 0.0
+i_leak = 0.01
+tau = 20.0
+gain = 1.0
+
+[integration]
+dt = 1.0
+method = "euler"
+
+[dynamics]
+i_mem = "(-i_mem + gain * I + i_leak) / tau"
+
+[threshold]
+condition = "i_mem >= i_threshold"
+detection = "level"
+
+[reset]
+i_mem = "i_reset"
+
+[extensions]
+current_domain_note = "State and input are transistor currents (nA), so i_mem stays non-negative under any non-negative drive; the source model's max(i_mem, 0) rectification guard is therefore inert across this schema's operating regime and is omitted from the continuous update."

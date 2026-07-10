@@ -5,6 +5,15 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 ## [Unreleased]
 
 ### Changed
+- Enrolled the DYNAP-SE differential-pair integrator (`dpi_neuron` schema,
+  Chicca et al. 2014 current-mode subthreshold LIF) into the WC-A5
+  Python↔Verilog co-simulation campaign at exact Q16.16 spike-count parity for
+  the explicit-Euler discretisation, with a three-way hand-model / schema / RTL
+  cross-check and a committed independent Euler-parity reference trace. The
+  non-negative current drive keeps the source model's `max(i_mem, 0)`
+  rectification inert, so the linear schema is a faithful discretisation. The
+  schema-DSL runner is Python-only; no benchmark dispatch or benchmark artefact
+  changed.
 - Enrolled the Izhikevich 2007 biophysical quadratic model (`izhikevich2007`
   schema, NeuroML `izhikevich2007Cell` parameterisation) into the WC-A5
   Python↔Verilog co-simulation campaign at exact Q16.16 spike-count parity for

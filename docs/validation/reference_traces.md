@@ -22,6 +22,7 @@ table because their schemas are stochastic.
 |-------|--------|--------|------------|
 | `adex_resting_adaptation_doi` | `adex` | `universal_dsl` | Independent explicit-Euler re-derivation of the subthreshold equations from `neurons/model_schemas/adex.toml` with DOI-backed schema provenance |
 | `connor_stevens_resting_gate_doi` | `connor_stevens` | `universal_dsl` | Independent explicit-Euler re-derivation of the resting gate equations from `neurons/model_schemas/connor_stevens.toml` with DOI-backed schema provenance |
+| `dpi_neuron_driven_spiking_doi` | `dpi_neuron` | `universal_dsl` | Independent explicit-Euler re-derivation of the current-mode differential-pair-integrator membrane from `neurons/model_schemas/dpi_neuron.toml` with DOI-backed schema provenance |
 | `exp_if_resting_exponential_doi` | `exp_if` | `universal_dsl` | Independent explicit-Euler re-derivation of the resting equation from `neurons/model_schemas/exp_if.toml` with DOI-backed schema provenance |
 | `fitzhugh_nagumo_driven_oscillation_doi` | `fitzhugh_nagumo` | `universal_dsl` | Independent explicit-Euler re-derivation of the driven relaxation equations from `neurons/model_schemas/fitzhugh_nagumo.toml` with DOI-backed schema provenance |
 | `glif_constant_current_threshold_adaptation` | `glif` | `universal_dsl` | Analytic linear Euler recurrence from `neurons/model_schemas/glif.toml` with DOI-backed schema provenance |
@@ -43,7 +44,7 @@ All entries record spike count, first spike step, and final/min/max/mean
 features for the declared state variables. The tests independently recompute the
 LIF, QIF, perfect-integrator, resonate-fire, theta, GLIF, Izhikevich,
 Izhikevich 2007, FitzHugh-Nagumo, AdEx, exponential-IF, Hindmarsh-Rose, Morris-Lecar,
-Hodgkin-Huxley, Connor-Stevens, and Wang-Buzsaki analytic or explicit-Euler
+Hodgkin-Huxley, Connor-Stevens, Wang-Buzsaki, and DPI analytic or explicit-Euler
 solutions — every deterministic bundled-schema entry — so the committed feature
 values are not merely copied from the runner output. The Morris-Lecar,
 Hodgkin-Huxley, Connor-Stevens, and Wang-Buzsaki re-derivations reuse the runner's
@@ -53,8 +54,11 @@ entry re-derives the exact subthreshold explicit-Euler recurrence for its linear
 membrane, adaptive threshold, and two after-spike currents; the Izhikevich entry
 re-derives the exact regular-spiking explicit-Euler recurrence including its
 `v = c`, `u = u + d` reset; and the FitzHugh-Nagumo entry re-derives its cubic
-relaxation recurrence with the `v = -1` reset. The perfect-integrator,
-FitzHugh-Nagumo, and Izhikevich entries are spike-bearing;
+relaxation recurrence with the `v = -1` reset; and the DPI entry re-derives its
+current-mode leaky-integrator recurrence with the `i_mem = i_reset` reset, its
+non-negative drive keeping the source model's `max(i_mem, 0)` rectification inert.
+The perfect-integrator, FitzHugh-Nagumo, Izhikevich, Izhikevich 2007, and DPI
+entries are spike-bearing;
 they validate reset and first-spike features, not only quiet trajectories. The
 Rulkov entry iterates the Rulkov 2002 piecewise fast/slow map with the
 `method = "map"` integration mode (`x_{n+1} = f(x_n, y_n)`, iterated as a discrete
