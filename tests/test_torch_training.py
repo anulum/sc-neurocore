@@ -430,6 +430,8 @@ class TestTrainingLoops:
 
     def test_auto_device_uses_cuda_when_probe_passes(self, monkeypatch):
         monkeypatch.setattr(training_loops.torch.cuda, "is_available", lambda: True)
+        monkeypatch.setattr(training_loops.torch.cuda, "device_count", lambda: 1)
+        monkeypatch.setattr(training_loops, "_cuda_device_supported", lambda index: True)
         monkeypatch.setattr(training_loops, "_device_usable", lambda device: True)
 
         assert training_loops.auto_device().type == "cuda"
