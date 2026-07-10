@@ -5,6 +5,21 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 ## [Unreleased]
 
 ### Added
+- Macro-step integration mode (`[integration] substeps = N`) in the schema DSL, in both the
+  Python runner (`EquationNeuron`) and the emitted Verilog. One macro `step()` advances `N`
+  inner integration sub-steps (any method — euler/rk4/exp_euler) before a single spike
+  decision, and the rising-edge crossing is evaluated only on the macro boundary against the
+  condition at the previous macro boundary. This lets the schema faithfully replicate the
+  maintained conductance hand models whose `step()` is itself a fixed number of fine sub-steps
+  per macro step (Hodgkin-Huxley / Connor-Stevens: 100 `dt=0.01` sub-steps per 1 ms; Wang-Buzsaki:
+  50 per 0.5 ms), so a repetitively firing oscillator counts one spike per action potential
+  rather than one per sub-step it stays above threshold. The RTL keeps one integration sub-step
+  per clock and gates the crossing to the macro boundary with a sub-step counter; the lowering is
+  bit-exact against the Python runner (proven on the polynomial FitzHugh-Nagumo at Q16.16, exact
+  across sub-step groupings). Supported for the edge (crossing, non-resetting), non-pipelined
+  datapath the conductance oscillators need; other combinations raise `NotImplementedError` rather
+  than emit RTL that silently disagrees with the golden. With the default `substeps = 1` every
+  existing model is bit-for-bit unchanged.
 - Rising-edge (`detection = "crossing"`) threshold detection in the schema DSL, in both
   the Python runner (`EquationNeuron`) and the emitted Verilog. A non-resetting oscillator
   (FitzHugh-Nagumo, McKean) spikes once per upward threshold crossing rather than on every
@@ -20,6 +35,26 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
   co-simulation path); crossing support there is a separate follow-up.
 
 ### Changed
+- Re-enrolled the Connor-Stevens A-current oscillator (`connor_stevens` schema, Connor &
+  Stevens 1971, DOI `10.1113/jphysiol.1971.sp009368`) faithfully using the new macro-step mode.
+  The bundled schema was single-step `method="euler"` — neither the maintained
+  `ConnorStevensNeuron`'s RK4 integrator nor its 100-sub-step-per-millisecond macro-stepping — so
+  it could only be compared schema-vs-verilog and over-counted crossings. The faithful schema is
+  now `method="rk4"` with `substeps=100` and a macro-boundary `v >= v_threshold` crossing, so the
+  schema reproduces the hand model's action-potential count exactly (`hand == schema`, ten
+  crossings at `I=100` over 60 macro steps). The Q16.16 RTL tracks the schema **within one spike**
+  over the bounded window (`I=100`, 20 macro steps): Connor-Stevens is a stiff six-state model
+  whose exprel / cube-root gating lowers to 256-entry look-up tables, and the residual drift is
+  **LUT-resolution-limited, not datapath-precision-limited** (identical spike count at Q16.16 /
+  Q24.24 / Q32.32) — an honest per-model hardware-fidelity band, three-way exact over a bounded
+  window and accumulating beyond it. The reference trace was re-derived as
+  `connor_stevens_driven_spiking_doi` (`independent_macrostep_rk4_reference`, bit-exact against the
+  runner) and the descriptor's integration updated (euler → rk4). Also fixed a pre-existing
+  toml/json drift: the `connor_stevens.json` `m`/`n` rate functions were the singular
+  `a*(V-V0)/(1-exp(...))` form (a 0/0 at `V=V0`) while the loaded `.toml` used the stable `exprel`
+  rewrite; the JSON now matches. Schema-gap counts unchanged (a re-enrolment). The schema-DSL
+  runner is Python-only; the hand `ConnorStevensNeuron` and its polyglot mirrors were already RK4,
+  so no polyglot counterpart or benchmark artefact changed.
 - Re-enrolled the Morris-Lecar calcium-potassium oscillator (`morris_lecar` schema,
   Morris & Lecar 1981, DOI `10.1016/S0006-3495(81)84782-0`) faithfully as the first
   **conductance** edge-crossing oscillator in the WC-A5 co-simulation set. The bundled

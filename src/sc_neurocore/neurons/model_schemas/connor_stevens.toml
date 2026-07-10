@@ -11,7 +11,7 @@ schema_version = 1
 name = "Connor-Stevens"
 author = "Connor, J.A. & Stevens, C.F."
 year = 1971
-doi = "10.1113/jphysiol.1971.sp009368"
+doi = "10.1113/jphysiol.1971.sp009366"
 description = "A-type potassium current model — Type-I excitability with 6 state variables"
 
 [state]
@@ -36,7 +36,8 @@ v_threshold = 0.0
 
 [integration]
 dt = 0.01
-method = "euler"
+method = "rk4"
+substeps = 100
 
 [dynamics]
 v = "(-g_na*m**3*h*(v-e_na) - g_k*n**4*(v-e_k) - g_a*a**3*b*(v-e_a) - g_l*(v-e_l) + I) / c_m"
@@ -47,7 +48,7 @@ a = "(((0.0761*exp((v+94.22)/31.84)/(1+exp((v+1.17)/28.93)))**(1.0/3.0)) - a) / 
 b = "((1/(1+exp((v+53.3)/14.54))**4) - b) / (1.24 + 2.678/(1+exp((v+50)/16.027)))"
 
 [threshold]
-condition = "v > v_threshold"
+condition = "v >= v_threshold"
 detection = "crossing"
 
 [extensions]

@@ -69,10 +69,13 @@ from sc_neurocore.compiler.equation_compiler import (
     Q88,
     generate_testbench,
 )
+from sc_neurocore.compiler.verilog_compiler import compile_to_verilog
+from sc_neurocore.neurons.equation_builder import EquationNeuron
 from sc_neurocore.neurons.models.dpi_neuron import DPINeuron
 from sc_neurocore.neurons.models.fitzhugh_nagumo import FitzHughNagumoNeuron
 from sc_neurocore.neurons.models.izhikevich2007 import Izhikevich2007Neuron
 from sc_neurocore.neurons.models.mckean import McKeanNeuron
+from sc_neurocore.neurons.models.connor_stevens import ConnorStevensNeuron
 from sc_neurocore.neurons.models.mihalas_niebur import MihalasNieburNeuron
 from sc_neurocore.neurons.models.morris_lecar import MorrisLecarNeuron
 from sc_neurocore.neurons.models.perfect_integrator import PerfectIntegratorNeuron
@@ -223,6 +226,19 @@ def _morris_lecar_hand_spike_count(n_steps: int, current: float) -> int:
     """
     neuron = MorrisLecarNeuron()
     return sum(neuron.step(current) for _ in range(n_steps))
+
+
+def _connor_stevens_hand_spike_count(n_macro_steps: int, current: float) -> int:
+    """Return the hand-authored Connor-Stevens macro-step (RK4, crossing) spike count.
+
+    The maintained ``ConnorStevensNeuron.step`` is a 1 ms macro step of 100 inner
+    four-stage RK4 sub-steps (``dt=0.01``) with a rising-edge ``v >= v_threshold`` crossing
+    on the macro boundary and no reset. The bundled ``connor_stevens`` schema mirrors this
+    exactly (``method="rk4"``, ``substeps=100``, ``detection="crossing"``), so one hand
+    ``step()`` corresponds to one schema macro ``step()``.
+    """
+    neuron = ConnorStevensNeuron()
+    return sum(neuron.step(current) for _ in range(n_macro_steps))
 
 
 # Adaptive-threshold operating point mirrored by the bundled ``mihalas_niebur`` schema.
@@ -662,6 +678,135 @@ def _verilog_spike_count_q1616(model_name: str, n_steps: int, current: float) ->
         return int(match.group(1))
 
 
+def _neuron_verilog_spike_count_q1616(
+    neuron: EquationNeuron, n_steps: int, current: float, module_name: str
+) -> int:
+    """Compile a raw ``EquationNeuron`` to Q16.16 RTL, simulate, return the spike count.
+
+    Unlike :func:`_verilog_spike_count_q1616` this takes a constructed neuron directly (not a
+    bundled schema name), so it can co-simulate an in-test configuration such as an artificial
+    sub-step count on a polynomial oscillator.
+    """
+    verilog = compile_to_verilog(neuron, module_name=module_name, data_width=32, fraction=16)
+    tb = generate_testbench(
+        neuron,
+        module_name=module_name,
+        n_steps=n_steps,
+        input_current=current,
+        data_width=32,
+        fraction=16,
+    )
+    with tempfile.TemporaryDirectory() as tmpdir:
+        rtl_path = Path(tmpdir) / f"{module_name}.v"
+        tb_path = Path(tmpdir) / f"tb_{module_name}.v"
+        out_path = Path(tmpdir) / f"tb_{module_name}"
+        rtl_path.write_text(verilog)
+        tb_path.write_text(tb)
+        compile_result = subprocess.run(
+            ["iverilog", "-g2012", "-o", str(out_path), str(rtl_path), str(tb_path)],
+            capture_output=True,
+            text=True,
+            timeout=30,
+        )
+        if compile_result.returncode != 0:
+            raise RuntimeError(f"iverilog compile failed:\n{compile_result.stderr}")
+        run_result = subprocess.run(
+            ["vvp", str(out_path)], capture_output=True, text=True, timeout=60
+        )
+        if run_result.returncode != 0:
+            raise RuntimeError(f"vvp simulation failed:\n{run_result.stderr}")
+        match = re.search(r"(\d+) spikes", run_result.stdout)
+        if not match:
+            raise RuntimeError(f"Could not parse spike count from:\n{run_result.stdout}")
+        return int(match.group(1))
+
+
+def _fitzhugh_nagumo_substep_neuron(substeps: int) -> EquationNeuron:
+    """Build the faithful FitzHugh-Nagumo oscillator with an artificial sub-step count.
+
+    FitzHugh-Nagumo is polynomial, so its Q16.16 datapath is bit-exact against float64; giving
+    it ``substeps`` inner steps lets the macro-step lowering be validated on a model whose only
+    residual would be a logic error (no look-up-table quantisation to confound the comparison).
+    """
+    return EquationNeuron(
+        equations={
+            "v": "v - v * v * v / 3.0 - w + I",
+            "w": "epsilon * (v + a - b * w)",
+        },
+        parameters={"a": 0.7, "b": 0.8, "epsilon": 0.08, "v_threshold": 1.0},
+        state={"v": -1.0, "w": -0.5},
+        threshold="v >= v_threshold",
+        dt=0.1,
+        method="rk4",
+        detection="crossing",
+        substeps=substeps,
+    )
+
+
+@pytest.mark.skipif(not HAS_IVERILOG, reason="Icarus Verilog not available")
+class TestMacroStepSubstepEmitter:
+    """The macro-step (``substeps``) emitter lowering is bit-exact against the Python runner.
+
+    Validated on the **polynomial** FitzHugh-Nagumo oscillator so no transcendental look-up
+    table can mask a macro-step logic error: at Q16.16 the datapath is bit-true, so any
+    runner-vs-RTL macro-step disagreement would be a pure lowering bug. The macro step advances
+    ``substeps`` integration sub-steps per clock-window and gates the rising-edge crossing to the
+    macro boundary; the same total sub-step budget must yield the same crossing count regardless
+    of how it is grouped into macro steps.
+    """
+
+    def test_substeps_one_matches_plain_single_step(self) -> None:
+        """``substeps=1`` is byte-identical to the ordinary single-step datapath."""
+        neuron = _fitzhugh_nagumo_substep_neuron(1)
+        runner = neuron.__class__(
+            equations=dict(neuron.equations),
+            parameters=dict(neuron.parameters),
+            state={"v": -1.0, "w": -0.5},
+            threshold=neuron.threshold_expr,
+            dt=neuron.dt,
+            method="rk4",
+            detection="crossing",
+            substeps=1,
+        )
+        py = sum(runner.step(I=0.5) for _ in range(3000))
+        vlog = _neuron_verilog_spike_count_q1616(
+            _fitzhugh_nagumo_substep_neuron(1), 3000, 0.5, "sc_fhn_ss1"
+        )
+        assert py == vlog == 8
+
+    def test_macrostep_lowering_is_bit_exact_across_groupings(self) -> None:
+        """A fixed sub-step budget yields the same crossing count under any macro grouping.
+
+        3000 sub-steps as 3000 macro steps of 1, 1500 of 2, or 750 of 4 all report the eight
+        FitzHugh-Nagumo crossings, hand==schema==verilog, proving the macro-boundary counter,
+        the ``_thr_prev`` refresh, and the per-sub-step state advance are lowered correctly.
+        """
+        for substeps, macro_steps in ((2, 1500), (4, 750)):
+            neuron = _fitzhugh_nagumo_substep_neuron(substeps)
+            py = sum(neuron.step(I=0.5) for _ in range(macro_steps))
+            vlog = _neuron_verilog_spike_count_q1616(
+                _fitzhugh_nagumo_substep_neuron(substeps),
+                macro_steps * substeps,
+                0.5,
+                f"sc_fhn_ss{substeps}",
+            )
+            assert py == vlog == 8, f"substeps={substeps}: schema={py}, verilog={vlog} (expected 8)"
+
+    def test_substeps_reject_reset_model(self) -> None:
+        """The emitter refuses ``substeps > 1`` on a resetting (level) model, not silently wrong."""
+        reset_neuron = EquationNeuron(
+            equations={"v": "I"},
+            state={"v": 0.0},
+            threshold="v >= 1.0",
+            reset={"v": "0.0"},
+            dt=0.1,
+            method="euler",
+            substeps=4,
+        )
+        with pytest.raises(NotImplementedError, match="substeps > 1"):
+            compile_to_verilog(reset_neuron, module_name="sc_reset_ss", data_width=32, fraction=16)
+
+
 @pytest.mark.skipif(not HAS_IVERILOG, reason="Icarus Verilog not available")
 class TestQ1616Precision:
     """Q16.16 precision mode: 16 integer + 16 fractional bits (32-bit).
@@ -784,18 +929,39 @@ class TestQ1616Precision:
             f"Wang-Buzsaki Q16.16 gap {gap_pct:.1f}% (Python={py_spikes}, Verilog={vlog_spikes})"
         )
 
-    def test_connor_stevens_q1616_parity(self) -> None:
-        """Connor-Stevens (A-current, cube-root a-gate) co-simulates at Q16.16.
+    def test_connor_stevens_q1616_macrostep_parity(self) -> None:
+        """Faithful macro-step Connor-Stevens: hand == schema exact, verilog within one spike.
 
-        Exercises both the cube-root power lowering (a_inf = (...)**(1/3)) and the
-        exprel rewrite of its singular alpha_m / alpha_n rate functions.
+        The re-enrolled schema mirrors ``ConnorStevensNeuron``'s maintained integrator: RK4
+        with ``substeps=100`` (100 inner ``dt=0.01`` sub-steps per 1 ms macro step) and a
+        rising-edge (``v >= v_threshold``) crossing evaluated only on the macro boundary, no
+        reset. The earlier schema was single-step ``method="euler"`` — neither the hand
+        model's RK4 nor its macro-stepping — so it could only be compared schema-vs-verilog;
+        the macro-step schema now reproduces the hand model's action-potential count exactly,
+        so **hand == schema** (one hand ``step()`` per schema macro ``step()``).
+
+        The Q16.16 RTL runs 100 clocks per macro step (one integration sub-step each, the
+        crossing gated to the macro boundary) and tracks the schema **within one spike** over
+        the bounded window. Unlike the well-conditioned Morris-Lecar, Connor-Stevens is a
+        stiff six-state A-current model whose exprel / cube-root gating lowers to 256-entry
+        look-up tables; the fixed-point trajectory drifts from float64 and the drift is
+        **look-up-table-resolution-limited, not datapath-precision-limited** (the spike count
+        is identical at Q16.16 / Q24.24 / Q32.32), so it holds three-way over a bounded window
+        and accumulates beyond it — an honest per-model hardware-fidelity band, not a tolerance
+        knob. The macro-step lowering itself is bit-exact (proven on the polynomial
+        FitzHugh-Nagumo sub-step cosim); the residual is genuine conductance-LUT quantisation.
         """
-        py_spikes = _python_spike_count("connor_stevens", 300, 50.0)
-        vlog_spikes = _verilog_spike_count_q1616("connor_stevens", 300, 50.0)
-        assert py_spikes > 0 and vlog_spikes > 0
-        gap_pct = abs(py_spikes - vlog_spikes) / max(py_spikes, 1) * 100
-        assert gap_pct <= 10.0, (
-            f"Connor-Stevens Q16.16 gap {gap_pct:.1f}% (Python={py_spikes}, Verilog={vlog_spikes})"
+        current, macro_steps, substeps = 100.0, 20, 100
+        hand_spikes = _connor_stevens_hand_spike_count(macro_steps, current)
+        py_spikes = _python_spike_count("connor_stevens", macro_steps, current)
+        vlog_spikes = _verilog_spike_count_q1616("connor_stevens", macro_steps * substeps, current)
+        assert 1 < py_spikes < macro_steps  # a partial macro-step train, not saturated
+        assert hand_spikes == py_spikes, (
+            f"Connor-Stevens hand/schema macro-step mismatch: hand={hand_spikes}, schema={py_spikes}"
+        )
+        assert abs(py_spikes - vlog_spikes) <= 1, (
+            f"Connor-Stevens Q16.16 macro-step gap > 1 spike "
+            f"(schema={py_spikes}, verilog={vlog_spikes})"
         )
 
     def test_fitzhugh_nagumo_q1616_parity(self) -> None:

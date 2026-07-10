@@ -143,7 +143,7 @@ range = [
 
 [integration]
 dt = 0.01
-method = "euler"
+method = "rk4"
 
 [dynamics]
 v = "(-g_na*m**3*h*(v-e_na) - g_k*n**4*(v-e_k) - g_a*a**3*b*(v-e_a) - g_l*(v-e_l) + I) / c_m"

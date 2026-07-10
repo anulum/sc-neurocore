@@ -81,6 +81,52 @@ class TestEquationNeuron:
         for _ in range(3000):
             n.step(I=0.5)  # must not raise
 
+    def test_substeps_defaults_to_one(self) -> None:
+        """Without an explicit ``substeps`` the neuron is a plain single-step integrator."""
+        from sc_neurocore.neurons.equation_builder import EquationNeuron
+
+        n = EquationNeuron(equations={"v": "I"}, state={"v": 0.0}, dt=1.0)
+        assert n.substeps == 1
+
+    def test_substeps_rejects_non_positive_and_bool(self) -> None:
+        """``substeps`` must be a positive integer; ``0``, negatives and ``bool`` are rejected."""
+        from sc_neurocore.neurons.equation_builder import EquationNeuron
+
+        for bad in (0, -3, True, False, 2.0):
+            with pytest.raises(ValueError, match="substeps must be a positive integer"):
+                EquationNeuron(equations={"v": "I"}, state={"v": 0.0}, dt=1.0, substeps=bad)  # type: ignore[arg-type]
+
+    def test_macrostep_advances_n_integration_substeps(self) -> None:
+        """One macro ``step()`` advances the state by ``substeps`` inner integration steps."""
+        from sc_neurocore.neurons.equation_builder import EquationNeuron
+
+        n = EquationNeuron(equations={"v": "I"}, state={"v": 0.0}, dt=1.0, substeps=5)
+        n.step(I=2.0)
+        # Euler ``v += I*dt`` applied five times: 0 + 5 * (2 * 1) = 10.
+        assert n.state["v"] == 10.0
+
+    def test_macrostep_crossing_fires_once_per_macro_boundary(self) -> None:
+        """A non-resetting ramp counts one spike per macro step, not per sub-step crossing.
+
+        The membrane crosses the threshold in the middle of the first macro window (at the
+        third of five sub-steps), but the rising-edge decision is taken only on the macro
+        boundary, so the macro step registers exactly one spike and the next macro step —
+        already above threshold — registers none.
+        """
+        from sc_neurocore.neurons.equation_builder import EquationNeuron
+
+        n = EquationNeuron(
+            equations={"v": "I"},
+            state={"v": 0.0},
+            threshold="v >= 2.5",
+            detection="crossing",
+            dt=1.0,
+            substeps=5,
+        )
+        spikes = [n.step(I=1.0) for _ in range(2)]
+        assert spikes == [1, 0]
+        assert n.state["v"] == 10.0
+
     def test_izhikevich(self) -> None:
         from sc_neurocore.neurons.equation_builder import EquationNeuron
 

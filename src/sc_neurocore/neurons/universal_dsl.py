@@ -45,6 +45,10 @@ Schema format (v1):
     [integration]
     dt = 0.1
     method = "euler"   # euler | map | rk4 | exp_euler
+    substeps = 1       # inner integration sub-steps per macro step (default 1). >1 advances
+                       # `substeps` sub-steps of `dt` before a single macro-boundary spike
+                       # decision, matching a sub-stepping hand model (e.g. 100 dt sub-steps
+                       # per 1 ms macro step); the crossing is taken once per macro step.
 
     [dynamics]
     # ODE right-hand sides: dvar/dt = expression
@@ -277,6 +281,10 @@ class UniversalNeuron:
         integration = self._schema.get("integration", {})
         dt = dt_override or integration.get("dt", 0.1)
         method = method_override or integration.get("method", "euler")
+        # ``substeps`` (default 1) advances the integrator this many inner steps per
+        # macro ``step()`` before a single spike decision, mirroring the conductance
+        # hand models' fixed sub-stepping (e.g. 100 dt sub-steps per 1 ms macro step).
+        substeps = int(integration.get("substeps", 1))
 
         # Threshold and reset
         threshold_config = self._schema.get("threshold", {})
@@ -304,6 +312,7 @@ class UniversalNeuron:
             dt=dt,
             method=method,
             detection=detection,
+            substeps=substeps,
         )
 
         logger.debug(

@@ -5,6 +5,32 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+### Macro-step integration mode + faithful Connor-Stevens re-enrolment
+- Added a macro-step integration mode (`[integration] substeps = N`) to the schema DSL — in both
+  the Python runner (`EquationNeuron`) and the emitted Verilog. One macro `step()` advances `N`
+  inner integration sub-steps before a single spike decision, with the rising-edge crossing taken
+  only on the macro boundary. This lets the schema faithfully replicate the maintained conductance
+  hand models whose `step()` is a fixed number of fine sub-steps per macro step (HH / Connor-Stevens:
+  100 `dt=0.01` sub-steps per 1 ms; Wang-Buzsaki: 50 per 0.5 ms), so a repetitively firing
+  oscillator counts one spike per action potential, not one per sub-step above threshold. The RTL
+  keeps one sub-step per clock and gates the crossing to the macro boundary via a sub-step counter;
+  the lowering is bit-exact against the runner (proven on the polynomial FitzHugh-Nagumo at Q16.16,
+  exact across sub-step groupings). Supported for the edge (crossing, non-resetting), non-pipelined
+  datapath; other combinations raise `NotImplementedError`. `substeps = 1` (default) leaves every
+  existing model bit-for-bit unchanged.
+- Re-enrolled Connor-Stevens (1971) faithfully with the macro-step mode: the bundled schema is now
+  `method="rk4"`, `substeps=100`, macro-boundary `v >= v_threshold` crossing — matching the
+  maintained `ConnorStevensNeuron`. `hand == schema` exact (ten action potentials at `I=100` over
+  60 macro steps), which the earlier single-step Euler schema could not achieve. The Q16.16 RTL
+  tracks the schema **within one spike** over the bounded window; the residual is genuine
+  conductance-LUT quantisation (LUT-resolution-limited, identical at Q16.16 / Q24.24 / Q32.32),
+  three-way exact over a bounded window and accumulating beyond it — an honest per-model
+  hardware-fidelity band. Re-derived reference trace `connor_stevens_driven_spiking_doi`
+  (`independent_macrostep_rk4_reference`, bit-exact vs the runner); descriptor integration updated
+  (euler → rk4). Also fixed a pre-existing `connor_stevens.json` toml/json drift (singular
+  `a*(V-V0)/(1-exp(...))` rate form → the stable `exprel` rewrite the `.toml` already used).
+  Schema-gap counts unchanged; no polyglot / benchmark change (the hand model was already RK4).
+
 ### Morris-Lecar faithful re-enrolment (RK4, no reset, rising-edge crossing)
 - Re-enrolled the Morris-Lecar (1981) calcium-potassium oscillator (`morris_lecar` schema,
   DOI `10.1016/S0006-3495(81)84782-0`) as the first **conductance** edge-crossing oscillator

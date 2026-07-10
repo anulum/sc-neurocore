@@ -98,6 +98,7 @@ class EquationNeuron:
         units: str = "none",
         input_unit: Any | None = None,
         detection: str = "level",
+        substeps: int = 1,
     ) -> None:
         """Initialise an equation-defined neuron from ODE strings."""
         if units not in {"none", "strict"}:
@@ -108,12 +109,19 @@ class EquationNeuron:
             raise ValueError(
                 f"detection must be one of {sorted(_SUPPORTED_DETECTION)}, got {detection!r}"
             )
+        # ``substeps`` advances the integrator this many inner steps per macro ``step()``
+        # before a single spike decision, mirroring the conductance hand models' fixed
+        # sub-stepping (e.g. 100 dt sub-steps per 1 ms macro step). Must be a positive
+        # integer; the ``bool`` guard rejects ``True``/``False`` slipping through as 1/0.
+        if isinstance(substeps, bool) or not isinstance(substeps, int) or substeps < 1:
+            raise ValueError(f"substeps must be a positive integer, got {substeps!r}")
 
         self.equations = equations
         self.threshold_expr = threshold
         self.reset_rules = reset or {}
         self.method = method
         self.detection = detection
+        self.substeps = substeps
         # Rising-edge (``crossing``) detection is only engaged for a NON-resetting model:
         # a reset that drops the state back below threshold already clears the condition
         # every spike, so ``level`` and ``crossing`` are identical there and the simpler
@@ -529,12 +537,62 @@ class EquationNeuron:
         return env
 
     def step(self, I: float = 0.0, **kwargs: float) -> int:
-        """Advance the neuron by one timestep; return 1 if it spikes."""
+        """Advance the neuron by one macro timestep; return 1 if it spikes.
+
+        When ``substeps > 1`` the state is advanced by that many inner integration
+        sub-steps before a single spike decision is taken on the macro boundary. This
+        matches the maintained conductance hand models whose ``step()`` runs a fixed
+        number of fine sub-steps per macro step (Hodgkin-Huxley / Connor-Stevens: 100
+        sub-steps of ``dt`` per 1 ms macro step; Wang-Buzsaki: 50 per 0.5 ms) and detect
+        the threshold crossing only across the macro step. The edge-crossing flag is
+        compared against the state at the previous macro boundary, not per sub-step, so a
+        repetitively firing oscillator counts one spike per action potential rather than
+        one per sub-step it stays above threshold. With the default ``substeps == 1`` this
+        is a plain single integration step and every existing model is bit-for-bit
+        unchanged.
+        """
         kwargs["I"] = self._convert_runtime_value(self._input_unit_name, I)
         if self._strict_units:
             kwargs = {
                 name: self._convert_runtime_value(name, value) for name, value in kwargs.items()
             }
+        for _ in range(self.substeps):
+            self._integrate_once(**kwargs)
+
+        spike = 0
+        if self._compiled_threshold:
+            env_post = self._build_env(**kwargs)
+            # nosec B307: AST-whitelisted compiled threshold expression.
+            active = bool(eval(self._compiled_threshold, self._EVAL_GLOBALS, env_post))  # nosec B307
+            # ``crossing`` fires once on the inactive -> active transition (a rising
+            # threshold crossing, matching the hand oscillator models' ``v >= thr and
+            # v_prev < thr`` edge test); ``level`` fires on every step the condition
+            # holds. The tracked flag is the pre-reset condition on the just-integrated
+            # state, which equals the committed state for a non-resetting oscillator and
+            # is cleared by any reset that drops the state back below threshold, so a
+            # reset-based level model behaves identically under either detection mode.
+            if self._edge_detection:
+                fired = active and not self._prev_threshold_active
+                self._prev_threshold_active = active
+            else:
+                fired = active
+            if fired:
+                spike = 1
+                reset_env = self._build_env(**kwargs)
+                for var, code in self._compiled_reset.items():
+                    # nosec B307: AST-whitelisted compiled reset rule.
+                    self.state[var] = float(eval(code, self._EVAL_GLOBALS, reset_env))  # nosec B307
+
+        return spike
+
+    def _integrate_once(self, **kwargs: float) -> None:
+        """Advance the state by one integration sub-step (no spike/threshold decision).
+
+        Rebuilds the evaluation environment from the current state so it can be called
+        repeatedly within a macro step, applies the method's integrator, and fails closed
+        on a non-finite state. The threshold/spike decision is taken once per macro step
+        in :meth:`step`, so this helper never reads the threshold or reset rules.
+        """
         env = self._build_env(**kwargs)
 
         if self.method == "euler":
@@ -624,32 +682,6 @@ class EquationNeuron:
                 raise FloatingPointError(
                     f"{var!r} became non-finite ({value}) after a {self.method} step"
                 )
-
-        spike = 0
-        if self._compiled_threshold:
-            env_post = self._build_env(**kwargs)
-            # nosec B307: AST-whitelisted compiled threshold expression.
-            active = bool(eval(self._compiled_threshold, self._EVAL_GLOBALS, env_post))  # nosec B307
-            # ``crossing`` fires once on the inactive -> active transition (a rising
-            # threshold crossing, matching the hand oscillator models' ``v >= thr and
-            # v_prev < thr`` edge test); ``level`` fires on every step the condition
-            # holds. The tracked flag is the pre-reset condition on the just-integrated
-            # state, which equals the committed state for a non-resetting oscillator and
-            # is cleared by any reset that drops the state back below threshold, so a
-            # reset-based level model behaves identically under either detection mode.
-            if self._edge_detection:
-                fired = active and not self._prev_threshold_active
-                self._prev_threshold_active = active
-            else:
-                fired = active
-            if fired:
-                spike = 1
-                reset_env = self._build_env(**kwargs)
-                for var, code in self._compiled_reset.items():
-                    # nosec B307: AST-whitelisted compiled reset rule.
-                    self.state[var] = float(eval(code, self._EVAL_GLOBALS, reset_env))  # nosec B307
-
-        return spike
 
     def get_state(self) -> dict[str, Any]:
         """Return current state, with units if in strict mode."""

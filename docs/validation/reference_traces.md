@@ -21,7 +21,7 @@ table because their schemas are stochastic.
 | Trace | Schema | Runner | Provenance |
 |-------|--------|--------|------------|
 | `adex_resting_adaptation_doi` | `adex` | `universal_dsl` | Independent explicit-Euler re-derivation of the subthreshold equations from `neurons/model_schemas/adex.toml` with DOI-backed schema provenance |
-| `connor_stevens_resting_gate_doi` | `connor_stevens` | `universal_dsl` | Independent explicit-Euler re-derivation of the resting gate equations from `neurons/model_schemas/connor_stevens.toml` with DOI-backed schema provenance |
+| `connor_stevens_driven_spiking_doi` | `connor_stevens` | `universal_dsl` | Independent macro-step RK4 re-derivation of the driven A-current oscillator (100 inner `dt=0.01` sub-steps per 1 ms macro step, no reset, macro-boundary `v >= 0` crossing) from `neurons/model_schemas/connor_stevens.toml` with DOI-backed schema provenance |
 | `dpi_neuron_driven_spiking_doi` | `dpi_neuron` | `universal_dsl` | Independent explicit-Euler re-derivation of the current-mode differential-pair-integrator membrane from `neurons/model_schemas/dpi_neuron.toml` with DOI-backed schema provenance |
 | `exp_if_resting_exponential_doi` | `exp_if` | `universal_dsl` | Independent explicit-Euler re-derivation of the resting equation from `neurons/model_schemas/exp_if.toml` with DOI-backed schema provenance |
 | `fitzhugh_nagumo_driven_oscillation_doi` | `fitzhugh_nagumo` | `universal_dsl` | Independent fourth-order Runge-Kutta re-derivation of the driven relaxation oscillator (no reset, rising-edge `v >= 1` crossing) from `neurons/model_schemas/fitzhugh_nagumo.toml` with DOI-backed schema provenance |
@@ -50,7 +50,7 @@ Hodgkin-Huxley, Connor-Stevens, Wang-Buzsaki, DPI, and Mihalas-Niebur analytic,
 explicit-Euler, or fourth-order Runge-Kutta solutions — every deterministic
 bundled-schema entry — so the committed feature values are not merely copied from
 the runner output. The
-Hodgkin-Huxley, Connor-Stevens, and Wang-Buzsaki re-derivations reuse the runner's
+Hodgkin-Huxley and Wang-Buzsaki re-derivations reuse the runner's
 numpy activation, exponential, and exprel functions so the conductance rate terms
 match bit-for-bit. The GLIF
 entry re-derives the exact subthreshold explicit-Euler recurrence for its linear
@@ -85,10 +85,20 @@ unlike the polynomial FitzHugh-Nagumo and piecewise-linear McKean oscillators th
 per-step state is not bit-identical to the hand model (numpy versus `math`
 transcendentals through distinct RK4 drivers), so the parity is at the spike-count
 level, robust across the whole `I in [90, 110]` band.
-The perfect-integrator, FitzHugh-Nagumo, McKean, Morris-Lecar, Izhikevich,
+The Connor-Stevens entry re-derives the exact **macro-step** RK4 recurrence for its
+six-state A-current oscillator: each 1 ms macro step advances 100 inner four-stage RK4
+sub-steps of `dt = 0.01`, and the rising-edge `v >= 0` crossing is taken only on the macro
+boundary — matching the maintained `ConnorStevensNeuron`, whose `step()` is itself a
+100-sub-step macro step. The six-state membrane and Na/K/A-type gating rate functions
+(numpy exp/exprel and the cube-root `a`-gate) reproduce the schema runner bit-for-bit, so the
+schema counts the same ten action potentials the hand model does (`hand == schema` exact),
+which the earlier single-step Euler schema could not. This macro-step integration mode
+(`[integration] substeps`) is what lets the schema faithfully replicate a sub-stepping hand
+model rather than over-counting one crossing per sub-step.
+The perfect-integrator, FitzHugh-Nagumo, McKean, Morris-Lecar, Connor-Stevens, Izhikevich,
 Izhikevich 2007, DPI, and Mihalas-Niebur entries are spike-bearing;
-they validate reset (or, for FitzHugh-Nagumo, McKean, and Morris-Lecar, rising-edge
-crossing) and first-spike features, not only quiet trajectories. The
+they validate reset (or, for FitzHugh-Nagumo, McKean, Morris-Lecar, and Connor-Stevens,
+rising-edge crossing) and first-spike features, not only quiet trajectories. The
 Rulkov entry iterates the Rulkov 2002 piecewise fast/slow map with the
 `method = "map"` integration mode (`x_{n+1} = f(x_n, y_n)`, iterated as a discrete
 map rather than integrated as an ODE), so the trajectory is bounded and its

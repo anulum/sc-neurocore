@@ -4,24 +4,53 @@
     "name": "Connor-Stevens",
     "author": "Connor, J.A. & Stevens, C.F.",
     "year": 1971,
-    "doi": "10.1113/jphysiol.1971.sp009368",
-    "description": "A-type potassium current model — Type-I excitability with 6 state variables"
+    "doi": "10.1113/jphysiol.1971.sp009366",
+    "description": "A-type potassium current model \u2014 Type-I excitability with 6 state variables"
   },
-  "state": { "v": -68.0, "m": 0.01, "h": 0.99, "n": 0.1, "a": 0.5, "b": 0.1 },
+  "state": {
+    "v": -68.0,
+    "m": 0.01,
+    "h": 0.99,
+    "n": 0.1,
+    "a": 0.5,
+    "b": 0.1
+  },
   "parameters": {
-    "g_na": 120.0, "g_k": 20.0, "g_a": 47.7, "g_l": 0.3,
-    "e_na": 55.0, "e_k": -72.0, "e_a": -75.0, "e_l": -17.0,
-    "c_m": 1.0, "v_threshold": 0.0
+    "g_na": 120.0,
+    "g_k": 20.0,
+    "g_a": 47.7,
+    "g_l": 0.3,
+    "e_na": 55.0,
+    "e_k": -72.0,
+    "e_a": -75.0,
+    "e_l": -17.0,
+    "c_m": 1.0,
+    "v_threshold": 0.0
   },
-  "integration": { "dt": 0.01, "method": "euler" },
+  "integration": {
+    "dt": 0.01,
+    "method": "rk4",
+    "substeps": 100
+  },
   "dynamics": {
     "v": "(-g_na*m**3*h*(v-e_na) - g_k*n**4*(v-e_k) - g_a*a**3*b*(v-e_a) - g_l*(v-e_l) + I) / c_m",
-    "m": "0.38*(v+29.7)/(1-exp(-(v+29.7)/10))*(1-m) - 15.2*exp(-(v+54.7)/18)*m",
+    "m": "3.8/exprel(-(v+29.7)/10)*(1-m) - 15.2*exp(-(v+54.7)/18)*m",
     "h": "0.266*exp(-(v+48)/20)*(1-h) - 3.8/(1+exp(-(v+18)/10))*h",
-    "n": "0.02*(v+45.7)/(1-exp(-(v+45.7)/10))*(1-n) - 0.25*exp(-(v+55.7)/80)*n",
+    "n": "0.2/exprel(-(v+45.7)/10)*(1-n) - 0.25*exp(-(v+55.7)/80)*n",
     "a": "(((0.0761*exp((v+94.22)/31.84)/(1+exp((v+1.17)/28.93)))**(1.0/3.0)) - a) / (0.3632 + 1.158/(1+exp((v+55.96)/20.12)))",
     "b": "((1/(1+exp((v+53.3)/14.54))**4) - b) / (1.24 + 2.678/(1+exp((v+50)/16.027)))"
   },
-  "threshold": { "condition": "v > v_threshold", "detection": "crossing" },
-  "extensions": { "excitability": "Type-I", "conductances": ["Na", "K", "A-type K", "leak"] }
+  "threshold": {
+    "condition": "v >= v_threshold",
+    "detection": "crossing"
+  },
+  "extensions": {
+    "excitability": "Type-I",
+    "conductances": [
+      "Na",
+      "K",
+      "A-type K",
+      "leak"
+    ]
+  }
 }

@@ -31,7 +31,7 @@ from sc_neurocore.neurons.universal_dsl import list_bundled_schemas
 _STOCHASTIC_SCHEMA_NAMES = frozenset({"escape_rate", "poisson"})
 _DETERMINISTIC_SCHEMA_TRACES = {
     "adex": "adex_resting_adaptation_doi",
-    "connor_stevens": "connor_stevens_resting_gate_doi",
+    "connor_stevens": "connor_stevens_driven_spiking_doi",
     "dpi_neuron": "dpi_neuron_driven_spiking_doi",
     "exp_if": "exp_if_resting_exponential_doi",
     "fitzhugh_nagumo": "fitzhugh_nagumo_driven_oscillation_doi",
@@ -998,28 +998,33 @@ def _hodgkin_huxley_resting_euler_features(
     return _summarise(recorded, spikes)
 
 
-def _connor_stevens_resting_euler_features(
-    *, current: float, dt: float, steps: int
+def _connor_stevens_macrostep_rk4_features(
+    *, current: float, dt: float, steps: int, substeps: int
 ) -> dict[str, float]:
-    """Return exact explicit-Euler features for the resting Connor-Stevens recurrence.
+    """Return exact macro-step RK4 features for the driven Connor-Stevens oscillator.
 
-    The Connor-Stevens (1971) membrane and its six gating variables (fast sodium
-    ``m``/``h``, delayed-rectifier ``n``, and A-type ``a``/``b``) are advanced with
-    the same simultaneous explicit-Euler update the schema runner applies, reusing
-    :func:`_np_exp` and :func:`_reference_exprel` so the rate functions match the
-    runner bit-for-bit. The verbatim expression order is preserved; the resting
-    zero-current protocol never crosses the ``v > 0`` threshold and the schema
-    declares no reset, so the reference is an independent re-derivation of the
-    committed gate trajectory.
+    The Connor-Stevens (1971) A-current model is the faithful representation of the
+    maintained ``ConnorStevensNeuron`` (RK4, sub-stepped): each macro step advances
+    ``substeps`` inner four-stage classical RK4 sub-steps of ``dt``, and the rising-edge
+    ``v >= 0`` crossing is evaluated only on the macro boundary against the condition at
+    the previous macro boundary — matching the hand model's 100-sub-step-per-millisecond
+    macro step and ``EquationNeuron.step``'s macro crossing, with **no reset**. The
+    six-state membrane and Na/K/A-type gating rate functions are transcribed verbatim from
+    the schema, reusing :func:`_np_exp` and :func:`_reference_exprel` (and the cube-root
+    ``a``-gate) so the recurrence reproduces the schema runner bit-for-bit. The reference is
+    an independent re-derivation of the committed driven-spiking trace, not a copy of the
+    runner.
 
     Parameters
     ----------
     current:
         Constant input current applied at every timestep.
     dt:
-        Simulation timestep.
+        Inner sub-step timestep.
     steps:
-        Number of timesteps to advance.
+        Number of macro steps to advance.
+    substeps:
+        Number of inner RK4 sub-steps per macro step.
 
     Returns
     -------
@@ -1036,15 +1041,12 @@ def _connor_stevens_resting_euler_features(
     e_a = -75.0
     e_l = -17.0
     c_m = 1.0
-    v = -68.0
-    m = 0.01
-    h = 0.99
-    n = 0.1
-    a = 0.5
-    b = 0.1
+    v_threshold = 0.0
     recorded: dict[str, list[float]] = {"v": [], "m": [], "h": [], "n": [], "a": [], "b": []}
     spikes: list[int] = []
-    for _ in range(steps):
+
+    def deriv(sv: tuple[float, ...]) -> tuple[float, ...]:
+        v, m, h, n, a, b = sv
         dv = (
             -g_na * m**3 * h * (v - e_na)
             - g_k * n**4 * (v - e_k)
@@ -1069,20 +1071,27 @@ def _connor_stevens_resting_euler_features(
         db = (1 / (1 + _np_exp((v + 53.3) / 14.54)) ** 4 - b) / (
             1.24 + 2.678 / (1 + _np_exp((v + 50) / 16.027))
         )
-        v_next = v + dv * dt
-        m_next = m + dm * dt
-        h_next = h + dh * dt
-        n_next = n + dn * dt
-        a_next = a + da * dt
-        b_next = b + db * dt
-        spikes.append(1 if v_next > 0 else 0)
-        v, m, h, n, a, b = v_next, m_next, h_next, n_next, a_next, b_next
-        recorded["v"].append(v)
-        recorded["m"].append(m)
-        recorded["h"].append(h)
-        recorded["n"].append(n)
-        recorded["a"].append(a)
-        recorded["b"].append(b)
+        return dv, dm, dh, dn, da, db
+
+    def rk4_substep(sv: tuple[float, ...]) -> tuple[float, ...]:
+        k1 = deriv(sv)
+        s1 = tuple(sv[i] + 0.5 * dt * k1[i] for i in range(6))
+        k2 = deriv(s1)
+        s2 = tuple(sv[i] + 0.5 * dt * k2[i] for i in range(6))
+        k3 = deriv(s2)
+        s3 = tuple(sv[i] + dt * k3[i] for i in range(6))
+        k4 = deriv(s3)
+        return tuple(sv[i] + dt * (k1[i] + 2 * k2[i] + 2 * k3[i] + k4[i]) / 6 for i in range(6))
+
+    state: tuple[float, ...] = (-68.0, 0.01, 0.99, 0.1, 0.5, 0.1)
+    for _ in range(steps):
+        v_prev = state[0]
+        for _ in range(substeps):
+            state = rk4_substep(state)
+        # Macro-boundary rising-edge crossing (matching the hand model / macro runner).
+        spikes.append(1 if (state[0] >= v_threshold and v_prev < v_threshold) else 0)
+        for index, name in enumerate(("v", "m", "h", "n", "a", "b")):
+            recorded[name].append(state[index])
 
     return _summarise(recorded, spikes)
 
@@ -1415,12 +1424,15 @@ _PARITY_CASES: list[tuple[str, str, str, str, Callable[[ReferenceTraceSpec], dic
         ),
     ),
     (
-        "connor_stevens_resting_gate_doi",
+        "connor_stevens_driven_spiking_doi",
         "connor_stevens",
-        "independent_euler_reference",
-        "doi:10.1113/jphysiol.1971.sp009368",
-        lambda spec: _connor_stevens_resting_euler_features(
-            current=spec.protocol.inputs["I"], dt=spec.protocol.dt, steps=spec.protocol.steps
+        "independent_macrostep_rk4_reference",
+        "doi:10.1113/jphysiol.1971.sp009366",
+        lambda spec: _connor_stevens_macrostep_rk4_features(
+            current=spec.protocol.inputs["I"],
+            dt=spec.protocol.dt,
+            steps=spec.protocol.steps,
+            substeps=100,
         ),
     ),
     (

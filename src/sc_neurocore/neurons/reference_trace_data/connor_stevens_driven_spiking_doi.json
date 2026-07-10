@@ -1,0 +1,71 @@
+{
+  "schema_version": "sc-neurocore.reference-trace.v1",
+  "name": "connor_stevens_driven_spiking_doi",
+  "model": {
+    "schema_name": "connor_stevens",
+    "runner": "universal_dsl"
+  },
+  "protocol": {
+    "dt": 0.01,
+    "steps": 60,
+    "inputs": {
+      "I": 100.0
+    },
+    "state_variables": [
+      "v",
+      "m",
+      "h",
+      "n",
+      "a",
+      "b"
+    ]
+  },
+  "provenance": {
+    "kind": "independent_macrostep_rk4_reference",
+    "source": "src/sc_neurocore/neurons/model_schemas/connor_stevens.toml",
+    "equation": "Driven Connor-Stevens A-current spiking (ten upward v>=0 crossings over 60 one-millisecond macro steps) advanced with the exact macro-step integrator: 100 inner four-stage classical RK4 sub-steps of dt=0.01 per macro step, rising-edge crossing evaluated only on the macro boundary, no reset. The six-state membrane and Na/K/A-type gating equations (numpy exp/exprel rates and the cube-root a-gate) are independently re-derived from the Connor-Stevens (1971) model definition, matching the schema runner bit-for-bit.",
+    "citation": "doi:10.1113/jphysiol.1971.sp009366"
+  },
+  "expected_features": {
+    "spike_count": 10.0,
+    "first_spike_step": 1.0,
+    "final.v": -51.04468539455392,
+    "min.v": -51.046274816767976,
+    "max.v": 24.111062921866885,
+    "mean.v": -29.722925664315145,
+    "final.m": 0.08634121711269942,
+    "min.m": 0.08366615187006801,
+    "max.m": 0.9917083642749476,
+    "mean.m": 0.4193326617908296,
+    "final.h": 0.1544889698596167,
+    "min.h": 0.03697790686324473,
+    "max.h": 0.2827736233759681,
+    "mean.h": 0.16080245831724085,
+    "final.n": 0.7072965908625133,
+    "min.n": 0.6166808317643505,
+    "max.n": 0.7735712734773182,
+    "mean.n": 0.6969570562721441,
+    "final.a": 0.7463929350387617,
+    "min.a": 0.6893372730247946,
+    "max.a": 0.9055513549075213,
+    "mean.a": 0.7639520848941835,
+    "final.b": 0.010644395292974899,
+    "min.b": 0.006803553999491032,
+    "max.b": 0.057311738974245775,
+    "mean.b": 0.013087596003861106
+  },
+  "tolerances": {
+    "default": {
+      "absolute": 1e-09,
+      "relative": 1e-12
+    },
+    "spike_count": {
+      "absolute": 0.0,
+      "relative": 0.0
+    },
+    "first_spike_step": {
+      "absolute": 0.0,
+      "relative": 0.0
+    }
+  }
+}
