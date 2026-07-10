@@ -27,10 +27,19 @@ from typing import Any, Literal
 SCHEMA_VERSION = "sc-neurocore.schema-gap-report.v1"
 MODEL_DIR = Path("src/sc_neurocore/neurons/models")
 SCHEMA_DIR = Path("src/sc_neurocore/neurons/model_schemas")
-SCHEMA_SOURCE_ALIASES: dict[str, str] = {
-    "expif": "exp_if",
-    "resonate_and_fire": "resonate_fire",
-}
+# Canonical alias table (schema stem ↔ module); keep import local so this tool
+# remains usable without a full package install when run as a script.
+try:
+    from sc_neurocore.neurons.schema_module_aliases import (  # type: ignore[import-not-found]
+        SCHEMA_SOURCE_ALIASES as _CANONICAL_SCHEMA_SOURCE_ALIASES,
+    )
+
+    SCHEMA_SOURCE_ALIASES: dict[str, str] = dict(_CANONICAL_SCHEMA_SOURCE_ALIASES)
+except ImportError:  # pragma: no cover - script path without PYTHONPATH=src
+    SCHEMA_SOURCE_ALIASES = {
+        "expif": "exp_if",
+        "resonate_and_fire": "resonate_fire",
+    }
 
 Classification = Literal[
     "schema_present",

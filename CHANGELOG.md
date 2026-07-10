@@ -5,6 +5,15 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 ## [Unreleased]
 
 ### Added
+- Schema/module/class alias registry (`neurons/schema_module_aliases.py`) so
+  schema-DSL stems such as ``exp_if``, ``resonate_fire``, and ``lif`` join the
+  correct hand modules and descriptor classes without fuzzy matching; schema-gap
+  reporting consumes the same table.
+- Catalogue registration for the public SC flagship ``StochasticLIFNeuron``
+  (thin ``models/stochastic_lif`` re-export + curated descriptor) so Studio and
+  dual-axis coverage include the package-root quickstart neuron. Schema stem
+  ``lif`` remains Lapicque-lineage for silicon cosim — documented in the alias
+  table and descriptor notes.
 - Readiness evidence index (`tools/readiness_evidence_index.py`) that wires dual-axis
   validation and silicon facets onto descriptors for models already enrolled in
   schema→RTL co-simulation, and preserves those facets across descriptor corpus

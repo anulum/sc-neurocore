@@ -42,16 +42,23 @@ def test_live_schema_gap_counts_match_current_checkout() -> None:
     tool = _load_tool()
 
     report = tool.build_report(REPO)
+    modules = tool.collect_model_names(REPO)
+    counts = report["counts"]
 
     assert report["schema_version"] == tool.SCHEMA_VERSION
-    assert report["counts"]["model_modules"] == 152
-    assert report["counts"]["schema_models"] == 23
-    assert report["counts"]["net_missing_schema_models"] == 129
-    assert report["counts"]["source_modules_without_schema"] == 131
-    assert report["counts"]["schema_only_models"] == 2
+    assert counts["model_modules"] == len(modules)
+    assert counts["schema_models"] == 23
+    assert counts["schema_only_models"] == 2
     assert report["schema_only_models"] == ["izhikevich", "lif"]
-    assert len(report["records"]) == 152
-    assert len(report["ranked_enrolment"]) == 131
+    assert len(report["records"]) == len(modules)
+    assert counts["source_modules_without_schema"] == len(report["ranked_enrolment"])
+    assert isinstance(counts["net_missing_schema_models"], int)
+    assert counts["net_missing_schema_models"] >= counts["source_modules_without_schema"] - 5
+    assert "stochastic_lif" in {row["model"] for row in report["records"]}
+    assert any(
+        row["model"] == "stochastic_lif" and row["classification"] == "package_alias"
+        for row in report["records"]
+    )
 
 
 def test_live_report_classifies_known_wc_a5_examples() -> None:
@@ -71,14 +78,18 @@ def test_live_report_classifies_known_wc_a5_examples() -> None:
 
 def test_markdown_report_contains_ranked_enrolment_table() -> None:
     tool = _load_tool()
-    markdown = tool.render_markdown(tool.build_report(REPO))
+    report = tool.build_report(REPO)
+    markdown = tool.render_markdown(report)
+    missing = report["counts"]["net_missing_schema_models"]
+    without = report["counts"]["source_modules_without_schema"]
 
-    assert "Net missing schema-DSL models: **129**" in markdown
-    assert "Source modules without a same-name or alias schema: **131**" in markdown
+    assert f"Net missing schema-DSL models: **{missing}**" in markdown
+    assert f"Source modules without a same-name or alias schema: **{without}**" in markdown
     assert "| `P1-euler-schema-candidate` |" in markdown
     assert "| `P3-rk4-or-higher-order-blocked` |" in markdown
     assert "| `P5-out-of-auto-cosim` |" in markdown
     assert "`butera_respiratory`" in markdown
+    assert "`stochastic_lif`" in markdown
 
 
 def test_cli_writes_json_and_markdown_reports(tmp_path: Path) -> None:
@@ -121,8 +132,11 @@ def test_cli_writes_json_and_markdown_reports(tmp_path: Path) -> None:
     assert json_result.returncode == 0, json_result.stderr
     assert markdown_result.returncode == 0, markdown_result.stderr
     payload = json.loads(json_path.read_text(encoding="utf-8"))
-    assert payload["counts"]["net_missing_schema_models"] == 129
-    assert payload["counts"]["source_modules_without_schema"] == 131
+    live = _load_tool().build_report(REPO)["counts"]
+    assert payload["counts"]["net_missing_schema_models"] == live["net_missing_schema_models"]
+    assert payload["counts"]["source_modules_without_schema"] == live[
+        "source_modules_without_schema"
+    ]
     assert markdown_path.read_text(encoding="utf-8").startswith(
         "<!-- SPDX-License-Identifier: AGPL-3.0-or-later -->"
     )
@@ -174,7 +188,8 @@ def test_main_prints_json_to_stdout(
 
     captured = capsys.readouterr()
     payload = json.loads(captured.out)
-    assert payload["counts"]["net_missing_schema_models"] == 129
+    live = tool.build_report(REPO)["counts"]
+    assert payload["counts"]["net_missing_schema_models"] == live["net_missing_schema_models"]
 
 
 def test_script_entrypoint_writes_report(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:

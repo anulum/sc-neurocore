@@ -963,9 +963,9 @@
     "public_api_exports": 45,
     "public_documentation_pages": 567,
     "python_model_classes": 158,
-    "python_model_source_modules": 152,
+    "python_model_source_modules": 153,
     "rust_pyo3_model_wrappers": 175,
-    "test_files": 1013
+    "test_files": 1015
   },
   "documentation": {
     "public_pages": [
@@ -2502,6 +2502,7 @@
       "src/sc_neurocore/neurons/models/sst_neuron.py",
       "src/sc_neurocore/neurons/models/stellate_cell.py",
       "src/sc_neurocore/neurons/models/stochastic_if.py",
+      "src/sc_neurocore/neurons/models/stochastic_lif.py",
       "src/sc_neurocore/neurons/models/superspike_neuron.py",
       "src/sc_neurocore/neurons/models/tc_lif.py",
       "src/sc_neurocore/neurons/models/terman_wang.py",
@@ -3538,6 +3539,7 @@
       "tests/test_sc_neurocore_engine_reexports.py",
       "tests/test_sc_primitives.py",
       "tests/test_sc_quantum_compiler.py",
+      "tests/test_schema_module_aliases.py",
       "tests/test_schema_validator.py",
       "tests/test_schema_validator_edges.py",
       "tests/test_scnir_compatibility.py",
@@ -3629,6 +3631,7 @@
       "tests/test_stochastic_doctor/test_diagnostics_branches.py",
       "tests/test_stochastic_doctor_diagnostics_fallback.py",
       "tests/test_stochastic_lif.py",
+      "tests/test_stochastic_lif_descriptor.py",
       "tests/test_streaming_spike_codec.py",
       "tests/test_structured_logging.py",
       "tests/test_studio_action_evidence.py",

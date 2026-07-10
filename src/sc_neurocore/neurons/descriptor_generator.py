@@ -414,11 +414,18 @@ def merge_descriptor_payloads(
                 spec[key] = _copy(overlay[key])
 
     cur_state = _mapping(curated.get("state"))
-    for name, spec in merged.get("state", {}).items():
+    merged_state = merged.setdefault("state", {})
+    for name, spec in list(merged_state.items()):
         overlay = _mapping(cur_state.get(name))
         for key in _STATE_CURATION_KEYS:
             if key in overlay:
                 spec[key] = _copy(overlay[key])
+    # Runtime state variables assigned outside the dataclass field list (for
+    # example membrane ``v`` on StochasticLIFNeuron) only exist in curation —
+    # preserve those keys so the corpus check cannot drop them.
+    for name, overlay in cur_state.items():
+        if name not in merged_state and isinstance(overlay, Mapping) and overlay:
+            merged_state[name] = _copy(overlay)
 
     cur_prov = _mapping(curated.get("provenance"))
     if cur_prov:

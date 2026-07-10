@@ -1,0 +1,132 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Commercial license available
+# © Concepts 1996–2026 Miroslav Šotek. All rights reserved.
+# © Code 2020–2026 Miroslav Šotek. All rights reserved.
+# ORCID: 0009-0009-3560-0851
+# Contact: www.anulum.li | protoscience@anulum.li
+# SC-NeuroCore — Source/config provenance header
+
+[metadata]
+schema_version = 2
+name = "StochasticLIFNeuron"
+class_name = "StochasticLIFNeuron"
+module = "stochastic_lif"
+display_name = "Stochastic LIF (SC public API)"
+summary = "Discrete-time noisy leaky integrate-and-fire for stochastic-computing workflows (normalised units)."
+family = "Integrate-and-Fire"
+category = "integrate-and-fire"
+biophysical_detail = "point"
+maturity = "experimental"
+intended_use = [
+    "sc-quickstart",
+    "bitstream-input",
+    "edge-snn-prototype",
+]
+hardware_fit = [
+    "sc-bitstream",
+    "cpu-python",
+]
+behavior_tags = [
+    "excitable",
+    "rate-coded",
+    "tonic",
+    "stochastic",
+]
+
+[provenance]
+authors = [
+    "Gerstner, W. & Kistler, W.M.",
+]
+year = 2002
+doi = "10.1017/CBO9780511815706"
+paper_title = "Spiking Neuron Models: Single Neurons, Populations, Plasticity"
+
+[state.v]
+init = 0.0
+unit = "1"
+meaning = "normalised membrane potential"
+
+[parameters.v_rest]
+default = 0.0
+unit = "1"
+meaning = "normalised resting potential"
+range = [
+    -1.0,
+    1.0,
+]
+
+[parameters.v_reset]
+default = 0.0
+unit = "1"
+meaning = "normalised post-spike reset potential"
+range = [
+    -1.0,
+    1.0,
+]
+
+[parameters.v_threshold]
+default = 1.0
+unit = "1"
+meaning = "normalised firing threshold"
+range = [
+    0.0,
+    5.0,
+]
+
+[parameters.tau_mem]
+default = 20.0
+unit = "ms"
+meaning = "membrane time constant"
+range = [
+    0.1,
+    500.0,
+]
+biological_range = [
+    5.0,
+    50.0,
+]
+
+[parameters.noise_std]
+default = 0.0
+unit = "1"
+meaning = "Euler–Maruyama noise scale (zero = deterministic)"
+range = [
+    0.0,
+    2.0,
+]
+
+[parameters.resistance]
+default = 1.0
+unit = "1"
+meaning = "normalised membrane resistance (absorbed into current scale)"
+range = [
+    0.0,
+    10.0,
+]
+
+[parameters.refractory_period]
+default = 0.0
+unit = "steps"
+meaning = "absolute refractory duration in discrete timesteps"
+range = [
+    0.0,
+    100.0,
+]
+
+[integration]
+dt = 1.0
+method = "euler"
+
+[dynamics]
+v = "-(v - v_rest) / tau_mem + resistance * I"
+
+[backends.python]
+status = "implemented"
+parity = "exact"
+
+[reproducibility]
+reference_config = "{\"n_steps\":500,\"current\":0.8,\"noise_std\":0.0,\"backend\":\"python\",\"parameters\":\"defaults\"}"
+
+[documentation]
+slug = "models/stochastic_lif"
+notes = "Public package flagship (README quickstart). Normalised units, not physiological mV. Schema-DSL stem 'lif' joins LapicqueNeuron for silicon cosim; this class is the SC API surface. See neurons/schema_module_aliases.py."

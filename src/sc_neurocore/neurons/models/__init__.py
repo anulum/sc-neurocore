@@ -155,6 +155,7 @@ _CLASS_TO_MODULE = {
     "SpikeResponseNeuron": "spike_response",
     "StellateCell": "stellate_cell",
     "StochasticIFNeuron": "stochastic_if",
+    "StochasticLIFNeuron": "stochastic_lif",
     "SuperSpikeNeuron": "superspike_neuron",
     "TTypeCaNeuron": "ttype_ca_neuron",
     "TermanWangOscillator": "terman_wang",
