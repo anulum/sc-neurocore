@@ -1,0 +1,35 @@
+{
+  "metadata": {
+    "schema_version": 1,
+    "name": "McKeanNeuron",
+    "author": "McKean, H.P.",
+    "year": 1970,
+    "doi": "10.1016/0001-8708(70)90023-X",
+    "description": "McKean 1970 piecewise-linear FitzHugh-Nagumo caricature — analytically tractable relaxation oscillator whose cubic v-nullcline is replaced by a three-branch piecewise-linear function"
+  },
+  "state": {
+    "v": 0.0,
+    "w": 0.0
+  },
+  "parameters": {
+    "a": 0.25,
+    "epsilon": 0.2,
+    "gamma": 0.5,
+    "v_peak": 0.8
+  },
+  "integration": {
+    "dt": 0.1,
+    "method": "rk4"
+  },
+  "dynamics": {
+    "v": "min(max(-v, v - a), 1 - v) - w + I",
+    "w": "epsilon * (v - gamma * w)"
+  },
+  "threshold": {
+    "condition": "v >= v_peak",
+    "detection": "crossing"
+  },
+  "extensions": {
+    "piecewise_nullcline_note": "The membrane right-hand side uses McKean's three-branch piecewise-linear cubic caricature f(v) = min(max(-v, v - a), 1 - v): the outer branches -v and 1 - v are the stable low and high legs and the middle branch v - a is the unstable threshold leg, joined at v = a/2 and v = (1 + a)/2. This is exact arithmetic (comparisons and linear pieces, no transcendental or cubic term), so the four-stage RK4 flow lowers to fixed point without a look-up table. At the enrolled operating point (epsilon = 0.2, gamma = 0.5, I = 0.6) the system is a sustained relaxation oscillator and each spike is an upward v >= v_peak crossing with no reset."
+  }
+}

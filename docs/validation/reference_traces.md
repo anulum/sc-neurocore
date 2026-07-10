@@ -32,6 +32,7 @@ table because their schemas are stochastic.
 | `izhikevich2007_regular_spiking_doi` | `izhikevich2007` | `universal_dsl` | Independent explicit-Euler re-derivation of the biophysical quadratic equations from `neurons/model_schemas/izhikevich2007.toml` with DOI-backed schema provenance |
 | `lif_constant_current_closed_form` | `lif` | `universal_dsl` | Closed-form RC solution from `neurons/model_schemas/lif.toml` |
 | `lapicque_constant_current_closed_form` | `lapicque` | `universal_dsl` | Closed-form RC solution from `neurons/model_schemas/lapicque.toml` |
+| `mckean_driven_oscillation_doi` | `mckean` | `universal_dsl` | Independent fourth-order Runge-Kutta re-derivation of the piecewise-linear relaxation oscillator (no reset, rising-edge `v >= 0.8` crossing) from `neurons/model_schemas/mckean.toml` with DOI-backed schema provenance |
 | `mihalas_niebur_driven_spiking_doi` | `mihalas_niebur` | `universal_dsl` | Independent fourth-order Runge-Kutta re-derivation of the four-state adaptive-threshold flow from `neurons/model_schemas/mihalas_niebur.toml` with DOI-backed schema provenance |
 | `morris_lecar_depolarizing_current_doi` | `morris_lecar` | `universal_dsl` | Independent explicit-Euler re-derivation of the depolarizing equations from `neurons/model_schemas/morris_lecar.toml` with DOI-backed schema provenance |
 | `perfect_integrator_constant_current_sawtooth` | `perfect_integrator` | `universal_dsl` | Analytic post-reset sawtooth solution from `neurons/model_schemas/perfect_integrator.toml` |
@@ -44,7 +45,7 @@ table because their schemas are stochastic.
 All entries record spike count, first spike step, and final/min/max/mean
 features for the declared state variables. The tests independently recompute the
 LIF, QIF, perfect-integrator, resonate-fire, theta, GLIF, Izhikevich,
-Izhikevich 2007, FitzHugh-Nagumo, AdEx, exponential-IF, Hindmarsh-Rose, Morris-Lecar,
+Izhikevich 2007, FitzHugh-Nagumo, McKean, AdEx, exponential-IF, Hindmarsh-Rose, Morris-Lecar,
 Hodgkin-Huxley, Connor-Stevens, Wang-Buzsaki, DPI, and Mihalas-Niebur analytic,
 explicit-Euler, or fourth-order Runge-Kutta solutions — every deterministic
 bundled-schema entry — so the committed feature values are not merely copied from
@@ -68,9 +69,15 @@ spike-triggered currents), including the `v = v_reset + b*(v - v_rest)`,
 `theta_reset` exceeds `theta_inf` the `max()` threshold floor engages on every
 spike, so the state-to-state `v >= theta` comparison is a genuine adaptive
 threshold rather than a fixed level.
-The perfect-integrator, FitzHugh-Nagumo, Izhikevich, Izhikevich 2007, DPI, and
+The McKean entry re-derives the exact classical fourth-order Runge-Kutta recurrence
+for its three-branch piecewise-linear membrane `f(v) = min(max(-v, v - a), 1 - v)` and
+linear recovery, with rising-edge `v >= v_peak` crossing detection and no reset; at the
+enrolled sustained-oscillation regime (`epsilon = 0.2`, `gamma = 0.5`, `I = 0.6`) it is a
+robust limit cycle whose sixteen upward crossings survive Q16.16 rounding, so the
+min/max branch selection lowers to fixed point without a look-up table.
+The perfect-integrator, FitzHugh-Nagumo, McKean, Izhikevich, Izhikevich 2007, DPI, and
 Mihalas-Niebur entries are spike-bearing;
-they validate reset (or, for FitzHugh-Nagumo, rising-edge crossing) and
+they validate reset (or, for FitzHugh-Nagumo and McKean, rising-edge crossing) and
 first-spike features, not only quiet trajectories. The
 Rulkov entry iterates the Rulkov 2002 piecewise fast/slow map with the
 `method = "map"` integration mode (`x_{n+1} = f(x_n, y_n)`, iterated as a discrete

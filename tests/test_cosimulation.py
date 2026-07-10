@@ -72,6 +72,7 @@ from sc_neurocore.compiler.equation_compiler import (
 from sc_neurocore.neurons.models.dpi_neuron import DPINeuron
 from sc_neurocore.neurons.models.fitzhugh_nagumo import FitzHughNagumoNeuron
 from sc_neurocore.neurons.models.izhikevich2007 import Izhikevich2007Neuron
+from sc_neurocore.neurons.models.mckean import McKeanNeuron
 from sc_neurocore.neurons.models.mihalas_niebur import MihalasNieburNeuron
 from sc_neurocore.neurons.models.perfect_integrator import PerfectIntegratorNeuron
 from sc_neurocore.neurons.universal_dsl import UniversalNeuron
@@ -196,6 +197,19 @@ def _fitzhugh_nagumo_hand_spike_count(n_steps: int, current: float) -> int:
     neuron = FitzHughNagumoNeuron(
         dt=0.1, v=-1.0, w=-0.5, a=0.7, b=0.8, epsilon=0.08, v_threshold=1.0
     )
+    return sum(neuron.step(current) for _ in range(n_steps))
+
+
+# Sustained relaxation-oscillation operating point mirrored by the bundled ``mckean`` schema.
+# The default hand-model regime (epsilon=0.01) is a single-transient knife-edge; epsilon=0.2 /
+# gamma=0.5 puts the piecewise-linear caricature on a robust limit cycle whose upward v_peak
+# crossings survive Q16.16 rounding, so the min/max RK4 datapath co-simulates bit-exactly.
+_MCKEAN_PARAMS = {"a": 0.25, "epsilon": 0.2, "gamma": 0.5, "v_peak": 0.8}
+
+
+def _mckean_hand_spike_count(n_steps: int, current: float) -> int:
+    """Return the hand-authored McKean (RK4, rising-edge crossing) spike count."""
+    neuron = McKeanNeuron(dt=0.1, v=0.0, w=0.0, **_MCKEAN_PARAMS)
     return sum(neuron.step(current) for _ in range(n_steps))
 
 
@@ -776,6 +790,31 @@ class TestQ1616Precision:
         assert 1 < py_spikes < n_steps  # a repetitive partial train, not saturated
         assert hand_spikes == py_spikes == vlog_spikes, (
             f"FitzHugh-Nagumo three-way mismatch: hand={hand_spikes}, "
+            f"schema={py_spikes}, verilog={vlog_spikes}"
+        )
+
+    def test_mckean_q1616_parity(self) -> None:
+        """Faithful McKean co-simulates at exact Q16.16 three-way parity.
+
+        The McKean (1970) piecewise-linear FitzHugh-Nagumo caricature replaces the
+        cubic nullcline with ``f(v) = min(max(-v, v - a), 1 - v)``; the bundled schema
+        is RK4, no reset, rising-edge (``v >= v_peak`` upward crossing) detection,
+        matching ``McKeanNeuron``. The min/max branch selection is exact arithmetic (a
+        fixed-point comparison + select, no look-up table), so at the sustained
+        relaxation-oscillation operating point (``epsilon=0.2``, ``gamma=0.5``,
+        ``I=0.6``) the hand model, the schema runner and the emitted Q16.16 RTL all
+        report the same 16-crossing train over 3000 steps, bit-exactly. (The default
+        hand-model regime ``epsilon=0.01`` is a single-transient knife-edge; the
+        enrolled regime is a robust limit cycle whose crossings survive fixed-point
+        rounding.)
+        """
+        current, n_steps = 0.6, 3000
+        hand_spikes = _mckean_hand_spike_count(n_steps, current)
+        py_spikes = _python_spike_count("mckean", n_steps, current)
+        vlog_spikes = _verilog_spike_count_q1616("mckean", n_steps, current)
+        assert 1 < py_spikes < n_steps  # a sustained oscillation train, not saturated
+        assert hand_spikes == py_spikes == vlog_spikes, (
+            f"McKean three-way mismatch: hand={hand_spikes}, "
             f"schema={py_spikes}, verilog={vlog_spikes}"
         )
 

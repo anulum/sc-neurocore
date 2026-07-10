@@ -76,9 +76,11 @@ range = [
 
 [integration]
 dt = 0.1
-method = "euler"
+method = "rk4"
 
 [dynamics]
+v = "min(max(-v, v - a), 1 - v) - w + I"
+w = "epsilon * (v - gamma * w)"
 
 [backends.python]
 status = "implemented"

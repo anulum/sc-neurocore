@@ -5,6 +5,27 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+### McKean piecewise-linear oscillator enrolment (RK4, no reset, rising-edge crossing)
+- Enrolled the McKean (1970) piecewise-linear FitzHugh-Nagumo caricature (`mckean` schema,
+  DOI `10.1016/0001-8708(70)90023-X`) into the WC-A5 schema corpus and Python↔Verilog
+  co-simulation. The bundled schema is RK4, no reset, rising-edge (`v >= v_peak`) detection,
+  with the three-branch piecewise-linear membrane `f(v) = min(max(-v, v - a), 1 - v)` — the
+  second edge-crossing oscillator after FitzHugh-Nagumo. The min/max branch selection lowers
+  to a fixed-point comparison + select (no look-up table), so at the sustained
+  relaxation-oscillation operating point (`epsilon=0.2`, `gamma=0.5`, `I=0.6`) the hand
+  `McKeanNeuron`, the schema runner, and the emitted Q16.16 RTL report the same 16-crossing
+  train over 3000 steps **bit-exactly** — a genuine three-way parity, not a tolerance band.
+- The default hand-model regime (`epsilon=0.01`) is a single-transient knife-edge; the
+  enrolled regime is a robust limit cycle whose upward crossings survive fixed-point rounding.
+- Committed an independent RK4-parity reference trace (`independent_rk4_reference`, `I=0.6`,
+  3000 steps, 16 crossings, first at step 12) via a new `_mckean_rk4_features` helper verified
+  bit-exact against the runner. Schema-gap counts move to 23 schema models / 129 net missing /
+  131 source modules without a schema; the `McKeanNeuron` descriptor now carries the schema's
+  RK4 integration and min/max dynamics (golden-trace SHA unchanged).
+- The schema-DSL runner is Python-only; the hand `McKeanNeuron` and its Rust/Julia/Go/Mojo
+  mirrors were already RK4 / piecewise-linear / no-reset, so no polyglot counterpart or
+  benchmark artefact changed.
+
 ### FitzHugh-Nagumo faithful re-enrolment (RK4, no reset, rising-edge crossing)
 - Replaced the bundled `fitzhugh_nagumo` schema's explicit-Euler + `v = -1` reset
   caricature with the genuine FitzHugh (1961) relaxation oscillator: four-stage RK4,

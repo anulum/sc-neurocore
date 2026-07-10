@@ -1,0 +1,51 @@
+{
+  "schema_version": "sc-neurocore.reference-trace.v1",
+  "name": "mckean_driven_oscillation_doi",
+  "model": {
+    "schema_name": "mckean",
+    "runner": "universal_dsl"
+  },
+  "protocol": {
+    "dt": 0.1,
+    "steps": 3000,
+    "inputs": {
+      "I": 0.6
+    },
+    "state_variables": [
+      "v",
+      "w"
+    ]
+  },
+  "provenance": {
+    "kind": "independent_rk4_reference",
+    "source": "src/sc_neurocore/neurons/model_schemas/mckean.toml",
+    "equation": "Driven McKean piecewise-linear relaxation oscillation (sixteen upward v>=0.8 threshold crossings) advanced with the exact four-stage classical RK4 step and rising-edge spike detection, no reset; the three-branch piecewise-linear membrane f(v)=min(max(-v, v-a), 1-v) and linear recovery equations are independently re-derived from the McKean (1970) Nagumo-equation caricature.",
+    "citation": "doi:10.1016/0001-8708(70)90023-X"
+  },
+  "expected_features": {
+    "spike_count": 16.0,
+    "first_spike_step": 12.0,
+    "final.v": 0.5189378988390342,
+    "min.v": -0.20274734793081386,
+    "max.v": 1.21940231179816,
+    "mean.v": 0.3773146668975017,
+    "final.w": 1.0291937219408265,
+    "min.w": 0.000578455,
+    "max.w": 1.0304943854882265,
+    "mean.w": 0.7203256671456074
+  },
+  "tolerances": {
+    "default": {
+      "absolute": 1e-09,
+      "relative": 1e-12
+    },
+    "spike_count": {
+      "absolute": 0.0,
+      "relative": 0.0
+    },
+    "first_spike_step": {
+      "absolute": 0.0,
+      "relative": 0.0
+    }
+  }
+}

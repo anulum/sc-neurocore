@@ -20,6 +20,22 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
   co-simulation path); crossing support there is a separate follow-up.
 
 ### Changed
+- Enrolled the McKean piecewise-linear FitzHugh-Nagumo caricature (`mckean` schema,
+  McKean 1970, DOI `10.1016/0001-8708(70)90023-X`) into the WC-A5 schema corpus and
+  Python↔Verilog co-simulation as a second `detection="crossing"` oscillator: RK4,
+  no reset, rising-edge (`v >= v_peak`) detection, and the three-branch piecewise-linear
+  membrane `f(v) = min(max(-v, v - a), 1 - v)`. The min/max branch selection is exact
+  arithmetic (a fixed-point comparison + select, no look-up table), so at the sustained
+  relaxation-oscillation operating point (`epsilon=0.2`, `gamma=0.5`, `I=0.6`) the hand
+  `McKeanNeuron`, the schema runner and the emitted Q16.16 RTL report the same 16-crossing
+  train over 3000 steps **bit-exactly** — a genuine three-way parity, not a tolerance band.
+  A committed independent RK4-parity reference trace (`independent_rk4_reference`) covers
+  the new bundled schema. The default hand-model regime (`epsilon=0.01`) is a single-
+  transient knife-edge; the enrolled regime is a robust limit cycle whose crossings survive
+  fixed-point rounding. Schema-gap counts move to 23 schema models / 129 net missing / 131
+  source modules without a schema. The schema-DSL runner is Python-only; the hand model and
+  its Rust/Julia/Go/Mojo mirrors were already RK4 / piecewise-linear / no-reset, so no
+  polyglot counterpart or benchmark artefact changed.
 - Re-enrolled the FitzHugh-Nagumo relaxation oscillator (`fitzhugh_nagumo` schema,
   FitzHugh 1961) at full fidelity: the bundled schema is now the genuine two-state
   cubic oscillator — four-stage RK4, **no reset**, rising-edge (`v >= v_threshold`
