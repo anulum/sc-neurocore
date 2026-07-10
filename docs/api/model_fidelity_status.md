@@ -57,9 +57,11 @@ stub.
 | Hindmarsh-Rose | ✅ | ✅ | ✅ | ✅ shared-lib | bit-exact — 0/26/52 @ I=0/3/5 over 2000 steps (RK4, polynomial RHS) | `45c05b1e9` |
 | FitzHugh-Rinzel | ✅ | ✅ | ✅ | ✅ shared-lib | bit-exact — 0/1/8 @ I=0/0.3/0.5 over 3000 steps (RK4, cubic RHS) | `498376221` |
 
-Each of the five carries a committed benchmark in its lane (Go `Benchmark*` for the models above;
-the Rust-safety per-kernel benchmark harness is a tracked open lane item, so those numbers currently
-come from the Go/engine lanes rather than a `benches/` target in the safety crate).
+Each model carries a committed benchmark: a Go `Benchmark*` in the services lane for the
+conductance models (Wang-Buzsaki, Morris-Lecar, Connor-Stevens, Hodgkin-Huxley, FitzHugh-Nagumo),
+and a `benchmarks/bench_<model>_simulate.py` plus committed criterion results for the FFI-dispatched
+bit-exact models (McKean, Hindmarsh-Rose, FitzHugh-Rinzel). A dedicated per-kernel benchmark harness
+for the Rust `accel/rust/safety` crate remains a tracked open lane item.
 
 ## In progress
 
