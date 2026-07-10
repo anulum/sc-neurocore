@@ -6,8 +6,6 @@
 // Contact: www.anulum.li | protoscience@anulum.li
 // SC-NeuroCore — Rust safety for hindmarsh_rose
 
-#![allow(unused_variables, dead_code, non_snake_case)]
-
 #[derive(Debug, Clone)]
 pub struct HindmarshRoseNeuron {
     pub x: f64,
@@ -99,14 +97,15 @@ impl HindmarshRoseNeuron {
     }
 
     pub fn reset(&mut self) {
-        // self.x = -1.6
-        // self.y = -10.0
-        // self.z = 2.0
         self.x = -1.6_f64;
         self.y = -10.0_f64;
         self.z = 2.0_f64;
-        self.b = 3.0_f64;
-        self.r = 0.001_f64;
+    }
+}
+
+impl Default for HindmarshRoseNeuron {
+    fn default() -> Self {
+        Self::new()
     }
 }
 
@@ -190,5 +189,20 @@ mod tests {
         let before = (state.x, state.y, state.z);
         assert_eq!(state.step(3.0), 0);
         assert_eq!((state.x, state.y, state.z), before);
+    }
+
+    #[test]
+    fn matches_python_golden_spike_count() {
+        // Parity with models/hindmarsh_rose.py (RK4 integrator, default parameters). The
+        // Hindmarsh-Rose right-hand side is polynomial (exact arithmetic), so the trajectory is
+        // bit-for-bit across languages and the spike count is an exact observable, not a
+        // "spike is 0 or 1" smoke check. Over 2000 macro steps: silent at zero drive, a 26-spike
+        // burst train at I=3, and 52 at I=5. The Go, Julia, Mojo and Rust-engine backends reproduce
+        // the same trajectory bit-for-bit via test_hindmarsh_rose_backends.py.
+        for (current, want) in [(0.0_f64, 0_usize), (3.0, 26), (5.0, 52)] {
+            let mut state = HindmarshRoseNeuron::new();
+            let spikes = (0..2000).filter(|_| state.step(current) == 1).count();
+            assert_eq!(spikes, want, "I={current}");
+        }
     }
 }
