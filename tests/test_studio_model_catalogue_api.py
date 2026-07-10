@@ -47,8 +47,9 @@ def test_list_models_serves_declared_family_and_provenance() -> None:
 def test_summary_exposes_completeness_tier_and_evidence_kind() -> None:
     by_name = {m["name"]: m for m in list_models()}
     adex = by_name["AdExNeuron"]
-    assert adex["tier"] >= 2
-    assert adex["evidence_kind"] == "curated"
+    # AdEx is engineering-verified (python+rust + golden trace) → kernel tier 3.
+    assert adex["tier"] == 3
+    assert adex["evidence_kind"] == "measured"
     fhn = by_name["FitzHughNagumoNeuron"]
     assert fhn["tier"] == 3
     assert fhn["evidence_kind"] == "measured"
@@ -63,6 +64,9 @@ def test_summary_exposes_dual_readiness_axes() -> None:
     # The full science axis never sits below the legacy kernel tier.
     assert cast(int, adex["science_tier"]) >= cast(int, adex["tier"])
     assert adex["science_label"] == f"S{adex['science_tier']}"
+    # S5: S3 kernel + dynamics_faithful + class-validated parity evidence.
+    assert adex["science_tier"] == 5
+    assert adex["science_label"] == "S5"
     # AdEx is enrolled in schema→RTL cosim; H1 is the honest floor.
     assert adex["silicon_tier"] == 1
     assert adex["silicon_label"] == "H1"
@@ -83,10 +87,11 @@ def test_detail_readiness_block_is_auditable() -> None:
     assert detail is not None
     readiness = cast(dict[str, object], detail["readiness"])
     assert readiness["science_label"] == f"S{readiness['science_tier']}"
+    assert readiness["science_tier"] == 5
     assert readiness["silicon_tier"] == 1
     assert readiness["silicon_label"] == "H1"
-    # Perfect requires S5 + declared terminal H-tier met; AdEx science kernel is S2.
-    assert readiness["is_perfect"] is False
+    # Perfect: S5 plus declared terminal H-tier (H1) is met via cosim evidence.
+    assert readiness["is_perfect"] is True
     validation = cast(dict[str, object], readiness["validation"])
     assert validation["metric"] == "parity"
     assert validation["dynamics_faithful"] is True

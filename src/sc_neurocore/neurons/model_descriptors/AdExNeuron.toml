@@ -154,8 +154,15 @@ w = "(a * (v - v_rest) - w) / tau_w"
 
 [backends.python]
 status = "implemented"
+parity = "exact"
+
+[backends.rust]
+status = "implemented"
+parity = "exact"
 
 [reproducibility]
+reference_config = "{\"n_steps\":1000,\"current\":250.0,\"backend\":\"python\",\"parameters\":\"defaults\"}"
+golden_trace_sha256 = "5413312b873921d2ef9aa6d50d8087d8962cf431ac0f6db2899cb5579ee46dfb"
 
 [documentation]
 slug = "models/adex"

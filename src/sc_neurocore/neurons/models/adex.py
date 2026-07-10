@@ -8,13 +8,55 @@
 
 from __future__ import annotations
 
+import importlib as _importlib
 import math
 from dataclasses import dataclass
-from typing import Any, Literal
+from typing import Any, Literal, Optional
 
 import numpy as np
+import numpy.typing as npt
 
 from sc_neurocore.solvers import RK4Solver, RosenbrockEuler
+
+# ───────────────────────── backend detection ─────────────────────────
+#
+# ``step`` advances one integrator update. ``simulate`` is an N-step sequential
+# recurrence. The Rust engine class ``AdExNeuron`` implements the same
+# factory-default baseline-Euler update as the pure-NumPy path and reproduces
+# its voltage trace bit-for-bit under that contract (no parameter injection on
+# the engine class). RK4 and Rosenbrock remain Python-only here.
+
+_EngineAdEx = Any
+
+
+def _load_engine_adex() -> type[Any]:
+    engine = _importlib.import_module("sc_neurocore_engine")
+    return engine.AdExNeuron  # type: ignore[no-any-return]
+
+
+try:
+    _EngineAdExCls: Optional[type[Any]] = _load_engine_adex()
+    _HAS_RUST = True
+except (ImportError, AttributeError):
+    _EngineAdExCls = None
+    _HAS_RUST = False
+
+# Factory defaults for the Rust engine path (no parameter/state injection).
+_RUST_ENGINE_DEFAULTS: dict[str, float] = {
+    "v": -65.0,
+    "w": 0.0,
+    "v_rest": -65.0,
+    "v_reset": -68.0,
+    "v_threshold": -50.0,
+    "v_rh": -55.0,
+    "delta_t": 2.0,
+    "tau": 20.0,
+    "tau_w": 100.0,
+    "a": 0.5,
+    "b": 7.0,
+    "c_m": 200.0,
+    "dt": 0.1,
+}
 
 
 @dataclass
@@ -32,6 +74,10 @@ class AdExNeuron:
     - ``rk4`` is an explicit higher-order alternative path
     - ``rosenbrock`` is a linearly implicit stiff-system path over the same
       AdEx ODEs
+
+    ``simulate`` supports ``backend`` values ``python``, ``rust``, and ``auto``
+    (prefer Rust when the factory-default Euler contract holds and the engine
+    wheel is present).
     """
 
     v: float = -65.0
@@ -59,6 +105,19 @@ class AdExNeuron:
             value = getattr(self, field)
             if not math.isfinite(value) or value <= 0.0:
                 raise ValueError(f"{field} must be finite and positive")
+
+    def _matches_rust_engine_contract(self) -> bool:
+        """Return whether the instance matches the Rust engine default contract.
+
+        The engine ``AdExNeuron`` class has no parameter or state injection; it
+        only reproduces the factory-default baseline-Euler trajectory.
+        """
+        if self.integrator != "baseline_euler":
+            return False
+        for name, expected in _RUST_ENGINE_DEFAULTS.items():
+            if float(getattr(self, name)) != expected:
+                return False
+        return True
 
     def step(self, current: float) -> int:
         if not math.isfinite(current):
@@ -133,6 +192,100 @@ class AdExNeuron:
                 self.dt,
             )
         return float(state[0]), float(state[1])
+
+    def simulate(
+        self, n_steps: int, current: float = 0.0, backend: str = "auto"
+    ) -> tuple[npt.NDArray[np.float64], int]:
+        """Advance ``n_steps`` updates from the current state, returning ``(trace, spikes)``.
+
+        ``trace[t]`` is the membrane voltage ``v`` after step ``t`` (post-reset
+        when that step fired); ``spikes`` counts the threshold crossings. The
+        instance state ``(v, w)`` is advanced to the final step.
+
+        Parameters
+        ----------
+        n_steps:
+            Number of integrator updates (must be non-negative).
+        current:
+            Constant injected current for every step (must be finite).
+        backend:
+            ``"python"`` always uses the local ``step`` loop. ``"rust"`` uses
+            the engine ``AdExNeuron`` under the factory-default baseline-Euler
+            contract and raises when that contract is not met or the engine is
+            unavailable. ``"auto"`` prefers Rust when the contract holds and the
+            engine is present, otherwise Python.
+
+        Returns
+        -------
+        tuple[npt.NDArray[np.float64], int]
+            Voltage trace of length ``n_steps`` and total spike count.
+
+        Raises
+        ------
+        ValueError
+            If ``n_steps`` is negative, ``current`` is non-finite, or ``backend``
+            is unknown.
+        RuntimeError
+            If ``backend="rust"`` is requested but the engine is missing or the
+            instance is outside the default Euler contract.
+        """
+        if n_steps < 0:
+            raise ValueError("n_steps must be non-negative")
+        if backend not in ("auto", "python", "rust"):
+            raise ValueError(f"backend must be auto/python/rust, got {backend!r}")
+        if not math.isfinite(current):
+            raise ValueError("current must be finite")
+        self._validate_runtime_state()
+
+        prefer_rust = backend == "rust" or (
+            backend == "auto" and _HAS_RUST and self._matches_rust_engine_contract()
+        )
+        if prefer_rust:
+            if not _HAS_RUST or _EngineAdExCls is None:
+                raise RuntimeError(
+                    "Rust AdEx backend requested but sc_neurocore_engine is unavailable."
+                )
+            if not self._matches_rust_engine_contract():
+                raise RuntimeError(
+                    "Rust AdEx engine backend requires factory-default parameters, "
+                    "baseline_euler integrator, and factory-default initial state "
+                    f"(v={_RUST_ENGINE_DEFAULTS['v']}, w={_RUST_ENGINE_DEFAULTS['w']})."
+                )
+            trace, spikes, state = self._simulate_rust(n_steps, current)
+        else:
+            if backend == "rust":
+                raise RuntimeError(
+                    "Rust AdEx backend requested but sc_neurocore_engine is unavailable."
+                )
+            trace, spikes, state = self._simulate_python(n_steps, current)
+        self.v, self.w = state
+        return trace, spikes
+
+    def _simulate_python(
+        self, n_steps: int, current: float
+    ) -> tuple[npt.NDArray[np.float64], int, tuple[float, float]]:
+        """Run the pure-Python step loop and return ``(trace, spikes, (v, w))``."""
+        trace = np.empty(n_steps, dtype=np.float64)
+        spikes = 0
+        for t in range(n_steps):
+            spikes += self.step(current)
+            trace[t] = self.v
+        return trace, spikes, (self.v, self.w)
+
+    def _simulate_rust(
+        self, n_steps: int, current: float
+    ) -> tuple[npt.NDArray[np.float64], int, tuple[float, float]]:
+        """Run the engine AdEx step loop under the default Euler contract."""
+        assert _EngineAdExCls is not None
+        neuron = _EngineAdExCls()
+        trace = np.empty(n_steps, dtype=np.float64)
+        spikes = 0
+        for t in range(n_steps):
+            spikes += int(neuron.step(float(current)))
+            state = neuron.get_state()
+            trace[t] = float(state["v"])
+        final = neuron.get_state()
+        return trace, spikes, (float(final["v"]), float(final["w"]))
 
     def reset(self) -> None:
         self.v = self.v_rest
