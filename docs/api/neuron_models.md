@@ -11,7 +11,7 @@ backend implements that surface.
 > (`accel/{rust,go,julia,mojo}`) is real and Python-parity-proven — is tracked
 > separately on the [Model Fidelity & Polyglot Status](model_fidelity_status.md)
 > page. Polyglot-complete today: Wang-Buzsaki, FitzHugh-Nagumo, Morris-Lecar,
-> Connor-Stevens, Hodgkin-Huxley, McKean, Hindmarsh-Rose. All other models are
+> Connor-Stevens, Hodgkin-Huxley, McKean, Hindmarsh-Rose, FitzHugh-Rinzel. All other models are
 > Python-faithful with their acceleration chain still under remediation.
 
 ## Quick Start
