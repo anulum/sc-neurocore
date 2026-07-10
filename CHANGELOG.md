@@ -35,8 +35,29 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
   co-simulation path); crossing support there is a separate follow-up.
 
 ### Changed
+- Re-enrolled the Hodgkin-Huxley membrane (`hodgkin_huxley` schema, Hodgkin & Huxley 1952,
+  DOI `10.1113/jphysiol.1952.sp004764`) faithfully as a driven repetitive-spiking oscillator
+  using the macro-step mode. The bundled schema was a single-step `method="euler"` resting-gate
+  re-derivation — neither `HodgkinHuxleyNeuron`'s RK4 integrator nor its 100-sub-step-per-
+  millisecond macro-stepping — so it could only be compared schema-vs-verilog under a 5% band.
+  The faithful schema is now `method="rk4"` with `substeps=100` and a macro-boundary
+  `v >= v_threshold` crossing, matching `HodgkinHuxleyNeuron(integrator="rk4")` (the simultaneous
+  RK4, not the Gauss-Seidel `baseline_euler` default the DSL cannot reproduce). The schema now
+  reproduces the hand model's action-potential count exactly (`hand == schema`, five crossings at
+  `I=20` over 60 macro steps). The Q16.16 RTL tracks the schema **within one spike** over the
+  bounded window (`I=15`, 20 macro steps, three-way exact): like Connor-Stevens, Hodgkin-Huxley is
+  stiff and its exprel / sigmoid gating lowers to 256-entry look-up tables, so the residual drift
+  is **LUT-resolution-limited, not datapath-precision-limited** — an honest per-model
+  hardware-fidelity band, exact over a bounded window and accumulating beyond it. The reference
+  trace was re-derived as `hodgkin_huxley_driven_spiking_doi` (`independent_macrostep_rk4_reference`,
+  bit-exact against the runner) and the descriptor's integration updated (euler → rk4). Also fixed a
+  pre-existing toml/json drift: the `hodgkin_huxley.json` `m`/`n` rate functions were the singular
+  `a*(V-V0)/(1-exp(...))` form (a 0/0 at `V=V0`) while the loaded `.toml` used the stable `exprel`
+  rewrite; the JSON now matches. Schema-gap counts unchanged (a re-enrolment). The schema-DSL runner
+  is Python-only; the hand `HodgkinHuxleyNeuron` already carries the RK4 path, so no polyglot
+  counterpart or benchmark artefact changed.
 - Re-enrolled the Connor-Stevens A-current oscillator (`connor_stevens` schema, Connor &
-  Stevens 1971, DOI `10.1113/jphysiol.1971.sp009368`) faithfully using the new macro-step mode.
+  Stevens 1971, DOI `10.1113/jphysiol.1971.sp009366`) faithfully using the new macro-step mode.
   The bundled schema was single-step `method="euler"` — neither the maintained
   `ConnorStevensNeuron`'s RK4 integrator nor its 100-sub-step-per-millisecond macro-stepping — so
   it could only be compared schema-vs-verilog and over-counted crossings. The faithful schema is

@@ -5,6 +5,24 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+### Faithful Hodgkin-Huxley re-enrolment (macro-step RK4)
+- Re-enrolled the Hodgkin-Huxley (1952) membrane (`hodgkin_huxley` schema,
+  DOI `10.1113/jphysiol.1952.sp004764`) as a driven repetitive-spiking oscillator using the
+  macro-step mode. The bundled schema was a single-step `method="euler"` resting-gate re-derivation
+  compared schema-vs-verilog under a 5% band; it is now `method="rk4"`, `substeps=100`,
+  macro-boundary `v >= v_threshold` crossing — matching `HodgkinHuxleyNeuron(integrator="rk4")` (the
+  simultaneous RK4, not the Gauss-Seidel `baseline_euler` default the DSL cannot reproduce).
+  `hand == schema` exact (five action potentials at `I=20` over 60 macro steps). The Q16.16 RTL
+  tracks the schema **within one spike** over the bounded window (`I=15`, 20 macro steps, three-way
+  exact); like Connor-Stevens the residual is genuine conductance-LUT quantisation
+  (LUT-resolution-limited, identical at Q16.16 / Q24.24 / Q32.32). Re-derived reference trace
+  `hodgkin_huxley_driven_spiking_doi` (`independent_macrostep_rk4_reference`, bit-exact vs the
+  runner); descriptor integration updated (euler → rk4). Also fixed a pre-existing
+  `hodgkin_huxley.json` toml/json drift (singular `a*(V-V0)/(1-exp(...))` rate form → the stable
+  `exprel` rewrite the `.toml` already used) and a stale wrong Connor-Stevens DOI (`sp009368` →
+  `sp009366`) in the changelog. Schema-gap counts unchanged; no polyglot / benchmark change (the
+  hand model already carries the RK4 path).
+
 ### Macro-step integration mode + faithful Connor-Stevens re-enrolment
 - Added a macro-step integration mode (`[integration] substeps = N`) to the schema DSL — in both
   the Python runner (`EquationNeuron`) and the emitted Verilog. One macro `step()` advances `N`

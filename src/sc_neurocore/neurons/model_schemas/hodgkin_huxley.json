@@ -20,23 +20,24 @@
     "g_L": 0.3,
     "E_Na": 50.0,
     "E_K": -77.0,
-    "E_L": -54.4
+    "E_L": -54.4,
+    "v_threshold": 0.0
   },
   "integration": {
     "dt": 0.01,
-    "method": "euler"
+    "method": "rk4",
+    "substeps": 100
   },
   "dynamics": {
     "v": "(-g_Na * m**3 * h * (v - E_Na) - g_K * n**4 * (v - E_K) - g_L * (v - E_L) + I) / C",
-    "m": "0.1 * (v + 40) / (1 - exp(-(v + 40) / 10)) * (1 - m) - 4 * exp(-(v + 65) / 18) * m",
+    "m": "1.0 / exprel(-(v + 40) / 10) * (1 - m) - 4 * exp(-(v + 65) / 18) * m",
     "h": "0.07 * exp(-(v + 65) / 20) * (1 - h) - 1 / (1 + exp(-(v + 35) / 10)) * h",
-    "n": "0.01 * (v + 55) / (1 - exp(-(v + 55) / 10)) * (1 - n) - 0.125 * exp(-(v + 65) / 80) * n"
+    "n": "0.1 / exprel(-(v + 55) / 10) * (1 - n) - 0.125 * exp(-(v + 65) / 80) * n"
   },
   "threshold": {
-    "condition": "v > 0",
+    "condition": "v >= v_threshold",
     "detection": "crossing"
   },
-  "reset": {},
   "extensions": {
     "ion_channels": ["Na", "K", "leak"]
   }

@@ -1,0 +1,61 @@
+{
+  "schema_version": "sc-neurocore.reference-trace.v1",
+  "name": "hodgkin_huxley_driven_spiking_doi",
+  "model": {
+    "schema_name": "hodgkin_huxley",
+    "runner": "universal_dsl"
+  },
+  "protocol": {
+    "dt": 0.01,
+    "steps": 60,
+    "inputs": {
+      "I": 20.0
+    },
+    "state_variables": [
+      "v",
+      "m",
+      "h",
+      "n"
+    ]
+  },
+  "provenance": {
+    "kind": "independent_macrostep_rk4_reference",
+    "source": "src/sc_neurocore/neurons/model_schemas/hodgkin_huxley.toml",
+    "equation": "Driven Hodgkin-Huxley repetitive spiking (five upward v>=0 crossings over 60 one-millisecond macro steps) advanced with the exact macro-step integrator: 100 inner four-stage classical RK4 sub-steps of dt=0.01 per macro step, rising-edge crossing evaluated only on the macro boundary, no reset. This matches HodgkinHuxleyNeuron(integrator='rk4'), whose step() is itself a 100-sub-step macro step over the same simultaneous RK4. The four-state membrane and Na/K gating rate functions (numpy exp rates and the exprel-rewritten alpha_m/alpha_n) are independently re-derived from the Hodgkin-Huxley (1952) model definition, matching the schema runner bit-for-bit.",
+    "citation": "doi:10.1113/jphysiol.1952.sp004764"
+  },
+  "expected_features": {
+    "spike_count": 5.0,
+    "first_spike_step": 2.0,
+    "final.v": 23.213775732492,
+    "min.v": -73.65828090238868,
+    "max.v": 24.155863482080004,
+    "mean.v": -51.82803444828839,
+    "final.m": 0.9495478511411131,
+    "min.m": 0.019063297764142704,
+    "max.m": 0.9943450085696635,
+    "mean.m": 0.243640741052058,
+    "final.h": 0.17829601125323366,
+    "min.h": 0.0665789879098367,
+    "max.h": 0.5438997228137855,
+    "mean.h": 0.27634700604798623,
+    "final.n": 0.6161060139878121,
+    "min.n": 0.35100801222762557,
+    "max.n": 0.7727080426949008,
+    "mean.n": 0.540882117659056
+  },
+  "tolerances": {
+    "default": {
+      "absolute": 1e-09,
+      "relative": 1e-12
+    },
+    "spike_count": {
+      "absolute": 0.0,
+      "relative": 0.0
+    },
+    "first_spike_step": {
+      "absolute": 0.0,
+      "relative": 0.0
+    }
+  }
+}

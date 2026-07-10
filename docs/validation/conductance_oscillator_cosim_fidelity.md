@@ -34,6 +34,7 @@ the two travel through distinct Runge-Kutta drivers.
 | Model | States | Integrator | hand == schema | schema == Q16.16 RTL |
 |-------|--------|------------|----------------|----------------------|
 | `morris_lecar` | 2 | single RK4 step per call | exact spike count (7 @ `I=100`, 3000 steps) | exact over the whole `I in [90, 110]` band |
+| `hodgkin_huxley` | 4 | 100-sub-step macro RK4 (`substeps=100`) | exact spike count (5 @ `I=20`, 60 macro steps) | exact over a bounded window (`I=15`, `macro=20`); `±1` beyond it |
 | `connor_stevens` | 6 | 100-sub-step macro RK4 (`substeps=100`) | exact spike count (10 @ `I=100`, 60 macro steps) | exact over a bounded window (`I=100`, `macro=20`); `±1` beyond it |
 
 Morris-Lecar is well conditioned: it takes a single RK4 step per `step()` call,
@@ -112,16 +113,20 @@ Reproducing a hand model's spike count requires matching its integration
   (`baseline_euler`) and the Wang-Buzsaki integrator are Gauss-Seidel, so the
   schema's simultaneous integration does **not** reproduce them.
 
-Consequences for the remaining conductance enrolments:
+Consequences for the conductance enrolments:
 
 - `hodgkin_huxley` additionally exposes an `integrator="rk4"` option (a
-  simultaneous `RK4Solver`), which the schema `rk4 + substeps=100` path should
-  match; the default `baseline_euler` path would need a sequential schema mode.
+  simultaneous `RK4Solver`), which the schema `rk4 + substeps=100` path matches
+  exactly — this is the enrolled operating point (`hand == schema` at `I=20`, 60
+  macro steps). The default `baseline_euler` path is Gauss-Seidel and would need a
+  sequential schema mode to reproduce; enrolling against the higher-fidelity `rk4`
+  path is faithful (same equations, a better integrator) and avoids that.
 - `wang_buzsaki` has no RK4 option, so it needs a sequential (Gauss-Seidel)
-  schema integration mode before it can be enrolled faithfully.
+  schema integration mode before it can be enrolled faithfully — still outstanding.
 
 Both are stiff, so a bounded-window `±1` Q16.16 band comparable to Connor-Stevens
-is expected once they are enrolled.
+is expected: Hodgkin-Huxley confirms it (exact three-way at `I=15`, `macro=20`;
+`±1` beyond), and Wang-Buzsaki is expected to match once its sequential mode lands.
 
 ## Provenance corrections landed in-line
 

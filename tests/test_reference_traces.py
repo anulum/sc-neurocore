@@ -37,7 +37,7 @@ _DETERMINISTIC_SCHEMA_TRACES = {
     "fitzhugh_nagumo": "fitzhugh_nagumo_driven_oscillation_doi",
     "glif": "glif_constant_current_threshold_adaptation",
     "hindmarsh_rose": "hindmarsh_rose_short_bursting_prefix",
-    "hodgkin_huxley": "hodgkin_huxley_resting_gate_doi",
+    "hodgkin_huxley": "hodgkin_huxley_driven_spiking_doi",
     "izhikevich": "izhikevich_regular_spiking_doi",
     "izhikevich2007": "izhikevich2007_regular_spiking_doi",
     "lapicque": "lapicque_constant_current_closed_form",
@@ -936,27 +936,33 @@ def _reference_exprel(x: float) -> float:
     return float(np.expm1(x)) / x
 
 
-def _hodgkin_huxley_resting_euler_features(
-    *, current: float, dt: float, steps: int
+def _hodgkin_huxley_macrostep_rk4_features(
+    *, current: float, dt: float, steps: int, substeps: int
 ) -> dict[str, float]:
-    """Return exact explicit-Euler features for the resting Hodgkin-Huxley recurrence.
+    """Return exact macro-step RK4 features for the driven Hodgkin-Huxley oscillator.
 
-    The Hodgkin-Huxley (1952) membrane and the sodium/potassium gating variables are
-    advanced with the same simultaneous explicit-Euler update the schema runner
-    applies, reusing :func:`_np_exp` and :func:`_reference_exprel` so the sharpened
-    rate functions match the runner bit-for-bit. The verbatim expression order is
-    preserved; the resting zero-current protocol never crosses the ``v > 0``
-    threshold and the schema declares no reset, so the reference is an independent
-    re-derivation of the committed gate-relaxation trajectory.
+    The Hodgkin-Huxley (1952) model is the faithful representation of the maintained
+    ``HodgkinHuxleyNeuron(integrator="rk4")``, whose ``step()`` is itself a 100-sub-step
+    macro step: each macro step advances ``substeps`` inner four-stage classical RK4
+    sub-steps of ``dt`` over the same simultaneous derivative, and the rising-edge
+    ``v >= 0`` crossing is evaluated only on the macro boundary against the condition at
+    the previous macro boundary, with **no reset**. The four-state membrane and Na/K
+    gating rate functions are transcribed verbatim from the schema, reusing
+    :func:`_np_exp` and :func:`_reference_exprel` (the exprel-rewritten ``alpha_m`` /
+    ``alpha_n``) so the recurrence reproduces the schema runner bit-for-bit. The
+    reference is an independent re-derivation of the committed driven-spiking trace, not a
+    copy of the runner.
 
     Parameters
     ----------
     current:
         Constant input current applied at every timestep.
     dt:
-        Simulation timestep.
+        Inner sub-step timestep.
     steps:
-        Number of timesteps to advance.
+        Number of macro steps to advance.
+    substeps:
+        Number of inner RK4 sub-steps per macro step.
 
     Returns
     -------
@@ -964,36 +970,46 @@ def _hodgkin_huxley_resting_euler_features(
         Reference feature map for the ``v``, ``m``, ``h``, and ``n`` state variables
         plus spike-count and first-spike-step features.
     """
-    capacitance = 1.0
     g_na = 120.0
     g_k = 36.0
     g_l = 0.3
     e_na = 50.0
     e_k = -77.0
     e_l = -54.4
-    v = -65.0
-    m = 0.05
-    h = 0.6
-    n = 0.32
+    c_m = 1.0
+    v_threshold = 0.0
     recorded: dict[str, list[float]] = {"v": [], "m": [], "h": [], "n": []}
     spikes: list[int] = []
-    for _ in range(steps):
+
+    def deriv(sv: tuple[float, ...]) -> tuple[float, ...]:
+        v, m, h, n = sv
         dv = (
             -g_na * m**3 * h * (v - e_na) - g_k * n**4 * (v - e_k) - g_l * (v - e_l) + current
-        ) / capacitance
+        ) / c_m
         dm = 1.0 / _reference_exprel(-(v + 40) / 10) * (1 - m) - 4 * _np_exp(-(v + 65) / 18) * m
         dh = 0.07 * _np_exp(-(v + 65) / 20) * (1 - h) - 1 / (1 + _np_exp(-(v + 35) / 10)) * h
         dn = 0.1 / _reference_exprel(-(v + 55) / 10) * (1 - n) - 0.125 * _np_exp(-(v + 65) / 80) * n
-        v_next = v + dv * dt
-        m_next = m + dm * dt
-        h_next = h + dh * dt
-        n_next = n + dn * dt
-        spikes.append(1 if v_next > 0 else 0)
-        v, m, h, n = v_next, m_next, h_next, n_next
-        recorded["v"].append(v)
-        recorded["m"].append(m)
-        recorded["h"].append(h)
-        recorded["n"].append(n)
+        return dv, dm, dh, dn
+
+    def rk4_substep(sv: tuple[float, ...]) -> tuple[float, ...]:
+        k1 = deriv(sv)
+        s1 = tuple(sv[i] + 0.5 * dt * k1[i] for i in range(4))
+        k2 = deriv(s1)
+        s2 = tuple(sv[i] + 0.5 * dt * k2[i] for i in range(4))
+        k3 = deriv(s2)
+        s3 = tuple(sv[i] + dt * k3[i] for i in range(4))
+        k4 = deriv(s3)
+        return tuple(sv[i] + dt * (k1[i] + 2 * k2[i] + 2 * k3[i] + k4[i]) / 6 for i in range(4))
+
+    state: tuple[float, ...] = (-65.0, 0.05, 0.6, 0.32)
+    for _ in range(steps):
+        v_prev = state[0]
+        for _ in range(substeps):
+            state = rk4_substep(state)
+        # Macro-boundary rising-edge crossing (matching the hand model / macro runner).
+        spikes.append(1 if (state[0] >= v_threshold and v_prev < v_threshold) else 0)
+        for index, name in enumerate(("v", "m", "h", "n")):
+            recorded[name].append(state[index])
 
     return _summarise(recorded, spikes)
 
@@ -1415,12 +1431,15 @@ _PARITY_CASES: list[tuple[str, str, str, str, Callable[[ReferenceTraceSpec], dic
         ),
     ),
     (
-        "hodgkin_huxley_resting_gate_doi",
+        "hodgkin_huxley_driven_spiking_doi",
         "hodgkin_huxley",
-        "independent_euler_reference",
+        "independent_macrostep_rk4_reference",
         "doi:10.1113/jphysiol.1952.sp004764",
-        lambda spec: _hodgkin_huxley_resting_euler_features(
-            current=spec.protocol.inputs["I"], dt=spec.protocol.dt, steps=spec.protocol.steps
+        lambda spec: _hodgkin_huxley_macrostep_rk4_features(
+            current=spec.protocol.inputs["I"],
+            dt=spec.protocol.dt,
+            steps=spec.protocol.steps,
+            substeps=100,
         ),
     ),
     (

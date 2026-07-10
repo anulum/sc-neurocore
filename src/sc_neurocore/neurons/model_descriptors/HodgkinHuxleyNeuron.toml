@@ -122,7 +122,7 @@ range = [
 
 [integration]
 dt = 0.01
-method = "euler"
+method = "rk4"
 
 [dynamics]
 v = "(-g_Na * m**3 * h * (v - E_Na) - g_K * n**4 * (v - E_K) - g_L * (v - E_L) + I) / C"

@@ -76,6 +76,7 @@ from sc_neurocore.neurons.models.fitzhugh_nagumo import FitzHughNagumoNeuron
 from sc_neurocore.neurons.models.izhikevich2007 import Izhikevich2007Neuron
 from sc_neurocore.neurons.models.mckean import McKeanNeuron
 from sc_neurocore.neurons.models.connor_stevens import ConnorStevensNeuron
+from sc_neurocore.neurons.models.hodgkin_huxley import HodgkinHuxleyNeuron
 from sc_neurocore.neurons.models.mihalas_niebur import MihalasNieburNeuron
 from sc_neurocore.neurons.models.morris_lecar import MorrisLecarNeuron
 from sc_neurocore.neurons.models.perfect_integrator import PerfectIntegratorNeuron
@@ -238,6 +239,20 @@ def _connor_stevens_hand_spike_count(n_macro_steps: int, current: float) -> int:
     ``step()`` corresponds to one schema macro ``step()``.
     """
     neuron = ConnorStevensNeuron()
+    return sum(neuron.step(current) for _ in range(n_macro_steps))
+
+
+def _hodgkin_huxley_hand_spike_count(n_macro_steps: int, current: float) -> int:
+    """Return the hand-authored Hodgkin-Huxley macro-step (RK4, crossing) spike count.
+
+    ``HodgkinHuxleyNeuron.step`` is a 1 ms macro step of 100 inner sub-steps (``dt=0.01``)
+    with a rising-edge ``v >= v_threshold`` crossing on the macro boundary and no reset. The
+    bundled ``hodgkin_huxley`` schema mirrors the ``integrator="rk4"`` path exactly
+    (``method="rk4"``, ``substeps=100``, ``detection="crossing"``) — the simultaneous RK4,
+    not the Gauss-Seidel default ``baseline_euler`` — so one hand ``step()`` corresponds to
+    one schema macro ``step()``.
+    """
+    neuron = HodgkinHuxleyNeuron(integrator="rk4")
     return sum(neuron.step(current) for _ in range(n_macro_steps))
 
 
@@ -892,21 +907,41 @@ class TestQ1616Precision:
             f"schema={py_spikes}, verilog={vlog_spikes}"
         )
 
-    def test_hodgkin_huxley_q1616_parity(self) -> None:
-        """The full 4-state Hodgkin-Huxley co-simulates bit-true at Q16.16.
+    def test_hodgkin_huxley_q1616_macrostep_parity(self) -> None:
+        """Faithful macro-step Hodgkin-Huxley: hand == schema exact, verilog within one spike.
 
-        HH never fired in fixed point until the alpha_m / alpha_n rate functions were
-        rewritten with exprel: their a*(V-V0)/(1-exp(-(V-V0)/k)) form divides by zero
-        when the exp LUT returns exactly 1 at the removable singularity (V=V0). The
-        exprel(z)=(exp(z)-1)/z form has the finite limit there, so the gating evolves
-        and the model spikes — matching Python exactly at Q16.16.
+        The re-enrolled schema mirrors ``HodgkinHuxleyNeuron(integrator="rk4")``'s maintained
+        integrator: RK4 with ``substeps=100`` (100 inner ``dt=0.01`` sub-steps per 1 ms macro
+        step) and a rising-edge (``v >= v_threshold``) crossing evaluated only on the macro
+        boundary, no reset. The earlier schema was single-step ``method="euler"`` — neither the
+        hand model's RK4 nor its macro-stepping — so it could only be compared schema-vs-verilog
+        under a 5% band; the macro-step schema now reproduces the hand model's action-potential
+        count exactly, so **hand == schema** (one hand ``step()`` per schema macro ``step()``).
+        The comparison is against the ``integrator="rk4"`` (simultaneous) path, not the
+        Gauss-Seidel default ``baseline_euler``, which the DSL's simultaneous integration matches.
+
+        The Q16.16 RTL runs 100 clocks per macro step (one integration sub-step each, the
+        crossing gated to the macro boundary) and tracks the schema **within one spike** over the
+        bounded window. Like the stiff six-state Connor-Stevens (and unlike the well-conditioned
+        Morris-Lecar), Hodgkin-Huxley's exprel / sigmoid gating lowers to 256-entry look-up
+        tables; the fixed-point trajectory drifts from float64 and the drift is
+        **look-up-table-resolution-limited, not datapath-precision-limited**, so it holds
+        three-way over a bounded window and accumulates beyond it — an honest per-model
+        hardware-fidelity band, not a tolerance knob. The macro-step lowering itself is bit-exact
+        (proven on the polynomial FitzHugh-Nagumo sub-step cosim); the residual is genuine
+        conductance-LUT quantisation.
         """
-        py_spikes = _python_spike_count("hodgkin_huxley", 300, 50.0)
-        vlog_spikes = _verilog_spike_count_q1616("hodgkin_huxley", 300, 50.0)
-        assert py_spikes > 0 and vlog_spikes > 0
-        gap_pct = abs(py_spikes - vlog_spikes) / max(py_spikes, 1) * 100
-        assert gap_pct <= 5.0, (
-            f"Hodgkin-Huxley Q16.16 gap {gap_pct:.1f}% (Python={py_spikes}, Verilog={vlog_spikes})"
+        current, macro_steps, substeps = 15.0, 20, 100
+        hand_spikes = _hodgkin_huxley_hand_spike_count(macro_steps, current)
+        py_spikes = _python_spike_count("hodgkin_huxley", macro_steps, current)
+        vlog_spikes = _verilog_spike_count_q1616("hodgkin_huxley", macro_steps * substeps, current)
+        assert 1 < py_spikes < macro_steps  # a partial macro-step train, not saturated
+        assert hand_spikes == py_spikes, (
+            f"Hodgkin-Huxley hand/schema macro-step mismatch: hand={hand_spikes}, schema={py_spikes}"
+        )
+        assert abs(py_spikes - vlog_spikes) <= 1, (
+            f"Hodgkin-Huxley Q16.16 macro-step gap > 1 spike "
+            f"(schema={py_spikes}, verilog={vlog_spikes})"
         )
 
     def test_adex_q1616_parity(self) -> None:
