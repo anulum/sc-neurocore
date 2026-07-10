@@ -1,0 +1,91 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Commercial license available
+# © Concepts 1996–2026 Miroslav Šotek. All rights reserved.
+# © Code 2020–2026 Miroslav Šotek. All rights reserved.
+# ORCID: 0009-0009-3560-0851
+# Contact: www.anulum.li | protoscience@anulum.li
+# SC-NeuroCore — Tests for the equation expression safety gate
+
+"""Unit tests for the AST-level equation safety validator.
+
+This is the security boundary that makes every ``# nosec B307`` eval site in
+the equation runner sound, so the tests exercise each rejection path (syntax,
+depth, disallowed node type, blocked name, dunder attribute, blocked attribute)
+as well as the accepting path for a benign attribute access.
+"""
+
+from __future__ import annotations
+
+import ast
+
+import pytest
+
+from sc_neurocore.neurons.equation_safety import EVAL_GLOBALS, ExpressionSafetyValidator
+
+
+def test_valid_expression_passes() -> None:
+    """A whitelisted arithmetic/transcendental expression validates cleanly."""
+    validator = ExpressionSafetyValidator()
+    validator.validate("tanh(v) + a * exp(-w / tau)")
+
+
+def test_benign_attribute_access_is_permitted() -> None:
+    """A non-dunder, non-blocked attribute passes the Attribute node checks."""
+    ExpressionSafetyValidator().validate("m.real + 1.0")
+
+
+def test_syntax_error_is_rejected() -> None:
+    """An unparsable string raises with the invalid-syntax message."""
+    with pytest.raises(ValueError, match="Invalid equation syntax"):
+        ExpressionSafetyValidator().validate("v +")
+
+
+def test_excessively_deep_ast_is_rejected() -> None:
+    """A tree deeper than the limit is refused before the node walk."""
+    deep = "1" + "+1" * 25
+    with pytest.raises(ValueError, match="AST depth .* exceeds limit"):
+        ExpressionSafetyValidator().validate(deep)
+
+
+def test_custom_max_depth_is_honoured() -> None:
+    """The configured depth limit governs the rejection threshold."""
+    expr = "1 + 1 + 1"  # depth 5, comfortably under the default
+    ExpressionSafetyValidator(max_depth=20).validate(expr)
+    with pytest.raises(ValueError, match="AST depth .* exceeds limit 2"):
+        ExpressionSafetyValidator(max_depth=2).validate(expr)
+
+
+def test_disallowed_node_type_is_rejected() -> None:
+    """A node type outside the allowlist (a lambda) is refused."""
+    with pytest.raises(ValueError, match="Unsafe AST node"):
+        ExpressionSafetyValidator().validate("lambda: 1")
+
+
+def test_blocked_name_is_rejected() -> None:
+    """A bare blocked identifier is refused as a blocked function."""
+    with pytest.raises(ValueError, match="Blocked function 'os'"):
+        ExpressionSafetyValidator().validate("os")
+
+
+def test_dunder_attribute_access_is_rejected() -> None:
+    """Any double-underscore attribute access is refused outright."""
+    with pytest.raises(ValueError, match="Dunder attribute access"):
+        ExpressionSafetyValidator().validate("v.__class__")
+
+
+def test_blocked_attribute_is_rejected() -> None:
+    """A non-dunder attribute whose name is on the block list is refused."""
+    with pytest.raises(ValueError, match="Blocked attribute 'subprocess'"):
+        ExpressionSafetyValidator().validate("v.subprocess")
+
+
+def test_ast_depth_of_a_leaf_is_one() -> None:
+    """The depth helper reports 1 for a childless node."""
+    leaf = ast.parse("1", mode="eval").body
+    assert ExpressionSafetyValidator._ast_depth(leaf) == 1
+
+
+def test_eval_globals_is_an_empty_builtins_sandbox() -> None:
+    """The eval globals expose only ``__import__`` inside a scoped builtins map."""
+    assert set(EVAL_GLOBALS) == {"__builtins__"}
+    assert set(EVAL_GLOBALS["__builtins__"]) == {"__import__"}

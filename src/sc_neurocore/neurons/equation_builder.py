@@ -46,7 +46,6 @@ Usage:
 
 from __future__ import annotations
 
-import ast
 import math
 import re
 from copy import deepcopy
@@ -54,14 +53,11 @@ from typing import Any
 
 import numpy as np
 
-from sc_neurocore.neurons._units import (
-    UNIT_REGISTRY,
-    build_quantity_namespace,
-    is_quantity,
-    quantity_to_base,
-    require_pint,
-    require_quantity,
-    validate_quantity_expression,
+from sc_neurocore.neurons.equation_namespace import build_eval_namespace
+from sc_neurocore.neurons.equation_safety import EVAL_GLOBALS, ExpressionSafetyValidator
+from sc_neurocore.neurons.equation_units_runtime import (
+    convert_runtime_value,
+    prepare_strict_runtime,
 )
 
 SUPPORTED_METHODS = ("euler", "map", "rk4", "exp_euler")
@@ -137,55 +133,30 @@ class EquationNeuron:
         self._runtime_units: dict[str, Any] = {}
         self._input_unit_name = "I"
 
-        def _sigmoid(x: float) -> Any:
-            """Logistic sigmoid with clipping for numerical stability."""
-            return 1.0 / (1.0 + np.exp(-np.clip(x, -500, 500)))
-
-        def _sqrt(x: Any) -> Any:
-            """Square root that fails before NumPy warning machinery on invalid domains."""
-            if np.any(np.asarray(x) < 0):
-                raise ValueError("sqrt domain error")
-            return np.sqrt(x)
-
-        def _exprel(x: Any) -> Any:
-            """(exp(x) - 1) / x with the removable-singularity limit exprel(0) = 1.
-
-            Lets conductance rate functions of the form a*(V-V0)/(1-exp(-(V-V0)/k))
-            be written without the 0/0 singularity at V = V0 (it becomes a*k/exprel).
-            """
-            arr = np.asarray(x, dtype=float)
-            safe = np.where(arr == 0.0, 1.0, arr)
-            return np.where(np.abs(arr) < 1e-9, 1.0 + arr / 2.0, np.expm1(arr) / safe)
-
-        self._namespace: dict[str, Any] = {
-            "exp": np.exp,
-            "log": np.log,
-            "sqrt": _sqrt,
-            "abs": abs,
-            "sin": np.sin,
-            "cos": np.cos,
-            "tanh": np.tanh,
-            "cosh": np.cosh,
-            "sinh": np.sinh,
-            "exprel": _exprel,
-            "sigmoid": _sigmoid,
-            "pi": math.pi,
-            "clip": np.clip,
-            "max": max,
-            "min": min,
-        }
+        self._namespace: dict[str, Any] = build_eval_namespace()
         raw_parameters = parameters or {}
         raw_state = state or {k: 0.0 for k in equations}
         raw_constants = constants or {}
 
         if self._strict_units:
-            self.parameters, self.state, self.constants, self.dt = self._prepare_strict_runtime(
+            runtime = prepare_strict_runtime(
+                equations=self.equations,
+                threshold_expr=self.threshold_expr,
+                reset_rules=self.reset_rules,
+                input_unit_name=self._input_unit_name,
                 raw_parameters=raw_parameters,
                 raw_state=raw_state,
                 raw_constants=raw_constants,
                 dt=dt,
                 input_unit=input_unit,
             )
+            self.parameters = runtime.parameters
+            self.state = runtime.state
+            self.constants = runtime.constants
+            self.dt = runtime.dt
+            self._runtime_units = runtime.runtime_units
+            self._base_state_units = runtime.base_state_units
+            self._display_state_units = runtime.display_state_units
         else:
             self.parameters = raw_parameters
             self.state = raw_state
@@ -195,11 +166,12 @@ class EquationNeuron:
         self.initial_state = deepcopy(self.state)
         self._noise_scale = np.sqrt(self.dt)
 
+        self._safety = ExpressionSafetyValidator()
         all_exprs = list(self.equations.values()) + list(self.reset_rules.values())
         if self.threshold_expr:
             all_exprs.append(self.threshold_expr)
         for expr in all_exprs:
-            self._validate_expr(expr)
+            self._safety.validate(expr)
 
         self._compiled_eqs = {
             var: compile(expr, f"<eq:{var}>", "eval") for var, expr in self.equations.items()
@@ -277,252 +249,15 @@ class EquationNeuron:
         compiled: dict[str, Any] = {}
         for var, expr in self.equations.items():
             derivative = differentiate(expr, var)
-            self._validate_expr(derivative)
+            self._safety.validate(derivative)
             self.jacobian_expressions[var] = derivative
             compiled[var] = compile(derivative, f"<jac:{var}>", "eval")
         return compiled
 
-    _ALLOWED_AST_NODES = {
-        ast.Expression,
-        ast.BinOp,
-        ast.UnaryOp,
-        ast.Compare,
-        ast.BoolOp,
-        ast.IfExp,
-        ast.Call,
-        ast.Name,
-        ast.Constant,
-        ast.Attribute,
-        ast.Subscript,
-        ast.Index,
-        ast.Slice,
-        ast.Load,
-        ast.Add,
-        ast.Sub,
-        ast.Mult,
-        ast.Div,
-        ast.Pow,
-        ast.Mod,
-        ast.FloorDiv,
-        ast.USub,
-        ast.UAdd,
-        ast.Eq,
-        ast.NotEq,
-        ast.Lt,
-        ast.LtE,
-        ast.Gt,
-        ast.GtE,
-        ast.And,
-        ast.Or,
-        ast.Not,
-        ast.Tuple,
-        ast.List,
-    }
-
-    _MAX_AST_DEPTH = 20
-
-    _BLOCKED_NAMES = {
-        # Python builtins that enable code execution or introspection
-        "__import__",
-        "eval",
-        "exec",
-        "compile",
-        "globals",
-        "locals",
-        "getattr",
-        "setattr",
-        "delattr",
-        "open",
-        "input",
-        "breakpoint",
-        "type",
-        "vars",
-        "dir",
-        "help",
-        "print",
-        "exit",
-        "quit",
-        # Dunder attributes used in sandbox escape chains
-        "__builtins__",
-        "__class__",
-        "__subclasses__",
-        "__mro__",
-        "__bases__",
-        "__globals__",
-        "__code__",
-        "__reduce__",
-        "__reduce_ex__",
-        "__dict__",
-        "__init_subclass__",
-        "__getattr__",
-        "__setattr__",
-        "__delattr__",
-        # Module names that must never appear as identifiers
-        "os",
-        "sys",
-        "subprocess",
-        "importlib",
-        "shutil",
-        "pathlib",
-        "socket",
-        "ctypes",
-        "pickle",
-    }
-
-    _EVAL_GLOBALS = {
-        "__builtins__": {"__import__": __import__},
-    }
-
-    def _validate_expr(self, expr: str) -> None:
-        """Validate an expression against the AST whitelist."""
-        try:
-            tree = ast.parse(expr, mode="eval")
-        except SyntaxError as e:
-            raise ValueError(f"Invalid equation syntax: {expr!r}") from e
-
-        # Reject excessively deep ASTs (stack exhaustion / obfuscation)
-        max_depth = self._ast_depth(tree)
-        if max_depth > self._MAX_AST_DEPTH:
-            raise ValueError(
-                f"Equation AST depth {max_depth} exceeds limit {self._MAX_AST_DEPTH}: {expr!r}"
-            )
-
-        for node in ast.walk(tree):
-            if type(node) not in self._ALLOWED_AST_NODES:
-                raise ValueError(f"Unsafe AST node {type(node).__name__} in equation: {expr!r}")
-            if isinstance(node, ast.Name) and node.id in self._BLOCKED_NAMES:
-                raise ValueError(f"Blocked function {node.id!r} in equation: {expr!r}")
-            if isinstance(node, ast.Attribute):
-                # Block all double-underscore attribute access
-                if node.attr.startswith("__") and node.attr.endswith("__"):
-                    raise ValueError(
-                        f"Dunder attribute access {node.attr!r} blocked in equation: {expr!r}"
-                    )
-                if node.attr in self._BLOCKED_NAMES:
-                    raise ValueError(f"Blocked attribute {node.attr!r} in equation: {expr!r}")
-
-    @staticmethod
-    def _ast_depth(node: ast.AST) -> int:
-        """Return the maximum nesting depth of an AST."""
-        children = list(ast.iter_child_nodes(node))
-        if not children:
-            return 1
-        return 1 + max(EquationNeuron._ast_depth(c) for c in children)
-
-    def _prepare_strict_runtime(
-        self,
-        *,
-        raw_parameters: dict[str, Any],
-        raw_state: dict[str, Any],
-        raw_constants: dict[str, Any],
-        dt: Any,
-        input_unit: Any | None,
-    ) -> tuple[dict[str, float], dict[str, float], dict[str, float], float]:
-        """Convert pint quantities to base-unit floats for runtime."""
-        require_pint()
-
-        missing_state = sorted(set(self.equations) - set(raw_state))
-        if missing_state:
-            raise ValueError(
-                "units='strict' requires explicit state quantities for all equation variables: "
-                + ", ".join(missing_state)
-            )
-
-        dt_quantity = require_quantity(dt, "dt")
-        dt_base = quantity_to_base(dt_quantity)
-        dt_base.to(UNIT_REGISTRY.second)
-
-        quantity_parameters = {
-            name: require_quantity(value, f"parameter {name}")
-            for name, value in raw_parameters.items()
-        }
-        quantity_state = {
-            name: require_quantity(value, f"state {name}") for name, value in raw_state.items()
-        }
-        quantity_constants = {
-            name: require_quantity(value, f"constant {name}")
-            for name, value in raw_constants.items()
-        }
-
-        quantity_env = build_quantity_namespace()
-        quantity_env.update(quantity_parameters)
-        quantity_env.update(quantity_constants)
-        quantity_env.update(quantity_state)
-        quantity_env["xi"] = 1.0 * UNIT_REGISTRY.dimensionless
-
-        uses_input = any(re.search(r"\bI\b", expr) for expr in self.equations.values())
-        if self.threshold_expr:
-            uses_input = uses_input or bool(re.search(r"\bI\b", self.threshold_expr))
-        if any(re.search(r"\bI\b", expr) for expr in self.reset_rules.values()):
-            uses_input = True
-
-        if uses_input:
-            if input_unit is None:
-                raise ValueError(
-                    "units='strict' requires input_unit when equations reference the special input 'I'"
-                )
-            input_quantity = require_quantity(input_unit, "input_unit")
-            quantity_env[self._input_unit_name] = input_quantity
-            self._runtime_units[self._input_unit_name] = quantity_to_base(input_quantity).units
-
-        for var, expr in self.equations.items():
-            expected = quantity_state[var] / dt_quantity
-            validate_quantity_expression(
-                expr,
-                quantity_env,
-                expected_quantity=expected,
-                label=f"d{var}/dt",
-            )
-
-        for var, expr in self.reset_rules.items():
-            validate_quantity_expression(
-                expr,
-                quantity_env,
-                expected_quantity=quantity_state[var],
-                label=f"reset {var}",
-            )
-
-        if self.threshold_expr:
-            threshold_result = validate_quantity_expression(
-                self.threshold_expr,
-                quantity_env,
-                label="threshold",
-            )
-            if not isinstance(threshold_result, (bool, np.bool_)):
-                raise ValueError(
-                    "Threshold expression must evaluate to a boolean in strict units mode"
-                )
-
-        runtime_parameters = {}
-        runtime_state = {}
-        runtime_constants = {}
-
-        for name, quantity in quantity_parameters.items():
-            runtime_parameters[name] = float(quantity_to_base(quantity).magnitude)
-            self._runtime_units[name] = quantity_to_base(quantity).units
-
-        for name, quantity in quantity_constants.items():
-            runtime_constants[name] = float(quantity_to_base(quantity).magnitude)
-            self._runtime_units[name] = quantity_to_base(quantity).units
-
-        for name, quantity in quantity_state.items():
-            base_quantity = quantity_to_base(quantity)
-            runtime_state[name] = float(base_quantity.magnitude)
-            self._runtime_units[name] = base_quantity.units
-            self._base_state_units[name] = base_quantity.units
-            self._display_state_units[name] = quantity.units
-
-        return runtime_parameters, runtime_state, runtime_constants, float(dt_base.magnitude)
-
-    def _convert_runtime_value(self, name: str, value: Any) -> float:
-        """Convert a runtime value from pint quantity to float."""
-        if not self._strict_units:
-            return float(value)
-        if not is_quantity(value):
-            return float(value)
-        if name not in self._runtime_units:
-            raise ValueError(f"No runtime unit declared for {name!r}")
-        return float(quantity_to_base(value).to(self._runtime_units[name]).magnitude)
+    # The compiled-expression ``eval`` sites below run with this empty-builtins
+    # sandbox; the AST allowlist that makes every ``# nosec B307`` sound lives in
+    # :class:`~sc_neurocore.neurons.equation_safety.ExpressionSafetyValidator`.
+    _EVAL_GLOBALS = EVAL_GLOBALS
 
     def _build_env(self, **kwargs: float) -> dict[str, object]:
         """Build the eval environment with parameters, state, and noise."""
@@ -551,10 +286,21 @@ class EquationNeuron:
         is a plain single integration step and every existing model is bit-for-bit
         unchanged.
         """
-        kwargs["I"] = self._convert_runtime_value(self._input_unit_name, I)
+        kwargs["I"] = convert_runtime_value(
+            strict_units=self._strict_units,
+            runtime_units=self._runtime_units,
+            name=self._input_unit_name,
+            value=I,
+        )
         if self._strict_units:
             kwargs = {
-                name: self._convert_runtime_value(name, value) for name, value in kwargs.items()
+                name: convert_runtime_value(
+                    strict_units=self._strict_units,
+                    runtime_units=self._runtime_units,
+                    name=name,
+                    value=value,
+                )
+                for name, value in kwargs.items()
             }
         for _ in range(self.substeps):
             self._integrate_once(**kwargs)
@@ -599,11 +345,11 @@ class EquationNeuron:
             derivatives = {}
             for var, code in self._compiled_eqs.items():
                 # nosec B307: `code` is a compiled expression that has
-                # already passed `_validate_expr`'s AST whitelist (no
-                # imports, no attribute access into builtins, only the
-                # whitelisted maths/comparison nodes). The `eval` env
-                # has empty `__builtins__` so even reaching `eval` /
-                # `exec` / `__import__` is impossible.
+                # already passed `ExpressionSafetyValidator.validate`'s AST
+                # whitelist (no imports, no attribute access into builtins, only
+                # the whitelisted maths/comparison nodes). The `eval` env has
+                # empty `__builtins__` so even reaching `eval` / `exec` /
+                # `__import__` is impossible.
                 derivatives[var] = float(eval(code, self._EVAL_GLOBALS, env))  # nosec B307
             for var in self.equations:
                 self.state[var] += derivatives[var] * self.dt
@@ -618,8 +364,8 @@ class EquationNeuron:
             updates = {}
             for var, code in self._compiled_eqs.items():
                 # nosec B307: `code` is a compiled expression that already passed
-                # `_validate_expr`'s AST whitelist and evaluates with empty
-                # `__builtins__` (see the euler branch comment for full rationale).
+                # `ExpressionSafetyValidator.validate`'s AST whitelist and evaluates
+                # with empty `__builtins__` (see the euler branch comment for full rationale).
                 updates[var] = float(eval(code, self._EVAL_GLOBALS, env))  # nosec B307
             for var in self.equations:
                 self.state[var] = updates[var]

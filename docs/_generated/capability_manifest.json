@@ -961,11 +961,11 @@
     "model_documentation_pages": 175,
     "optional_extras": 28,
     "public_api_exports": 45,
-    "public_documentation_pages": 566,
+    "public_documentation_pages": 567,
     "python_model_classes": 158,
     "python_model_source_modules": 152,
     "rust_pyo3_model_wrappers": 175,
-    "test_files": 1009
+    "test_files": 1012
   },
   "documentation": {
     "public_pages": [
@@ -1529,6 +1529,7 @@
       "docs/tutorials/fpga_in_20_minutes.md",
       "docs/tutorials/sc_training_pipeline.md",
       "docs/tutorials/studio_quickstart.md",
+      "docs/validation/conductance_oscillator_cosim_fidelity.md",
       "docs/validation/cross_framework_brian2.md",
       "docs/validation/hodgkin_huxley.md",
       "docs/validation/izhikevich_patterns.md",
@@ -3022,7 +3023,10 @@
       "tests/test_equation_builder_adversarial.py",
       "tests/test_equation_builder_coverage_contracts.py",
       "tests/test_equation_compiler.py",
+      "tests/test_equation_namespace.py",
+      "tests/test_equation_safety.py",
       "tests/test_equation_units.py",
+      "tests/test_equation_units_runtime.py",
       "tests/test_equilibrium_propagation.py",
       "tests/test_equivalence_check.py",
       "tests/test_equivalence_miter.py",

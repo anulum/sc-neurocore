@@ -202,9 +202,12 @@ verilog = compile_to_verilog(
 | Comparison | `>`, `>=`, `<`, `<=` |
 
 The equation builder validates every equation, threshold, and reset expression
-through an AST allowlist before compilation. Runtime helpers cover clipped
-`sigmoid`, `exprel`, checked `sqrt`, and strict pint-backed unit conversion.
-The focused verification gate is:
+through an AST allowlist before compilation. Three focused responsibilities are
+split into sibling modules that `EquationNeuron` composes: the AST sandbox gate
+(`equation_safety.py`), the numpy evaluation namespace with clipped `sigmoid`,
+`exprel`, and checked `sqrt` (`equation_namespace.py`), and the strict
+pint-backed unit runtime (`equation_units_runtime.py`). Each sibling owns its own
+test surface; the combined focused verification gate is:
 
 ```bash
 PYTHONPATH=src .venv/bin/python -m coverage run --rcfile=/dev/null \
@@ -212,12 +215,25 @@ PYTHONPATH=src .venv/bin/python -m coverage run --rcfile=/dev/null \
     tests/test_equation_builder.py \
     tests/test_equation_builder_adversarial.py \
     tests/test_equation_units.py \
-    tests/test_equation_builder_coverage_contracts.py -q
+    tests/test_equation_builder_coverage_contracts.py \
+    tests/test_exp_euler_golden.py \
+    tests/test_edge_crossing_detection.py \
+    tests/test_universal_dsl.py \
+    tests/test_equation_namespace.py \
+    tests/test_equation_safety.py \
+    tests/test_equation_units_runtime.py -q
 PYTHONPATH=src .venv/bin/python -m coverage report --rcfile=/dev/null \
-    --include=src/sc_neurocore/neurons/equation_builder.py --fail-under=100 -m
+    --include='src/sc_neurocore/neurons/equation_builder.py,src/sc_neurocore/neurons/equation_namespace.py,src/sc_neurocore/neurons/equation_safety.py,src/sc_neurocore/neurons/equation_units_runtime.py' \
+    --fail-under=100 -m
 PYTHONPATH=src .venv/bin/python -m mypy --strict \
     src/sc_neurocore/neurons/equation_builder.py \
-    tests/test_equation_builder_coverage_contracts.py
+    src/sc_neurocore/neurons/equation_namespace.py \
+    src/sc_neurocore/neurons/equation_safety.py \
+    src/sc_neurocore/neurons/equation_units_runtime.py \
+    tests/test_equation_builder_coverage_contracts.py \
+    tests/test_equation_namespace.py \
+    tests/test_equation_safety.py \
+    tests/test_equation_units_runtime.py
 ```
 
 ### 4.2 MLIR Emitter
