@@ -323,7 +323,6 @@ def emit_all() -> list[EmitResult]:
             f"| {row.class_name} | {row.schema} | `{row.module}` | "
             f"`{row.state_port}` | {row.depth} |"
         )
-    lines.append("")
     inventory.write_text("\n".join(lines) + "\n", encoding="utf-8")
     return results
 
