@@ -8,9 +8,9 @@
     "description": "Modified HH for hippocampal interneurons — fast-spiking GABAergic basket cells"
   },
   "state": {
-    "v": -65.0,
-    "h": 0.6,
-    "n": 0.32
+    "h": 0.8,
+    "n": 0.1,
+    "v": -65.0
   },
   "parameters": {
     "C": 1.0,
@@ -20,22 +20,23 @@
     "E_Na": 55.0,
     "E_K": -90.0,
     "E_L": -65.0,
-    "phi": 5.0
+    "phi": 5.0,
+    "v_threshold": -20.0
   },
   "integration": {
     "dt": 0.01,
-    "method": "euler"
+    "method": "gauss_seidel",
+    "substeps": 50
   },
   "dynamics": {
-    "v": "(-g_Na * (1 / (1 + exp(-(v + 35) / 10)))**3 * h * (v - E_Na) - g_K * n**4 * (v - E_K) - g_L * (v - E_L) + I) / C",
     "h": "phi * (0.07 * exp(-(v + 58) / 20) * (1 - h) - 1 / (1 + exp(-(v + 28) / 10)) * h)",
-    "n": "phi * (0.01 * (v + 34) / (1 - exp(-(v + 34) / 10)) * (1 - n) - 0.125 * exp(-(v + 44) / 80) * n)"
+    "n": "phi * (0.1 / exprel(-(v + 34) / 10) * (1 - n) - 0.125 * exp(-(v + 44) / 80) * n)",
+    "v": "(-g_Na * ((1 / exprel(-(v + 35) / 10)) / (1 / exprel(-(v + 35) / 10) + 4 * exp(-(v + 60) / 18)))**3 * h * (v - E_Na) - g_K * n**4 * (v - E_K) - g_L * (v - E_L) + I) / C"
   },
   "threshold": {
-    "condition": "v > -10",
+    "condition": "v >= v_threshold",
     "detection": "crossing"
   },
-  "reset": {},
   "extensions": {
     "cell_type": "fast-spiking interneuron",
     "brain_region": "hippocampus"

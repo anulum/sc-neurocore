@@ -36,6 +36,7 @@ the two travel through distinct Runge-Kutta drivers.
 | `morris_lecar` | 2 | single RK4 step per call | exact spike count (7 @ `I=100`, 3000 steps) | exact over the whole `I in [90, 110]` band |
 | `hodgkin_huxley` | 4 | 100-sub-step macro RK4 (`substeps=100`) | exact spike count (5 @ `I=20`, 60 macro steps) | exact over a bounded window (`I=15`, `macro=20`); `±1` beyond it |
 | `connor_stevens` | 6 | 100-sub-step macro RK4 (`substeps=100`) | exact spike count (10 @ `I=100`, 60 macro steps) | exact over a bounded window (`I=100`, `macro=20`); `±1` beyond it |
+| `wang_buzsaki` | 3 | 50-sub-step macro Gauss-Seidel (`substeps=50`) | exact spike count (3 @ `I=10`, 20 macro steps) | exact over a bounded window (`I=10`, `macro=20`); `±1` beyond it |
 
 Morris-Lecar is well conditioned: it takes a single RK4 step per `step()` call,
 its `tanh`/`cosh` gating maps onto the fixed-point look-up datapath without
@@ -121,12 +122,20 @@ Consequences for the conductance enrolments:
   macro steps). The default `baseline_euler` path is Gauss-Seidel and would need a
   sequential schema mode to reproduce; enrolling against the higher-fidelity `rk4`
   path is faithful (same equations, a better integrator) and avoids that.
-- `wang_buzsaki` has no RK4 option, so it needs a sequential (Gauss-Seidel)
-  schema integration mode before it can be enrolled faithfully — still outstanding.
+- `wang_buzsaki` has no RK4 option, so it needs a sequential (Gauss-Seidel) schema
+  integration mode to be enrolled faithfully. That mode is now delivered: the
+  `EquationNeuron` runner and the Verilog emitter both carry a `gauss_seidel` method
+  that advances the state variables in declaration order (`h`, `n` before `v`), so a
+  later variable reads the already-committed earlier ones — matching the hand model's
+  gates-then-voltage update. With state ordered `h, n, v` and `substeps=50`, the schema
+  reproduces `WangBuzsakiNeuron` exactly (`hand == schema` at `I=10`, 20 macro steps).
 
 Both are stiff, so a bounded-window `±1` Q16.16 band comparable to Connor-Stevens
 is expected: Hodgkin-Huxley confirms it (exact three-way at `I=15`, `macro=20`;
-`±1` beyond), and Wang-Buzsaki is expected to match once its sequential mode lands.
+`±1` beyond), and Wang-Buzsaki now confirms it as well — three-way exact at `I=10`,
+`macro=20` (its `m_inf = alpha_m/(alpha_m+beta_m)` runtime division and exprel gating
+lower to a fixed-point divide plus a 256-entry look-up table, the same look-up-table-
+and fixed-point-resolution limit, not a datapath-precision limit).
 
 ## Provenance corrections landed in-line
 

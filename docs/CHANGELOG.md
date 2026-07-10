@@ -5,6 +5,34 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+### Sequential (Gauss-Seidel) integration mode + faithful Wang-Buzsáki re-enrolment
+- Added a sequential (Gauss-Seidel) integration mode (`[integration] method = "gauss_seidel"`) to
+  the schema DSL, in both the Python runner (`EquationNeuron`) and the emitted Verilog. The state
+  variables advance in declaration order, each derivative reading the already-committed earlier
+  variables within the same sub-step — lowering a conductance hand model's gates-then-voltage
+  update (gates from the old voltage, voltage from the new gates). The emitter renders each earlier
+  variable as its `<var>_next` wire in a later variable's derivative (a commit-before-read chain,
+  no cycle). Composes with `substeps`; the simultaneous `euler`/`rk4` methods stay bit-for-bit
+  unchanged (default `substeps = 1`).
+- Re-enrolled the Wang-Buzsáki (1996) fast-spiking interneuron (`wang_buzsaki` schema, DOI
+  `10.1523/JNEUROSCI.16-20-06402.1996`) faithfully. The bundled schema was a single-step
+  `method="euler"` re-derivation with a sigmoid-caricature `m_inf`, unfaithful gate initial
+  conditions (`h=0.6`, `n=0.32`), a `v > -10` threshold, and a singular `n` rate; it is now
+  `method="gauss_seidel"`, `substeps=50`, state ordered `h, n, v` (`h=0.8`, `n=0.1`, `v=-65`), the
+  true instantaneous `m_inf = alpha_m/(alpha_m+beta_m)` (`alpha_m = 1/exprel(-(v+35)/10)`), the
+  exprel `n` rate `0.1/exprel(-(v+34)/10)`, a macro-boundary `v >= v_threshold` crossing
+  (`v_threshold=-20`), no reset — matching `WangBuzsakiNeuron` exactly (`hand == schema`, three
+  action potentials at `I=10` over 20 macro steps). The Q16.16 RTL tracks the schema **within one
+  spike** over the bounded window (three-way exact at `I=10`, `macro=20`); the residual is the
+  `m_inf` fixed-point divide plus a 256-entry exprel look-up, not a datapath-precision limit.
+  Re-derived reference trace `wang_buzsaki_driven_spiking_doi`
+  (`independent_macrostep_gauss_seidel_reference`, a 3-state helper bit-exact vs the runner,
+  spike_count 4), replacing the deleted resting-gate trace; descriptor dynamics synced to the
+  exprel form; the 15%-band cosim test becomes a macro-step three-way parity test. Wang-Buzsáki is
+  the last of the four WC-A5 conductance oscillators (Morris-Lecar, Connor-Stevens, Hodgkin-Huxley,
+  Wang-Buzsáki), all now faithfully enrolled; the polynomial edge-crossing oscillators
+  (FitzHugh-Nagumo, McKean) were enrolled earlier.
+
 ### Faithful Hodgkin-Huxley re-enrolment (macro-step RK4)
 - Re-enrolled the Hodgkin-Huxley (1952) membrane (`hodgkin_huxley` schema,
   DOI `10.1113/jphysiol.1952.sp004764`) as a driven repetitive-spiking oscillator using the

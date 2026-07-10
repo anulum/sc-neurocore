@@ -60,7 +60,7 @@ from sc_neurocore.neurons.equation_units_runtime import (
     prepare_strict_runtime,
 )
 
-SUPPORTED_METHODS = ("euler", "map", "rk4", "exp_euler")
+SUPPORTED_METHODS = ("euler", "map", "rk4", "exp_euler", "gauss_seidel")
 
 # Spike-detection modes a schema's ``[threshold]`` may declare. ``level`` fires on every
 # step the condition holds (integrate -> threshold -> reset); ``crossing`` fires once on
@@ -400,6 +400,26 @@ class EquationNeuron:
             k4 = eval_derivs(s3)
             for v in self.equations:
                 self.state[v] = s0[v] + (k1[v] + 2 * k2[v] + 2 * k3[v] + k4[v]) * self.dt / 6
+
+        elif self.method == "gauss_seidel":
+            # Sequential (Gauss-Seidel) forward Euler: advance each state variable in
+            # declaration order, writing its updated value back into the evaluation
+            # environment before the next variable's derivative is evaluated. A
+            # later-declared variable therefore reads the ALREADY-UPDATED earlier
+            # variables within the same sub-step, unlike the simultaneous ``euler`` mode
+            # whose derivatives all read the pre-step state. This matches conductance
+            # models whose hand implementation updates the gating variables first and the
+            # membrane voltage from the new gates (Wang-Buzsaki 1996 updates h, n before
+            # v). ``env`` already holds the pre-step state, parameters, constants, kwargs
+            # and a single ``xi`` draw (one per sub-step, matching euler); committing the
+            # variable in place makes the next derivative in the loop read the new value.
+            for var, code in self._compiled_eqs.items():
+                # nosec B307: `code` is a compiled expression that already passed
+                # `ExpressionSafetyValidator.validate`'s AST whitelist and evaluates
+                # with empty `__builtins__` (see the euler branch comment for full rationale).
+                derivative = float(eval(code, self._EVAL_GLOBALS, env))  # nosec B307
+                self.state[var] += derivative * self.dt
+                env[var] = self.state[var]
 
         elif self.method == "exp_euler":
             # Linearised exponential Euler (Rush-Larsen): for each dx/dt = f(x),

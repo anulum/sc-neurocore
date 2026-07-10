@@ -1,0 +1,56 @@
+{
+  "schema_version": "sc-neurocore.reference-trace.v1",
+  "name": "wang_buzsaki_driven_spiking_doi",
+  "model": {
+    "schema_name": "wang_buzsaki",
+    "runner": "universal_dsl"
+  },
+  "protocol": {
+    "dt": 0.01,
+    "steps": 30,
+    "inputs": {
+      "I": 10.0
+    },
+    "state_variables": [
+      "h",
+      "n",
+      "v"
+    ]
+  },
+  "provenance": {
+    "kind": "independent_macrostep_gauss_seidel_reference",
+    "source": "src/sc_neurocore/neurons/model_schemas/wang_buzsaki.toml",
+    "equation": "Driven Wang-Buzsaki fast-spiking interneuron: 50 inner dt=0.01 sub-steps per 0.5 ms macro step advanced with the sequential (Gauss-Seidel) forward Euler the schema declares (gating variables h, n updated from the old voltage, then the membrane voltage v from the new gates; sodium activation instantaneous via m_inf = alpha_m/(alpha_m+beta_m) with alpha_m = 1/exprel(-(v+35)/10)). The rising-edge v >= v_threshold crossing is evaluated only on the macro boundary (no reset). numpy exp/expm1 match the runner bit-for-bit; independently re-derived from the Wang-Buzsaki (1996) model definition.",
+    "citation": "doi:10.1523/JNEUROSCI.16-20-06402.1996"
+  },
+  "expected_features": {
+    "spike_count": 4.0,
+    "first_spike_step": 4.0,
+    "final.h": 0.384857931083717,
+    "min.h": 0.02100556933438031,
+    "max.h": 0.7837476470409019,
+    "mean.h": 0.2905311951055335,
+    "final.n": 0.260708748290533,
+    "min.n": 0.1004683839851963,
+    "max.n": 0.7290823014249463,
+    "mean.n": 0.39318681966100677,
+    "final.v": -53.96410273608651,
+    "min.v": -62.751037153254885,
+    "max.v": 34.532659093454576,
+    "mean.v": -42.26601978024987
+  },
+  "tolerances": {
+    "default": {
+      "absolute": 1e-09,
+      "relative": 1e-12
+    },
+    "spike_count": {
+      "absolute": 0.0,
+      "relative": 0.0
+    },
+    "first_spike_step": {
+      "absolute": 0.0,
+      "relative": 0.0
+    }
+  }
+}

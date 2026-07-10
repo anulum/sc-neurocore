@@ -59,6 +59,98 @@ def test_compile_to_verilog_lowers_map_method_and_piecewise_ifexp() -> None:
     assert "_reg + d" not in verilog
 
 
+def test_compile_to_verilog_gauss_seidel_reads_committed_earlier_variable() -> None:
+    """Sequential (Gauss-Seidel) lowering reads the freshly-committed earlier variable.
+
+    With state declared ``a`` then ``b`` and ``db/dt`` referencing ``a``, the ``gauss_seidel``
+    method emits ``a_next`` inside ``b``'s derivative — the datapath consumes the updated
+    ``a`` within the same sub-step — whereas the simultaneous ``euler`` method reads only the
+    pre-step ``a_reg`` there. The extra ``a_next`` reference (and the correspondingly fewer
+    ``a_reg`` references) in the sequential Verilog pins the commit-before-read ordering, not
+    merely that the branch executed.
+    """
+    equations = {"a": "-a / tau_a", "b": "a - b / tau_b"}
+    params = {"tau_a": 10.0, "tau_b": 20.0}
+    state = {"a": 1.0, "b": 0.0}
+
+    sequential = compile_to_verilog(
+        EquationNeuron(
+            equations=equations,
+            parameters=params,
+            state=dict(state),
+            threshold="b > 100.0",
+            dt=0.1,
+            method="gauss_seidel",
+        ),
+        module_name="sc_gs_seq",
+    )
+    simultaneous = compile_to_verilog(
+        EquationNeuron(
+            equations=equations,
+            parameters=params,
+            state=dict(state),
+            threshold="b > 100.0",
+            dt=0.1,
+            method="euler",
+        ),
+        module_name="sc_gs_sim",
+    )
+
+    assert "module sc_gs_seq" in sequential
+    # ``b``'s derivative reads the committed ``a_next`` under Gauss-Seidel but not under Euler
+    # (``a_next`` still appears in the simultaneous Verilog, but only for the state commit).
+    assert "a_next" in simultaneous
+    assert sequential.count("a_next") > simultaneous.count("a_next")
+    assert sequential.count("a_reg") < simultaneous.count("a_reg")
+
+
+def test_compile_to_verilog_gauss_seidel_pipelined_registers_multiplies() -> None:
+    """Sequential-mode compilation with pipelining registers the derivative multiplies.
+
+    ``pipeline_stages > 0`` routes the sub-step dt-scaling multiply through a pipeline
+    register (``_dt_mul_<var>_r``) exactly as the Euler path does, exercising the registered
+    branch of the sequential emitter's dt-scaling.
+    """
+    neuron = EquationNeuron(
+        equations={"a": "-a / tau_a", "b": "a - b / tau_b"},
+        parameters={"tau_a": 10.0, "tau_b": 20.0},
+        state={"a": 1.0, "b": 0.0},
+        threshold="b > 100.0",
+        dt=0.1,
+        method="gauss_seidel",
+    )
+
+    verilog = compile_to_verilog(neuron, module_name="sc_gs_pipe", pipeline_stages=1)
+
+    assert "module sc_gs_pipe" in verilog
+    assert "_dt_mul_a_r" in verilog  # the dt-scaling multiply for ``a`` is registered
+
+
+def test_compile_to_verilog_rejects_substeps_with_pipelining() -> None:
+    """Macro-step sub-stepping and multiply pipelining cannot be combined.
+
+    ``substeps > 1`` folds several integration sub-steps into one macro step whose spike
+    decision is taken on the macro boundary; multiply pipelining instead holds the state
+    steady across fill cycles, so the two stepping schemes would disagree with the golden. The
+    compiler rejects the combination rather than emit a datapath that silently drifts. The
+    guard fires only after the edge-crossing check (a resetting model would raise there first),
+    so this uses a non-resetting crossing oscillator to reach the pipelining guard.
+    """
+    neuron = EquationNeuron(
+        equations={"v": "v - v * v * v / 3.0 - w + I", "w": "epsilon * (v + a - b * w)"},
+        parameters={"a": 0.7, "b": 0.8, "epsilon": 0.08, "v_threshold": 1.0},
+        state={"v": -1.0, "w": -0.5},
+        threshold="v >= v_threshold",
+        detection="crossing",
+        dt=0.1,
+        method="rk4",
+        substeps=2,
+    )
+
+    with pytest.raises(NotImplementedError, match="not supported with multiply pipelining"):
+        compile_to_verilog(neuron, pipeline_stages=1)
+
+
 def test_compile_to_verilog_disambiguates_case_colliding_parameters() -> None:
     """Case-distinct parameter names must not collapse onto one Verilog port.
 

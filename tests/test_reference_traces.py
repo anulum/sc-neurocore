@@ -50,7 +50,7 @@ _DETERMINISTIC_SCHEMA_TRACES = {
     "resonate_fire": "resonate_fire_subthreshold_resonance_doi",
     "rulkov_map": "rulkov_map_driven_spiking_doi",
     "theta": "theta_constant_current_phase_analytic",
-    "wang_buzsaki": "wang_buzsaki_resting_interneuron_doi",
+    "wang_buzsaki": "wang_buzsaki_driven_spiking_doi",
 }
 
 
@@ -1112,69 +1112,96 @@ def _connor_stevens_macrostep_rk4_features(
     return _summarise(recorded, spikes)
 
 
-def _wang_buzsaki_resting_euler_features(
-    *, current: float, dt: float, steps: int
+def _wang_buzsaki_macrostep_gauss_seidel_features(
+    *, current: float, dt: float, steps: int, substeps: int
 ) -> dict[str, float]:
-    """Return exact explicit-Euler features for the resting Wang-Buzsaki recurrence.
+    """Return exact macro-step Gauss-Seidel features for the driven Wang-Buzsaki oscillator.
 
-    The Wang-Buzsaki (1996) fast-spiking interneuron membrane and its ``h``/``n``
-    gating variables (sodium activation is instantaneous) are advanced with the same
-    simultaneous explicit-Euler update the schema runner applies, reusing
-    :func:`_np_exp` so the rate functions match the runner bit-for-bit. The verbatim
-    expression order is preserved; the resting zero-current protocol never crosses
-    the ``v > -10`` threshold and the schema declares no reset, so the reference is
-    an independent re-derivation of the committed gate trajectory.
+    The Wang-Buzsaki (1996) fast-spiking interneuron is the faithful representation of the
+    maintained ``WangBuzsakiNeuron``: each macro step advances ``substeps`` inner sequential
+    (Gauss-Seidel) forward-Euler sub-steps of ``dt`` — the gating variables ``h`` and ``n``
+    are updated from the old voltage first, then the membrane voltage ``v`` from the
+    already-updated gates (the schema declares ``method="gauss_seidel"`` with state ordered
+    ``h, n, v``). Sodium activation is instantaneous: ``m_inf = alpha_m/(alpha_m+beta_m)``
+    with ``alpha_m = 1/exprel(-(v+35)/10)`` (the exprel rewrite of ``0.1*(v+35)/(1-exp(...))``)
+    and ``beta_m = 4*exp(-(v+60)/18)``; the potassium rate ``alpha_n`` is likewise
+    ``0.1/exprel(-(v+34)/10)``. The rising-edge ``v >= v_threshold`` crossing is evaluated
+    only on the macro boundary against the condition at the previous macro boundary, with
+    **no reset**. The rate functions are transcribed verbatim from the schema, reusing
+    :func:`_np_exp` and :func:`_reference_exprel` so the recurrence reproduces the schema
+    runner bit-for-bit. The reference is an independent re-derivation of the committed
+    driven-spiking trace, not a copy of the runner.
 
     Parameters
     ----------
     current:
         Constant input current applied at every timestep.
     dt:
-        Simulation timestep.
+        Inner sub-step timestep.
     steps:
-        Number of timesteps to advance.
+        Number of macro steps to advance.
+    substeps:
+        Number of inner Gauss-Seidel sub-steps per macro step.
 
     Returns
     -------
     dict of str to float
-        Reference feature map for the ``v``, ``h``, and ``n`` state variables plus
+        Reference feature map for the ``h``, ``n``, and ``v`` state variables plus
         spike-count and first-spike-step features.
     """
-    capacitance = 1.0
+    phi = 5.0
     g_na = 35.0
     g_k = 9.0
     g_l = 0.1
     e_na = 55.0
     e_k = -90.0
     e_l = -65.0
-    phi = 5.0
+    capacitance = 1.0
+    v_threshold = -20.0
+    h = 0.8
+    n = 0.1
     v = -65.0
-    h = 0.6
-    n = 0.32
-    recorded: dict[str, list[float]] = {"v": [], "h": [], "n": []}
+    recorded: dict[str, list[float]] = {"h": [], "n": [], "v": []}
     spikes: list[int] = []
     for _ in range(steps):
-        dv = (
-            -g_na * (1 / (1 + _np_exp(-(v + 35) / 10))) ** 3 * h * (v - e_na)
-            - g_k * n**4 * (v - e_k)
-            - g_l * (v - e_l)
-            + current
-        ) / capacitance
-        dh = phi * (
-            0.07 * _np_exp(-(v + 58) / 20) * (1 - h) - 1 / (1 + _np_exp(-(v + 28) / 10)) * h
-        )
-        dn = phi * (
-            0.01 * (v + 34) / (1 - _np_exp(-(v + 34) / 10)) * (1 - n)
-            - 0.125 * _np_exp(-(v + 44) / 80) * n
-        )
-        v_next = v + dv * dt
-        h_next = h + dh * dt
-        n_next = n + dn * dt
-        spikes.append(1 if v_next > -10 else 0)
-        v, h, n = v_next, h_next, n_next
-        recorded["v"].append(v)
+        v_prev = v
+        for _ in range(substeps):
+            # ``h`` (declared first): reads the old voltage and old ``h``.
+            h = (
+                h
+                + phi
+                * (0.07 * _np_exp(-(v + 58) / 20) * (1 - h) - 1 / (1 + _np_exp(-(v + 28) / 10)) * h)
+                * dt
+            )
+            # ``n`` (declared second): reads the old voltage and old ``n``.
+            n = (
+                n
+                + phi
+                * (
+                    0.1 / _reference_exprel(-(v + 34) / 10) * (1 - n)
+                    - 0.125 * _np_exp(-(v + 44) / 80) * n
+                )
+                * dt
+            )
+            # ``v`` (declared last): reads the already-updated ``h``/``n`` and old ``v``.
+            inv_exprel = 1 / _reference_exprel(-(v + 35) / 10)
+            m_inf = inv_exprel / (inv_exprel + 4 * _np_exp(-(v + 60) / 18))
+            v = (
+                v
+                + (
+                    -g_na * m_inf**3 * h * (v - e_na)
+                    - g_k * n**4 * (v - e_k)
+                    - g_l * (v - e_l)
+                    + current
+                )
+                / capacitance
+                * dt
+            )
+        # Macro-boundary rising-edge crossing (matching the hand model / macro runner).
+        spikes.append(1 if (v >= v_threshold and v_prev < v_threshold) else 0)
         recorded["h"].append(h)
         recorded["n"].append(n)
+        recorded["v"].append(v)
 
     return _summarise(recorded, spikes)
 
@@ -1455,12 +1482,15 @@ _PARITY_CASES: list[tuple[str, str, str, str, Callable[[ReferenceTraceSpec], dic
         ),
     ),
     (
-        "wang_buzsaki_resting_interneuron_doi",
+        "wang_buzsaki_driven_spiking_doi",
         "wang_buzsaki",
-        "independent_euler_reference",
+        "independent_macrostep_gauss_seidel_reference",
         "doi:10.1523/JNEUROSCI.16-20-06402.1996",
-        lambda spec: _wang_buzsaki_resting_euler_features(
-            current=spec.protocol.inputs["I"], dt=spec.protocol.dt, steps=spec.protocol.steps
+        lambda spec: _wang_buzsaki_macrostep_gauss_seidel_features(
+            current=spec.protocol.inputs["I"],
+            dt=spec.protocol.dt,
+            steps=spec.protocol.steps,
+            substeps=50,
         ),
     ),
 ]

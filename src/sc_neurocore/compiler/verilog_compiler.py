@@ -120,6 +120,86 @@ def _emit_euler_deriv_wires(
     return deriv_wires, all_intermediates, all_pipeline_regs, _mc, _tc
 
 
+def _emit_gauss_seidel_deriv_wires(
+    neuron: EquationNeuron,
+    state_var_map: dict[str, str],
+    param_map: dict[str, str],
+    q: Q88,
+    *,
+    data_width: int,
+    fraction: int,
+    use_pipeline: bool,
+    pp_set: set[str],
+    mul_start: int,
+    trunc_start: int,
+) -> tuple[list[str], list[str], list[str], int, int]:
+    """Emit the per-variable ``d<var> = f(state)·dt`` sequential (Gauss-Seidel) increments.
+
+    Identical to :func:`_emit_euler_deriv_wires` except for which register each state
+    variable resolves to inside a later variable's derivative expression. In the
+    simultaneous Euler path every derivative reads the pre-step ``<var>_reg``; here each
+    derivative is emitted in declaration order and the earlier-declared variables resolve
+    to their freshly-committed ``<var>_next`` wire (the saturated ``<var>_reg + d<var>``),
+    while this variable and the later ones still read ``<var>_reg``. A later variable
+    therefore consumes the already-updated earlier variables within the same sub-step,
+    lowering the Python golden's Gauss-Seidel commit order (Wang-Buzsaki 1996 updates the
+    gating variables ``h``/``n`` before the membrane voltage ``v``) as a commit-before-read
+    combinational dependency chain — no cycle, since ``h_next``/``n_next`` depend only on
+    the registers, not on ``v_next``. The substitution reuses the same mechanism the
+    threshold emitter uses to reference ``<var>_next``; state variables are supplied
+    through ``param_map`` (``state_vars`` is empty) so the emitter renders the exact wire
+    chosen per variable. Returns ``(deriv_wires, intermediates, pipeline_regs, mul_count,
+    trunc_count)``.
+    """
+    deriv_wires: list[str] = []
+    all_intermediates: list[str] = []
+    all_pipeline_regs: list[str] = []
+    _mc = mul_start
+    _tc = trunc_start
+    variables = list(neuron.equations)
+    for idx, var in enumerate(variables):
+        safe_var = state_var_map[var]
+        # Earlier-declared variables resolve to their committed ``<var>_next`` value;
+        # this variable and later ones keep the pre-step ``<var>_reg``.
+        render_map = dict(param_map)
+        for position, other in enumerate(variables):
+            render_map[other] = (
+                f"{state_var_map[other]}_next" if position < idx else f"{state_var_map[other]}_reg"
+            )
+        vexpr, intermediates, _mc, _tc, p_regs = _emit_expr(
+            neuron.equations[var],
+            {},
+            render_map,
+            q,
+            mul_start=_mc,
+            trunc_start=_tc,
+            pipeline=use_pipeline,
+            pipeline_points=pp_set,
+        )
+        all_intermediates.extend(intermediates)
+        all_pipeline_regs.extend(p_regs)
+        dt_literal = q.encode_signed_literal(neuron.dt)
+        dt_tmp = f"_dt_mul_{safe_var}"
+        dt_should_pipe = use_pipeline or dt_tmp in pp_set
+        all_intermediates.append(
+            f"wire signed [{2 * data_width - 1}:0] {dt_tmp} = ({vexpr}) * {dt_literal};"
+        )
+        deriv_name = f"d{safe_var}"
+        deriv_trunc = f"_dt_trunc_{safe_var}"
+        if dt_should_pipe:
+            dt_reg = f"{dt_tmp}_r"
+            all_pipeline_regs.append(f"reg signed [{2 * data_width - 1}:0] {dt_reg};")
+            all_intermediates.append(
+                f"wire signed [{data_width - 1}:0] {deriv_trunc} = ({dt_reg} >>> {fraction});"
+            )
+        else:
+            all_intermediates.append(
+                f"wire signed [{data_width - 1}:0] {deriv_trunc} = ({dt_tmp} >>> {fraction});"
+            )
+        deriv_wires.append(f"wire signed [{data_width - 1}:0] {deriv_name} = {deriv_trunc};")
+    return deriv_wires, all_intermediates, all_pipeline_regs, _mc, _tc
+
+
 def _emit_map_deriv_wires(
     neuron: EquationNeuron,
     state_var_map: dict[str, str],
@@ -425,6 +505,19 @@ def _build_neuron_core(
             param_map,
             q,
             data_width=data_width,
+            use_pipeline=use_pipeline,
+            pp_set=pp_set,
+            mul_start=_mc,
+            trunc_start=_tc,
+        )
+    elif method == "gauss_seidel":
+        deriv_wires, deriv_intermediates, deriv_regs, _mc, _tc = _emit_gauss_seidel_deriv_wires(
+            neuron,
+            state_var_map,
+            param_map,
+            q,
+            data_width=data_width,
+            fraction=fraction,
             use_pipeline=use_pipeline,
             pp_set=pp_set,
             mul_start=_mc,

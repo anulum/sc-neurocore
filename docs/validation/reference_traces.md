@@ -40,14 +40,14 @@ table because their schemas are stochastic.
 | `resonate_fire_subthreshold_resonance_doi` | `resonate_fire` | `universal_dsl` | Analytic linear Euler recurrence from `neurons/model_schemas/resonate_fire.toml` |
 | `rulkov_map_driven_spiking_doi` | `rulkov_map` | `universal_dsl` | Independent piecewise-map iteration (Rulkov 2002, `method="map"`) from `neurons/model_schemas/rulkov_map.toml` with DOI-backed schema provenance |
 | `theta_constant_current_phase_analytic` | `theta` | `universal_dsl` | Analytic tangent half-angle phase solution from `neurons/model_schemas/theta.toml` with DOI-backed schema provenance |
-| `wang_buzsaki_resting_interneuron_doi` | `wang_buzsaki` | `universal_dsl` | Independent explicit-Euler re-derivation of the resting gate equations from `neurons/model_schemas/wang_buzsaki.toml` with DOI-backed schema provenance |
+| `wang_buzsaki_driven_spiking_doi` | `wang_buzsaki` | `universal_dsl` | Independent macro-step Gauss-Seidel re-derivation of the driven fast-spiking interneuron (50 inner `dt=0.01` sub-steps per 0.5 ms macro step, gates `h`/`n` updated before `v`, no reset, macro-boundary `v >= v_threshold` crossing) from `neurons/model_schemas/wang_buzsaki.toml` with DOI-backed schema provenance |
 
 All entries record spike count, first spike step, and final/min/max/mean
 features for the declared state variables. The tests independently recompute the
 LIF, QIF, perfect-integrator, resonate-fire, theta, GLIF, Izhikevich,
 Izhikevich 2007, FitzHugh-Nagumo, McKean, AdEx, exponential-IF, Hindmarsh-Rose, Morris-Lecar,
 Hodgkin-Huxley, Connor-Stevens, Wang-Buzsaki, DPI, and Mihalas-Niebur analytic,
-explicit-Euler, or fourth-order Runge-Kutta solutions — every deterministic
+explicit-Euler, sequential Gauss-Seidel, or fourth-order Runge-Kutta solutions — every deterministic
 bundled-schema entry — so the committed feature values are not merely copied from
 the runner output. The
 Hodgkin-Huxley, Connor-Stevens, and Wang-Buzsaki re-derivations reuse the runner's

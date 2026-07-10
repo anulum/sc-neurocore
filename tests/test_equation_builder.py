@@ -171,6 +171,51 @@ class TestEquationNeuron:
             n.step(I=1.0)
         assert n.state["v"] > 1.0, "should converge toward steady state"
 
+    def test_gauss_seidel_method(self) -> None:
+        """Gauss-Seidel advances state variables sequentially in declaration order.
+
+        A later-declared variable reads the already-updated value of an earlier one within
+        the same step, unlike the simultaneous ``euler`` mode. With ``da/dt = 1`` and
+        ``db/dt = a`` at ``dt = 1`` from ``a = b = 0``: the sequential mode commits ``a = 1``
+        first, so ``b`` integrates the new ``a`` to ``1``; simultaneous Euler reads the
+        pre-step ``a = 0`` and leaves ``b = 0``. The contrast pins the ordering, not just the
+        branch being executed.
+        """
+        from sc_neurocore.neurons.equation_builder import EquationNeuron
+
+        sequential = EquationNeuron(
+            equations={"a": "1", "b": "a"},
+            state={"a": 0.0, "b": 0.0},
+            dt=1.0,
+            method="gauss_seidel",
+        )
+        sequential.step()
+        assert sequential.state["a"] == 1.0
+        assert sequential.state["b"] == 1.0  # reads the committed a = 1, not the pre-step a = 0
+
+        simultaneous = EquationNeuron(
+            equations={"a": "1", "b": "a"},
+            state={"a": 0.0, "b": 0.0},
+            dt=1.0,
+            method="euler",
+        )
+        simultaneous.step()
+        assert simultaneous.state["a"] == 1.0
+        assert simultaneous.state["b"] == 0.0  # reads the pre-step a = 0
+
+    def test_gauss_seidel_fails_closed_on_non_finite_state(self) -> None:
+        """A diverging sequential integration raises rather than propagating a non-finite state."""
+        from sc_neurocore.neurons.equation_builder import EquationNeuron
+
+        n = EquationNeuron(
+            equations={"v": "v * v + 1e6"},
+            state={"v": 1e200},
+            dt=1.0,
+            method="gauss_seidel",
+        )
+        with pytest.raises(FloatingPointError, match="became non-finite"):
+            n.step()
+
     def test_no_threshold(self) -> None:
         from sc_neurocore.neurons.equation_builder import EquationNeuron
 

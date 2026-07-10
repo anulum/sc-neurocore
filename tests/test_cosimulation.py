@@ -77,6 +77,7 @@ from sc_neurocore.neurons.models.izhikevich2007 import Izhikevich2007Neuron
 from sc_neurocore.neurons.models.mckean import McKeanNeuron
 from sc_neurocore.neurons.models.connor_stevens import ConnorStevensNeuron
 from sc_neurocore.neurons.models.hodgkin_huxley import HodgkinHuxleyNeuron
+from sc_neurocore.neurons.models.wang_buzsaki import WangBuzsakiNeuron
 from sc_neurocore.neurons.models.mihalas_niebur import MihalasNieburNeuron
 from sc_neurocore.neurons.models.morris_lecar import MorrisLecarNeuron
 from sc_neurocore.neurons.models.perfect_integrator import PerfectIntegratorNeuron
@@ -253,6 +254,21 @@ def _hodgkin_huxley_hand_spike_count(n_macro_steps: int, current: float) -> int:
     one schema macro ``step()``.
     """
     neuron = HodgkinHuxleyNeuron(integrator="rk4")
+    return sum(neuron.step(current) for _ in range(n_macro_steps))
+
+
+def _wang_buzsaki_hand_spike_count(n_macro_steps: int, current: float) -> int:
+    """Return the hand-authored Wang-Buzsaki macro-step (Gauss-Seidel, crossing) spike count.
+
+    ``WangBuzsakiNeuron.step`` is a 0.5 ms macro step of 50 inner sub-steps (``dt=0.01``)
+    advanced sequentially (the gating variables ``h``/``n`` from the old voltage, then the
+    membrane voltage ``v`` from the new gates), with a rising-edge ``v >= v_threshold``
+    crossing on the macro boundary and no reset. The bundled ``wang_buzsaki`` schema mirrors
+    that path exactly (``method="gauss_seidel"``, ``substeps=50``, state ordered ``h, n, v``,
+    ``detection="crossing"``), so one hand ``step()`` corresponds to one schema macro
+    ``step()``. The neuron is constructed once so the state accumulates across the train.
+    """
+    neuron = WangBuzsakiNeuron()
     return sum(neuron.step(current) for _ in range(n_macro_steps))
 
 
@@ -954,14 +970,41 @@ class TestQ1616Precision:
             f"AdEx Q16.16 gap {gap_pct:.1f}% (Python={py_spikes}, Verilog={vlog_spikes})"
         )
 
-    def test_wang_buzsaki_q1616_parity(self) -> None:
-        """Wang-Buzsaki fast-spiking interneuron (conductance-based) at Q16.16."""
-        py_spikes = _python_spike_count("wang_buzsaki", 300, 10.0)
-        vlog_spikes = _verilog_spike_count_q1616("wang_buzsaki", 300, 10.0)
-        assert py_spikes > 0 and vlog_spikes > 0
-        gap_pct = abs(py_spikes - vlog_spikes) / max(py_spikes, 1) * 100
-        assert gap_pct <= 15.0, (
-            f"Wang-Buzsaki Q16.16 gap {gap_pct:.1f}% (Python={py_spikes}, Verilog={vlog_spikes})"
+    def test_wang_buzsaki_q1616_macrostep_parity(self) -> None:
+        """Faithful macro-step Wang-Buzsaki: hand == schema exact, verilog within one spike.
+
+        The re-enrolled schema mirrors ``WangBuzsakiNeuron``'s maintained integrator: a
+        sequential (Gauss-Seidel) forward Euler with ``substeps=50`` (50 inner ``dt=0.01``
+        sub-steps per 0.5 ms macro step, the gating variables ``h``/``n`` updated from the old
+        voltage and the membrane voltage ``v`` from the new gates) and a rising-edge
+        ``v >= v_threshold`` crossing evaluated only on the macro boundary, no reset. The
+        earlier schema was single-step ``method="euler"`` with a sigmoid-caricature ``m_inf``
+        and unfaithful gate initial conditions, so it could only be compared schema-vs-verilog
+        under a 15% band; the macro-step schema now reproduces the hand model's
+        action-potential count exactly, so **hand == schema** (one hand ``step()`` per schema
+        macro ``step()``). Unlike Hodgkin-Huxley (simultaneous RK4), Wang-Buzsaki requires the
+        DSL's ``gauss_seidel`` mode — the hand model updates the gates before the voltage, and
+        simultaneous Euler drifts.
+
+        The Q16.16 RTL runs 50 clocks per macro step (one sequential sub-step each, the crossing
+        gated to the macro boundary) and tracks the schema **within one spike** over the bounded
+        window. Wang-Buzsaki's exprel gating and its ``m_inf = alpha_m/(alpha_m+beta_m)``
+        runtime division lower to a 256-entry look-up table plus a fixed-point divide; the
+        fixed-point trajectory drifts from float64 and the drift is look-up-table- and
+        fixed-point-resolution-limited, not a tolerance knob — three-way exact over this
+        bounded window and accumulating beyond it, an honest per-model hardware-fidelity band.
+        """
+        current, macro_steps, substeps = 10.0, 20, 50
+        hand_spikes = _wang_buzsaki_hand_spike_count(macro_steps, current)
+        py_spikes = _python_spike_count("wang_buzsaki", macro_steps, current)
+        vlog_spikes = _verilog_spike_count_q1616("wang_buzsaki", macro_steps * substeps, current)
+        assert 1 < py_spikes < macro_steps  # a partial macro-step train, not saturated
+        assert hand_spikes == py_spikes, (
+            f"Wang-Buzsaki hand/schema macro-step mismatch: hand={hand_spikes}, schema={py_spikes}"
+        )
+        assert abs(py_spikes - vlog_spikes) <= 1, (
+            f"Wang-Buzsaki Q16.16 macro-step gap > 1 spike "
+            f"(schema={py_spikes}, verilog={vlog_spikes})"
         )
 
     def test_connor_stevens_q1616_macrostep_parity(self) -> None:

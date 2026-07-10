@@ -5,6 +5,32 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 ## [Unreleased]
 
 ### Added
+- Sequential (Gauss-Seidel) integration mode (`[integration] method = "gauss_seidel"`) in the
+  schema DSL, in both the Python runner (`EquationNeuron`) and the emitted Verilog. The state
+  variables are advanced in declaration order, each derivative reading the already-committed
+  earlier variables within the same sub-step (unlike the simultaneous `euler`/`rk4` modes, whose
+  derivatives all read the pre-step state). This lowers a conductance hand model's
+  gates-then-voltage update — the gating variables from the old membrane voltage, then the voltage
+  from the new gates. The Verilog emitter renders each earlier variable as its freshly-committed
+  `<var>_next` wire in a later variable's derivative (a commit-before-read dependency chain, no
+  combinational cycle), matching the runner. Composes with `substeps`; the default `substeps = 1`
+  simultaneous methods stay bit-for-bit unchanged.
+- Faithful re-enrolment of the Wang-Buzsáki (1996) fast-spiking interneuron. The bundled schema was
+  a single-step `method="euler"` re-derivation with a sigmoid-caricature `m_inf`, unfaithful gate
+  initial conditions (`h=0.6`, `n=0.32`), a `v > -10` threshold, and a singular `n` rate; it is now
+  `method="gauss_seidel"` with `substeps=50`, state ordered `h, n, v` (`h=0.8`, `n=0.1`, `v=-65`),
+  the true instantaneous `m_inf = alpha_m/(alpha_m+beta_m)` (with `alpha_m` in the stable exprel
+  form `1/exprel(-(v+35)/10)`), the exprel `n` rate `0.1/exprel(-(v+34)/10)`, a macro-boundary
+  `v >= v_threshold` crossing (`v_threshold=-20`), and no reset — matching `WangBuzsakiNeuron`
+  exactly (`hand == schema`, 3 action potentials at `I=10` over 20 macro steps). The Q16.16 RTL
+  tracks the schema within one spike over the bounded window (three-way exact at `I=10`,
+  `macro=20`; the residual is the `m_inf` fixed-point divide plus 256-entry exprel look-up, not a
+  datapath-precision limit). The reference trace is re-derived as `wang_buzsaki_driven_spiking_doi`
+  (`independent_macrostep_gauss_seidel_reference`, a 3-state helper bit-exact against the runner,
+  spike_count 4, first_spike_step 4), replacing the deleted resting-gate trace; the descriptor
+  dynamics are synced to the exprel form; the bundled 15%-band cosim test becomes a macro-step
+  three-way parity test (`hand == schema` exact, `|schema - verilog| <= 1`). DOI
+  `10.1523/JNEUROSCI.16-20-06402.1996` Crossref-verified.
 - Schema/module/class alias registry (`neurons/schema_module_aliases.py`) so
   schema-DSL stems such as ``exp_if``, ``resonate_fire``, and ``lif`` join the
   correct hand modules and descriptor classes without fuzzy matching; schema-gap
@@ -18,7 +44,8 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
   validation and silicon facets onto descriptors for models already enrolled in
   schema→RTL co-simulation, and preserves those facets across descriptor corpus
   regeneration. Studio catalogue readiness now reports H0/H1 for that shortlist
-  (Wang-Buzsaki intentionally deferred while a peer re-enrolment lane is open).
+  (Wang-Buzsaki was deferred here while its re-enrolment lane was open; that lane has since landed
+  the faithful Gauss-Seidel enrolment above, so it can join the shortlist).
 - Macro-step integration mode (`[integration] substeps = N`) in the schema DSL, in both the
   Python runner (`EquationNeuron`) and the emitted Verilog. One macro `step()` advances `N`
   inner integration sub-steps (any method — euler/rk4/exp_euler) before a single spike
