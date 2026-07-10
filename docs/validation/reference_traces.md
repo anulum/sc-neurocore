@@ -34,7 +34,7 @@ table because their schemas are stochastic.
 | `lapicque_constant_current_closed_form` | `lapicque` | `universal_dsl` | Closed-form RC solution from `neurons/model_schemas/lapicque.toml` |
 | `mckean_driven_oscillation_doi` | `mckean` | `universal_dsl` | Independent fourth-order Runge-Kutta re-derivation of the piecewise-linear relaxation oscillator (no reset, rising-edge `v >= 0.8` crossing) from `neurons/model_schemas/mckean.toml` with DOI-backed schema provenance |
 | `mihalas_niebur_driven_spiking_doi` | `mihalas_niebur` | `universal_dsl` | Independent fourth-order Runge-Kutta re-derivation of the four-state adaptive-threshold flow from `neurons/model_schemas/mihalas_niebur.toml` with DOI-backed schema provenance |
-| `morris_lecar_depolarizing_current_doi` | `morris_lecar` | `universal_dsl` | Independent explicit-Euler re-derivation of the depolarizing equations from `neurons/model_schemas/morris_lecar.toml` with DOI-backed schema provenance |
+| `morris_lecar_driven_oscillation_doi` | `morris_lecar` | `universal_dsl` | Independent fourth-order Runge-Kutta re-derivation of the driven calcium-potassium relaxation oscillator (no reset, rising-edge `v >= 0` crossing) from `neurons/model_schemas/morris_lecar.toml` with DOI-backed schema provenance |
 | `perfect_integrator_constant_current_sawtooth` | `perfect_integrator` | `universal_dsl` | Analytic post-reset sawtooth solution from `neurons/model_schemas/perfect_integrator.toml` |
 | `quadratic_if_zero_current_analytic` | `quadratic_if` | `universal_dsl` | Analytic zero-current Riccati solution from `neurons/model_schemas/quadratic_if.toml` with DOI-backed schema provenance |
 | `resonate_fire_subthreshold_resonance_doi` | `resonate_fire` | `universal_dsl` | Analytic linear Euler recurrence from `neurons/model_schemas/resonate_fire.toml` |
@@ -49,7 +49,7 @@ Izhikevich 2007, FitzHugh-Nagumo, McKean, AdEx, exponential-IF, Hindmarsh-Rose, 
 Hodgkin-Huxley, Connor-Stevens, Wang-Buzsaki, DPI, and Mihalas-Niebur analytic,
 explicit-Euler, or fourth-order Runge-Kutta solutions — every deterministic
 bundled-schema entry — so the committed feature values are not merely copied from
-the runner output. The Morris-Lecar,
+the runner output. The
 Hodgkin-Huxley, Connor-Stevens, and Wang-Buzsaki re-derivations reuse the runner's
 numpy activation, exponential, and exprel functions so the conductance rate terms
 match bit-for-bit. The GLIF
@@ -75,10 +75,20 @@ linear recovery, with rising-edge `v >= v_peak` crossing detection and no reset;
 enrolled sustained-oscillation regime (`epsilon = 0.2`, `gamma = 0.5`, `I = 0.6`) it is a
 robust limit cycle whose sixteen upward crossings survive Q16.16 rounding, so the
 min/max branch selection lowers to fixed point without a look-up table.
-The perfect-integrator, FitzHugh-Nagumo, McKean, Izhikevich, Izhikevich 2007, DPI, and
-Mihalas-Niebur entries are spike-bearing;
-they validate reset (or, for FitzHugh-Nagumo and McKean, rising-edge crossing) and
-first-spike features, not only quiet trajectories. The
+The Morris-Lecar entry re-derives the exact classical fourth-order Runge-Kutta
+recurrence for its calcium-potassium conductance oscillator — sigmoidal `tanh`
+calcium activation and `cosh`/`tanh` potassium gating, reusing the runner's numpy
+transcendentals — with rising-edge `v >= 0` crossing detection and no reset. At the
+enrolled depolarising regime (`I = 100`) it is a robust relaxation oscillator whose
+seven upward crossings the Q16.16 cosh/tanh look-up datapath reproduces exactly;
+unlike the polynomial FitzHugh-Nagumo and piecewise-linear McKean oscillators the
+per-step state is not bit-identical to the hand model (numpy versus `math`
+transcendentals through distinct RK4 drivers), so the parity is at the spike-count
+level, robust across the whole `I in [90, 110]` band.
+The perfect-integrator, FitzHugh-Nagumo, McKean, Morris-Lecar, Izhikevich,
+Izhikevich 2007, DPI, and Mihalas-Niebur entries are spike-bearing;
+they validate reset (or, for FitzHugh-Nagumo, McKean, and Morris-Lecar, rising-edge
+crossing) and first-spike features, not only quiet trajectories. The
 Rulkov entry iterates the Rulkov 2002 piecewise fast/slow map with the
 `method = "map"` integration mode (`x_{n+1} = f(x_n, y_n)`, iterated as a discrete
 map rather than integrated as an ODE), so the trajectory is bounded and its

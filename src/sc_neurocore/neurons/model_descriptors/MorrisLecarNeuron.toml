@@ -157,7 +157,7 @@ range = [
 
 [integration]
 dt = 0.1
-method = "euler"
+method = "rk4"
 
 [dynamics]
 v = "(-g_ca * 0.5 * (1 + tanh((v - v1) / v2)) * (v - e_ca) - g_k * w * (v - e_k) - g_l * (v - e_l) + I) / c_m"

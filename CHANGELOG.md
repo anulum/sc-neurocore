@@ -20,6 +20,27 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
   co-simulation path); crossing support there is a separate follow-up.
 
 ### Changed
+- Re-enrolled the Morris-Lecar calcium-potassium oscillator (`morris_lecar` schema,
+  Morris & Lecar 1981, DOI `10.1016/S0006-3495(81)84782-0`) faithfully as the first
+  **conductance** edge-crossing oscillator in the WC-A5 co-simulation set. The bundled
+  schema was `method="euler"` with a no-op `[reset]` (`v -> v`, `w -> w`) that disabled
+  edge detection, routed to the level datapath, and over-counted every above-threshold
+  step; both Python and Verilog over-counted identically so a ~15% tolerance band passed
+  while validating a caricature. The faithful schema mirrors `MorrisLecarNeuron`'s
+  maintained defaults — four-stage RK4, **no reset**, rising-edge (`v >= v_threshold`)
+  crossing, and `phi = 1/15` — so it counts one spike per action potential. At the
+  sustained depolarising regime (`I=100`, 3000 steps) the hand model, the schema runner
+  and the emitted Q16.16 RTL report the same seven upward crossings. Because the sigmoidal
+  gating lowers to 256-entry cosh/tanh look-up tables and the hand model uses `math`
+  transcendentals through a distinct RK4 driver, this is an exact **spike-count** parity
+  (robust across the whole `I in [90, 110]` band), not the bit-identical state the
+  polynomial FitzHugh-Nagumo / piecewise-linear McKean oscillators achieve. The reference
+  trace was re-derived as `morris_lecar_driven_oscillation_doi` (`independent_rk4_reference`,
+  bit-exact against the runner) and the `MorrisLecarNeuron` descriptor now carries the
+  schema's RK4 integration. Schema-gap counts are unchanged (a re-enrolment, not a new
+  schema). The schema-DSL runner is Python-only; the hand `MorrisLecarNeuron` and its
+  Rust/Julia/Go/Mojo mirrors were already RK4 / no-reset, so no polyglot counterpart or
+  benchmark artefact changed.
 - Enrolled the McKean piecewise-linear FitzHugh-Nagumo caricature (`mckean` schema,
   McKean 1970, DOI `10.1016/0001-8708(70)90023-X`) into the WC-A5 schema corpus and
   Python↔Verilog co-simulation as a second `detection="crossing"` oscillator: RK4,

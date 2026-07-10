@@ -23,23 +23,20 @@
     "v2": 18.0,
     "v3": 12.0,
     "v4": 17.4,
-    "phi": 0.0667
+    "phi": 0.06666666666666667,
+    "v_threshold": 0.0
   },
   "integration": {
     "dt": 0.1,
-    "method": "euler"
+    "method": "rk4"
   },
   "dynamics": {
     "v": "(-g_ca * 0.5 * (1 + tanh((v - v1) / v2)) * (v - e_ca) - g_k * w * (v - e_k) - g_l * (v - e_l) + I) / c_m",
     "w": "phi * cosh((v - v3) / (2 * v4)) * (0.5 * (1 + tanh((v - v3) / v4)) - w)"
   },
   "threshold": {
-    "condition": "v > 0",
+    "condition": "v >= v_threshold",
     "detection": "crossing"
-  },
-  "reset": {
-    "v": "v",
-    "w": "w"
   },
   "extensions": {}
 }

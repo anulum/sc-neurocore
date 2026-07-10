@@ -1,0 +1,51 @@
+{
+  "schema_version": "sc-neurocore.reference-trace.v1",
+  "name": "morris_lecar_driven_oscillation_doi",
+  "model": {
+    "schema_name": "morris_lecar",
+    "runner": "universal_dsl"
+  },
+  "protocol": {
+    "dt": 0.1,
+    "steps": 3000,
+    "inputs": {
+      "I": 100.0
+    },
+    "state_variables": [
+      "v",
+      "w"
+    ]
+  },
+  "provenance": {
+    "kind": "independent_rk4_reference",
+    "source": "src/sc_neurocore/neurons/model_schemas/morris_lecar.toml",
+    "equation": "Driven Morris-Lecar calcium-potassium relaxation oscillation (seven upward v>=0 threshold crossings) advanced with the exact four-stage classical RK4 step and rising-edge spike detection, no reset; the sigmoidal calcium activation and potassium gating rate equations are independently re-derived from the Morris-Lecar (1981) model definition, with numpy tanh/cosh matching the runner bit-for-bit.",
+    "citation": "doi:10.1016/S0006-3495(81)84782-0"
+  },
+  "expected_features": {
+    "spike_count": 7.0,
+    "first_spike_step": 141.0,
+    "final.v": -28.10810326464296,
+    "min.v": -59.49715298438141,
+    "max.v": 37.58505801678554,
+    "mean.v": -6.195467559107507,
+    "final.w": 0.08585318928491548,
+    "min.w": 6.884438568087537e-06,
+    "max.w": 0.4768145604431981,
+    "mean.w": 0.24070422273250894
+  },
+  "tolerances": {
+    "default": {
+      "absolute": 1e-09,
+      "relative": 1e-12
+    },
+    "spike_count": {
+      "absolute": 0.0,
+      "relative": 0.0
+    },
+    "first_spike_step": {
+      "absolute": 0.0,
+      "relative": 0.0
+    }
+  }
+}

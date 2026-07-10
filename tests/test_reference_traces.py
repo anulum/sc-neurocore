@@ -44,7 +44,7 @@ _DETERMINISTIC_SCHEMA_TRACES = {
     "lif": "lif_constant_current_closed_form",
     "mckean": "mckean_driven_oscillation_doi",
     "mihalas_niebur": "mihalas_niebur_driven_spiking_doi",
-    "morris_lecar": "morris_lecar_depolarizing_current_doi",
+    "morris_lecar": "morris_lecar_driven_oscillation_doi",
     "perfect_integrator": "perfect_integrator_constant_current_sawtooth",
     "quadratic_if": "quadratic_if_zero_current_analytic",
     "resonate_fire": "resonate_fire_subthreshold_resonance_doi",
@@ -818,16 +818,18 @@ def _hindmarsh_rose_prefix_euler_features(
     return _summarise({"x": x_values, "y": y_values, "z": z_values}, spikes)
 
 
-def _morris_lecar_euler_features(*, current: float, dt: float, steps: int) -> dict[str, float]:
-    """Return exact explicit-Euler features for the Morris-Lecar recurrence.
+def _morris_lecar_rk4_features(*, current: float, dt: float, steps: int) -> dict[str, float]:
+    """Return exact classical-RK4 features for the driven Morris-Lecar oscillator.
 
-    The Morris-Lecar (1981) sigmoidal calcium activation and potassium gating
-    equations are advanced with the same simultaneous explicit-Euler update the
-    schema runner applies. ``numpy.tanh`` and ``numpy.cosh`` match the runner's
-    activation and rate functions bit-for-bit, and the verbatim expression order is
-    preserved so the recurrence reproduces the runner exactly. The depolarizing
-    current stays below the ``v > 0`` threshold, so the identity reset never fires
-    and the reference is an independent re-derivation of the committed trajectory.
+    The Morris-Lecar (1981) calcium-potassium oscillator is the faithful
+    conductance model: a genuine relaxation oscillator whose spikes are upward
+    ``v >= v_threshold`` crossings, integrated with the same four-stage classical
+    RK4 step the maintained ``MorrisLecarNeuron`` uses, with **no reset**. The
+    sigmoidal calcium activation and potassium gating rate functions are transcribed
+    verbatim from the schema, reusing ``numpy.tanh`` and ``numpy.cosh`` so the
+    recurrence reproduces the schema runner bit-for-bit (the input current enters at
+    every RK4 stage). The reference is an independent re-derivation of the committed
+    driven-oscillation trace, not a copy of the runner.
 
     Parameters
     ----------
@@ -855,31 +857,40 @@ def _morris_lecar_euler_features(*, current: float, dt: float, steps: int) -> di
     v2 = 18.0
     v3 = 12.0
     v4 = 17.4
-    phi = 0.0667
+    phi = 0.06666666666666667
+    v_threshold = 0.0
     v = -60.0
     w = 0.0
     v_values: list[float] = []
     w_values: list[float] = []
     spikes: list[int] = []
-    for _ in range(steps):
+
+    def deriv(v_state: float, w_state: float) -> tuple[float, float]:
         dv = (
-            -g_ca * 0.5 * (1 + float(np.tanh((v - v1) / v2))) * (v - e_ca)
-            - g_k * w * (v - e_k)
-            - g_l * (v - e_l)
+            -g_ca * 0.5 * (1 + float(np.tanh((v_state - v1) / v2))) * (v_state - e_ca)
+            - g_k * w_state * (v_state - e_k)
+            - g_l * (v_state - e_l)
             + current
         ) / c_m
         dw = (
             phi
-            * float(np.cosh((v - v3) / (2 * v4)))
-            * (0.5 * (1 + float(np.tanh((v - v3) / v4))) - w)
+            * float(np.cosh((v_state - v3) / (2 * v4)))
+            * (0.5 * (1 + float(np.tanh((v_state - v3) / v4))) - w_state)
         )
-        v_next = v + dv * dt
-        w_next = w + dw * dt
-        if v_next > 0:
-            spikes.append(1)
-        else:
-            spikes.append(0)
-        v, w = v_next, w_next
+        return dv, dw
+
+    for _ in range(steps):
+        v_prev = v
+        k1v, k1w = deriv(v, w)
+        k2v, k2w = deriv(v + 0.5 * dt * k1v, w + 0.5 * dt * k1w)
+        k3v, k3w = deriv(v + 0.5 * dt * k2v, w + 0.5 * dt * k2w)
+        k4v, k4w = deriv(v + dt * k3v, w + dt * k3w)
+        v = v + dt * (k1v + 2.0 * k2v + 2.0 * k3v + k4v) / 6.0
+        w = w + dt * (k1w + 2.0 * k2w + 2.0 * k3w + k4w) / 6.0
+        # Rising-edge crossing: fires when the post-step membrane is at/above threshold
+        # and the previous committed membrane was below it (matching the hand model's
+        # ``v >= thr and v_prev < thr`` edge test); no reset for this oscillator.
+        spikes.append(1 if (v >= v_threshold and v_prev < v_threshold) else 0)
         v_values.append(v)
         w_values.append(w)
 
@@ -1386,11 +1397,11 @@ _PARITY_CASES: list[tuple[str, str, str, str, Callable[[ReferenceTraceSpec], dic
         ),
     ),
     (
-        "morris_lecar_depolarizing_current_doi",
+        "morris_lecar_driven_oscillation_doi",
         "morris_lecar",
-        "independent_euler_reference",
+        "independent_rk4_reference",
         "doi:10.1016/S0006-3495(81)84782-0",
-        lambda spec: _morris_lecar_euler_features(
+        lambda spec: _morris_lecar_rk4_features(
             current=spec.protocol.inputs["I"], dt=spec.protocol.dt, steps=spec.protocol.steps
         ),
     ),

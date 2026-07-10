@@ -5,6 +5,30 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+### Morris-Lecar faithful re-enrolment (RK4, no reset, rising-edge crossing)
+- Re-enrolled the Morris-Lecar (1981) calcium-potassium oscillator (`morris_lecar` schema,
+  DOI `10.1016/S0006-3495(81)84782-0`) as the first **conductance** edge-crossing oscillator
+  in the WC-A5 Python↔Verilog co-simulation set. The prior schema was `method="euler"` with a
+  no-op `[reset]` (`v -> v`, `w -> w`) that disabled edge detection and over-counted every
+  above-threshold step — a caricature that only "passed" a ~15% band because both sides
+  over-counted identically. The faithful schema mirrors `MorrisLecarNeuron`'s maintained
+  defaults: four-stage RK4, **no reset**, rising-edge (`v >= v_threshold`) crossing, and
+  `phi = 1/15`.
+- At the sustained depolarising regime (`I=100`, 3000 steps) the hand `MorrisLecarNeuron`,
+  the schema runner, and the emitted Q16.16 RTL report the same seven upward crossings.
+  Because the sigmoidal gating lowers to 256-entry cosh/tanh look-up tables and the hand
+  model integrates with `math` transcendentals through a distinct RK4 driver, this is an
+  exact **spike-count** parity (robust across the whole `I in [90, 110]` band), not the
+  bit-identical state the polynomial FitzHugh-Nagumo / piecewise-linear McKean oscillators
+  achieve; `I=120` is a knife-edge that splits a marginal crossing between the paths.
+- Re-derived the reference trace as `morris_lecar_driven_oscillation_doi`
+  (`independent_rk4_reference`, `I=100`, 3000 steps, seven crossings, first at step 141) via a
+  new `_morris_lecar_rk4_features` helper verified bit-exact against the runner. The
+  `MorrisLecarNeuron` descriptor now carries the schema's RK4 integration. Schema-gap counts
+  are unchanged (a re-enrolment, not a new schema).
+- The schema-DSL runner is Python-only; the hand `MorrisLecarNeuron` and its Rust/Julia/Go/Mojo
+  mirrors were already RK4 / no-reset, so no polyglot counterpart or benchmark artefact changed.
+
 ### McKean piecewise-linear oscillator enrolment (RK4, no reset, rising-edge crossing)
 - Enrolled the McKean (1970) piecewise-linear FitzHugh-Nagumo caricature (`mckean` schema,
   DOI `10.1016/0001-8708(70)90023-X`) into the WC-A5 schema corpus and Python↔Verilog
