@@ -6,8 +6,6 @@
 // Contact: www.anulum.li | protoscience@anulum.li
 // SC-NeuroCore — Rust safety for wilson_hr
 
-#![allow(unused_variables, dead_code, non_snake_case)]
-
 #[derive(Debug, Clone)]
 pub struct WilsonHRNeuron {
     pub v: f64,
@@ -85,11 +83,16 @@ impl WilsonHRNeuron {
     }
 
     pub fn reset(&mut self) {
+        // Mirror models/wilson_hr.py `reset`: restore only the state variables,
+        // never the parameters (tau_r/v_peak/dt are configuration, not state).
         self.v = -0.7_f64;
         self.r = 0.1_f64;
-        self.tau_r = 1.9_f64;
-        self.v_peak = 0.4_f64;
-        self.dt = 0.05_f64;
+    }
+}
+
+impl Default for WilsonHRNeuron {
+    fn default() -> Self {
+        Self::new()
     }
 }
 
@@ -179,5 +182,26 @@ mod tests {
         let before = (state.v, state.r);
         assert!(state.step(0.3).is_err());
         assert_eq!((state.v, state.r), before);
+    }
+
+    #[test]
+    fn matches_python_golden_spike_count() {
+        // Parity with models/wilson_hr.py (RK4 integrator, default parameters). The Wilson 1999
+        // reduced spiking model has a polynomial right-hand side (a cubic drive plus a bilinear
+        // recovery-conductance term, all exact float arithmetic) and a hard reset-on-spike
+        // (v is set to -0.7 the step its RK4 candidate reaches v_peak). The trajectory is therefore
+        // bit-for-bit across languages, so the spike count is an exact observable. Drive gates the
+        // regime cleanly: silent at I=0.0, a single spike at I=2.0, a four-spike transient burst at
+        // I=10.0 (the flow settles to a fixed point, so the count saturates by ~2000 steps), each
+        // over 5000 macro steps. Verified python-vs-rust max|Δ|=0; the Go, Julia and Mojo backends
+        // reproduce the same trajectory (Mojo within a per-step ULP band, identical counts) via
+        // test_wilson_hr_backends.py.
+        for (current, want) in [(0.0_f64, 0_usize), (2.0, 1), (10.0, 4)] {
+            let mut state = WilsonHRNeuron::new();
+            let spikes = (0..5000)
+                .filter(|_| state.step(current).expect("finite step") == 1)
+                .count();
+            assert_eq!(spikes, want, "I={current}");
+        }
     }
 }
