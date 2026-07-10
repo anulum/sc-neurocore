@@ -1,0 +1,18 @@
+# SymbiYosys job for catalogue model sc_izhikevich2007
+# Dual-axis perfect model formal (BMC)
+
+[options]
+mode bmc
+depth 20
+
+[engines]
+smtbmc z3
+
+[script]
+read -formal sc_izhikevich2007_formal.v
+read -formal sc_izhikevich2007.v
+prep -top sc_izhikevich2007_formal
+
+[files]
+sc_izhikevich2007_formal.v
+sc_izhikevich2007.v

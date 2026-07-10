@@ -1,0 +1,18 @@
+# SymbiYosys job for catalogue model sc_dpineuron
+# Dual-axis perfect model formal (BMC)
+
+[options]
+mode bmc
+depth 20
+
+[engines]
+smtbmc z3
+
+[script]
+read -formal sc_dpineuron_formal.v
+read -formal sc_dpineuron.v
+prep -top sc_dpineuron_formal
+
+[files]
+sc_dpineuron_formal.v
+sc_dpineuron.v

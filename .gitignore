@@ -222,3 +222,6 @@ docs/source_papers/**/*.pdf
 docs/external_papers/
 .env
 TODO
+
+# SymbiYosys workdirs for catalogue formal jobs
+hdl/formal/catalogue/*/

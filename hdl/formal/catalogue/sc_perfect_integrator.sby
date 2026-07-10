@@ -1,0 +1,18 @@
+# SymbiYosys job for catalogue model sc_perfect_integrator
+# Dual-axis perfect model formal (BMC)
+
+[options]
+mode bmc
+depth 20
+
+[engines]
+smtbmc z3
+
+[script]
+read -formal sc_perfect_integrator_formal.v
+read -formal sc_perfect_integrator.v
+prep -top sc_perfect_integrator_formal
+
+[files]
+sc_perfect_integrator_formal.v
+sc_perfect_integrator.v

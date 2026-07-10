@@ -1,0 +1,18 @@
+# SymbiYosys job for catalogue model sc_morris_lecar
+# Dual-axis perfect model formal (BMC)
+
+[options]
+mode bmc
+depth 3
+
+[engines]
+smtbmc z3
+
+[script]
+read -formal sc_morris_lecar_formal.v
+read -formal sc_morris_lecar.v
+prep -top sc_morris_lecar_formal
+
+[files]
+sc_morris_lecar_formal.v
+sc_morris_lecar.v

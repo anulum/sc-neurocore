@@ -336,7 +336,7 @@ graph TD
         K --> L[Verilog RTL<br/>AXI-Lite + LIF Core]
         K2 --> L
         L --> M[FPGA Bitstream<br/>Xilinx / Intel]
-        L --> V[Formal Verification<br/>18 proof jobs · 130 formal statements]
+        L --> V[Formal Verification<br/>32 proof jobs · catalogue + legacy]
     end
 
     subgraph "Domain Bridges (optional)"
@@ -401,11 +401,13 @@ hdl/
   sc_event_neuron.v           -- Event-triggered LIF (power ∝ spike rate)
   sc_aer_router.v             -- AER event distribution to target neurons
   tb_sc_*.v (16 testbenches)  -- Self-checking simulation testbenches
-  formal/ (18 proof jobs)     -- 130 formal statements (100 assert, 7 assume, 23 cover)
+  formal/ (32 proof jobs)     -- catalogue dual-axis perfect + legacy SC cores
 ```
 
-Formal verification inventory: 18 SymbiYosys proof jobs and 130 formal
-statements (100 assert, 7 assume, 23 cover) under `hdl/formal/`.
+Formal verification inventory: **32** SymbiYosys proof jobs under `hdl/formal/`
+(18 legacy SC/sensor/timing jobs + **14 catalogue jobs** for dual-axis perfect
+models under `hdl/formal/catalogue/`). Re-emit with
+`tools/emit_catalogue_formal.py`.
 
 ### GPU Acceleration
 

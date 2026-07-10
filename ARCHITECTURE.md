@@ -101,7 +101,7 @@ sc-neurocore/
 │   ├── sc_aer_router.v     AER event distribution to target neurons
 │   ├── sc_cordiv.v         CORDIV stochastic division
 │   ├── sc_stdp_synapse.v   On-chip STDP learning
-│   ├── formal/             SymbiYosys formal verification (7 modules, 67+ properties)
+│   ├── formal/             SymbiYosys formal verification (32 jobs: 18 legacy + 14 catalogue perfect)
 │   ├── constraints/        XDC timing constraints (PYNQ-Z2)
 │   ├── reports/            Vivado synthesis reports (committed)
 │   ├── pynq/               PYNQ-Z2 deployment (driver, demo, Tcl)

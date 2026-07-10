@@ -1,0 +1,18 @@
+# SymbiYosys job for catalogue model sc_mckeanneuron
+# Dual-axis perfect model formal (BMC)
+
+[options]
+mode bmc
+depth 4
+
+[engines]
+smtbmc z3
+
+[script]
+read -formal sc_mckeanneuron_formal.v
+read -formal sc_mckeanneuron.v
+prep -top sc_mckeanneuron_formal
+
+[files]
+sc_mckeanneuron_formal.v
+sc_mckeanneuron.v
