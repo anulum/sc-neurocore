@@ -60,13 +60,14 @@ stub.
 | Terman-Wang | ✅ | ✅ | ✅ | ✅ shared-lib | spike count — 0/1/3 @ I=-1/0/0.5 over 8000 steps (RK4, cubic + tanh gate) | `ce04dd6f9` |
 | Wilson-HR | ✅ | ✅ | ✅ | ✅ shared-lib | bit-exact — 0/1/4 @ I=0/2/10 over 5000 steps (RK4, polynomial RHS, hard reset-on-spike) | `4d9810e2f` |
 | Rulkov map | ✅ | ✅ | ✅ | ✅ shared-lib | bit-exact — 0/4/34 @ I=0/0.1/0.5 over 2000 iterations (discrete fast-slow map, no integrator; Mojo ULP-bounded) | `7d5889e10` |
+| GLIF | ✅ | ✅ | ✅ | ✅ shared-lib | bit-exact — 0/54/95 @ I=0/30/50 over 1000 steps (RK4, linear RHS, adaptive-threshold integrate-and-fire) | `ecd799d58` |
 
 Each model carries a committed benchmark: a Go `Benchmark*` in the services lane for the
 conductance models (Wang-Buzsaki, Morris-Lecar, Connor-Stevens, Hodgkin-Huxley, FitzHugh-Nagumo),
 and a committed `benchmarks/bench_<model>*.py` harness with its recorded per-backend result for the
 FFI-dispatched models (McKean, Hindmarsh-Rose, FitzHugh-Rinzel, Pernarowski, Terman-Wang, Wilson-HR,
-Rulkov map). A dedicated per-kernel benchmark harness for the Rust `accel/rust/safety` crate remains
-a tracked open lane item.
+Rulkov map, GLIF). A dedicated per-kernel benchmark harness for the Rust `accel/rust/safety` crate
+remains a tracked open lane item.
 
 ## In progress
 
@@ -80,7 +81,7 @@ Rust engine acceleration path), but its four `accel/{rust,go,julia,mojo}` kernel
 or not yet verified** — the polyglot-stub-remediation sweep is replacing them model-by-model. Those
 models are **deliberately not ticked here**: per-model status is promoted onto this page only after a
 unit is closed and verified at source, so this table never claims completion it has not proven. As of
-the latest landed commit that is **twelve polyglot-complete models** out of the full catalogue; the
+the latest landed commit that is **thirteen polyglot-complete models** out of the full catalogue; the
 remainder are Python-faithful with an acceleration chain still under remediation.
 
 ## How a model graduates onto this page
