@@ -82,14 +82,7 @@ impl GLIFNeuron {
             && self.resistance >= 0.0
     }
 
-    fn derivatives(
-        &self,
-        v: f64,
-        theta: f64,
-        i_asc1: f64,
-        i_asc2: f64,
-        i_ext: f64,
-    ) -> [f64; 4] {
+    fn derivatives(&self, v: f64, theta: f64, i_asc1: f64, i_asc2: f64, i_ext: f64) -> [f64; 4] {
         [
             (-(v - self.v_rest) + self.resistance * i_ext + i_asc1 + i_asc2) / self.tau_m,
             (self.theta_inf - theta + self.a_theta * (v - self.v_rest)) / self.tau_theta,
@@ -216,5 +209,24 @@ mod tests {
         let before = (state.v, state.theta, state.i_asc1, state.i_asc2);
         assert_eq!(state.step(f64::NAN), 0);
         assert_eq!((state.v, state.theta, state.i_asc1, state.i_asc2), before);
+    }
+
+    #[test]
+    fn matches_python_golden_spike_count() {
+        // Parity with models/glif.py (RK4 integrator, default parameters). The GLIF (generalised
+        // leaky integrate-and-fire) right-hand side is entirely linear — a leaky membrane, a
+        // linearly-adapting threshold, and two exponentially-decaying after-spike currents — with
+        // an adaptive-threshold spike (v >= theta) that hard-resets v to v_reset and increments
+        // theta / the after-spike currents. No transcendentals, so the trajectory is bit-for-bit
+        // across languages and the spike count is an exact observable. Drive gates the regime
+        // cleanly around rheobase (~20-25): silent at I=0.0, a 54-spike regular train at I=30.0,
+        // a 95-spike train at I=50.0, each over 1000 macro steps. Verified python-vs-rust
+        // max|Δ|=0; the Go, Julia, Mojo and Rust-engine backends reproduce the same trajectory via
+        // test_glif_backends.py.
+        for (current, want) in [(0.0_f64, 0_usize), (30.0, 54), (50.0, 95)] {
+            let mut state = GLIFNeuron::new();
+            let spikes = (0..1000).filter(|_| state.step(current) == 1).count();
+            assert_eq!(spikes, want, "I={current}");
+        }
     }
 }
