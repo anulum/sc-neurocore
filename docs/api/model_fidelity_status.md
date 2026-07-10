@@ -65,13 +65,15 @@ stub.
 | Medvedev map | ✅ | ✅ | ✅ | ✅ shared-lib | Rust/Julia/Go bit-exact — 0/92/112 @ I=0/0.2/0.5 over 1000 iterations (expanding chaotic circle map). Mojo per-step ULP-bounded only: FMA fusion amplifies on the chaotic map, so it does not reproduce the exact spike count (by design) | `9936d997d` |
 | Cazelles map | ✅ | ✅ | ✅ | ✅ shared-lib | Rust/Julia/Go bit-exact — 5/182/204 @ I=0/0.5/1.0 over 1000 iterations (logistic-driven chaotic map, fast variable clamped to [-2,2]). Mojo per-step ULP-bounded; the clamp saturates the orbit so the counts still match at the tested drives | `22110c66d` |
 | Courbage-Nekorkin map | ✅ | ✅ | ✅ | ✅ shared-lib | Rust/Julia/Go bit-exact — 157/193/168 @ I=-0.3/0/0.3 over 1000 iterations (discontinuous piecewise-linear + Heaviside chaotic spiking-bursting map). Mojo per-step ULP-bounded; diverges after ~100 steps, reproduces the coarse count to a fraction of a percent | `63826b513` |
+| Izhikevich 2007 | ✅ | ✅ | ✅ | ✅ shared-lib | bit-exact — 0/3/14 @ I=0/100/400 over 2000 steps (RK4, quadratic v-nullcline, spike reset v→c / u+=d; Mojo ULP-bounded but the per-spike reset re-synchronises the trace so its counts always match) | `75b32d935` |
 
 Each model carries a committed benchmark: a Go `Benchmark*` in the services lane for the
 conductance models (Wang-Buzsaki, Morris-Lecar, Connor-Stevens, Hodgkin-Huxley, FitzHugh-Nagumo),
 and a committed `benchmarks/bench_<model>*.py` harness with its recorded per-backend result for the
 FFI-dispatched models (McKean, Hindmarsh-Rose, FitzHugh-Rinzel, Pernarowski, Terman-Wang, Wilson-HR,
-Rulkov map, GLIF, Mihalas-Niebur, Medvedev map, Cazelles map, Courbage-Nekorkin map). A dedicated
-per-kernel benchmark harness for the Rust `accel/rust/safety` crate remains a tracked open lane item.
+Rulkov map, GLIF, Mihalas-Niebur, Medvedev map, Cazelles map, Courbage-Nekorkin map, Izhikevich 2007).
+A dedicated per-kernel benchmark harness for the Rust `accel/rust/safety` crate remains a tracked open
+lane item.
 
 ## In progress
 
@@ -85,7 +87,7 @@ Rust engine acceleration path), but its four `accel/{rust,go,julia,mojo}` kernel
 or not yet verified** — the polyglot-stub-remediation sweep is replacing them model-by-model. Those
 models are **deliberately not ticked here**: per-model status is promoted onto this page only after a
 unit is closed and verified at source, so this table never claims completion it has not proven. As of
-the latest landed commit that is **seventeen polyglot-complete models** out of the full catalogue; the
+the latest landed commit that is **eighteen polyglot-complete models** out of the full catalogue; the
 remainder are Python-faithful with an acceleration chain still under remediation.
 
 ## How a model graduates onto this page
