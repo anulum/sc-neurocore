@@ -121,6 +121,7 @@ nav:
       - NAS Guide: guides/nas_guide.md
   - Validation:
       - Reference Trace Harness: validation/reference_traces.md
+      - Conductance Oscillator Co-Simulation Fidelity: validation/conductance_oscillator_cosim_fidelity.md
       - LIF f-I Curve: validation/lif_fi_curve.md
       - Izhikevich 20 Patterns: validation/izhikevich_patterns.md
       - Hodgkin-Huxley 1952: validation/hodgkin_huxley.md
