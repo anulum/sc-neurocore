@@ -5,6 +5,24 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+### Rising-edge (`crossing`) threshold detection for non-resetting oscillators
+- Made the schema DSL's `[threshold] detection = "crossing"` field functional in both the
+  Python runner (`EquationNeuron`) and the schema→Verilog emitter. A non-resetting
+  oscillator now spikes once per **upward** threshold crossing (matching the hand models'
+  `v >= thr and v_prev < thr` edge test) instead of on every step it stays above threshold.
+  This unlocks faithful enrolment of the biophysical oscillator family (FitzHugh-Nagumo,
+  McKean, and the conductance oscillators), which the previous level-only path could only
+  over-count. Validated end-to-end by a faithful FitzHugh-Nagumo hand-model / schema /
+  Q16.16 RTL three-way parity at exact spike counts on a sustained relaxation-oscillation
+  train (8 of 3000 steps). Edge detection engages **only** for a crossing model with no
+  reset — a reset that clears the condition makes `level` and `crossing` identical, so every
+  existing reset-based integrate-and-fire model keeps its exact prior behaviour (the field
+  was previously decorative, and several reset models declared `crossing` harmlessly). The
+  emitted RTL carries a 1-bit `_thr_prev` edge-history register, seeded from the initial
+  state to bit-match the golden. The folded `compile_to_datapath` PE stays level-only for
+  now (the co-simulation path uses the per-instance module); crossing support in the folded
+  datapath is a separate follow-up.
+
 ### Mihalas-Niebur RK4 co-simulation enrollment
 - Enrolled `mihalas_niebur` (Mihalaş & Niebur 2009 generalised linear
   integrate-and-fire) into the WC-A5 schema corpus and Python↔Verilog

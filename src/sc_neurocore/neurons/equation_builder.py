@@ -66,6 +66,13 @@ from sc_neurocore.neurons._units import (
 
 SUPPORTED_METHODS = ("euler", "map", "rk4", "exp_euler")
 
+# Spike-detection modes a schema's ``[threshold]`` may declare. ``level`` fires on every
+# step the condition holds (integrate -> threshold -> reset); ``crossing`` fires once on
+# the rising transition (a non-resetting oscillator's ``v >= thr and v_prev < thr`` edge).
+# ``poisson`` / ``escape_rate`` mark the stochastic threshold mechanism handled elsewhere;
+# they are accepted here (so those schemas still construct) but never engage edge logic.
+_SUPPORTED_DETECTION = frozenset({"level", "crossing", "poisson", "escape_rate"})
+
 
 class EquationNeuron:
     """Neuron defined by arbitrary ODE equations as strings.
@@ -90,17 +97,31 @@ class EquationNeuron:
         method: str = "euler",
         units: str = "none",
         input_unit: Any | None = None,
+        detection: str = "level",
     ) -> None:
         """Initialise an equation-defined neuron from ODE strings."""
         if units not in {"none", "strict"}:
             raise ValueError("units must be 'none' or 'strict'")
         if method not in SUPPORTED_METHODS:
             raise ValueError(f"method must be one of {list(SUPPORTED_METHODS)}, got {method!r}")
+        if detection not in _SUPPORTED_DETECTION:
+            raise ValueError(
+                f"detection must be one of {sorted(_SUPPORTED_DETECTION)}, got {detection!r}"
+            )
 
         self.equations = equations
         self.threshold_expr = threshold
         self.reset_rules = reset or {}
         self.method = method
+        self.detection = detection
+        # Rising-edge (``crossing``) detection is only engaged for a NON-resetting model:
+        # a reset that drops the state back below threshold already clears the condition
+        # every spike, so ``level`` and ``crossing`` are identical there and the simpler
+        # (and previously validated) level path is used. Genuine no-reset oscillators
+        # (e.g. FitzHugh-Nagumo, McKean) are the case that needs true edge detection.
+        self._edge_detection = (
+            detection == "crossing" and threshold is not None and not self.reset_rules
+        )
         self.units = units
         self._strict_units = units == "strict"
         self._display_state_units: dict[str, Any] = {}
@@ -183,6 +204,39 @@ class EquationNeuron:
         }
         self.jacobian_expressions: dict[str, str] = {}
         self._compiled_jacobian = self._build_jacobian() if self.method == "exp_euler" else {}
+
+        # Edge (``crossing``) detection tracks whether the threshold condition held on the
+        # previously committed state, so a spike fires only on the rising transition
+        # (inactive -> active) rather than on every step the condition holds. Seeding it
+        # from the initial state means an oscillator that starts below threshold (the
+        # usual case) does not emit a spurious first-step spike, and one already above
+        # threshold waits for a genuine re-crossing. Only computed for edge models, so a
+        # stochastic ``threshold`` condition (poisson/escape_rate) is never evaluated here.
+        self._prev_threshold_active = (
+            self.initial_threshold_active() if self._edge_detection else False
+        )
+
+    def initial_threshold_active(self) -> bool:
+        """Return whether the threshold condition holds on the INITIAL committed state.
+
+        This is the seed for the edge-detection ``_prev_threshold_active`` flag: before
+        the first step the "previously committed state" is the initial state, and a reset
+        returns to it. Evaluated deterministically with zero noise and zero input current
+        — the corpus threshold conditions are functions of state (and parameters), so the
+        input value does not affect the result. Returns ``False`` when no threshold is
+        declared. Non-mutating, so the Verilog emitter can seed its ``_thr_prev`` register
+        with the same value regardless of the neuron's current runtime state.
+        """
+        if self._compiled_threshold is None:
+            return False
+        env: dict[str, object] = dict(self._namespace)
+        env["xi"] = 0.0
+        env.update(self.parameters)
+        env.update(self.constants)
+        env.update(self.initial_state)
+        env["I"] = 0.0
+        # nosec B307: AST-whitelisted compiled threshold expression (see step()).
+        return bool(eval(self._compiled_threshold, self._EVAL_GLOBALS, env))  # nosec B307
 
     def _build_jacobian(self) -> dict[str, Any]:
         """Compile the diagonal Jacobian ``∂f/∂x`` for each equation.
@@ -565,7 +619,20 @@ class EquationNeuron:
         if self._compiled_threshold:
             env_post = self._build_env(**kwargs)
             # nosec B307: AST-whitelisted compiled threshold expression.
-            if eval(self._compiled_threshold, self._EVAL_GLOBALS, env_post):  # nosec B307
+            active = bool(eval(self._compiled_threshold, self._EVAL_GLOBALS, env_post))  # nosec B307
+            # ``crossing`` fires once on the inactive -> active transition (a rising
+            # threshold crossing, matching the hand oscillator models' ``v >= thr and
+            # v_prev < thr`` edge test); ``level`` fires on every step the condition
+            # holds. The tracked flag is the pre-reset condition on the just-integrated
+            # state, which equals the committed state for a non-resetting oscillator and
+            # is cleared by any reset that drops the state back below threshold, so a
+            # reset-based level model behaves identically under either detection mode.
+            if self._edge_detection:
+                fired = active and not self._prev_threshold_active
+                self._prev_threshold_active = active
+            else:
+                fired = active
+            if fired:
                 spike = 1
                 reset_env = self._build_env(**kwargs)
                 for var, code in self._compiled_reset.items():
@@ -586,6 +653,9 @@ class EquationNeuron:
     def reset(self) -> None:
         """Reset state to initial values."""
         self.state = deepcopy(self.initial_state)
+        self._prev_threshold_active = (
+            self.initial_threshold_active() if self._edge_detection else False
+        )
 
     def __repr__(self) -> str:
         """Human-readable representation of the neuron equations."""
@@ -604,6 +674,7 @@ def from_equations(
     method: str = "euler",
     units: str = "none",
     input_unit: Any | None = None,
+    detection: str = "level",
 ) -> EquationNeuron:
     """Build an EquationNeuron from Brian2-style equation strings.
 
@@ -665,4 +736,5 @@ def from_equations(
         method=method,
         units=units,
         input_unit=input_unit,
+        detection=detection,
     )

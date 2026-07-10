@@ -53,7 +53,11 @@ Schema format (v1):
 
     [threshold]
     condition = "v > 1.0"
-    detection = "crossing"   # crossing | level
+    detection = "crossing"   # "level" fires on every step the condition holds;
+                             # "crossing" fires once on the rising (inactive->active)
+                             # edge, for a non-resetting oscillator. A reset that clears
+                             # the condition makes the two identical, so reset-based
+                             # integrate-and-fire models use "level" semantics either way.
 
     [reset]
     v = "-1.0"
@@ -277,6 +281,7 @@ class UniversalNeuron:
         # Threshold and reset
         threshold_config = self._schema.get("threshold", {})
         threshold_expr = threshold_config.get("condition")
+        detection = threshold_config.get("detection", "level")
         reset_config = self._schema.get("reset", {})
 
         # Extensions (stored for future use, not consumed by EquationNeuron)
@@ -298,6 +303,7 @@ class UniversalNeuron:
             reset=reset_config if reset_config else None,
             dt=dt,
             method=method,
+            detection=detection,
         )
 
         logger.debug(
