@@ -93,10 +93,6 @@ func ValidateEscapeRate(s *EscapeRateNeuronState) bool {
 		finite(s.Dt) && s.Dt > 0.0
 }
 
-func finite(v float64) bool {
-	return !math.IsNaN(v) && !math.IsInf(v, 0)
-}
-
 func safeExp(x float64) float64 {
 	return math.Exp(math.Max(-700.0, math.Min(700.0, x)))
 }
