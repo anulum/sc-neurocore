@@ -6,8 +6,6 @@
 // Contact: www.anulum.li | protoscience@anulum.li
 // SC-NeuroCore — Rust safety for McKean
 
-#![allow(unused_variables, dead_code, non_snake_case)]
-
 #[derive(Debug, Clone)]
 pub struct McKeanNeuron {
     pub v: f64,
@@ -100,6 +98,12 @@ impl McKeanNeuron {
     }
 }
 
+impl Default for McKeanNeuron {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 pub fn validate_mckean(state: &McKeanNeuron) -> bool {
     state.v.is_finite()
         && state.w.is_finite()
@@ -173,5 +177,20 @@ mod tests {
         let before = (state.v, state.w);
         assert_eq!(state.step(1.7e308), 0);
         assert_eq!((state.v, state.w), before);
+    }
+
+    #[test]
+    fn matches_python_golden_spike_count() {
+        // Parity with models/mckean.py (candidate-first RK4, default parameters): the piecewise-linear
+        // right-hand side is exact arithmetic, so the trajectory is bit-for-bit across languages and
+        // the spike count is an exact observable (not a "spike is 0 or 1" smoke check). Over 20000
+        // macro steps: silent at zero drive, a single upstroke at I=0.2 (sub-threshold approach to the
+        // slow limit cycle), and a seven-spike relaxation train at I=0.5. The Go, Julia, Mojo and
+        // Rust-engine backends reproduce the same trajectory bit-for-bit via test_mckean_backends.py.
+        for (current, want) in [(0.0_f64, 0_usize), (0.2, 1), (0.5, 7)] {
+            let mut state = McKeanNeuron::new();
+            let spikes = (0..20000).filter(|_| state.step(current) == 1).count();
+            assert_eq!(spikes, want, "I={current}");
+        }
     }
 }
