@@ -6,8 +6,6 @@
 // Contact: www.anulum.li | protoscience@anulum.li
 // SC-NeuroCore — Rust safety for morris_lecar
 
-#![allow(unused_variables, dead_code, non_snake_case)]
-
 #[derive(Debug, Clone)]
 pub struct MorrisLecarNeuron {
     pub v: f64,
@@ -126,8 +124,6 @@ impl MorrisLecarNeuron {
     }
 
     pub fn reset(&mut self) {
-        // self.v = -60.0
-        // self.w = 0.0
         self.v = -60.0_f64;
         self.w = 0.0_f64;
         self.c_m = 20.0_f64;
@@ -144,6 +140,12 @@ impl MorrisLecarNeuron {
         self.phi = 1.0_f64 / 15.0_f64;
         self.dt = 0.1_f64;
         self.v_threshold = 0.0_f64;
+    }
+}
+
+impl Default for MorrisLecarNeuron {
+    fn default() -> Self {
+        Self::new()
     }
 }
 
@@ -255,5 +257,19 @@ mod tests {
         assert_eq!(state.step(0.0), -1);
         assert_eq!(state.v, before.v);
         assert_eq!(state.w, before.w);
+    }
+
+    #[test]
+    fn matches_python_golden_spike_count() {
+        // Parity with models/morris_lecar.py (single-step RK4): silent at zero drive,
+        // three action potentials at I=50 over 2000 steps, five at I=100. Morris-Lecar
+        // gating is tanh/cosh, so the trace is not bit-exact across libms; the spike
+        // count is the stable observable and is the parity contract — not a
+        // "spike is 0 or 1" smoke check. The Go and Julia kernels reproduce the same counts.
+        for (current, want) in [(0.0_f64, 0_usize), (50.0, 3), (100.0, 5)] {
+            let mut state = MorrisLecarNeuron::new();
+            let spikes = (0..2000).filter(|_| state.step(current) == 1).count();
+            assert_eq!(spikes, want, "I={current}");
+        }
     }
 }

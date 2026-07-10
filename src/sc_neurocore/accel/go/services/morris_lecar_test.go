@@ -87,6 +87,28 @@ func TestMorrisLecarRejectsOverflowCandidateWithoutMutation(t *testing.T) {
 	}
 }
 
+// TestMorrisLecarMatchesPythonGolden pins the Go kernel to the Python golden
+// (models/morris_lecar.py MorrisLecarNeuron.simulate, single-step RK4): silent at
+// zero drive, three action potentials at I=50 over 2000 steps, and five at I=100.
+// Morris-Lecar gating uses tanh/cosh, so the trace is NOT bit-exact across libms;
+// the spike count is the stable observable and is the parity contract here — not a
+// "spike is 0 or 1" smoke test. (The Rust/Julia kernels reproduce the same counts.)
+func TestMorrisLecarMatchesPythonGolden(t *testing.T) {
+	for _, tc := range []struct {
+		current float64
+		want    int
+	}{
+		{0.0, 0},
+		{50.0, 3},
+		{100.0, 5},
+	} {
+		_, spikes := SimulateMorrisLecarNeuron(2000, tc.current)
+		if spikes != tc.want {
+			t.Fatalf("Morris-Lecar Go kernel must reproduce the Python golden at I=%g over 2000 steps: want %d spikes, got %d", tc.current, tc.want, spikes)
+		}
+	}
+}
+
 func BenchmarkMorrisLecarRK4(b *testing.B) {
 	state := NewMorrisLecarNeuron()
 	spikes := 0

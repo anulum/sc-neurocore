@@ -5,6 +5,21 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+### Morris-Lecar polyglot kernels pinned to the Python golden spike count
+- The Go (`accel/go/services/morris_lecar.go`), Rust (`accel/rust/safety/morris_lecar.rs`) and Julia
+  (`accel/julia/neurons/morris_lecar.jl`) Morris-Lecar kernels already carried the real RK4 dynamics
+  but were only self-consistency / smoke tested; each now asserts the Python golden counts — silent
+  at zero drive, three action potentials at `I=50` over 2000 steps, five at `I=100`. Morris-Lecar
+  gating is `tanh`/`cosh`, so the trace is not bit-exact across C libraries; the spike count is the
+  stated parity observable and all four languages reproduce it.
+- Added a native Julia parity test (`accel/julia/morris_lecar_parity_test.jl`) and an executable
+  `simulate`/`main` parity harness to the Mojo kernel (`accel/mojo/kernels/morris_lecar.mojo`, so
+  `mojo run` prints `PARITY OK`); removed a dead `k4_v` assignment in that kernel's `next_w` path.
+  On the Rust side, dropped a vestigial `#![allow(unused_variables, dead_code, non_snake_case)]`
+  (the code is real, not a masked stub) and added the idiomatic `Default` impl. Morris-Lecar's
+  Python model dispatches only to the Rust engine, so the Go/Julia/Mojo kernels are language-native;
+  no Python runtime path, FFI dispatch, or committed benchmark artefact changed.
+
 ### FitzHugh-Nagumo Go accel-services kernel (services test suite unblocked)
 - Added `accel/go/services/fitzhugh_nagumo.go`, a real RK4 `SimulateFitzHughNagumoNeuron` in
   parity with `sc_neurocore.neurons.models.fitzhugh_nagumo.FitzHughNagumoNeuron` (the cube written

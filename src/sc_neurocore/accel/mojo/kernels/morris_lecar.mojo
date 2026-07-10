@@ -171,7 +171,6 @@ fn morris_lecar_next_w(
     var k2_w = _rhs_w(v + 0.5 * dt * k1_v, w + 0.5 * dt * k1_w, v3, v4, phi)
     var k3_v = _rhs_v(v + 0.5 * dt * k2_v, w + 0.5 * dt * k2_w, current, c_m, g_ca, g_k, g_l, e_ca, e_k, e_l, v1, v2)
     var k3_w = _rhs_w(v + 0.5 * dt * k2_v, w + 0.5 * dt * k2_w, v3, v4, phi)
-    var k4_v = _rhs_v(v + dt * k3_v, w + dt * k3_w, current, c_m, g_ca, g_k, g_l, e_ca, e_k, e_l, v1, v2)
     var k4_w = _rhs_w(v + dt * k3_v, w + dt * k3_w, v3, v4, phi)
     var next_w = w + dt * (k1_w + 2.0 * k2_w + 2.0 * k3_w + k4_w) / 6.0
     if not _finite(next_w) or next_w < 0.0 or next_w > 1.0:
@@ -189,3 +188,56 @@ fn morris_lecar_step_spike(
     if next_v >= v_threshold and v < v_threshold:
         return 1
     return 0
+
+
+# Run a default neuron (parameters mirroring the Python golden MorrisLecarNeuron) for n_steps
+# RK4 steps at constant current and return the rising-edge spike count. This composes the
+# per-step primitives above into the simulate() recurrence so the kernel carries a runnable
+# parity check.
+fn simulate(n_steps: Int, current: Float64) -> Int:
+    var v = -60.0
+    var w = 0.0
+    var c_m = 20.0
+    var g_ca = 4.0
+    var g_k = 8.0
+    var g_l = 2.0
+    var e_ca = 120.0
+    var e_k = -84.0
+    var e_l = -60.0
+    var v1 = -1.2
+    var v2 = 18.0
+    var v3 = 12.0
+    var v4 = 17.4
+    var phi = 1.0 / 15.0
+    var dt = 0.1
+    var v_threshold = 0.0
+    var spikes: Int = 0
+    for _ in range(n_steps):
+        var next_v = morris_lecar_next_v(
+            v, w, current, c_m, g_ca, g_k, g_l, e_ca, e_k, e_l, v1, v2, v3, v4, phi, dt, v_threshold
+        )
+        var next_w = morris_lecar_next_w(
+            v, w, current, c_m, g_ca, g_k, g_l, e_ca, e_k, e_l, v1, v2, v3, v4, phi, dt, v_threshold
+        )
+        if morris_lecar_step_spike(v, next_v, v_threshold) > 0:
+            spikes += 1
+        v = next_v
+        w = next_w
+    return spikes
+
+
+def main():
+    # Parity contract against the Python golden over 2000 steps: 0 spikes at I=0, 3 at I=50,
+    # 5 at I=100 — the same counts the Python, Rust, Go and Julia kernels reproduce. Morris-Lecar
+    # gating is tanh/cosh, so the trace is not bit-exact across libms, but the spike count is the
+    # stable observable. Run: `mojo run morris_lecar.mojo`.
+    var silent = simulate(2000, 0.0)
+    print("I=0, 2000 steps -> spikes =", silent, "(expect 0)")
+    var three = simulate(2000, 50.0)
+    print("I=50, 2000 steps -> spikes =", three, "(expect 3)")
+    var five = simulate(2000, 100.0)
+    print("I=100, 2000 steps -> spikes =", five, "(expect 5)")
+    if silent == 0 and three == 3 and five == 5:
+        print("PARITY OK (matches the Python golden across all three regimes)")
+    else:
+        print("PARITY FAIL: expected 0 / 3 / 5 to match the Python golden")
