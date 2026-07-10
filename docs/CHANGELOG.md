@@ -5,6 +5,21 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+### FitzHugh-Nagumo Go accel-services kernel (services test suite unblocked)
+- Added `accel/go/services/fitzhugh_nagumo.go`, a real RK4 `SimulateFitzHughNagumoNeuron` in
+  parity with `sc_neurocore.neurons.models.fitzhugh_nagumo.FitzHughNagumoNeuron` (the cube written
+  `v*v*v`, exact arithmetic, fail-closed on a non-finite input, state, or candidate). The Go
+  services test suite could not compile because `services_test.go` referenced this function while
+  the FitzHugh-Nagumo Go kernel existed only as a `package main` cgo shared library under
+  `accel/go/neurons/fitzhugh_nagumo/`. A golden-parity test pins the kernel to the Python reference
+  (one action potential at `I=10` over 100 steps and a five-spike partial train at `I=0.5` over
+  2000 steps, final `v` bit-identical to NumPy) and an honest per-step benchmark records the timing.
+- Strengthened the `accel/rust/safety` FitzHugh-Nagumo test from a `spike is 0 or 1` smoke check to
+  the same Python-golden spike count, dropped a vestigial `#![allow(dead_code)]`, and added the
+  idiomatic `Default` impl. The services surface is Go-native, not FFI-dispatched, so no Python
+  runtime path, FFI dispatch, cross-language `simulate` benchmark, or committed benchmark artefact
+  changed.
+
 ### Sequential (Gauss-Seidel) integration mode + faithful Wang-Buzsáki re-enrolment
 - Added a sequential (Gauss-Seidel) integration mode (`[integration] method = "gauss_seidel"`) to
   the schema DSL, in both the Python runner (`EquationNeuron`) and the emitted Verilog. The state

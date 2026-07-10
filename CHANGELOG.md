@@ -271,6 +271,21 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
   code, polyglot mirror, benchmark dispatch, or benchmark artefact changed.
 
 ### Fixed
+- Completed the FitzHugh-Nagumo Go accel-services surface so the `accel/go/services`
+  test suite compiles and runs again. `services_test.go` called
+  `SimulateFitzHughNagumoNeuron`, which no source file defined (the FitzHugh-Nagumo Go
+  kernel existed only as a `package main` cgo shared library under
+  `accel/go/neurons/fitzhugh_nagumo/`), so the whole services package test build failed. Added
+  `services/fitzhugh_nagumo.go` — a real RK4 `SimulateFitzHughNagumoNeuron` in parity with
+  `sc_neurocore.neurons.models.fitzhugh_nagumo.FitzHughNagumoNeuron` (the cube written
+  `v*v*v`, exact arithmetic, fail-closed on non-finite input/state/candidate) — with a
+  golden-parity test (one action potential at `I=10` over 100 steps and a five-spike partial
+  train at `I=0.5` over 2000 steps, final `v` bit-identical to the NumPy reference) and an
+  honest per-step benchmark. Also strengthened the `accel/rust/safety` FitzHugh-Nagumo test
+  from a `spike is 0 or 1` smoke check to the same Python-golden spike count, dropped a
+  vestigial `#![allow(dead_code)]`, and added the idiomatic `Default` impl. The services
+  surface is Go-native, not FFI-dispatched, so no Python runtime path, FFI dispatch,
+  cross-language `simulate` benchmark, or committed benchmark artefact changed.
 - Made `sc_neurocore.training.auto_device()` skip CUDA devices whose compute
   capability is not supported by the installed PyTorch build, avoiding noisy
   local GTX 1060 / `sm_61` warnings while preserving fallback to MPS or CPU.

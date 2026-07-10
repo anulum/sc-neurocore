@@ -6,8 +6,6 @@
 // Contact: www.anulum.li | protoscience@anulum.li
 // SC-NeuroCore — Rust safety for fitzhugh_nagumo
 
-#![allow(dead_code)]
-
 #[derive(Debug, Clone)]
 pub struct FitzHughNagumoNeuron {
     pub v: f64,
@@ -60,6 +58,12 @@ impl FitzHughNagumoNeuron {
         self.epsilon = 0.08;
         self.dt = 0.1;
         self.v_threshold = 1.0;
+    }
+}
+
+impl Default for FitzHughNagumoNeuron {
+    fn default() -> Self {
+        Self::new()
     }
 }
 
@@ -149,5 +153,21 @@ mod tests {
         assert_eq!(state.step(0.0), -1);
         assert_eq!(state.v, before.v);
         assert_eq!(state.w, before.w);
+    }
+
+    #[test]
+    fn matches_python_golden_spike_count() {
+        // Parity with models/fitzhugh_nagumo.py: simulate(100, 10.0) fires once
+        // and simulate(2000, 0.5) fires five times (a clean partial train on the
+        // limit cycle). Looping step() is exactly the simulate() recurrence, so
+        // this pins the kernel to the Python golden spike count rather than a
+        // "spike is 0 or 1" smoke check.
+        let mut single = FitzHughNagumoNeuron::new();
+        let single_spikes = (0..100).filter(|_| single.step(10.0) == 1).count();
+        assert_eq!(single_spikes, 1);
+
+        let mut train = FitzHughNagumoNeuron::new();
+        let train_spikes = (0..2000).filter(|_| train.step(0.5) == 1).count();
+        assert_eq!(train_spikes, 5);
     }
 }
