@@ -202,4 +202,25 @@ mod tests {
         assert_eq!(state.step(f64::NAN), 0);
         assert_eq!((state.v, state.theta, state.i1, state.i2), before);
     }
+
+    #[test]
+    fn matches_python_golden_spike_count() {
+        // Parity with models/mihalas_niebur.py (RK4 integrator, default parameters). The
+        // Mihalas-Niebur 2009 right-hand side is entirely linear (leaky membrane, linearly-adapting
+        // threshold, two exponentially-decaying internal currents), with a spike (v >= theta) that
+        // resets v to v_reset + b*(v - v_rest), lifts theta to at least theta_reset, and increments
+        // the internal currents. No transcendentals, so the trajectory is bit-for-bit across
+        // languages and the spike count is an exact observable. At the default parameters the
+        // adaptation coefficient and after-spike increments are zero, so this exercises the
+        // sustained-firing regime of a fixed-threshold reset (the adaptation and b-scaled reset are
+        // covered exactly by test_mihalas_niebur_spike_reset_uses_b). Drive gates it cleanly around
+        // rheobase (~1): silent at I=0.0, a 142-spike train at I=2.0, a 333-spike train at I=5.0,
+        // each over 1000 macro steps. Verified python-vs-rust max|Δ|=0; the Go, Julia, Mojo and
+        // Rust-engine backends reproduce the same trajectory via test_mihalas_niebur_backends.py.
+        for (current, want) in [(0.0_f64, 0_usize), (2.0, 142), (5.0, 333)] {
+            let mut state = MihalasNieburNeuron::new();
+            let spikes = (0..1000).filter(|_| state.step(current) == 1).count();
+            assert_eq!(spikes, want, "I={current}");
+        }
+    }
 }
