@@ -128,9 +128,7 @@ def _parse_module_ports(rtl: str) -> ModulePorts:
     if not mod_match:
         raise ValueError("generated RTL has no module declaration")
     module = mod_match.group(1)
-    signed_outs = tuple(
-        re.findall(r"output\s+reg\s+signed\s+\[[^\]]+\]\s+(\w+)", rtl)
-    )
+    signed_outs = tuple(re.findall(r"output\s+reg\s+signed\s+\[[^\]]+\]\s+(\w+)", rtl))
     # Do not use a bare ``output reg (\w+)`` — it would capture the keyword
     # ``signed`` from ``output reg signed [15:0] …``.
     bit_outs = tuple(re.findall(r"output\s+reg\s+(?!signed\b)(\w+)", rtl))

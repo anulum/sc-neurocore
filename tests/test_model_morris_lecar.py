@@ -483,7 +483,11 @@ class TestMorrisLecarNeuronSimulate:
         pytest.importorskip("sc_neurocore_engine", reason="Rust engine not built")
         # force non-default via a constructor override that every model accepts
         try:
-            n = MorrisLecarNeuron(dt=0.02) if "dt" in MorrisLecarNeuron.__dataclass_fields__ else MorrisLecarNeuron()
+            n = (
+                MorrisLecarNeuron(dt=0.02)
+                if "dt" in MorrisLecarNeuron.__dataclass_fields__
+                else MorrisLecarNeuron()
+            )
             if "dt" not in MorrisLecarNeuron.__dataclass_fields__:
                 pytest.skip("no dt field")
         except TypeError:

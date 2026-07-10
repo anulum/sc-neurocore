@@ -420,9 +420,7 @@ def index_payload(rows: list[ReadinessRow]) -> dict[str, Any]:
     }
 
 
-def validation_section(
-    entry: EnrolledEvidence, *, has_dynamics: bool
-) -> dict[str, Any]:
+def validation_section(entry: EnrolledEvidence, *, has_dynamics: bool) -> dict[str, Any]:
     """Build a Validation facet for an enrolled model.
 
     ``dynamics_faithful`` is only set when the descriptor already carries a
@@ -471,8 +469,7 @@ def silicon_section(entry: EnrolledEvidence) -> dict[str, Any]:
         "cosim_evidence": "",
         "target_tier": "H0",
         "terminal_reason": (
-            "Compile-clean RTL only; spike-parity not claimed for this class "
-            f"({entry.tolerance})."
+            f"Compile-clean RTL only; spike-parity not claimed for this class ({entry.tolerance})."
         ),
     }
 

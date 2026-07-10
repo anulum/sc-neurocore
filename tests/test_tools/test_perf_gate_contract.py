@@ -91,7 +91,10 @@ def test_perf_gated_tests_are_scheduled_and_documented() -> None:
 
     assert perf_files
     assert "schedule" in events
-    assert perf_job["if"] == "github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'"
+    assert (
+        perf_job["if"]
+        == "github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'"
+    )
     assert perf_job["env"]["SC_NEUROCORE_PERF"] == "1"
     assert perf_job["env"]["PYTHONPATH"] == "src:."
     assert "SC_NEUROCORE_PERF=1" in docs_text

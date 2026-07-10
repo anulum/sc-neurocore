@@ -105,9 +105,7 @@ def _vivado_gates() -> list[VivadoGate]:
 def test_vivado_ci_gates_are_documented() -> None:
     """Ensure every Vivado opt-in pytest gate appears in public hardware docs."""
 
-    docs = (_repo_root() / "docs" / "hardware" / "vivado_ci_gates.md").read_text(
-        encoding="utf-8"
-    )
+    docs = (_repo_root() / "docs" / "hardware" / "vivado_ci_gates.md").read_text(encoding="utf-8")
     gates = _vivado_gates()
     gate_paths = {gate.test_path for gate in gates}
 

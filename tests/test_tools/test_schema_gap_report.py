@@ -134,9 +134,9 @@ def test_cli_writes_json_and_markdown_reports(tmp_path: Path) -> None:
     payload = json.loads(json_path.read_text(encoding="utf-8"))
     live = _load_tool().build_report(REPO)["counts"]
     assert payload["counts"]["net_missing_schema_models"] == live["net_missing_schema_models"]
-    assert payload["counts"]["source_modules_without_schema"] == live[
-        "source_modules_without_schema"
-    ]
+    assert (
+        payload["counts"]["source_modules_without_schema"] == live["source_modules_without_schema"]
+    )
     assert markdown_path.read_text(encoding="utf-8").startswith(
         "<!-- SPDX-License-Identifier: AGPL-3.0-or-later -->"
     )

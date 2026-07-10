@@ -271,6 +271,18 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
   code, polyglot mirror, benchmark dispatch, or benchmark artefact changed.
 
 ### Fixed
+- Restored a green `main` after inherited tooling drift left three required checks red, with no
+  behavioural change. The `pre-commit` and `lint` jobs reformatted 21 model/test/tool files to the
+  pinned `ruff` 0.15.16 style — adjacent-string joins and single-line calls a staler formatter had
+  wrapped — and trimmed a trailing newline the SymbiYosys catalogue commit left in
+  `hdl/formal/catalogue/INVENTORY.md`. The `test` job's `tools/readiness_evidence_index.py` imports
+  `tomli_w` (the TOML *writer*, which has no standard-library equivalent) but the dependency was
+  never declared, so its whole test module errored at collection with `ModuleNotFoundError`;
+  `tomli-w>=1.0` is now in the `dev` extra. The `v3-engine` `rust-lint` job tracks the latest stable
+  Rust (1.97.0), whose new default `clippy` lints rejected two pre-existing engine sites — a
+  redundant `seed: _` beside a `..` rest-pattern (`unneeded_wildcard_pattern`) and a
+  `[b'A', b'C', b'G', b'T']` array literal (`byte_char_slices`); both are cleared (the latter as
+  `*b"ACGT"`).
 - Pinned the Connor-Stevens polyglot kernels to the Python golden spike count. The Go
   (`accel/go/services/connor_stevens.go`), Rust (`accel/rust/safety/connor_stevens.rs`) and Julia
   (`accel/julia/neurons/connor_stevens.jl`) kernels already carried the real six-state macro-step

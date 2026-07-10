@@ -22,7 +22,7 @@ use std::collections::HashMap;
 
 // ── Constants ────────────────────────────────────────────────────────
 
-const ALPHABET: [u8; 4] = [b'A', b'C', b'G', b'T'];
+const ALPHABET: [u8; 4] = *b"ACGT";
 const GC_LOW: f64 = 0.40;
 const GC_HIGH: f64 = 0.60;
 const MAX_HOMOPOLYMER: usize = 3;

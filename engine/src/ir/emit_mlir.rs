@@ -56,7 +56,7 @@ pub fn emit(graph: &ScGraph) -> Result<String, String> {
                 last_output = format!("%{name}");
             }
             ScOp::Encode {
-                id, prob, seed: _, ..
+                id, prob, ..
             } => {
                 let prob_wire = value_wire(graph, *prob);
                 mlir.push_str(&format!(

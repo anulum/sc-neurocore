@@ -24,7 +24,9 @@ from tools import check_icarus_verilog
 REPO_ROOT = Path(__file__).resolve().parents[2]
 
 
-def _completed(command: Sequence[str], output: str, returncode: int = 0) -> subprocess.CompletedProcess[str]:
+def _completed(
+    command: Sequence[str], output: str, returncode: int = 0
+) -> subprocess.CompletedProcess[str]:
     """Return a typed completed process for fake version commands."""
     return subprocess.CompletedProcess(
         args=list(command),
@@ -46,10 +48,7 @@ def _load_ci_workflow() -> dict[str, Any]:
 def test_parse_iverilog_major_reads_stable_version() -> None:
     """The checker accepts the version banner emitted by Icarus Verilog 12."""
     assert (
-        check_icarus_verilog.parse_iverilog_major(
-            "Icarus Verilog version 12.0 (stable) ()"
-        )
-        == 12
+        check_icarus_verilog.parse_iverilog_major("Icarus Verilog version 12.0 (stable) ()") == 12
     )
 
 
@@ -74,10 +73,13 @@ def test_check_icarus_verilog_accepts_ci_floor() -> None:
             return _completed(command, "Icarus Verilog version 12.0 (stable) ()")
         return _completed(command, "Icarus Verilog VVP Code Generator 12.0")
 
-    assert check_icarus_verilog.check_icarus_verilog(
-        minimum_major=12,
-        runner=runner,
-    ) == []
+    assert (
+        check_icarus_verilog.check_icarus_verilog(
+            minimum_major=12,
+            runner=runner,
+        )
+        == []
+    )
 
 
 def test_check_icarus_verilog_requires_frontend() -> None:

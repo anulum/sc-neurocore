@@ -17,9 +17,7 @@ import numpy as np
 import numpy.typing as npt
 
 try:
-    _EngineCls: Optional[type[Any]] = _importlib.import_module(
-        "sc_neurocore_engine"
-    ).DPINeuron
+    _EngineCls: Optional[type[Any]] = _importlib.import_module("sc_neurocore_engine").DPINeuron
     _HAS_RUST = True
 except (ImportError, AttributeError):
     _EngineCls = None

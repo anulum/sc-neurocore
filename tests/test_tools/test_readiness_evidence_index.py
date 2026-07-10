@@ -58,11 +58,7 @@ def test_enrolled_class_names_exist_in_descriptor_corpus(tool: ModuleType) -> No
     """Every enrolled class_name has an on-disk descriptor (except none expected)."""
     from sc_neurocore.neurons.model_catalogue import descriptor_path
 
-    missing = [
-        e.class_name
-        for e in tool.ENROLLED
-        if not descriptor_path(e.class_name).is_file()
-    ]
+    missing = [e.class_name for e in tool.ENROLLED if not descriptor_path(e.class_name).is_file()]
     assert missing == [], f"missing descriptors: {missing}"
 
 
@@ -98,9 +94,7 @@ def test_validation_and_silicon_sections_are_honest_for_h1(tool: ModuleType) -> 
     assert v0_empty["dynamics_faithful"] is False
 
 
-def test_index_payload_schema_and_json_roundtrip(
-    tool: ModuleType, tmp_path: Path
-) -> None:
+def test_index_payload_schema_and_json_roundtrip(tool: ModuleType, tmp_path: Path) -> None:
     """JSON export is valid and carries the schema version marker."""
     rows = tool.build_rows()
     payload = tool.index_payload(rows)
@@ -153,9 +147,7 @@ def test_apply_writes_facets_and_raises_live_tiers(
             import tomllib
 
             raw = tmp_desc.read_text(encoding="utf-8")
-            body = "\n".join(
-                line for line in raw.splitlines() if not line.startswith("#")
-            )
+            body = "\n".join(line for line in raw.splitlines() if not line.startswith("#"))
             return tomllib.loads(body)
         return real_load_payload(class_name)
 

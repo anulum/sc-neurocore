@@ -59,9 +59,7 @@ def check_icarus_verilog(
     if major is None:
         errors.append("iverilog -V output did not include an Icarus Verilog version")
     elif major < minimum_major:
-        errors.append(
-            f"Icarus Verilog {major}.x is below the required {minimum_major}.x floor"
-        )
+        errors.append(f"Icarus Verilog {major}.x is below the required {minimum_major}.x floor")
 
     try:
         vvp_result = runner(("vvp", "-V"))

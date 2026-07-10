@@ -372,7 +372,11 @@ class TestLapicqueNeuronSimulate:
         pytest.importorskip("sc_neurocore_engine", reason="Rust engine not built")
         # force non-default via a constructor override that every model accepts
         try:
-            n = LapicqueNeuron(dt=0.02) if "dt" in LapicqueNeuron.__dataclass_fields__ else LapicqueNeuron()
+            n = (
+                LapicqueNeuron(dt=0.02)
+                if "dt" in LapicqueNeuron.__dataclass_fields__
+                else LapicqueNeuron()
+            )
             if "dt" not in LapicqueNeuron.__dataclass_fields__:
                 pytest.skip("no dt field")
         except TypeError:

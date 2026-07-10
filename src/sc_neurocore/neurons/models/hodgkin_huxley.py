@@ -145,8 +145,7 @@ class HodgkinHuxleyNeuron:
         if prefer_rust:
             if not _HAS_RUST or _EngineCls is None:
                 raise RuntimeError(
-                    "Rust HodgkinHuxley backend requested but sc_neurocore_engine "
-                    "is unavailable."
+                    "Rust HodgkinHuxley backend requested but sc_neurocore_engine is unavailable."
                 )
             if not self._matches_rust_engine_contract():
                 raise RuntimeError(
@@ -157,8 +156,7 @@ class HodgkinHuxleyNeuron:
         else:
             if backend == "rust":
                 raise RuntimeError(
-                    "Rust HodgkinHuxley backend requested but sc_neurocore_engine "
-                    "is unavailable."
+                    "Rust HodgkinHuxley backend requested but sc_neurocore_engine is unavailable."
                 )
             trace, spikes, state = self._simulate_python(n_steps, current)
         self.v, self.m, self.h, self.n = state

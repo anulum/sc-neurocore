@@ -320,8 +320,7 @@ class ConnorStevensNeuron:
         if prefer_rust:
             if not _HAS_RUST or _EngineCls is None:
                 raise RuntimeError(
-                    "Rust ConnorStevens backend requested but sc_neurocore_engine "
-                    "is unavailable."
+                    "Rust ConnorStevens backend requested but sc_neurocore_engine is unavailable."
                 )
             if not self._matches_rust_engine_contract():
                 raise RuntimeError(
@@ -332,8 +331,7 @@ class ConnorStevensNeuron:
         else:
             if backend == "rust":
                 raise RuntimeError(
-                    "Rust ConnorStevens backend requested but sc_neurocore_engine "
-                    "is unavailable."
+                    "Rust ConnorStevens backend requested but sc_neurocore_engine is unavailable."
                 )
             trace, spikes, state = self._simulate_python(n_steps, current)
         self.v, self.m, self.h, self.n, self.a, self.b = state

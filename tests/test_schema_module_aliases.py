@@ -45,9 +45,7 @@ def test_lif_schema_joins_lapicque_not_stochastic_lif() -> None:
 def test_schema_to_class_entries_exist_in_registry() -> None:
     """Every mapped class_name is a registered catalogue model."""
     missing = [
-        class_name
-        for class_name in SCHEMA_TO_CLASS.values()
-        if class_name not in _CLASS_TO_MODULE
+        class_name for class_name in SCHEMA_TO_CLASS.values() if class_name not in _CLASS_TO_MODULE
     ]
     assert missing == [], f"alias points at unregistered classes: {missing}"
 

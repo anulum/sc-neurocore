@@ -18,9 +18,7 @@ import numpy.typing as npt
 
 # Rust engine path: factory-default exact-flow step is bit-identical to pure Python.
 try:
-    _EngineCls: Optional[type[Any]] = _importlib.import_module(
-        "sc_neurocore_engine"
-    ).ThetaNeuron
+    _EngineCls: Optional[type[Any]] = _importlib.import_module("sc_neurocore_engine").ThetaNeuron
     _HAS_RUST = True
 except (ImportError, AttributeError):
     _EngineCls = None

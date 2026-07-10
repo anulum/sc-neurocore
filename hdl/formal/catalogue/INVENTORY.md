@@ -21,4 +21,3 @@ Jobs: **14**
 | PerfectIntegratorNeuron | perfect_integrator | `sc_perfect_integrator` | `v_out` | 20 |
 | QuadraticIFNeuron | quadratic_if | `sc_quadratic_if` | `v_out` | 20 |
 | ThetaNeuron | theta | `sc_theta` | `theta_out` | 6 |
-

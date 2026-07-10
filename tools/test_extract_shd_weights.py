@@ -168,7 +168,9 @@ class TestCheckpointTrustBoundary:
             extract(str(checkpoint), str(tmp_path / "artifacts"), checkpoint_sha256=cast(str, None))
 
     @pytest.mark.parametrize("bad_digest", ["abc123", "g" * 64])
-    def test_extract_rejects_invalid_checkpoint_sha256_format(self, tmp_path: Path, bad_digest: str) -> None:
+    def test_extract_rejects_invalid_checkpoint_sha256_format(
+        self, tmp_path: Path, bad_digest: str
+    ) -> None:
         checkpoint = tmp_path / "shd_metadata.pth"
         torch.save({"net": {}, "acc": 0.0, "sigma": 0.23, "epoch": 0}, checkpoint)
 
