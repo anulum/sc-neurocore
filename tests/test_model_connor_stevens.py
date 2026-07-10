@@ -385,3 +385,36 @@ def test_connor_stevens_rejects_corrupted_runtime_state_without_mutation() -> No
         neuron.step(6.0)
 
     assert (neuron.v, neuron.m, neuron.h, neuron.n, neuron.a, neuron.b) == before
+
+
+class TestConnorStevensNeuronSimulate:
+    """Engineering-verification surface for ``ConnorStevensNeuron.simulate``."""
+
+    def test_simulate_python_returns_finite_trace(self) -> None:
+        n = ConnorStevensNeuron()
+        trace, spikes = n.simulate(1000, current=10.0, backend="python")
+        assert trace.shape == (1000,)
+        assert np.all(np.isfinite(trace))
+        assert spikes >= 1
+
+    def test_simulate_rust_matches_or_ulp_python(self) -> None:
+        pytest.importorskip("sc_neurocore_engine", reason="Rust engine not built")
+        py = ConnorStevensNeuron()
+        rs = ConnorStevensNeuron()
+        tr_py, sp_py = py.simulate(1000, current=10.0, backend="python")
+        tr_rs, sp_rs = rs.simulate(1000, current=10.0, backend="rust")
+        assert sp_py == sp_rs
+        max_diff = float(np.max(np.abs(tr_py - tr_rs)))
+        assert max_diff < 1e-9
+
+    def test_simulate_rust_rejects_non_default(self) -> None:
+        pytest.importorskip("sc_neurocore_engine", reason="Rust engine not built")
+        # force non-default via a constructor override that every model accepts
+        try:
+            n = ConnorStevensNeuron(dt=0.02) if "dt" in ConnorStevensNeuron.__dataclass_fields__ else ConnorStevensNeuron()
+            if "dt" not in ConnorStevensNeuron.__dataclass_fields__:
+                pytest.skip("no dt field")
+        except TypeError:
+            pytest.skip("cannot override defaults")
+        with pytest.raises(RuntimeError, match="factory-default"):
+            n.simulate(10, current=0.0, backend="rust")

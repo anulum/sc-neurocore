@@ -132,8 +132,16 @@ n = "0.01 * (v + 55) / (1 - exp(-(v + 55) / 10)) * (1 - n) - 0.125 * exp(-(v + 6
 
 [backends.python]
 status = "implemented"
+parity = "exact"
+
+[backends.rust]
+status = "implemented"
+parity = "ulp-bounded"
 
 [reproducibility]
+reference_config = "{\"n_steps\":1000,\"current\":10.0,\"backend\":\"python\",\"parameters\":\"defaults\"}"
+golden_trace_sha256 = "cf7f009a3cdbcba2a6402c89c198ed40283e54a7ba844133eaae1f6b8c5c2e54"
+
 
 [documentation]
 slug = "models/hodgkin_huxley"

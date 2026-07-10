@@ -217,3 +217,36 @@ class TestHHPipeline:
         assert sc >= 50
         rate = firing_rate(train, dt=0.001)  # 1 ms per step (100 substeps × 0.01)
         assert rate > 0
+
+
+class TestHodgkinHuxleyNeuronSimulate:
+    """Engineering-verification surface for ``HodgkinHuxleyNeuron.simulate``."""
+
+    def test_simulate_python_returns_finite_trace(self) -> None:
+        n = HodgkinHuxleyNeuron()
+        trace, spikes = n.simulate(1000, current=10.0, backend="python")
+        assert trace.shape == (1000,)
+        assert np.all(np.isfinite(trace))
+        assert spikes >= 1
+
+    def test_simulate_rust_matches_or_ulp_python(self) -> None:
+        pytest.importorskip("sc_neurocore_engine", reason="Rust engine not built")
+        py = HodgkinHuxleyNeuron()
+        rs = HodgkinHuxleyNeuron()
+        tr_py, sp_py = py.simulate(1000, current=10.0, backend="python")
+        tr_rs, sp_rs = rs.simulate(1000, current=10.0, backend="rust")
+        assert sp_py == sp_rs
+        max_diff = float(np.max(np.abs(tr_py - tr_rs)))
+        assert max_diff < 1e-9
+
+    def test_simulate_rust_rejects_non_default(self) -> None:
+        pytest.importorskip("sc_neurocore_engine", reason="Rust engine not built")
+        # force non-default via a constructor override that every model accepts
+        try:
+            n = HodgkinHuxleyNeuron(dt=0.02) if "dt" in HodgkinHuxleyNeuron.__dataclass_fields__ else HodgkinHuxleyNeuron()
+            if "dt" not in HodgkinHuxleyNeuron.__dataclass_fields__:
+                pytest.skip("no dt field")
+        except TypeError:
+            pytest.skip("cannot override defaults")
+        with pytest.raises(RuntimeError, match="factory-default"):
+            n.simulate(10, current=0.0, backend="rust")

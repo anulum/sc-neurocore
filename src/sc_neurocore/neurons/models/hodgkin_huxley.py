@@ -8,12 +8,40 @@
 
 from __future__ import annotations
 
+import importlib as _importlib
+import math
 from dataclasses import dataclass
-from typing import Any, Literal
+from typing import Any, Literal, Optional
 
 import numpy as np
+import numpy.typing as npt
 
 from sc_neurocore.solvers import RK4Solver, RosenbrockEuler
+
+try:
+    _EngineCls: Optional[type[Any]] = _importlib.import_module(
+        "sc_neurocore_engine"
+    ).HodgkinHuxleyNeuron
+    _HAS_RUST = True
+except (ImportError, AttributeError):
+    _EngineCls = None
+    _HAS_RUST = False
+
+_RUST_ENGINE_DEFAULTS: dict[str, float] = {
+    "v": -65.0,
+    "m": 0.05,
+    "h": 0.6,
+    "n": 0.32,
+    "c_m": 1.0,
+    "g_na": 120.0,
+    "g_k": 36.0,
+    "g_l": 0.3,
+    "e_na": 50.0,
+    "e_k": -77.0,
+    "e_l": -54.4,
+    "dt": 0.01,
+    "v_threshold": 0.0,
+}
 
 
 @dataclass
@@ -87,6 +115,82 @@ class HodgkinHuxleyNeuron:
         else:
             self._step_rosenbrock(current)
         return 1 if (self.v >= self.v_threshold and v_prev < self.v_threshold) else 0
+
+    def _matches_rust_engine_contract(self) -> bool:
+        """Return whether the instance matches the Rust engine default contract."""
+        if self.integrator != "baseline_euler":
+            return False
+        for name, expected in _RUST_ENGINE_DEFAULTS.items():
+            if float(getattr(self, name)) != expected:
+                return False
+        return True
+
+    def simulate(
+        self, n_steps: int, current: float = 0.0, backend: str = "auto"
+    ) -> tuple[npt.NDArray[np.float64], int]:
+        """Advance ``n_steps`` updates, returning ``(v_trace, spikes)``.
+
+        Rust path requires factory-default ``baseline_euler``; parity is
+        ULP-bounded against the pure-Python path.
+        """
+        if n_steps < 0:
+            raise ValueError("n_steps must be non-negative")
+        if backend not in ("auto", "python", "rust"):
+            raise ValueError(f"backend must be auto/python/rust, got {backend!r}")
+        if not math.isfinite(current):
+            raise ValueError("current must be finite")
+        prefer_rust = backend == "rust" or (
+            backend == "auto" and _HAS_RUST and self._matches_rust_engine_contract()
+        )
+        if prefer_rust:
+            if not _HAS_RUST or _EngineCls is None:
+                raise RuntimeError(
+                    "Rust HodgkinHuxley backend requested but sc_neurocore_engine "
+                    "is unavailable."
+                )
+            if not self._matches_rust_engine_contract():
+                raise RuntimeError(
+                    "Rust HodgkinHuxley backend requires factory-default "
+                    "baseline_euler parameters and initial state."
+                )
+            trace, spikes, state = self._simulate_rust(n_steps, current)
+        else:
+            if backend == "rust":
+                raise RuntimeError(
+                    "Rust HodgkinHuxley backend requested but sc_neurocore_engine "
+                    "is unavailable."
+                )
+            trace, spikes, state = self._simulate_python(n_steps, current)
+        self.v, self.m, self.h, self.n = state
+        return trace, spikes
+
+    def _simulate_python(
+        self, n_steps: int, current: float
+    ) -> tuple[npt.NDArray[np.float64], int, tuple[float, float, float, float]]:
+        trace = np.empty(n_steps, dtype=np.float64)
+        spikes = 0
+        for t in range(n_steps):
+            spikes += self.step(current)
+            trace[t] = self.v
+        return trace, spikes, (self.v, self.m, self.h, self.n)
+
+    def _simulate_rust(
+        self, n_steps: int, current: float
+    ) -> tuple[npt.NDArray[np.float64], int, tuple[float, float, float, float]]:
+        assert _EngineCls is not None
+        neuron = _EngineCls()
+        trace = np.empty(n_steps, dtype=np.float64)
+        spikes = 0
+        for t in range(n_steps):
+            spikes += int(neuron.step(float(current)))
+            st = neuron.get_state()
+            trace[t] = float(st["v"])
+        st = neuron.get_state()
+        return (
+            trace,
+            spikes,
+            (float(st["v"]), float(st["m"]), float(st["h"]), float(st["n"])),
+        )
 
     def _rhs(self, _t: float, state: np.ndarray[Any, Any], current: float) -> np.ndarray[Any, Any]:
         v, m, h, n = (float(value) for value in state)

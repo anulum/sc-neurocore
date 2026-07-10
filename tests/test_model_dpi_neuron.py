@@ -258,3 +258,36 @@ class TestDPIPipeline:
         train = np.array([float(n.step(50.0)) for _ in range(5000)])
         rate = firing_rate(train, dt=0.001)
         assert rate > 0
+
+
+class TestDPINeuronSimulate:
+    """Engineering-verification surface for ``DPINeuron.simulate``."""
+
+    def test_simulate_python_returns_finite_trace(self) -> None:
+        n = DPINeuron()
+        trace, spikes = n.simulate(1000, current=1.0, backend="python")
+        assert trace.shape == (1000,)
+        assert np.all(np.isfinite(trace))
+        assert spikes >= 1
+
+    def test_simulate_rust_matches_or_ulp_python(self) -> None:
+        pytest.importorskip("sc_neurocore_engine", reason="Rust engine not built")
+        py = DPINeuron()
+        rs = DPINeuron()
+        tr_py, sp_py = py.simulate(1000, current=1.0, backend="python")
+        tr_rs, sp_rs = rs.simulate(1000, current=1.0, backend="rust")
+        assert sp_py == sp_rs
+        max_diff = float(np.max(np.abs(tr_py - tr_rs)))
+        assert max_diff < 1e-9
+
+    def test_simulate_rust_rejects_non_default(self) -> None:
+        pytest.importorskip("sc_neurocore_engine", reason="Rust engine not built")
+        # force non-default via a constructor override that every model accepts
+        try:
+            n = DPINeuron(dt=0.02) if "dt" in DPINeuron.__dataclass_fields__ else DPINeuron()
+            if "dt" not in DPINeuron.__dataclass_fields__:
+                pytest.skip("no dt field")
+        except TypeError:
+            pytest.skip("cannot override defaults")
+        with pytest.raises(RuntimeError, match="factory-default"):
+            n.simulate(10, current=0.0, backend="rust")

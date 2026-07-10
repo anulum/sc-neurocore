@@ -155,8 +155,16 @@ b = "((1/(1+exp((v+53.3)/14.54))**4) - b) / (1.24 + 2.678/(1+exp((v+50)/16.027))
 
 [backends.python]
 status = "implemented"
+parity = "exact"
+
+[backends.rust]
+status = "implemented"
+parity = "ulp-bounded"
 
 [reproducibility]
+reference_config = "{\"n_steps\":1000,\"current\":10.0,\"backend\":\"python\",\"parameters\":\"defaults\"}"
+golden_trace_sha256 = "5e50dfeb202f5f83d7dfe5761691b0e93523df0f0e19806f9dc922f5d78d58a0"
+
 
 [documentation]
 slug = "models/connor_stevens"
