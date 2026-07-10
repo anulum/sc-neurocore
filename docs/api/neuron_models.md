@@ -13,8 +13,8 @@ backend implements that surface.
 > page. Polyglot-complete today: Wang-Buzsaki, FitzHugh-Nagumo, Morris-Lecar,
 > Connor-Stevens, Hodgkin-Huxley, McKean, Hindmarsh-Rose, FitzHugh-Rinzel, Pernarowski, Terman-Wang,
 > Wilson-HR, Rulkov map, GLIF, Mihalas-Niebur, Medvedev map, Cazelles map, Courbage-Nekorkin map,
-> Izhikevich 2007, Ibarz-Tanaka map. All other models are Python-faithful with their acceleration chain
-> still under remediation.
+> Izhikevich 2007, Ibarz-Tanaka map, Ermentrout-Kopell. All other models are Python-faithful with their
+> acceleration chain still under remediation.
 
 ## Quick Start
 
