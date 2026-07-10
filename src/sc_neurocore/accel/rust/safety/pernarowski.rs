@@ -6,8 +6,6 @@
 // Contact: www.anulum.li | protoscience@anulum.li
 // SC-NeuroCore — Rust safety for Pernarowski
 
-#![allow(unused_variables, dead_code, non_snake_case)]
-
 #[derive(Debug, Clone)]
 pub struct PernarowskiNeuron {
     pub v: f64,
@@ -103,11 +101,17 @@ impl PernarowskiNeuron {
     }
 
     pub fn reset(&mut self) {
+        // Mirror models/pernarowski.py `reset`: restore only the state variables,
+        // never the parameters (alpha/beta et al. are configuration, not state).
         self.v = -1.0_f64;
         self.w = 0.0_f64;
         self.z = 0.0_f64;
-        self.alpha = 0.1_f64;
-        self.beta = 0.5_f64;
+    }
+}
+
+impl Default for PernarowskiNeuron {
+    fn default() -> Self {
+        Self::new()
     }
 }
 
@@ -202,5 +206,24 @@ mod tests {
         let before = (state.v, state.w, state.z);
         assert_eq!(state.step(0.5), 0);
         assert_eq!((state.v, state.w, state.z), before);
+    }
+
+    #[test]
+    fn matches_python_golden_spike_count() {
+        // Parity with models/pernarowski.py (RK4 integrator, default parameters). The
+        // Pernarowski 1994 beta-cell burster is an *autonomous* slow-wave oscillator: the
+        // intrinsic burst rhythm is driven by the slow z-adaptation, so external current does
+        // not gate spiking (silent/single/train sweeps do not apply). The right-hand side is a
+        // polynomial (a cubic; `v.powi(3)` matches the Python `v*v*v` bit-for-bit), so the
+        // trajectory is exact across languages and the burst-spike count is an exact observable.
+        // At the default resting start with zero drive the intrinsic rhythm produces 7 spikes
+        // over 2000 macro steps, 17 over 5000, and 27 over 8000. The Go, Julia, Mojo and
+        // Rust-engine backends reproduce the same trajectory bit-for-bit (max|Δ|=0) via
+        // test_pernarowski_backends.py.
+        for (n_steps, want) in [(2000_usize, 7_usize), (5000, 17), (8000, 27)] {
+            let mut state = PernarowskiNeuron::new();
+            let spikes = (0..n_steps).filter(|_| state.step(0.0) == 1).count();
+            assert_eq!(spikes, want, "n_steps={n_steps}");
+        }
     }
 }
