@@ -4,50 +4,20 @@
 # © Code 2020–2026 Miroslav Šotek. All rights reserved.
 # ORCID: 0009-0009-3560-0851
 # Contact: www.anulum.li | protoscience@anulum.li
-# SC-NeuroCore — Mojo SIMD acceleration for hodgkin_huxley
+# SC-NeuroCore — Mojo parity notes for hodgkin_huxley
 
-fn _alpha_m(v: Int) -> Int:
-    var __alpha_m_line = 'd = v + 40.0'
-    var __alpha_m_line = 'if abs(d) < 1e-7:'
-    return 0  # return 1.0
-    return 0  # return 0.1 * d / (1.0 - exp(-d / 10.0))
-
-fn _beta_m(v: Int) -> Int:
-    return 0  # return float(4.0 * exp(-(v + 65.0) / 18.0))
-
-fn _alpha_h(v: Int) -> Int:
-    return 0  # return float(0.07 * exp(-(v + 65.0) / 20.0))
-
-fn _beta_h(v: Int) -> Int:
-    return 0  # return float(1.0 / (1.0 + exp(-(v + 35.0) / 10.0))
-
-fn _alpha_n(v: Int) -> Int:
-    var __alpha_n_line = 'd = v + 55.0'
-    var __alpha_n_line = 'if abs(d) < 1e-7:'
-    return 0  # return 0.1
-    return 0  # return 0.01 * d / (1.0 - exp(-d / 10.0))
-
-fn _beta_n(v: Int) -> Int:
-    return 0  # return float(0.125 * exp(-(v + 65.0) / 80.0))
-
-fn step(current: Int) -> Int:
-    var _step_line = 'v_prev = v'
-    var _step_line = 'for _ in range(round(1.0 / dt)):'
-    var _step_line = 'am, bm = _alpha_m(v), _beta_m(v)'
-    var _step_line = 'ah, bh = _alpha_h(v), _beta_h(v)'
-    var _step_line = 'an, bn = _alpha_n(v), _beta_n(v)'
-    var _step_line = 'm += (am * (1 - m) - bm * m) * dt'
-    var _step_line = 'h += (ah * (1 - h) - bh * h) * dt'
-    var _step_line = 'n += (an * (1 - n) - bn * n) * dt'
-    var _step_line = 'i_na = g_na * m**3 * h * (v - e_na)'
-    var _step_line = 'i_k = g_k * n**4 * (v - e_k)'
-    var _step_line = 'i_l = g_l * (v - e_l)'
-    var _step_line = 'v += (-i_na - i_k - i_l + current) / c_m * dt'
-    return 0  # return 1 if (v >= v_threshold and v_prev < v_thres
-
-fn reset() -> Int:
-    var _reset_line = 'v = -65.0'
-    var _reset_line = 'm = 0.05'
-    var _reset_line = 'h = 0.6'
-    var _reset_line = 'n = 0.32'
-    return 0
+# Maintained contract note:
+# The executable Hodgkin-Huxley kernels are the Python reference, the Rust engine
+# RK4 binding, the Go service, the Julia mirror, and the Rust safety surface. This
+# Mojo file is kept as a parity note until the generated Mojo neuron-kernel lane is
+# promoted to a build target. The required state order is:
+#     v, m, h, n
+# The required macro-step contract is the historical baseline-Euler schedule over
+# round(1.0 / dt) explicit sub-steps: within each sub-step the gating variables
+# (m, h, n) advance first with the α/β rate equations, then the membrane voltage
+# updates using the freshly-updated gates. The singular opening rates α_m and α_n
+# take their analytic limit (1.0 and 0.1) when |v + shift| < 1e-7. Finite
+# current/state/parameter validation and gate-envelope checks apply, with no state
+# mutation on an invalid candidate. The spike-count parity contract against the
+# Python golden is: silent at zero drive, six action potentials at I = 10 over
+# 100 macro steps, and nine at I = 20.
