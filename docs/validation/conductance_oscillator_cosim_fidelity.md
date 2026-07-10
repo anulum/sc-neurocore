@@ -147,13 +147,15 @@ the same change rather than deferred:
 Both corrections reinforce a standing rule: verify every DOI at Crossref before
 it lands, and keep the paired TOML/JSON schema forms in sync.
 
-## Known debt (out of scope for the conductance enrolments)
+## Resolved debt (was out of scope for the conductance enrolments)
 
 `src/scpn_neurocore/` — a separate three-file SCPN bridge package
 (`datastream.py`, `bridge.py`) that is **not** in the CI strict-mypy gate
-(`mypy --strict src/sc_neurocore/`) — carries 31 pre-existing `type-arg`
-strict-mypy errors. It is recorded here so it is not lost, but it is its own unit
-of work and must not be folded into a `sc_neurocore` change.
+(`mypy --strict src/sc_neurocore/`) — carried 31 pre-existing `type-arg` and
+`arg-type` strict-mypy errors. These were fixed as their own unit (bare
+`np.ndarray` annotations parametrised as `np.ndarray[Any, Any]`; two
+untrusted-payload validators widened from `str` to `object`), so
+`mypy --strict src/scpn_neurocore/` is now clean. Recorded here for the trail.
 
 ## Verification
 
