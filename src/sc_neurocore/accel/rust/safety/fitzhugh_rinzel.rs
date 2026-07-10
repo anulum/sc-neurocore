@@ -6,8 +6,6 @@
 // Contact: www.anulum.li | protoscience@anulum.li
 // SC-NeuroCore — Rust safety for fitzhugh_rinzel
 
-#![allow(dead_code)]
-
 #[derive(Debug, Clone)]
 pub struct FitzHughRinzelNeuron {
     pub v: f64,
@@ -61,14 +59,12 @@ impl FitzHughRinzelNeuron {
         self.v = -1.0;
         self.w = -0.5;
         self.y = 0.0;
-        self.a = 0.7;
-        self.b = 0.8;
-        self.c = -0.775;
-        self.d = 1.0;
-        self.delta = 0.08;
-        self.mu = 0.0001;
-        self.dt = 0.1;
-        self.v_threshold = 1.0;
+    }
+}
+
+impl Default for FitzHughRinzelNeuron {
+    fn default() -> Self {
+        Self::new()
     }
 }
 
@@ -183,5 +179,20 @@ mod tests {
         let before = (state.v, state.w, state.y);
         assert_eq!(state.step(0.5), 0);
         assert_eq!((state.v, state.w, state.y), before);
+    }
+
+    #[test]
+    fn matches_python_golden_spike_count() {
+        // Parity with models/fitzhugh_rinzel.py (RK4 integrator, default parameters). The
+        // FitzHugh-Rinzel right-hand side is polynomial (a cubic), so the trajectory is bit-for-bit
+        // across languages and the spike count is an exact observable, not a "spike is 0 or 1" smoke
+        // check. Over 3000 macro steps: silent at zero drive, one upstroke at I=0.3, an eight-spike
+        // burst train at I=0.5. The Go, Julia, Mojo and Rust-engine backends reproduce the same
+        // trajectory bit-for-bit via test_fitzhugh_rinzel_backends.py.
+        for (current, want) in [(0.0_f64, 0_usize), (0.3, 1), (0.5, 8)] {
+            let mut state = FitzHughRinzelNeuron::new();
+            let spikes = (0..3000).filter(|_| state.step(current) == 1).count();
+            assert_eq!(spikes, want, "I={current}");
+        }
     }
 }
