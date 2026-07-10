@@ -6,6 +6,14 @@ SC-NeuroCore currently exposes 158 lazy-loaded Python model classes across
 use the same `step()` / `reset()` / `get_state()` interface shape where the
 backend implements that surface.
 
+> **Fidelity status:** every model here has a faithful, tested Python reference.
+> A stricter bar — a model whose whole four-language acceleration chain
+> (`accel/{rust,go,julia,mojo}`) is real and Python-parity-proven — is tracked
+> separately on the [Model Fidelity & Polyglot Status](model_fidelity_status.md)
+> page. Polyglot-complete today: Wang-Buzsaki, FitzHugh-Nagumo, Morris-Lecar,
+> Connor-Stevens, Hodgkin-Huxley (McKean in progress). All other models are
+> Python-faithful with their acceleration chain still under remediation.
+
 ## Quick Start
 
 ```python
