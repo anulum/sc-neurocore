@@ -19004,10 +19004,11 @@ Structural fields (which parameters and state variables exist, their
 defaults and initial values, the timestep) always follow the regenerated
 payload, which is read from the model code — so the corpus can never drift
 from the implementation. Curation fields (parameter units/ranges/meaning,
-state semantics, taxonomy, the backend matrix, reproducibility, notes, and
-any richer provenance, dynamics, or display fields) are preserved from the
-curated payload. The result is the regenerated payload with curation
-overlaid, ready to be re-serialised.
+state semantics, taxonomy, the backend matrix, reproducibility, notes,
+validation evidence, silicon evidence anchors, and any richer provenance,
+dynamics, or display fields) are preserved from the curated payload. The
+result is the regenerated payload with curation overlaid, ready to be
+re-serialised.
 
 Parameters
 ----------
@@ -19165,10 +19166,12 @@ and the special variable `I` (input current).
 ``units="strict"`` enables opt-in pint-based dimensional
 validation before the expressions are compiled for runtime.
 
-- **__init__**(equations, parameters, state, threshold, reset, constants, dt, method, units, input_unit)
+- **__init__**(equations, parameters, state, threshold, reset, constants, dt, method, units, input_unit, detection, substeps)
   - Initialise an equation-defined neuron from ODE strings.
+- **initial_threshold_active**()
+  - Return whether the threshold condition holds on the INITIAL committed state.
 - **step**(I)
-  - Advance the neuron by one timestep; return 1 if it spikes.
+  - Advance the neuron by one macro timestep; return 1 if it spikes.
 - **get_state**()
   - Return current state, with units if in strict mode.
 - **reset**()
@@ -19190,6 +19193,57 @@ Example:
 
 Use ``units="strict"`` with pint quantities to validate the
 equation dimensions before runtime compilation.
+
+---
+
+## Module `neurons.equation_namespace`
+
+### Function `build_eval_namespace()`
+Return the maths namespace exposed to compiled equation expressions.
+
+The returned dict is fresh on every call so a neuron may own its namespace
+without aliasing another's. The bindings are the exact functions the
+fixed-point emitter mirrors; keep them identical to preserve co-simulation
+bit-exactness (see the module docstring).
+
+---
+
+## Module `neurons.equation_safety`
+
+### Class `ExpressionSafetyValidator`
+Validate equation expression strings against the AST allowlist.
+
+Holds the allowed node set, the blocked-name set, and the maximum AST depth,
+and exposes :meth:`validate`, which raises :class:`ValueError` on any
+disallowed construct. The same validator instance is reused for a neuron's
+dynamics, threshold, reset rules, and (for exponential Euler) its symbolic
+Jacobian, so every expression that reaches an ``eval`` site has passed the
+same gate.
+
+- **__init__**()
+  - Create a validator with the given maximum AST depth.
+- **validate**(expr)
+  - Validate an expression against the AST whitelist.
+
+---
+
+## Module `neurons.equation_units_runtime`
+
+### Class `StrictRuntime`
+Base-unit runtime values and unit maps produced by strict validation.
+
+``parameters``/``state``/``constants``/``dt`` are the base-unit floats the
+integrator steps; ``runtime_units`` maps each name (and the input ``I``) to
+its base unit for converting runtime inputs; ``base_state_units`` and
+``display_state_units`` let :meth:`EquationNeuron.get_state` re-attach the
+caller's display units to each state variable.
+
+
+### Function `prepare_strict_runtime()`
+Convert pint quantities to base-unit floats for runtime.
+
+### Function `convert_runtime_value()`
+Convert a runtime value from pint quantity to float.
 
 ---
 
@@ -19669,8 +19723,14 @@ Integrator options:
 - ``rosenbrock`` is a linearly implicit stiff-system path over the same
   AdEx ODEs
 
+``simulate`` supports ``backend`` values ``python``, ``rust``, and ``auto``
+(prefer Rust when the factory-default Euler contract holds and the engine
+wheel is present).
+
 - **__post_init__**()
 - **step**(current)
+- **simulate**(n_steps, current, backend)
+  - Advance ``n_steps`` updates from the current state, returning ``(trace, spikes)``.
 - **reset**()
 
 ---
@@ -20404,6 +20464,8 @@ sub-steps and commits only finite, physically bounded candidates.
 - **__post_init__**()
 - **step**(current)
   - Advance one macro-step and return an upward-threshold spike flag.
+- **simulate**(n_steps, current, backend)
+  - Advance ``n_steps`` macro-steps, returning ``(v_trace, spikes)``.
 - **reset**()
 
 ---
@@ -20578,7 +20640,11 @@ All variables in current domain (nA), mirroring transistor currents.
 
 Reference: Chicca, E. et al. (2014). Proc. IEEE 102:1367–1388.
 
+``simulate`` supports ``backend`` values ``python``, ``rust``, and ``auto``.
+
 - **step**(i_syn)
+- **simulate**(n_steps, current, backend)
+  - Advance ``n_steps`` updates, returning ``(i_mem_trace, spikes)``.
 - **reset**()
 
 ---
@@ -21127,6 +21193,8 @@ Integrator options:
 
 - **__post_init__**()
 - **step**(current)
+- **simulate**(n_steps, current, backend)
+  - Advance ``n_steps`` updates, returning ``(v_trace, spikes)``.
 - **reset**()
 
 ---
@@ -21347,8 +21415,12 @@ where V_inf = V_rest + R * I.
 
 Reference: Lapicque, L. (1907). J. Physiol. Pathol. Gén. 9:620–635.
 
+``simulate`` supports ``backend`` values ``python``, ``rust``, and ``auto``.
+
 - **__post_init__**()
 - **step**(current)
+- **simulate**(n_steps, current, backend)
+  - Advance ``n_steps`` updates, returning ``(v_trace, spikes)``.
 - **reset**()
 
 ---
@@ -21677,6 +21749,8 @@ Integrator options:
 
 - **__post_init__**()
 - **step**(current)
+- **simulate**(n_steps, current, backend)
+  - Advance ``n_steps`` updates, returning ``(v_trace, spikes)``.
 - **reset**()
 
 ---
@@ -21840,8 +21914,13 @@ dV/dt = I / C
 
 Reference: Gerstner, W. et al. (2014). Neuronal Dynamics. Cambridge Univ. Press, §1.3.
 
+``simulate`` supports ``backend`` values ``python``, ``rust``, and ``auto``
+(prefer Rust under the factory-default contract when the engine is present).
+
 - **__post_init__**()
 - **step**(current)
+- **simulate**(n_steps, current, backend)
+  - Advance ``n_steps`` updates, returning ``(v_trace, spikes)``.
 - **reset**()
 
 ---
@@ -22103,8 +22182,13 @@ Reset when v >= v_peak.
 
 Reference: Latham, P.E. et al. (2000). J. Neurophysiol. 83:808–827.
 
+``simulate`` supports ``backend`` values ``python``, ``rust``, and ``auto``
+(prefer Rust under the factory-default contract when the engine is present).
+
 - **__post_init__**()
 - **step**(current)
+- **simulate**(n_steps, current, backend)
+  - Advance ``n_steps`` updates, returning ``(v_trace, spikes)``.
 - **reset**()
 
 ---
@@ -22545,8 +22629,13 @@ Ermentrout & Kopell 1986.
 
 Reference: Ermentrout, G.B. & Kopell, N. (1986). SIAM J. Appl. Math. 46:233–253.
 
+``simulate`` supports ``backend`` values ``python``, ``rust``, and ``auto``
+(prefer Rust under the factory-default contract when the engine is present).
+
 - **__post_init__**()
 - **step**(current)
+- **simulate**(n_steps, current, backend)
+  - Advance ``n_steps`` updates, returning ``(theta_trace, spikes)``.
 - **reset**()
 
 ---
@@ -23042,6 +23131,22 @@ Integrator options:
 - **step**(input_current)
 - **reset_state**()
 - **get_state**()
+
+---
+
+## Module `neurons.schema_module_aliases`
+
+### Function `schema_for_module(module)`
+Return the schema stem for a models/ module stem (identity if unmapped).
+
+### Function `module_for_schema(schema)`
+Return the models/ module stem for a schema stem (identity if unmapped).
+
+### Function `class_for_schema(schema)`
+Return the descriptor class name for a schema stem, if known.
+
+### Function `resolve_schema_join(schema)`
+Return ``(module, class_name_or_none)`` for a schema stem.
 
 ---
 
