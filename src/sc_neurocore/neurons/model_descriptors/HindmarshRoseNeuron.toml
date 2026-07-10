@@ -122,3 +122,17 @@ golden_trace_sha256 = "38321340107629a994d0c18b9ea553adcd3f7d4dff6afeebf8a98fa18
 [documentation]
 slug = "models/hindmarsh_rose"
 notes = ""
+
+[validation]
+dynamics_faithful = true
+metric = "none"
+operating_point = "schema-DSL hindmarsh_rose; compile-only"
+tolerance = "compile-only (chaotic sensitivity)"
+evidence = "tests/test_cosimulation.py::TestSchemaGapModelCosim::_SCHEMA_GAP_COMPILE_ONLY"
+
+[silicon]
+compiles = true
+cosim_validated = false
+cosim_evidence = ""
+target_tier = "H0"
+terminal_reason = "Compile-clean RTL only; spike-parity not claimed for this class (compile-only (chaotic sensitivity))."

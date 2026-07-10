@@ -109,3 +109,17 @@ golden_trace_sha256 = "b386d304af07c2558e8dfc5b48f49094eadd450d7ff4f9606feba7a2f
 [documentation]
 slug = "models/fitzhugh_nagumo"
 notes = ""
+
+[validation]
+dynamics_faithful = true
+metric = "parity"
+operating_point = "schema-DSL FHN; edge-crossing; three-way enrolment"
+tolerance = "exact or ±1 spike band per test"
+evidence = "tests/test_cosimulation.py::TestQ1616Precision::test_fitzhugh_nagumo_q1616_parity"
+
+[silicon]
+compiles = true
+cosim_validated = true
+cosim_evidence = "tests/test_cosimulation.py::TestQ1616Precision::test_fitzhugh_nagumo_q1616_parity"
+target_tier = "H1"
+terminal_reason = "Point-neuron schema→RTL path; higher silicon rungs need synth/timing/formal programmes."

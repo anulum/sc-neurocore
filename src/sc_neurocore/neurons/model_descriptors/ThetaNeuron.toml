@@ -52,3 +52,17 @@ status = "implemented"
 [documentation]
 slug = "models/theta"
 notes = ""
+
+[validation]
+dynamics_faithful = true
+metric = "parity"
+operating_point = "schema-DSL theta phase oscillator; Q8.8/Q16 paths"
+tolerance = "transcendental tolerance band"
+evidence = "tests/test_cosimulation.py::_TRANSCENDENTAL_COSIM_MODELS"
+
+[silicon]
+compiles = true
+cosim_validated = true
+cosim_evidence = "tests/test_cosimulation.py::_TRANSCENDENTAL_COSIM_MODELS"
+target_tier = "H1"
+terminal_reason = "Point-neuron schema→RTL path; higher silicon rungs need synth/timing/formal programmes."

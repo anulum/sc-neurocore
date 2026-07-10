@@ -63,9 +63,9 @@ def test_summary_exposes_dual_readiness_axes() -> None:
     # The full science axis never sits below the legacy kernel tier.
     assert cast(int, adex["science_tier"]) >= cast(int, adex["tier"])
     assert adex["science_label"] == f"S{adex['science_tier']}"
-    # No committed descriptor carries silicon evidence yet.
-    assert adex["silicon_tier"] is None
-    assert adex["silicon_label"] == "none"
+    # AdEx is enrolled in schema→RTL cosim; H1 is the honest floor.
+    assert adex["silicon_tier"] == 1
+    assert adex["silicon_label"] == "H1"
 
 
 def test_introspected_summary_defaults_to_below_readiness() -> None:
@@ -83,13 +83,16 @@ def test_detail_readiness_block_is_auditable() -> None:
     assert detail is not None
     readiness = cast(dict[str, object], detail["readiness"])
     assert readiness["science_label"] == f"S{readiness['science_tier']}"
-    assert readiness["silicon_tier"] is None
-    assert readiness["silicon_label"] == "none"
+    assert readiness["silicon_tier"] == 1
+    assert readiness["silicon_label"] == "H1"
+    # Perfect requires S5 + declared terminal H-tier met; AdEx science kernel is S2.
     assert readiness["is_perfect"] is False
     validation = cast(dict[str, object], readiness["validation"])
-    assert validation["metric"] == "none"
+    assert validation["metric"] == "parity"
+    assert validation["dynamics_faithful"] is True
     silicon = cast(dict[str, object], readiness["silicon"])
-    assert silicon["compiles"] is False
+    assert silicon["compiles"] is True
+    assert silicon["cosim_validated"] is True
     assert silicon["clock_mhz"] is None
 
 

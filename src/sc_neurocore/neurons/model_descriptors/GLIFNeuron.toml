@@ -189,3 +189,17 @@ golden_trace_sha256 = "b5847da0aef34a9e6b73f322c36c2f1b002f069d8624dd0d94ec17d95
 [documentation]
 slug = "models/glif"
 notes = ""
+
+[validation]
+dynamics_faithful = true
+metric = "parity"
+operating_point = "schema-DSL GLIF; Q16.16 path"
+tolerance = "parity gap bound in test"
+evidence = "tests/test_cosimulation.py::TestQ1616Precision::test_glif_q1616_parity"
+
+[silicon]
+compiles = true
+cosim_validated = true
+cosim_evidence = "tests/test_cosimulation.py::TestQ1616Precision::test_glif_q1616_parity"
+target_tier = "H1"
+terminal_reason = "Point-neuron schema→RTL path; higher silicon rungs need synth/timing/formal programmes."

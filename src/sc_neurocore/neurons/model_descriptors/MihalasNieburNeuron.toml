@@ -189,3 +189,17 @@ golden_trace_sha256 = "d92ed2edac56da363bc2ee6351d4b653415a7164c8759aaafe9059641
 [documentation]
 slug = "models/mihalas_niebur"
 notes = ""
+
+[validation]
+dynamics_faithful = true
+metric = "parity"
+operating_point = "schema-DSL mihalas_niebur method=rk4"
+tolerance = "tolerance-band Q16.16 (see test)"
+evidence = "tests/test_cosimulation.py mihalas_niebur rk4 enrolment"
+
+[silicon]
+compiles = true
+cosim_validated = true
+cosim_evidence = "tests/test_cosimulation.py mihalas_niebur rk4 enrolment"
+target_tier = "H1"
+terminal_reason = "Point-neuron schema→RTL path; higher silicon rungs need synth/timing/formal programmes."

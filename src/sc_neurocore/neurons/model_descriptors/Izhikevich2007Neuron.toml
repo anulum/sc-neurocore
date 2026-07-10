@@ -155,3 +155,17 @@ golden_trace_sha256 = "cad92108ee99cecc3aac70089d8b9d07046c7d44490ef5431c724e388
 [documentation]
 slug = "models/izhikevich2007"
 notes = ""
+
+[validation]
+dynamics_faithful = true
+metric = "parity"
+operating_point = "schema-DSL izhikevich2007; Euler; hand/schema/RTL"
+tolerance = "exact Q16.16 spike parity per enrolment"
+evidence = "tests/test_cosimulation.py izhikevich2007 three-way enrolment"
+
+[silicon]
+compiles = true
+cosim_validated = true
+cosim_evidence = "tests/test_cosimulation.py izhikevich2007 three-way enrolment"
+target_tier = "H1"
+terminal_reason = "Point-neuron schema→RTL path; higher silicon rungs need synth/timing/formal programmes."

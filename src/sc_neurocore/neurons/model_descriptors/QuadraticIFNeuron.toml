@@ -68,3 +68,17 @@ status = "implemented"
 [documentation]
 slug = "models/quadratic_if"
 notes = ""
+
+[validation]
+dynamics_faithful = true
+metric = "parity"
+operating_point = "schema-DSL quadratic_if; RK4 emitter exact suite"
+tolerance = "RK4 golden track"
+evidence = "tests/test_cosimulation.py::_RK4_EXACT_MODELS + _COSIM_MODELS"
+
+[silicon]
+compiles = true
+cosim_validated = true
+cosim_evidence = "tests/test_cosimulation.py::_RK4_EXACT_MODELS + _COSIM_MODELS"
+target_tier = "H1"
+terminal_reason = "Point-neuron schema→RTL path; higher silicon rungs need synth/timing/formal programmes."

@@ -5,6 +5,11 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 ## [Unreleased]
 
 ### Added
+- Readiness evidence index (`tools/readiness_evidence_index.py`) that wires dual-axis
+  validation and silicon facets onto descriptors for models already enrolled in
+  schema→RTL co-simulation, and preserves those facets across descriptor corpus
+  regeneration. Studio catalogue readiness now reports H0/H1 for that shortlist
+  (Wang-Buzsaki intentionally deferred while a peer re-enrolment lane is open).
 - Macro-step integration mode (`[integration] substeps = N`) in the schema DSL, in both the
   Python runner (`EquationNeuron`) and the emitted Verilog. One macro `step()` advances `N`
   inner integration sub-steps (any method — euler/rk4/exp_euler) before a single spike

@@ -77,3 +77,17 @@ status = "implemented"
 [documentation]
 slug = "models/perfect_integrator"
 notes = ""
+
+[validation]
+dynamics_faithful = true
+metric = "parity"
+operating_point = "schema-DSL perfect_integrator; hand/schema/RTL path"
+tolerance = "exact or suite-defined band"
+evidence = "tests/test_cosimulation.py perfect_integrator enrolment"
+
+[silicon]
+compiles = true
+cosim_validated = true
+cosim_evidence = "tests/test_cosimulation.py perfect_integrator enrolment"
+target_tier = "H1"
+terminal_reason = "Point-neuron schema→RTL path; higher silicon rungs need synth/timing/formal programmes."

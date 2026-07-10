@@ -537,6 +537,20 @@ def test_merge_descriptor_payloads_preserves_curation_without_structural_drift()
         "dynamics": {"v": "curated membrane equation"},
         "backends": {"python": {"status": "implemented"}, "rust": {"status": "implemented"}},
         "reproducibility": {"reference_config": "golden/adex.json"},
+        "validation": {
+            "dynamics_faithful": True,
+            "metric": "parity",
+            "operating_point": "schema-DSL cosim Q16.16",
+            "tolerance": "class-correct spike-count band",
+            "evidence": "tests/test_cosimulation.py::TestQ1616Precision::test_adex_q1616_parity",
+        },
+        "silicon": {
+            "compiles": True,
+            "cosim_validated": True,
+            "cosim_evidence": "tests/test_cosimulation.py::TestQ1616Precision::test_adex_q1616_parity",
+            "target_tier": "H1",
+            "terminal_reason": "point-neuron SC/RTL path; signed PPA out of scope",
+        },
         "documentation": {"notes": "Preserved reviewer note."},
     }
 
@@ -557,6 +571,12 @@ def test_merge_descriptor_payloads_preserves_curation_without_structural_drift()
     assert "rust" in merged["backends"]
     assert merged["reproducibility"]["reference_config"] == "golden/adex.json"
     assert merged["documentation"]["notes"] == "Preserved reviewer note."
+    assert merged["validation"]["dynamics_faithful"] is True
+    assert merged["validation"]["metric"] == "parity"
+    assert merged["validation"]["evidence"].endswith("test_adex_q1616_parity")
+    assert merged["silicon"]["compiles"] is True
+    assert merged["silicon"]["cosim_validated"] is True
+    assert merged["silicon"]["target_tier"] == "H1"
 
 
 @pytest.mark.parametrize("class_name", sorted(_CLASS_TO_MODULE))

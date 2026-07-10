@@ -103,3 +103,17 @@ status = "implemented"
 [documentation]
 slug = "models/expif"
 notes = ""
+
+[validation]
+dynamics_faithful = false
+metric = "none"
+operating_point = "schema-DSL exp_if; iverilog-valid RTL only"
+tolerance = "compile-only (no spike-parity claim)"
+evidence = "tests/test_cosimulation.py::TestSchemaGapModelCosim::_SCHEMA_GAP_COMPILE_ONLY"
+
+[silicon]
+compiles = true
+cosim_validated = false
+cosim_evidence = ""
+target_tier = "H0"
+terminal_reason = "Compile-clean RTL only; spike-parity not claimed for this class (compile-only (no spike-parity claim))."

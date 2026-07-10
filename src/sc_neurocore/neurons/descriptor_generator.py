@@ -376,10 +376,11 @@ def merge_descriptor_payloads(
     defaults and initial values, the timestep) always follow the regenerated
     payload, which is read from the model code — so the corpus can never drift
     from the implementation. Curation fields (parameter units/ranges/meaning,
-    state semantics, taxonomy, the backend matrix, reproducibility, notes, and
-    any richer provenance, dynamics, or display fields) are preserved from the
-    curated payload. The result is the regenerated payload with curation
-    overlaid, ready to be re-serialised.
+    state semantics, taxonomy, the backend matrix, reproducibility, notes,
+    validation evidence, silicon evidence anchors, and any richer provenance,
+    dynamics, or display fields) are preserved from the curated payload. The
+    result is the regenerated payload with curation overlaid, ready to be
+    re-serialised.
 
     Parameters
     ----------
@@ -426,9 +427,12 @@ def merge_descriptor_payloads(
     cur_dyn = _mapping(curated.get("dynamics"))
     if cur_dyn:
         merged["dynamics"] = {**_mapping(merged.get("dynamics")), **cur_dyn}
-    for section in ("backends", "reproducibility"):
+    for section in ("backends", "reproducibility", "validation", "silicon"):
         cur_section = _mapping(curated.get(section))
         if cur_section:
+            # Evidence facets are curated, never regenerated from constructor
+            # inspection. Preserve them wholesale so dual-axis readiness (S4/S5
+            # and H0-H5) cannot be wiped by a structural corpus refresh.
             merged[section] = _copy(cur_section)
     cur_doc = _mapping(curated.get("documentation"))
     notes = cur_doc.get("notes")
