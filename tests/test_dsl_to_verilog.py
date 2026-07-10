@@ -32,17 +32,20 @@ HAS_IVERILOG = shutil.which("iverilog") is not None
 
 
 # Models that use only polynomial/linear dynamics (no transcendentals)
-# These are guaranteed to compile cleanly with the Q8.8 arithmetic.
+# These are guaranteed to compile cleanly with the Q8.8 arithmetic. FitzHugh-Nagumo
+# belongs here: its right-hand side is the polynomial cube ``v * v * v`` (no exp/tanh),
+# so it lowers to plain fixed-point multipliers, not a look-up table.
 _SIMPLE_MODELS = [
     "lif",
     "lapicque",
     "izhikevich",
     "quadratic_if",
     "resonate_fire",
+    "fitzhugh_nagumo",
 ]
 
 # Models with transcendentals (exp, tanh) — require LUT support
-_TRANSCENDENTAL_MODELS = ["fitzhugh_nagumo", "adex", "hindmarsh_rose"]
+_TRANSCENDENTAL_MODELS = ["adex", "hindmarsh_rose"]
 
 
 class TestDSLToVerilogCompilation:

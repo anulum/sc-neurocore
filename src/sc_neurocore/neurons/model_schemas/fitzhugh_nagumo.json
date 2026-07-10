@@ -14,23 +14,20 @@
   "parameters": {
     "a": 0.7,
     "b": 0.8,
-    "epsilon": 0.08
+    "epsilon": 0.08,
+    "v_threshold": 1.0
   },
   "integration": {
     "dt": 0.1,
-    "method": "euler"
+    "method": "rk4"
   },
   "dynamics": {
-    "v": "v - v**3 / 3 - w + I",
+    "v": "v - v * v * v / 3.0 - w + I",
     "w": "epsilon * (v + a - b * w)"
   },
   "threshold": {
-    "condition": "v > 1.0",
+    "condition": "v >= v_threshold",
     "detection": "crossing"
-  },
-  "reset": {
-    "v": "-1.0",
-    "w": "w"
   },
   "extensions": {}
 }

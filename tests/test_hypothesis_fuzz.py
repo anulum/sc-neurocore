@@ -109,8 +109,8 @@ class TestEquationBuilderFuzz:
             )
             # Step with safe inputs — should not crash
             neuron.step(I=1.0, w=0.5, u=0.0, x=0.0, y=0.0, z=0.0, theta=0.0)
-        except (ValueError, ZeroDivisionError, OverflowError):
-            pass  # Expected for some random expressions
+        except (ValueError, ZeroDivisionError, OverflowError, FloatingPointError):
+            pass  # Expected for some random expressions (FloatingPointError = fail-closed divergence)
         except Exception as e:
             # NameError is OK (unknown variables), TypeError is OK (type mismatches)
             if not isinstance(e, (NameError, TypeError)):
@@ -223,13 +223,20 @@ class TestUniversalDSLFuzz:
     @given(dt=st.floats(min_value=0.001, max_value=2.0))
     @settings(max_examples=50)
     def test_fitzhugh_nagumo_dt_sweep(self, dt: float) -> None:
-        """FHN with swept dt should not crash (may diverge but not NaN)."""
+        """Faithful FHN (RK4, no reset) either stays finite or fails closed.
+
+        The re-enrolled FitzHugh-Nagumo is an unbounded cubic relaxation oscillator,
+        so a large enough step size genuinely diverges (unlike the earlier bounded
+        reset caricature). The runner fails closed on a non-finite state
+        (``FloatingPointError``, matching the hand models) rather than silently
+        propagating NaN, so a completed 100-step sweep must leave a finite state and a
+        divergent step raises the controlled error instead of corrupting the trace.
+        """
         neuron = UniversalNeuron.from_schema("fitzhugh_nagumo", dt_override=dt)
         try:
             for _ in range(100):
                 neuron.step(I=0.5)
-        except (OverflowError, ValueError):
-            pass  # Acceptable for extreme dt values
+        except (OverflowError, ValueError, FloatingPointError):
+            return  # controlled fail-closed divergence for an extreme step size
         v = neuron.state["v"]
-        # Allow inf for extreme dt but not NaN
-        assert not math.isnan(v), f"FHN NaN with dt={dt}"
+        assert math.isfinite(v), f"FHN left a non-finite state without failing closed (dt={dt})"

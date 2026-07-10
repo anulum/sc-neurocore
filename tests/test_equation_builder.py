@@ -12,7 +12,7 @@ import pytest
 
 
 class TestEquationNeuron:
-    def test_lif_from_dict(self):
+    def test_lif_from_dict(self) -> None:
         from sc_neurocore.neurons.equation_builder import EquationNeuron
 
         n = EquationNeuron(
@@ -26,7 +26,7 @@ class TestEquationNeuron:
         spikes = sum(n.step(I=30.0) for _ in range(200))
         assert spikes > 0
 
-    def test_fitzhugh_nagumo(self):
+    def test_fitzhugh_nagumo(self) -> None:
         from sc_neurocore.neurons.equation_builder import EquationNeuron
 
         n = EquationNeuron(
@@ -44,7 +44,44 @@ class TestEquationNeuron:
         spikes = sum(n.step(I=0.5) for _ in range(2000))
         assert spikes > 0
 
-    def test_izhikevich(self):
+    def test_step_fails_closed_on_non_finite_state(self) -> None:
+        """A diverging integration raises ``FloatingPointError`` instead of NaN.
+
+        A non-resetting cubic oscillator stepped far past its stability limit blows
+        up; the runner must fail closed on the resulting non-finite state (matching
+        the hand neuron models' ``_validate_candidate`` contract) rather than
+        silently feeding ``inf``/``nan`` into the threshold decision.
+        """
+        from sc_neurocore.neurons.equation_builder import EquationNeuron
+
+        n = EquationNeuron(
+            equations={"v": "v - v * v * v / 3.0 - w + I", "w": "0.08 * (v + 0.7 - 0.8 * w)"},
+            state={"v": -1.0, "w": -0.5},
+            threshold="v >= 1.0",
+            detection="crossing",
+            method="rk4",
+            dt=5.0,  # far past the stability limit — the cubic diverges
+        )
+        with pytest.raises(FloatingPointError, match="became non-finite"):
+            for _ in range(100):
+                n.step(I=0.5)
+
+    def test_step_stays_finite_within_stability_limit(self) -> None:
+        """At the production step size the same oscillator never trips the guard."""
+        from sc_neurocore.neurons.equation_builder import EquationNeuron
+
+        n = EquationNeuron(
+            equations={"v": "v - v * v * v / 3.0 - w + I", "w": "0.08 * (v + 0.7 - 0.8 * w)"},
+            state={"v": -1.0, "w": -0.5},
+            threshold="v >= 1.0",
+            detection="crossing",
+            method="rk4",
+            dt=0.1,
+        )
+        for _ in range(3000):
+            n.step(I=0.5)  # must not raise
+
+    def test_izhikevich(self) -> None:
         from sc_neurocore.neurons.equation_builder import EquationNeuron
 
         n = EquationNeuron(
@@ -61,7 +98,7 @@ class TestEquationNeuron:
         spikes = sum(n.step(I=10.0) for _ in range(200))
         assert spikes > 0
 
-    def test_reset_clears_state(self):
+    def test_reset_clears_state(self) -> None:
         from sc_neurocore.neurons.equation_builder import EquationNeuron
 
         n = EquationNeuron(
@@ -74,7 +111,7 @@ class TestEquationNeuron:
         n.reset()
         assert n.state["v"] == 0.0
 
-    def test_rk4_method(self):
+    def test_rk4_method(self) -> None:
         from sc_neurocore.neurons.equation_builder import EquationNeuron
 
         n = EquationNeuron(
@@ -88,7 +125,7 @@ class TestEquationNeuron:
             n.step(I=1.0)
         assert n.state["v"] > 1.0, "should converge toward steady state"
 
-    def test_no_threshold(self):
+    def test_no_threshold(self) -> None:
         from sc_neurocore.neurons.equation_builder import EquationNeuron
 
         n = EquationNeuron(
@@ -99,7 +136,7 @@ class TestEquationNeuron:
         spike = n.step(I=100.0)
         assert spike == 0
 
-    def test_math_functions(self):
+    def test_math_functions(self) -> None:
         from sc_neurocore.neurons.equation_builder import EquationNeuron
 
         n = EquationNeuron(
@@ -110,7 +147,7 @@ class TestEquationNeuron:
         n.step(I=1.0)
         assert n.state["v"] != 0.0
 
-    def test_repr(self):
+    def test_repr(self) -> None:
         from sc_neurocore.neurons.equation_builder import EquationNeuron
 
         n = EquationNeuron(equations={"v": "I"}, state={"v": 0.0})
@@ -119,7 +156,7 @@ class TestEquationNeuron:
 
 
 class TestFromEquations:
-    def test_brian2_style_lif(self):
+    def test_brian2_style_lif(self) -> None:
         from sc_neurocore.neurons.equation_builder import from_equations
 
         n = from_equations(
@@ -133,7 +170,7 @@ class TestFromEquations:
         spikes = sum(n.step(I=30.0) for _ in range(200))
         assert spikes > 0
 
-    def test_multi_equation(self):
+    def test_multi_equation(self) -> None:
         from sc_neurocore.neurons.equation_builder import from_equations
 
         n = from_equations(
@@ -148,13 +185,13 @@ class TestFromEquations:
         assert n.state["v"] != 0.0
         assert n.state["w"] != 0.0
 
-    def test_invalid_equation_raises(self):
+    def test_invalid_equation_raises(self) -> None:
         from sc_neurocore.neurons.equation_builder import from_equations
 
         with pytest.raises(ValueError, match="Cannot parse"):
             from_equations("v = I + 1")
 
-    def test_adex_from_string(self):
+    def test_adex_from_string(self) -> None:
         from sc_neurocore.neurons.equation_builder import from_equations
 
         n = from_equations(
@@ -178,7 +215,7 @@ class TestFromEquations:
             n.step(I=5.0)
         assert n.state["v"] != -70.6, "AdEx dynamics must evolve"
 
-    def test_hodgkin_huxley_from_string(self):
+    def test_hodgkin_huxley_from_string(self) -> None:
         from sc_neurocore.neurons.equation_builder import from_equations
 
         n = from_equations(
@@ -203,7 +240,7 @@ class TestFromEquations:
         spikes = sum(n.step(I=10.0) for _ in range(1000))
         assert spikes > 0
 
-    def test_non_numeric_reset_expression(self):
+    def test_non_numeric_reset_expression(self) -> None:
         from sc_neurocore.neurons.equation_builder import from_equations
 
         n = from_equations(
@@ -217,7 +254,7 @@ class TestFromEquations:
         spikes = sum(n.step(I=5.0) for _ in range(200))
         assert spikes > 0
 
-    def test_get_state(self):
+    def test_get_state(self) -> None:
         from sc_neurocore.neurons.equation_builder import from_equations
 
         n = from_equations("dv/dt = I", init={"v": 0.0}, dt=0.1)
@@ -226,7 +263,7 @@ class TestFromEquations:
         assert "v" in state
         assert state["v"] != 0.0
 
-    def test_reject_syntax_error(self):
+    def test_reject_syntax_error(self) -> None:
         from sc_neurocore.neurons.equation_builder import EquationNeuron
 
         with pytest.raises(ValueError, match="Invalid equation syntax"):
@@ -236,7 +273,7 @@ class TestFromEquations:
                 dt=1.0,
             )
 
-    def test_reject_unsafe_ast_node(self):
+    def test_reject_unsafe_ast_node(self) -> None:
         from sc_neurocore.neurons.equation_builder import EquationNeuron
 
         with pytest.raises(ValueError, match="Unsafe AST node"):
@@ -246,7 +283,7 @@ class TestFromEquations:
                 dt=1.0,
             )
 
-    def test_reject_blocked_name(self):
+    def test_reject_blocked_name(self) -> None:
         from sc_neurocore.neurons.equation_builder import EquationNeuron
 
         with pytest.raises(ValueError, match="Blocked function"):
@@ -256,7 +293,7 @@ class TestFromEquations:
                 dt=1.0,
             )
 
-    def test_reject_blocked_attribute(self):
+    def test_reject_blocked_attribute(self) -> None:
         from sc_neurocore.neurons.equation_builder import EquationNeuron
 
         with pytest.raises(ValueError, match="Blocked attribute|Dunder attribute"):
@@ -266,7 +303,7 @@ class TestFromEquations:
                 dt=1.0,
             )
 
-    def test_reset_with_empty_parts(self):
+    def test_reset_with_empty_parts(self) -> None:
         from sc_neurocore.neurons.equation_builder import from_equations
 
         n = from_equations(

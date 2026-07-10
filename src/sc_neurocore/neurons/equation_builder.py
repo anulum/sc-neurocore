@@ -615,6 +615,16 @@ class EquationNeuron:
             for var in self.equations:
                 self.state[var] += increments[var]
 
+        # Fail closed on a non-finite state, matching the hand neuron models'
+        # ``_validate_candidate`` contract: an integrator that diverges (e.g. a
+        # cubic relaxation oscillator stepped past its stability limit) must raise
+        # rather than silently propagate ``inf``/``nan`` into the threshold decision.
+        for var, value in self.state.items():
+            if not math.isfinite(value):
+                raise FloatingPointError(
+                    f"{var!r} became non-finite ({value}) after a {self.method} step"
+                )
+
         spike = 0
         if self._compiled_threshold:
             env_post = self._build_env(**kwargs)

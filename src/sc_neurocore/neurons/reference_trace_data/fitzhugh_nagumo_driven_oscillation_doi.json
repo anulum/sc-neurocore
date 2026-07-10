@@ -7,9 +7,9 @@
   },
   "protocol": {
     "dt": 0.1,
-    "steps": 80,
+    "steps": 3000,
     "inputs": {
-      "I": 0.8
+      "I": 0.5
     },
     "state_variables": [
       "v",
@@ -17,22 +17,22 @@
     ]
   },
   "provenance": {
-    "kind": "independent_euler_reference",
+    "kind": "independent_rk4_reference",
     "source": "src/sc_neurocore/neurons/model_schemas/fitzhugh_nagumo.toml",
-    "equation": "Driven FitzHugh-Nagumo relaxation trace with three v>1 resets; the cubic membrane and linear recovery equations are advanced with the exact explicit-Euler recurrence, independently re-derived from the FitzHugh (1961) model definition with the v=-1 (recovery-identity) reset.",
+    "equation": "Driven FitzHugh-Nagumo relaxation oscillation (eight upward v>=1 threshold crossings) advanced with the exact four-stage classical RK4 step and rising-edge spike detection, no reset; the cubic membrane and linear recovery equations are independently re-derived from the FitzHugh (1961) model definition with the exact IEEE cube v*v*v.",
     "citation": "doi:10.1016/S0006-3495(61)86902-6"
   },
   "expected_features": {
-    "spike_count": 3.0,
-    "first_spike_step": 19.0,
-    "final.v": -0.6016405805482058,
-    "min.v": -1.0,
-    "max.v": 0.8880621314298947,
-    "mean.v": -0.36139590309259323,
-    "final.w": -0.13328917357166536,
-    "min.w": -0.4992,
-    "max.w": -0.1310837021463212,
-    "mean.w": -0.29461744233216247
+    "spike_count": 8.0,
+    "first_spike_step": 29.0,
+    "final.v": -1.7777418714201767,
+    "min.v": -1.970400874999942,
+    "max.v": 1.9501646996356687,
+    "mean.v": -0.2929656392726857,
+    "final.w": 0.5389244564154821,
+    "min.w": -0.4990695469002049,
+    "max.w": 1.3937722115003908,
+    "mean.w": 0.4550180065012828
   },
   "tolerances": {
     "default": {

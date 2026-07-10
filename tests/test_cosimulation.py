@@ -44,7 +44,8 @@ All 6 Q8.8 baseline models: 0.0% spike count gap at Q8.8 (I=50.0, 200 steps).
 Driven LIF spike-count parity holds for Q8.8, Q4.12, and Q16.16 at
 I=50.0; zero-current LIF requires an mV-range mode because Q4.12 cannot
 represent v_rest=-65 mV or tau_m=10.
-FitzHugh-Nagumo (2026-07-07): 0.0% gap at Q16.16, I=0.8, 300 steps (7 spikes).
+FitzHugh-Nagumo (2026-07-10): faithful RK4 / no-reset / rising-edge crossing re-enrolment
+— hand == schema == Q16.16 RTL three-way exact (8 crossings, I=0.5, 3000 steps).
 
 Prerequisites
 -------------
@@ -69,6 +70,7 @@ from sc_neurocore.compiler.equation_compiler import (
     generate_testbench,
 )
 from sc_neurocore.neurons.models.dpi_neuron import DPINeuron
+from sc_neurocore.neurons.models.fitzhugh_nagumo import FitzHughNagumoNeuron
 from sc_neurocore.neurons.models.izhikevich2007 import Izhikevich2007Neuron
 from sc_neurocore.neurons.models.mihalas_niebur import MihalasNieburNeuron
 from sc_neurocore.neurons.models.perfect_integrator import PerfectIntegratorNeuron
@@ -186,6 +188,14 @@ def _izhikevich2007_hand_euler_spike_count(n_steps: int, current: float) -> int:
 def _dpi_neuron_hand_spike_count(n_steps: int, current: float) -> int:
     """Return the hand-authored DPI (current-mode Euler) spike count for comparison."""
     neuron = DPINeuron()
+    return sum(neuron.step(current) for _ in range(n_steps))
+
+
+def _fitzhugh_nagumo_hand_spike_count(n_steps: int, current: float) -> int:
+    """Return the hand-authored FitzHugh-Nagumo (RK4, rising-edge crossing) spike count."""
+    neuron = FitzHughNagumoNeuron(
+        dt=0.1, v=-1.0, w=-0.5, a=0.7, b=0.8, epsilon=0.08, v_threshold=1.0
+    )
     return sum(neuron.step(current) for _ in range(n_steps))
 
 
@@ -745,22 +755,28 @@ class TestQ1616Precision:
         )
 
     def test_fitzhugh_nagumo_q1616_parity(self) -> None:
-        """FitzHugh-Nagumo relaxation oscillator co-simulates bit-true at Q16.16.
+        """Faithful FitzHugh-Nagumo co-simulates at exact Q16.16 three-way parity.
 
-        FHN (FitzHugh 1961) is a two-variable cubic relaxation oscillator with no
-        biophysical reset; the schema imposes a ``v > 1.0`` spike detector plus
-        reset. At Q8.8 the cubic ``v**3 / 3`` term quantises too coarsely (40-67%
-        gap), but Q16.16 reproduces the limit cycle exactly: ``I=0.8`` yields 7
-        spikes in both Python and Verilog over the 300-step window, deterministically
-        (verified 2026-07-07, WC-A5 Tier A). This closes the last cleanly
-        deterministic schema-gap model into the spike-parity set.
+        The re-enrolled schema is the genuine FitzHugh (1961) relaxation oscillator:
+        four-stage RK4, **no reset**, and rising-edge (``v >= v_threshold`` upward
+        crossing) spike detection matching ``FitzHughNagumoNeuron`` — the cube is
+        ``v * v * v`` (exact IEEE multiplication). Over 3000 steps at ``I=0.5`` the
+        hand model, the schema runner and the emitted Q16.16 RTL all report the same
+        sustained partial train (eight crossings), a repetitive train that exercises
+        the ``_thr_prev`` edge re-arming rather than a single event. The right-hand
+        side is polynomial (no look-up table), so the fixed-point parity is bit-exact,
+        not a tolerance band. This supersedes the earlier Euler+reset caricature
+        (``I=0.8``, 7 of 300) that only agreed because both sides shared the same
+        unfaithful reset dynamics.
         """
-        py_spikes = _python_spike_count("fitzhugh_nagumo", 300, 0.8)
-        vlog_spikes = _verilog_spike_count_q1616("fitzhugh_nagumo", 300, 0.8)
-        assert py_spikes > 0 and vlog_spikes > 0
-        gap_pct = abs(py_spikes - vlog_spikes) / max(py_spikes, 1) * 100
-        assert gap_pct <= 5.0, (
-            f"FitzHugh-Nagumo Q16.16 gap {gap_pct:.1f}% (Python={py_spikes}, Verilog={vlog_spikes})"
+        current, n_steps = 0.5, 3000
+        hand_spikes = _fitzhugh_nagumo_hand_spike_count(n_steps, current)
+        py_spikes = _python_spike_count("fitzhugh_nagumo", n_steps, current)
+        vlog_spikes = _verilog_spike_count_q1616("fitzhugh_nagumo", n_steps, current)
+        assert 1 < py_spikes < n_steps  # a repetitive partial train, not saturated
+        assert hand_spikes == py_spikes == vlog_spikes, (
+            f"FitzHugh-Nagumo three-way mismatch: hand={hand_spikes}, "
+            f"schema={py_spikes}, verilog={vlog_spikes}"
         )
 
 
@@ -1169,13 +1185,17 @@ class TestRK4Emitter:
     def test_rk4_path_is_distinct_from_euler(self) -> None:
         """The RK4 emitter is a genuine four-stage step, not aliased to Euler.
 
-        FitzHugh-Nagumo at I=5.0 is nonlinear enough that RK4 and Euler diverge:
-        the emitted RK4 differs from the emitted Euler and still tracks the Python
-        RK4 golden within the same fixed-point band the Euler path achieves.
+        The theta phase-oscillator (sine LUT) at ``I=150`` is nonlinear enough that
+        RK4 and Euler resolve a different number of phase wraps: the emitted RK4
+        differs from the emitted Euler and still reproduces the Python RK4 golden
+        exactly at Q16.16. (The faithful FitzHugh-Nagumo relaxation oscillator counts
+        the same threshold crossings under either integrator — that robustness is why
+        the distinctness demonstration uses a model whose spike count is genuinely
+        integrator-sensitive rather than the earlier Euler+reset FHN caricature.)
         """
-        py_rk4 = _spike_count_method("fitzhugh_nagumo", 300, 5.0, "rk4")
-        vlog_rk4 = _verilog_spike_count_method("fitzhugh_nagumo", 300, 5.0, 32, 16, "rk4")
-        vlog_euler = _verilog_spike_count_method("fitzhugh_nagumo", 300, 5.0, 32, 16, "euler")
+        py_rk4 = _spike_count_method("theta", 300, 150.0, "rk4")
+        vlog_rk4 = _verilog_spike_count_method("theta", 300, 150.0, 32, 16, "rk4")
+        vlog_euler = _verilog_spike_count_method("theta", 300, 150.0, 32, 16, "euler")
         assert vlog_rk4 != vlog_euler, "RK4 output must differ from Euler for a nonlinear model"
         gap_pct = abs(py_rk4 - vlog_rk4) / max(py_rk4, 1) * 100
         assert gap_pct <= 6.0, f"RK4 gap {gap_pct:.1f}% (Python={py_rk4}, Verilog={vlog_rk4})"
@@ -1274,17 +1294,18 @@ class TestExpEulerEmitter:
     def test_exp_euler_path_is_distinct_from_euler(self) -> None:
         """The exp-Euler emitter is a genuine linearised step, not aliased to Euler.
 
-        FitzHugh-Nagumo at I=5.0 is nonlinear enough that the exponential correction
-        moves the spike count: the emitted exp-Euler differs from the emitted Euler and
-        still tracks the Python exp-Euler golden within the same fixed-point band the
-        Euler path achieves.
+        The resonate-and-fire linear oscillator at ``I=10`` is stiff enough that
+        forward Euler is unstable and fires every step, while the exponential-Euler
+        linearisation stays on the true half-rate limit cycle: the emitted exp-Euler
+        differs from the emitted Euler and reproduces the Python exp-Euler golden
+        exactly at Q16.16. (As with the RK4 distinctness test, the faithful FHN
+        oscillator is integrator-robust, so a stiff linear model demonstrates the
+        exponential correction's effect more sharply.)
         """
-        py_exp = _spike_count_method("fitzhugh_nagumo", 300, 5.0, "exp_euler")
-        vlog_exp = _verilog_spike_count_method("fitzhugh_nagumo", 300, 5.0, 32, 16, "exp_euler")
-        vlog_euler = _verilog_spike_count_method("fitzhugh_nagumo", 300, 5.0, 32, 16, "euler")
-        assert vlog_exp != vlog_euler, (
-            "exp-Euler output must differ from Euler for a nonlinear model"
-        )
+        py_exp = _spike_count_method("resonate_fire", 300, 10.0, "exp_euler")
+        vlog_exp = _verilog_spike_count_method("resonate_fire", 300, 10.0, 32, 16, "exp_euler")
+        vlog_euler = _verilog_spike_count_method("resonate_fire", 300, 10.0, 32, 16, "euler")
+        assert vlog_exp != vlog_euler, "exp-Euler output must differ from Euler for a stiff model"
         gap_pct = abs(py_exp - vlog_exp) / max(py_exp, 1) * 100
         assert gap_pct <= 6.0, f"exp-Euler gap {gap_pct:.1f}% (Python={py_exp}, Verilog={vlog_exp})"
 

@@ -330,7 +330,8 @@ class TestIntrospection:
         eqs = neuron.list_equations()
         assert "v" in eqs
         assert "w" in eqs
-        assert "v**3" in eqs["v"]
+        # ``v * v * v`` (exact IEEE cube), not ``v ** 3`` — matches the hand model's RHS.
+        assert "v * v * v" in eqs["v"]
 
     def test_repr(self) -> None:
         neuron = UniversalNeuron.from_schema("lif")

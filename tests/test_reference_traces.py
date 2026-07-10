@@ -532,15 +532,17 @@ def _mihalas_niebur_driven_rk4_features(
     )
 
 
-def _fitzhugh_nagumo_euler_features(*, current: float, dt: float, steps: int) -> dict[str, float]:
-    """Return exact explicit-Euler features for the driven FitzHugh-Nagumo recurrence.
+def _fitzhugh_nagumo_rk4_features(*, current: float, dt: float, steps: int) -> dict[str, float]:
+    """Return exact classical-RK4 features for the driven FitzHugh-Nagumo oscillator.
 
     The FitzHugh (1961) cubic membrane and linear recovery equations are advanced
-    with the same simultaneous explicit-Euler update the schema runner applies, and
-    the ``v = -1`` reset (recovery ``w`` left unchanged) fires whenever the
-    post-update membrane crosses the ``v > 1`` threshold. The reference is an
-    independent re-derivation of the committed relaxation-oscillation trace, not a
-    copy of the runner.
+    with the same four-stage RK4 step and rising-edge spike detection the faithful
+    schema runner applies, with **no reset** — the re-enrolled model is a genuine
+    relaxation oscillator whose spikes are upward ``v >= 1`` threshold crossings, not
+    integrate-and-fire resets. The cube is written ``v * v * v`` (not ``v ** 3``) so
+    it is the exact IEEE multiplication the runner and the hand model evaluate. The
+    reference is an independent re-derivation of the committed relaxation-oscillation
+    trace, not a copy of the runner.
 
     Parameters
     ----------
@@ -560,22 +562,31 @@ def _fitzhugh_nagumo_euler_features(*, current: float, dt: float, steps: int) ->
     a = 0.7
     b = 0.8
     epsilon = 0.08
+    threshold = 1.0
     v = -1.0
     w = -0.5
     v_values: list[float] = []
     w_values: list[float] = []
     spikes: list[int] = []
+
+    def deriv(v_state: float, w_state: float) -> tuple[float, float]:
+        return (
+            v_state - v_state * v_state * v_state / 3.0 - w_state + current,
+            epsilon * (v_state + a - b * w_state),
+        )
+
     for _ in range(steps):
-        dv = v - v**3 / 3 - w + current
-        dw = epsilon * (v + a - b * w)
-        v_next = v + dv * dt
-        w_next = w + dw * dt
-        if v_next > 1.0:
-            spikes.append(1)
-            v_next = -1.0
-        else:
-            spikes.append(0)
-        v, w = v_next, w_next
+        v_prev = v
+        k1v, k1w = deriv(v, w)
+        k2v, k2w = deriv(v + 0.5 * dt * k1v, w + 0.5 * dt * k1w)
+        k3v, k3w = deriv(v + 0.5 * dt * k2v, w + 0.5 * dt * k2w)
+        k4v, k4w = deriv(v + dt * k3v, w + dt * k3w)
+        v = v + dt * (k1v + 2.0 * k2v + 2.0 * k3v + k4v) / 6.0
+        w = w + dt * (k1w + 2.0 * k2w + 2.0 * k3w + k4w) / 6.0
+        # Rising-edge crossing: fires when the post-step membrane is at/above threshold
+        # and the previous committed membrane was below it (matching the hand model's
+        # ``v >= thr and v_prev < thr`` edge test); no reset for this oscillator.
+        spikes.append(1 if (v >= threshold and v_prev < threshold) else 0)
         v_values.append(v)
         w_values.append(w)
 
@@ -1273,9 +1284,9 @@ _PARITY_CASES: list[tuple[str, str, str, str, Callable[[ReferenceTraceSpec], dic
     (
         "fitzhugh_nagumo_driven_oscillation_doi",
         "fitzhugh_nagumo",
-        "independent_euler_reference",
+        "independent_rk4_reference",
         "doi:10.1016/S0006-3495(61)86902-6",
-        lambda spec: _fitzhugh_nagumo_euler_features(
+        lambda spec: _fitzhugh_nagumo_rk4_features(
             current=spec.protocol.inputs["I"], dt=spec.protocol.dt, steps=spec.protocol.steps
         ),
     ),

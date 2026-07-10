@@ -76,7 +76,7 @@ range = [
 
 [integration]
 dt = 0.1
-method = "euler"
+method = "rk4"
 
 [dynamics]
 v = "v - v**3 / 3 - w + I"

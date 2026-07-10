@@ -5,6 +5,31 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+### FitzHugh-Nagumo faithful re-enrolment (RK4, no reset, rising-edge crossing)
+- Replaced the bundled `fitzhugh_nagumo` schema's explicit-Euler + `v = -1` reset
+  caricature with the genuine FitzHugh (1961) relaxation oscillator: four-stage RK4,
+  **no reset**, rising-edge (`v >= v_threshold` upward crossing) spike detection, and
+  the exact IEEE cube `v * v * v`. The schema now matches `FitzHughNagumoNeuron`
+  bit-for-bit in float64, and over 3000 steps at `I=0.5` the hand model, the schema
+  runner, and the emitted Q16.16 RTL report the same eight-crossing partial train
+  **exactly** — a genuine three-way parity, not a tolerance band, because the
+  right-hand side is polynomial (no look-up table). The earlier Euler+reset "parity"
+  only held because both sides shared the same unfaithful reset dynamics; the RK4
+  distinctness demonstration therefore moved to models whose spike count is genuinely
+  integrator-sensitive (theta for RK4, resonate-and-fire for exponential Euler), since
+  a faithful relaxation oscillator counts the same crossings under any integrator.
+- The committed reference trace is re-derived with an independent RK4 recurrence
+  (`independent_rk4_reference`, `I=0.5`, 3000 steps, eight crossings, first at step 29).
+- The schema-DSL runner now fails closed on a non-finite state (`FloatingPointError`,
+  matching the hand neuron models' `_validate_candidate` contract) rather than silently
+  propagating `inf`/`nan` into the threshold decision, so the unbounded oscillator's
+  large-step divergence is a controlled error, not a corrupt trace. FitzHugh-Nagumo also
+  moved from the "transcendental (LUT)" compile group to the polynomial group in the
+  DSL→Verilog tests — its cube lowers to plain fixed-point multipliers.
+- The schema-DSL runner is Python-only; no benchmark dispatch or benchmark artefact
+  changed. The hand `FitzHughNagumoNeuron` and its Rust/Julia/Go/Mojo mirrors were
+  already RK4 / `v*v*v` / no-reset, so no polyglot counterpart changed.
+
 ### Rising-edge (`crossing`) threshold detection for non-resetting oscillators
 - Made the schema DSL's `[threshold] detection = "crossing"` field functional in both the
   Python runner (`EquationNeuron`) and the schema→Verilog emitter. A non-resetting

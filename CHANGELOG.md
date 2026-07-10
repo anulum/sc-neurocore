@@ -20,6 +20,22 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
   co-simulation path); crossing support there is a separate follow-up.
 
 ### Changed
+- Re-enrolled the FitzHugh-Nagumo relaxation oscillator (`fitzhugh_nagumo` schema,
+  FitzHugh 1961) at full fidelity: the bundled schema is now the genuine two-state
+  cubic oscillator — four-stage RK4, **no reset**, rising-edge (`v >= v_threshold`
+  upward crossing) spike detection, and the exact IEEE cube `v * v * v` — matching
+  `FitzHughNagumoNeuron` bit-for-bit. Over 3000 steps at `I=0.5` the hand model, the
+  schema runner and the emitted Q16.16 RTL report the same eight-crossing partial
+  train exactly (a genuine three-way parity, not a tolerance band, because the
+  right-hand side is polynomial with no look-up table). This supersedes the earlier
+  explicit-Euler + `v = -1` reset caricature, whose Q16.16 "parity" only held because
+  both sides shared the same unfaithful reset dynamics; the committed reference trace
+  is now re-derived with an independent RK4 recurrence (`independent_rk4_reference`).
+  The schema-DSL runner additionally fails closed on a non-finite state
+  (`FloatingPointError`, matching the hand models) instead of silently propagating
+  NaN, so the unbounded oscillator's large-step divergence surfaces as a controlled
+  error rather than a corrupt trace. The schema-DSL runner is Python-only; no
+  benchmark dispatch or benchmark artefact changed.
 - Enrolled the Mihalas-Niebur generalised integrate-and-fire neuron
   (`mihalas_niebur` schema, Mihalaş & Niebur 2009) into the WC-A5 schema corpus
   and Python↔Verilog co-simulation as the first `method="rk4"` bundled model: a
