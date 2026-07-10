@@ -6,8 +6,6 @@
 // Contact: www.anulum.li | protoscience@anulum.li
 // SC-NeuroCore — Rust safety for ermentrout_kopell_map_neuron
 
-#![allow(unused_variables, dead_code, non_snake_case)]
-
 #[derive(Debug, Clone)]
 pub struct ErmentroutKopellMapNeuron {
     pub theta: f64,
@@ -55,11 +53,15 @@ impl ErmentroutKopellMapNeuron {
     }
 
     pub fn reset(&mut self) {
-        // self.theta = 0.0
+        // Mirror models/ermentrout_kopell_map_neuron.py `reset`: restore only the
+        // phase state, never the parameters (dt/gain/theta_threshold are config).
         self.theta = 0.0_f64;
-        self.dt = 0.1_f64;
-        self.gain = 1.0_f64;
-        self.theta_threshold = std::f64::consts::PI;
+    }
+}
+
+impl Default for ErmentroutKopellMapNeuron {
+    fn default() -> Self {
+        Self::new()
     }
 }
 
@@ -93,5 +95,40 @@ mod tests {
         let mut state = ErmentroutKopellMapNeuron::new();
         state.theta = f64::INFINITY;
         assert!(state.step(1.0).is_err());
+    }
+
+    #[test]
+    fn test_ermentrout_kopell_matches_reference_step() {
+        // Independent re-derivation of one theta-neuron update (no threshold crossing), matched
+        // bit-for-bit — the only transcendental is `cos`, and the test uses the same libm.
+        let mut state = ErmentroutKopellMapNeuron::new();
+        state.theta = 0.5;
+        let inp = state.gain * 0.1;
+        let d_theta = (1.0 - state.theta.cos()) + (1.0 + state.theta.cos()) * inp;
+        let expected = (state.theta + state.dt * d_theta).rem_euclid(2.0 * std::f64::consts::PI);
+        assert_eq!(state.step(0.1).unwrap(), 0);
+        assert_eq!(state.theta, expected);
+    }
+
+    #[test]
+    fn matches_python_golden_spike_count() {
+        // Parity with models/ermentrout_kopell_map_neuron.py (default parameters). The
+        // Ermentrout-Kopell theta neuron is the canonical Type-I phase model:
+        // dtheta = (1 - cos theta) + (1 + cos theta) * gain * I, advanced by forward Euler and
+        // wrapped modulo 2*pi, with a spike on an upward crossing of theta_threshold = pi. The only
+        // transcendental is `cos`; on a shared libm the Rust trace is bit-for-bit with the NumPy
+        // reference, and because the flow is a non-chaotic phase model the Go/Julia/Mojo libm
+        // divergence is a non-amplifying sub-ULP band that never moves a pi-crossing — so the spike
+        // count is the exact, portable observable across all backends. Drive gates the regime
+        // cleanly: silent at I=-0.5 (below the SNIC bifurcation), 20 spikes at I=0.1, a 64-spike
+        // train at I=1.0, each over 2000 macro steps. Verified python-vs-rust max|Δ|=0 (and
+        // python-vs-mojo counts equal) via test_ermentrout_kopell_map_backends.py.
+        for (current, want) in [(-0.5_f64, 0_usize), (0.1, 20), (1.0, 64)] {
+            let mut state = ErmentroutKopellMapNeuron::new();
+            let spikes = (0..2000)
+                .filter(|_| state.step(current).expect("finite step") == 1)
+                .count();
+            assert_eq!(spikes, want, "I={current}");
+        }
     }
 }
