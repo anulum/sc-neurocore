@@ -49,15 +49,30 @@ from sc_neurocore.neurons.model_catalogue import (  # noqa: E402
 from sc_neurocore.neurons.models import _CLASS_TO_MODULE  # noqa: E402
 
 
+# The SPDX provenance header every committed descriptor carries (uniform across the
+# corpus). Emitting it keeps regenerated files SPDX-compliant and makes ``--check``
+# meaningful — without it every committed descriptor read as "out of sync" purely because
+# the generator dropped the header, masking genuine body drift.
+_DESCRIPTOR_HEADER = (
+    "# SPDX-License-Identifier: AGPL-3.0-or-later\n"
+    "# Commercial license available\n"
+    "# © Concepts 1996–2026 Miroslav Šotek. All rights reserved.\n"
+    "# © Code 2020–2026 Miroslav Šotek. All rights reserved.\n"
+    "# ORCID: 0009-0009-3560-0851\n"
+    "# Contact: www.anulum.li | protoscience@anulum.li\n"
+    "# SC-NeuroCore — Source/config provenance header\n\n"
+)
+
+
 def _rendered_descriptor(class_name: str) -> str:
-    """Return the serialized merged descriptor TOML for a model."""
+    """Return the serialized merged descriptor TOML for a model, with the SPDX header."""
 
     regenerated = generate_descriptor_payload(class_name)
     committed = load_descriptor_payload(class_name)
     payload = (
         merge_descriptor_payloads(committed, regenerated) if committed is not None else regenerated
     )
-    return tomli_w.dumps(payload)
+    return _DESCRIPTOR_HEADER + tomli_w.dumps(payload)
 
 
 def write_corpus() -> int:

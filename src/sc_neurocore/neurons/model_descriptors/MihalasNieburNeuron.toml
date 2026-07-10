@@ -154,9 +154,13 @@ range = [
 
 [integration]
 dt = 1.0
-method = "euler"
+method = "rk4"
 
 [dynamics]
+v = "(-(v - v_rest) + i1 + i2 + I) / tau_v"
+theta = "(theta_inf - theta + a * (v - v_rest)) / tau_theta"
+i1 = "-i1 / tau_1"
+i2 = "-i2 / tau_2"
 
 [backends.python]
 status = "implemented"

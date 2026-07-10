@@ -8,7 +8,7 @@
 
 [metadata]
 schema_version = 2
-name = "Izhikevich2007Neuron"
+name = "Izhikevich2007"
 class_name = "Izhikevich2007Neuron"
 module = "izhikevich2007"
 display_name = ""
@@ -34,7 +34,7 @@ year = 2007
 doi = "10.7551/mitpress/2526.001.0001"
 
 [state.v]
-init = 0.0
+init = -60.0
 
 [state.u]
 init = 0.0
@@ -125,6 +125,8 @@ dt = 0.1
 method = "euler"
 
 [dynamics]
+v = "(k * (v - vr) * (v - vt) - u + I) / C"
+u = "a * (b * (v - vr) - u)"
 
 [backends.python]
 status = "implemented"
