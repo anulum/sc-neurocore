@@ -56,12 +56,13 @@ stub.
 | McKean | ✅ | ✅ | ✅ | ✅ shared-lib | bit-exact — 0/1/7 @ I=0/0.2/0.5 over 20000 steps (RK4, exact piecewise-linear RHS) | `059871140` |
 | Hindmarsh-Rose | ✅ | ✅ | ✅ | ✅ shared-lib | bit-exact — 0/26/52 @ I=0/3/5 over 2000 steps (RK4, polynomial RHS) | `45c05b1e9` |
 | FitzHugh-Rinzel | ✅ | ✅ | ✅ | ✅ shared-lib | bit-exact — 0/1/8 @ I=0/0.3/0.5 over 3000 steps (RK4, cubic RHS) | `498376221` |
+| Pernarowski | ✅ | ✅ | ✅ | ✅ shared-lib | bit-exact — 7/17/27 @ I=0 over 2000/5000/8000 steps (RK4, cubic RHS, autonomous burster) | `c384ac0cd` |
 
 Each model carries a committed benchmark: a Go `Benchmark*` in the services lane for the
 conductance models (Wang-Buzsaki, Morris-Lecar, Connor-Stevens, Hodgkin-Huxley, FitzHugh-Nagumo),
 and a `benchmarks/bench_<model>_simulate.py` plus committed criterion results for the FFI-dispatched
-bit-exact models (McKean, Hindmarsh-Rose, FitzHugh-Rinzel). A dedicated per-kernel benchmark harness
-for the Rust `accel/rust/safety` crate remains a tracked open lane item.
+bit-exact models (McKean, Hindmarsh-Rose, FitzHugh-Rinzel, Pernarowski). A dedicated per-kernel
+benchmark harness for the Rust `accel/rust/safety` crate remains a tracked open lane item.
 
 ## In progress
 
@@ -75,7 +76,7 @@ Rust engine acceleration path), but its four `accel/{rust,go,julia,mojo}` kernel
 or not yet verified** — the polyglot-stub-remediation sweep is replacing them model-by-model. Those
 models are **deliberately not ticked here**: per-model status is promoted onto this page only after a
 unit is closed and verified at source, so this table never claims completion it has not proven. As of
-the latest landed commit that is **eight polyglot-complete models** out of the full catalogue; the
+the latest landed commit that is **nine polyglot-complete models** out of the full catalogue; the
 remainder are Python-faithful with an acceleration chain still under remediation.
 
 ## How a model graduates onto this page
