@@ -55,9 +55,7 @@ pub fn emit(graph: &ScGraph) -> Result<String, String> {
                 mlir.push_str(&format!("  hw.output {src} : i1\n"));
                 last_output = format!("%{name}");
             }
-            ScOp::Encode {
-                id, prob, ..
-            } => {
+            ScOp::Encode { id, prob, .. } => {
                 let prob_wire = value_wire(graph, *prob);
                 mlir.push_str(&format!(
                     "  %v{} = hw.instance \"enc_{}\" @sc_bitstream_encoder(\
