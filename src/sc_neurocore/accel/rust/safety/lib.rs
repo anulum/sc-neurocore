@@ -202,6 +202,7 @@ pub mod inhomogeneous_poisson;
 pub mod iqif;
 pub mod ir_type_checker;
 pub mod ising;
+pub mod izhikevich2007;
 pub mod jansen_rit;
 pub mod jax_dense_layer;
 pub mod kilinc_bhatt_map_neuron;
