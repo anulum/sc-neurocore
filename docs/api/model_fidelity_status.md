@@ -53,6 +53,7 @@ stub.
 | Morris-Lecar | ✅ | ✅ | ✅ | ✅ executable | spike count — 0/3/5 @ I=0/50/100 over 2000 steps (RK4, tanh/cosh) | `bc46a0fb5` |
 | Connor-Stevens | ✅ | ✅ | ✅ | 🔶 parity note | spike count — 0/2/9 @ I=0/10/20 over 100 macro steps (RK4, exp) | `4776283ba` |
 | Hodgkin-Huxley | ✅ | ✅ | ✅ | 🔶 parity note | spike count — 0/6/9 @ I=0/10/20 over 100 macro steps (baseline-Euler, exp) | `0b23b5653` |
+| McKean | ✅ | ✅ | ✅ | ✅ shared-lib | bit-exact — 0/1/7 @ I=0/0.2/0.5 over 20000 steps (RK4, exact piecewise-linear RHS) | `059871140` |
 
 Each of the five carries a committed benchmark in its lane (Go `Benchmark*` for the models above;
 the Rust-safety per-kernel benchmark harness is a tracked open lane item, so those numbers currently
@@ -60,9 +61,8 @@ come from the Go/engine lanes rather than a `benches/` target in the safety crat
 
 ## In progress
 
-| Model | Rust engine | Rust safety | Go (cgo) | Julia | Mojo | Notes |
-|---|---|---|---|---|---|---|
-| McKean | ✅ bit-exact | 🔶 real, strengthen | ✅ bit-exact | ✅ bit-exact | 🔶 built lib, band | Class-A FFI model: the Go-cgo, Julia, Mojo and Rust-engine backends are already real and parity-tested bit-for-bit via `tests/test_mckean_backends.py` (the PWL right-hand side is exact arithmetic). The `accel/rust/safety` kernel is already real RK4 with an independent-RK4 cross-check, but still carries a vestigial `#![allow(…)]`, lacks the golden spike-count test, and lacks a `Default` — the remaining strengthening pass to graduate it to ✅. |
+No model is mid-flight right now. The next remediation unit will appear here when it opens; see the
+internal working tracker for the queue.
 
 ## The rest of the catalogue
 
@@ -71,9 +71,8 @@ Rust engine acceleration path), but its four `accel/{rust,go,julia,mojo}` kernel
 or not yet verified** — the polyglot-stub-remediation sweep is replacing them model-by-model. Those
 models are **deliberately not ticked here**: per-model status is promoted onto this page only after a
 unit is closed and verified at source, so this table never claims completion it has not proven. As of
-the latest landed commit that is **five polyglot-complete models (plus McKean in progress)** out of
-the full catalogue; the remainder are Python-faithful with an acceleration chain still under
-remediation.
+the latest landed commit that is **six polyglot-complete models** out of the full catalogue; the
+remainder are Python-faithful with an acceleration chain still under remediation.
 
 ## How a model graduates onto this page
 
