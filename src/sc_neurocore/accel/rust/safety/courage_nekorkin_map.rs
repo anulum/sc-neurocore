@@ -13,8 +13,6 @@
 //! never propagates. The arithmetic mirrors the engine struct operation for
 //! operation, so the trace is bit-identical to the Python NumPy reference.
 
-#![allow(dead_code)]
-
 #[derive(Debug, Clone)]
 pub struct CourageNekorkinMapNeuron {
     pub x: f64,
@@ -175,5 +173,25 @@ mod tests {
             max_abs < 10.0,
             "trajectory must stay bounded, got {max_abs}"
         );
+    }
+
+    #[test]
+    fn matches_python_golden_spike_count() {
+        // Parity with models/courage_nekorkin_map.py (default parameters). The Courbage-Nekorkin-
+        // Vdovin 2007 map is a discontinuous 2-D spiking map (a piecewise-linear F plus a Heaviside
+        // reset term) in the chaotic spiking-bursting regime. Every operation is exact IEEE
+        // arithmetic (piecewise-linear evaluation, a step function, adds and multiplies), so the
+        // orbit is bit-for-bit across the exact-arithmetic backends (Go, Julia, Rust) and the
+        // upward-crossing spike count is an exact observable. The autonomous burster keeps firing
+        // at any modest drive, so the current shifts rather than gates the count: 157 spikes at
+        // I=-0.3, 193 at I=0.0, 168 at I=0.3, each over 1000 iterations. Verified python-vs-rust
+        // max|Δ|=0. NOTE: the FMA-fusing Mojo backend diverges after ~100 steps on this chaotic
+        // map, so it is validated per-step ULP-bounded and only reproduces the coarse count to
+        // within a fraction of a percent — by design, see test_courage_nekorkin_map_backends.py.
+        for (current, want) in [(-0.3_f64, 157_usize), (0.0, 193), (0.3, 168)] {
+            let mut state = CourageNekorkinMapNeuron::new();
+            let spikes = (0..1000).filter(|_| state.step(current) == 1).count();
+            assert_eq!(spikes, want, "I={current}");
+        }
     }
 }
