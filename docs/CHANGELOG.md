@@ -5,6 +5,18 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+### StochasticLIF same-name Rust engine binding
+- `StochasticLIFNeuron` was enrolled in the public registry
+  (`sc_neurocore.neurons.models.__all__`) for catalogue readiness but had no same-name PyO3
+  constructor, so the registry-parity coverage map flagged it as an uncovered non-Python-only model.
+  The Rust neuron already existed in the engine (`engine/src/neurons/trivial.rs`) and was wired into
+  the `NetworkRunner`; this adds the missing `PyStochasticLIFNeuron` wrapper (`new(seed)` / `step` /
+  `reset` / `get_state`, mirroring `StochasticIFNeuron`), re-exports it from the engine package root,
+  and enrols it in the RNG-dependent parity set. Exact traces are not claimed — the Rust Gaussian
+  stream is `Xoshiro256++` Box-Muller rather than NumPy's PCG64 Ziggurat — so the spike count is the
+  stated parity observable. The registry map is now 160 public Python registry names, 146 same-name
+  Rust constructors, and 176 Rust PyO3 model wrappers.
+
 ### Connor-Stevens polyglot kernels pinned to the Python golden spike count
 - The Go (`accel/go/services/connor_stevens.go`), Rust (`accel/rust/safety/connor_stevens.rs`) and
   Julia (`accel/julia/neurons/connor_stevens.jl`) Connor-Stevens kernels already carried the real

@@ -1,8 +1,8 @@
-# Neuron Model Reference — 158 Python Classes / 175 Rust PyO3 Wrappers
+# Neuron Model Reference — 158 Python Classes / 176 Rust PyO3 Wrappers
 
 SC-NeuroCore currently exposes 158 lazy-loaded Python model classes across
 152 Python model source modules in `src/sc_neurocore/neurons/models/`, plus
-175 Rust PyO3 model wrappers in the optional engine. Matching model classes
+176 Rust PyO3 model wrappers in the optional engine. Matching model classes
 use the same `step()` / `reset()` / `get_state()` interface shape where the
 backend implements that surface.
 
@@ -28,7 +28,7 @@ spike = hh_rs.step(current=10.0)
 | Rust | `sc_neurocore_engine.sc_neurocore_engine` | Production, benchmarks, batch simulation |
 
 Backends use identical class names where parity wrappers exist (for example,
-`HodgkinHuxleyNeuron`). The Rust engine provides 175 Rust PyO3 model wrappers,
+`HodgkinHuxleyNeuron`). The Rust engine provides 176 Rust PyO3 model wrappers,
 161 of which are wired into the NetworkRunner pipeline.
 
 The package-level `sc_neurocore.neurons` facade remains lazy: core neuron
@@ -43,18 +43,20 @@ caches the resolved Python class for later imports.
 Python registry exposed by `sc_neurocore.neurons.models.__all__`. The generated
 capability inventory above counts 158 static classes in
 `src/sc_neurocore/neurons/models/*.py`; the registry-level map covers
-159 public Python registry names because `HybridFisherPosnerLIFNeuron` is
-re-exported from `sc_neurocore.quantum_cognition.fisher_posner` for
-population dispatch.
+160 public Python registry names because `HybridFisherPosnerLIFNeuron` and
+`StochasticLIFNeuron` are re-exported (from
+`sc_neurocore.quantum_cognition.fisher_posner` for population dispatch and
+`sc_neurocore.neurons.stochastic_lif` for the torch-free public root import,
+respectively) rather than defined as static classes under `neurons/models/`.
 
 Current binding disposition:
 
-The current registry map records 145 same-name Rust constructors,
+The current registry map records 146 same-name Rust constructors,
 9 Rust-prefixed or core-only constructors, and 5 Python-only registry names.
 
 | Disposition | Count | Contract |
 |-------------|------:|----------|
-| Same-name Rust constructors | 145 | Python registry name matches the compiled `sc_neurocore_engine.sc_neurocore_engine` class name. |
+| Same-name Rust constructors | 146 | Python registry name matches the compiled `sc_neurocore_engine.sc_neurocore_engine` class name. |
 | Rust-prefixed or core-only constructors | 9 | A Rust binding exists, but the generic scalar parity harness uses an explicit name map. |
 | Python-only registry names | 5 | No same-name PyO3 neuron constructor is claimed; each entry below records the durable boundary. |
 

@@ -1042,6 +1042,37 @@ impl PyStochasticIFNeuron {
 }
 
 #[pyclass(
+    name = "StochasticLIFNeuron",
+    module = "sc_neurocore_engine.sc_neurocore_engine"
+)]
+#[derive(Clone)]
+pub struct PyStochasticLIFNeuron {
+    inner: neurons::StochasticLIFNeuron,
+}
+
+#[pymethods]
+impl PyStochasticLIFNeuron {
+    #[new]
+    #[pyo3(signature = (seed=42))]
+    fn new(seed: u64) -> Self {
+        Self {
+            inner: neurons::StochasticLIFNeuron::new(seed),
+        }
+    }
+    fn step(&mut self, current: f64) -> i32 {
+        self.inner.step(current)
+    }
+    fn reset(&mut self) {
+        self.inner.reset();
+    }
+    fn get_state(&self, py: Python<'_>) -> PyResult<Py<PyAny>> {
+        let d = PyDict::new(py);
+        d.set_item("v", self.inner.v)?;
+        Ok(d.into_any().unbind())
+    }
+}
+
+#[pyclass(
     name = "GalvesLocherbachNeuron",
     module = "sc_neurocore_engine.sc_neurocore_engine"
 )]
@@ -2059,6 +2090,7 @@ pub fn register_neuron_classes(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_class::<PyInhomogeneousPoissonNeuron>()?;
     m.add_class::<PyGammaRenewalNeuron>()?;
     m.add_class::<PyStochasticIFNeuron>()?;
+    m.add_class::<PyStochasticLIFNeuron>()?;
     m.add_class::<PyGalvesLocherbachNeuron>()?;
     m.add_class::<PySpikeResponseNeuron>()?;
     m.add_class::<PyGLMNeuron>()?;

@@ -5,6 +5,17 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 ## [Unreleased]
 
 ### Added
+- Same-name PyO3 engine binding for `StochasticLIFNeuron`. The Rust neuron
+  (`engine/src/neurons/trivial.rs` — leaky integrate-and-fire with Euler-Maruyama membrane noise and
+  an integer refractory clamp) already existed and was wired into the `NetworkRunner`, but carried no
+  `#[pyclass]` wrapper, so once the model was enrolled in the public registry the coverage map in
+  `tests/test_rust_python_neuron_parity.py` correctly flagged it as an uncovered non-Python-only
+  entry. `PyStochasticLIFNeuron` now exposes the same `new(seed)` / `step` / `reset` / `get_state`
+  surface as its `StochasticIFNeuron` sibling and is re-exported from the engine package root. It
+  joins the RNG-dependent parity set — exact traces are not claimed because the Gaussian stream is
+  `Xoshiro256++` Box-Muller rather than NumPy's PCG64 Ziggurat, so the spike count is the stated
+  parity observable. The registry map is now 160 public Python registry names, 146 same-name Rust
+  constructors, and 176 Rust PyO3 model wrappers.
 - Sequential (Gauss-Seidel) integration mode (`[integration] method = "gauss_seidel"`) in the
   schema DSL, in both the Python runner (`EquationNeuron`) and the emitted Verilog. The state
   variables are advanced in declaration order, each derivative reading the already-committed
