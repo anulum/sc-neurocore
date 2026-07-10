@@ -63,13 +63,14 @@ stub.
 | GLIF | ✅ | ✅ | ✅ | ✅ shared-lib | bit-exact — 0/54/95 @ I=0/30/50 over 1000 steps (RK4, linear RHS, adaptive-threshold integrate-and-fire) | `ecd799d58` |
 | Mihalas-Niebur | ✅ | ✅ | ✅ | ✅ shared-lib | bit-exact — 0/142/333 @ I=0/2/5 over 1000 steps (RK4, linear RHS, adaptive-threshold IF, b-scaled reset) | `081dd569c` |
 | Medvedev map | ✅ | ✅ | ✅ | ✅ shared-lib | Rust/Julia/Go bit-exact — 0/92/112 @ I=0/0.2/0.5 over 1000 iterations (expanding chaotic circle map). Mojo per-step ULP-bounded only: FMA fusion amplifies on the chaotic map, so it does not reproduce the exact spike count (by design) | `9936d997d` |
+| Cazelles map | ✅ | ✅ | ✅ | ✅ shared-lib | Rust/Julia/Go bit-exact — 5/182/204 @ I=0/0.5/1.0 over 1000 iterations (logistic-driven chaotic map, fast variable clamped to [-2,2]). Mojo per-step ULP-bounded; the clamp saturates the orbit so the counts still match at the tested drives | `22110c66d` |
 
 Each model carries a committed benchmark: a Go `Benchmark*` in the services lane for the
 conductance models (Wang-Buzsaki, Morris-Lecar, Connor-Stevens, Hodgkin-Huxley, FitzHugh-Nagumo),
 and a committed `benchmarks/bench_<model>*.py` harness with its recorded per-backend result for the
 FFI-dispatched models (McKean, Hindmarsh-Rose, FitzHugh-Rinzel, Pernarowski, Terman-Wang, Wilson-HR,
-Rulkov map, GLIF, Mihalas-Niebur, Medvedev map). A dedicated per-kernel benchmark harness for the
-Rust `accel/rust/safety` crate remains a tracked open lane item.
+Rulkov map, GLIF, Mihalas-Niebur, Medvedev map, Cazelles map). A dedicated per-kernel benchmark
+harness for the Rust `accel/rust/safety` crate remains a tracked open lane item.
 
 ## In progress
 
@@ -83,7 +84,7 @@ Rust engine acceleration path), but its four `accel/{rust,go,julia,mojo}` kernel
 or not yet verified** — the polyglot-stub-remediation sweep is replacing them model-by-model. Those
 models are **deliberately not ticked here**: per-model status is promoted onto this page only after a
 unit is closed and verified at source, so this table never claims completion it has not proven. As of
-the latest landed commit that is **fifteen polyglot-complete models** out of the full catalogue; the
+the latest landed commit that is **sixteen polyglot-complete models** out of the full catalogue; the
 remainder are Python-faithful with an acceleration chain still under remediation.
 
 ## How a model graduates onto this page
