@@ -37,9 +37,9 @@ class QPUBridgeArtifact:
     domain: str
     source_name: str
     source_mode: str
-    K_nm: np.ndarray
-    omega: np.ndarray
-    theta0: np.ndarray | None
+    K_nm: np.ndarray[Any, Any]
+    omega: np.ndarray[Any, Any]
+    theta0: np.ndarray[Any, Any] | None
     layer_assignments: list[int]
     normalization: str
     extraction_method: str
@@ -158,8 +158,8 @@ def load_tokamak_data(
     if mode not in NON_PUBLICATION_SOURCE_MODES:
         _raise_unavailable("tokamak", (size, size))
 
-    knm: np.ndarray = _banded_coupling(size, base=0.45, decay=0.32)
-    omega: np.ndarray = np.resize(
+    knm: np.ndarray[Any, Any] = _banded_coupling(size, base=0.45, decay=0.32)
+    omega: np.ndarray[Any, Any] = np.resize(
         np.array([10.0, 8.0, 3.0, 5.0, 0.5, 0.3, 0.1, 1.0], dtype=np.float64),
         size,
     )
@@ -194,8 +194,8 @@ def load_power_grid(
     if mode not in NON_PUBLICATION_SOURCE_MODES:
         _raise_unavailable(source_name, (size, size))
 
-    knm: np.ndarray = _ring_coupling(size, nearest=0.5, long_range=0.08)
-    omega: np.ndarray = np.ones(size, dtype=np.float64)
+    knm: np.ndarray[Any, Any] = _ring_coupling(size, nearest=0.5, long_range=0.08)
+    omega: np.ndarray[Any, Any] = np.ones(size, dtype=np.float64)
     if size >= 4:
         omega[1::4] = 1.02
         omega[3::4] = 0.98
@@ -308,9 +308,9 @@ def _artifact(
     domain: str,
     source_name: str,
     source_mode: str,
-    knm: np.ndarray,
-    omega: np.ndarray,
-    theta0: np.ndarray | None,
+    knm: np.ndarray[Any, Any],
+    omega: np.ndarray[Any, Any],
+    theta0: np.ndarray[Any, Any] | None,
     normalization: str,
     extraction_method: str,
     metadata: dict[str, Any],
@@ -344,12 +344,12 @@ def _resolve_source_mode(source_mode: str | None, synthetic: bool) -> str:
     return source_mode
 
 
-def _validate_source_mode(source_mode: str) -> None:
+def _validate_source_mode(source_mode: object) -> None:
     if source_mode not in SOURCE_MODES:
         raise ValueError(f"unsupported source_mode {source_mode!r}")
 
 
-def _require_non_empty_string(value: str, field_name: str) -> None:
+def _require_non_empty_string(value: object, field_name: str) -> None:
     if not isinstance(value, str) or not value.strip():
         raise ValueError(f"{field_name} must be a non-empty string")
 
@@ -367,9 +367,9 @@ def _require_positive_n(n: int) -> int:
 
 
 def _validate_artifact_arrays(
-    knm: np.ndarray,
-    omega: np.ndarray,
-    theta0: np.ndarray | None,
+    knm: np.ndarray[Any, Any],
+    omega: np.ndarray[Any, Any],
+    theta0: np.ndarray[Any, Any] | None,
     layer_assignments: list[int],
 ) -> None:
     if knm.ndim != 2 or knm.shape[0] != knm.shape[1]:
@@ -402,19 +402,21 @@ def _validate_artifact_arrays(
         raise ValueError("K_nm must be non-negative")
 
 
-def _hash_array(array: np.ndarray) -> str:
+def _hash_array(array: np.ndarray[Any, Any]) -> str:
     stable = np.ascontiguousarray(array, dtype=np.float64)
     return hashlib.sha256(stable.tobytes()).hexdigest()
 
 
-def _array_from_payload(payload: dict[str, Any], key: str) -> np.ndarray:
+def _array_from_payload(payload: dict[str, Any], key: str) -> np.ndarray[Any, Any]:
     try:
         return np.asarray(payload.get(key), dtype=np.float64)
     except (TypeError, ValueError) as exc:
         raise ValueError(f"{key} must be a numeric JSON array") from exc
 
 
-def _validate_payload_array_hash(hashes: dict[str, Any], key: str, array: np.ndarray) -> None:
+def _validate_payload_array_hash(
+    hashes: dict[str, Any], key: str, array: np.ndarray[Any, Any]
+) -> None:
     value = hashes.get(key)
     if not _is_sha256_hex(value):
         raise ValueError(f"{key} must be a SHA256 hex digest")
@@ -449,18 +451,18 @@ def _canonical_artifact_sha256(payload: dict[str, Any]) -> str:
     return hashlib.sha256(encoded).hexdigest()
 
 
-def _banded_coupling(n: int, *, base: float, decay: float) -> np.ndarray:
+def _banded_coupling(n: int, *, base: float, decay: float) -> np.ndarray[Any, Any]:
     if n == 16:
         return build_knm_matrix()
-    idx: np.ndarray = np.arange(n, dtype=np.float64)
-    dist: np.ndarray = np.abs(idx[:, None] - idx[None, :])
-    knm: np.ndarray = base * np.exp(-decay * dist)
+    idx: np.ndarray[Any, Any] = np.arange(n, dtype=np.float64)
+    dist: np.ndarray[Any, Any] = np.abs(idx[:, None] - idx[None, :])
+    knm: np.ndarray[Any, Any] = base * np.exp(-decay * dist)
     np.fill_diagonal(knm, 0.0)
     return knm.astype(np.float64)
 
 
-def _chain_coupling(n: int, *, nearest: float, next_nearest: float) -> np.ndarray:
-    knm: np.ndarray = np.zeros((n, n), dtype=np.float64)
+def _chain_coupling(n: int, *, nearest: float, next_nearest: float) -> np.ndarray[Any, Any]:
+    knm: np.ndarray[Any, Any] = np.zeros((n, n), dtype=np.float64)
     for i in range(n - 1):
         knm[i, i + 1] = nearest
         knm[i + 1, i] = nearest
@@ -472,8 +474,8 @@ def _chain_coupling(n: int, *, nearest: float, next_nearest: float) -> np.ndarra
     return knm
 
 
-def _ring_coupling(n: int, *, nearest: float, long_range: float) -> np.ndarray:
-    knm: np.ndarray = np.zeros((n, n), dtype=np.float64)
+def _ring_coupling(n: int, *, nearest: float, long_range: float) -> np.ndarray[Any, Any]:
+    knm: np.ndarray[Any, Any] = np.zeros((n, n), dtype=np.float64)
     if n == 1:
         return knm
     for i in range(n):

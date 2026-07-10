@@ -88,8 +88,8 @@ class SCNeuroCoreDatastreamPacket:
 
 def build_datastream_packet(
     *,
-    waveform: np.ndarray,
-    spike_raster: np.ndarray,
+    waveform: np.ndarray[Any, Any],
+    spike_raster: np.ndarray[Any, Any],
     source_name: str,
     source_mode: str,
     layer_id: str = "input",
@@ -204,7 +204,7 @@ def validate_datastream_payload(payload: dict[str, Any]) -> None:
         raise DatastreamValidationError("packet_sha256 does not match payload")
 
 
-def _validate_waveform(waveform: np.ndarray) -> np.ndarray:
+def _validate_waveform(waveform: np.ndarray[Any, Any]) -> np.ndarray[Any, Any]:
     array = np.asarray(waveform, dtype=np.float32)
     if array.ndim != 2:
         raise DatastreamValidationError(f"waveform must be two-dimensional, got {array.ndim}D")
@@ -215,7 +215,7 @@ def _validate_waveform(waveform: np.ndarray) -> np.ndarray:
     return array
 
 
-def _validate_spike_raster(spike_raster: np.ndarray) -> np.ndarray:
+def _validate_spike_raster(spike_raster: np.ndarray[Any, Any]) -> np.ndarray[Any, Any]:
     raw = np.asarray(spike_raster)
     if raw.ndim != 2:
         raise DatastreamValidationError(f"spike_raster must be two-dimensional, got {raw.ndim}D")
@@ -231,7 +231,7 @@ def _validate_spike_raster(spike_raster: np.ndarray) -> np.ndarray:
     return spikes
 
 
-def _telemetry_summary(spikes: np.ndarray, *, layer_id: str) -> dict[str, Any]:
+def _telemetry_summary(spikes: np.ndarray[Any, Any], *, layer_id: str) -> dict[str, Any]:
     telemetry = DeviceTelemetry()
     n_neurons = int(spikes.shape[1])
     for row in spikes:
