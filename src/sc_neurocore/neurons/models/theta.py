@@ -8,8 +8,28 @@
 
 from __future__ import annotations
 
+import importlib as _importlib
 import math
 from dataclasses import dataclass
+from typing import Any, Optional
+
+import numpy as np
+import numpy.typing as npt
+
+# Rust engine path: factory-default exact-flow step is bit-identical to pure Python.
+try:
+    _EngineCls: Optional[type[Any]] = _importlib.import_module(
+        "sc_neurocore_engine"
+    ).ThetaNeuron
+    _HAS_RUST = True
+except (ImportError, AttributeError):
+    _EngineCls = None
+    _HAS_RUST = False
+
+_RUST_ENGINE_DEFAULTS: dict[str, float] = {
+    "theta": 0.0,
+    "dt": 0.01,
+}
 
 
 @dataclass
@@ -21,6 +41,9 @@ class ThetaNeuron:
     Ermentrout & Kopell 1986.
 
     Reference: Ermentrout, G.B. & Kopell, N. (1986). SIAM J. Appl. Math. 46:233–253.
+
+    ``simulate`` supports ``backend`` values ``python``, ``rust``, and ``auto``
+    (prefer Rust under the factory-default contract when the engine is present).
     """
 
     theta: float = 0.0
@@ -32,6 +55,13 @@ class ThetaNeuron:
         if not math.isfinite(self.dt) or self.dt <= 0.0:
             raise ValueError("dt must be finite and positive")
         self.theta = self._wrap_phase(self.theta)
+
+    def _matches_rust_engine_contract(self) -> bool:
+        """Return whether the instance matches the Rust engine default contract."""
+        for name, expected in _RUST_ENGINE_DEFAULTS.items():
+            if float(getattr(self, name)) != expected:
+                return False
+        return True
 
     @staticmethod
     def _wrap_phase(theta: float) -> float:
@@ -84,6 +114,72 @@ class ThetaNeuron:
             raise ValueError("exact-flow candidate must be finite")
         self.theta = self._wrap_phase(next_theta)
         return int(spiked)
+
+    def simulate(
+        self, n_steps: int, current: float = 0.0, backend: str = "auto"
+    ) -> tuple[npt.NDArray[np.float64], int]:
+        """Advance ``n_steps`` updates, returning ``(theta_trace, spikes)``.
+
+        Parameters
+        ----------
+        n_steps:
+            Number of updates (non-negative).
+        current:
+            Constant injected current (finite).
+        backend:
+            ``python``, ``rust`` (factory defaults only), or ``auto``.
+        """
+        if n_steps < 0:
+            raise ValueError("n_steps must be non-negative")
+        if backend not in ("auto", "python", "rust"):
+            raise ValueError(f"backend must be auto/python/rust, got {backend!r}")
+        if not math.isfinite(current):
+            raise ValueError("current must be finite")
+        self._validate_runtime_state()
+
+        prefer_rust = backend == "rust" or (
+            backend == "auto" and _HAS_RUST and self._matches_rust_engine_contract()
+        )
+        if prefer_rust:
+            if not _HAS_RUST or _EngineCls is None:
+                raise RuntimeError(
+                    "Rust Theta backend requested but sc_neurocore_engine is unavailable."
+                )
+            if not self._matches_rust_engine_contract():
+                raise RuntimeError(
+                    "Rust Theta backend requires factory-default parameters and initial state."
+                )
+            trace, spikes, state = self._simulate_rust(n_steps, current)
+        else:
+            if backend == "rust":
+                raise RuntimeError(
+                    "Rust Theta backend requested but sc_neurocore_engine is unavailable."
+                )
+            trace, spikes, state = self._simulate_python(n_steps, current)
+        self.theta = state
+        return trace, spikes
+
+    def _simulate_python(
+        self, n_steps: int, current: float
+    ) -> tuple[npt.NDArray[np.float64], int, float]:
+        trace = np.empty(n_steps, dtype=np.float64)
+        spikes = 0
+        for t in range(n_steps):
+            spikes += self.step(current)
+            trace[t] = self.theta
+        return trace, spikes, self.theta
+
+    def _simulate_rust(
+        self, n_steps: int, current: float
+    ) -> tuple[npt.NDArray[np.float64], int, float]:
+        assert _EngineCls is not None
+        neuron = _EngineCls()
+        trace = np.empty(n_steps, dtype=np.float64)
+        spikes = 0
+        for t in range(n_steps):
+            spikes += int(neuron.step(float(current)))
+            trace[t] = float(neuron.get_state()["theta"])
+        return trace, spikes, float(neuron.get_state()["theta"])
 
     def reset(self) -> None:
         self.theta = 0.0

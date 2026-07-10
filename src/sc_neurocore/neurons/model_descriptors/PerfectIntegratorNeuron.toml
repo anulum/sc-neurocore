@@ -71,8 +71,15 @@ v = "I / c_m"
 
 [backends.python]
 status = "implemented"
+parity = "exact"
+
+[backends.rust]
+status = "implemented"
+parity = "exact"
 
 [reproducibility]
+reference_config = "{\"n_steps\":1000,\"current\":1.0,\"backend\":\"python\",\"parameters\":\"defaults\"}"
+golden_trace_sha256 = "b214f61993fe65ffb313000e59aa48b0cdd501b985eabc955beb7c45e2126e74"
 
 [documentation]
 slug = "models/perfect_integrator"

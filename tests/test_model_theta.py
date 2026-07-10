@@ -361,3 +361,30 @@ class TestThetaPipeline:
         assert rate > 0
         duration = 50000 * 0.001
         assert abs(rate - sc / duration) < 1.0
+
+
+class TestThetaSimulate:
+    """Engineering-verification surface for ``ThetaNeuron.simulate``."""
+
+    def test_simulate_python_returns_finite_trace(self) -> None:
+        n = ThetaNeuron()
+        trace, spikes = n.simulate(1000, current=1.0, backend="python")
+        assert trace.shape == (1000,)
+        assert np.all(np.isfinite(trace))
+        assert spikes >= 1
+        assert n.theta == float(trace[-1])
+
+    def test_simulate_rust_matches_python(self) -> None:
+        pytest.importorskip("sc_neurocore_engine", reason="Rust engine not built")
+        py = ThetaNeuron()
+        rs = ThetaNeuron()
+        tr_py, sp_py = py.simulate(1000, current=1.0, backend="python")
+        tr_rs, sp_rs = rs.simulate(1000, current=1.0, backend="rust")
+        assert sp_py == sp_rs
+        assert np.array_equal(tr_py, tr_rs)
+
+    def test_simulate_rust_rejects_non_default(self) -> None:
+        pytest.importorskip("sc_neurocore_engine", reason="Rust engine not built")
+        n = ThetaNeuron(dt=0.02)
+        with pytest.raises(RuntimeError, match="factory-default"):
+            n.simulate(10, current=0.0, backend="rust")

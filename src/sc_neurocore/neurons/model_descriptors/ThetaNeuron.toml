@@ -46,8 +46,15 @@ theta = "(1 - cos(theta)) + (1 + cos(theta)) * I"
 
 [backends.python]
 status = "implemented"
+parity = "exact"
+
+[backends.rust]
+status = "implemented"
+parity = "exact"
 
 [reproducibility]
+reference_config = "{\"n_steps\":1000,\"current\":1.0,\"backend\":\"python\",\"parameters\":\"defaults\"}"
+golden_trace_sha256 = "49b3d2e53d937f04da0e8132c538cf5516a4d752a4fdcef93804ec1db2b2cb16"
 
 [documentation]
 slug = "models/theta"
