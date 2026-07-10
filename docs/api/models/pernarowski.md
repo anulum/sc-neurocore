@@ -1,4 +1,4 @@
-# SPDX-License-Identifier: AGPL-3.0-or-later
+<!-- SPDX-License-Identifier: AGPL-3.0-or-later -->
 # PernarowskiNeuron
 
 **Module:** `sc_neurocore.neurons.models.pernarowski`

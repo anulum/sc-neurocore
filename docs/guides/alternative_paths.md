@@ -1,4 +1,4 @@
-# SPDX-License-Identifier: AGPL-3.0-or-later
+<!-- SPDX-License-Identifier: AGPL-3.0-or-later -->
 # Alternative Paths
 
 SC-NeuroCore already contains research-tier and experimental modules, but that

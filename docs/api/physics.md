@@ -1,4 +1,4 @@
-# SPDX-License-Identifier: AGPL-3.0-or-later
+<!-- SPDX-License-Identifier: AGPL-3.0-or-later -->
 # Physics — Stochastic PDE Solvers + Wolfram Hypergraph
 
 Physics simulation using stochastic methods: heat equation via reflected
