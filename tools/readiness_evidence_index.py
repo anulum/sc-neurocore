@@ -498,6 +498,31 @@ def apply_facets(entries: tuple[EnrolledEvidence, ...] | None = None) -> list[st
             continue
         payload = dict(payload)
         has_dynamics = bool(_mapping_has_content(payload.get("dynamics")))
+        current = load_descriptor(entry.class_name)
+        if current is None:
+            lines.append(f"MISS {entry.class_name}: descriptor reload failed")
+            continue
+        s0s3 = descriptor_completeness_tier(current)
+        current_science = science_tier(current)
+        current_silicon = silicon_tier(current)
+        current_fields: dict[str, Any] = {
+            "science": current_science,
+            "silicon": current_silicon,
+            "s0s3": s0s3,
+            "has_dynamics": has_dynamics,
+            "dynamics_faithful": current.validation.dynamics_faithful,
+            "validation_metric": current.validation.metric,
+            "compiles": current.silicon.compiles,
+            "cosim_validated": current.silicon.cosim_validated,
+            "expected_science_min": _expected_science_min(entry, has_dynamics, s0s3),
+            "expected_silicon": _expected_silicon(entry),
+        }
+        if not _gaps(entry, current_fields):
+            lines.append(
+                f"PRESERVED {entry.class_name}: existing S{current_science} "
+                f"H{current_silicon} meets or exceeds {entry.level}"
+            )
+            continue
         payload["validation"] = validation_section(entry, has_dynamics=has_dynamics)
         payload["silicon"] = silicon_section(entry)
         rendered = _DESCRIPTOR_HEADER + tomli_w.dumps(payload)

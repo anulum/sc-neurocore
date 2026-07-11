@@ -6,6 +6,12 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 ## [Unreleased]
 
 ### Rulkov map class-correct schema-to-RTL enrolment
+- Descriptor regeneration now inherits `integration.dt` from a bundled map schema when the hand
+  class intentionally has no timestep parameter, so the Rulkov map retains its one-iteration
+  metadata without adding a non-functional public field or changing non-map fallbacks. The
+  readiness facet writer also preserves any descriptor whose recorded evidence already meets or
+  exceeds the indexed floor, preventing regeneration from replacing Rulkov's S5 trajectory and H2
+  synthesis evidence with H0 facets.
 - Re-enrolled the Rulkov 2002 fast/slow map (`rulkov_map`, DOI
   `10.1103/PhysRevE.65.041922`) with paired TOML/JSON schemas that mirror the maintained
   hand model's simultaneous rational/plateau/hard-reset branches and rising `x >= 0`

@@ -5,6 +5,12 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 ## [Unreleased]
 
 ### Added
+- Descriptor regeneration now reads `integration.dt` from an authoritative bundled map schema when
+  a model class has no public `dt` field, preserving the unit-iteration metadata of pure discrete
+  maps such as Rulkov without changing the fallback semantics of non-map models. Readiness facet
+  application now leaves descriptors unchanged when their existing science and silicon evidence
+  already meets or exceeds the indexed floor, preventing an H0 index entry from replacing Rulkov's
+  trajectory-backed S5/H2 evidence.
 - Class-correct schema-to-RTL re-enrolment of the Rulkov fast/slow map (`rulkov_map`,
   Rulkov 2002, DOI `10.1103/PhysRevE.65.041922`). The paired TOML/JSON schemas now mirror
   the maintained hand model's simultaneous three-branch map and rising `x >= 0` crossing

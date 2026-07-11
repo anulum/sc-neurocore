@@ -16,6 +16,7 @@ corpus must stay in sync with the model code.
 from __future__ import annotations
 
 import importlib.util
+import inspect
 import sys
 from pathlib import Path
 from types import ModuleType
@@ -63,3 +64,15 @@ def test_header_constant_matches_a_committed_descriptor() -> None:
         REPO / "src/sc_neurocore/neurons/model_descriptors/HodgkinHuxleyNeuron.toml"
     ).read_text(encoding="utf-8")
     assert committed.startswith(tool._DESCRIPTOR_HEADER)
+
+
+def test_map_descriptor_uses_schema_iteration_dt_without_public_dt_parameter() -> None:
+    """A pure map inherits its unit iteration from the schema, not the ODE fallback."""
+    from sc_neurocore.neurons.descriptor_generator import generate_descriptor
+    from sc_neurocore.neurons.models.rulkov_map import RulkovMapNeuron
+
+    descriptor = generate_descriptor("RulkovMapNeuron")
+
+    assert "dt" not in inspect.signature(RulkovMapNeuron).parameters
+    assert descriptor.dt == 1.0
+    assert descriptor.integration_method == "map"

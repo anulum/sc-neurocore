@@ -28,7 +28,7 @@ import inspect
 import re
 import textwrap
 from collections.abc import Mapping
-from typing import Any
+from typing import Any, TypeGuard
 
 from sc_neurocore.neurons.model_descriptor import (
     MODEL_DESCRIPTOR_SCHEMA_VERSION,
@@ -242,12 +242,15 @@ def generate_descriptor_payload(class_name: str) -> dict[str, Any]:
     v1_meta = v1.get("metadata", {}) if isinstance(v1.get("metadata"), Mapping) else {}
     v1_state = v1.get("state", {}) if isinstance(v1.get("state"), Mapping) else {}
     v1_params = v1.get("parameters", {}) if isinstance(v1.get("parameters"), Mapping) else {}
+    v1_integration = v1.get("integration", {}) if isinstance(v1.get("integration"), Mapping) else {}
+    integration_method = str(v1_integration.get("method", "euler"))
 
     specs = _field_specs(cls)
     dyn_state = _dynamic_state_fields(cls)
     state: dict[str, Any] = {}
     parameters: dict[str, Any] = {}
-    dt = 0.1
+    schema_dt = v1_integration.get("dt") if integration_method == "map" else None
+    dt = float(schema_dt) if _is_number(schema_dt) else 0.1
     for name, default in specs:
         if name == "dt":
             dt = default
@@ -318,9 +321,7 @@ def generate_descriptor_payload(class_name: str) -> dict[str, Any]:
         "parameters": parameters,
         "integration": {
             "dt": dt,
-            "method": str(v1.get("integration", {}).get("method", "euler"))
-            if isinstance(v1.get("integration"), Mapping)
-            else "euler",
+            "method": integration_method,
         },
         "dynamics": dynamics,
         "backends": {"python": {"status": "implemented"}},
@@ -448,7 +449,7 @@ def merge_descriptor_payloads(
     return merged
 
 
-def _is_number(value: object) -> bool:
+def _is_number(value: object) -> TypeGuard[int | float]:
     return isinstance(value, (int, float)) and not isinstance(value, bool)
 
 
