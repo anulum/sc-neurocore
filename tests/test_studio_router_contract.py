@@ -13,7 +13,6 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
-import pytest
 from fastapi import FastAPI
 from fastapi.routing import APIRoute, APIWebSocketRoute
 from starlette.testclient import TestClient
@@ -33,7 +32,6 @@ EXPECTED_HTTP_ROUTE_MODULES = frozenset(
         "sc_neurocore.studio.api.deploy",
         "sc_neurocore.studio.api.design",
         "sc_neurocore.studio.api.export",
-        "sc_neurocore.studio.api.frontend",
         "sc_neurocore.studio.api.identity",
         "sc_neurocore.studio.api.jobs",
         "sc_neurocore.studio.api.presets",
@@ -49,10 +47,16 @@ EXPECTED_HTTP_ROUTE_MODULES = frozenset(
 def test_application_routes_are_owned_by_responsibility_modules() -> None:
     application = create_app()
     routes = [route for route in application.routes if isinstance(route, APIRoute)]
+    backend_routes = [route for route in routes if route.path != "/"]
+    root_routes = [route for route in routes if route.path == "/"]
     signatures = [(route.path, tuple(sorted(route.methods or ()))) for route in routes]
 
-    assert len(routes) == 114
-    assert {route.endpoint.__module__ for route in routes} == EXPECTED_HTTP_ROUTE_MODULES
+    assert len(backend_routes) == 113
+    assert {route.endpoint.__module__ for route in backend_routes} == EXPECTED_HTTP_ROUTE_MODULES
+    assert len(root_routes) <= 1
+    assert all(
+        route.endpoint.__module__ == "sc_neurocore.studio.api.frontend" for route in root_routes
+    )
     assert len(signatures) == len(set(signatures))
     assert all(route.endpoint.__module__ != "sc_neurocore.studio.app" for route in routes)
 
@@ -70,13 +74,6 @@ def test_runtime_openapi_matches_committed_reference() -> None:
     assert create_app().openapi() == committed
 
 
-def test_application_always_registers_frontend_root() -> None:
-    routes = [route for route in create_app().routes if isinstance(route, APIRoute)]
-    root = next(route for route in routes if route.path == "/")
-
-    assert root.endpoint.__module__ == "sc_neurocore.studio.api.frontend"
-
-
 def test_frontend_mount_supports_source_tree_fallback(tmp_path: Path) -> None:
     app_module_file = tmp_path / "one" / "two" / "three" / "four" / "app.py"
     app_module_file.parent.mkdir(parents=True)
@@ -92,7 +89,7 @@ def test_frontend_mount_supports_source_tree_fallback(tmp_path: Path) -> None:
     assert response.text == "<html>fallback</html>"
 
 
-def test_frontend_mount_fails_closed_without_distribution(tmp_path: Path) -> None:
+def test_frontend_mount_leaves_root_unclaimed_without_distribution(tmp_path: Path) -> None:
     app_module_file = tmp_path / "one" / "two" / "three" / "four" / "app.py"
     app_module_file.parent.mkdir(parents=True)
     application = FastAPI()
@@ -100,23 +97,4 @@ def test_frontend_mount_fails_closed_without_distribution(tmp_path: Path) -> Non
     mount_studio_frontend(application, app_module_file=str(app_module_file))
     response = TestClient(application, base_url="http://127.0.0.1").get("/")
 
-    assert response.status_code == 503
-    assert response.json()["detail"] == "studio_frontend_not_built"
-
-
-def test_application_contract_is_stable_without_frontend_build(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
-    """A clean checkout keeps the root route and committed OpenAPI contract."""
-    monkeypatch.setattr(
-        "sc_neurocore.studio.api.frontend.os.path.isdir",
-        lambda _path: False,
-    )
-    application = create_app()
-    routes = [route for route in application.routes if isinstance(route, APIRoute)]
-    response = TestClient(application, base_url="http://127.0.0.1").get("/")
-
-    assert len(routes) == 114
-    assert application.openapi() == json.loads(OPENAPI_REFERENCE.read_text(encoding="utf-8"))
-    assert response.status_code == 503
-    assert response.json()["detail"] == "studio_frontend_not_built"
+    assert response.status_code == 404

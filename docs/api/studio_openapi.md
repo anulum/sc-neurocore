@@ -18,6 +18,11 @@ parameter, request body, response schema, and validation schema. CI-facing
 checks compare the committed document with the runtime application so route or
 schema drift cannot land silently.
 
+The conditionally mounted frontend document at `/` is a UI delivery route, not
+an API operation, and is excluded from the schema. This keeps the reference
+identical whether or not the ignored production `studio/frontend/dist/` bundle
+exists in the checkout.
+
 ## Responsibility routers
 
 | Responsibility | Route family |

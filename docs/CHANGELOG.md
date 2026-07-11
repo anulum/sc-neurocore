@@ -12,13 +12,13 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
   deployment, training, training weights, export, and adaptive-precision
   responsibilities; shared runtime, security, schema, guard, preset-flow, and
   frontend helpers live beside them.
-- Preserved the complete live API surface: 114 HTTP routes, 111 OpenAPI paths,
-  and `/ws/progress`. Canonical OpenAPI JSON remains byte-semantically equal to
-  the pre-refactor document at SHA-256
-  `a6b9dc6d391f85f10cec200cde0798109d69d0bc7d141d1545eeab15c7f4cef7`.
-- Made the root frontend route deterministic when the ignored `dist/` build is
-  absent: clean checkouts keep the same OpenAPI and route ownership, while `/`
-  returns `503 studio_frontend_not_built` until the production bundle exists.
+- Preserved the complete hermetic API surface: 113 backend HTTP routes, 110
+  OpenAPI paths, and `/ws/progress`. Canonical OpenAPI JSON remains
+  byte-semantically equal to the clean pre-refactor document at SHA-256
+  `b1e698de8ce38e15f152a3bffdf86d24dc8f14c12747a927be320bcc25825cdb`.
+- Kept the frontend root route conditional on the ignored `dist/` build while
+  excluding that UI document route from OpenAPI. Runtime and generated API
+  contracts are therefore identical in local, CI, and clean-worktree builds.
 - Added deterministic `tools/generate_studio_openapi.py` generation, a
   committed JSON reference, MkDocs API guidance, route-ownership assertions,
   normalized handler parity checks, and public-route coverage for terminal,

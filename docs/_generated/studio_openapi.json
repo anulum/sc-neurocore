@@ -2111,24 +2111,6 @@
   },
   "openapi": "3.1.0",
   "paths": {
-    "/": {
-      "get": {
-        "operationId": "serve_index__get",
-        "responses": {
-          "200": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "title": "Response Serve Index  Get"
-                }
-              }
-            },
-            "description": "Successful Response"
-          }
-        },
-        "summary": "Serve Index"
-      }
-    },
     "/api/adaptive-precision/auto-tune": {
       "post": {
         "operationId": "api_adaptive_precision_auto_tune_api_adaptive_precision_auto_tune_post",

@@ -13,7 +13,7 @@ from __future__ import annotations
 import os
 from typing import Any
 
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 
@@ -28,12 +28,11 @@ def mount_studio_frontend(app: FastAPI, *, app_module_file: str) -> None:
     app_module_file:
         Path of the compatibility application module used as the search anchor.
     """
-    primary_dist_dir = os.path.join(
+    dist_dir = os.path.join(
         os.path.dirname(app_module_file), "..", "..", "..", "studio", "frontend", "dist"
     )
-    dist_dir: str | None = primary_dist_dir
-    if not os.path.isdir(primary_dist_dir):
-        fallback_dist_dir = os.path.join(
+    if not os.path.isdir(dist_dir):
+        dist_dir = os.path.join(
             os.path.dirname(app_module_file),
             "..",
             "..",
@@ -43,13 +42,10 @@ def mount_studio_frontend(app: FastAPI, *, app_module_file: str) -> None:
             "frontend",
             "dist",
         )
-        dist_dir = fallback_dist_dir if os.path.isdir(fallback_dist_dir) else None
+    if os.path.isdir(dist_dir):
 
-    @app.get("/")
-    def serve_index() -> Any:
-        if dist_dir is None:
-            raise HTTPException(status_code=503, detail="studio_frontend_not_built")
-        return FileResponse(os.path.join(dist_dir, "index.html"))
+        @app.get("/", include_in_schema=False)
+        def serve_index() -> Any:
+            return FileResponse(os.path.join(dist_dir, "index.html"))
 
-    if dist_dir is not None:
         app.mount("/", StaticFiles(directory=dist_dir), name="static")
