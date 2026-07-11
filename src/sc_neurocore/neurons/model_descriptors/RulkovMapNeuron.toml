@@ -76,12 +76,12 @@ range = [
 ]
 
 [integration]
-dt = 0.1
+dt = 1.0
 method = "map"
 
 [dynamics]
-x = "alpha / (1.0 + x**2) + y + I"
-y = "y - sigma * x - beta"
+x = "(alpha / (1.0 - x) + y + I) if x <= 0 else (alpha + y + I if x < alpha + y + I else -1.0)"
+y = "y - mu * (x + 1.0) + mu * sigma"
 
 [backends.python]
 status = "implemented"
@@ -101,7 +101,7 @@ parity = "exact"
 
 [backends.mojo]
 status = "implemented"
-parity = "exact"
+parity = "ulp-bounded"
 
 [reproducibility]
 reference_config = "{\"n_steps\":1000,\"current\":2.0,\"backend\":\"python\",\"parameters\":\"defaults\"}"
@@ -113,14 +113,17 @@ notes = ""
 
 [validation]
 dynamics_faithful = true
-metric = "none"
-operating_point = "schema-DSL rulkov_map; map mode; compile-only for parity class"
-tolerance = "compile-only or map-suite separate gates"
-evidence = "tests/test_cosimulation.py::TestSchemaGapModelCosim::_SCHEMA_GAP_COMPILE_ONLY"
+metric = "trajectory"
+operating_point = "schema-DSL Rulkov three-branch fast/slow map at I=1.5 over 30 iterations"
+tolerance = "hand/TOML/JSON states exact; Q16.16 RTL spike vector exact and x/y absolute error below 0.001"
+evidence = "tests/test_cosimulation.py::TestQ1616Precision::test_rulkov_map_q1616_short_window_trajectory"
 
 [silicon]
 compiles = true
-cosim_validated = false
-cosim_evidence = ""
-target_tier = "H0"
-terminal_reason = "Compile-clean RTL only; spike-parity not claimed for this class (compile-only or map-suite separate gates)."
+cosim_validated = true
+synthesised = true
+cosim_evidence = "tests/test_cosimulation.py::TestQ1616Precision::test_rulkov_map_q1616_short_window_trajectory"
+synth_report = "hdl/reports/yosys_rulkov_map_q1616_2026-07-11.json"
+target_device = "Xilinx 7-series (Yosys synth_xilinx)"
+target_tier = "H2"
+terminal_reason = "Discrete bursting map; H2 is the documented terminal because long-window fixed-point trajectory identity is not a valid metric for sensitive map dynamics."

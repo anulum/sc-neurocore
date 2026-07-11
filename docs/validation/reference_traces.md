@@ -42,7 +42,7 @@ table because their schemas are stochastic.
 | `perfect_integrator_constant_current_sawtooth` | `perfect_integrator` | `universal_dsl` | Analytic post-reset sawtooth solution from `neurons/model_schemas/perfect_integrator.toml` |
 | `quadratic_if_zero_current_analytic` | `quadratic_if` | `universal_dsl` | Analytic zero-current Riccati solution from `neurons/model_schemas/quadratic_if.toml` with DOI-backed schema provenance |
 | `resonate_fire_subthreshold_resonance_doi` | `resonate_fire` | `universal_dsl` | Analytic linear Euler recurrence from `neurons/model_schemas/resonate_fire.toml` |
-| `rulkov_map_driven_spiking_doi` | `rulkov_map` | `universal_dsl` | Independent piecewise-map iteration (Rulkov 2002, `method="map"`) from `neurons/model_schemas/rulkov_map.toml` with DOI-backed schema provenance |
+| `rulkov_map_driven_spiking_doi` | `rulkov_map` | `universal_dsl` | Independent piecewise-map iteration (Rulkov 2002, `method="map"`, rising `x >= 0` crossing) from `neurons/model_schemas/rulkov_map.toml` with DOI-backed schema provenance |
 | `theta_constant_current_phase_analytic` | `theta` | `universal_dsl` | Analytic tangent half-angle phase solution from `neurons/model_schemas/theta.toml` with DOI-backed schema provenance |
 | `wang_buzsaki_driven_spiking_doi` | `wang_buzsaki` | `universal_dsl` | Independent macro-step Gauss-Seidel re-derivation of the driven fast-spiking interneuron (50 inner `dt=0.01` sub-steps per 0.5 ms macro step, gates `h`/`n` updated before `v`, no reset, macro-boundary `v >= v_threshold` crossing) from `neurons/model_schemas/wang_buzsaki.toml` with DOI-backed schema provenance |
 
@@ -133,10 +133,10 @@ membrane and Na/K gating rate functions (numpy exp and the exprel-rewritten `alp
 `alpha_n`) reproduce the schema runner bit-for-bit, so the driven schema counts the same five
 action potentials the hand model does (`hand == schema` exact), which the earlier single-step
 Euler resting-gate schema could not.
-The perfect-integrator, FitzHugh-Nagumo, FitzHugh-Rinzel, Pernarowski, Terman-Wang, Wilson-HR, McKean, Morris-Lecar,
+The perfect-integrator, FitzHugh-Nagumo, FitzHugh-Rinzel, Pernarowski, Terman-Wang, Wilson-HR, Rulkov, McKean, Morris-Lecar,
 Hodgkin-Huxley, Connor-Stevens,
 Izhikevich, Izhikevich 2007, DPI, and Mihalas-Niebur entries are spike-bearing;
-they validate reset (or, for FitzHugh-Nagumo, FitzHugh-Rinzel, Pernarowski, Terman-Wang, McKean, Morris-Lecar,
+they validate reset (or, for FitzHugh-Nagumo, FitzHugh-Rinzel, Pernarowski, Terman-Wang, Rulkov, McKean, Morris-Lecar,
 Hodgkin-Huxley, and Connor-Stevens, rising-edge crossing) and first-spike features,
 not only quiet trajectories. The
 Rulkov entry iterates the Rulkov 2002 piecewise fast/slow map with the
@@ -144,7 +144,8 @@ Rulkov entry iterates the Rulkov 2002 piecewise fast/slow map with the
 map rather than integrated as an ODE), so the trajectory is bounded and its
 committed features are independently re-derived exactly; a driving current
 exercises all three fast-map branches (rational subthreshold, spike plateau, hard
-reset). The QIF and theta tolerances are wider than
+reset). Its rising-crossing reference counts ten events rather than the twenty
+positive-level steps produced by the superseded schema. The QIF and theta tolerances are wider than
 machine-epsilon feature precision because the current schema runner declares
 explicit Euler integration while those references are continuous analytic
 solutions.

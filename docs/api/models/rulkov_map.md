@@ -1,7 +1,7 @@
 # RulkovMapNeuron
 
 **Module:** `sc_neurocore.neurons.models.rulkov_map`
-**Reference:** Rulkov 2001
+**Reference:** Rulkov 2002
 **Family:** Map-based (discrete iteration, no ODE)
 **State variables:** `x` (fast), `y` (slow)
 
@@ -64,8 +64,8 @@ No numerical integration — pure discrete map iteration. O(1) per step.
 ### Three-branch piecewise structure
 
 1. **Branch 1** ($x \leq 0$): $x_{new} = \alpha/(1-x) + y + I$. This is the
-   subthreshold regime. At the fixed point $x^* = -1$, $y^* = -3$, $I = 0$:
-   $x_{new} = 4/2 + (-3) = -1$ exactly. The map has a stable fixed point here.
+   subthreshold regime. At the initial state $x = -1$, $y = -3$, $I = 0$,
+   the first fast update returns $x_{new} = 4/2 + (-3) = -1$ exactly.
 
 2. **Branch 2** ($0 < x < \alpha + y + I$): $x_{new} = \alpha + y + I$. This
    is the spike plateau — x stays at the maximum value for one step.
@@ -73,22 +73,24 @@ No numerical integration — pure discrete map iteration. O(1) per step.
 3. **Branch 3** ($x \geq \alpha + y + I$): $x_{new} = -1$. Hard reset to
    the resting state.
 
-### Verified fixed point
+### Verified first fast update
 
 At default params (x=−1, y=−3, I=0): $x_{new} = 4/(1-(-1)) + (-3) + 0 = 2 - 3 = -1$.
-The map returns exactly to $x = -1$. Verified in test: `abs(x_new - (-1.0)) < 1e-10`.
+The fast coordinate returns exactly to $x = -1$ on that first step. The full
+two-state point is not fixed: the simultaneous slow update moves `y` by
+$\mu\sigma=-0.0016$. Both facts are pinned by the model tests.
 
 ### Current-driven spiking
 
 Adding current shifts x upward via all three branches. At I=0 with default
-params, the neuron sits at the fixed point and is silent (0 spikes/50k).
+params, the slow state drifts while the neuron remains silent over the tested window.
 At I=0.5, current pushes x above threshold, triggering rapid spike clusters.
 
 ### Measured dynamics (constant current)
 
-| Current | Spikes (50k) | Mean ISI | Regime |
+| Current | Spikes (2,000 iterations) | Mean ISI | Regime |
 |---------|-------------|----------|--------|
-| 0.0 | 0 | — | Fixed point (silent) |
+| 0.0 | 0 | — | Silent slow drift |
 | 0.5 | 34 | 6 | Sparse bursting |
 | 1.0 | 77 | 5 | Regular bursting |
 | 2.0 | 179 | 4 | Fast bursting |
@@ -96,8 +98,8 @@ At I=0.5, current pushes x above threshold, triggering rapid spike clusters.
 
 ### Slow variable y dynamics
 
-y evolves on the timescale $\mu = 0.001$ (1000× slower than x). At the fixed
-point ($x = -1$): $\Delta y = -\mu(-1+1) + \mu\sigma = \mu\sigma = -0.0016$.
+y evolves on the timescale $\mu = 0.001$ (1000× slower than x). At the initial
+fast coordinate ($x = -1$): $\Delta y = -\mu(-1+1) + \mu\sigma = \mu\sigma = -0.0016$.
 This slow drift of y modulates the burst pattern over long timescales.
 
 ### Sigma controls excitability
@@ -114,7 +116,7 @@ spontaneous firing even at I=0. At alpha=2.0, the neuron is silent at I=0.
 
 ### x is bounded
 
-Measured x range over 10k steps at I=0.5: [−2.6, −1.0]. The branch-3 reset
+Measured x range over 10k steps at I=0.5: approximately [−2.6, 1.4963]. The branch-3 reset
 to $x = -1$ prevents divergence. The lower bound comes from branch-1 dynamics
 where $\alpha/(1-x) + y$ can go negative when y is sufficiently negative.
 
@@ -134,7 +136,7 @@ the interaction between the fast map dynamics and the slow y modulation.
 | Cost per step | O(1), no multiply chain | O(1), 2 multiplies | O(1), 4+ exp() |
 | Bursting | Built-in (3 branches) | Via parameter choice | Via slow K/Ca |
 | Timescales | Separate (mu) | Separate (a, b) | Coupled (gating) |
-| FPGA suitability | Excellent (no multiplier for branch 2/3) | Good | Poor (exp LUTs) |
+| FPGA datapath | Rational divider plus branch selects | Polynomial arithmetic | Exponential look-up tables plus gating arithmetic |
 
 ---
 
@@ -150,6 +152,28 @@ the interaction between the fast map dynamics and the slow y modulation.
 - **Division by zero protection:** Branch 1 uses $\alpha/(1-x)$. At $x = 1$,
   this diverges. However, the branch condition $x \leq 0$ ensures $1-x \geq 1$,
   so division by zero cannot occur in branch 1.
+
+---
+
+## Python↔Verilog co-simulation and synthesis
+
+The paired schema files use `method = "map"`, the same simultaneous recurrence
+as `RulkovMapNeuron`, and rising `x >= 0` crossing detection. At `I=1.5`, the
+30-iteration evidence window visits the rational, plateau, and hard-reset
+branches ten times each. Hand model and both schema formats have exact states
+and event decisions. The generated Q16.16 RTL reproduces the complete ten-event
+vector while each committed `x`/`y` state remains within `0.001` absolute error
+of the float64 hand trajectory.
+
+This bounded trajectory is the declared metric for a sensitive discrete map.
+Long-window spike-count identity is intentionally not used: fixed-point rounding
+can move a sensitive map onto a different orbit even when the short-window
+lowering is faithful.
+
+The Q16.16 core also passes Yosys 0.33 `synth_xilinx`; the raw synthesis report
+is committed at `hdl/reports/yosys_rulkov_map_q1616_2026-07-11.json`, satisfying
+the model's documented H2 terminal. The formal catalogue carries a separate
+Q8.8 port-only reset-spike safety job at BMC depth 4.
 
 ---
 
@@ -233,7 +257,7 @@ refreshed artefact reports 34 spikes for every backend.
 | Category | Tests | What is verified |
 |----------|------:|-----------------|
 | Isolation | 5 | defaults, binary, state evolution, finite 50k, reset |
-| Map dynamics | 5 | branch-1 fixed point (x=−1 exactly), branch-1 current shift, branch-3 reset to −1, y slow drift (μσ), x bounded |
+| Map dynamics | 5 | branch-1 first update (x=−1 exactly), branch-1 current shift, branch-3 reset to −1, y slow drift (μσ), x bounded |
 | f–I curve | 4 | silent at I=0, I=0.5 triggers spikes, rate increases, monotonic 4-point |
 | Bursting | 2 | short ISI (median <10), ISI variability (CV>0.1) |
 | Parameters | 4 | sigma excitability, alpha amplitude, mu timescale, upward crossing |
@@ -241,6 +265,8 @@ refreshed artefact reports 34 spikes for every backend.
 | Network | 2 | Population(n=10), Network spikes |
 | Analysis | 2 | spike_count, consistency |
 | Polyglot parity | 33 | rust/julia/go bit-exact (4 regimes + empty/single + high-current branches 2/3), mojo ULP-bounded trace + per-step + spike count, dispatch/validation, simulate==repeated-step, final-state advance |
+| Schema/RTL trajectory | 1 | exact hand/TOML/JSON states, all three branches, exact Q16.16 event vector, bounded x/y error |
+| Silicon evidence | 2 | Q16.16 Yosys synthesis report and Q8.8 depth-4 formal safety job |
 
 The step-level categories above are listed by intent; parametrisation expands
 them at collection time. The two files collect **67 tests** in total (34 in
@@ -251,9 +277,9 @@ all passing.
 
 ## Findings
 
-1. **Fixed point verified exactly:** At x=−1, y=−3, I=0: x_new = −1.0
-   to machine precision. The map returns to the same state.
-2. **y slow drift = μσ at fixed point:** Measured Δy = −0.0016 = μ × σ
+1. **Initial fast update verified exactly:** At x=−1, y=−3, I=0: x_new = −1.0
+   to machine precision while the slow coordinate advances.
+2. **y slow drift = μσ at the initial x:** Measured Δy = −0.0016 = μ × σ
    exactly. The slow variable dynamics are correct.
 3. **Branch-3 reset to −1 confirmed:** When x=5 with alpha+y+I=1,
    x_new = −1.0 exactly.

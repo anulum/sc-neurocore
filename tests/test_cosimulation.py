@@ -34,9 +34,9 @@ TestQ1616Precision
 
 TestSchemaGapModelCosim
     WC-A5 Tier A: honest cosim status for the six schema-gap models —
-    FitzHugh-Nagumo spike-parity at Q16.16; exp_if / Hindmarsh-Rose / Rulkov
-    compile-valid only (stiff exp, chaos, map instability); poisson /
-    escape_rate stochastic and excluded from deterministic parity.
+    FitzHugh-Nagumo spike-parity and Rulkov short-window trajectory parity at
+    Q16.16; exp_if / Hindmarsh-Rose compile-valid only (stiff exp / chaos);
+    poisson / escape_rate stochastic and excluded from deterministic parity.
 
 Verified Results (2026-05-01)
 -----------------------------
@@ -54,6 +54,8 @@ Terman-Wang (2026-07-11): faithful two-state RK4 / no-reset / rising-edge crossi
 enrolment — exact hand / schema / Q16.16 RTL spike-count parity across three drive regimes.
 Wilson-HR (2026-07-11): faithful two-state polynomial RK4 / hard voltage reset enrolment
 — exact hand / schema / Q16.16 RTL spike-count parity across three drive regimes.
+Rulkov map (2026-07-11): faithful simultaneous three-branch map / rising-edge crossing
+enrolment — hand/TOML/JSON exact and Q16.16 RTL short-window trajectory within 0.001.
 
 Prerequisites
 -------------
@@ -91,6 +93,7 @@ from sc_neurocore.neurons.models.mihalas_niebur import MihalasNieburNeuron
 from sc_neurocore.neurons.models.morris_lecar import MorrisLecarNeuron
 from sc_neurocore.neurons.models.perfect_integrator import PerfectIntegratorNeuron
 from sc_neurocore.neurons.models.pernarowski import PernarowskiNeuron
+from sc_neurocore.neurons.models.rulkov_map import RulkovMapNeuron
 from sc_neurocore.neurons.models.terman_wang import TermanWangOscillator
 from sc_neurocore.neurons.models.wilson_hr import WilsonHRNeuron
 from sc_neurocore.neurons.universal_dsl import UniversalNeuron
@@ -891,6 +894,78 @@ def _verilog_spike_count_q1616(model_name: str, n_steps: int, current: float) ->
         return int(match.group(1))
 
 
+def _rulkov_map_verilog_q1616_trace(n_steps: int, current: float) -> list[tuple[int, float, float]]:
+    """Return the emitted Rulkov RTL's committed Q16.16 state trace.
+
+    The testbench samples the generated module's synchronous ``x_reg`` and
+    ``y_reg`` state after each active clock edge. These registers are the map
+    recurrence itself; the public state outputs retain the pre-threshold value
+    on a spiking cycle, so sampling the committed registers
+    avoids confusing that interface convention with the next-state trajectory.
+    """
+    neuron = UniversalNeuron.from_schema("rulkov_map")
+    module_name = "sc_rulkov_map_q1616_trace"
+    verilog = neuron.to_verilog(module_name=module_name, data_width=32, fraction=16)
+    current_q = Q88(data_width=32, fraction=16).encode(current)
+    testbench = "\n".join(
+        [
+            "`timescale 1ns / 1ps",
+            "module tb_sc_rulkov_map_q1616_trace;",
+            "reg clk = 1'b0;",
+            "reg rst_n = 1'b0;",
+            "wire spike_out;",
+            "wire signed [31:0] x_out;",
+            "wire signed [31:0] y_out;",
+            "always #5 clk = ~clk;",
+            f"{module_name} uut (",
+            "    .clk(clk), .rst_n(rst_n),",
+            f"    .I_t(32'sd{current_q}),",
+            "    .spike_out(spike_out), .x_out(x_out), .y_out(y_out)",
+            ");",
+            "integer step_index;",
+            "initial begin",
+            "    #23; rst_n = 1'b1;",
+            f"    for (step_index = 0; step_index < {n_steps}; step_index = step_index + 1) begin",
+            "        @(posedge clk); #1;",
+            '        $display("RULKOV_TRACE %0d %0d %0d", spike_out, uut.x_reg, uut.y_reg);',
+            "    end",
+            "    $finish;",
+            "end",
+            "endmodule",
+        ]
+    )
+
+    with tempfile.TemporaryDirectory() as tmpdir:
+        root = Path(tmpdir)
+        rtl_path = root / f"{module_name}.v"
+        tb_path = root / f"tb_{module_name}.v"
+        out_path = root / f"tb_{module_name}"
+        rtl_path.write_text(verilog, encoding="utf-8")
+        tb_path.write_text(testbench, encoding="utf-8")
+        subprocess.run(
+            ["iverilog", "-g2012", "-o", str(out_path), str(rtl_path), str(tb_path)],
+            capture_output=True,
+            text=True,
+            timeout=30,
+            check=True,
+        )
+        simulation = subprocess.run(
+            ["vvp", str(out_path)],
+            capture_output=True,
+            text=True,
+            timeout=30,
+            check=True,
+        )
+
+    scale = float(1 << 16)
+    rows = re.findall(r"^RULKOV_TRACE (-?\d+) (-?\d+) (-?\d+)$", simulation.stdout, re.MULTILINE)
+    trace = [(int(spike), int(x_q) / scale, int(y_q) / scale) for spike, x_q, y_q in rows]
+    assert len(trace) == n_steps, (
+        f"Rulkov RTL emitted {len(trace)} trace rows; expected {n_steps}:\n{simulation.stdout}"
+    )
+    return trace
+
+
 def _neuron_verilog_spike_count_q1616(
     neuron: EquationNeuron, n_steps: int, current: float, module_name: str
 ) -> int:
@@ -1350,6 +1425,51 @@ class TestQ1616Precision:
             f"schema={py_spikes}, verilog={vlog_spikes}"
         )
 
+    def test_rulkov_map_q1616_short_window_trajectory(self) -> None:
+        """Rulkov has class-correct three-way short-window trajectory parity.
+
+        The maintained hand model and both schema formats execute the published
+        simultaneous fast/slow map with rising ``x >= 0`` crossing detection.
+        At ``I=1.5`` the 30-step window visits the rational, plateau, and hard-reset
+        branches ten times each. Hand/TOML/JSON decisions and states must be exact;
+        the emitted Q16.16 RTL must reproduce the complete ten-event vector while
+        each committed state stays within 0.001 of float64. The bounded trajectory
+        is the map-appropriate observable; no long-window spike-count claim is made.
+        """
+        current = 1.5
+        n_steps = 30
+        schema_dir = Path(__file__).resolve().parents[1] / "src/sc_neurocore/neurons/model_schemas"
+        hand = RulkovMapNeuron()
+        toml_schema = UniversalNeuron.from_schema(schema_dir / "rulkov_map.toml")
+        json_schema = UniversalNeuron.from_schema(schema_dir / "rulkov_map.json")
+        hand_trace: list[tuple[int, float, float]] = []
+        branch_counts = {"rational": 0, "plateau": 0, "reset": 0}
+
+        for _step in range(n_steps):
+            boundary = hand.alpha + hand.y + current
+            if hand.x <= 0.0:
+                branch_counts["rational"] += 1
+            elif hand.x < boundary:
+                branch_counts["plateau"] += 1
+            else:
+                branch_counts["reset"] += 1
+            hand_spike = hand.step(current)
+            assert int(bool(toml_schema.step(I=current))) == hand_spike
+            assert int(bool(json_schema.step(I=current))) == hand_spike
+            assert toml_schema.state == {"x": hand.x, "y": hand.y}
+            assert json_schema.state == {"x": hand.x, "y": hand.y}
+            hand_trace.append((hand_spike, hand.x, hand.y))
+
+        rtl_trace = _rulkov_map_verilog_q1616_trace(n_steps, current)
+        assert branch_counts == {"rational": 10, "plateau": 10, "reset": 10}
+        assert [row[0] for row in hand_trace] == [row[0] for row in rtl_trace]
+        assert sum(row[0] for row in rtl_trace) == 10
+        for (_spike, expected_x, expected_y), (_rtl_spike, rtl_x, rtl_y) in zip(
+            hand_trace, rtl_trace, strict=True
+        ):
+            assert rtl_x == pytest.approx(expected_x, abs=0.001)
+            assert rtl_y == pytest.approx(expected_y, abs=0.001)
+
     def test_mckean_q1616_parity(self) -> None:
         """Faithful McKean co-simulates at exact Q16.16 three-way parity.
 
@@ -1681,19 +1801,16 @@ class TestTranscendentalCoSimulation:
 #                      (0 spikes) for n≤80, then sensitive dependence makes the
 #                      fixed-point and float trains diverge (422%→1000% gap) once
 #                      bursting starts — bit-true parity is undefined for chaos.
-#   rulkov_map       → compile-valid RTL only. Deterministic discrete map (Rulkov
-#                      2002, `method="map"`), lowered through the IfExp/map datapath
-#                      to the correct `x_{n+1}=f(x_n,y_n)` recurrence. A map has no
-#                      integrator smoothing, so fixed-point per-step rounding
-#                      compounds and diverges from the float reference within a few
-#                      steps — no spike-count parity is claimable, but the RTL is the
-#                      faithful map (not the earlier diverging Euler-on-a-map).
+#   rulkov_map       → short-window trajectory parity at Q16.16. The corrected
+#                      rising-crossing schema is enrolled above with exact event
+#                      parity and bounded x/y error across all three map branches;
+#                      long-window spike count remains intentionally unclaimed.
 #   poisson,         → stochastic (schema `stochastic = true`, threshold
 #   escape_rate        `condition = "stochastic"`): spike emission is a random
 #                      process, so deterministic spike-count parity is not defined.
 #
 # Full evidence: docs/internal (WC-A5 Tier-A report).
-_SCHEMA_GAP_COMPILE_ONLY = ["exp_if", "hindmarsh_rose", "rulkov_map"]
+_SCHEMA_GAP_COMPILE_ONLY = ["exp_if", "hindmarsh_rose"]
 _SCHEMA_GAP_STOCHASTIC = ["poisson", "escape_rate"]
 
 
@@ -1710,11 +1827,11 @@ class TestSchemaGapModelCosim:
 
     @pytest.mark.parametrize("model_name", _SCHEMA_GAP_COMPILE_ONLY)
     def test_compile_valid_but_not_spike_parity(self, model_name: str) -> None:
-        """exp_if / hindmarsh_rose / rulkov_map lower to iverilog-valid Verilog.
+        """exp_if and Hindmarsh-Rose lower to iverilog-valid Verilog.
 
         Spike-count parity is not scientifically claimable for these (stiff exp
-        saturation, chaotic sensitive-dependence, map instability — see module
-        notes), so this asserts the fixed-point *path* is valid rather than a
+        saturation and chaotic sensitive-dependence — see module notes), so this
+        asserts the fixed-point *path* is valid rather than a
         spike count, matching the honest compile-only precedent for coarse-LUT
         transcendental models.
         """

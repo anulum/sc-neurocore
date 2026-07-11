@@ -36,10 +36,11 @@ x = "(alpha / (1.0 - x) + y + I) if x <= 0 else (alpha + y + I if x < alpha + y 
 y = "y - mu * (x + 1.0) + mu * sigma"
 
 [threshold]
-condition = "x > 0.0"
-detection = "level"
+condition = "x >= 0.0"
+detection = "crossing"
 
 [extensions]
 model_type = "map"
 discrete_time = true
 bursting = true
+silicon_cosim_note = "At I=1.5 over 30 iterations, the hand model and both schema formats have exact state and crossing agreement; Q16.16 RTL reproduces the 10-event crossing vector while both state variables stay within 0.001 absolute error. All three fast-map branches execute ten times. Long-window spike-count parity is not used for this map class."

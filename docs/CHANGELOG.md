@@ -5,6 +5,25 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+### Rulkov map class-correct schema-to-RTL enrolment
+- Re-enrolled the Rulkov 2002 fast/slow map (`rulkov_map`, DOI
+  `10.1103/PhysRevE.65.041922`) with paired TOML/JSON schemas that mirror the maintained
+  hand model's simultaneous rational/plateau/hard-reset branches and rising `x >= 0`
+  crossing decision. The old schema used level detection and therefore counted every
+  positive plateau step rather than the hand model's upward crossings.
+- At `I=1.5`, the bounded 30-iteration validation window executes every fast-map branch
+  ten times. Hand model and both schema formats agree exactly on all post-step states and
+  the ten-event vector; emitted Q16.16 RTL reproduces that event vector exactly with
+  absolute `x`/`y` error below `0.001`. The evidence uses the class-appropriate short-window
+  trajectory metric and explicitly withholds long-window spike-count identity.
+- Corrected the descriptor's stale equations and timestep, regenerated the DOI-backed
+  crossing reference, and recorded S5/H2: the Q16.16 core passes Yosys 0.33
+  `synth_xilinx` with a raw committed report. The now-perfect descriptor is registered
+  with the formal catalogue through generated Q8.8 RTL, a port-only harness, and a
+  depth-4 SymbiYosys/Z3 safety job, bringing the inventory to 19 models. Schema-gap
+  counts are unchanged because the paired schema already existed. The completed
+  acceleration chain and its benchmark artefacts are unchanged.
+
 ### Wilson-HR faithful schema-to-RTL enrolment
 - Enrolled the Wilson-HR two-state polynomial cortical model (`wilson_hr`, Wilson 1999, DOI
   `10.1006/jtbi.1999.1002`) with paired TOML/JSON schemas that mirror the maintained hand model's

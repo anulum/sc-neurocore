@@ -5,6 +5,19 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 ## [Unreleased]
 
 ### Added
+- Class-correct schema-to-RTL re-enrolment of the Rulkov fast/slow map (`rulkov_map`,
+  Rulkov 2002, DOI `10.1103/PhysRevE.65.041922`). The paired TOML/JSON schemas now mirror
+  the maintained hand model's simultaneous three-branch map and rising `x >= 0` crossing
+  semantics instead of counting every positive plateau step. At `I=1.5`, a bounded 30-iteration
+  window exercises the rational, plateau, and hard-reset branches ten times each: hand model and
+  both schema formats have exact state/event agreement, while the emitted Q16.16 RTL reproduces
+  the exact ten-event vector with both state errors below `0.001`. This short-window trajectory is
+  the class-appropriate map metric; no long-window spike-count identity is claimed. The descriptor
+  now records faithful map dynamics, S5 trajectory evidence, and the documented H2 terminal backed
+  by a raw Yosys 0.33 `synth_xilinx` report over the Q16.16 core. The resulting S5/H2 descriptor is
+  registered with the formal catalogue through generated Q8.8 RTL, a port-only harness, and a
+  depth-4 SymbiYosys/Z3 reset-spike safety job, bringing the inventory to 19 models. The existing
+  Rust/Go/Julia/Mojo acceleration chain and committed benchmark artefacts remain unchanged.
 - Faithful schema-to-RTL enrolment of the Wilson-HR two-state polynomial cortical model
   (`wilson_hr`, Wilson 1999, DOI `10.1006/jtbi.1999.1002`). The paired TOML/JSON schemas mirror
   the maintained hand model's simultaneous classical RK4 flow, polynomial membrane nullcline,
