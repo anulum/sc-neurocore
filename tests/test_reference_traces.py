@@ -31,6 +31,7 @@ from sc_neurocore.neurons.universal_dsl import list_bundled_schemas
 _STOCHASTIC_SCHEMA_NAMES = frozenset({"escape_rate", "poisson"})
 _DETERMINISTIC_SCHEMA_TRACES = {
     "adex": "adex_resting_adaptation_doi",
+    "cazelles_map": "cazelles_map_bursting_doi",
     "connor_stevens": "connor_stevens_driven_spiking_doi",
     "dpi_neuron": "dpi_neuron_driven_spiking_doi",
     "exp_if": "exp_if_resting_exponential_doi",

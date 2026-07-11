@@ -172,6 +172,32 @@ uses generated Q8.8 RTL, a port-only harness, and a depth-4 SymbiYosys/Z3
 reset-spike safety job; behavioural evidence remains the Q16.16 short-window
 trajectory.
 
+### Cazelles map Q16.16 trajectory enrolment
+
+The `cazelles_map` schema mirrors the maintained Cazelles, Courbage, and
+Rabinovich (2001) hand model as a simultaneous discrete recurrence. The fast
+coordinate commits
+`clip(a*x*(1-x) - y + I, -2, 2)`, the slow coordinate commits
+`y + epsilon*(x - sigma)` from the old state, and each committed
+`x >= x_threshold` value emits a level event. It is not a crossing detector and
+receives no ODE timestep scaling.
+
+The enrolled Q16.16 evidence uses three bounded 30-iteration trajectories. At
+`I=0.5`, `1.0`, and `2.0`, the hand model and paired TOML/JSON schemas agree
+exactly on all states and events. The RTL reproduces the complete event vectors
+of two, one, and one events respectively, while both state coordinates remain
+within `0.0004` absolute error of float64. Together the points exercise the
+interior expression and both fast-state clip bounds.
+
+The sensitive `I=0.05` trajectory is an explicit exclusion: over 30 iterations,
+the hand/schema path emits seven level events while Q16.16 emits eight, with
+seven event-position mismatches. Pinning that observation prevents the bounded
+trajectory evidence from being read as long-window chaotic identity.
+
+The S5/H1 promotion adds a Q8.8 formal-catalogue core and port-only harness.
+Its depth-4 SymbiYosys/Z3 job proves reset-spike safety only; the three Q16.16
+trajectories remain the behavioural evidence.
+
 ### GLIF Q16.16 enrolment
 
 The `glif` schema mirrors the maintained Allen Institute GLIF5 model:

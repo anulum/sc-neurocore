@@ -1,0 +1,45 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Commercial license available
+# © Concepts 1996–2026 Miroslav Šotek. All rights reserved.
+# © Code 2020–2026 Miroslav Šotek. All rights reserved.
+# ORCID: 0009-0009-3560-0851
+# Contact: www.anulum.li | protoscience@anulum.li
+# SC-NeuroCore — Source/config provenance header
+
+[metadata]
+schema_version = 1
+name = "Cazelles Map"
+author = "Cazelles, B., Courbage, M. & Rabinovich, M."
+year = 2001
+doi = "10.1209/epl/i2001-00548-y"
+description = "Discrete-time clipped logistic fast/slow bursting map"
+
+[state]
+x = 0.1
+y = 0.0
+
+[parameters]
+a = 3.8
+epsilon = 0.01
+sigma = 0.5
+x_threshold = 0.9
+
+[integration]
+dt = 1.0
+method = "map"
+
+[dynamics]
+# Cazelles, Courbage & Rabinovich (2001): simultaneous two-dimensional map.
+# `method = "map"` commits these expressions directly without timestep scaling.
+x = "min(2.0, max(-2.0, a * x * (1.0 - x) - y + I))"
+y = "y + epsilon * (x - sigma)"
+
+[threshold]
+condition = "x >= x_threshold"
+detection = "level"
+
+[extensions]
+model_type = "map"
+discrete_time = true
+bursting = true
+silicon_cosim_note = "At I=0.5, I=1.0, and I=2.0 over 30 iterations, hand model and both schemas agree exactly on states and events; Q16.16 RTL reproduces the complete event vectors with maximum state error below 0.0004. The chaotic I=0.05 trace is an explicit excluded boundary."

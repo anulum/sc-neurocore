@@ -41,6 +41,7 @@ DESC_DIR = ROOT / "src" / "sc_neurocore" / "neurons" / "model_descriptors"
 # Schema stem used by UniversalNeuron.from_schema for each perfect class.
 CLASS_TO_SCHEMA: dict[str, str] = {
     "AdExNeuron": "adex",
+    "CazellesMapNeuron": "cazelles_map",
     "ConnorStevensNeuron": "connor_stevens",
     "DPINeuron": "dpi_neuron",
     "FitzHughNagumoNeuron": "fitzhugh_nagumo",
@@ -63,6 +64,7 @@ CLASS_TO_SCHEMA: dict[str, str] = {
 
 # BMC depth: small for huge LUT models; deeper for compact IF cores.
 DEPTH_BY_SCHEMA: dict[str, int] = {
+    "cazelles_map": 4,
     "connor_stevens": 4,
     "hodgkin_huxley": 4,
     "morris_lecar": 3,
@@ -82,6 +84,7 @@ DEPTH_BY_SCHEMA: dict[str, int] = {
 # Heavy multi-state / transcendental cores: prove only reset-spike safety at tiny BMC depth.
 MINIMAL_SAFETY_SCHEMAS: frozenset[str] = frozenset(
     {
+        "cazelles_map",
         "fitzhugh_nagumo",
         "fitzhugh_rinzel",
         "mckean",

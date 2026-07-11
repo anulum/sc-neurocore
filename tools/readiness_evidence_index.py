@@ -97,6 +97,17 @@ class EnrolledEvidence:
 # skip_apply while the peer agent rewrites its integrator (Gauss-Seidel).
 ENROLLED: tuple[EnrolledEvidence, ...] = (
     EnrolledEvidence(
+        schema_name="cazelles_map",
+        class_name="CazellesMapNeuron",
+        level="h1_cosim",
+        evidence="tests/test_cosim_cazelles_map.py::test_q1616_short_window_trajectory",
+        operating_point=("schema-DSL Cazelles map at I=0.5,1.0,2.0 over 30 iterations"),
+        tolerance=(
+            "hand/TOML/JSON exact; Q16.16 event-exact with state error below "
+            "0.0004; I=0.05 excluded"
+        ),
+    ),
+    EnrolledEvidence(
         schema_name="lapicque",
         class_name="LapicqueNeuron",
         level="h1_cosim",

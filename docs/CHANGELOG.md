@@ -5,6 +5,30 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+### Cazelles map bounded schema-to-RTL enrolment
+- Enrolled the already acceleration-complete Cazelles, Courbage, and Rabinovich
+  (2001) fast/slow map (`cazelles_map`, DOI
+  `10.1209/epl/i2001-00548-y`). The paired TOML/JSON schemas mirror the
+  maintained hand model's simultaneous clipped logistic fast recurrence, slow
+  update from the old fast coordinate, and committed-state `x >= x_threshold`
+  level event. Hand model and both schemas agree exactly on every state and
+  event across the enrolled operating set.
+- Over 30 iterations, emitted Q16.16 RTL reproduces the complete 2/1/1 event
+  vectors at `I=0.5/1.0/2.0`, with both coordinates within `0.0004` absolute
+  error of float64. The three points exercise the interior expression and both
+  clip bounds. A separate regression fixes the sensitive `I=0.05` boundary at
+  seven float64 events, eight RTL events, and seven event-position mismatches,
+  so the bounded evidence cannot imply long-window chaotic identity.
+- The Cazelles co-simulation and independent-reference tests live in dedicated
+  model-scoped modules rather than the legacy catalogue-wide test accumulators.
+  The unit adds the DOI-backed independent map reference, S5/H1
+  descriptor/readiness facets, public fidelity and model documentation, and
+  generated Q8.8 RTL. Its port-only depth-4 SymbiYosys/Z3 reset-spike safety
+  job passes. The formal inventory
+  moves to 20 models and schema-gap counts move to 28 schema models / 125 net
+  missing / 127 source modules without a schema. The completed acceleration
+  chain and its committed benchmark artefact remain unchanged.
+
 ### Mihalas-Niebur co-simulation evidence correction
 - Replaced the stale loose Q16.16 guard with exact operating-point contracts after the shared
   candidate-reset/output correction. The hand model and paired TOML/JSON schemas agree exactly on

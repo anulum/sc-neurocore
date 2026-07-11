@@ -5,6 +5,25 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 ## [Unreleased]
 
 ### Added
+- Enrolled the already acceleration-complete Cazelles fast/slow map
+  (`cazelles_map`, DOI `10.1209/epl/i2001-00548-y`) with paired TOML/JSON
+  schemas that mirror the maintained simultaneous clipped logistic recurrence,
+  slow-state update from the old fast coordinate, and committed-state level
+  event. Hand model and both schemas agree exactly on every state and event at
+  the enrolled points. Over 30 iterations, emitted Q16.16 RTL reproduces the
+  complete 2/1/1 event vectors at `I=0.5/1.0/2.0`, with each state coordinate
+  within `0.0004` of float64 while the operating set exercises the interior
+  expression and both fast-state clip bounds. The sensitive `I=0.05` trace is
+  pinned separately at seven float64 events, eight RTL events, and seven event
+  mismatches rather than promoted through a loose tolerance. The Cazelles
+  co-simulation and independent-reference tests live in model-scoped modules,
+  not the legacy catalogue-wide test accumulators. The unit adds the DOI-backed
+  independent map reference, S5/H1 descriptor and readiness entry, public
+  fidelity documentation, and generated Q8.8 RTL. Its port-only depth-4
+  SymbiYosys/Z3 reset-spike safety job passes. The formal inventory moves to
+  20 models and schema-gap counts move to 28 schema models / 125 net missing /
+  127 source modules without a schema. The completed Rust/Go/Julia/Mojo chain
+  and its committed benchmark artefact remain unchanged.
 - Corrected the already acceleration-complete Mihalas-Niebur co-simulation evidence after the
   shared candidate-reset/output fix. The paired TOML/JSON schemas reproduce every event and all
   four hand-model states exactly over a varied 1,600-step sequence with 168 adaptive resets. The
