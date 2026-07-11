@@ -11,6 +11,7 @@
 from __future__ import annotations
 
 import ast
+import math
 
 from ..hdl_gen._ident import sanitize_ident
 from . import expr_lut_tables
@@ -20,7 +21,8 @@ from .verilog_compiler_config import Q88
 class _VerilogExprEmitter(ast.NodeVisitor):
     """Walk a Python AST and emit equivalent Verilog fixed-point expressions.
 
-    Handles: +, -, *, /, **, unary minus, comparisons, names, constants.
+    Handles: +, -, *, /, positive-literal %, **, unary minus, comparisons,
+    names, constants.
     Multiplications emit wide product with arithmetic right shift.
     """
 
@@ -180,6 +182,49 @@ class _VerilogExprEmitter(ast.NodeVisitor):
                 f"wire signed [{dw - 1}:0] {res_name} = {div_tmp}[{dw - 1}:0];"
             )
             return res_name
+        elif isinstance(node.op, ast.Mod):
+            if not self.q.signed:
+                raise ValueError("Positive-literal modulo requires signed fixed-point state")
+            if (
+                not isinstance(node.right, ast.Constant)
+                or isinstance(node.right.value, bool)
+                or not isinstance(node.right.value, (int, float))
+            ):
+                raise ValueError("Modulo divisor must be a positive numeric literal")
+            period = float(node.right.value)
+            if not math.isfinite(period) or period <= 0.0:
+                raise ValueError("Modulo divisor must be a finite positive numeric literal")
+            if period > self.q.max_value:
+                raise ValueError(
+                    f"Modulo divisor {period} exceeds fixed-point maximum {self.q.max_value}"
+                )
+            period_q = int(round(period * (1 << self.q.fraction)))
+            if period_q <= 0:
+                raise ValueError(
+                    f"Modulo divisor {period} underflows at fraction={self.q.fraction}"
+                )
+
+            op_index = self._mul_count
+            self._mul_count += 1
+            dw = self.q.data_width
+            dividend = f"_mod{op_index}_dividend"
+            remainder = f"_mod{op_index}_remainder"
+            result = f"_mod{op_index}"
+            period_literal = f"{dw}'sd{period_q}"
+            # Python's ``x % p`` with p > 0 is a floored remainder in [0, p),
+            # whereas Verilog's remainder keeps the dividend's sign. Hoist the
+            # compound dividend to one data-width word, take the hardware
+            # remainder, then correct its negative branch by one period.
+            self.intermediates.append(f"wire signed [{dw - 1}:0] {dividend} = {left};")
+            self.intermediates.append(
+                f"wire signed [{dw - 1}:0] {remainder} = "
+                f"$signed({dividend}) % $signed({period_literal});"
+            )
+            self.intermediates.append(
+                f"wire signed [{dw - 1}:0] {result} = "
+                f"({remainder} < 0) ? ({remainder} + {period_literal}) : {remainder};"
+            )
+            return result
         elif isinstance(node.op, ast.Pow):
             if isinstance(node.right, ast.Constant) and node.right.value == 2:
                 tmp = f"_mul{self._mul_count}"
@@ -270,6 +315,7 @@ class _VerilogExprEmitter(ast.NodeVisitor):
                 results.append(f"({left} <= {right})")
             else:
                 raise ValueError(f"Unsupported comparison: {type(op).__name__}")
+            left = right
         return " && ".join(results)
 
     def visit_IfExp(self, node: ast.IfExp) -> str:

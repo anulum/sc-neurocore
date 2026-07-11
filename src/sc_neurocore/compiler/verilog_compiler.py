@@ -615,6 +615,7 @@ def _build_neuron_core(
         for var in neuron.equations:
             safe_var = state_var_map[var]
             thr_param_map[var] = f"{safe_var}_next"
+            thr_param_map[f"{var}_prev"] = f"{safe_var}_reg"
         threshold_verilog, thr_intermediates, _mc, _tc, thr_pregs = _emit_expr(
             neuron.threshold_expr,
             {},
@@ -628,6 +629,9 @@ def _build_neuron_core(
 
     reset_param_map = dict(param_map)
     reset_param_map.update({var: f"{safe_var}_next" for var, safe_var in state_var_map.items()})
+    reset_param_map.update(
+        {f"{var}_prev": f"{safe_var}_reg" for var, safe_var in state_var_map.items()}
+    )
     reset_expressions: dict[str, str] = {}
     for var, expr_str in neuron.reset_rules.items():
         safe_var = state_var_map[var]

@@ -198,8 +198,58 @@ verilog = compile_to_verilog(
 | Transcendental | `exp`, `log`, `sqrt`, `tanh`, `sigmoid`, `sin`, `cos` |
 | Arithmetic | `abs`, `clip(x, lo, hi)`, `max(a, b)`, `min(a, b)` |
 | Polynomial | `x**2` through `x**8` |
-| Operators | `+`, `-`, `*`, `/` (by constant), unary `-` |
+| Operators | `+`, `-`, `*`, `/`, `%` by a finite positive numeric literal, unary `-` |
 | Comparison | `>`, `>=`, `<`, `<=` |
+
+#### Candidate and previous-state expressions
+
+Dynamics always read the committed state at the start of the integration step.
+Threshold and reset expressions use a two-view namespace:
+
+- an ordinary state name such as `theta` resolves to the integrated candidate;
+- `theta_prev` resolves to the committed value at the start of the macro step.
+
+The `<state>_prev` form is reserved for every declared state and cannot also be
+used as a state, parameter, or constant name. It is useful when event semantics
+depend on a candidate that is transformed before commit. A wrapped phase map,
+for example, can test the unwrapped candidate without mistaking a backward wrap
+for an upward event:
+
+```python
+candidate = (
+    "theta_prev + dt * ((1.0 - cos(theta_prev)) + "
+    "(1.0 + cos(theta_prev)) * gain * I)"
+)
+neuron = EquationNeuron(
+    equations={
+        "theta": (
+            "(theta + dt * ((1.0 - cos(theta)) + "
+            "(1.0 + cos(theta)) * gain * I)) % 6.283185307179586"
+        )
+    },
+    parameters={"dt": 0.1, "gain": 1.0, "threshold": 3.141592653589793},
+    state={"theta": 0.0},
+    threshold=f"theta_prev < threshold <= ({candidate})",
+    dt=1.0,
+    method="map",
+)
+```
+
+Chained comparisons retain Python ordering, so `a < b <= c` lowers as
+`a < b && b <= c`. The generated Verilog and integer C/Rust kernels map every
+`<state>_prev` read to the state register and every ordinary threshold/reset
+state read to the candidate wire.
+
+Modulo support is deliberately narrow. The divisor must be a finite positive
+numeric literal that is representable in the selected Q format. Python uses a
+floored remainder for a positive divisor, while Verilog, C, and Rust keep the
+dividend's sign; all three generated backends therefore add one period when the
+raw remainder is negative. Zero, negative, dynamic, non-finite, underflowed, and
+out-of-range divisors fail compilation.
+
+The whole-neuron bit-true C/Rust generator currently mirrors `method="euler"`
+and `method="map"`. It rejects other integrators rather than attaching a
+bit-identity claim to a recurrence it does not lower.
 
 The equation builder validates every equation, threshold, and reset expression
 through an AST allowlist before compilation. Three focused responsibilities are

@@ -36,7 +36,10 @@ from sc_neurocore.compiler.intelligence.bit_true_kernel import (
 )
 from sc_neurocore.compiler.verilog_compiler import compile_to_verilog
 from sc_neurocore.compiler.verilog_compiler_config import Q88
-from sc_neurocore.neurons.equation_builder import from_equations
+from sc_neurocore.neurons.equation_builder import EquationNeuron, from_equations
+from sc_neurocore.neurons.models.ermentrout_kopell_map_neuron import (
+    ErmentroutKopellMapNeuron,
+)
 
 HAS_COSIM = shutil.which("iverilog") is not None and shutil.which("gcc") is not None
 HAS_RUST = shutil.which("rustc") is not None
@@ -65,8 +68,8 @@ def _testbench(neuron, module: str, current: float, n_steps: int, dw: int, frac:
         ports.append(f"    .{v}_out({v}_out),")
         wires.append(f"wire signed [{dw - 1}:0] {v}_out;")
     ports[-1] = ports[-1].rstrip(",")
-    fmt = " ".join("%0d" for _ in svs)
-    args = ", ".join(f"$signed({v}_out)" for v in svs)
+    fmt = " ".join(["%0d", *("%0d" for _ in svs)])
+    args = ", ".join(["$unsigned(spike_out)", *(f"$signed({v}_out)" for v in svs)])
     # rst_n is deasserted at t=23 — strictly between clock edges — so the first
     # sampled posedge is a genuine step-1 (no reset/step race, no off-by-one).
     return "\n".join(
@@ -96,12 +99,12 @@ def _testbench(neuron, module: str, current: float, n_steps: int, dw: int, frac:
 
 def _c_main(neuron, module: str, i_q: int, n_steps: int, dw: int) -> str:
     svs = list(neuron.equations)
-    fmt = " ".join("%d" for _ in svs)
-    args = ", ".join(f"(int)st.{v}_out" for v in svs)
+    fmt = " ".join(["%d", *("%d" for _ in svs)])
+    args = ", ".join(["spike", *(f"(int)st.{v}_out" for v in svs)])
     return (
         "#include <stdio.h>\n"
         f"int main(void) {{ {module}_state_t st; {module}_reset(&st); int{dw}_t I = {i_q};\n"
-        f'  for (int k = 0; k < {n_steps}; k++) {{ {module}_step(&st, I); printf("{fmt}\\n", {args}); }}\n'
+        f'  for (int k = 0; k < {n_steps}; k++) {{ int spike = {module}_step(&st, I); printf("{fmt}\\n", {args}); }}\n'
         "  return 0; }\n"
     )
 
@@ -110,14 +113,14 @@ def _rust_main(neuron, module: str, i_q: int, n_steps: int, dw: int) -> str:
     struct = f"{module.capitalize()}State"
     svs = list(neuron.equations)
     fields = ", ".join([f"{v}: 0, {v}_out: 0" for v in svs] + ["spike_out: 0"])
-    outs = ", ".join(f"st.{v}_out" for v in svs)
-    fmt = " ".join("{}" for _ in svs)
+    outs = ", ".join(["spike", *(f"st.{v}_out" for v in svs)])
+    fmt = " ".join(["{}", *("{}" for _ in svs)])
     return (
         "fn main() {\n"
         f"    let mut st = {struct} {{ {fields} }};\n"
         "    st.reset();\n"
         f"    let i: i{dw} = {i_q};\n"
-        f'    for _ in 0..{n_steps} {{ st.step(i); println!("{fmt}", {outs}); }}\n'
+        f'    for _ in 0..{n_steps} {{ let spike = st.step(i); println!("{fmt}", {outs}); }}\n'
         "}\n"
     )
 
@@ -217,6 +220,26 @@ def _fire():
     return from_equations("dv/dt = I", threshold="v > 5", reset="v = 0", init=dict(v=0.0), dt=1.0)
 
 
+def _ermentrout_kopell_map() -> EquationNeuron:
+    """Return the maintained theta-Euler recurrence as one explicit map step."""
+    candidate = "theta + dt * ((1.0 - cos(theta)) + (1.0 + cos(theta)) * gain * I)"
+    previous_candidate = (
+        "theta_prev + dt * ((1.0 - cos(theta_prev)) + (1.0 + cos(theta_prev)) * gain * I)"
+    )
+    return EquationNeuron(
+        equations={"theta": f"({candidate}) % 6.283185307179586"},
+        parameters={
+            "dt": 0.1,
+            "gain": 1.0,
+            "theta_threshold": 3.141592653589793,
+        },
+        state={"theta": 0.0},
+        threshold=f"theta_prev < theta_threshold <= ({previous_candidate})",
+        dt=1.0,
+        method="map",
+    )
+
+
 _CASES = [
     ("lif_q88", _lif, 10.0, 60, 16, 8),
     ("lif_q1616", _lif, 10.0, 60, 32, 16),
@@ -226,6 +249,8 @@ _CASES = [
     ("fhn_q1616", _fhn, 0.5, 60, 32, 16),
     ("fire_q88", _fire, 1.0, 30, 16, 8),
     ("fire_q1616", _fire, 1.0, 30, 32, 16),
+    ("ermentrout_kopell_negative_q1616", _ermentrout_kopell_map, -0.5, 240, 32, 16),
+    ("ermentrout_kopell_positive_q1616", _ermentrout_kopell_map, 1.0, 240, 32, 16),
 ]
 
 
@@ -252,9 +277,25 @@ class TestBitTrueCosim:
         with tempfile.TemporaryDirectory() as d:
             tmp = Path(d)
             vtrace = _verilog_trace(neuron, "sc_fire_rst", 1.0, 30, 16, 8, tmp)
-        v_series = [int(row[0]) for row in vtrace]
+        v_series = [int(row[1]) for row in vtrace]
         drops = [b < a for a, b in zip(v_series, v_series[1:])]
         assert any(drops), "expected at least one reset (falling edge) in the trace"
+
+    def test_ermentrout_kopell_cases_exercise_both_event_branches(self) -> None:
+        """Positive drive crosses pi; a negative backward wrap stays event-silent."""
+        neuron = _ermentrout_kopell_map()
+        with tempfile.TemporaryDirectory() as d:
+            tmp = Path(d)
+            negative = _verilog_trace(neuron, "sc_ek_negative", -0.5, 240, 32, 16, tmp)
+        with tempfile.TemporaryDirectory() as d:
+            tmp = Path(d)
+            positive = _verilog_trace(
+                _ermentrout_kopell_map(), "sc_ek_positive", 1.0, 240, 32, 16, tmp
+            )
+
+        assert sum(int(row[0]) for row in negative) == 0
+        assert int(negative[0][1]) > int(3.141592653589793 * (1 << 16))
+        assert sum(int(row[0]) for row in positive) > 0
 
 
 @pytest.mark.skipif(
@@ -273,3 +314,33 @@ class TestRustMatchesC:
             ctrace = _c_trace(neuron, module, i_q, steps, dw, frac, tmp)
             rtrace = _rust_trace(neuron, module, i_q, steps, dw, frac, tmp)
         assert ctrace == rtrace, f"{name}: Rust kernel diverged from C kernel"
+
+    @pytest.mark.parametrize(
+        ("current", "expected_events"),
+        ((-0.5, 0), (1.0, 8)),
+        ids=("negative-backward-wrap", "positive-upward-crossing"),
+    )
+    def test_ermentrout_hand_event_vector_matches_all_bittrue_targets(
+        self,
+        current: float,
+        expected_events: int,
+    ) -> None:
+        """Both crossing signs agree across the hand model, RTL, C, and Rust."""
+        steps = 240
+        suffix = "negative" if current < 0.0 else "positive"
+        module = f"sc_ek_all_targets_{suffix}"
+        hand = ErmentroutKopellMapNeuron()
+        hand_events = [str(hand.step(current)) for _ in range(steps)]
+        neuron = _ermentrout_kopell_map()
+        i_q = _q_input(current, 32, 16)
+
+        with tempfile.TemporaryDirectory() as d:
+            tmp = Path(d)
+            verilog = _verilog_trace(neuron, module, current, steps, 32, 16, tmp)
+            c_trace = _c_trace(neuron, module, i_q, steps, 32, 16, tmp)
+            rust = _rust_trace(neuron, module, i_q, steps, 32, 16, tmp)
+
+        assert sum(int(event) for event in hand_events) == expected_events
+        assert hand_events == [row[0] for row in verilog]
+        assert hand_events == [row[0] for row in c_trace]
+        assert hand_events == [row[0] for row in rust]

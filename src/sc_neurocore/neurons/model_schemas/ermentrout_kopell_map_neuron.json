@@ -1,0 +1,35 @@
+{
+  "metadata": {
+    "schema_version": 1,
+    "name": "Ermentrout-Kopell Map Neuron",
+    "author": "Ermentrout, G.B. & Kopell, N.",
+    "year": 1986,
+    "doi": "10.1137/0146017",
+    "description": "Forward-Euler implementation of the canonical Type-I theta equation on a circular phase domain"
+  },
+  "state": {
+    "theta": 0.0
+  },
+  "parameters": {
+    "gain": 1.0,
+    "theta_threshold": 3.141592653589793
+  },
+  "integration": {
+    "dt": 0.1,
+    "method": "map"
+  },
+  "dynamics": {
+    "theta": "(theta + 0.1 * ((1.0 - cos(theta)) + (1.0 + cos(theta)) * gain * I)) % 6.283185307179586"
+  },
+  "threshold": {
+    "condition": "theta_prev < theta_threshold <= (theta_prev + 0.1 * ((1.0 - cos(theta_prev)) + (1.0 + cos(theta_prev)) * gain * I))",
+    "detection": "level"
+  },
+  "extensions": {
+    "model_type": "phase_map",
+    "topology": "circular",
+    "source_equation_note": "The continuous theta equation follows Ermentrout and Kopell (1986), DOI 10.1137/0146017.",
+    "discretisation_note": "dt=0.1, gain, explicit Euler, modulo 2*pi, and the pi event convention are maintained implementation choices; they are not presented as a discrete recurrence from the 1986 paper.",
+    "silicon_cosim_note": "Hand/TOML/JSON float64 states and events are exact. Over 2000 steps Q16.16 preserves the class-correct spike counts at I=-0.5 (0) and I=1.0 (64); maximum circular phase errors are below 0.081 and 0.025 rad respectively. Event timing and full trajectories are not claimed exact because the cosine LUT is quantised."
+  }
+}

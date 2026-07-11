@@ -636,17 +636,59 @@ class TestEdgeCaseCoverage:
         verilog = compile_to_verilog(neuron, module_name="gte_cmp")
         assert ">=" in verilog
 
-    def test_unsupported_binop_raises(self):
-        """Modulo operator is not supported in Verilog emission."""
+    def test_positive_literal_modulo_lowers_python_floor_correction(self) -> None:
+        """Positive-literal modulo corrects Verilog's negative remainder."""
+        neuron = EquationNeuron(
+            equations={"v": "v % 2.0"},
+            state={"v": -0.5},
+            dt=1.0,
+            method="map",
+        )
+
+        verilog = compile_to_verilog(neuron, module_name="positive_modulo")
+
+        assert "_mod0_dividend" in verilog
+        assert "$signed(_mod0_dividend) % $signed(16'sd512)" in verilog
+        assert "(_mod0_remainder < 0) ? (_mod0_remainder + 16'sd512)" in verilog
+
+    @staticmethod
+    def test_modulo_rejects_non_positive_or_dynamic_divisors() -> None:
+        """Modulo stays narrow: its divisor must be a representable positive literal."""
         import pytest
 
-        neuron = EquationNeuron(
-            equations={"v": "v % 2"},
-            state={"v": 1.0},
-            dt=0.1,
-        )
+        for expression in ("v % 0.0", "v % -2.0", "v % period"):
+            neuron = EquationNeuron(
+                equations={"v": expression},
+                parameters={"period": 2.0},
+                state={"v": 1.0},
+                dt=1.0,
+                method="map",
+            )
+            with pytest.raises(ValueError, match="Modulo divisor"):
+                compile_to_verilog(neuron)
+
+    def test_unsupported_binop_raises(self) -> None:
+        """Floor division remains outside the synthesizable expression subset."""
+        import pytest
+
+        neuron = EquationNeuron(equations={"v": "v // 2"}, state={"v": 1.0}, dt=0.1)
         with pytest.raises(ValueError, match="Unsupported binary op"):
             compile_to_verilog(neuron)
+
+    def test_chained_comparison_advances_the_left_operand(self) -> None:
+        """``a < b <= c`` must lower as ``a < b && b <= c``."""
+        neuron = EquationNeuron(
+            equations={"v": "v + I"},
+            parameters={"threshold": 1.0},
+            state={"v": 0.0},
+            threshold="v_prev < threshold <= v_prev + I",
+            dt=1.0,
+            method="map",
+        )
+
+        verilog = compile_to_verilog(neuron, module_name="chained_threshold")
+
+        assert "(v_reg < P_THRESHOLD) && (P_THRESHOLD <= (v_reg + I_t))" in verilog
 
     def test_unsupported_comparison_raises(self):
         import pytest

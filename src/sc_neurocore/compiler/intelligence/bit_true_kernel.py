@@ -10,9 +10,9 @@
 
 The generated C / Rust reproduces the exact two's-complement arithmetic of the
 Verilog RTL (see :mod:`sc_neurocore.compiler.verilog_compiler`): wrap-truncate
-fixed-point multiply, saturating (or wrapping) explicit-Euler accumulate, and
-transcendental look-up tables with the RTL's index arithmetic — all lowered by
-:mod:`sc_neurocore.compiler.c_fixed_emitter`.
+fixed-point multiply, saturating (or wrapping) explicit-Euler or discrete-map
+commit, positive-period modulo, and transcendental look-up tables with the RTL's
+index arithmetic — all lowered by :mod:`sc_neurocore.compiler.c_fixed_emitter`.
 
 Two entry points:
 
@@ -107,6 +107,13 @@ def _preamble_c(q: Q88) -> list[str]:
         f"    return ({ctype})sc_wrap({prod} >> FRAC_BITS, WORD_BITS);",
         "}",
         "",
+        f"static inline {ctype} fxmod(int64_t value, int64_t period) {{",
+        "    int64_t dividend = sc_wrap(value, WORD_BITS);",
+        "    int64_t remainder = dividend % period;",
+        "    if (remainder < 0) { remainder += period; }",
+        f"    return ({ctype})remainder;",
+        "}",
+        "",
     ]
 
 
@@ -141,6 +148,13 @@ def _preamble_rust(q: Q88) -> list[str]:
         "",
         f"fn fxmul(a: i64, b: i64) -> {rtype} {{",
         f"    sc_wrap({prod} >> FRAC_BITS, WORD_BITS) as {rtype}",
+        "}",
+        "",
+        f"fn fxmod(value: i64, period: i64) -> {rtype} {{",
+        "    let dividend = sc_wrap(value, WORD_BITS);",
+        "    let mut remainder = dividend % period;",
+        "    if remainder < 0 { remainder += period; }",
+        f"    remainder as {rtype}",
         "}",
         "",
     ]
@@ -370,13 +384,14 @@ def generate_bittrue_kernel_from_neuron(
     """Generate a whole-neuron kernel bit-identical to the compiled Verilog.
 
     Mirrors :func:`sc_neurocore.compiler.verilog_compiler.compile_to_verilog`
-    exactly — parameter/constant Q-encoding, dt-scaled explicit Euler with
-    wrap-truncate multiply, the same overflow handling, and the threshold / reset
-    / spike sequencing of the RTL ``always`` block. Reset expressions read the
-    integrated candidate state, and both state and output fields take the same
-    post-reset value on a spike. The resulting ``<module>_step`` therefore
-    produces the identical per-cycle state trace as the RTL, which the iverilog
-    co-simulation proves.
+    exactly for explicit-Euler and discrete-map neurons — parameter/constant
+    Q-encoding, wrap-truncate arithmetic, the same overflow handling, and the
+    threshold / reset / spike sequencing of the RTL ``always`` block. Threshold
+    and reset expressions may read ``<state>_prev`` aliases for the pre-step
+    register while ordinary state names resolve to the integrated candidate.
+    Both state and output fields take the same post-reset value on a spike. The
+    resulting ``<module>_step`` therefore produces the identical per-cycle state
+    trace as the RTL, which the iverilog co-simulation proves.
 
     Parameters
     ----------
@@ -409,6 +424,11 @@ def generate_bittrue_kernel_from_neuron(
         data_width=data_width, fraction=fraction, signed=True, overflow=overflow, rounding=rounding
     )
     _validate_modes(q)
+    if neuron.method not in {"euler", "map"}:
+        raise ValueError(
+            "bit-true neuron kernel currently supports method='euler' or method='map', "
+            f"got {neuron.method!r}"
+        )
 
     dt_q = signed_q(q, neuron.dt)
     if neuron.dt != 0.0 and dt_q == 0:
@@ -435,11 +455,13 @@ def generate_bittrue_kernel_from_neuron(
         tables.update(t)
 
     next_map = {v: f"_next_{safe[v]}" for v in neuron.equations}
+    candidate_map = dict(next_map)
+    candidate_map.update({f"{v}_prev": state_map[v] for v in neuron.equations})
     threshold_expr = ""
     threshold_stmts: list[str] = []
     if neuron.threshold_expr:
         threshold_expr, threshold_stmts, t, _fv, lut, _used = emit_c_fixed_expr(
-            neuron.threshold_expr, next_map, param_map, q, lang=language, lut_start=lut
+            neuron.threshold_expr, candidate_map, param_map, q, lang=language, lut_start=lut
         )
         tables.update(t)
 
@@ -447,7 +469,7 @@ def generate_bittrue_kernel_from_neuron(
     reset_stmts: list[str] = []
     for var, expr in neuron.reset_rules.items():
         result, s, t, _fv, lut, _used = emit_c_fixed_expr(
-            expr, next_map, param_map, q, lang=language, lut_start=lut
+            expr, candidate_map, param_map, q, lang=language, lut_start=lut
         )
         reset_exprs[var] = result
         reset_stmts.extend(s)
@@ -542,9 +564,13 @@ def _emit_neuron_c(ctx: _KernelContext) -> str:
     for stmt in ctx.deriv_stmts:
         lines.append(f"    {stmt}")
     for var in ctx.neuron.equations:
-        acc = _accumulate_bias(
-            f"((int64_t)s->{ctx.safe[var]}) + fxmul({ctx.derivs[var]}, {ctx.dt_q})", q.overflow
-        )
+        if ctx.neuron.method == "map":
+            acc = _accumulate_bias(ctx.derivs[var], q.overflow)
+        else:
+            acc = _accumulate_bias(
+                f"((int64_t)s->{ctx.safe[var]}) + fxmul({ctx.derivs[var]}, {ctx.dt_q})",
+                q.overflow,
+            )
         lines.append(f"    {ctype} _next_{ctx.safe[var]} = {acc};")
     lines.extend(_neuron_commit_c(ctx))
     lines.append("}")
@@ -616,10 +642,13 @@ def _emit_neuron_rust(ctx: _KernelContext) -> str:
     for stmt in ctx.deriv_stmts:
         lines.append(f"        {stmt}")
     for var in ctx.neuron.equations:
-        acc = _accumulate_bias(
-            f"(self.{ctx.safe[var]} as i64) + (fxmul({ctx.derivs[var]}, {ctx.dt_q}) as i64)",
-            q.overflow,
-        )
+        if ctx.neuron.method == "map":
+            acc = _accumulate_bias(ctx.derivs[var], q.overflow)
+        else:
+            acc = _accumulate_bias(
+                f"(self.{ctx.safe[var]} as i64) + (fxmul({ctx.derivs[var]}, {ctx.dt_q}) as i64)",
+                q.overflow,
+            )
         lines.append(f"        let _next_{ctx.safe[var]}: {rtype} = {acc};")
     lines.extend(_neuron_commit_rust(ctx))
     lines.append("    }")

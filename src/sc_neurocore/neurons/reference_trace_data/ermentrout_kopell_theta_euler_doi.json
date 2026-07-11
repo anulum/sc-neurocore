@@ -1,0 +1,46 @@
+{
+  "schema_version": "sc-neurocore.reference-trace.v1",
+  "name": "ermentrout_kopell_theta_euler_doi",
+  "model": {
+    "schema_name": "ermentrout_kopell_map_neuron",
+    "runner": "universal_dsl"
+  },
+  "protocol": {
+    "dt": 1.0,
+    "steps": 2000,
+    "inputs": {
+      "I": 0.5
+    },
+    "state_variables": [
+      "theta"
+    ]
+  },
+  "provenance": {
+    "kind": "independent_euler_reference",
+    "source": "src/sc_neurocore/neurons/model_schemas/ermentrout_kopell_map_neuron.toml",
+    "equation": "Driven canonical theta flow dtheta/dt=(1-cos(theta))+(1+cos(theta))*gain*I, independently re-derived from Ermentrout and Kopell (1986), is advanced with the maintained forward-Euler parameter dt=0.1. Each unwrapped candidate is tested for an upward theta=pi crossing before the committed phase is reduced modulo 2*pi. The schema runner uses method=map and protocol dt=1 because its dynamics string already contains that complete Euler recurrence.",
+    "citation": "doi:10.1137/0146017"
+  },
+  "expected_features": {
+    "spike_count": 45.0,
+    "first_spike_step": 23.0,
+    "final.theta": 0.09049711399184002,
+    "min.theta": 0.002667707575482403,
+    "max.theta": 6.282885194616758,
+    "mean.theta": 3.1145830198864997
+  },
+  "tolerances": {
+    "default": {
+      "absolute": 1e-12,
+      "relative": 1e-12
+    },
+    "spike_count": {
+      "absolute": 0.0,
+      "relative": 0.0
+    },
+    "first_spike_step": {
+      "absolute": 0.0,
+      "relative": 0.0
+    }
+  }
+}

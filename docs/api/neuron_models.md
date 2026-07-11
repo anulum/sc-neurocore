@@ -1,7 +1,7 @@
 # Neuron Model Reference — 158 Python Classes / 176 Rust PyO3 Wrappers
 
 SC-NeuroCore currently exposes 158 lazy-loaded Python model classes across
-152 Python model source modules in `src/sc_neurocore/neurons/models/`, plus
+153 Python model source modules in `src/sc_neurocore/neurons/models/`, plus
 176 Rust PyO3 model wrappers in the optional engine. Matching model classes
 use the same `step()` / `reset()` / `get_state()` interface shape where the
 backend implements that surface.
@@ -106,10 +106,13 @@ reduced form.
 
 The schema-driven validation harness in `sc_neurocore.neurons.reference_traces`
 loads committed JSON corpus entries, executes the `UniversalNeuron` runner, and
-compares scalar trace features with explicit per-feature tolerances. The current
-seed corpus covers deterministic `lif` and `lapicque` schema traces via analytic
-closed-form RC solutions. It is a reusable harness and seed corpus, not a claim
-that every model listed below has external simulator parity evidence yet.
+compares scalar trace features with explicit per-feature tolerances. The corpus
+contains analytic, independently integrated, and map-iteration references tied
+to each entry's stated source. For example, the Ermentrout-Kopell hand-class
+enrolment independently advances the sourced theta flow with the maintained
+Euler, event, and circular-wrap conventions over 2,000 steps. A corpus entry is
+model-specific evidence, not a claim that every class below has external
+simulator parity.
 
 ## Model Catalogue
 
@@ -184,7 +187,7 @@ descriptor reaches the catalogue or Studio browser surface.
 | `LearnableNeuronModel` | `LearnableNeuronModel` | — |
 | `PernarowskiNeuron` | `PernarowskiNeuron` | Pernarowski 1994 |
 
-### Discrete Maps (6 models)
+### Discrete Maps (7 models)
 
 | Python Class | Rust Class | Reference |
 |-------------|-----------|-----------|
@@ -194,6 +197,7 @@ descriptor reaches the catalogue or Studio browser surface.
 | `MedvedevMapNeuron` | `MedvedevMapNeuron` | Medvedev 2005 |
 | `CazellesMapNeuron` | `CazellesMapNeuron` | Cazelles et al. 2001 |
 | `CourageNekorkinMapNeuron` | `CourageNekorkinMapNeuron` | Courbage, Nekorkin & Vdovin 2007 |
+| `ErmentroutKopellMapNeuron` | `ErmentroutKopellMapNeuron` | Ermentrout & Kopell 1986 (maintained Euler map) |
 
 ### Biophysical / Conductance-Based (20 models)
 

@@ -5,6 +5,27 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 ## [Unreleased]
 
 ### Added
+- Enrolled the already acceleration-complete Ermentrout-Kopell hand class
+  (`ermentrout_kopell_map_neuron`, DOI `10.1137/0146017`) with paired
+  TOML/JSON schemas and an independent 2,000-step theta-flow reference. The
+  source boundary is explicit: the paper supplies the continuous Type-I theta
+  equation, while `dt=0.1`, gain, forward Euler, the upward `theta=pi` event,
+  and modulo `2*pi` are maintained implementation choices. Hand model and both
+  schemas agree exactly under varied negative/positive drive. Q16.16 RTL
+  preserves 0/45/64 spikes at `I=-0.5/0.5/1.0` over 2,000 steps, with maximum
+  circular phase error below 0.081/0.089/0.025 rad; event timing and full
+  fixed-point trajectories are not claimed exact. The equation runtime,
+  Verilog emitter, and generated integer C/Rust kernels now share explicit
+  `<state>_prev` macro-boundary aliases and Python-compatible modulo by a
+  finite positive literal, preventing a negative backward wrap from becoming
+  a false event. Integer C/Rust and Verilog state/event words co-simulate
+  cycle-exactly over the 240-step protocol for both current signs. The S5/H1
+  descriptor adds a generated
+  Q8.8 formal job whose depth-4 SymbiYosys/Z3 safety check passes. All 21
+  pre-existing catalogue jobs regenerate byte-identically; the inventory moves
+  to 22, and schema-gap counts move to 30 schema models / 123 net missing / 125
+  source modules without a schema. Existing floating-point acceleration and
+  benchmark artefacts remain unchanged.
 - Enrolled the already acceleration-complete Courbage-Nekorkin-Vdovin
   discontinuous map (`courage_nekorkin_map`, DOI `10.1063/1.2795435`) with
   paired TOML/JSON schemas that reproduce the maintained simultaneous

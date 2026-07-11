@@ -227,6 +227,34 @@ The S5/H1 promotion adds a Q8.8 formal-catalogue core and port-only harness.
 Its depth-4 SymbiYosys/Z3 job proves reset-spike safety only; Q16.16/Q32.32
 trajectories remain the behavioural evidence.
 
+### Ermentrout-Kopell theta-Euler Q16.16 enrolment
+
+The `ermentrout_kopell_map_neuron` schema mirrors the maintained hand class,
+not the older catalogue `theta` schema. The sourced object is the continuous
+Ermentrout-Kopell (1986) theta equation. The hand implementation adds
+`dt=0.1`, input gain, forward Euler, an upward `theta=pi` event, and modulo
+`2*pi`; the schema states those as maintained choices and commits the complete
+recurrence with `method="map"`.
+
+The event predicate uses `theta_prev` and the unwrapped candidate. This matters
+at negative current: the first candidate can fall below zero and commit near
+`2*pi`, but that backward wrap is not an upward event. Positive-literal modulo
+is lowered with the same floored-remainder correction in Verilog and the
+generated integer C/Rust kernels.
+
+The hand model and paired TOML/JSON schemas agree exactly on every float64 state
+and event under the varied-drive test. Over 2,000 steps, Q16.16 RTL preserves
+the class-correct spike counts at all enrolled points: zero at `I=-0.5`, 45 at
+`I=0.5`, and 64 at `I=1.0`. Maximum circular phase errors are respectively
+below `0.081`, `0.089`, and `0.025` rad. The cosine LUT shifts some event
+positions, so full fixed-point event vectors and trajectories are not claimed
+exact.
+
+The integer C and Rust generators match Verilog state and event words
+cycle-for-cycle over 240 steps at both current signs. The S5/H1 promotion also emits a Q8.8
+catalogue core and port-only harness; its depth-4 SymbiYosys/Z3 job proves the
+bounded reset/spike safety property only.
+
 ### GLIF Q16.16 enrolment
 
 The `glif` schema mirrors the maintained Allen Institute GLIF5 model:
@@ -288,17 +316,20 @@ the three Q16.16 operating points remain the behavioural parity evidence.
 
 ## Adding a New Model to Co-Simulation
 
-1. **Ensure the model schema exists** in `src/sc_neurocore/neurons/model_schemas/`
-2. **Add the model name** to `_COSIM_MODELS` in `tests/test_cosimulation.py`
-3. **Run the test** — if it fails:
-   - Check if the model uses transcendental functions (not yet supported in co-sim)
+1. **Ensure paired TOML/JSON schemas exist** in
+   `src/sc_neurocore/neurons/model_schemas/`.
+2. **Create dedicated files** named `tests/test_cosim_<model>.py` and
+   `tests/test_reference_<model>.py`; do not add new enrolments to the legacy
+   aggregate buckets.
+3. **Run those model-specific tests** — if they fail:
+   - Check whether a transcendental LUT changes the class-correct observable
    - Check if parameters overflow the chosen precision mode
    - Use `python -m sc_neurocore.neurons precision <model>` for diagnostics
 
-```python
-# Example: adding a new model to co-sim
-_COSIM_MODELS = ["lif", "lapicque", "quadratic_if", "izhikevich",
-                 "resonate_fire", "perfect_integrator", "your_new_model"]
+```bash
+python -m pytest -q \
+    tests/test_cosim_your_new_model.py \
+    tests/test_reference_your_new_model.py
 ```
 
 ## Schema-Gap Reporting
@@ -313,7 +344,7 @@ The tool scans live source modules and schema files without importing optional
 backends. It reports the net schema gap, source modules still lacking a
 same-name or alias schema, schema-only names, source-evidence classifications,
 and a ranked enrolment table. The current checkout has 153 model source modules,
-29 unique schema models, a net schema gap of 124, and 126 source-module rows
+30 unique schema models, a net schema gap of 123, and 125 source-module rows
 still needing same-name or alias schema coverage because `izhikevich` and `lif`
 are schema-only names.
 

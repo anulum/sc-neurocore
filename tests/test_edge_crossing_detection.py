@@ -49,6 +49,29 @@ _MCKEAN_PARAMS = {"a": 0.25, "epsilon": 0.3, "gamma": 2.0, "v_peak": 0.8}
 _MCKEAN_INIT = {"v": 0.0, "w": 0.0}
 
 
+def _wrapped_phase_schema(theta: float = 0.0) -> dict[str, object]:
+    """Return a one-state Euler phase map with an explicit pre-wrap crossing."""
+    candidate = "theta + dt * ((1.0 - cos(theta)) + (1.0 + cos(theta)) * gain * I)"
+    previous_candidate = (
+        "theta_prev + dt * ((1.0 - cos(theta_prev)) + (1.0 + cos(theta_prev)) * gain * I)"
+    )
+    return {
+        "metadata": {"schema_version": 1, "name": "Wrapped phase"},
+        "state": {"theta": theta},
+        "parameters": {
+            "dt": 0.1,
+            "gain": 1.0,
+            "theta_threshold": 3.141592653589793,
+        },
+        "integration": {"dt": 1.0, "method": "map"},
+        "dynamics": {"theta": f"({candidate}) % 6.283185307179586"},
+        "threshold": {
+            "condition": f"theta_prev < theta_threshold <= ({previous_candidate})",
+            "detection": "level",
+        },
+    }
+
+
 def _fhn_hand() -> FitzHughNagumoNeuron:
     """Hand-authored FitzHugh-Nagumo neuron at the same operating point as the schema."""
     return FitzHughNagumoNeuron(dt=0.1, v=-1.0, w=-0.5, a=0.7, b=0.8, epsilon=0.08, v_threshold=1.0)
@@ -234,6 +257,25 @@ class TestEdgeDetectionRunner:
         with pytest.raises(ValueError, match="detection must be one of"):
             EquationNeuron(equations={"v": "I"}, state={"v": 0.0}, detection="edge")
 
+    def test_previous_state_alias_exposes_unwrapped_candidate_crossing(self) -> None:
+        """A backward phase wrap at negative current must not look like a spike."""
+        schema = UniversalNeuron.from_dict(_wrapped_phase_schema(theta=0.01))
+
+        assert schema.step(I=-0.5) == 0
+        assert 0.0 <= schema.state["theta"] < 2.0 * 3.141592653589793
+        assert schema.state["theta"] > 3.141592653589793
+
+    def test_previous_state_alias_names_are_reserved(self) -> None:
+        """A user parameter cannot shadow the generated macro-boundary alias."""
+        with pytest.raises(ValueError, match="previous-state aliases"):
+            EquationNeuron(
+                equations={"v": "v + I"},
+                parameters={"v_prev": 0.0},
+                state={"v": 0.0},
+                dt=1.0,
+                method="map",
+            )
+
     @pytest.mark.parametrize("detection", ["poisson", "escape_rate"])
     def test_stochastic_detection_markers_accepted_without_edge(self, detection: str) -> None:
         """Stochastic detection markers construct but never engage edge logic."""
@@ -272,6 +314,16 @@ class TestEdgeDetectionEmitter:
             detection="crossing",
         )
         rtl = compile_to_verilog(neuron, module_name="lif_reset_crossing")
+        assert "_thr_prev" not in rtl
+
+    def test_explicit_previous_state_crossing_reads_register_and_candidate(self) -> None:
+        """The compiler maps ``theta_prev`` to the register, not wrapped next state."""
+        rtl = UniversalNeuron.from_dict(_wrapped_phase_schema()).to_verilog(
+            module_name="wrapped_phase"
+        )
+
+        assert "(theta_reg < P_THETA_THRESHOLD)" in rtl
+        assert "P_THETA_THRESHOLD <= (theta_reg +" in rtl
         assert "_thr_prev" not in rtl
 
 

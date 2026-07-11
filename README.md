@@ -97,7 +97,7 @@ SC-NeuroCore is positioned for neuromorphic R&D, stochastic accelerator design, 
 | Model documentation pages | 175 |
 | Rust PyO3 model wrappers | 176 |
 | Optional extras | 28 |
-| Python test files | 1070 |
+| Python test files | 1072 |
 | Public documentation pages | 568 |
 | GitHub Actions workflows | 19 |
 
@@ -314,7 +314,7 @@ Research and extended modules are available from source (`pip install -e ".[dev]
 graph TD
     subgraph "Python API (pip install sc-neurocore)"
         A[BitstreamEncoder] --> B[SCDenseLayer / SCConv2DLayer]
-        B --> C[158 lazy-loaded Python model classes<br/>152 Python model source modules]
+        B --> C[158 lazy-loaded Python model classes<br/>153 Python model source modules]
         C --> NET[Network Engine<br/>Population · Projection · 3 Backends]
         C --> ID[Identity Substrate<br/>Persistent SNN · Checkpoint · Director]
         C --> D[STDP / R-STDP Synapses]
@@ -336,7 +336,7 @@ graph TD
         K --> L[Verilog RTL<br/>AXI-Lite + LIF Core]
         K2 --> L
         L --> M[FPGA Bitstream<br/>Xilinx / Intel]
-        L --> V[Formal Verification<br/>32 proof jobs · catalogue + legacy]
+        L --> V[Formal Verification<br/>59 proof jobs · catalogue + legacy]
     end
 
     subgraph "Domain Bridges (optional)"
@@ -401,12 +401,12 @@ hdl/
   sc_event_neuron.v           -- Event-triggered LIF (power ∝ spike rate)
   sc_aer_router.v             -- AER event distribution to target neurons
   tb_sc_*.v (16 testbenches)  -- Self-checking simulation testbenches
-  formal/ (32 proof jobs)     -- catalogue dual-axis perfect + legacy SC cores
+  formal/ (59 proof jobs)     -- catalogue dual-axis perfect + legacy SC cores
 ```
 
-Formal verification inventory: **32** SymbiYosys proof jobs under `hdl/formal/`
-(18 legacy SC/sensor/timing jobs + **14 catalogue jobs** for dual-axis perfect
-models under `hdl/formal/catalogue/`). Re-emit with
+Formal verification inventory: **59 SymbiYosys proof jobs and 207 formal
+statements (177 assert, 7 assume, 23 cover)** under `hdl/formal/` (37
+non-catalogue jobs + **22 catalogue jobs** under `hdl/formal/catalogue/`). Re-emit with
 `tools/emit_catalogue_formal.py`.
 
 ### GPU Acceleration

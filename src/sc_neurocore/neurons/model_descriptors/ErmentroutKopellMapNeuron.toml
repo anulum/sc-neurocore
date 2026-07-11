@@ -8,19 +8,18 @@
 
 [metadata]
 schema_version = 2
-name = "ErmentroutKopellMapNeuron"
+name = "Ermentrout-Kopell Theta Euler Map"
 class_name = "ErmentroutKopellMapNeuron"
 module = "ermentrout_kopell_map_neuron"
 display_name = ""
-summary = "Ermentrout-Kopell 1986 canonical Type I (theta neuron) map."
-family = "Map-based"
+summary = "Forward-Euler implementation of the Ermentrout-Kopell 1986 canonical Type-I theta neuron on a circular phase domain."
+family = "Phase model"
 category = "map-based"
 biophysical_detail = "point"
 maturity = "experimental"
 intended_use = []
 hardware_fit = []
 behavior_tags = [
-    "chaotic",
     "excitable",
     "tonic",
 ]
@@ -55,9 +54,10 @@ range = [
 
 [integration]
 dt = 0.1
-method = "euler"
+method = "map"
 
 [dynamics]
+theta = "(theta + 0.1 * ((1.0 - cos(theta)) + (1.0 + cos(theta)) * gain * I)) % 6.283185307179586"
 
 [backends.python]
 status = "implemented"
@@ -84,5 +84,19 @@ reference_config = "{\"n_steps\":1000,\"current\":2.0,\"backend\":\"python\",\"p
 golden_trace_sha256 = "a1a8eb94a2a3318964722901c46b7006533780e790ae7c666df43961b1a8a113"
 
 [documentation]
-slug = "models/ermentrout_kopell_map_neuron"
-notes = ""
+slug = "models/ermentrout_kopell_map"
+notes = "The sourced 1986 object is the continuous theta equation. dt=0.1, gain, forward Euler, modulo 2*pi, and the pi event convention are maintained implementation choices, so the schema lowers the complete recurrence with method=map rather than presenting it as a paper-discrete map."
+
+[validation]
+dynamics_faithful = true
+metric = "parity"
+operating_point = "Maintained theta-Euler recurrence over 2000 steps: independent I=0.5 reference; hand/TOML/JSON varied drive; Q16.16 at I=-0.5,0.5,1.0"
+tolerance = "hand/TOML/JSON states and events exact; Q16.16 spike counts 0/45/64 exact with maximum circular phase error below 0.081/0.089/0.025 rad; event timing and full fixed-point trajectories not claimed exact"
+evidence = "tests/test_cosim_ermentrout_kopell_map_neuron.py::test_q1616_class_correct_spike_count_and_circular_phase_bound; tests/test_reference_ermentrout_kopell_map_neuron.py"
+
+[silicon]
+compiles = true
+cosim_validated = true
+cosim_evidence = "tests/test_cosim_ermentrout_kopell_map_neuron.py::test_q1616_class_correct_spike_count_and_circular_phase_bound; tests/test_bit_true_cosim.py"
+target_tier = "H1"
+terminal_reason = "The point-phase recurrence has bounded Q16.16 class-metric co-simulation; higher rungs require synthesis, timing, and equivalence programmes."

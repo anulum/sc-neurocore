@@ -1,0 +1,18 @@
+# SymbiYosys job for catalogue model sc_ermentrout_kopell_map_neuron
+# Dual-axis perfect model formal (BMC)
+
+[options]
+mode bmc
+depth 4
+
+[engines]
+smtbmc z3
+
+[script]
+read -formal sc_ermentrout_kopell_map_neuron_formal.v
+read -formal sc_ermentrout_kopell_map_neuron.v
+prep -top sc_ermentrout_kopell_map_neuron_formal
+
+[files]
+sc_ermentrout_kopell_map_neuron_formal.v
+sc_ermentrout_kopell_map_neuron.v

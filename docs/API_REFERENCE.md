@@ -6439,12 +6439,14 @@ str
 Generate a whole-neuron kernel bit-identical to the compiled Verilog.
 
 Mirrors :func:`sc_neurocore.compiler.verilog_compiler.compile_to_verilog`
-exactly — parameter/constant Q-encoding, dt-scaled explicit Euler with
-wrap-truncate multiply, the same overflow handling, and the threshold / reset
-/ spike sequencing of the RTL ``always`` block (on a spike the output ports
-hold the pre-update register value while the registers take the reset/next
-value). The resulting ``<module>_step`` therefore produces the identical
-per-cycle state trace as the RTL, which the iverilog co-simulation proves.
+exactly for explicit-Euler and discrete-map neurons — parameter/constant
+Q-encoding, wrap-truncate arithmetic, the same overflow handling, and the
+threshold / reset / spike sequencing of the RTL ``always`` block. Threshold
+and reset expressions may read ``<state>_prev`` aliases for the pre-step
+register while ordinary state names resolve to the integrated candidate.
+Both state and output fields take the same post-reset value on a spike. The
+resulting ``<module>_step`` therefore produces the identical per-cycle state
+trace as the RTL, which the iverilog co-simulation proves.
 
 Parameters
 ----------

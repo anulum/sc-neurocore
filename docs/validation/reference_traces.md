@@ -25,6 +25,7 @@ table because their schemas are stochastic.
 | `connor_stevens_driven_spiking_doi` | `connor_stevens` | `universal_dsl` | Independent macro-step RK4 re-derivation of the driven A-current oscillator (100 inner `dt=0.01` sub-steps per 1 ms macro step, no reset, macro-boundary `v >= 0` crossing) from `neurons/model_schemas/connor_stevens.toml` with DOI-backed schema provenance |
 | `courage_nekorkin_map_autonomous_doi` | `courage_nekorkin_map` | `universal_dsl` | Independent simultaneous iteration of Courbage, Nekorkin & Vdovin (2007), equations 3–5 (`method="map"`, three fast branches, Heaviside discontinuity, upward `x >= x_threshold` crossing), with DOI-backed schema provenance |
 | `dpi_neuron_driven_spiking_doi` | `dpi_neuron` | `universal_dsl` | Independent explicit-Euler re-derivation of the current-mode differential-pair-integrator membrane from `neurons/model_schemas/dpi_neuron.toml` with DOI-backed schema provenance |
+| `ermentrout_kopell_theta_euler_doi` | `ermentrout_kopell_map_neuron` | `universal_dsl` | Independent forward-Euler iteration of the Ermentrout-Kopell (1986) theta flow with maintained `dt=0.1`, gain, pre-wrap upward `theta=pi` event, and modulo `2*pi`; the implementation conventions are separated from the DOI-sourced continuous equation |
 | `exp_if_resting_exponential_doi` | `exp_if` | `universal_dsl` | Independent explicit-Euler re-derivation of the resting equation from `neurons/model_schemas/exp_if.toml` with DOI-backed schema provenance |
 | `fitzhugh_nagumo_driven_oscillation_doi` | `fitzhugh_nagumo` | `universal_dsl` | Independent fourth-order Runge-Kutta re-derivation of the driven relaxation oscillator (no reset, rising-edge `v >= 1` crossing) from `neurons/model_schemas/fitzhugh_nagumo.toml` with DOI-backed schema provenance |
 | `fitzhugh_rinzel_driven_bursting_doi` | `fitzhugh_rinzel` | `universal_dsl` | Independent fourth-order Runge-Kutta re-derivation of the three-state fast-slow bursting flow (no reset, rising-edge `v >= 1` crossing) from `neurons/model_schemas/fitzhugh_rinzel.toml` with DOI-backed schema provenance |
@@ -50,7 +51,7 @@ table because their schemas are stochastic.
 
 All entries record spike count, first spike step, and final/min/max/mean
 features for the declared state variables. The tests independently recompute the
-LIF, QIF, perfect-integrator, resonate-fire, theta, GLIF, Izhikevich, Cazelles map, Courbage-Nekorkin map,
+LIF, QIF, perfect-integrator, resonate-fire, theta, Ermentrout-Kopell theta-Euler, GLIF, Izhikevich, Cazelles map, Courbage-Nekorkin map,
 Izhikevich 2007, FitzHugh-Nagumo, FitzHugh-Rinzel, Pernarowski, Terman-Wang, Wilson-HR, McKean, AdEx, exponential-IF,
 Hindmarsh-Rose, Morris-Lecar,
 Hodgkin-Huxley, Connor-Stevens, Wang-Buzsaki, DPI, and Mihalas-Niebur analytic,
@@ -135,10 +136,10 @@ membrane and Na/K gating rate functions (numpy exp and the exprel-rewritten `alp
 `alpha_n`) reproduce the schema runner bit-for-bit, so the driven schema counts the same five
 action potentials the hand model does (`hand == schema` exact), which the earlier single-step
 Euler resting-gate schema could not.
-The perfect-integrator, FitzHugh-Nagumo, FitzHugh-Rinzel, Pernarowski, Terman-Wang, Wilson-HR, Rulkov, Cazelles, Courbage-Nekorkin, McKean, Morris-Lecar,
+The perfect-integrator, Ermentrout-Kopell theta-Euler, FitzHugh-Nagumo, FitzHugh-Rinzel, Pernarowski, Terman-Wang, Wilson-HR, Rulkov, Cazelles, Courbage-Nekorkin, McKean, Morris-Lecar,
 Hodgkin-Huxley, Connor-Stevens,
 Izhikevich, Izhikevich 2007, DPI, and Mihalas-Niebur entries are spike-bearing;
-they validate reset (or, for FitzHugh-Nagumo, FitzHugh-Rinzel, Pernarowski, Terman-Wang, Rulkov, McKean, Morris-Lecar,
+they validate reset (or, for Ermentrout-Kopell theta-Euler, FitzHugh-Nagumo, FitzHugh-Rinzel, Pernarowski, Terman-Wang, Rulkov, McKean, Morris-Lecar,
 Hodgkin-Huxley, and Connor-Stevens, rising-edge crossing) and first-spike features,
 not only quiet trajectories. The
 Rulkov entry iterates the Rulkov 2002 piecewise fast/slow map with the
@@ -154,7 +155,11 @@ the `a=3.8` fast map amplifies fixed-point perturbations on longer chaotic traje
 Courbage-Nekorkin entry independently iterates the published three-branch fast map and recovery
 recurrence for 30 autonomous iterations, including the Heaviside discontinuity and upward event
 crossing. It records four events and features for both coordinates without importing the hand model
-or schema expressions. The QIF and theta tolerances are wider than
+or schema expressions. The Ermentrout-Kopell entry independently advances the DOI-sourced theta
+flow with the maintained forward-Euler parameter, judges the unwrapped candidate against the
+pre-step phase, and only then reduces the committed phase modulo `2*pi`. Its `I=0.5`, 2,000-step
+protocol records 45 events and the scalar phase feature set without calling the hand model or schema
+expressions. The QIF and older `theta` tolerances are wider than
 machine-epsilon feature precision because the current schema runner declares
 explicit Euler integration while those references are continuous analytic
 solutions.
@@ -178,7 +183,10 @@ runner, schema name, protocol fields, feature values, and tolerance fields.
 The focused harness selector is:
 
 ```bash
-PYTHONPATH=src python -m pytest tests/test_reference_traces.py tests/test_reference_trace_payloads.py -q
+PYTHONPATH=src python -m pytest \
+    tests/test_reference_traces.py \
+    tests/test_reference_trace_payloads.py \
+    tests/test_reference_ermentrout_kopell_map_neuron.py -q
 ```
 
 Exact-file coverage for the implementation modules is measured with:

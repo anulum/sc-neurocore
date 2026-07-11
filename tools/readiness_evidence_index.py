@@ -119,6 +119,20 @@ ENROLLED: tuple[EnrolledEvidence, ...] = (
         ),
     ),
     EnrolledEvidence(
+        schema_name="ermentrout_kopell_map_neuron",
+        class_name="ErmentroutKopellMapNeuron",
+        level="h1_cosim",
+        evidence=(
+            "tests/test_cosim_ermentrout_kopell_map_neuron.py::"
+            "test_q1616_class_correct_spike_count_and_circular_phase_bound"
+        ),
+        operating_point=("maintained theta-Euler recurrence over 2000 steps at I=-0.5,0.5,1.0"),
+        tolerance=(
+            "hand/TOML/JSON exact; Q16.16 spike counts 0/45/64 exact with maximum "
+            "circular phase error below 0.081/0.089/0.025 rad"
+        ),
+    ),
+    EnrolledEvidence(
         schema_name="lapicque",
         class_name="LapicqueNeuron",
         level="h1_cosim",

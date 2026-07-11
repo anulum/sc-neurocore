@@ -45,6 +45,7 @@ CLASS_TO_SCHEMA: dict[str, str] = {
     "ConnorStevensNeuron": "connor_stevens",
     "CourageNekorkinMapNeuron": "courage_nekorkin_map",
     "DPINeuron": "dpi_neuron",
+    "ErmentroutKopellMapNeuron": "ermentrout_kopell_map_neuron",
     "FitzHughNagumoNeuron": "fitzhugh_nagumo",
     "FitzHughRinzelNeuron": "fitzhugh_rinzel",
     "GLIFNeuron": "glif",
@@ -68,6 +69,7 @@ DEPTH_BY_SCHEMA: dict[str, int] = {
     "cazelles_map": 4,
     "connor_stevens": 4,
     "courage_nekorkin_map": 4,
+    "ermentrout_kopell_map_neuron": 4,
     "hodgkin_huxley": 4,
     "morris_lecar": 3,
     "fitzhugh_nagumo": 4,
@@ -88,6 +90,7 @@ MINIMAL_SAFETY_SCHEMAS: frozenset[str] = frozenset(
     {
         "cazelles_map",
         "courage_nekorkin_map",
+        "ermentrout_kopell_map_neuron",
         "fitzhugh_nagumo",
         "fitzhugh_rinzel",
         "mckean",

@@ -5,6 +5,27 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+### Ermentrout-Kopell theta-Euler schema-to-RTL enrolment
+- Enrolled `ermentrout_kopell_map_neuron` against Ermentrout and Kopell
+  (1986), DOI `10.1137/0146017`. Paired schemas reproduce the maintained hand
+  recurrence exactly while separating the paper's continuous theta equation
+  from the implementation's `dt=0.1`, gain, forward-Euler, `theta=pi` event,
+  and modulo `2*pi` choices. The independent `I=0.5` reference records 45
+  events over 2,000 steps; varied-drive tests require exact hand/TOML/JSON
+  states and events.
+- Q16.16 RTL preserves 0/45/64 spikes at `I=-0.5/0.5/1.0` over 2,000 steps,
+  with maximum circular phase error below 0.081/0.089/0.025 rad. The cosine LUT
+  can shift event positions, so event-vector and full-trajectory identity are
+  withheld. Generated integer C/Rust kernels match generated Verilog state and
+  event words cycle-for-cycle over the 240-step protocol for both current signs.
+- The equation runtime and generated backends now expose `<state>_prev` at the
+  macro boundary and lower modulo only for a representable finite positive
+  literal, with the negative-remainder correction required to match Python.
+  The S5/H1 descriptor adds a Q8.8 port-only formal job; its depth-4 Z3 BMC
+  passes. All 21 earlier jobs regenerate byte-identically, the inventory moves
+  to 22, and schema-gap counts move to 30 / 123 / 125. Existing acceleration
+  and benchmark artefacts remain unchanged.
+
 ### Courbage-Nekorkin-Vdovin bounded schema-to-RTL enrolment
 - Enrolled the already acceleration-complete 2007 discontinuous map
   (`courage_nekorkin_map`, DOI `10.1063/1.2795435`). The paired TOML/JSON

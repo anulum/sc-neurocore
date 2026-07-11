@@ -51,6 +51,26 @@ def _adaptive_reset_neuron() -> EquationNeuron:
     )
 
 
+def _wrapped_phase_neuron() -> EquationNeuron:
+    """Build a discrete phase map with pre-step crossing and positive modulo."""
+    candidate = "theta + dt * ((1.0 - cos(theta)) + (1.0 + cos(theta)) * gain * I)"
+    previous_candidate = (
+        "theta_prev + dt * ((1.0 - cos(theta_prev)) + (1.0 + cos(theta_prev)) * gain * I)"
+    )
+    return EquationNeuron(
+        equations={"theta": f"({candidate}) % 6.283185307179586"},
+        parameters={
+            "dt": 0.1,
+            "gain": 1.0,
+            "theta_threshold": 3.141592653589793,
+        },
+        state={"theta": 0.0},
+        threshold=f"theta_prev < theta_threshold <= ({previous_candidate})",
+        dt=1.0,
+        method="map",
+    )
+
+
 class TestTypeHelpers:
     @pytest.mark.parametrize(
         "dw,expected", [(8, "int8_t"), (16, "int16_t"), (32, "int32_t"), (64, "int64_t")]
@@ -108,6 +128,12 @@ class TestSimpleKernelC:
         code = generate_bittrue_kernel("sc_th", {"v": "tanh(v)"})
         assert "static const int16_t _tanh_lut0" in code
 
+    def test_positive_modulo_uses_floor_remainder_helper(self) -> None:
+        code = generate_bittrue_kernel("sc_phase", {"v": "v % 2.0"})
+        assert "static inline int16_t fxmod" in code
+        assert "if (remainder < 0) { remainder += period; }" in code
+        assert "fxmod(" in code
+
 
 class TestSimpleKernelRust:
     def test_substrings(self) -> None:
@@ -122,6 +148,11 @@ class TestSimpleKernelRust:
     def test_free_variables_become_arguments(self) -> None:
         code = generate_bittrue_kernel("sc_lif", {"v": "a + b"}, language="rust")
         assert ", a: i16" in code and ", b: i16" in code
+
+    def test_positive_modulo_uses_floor_remainder_helper(self) -> None:
+        code = generate_bittrue_kernel("sc_phase", {"v": "v % 2.0"}, language="rust")
+        assert "fn fxmod(value: i64, period: i64) -> i16" in code
+        assert "if remainder < 0 { remainder += period; }" in code
 
 
 class TestNeuronKernelC:
@@ -161,6 +192,18 @@ class TestNeuronKernelC:
         assert "s->u = _rst_u;" in code and "s->u_out = _rst_u;" in code
         assert "int32_t v;" in code and "int32_t u;" in code
 
+    def test_map_commit_and_previous_state_threshold(self) -> None:
+        """Map kernels commit f(state) directly and keep aliases on the register."""
+        code = generate_bittrue_kernel_from_neuron(
+            _wrapped_phase_neuron(), "sc_phase", data_width=32, fraction=16
+        )
+        next_line = next(line for line in code.splitlines() if "_next_theta =" in line)
+        spike_line = next(line for line in code.splitlines() if "int _spk =" in line)
+        assert "fxmod(" in next_line
+        assert "+ fxmul" not in next_line
+        assert "s->theta" in spike_line
+        assert "_next_theta" not in spike_line
+
 
 class TestNeuronKernelRust:
     def test_reset_and_step(self) -> None:
@@ -190,6 +233,21 @@ class TestNeuronKernelRust:
         neuron = from_equations("dv/dt = -v + I", init=dict(v=0.0), dt=1.0)
         code = generate_bittrue_kernel_from_neuron(neuron, "sc_leak", language="rust")
         assert "return 0;" in code
+
+    def test_map_commit_and_previous_state_threshold(self) -> None:
+        code = generate_bittrue_kernel_from_neuron(
+            _wrapped_phase_neuron(),
+            "sc_phase",
+            data_width=32,
+            fraction=16,
+            language="rust",
+        )
+        next_line = next(line for line in code.splitlines() if "_next_theta:" in line)
+        spike_line = next(line for line in code.splitlines() if "let _spk:" in line)
+        assert "fxmod(" in next_line
+        assert "+ (fxmul" not in next_line
+        assert "self.theta" in spike_line
+        assert "_next_theta" not in spike_line
 
 
 class TestTranscendentalStatements:
@@ -267,3 +325,13 @@ class TestModesAndValidation:
         neuron = from_equations("dv/dt = -v + I", init=dict(v=0.0), dt=0.001)
         with pytest.raises(ValueError, match="underflows"):
             generate_bittrue_kernel_from_neuron(neuron, "m", data_width=16, fraction=8)
+
+    def test_unsupported_integrator_rejected(self) -> None:
+        neuron = EquationNeuron(
+            equations={"v": "-v + I"},
+            state={"v": 0.0},
+            dt=0.1,
+            method="rk4",
+        )
+        with pytest.raises(ValueError, match="method='euler' or method='map'"):
+            generate_bittrue_kernel_from_neuron(neuron, "m")

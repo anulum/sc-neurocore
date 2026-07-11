@@ -47,7 +47,7 @@ def test_live_schema_gap_counts_match_current_checkout() -> None:
 
     assert report["schema_version"] == tool.SCHEMA_VERSION
     assert counts["model_modules"] == len(modules)
-    assert counts["schema_models"] == 29
+    assert counts["schema_models"] == 30
     assert counts["schema_only_models"] == 2
     assert report["schema_only_models"] == ["izhikevich", "lif"]
     assert len(report["records"]) == len(modules)
@@ -69,6 +69,10 @@ def test_live_report_classifies_known_wc_a5_examples() -> None:
     assert records["expif"]["schema_present"] is True
     assert records["expif"]["schema_name"] == "exp_if"
     assert records["expif"]["classification"] == "schema_present"
+    assert records["ermentrout_kopell_map_neuron"]["schema_present"] is True
+    assert records["ermentrout_kopell_map_neuron"]["schema_name"] == (
+        "ermentrout_kopell_map_neuron"
+    )
     assert records["butera_respiratory"]["classification"] == "rk4_required"
     assert records["butera_respiratory"]["priority"] == "P3-rk4-or-higher-order-blocked"
     assert records["pinsky_rinzel"]["classification"] == "multi_compartment"

@@ -70,6 +70,11 @@ SUPPORTED_METHODS = ("euler", "map", "rk4", "exp_euler", "gauss_seidel")
 _SUPPORTED_DETECTION = frozenset({"level", "crossing", "poisson", "escape_rate"})
 
 
+def _previous_state_aliases(state: dict[str, float]) -> dict[str, float]:
+    """Return macro-boundary ``<state>_prev`` aliases for expression evaluation."""
+    return {f"{name}_prev": value for name, value in state.items()}
+
+
 class EquationNeuron:
     """Neuron defined by arbitrary ODE equations as strings.
 
@@ -137,6 +142,14 @@ class EquationNeuron:
         raw_parameters = parameters or {}
         raw_state = state or {k: 0.0 for k in equations}
         raw_constants = constants or {}
+        previous_aliases = {f"{name}_prev" for name in equations}
+        occupied_names = set(equations) | set(raw_parameters) | set(raw_state) | set(raw_constants)
+        alias_collisions = sorted(previous_aliases & occupied_names)
+        if alias_collisions:
+            joined = ", ".join(alias_collisions)
+            raise ValueError(
+                f"Names reserved for previous-state aliases cannot be declared: {joined}"
+            )
 
         if self._strict_units:
             runtime = prepare_strict_runtime(
@@ -214,6 +227,7 @@ class EquationNeuron:
         env.update(self.parameters)
         env.update(self.constants)
         env.update(self.initial_state)
+        env.update(_previous_state_aliases(self.initial_state))
         env["I"] = 0.0
         # nosec B307: AST-whitelisted compiled threshold expression (see step()).
         return bool(eval(self._compiled_threshold, self._EVAL_GLOBALS, env))  # nosec B307
@@ -302,12 +316,14 @@ class EquationNeuron:
                 )
                 for name, value in kwargs.items()
             }
+        previous_state = dict(self.state)
         for _ in range(self.substeps):
             self._integrate_once(**kwargs)
 
         spike = 0
         if self._compiled_threshold:
             env_post = self._build_env(**kwargs)
+            env_post.update(_previous_state_aliases(previous_state))
             # nosec B307: AST-whitelisted compiled threshold expression.
             active = bool(eval(self._compiled_threshold, self._EVAL_GLOBALS, env_post))  # nosec B307
             # ``crossing`` fires once on the inactive -> active transition (a rising
@@ -325,6 +341,7 @@ class EquationNeuron:
             if fired:
                 spike = 1
                 reset_env = self._build_env(**kwargs)
+                reset_env.update(_previous_state_aliases(previous_state))
                 for var, code in self._compiled_reset.items():
                     # nosec B307: AST-whitelisted compiled reset rule.
                     self.state[var] = float(eval(code, self._EVAL_GLOBALS, reset_env))  # nosec B307

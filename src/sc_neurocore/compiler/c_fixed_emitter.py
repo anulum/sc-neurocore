@@ -186,7 +186,7 @@ class _CFixedExprEmitter(ast.NodeVisitor):
     # ── AST visitors ──────────────────────────────────────────────────────
 
     def visit_BinOp(self, node: ast.BinOp) -> str:
-        """Emit a binary op (add, sub, mul, div, pow)."""
+        """Emit a binary op (add, sub, mul, div, positive modulo, pow)."""
         left: str = self.visit(node.left)
         if isinstance(node.op, ast.Add):
             return f"({left} + {self.visit(node.right)})"
@@ -196,6 +196,8 @@ class _CFixedExprEmitter(ast.NodeVisitor):
             return self._fxmul(left, self.visit(node.right))
         if isinstance(node.op, ast.Div):
             return self._emit_div(node, left)
+        if isinstance(node.op, ast.Mod):
+            return self._emit_mod(node, left)
         if isinstance(node.op, ast.Pow):
             return self._emit_pow(node, left)
         raise ValueError(f"Unsupported binary op: {type(node.op).__name__}")
@@ -213,6 +215,32 @@ class _CFixedExprEmitter(ast.NodeVisitor):
         shifted = f"sc_wrap(({left}) << {self.q.fraction}, {wide})"
         quotient = f"({shifted} / ({right}))"
         return self._wide(f"sc_wrap({quotient}, {dw})")
+
+    def _emit_mod(self, node: ast.BinOp, left: str) -> str:
+        """Emit Python-compatible modulo by one positive numeric literal.
+
+        The generated ``fxmod`` helper first collapses the dividend to the RTL
+        word width, takes the C/Rust signed remainder, then adds one positive
+        period when that remainder is negative. This is exactly the correction
+        used by the Verilog emitter to reproduce Python's floored ``x % p``.
+        """
+        if (
+            not isinstance(node.right, ast.Constant)
+            or isinstance(node.right.value, bool)
+            or not isinstance(node.right.value, (int, float))
+        ):
+            raise ValueError("Modulo divisor must be a positive numeric literal")
+        period = float(node.right.value)
+        if not math.isfinite(period) or period <= 0.0:
+            raise ValueError("Modulo divisor must be a finite positive numeric literal")
+        if period > self.q.max_value:
+            raise ValueError(
+                f"Modulo divisor {period} exceeds fixed-point maximum {self.q.max_value}"
+            )
+        period_q = int(round(period * (1 << self.q.fraction)))
+        if period_q <= 0:
+            raise ValueError(f"Modulo divisor {period} underflows at fraction={self.q.fraction}")
+        return self._wide(f"fxmod({left}, {period_q})")
 
     def _emit_pow(self, node: ast.BinOp, left: str) -> str:
         """Emit a power: integer 2-8 as repeated wrap-multiply, 1/2 and 1/3 as LUT roots."""
