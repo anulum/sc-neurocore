@@ -187,7 +187,7 @@ wire signed [18:0] _rkw_i1 = _k1_i1 + _k2_i1 + _k2_i1 + _k3_i1 + _k3_i1 + _k4_i1
 wire signed [34:0] _rk6mul_i1 = _rkw_i1 * 16'sd43;
 wire signed [18:0] _rkw_i2 = _k1_i2 + _k2_i2 + _k2_i2 + _k3_i2 + _k3_i2 + _k4_i2;
 wire signed [34:0] _rk6mul_i2 = _rkw_i2 * 16'sd43;
-wire signed [31:0] _mul20 = P_B * (v_reg - P_V_REST);
+wire signed [31:0] _mul20 = P_B * (v_next - P_V_REST);
 wire signed [15:0] _t4 = (_mul20 >>> 8);
 
 wire signed [15:0] dv = (_rk6mul_v >>> 8);
@@ -219,13 +219,13 @@ always @(posedge clk or negedge rst_n) begin
         if ((v_next >= theta_next)) begin
             spike_out <= 1'b1;
             v_reg <= (P_V_RESET + _t4);
-            theta_reg <= ((theta_reg > P_THETA_RESET) ? theta_reg : P_THETA_RESET);
-            i1_reg <= (i1_reg + P_R1);
-            i2_reg <= (i2_reg + P_R2);
-            v_out <= v_reg;
-            theta_out <= theta_reg;
-            i1_out <= i1_reg;
-            i2_out <= i2_reg;
+            v_out <= (P_V_RESET + _t4);
+            theta_reg <= ((theta_next > P_THETA_RESET) ? theta_next : P_THETA_RESET);
+            theta_out <= ((theta_next > P_THETA_RESET) ? theta_next : P_THETA_RESET);
+            i1_reg <= (i1_next + P_R1);
+            i1_out <= (i1_next + P_R1);
+            i2_reg <= (i2_next + P_R2);
+            i2_out <= (i2_next + P_R2);
         end else begin
             spike_out <= 1'b0;
             v_reg <= v_next;

@@ -57,9 +57,9 @@ bundled-schema entry — so the committed feature values are not merely copied f
 the runner output. The
 Hodgkin-Huxley, Connor-Stevens, and Wang-Buzsaki re-derivations reuse the runner's
 numpy activation, exponential, and exprel functions so the conductance rate terms
-match bit-for-bit. The GLIF
-entry re-derives the exact subthreshold explicit-Euler recurrence for its linear
-membrane, adaptive threshold, and two after-spike currents; the Izhikevich entry
+match bit-for-bit. The GLIF entry independently re-derives its four-state
+classical-RK4 flow, candidate-level adaptive threshold decision, and
+candidate-first reset across a 54-spike driven train; the Izhikevich entry
 re-derives the exact regular-spiking explicit-Euler recurrence including its
 `v = c`, `u = u + d` reset; the FitzHugh-Nagumo entry re-derives its cubic
 relaxation oscillator with the faithful four-stage RK4 step and rising-edge

@@ -344,9 +344,9 @@ always @(posedge clk or negedge rst_n) begin
         if ((v_next > (-16'sd12800))) begin
             spike_out <= 1'b1;
             v_reg <= P_V_RESET;
-            w_reg <= (w_reg + P_B_ADAPT);
-            v_out <= v_reg;
-            w_out <= w_reg;
+            v_out <= P_V_RESET;
+            w_reg <= (w_next + P_B_ADAPT);
+            w_out <= (w_next + P_B_ADAPT);
         end else begin
             spike_out <= 1'b0;
             v_reg <= v_next;

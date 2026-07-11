@@ -5,6 +5,26 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+### GLIF faithful RK4 schema-to-RTL correction
+- Corrected the already enrolled `glif` TOML/JSON schemas from stale Euler and `v > theta`
+  semantics to the maintained Allen Institute GLIF5 contract: simultaneous four-state classical
+  RK4, candidate-level `v >= theta` detection, and candidate-first adaptive reset. The hand model
+  and both schema formats agree exactly on all states and 181 reset events over a varied
+  4,000-step drive.
+- Replaced the silent Euler reference with an independent 54-spike RK4 re-derivation. Across the
+  six 1,000-step Q16.16 operating points `I=0/15/22/30/45/50`, hand model, schema runner, and RTL
+  agree exactly on 0/0/23/54/86/95 spikes. The compiler and bit-true C/Rust generators now evaluate
+  reset expressions from the integrated candidate and expose identical post-reset state, removing
+  the pre-step-reset mismatch that a one-spike band had masked. The S5/H1 descriptor/readiness
+  facets record the exact observable. Deterministic regeneration changes all ten reset-using formal
+  RTL models plus seven non-resetting single-step edge models so spike-cycle outputs expose the
+  committed candidate. Connor-Stevens and Hodgkin-Huxley already expose that candidate in their
+  macro-step branches and remain byte-identical, accounting for all 19 jobs without changing the
+  inventory. The completed acceleration chain and benchmark artefacts are unchanged. The reset
+  correction exposes one honest legacy
+  Izhikevich Q8.8 boundary (float64 25 spikes versus RTL 24 at `I=50` over 200 steps), while a new
+  Q16.16 guard proves exact 25/25 parity at the same point.
+
 ### Rulkov map class-correct schema-to-RTL enrolment
 - Descriptor regeneration now inherits `integration.dt` from a bundled map schema when the hand
   class intentionally has no timestep parameter, so the Rulkov map retains its one-iteration

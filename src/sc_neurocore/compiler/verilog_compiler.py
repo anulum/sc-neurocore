@@ -37,9 +37,10 @@ class _NeuronCore:
 
     Both the registered per-instance module and the combinational datapath PE are
     assembled from these identical fragments, so their arithmetic is bit-for-bit
-    the same. State variables are referenced as ``<safe_var>_reg`` throughout
-    (the per-instance module declares those as registers; the datapath PE declares
-    them as input ports).
+    the same. Derivatives read ``<safe_var>_reg``; threshold and reset expressions
+    read the integrated ``<safe_var>_next`` candidate. The per-instance module
+    declares the former as registers, while the datapath PE declares them as input
+    ports.
     """
 
     state_var_map: dict[str, str]
@@ -50,7 +51,7 @@ class _NeuronCore:
     deriv_wires: list[str]
     next_wires: list[str]
     threshold_verilog: str
-    reset_assignments: list[str]
+    reset_expressions: dict[str, str]
 
     @property
     def total_pipeline_latency(self) -> int:
@@ -625,20 +626,22 @@ def _build_neuron_core(
         all_intermediates.extend(thr_intermediates)
         all_pipeline_regs.extend(thr_pregs)
 
-    reset_assignments: list[str] = []
+    reset_param_map = dict(param_map)
+    reset_param_map.update({var: f"{safe_var}_next" for var, safe_var in state_var_map.items()})
+    reset_expressions: dict[str, str] = {}
     for var, expr_str in neuron.reset_rules.items():
         safe_var = state_var_map[var]
         rexpr, r_intermediates, _mc, _tc, r_pregs = _emit_expr(
             expr_str,
-            state_var_map,
-            param_map,
+            {},
+            reset_param_map,
             q,
             mul_start=_mc,
             trunc_start=_tc,
         )
         all_intermediates.extend(r_intermediates)
         all_pipeline_regs.extend(r_pregs)
-        reset_assignments.append(f"            {safe_var}_reg <= {rexpr};")
+        reset_expressions[safe_var] = rexpr
 
     return _NeuronCore(
         state_var_map=state_var_map,
@@ -649,7 +652,7 @@ def _build_neuron_core(
         deriv_wires=deriv_wires,
         next_wires=next_wires,
         threshold_verilog=threshold_verilog,
-        reset_assignments=reset_assignments,
+        reset_expressions=reset_expressions,
     )
 
 
@@ -724,7 +727,7 @@ def compile_to_verilog(
     deriv_wires = core.deriv_wires
     next_wires = core.next_wires
     threshold_verilog = core.threshold_verilog
-    reset_assignments = core.reset_assignments
+    reset_expressions = core.reset_expressions
     total_pipeline_latency = core.total_pipeline_latency
     # Mirror the Python golden's edge/level decision exactly (see EquationNeuron): edge
     # logic is engaged only for a crossing, non-resetting model, so reset-based models use
@@ -890,15 +893,11 @@ def compile_to_verilog(
             spike_cond = threshold_verilog
         step_lines.append(f"        if ({spike_cond}) begin")
         step_lines.append("            spike_out <= 1'b1;")
-        for assign in reset_assignments:
-            step_lines.append(assign)
         for var in neuron.equations:
             safe_var = state_var_map[var]
-            if var not in neuron.reset_rules:
-                step_lines.append(f"            {safe_var}_reg <= {safe_var}_next;")
-        for var in neuron.equations:
-            safe_var = state_var_map[var]
-            step_lines.append(f"            {safe_var}_out <= {safe_var}_reg;")
+            on_spike = reset_expressions.get(safe_var, f"{safe_var}_next")
+            step_lines.append(f"            {safe_var}_reg <= {on_spike};")
+            step_lines.append(f"            {safe_var}_out <= {on_spike};")
         step_lines.append("        end else begin")
         step_lines.append("            spike_out <= 1'b0;")
         for var in neuron.equations:
@@ -1088,17 +1087,9 @@ def compile_to_datapath(
     # Next-state output: on spike, apply reset rules (or hold <var>_next when the
     # variable has no reset rule); otherwise advance to <var>_next. This mirrors
     # the per-instance always block exactly.
-    reset_map: dict[str, str] = {}
-    for assign in core.reset_assignments:
-        # Each entry is "            <safe_var>_reg <= <expr>;"
-        body = assign.strip().rstrip(";")
-        lhs, rhs = body.split("<=", 1)
-        safe_var = lhs.strip().removesuffix("_reg")
-        reset_map[safe_var] = rhs.strip()
-
     for var in neuron.equations:
         safe_var = state_var_map[var]
-        on_spike = reset_map.get(safe_var, f"{safe_var}_next")
+        on_spike = core.reset_expressions.get(safe_var, f"{safe_var}_next")
         if core.threshold_verilog:
             lines.append(
                 f"assign {safe_var}_next_out = spike_out ? ({on_spike}) : {safe_var}_next;"

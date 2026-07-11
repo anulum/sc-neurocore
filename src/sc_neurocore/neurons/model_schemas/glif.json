@@ -19,14 +19,14 @@
     "a_theta": 0.01, "delta_theta": 2.0,
     "r_asc1": 1.0, "r_asc2": 0.5, "resistance": 1.0
   },
-  "integration": { "dt": 1.0, "method": "euler" },
+  "integration": { "dt": 1.0, "method": "rk4" },
   "dynamics": {
     "v": "(-(v - v_rest) + resistance * I + i_asc1 + i_asc2) / tau_m",
     "theta": "(theta_inf - theta + a_theta * (v - v_rest)) / tau_theta",
     "i_asc1": "-i_asc1 / tau_asc1",
     "i_asc2": "-i_asc2 / tau_asc2"
   },
-  "threshold": { "condition": "v > theta", "detection": "crossing" },
+  "threshold": { "condition": "v >= theta", "detection": "crossing" },
   "reset": {
     "v": "v_reset",
     "theta": "theta + delta_theta",

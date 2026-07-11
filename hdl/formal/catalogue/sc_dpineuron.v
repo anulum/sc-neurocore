@@ -50,7 +50,7 @@ always @(posedge clk or negedge rst_n) begin
         if ((i_mem_next >= P_I_THRESHOLD)) begin
             spike_out <= 1'b1;
             i_mem_reg <= P_I_RESET;
-            i_mem_out <= i_mem_reg;
+            i_mem_out <= P_I_RESET;
         end else begin
             spike_out <= 1'b0;
             i_mem_reg <= i_mem_next;

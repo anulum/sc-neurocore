@@ -160,11 +160,11 @@ always @(posedge clk or negedge rst_n) begin
         if (((v_next >= P_V_THRESHOLD)) && !_thr_prev) begin
             spike_out <= 1'b1;
             v_reg <= v_next;
+            v_out <= v_next;
             w_reg <= w_next;
+            w_out <= w_next;
             y_reg <= y_next;
-            v_out <= v_reg;
-            w_out <= w_reg;
-            y_out <= y_reg;
+            y_out <= y_next;
         end else begin
             spike_out <= 1'b0;
             v_reg <= v_next;

@@ -50,7 +50,7 @@ always @(posedge clk or negedge rst_n) begin
         if ((v_next > P_V_THRESHOLD)) begin
             spike_out <= 1'b1;
             v_reg <= P_V_RESET;
-            v_out <= v_reg;
+            v_out <= P_V_RESET;
         end else begin
             spike_out <= 1'b0;
             v_reg <= v_next;

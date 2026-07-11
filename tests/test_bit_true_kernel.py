@@ -24,10 +24,10 @@ from sc_neurocore.compiler.intelligence.bit_true_kernel import (
     generate_bittrue_kernel,
     generate_bittrue_kernel_from_neuron,
 )
-from sc_neurocore.neurons.equation_builder import from_equations
+from sc_neurocore.neurons.equation_builder import EquationNeuron, from_equations
 
 
-def _lif(dt=1.0):
+def _lif(dt: float = 1.0) -> EquationNeuron:
     return from_equations(
         "dv/dt = -(v - E_L)/tau_m + I/C",
         threshold="v > -50",
@@ -38,131 +38,155 @@ def _lif(dt=1.0):
     )
 
 
+def _adaptive_reset_neuron() -> EquationNeuron:
+    """Build a two-state neuron whose recovery reset depends on its candidate."""
+    return from_equations(
+        "dv/dt = 0.04*v**2 + 5*v + 140 - u + I",
+        "du/dt = a*(b*v - u)",
+        threshold="v > 30",
+        reset="v = c; u = u + d",
+        params=dict(a=0.02, b=0.2, c=-65, d=8),
+        init=dict(v=-65, u=-13),
+        dt=1.0,
+    )
+
+
 class TestTypeHelpers:
     @pytest.mark.parametrize(
         "dw,expected", [(8, "int8_t"), (16, "int16_t"), (32, "int32_t"), (64, "int64_t")]
     )
-    def test_ctype_native(self, dw, expected):
+    def test_ctype_native(self, dw: int, expected: str) -> None:
         assert _ctype(dw) == expected
 
-    def test_ctype_non_native_widens(self):
+    def test_ctype_non_native_widens(self) -> None:
         assert _ctype(24) == "int32_t"
         assert _ctype(48) == "int64_t"
 
     @pytest.mark.parametrize("dw,expected", [(8, "i8"), (16, "i16"), (32, "i32"), (64, "i64")])
-    def test_rtype_native(self, dw, expected):
+    def test_rtype_native(self, dw: int, expected: str) -> None:
         assert _rtype(dw) == expected
 
-    def test_rtype_non_native_widens(self):
+    def test_rtype_non_native_widens(self) -> None:
         assert _rtype(24) == "i32"
         assert _rtype(48) == "i64"
 
-    def test_accumulate_bias_saturate(self):
+    def test_accumulate_bias_saturate(self) -> None:
         assert _accumulate_bias("x", "saturate") == "sat(x)"
 
-    def test_accumulate_bias_wrap(self):
+    def test_accumulate_bias_wrap(self) -> None:
         assert _accumulate_bias("x", "wrap") == "sc_wrap(x, WORD_BITS)"
 
-    def test_format_tables_empty(self):
+    def test_format_tables_empty(self) -> None:
         assert _format_tables_c({}, 16) == []
 
 
 class TestSimpleKernelC:
-    def test_substrings(self):
+    def test_substrings(self) -> None:
         code = generate_bittrue_kernel("sc_lif", {"v": "a + b"})
         for s in ("#include <stdint.h>", "sc_lif_state_t", "sat(", "fxmul("):
             assert s in code
 
-    def test_step_is_not_a_noop(self):
+    def test_step_is_not_a_noop(self) -> None:
         code = generate_bittrue_kernel("sc_lif", {"v": "a + b"})
         assert "_next_v = sat(" in code
         assert "s->v = _next_v;" in code
         assert "/* update */" not in code  # the old placeholder is gone
 
-    def test_multi_var_struct(self):
+    def test_multi_var_struct(self) -> None:
         code = generate_bittrue_kernel("sc_izh", {"v": "a * b", "u": "c + d"})
         assert "int16_t v;" in code and "int16_t u;" in code
 
-    def test_free_variables_become_arguments(self):
+    def test_free_variables_become_arguments(self) -> None:
         code = generate_bittrue_kernel("sc_lif", {"v": "a + b"})
         assert "int16_t a" in code and "int16_t b" in code
 
-    def test_input_current_becomes_argument(self):
+    def test_input_current_becomes_argument(self) -> None:
         code = generate_bittrue_kernel("sc_lif", {"v": "I - v"})
         assert "int16_t I_t" in code
 
-    def test_transcendental_declares_table(self):
+    def test_transcendental_declares_table(self) -> None:
         code = generate_bittrue_kernel("sc_th", {"v": "tanh(v)"})
         assert "static const int16_t _tanh_lut0" in code
 
 
 class TestSimpleKernelRust:
-    def test_substrings(self):
+    def test_substrings(self) -> None:
         code = generate_bittrue_kernel("sc_lif", {"v": "a + b"}, language="rust")
         for s in ("pub struct", "fn sat", "clamp"):
             assert s in code
 
-    def test_step_computes(self):
+    def test_step_computes(self) -> None:
         code = generate_bittrue_kernel("sc_lif", {"v": "a + b"}, language="rust")
         assert "let _next_v" in code and "self.v = _next_v;" in code
 
-    def test_free_variables_become_arguments(self):
+    def test_free_variables_become_arguments(self) -> None:
         code = generate_bittrue_kernel("sc_lif", {"v": "a + b"}, language="rust")
         assert ", a: i16" in code and ", b: i16" in code
 
 
 class TestNeuronKernelC:
-    def test_reset_and_step(self):
+    def test_reset_and_step(self) -> None:
         code = generate_bittrue_kernel_from_neuron(_lif(), "sc_lif")
         assert "sc_lif_reset(sc_lif_state_t *s)" in code
         assert "int sc_lif_step(sc_lif_state_t *s, int16_t I_t)" in code
 
-    def test_bit_identical_claim_present(self):
+    def test_bit_identical_claim_present(self) -> None:
         code = generate_bittrue_kernel_from_neuron(_lif(), "sc_lif")
         assert "Bit-identical to compile_to_verilog" in code
 
-    def test_threshold_and_spike_sequencing(self):
+    def test_threshold_and_spike_sequencing(self) -> None:
         code = generate_bittrue_kernel_from_neuron(_lif(), "sc_lif")
-        # on spike the output holds the old register value
-        assert "s->v_out = s->v;" in code
+        # On a spike, state and output expose the same post-reset value.
+        assert "s->v = _rst_v;" in code
+        assert "s->v_out = _rst_v;" in code
         assert "int _spk" in code and "return _spk;" in code
 
-    def test_reset_rule_lowered(self):
+    def test_reset_rule_lowered(self) -> None:
         code = generate_bittrue_kernel_from_neuron(_lif(), "sc_lif")
         assert "_rst_v = sat(" in code
 
-    def test_no_threshold_branch(self):
+    def test_no_threshold_branch(self) -> None:
         neuron = from_equations("dv/dt = -v + I", init=dict(v=0.0), dt=1.0)
         code = generate_bittrue_kernel_from_neuron(neuron, "sc_leak")
         assert "return 0;" in code and "spike_out = 0;" in code
         assert "_spk" not in code
 
-    def test_multi_var_with_two_resets(self):
-        izh = from_equations(
-            "dv/dt = 0.04*v**2 + 5*v + 140 - u + I",
-            "du/dt = a*(b*v - u)",
-            threshold="v > 30",
-            reset="v = c; u = u + d",
-            params=dict(a=0.02, b=0.2, c=-65, d=8),
-            init=dict(v=-65, u=-13),
-            dt=1.0,
+    def test_multi_var_with_two_resets(self) -> None:
+        code = generate_bittrue_kernel_from_neuron(
+            _adaptive_reset_neuron(), "sc_izh", data_width=32, fraction=16
         )
-        code = generate_bittrue_kernel_from_neuron(izh, "sc_izh", data_width=32, fraction=16)
         assert "_rst_v = sat(" in code and "_rst_u = sat(" in code
+        reset_u = next(line for line in code.splitlines() if "_rst_u = sat(" in line)
+        assert "_next_u" in reset_u
+        assert "s->u = _rst_u;" in code and "s->u_out = _rst_u;" in code
         assert "int32_t v;" in code and "int32_t u;" in code
 
 
 class TestNeuronKernelRust:
-    def test_reset_and_step(self):
+    def test_reset_and_step(self) -> None:
         code = generate_bittrue_kernel_from_neuron(_lif(), "sc_lif", language="rust")
         assert "pub fn reset(&mut self)" in code
         assert "pub fn step(&mut self, I_t: i16) -> i32" in code
 
-    def test_threshold_sequencing(self):
+    def test_threshold_sequencing(self) -> None:
         code = generate_bittrue_kernel_from_neuron(_lif(), "sc_lif", language="rust")
-        assert "self.v_out = self.v;" in code and "if _spk != 0" in code
+        assert "self.v = _rst_v;" in code
+        assert "self.v_out = _rst_v;" in code
+        assert "if _spk != 0" in code
 
-    def test_no_threshold_branch(self):
+    def test_state_dependent_reset_reads_candidate(self) -> None:
+        code = generate_bittrue_kernel_from_neuron(
+            _adaptive_reset_neuron(),
+            "sc_izh",
+            data_width=32,
+            fraction=16,
+            language="rust",
+        )
+        reset_u = next(line for line in code.splitlines() if "_rst_u:" in line)
+        assert "_next_u" in reset_u
+        assert "self.u = _rst_u;" in code and "self.u_out = _rst_u;" in code
+
+    def test_no_threshold_branch(self) -> None:
         neuron = from_equations("dv/dt = -v + I", init=dict(v=0.0), dt=1.0)
         code = generate_bittrue_kernel_from_neuron(neuron, "sc_leak", language="rust")
         assert "return 0;" in code
@@ -171,13 +195,13 @@ class TestNeuronKernelRust:
 class TestTranscendentalStatements:
     """Cover the LUT-statement paths (deriv, threshold and table declarations)."""
 
-    def test_simple_rust_lut_and_input(self):
+    def test_simple_rust_lut_and_input(self) -> None:
         code = generate_bittrue_kernel("sc_th", {"v": "tanh(v) + I"}, language="rust")
         assert "const _tanh_lut0: [i16;" in code  # rust table declaration
         assert ", I_t: i16" in code  # input argument
         assert "let _tanh_lut0_arg" in code  # LUT statement inside step
 
-    def _transcendental_neuron(self):
+    def _transcendental_neuron(self) -> EquationNeuron:
         return from_equations(
             "dv/dt = 0.1*(exp(v) - v) + I",
             threshold="tanh(v) > 0.5",
@@ -186,12 +210,12 @@ class TestTranscendentalStatements:
             dt=0.5,
         )
 
-    def test_neuron_c_deriv_and_threshold_statements(self):
+    def test_neuron_c_deriv_and_threshold_statements(self) -> None:
         code = generate_bittrue_kernel_from_neuron(self._transcendental_neuron(), "sc_tr")
         assert "_exp_lut0_arg" in code  # derivative LUT statement (line 534)
         assert "_tanh_lut" in code  # threshold LUT statement (line 557)
 
-    def test_neuron_rust_deriv_and_threshold_statements(self):
+    def test_neuron_rust_deriv_and_threshold_statements(self) -> None:
         code = generate_bittrue_kernel_from_neuron(
             self._transcendental_neuron(), "sc_tr", language="rust"
         )
@@ -200,45 +224,45 @@ class TestTranscendentalStatements:
 
 
 class TestModesAndValidation:
-    def test_nearest_rounding_adds_half(self):
+    def test_nearest_rounding_adds_half(self) -> None:
         code = generate_bittrue_kernel_from_neuron(_lif(), "sc_lif", rounding="nearest")
         assert "(1 << (FRAC_BITS - 1))" in code
 
-    def test_wrap_overflow_uses_sc_wrap(self):
+    def test_wrap_overflow_uses_sc_wrap(self) -> None:
         code = generate_bittrue_kernel_from_neuron(_lif(), "sc_lif", overflow="wrap")
         assert "sc_wrap(((int64_t)s->v)" in code
 
-    def test_nearest_rounding_rust(self):
+    def test_nearest_rounding_rust(self) -> None:
         code = generate_bittrue_kernel_from_neuron(
             _lif(), "sc_lif", rounding="nearest", language="rust"
         )
         assert "(1 << (FRAC_BITS - 1))" in code
 
-    def test_bad_language_simple(self):
+    def test_bad_language_simple(self) -> None:
         with pytest.raises(ValueError, match="language must be"):
             generate_bittrue_kernel("m", {"v": "v"}, language="go")
 
-    def test_bad_language_neuron(self):
+    def test_bad_language_neuron(self) -> None:
         with pytest.raises(ValueError, match="language must be"):
             generate_bittrue_kernel_from_neuron(_lif(), "m", language="go")
 
-    def test_bankers_rounding_rejected(self):
+    def test_bankers_rounding_rejected(self) -> None:
         with pytest.raises(ValueError, match="rounding"):
             generate_bittrue_kernel_from_neuron(_lif(), "m", rounding="bankers")
 
-    def test_stochastic_rounding_rejected(self):
+    def test_stochastic_rounding_rejected(self) -> None:
         with pytest.raises(ValueError, match="stochastic"):
             generate_bittrue_kernel_from_neuron(_lif(), "m", rounding="stochastic")
 
-    def test_trap_overflow_rejected(self):
+    def test_trap_overflow_rejected(self) -> None:
         with pytest.raises(ValueError, match="trap"):
             generate_bittrue_kernel_from_neuron(_lif(), "m", overflow="trap")
 
-    def test_unsigned_rejected(self):
+    def test_unsigned_rejected(self) -> None:
         with pytest.raises(ValueError, match="signed=True"):
             generate_bittrue_kernel_from_neuron(_lif(), "m", signed=False)
 
-    def test_dt_underflow_rejected(self):
+    def test_dt_underflow_rejected(self) -> None:
         # dt=0.001 underflows Q8.8 (resolution 1/256 ≈ 0.0039)
         neuron = from_equations("dv/dt = -v + I", init=dict(v=0.0), dt=0.001)
         with pytest.raises(ValueError, match="underflows"):

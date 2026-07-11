@@ -69,9 +69,9 @@ always @(posedge clk or negedge rst_n) begin
         if ((v_next >= P_VPEAK)) begin
             spike_out <= 1'b1;
             v_reg <= P_c;
-            u_reg <= (u_reg + P_D);
-            v_out <= v_reg;
-            u_out <= u_reg;
+            v_out <= P_c;
+            u_reg <= (u_next + P_D);
+            u_out <= (u_next + P_D);
         end else begin
             spike_out <= 1'b0;
             v_reg <= v_next;

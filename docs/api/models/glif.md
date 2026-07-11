@@ -64,6 +64,38 @@ The Python reference raises before mutation when:
 
 The non-throwing Go, Julia, Rust engine, and Rust safety mirrors preserve state and return no spike for the same invalid runtime boundaries.
 
+## Co-simulation fidelity
+
+The paired TOML and JSON schemas now encode the same simultaneous classical RK4
+flow and candidate-level `v >= theta` reset as the maintained hand model. Across
+the varied 4,000-step drive `(0, 15, 22, 30, 45, 50, 30, 22) × 500`, both schema
+formats reproduce all 181 spike decisions and every post-step `v`, `theta`,
+`i_asc1`, and `i_asc2` value exactly.
+
+The Q16.16 contract covers silent, subthreshold, onset, tonic, and high-drive
+regimes over 1,000 steps:
+
+| Current | Hand / schema spikes | Q16.16 RTL spikes | Absolute gap |
+| ---: | ---: | ---: | ---: |
+| 0 | 0 | 0 | 0 |
+| 15 | 0 | 0 | 0 |
+| 22 | 23 | 23 | 0 |
+| 30 | 54 | 54 | 0 |
+| 45 | 86 | 86 | 0 |
+| 50 | 95 | 95 | 0 |
+
+The right-hand side is linear, so no look-up table is involved. The compiler
+evaluates reset expressions from the integrated candidate and exposes that same
+post-reset state on the RTL outputs, matching the schema runner's
+integrate-detect-reset order. Q16.16 therefore preserves the spike count exactly
+across the full operating set despite quantising coefficients such as
+`a_theta = 0.01`; raw state identity is not claimed.
+
+The S5/H1 descriptor also enrols generated Q8.8 RTL, a port-only formal harness,
+and a depth-6 SymbiYosys/Z3 reset-spike safety job. That bounded safety result does
+not replace the Q16.16 behavioural evidence. No synthesis or timing evidence is
+claimed, so the silicon tier remains H1.
+
 ## Cross-language surfaces
 
 | Surface | Contract |
@@ -151,8 +183,12 @@ Artefact: `benchmarks/results/bench_glif_simulate.json`.
 ```bash
 PYTHONPATH=src .venv/bin/python -m pytest tests/test_model_glif.py -q
 PYTHONPATH=src .venv/bin/python -m pytest tests/test_glif_backends.py -q
+PYTHONPATH=src .venv/bin/python -m pytest tests/test_cosimulation.py::TestTierBModelCosim::test_glif_schema_formats_match_hand_rk4_sequence -q
+PYTHONPATH=src .venv/bin/python -m pytest tests/test_cosimulation.py::TestQ1616Precision::test_glif_q1616_parity -q
+PYTHONPATH=src .venv/bin/python -m pytest tests/test_reference_traces.py -q
 cargo test --manifest-path engine/Cargo.toml glif_ --release
 (cd src/sc_neurocore/accel/go/neurons/glif && go build -buildmode=c-shared -o libglif.so glif.go)
 (cd src/sc_neurocore/accel/mojo/neurons && mojo build --emit shared-lib -o libglif.so glif.mojo)
 PYTHONPATH=src .venv/bin/python benchmarks/bench_glif_simulate.py --json benchmarks/results/bench_glif_simulate.json
+(cd hdl/formal/catalogue && sby -f sc_glif.sby)
 ```

@@ -7,9 +7,9 @@
   },
   "protocol": {
     "dt": 1.0,
-    "steps": 60,
+    "steps": 1000,
     "inputs": {
-      "I": 2.0
+      "I": 30.0
     },
     "state_variables": [
       "v",
@@ -19,30 +19,30 @@
     ]
   },
   "provenance": {
-    "kind": "analytic_linear_euler_reference",
+    "kind": "independent_rk4_reference",
     "source": "src/sc_neurocore/neurons/model_schemas/glif.toml",
-    "equation": "Subthreshold constant-current GLIF5 trace; the linear membrane, adaptive threshold, and two after-spike currents are advanced with the exact explicit-Euler recurrence, independently re-derived from the Allen Institute GLIF5 equations with the after-spike currents quiescent at zero.",
+    "equation": "Driven GLIF5 trace independently re-derived from the Allen Institute four-state flow with simultaneous classical RK4, candidate-level v >= theta detection, and the candidate-first voltage, threshold, and after-spike-current reset increments.",
     "citation": "doi:10.1038/s41467-017-02717-4"
   },
   "expected_features": {
-    "spike_count": 0.0,
-    "first_spike_step": -1.0,
-    "final.v": -68.00359402059982,
-    "min.v": -69.8,
-    "max.v": -68.00359402059982,
-    "mean.v": -68.29946089691002,
-    "final.theta": -49.99215504314136,
-    "min.theta": -50.0,
-    "max.theta": -49.99215504314136,
-    "mean.theta": -49.99627152211577,
-    "final.i_asc1": 0.0,
+    "spike_count": 54.0,
+    "first_spike_step": 11.0,
+    "final.v": -66.51811704549482,
+    "min.v": -70.0,
+    "max.v": -40.289548021238076,
+    "mean.v": -51.68975714447121,
+    "final.theta": -38.35658698727918,
+    "min.theta": -49.99985536125,
+    "max.theta": -38.23974703626318,
+    "mean.theta": -40.11335570702817,
+    "final.i_asc1": 1.0639750535363472,
     "min.i_asc1": 0.0,
-    "max.i_asc1": 0.0,
-    "mean.i_asc1": 0.0,
-    "final.i_asc2": 0.0,
+    "max.i_asc1": 1.31380295378062,
+    "mean.i_asc1": 0.5573337761460219,
+    "final.i_asc2": 5.4573193867425225,
     "min.i_asc2": 0.0,
-    "max.i_asc2": 0.0,
-    "mean.i_asc2": 0.0
+    "max.i_asc2": 5.48467431400484,
+    "mean.i_asc2": 4.32477375848058
   },
   "tolerances": {
     "default": {

@@ -151,9 +151,9 @@ always @(posedge clk or negedge rst_n) begin
         if ((v_next >= P_V_PEAK)) begin
             spike_out <= 1'b1;
             v_reg <= (-16'sd179);
+            v_out <= (-16'sd179);
             r_reg <= r_next;
-            v_out <= v_reg;
-            r_out <= r_reg;
+            r_out <= r_next;
         end else begin
             spike_out <= 1'b0;
             v_reg <= v_next;

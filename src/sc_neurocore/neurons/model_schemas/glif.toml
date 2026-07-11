@@ -36,7 +36,7 @@ resistance = 1.0
 
 [integration]
 dt = 1.0
-method = "euler"
+method = "rk4"
 
 [dynamics]
 v = "(-(v - v_rest) + resistance * I + i_asc1 + i_asc2) / tau_m"
@@ -45,7 +45,7 @@ i_asc1 = "-i_asc1 / tau_asc1"
 i_asc2 = "-i_asc2 / tau_asc2"
 
 [threshold]
-condition = "v > theta"
+condition = "v >= theta"
 detection = "crossing"
 
 [reset]

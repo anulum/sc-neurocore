@@ -5,6 +5,23 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 ## [Unreleased]
 
 ### Added
+- Corrected the already acceleration-complete GLIF5 schema-to-RTL surface to match the maintained
+  hand model: paired TOML/JSON four-state classical RK4, candidate-level `v >= theta` detection,
+  and candidate-first adaptive reset replace the stale Euler / strict-greater-than contract. A
+  varied 4,000-step drive gives exact hand/TOML/JSON state and event parity across 181 resets. The
+  six-point 1,000-step Q16.16 contract spans silent through high-drive regimes with exact
+  hand/schema/RTL counts of 0/0/23/54/86/95 at `I=0/15/22/30/45/50`. The equation compiler and
+  bit-true C/Rust generators now evaluate reset expressions from the integrated candidate and expose
+  identical post-reset state, removing the pre-step-reset mismatch that a one-spike band had masked.
+  The DOI-backed reference is an independent, spike-bearing RK4 re-derivation; the S5/H1 descriptor
+  and readiness evidence record the same observable. Deterministic regeneration changes all ten
+  reset-using formal RTL models plus seven non-resetting single-step edge models so every spike-cycle
+  output exposes the committed candidate. The Connor-Stevens and Hodgkin-Huxley macro-step outputs
+  already exposed that candidate and remain byte-identical; all 19 jobs are therefore accounted for
+  and the inventory count is unchanged. Acceleration kernels and benchmark artefacts are unchanged.
+  The corrected reset exposes one honest legacy
+  Izhikevich Q8.8 boundary (float64 25 spikes, RTL 24 at `I=50` over 200 steps); Q16.16 remains
+  exact at 25/25 and now has a dedicated regression guard.
 - Descriptor regeneration now reads `integration.dt` from an authoritative bundled map schema when
   a model class has no public `dt` field, preserving the unit-iteration metadata of pure discrete
   maps such as Rulkov without changing the fallback semantics of non-map models. Readiness facet

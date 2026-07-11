@@ -566,8 +566,8 @@ always @(posedge clk or negedge rst_n) begin
     end else begin
         if ((theta_next > 16'sd796)) begin
             spike_out <= 1'b1;
-            theta_reg <= (theta_reg - 16'sd1608);
-            theta_out <= theta_reg;
+            theta_reg <= (theta_next - 16'sd1608);
+            theta_out <= (theta_next - 16'sd1608);
         end else begin
             spike_out <= 1'b0;
             theta_reg <= theta_next;

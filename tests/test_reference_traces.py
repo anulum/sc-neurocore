@@ -205,13 +205,16 @@ def _resonate_fire_linear_euler_features(
     return _summarise({"x": x_values, "y": y_values}, spikes)
 
 
-def _glif_subthreshold_euler_features(*, current: float, dt: float, steps: int) -> dict[str, float]:
-    """Return exact explicit-Euler features for the subthreshold GLIF5 recurrence.
+def _glif_driven_rk4_features(*, current: float, dt: float, steps: int) -> dict[str, float]:
+    """Return classical-RK4 features for the driven GLIF5 flow and adaptive reset.
 
-    The Allen Institute GLIF5 membrane, adaptive threshold, and two after-spike
-    currents are linear, so the schema runner's simultaneous explicit-Euler update
-    has an exact independent re-derivation. For a subthreshold constant current the
-    threshold is never crossed and both after-spike currents stay quiescent at zero.
+    The maintained Allen Institute GLIF5 model advances four coupled linear states:
+    the membrane potential, adaptive threshold, and two after-spike currents. This
+    independent recurrence evaluates all four classical RK4 stages from the same
+    pre-step state, then applies the candidate-level ``v >= theta`` decision and the
+    candidate-first voltage, threshold, and current reset increments. A driven tonic
+    train therefore exercises both the continuous flow and every reset surface rather
+    than validating only a silent linear tail.
 
     Parameters
     ----------
@@ -228,43 +231,72 @@ def _glif_subthreshold_euler_features(*, current: float, dt: float, steps: int) 
         Reference feature map for the ``v``, ``theta``, ``i_asc1``, and ``i_asc2``
         state variables plus spike-count and first-spike-step features.
     """
+    theta_inf = -50.0
     v_rest = -70.0
     v_reset = -70.0
-    resistance = 1.0
     tau_m = 10.0
-    theta_inf = -50.0
-    a_theta = 0.01
     tau_theta = 100.0
     tau_asc1 = 10.0
     tau_asc2 = 200.0
+    a_theta = 0.01
     delta_theta = 2.0
     r_asc1 = 1.0
     r_asc2 = 0.5
+    resistance = 1.0
 
     v = v_rest
     theta = theta_inf
     i_asc1 = 0.0
     i_asc2 = 0.0
+    half_dt = 0.5 * dt
     recorded: dict[str, list[float]] = {"v": [], "theta": [], "i_asc1": [], "i_asc2": []}
     spikes: list[int] = []
+
+    def derivatives(
+        membrane: float,
+        threshold: float,
+        asc1: float,
+        asc2: float,
+    ) -> tuple[float, float, float, float]:
+        return (
+            (-(membrane - v_rest) + resistance * current + asc1 + asc2) / tau_m,
+            (theta_inf - threshold + a_theta * (membrane - v_rest)) / tau_theta,
+            -asc1 / tau_asc1,
+            -asc2 / tau_asc2,
+        )
+
     for _ in range(steps):
-        dv = (-(v - v_rest) + resistance * current + i_asc1 + i_asc2) / tau_m
-        dtheta = (theta_inf - theta + a_theta * (v - v_rest)) / tau_theta
-        di_asc1 = -i_asc1 / tau_asc1
-        di_asc2 = -i_asc2 / tau_asc2
-        v_next = v + dv * dt
-        theta_next = theta + dtheta * dt
-        i_asc1_next = i_asc1 + di_asc1 * dt
-        i_asc2_next = i_asc2 + di_asc2 * dt
-        if v_next > theta_next:
+        k1 = derivatives(v, theta, i_asc1, i_asc2)
+        k2 = derivatives(
+            v + half_dt * k1[0],
+            theta + half_dt * k1[1],
+            i_asc1 + half_dt * k1[2],
+            i_asc2 + half_dt * k1[3],
+        )
+        k3 = derivatives(
+            v + half_dt * k2[0],
+            theta + half_dt * k2[1],
+            i_asc1 + half_dt * k2[2],
+            i_asc2 + half_dt * k2[3],
+        )
+        k4 = derivatives(
+            v + dt * k3[0],
+            theta + dt * k3[1],
+            i_asc1 + dt * k3[2],
+            i_asc2 + dt * k3[3],
+        )
+        v = v + dt * (k1[0] + 2.0 * k2[0] + 2.0 * k3[0] + k4[0]) / 6.0
+        theta = theta + dt * (k1[1] + 2.0 * k2[1] + 2.0 * k3[1] + k4[1]) / 6.0
+        i_asc1 = i_asc1 + dt * (k1[2] + 2.0 * k2[2] + 2.0 * k3[2] + k4[2]) / 6.0
+        i_asc2 = i_asc2 + dt * (k1[3] + 2.0 * k2[3] + 2.0 * k3[3] + k4[3]) / 6.0
+        if v >= theta:
             spikes.append(1)
-            v_next = v_reset
-            theta_next = theta_next + delta_theta
-            i_asc1_next = i_asc1_next + r_asc1
-            i_asc2_next = i_asc2_next + r_asc2
+            v = v_reset
+            theta = theta + delta_theta
+            i_asc1 = i_asc1 + r_asc1
+            i_asc2 = i_asc2 + r_asc2
         else:
             spikes.append(0)
-        v, theta, i_asc1, i_asc2 = v_next, theta_next, i_asc1_next, i_asc2_next
         recorded["v"].append(v)
         recorded["theta"].append(theta)
         recorded["i_asc1"].append(i_asc1)
@@ -1624,9 +1656,9 @@ _PARITY_CASES: list[tuple[str, str, str, str, Callable[[ReferenceTraceSpec], dic
     (
         "glif_constant_current_threshold_adaptation",
         "glif",
-        "analytic_linear_euler_reference",
+        "independent_rk4_reference",
         "doi:10.1038/s41467-017-02717-4",
-        lambda spec: _glif_subthreshold_euler_features(
+        lambda spec: _glif_driven_rk4_features(
             current=spec.protocol.inputs["I"], dt=spec.protocol.dt, steps=spec.protocol.steps
         ),
     ),

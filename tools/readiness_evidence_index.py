@@ -160,8 +160,8 @@ ENROLLED: tuple[EnrolledEvidence, ...] = (
         class_name="GLIFNeuron",
         level="h1_cosim",
         evidence="tests/test_cosimulation.py::TestQ1616Precision::test_glif_q1616_parity",
-        operating_point="schema-DSL GLIF; Q16.16 path",
-        tolerance="parity gap bound in test",
+        operating_point="schema-DSL GLIF four-state RK4 at I=0,15,22,30,45,50 over 1000 steps",
+        tolerance="exact hand/schema/Q16.16 spike counts at every operating point",
     ),
     EnrolledEvidence(
         schema_name="izhikevich2007",

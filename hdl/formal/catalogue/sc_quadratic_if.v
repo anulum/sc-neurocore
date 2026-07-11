@@ -42,7 +42,7 @@ always @(posedge clk or negedge rst_n) begin
         if ((v_next > 16'sd256)) begin
             spike_out <= 1'b1;
             v_reg <= (-16'sd256);
-            v_out <= v_reg;
+            v_out <= (-16'sd256);
         end else begin
             spike_out <= 1'b0;
             v_reg <= v_next;

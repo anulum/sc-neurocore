@@ -99,14 +99,16 @@ before treating any Q4.12 LIF run as a parity claim.
 
 ## Verified Models
 
-Six deterministic Q8.8 baseline models are verified in the spike-parity set:
+Six deterministic Q8.8 baseline models are verified. Five have exact spike-count
+parity; Izhikevich has a declared one-spike Q8.8 quantisation boundary and exact
+Q16.16 parity at the same operating point:
 
 | Model | State Variables | Complexity | Spikes (I=50, 200 steps) |
 |-------|:-:|:-:|:-:|
 | **LIF** | v | Linear | 200 |
 | **Lapicque** | v | Linear | 200 |
 | **Quadratic IF** | v | Quadratic | 50 |
-| **Izhikevich** | v, u | Quadratic (2-var) | 25 |
+| **Izhikevich** | v, u | Quadratic (2-var) | 25 float64 / 24 Q8.8; 25 Q16.16 |
 | **Resonate-and-Fire** | v, w | Linear (2-var) | 200 |
 | **Perfect Integrator** | v | Linear ramp | 200 |
 
@@ -169,6 +171,27 @@ The S5/H2 descriptor additionally points to the raw Yosys 0.33
 uses generated Q8.8 RTL, a port-only harness, and a depth-4 SymbiYosys/Z3
 reset-spike safety job; behavioural evidence remains the Q16.16 short-window
 trajectory.
+
+### GLIF Q16.16 enrolment
+
+The `glif` schema mirrors the maintained Allen Institute GLIF5 model:
+simultaneous classical RK4 over membrane voltage, adaptive threshold, and two
+after-spike currents, followed by candidate-level `v >= theta` detection and a
+candidate-first adaptive reset. A varied 4,000-step drive produces 181 resets;
+the hand model and both schema formats agree exactly on every event and all four
+post-step states.
+
+Over 1,000 constant-current steps, hand model and schema runner report
+0/0/23/54/86/95 spikes at `I=0/15/22/30/45/50`; emitted Q16.16 RTL reports the
+same six counts exactly. The compiler evaluates state-dependent resets from the
+integrated candidate and exposes post-reset output state, matching the schema
+runner's integrate-detect-reset order. This removes the former one-spike drift
+that had masked a pre-step-reset semantic mismatch. The enrolled hardware
+contract spans the whole operating set rather than one selected exact current.
+
+The S5/H1 promotion retains the existing formal-catalogue enrolment with
+regenerated Q8.8 RTL, a port-only harness, and a depth-6 SymbiYosys/Z3 safety
+job. The Q16.16 six-point set remains the behavioural parity evidence.
 
 ### Wilson-HR Q16.16 enrolment
 

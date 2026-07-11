@@ -26,12 +26,50 @@ def _lif_without_threshold(dt: float = 0.01) -> EquationNeuron:
     )
 
 
+def _candidate_reset_neuron() -> EquationNeuron:
+    """Build a two-state RK4 neuron whose adaptive reset reads the candidate state."""
+    return EquationNeuron(
+        equations={"v": "I", "a": "-a / tau"},
+        parameters={"tau": 10.0, "kick": 2.0, "v_reset": 0.0},
+        state={"v": 0.0, "a": 1.0},
+        threshold="v >= 1.0",
+        reset={"v": "v_reset", "a": "a + kick"},
+        dt=1.0,
+        method="rk4",
+    )
+
+
 def test_compile_to_verilog_rejects_unknown_overflow_mode() -> None:
     """The registered compiler rejects unsupported overflow policies."""
     neuron = _lif_without_threshold()
 
     with pytest.raises(ValueError, match="Unknown overflow mode"):
         compile_to_verilog(neuron, overflow="explode")
+
+
+def test_compile_to_verilog_resets_from_candidate_and_exposes_post_reset_state() -> None:
+    """Registered RTL must match EquationNeuron's integrate-detect-reset sequence.
+
+    The adaptive ``a = a + kick`` reset reads ``a_next``, not the pre-step
+    ``a_reg``. Both the internal register and public output take that same reset
+    value on the spike cycle; a constant voltage reset follows the same public
+    post-reset contract.
+    """
+    verilog = compile_to_verilog(_candidate_reset_neuron(), module_name="sc_candidate_reset")
+
+    assert "a_reg <= (a_next + P_KICK);" in verilog
+    assert "a_out <= (a_next + P_KICK);" in verilog
+    assert "a_reg <= (a_reg + P_KICK);" not in verilog
+    assert "v_reg <= P_V_RESET;" in verilog
+    assert "v_out <= P_V_RESET;" in verilog
+
+
+def test_compile_to_datapath_resets_from_the_same_candidate_expression() -> None:
+    """The folded PE must expose the same candidate-based post-reset next state."""
+    verilog = compile_to_datapath(_candidate_reset_neuron(), module_name="sc_candidate_reset_pe")
+
+    assert "assign a_next_out = spike_out ? ((a_next + P_KICK)) : a_next;" in verilog
+    assert "assign v_next_out = spike_out ? (P_V_RESET) : v_next;" in verilog
 
 
 def test_compile_to_verilog_lowers_map_method_and_piecewise_ifexp() -> None:

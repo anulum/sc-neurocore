@@ -372,10 +372,11 @@ def generate_bittrue_kernel_from_neuron(
     Mirrors :func:`sc_neurocore.compiler.verilog_compiler.compile_to_verilog`
     exactly — parameter/constant Q-encoding, dt-scaled explicit Euler with
     wrap-truncate multiply, the same overflow handling, and the threshold / reset
-    / spike sequencing of the RTL ``always`` block (on a spike the output ports
-    hold the pre-update register value while the registers take the reset/next
-    value). The resulting ``<module>_step`` therefore produces the identical
-    per-cycle state trace as the RTL, which the iverilog co-simulation proves.
+    / spike sequencing of the RTL ``always`` block. Reset expressions read the
+    integrated candidate state, and both state and output fields take the same
+    post-reset value on a spike. The resulting ``<module>_step`` therefore
+    produces the identical per-cycle state trace as the RTL, which the iverilog
+    co-simulation proves.
 
     Parameters
     ----------
@@ -433,10 +434,10 @@ def generate_bittrue_kernel_from_neuron(
         deriv_stmts.extend(s)
         tables.update(t)
 
+    next_map = {v: f"_next_{safe[v]}" for v in neuron.equations}
     threshold_expr = ""
     threshold_stmts: list[str] = []
     if neuron.threshold_expr:
-        next_map = {v: f"_next_{safe[v]}" for v in neuron.equations}
         threshold_expr, threshold_stmts, t, _fv, lut, _used = emit_c_fixed_expr(
             neuron.threshold_expr, next_map, param_map, q, lang=language, lut_start=lut
         )
@@ -446,7 +447,7 @@ def generate_bittrue_kernel_from_neuron(
     reset_stmts: list[str] = []
     for var, expr in neuron.reset_rules.items():
         result, s, t, _fv, lut, _used = emit_c_fixed_expr(
-            expr, state_map, param_map, q, lang=language, lut_start=lut
+            expr, next_map, param_map, q, lang=language, lut_start=lut
         )
         reset_exprs[var] = result
         reset_stmts.extend(s)
@@ -568,10 +569,9 @@ def _neuron_commit_c(ctx: _KernelContext) -> list[str]:
         lines.append(f"    {_ctype(ctx.q.data_width)} _rst_{ctx.safe[var]} = sat({expr});")
     lines.append("    if (_spk) {")
     for var in eqs:
-        lines.append(f"        s->{ctx.safe[var]}_out = s->{ctx.safe[var]};")
-    for var in eqs:
         rhs = f"_rst_{ctx.safe[var]}" if var in ctx.reset_exprs else f"_next_{ctx.safe[var]}"
         lines.append(f"        s->{ctx.safe[var]} = {rhs};")
+        lines.append(f"        s->{ctx.safe[var]}_out = {rhs};")
     lines.append("    } else {")
     for var in eqs:
         lines.append(f"        s->{ctx.safe[var]} = _next_{ctx.safe[var]};")
@@ -645,10 +645,9 @@ def _neuron_commit_rust(ctx: _KernelContext) -> list[str]:
         lines.append(f"        let _rst_{ctx.safe[var]}: {_rtype(ctx.q.data_width)} = sat({expr});")
     lines.append("        if _spk != 0 {")
     for var in eqs:
-        lines.append(f"            self.{ctx.safe[var]}_out = self.{ctx.safe[var]};")
-    for var in eqs:
         rhs = f"_rst_{ctx.safe[var]}" if var in ctx.reset_exprs else f"_next_{ctx.safe[var]}"
         lines.append(f"            self.{ctx.safe[var]} = {rhs};")
+        lines.append(f"            self.{ctx.safe[var]}_out = {rhs};")
     lines.append("        } else {")
     for var in eqs:
         lines.append(f"            self.{ctx.safe[var]} = _next_{ctx.safe[var]};")

@@ -57,9 +57,9 @@ always @(posedge clk or negedge rst_n) begin
         if (((x_next >= 16'sd0)) && !_thr_prev) begin
             spike_out <= 1'b1;
             x_reg <= x_next;
+            x_out <= x_next;
             y_reg <= y_next;
-            x_out <= x_reg;
-            y_out <= y_reg;
+            y_out <= y_next;
         end else begin
             spike_out <= 1'b0;
             x_reg <= x_next;

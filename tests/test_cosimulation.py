@@ -40,7 +40,9 @@ TestSchemaGapModelCosim
 
 Verified Results (2026-05-01)
 -----------------------------
-All 6 Q8.8 baseline models: 0.0% spike count gap at Q8.8 (I=50.0, 200 steps).
+Five Q8.8 baseline models have exact spike-count parity at I=50.0 over 200 steps.
+Izhikevich has the honest Q8.8 boundary: float64=25, RTL=24 after candidate-reset
+correction; Q16.16 restores exact 25/25 parity at the same operating point.
 Driven LIF spike-count parity holds for Q8.8, Q4.12, and Q16.16 at
 I=50.0; zero-current LIF requires an mV-range mode because Q4.12 cannot
 represent v_rest=-65 mV or tau_m=10.
@@ -84,6 +86,7 @@ from sc_neurocore.neurons.equation_builder import EquationNeuron
 from sc_neurocore.neurons.models.dpi_neuron import DPINeuron
 from sc_neurocore.neurons.models.fitzhugh_nagumo import FitzHughNagumoNeuron
 from sc_neurocore.neurons.models.fitzhugh_rinzel import FitzHughRinzelNeuron
+from sc_neurocore.neurons.models.glif import GLIFNeuron
 from sc_neurocore.neurons.models.izhikevich2007 import Izhikevich2007Neuron
 from sc_neurocore.neurons.models.mckean import McKeanNeuron
 from sc_neurocore.neurons.models.connor_stevens import ConnorStevensNeuron
@@ -115,8 +118,9 @@ HAS_IVERILOG = shutil.which("iverilog") is not None
 _N_STEPS = 200
 _INPUT_CURRENT = 50.0  # Higher than Python needs — overcomes Q8.8 precision loss
 
-# Models suitable for co-simulation (polynomial/linear, no transcendental functions).
-# All 6 models achieve 0% Python↔Verilog spike count gap.
+# Models suitable for Q8.8 co-simulation (polynomial/linear, no transcendental functions).
+# Five models have exact spike-count parity. Izhikevich carries a one-spike Q8.8
+# quantisation band and a separate exact Q16.16 guard below.
 _COSIM_MODELS = [
     "lif",
     "lapicque",
@@ -126,11 +130,12 @@ _COSIM_MODELS = [
     "perfect_integrator",
 ]
 
-# Transcendental models reachable through the auto model→RTL path once the emitter
+# Non-baseline models reachable through the auto model→RTL path once the emitter
 # lowers negative LUT entries correctly, supports cosh, and omits an empty parameter
-# list. `theta` (phase oscillator) co-simulates near bit-true; `glif` and
-# `morris_lecar` lower to valid Verilog but Q8.8 + 16-entry LUTs are too coarse for a
-# spike-count parity claim, so they are validated at compile level only (honest).
+# list. ``theta`` co-simulates near bit-true. GLIF is linear and has a dedicated exact Q16.16
+# set below, while its Q8.8 path and the transcendental conductance models retain this
+# compile-level regression because their coarse fixed-point forms do not support the
+# same behavioural claim.
 _TRANSCENDENTAL_COSIM_MODELS = ["theta"]
 _TRANSCENDENTAL_TOLERANCE_PCT = 5.0
 _TRANSCENDENTAL_COMPILE_MODELS = [
@@ -230,6 +235,12 @@ def _fitzhugh_nagumo_hand_spike_count(n_steps: int, current: float) -> int:
 def _fitzhugh_rinzel_hand_spike_count(n_steps: int, current: float) -> int:
     """Return the hand-authored FitzHugh-Rinzel RK4 upward-crossing count."""
     neuron = FitzHughRinzelNeuron()
+    return sum(neuron.step(current) for _ in range(n_steps))
+
+
+def _glif_hand_spike_count(n_steps: int, current: float) -> int:
+    """Return the hand-authored GLIF candidate-first RK4 spike count."""
+    neuron = GLIFNeuron()
     return sum(neuron.step(current) for _ in range(n_steps))
 
 
@@ -366,10 +377,12 @@ class TestCoSimulation:
 
     @pytest.mark.parametrize("model_name", _COSIM_MODELS)
     def test_spike_count_accuracy(self, model_name: str) -> None:
-        """Q8.8 co-simulation must be within 1% of Python float64.
+        """Q8.8 is exact except for the declared Izhikevich one-spike boundary.
 
-        With proper Q-format division, look-ahead threshold detection,
-        and correct testbench timing, all models achieve 0% gap.
+        Candidate-first reset semantics expose a single marginal Izhikevich
+        crossing at this coarse precision: float64 reports 25 spikes and Q8.8
+        reports 24. The same model is exact at Q16.16 below. Every other baseline
+        model retains exact Q8.8 parity.
         """
         py_spikes = _python_spike_count(model_name, _N_STEPS, _INPUT_CURRENT)
         vlog_spikes = _verilog_spike_count(model_name, _N_STEPS, _INPUT_CURRENT)
@@ -384,10 +397,13 @@ class TestCoSimulation:
             f"gap={gap} ({gap_pct:.1f}%)"
         )
 
-        assert gap_pct < 1.0, (
-            f"Q8.8 co-simulation gap too large: {gap_pct:.1f}% "
-            f"(model={model_name}, Python={py_spikes}, Verilog={vlog_spikes})"
-        )
+        if model_name == "izhikevich":
+            assert (py_spikes, vlog_spikes) == (25, 24)
+        else:
+            assert gap == 0, (
+                f"Q8.8 co-simulation must be exact: {gap_pct:.1f}% "
+                f"(model={model_name}, Python={py_spikes}, Verilog={vlog_spikes})"
+            )
 
     @pytest.mark.parametrize("model_name", [m for m in _COSIM_MODELS if m != "izhikevich"])
     def test_no_current_no_spikes(self, model_name: str) -> None:
@@ -461,6 +477,38 @@ class TestTierBModelCosim:
 
         assert spike_count == 1
         assert rearmed
+
+    def test_glif_schema_formats_match_hand_rk4_sequence(self) -> None:
+        """The paired GLIF schemas reproduce every hand-model RK4 state and reset.
+
+        The 4,000-step varied drive exercises all four coupled linear equations,
+        every RK4 stage, silence, tonic firing, and 181 candidate-first adaptive
+        resets. Exact state and event equality after every step catches drift in
+        either schema format's integration method, threshold relation, parameter,
+        reset source, or post-candidate update order.
+        """
+        schema_dir = Path(__file__).resolve().parents[1] / "src/sc_neurocore/neurons/model_schemas"
+        hand = GLIFNeuron()
+        toml_schema = UniversalNeuron.from_schema(schema_dir / "glif.toml")
+        json_schema = UniversalNeuron.from_schema(schema_dir / "glif.json")
+        currents = (0.0, 15.0, 22.0, 30.0, 45.0, 50.0, 30.0, 22.0) * 500
+        spike_count = 0
+        reset_count = 0
+
+        for current in currents:
+            hand_spike = hand.step(current)
+            spike_count += hand_spike
+            if hand_spike:
+                assert hand.v == hand.v_reset
+                reset_count += 1
+            assert int(bool(toml_schema.step(I=current))) == hand_spike
+            assert int(bool(json_schema.step(I=current))) == hand_spike
+            for variable in ("v", "theta", "i_asc1", "i_asc2"):
+                expected = getattr(hand, variable)
+                assert toml_schema.state[variable] == expected
+                assert json_schema.state[variable] == expected
+
+        assert spike_count == reset_count == 181
 
     def test_pernarowski_schema_formats_match_hand_rk4_sequence(self) -> None:
         """The TOML and JSON schemas reproduce the hand model over a varied drive.
@@ -1133,18 +1181,43 @@ class TestQ1616Precision:
         vlog_spikes = _verilog_spike_count_q1616("lif", 50, 0.0)
         assert vlog_spikes == 0
 
-    def test_glif_q1616_parity(self) -> None:
-        """GLIF (transcendental) co-simulates near bit-true at Q16.16.
+    def test_izhikevich_q1616_candidate_reset_parity(self) -> None:
+        """Q16.16 preserves exact Izhikevich parity with candidate-based recovery reset.
 
-        At Q8.8 the gap is large/coarse; the wider word plus the width-aware exp LUT
-        cap (no longer a fixed 32767) close it to ~0% over the baseline window.
+        The coarse Q8.8 path shifts one marginal spike after correcting ``u = u + d``
+        to read the integrated candidate. At Q16.16 the same 200-step, ``I=50``
+        operating point reproduces all 25 float64 spikes, proving the semantic fix
+        does not trade fidelity for the Q8.8 baseline count.
         """
-        py_spikes = _python_spike_count("glif", _N_STEPS, _INPUT_CURRENT)
-        vlog_spikes = _verilog_spike_count_q1616("glif", _N_STEPS, _INPUT_CURRENT)
-        assert py_spikes > 0 and vlog_spikes > 0
-        gap_pct = abs(py_spikes - vlog_spikes) / max(py_spikes, 1) * 100
-        assert gap_pct <= 2.0, (
-            f"GLIF Q16.16 gap {gap_pct:.1f}% (Python={py_spikes}, Verilog={vlog_spikes})"
+        python_spikes = _python_spike_count("izhikevich", _N_STEPS, _INPUT_CURRENT)
+        verilog_spikes = _verilog_spike_count_q1616("izhikevich", _N_STEPS, _INPUT_CURRENT)
+
+        assert python_spikes == verilog_spikes == 25
+
+    @pytest.mark.parametrize(
+        ("current", "expected_spikes"),
+        ((0.0, 0), (15.0, 0), (22.0, 23), (30.0, 54), (45.0, 86), (50.0, 95)),
+        ids=("rest", "subthreshold", "onset", "tonic", "high-drive", "strong-drive"),
+    )
+    def test_glif_q1616_parity(self, current: float, expected_spikes: int) -> None:
+        """GLIF has exact hand/schema/Q16.16 spike-count parity across six regimes.
+
+        The schema mirrors the maintained four-state, candidate-first classical-RK4
+        hand model with level ``v >= theta`` detection and adaptive reset. Hand model
+        and schema runner agree exactly at every operating point. The compiler lowers
+        reset expressions from the integrated candidate and exposes the same post-reset
+        state in RTL, so Q16.16 preserves the complete spike count despite quantising
+        ``a_theta=0.01`` and the adaptive increments. Rest, subthreshold, onset, tonic,
+        and high-drive regimes are all enrolled rather than one selected current.
+        """
+        n_steps = 1000
+        hand_spikes = _glif_hand_spike_count(n_steps, current)
+        schema_spikes = _python_spike_count("glif", n_steps, current)
+        verilog_spikes = _verilog_spike_count_q1616("glif", n_steps, current)
+
+        assert hand_spikes == schema_spikes == verilog_spikes == expected_spikes, (
+            f"GLIF exact Q16.16 mismatch at I={current}: "
+            f"hand={hand_spikes}, schema={schema_spikes}, verilog={verilog_spikes}"
         )
 
     def test_morris_lecar_q1616_parity(self) -> None:
@@ -1764,13 +1837,14 @@ class TestTranscendentalCoSimulation:
 
     @pytest.mark.parametrize("model_name", _TRANSCENDENTAL_COMPILE_MODELS)
     def test_transcendental_model_lowers_to_valid_verilog(self, model_name: str) -> None:
-        """Transcendental models lower to iverilog-valid Verilog (no malformed literals).
+        """Non-baseline models lower to iverilog-valid Verilog without malformed literals.
 
         This is the emitter-fix verification: before the negative-LUT-literal,
         cosh, and empty-parameter fixes these models either raised
-        "Unsupported function" or emitted malformed `W'sd-N` literals. Q8.8 +
-        16-entry LUTs can be too coarse for a spike-count parity claim (glif,
-        morris_lecar), so this asserts valid synthesisable RTL, not spike parity.
+        "Unsupported function" or emitted malformed `W'sd-N` literals. The GLIF
+        Q8.8 path is resolution-limited and the conductance-model look-up tables can
+        be too coarse for the dedicated Q16.16 behavioural claims, so this assertion
+        covers valid synthesisable RTL rather than spike parity.
         """
         verilog = UniversalNeuron.from_schema(model_name).to_verilog(module_name=f"sc_{model_name}")
         assert "'sd-" not in verilog  # no malformed negative literals
