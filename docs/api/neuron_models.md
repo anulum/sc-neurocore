@@ -193,7 +193,7 @@ descriptor reaches the catalogue or Studio browser surface.
 | `IbarzTanakaMapNeuron` | `IbarzTanakaMapNeuron` | Ibarz et al. 2011 |
 | `MedvedevMapNeuron` | `MedvedevMapNeuron` | Medvedev 2005 |
 | `CazellesMapNeuron` | `CazellesMapNeuron` | Cazelles et al. 2001 |
-| `CourageNekorkinMapNeuron` | `CourageNekorkinMapNeuron` | Courbage & Nekorkin 2010 |
+| `CourageNekorkinMapNeuron` | `CourageNekorkinMapNeuron` | Courbage, Nekorkin & Vdovin 2007 |
 
 ### Biophysical / Conductance-Based (20 models)
 

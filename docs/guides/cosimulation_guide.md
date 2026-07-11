@@ -198,6 +198,35 @@ The S5/H1 promotion adds a Q8.8 formal-catalogue core and port-only harness.
 Its depth-4 SymbiYosys/Z3 job proves reset-spike safety only; the three Q16.16
 trajectories remain the behavioural evidence.
 
+### Courbage-Nekorkin map fixed-point trajectory enrolment
+
+The `courage_nekorkin_map` schema reproduces Courbage, Nekorkin, and Vdovin
+(2007), equations 3–5: both coordinates commit simultaneously, the fast map
+uses its three published piecewise-linear branches, and the `x >= d` Heaviside
+term applies on the upper side of the discontinuity. `I` is the maintained API
+extension; `I=0` is the published autonomous recurrence. The software event is
+an upward `x >= x_threshold` crossing and does not reset either coordinate.
+
+At `I=-0.3/0/0.3`, the hand model and paired TOML/JSON schemas agree exactly
+on every state and event. Q16.16 RTL is event-exact over bounded
+30/20/30-iteration windows. The points exercise all three fast-map branches
+and both sides of the Heaviside discontinuity; maximum coordinate errors remain
+below `0.014` for `x` and `0.00031` for `y`.
+
+Q32.32 extends each input to 30 iterations and preserves the complete event
+vectors of one, four, and one events. Across that set, the maximum errors are
+`2.604e-5` for `x` and `8.379e-7` for `y`.
+
+The autonomous 30-iteration Q16.16 trace is an explicit exclusion: float64
+emits four events, RTL emits six, and six positions differ. Q32.32 resolves
+that same window at four events on both paths. The exclusion prevents bounded
+fixed-point evidence from being read as long-window identity for a sensitive
+discontinuous map.
+
+The S5/H1 promotion adds a Q8.8 formal-catalogue core and port-only harness.
+Its depth-4 SymbiYosys/Z3 job proves reset-spike safety only; Q16.16/Q32.32
+trajectories remain the behavioural evidence.
+
 ### GLIF Q16.16 enrolment
 
 The `glif` schema mirrors the maintained Allen Institute GLIF5 model:
@@ -284,7 +313,7 @@ The tool scans live source modules and schema files without importing optional
 backends. It reports the net schema gap, source modules still lacking a
 same-name or alias schema, schema-only names, source-evidence classifications,
 and a ranked enrolment table. The current checkout has 153 model source modules,
-27 unique schema models, a net schema gap of 126, and 128 source-module rows
+29 unique schema models, a net schema gap of 124, and 126 source-module rows
 still needing same-name or alias schema coverage because `izhikevich` and `lif`
 are schema-only names.
 

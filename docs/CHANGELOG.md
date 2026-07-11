@@ -5,6 +5,27 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+### Courbage-Nekorkin-Vdovin bounded schema-to-RTL enrolment
+- Enrolled the already acceleration-complete 2007 discontinuous map
+  (`courage_nekorkin_map`, DOI `10.1063/1.2795435`). The paired TOML/JSON
+  schemas reproduce equations 3–5, including simultaneous state commits, all
+  three fast-map branches, the Heaviside discontinuity, and the maintained
+  upward `x_threshold` crossing. The hand model and both schemas agree exactly
+  across the enrolled operating set.
+- Q16.16 RTL is event-exact at `I=-0.3/0/0.3` over bounded
+  30/20/30-iteration windows, with both state errors below `0.014`. Q32.32 RTL
+  is event-exact at all three inputs over 30 iterations, with fast-coordinate
+  error below `0.00003` and recovery-coordinate error below `0.000001`. A
+  separate regression fixes the autonomous 30-iteration Q16.16 boundary at
+  four float64 events, six RTL events, and six event-position mismatches.
+- The model-scoped co-simulation and independent-reference tests add a
+  DOI-backed recurrence, S5/H1 descriptor/readiness facets, source-bounded
+  public documentation, and generated Q8.8 RTL. The port-only depth-4
+  SymbiYosys/Z3 reset-spike safety job passes. The formal inventory moves to
+  21 models and schema-gap counts move to 29 schema models / 124 net missing /
+  126 source modules without a schema. The completed acceleration chain and
+  its committed benchmark artefact remain unchanged.
+
 ### Cazelles map bounded schema-to-RTL enrolment
 - Enrolled the already acceleration-complete Cazelles, Courbage, and Rabinovich
   (2001) fast/slow map (`cazelles_map`, DOI

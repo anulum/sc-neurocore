@@ -8,7 +8,7 @@
 
 [metadata]
 schema_version = 2
-name = "CourageNekorkinMapNeuron"
+name = "Courbage-Nekorkin Map"
 class_name = "CourageNekorkinMapNeuron"
 module = "courage_nekorkin_map"
 display_name = ""
@@ -110,10 +110,12 @@ range = [
 ]
 
 [integration]
-dt = 0.1
-method = "euler"
+dt = 1.0
+method = "map"
 
 [dynamics]
+x = "x + ((-m0 * x) if x <= (a * m1 / (m0 + m1)) else (m1 * (x - a) if x < ((m0 + a * m1) / (m0 + m1)) else -m0 * (x - 1.0))) - y - beta * (1.0 if x >= d else 0.0) + I"
+y = "y + eps * (x - j)"
 
 [backends.python]
 status = "implemented"
@@ -142,3 +144,17 @@ golden_trace_sha256 = "60e2932556b46a5a5246b15ef7a0cb6b7445db3b1602135043716de72
 [documentation]
 slug = "models/courage_nekorkin_map"
 notes = ""
+
+[validation]
+dynamics_faithful = true
+metric = "trajectory"
+operating_point = "Courbage-Nekorkin-Vdovin map at I=-0.3,0,0.3 over bounded 20-30 iteration windows"
+tolerance = "hand/TOML/JSON exact; Q32.32 event-exact over 30 iterations with state error below 0.00003; Q16.16 autonomous 30-iteration boundary excluded"
+evidence = "tests/test_cosim_courage_nekorkin_map.py::test_q3232_short_window_trajectory"
+
+[silicon]
+compiles = true
+cosim_validated = true
+cosim_evidence = "tests/test_cosim_courage_nekorkin_map.py::test_q3232_short_window_trajectory"
+target_tier = "H1"
+terminal_reason = "Sensitive discontinuous map validated by bounded fixed-point trajectories; higher silicon rungs require synthesis and timing evidence."

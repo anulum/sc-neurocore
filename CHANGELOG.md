@@ -5,6 +5,24 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 ## [Unreleased]
 
 ### Added
+- Enrolled the already acceleration-complete Courbage-Nekorkin-Vdovin
+  discontinuous map (`courage_nekorkin_map`, DOI `10.1063/1.2795435`) with
+  paired TOML/JSON schemas that reproduce the maintained simultaneous
+  piecewise recurrence, Heaviside branch, and upward event crossing. The hand
+  model and both schemas agree exactly at every enrolled point. Q16.16 RTL is
+  event-exact at `I=-0.3/0/0.3` over bounded 30/20/30-iteration windows, with
+  both state errors below `0.014`; Q32.32 is event-exact at all three inputs
+  over 30 iterations with `x` error below `0.00003` and `y` error below
+  `0.000001`. The autonomous 30-iteration Q16.16 trace is pinned separately at
+  four float64 events, six RTL events, and six event-position mismatches rather
+  than admitted through a loose tolerance. The model-scoped tests add a
+  DOI-backed independent recurrence, S5/H1 descriptor and readiness evidence,
+  source-bounded public documentation, and generated Q8.8 RTL. Its port-only
+  depth-4 SymbiYosys/Z3 reset-spike safety job passes. The formal inventory
+  moves to 21 models and schema-gap counts move to 29 schema models / 124 net
+  missing / 126 source modules without a schema. The completed
+  Rust/Go/Julia/Mojo chain and its committed benchmark artefact remain
+  unchanged.
 - Enrolled the already acceleration-complete Cazelles fast/slow map
   (`cazelles_map`, DOI `10.1209/epl/i2001-00548-y`) with paired TOML/JSON
   schemas that mirror the maintained simultaneous clipped logistic recurrence,

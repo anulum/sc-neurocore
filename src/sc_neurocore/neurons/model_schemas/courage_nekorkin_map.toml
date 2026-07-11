@@ -1,0 +1,50 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Commercial license available
+# © Concepts 1996–2026 Miroslav Šotek. All rights reserved.
+# © Code 2020–2026 Miroslav Šotek. All rights reserved.
+# ORCID: 0009-0009-3560-0851
+# Contact: www.anulum.li | protoscience@anulum.li
+# SC-NeuroCore — Source/config provenance header
+
+[metadata]
+schema_version = 1
+name = "Courbage-Nekorkin Map"
+author = "Courbage, M., Nekorkin, V.I. & Vdovin, L.V."
+year = 2007
+doi = "10.1063/1.2795435"
+description = "Discontinuous two-dimensional piecewise-linear spiking-bursting map"
+
+[state]
+x = 0.0
+y = 0.0
+
+[parameters]
+m0 = 0.0864
+m1 = 0.65
+a = 0.2
+d = 0.235
+j = 0.2
+beta = 0.085
+eps = 0.02
+x_threshold = 0.235
+
+[integration]
+dt = 1.0
+method = "map"
+
+[dynamics]
+# Courbage, Nekorkin & Vdovin (2007), eqs. 3-5. Both assignments use the
+# committed x_n/y_n state; I is an injected-current extension and I=0 is the
+# published autonomous map.
+x = "x + ((-m0 * x) if x <= (a * m1 / (m0 + m1)) else (m1 * (x - a) if x < ((m0 + a * m1) / (m0 + m1)) else -m0 * (x - 1.0))) - y - beta * (1.0 if x >= d else 0.0) + I"
+y = "y + eps * (x - j)"
+
+[threshold]
+condition = "x >= x_threshold"
+detection = "crossing"
+
+[extensions]
+model_type = "map"
+discrete_time = true
+bursting = true
+silicon_cosim_note = "Hand model and both schema formats agree exactly at I=-0.3, I=0, and I=0.3. Q32.32 RTL reproduces all three 30-iteration event vectors with state error below 0.00003. Q16.16 is event-exact at (I=-0.3, 30), (I=0, 20), and (I=0.3, 30); the autonomous I=0 30-iteration trace is an explicit excluded boundary at four float64 events, six RTL events, and six event-position mismatches."

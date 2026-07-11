@@ -1,0 +1,18 @@
+# SymbiYosys job for catalogue model sc_courbage_nekorkin_map
+# Dual-axis perfect model formal (BMC)
+
+[options]
+mode bmc
+depth 4
+
+[engines]
+smtbmc z3
+
+[script]
+read -formal sc_courbage_nekorkin_map_formal.v
+read -formal sc_courbage_nekorkin_map.v
+prep -top sc_courbage_nekorkin_map_formal
+
+[files]
+sc_courbage_nekorkin_map_formal.v
+sc_courbage_nekorkin_map.v

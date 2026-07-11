@@ -1,245 +1,217 @@
-# CourageNekorkinMapNeuron
+<!-- SPDX-License-Identifier: AGPL-3.0-or-later -->
+<!-- Commercial license available -->
+<!-- © Concepts 1996–2026 Miroslav Šotek. All rights reserved. -->
+<!-- © Code 2020–2026 Miroslav Šotek. All rights reserved. -->
+<!-- ORCID: 0009-0009-3560-0851 -->
+<!-- Contact: www.anulum.li | protoscience@anulum.li -->
+<!-- SC-NeuroCore — Courbage-Nekorkin-Vdovin map model -->
 
-**Module:** `sc_neurocore.neurons.models.courage_nekorkin_map`
-**Reference:** Courbage M., Nekorkin V.I. & Vdovin L.V. (2007), *Chaotic oscillations
-in a map-based model of neural activity*, **Chaos 17:043109** ([arXiv:0712.2097](https://arxiv.org/abs/0712.2097)).
-**Family:** Map-based (discrete-time, discontinuous piecewise-linear Lorenz-type)
-**State variables:** `x` (fast, membrane-like), `y` (slow, recovery-like)
+# Courbage–Nekorkin–Vdovin map
 
-The Courbage-Nekorkin-Vdovin (CNV) map is a two-dimensional discrete-time neuron
-built from a discrete FitzHugh-Nagumo system combined with a one-dimensional
-Lorenz-type map, with a Heaviside discontinuity at `x = d` that sets the
-excitation threshold. With a single parameter region it reproduces a rich gallery
-of biological firing modes — chaotic spiking-bursting, subthreshold oscillations,
-tonic spiking, phasic spikes and bursts — at a fraction of the cost of an
-ODE-based conductance model. That makes it a natural building block for
-large-scale spiking-network simulation, where per-neuron cost dominates.
+`CourageNekorkinMapNeuron` implements the discontinuous two-state map proposed
+by Courbage, Nekorkin, and Vdovin (2007). One `step()` call advances one map
+iteration; there is no ODE integrator or physical timestep.
 
----
+- Module: `sc_neurocore.neurons.models.courage_nekorkin_map`
+- Family: discontinuous map-based neuron
+- State: fast membrane-like coordinate `x`, slow recovery coordinate `y`
+- Primary source: [Courbage, Nekorkin & Vdovin (2007)](https://doi.org/10.1063/1.2795435), equations 3–6
 
-## Equations
+The public class and schema identifiers retain the historical `Courage...`
+spelling for compatibility. The publication and prose use the authors' surname
+`Courbage`.
 
-The map `f : (x, y) → (x̄, ȳ)` is (Courbage et al. 2007, eqs. 3–5):
+## Recurrence
 
-$$\bar{x} = x + F(x) - y - \beta\,H(x - d) + I$$
+The published autonomous map is
 
-$$\bar{y} = y + \varepsilon\,(x - J)$$
+$$
+\begin{aligned}
+x_{n+1} &= x_n + F(x_n) - y_n - \beta H(x_n-d), \\
+y_{n+1} &= y_n + \varepsilon(x_n-J),
+\end{aligned}
+$$
 
-with the piecewise-linear field and the Heaviside step
+where
 
-$$F(x) = \begin{cases} -m_0\,x & x \le J_{\min} \\ m_1\,(x - a) & J_{\min} < x < J_{\max} \\ -m_0\,(x - 1) & x \ge J_{\max} \end{cases}
-\qquad
-H(z) = \begin{cases} 1 & z \ge 0 \\ 0 & z < 0 \end{cases}$$
+$$
+F(x)=
+\begin{cases}
+-m_0x, & x\leq J_{\min},\\
+m_1(x-a), & J_{\min}<x<J_{\max},\\
+-m_0(x-1), & x\geq J_{\max},
+\end{cases}
+$$
 
-The continuity breakpoints of `F` are fixed by the parameters:
+$$
+J_{\min}=\frac{am_1}{m_0+m_1}, \qquad
+J_{\max}=\frac{m_0+am_1}{m_0+m_1}, \qquad
+H(z)=\begin{cases}1,&z\geq0,\\0,&z<0.\end{cases}
+$$
 
-$$J_{\min} = \frac{a\,m_1}{m_0 + m_1}, \qquad J_{\max} = \frac{m_0 + a\,m_1}{m_0 + m_1}$$
+SC‑NeuroCore adds the API input `I_n` to the fast recurrence:
 
-`x` is the membrane potential, `y` the recovery variable (outward ionic currents),
-`I` (`current`) an injected external stimulus, `J` a constant external drive, and
-`d` the discontinuity line that determines the excitation threshold of the
-spiking-bursting oscillations. `I = 0` reproduces the published autonomous map.
+$$
+x_{n+1}=x_n+F(x_n)-y_n-\beta H(x_n-d)+I_n.
+$$
 
-The model carries **no clip**: it stays bounded by its own invariant attractor
-inside the parameter region below, not by an artificial saturation.
+`I_n=0` therefore reproduces the published autonomous map. Both candidate
+coordinates are computed from `(x_n, y_n)` and committed simultaneously.
 
-### Parameter region (eq. 6)
+## Maintained defaults and source boundary
 
-The published analysis holds on
+| Name | Default | Meaning |
+| --- | ---: | --- |
+| `x` | `0.0` | initial fast coordinate |
+| `y` | `0.0` | initial recovery coordinate |
+| `m0` | `0.0864` | magnitude of the outer-branch slope |
+| `m1` | `0.65` | middle-branch slope |
+| `a` | `0.2` | middle-branch offset and breakpoint parameter |
+| `d` | `0.235` | Heaviside discontinuity |
+| `j` | `0.2` | constant external-stimulus parameter `J` |
+| `beta` | `0.085` | discontinuity jump magnitude |
+| `eps` | `0.02` | recovery-coordinate scale separation |
+| `x_threshold` | `0.235` | software event threshold |
 
-$$0 < J < d, \qquad J_{\min} < d < J_{\max}, \qquad m_0 < 1.$$
+The paper's Figure 1 uses `m0=0.0864`, `m1=0.65`, and `a=0.2` to illustrate
+the admissible `B⁺` region. It does not publish the repository's complete
+default tuple as one experimental operating point. The maintained
+`d/J/β/ε` values are repository choices within the paper's analysed region:
 
-The chaotic-attractor region `B⁺` additionally requires
-`β₀ < β < β₁` with `β₀ = F(J_max) − F(J_min)` and
-`β₁ = min{q(J_max − d), q(d − J_min)}`, where `q = 1 + m₁`.
+$$
+0<J<d, \qquad J_{\min}<d<J_{\max}, \qquad m_0<1,
+$$
 
-### Spike detection
+with `J_min=0.1765344921`, `J_max=0.2938620315`, and
+`β₀=0.0762629006 < β=0.085 < β₁=0.0964680880` from equations 9 and 12.
+This statement does not identify the defaults with the paper's Figure 4
+bursting example, which uses a different parameter tuple.
 
-A spike is the upward crossing of `x_threshold` (defaulting to the discontinuity
-`d`): `x_prev < x_threshold` **and** `x̄ ≥ x_threshold`. This counts each
-threshold excursion once.
+## Event observable
 
----
+The paper defines the map dynamics but not SC‑NeuroCore's binary event API. The
+maintained observable emits one event on an upward crossing of
+`x_threshold`:
 
-## Parameters
+$$
+s_{n+1}=\mathbf{1}\!\left[
+x_n<x_{\mathrm{threshold}}\ \land
+x_{n+1}\geq x_{\mathrm{threshold}}
+\right].
+$$
 
-| Parameter | Default | Description |
-|-----------|--------:|-------------|
-| `x` | 0.0 | Fast variable (membrane potential) |
-| `y` | 0.0 | Slow variable (recovery / outward currents) |
-| `m0` | 0.0864 | Slope of the outer (resting / spike-peak) branches of `F` |
-| `m1` | 0.65 | Slope of the middle (regenerative) branch of `F`; `q = 1 + m1` |
-| `a` | 0.2 | Offset of the middle branch; sets `J_min`, `J_max` |
-| `d` | 0.235 | Heaviside discontinuity — the excitation threshold |
-| `j` | 0.2 | Constant external drive `J` |
-| `beta` | 0.085 | Reset jump applied through `H(x − d)` |
-| `eps` | 0.02 | Recovery time-scale `ε` (slow variable) |
-| `x_threshold` | 0.235 | Spike-detection threshold (defaults to `d`) |
+The default event threshold equals `d`. The event does not reset either state.
 
-The defaults are the published values: `m0 = 0.0864`, `m1 = 0.65`, `a = 0.2` are
-the figure-1 parameters; `d`, `J`, `β`, `ε` sit inside the `B⁺` invariant-region
-triangle and the chaotic-spiking regime (Table, p20). With these,
-`J_min ≈ 0.17653`, `J_max ≈ 0.29386`, so `J_min < d < J_max` and `0 < J < d` hold.
+## Python use
 
----
+```python
+from sc_neurocore.neurons.models.courage_nekorkin_map import (
+    CourageNekorkinMapNeuron,
+)
 
-## Firing regimes
+neuron = CourageNekorkinMapNeuron()
+event = neuron.step(current=0.0)
 
-The same map reproduces the published gallery of neural activity by moving inside
-the parameter region (Courbage et al. 2007, Table p20):
+trace, events = neuron.simulate(
+    n_steps=2_000,
+    current=0.0,
+    backend="auto",
+)
+```
 
-| Regime | Condition (in addition to the region constraints) |
-|--------|----------------------------------------------------|
-| Chaotic spiking (default) | `J > J_min`, `ε ≪ 1`, `F(J_min) > F(d) − β`, `F(J_max) > F(d)` |
-| Chaotic spiking-bursting | invariant-region inequalities (eq. 26) |
-| Subthreshold oscillations | `J > J_min`, `ε < m₀`, `m₀ > m₁²/4`, `ε > max(m₀²/4, m₁²/4)` |
-| Tonic spiking | `J > J_min`, `ε ≪ 1`, `F(J_min) < F(d) − β` |
-| Phasic spikes / bursts | `J < J_min`, `ε ≪ 1` (excitable rest state, response to a pulse) |
-
-The default parameters produce a bounded chaotic attractor. Verified numerically
-on a 20 000-step autonomous run from `(x, y) = (0, 0)`: ~3 700 spikes, trajectory
-bounded in `x ∈ [0, 0.28]` (no clip-pegging), inter-spike intervals spanning
-in-burst (≤ 3) and inter-burst (≥ 8) gaps, and sensitive dependence on initial
-conditions (a `10⁻⁹` perturbation grows to `10⁻²` within 2 000 steps).
-
----
+`simulate()` accepts `python`, `rust`, `julia`, `go`, `mojo`, or `auto`.
+`auto` selects the compiled Rust path when available and otherwise uses the
+Python implementation.
 
 ## Polyglot acceleration
 
-A single `step` is trivial, but an N-step run is a sequential recurrence that does
-not vectorise, so a compiled inner loop genuinely beats Python.
-`simulate(n_steps, current, backend="auto")` dispatches across the polyglot chain
-and returns `(trace, spikes)`:
+The acceleration surface was completed in commit `63826b513` and is unchanged
+by the schema-to-RTL enrolment. Rust, Julia, and Go reproduce the Python golden
+trace bit-for-bit at the maintained test points. Mojo is checked per step
+because fused multiply-add rounding is amplified by this sensitive map.
 
-```python
-from sc_neurocore.neurons.models.courage_nekorkin_map import CourageNekorkinMapNeuron
+The committed benchmark artefact records 2,000,000 autonomous iterations,
+five repeats, and a non-isolated loaded workstation. Python, Rust, Julia, and
+Go each record 371,008 events; Mojo records 371,063 and is therefore not
+presented as event-exact on that long trajectory. Reproduce the artefact with:
 
-neuron = CourageNekorkinMapNeuron()
-trace, spikes = neuron.simulate(20_000, current=0.0)   # auto → Rust
+```bash
+PYTHONPATH=src .venv/bin/python \
+  benchmarks/bench_courage_nekorkin_map_simulate.py \
+  --json benchmarks/results/bench_courage_nekorkin_map_simulate.json
 ```
 
-The map is exact floating-point arithmetic (additions, multiplications, one
-division for the breakpoints, and a piecewise/Heaviside branch — no transcendental
-functions), so **Rust, Julia and Go reproduce the NumPy reference bit-for-bit**
-even though the dynamics are chaotic. Mojo's release build contracts a
-multiply-add into a fused multiply-add: the trajectory is bit-exact for the first
-~100 steps, after which a single ULP appears and the chaotic map amplifies it into
-a whole-trace gap — so the Mojo backend is validated per-step and on spike counts,
-and `auto` selects Rust (the fastest bit-exact backend, shipped in the wheel).
+The JSON result and `courage-nekorkin-map-five-backend-local-regression` gate
+carry the measured timings, parity fields, workload, environment, and source
+hashes. The numbers are regression evidence for that recorded environment,
+not isolated-core release claims.
 
-### Measured throughput
+## Python-to-Verilog validation
 
-2 000 000 steps, default chaotic regime, median of 5 repeats. Non-isolated loaded
-workstation (Intel i5-11600K) per `BROADCAST_2026-06-04_benchmark_core_isolation`
-— functional/regression evidence, not an isolated-core figure. Reproduce with
-`PYTHONPATH=src .venv/bin/python benchmarks/bench_courage_nekorkin_map_simulate.py --json benchmarks/results/bench_courage_nekorkin_map_simulate.json`.
+The paired TOML and JSON schemas use `method="map"`, `dt=1.0`, and the exact
+published branch ordering. Their `dt` value is the schema's iteration unit, not
+physical time. The hand model and both schema runners agree exactly on every
+state and event at the enrolled points.
 
-| Backend | Median (ms) | Min (ms) | Speed-up vs Python | Whole-trace parity | Spikes |
-|---------|------------:|---------:|-------------------:|-------------------:|-------:|
-| Python  | 557.3819330020342 | 538.0827189947013 | 1.0× | reference | 371008 |
-| Rust (`auto`) | 13.899400015361607 | 13.64939400809817 | 40.10115058103343× | 0 | 371008 |
-| Julia   | 15.836403996217996 | 11.05115600512363 | 35.19624361282691× | 0 | 371008 |
-| Go      | 14.982394000981003 | 14.369175012689084 | 37.20246129994569× | 0 | 371008 |
-| Mojo    | 14.448277011979371 | 13.346396997803822 | 38.57774408255719× | 0.1971105443600312 | 371063 |
+Q16.16 RTL is event-exact on three bounded operating windows:
 
-Artefact: `benchmarks/results/bench_courage_nekorkin_map_simulate.json`; gate:
-`courage-nekorkin-map-five-backend-local-regression` in
-`benchmarks/benchmark_regression_gates.json`. The artefact records SHA-256
-source provenance for the benchmark runner and Python/Rust/Julia/Go/Mojo
-backend chain. The gate enforces exact spike-count parity for Python, Rust,
-Julia and Go; Mojo is bounded by the documented chaotic FMA drift envelope.
+| Input | Iterations | Branch counts `(low, middle, high)` | Events | Maximum state error `(x, y)` |
+| ---: | ---: | ---: | ---: | ---: |
+| `-0.3` | `30` | `(22, 1, 7)` | `1` | `(0.001969, 0.000163)` |
+| `0.0` | `20` | `(13, 7, 0)` | `2` | `(0.013687, 0.000304)` |
+| `0.3` | `30` | `(7, 1, 22)` | `1` | `(0.000491, 0.000051)` |
 
----
+Q32.32 RTL is event-exact at `I=-0.3/0/0.3` over 30 iterations. Across that
+set, the largest fast-coordinate error is `2.604e-5` and the largest recovery
+error is `8.379e-7`.
 
-## Usage
+### Declared Q16.16 boundary
 
-### Single neuron, threshold crossings
+The 30-iteration autonomous Q16.16 trajectory is deliberately excluded from
+the parity band. Float64 emits four events, Q16.16 emits six, and six event
+positions differ. Q32.32 resolves that same window at four events on both
+paths. The regression pins this boundary so the bounded evidence cannot be
+read as long-window fixed-point identity.
 
-```python
-from sc_neurocore.neurons.models.courage_nekorkin_map import CourageNekorkinMapNeuron
+The class-specific evidence lives in
+`tests/test_cosim_courage_nekorkin_map.py`.
 
-neuron = CourageNekorkinMapNeuron()
-spikes = [t for t in range(10_000) if neuron.step() == 1]
-print(f"{len(spikes)} spikes")
+## Independent reference trace
+
+`courage_nekorkin_map_autonomous_doi.json` records a 30-iteration autonomous
+trace. Its model-scoped test independently reimplements equations 3–5 rather
+than calling the hand class or schema expressions. The committed features cover
+event count, first event, and final/minimum/maximum/mean values for both state
+coordinates. The production schema runner then validates the same artefact.
+
+## Silicon and formal scope
+
+The descriptor is science tier S5 and silicon tier H1:
+
+- the paired schemas match the maintained hand implementation;
+- generated Q16.16 and Q32.32 RTL satisfy the bounded contracts above;
+- generated Q8.8 RTL is enrolled in the catalogue formal inventory;
+- a port-only depth-4 SymbiYosys/Z3 job proves reset-spike safety.
+
+The formal job is structural safety evidence. It does not replace the
+behavioural trajectories and does not claim FPGA synthesis, timing closure, or
+hardware deployment.
+
+## Reproducing the evidence
+
+```bash
+PYTHONPATH=src:. .venv/bin/python -m pytest -q \
+  tests/test_courage_nekorkin_map_backends.py \
+  tests/test_cosim_courage_nekorkin_map.py \
+  tests/test_reference_courage_nekorkin_map.py
+
+PYTHONPATH=src:. .venv/bin/python tools/readiness_evidence_index.py --check
+
+cd hdl/formal/catalogue
+sby -f sc_courbage_nekorkin_map.sby
 ```
 
-### Switching firing regime
-
-```python
-# Excitable / phasic regime: drive J below J_min (~0.1765)
-excitable = CourageNekorkinMapNeuron(j=0.12)
-_, n_excitable = excitable.simulate(20_000)
-
-# Default chaotic spiking-bursting
-_, n_default = CourageNekorkinMapNeuron().simulate(20_000)
-assert n_excitable < n_default
-```
-
-### Coupled network
-
-```python
-from sc_neurocore.network.population import Population
-from sc_neurocore.network.projection import Projection
-from sc_neurocore.network.network import Network
-from sc_neurocore.network.monitor import SpikeMonitor
-from sc_neurocore.network.stimulus import PoissonInput
-from sc_neurocore.neurons.models.courage_nekorkin_map import CourageNekorkinMapNeuron
-
-pop = Population(CourageNekorkinMapNeuron, n=50, label="excitable")
-drive = PoissonInput(n=50, rate_hz=500.0, weight=0.3, dt=0.001, seed=42)
-mon = SpikeMonitor(pop)
-net = Network(pop, drive, mon)
-net.run(duration=2.0, dt=0.001, backend="python")
-print(mon.count)
-```
-
----
-
-## Applications
-
-- **Large-scale spiking-network simulation.** Map-based neurons replace ODE
-  integration with a few arithmetic operations per step, so cortical-column and
-  whole-network models run at a fraction of the conductance-model cost while
-  retaining spiking, bursting and subthreshold dynamics.
-- **Chaotic spiking-bursting studies.** The bounded chaotic attractor models the
-  irregular spiking-bursting seen in hippocampal pyramidal and thalamic cells.
-- **Subthreshold-oscillation regimes** relevant to inferior-olive neurons and
-  olivo-cerebellar timing.
-- **Synchronisation and wave propagation** in coupled excitable lattices.
-- **Neuromorphic / FPGA targets.** With no transcendental functions and a single
-  division for the breakpoints, the per-step kernel maps directly onto
-  fixed-point hardware.
-
----
-
-## Implementation notes
-
-| Surface | File |
-|---------|------|
-| Python reference + backend dispatch | `src/sc_neurocore/neurons/models/courage_nekorkin_map.py` |
-| Rust engine struct + `simulate` (PyO3) | `engine/src/neurons/maps.rs`, `engine/src/lib.rs` |
-| Rust fail-closed safety mirror | `src/sc_neurocore/accel/rust/safety/courage_nekorkin_map.rs` |
-| Julia backend | `src/sc_neurocore/accel/julia/neurons/courage_nekorkin_map.jl` |
-| Go backend (c-shared) | `src/sc_neurocore/accel/go/neurons/courage_nekorkin_map/courage_nekorkin_map.go` |
-| Mojo backend (FFI) | `src/sc_neurocore/accel/mojo/neurons/courage_nekorkin_map.mojo` |
-| Tests | `tests/test_model_courage_nekorkin_map.py`, `tests/test_courage_nekorkin_map_backends.py` |
-| Benchmark | `benchmarks/bench_courage_nekorkin_map_simulate.py` |
-
-All five backends share an identical operation order; the bit-exact backends are
-verified against the NumPy reference across several currents and parameter regimes
-in `tests/test_courage_nekorkin_map_backends.py`.
-
----
-
-## Citations
-
-1. Courbage M., Nekorkin V.I., Vdovin L.V. (2007). Chaotic oscillations in a
-   map-based model of neural activity. *Chaos* 17:043109.
-   DOI: [10.1063/1.2795435](https://doi.org/10.1063/1.2795435);
-   [arXiv:0712.2097](https://arxiv.org/abs/0712.2097).
-2. Courbage M., Nekorkin V.I. (2010). Map based models in neurodynamics.
-   *Int. J. Bifurcat. Chaos* 20(6):1631–1651.
-   DOI: [10.1142/S0218127410026733](https://doi.org/10.1142/S0218127410026733).
-3. Rulkov N.F. (2002). Modeling of spiking-bursting neural behavior using
-   two-dimensional map. *Phys. Rev. E* 65:041922.
-   DOI: [10.1103/PhysRevE.65.041922](https://doi.org/10.1103/PhysRevE.65.041922).
+See the [co-simulation guide](../../guides/cosimulation_guide.md),
+[reference-trace contract](../../validation/reference_traces.md), and
+[model fidelity status](../model_fidelity_status.md) for the catalogue-wide
+context.

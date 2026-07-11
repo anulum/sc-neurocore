@@ -108,6 +108,17 @@ ENROLLED: tuple[EnrolledEvidence, ...] = (
         ),
     ),
     EnrolledEvidence(
+        schema_name="courage_nekorkin_map",
+        class_name="CourageNekorkinMapNeuron",
+        level="h1_cosim",
+        evidence=("tests/test_cosim_courage_nekorkin_map.py::test_q3232_short_window_trajectory"),
+        operating_point=("schema-DSL Courbage-Nekorkin map at I=-0.3,0,0.3 over 30 iterations"),
+        tolerance=(
+            "hand/TOML/JSON exact; Q32.32 event-exact with state error below "
+            "0.00003; Q16.16 autonomous 30-iteration boundary excluded"
+        ),
+    ),
+    EnrolledEvidence(
         schema_name="lapicque",
         class_name="LapicqueNeuron",
         level="h1_cosim",

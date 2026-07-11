@@ -965,7 +965,7 @@
     "python_model_classes": 158,
     "python_model_source_modules": 153,
     "rust_pyo3_model_wrappers": 176,
-    "test_files": 1027
+    "test_files": 1029
   },
   "documentation": {
     "public_pages": [
@@ -2971,6 +2971,7 @@
       "tests/test_cortical_column_julia_parity.py",
       "tests/test_cortical_column_mojo_parity.py",
       "tests/test_cosim_cazelles_map.py",
+      "tests/test_cosim_courage_nekorkin_map.py",
       "tests/test_cosim_dpi_neuron.py",
       "tests/test_cosim_emitters.py",
       "tests/test_cosim_izhikevich2007.py",
@@ -3520,6 +3521,7 @@
       "tests/test_rall_dendrite.py",
       "tests/test_recorders/test_spike_recorder.py",
       "tests/test_reference_cazelles_map.py",
+      "tests/test_reference_courage_nekorkin_map.py",
       "tests/test_reference_dpi_neuron.py",
       "tests/test_reference_izhikevich2007.py",
       "tests/test_reference_mihalas_niebur.py",
