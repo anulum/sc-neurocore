@@ -132,6 +132,21 @@ The corresponding S5/H1 promotion also emits a Q8.8 formal-catalogue core and
 port-only harness. Its depth-4 SymbiYosys/Z3 job proves the bounded reset-spike
 safety property; the Q16.16 harness remains the behavioural parity evidence.
 
+### Terman-Wang Q16.16 enrolment
+
+The two-state `terman_wang` schema mirrors the maintained LEGION relaxation
+oscillator: simultaneous classical RK4 over the cubic fast nullcline and
+`tanh`-gated recovery, rising-edge `v >= 1.5` detection, and no reset. Because
+the recovery equation is transcendental, raw state bit identity is not portable
+across math libraries or fixed-point look-up tables. The enrolled observable is
+therefore the robust crossing count. Over 8,000 steps the hand model, schema
+runner, and Q16.16 RTL agree exactly on the full silent/single/train set: zero
+crossings at `I=-1.0`, one at `I=0.0`, and three at `I=0.5`.
+
+The S5/H1 promotion also emits a Q8.8 formal-catalogue core and port-only
+harness. Its depth-4 SymbiYosys/Z3 job proves bounded reset-spike safety only;
+the three Q16.16 operating points remain the behavioural parity evidence.
+
 ## Adding a New Model to Co-Simulation
 
 1. **Ensure the model schema exists** in `src/sc_neurocore/neurons/model_schemas/`
@@ -159,7 +174,7 @@ The tool scans live source modules and schema files without importing optional
 backends. It reports the net schema gap, source modules still lacking a
 same-name or alias schema, schema-only names, source-evidence classifications,
 and a ranked enrolment table. The current checkout has 153 model source modules,
-25 unique schema models, a net schema gap of 128, and 130 source-module rows
+26 unique schema models, a net schema gap of 127, and 129 source-module rows
 still needing same-name or alias schema coverage because `izhikevich` and `lif`
 are schema-only names.
 

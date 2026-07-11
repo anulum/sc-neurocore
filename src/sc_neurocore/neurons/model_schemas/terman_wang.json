@@ -1,0 +1,36 @@
+{
+  "metadata": {
+    "schema_version": 1,
+    "name": "Terman-Wang",
+    "author": "Terman, D. & Wang, D. L.",
+    "year": 1995,
+    "doi": "10.1016/0167-2789(94)00205-5",
+    "description": "Two-state LEGION relaxation oscillator with cubic fast dynamics and tanh-gated recovery"
+  },
+  "state": {
+    "v": -1.5,
+    "w": -0.5
+  },
+  "parameters": {
+    "alpha": 3.0,
+    "beta": 0.2,
+    "epsilon": 0.02,
+    "rho": 0.0,
+    "v_peak": 1.5
+  },
+  "integration": {
+    "dt": 0.05,
+    "method": "rk4"
+  },
+  "dynamics": {
+    "v": "3.0 * v - v * v * v + 2.0 - w + I + rho",
+    "w": "epsilon * (alpha * (1.0 + tanh(v / beta)) - w)"
+  },
+  "threshold": {
+    "condition": "v >= v_peak",
+    "detection": "crossing"
+  },
+  "extensions": {
+    "silicon_cosim_note": "Over 8000 steps, hand model, schema runner, and Q16.16 RTL produce 0, 1, and 3 upward crossings at I=-1.0, 0.0, and 0.5 respectively. The transcendental tanh gate makes spike count, rather than bit-identical state, the portable parity observable."
+  }
+}

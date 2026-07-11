@@ -4,7 +4,8 @@
 **Module:** `sc_neurocore.neurons.models.terman_wang`
 **Rust engine:** `sc_neurocore_engine::neurons::simple_spiking::TermanWangOscillator`
 **Polyglot `simulate` backends:** Rust engine (PyO3, bit-exact), Julia `TermanWangAccel`, Go c-shared (`accel/go/neurons/terman_wang`), Mojo FFI (`accel/mojo/neurons/terman_wang.mojo`); standalone Rust safety mirror `TermanWangOscillator`
-**Reference:** Terman, D. & Wang, D. L. (1995). Neural Computation, 7(5), 1035-1064.
+**Reference:** Terman, D. & Wang, D. L. (1995). Physica D, 81, 148-176.
+DOI: `10.1016/0167-2789(94)00205-5`.
 **Family:** two-state relaxation oscillator for LEGION-style temporal segmentation.
 
 ---
@@ -111,6 +112,40 @@ parity suite confirms Rust bit-exactness and the Julia/Go/Mojo ULP band.
 
 ---
 
+## Schema-to-RTL co-simulation
+
+The paired `terman_wang.toml` and `terman_wang.json` schemas reproduce the
+maintained two-state contract: simultaneous classical RK4 at `dt=0.05`, the
+cubic fast nullcline, the `tanh` recovery gate, rising-edge `v >= v_peak`
+detection, and no reset. An 8,000-step varied-current sequence exercises every
+RK4 stage and produces 28 crossings followed by 28 re-arms. The TOML and JSON
+state trajectories remain within `1e-10` of the hand model while every spike
+decision agrees step by step.
+
+The transcendental gate makes raw state bit identity non-portable across math
+libraries and fixed-point look-up tables, so the declared behavioural observable
+is the crossing count. The Q16.16 equation-compiler path reproduces the complete
+silent/single/train regime exactly:
+
+| Constant current | Hand model | Schema runner | Q16.16 RTL |
+|-----------------:|-----------:|--------------:|-----------:|
+| `-1.0` | 0 | 0 | 0 |
+| `0.0` | 1 | 1 | 1 |
+| `0.5` | 3 | 3 | 3 |
+
+Each result covers 8,000 steps. The DOI-backed
+`terman_wang_legion_oscillation_doi` trace independently re-derives the coupled
+RK4 recurrence at `I=0.5`, including all `v`/`w` feature statistics, the first
+crossing at step 29, and the three-crossing total.
+
+The descriptor is Science S5 / Silicon H1 and is registered with the formal
+catalogue. Its generated Q8.8 RTL and port-only harness have a depth-4
+SymbiYosys/Z3 reset-spike safety proof. That bounded property is not presented as
+Python-to-RTL behavioural equivalence; the Q16.16 three-way results above are the
+behavioural parity evidence.
+
+---
+
 ## Polyglot acceleration
 
 A single `step` is trivial, but an N-step run is a sequential RK4 recurrence that
@@ -180,6 +215,7 @@ TermanWangOscillator
 ├── Go mirror: candidate-first RK4 service path
 ├── Mojo kernel notes: RK4 candidate contract mirror
 ├── Rust safety mirror: candidate-first RK4 fail-closed path
+├── Schema/RTL: paired schema formats, Q16.16 crossing parity, Q8.8 bounded formal job
 ├── Population / Network / Projection / Monitor integration
 └── Spike-count analysis integration
 ```

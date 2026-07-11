@@ -8,7 +8,7 @@
 
 [metadata]
 schema_version = 2
-name = "TermanWangOscillator"
+name = "Terman-Wang"
 class_name = "TermanWangOscillator"
 module = "terman_wang"
 display_name = ""
@@ -84,9 +84,11 @@ range = [
 
 [integration]
 dt = 0.05
-method = "euler"
+method = "rk4"
 
 [dynamics]
+v = "3.0 * v - v * v * v + 2.0 - w + I + rho"
+w = "epsilon * (alpha * (1.0 + tanh(v / beta)) - w)"
 
 [backends.python]
 status = "implemented"
@@ -98,11 +100,11 @@ parity = "exact"
 
 [backends.julia]
 status = "implemented"
-parity = "exact"
+parity = "ulp-bounded"
 
 [backends.go]
 status = "implemented"
-parity = "exact"
+parity = "ulp-bounded"
 
 [backends.mojo]
 status = "implemented"
@@ -115,3 +117,17 @@ golden_trace_sha256 = "7d0b5c40be78da5cb1b68d379c986a33897219e94d8789ed349154b2b
 [documentation]
 slug = "models/terman_wang"
 notes = ""
+
+[validation]
+dynamics_faithful = true
+metric = "parity"
+operating_point = "schema-DSL Terman-Wang two-state RK4 relaxation oscillator"
+tolerance = "exact three-way spike-count parity at I=-1.0, 0.0, and 0.5 over 8000 steps"
+evidence = "tests/test_cosimulation.py::TestQ1616Precision::test_terman_wang_q1616_parity"
+
+[silicon]
+compiles = true
+cosim_validated = true
+cosim_evidence = "tests/test_cosimulation.py::TestQ1616Precision::test_terman_wang_q1616_parity"
+target_tier = "H1"
+terminal_reason = "Point-neuron schema→RTL path; higher silicon rungs need synthesis, timing, and equivalence programmes."

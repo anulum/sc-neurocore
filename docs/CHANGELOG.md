@@ -5,6 +5,21 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+### Terman-Wang faithful schema-to-RTL enrolment
+- Enrolled the Terman-Wang two-state LEGION relaxation oscillator (`terman_wang`, Terman & Wang
+  1995, DOI `10.1016/0167-2789(94)00205-5`) with paired TOML/JSON schemas that mirror the
+  maintained hand model's simultaneous classical RK4 flow, cubic fast nullcline, `tanh`-gated
+  recovery, rising-edge `v >= v_peak` decision, and no-reset semantics. Over 8,000 steps the hand
+  model, schema runner, and emitted Q16.16 RTL agree exactly on the silent/single/train crossing
+  counts: 0 at `I=-1.0`, 1 at `I=0.0`, and 3 at `I=0.5`.
+- Added the DOI-backed `terman_wang_legion_oscillation_doi` trace with an independent two-state RK4
+  re-derivation, corrected the public model citation, marked the descriptor's RK4 and co-sim
+  facets, and updated the public fidelity row. The S5/H1 descriptor is registered with the formal
+  catalogue: generated Q8.8 RTL, a port-only harness, and a depth-4 SymbiYosys reset-spike safety
+  job bring the committed inventory to 17 models. Schema-gap counts move to 26 schema models / 127
+  net missing / 129 source modules without a schema. The completed Rust/Go/Julia/Mojo acceleration
+  chain and its committed benchmark artefacts are unchanged.
+
 ### Pernarowski faithful schema-to-RTL enrolment
 - Enrolled the Pernarowski three-state pancreatic beta-cell burster (`pernarowski`, Pernarowski
   1994, DOI `10.1137/S003613999223449X`) with a TOML/JSON schema that mirrors the maintained hand
