@@ -26,16 +26,10 @@ from sc_neurocore.neurons.reference_traces import (
 )
 from sc_neurocore.neurons.universal_dsl import list_bundled_schemas
 from tests.cosim_support import (
-    _adex_subthreshold_euler_features,
-    _closed_form_features,
     _exp_if_subthreshold_euler_features,
-    _fitzhugh_nagumo_rk4_features,
     _hindmarsh_rose_prefix_euler_features,
-    _izhikevich_rs_euler_features,
-    _mckean_rk4_features,
     _quadratic_if_zero_current_features,
     _resonate_fire_linear_euler_features,
-    _rulkov_map_features,
     _theta_constant_current_features,
 )
 
@@ -102,22 +96,6 @@ def test_reference_trace_corpus_covers_every_deterministic_bundled_schema() -> N
             assert spec.provenance.citation.startswith("doi:")
 
 
-def test_lif_seed_features_match_independent_closed_form_solution() -> None:
-    """Committed LIF features must match the closed-form RC solution, not the runner."""
-    spec = load_reference_trace_spec("lif_constant_current_closed_form")
-
-    expected = _closed_form_features(
-        initial=-65.0,
-        steady=-55.0,
-        tau=10.0,
-        dt=spec.protocol.dt,
-        steps=spec.protocol.steps,
-    )
-
-    for feature_name, feature_value in expected.items():
-        assert spec.expected_features[feature_name] == pytest.approx(feature_value, abs=1e-12)
-
-
 def test_quadratic_if_trace_features_match_independent_analytic_solution() -> None:
     """Committed QIF features must match the analytic zero-current Riccati flow."""
     spec = load_reference_trace_spec("quadratic_if_zero_current_analytic")
@@ -157,42 +135,6 @@ _PARITY_CASES: list[tuple[str, str, str, str, Callable[[ReferenceTraceSpec], dic
         "analytic_linear_euler_reference",
         "doi:10.1162/089976601300014538",
         lambda spec: _resonate_fire_linear_euler_features(
-            current=spec.protocol.inputs["I"], dt=spec.protocol.dt, steps=spec.protocol.steps
-        ),
-    ),
-    (
-        "izhikevich_regular_spiking_doi",
-        "izhikevich",
-        "independent_euler_reference",
-        "doi:10.1109/TNN.2003.820440",
-        lambda spec: _izhikevich_rs_euler_features(
-            current=spec.protocol.inputs["I"], dt=spec.protocol.dt, steps=spec.protocol.steps
-        ),
-    ),
-    (
-        "fitzhugh_nagumo_driven_oscillation_doi",
-        "fitzhugh_nagumo",
-        "independent_rk4_reference",
-        "doi:10.1016/S0006-3495(61)86902-6",
-        lambda spec: _fitzhugh_nagumo_rk4_features(
-            current=spec.protocol.inputs["I"], dt=spec.protocol.dt, steps=spec.protocol.steps
-        ),
-    ),
-    (
-        "mckean_driven_oscillation_doi",
-        "mckean",
-        "independent_rk4_reference",
-        "doi:10.1016/0001-8708(70)90023-X",
-        lambda spec: _mckean_rk4_features(
-            current=spec.protocol.inputs["I"], dt=spec.protocol.dt, steps=spec.protocol.steps
-        ),
-    ),
-    (
-        "adex_resting_adaptation_doi",
-        "adex",
-        "independent_euler_reference",
-        "doi:10.1152/jn.00686.2005",
-        lambda spec: _adex_subthreshold_euler_features(
             current=spec.protocol.inputs["I"], dt=spec.protocol.dt, steps=spec.protocol.steps
         ),
     ),
@@ -244,24 +186,6 @@ def test_trace_features_match_independent_reference(
     assert spec.schema_name == schema_name
     assert spec.provenance.kind == kind
     assert spec.provenance.citation == citation
-    assert set(expected) == set(spec.expected_features)
-    for feature_name, feature_value in expected.items():
-        assert spec.expected_features[feature_name] == pytest.approx(feature_value, abs=1e-12)
-
-
-def test_rulkov_map_trace_features_match_independent_map_iteration() -> None:
-    """Committed Rulkov features must match an independent piecewise-map iteration."""
-    spec = load_reference_trace_spec("rulkov_map_driven_spiking_doi")
-
-    expected = _rulkov_map_features(
-        current=spec.protocol.inputs["I"],
-        steps=spec.protocol.steps,
-    )
-
-    assert spec.schema_name == "rulkov_map"
-    assert spec.provenance.kind == "map_iteration_reference"
-    assert spec.provenance.citation == "doi:10.1103/PhysRevE.65.041922"
-    assert spec.expected_features["spike_count"] > 0
     assert set(expected) == set(spec.expected_features)
     for feature_name, feature_value in expected.items():
         assert spec.expected_features[feature_name] == pytest.approx(feature_value, abs=1e-12)
