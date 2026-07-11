@@ -48,6 +48,7 @@ _DETERMINISTIC_SCHEMA_TRACES = {
     "morris_lecar": "morris_lecar_driven_oscillation_doi",
     "pernarowski": "pernarowski_autonomous_bursting_doi",
     "terman_wang": "terman_wang_legion_oscillation_doi",
+    "wilson_hr": "wilson_hr_driven_spiking_doi",
     "perfect_integrator": "perfect_integrator_constant_current_sawtooth",
     "quadratic_if": "quadratic_if_zero_current_analytic",
     "resonate_fire": "resonate_fire_subthreshold_resonance_doi",
@@ -794,6 +795,64 @@ def _terman_wang_rk4_features(*, current: float, dt: float, steps: int) -> dict[
         w_values.append(w)
 
     return _summarise({"v": v_values, "w": w_values}, spikes)
+
+
+def _wilson_hr_rk4_features(*, current: float, dt: float, steps: int) -> dict[str, float]:
+    """Return classical-RK4 features for the Wilson-HR cortical model.
+
+    This independent recurrence re-derives Wilson's two-state polynomial flow,
+    advances ``v`` and ``r`` simultaneously through four Runge-Kutta stages, and
+    applies the level ``v >= 0.4`` spike decision. A spike hard-resets only ``v``
+    to ``-0.7``; the RK4 candidate recovery state is preserved. The helper does not
+    call the hand model or schema runner.
+
+    Parameters
+    ----------
+    current:
+        Constant input current applied at every timestep.
+    dt:
+        Simulation timestep.
+    steps:
+        Number of timesteps to advance.
+
+    Returns
+    -------
+    dict of str to float
+        Reference features for post-reset ``v`` and candidate ``r``, plus the
+        spike count and first-spike step.
+    """
+    tau_r = 1.9
+    threshold = 0.4
+    reset_voltage = -0.7
+    v = -0.7
+    r = 0.1
+    v_values: list[float] = []
+    r_values: list[float] = []
+    spikes: list[int] = []
+
+    def deriv(v_state: float, r_state: float) -> tuple[float, float]:
+        membrane = -(17.81 + 47.71 * v_state + 32.63 * v_state * v_state) * (v_state - 0.55)
+        recovery_coupling = -26.0 * r_state * (v_state + 0.92)
+        return (
+            membrane + recovery_coupling + current,
+            (-r_state + 1.35 * v_state + 1.03) / tau_r,
+        )
+
+    for _ in range(steps):
+        k1 = deriv(v, r)
+        k2 = deriv(v + 0.5 * dt * k1[0], r + 0.5 * dt * k1[1])
+        k3 = deriv(v + 0.5 * dt * k2[0], r + 0.5 * dt * k2[1])
+        k4 = deriv(v + dt * k3[0], r + dt * k3[1])
+        v = v + dt * (k1[0] + 2.0 * k2[0] + 2.0 * k3[0] + k4[0]) / 6.0
+        r = r + dt * (k1[1] + 2.0 * k2[1] + 2.0 * k3[1] + k4[1]) / 6.0
+        spike = int(v >= threshold)
+        if spike:
+            v = reset_voltage
+        spikes.append(spike)
+        v_values.append(v)
+        r_values.append(r)
+
+    return _summarise({"v": v_values, "r": r_values}, spikes)
 
 
 def _mckean_rk4_features(*, current: float, dt: float, steps: int) -> dict[str, float]:
@@ -1638,6 +1697,15 @@ _PARITY_CASES: list[tuple[str, str, str, str, Callable[[ReferenceTraceSpec], dic
         "independent_rk4_reference",
         "doi:10.1016/0167-2789(94)00205-5",
         lambda spec: _terman_wang_rk4_features(
+            current=spec.protocol.inputs["I"], dt=spec.protocol.dt, steps=spec.protocol.steps
+        ),
+    ),
+    (
+        "wilson_hr_driven_spiking_doi",
+        "wilson_hr",
+        "independent_rk4_reference",
+        "doi:10.1006/jtbi.1999.1002",
+        lambda spec: _wilson_hr_rk4_features(
             current=spec.protocol.inputs["I"], dt=spec.protocol.dt, steps=spec.protocol.steps
         ),
     ),

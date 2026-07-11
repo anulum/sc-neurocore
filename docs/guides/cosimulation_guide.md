@@ -147,6 +147,21 @@ The S5/H1 promotion also emits a Q8.8 formal-catalogue core and port-only
 harness. Its depth-4 SymbiYosys/Z3 job proves bounded reset-spike safety only;
 the three Q16.16 operating points remain the behavioural parity evidence.
 
+### Wilson-HR Q16.16 enrolment
+
+The two-state `wilson_hr` schema mirrors the maintained polynomial cortical
+model: simultaneous classical RK4 over membrane `v` and recovery `r`, level
+`v >= 0.4` detection, and a hard `v = -0.7` reset that preserves the candidate
+recovery state. Five passes through eight 100-step current blocks produce 35
+spikes and resets while both schema formats reproduce every post-step hand-model
+state exactly. Over 5,000 constant-current steps the hand model, schema runner,
+and Q16.16 RTL agree exactly on the enrolled silent/single/train set: zero spikes
+at `I=0.0`, one at `I=2.0`, and four at `I=10.0`.
+
+The S5/H1 promotion also emits a Q8.8 formal-catalogue core and port-only
+harness. Its depth-4 SymbiYosys/Z3 job proves bounded reset-spike safety only;
+the three Q16.16 operating points remain the behavioural parity evidence.
+
 ## Adding a New Model to Co-Simulation
 
 1. **Ensure the model schema exists** in `src/sc_neurocore/neurons/model_schemas/`
@@ -174,7 +189,7 @@ The tool scans live source modules and schema files without importing optional
 backends. It reports the net schema gap, source modules still lacking a
 same-name or alias schema, schema-only names, source-evidence classifications,
 and a ranked enrolment table. The current checkout has 153 model source modules,
-26 unique schema models, a net schema gap of 127, and 129 source-module rows
+27 unique schema models, a net schema gap of 126, and 128 source-module rows
 still needing same-name or alias schema coverage because `izhikevich` and `lif`
 are schema-only names.
 

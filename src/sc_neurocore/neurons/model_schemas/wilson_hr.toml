@@ -1,0 +1,41 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Commercial license available
+# © Concepts 1996–2026 Miroslav Šotek. All rights reserved.
+# © Code 2020–2026 Miroslav Šotek. All rights reserved.
+# ORCID: 0009-0009-3560-0851
+# Contact: www.anulum.li | protoscience@anulum.li
+# SC-NeuroCore — Source/config provenance header
+
+[metadata]
+schema_version = 1
+name = "Wilson-HR"
+author = "Wilson, H. R."
+year = 1999
+doi = "10.1006/jtbi.1999.1002"
+description = "Two-state polynomial cortical model with hard voltage reset"
+
+[state]
+v = -0.7
+r = 0.1
+
+[parameters]
+tau_r = 1.9
+v_peak = 0.4
+
+[integration]
+dt = 0.05
+method = "rk4"
+
+[dynamics]
+v = "-(17.81 + 47.71 * v + 32.63 * v * v) * (v - 0.55) - 26.0 * r * (v + 0.92) + I"
+r = "(-r + 1.35 * v + 1.03) / tau_r"
+
+[threshold]
+condition = "v >= v_peak"
+detection = "level"
+
+[reset]
+v = "-0.7"
+
+[extensions]
+silicon_cosim_note = "Over 5000 steps, hand model, schema runner, and Q16.16 RTL produce exactly 0, 1, and 4 spikes at I=0.0, 2.0, and 10.0 respectively. The polynomial RK4 flow and hard voltage reset preserve exact spike-count parity across all three paths."

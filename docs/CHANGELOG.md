@@ -5,6 +5,22 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+### Wilson-HR faithful schema-to-RTL enrolment
+- Enrolled the Wilson-HR two-state polynomial cortical model (`wilson_hr`, Wilson 1999, DOI
+  `10.1006/jtbi.1999.1002`) with paired TOML/JSON schemas that mirror the maintained hand model's
+  simultaneous classical RK4 flow, polynomial membrane nullcline, level `v >= v_peak` decision,
+  and hard `v = -0.7` reset that preserves the candidate recovery state. A varied 4,000-step drive
+  produces 35 spikes and resets with exact hand/TOML/JSON state agreement. Over 5,000
+  constant-current steps the hand model, schema runner, and Q16.16 RTL agree exactly on 0, 1, and
+  4 spikes at `I=0.0`, `2.0`, and `10.0`.
+- Added the DOI-backed `wilson_hr_driven_spiking_doi` trace with an independent two-state RK4
+  re-derivation, corrected the public model provenance, marked the descriptor's RK4 and co-sim
+  facets, and updated the public fidelity row. The S5/H1 descriptor is registered with the formal
+  catalogue: generated Q8.8 RTL, a port-only harness, and a depth-4 SymbiYosys reset-spike safety
+  job bring the committed inventory to 18 models. Schema-gap counts move to 27 schema models / 126
+  net missing / 128 source modules without a schema. The completed Rust/Go/Julia/Mojo acceleration
+  chain and its committed benchmark artefacts are unchanged.
+
 ### Terman-Wang faithful schema-to-RTL enrolment
 - Enrolled the Terman-Wang two-state LEGION relaxation oscillator (`terman_wang`, Terman & Wang
   1995, DOI `10.1016/0167-2789(94)00205-5`) with paired TOML/JSON schemas that mirror the

@@ -3,7 +3,8 @@
 
 **Module:** `sc_neurocore.neurons.models.wilson_hr`
 **Rust engine:** `sc_neurocore_engine::neurons::simple_spiking::WilsonHRNeuron`
-**Reference:** Wilson, H. R. (1999), *Spikes, Decisions, and Actions*, Oxford University Press.
+**Reference:** Wilson, H. R. (1999), “Simplified Dynamics of Human and Mammalian
+Neocortical Neurons”. DOI: `10.1006/jtbi.1999.1002`.
 
 `WilsonHRNeuron` implements Wilson's two-state polynomial cortical model. The
 model keeps voltage `v` and recovery `r` dimensionless and uses polynomial
@@ -37,6 +38,35 @@ surfaces use candidate-first RK4 over the coupled `(v, r)` state. Each stage
 evaluates the same Wilson-HR polynomial right-hand side. State is committed only
 after both candidate variables are finite.
 
+## Schema-to-RTL co-simulation
+
+The paired `wilson_hr.toml` and `wilson_hr.json` schemas reproduce the maintained
+two-state contract: simultaneous classical RK4 at `dt=0.05`, the Wilson-HR
+polynomial membrane equation, linear recovery flow, level `v >= v_peak`
+detection, and hard `v = -0.7` reset while preserving the candidate `r` state.
+Five passes through eight 100-step current blocks exercise all RK4 stages and
+produce 35 spikes and hard resets. Both schema formats reproduce every hand-model
+spike decision and post-step `v`/`r` state exactly.
+
+The Q16.16 equation-compiler path reproduces the enrolled response regimes:
+
+| Constant current | Hand model | Schema runner | Q16.16 RTL |
+|-----------------:|-----------:|--------------:|-----------:|
+| `0.0` | 0 | 0 | 0 |
+| `2.0` | 1 | 1 | 1 |
+| `10.0` | 4 | 4 | 4 |
+
+Each result covers 5,000 steps. The DOI-backed
+`wilson_hr_driven_spiking_doi` trace independently re-derives the coupled RK4
+recurrence at `I=10.0`, including post-reset `v` and preserved `r` feature
+statistics, the first spike at step 2, and the four-spike total.
+
+The descriptor is Science S5 / Silicon H1 and is registered with the formal
+catalogue. Its generated Q8.8 RTL and port-only harness have a depth-4
+SymbiYosys/Z3 reset-spike safety proof. That bounded property is not presented as
+Python-to-RTL behavioural equivalence; the Q16.16 three-way results above are the
+behavioural parity evidence.
+
 Invalid runtime contracts are fail-closed:
 
 | Condition | Python public surface | Go / Julia / Rust safety / Rust engine |
@@ -57,6 +87,8 @@ Invalid runtime contracts are fail-closed:
 | `src/sc_neurocore/accel/go/neurons/wilson_hr/wilson_hr.go` | Go RK4 c-shared `simulate` parity |
 | `src/sc_neurocore/accel/mojo/neurons/wilson_hr.mojo` | Mojo RK4 FFI `simulate` (FMA ULP-bounded) |
 | `src/sc_neurocore/accel/rust/safety/wilson_hr.rs` | Standalone Rust safety RK4 parity and invalid-state preservation |
+| `src/sc_neurocore/neurons/model_schemas/wilson_hr.{toml,json}` | Paired schema source for Python and generated RTL co-simulation |
+| `hdl/formal/catalogue/sc_wilson_hr.*` | Generated Q8.8 RTL, port-only harness, and depth-4 bounded formal job |
 
 The cross-module Python workflow is explicitly named as the Wilson-HR public
 surface inside the Python simulator. It exercises real `Population`,
