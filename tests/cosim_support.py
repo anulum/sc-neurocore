@@ -35,6 +35,7 @@ from sc_neurocore.neurons.models.fitzhugh_nagumo import FitzHughNagumoNeuron
 from sc_neurocore.neurons.models.fitzhugh_rinzel import FitzHughRinzelNeuron
 from sc_neurocore.neurons.models.glif import GLIFNeuron
 from sc_neurocore.neurons.models.hodgkin_huxley import HodgkinHuxleyNeuron
+from sc_neurocore.neurons.models.hindmarsh_rose import HindmarshRoseNeuron
 from sc_neurocore.neurons.models.izhikevich2007 import Izhikevich2007Neuron
 from sc_neurocore.neurons.models.mckean import McKeanNeuron
 from sc_neurocore.neurons.models.mihalas_niebur import MihalasNieburNeuron
@@ -234,6 +235,12 @@ def _fitzhugh_nagumo_hand_spike_count(n_steps: int, current: float) -> int:
 def _fitzhugh_rinzel_hand_spike_count(n_steps: int, current: float) -> int:
     """Return the hand-authored FitzHugh-Rinzel RK4 upward-crossing count."""
     neuron = FitzHughRinzelNeuron()
+    return sum(neuron.step(current) for _ in range(n_steps))
+
+
+def _hindmarsh_rose_hand_spike_count(n_steps: int, current: float) -> int:
+    """Return the hand-authored Hindmarsh-Rose RK4 upward-crossing count."""
+    neuron = HindmarshRoseNeuron()
     return sum(neuron.step(current) for _ in range(n_steps))
 
 
@@ -1680,16 +1687,14 @@ def _exp_if_subthreshold_euler_features(
     return _summarise({"v": v_values}, spikes)
 
 
-def _hindmarsh_rose_prefix_euler_features(
-    *, current: float, dt: float, steps: int
-) -> dict[str, float]:
-    """Return exact explicit-Euler features for the Hindmarsh-Rose bursting prefix.
+def _hindmarsh_rose_rk4_features(*, current: float, dt: float, steps: int) -> dict[str, float]:
+    """Return classical-RK4 features for the driven Hindmarsh-Rose flow.
 
     The Hindmarsh-Rose (1984) cubic fast subsystem and slow adaptation variable are
-    advanced with the same simultaneous explicit-Euler update the schema runner
-    applies. The schema reset is the identity map, and the committed short prefix
-    stays below the ``x > 1`` threshold, so the reference is an independent
-    re-derivation of the committed pre-bursting trajectory.
+    advanced with an independently re-derived simultaneous four-stage RK4 step. The
+    maintained event is an upward ``x >= 1`` crossing and does not reset any state.
+    Repeated multiplication preserves the source polynomial's evaluation order without
+    importing either the hand model or the schema runner.
 
     Parameters
     ----------
@@ -1710,6 +1715,7 @@ def _hindmarsh_rose_prefix_euler_features(
     r = 0.001
     s = 4.0
     x_rest = -1.6
+    threshold = 1.0
     x = -1.6
     y = -10.0
     z = 2.0
@@ -1717,18 +1723,34 @@ def _hindmarsh_rose_prefix_euler_features(
     y_values: list[float] = []
     z_values: list[float] = []
     spikes: list[int] = []
+
+    def derivatives(x_state: float, y_state: float, z_state: float) -> tuple[float, float, float]:
+        x2 = x_state * x_state
+        x3 = x2 * x_state
+        return (
+            y_state - x3 + b * x2 - z_state + current,
+            1.0 - 5.0 * x2 - y_state,
+            r * (s * (x_state - x_rest) - z_state),
+        )
+
     for _ in range(steps):
-        dx = y - x**3 + b * x**2 - z + current
-        dy = 1 - 5 * x**2 - y
-        dz = r * (s * (x - x_rest) - z)
-        x_next = x + dx * dt
-        y_next = y + dy * dt
-        z_next = z + dz * dt
-        if x_next > 1.0:
-            spikes.append(1)
-        else:
-            spikes.append(0)
-        x, y, z = x_next, y_next, z_next
+        x_prev = x
+        k1 = derivatives(x, y, z)
+        k2 = derivatives(
+            x + 0.5 * dt * k1[0],
+            y + 0.5 * dt * k1[1],
+            z + 0.5 * dt * k1[2],
+        )
+        k3 = derivatives(
+            x + 0.5 * dt * k2[0],
+            y + 0.5 * dt * k2[1],
+            z + 0.5 * dt * k2[2],
+        )
+        k4 = derivatives(x + dt * k3[0], y + dt * k3[1], z + dt * k3[2])
+        x = x + (dt / 6.0) * (k1[0] + 2.0 * k2[0] + 2.0 * k3[0] + k4[0])
+        y = y + (dt / 6.0) * (k1[1] + 2.0 * k2[1] + 2.0 * k3[1] + k4[1])
+        z = z + (dt / 6.0) * (k1[2] + 2.0 * k2[2] + 2.0 * k3[2] + k4[2])
+        spikes.append(1 if (x >= threshold and x_prev < threshold) else 0)
         x_values.append(x)
         y_values.append(y)
         z_values.append(z)

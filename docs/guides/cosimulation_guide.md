@@ -123,6 +123,27 @@ band: seven crossings at `I=0.4`, eight at `I=0.5`, and eight at `I=0.6`. The ma
 crossing at `I=0.7` is outside the declared parity band because fixed-point rounding
 changes its count.
 
+### Hindmarsh-Rose Q16.16 enrolment
+
+The three-state `hindmarsh_rose` schema now mirrors the maintained 1984 model:
+simultaneous classical RK4 over the cubic fast membrane, recovery, and slow
+adaptation equations; rising-edge `x >= x_threshold` observation; and no reset.
+The previous explicit-Euler schema carried an identity reset, which made the
+runtime treat `detection="crossing"` as a level decision and count every
+above-threshold timestep. The paired TOML/JSON schemas remove that semantic
+caricature.
+
+Over 2,000 steps, the hand model, both schema formats, and emitted Q16.16 RTL
+agree exactly at five enrolled operating points: `0/0/26/40/52` crossings at
+`I=0/2/3/4/5`. This is a bounded behavioural contract, not indefinite chaotic
+trajectory identity. Over 5,000 steps at `I=2/3/4/5`, float64 reports
+`9/48/85/114` crossings while Q16.16 reports `10/49/86/115`; dedicated tests
+preserve that one-crossing boundary explicitly.
+
+The S5/H1 promotion emits a Q8.8 formal-catalogue core and port-only harness.
+Its depth-4 SymbiYosys/Z3 job proves reset-spike safety only; the Q16.16
+operating points remain the behavioural parity evidence.
+
 ### Pernarowski Q16.16 enrolment
 
 The three-state `pernarowski` schema mirrors the maintained autonomous beta-cell

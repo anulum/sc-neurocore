@@ -92,6 +92,29 @@ Julia surface also fail closed if the cubic derivative overflows or an
 intermediate RK4 stage becomes non-finite; the previous state is preserved
 in that case.
 
+### 1.6 Schema and silicon contract
+
+DOI `10.1098/rspb.1984.0024` supplies the three coupled ODEs and the canonical
+`b=3`, `r=0.001`, `s=4`, and `x_rest=-1.6` operating parameters. The timestep,
+classical RK4 discretisation, and upward `x_threshold=1.0` event are maintained
+implementation choices rather than additional paper equations.
+
+The paired TOML/JSON schemas use the same RK4/no-reset semantics as the hand
+model. An earlier schema declared explicit Euler and an identity reset. That
+identity reset disabled crossing-edge history in the schema runtime, so each
+above-threshold timestep was incorrectly reported as a new event.
+
+At Q16.16, hand model, TOML runner, JSON runner, and emitted RTL agree exactly
+over 2,000 steps: `0/0/26/40/52` upward crossings at `I=0/2/3/4/5`. This is a
+bounded crossing-count contract. Over 5,000 steps at the four bursting points
+`I=2/3/4/5`, Q16.16 reports one additional crossing
+(`10/49/86/115` versus float64 `9/48/85/114`), so long-window chaotic identity
+is explicitly outside the claim.
+
+The generated Q8.8 catalogue module has a port-only depth-4 SymbiYosys/Z3
+bounded safety job. That proof covers reset/spike safety; it does not replace
+the Q16.16 behavioural co-simulation evidence.
+
 ---
 
 ## 2. Theoretical Context

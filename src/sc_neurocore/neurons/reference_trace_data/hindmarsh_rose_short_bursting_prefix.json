@@ -6,10 +6,10 @@
     "runner": "universal_dsl"
   },
   "protocol": {
-    "dt": 0.05,
-    "steps": 80,
+    "dt": 0.1,
+    "steps": 2000,
     "inputs": {
-      "I": 0.0
+      "I": 3.0
     },
     "state_variables": [
       "x",
@@ -18,26 +18,26 @@
     ]
   },
   "provenance": {
-    "kind": "independent_euler_reference",
+    "kind": "independent_rk4_reference",
     "source": "src/sc_neurocore/neurons/model_schemas/hindmarsh_rose.toml",
-    "equation": "Short finite Hindmarsh-Rose prefix before chaotic bursting dominates; the cubic fast subsystem and slow adaptation variable are advanced with the exact explicit-Euler recurrence, independently re-derived from the Hindmarsh-Rose (1984) model definition (threshold not reached, identity reset).",
+    "equation": "Driven Hindmarsh-Rose three-state bursting flow (26 upward x>=1 crossings) advanced with an independently re-derived simultaneous four-stage classical RK4 step and rising-edge detection, no reset; the cubic fast subsystem and slow adaptation equation follow the Hindmarsh-Rose (1984) model definition.",
     "citation": "doi:10.1098/rspb.1984.0024"
   },
   "expected_features": {
-    "spike_count": 0.0,
-    "first_spike_step": -1.0,
-    "final.x": -1.9247357023944893,
-    "min.x": -1.9247357023944893,
-    "max.x": -1.6112,
-    "mean.x": -1.7863115117678003,
-    "final.y": -16.30892862035388,
-    "min.y": -16.30892862035388,
-    "max.y": -10.09,
-    "mean.y": -13.426297542316295,
-    "final.z": 1.9891038008353665,
-    "min.z": 1.9891038008353665,
-    "max.z": 1.9999,
-    "mean.z": 1.9949043267172057
+    "spike_count": 26.0,
+    "first_spike_step": 114.0,
+    "final.x": -0.8688531746086836,
+    "min.x": -1.4770193566363319,
+    "max.x": 2.0105755463611805,
+    "mean.x": -0.31300838517038676,
+    "final.y": -3.28324463421698,
+    "min.y": -10.033136138760128,
+    "max.y": 0.3991837080268054,
+    "mean.y": -2.8697002384816357,
+    "final.z": 2.5713296898084175,
+    "min.z": 1.9959875442104262,
+    "max.z": 2.5713296898084175,
+    "mean.z": 2.290521158765885
   },
   "tolerances": {
     "default": {

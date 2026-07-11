@@ -279,10 +279,16 @@ ENROLLED: tuple[EnrolledEvidence, ...] = (
     EnrolledEvidence(
         schema_name="hindmarsh_rose",
         class_name="HindmarshRoseNeuron",
-        level="h0_compile",
-        evidence="tests/test_cosimulation.py::TestSchemaGapModelCosim::_SCHEMA_GAP_COMPILE_ONLY",
-        operating_point="schema-DSL hindmarsh_rose; compile-only",
-        tolerance="compile-only (chaotic sensitivity)",
+        level="h1_cosim",
+        evidence=(
+            "tests/test_cosim_hindmarsh_rose.py::TestQ1616Precision::"
+            "test_hindmarsh_rose_q1616_parity"
+        ),
+        operating_point="schema-DSL Hindmarsh-Rose three-state RK4; 2000 steps",
+        tolerance=(
+            "exact hand/schema/Q16.16 counts at I=0,2,3,4,5; declared +1 "
+            "Q16.16 boundary over 5000 steps at I=2 through I=5"
+        ),
     ),
     EnrolledEvidence(
         schema_name="rulkov_map",

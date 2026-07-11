@@ -5,6 +5,21 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 ## [Unreleased]
 
 ### Added
+- Re-enrolled the already acceleration-complete Hindmarsh-Rose model (DOI
+  `10.1098/rspb.1984.0024`) on its maintained three-state RK4 path. The paired
+  schemas now match the hand model's no-reset upward `x >= x_threshold`
+  crossing semantics, replacing a stale explicit-Euler schema whose identity
+  reset turned crossing detection into level counting. An independent RK4
+  reference reproduces the 2,000-step `I=3` bursting trace without calling the
+  hand model or schema runner.
+- Hand model, TOML, JSON, and Q16.16 RTL produce exact 2,000-step crossing
+  counts `0/0/26/40/52` at `I=0/2/3/4/5`. Dedicated tests also preserve the
+  5,000-step chaotic boundary: Q16.16 produces one extra crossing at each
+  bursting point `I=2` through `I=5`. The S5/H1 descriptor adds a generated
+  Q8.8 port-only formal job whose depth-4 SymbiYosys/Z3 check passes. Existing
+  model, acceleration, backend-parity, and benchmark artefacts are unchanged;
+  schema-gap counts remain `31 / 122 / 124`, while the formal catalogue moves
+  to 24 jobs and the whole HDL inventory to 61 jobs / 209 statements.
 - Completed the source-verified Chialvo map unit (DOI
   `10.1016/0960-0779(93)E0056-H`) across its checked Python, Rust engine,
   Rust safety, Go, Julia, and Mojo simulation paths. All lanes implement the

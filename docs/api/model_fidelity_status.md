@@ -54,7 +54,7 @@ stub.
 | Connor-Stevens | ✅ | ✅ | ✅ | 🔶 parity note | spike count — 0/2/9 @ I=0/10/20 over 100 macro steps (RK4, exp) | `4776283ba` |
 | Hodgkin-Huxley | ✅ | ✅ | ✅ | 🔶 parity note | spike count — 0/6/9 @ I=0/10/20 over 100 macro steps (baseline-Euler, exp) | `0b23b5653` |
 | McKean | ✅ | ✅ | ✅ | ✅ shared-lib | bit-exact — 0/1/7 @ I=0/0.2/0.5 over 20000 steps (RK4, exact piecewise-linear RHS) | `059871140` |
-| Hindmarsh-Rose | ✅ | ✅ | ✅ | ✅ shared-lib | bit-exact — 0/26/52 @ I=0/3/5 over 2000 steps (RK4, polynomial RHS) | `45c05b1e9` |
+| Hindmarsh-Rose | ✅ | ✅ | ✅ | ✅ shared-lib | bit-exact accel — 0/26/52 @ I=0/3/5 over 2000 steps; co-sim exact hand/TOML/JSON/Q16.16 counts — 0/0/26/40/52 @ I=0/2/3/4/5 over 2000 RK4 steps; declared Q16.16 +1 crossing boundary over 5000 steps at I=2 through I=5; formal Q8.8 BMC depth 4 | `this commit` |
 | FitzHugh-Rinzel | ✅ | ✅ | ✅ | ✅ shared-lib | bit-exact accel — 0/1/8 @ I=0/0.3/0.5; co-sim exact spike count — hand/schema/Q16.16 RTL 8 @ I=0.5 (3000 RK4 steps, cubic RHS) | `498376221` |
 | Pernarowski | ✅ | ✅ | ✅ | ✅ shared-lib | bit-exact accel — 7/17/27 @ I=0 over 2000/5000/8000 steps; co-sim exact spike count — hand/schema/Q16.16 RTL 17 @ I=-0.1/0/0.1/0.2 (5000 RK4 steps, autonomous cubic burster); formal Q8.8 reset-spike BMC depth 4 | `c384ac0cd` |
 | Terman-Wang | ✅ | ✅ | ✅ | ✅ shared-lib | accel spike count — 0/1/3 @ I=-1/0/0.5 over 8000 steps; co-sim exact spike count — hand/schema/Q16.16 RTL 0/1/3 at the same operating points (RK4, cubic + tanh gate); formal Q8.8 reset-spike BMC depth 4 | `ce04dd6f9` |

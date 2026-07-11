@@ -31,7 +31,7 @@ table because their schemas are stochastic.
 | `fitzhugh_nagumo_driven_oscillation_doi` | `fitzhugh_nagumo` | `universal_dsl` | Independent fourth-order Runge-Kutta re-derivation of the driven relaxation oscillator (no reset, rising-edge `v >= 1` crossing) from `neurons/model_schemas/fitzhugh_nagumo.toml` with DOI-backed schema provenance |
 | `fitzhugh_rinzel_driven_bursting_doi` | `fitzhugh_rinzel` | `universal_dsl` | Independent fourth-order Runge-Kutta re-derivation of the three-state fast-slow bursting flow (no reset, rising-edge `v >= 1` crossing) from `neurons/model_schemas/fitzhugh_rinzel.toml` with DOI-backed schema provenance |
 | `glif_constant_current_threshold_adaptation` | `glif` | `universal_dsl` | Analytic linear Euler recurrence from `neurons/model_schemas/glif.toml` with DOI-backed schema provenance |
-| `hindmarsh_rose_short_bursting_prefix` | `hindmarsh_rose` | `universal_dsl` | Independent explicit-Euler re-derivation of the short bursting prefix from `neurons/model_schemas/hindmarsh_rose.toml` with DOI-backed schema provenance |
+| `hindmarsh_rose_short_bursting_prefix` | `hindmarsh_rose` | `universal_dsl` | Independent fourth-order Runge-Kutta re-derivation of the driven three-state bursting flow (no reset, rising-edge `x >= 1` crossing) from `neurons/model_schemas/hindmarsh_rose.toml` with DOI-backed schema provenance |
 | `hodgkin_huxley_driven_spiking_doi` | `hodgkin_huxley` | `universal_dsl` | Independent macro-step RK4 re-derivation of the driven repetitive-spiking membrane (100 inner `dt=0.01` sub-steps per 1 ms macro step, no reset, macro-boundary `v >= 0` crossing) from `neurons/model_schemas/hodgkin_huxley.toml` with DOI-backed schema provenance |
 | `izhikevich_regular_spiking_doi` | `izhikevich` | `universal_dsl` | Independent explicit-Euler re-derivation of the regular-spiking equations from `neurons/model_schemas/izhikevich.toml` with DOI-backed schema provenance |
 | `izhikevich2007_regular_spiking_doi` | `izhikevich2007` | `universal_dsl` | Independent explicit-Euler re-derivation of the biophysical quadratic equations from `neurons/model_schemas/izhikevich2007.toml` with DOI-backed schema provenance |
@@ -76,6 +76,11 @@ ultra-slow `y` modulation equation. It advances `v`, `w`, and `y` simultaneously
 uses the same no-reset upward-crossing decision, and reproduces all three state
 feature sets plus the eight-crossing `I=0.5` protocol without calling the hand
 model or schema runner.
+The Hindmarsh-Rose entry independently advances its cubic fast membrane,
+recovery state, and slow adaptation state with simultaneous classical RK4. It
+uses the maintained no-reset upward `x >= 1` crossing observation and reproduces
+all three feature sets, the first crossing at step 114, and the 26-crossing
+`I=3` protocol without calling the hand model or schema runner.
 The Pernarowski entry independently advances its cubic fast coordinate, recovery
 `w`, and ultra-slow adaptation `z` with simultaneous classical RK4. It uses the
 same no-reset upward-crossing decision and reproduces all three state feature sets,

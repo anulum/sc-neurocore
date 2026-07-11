@@ -24,7 +24,7 @@ _COSIM_MODELS = [
     "perfect_integrator",
 ]
 _TRANSCENDENTAL_COSIM_MODELS = ["theta"]
-_SCHEMA_GAP_COMPILE_ONLY = ["exp_if", "hindmarsh_rose"]
+_SCHEMA_GAP_COMPILE_ONLY = ["exp_if"]
 _SCHEMA_GAP_STOCHASTIC = ["escape_rate"]
 
 
@@ -32,11 +32,9 @@ _SCHEMA_GAP_STOCHASTIC = ["escape_rate"]
 class TestSchemaGapModelCosim:
     """WC-A5 Tier-A closure: every schema-gap model has an explicit cosim status.
 
-    ``fitzhugh_nagumo`` is spike-parity validated in ``TestQ1616Precision``. The
-    remaining five are classified here: deterministic-but-not-parity models are
-    asserted to lower to valid RTL (the honest compile-only precedent used for
-    glif/morris_lecar at Q8.8), and stochastic models are asserted to be excluded
-    from every deterministic cosim set with their schema stochastic flag confirmed.
+    Deterministic models are classified by their dedicated modules. Stochastic
+    models are asserted to be excluded from every deterministic co-simulation set
+    with their schema stochastic flag confirmed.
     """
 
     @pytest.mark.parametrize("model_name", _SCHEMA_GAP_STOCHASTIC)

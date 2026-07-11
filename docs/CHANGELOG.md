@@ -5,6 +5,25 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+### Hindmarsh-Rose RK4 schema-to-RTL enrolment
+- Re-enrolled the already acceleration-complete Hindmarsh-Rose model against
+  Hindmarsh and Rose (1984), DOI `10.1098/rspb.1984.0024`. Paired schemas now
+  reproduce the maintained three-state RK4 hand flow, no-reset state, and
+  upward `x >= x_threshold` observation. The former explicit-Euler schema's
+  identity reset had disabled crossing-edge history and counted every
+  above-threshold timestep as an event.
+- The hand model and both schema formats agree across a varied 1,200-step
+  sequence. Over 2,000 steps, hand/TOML/JSON/Q16.16 RTL crossing counts are
+  exactly `0/0/26/40/52` at `I=0/2/3/4/5`. The longer 5,000-step chaotic
+  boundary is explicit: Q16.16 reports `10/49/86/115` crossings at
+  `I=2/3/4/5`, one more than float64's `9/48/85/114`.
+- The DOI-backed reference is independently re-derived with classical RK4.
+  The S5/H1 descriptor adds a generated Q8.8 port-only formal job whose
+  depth-4 SymbiYosys/Z3 check passes. Existing model, acceleration,
+  backend-parity, and benchmark artefacts remain unchanged; schema-gap counts
+  stay at `31 / 122 / 124`, while the formal catalogue moves to 24 jobs and
+  the whole HDL inventory to 61 jobs / 209 statements.
+
 ### Chialvo source-to-silicon fidelity enrolment
 - Bound `ChialvoMapNeuron` to Chialvo (1995), DOI
   `10.1016/0960-0779(93)E0056-H`. The Python and compiled lanes now share the

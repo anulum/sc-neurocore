@@ -16,11 +16,12 @@
     "b": 3.0,
     "r": 0.001,
     "s": 4.0,
-    "x_rest": -1.6
+    "x_rest": -1.6,
+    "x_threshold": 1.0
   },
   "integration": {
     "dt": 0.1,
-    "method": "euler"
+    "method": "rk4"
   },
   "dynamics": {
     "x": "y - x**3 + b * x**2 - z + I",
@@ -28,13 +29,10 @@
     "z": "r * (s * (x - x_rest) - z)"
   },
   "threshold": {
-    "condition": "x > 1.0",
+    "condition": "x >= x_threshold",
     "detection": "crossing"
   },
-  "reset": {
-    "x": "x",
-    "y": "y",
-    "z": "z"
-  },
-  "extensions": {}
+  "extensions": {
+    "silicon_cosim_note": "Over 2000 RK4 steps, the maintained hand model, paired schema runners, and Q16.16 RTL produce exactly 0, 0, 26, 40, and 52 upward crossings at I=0, 2, 3, 4, and 5 respectively. At 5000 steps Q16.16 produces one extra crossing at each bursting point I=2 through I=5, an explicit long-window chaotic boundary. The oscillator has no reset; x_threshold is a maintained observation convention rather than a source-equation parameter."
+  }
 }

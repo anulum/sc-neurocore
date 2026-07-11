@@ -21,21 +21,16 @@ _SCHEMA_GAP_COMPILE_ONLY = ["exp_if"]
 class TestSchemaGapModelCosim:
     """WC-A5 Tier-A closure: every schema-gap model has an explicit cosim status.
 
-    ``fitzhugh_nagumo`` is spike-parity validated in ``TestQ1616Precision``. The
-    remaining five are classified here: deterministic-but-not-parity models are
-    asserted to lower to valid RTL (the honest compile-only precedent used for
-    glif/morris_lecar at Q8.8), and stochastic models are asserted to be excluded
-    from every deterministic cosim set with their schema stochastic flag confirmed.
+    Exponential IF remains compile-only because its stiff exponential saturation
+    does not have a source-faithful fixed-point parity contract at this precision.
     """
 
     @pytest.mark.parametrize("model_name", _SCHEMA_GAP_COMPILE_ONLY)
     def test_compile_valid_but_not_spike_parity(self, model_name: str) -> None:
-        """exp_if and Hindmarsh-Rose lower to iverilog-valid Verilog.
+        """Exponential IF lowers to iverilog-valid Verilog.
 
-        Spike-count parity is not scientifically claimable for these (stiff exp
-        saturation and chaotic sensitive-dependence — see module notes), so this
-        asserts the fixed-point *path* is valid rather than a
-        spike count, matching the honest compile-only precedent for coarse-LUT
-        transcendental models.
+        Its stiff exponential saturation has no enrolled spike-count parity
+        contract, so this asserts the fixed-point path rather than a behavioural
+        result.
         """
         assert _verilog_compiles(model_name)

@@ -15,15 +15,15 @@ from collections.abc import Callable
 import pytest
 
 from sc_neurocore.neurons.reference_traces import ReferenceTraceSpec, load_reference_trace_spec
-from tests.cosim_support import _hindmarsh_rose_prefix_euler_features
+from tests.cosim_support import _hindmarsh_rose_rk4_features
 
 _PARITY_CASES: list[tuple[str, str, str, str, Callable[[ReferenceTraceSpec], dict[str, float]]]] = [
     (
         "hindmarsh_rose_short_bursting_prefix",
         "hindmarsh_rose",
-        "independent_euler_reference",
+        "independent_rk4_reference",
         "doi:10.1098/rspb.1984.0024",
-        lambda spec: _hindmarsh_rose_prefix_euler_features(
+        lambda spec: _hindmarsh_rose_rk4_features(
             current=spec.protocol.inputs["I"], dt=spec.protocol.dt, steps=spec.protocol.steps
         ),
     ),
