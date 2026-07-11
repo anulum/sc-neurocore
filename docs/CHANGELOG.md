@@ -5,6 +5,20 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+### Mihalas-Niebur co-simulation evidence correction
+- Replaced the stale loose Q16.16 guard with exact operating-point contracts after the shared
+  candidate-reset/output correction. The hand model and paired TOML/JSON schemas agree exactly on
+  every event and all four states over a varied 1,600-step sequence containing 168 resets. At
+  `I=3` over 300 steps, hand/schema/RTL now report 36/36/36 rather than the former 36/36/35.
+- Over 1,000 steps, hand/schema/Q16.16 RTL agree exactly on
+  0/0/0/31/60/87/131/157/207/256 spikes at
+  `I=0/0.5/1/1.5/2/2.5/3.5/4/5/6`. A separate test pins the isolated `I=3` boundary at
+  111/111/112, preserving the marginal fixed-point crossing as an explicit exclusion rather than
+  a hidden tolerance. The S5/H1 descriptor, readiness index, public fidelity row, model page, and
+  co-simulation guide now state that same contract. The existing depth-3 SymbiYosys/Z3 job remains
+  the structural safety proof; all model, acceleration, schema, compiler, generated RTL, formal
+  source, and benchmark artefacts are unchanged.
+
 ### GLIF faithful RK4 schema-to-RTL correction
 - Corrected the already enrolled `glif` TOML/JSON schemas from stale Euler and `v > theta`
   semantics to the maintained Allen Institute GLIF5 contract: simultaneous four-state classical

@@ -58,6 +58,9 @@ Wilson-HR (2026-07-11): faithful two-state polynomial RK4 / hard voltage reset e
 — exact hand / schema / Q16.16 RTL spike-count parity across three drive regimes.
 Rulkov map (2026-07-11): faithful simultaneous three-branch map / rising-edge crossing
 enrolment — hand/TOML/JSON exact and Q16.16 RTL short-window trajectory within 0.001.
+Mihalas-Niebur (2026-07-11): faithful four-state candidate-first RK4 / adaptive-reset
+enrolment — exact hand / schema / Q16.16 RTL counts at ten currents from I=0 to I=6;
+the isolated 1,000-step I=3 boundary is explicitly fixed at 111/111/112.
 
 Prerequisites
 -------------
@@ -700,51 +703,111 @@ class TestTierBModelCosim:
         assert hand_spikes == schema_spikes == verilog_spikes
 
     def test_mihalas_niebur_schema_matches_hand_rk4_sequence(self) -> None:
-        """The schema mirrors the Mihalas-Niebur RK4 step law and adaptive reset over a sequence.
+        """Both schemas mirror the Mihalas-Niebur RK4 flow and adaptive reset.
 
-        The bundled ``mihalas_niebur`` schema is the ``method="rk4"`` discretisation of the
-        generalised integrate-and-fire neuron (``MihalasNieburNeuron``, Mihalaş & Niebur
-        2009). This four-state (``v``, ``theta``, ``i1``, ``i2``) anchor asserts the schema
-        reproduces the hand model's spike decision *and* every state variable over a varied
-        drive, exercising the classical RK4 stage evaluation, the state-to-state
-        ``v >= theta`` threshold and the ``max(theta, theta_reset)`` adaptive-threshold reset
-        in lock-step with the canonical publication implementation.
+        The paired TOML/JSON ``mihalas_niebur`` schemas are the ``method="rk4"``
+        discretisation of the generalised integrate-and-fire neuron
+        (``MihalasNieburNeuron``, Mihalaş & Niebur 2009). The 1,600-step varied drive
+        exercises the four coupled states, every RK4 stage, silence, tonic firing, and
+        168 candidate-first resets. Both schema formats must reproduce every hand-model
+        event and post-step state exactly.
         """
+        schema_dir = Path(__file__).resolve().parents[1] / "src/sc_neurocore/neurons/model_schemas"
         hand = MihalasNieburNeuron(dt=1.0, **_MIHALAS_NIEBUR_PARAMS)
-        schema = UniversalNeuron.from_schema("mihalas_niebur")
+        toml_schema = UniversalNeuron.from_schema(schema_dir / "mihalas_niebur.toml")
+        json_schema = UniversalNeuron.from_schema(schema_dir / "mihalas_niebur.json")
+        currents = (0.0, 3.0, 5.0, 2.0, 4.0, 0.0, 6.0, 3.5) * 200
+        spike_count = 0
 
-        for current in (0.0, 3.0, 5.0, 2.0, 4.0, 0.0, 6.0, 3.5):
-            assert int(bool(schema.step(I=current))) == hand.step(current)
-            assert schema.state["v"] == hand.v
-            assert schema.state["theta"] == hand.theta
-            assert schema.state["i1"] == hand.i1
-            assert schema.state["i2"] == hand.i2
+        for current in currents:
+            hand_spike = hand.step(current)
+            spike_count += hand_spike
+            assert int(bool(toml_schema.step(I=current))) == hand_spike
+            assert int(bool(json_schema.step(I=current))) == hand_spike
+            for variable in ("v", "theta", "i1", "i2"):
+                expected = getattr(hand, variable)
+                assert toml_schema.state[variable] == expected
+                assert json_schema.state[variable] == expected
+
+        assert spike_count == 168
 
     @pytest.mark.skipif(not HAS_IVERILOG, reason="Icarus Verilog not available")
-    def test_mihalas_niebur_q1616_tracks_hand_within_one_spike(self) -> None:
-        """Mihalas-Niebur (RK4) Q16.16 co-simulation tracks the float train to within one spike.
+    def test_mihalas_niebur_q1616_legacy_window_is_exact(self) -> None:
+        """The corrected candidate-reset RTL exactly matches the former 300-step window.
 
-        Unlike the Euler perfect-integrator / DPI / Izhikevich 2007 anchors, the
-        Mihalas-Niebur neuron cannot claim *exact* fixed-point spike-count parity, and this
-        test does not pretend otherwise. The state-to-state ``v >= theta`` threshold compares
-        two evolving quantised states, and the four-stage RK4 update injects four times the
-        per-step rounding of a single Euler step, so a marginal crossing shifts by one step
-        under Q16.16 rounding — fixed-point timing jitter, not LUT coarseness (the right-hand
-        side is purely linear, so no look-up table is involved). At the ``I=3.0``, 300-step
-        operating point the hand model and schema runner agree exactly in float64 (36 of 300
-        steps, a partial train after ~5 sub-threshold steps), and the emitted Q16.16 RTL
-        tracks that train to within a single spike (35 of 300). The assertion is an honest
-        tolerance band: the fixed-point datapath follows the adaptive-threshold crossing
-        train closely but is not bit-exact.
+        At ``I=3.0`` the maintained hand model, schema runner, and emitted Q16.16 RTL now
+        produce the same 36-spike partial train. This guards the post-candidate reset/output
+        semantics that replaced the stale 36/36/35 evidence.
         """
         hand_spikes = _mihalas_niebur_hand_spike_count(300, 3.0)
         schema_spikes = _python_spike_count("mihalas_niebur", 300, 3.0)
         verilog_spikes = _verilog_spike_count_q1616("mihalas_niebur", 300, 3.0)
 
-        assert hand_spikes == schema_spikes  # the float64 anchor is exact
-        assert 0 < schema_spikes < 300  # a partial train, neither saturated nor silent
-        assert 0 < verilog_spikes < 300  # the RTL also fires a partial train
-        assert abs(schema_spikes - verilog_spikes) <= 2  # Q16.16 tracks within the jitter band
+        assert hand_spikes == schema_spikes == verilog_spikes == 36
+
+    @pytest.mark.skipif(not HAS_IVERILOG, reason="Icarus Verilog not available")
+    @pytest.mark.parametrize(
+        ("current", "expected_spikes"),
+        (
+            (0.0, 0),
+            (0.5, 0),
+            (1.0, 0),
+            (1.5, 31),
+            (2.0, 60),
+            (2.5, 87),
+            (3.5, 131),
+            (4.0, 157),
+            (5.0, 207),
+            (6.0, 256),
+        ),
+        ids=(
+            "rest",
+            "subthreshold-low",
+            "subthreshold-high",
+            "onset",
+            "low-train",
+            "medium-train",
+            "above-boundary",
+            "tonic",
+            "high-drive",
+            "strong-drive",
+        ),
+    )
+    def test_mihalas_niebur_q1616_exact_operating_set(
+        self, current: float, expected_spikes: int
+    ) -> None:
+        """Mihalas-Niebur has exact Q16.16 parity at ten enrolled currents.
+
+        The set spans three silent regimes and seven partial trains over 1,000 RK4 steps.
+        Hand-model and schema equality anchors the float64 formulation; equality with the
+        emitted RTL proves fixed-point spike-count parity on both sides of the isolated
+        ``I=3.0`` crossing boundary.
+        """
+        n_steps = 1000
+        hand_spikes = _mihalas_niebur_hand_spike_count(n_steps, current)
+        schema_spikes = _python_spike_count("mihalas_niebur", n_steps, current)
+        verilog_spikes = _verilog_spike_count_q1616("mihalas_niebur", n_steps, current)
+
+        assert hand_spikes == schema_spikes == verilog_spikes == expected_spikes, (
+            f"Mihalas-Niebur exact Q16.16 mismatch at I={current}: "
+            f"hand={hand_spikes}, schema={schema_spikes}, verilog={verilog_spikes}"
+        )
+
+    @pytest.mark.skipif(not HAS_IVERILOG, reason="Icarus Verilog not available")
+    def test_mihalas_niebur_q1616_declares_i3_boundary(self) -> None:
+        """The 1,000-step ``I=3.0`` crossing boundary remains explicit and exact.
+
+        Q16.16 rounding advances one marginal adaptive-threshold crossing: the hand model
+        and schema runner produce 111 spikes while RTL produces 112. Pinning the complete
+        triplet prevents either hiding the boundary behind a loose tolerance or promoting
+        the operating point to exact parity.
+        """
+        n_steps = 1000
+        hand_spikes = _mihalas_niebur_hand_spike_count(n_steps, 3.0)
+        schema_spikes = _python_spike_count("mihalas_niebur", n_steps, 3.0)
+        verilog_spikes = _verilog_spike_count_q1616("mihalas_niebur", n_steps, 3.0)
+
+        assert (hand_spikes, schema_spikes, verilog_spikes) == (111, 111, 112)
 
 
 def _verilog_spike_count_q412(model_name: str, n_steps: int, current: float) -> int:

@@ -193,13 +193,13 @@ notes = ""
 [validation]
 dynamics_faithful = true
 metric = "parity"
-operating_point = "schema-DSL mihalas_niebur method=rk4"
-tolerance = "tolerance-band Q16.16 (see test)"
-evidence = "tests/test_cosimulation.py mihalas_niebur rk4 enrolment"
+operating_point = "schema-DSL mihalas_niebur RK4; hand/schema/Q16.16 RTL; 1000 steps at I=0 through I=6"
+tolerance = "exact at ten enrolled currents; declared 111/112 RTL boundary at I=3 over 1000 steps"
+evidence = "tests/test_cosimulation.py::TestTierBModelCosim::test_mihalas_niebur_q1616_exact_operating_set; test_mihalas_niebur_q1616_declares_i3_boundary"
 
 [silicon]
 compiles = true
 cosim_validated = true
-cosim_evidence = "tests/test_cosimulation.py mihalas_niebur rk4 enrolment"
+cosim_evidence = "tests/test_cosimulation.py::TestTierBModelCosim::test_mihalas_niebur_q1616_exact_operating_set; test_mihalas_niebur_q1616_declares_i3_boundary"
 target_tier = "H1"
 terminal_reason = "Point-neuron schema→RTL path; higher silicon rungs need synth/timing/formal programmes."

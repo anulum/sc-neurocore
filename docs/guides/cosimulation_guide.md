@@ -193,6 +193,29 @@ The S5/H1 promotion retains the existing formal-catalogue enrolment with
 regenerated Q8.8 RTL, a port-only harness, and a depth-6 SymbiYosys/Z3 safety
 job. The Q16.16 six-point set remains the behavioural parity evidence.
 
+### Mihalas-Niebur Q16.16 enrolment
+
+The `mihalas_niebur` schema mirrors the maintained four-state generalised
+integrate-and-fire model: simultaneous classical RK4 over membrane voltage,
+adaptive threshold, and two spike-triggered currents; candidate-level
+`v >= theta` detection; and a candidate-first reset that scales the membrane
+excursion, floors the threshold, and increments both currents. Over a varied
+1,600-step sequence with 168 resets, the hand model and paired TOML/JSON schemas
+agree exactly on every event and all four post-step states.
+
+Over 1,000 constant-current steps, hand model, schema runner, and emitted Q16.16
+RTL agree exactly on 0/0/0/31/60/87/131/157/207/256 spikes at
+`I=0/0.5/1/1.5/2/2.5/3.5/4/5/6`. The former 300-step `I=3` evidence is now exact
+at 36/36/36 after the shared candidate-reset/output correction. A longer
+1,000-step run at the same current exposes one marginal fixed-point crossing:
+hand/schema/RTL report 111/111/112. The suite asserts that triplet separately,
+so the boundary cannot be hidden by a loose global tolerance or promoted as an
+exact operating point.
+
+The S5/H1 descriptor retains the generated Q8.8 formal-catalogue core, port-only
+harness, and depth-3 SymbiYosys/Z3 safety job. The ten exact Q16.16 points plus
+the declared boundary remain the behavioural parity evidence.
+
 ### Wilson-HR Q16.16 enrolment
 
 The two-state `wilson_hr` schema mirrors the maintained polynomial cortical

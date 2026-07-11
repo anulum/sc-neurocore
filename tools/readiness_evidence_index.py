@@ -183,9 +183,17 @@ ENROLLED: tuple[EnrolledEvidence, ...] = (
         schema_name="mihalas_niebur",
         class_name="MihalasNieburNeuron",
         level="h1_cosim",
-        evidence="tests/test_cosimulation.py mihalas_niebur rk4 enrolment",
-        operating_point="schema-DSL mihalas_niebur method=rk4",
-        tolerance="tolerance-band Q16.16 (see test)",
+        evidence=(
+            "tests/test_cosimulation.py::TestTierBModelCosim::"
+            "test_mihalas_niebur_q1616_exact_operating_set; "
+            "test_mihalas_niebur_q1616_declares_i3_boundary"
+        ),
+        operating_point=(
+            "schema-DSL mihalas_niebur RK4; hand/schema/Q16.16 RTL; 1000 steps at I=0 through I=6"
+        ),
+        tolerance=(
+            "exact at ten enrolled currents; declared 111/112 RTL boundary at I=3 over 1000 steps"
+        ),
     ),
     EnrolledEvidence(
         schema_name="morris_lecar",

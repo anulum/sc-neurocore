@@ -82,6 +82,25 @@ These boundaries are intentionally consistent across the Python reference, Rust 
 - Fast after-spike current decays faster than slow after-spike current when `tau_1 < tau_2`.
 - Invalid inputs and invalid runtime parameters do not mutate state.
 
+## Hardware co-simulation
+
+The paired TOML and JSON schemas reproduce the hand model's event decision and all four
+post-step states exactly over a 1,600-step varied-current sequence containing 168 adaptive
+resets. The emitted Q16.16 RTL has exact three-way spike-count parity at ten 1,000-step
+operating points: 0/0/0/31/60/87/131/157/207/256 spikes at
+`I=0/0.5/1/1.5/2/2.5/3.5/4/5/6`. The former 300-step `I=3` window is also exact at
+36/36/36 after the compiler's candidate-reset/output correction.
+
+One longer-window boundary remains explicit: at `I=3` over 1,000 steps the hand model and
+schema runner report 111 spikes while Q16.16 RTL reports 112. Quantisation advances one
+marginal `v >= theta` crossing between two evolving fixed-point states. The tests pin that
+111/111/112 triplet directly; they do not hide it behind a general tolerance band or label
+the boundary as exact parity.
+
+The S5/H1 descriptor also registers the generated Q8.8 formal core and its depth-3
+SymbiYosys/Z3 reset-spike safety proof. That bounded proof is structural safety evidence;
+the Q16.16 operating set above remains the behavioural fidelity evidence.
+
 ## Usage
 
 ```python
@@ -150,7 +169,9 @@ Artefact: `benchmarks/results/bench_mihalas_niebur_simulate.json`.
 ```bash
 PYTHONPATH=src .venv/bin/python -m pytest tests/test_model_mihalas_niebur.py -q
 PYTHONPATH=src .venv/bin/python -m pytest tests/test_mihalas_niebur_backends.py -q
+PYTHONPATH=src .venv/bin/python -m pytest tests/test_cosimulation.py -k mihalas_niebur -q
 cargo test --manifest-path engine/Cargo.toml mn_ --release
+(cd hdl/formal/catalogue && sby -f sc_mihalasnieburneuron.sby)
 (cd src/sc_neurocore/accel/go/neurons/mihalas_niebur && go build -buildmode=c-shared -o libmihalasniebur.so mihalas_niebur.go)
 (cd src/sc_neurocore/accel/mojo/neurons && mojo build --emit shared-lib -o libmihalasniebur.so mihalas_niebur.mojo)
 PYTHONPATH=src .venv/bin/python benchmarks/bench_mihalas_niebur_simulate.py --json benchmarks/results/bench_mihalas_niebur_simulate.json
