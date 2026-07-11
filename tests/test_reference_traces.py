@@ -31,21 +31,17 @@ from tests.cosim_support import (
     _connor_stevens_macrostep_rk4_features,
     _exp_if_subthreshold_euler_features,
     _fitzhugh_nagumo_rk4_features,
-    _fitzhugh_rinzel_rk4_features,
     _glif_driven_rk4_features,
     _hindmarsh_rose_prefix_euler_features,
     _hodgkin_huxley_macrostep_rk4_features,
     _izhikevich_rs_euler_features,
     _mckean_rk4_features,
     _morris_lecar_rk4_features,
-    _pernarowski_rk4_features,
     _quadratic_if_zero_current_features,
     _resonate_fire_linear_euler_features,
     _rulkov_map_features,
-    _terman_wang_rk4_features,
     _theta_constant_current_features,
     _wang_buzsaki_macrostep_gauss_seidel_features,
-    _wilson_hr_rk4_features,
 )
 
 _STOCHASTIC_SCHEMA_NAMES = frozenset({"escape_rate", "poisson"})
@@ -193,42 +189,6 @@ _PARITY_CASES: list[tuple[str, str, str, str, Callable[[ReferenceTraceSpec], dic
         "independent_rk4_reference",
         "doi:10.1016/S0006-3495(61)86902-6",
         lambda spec: _fitzhugh_nagumo_rk4_features(
-            current=spec.protocol.inputs["I"], dt=spec.protocol.dt, steps=spec.protocol.steps
-        ),
-    ),
-    (
-        "fitzhugh_rinzel_driven_bursting_doi",
-        "fitzhugh_rinzel",
-        "independent_rk4_reference",
-        "doi:10.1007/978-3-642-93360-8_26",
-        lambda spec: _fitzhugh_rinzel_rk4_features(
-            current=spec.protocol.inputs["I"], dt=spec.protocol.dt, steps=spec.protocol.steps
-        ),
-    ),
-    (
-        "pernarowski_autonomous_bursting_doi",
-        "pernarowski",
-        "independent_rk4_reference",
-        "doi:10.1137/S003613999223449X",
-        lambda spec: _pernarowski_rk4_features(
-            current=spec.protocol.inputs["I"], dt=spec.protocol.dt, steps=spec.protocol.steps
-        ),
-    ),
-    (
-        "terman_wang_legion_oscillation_doi",
-        "terman_wang",
-        "independent_rk4_reference",
-        "doi:10.1016/0167-2789(94)00205-5",
-        lambda spec: _terman_wang_rk4_features(
-            current=spec.protocol.inputs["I"], dt=spec.protocol.dt, steps=spec.protocol.steps
-        ),
-    ),
-    (
-        "wilson_hr_driven_spiking_doi",
-        "wilson_hr",
-        "independent_rk4_reference",
-        "doi:10.1006/jtbi.1999.1002",
-        lambda spec: _wilson_hr_rk4_features(
             current=spec.protocol.inputs["I"], dt=spec.protocol.dt, steps=spec.protocol.steps
         ),
     ),

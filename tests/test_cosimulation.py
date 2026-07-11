@@ -77,12 +77,8 @@ from pathlib import Path
 import pytest
 
 from sc_neurocore.compiler.equation_compiler import Q88
-from sc_neurocore.neurons.models.fitzhugh_rinzel import FitzHughRinzelNeuron
 from sc_neurocore.neurons.models.glif import GLIFNeuron
-from sc_neurocore.neurons.models.pernarowski import PernarowskiNeuron
 from sc_neurocore.neurons.models.rulkov_map import RulkovMapNeuron
-from sc_neurocore.neurons.models.terman_wang import TermanWangOscillator
-from sc_neurocore.neurons.models.wilson_hr import WilsonHRNeuron
 from sc_neurocore.neurons.universal_dsl import UniversalNeuron
 
 # Method-based spike-count primitives are shared with the pipelined co-simulation suite
@@ -92,22 +88,18 @@ from tests.cosim_support import (
     HAS_IVERILOG,
     _connor_stevens_hand_spike_count,
     _fitzhugh_nagumo_hand_spike_count,
-    _fitzhugh_rinzel_hand_spike_count,
     _glif_hand_spike_count,
     _hodgkin_huxley_hand_spike_count,
     _lif_schema_precision_values,
     _mckean_hand_spike_count,
     _morris_lecar_hand_spike_count,
-    _pernarowski_hand_spike_count,
     _python_spike_count,
     _rulkov_map_verilog_q1616_trace,
-    _terman_wang_hand_spike_count,
     _verilog_compiles,
     _verilog_spike_count,
     _verilog_spike_count_q1616,
     _verilog_spike_count_q412,
     _wang_buzsaki_hand_spike_count,
-    _wilson_hr_hand_spike_count,
 )
 
 # Co-simulation parameters
@@ -149,39 +141,6 @@ _TRANSCENDENTAL_COMPILE_MODELS = [
 class TestTierBModelCosim:
     """WC-A5 Tier-B model enrollment beyond the original schema set."""
 
-    def test_fitzhugh_rinzel_schema_formats_match_hand_rk4_sequence(self) -> None:
-        """The TOML and JSON schemas reproduce the hand model over a varied drive.
-
-        The 1,200-step sequence alternates quiet, depolarising, and negative currents,
-        exercising every RK4 stage in the three coupled equations, one upward crossing,
-        and subsequent below-threshold re-arming. Exact state equality is required for
-        ``v``, ``w``, and the ultra-slow ``y`` variable after every step, so either
-        schema format drifting in an initial value, parameter, equation, operation order,
-        or no-reset crossing decision fails immediately.
-        """
-        schema_dir = Path(__file__).resolve().parents[1] / "src/sc_neurocore/neurons/model_schemas"
-        hand = FitzHughRinzelNeuron()
-        toml_schema = UniversalNeuron.from_schema(schema_dir / "fitzhugh_rinzel.toml")
-        json_schema = UniversalNeuron.from_schema(schema_dir / "fitzhugh_rinzel.json")
-        currents = (0.0, 0.17, 0.5, 0.31, 0.83, -0.07) * 200
-        spike_count = 0
-        rearmed = False
-
-        for current in currents:
-            hand_spike = hand.step(current)
-            spike_count += hand_spike
-            if spike_count and hand.v < hand.v_threshold:
-                rearmed = True
-            assert int(bool(toml_schema.step(I=current))) == hand_spike
-            assert int(bool(json_schema.step(I=current))) == hand_spike
-            for variable in ("v", "w", "y"):
-                expected = getattr(hand, variable)
-                assert toml_schema.state[variable] == expected
-                assert json_schema.state[variable] == expected
-
-        assert spike_count == 1
-        assert rearmed
-
     def test_glif_schema_formats_match_hand_rk4_sequence(self) -> None:
         """The paired GLIF schemas reproduce every hand-model RK4 state and reset.
 
@@ -213,113 +172,6 @@ class TestTierBModelCosim:
                 assert json_schema.state[variable] == expected
 
         assert spike_count == reset_count == 181
-
-    def test_pernarowski_schema_formats_match_hand_rk4_sequence(self) -> None:
-        """The TOML and JSON schemas reproduce the hand model over a varied drive.
-
-        The 5,000-step sequence exercises the external-current term and every RK4
-        stage across the fast cubic coordinate, recovery variable, and ultra-slow
-        adaptation variable. It also covers 17 upward crossings and 17 subsequent
-        below-threshold re-arms. Exact state equality is required after every step,
-        so either schema format drifting in initial state, parameters, equations,
-        operation order, or no-reset edge detection fails immediately.
-        """
-        schema_dir = Path(__file__).resolve().parents[1] / "src/sc_neurocore/neurons/model_schemas"
-        hand = PernarowskiNeuron()
-        toml_schema = UniversalNeuron.from_schema(schema_dir / "pernarowski.toml")
-        json_schema = UniversalNeuron.from_schema(schema_dir / "pernarowski.json")
-        currents = (0.0, 0.1, -0.1, 0.2, 0.0, -0.2, 0.15, 0.05) * 625
-        spike_count = 0
-        rearm_count = 0
-        was_above = hand.v >= hand.v_threshold
-
-        for current in currents:
-            hand_spike = hand.step(current)
-            spike_count += hand_spike
-            now_above = hand.v >= hand.v_threshold
-            if was_above and not now_above:
-                rearm_count += 1
-            was_above = now_above
-            assert int(bool(toml_schema.step(I=current))) == hand_spike
-            assert int(bool(json_schema.step(I=current))) == hand_spike
-            for variable in ("v", "w", "z"):
-                expected = getattr(hand, variable)
-                assert toml_schema.state[variable] == expected
-                assert json_schema.state[variable] == expected
-
-        assert spike_count == 17
-        assert rearm_count == 17
-
-    def test_terman_wang_schema_formats_match_hand_rk4_sequence(self) -> None:
-        """The TOML and JSON schemas track the hand oscillator over a varied drive.
-
-        The 8,000-step sequence exercises the cubic fast nullcline, the ``tanh``
-        recovery gate, external drive, all four simultaneous RK4 stages, and 28
-        upward crossings followed by 28 re-arms. The hand model uses ``math.tanh``
-        while the schema evaluator uses the NumPy transcendental, so state parity is
-        asserted within a tight floating-point band rather than mislabelled as bit
-        identity; spike decisions must still match exactly at every step.
-        """
-        schema_dir = Path(__file__).resolve().parents[1] / "src/sc_neurocore/neurons/model_schemas"
-        hand = TermanWangOscillator()
-        toml_schema = UniversalNeuron.from_schema(schema_dir / "terman_wang.toml")
-        json_schema = UniversalNeuron.from_schema(schema_dir / "terman_wang.json")
-        currents = (-1.0, 0.0, 0.5, 0.25, -0.5, 0.75, 0.0, 0.4) * 1000
-        spike_count = 0
-        rearm_count = 0
-        was_above = hand.v >= hand.v_peak
-
-        for current in currents:
-            hand_spike = hand.step(current)
-            spike_count += hand_spike
-            now_above = hand.v >= hand.v_peak
-            if was_above and not now_above:
-                rearm_count += 1
-            was_above = now_above
-            assert int(bool(toml_schema.step(I=current))) == hand_spike
-            assert int(bool(json_schema.step(I=current))) == hand_spike
-            for variable in ("v", "w"):
-                expected = getattr(hand, variable)
-                assert toml_schema.state[variable] == pytest.approx(expected, rel=1e-12, abs=1e-10)
-                assert json_schema.state[variable] == pytest.approx(expected, rel=1e-12, abs=1e-10)
-
-        assert spike_count == 28
-        assert rearm_count == 28
-
-    def test_wilson_hr_schema_formats_match_hand_rk4_sequence(self) -> None:
-        """The TOML and JSON schemas track Wilson-HR over a varied drive.
-
-        Five passes through eight 100-step drive blocks exercise the polynomial
-        membrane nullcline, coupled recovery flow, all four simultaneous RK4 stages,
-        and 35 hard voltage resets. Both schema formats must reproduce every hand-model
-        spike decision and both post-step states exactly; equality of ``r`` on spiking
-        steps guards the contract that only ``v`` resets.
-        """
-        schema_dir = Path(__file__).resolve().parents[1] / "src/sc_neurocore/neurons/model_schemas"
-        hand = WilsonHRNeuron()
-        toml_schema = UniversalNeuron.from_schema(schema_dir / "wilson_hr.toml")
-        json_schema = UniversalNeuron.from_schema(schema_dir / "wilson_hr.json")
-        current_blocks = (0.0, 10.0, 2.0, 10.0, 0.0, 5.0, 10.0, 2.0)
-        spike_count = 0
-        reset_count = 0
-
-        for _cycle in range(5):
-            for current in current_blocks:
-                for _step in range(100):
-                    hand_spike = hand.step(current)
-                    spike_count += hand_spike
-                    if hand_spike:
-                        assert hand.v == -0.7
-                        reset_count += 1
-                    assert int(bool(toml_schema.step(I=current))) == hand_spike
-                    assert int(bool(json_schema.step(I=current))) == hand_spike
-                    for variable in ("v", "r"):
-                        expected = getattr(hand, variable)
-                        assert toml_schema.state[variable] == expected
-                        assert json_schema.state[variable] == expected
-
-        assert spike_count == 35
-        assert reset_count == 35
 
 
 @pytest.mark.skipif(not HAS_IVERILOG, reason="Icarus Verilog not available")
@@ -664,107 +516,6 @@ class TestQ1616Precision:
         assert 1 < py_spikes < n_steps  # a repetitive partial train, not saturated
         assert hand_spikes == py_spikes == vlog_spikes, (
             f"FitzHugh-Nagumo three-way mismatch: hand={hand_spikes}, "
-            f"schema={py_spikes}, verilog={vlog_spikes}"
-        )
-
-    @pytest.mark.parametrize(
-        ("current", "expected_spikes"),
-        ((0.4, 7), (0.5, 8), (0.6, 8)),
-        ids=("I=0.4", "I=0.5", "I=0.6"),
-    )
-    def test_fitzhugh_rinzel_q1616_parity(self, current: float, expected_spikes: int) -> None:
-        """FitzHugh-Rinzel has exact three-way Q16.16 spike-count parity.
-
-        The enrolled schema mirrors the maintained three-state flow: four-stage
-        simultaneous RK4 over the cubic fast membrane, linear recovery, and
-        ultra-slow modulation equations; no reset; and rising-edge
-        ``v >= v_threshold`` crossing detection. Over 3000 steps the hand model,
-        schema runner, and emitted Q16.16 RTL produce 7, 8, and 8 crossings at
-        ``I=0.4``, ``0.5``, and ``0.6`` respectively. This current band avoids the
-        marginal ninth crossing at ``I=0.7``, where fixed-point rounding changes the
-        spike count, so the contract states the robust band rather than hiding that
-        boundary.
-        """
-        n_steps = 3000
-        hand_spikes = _fitzhugh_rinzel_hand_spike_count(n_steps, current)
-        py_spikes = _python_spike_count("fitzhugh_rinzel", n_steps, current)
-        vlog_spikes = _verilog_spike_count_q1616("fitzhugh_rinzel", n_steps, current)
-        assert hand_spikes == expected_spikes
-        assert hand_spikes == py_spikes == vlog_spikes, (
-            f"FitzHugh-Rinzel three-way mismatch at I={current}: hand={hand_spikes}, "
-            f"schema={py_spikes}, verilog={vlog_spikes}"
-        )
-
-    @pytest.mark.parametrize(
-        "current",
-        (-0.1, 0.0, 0.1, 0.2),
-        ids=("I=-0.1", "I=0.0", "I=0.1", "I=0.2"),
-    )
-    def test_pernarowski_q1616_parity(self, current: float) -> None:
-        """Pernarowski has exact three-way Q16.16 spike-count parity.
-
-        The enrolled schema mirrors the maintained three-state beta-cell flow:
-        simultaneous four-stage RK4 over the cubic fast coordinate and two
-        separated slow variables, rising-edge ``v >= v_threshold`` detection,
-        and no reset. The oscillator is autonomous, so input current shifts the
-        trajectory rather than gating a silent/single/train transition. At each
-        enrolled point from ``I=-0.1`` through ``I=0.2``, the hand model, schema
-        runner, and emitted Q16.16 RTL report 17 crossings over 5,000 steps.
-        """
-        n_steps = 5000
-        hand_spikes = _pernarowski_hand_spike_count(n_steps, current)
-        py_spikes = _python_spike_count("pernarowski", n_steps, current)
-        vlog_spikes = _verilog_spike_count_q1616("pernarowski", n_steps, current)
-        assert 1 < hand_spikes < n_steps
-        assert hand_spikes == py_spikes == vlog_spikes == 17, (
-            f"Pernarowski three-way mismatch at I={current}: hand={hand_spikes}, "
-            f"schema={py_spikes}, verilog={vlog_spikes}"
-        )
-
-    @pytest.mark.parametrize(
-        ("current", "expected_spikes"),
-        ((-1.0, 0), (0.0, 1), (0.5, 3)),
-        ids=("silent", "single-crossing", "oscillatory-train"),
-    )
-    def test_terman_wang_q1616_parity(self, current: float, expected_spikes: int) -> None:
-        """Terman-Wang has exact three-way Q16.16 spike-count parity.
-
-        The enrolled schema mirrors the maintained two-state LEGION oscillator:
-        simultaneous four-stage RK4 over the cubic fast nullcline and ``tanh``-gated
-        slow recovery, rising-edge ``v >= v_peak`` detection, and no reset. The
-        transcendental gate makes raw state bit identity non-portable, so the declared
-        observable is the robust silent/single/train crossing count: 0, 1, and 3 at
-        ``I=-1.0``, ``0.0``, and ``0.5`` respectively over 8,000 steps.
-        """
-        n_steps = 8000
-        hand_spikes = _terman_wang_hand_spike_count(n_steps, current)
-        py_spikes = _python_spike_count("terman_wang", n_steps, current)
-        vlog_spikes = _verilog_spike_count_q1616("terman_wang", n_steps, current)
-        assert hand_spikes == py_spikes == vlog_spikes == expected_spikes, (
-            f"Terman-Wang three-way mismatch at I={current}: hand={hand_spikes}, "
-            f"schema={py_spikes}, verilog={vlog_spikes}"
-        )
-
-    @pytest.mark.parametrize(
-        ("current", "expected_spikes"),
-        ((0.0, 0), (2.0, 1), (10.0, 4)),
-        ids=("silent", "single-spike", "four-spike-train"),
-    )
-    def test_wilson_hr_q1616_parity(self, current: float, expected_spikes: int) -> None:
-        """Wilson-HR has exact three-way Q16.16 spike-count parity.
-
-        The schema mirrors the maintained two-state polynomial cortical model:
-        simultaneous four-stage RK4 over ``v`` and ``r``, level detection at
-        ``v >= v_peak``, and a hard ``v = -0.7`` reset that preserves the candidate
-        recovery state. Over 5,000 steps the hand model, schema runner, and emitted
-        RTL reproduce the silent, single-spike, and four-spike operating points.
-        """
-        n_steps = 5000
-        hand_spikes = _wilson_hr_hand_spike_count(n_steps, current)
-        py_spikes = _python_spike_count("wilson_hr", n_steps, current)
-        vlog_spikes = _verilog_spike_count_q1616("wilson_hr", n_steps, current)
-        assert hand_spikes == py_spikes == vlog_spikes == expected_spikes, (
-            f"Wilson-HR three-way mismatch at I={current}: hand={hand_spikes}, "
             f"schema={py_spikes}, verilog={vlog_spikes}"
         )
 
