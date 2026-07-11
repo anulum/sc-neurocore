@@ -31,7 +31,9 @@ The public spike output is a threshold-crossing event:
 
 $$v_{new} \geq v_{threshold} \land v_{old} < v_{threshold}$$
 
-A spike resets the public state to `v=-1.0`, `w=-0.5`, `y=0.0`. This keeps the repository's spiking-neuron interface deterministic while preserving the continuous three-variable flow between threshold events.
+The event does **not** reset any state. The continuous three-variable flow remains
+intact, and a new event is reported only after `v` falls below the threshold and
+crosses upward again.
 
 ---
 
@@ -43,7 +45,7 @@ All maintained implementations now use the same candidate-first fourth-order Run
 2. Require positive `b`, `d`, `delta`, `mu`, and `dt`.
 3. Compute a full RK4 candidate without mutating public state.
 4. Reject non-finite derivative or candidate values before mutation.
-5. Commit the candidate and then apply threshold/reset semantics.
+5. Commit the candidate and report the rising-edge threshold decision without a reset.
 
 The RK4 candidate is equivalent to applying the standard four-stage integrator to the coupled ODE above, not to three independent scalar updates. The same contract is implemented in the Python reference, Rust engine benchmark path, Julia mirror, Go mirror, and Rust safety mirror.
 
@@ -98,7 +100,7 @@ Module-specific tests in `tests/test_model_fitzhugh_rinzel.py` assert the follow
 | slow-variable physics | changing `mu` changes the long-horizon `y` drift while preserving finite state |
 | current regimes | moderate current produces repeated threshold events; quiescent and high-drive regimes remain deterministic |
 | boundedness | long integrations remain finite and inside broad model-specific envelopes |
-| reset semantics | spike threshold events reset `(v, w, y)` to the public spiking baseline |
+| edge semantics | a spike is reported only on an upward threshold crossing and leaves `(v, w, y)` unchanged |
 | reproducibility | identical models under identical current sequences produce identical state and spike traces |
 | public integration surfaces | population, network, projection, and analysis paths preserve the model contract |
 
@@ -120,6 +122,34 @@ cargo test --manifest-path engine/Cargo.toml fhr_ -- --nocapture
 ```
 
 Observed results: Julia valid-step check passed, Go compile/test passed, Rust safety tests passed with 5 tests, and Rust engine FHR tests passed with 8 tests.
+
+---
+
+## Schema-to-RTL co-simulation
+
+The bundled `fitzhugh_rinzel` TOML and JSON schemas mirror the maintained Python
+contract: three coupled state variables, simultaneous classical RK4 at `dt=0.1`,
+the exact `v * v * v` operation order, rising-edge `v >= v_threshold` detection,
+and no reset. At the enrolled 3000-step operating point (`I=0.5`), the hand model,
+the schema runner, and the emitted Q16.16 RTL each report eight crossings.
+
+The exact spike-count result also holds across the tested `I=0.4` to `I=0.6`
+band (seven, eight, and eight crossings). `I=0.7` is deliberately outside the
+contract: a marginal ninth crossing moves across the threshold under fixed-point
+rounding. This boundary is recorded rather than hidden behind a broad tolerance.
+
+The committed `fitzhugh_rinzel_driven_bursting_doi` trace independently re-derives
+the three-state RK4 recurrence and checks spike count, first-spike step, and the
+final/minimum/maximum/mean of `v`, `w`, and `y`. Its provenance is Rinzel's 1987
+*A Formal Classification of Bursting Mechanisms in Excitable Systems*, DOI
+`10.1007/978-3-642-93360-8_26`.
+
+Focused evidence:
+
+```text
+tests/test_cosimulation.py::TestQ1616Precision::test_fitzhugh_rinzel_q1616_parity
+tests/test_reference_traces.py::test_trace_features_match_independent_reference[fitzhugh_rinzel]
+```
 
 ---
 

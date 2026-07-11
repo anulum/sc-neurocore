@@ -5,6 +5,20 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+### FitzHugh-Rinzel faithful schema-to-RTL enrolment
+- Enrolled the FitzHugh-Rinzel three-state qualitative burster (`fitzhugh_rinzel`, Rinzel 1987,
+  DOI `10.1007/978-3-642-93360-8_26`) with a TOML/JSON schema that mirrors the maintained hand
+  model's coupled classical RK4 flow, exact `v * v * v` operation order, rising-edge
+  `v >= v_threshold` decision, and no-reset semantics. The hand model, schema runner, and emitted
+  Q16.16 RTL have exact spike-count parity across the enrolled `I=0.4` to `I=0.6` band (seven,
+  eight, and eight crossings over 3000 steps); `I=0.7` is recorded as an excluded
+  marginal-crossing boundary rather than hidden by a tolerance.
+- Added the DOI-backed `fitzhugh_rinzel_driven_bursting_doi` trace with an independent three-state
+  RK4 re-derivation, corrected the model page's stale reset claim, marked the descriptor's RK4 and
+  co-sim facets, and updated the public fidelity row. Schema-gap counts move to 24 schema models /
+  129 net missing / 131 source modules without a schema. The already completed Rust/Go/Julia/Mojo
+  acceleration chain and its committed benchmark artefacts are unchanged.
+
 ### StochasticLIF same-name Rust engine binding
 - `StochasticLIFNeuron` was enrolled in the public registry
   (`sc_neurocore.neurons.models.__all__`) for catalogue readiness but had no same-name PyO3

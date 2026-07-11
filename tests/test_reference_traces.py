@@ -35,6 +35,7 @@ _DETERMINISTIC_SCHEMA_TRACES = {
     "dpi_neuron": "dpi_neuron_driven_spiking_doi",
     "exp_if": "exp_if_resting_exponential_doi",
     "fitzhugh_nagumo": "fitzhugh_nagumo_driven_oscillation_doi",
+    "fitzhugh_rinzel": "fitzhugh_rinzel_driven_bursting_doi",
     "glif": "glif_constant_current_threshold_adaptation",
     "hindmarsh_rose": "hindmarsh_rose_short_bursting_prefix",
     "hodgkin_huxley": "hodgkin_huxley_driven_spiking_doi",
@@ -592,6 +593,79 @@ def _fitzhugh_nagumo_rk4_features(*, current: float, dt: float, steps: int) -> d
         w_values.append(w)
 
     return _summarise({"v": v_values, "w": w_values}, spikes)
+
+
+def _fitzhugh_rinzel_rk4_features(*, current: float, dt: float, steps: int) -> dict[str, float]:
+    """Return classical-RK4 features for the driven FitzHugh-Rinzel flow.
+
+    The Rinzel (1987) three-state qualitative burster extends the FitzHugh-Nagumo
+    fast subsystem with the ultra-slow ``y`` modulation equation. This independent
+    recurrence advances all three coupled equations with one simultaneous four-stage
+    RK4 step, then applies the maintained rising-edge ``v >= 1`` crossing decision
+    without resetting any state. The cube is written ``v * v * v`` to reproduce the
+    exact IEEE operation order of the hand model and schema runner; the recurrence is
+    re-derived here rather than calling either implementation.
+
+    Parameters
+    ----------
+    current:
+        Constant input current applied at every timestep.
+    dt:
+        Simulation timestep.
+    steps:
+        Number of timesteps to advance.
+
+    Returns
+    -------
+    dict of str to float
+        Reference features for ``v``, ``w``, and ``y``, plus the spike count and
+        first-spike step.
+    """
+    a = 0.7
+    b = 0.8
+    c = -0.775
+    d = 1.0
+    delta = 0.08
+    mu = 0.0001
+    threshold = 1.0
+    v = -1.0
+    w = -0.5
+    y = 0.0
+    v_values: list[float] = []
+    w_values: list[float] = []
+    y_values: list[float] = []
+    spikes: list[int] = []
+
+    def deriv(v_state: float, w_state: float, y_state: float) -> tuple[float, float, float]:
+        return (
+            v_state - v_state * v_state * v_state / 3.0 - w_state + y_state + current,
+            delta * (a + v_state - b * w_state),
+            mu * (c - v_state - d * y_state),
+        )
+
+    for _ in range(steps):
+        v_prev = v
+        k1 = deriv(v, w, y)
+        k2 = deriv(
+            v + 0.5 * dt * k1[0],
+            w + 0.5 * dt * k1[1],
+            y + 0.5 * dt * k1[2],
+        )
+        k3 = deriv(
+            v + 0.5 * dt * k2[0],
+            w + 0.5 * dt * k2[1],
+            y + 0.5 * dt * k2[2],
+        )
+        k4 = deriv(v + dt * k3[0], w + dt * k3[1], y + dt * k3[2])
+        v = v + dt * (k1[0] + 2.0 * k2[0] + 2.0 * k3[0] + k4[0]) / 6.0
+        w = w + dt * (k1[1] + 2.0 * k2[1] + 2.0 * k3[1] + k4[1]) / 6.0
+        y = y + dt * (k1[2] + 2.0 * k2[2] + 2.0 * k3[2] + k4[2]) / 6.0
+        spikes.append(1 if (v >= threshold and v_prev < threshold) else 0)
+        v_values.append(v)
+        w_values.append(w)
+        y_values.append(y)
+
+    return _summarise({"v": v_values, "w": w_values, "y": y_values}, spikes)
 
 
 def _mckean_rk4_features(*, current: float, dt: float, steps: int) -> dict[str, float]:
@@ -1409,6 +1483,15 @@ _PARITY_CASES: list[tuple[str, str, str, str, Callable[[ReferenceTraceSpec], dic
         "independent_rk4_reference",
         "doi:10.1016/S0006-3495(61)86902-6",
         lambda spec: _fitzhugh_nagumo_rk4_features(
+            current=spec.protocol.inputs["I"], dt=spec.protocol.dt, steps=spec.protocol.steps
+        ),
+    ),
+    (
+        "fitzhugh_rinzel_driven_bursting_doi",
+        "fitzhugh_rinzel",
+        "independent_rk4_reference",
+        "doi:10.1007/978-3-642-93360-8_26",
+        lambda spec: _fitzhugh_rinzel_rk4_features(
             current=spec.protocol.inputs["I"], dt=spec.protocol.dt, steps=spec.protocol.steps
         ),
     ),

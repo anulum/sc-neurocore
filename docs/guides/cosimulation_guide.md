@@ -108,6 +108,17 @@ Six deterministic Q8.8 baseline models are verified in the spike-parity set:
 | **Resonate-and-Fire** | v, w | Linear (2-var) | 200 |
 | **Perfect Integrator** | v | Linear ramp | 200 |
 
+### FitzHugh-Rinzel Q16.16 enrolment
+
+The three-state `fitzhugh_rinzel` schema is validated separately from the Q8.8
+baseline set because its slow variable and cubic RK4 datapath need Q16.16 range and
+resolution. The schema mirrors the hand model's coupled `v`, `w`, and `y` equations,
+rising-edge `v >= 1` decision, and no-reset flow. Over 3000 steps, hand model, schema
+runner, and emitted RTL agree exactly on spike counts throughout the enrolled current
+band: seven crossings at `I=0.4`, eight at `I=0.5`, and eight at `I=0.6`. The marginal
+crossing at `I=0.7` is outside the declared parity band because fixed-point rounding
+changes its count.
+
 ## Adding a New Model to Co-Simulation
 
 1. **Ensure the model schema exists** in `src/sc_neurocore/neurons/model_schemas/`
@@ -134,8 +145,8 @@ python tools/schema_gap_report.py --format markdown --output docs/internal/schem
 The tool scans live source modules and schema files without importing optional
 backends. It reports the net schema gap, source modules still lacking a
 same-name or alias schema, schema-only names, source-evidence classifications,
-and a ranked enrolment table. The current checkout has 152 model source modules,
-23 unique schema models, a net schema gap of 129, and 131 source-module rows
+and a ranked enrolment table. The current checkout has 153 model source modules,
+24 unique schema models, a net schema gap of 129, and 131 source-module rows
 still needing same-name or alias schema coverage because `izhikevich` and `lif`
 are schema-only names.
 

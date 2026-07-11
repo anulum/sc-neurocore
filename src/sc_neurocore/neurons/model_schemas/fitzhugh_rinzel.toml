@@ -1,0 +1,45 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Commercial license available
+# © Concepts 1996–2026 Miroslav Šotek. All rights reserved.
+# © Code 2020–2026 Miroslav Šotek. All rights reserved.
+# ORCID: 0009-0009-3560-0851
+# Contact: www.anulum.li | protoscience@anulum.li
+# SC-NeuroCore — Source/config provenance header
+
+[metadata]
+schema_version = 1
+name = "FitzHugh-Rinzel"
+author = "Rinzel, J."
+year = 1987
+doi = "10.1007/978-3-642-93360-8_26"
+description = "Three-state fast-slow qualitative bursting oscillator with a FitzHugh-Nagumo fast subsystem and ultra-slow modulation"
+
+[state]
+v = -1.0
+w = -0.5
+y = 0.0
+
+[parameters]
+a = 0.7
+b = 0.8
+c = -0.775
+d = 1.0
+delta = 0.08
+mu = 0.0001
+v_threshold = 1.0
+
+[integration]
+dt = 0.1
+method = "rk4"
+
+[dynamics]
+v = "v - v * v * v / 3.0 - w + y + I"
+w = "delta * (a + v - b * w)"
+y = "mu * (c - v - d * y)"
+
+[threshold]
+condition = "v >= v_threshold"
+detection = "crossing"
+
+[extensions]
+silicon_cosim_note = "At the enrolled I=0.5 operating point, the no-reset oscillator produces eight upward crossings over 3000 steps in the hand model, schema runner, and Q16.16 RTL. Exact spike-count parity is robust across I=0.4 to I=0.6; I=0.7 is a marginal-crossing boundary and is excluded from the parity contract."

@@ -25,6 +25,7 @@ table because their schemas are stochastic.
 | `dpi_neuron_driven_spiking_doi` | `dpi_neuron` | `universal_dsl` | Independent explicit-Euler re-derivation of the current-mode differential-pair-integrator membrane from `neurons/model_schemas/dpi_neuron.toml` with DOI-backed schema provenance |
 | `exp_if_resting_exponential_doi` | `exp_if` | `universal_dsl` | Independent explicit-Euler re-derivation of the resting equation from `neurons/model_schemas/exp_if.toml` with DOI-backed schema provenance |
 | `fitzhugh_nagumo_driven_oscillation_doi` | `fitzhugh_nagumo` | `universal_dsl` | Independent fourth-order Runge-Kutta re-derivation of the driven relaxation oscillator (no reset, rising-edge `v >= 1` crossing) from `neurons/model_schemas/fitzhugh_nagumo.toml` with DOI-backed schema provenance |
+| `fitzhugh_rinzel_driven_bursting_doi` | `fitzhugh_rinzel` | `universal_dsl` | Independent fourth-order Runge-Kutta re-derivation of the three-state fast-slow bursting flow (no reset, rising-edge `v >= 1` crossing) from `neurons/model_schemas/fitzhugh_rinzel.toml` with DOI-backed schema provenance |
 | `glif_constant_current_threshold_adaptation` | `glif` | `universal_dsl` | Analytic linear Euler recurrence from `neurons/model_schemas/glif.toml` with DOI-backed schema provenance |
 | `hindmarsh_rose_short_bursting_prefix` | `hindmarsh_rose` | `universal_dsl` | Independent explicit-Euler re-derivation of the short bursting prefix from `neurons/model_schemas/hindmarsh_rose.toml` with DOI-backed schema provenance |
 | `hodgkin_huxley_driven_spiking_doi` | `hodgkin_huxley` | `universal_dsl` | Independent macro-step RK4 re-derivation of the driven repetitive-spiking membrane (100 inner `dt=0.01` sub-steps per 1 ms macro step, no reset, macro-boundary `v >= 0` crossing) from `neurons/model_schemas/hodgkin_huxley.toml` with DOI-backed schema provenance |
@@ -45,7 +46,8 @@ table because their schemas are stochastic.
 All entries record spike count, first spike step, and final/min/max/mean
 features for the declared state variables. The tests independently recompute the
 LIF, QIF, perfect-integrator, resonate-fire, theta, GLIF, Izhikevich,
-Izhikevich 2007, FitzHugh-Nagumo, McKean, AdEx, exponential-IF, Hindmarsh-Rose, Morris-Lecar,
+Izhikevich 2007, FitzHugh-Nagumo, FitzHugh-Rinzel, McKean, AdEx, exponential-IF,
+Hindmarsh-Rose, Morris-Lecar,
 Hodgkin-Huxley, Connor-Stevens, Wang-Buzsaki, DPI, and Mihalas-Niebur analytic,
 explicit-Euler, sequential Gauss-Seidel, or fourth-order Runge-Kutta solutions — every deterministic
 bundled-schema entry — so the committed feature values are not merely copied from
@@ -62,6 +64,11 @@ relaxation oscillator with the faithful four-stage RK4 step and rising-edge
 relaxation oscillator, not integrate-and-fire); and the DPI entry re-derives its
 current-mode leaky-integrator recurrence with the `i_mem = i_reset` reset, its
 non-negative drive keeping the source model's `max(i_mem, 0)` rectification inert.
+The FitzHugh-Rinzel entry extends that independent cubic RK4 recurrence with the
+ultra-slow `y` modulation equation. It advances `v`, `w`, and `y` simultaneously,
+uses the same no-reset upward-crossing decision, and reproduces all three state
+feature sets plus the eight-crossing `I=0.5` protocol without calling the hand
+model or schema runner.
 The Mihalas-Niebur entry re-derives the exact classical fourth-order Runge-Kutta
 recurrence for its four linear states (membrane, adaptive threshold, and two
 spike-triggered currents), including the `v = v_reset + b*(v - v_rest)`,
@@ -104,10 +111,12 @@ membrane and Na/K gating rate functions (numpy exp and the exprel-rewritten `alp
 `alpha_n`) reproduce the schema runner bit-for-bit, so the driven schema counts the same five
 action potentials the hand model does (`hand == schema` exact), which the earlier single-step
 Euler resting-gate schema could not.
-The perfect-integrator, FitzHugh-Nagumo, McKean, Morris-Lecar, Hodgkin-Huxley, Connor-Stevens,
+The perfect-integrator, FitzHugh-Nagumo, FitzHugh-Rinzel, McKean, Morris-Lecar,
+Hodgkin-Huxley, Connor-Stevens,
 Izhikevich, Izhikevich 2007, DPI, and Mihalas-Niebur entries are spike-bearing;
-they validate reset (or, for FitzHugh-Nagumo, McKean, Morris-Lecar, Hodgkin-Huxley, and
-Connor-Stevens, rising-edge crossing) and first-spike features, not only quiet trajectories. The
+they validate reset (or, for FitzHugh-Nagumo, FitzHugh-Rinzel, McKean, Morris-Lecar,
+Hodgkin-Huxley, and Connor-Stevens, rising-edge crossing) and first-spike features,
+not only quiet trajectories. The
 Rulkov entry iterates the Rulkov 2002 piecewise fast/slow map with the
 `method = "map"` integration mode (`x_{n+1} = f(x_n, y_n)`, iterated as a discrete
 map rather than integrated as an ODE), so the trajectory is bounded and its

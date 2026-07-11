@@ -8,7 +8,7 @@
 
 [metadata]
 schema_version = 2
-name = "FitzHughRinzelNeuron"
+name = "FitzHugh-Rinzel"
 class_name = "FitzHughRinzelNeuron"
 module = "fitzhugh_rinzel"
 display_name = ""
@@ -106,9 +106,12 @@ range = [
 
 [integration]
 dt = 0.1
-method = "euler"
+method = "rk4"
 
 [dynamics]
+v = "v - v * v * v / 3.0 - w + y + I"
+w = "delta * (a + v - b * w)"
+y = "mu * (c - v - d * y)"
 
 [backends.python]
 status = "implemented"
@@ -137,3 +140,17 @@ golden_trace_sha256 = "12eaadf8be17cd109ce4e0454972b7657b9f8bae0317c11ea0e23932d
 [documentation]
 slug = "models/fitzhugh_rinzel"
 notes = ""
+
+[validation]
+dynamics_faithful = true
+metric = "parity"
+operating_point = "schema-DSL FitzHugh-Rinzel three-state RK4 oscillator"
+tolerance = "exact three-way spike-count parity for I=0.4 to I=0.6 over 3000 steps"
+evidence = "tests/test_cosimulation.py::TestQ1616Precision::test_fitzhugh_rinzel_q1616_parity"
+
+[silicon]
+compiles = true
+cosim_validated = true
+cosim_evidence = "tests/test_cosimulation.py::TestQ1616Precision::test_fitzhugh_rinzel_q1616_parity"
+target_tier = "H1"
+terminal_reason = "Point-neuron schema→RTL path; higher silicon rungs need synth/timing/formal programmes."
