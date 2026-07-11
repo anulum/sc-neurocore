@@ -108,6 +108,19 @@ ENROLLED: tuple[EnrolledEvidence, ...] = (
         ),
     ),
     EnrolledEvidence(
+        schema_name="chialvo_map",
+        class_name="ChialvoMapNeuron",
+        level="h1_cosim",
+        evidence=(
+            "tests/test_cosim_chialvo_map.py::test_q1616_event_class_and_stable_trajectory_envelope"
+        ),
+        operating_point=("Chialvo map at I=-0.05,0,0.01,0.1,1.0 over 100 iterations"),
+        tolerance=(
+            "hand/TOML/JSON exact; Q16.16 event counts exact; stable-point x/y errors "
+            "below 0.055/0.093"
+        ),
+    ),
+    EnrolledEvidence(
         schema_name="courage_nekorkin_map",
         class_name="CourageNekorkinMapNeuron",
         level="h1_cosim",

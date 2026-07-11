@@ -5,6 +5,31 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+### Chialvo source-to-silicon fidelity enrolment
+- Bound `ChialvoMapNeuron` to Chialvo (1995), DOI
+  `10.1016/0960-0779(93)E0056-H`. The Python and compiled lanes now share the
+  paper's simultaneous `x*x*exp(y-x)+k+I`, `a*y-b*x+c` recurrence and reject
+  non-finite candidates without committing them. The paper permits a constant
+  or time-dependent additive perturbation; `k` and `current` represent those
+  roles. The upward `x_threshold=1.0` crossing is kept separate as a maintained
+  observation convention.
+- Wired checked Rust-engine, Rust-safety, Go, Julia, and Mojo batch paths into
+  measured-order `auto` dispatch. Cross-language tests enforce one-step
+  source-equation envelopes and identical 1,000-step event counts at six
+  currents. The committed 500,000-iteration, five-repeat benchmark was pinned
+  to one logical CPU and records 12,935 events in every lane. Its medians are
+  7.270 ms Rust, 9.576 ms Julia, 11.373 ms Mojo, 20.524 ms Go, and 2,175.866 ms
+  Python; the JSON records that the host had no kernel-isolated CPU set.
+- Added paired TOML/JSON map schemas and an independent 100-iteration DOI
+  reference. Hand/TOML/JSON states and events are exact at
+  `I=-0.05/0/0.01/0.1/1.0`; Q16.16 retains event counts `0/2/3/0/1` and keeps
+  stable-point `x/y` errors below `0.055/0.093`. Four and six oscillatory event
+  positions shift at `I=0/0.01`, so timing identity is excluded explicitly.
+  The S5/H1 descriptor adds a generated Q8.8 port-only formal job whose
+  depth-4 SymbiYosys/Z3 check passes. The public fidelity count moves to 21;
+  schema-gap counts move to 31 / 122 / 124; the formal catalogue moves to 23
+  jobs and the whole HDL inventory to 60 jobs / 208 statements.
+
 ### Ermentrout-Kopell theta-Euler schema-to-RTL enrolment
 - Enrolled `ermentrout_kopell_map_neuron` against Ermentrout and Kopell
   (1986), DOI `10.1137/0146017`. Paired schemas reproduce the maintained hand

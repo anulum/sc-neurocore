@@ -198,6 +198,30 @@ The S5/H1 promotion adds a Q8.8 formal-catalogue core and port-only harness.
 Its depth-4 SymbiYosys/Z3 job proves reset-spike safety only; the three Q16.16
 trajectories remain the behavioural evidence.
 
+### Chialvo map Q16.16 event-class enrolment
+
+The `chialvo_map` schema reproduces Chialvo (1995), DOI
+`10.1016/0960-0779(93)E0056-H`: simultaneous
+`x*x*exp(y-x) + k + I` and `a*y - b*x + c` commits with
+`method="map"`. The paper permits `k` to be constant or a time-dependent
+additive perturbation, so `I` carries the time-dependent part. The upward
+`x_threshold=1.0` crossing is a maintained observation convention and is not
+attributed to the paper.
+
+At `I=-0.05/0/0.01/0.1/1.0` over 100 iterations, the hand model and paired
+TOML/JSON schemas agree exactly on every state and event. Q16.16 RTL preserves
+the event counts `0/2/3/0/1`. At the stable `I=-0.05/0.1/1.0` points, maximum
+absolute errors stay below `0.055` for `x` and `0.093` for `y`.
+
+The exponential LUT phase-shifts four event positions at `I=0` and six at
+`I=0.01`, although the total counts remain exact. Event timing and complete
+oscillatory trajectory identity are therefore explicit exclusions rather than
+hidden inside a loose tolerance.
+
+The S5/H1 promotion adds a Q8.8 formal-catalogue core and port-only harness.
+Its depth-4 SymbiYosys/Z3 job proves the bounded reset/spike safety property;
+the Q16.16 operating set remains the behavioural evidence.
+
 ### Courbage-Nekorkin map fixed-point trajectory enrolment
 
 The `courage_nekorkin_map` schema reproduces Courbage, Nekorkin, and Vdovin

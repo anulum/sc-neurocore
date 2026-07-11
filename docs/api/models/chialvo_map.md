@@ -1,567 +1,174 @@
 # ChialvoMapNeuron
 
-**Module:** `sc_neurocore.neurons.models.chialvo_map`
-**Reference:** Chialvo, Chaos Solitons Fractals 5(3-4), 1995
-**Family:** Map-based (discrete-time 2D excitable neuron)
-**State variables:** `x` (fast variable, membrane-like), `y` (slow variable, recovery-like)
+`ChialvoMapNeuron` implements the simultaneous two-dimensional discrete map in
+Chialvo (1995), [DOI 10.1016/0960-0779(93)E0056-H](https://doi.org/10.1016/0960-0779(93)E0056-H).
+It is a map, not an ODE: one `step()` call is one complete recurrence and no
+Euler timestep is applied.
 
----
+## Source recurrence
 
-## Equations
+The paper's Eq. 1 is:
 
-### Fast variable (spike-generating)
+\[
+x_{n+1}=x_n^2\exp(y_n-x_n)+k
+\]
 
-$$x_{n+1} = x_n^2 \cdot \exp(y_n - x_n) + k + I$$
+\[
+y_{n+1}=a y_n-b x_n+c
+\]
 
-### Slow recovery variable
+The paper permits \(k\) to be a constant bias or a time-dependent additive
+perturbation. The maintained API separates those roles:
 
-$$y_{n+1} = a \cdot y_n - b \cdot x_n + c$$
+\[
+x_{n+1}=x_n^2\exp(y_n-x_n)+k+I_n
+\]
 
-### Spike detection
+where `k` is the configured constant and `current` supplies \(I_n\). Both
+coordinates use the old \((x_n,y_n)\) state and commit simultaneously.
 
-$$x_n \geq x_{threshold} \; \text{AND} \; x_{n-1} < x_{threshold}: \quad \text{return } 1$$
+| Surface | Status |
+|---|---|
+| `a=0.89`, `b=0.6`, `c=0.28`, `k=0.04` | Source-paper parameter set |
+| `x=0`, `y=0` initial state | Maintained default |
+| `current` additive input | Time-dependent part of the paper's permitted additive perturbation |
+| `x_threshold=1.0` upward crossing | Maintained observation convention; not a paper equation or parameter |
+| Exponential argument clipped to `[-500, 500]` | Maintained float64 overflow guard; inactive in the enrolled source regimes |
 
-Upward threshold crossing — prevents counting the same excursion twice.
+The event returned by the software API is therefore:
 
-### Implementation
+\[
+x_n < x_{threshold} \le x_{n+1}.
+\]
 
-```python
-def step(self, current: float = 0.0) -> int:
-    x_prev = self.x
-    x_new = self.x**2 * safe_exp(self.y - self.x) + self.k + current
-    y_new = self.a * self.y - self.b * self.x + self.c
-    self.x = x_new
-    self.y = y_new
-    return 1 if (self.x >= self.x_threshold and x_prev < self.x_threshold) else 0
-```
+It observes the map and does not reset either coordinate.
 
-**Discrete-time map** — no ODE, no Euler, no dt. Each `step()` call is
-one map iteration. Uses `safe_exp()` from `sc_neurocore.utils.numerics`
-to prevent overflow when y − x is extreme.
-
----
-
-## Parameters
-
-| Parameter | Default | Unit | Description |
-|-----------|---------|------|-------------|
-| `x` | 0.0 | — | Fast variable (membrane-like) |
-| `y` | 0.0 | — | Slow variable (recovery-like) |
-| `a` | 0.89 | — | Recovery decay rate |
-| `b` | 0.6 | — | Recovery coupling to fast variable |
-| `c` | 0.28 | — | Recovery constant drive |
-| `k` | 0.04 | — | Intrinsic excitability parameter |
-| `x_threshold` | 1.0 | — | Spike detection threshold |
-
-### k = 0.04 (intrinsic excitability)
-
-The parameter k acts as a baseline offset added to x at every iteration.
-At k=0.04, the model is **intrinsically excitable** — it produces spikes
-without any external input. This is a key feature: the neuron fires
-spontaneously at default parameters.
-
-### a = 0.89 (recovery decay)
-
-The slow variable y decays by factor a=0.89 per iteration — retains
-89% of its previous value. This creates a slow recovery process: y
-changes gradually while x can jump dramatically in a single step.
-
-### b = 0.6 (fast-to-slow coupling)
-
-Each iteration, the fast variable x suppresses y by b×x = 0.6×x. This
-is the negative feedback pathway: when x is high (during a spike), y
-is driven downward, which subsequently reduces x in the next iteration
-(via the exp(y − x) term).
-
----
-
-## Analytical Properties
-
-### The x² · exp(y − x) nonlinearity
-
-The core of the Chialvo map is the term x² · exp(y − x). Decomposing:
-
-- **x²:** Quadratic amplification — small x values grow quadratically.
-  This provides excitability: once x starts rising, it accelerates.
-- **exp(y − x):** Exponential modulation. When y > x, this amplifies
-  (exp > 1). When y < x, this suppresses (exp < 1).
-
-The combined effect:
-- At rest (x ≈ 0): x² ≈ 0 → weak dynamics, k dominates
-- During spike rise: x grows, x² grows faster, but exp(y − x)
-  decreases as x exceeds y → creates a peak and fold-back
-- After spike: x has fallen, y is reduced by b coupling → recovery
-
-### Fixed points
-
-Setting x_{n+1} = x_n = x* and y_{n+1} = y_n = y*:
-
-$$x^* = (x^*)^2 \cdot \exp(y^* - x^*) + k$$
-$$y^* = \frac{c - b \cdot x^*}{1 - a}$$
-
-The second equation gives y* directly from x*. Substituting into the
-first yields a transcendental equation in x* that generally requires
-numerical solution.
-
-At default parameters (a=0.89, b=0.6, c=0.28, k=0.04):
-- The fixed point exists but is **unstable** — the system exhibits a
-  stable limit cycle (sustained oscillations/spiking)
-- This explains the intrinsic spiking: the model cannot rest at a
-  fixed point with these parameters
-
-### Stability and bifurcations
-
-The Chialvo map exhibits a rich bifurcation structure as parameters vary:
-
-- **k < 0:** No spiking (quiescent, stable fixed point)
-- **k ≈ 0:** Onset of oscillations (Neimark-Sacker or period-doubling
-  bifurcation depending on other parameters)
-- **k = 0.04:** Stable spiking (default)
-- **Large k:** Higher frequency spiking, eventually chaotic
-
-The parameter a controls the recovery timescale:
-- **a → 0:** Fast recovery → period-1 spiking
-- **a → 1:** Slow recovery → complex dynamics, period-doubling, chaos
-
-### Map vs ODE comparison
-
-| Property | Chialvo Map | LIF (ODE) | CazellesMap |
-|----------|-------------|-----------|-------------|
-| Time | Discrete (iterations) | Continuous (ms) | Discrete (iterations) |
-| Integration | Exact (no Euler) | Euler (approximate) | Exact (no Euler) |
-| dt parameter | Not applicable | Required | Not applicable |
-| Nonlinearity | x²·exp(y−x) | Linear + threshold | Logistic (ax(1−x)) |
-| Spontaneous | Yes (k>0) | No (needs input) | Depends on params |
-| State vars | 2 (x, y) | 1 (V) | 2 (x, y) |
-| Transcendentals | 1 exp per step | 0–1 exp per step | 0 per step |
-
-### Excitability type
-
-The Chialvo map exhibits **Type II excitability** — a nonzero frequency at
-onset of oscillations (no arbitrarily slow spiking near threshold). This
-is consistent with the resonant properties of the 2D map with slow y
-recovery.
-
----
-
-## Behaviour
-
-### Intrinsic spiking (k = 0.04)
-
-At default parameters, the model spikes without external input. The
-constant k = 0.04 provides enough baseline excitability to sustain
-oscillations. The limit cycle produces periodic threshold crossings
-of x ≥ 1.0.
-
-### Spike morphology
-
-Unlike ODE-based models where the action potential has a smooth waveform,
-the Chialvo map produces discrete jumps:
-1. x is near 0 (subthreshold)
-2. In one iteration, x jumps above threshold (x ≥ 1.0)
-3. The exp(y − x) term rapidly reduces the amplification
-4. x falls back below threshold in 1–2 iterations
-5. Recovery phase: y slowly returns toward equilibrium
-
-The "spike" is therefore 1–2 iterations wide, not a smooth curve.
-
-### Current modulation
-
-- **Positive current (I > 0):** Adds directly to x_{n+1} → increases
-  excitability, may increase spike rate or destabilise into chaos
-- **Negative current (I < 0):** Opposes k → can suppress spiking
-  entirely if I < −k
-- **Moderate positive current can suppress spiking:** At certain I values,
-  the system can stabilise at a depolarised fixed point — counterintuitive
-  but characteristic of nonlinear maps
-
-### Two-timescale dynamics
-
-- **Fast (x):** Changes dramatically per iteration (x² · exp term)
-- **Slow (y):** Changes by at most ~0.6 per iteration (a·y − b·x + c)
-
-The timescale separation (controlled by a and b) creates the
-excitable dynamics: x generates spikes while y modulates the
-inter-spike interval.
-
----
-
-## Comparison with Related Models
-
-| Property | Chialvo (1995) | CazellesMap | RulkovMap | IzhikevichMap |
-|----------|---------------|-------------|-----------|--------------|
-| Fast nonlinearity | x²·exp(y−x) | ax(1−x) logistic | α/(1+x²) | Quadratic (0.04x²) |
-| Slow dynamics | a·y − b·x + c | y + ε(x−σ) | y − µ(x−σ) | u + a(bV−u) |
-| Transcendentals | 1 exp | 0 | 0 | 0 |
-| Spontaneous | Yes (k>0) | No | No | No |
-| State vars | 2 | 2 | 2 | 2 |
-| Spike mechanism | Threshold crossing | Threshold crossing | Threshold + reset | Threshold + reset |
-| Chaotic | At some params | Yes (a=3.8) | At some α | No |
-| Reference | Chialvo 1995 | Cazelles 2001 | Rulkov 2002 | Izhikevich 2003 |
-
-The Chialvo map is unique among 2D map neurons for using the exponential
-nonlinearity and for being intrinsically excitable at default parameters.
-
----
-
-## Numerical Considerations
-
-- **1 exp() per step:** `safe_exp(y − x)` — the only transcendental function.
-- **safe_exp overflow protection:** The `safe_exp()` utility from
-  `sc_neurocore.utils.numerics` clips the argument to prevent IEEE
-  overflow. Without this, extreme y values could produce exp(1000) → inf.
-- **No clipping on x or y:** Unlike Cazelles (x clipped to [−2, 2]),
-  the Chialvo map allows unbounded state evolution. The natural dynamics
-  self-regulate via the exp(y − x) term.
-- **Potential divergence:** With extreme inputs or parameters, x can
-  grow without bound (x² positive feedback). The safe_exp prevents
-  inf × 0 = NaN but cannot prevent x → large finite values.
-- **No dt parameter:** Discrete-time map — no Euler stability concerns.
-  Each iteration is exact.
-- **One multiplication + one exp:** Minimal per-step computation.
-
----
-
-## Implementation Notes
-
-- **Source:** `src/sc_neurocore/neurons/models/chialvo_map.py` — 41 lines.
-- **Two state variables:** x (fast), y (slow).
-- **Dataclass:** Uses `@dataclass`.
-- **Uses safe_exp:** Imported from `sc_neurocore.utils.numerics`.
-- **No numpy dependency:** Pure Python arithmetic + safe_exp.
-- **Rust wiring:** Compatible (2 f64 state vars, 1 exp in Rust stdlib).
-
----
-
-## Performance
-
-| Metric | Python | Rust |
-|--------|--------|------|
-| Isolation | ~225K steps/s | Not measured |
-| Network (20n, 500ms) | ~200K neuron-steps/s | — |
-
-Fast — only 1 exp() per step, no clipping operations, no ODE integration.
-Among the faster models, though slower than pure-arithmetic maps (Cazelles,
-TrueNorth) due to the single exp() call.
-
----
-
-## Test Coverage
-
-| Category | Tests | What is verified |
-|----------|------:|-----------------|
-| Isolation | 6 | construction, binary output, intrinsic spiking, state finite (10K), safe_exp overflow, reset |
-| Network | 3 | Population(n=10/20), Network+PoissonInput spikes, Projection+spike_trains |
-| Analysis | 3 | firing_rate >0, spike_count >0, isi finite |
-| **Total** | **12** | **ALL PASSED (2.91s)** |
-
-See `tests/test_model_chialvo_map.py`.
-
----
-
-## Findings (Measured 2026-03-31)
-
-1. **12/12 tests PASSED in 2.91s.** No failures.
-
-2. **Intrinsic spiking confirmed.** At default parameters (k=0.04, no
-   external input), the model produces spikes within 5000 iterations.
-   The unstable fixed point drives sustained oscillations.
-
-3. **State remains finite.** After 10K iterations with current=0.02,
-   both x and y are finite. The natural dynamics self-regulate without
-   explicit clipping.
-
-4. **safe_exp prevents overflow.** Setting y=1000, x=0 (extreme case)
-   does not produce NaN. The safe_exp utility clips the argument,
-   preventing exp(1000) overflow.
-
-5. **Network pipeline functional.** Population(n=20) with PoissonInput
-   (rate=500Hz, weight=0.1) produces spikes. Projection(pop→pop,
-   weight=0.01, prob=0.3) works. spike_trains extractable.
-
-6. **Analysis pipeline verified.** firing_rate > 0 Hz, spike_count > 0,
-   isi all finite — from a 5000-step binary train with intrinsic spiking.
-
-7. **Deterministic.** No stochastic component. Same initial conditions
-   → same trajectory (but sensitive to perturbations due to nonlinearity).
-
-8. **Simplest excitable model in SC-NeuroCore.** 41 lines of source,
-   2 state variables, 1 exp per step, intrinsically active. The minimal
-   model for studying excitability and spike dynamics.
-
----
-
-## Pipeline Verification (End-to-End, Measured 2026-03-31)
-
-### Test execution
-
-```
-12/12 PASSED in 2.91s
-├── TestChialvoIsolation: 6 tests
-│   ├── construction (x=0, y=0)
-│   ├── step() → int {0,1}
-│   ├── intrinsic spiking (spikes > 0 in 5K iterations, no input)
-│   ├── state finite (10K iterations with I=0.02)
-│   ├── safe_exp prevents overflow (y=1000, x=0)
-│   └── reset() (x→0, y→0)
-├── TestChialvoNetwork: 3 tests
-│   ├── Population(n=10)
-│   ├── Network(n=20) + PoissonInput → spikes > 0
-│   └── Projection(pop→pop, w=0.01, p=0.3) + spike_trains
-└── TestChialvoAnalysis: 3 tests
-    ├── firing_rate > 0
-    ├── spike_count > 0
-    └── isi all finite
-```
-
-### Pipeline stages verified
-
-| Stage | Status | Notes |
-|-------|--------|-------|
-| Import + construction | ✓ PASS | x=0, y=0 |
-| step() → int {0,1} | ✓ PASS | Upward threshold crossing |
-| Intrinsic spiking | ✓ PASS | Fires without input (k=0.04) |
-| State finite (10K) | ✓ PASS | x, y both finite |
-| safe_exp overflow | ✓ PASS | y=1000 → no NaN |
-| reset() | ✓ PASS | x→0, y→0 |
-| Population(n=10) | ✓ PASS | 10 instances |
-| Network + PoissonInput | ✓ PASS | Spikes > 0 |
-| Projection(pop→pop) | ✓ PASS | spike_trains extractable |
-| firing_rate | ✓ PASS | > 0 Hz |
-| spike_count | ✓ PASS | > 0 |
-| isi | ✓ PASS | all finite |
-
-### Network configuration tested
-
-- Population: 20 ChialvoMapNeurons (spiking test), 10 (Projection test)
-- PoissonInput: rate=500Hz, weight=0.1, dt=0.001, seed=42
-- Projection: self-recurrent, weight=0.01, probability=0.3
-- SpikeMonitor: count, spike_trains verified
-- Duration: 0.5s (500 timesteps) for spiking, 0.3s for Projection
-
-**ALL 12 PIPELINE TESTS PASSED. MODEL IS END-TO-END FUNCTIONAL.**
-
----
-
-## Theoretical Context
-
-### Chialvo 1995
-
-Dante Chialvo introduced this map as the **simplest possible excitable
-neuron model** — a 2D discrete map with one transcendental function.
-The paper "Generic excitable dynamics on a two-dimensional map"
-demonstrated that the minimal ingredients for neuronal excitability are:
-
-1. A fast variable with quadratic amplification (x²)
-2. A slow recovery variable with linear dynamics
-3. An exponential coupling that creates the spike peak and fold-back
-
-### Relationship to continuous models
-
-The Chialvo map can be seen as a discrete-time analogue of the
-FitzHugh-Nagumo model:
-- x ↔ V (membrane potential / fast variable)
-- y ↔ w (recovery / slow variable)
-- x²·exp(y−x) ↔ V − V³/3 − w (cubic nullcline)
-- a·y − b·x + c ↔ ε(V + a − bw) (linear nullcline)
-
-Both produce excitable dynamics via the interaction of a fast
-excitable variable with a slow recovery variable. The map version
-trades smooth waveforms for computational efficiency and richer
-discrete dynamics.
-
-### Chaos and complexity
-
-At certain parameter combinations, the Chialvo map exhibits:
-- Period-doubling cascades (route to chaos via a or k)
-- Chaotic spiking (irregular inter-spike intervals)
-- Intermittency (alternating regular and irregular epochs)
-- Multistability (coexistence of different attractors)
-
-These properties make the Chialvo map a standard test case in
-nonlinear dynamics and computational neuroscience — it demonstrates
-that complex neural activity can emerge from extremely simple
-rules with minimal state.
-
-### Applications in large-scale brain networks
-
-The Chialvo map's computational efficiency (single exp() per step,
-no sub-stepping, 2 state variables) makes it suitable for
-large-scale network simulations where individual neuron detail is
-less important than collective dynamics. Networks of 10⁴–10⁶
-Chialvo neurons can simulate cortical-scale activity on standard
-hardware — testing hypotheses about criticality, avalanche dynamics,
-and information transfer in neural networks.
-
-### Criticality and self-organised criticality (SOC)
-
-Chialvo & Bak (1999) showed that networks of excitable elements
-(including the Chialvo map) can self-organise to a critical state
-at the boundary between quiescence and sustained activity. At
-criticality, the network exhibits power-law distributed avalanches
-— consistent with experimental observations in cortical slices
-(Beggs & Plenz 2003). The Chialvo map remains a standard tool for
-studying neural criticality.
-
----
-
-## Usage Examples
-
-### Example 1: Spiking dynamics
+## Python API
 
 ```python
 from sc_neurocore.neurons.models.chialvo_map import ChialvoMapNeuron
 
 neuron = ChialvoMapNeuron()
-spike_times = []
+event = neuron.step(current=0.0)
 
-for t in range(10000):
-    spike = neuron.step(0.04)  # weak drive
-    if spike:
-        spike_times.append(t)
-
-print(f"Spikes: {len(spike_times)}")
-if len(spike_times) > 1:
-    isis = [
-        spike_times[i + 1] - spike_times[i]
-        for i in range(len(spike_times) - 1)
-    ]
-    mean_isi = sum(isis) / len(isis)
-    print(f"Mean ISI: {mean_isi:.1f} steps")
-```
-
-### Example 2: Parameter sweep (a controls excitability)
-
-```python
-from sc_neurocore.neurons.models.chialvo_map import ChialvoMapNeuron
-
-for a_val in [0.8, 0.9, 1.0, 1.1, 1.2]:
-    n = ChialvoMapNeuron()
-    n.a = a_val
-    spikes = sum(n.step(0.04) for _ in range(5000))
-    print(f"a={a_val:.1f}: {spikes} spikes")
-```
-
-### Example 3: Large-scale network
-
-```python
-from sc_neurocore.network import Network, Population, Projection
-from sc_neurocore.neurons.models.chialvo_map import ChialvoMapNeuron
-from sc_neurocore.input import PoissonInput
-from sc_neurocore.monitors import SpikeMonitor
-from sc_neurocore.analysis import spike_count
-
-pop = Population(ChialvoMapNeuron, n=100)
-recurrent = Projection(
-    source=pop, target=pop,
-    weight=0.01, probability=0.1,
+trace, events = neuron.simulate(
+    n_steps=1_000,
+    current=0.0,
+    backend="auto",
 )
-drive = PoissonInput(rate=500.0, weight=0.05, dt=0.001, seed=42)
-
-net = Network()
-net.add_population("cortex", pop)
-net.add_projection("recurrent", recurrent)
-net.add_input("drive", drive, target="cortex")
-
-mon = SpikeMonitor()
-net.add_monitor("spikes", mon, source="cortex")
-
-net.run(duration=1.0)
-print(f"Total spikes: {spike_count(mon)}")
 ```
 
----
+`trace[t]` is the committed fast coordinate after iteration `t`. `simulate()`
+advances the object to the final `(x, y)` state and returns the maintained
+upward-crossing count. `reset()` restores only `x` and `y`; configured
+parameters are preserved.
 
-## Technical Reference
+Invalid state, parameters, current, and non-finite candidate values fail before
+a corrupt candidate is committed.
 
-### Rust parity
+## Acceleration and dispatch
 
-| Aspect | Python | Rust | Status |
-|--------|--------|------|--------|
-| State variables | x, y | x, y | **EXACT** |
-| x update | x²·exp(y−x) + k + I | same | **EXACT** |
-| y update | a·y − b·x + c | same | **EXACT** |
-| All defaults | identical | identical | **EXACT** |
-| Spike detection | threshold crossing | threshold crossing | **EXACT** |
+The model exposes the same checked recurrence through:
 
-**No parity defects.** Python and Rust produce identical traces.
-The Chialvo map is one of the simplest models in the library —
-parity verification is straightforward due to its 2-line update rule.
+- the Rust engine batch function `py_chialvo_map_simulate`;
+- the Rust safety kernel in `accel/rust/safety/chialvo_map.rs`;
+- the Go service and C shared-library boundary;
+- the Julia `ChialvoMapAccel.simulate_trace` function;
+- the Mojo C shared-library boundary; and
+- the Python reference floor.
 
-### Source files
+Explicit backend requests fail if that backend is not built. `backend="auto"`
+consults the committed host-matched benchmark record through
+`accel.backend_selection.select_backend_order`, tries the measured order, and
+keeps Python as the final floor. It does not silently turn an explicit compiled
+request into Python.
 
-| File | Lines | Description |
-|------|-------|-------------|
-| `src/sc_neurocore/neurons/models/chialvo_map.py` | 40 | Python reference |
-| `engine/src/neurons/maps.rs` | (shared) | Rust implementation |
-| `tests/test_model_chialvo_map.py` | ~120 | 12 tests |
+Build the local C ABI artefacts with:
 
----
+```bash
+cd src/sc_neurocore/accel/go/neurons/chialvo_map
+go build -buildmode=c-shared -o libchialvo.so chialvo_map.go
 
-## Performance Benchmarks
+cd ../../../mojo/neurons
+mojo build --emit shared-lib -o libchialvo.so chialvo_map.mojo
+```
 
-### Criterion benchmarks (local i5-11600K, measured 2026-04-05)
+The Rust batch function is built with the optional engine wheel. Julia is
+loaded through `juliacall` from `accel/julia/neurons/chialvo_map.jl`.
 
-| Metric | Value |
-|--------|-------|
-| Test | `chialvo_1k_steps` |
-| Median | 1,649 µs (1.65 ms) |
-| Per-step | 1.65 µs |
-| Throughput | ~606K steps/s |
+## Floating-point parity
 
-Note: the relatively high per-step cost for a simple map is due to
-the exp() call — transcendental functions dominate the cost even
-in minimal models.
+`exp` and optimised multiply/add evaluation differ slightly across language
+runtimes. Chialvo's recurrence can amplify those differences, so long-trace
+bit identity is not claimed.
 
-### Comparison with other map models
+`tests/test_chialvo_map_backends.py` enforces two complementary contracts:
 
-| Model | Criterion (1K steps) | State vars | exp()/step |
-|-------|---------------------|------------|------------|
-| RulkovMap | ~50 µs | 2 | 0 (piecewise) |
-| MedvedevMap | ~80 µs | 2 | 0 (polynomial) |
-| ChialvoMap | 1,649 µs | 2 | 1 |
-| IbarzTanakaMap | ~2,000 µs | 3 | 1 |
+1. 1,000 independently sampled one-step updates over the enrolled state/input
+   box agree with Python within `5e-15` for Rust, Julia, and Go and `5e-11` for
+   Mojo, with identical events.
+2. Over 1,000 iterations at `I=-0.05, 0, 0.01, 0.05, 0.1, 1.0`, all four
+   compiled lanes reproduce the Python event counts. The trace envelope is
+   `5e-14` for Rust, Julia, and Go and `2e-9` for Mojo.
 
-The Chialvo map is slower than piecewise/polynomial maps but
-faster than all continuous-time biophysical models.
+The declared 1,000-step event counts are `0/26/30/0/0/1` in that current order.
 
-### Python baseline
+## Recorded benchmark
 
-| Metric | Value |
-|--------|-------|
-| Isolation | ~50K steps/s |
-| Spikes (5K steps, I=0.04) | model-dependent |
+`benchmarks/results/bench_chialvo_map.json` was produced by the committed
+`benchmarks/bench_chialvo_map.py`. The run
+used 500,000 iterations, five repeats, one-logical-CPU affinity on CPU 4, the
+`powersave` governor, and a workstation with no kernel-isolated CPU set. Load,
+runtime versions, CPU model, source hashes, parity, and event counts are stored
+in the JSON rather than inferred later.
 
----
+| Backend | Median call | Speed-up vs Python | Maximum trace difference | Events |
+|---|---:|---:|---:|---:|
+| Rust | 7.270 ms | 299.30x | `5.195e-12` | 12,935 |
+| Julia | 9.576 ms | 227.22x | `1.736e-12` | 12,935 |
+| Mojo | 11.373 ms | 191.32x | `6.839e-7` | 12,935 |
+| Go | 20.524 ms | 106.01x | `3.542e-12` | 12,935 |
+| Python | 2,175.866 ms | 1.00x | `0` | 12,935 |
 
-## Citations
+These values describe that recorded host and workload. They are not portable
+latency promises.
 
-1. Chialvo DR (1995). Generic excitable dynamics on a two-dimensional
-   map. *Chaos Solitons Fractals* 5(3-4):461–479.
-   DOI: [10.1016/0960-0779(93)E0056-H](https://doi.org/10.1016/0960-0779(93)E0056-H)
+## Schema and Q16.16 co-simulation
 
-2. Chialvo DR, Bak P (1999). Learning from mistakes. *Neuroscience*
-   90(4):1137–1148.
-   DOI: [10.1016/S0306-4522(98)00472-2](https://doi.org/10.1016/S0306-4522(98)00472-2)
+The paired `chialvo_map.toml` and `chialvo_map.json` schemas use
+`method="map"` and reproduce the hand float64 states and events exactly at
+`I=-0.05, 0, 0.01, 0.1, 1.0` over 100 iterations.
 
-3. Beggs JM, Plenz D (2003). Neuronal avalanches in neocortical
-   circuits. *J Neurosci* 23(35):11167–11177.
-   DOI: [10.1523/JNEUROSCI.23-35-11167.2003](https://doi.org/10.1523/JNEUROSCI.23-35-11167.2003)
+Generated Q16.16 RTL preserves the corresponding event counts
+`0/2/3/0/1`. At the stable `I=-0.05, 0.1, 1.0` points, maximum absolute errors
+remain below `0.055` for `x` and `0.093` for `y`. At the oscillatory `I=0` and
+`I=0.01` points the exponential LUT phase-shifts four and six event positions,
+respectively, while retaining the total event counts. Event timing and full
+oscillatory trajectory identity are explicitly outside the claim.
 
-4. Izhikevich EM (2007). *Dynamical Systems in Neuroscience*.
-   MIT Press. ISBN: 978-0-262-09043-8.
+The descriptor reaches science S5 and silicon H1 on that bounded evidence. The
+generated Q8.8 formal job `sc_chialvo_map.sby` passes depth-4 Z3 bounded model
+checking of its port-only reset/spike safety property. That structural proof is
+not presented as a proof of float64 behavioural equivalence.
 
-5. FitzHugh R (1961). Impulses and physiological states in
-   theoretical models of nerve membrane. *Biophys J* 1(6):445–466.
-   DOI: [10.1016/S0006-3495(61)86902-6](https://doi.org/10.1016/S0006-3495(61)86902-6)
+## Independent reference
 
-6. Rulkov NF (2002). Modeling of spiking-bursting neural behavior
-   using two-dimensional map. *Phys Rev E* 65(4):041922.
-   DOI: [10.1103/PhysRevE.65.041922](https://doi.org/10.1103/PhysRevE.65.041922)
+`chialvo_map_doi.json` records a 100-iteration, zero-input feature contract.
+`tests/test_reference_chialvo_map.py` independently re-derives the simultaneous
+source recurrence with `math.exp`; it does not call the hand model or copy
+schema-runner output. The protocol records two maintained upward crossings,
+the first at iteration 33, plus final/minimum/maximum/mean features for both
+coordinates.
 
----
+## Focused verification
 
-**ALL 12 PIPELINE TESTS PASSED. MODEL IS END-TO-END FUNCTIONAL.**
-**Rust parity: EXACT (no defects found).**
-**Criterion: 1,649 µs / 1K steps (1.65 µs/step, ~606K steps/s).**
-deterministic rules.
+```bash
+python -m pytest tests/test_model_chialvo_map.py -p no:cov -q
+python -m pytest tests/test_chialvo_map_backends.py -p no:cov -q
+python -m pytest tests/test_cosim_chialvo_map.py -p no:cov -q
+python -m pytest tests/test_reference_chialvo_map.py -p no:cov -q
+cargo test --manifest-path src/sc_neurocore/accel/rust/Cargo.toml chialvo_map -j 4
+go -C src/sc_neurocore/accel/go test ./services ./neurons/chialvo_map
+cd hdl/formal/catalogue
+sby -f sc_chialvo_map.sby
+```

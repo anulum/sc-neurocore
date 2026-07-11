@@ -64,6 +64,7 @@ stub.
 | Mihalas-Niebur | ✅ | ✅ | ✅ | ✅ shared-lib | bit-exact accel — 0/142/333 @ I=0/2/5 over 1000 steps; co-sim exact hand/schema/Q16.16 RTL — 0/0/0/31/60/87/131/157/207/256 @ I=0/0.5/1/1.5/2/2.5/3.5/4/5/6 over 1000 RK4 steps; explicit I=3 boundary 111/111/112; formal Q8.8 BMC depth 3 | `081dd569c` |
 | Medvedev map | ✅ | ✅ | ✅ | ✅ shared-lib | Rust/Julia/Go bit-exact — 0/92/112 @ I=0/0.2/0.5 over 1000 iterations (expanding chaotic circle map). Mojo per-step ULP-bounded only: FMA fusion amplifies on the chaotic map, so it does not reproduce the exact spike count (by design) | `9936d997d` |
 | Cazelles map | ✅ | ✅ | ✅ | ✅ shared-lib | accel: Rust/Julia/Go bit-exact, Mojo per-step ULP-bounded, 5/182/204 @ I=0/0.5/1.0 over 1000 iterations; co-sim: hand/TOML/JSON exact and Q16.16 RTL event-exact at I=0.5/1.0/2.0 over 30 iterations with state error below 0.0004; I=0.05 is excluded; formal Q8.8 BMC depth 4 | `22110c66d` |
+| Chialvo map | ✅ | ✅ | ✅ | ✅ shared-lib | accel: all compiled lanes ULP-bounded to the source recurrence and event-count exact at I=-0.05/0/0.01/0.05/0.1/1.0 over 1000 iterations (0/26/30/0/0/1); pinned 500,000-iteration benchmark records 12,935 events in every lane; co-sim: hand/TOML/JSON exact and Q16.16 event counts 0/2/3/0/1 at I=-0.05/0/0.01/0.1/1.0 over 100 iterations, with stable-point x/y errors below 0.055/0.093 and oscillatory timing explicitly excluded; formal Q8.8 BMC depth 4 | `this commit` |
 | Courbage-Nekorkin map | ✅ | ✅ | ✅ | ✅ shared-lib | accel: Rust/Julia/Go bit-exact, Mojo per-step ULP-bounded, 157/193/168 @ I=-0.3/0/0.3 over 1000 iterations; co-sim: hand/TOML/JSON exact, Q16.16 event-exact at I=-0.3/0/0.3 over bounded 30/20/30-iteration windows, and Q32.32 event-exact at all three inputs over 30 iterations with state error below 0.00003; autonomous Q16.16 30-iteration trace is an explicit 4/6-event boundary; formal Q8.8 BMC depth 4 | `63826b513` |
 | Izhikevich 2007 | ✅ | ✅ | ✅ | ✅ shared-lib | bit-exact — 0/3/14 @ I=0/100/400 over 2000 steps (RK4, quadratic v-nullcline, spike reset v→c / u+=d; Mojo ULP-bounded but the per-spike reset re-synchronises the trace so its counts always match) | `75b32d935` |
 | Ibarz-Tanaka map | ✅ | ✅ | ✅ | ✅ shared-lib | bit-exact — 0/69/235 @ I=1.0/1.5/2.0 over 2000 iterations (modified-Rulkov 2-D map, rational/linear fast branch, reset-on-spike; Mojo ULP-bounded but the reset re-synchronises so its counts match) | `780d29050` |
@@ -74,7 +75,7 @@ conductance models (Wang-Buzsaki, Morris-Lecar, Connor-Stevens, Hodgkin-Huxley, 
 and a committed `benchmarks/bench_<model>*.py` harness with its recorded per-backend result for the
 FFI-dispatched models (McKean, Hindmarsh-Rose, FitzHugh-Rinzel, Pernarowski, Terman-Wang, Wilson-HR,
 Rulkov map, GLIF, Mihalas-Niebur, Medvedev map, Cazelles map, Courbage-Nekorkin map, Izhikevich 2007,
-Ibarz-Tanaka map, Ermentrout-Kopell). A dedicated per-kernel benchmark harness for the Rust
+Chialvo map, Ibarz-Tanaka map, Ermentrout-Kopell). A dedicated per-kernel benchmark harness for the Rust
 `accel/rust/safety` crate remains a tracked open lane item.
 
 ## In progress
@@ -89,7 +90,7 @@ Rust engine acceleration path), but its four `accel/{rust,go,julia,mojo}` kernel
 or not yet verified** — the polyglot-stub-remediation sweep is replacing them model-by-model. Those
 models are **deliberately not ticked here**: per-model status is promoted onto this page only after a
 unit is closed and verified at source, so this table never claims completion it has not proven. As of
-the latest landed commit that is **twenty polyglot-complete models** out of the full catalogue; the
+the latest landed commit that is **twenty-one polyglot-complete models** out of the full catalogue; the
 remainder are Python-faithful with an acceleration chain still under remediation.
 
 ## How a model graduates onto this page

@@ -74,5 +74,27 @@ SC-NeuroCore-specific.
 | Python models | **158 lazy-loaded classes / 153 source modules** | 11 | 6 | Custom eq. | 3 |
 | Rust/compiled models | **175 Rust PyO3 wrappers / 161-model NetworkRunner** | — | — | C++ codegen | — |
 | Hardware emulators | **9** | — | — | — | Loihi only |
-| Formal verification | **59 SymbiYosys proof jobs and 207 formal statements (177 assert, 7 assume, 23 cover)** | — | — | — | — |
+| Formal verification | **60 SymbiYosys proof jobs and 208 formal statements (178 assert, 7 assume, 23 cover)** | — | — | — | — |
 | Train-to-FPGA export | **Yes** | No | No | No | No |
+
+## Chialvo map polyglot batch loop
+
+The committed `benchmarks/bench_chialvo_map.py` runs the same
+500,000-iteration recurrence through every production lane. Its recorded
+`benchmarks/results/bench_chialvo_map.json` contains the
+source hashes, toolchain versions, CPU affinity, governor, load, parity, and
+event counts. The 2026-07-11 run was pinned to logical CPU 4 on an Intel
+i5-11600K under the `powersave` governor; the host reported no kernel-isolated
+CPU set.
+
+| Backend | Median call | Speed-up vs Python | Maximum trace difference | Events |
+|---|---:|---:|---:|---:|
+| Rust | 7.270 ms | 299.30x | `5.195e-12` | 12,935 |
+| Julia | 9.576 ms | 227.22x | `1.736e-12` | 12,935 |
+| Mojo | 11.373 ms | 191.32x | `6.839e-7` | 12,935 |
+| Go | 20.524 ms | 106.01x | `3.542e-12` | 12,935 |
+| Python | 2,175.866 ms | 1.00x | `0` | 12,935 |
+
+These timings describe that recorded host and workload. They are used for the
+host-matched fastest-first dispatcher, not presented as portable latency or
+cross-framework claims.

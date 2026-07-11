@@ -20358,16 +20358,25 @@ Biophys. J. 42:181-189.
 ## Module `neurons.models.chialvo_map`
 
 ### Class `ChialvoMapNeuron`
-Chialvo 1995 — 2D discrete map neuron.
+Chialvo (1995) two-dimensional discrete map neuron.
 
-x&#91;n+1&#93; = x²·exp(y-x) + k + I
-y&#91;n+1&#93; = a·y - b·x + c
-
-Reference: Chialvo, D.R. (1995). Chaos, Solitons & Fractals 5:461–479.
+Parameters
+----------
+x, y : float
+    Fast and recovery state variables.
+a, b, c, k : float
+    Published dimensionless map parameters. The defaults reproduce a
+    parameter set used in the source paper.
+x_threshold : float
+    Maintained upward-crossing observation level; not a source parameter.
 
 - **__post_init__**()
 - **step**(current)
+  - Advance one simultaneous map iteration.
+- **simulate**(n_steps, current, backend)
+  - Advance several map iterations through a selected backend.
 - **reset**()
+  - Restore the two state variables while preserving configured parameters.
 
 ---
 

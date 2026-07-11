@@ -42,6 +42,7 @@ DESC_DIR = ROOT / "src" / "sc_neurocore" / "neurons" / "model_descriptors"
 CLASS_TO_SCHEMA: dict[str, str] = {
     "AdExNeuron": "adex",
     "CazellesMapNeuron": "cazelles_map",
+    "ChialvoMapNeuron": "chialvo_map",
     "ConnorStevensNeuron": "connor_stevens",
     "CourageNekorkinMapNeuron": "courage_nekorkin_map",
     "DPINeuron": "dpi_neuron",
@@ -67,6 +68,7 @@ CLASS_TO_SCHEMA: dict[str, str] = {
 # BMC depth: small for huge LUT models; deeper for compact IF cores.
 DEPTH_BY_SCHEMA: dict[str, int] = {
     "cazelles_map": 4,
+    "chialvo_map": 4,
     "connor_stevens": 4,
     "courage_nekorkin_map": 4,
     "ermentrout_kopell_map_neuron": 4,
@@ -89,6 +91,7 @@ DEPTH_BY_SCHEMA: dict[str, int] = {
 MINIMAL_SAFETY_SCHEMAS: frozenset[str] = frozenset(
     {
         "cazelles_map",
+        "chialvo_map",
         "courage_nekorkin_map",
         "ermentrout_kopell_map_neuron",
         "fitzhugh_nagumo",

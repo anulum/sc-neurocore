@@ -17,7 +17,7 @@ use numpy::{
     IntoPyArray, PyArray1, PyArray2, PyArrayMethods, PyReadonlyArray1, PyReadonlyArray2,
     PyReadwriteArray1, PyUntypedArrayMethods,
 };
-use pyo3::exceptions::PyValueError;
+use pyo3::exceptions::{PyFloatingPointError, PyValueError};
 use pyo3::prelude::*;
 use pyo3::types::PyDict;
 use pyo3::IntoPyObject;
@@ -1001,6 +1001,7 @@ fn sc_neurocore_engine(m: &Bound<'_, PyModule>) -> PyResult<()> {
     // LGSSM Kalman filter (predictive_model)
     m.add_function(wrap_pyfunction!(py_lgssm_kalman_filter, m)?)?;
     m.add_function(wrap_pyfunction!(py_ollivier_ricci_curvature, m)?)?;
+    m.add_function(wrap_pyfunction!(py_chialvo_map_simulate, m)?)?;
     m.add_function(wrap_pyfunction!(py_cazelles_map_simulate, m)?)?;
     m.add_function(wrap_pyfunction!(py_courage_nekorkin_map_simulate, m)?)?;
     m.add_function(wrap_pyfunction!(py_mckean_simulate, m)?)?;
@@ -5939,6 +5940,44 @@ fn py_ollivier_ricci_curvature(knm_flat: Vec<f64>, n: usize, i: usize, j: usize)
             Err(PyValueError::new_err("transport problem is infeasible"))
         }
     }
+}
+
+/// N-step Chialvo (1995) two-dimensional-map simulation.
+///
+/// The recurrence matches
+/// `sc_neurocore.neurons.models.chialvo_map.ChialvoMapNeuron.simulate`. The
+/// returned trace records `x` after every simultaneous map update; the event
+/// count uses the maintained upward `x_threshold` crossing convention. The
+/// checked path rejects non-finite state, parameters, input, or candidates
+/// without committing a corrupt state.
+#[pyfunction]
+#[pyo3(signature = (x0, y0, a, b, c, k, x_threshold, n_steps, current))]
+#[allow(clippy::too_many_arguments)]
+fn py_chialvo_map_simulate<'py>(
+    py: Python<'py>,
+    x0: f64,
+    y0: f64,
+    a: f64,
+    b: f64,
+    c: f64,
+    k: f64,
+    x_threshold: f64,
+    n_steps: usize,
+    current: f64,
+) -> PyResult<(Bound<'py, PyArray1<f64>>, i64, f64, f64)> {
+    let mut neuron = crate::neurons::ChialvoMapNeuron {
+        x: x0,
+        y: y0,
+        a,
+        b,
+        c,
+        k,
+        x_threshold,
+    };
+    let (trace, spikes) = neuron
+        .simulate(n_steps, current)
+        .map_err(PyFloatingPointError::new_err)?;
+    Ok((trace.into_pyarray(py), spikes, neuron.x, neuron.y))
 }
 
 /// N-step Cazelles-Courbage-Rabinovich (2001) bursting-map simulation.

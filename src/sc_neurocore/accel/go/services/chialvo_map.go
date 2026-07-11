@@ -4,7 +4,7 @@
 // © Code 2020–2026 Miroslav Šotek. All rights reserved.
 // ORCID: 0009-0009-3560-0851
 // Contact: www.anulum.li | protoscience@anulum.li
-// SC-NeuroCore — Go service for chialvo_map
+// SC-NeuroCore — Checked Go service for the Chialvo map
 
 package services
 
@@ -13,7 +13,7 @@ import (
 	"math"
 )
 
-// ChialvoMapNeuronState holds the neuron state
+// ChialvoMapNeuronState holds the two state variables and map parameters.
 type ChialvoMapNeuronState struct {
 	X          float64
 	Y          float64
@@ -24,7 +24,7 @@ type ChialvoMapNeuronState struct {
 	XThreshold float64
 }
 
-// NewChialvoMapNeuron creates a new ChialvoMapNeuron neuron with default parameters
+// NewChialvoMapNeuron returns the source-paper parameter set used by Python.
 func NewChialvoMapNeuron() *ChialvoMapNeuronState {
 	return &ChialvoMapNeuronState{
 		X:          0.0,
@@ -42,61 +42,76 @@ func finiteChialvoMap(value float64) bool {
 }
 
 func safeExpChialvoMap(value float64) float64 {
-	return math.Exp(math.Min(709.0, math.Max(-745.0, value)))
+	return math.Exp(math.Min(500.0, math.Max(-500.0, value)))
 }
 
-// ValidateChialvoMap checks discrete-map state and numerical parameters.
-func ValidateChialvoMap(s *ChialvoMapNeuronState) bool {
-	if s == nil {
+// ValidateChialvoMap checks that every state and parameter field is finite.
+func ValidateChialvoMap(state *ChialvoMapNeuronState) bool {
+	if state == nil {
 		return false
 	}
-	return finiteChialvoMap(s.X) &&
-		finiteChialvoMap(s.Y) &&
-		finiteChialvoMap(s.A) &&
-		finiteChialvoMap(s.B) &&
-		finiteChialvoMap(s.C) &&
-		finiteChialvoMap(s.K) &&
-		finiteChialvoMap(s.XThreshold)
+	return finiteChialvoMap(state.X) &&
+		finiteChialvoMap(state.Y) &&
+		finiteChialvoMap(state.A) &&
+		finiteChialvoMap(state.B) &&
+		finiteChialvoMap(state.C) &&
+		finiteChialvoMap(state.K) &&
+		finiteChialvoMap(state.XThreshold)
 }
 
-// Step advances the neuron by one timestep
-func (s *ChialvoMapNeuronState) Step(iExt float64) (int, error) {
-	if !ValidateChialvoMap(s) {
+// Step advances one simultaneous map iteration under an additive perturbation.
+func (state *ChialvoMapNeuronState) Step(current float64) (int, error) {
+	if !ValidateChialvoMap(state) {
 		return 0, errors.New("invalid Chialvo map runtime state")
 	}
-	if !finiteChialvoMap(iExt) {
+	if !finiteChialvoMap(current) {
 		return 0, errors.New("invalid Chialvo map current")
 	}
 
-	xPrev := s.X
-	xNew := s.X*s.X*safeExpChialvoMap(s.Y-s.X) + s.K + iExt
-	yNew := s.A*s.Y - s.B*s.X + s.C
-	if !finiteChialvoMap(xNew) || !finiteChialvoMap(yNew) {
+	xPrevious := state.X
+	xSquared := state.X * state.X
+	exponential := safeExpChialvoMap(state.Y - state.X)
+	xNext := xSquared*exponential + state.K + current
+	yNext := state.A*state.Y - state.B*state.X + state.C
+	if !finiteChialvoMap(xNext) || !finiteChialvoMap(yNext) {
 		return 0, errors.New("invalid Chialvo map candidate state")
 	}
-	s.X = xNew
-	s.Y = yNew
-	if s.X >= s.XThreshold && xPrev < s.XThreshold {
+	state.X = xNext
+	state.Y = yNext
+	if xPrevious < state.XThreshold && state.X >= state.XThreshold {
 		return 1, nil
 	}
 	return 0, nil
 }
 
-// SimulateChialvoMapNeuron runs the neuron for n steps
-func SimulateChialvoMapNeuron(nSteps int, iExt float64) ([]float64, int) {
-	s := NewChialvoMapNeuron()
-	trace := make([]float64, nSteps)
-	spikes := 0
-	for t := 0; t < nSteps; t++ {
-		result, err := s.Step(iExt)
-		if err != nil {
-			trace[t] = math.NaN()
-			continue
-		}
-		trace[t] = s.X
-		if result > 0 {
-			spikes++
-		}
+// Simulate runs checked iterations and leaves the final state in the receiver.
+func (state *ChialvoMapNeuronState) Simulate(
+	nSteps int,
+	current float64,
+) ([]float64, int64, error) {
+	if nSteps < 0 {
+		return nil, 0, errors.New("nSteps must be non-negative")
 	}
-	return trace, spikes
+	trace := make([]float64, nSteps)
+	var spikes int64
+	for index := range trace {
+		spiked, err := state.Step(current)
+		if err != nil {
+			return nil, 0, err
+		}
+		trace[index] = state.X
+		spikes += int64(spiked)
+	}
+	return trace, spikes, nil
+}
+
+// Reset restores state variables while preserving configured parameters.
+func (state *ChialvoMapNeuronState) Reset() {
+	state.X = 0.0
+	state.Y = 0.0
+}
+
+// SimulateChialvoMapNeuron runs the default model for compatibility callers.
+func SimulateChialvoMapNeuron(nSteps int, current float64) ([]float64, int64, error) {
+	return NewChialvoMapNeuron().Simulate(nSteps, current)
 }

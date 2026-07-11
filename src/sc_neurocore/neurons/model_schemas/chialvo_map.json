@@ -1,0 +1,40 @@
+{
+  "metadata": {
+    "schema_version": 1,
+    "name": "Chialvo Map",
+    "author": "Chialvo, D.R.",
+    "year": 1995,
+    "doi": "10.1016/0960-0779(93)E0056-H",
+    "description": "Two-dimensional discrete excitable map with exponential fast-variable feedback"
+  },
+  "state": {
+    "x": 0.0,
+    "y": 0.0
+  },
+  "parameters": {
+    "a": 0.89,
+    "b": 0.6,
+    "c": 0.28,
+    "k": 0.04,
+    "x_threshold": 1.0
+  },
+  "integration": {
+    "dt": 1.0,
+    "method": "map"
+  },
+  "dynamics": {
+    "x": "x * x * exp(y - x) + k + I",
+    "y": "a * y - b * x + c"
+  },
+  "threshold": {
+    "condition": "x_prev < x_threshold <= (x_prev * x_prev * exp(y_prev - x_prev) + k + I)",
+    "detection": "level"
+  },
+  "extensions": {
+    "model_type": "map",
+    "discrete_time": true,
+    "source_equation_note": "The simultaneous recurrence and defaults follow Chialvo (1995), DOI 10.1016/0960-0779(93)E0056-H.",
+    "observation_note": "x_threshold=1.0 and upward-crossing event detection are maintained SC-NeuroCore observables, not source-paper dynamics.",
+    "silicon_cosim_note": "At I=-0.05,0,0.01,0.1,1.0 over 100 iterations, hand model and both schemas agree exactly. Q16.16 preserves event counts 0/2/3/0/1; at the stable I=-0.05,0.1,1.0 points maximum x/y errors remain below 0.055/0.093. Oscillatory event timing and full trajectories are not claimed exact because exp is LUT-quantised."
+  }
+}

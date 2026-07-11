@@ -5,6 +5,26 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 ## [Unreleased]
 
 ### Added
+- Completed the source-verified Chialvo map unit (DOI
+  `10.1016/0960-0779(93)E0056-H`) across its checked Python, Rust engine,
+  Rust safety, Go, Julia, and Mojo simulation paths. All lanes implement the
+  simultaneous `x*x*exp(y-x)+k+I`, `a*y-b*x+c` recurrence; the upward
+  `x_threshold=1.0` event is documented as a maintained observation rather
+  than a paper equation. The production `auto` path now consumes the
+  host-matched committed benchmark order. A single-CPU-affinity,
+  500,000-iteration result records identical 12,935-event counts and measured
+  medians of 7.270/9.576/11.373/20.524/2,175.866 ms for
+  Rust/Julia/Mojo/Go/Python, with environment and source hashes preserved in
+  `benchmarks/results/bench_chialvo_map.json`.
+- Added paired `chialvo_map` schemas, an independently re-derived 100-iteration
+  DOI reference, and Q16.16 co-simulation. Hand/TOML/JSON states and events are
+  exact at the five enrolled currents; RTL preserves event counts `0/2/3/0/1`
+  and the declared stable-point error envelope while oscillatory event timing
+  remains an explicit boundary. The S5/H1 promotion adds a generated Q8.8
+  formal job whose depth-4 SymbiYosys/Z3 check passes. The public fidelity
+  count moves to 21; schema-gap counts move to 31 schema models / 122 net
+  missing / 124 source modules without a schema; the formal catalogue moves to
+  23 jobs and the whole HDL inventory to 60 jobs / 208 statements.
 - Enrolled the already acceleration-complete Ermentrout-Kopell hand class
   (`ermentrout_kopell_map_neuron`, DOI `10.1137/0146017`) with paired
   TOML/JSON schemas and an independent 2,000-step theta-flow reference. The

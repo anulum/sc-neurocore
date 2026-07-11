@@ -1,0 +1,51 @@
+{
+  "schema_version": "sc-neurocore.reference-trace.v1",
+  "name": "chialvo_map_doi",
+  "model": {
+    "schema_name": "chialvo_map",
+    "runner": "universal_dsl"
+  },
+  "protocol": {
+    "dt": 1.0,
+    "steps": 100,
+    "inputs": {
+      "I": 0.0
+    },
+    "state_variables": [
+      "x",
+      "y"
+    ]
+  },
+  "provenance": {
+    "kind": "map_iteration_reference",
+    "source": "src/sc_neurocore/neurons/model_schemas/chialvo_map.toml",
+    "equation": "Chialvo (1995) simultaneous map x[n+1]=x[n]^2*exp(y[n]-x[n])+k+I[n], y[n+1]=a*y[n]-b*x[n]+c. The feature event uses the maintained upward x_threshold crossing and is not attributed to the paper.",
+    "citation": "doi:10.1016/0960-0779(93)E0056-H"
+  },
+  "expected_features": {
+    "spike_count": 2.0,
+    "first_spike_step": 33.0,
+    "final.x": 0.08757691928233081,
+    "min.x": 0.04,
+    "max.x": 1.8152197626207431,
+    "mean.x": 0.17826083433771228,
+    "final.y": 2.0442951039169808,
+    "min.y": -0.5747659005568924,
+    "max.y": 2.0468208738763902,
+    "mean.y": 1.412497586256414
+  },
+  "tolerances": {
+    "default": {
+      "absolute": 1e-12,
+      "relative": 1e-12
+    },
+    "spike_count": {
+      "absolute": 0.0,
+      "relative": 0.0
+    },
+    "first_spike_step": {
+      "absolute": 0.0,
+      "relative": 0.0
+    }
+  }
+}

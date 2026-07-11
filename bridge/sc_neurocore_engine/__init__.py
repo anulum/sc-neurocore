@@ -511,6 +511,16 @@ except ImportError:
 
 try:
     from sc_neurocore_engine.sc_neurocore_engine import (
+        py_chialvo_map_simulate,
+    )
+
+    __all__ += ["py_chialvo_map_simulate"]
+    _chialvo_rust_available = True
+except ImportError:
+    _chialvo_rust_available = False
+
+try:
+    from sc_neurocore_engine.sc_neurocore_engine import (
         py_cazelles_map_simulate,
     )
 

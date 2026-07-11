@@ -22,6 +22,7 @@ table because their schemas are stochastic.
 |-------|--------|--------|------------|
 | `adex_resting_adaptation_doi` | `adex` | `universal_dsl` | Independent explicit-Euler re-derivation of the subthreshold equations from `neurons/model_schemas/adex.toml` with DOI-backed schema provenance |
 | `cazelles_map_bursting_doi` | `cazelles_map` | `universal_dsl` | Independent simultaneous clipped logistic fast/slow map iteration (Cazelles, Courbage & Rabinovich 2001, `method="map"`, level `x >= x_threshold` event) from `neurons/model_schemas/cazelles_map.toml` with DOI-backed schema provenance |
+| `chialvo_map_doi` | `chialvo_map` | `universal_dsl` | Independent simultaneous iteration of Chialvo (1995), Eq. 1 (`method="map"`), with the maintained upward `x_threshold` observation separated from DOI-sourced dynamics |
 | `connor_stevens_driven_spiking_doi` | `connor_stevens` | `universal_dsl` | Independent macro-step RK4 re-derivation of the driven A-current oscillator (100 inner `dt=0.01` sub-steps per 1 ms macro step, no reset, macro-boundary `v >= 0` crossing) from `neurons/model_schemas/connor_stevens.toml` with DOI-backed schema provenance |
 | `courage_nekorkin_map_autonomous_doi` | `courage_nekorkin_map` | `universal_dsl` | Independent simultaneous iteration of Courbage, Nekorkin & Vdovin (2007), equations 3–5 (`method="map"`, three fast branches, Heaviside discontinuity, upward `x >= x_threshold` crossing), with DOI-backed schema provenance |
 | `dpi_neuron_driven_spiking_doi` | `dpi_neuron` | `universal_dsl` | Independent explicit-Euler re-derivation of the current-mode differential-pair-integrator membrane from `neurons/model_schemas/dpi_neuron.toml` with DOI-backed schema provenance |
@@ -51,7 +52,7 @@ table because their schemas are stochastic.
 
 All entries record spike count, first spike step, and final/min/max/mean
 features for the declared state variables. The tests independently recompute the
-LIF, QIF, perfect-integrator, resonate-fire, theta, Ermentrout-Kopell theta-Euler, GLIF, Izhikevich, Cazelles map, Courbage-Nekorkin map,
+LIF, QIF, perfect-integrator, resonate-fire, theta, Ermentrout-Kopell theta-Euler, GLIF, Izhikevich, Cazelles map, Chialvo map, Courbage-Nekorkin map,
 Izhikevich 2007, FitzHugh-Nagumo, FitzHugh-Rinzel, Pernarowski, Terman-Wang, Wilson-HR, McKean, AdEx, exponential-IF,
 Hindmarsh-Rose, Morris-Lecar,
 Hodgkin-Huxley, Connor-Stevens, Wang-Buzsaki, DPI, and Mihalas-Niebur analytic,
@@ -136,7 +137,7 @@ membrane and Na/K gating rate functions (numpy exp and the exprel-rewritten `alp
 `alpha_n`) reproduce the schema runner bit-for-bit, so the driven schema counts the same five
 action potentials the hand model does (`hand == schema` exact), which the earlier single-step
 Euler resting-gate schema could not.
-The perfect-integrator, Ermentrout-Kopell theta-Euler, FitzHugh-Nagumo, FitzHugh-Rinzel, Pernarowski, Terman-Wang, Wilson-HR, Rulkov, Cazelles, Courbage-Nekorkin, McKean, Morris-Lecar,
+The perfect-integrator, Ermentrout-Kopell theta-Euler, FitzHugh-Nagumo, FitzHugh-Rinzel, Pernarowski, Terman-Wang, Wilson-HR, Rulkov, Cazelles, Chialvo, Courbage-Nekorkin, McKean, Morris-Lecar,
 Hodgkin-Huxley, Connor-Stevens,
 Izhikevich, Izhikevich 2007, DPI, and Mihalas-Niebur entries are spike-bearing;
 they validate reset (or, for Ermentrout-Kopell theta-Euler, FitzHugh-Nagumo, FitzHugh-Rinzel, Pernarowski, Terman-Wang, Rulkov, McKean, Morris-Lecar,
@@ -152,7 +153,10 @@ positive-level steps produced by the superseded schema. The Cazelles entry indep
 the simultaneous clipped logistic fast/slow map at `I=0.5`; the 30-step window exercises interior
 and lower-clip branches and records two level events. The reference is deliberately bounded because
 the `a=3.8` fast map amplifies fixed-point perturbations on longer chaotic trajectories. The
-Courbage-Nekorkin entry independently iterates the published three-branch fast map and recovery
+Chialvo entry independently iterates the DOI-sourced exponential two-state map for 100 iterations,
+records two maintained upward crossings with the first at iteration 33, and derives both state
+feature sets without calling the hand model or schema runner. The threshold observation is
+separated explicitly from the paper's recurrence. The Courbage-Nekorkin entry independently iterates the published three-branch fast map and recovery
 recurrence for 30 autonomous iterations, including the Heaviside discontinuity and upward event
 crossing. It records four events and features for both coordinates without importing the hand model
 or schema expressions. The Ermentrout-Kopell entry independently advances the DOI-sourced theta

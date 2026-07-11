@@ -12,7 +12,7 @@ backend implements that surface.
 > separately on the [Model Fidelity & Polyglot Status](model_fidelity_status.md)
 > page. Polyglot-complete today: Wang-Buzsaki, FitzHugh-Nagumo, Morris-Lecar,
 > Connor-Stevens, Hodgkin-Huxley, McKean, Hindmarsh-Rose, FitzHugh-Rinzel, Pernarowski, Terman-Wang,
-> Wilson-HR, Rulkov map, GLIF, Mihalas-Niebur, Medvedev map, Cazelles map, Courbage-Nekorkin map,
+> Wilson-HR, Rulkov map, GLIF, Mihalas-Niebur, Medvedev map, Cazelles map, Chialvo map, Courbage-Nekorkin map,
 > Izhikevich 2007, Ibarz-Tanaka map, Ermentrout-Kopell. All other models are Python-faithful with their
 > acceleration chain still under remediation.
 
