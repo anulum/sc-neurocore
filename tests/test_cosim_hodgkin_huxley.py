@@ -12,12 +12,16 @@ from __future__ import annotations
 
 import pytest
 
+from sc_neurocore.neurons.universal_dsl import UniversalNeuron
 from tests.cosim_support import (
     HAS_IVERILOG,
     _hodgkin_huxley_hand_spike_count,
     _python_spike_count,
+    _verilog_compiles,
     _verilog_spike_count_q1616,
 )
+
+_TRANSCENDENTAL_COMPILE_MODELS = ["hodgkin_huxley"]
 
 
 @pytest.mark.skipif(not HAS_IVERILOG, reason="Icarus Verilog not available")
@@ -60,3 +64,23 @@ class TestQ1616Precision:
             f"Hodgkin-Huxley Q16.16 macro-step gap > 1 spike "
             f"(schema={py_spikes}, verilog={vlog_spikes})"
         )
+
+
+@pytest.mark.skipif(not HAS_IVERILOG, reason="Icarus Verilog not available")
+class TestTranscendentalCoSimulation:
+    """Auto model→RTL compile contracts for Hodgkin-Huxley."""
+
+    @pytest.mark.parametrize("model_name", _TRANSCENDENTAL_COMPILE_MODELS)
+    def test_transcendental_model_lowers_to_valid_verilog(self, model_name: str) -> None:
+        """Non-baseline models lower to iverilog-valid Verilog without malformed literals.
+
+        This is the emitter-fix verification: before the negative-LUT-literal,
+        cosh, and empty-parameter fixes these models either raised
+        "Unsupported function" or emitted malformed `W'sd-N` literals. The GLIF
+        Q8.8 path is resolution-limited and the conductance-model look-up tables can
+        be too coarse for the dedicated Q16.16 behavioural claims, so this assertion
+        covers valid synthesisable RTL rather than spike parity.
+        """
+        verilog = UniversalNeuron.from_schema(model_name).to_verilog(module_name=f"sc_{model_name}")
+        assert "'sd-" not in verilog  # no malformed negative literals
+        assert _verilog_compiles(model_name)
