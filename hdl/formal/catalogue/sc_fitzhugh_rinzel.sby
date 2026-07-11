@@ -1,0 +1,18 @@
+# SymbiYosys job for catalogue model sc_fitzhugh_rinzel
+# Dual-axis perfect model formal (BMC)
+
+[options]
+mode bmc
+depth 4
+
+[engines]
+smtbmc z3
+
+[script]
+read -formal sc_fitzhugh_rinzel_formal.v
+read -formal sc_fitzhugh_rinzel.v
+prep -top sc_fitzhugh_rinzel_formal
+
+[files]
+sc_fitzhugh_rinzel_formal.v
+sc_fitzhugh_rinzel.v

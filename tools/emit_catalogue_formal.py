@@ -44,6 +44,7 @@ CLASS_TO_SCHEMA: dict[str, str] = {
     "ConnorStevensNeuron": "connor_stevens",
     "DPINeuron": "dpi_neuron",
     "FitzHughNagumoNeuron": "fitzhugh_nagumo",
+    "FitzHughRinzelNeuron": "fitzhugh_rinzel",
     "GLIFNeuron": "glif",
     "HodgkinHuxleyNeuron": "hodgkin_huxley",
     "Izhikevich2007Neuron": "izhikevich2007",
@@ -62,6 +63,7 @@ DEPTH_BY_SCHEMA: dict[str, int] = {
     "hodgkin_huxley": 4,
     "morris_lecar": 3,
     "fitzhugh_nagumo": 4,
+    "fitzhugh_rinzel": 4,
     "mckean": 4,
     "mihalas_niebur": 3,
     "theta": 6,
@@ -73,6 +75,7 @@ DEPTH_BY_SCHEMA: dict[str, int] = {
 MINIMAL_SAFETY_SCHEMAS: frozenset[str] = frozenset(
     {
         "fitzhugh_nagumo",
+        "fitzhugh_rinzel",
         "mckean",
         "mihalas_niebur",
         "morris_lecar",
