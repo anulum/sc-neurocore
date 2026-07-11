@@ -155,6 +155,39 @@ evidence for the per-step `step` path.
 
 ---
 
+## Schema-to-RTL co-simulation
+
+The bundled `pernarowski` TOML and JSON schemas mirror the maintained Python
+contract: simultaneous classical RK4 over `v`, `w`, and `z` at `dt=0.1`, the
+exact `v * v * v` operation order, rising-edge `v >= v_threshold` detection,
+and no reset. At each enrolled 5,000-step operating point (`I=-0.1`, `0.0`,
+`0.1`, and `0.2`), the hand model, schema runner, and emitted Q16.16 RTL report
+exactly 17 crossings. The varied-drive schema-format test additionally requires
+exact `v`/`w`/`z` state equality after every step and covers all 17 subsequent
+below-threshold re-arms.
+
+The committed `pernarowski_autonomous_bursting_doi` trace independently
+re-derives the three-state RK4 recurrence and checks spike count, first-spike
+step, and the final/minimum/maximum/mean of every state variable. Its provenance
+is Pernarowski's 1994 *Fast Subsystem Bifurcations in a Slowly Varying Liénard
+System Exhibiting Bursting*, DOI `10.1137/S003613999223449X`.
+
+The S5/H1 descriptor also enrols the model in the generated formal catalogue.
+Its Q8.8 equation-compiler RTL and port-only harness pass a four-cycle
+SymbiYosys/Z3 bounded check that asynchronous reset clears the spike output.
+This is a bounded reset-spike safety proof; behavioural trace equivalence is
+established separately by the Q16.16 co-simulation evidence above.
+
+Focused evidence:
+
+```text
+tests/test_cosimulation.py::TestQ1616Precision::test_pernarowski_q1616_parity
+tests/test_reference_traces.py::test_trace_features_match_independent_reference[pernarowski]
+tests/test_catalogue_formal.py::test_catalogue_formal_inventory_matches_perfect_count
+```
+
+---
+
 ## Infrastructure pipeline
 
 ```text
@@ -164,6 +197,8 @@ PernarowskiNeuron
 ├── Julia mirror: candidate-first RK4 adapter path
 ├── Go mirror: candidate-first RK4 service path
 ├── Rust safety mirror: candidate-first RK4 fail-closed path
+├── Schema-to-RTL: Q16.16 exact spike-count co-simulation
+├── Formal catalogue: Q8.8 depth-4 reset-spike safety BMC
 ├── Population / Network / Monitor integration
 └── Spike-count analysis integration
 ```

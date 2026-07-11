@@ -5,6 +5,21 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+### Pernarowski faithful schema-to-RTL enrolment
+- Enrolled the Pernarowski three-state pancreatic beta-cell burster (`pernarowski`, Pernarowski
+  1994, DOI `10.1137/S003613999223449X`) with a TOML/JSON schema that mirrors the maintained hand
+  model's simultaneous classical RK4 flow, exact `v * v * v` operation order, rising-edge
+  `v >= v_threshold` decision, and no-reset semantics. The hand model, schema runner, and emitted
+  Q16.16 RTL have exact spike-count parity at all four enrolled 5,000-step operating points: 17
+  crossings at each of `I=-0.1`, `0.0`, `0.1`, and `0.2`.
+- Added the DOI-backed `pernarowski_autonomous_bursting_doi` trace with an independent three-state
+  RK4 re-derivation, marked the descriptor's RK4 and co-sim facets, and updated the public fidelity
+  row. The S5/H1 descriptor is also registered with the formal catalogue: generated Q8.8 RTL, a
+  port-only harness, and a depth-4 SymbiYosys reset-spike safety job bring the committed inventory
+  to 16 models and pass a direct Z3 BMC. Schema-gap counts move to 25 schema models / 128 net missing
+  / 130 source modules without a schema. The already completed Rust/Go/Julia/Mojo acceleration
+  chain and its committed benchmark artefacts are unchanged.
+
 ### FitzHugh-Rinzel faithful schema-to-RTL enrolment
 - Enrolled the FitzHugh-Rinzel three-state qualitative burster (`fitzhugh_rinzel`, Rinzel 1987,
   DOI `10.1007/978-3-642-93360-8_26`) with a TOML/JSON schema that mirrors the maintained hand

@@ -52,6 +52,7 @@ CLASS_TO_SCHEMA: dict[str, str] = {
     "McKeanNeuron": "mckean",
     "MihalasNieburNeuron": "mihalas_niebur",
     "MorrisLecarNeuron": "morris_lecar",
+    "PernarowskiNeuron": "pernarowski",
     "PerfectIntegratorNeuron": "perfect_integrator",
     "QuadraticIFNeuron": "quadratic_if",
     "ThetaNeuron": "theta",
@@ -66,6 +67,7 @@ DEPTH_BY_SCHEMA: dict[str, int] = {
     "fitzhugh_rinzel": 4,
     "mckean": 4,
     "mihalas_niebur": 3,
+    "pernarowski": 4,
     "theta": 6,
     "adex": 6,
     "glif": 6,
@@ -79,6 +81,7 @@ MINIMAL_SAFETY_SCHEMAS: frozenset[str] = frozenset(
         "mckean",
         "mihalas_niebur",
         "morris_lecar",
+        "pernarowski",
         "connor_stevens",
         "hodgkin_huxley",
     }

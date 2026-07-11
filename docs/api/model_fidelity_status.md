@@ -56,7 +56,7 @@ stub.
 | McKean | ✅ | ✅ | ✅ | ✅ shared-lib | bit-exact — 0/1/7 @ I=0/0.2/0.5 over 20000 steps (RK4, exact piecewise-linear RHS) | `059871140` |
 | Hindmarsh-Rose | ✅ | ✅ | ✅ | ✅ shared-lib | bit-exact — 0/26/52 @ I=0/3/5 over 2000 steps (RK4, polynomial RHS) | `45c05b1e9` |
 | FitzHugh-Rinzel | ✅ | ✅ | ✅ | ✅ shared-lib | bit-exact accel — 0/1/8 @ I=0/0.3/0.5; co-sim exact spike count — hand/schema/Q16.16 RTL 8 @ I=0.5 (3000 RK4 steps, cubic RHS) | `498376221` |
-| Pernarowski | ✅ | ✅ | ✅ | ✅ shared-lib | bit-exact — 7/17/27 @ I=0 over 2000/5000/8000 steps (RK4, cubic RHS, autonomous burster) | `c384ac0cd` |
+| Pernarowski | ✅ | ✅ | ✅ | ✅ shared-lib | bit-exact accel — 7/17/27 @ I=0 over 2000/5000/8000 steps; co-sim exact spike count — hand/schema/Q16.16 RTL 17 @ I=-0.1/0/0.1/0.2 (5000 RK4 steps, autonomous cubic burster); formal Q8.8 reset-spike BMC depth 4 | `c384ac0cd` |
 | Terman-Wang | ✅ | ✅ | ✅ | ✅ shared-lib | spike count — 0/1/3 @ I=-1/0/0.5 over 8000 steps (RK4, cubic + tanh gate) | `ce04dd6f9` |
 | Wilson-HR | ✅ | ✅ | ✅ | ✅ shared-lib | bit-exact — 0/1/4 @ I=0/2/10 over 5000 steps (RK4, polynomial RHS, hard reset-on-spike) | `4d9810e2f` |
 | Rulkov map | ✅ | ✅ | ✅ | ✅ shared-lib | bit-exact — 0/4/34 @ I=0/0.1/0.5 over 2000 iterations (discrete fast-slow map, no integrator; Mojo ULP-bounded) | `7d5889e10` |

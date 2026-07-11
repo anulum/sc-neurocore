@@ -1,0 +1,56 @@
+{
+  "schema_version": "sc-neurocore.reference-trace.v1",
+  "name": "pernarowski_autonomous_bursting_doi",
+  "model": {
+    "schema_name": "pernarowski",
+    "runner": "universal_dsl"
+  },
+  "protocol": {
+    "dt": 0.1,
+    "steps": 5000,
+    "inputs": {
+      "I": 0.0
+    },
+    "state_variables": [
+      "v",
+      "w",
+      "z"
+    ]
+  },
+  "provenance": {
+    "kind": "independent_rk4_reference",
+    "source": "src/sc_neurocore/neurons/model_schemas/pernarowski.toml",
+    "equation": "Autonomous Pernarowski three-state bursting flow (17 upward v>=0.5 threshold crossings) advanced with an independently re-derived four-stage classical RK4 step and rising-edge spike detection, no reset; the cubic fast coordinate and separated recovery and adaptation equations follow Pernarowski's 1994 slowly varying Liénard-system model.",
+    "citation": "doi:10.1137/S003613999223449X"
+  },
+  "expected_features": {
+    "spike_count": 17.0,
+    "first_spike_step": 113.0,
+    "final.v": -1.7558481812747977,
+    "min.v": -1.977202918206893,
+    "max.v": 1.9298352829923668,
+    "mean.v": -0.13635298207561358,
+    "final.w": -0.1378034313981877,
+    "min.w": -0.9706277580421317,
+    "max.w": 0.9298849791465325,
+    "mean.w": -0.06705912344738536,
+    "final.z": 0.11082518025562278,
+    "min.z": -0.0027823319547937157,
+    "max.z": 0.11415624126175451,
+    "mean.z": 0.060221380175545736
+  },
+  "tolerances": {
+    "default": {
+      "absolute": 1e-09,
+      "relative": 1e-12
+    },
+    "spike_count": {
+      "absolute": 0.0,
+      "relative": 0.0
+    },
+    "first_spike_step": {
+      "absolute": 0.0,
+      "relative": 0.0
+    }
+  }
+}

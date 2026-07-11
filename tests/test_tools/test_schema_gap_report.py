@@ -47,7 +47,7 @@ def test_live_schema_gap_counts_match_current_checkout() -> None:
 
     assert report["schema_version"] == tool.SCHEMA_VERSION
     assert counts["model_modules"] == len(modules)
-    assert counts["schema_models"] == 24
+    assert counts["schema_models"] == 25
     assert counts["schema_only_models"] == 2
     assert report["schema_only_models"] == ["izhikevich", "lif"]
     assert len(report["records"]) == len(modules)

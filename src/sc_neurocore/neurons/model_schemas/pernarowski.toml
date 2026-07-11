@@ -1,0 +1,44 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Commercial license available
+# © Concepts 1996–2026 Miroslav Šotek. All rights reserved.
+# © Code 2020–2026 Miroslav Šotek. All rights reserved.
+# ORCID: 0009-0009-3560-0851
+# Contact: www.anulum.li | protoscience@anulum.li
+# SC-NeuroCore — Source/config provenance header
+
+[metadata]
+schema_version = 1
+name = "Pernarowski"
+author = "Pernarowski, M."
+year = 1994
+doi = "10.1137/S003613999223449X"
+description = "Three-state pancreatic beta-cell bursting oscillator with a fast cubic coordinate and two separated slow variables"
+
+[state]
+v = -1.0
+w = 0.0
+z = 0.0
+
+[parameters]
+alpha = 0.1
+beta = 0.5
+eps1 = 0.1
+eps2 = 0.001
+gamma = 0.5
+v_threshold = 0.5
+
+[integration]
+dt = 0.1
+method = "rk4"
+
+[dynamics]
+v = "v - v * v * v / 3.0 - w - z + I"
+w = "eps1 * (v - gamma * w + alpha)"
+z = "eps2 * (beta * (v + 0.7) - z)"
+
+[threshold]
+condition = "v >= v_threshold"
+detection = "crossing"
+
+[extensions]
+silicon_cosim_note = "At each enrolled operating point I=-0.1, 0.0, 0.1, and 0.2, the no-reset autonomous burster produces 17 upward crossings over 5000 steps in the hand model, schema runner, and Q16.16 RTL."

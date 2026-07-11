@@ -119,6 +119,19 @@ band: seven crossings at `I=0.4`, eight at `I=0.5`, and eight at `I=0.6`. The ma
 crossing at `I=0.7` is outside the declared parity band because fixed-point rounding
 changes its count.
 
+### Pernarowski Q16.16 enrolment
+
+The three-state `pernarowski` schema mirrors the maintained autonomous beta-cell
+burster: simultaneous classical RK4 over a cubic fast coordinate and two separated
+slow variables, rising-edge `v >= 0.5` detection, and no reset. Its slow-wave rhythm
+is intrinsic, so input current shifts the trajectory rather than gating a
+silent/single/train response. Over 5000 steps, the hand model, schema runner, and
+emitted Q16.16 RTL agree exactly at all four enrolled operating points: 17 crossings
+at each of `I=-0.1`, `0.0`, `0.1`, and `0.2`.
+The corresponding S5/H1 promotion also emits a Q8.8 formal-catalogue core and
+port-only harness. Its depth-4 SymbiYosys/Z3 job proves the bounded reset-spike
+safety property; the Q16.16 harness remains the behavioural parity evidence.
+
 ## Adding a New Model to Co-Simulation
 
 1. **Ensure the model schema exists** in `src/sc_neurocore/neurons/model_schemas/`
@@ -146,7 +159,7 @@ The tool scans live source modules and schema files without importing optional
 backends. It reports the net schema gap, source modules still lacking a
 same-name or alias schema, schema-only names, source-evidence classifications,
 and a ranked enrolment table. The current checkout has 153 model source modules,
-24 unique schema models, a net schema gap of 129, and 131 source-module rows
+25 unique schema models, a net schema gap of 128, and 130 source-module rows
 still needing same-name or alias schema coverage because `izhikevich` and `lif`
 are schema-only names.
 

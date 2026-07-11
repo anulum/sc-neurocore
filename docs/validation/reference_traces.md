@@ -36,6 +36,7 @@ table because their schemas are stochastic.
 | `mckean_driven_oscillation_doi` | `mckean` | `universal_dsl` | Independent fourth-order Runge-Kutta re-derivation of the piecewise-linear relaxation oscillator (no reset, rising-edge `v >= 0.8` crossing) from `neurons/model_schemas/mckean.toml` with DOI-backed schema provenance |
 | `mihalas_niebur_driven_spiking_doi` | `mihalas_niebur` | `universal_dsl` | Independent fourth-order Runge-Kutta re-derivation of the four-state adaptive-threshold flow from `neurons/model_schemas/mihalas_niebur.toml` with DOI-backed schema provenance |
 | `morris_lecar_driven_oscillation_doi` | `morris_lecar` | `universal_dsl` | Independent fourth-order Runge-Kutta re-derivation of the driven calcium-potassium relaxation oscillator (no reset, rising-edge `v >= 0` crossing) from `neurons/model_schemas/morris_lecar.toml` with DOI-backed schema provenance |
+| `pernarowski_autonomous_bursting_doi` | `pernarowski` | `universal_dsl` | Independent fourth-order Runge-Kutta re-derivation of the autonomous three-state beta-cell bursting flow (no reset, rising-edge `v >= 0.5` crossing) from `neurons/model_schemas/pernarowski.toml` with DOI-backed schema provenance |
 | `perfect_integrator_constant_current_sawtooth` | `perfect_integrator` | `universal_dsl` | Analytic post-reset sawtooth solution from `neurons/model_schemas/perfect_integrator.toml` |
 | `quadratic_if_zero_current_analytic` | `quadratic_if` | `universal_dsl` | Analytic zero-current Riccati solution from `neurons/model_schemas/quadratic_if.toml` with DOI-backed schema provenance |
 | `resonate_fire_subthreshold_resonance_doi` | `resonate_fire` | `universal_dsl` | Analytic linear Euler recurrence from `neurons/model_schemas/resonate_fire.toml` |
@@ -46,7 +47,7 @@ table because their schemas are stochastic.
 All entries record spike count, first spike step, and final/min/max/mean
 features for the declared state variables. The tests independently recompute the
 LIF, QIF, perfect-integrator, resonate-fire, theta, GLIF, Izhikevich,
-Izhikevich 2007, FitzHugh-Nagumo, FitzHugh-Rinzel, McKean, AdEx, exponential-IF,
+Izhikevich 2007, FitzHugh-Nagumo, FitzHugh-Rinzel, Pernarowski, McKean, AdEx, exponential-IF,
 Hindmarsh-Rose, Morris-Lecar,
 Hodgkin-Huxley, Connor-Stevens, Wang-Buzsaki, DPI, and Mihalas-Niebur analytic,
 explicit-Euler, sequential Gauss-Seidel, or fourth-order Runge-Kutta solutions — every deterministic
@@ -69,6 +70,11 @@ ultra-slow `y` modulation equation. It advances `v`, `w`, and `y` simultaneously
 uses the same no-reset upward-crossing decision, and reproduces all three state
 feature sets plus the eight-crossing `I=0.5` protocol without calling the hand
 model or schema runner.
+The Pernarowski entry independently advances its cubic fast coordinate, recovery
+`w`, and ultra-slow adaptation `z` with simultaneous classical RK4. It uses the
+same no-reset upward-crossing decision and reproduces all three state feature sets,
+the first-spike step, and the 17-crossing zero-drive protocol without calling the
+hand model or schema runner.
 The Mihalas-Niebur entry re-derives the exact classical fourth-order Runge-Kutta
 recurrence for its four linear states (membrane, adaptive threshold, and two
 spike-triggered currents), including the `v = v_reset + b*(v - v_rest)`,
@@ -111,10 +117,10 @@ membrane and Na/K gating rate functions (numpy exp and the exprel-rewritten `alp
 `alpha_n`) reproduce the schema runner bit-for-bit, so the driven schema counts the same five
 action potentials the hand model does (`hand == schema` exact), which the earlier single-step
 Euler resting-gate schema could not.
-The perfect-integrator, FitzHugh-Nagumo, FitzHugh-Rinzel, McKean, Morris-Lecar,
+The perfect-integrator, FitzHugh-Nagumo, FitzHugh-Rinzel, Pernarowski, McKean, Morris-Lecar,
 Hodgkin-Huxley, Connor-Stevens,
 Izhikevich, Izhikevich 2007, DPI, and Mihalas-Niebur entries are spike-bearing;
-they validate reset (or, for FitzHugh-Nagumo, FitzHugh-Rinzel, McKean, Morris-Lecar,
+they validate reset (or, for FitzHugh-Nagumo, FitzHugh-Rinzel, Pernarowski, McKean, Morris-Lecar,
 Hodgkin-Huxley, and Connor-Stevens, rising-edge crossing) and first-spike features,
 not only quiet trajectories. The
 Rulkov entry iterates the Rulkov 2002 piecewise fast/slow map with the
