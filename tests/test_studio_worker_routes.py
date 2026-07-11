@@ -15,6 +15,7 @@ import json
 from pathlib import Path
 from typing import cast
 
+import pytest
 from fastapi import FastAPI
 from starlette.testclient import TestClient
 
@@ -23,7 +24,11 @@ from sc_neurocore.studio.platform import (
     STUDIO_ACTION_EVIDENCE_SCHEMA_VERSION,
     StudioRuntimeSettings,
 )
-from sc_neurocore.studio.platform.jobs import StudioJobManager, StudioJobRecord
+from sc_neurocore.studio.platform.jobs import (
+    StudioJobManager,
+    StudioJobRecord,
+    StudioJobStatus,
+)
 
 
 def _client_with_job_root(tmp_path: Path) -> tuple[FastAPI, TestClient]:
@@ -100,6 +105,66 @@ def _assert_evidence_manifest(
     result_artifact = artifacts[0]
     assert isinstance(result_artifact, dict)
     assert result_artifact["relative_path"] == result_path
+
+
+@pytest.mark.parametrize(
+    ("status", "expected_status", "expected_detail"),
+    [
+        ("pending", 503, "studio_job_wait_exceeded"),
+        ("timed_out", 504, "studio_job_timed_out"),
+        ("failed", 500, "studio_job_failed"),
+    ],
+)
+def test_compile_route_maps_process_worker_terminal_failures(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    status: StudioJobStatus,
+    expected_status: int,
+    expected_detail: str,
+) -> None:
+    """Process-worker terminal states map to stable API failures."""
+    app, client = _client_with_job_root(tmp_path)
+
+    def _submit_process_task(
+        self: StudioJobManager,
+        **_kwargs: object,
+    ) -> StudioJobRecord:
+        return StudioJobRecord(
+            job_id="route-error-job",
+            kind="compiler",
+            owner="studio-compiler",
+            request_id=None,
+            status="pending",
+            execution_model="process",
+            created_at_utc="2026-07-11T00:00:00Z",
+        )
+
+    def _wait(
+        self: StudioJobManager,
+        job_id: str,
+        *,
+        timeout_seconds: float | None = None,
+    ) -> StudioJobRecord:
+        del self, timeout_seconds
+        return StudioJobRecord(
+            job_id=job_id,
+            kind="compiler",
+            owner="studio-compiler",
+            request_id=None,
+            status=status,
+            execution_model="process",
+            created_at_utc="2026-07-11T00:00:00Z",
+        )
+
+    monkeypatch.setattr(StudioJobManager, "submit_process_task", _submit_process_task)
+    monkeypatch.setattr(StudioJobManager, "wait", _wait)
+    response = client.post(
+        "/api/compile",
+        json={"equations": ["dv/dt = I"]},
+    )
+
+    assert response.status_code == expected_status
+    assert response.json()["detail"] == expected_detail
 
 
 def test_synthesis_route_records_bounded_worker_job(tmp_path: Path) -> None:
@@ -249,6 +314,17 @@ def test_compile_route_records_bounded_worker_job(tmp_path: Path) -> None:
         result_path="compiler/result.json",
         replay_route="POST /api/compile",
     )
+
+
+def test_emit_systemverilog_route_requires_ir_text(tmp_path: Path) -> None:
+    """Direct IR emission rejects an empty intermediate representation."""
+
+    _, client = _client_with_job_root(tmp_path)
+
+    response = client.post("/api/ir/emit-sv", json={})
+
+    assert response.status_code == 422
+    assert response.json()["detail"] == "ir_text required"
 
 
 def test_pipeline_route_records_bounded_worker_job(tmp_path: Path) -> None:

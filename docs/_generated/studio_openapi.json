@@ -1,0 +1,6438 @@
+{
+  "components": {
+    "schemas": {
+      "AdaptivePrecisionAutoTuneRequest": {
+        "description": "Request body for adaptive synapse-precision auto-tuning.",
+        "properties": {
+          "confidence": {
+            "default": 0.95,
+            "exclusiveMaximum": 1.0,
+            "exclusiveMinimum": 0.0,
+            "title": "Confidence",
+            "type": "number"
+          },
+          "layer_names": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Layer Names"
+          },
+          "layer_weights": {
+            "items": {
+              "anyOf": [
+                {
+                  "items": {
+                    "items": {
+                      "type": "number"
+                    },
+                    "type": "array"
+                  },
+                  "type": "array"
+                },
+                {
+                  "items": {
+                    "type": "number"
+                  },
+                  "type": "array"
+                }
+              ]
+            },
+            "title": "Layer Weights",
+            "type": "array"
+          },
+          "max_bits": {
+            "default": 16,
+            "maximum": 32.0,
+            "minimum": 1.0,
+            "title": "Max Bits",
+            "type": "integer"
+          },
+          "max_length": {
+            "default": 4096,
+            "maximum": 262144.0,
+            "minimum": 1.0,
+            "title": "Max Length",
+            "type": "integer"
+          },
+          "min_bits": {
+            "default": 4,
+            "maximum": 32.0,
+            "minimum": 1.0,
+            "title": "Min Bits",
+            "type": "integer"
+          },
+          "min_length": {
+            "default": 32,
+            "maximum": 65536.0,
+            "minimum": 1.0,
+            "title": "Min Length",
+            "type": "integer"
+          },
+          "target_error_percent": {
+            "default": 0.1,
+            "exclusiveMinimum": 0.0,
+            "maximum": 10.0,
+            "title": "Target Error Percent",
+            "type": "number"
+          }
+        },
+        "required": [
+          "layer_weights"
+        ],
+        "title": "AdaptivePrecisionAutoTuneRequest",
+        "type": "object"
+      },
+      "AdaptivePrecisionFormalBundleRequest": {
+        "description": "Request body for adaptive-precision formal evidence bundles.",
+        "properties": {
+          "confidence": {
+            "default": 0.95,
+            "exclusiveMaximum": 1.0,
+            "exclusiveMinimum": 0.0,
+            "title": "Confidence",
+            "type": "number"
+          },
+          "layer_names": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Layer Names"
+          },
+          "layer_weights": {
+            "items": {
+              "anyOf": [
+                {
+                  "items": {
+                    "items": {
+                      "type": "number"
+                    },
+                    "type": "array"
+                  },
+                  "type": "array"
+                },
+                {
+                  "items": {
+                    "type": "number"
+                  },
+                  "type": "array"
+                }
+              ]
+            },
+            "title": "Layer Weights",
+            "type": "array"
+          },
+          "max_bits": {
+            "default": 16,
+            "maximum": 32.0,
+            "minimum": 1.0,
+            "title": "Max Bits",
+            "type": "integer"
+          },
+          "max_length": {
+            "default": 4096,
+            "maximum": 262144.0,
+            "minimum": 1.0,
+            "title": "Max Length",
+            "type": "integer"
+          },
+          "min_bits": {
+            "default": 4,
+            "maximum": 32.0,
+            "minimum": 1.0,
+            "title": "Min Bits",
+            "type": "integer"
+          },
+          "min_length": {
+            "default": 32,
+            "maximum": 65536.0,
+            "minimum": 1.0,
+            "title": "Min Length",
+            "type": "integer"
+          },
+          "module_name": {
+            "default": "adaptive_precision_plan",
+            "maxLength": 128,
+            "minLength": 1,
+            "title": "Module Name",
+            "type": "string"
+          },
+          "target_error_percent": {
+            "default": 0.1,
+            "exclusiveMinimum": 0.0,
+            "maximum": 10.0,
+            "title": "Target Error Percent",
+            "type": "number"
+          }
+        },
+        "required": [
+          "layer_weights"
+        ],
+        "title": "AdaptivePrecisionFormalBundleRequest",
+        "type": "object"
+      },
+      "BenchmarkContributeRequest": {
+        "description": "Request body for benchmark-databank contribution uploads.",
+        "properties": {
+          "handle": {
+            "default": "",
+            "maxLength": 40,
+            "title": "Handle",
+            "type": "string"
+          },
+          "submission": {
+            "additionalProperties": true,
+            "title": "Submission",
+            "type": "object"
+          }
+        },
+        "required": [
+          "submission"
+        ],
+        "title": "BenchmarkContributeRequest",
+        "type": "object"
+      },
+      "BenchmarkRunRequest": {
+        "description": "Request body for local Studio benchmark runs.",
+        "properties": {
+          "n_channels": {
+            "default": 512,
+            "maximum": 8192.0,
+            "minimum": 16.0,
+            "title": "N Channels",
+            "type": "integer"
+          },
+          "n_taps": {
+            "default": 32,
+            "maximum": 256.0,
+            "minimum": 4.0,
+            "title": "N Taps",
+            "type": "integer"
+          },
+          "repeats": {
+            "default": 12,
+            "maximum": 50.0,
+            "minimum": 3.0,
+            "title": "Repeats",
+            "type": "integer"
+          }
+        },
+        "title": "BenchmarkRunRequest",
+        "type": "object"
+      },
+      "BifurcationRequest": {
+        "description": "Request body for one-parameter bifurcation sweeps.",
+        "properties": {
+          "current": {
+            "default": 10.0,
+            "title": "Current",
+            "type": "number"
+          },
+          "dt": {
+            "default": 0.1,
+            "title": "Dt",
+            "type": "number"
+          },
+          "duration": {
+            "default": 200.0,
+            "title": "Duration",
+            "type": "number"
+          },
+          "equations": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Equations"
+          },
+          "init": {
+            "anyOf": [
+              {
+                "additionalProperties": {
+                  "type": "number"
+                },
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Init"
+          },
+          "model_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Model Name"
+          },
+          "params": {
+            "anyOf": [
+              {
+                "additionalProperties": {
+                  "type": "number"
+                },
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Params"
+          },
+          "reset": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reset"
+          },
+          "sweep_max": {
+            "title": "Sweep Max",
+            "type": "number"
+          },
+          "sweep_min": {
+            "title": "Sweep Min",
+            "type": "number"
+          },
+          "sweep_param": {
+            "title": "Sweep Param",
+            "type": "string"
+          },
+          "sweep_steps": {
+            "default": 30,
+            "maximum": 80.0,
+            "minimum": 5.0,
+            "title": "Sweep Steps",
+            "type": "integer"
+          },
+          "threshold": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Threshold"
+          }
+        },
+        "required": [
+          "sweep_param",
+          "sweep_min",
+          "sweep_max"
+        ],
+        "title": "BifurcationRequest",
+        "type": "object"
+      },
+      "CodegenRequest": {
+        "description": "Request body for Studio script and one-liner generation.",
+        "properties": {
+          "current": {
+            "default": 10.0,
+            "title": "Current",
+            "type": "number"
+          },
+          "dt": {
+            "default": 0.1,
+            "title": "Dt",
+            "type": "number"
+          },
+          "duration": {
+            "default": 100.0,
+            "title": "Duration",
+            "type": "number"
+          },
+          "equations": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Equations"
+          },
+          "init": {
+            "anyOf": [
+              {
+                "additionalProperties": {
+                  "type": "number"
+                },
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Init"
+          },
+          "mode": {
+            "default": "model",
+            "title": "Mode",
+            "type": "string"
+          },
+          "model_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Model Name"
+          },
+          "params": {
+            "anyOf": [
+              {
+                "additionalProperties": {
+                  "type": "number"
+                },
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Params"
+          },
+          "reset": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reset"
+          },
+          "threshold": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Threshold"
+          }
+        },
+        "title": "CodegenRequest",
+        "type": "object"
+      },
+      "CompareRequest": {
+        "description": "Request body for comparing two Studio simulation configurations.",
+        "properties": {
+          "config_a": {
+            "additionalProperties": true,
+            "title": "Config A",
+            "type": "object"
+          },
+          "config_b": {
+            "additionalProperties": true,
+            "title": "Config B",
+            "type": "object"
+          }
+        },
+        "required": [
+          "config_a",
+          "config_b"
+        ],
+        "title": "CompareRequest",
+        "type": "object"
+      },
+      "CompileRequest": {
+        "description": "Request body for equation-to-SystemVerilog compilation.",
+        "properties": {
+          "equations": {
+            "items": {
+              "type": "string"
+            },
+            "minItems": 1,
+            "title": "Equations",
+            "type": "array"
+          },
+          "init": {
+            "anyOf": [
+              {
+                "additionalProperties": {
+                  "type": "number"
+                },
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Init"
+          },
+          "module_name": {
+            "default": "sc_neuron",
+            "title": "Module Name",
+            "type": "string"
+          },
+          "params": {
+            "anyOf": [
+              {
+                "additionalProperties": {
+                  "type": "number"
+                },
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Params"
+          },
+          "reset": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reset"
+          },
+          "threshold": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Threshold"
+          }
+        },
+        "required": [
+          "equations"
+        ],
+        "title": "CompileRequest",
+        "type": "object"
+      },
+      "DclsEvaluateRequest": {
+        "description": "Request body for DCLS kernel parity evaluation.",
+        "properties": {
+          "centre_q88": {
+            "default": 512,
+            "maximum": 65535.0,
+            "minimum": 0.0,
+            "title": "Centre Q88",
+            "type": "integer"
+          },
+          "n_taps": {
+            "default": 8,
+            "maximum": 256.0,
+            "minimum": 1.0,
+            "title": "N Taps",
+            "type": "integer"
+          },
+          "sigma_q88": {
+            "default": 512,
+            "exclusiveMinimum": 0.0,
+            "maximum": 65535.0,
+            "title": "Sigma Q88",
+            "type": "integer"
+          },
+          "spikes": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "integer"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Spikes"
+          },
+          "weights_q88": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "integer"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Weights Q88"
+          }
+        },
+        "title": "DclsEvaluateRequest",
+        "type": "object"
+      },
+      "FICurveRequest": {
+        "description": "Request body for firing-rate versus current sweeps.",
+        "properties": {
+          "dt": {
+            "default": 0.1,
+            "exclusiveMinimum": 0.0,
+            "title": "Dt",
+            "type": "number"
+          },
+          "duration": {
+            "default": 200.0,
+            "exclusiveMinimum": 0.0,
+            "title": "Duration",
+            "type": "number"
+          },
+          "equations": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Equations"
+          },
+          "i_max": {
+            "default": 50.0,
+            "title": "I Max",
+            "type": "number"
+          },
+          "i_min": {
+            "default": 0.0,
+            "title": "I Min",
+            "type": "number"
+          },
+          "i_steps": {
+            "default": 25,
+            "maximum": 100.0,
+            "minimum": 2.0,
+            "title": "I Steps",
+            "type": "integer"
+          },
+          "init": {
+            "anyOf": [
+              {
+                "additionalProperties": {
+                  "type": "number"
+                },
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Init"
+          },
+          "model_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Model Name"
+          },
+          "params": {
+            "anyOf": [
+              {
+                "additionalProperties": {
+                  "type": "number"
+                },
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Params"
+          },
+          "reset": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reset"
+          },
+          "threshold": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Threshold"
+          }
+        },
+        "title": "FICurveRequest",
+        "type": "object"
+      },
+      "FreqResponseRequest": {
+        "description": "Request body for frequency-response analysis.",
+        "properties": {
+          "amplitude": {
+            "default": 10.0,
+            "title": "Amplitude",
+            "type": "number"
+          },
+          "dt": {
+            "default": 0.1,
+            "title": "Dt",
+            "type": "number"
+          },
+          "duration": {
+            "default": 200.0,
+            "title": "Duration",
+            "type": "number"
+          },
+          "equations": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Equations"
+          },
+          "freq_max": {
+            "default": 100.0,
+            "title": "Freq Max",
+            "type": "number"
+          },
+          "freq_min": {
+            "default": 1.0,
+            "title": "Freq Min",
+            "type": "number"
+          },
+          "init": {
+            "anyOf": [
+              {
+                "additionalProperties": {
+                  "type": "number"
+                },
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Init"
+          },
+          "model_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Model Name"
+          },
+          "n_freqs": {
+            "default": 15,
+            "maximum": 50.0,
+            "minimum": 3.0,
+            "title": "N Freqs",
+            "type": "integer"
+          },
+          "params": {
+            "anyOf": [
+              {
+                "additionalProperties": {
+                  "type": "number"
+                },
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Params"
+          },
+          "reset": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reset"
+          },
+          "threshold": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Threshold"
+          }
+        },
+        "title": "FreqResponseRequest",
+        "type": "object"
+      },
+      "HTTPValidationError": {
+        "properties": {
+          "detail": {
+            "items": {
+              "$ref": "#/components/schemas/ValidationError"
+            },
+            "title": "Detail",
+            "type": "array"
+          }
+        },
+        "title": "HTTPValidationError",
+        "type": "object"
+      },
+      "HeatmapRequest": {
+        "description": "Request body for two-parameter response heatmap analysis.",
+        "properties": {
+          "current": {
+            "default": 10.0,
+            "title": "Current",
+            "type": "number"
+          },
+          "dt": {
+            "default": 0.1,
+            "title": "Dt",
+            "type": "number"
+          },
+          "duration": {
+            "default": 100.0,
+            "title": "Duration",
+            "type": "number"
+          },
+          "equations": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Equations"
+          },
+          "init": {
+            "anyOf": [
+              {
+                "additionalProperties": {
+                  "type": "number"
+                },
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Init"
+          },
+          "model_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Model Name"
+          },
+          "param_x": {
+            "title": "Param X",
+            "type": "string"
+          },
+          "param_y": {
+            "title": "Param Y",
+            "type": "string"
+          },
+          "params": {
+            "anyOf": [
+              {
+                "additionalProperties": {
+                  "type": "number"
+                },
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Params"
+          },
+          "reset": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reset"
+          },
+          "threshold": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Threshold"
+          },
+          "x_max": {
+            "title": "X Max",
+            "type": "number"
+          },
+          "x_min": {
+            "title": "X Min",
+            "type": "number"
+          },
+          "x_steps": {
+            "default": 15,
+            "maximum": 30.0,
+            "minimum": 3.0,
+            "title": "X Steps",
+            "type": "integer"
+          },
+          "y_max": {
+            "title": "Y Max",
+            "type": "number"
+          },
+          "y_min": {
+            "title": "Y Min",
+            "type": "number"
+          },
+          "y_steps": {
+            "default": 15,
+            "maximum": 30.0,
+            "minimum": 3.0,
+            "title": "Y Steps",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "param_x",
+          "x_min",
+          "x_max",
+          "param_y",
+          "y_min",
+          "y_max"
+        ],
+        "title": "HeatmapRequest",
+        "type": "object"
+      },
+      "ModelSimulateRequest": {
+        "description": "Request body for model-catalogue simulation in Studio.",
+        "properties": {
+          "current": {
+            "default": 10.0,
+            "title": "Current",
+            "type": "number"
+          },
+          "dt": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Dt"
+          },
+          "duration": {
+            "default": 100.0,
+            "exclusiveMinimum": 0.0,
+            "title": "Duration",
+            "type": "number"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "params": {
+            "anyOf": [
+              {
+                "additionalProperties": {
+                  "type": "number"
+                },
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Params"
+          },
+          "protocol": {
+            "default": "constant",
+            "title": "Protocol",
+            "type": "string"
+          }
+        },
+        "required": [
+          "name"
+        ],
+        "title": "ModelSimulateRequest",
+        "type": "object"
+      },
+      "NetworkRequest": {
+        "description": "Request body for balanced excitatory-inhibitory network simulation.",
+        "properties": {
+          "dt": {
+            "default": 0.1,
+            "exclusiveMinimum": 0.0,
+            "title": "Dt",
+            "type": "number"
+          },
+          "duration": {
+            "default": 200.0,
+            "exclusiveMinimum": 0.0,
+            "maximum": 2000.0,
+            "title": "Duration",
+            "type": "number"
+          },
+          "ext_rate": {
+            "default": 5.0,
+            "title": "Ext Rate",
+            "type": "number"
+          },
+          "n_exc": {
+            "default": 80,
+            "maximum": 500.0,
+            "minimum": 10.0,
+            "title": "N Exc",
+            "type": "integer"
+          },
+          "n_inh": {
+            "default": 20,
+            "maximum": 200.0,
+            "minimum": 5.0,
+            "title": "N Inh",
+            "type": "integer"
+          },
+          "p_conn": {
+            "default": 0.2,
+            "maximum": 1.0,
+            "minimum": 0.01,
+            "title": "P Conn",
+            "type": "number"
+          },
+          "w_ee": {
+            "default": 0.1,
+            "title": "W Ee",
+            "type": "number"
+          },
+          "w_ei": {
+            "default": 0.4,
+            "title": "W Ei",
+            "type": "number"
+          },
+          "w_ie": {
+            "default": 0.1,
+            "title": "W Ie",
+            "type": "number"
+          },
+          "w_ii": {
+            "default": 0.4,
+            "title": "W Ii",
+            "type": "number"
+          }
+        },
+        "title": "NetworkRequest",
+        "type": "object"
+      },
+      "NullclineRequest": {
+        "description": "Request body for two-dimensional nullcline analysis.",
+        "properties": {
+          "equations": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Equations",
+            "type": "array"
+          },
+          "grid_size": {
+            "default": 60,
+            "maximum": 150.0,
+            "minimum": 20.0,
+            "title": "Grid Size",
+            "type": "integer"
+          },
+          "params": {
+            "additionalProperties": {
+              "type": "number"
+            },
+            "title": "Params",
+            "type": "object"
+          },
+          "ranges": {
+            "additionalProperties": {
+              "items": {
+                "type": "number"
+              },
+              "type": "array"
+            },
+            "title": "Ranges",
+            "type": "object"
+          },
+          "var_names": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Var Names",
+            "type": "array"
+          }
+        },
+        "required": [
+          "equations",
+          "params",
+          "var_names",
+          "ranges"
+        ],
+        "title": "NullclineRequest",
+        "type": "object"
+      },
+      "PrecisionRequest": {
+        "description": "Request body for float versus fixed-point precision comparisons.",
+        "properties": {
+          "current": {
+            "default": 10.0,
+            "title": "Current",
+            "type": "number"
+          },
+          "dt": {
+            "default": 0.1,
+            "title": "Dt",
+            "type": "number"
+          },
+          "duration": {
+            "default": 200.0,
+            "title": "Duration",
+            "type": "number"
+          },
+          "equations": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Equations",
+            "type": "array"
+          },
+          "init": {
+            "anyOf": [
+              {
+                "additionalProperties": {
+                  "type": "number"
+                },
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Init"
+          },
+          "params": {
+            "anyOf": [
+              {
+                "additionalProperties": {
+                  "type": "number"
+                },
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Params"
+          },
+          "reset": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reset"
+          },
+          "threshold": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Threshold"
+          }
+        },
+        "required": [
+          "equations"
+        ],
+        "title": "PrecisionRequest",
+        "type": "object"
+      },
+      "PresetActionResolveRequest": {
+        "description": "Request body for resolving one preset action template.",
+        "properties": {
+          "overrides": {
+            "additionalProperties": true,
+            "title": "Overrides",
+            "type": "object"
+          }
+        },
+        "title": "PresetActionResolveRequest",
+        "type": "object"
+      },
+      "PresetActionsExecuteAllRequest": {
+        "description": "Request body for executing all actions attached to a preset.",
+        "properties": {
+          "action_overrides": {
+            "additionalProperties": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "title": "Action Overrides",
+            "type": "object"
+          }
+        },
+        "title": "PresetActionsExecuteAllRequest",
+        "type": "object"
+      },
+      "PresetDefaultFlowAttestRequest": {
+        "description": "Request body for attesting a completed preset flow run.",
+        "properties": {
+          "run_result": {
+            "additionalProperties": true,
+            "title": "Run Result",
+            "type": "object"
+          }
+        },
+        "required": [
+          "run_result"
+        ],
+        "title": "PresetDefaultFlowAttestRequest",
+        "type": "object"
+      },
+      "PresetDefaultFlowAttestationVerifyRequest": {
+        "description": "Request body for verifying a preset flow attestation.",
+        "properties": {
+          "attestation": {
+            "additionalProperties": true,
+            "title": "Attestation",
+            "type": "object"
+          },
+          "run_result": {
+            "additionalProperties": true,
+            "title": "Run Result",
+            "type": "object"
+          }
+        },
+        "required": [
+          "run_result",
+          "attestation"
+        ],
+        "title": "PresetDefaultFlowAttestationVerifyRequest",
+        "type": "object"
+      },
+      "PresetDefaultFlowGuardedRunRequest": {
+        "description": "Request body for running a preset flow with fingerprint guards.",
+        "properties": {
+          "action_order": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Action Order",
+            "type": "array"
+          },
+          "action_overrides": {
+            "additionalProperties": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "title": "Action Overrides",
+            "type": "object"
+          },
+          "plan_fingerprint_sha256": {
+            "pattern": "^[0-9a-f]{64}$",
+            "title": "Plan Fingerprint Sha256",
+            "type": "string"
+          },
+          "template_fingerprints": {
+            "additionalProperties": {
+              "pattern": "^[0-9a-f]{64}$",
+              "type": "string"
+            },
+            "title": "Template Fingerprints",
+            "type": "object"
+          }
+        },
+        "required": [
+          "action_order",
+          "template_fingerprints",
+          "plan_fingerprint_sha256"
+        ],
+        "title": "PresetDefaultFlowGuardedRunRequest",
+        "type": "object"
+      },
+      "PresetDefaultFlowRunFromContractRequest": {
+        "description": "Request body for running a preset flow from a stored contract.",
+        "properties": {
+          "action_overrides": {
+            "additionalProperties": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "title": "Action Overrides",
+            "type": "object"
+          },
+          "contract": {
+            "additionalProperties": true,
+            "title": "Contract",
+            "type": "object"
+          }
+        },
+        "required": [
+          "contract"
+        ],
+        "title": "PresetDefaultFlowRunFromContractRequest",
+        "type": "object"
+      },
+      "PresetDefaultFlowRunRequest": {
+        "description": "Request body for running a preset's default action flow.",
+        "properties": {
+          "action_overrides": {
+            "additionalProperties": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "title": "Action Overrides",
+            "type": "object"
+          }
+        },
+        "title": "PresetDefaultFlowRunRequest",
+        "type": "object"
+      },
+      "PresetDefaultFlowVerifyRequest": {
+        "description": "Request body for verifying a preset default-flow plan.",
+        "properties": {
+          "action_order": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Action Order",
+            "type": "array"
+          },
+          "plan_fingerprint_sha256": {
+            "anyOf": [
+              {
+                "pattern": "^[0-9a-f]{64}$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Plan Fingerprint Sha256"
+          },
+          "template_fingerprints": {
+            "additionalProperties": {
+              "pattern": "^[0-9a-f]{64}$",
+              "type": "string"
+            },
+            "title": "Template Fingerprints",
+            "type": "object"
+          }
+        },
+        "required": [
+          "action_order",
+          "template_fingerprints"
+        ],
+        "title": "PresetDefaultFlowVerifyRequest",
+        "type": "object"
+      },
+      "SensitivityRequest": {
+        "description": "Request body for Studio model sensitivity analysis.",
+        "properties": {
+          "current": {
+            "default": 10.0,
+            "title": "Current",
+            "type": "number"
+          },
+          "dt": {
+            "default": 0.1,
+            "title": "Dt",
+            "type": "number"
+          },
+          "duration": {
+            "default": 200.0,
+            "title": "Duration",
+            "type": "number"
+          },
+          "equations": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Equations"
+          },
+          "init": {
+            "anyOf": [
+              {
+                "additionalProperties": {
+                  "type": "number"
+                },
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Init"
+          },
+          "model_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Model Name"
+          },
+          "params": {
+            "anyOf": [
+              {
+                "additionalProperties": {
+                  "type": "number"
+                },
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Params"
+          },
+          "reset": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reset"
+          },
+          "threshold": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Threshold"
+          }
+        },
+        "title": "SensitivityRequest",
+        "type": "object"
+      },
+      "SimulateRequest": {
+        "description": "Request body for direct ODE simulation in Studio.",
+        "properties": {
+          "current": {
+            "default": 0.0,
+            "title": "Current",
+            "type": "number"
+          },
+          "dt": {
+            "default": 0.1,
+            "exclusiveMinimum": 0.0,
+            "title": "Dt",
+            "type": "number"
+          },
+          "duration": {
+            "default": 100.0,
+            "exclusiveMinimum": 0.0,
+            "title": "Duration",
+            "type": "number"
+          },
+          "equations": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Equations",
+            "type": "array"
+          },
+          "init": {
+            "anyOf": [
+              {
+                "additionalProperties": {
+                  "type": "number"
+                },
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Init"
+          },
+          "params": {
+            "anyOf": [
+              {
+                "additionalProperties": {
+                  "type": "number"
+                },
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Params"
+          },
+          "protocol": {
+            "default": "constant",
+            "title": "Protocol",
+            "type": "string"
+          },
+          "reset": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reset"
+          },
+          "threshold": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Threshold"
+          }
+        },
+        "required": [
+          "equations"
+        ],
+        "title": "SimulateRequest",
+        "type": "object"
+      },
+      "StudioAuditQuarantineArchivePurgeRequest": {
+        "description": "Request body for admin audit quarantine archive retention purges.",
+        "properties": {
+          "retain_latest": {
+            "default": 10,
+            "maximum": 1000.0,
+            "minimum": 1.0,
+            "title": "Retain Latest",
+            "type": "integer"
+          }
+        },
+        "title": "StudioAuditQuarantineArchivePurgeRequest",
+        "type": "object"
+      },
+      "StudioAuditQuarantineArchiveRequest": {
+        "description": "Request body for admin audit quarantine archive creation.",
+        "properties": {
+          "limit": {
+            "default": 100,
+            "maximum": 1000.0,
+            "minimum": 1.0,
+            "title": "Limit",
+            "type": "integer"
+          }
+        },
+        "title": "StudioAuditQuarantineArchiveRequest",
+        "type": "object"
+      },
+      "StudioAuditQuarantineArchiveRestoreRequest": {
+        "description": "Request body for admin audit quarantine archive restore materialization.",
+        "properties": {
+          "archive": {
+            "additionalProperties": true,
+            "title": "Archive",
+            "type": "object"
+          },
+          "manifest": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Manifest"
+          }
+        },
+        "required": [
+          "archive"
+        ],
+        "title": "StudioAuditQuarantineArchiveRestoreRequest",
+        "type": "object"
+      },
+      "StudioAuditQuarantineArchiveValidateRequest": {
+        "description": "Request body for admin audit quarantine archive validation.",
+        "properties": {
+          "archive": {
+            "additionalProperties": true,
+            "title": "Archive",
+            "type": "object"
+          },
+          "manifest": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Manifest"
+          }
+        },
+        "required": [
+          "archive"
+        ],
+        "title": "StudioAuditQuarantineArchiveValidateRequest",
+        "type": "object"
+      },
+      "StudioBrowserLoginRequest": {
+        "description": "Request body for browser-user login.",
+        "properties": {
+          "password": {
+            "maxLength": 4096,
+            "minLength": 1,
+            "title": "Password",
+            "type": "string"
+          },
+          "username": {
+            "maxLength": 128,
+            "minLength": 1,
+            "title": "Username",
+            "type": "string"
+          }
+        },
+        "required": [
+          "username",
+          "password"
+        ],
+        "title": "StudioBrowserLoginRequest",
+        "type": "object"
+      },
+      "StudioBrowserUserCreateRequest": {
+        "description": "Request body for admin browser-user creation.",
+        "properties": {
+          "active": {
+            "default": true,
+            "title": "Active",
+            "type": "boolean"
+          },
+          "expires_at_utc": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Expires At Utc"
+          },
+          "password": {
+            "maxLength": 4096,
+            "minLength": 1,
+            "title": "Password",
+            "type": "string"
+          },
+          "principal_id": {
+            "maxLength": 256,
+            "minLength": 1,
+            "title": "Principal Id",
+            "type": "string"
+          },
+          "roles": {
+            "items": {
+              "type": "string"
+            },
+            "minItems": 1,
+            "title": "Roles",
+            "type": "array"
+          },
+          "username": {
+            "maxLength": 128,
+            "minLength": 1,
+            "title": "Username",
+            "type": "string"
+          }
+        },
+        "required": [
+          "username",
+          "principal_id",
+          "roles",
+          "password"
+        ],
+        "title": "StudioBrowserUserCreateRequest",
+        "type": "object"
+      },
+      "StudioBrowserUserPasswordRotateRequest": {
+        "description": "Request body for admin browser-user password rotation.",
+        "properties": {
+          "password": {
+            "maxLength": 4096,
+            "minLength": 1,
+            "title": "Password",
+            "type": "string"
+          }
+        },
+        "required": [
+          "password"
+        ],
+        "title": "StudioBrowserUserPasswordRotateRequest",
+        "type": "object"
+      },
+      "StudioBrowserUserUpdateRequest": {
+        "description": "Request body for admin browser-user metadata updates.",
+        "properties": {
+          "active": {
+            "title": "Active",
+            "type": "boolean"
+          },
+          "expires_at_utc": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Expires At Utc"
+          },
+          "roles": {
+            "items": {
+              "type": "string"
+            },
+            "minItems": 1,
+            "title": "Roles",
+            "type": "array"
+          }
+        },
+        "required": [
+          "roles",
+          "active"
+        ],
+        "title": "StudioBrowserUserUpdateRequest",
+        "type": "object"
+      },
+      "StudioEvidenceBundleRequest": {
+        "description": "Request body for admin evidence bundle export.",
+        "properties": {
+          "analysis_results": {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "maxItems": 16,
+            "title": "Analysis Results",
+            "type": "array"
+          },
+          "audit_limit": {
+            "default": 100,
+            "maximum": 1000.0,
+            "minimum": 1.0,
+            "title": "Audit Limit",
+            "type": "integer"
+          },
+          "command_replay": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Command Replay"
+          },
+          "default_flow_attestations": {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "maxItems": 16,
+            "title": "Default Flow Attestations",
+            "type": "array"
+          },
+          "default_flow_runs": {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "maxItems": 16,
+            "title": "Default Flow Runs",
+            "type": "array"
+          },
+          "include_audit": {
+            "default": true,
+            "title": "Include Audit",
+            "type": "boolean"
+          },
+          "job_ids": {
+            "items": {
+              "type": "string"
+            },
+            "maxItems": 64,
+            "title": "Job Ids",
+            "type": "array"
+          },
+          "model_scan_results": {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "maxItems": 16,
+            "title": "Model Scan Results",
+            "type": "array"
+          },
+          "project_name": {
+            "anyOf": [
+              {
+                "maxLength": 128,
+                "minLength": 1,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Project Name"
+          },
+          "simulation_results": {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "maxItems": 16,
+            "title": "Simulation Results",
+            "type": "array"
+          },
+          "weight_restore_attach_results": {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "maxItems": 16,
+            "title": "Weight Restore Attach Results",
+            "type": "array"
+          },
+          "weight_restore_results": {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "maxItems": 16,
+            "title": "Weight Restore Results",
+            "type": "array"
+          }
+        },
+        "title": "StudioEvidenceBundleRequest",
+        "type": "object"
+      },
+      "StudioIdentityServiceAccountUpdateRequest": {
+        "description": "Request body for admin service-account metadata updates.",
+        "properties": {
+          "active": {
+            "title": "Active",
+            "type": "boolean"
+          },
+          "expires_at_utc": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Expires At Utc"
+          },
+          "roles": {
+            "items": {
+              "type": "string"
+            },
+            "minItems": 1,
+            "title": "Roles",
+            "type": "array"
+          }
+        },
+        "required": [
+          "roles",
+          "active"
+        ],
+        "title": "StudioIdentityServiceAccountUpdateRequest",
+        "type": "object"
+      },
+      "StudioTrainingWeightAttachRequest": {
+        "description": "Request body for admin training weight-restore warm-start attach.",
+        "properties": {
+          "config": {
+            "additionalProperties": true,
+            "title": "Config",
+            "type": "object"
+          },
+          "expected_config_sha256": {
+            "anyOf": [
+              {
+                "pattern": "^[0-9a-f]{64}$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Expected Config Sha256"
+          },
+          "source_job_id": {
+            "maxLength": 128,
+            "minLength": 1,
+            "title": "Source Job Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "source_job_id"
+        ],
+        "title": "StudioTrainingWeightAttachRequest",
+        "type": "object"
+      },
+      "StudioTrainingWeightLiveAttachRequest": {
+        "description": "Request body for admin training weight-restore live attach.",
+        "properties": {
+          "expected_config_sha256": {
+            "anyOf": [
+              {
+                "pattern": "^[0-9a-f]{64}$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Expected Config Sha256"
+          },
+          "source_job_id": {
+            "maxLength": 128,
+            "minLength": 1,
+            "title": "Source Job Id",
+            "type": "string"
+          },
+          "target_job_id": {
+            "maxLength": 128,
+            "minLength": 1,
+            "title": "Target Job Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "target_job_id",
+          "source_job_id"
+        ],
+        "title": "StudioTrainingWeightLiveAttachRequest",
+        "type": "object"
+      },
+      "StudioTrainingWeightRestoreRequest": {
+        "description": "Request body for admin training weight-restore materialization.",
+        "properties": {
+          "expected_config_sha256": {
+            "anyOf": [
+              {
+                "pattern": "^[0-9a-f]{64}$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Expected Config Sha256"
+          },
+          "source_job_id": {
+            "maxLength": 128,
+            "minLength": 1,
+            "title": "Source Job Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "source_job_id"
+        ],
+        "title": "StudioTrainingWeightRestoreRequest",
+        "type": "object"
+      },
+      "ValidationError": {
+        "properties": {
+          "ctx": {
+            "title": "Context",
+            "type": "object"
+          },
+          "input": {
+            "title": "Input"
+          },
+          "loc": {
+            "items": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "integer"
+                }
+              ]
+            },
+            "title": "Location",
+            "type": "array"
+          },
+          "msg": {
+            "title": "Message",
+            "type": "string"
+          },
+          "type": {
+            "title": "Error Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "loc",
+          "msg",
+          "type"
+        ],
+        "title": "ValidationError",
+        "type": "object"
+      }
+    }
+  },
+  "info": {
+    "title": "SC-NeuroCore Studio",
+    "version": "1.0.0"
+  },
+  "openapi": "3.1.0",
+  "paths": {
+    "/": {
+      "get": {
+        "operationId": "serve_index__get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Response Serve Index  Get"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Serve Index"
+      }
+    },
+    "/api/adaptive-precision/auto-tune": {
+      "post": {
+        "operationId": "api_adaptive_precision_auto_tune_api_adaptive_precision_auto_tune_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AdaptivePrecisionAutoTuneRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Response Api Adaptive Precision Auto Tune Api Adaptive Precision Auto Tune Post"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Api Adaptive Precision Auto Tune"
+      }
+    },
+    "/api/adaptive-precision/formal-bundle": {
+      "post": {
+        "operationId": "api_adaptive_precision_formal_bundle_api_adaptive_precision_formal_bundle_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AdaptivePrecisionFormalBundleRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Response Api Adaptive Precision Formal Bundle Api Adaptive Precision Formal Bundle Post"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Api Adaptive Precision Formal Bundle"
+      }
+    },
+    "/api/benchmarks/contribute": {
+      "post": {
+        "operationId": "api_benchmark_contribute_api_benchmarks_contribute_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BenchmarkContributeRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Response Api Benchmark Contribute Api Benchmarks Contribute Post"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Api Benchmark Contribute"
+      }
+    },
+    "/api/benchmarks/databank": {
+      "get": {
+        "operationId": "api_benchmark_databank_api_benchmarks_databank_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Response Api Benchmark Databank Api Benchmarks Databank Get"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Api Benchmark Databank"
+      }
+    },
+    "/api/benchmarks/run": {
+      "post": {
+        "operationId": "api_benchmark_run_api_benchmarks_run_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BenchmarkRunRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Response Api Benchmark Run Api Benchmarks Run Post"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Api Benchmark Run"
+      }
+    },
+    "/api/benchmarks/schema": {
+      "get": {
+        "operationId": "api_benchmark_schema_api_benchmarks_schema_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Response Api Benchmark Schema Api Benchmarks Schema Get"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Api Benchmark Schema"
+      }
+    },
+    "/api/bifurcation": {
+      "post": {
+        "operationId": "api_bifurcation_api_bifurcation_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BifurcationRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Response Api Bifurcation Api Bifurcation Post"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Api Bifurcation"
+      }
+    },
+    "/api/cache/stats": {
+      "get": {
+        "operationId": "api_cache_stats_api_cache_stats_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": {
+                    "type": "integer"
+                  },
+                  "title": "Response Api Cache Stats Api Cache Stats Get",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Api Cache Stats"
+      }
+    },
+    "/api/characterize": {
+      "post": {
+        "operationId": "api_characterize_api_characterize_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ModelSimulateRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Response Api Characterize Api Characterize Post"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Api Characterize"
+      }
+    },
+    "/api/classify": {
+      "post": {
+        "operationId": "api_classify_api_classify_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SimulateRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Response Api Classify Api Classify Post"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Api Classify"
+      }
+    },
+    "/api/codegen": {
+      "post": {
+        "operationId": "api_codegen_api_codegen_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CodegenRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Response Api Codegen Api Codegen Post"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Api Codegen"
+      }
+    },
+    "/api/compare": {
+      "post": {
+        "operationId": "api_compare_api_compare_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CompareRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Response Api Compare Api Compare Post"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Api Compare"
+      }
+    },
+    "/api/compile": {
+      "post": {
+        "operationId": "api_compile_api_compile_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CompileRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Response Api Compile Api Compile Post"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Api Compile"
+      }
+    },
+    "/api/dcls/benchmark": {
+      "get": {
+        "operationId": "api_dcls_benchmark_api_dcls_benchmark_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Response Api Dcls Benchmark Api Dcls Benchmark Get"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Api Dcls Benchmark"
+      }
+    },
+    "/api/dcls/evaluate": {
+      "post": {
+        "operationId": "api_dcls_evaluate_api_dcls_evaluate_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DclsEvaluateRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Response Api Dcls Evaluate Api Dcls Evaluate Post"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Api Dcls Evaluate"
+      }
+    },
+    "/api/dcls/info": {
+      "get": {
+        "operationId": "api_dcls_info_api_dcls_info_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Response Api Dcls Info Api Dcls Info Get"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Api Dcls Info"
+      }
+    },
+    "/api/export/svg": {
+      "post": {
+        "operationId": "export_svg_api_export_svg_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ModelSimulateRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Response Export Svg Api Export Svg Post"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Export Svg"
+      }
+    },
+    "/api/fi-curve": {
+      "post": {
+        "operationId": "api_fi_curve_api_fi_curve_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/FICurveRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Response Api Fi Curve Api Fi Curve Post"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Api Fi Curve"
+      }
+    },
+    "/api/freq-response": {
+      "post": {
+        "operationId": "api_freq_response_api_freq_response_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/FreqResponseRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Response Api Freq Response Api Freq Response Post"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Api Freq Response"
+      }
+    },
+    "/api/graph/export-nir": {
+      "post": {
+        "operationId": "api_export_nir_api_graph_export_nir_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "additionalProperties": true,
+                "title": "Data",
+                "type": "object"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Response Api Export Nir Api Graph Export Nir Post"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Api Export Nir"
+      }
+    },
+    "/api/graph/import-nir": {
+      "post": {
+        "operationId": "api_import_nir_api_graph_import_nir_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "additionalProperties": true,
+                "title": "Data",
+                "type": "object"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Response Api Import Nir Api Graph Import Nir Post"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Api Import Nir"
+      }
+    },
+    "/api/graph/models": {
+      "get": {
+        "operationId": "api_graph_models_api_graph_models_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Response Api Graph Models Api Graph Models Get"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Api Graph Models"
+      }
+    },
+    "/api/graph/population": {
+      "post": {
+        "operationId": "api_create_population_api_graph_population_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "additionalProperties": true,
+                "title": "Data",
+                "type": "object"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Response Api Create Population Api Graph Population Post"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Api Create Population"
+      }
+    },
+    "/api/graph/projection": {
+      "post": {
+        "operationId": "api_create_projection_api_graph_projection_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "additionalProperties": true,
+                "title": "Data",
+                "type": "object"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Response Api Create Projection Api Graph Projection Post"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Api Create Projection"
+      }
+    },
+    "/api/graph/simulate": {
+      "post": {
+        "operationId": "api_simulate_graph_api_graph_simulate_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "additionalProperties": true,
+                "title": "Data",
+                "type": "object"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Response Api Simulate Graph Api Graph Simulate Post"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Api Simulate Graph"
+      }
+    },
+    "/api/graph/validate": {
+      "post": {
+        "operationId": "api_validate_graph_api_graph_validate_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "additionalProperties": true,
+                "title": "Data",
+                "type": "object"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Response Api Validate Graph Api Graph Validate Post"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Api Validate Graph"
+      }
+    },
+    "/api/health": {
+      "get": {
+        "operationId": "health_api_health_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response Health Api Health Get",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Health"
+      }
+    },
+    "/api/heatmap": {
+      "post": {
+        "operationId": "api_heatmap_api_heatmap_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/HeatmapRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Response Api Heatmap Api Heatmap Post"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Api Heatmap"
+      }
+    },
+    "/api/import-trace": {
+      "post": {
+        "description": "Accept a voltage trace as JSON array for overlay comparison.",
+        "operationId": "api_import_trace_api_import_trace_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "additionalProperties": true,
+                "title": "Data",
+                "type": "object"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Response Api Import Trace Api Import Trace Post"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Api Import Trace"
+      }
+    },
+    "/api/ir/build": {
+      "post": {
+        "operationId": "api_ir_build_api_ir_build_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SimulateRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Response Api Ir Build Api Ir Build Post"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Api Ir Build"
+      }
+    },
+    "/api/ir/cosim": {
+      "post": {
+        "operationId": "api_ir_cosim_api_ir_cosim_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PrecisionRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Response Api Ir Cosim Api Ir Cosim Post"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Api Ir Cosim"
+      }
+    },
+    "/api/ir/emit-sv": {
+      "post": {
+        "operationId": "api_ir_emit_sv_api_ir_emit_sv_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "additionalProperties": true,
+                "title": "Data",
+                "type": "object"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Response Api Ir Emit Sv Api Ir Emit Sv Post"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Api Ir Emit Sv"
+      }
+    },
+    "/api/ir/emit-sv-direct": {
+      "post": {
+        "operationId": "api_ir_emit_sv_direct_api_ir_emit_sv_direct_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SimulateRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Response Api Ir Emit Sv Direct Api Ir Emit Sv Direct Post"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Api Ir Emit Sv Direct"
+      }
+    },
+    "/api/ir/verify": {
+      "post": {
+        "operationId": "api_ir_verify_api_ir_verify_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "additionalProperties": true,
+                "title": "Data",
+                "type": "object"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Response Api Ir Verify Api Ir Verify Post"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Api Ir Verify"
+      }
+    },
+    "/api/models": {
+      "get": {
+        "operationId": "api_models_api_models_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Response Api Models Api Models Get"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Api Models"
+      }
+    },
+    "/api/models/facets": {
+      "get": {
+        "operationId": "api_model_facets_api_models_facets_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Response Api Model Facets Api Models Facets Get"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Api Model Facets"
+      }
+    },
+    "/api/models/scan": {
+      "get": {
+        "operationId": "api_model_scan_api_models_scan_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Response Api Model Scan Api Models Scan Get"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Api Model Scan"
+      }
+    },
+    "/api/models/simulate": {
+      "post": {
+        "operationId": "api_model_simulate_api_models_simulate_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ModelSimulateRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Response Api Model Simulate Api Models Simulate Post"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Api Model Simulate"
+      }
+    },
+    "/api/models/{name}": {
+      "get": {
+        "operationId": "api_model_api_models__name__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "name",
+            "required": true,
+            "schema": {
+              "title": "Name",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Response Api Model Api Models  Name  Get"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Api Model"
+      }
+    },
+    "/api/models/{name}/doc": {
+      "get": {
+        "operationId": "api_model_doc_api_models__name__doc_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "name",
+            "required": true,
+            "schema": {
+              "title": "Name",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Response Api Model Doc Api Models  Name  Doc Get"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Api Model Doc"
+      }
+    },
+    "/api/multi-simulate": {
+      "post": {
+        "operationId": "api_multi_simulate_api_multi_simulate_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "items": {
+                  "$ref": "#/components/schemas/ModelSimulateRequest"
+                },
+                "title": "Configs",
+                "type": "array"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Response Api Multi Simulate Api Multi Simulate Post"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Api Multi Simulate"
+      }
+    },
+    "/api/network/ei": {
+      "post": {
+        "operationId": "api_network_ei_api_network_ei_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/NetworkRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Response Api Network Ei Api Network Ei Post"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Api Network Ei"
+      }
+    },
+    "/api/nir/compile": {
+      "post": {
+        "operationId": "api_nir_compile_api_nir_compile_post",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "module_name",
+            "required": false,
+            "schema": {
+              "default": "sc_nir_network",
+              "title": "Module Name",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "source_kind",
+            "required": false,
+            "schema": {
+              "default": "lfsr",
+              "title": "Source Kind",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Response Api Nir Compile Api Nir Compile Post"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Api Nir Compile"
+      }
+    },
+    "/api/nullclines": {
+      "post": {
+        "operationId": "api_nullclines_api_nullclines_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/NullclineRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Response Api Nullclines Api Nullclines Post"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Api Nullclines"
+      }
+    },
+    "/api/pipeline/run": {
+      "post": {
+        "operationId": "api_pipeline_run_api_pipeline_run_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "additionalProperties": true,
+                "title": "Data",
+                "type": "object"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Response Api Pipeline Run Api Pipeline Run Post"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Api Pipeline Run"
+      }
+    },
+    "/api/precision": {
+      "post": {
+        "operationId": "api_precision_api_precision_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PrecisionRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Response Api Precision Api Precision Post"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Api Precision"
+      }
+    },
+    "/api/presets": {
+      "get": {
+        "operationId": "api_presets_api_presets_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Response Api Presets Api Presets Get"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Api Presets"
+      }
+    },
+    "/api/presets/actions/catalog": {
+      "get": {
+        "operationId": "api_preset_actions_catalog_api_presets_actions_catalog_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Response Api Preset Actions Catalog Api Presets Actions Catalog Get"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Api Preset Actions Catalog"
+      }
+    },
+    "/api/presets/{preset_id}": {
+      "get": {
+        "operationId": "api_preset_api_presets__preset_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "preset_id",
+            "required": true,
+            "schema": {
+              "title": "Preset Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Response Api Preset Api Presets  Preset Id  Get"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Api Preset"
+      }
+    },
+    "/api/presets/{preset_id}/actions": {
+      "get": {
+        "operationId": "api_preset_actions_api_presets__preset_id__actions_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "preset_id",
+            "required": true,
+            "schema": {
+              "title": "Preset Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Response Api Preset Actions Api Presets  Preset Id  Actions Get"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Api Preset Actions"
+      }
+    },
+    "/api/presets/{preset_id}/actions/execute-all": {
+      "post": {
+        "operationId": "api_preset_actions_execute_all_api_presets__preset_id__actions_execute_all_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "preset_id",
+            "required": true,
+            "schema": {
+              "title": "Preset Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PresetActionsExecuteAllRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Response Api Preset Actions Execute All Api Presets  Preset Id  Actions Execute All Post"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Api Preset Actions Execute All"
+      }
+    },
+    "/api/presets/{preset_id}/actions/{action_id}/execute": {
+      "post": {
+        "operationId": "api_preset_action_execute_api_presets__preset_id__actions__action_id__execute_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "preset_id",
+            "required": true,
+            "schema": {
+              "title": "Preset Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "action_id",
+            "required": true,
+            "schema": {
+              "title": "Action Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PresetActionResolveRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Response Api Preset Action Execute Api Presets  Preset Id  Actions  Action Id  Execute Post"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Api Preset Action Execute"
+      }
+    },
+    "/api/presets/{preset_id}/actions/{action_id}/resolve": {
+      "post": {
+        "operationId": "api_preset_action_resolve_api_presets__preset_id__actions__action_id__resolve_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "preset_id",
+            "required": true,
+            "schema": {
+              "title": "Preset Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "action_id",
+            "required": true,
+            "schema": {
+              "title": "Action Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PresetActionResolveRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Response Api Preset Action Resolve Api Presets  Preset Id  Actions  Action Id  Resolve Post"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Api Preset Action Resolve"
+      }
+    },
+    "/api/presets/{preset_id}/default-flow/attest": {
+      "post": {
+        "operationId": "api_preset_default_flow_attest_api_presets__preset_id__default_flow_attest_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "preset_id",
+            "required": true,
+            "schema": {
+              "title": "Preset Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PresetDefaultFlowAttestRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Response Api Preset Default Flow Attest Api Presets  Preset Id  Default Flow Attest Post"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Api Preset Default Flow Attest"
+      }
+    },
+    "/api/presets/{preset_id}/default-flow/attest/verify": {
+      "post": {
+        "operationId": "api_preset_default_flow_attest_verify_api_presets__preset_id__default_flow_attest_verify_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "preset_id",
+            "required": true,
+            "schema": {
+              "title": "Preset Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PresetDefaultFlowAttestationVerifyRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Response Api Preset Default Flow Attest Verify Api Presets  Preset Id  Default Flow Attest Verify Post"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Api Preset Default Flow Attest Verify"
+      }
+    },
+    "/api/presets/{preset_id}/default-flow/contract": {
+      "get": {
+        "operationId": "api_preset_default_flow_contract_api_presets__preset_id__default_flow_contract_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "preset_id",
+            "required": true,
+            "schema": {
+              "title": "Preset Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Response Api Preset Default Flow Contract Api Presets  Preset Id  Default Flow Contract Get"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Api Preset Default Flow Contract"
+      }
+    },
+    "/api/presets/{preset_id}/default-flow/plan": {
+      "get": {
+        "operationId": "api_preset_default_flow_plan_api_presets__preset_id__default_flow_plan_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "preset_id",
+            "required": true,
+            "schema": {
+              "title": "Preset Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Response Api Preset Default Flow Plan Api Presets  Preset Id  Default Flow Plan Get"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Api Preset Default Flow Plan"
+      }
+    },
+    "/api/presets/{preset_id}/default-flow/run": {
+      "post": {
+        "operationId": "api_preset_default_flow_run_api_presets__preset_id__default_flow_run_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "preset_id",
+            "required": true,
+            "schema": {
+              "title": "Preset Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PresetDefaultFlowRunRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Response Api Preset Default Flow Run Api Presets  Preset Id  Default Flow Run Post"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Api Preset Default Flow Run"
+      }
+    },
+    "/api/presets/{preset_id}/default-flow/run-from-contract": {
+      "post": {
+        "operationId": "api_preset_default_flow_run_from_contract_api_presets__preset_id__default_flow_run_from_contract_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "preset_id",
+            "required": true,
+            "schema": {
+              "title": "Preset Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PresetDefaultFlowRunFromContractRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Response Api Preset Default Flow Run From Contract Api Presets  Preset Id  Default Flow Run From Contract Post"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Api Preset Default Flow Run From Contract"
+      }
+    },
+    "/api/presets/{preset_id}/default-flow/run-guarded": {
+      "post": {
+        "operationId": "api_preset_default_flow_run_guarded_api_presets__preset_id__default_flow_run_guarded_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "preset_id",
+            "required": true,
+            "schema": {
+              "title": "Preset Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PresetDefaultFlowGuardedRunRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Response Api Preset Default Flow Run Guarded Api Presets  Preset Id  Default Flow Run Guarded Post"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Api Preset Default Flow Run Guarded"
+      }
+    },
+    "/api/presets/{preset_id}/default-flow/verify": {
+      "post": {
+        "operationId": "api_preset_default_flow_verify_api_presets__preset_id__default_flow_verify_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "preset_id",
+            "required": true,
+            "schema": {
+              "title": "Preset Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PresetDefaultFlowVerifyRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Response Api Preset Default Flow Verify Api Presets  Preset Id  Default Flow Verify Post"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Api Preset Default Flow Verify"
+      }
+    },
+    "/api/project/list": {
+      "get": {
+        "operationId": "api_project_list_api_project_list_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Response Api Project List Api Project List Get"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Api Project List"
+      }
+    },
+    "/api/project/load/{name}": {
+      "get": {
+        "operationId": "api_project_load_api_project_load__name__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "name",
+            "required": true,
+            "schema": {
+              "title": "Name",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Response Api Project Load Api Project Load  Name  Get"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Api Project Load"
+      }
+    },
+    "/api/project/save": {
+      "post": {
+        "operationId": "api_project_save_api_project_save_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "additionalProperties": true,
+                "title": "Data",
+                "type": "object"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Response Api Project Save Api Project Save Post"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Api Project Save"
+      }
+    },
+    "/api/project/{name}": {
+      "delete": {
+        "operationId": "api_project_delete_api_project__name__delete",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "name",
+            "required": true,
+            "schema": {
+              "title": "Name",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Response Api Project Delete Api Project  Name  Delete"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Api Project Delete"
+      }
+    },
+    "/api/sensitivity": {
+      "post": {
+        "operationId": "api_sensitivity_api_sensitivity_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SensitivityRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Response Api Sensitivity Api Sensitivity Post"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Api Sensitivity"
+      }
+    },
+    "/api/simulate": {
+      "post": {
+        "operationId": "api_simulate_api_simulate_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SimulateRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Response Api Simulate Api Simulate Post"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Api Simulate"
+      }
+    },
+    "/api/studio/audit/export": {
+      "get": {
+        "description": "Return a bounded, path-free audit export for Studio administrators.",
+        "operationId": "api_studio_audit_export_api_studio_audit_export_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 100,
+              "title": "Limit",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": {
+                    "anyOf": [
+                      {
+                        "type": "boolean"
+                      },
+                      {
+                        "type": "integer"
+                      },
+                      {
+                        "type": "string"
+                      },
+                      {
+                        "items": {
+                          "additionalProperties": {
+                            "anyOf": [
+                              {
+                                "type": "string"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
+                          },
+                          "type": "object"
+                        },
+                        "type": "array"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "title": "Response Api Studio Audit Export Api Studio Audit Export Get",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Api Studio Audit Export"
+      }
+    },
+    "/api/studio/audit/quarantine/archive": {
+      "post": {
+        "description": "Write quarantined audit rows into a confined Studio evidence job.",
+        "operationId": "api_studio_audit_quarantine_archive_api_studio_audit_quarantine_archive_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/StudioAuditQuarantineArchiveRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response Api Studio Audit Quarantine Archive Api Studio Audit Quarantine Archive Post",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Api Studio Audit Quarantine Archive"
+      }
+    },
+    "/api/studio/audit/quarantine/archive/purge": {
+      "post": {
+        "description": "Purge archive jobs marked as retention prune candidates.",
+        "operationId": "api_studio_audit_quarantine_archive_purge_api_studio_audit_quarantine_archive_purge_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/StudioAuditQuarantineArchivePurgeRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response Api Studio Audit Quarantine Archive Purge Api Studio Audit Quarantine Archive Purge Post",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Api Studio Audit Quarantine Archive Purge"
+      }
+    },
+    "/api/studio/audit/quarantine/archive/restore": {
+      "post": {
+        "description": "Materialize a validated archive as confined restore artifacts.",
+        "operationId": "api_studio_audit_quarantine_archive_restore_api_studio_audit_quarantine_archive_restore_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/StudioAuditQuarantineArchiveRestoreRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response Api Studio Audit Quarantine Archive Restore Api Studio Audit Quarantine Archive Restore Post",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Api Studio Audit Quarantine Archive Restore"
+      }
+    },
+    "/api/studio/audit/quarantine/archive/retention": {
+      "get": {
+        "description": "Return a path-free quarantine archive retention plan.",
+        "operationId": "api_studio_audit_quarantine_archive_retention_api_studio_audit_quarantine_archive_retention_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "retain_latest",
+            "required": false,
+            "schema": {
+              "default": 10,
+              "maximum": 1000,
+              "minimum": 1,
+              "title": "Retain Latest",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response Api Studio Audit Quarantine Archive Retention Api Studio Audit Quarantine Archive Retention Get",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Api Studio Audit Quarantine Archive Retention"
+      }
+    },
+    "/api/studio/audit/quarantine/archive/validate": {
+      "post": {
+        "description": "Validate a path-free quarantine archive before import handling.",
+        "operationId": "api_studio_audit_quarantine_archive_validate_api_studio_audit_quarantine_archive_validate_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/StudioAuditQuarantineArchiveValidateRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response Api Studio Audit Quarantine Archive Validate Api Studio Audit Quarantine Archive Validate Post",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Api Studio Audit Quarantine Archive Validate"
+      }
+    },
+    "/api/studio/audit/quarantine/export": {
+      "get": {
+        "description": "Return path-free quarantined audit rows for incident handoff.",
+        "operationId": "api_studio_audit_quarantine_export_api_studio_audit_quarantine_export_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 100,
+              "title": "Limit",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": {
+                    "anyOf": [
+                      {
+                        "type": "boolean"
+                      },
+                      {
+                        "type": "integer"
+                      },
+                      {
+                        "type": "string"
+                      },
+                      {
+                        "items": {
+                          "additionalProperties": {
+                            "anyOf": [
+                              {
+                                "type": "string"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
+                          },
+                          "type": "object"
+                        },
+                        "type": "array"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "title": "Response Api Studio Audit Quarantine Export Api Studio Audit Quarantine Export Get",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Api Studio Audit Quarantine Export"
+      }
+    },
+    "/api/studio/audit/status": {
+      "get": {
+        "description": "Return path-free health for the configured Studio audit sink.",
+        "operationId": "api_studio_audit_status_api_studio_audit_status_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": {
+                    "anyOf": [
+                      {
+                        "type": "boolean"
+                      },
+                      {
+                        "type": "integer"
+                      },
+                      {
+                        "type": "string"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "title": "Response Api Studio Audit Status Api Studio Audit Status Get",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Api Studio Audit Status"
+      }
+    },
+    "/api/studio/auth/login": {
+      "post": {
+        "description": "Authenticate a browser user and issue an expiring bearer session.",
+        "operationId": "api_studio_auth_login_api_studio_auth_login_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/StudioBrowserLoginRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": {
+                    "anyOf": [
+                      {
+                        "items": {
+                          "type": "string"
+                        },
+                        "type": "array"
+                      },
+                      {
+                        "type": "string"
+                      }
+                    ]
+                  },
+                  "title": "Response Api Studio Auth Login Api Studio Auth Login Post",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Api Studio Auth Login"
+      }
+    },
+    "/api/studio/auth/logout": {
+      "post": {
+        "description": "Revoke the current browser bearer session.",
+        "operationId": "api_studio_auth_logout_api_studio_auth_logout_post",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": {
+                    "type": "boolean"
+                  },
+                  "title": "Response Api Studio Auth Logout Api Studio Auth Logout Post",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Api Studio Auth Logout"
+      }
+    },
+    "/api/studio/auth/session": {
+      "get": {
+        "description": "Return the current browser bearer-session principal.",
+        "operationId": "api_studio_auth_session_api_studio_auth_session_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": {
+                    "anyOf": [
+                      {
+                        "type": "boolean"
+                      },
+                      {
+                        "items": {
+                          "type": "string"
+                        },
+                        "type": "array"
+                      },
+                      {
+                        "type": "string"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "title": "Response Api Studio Auth Session Api Studio Auth Session Get",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Api Studio Auth Session"
+      }
+    },
+    "/api/studio/capabilities": {
+      "get": {
+        "operationId": "api_studio_capabilities_api_studio_capabilities_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": {
+                    "items": {
+                      "additionalProperties": true,
+                      "type": "object"
+                    },
+                    "type": "array"
+                  },
+                  "title": "Response Api Studio Capabilities Api Studio Capabilities Get",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Api Studio Capabilities"
+      }
+    },
+    "/api/studio/capabilities/{capability_id}": {
+      "get": {
+        "operationId": "api_studio_capability_api_studio_capabilities__capability_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "capability_id",
+            "required": true,
+            "schema": {
+              "title": "Capability Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response Api Studio Capability Api Studio Capabilities  Capability Id  Get",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Api Studio Capability"
+      }
+    },
+    "/api/studio/evidence/bundle": {
+      "post": {
+        "description": "Create a path-confined evidence bundle as a Studio worker artifact.",
+        "operationId": "api_studio_evidence_bundle_api_studio_evidence_bundle_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/StudioEvidenceBundleRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response Api Studio Evidence Bundle Api Studio Evidence Bundle Post",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Api Studio Evidence Bundle"
+      }
+    },
+    "/api/studio/identity/browser-users": {
+      "get": {
+        "description": "Return password-free persistent browser users for administrators.",
+        "operationId": "api_studio_identity_browser_users_api_studio_identity_browser_users_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response Api Studio Identity Browser Users Api Studio Identity Browser Users Get",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Api Studio Identity Browser Users"
+      },
+      "post": {
+        "description": "Create one persistent browser user for administrators.",
+        "operationId": "api_create_studio_identity_browser_user_api_studio_identity_browser_users_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/StudioBrowserUserCreateRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": {
+                    "anyOf": [
+                      {
+                        "type": "boolean"
+                      },
+                      {
+                        "items": {
+                          "type": "string"
+                        },
+                        "type": "array"
+                      },
+                      {
+                        "type": "string"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "title": "Response Api Create Studio Identity Browser User Api Studio Identity Browser Users Post",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Api Create Studio Identity Browser User"
+      }
+    },
+    "/api/studio/identity/browser-users/{username}": {
+      "get": {
+        "description": "Return one password-free persistent browser user for administrators.",
+        "operationId": "api_studio_identity_browser_user_api_studio_identity_browser_users__username__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "username",
+            "required": true,
+            "schema": {
+              "title": "Username",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": {
+                    "anyOf": [
+                      {
+                        "type": "boolean"
+                      },
+                      {
+                        "items": {
+                          "type": "string"
+                        },
+                        "type": "array"
+                      },
+                      {
+                        "type": "string"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "title": "Response Api Studio Identity Browser User Api Studio Identity Browser Users  Username  Get",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Api Studio Identity Browser User"
+      },
+      "patch": {
+        "description": "Update persistent browser-user role metadata for administrators.",
+        "operationId": "api_update_studio_identity_browser_user_api_studio_identity_browser_users__username__patch",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "username",
+            "required": true,
+            "schema": {
+              "title": "Username",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/StudioBrowserUserUpdateRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": {
+                    "anyOf": [
+                      {
+                        "type": "boolean"
+                      },
+                      {
+                        "items": {
+                          "type": "string"
+                        },
+                        "type": "array"
+                      },
+                      {
+                        "type": "string"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "title": "Response Api Update Studio Identity Browser User Api Studio Identity Browser Users  Username  Patch",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Api Update Studio Identity Browser User"
+      }
+    },
+    "/api/studio/identity/browser-users/{username}/password": {
+      "post": {
+        "description": "Rotate one persistent browser-user password verifier.",
+        "operationId": "api_rotate_studio_identity_browser_user_password_api_studio_identity_browser_users__username__password_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "username",
+            "required": true,
+            "schema": {
+              "title": "Username",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/StudioBrowserUserPasswordRotateRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": {
+                    "anyOf": [
+                      {
+                        "type": "boolean"
+                      },
+                      {
+                        "items": {
+                          "type": "string"
+                        },
+                        "type": "array"
+                      },
+                      {
+                        "type": "string"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "title": "Response Api Rotate Studio Identity Browser User Password Api Studio Identity Browser Users  Username  Password Post",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Api Rotate Studio Identity Browser User Password"
+      }
+    },
+    "/api/studio/identity/service-accounts": {
+      "get": {
+        "description": "Return token-free persistent service accounts for administrators.",
+        "operationId": "api_studio_identity_service_accounts_api_studio_identity_service_accounts_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response Api Studio Identity Service Accounts Api Studio Identity Service Accounts Get",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Api Studio Identity Service Accounts"
+      }
+    },
+    "/api/studio/identity/service-accounts/{principal_id}": {
+      "get": {
+        "description": "Return one token-free persistent service account for administrators.",
+        "operationId": "api_studio_identity_service_account_api_studio_identity_service_accounts__principal_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "principal_id",
+            "required": true,
+            "schema": {
+              "title": "Principal Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": {
+                    "anyOf": [
+                      {
+                        "type": "boolean"
+                      },
+                      {
+                        "items": {
+                          "type": "string"
+                        },
+                        "type": "array"
+                      },
+                      {
+                        "type": "string"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "title": "Response Api Studio Identity Service Account Api Studio Identity Service Accounts  Principal Id  Get",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Api Studio Identity Service Account"
+      },
+      "patch": {
+        "description": "Update persistent service-account role metadata for administrators.",
+        "operationId": "api_update_studio_identity_service_account_api_studio_identity_service_accounts__principal_id__patch",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "principal_id",
+            "required": true,
+            "schema": {
+              "title": "Principal Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/StudioIdentityServiceAccountUpdateRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": {
+                    "anyOf": [
+                      {
+                        "type": "boolean"
+                      },
+                      {
+                        "items": {
+                          "type": "string"
+                        },
+                        "type": "array"
+                      },
+                      {
+                        "type": "string"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "title": "Response Api Update Studio Identity Service Account Api Studio Identity Service Accounts  Principal Id  Patch",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Api Update Studio Identity Service Account"
+      }
+    },
+    "/api/studio/jobs": {
+      "get": {
+        "description": "Return path-free local job records for administrators.",
+        "operationId": "api_studio_jobs_api_studio_jobs_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response Api Studio Jobs Api Studio Jobs Get",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Api Studio Jobs"
+      }
+    },
+    "/api/studio/jobs/status": {
+      "get": {
+        "description": "Return path-free local worker health for operator dashboards.",
+        "operationId": "api_studio_jobs_status_api_studio_jobs_status_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response Api Studio Jobs Status Api Studio Jobs Status Get",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Api Studio Jobs Status"
+      }
+    },
+    "/api/studio/jobs/{job_id}": {
+      "get": {
+        "description": "Return one path-free local job record for administrators.",
+        "operationId": "api_studio_job_api_studio_jobs__job_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "job_id",
+            "required": true,
+            "schema": {
+              "title": "Job Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response Api Studio Job Api Studio Jobs  Job Id  Get",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Api Studio Job"
+      }
+    },
+    "/api/studio/jobs/{job_id}/artifacts/{artifact_path}": {
+      "get": {
+        "description": "Download one declared Studio job artifact after integrity validation.",
+        "operationId": "api_studio_job_artifact_api_studio_jobs__job_id__artifacts__artifact_path__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "job_id",
+            "required": true,
+            "schema": {
+              "title": "Job Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "artifact_path",
+            "required": true,
+            "schema": {
+              "title": "Artifact Path",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Api Studio Job Artifact"
+      }
+    },
+    "/api/studio/operator/status": {
+      "get": {
+        "description": "Return aggregate, path-free Studio operator control-plane health.",
+        "operationId": "api_studio_operator_status_api_studio_operator_status_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response Api Studio Operator Status Api Studio Operator Status Get",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Api Studio Operator Status"
+      }
+    },
+    "/api/studio/training/weight-restore": {
+      "post": {
+        "description": "Materialize and verify a training job's weights as confined evidence.\n\nBuilds the canonical restore plan from the source training job's stored\ncheckpoint metadata, fetches the integrity-checked weight and metadata\nartifacts, then runs the untrusted torch deserialization inside a bounded\nworker job. The job emits a path-free\n``studio.training.weight-restore.v1`` evidence artifact carrying only the\nverified digests and loaded-key totals; the in-memory tensor state\ndictionary never leaves the worker.",
+        "operationId": "api_studio_training_weight_restore_api_studio_training_weight_restore_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/StudioTrainingWeightRestoreRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response Api Studio Training Weight Restore Api Studio Training Weight Restore Post",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Api Studio Training Weight Restore"
+      }
+    },
+    "/api/studio/training/weight-restore/attach": {
+      "post": {
+        "description": "Warm-start a training job seeded with restored, verified weights.\n\nBuilds the canonical restore plan from the source job's checkpoint,\ndelivers the integrity-checked weights to a bounded process worker as\nconfined seed inputs, and starts a training job that loads them at the\nepoch-zero checkpoint boundary before training forward. A strict load of\nan incompatible architecture fails the job before training begins. The\nworker writes a path-free ``studio.training.weight-restore-attach.v1``\nevidence artifact; the deserialized tensors never reach the response.",
+        "operationId": "api_studio_training_weight_restore_attach_api_studio_training_weight_restore_attach_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/StudioTrainingWeightAttachRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response Api Studio Training Weight Restore Attach Api Studio Training Weight Restore Attach Post",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Api Studio Training Weight Restore Attach"
+      }
+    },
+    "/api/studio/training/weight-restore/attach/live": {
+      "post": {
+        "description": "Deliver verified weights to a running training job for a live attach.\n\nValidates that the target job is running and that the source and target\narchitectures are compatible, then delivers the integrity-checked weight\nartifacts to the running worker as a confined control command. The worker\napplies the attach at its next epoch boundary and writes a path-free\n``studio.training.weight-restore-attach.v1`` (``mode: live``) evidence\nartifact. An incompatible attach is rejected without interrupting the\nrunning job. The response is returned immediately on delivery.",
+        "operationId": "api_studio_training_weight_restore_attach_live_api_studio_training_weight_restore_attach_live_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/StudioTrainingWeightLiveAttachRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response Api Studio Training Weight Restore Attach Live Api Studio Training Weight Restore Attach Live Post",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Api Studio Training Weight Restore Attach Live"
+      }
+    },
+    "/api/synth/estimate": {
+      "post": {
+        "operationId": "api_synth_estimate_api_synth_estimate_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "additionalProperties": true,
+                "title": "Data",
+                "type": "object"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Response Api Synth Estimate Api Synth Estimate Post"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Api Synth Estimate"
+      }
+    },
+    "/api/synth/multi-target": {
+      "post": {
+        "operationId": "api_synth_multi_api_synth_multi_target_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "additionalProperties": true,
+                "title": "Data",
+                "type": "object"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Response Api Synth Multi Api Synth Multi Target Post"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Api Synth Multi"
+      }
+    },
+    "/api/synth/pnr": {
+      "post": {
+        "operationId": "api_synth_pnr_api_synth_pnr_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "additionalProperties": true,
+                "title": "Data",
+                "type": "object"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Response Api Synth Pnr Api Synth Pnr Post"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Api Synth Pnr"
+      }
+    },
+    "/api/synth/run": {
+      "post": {
+        "operationId": "api_synth_run_api_synth_run_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "additionalProperties": true,
+                "title": "Data",
+                "type": "object"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Response Api Synth Run Api Synth Run Post"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Api Synth Run"
+      }
+    },
+    "/api/synth/tools-status": {
+      "get": {
+        "operationId": "api_synth_tools_api_synth_tools_status_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Response Api Synth Tools Api Synth Tools Status Get"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Api Synth Tools"
+      }
+    },
+    "/api/templates": {
+      "get": {
+        "operationId": "api_templates_api_templates_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "additionalProperties": true,
+                    "type": "object"
+                  },
+                  "title": "Response Api Templates Api Templates Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Api Templates"
+      }
+    },
+    "/api/templates/{name}": {
+      "get": {
+        "operationId": "api_template_api_templates__name__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "name",
+            "required": true,
+            "schema": {
+              "title": "Name",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Response Api Template Api Templates  Name  Get"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Api Template"
+      }
+    },
+    "/api/training/cell-types": {
+      "get": {
+        "operationId": "api_cell_types_api_training_cell_types_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Response Api Cell Types Api Training Cell Types Get"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Api Cell Types"
+      }
+    },
+    "/api/training/checkpoint/import": {
+      "post": {
+        "description": "Validate an imported Training Monitor checkpoint.",
+        "operationId": "api_training_checkpoint_import_api_training_checkpoint_import_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "additionalProperties": true,
+                "title": "Data",
+                "type": "object"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Response Api Training Checkpoint Import Api Training Checkpoint Import Post"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Api Training Checkpoint Import"
+      }
+    },
+    "/api/training/checkpoint/{job_id}": {
+      "get": {
+        "description": "Export one portable Training Monitor checkpoint.",
+        "operationId": "api_training_checkpoint_export_api_training_checkpoint__job_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "job_id",
+            "required": true,
+            "schema": {
+              "title": "Job Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Response Api Training Checkpoint Export Api Training Checkpoint  Job Id  Get"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Api Training Checkpoint Export"
+      }
+    },
+    "/api/training/jobs": {
+      "get": {
+        "operationId": "api_training_jobs_api_training_jobs_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Response Api Training Jobs Api Training Jobs Get"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Api Training Jobs"
+      }
+    },
+    "/api/training/start": {
+      "post": {
+        "operationId": "api_training_start_api_training_start_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "additionalProperties": true,
+                "title": "Data",
+                "type": "object"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Response Api Training Start Api Training Start Post"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Api Training Start"
+      }
+    },
+    "/api/training/status/{job_id}": {
+      "get": {
+        "operationId": "api_training_status_api_training_status__job_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "job_id",
+            "required": true,
+            "schema": {
+              "title": "Job Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Response Api Training Status Api Training Status  Job Id  Get"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Api Training Status"
+      }
+    },
+    "/api/training/stop": {
+      "post": {
+        "operationId": "api_training_stop_api_training_stop_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "additionalProperties": true,
+                "title": "Data",
+                "type": "object"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Response Api Training Stop Api Training Stop Post"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Api Training Stop"
+      }
+    },
+    "/api/training/stream/{job_id}": {
+      "get": {
+        "operationId": "api_training_stream_api_training_stream__job_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "job_id",
+            "required": true,
+            "schema": {
+              "title": "Job Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Response Api Training Stream Api Training Stream  Job Id  Get"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Api Training Stream"
+      }
+    },
+    "/api/training/surrogates": {
+      "get": {
+        "operationId": "api_surrogates_api_training_surrogates_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Response Api Surrogates Api Training Surrogates Get"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Api Surrogates"
+      }
+    }
+  }
+}

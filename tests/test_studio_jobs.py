@@ -1439,6 +1439,10 @@ def test_studio_job_list_and_detail_endpoints_are_admin_gated_and_path_free(
     listed = client.get("/api/studio/jobs", headers=admin_headers)
     detailed = client.get(f"/api/studio/jobs/{record.job_id}", headers=admin_headers)
     missing = client.get("/api/studio/jobs/sj_missing", headers=admin_headers)
+    missing_artifact = client.get(
+        "/api/studio/jobs/sj_missing/artifacts/reports/result.txt",
+        headers=admin_headers,
+    )
 
     assert denied.status_code == 401
     assert listed.status_code == 200
@@ -1452,6 +1456,8 @@ def test_studio_job_list_and_detail_endpoints_are_admin_gated_and_path_free(
     assert detailed.json()["status"] == "completed"
     assert missing.status_code == 404
     assert missing.json()["detail"] == "job_not_found"
+    assert missing_artifact.status_code == 404
+    assert missing_artifact.json()["detail"] == "job_artifact_not_found"
     assert str(tmp_path) not in listed.text
     assert str(tmp_path) not in detailed.text
 

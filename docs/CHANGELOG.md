@@ -5,6 +5,26 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+### Studio responsibility-router and OpenAPI contract split
+- Reduced `src/sc_neurocore/studio/app.py` from 3,662 lines to a 147-line
+  composition root. Sixteen routers now own system, jobs, audit, identity,
+  catalogue, presets, simulation, compiler, co-simulation, synthesis, design,
+  deployment, training, training weights, export, and adaptive-precision
+  responsibilities; shared runtime, security, schema, guard, preset-flow, and
+  frontend helpers live beside them.
+- Preserved the complete live API surface: 114 HTTP routes, 111 OpenAPI paths,
+  and `/ws/progress`. Canonical OpenAPI JSON remains byte-semantically equal to
+  the pre-refactor document at SHA-256
+  `a6b9dc6d391f85f10cec200cde0798109d69d0bc7d141d1545eeab15c7f4cef7`.
+- Made the root frontend route deterministic when the ignored `dist/` build is
+  absent: clean checkouts keep the same OpenAPI and route ownership, while `/`
+  returns `503 studio_frontend_not_built` until the production bundle exists.
+- Added deterministic `tools/generate_studio_openapi.py` generation, a
+  committed JSON reference, MkDocs API guidance, route-ownership assertions,
+  normalized handler parity checks, and public-route coverage for terminal,
+  validation, isolation, policy, audit, identity, frontend, and artifact
+  failure boundaries.
+
 ### Hindmarsh-Rose RK4 schema-to-RTL enrolment
 - Re-enrolled the already acceleration-complete Hindmarsh-Rose model against
   Hindmarsh and Rose (1984), DOI `10.1098/rspb.1984.0024`. Paired schemas now

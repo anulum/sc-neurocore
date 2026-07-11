@@ -140,6 +140,7 @@ nav:
       - Onboarding Tour: studio/onboarding.md
       - Measured Behaviour Facet: studio/behaviour-facet.md
       - Admin Identity & Audit: studio/admin-identity.md
+      - OpenAPI Contract: api/studio_openapi.md
   - Tutorials:
       - Studio Quickstart: tutorials/studio_quickstart.md
       - SC Training Pipeline: tutorials/sc_training_pipeline.md

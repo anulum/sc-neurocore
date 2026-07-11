@@ -60,12 +60,12 @@ class TestTemplatesEndpoints:
         assert r.status_code == 200
 
     def test_internal_error_is_logged(self, client, monkeypatch, caplog):
-        import sc_neurocore.studio.app as app_mod
+        import sc_neurocore.studio.api.catalogue as catalogue_routes
 
         def _boom():
             raise RuntimeError("catalog exploded")
 
-        monkeypatch.setattr(app_mod, "list_models", _boom)
+        monkeypatch.setattr(catalogue_routes, "list_models", _boom)
         with caplog.at_level(logging.ERROR):
             r = client.get("/api/models")
         assert r.status_code == 500

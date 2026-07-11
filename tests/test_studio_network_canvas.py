@@ -208,12 +208,12 @@ class TestEndpoints:
         assert isinstance(r.json(), list)
 
     def test_models_endpoint_surfaces_discovery_failure(self, client, monkeypatch):
-        import sc_neurocore.studio.app as app_mod
+        import sc_neurocore.studio.api.design as design_routes
 
         def _boom():
             raise RuntimeError("catalog failed")
 
-        monkeypatch.setattr(app_mod, "graph_available_models", _boom)
+        monkeypatch.setattr(design_routes, "graph_available_models", _boom)
         r = client.get("/api/graph/models")
         assert r.status_code == 500
         assert r.json()["detail"] == "Internal error"
@@ -265,3 +265,68 @@ class TestEndpoints:
         r = client.post("/api/graph/import-nir", json={"nodes": {"a": {}}, "edges": [{}]})
         assert r.status_code == 422
         assert r.json()["detail"] == "Invalid input"
+
+    def test_project_load_endpoint_returns_loaded_state(self, client, monkeypatch):
+        """The project adapter returns a successful load result unchanged."""
+        import sc_neurocore.studio.api.design as design_routes
+
+        monkeypatch.setattr(
+            design_routes,
+            "load_project",
+            lambda name: {"name": name, "state": {"zoom": 2}},
+        )
+
+        response = client.get("/api/project/load/example")
+
+        assert response.status_code == 200
+        assert response.json() == {"name": "example", "state": {"zoom": 2}}
+
+    def test_project_delete_endpoint_maps_missing_project(self, client, monkeypatch):
+        """A missing project maps to the established not-found response."""
+        import sc_neurocore.studio.api.design as design_routes
+
+        monkeypatch.setattr(
+            design_routes,
+            "delete_project",
+            lambda name: {"error": f"Project not found: {name}"},
+        )
+
+        response = client.delete("/api/project/missing")
+
+        assert response.status_code == 404
+        assert response.json()["detail"] == "Project not found: missing"
+
+    def test_project_delete_endpoint_returns_deleted_project(self, client, monkeypatch):
+        """A successful project deletion returns its public confirmation."""
+        import sc_neurocore.studio.api.design as design_routes
+
+        monkeypatch.setattr(
+            design_routes,
+            "delete_project",
+            lambda name: {"deleted": name},
+        )
+
+        response = client.delete("/api/project/example")
+
+        assert response.status_code == 200
+        assert response.json() == {"deleted": "example"}
+
+    def test_create_projection_endpoint_filters_unknown_fields(self, client, monkeypatch):
+        """Only the graph projection contract reaches the implementation."""
+        import sc_neurocore.studio.api.design as design_routes
+
+        captured: dict[str, object] = {}
+
+        def _create_projection(**kwargs):
+            captured.update(kwargs)
+            return {"id": "projection-1", **kwargs}
+
+        monkeypatch.setattr(design_routes, "create_projection", _create_projection)
+        response = client.post(
+            "/api/graph/projection",
+            json={"source_id": "a", "target_id": "b", "weight": 0.5, "private": "drop"},
+        )
+
+        assert response.status_code == 200
+        assert captured == {"source_id": "a", "target_id": "b", "weight": 0.5}
+        assert "private" not in response.json()

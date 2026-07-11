@@ -15,7 +15,7 @@ from typing import Any
 import pytest
 from starlette.testclient import TestClient
 
-from sc_neurocore.studio import app as studio_app
+from sc_neurocore.studio.api import catalogue as catalogue_routes
 from sc_neurocore.studio.app import create_app
 from sc_neurocore.studio.platform import StudioRuntimeSettings
 
@@ -26,7 +26,7 @@ def test_model_scan_rejected_over_catalogue_budget_before_scan_runs(
     """Oversized model catalogues fail at the route guard with path-free detail."""
 
     monkeypatch.setattr(
-        studio_app,
+        catalogue_routes,
         "list_models",
         lambda: [
             {"name": "ModelA", "category": "CatA"},
@@ -38,7 +38,7 @@ def test_model_scan_rejected_over_catalogue_budget_before_scan_runs(
     def _scan_all_models(*, current: float, duration: float) -> dict[str, object]:
         raise AssertionError("scan_all_models must not run after budget rejection")
 
-    monkeypatch.setattr(studio_app, "scan_all_models", _scan_all_models)
+    monkeypatch.setattr(catalogue_routes, "scan_all_models", _scan_all_models)
     client = TestClient(
         create_app(StudioRuntimeSettings(max_sync_analysis_simulations=2)),
         base_url="http://127.0.0.1",
@@ -65,7 +65,7 @@ def test_model_scan_within_catalogue_budget_runs_scan(
     """A bounded model catalogue still uses the production scan route."""
 
     monkeypatch.setattr(
-        studio_app,
+        catalogue_routes,
         "list_models",
         lambda: [{"name": "ModelA", "category": "CatA"}],
     )
@@ -83,7 +83,7 @@ def test_model_scan_within_catalogue_budget_runs_scan(
             "schema_version": "studio.model-scan.v1",
         }
 
-    monkeypatch.setattr(studio_app, "scan_all_models", _scan_all_models)
+    monkeypatch.setattr(catalogue_routes, "scan_all_models", _scan_all_models)
     client = TestClient(
         create_app(StudioRuntimeSettings(max_sync_analysis_simulations=1)),
         base_url="http://127.0.0.1",

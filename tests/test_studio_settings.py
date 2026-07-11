@@ -561,6 +561,16 @@ def test_studio_app_route_policy_enforcement_allows_public_route() -> None:
     assert response.status_code == 200
 
 
+def test_studio_app_route_policy_enforcement_rejects_unclassified_route() -> None:
+    app = create_app(runtime_settings=StudioRuntimeSettings(enforce_route_policies=True))
+    client = TestClient(app, base_url="http://127.0.0.1")
+
+    response = client.get("/api/unclassified")
+
+    assert response.status_code == 403
+    assert response.json()["detail"] == "unclassified_route"
+
+
 def test_studio_app_route_policy_enforcement_rejects_missing_principal() -> None:
     app = create_app(runtime_settings=StudioRuntimeSettings(enforce_route_policies=True))
     client = TestClient(app, base_url="http://127.0.0.1")

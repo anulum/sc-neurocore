@@ -118,3 +118,16 @@ def test_api_dcls_evaluate_endpoint(client: TestClient) -> None:
     body = response.json()
     assert body["profile"]["gates"][2] == pytest.approx(1.0)
     assert body["forward"]["bit_exact"] is True
+
+
+def test_api_dcls_evaluate_rejects_mismatched_vectors(client: TestClient) -> None:
+    response = client.post(
+        "/api/dcls/evaluate",
+        json={
+            "spikes": [1, 0],
+            "weights_q88": [256],
+        },
+    )
+
+    assert response.status_code == 400
+    assert response.json()["detail"] == "spikes and weights_q88 must have equal length"

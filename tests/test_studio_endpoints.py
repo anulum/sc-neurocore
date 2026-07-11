@@ -53,12 +53,12 @@ class TestModelEndpoints:
         assert r.status_code == 404
 
     def test_model_detail_internal_failure_is_500(self, client, monkeypatch):
-        import sc_neurocore.studio.app as app_mod
+        import sc_neurocore.studio.api.catalogue as catalogue_routes
 
         def _boom(_name: str):
             raise RuntimeError("metadata exploded")
 
-        monkeypatch.setattr(app_mod, "get_model_detail", _boom)
+        monkeypatch.setattr(catalogue_routes, "get_model_detail", _boom)
         r = client.get(f"/api/models/{MODEL}")
         assert r.status_code == 500
         assert r.json()["detail"] == "Internal error"
@@ -469,6 +469,14 @@ class TestMultiSimulate:
         assert len(data) == 2
         assert all("time" in d for d in data)
 
+    def test_empty_multi_simulate_returns_empty_result(self, client):
+        """An empty bounded batch is a valid no-op."""
+
+        response = client.post("/api/multi-simulate", json=[])
+
+        assert response.status_code == 200
+        assert response.json() == []
+
 
 class TestCacheStats:
     def test_cache_stats(self, client):
@@ -478,6 +486,46 @@ class TestCacheStats:
         assert "hits" in data
         assert "misses" in data
         assert "size" in data
+
+    def test_simulation_cache_reuses_and_evicts_results(self, monkeypatch):
+        """The bounded simulation cache reuses hits and evicts its oldest entry."""
+        import sc_neurocore.studio.api.simulation as simulation_routes
+
+        cache = simulation_routes._SimCache(maxsize=1)
+        monkeypatch.setattr(simulation_routes, "_cache", cache)
+        local_client = TestClient(create_app(), base_url="http://127.0.0.1")
+        payload = {
+            "current": 1.0,
+            "dt": 0.1,
+            "duration": 1.0,
+            "equations": ["dv/dt = I"],
+            "init": {"v": 0.0},
+        }
+
+        first = local_client.post("/api/simulate", json=payload)
+        cached = local_client.post("/api/simulate", json=payload)
+        second = local_client.post("/api/simulate", json={**payload, "current": 2.0})
+        evicted = local_client.post("/api/simulate", json=payload)
+
+        assert [response.status_code for response in (first, cached, second, evicted)] == [
+            200,
+            200,
+            200,
+            200,
+        ]
+        assert cached.json() == first.json()
+        assert cache.hits == 1
+        assert cache.misses == 3
+        assert len(cache._cache) == 1
+
+
+def test_import_trace_rejects_empty_voltage(client: TestClient) -> None:
+    """Trace import requires a non-empty voltage vector."""
+
+    response = client.post("/api/import-trace", json={"voltage": [], "dt": 0.1})
+
+    assert response.status_code == 422
+    assert response.json()["detail"] == "Expected {voltage: [...], dt: float}"
 
 
 def _budget_client(
@@ -536,6 +584,38 @@ class TestAnalysisBudgetEnforcement:
         assert detail["limit"] == "simulations"
         assert detail["projected"] == 1 + 2 * 10
         assert detail["allowed"] == 5
+
+    def test_multi_simulate_rejected_over_simulation_budget(self) -> None:
+        client = _budget_client(max_sync_analysis_simulations=1)
+        r = client.post(
+            "/api/multi-simulate",
+            json=[
+                {"name": MODEL, "duration": 20.0, "current": 10.0},
+                {"name": "ChayNeuron", "duration": 20.0, "current": 10.0},
+            ],
+        )
+        assert r.status_code == 422
+        detail = r.json()["detail"]
+        assert detail["limit"] == "simulations"
+        assert detail["projected"] == 2
+        assert detail["allowed"] == 1
+
+    def test_compare_invalid_cost_fields_reaches_payload_validation(
+        self,
+        client: TestClient,
+    ) -> None:
+        invalid_config = {
+            "equations": ["dv/dt = I"],
+            "init": {"v": 0.0},
+            "duration": "not-a-number",
+            "dt": "not-a-number",
+        }
+        r = client.post(
+            "/api/compare",
+            json={"config_a": invalid_config, "config_b": invalid_config},
+        )
+        assert r.status_code == 422
+        assert r.json()["detail"] == "Invalid input"
 
     def test_bifurcation_rejected_for_non_positive_timestep(self, client: TestClient) -> None:
         r = client.post(

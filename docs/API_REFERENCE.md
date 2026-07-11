@@ -28929,7 +28929,123 @@ AnalysisSource
 
 ---
 
-## Module `studio.app`
+## Module `studio.api.adaptive_precision`
+
+### Function `build_adaptive_precision_router(context)`
+Build the adaptive-precision router over shared Studio runtime state.
+
+---
+
+## Module `studio.api.audit`
+
+### Function `build_audit_router(context)`
+Build the audit and evidence router over shared Studio runtime state.
+
+---
+
+## Module `studio.api.catalogue`
+
+### Function `build_catalogue_router(context)`
+Build the catalogue and benchmark router over shared Studio runtime state.
+
+---
+
+## Module `studio.api.compiler`
+
+### Function `build_compiler_router(context)`
+Build the compiler router over shared Studio runtime state.
+
+---
+
+## Module `studio.api.cosim`
+
+### Function `build_cosim_router(context)`
+Build the co-simulation router over shared Studio runtime state.
+
+---
+
+## Module `studio.api.deploy`
+
+### Function `build_deploy_router(context)`
+Build the deployment pipeline router over shared Studio runtime state.
+
+---
+
+## Module `studio.api.design`
+
+### Function `build_design_router(context)`
+Build the project and network-design router over shared Studio runtime state.
+
+---
+
+## Module `studio.api.export`
+
+### Function `build_export_router(context)`
+Build the export and progress router over shared Studio runtime state.
+
+---
+
+## Module `studio.api.frontend`
+
+### Function `mount_studio_frontend(app)`
+Mount the production frontend when its distribution exists.
+
+Parameters
+----------
+app:
+    FastAPI application receiving the root route and static mount.
+app_module_file:
+    Path of the compatibility application module used as the search anchor.
+
+---
+
+## Module `studio.api.identity`
+
+### Function `build_identity_router(context)`
+Build the identity and browser-session router over shared Studio runtime state.
+
+---
+
+## Module `studio.api.jobs`
+
+### Function `build_jobs_router(context)`
+Build the job inspection router over shared Studio runtime state.
+
+---
+
+## Module `studio.api.presets`
+
+### Function `build_presets_router(context)`
+Build the preset and default-flow router over shared Studio runtime state.
+
+---
+
+## Module `studio.api.runtime`
+
+### Class `StudioApiContext`
+Hold the collaborators shared across Studio route responsibilities.
+
+- **run_studio_process_job_sync**()
+  - Run one importable task through the bounded process worker.
+
+### Function `build_studio_api_context(app, runtime_settings)`
+Build and expose the collaborators used by Studio routers.
+
+Parameters
+----------
+app:
+    FastAPI application receiving the collaborators in its state.
+runtime_settings:
+    Optional validated settings override.
+
+Returns
+-------
+StudioApiContext
+    Shared mutable runtime state.
+
+---
+
+## Module `studio.api.schemas`
 
 ### Class `SimulateRequest`
 Request body for direct ODE simulation in Studio.
@@ -29087,8 +29203,72 @@ Request body for balanced excitatory-inhibitory network simulation.
 Request body for Studio script and one-liner generation.
 
 
+---
+
+## Module `studio.api.security`
+
+### Function `install_studio_security_middleware(app, context)`
+Install request limits, policy checks, and response security headers.
+
+Parameters
+----------
+app:
+    FastAPI application receiving the middleware.
+context:
+    Shared runtime state used for policy and identity decisions.
+
+---
+
+## Module `studio.api.simulation`
+
+### Function `build_simulation_router(context)`
+Build the simulation and analysis router over shared Studio runtime state.
+
+---
+
+## Module `studio.api.synthesis`
+
+### Function `build_synthesis_router(context)`
+Build the synthesis and place-and-route router over shared Studio runtime state.
+
+---
+
+## Module `studio.api.system`
+
+### Function `build_system_router(context)`
+Build the system and capability router over shared Studio runtime state.
+
+---
+
+## Module `studio.api.training`
+
+### Function `build_training_router(context)`
+Build the training monitor router over shared Studio runtime state.
+
+---
+
+## Module `studio.api.training_weights`
+
+### Function `build_training_weights_router(context)`
+Build the training-weight lifecycle router over shared Studio runtime state.
+
+---
+
+## Module `studio.app`
+
 ### Function `create_app(runtime_settings)`
 Create and configure the Visual SNN Studio FastAPI application.
+
+Parameters
+----------
+runtime_settings:
+    Optional validated runtime settings. Environment-derived settings are
+    used when omitted.
+
+Returns
+-------
+FastAPI
+    Application with security middleware and responsibility routers mounted.
 
 ---
 

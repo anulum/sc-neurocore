@@ -5,6 +5,20 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 ## [Unreleased]
 
 ### Added
+- Refactored the 3,662-line Studio application godfile into a 147-line
+  composition root, 16 responsibility-specific API routers, and dedicated
+  runtime, security, schema, guard, preset-flow, and frontend support modules.
+  The public contract is unchanged: all 114 HTTP routes, the progress
+  WebSocket, and the 111-path OpenAPI document retain the pre-refactor
+  semantics and canonical SHA-256
+  `a6b9dc6d391f85f10cec200cde0798109d69d0bc7d141d1545eeab15c7f4cef7`.
+  Clean checkouts without the ignored frontend build now retain the root route
+  and fail closed with `503 studio_frontend_not_built`, so route ownership and
+  OpenAPI generation no longer depend on local build artefacts.
+  Added a deterministic OpenAPI generator, committed reference document,
+  responsibility-ownership tests, normalized handler-body parity evidence,
+  and route-level failure tests covering worker, identity, audit, export,
+  training-weight, preset, precision, catalogue, and analysis boundaries.
 - Re-enrolled the already acceleration-complete Hindmarsh-Rose model (DOI
   `10.1098/rspb.1984.0024`) on its maintained three-state RK4 path. The paired
   schemas now match the hand model's no-reset upward `x >= x_threshold`
