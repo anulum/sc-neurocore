@@ -70,33 +70,19 @@ Prerequisites
 
 from __future__ import annotations
 
-import re
-import shutil
 import subprocess
 import sys
-import tempfile
 from pathlib import Path
-from typing import Mapping, cast
 
 import pytest
 
-from sc_neurocore.compiler.equation_compiler import (
-    Q88,
-    generate_testbench,
-)
-from sc_neurocore.compiler.verilog_compiler import compile_to_verilog
+from sc_neurocore.compiler.equation_compiler import Q88
 from sc_neurocore.neurons.equation_builder import EquationNeuron
 from sc_neurocore.neurons.models.dpi_neuron import DPINeuron
-from sc_neurocore.neurons.models.fitzhugh_nagumo import FitzHughNagumoNeuron
 from sc_neurocore.neurons.models.fitzhugh_rinzel import FitzHughRinzelNeuron
 from sc_neurocore.neurons.models.glif import GLIFNeuron
 from sc_neurocore.neurons.models.izhikevich2007 import Izhikevich2007Neuron
-from sc_neurocore.neurons.models.mckean import McKeanNeuron
-from sc_neurocore.neurons.models.connor_stevens import ConnorStevensNeuron
-from sc_neurocore.neurons.models.hodgkin_huxley import HodgkinHuxleyNeuron
-from sc_neurocore.neurons.models.wang_buzsaki import WangBuzsakiNeuron
 from sc_neurocore.neurons.models.mihalas_niebur import MihalasNieburNeuron
-from sc_neurocore.neurons.models.morris_lecar import MorrisLecarNeuron
 from sc_neurocore.neurons.models.perfect_integrator import PerfectIntegratorNeuron
 from sc_neurocore.neurons.models.pernarowski import PernarowskiNeuron
 from sc_neurocore.neurons.models.rulkov_map import RulkovMapNeuron
@@ -108,11 +94,37 @@ from sc_neurocore.neurons.universal_dsl import UniversalNeuron
 # (``tests/test_pipeline_cosim.py``); they live in ``tests/cosim_support.py``. Imported under
 # the module-local underscore names so the existing RK4 / exp-Euler call sites are unchanged.
 from tests.cosim_support import (
+    HAS_IVERILOG,
+    _MIHALAS_NIEBUR_PARAMS,
+    _connor_stevens_hand_spike_count,
+    _dpi_neuron_hand_spike_count,
+    _fitzhugh_nagumo_hand_spike_count,
+    _fitzhugh_nagumo_substep_neuron,
+    _fitzhugh_rinzel_hand_spike_count,
+    _glif_hand_spike_count,
+    _hodgkin_huxley_hand_spike_count,
+    _izhikevich2007_hand_euler_spike_count,
+    _lif_schema_precision_values,
+    _mckean_hand_spike_count,
+    _mihalas_niebur_hand_spike_count,
+    _morris_lecar_hand_spike_count,
+    _neuron_verilog_spike_count_q1616,
+    _perfect_integrator_hand_spike_count,
+    _pernarowski_hand_spike_count,
+    _python_spike_count,
+    _rulkov_map_verilog_q1616_trace,
+    _terman_wang_hand_spike_count,
+    _verilog_compiles,
+    _verilog_spike_count,
+    _verilog_spike_count_generic,
+    _verilog_spike_count_q1616,
+    _verilog_spike_count_q412,
+    _wang_buzsaki_hand_spike_count,
+    _wilson_hr_hand_spike_count,
+    compile_to_verilog,
     spike_count_method as _spike_count_method,
     verilog_spike_count_method as _verilog_spike_count_method,
 )
-
-HAS_IVERILOG = shutil.which("iverilog") is not None
 
 # Co-simulation parameters
 # NOTE: Q8.8 fixed-point has ±0.004 precision, which causes quantization
@@ -148,220 +160,6 @@ _TRANSCENDENTAL_COMPILE_MODELS = [
     "hodgkin_huxley",
     "terman_wang",
 ]
-
-
-def _python_spike_count(model_name: str, n_steps: int, current: float) -> int:
-    """Run a model in Python and return the spike count."""
-    neuron = UniversalNeuron.from_schema(model_name)
-    spikes = 0
-    for _ in range(n_steps):
-        if neuron.step(I=current):
-            spikes += 1
-    return spikes
-
-
-def _verilog_spike_count(model_name: str, n_steps: int, current: float) -> int:
-    """Compile a model to Verilog, simulate with iverilog, return spike count."""
-    neuron = UniversalNeuron.from_schema(model_name)
-    eq_neuron = neuron.to_equation_neuron()
-    module_name = f"sc_{model_name}"
-
-    verilog = neuron.to_verilog(module_name=module_name)
-    tb = generate_testbench(
-        eq_neuron,
-        module_name=module_name,
-        n_steps=n_steps,
-        input_current=current,
-    )
-
-    with tempfile.TemporaryDirectory() as tmpdir:
-        rtl_path = Path(tmpdir) / f"{module_name}.v"
-        tb_path = Path(tmpdir) / f"tb_{module_name}.v"
-        out_path = Path(tmpdir) / f"tb_{module_name}"
-
-        rtl_path.write_text(verilog)
-        tb_path.write_text(tb)
-
-        # Compile
-        result = subprocess.run(
-            ["iverilog", "-g2012", "-o", str(out_path), str(rtl_path), str(tb_path)],
-            capture_output=True,
-            text=True,
-            timeout=30,
-        )
-        if result.returncode != 0:
-            raise RuntimeError(f"iverilog compile failed:\n{result.stderr}")
-
-        # Simulate
-        result = subprocess.run(
-            ["vvp", str(out_path)],
-            capture_output=True,
-            text=True,
-            timeout=30,
-        )
-        if result.returncode != 0:
-            raise RuntimeError(f"vvp simulation failed:\n{result.stderr}")
-
-        # Parse spike count from output: "Simulation complete: N spikes in M cycles"
-        match = re.search(r"(\d+) spikes", result.stdout)
-        if not match:
-            raise RuntimeError(f"Could not parse spike count from:\n{result.stdout}")
-        return int(match.group(1))
-
-
-def _perfect_integrator_hand_spike_count(n_steps: int, current: float) -> int:
-    """Return the hand-authored perfect-integrator spike count for comparison."""
-    neuron = PerfectIntegratorNeuron()
-    return sum(neuron.step(current) for _ in range(n_steps))
-
-
-def _izhikevich2007_hand_euler_spike_count(n_steps: int, current: float) -> int:
-    """Return the hand-authored Izhikevich 2007 (Euler) spike count for comparison."""
-    neuron = Izhikevich2007Neuron(integrator="euler")
-    return sum(neuron.step(current) for _ in range(n_steps))
-
-
-def _dpi_neuron_hand_spike_count(n_steps: int, current: float) -> int:
-    """Return the hand-authored DPI (current-mode Euler) spike count for comparison."""
-    neuron = DPINeuron()
-    return sum(neuron.step(current) for _ in range(n_steps))
-
-
-def _fitzhugh_nagumo_hand_spike_count(n_steps: int, current: float) -> int:
-    """Return the hand-authored FitzHugh-Nagumo (RK4, rising-edge crossing) spike count."""
-    neuron = FitzHughNagumoNeuron(
-        dt=0.1, v=-1.0, w=-0.5, a=0.7, b=0.8, epsilon=0.08, v_threshold=1.0
-    )
-    return sum(neuron.step(current) for _ in range(n_steps))
-
-
-def _fitzhugh_rinzel_hand_spike_count(n_steps: int, current: float) -> int:
-    """Return the hand-authored FitzHugh-Rinzel RK4 upward-crossing count."""
-    neuron = FitzHughRinzelNeuron()
-    return sum(neuron.step(current) for _ in range(n_steps))
-
-
-def _glif_hand_spike_count(n_steps: int, current: float) -> int:
-    """Return the hand-authored GLIF candidate-first RK4 spike count."""
-    neuron = GLIFNeuron()
-    return sum(neuron.step(current) for _ in range(n_steps))
-
-
-def _pernarowski_hand_spike_count(n_steps: int, current: float) -> int:
-    """Return the hand-authored Pernarowski RK4 upward-crossing count."""
-    neuron = PernarowskiNeuron()
-    return sum(neuron.step(current) for _ in range(n_steps))
-
-
-def _terman_wang_hand_spike_count(n_steps: int, current: float) -> int:
-    """Return the hand-authored Terman-Wang RK4 upward-crossing count."""
-    neuron = TermanWangOscillator()
-    return sum(neuron.step(current) for _ in range(n_steps))
-
-
-def _wilson_hr_hand_spike_count(n_steps: int, current: float) -> int:
-    """Return the hand-authored Wilson-HR RK4 hard-reset spike count."""
-    neuron = WilsonHRNeuron()
-    return sum(neuron.step(current) for _ in range(n_steps))
-
-
-# Sustained relaxation-oscillation operating point mirrored by the bundled ``mckean`` schema.
-# The default hand-model regime (epsilon=0.01) is a single-transient knife-edge; epsilon=0.2 /
-# gamma=0.5 puts the piecewise-linear caricature on a robust limit cycle whose upward v_peak
-# crossings survive Q16.16 rounding, so the min/max RK4 datapath co-simulates bit-exactly.
-_MCKEAN_PARAMS = {"a": 0.25, "epsilon": 0.2, "gamma": 0.5, "v_peak": 0.8}
-
-
-def _mckean_hand_spike_count(n_steps: int, current: float) -> int:
-    """Return the hand-authored McKean (RK4, rising-edge crossing) spike count."""
-    neuron = McKeanNeuron(dt=0.1, v=0.0, w=0.0, **_MCKEAN_PARAMS)
-    return sum(neuron.step(current) for _ in range(n_steps))
-
-
-def _morris_lecar_hand_spike_count(n_steps: int, current: float) -> int:
-    """Return the hand-authored Morris-Lecar (RK4, rising-edge crossing) spike count.
-
-    The bundled ``morris_lecar`` schema mirrors ``MorrisLecarNeuron``'s maintained
-    defaults exactly (RK4 integrator, no reset, ``v >= v_threshold`` upward crossing,
-    ``phi = 1/15``), so the default construction is the enrolled operating point.
-    """
-    neuron = MorrisLecarNeuron()
-    return sum(neuron.step(current) for _ in range(n_steps))
-
-
-def _connor_stevens_hand_spike_count(n_macro_steps: int, current: float) -> int:
-    """Return the hand-authored Connor-Stevens macro-step (RK4, crossing) spike count.
-
-    The maintained ``ConnorStevensNeuron.step`` is a 1 ms macro step of 100 inner
-    four-stage RK4 sub-steps (``dt=0.01``) with a rising-edge ``v >= v_threshold`` crossing
-    on the macro boundary and no reset. The bundled ``connor_stevens`` schema mirrors this
-    exactly (``method="rk4"``, ``substeps=100``, ``detection="crossing"``), so one hand
-    ``step()`` corresponds to one schema macro ``step()``.
-    """
-    neuron = ConnorStevensNeuron()
-    return sum(neuron.step(current) for _ in range(n_macro_steps))
-
-
-def _hodgkin_huxley_hand_spike_count(n_macro_steps: int, current: float) -> int:
-    """Return the hand-authored Hodgkin-Huxley macro-step (RK4, crossing) spike count.
-
-    ``HodgkinHuxleyNeuron.step`` is a 1 ms macro step of 100 inner sub-steps (``dt=0.01``)
-    with a rising-edge ``v >= v_threshold`` crossing on the macro boundary and no reset. The
-    bundled ``hodgkin_huxley`` schema mirrors the ``integrator="rk4"`` path exactly
-    (``method="rk4"``, ``substeps=100``, ``detection="crossing"``) — the simultaneous RK4,
-    not the Gauss-Seidel default ``baseline_euler`` — so one hand ``step()`` corresponds to
-    one schema macro ``step()``.
-    """
-    neuron = HodgkinHuxleyNeuron(integrator="rk4")
-    return sum(neuron.step(current) for _ in range(n_macro_steps))
-
-
-def _wang_buzsaki_hand_spike_count(n_macro_steps: int, current: float) -> int:
-    """Return the hand-authored Wang-Buzsaki macro-step (Gauss-Seidel, crossing) spike count.
-
-    ``WangBuzsakiNeuron.step`` is a 0.5 ms macro step of 50 inner sub-steps (``dt=0.01``)
-    advanced sequentially (the gating variables ``h``/``n`` from the old voltage, then the
-    membrane voltage ``v`` from the new gates), with a rising-edge ``v >= v_threshold``
-    crossing on the macro boundary and no reset. The bundled ``wang_buzsaki`` schema mirrors
-    that path exactly (``method="gauss_seidel"``, ``substeps=50``, state ordered ``h, n, v``,
-    ``detection="crossing"``), so one hand ``step()`` corresponds to one schema macro
-    ``step()``. The neuron is constructed once so the state accumulates across the train.
-    """
-    neuron = WangBuzsakiNeuron()
-    return sum(neuron.step(current) for _ in range(n_macro_steps))
-
-
-# Adaptive-threshold operating point mirrored by the bundled ``mihalas_niebur`` schema.
-# ``theta_reset`` (1.3) exceeds ``theta_inf`` (1.0), so the max() threshold floor engages
-# on every spike and the fractional taus/coefficients stress the fixed-point datapath.
-_MIHALAS_NIEBUR_PARAMS = {
-    "v_rest": 0.0,
-    "v_reset": 0.0,
-    "theta_reset": 1.3,
-    "theta_inf": 1.0,
-    "tau_v": 10.0,
-    "tau_theta": 40.0,
-    "tau_1": 15.0,
-    "tau_2": 80.0,
-    "a": 0.1,
-    "b": 0.1,
-    "r1": 0.2,
-    "r2": -0.15,
-}
-
-
-def _mihalas_niebur_hand_spike_count(n_steps: int, current: float) -> int:
-    """Return the hand-authored Mihalas-Niebur (RK4) spike count for comparison."""
-    neuron = MihalasNieburNeuron(dt=1.0, **_MIHALAS_NIEBUR_PARAMS)
-    return sum(neuron.step(current) for _ in range(n_steps))
-
-
-def _lif_schema_precision_values() -> dict[str, float]:
-    """Return LIF schema values checked by the public precision CLI."""
-    schema = UniversalNeuron.from_schema("lif").schema
-    parameters = cast(Mapping[str, float], schema.get("parameters", {}))
-    state = cast(Mapping[str, float], schema.get("state", {}))
-    return {**parameters, **state}
 
 
 @pytest.mark.skipif(not HAS_IVERILOG, reason="Icarus Verilog not available")
@@ -810,58 +608,6 @@ class TestTierBModelCosim:
         assert (hand_spikes, schema_spikes, verilog_spikes) == (111, 111, 112)
 
 
-def _verilog_spike_count_q412(model_name: str, n_steps: int, current: float) -> int:
-    """Compile at Q4.12 precision and simulate, returning spike count."""
-    neuron = UniversalNeuron.from_schema(model_name)
-    eq_neuron = neuron.to_equation_neuron()
-    module_name = f"sc_{model_name}_q412"
-
-    verilog = neuron.to_verilog(
-        module_name=module_name,
-        data_width=16,
-        fraction=12,
-    )
-    tb = generate_testbench(
-        eq_neuron,
-        module_name=module_name,
-        n_steps=n_steps,
-        input_current=current,
-        data_width=16,
-        fraction=12,
-    )
-
-    with tempfile.TemporaryDirectory() as tmpdir:
-        rtl_path = Path(tmpdir) / f"{module_name}.v"
-        tb_path = Path(tmpdir) / f"tb_{module_name}.v"
-        out_path = Path(tmpdir) / f"tb_{module_name}"
-
-        rtl_path.write_text(verilog)
-        tb_path.write_text(tb)
-
-        result = subprocess.run(
-            ["iverilog", "-g2012", "-o", str(out_path), str(rtl_path), str(tb_path)],
-            capture_output=True,
-            text=True,
-            timeout=30,
-        )
-        if result.returncode != 0:
-            raise RuntimeError(f"iverilog compile failed:\n{result.stderr}")
-
-        result = subprocess.run(
-            ["vvp", str(out_path)],
-            capture_output=True,
-            text=True,
-            timeout=30,
-        )
-        if result.returncode != 0:
-            raise RuntimeError(f"vvp simulation failed:\n{result.stderr}")
-
-        match = re.search(r"(\d+) spikes", result.stdout)
-        if not match:
-            raise RuntimeError(f"Could not parse spike count from:\n{result.stdout}")
-        return int(match.group(1))
-
-
 @pytest.mark.skipif(not HAS_IVERILOG, reason="Icarus Verilog not available")
 class TestQ412Precision:
     """Q4.12 precision mode: 4 integer + 12 fractional bits.
@@ -951,195 +697,6 @@ class TestQ412Precision:
         assert "Q4.12" not in compatible_line
         assert "Q8.8" in compatible_line
         assert "Q16.16" in compatible_line
-
-
-def _verilog_spike_count_q1616(model_name: str, n_steps: int, current: float) -> int:
-    """Compile at Q16.16 precision (32-bit) and simulate, returning spike count."""
-    neuron = UniversalNeuron.from_schema(model_name)
-    eq_neuron = neuron.to_equation_neuron()
-    module_name = f"sc_{model_name}_q1616"
-
-    verilog = neuron.to_verilog(
-        module_name=module_name,
-        data_width=32,
-        fraction=16,
-    )
-    tb = generate_testbench(
-        eq_neuron,
-        module_name=module_name,
-        n_steps=n_steps,
-        input_current=current,
-        data_width=32,
-        fraction=16,
-    )
-
-    with tempfile.TemporaryDirectory() as tmpdir:
-        rtl_path = Path(tmpdir) / f"{module_name}.v"
-        tb_path = Path(tmpdir) / f"tb_{module_name}.v"
-        out_path = Path(tmpdir) / f"tb_{module_name}"
-
-        rtl_path.write_text(verilog)
-        tb_path.write_text(tb)
-
-        result = subprocess.run(
-            ["iverilog", "-g2012", "-o", str(out_path), str(rtl_path), str(tb_path)],
-            capture_output=True,
-            text=True,
-            timeout=30,
-        )
-        if result.returncode != 0:
-            raise RuntimeError(f"iverilog compile failed:\n{result.stderr}")
-
-        result = subprocess.run(
-            ["vvp", str(out_path)],
-            capture_output=True,
-            text=True,
-            timeout=30,
-        )
-        if result.returncode != 0:
-            raise RuntimeError(f"vvp simulation failed:\n{result.stderr}")
-
-        match = re.search(r"(\d+) spikes", result.stdout)
-        if not match:
-            raise RuntimeError(f"Could not parse spike count from:\n{result.stdout}")
-        return int(match.group(1))
-
-
-def _rulkov_map_verilog_q1616_trace(n_steps: int, current: float) -> list[tuple[int, float, float]]:
-    """Return the emitted Rulkov RTL's committed Q16.16 state trace.
-
-    The testbench samples the generated module's synchronous ``x_reg`` and
-    ``y_reg`` state after each active clock edge. These registers are the map
-    recurrence itself; the public state outputs retain the pre-threshold value
-    on a spiking cycle, so sampling the committed registers
-    avoids confusing that interface convention with the next-state trajectory.
-    """
-    neuron = UniversalNeuron.from_schema("rulkov_map")
-    module_name = "sc_rulkov_map_q1616_trace"
-    verilog = neuron.to_verilog(module_name=module_name, data_width=32, fraction=16)
-    current_q = Q88(data_width=32, fraction=16).encode(current)
-    testbench = "\n".join(
-        [
-            "`timescale 1ns / 1ps",
-            "module tb_sc_rulkov_map_q1616_trace;",
-            "reg clk = 1'b0;",
-            "reg rst_n = 1'b0;",
-            "wire spike_out;",
-            "wire signed [31:0] x_out;",
-            "wire signed [31:0] y_out;",
-            "always #5 clk = ~clk;",
-            f"{module_name} uut (",
-            "    .clk(clk), .rst_n(rst_n),",
-            f"    .I_t(32'sd{current_q}),",
-            "    .spike_out(spike_out), .x_out(x_out), .y_out(y_out)",
-            ");",
-            "integer step_index;",
-            "initial begin",
-            "    #23; rst_n = 1'b1;",
-            f"    for (step_index = 0; step_index < {n_steps}; step_index = step_index + 1) begin",
-            "        @(posedge clk); #1;",
-            '        $display("RULKOV_TRACE %0d %0d %0d", spike_out, uut.x_reg, uut.y_reg);',
-            "    end",
-            "    $finish;",
-            "end",
-            "endmodule",
-        ]
-    )
-
-    with tempfile.TemporaryDirectory() as tmpdir:
-        root = Path(tmpdir)
-        rtl_path = root / f"{module_name}.v"
-        tb_path = root / f"tb_{module_name}.v"
-        out_path = root / f"tb_{module_name}"
-        rtl_path.write_text(verilog, encoding="utf-8")
-        tb_path.write_text(testbench, encoding="utf-8")
-        subprocess.run(
-            ["iverilog", "-g2012", "-o", str(out_path), str(rtl_path), str(tb_path)],
-            capture_output=True,
-            text=True,
-            timeout=30,
-            check=True,
-        )
-        simulation = subprocess.run(
-            ["vvp", str(out_path)],
-            capture_output=True,
-            text=True,
-            timeout=30,
-            check=True,
-        )
-
-    scale = float(1 << 16)
-    rows = re.findall(r"^RULKOV_TRACE (-?\d+) (-?\d+) (-?\d+)$", simulation.stdout, re.MULTILINE)
-    trace = [(int(spike), int(x_q) / scale, int(y_q) / scale) for spike, x_q, y_q in rows]
-    assert len(trace) == n_steps, (
-        f"Rulkov RTL emitted {len(trace)} trace rows; expected {n_steps}:\n{simulation.stdout}"
-    )
-    return trace
-
-
-def _neuron_verilog_spike_count_q1616(
-    neuron: EquationNeuron, n_steps: int, current: float, module_name: str
-) -> int:
-    """Compile a raw ``EquationNeuron`` to Q16.16 RTL, simulate, return the spike count.
-
-    Unlike :func:`_verilog_spike_count_q1616` this takes a constructed neuron directly (not a
-    bundled schema name), so it can co-simulate an in-test configuration such as an artificial
-    sub-step count on a polynomial oscillator.
-    """
-    verilog = compile_to_verilog(neuron, module_name=module_name, data_width=32, fraction=16)
-    tb = generate_testbench(
-        neuron,
-        module_name=module_name,
-        n_steps=n_steps,
-        input_current=current,
-        data_width=32,
-        fraction=16,
-    )
-    with tempfile.TemporaryDirectory() as tmpdir:
-        rtl_path = Path(tmpdir) / f"{module_name}.v"
-        tb_path = Path(tmpdir) / f"tb_{module_name}.v"
-        out_path = Path(tmpdir) / f"tb_{module_name}"
-        rtl_path.write_text(verilog)
-        tb_path.write_text(tb)
-        compile_result = subprocess.run(
-            ["iverilog", "-g2012", "-o", str(out_path), str(rtl_path), str(tb_path)],
-            capture_output=True,
-            text=True,
-            timeout=30,
-        )
-        if compile_result.returncode != 0:
-            raise RuntimeError(f"iverilog compile failed:\n{compile_result.stderr}")
-        run_result = subprocess.run(
-            ["vvp", str(out_path)], capture_output=True, text=True, timeout=60
-        )
-        if run_result.returncode != 0:
-            raise RuntimeError(f"vvp simulation failed:\n{run_result.stderr}")
-        match = re.search(r"(\d+) spikes", run_result.stdout)
-        if not match:
-            raise RuntimeError(f"Could not parse spike count from:\n{run_result.stdout}")
-        return int(match.group(1))
-
-
-def _fitzhugh_nagumo_substep_neuron(substeps: int) -> EquationNeuron:
-    """Build the faithful FitzHugh-Nagumo oscillator with an artificial sub-step count.
-
-    FitzHugh-Nagumo is polynomial, so its Q16.16 datapath is bit-exact against float64; giving
-    it ``substeps`` inner steps lets the macro-step lowering be validated on a model whose only
-    residual would be a logic error (no look-up-table quantisation to confound the comparison).
-    """
-    return EquationNeuron(
-        equations={
-            "v": "v - v * v * v / 3.0 - w + I",
-            "w": "epsilon * (v + a - b * w)",
-        },
-        parameters={"a": 0.7, "b": 0.8, "epsilon": 0.08, "v_threshold": 1.0},
-        state={"v": -1.0, "w": -0.5},
-        threshold="v >= v_threshold",
-        dt=0.1,
-        method="rk4",
-        detection="crossing",
-        substeps=substeps,
-    )
 
 
 @pytest.mark.skipif(not HAS_IVERILOG, reason="Icarus Verilog not available")
@@ -1637,70 +1194,6 @@ class TestQ1616Precision:
 # ══════════════════════════════════════════════════════════════════════
 
 
-def _verilog_spike_count_generic(
-    model_name: str,
-    n_steps: int,
-    current: float,
-    data_width: int,
-    fraction: int,
-) -> int:
-    """Compile at arbitrary (data_width, fraction) and simulate, returning spike count.
-
-    This is the universal co-simulation helper — all precision-specific
-    helpers (_verilog_spike_count, _verilog_spike_count_q412, etc.) are
-    special cases of this function.
-    """
-    neuron = UniversalNeuron.from_schema(model_name)
-    eq_neuron = neuron.to_equation_neuron()
-    mode_tag = f"q{data_width - fraction}_{fraction}"
-    module_name = f"sc_{model_name}_{mode_tag}"
-
-    verilog = neuron.to_verilog(
-        module_name=module_name,
-        data_width=data_width,
-        fraction=fraction,
-    )
-    tb = generate_testbench(
-        eq_neuron,
-        module_name=module_name,
-        n_steps=n_steps,
-        input_current=current,
-        data_width=data_width,
-        fraction=fraction,
-    )
-
-    with tempfile.TemporaryDirectory() as tmpdir:
-        rtl_path = Path(tmpdir) / f"{module_name}.v"
-        tb_path = Path(tmpdir) / f"tb_{module_name}.v"
-        out_path = Path(tmpdir) / f"tb_{module_name}"
-
-        rtl_path.write_text(verilog)
-        tb_path.write_text(tb)
-
-        result = subprocess.run(
-            ["iverilog", "-g2012", "-o", str(out_path), str(rtl_path), str(tb_path)],
-            capture_output=True,
-            text=True,
-            timeout=30,
-        )
-        if result.returncode != 0:
-            raise RuntimeError(f"iverilog compile failed:\n{result.stderr}")
-
-        result = subprocess.run(
-            ["vvp", str(out_path)],
-            capture_output=True,
-            text=True,
-            timeout=30,
-        )
-        if result.returncode != 0:
-            raise RuntimeError(f"vvp simulation failed:\n{result.stderr}")
-
-        match = re.search(r"(\d+) spikes", result.stdout)
-        if not match:
-            raise RuntimeError(f"Could not parse spike count from:\n{result.stdout}")
-        return int(match.group(1))
-
-
 # ── Full precision mode registry (matches dsl_cli.PRECISION_MODES) ───
 _ALL_MODES = {
     "Q1.7": (8, 7),
@@ -1854,24 +1347,6 @@ class TestMultiPrecision:
             # Precision report must not crash
             report = q.precision_report(dt=0.01, params={"test": 1.0})
             assert "Fixed-point format" in report
-
-
-def _verilog_compiles(model_name: str) -> bool:
-    """Return whether a model's generated Verilog is accepted by iverilog."""
-    neuron = UniversalNeuron.from_schema(model_name)
-    module_name = f"sc_{model_name}"
-    verilog = neuron.to_verilog(module_name=module_name)
-    with tempfile.TemporaryDirectory() as tmpdir:
-        rtl_path = Path(tmpdir) / f"{module_name}.v"
-        out_path = Path(tmpdir) / f"{module_name}.out"
-        rtl_path.write_text(verilog)
-        result = subprocess.run(
-            ["iverilog", "-g2012", "-o", str(out_path), str(rtl_path)],
-            capture_output=True,
-            text=True,
-            timeout=30,
-        )
-        return result.returncode == 0
 
 
 @pytest.mark.skipif(not HAS_IVERILOG, reason="Icarus Verilog not available")
