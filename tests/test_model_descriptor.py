@@ -63,6 +63,22 @@ def test_parse_minimal_descriptor() -> None:
     assert descriptor_completeness_tier(descriptor) == 0
 
 
+def test_parse_reads_doi_is_translation_flag() -> None:
+    """A provenance section can mark its DOI as a translation of the cited work."""
+    payload = _minimal_payload()
+    payload["provenance"] = {
+        "authors": ["Lapicque, L."],
+        "year": 1907,
+        "doi": "10.1007/s00422-007-0189-6",
+        "doi_is_translation": True,
+    }
+    descriptor = parse_model_descriptor(payload)
+    assert descriptor.provenance.doi_is_translation is True
+    # The flag defaults to False when absent, so ordinary citations are unaffected.
+    payload["provenance"].pop("doi_is_translation")
+    assert parse_model_descriptor(payload).provenance.doi_is_translation is False
+
+
 def test_parse_rejects_missing_class_name() -> None:
     payload = _minimal_payload()
     del payload["metadata"]["class_name"]

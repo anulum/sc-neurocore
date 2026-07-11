@@ -16,6 +16,7 @@ from __future__ import annotations
 
 import shutil
 import subprocess
+import sys
 from pathlib import Path
 
 import pytest
@@ -26,7 +27,10 @@ EMITTER = ROOT / "tools" / "emit_catalogue_formal.py"
 
 
 def _perfect_class_names() -> set[str]:
-    import tomllib
+    if sys.version_info >= (3, 11):
+        import tomllib
+    else:
+        import tomli as tomllib
 
     from sc_neurocore.neurons.descriptor_tiers import is_perfect
     from sc_neurocore.neurons.model_descriptor import parse_model_descriptor

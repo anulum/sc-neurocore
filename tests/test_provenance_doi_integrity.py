@@ -84,15 +84,20 @@ def test_every_descriptor_doi_is_verified(model: str, doi: str) -> None:
     assert entry["resolves"] is True, (
         f"{model}: DOI {doi} does not resolve at {entry['registry']} (fabricated or mistyped)"
     )
-    assert entry["author_match"] is True, (
-        f"{model}: DOI {doi} resolves but its first author "
-        f"({entry.get('registry_first_author')!r}) does not match the descriptor — "
-        f"the DOI likely points to a different paper"
-    )
-    assert entry["year_match"] is True, (
-        f"{model}: DOI {doi} resolves but its year ({entry.get('registry_year')}) "
-        f"is more than a year from the descriptor's"
-    )
+    # A declared translation/reprint deliberately keeps the original work's author
+    # and year while the DOI points to a later translation, so the literal
+    # author/year comparison is expected to differ; resolution + verification still
+    # apply (the DOI must be a real, resolvable paper).
+    if not entry.get("translation"):
+        assert entry["author_match"] is True, (
+            f"{model}: DOI {doi} resolves but its first author "
+            f"({entry.get('registry_first_author')!r}) does not match the descriptor — "
+            f"the DOI likely points to a different paper"
+        )
+        assert entry["year_match"] is True, (
+            f"{model}: DOI {doi} resolves but its year ({entry.get('registry_year')}) "
+            f"is more than a year from the descriptor's"
+        )
     assert entry["verified"] is True, f"{model}: DOI {doi} is not marked verified in the ledger"
 
 

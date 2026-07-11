@@ -112,6 +112,15 @@ class Provenance:
     paper_title: str = ""
     url: str = ""
     license_note: str = ""
+    doi_is_translation: bool = False
+    """True when ``doi`` points to a later translation/reprint of the cited work.
+
+    A pre-DOI historical work (e.g. Lapicque 1907) has no DOI of its own; the
+    honest, verifiable reference is a modern translation with a DOI whose registry
+    author and year are the translator's, not the original's. The verifier then
+    confirms the DOI *resolves* (anti-fabrication) without demanding the original's
+    author and year match the translation's.
+    """
 
     @property
     def is_citeable(self) -> bool:
@@ -470,6 +479,7 @@ def _parse_provenance(section: Mapping[str, object]) -> Provenance:
         paper_title=_opt_str(section, "paper_title"),
         url=_opt_str(section, "url"),
         license_note=_opt_str(section, "license_note"),
+        doi_is_translation=bool(section.get("doi_is_translation", False)),
     )
 
 

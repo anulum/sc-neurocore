@@ -232,3 +232,16 @@ def test_merge_preserves_curation_and_follows_code() -> None:
     # Structure follows the code: defaults from the model, no obsolete params.
     assert merged["parameters"]["tau"]["default"] == regenerated["parameters"]["tau"]["default"]
     assert "obsolete_param" not in merged["parameters"]
+
+
+def test_runtime_only_state_is_materialised_and_mirror_fields_excluded() -> None:
+    """A genuine runtime state variable is materialised from a safe default
+    instance; an adapter's pseudo-field that merely mirrors a wrapped model's state
+    is not, so the descriptor never claims a state variable the model does not own.
+    """
+    stochastic_state = {s.name: s.init for s in generate_descriptor("StochasticLIFNeuron").state}
+    assert stochastic_state == {"v": 0.0}
+    # AstrocyteNeuron exposes ``self.v = self._astro.ca`` as a compatibility
+    # pseudo-voltage; its real state is the wrapped astrocyte's, so ``v`` stays out.
+    astrocyte_state = {s.name: s.init for s in generate_descriptor("AstrocyteNeuron").state}
+    assert "v" not in astrocyte_state

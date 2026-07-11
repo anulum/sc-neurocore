@@ -138,7 +138,10 @@ def resolve_doi(doi: str) -> dict[str, Any]:
 
 
 def classify_match(
-    claimed_first: str, claimed_year: int | None, outcome: dict[str, Any]
+    claimed_first: str,
+    claimed_year: int | None,
+    outcome: dict[str, Any],
+    translation: bool = False,
 ) -> dict[str, bool]:
     """Decide author/year/verified verdicts from a claimed pair and a registry outcome.
 
@@ -147,6 +150,12 @@ def classify_match(
     registry's online date routinely trails a book's or preprint's cited print year
     by a year), so it is confirmed within +/-1. A wrong DOI that resolves to a
     different paper still fails on the author check.
+
+    When ``translation`` is set the descriptor deliberately keeps the original
+    work's author and year while the DOI points to a later translation/reprint, so
+    the literal author/year comparison is expected to differ. The DOI still has to
+    *resolve* (the fabrication catcher), and that resolution alone verifies it; the
+    literal ``author_match``/``year_match`` are recorded unchanged for the record.
     """
     author_match = bool(claimed_first) and claimed_first == outcome.get("first_author")
     registry_year = outcome.get("year")
@@ -155,8 +164,14 @@ def classify_match(
         and registry_year is not None
         and abs(int(claimed_year) - int(registry_year)) <= 1
     )
-    verified = bool(outcome.get("resolves")) and author_match and year_match
-    return {"author_match": author_match, "year_match": year_match, "verified": verified}
+    resolves = bool(outcome.get("resolves"))
+    verified = resolves and (translation or (author_match and year_match))
+    return {
+        "author_match": author_match,
+        "year_match": year_match,
+        "verified": verified,
+        "translation": translation,
+    }
 
 
 def build_ledger() -> dict[str, dict[str, Any]]:
@@ -172,16 +187,18 @@ def build_ledger() -> dict[str, dict[str, Any]]:
         claimed_authors = list(getattr(provenance, "authors", []) or [])
         claimed_first = fold_surname(claimed_authors[0]) if claimed_authors else ""
         claimed_year = getattr(provenance, "year", None)
+        translation = bool(getattr(provenance, "doi_is_translation", False))
         outcome = resolve_doi(doi)
         if outcome["registry"] == "crossref":
             time.sleep(_CROSSREF_POLITE_DELAY_S)
-        match = classify_match(claimed_first, claimed_year, outcome)
+        match = classify_match(claimed_first, claimed_year, outcome, translation)
         ledger[doi] = {
             "model": toml_path.stem,
             "registry": outcome["registry"],
             "resolves": outcome["resolves"],
             "author_match": match["author_match"],
             "year_match": match["year_match"],
+            "translation": match["translation"],
             "verified": match["verified"],
             "registry_first_author": outcome.get("first_author"),
             "registry_year": outcome.get("year"),

@@ -30,7 +30,8 @@ authors = [
     "Lapicque, L.",
 ]
 year = 1907
-doi = "10.1007/s00422-007-0190-0"
+doi = "10.1007/s00422-007-0189-6"
+doi_is_translation = true
 paper_title = "Recherches quantitatives sur l'excitation electrique des nerfs traitee comme une polarisation"
 
 [state.v]

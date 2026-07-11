@@ -190,6 +190,63 @@ def _dynamic_state_fields(cls: type) -> frozenset[str]:
     return frozenset(fields)
 
 
+def _instance_state_init(cls: type, name: str) -> float | None:
+    """Return a state field's initial value from a zero-argument instance, if numeric.
+
+    A runtime-only state variable — assigned by the dynamics (a reset or a
+    rest-set membrane potential) rather than declared as a constructor field —
+    carries its initial value on a freshly constructed model. When the model
+    cannot be built with no arguments, or the field is absent or non-numeric, this
+    returns ``None`` so the field is left uncurated rather than fabricated.
+    """
+    try:
+        instance = cls()
+    except Exception:
+        return None
+    value = getattr(instance, name, None)
+    if isinstance(value, bool) or not isinstance(value, (int, float)):
+        return None
+    return float(value)
+
+
+def _is_mirror_field(cls: type, name: str) -> bool:
+    """True when ``self.<name>`` is ever assigned from a wrapped object's attribute.
+
+    An adapter that wraps another model and exposes a compatibility pseudo-field
+    (``self.v = self._astro.ca``) is mirroring the wrapped model's state, not
+    carrying its own integration state. Such a field, assigned from a nested
+    ``self.<other>.<attr>`` on any code path, is an exposed interface mirror and is
+    excluded from materialised state so the descriptor does not claim a state
+    variable the model does not own.
+    """
+    try:
+        source = textwrap.dedent(inspect.getsource(cls))
+        tree = ast.parse(source)
+    except (OSError, TypeError, SyntaxError):
+        return False
+    for node in ast.walk(tree):
+        if not isinstance(node, ast.Assign):
+            continue
+        assigns_field = any(
+            isinstance(t, ast.Attribute)
+            and isinstance(t.value, ast.Name)
+            and t.value.id == "self"
+            and t.attr == name
+            for t in node.targets
+        )
+        if not assigns_field:
+            continue
+        rhs = node.value
+        if (
+            isinstance(rhs, ast.Attribute)
+            and isinstance(rhs.value, ast.Attribute)
+            and isinstance(rhs.value.value, ast.Name)
+            and rhs.value.value.id == "self"
+        ):
+            return True
+    return False
+
+
 def _load_v1_schema(module: str) -> dict[str, Any]:
     """Return the curated v1 schema for a module, or an empty mapping."""
     from sc_neurocore.neurons.universal_dsl import load_schema
@@ -267,10 +324,27 @@ def generate_descriptor_payload(class_name: str) -> dict[str, Any]:
             parameters[name] = {"default": default, "unit": "", "meaning": ""}
         else:
             state[name] = {"init": default}
-    # No fabricated fallback: a model whose integration state is an internal
-    # accumulator (rate, statistical, and generator models) exposes no numeric
-    # state field, so its declared state stays empty until curated rather than
-    # inventing a membrane potential that does not exist.
+    # Materialise a runtime-only state variable: a recognised state field assigned
+    # by the model's dynamics but not declared as a constructor field (a membrane
+    # potential set from a rest parameter, then evolved by the step) has no static
+    # default, so read its initial value from a safe zero-argument instance rather
+    # than dropping it.
+    declared_names = {name for name, _ in specs}
+    for name in sorted(dyn_state - declared_names):
+        if name in state or name in parameters or name in v1_params:
+            continue
+        if _is_param(name) or not _is_state_var(name):
+            continue
+        if _is_mirror_field(cls, name):
+            continue
+        init = _instance_state_init(cls, name)
+        if init is not None:
+            state[name] = {"init": init}
+    # No fabricated fallback beyond that: a model whose integration state is an
+    # internal accumulator (rate, statistical, and generator models) with no
+    # numeric initial value on a default instance exposes no numeric state field,
+    # so its declared state stays empty until curated rather than inventing a
+    # membrane potential that does not exist.
 
     doc = cls.__doc__ or ""
     doi = ""

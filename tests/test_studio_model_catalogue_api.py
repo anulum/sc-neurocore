@@ -54,8 +54,9 @@ def test_summary_exposes_completeness_tier_and_evidence_kind() -> None:
     assert fhn["tier"] == 3
     assert fhn["evidence_kind"] == "measured"
     lapicque = by_name["LapicqueNeuron"]
-    assert lapicque["tier"] < 2
-    assert lapicque["evidence_kind"] == ""
+    # Lapicque now carries python+rust backends with a golden trace → kernel tier 3.
+    assert lapicque["tier"] == 3
+    assert lapicque["evidence_kind"] == "measured"
 
 
 def test_summary_exposes_dual_readiness_axes() -> None:

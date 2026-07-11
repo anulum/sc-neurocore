@@ -57,7 +57,32 @@ class TestClassifyMatch:
 
     def test_exact_match_is_verified(self) -> None:
         result = verify_dois.classify_match("jahr", 1990, self._outcome())
-        assert result == {"author_match": True, "year_match": True, "verified": True}
+        assert result == {
+            "author_match": True,
+            "year_match": True,
+            "verified": True,
+            "translation": False,
+        }
+
+    def test_translation_verifies_on_resolution_despite_author_year_mismatch(self) -> None:
+        # A declared translation deliberately keeps the original work's author and
+        # year (Lapicque 1907) while the DOI points to the translator's paper
+        # (Brunel 2007); resolution alone verifies it, and the literal mismatch is
+        # recorded rather than treated as fabrication.
+        result = verify_dois.classify_match(
+            "lapicque", 1907, self._outcome(first_author="brunel", year=2007), translation=True
+        )
+        assert result["author_match"] is False
+        assert result["year_match"] is False
+        assert result["translation"] is True
+        assert result["verified"] is True
+
+    def test_translation_still_requires_the_doi_to_resolve(self) -> None:
+        # The translation flag relaxes author/year, never the fabrication catcher.
+        result = verify_dois.classify_match(
+            "lapicque", 1907, {"registry": "crossref", "resolves": False}, translation=True
+        )
+        assert result["verified"] is False
 
     def test_year_within_one_still_verifies(self) -> None:
         # 2007 claimed, 2006 registered (a book's print-vs-online date) -> still verified.
