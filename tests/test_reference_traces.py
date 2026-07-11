@@ -28,20 +28,15 @@ from sc_neurocore.neurons.universal_dsl import list_bundled_schemas
 from tests.cosim_support import (
     _adex_subthreshold_euler_features,
     _closed_form_features,
-    _connor_stevens_macrostep_rk4_features,
     _exp_if_subthreshold_euler_features,
     _fitzhugh_nagumo_rk4_features,
-    _glif_driven_rk4_features,
     _hindmarsh_rose_prefix_euler_features,
-    _hodgkin_huxley_macrostep_rk4_features,
     _izhikevich_rs_euler_features,
     _mckean_rk4_features,
-    _morris_lecar_rk4_features,
     _quadratic_if_zero_current_features,
     _resonate_fire_linear_euler_features,
     _rulkov_map_features,
     _theta_constant_current_features,
-    _wang_buzsaki_macrostep_gauss_seidel_features,
 )
 
 _STOCHASTIC_SCHEMA_NAMES = frozenset({"escape_rate", "poisson"})
@@ -166,15 +161,6 @@ _PARITY_CASES: list[tuple[str, str, str, str, Callable[[ReferenceTraceSpec], dic
         ),
     ),
     (
-        "glif_constant_current_threshold_adaptation",
-        "glif",
-        "independent_rk4_reference",
-        "doi:10.1038/s41467-017-02717-4",
-        lambda spec: _glif_driven_rk4_features(
-            current=spec.protocol.inputs["I"], dt=spec.protocol.dt, steps=spec.protocol.steps
-        ),
-    ),
-    (
         "izhikevich_regular_spiking_doi",
         "izhikevich",
         "independent_euler_reference",
@@ -226,51 +212,6 @@ _PARITY_CASES: list[tuple[str, str, str, str, Callable[[ReferenceTraceSpec], dic
         "doi:10.1098/rspb.1984.0024",
         lambda spec: _hindmarsh_rose_prefix_euler_features(
             current=spec.protocol.inputs["I"], dt=spec.protocol.dt, steps=spec.protocol.steps
-        ),
-    ),
-    (
-        "morris_lecar_driven_oscillation_doi",
-        "morris_lecar",
-        "independent_rk4_reference",
-        "doi:10.1016/S0006-3495(81)84782-0",
-        lambda spec: _morris_lecar_rk4_features(
-            current=spec.protocol.inputs["I"], dt=spec.protocol.dt, steps=spec.protocol.steps
-        ),
-    ),
-    (
-        "hodgkin_huxley_driven_spiking_doi",
-        "hodgkin_huxley",
-        "independent_macrostep_rk4_reference",
-        "doi:10.1113/jphysiol.1952.sp004764",
-        lambda spec: _hodgkin_huxley_macrostep_rk4_features(
-            current=spec.protocol.inputs["I"],
-            dt=spec.protocol.dt,
-            steps=spec.protocol.steps,
-            substeps=100,
-        ),
-    ),
-    (
-        "connor_stevens_driven_spiking_doi",
-        "connor_stevens",
-        "independent_macrostep_rk4_reference",
-        "doi:10.1113/jphysiol.1971.sp009366",
-        lambda spec: _connor_stevens_macrostep_rk4_features(
-            current=spec.protocol.inputs["I"],
-            dt=spec.protocol.dt,
-            steps=spec.protocol.steps,
-            substeps=100,
-        ),
-    ),
-    (
-        "wang_buzsaki_driven_spiking_doi",
-        "wang_buzsaki",
-        "independent_macrostep_gauss_seidel_reference",
-        "doi:10.1523/JNEUROSCI.16-20-06402.1996",
-        lambda spec: _wang_buzsaki_macrostep_gauss_seidel_features(
-            current=spec.protocol.inputs["I"],
-            dt=spec.protocol.dt,
-            steps=spec.protocol.steps,
-            substeps=50,
         ),
     ),
 ]

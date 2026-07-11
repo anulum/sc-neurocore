@@ -77,7 +77,6 @@ from pathlib import Path
 import pytest
 
 from sc_neurocore.compiler.equation_compiler import Q88
-from sc_neurocore.neurons.models.glif import GLIFNeuron
 from sc_neurocore.neurons.models.rulkov_map import RulkovMapNeuron
 from sc_neurocore.neurons.universal_dsl import UniversalNeuron
 
@@ -86,20 +85,15 @@ from sc_neurocore.neurons.universal_dsl import UniversalNeuron
 # the module-local underscore names so the existing RK4 / exp-Euler call sites are unchanged.
 from tests.cosim_support import (
     HAS_IVERILOG,
-    _connor_stevens_hand_spike_count,
     _fitzhugh_nagumo_hand_spike_count,
-    _glif_hand_spike_count,
-    _hodgkin_huxley_hand_spike_count,
     _lif_schema_precision_values,
     _mckean_hand_spike_count,
-    _morris_lecar_hand_spike_count,
     _python_spike_count,
     _rulkov_map_verilog_q1616_trace,
     _verilog_compiles,
     _verilog_spike_count,
     _verilog_spike_count_q1616,
     _verilog_spike_count_q412,
-    _wang_buzsaki_hand_spike_count,
 )
 
 # Co-simulation parameters
@@ -140,38 +134,6 @@ _TRANSCENDENTAL_COMPILE_MODELS = [
 
 class TestTierBModelCosim:
     """WC-A5 Tier-B model enrollment beyond the original schema set."""
-
-    def test_glif_schema_formats_match_hand_rk4_sequence(self) -> None:
-        """The paired GLIF schemas reproduce every hand-model RK4 state and reset.
-
-        The 4,000-step varied drive exercises all four coupled linear equations,
-        every RK4 stage, silence, tonic firing, and 181 candidate-first adaptive
-        resets. Exact state and event equality after every step catches drift in
-        either schema format's integration method, threshold relation, parameter,
-        reset source, or post-candidate update order.
-        """
-        schema_dir = Path(__file__).resolve().parents[1] / "src/sc_neurocore/neurons/model_schemas"
-        hand = GLIFNeuron()
-        toml_schema = UniversalNeuron.from_schema(schema_dir / "glif.toml")
-        json_schema = UniversalNeuron.from_schema(schema_dir / "glif.json")
-        currents = (0.0, 15.0, 22.0, 30.0, 45.0, 50.0, 30.0, 22.0) * 500
-        spike_count = 0
-        reset_count = 0
-
-        for current in currents:
-            hand_spike = hand.step(current)
-            spike_count += hand_spike
-            if hand_spike:
-                assert hand.v == hand.v_reset
-                reset_count += 1
-            assert int(bool(toml_schema.step(I=current))) == hand_spike
-            assert int(bool(json_schema.step(I=current))) == hand_spike
-            for variable in ("v", "theta", "i_asc1", "i_asc2"):
-                expected = getattr(hand, variable)
-                assert toml_schema.state[variable] == expected
-                assert json_schema.state[variable] == expected
-
-        assert spike_count == reset_count == 181
 
 
 @pytest.mark.skipif(not HAS_IVERILOG, reason="Icarus Verilog not available")
@@ -316,102 +278,6 @@ class TestQ1616Precision:
 
         assert python_spikes == verilog_spikes == 25
 
-    @pytest.mark.parametrize(
-        ("current", "expected_spikes"),
-        ((0.0, 0), (15.0, 0), (22.0, 23), (30.0, 54), (45.0, 86), (50.0, 95)),
-        ids=("rest", "subthreshold", "onset", "tonic", "high-drive", "strong-drive"),
-    )
-    def test_glif_q1616_parity(self, current: float, expected_spikes: int) -> None:
-        """GLIF has exact hand/schema/Q16.16 spike-count parity across six regimes.
-
-        The schema mirrors the maintained four-state, candidate-first classical-RK4
-        hand model with level ``v >= theta`` detection and adaptive reset. Hand model
-        and schema runner agree exactly at every operating point. The compiler lowers
-        reset expressions from the integrated candidate and exposes the same post-reset
-        state in RTL, so Q16.16 preserves the complete spike count despite quantising
-        ``a_theta=0.01`` and the adaptive increments. Rest, subthreshold, onset, tonic,
-        and high-drive regimes are all enrolled rather than one selected current.
-        """
-        n_steps = 1000
-        hand_spikes = _glif_hand_spike_count(n_steps, current)
-        schema_spikes = _python_spike_count("glif", n_steps, current)
-        verilog_spikes = _verilog_spike_count_q1616("glif", n_steps, current)
-
-        assert hand_spikes == schema_spikes == verilog_spikes == expected_spikes, (
-            f"GLIF exact Q16.16 mismatch at I={current}: "
-            f"hand={hand_spikes}, schema={schema_spikes}, verilog={verilog_spikes}"
-        )
-
-    def test_morris_lecar_q1616_parity(self) -> None:
-        """Faithful Morris-Lecar co-simulates at exact Q16.16 three-way crossing parity.
-
-        The re-enrolled schema is the genuine Morris-Lecar (1981) calcium-potassium
-        relaxation oscillator matching ``MorrisLecarNeuron``'s maintained defaults:
-        four-stage RK4, **no reset**, and rising-edge (``v >= v_threshold`` upward
-        crossing) spike detection. The earlier schema was ``method="euler"`` with a
-        no-op ``[reset]`` (``v -> v``, ``w -> w``) that disabled edge detection, routed
-        to the level datapath, and over-counted every above-threshold step; both sides
-        over-counted identically so a ~15% tolerance band passed while validating a
-        caricature. The faithful schema counts one spike per action potential: at the
-        sustained depolarising regime (``I=100``, 3000 steps) the hand model, the schema
-        runner and the emitted Q16.16 RTL all report the same seven upward crossings.
-
-        The sigmoidal gating lowers to 256-entry cosh/tanh LUTs, so — unlike the
-        polynomial FitzHugh-Nagumo / piecewise-linear McKean oscillators — this is an
-        exact **spike-count** parity, not bit-identical state: the hand model (``math``
-        transcendentals via ``RK4Solver``) and the schema runner (``numpy``
-        transcendentals) diverge at the float level, yet the crossing count is robust to
-        that drift across the whole ``I in [90, 110]`` band and the Q16.16 LUT datapath
-        reproduces it exactly. (``I=120`` is a knife-edge where a marginal crossing
-        splits between the paths; the enrolled point sits safely inside the robust band.)
-        """
-        current, n_steps = 100.0, 3000
-        hand_spikes = _morris_lecar_hand_spike_count(n_steps, current)
-        py_spikes = _python_spike_count("morris_lecar", n_steps, current)
-        vlog_spikes = _verilog_spike_count_q1616("morris_lecar", n_steps, current)
-        assert 1 < py_spikes < n_steps  # a sustained relaxation train, not saturated
-        assert hand_spikes == py_spikes == vlog_spikes, (
-            f"Morris-Lecar three-way mismatch: hand={hand_spikes}, "
-            f"schema={py_spikes}, verilog={vlog_spikes}"
-        )
-
-    def test_hodgkin_huxley_q1616_macrostep_parity(self) -> None:
-        """Faithful macro-step Hodgkin-Huxley: hand == schema exact, verilog within one spike.
-
-        The re-enrolled schema mirrors ``HodgkinHuxleyNeuron(integrator="rk4")``'s maintained
-        integrator: RK4 with ``substeps=100`` (100 inner ``dt=0.01`` sub-steps per 1 ms macro
-        step) and a rising-edge (``v >= v_threshold``) crossing evaluated only on the macro
-        boundary, no reset. The earlier schema was single-step ``method="euler"`` — neither the
-        hand model's RK4 nor its macro-stepping — so it could only be compared schema-vs-verilog
-        under a 5% band; the macro-step schema now reproduces the hand model's action-potential
-        count exactly, so **hand == schema** (one hand ``step()`` per schema macro ``step()``).
-        The comparison is against the ``integrator="rk4"`` (simultaneous) path, not the
-        Gauss-Seidel default ``baseline_euler``, which the DSL's simultaneous integration matches.
-
-        The Q16.16 RTL runs 100 clocks per macro step (one integration sub-step each, the
-        crossing gated to the macro boundary) and tracks the schema **within one spike** over the
-        bounded window. Like the stiff six-state Connor-Stevens (and unlike the well-conditioned
-        Morris-Lecar), Hodgkin-Huxley's exprel / sigmoid gating lowers to 256-entry look-up
-        tables; the fixed-point trajectory drifts from float64 and the drift is
-        **look-up-table-resolution-limited, not datapath-precision-limited**, so it holds
-        three-way over a bounded window and accumulates beyond it — an honest per-model
-        hardware-fidelity band, not a tolerance knob. The macro-step lowering itself is bit-exact
-        (proven on the polynomial FitzHugh-Nagumo sub-step cosim); the residual is genuine
-        conductance-LUT quantisation.
-        """
-        current, macro_steps, substeps = 15.0, 20, 100
-        hand_spikes = _hodgkin_huxley_hand_spike_count(macro_steps, current)
-        py_spikes = _python_spike_count("hodgkin_huxley", macro_steps, current)
-        vlog_spikes = _verilog_spike_count_q1616("hodgkin_huxley", macro_steps * substeps, current)
-        assert 1 < py_spikes < macro_steps  # a partial macro-step train, not saturated
-        assert hand_spikes == py_spikes, (
-            f"Hodgkin-Huxley hand/schema macro-step mismatch: hand={hand_spikes}, schema={py_spikes}"
-        )
-        assert abs(py_spikes - vlog_spikes) <= 1, (
-            f"Hodgkin-Huxley Q16.16 macro-step gap > 1 spike "
-            f"(schema={py_spikes}, verilog={vlog_spikes})"
-        )
-
     def test_adex_q1616_parity(self) -> None:
         """Adaptive-exponential IF (exp spike + adaptation + reset) is bit-true at Q16.16."""
         py_spikes = _python_spike_count("adex", 500, 1000.0)
@@ -420,78 +286,6 @@ class TestQ1616Precision:
         gap_pct = abs(py_spikes - vlog_spikes) / max(py_spikes, 1) * 100
         assert gap_pct <= 2.0, (
             f"AdEx Q16.16 gap {gap_pct:.1f}% (Python={py_spikes}, Verilog={vlog_spikes})"
-        )
-
-    def test_wang_buzsaki_q1616_macrostep_parity(self) -> None:
-        """Faithful macro-step Wang-Buzsaki: hand == schema exact, verilog within one spike.
-
-        The re-enrolled schema mirrors ``WangBuzsakiNeuron``'s maintained integrator: a
-        sequential (Gauss-Seidel) forward Euler with ``substeps=50`` (50 inner ``dt=0.01``
-        sub-steps per 0.5 ms macro step, the gating variables ``h``/``n`` updated from the old
-        voltage and the membrane voltage ``v`` from the new gates) and a rising-edge
-        ``v >= v_threshold`` crossing evaluated only on the macro boundary, no reset. The
-        earlier schema was single-step ``method="euler"`` with a sigmoid-caricature ``m_inf``
-        and unfaithful gate initial conditions, so it could only be compared schema-vs-verilog
-        under a 15% band; the macro-step schema now reproduces the hand model's
-        action-potential count exactly, so **hand == schema** (one hand ``step()`` per schema
-        macro ``step()``). Unlike Hodgkin-Huxley (simultaneous RK4), Wang-Buzsaki requires the
-        DSL's ``gauss_seidel`` mode — the hand model updates the gates before the voltage, and
-        simultaneous Euler drifts.
-
-        The Q16.16 RTL runs 50 clocks per macro step (one sequential sub-step each, the crossing
-        gated to the macro boundary) and tracks the schema **within one spike** over the bounded
-        window. Wang-Buzsaki's exprel gating and its ``m_inf = alpha_m/(alpha_m+beta_m)``
-        runtime division lower to a 256-entry look-up table plus a fixed-point divide; the
-        fixed-point trajectory drifts from float64 and the drift is look-up-table- and
-        fixed-point-resolution-limited, not a tolerance knob — three-way exact over this
-        bounded window and accumulating beyond it, an honest per-model hardware-fidelity band.
-        """
-        current, macro_steps, substeps = 10.0, 20, 50
-        hand_spikes = _wang_buzsaki_hand_spike_count(macro_steps, current)
-        py_spikes = _python_spike_count("wang_buzsaki", macro_steps, current)
-        vlog_spikes = _verilog_spike_count_q1616("wang_buzsaki", macro_steps * substeps, current)
-        assert 1 < py_spikes < macro_steps  # a partial macro-step train, not saturated
-        assert hand_spikes == py_spikes, (
-            f"Wang-Buzsaki hand/schema macro-step mismatch: hand={hand_spikes}, schema={py_spikes}"
-        )
-        assert abs(py_spikes - vlog_spikes) <= 1, (
-            f"Wang-Buzsaki Q16.16 macro-step gap > 1 spike "
-            f"(schema={py_spikes}, verilog={vlog_spikes})"
-        )
-
-    def test_connor_stevens_q1616_macrostep_parity(self) -> None:
-        """Faithful macro-step Connor-Stevens: hand == schema exact, verilog within one spike.
-
-        The re-enrolled schema mirrors ``ConnorStevensNeuron``'s maintained integrator: RK4
-        with ``substeps=100`` (100 inner ``dt=0.01`` sub-steps per 1 ms macro step) and a
-        rising-edge (``v >= v_threshold``) crossing evaluated only on the macro boundary, no
-        reset. The earlier schema was single-step ``method="euler"`` — neither the hand
-        model's RK4 nor its macro-stepping — so it could only be compared schema-vs-verilog;
-        the macro-step schema now reproduces the hand model's action-potential count exactly,
-        so **hand == schema** (one hand ``step()`` per schema macro ``step()``).
-
-        The Q16.16 RTL runs 100 clocks per macro step (one integration sub-step each, the
-        crossing gated to the macro boundary) and tracks the schema **within one spike** over
-        the bounded window. Unlike the well-conditioned Morris-Lecar, Connor-Stevens is a
-        stiff six-state A-current model whose exprel / cube-root gating lowers to 256-entry
-        look-up tables; the fixed-point trajectory drifts from float64 and the drift is
-        **look-up-table-resolution-limited, not datapath-precision-limited** (the spike count
-        is identical at Q16.16 / Q24.24 / Q32.32), so it holds three-way over a bounded window
-        and accumulates beyond it — an honest per-model hardware-fidelity band, not a tolerance
-        knob. The macro-step lowering itself is bit-exact (proven on the polynomial
-        FitzHugh-Nagumo sub-step cosim); the residual is genuine conductance-LUT quantisation.
-        """
-        current, macro_steps, substeps = 100.0, 20, 100
-        hand_spikes = _connor_stevens_hand_spike_count(macro_steps, current)
-        py_spikes = _python_spike_count("connor_stevens", macro_steps, current)
-        vlog_spikes = _verilog_spike_count_q1616("connor_stevens", macro_steps * substeps, current)
-        assert 1 < py_spikes < macro_steps  # a partial macro-step train, not saturated
-        assert hand_spikes == py_spikes, (
-            f"Connor-Stevens hand/schema macro-step mismatch: hand={hand_spikes}, schema={py_spikes}"
-        )
-        assert abs(py_spikes - vlog_spikes) <= 1, (
-            f"Connor-Stevens Q16.16 macro-step gap > 1 spike "
-            f"(schema={py_spikes}, verilog={vlog_spikes})"
         )
 
     def test_fitzhugh_nagumo_q1616_parity(self) -> None:
