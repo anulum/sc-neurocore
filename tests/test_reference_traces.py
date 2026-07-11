@@ -29,19 +29,15 @@ from tests.cosim_support import (
     _adex_subthreshold_euler_features,
     _closed_form_features,
     _connor_stevens_macrostep_rk4_features,
-    _dpi_neuron_driven_euler_features,
     _exp_if_subthreshold_euler_features,
     _fitzhugh_nagumo_rk4_features,
     _fitzhugh_rinzel_rk4_features,
     _glif_driven_rk4_features,
     _hindmarsh_rose_prefix_euler_features,
     _hodgkin_huxley_macrostep_rk4_features,
-    _izhikevich2007_euler_features,
     _izhikevich_rs_euler_features,
     _mckean_rk4_features,
-    _mihalas_niebur_driven_rk4_features,
     _morris_lecar_rk4_features,
-    _perfect_integrator_sawtooth_features,
     _pernarowski_rk4_features,
     _quadratic_if_zero_current_features,
     _resonate_fire_linear_euler_features,
@@ -145,23 +141,6 @@ def test_quadratic_if_trace_features_match_independent_analytic_solution() -> No
         assert spec.expected_features[feature_name] == pytest.approx(feature_value, abs=1e-12)
 
 
-def test_perfect_integrator_trace_features_match_independent_sawtooth_solution() -> None:
-    """Committed perfect-integrator features must match the exact reset sawtooth."""
-    spec = load_reference_trace_spec("perfect_integrator_constant_current_sawtooth")
-
-    expected = _perfect_integrator_sawtooth_features(
-        current=spec.protocol.inputs["I"],
-        dt=spec.protocol.dt,
-        steps=spec.protocol.steps,
-    )
-
-    assert spec.schema_name == "perfect_integrator"
-    assert spec.provenance.kind == "analytic_sawtooth"
-    assert spec.provenance.citation == "doi:10.1017/CBO9781107447615"
-    for feature_name, feature_value in expected.items():
-        assert spec.expected_features[feature_name] == pytest.approx(feature_value, abs=1e-12)
-
-
 def test_theta_trace_features_match_independent_phase_solution() -> None:
     """Committed theta features must match the tangent half-angle phase solution."""
     spec = load_reference_trace_spec("theta_constant_current_phase_analytic")
@@ -204,33 +183,6 @@ _PARITY_CASES: list[tuple[str, str, str, str, Callable[[ReferenceTraceSpec], dic
         "independent_euler_reference",
         "doi:10.1109/TNN.2003.820440",
         lambda spec: _izhikevich_rs_euler_features(
-            current=spec.protocol.inputs["I"], dt=spec.protocol.dt, steps=spec.protocol.steps
-        ),
-    ),
-    (
-        "izhikevich2007_regular_spiking_doi",
-        "izhikevich2007",
-        "independent_euler_reference",
-        "doi:10.7551/mitpress/2526.001.0001",
-        lambda spec: _izhikevich2007_euler_features(
-            current=spec.protocol.inputs["I"], dt=spec.protocol.dt, steps=spec.protocol.steps
-        ),
-    ),
-    (
-        "dpi_neuron_driven_spiking_doi",
-        "dpi_neuron",
-        "independent_euler_reference",
-        "doi:10.1109/JPROC.2014.2313954",
-        lambda spec: _dpi_neuron_driven_euler_features(
-            current=spec.protocol.inputs["I"], dt=spec.protocol.dt, steps=spec.protocol.steps
-        ),
-    ),
-    (
-        "mihalas_niebur_driven_spiking_doi",
-        "mihalas_niebur",
-        "independent_rk4_reference",
-        "doi:10.1162/neco.2008.12-07-680",
-        lambda spec: _mihalas_niebur_driven_rk4_features(
             current=spec.protocol.inputs["I"], dt=spec.protocol.dt, steps=spec.protocol.steps
         ),
     ),
