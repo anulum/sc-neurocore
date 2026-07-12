@@ -356,6 +356,13 @@ evolutionary search is delegated to the Rust engine with no Python fallback) / D
 edge AER, HDC/VSA, self-replicating SC substrate. Mixed **MAINTAINED / DRAFT**;
 several are Research-tier (excluded from wheel). Detailed classification in audit.
 
+`evo_substrate` exposes its historical import path through a thin compatibility
+facade. Fourteen focused modules separate genome state, organisms, variation,
+fitness, speciation, lineage, selection, ecology, development, statistics,
+emission, deployment, safety, and replication. `replication` is the composition
+root of an explicitly tested acyclic import graph; public symbol identity and
+pickle compatibility remain anchored to the historical facade.
+
 ### M. Analysis, explainability, profiling, energy — *Research (most)*
 `analysis` (spike-train toolkit, 132 functions) · `explain` · `explainability` ·
 `debug` · `profiler` · `profiling` · `viz` · `dashboard` · `energy` ·

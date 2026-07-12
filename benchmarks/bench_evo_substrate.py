@@ -4,26 +4,32 @@
 # © Code 2020–2026 Miroslav Šotek. All rights reserved.
 # ORCID: 0009-0009-3560-0851
 # Contact: www.anulum.li | protoscience@anulum.li
-# SC-NeuroCore — evo_substrate microbenchmark harness
+# SC-NeuroCore — Evolutionary substrate benchmark evidence
 
-"""Measures the throughput of the evolutionary substrate hot paths.
+"""Measure evolutionary-substrate workflows with source-bound raw samples."""
 
-Results are time.perf_counter deltas; no smoothing, no simulation.
-Emits a markdown table to stdout and a JSON snapshot to
-benchmarks/results/bench_evo_substrate.json for doc consumption.
-"""
+from __future__ import annotations
 
+import argparse
+from collections.abc import Callable, Sequence
+from dataclasses import dataclass
+from datetime import datetime, timezone
+import hashlib
+import inspect
 import json
+import math
 import os
+from pathlib import Path
+import platform
+import statistics
+import subprocess
 import sys
 import time
 
 import numpy as np
 
-SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
-sys.path.insert(0, os.path.join(SCRIPT_DIR, "..", "src"))
-
-from sc_neurocore.evo_substrate.evo_substrate import (  # noqa: E402
+from _benchmark_context import load_average, measurement_context
+from sc_neurocore.evo_substrate import (
     CrossoverEngine,
     FormalSafetyGuard,
     Genome,
@@ -34,77 +40,242 @@ from sc_neurocore.evo_substrate.evo_substrate import (  # noqa: E402
     genomic_distance,
 )
 
-
-def _ns_per_call(fn, iters: int) -> float:
-    t0 = time.perf_counter()
-    for _ in range(iters):
-        fn()
-    t1 = time.perf_counter()
-    return (t1 - t0) * 1e9 / iters
+_SCHEMA_VERSION = "sc-neurocore.evo-substrate-benchmark.v2"
+_REPO_ROOT = Path(__file__).resolve().parents[1]
+_DEFAULT_OUTPUT = _REPO_ROOT / "benchmarks" / "results" / "bench_evo_substrate.json"
 
 
-def main() -> int:
-    results: dict[str, dict[str, float]] = {}
+@dataclass(frozen=True)
+class Operation:
+    """Describe one timed operation and its per-sample preparation."""
 
-    me = MutationEngine(rng_seed=7)
-    seed_g = Genome()
-    seed_g.compute_id()
-    results["mutate"] = {"ns_per_call": _ns_per_call(lambda: me.mutate(seed_g), 10_000)}
+    name: str
+    iterations: int
+    prepare: Callable[[], Callable[[], object]]
 
-    ce = CrossoverEngine(rng_seed=7)
-    a = Genome()
-    a.compute_id()
-    b = Genome()
-    b.compute_id()
-    results["crossover"] = {
-        "ns_per_call": _ns_per_call(lambda: ce.crossover(a, b), 10_000),
+
+def _parser() -> argparse.ArgumentParser:
+    """Build the benchmark command parser."""
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--samples", type=int, default=30)
+    parser.add_argument("--warmups", type=int, default=5)
+    parser.add_argument("--output", type=Path, default=_DEFAULT_OUTPUT)
+    return parser
+
+
+def _validate_args(args: argparse.Namespace) -> None:
+    """Reject non-positive sample counts and negative warm-up counts."""
+    if args.samples <= 0:
+        raise ValueError("samples must be positive")
+    if args.warmups < 0:
+        raise ValueError("warmups must be non-negative")
+
+
+def _source_digest() -> tuple[str, int]:
+    """Hash every Python file in the evolutionary-substrate package."""
+    source_root = _REPO_ROOT / "src" / "sc_neurocore" / "evo_substrate"
+    files = sorted(source_root.glob("*.py"))
+    if not files:
+        raise RuntimeError("evolutionary-substrate source package is empty")
+    digest = hashlib.sha256()
+    for path in files:
+        digest.update(path.relative_to(_REPO_ROOT).as_posix().encode("utf-8"))
+        digest.update(b"\0")
+        digest.update(path.read_bytes())
+        digest.update(b"\0")
+    return digest.hexdigest(), len(files)
+
+
+def _git_metadata() -> dict[str, object]:
+    """Return Git identity and scoped dirty-state metadata."""
+    head = subprocess.run(
+        ["git", "rev-parse", "HEAD"],
+        cwd=_REPO_ROOT,
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    status = subprocess.run(
+        [
+            "git",
+            "status",
+            "--porcelain",
+            "--",
+            "src/sc_neurocore/evo_substrate",
+            "benchmarks/bench_evo_substrate.py",
+        ],
+        cwd=_REPO_ROOT,
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    digest, file_count = _source_digest()
+    return {
+        "git_head": head.stdout.strip() if head.returncode == 0 else None,
+        "surface_dirty": bool(status.stdout.strip()) if status.returncode == 0 else None,
+        "source_sha256": digest,
+        "source_file_count": file_count,
     }
 
-    results["genomic_distance"] = {
-        "ns_per_call": _ns_per_call(lambda: genomic_distance(a, b), 10_000),
-    }
 
-    sg = FormalSafetyGuard()
-    results["safety_guard_check"] = {
-        "ns_per_call": _ns_per_call(lambda: sg.check(seed_g), 10_000),
-    }
+def _assert_source_tree_import() -> None:
+    """Reject measurements imported from an installed or stale source tree."""
+    imported = Path(inspect.getfile(Genome)).resolve()
+    expected = (_REPO_ROOT / "src" / "sc_neurocore" / "evo_substrate").resolve()
+    if expected not in imported.parents:
+        raise RuntimeError(f"Genome imported outside the source tree: {imported}")
 
-    pop = [
-        Organism(genome=Genome.from_vector(np.random.RandomState(i).rand(19) * 2, i))
-        for i in range(64)
+
+def _mutation() -> Callable[[], object]:
+    engine = MutationEngine(rng_seed=7)
+    genome = Genome()
+    genome.compute_id()
+    return lambda: engine.mutate(genome)
+
+
+def _crossover() -> Callable[[], object]:
+    engine = CrossoverEngine(rng_seed=7)
+    left = Genome()
+    right = Genome()
+    left.compute_id()
+    right.compute_id()
+    return lambda: engine.crossover(left, right)
+
+
+def _distance() -> Callable[[], object]:
+    left = Genome()
+    right = Genome()
+    right.topology.num_neurons = 32
+    return lambda: genomic_distance(left, right)
+
+
+def _safety() -> Callable[[], object]:
+    guard = FormalSafetyGuard()
+    genome = Genome()
+    return lambda: guard.check(genome)
+
+
+def _species() -> Callable[[], object]:
+    population = [
+        Organism(genome=Genome.from_vector(np.random.default_rng(index).random(19) * 2, index))
+        for index in range(64)
     ]
-    for p in pop:
-        p.genome.compute_id()
-    results["assign_species_n64"] = {
-        "ns_per_call": _ns_per_call(lambda: assign_species(pop, threshold=0.3), 1_000),
-    }
+    for organism in population:
+        organism.genome.compute_id()
+    return lambda: assign_species(population, threshold=0.3)
 
-    def metrics_fn(g):
-        return {"accuracy": 0.5 + 0.01 * g.topology.num_neurons / 32}
 
+def _metrics(genome: Genome) -> dict[str, float]:
+    """Return deterministic accuracy for the benchmark evolution workflow."""
+    return {"accuracy": 0.5 + 0.01 * genome.topology.num_neurons / 32}
+
+
+def _evolution() -> Callable[[], object]:
     engine = ReplicationEngine(max_population=32, industrial_mode=True)
-    for i in range(16):
-        g = Genome()
-        g.compute_id()
-        engine.seed(g)
-    engine.evaluate_all(metrics_fn)
-    results["evolve_generation_pop32"] = {
-        "ns_per_call": _ns_per_call(lambda: engine.evolve_generation(metrics_fn), 20),
+    for _ in range(16):
+        engine.seed(Genome())
+    engine.evaluate_all(_metrics)
+    return lambda: engine.evolve_generation(_metrics)
+
+
+def _operations() -> tuple[Operation, ...]:
+    """Return the fixed operation set and inner-iteration counts."""
+    return (
+        Operation("mutate", 1_000, _mutation),
+        Operation("crossover", 1_000, _crossover),
+        Operation("genomic_distance", 5_000, _distance),
+        Operation("safety_guard_check", 5_000, _safety),
+        Operation("assign_species_n64", 100, _species),
+        Operation("evolve_generation_pop32", 10, _evolution),
+    )
+
+
+def _measure(operation: Operation) -> float:
+    """Return nanoseconds per call for one freshly prepared sample."""
+    function = operation.prepare()
+    started = time.perf_counter_ns()
+    for _ in range(operation.iterations):
+        function()
+    elapsed = time.perf_counter_ns() - started
+    return elapsed / operation.iterations
+
+
+def _summarise(samples: list[float], iterations: int) -> dict[str, object]:
+    """Retain raw samples and compute descriptive timing statistics."""
+    if not samples or any(not math.isfinite(value) or value <= 0.0 for value in samples):
+        raise RuntimeError("benchmark produced an invalid timing sample")
+    return {
+        "iterations_per_sample": iterations,
+        "sample_count": len(samples),
+        "samples_ns_per_call": samples,
+        "min_ns_per_call": min(samples),
+        "median_ns_per_call": statistics.median(samples),
+        "mean_ns_per_call": statistics.fmean(samples),
+        "max_ns_per_call": max(samples),
     }
 
-    print(f"\n{'Operation':<40} {'ns/call':>14} {'ops/s':>14}")
-    print("-" * 72)
-    for op, m in results.items():
-        ns = m["ns_per_call"]
-        ops = 1e9 / ns
-        print(f"{op:<40} {ns:>14.1f} {ops:>14.0f}")
 
-    out_dir = os.path.join(SCRIPT_DIR, "results")
-    os.makedirs(out_dir, exist_ok=True)
-    out_path = os.path.join(out_dir, "bench_evo_substrate.json")
-    with open(out_path, "w") as fh:
-        json.dump(results, fh, indent=2)
-    print(f"\nResults written to {out_path}")
+def run(args: argparse.Namespace) -> dict[str, object]:
+    """Execute warm-ups and timed samples for every operation."""
+    _validate_args(args)
+    _assert_source_tree_import()
+    load_before = load_average()
+    operations = _operations()
+    for _ in range(args.warmups):
+        for operation in operations:
+            _measure(operation)
+
+    measured: dict[str, object] = {}
+    for operation in operations:
+        samples = [_measure(operation) for _ in range(args.samples)]
+        measured[operation.name] = _summarise(samples, operation.iterations)
+
+    return {
+        "schema_version": _SCHEMA_VERSION,
+        "captured_at": datetime.now(timezone.utc).isoformat(),
+        "command": "PYTHONPATH=src taskset -c <cpu> .venv/bin/python benchmarks/bench_evo_substrate.py",
+        "protocol": {
+            "samples": args.samples,
+            "warmups": args.warmups,
+            "clock": "time.perf_counter_ns",
+            "pythonhashseed": os.environ.get("PYTHONHASHSEED"),
+        },
+        "runtime": {
+            "python": sys.version.split()[0],
+            "platform": platform.platform(),
+            "numpy": np.__version__,
+        },
+        "source": _git_metadata(),
+        "measurement_context": measurement_context(load_before),
+        "operations": measured,
+    }
+
+
+def _print_summary(payload: dict[str, object]) -> None:
+    """Print median latency and throughput for each operation."""
+    operations = payload["operations"]
+    if not isinstance(operations, dict):
+        raise RuntimeError("benchmark payload has no operations")
+    print(f"\n{'Operation':<34} {'median ns/call':>18} {'median ops/s':>16}")
+    print("-" * 72)
+    for name, raw in operations.items():
+        if not isinstance(raw, dict):
+            raise RuntimeError(f"invalid operation summary: {name}")
+        median = raw.get("median_ns_per_call")
+        if not isinstance(median, (int, float)):
+            raise RuntimeError(f"missing median for {name}")
+        print(f"{name:<34} {median:>18.1f} {1e9 / median:>16.0f}")
+
+
+def main(argv: Sequence[str] | None = None) -> int:
+    """Run the benchmark and write its JSON evidence file."""
+    args = _parser().parse_args(argv)
+    payload = run(args)
+    output = Path(args.output)
+    output.parent.mkdir(parents=True, exist_ok=True)
+    output.write_text(json.dumps(payload, indent=2) + "\n", encoding="utf-8")
+    _print_summary(payload)
+    print(f"Results written to {output}")
     return 0
 
 

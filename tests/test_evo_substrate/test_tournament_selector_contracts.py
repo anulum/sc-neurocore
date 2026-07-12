@@ -18,7 +18,7 @@ from types import ModuleType
 import numpy as np
 import pytest
 
-import sc_neurocore.evo_substrate.evo_substrate as evo_module
+import sc_neurocore.evo_substrate.speciation as speciation_module
 from sc_neurocore.evo_substrate.evo_substrate import Organism, TournamentSelector
 
 
@@ -35,7 +35,7 @@ def test_optional_rust_evo_import_failure_keeps_python_fallback(
         return real_import_module(name, package)
 
     monkeypatch.setattr(importlib, "import_module", missing_evo_extension)
-    module_path = Path(evo_module.__file__).resolve()
+    module_path = Path(speciation_module.__file__).resolve()
     namespace = runpy.run_path(
         str(module_path),
         run_name="_sc_neurocore_evo_substrate_import_fallback",

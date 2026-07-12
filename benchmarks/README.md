@@ -48,6 +48,8 @@ same checkout.
 | `bench_safety_certification.py` | Interleaved parent/candidate comparison for safety-package import and deterministic in-memory evidence generation; records raw samples, source hashes, affinity, host-load limits, and non-applicability of removed report-generator mirrors |
 | `bench_cli_startup.py` | Interleaved parent/candidate cold-start comparison for Python CLI import, `--version` dispatch, process wall time, and maximum RSS; records source hashes, affinity, governor, and host-load limits |
 | `bench_dna_mapper_import.py` | Interleaved flat-parent/modular comparison for DNA mapper import, repeated one-gate compilation, process wall time, and maximum RSS; records raw samples, source hashes, and host limitations |
+| `bench_evo_substrate.py` | Source-bound Python evolutionary-operator timings with raw samples, summary statistics, affinity, governor, frequency, and host-load evidence |
+| `bench_evo_substrate_multilang.py` | Fail-closed Rust/Julia/Go/Mojo/Python kernel parity and timing with interleaved samples, source digest, toolchain context, and explicit unavailable-backend reporting |
 | `bench_neuron_integrators.py` | Research-only cross-language RK4 neuron integrator parity and timing for Python / Rust / Julia / Go / Mojo |
 | `bench_live_control_updates.py` | Local regression evidence for generated live-control update sequences, static RTL regeneration, staged overflow/underflow trap capture, and selected sticky-trap clear semantics |
 | `benchmark_regression_gates.json` | Manifest of benchmark artefacts and metrics enforced by `tools/benchmark_evidence_gate.py` |
@@ -88,7 +90,26 @@ python benchmarks/bench_quantum_annealing_modularisation.py \
   --baseline-root <parent-root> \
   --candidate-root . \
   --output benchmarks/results/local_python_2026-07-12_quantum_annealing_modularisation.json
+
+# Evolutionary substrate Python evidence (30 samples)
+PYTHONHASHSEED=0 PYTHONPATH=src taskset -c <cpu> \
+  .venv/bin/python benchmarks/bench_evo_substrate.py \
+  --samples 30 --warmups 2 \
+  --output benchmarks/results/bench_evo_substrate.json
+
+# Evolutionary substrate five-language evidence (30 interleaved samples)
+JULIA_DEPOT_PATH="$PWD/build/julia-depot" PYTHONHASHSEED=0 PYTHONPATH=src \
+  taskset -c <cpu> .venv/bin/python \
+  benchmarks/bench_evo_substrate_multilang.py \
+  --samples 30 --warmups 2 \
+  --output benchmarks/results/bench_evo_substrate_multilang.json
 ```
+
+The committed evolutionary-substrate schema-v2 artefacts were captured on a
+non-exclusive workstation without kernel-reserved isolated cores. They record
+the loaded-host condition and are local regression context only. Rerun both
+producers on reserved isolated cores, with affinity, governor, frequency,
+versions, and load evidence retained, before publishing performance claims.
 
 The DNA import harness measures Python orchestration only. Its maintained Rust
 safety mirror has a separate six-test contract. Earlier generated Julia and

@@ -5,6 +5,24 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+### Evolutionary-substrate GodFile modularisation
+- Replaced the 1,737-line implementation and 1,227-line primary test file with
+  a 156-line compatibility facade, 14 acyclic responsibility modules, and 18
+  focused test modules. The largest implementation and test files are 304 and
+  312 lines. All 56 historical exports retain object identity, qualified names,
+  and pickle compatibility; deterministic parent/candidate Python-fallback
+  workflows are byte-identical.
+- The focused suite passes 160 tests with real Mojo and four-runner parity
+  paths. The 135-test core covers all 1,005 statements and 166 branches. Native
+  Rust, Julia, Go, and Mojo checks pass 17, 17, 8, and 7 tests, while the
+  18-test cross-language runner suite completes without skips. Strict touched
+  MyPy, Ruff, NumPy docstrings, Bandit, SPDX, and wheel smoke checks pass.
+- Rebuilt the Python and five-language benchmark producers around 30-sample
+  schema-v2 evidence with raw samples, source digests, runtime versions,
+  affinity, governor, frequency, and load context. The committed run had no
+  kernel-reserved cores and heavy concurrent load, so its values are local
+  regression diagnostics rather than publishable throughput claims.
+
 ### Ibarz-Tanaka four-branch source-to-silicon correction
 - Replaced the unsupported beta-based rational/linear hybrid with Ibarz,
   Tanaka, Sanjuan, and Aihara (2007), DOI `10.1103/PhysRevE.75.041902`, Eqs.

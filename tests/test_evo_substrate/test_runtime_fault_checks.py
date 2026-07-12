@@ -19,10 +19,15 @@ from sc_neurocore.fault_injection import DegradationAction, FaultModel, Graceful
 from sc_neurocore.stochastic_doctor.diagnostics import StochasticDoctor
 
 
-def _quiet_policy(**kwargs: float) -> GracefulDegradationPolicy:
+def _quiet_policy(
+    *,
+    warning_affected_ratio: float,
+    critical_affected_ratio: float,
+) -> GracefulDegradationPolicy:
     return GracefulDegradationPolicy(
         doctor=StochasticDoctor(correlation_threshold=2.0, critical_threshold=3.0),
-        **kwargs,
+        warning_affected_ratio=warning_affected_ratio,
+        critical_affected_ratio=critical_affected_ratio,
     )
 
 

@@ -176,10 +176,15 @@ generations, exposed through :func:`dominates`.
 
 ### 1.9 Bloat-aware fitness penalty
 
-Complexity is measured by
-:func:`genome_complexity`$(g) = 0.7\,\tfrac{N_{\text{neurons}}}{N_{\max}}
-+ 0.3\,\tfrac{N_{\text{layers}}}{10}$. :class:`BloatPenalizer`
-subtracts a parsimony term from the composite score:
+Complexity combines the Shannon entropy of the normalised absolute genome
+coordinates with a topology term:
+
+$$
+C(g) = H\!\left(\frac{|\mathbf{g}|}{\lVert\mathbf{g}\rVert_1}\right)
+  + \log_2\!\left(1 + N_{\text{neurons}}N_{\text{layers}}c\right).
+$$
+
+:class:`BloatPenalizer` subtracts a parsimony term from the composite score:
 
 $$
 F_{\text{penalised}} = F - \lambda \cdot
@@ -477,9 +482,9 @@ selection.
 | ----------------------- | --------------------------------------------------------------------- |
 | :class:`LineageRecord`  | `(genome_id, parent_id, generation, mutation_type, fitness)`          |
 | :class:`LineageTracker` | records all records; walk ancestry via `get_ancestors(genome_id)`     |
-| :class:`GenomeDiff`     | `(topology_delta, neuron_delta, plasticity_delta)`                    |
-| :func:`genome_diff`     | per-block L2 delta between two genomes                                |
-| :func:`genome_complexity` | scalar $0.7 N/N_{\max} + 0.3 L/10$                                  |
+| :class:`GenomeDiff`     | neuron/layer/connectivity/time-constant deltas + changed-parameter count |
+| :func:`genome_diff`     | structural deltas and vector coordinates changed above $10^{-8}$      |
+| :func:`genome_complexity` | coordinate entropy + $\log_2(1 + NLC)$ topology term                 |
 
 ### 6.8 Emission
 
@@ -490,26 +495,29 @@ selection.
 
 ---
 
-## 7. Verified benchmarks
+## 7. Verified diagnostic benchmarks
 
-Measured on Ubuntu 24.04 / CPython 3.12.3 / Intel i5-11600K @ 3.90 GHz,
-single-thread. All figures produced by
-`benchmarks/bench_evo_substrate.py` (committed) and reproducible with
-`python benchmarks/bench_evo_substrate.py`.
+The committed schema-v2 artefact was captured on 2026-07-12 with CPython
+3.12.3 and NumPy 2.2.6 on an Intel i5-11600K workstation. Each value below is
+the median of 30 samples after two warmups. The process was pinned to one CPU,
+but the host had no kernel-reserved isolated cores, used the `powersave`
+governor, and had load averages near 22. These timings are local regression
+context only, not publishable throughput claims.
 
-| Operation                                    | Throughput            | Latency   |
-| -------------------------------------------- | --------------------- | --------- |
-| `MutationEngine.mutate`                      | 15 223 ops/s          | 65.69 µs  |
-| `CrossoverEngine.crossover`                  | 29 631 ops/s          | 33.75 µs  |
-| `genomic_distance` (19-D)                    | 92 891 ops/s          | 10.77 µs  |
-| `FormalSafetyGuard.check`                    | 1 376 152 ops/s       |  0.73 µs  |
-| `assign_species` (n=64, θ=0.3)               |  1 430 ops/s          |  0.70 ms  |
-| `ReplicationEngine.evolve_generation` (pop=32, industrial_mode=True) | 161 gen/s | 6.20 ms |
+| Operation                                                  | Median latency | Diagnostic rate |
+| ---------------------------------------------------------- | -------------: | --------------: |
+| `MutationEngine.mutate`                                    |      217.10 µs |     4 606 ops/s |
+| `CrossoverEngine.crossover`                                |      111.70 µs |     8 953 ops/s |
+| `genomic_distance` (19-D)                                  |       23.08 µs |    43 330 ops/s |
+| `FormalSafetyGuard.check`                                  |        2.00 µs |   500 541 ops/s |
+| `assign_species` (n=64, $\theta=0.3$)                       |        1.81 ms |       552 ops/s |
+| `ReplicationEngine.evolve_generation` (pop=32, industrial) |       16.28 ms |        61 gen/s |
 
-Raw JSON at `benchmarks/results/bench_evo_substrate.json` is written by
-the same script every run, so any doc regression (drift, rename, hidden
-simplification) can be caught by diffing the JSON rather than re-reading
-the markdown.
+`benchmarks/bench_evo_substrate.py` records all raw samples, summary
+statistics, source-tree SHA-256, runtime versions, affinity, governor,
+frequency, and host-load evidence in
+`benchmarks/results/bench_evo_substrate.json`. Rerun on reserved isolated
+cores before using the numbers in a release or publication.
 
 ### 7.1 Determinism + reproducibility
 
@@ -540,30 +548,29 @@ guards — 40+ classes) stays authoritative in Python; only
 `genomic_distance`, `crossover_uniform`, `point_mutation`, and
 `population_diversity` are mirrored elsewhere.
 
-Measured on 2026-04-20 via `benchmarks/bench_evo_substrate_multilang.py`
-(committed harness, JSON at
-`benchmarks/results/bench_evo_substrate_multilang.json`). Inputs are
-19-D Float64 vectors, 100 000 iterations, warm cache.
+The source-bound schema-v2 comparison was captured on 2026-07-12 via
+`benchmarks/bench_evo_substrate_multilang.py`. It interleaves 30 samples per
+backend after two warmups; each sample executes 100 000 calls over 19-D
+Float64 vectors. All five required backends completed. The same non-exclusive,
+loaded-host caveat applies, so the medians below are diagnostic only.
 
 | Kernel (ns/call, dim=19) |    Rust |  Julia |    Go |   Mojo |   Python |
 | ------------------------ | ------: | -----: | ----: | -----: | -------: |
-| `genomic_distance`       |   257.6 |   22.5 |  22.8 |   18.8 |  5 992.3 |
-| `crossover_uniform`      |   481.4 |   45.8 |  42.2 |  150.5 |  1 093.9 |
-| `point_mutation`         |   432.4 |  295.4 |  46.7 |  151.2 |  3 984.4 |
+| `genomic_distance`       |   692.8 |   36.0 |  80.0 |   34.8 | 21 347.4 |
+| `crossover_uniform`      | 1 508.1 |  131.3 | 161.7 |  323.8 |  3 705.1 |
+| `point_mutation`         | 1 205.3 |  707.2 | 176.8 |  328.3 | 12 373.0 |
 
-**How to read this.** The standalone numbers (Julia 22 ns,
-Go 23 ns, Mojo 19 ns on `genomic_distance`) confirm the kernel itself
-is cheap in every language — the hot loop is 19 float ops. The Rust
-number (258 ns) includes the PyO3 FFI boundary: NumPy array view
-materialisation + reference-count bump + tuple unpack. Rust **called
-from another Rust binary** runs in ~10 ns (see the Criterion benches
-in `crates/evo_substrate_core/benches/evo_bench.rs`).
+**How to read this.** Rust includes the PyO3 boundary. Julia, Go, and Mojo are
+standalone kernel processes and are parity references rather than Python-callable
+inner-loop backends. The raw samples, toolchain context, source digest, and
+empty `unavailable` set are committed in
+`benchmarks/results/bench_evo_substrate_multilang.json`.
 
-**From the Python orchestration's perspective** (the caller that
-matters), Rust is the fastest accessible backend because Julia / Go /
-Mojo would need a subprocess round-trip per call (~ms, fatal for inner
-loops). The PyO3-dispatched Rust path gives 23× speedup over pure
-Python without any subprocess cost.
+**From the Python orchestration's perspective**, Rust is the only directly
+accessible compiled kernel because Julia, Go, and Mojo require subprocess
+dispatch. In this loaded diagnostic run, the Rust distance median was about
+30.8 times lower than the Python reference median; this ratio is not a
+production claim.
 
 **Fallback order.** Python callers currently dispatch
 `genomic_distance` to Rust PyO3 when importable, else fall back to
@@ -623,12 +630,15 @@ because the compounding drift leaves a few more non-dominated organisms
 standing.
 
 The cross-language parity suite in
-`tests/test_evo_substrate/test_multilang_parity.py` asserts the above
-four-way relationships; it skips gracefully on missing toolchains.
+`tests/test_evo_substrate/test_multilang_parity.py` asserts these four-way
+relationships. The benchmark producer fails closed when a required backend is
+missing; test environments may skip an unavailable optional toolchain.
 
-#### 7.3.2 Whole-process timing (seed=7, pop=16, 10 gens, industrial)
+#### 7.3.2 Historical whole-process timing (seed=7, pop=16, 10 gens)
 
-Measured 2026-04-20 on i5-11600K / CPython 3.12.3:
+The figures below came from a 2026-04-20 exploratory run without the schema-v2
+host-load and source-binding evidence now required. They explain dispatch-cost
+shape only and must not be used as release, regression, or publication evidence.
 
 | Backend                                | Wall clock           | Dispatch model                         |
 | -------------------------------------- | -------------------- | -------------------------------------- |
@@ -678,29 +688,26 @@ Measured 2026-04-20 on i5-11600K / CPython 3.12.3:
 
 #### 7.3.4 Testing the 4-backend parity set
 
-* Rust: `cargo test --release --features pyo3_bindings --manifest-path
-  crates/evo_substrate_core/Cargo.toml` — 17 unit tests.
-* Julia: `julia src/sc_neurocore/accel/julia/evo_substrate/test_evo_runner.jl`
-  — 17 unit tests (PRNG, roundtrip, fitness, safety, determinism).
-* Go: `go test -v ./src/sc_neurocore/accel/go/evo_substrate/...` — 8
-  unit tests (PRNG, roundtrip, id-shape, fitness, safety, determinism).
+* Rust: `cargo test --manifest-path crates/evo_substrate_core/Cargo.toml` —
+  17 unit tests.
+* Julia: `JULIA_DEPOT_PATH=build/julia-depot julia
+  --project=src/sc_neurocore/accel/julia/evo_substrate
+  src/sc_neurocore/accel/julia/evo_substrate/test_evo_runner.jl` — 17 unit
+  tests (PRNG, roundtrip, fitness, safety, determinism).
+* Go: `(cd src/sc_neurocore/accel/go/evo_substrate && go test -v ./...)` —
+  8 unit tests (PRNG, roundtrip, id-shape, fitness, safety, determinism).
 * Mojo: `pytest tests/test_evo_substrate/test_mojo_runner.py` — 7
-  side-validated unit tests driven from Python (Mojo 0.26 has no
-  native unit-test harness).
-* Cross-language parity: `pytest tests/test_evo_substrate/test_multilang_parity.py`
-  — 18 tests (schema, Rust↔Julia bit-exact, Rust↔Go tolerance,
-  Rust↔Mojo structure, determinism).
+  side-validated unit tests driven from Python.
+* Cross-language parity: `JULIA_DEPOT_PATH=build/julia-depot pytest
+  tests/test_evo_substrate/test_multilang_parity.py` — 18 tests (schema,
+  Rust↔Julia bit-exact, Rust↔Go tolerance, Rust↔Mojo structure, determinism).
 
-**Interpretation.** Safety checks and distance computations are cheap
-enough (<1 µs and ~10 µs respectively) that they do not dominate the
-generation cost. Mutation and crossover are the slower inner ops
-(NumPy array creation per call); bulk speedup when moving to a Rust
-inner loop is achievable but not necessary for current population
-sizes — at 32 organisms × 20 generations, a full run completes in
-$\approx 0.12$ s.
-
-Figures above are `time.perf_counter` deltas from
-`benchmarks/bench_evo_substrate.py`.
+**Interpretation.** In the current loaded-host artefact, safety checks and
+distance computations have 2.00 µs and 23.08 µs medians, while a 32-organism
+generation has a 16.28 ms median. Mutation and crossover remain the slower
+Python inner operations because they allocate NumPy arrays per call. Treat
+these relationships as local regression context until the benchmark is rerun
+on reserved isolated cores.
 
 ---
 
@@ -737,10 +744,16 @@ Figures above are `time.perf_counter` deltas from
 
 ## Reference
 
-- Source: `src/sc_neurocore/evo_substrate/evo_substrate.py` (1594 LOC).
-- Tests: `tests/test_evo_substrate/test_evo_substrate.py` (908 LOC).
+- Public compatibility facade:
+  `src/sc_neurocore/evo_substrate/evo_substrate.py` (156 LOC).
+- Implementation: 14 responsibility modules under
+  `src/sc_neurocore/evo_substrate/`; the largest is `replication.py`
+  (304 LOC).
+- Tests: 18 focused modules under `tests/test_evo_substrate/`; the largest is
+  `test_multilang_parity.py` (312 LOC).
 - Demo: `examples/16_evo_substrate_demo.py`.
-- Benchmark: `benchmarks/bench_evo_substrate.py`.
+- Benchmarks: `benchmarks/bench_evo_substrate.py` and
+  `benchmarks/bench_evo_substrate_multilang.py`.
 
 ::: sc_neurocore.evo_substrate.evo_substrate
     options:

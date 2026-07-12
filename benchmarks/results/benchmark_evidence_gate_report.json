@@ -106,6 +106,14 @@
       "id": "ibarz-tanaka-map-five-backend-controlled-regression"
     },
     {
+      "artefact": "benchmarks/results/bench_evo_substrate.json",
+      "id": "evo-substrate-python-local-diagnostics"
+    },
+    {
+      "artefact": "benchmarks/results/bench_evo_substrate_multilang.json",
+      "id": "evo-substrate-five-language-local-diagnostics"
+    },
+    {
       "artefact": "benchmarks/results/bench_medvedev_map.json",
       "id": "medvedev-map-five-backend-controlled-regression"
     },
@@ -409,7 +417,7 @@
       "reason": "source_hash_mismatch"
     }
   ],
-  "gate_count": 41,
+  "gate_count": 43,
   "manifest": "benchmarks/benchmark_regression_gates.json",
   "passed": false,
   "schema_version": "sc-neurocore.benchmark-evidence-gate.v1"

@@ -154,8 +154,16 @@ conformity.
 ### Frontiers
 
 #### evo_substrate — Self-Replicating Evolutionary Substrate
-- **Source:** `src/sc_neurocore/evo_substrate/evo_substrate.py`
-- **Tests:** `tests/test_evo_substrate/test_evo_substrate.py` — **91 tests**
+- **Source:** `src/sc_neurocore/evo_substrate/` — 156-line compatibility
+  facade over 14 responsibility modules; no implementation file exceeds 304
+  lines
+- **Tests:** `tests/test_evo_substrate/` — **160 tests** across 18 focused
+  modules, including architecture, Rust/Julia/Go/Mojo parity, and runtime-fault
+  contracts
+- **Boundaries:** `genome`/`organism` own state; `variation`, `fitness`,
+  `speciation`, and `selection` own search operators; `safety`, `deployment`,
+  and `emission` own fail-closed hardware boundaries; `replication` composes
+  the acyclic dependency graph
 - **Key Classes:**
   - `Genome`, `TopologyGene`, `NeuronGene`, `PlasticityGene` — Genetic encoding
   - `MutationEngine` — Point, structural, duplication, swap mutations
@@ -278,14 +286,14 @@ conformity.
 | analog_bridge | `tests/test_analog_bridge/` | 27 |
 | bioware | `tests/test_bioware/` | 121 |
 | meta_plasticity | `tests/test_meta_plasticity/` | 72 |
-| evo_substrate | `tests/test_evo_substrate/` | 91 |
+| evo_substrate | `tests/test_evo_substrate/` | 160 |
 | federated | `tests/test_federated/` | 93 |
 | bci_studio | `tests/test_bci/` | 32 |
 | explainability | `tests/test_explainability/` | 71 |
 | neuro_symbolic | `tests/test_neuro_symbolic/` | 34 |
 | stochastic_doctor | `tests/test_stochastic_doctor/` | 16 |
 | model_zoo | `tests/test_model_zoo/` | 37 |
-| **TOTAL** | | **1,173** |
+| **TOTAL** | | **1,242** |
 
 ## Running Tests
 

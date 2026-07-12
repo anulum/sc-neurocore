@@ -29,16 +29,36 @@ of letting missing optional toolchains pass silently.
 from __future__ import annotations
 
 import json
+import importlib
+import shutil
 import subprocess
 import sys
 from pathlib import Path
+from typing import Any, Protocol, cast
 
 import pytest
+
+JsonObject = dict[str, Any]
+
+
+class EvoRunner(Protocol):
+    """Typed boundary for the optional PyO3 evolution runner."""
+
+    def py_evolve_run(self, config_json: str) -> str:
+        """Run one evolution configuration and return JSON."""
+        ...
+
+
+def _rust_runner() -> EvoRunner:
+    """Load the optional Rust runner through its import boundary."""
+    module = importlib.import_module("sc_neurocore.evo_substrate.evo_substrate_core")
+    return cast(EvoRunner, module)
+
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(REPO_ROOT / "src"))
 
-EVO_CFG_SEED7 = {
+EVO_CFG_SEED7: JsonObject = {
     "seed": 7,
     "pop_size": 16,
     "n_generations": 10,
@@ -84,15 +104,15 @@ def cfg_json() -> str:
 
 
 @pytest.fixture(scope="module")
-def rust_output(cfg_json: str) -> dict:
+def rust_output(cfg_json: str) -> JsonObject:
     try:
-        from sc_neurocore.evo_substrate import evo_substrate_core as ec
+        runner = _rust_runner()
     except ImportError:
         pytest.skip("evo_substrate_core PyO3 extension not compiled")
-    return json.loads(ec.py_evolve_run(cfg_json))
+    return cast(JsonObject, json.loads(runner.py_evolve_run(cfg_json)))
 
 
-def _run_subprocess(cmd: list[str], cfg_json: str, cwd: str | None = None) -> dict:
+def _run_subprocess(cmd: list[str], cfg_json: str, cwd: str | None = None) -> JsonObject:
     proc = subprocess.run(
         cmd,
         input=cfg_json,
@@ -103,20 +123,23 @@ def _run_subprocess(cmd: list[str], cfg_json: str, cwd: str | None = None) -> di
     )
     if proc.returncode != 0:
         pytest.fail(f"{cmd[0]} runner failed: {proc.stderr[:500]}")
-    return json.loads(proc.stdout)
+    return cast(JsonObject, json.loads(proc.stdout))
 
 
 @pytest.fixture(scope="module")
-def julia_output(cfg_json: str) -> dict:
+def julia_output(cfg_json: str) -> JsonObject:
     julia = Path.home() / ".juliaup" / "bin" / "julia"
     if not julia.exists():
         pytest.skip(f"julia binary not found at {julia}")
     script = REPO_ROOT / "src/sc_neurocore/accel/julia/evo_substrate/evo_runner.jl"
-    return _run_subprocess([str(julia), str(script)], cfg_json)
+    return _run_subprocess(
+        [str(julia), f"--project={script.parent}", str(script)],
+        cfg_json,
+    )
 
 
 @pytest.fixture(scope="module")
-def go_output(cfg_json: str) -> dict:
+def go_output(cfg_json: str) -> JsonObject:
     go_dir = REPO_ROOT / "src/sc_neurocore/accel/go/evo_substrate"
     binary = go_dir / "evo_substrate_bench"
     if not binary.exists():
@@ -135,13 +158,13 @@ def go_output(cfg_json: str) -> dict:
 
 
 @pytest.fixture(scope="module")
-def mojo_output(cfg_json: str) -> dict:
+def mojo_output(cfg_json: str) -> JsonObject:
     mojo_dir = REPO_ROOT / "src/sc_neurocore/accel/mojo"
-    pixi = Path.home() / ".pixi" / "bin" / "pixi"
-    if not pixi.exists() or not (mojo_dir / "pixi.toml").exists():
+    pixi = shutil.which("pixi")
+    if pixi is None or not (mojo_dir / "pixi.toml").exists():
         pytest.skip("pixi/Mojo toolchain not available")
     return _run_subprocess(
-        [str(pixi), "run", "mojo", "run", "kernels/evo_runner.mojo"],
+        [pixi, "run", "mojo", "run", "kernels/evo_runner.mojo"],
         cfg_json,
         cwd=str(mojo_dir),
     )
@@ -150,23 +173,23 @@ def mojo_output(cfg_json: str) -> dict:
 # ─── Level 1: every backend produces a well-formed EvolveResult ───────
 
 
-def test_rust_output_schema(rust_output: dict):
+def test_rust_output_schema(rust_output: JsonObject) -> None:
     _assert_evolve_result_schema(rust_output)
 
 
-def test_julia_output_schema(julia_output: dict):
+def test_julia_output_schema(julia_output: JsonObject) -> None:
     _assert_evolve_result_schema(julia_output)
 
 
-def test_go_output_schema(go_output: dict):
+def test_go_output_schema(go_output: JsonObject) -> None:
     _assert_evolve_result_schema(go_output)
 
 
-def test_mojo_output_schema(mojo_output: dict):
+def test_mojo_output_schema(mojo_output: JsonObject) -> None:
     _assert_evolve_result_schema(mojo_output)
 
 
-def _assert_evolve_result_schema(result: dict):
+def _assert_evolve_result_schema(result: JsonObject) -> None:
     assert set(result.keys()) >= {
         "final_population",
         "stats_per_generation",
@@ -193,13 +216,15 @@ def _assert_evolve_result_schema(result: dict):
 # ─── Level 2: Rust ↔ Julia byte-exact identity ────────────────────────
 
 
-def test_rust_julia_bit_exact_best_fitness(rust_output: dict, julia_output: dict):
+def test_rust_julia_bit_exact_best_fitness(
+    rust_output: JsonObject, julia_output: JsonObject
+) -> None:
     r = rust_output["stats_per_generation"][-1]["best_fitness"]
     j = julia_output["stats_per_generation"][-1]["best_fitness"]
     assert r == j, f"Rust best={r} Julia best={j} — expected byte-exact"
 
 
-def test_rust_julia_bit_exact_population(rust_output: dict, julia_output: dict):
+def test_rust_julia_bit_exact_population(rust_output: JsonObject, julia_output: JsonObject) -> None:
     r_ids = [g["genome_id"] for g in rust_output["final_population"]]
     j_ids = [g["genome_id"] for g in julia_output["final_population"]]
     assert r_ids == j_ids, (
@@ -207,13 +232,15 @@ def test_rust_julia_bit_exact_population(rust_output: dict, julia_output: dict):
     )
 
 
-def test_rust_julia_bit_exact_lineage(rust_output: dict, julia_output: dict):
+def test_rust_julia_bit_exact_lineage(rust_output: JsonObject, julia_output: JsonObject) -> None:
     assert len(rust_output["lineage"]) == len(julia_output["lineage"])
     for i, (r, j) in enumerate(zip(rust_output["lineage"], julia_output["lineage"])):
         assert r["genome_id"] == j["genome_id"], f"lineage[{i}] diverges"
 
 
-def test_rust_julia_bit_exact_hall_of_fame(rust_output: dict, julia_output: dict):
+def test_rust_julia_bit_exact_hall_of_fame(
+    rust_output: JsonObject, julia_output: JsonObject
+) -> None:
     r = [g["genome_id"] for g in rust_output["hall_of_fame"]]
     j = [g["genome_id"] for g in julia_output["hall_of_fame"]]
     assert r == j
@@ -222,23 +249,25 @@ def test_rust_julia_bit_exact_hall_of_fame(rust_output: dict, julia_output: dict
 # ─── Level 3: Rust ↔ Go structural parity + fitness tolerance ─────────
 
 
-def test_rust_go_population_size(rust_output: dict, go_output: dict):
+def test_rust_go_population_size(rust_output: JsonObject, go_output: JsonObject) -> None:
     assert len(rust_output["final_population"]) == len(go_output["final_population"])
 
 
-def test_rust_go_pareto_size(rust_output: dict, go_output: dict):
+def test_rust_go_pareto_size(rust_output: JsonObject, go_output: JsonObject) -> None:
     assert len(rust_output["pareto_front"]) == len(go_output["pareto_front"])
 
 
-def test_rust_go_lineage_length(rust_output: dict, go_output: dict):
+def test_rust_go_lineage_length(rust_output: JsonObject, go_output: JsonObject) -> None:
     assert len(rust_output["lineage"]) == len(go_output["lineage"])
 
 
-def test_rust_go_total_replications(rust_output: dict, go_output: dict):
+def test_rust_go_total_replications(rust_output: JsonObject, go_output: JsonObject) -> None:
     assert rust_output["total_replications"] == go_output["total_replications"]
 
 
-def test_rust_go_best_fitness_within_tolerance(rust_output: dict, go_output: dict):
+def test_rust_go_best_fitness_within_tolerance(
+    rust_output: JsonObject, go_output: JsonObject
+) -> None:
     r = rust_output["stats_per_generation"][-1]["best_fitness"]
     g = go_output["stats_per_generation"][-1]["best_fitness"]
     # Go's libm Cos/Log differ from Rust's at ~1 ULP, compounding via
@@ -249,20 +278,20 @@ def test_rust_go_best_fitness_within_tolerance(rust_output: dict, go_output: dic
 # ─── Level 4: Rust ↔ Mojo structural schema match ─────────────────────
 
 
-def test_rust_mojo_population_size(rust_output: dict, mojo_output: dict):
+def test_rust_mojo_population_size(rust_output: JsonObject, mojo_output: JsonObject) -> None:
     assert len(rust_output["final_population"]) == len(mojo_output["final_population"])
 
 
-def test_rust_mojo_counters_agree(rust_output: dict, mojo_output: dict):
+def test_rust_mojo_counters_agree(rust_output: JsonObject, mojo_output: JsonObject) -> None:
     assert rust_output["total_replications"] == mojo_output["total_replications"]
     assert rust_output["safety_rejected"] == mojo_output["safety_rejected"]
 
 
-def test_rust_mojo_lineage_length(rust_output: dict, mojo_output: dict):
+def test_rust_mojo_lineage_length(rust_output: JsonObject, mojo_output: JsonObject) -> None:
     assert len(rust_output["lineage"]) == len(mojo_output["lineage"])
 
 
-def test_rust_mojo_pareto_nonempty(rust_output: dict, mojo_output: dict):
+def test_rust_mojo_pareto_nonempty(rust_output: JsonObject, mojo_output: JsonObject) -> None:
     # Mojo's transcendental drift makes the exact Pareto set diverge,
     # but it must still be a non-empty non-dominated set because the
     # Pareto-update logic is the same algorithm.
@@ -273,11 +302,11 @@ def test_rust_mojo_pareto_nonempty(rust_output: dict, mojo_output: dict):
 # ─── Level 5: determinism under same seed (each backend with itself) ──
 
 
-def test_rust_seed_determinism(cfg_json: str):
+def test_rust_seed_determinism(cfg_json: str) -> None:
     try:
-        from sc_neurocore.evo_substrate import evo_substrate_core as ec
+        runner = _rust_runner()
     except ImportError:
         pytest.skip("evo_substrate_core PyO3 extension not compiled")
-    a = json.loads(ec.py_evolve_run(cfg_json))
-    b = json.loads(ec.py_evolve_run(cfg_json))
+    a = cast(JsonObject, json.loads(runner.py_evolve_run(cfg_json)))
+    b = cast(JsonObject, json.loads(runner.py_evolve_run(cfg_json)))
     assert a == b, "Rust runner is non-deterministic under fixed seed"

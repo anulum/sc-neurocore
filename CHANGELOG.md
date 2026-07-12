@@ -5,6 +5,27 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 ## [Unreleased]
 
 ### Added
+- Replaced the 1,737-line evolutionary-substrate GodFile and 1,227-line
+  primary test GodFile with a 156-line historical facade, 14 acyclic
+  responsibility modules, and 18 focused test modules. No implementation file
+  exceeds 304 lines and no owned test file exceeds 312 lines. All 56 public
+  exports retain object identity, historical qualified names, and pickle
+  compatibility. A deterministic parent/candidate probe remains byte-identical
+  across genome, variation, fitness, safety, speciation, statistics, and
+  three-generation replication workflows.
+- Added fail-closed architecture, branch, runtime-fault, package, and polyglot
+  contracts for the evolutionary substrate. The complete focused Python suite
+  passes 160 tests with the real Mojo and four-runner parity paths enabled;
+  135 core tests cover all 1,005 statements and 166 branches. Native Rust,
+  Julia, Go, and Mojo checks pass 17, 17, 8, and 7 tests respectively, and the
+  18-test cross-language runner suite has no skips. Strict touched MyPy, Ruff,
+  NumPy docstrings, Bandit, SPDX, and staged-index wheel smoke checks are clean.
+- Rebuilt both evolutionary benchmark producers as source-bound schema-v2
+  evidence with raw samples, medians, runtime versions, affinity, governor,
+  frequency, and host-load context. The 30-sample Python and five-language
+  artefacts were captured without kernel-reserved cores under heavy concurrent
+  load; their timings are diagnostic regression context and require an
+  isolated-core rerun before publication.
 - Replaced the 1,910-line quantum-annealing GodFile and its 1,001-line
   primary test GodFile with a 98-line historical facade, nine acyclic
   responsibility modules, and focused typed tests. Every production module is

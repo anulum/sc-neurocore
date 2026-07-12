@@ -19,15 +19,20 @@ Skipped when pixi / Mojo toolchain is missing.
 from __future__ import annotations
 
 import json
+import shutil
 import subprocess
 from pathlib import Path
+from typing import Any, cast
 
 import pytest
+
+JsonObject = dict[str, Any]
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 MOJO_DIR = REPO_ROOT / "src/sc_neurocore/accel/mojo"
 RUNNER = MOJO_DIR / "kernels/evo_runner.mojo"
-PIXI = Path.home() / ".pixi/bin/pixi"
+_PIXI_PATH = shutil.which("pixi")
+PIXI = Path(_PIXI_PATH) if _PIXI_PATH is not None else None
 
 
 def _minimal_cfg(seed: int, pop: int = 8, gens: int = 3) -> str:
@@ -72,10 +77,11 @@ def _minimal_cfg(seed: int, pop: int = 8, gens: int = 3) -> str:
     return json.dumps(cfg)
 
 
-def _run_mojo(cfg: str) -> dict:
+def _run_mojo(cfg: str) -> JsonObject:
     # Mojo 0.26 JIT-compiles the runner on every invocation (~1 min on
     # cold pixi cache, faster once warm). 900 s gives comfortable margin
     # for the slowest cold run without hiding a genuine hang.
+    assert PIXI is not None
     proc = subprocess.run(
         [str(PIXI), "run", "mojo", "run", "kernels/evo_runner.mojo"],
         input=cfg,
@@ -86,16 +92,16 @@ def _run_mojo(cfg: str) -> dict:
     )
     if proc.returncode != 0:
         pytest.fail(f"Mojo runner failed: {proc.stderr[:400]}")
-    return json.loads(proc.stdout)
+    return cast(JsonObject, json.loads(proc.stdout))
 
 
 pytestmark = pytest.mark.skipif(
-    not PIXI.exists() or not (MOJO_DIR / "pixi.toml").exists(),
+    PIXI is None or not (MOJO_DIR / "pixi.toml").exists(),
     reason="pixi/Mojo toolchain not available",
 )
 
 
-def test_mojo_runner_produces_valid_schema():
+def test_mojo_runner_produces_valid_schema() -> None:
     r = _run_mojo(_minimal_cfg(seed=7))
     required = {
         "final_population",
@@ -111,12 +117,12 @@ def test_mojo_runner_produces_valid_schema():
     assert set(r.keys()) >= required
 
 
-def test_mojo_runner_generation_count_matches_config():
+def test_mojo_runner_generation_count_matches_config() -> None:
     r = _run_mojo(_minimal_cfg(seed=7, gens=5))
     assert len(r["stats_per_generation"]) == 5
 
 
-def test_mojo_runner_lineage_records_have_full_schema():
+def test_mojo_runner_lineage_records_have_full_schema() -> None:
     r = _run_mojo(_minimal_cfg(seed=7))
     assert len(r["lineage"]) > 0
     for rec in r["lineage"]:
@@ -129,21 +135,21 @@ def test_mojo_runner_lineage_records_have_full_schema():
         }
 
 
-def test_mojo_runner_pareto_front_is_non_empty_on_default_fitness():
+def test_mojo_runner_pareto_front_is_non_empty_on_default_fitness() -> None:
     r = _run_mojo(_minimal_cfg(seed=7))
     # The default parametric fitness always produces at least one
     # non-dominated organism, so the Pareto front must be non-empty.
     assert len(r["pareto_front"]) >= 1
 
 
-def test_mojo_runner_genome_ids_are_12_hex_chars():
+def test_mojo_runner_genome_ids_are_12_hex_chars() -> None:
     r = _run_mojo(_minimal_cfg(seed=7))
     for g in r["final_population"]:
         assert len(g["genome_id"]) == 12, f"bad id: {g['genome_id']!r}"
         int(g["genome_id"], 16)  # must be valid hex
 
 
-def test_mojo_runner_is_deterministic_under_same_seed():
+def test_mojo_runner_is_deterministic_under_same_seed() -> None:
     # Minimal workload — Mojo subprocess JIT compile dominates (~7 min
     # per call on cold pixi cache). Two runs × small pop/gens is still
     # a valid parity check because the deterministic XorShift64 state
@@ -155,7 +161,7 @@ def test_mojo_runner_is_deterministic_under_same_seed():
     assert a_ids == b_ids
 
 
-def test_mojo_runner_counters_are_monotonic():
+def test_mojo_runner_counters_are_monotonic() -> None:
     r = _run_mojo(_minimal_cfg(seed=7, gens=5))
     assert r["total_replications"] >= len(r["lineage"]) - 8  # minus seed records
     assert r["safety_rejected"] <= r["safety_checked"]

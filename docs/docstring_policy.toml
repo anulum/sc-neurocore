@@ -14,7 +14,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 328
+expected_file_count = 343
 
 [[file]]
 path = "src/sc_neurocore/__init__.py"
@@ -395,6 +395,66 @@ rationale = "Public explainability package entry point for bitstream-level attri
 [[file]]
 path = "src/sc_neurocore/evo_substrate/__init__.py"
 rationale = "Public evolutionary-substrate package entry point."
+
+[[file]]
+path = "src/sc_neurocore/evo_substrate/evo_substrate.py"
+rationale = "Historical evolutionary-substrate import and pickle-identity facade over focused responsibility modules."
+
+[[file]]
+path = "src/sc_neurocore/evo_substrate/genome.py"
+rationale = "Canonical evolutionary genome encoding, fingerprinting, and persistence contracts."
+
+[[file]]
+path = "src/sc_neurocore/evo_substrate/organism.py"
+rationale = "Shared evolving-organism state consumed by selection, safety, deployment, and replication."
+
+[[file]]
+path = "src/sc_neurocore/evo_substrate/variation.py"
+rationale = "Seeded mutation and crossover operators for evolutionary genomes."
+
+[[file]]
+path = "src/sc_neurocore/evo_substrate/fitness.py"
+rationale = "Software and FPGA fitness contracts used by the replication workflow."
+
+[[file]]
+path = "src/sc_neurocore/evo_substrate/safety.py"
+rationale = "Runtime fault decisions, resource bounds, and formal deployment-safety checks."
+
+[[file]]
+path = "src/sc_neurocore/evo_substrate/speciation.py"
+rationale = "Rust-dispatched genomic distance, species assignment, diversity, and niche fitness."
+
+[[file]]
+path = "src/sc_neurocore/evo_substrate/lineage.py"
+rationale = "Genome ancestry records and parent-chain traversal."
+
+[[file]]
+path = "src/sc_neurocore/evo_substrate/selection.py"
+rationale = "Tournament, Pareto, age, bloat, and hall-of-fame selection policies."
+
+[[file]]
+path = "src/sc_neurocore/evo_substrate/ecology.py"
+rationale = "Island migration, novelty search, extinction, and co-evolutionary populations."
+
+[[file]]
+path = "src/sc_neurocore/evo_substrate/development.py"
+rationale = "CPPN developmental encoding for structured evolutionary connection weights."
+
+[[file]]
+path = "src/sc_neurocore/evo_substrate/statistics.py"
+rationale = "Generation statistics, genome comparison, and complexity trajectories."
+
+[[file]]
+path = "src/sc_neurocore/evo_substrate/emission.py"
+rationale = "NIR, Verilog, and photonic artefact emission for evolved organisms."
+
+[[file]]
+path = "src/sc_neurocore/evo_substrate/deployment.py"
+rationale = "FPGA tile allocation and utilisation tracking for evolved organisms."
+
+[[file]]
+path = "src/sc_neurocore/evo_substrate/replication.py"
+rationale = "End-to-end evaluation, selection, mutation, safety, and population-renewal workflow."
 
 [[file]]
 path = "src/sc_neurocore/exceptions.py"

@@ -13502,53 +13502,217 @@ refractory : float
 
 ---
 
-## Module `evo_substrate.evo_substrate`
+## Module `evo_substrate.deployment`
+
+### Class `TileAllocation`
+Maps an organism to a physical FPGA tile.
+
+
+### Class `TileDeploymentTracker`
+Tracks which organisms are deployed on which FPGA tiles.
+
+- **__init__**(num_tiles)
+- **deploy**(organism, tile_id)
+  - Assign an organism to a tile and return the recorded allocation.
+- **evict**(tile_id)
+  - Mark a tile as free without mutating the former organism.
+- **free_tiles**()
+  - Return tile identifiers with no active allocation.
+- **utilisation**()
+  - Return the fraction of tiles carrying an allocation.
+
+---
+
+## Module `evo_substrate.development`
+
+### Class `ActivationFunc`
+Select the nonlinear response used by a CPPN node.
+
+
+### Class `CPPNNode`
+One node in a CPPN network.
+
+
+### Class `CPPNEdge`
+One edge in a CPPN network.
+
+
+### Class `CPPNGenome`
+Compositional Pattern Producing Network for developmental encoding.
+
+- **__init__**()
+- **query**(x, y)
+  - Query the CPPN at coordinates (x, y).
+- **generate_weight_matrix**(rows, cols)
+  - Generate a weight matrix by querying CPPN at grid positions.
+- **num_nodes**()
+  - Return the number of nodes in the CPPN graph.
+- **num_edges**()
+  - Return the number of edges in the CPPN graph.
+
+---
+
+## Module `evo_substrate.ecology`
+
+### Class `Island`
+One sub-population (deme) in an island model.
+
+
+### Class `IslandModel`
+Multi-deme evolution with periodic migration.
+
+- **__init__**(num_islands, migration_rate)
+- **add_organism**(island_id, organism)
+  - Append an organism to the selected island population.
+- **migrate**(rng)
+  - Migrate best organisms between random island pairs.
+- **total_population**()
+  - Return the number of organisms across every island.
+
+### Class `NoveltyArchive`
+Behavioural novelty archive for novelty search.
+
+- **__init__**(k_nearest, threshold)
+- **novelty_score**(behaviour)
+  - Return mean distance to the nearest archived behaviours.
+- **maybe_add**(behaviour)
+  - Archive a copied behaviour when its novelty exceeds the threshold.
+- **size**()
+  - Return the number of archived behaviour vectors.
+
+### Class `ExtinctionDetector`
+Detects population stagnation and triggers extinction events.
+
+- **__init__**(stagnation_gens, kill_fraction)
+- **check**(best_fitness)
+  - Record fitness and report whether recent progress stagnated.
+- **apply**(population, rng)
+  - Kill kill_fraction of population randomly.
+
+### Class `CoevoRole`
+Identify an organism's role in a co-evolutionary interaction.
+
+
+### Class `CoevoOrganism`
+Organism with a co-evolutionary role.
+
+
+### Class `CoevolutionArena`
+Runs predator-prey or symbiotic co-evolution.
+
+- **__init__**()
+- **add_predator**(organism)
+  - Add an organism to the predator population.
+- **add_prey**(organism)
+  - Add an organism to the prey population.
+- **evaluate_interactions**()
+  - Evaluate predator-prey fitness from pairwise interactions.
+- **total_organisms**()
+  - Return the combined predator and prey population.
+
+---
+
+## Module `evo_substrate.emission`
+
+### Class `OrganismEmitter`
+Emits evolved organisms as NIR graph or Verilog.
+
+- **to_nir**(genome)
+  - Emit a simplified NIR-compatible graph dict.
+- **to_verilog**(genome, module_name)
+  - Emit Verilog wrapper for the organism.
+- **to_photonic_netlist**(genome, pml_layers)
+  - Emit a photonic netlist compatible with the optics PhotonicCompiler.
+
+---
+
+## Module `evo_substrate.fitness`
+
+### Class `FitnessType`
+Identify the objective exposed by a fitness evaluation.
+
+
+### Class `FitnessResult`
+Fitness evaluation result.
+
+- **compute_composite**(w_acc, w_energy, w_latency)
+  - Update and return the weighted three-objective fitness.
+
+### Class `FitnessEvaluator`
+Evaluates organism fitness from simulation metrics.
+
+- **__init__**(fitness_type)
+- **evaluate**(genome, metrics)
+  - Evaluate one genome from simulation metrics and hardware proxies.
+
+### Class `HWFitnessReport`
+Fitness feedback from actual FPGA execution.
+
+- **hw_composite**()
+  - Return the weighted accuracy, clock, and timing-closure score.
+
+### Class `HWFitnessCollector`
+Collects HW fitness from deployed organisms.
+
+- **__init__**()
+- **submit**(report)
+  - Store the latest FPGA fitness report for one genome.
+- **get**(genome_id)
+  - Return the latest report for the genome, if submitted.
+- **total_reports**()
+  - Return the number of genomes with submitted FPGA reports.
+
+---
+
+## Module `evo_substrate.genome`
 
 ### Class `TopologyGene`
 Encodes the network topology.
 
 - **to_vector**()
+  - Serialise topology fields in their canonical five-value order.
 - **from_vector**(cls, v)
+  - Construct a topology gene while enforcing physical parameter bounds.
 
 ### Class `NeuronGene`
 Encodes neuron-level parameters (ArcaneNeuron-compatible).
 
 - **to_vector**()
+  - Serialise neuron kinetics in their canonical eight-value order.
 - **from_vector**(cls, v)
+  - Construct neuron kinetics while enforcing finite lower bounds.
 
 ### Class `PlasticityGene`
 Encodes plasticity rule parameters.
 
 - **to_vector**()
+  - Serialise plasticity fields in their canonical six-value order.
 - **from_vector**(cls, v)
+  - Construct plasticity parameters while enforcing valid rates.
 
 ### Class `Genome`
 Complete genome for an evolving SC organism.
 
 - **to_vector**()
+  - Return the canonical 19-value topology-neuron-plasticity vector.
 - **from_vector**(cls, v, gen)
+  - Construct a genome from its canonical parameter vector.
 - **vector_dim**()
+  - Return the number of values in the canonical genome vector.
 - **compute_id**()
+  - Set and return the 12-hex SHA-256 prefix of the genome vector.
 
-### Class `MutationType`
+### Class `GenomeSerializer`
+Serializes/deserializes genomes for persistence.
 
-### Class `MutationConfig`
-Controls mutation rates and magnitudes.
+- **to_dict**(genome)
+  - Return a JSON-ready mapping that preserves genome identity fields.
+- **from_dict**(d)
+  - Reconstruct a genome from :meth:`to_dict` output.
 
+---
 
-### Class `MutationEngine`
-Applies mutations to genomes.
-
-- **__init__**(config, rng_seed)
-- **mutate**(genome)
-  - Apply a random mutation and return the mutated child.
-
-### Class `CrossoverEngine`
-Uniform crossover between two parent genomes.
-
-- **__init__**(rng_seed)
-- **crossover**(parent_a, parent_b)
-  - Uniform crossover: each gene drawn from either parent.
+## Module `evo_substrate.lineage`
 
 ### Class `LineageRecord`
 One entry in the ancestry log.
@@ -13559,37 +13723,23 @@ Tracks ancestry graph for all organisms.
 
 - **__init__**()
 - **record**(organism, mutation_type)
+  - Append one ancestry record and index it by genome identifier.
 - **get_ancestors**(genome_id)
   - Walk the ancestry chain to the root.
 - **num_records**()
+  - Return the number of recorded organisms.
 
-### Class `FitnessType`
+---
 
-### Class `FitnessResult`
-Fitness evaluation result.
-
-- **compute_composite**(w_acc, w_energy, w_latency)
-
-### Class `FitnessEvaluator`
-Evaluates organism fitness from simulation metrics.
-
-- **__init__**(fitness_type)
-- **evaluate**(genome, metrics)
+## Module `evo_substrate.organism`
 
 ### Class `Organism`
 One evolving SC organism.
 
 
-### Class `RuntimeFaultConfig`
-Runtime fault-check settings for evolved SC organisms.
+---
 
-
-### Class `RuntimeFaultCheck`
-Recorded runtime fault/degradation decision for one organism.
-
-- **from_plan**(cls, organism, plan)
-- **to_dict**()
-  - Return a JSON-ready fault-check summary.
+## Module `evo_substrate.replication`
 
 ### Class `ReplicationEngine`
 Manages organism reproduction, mutation, and deployment.
@@ -13612,18 +13762,27 @@ Selection → Replication → Mutation → Safety Check → Deploy
 - **evolve_generation**(metrics_fn)
   - Run one full evolutionary generation.
 - **best_organism**()
+  - Return the highest-fitness living organism, if one is evaluated.
 - **best_fitness**()
+  - Return the best living composite fitness, or zero when unavailable.
 - **mean_fitness**()
+  - Return mean composite fitness across evaluated organisms.
 
-### Class `OrganismEmitter`
-Emits evolved organisms as NIR graph or Verilog.
+---
 
-- **to_nir**(genome)
-  - Emit a simplified NIR-compatible graph dict.
-- **to_verilog**(genome, module_name)
-  - Emit Verilog wrapper for the organism.
-- **to_photonic_netlist**(genome, pml_layers)
-  - Emit a photonic netlist compatible with the optics PhotonicCompiler.
+## Module `evo_substrate.safety`
+
+### Class `RuntimeFaultConfig`
+Runtime fault-check settings for evolved SC organisms.
+
+
+### Class `RuntimeFaultCheck`
+Recorded runtime fault/degradation decision for one organism.
+
+- **from_plan**(cls, organism, plan)
+  - Capture a degradation plan against the organism's current identity.
+- **to_dict**()
+  - Return a JSON-ready fault-check summary.
 
 ### Class `SafetyBounds`
 Constrains the mutation space to prevent runaway replication.
@@ -13632,84 +13791,15 @@ Enforces hard limits on genome parameters that could cause
 resource exhaustion or unsafe behaviour on FPGA tiles.
 
 - **clamp**(genome)
+  - Clamp mutable genome fields to configured deployment bounds.
 - **is_within_bounds**(genome)
-
-### Class `TileAllocation`
-Maps an organism to a physical FPGA tile.
-
-
-### Class `TileDeploymentTracker`
-Tracks which organisms are deployed on which FPGA tiles.
-
-- **__init__**(num_tiles)
-- **deploy**(organism, tile_id)
-- **evict**(tile_id)
-- **free_tiles**()
-- **utilisation**()
-
-### Class `HallOfFame`
-Maintains the top-N organisms across all generations.
-
-- **__init__**(max_size)
-- **update**(organism)
-- **best_fitness**()
-- **size**()
-
-### Class `Island`
-One sub-population (deme) in an island model.
-
-
-### Class `IslandModel`
-Multi-deme evolution with periodic migration.
-
-- **__init__**(num_islands, migration_rate)
-- **add_organism**(island_id, organism)
-- **migrate**(rng)
-  - Migrate best organisms between random island pairs.
-- **total_population**()
-
-### Class `GenomeSerializer`
-Serializes/deserializes genomes for persistence.
-
-- **to_dict**(genome)
-- **from_dict**(d)
-
-### Class `NoveltyArchive`
-Behavioural novelty archive for novelty search.
-
-- **__init__**(k_nearest, threshold)
-- **novelty_score**(behaviour)
-- **maybe_add**(behaviour)
-- **size**()
+  - Return whether topology dimensions fit the configured bounds.
 
 ### Class `ResourceBudget`
 Per-organism resource constraints.
 
 - **check**(genome)
-
-### Class `ExtinctionDetector`
-Detects population stagnation and triggers extinction events.
-
-- **__init__**(stagnation_gens, kill_fraction)
-- **check**(best_fitness)
-- **apply**(population, rng)
-  - Kill kill_fraction of population randomly.
-
-### Class `CoevoRole`
-
-### Class `CoevoOrganism`
-Organism with a co-evolutionary role.
-
-
-### Class `CoevolutionArena`
-Runs predator-prey or symbiotic co-evolution.
-
-- **__init__**()
-- **add_predator**(organism)
-- **add_prey**(organism)
-- **evaluate_interactions**()
-  - Evaluate predator-prey fitness from pairwise interactions.
-- **total_organisms**()
+  - Return budget compliance and human-readable resource violations.
 
 ### Class `SafetyCheckResult`
 Result of a formal safety check on emitted Verilog/NIR.
@@ -13722,99 +13812,72 @@ Links to the safety_cert module for IEC 61508 compliance.
 
 - **__init__**(bounds)
 - **check**(genome)
+  - Evaluate topology limits and update cumulative rejection counters.
 - **rejection_rate**()
+  - Return rejected checks divided by all completed checks.
+
+---
+
+## Module `evo_substrate.selection`
+
+### Class `HallOfFame`
+Maintains the top-N organisms across all generations.
+
+- **__init__**(max_size)
+- **update**(organism)
+  - Insert a fitted organism and retain the highest-ranked entries.
+- **best_fitness**()
+  - Return the highest retained composite fitness, or zero when empty.
+- **size**()
+  - Return the number of retained hall-of-fame entries.
 
 ### Class `TournamentSelector`
 Tournament selection with configurable pressure.
 
 - **__init__**(tournament_size)
 - **select**(population, rng)
+  - Return the highest-fitness member of one random tournament.
 - **select_n**(population, n, rng)
+  - Run independent tournaments and return the requested selections.
 
 ### Class `ParetoFront`
 Maintains a non-dominated Pareto front.
 
 - **__init__**()
 - **update**(organism)
+  - Insert an organism when no retained member dominates its fitness.
 - **size**()
+  - Return the number of non-dominated organisms.
 
 ### Class `AgeRegulator`
 Culls organisms that exceed a maximum lifespan.
 
 - **__init__**(max_age)
 - **apply**(population, current_generation)
+  - Mark over-age organisms dead and return the number culled.
 
 ### Class `BloatMetrics`
 Measures genome complexity for bloat detection.
 
 - **is_bloated**()
+  - Return whether complexity exceeds the baseline bloat score.
 
 ### Class `BloatPenalizer`
 Penalizes fitness for bloated genomes.
 
 - **__init__**(penalty_weight, threshold)
 - **penalize**(fitness, genome)
+  - Apply a bounded multiplicative penalty above the bloat threshold.
 
-### Class `ActivationFunc`
+### Function `dominates(a, b)`
+Return whether the first result Pareto-dominates the second.
 
-### Class `CPPNNode`
-One node in a CPPN network.
+### Function `compute_bloat(genome, baseline_neurons)`
+Compute bloat relative to a baseline.
 
+---
 
-### Class `CPPNEdge`
-One edge in a CPPN network.
-
-
-### Class `CPPNGenome`
-Compositional Pattern Producing Network for developmental encoding.
-
-- **__init__**()
-- **query**(x, y)
-  - Query the CPPN at coordinates (x, y).
-- **generate_weight_matrix**(rows, cols)
-  - Generate a weight matrix by querying CPPN at grid positions.
-- **num_nodes**()
-- **num_edges**()
-
-### Class `HWFitnessReport`
-Fitness feedback from actual FPGA execution.
-
-- **hw_composite**()
-
-### Class `HWFitnessCollector`
-Collects HW fitness from deployed organisms.
-
-- **__init__**()
-- **submit**(report)
-- **get**(genome_id)
-- **total_reports**()
-
-### Class `GenerationStats`
-Statistics for one generation.
-
-
-### Class `EvoStatisticsTracker`
-Records per-generation statistics for analytics.
-
-- **__init__**()
-- **record**(stats)
-- **generations_tracked**()
-- **fitness_trajectory**()
-- **diversity_trajectory**()
-- **improvement_rate**()
-
-### Class `GenomeDiff`
-Structural diff between two genomes.
-
-- **is_identical**()
-
-### Class `ComplexityTracker`
-Tracks population complexity over generations.
-
-- **__init__**()
-- **record**(generation, population)
-- **mean_trajectory**()
-- **is_complexifying**()
+## Module `evo_substrate.speciation`
 
 ### Function `genomic_distance(a, b)`
 Normalised L1 distance between genome vectors.
@@ -13831,20 +13894,80 @@ First organism of each species is the representative.
 ### Function `population_diversity(population)`
 Mean pairwise genomic distance (0 = clones, 1 = max diversity).
 
-### Function `dominates(a, b)`
-True if a Pareto-dominates b.
-
-### Function `compute_bloat(genome, baseline_neurons)`
-Compute bloat relative to a baseline.
-
 ### Function `shared_fitness(organism, population, sigma)`
 Shared fitness: divide by niche count to prevent species domination.
+
+---
+
+## Module `evo_substrate.statistics`
+
+### Class `GenerationStats`
+Statistics for one generation.
+
+
+### Class `EvoStatisticsTracker`
+Records per-generation statistics for analytics.
+
+- **__init__**()
+- **record**(stats)
+  - Append statistics for one completed generation.
+- **generations_tracked**()
+  - Return the number of recorded generations.
+- **fitness_trajectory**()
+  - Return best fitness in generation order.
+- **diversity_trajectory**()
+  - Return population diversity in generation order.
+- **improvement_rate**()
+  - Return best-fitness change from the first to latest generation.
+
+### Class `GenomeDiff`
+Structural diff between two genomes.
+
+- **is_identical**()
+  - Return whether the canonical vectors contain no changed values.
+
+### Class `ComplexityTracker`
+Tracks population complexity over generations.
+
+- **__init__**()
+- **record**(generation, population)
+  - Append mean and maximum complexity for a non-empty population.
+- **mean_trajectory**()
+  - Return mean genome complexity in generation order.
+- **is_complexifying**()
+  - Return whether mean complexity increased over three or more samples.
 
 ### Function `genome_diff(a, b)`
 Compute structural diff between two genomes.
 
 ### Function `genome_complexity(genome)`
 Measure evolved complexity (information-theoretic).
+
+---
+
+## Module `evo_substrate.variation`
+
+### Class `MutationType`
+Identify the mutation operator applied to a child genome.
+
+
+### Class `MutationConfig`
+Controls mutation rates and magnitudes.
+
+
+### Class `MutationEngine`
+Applies mutations to genomes.
+
+- **__init__**(config, rng_seed)
+- **mutate**(genome)
+  - Apply a random mutation and return the mutated child.
+
+### Class `CrossoverEngine`
+Uniform crossover between two parent genomes.
+
+- **__init__**(rng_seed)
+- **crossover**(parent_a, parent_b)
+  - Uniform crossover: each gene drawn from either parent.
 
 ---
 
