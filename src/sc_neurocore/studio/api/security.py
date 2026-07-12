@@ -10,7 +10,7 @@
 
 from __future__ import annotations
 
-from collections.abc import Callable, Mapping
+from collections.abc import Callable, Iterable, Iterator, Mapping
 from datetime import datetime, timezone
 from typing import Any
 from uuid import uuid4
@@ -127,10 +127,28 @@ def _studio_websocket_accept_subprotocol(headers: Mapping[str, str]) -> str | No
     return "studio-auth" if "studio-auth" in protocols else None
 
 
+def _iter_leaf_routes(routes: Iterable[Any]) -> Iterator[Route]:
+    """Yield every leaf HTTP ``Route``, descending into included sub-routers.
+
+    Starlette 1.3 stopped flattening ``include_router`` routes onto ``app.routes``
+    and instead wraps each included router in an ``_IncludedRouter`` whose leaf
+    routes are reachable via ``original_router.routes``. Older Starlette flattened
+    them, so iterating ``app.routes`` directly sufficed. Walk both shapes so route
+    policy classification cannot silently fall back to ``unclassified_route`` on a
+    newer Starlette.
+    """
+    for route in routes:
+        if isinstance(route, Route):
+            yield route
+        original_router = getattr(route, "original_router", None)
+        if original_router is not None and hasattr(original_router, "routes"):
+            yield from _iter_leaf_routes(original_router.routes)
+        elif not isinstance(route, Route) and getattr(route, "routes", None):
+            yield from _iter_leaf_routes(route.routes)
+
+
 def _studio_route_signature(app: FastAPI, request: Request) -> tuple[str, str] | None:
-    for route in app.routes:
-        if not isinstance(route, Route):
-            continue
+    for route in _iter_leaf_routes(app.routes):
         match, _ = route.matches(request.scope)
         if match is Match.FULL:
             return request.method, route.path

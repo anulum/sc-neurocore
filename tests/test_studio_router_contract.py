@@ -11,7 +11,9 @@
 from __future__ import annotations
 
 import json
+from collections.abc import Iterable, Iterator
 from pathlib import Path
+from typing import Any
 
 from fastapi import FastAPI
 from fastapi.routing import APIRoute, APIWebSocketRoute
@@ -44,9 +46,26 @@ EXPECTED_HTTP_ROUTE_MODULES = frozenset(
 )
 
 
+def _leaf_routes(routes: Iterable[Any]) -> Iterator[Any]:
+    """Yield leaf routes, descending into Starlette 1.3 included sub-routers.
+
+    Starlette 1.3 wraps ``include_router`` routes in an ``_IncludedRouter`` whose
+    leaf routes live under ``original_router.routes`` instead of being flattened
+    onto ``app.routes``; older Starlette flattened them. Walk both shapes.
+    """
+    for route in routes:
+        original_router = getattr(route, "original_router", None)
+        if original_router is not None and hasattr(original_router, "routes"):
+            yield from _leaf_routes(original_router.routes)
+        elif getattr(route, "routes", None):
+            yield from _leaf_routes(route.routes)
+        else:
+            yield route
+
+
 def test_application_routes_are_owned_by_responsibility_modules() -> None:
     application = create_app()
-    routes = [route for route in application.routes if isinstance(route, APIRoute)]
+    routes = [route for route in _leaf_routes(application.routes) if isinstance(route, APIRoute)]
     backend_routes = [route for route in routes if route.path != "/"]
     root_routes = [route for route in routes if route.path == "/"]
     signatures = [(route.path, tuple(sorted(route.methods or ()))) for route in routes]
@@ -61,7 +80,7 @@ def test_application_routes_are_owned_by_responsibility_modules() -> None:
     assert all(route.endpoint.__module__ != "sc_neurocore.studio.app" for route in routes)
 
     websocket_routes = [
-        route for route in application.routes if isinstance(route, APIWebSocketRoute)
+        route for route in _leaf_routes(application.routes) if isinstance(route, APIWebSocketRoute)
     ]
     assert [(route.path, route.endpoint.__module__) for route in websocket_routes] == [
         ("/ws/progress", "sc_neurocore.studio.api.export")
