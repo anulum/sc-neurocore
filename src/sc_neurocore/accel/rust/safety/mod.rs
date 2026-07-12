@@ -335,7 +335,6 @@ pub mod quadratic_if;
 pub mod quantization;
 pub mod quantize;
 pub mod quantizer;
-pub mod quantum_annealing;
 pub mod quantum_entropy;
 pub mod quantum_inspired_lif;
 pub mod r_stdp;

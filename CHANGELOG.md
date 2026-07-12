@@ -5,6 +5,27 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 ## [Unreleased]
 
 ### Added
+- Replaced the 1,910-line quantum-annealing GodFile and its 1,001-line
+  primary test GodFile with a 98-line historical facade, nine acyclic
+  responsibility modules, and focused typed tests. Every production module is
+  below 400 lines and every owned test file is below 500 lines. All 24 public
+  imports retain object identity and historical pickle paths. Models now
+  canonicalise terms and fail closed on invalid indices, labels, shapes,
+  cardinalities, schedules, samples, and non-finite data. The exact QUBO to
+  Ising mapping fixes diagonal offsets, explicit backend selectors never
+  silently substitute a requested runtime, native responses are validated,
+  exports are atomic, and decomposition reconstructs exact global indices.
+  The linked focused cohort passes 250 tests with one optional `neal` skip and
+  reaches 100 percent coverage over 1,040 statements and 442 branches.
+- Removed false quantum-annealing mirrors: the generated Rust safety file
+  returned constants, the Go service exposed empty functions, and the Julia
+  and Mojo files did not build. The maintained native authority remains
+  `engine/src/quantum.rs` with 12 focused tests. A source-hash-bound,
+  30-sample local parent/candidate benchmark records median compile, cold
+  import, Python solve, process wall, and RSS changes of +99.65 percent,
+  -25.37 percent, -16.67 percent, -23.21 percent, and -3.48 percent. The
+  non-exclusive workstation load rose during capture, so these are regression
+  diagnostics rather than release throughput or quantum-speedup claims.
 - Replaced the 1,926-line safety-certification GodFile and 2,262-line test
   GodFile with a 98-line historical facade, ten acyclic responsibility modules,
   and focused typed test modules, all below 600 lines. The established 32
@@ -2482,10 +2503,14 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 - **Maturin**: Rebuilt `sc_neurocore_engine` v3.14.0 with all Rust bindings
 - **Total**: 10,592 tests (8,895 Python + 1,697 Rust) — ALL GREEN
 
-### Extended Rust Wiring — QA & DNA Bridges (2026-04-17)
-- **Quantum Annealing**: `bridges/quantum_annealing.py` → `py_qa_simulated_annealing` (**2,402×** at 100 qubits)
+### Extended Rust Wiring — QA & DNA Bridges (2026-04-17; timing superseded)
+- **Quantum Annealing**: `bridges/quantum_annealing.py` →
+  `py_qa_simulated_annealing`. The historical speed figures recorded here were
+  not promotion-grade evidence and are superseded by the 2026-07-12
+  source-bound rerun requirement; do not quote them.
   - `IsingModel.energy()` → `py_qa_ising_energy` (Rust path for n>20 qubits)
-  - `SimulatedAnnealer.solve_ising()` → `py_qa_simulated_annealing` (467× at 20Q → **2,402×** at 100Q)
+  - `SimulatedAnnealer.solve_ising()` → `py_qa_simulated_annealing` (native
+    path retained; speed must be remeasured on the target release host)
   - `EnergyLandscape.analyze()` → `py_qa_batch_ising_energy` (batch energy for >100 samples)
 - **DNA Mapper**: `bridges/dna_mapper.py` — Rust engine loaded (`_HAS_RUST_DNA`)
   - Imported: `py_dna_design_sequence`, `py_dna_detect_hairpins`, `py_dna_check_cross_hybridization`, `py_dna_simulate_kinetics`, `py_dna_design_orthogonal_set`
@@ -2496,8 +2521,11 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 - **Tournament Selection**: **337–394×** (amortised per-round overhead elimination)
 - **Batch Mutate**: 17–21× across population sizes 50–1000
 - **Population Diversity**: 34–**90×** (O(N²) SIMD pairwise distance)
-- **Mean Rust speedup**: **334.6×** across all hot paths (incl. QA)
-- **Peak QA**: 467× (20Q) → 1,426× (50Q) → **2,402× (100Q)**
+- **Historical aggregate**: the former mean included superseded QA timings and
+  must not be treated as a current cross-path claim
+- **QA timing**: superseded; rerun
+  `bench_quantum_annealing_rust_vs_python.py` on the target release host before
+  making a native speed claim
 - **E2E Pipeline**: NAS→Optimizer→Energy→Verilog in **13.7ms** (small) to **116ms** (large)
 - Criterion (Rust-native): spike_times=83ns, firing_rate=13ns, ISI=96ns, van_rossum=1.2µs (N=100)
 - Results: `benchmarks/results/py_vs_rust_integration.json`

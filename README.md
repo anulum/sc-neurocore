@@ -97,7 +97,7 @@ SC-NeuroCore is positioned for neuromorphic R&D, stochastic accelerator design, 
 | Model documentation pages | 175 |
 | Rust PyO3 model wrappers | 176 |
 | Optional extras | 28 |
-| Python test files | 1125 |
+| Python test files | 1130 |
 | Public documentation pages | 569 |
 | GitHub Actions workflows | 19 |
 
@@ -310,7 +310,7 @@ Research and extended modules are available from source (`pip install -e ".[dev]
 | **Simulation** | hdc, solvers, transformers, learning, graphs, ensembles, export, pipeline, profiling, models, math, spatial, verification, security | Yes | Stable. Import explicitly. |
 | **Industrial** | safety_cert, asic_flow, fault_injection, uvm_gen, hypervisor, digital_twin, chiplet, spintronic, memristor, analog_bridge | No | Source-only; see `docs/MODULE_INTEGRATION.md` for the historical 19-module integration slice. |
 | **Extended research** | evo_substrate, meta_plasticity, bioware, federated, bci_studio, explainability, neuro_symbolic, stochastic_doctor, model_zoo | No | Source-only; see `docs/MODULE_INTEGRATION.md` for the historical 19-module integration slice. |
-| **Domain bridges** | quantum (Qiskit/PennyLane), adapters/holonomic (JAX), scpn (Petri nets) | Yes | Requires `pip install sc-neurocore[quantum]` or `[jax]` |
+| **Domain bridges** | quantum (Qiskit/PennyLane), bridges/quantum_annealing (Ising/QUBO), adapters/holonomic (JAX), scpn (Petri nets) | Yes | Heavy backends require the `[quantum]`, `[annealing]`, or `[jax]` extra |
 | **Research** | robotics, physics, bio, optics, chaos, sleep, interfaces | No | Tested. Available from source. |
 | **Speculative** | `research/` (eschaton, exotic, meta, post_silicon, transcendent) | No | Theoretical. See `research/README.md`. |
 
@@ -606,6 +606,7 @@ pip install sc-neurocore[accel]       # Numba JIT experiments
 pip install sc-neurocore[gpu]         # CuPy CUDA experiments
 pip install sc-neurocore[jax]         # JAX-backed experiments
 pip install sc-neurocore[quantum]     # research-grade Qiskit/PennyLane bridges
+pip install sc-neurocore[annealing]   # dimod/neal parity for the Ising/QUBO bridge
 pip install sc-neurocore[lava]        # Lava interop experiments
 pip install sc-neurocore[research]    # plotting, graph, ONNX, and torch research stack
 pip install sc-neurocore[full]        # local research environment only; pulls heavy extras

@@ -14,7 +14,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 310
+expected_file_count = 319
 
 [[file]]
 path = "src/sc_neurocore/__init__.py"
@@ -1181,8 +1181,44 @@ path = "src/sc_neurocore/bridges/dna_types.py"
 rationale = "Stable molecular-circuit contracts and physical constants."
 
 [[file]]
+path = "src/sc_neurocore/bridges/annealing_analysis.py"
+rationale = "Quantum-annealing landscape, embedding, sample, and time-to-solution analysis."
+
+[[file]]
+path = "src/sc_neurocore/bridges/annealing_backends.py"
+rationale = "Optional Rust, dimod, and D-Wave dependency boundary for quantum annealing."
+
+[[file]]
+path = "src/sc_neurocore/bridges/annealing_compilers.py"
+rationale = "Validated SC adjacency, bitstream, and pruning problem compilers."
+
+[[file]]
+path = "src/sc_neurocore/bridges/annealing_decomposition.py"
+rationale = "Bounded graph-aware Ising decomposition and exact-index reconstruction."
+
+[[file]]
+path = "src/sc_neurocore/bridges/annealing_hardware.py"
+rationale = "Annealer hardware-capacity estimates and broken-chain resolution."
+
+[[file]]
+path = "src/sc_neurocore/bridges/annealing_io.py"
+rationale = "Atomic quantum-annealing model export and text visualisation."
+
+[[file]]
+path = "src/sc_neurocore/bridges/annealing_models.py"
+rationale = "Validated Ising and QUBO contracts with explicit backend selection."
+
+[[file]]
+path = "src/sc_neurocore/bridges/annealing_solvers.py"
+rationale = "Classical, native, and D-Wave quantum-annealing solver adapters."
+
+[[file]]
+path = "src/sc_neurocore/bridges/annealing_transforms.py"
+rationale = "Annealing schedules, spin gauges, and SC precision encodings."
+
+[[file]]
 path = "src/sc_neurocore/bridges/quantum_annealing.py"
-rationale = "Public quantum-annealing bridge and Ising/QUBO helper surface with optional Rust acceleration."
+rationale = "Stable public quantum-annealing compatibility facade and historical exports."
 
 [[file]]
 path = "src/sc_neurocore/optics/photonic_emitter.py"

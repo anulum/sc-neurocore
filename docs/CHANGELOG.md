@@ -5,6 +5,24 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+### Quantum-annealing GodFile modularisation
+- Replaced the 1,910-line quantum-annealing implementation and 1,001-line
+  primary test GodFile with a 98-line compatibility facade, nine acyclic
+  responsibility modules below 400 lines, and focused typed tests below 500
+  lines. All 24 historical imports and pickle identities remain stable. The
+  linked cohort passes 250 tests with one optional `neal` skip, while 216
+  exact-file tests cover all 1,040 statements and 442 branches.
+- Corrected the exact QUBO-to-Ising diagonal offset, made backend selection
+  explicit, validated native and QPU boundaries, hardened compiler/model/
+  schedule/sample inputs, made JSON exports atomic, and retained exact global
+  indices through overlapping decomposition.
+- Removed nonfunctional generated Rust safety, Go, Julia, and Mojo mirrors.
+  The maintained native authority remains `engine/src/quantum.rs` with 12
+  focused tests. The source-bound 30-sample local benchmark records +99.65%
+  compile, -25.37% cold import, -16.67% Python solve, -23.21% process wall,
+  and -3.48% RSS median changes. Rising non-exclusive host load makes these
+  regression diagnostics, not release or quantum-speedup evidence.
+
 ### Medvedev slow-calcium first-return source-to-silicon correction
 - Replaced the repository's falsely attributed tent map with the scalar
   slow-calcium first-return construction derived in Section 4 of Medvedev
@@ -2494,10 +2512,14 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 - **Maturin**: Rebuilt `sc_neurocore_engine` v3.14.0 with all Rust bindings
 - **Total**: 10,592 tests (8,895 Python + 1,697 Rust) — ALL GREEN
 
-### Extended Rust Wiring — QA & DNA Bridges (2026-04-17)
-- **Quantum Annealing**: `bridges/quantum_annealing.py` → `py_qa_simulated_annealing` (**2,402×** at 100 qubits)
+### Extended Rust Wiring — QA & DNA Bridges (2026-04-17; timing superseded)
+- **Quantum Annealing**: `bridges/quantum_annealing.py` →
+  `py_qa_simulated_annealing`. The historical speed figures recorded here were
+  not promotion-grade evidence and are superseded by the 2026-07-12
+  source-bound rerun requirement; do not quote them.
   - `IsingModel.energy()` → `py_qa_ising_energy` (Rust path for n>20 qubits)
-  - `SimulatedAnnealer.solve_ising()` → `py_qa_simulated_annealing` (467× at 20Q → **2,402×** at 100Q)
+  - `SimulatedAnnealer.solve_ising()` → `py_qa_simulated_annealing` (native
+    path retained; speed must be remeasured on the target release host)
   - `EnergyLandscape.analyze()` → `py_qa_batch_ising_energy` (batch energy for >100 samples)
 - **DNA Mapper**: `bridges/dna_mapper.py` — Rust engine loaded (`_HAS_RUST_DNA`)
   - Imported: `py_dna_design_sequence`, `py_dna_detect_hairpins`, `py_dna_check_cross_hybridization`, `py_dna_simulate_kinetics`, `py_dna_design_orthogonal_set`
@@ -2508,8 +2530,11 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 - **Tournament Selection**: **337–394×** (amortised per-round overhead elimination)
 - **Batch Mutate**: 17–21× across population sizes 50–1000
 - **Population Diversity**: 34–**90×** (O(N²) SIMD pairwise distance)
-- **Mean Rust speedup**: **334.6×** across all hot paths (incl. QA)
-- **Peak QA**: 467× (20Q) → 1,426× (50Q) → **2,402× (100Q)**
+- **Historical aggregate**: the former mean included superseded QA timings and
+  must not be treated as a current cross-path claim
+- **QA timing**: superseded; rerun
+  `bench_quantum_annealing_rust_vs_python.py` on the target release host before
+  making a native speed claim
 - **E2E Pipeline**: NAS→Optimizer→Energy→Verilog in **13.7ms** (small) to **116ms** (large)
 - Criterion (Rust-native): spike_times=83ns, firing_rate=13ns, ISI=96ns, van_rossum=1.2µs (N=100)
 - Results: `benchmarks/results/py_vs_rust_integration.json`

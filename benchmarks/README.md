@@ -44,6 +44,7 @@ same checkout.
 
 | Script | Description |
 |--------|-------------|
+| `bench_quantum_annealing_modularisation.py` | Interleaved single-file-parent/modular-candidate comparison for cold import, deterministic SC-to-Ising compilation, Python solve, process wall time, and RSS; records raw samples, source hashes, affinity, and host-load limits |
 | `bench_safety_certification.py` | Interleaved parent/candidate comparison for safety-package import and deterministic in-memory evidence generation; records raw samples, source hashes, affinity, host-load limits, and non-applicability of removed report-generator mirrors |
 | `bench_cli_startup.py` | Interleaved parent/candidate cold-start comparison for Python CLI import, `--version` dispatch, process wall time, and maximum RSS; records source hashes, affinity, governor, and host-load limits |
 | `bench_dna_mapper_import.py` | Interleaved flat-parent/modular comparison for DNA mapper import, repeated one-gate compilation, process wall time, and maximum RSS; records raw samples, source hashes, and host limitations |
@@ -81,6 +82,12 @@ python benchmarks/bench_safety_certification.py \
   --baseline-root <parent-root> \
   --candidate-root . \
   --output benchmarks/results/local_python_2026-07-12_safety_certification.json
+
+# Quantum-annealing modularisation regression evidence
+python benchmarks/bench_quantum_annealing_modularisation.py \
+  --baseline-root <parent-root> \
+  --candidate-root . \
+  --output benchmarks/results/local_python_2026-07-12_quantum_annealing_modularisation.json
 ```
 
 The DNA import harness measures Python orchestration only. Its maintained Rust
@@ -96,6 +103,16 @@ and -1.31%, respectively. The generation median remains 0.172 ms while the
 modular path performs full-field hashing and emits fail-closed reports. These
 measurements are regression context, not publishable throughput claims. The
 separate `SafetyMonitor` acceleration chain is outside this benchmark.
+
+The quantum-annealing modularisation harness measures Python orchestration and
+an explicitly selected Python solver. Its committed 30-sample local run is
+source-hash bound and records median compile, cold import, solve, process wall,
+and RSS changes of +99.65%, -25.37%, -16.67%, -23.21%, and -3.48%. Compile
+remains 0.078 ms. CPU affinity was not exclusive and host load rose during the
+capture, so the artefact is regression context rather than publishable
+throughput or quantum-speedup evidence. The maintained Rust authority is
+`engine/src/quantum.rs`; removed generated Rust safety, Go, Julia, and Mojo
+files were nonfunctional mirrors, not comparison backends.
 
 ## Rust Benchmarks
 

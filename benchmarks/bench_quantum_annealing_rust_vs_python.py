@@ -9,20 +9,10 @@
 
 """Reproducible benchmark for `SimulatedAnnealer.solve_ising`.
 
-Reproduces the Rust-vs-Python wall-clock comparison cited in
-``docs/api/bridges/quantum_annealing.md`` §6.1. On the workstation
-where the doc was written (Intel i5-11600K, NumPy 2.2.6, Python
-3.12 venv with `sc_neurocore_engine` release wheel installed):
-
-    | N qubits | Python wall | Rust wall | Speedup |
-    |---------:|------------:|----------:|--------:|
-    | 20       | ~90.5 ms    | ~15.5 ms  | ~5.8×   |
-    | 50       | ~684 ms     | ~0.9 ms   | ~761×   |
-    | 100      | ~4 342 ms   | ~2.7 ms   | ~1 593× |
-
-Numbers will vary by hardware. The script prints absolute wall
-times and the speedup ratio so the doc claim can be checked on
-any machine.
+Measures the maintained ``engine/src/quantum.rs`` solver against the explicit
+pure-Python fallback. Numbers vary by hardware; committed documentation must
+refer to a source-hash-bound result rather than copying an old workstation
+observation into a timeless speed claim.
 
 **Run:**
     python benchmarks/bench_quantum_annealing_rust_vs_python.py
@@ -42,11 +32,12 @@ import platform
 import sys
 import time
 from pathlib import Path
+from typing import Literal
 
 import numpy as np
 
+from sc_neurocore.bridges import annealing_backends as backends
 from sc_neurocore.bridges.quantum_annealing import (
-    _HAS_RUST_QA,
     IsingModel,
     SimulatedAnnealer,
 )
@@ -61,6 +52,7 @@ NUM_READS = 5
 BETA_START = 0.1
 BETA_END = 10.0
 SEED = 42
+_HAS_RUST_QA = backends.HAS_RUST_QA
 
 
 def build_random_ising(n: int, p: float, seed: int) -> IsingModel:
@@ -77,54 +69,38 @@ def build_random_ising(n: int, p: float, seed: int) -> IsingModel:
 
 def time_solver(
     model: IsingModel,
-    backend: str,
+    backend: Literal["python", "rust"],
     n_repeats: int = 5,
 ) -> tuple[float, float, float]:
     """Run solve_ising `n_repeats` times, return (median_ms, min_ms, best_energy).
 
-    Backend selection: the bridge dispatches to Rust when
-    `_HAS_RUST_QA and model.n_qubits > 10`. To force Python on a
-    Rust-capable build we monkey-patch the module flag.
+    Backend selection uses the bridge's explicit constructor contract, so the
+    Python measurement cannot accidentally dispatch back into Rust.
 
     Median + min reported because Rust wall-times at small N are
     sub-millisecond and dominated by system noise; min is the
     closest estimate of the underlying compute cost, median is
     the typical-run figure.
     """
-    from sc_neurocore.bridges import quantum_annealing as qa
-
+    if backend == "rust" and not _HAS_RUST_QA:
+        raise RuntimeError("requested rust backend but _HAS_RUST_QA = False")
     sa = SimulatedAnnealer(
         n_sweeps=N_SWEEPS,
         beta_start=BETA_START,
         beta_end=BETA_END,
         seed=SEED,
+        backend=backend,
     )
 
-    if backend == "rust" and not _HAS_RUST_QA:
-        raise RuntimeError("requested rust backend but _HAS_RUST_QA = False")
-
-    saved = qa._HAS_RUST_QA
-    try:
-        if backend == "python":
-            qa._HAS_RUST_QA = False
-        elif backend == "rust":
-            qa._HAS_RUST_QA = True
-        else:
-            raise ValueError(f"unknown backend: {backend!r}")
-
-        # Warm-up: one short call so the timer doesn't include first-call
-        # overhead (lazy imports, page faults, etc.).
-        sa.solve_ising(model, num_reads=1)
-
-        times_ms: list[float] = []
-        last_energy = 0.0
-        for _ in range(n_repeats):
-            t0 = time.perf_counter()
-            result = sa.solve_ising(model, num_reads=NUM_READS)
-            times_ms.append((time.perf_counter() - t0) * 1000.0)
-            last_energy = float(result["best_energy"])
-    finally:
-        qa._HAS_RUST_QA = saved
+    # Warm-up: one short call so the timer excludes first-call overhead.
+    sa.solve_ising(model, num_reads=1)
+    times_ms: list[float] = []
+    last_energy = 0.0
+    for _ in range(n_repeats):
+        t0 = time.perf_counter()
+        result = sa.solve_ising(model, num_reads=NUM_READS)
+        times_ms.append((time.perf_counter() - t0) * 1000.0)
+        last_energy = float(result["best_energy"])
 
     times_ms.sort()
     median_ms = times_ms[len(times_ms) // 2]
@@ -231,7 +207,7 @@ def main(argv: list[str]) -> int:
             },
             "rows": rows,
         }
-        args.json.write_text(json.dumps(payload, indent=2))
+        args.json.write_text(json.dumps(payload, indent=2) + "\n", encoding="utf-8")
         print(f"\nwrote {args.json}")
 
     return 0

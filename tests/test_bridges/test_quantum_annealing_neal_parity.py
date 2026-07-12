@@ -36,9 +36,10 @@ from __future__ import annotations
 
 import numpy as np
 import pytest
+from typing import Any
 
-neal = pytest.importorskip("neal")
-dimod = pytest.importorskip("dimod")
+neal: Any = pytest.importorskip("neal")
+dimod: Any = pytest.importorskip("dimod")
 
 from sc_neurocore.bridges.quantum_annealing import (
     IsingModel,
@@ -73,7 +74,7 @@ def _build_planted_ising(
     return model, planted
 
 
-def _to_neal_bqm(model: IsingModel) -> "dimod.BinaryQuadraticModel":
+def _to_neal_bqm(model: IsingModel) -> Any:
     """Convert our IsingModel → dimod.BQM in spin vartype."""
     return dimod.BinaryQuadraticModel.from_ising(
         h=dict(model.h),
@@ -116,7 +117,7 @@ def test_energy_function_matches_dimod(n: int, p: float, seed: int) -> None:
     rng = np.random.default_rng(seed * 7)
     for _ in range(8):
         spins = {i: int(rng.choice([-1, 1])) for i in range(n)}
-        ours = model.energy(spins)
+        ours = model.energy(spins, backend="python")
         theirs = float(bqm.energy(spins))
         assert ours == pytest.approx(theirs, abs=1e-9), (
             f"energy mismatch on n={n} spins={spins}: ours={ours} dimod={theirs}"
@@ -127,7 +128,7 @@ def test_energy_function_matches_dimod(n: int, p: float, seed: int) -> None:
 def test_planted_ground_state_recovered(n: int, seed: int) -> None:
     """Both samplers should find energy close to the planted GS."""
     model, planted = _build_planted_ising(n, p=0.3, coupling=1.0, seed=seed)
-    planted_energy = model.energy(planted)
+    planted_energy = model.energy(planted, backend="python")
 
     neal_best, _, _ = _neal_best_energy(
         model,
@@ -135,7 +136,13 @@ def test_planted_ground_state_recovered(n: int, seed: int) -> None:
         seed=seed,
         sweeps=500,
     )
-    sa = SimulatedAnnealer(n_sweeps=500, beta_start=0.1, beta_end=10.0, seed=seed)
+    sa = SimulatedAnnealer(
+        n_sweeps=500,
+        beta_start=0.1,
+        beta_end=10.0,
+        seed=seed,
+        backend="python",
+    )
     ours = sa.solve_ising(model, num_reads=20)
 
     # neal must hit (or be within 1%) of planted.
@@ -169,7 +176,13 @@ def test_random_ising_best_energy_within_tolerance(n: int, seed: int) -> None:
         seed=seed,
         sweeps=1000,
     )
-    sa = SimulatedAnnealer(n_sweeps=1000, beta_start=0.1, beta_end=10.0, seed=seed)
+    sa = SimulatedAnnealer(
+        n_sweeps=1000,
+        beta_start=0.1,
+        beta_end=10.0,
+        seed=seed,
+        backend="python",
+    )
     ours = sa.solve_ising(model, num_reads=50)
 
     # On frustrated random instances, finding the global minimum is hard.
@@ -193,7 +206,7 @@ def test_offset_propagation() -> None:
     model.offset = 12.5
     bqm = _to_neal_bqm(model)
     spins = {i: 1 for i in range(8)}
-    ours = model.energy(spins)
+    ours = model.energy(spins, backend="python")
     theirs = float(bqm.energy(spins))
     assert ours == pytest.approx(theirs, abs=1e-9)
     # Offset is part of the energy.
@@ -217,7 +230,7 @@ def test_returned_spin_assignment_is_valid_for_neal_best() -> None:
         seed=999,
         sweeps=300,
     )
-    recomputed = model.energy(neal_spins)
+    recomputed = model.energy(neal_spins, backend="python")
     assert recomputed == pytest.approx(neal_best, abs=1e-9), (
         f"convention mismatch: neal_e={neal_best} our_e_on_neal_spins={recomputed}"
     )

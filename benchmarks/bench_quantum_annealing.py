@@ -20,6 +20,7 @@ import time
 from typing import Any
 
 import numpy as np
+from numpy.typing import NDArray
 
 from sc_neurocore.bridges.quantum_annealing import (
     IsingModel,
@@ -36,7 +37,7 @@ except ImportError:
     _HAS_RUST = False
 
 
-def _build_model(n: int) -> tuple[IsingModel, np.ndarray]:
+def _build_model(n: int) -> tuple[IsingModel, NDArray[np.float64]]:
     """Build a random n-node SC network and compile to Ising."""
     rng = np.random.default_rng(42)
     adj = rng.random((n, n))
@@ -75,12 +76,13 @@ def bench_energy(sizes: list[int]) -> None:
 
     for n in sizes:
         model, _ = _build_model(n)
-        spins = {i: int(np.random.choice([-1, 1])) for i in range(n)}
+        rng = np.random.default_rng(42)
+        spins = {i: int(rng.choice((-1, 1))) for i in range(n)}
 
         # Python
         t0 = time.perf_counter()
         for _ in range(1000):
-            model.energy(spins)
+            model.energy(spins, backend="python")
         t_py = (time.perf_counter() - t0) / 1000 * 1e6
 
         # Rust
@@ -119,7 +121,7 @@ def bench_sa(sizes: list[int]) -> None:
         model, _ = _build_model(n)
 
         # Python
-        sa = SimulatedAnnealer(n_sweeps=n_sweeps, seed=42)
+        sa = SimulatedAnnealer(n_sweeps=n_sweeps, seed=42, backend="python")
         t0 = time.perf_counter()
         result_py = sa.solve_ising(model, num_reads=num_reads)
         t_py = (time.perf_counter() - t0) * 1e3

@@ -17,7 +17,7 @@ from sc_neurocore.quantum.hardware_bridge import (
 
 
 @pytest.mark.skipif(not HAS_QISKIT, reason="Qiskit is not installed")
-def test_qiskit_backend():
+def test_qiskit_backend() -> None:
     layer = QuantumHardwareLayer(n_qubits=2, length=100, backend_type="aer_simulator")
 
     # Input probability 0.0 -> theta 0 -> cos(0) = 1 -> |0> -> bit 1
@@ -36,7 +36,7 @@ def test_qiskit_backend():
 
 
 @pytest.mark.skipif(not HAS_PENNYLANE, reason="PennyLane is not installed")
-def test_pennylane_backend():
+def test_pennylane_backend() -> None:
     layer = QuantumHardwareLayer(n_qubits=2, length=100, backend_type="pennylane.default.qubit")
 
     input_bits = np.zeros((2, 100), dtype=np.uint8)
@@ -50,7 +50,7 @@ def test_pennylane_backend():
     assert np.mean(out_bits[1, :]) < 0.1
 
 
-def test_quantum_hardware_bridge_rejects_unknown_backend():
+def test_quantum_hardware_bridge_rejects_unknown_backend() -> None:
     layer = QuantumHardwareLayer.__new__(QuantumHardwareLayer)
     layer.n_qubits = 2
     layer.length = 64

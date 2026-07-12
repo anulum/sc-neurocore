@@ -364,9 +364,12 @@ several are Research-tier (excluded from wheel). Detailed classification in audi
 (analysis, profiler, energy_accounting) / DRAFT (others).
 
 ### N. Quantum & cognition — *Research (experimental)*
-`quantum` (Qiskit/PennyLane VQC bridge) · `quantum_cognition` (Fisher–Posner,
-experimental) · `chaos` · `physics`
-→ Experimental; `quantum_cognition` and `physics`/`chaos` are research-tier.
+`quantum` (Qiskit/PennyLane VQC bridge) · `bridges.quantum_annealing`
+(validated Ising/QUBO orchestration with optional native/D-Wave backends) ·
+`quantum_cognition` (Fisher–Posner, experimental) · `chaos` · `physics`
+→ Experimental; the annealing bridge is research orchestration rather than a
+QPU-validation or quantum-advantage claim. `quantum_cognition` and
+`physics`/`chaos` are research-tier.
 **EXPERIMENTAL** — flagged in audit.
 
 ### O. Safety, security, resilience — *Core / Research*

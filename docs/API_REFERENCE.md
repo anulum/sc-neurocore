@@ -3462,6 +3462,258 @@ UDP routing, use the Go server (hil_debugger/interconnect).
 
 ---
 
+## Module `bridges.annealing_analysis`
+
+### Class `EnergyLandscape`
+Compute energy statistics and spectral gaps for an Ising model.
+
+- **__init__**()
+  - Configure deterministic large-model sampling and backend choice.
+- **analyze**(model, samples)
+  - Analyze exhaustive, supplied, or deterministic random samples.
+
+### Class `EmbeddingAnalyzer`
+Estimate logical-to-physical embedding requirements.
+
+- **analyze**(model)
+  - Return graph density, degree, and Pegasus chain estimates.
+
+### Class `SampleAggregator`
+Deduplicate samples and compute energy-distribution statistics.
+
+- **aggregate**(samples, energies, temperature)
+  - Aggregate an aligned sample and energy sequence.
+
+### Class `TTSAnalyzer`
+Compute time-to-solution from single-run success probability.
+
+- **compute**(p_success, t_anneal_us, p_target)
+  - Compute the standard cumulative-success TTS metric.
+- **from_samples**(energies, ground_state_energy, t_anneal_us, tolerance, p_target)
+  - Estimate single-run success from observed energies.
+- **compare_solvers**(results, ground_state_energy, tolerance)
+  - Compute comparable TTS rows for named solver outputs.
+
+---
+
+## Module `bridges.annealing_backends`
+
+### Function `require_rust_energy()`
+Return the native energy kernel or raise a stable availability error.
+
+### Function `require_rust_batch_energy()`
+Return the native batch kernel or raise a stable availability error.
+
+### Function `require_rust_annealer()`
+Return the native annealer or raise a stable availability error.
+
+### Function `build_spin_bqm(h, couplings, offset)`
+Build a dimod spin BQM, returning ``None`` when dimod is absent.
+
+### Function `require_dwave_components()`
+Return dimod and D-Wave constructors or raise an availability error.
+
+---
+
+## Module `bridges.annealing_compilers`
+
+### Class `SCToIsing`
+Compile an SC adjacency matrix into an Ising model.
+
+- **__init__**(coupling_scale, field_scale)
+  - Configure finite coupling and local-field scales.
+- **compile**(adjacency, node_labels, biases, name)
+  - Compile a finite square weight matrix.
+
+### Class `SCToQUBO`
+Compile an SC adjacency matrix into a QUBO model.
+
+- **__init__**(penalty)
+  - Configure a positive constraint penalty.
+- **compile**(adjacency, node_labels, name)
+  - Compile a finite square weight matrix into canonical QUBO terms.
+
+### Class `SCBitstreamQUBO`
+Build QUBOs for SC weight selection and connection pruning.
+
+- **__init__**(penalty)
+  - Configure a positive constraint penalty.
+- **weight_optimization**(target_output, candidate_weights, n_bits)
+  - Encode ``||target - candidate_weights @ x||²`` for binary ``x``.
+- **pruning**(adjacency, importance_scores, max_connections)
+  - Select exactly ``max_connections`` undirected candidate edges.
+
+---
+
+## Module `bridges.annealing_decomposition`
+
+### Class `ProblemDecomposer`
+Partition large Ising graphs into bounded overlapping subproblems.
+
+- **__init__**(max_subproblem_size, overlap, n_iterations)
+  - Configure maximum size, real overlap, and merge iterations.
+- **decompose**(model)
+  - Return bounded submodels; small inputs retain object identity.
+- **solve_decomposed**(model, solver)
+  - Solve submodels iteratively and reconstruct by exact global index.
+
+---
+
+## Module `bridges.annealing_hardware`
+
+### Class `HardwareGraph`
+Capacity model for Chimera, Pegasus, and Zephyr topologies.
+
+- **__init__**(topology, size)
+  - Select a topology and a valid positive size parameter.
+- **n_physical_qubits**()
+  - Return the idealized physical-qubit capacity.
+- **connectivity**()
+  - Return the idealized per-qubit connectivity.
+- **can_embed**(model)
+  - Return a conservative degree-based capacity estimate.
+
+### Class `ChainBreakResolver`
+Resolve embedded-chain disagreement by vote or local energy search.
+
+- **__init__**(method)
+  - Select a supported deterministic resolution method.
+- **resolve**(physical_samples, chains, model)
+  - Map physical samples to logical samples and optionally refine them.
+- **analyze_breaks**(physical_samples, chains)
+  - Measure per-chain and aggregate break rates.
+
+---
+
+## Module `bridges.annealing_io`
+
+### Function `export_ising_json(model, path)`
+Write a canonical JSON representation of an Ising model.
+
+### Function `export_qubo_json(model, path)`
+Write a canonical JSON representation of a QUBO model.
+
+### Function `export_bqm(model)`
+Return a dimod spin BQM, or ``None`` when dimod is unavailable.
+
+### Function `visualize_ising(model)`
+Return a stable Unicode text rendering of fields and couplings.
+
+---
+
+## Module `bridges.annealing_models`
+
+### Class `ProblemType`
+Quantum optimization problem type.
+
+
+### Class `QubitSpec`
+Specification for one logical qubit.
+
+- **__post_init__**()
+  - Validate the qubit index, label, and bias.
+
+### Class `CouplerSpec`
+Specification for one logical Ising/QUBO coupling.
+
+- **__post_init__**()
+  - Validate distinct endpoints and a finite strength.
+
+### Class `IsingModel`
+Ising spin-glass model ``H = Σhᵢsᵢ + ΣJᵢⱼsᵢsⱼ``.
+
+- **__post_init__**()
+  - Normalize canonical couplings and validate model bounds.
+- **energy**(spins)
+  - Compute energy for a partial spin assignment.
+
+### Class `QUBOModel`
+Quadratic unconstrained binary optimization model ``xᵀQx``.
+
+- **__post_init__**()
+  - Normalize matrix keys and validate model bounds.
+- **energy**(bits)
+  - Compute QUBO energy for a partial binary assignment.
+- **to_ising**()
+  - Convert QUBO to an exactly energy-equivalent Ising model.
+
+### Function `validate_backend_choice(backend)`
+Validate and narrow an execution-backend selector.
+
+---
+
+## Module `bridges.annealing_solvers`
+
+### Class `SimulatedAnnealer`
+Metropolis simulated annealer with explicit backend selection.
+
+- **__init__**(n_sweeps, beta_start, beta_end, seed)
+  - Configure a deterministic annealer.
+- **solve_ising**(model, num_reads)
+  - Solve an Ising model and preserve a stable sample contract.
+- **solve_qubo**(model, num_reads)
+  - Convert a QUBO to Ising, solve it, and map samples back to bits.
+
+### Class `DWaveInterface`
+Submit validated Ising models to D-Wave or use a local fallback.
+
+- **__init__**(chain_strength, num_reads, annealing_time_us)
+  - Configure QPU sampling parameters.
+- **available**()
+  - Return whether both Ocean SDK components are importable.
+- **solve_ising**(model)
+  - Submit to a QPU, or run a bounded local fallback when unavailable.
+
+---
+
+## Module `bridges.annealing_transforms`
+
+### Class `AnnealingSchedule`
+Build validated linear, pause, and reverse annealing schedules.
+
+- **__init__**()
+  - Create an empty schedule.
+- **linear**(duration_us)
+  - Configure a standard linear anneal from zero to one.
+- **pause_and_quench**(ramp_time_us, pause_at_s, pause_duration_us, quench_time_us)
+  - Ramp, hold at an intermediate fraction, then quench.
+- **reverse**(initial_s, reverse_to_s, ramp_time_us, hold_time_us, forward_time_us)
+  - Configure a reverse anneal followed by a forward return.
+- **points**()
+  - Return a defensive copy of the schedule points.
+- **total_time_us**()
+  - Return zero for an empty schedule or its final timestamp.
+- **to_dict**()
+  - Return a D-Wave-compatible schedule payload.
+
+### Class `GaugeTransform`
+Generate deterministic random spin-reversal transformations.
+
+- **__init__**(n_gauges, seed)
+  - Configure a positive transform count and deterministic seed.
+- **transform**(model)
+  - Return energy-equivalent gauge-transformed model copies.
+- **untransform_sample**(sample, gauge)
+  - Return a transformed sample to the original spin frame.
+
+### Class `SCPrecisionEncoder`
+Encode unit-interval SC values as binary, unary, or one-hot qubits.
+
+- **__init__**(encoding, n_bits)
+  - Select a supported encoding and positive qubit count.
+- **n_levels**()
+  - Return the number of representable precision levels.
+- **encode**(sc_value)
+  - Encode one finite SC value after clipping it to ``&#91;0, 1&#93;``.
+- **decode**(qubits)
+  - Decode a validated partial binary qubit mapping.
+- **qubits_needed**(n_sc_values)
+  - Return the total qubits required for a non-negative value count.
+- **encode_array**(values)
+  - Encode a non-empty one-dimensional array into global qubit indices.
+
+---
+
 ## Module `bridges.dna_analysis`
 
 ### Class `CrossHybridizationChecker`
@@ -4365,392 +4617,6 @@ path : str
 
 ### Function `visualize_photonic(design)`
 Generate ASCII visualization of a photonic design.
-
-Returns
--------
-str
-    Multi-line ASCII representation.
-
----
-
-## Module `bridges.quantum_annealing`
-
-### Class `ProblemType`
-Quantum optimization problem type.
-
-
-### Class `QubitSpec`
-Specification for a single logical qubit.
-
-Attributes
-----------
-index : int
-    Logical qubit index.
-label : str
-    Human-readable label (e.g. neuron name).
-bias : float
-    Local field / linear bias (h_i in Ising, Q_ii in QUBO).
-
-
-### Class `CouplerSpec`
-Specification for a qubit-qubit coupling.
-
-Attributes
-----------
-qubit_a : int
-    First qubit index.
-qubit_b : int
-    Second qubit index.
-strength : float
-    Coupling strength (J_ij in Ising, Q_ij in QUBO).
-
-
-### Class `IsingModel`
-Ising spin-glass model: H = Σ h_i·s_i + Σ J_ij·s_i·s_j.
-
-Attributes
-----------
-h : dict&#91;int, float&#93;
-    Linear biases (local fields). Key = qubit index.
-J : dict&#91;tuple&#91;int, int&#93;, float&#93;
-    Quadratic couplings. Key = (i, j) pair, i < j.
-offset : float
-    Constant energy offset.
-qubit_labels : dict&#91;int, str&#93;
-    Index → label mapping.
-n_qubits : int
-    Total logical qubits.
-source : str
-    Origin description.
-
-- **energy**(spins)
-  - Compute Ising energy for a spin configuration.
-
-### Class `QUBOModel`
-QUBO model: min x^T Q x.
-
-Attributes
-----------
-Q : dict&#91;tuple&#91;int, int&#93;, float&#93;
-    QUBO matrix entries. Diagonal = linear, off-diagonal = quadratic.
-offset : float
-    Constant energy offset.
-qubit_labels : dict&#91;int, str&#93;
-    Index → label mapping.
-n_qubits : int
-    Total logical qubits.
-source : str
-    Origin description.
-
-- **energy**(bits)
-  - Compute QUBO energy for a binary configuration.
-- **to_ising**()
-  - Convert QUBO to Ising model.
-
-### Class `SCToIsing`
-Compile SC network adjacency matrices into Ising models.
-
-Maps SC populations to qubits and projections to couplings.
-Excitatory connections → ferromagnetic (J < 0, favoring alignment).
-Inhibitory connections → antiferromagnetic (J > 0, favoring anti-alignment).
-
-Parameters
-----------
-coupling_scale : float
-    Multiplier applied to connection weights (default 1.0).
-field_scale : float
-    Multiplier for external field from bias (default 0.1).
-
-- **__init__**(coupling_scale, field_scale)
-- **compile**(adjacency, node_labels, biases, name)
-  - Compile adjacency matrix into an Ising model.
-
-### Class `SCToQUBO`
-Compile SC network into QUBO formulation.
-
-Parameters
-----------
-penalty : float
-    Constraint penalty coefficient (default 2.0).
-
-- **__init__**(penalty)
-- **compile**(adjacency, node_labels, name)
-  - Compile adjacency matrix into a QUBO model.
-
-### Class `SimulatedAnnealer`
-Classical simulated annealing solver for Ising/QUBO models.
-
-Implements the Metropolis-Hastings algorithm with exponential
-temperature schedule.
-
-Parameters
-----------
-n_sweeps : int
-    Number of Monte Carlo sweeps (default 1000).
-beta_start : float
-    Initial inverse temperature (default 0.1).
-beta_end : float
-    Final inverse temperature (default 10.0).
-seed : int
-    Random seed.
-
-- **__init__**(n_sweeps, beta_start, beta_end, seed)
-- **solve_ising**(model, num_reads)
-  - Solve an Ising model via simulated annealing.
-- **solve_qubo**(model, num_reads)
-  - Solve a QUBO model via simulated annealing.
-
-### Class `DWaveInterface`
-Interface to D-Wave quantum annealer via Ocean SDK.
-
-Wraps ``DWaveSampler`` + ``EmbeddingComposite`` for transparent
-minor-embedding. Falls back to simulated annealing if no QPU
-is available.
-
-Parameters
-----------
-chain_strength : float
-    Chain strength for embedding (default 2.0).
-num_reads : int
-    Number of QPU reads (default 1000).
-annealing_time_us : float
-    Annealing time in microseconds (default 20.0).
-
-- **__init__**(chain_strength, num_reads, annealing_time_us)
-- **available**()
-  - Whether D-Wave SDK is available.
-- **solve_ising**(model)
-  - Submit Ising model to D-Wave QPU.
-
-### Class `EnergyLandscape`
-Analyze the energy landscape of an Ising model.
-
-Computes energy statistics, degeneracy, spectral gap, and
-partition function (for small models).
-
-- **analyze**(model, samples)
-  - Run landscape analysis.
-
-### Class `EmbeddingAnalyzer`
-Analyze embedding requirements for D-Wave hardware.
-
-Computes logical-to-physical qubit ratios, chain length
-statistics, and connectivity requirements.
-
-- **analyze**(model)
-  - Analyze embedding requirements.
-
-### Class `HardwareGraph`
-D-Wave hardware graph topology model.
-
-Generates adjacency structure for Chimera, Pegasus, and Zephyr
-topologies to enable embedding feasibility analysis.
-
-Parameters
-----------
-topology : str
-    One of ``chimera``, ``pegasus``, ``zephyr``.
-size : int
-    Topology size parameter (M for Chimera M×M×4,
-    M for Pegasus P(M), M for Zephyr Z(M)).
-
-- **__init__**(topology, size)
-- **n_physical_qubits**()
-  - Total physical qubits in this hardware graph.
-- **connectivity**()
-  - Per-qubit connectivity.
-- **can_embed**(model)
-  - Check whether a model can be embedded on this hardware.
-
-### Class `ChainBreakResolver`
-Post-process D-Wave samples to repair broken chains.
-
-When a logical qubit is embedded as a chain of physical qubits,
-some physical qubits in the chain may disagree. This class
-resolves disagreements using majority vote or energy minimization.
-
-Parameters
-----------
-method : str
-    Resolution method: ``majority_vote`` or ``minimize_energy``.
-
-- **__init__**(method)
-- **resolve**(physical_samples, chains, model)
-  - Resolve chain breaks in physical samples.
-- **analyze_breaks**(physical_samples, chains)
-  - Analyze chain break statistics.
-
-### Class `AnnealingSchedule`
-Custom annealing schedule builder for D-Wave.
-
-Supports linear, pause-and-quench, and reverse annealing
-protocols.
-
-The schedule is a list of (time_us, s) points where s ∈ &#91;0, 1&#93;
-is the anneal fraction (0 = transverse field dominant,
-1 = problem Hamiltonian dominant).
-
-- **__init__**()
-- **linear**(duration_us)
-  - Configure a standard linear anneal from s=0 to s=1.
-- **pause_and_quench**(ramp_time_us, pause_at_s, pause_duration_us, quench_time_us)
-  - Pause-and-quench: ramp to s, hold, then quench to s=1.
-- **reverse**(initial_s, reverse_to_s, ramp_time_us, hold_time_us, forward_time_us)
-  - Reverse annealing: start at s=1, go back, then forward.
-- **points**()
-  - Schedule points as &#91;(time_us, s), ...&#93;.
-- **total_time_us**()
-  - Total annealing time in microseconds.
-- **to_dict**()
-  - Export schedule as dict for D-Wave API.
-
-### Class `GaugeTransform`
-Random gauge transformations for improved sampling.
-
-Applies random spin-flip transformations (g_i ∈ {+1, -1}) to the
-Ising model: h'_i = g_i · h_i, J'_ij = g_i · g_j · J_ij.
-This breaks systematic QPU biases without changing the energy
-landscape.
-
-Parameters
-----------
-n_gauges : int
-    Number of gauge transforms to apply (default 10).
-seed : int
-    Random seed.
-
-- **__init__**(n_gauges, seed)
-- **transform**(model)
-  - Generate gauge-transformed copies of the model.
-- **untransform_sample**(sample, gauge)
-  - Undo gauge transform on a sample.
-
-### Class `SCBitstreamQUBO`
-SC-specific QUBO formulations for bitstream optimization.
-
-Provides problem-specific encodings for common SC optimization
-tasks:
-- **Weight optimization**: Find binary weight mask that minimizes
-  network error.
-- **Pruning**: Select minimal subset of connections preserving
-  accuracy.
-- **Topology search**: Binary selection of connections from a
-  candidate set.
-
-Parameters
-----------
-penalty : float
-    Constraint violation penalty (default 5.0).
-
-- **__init__**(penalty)
-- **weight_optimization**(target_output, candidate_weights, n_bits)
-  - Formulate weight optimization as QUBO.
-- **pruning**(adjacency, importance_scores, max_connections)
-  - Formulate network pruning as QUBO.
-
-### Class `SampleAggregator`
-Post-process and aggregate quantum annealing samples.
-
-Provides filtering, deduplication, energy histogram, and
-Boltzmann-weighted statistics.
-
-- **aggregate**(samples, energies, temperature)
-  - Aggregate and analyze sample set.
-
-### Class `SCPrecisionEncoder`
-Encode SC probability values as qubit configurations.
-
-SC values are continuous probabilities in &#91;0, 1&#93;. Quantum
-annealers operate on binary variables. This encoder provides
-three strategies for mapping SC precision to qubits:
-
-- **binary**: k qubits encode 2^k levels (compact but coupled)
-- **unary**: k qubits encode k+1 levels (robust but expensive)
-- **one_hot**: k qubits encode k levels (good for categorical)
-
-Parameters
-----------
-encoding : str
-    One of ``binary``, ``unary``, ``one_hot``.
-n_bits : int
-    Number of qubits per SC value (default 8).
-
-- **__init__**(encoding, n_bits)
-- **n_levels**()
-  - Number of representable precision levels.
-- **encode**(sc_value)
-  - Encode an SC probability as qubit configuration.
-- **decode**(qubits)
-  - Decode qubit configuration back to SC probability.
-- **qubits_needed**(n_sc_values)
-  - Total qubits needed to encode n SC values.
-- **encode_array**(values)
-  - Encode array of SC values into a single qubit dict.
-
-### Class `ProblemDecomposer`
-Decompose large QUBO/Ising into sub-problems for QPU.
-
-When a model exceeds QPU capacity, this class partitions it
-into smaller sub-problems that fit on hardware, solves each,
-then merges the results.
-
-Parameters
-----------
-max_subproblem_size : int
-    Maximum qubits per sub-problem (default 64 for Chimera unit cell).
-overlap : int
-    Number of shared qubits between partitions (default 4).
-n_iterations : int
-    Number of decomposition-merge iterations (default 10).
-
-- **__init__**(max_subproblem_size, overlap, n_iterations)
-- **decompose**(model)
-  - Partition Ising model into sub-problems.
-- **solve_decomposed**(model, solver)
-  - Decompose, solve sub-problems, and merge.
-
-### Class `TTSAnalyzer`
-Time-to-solution quality metric for quantum annealing.
-
-TTS measures the total time required to find the ground state
-with probability p_target, given:
-- p_success: probability of finding ground state in a single run
-- t_anneal: time per annealing run
-
-TTS = t_anneal × (log(1 - p_target) / log(1 - p_success))
-
-This is the standard benchmark metric used in D-Wave literature.
-
-- **compute**(p_success, t_anneal_us, p_target)
-  - Compute TTS metric.
-- **from_samples**(energies, ground_state_energy, t_anneal_us, tolerance, p_target)
-  - Compute TTS from a set of sample energies.
-- **compare_solvers**(results, ground_state_energy, tolerance)
-  - Compare TTS across multiple solvers.
-
-### Function `export_ising_json(model, path)`
-Export Ising model to JSON format.
-
-Parameters
-----------
-model : IsingModel
-    The model to export.
-path : str
-    Output file path.
-
-### Function `export_qubo_json(model, path)`
-Export QUBO model to JSON format.
-
-### Function `export_bqm(model)`
-Export Ising model as a dimod BinaryQuadraticModel.
-
-Returns
--------
-dimod.BinaryQuadraticModel or None
-    BQM object, or None if dimod is not installed.
-
-### Function `visualize_ising(model)`
-Generate ASCII visualization of an Ising model.
 
 Returns
 -------
