@@ -23395,7 +23395,54 @@ nir.NIRGraph
 
 ---
 
-## Module `nir_bridge.fpga_compiler`
+## Module `nir_bridge.fpga_aer_interconnect`
+
+### Function `build_aer_interconnect(module_name, qgraph)`
+Generate weighted event-bus top-level interconnect.
+
+The emitted datapath keeps the same population instances as the direct
+interconnect but routes spike-producing source populations through an
+address-event fan-out block.  All active source spikes in a cycle contribute
+their signed fixed-point weights to every destination accumulator, so
+simultaneous events preserve the dense affine semantics of the NIR graph.
+External analogue inputs and analogue source populations remain direct
+fixed-point multiply-accumulate terms because they are not sparse events.
+
+Parameters
+----------
+module_name : str
+    Top-level module name.
+qgraph : QuantisedGraph
+    Quantised graph.
+data_width : int
+    Fixed-point data width.
+fraction : int
+    Fractional bits for analogue multiply downshift.
+bitstream_length : int
+    SC-NIR bitstream length recorded in the generated top module.
+scnir_stream_count : int
+    Number of semantic streams recorded in the SC-NIR document.
+scnir_source_module_count : int
+    Number of materialised stochastic source modules.
+scnir_hierarchy : Sequence&#91;SCNIRHierarchyInstance&#93;
+    Typed hierarchy boundaries instantiated by the network top.
+scnir_semantic_hierarchy_stream_ids : frozenset&#91;str&#93;
+    Hierarchy stream identifiers that provide semantic connection weights.
+
+Returns
+-------
+str
+    Verilog top-level module source.
+
+Raises
+------
+ValueError
+    If hierarchy metadata cannot be represented by the address-event
+    interconnect contract.
+
+---
+
+## Module `nir_bridge.fpga_compilation_result`
 
 ### Class `SCNIRExternalInputManifestEntry`
 Stable flattened input-bus layout entry for one external source.
@@ -23485,6 +23532,10 @@ scnir_hierarchy_modules : dict&#91;str, str&#93;
     Standalone SC-NIR hierarchy boundary modules keyed by module name.
 
 
+---
+
+## Module `nir_bridge.fpga_compiler`
+
 ### Function `compile_network_to_fpga(graph)`
 Compile a NeuronGraph to synthesisable Verilog RTL.
 
@@ -23533,6 +23584,303 @@ Raises
 ------
 ValueError
     If the graph is empty or contains unsupported neuron types.
+
+---
+
+## Module `nir_bridge.fpga_connection_routing`
+
+### Function `validate_connection_routing(graph)`
+Validate connection shapes, external lanes, and delay vectors before lowering.
+
+The SC-NIR conversion and all three interconnect emitters index connection
+matrices by source column. Validating the matrix rank first converts malformed
+direct ``NeuronGraph`` input into a stable ``ValueError`` instead of leaking an
+``IndexError`` from a downstream conversion step.
+
+Parameters
+----------
+graph : NeuronGraph
+    Network graph whose connection layout will be lowered to RTL.
+
+Raises
+------
+ValueError
+    If a connection matrix, endpoint width, bias, threshold, or delay is
+    inconsistent with its source and destination populations.
+
+---
+
+## Module `nir_bridge.fpga_direct_interconnect`
+
+### Function `build_direct_interconnect(module_name, qgraph)`
+Generate direct-wired per-neuron top-level interconnect.
+
+Every neuron gets its own instance of the type-specific module.  NIR
+affine weights are emitted explicitly in fixed-point arithmetic:
+
+* external analogue inputs use ``(input * weight) >>> fraction``;
+* analogue source populations use ``(v_out * weight) >>> fraction``;
+* spiking source populations contribute their fixed-point weight on
+  spikes and zero otherwise;
+* all fan-in terms and biases accumulate in a widened signed accumulator
+  before saturation back to the neuron input Q-format.
+
+Parameters
+----------
+module_name : str
+    Top-level module name.
+qgraph : QuantisedGraph
+    Quantised graph.
+data_width : int
+    Fixed-point data width.
+fraction : int
+    Fractional bits for fixed-point multiply downshift.
+bitstream_length : int
+    SC-NIR bitstream length recorded in the generated top module.
+scnir_stream_count : int
+    Number of semantic streams recorded in the SC-NIR document.
+scnir_source_module_count : int
+    Number of materialised stochastic source modules.
+scnir_hierarchy : Sequence&#91;SCNIRHierarchyInstance&#93;
+    Typed hierarchy boundaries instantiated by the network top.
+scnir_semantic_hierarchy_stream_ids : frozenset&#91;str&#93;
+    Hierarchy stream identifiers that provide semantic connection weights.
+
+Returns
+-------
+str
+    Verilog top-level module source.
+
+Raises
+------
+ValueError
+    If the graph or hierarchy metadata cannot be represented by the direct
+    interconnect contract.
+
+---
+
+## Module `nir_bridge.fpga_folded_interconnect`
+
+### Function `can_fold(qgraph)`
+Return True if the graph is in the folded interconnect's supported subset.
+
+The folded interconnect time-multiplexes any number of populations of supported
+neuron types over a per-type PE pool and one global spike bus. A graph folds when
+every population has an ODE template, every population's heterogeneous per-neuron
+parameters are datapath parameters the PE can carry on a port (streamed from a
+per-neuron parameter ROM — a parameter varying in something other than an ODE
+parameter cannot be streamed and falls back to the direct path), and every
+connection is one of:
+
+* **connection-less** — neurons driven only by their own external ``I_ext`` lane;
+* **external-weighted** — fed by external (non-population) source columns;
+* **spiking fan-in** — recurrent (self) or inter-population spikes from another
+  population, read from the prior-tick global spike bus, optionally delayed or
+  gated by a source/destination NIR ``Threshold`` transform;
+* **analogue fan-in** — an analogue source population (``li``/``cuba_li``/
+  ``integrator``, whose output is the membrane voltage), read from the prior-tick
+  global voltage bus (optionally delayed via a voltage-bus history register) and
+  multiplied (or threshold-gated) by the weight.
+
+Connections may also carry a per-destination-neuron bias constant. Only a *delayed
+external* (non-population) source connection is not folded — a synaptic delay has
+registered semantics only from a neuron population — and falls back to the direct
+interconnect.
+
+Parameters
+----------
+qgraph : QuantisedGraph
+    Quantised network graph to classify.
+data_width : int
+    Fixed-point data width used to compare per-neuron parameters.
+
+Returns
+-------
+bool
+    ``True`` when the graph can use the shared-datapath interconnect.
+
+### Function `folded_resource_metrics(qgraph)`
+Summarise the shared-datapath resources of a foldable graph.
+
+Counts one PE per distinct neuron type (the per-type pool), the shared
+weighted-fan-in multipliers (external-source and analogue-voltage-source columns —
+spiking recurrent or inter-population fan-in is spike-gated and uses none), the BRAM
+state-word storage summed over populations, the per-neuron parameter-ROM storage for
+heterogeneous populations, the cycles-per-tick, and the direct-path instance count the
+fold collapses.
+
+Parameters
+----------
+qgraph : QuantisedGraph
+    A graph satisfying :func:`can_fold`.
+data_width : int
+    Fixed-point data width (BRAM word sizing).
+
+Returns
+-------
+FoldedResourceMetrics
+    The architectural fold summary.
+
+### Function `build_folded_interconnect(module_name, qgraph)`
+Generate a time-multiplexed (folded) top plus its per-type datapath PE pool.
+
+One combinational PE (:func:`compile_to_datapath`) per distinct neuron type and
+one BRAM-backed state array per population are shared across every neuron: a
+single sequencer steps one neuron per cycle, walking each population in turn,
+reading the addressed neuron's packed state from its BRAM, driving the population's
+PE with that state and the neuron's input current, and writing the next state back.
+Spikes accumulate over a tick into a global accumulator and commit to a single
+``spike_bus`` in a dedicated cycle (``tick_done`` pulses), so the bus is race-free
+and stable for the whole next tick. Recurrent and inter-population spiking fan-in
+read that prior-tick ``spike_bus`` at the source population's bit offset — the same
+double-buffer the direct interconnect's registered spikes provide. An analogue
+source population's membrane voltage is committed the same way to a global ``v_bus``
+(one ``DATA_WIDTH`` word per analogue source neuron), so analogue fan-in reads the
+prior-tick voltage exactly like the direct path's registered ``v_out``.
+
+Restricted to the :func:`can_fold` subset. Returns
+``({neuron_module_key: pe_source}, top_module_source)`` with one PE source per
+distinct neuron type, keyed ``"{neuron_type}_pe"`` for the compilation artefacts.
+
+Parameters
+----------
+module_name : str
+    Verilog module name for the folded network top.
+qgraph : QuantisedGraph
+    Quantised graph accepted by :func:`can_fold`.
+data_width : int
+    Fixed-point word width.
+fraction : int
+    Number of fractional bits in each fixed-point word.
+
+Returns
+-------
+tuple&#91;dict&#91;str, str&#93;, str&#93;
+    Per-type processing-element sources and the folded top-level Verilog.
+
+Raises
+------
+ValueError
+    If the graph is outside the supported folded subset.
+
+---
+
+## Module `nir_bridge.fpga_neuron_rtl`
+
+### Function `build_neuron_module(neuron_type, pop)`
+Build a Verilog module for one canonical neuron type.
+
+Uses the existing ``equation_compiler.compile_to_verilog()`` with
+canonical ODE templates.
+
+Parameters
+----------
+neuron_type : str
+    Canonical neuron type (``"lif"``, ``"if"``, etc.).
+pop : NeuronSpec
+    Representative population (for parameter defaults).
+data_width : int
+    Fixed-point data width.
+fraction : int
+    Fractional bits.
+
+Returns
+-------
+str
+    Synthesisable Verilog module source.
+
+Raises
+------
+ValueError
+    If the neuron type or one of its parameters has no canonical FPGA
+    template contract.
+
+---
+
+## Module `nir_bridge.fpga_scnir_hierarchy`
+
+### Function `resolve_hierarchy_weight_literals(document, qgraph)`
+Resolve flattened weights referenced by hierarchy output ports.
+
+Parameters
+----------
+document : SCNIRDocument
+    Typed hierarchy and stream metadata for the compilation.
+qgraph : QuantisedGraph
+    Quantised graph that owns the referenced connection weights.
+
+Returns
+-------
+dict&#91;str, tuple&#91;int, ...&#93;&#93;
+    Flattened integer weights keyed by semantic SC-NIR stream identifier.
+
+Raises
+------
+ValueError
+    If a weight port references an unknown stream or incompatible packed width.
+
+### Function `build_scnir_hierarchy_modules(document)`
+Emit standalone boundary modules for preserved SC-NIR hierarchy instances.
+
+Parameters
+----------
+document : SCNIRDocument
+    Typed hierarchy metadata to lower.
+weight_literals : dict&#91;str, tuple&#91;int, ...&#93;&#93;
+    Flattened fixed-point weights keyed by semantic stream identifier.
+
+Returns
+-------
+dict&#91;str, str&#93;
+    Synthesisable Verilog keyed by hierarchy module name.
+
+Raises
+------
+ValueError
+    If module names collide or a hierarchy boundary is malformed.
+
+### Function `build_scnir_hierarchy_instance_block(hierarchy)`
+Emit top-level hierarchy instances and typed connecting wires.
+
+Parameters
+----------
+hierarchy : Sequence&#91;SCNIRHierarchyInstance&#93;
+    Typed hierarchy instances to connect at the network top.
+data_width : int
+    Active fixed-point data width used for canonical weight wires.
+
+Returns
+-------
+list&#91;str&#93;
+    Verilog declarations, zero-driven inputs, and instance blocks.
+
+Raises
+------
+ValueError
+    If a hierarchy port has a non-positive width.
+
+---
+
+## Module `nir_bridge.fpga_weight_rom`
+
+### Function `build_weight_rom(qgraph)`
+Generate a combined weight ROM for all connections.
+
+All connection weight matrices are flattened into a single ROM
+addressed by a global index.  Each connection gets a base address
+offset.
+
+Parameters
+----------
+qgraph : QuantisedGraph
+    Quantised graph with integer weight matrices.
+data_width : int
+    Weight data width.
+
+Returns
+-------
+str
+    Verilog weight ROM module source.
 
 ---
 

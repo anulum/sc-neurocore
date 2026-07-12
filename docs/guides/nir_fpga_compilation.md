@@ -279,7 +279,34 @@ evidence.
                           └───────────────────┘
 ```
 
-### 3.2 Inputs
+### 3.2 Compiler Responsibility Boundaries
+
+The public entry point remains
+`sc_neurocore.nir_bridge.compile_network_to_fpga`. Internally, each lowering
+responsibility has one owner:
+
+| Module | Responsibility |
+|--------|----------------|
+| `fpga_compiler.py` | Pipeline composition, resource bounds, interconnect selection, and result assembly |
+| `fpga_connection_routing.py` | Connection shape, lane, threshold, bias, and delay validation |
+| `fpga_neuron_rtl.py` | Canonical neuron parameter binding and per-type RTL |
+| `fpga_weight_rom.py` | Deterministic combined weight-ROM emission |
+| `fpga_scnir_hierarchy.py` | SC-NIR hierarchy modules, instances, and semantic weight streams |
+| `fpga_direct_interconnect.py` | Explicit per-neuron fixed-point interconnect |
+| `fpga_aer_interconnect.py` | Weighted address-event fan-out interconnect |
+| `fpga_folded_interconnect.py` | Time-multiplexed processing elements, state RAM, and resource metrics |
+| `fpga_compilation_result.py` | Stable result and manifest data contracts |
+
+The composition boundary preserves the generated direct, address-event,
+folded, and hierarchical RTL artefacts. Result types also preserve their
+historical import and pickle path through `fpga_compiler`.
+
+Connection validation runs before SC-NIR conversion. Empty networks,
+non-matrix weights, inconsistent population dimensions, invalid bias or
+threshold vectors, and malformed delay vectors therefore fail closed before
+any partial HDL artefact is emitted.
+
+### 3.3 Inputs
 
 | Input | Type | Source |
 |-------|------|--------|
@@ -292,7 +319,7 @@ evidence.
 | `base_seed` | int | First deterministic source seed |
 | `target` | str | FPGA target for hints (default: `"artix7"`) |
 
-### 3.3 Outputs
+### 3.4 Outputs
 
 | Output | Content |
 |--------|---------|

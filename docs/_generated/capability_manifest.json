@@ -965,7 +965,7 @@
     "python_model_classes": 158,
     "python_model_source_modules": 153,
     "rust_pyo3_model_wrappers": 176,
-    "test_files": 1085
+    "test_files": 1094
   },
   "documentation": {
     "public_pages": [
@@ -3119,7 +3119,16 @@
       "tests/test_formal_network_properties.py",
       "tests/test_formal_proofs.py",
       "tests/test_formal_property_check.py",
+      "tests/test_fpga_aer_interconnect.py",
+      "tests/test_fpga_compilation_result.py",
+      "tests/test_fpga_compiler_architecture.py",
+      "tests/test_fpga_connection_routing.py",
+      "tests/test_fpga_direct_interconnect.py",
+      "tests/test_fpga_folded_interconnect_edges.py",
+      "tests/test_fpga_neuron_rtl.py",
+      "tests/test_fpga_scnir_hierarchy.py",
       "tests/test_fpga_synthesis_bounds.py",
+      "tests/test_fpga_weight_rom.py",
       "tests/test_frontiers.py",
       "tests/test_fusion/test_sensor_fusion.py",
       "tests/test_fusion.py",

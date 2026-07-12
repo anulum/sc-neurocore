@@ -43,6 +43,13 @@ def _connected_graph(n_dst: int, n_src: int) -> NeuronGraph:
     )
 
 
+def test_rejects_empty_graph() -> None:
+    graph = NeuronGraph(populations=[], connections=[], input_pop="", output_pop="")
+
+    with pytest.raises(ValueError, match="at least one neuron"):
+        compile_network_to_fpga(graph)
+
+
 def test_rejects_data_width_above_ceiling() -> None:
     with pytest.raises(ValueError, match="outside the synthesisable range"):
         compile_network_to_fpga(_lif_graph(4), data_width=128, fraction=8)

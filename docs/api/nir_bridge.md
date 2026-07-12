@@ -5,6 +5,27 @@
       show_root_heading: true
       members_order: source
 
+## FPGA Network Compiler
+
+::: sc_neurocore.nir_bridge.fpga_compiler
+    options:
+      show_root_heading: true
+      members:
+        - compile_network_to_fpga
+        - NetworkCompilationResult
+        - FoldedResourceMetrics
+
+`compile_network_to_fpga()` remains the stable public composition boundary.
+Its implementation delegates to responsibility-specific modules for connection
+validation, neuron RTL, weight ROMs, SC-NIR hierarchy boundaries, and the
+direct, address-event, and folded interconnects. Result classes retain their
+historical `sc_neurocore.nir_bridge.fpga_compiler` serialisation path.
+
+Malformed direct `NeuronGraph` inputs fail before SC-NIR conversion or HDL
+emission: the compiler rejects empty networks, non-matrix weights, inconsistent
+source/destination widths, invalid bias or threshold vectors, and invalid
+connection delays with stable `ValueError` contracts.
+
 ## Parser
 
 ::: sc_neurocore.nir_bridge.parser

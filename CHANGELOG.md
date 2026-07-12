@@ -316,6 +316,14 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
   co-simulation path); crossing support there is a separate follow-up.
 
 ### Changed
+- Split the 2,690-line NIR FPGA compiler into a 400-line composition and
+  resource-policy boundary plus focused modules for connection validation,
+  result contracts, neuron RTL, weight ROMs, SC-NIR hierarchy boundaries, and
+  direct, address-event, and folded interconnects. Valid direct, address-event,
+  folded, and hierarchical compilations retain byte-identical generated
+  artefacts; public result types keep their historical import and pickle path.
+  Empty graphs and malformed connection matrices now fail before SC-NIR
+  conversion or partial HDL emission.
 - Re-enrolled the Hodgkin-Huxley membrane (`hodgkin_huxley` schema, Hodgkin & Huxley 1952,
   DOI `10.1113/jphysiol.1952.sp004764`) faithfully as a driven repetitive-spiking oscillator
   using the macro-step mode. The bundled schema was a single-step `method="euler"` resting-gate
