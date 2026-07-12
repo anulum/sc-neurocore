@@ -36,7 +36,7 @@ Current documented mirrors:
 | Mirror | Python surface | Verification |
 |---|---|---|
 | `safety/analysis.rs` | `studio.analysis` | Rust unit tests plus `tests/test_studio_analysis.py` |
-| `safety/dna_mapper.rs` | `bridges.dna_mapper` | Rust unit tests plus 139 DNA mapper tests |
+| `safety/dna_mapper.rs` | `bridges.dna_mapper` | 6 standalone Rust tests plus 316 focused Python/consumer tests |
 | `safety/l7_symbolic.rs` | `scpn.layers.l7_symbolic` | Rust unit tests plus L7 and cross-layer contract tests |
 | `safety/predictive_model.rs` | `world_model.predictive_model` | Rust unit tests plus 77 passed predictive-model tests, with 3 optional-path skips |
 

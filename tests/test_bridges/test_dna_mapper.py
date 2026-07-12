@@ -25,6 +25,7 @@ from __future__ import annotations
 import json
 from pathlib import Path
 from types import SimpleNamespace
+from typing import Any
 
 import numpy as np
 import pytest
@@ -54,9 +55,6 @@ from sc_neurocore.bridges.dna_mapper import (
     SequenceDesigner,
     StrandDisplacementCompiler,
     TopologicalAnalyzer,
-    _GC_TARGET_HIGH,
-    _GC_TARGET_LOW,
-    _MAX_HOMOPOLYMER,
     estimate_cost,
     export_fasta,
     export_genbank,
@@ -66,6 +64,7 @@ from sc_neurocore.bridges.dna_mapper import (
     visualize_circuit,
     visualize_kinetics,
 )
+from sc_neurocore.bridges.dna_types import _GC_TARGET_HIGH, _GC_TARGET_LOW, _MAX_HOMOPOLYMER
 
 
 # ══════════════════════════════════════════════════════════════════════
@@ -201,7 +200,7 @@ class TestSequenceDesigner:
             def choice(self, nucs: list[str], p: list[float]) -> str:
                 return "A"
 
-        monkeypatch.setattr(dna_mapper.np.random, "default_rng", lambda seed=None: ConstantRng())
+        monkeypatch.setattr(np.random, "default_rng", lambda seed=None: ConstantRng())
 
         seq = SequenceDesigner(seed=42).generate(4, "forced_homopolymer")
 
@@ -546,7 +545,7 @@ class TestNUPACKInterface:
                 self.name = name
 
         class FakePairs:
-            def to_array(self) -> np.ndarray:
+            def to_array(self) -> np.ndarray[Any, Any]:
                 return np.array([[0.0, 0.25], [0.25, 0.0]])
 
         fake_nupack = SimpleNamespace(

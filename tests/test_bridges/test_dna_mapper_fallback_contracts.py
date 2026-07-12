@@ -15,12 +15,13 @@ import importlib.machinery
 import sys
 from collections.abc import Callable, Sequence
 from types import ModuleType
-from typing import cast
+from typing import Any, cast
 
 import numpy as np
 import pytest
 
 import sc_neurocore.bridges.dna_mapper as dna_mapper
+from sc_neurocore.bridges import dna_thermodynamics
 from tests.module_reload import restore_module_namespace, snapshot_module_namespace
 
 
@@ -158,3 +159,114 @@ def test_sc_network_bridge_emits_buffer_for_single_excitatory_source() -> None:
     )
 
     assert [gate.gate_type for gate in design.gates] == [dna_mapper.GateType.BUFFER]
+
+
+def test_internal_nupack_provider_starts_fail_closed() -> None:
+    """The thermodynamic module is safe before façade dependency injection."""
+    assert dna_thermodynamics._fallback_nupack_backend() == (False, None)
+
+
+def test_empty_topology_has_no_critical_path() -> None:
+    """An empty molecular circuit has a stable zero-node topology report."""
+    report = dna_mapper.TopologicalAnalyzer().analyze(dna_mapper.DNACircuitDesign())
+
+    assert report == {
+        "depth": 0,
+        "fan_out": {},
+        "has_feedback": False,
+        "cycles": [],
+        "topological_order": [],
+        "critical_path": [],
+        "n_nodes": 0,
+    }
+
+
+def test_dual_rail_fault_scan_ignores_unrelated_traces() -> None:
+    """Non-rail metadata does not become a fault-detection signal."""
+    result = {
+        "time": np.array([0.0, 1.0]),
+        "metadata": np.array([1.0, 1.0]),
+    }
+
+    assert dna_mapper.DualRailEncoder().check_faults(result) == []
+
+
+def test_protocol_deduplicates_strands_by_name() -> None:
+    """Repeated logical strand names produce one laboratory material row."""
+    design = dna_mapper.DNACircuitDesign(
+        input_strands=[
+            dna_mapper.DNAStrand(name="duplicate", sequence="ACGT"),
+            dna_mapper.DNAStrand(name="duplicate", sequence="TGCA"),
+        ]
+    )
+
+    protocol = dna_mapper.generate_protocol(design)
+
+    assert protocol.count("| duplicate |") == 1
+
+
+def test_plate_layout_handles_empty_and_duplicate_sequences() -> None:
+    """Plate planning omits empty and duplicate oligos without phantom plates."""
+    layout = dna_mapper.PlateLayout()
+    empty_result = layout.layout(dna_mapper.DNACircuitDesign())
+    design = dna_mapper.DNACircuitDesign(
+        input_strands=[
+            dna_mapper.DNAStrand(name="empty", sequence=""),
+            dna_mapper.DNAStrand(name="first", sequence="ACGT"),
+            dna_mapper.DNAStrand(name="duplicate", sequence="ACGT"),
+        ]
+    )
+
+    populated_result = layout.layout(design)
+
+    assert empty_result["n_plates"] == 0
+    assert empty_result["utilization_pct"] == 0.0
+    assert populated_result["n_unique_oligos"] == 1
+
+
+def _simulate_without_gate_outputs(
+    _self: dna_mapper.KineticSimulator,
+    _design: dna_mapper.DNACircuitDesign,
+    _input_concentrations: dict[str, float],
+    duration_s: float = 3600.0,
+    dt: float = 1.0,
+) -> dict[str, np.ndarray[Any, Any]]:
+    """Return a deliberately incomplete simulator result for boundary tests."""
+    return {"time": np.array([0.0, duration_s, dt])}
+
+
+def _single_buffer_design() -> dna_mapper.DNACircuitDesign:
+    """Build the smallest circuit with one expected output trace."""
+    gate = dna_mapper.DNAGate(
+        gate_id=0,
+        gate_type=dna_mapper.GateType.BUFFER,
+        input_names=["a"],
+        output_name="out",
+    )
+    return dna_mapper.DNACircuitDesign(gates=[gate])
+
+
+def test_noise_analysis_fails_closed_when_simulator_omits_output(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Monte Carlo analysis rejects incomplete kinetic result surfaces."""
+    monkeypatch.setattr(dna_mapper.KineticSimulator, "simulate", _simulate_without_gate_outputs)
+
+    with pytest.raises(RuntimeError, match="omitted output trace: out"):
+        dna_mapper.NoiseModel(n_trials=1).sensitivity_analysis(
+            _single_buffer_design(),
+            {"a": 200.0},
+        )
+
+
+def test_concentration_optimizer_fails_closed_when_expected_output_is_absent(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Concentration fitting rejects a truth table it cannot evaluate."""
+    monkeypatch.setattr(dna_mapper.KineticSimulator, "simulate", _simulate_without_gate_outputs)
+
+    with pytest.raises(RuntimeError, match="omitted expected output: out"):
+        dna_mapper.ConcentrationOptimizer(n_evaluations=0).optimize(
+            _single_buffer_design(),
+            [{"inputs": {"a": 200.0}, "expected": {"out": "high"}}],
+        )

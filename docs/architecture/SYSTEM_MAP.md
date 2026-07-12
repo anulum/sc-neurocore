@@ -326,7 +326,8 @@ schema-defined, generation deferred).
 ### I. Acceleration & polyglot — *Core*
 `accel` (rust/julia/go/mojo/jax) · `_native` · `bridges`
 → Backend selection + compiled kernels (see §5). **MAINTAINED** (rust path,
-`_native`) / Research (julia/go/mojo per-package kernels, not in canonical dispatch).
+`_native`) / Research (julia/go/mojo per-package surfaces are mixed prototypes,
+not canonical dispatch; each needs its own compile/parity evidence).
 
 ### J. Interop, serving & deployment — *Core / Research*
 `nir_bridge` (18/18 NIR primitives; Norse/snnTorch/SpikingJelly/Sinabs/Rockpool) ·

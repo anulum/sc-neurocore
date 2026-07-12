@@ -1,6 +1,6 @@
 # DNA Computing Mapper — `sc_neurocore.bridges.dna_mapper`
 
-> **Module Version:** 1.0.0 · **Status:** Production · **Tier:** Research
+> **Module Version:** 1.1.0 · **Status:** Production code · **Tier:** Research substrate
 > **Author:** Miroslav Šotek · **ORCID:** 0009-0009-3560-0851
 > **License:** AGPL-3.0-or-later | Commercial license available
 > **Contact:** www.anulum.li | protoscience@anulum.li
@@ -34,11 +34,12 @@
 
 ## 1. Overview
 
-The `dna_mapper` module is the **primary bridge** in the SC-NeuroCore
-`bridges` package. It compiles stochastic computing (SC) Boolean networks
-into DNA strand displacement circuits, enzymatic gate cascades, and
-NUPACK-compatible sequence designs — bridging the gap between digital
-stochastic computing and wet-lab molecular computation.
+The `dna_mapper` compatibility façade is the **primary molecular bridge** in
+the SC-NeuroCore `bridges` package. Nine acyclic responsibility modules behind
+it compile stochastic computing (SC) Boolean networks into DNA strand
+displacement circuits, enzymatic gate cascades, and NUPACK-compatible sequence
+designs. Historical imports and serialized public object identities remain at
+`sc_neurocore.bridges.dna_mapper`.
 
 ### Key Capabilities
 
@@ -57,20 +58,22 @@ stochastic computing and wet-lab molecular computation.
 | Wet-lab protocol generation (Markdown) | `generate_protocol()` | ✅ |
 | 4 export formats (GenBank, FASTA, NUPACK, JSON) | `export_*()` functions | ✅ |
 | NUPACK integration (soft import with fallback) | `NUPACKInterface` | ✅ |
-| 139 tests, 5 benchmark suites | `tests/test_bridges_dna_mapper.py`, `tests/test_bridges/`, `benchmarks/` | ✅ |
-| Rust safety mirror | `src/sc_neurocore/accel/rust/safety/dna_mapper.rs` | ✅ |
+| 316 focused tests; full touched-surface statement/branch coverage | DNA, wheel boundary, linked consumer, architecture, and benchmark cohorts | ✅ |
+| Maintained Rust safety mirror | `src/sc_neurocore/accel/rust/safety/dna_mapper.rs` (6 focused tests) | ✅ |
 
 ### Metrics
 
 | Metric | Value |
 |--------|-------|
-| **Source LOC** | 2,018 |
-| **Test LOC** | 844 |
-| **Benchmark LOC** | 247 |
-| **Classes** | 14 |
+| **Source LOC** | 3,500 across 10 modules |
+| **Façade / largest responsibility module** | 213 / 573 lines |
+| **Owned test LOC** | 2,607 |
+| **Benchmark LOC** | 624 |
+| **Public types/classes/enums** | 23 |
 | **Gate types** | 10 |
-| **Test count** | 139 |
+| **Focused test count** | 316 |
 | **Test pass rate** | 100% |
+| **Coverage** | 1,220 statements + 406 branches, 0 misses/partials |
 | **Compile throughput** | ~50 gates in 196 ms |
 | **Simulation throughput** | 7,200 s in 4.1 ms |
 
@@ -149,7 +152,26 @@ at positions `i` and `i+1`. This determines:
 
 ## 3. Architecture
 
-### 3.1 Module Dependency Graph
+### 3.1 Responsibility Ownership
+
+| Module | Responsibility | Physical lines |
+|---|---|---:|
+| `dna_mapper.py` | Stable imports, optional-backend state, compatibility identity | 213 |
+| `dna_types.py` | Physical constants, enums, strand/gate/circuit contracts | 342 |
+| `dna_sequences.py` | Deterministic constrained sequence generation | 163 |
+| `dna_compilers.py` | Strand-displacement and enzymatic gate compilation | 573 |
+| `dna_thermodynamics.py` | NUPACK adapter and deterministic fallback thermodynamics | 276 |
+| `dna_simulation.py` | Kinetics, noise, concentration, precision, degradation | 491 |
+| `dna_bridge.py` | High-level network and adjacency orchestration | 343 |
+| `dna_encoding.py` | GF(4) error correction and dual-rail encoding | 213 |
+| `dna_analysis.py` | Hybridization, topology, hairpin, and gate analysis | 338 |
+| `dna_io.py` | Exports, costing, protocols, visualization, plate layout | 548 |
+
+An architecture contract caps the façade at 250 lines and every responsibility
+module at 650 lines. It also parses imports and rejects cycles or a dependency
+back into the façade.
+
+### 3.2 Component Dependency Graph
 
 ```
                     BitstreamToDNA
@@ -176,7 +198,7 @@ at positions `i` and `i+1`. This determines:
     generate_protocol()
 ```
 
-### 3.2 Data Flow
+### 3.3 Data Flow
 
 ```
 SC Gate Spec  ──→  SequenceDesigner  ──→  Compiler  ──→  DNACircuitDesign
@@ -190,7 +212,7 @@ SC Gate Spec  ──→  SequenceDesigner  ──→  Compiler  ──→  DNACi
                                                         .gb .fa .json
 ```
 
-### 3.3 Soft Import Pattern
+### 3.4 Soft Import Pattern
 
 External dependencies use the project-standard soft import pattern:
 
@@ -208,6 +230,19 @@ the internal nearest-neighbour thermodynamic model plus deterministic
 Watson-Crick secondary-structure dynamic programming and Boltzmann-style
 base-pair probability estimates, so validation still detects likely
 intramolecular hairpins instead of assuming all strands are unstructured.
+
+The base wheel intentionally excludes the source-only `sc_neurocore.optics`
+tree. `sc_neurocore.bridges` therefore publishes photonic co-design exports
+only when that tree is present; DNA imports remain available in the base wheel.
+
+### 3.5 Polyglot Authority
+
+Python is the canonical molecular-mapper implementation. The Rust safety
+module is the only maintained execution mirror in this repository; it compiles
+standalone and its six focused tests pass. Generated Julia and Mojo files were
+non-parsing Python-to-string scaffolds, while the generated Go package contained
+only empty functions and no tests. Those false surfaces were removed rather
+than presented as parity evidence. No canonical dispatcher referenced them.
 
 ---
 
@@ -822,6 +857,31 @@ python benchmarks/dna_mapper_benchmark.py
 # Results → benchmarks/results/dna_mapper_benchmark.json
 ```
 
+The architecture regression harness compares the flat parent against the
+modular working tree using 30 interleaved subprocess samples after five
+warmups, with ten repeated one-gate compilations per sample:
+
+```bash
+python benchmarks/bench_dna_mapper_import.py \
+  --baseline-root <parent-root> \
+  --candidate-root <candidate-root> \
+  --output benchmarks/results/local_python_2026-07-12_dna_mapper_import.json
+```
+
+| Metric | Flat parent median | Modular median | Delta |
+|---|---:|---:|---:|
+| Cold import | 334.571 ms | 362.184 ms | +8.25% |
+| One-gate compile | 9.689 ms | 10.082 ms | +4.06% |
+| Process wall | 617.283 ms | 660.115 ms | +6.94% |
+| Peak RSS | 39,948 KiB | 39,916 KiB | -0.08% |
+
+This is local regression evidence, not a publishable throughput claim. The
+capture used taskset affinity but no exclusive core, the powersave governor,
+and a workstation whose one-minute load rose from 10.56 to 15.00 during the
+capture. The committed JSON preserves raw samples, source hashes, affinity,
+frequency, governor, and host-load limitations. A reserved-core rerun is
+required before treating the positive timing deltas as a stable regression.
+
 ---
 
 ## 16. Integration Guide
@@ -971,6 +1031,20 @@ strands).
 
 ## 20. Change Log
 
+### v1.1.0 (2026-07-12)
+
+- Replaced the 3,257-line GodFile with a 213-line compatibility façade and nine
+  bounded, acyclic responsibility modules.
+- Preserved documented imports, reloadable optional-backend state, and pickle
+  module identity; detached-parent deterministic outputs remain equivalent.
+- Reached 100% statement and branch coverage over all mapper modules and made
+  missing kinetic output traces fail closed.
+- Removed false Julia, Mojo, and Go acceleration scaffolds; retained and
+  independently verified the maintained Rust safety mirror.
+- Added hash-bound parent/candidate import and golden-path benchmark evidence.
+- Made source-only photonic co-design exports conditional so the documented DNA
+  import path works from the clean base wheel without the excluded optics tree.
+
 ### v1.0.0 (2026-04-16)
 
 - Initial production release
@@ -979,48 +1053,3 @@ strands).
 - GF(4) error correction, cross-hybridization analysis
 - Monte Carlo noise model, cost estimation, protocol generation
 - Full pipeline wiring via `bridges/__init__.py`
-
-
-## 7. Performance benchmarks
-
-
-### Output from `dna_mapper_benchmark.py`
-
-```text
-============================================================
-SC-NeuroCore DNA Mapper Benchmark
-============================================================
-Python 3.12.3 (main, Mar  3 2026, 12:15:18) [GCC 13.3.0]
-Platform: Linux-6.17.0-20-generic-x86_64-with-glibc2.39
-NumPy: 2.2.6
-
-[1/5] Compilation benchmarks
-  compile   1 gates: 4.2 ms (8 strands, 185 nt)
-  compile   5 gates: 12.3 ms (27 strands, 690 nt)
-  compile  10 gates: 24.0 ms (50 strands, 1265 nt)
-  compile  25 gates: 86.2 ms (120 strands, 3065 nt)
-  compile  50 gates: 241.8 ms (237 strands, 6090 nt)
-
-[2/5] Simulation benchmarks
-  simulate   100s: 0.1 ms
-  simulate  1000s: 0.7 ms
-  simulate  3600s: 3.8 ms
-  simulate  7200s: 5.3 ms
-
-[3/5] Error correction benchmarks
-  EC    48 nt: encode 28 µs, decode 30 µs
-  EC   240 nt: encode 136 µs, decode 143 µs
-  EC  1200 nt: encode 660 µs, decode 744 µs
-
-[4/5] Cross-hybridization benchmarks
-  X-hyb   5 gates (17 strands): 5.3 ms, 8 flags
-  X-hyb  10 gates (32 strands): 19.8 ms, 13 flags
-  X-hyb  25 gates (77 strands): 115.3 ms, 40 flags
-
-[5/5] Cost & protocol benchmarks
-  Cost estimation: 10 µs ($98.00)
-  Protocol gen:    17 µs (52 lines)
-
-Results written to /media/anulum/724AA8E84AA8AA75/aaa_God_of_the_Math_Collection/03_CODE/SC-NEUROCORE/benchmarks/results/dna_mapper_benchmark.json
-============================================================
-```

@@ -3462,127 +3462,135 @@ UDP routing, use the Go server (hil_debugger/interconnect).
 
 ---
 
-## Module `bridges.dna_mapper`
+## Module `bridges.dna_analysis`
 
-### Class `GateType`
-Supported DNA logic gate types.
+### Class `CrossHybridizationChecker`
+Detect unwanted cross-hybridization between circuit strands.
 
-
-### Class `CompilationMethod`
-Compilation target for the DNA circuit.
-
-
-### Class `DNAStrand`
-A single-stranded DNA molecule used in a circuit.
-
-Attributes
-----------
-name : str
-    Unique identifier (e.g. ``"gate_0_input_a"``).
-sequence : str
-    5' → 3' nucleotide sequence (A, C, G, T).
-role : str
-    Functional role: ``"signal"``, ``"fuel"``, ``"output"``,
-    ``"waste"``, ``"toehold"``, ``"translator"``.
-concentration_nM : float
-    Initial concentration in nanomolar.
-
-- **length**()
-  - Return the nucleotide length of this strand.
-- **gc_content**()
-  - Return the fraction of nucleotides that are G or C bases.
-- **complement**()
-  - Return the reverse-complement strand sequence.
-- **max_homopolymer_run**()
-  - Return the longest repeated-base run in the strand.
-- **delta_g_37**()
-  - Nearest-neighbour ΔG° at 37 °C (kcal/mol).
-- **melting_temperature**(na_conc_M, strand_conc_M)
-  - Return nearest-neighbour DNA duplex melting temperature in °C.
-
-### Class `DNAGate`
-A logic gate implemented via DNA strand displacement.
-
-Attributes
-----------
-gate_id : int
-    Unique gate index in the circuit.
-gate_type : GateType
-    Logic operation (AND, OR, NOT, etc.).
-input_names : list&#91;str&#93;
-    Names of input signal strands.
-output_name : str
-    Name of the output signal strand.
-strands : list&#91;DNAStrand&#93;
-    All DNA strands participating in this gate (inputs, fuel,
-    translator complexes, output, waste).
-threshold : float
-    For threshold gates, the activation threshold concentration.
-leak_rate : float
-    Estimated spurious activation rate (per second).
-
-- **strand_count**()
-  - Return the number of strands implementing this gate.
-
-### Class `DNACircuitDesign`
-Complete compiled DNA circuit.
-
-Holds the full strand-level design for a compiled SC network,
-including all gates, signal routing, and thermodynamic validation.
-
-Attributes
-----------
-name : str
-    Circuit identifier.
-gates : list&#91;DNAGate&#93;
-    Ordered list of compiled gates.
-input_strands : list&#91;DNAStrand&#93;
-    Primary input signal strands.
-output_strands : list&#91;DNAStrand&#93;
-    Primary output signal strands.
-fuel_strands : list&#91;DNAStrand&#93;
-    Fuel/helper strands consumed during computation.
-method : CompilationMethod
-    Compilation target used.
-temperature_c : float
-    Design temperature in Celsius.
-na_concentration_M : float
-    Sodium concentration for thermodynamic calculations.
-
-- **total_strands**()
-  - Return the total strand count across circuit inputs, outputs, fuel, and gates.
-- **total_gates**()
-  - Return the number of DNA logic gates in the circuit.
-- **total_nucleotides**()
-  - Return the total nucleotide count across all circuit strands.
-- **validate**()
-  - Run design rule checks. Returns list of warnings.
-
-### Class `SequenceDesigner`
-Deterministic DNA sequence generator with constraint satisfaction.
-
-Generates sequences that satisfy GC content, homopolymer, and
-orthogonality constraints using a seed-based deterministic algorithm.
-This ensures reproducible designs without requiring NUPACK.
+Computes a pairwise alignment score matrix for all strands in a
+design and flags pairs with dangerous complementarity.
 
 Parameters
 ----------
-seed : int
-    Random seed for reproducible sequence generation.
-gc_target : tuple&#91;float, float&#93;
-    Acceptable GC content range (default 0.40–0.60).
-max_homopolymer : int
-    Maximum consecutive identical nucleotides (default 3).
+max_complementary_run : int
+    Maximum allowed consecutive complementary bases between
+    two non-interacting strands (default 8).
 
-- **__init__**(seed, gc_target, max_homopolymer)
-- **generate**(length, name)
-  - Generate a sequence satisfying all constraints.
-- **generate_complement**(sequence)
-  - Return the Watson-Crick complement (3' → 5').
-- **generate_toehold**(name)
-  - Generate a toehold domain (6 nt).
-- **generate_recognition**(name)
-  - Generate a recognition domain (15 nt).
+- **__init__**(max_complementary_run)
+- **check**(design)
+  - Check all strand pairs for cross-hybridization.
+
+### Class `TopologicalAnalyzer`
+Analyze circuit topology: depth, fan-out, feedback detection.
+
+Builds a directed graph from gate connectivity, then computes:
+- Topological sort order (or detects cycles)
+- Circuit depth (critical path length)
+- Fan-out per signal (number of consumers)
+- Feedback loops (cycles in the gate graph)
+
+- **analyze**(design)
+  - Run full topological analysis.
+
+### Class `HairpinChecker`
+Detect potential hairpin (stem-loop) secondary structures.
+
+Scans each strand for self-complementary regions that could form
+intramolecular hairpins, reducing effective concentration and
+interfering with gate operation.
+
+Parameters
+----------
+min_stem_length : int
+    Minimum stem length to flag (default 4 bp).
+min_loop_length : int
+    Minimum loop length for a valid hairpin (default 3 nt).
+
+- **__init__**(min_stem_length, min_loop_length)
+- **check_strand**(sequence)
+  - Find potential hairpins in a single sequence.
+- **check_design**(design)
+  - Check all strands in a circuit for hairpins.
+
+### Class `GateOptimizer`
+Circuit-level gate optimization.
+
+Performs:
+- Dead gate elimination (outputs not consumed by any downstream gate)
+- Constant propagation (gates with all-zero or all-max inputs)
+- Identity elimination (BUFFER gates with direct pass-through)
+- Duplicate detection (identical gate specs)
+
+- **optimize**(gates, output_names)
+  - Optimize a gate list before compilation.
+
+---
+
+## Module `bridges.dna_bridge`
+
+### Class `BitstreamToDNA`
+High-level API for mapping SC bitstreams to DNA circuits.
+
+This is the primary entry point for the DNA computing bridge.
+Accepts a description of an SC Boolean network and compiles it
+into a complete DNA circuit design.
+
+Parameters
+----------
+method : str
+    Compilation method: ``"displacement"`` (default),
+    ``"enzymatic"``, or ``"hybrid"``.
+seed : int
+    Sequence generation seed for reproducibility.
+temperature_c : float
+    Design temperature in Celsius.
+
+Examples
+--------
+>>> compiler = BitstreamToDNA(method="displacement", seed=42)
+>>> design = compiler.compile_network(
+...     gates=&#91;
+...         {"type": "AND", "inputs": &#91;"A", "B"&#93;, "output": "C"},
+...         {"type": "NOT", "inputs": &#91;"C"&#93;, "output": "D"},
+...     &#93;,
+...     input_names=&#91;"A", "B"&#93;,
+...     output_names=&#91;"D"&#93;,
+... )
+>>> print(design.total_gates)
+2
+>>> print(design.total_strands)
+...
+>>> export_genbank(design, "nand_circuit.gb")
+
+- **__init__**(method, seed, temperature_c)
+- **compile_network**(gates, input_names, output_names, name)
+  - Compile an SC Boolean network into a DNA circuit.
+- **simulate**(design, input_concentrations, duration_s, dt)
+  - Simulate the compiled circuit.
+- **validate**(design)
+  - Validate design using NUPACK (or fallback).
+
+### Class `SCNetworkBridge`
+Bridge between SC-NeuroCore network objects and DNA compilation.
+
+Converts Population/Projection-based SC networks into the gate-spec
+format consumed by BitstreamToDNA. Supports automatic gate-type
+inference from connection weights.
+
+Parameters
+----------
+method : str
+    Compilation method (``"displacement"`` or ``"enzymatic"``).
+seed : int
+    Random seed.
+
+- **__init__**(method, seed)
+- **from_adjacency**(adjacency, input_indices, output_indices, name)
+  - Compile from an adjacency matrix.
+
+---
+
+## Module `bridges.dna_compilers`
 
 ### Class `StrandDisplacementCompiler`
 Compile SC Boolean gates into toehold-mediated displacement circuits.
@@ -3631,95 +3639,9 @@ designer : SequenceDesigner | None
 - **compile_xor**(input_a, input_b, output)
   - XOR gate via nick-sealing ligase logic.
 
-### Class `NUPACKInterface`
-Interface to NUPACK for thermodynamic validation.
+---
 
-Provides minimum free energy (MFE) structure prediction, base-pair
-probability computation, and design validation. Falls back to
-internal nearest-neighbour estimates, Watson-Crick secondary-structure
-dynamic programming, and Boltzmann-style pair probabilities when NUPACK is
-not installed.
-
-Parameters
-----------
-temperature_c : float
-    Temperature in Celsius.
-na_concentration_M : float
-    Sodium concentration in molar.
-
-- **__init__**(temperature_c, na_concentration_M)
-- **has_nupack**()
-  - Return whether optional NUPACK thermodynamic analysis is installed.
-- **compute_mfe**(sequence)
-  - Compute minimum free energy and structure.
-- **compute_pair_probabilities**(sequence)
-  - Compute base-pair probability matrix.
-- **validate_design**(design)
-  - Validate a full circuit design.
-
-### Class `KineticSimulator`
-Mass-action kinetics simulator for DNA strand displacement.
-
-Simulates the time evolution of strand concentrations using
-selectable integration (Euler or RK4) with Arrhenius temperature
-scaling of rate constants.
-
-Parameters
-----------
-rate_hybridization : float
-    Second-order rate constant for toehold binding (M⁻¹ s⁻¹).
-rate_displacement : float
-    First-order rate constant for branch migration (s⁻¹).
-temperature_c : float
-    Temperature in Celsius.
-integrator : str
-    Integration method: ``"euler"`` or ``"rk4"``.
-
-- **__init__**(rate_hybridization, rate_displacement, temperature_c, integrator)
-- **simulate**(design, input_concentrations, duration_s, dt)
-  - Simulate circuit kinetics.
-
-### Class `BitstreamToDNA`
-High-level API for mapping SC bitstreams to DNA circuits.
-
-This is the primary entry point for the DNA computing bridge.
-Accepts a description of an SC Boolean network and compiles it
-into a complete DNA circuit design.
-
-Parameters
-----------
-method : str
-    Compilation method: ``"displacement"`` (default),
-    ``"enzymatic"``, or ``"hybrid"``.
-seed : int
-    Sequence generation seed for reproducibility.
-temperature_c : float
-    Design temperature in Celsius.
-
-Examples
---------
->>> compiler = BitstreamToDNA(method="displacement", seed=42)
->>> design = compiler.compile_network(
-...     gates=&#91;
-...         {"type": "AND", "inputs": &#91;"A", "B"&#93;, "output": "C"},
-...         {"type": "NOT", "inputs": &#91;"C"&#93;, "output": "D"},
-...     &#93;,
-...     input_names=&#91;"A", "B"&#93;,
-...     output_names=&#91;"D"&#93;,
-... )
->>> print(design.total_gates)
-2
->>> print(design.total_strands)
-...
->>> export_genbank(design, "nand_circuit.gb")
-
-- **__init__**(method, seed, temperature_c)
-- **compile_network**(gates, input_names, output_names, name)
-  - Compile an SC Boolean network into a DNA circuit.
-- **simulate**(design, input_concentrations, duration_s, dt)
-  - Simulate the compiled circuit.
-- **validate**(design)
-  - Validate design using NUPACK (or fallback).
+## Module `bridges.dna_encoding`
 
 ### Class `GF4ErrorCorrection`
 Reed–Solomon-like error correction over GF(4) for DNA sequences.
@@ -3741,56 +3663,6 @@ block_size : int
 - **decode**(encoded_sequence)
   - Decode and correct errors. Returns (corrected_data, n_corrections).
 
-### Class `CrossHybridizationChecker`
-Detect unwanted cross-hybridization between circuit strands.
-
-Computes a pairwise alignment score matrix for all strands in a
-design and flags pairs with dangerous complementarity.
-
-Parameters
-----------
-max_complementary_run : int
-    Maximum allowed consecutive complementary bases between
-    two non-interacting strands (default 8).
-
-- **__init__**(max_complementary_run)
-- **check**(design)
-  - Check all strand pairs for cross-hybridization.
-
-### Class `NoiseModel`
-Monte Carlo noise injection for robustness analysis.
-
-Perturbs strand concentrations, hybridization rates, and
-temperature to assess circuit robustness under realistic
-experimental conditions.
-
-Parameters
-----------
-concentration_cv : float
-    Coefficient of variation for pipetting noise (default 0.05 = 5%).
-temperature_std_c : float
-    Temperature uncertainty in °C (default 0.5).
-n_trials : int
-    Number of Monte Carlo trials (default 50).
-seed : int
-    Random seed.
-
-- **__init__**(concentration_cv, temperature_std_c, n_trials, seed)
-- **sensitivity_analysis**(design, input_concentrations, duration_s)
-  - Run Monte Carlo sensitivity analysis.
-
-### Class `TopologicalAnalyzer`
-Analyze circuit topology: depth, fan-out, feedback detection.
-
-Builds a directed graph from gate connectivity, then computes:
-- Topological sort order (or detects cycles)
-- Circuit depth (critical path length)
-- Fan-out per signal (number of consumers)
-- Feedback loops (cycles in the gate graph)
-
-- **analyze**(design)
-  - Run full topological analysis.
-
 ### Class `DualRailEncoder`
 Dual-rail encoding for fault-tolerant DNA circuits.
 
@@ -3808,106 +3680,9 @@ This provides single-fault detection for each signal.
 - **check_faults**(result, threshold_nM)
   - Detect faults in dual-rail simulation results.
 
-### Class `ConcentrationOptimizer`
-Gradient-free optimization of strand concentrations.
+---
 
-Uses Nelder–Mead simplex to minimize output error across
-all truth-table entries, finding optimal working concentrations
-for translator, threshold, and fuel strands.
-
-Parameters
-----------
-n_evaluations : int
-    Maximum function evaluations (default 200).
-seed : int
-    Random seed for initial simplex.
-
-- **__init__**(n_evaluations, seed)
-- **optimize**(design, truth_table, duration_s)
-  - Optimize concentrations against a truth table.
-
-### Class `SCNetworkBridge`
-Bridge between SC-NeuroCore network objects and DNA compilation.
-
-Converts Population/Projection-based SC networks into the gate-spec
-format consumed by BitstreamToDNA. Supports automatic gate-type
-inference from connection weights.
-
-Parameters
-----------
-method : str
-    Compilation method (``"displacement"`` or ``"enzymatic"``).
-seed : int
-    Random seed.
-
-- **__init__**(method, seed)
-- **from_adjacency**(adjacency, input_indices, output_indices, name)
-  - Compile from an adjacency matrix.
-
-### Class `HairpinChecker`
-Detect potential hairpin (stem-loop) secondary structures.
-
-Scans each strand for self-complementary regions that could form
-intramolecular hairpins, reducing effective concentration and
-interfering with gate operation.
-
-Parameters
-----------
-min_stem_length : int
-    Minimum stem length to flag (default 4 bp).
-min_loop_length : int
-    Minimum loop length for a valid hairpin (default 3 nt).
-
-- **__init__**(min_stem_length, min_loop_length)
-- **check_strand**(sequence)
-  - Find potential hairpins in a single sequence.
-- **check_design**(design)
-  - Check all strands in a circuit for hairpins.
-
-### Class `GateOptimizer`
-Circuit-level gate optimization.
-
-Performs:
-- Dead gate elimination (outputs not consumed by any downstream gate)
-- Constant propagation (gates with all-zero or all-max inputs)
-- Identity elimination (BUFFER gates with direct pass-through)
-- Duplicate detection (identical gate specs)
-
-- **optimize**(gates, output_names)
-  - Optimize a gate list before compilation.
-
-### Class `SCPrecisionAnalyzer`
-Stochastic computing precision analysis for DNA circuits.
-
-Evaluates the effective bit-width, signal-to-noise ratio, and
-output precision achievable by a DNA-encoded SC circuit at given
-strand concentrations.
-
-In standard SC, a bitstream of length L encodes precision
-log2(L+1) bits. In DNA circuits, the analog concentration range
-&#91;0, max_nM&#93; plays the role of L.
-
-- **analyze**(design, input_concentrations, max_conc_nM, duration_s)
-  - Analyze SC precision of a compiled circuit.
-
-### Class `DegradationModel`
-Time-dependent DNA strand degradation model.
-
-Models first-order exponential decay of strand concentrations
-based on nuclease activity, temperature, and strand length.
-
-Parameters
-----------
-half_life_hr : float
-    Base half-life in hours at 37°C (default 24 for ssDNA).
-temperature_c : float
-    Operating temperature in Celsius.
-
-- **__init__**(half_life_hr, temperature_c)
-- **predict_concentration**(initial_nM, strand_length, time_hr)
-  - Predict remaining concentration after time_hr hours.
-- **analyze_design**(design, time_hr)
-  - Predict degradation across all circuit strands.
+## Module `bridges.dna_io`
 
 ### Class `PlateLayout`
 Organize oligos into 96-well synthesis plate format.
@@ -4035,6 +3810,263 @@ Returns
 -------
 str
     Multi-line ASCII sparkline chart.
+
+---
+
+## Module `bridges.dna_sequences`
+
+### Class `SequenceDesigner`
+Deterministic DNA sequence generator with constraint satisfaction.
+
+Generates sequences that satisfy GC content, homopolymer, and
+orthogonality constraints using a seed-based deterministic algorithm.
+This ensures reproducible designs without requiring NUPACK.
+
+Parameters
+----------
+seed : int
+    Random seed for reproducible sequence generation.
+gc_target : tuple&#91;float, float&#93;
+    Acceptable GC content range (default 0.40–0.60).
+max_homopolymer : int
+    Maximum consecutive identical nucleotides (default 3).
+
+- **__init__**(seed, gc_target, max_homopolymer)
+- **generate**(length, name)
+  - Generate a sequence satisfying all constraints.
+- **generate_complement**(sequence)
+  - Return the Watson-Crick complement (3' → 5').
+- **generate_toehold**(name)
+  - Generate a toehold domain (6 nt).
+- **generate_recognition**(name)
+  - Generate a recognition domain (15 nt).
+
+---
+
+## Module `bridges.dna_simulation`
+
+### Class `KineticSimulator`
+Mass-action kinetics simulator for DNA strand displacement.
+
+Simulates the time evolution of strand concentrations using
+selectable integration (Euler or RK4) with Arrhenius temperature
+scaling of rate constants.
+
+Parameters
+----------
+rate_hybridization : float
+    Second-order rate constant for toehold binding (M⁻¹ s⁻¹).
+rate_displacement : float
+    First-order rate constant for branch migration (s⁻¹).
+temperature_c : float
+    Temperature in Celsius.
+integrator : str
+    Integration method: ``"euler"`` or ``"rk4"``.
+
+- **__init__**(rate_hybridization, rate_displacement, temperature_c, integrator)
+- **simulate**(design, input_concentrations, duration_s, dt)
+  - Simulate circuit kinetics.
+
+### Class `NoiseModel`
+Monte Carlo noise injection for robustness analysis.
+
+Perturbs strand concentrations, hybridization rates, and
+temperature to assess circuit robustness under realistic
+experimental conditions.
+
+Parameters
+----------
+concentration_cv : float
+    Coefficient of variation for pipetting noise (default 0.05 = 5%).
+temperature_std_c : float
+    Temperature uncertainty in °C (default 0.5).
+n_trials : int
+    Number of Monte Carlo trials (default 50).
+seed : int
+    Random seed.
+
+- **__init__**(concentration_cv, temperature_std_c, n_trials, seed)
+- **sensitivity_analysis**(design, input_concentrations, duration_s)
+  - Run Monte Carlo sensitivity analysis.
+
+### Class `ConcentrationOptimizer`
+Gradient-free optimization of strand concentrations.
+
+Uses Nelder–Mead simplex to minimize output error across
+all truth-table entries, finding optimal working concentrations
+for translator, threshold, and fuel strands.
+
+Parameters
+----------
+n_evaluations : int
+    Maximum function evaluations (default 200).
+seed : int
+    Random seed for initial simplex.
+
+- **__init__**(n_evaluations, seed)
+- **optimize**(design, truth_table, duration_s)
+  - Optimize concentrations against a truth table.
+
+### Class `SCPrecisionAnalyzer`
+Stochastic computing precision analysis for DNA circuits.
+
+Evaluates the effective bit-width, signal-to-noise ratio, and
+output precision achievable by a DNA-encoded SC circuit at given
+strand concentrations.
+
+In standard SC, a bitstream of length L encodes precision
+log2(L+1) bits. In DNA circuits, the analog concentration range
+&#91;0, max_nM&#93; plays the role of L.
+
+- **analyze**(design, input_concentrations, max_conc_nM, duration_s)
+  - Analyze SC precision of a compiled circuit.
+
+### Class `DegradationModel`
+Time-dependent DNA strand degradation model.
+
+Models first-order exponential decay of strand concentrations
+based on nuclease activity, temperature, and strand length.
+
+Parameters
+----------
+half_life_hr : float
+    Base half-life in hours at 37°C (default 24 for ssDNA).
+temperature_c : float
+    Operating temperature in Celsius.
+
+- **__init__**(half_life_hr, temperature_c)
+- **predict_concentration**(initial_nM, strand_length, time_hr)
+  - Predict remaining concentration after time_hr hours.
+- **analyze_design**(design, time_hr)
+  - Predict degradation across all circuit strands.
+
+---
+
+## Module `bridges.dna_thermodynamics`
+
+### Class `NUPACKInterface`
+Interface to NUPACK for thermodynamic validation.
+
+Provides minimum free energy (MFE) structure prediction, base-pair
+probability computation, and design validation. Falls back to
+internal nearest-neighbour estimates, Watson-Crick secondary-structure
+dynamic programming, and Boltzmann-style pair probabilities when NUPACK is
+not installed.
+
+Parameters
+----------
+temperature_c : float
+    Temperature in Celsius.
+na_concentration_M : float
+    Sodium concentration in molar.
+
+- **__init__**(temperature_c, na_concentration_M)
+- **has_nupack**()
+  - Return whether optional NUPACK thermodynamic analysis is installed.
+- **compute_mfe**(sequence)
+  - Compute minimum free energy and structure.
+- **compute_pair_probabilities**(sequence)
+  - Compute base-pair probability matrix.
+- **validate_design**(design)
+  - Validate a full circuit design.
+
+---
+
+## Module `bridges.dna_types`
+
+### Class `GateType`
+Supported DNA logic gate types.
+
+
+### Class `CompilationMethod`
+Compilation target for the DNA circuit.
+
+
+### Class `DNAStrand`
+A single-stranded DNA molecule used in a circuit.
+
+Attributes
+----------
+name : str
+    Unique identifier (e.g. ``"gate_0_input_a"``).
+sequence : str
+    5' → 3' nucleotide sequence (A, C, G, T).
+role : str
+    Functional role: ``"signal"``, ``"fuel"``, ``"output"``,
+    ``"waste"``, ``"toehold"``, ``"translator"``.
+concentration_nM : float
+    Initial concentration in nanomolar.
+
+- **length**()
+  - Return the nucleotide length of this strand.
+- **gc_content**()
+  - Return the fraction of nucleotides that are G or C bases.
+- **complement**()
+  - Return the reverse-complement strand sequence.
+- **max_homopolymer_run**()
+  - Return the longest repeated-base run in the strand.
+- **delta_g_37**()
+  - Nearest-neighbour ΔG° at 37 °C (kcal/mol).
+- **melting_temperature**(na_conc_M, strand_conc_M)
+  - Return nearest-neighbour DNA duplex melting temperature in °C.
+
+### Class `DNAGate`
+A logic gate implemented via DNA strand displacement.
+
+Attributes
+----------
+gate_id : int
+    Unique gate index in the circuit.
+gate_type : GateType
+    Logic operation (AND, OR, NOT, etc.).
+input_names : list&#91;str&#93;
+    Names of input signal strands.
+output_name : str
+    Name of the output signal strand.
+strands : list&#91;DNAStrand&#93;
+    All DNA strands participating in this gate (inputs, fuel,
+    translator complexes, output, waste).
+threshold : float
+    For threshold gates, the activation threshold concentration.
+leak_rate : float
+    Estimated spurious activation rate (per second).
+
+- **strand_count**()
+  - Return the number of strands implementing this gate.
+
+### Class `DNACircuitDesign`
+Complete compiled DNA circuit.
+
+Holds the full strand-level design for a compiled SC network,
+including all gates, signal routing, and thermodynamic validation.
+
+Attributes
+----------
+name : str
+    Circuit identifier.
+gates : list&#91;DNAGate&#93;
+    Ordered list of compiled gates.
+input_strands : list&#91;DNAStrand&#93;
+    Primary input signal strands.
+output_strands : list&#91;DNAStrand&#93;
+    Primary output signal strands.
+fuel_strands : list&#91;DNAStrand&#93;
+    Fuel/helper strands consumed during computation.
+method : CompilationMethod
+    Compilation target used.
+temperature_c : float
+    Design temperature in Celsius.
+na_concentration_M : float
+    Sodium concentration for thermodynamic calculations.
+
+- **total_strands**()
+  - Return the total strand count across circuit inputs, outputs, fuel, and gates.
+- **total_gates**()
+  - Return the number of DNA logic gates in the circuit.
+- **total_nucleotides**()
+  - Return the total nucleotide count across all circuit strands.
+- **validate**()
+  - Run design rule checks. Returns list of warnings.
 
 ---
 

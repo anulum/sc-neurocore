@@ -14,7 +14,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 288
+expected_file_count = 298
 
 [[file]]
 path = "src/sc_neurocore/__init__.py"
@@ -1137,8 +1137,48 @@ path = "src/sc_neurocore/cli/commands/synthesis.py"
 rationale = "Public synthesis-report evidence collection command handler."
 
 [[file]]
+path = "src/sc_neurocore/bridges/__init__.py"
+rationale = "Public optional-substrate bridge package and base-wheel export boundary."
+
+[[file]]
 path = "src/sc_neurocore/bridges/dna_mapper.py"
 rationale = "Public DNA-computing bridge with strand, gate, circuit, and thermodynamic analysis helpers."
+
+[[file]]
+path = "src/sc_neurocore/bridges/dna_analysis.py"
+rationale = "DNA circuit hybridization, topology, hairpin, and gate-graph analysis surfaces."
+
+[[file]]
+path = "src/sc_neurocore/bridges/dna_bridge.py"
+rationale = "High-level stochastic-network to molecular-circuit orchestration surfaces."
+
+[[file]]
+path = "src/sc_neurocore/bridges/dna_compilers.py"
+rationale = "Strand-displacement and enzymatic molecular gate compilers."
+
+[[file]]
+path = "src/sc_neurocore/bridges/dna_encoding.py"
+rationale = "GF(4) error-correction and dual-rail molecular encoding surfaces."
+
+[[file]]
+path = "src/sc_neurocore/bridges/dna_io.py"
+rationale = "DNA circuit exports, costing, protocols, visualization, and plate-layout helpers."
+
+[[file]]
+path = "src/sc_neurocore/bridges/dna_sequences.py"
+rationale = "Deterministic constrained molecular sequence-design engine."
+
+[[file]]
+path = "src/sc_neurocore/bridges/dna_simulation.py"
+rationale = "DNA kinetics, noise, concentration, precision, and degradation analysis surfaces."
+
+[[file]]
+path = "src/sc_neurocore/bridges/dna_thermodynamics.py"
+rationale = "Fallback and optional-NUPACK molecular thermodynamic analysis."
+
+[[file]]
+path = "src/sc_neurocore/bridges/dna_types.py"
+rationale = "Stable molecular-circuit contracts and physical constants."
 
 [[file]]
 path = "src/sc_neurocore/bridges/quantum_annealing.py"

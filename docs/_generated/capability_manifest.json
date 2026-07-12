@@ -83,7 +83,7 @@
     "boundaries": {
       "bounded": [
         "Network Rust/MPI paths cover a subset (plasticity/FIM/spike-gating are Python-only)",
-        "polyglot julia/go/mojo kernels are real but reachable only per-package, not via the canonical selector"
+        "julia/go/mojo per-package surfaces are mixed research prototypes; generated scaffolds are not execution authority and require per-module compile/parity evidence"
       ],
       "closed": [
         "speculative sci-fi modules are NOT in src/ (confined to repo-root research/, not importable as sc_neurocore.*)"
@@ -971,7 +971,7 @@
     "python_model_classes": 158,
     "python_model_source_modules": 153,
     "rust_pyo3_model_wrappers": 176,
-    "test_files": 1109
+    "test_files": 1113
   },
   "documentation": {
     "public_pages": [
@@ -2897,6 +2897,7 @@
       "tests/test_behavior_taxonomy.py",
       "tests/test_behavioral_equivalence.py",
       "tests/test_bench_cli_startup.py",
+      "tests/test_bench_dna_mapper_import.py",
       "tests/test_benchmark_context.py",
       "tests/test_benchmark_evidence_docs.py",
       "tests/test_benchmark_harness_contracts.py",
@@ -2911,7 +2912,9 @@
       "tests/test_bit_true_cosim.py",
       "tests/test_bit_true_kernel.py",
       "tests/test_block_floating_dense_hdl.py",
+      "tests/test_bridges/test_bridges_optional_exports.py",
       "tests/test_bridges/test_dna_mapper.py",
+      "tests/test_bridges/test_dna_mapper_architecture.py",
       "tests/test_bridges/test_dna_mapper_fallback_contracts.py",
       "tests/test_bridges/test_local_llm.py",
       "tests/test_bridges/test_photonic_codesign.py",
@@ -3621,6 +3624,7 @@
       "tests/test_rust_integration.py",
       "tests/test_rust_python_neuron_parity.py",
       "tests/test_rust_rk4_neuron_parity.py",
+      "tests/test_rust_safety_module_registry.py",
       "tests/test_safety/test_safety_monitor.py",
       "tests/test_safety_cert/test_safety_cert.py",
       "tests/test_safety_cert/test_safety_cert_public_api.py",

@@ -5,6 +5,26 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 ## [Unreleased]
 
 ### Added
+- Replaced the 3,257-line molecular/DNA mapper GodFile with a 213-line
+  compatibility façade and nine acyclic responsibility modules, each below 600
+  lines. Historical documented imports, optional NUPACK reload/monkeypatch
+  behavior, and pickle module identities remain stable; deterministic parent
+  and candidate designs, exports, simulations, analyses, and serialized
+  artefacts match. The focused cohort passes 316 tests, and the complete
+  touched surface reaches 100% coverage over 1,220 statements and 406
+  branches. Missing simulator outputs now fail closed in noise and
+  concentration analysis. The bridge package no longer eagerly requires the
+  source-only, wheel-excluded optics tree before DNA imports can succeed.
+- Added a hash-bound 30-sample parent/candidate benchmark with raw samples and
+  explicit workstation limitations. Median cold import, repeated one-gate
+  compilation, wall time, and RSS changed by +8.25%, +4.06%, +6.94%, and
+  -0.08%, respectively, while one-minute host load rose from 10.56 to 15.00.
+  These are local regression observations requiring a reserved-core rerun, not
+  release claims. The maintained Rust safety mirror compiles standalone
+  and passes six tests. Removed generated Julia/Mojo DNA files that did not
+  parse and a Go package containing only empty functions; none was reachable
+  from canonical dispatch.
+
 - Replaced the 2,318-line command-line monolith with a stable
   `sc_neurocore.cli:main` package entry point, a 45-line parser composition
   root, and responsibility-specific compile, deploy, formal, SC-NIR, Studio,
