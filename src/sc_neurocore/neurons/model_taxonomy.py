@@ -45,6 +45,7 @@ _FAMILIES: dict[str, tuple[str, tuple[str, ...]]] = {
             "QuadraticIFNeuron",
             "SFANeuron",
             "StochasticIFNeuron",
+            "StochasticLIFNeuron",
             "ThetaNeuron",
         ),
     ),
