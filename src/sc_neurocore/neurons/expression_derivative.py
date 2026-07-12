@@ -37,7 +37,7 @@ from typing import cast
 import sympy
 
 
-class exprel(sympy.Function):  # noqa: N801 - DSL/print token
+class exprel(sympy.Function):  # type: ignore[misc]  # noqa: N801 - DSL/print token
     """SymPy image of the DSL ``exprel(x) = (exp(x) - 1) / x`` (exprel(0) = 1)."""
 
     def fdiff(self, argindex: int = 1) -> sympy.Expr:
@@ -47,7 +47,7 @@ class exprel(sympy.Function):  # noqa: N801 - DSL/print token
         return _as_expr(numerator / x**2)
 
 
-class sigmoid(sympy.Function):  # noqa: N801 - DSL/print token
+class sigmoid(sympy.Function):  # type: ignore[misc]  # noqa: N801 - DSL/print token
     """SymPy image of the DSL logistic ``sigmoid(x) = 1/(1 + exp(-x))``."""
 
     def fdiff(self, argindex: int = 1) -> sympy.Expr:
@@ -116,12 +116,12 @@ def _as_expr(value: object) -> sympy.Expr:
 
 def _diff(expr: sympy.Expr, symbol: sympy.Expr) -> sympy.Expr:
     """Return ``d(expr)/d(symbol)`` through SymPy's untyped differentiator."""
-    return cast(sympy.Expr, sympy.diff(expr, symbol))  # type: ignore[no-untyped-call] # SymPy API is untyped.
+    return cast(sympy.Expr, sympy.diff(expr, symbol))
 
 
 def _float(value: float) -> sympy.Expr:
     """Return a SymPy float through SymPy's untyped constructor."""
-    return cast(sympy.Expr, sympy.Float(value))  # type: ignore[no-untyped-call] # SymPy API is untyped.
+    return cast(sympy.Expr, sympy.Float(value))
 
 
 def _integer(value: int) -> sympy.Expr:
@@ -131,7 +131,7 @@ def _integer(value: int) -> sympy.Expr:
 
 def _symbol(name: str) -> sympy.Expr:
     """Return a SymPy symbol through SymPy's untyped constructor."""
-    return cast(sympy.Expr, sympy.Symbol(name))  # type: ignore[no-untyped-call] # SymPy API is untyped.
+    return cast(sympy.Expr, sympy.Symbol(name))
 
 
 def _exprel_expr(*args: sympy.Expr) -> sympy.Expr:
@@ -213,16 +213,16 @@ class _Converter:
         return _GrammarPrinter(self._sources).render(expr)
 
 
-class _GrammarPrinter(sympy.printing.str.StrPrinter):
+class _GrammarPrinter(sympy.printing.str.StrPrinter):  # type: ignore[misc]
     """Print SymPy expressions using DSL-grammar tokens and opaque source text."""
 
     def __init__(self, sources: dict[str, str]) -> None:
-        super().__init__()  # type: ignore[no-untyped-call] # SymPy printer base is untyped.
+        super().__init__()
         self._sources = sources
 
     def render(self, expr: sympy.Expr) -> str:
         """Return the DSL string representation of ``expr``."""
-        return str(self.doprint(expr))  # type: ignore[no-untyped-call] # SymPy printer API is untyped.
+        return str(self.doprint(expr))
 
     def _print_Symbol(self, expr: sympy.Symbol) -> str:
         source = self._sources.get(expr.name)
