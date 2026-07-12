@@ -128,6 +128,16 @@ _APPROVED_NOTIMPLEMENTED_GUARDS = {
         "CompilationResult.to_gdsii",
         "num_modulators > 0",
     ),
+    _RaiseSite(
+        "src/sc_neurocore/compiler/verilog_compiler.py",
+        "compile_to_verilog",
+        "substeps > 1 is only supported for edge-crossing",
+    ),
+    _RaiseSite(
+        "src/sc_neurocore/compiler/verilog_compiler.py",
+        "compile_to_verilog",
+        "substeps > 1 is not supported with multiply pipelining",
+    ),
 }
 
 
