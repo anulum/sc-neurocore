@@ -169,66 +169,91 @@ impl Default for RulkovMapNeuron {
     }
 }
 
-/// Ibarz-Tanaka map — piecewise-linear spiking map.
+/// Ibarz-Tanaka (2007) four-branch Rulkov map.
 #[derive(Clone, Debug)]
 pub struct IbarzTanakaMapNeuron {
-    pub x: f64,
-    pub y: f64,
+    pub v: f64,
+    pub u: f64,
     pub alpha: f64,
-    pub beta: f64,
     pub mu: f64,
     pub sigma: f64,
-    pub x_threshold: f64,
-    pub x_reset: f64,
 }
 
 impl IbarzTanakaMapNeuron {
     pub fn new() -> Self {
         Self {
-            x: -1.0,
-            y: -2.5,
-            alpha: 3.65,
-            beta: 0.25,
-            mu: 0.0005,
-            sigma: -1.6,
-            x_threshold: 3.0,
-            x_reset: -1.0,
+            v: -1.0,
+            u: -0.1,
+            alpha: 1.0,
+            mu: 0.001,
+            sigma: 0.1,
         }
     }
-    pub fn step(&mut self, current: f64) -> i32 {
-        let f = if self.x <= 0.0 {
-            self.alpha / (1.0 - self.x)
+
+    fn parameters_are_valid(&self) -> bool {
+        self.alpha.is_finite()
+            && self.mu.is_finite()
+            && self.sigma.is_finite()
+            && self.alpha > 0.0
+            && self.mu > 0.0
+    }
+
+    fn candidate(&self, current: f64) -> Result<(f64, f64, i32), &'static str> {
+        let lower = -1.0 - self.alpha / 2.0;
+        let upper = 1.0 + current + self.u;
+        let v_next = if self.v < lower {
+            -(self.alpha * self.alpha) / 4.0 - self.alpha + current + self.u
+        } else if self.v <= 0.0 {
+            self.alpha * self.v + (self.v + 1.0) * (self.v + 1.0) + current + self.u
+        } else if self.v < upper {
+            upper
         } else {
-            self.alpha + self.beta * self.x
+            -1.0
         };
-        let x_new = f + self.y + current;
-        let y_new = self.y - self.mu * (self.x + 1.0) + self.mu * self.sigma;
-        self.x = x_new;
-        self.y = y_new;
-        if self.x >= self.x_threshold {
-            self.x = self.x_reset;
-            1
-        } else {
-            0
+        let u_next = self.u - self.mu * (self.v + 1.0 - self.sigma);
+        if !v_next.is_finite() || !u_next.is_finite() {
+            return Err("invalid Ibarz-Tanaka map candidate");
         }
+        Ok((v_next, u_next, i32::from(self.v >= upper)))
     }
-    /// Run `n_steps` under a constant input, returning the `x` trace (already
-    /// reset to `x_reset` on spiking steps) and the spike count. Reuses `step`
-    /// so the trace is bit-identical to the per-step path and to the Python
-    /// reference. The final state is left in `self.x` / `self.y`.
-    pub fn simulate(&mut self, n_steps: usize, current: f64) -> (Vec<f64>, i64) {
+
+    /// Checked source-derived update; a rejected step leaves the state intact.
+    pub fn try_step(&mut self, current: f64) -> Result<i32, &'static str> {
+        if !self.v.is_finite() || !self.u.is_finite() || !self.parameters_are_valid() {
+            return Err("invalid Ibarz-Tanaka runtime state");
+        }
+        if !current.is_finite() {
+            return Err("invalid Ibarz-Tanaka current");
+        }
+        let (v_next, u_next, event) = self.candidate(current)?;
+        self.v = v_next;
+        self.u = u_next;
+        Ok(event)
+    }
+
+    /// Legacy infallible engine-class update; invalid input emits no event.
+    pub fn step(&mut self, current: f64) -> i32 {
+        self.try_step(current).unwrap_or(0)
+    }
+
+    /// Run checked Eq. 2-3 iterations and return the post-step `v` trace.
+    pub fn simulate(
+        &mut self,
+        n_steps: usize,
+        current: f64,
+    ) -> Result<(Vec<f64>, i64), &'static str> {
         let mut trace = Vec::with_capacity(n_steps);
-        let mut spikes: i64 = 0;
+        let mut events = 0_i64;
         for _ in 0..n_steps {
-            let spiked = self.step(current);
-            trace.push(self.x);
-            spikes += spiked as i64;
+            events += i64::from(self.try_step(current)?);
+            trace.push(self.v);
         }
-        (trace, spikes)
+        Ok((trace, events))
     }
+
     pub fn reset(&mut self) {
-        self.x = -1.0;
-        self.y = -2.5;
+        self.v = -1.0;
+        self.u = -0.1;
     }
 }
 impl Default for IbarzTanakaMapNeuron {

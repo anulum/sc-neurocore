@@ -4,63 +4,57 @@
 # © Code 2020–2026 Miroslav Šotek. All rights reserved.
 # ORCID: 0009-0009-3560-0851
 # Contact: www.anulum.li | protoscience@anulum.li
-# SC-NeuroCore — Julia acceleration for the Ibarz-Tanaka piecewise-linear map
-
-# Parity contract: `simulate_trace` reproduces
-# `sc_neurocore.neurons.models.ibarz_tanaka_map.IbarzTanakaMapNeuron.simulate`
-# bit-for-bit — the map is exact floating-point arithmetic (one division,
-# additions, multiplications, no transcendental functions), so identical
-# operation order yields an identical trace, spike count and final state.
-#
-# Reference: Ibarz, B., Casado, J.M. & Sanjuán, M.A.F. (2011).
-# Phys. Rep. 501:1-74.
+# SC-NeuroCore — Julia Ibarz-Tanaka 2007 four-branch map
 
 module IbarzTanakaMapAccel
 
 export simulate_trace
 
 """
-    simulate_trace(x0, y0, alpha, beta, mu, sigma, x_threshold, x_reset, n_steps, current)
+    simulate_trace(v0, u0, alpha, mu, sigma, n_steps, current)
 
-Run `n_steps` of the Ibarz-Tanaka map from state `(x0, y0)` under a constant
-input `current`. Returns a named tuple `(trace, spikes, xf, yf)` where
-`trace[t]` is `x` after step `t` (already reset to `x_reset` on a spiking step),
-`spikes` counts threshold crossings, and `(xf, yf)` is the final state.
+Run Ibarz et al. (2007), Eqs. 2-3, and return
+`(trace, events, vf, uf)`. The trace stores the fast state after each
+simultaneous map iteration; events count executions of the reset branch.
 """
 function simulate_trace(
-    x0::Float64,
-    y0::Float64,
+    v0::Float64,
+    u0::Float64,
     alpha::Float64,
-    beta::Float64,
     mu::Float64,
     sigma::Float64,
-    x_threshold::Float64,
-    x_reset::Float64,
     n_steps::Int,
     current::Float64,
 )
+    values = (v0, u0, alpha, mu, sigma, current)
+    all(isfinite, values) || throw(ArgumentError("state, parameters and current must be finite"))
+    alpha > 0.0 || throw(ArgumentError("alpha must be positive"))
+    mu > 0.0 || throw(ArgumentError("mu must be positive"))
+    n_steps >= 0 || throw(ArgumentError("n_steps must be non-negative"))
+
     trace = Vector{Float64}(undef, n_steps)
-    x = x0
-    y = y0
-    spikes = 0
-    for t in 1:n_steps
-        if x <= 0.0
-            f = alpha / (1.0 - x)
+    v = v0
+    u = u0
+    events = 0
+    for step in 1:n_steps
+        lower = -1.0 - alpha / 2.0
+        upper = 1.0 + current + u
+        if v < lower
+            v_next = -(alpha * alpha) / 4.0 - alpha + current + u
+        elseif v <= 0.0
+            v_next = alpha * v + (v + 1.0) * (v + 1.0) + current + u
+        elseif v < upper
+            v_next = upper
         else
-            f = alpha + beta * x
+            v_next = -1.0
+            events += 1
         end
-        x_new = f + y + current
-        y_new = y - mu * (x + 1.0) + mu * sigma
-        y = y_new
-        if x_new >= x_threshold
-            x = x_reset
-            spikes += 1
-        else
-            x = x_new
-        end
-        trace[t] = x
+        u_next = u - mu * (v + 1.0 - sigma)
+        isfinite(v_next) && isfinite(u_next) || throw(OverflowError("map candidate is non-finite"))
+        v, u = v_next, u_next
+        trace[step] = v
     end
-    return (trace = trace, spikes = spikes, xf = x, yf = y)
+    return (trace = trace, events = events, vf = v, uf = u)
 end
 
-end # module IbarzTanakaMapAccel
+end

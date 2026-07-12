@@ -266,6 +266,24 @@ Q16.16 catalogue core and port-only harness; its depth-4 SymbiYosys/Z3 job
 proves bounded reset/event safety, while the 100-iteration co-simulation is the
 behavioural evidence.
 
+### Ibarz-Tanaka four-branch Q16.16 enrolment
+
+The `ibarz_tanaka_map` schema implements Ibarz et al. (2007), Eqs. 2–3:
+constant, parabolic, plateau, and fixed `-1` reset branches for `v`, plus the
+simultaneous `u - mu*(v + 1 - sigma)` slow update. `I` is the paper's `I_v`.
+The reset event is a pre-state level decision `v >= 1 + I + u`; no separate
+threshold, reset parameter, or `beta` belongs to this model.
+
+At `I=0.2` over 30 iterations, hand Python and paired TOML/JSON schema traces
+are identical. The protocol visits the constant branch initially, then 23
+parabolic, four plateau, and three reset branches. Generated Q16.16 RTL
+preserves the complete three-event vector with maximum errors below `0.003`
+for `v` and `0.0001` for `u`.
+
+Q8.8 is invalid because `mu=0.001` quantises to zero. The S5/H1 catalogue job
+therefore uses Q16.16; its depth-4 SymbiYosys/Z3 proof establishes bounded
+reset-spike safety, while this 30-step trajectory is the behavioural evidence.
+
 ### Courbage-Nekorkin map fixed-point trajectory enrolment
 
 The `courage_nekorkin_map` schema reproduces Courbage, Nekorkin, and Vdovin

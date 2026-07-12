@@ -971,7 +971,7 @@
     "python_model_classes": 158,
     "python_model_source_modules": 153,
     "rust_pyo3_model_wrappers": 176,
-    "test_files": 1137
+    "test_files": 1139
   },
   "documentation": {
     "public_pages": [
@@ -3024,6 +3024,7 @@
       "tests/test_cosim_glif.py",
       "tests/test_cosim_hindmarsh_rose.py",
       "tests/test_cosim_hodgkin_huxley.py",
+      "tests/test_cosim_ibarz_tanaka_map.py",
       "tests/test_cosim_izhikevich.py",
       "tests/test_cosim_izhikevich2007.py",
       "tests/test_cosim_lif.py",
@@ -3605,6 +3606,7 @@
       "tests/test_reference_harness.py",
       "tests/test_reference_hindmarsh_rose.py",
       "tests/test_reference_hodgkin_huxley.py",
+      "tests/test_reference_ibarz_tanaka_map.py",
       "tests/test_reference_izhikevich.py",
       "tests/test_reference_izhikevich2007.py",
       "tests/test_reference_lif.py",

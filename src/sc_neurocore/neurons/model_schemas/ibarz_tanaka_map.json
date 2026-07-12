@@ -1,0 +1,39 @@
+{
+  "metadata": {
+    "schema_version": 1,
+    "name": "Ibarz-Tanaka Rulkov Map",
+    "author": "Ibarz, B.; Tanaka, G.; Sanjuan, M.A.F.; Aihara, K.",
+    "year": 2007,
+    "doi": "10.1103/PhysRevE.75.041902",
+    "description": "Self-sustained-oscillation Rulkov map from Ibarz et al. (2007), Eqs. 2-3"
+  },
+  "state": {
+    "v": -1.0,
+    "u": -0.1
+  },
+  "parameters": {
+    "alpha": 1.0,
+    "mu": 0.001,
+    "sigma": 0.1
+  },
+  "integration": {
+    "dt": 1.0,
+    "method": "map"
+  },
+  "dynamics": {
+    "v": "((-(alpha * alpha) / 4.0 - alpha + I + u) if v < (-1.0 - alpha / 2.0) else (alpha * v + (v + 1.0) * (v + 1.0) + I + u if v <= 0.0 else (1.0 + I + u if v < (1.0 + I + u) else -1.0)))",
+    "u": "u - mu * (v + 1.0 - sigma)"
+  },
+  "threshold": {
+    "condition": "v_prev >= (1.0 + I + u_prev)",
+    "detection": "level"
+  },
+  "extensions": {
+    "model_type": "map",
+    "discrete_time": true,
+    "bursting": true,
+    "source_equation_note": "Implements Eqs. 2-3 of DOI 10.1103/PhysRevE.75.041902; beta, a fixed threshold, and a configurable reset are absent from the source model.",
+    "observation_note": "An event marks execution of Eq. 3's fourth branch, which resets v to the source-fixed value -1.",
+    "silicon_cosim_note": "Q16.16 is required because the source mu=0.001 quantises to zero in Q8.8. At I=0.2 over 30 iterations it preserves the exact three-event vector with v error below 0.003 and u error below 0.0001."
+  }
+}

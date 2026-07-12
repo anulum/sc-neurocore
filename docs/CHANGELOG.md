@@ -5,6 +5,30 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+### Ibarz-Tanaka four-branch source-to-silicon correction
+- Replaced the unsupported beta-based rational/linear hybrid with Ibarz,
+  Tanaka, Sanjuan, and Aihara (2007), DOI `10.1103/PhysRevE.75.041902`, Eqs.
+  2–3: four fast-map branches and the simultaneous slow update
+  `u_next = u - mu*(v + 1 - sigma)`. Events now identify execution of the
+  source's fixed `-1` reset branch; the stale 2011 review citation, `beta`,
+  configurable threshold, and configurable reset were removed.
+- Rebuilt the fail-closed Python, Rust engine, Rust safety, Go, Julia, and Mojo
+  paths around the same recurrence. Rust, Julia, and Go are bit-exact across
+  the 1,000-step `I=0/0.2/1` envelope; Mojo preserves event vectors below a
+  measured `1.5e-8` absolute band. The source-hashed 21-call pinned benchmark
+  at `I=0.2` records 33 events in every lane. The host had no kernel-isolated
+  CPU set and high load, so its timings are local regression evidence.
+- Added paired TOML/JSON schemas and an independently re-derived DOI reference.
+  Hand/TOML/JSON agree exactly. Over the bounded 30-step `I=0.2` co-simulation,
+  Q16.16 RTL preserves all three reset events with maximum `v/u` errors below
+  `0.003/0.0001` while exercising every source branch. Q8.8 is invalid because
+  `mu=0.001` quantises to zero.
+- The S5/H1 descriptor, readiness evidence, generated Q16.16 catalogue core,
+  and depth-4 Z3 proof are cross-wired. The polyglot-complete model count is
+  unchanged; schema-gap counts move to `33 / 120 / 122`, the catalogue
+  inventory moves to 26, and the whole HDL inventory moves to 63 jobs / 211
+  statements.
+
 ### Chiplet responsibility modularisation
 - Replaced the 1,744-line chiplet implementation and 1,223-line primary test
   file with a 98-line compatibility facade, seven focused public-responsibility

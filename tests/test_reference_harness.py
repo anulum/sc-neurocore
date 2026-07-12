@@ -42,6 +42,7 @@ _DETERMINISTIC_SCHEMA_TRACES = {
     "hodgkin_huxley": "hodgkin_huxley_driven_spiking_doi",
     "izhikevich": "izhikevich_regular_spiking_doi",
     "izhikevich2007": "izhikevich2007_regular_spiking_doi",
+    "ibarz_tanaka_map": "ibarz_tanaka_map_2007_doi",
     "lapicque": "lapicque_constant_current_closed_form",
     "lif": "lif_constant_current_closed_form",
     "mckean": "mckean_driven_oscillation_doi",

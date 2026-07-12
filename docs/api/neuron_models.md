@@ -193,7 +193,7 @@ descriptor reaches the catalogue or Studio browser surface.
 |-------------|-----------|-----------|
 | `ChialvoMapNeuron` | `ChialvoMapNeuron` | Chialvo 1995 |
 | `RulkovMapNeuron` | `RulkovMapNeuron` | Rulkov 2001 |
-| `IbarzTanakaMapNeuron` | `IbarzTanakaMapNeuron` | Ibarz et al. 2011 |
+| `IbarzTanakaMapNeuron` | `IbarzTanakaMapNeuron` | Ibarz, Tanaka, Sanjuan & Aihara 2007, Eqs. 2–3 |
 | `MedvedevMapNeuron` | `MedvedevMapNeuron` | Medvedev 2005 slow-calcium first-return reduction |
 | `CazellesMapNeuron` | `CazellesMapNeuron` | Cazelles et al. 2001 |
 | `CourageNekorkinMapNeuron` | `CourageNekorkinMapNeuron` | Courbage, Nekorkin & Vdovin 2007 |

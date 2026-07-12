@@ -74,7 +74,7 @@ SC-NeuroCore-specific.
 | Python models | **158 lazy-loaded classes / 153 source modules** | 11 | 6 | Custom eq. | 3 |
 | Rust/compiled models | **175 Rust PyO3 wrappers / 161-model NetworkRunner** | — | — | C++ codegen | — |
 | Hardware emulators | **9** | — | — | — | Loihi only |
-| Formal verification | **62 SymbiYosys proof jobs and 210 formal statements (180 assert, 7 assume, 23 cover)** | — | — | — | — |
+| Formal verification | **63 SymbiYosys proof jobs and 211 formal statements (181 assert, 7 assume, 23 cover)** | — | — | — | — |
 | Train-to-FPGA export | **Yes** | No | No | No | No |
 
 ## Chialvo map polyglot batch loop
@@ -119,3 +119,25 @@ claiming an isolated measurement.
 The result, source hashes, runtime versions, affinity, parity, and final state
 are committed in `benchmarks/results/bench_medvedev_map.json`. These are
 host-specific batch timings, not portable single-step latency claims.
+
+## Ibarz-Tanaka four-branch map parity horizon
+
+The corrected `benchmarks/bench_ibarz_tanaka_map.py` measures the source-derived
+Ibarz et al. (2007) recurrence over its committed 1,000-iteration `I=0.2`
+parity horizon, using 21 calls per backend. The run was pinned to logical CPU 10
+on the same i5-11600K host under the `powersave` governor. The host reported no
+kernel-isolated CPU set and high concurrent load.
+
+| Backend | Median call | Speed-up vs Python | Maximum trace difference | Events |
+|---|---:|---:|---:|---:|
+| Rust | 0.079827 ms | 11.28× | `0` | 33 |
+| Mojo | 0.148605 ms | 6.06× | `6.883e-15` | 33 |
+| Go | 0.242630 ms | 3.71× | `0` | 33 |
+| Julia | 0.249030 ms | 3.62× | `0` | 33 |
+| Python | 0.900612 ms | 1.00× | `0` | 33 |
+
+Rust, Julia, and Go are bit-exact. Mojo is event-exact over the enrolled
+horizon, but FMA-level differences can alter this sensitive map's branch
+sequence over much longer runs; indefinite trajectory parity is not claimed.
+The complete host metadata and source hashes are in
+`benchmarks/results/bench_ibarz_tanaka_map.json`.

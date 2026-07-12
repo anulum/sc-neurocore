@@ -4,74 +4,69 @@
 // © Code 2020–2026 Miroslav Šotek. All rights reserved.
 // ORCID: 0009-0009-3560-0851
 // Contact: www.anulum.li | protoscience@anulum.li
-// SC-NeuroCore — Rust safety for ibarz_tanaka_map
+// SC-NeuroCore — Rust safety kernel for the Ibarz-Tanaka 2007 map
 
+/// Four-branch Rulkov map from Ibarz et al. (2007), Eqs. 2-3.
 #[derive(Debug, Clone)]
 pub struct IbarzTanakaMapNeuron {
-    pub x: f64,
-    pub y: f64,
+    pub v: f64,
+    pub u: f64,
     pub alpha: f64,
-    pub beta: f64,
     pub mu: f64,
     pub sigma: f64,
-    pub x_threshold: f64,
-    pub x_reset: f64,
 }
 
 impl IbarzTanakaMapNeuron {
     pub fn new() -> Self {
         Self {
-            x: -1.0_f64,
-            y: -2.5_f64,
-            alpha: 3.65_f64,
-            beta: 0.25_f64,
-            mu: 0.0005_f64,
-            sigma: -1.6_f64,
-            x_threshold: 3.0_f64,
-            x_reset: -1.0_f64,
+            v: -1.0,
+            u: -0.1,
+            alpha: 1.0,
+            mu: 0.001,
+            sigma: 0.1,
         }
     }
 
-    /// Piecewise fast map `f` (Ibarz-Tanaka modified Rulkov map, eq. from
-    /// models/ibarz_tanaka_map.py): a rational branch for the resting side and a
-    /// linear branch for the depolarised side.
-    pub fn f(&self, x: f64) -> f64 {
-        if x <= 0.0 {
-            // For x <= 0 the denominator 1 - x is >= 1, so the rational branch is
-            // finite for any finite x (no division by a vanishing denominator).
-            self.alpha / (1.0 - x)
+    fn candidate(&self, current: f64) -> Option<(f64, f64, i32)> {
+        let lower = -1.0 - self.alpha / 2.0;
+        let upper = 1.0 + current + self.u;
+        let v_next = if self.v < lower {
+            -(self.alpha * self.alpha) / 4.0 - self.alpha + current + self.u
+        } else if self.v <= 0.0 {
+            self.alpha * self.v + (self.v + 1.0) * (self.v + 1.0) + current + self.u
+        } else if self.v < upper {
+            upper
         } else {
-            self.alpha + self.beta * x
-        }
+            -1.0
+        };
+        let u_next = self.u - self.mu * (self.v + 1.0 - self.sigma);
+        (v_next.is_finite() && u_next.is_finite()).then_some((
+            v_next,
+            u_next,
+            i32::from(self.v >= upper),
+        ))
     }
 
-    pub fn step(&mut self, i_ext: f64) -> i32 {
-        if !validate_ibarz_tanaka_map(self) || !i_ext.is_finite() {
-            return 0;
+    /// Evaluate one checked source step and preserve state on failure.
+    pub fn try_step(&mut self, current: f64) -> Result<i32, &'static str> {
+        if !validate_ibarz_tanaka_map(self) || !current.is_finite() {
+            return Err("invalid Ibarz-Tanaka runtime state");
         }
-        // Both updates use the OLD x (the Python computes x_new and y_new before
-        // reassigning self.x), and the arithmetic stays as separate IEEE operations.
-        let x_new = self.f(self.x) + self.y + i_ext;
-        let y_new = self.y - self.mu * (self.x + 1.0) + self.mu * self.sigma;
-        if !x_new.is_finite() || !y_new.is_finite() {
-            return 0;
-        }
-        self.x = x_new;
-        self.y = y_new;
-        // Reset-on-spike: a threshold crossing hard-resets x to x_reset.
-        if self.x >= self.x_threshold {
-            self.x = self.x_reset;
-            1
-        } else {
-            0
-        }
+        let (v_next, u_next, event) = self
+            .candidate(current)
+            .ok_or("invalid Ibarz-Tanaka candidate")?;
+        self.v = v_next;
+        self.u = u_next;
+        Ok(event)
+    }
+
+    pub fn step(&mut self, current: f64) -> i32 {
+        self.try_step(current).unwrap_or(0)
     }
 
     pub fn reset(&mut self) {
-        // Mirror models/ibarz_tanaka_map.py `reset`: restore only the state
-        // variables x and y, never the parameters.
-        self.x = -1.0_f64;
-        self.y = -2.5_f64;
+        self.v = -1.0;
+        self.u = -0.1;
     }
 }
 
@@ -82,114 +77,76 @@ impl Default for IbarzTanakaMapNeuron {
 }
 
 pub fn validate_ibarz_tanaka_map(state: &IbarzTanakaMapNeuron) -> bool {
-    state.x.is_finite()
-        && state.y.is_finite()
+    state.v.is_finite()
+        && state.u.is_finite()
         && state.alpha.is_finite()
-        && state.beta.is_finite()
         && state.mu.is_finite()
         && state.sigma.is_finite()
-        && state.x_threshold.is_finite()
-        && state.x_reset.is_finite()
+        && state.alpha > 0.0
+        && state.mu > 0.0
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
 
-    // Independent re-derivation of one Ibarz-Tanaka map iteration, mirroring
-    // models/ibarz_tanaka_map.py step() exactly (both updates use the old x).
-    fn map_reference(n: &IbarzTanakaMapNeuron, current: f64) -> (f64, f64) {
-        let fx = if n.x <= 0.0 {
-            n.alpha / (1.0 - n.x)
+    fn reference_step(state: &IbarzTanakaMapNeuron, current: f64) -> (f64, f64, i32) {
+        let lower = -1.0 - state.alpha / 2.0;
+        let upper = 1.0 + current + state.u;
+        let v_next = if state.v < lower {
+            -(state.alpha * state.alpha) / 4.0 - state.alpha + current + state.u
+        } else if state.v <= 0.0 {
+            state.alpha * state.v + (state.v + 1.0) * (state.v + 1.0) + current + state.u
+        } else if state.v < upper {
+            upper
         } else {
-            n.alpha + n.beta * n.x
+            -1.0
         };
         (
-            fx + n.y + current,
-            n.y - n.mu * (n.x + 1.0) + n.mu * n.sigma,
+            v_next,
+            state.u - state.mu * (state.v + 1.0 - state.sigma),
+            i32::from(state.v >= upper),
         )
     }
 
     #[test]
-    fn test_ibarz_tanaka_map_new() {
+    fn defaults_match_the_source_example() {
         let state = IbarzTanakaMapNeuron::new();
+        assert_eq!(
+            (state.v, state.u, state.alpha, state.mu, state.sigma),
+            (-1.0, -0.1, 1.0, 0.001, 0.1)
+        );
         assert!(validate_ibarz_tanaka_map(&state));
     }
 
     #[test]
-    fn test_ibarz_tanaka_map_step() {
-        let mut state = IbarzTanakaMapNeuron::new();
-        let spike = state.step(10.0);
-        assert!(spike == 0 || spike == 1);
-    }
-
-    #[test]
-    fn test_ibarz_tanaka_map_matches_reference_both_branches() {
-        // x = -1 (<= 0): the rational fast branch. x = 0.5 (> 0): the linear branch. Both chosen
-        // with a drive that keeps x_new below x_threshold, so no reset intervenes and the raw map
-        // arithmetic can be checked exactly.
-        for (x0, current) in [(-1.0_f64, 0.0), (0.5, 0.0)] {
+    fn all_four_branches_match_an_independent_recurrence() {
+        for v in [-2.0, -1.0, 0.5, 1.5] {
             let mut state = IbarzTanakaMapNeuron {
-                x: x0,
+                v,
+                u: -0.1,
                 ..IbarzTanakaMapNeuron::new()
             };
-            let (xe, ye) = map_reference(&state, current);
-            assert!(xe < state.x_threshold, "no spike for x0={x0}");
-            state.step(current);
-            assert_eq!(state.x, xe, "x for x0={x0}");
-            assert_eq!(state.y, ye, "y for x0={x0}");
+            let expected = reference_step(&state, 0.2);
+            assert_eq!(state.try_step(0.2), Ok(expected.2));
+            assert_eq!((state.v, state.u), (expected.0, expected.1));
         }
     }
 
     #[test]
-    fn test_ibarz_tanaka_map_spike_resets_to_x_reset() {
-        // A strong drive pushes x_new past x_threshold, so the step must hard-reset x to x_reset.
-        let mut state = IbarzTanakaMapNeuron {
-            x: 0.5,
-            y: 0.0,
-            ..IbarzTanakaMapNeuron::new()
-        };
-        assert_eq!(state.step(3.0), 1);
-        assert_eq!(state.x, state.x_reset);
-    }
-
-    #[test]
-    fn test_ibarz_tanaka_map_invalid_current_preserves_state() {
+    fn invalid_input_preserves_state() {
         let mut state = IbarzTanakaMapNeuron::new();
-        state.x = -0.4;
-        state.y = -2.0;
-        let before = (state.x, state.y);
-        assert_eq!(state.step(f64::NAN), 0);
-        assert_eq!((state.x, state.y), before);
+        let before = (state.v, state.u);
+        assert!(state.try_step(f64::NAN).is_err());
+        assert_eq!((state.v, state.u), before);
     }
 
     #[test]
-    fn test_ibarz_tanaka_map_overflow_preserves_state() {
-        let mut state = IbarzTanakaMapNeuron::new();
-        // The linear branch alpha + beta*x overflows to +inf → fail-closed, state untouched.
-        state.x = 1.0e308;
-        state.beta = 1.0e300;
-        let before = (state.x, state.y);
-        assert_eq!(state.step(0.0), 0);
-        assert_eq!((state.x, state.y), before);
-    }
-
-    #[test]
-    fn matches_python_golden_spike_count() {
-        // Parity with models/ibarz_tanaka_map.py (default parameters). The Ibarz-Tanaka map is a
-        // modified Rulkov 2-D map (a rational/linear piecewise fast variable plus a slow linear
-        // adaptation) with a reset-on-spike (x hard-resets to x_reset when it reaches x_threshold).
-        // Every operation is exact IEEE arithmetic, so the orbit is bit-for-bit across the
-        // exact-arithmetic backends (Go, Julia, Rust) and the spike count is an exact observable;
-        // the per-spike reset re-synchronises the trajectory, so the FMA-fusing Mojo backend also
-        // reproduces the same counts. Drive gates the regime around rheobase (~1.5): silent at
-        // I=1.0, 69 spikes at I=1.5, a 235-spike burst train at I=2.0, each over 2000 iterations.
-        // Verified python-vs-rust max|Δ|=0 (and python-vs-mojo counts equal) via
-        // test_ibarz_tanaka_backends.py.
-        for (current, want) in [(1.0_f64, 0_usize), (1.5, 69), (2.0, 235)] {
+    fn source_protocol_golden_counts_are_stable() {
+        for (current, expected) in [(0.0, 9), (0.2, 33), (1.0, 195)] {
             let mut state = IbarzTanakaMapNeuron::new();
-            let spikes = (0..2000).filter(|_| state.step(current) == 1).count();
-            assert_eq!(spikes, want, "I={current}");
+            let events: i32 = (0..1000).map(|_| state.step(current)).sum();
+            assert_eq!(events, expected, "I={current}");
         }
     }
 }

@@ -21,7 +21,7 @@ extern const char *_GoStringPtr(_GoString_ s);
 /* Start of preamble from import "C" comments.  */
 
 
-#line 23 "ibarz_tanaka_map.go"
+#line 12 "ibarz_tanaka_map.go"
 
 #include <stdint.h>
 
@@ -87,7 +87,7 @@ typedef struct { void *data; GoInt len; GoInt cap; } GoSlice;
 extern "C" {
 #endif
 
-extern long long int ibarz_tanaka_map_simulate_c(double x0, double y0, double alpha, double beta, double mu, double sigma, double xThreshold, double xReset, int nSteps, double current, double* tracePtr);
+extern long long int ibarz_tanaka_map_simulate_c(double v0, double u0, double alpha, double mu, double sigma, int nSteps, double current, double* tracePtr);
 
 #ifdef __cplusplus
 }

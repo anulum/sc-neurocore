@@ -82,6 +82,24 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
   22.27% lower median import cost, effectively unchanged process wall time,
   and unchanged RSS versus the parent flat module, with non-exclusive CPU and
   host-load limitations preserved in the evidence artefact.
+- Replaced the unsupported Ibarz-Tanaka beta-based rational/linear hybrid with
+  the four-branch fast/slow map from Ibarz, Tanaka, Sanjuan, and Aihara (2007),
+  DOI `10.1103/PhysRevE.75.041902`, Eqs. 2–3. The stale review citation and
+  non-source `beta`, threshold, and reset parameters were removed; an event is
+  now execution of the source's fixed `-1` reset branch.
+- Rebuilt the checked Python, Rust engine, Rust safety, Go, Julia, and Mojo
+  paths. Rust, Julia, and Go are bit-exact on the enrolled 1,000-step envelope;
+  Mojo preserves event vectors within its measured absolute-error band. A
+  source-hashed, CPU-pinned 21-call benchmark at `I=0.2` records 33 events in
+  every lane and discloses the host's high load and absent kernel isolation.
+- Added paired schemas, an independent DOI reference contract, and bounded
+  Q16.16 co-simulation. Hand/TOML/JSON trajectories are exact; the 30-step RTL
+  run exercises all four branches and preserves all three reset events with
+  `v/u` errors below `0.003/0.0001`. Q8.8 cannot represent `mu=0.001`.
+- Promoted the corrected model to S5/H1 with a generated Q16.16 catalogue core
+  and depth-4 SymbiYosys/Z3 safety proof. Schema coverage moves to 33 models;
+  the catalogue moves to 26 jobs and the full HDL tree to 63 jobs / 211
+  statements.
 - Replaced the falsely attributed Medvedev tent map with the scalar
   slow-calcium first-return construction derived in Section 4 of Medvedev
   (2005), DOI `10.1016/j.physd.2005.01.021`. The three source regions follow

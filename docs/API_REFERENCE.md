@@ -21677,21 +21677,27 @@ window_size : int
 ## Module `neurons.models.ibarz_tanaka_map`
 
 ### Class `IbarzTanakaMapNeuron`
-Ibarz et al. 2007 / Tanaka — piecewise-linear bursting map.
+Ibarz et al. (2007) four-branch Rulkov map.
 
-x(n+1) = f(x(n)) + y(n) + I
-y(n+1) = y(n) - mu*(x(n) + 1) + mu*sigma
+Parameters
+----------
+v, u : float
+    Fast membrane-like state and slow recovery state. The defaults reproduce
+    the map placement used for Fig. 2(a) of the source at zero current.
+alpha : float
+    Fast-map geometry parameter from Eq. 3.
+mu : float
+    Positive slow timescale from Eq. 2.
+sigma : float
+    Slow-nullcline offset from Eq. 2.
 
-f(x) = alpha/(1-x)       if x <= 0
-     = alpha + beta*x     if 0 < x < alpha+beta (spiking)
-Reset x -> x_reset when x >= x_threshold.
-
-Reference: Ibarz, B. et al. (2011). Phys. Rep. 501:1–74.
-
+- **__post_init__**()
 - **step**(current)
+  - Advance Eqs. 2-3 once and return the reset-branch event.
 - **simulate**(n_steps, current, backend)
-  - Advance ``n_steps`` from the current state, returning ``(trace, spikes)``.
+  - Advance the map and return the fast-state trace plus event count.
 - **reset**()
+  - Restore the source example's initial state without changing parameters.
 
 ---
 

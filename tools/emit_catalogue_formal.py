@@ -52,6 +52,7 @@ CLASS_TO_SCHEMA: dict[str, str] = {
     "GLIFNeuron": "glif",
     "HindmarshRoseNeuron": "hindmarsh_rose",
     "HodgkinHuxleyNeuron": "hodgkin_huxley",
+    "IbarzTanakaMapNeuron": "ibarz_tanaka_map",
     "Izhikevich2007Neuron": "izhikevich2007",
     "LapicqueNeuron": "lapicque",
     "McKeanNeuron": "mckean",
@@ -75,6 +76,7 @@ DEPTH_BY_SCHEMA: dict[str, int] = {
     "courage_nekorkin_map": 4,
     "ermentrout_kopell_map_neuron": 4,
     "hodgkin_huxley": 4,
+    "ibarz_tanaka_map": 4,
     "morris_lecar": 3,
     "fitzhugh_nagumo": 4,
     "fitzhugh_rinzel": 4,
@@ -110,13 +112,16 @@ MINIMAL_SAFETY_SCHEMAS: frozenset[str] = frozenset(
         "terman_wang",
         "connor_stevens",
         "hodgkin_huxley",
+        "ibarz_tanaka_map",
     }
 )
 
 # Width overrides are additive: every pre-existing catalogue job retains Q8.8.
 # Medvedev needs Q16.16 because its calibrated d=2271.19 cannot fit Q8.8.
+# Ibarz-Tanaka needs Q16.16 because its source mu=0.001 rounds to zero in Q8.8.
 DEFAULT_PRECISION = (16, 8)
 PRECISION_BY_SCHEMA: dict[str, tuple[int, int]] = {
+    "ibarz_tanaka_map": (32, 16),
     "medvedev_map": (32, 16),
 }
 

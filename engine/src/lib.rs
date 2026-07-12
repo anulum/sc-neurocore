@@ -6090,39 +6090,32 @@ fn py_rulkov_map_simulate<'py>(
 
 /// Parity contract with
 /// `sc_neurocore.neurons.models.ibarz_tanaka_map.IbarzTanakaMapNeuron.simulate`:
-/// for the same parameters and constant input the returned `x` trace (already
-/// reset on spiking steps), spike count, and final `(x, y)` state are
-/// bit-identical to the Python reference (the map is exact floating-point
-/// arithmetic — one division, additions and multiplications, no transcendental
-/// functions).
+/// for the same parameters and constant input the returned `v` trace, reset-
+/// branch event count, and final `(v, u)` state are bit-identical to the Python
+/// reference. The implementation follows Eqs. 2-3 of Ibarz et al. (2007).
 #[pyfunction]
-#[pyo3(signature = (x0, y0, alpha, beta, mu, sigma, x_threshold, x_reset, n_steps, current))]
-#[allow(clippy::too_many_arguments)]
+#[pyo3(signature = (v0, u0, alpha, mu, sigma, n_steps, current))]
 fn py_ibarz_tanaka_map_simulate<'py>(
     py: Python<'py>,
-    x0: f64,
-    y0: f64,
+    v0: f64,
+    u0: f64,
     alpha: f64,
-    beta: f64,
     mu: f64,
     sigma: f64,
-    x_threshold: f64,
-    x_reset: f64,
     n_steps: usize,
     current: f64,
-) -> (Bound<'py, PyArray1<f64>>, i64, f64, f64) {
+) -> PyResult<(Bound<'py, PyArray1<f64>>, i64, f64, f64)> {
     let mut neuron = crate::neurons::IbarzTanakaMapNeuron {
-        x: x0,
-        y: y0,
+        v: v0,
+        u: u0,
         alpha,
-        beta,
         mu,
         sigma,
-        x_threshold,
-        x_reset,
     };
-    let (trace, spikes) = neuron.simulate(n_steps, current);
-    (trace.into_pyarray(py), spikes, neuron.x, neuron.y)
+    let (trace, events) = neuron
+        .simulate(n_steps, current)
+        .map_err(PyFloatingPointError::new_err)?;
+    Ok((trace.into_pyarray(py), events, neuron.v, neuron.u))
 }
 
 /// N-step Medvedev (2005) slow-calcium first-return simulation.

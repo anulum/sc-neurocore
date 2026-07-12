@@ -428,19 +428,6 @@
     "verified_utc": "2026-07-11T09:31:35+00:00",
     "year_match": true
   },
-  "10.1016/j.physrep.2010.12.003": {
-    "author_match": true,
-    "model": "IbarzTanakaMapNeuron",
-    "registry": "crossref",
-    "registry_first_author": "ibarz",
-    "registry_year": 2011,
-    "resolves": true,
-    "title": "Map-based models in neuronal dynamics",
-    "translation": false,
-    "verified": true,
-    "verified_utc": "2026-07-11T09:31:35+00:00",
-    "year_match": true
-  },
   "10.1016/j.tins.2009.05.001": {
     "author_match": true,
     "model": "AstrocyteLIFNeuron",
@@ -751,6 +738,19 @@
     "translation": false,
     "verified": true,
     "verified_utc": "2026-07-11T09:31:35+00:00",
+    "year_match": true
+  },
+  "10.1103/PhysRevE.75.041902": {
+    "author_match": true,
+    "model": "IbarzTanakaMapNeuron",
+    "registry": "crossref",
+    "registry_first_author": "ibarz",
+    "registry_year": 2007,
+    "resolves": true,
+    "title": "Sensitivity versus resonance in two-dimensional spiking-bursting neuron models",
+    "translation": false,
+    "verified": true,
+    "verified_utc": "2026-07-12T21:53:58+00:00",
     "year_match": true
   },
   "10.1109/AICAS51828.2021.9458572": {

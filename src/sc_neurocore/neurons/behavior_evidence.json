@@ -770,11 +770,12 @@
       "behavior_tags": [
         "adapting",
         "excitable",
+        "irregular",
         "rate-coded",
         "tonic"
       ],
       "drivable": true,
-      "result_sha256": "cd8958874cbcbfac93f09cfac928f491c3b026234df1f63210d4ed491759abc9",
+      "result_sha256": "2ef6ae5c8d34d408d5c8c948db49a19a629af611148158233184b9458a0fbedc",
       "stochastic": false
     },
     "IhNeuron": {
@@ -1630,7 +1631,7 @@
       "stochastic": false
     }
   },
-  "result_sha256": "437a950acdd6d3a3c532e7d1aab79a969182b15c904e9d1fb80f53fdeafb556f",
+  "result_sha256": "9e27067ad16f9009441952c03660fc86837d25839c0043cc3bdf1106f07eff35",
   "schema_version": "studio.behavior-probe.v1",
   "sweep": {
     "currents": [

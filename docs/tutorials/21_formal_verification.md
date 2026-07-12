@@ -4,7 +4,7 @@
 
 Formal verification proves that hardware properties hold for **all
 possible inputs**, not just a finite test set. SC-NeuroCore currently ships
-62 SymbiYosys proof jobs and 210 formal statements (180 assert, 7 assume,
+63 SymbiYosys proof jobs and 211 formal statements (181 assert, 7 assume,
 23 cover) across the HDL formal tree.
 
 **Prerequisites**: [SymbiYosys](https://symbiyosys.readthedocs.io/),
@@ -24,13 +24,13 @@ The current inventory is:
 
 | Inventory | Count |
 |-----------|------:|
-| SymbiYosys `.sby` proof jobs | 62 |
-| `assert(...)` statements | 180 |
+| SymbiYosys `.sby` proof jobs | 63 |
+| `assert(...)` statements | 181 |
 | `assume(...)` statements | 7 |
 | `cover(...)` statements | 23 |
-| Total formal statements | 210 |
+| Total formal statements | 211 |
 
-**Total: 62 SymbiYosys proof jobs and 210 formal statements (180 assert, 7 assume, 23 cover).**
+**Total: 63 SymbiYosys proof jobs and 211 formal statements (181 assert, 7 assume, 23 cover).**
 
 The larger proof-job set covers the original stochastic-computing RTL blocks
 plus timing, masking, controller, queue, and sensor wrappers added after the
@@ -59,6 +59,13 @@ the Medvedev job is deliberately Q16.16 because its calibrated
 ```bash
 cd hdl/formal/catalogue
 sby -f sc_medvedev_map.sby
+```
+
+The Ibarz-Tanaka job is also Q16.16: the source timescale `mu=0.001`
+quantises to zero in Q8.8. Its depth-4 Z3 job is:
+
+```bash
+sby -f sc_ibarz_tanaka_rulkov_map.sby
 ```
 
 ## 3. Anatomy of a formal wrapper

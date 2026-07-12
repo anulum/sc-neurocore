@@ -417,7 +417,7 @@ voltage-dependent rate functions). Other rows are earlier criterion medians.
 
 | Model | Steps | Median | Per step | Notes |
 |-------|-------|--------|----------|-------|
-| Ibarz-Tanaka | 100k | 803 µs | **8.0 ns** | Chaotic bursting map |
+| Ibarz-Tanaka | 1k | 0.079827 ms | **79.8 ns** | Controlled PyO3 batch; source four-branch map |
 | Cazelles | 100k | 955 µs | **9.6 ns** | Coupled map lattice |
 | Medvedev | 500k | 10.799 ms | **21.6 ns** | Controlled PyO3 batch; slow-calcium first-return map |
 | Courage-Nekorkin | 100k | 1.34 ms | **13.4 ns** | FHN-like map |
@@ -431,6 +431,14 @@ The source-derived recurrence produces 375,000 events in every Python, Rust,
 Julia, Go, and Mojo lane over 500,000 iterations at `I=2`. Rust's recorded
 median is 10.799 ms; the complete host metadata, source hashes, measured order,
 and parity fields are in `benchmarks/results/bench_medvedev_map.json`.
+
+The corrected Ibarz-Tanaka row supersedes the earlier rational/linear-kernel
+Criterion result. It comes from the 21-call controlled parity artefact at
+`I=0.2`, where all five lanes report 33 source reset events over 1,000
+iterations. Rust's median is 0.079827 ms; the recorded process is CPU-pinned,
+but the host is loaded and has no kernel-isolated CPU set. Source hashes and
+the complete environment are in
+`benchmarks/results/bench_ibarz_tanaka_map.json`.
 
 ### Sensory — Additional (`neurons/sensory.rs`)
 

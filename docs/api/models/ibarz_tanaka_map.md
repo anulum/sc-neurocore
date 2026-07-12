@@ -1,170 +1,160 @@
 # IbarzTanakaMapNeuron
 
-**Module:** `sc_neurocore.neurons.models.ibarz_tanaka_map`
-**Reference:** Ibarz et al. 2007
-**Family:** Map-based (piecewise-linear bursting)
-**State variables:** `x` (fast, ≈voltage), `y` (slow, ≈adaptation)
+`IbarzTanakaMapNeuron` implements the four-branch fast/slow map analysed by
+Ibarz, Tanaka, Sanjuan, and Aihara (2007). It is a simultaneous discrete map,
+not the rational/linear hybrid formerly stored under this class name.
 
-## Equations
+**Python:** `sc_neurocore.neurons.models.ibarz_tanaka_map.IbarzTanakaMapNeuron`
 
-$$x_{n+1} = f(x_n) + y_n + I$$
-$$y_{n+1} = y_n - \mu(x_n + 1) + \mu\sigma$$
+**Rust engine:** `engine/src/neurons/maps.rs::IbarzTanakaMapNeuron`
 
-$$f(x) = \begin{cases} \alpha/(1-x) & x \leq 0 \\ \alpha + \beta x & x > 0 \end{cases}$$
+**Reference:** B. Ibarz, G. Tanaka, M. A. F. Sanjuan, and K. Aihara,
+*Sensitivity versus resonance in two-dimensional spiking-bursting neuron
+models*, Physical Review E 75, 041902 (2007),
+[DOI 10.1103/PhysRevE.75.041902](https://doi.org/10.1103/PhysRevE.75.041902).
 
-Spike: $x \geq x_\theta$, reset $x \to x_{reset}$.
+## Source recurrence
 
-## Parameters
+For the paper's external input (I_v), let (h_n=I_v+u_n). Equations 2–3 give
 
-| Parameter | Default | Description |
-|-----------|---------|-------------|
-| `alpha` | 3.65 | Piecewise map amplitude |
-| `beta` | 0.25 | Linear spiking slope |
-| `mu` | 0.0005 | Slow time-scale |
-| `sigma` | -1.6 | Slow variable target |
-| `x_threshold` | 3.0 | Spike threshold |
-| `x_reset` | -1.0 | Post-spike reset |
+\[
+v_{n+1}=
+\begin{cases}
+-\alpha^2/4-\alpha+h_n,
+    & v_n < -1-\alpha/2,\\
+\alpha v_n+(v_n+1)^2+h_n,
+    & -1-\alpha/2 \le v_n \le 0,\\
+1+h_n,
+    & 0 < v_n < 1+h_n,\\
+-1,
+    & v_n \ge 1+h_n,
+\end{cases}
+\]
 
-## Behaviour
+and
 
-- **Discrete map:** No ODE — iterative, computationally cheap.
-- **Piecewise-linear:** f(x) has a singularity at x=1 (from left),
-  producing sharp spike onset. Linear spiking phase above x=0.
-- **Bursting:** Slow y variable (µ=0.0005) modulates burst-pause.
-- **Deterministic:** Fully deterministic map.
-- **Efficient:** Single evaluation per step — ideal for large networks.
+\[
+u_{n+1}=u_n-\mu(v_n+1-\sigma).
+\]
 
-## Polyglot acceleration
+Both candidates use the pre-step `(v, u)` state. `step()` and `simulate()`
+therefore commit the two states simultaneously. The Python `current` argument
+is (I_v).
 
-A single `step` is trivial, but `simulate(n_steps, current, backend=...)` is a
-sequential recurrence (each step depends on the previous) that does not
-vectorise — a compiled inner loop genuinely beats Python. The kernel carries a
-full polyglot chain:
+## Event convention
+
+An event is execution of the fourth source branch:
+
+\[
+e_n=\mathbf{1}[v_n\ge 1+I_v+u_n].
+\]
+
+This is a level decision on the pre-step state and produces the source's fixed
+`v_next = -1` return. There is no separate threshold, configurable reset, or
+`beta` parameter.
+
+## Defaults
+
+| Field | Default | Meaning |
+|---|---:|---|
+| `v` | `-1.0` | Initial fast state |
+| `u` | `-0.1` | Initial slow state, matching the paper's illustrated map placement |
+| `alpha` | `1.0` | Fast-map geometry parameter |
+| `mu` | `0.001` | Positive slow timescale |
+| `sigma` | `0.1` | Slow-nullcline offset |
+
+Construction, `step()`, and `simulate()` reject non-finite state, parameters,
+or input. `alpha` and `mu` must be positive. Candidate validation happens
+before mutation, so a rejected step preserves both states.
+
+## Python API
 
 ```python
+from sc_neurocore.neurons.models.ibarz_tanaka_map import IbarzTanakaMapNeuron
+
 neuron = IbarzTanakaMapNeuron()
-trace, spikes = neuron.simulate(2_000_000, current=3.0)            # auto -> Rust
-trace, spikes = neuron.simulate(2_000_000, 3.0, backend="go")     # force a backend
+trace, events = neuron.simulate(1_000, current=0.2, backend="auto")
+
+assert events == 33
+assert neuron.v == -1.017019564883986
+assert neuron.u == -0.199138284637132
 ```
 
-`backend` accepts `"auto" | "rust" | "julia" | "go" | "mojo" | "python"`. `auto`
-prefers Rust (it ships in the `sc_neurocore_engine` wheel) and falls back to the
-pure-NumPy reference. `trace[t]` is `x` after step `t` — already reset to
-`x_reset` on a spiking step; `spikes` counts threshold crossings; the instance
-`(x, y)` is left at the final step.
+`backend` accepts `"auto"`, `"rust"`, `"julia"`, `"go"`, `"mojo"`, and
+`"python"`. The returned float64 trace stores post-step `v`; the instance
+retains final `(v, u)`.
 
-Because the map is exact floating-point arithmetic (one division, additions and
-multiplications, no transcendental functions), **Rust, Julia and Go reproduce
-the NumPy trace bit-for-bit** across the silent, bursting and strongly-driven
-regimes (defaults are silent below current ≈ 2.0). Mojo's release build can
-contract the linear branch `alpha + beta*x` and the slow-variable update
-`y - mu*(x+1) + mu*sigma` into fused multiply-adds (one rounding rather than
-two); each step therefore agrees to within a couple of ULP. The explicit reset
-to `x_reset` on every spike periodically resynchronises the trajectory, so the
-whole-trace gap stays at the per-step ULP level rather than diverging. This is
-the documented Mojo FMA-parity behaviour, not a defect, and the spike counts
-still match exactly.
+## Reproducibility and behaviour evidence
 
-### Measured backends
+- At `I=0`, 1,000 iterations produce 9 reset events; the first is step 395.
+- At `I=0.2`, 1,000 iterations produce 33 events and the little-endian float64
+  trace SHA-256 is
+  `68000d6955ffcaedffa3a851f70e8f118156312ab224638defb408ae0b3002ed`.
+- At `I=1`, 1,000 iterations produce 195 events.
+- The committed behaviour sweep records `adapting`, `excitable`, `irregular`,
+  `rate-coded`, and `tonic` tags. Those are measured catalogue facets, not
+  traits inferred from the paper title.
 
-Reproduce with `PYTHONPATH=src .venv/bin/python benchmarks/bench_ibarz_tanaka_map.py --json benchmarks/results/bench_ibarz_tanaka_map.json`.
-Workload: 2,000,000 steps, default parameters, current = 3.0 (sustained
-bursting), median of 5 repeats. **Non-isolated** (loaded workstation, Python
-3.12 / NumPy 2.3) — functional/regression evidence, not isolated-core release
-numbers.
+The DOI-backed `ibarz_tanaka_map_2007_doi` contract independently re-derives
+the four branches and slow update without importing the hand model or schema
+expressions.
 
-| backend | median (ms) | min (ms) | speedup vs NumPy | parity Δ vs NumPy | spikes |
-|---|---:|---:|---:|---:|---:|
-| python (NumPy) | 374.2387480160687 | 342.2251640004106 | 1.0× | 0 | 567 |
-| rust | 15.829967014724389 | 15.798506006831303 | 23.64115779066167× | 0 | 567 |
-| julia | 23.4530640009325 | 22.022475983249024 | 15.956923496272763× | 0 | 567 |
-| go | 16.764686995884404 | 16.218030999880284 | 22.323038187825478× | 0 | 567 |
-| mojo | 20.01404599286616 | 19.43143500830047 | 18.69880523655552× | 3.9968028886505635e-13 | 567 |
+## Compiled parity
 
-The speedups (~20×) are modest relative to a branch-free map: the two-piece
-conditional plus the per-spike reset limit instruction-level parallelism in
-every backend. Go and Mojo lead by filling a preallocated NumPy buffer over the
-C ABI; Rust returns a NumPy array directly (avoiding a multi-million-element
-Python-list marshal); `auto` selects Rust as the always-available wheel backend
-within ~1.06× of the fastest locally-built backend. Artefact:
-`benchmarks/results/bench_ibarz_tanaka_map.json`; gate:
-`ibarz-tanaka-map-five-backend-local-regression` in
-`benchmarks/benchmark_regression_gates.json`. The artefact records SHA-256
-source provenance for the benchmark runner and Python/Rust/Julia/Go/Mojo
-backend chain.
+Python, the Rust engine, the independent Rust safety crate, Julia, Go, and Mojo
+implement the same five-float state/parameter ABI. Across the committed
+1,000-step `I=0/0.2/1.0` envelope, Rust, Julia, and Go reproduce every Python
+trace bit and final state. Mojo preserves the complete event vector and stays
+below the measured `1.5e-8` absolute trace/state bound; at the benchmark's
+`I=0.2` point its maximum difference is `6.883e-15`.
 
-## Infrastructure Pipeline
+The map is numerically sensitive. FMA-level differences can change the branch
+sequence over much longer horizons, so SC-NeuroCore does not claim indefinite
+Mojo trajectory or event identity. Rust, Julia, and Go remain bit-exact because
+their operation ordering matches the Python reference.
 
-```
-IbarzTanakaMapNeuron
-├── step(current) → int {0,1}
-├── Population: works
-├── Verilog: division LUT + comparator, ~30 LUTs
-├── Rust: supported via NeuronVariant
-└── simulate(): polyglot N-step chain (rust/julia/go/mojo) — see above
-```
+## Controlled benchmark
 
-## Test Coverage
+`benchmarks/results/bench_ibarz_tanaka_map.json` records 1,000 iterations at
+`I=0.2`, median of 21 calls, on logical CPU 10 of an Intel i5-11600K. The
+process was affinity-pinned, but the host had no kernel-isolated CPU set and
+reported high concurrent load; these are local regression timings, not portable
+latency claims.
 
-| Category | Tests | What is verified |
-|----------|------:|-----------------|
-| Isolation | 10 | construction, step binary, subthreshold, spikes, piecewise f, slow y, reset on spike, rate increase, stability, reset, deterministic |
-| Network | 1 | Population |
-| Analysis | 1 | spike_count |
-| Polyglot parity | 33 | rust/julia/go bit-exact (4 regimes + empty/single + strong-drive resets), mojo ULP-bounded trace + per-step + spike count, dispatch/validation, simulate==repeated-step, final-state advance, reset-value trace |
+| Backend | Median call | Speed-up vs Python | Maximum trace difference | Events |
+|---|---:|---:|---:|---:|
+| Rust | 0.079827 ms | 11.28× | `0` | 33 |
+| Mojo | 0.148605 ms | 6.06× | `6.883e-15` | 33 |
+| Go | 0.242630 ms | 3.71× | `0` | 33 |
+| Julia | 0.249030 ms | 3.62× | `0` | 33 |
+| Python | 0.900612 ms | 1.00× | `0` | 33 |
 
-The polyglot parity suite lives in `tests/test_ibarz_tanaka_backends.py`; the
-step-level suite lives in `tests/test_model_ibarz_tanaka.py`. The two files
-collect **64 tests** in total, all passing.
+The artefact includes runtime versions, affinity, governor, load, final states,
+and SHA-256 digests for every maintained kernel and ABI source. Its evidence
+gate is `ibarz-tanaka-map-five-backend-controlled-regression`.
 
+## Schema, RTL, and formal boundary
 
----
+The paired TOML and JSON schemas reproduce the hand recurrence exactly. A
+30-step `I=0.2` co-simulation covers all four branches: 23 parabolic, 4 plateau,
+3 reset, and the initial constant branch. Hand, TOML, and JSON trajectories are
+identical. Generated Q16.16 RTL preserves the full reset-event vector with
+maximum errors below `0.003` for `v` and `0.0001` for `u`.
 
-## Measured Performance (2026-04-04)
+Q16.16 is required because `mu=0.001` rounds to zero in Q8.8. The S5/H1
+descriptor therefore emits a Q16.16 catalogue core and port-only harness. The
+depth-4 SymbiYosys/Z3 job `sc_ibarz_tanaka_rulkov_map.sby` proves the bounded
+reset-spike safety property; the 30-step co-simulation remains the behavioural
+fidelity evidence.
 
-| Metric | Value |
-|--------|-------|
-| Python throughput | ~319K steps/s |
-| Spikes (10K steps, I=5.0) | 2421 |
-| State stability (20K steps) | PASS |
-| Rust parity | EXACT |
+## Focused verification
 
----
-
-## Pipeline Verification (End-to-End)
-
-### 1. Construction
-`IbarzTanakaMapNeuron()` instantiates with documented defaults.
-**Status: PASS**
-
-### 2. step() → correct type
-Returns `int` (spike indicator) or `float` (rate/potential).
-**Status: PASS**
-
-### 3. Spiking behaviour
-2421 spikes in 10,000 steps at I=5.0.
-**Status: PASS**
-
-### 4. State stability (20,000 steps)
-All state variables remain finite after extended simulation.
-**Status: PASS**
-
-### 5. reset()
-State returns to initial values after `reset()`.
-**Status: PASS**
-
-### 6. Population
-`Population(IbarzTanakaMapNeuron, n=10)` creates correct instances.
-**Status: PASS**
-
-### 7. Rust parity
-**EXACT** — Python and Rust produce identical spike trains.
-
----
-
-## Findings (measured 2026-04-04)
-
-1. Throughput: ~319K steps/s (Python, single-thread)
-2. All pipeline stages verified green
-3. Rust parity: EXACT
-4. Numerical stability confirmed over 20K steps
+- `tests/test_model_ibarz_tanaka.py`: source branches, simultaneous state,
+  event semantics, goldens, validation, and population integration.
+- `tests/test_ibarz_tanaka_backends.py`: five-backend parity, final state,
+  zero-step contract, and explicit fail-closed dispatch.
+- `tests/test_reference_ibarz_tanaka_map.py`: independent DOI contract.
+- `tests/test_cosim_ibarz_tanaka_map.py`: hand/TOML/JSON/Q16.16 branch and
+  event-vector evidence.
+- `src/sc_neurocore/accel/rust/safety/ibarz_tanaka_map.rs`: independent Rust
+  branch and golden-count tests.

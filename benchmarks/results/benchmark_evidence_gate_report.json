@@ -103,7 +103,7 @@
     },
     {
       "artefact": "benchmarks/results/bench_ibarz_tanaka_map.json",
-      "id": "ibarz-tanaka-map-five-backend-local-regression"
+      "id": "ibarz-tanaka-map-five-backend-controlled-regression"
     },
     {
       "artefact": "benchmarks/results/bench_medvedev_map.json",
@@ -166,7 +166,7 @@
       "id": "energy-lif-exact-flow-multibackend-local-regression"
     }
   ],
-  "failure_count": 47,
+  "failure_count": 48,
   "failures": [
     {
       "gate_id": "expif-rk4-multibackend-local-regression",
@@ -374,18 +374,23 @@
       "reason": "source_hash_mismatch"
     },
     {
-      "gate_id": "ibarz-tanaka-map-five-backend-local-regression",
+      "gate_id": "medvedev-map-five-backend-controlled-regression",
       "path": "engine/src/lib.rs->source_hashes.engine/src/lib.rs",
       "reason": "source_hash_mismatch"
     },
     {
-      "gate_id": "ibarz-tanaka-map-five-backend-local-regression",
+      "gate_id": "medvedev-map-five-backend-controlled-regression",
       "path": "engine/src/neurons/maps.rs->source_hashes.engine/src/neurons/maps.rs",
       "reason": "source_hash_mismatch"
     },
     {
       "gate_id": "coba-lif-rk4-multibackend-local-regression",
       "path": "src/sc_neurocore/neurons/models/coba_lif.py->source_hashes.src/sc_neurocore/neurons/models/coba_lif.py",
+      "reason": "source_hash_mismatch"
+    },
+    {
+      "gate_id": "sfa-rk4-multibackend-local-regression",
+      "path": "src/sc_neurocore/accel/rust/safety/sfa.rs->source_hashes.src/sc_neurocore/accel/rust/safety/sfa.rs",
       "reason": "source_hash_mismatch"
     },
     {

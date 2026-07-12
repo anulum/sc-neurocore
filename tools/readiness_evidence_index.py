@@ -121,6 +121,19 @@ ENROLLED: tuple[EnrolledEvidence, ...] = (
         ),
     ),
     EnrolledEvidence(
+        schema_name="ibarz_tanaka_map",
+        class_name="IbarzTanakaMapNeuron",
+        level="h1_cosim",
+        evidence=(
+            "tests/test_cosim_ibarz_tanaka_map.py::test_q1616_source_trajectory_and_reset_events"
+        ),
+        operating_point="Ibarz-Tanaka four-branch map at I=0.2 over 30 iterations",
+        tolerance=(
+            "hand/TOML/JSON exact; Q16.16 reset-event vector exact with v error "
+            "below 0.003 and u error below 0.0001"
+        ),
+    ),
+    EnrolledEvidence(
         schema_name="medvedev_map",
         class_name="MedvedevMapNeuron",
         level="h1_cosim",

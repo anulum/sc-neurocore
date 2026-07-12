@@ -33,6 +33,7 @@ table because their schemas are stochastic.
 | `glif_constant_current_threshold_adaptation` | `glif` | `universal_dsl` | Analytic linear Euler recurrence from `neurons/model_schemas/glif.toml` with DOI-backed schema provenance |
 | `hindmarsh_rose_short_bursting_prefix` | `hindmarsh_rose` | `universal_dsl` | Independent fourth-order Runge-Kutta re-derivation of the driven three-state bursting flow (no reset, rising-edge `x >= 1` crossing) from `neurons/model_schemas/hindmarsh_rose.toml` with DOI-backed schema provenance |
 | `hodgkin_huxley_driven_spiking_doi` | `hodgkin_huxley` | `universal_dsl` | Independent macro-step RK4 re-derivation of the driven repetitive-spiking membrane (100 inner `dt=0.01` sub-steps per 1 ms macro step, no reset, macro-boundary `v >= 0` crossing) from `neurons/model_schemas/hodgkin_huxley.toml` with DOI-backed schema provenance |
+| `ibarz_tanaka_map_2007_doi` | `ibarz_tanaka_map` | `universal_dsl` | Independent simultaneous iteration of Ibarz et al. (2007), Eqs. 2–3 (four fast branches, slow `u` update, source reset-branch event), without importing the hand model or schema expressions |
 | `izhikevich_regular_spiking_doi` | `izhikevich` | `universal_dsl` | Independent explicit-Euler re-derivation of the regular-spiking equations from `neurons/model_schemas/izhikevich.toml` with DOI-backed schema provenance |
 | `izhikevich2007_regular_spiking_doi` | `izhikevich2007` | `universal_dsl` | Independent explicit-Euler re-derivation of the biophysical quadratic equations from `neurons/model_schemas/izhikevich2007.toml` with DOI-backed schema provenance |
 | `lif_constant_current_closed_form` | `lif` | `universal_dsl` | Closed-form RC solution from `neurons/model_schemas/lif.toml` |
@@ -53,7 +54,7 @@ table because their schemas are stochastic.
 
 All entries record spike count, first spike step, and final/min/max/mean
 features for the declared state variables. The tests independently recompute the
-LIF, QIF, perfect-integrator, resonate-fire, theta, Ermentrout-Kopell theta-Euler, GLIF, Izhikevich, Cazelles map, Chialvo map, Medvedev map, Courbage-Nekorkin map,
+LIF, QIF, perfect-integrator, resonate-fire, theta, Ermentrout-Kopell theta-Euler, GLIF, Izhikevich, Cazelles map, Chialvo map, Ibarz-Tanaka map, Medvedev map, Courbage-Nekorkin map,
 Izhikevich 2007, FitzHugh-Nagumo, FitzHugh-Rinzel, Pernarowski, Terman-Wang, Wilson-HR, McKean, AdEx, exponential-IF,
 Hindmarsh-Rose, Morris-Lecar,
 Hodgkin-Huxley, Connor-Stevens, Wang-Buzsaki, DPI, and Mihalas-Niebur analytic,
@@ -120,6 +121,10 @@ Its `I=2`, 100-iteration protocol reproduces the exact four-state cycle and 75
 maintained pre-state events without importing the hand model or schema expressions.
 The reference explicitly records that non-zero current and event labelling are
 maintained conventions rather than equations or spike semantics asserted by the paper.
+The Ibarz-Tanaka entry independently evaluates all four fast-map branches and
+the simultaneous slow update from Eqs. 2–3. Its zero-current 1,000-iteration
+protocol reproduces nine source reset events, the first at step 395, and all
+committed `v`/`u` features without importing the hand model or schema runner.
 The Morris-Lecar entry re-derives the exact classical fourth-order Runge-Kutta
 recurrence for its calcium-potassium conductance oscillator — sigmoidal `tanh`
 calcium activation and `cosh`/`tanh` potassium gating, reusing the runner's numpy
@@ -149,7 +154,7 @@ membrane and Na/K gating rate functions (numpy exp and the exprel-rewritten `alp
 `alpha_n`) reproduce the schema runner bit-for-bit, so the driven schema counts the same five
 action potentials the hand model does (`hand == schema` exact), which the earlier single-step
 Euler resting-gate schema could not.
-The perfect-integrator, Ermentrout-Kopell theta-Euler, FitzHugh-Nagumo, FitzHugh-Rinzel, Pernarowski, Terman-Wang, Wilson-HR, Rulkov, Cazelles, Chialvo, Medvedev, Courbage-Nekorkin, McKean, Morris-Lecar,
+The perfect-integrator, Ermentrout-Kopell theta-Euler, FitzHugh-Nagumo, FitzHugh-Rinzel, Pernarowski, Terman-Wang, Wilson-HR, Rulkov, Cazelles, Chialvo, Ibarz-Tanaka, Medvedev, Courbage-Nekorkin, McKean, Morris-Lecar,
 Hodgkin-Huxley, Connor-Stevens,
 Izhikevich, Izhikevich 2007, DPI, and Mihalas-Niebur entries are spike-bearing;
 they validate reset (or, for Ermentrout-Kopell theta-Euler, FitzHugh-Nagumo, FitzHugh-Rinzel, Pernarowski, Terman-Wang, Rulkov, McKean, Morris-Lecar,

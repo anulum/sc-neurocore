@@ -512,7 +512,7 @@ impl NeuronVariant {
             NeuronVariant::ClosedFormContinuous(n) => n.x,
             NeuronVariant::ChialvoMap(n) => n.x,
             NeuronVariant::RulkovMap(n) => n.x,
-            NeuronVariant::IbarzTanakaMap(n) => n.x,
+            NeuronVariant::IbarzTanakaMap(n) => n.v,
             NeuronVariant::MedvedevMap(n) => n.u,
             NeuronVariant::CazellesMap(n) => n.x,
             NeuronVariant::CourageNekorkinMap(n) => n.x,
