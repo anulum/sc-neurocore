@@ -14,7 +14,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 274
+expected_file_count = 288
 
 [[file]]
 path = "src/sc_neurocore/__init__.py"
@@ -1077,8 +1077,64 @@ path = "src/sc_neurocore/scpn/layers/__init__.py"
 rationale = "Public SCPN layer-stack package entry point with integrated 16-layer helper functions."
 
 [[file]]
-path = "src/sc_neurocore/cli.py"
-rationale = "Public command-line entry point for SC-NeuroCore build, compile, Studio, and formal workflows."
+path = "src/sc_neurocore/cli/__init__.py"
+rationale = "Stable public command-line package facade that preserves the sc_neurocore.cli:main entry point."
+
+[[file]]
+path = "src/sc_neurocore/cli/__main__.py"
+rationale = "Public python -m sc_neurocore.cli process entry point."
+
+[[file]]
+path = "src/sc_neurocore/cli/parser.py"
+rationale = "Public CLI composition root for grouped help, version handling, parser registration, and dispatch."
+
+[[file]]
+path = "src/sc_neurocore/cli/commands/__init__.py"
+rationale = "Responsibility-specific command package boundary."
+
+[[file]]
+path = "src/sc_neurocore/cli/commands/compile.py"
+rationale = "Public equation and NIR compilation command handlers."
+
+[[file]]
+path = "src/sc_neurocore/cli/commands/deploy.py"
+rationale = "Public trusted model deployment and target project command handlers."
+
+[[file]]
+path = "src/sc_neurocore/cli/commands/formal.py"
+rationale = "Public formal network contract, replay, and SymbiYosys command handler."
+
+[[file]]
+path = "src/sc_neurocore/cli/commands/hub.py"
+rationale = "Public self-hosted hub bundle command handler."
+
+[[file]]
+path = "src/sc_neurocore/cli/commands/info.py"
+rationale = "Public runtime and optional-engine information command handler."
+
+[[file]]
+path = "src/sc_neurocore/cli/commands/mapping.py"
+rationale = "Public NIR silicon-mapping command handler."
+
+[[file]]
+path = "src/sc_neurocore/cli/commands/maintenance.py"
+rationale = "Public benchmark and preflight delegation command handlers."
+
+[[file]]
+path = "src/sc_neurocore/cli/commands/scnir.py"
+rationale = "Public SC-NIR document, compatibility, closure, and HDL-audit command handler."
+
+[[file]]
+path = "src/sc_neurocore/cli/commands/serve.py"
+rationale = "Public NIR spike-stream server command handler."
+
+[[file]]
+path = "src/sc_neurocore/cli/commands/studio.py"
+rationale = "Public Studio launcher and local operator-state command handlers."
+
+[[file]]
+path = "src/sc_neurocore/cli/commands/synthesis.py"
+rationale = "Public synthesis-report evidence collection command handler."
 
 [[file]]
 path = "src/sc_neurocore/bridges/dna_mapper.py"

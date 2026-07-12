@@ -253,7 +253,7 @@ def test_scnir_compatibility_matrix_does_not_overclaim_parser_only_rows() -> Non
     assert "standalone hierarchy boundary module artefacts" in nested.hdl_support
     assert "top-level contract instances" in nested.hdl_support
     assert "packed hierarchy weight outputs" in nested.hdl_support
-    assert "tests/test_cli.py" in nested.audit_evidence
+    assert "tests/test_cli_nir.py" in nested.audit_evidence
     assert "tests/test_scnir_handoff_audit.py" in nested.audit_evidence
     assert "multi-output" in nested.limitation
     assert "Ambiguous" in nested.limitation

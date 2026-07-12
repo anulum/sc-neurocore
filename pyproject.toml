@@ -213,8 +213,6 @@ omit = [
     # test_fim_symmetry_dynamics, test_identity_lazarus.
     # Remaining omits: mpi_runner.py (requires mpi4py)
     "*/network/mpi_runner.py",
-    # --- CLI (tested via subprocess in CI, not via pytest) ---
-    "*/cli.py",
     "*/neurons/__main__.py",
     "*/neurons/dsl_cli.py",
     "*/quantum_cognition/__main__.py",

@@ -5,6 +5,22 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 ## [Unreleased]
 
 ### Added
+- Replaced the 2,318-line command-line monolith with a stable
+  `sc_neurocore.cli:main` package entry point, a 45-line parser composition
+  root, and responsibility-specific compile, deploy, formal, SC-NIR, Studio,
+  synthesis, mapping, serve, hub, status, and maintenance command modules.
+  Top-level help now presents Model, Hardware, Studio, and Maintain modes with
+  command-level progressive disclosure. The split preserves console and
+  `python -m sc_neurocore.cli` invocation, makes `compile-nir` precision flags
+  effective, and keeps SC-NIR upgrade/export destinations explicit. Focused
+  command tests reach 100% of the package's 1,172 statements and 294 branches;
+  real NIR/Icarus co-simulations use the post-reset membrane observable shared
+  by generated RTL and the bit-true Python model. Removed unreferenced
+  Rust/Julia/Mojo files that were generated comment/constant stubs rather than
+  callable CLI counterparts. A path-free 30-run local benchmark records a
+  22.27% lower median import cost, effectively unchanged process wall time,
+  and unchanged RSS versus the parent flat module, with non-exclusive CPU and
+  host-load limitations preserved in the evidence artefact.
 - Replaced the falsely attributed Medvedev tent map with the scalar
   slow-calcium first-return construction derived in Section 4 of Medvedev
   (2005), DOI `10.1016/j.physd.2005.01.021`. The three source regions follow

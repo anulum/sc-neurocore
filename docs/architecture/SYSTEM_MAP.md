@@ -1,7 +1,7 @@
 # SC-NeuroCore — System Architecture Map
 
 > Canonical architecture map. Package version `3.16.0`; refreshed against the
-> current tree on 2026-07-06. Supersedes the earlier `architecture.md` and
+> current tree on 2026-07-12. Supersedes the earlier `architecture.md` and
 > `COMPONENT_INVENTORY.md` in this directory, which are stale (see *Provenance*).
 >
 > Purpose: a single, factual reference to SC-NeuroCore's capabilities, data flow,
@@ -63,7 +63,13 @@ load on first access. The exported, supported surface is:
 | Exceptions | `SCNeuroError`, `SCEncodingError`, `SCConfigError`, `SCWeightError`, `SCDependencyError`, `SCHardwareError`, `SCCompilerError` | `exceptions` |
 | Lazy submodules | `plasticity`, `datasets` | — |
 
-CLI entry point: `sc-neurocore = sc_neurocore.cli:main` (`pyproject.toml:63`).
+CLI entry point: `sc-neurocore = sc_neurocore.cli:main` (`pyproject.toml`).
+`src/sc_neurocore/cli/parser.py` is the composition root; focused modules under
+`src/sc_neurocore/cli/commands/` own compilation, deployment, formal, SC-NIR,
+Studio, synthesis-evidence, mapping, serving, hub, status, and maintenance
+commands. Top-level help exposes Model, Hardware, Studio, and Maintain modes,
+while `COMMAND --help` progressively discloses command-specific options. Heavy
+optional dependencies are imported inside handlers rather than by the parser.
 
 ---
 

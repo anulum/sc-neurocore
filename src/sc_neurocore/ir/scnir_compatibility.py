@@ -319,7 +319,7 @@ _MATRIX: tuple[SCNIRCompatibilityRow, ...] = (
         audit_evidence=(
             "tests/test_scnir_convert.py",
             "tests/test_scnir_fpga_integration.py",
-            "tests/test_cli.py",
+            "tests/test_cli_nir.py",
             "tests/test_scnir_handoff_audit.py",
         ),
         limitation=(

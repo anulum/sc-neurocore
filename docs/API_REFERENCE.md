@@ -5235,10 +5235,431 @@ Build a complete partition report.
 
 ---
 
-## Module `cli`
+## Module `cli.commands.compile`
 
-### Function `main()`
+### Function `add_compile_commands(subparsers)`
+Register equation and NIR compilation commands.
+
+Parameters
+----------
+subparsers : argparse._SubParsersAction&#91;argparse.ArgumentParser&#93;
+    Top-level command registry.
+
+### Function `run_compile_nir(args)`
+Compile a NIR or ONNX model to Verilog RTL artefacts.
+
+Parameters
+----------
+args : argparse.Namespace
+    Parsed ``compile-nir`` arguments.
+
+Returns
+-------
+int
+    Zero on success, otherwise one for invalid command input.
+
+### Function `run_compile(args)`
+Compile an ODE equation to Verilog RTL and optional synthesis.
+
+Parameters
+----------
+args : argparse.Namespace
+    Parsed ``compile`` arguments.
+
+Returns
+-------
+int
+    Zero after artefact emission; invalid equations propagate their typed error.
+
+Notes
+-----
+The command supports three compilation modes via CLI flags:
+
+1. **Standard** (default): combinational datapath at the configured
+   precision (``--data-width`` / ``--fraction``).
+2. **Pipelined** (``--pipeline auto|N``): insert register stages at
+   multiply outputs for high-frequency targets.  ``auto`` uses
+   ``critical_path_depth()`` + ``pipeline_stages_needed()`` from
+   ``static_analysis.py``.  ``--pipeline-points`` selects individual
+   signals to register.
+3. **Adaptive precision** (``--adaptive-precision``): generate a
+   dual-datapath module with LP and HP sub-modules, hysteresis-based
+   precision switching, and clock gating.  Configure LP/HP widths via
+   ``--lp-width`` / ``--lp-frac`` and ``--hp-width`` / ``--hp-frac`` or
+   precision strings via ``--lp-precision`` / ``--hp-precision``.
+
+---
+
+## Module `cli.commands.deploy`
+
+### Function `add_deploy_command(subparsers)`
+Register the model deployment command.
+
+Parameters
+----------
+subparsers : argparse._SubParsersAction&#91;argparse.ArgumentParser&#93;
+    Top-level command registry.
+
+### Function `run_deploy(args)`
+Deploy one model through the selected target workflow.
+
+Parameters
+----------
+args : argparse.Namespace
+    Parsed deployment arguments.
+
+Returns
+-------
+int
+    Zero on success, otherwise one for an invalid or failed deployment.
+
+### Function `run_auto_synthesis(output_dir, target, top_module, cfg)`
+Run the open-source synthesis flow when its tools are installed.
+
+Parameters
+----------
+output_dir : str
+    Deployment directory containing the HDL tree.
+target : str
+    Target identifier used in status output.
+top_module : str
+    SystemVerilog top-module name.
+cfg : dict&#91;str, str&#93;
+    Device family, part, package, and tool configuration.
+
+Returns
+-------
+bool
+    ``True`` when Yosys succeeds, otherwise ``False``.
+
+---
+
+## Module `cli.commands.formal`
+
+### Function `add_formal_command(subparsers)`
+Register network formal verification.
+
+Parameters
+----------
+subparsers : argparse._SubParsersAction&#91;argparse.ArgumentParser&#93;
+    Top-level command registry.
+
+### Function `run_formal(args)`
+Compile and replay network-level formal verification artefacts.
+
+Parameters
+----------
+args : argparse.Namespace
+    Parsed ``formal`` arguments.
+
+Returns
+-------
+int
+    Zero when emitted contracts and requested verification pass, otherwise one.
+
+---
+
+## Module `cli.commands.hub`
+
+### Function `add_hub_command(subparsers)`
+Register the self-hosted hub bundle command.
+
+Parameters
+----------
+subparsers : argparse._SubParsersAction&#91;argparse.ArgumentParser&#93;
+    Top-level command registry.
+
+### Function `run_hub_init(args)`
+Write the requested self-hosted hub bundle.
+
+Parameters
+----------
+args : argparse.Namespace
+    Parsed ``hub-init`` arguments.
+
+Returns
+-------
+int
+    Zero on success, otherwise one for invalid configuration or I/O failure.
+
+---
+
+## Module `cli.commands.info`
+
+### Function `add_info_command(subparsers)`
+Register the runtime information command.
+
+Parameters
+----------
+subparsers : argparse._SubParsersAction&#91;argparse.ArgumentParser&#93;
+    Top-level command registry.
+
+### Function `run_info(args)`
+Print runtime information without importing optional dependencies.
+
+Parameters
+----------
+args : argparse.Namespace
+    Parsed ``info`` arguments.
+
+Returns
+-------
+int
+    Always zero after the status report is emitted.
+
+---
+
+## Module `cli.commands.maintenance`
+
+### Function `add_maintenance_commands(subparsers)`
+Register benchmark and preflight delegates.
+
+Parameters
+----------
+subparsers : argparse._SubParsersAction&#91;argparse.ArgumentParser&#93;
+    Top-level command registry.
+
+### Function `run_benchmark(args)`
+Run the repository benchmark suite in a child interpreter.
+
+Parameters
+----------
+args : argparse.Namespace
+    Parsed ``benchmark`` arguments.
+
+Returns
+-------
+int
+    Child process exit status.
+
+### Function `run_preflight(args)`
+Run the repository preflight script in a child interpreter.
+
+Parameters
+----------
+args : argparse.Namespace
+    Parsed ``preflight`` arguments.
+
+Returns
+-------
+int
+    Child process exit status.
+
+---
+
+## Module `cli.commands.mapping`
+
+### Function `add_mapping_command(subparsers)`
+Register the NIR silicon-mapping command.
+
+Parameters
+----------
+subparsers : argparse._SubParsersAction&#91;argparse.ArgumentParser&#93;
+    Top-level command registry.
+
+### Function `run_mapping(args)`
+Write a NIR silicon-mapping report.
+
+Parameters
+----------
+args : argparse.Namespace
+    Parsed ``map-nir`` arguments.
+
+Returns
+-------
+int
+    Zero on success, otherwise one for invalid input or conversion failure.
+
+---
+
+## Module `cli.commands.scnir`
+
+### Function `add_scnir_command(subparsers)`
+Register SC-NIR document operations.
+
+Parameters
+----------
+subparsers : argparse._SubParsersAction&#91;argparse.ArgumentParser&#93;
+    Top-level command registry.
+
+### Function `run_scnir(args)`
+Execute an SC-NIR document operation.
+
+Parameters
+----------
+args : argparse.Namespace
+    Parsed ``scnir`` arguments.
+
+Returns
+-------
+int
+    Zero on success, otherwise one for invalid input or evidence.
+
+---
+
+## Module `cli.commands.serve`
+
+### Function `add_serve_command(subparsers)`
+Register the streaming inference command.
+
+Parameters
+----------
+subparsers : argparse._SubParsersAction&#91;argparse.ArgumentParser&#93;
+    Top-level command registry.
+
+### Function `run_serve(args)`
+Load a NIR graph and start its blocking spike server.
+
+Parameters
+----------
+args : argparse.Namespace
+    Parsed ``serve`` arguments.
+
+Returns
+-------
+int
+    Zero after a clean server shutdown, otherwise one for invalid input.
+
+---
+
+## Module `cli.commands.studio`
+
+### Function `add_studio_commands(subparsers)`
+Register Studio launch and operator commands.
+
+Parameters
+----------
+subparsers : argparse._SubParsersAction&#91;argparse.ArgumentParser&#93;
+    Top-level command registry.
+
+### Function `run_studio(args)`
+Launch the local Studio application.
+
+Parameters
+----------
+args : argparse.Namespace
+    Parsed ``studio`` arguments.
+
+Returns
+-------
+int
+    Zero after a clean server shutdown, otherwise one when Studio extras are absent.
+
+### Function `run_studio_backup_plan(args)`
+Emit the Studio durable-state backup and restore plan.
+
+Parameters
+----------
+args : argparse.Namespace
+    Parsed ``studio-backup-plan`` arguments.
+
+Returns
+-------
+int
+    Zero when required durable targets exist, otherwise one.
+
+### Function `run_studio_bootstrap_admin(args)`
+Create the first local Studio service-account identity file.
+
+Parameters
+----------
+args : argparse.Namespace
+    Parsed ``studio-bootstrap-admin`` arguments.
+
+Returns
+-------
+int
+    Zero on success, otherwise one for invalid input or I/O failure.
+
+### Function `run_studio_deployment_profile(args)`
+Emit a Studio deployment profile package.
+
+Parameters
+----------
+args : argparse.Namespace
+    Parsed ``studio-deployment-profile`` arguments.
+
+Returns
+-------
+int
+    Zero on success, otherwise one for an invalid profile.
+
+### Function `run_studio_preflight(args)`
+Run the Studio release-readiness preflight.
+
+Parameters
+----------
+args : argparse.Namespace
+    Parsed ``studio-preflight`` arguments.
+
+Returns
+-------
+int
+    Zero when the report passes, otherwise one.
+
+### Function `run_studio_add_browser_user(args)`
+Add a persistent browser-login user to a Studio identity file.
+
+Parameters
+----------
+args : argparse.Namespace
+    Parsed ``studio-add-browser-user`` arguments.
+
+Returns
+-------
+int
+    Zero on success, otherwise one for invalid input or I/O failure.
+
+---
+
+## Module `cli.commands.synthesis`
+
+### Function `add_synthesis_command(subparsers)`
+Register synthesis evidence collection.
+
+Parameters
+----------
+subparsers : argparse._SubParsersAction&#91;argparse.ArgumentParser&#93;
+    Top-level command registry.
+
+### Function `run_collect_synthesis(args)`
+Collect synthesis reports into optimiser evidence JSON.
+
+Parameters
+----------
+args : argparse.Namespace
+    Parsed ``collect-synthesis`` arguments.
+
+Returns
+-------
+int
+    Zero on success, otherwise one for missing or invalid evidence.
+
+---
+
+## Module `cli.parser`
+
+### Function `build_parser()`
+Build the top-level parser and all command-specific parsers.
+
+Returns
+-------
+argparse.ArgumentParser
+    Parser for the installed ``sc-neurocore`` console script.
+
+### Function `main(argv)`
 Run the command-line interface and return a process exit status.
+
+Parameters
+----------
+argv : Sequence&#91;str&#93; | None
+    Argument vector without the executable name. ``None`` reads
+    ``sys.argv`` through :mod:`argparse`.
+
+Returns
+-------
+int
+    Zero on success, otherwise the command-specific failure status.
 
 ---
 

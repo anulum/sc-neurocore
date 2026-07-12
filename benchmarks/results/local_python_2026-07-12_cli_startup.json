@@ -1,0 +1,460 @@
+{
+  "commands": {
+    "child": "[taskset --cpu-list <cpu>] <python> -c <cold-start probe>",
+    "harness": "python benchmarks/bench_cli_startup.py --baseline-root <parent-root> --candidate-root <candidate-root> --output <result.json>"
+  },
+  "comparison": {
+    "import_ns": {
+      "baseline_median": 114632617.0,
+      "candidate_delta_percent": -22.273810603137502,
+      "candidate_median": 89099565.0,
+      "candidate_minus_baseline": -25533052.0
+    },
+    "max_rss_kib": {
+      "baseline_median": 20568.0,
+      "candidate_delta_percent": 0.0,
+      "candidate_median": 20568.0,
+      "candidate_minus_baseline": 0.0
+    },
+    "subprocess_wall_ns": {
+      "baseline_median": 198214950.0,
+      "candidate_delta_percent": -0.013008605052244882,
+      "candidate_median": 198189165.0,
+      "candidate_minus_baseline": -25785.0
+    }
+  },
+  "configuration": {
+    "affinity_mode": "taskset affinity pinned; CPU not exclusively isolated",
+    "child_environment": {
+      "PYTHONDONTWRITEBYTECODE": "1",
+      "PYTHONHASHSEED": "0",
+      "PYTHONNOUSERSITE": "1"
+    },
+    "cpu": 0,
+    "interleaving": "variant order reverses on alternating rounds",
+    "iterations": 30,
+    "machine": "x86_64",
+    "platform": "Linux-6.17.0-35-generic-x86_64-with-glibc2.39",
+    "python_executable": "/home/anulum/.local/bin/python",
+    "python_version": "3.12.3",
+    "warmups": 5
+  },
+  "evidence_class": "local_cold_start_regression",
+  "generated_at_utc": "2026-07-12T15:46:00.402376+00:00",
+  "hardware_measurement_claimed": false,
+  "measurement_context": {
+    "concurrent_load_status": "non-exclusive workstation run; other heavy jobs may have been active",
+    "cpu_affinity": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11
+    ],
+    "cpu_frequency_mhz": {
+      "max_observed_mhz": 3410.625,
+      "min_observed_mhz": 3389.171,
+      "sampled_cpu_count": 12.0
+    },
+    "cpu_governor": [
+      "powersave"
+    ],
+    "cpu_isolation": "taskset affinity only when launched with taskset; no kernel-reserved isolated cores were detected on this workstation",
+    "host_load": "workstation under concurrent load during capture",
+    "load_average_after": [
+      11.818359375,
+      11.68603515625,
+      12.45703125
+    ],
+    "load_average_before": [
+      11.09912109375,
+      11.54931640625,
+      12.4267578125
+    ],
+    "production_rerun_requirement": "rerun on reserved isolated cores with recorded affinity, governor, frequency, versions, and host-load evidence before publishing performance claims",
+    "timing_interpretation": "use timing medians as local regression context only, not final throughput claims"
+  },
+  "operation": "import sc_neurocore.cli and dispatch main() with sys.argv=['--version']",
+  "polyglot_applicability": {
+    "go": "not_applicable",
+    "julia": "not_applicable",
+    "mojo": "not_applicable",
+    "python": "measured",
+    "reason": "CLI parsing and process dispatch are Python-only; compute kernels retain their separate polyglot parity benchmarks",
+    "rust": "not_applicable"
+  },
+  "results": {
+    "cli-package": {
+      "import_ns": {
+        "max": 214944671,
+        "mean": 102200587.0,
+        "median": 89099565.0,
+        "min": 39653341
+      },
+      "max_rss_kib": {
+        "max": 20568,
+        "mean": 20568.0,
+        "median": 20568.0,
+        "min": 20568
+      },
+      "sample_count": 30,
+      "samples": [
+        {
+          "import_ns": 87288025,
+          "max_rss_kib": 20568,
+          "subprocess_wall_ns": 181617219
+        },
+        {
+          "import_ns": 72382825,
+          "max_rss_kib": 20568,
+          "subprocess_wall_ns": 161183975
+        },
+        {
+          "import_ns": 181287787,
+          "max_rss_kib": 20568,
+          "subprocess_wall_ns": 405501727
+        },
+        {
+          "import_ns": 83096481,
+          "max_rss_kib": 20568,
+          "subprocess_wall_ns": 206532986
+        },
+        {
+          "import_ns": 73224610,
+          "max_rss_kib": 20568,
+          "subprocess_wall_ns": 228794507
+        },
+        {
+          "import_ns": 67457592,
+          "max_rss_kib": 20568,
+          "subprocess_wall_ns": 168634182
+        },
+        {
+          "import_ns": 110947089,
+          "max_rss_kib": 20568,
+          "subprocess_wall_ns": 237112020
+        },
+        {
+          "import_ns": 73473761,
+          "max_rss_kib": 20568,
+          "subprocess_wall_ns": 185870455
+        },
+        {
+          "import_ns": 95578034,
+          "max_rss_kib": 20568,
+          "subprocess_wall_ns": 162760562
+        },
+        {
+          "import_ns": 85052839,
+          "max_rss_kib": 20568,
+          "subprocess_wall_ns": 205623574
+        },
+        {
+          "import_ns": 152517591,
+          "max_rss_kib": 20568,
+          "subprocess_wall_ns": 262829910
+        },
+        {
+          "import_ns": 135015684,
+          "max_rss_kib": 20568,
+          "subprocess_wall_ns": 233836336
+        },
+        {
+          "import_ns": 113998993,
+          "max_rss_kib": 20568,
+          "subprocess_wall_ns": 290678121
+        },
+        {
+          "import_ns": 214944671,
+          "max_rss_kib": 20568,
+          "subprocess_wall_ns": 382517772
+        },
+        {
+          "import_ns": 81552028,
+          "max_rss_kib": 20568,
+          "subprocess_wall_ns": 244876684
+        },
+        {
+          "import_ns": 95099661,
+          "max_rss_kib": 20568,
+          "subprocess_wall_ns": 210860179
+        },
+        {
+          "import_ns": 109522904,
+          "max_rss_kib": 20568,
+          "subprocess_wall_ns": 201691956
+        },
+        {
+          "import_ns": 101203454,
+          "max_rss_kib": 20568,
+          "subprocess_wall_ns": 227178953
+        },
+        {
+          "import_ns": 110656920,
+          "max_rss_kib": 20568,
+          "subprocess_wall_ns": 186371913
+        },
+        {
+          "import_ns": 214750562,
+          "max_rss_kib": 20568,
+          "subprocess_wall_ns": 395062591
+        },
+        {
+          "import_ns": 60081248,
+          "max_rss_kib": 20568,
+          "subprocess_wall_ns": 138008431
+        },
+        {
+          "import_ns": 90911105,
+          "max_rss_kib": 20568,
+          "subprocess_wall_ns": 160401185
+        },
+        {
+          "import_ns": 78830372,
+          "max_rss_kib": 20568,
+          "subprocess_wall_ns": 161278733
+        },
+        {
+          "import_ns": 55223234,
+          "max_rss_kib": 20568,
+          "subprocess_wall_ns": 135947096
+        },
+        {
+          "import_ns": 69114366,
+          "max_rss_kib": 20568,
+          "subprocess_wall_ns": 166319375
+        },
+        {
+          "import_ns": 39653341,
+          "max_rss_kib": 20568,
+          "subprocess_wall_ns": 120964118
+        },
+        {
+          "import_ns": 157653422,
+          "max_rss_kib": 20568,
+          "subprocess_wall_ns": 321496161
+        },
+        {
+          "import_ns": 65262447,
+          "max_rss_kib": 20568,
+          "subprocess_wall_ns": 173130669
+        },
+        {
+          "import_ns": 77971803,
+          "max_rss_kib": 20568,
+          "subprocess_wall_ns": 169854462
+        },
+        {
+          "import_ns": 112264761,
+          "max_rss_kib": 20568,
+          "subprocess_wall_ns": 194686374
+        }
+      ],
+      "subprocess_wall_ns": {
+        "max": 405501727,
+        "mean": 217387407.53333333,
+        "median": 198189165.0,
+        "min": 120964118
+      }
+    },
+    "parent-b28df48": {
+      "import_ns": {
+        "max": 221634122,
+        "mean": 122242785.66666667,
+        "median": 114632617.0,
+        "min": 62671738
+      },
+      "max_rss_kib": {
+        "max": 20568,
+        "mean": 20568.0,
+        "median": 20568.0,
+        "min": 20568
+      },
+      "sample_count": 30,
+      "samples": [
+        {
+          "import_ns": 134525506,
+          "max_rss_kib": 20568,
+          "subprocess_wall_ns": 223056418
+        },
+        {
+          "import_ns": 125338679,
+          "max_rss_kib": 20568,
+          "subprocess_wall_ns": 193833327
+        },
+        {
+          "import_ns": 158765583,
+          "max_rss_kib": 20568,
+          "subprocess_wall_ns": 241950258
+        },
+        {
+          "import_ns": 130182387,
+          "max_rss_kib": 20568,
+          "subprocess_wall_ns": 229354639
+        },
+        {
+          "import_ns": 143697988,
+          "max_rss_kib": 20568,
+          "subprocess_wall_ns": 285151927
+        },
+        {
+          "import_ns": 101586158,
+          "max_rss_kib": 20568,
+          "subprocess_wall_ns": 186306184
+        },
+        {
+          "import_ns": 98285822,
+          "max_rss_kib": 20568,
+          "subprocess_wall_ns": 163374441
+        },
+        {
+          "import_ns": 221634122,
+          "max_rss_kib": 20568,
+          "subprocess_wall_ns": 390497639
+        },
+        {
+          "import_ns": 163451427,
+          "max_rss_kib": 20568,
+          "subprocess_wall_ns": 288780693
+        },
+        {
+          "import_ns": 102837159,
+          "max_rss_kib": 20568,
+          "subprocess_wall_ns": 242602827
+        },
+        {
+          "import_ns": 199983212,
+          "max_rss_kib": 20568,
+          "subprocess_wall_ns": 271923264
+        },
+        {
+          "import_ns": 96911330,
+          "max_rss_kib": 20568,
+          "subprocess_wall_ns": 154170648
+        },
+        {
+          "import_ns": 141313876,
+          "max_rss_kib": 20568,
+          "subprocess_wall_ns": 202596573
+        },
+        {
+          "import_ns": 90516379,
+          "max_rss_kib": 20568,
+          "subprocess_wall_ns": 133378114
+        },
+        {
+          "import_ns": 102524584,
+          "max_rss_kib": 20568,
+          "subprocess_wall_ns": 159832561
+        },
+        {
+          "import_ns": 132404720,
+          "max_rss_kib": 20568,
+          "subprocess_wall_ns": 214501778
+        },
+        {
+          "import_ns": 158689701,
+          "max_rss_kib": 20568,
+          "subprocess_wall_ns": 216165924
+        },
+        {
+          "import_ns": 62671738,
+          "max_rss_kib": 20568,
+          "subprocess_wall_ns": 127243239
+        },
+        {
+          "import_ns": 146990119,
+          "max_rss_kib": 20568,
+          "subprocess_wall_ns": 213659767
+        },
+        {
+          "import_ns": 71174774,
+          "max_rss_kib": 20568,
+          "subprocess_wall_ns": 171020750
+        },
+        {
+          "import_ns": 76826995,
+          "max_rss_kib": 20568,
+          "subprocess_wall_ns": 122439195
+        },
+        {
+          "import_ns": 84474173,
+          "max_rss_kib": 20568,
+          "subprocess_wall_ns": 171356591
+        },
+        {
+          "import_ns": 77008537,
+          "max_rss_kib": 20568,
+          "subprocess_wall_ns": 180855581
+        },
+        {
+          "import_ns": 105594431,
+          "max_rss_kib": 20568,
+          "subprocess_wall_ns": 193792735
+        },
+        {
+          "import_ns": 94036431,
+          "max_rss_kib": 20568,
+          "subprocess_wall_ns": 152022603
+        },
+        {
+          "import_ns": 116924517,
+          "max_rss_kib": 20568,
+          "subprocess_wall_ns": 193536470
+        },
+        {
+          "import_ns": 162584013,
+          "max_rss_kib": 20568,
+          "subprocess_wall_ns": 261150032
+        },
+        {
+          "import_ns": 86427307,
+          "max_rss_kib": 20568,
+          "subprocess_wall_ns": 169638934
+        },
+        {
+          "import_ns": 112340717,
+          "max_rss_kib": 20568,
+          "subprocess_wall_ns": 206920293
+        },
+        {
+          "import_ns": 167581185,
+          "max_rss_kib": 20568,
+          "subprocess_wall_ns": 277198289
+        }
+      ],
+      "subprocess_wall_ns": {
+        "max": 390497639,
+        "mean": 207943723.13333333,
+        "median": 198214950.0,
+        "min": 122439195
+      }
+    }
+  },
+  "schema_version": "sc-neurocore.cli-startup-benchmark.v1",
+  "variants": [
+    {
+      "cli_source_sha256": "3bfd6e5bb472ab24bba87245b45e7ddfb8f7cff891b185ec226c74258f528db9",
+      "cli_surface_dirty": false,
+      "git_head": "b28df48be5b366622083c60ff45f12d730e42529",
+      "label": "parent-b28df48",
+      "local_path_recorded": false,
+      "source_root": "git:b28df48be5b366622083c60ff45f12d730e42529"
+    },
+    {
+      "cli_source_sha256": "8b2deeee554b21a2bc4a7ab284b8abd3f50d97ec14423c83a5e81cab769bcbc5",
+      "cli_surface_dirty": true,
+      "git_head": "b28df48be5b366622083c60ff45f12d730e42529",
+      "label": "cli-package",
+      "local_path_recorded": false,
+      "source_root": "working-tree:b28df48be5b366622083c60ff45f12d730e42529"
+    }
+  ]
+}

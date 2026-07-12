@@ -202,6 +202,12 @@
       },
       {
         "domain": "Interop, serving & deployment",
+        "name": "cli",
+        "status": "wired",
+        "tier": "core"
+      },
+      {
+        "domain": "Interop, serving & deployment",
         "name": "comm",
         "status": "library-only",
         "tier": "core"
@@ -965,7 +971,7 @@
     "python_model_classes": 158,
     "python_model_source_modules": 153,
     "rust_pyo3_model_wrappers": 176,
-    "test_files": 1094
+    "test_files": 1109
   },
   "documentation": {
     "public_pages": [
@@ -2826,6 +2832,8 @@
     "test_files": [
       "tests/__init__.py",
       "tests/_mpi_helpers/mpi_runner_worker.py",
+      "tests/cli_nir_test_support.py",
+      "tests/cli_test_support.py",
       "tests/conftest.py",
       "tests/cosim_support.py",
       "tests/e2e/__init__.py",
@@ -2888,6 +2896,7 @@
       "tests/test_behavior_tags.py",
       "tests/test_behavior_taxonomy.py",
       "tests/test_behavioral_equivalence.py",
+      "tests/test_bench_cli_startup.py",
       "tests/test_benchmark_context.py",
       "tests/test_benchmark_evidence_docs.py",
       "tests/test_benchmark_harness_contracts.py",
@@ -2934,8 +2943,20 @@
       "tests/test_chiplet/test_chiplet_public_api.py",
       "tests/test_chiplet/test_hierarchical_partitioner_perf.py",
       "tests/test_circuit_primitives.py",
-      "tests/test_cli.py",
-      "tests/test_cli_info_contracts.py",
+      "tests/test_cli_architecture.py",
+      "tests/test_cli_deploy.py",
+      "tests/test_cli_dispatch.py",
+      "tests/test_cli_equation.py",
+      "tests/test_cli_formal.py",
+      "tests/test_cli_hub.py",
+      "tests/test_cli_info.py",
+      "tests/test_cli_maintenance.py",
+      "tests/test_cli_mapping.py",
+      "tests/test_cli_nir.py",
+      "tests/test_cli_scnir.py",
+      "tests/test_cli_serve.py",
+      "tests/test_cli_studio.py",
+      "tests/test_cli_synthesis.py",
       "tests/test_clopath_stdp.py",
       "tests/test_codec_registry.py",
       "tests/test_comm_aer.py",

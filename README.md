@@ -97,7 +97,7 @@ SC-NeuroCore is positioned for neuromorphic R&D, stochastic accelerator design, 
 | Model documentation pages | 175 |
 | Rust PyO3 model wrappers | 176 |
 | Optional extras | 28 |
-| Python test files | 1094 |
+| Python test files | 1109 |
 | Public documentation pages | 569 |
 | GitHub Actions workflows | 19 |
 
@@ -114,7 +114,13 @@ pages** counts Markdown under `docs/` after excluding `docs/internal/` and
 
 ```bash
 pip install sc-neurocore
+sc-neurocore info
+sc-neurocore --help
 ```
+
+The CLI presents Model, Hardware, Studio, and Maintain workflows at the top
+level; use `sc-neurocore COMMAND --help` for command-specific options. The
+complete command guide is in [Command-Line Interface](docs/api/cli.md).
 
 For biological closed-loop BCI implementations (experimental), install the bioware optional dependencies:
 ```bash

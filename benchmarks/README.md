@@ -44,6 +44,7 @@ same checkout.
 
 | Script | Description |
 |--------|-------------|
+| `bench_cli_startup.py` | Interleaved parent/candidate cold-start comparison for Python CLI import, `--version` dispatch, process wall time, and maximum RSS; records source hashes, affinity, governor, and host-load limits |
 | `bench_neuron_integrators.py` | Research-only cross-language RK4 neuron integrator parity and timing for Python / Rust / Julia / Go / Mojo |
 | `bench_live_control_updates.py` | Local regression evidence for generated live-control update sequences, static RTL regeneration, staged overflow/underflow trap capture, and selected sticky-trap clear semantics |
 | `benchmark_regression_gates.json` | Manifest of benchmark artefacts and metrics enforced by `tools/benchmark_evidence_gate.py` |
