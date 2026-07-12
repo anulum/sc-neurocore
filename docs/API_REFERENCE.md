@@ -19018,10 +19018,13 @@ defaults and initial values, the timestep) always follow the regenerated
 payload, which is read from the model code — so the corpus can never drift
 from the implementation. Curation fields (parameter units/ranges/meaning,
 state semantics, taxonomy, the backend matrix, reproducibility, notes,
-validation evidence, silicon evidence anchors, and any richer provenance,
-dynamics, or display fields) are preserved from the curated payload. The
-result is the regenerated payload with curation overlaid, ready to be
-re-serialised.
+validation evidence, silicon evidence anchors, the curated display name and
+documentation slug, and any richer provenance, dynamics, or display fields)
+are preserved from the curated payload. The curated ``metadata.name`` and
+``documentation.slug`` are authoritative overlays: a hand-written descriptive
+name (e.g. "Ermentrout-Kopell Theta Euler Map") is never overwritten by the
+generic generator default. The result is the regenerated payload with
+curation overlaid, ready to be re-serialised.
 
 Parameters
 ----------

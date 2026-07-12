@@ -211,7 +211,7 @@ class TestMedvedevMap:
         n = MedvedevMapNeuron()
         for _ in range(50):
             n.step(0.1)
-        assert n.x != 0.0
+        assert n.u != 0.0
 
 
 class TestLoihiCUBA:
