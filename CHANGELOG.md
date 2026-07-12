@@ -5,6 +5,26 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 ## [Unreleased]
 
 ### Added
+- Replaced the 1,926-line safety-certification GodFile and 2,262-line test
+  GodFile with a 98-line historical facade, ten acyclic responsibility modules,
+  and focused typed test modules, all below 600 lines. The established 32
+  public evidence classes retain object identity and historical pickle paths.
+  Package generation now fails closed: it does not invent implementation
+  files, FIT/DC data, timing inputs, or addressed checklist rows. Full-field
+  formal-evidence hashes, concrete traceability links, path-safe evidence
+  manifests, and atomic six-file package materialisation are wired end to end.
+  The focused safety/consumer cohort passes 467 tests with 100 percent
+  statement and branch coverage over 1,437 production statements and 858
+  branches; strict touched MyPy, Ruff, and public docstrings are clean.
+- Removed unreachable generated safety_cert report mirrors: Julia and Mojo did
+  not parse, Go exposed only empty functions, and Rust returned constants
+  behind a test that always passed. The distinct SafetyMonitor chain remains.
+  A source-hash-bound 30-sample local parent/candidate benchmark records median
+  import, generation, process wall, and RSS changes of +16.62 percent,
+  +37.31 percent, +6.18 percent, and -1.31 percent. Generation remains about
+  0.172 ms while performing full-field hashing and fail-closed reporting. The
+  non-exclusive workstation measurements are regression context, not
+  publishable throughput claims.
 - Replaced the 3,257-line molecular/DNA mapper GodFile with a 213-line
   compatibility façade and nine acyclic responsibility modules, each below 600
   lines. Historical documented imports, optional NUPACK reload/monkeypatch

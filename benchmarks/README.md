@@ -44,6 +44,7 @@ same checkout.
 
 | Script | Description |
 |--------|-------------|
+| `bench_safety_certification.py` | Interleaved parent/candidate comparison for safety-package import and deterministic in-memory evidence generation; records raw samples, source hashes, affinity, host-load limits, and non-applicability of removed report-generator mirrors |
 | `bench_cli_startup.py` | Interleaved parent/candidate cold-start comparison for Python CLI import, `--version` dispatch, process wall time, and maximum RSS; records source hashes, affinity, governor, and host-load limits |
 | `bench_dna_mapper_import.py` | Interleaved flat-parent/modular comparison for DNA mapper import, repeated one-gate compilation, process wall time, and maximum RSS; records raw samples, source hashes, and host limitations |
 | `bench_neuron_integrators.py` | Research-only cross-language RK4 neuron integrator parity and timing for Python / Rust / Julia / Go / Mojo |
@@ -74,12 +75,27 @@ python benchmarks/bench_dna_mapper_import.py \
   --baseline-root <parent-root> \
   --candidate-root . \
   --output benchmarks/results/local_python_2026-07-12_dna_mapper_import.json
+
+# Safety-evidence modularisation regression evidence
+python benchmarks/bench_safety_certification.py \
+  --baseline-root <parent-root> \
+  --candidate-root . \
+  --output benchmarks/results/local_python_2026-07-12_safety_certification.json
 ```
 
 The DNA import harness measures Python orchestration only. Its maintained Rust
 safety mirror has a separate six-test contract. Earlier generated Julia and
 Mojo DNA files did not parse, and the Go file contained only empty functions;
 those false surfaces are not performance evidence and are no longer shipped.
+
+The safety-evidence harness also measures Python orchestration rather than a
+numerical kernel. Its committed 30-sample local run is source-hash bound and
+records the non-exclusive workstation load. Median cold import, in-memory
+generation, process wall, and maximum RSS changed by +16.62%, +37.31%, +6.18%,
+and -1.31%, respectively. The generation median remains 0.172 ms while the
+modular path performs full-field hashing and emits fail-closed reports. These
+measurements are regression context, not publishable throughput claims. The
+separate `SafetyMonitor` acceleration chain is outside this benchmark.
 
 ## Rust Benchmarks
 

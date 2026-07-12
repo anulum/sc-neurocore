@@ -97,7 +97,7 @@ SC-NeuroCore is positioned for neuromorphic R&D, stochastic accelerator design, 
 | Model documentation pages | 175 |
 | Rust PyO3 model wrappers | 176 |
 | Optional extras | 28 |
-| Python test files | 1113 |
+| Python test files | 1125 |
 | Public documentation pages | 569 |
 | GitHub Actions workflows | 19 |
 
@@ -313,6 +313,10 @@ Research and extended modules are available from source (`pip install -e ".[dev]
 | **Domain bridges** | quantum (Qiskit/PennyLane), adapters/holonomic (JAX), scpn (Petri nets) | Yes | Requires `pip install sc-neurocore[quantum]` or `[jax]` |
 | **Research** | robotics, physics, bio, optics, chaos, sleep, interfaces | No | Tested. Available from source. |
 | **Speculative** | `research/` (eschaton, exotic, meta, post_silicon, transcendent) | No | Theoretical. See `research/README.md`. |
+
+The safety_cert package is a source-only, library-only safety-evidence
+organiser. It materialises hash-bound reports from explicit inputs; it does not
+issue certification or regulatory approval.
 
 ### Architecture Diagram
 

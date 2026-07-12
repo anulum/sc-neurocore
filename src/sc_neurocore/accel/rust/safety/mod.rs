@@ -353,7 +353,6 @@ pub mod resource_optimizer;
 pub mod rng;
 pub mod rulkov_map;
 pub mod safety;
-pub mod safety_cert;
 pub mod safety_monitor;
 pub mod sc_conv_layer;
 pub mod sc_dense_layer;

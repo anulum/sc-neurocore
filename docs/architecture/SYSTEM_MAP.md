@@ -265,8 +265,10 @@ Ordered stages, each with its entry symbol (verified end-to-end):
     PDKs SKY130, GF180MCU, TSMC28, Intel16, custom.
 12. **Chiplet** — interposer models UCIe / BoW / EMIB / CoWoS
     (`chiplet/chiplet_gen.py:73`).
-13. **Safety certification** — IEC 61508 / ISO 26262 artifact generation
-    (`safety_cert/`, schema-complete, generation partly deferred).
+13. **Safety evidence** — fail-closed traceability, caller-supplied FMEDA and
+    formal-property records, timing assumptions, checklist bookkeeping, and
+    atomic hash-manifest materialisation (`safety_cert/`, library-only; not a
+    certification or approval service).
 
 External tools shelled out: `firtool`, `yosys`, `nextpnr`, `openroad`, `iverilog`,
 `vivado`, `sby`, `lean`.
@@ -319,9 +321,9 @@ spatial, ensembles — research prototypes not yet wired into the `Network` core
 
 ### H. EDA / ASIC / verification — *Core*
 `asic_flow` · `chiplet` · `uvm_gen` · `verification` · `formal` · `safety_cert`
-→ ASIC flow, chiplet, formal proofs, UVM, safety certification. **MAINTAINED**
-(asic_flow, chiplet, formal) / DRAFT (uvm_gen, verification, safety_cert —
-schema-defined, generation deferred).
+→ ASIC flow, chiplet, formal proofs, UVM, and safety-evidence organisation.
+**MAINTAINED** (asic_flow, chiplet, formal; safety_cert as a library-only,
+non-certifying evidence surface) / DRAFT (uvm_gen, verification).
 
 ### I. Acceleration & polyglot — *Core*
 `accel` (rust/julia/go/mojo/jax) · `_native` · `bridges`

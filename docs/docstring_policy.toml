@@ -14,7 +14,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 298
+expected_file_count = 310
 
 [[file]]
 path = "src/sc_neurocore/__init__.py"
@@ -1207,3 +1207,51 @@ rationale = "Public Studio equation-template lookup surface."
 [[file]]
 path = "src/sc_neurocore/studio/presets.py"
 rationale = "Public Studio preset and preset-action lookup surface."
+
+[[file]]
+path = "src/sc_neurocore/safety_cert/__init__.py"
+rationale = "Public safety-evidence package facade and runtime-monitor exports."
+
+[[file]]
+path = "src/sc_neurocore/safety_cert/safety_cert.py"
+rationale = "Historical safety-evidence import and pickle compatibility facade."
+
+[[file]]
+path = "src/sc_neurocore/safety_cert/standards.py"
+rationale = "Safety-standard labels and explicitly non-normative compatibility crosswalk."
+
+[[file]]
+path = "src/sc_neurocore/safety_cert/traceability.py"
+rationale = "Fail-closed requirement and concrete artifact traceability reporting surface."
+
+[[file]]
+path = "src/sc_neurocore/safety_cert/failure_analysis.py"
+rationale = "Caller-supplied FMEDA arithmetic and reliability screening surface."
+
+[[file]]
+path = "src/sc_neurocore/safety_cert/formal_evidence.py"
+rationale = "Full-field formal-property hashing, proof completeness, and gap analysis."
+
+[[file]]
+path = "src/sc_neurocore/safety_cert/timing_analysis.py"
+rationale = "Formula-derived pipeline timing analysis with explicit assumption boundaries."
+
+[[file]]
+path = "src/sc_neurocore/safety_cert/compliance.py"
+rationale = "Fail-closed checklist templates and non-normative clause navigation."
+
+[[file]]
+path = "src/sc_neurocore/safety_cert/certification.py"
+rationale = "Evidence-package assembly, full content hashing, and atomic materialisation."
+
+[[file]]
+path = "src/sc_neurocore/safety_cert/fault_tolerance.py"
+rationale = "Common-cause and hardware-fault-tolerance screening helpers."
+
+[[file]]
+path = "src/sc_neurocore/safety_cert/change_impact.py"
+rationale = "Safety change-impact and re-verification tracking surface."
+
+[[file]]
+path = "src/sc_neurocore/safety_cert/evidence.py"
+rationale = "Path-safe evidence manifests, SHA-256 indexing, and on-disk verification."

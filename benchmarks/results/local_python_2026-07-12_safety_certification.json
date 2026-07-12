@@ -1,0 +1,539 @@
+{
+  "commands": {
+    "child": "[taskset --cpu-list <cpu>] <python> -c <cold-start probe>",
+    "harness": "python benchmarks/bench_safety_certification.py --baseline-root <parent-root> --candidate-root <candidate-root> --output <result.json>"
+  },
+  "comparison": {
+    "generation_ns": {
+      "baseline_median": 125615.0,
+      "candidate_delta_percent": 37.30605421327071,
+      "candidate_median": 172477.0,
+      "candidate_minus_baseline": 46862.0
+    },
+    "import_ns": {
+      "baseline_median": 61662515.0,
+      "candidate_delta_percent": 16.62088628723626,
+      "candidate_median": 71911371.5,
+      "candidate_minus_baseline": 10248856.5
+    },
+    "max_rss_kib": {
+      "baseline_median": 21356.0,
+      "candidate_delta_percent": -1.3111069488668248,
+      "candidate_median": 21076.0,
+      "candidate_minus_baseline": -280.0
+    },
+    "subprocess_wall_ns": {
+      "baseline_median": 123158125.5,
+      "candidate_delta_percent": 6.1793503019823115,
+      "candidate_median": 130768497.5,
+      "candidate_minus_baseline": 7610372.0
+    }
+  },
+  "configuration": {
+    "affinity_mode": "taskset affinity pinned; CPU not exclusively isolated",
+    "child_environment": {
+      "PYTHONDONTWRITEBYTECODE": "1",
+      "PYTHONHASHSEED": "0",
+      "PYTHONNOUSERSITE": "1"
+    },
+    "cpu": 0,
+    "interleaving": "variant order reverses on alternating rounds",
+    "iterations": 30,
+    "machine": "x86_64",
+    "operations_per_sample": 10,
+    "platform": "Linux-6.17.0-35-generic-x86_64-with-glibc2.39",
+    "python_executable": "python",
+    "python_version": "3.12.3",
+    "warmups": 5
+  },
+  "evidence_class": "local_source_refactor_regression",
+  "generated_at_utc": "2026-07-12T18:47:55.709018+00:00",
+  "hardware_measurement_claimed": false,
+  "measurement_context": {
+    "concurrent_load_status": "non-exclusive workstation run; other heavy jobs may have been active",
+    "cpu_affinity": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11
+    ],
+    "cpu_frequency_mhz": {
+      "max_observed_mhz": 4179.467,
+      "min_observed_mhz": 4007.923,
+      "sampled_cpu_count": 12.0
+    },
+    "cpu_governor": [
+      "powersave"
+    ],
+    "cpu_isolation": "taskset affinity only when launched with taskset; no kernel-reserved isolated cores were detected on this workstation",
+    "host_load": "workstation under concurrent load during capture",
+    "load_average_after": [
+      10.578125,
+      14.68701171875,
+      16.3818359375
+    ],
+    "load_average_before": [
+      10.91357421875,
+      14.896484375,
+      16.4677734375
+    ],
+    "production_rerun_requirement": "rerun on reserved isolated cores with recorded affinity, governor, frequency, versions, and host-load evidence before publishing performance claims",
+    "timing_interpretation": "use timing medians as local regression context only, not final throughput claims"
+  },
+  "operation": "import safety package and generate one deterministic IEC 61508 evidence set",
+  "polyglot_applicability": {
+    "go": "not_applicable_no_runtime_mirror",
+    "julia": "not_applicable_no_runtime_mirror",
+    "mojo": "not_applicable_no_runtime_mirror",
+    "python": "measured",
+    "reason": "Certification report assembly is Python orchestration, not a numerical kernel. False Rust, Julia, Mojo, and Go report-generator scaffolds were removed; the separate SafetyMonitor acceleration chain is outside this benchmark.",
+    "rust": "not_applicable_no_certification_runtime_mirror"
+  },
+  "results": {
+    "safety-modular": {
+      "generation_ns": {
+        "max": 220513,
+        "mean": 163693.2,
+        "median": 172477.0,
+        "min": 103212
+      },
+      "import_ns": {
+        "max": 107080686,
+        "mean": 74106704.56666666,
+        "median": 71911371.5,
+        "min": 46764847
+      },
+      "max_rss_kib": {
+        "max": 21184,
+        "mean": 21089.466666666667,
+        "median": 21076.0,
+        "min": 21024
+      },
+      "sample_count": 30,
+      "samples": [
+        {
+          "generation_ns": 166338,
+          "import_ns": 62416855,
+          "max_rss_kib": 21180,
+          "subprocess_wall_ns": 106388632
+        },
+        {
+          "generation_ns": 106666,
+          "import_ns": 46946178,
+          "max_rss_kib": 21048,
+          "subprocess_wall_ns": 86270389
+        },
+        {
+          "generation_ns": 126162,
+          "import_ns": 63764196,
+          "max_rss_kib": 21052,
+          "subprocess_wall_ns": 128766327
+        },
+        {
+          "generation_ns": 177327,
+          "import_ns": 62522209,
+          "max_rss_kib": 21116,
+          "subprocess_wall_ns": 124901031
+        },
+        {
+          "generation_ns": 172657,
+          "import_ns": 91844735,
+          "max_rss_kib": 21120,
+          "subprocess_wall_ns": 162121863
+        },
+        {
+          "generation_ns": 131159,
+          "import_ns": 55084499,
+          "max_rss_kib": 21024,
+          "subprocess_wall_ns": 129106692
+        },
+        {
+          "generation_ns": 139715,
+          "import_ns": 61126146,
+          "max_rss_kib": 21024,
+          "subprocess_wall_ns": 113495888
+        },
+        {
+          "generation_ns": 179134,
+          "import_ns": 46764847,
+          "max_rss_kib": 21028,
+          "subprocess_wall_ns": 105780015
+        },
+        {
+          "generation_ns": 180283,
+          "import_ns": 107080686,
+          "max_rss_kib": 21116,
+          "subprocess_wall_ns": 180422182
+        },
+        {
+          "generation_ns": 172351,
+          "import_ns": 79336591,
+          "max_rss_kib": 21136,
+          "subprocess_wall_ns": 167642772
+        },
+        {
+          "generation_ns": 207309,
+          "import_ns": 79613895,
+          "max_rss_kib": 21068,
+          "subprocess_wall_ns": 152770016
+        },
+        {
+          "generation_ns": 182036,
+          "import_ns": 93175769,
+          "max_rss_kib": 21180,
+          "subprocess_wall_ns": 165428143
+        },
+        {
+          "generation_ns": 200132,
+          "import_ns": 93267150,
+          "max_rss_kib": 21060,
+          "subprocess_wall_ns": 164073676
+        },
+        {
+          "generation_ns": 193396,
+          "import_ns": 73890127,
+          "max_rss_kib": 21024,
+          "subprocess_wall_ns": 168298576
+        },
+        {
+          "generation_ns": 184208,
+          "import_ns": 89934209,
+          "max_rss_kib": 21184,
+          "subprocess_wall_ns": 173937566
+        },
+        {
+          "generation_ns": 196832,
+          "import_ns": 85038812,
+          "max_rss_kib": 21168,
+          "subprocess_wall_ns": 163074291
+        },
+        {
+          "generation_ns": 173368,
+          "import_ns": 93195226,
+          "max_rss_kib": 21048,
+          "subprocess_wall_ns": 152691078
+        },
+        {
+          "generation_ns": 156556,
+          "import_ns": 69116116,
+          "max_rss_kib": 21152,
+          "subprocess_wall_ns": 124851439
+        },
+        {
+          "generation_ns": 163409,
+          "import_ns": 90798373,
+          "max_rss_kib": 21084,
+          "subprocess_wall_ns": 132430303
+        },
+        {
+          "generation_ns": 158539,
+          "import_ns": 88720731,
+          "max_rss_kib": 21060,
+          "subprocess_wall_ns": 168666200
+        },
+        {
+          "generation_ns": 156502,
+          "import_ns": 67250344,
+          "max_rss_kib": 21164,
+          "subprocess_wall_ns": 114162788
+        },
+        {
+          "generation_ns": 220513,
+          "import_ns": 82397382,
+          "max_rss_kib": 21056,
+          "subprocess_wall_ns": 135387932
+        },
+        {
+          "generation_ns": 153701,
+          "import_ns": 69932616,
+          "max_rss_kib": 21120,
+          "subprocess_wall_ns": 128845421
+        },
+        {
+          "generation_ns": 199488,
+          "import_ns": 85988432,
+          "max_rss_kib": 21040,
+          "subprocess_wall_ns": 160357468
+        },
+        {
+          "generation_ns": 192694,
+          "import_ns": 53497604,
+          "max_rss_kib": 21028,
+          "subprocess_wall_ns": 128150213
+        },
+        {
+          "generation_ns": 132910,
+          "import_ns": 67602993,
+          "max_rss_kib": 21056,
+          "subprocess_wall_ns": 108937179
+        },
+        {
+          "generation_ns": 172603,
+          "import_ns": 100359107,
+          "max_rss_kib": 21104,
+          "subprocess_wall_ns": 153057469
+        },
+        {
+          "generation_ns": 106643,
+          "import_ns": 62778694,
+          "max_rss_kib": 21104,
+          "subprocess_wall_ns": 124475542
+        },
+        {
+          "generation_ns": 104953,
+          "import_ns": 49916170,
+          "max_rss_kib": 21044,
+          "subprocess_wall_ns": 112995862
+        },
+        {
+          "generation_ns": 103212,
+          "import_ns": 49840445,
+          "max_rss_kib": 21096,
+          "subprocess_wall_ns": 78914342
+        }
+      ],
+      "subprocess_wall_ns": {
+        "max": 180422182,
+        "mean": 137213376.5,
+        "median": 130768497.5,
+        "min": 78914342
+      }
+    },
+    "safety-parent": {
+      "generation_ns": {
+        "max": 183446,
+        "mean": 124468.03333333334,
+        "median": 125615.0,
+        "min": 74064
+      },
+      "import_ns": {
+        "max": 88435862,
+        "mean": 62022759.766666666,
+        "median": 61662515.0,
+        "min": 40682481
+      },
+      "max_rss_kib": {
+        "max": 21456,
+        "mean": 21365.866666666665,
+        "median": 21356.0,
+        "min": 21276
+      },
+      "sample_count": 30,
+      "samples": [
+        {
+          "generation_ns": 97918,
+          "import_ns": 40682481,
+          "max_rss_kib": 21432,
+          "subprocess_wall_ns": 96066503
+        },
+        {
+          "generation_ns": 79068,
+          "import_ns": 44596409,
+          "max_rss_kib": 21276,
+          "subprocess_wall_ns": 87674154
+        },
+        {
+          "generation_ns": 81179,
+          "import_ns": 55026202,
+          "max_rss_kib": 21356,
+          "subprocess_wall_ns": 118004046
+        },
+        {
+          "generation_ns": 114586,
+          "import_ns": 80543190,
+          "max_rss_kib": 21436,
+          "subprocess_wall_ns": 167497424
+        },
+        {
+          "generation_ns": 94817,
+          "import_ns": 52915778,
+          "max_rss_kib": 21372,
+          "subprocess_wall_ns": 115386892
+        },
+        {
+          "generation_ns": 81584,
+          "import_ns": 49158864,
+          "max_rss_kib": 21400,
+          "subprocess_wall_ns": 84903549
+        },
+        {
+          "generation_ns": 144778,
+          "import_ns": 55331729,
+          "max_rss_kib": 21452,
+          "subprocess_wall_ns": 109472830
+        },
+        {
+          "generation_ns": 173327,
+          "import_ns": 66658492,
+          "max_rss_kib": 21316,
+          "subprocess_wall_ns": 125732286
+        },
+        {
+          "generation_ns": 105130,
+          "import_ns": 47580269,
+          "max_rss_kib": 21376,
+          "subprocess_wall_ns": 110462355
+        },
+        {
+          "generation_ns": 138428,
+          "import_ns": 71197206,
+          "max_rss_kib": 21336,
+          "subprocess_wall_ns": 144521523
+        },
+        {
+          "generation_ns": 131884,
+          "import_ns": 63118498,
+          "max_rss_kib": 21448,
+          "subprocess_wall_ns": 132606151
+        },
+        {
+          "generation_ns": 154464,
+          "import_ns": 69507372,
+          "max_rss_kib": 21436,
+          "subprocess_wall_ns": 159380973
+        },
+        {
+          "generation_ns": 150564,
+          "import_ns": 71247063,
+          "max_rss_kib": 21300,
+          "subprocess_wall_ns": 123526784
+        },
+        {
+          "generation_ns": 142254,
+          "import_ns": 55450335,
+          "max_rss_kib": 21304,
+          "subprocess_wall_ns": 115624831
+        },
+        {
+          "generation_ns": 129474,
+          "import_ns": 87280176,
+          "max_rss_kib": 21300,
+          "subprocess_wall_ns": 128951849
+        },
+        {
+          "generation_ns": 124667,
+          "import_ns": 80228881,
+          "max_rss_kib": 21344,
+          "subprocess_wall_ns": 131186428
+        },
+        {
+          "generation_ns": 166675,
+          "import_ns": 84931274,
+          "max_rss_kib": 21456,
+          "subprocess_wall_ns": 185541352
+        },
+        {
+          "generation_ns": 117951,
+          "import_ns": 63553354,
+          "max_rss_kib": 21456,
+          "subprocess_wall_ns": 134836444
+        },
+        {
+          "generation_ns": 181950,
+          "import_ns": 60206532,
+          "max_rss_kib": 21368,
+          "subprocess_wall_ns": 133066210
+        },
+        {
+          "generation_ns": 126563,
+          "import_ns": 63334936,
+          "max_rss_kib": 21340,
+          "subprocess_wall_ns": 126527580
+        },
+        {
+          "generation_ns": 117291,
+          "import_ns": 54601490,
+          "max_rss_kib": 21356,
+          "subprocess_wall_ns": 108701245
+        },
+        {
+          "generation_ns": 141119,
+          "import_ns": 66566916,
+          "max_rss_kib": 21348,
+          "subprocess_wall_ns": 135785326
+        },
+        {
+          "generation_ns": 183446,
+          "import_ns": 88435862,
+          "max_rss_kib": 21368,
+          "subprocess_wall_ns": 203657977
+        },
+        {
+          "generation_ns": 146544,
+          "import_ns": 63260400,
+          "max_rss_kib": 21340,
+          "subprocess_wall_ns": 122789467
+        },
+        {
+          "generation_ns": 124358,
+          "import_ns": 54439522,
+          "max_rss_kib": 21372,
+          "subprocess_wall_ns": 113217168
+        },
+        {
+          "generation_ns": 85425,
+          "import_ns": 46182543,
+          "max_rss_kib": 21348,
+          "subprocess_wall_ns": 75494466
+        },
+        {
+          "generation_ns": 74064,
+          "import_ns": 52272964,
+          "max_rss_kib": 21372,
+          "subprocess_wall_ns": 105518854
+        },
+        {
+          "generation_ns": 162651,
+          "import_ns": 71351139,
+          "max_rss_kib": 21320,
+          "subprocess_wall_ns": 127770124
+        },
+        {
+          "generation_ns": 77693,
+          "import_ns": 56994938,
+          "max_rss_kib": 21316,
+          "subprocess_wall_ns": 107449857
+        },
+        {
+          "generation_ns": 84189,
+          "import_ns": 44027978,
+          "max_rss_kib": 21332,
+          "subprocess_wall_ns": 98803751
+        }
+      ],
+      "subprocess_wall_ns": {
+        "max": 203657977,
+        "mean": 124338613.3,
+        "median": 123158125.5,
+        "min": 75494466
+      }
+    }
+  },
+  "schema_version": "sc-neurocore.safety-certification-benchmark.v1",
+  "variants": [
+    {
+      "git_head": "2e8e824fe76dcd3be82b9534c2436b8bd68ee884",
+      "label": "safety-parent",
+      "local_path_recorded": false,
+      "safety_cert_source_sha256": "2c1fabd76f1a142be02f1a73606779b2d5e54c5b56b2bfe193d67c554f306c12",
+      "safety_cert_surface_dirty": false,
+      "source_root": "git:2e8e824fe76dcd3be82b9534c2436b8bd68ee884"
+    },
+    {
+      "git_head": "2e8e824fe76dcd3be82b9534c2436b8bd68ee884",
+      "label": "safety-modular",
+      "local_path_recorded": false,
+      "safety_cert_source_sha256": "1a6e979be3b7d0d780b1fa54db0debed455a313e5bb59f3d0b39cbd158a49df3",
+      "safety_cert_surface_dirty": true,
+      "source_root": "working-tree:2e8e824fe76dcd3be82b9534c2436b8bd68ee884"
+    }
+  ]
+}

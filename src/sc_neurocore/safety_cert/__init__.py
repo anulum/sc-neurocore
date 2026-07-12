@@ -6,21 +6,14 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore — sc_neurocore.safety_cert public API surface
 
-"""sc_neurocore.safety_cert — IEC 61508 / ISO 26262 / FDA Class III safety certification.
+"""Safety-evidence organisation and runtime monitoring.
 
-Tier: industrial.
+The evidence modules build fail-closed traceability, FMEDA, formal-property,
+timing, checklist, and manifest artifacts from explicit caller inputs. They do
+not issue a certificate or replace a qualified conformity assessment.
 
-Two modules:
-
-- ``safety_cert`` — automated certification artefact generators
-  (traceability matrix, FMEDA, formal-proof certificates, WCET
-  analysis, compliance checklists, certification package, CCF +
-  proof-test + HFT assessments, IEC 62304 software safety
-  classification, change-impact tracker, cross-standard mapper,
-  formal-property gap detector, reliability metrics, evidence bag,
-  safety-manual generator).
-- ``safety_monitor`` — software-in-the-loop mirror of the
-  formally-proven hardware safety monitor (6 properties).
+The separate safety-monitor module is a software-in-the-loop mirror of the
+hardware safety monitor.
 """
 
 from sc_neurocore.safety_cert.safety_cert import (

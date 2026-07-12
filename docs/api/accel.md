@@ -40,6 +40,12 @@ Current documented mirrors:
 | `safety/l7_symbolic.rs` | `scpn.layers.l7_symbolic` | Rust unit tests plus L7 and cross-layer contract tests |
 | `safety/predictive_model.rs` | `world_model.predictive_model` | Rust unit tests plus 77 passed predictive-model tests, with 3 optional-path skips |
 
+Safety-evidence report assembly is not an acceleration kernel. Former
+safety_cert Rust, Julia, Go, and Mojo files were generated scaffolds without a
+runtime dispatcher or parity contract and have been removed. The distinct
+SafetyMonitor files remain a separate research/verification chain; their
+presence does not accelerate CertificationGenerator.
+
 Cargo command:
 
 ```bash

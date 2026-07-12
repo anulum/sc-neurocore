@@ -27110,41 +27110,146 @@ Synchronize two learning agents by mutually attracting their weights.
 
 ---
 
-## Module `safety_cert.safety_cert`
+## Module `safety_cert.certification`
 
-### Class `SafetyStandard`
-
-### Class `SILLevel`
-
-### Class `ASILLevel`
-
-### Class `Requirement`
-One safety requirement with traceability links.
+### Class `CertificationPackage`
+In-memory safety-evidence reports ready for deterministic materialisation.
 
 - **__post_init__**()
+  - Validate package metadata and every checklist row.
+- **checklist_coverage**()
+  - Return the fraction with explicit evidence, including partial rows.
+- **checklist_report**()
+  - Render checklist state without upgrading any evidence status.
+- **artifacts**()
+  - Return the five deterministic report filenames and their contents.
+- **content_sha256**()
+  - Return a full digest over metadata and all report contents.
+- **write**(directory)
+  - Atomically materialise reports and a hash manifest in a new directory.
 
-### Class `TraceabilityMatrix`
-Requirement → implementation → verification traceability.
+### Class `CertificationGenerator`
+Assemble caller-supplied records without fabricating assurance evidence.
 
-Each requirement links to:
-- Implementation artifacts (RTL files, Python modules)
-- Verification artifacts (formal proofs, UVM results, tests)
+- **generate**(standard, target_sil, modules, formal_properties, network_config)
+  - Build one evidence package from explicit records and assumptions.
+
+### Class `SafetyManualGenerator`
+Render a clearly labelled safety-manual template from explicit inputs.
+
+- **generate**(product_name, sil_level, modules, wcet_ns)
+  - Generate a non-certifying manual template for later expert review.
+
+---
+
+## Module `safety_cert.change_impact`
+
+### Class `ChangeRecord`
+One tracked change affecting safety.
+
+- **__post_init__**()
+  - Validate one change record and its affected identifiers.
+
+### Class `ChangeImpactTracker`
+Tracks changes and their impact on certification artifacts.
 
 - **__init__**()
-- **add_requirement**(req)
-- **link_implementation**(req_id, impl_ref)
-- **link_verification**(req_id, verif_ref)
-- **coverage**()
-- **open_count**()
-- **generate_report**()
-  - Generate text traceability report.
+- **add_change**(change)
+  - Add one unique change and derive its re-verification flag.
+- **affected_requirements**()
+  - Return sorted unique requirement IDs affected by recorded changes.
+- **high_risk_count**()
+  - Return the number of changes labelled high risk.
+- **needs_re_certification**()
+  - Return the legacy screen for at least one high-risk change.
+
+---
+
+## Module `safety_cert.compliance`
+
+### Class `ChecklistItem`
+One item in a compliance checklist.
+
+- **__post_init__**()
+  - Validate one checklist row and its evidence state.
+
+### Class `ComplianceChecklist`
+Generate fail-closed checklist skeletons from curated clause labels.
+
+Clause descriptions and suggested artifact locations are navigation aids,
+not normative text. Users remain responsible for licensed standards,
+applicability analysis, evidence review, and conformity assessment.
+
+- **generate**(cls, standard)
+  - Create a checklist, marking only caller-supplied evidence partial.
+
+### Class `SWClass`
+IEC 62304 software safety-class labels.
+
+
+### Class `IEC62304Assessment`
+IEC 62304 software safety classification for medical devices.
+
+- **__post_init__**()
+  - Validate the software-class assessment inputs.
+- **requires_unit_testing**()
+  - Return whether the legacy class screen calls for unit-test evidence.
+- **requires_architectural_design**()
+  - Return whether the legacy class screen calls for architecture evidence.
+- **from_sil**(sil)
+  - Return the legacy, non-normative SIL-to-software-class crosswalk.
+
+### Class `CrossStandardMapper`
+Navigate curated clause relationships without asserting equivalence.
+
+- **equivalent_clauses**(standard, clause)
+  - Return a copy of curated related-clause labels.
+- **coverage_overlap**(checklist_a, checklist_b)
+  - Count shared compliance coverage between two checklists.
+
+---
+
+## Module `safety_cert.evidence`
+
+### Class `EvidenceItem`
+One relative evidence filename with optional full SHA-256 digest.
+
+- **__post_init__**()
+  - Validate metadata and reject unsafe or ambiguous paths.
+
+### Class `EvidenceBag`
+Ordered manifest of uniquely named evidence artifacts.
+
+- **__init__**()
+  - Create an empty evidence manifest.
+- **add**(item)
+  - Add one item while preserving filename uniqueness.
+- **add_from_package**(package)
+  - Index every in-memory package report with its real content digest.
+- **file_count**()
+  - Return the number of validated manifest rows.
+- **manifest**()
+  - Render a Markdown manifest including declared digests.
+- **content_sha256**()
+  - Return the full digest of all canonical manifest fields.
+- **compute_hashes**()
+  - Return the historical 32-character prefix of the manifest digest.
+- **verify**(directory)
+  - Verify all declared digests against regular non-symlink files.
+
+---
+
+## Module `safety_cert.failure_analysis`
 
 ### Class `FailureCategory`
+Failure-effect categories used by the FMEDA arithmetic.
+
 
 ### Class `FailureMode`
 One failure mode in the FMEDA.
 
 - **__post_init__**()
+  - Validate one caller-supplied failure-mode record.
 - **safe_failure_fraction**()
   - Fraction of failures that are safe or detected dangerous.
 
@@ -27156,193 +27261,135 @@ Safe Failure Fraction (SFF) and Diagnostic Coverage (DC).
 
 - **__init__**()
 - **add_failure_mode**(fm)
+  - Add one uniquely identified failure mode.
 - **add_sc_standard_modes**(component)
-  - Add standard SC-specific failure modes for a component.
+  - Add the legacy synthetic profile after explicit acknowledgement.
 - **total_failure_rate**()
+  - Return the sum of caller-supplied FIT values.
 - **safe_failure_fraction**()
   - SFF = (safe + no_effect + DC*dangerous_detected) / total.
 - **diagnostic_coverage**()
+  - Return the FIT-weighted coverage of detected-dangerous modes.
 - **residual_risk_fit**()
   - Dangerous-undetected failure rate (residual risk).
 - **sff_by_component**()
   - Per-component safe failure fraction.
 - **max_achievable_sil**()
-  - Determine max achievable SIL from SFF and DC.
+  - Return a legacy SFF/DC screening label, not a SIL determination.
 - **generate_report**()
-
-### Class `FormalProperty`
-One formally verified property.
-
-- **__post_init__**()
-
-### Class `FormalProofCertificate`
-Certificate packaging formal verification evidence.
-
-- **__post_init__**()
-- **add_property**(prop)
-- **proven_count**()
-- **total_count**()
-- **pass_rate**()
-- **compute_hash**()
-- **generate_report**()
-
-### Class `WCETPath`
-Worst-case execution time for one SC computation path.
-
-- **__post_init__**()
-- **total_cycles**()
-- **wcet_ns**(clock_mhz)
-
-### Class `WCETAnalyzer`
-Worst-case execution time analysis for SC bitstream paths.
-
-Uses static analysis of the SC pipeline stages:
-- LFSR encoding: bitstream_length cycles
-- Dot product: num_inputs cycles
-- LIF evaluation: fixed (3 cycles)
-- AER encoding: num_neurons worst-case
-- STP update: 1 cycle
-
-- **analyze**(cls, bitstream_length, num_inputs, num_neurons, has_stp)
-- **analyze_multistage**(cls, layers)
-  - Analyze a multi-layer SC network.
-
-### Class `ChecklistItem`
-One item in a compliance checklist.
-
-- **__post_init__**()
-
-### Class `ComplianceChecklist`
-Standard-specific compliance checklist generator.
-
-- **generate**(cls, standard)
-
-### Class `CertificationPackage`
-Complete certification package output.
-
-- **__post_init__**()
-- **checklist_coverage**()
-
-### Class `CertificationGenerator`
-Top-level generator for safety certification packages.
-
-- **generate**(standard, target_sil, modules, formal_properties, network_config)
-  - Generate a complete certification package.
-
-### Class `CCFDefence`
-One defence against common cause failures.
-
-- **__post_init__**()
-
-### Class `CCFAnalysis`
-IEC 61508 Annex D — β-factor estimation for common cause failures.
-
-β = fraction of dangerous failures that are common cause.
-Defences reduce β. Lower β → higher achievable SIL.
-
-- **__init__**()
-- **mark_implemented**(defence_id)
-- **beta_factor**()
-  - Resulting β-factor (start at 0.10, reduce by implemented defences).
-- **implemented_count**()
-- **sil_compatible**(target_sil)
-  - Check if β is low enough for the target SIL.
-
-### Class `ProofTestCoverage`
-Maps formal proof pass/fail to diagnostic coverage for SIL claims.
-
-- **coverage_from_proofs**(properties)
-  - Formal proof coverage = proven / total asserts.
-- **dc_to_sil**(dc)
-  - Map diagnostic coverage to max SIL per IEC 61508 Table 3.
-- **uncovered_modules**(properties, all_modules)
-  - Modules with no formal proofs.
-
-### Class `HFTLevel`
-
-### Class `HFTAssessment`
-Hardware Fault Tolerance assessment per IEC 61508 Table 2.
-
-- **__post_init__**()
-- **required_hft**()
-  - Determine required HFT from SFF and target SIL.
-- **is_simplex_ok**()
-
-### Class `ChangeRecord`
-One tracked change affecting safety.
-
-- **__post_init__**()
-
-### Class `ChangeImpactTracker`
-Tracks changes and their impact on certification artifacts.
-
-- **__init__**()
-- **add_change**(change)
-- **affected_requirements**()
-- **high_risk_count**()
-- **needs_re_certification**()
-
-### Class `SafetyManualGenerator`
-Generates operator safety manual skeleton per IEC 61508-2 §7.4.15.
-
-- **generate**(product_name, sil_level, modules, wcet_ns)
-
-### Class `SWClass`
-
-### Class `IEC62304Assessment`
-IEC 62304 software safety classification for medical devices.
-
-- **__post_init__**()
-- **requires_unit_testing**()
-- **requires_architectural_design**()
-- **from_sil**(sil)
+  - Render the supplied FMEDA arithmetic and its provenance warning.
 
 ### Class `ReliabilityMetrics`
 System-level reliability from FMEDA data.
 
 - **__post_init__**()
+  - Validate system-level FIT values.
 - **mtbf_hours**()
   - Mean Time Between Failures (hours).
 - **mtbf_years**()
+  - Return mean time between failures in 365-day years.
 - **pfh_d**()
   - Probability of dangerous failure per hour.
 - **pfh_sil**()
-  - Max SIL from PFHd per IEC 61508 Table 3.
+  - Return the legacy PFH-only screening label, not a SIL determination.
 - **from_fmeda**(fmeda)
+  - Build metrics from explicitly populated FMEDA arithmetic.
 
-### Class `EvidenceItem`
-One item in the evidence bag.
+---
+
+## Module `safety_cert.fault_tolerance`
+
+### Class `CCFDefence`
+One defence against common cause failures.
 
 - **__post_init__**()
+  - Validate one common-cause screening defence.
 
-### Class `EvidenceBag`
-Manifest of all certification evidence artifacts.
+### Class `CCFAnalysis`
+Non-normative beta-factor screening helper.
+
+Default reductions are legacy modelling assumptions, not measured evidence
+or a conformity determination.
 
 - **__init__**()
-- **add**(item)
-- **add_from_package**(pkg)
-- **file_count**()
-- **manifest**()
-- **compute_hashes**()
+- **mark_implemented**(defence_id)
+  - Mark one known defence present, returning false for an unknown ID.
+- **beta_factor**()
+  - Resulting β-factor (start at 0.10, reduce by implemented defences).
+- **implemented_count**()
+  - Return the number of defences marked present.
+- **sil_compatible**(target_sil)
+  - Check if β is low enough for the target SIL.
 
-### Class `CrossStandardMapper`
-Maps equivalent clauses across IEC 61508 / ISO 26262 / FDA / DO-254.
+### Class `HFTLevel`
+Hardware-fault-tolerance screening labels.
 
-- **equivalent_clauses**(standard, clause)
-- **coverage_overlap**(checklist_a, checklist_b)
-  - Count shared compliance coverage between two checklists.
+
+### Class `HFTAssessment`
+Hardware Fault Tolerance assessment per IEC 61508 Table 2.
+
+- **__post_init__**()
+  - Validate screening inputs.
+- **required_hft**()
+  - Determine required HFT from SFF and target SIL.
+- **is_simplex_ok**()
+  - Return whether the legacy table screen yields HFT zero.
+
+---
+
+## Module `safety_cert.formal_evidence`
+
+### Class `FormalProperty`
+One formally verified property.
+
+- **__post_init__**()
+  - Validate a formal-property evidence record.
+
+### Class `FormalProofCertificate`
+Immutable-content identifier and report for formal-property evidence.
+
+- **__post_init__**()
+  - Validate the certificate container and its property records.
+- **add_property**(prop)
+  - Append one formal-property evidence record.
+- **proven_count**()
+  - Return the number of properties explicitly marked proven.
+- **total_count**()
+  - Return the number of property records.
+- **pass_rate**()
+  - Return the proven fraction, or zero for an empty certificate.
+- **content_sha256**()
+  - Return the full SHA-256 digest of every material property field.
+- **compute_hash**()
+  - Set and return the historical 32-character certificate identifier.
+- **generate_report**()
+  - Render the formal-property evidence as Markdown.
+
+### Class `ProofTestCoverage`
+Screen formal-proof completeness without making a compliance claim.
+
+- **coverage_from_proofs**(properties)
+  - Formal proof coverage = proven / total asserts.
+- **dc_to_sil**(dc)
+  - Return the legacy DC-only screening label.
+- **uncovered_modules**(properties, all_modules)
+  - Modules with no formal proofs.
 
 ### Class `PropertyGap`
 One module with insufficient formal coverage.
 
 - **__post_init__**()
+  - Validate the formal-property gap counts.
 - **coverage**()
+  - Return the proven fraction, or zero when no properties exist.
 
 ### Class `FormalPropertyGapDetector`
 Detects modules with insufficient formal verification coverage.
 
 - **detect**(cls, properties, required_modules)
+  - Return missing or incomplete formal-property coverage by module.
 - **is_fully_covered**(cls, properties, required_modules)
+  - Return whether every required module passes the configured screen.
 
 ---
 
@@ -27369,6 +27416,87 @@ Enforces all 6 formally proven properties:
   - Check all 6 safety properties. Returns True if any violation detected.
 - **property_names**()
   - Return names of violated properties.
+
+---
+
+## Module `safety_cert.standards`
+
+### Class `SafetyStandard`
+Standards for which the library can organise user-supplied evidence.
+
+
+### Class `SILLevel`
+Safety Integrity Level labels used in reports and screening utilities.
+
+
+### Class `ASILLevel`
+Automotive Safety Integrity Level labels used by a legacy crosswalk.
+
+
+---
+
+## Module `safety_cert.timing_analysis`
+
+### Class `WCETPath`
+Worst-case execution time for one SC computation path.
+
+- **__post_init__**()
+  - Validate one formula-derived timing path.
+- **total_cycles**()
+  - Return the sum of validated stage-cycle counts.
+- **wcet_ns**(clock_mhz)
+  - Convert cycles to nanoseconds at a caller-supplied clock.
+
+### Class `WCETAnalyzer`
+Formula model for SC pipeline cycle counts.
+
+This is not a synthesis timing report or a measured hardware bound. It uses
+the following caller-reviewable stage assumptions:
+- LFSR encoding: bitstream_length cycles
+- Dot product: num_inputs cycles
+- LIF evaluation: fixed (3 cycles)
+- AER encoding: num_neurons worst-case
+- STP update: 1 cycle
+
+- **analyze**(cls, bitstream_length, num_inputs, num_neurons, has_stp)
+  - Build a single-layer path from explicit dimension assumptions.
+- **analyze_multistage**(cls, layers)
+  - Analyze a multi-layer SC network.
+
+---
+
+## Module `safety_cert.traceability`
+
+### Class `Requirement`
+One safety requirement with traceability links.
+
+- **__post_init__**()
+  - Validate the requirement and its initial traceability links.
+
+### Class `TraceabilityMatrix`
+Requirement → implementation → verification traceability.
+
+Each requirement links to:
+- Implementation artifacts (RTL files, Python modules)
+- Verification artifacts (formal proofs, UVM results, tests)
+
+- **__init__**()
+- **add_requirement**(req)
+  - Add one uniquely identified requirement.
+- **link_implementation**(req_id, impl_ref)
+  - Link an implementation artifact, returning false for an unknown ID.
+- **link_verification**(req_id, verif_ref)
+  - Link a verification artifact, returning false for an unknown ID.
+- **coverage**()
+  - Return the fraction of requirements with both link types.
+- **open_count**()
+  - Return the number of requirements with no implementation link.
+- **implemented_count**()
+  - Return the number with implementation but no verification link.
+- **verified_count**()
+  - Return the number with implementation and verification links.
+- **generate_report**()
+  - Generate a Markdown traceability report.
 
 ---
 

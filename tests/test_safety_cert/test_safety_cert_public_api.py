@@ -6,14 +6,10 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore — Tests for sc_neurocore.safety_cert package public API
 
-"""Tests for the `sc_neurocore.safety_cert` package re-exports.
+"""Pin the safety package re-export and runtime-monitor contracts.
 
-Antigravity authored `safety_cert.py` + `safety_monitor.py` but did
-not wire `__init__.py` to re-export the 34 public symbols. Arcane
-Sapience wired the re-exports in this batch (audit P0 / B1 of #57).
-This test pins the contract: every documented symbol must import
-from the top-level package, must equal the same object as the inner
-module, and must be in `__all__`.
+Every documented symbol must import from the package, retain identity with the
+historical compatibility module, and remain listed in the public export list.
 """
 
 from __future__ import annotations

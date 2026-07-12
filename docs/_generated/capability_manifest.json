@@ -659,7 +659,7 @@
       {
         "domain": "EDA / ASIC / verification",
         "name": "safety_cert",
-        "status": "stub",
+        "status": "library-only",
         "tier": "core"
       },
       {
@@ -971,7 +971,7 @@
     "python_model_classes": 158,
     "python_model_source_modules": 153,
     "rust_pyo3_model_wrappers": 176,
-    "test_files": 1113
+    "test_files": 1125
   },
   "documentation": {
     "public_pages": [
@@ -2898,6 +2898,7 @@
       "tests/test_behavioral_equivalence.py",
       "tests/test_bench_cli_startup.py",
       "tests/test_bench_dna_mapper_import.py",
+      "tests/test_bench_safety_certification.py",
       "tests/test_benchmark_context.py",
       "tests/test_benchmark_evidence_docs.py",
       "tests/test_benchmark_harness_contracts.py",
@@ -3626,8 +3627,19 @@
       "tests/test_rust_rk4_neuron_parity.py",
       "tests/test_rust_safety_module_registry.py",
       "tests/test_safety/test_safety_monitor.py",
-      "tests/test_safety_cert/test_safety_cert.py",
+      "tests/test_safety_cert/test_architecture.py",
+      "tests/test_safety_cert/test_certification.py",
+      "tests/test_safety_cert/test_change_impact.py",
+      "tests/test_safety_cert/test_compliance.py",
+      "tests/test_safety_cert/test_evidence.py",
+      "tests/test_safety_cert/test_failure_analysis.py",
+      "tests/test_safety_cert/test_fault_tolerance.py",
+      "tests/test_safety_cert/test_formal_evidence.py",
+      "tests/test_safety_cert/test_package_materialisation.py",
       "tests/test_safety_cert/test_safety_cert_public_api.py",
+      "tests/test_safety_cert/test_standards.py",
+      "tests/test_safety_cert/test_timing_analysis.py",
+      "tests/test_safety_cert/test_traceability.py",
       "tests/test_sby_formal.py",
       "tests/test_sby_runner.py",
       "tests/test_sc_convergence.py",

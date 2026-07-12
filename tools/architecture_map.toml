@@ -256,7 +256,7 @@ federated = "stub"
 hypervisor = "stub"
 uvm_gen = "stub"
 verification = "stub"
-safety_cert = "stub"
+safety_cert = "library-only"
 # experimental / naming-ahead-of-substance
 quantum_cognition = "feasibility-only"
 physics = "feasibility-only"

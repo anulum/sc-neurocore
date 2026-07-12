@@ -1,17 +1,21 @@
 # SC-NEUROCORE — Module Integration Reference
 
-> **Status:** Integrated
-> **Date:** 2026-04-16
-> **Tests:** 1,173 passing across 19 modules
+> **Status:** Historical integration inventory; use the live system map and
+> focused module evidence for current status
+> **Snapshot date:** 2026-04-16
+> **Snapshot tests:** 1,173 across 19 modules
 > **Languages:** Python, Go, Rust, SystemVerilog
-> **Co-Authored-By:** Arcane Sapience <protoscience@anulum.li>
 
 ---
 
 ## Overview
 
-This document catalogues all modules industrialized from the research sandbox
-and integrated into the production `SC-NEUROCORE` tree. Each module has been:
+This document records the April 2026 migration from the research sandbox into
+the SC-NEUROCORE tree. Paths, tests, and readiness have continued to evolve;
+this inventory must not be used as a live certification or production-readiness
+claim.
+
+At that snapshot, modules were:
 
 1. Copied (not moved) into `src/sc_neurocore/` and `tests/`
 2. Given clean module names (no `phase` prefixes)
@@ -26,20 +30,24 @@ and integrated into the production `SC-NEUROCORE` tree. Each module has been:
 
 ### Safety & Certification
 
-#### safety_cert — IEC 61508 / ISO 26262 Safety Certification
-- **Source:** `src/sc_neurocore/safety_cert/safety_cert.py`
-- **Tests:** `tests/test_safety_cert/test_safety_cert.py` — **81 tests**
+#### safety_cert — fail-closed safety-evidence organisation
+- **Source:** ten responsibility modules plus the compatibility facade under
+  `src/sc_neurocore/safety_cert/`
+- **Tests:** `tests/test_safety_cert/` — **456 focused tests**
 - **Key Classes:**
-  - `SafetyRequirement` — Individual safety requirement with SIL/ASIL level
-  - `RequirementTracer` — Bidirectional traceability matrix
-  - `FMEDAAnalyzer` — Failure Modes, Effects, and Diagnostic Analysis
-  - `SafetyManualGenerator` — IEC 61508 / ISO 26262 documentation generator
-  - `FormalPropertyLink` — Links requirements to SymbiYosys formal proofs
-  - `ReliabilityPredictor` — FIT rate and MTTF calculation (MIL-HDBK-217F)
-  - `CertificationAuditor` — Automated compliance auditing
-  - `RiskGraph` — Risk assessment with consequence/exposure/controllability
-  - `SafetyIntegrityVerifier` — Cross-module SIL verification
-  - `DependencyAnalyzer` — Inter-module dependency tracking
+  - `Requirement` and `TraceabilityMatrix` — explicit implementation and
+    verification links
+  - `FailureMode`, `FMEDA`, and `ReliabilityMetrics` — arithmetic over
+    caller-supplied FIT/DC records
+  - `FormalProperty` and `FormalProofCertificate` — full-field evidence
+    hashing and reports
+  - `CertificationGenerator` and `CertificationPackage` — fail-closed
+    assembly and atomic materialisation
+  - `EvidenceItem` and `EvidenceBag` — path-safe SHA-256 manifests and
+    on-disk verification
+
+This library organises evidence. It does not grant certification, approval, or
+conformity.
 
 #### fault_injection — Resilience Testing
 - **Source:** `src/sc_neurocore/fault_injection/fault_injection.py`
@@ -257,7 +265,7 @@ and integrated into the production `SC-NEUROCORE` tree. Each module has been:
 
 | Module | Location | Tests |
 |--------|----------|------:|
-| safety_cert | `tests/test_safety_cert/` | 81 |
+| safety_cert | `tests/test_safety_cert/` | 456 |
 | asic_flow | `tests/test_asic_flow/` | 67 |
 | fault_injection | `tests/test_fault_injection/` | 22 |
 | uvm_gen | `tests/test_uvm_gen/` | 72 |
