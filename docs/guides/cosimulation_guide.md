@@ -243,6 +243,29 @@ The S5/H1 promotion adds a Q8.8 formal-catalogue core and port-only harness.
 Its depth-4 SymbiYosys/Z3 job proves the bounded reset/spike safety property;
 the Q16.16 operating set remains the behavioural evidence.
 
+### Medvedev first-return Q16.16 enrolment
+
+The `medvedev_map` schema is the scalar slow-calcium first-return reduction in
+Medvedev (2005), DOI `10.1016/j.physd.2005.01.021`; it is not the superseded
+tent-map recurrence. Its three regions follow equations 4.4/4.7, 4.8 with
+4.13, and 4.15. The paper does not tabulate one unique global pair of return
+functions, so the decay, affine-return, average, exponent, and scale constants
+are disclosed as SC-NeuroCore's reproducible calibration. `I=0` is the sourced
+map; non-zero `I` is a maintained perturbation of active returns. An event is
+the maintained pre-step observation `u <= u_HC`, not a paper-defined spike.
+
+The hand model and paired TOML/JSON schemas agree exactly on every state and
+event. At `I=2` over 100 iterations they traverse the exact four-state cycle
+and emit the same 75-event vector. Q16.16 RTL preserves that complete vector
+with maximum state error below `0.007813`. Q8.8 is not a valid target because
+the calibrated `d=2271.1927977404063` log scale exceeds its signed range.
+
+The emitted log datapath uses the shared 256-entry positive-domain LUT over
+`[1/256, 8 + 1/256)` at step `1/32`. The S5/H1 promotion therefore emits a
+Q16.16 catalogue core and port-only harness; its depth-4 SymbiYosys/Z3 job
+proves bounded reset/event safety, while the 100-iteration co-simulation is the
+behavioural evidence.
+
 ### Courbage-Nekorkin map fixed-point trajectory enrolment
 
 The `courage_nekorkin_map` schema reproduces Courbage, Nekorkin, and Vdovin
@@ -389,7 +412,7 @@ The tool scans live source modules and schema files without importing optional
 backends. It reports the net schema gap, source modules still lacking a
 same-name or alias schema, schema-only names, source-evidence classifications,
 and a ranked enrolment table. The current checkout has 153 model source modules,
-30 unique schema models, a net schema gap of 123, and 125 source-module rows
+32 unique schema models, a net schema gap of 121, and 123 source-module rows
 still needing same-name or alias schema coverage because `izhikevich` and `lif`
 are schema-only names.
 

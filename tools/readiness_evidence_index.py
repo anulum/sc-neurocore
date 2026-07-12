@@ -121,6 +121,16 @@ ENROLLED: tuple[EnrolledEvidence, ...] = (
         ),
     ),
     EnrolledEvidence(
+        schema_name="medvedev_map",
+        class_name="MedvedevMapNeuron",
+        level="h1_cosim",
+        evidence=("tests/test_cosim_medvedev_map.py::test_q1616_event_vector_and_state_envelope"),
+        operating_point="Medvedev first-return map at I=2 over 100 iterations",
+        tolerance=(
+            "hand/TOML/JSON exact; Q16.16 exact 75-event vector with maximum u error below 0.007813"
+        ),
+    ),
+    EnrolledEvidence(
         schema_name="courage_nekorkin_map",
         class_name="CourageNekorkinMapNeuron",
         level="h1_cosim",

@@ -11,7 +11,7 @@
 
 Only models with ``is_perfect`` (science S5 + silicon ≥ target H) are enrolled.
 Each job proves reset hygiene and spike reachability on the *committed* equation-
-compiler RTL (Q8.8 defaults), without hierarchical ``uut.*`` probes so
+compiler RTL (Q8.8 by default, with explicit per-schema overrides), without hierarchical ``uut.*`` probes so
 ``default_nettype none`` stays clean.
 
 Usage
@@ -55,6 +55,7 @@ CLASS_TO_SCHEMA: dict[str, str] = {
     "Izhikevich2007Neuron": "izhikevich2007",
     "LapicqueNeuron": "lapicque",
     "McKeanNeuron": "mckean",
+    "MedvedevMapNeuron": "medvedev_map",
     "MihalasNieburNeuron": "mihalas_niebur",
     "MorrisLecarNeuron": "morris_lecar",
     "PernarowskiNeuron": "pernarowski",
@@ -79,6 +80,7 @@ DEPTH_BY_SCHEMA: dict[str, int] = {
     "fitzhugh_rinzel": 4,
     "hindmarsh_rose": 4,
     "mckean": 4,
+    "medvedev_map": 4,
     "mihalas_niebur": 3,
     "pernarowski": 4,
     "rulkov_map": 4,
@@ -100,6 +102,7 @@ MINIMAL_SAFETY_SCHEMAS: frozenset[str] = frozenset(
         "fitzhugh_rinzel",
         "hindmarsh_rose",
         "mckean",
+        "medvedev_map",
         "mihalas_niebur",
         "morris_lecar",
         "pernarowski",
@@ -109,6 +112,13 @@ MINIMAL_SAFETY_SCHEMAS: frozenset[str] = frozenset(
         "hodgkin_huxley",
     }
 )
+
+# Width overrides are additive: every pre-existing catalogue job retains Q8.8.
+# Medvedev needs Q16.16 because its calibrated d=2271.19 cannot fit Q8.8.
+DEFAULT_PRECISION = (16, 8)
+PRECISION_BY_SCHEMA: dict[str, tuple[int, int]] = {
+    "medvedev_map": (32, 16),
+}
 
 
 @dataclass(frozen=True)
@@ -123,6 +133,8 @@ class EmitResult:
     formal_path: Path
     sby_path: Path
     depth: int
+    data_width: int
+    fraction: int
 
 
 def _perfect_class_names() -> list[str]:
@@ -191,7 +203,7 @@ def _spdx_header(title: str) -> str:
     )
 
 
-def _formal_wrapper(ports: ModulePorts, *, minimal: bool) -> str:
+def _formal_wrapper(ports: ModulePorts, *, minimal: bool, data_width: int = 16) -> str:
     """Build a port-only formal harness (no hierarchical probes)."""
     module = ports.name
     state_port = ports.primary_state
@@ -199,7 +211,7 @@ def _formal_wrapper(ports: ModulePorts, *, minimal: bool) -> str:
     for bit in ports.bit_outputs:
         wire_decls.append(f"    wire {bit};")
     for signed in ports.signed_outputs:
-        wire_decls.append(f"    wire signed [15:0] {signed};")
+        wire_decls.append(f"    wire signed [{data_width - 1}:0] {signed};")
     connections = [
         ".clk(clk)",
         ".rst_n(rst_n)",
@@ -240,8 +252,8 @@ def _formal_wrapper(ports: ModulePorts, *, minimal: bool) -> str:
     // Saturation contract on the primary membrane / phase / current state.
     always @(posedge clk) begin
         if (past_valid && rst_n) begin
-            assert ($signed({state_port}) >= -16'sd32768);
-            assert ($signed({state_port}) <= 16'sd32767);
+            assert ($signed({state_port}) >= -{data_width}'sd{1 << (data_width - 1)});
+            assert ($signed({state_port}) <= {data_width}'sd{(1 << (data_width - 1)) - 1});
         end
     end
 `endif
@@ -254,7 +266,7 @@ def _formal_wrapper(ports: ModulePorts, *, minimal: bool) -> str:
 module {module}_formal (
     input wire clk,
     input wire rst_n,
-    input wire signed [15:0] I_t
+    input wire signed [{data_width - 1}:0] I_t
 );
 
 {wires}
@@ -298,8 +310,8 @@ def emit_one(class_name: str) -> EmitResult:
 
     schema = CLASS_TO_SCHEMA[class_name]
     neuron = UniversalNeuron.from_schema(schema)
-    # Q8.8 matches small-core formal style and keeps LUT models smaller than Q16.16.
-    rtl = neuron.to_verilog(data_width=16, fraction=8)
+    data_width, fraction = PRECISION_BY_SCHEMA.get(schema, DEFAULT_PRECISION)
+    rtl = neuron.to_verilog(data_width=data_width, fraction=fraction)
     ports = _parse_module_ports(rtl)
     module = ports.name
     depth = DEPTH_BY_SCHEMA.get(schema, 20)
@@ -313,7 +325,11 @@ def emit_one(class_name: str) -> EmitResult:
 
     rtl_path.write_text(rtl if rtl.endswith("\n") else rtl + "\n", encoding="utf-8")
     formal_path.write_text(
-        _formal_wrapper(ports, minimal=schema in MINIMAL_SAFETY_SCHEMAS),
+        _formal_wrapper(
+            ports,
+            minimal=schema in MINIMAL_SAFETY_SCHEMAS,
+            data_width=data_width,
+        ),
         encoding="utf-8",
     )
     sby_path.write_text(_sby_script(module, depth), encoding="utf-8")
@@ -327,6 +343,8 @@ def emit_one(class_name: str) -> EmitResult:
         formal_path=formal_path,
         sby_path=sby_path,
         depth=depth,
+        data_width=data_width,
+        fraction=fraction,
     )
 
 
@@ -344,13 +362,14 @@ def emit_all() -> list[EmitResult]:
         "",
         f"Jobs: **{len(results)}**",
         "",
-        "| Class | Schema | Module | State port | Depth |",
-        "| --- | --- | --- | --- | ---: |",
+        "| Class | Schema | Module | State port | Q format | Depth |",
+        "| --- | --- | --- | --- | --- | ---: |",
     ]
     for row in results:
         lines.append(
             f"| {row.class_name} | {row.schema} | `{row.module}` | "
-            f"`{row.state_port}` | {row.depth} |"
+            f"`{row.state_port}` | Q{row.data_width - row.fraction}.{row.fraction} | "
+            f"{row.depth} |"
         )
     inventory.write_text("\n".join(lines) + "\n", encoding="utf-8")
     return results

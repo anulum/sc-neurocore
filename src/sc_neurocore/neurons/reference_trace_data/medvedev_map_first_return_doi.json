@@ -1,0 +1,46 @@
+{
+  "schema_version": "sc-neurocore.reference-trace.v1",
+  "name": "medvedev_map_first_return_doi",
+  "model": {
+    "schema_name": "medvedev_map",
+    "runner": "universal_dsl"
+  },
+  "protocol": {
+    "dt": 1.0,
+    "steps": 100,
+    "inputs": {
+      "I": 2.0
+    },
+    "state_variables": [
+      "u"
+    ]
+  },
+  "provenance": {
+    "kind": "map_iteration_reference",
+    "source": "src/sc_neurocore/neurons/model_schemas/medvedev_map.toml",
+    "equation": "Medvedev (2005) Section 4 first-return construction: calibrated Eq. 4.4/4.7 left return, Eq. 4.8 affine inner return composed with Eq. 4.13, and exact Eq. 4.15 right return. The paper does not uniquely tabulate global T(u) and F(u), so the calibration is explicit. I=2 is a maintained active-return perturbation and the pre-state u<=u_HC event is not attributed to the paper.",
+    "citation": "doi:10.1016/j.physd.2005.01.021"
+  },
+  "expected_features": {
+    "spike_count": 75.0,
+    "first_spike_step": 1.0,
+    "final.u": 0.2514078836724436,
+    "min.u": 0.20201527871456648,
+    "max.u": 0.26318342915295445,
+    "mean.u": 0.23764300712961073
+  },
+  "tolerances": {
+    "default": {
+      "absolute": 1e-12,
+      "relative": 1e-12
+    },
+    "spike_count": {
+      "absolute": 0.0,
+      "relative": 0.0
+    },
+    "first_spike_step": {
+      "absolute": 0.0,
+      "relative": 0.0
+    }
+  }
+}

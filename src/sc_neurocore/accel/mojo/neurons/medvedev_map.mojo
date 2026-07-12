@@ -4,72 +4,95 @@
 # © Code 2020–2026 Miroslav Šotek. All rights reserved.
 # ORCID: 0009-0009-3560-0851
 # Contact: www.anulum.li | protoscience@anulum.li
-# SC-NeuroCore — Mojo Medvedev 2005 1D spiking map (parity with medvedev_map.py)
-#
+# SC-NeuroCore — Mojo C ABI for the Medvedev 2005 first-return map
+
 # Build:
 #   mojo build --emit shared-lib -o libmedvedev.so medvedev_map.mojo
 #
-# Parity contract: `medvedev_map_simulate_c` reproduces
-# `sc_neurocore.neurons.models.medvedev_map.MedvedevMapNeuron.simulate`. The map
-# is exact floating-point arithmetic (a multiply, an add, and a fold into
-# [0, 1)). The fold is `x - floor(x)`, which equals Python's `x % 1.0`, Rust's
-# `rem_euclid(1.0)` and Julia's `mod(x, 1.0)` bit-for-bit. Rust/Julia/Go
-# reproduce the trace bit-for-bit; Mojo's release build can contract
-# `alpha*x + current` (and `alpha*(1-x) + current`) into a fused multiply-add
-# (one rounding instead of two), so each step agrees to within a couple of ULP.
-# This is a chaotic expanding map (alpha > 1), so a single ULP can be amplified
-# into a visible whole-trace gap — the per-step agreement stays tightly
-# ULP-bounded and the spike counts match. This matches the documented Mojo
-# FMA-parity precedent for wong_wang / wilson_cowan.
-#
-# Mojo FFI rule (per feedback_mojo_026_ffi_pattern): @export rejects parametric
-# signatures, so the output trace buffer is passed as a raw `Int` address and
-# the pointer is reconstructed inside. The caller allocates n+1 Float64 slots:
-# [0, n) receive the x trace, index n the final x.
-#
-# Reference: Medvedev, G.S. (2005). Physica D 202:37-59.
+# The caller supplies n_steps+1 Float64 slots: the slow-calcium trace followed
+# by final u. A negative result reports rejected input or a non-finite candidate.
 
+from std.math import exp, isfinite, log
 from std.memory import UnsafePointer
-from math import floor
-
-
-@always_inline
-fn _fold_unit(v: Float64) -> Float64:
-    # Euclidean remainder modulo 1.0: v - floor(v) lands in [0, 1) and is exact.
-    return v - floor(v)
 
 
 @export
-fn medvedev_map_simulate_c(
-    x0: Float64,
-    alpha: Float64,
-    beta: Float64,
-    x_threshold: Float64,
+def medvedev_map_simulate_c(
+    u0: Float64,
+    beta_0: Float64,
+    beta_hc: Float64,
+    beta_sn: Float64,
+    delta: Float64,
+    decay_t0: Float64,
+    alpha_t0: Float64,
+    f_0: Float64,
+    f_1: Float64,
+    homoclinic_exponent: Float64,
+    d: Float64,
+    input_gain: Float64,
     n_steps: Int,
     current: Float64,
     trace_addr: Int,
 ) -> Int64:
+    if n_steps < 0 or trace_addr == 0:
+        return -1
+    if (
+        not isfinite(u0)
+        or not isfinite(beta_0)
+        or not isfinite(beta_hc)
+        or not isfinite(beta_sn)
+        or not isfinite(delta)
+        or not isfinite(decay_t0)
+        or not isfinite(alpha_t0)
+        or not isfinite(f_0)
+        or not isfinite(f_1)
+        or not isfinite(homoclinic_exponent)
+        or not isfinite(d)
+        or not isfinite(input_gain)
+        or not isfinite(current)
+        or not (0.0 < beta_0 and beta_0 < beta_sn and beta_sn < beta_hc and beta_hc < delta)
+        or not (0.0 < decay_t0 and decay_t0 < 1.0)
+        or not (0.0 < alpha_t0 and alpha_t0 < 1.0)
+        or not (0.0 <= f_1 and f_1 < f_0)
+        or homoclinic_exponent <= 0.0
+        or d <= 0.0
+        or input_gain < 0.0
+    ):
+        return -1
+
     var trace = UnsafePointer[Float64, MutAnyOrigin](unsafe_from_address=trace_addr)
-    var x = x0
-    var spikes: Int64 = 0
-    for t in range(n_steps):
-        var x_prev = x
-        # Round the product before adding `current` so the compiler cannot
-        # contract `alpha*x + current` into a single-rounding fused multiply-add
-        # — that fusion is the one operation that diverges from the IEEE-754
-        # two-rounding path used by Python/Rust/Go/Julia.
-        var raw: Float64
-        if x < beta:
-            var ax = alpha * x
-            raw = ax + current
+    var u_0 = beta_0 / (delta - beta_0)
+    var u_hc = beta_hc / (delta - beta_hc)
+    var u_sn = beta_sn / (delta - beta_sn)
+    var u = u0
+    var events: Int64 = 0
+    for index in range(n_steps):
+        if u <= u_hc:
+            events += 1
+
+        var candidate: Float64
+        if u <= u_0:
+            candidate = decay_t0 * u + (1.0 - decay_t0) * f_0 + input_gain * current
+        elif u <= u_hc:
+            var u_1 = (1.0 - alpha_t0) * u + alpha_t0 * f_0
+            var gap = beta_hc - delta * u_1 / (1.0 + u_1)
+            var inner_return: Float64
+            if gap <= 0.0:
+                inner_return = f_1
+            else:
+                var log_argument = d * gap
+                if not isfinite(log_argument) or log_argument <= 0.0:
+                    return -1
+                var scale = exp(homoclinic_exponent * log(log_argument))
+                inner_return = scale * (u_1 - f_1) + f_1
+            candidate = inner_return + input_gain * current
         else:
-            var one_minus_x = 1.0 - x
-            var a_term = alpha * one_minus_x
-            raw = a_term + current
-        x = _fold_unit(raw)
-        trace[t] = x
-        if x >= x_threshold and x_prev < x_threshold:
-            spikes += 1
-    if n_steps > 0:
-        trace[n_steps] = x
-    return spikes
+            candidate = u_sn
+
+        if not isfinite(candidate):
+            return -1
+        u = candidate
+        trace[index] = u
+
+    trace[n_steps] = u
+    return events

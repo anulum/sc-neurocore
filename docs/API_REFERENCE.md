@@ -5897,6 +5897,17 @@ Returns
 list of float
     The 256 tabulation points.
 
+### Function `log_sample_points()`
+Return the 256 positive ``log`` points over ``&#91;1/256, 8+1/256)``.
+
+The ``1/32`` spacing and ``1/256`` offset are both exactly representable in
+Q8.8 and Q16.16, so every lowering backend derives the same integer index.
+
+Returns
+-------
+list of float
+    The 256 strictly positive tabulation points.
+
 ### Function `exp_lut_entries(data_width, fraction)`
 Quantised ``exp`` LUT over the symmetric grid, saturated to the word max.
 
@@ -5913,7 +5924,7 @@ list of int
     256 integer Q-format entries.
 
 ### Function `log_lut_entries(fraction)`
-Quantised ``log`` LUT (16 entries over ``&#91;0.06, 7.56)`` at 0.5 spacing).
+Quantised ``log`` LUT on the canonical positive 256-point grid.
 
 Parameters
 ----------
@@ -5923,7 +5934,7 @@ fraction : int
 Returns
 -------
 list of int
-    16 integer Q-format entries.
+    256 integer Q-format entries.
 
 ### Function `sqrt_lut_entries(fraction)`
 Quantised ``sqrt`` LUT (16 entries over ``&#91;0, 7.5&#93;`` at 0.5 spacing).
@@ -21713,14 +21724,31 @@ Reference: McKean, H.P. (1970). Advances in Mathematics, 4:209-223.
 ## Module `neurons.models.medvedev_map`
 
 ### Class `MedvedevMapNeuron`
-Medvedev 2005 — 1D piecewise-monotone spiking map.
+Medvedev (2005) calibrated slow-calcium first-return map.
 
-Reference: Medvedev, G.S. (2005). Physica D 202:37–59.
+Parameters
+----------
+u : float
+    Slow calcium state. The default is the calibrated saddle-node return
+    ``u_SN``.
+beta_0, beta_hc, beta_sn, delta : float
+    Source bifurcation parameters defining ``u_0``, ``u_HC`` and ``u_SN``.
+decay_t0, alpha_t0 : float
+    Calibrated Eq. 4.4 relaxation and Eq. 4.8 affine-return coefficients.
+f_0, f_1 : float
+    Calibrated fast-subsystem averages on the active and homoclinic branches.
+homoclinic_exponent, d : float
+    Eq. 4.13 boundary-layer exponent and scale.
+input_gain : float
+    Maintained gain for the external perturbation on active returns.
 
+- **__post_init__**()
 - **step**(current)
+  - Advance one first-return iteration without partial state mutation.
 - **simulate**(n_steps, current, backend)
-  - Advance ``n_steps`` from the current state, returning ``(trace, spikes)``.
+  - Advance a constant-current first-return trajectory.
 - **reset**()
+  - Restore only the slow-calcium state to the calibrated ``u_SN`` return.
 
 ---
 

@@ -1,0 +1,45 @@
+{
+  "metadata": {
+    "schema_version": 1,
+    "name": "Medvedev Map",
+    "author": "Medvedev, G.S.",
+    "year": 2005,
+    "doi": "10.1016/j.physd.2005.01.021",
+    "description": "Calibrated scalar first-return map for the slow calcium variable of an excitable cell"
+  },
+  "state": {
+    "u": 0.2514078836724436
+  },
+  "parameters": {
+    "beta_0": 0.0015,
+    "beta_hc": 0.00203,
+    "beta_sn": 0.002009000318382601,
+    "delta": 0.01,
+    "decay_t0": 0.9903563355786734,
+    "alpha_t0": 0.0096904656865853,
+    "f_0": 1.4713541429802286,
+    "f_1": 0.1820152787145665,
+    "homoclinic_exponent": 0.02149298991339221,
+    "d": 2271.1927977404063,
+    "input_gain": 0.01
+  },
+  "integration": {
+    "dt": 1.0,
+    "method": "map"
+  },
+  "dynamics": {
+    "u": "((decay_t0 * u + (1.0 - decay_t0) * f_0 + input_gain * I) if u <= (beta_0 / (delta - beta_0)) else ((((exp(homoclinic_exponent * log(d * (beta_hc - delta * ((1.0 - alpha_t0) * u + alpha_t0 * f_0) / (1.0 + ((1.0 - alpha_t0) * u + alpha_t0 * f_0))))) * (((1.0 - alpha_t0) * u + alpha_t0 * f_0) - f_1) + f_1) if (beta_hc - delta * ((1.0 - alpha_t0) * u + alpha_t0 * f_0) / (1.0 + ((1.0 - alpha_t0) * u + alpha_t0 * f_0))) > 0.0 else f_1) + input_gain * I) if u <= (beta_hc / (delta - beta_hc)) else (beta_sn / (delta - beta_sn))))"
+  },
+  "threshold": {
+    "condition": "u_prev <= (beta_hc / (delta - beta_hc))",
+    "detection": "level"
+  },
+  "extensions": {
+    "model_type": "map",
+    "discrete_time": true,
+    "source_equation_note": "The piecewise construction maps Eqs. 4.4/4.7, 4.8, 4.13 and 4.15 of DOI 10.1016/j.physd.2005.01.021; global calibration constants are disclosed because the paper does not uniquely tabulate T(u) and F(u).",
+    "input_note": "I is an SC-NeuroCore perturbation applied only to active returns; I=0 is the cited source map.",
+    "observation_note": "An event is a maintained fast-cycle return selected from the pre-step condition u <= u_HC, not a source-paper spike threshold.",
+    "silicon_cosim_note": "Q16.16 is required because d=2271.1927977404063 exceeds Q8.8 range. At I=2 over 100 iterations it preserves the exact 75-event vector with maximum state error below 0.007813."
+  }
+}

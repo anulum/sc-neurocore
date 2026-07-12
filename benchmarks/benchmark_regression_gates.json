@@ -1287,77 +1287,80 @@
     },
     {
       "artefact": "benchmarks/results/bench_medvedev_map.json",
-      "description": "Medvedev 2005 expanding chaotic map five-backend simulation evidence.",
+      "description": "Controlled Medvedev 2005 slow-calcium first-return five-backend evidence.",
       "expected_values": {
-        "benchmark": "medvedev_map_simulate",
-        "environment.isolation": "non-isolated (loaded workstation)",
-        "workload.current": 0.1,
-        "workload.n_steps": 2000000,
+        "backends.go.event_count_matches_python": true,
+        "backends.julia.event_count_matches_python": true,
+        "backends.mojo.event_count_matches_python": true,
+        "backends.rust.event_count_matches_python": true,
+        "kernel": "medvedev_map_simulate",
+        "meta.single_cpu_pinned": true,
+        "schema_version": "sc-neurocore.polyglot-benchmark.v1",
+        "workload.current": 2.0,
+        "workload.n_steps": 500000,
+        "workload.parameters": "Medvedev 2005 disclosed first-return calibration",
         "workload.repeats": 5
       },
-      "id": "medvedev-map-five-backend-local-regression",
+      "id": "medvedev-map-five-backend-controlled-regression",
       "parity_groups": [
         {
           "paths": [
-            "backend_summary.python.spikes",
-            "backend_summary.rust.spikes",
-            "backend_summary.julia.spikes",
-            "backend_summary.go.spikes"
+            "backends.python.event_count",
+            "backends.rust.event_count",
+            "backends.julia.event_count",
+            "backends.go.event_count",
+            "backends.mojo.event_count"
           ],
           "tolerance": 0.0
-        },
-        {
-          "paths": [
-            "backend_summary.python.spikes",
-            "backend_summary.mojo.spikes"
-          ],
-          "tolerance": 250.0
         }
       ],
       "regression_limits": {
-        "backend_summary.go.parity_max_abs_diff": {
+        "backends.go.parity_max_abs_diff": {
           "max": 0.0
         },
-        "backend_summary.julia.parity_max_abs_diff": {
+        "backends.julia.parity_max_abs_diff": {
           "max": 0.0
         },
-        "backend_summary.mojo.parity_max_abs_diff": {
-          "max": 1.0
+        "backends.mojo.parity_max_abs_diff": {
+          "max": 5e-13
         },
-        "backend_summary.rust.parity_max_abs_diff": {
+        "backends.rust.parity_max_abs_diff": {
           "max": 0.0
         }
       },
       "required_numbers": [
-        "backend_summary.python.median_ms",
-        "backend_summary.python.min_ms",
-        "backend_summary.python.parity_max_abs_diff",
-        "backend_summary.python.spikes",
-        "backend_summary.rust.median_ms",
-        "backend_summary.rust.min_ms",
-        "backend_summary.rust.parity_max_abs_diff",
-        "backend_summary.rust.spikes",
-        "backend_summary.julia.median_ms",
-        "backend_summary.julia.min_ms",
-        "backend_summary.julia.parity_max_abs_diff",
-        "backend_summary.julia.spikes",
-        "backend_summary.go.median_ms",
-        "backend_summary.go.min_ms",
-        "backend_summary.go.parity_max_abs_diff",
-        "backend_summary.go.spikes",
-        "backend_summary.mojo.median_ms",
-        "backend_summary.mojo.min_ms",
-        "backend_summary.mojo.parity_max_abs_diff",
-        "backend_summary.mojo.spikes"
+        "backends.python.median_call_ms",
+        "backends.python.minimum_call_ms",
+        "backends.python.parity_max_abs_diff",
+        "backends.python.event_count",
+        "backends.rust.median_call_ms",
+        "backends.rust.minimum_call_ms",
+        "backends.rust.parity_max_abs_diff",
+        "backends.rust.event_count",
+        "backends.julia.median_call_ms",
+        "backends.julia.minimum_call_ms",
+        "backends.julia.parity_max_abs_diff",
+        "backends.julia.event_count",
+        "backends.go.median_call_ms",
+        "backends.go.minimum_call_ms",
+        "backends.go.parity_max_abs_diff",
+        "backends.go.event_count",
+        "backends.mojo.median_call_ms",
+        "backends.mojo.minimum_call_ms",
+        "backends.mojo.parity_max_abs_diff",
+        "backends.mojo.event_count"
       ],
       "source_hashes": {
         "benchmarks/bench_medvedev_map.py": "source_hashes.benchmarks/bench_medvedev_map.py",
+        "bridge/sc_neurocore_engine/__init__.py": "source_hashes.bridge/sc_neurocore_engine/__init__.py",
         "engine/src/lib.rs": "source_hashes.engine/src/lib.rs",
         "engine/src/neurons/maps.rs": "source_hashes.engine/src/neurons/maps.rs",
-        "src/sc_neurocore/neurons/models/medvedev_map.py": "source_hashes.src/sc_neurocore/neurons/models/medvedev_map.py",
+        "src/sc_neurocore/accel/go/neurons/medvedev_map/libmedvedev.h": "source_hashes.src/sc_neurocore/accel/go/neurons/medvedev_map/libmedvedev.h",
         "src/sc_neurocore/accel/go/neurons/medvedev_map/medvedev_map.go": "source_hashes.src/sc_neurocore/accel/go/neurons/medvedev_map/medvedev_map.go",
         "src/sc_neurocore/accel/julia/neurons/medvedev_map.jl": "source_hashes.src/sc_neurocore/accel/julia/neurons/medvedev_map.jl",
-        "src/sc_neurocore/accel/mojo/neurons/medvedev_map.mojo": "source_hashes.src/sc_neurocore/accel/mojo/neurons/medvedev_map.mojo"
+        "src/sc_neurocore/accel/mojo/neurons/medvedev_map.mojo": "source_hashes.src/sc_neurocore/accel/mojo/neurons/medvedev_map.mojo",
+        "src/sc_neurocore/accel/rust/safety/medvedev_map.rs": "source_hashes.src/sc_neurocore/accel/rust/safety/medvedev_map.rs",
+        "src/sc_neurocore/neurons/models/medvedev_map.py": "source_hashes.src/sc_neurocore/neurons/models/medvedev_map.py"
       }
     },
     {

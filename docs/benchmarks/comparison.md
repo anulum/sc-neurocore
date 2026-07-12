@@ -74,7 +74,7 @@ SC-NeuroCore-specific.
 | Python models | **158 lazy-loaded classes / 153 source modules** | 11 | 6 | Custom eq. | 3 |
 | Rust/compiled models | **175 Rust PyO3 wrappers / 161-model NetworkRunner** | — | — | C++ codegen | — |
 | Hardware emulators | **9** | — | — | — | Loihi only |
-| Formal verification | **61 SymbiYosys proof jobs and 209 formal statements (179 assert, 7 assume, 23 cover)** | — | — | — | — |
+| Formal verification | **62 SymbiYosys proof jobs and 210 formal statements (180 assert, 7 assume, 23 cover)** | — | — | — | — |
 | Train-to-FPGA export | **Yes** | No | No | No | No |
 
 ## Chialvo map polyglot batch loop
@@ -98,3 +98,24 @@ CPU set.
 These timings describe that recorded host and workload. They are used for the
 host-matched fastest-first dispatcher, not presented as portable latency or
 cross-framework claims.
+
+## Medvedev first-return polyglot batch loop
+
+The committed `benchmarks/bench_medvedev_map.py` measures the source-derived
+slow-calcium first-return recurrence through all five production lanes. The
+500,000-iteration, five-repeat record was pinned to logical CPU 4 on the same
+Intel i5-11600K host under the `powersave` governor. The host reported no
+kernel-isolated CPU set, and the artefact records workstation load rather than
+claiming an isolated measurement.
+
+| Backend | Median call | Speed-up vs Python | Maximum trace difference | Events |
+|---|---:|---:|---:|---:|
+| Julia | 8.230 ms | 29.52x | `0` | 375,000 |
+| Rust | 10.799 ms | 22.50x | `0` | 375,000 |
+| Mojo | 19.524 ms | 12.44x | `6.806e-14` | 375,000 |
+| Go | 20.959 ms | 11.59x | `0` | 375,000 |
+| Python | 242.929 ms | 1.00x | `0` | 375,000 |
+
+The result, source hashes, runtime versions, affinity, parity, and final state
+are committed in `benchmarks/results/bench_medvedev_map.json`. These are
+host-specific batch timings, not portable single-step latency claims.

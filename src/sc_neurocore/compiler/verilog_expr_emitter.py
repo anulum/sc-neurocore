@@ -292,12 +292,12 @@ class _VerilogExprEmitter(ast.NodeVisitor):
             return self.param_map[name]
         if name == "I":
             return "I_t"
-        return sanitize_ident(name, context="expression identifier")
+        return str(sanitize_ident(name, context="expression identifier"))
 
     def visit_Constant(self, node: ast.Constant) -> str:
         """Encode a numeric constant as a Verilog signed literal in Q-format."""
         val: float = float(node.value) if isinstance(node.value, (int, float)) else 0.0
-        return self.q.encode_signed_literal(val)
+        return str(self.q.encode_signed_literal(val))
 
     def visit_Compare(self, node: ast.Compare) -> str:
         """Emit Verilog for comparison operators (>, >=, <, <=)."""
@@ -344,7 +344,11 @@ class _VerilogExprEmitter(ast.NodeVisitor):
             return self._emit_lut_call("_exp_lut", arg, self._exp_lut_entries())
         elif fname == "log":
             return self._emit_lut_call(
-                "_log_lut", arg, self._log_lut_entries(), lut_min=-8.0, lut_step=1.0
+                "_log_lut",
+                arg,
+                self._log_lut_entries(),
+                lut_min=expr_lut_tables.LOG_LUT_MIN,
+                lut_step=expr_lut_tables.LOG_LUT_STEP,
             )
         elif fname == "sqrt":
             return self._emit_lut_call(

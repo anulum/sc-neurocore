@@ -38,6 +38,7 @@ table because their schemas are stochastic.
 | `lif_constant_current_closed_form` | `lif` | `universal_dsl` | Closed-form RC solution from `neurons/model_schemas/lif.toml` |
 | `lapicque_constant_current_closed_form` | `lapicque` | `universal_dsl` | Closed-form RC solution from `neurons/model_schemas/lapicque.toml` |
 | `mckean_driven_oscillation_doi` | `mckean` | `universal_dsl` | Independent fourth-order Runge-Kutta re-derivation of the piecewise-linear relaxation oscillator (no reset, rising-edge `v >= 0.8` crossing) from `neurons/model_schemas/mckean.toml` with DOI-backed schema provenance |
+| `medvedev_map_first_return_doi` | `medvedev_map` | `universal_dsl` | Independent scalar iteration of Medvedev (2005) Section 4's three-region slow-calcium first-return construction, with the disclosed global calibration and maintained pre-state event convention separated from the DOI-sourced equations |
 | `mihalas_niebur_driven_spiking_doi` | `mihalas_niebur` | `universal_dsl` | Independent fourth-order Runge-Kutta re-derivation of the four-state adaptive-threshold flow from `neurons/model_schemas/mihalas_niebur.toml` with DOI-backed schema provenance |
 | `morris_lecar_driven_oscillation_doi` | `morris_lecar` | `universal_dsl` | Independent fourth-order Runge-Kutta re-derivation of the driven calcium-potassium relaxation oscillator (no reset, rising-edge `v >= 0` crossing) from `neurons/model_schemas/morris_lecar.toml` with DOI-backed schema provenance |
 | `pernarowski_autonomous_bursting_doi` | `pernarowski` | `universal_dsl` | Independent fourth-order Runge-Kutta re-derivation of the autonomous three-state beta-cell bursting flow (no reset, rising-edge `v >= 0.5` crossing) from `neurons/model_schemas/pernarowski.toml` with DOI-backed schema provenance |
@@ -52,7 +53,7 @@ table because their schemas are stochastic.
 
 All entries record spike count, first spike step, and final/min/max/mean
 features for the declared state variables. The tests independently recompute the
-LIF, QIF, perfect-integrator, resonate-fire, theta, Ermentrout-Kopell theta-Euler, GLIF, Izhikevich, Cazelles map, Chialvo map, Courbage-Nekorkin map,
+LIF, QIF, perfect-integrator, resonate-fire, theta, Ermentrout-Kopell theta-Euler, GLIF, Izhikevich, Cazelles map, Chialvo map, Medvedev map, Courbage-Nekorkin map,
 Izhikevich 2007, FitzHugh-Nagumo, FitzHugh-Rinzel, Pernarowski, Terman-Wang, Wilson-HR, McKean, AdEx, exponential-IF,
 Hindmarsh-Rose, Morris-Lecar,
 Hodgkin-Huxley, Connor-Stevens, Wang-Buzsaki, DPI, and Mihalas-Niebur analytic,
@@ -113,6 +114,12 @@ linear recovery, with rising-edge `v >= v_peak` crossing detection and no reset;
 enrolled sustained-oscillation regime (`epsilon = 0.2`, `gamma = 0.5`, `I = 0.6`) it is a
 robust limit cycle whose sixteen upward crossings survive Q16.16 rounding, so the
 min/max branch selection lowers to fixed point without a look-up table.
+The Medvedev entry independently reconstructs the Section 4 slow-calcium return
+from its three source regions and the disclosed SC-NeuroCore global calibration.
+Its `I=2`, 100-iteration protocol reproduces the exact four-state cycle and 75
+maintained pre-state events without importing the hand model or schema expressions.
+The reference explicitly records that non-zero current and event labelling are
+maintained conventions rather than equations or spike semantics asserted by the paper.
 The Morris-Lecar entry re-derives the exact classical fourth-order Runge-Kutta
 recurrence for its calcium-potassium conductance oscillator — sigmoidal `tanh`
 calcium activation and `cosh`/`tanh` potassium gating, reusing the runner's numpy
@@ -142,7 +149,7 @@ membrane and Na/K gating rate functions (numpy exp and the exprel-rewritten `alp
 `alpha_n`) reproduce the schema runner bit-for-bit, so the driven schema counts the same five
 action potentials the hand model does (`hand == schema` exact), which the earlier single-step
 Euler resting-gate schema could not.
-The perfect-integrator, Ermentrout-Kopell theta-Euler, FitzHugh-Nagumo, FitzHugh-Rinzel, Pernarowski, Terman-Wang, Wilson-HR, Rulkov, Cazelles, Chialvo, Courbage-Nekorkin, McKean, Morris-Lecar,
+The perfect-integrator, Ermentrout-Kopell theta-Euler, FitzHugh-Nagumo, FitzHugh-Rinzel, Pernarowski, Terman-Wang, Wilson-HR, Rulkov, Cazelles, Chialvo, Medvedev, Courbage-Nekorkin, McKean, Morris-Lecar,
 Hodgkin-Huxley, Connor-Stevens,
 Izhikevich, Izhikevich 2007, DPI, and Mihalas-Niebur entries are spike-bearing;
 they validate reset (or, for Ermentrout-Kopell theta-Euler, FitzHugh-Nagumo, FitzHugh-Rinzel, Pernarowski, Terman-Wang, Rulkov, McKean, Morris-Lecar,
@@ -195,7 +202,8 @@ The focused harness selector is:
 PYTHONPATH=src python -m pytest \
     tests/test_reference_traces.py \
     tests/test_reference_trace_payloads.py \
-    tests/test_reference_ermentrout_kopell_map_neuron.py -q
+    tests/test_reference_ermentrout_kopell_map_neuron.py \
+    tests/test_reference_medvedev_map.py -q
 ```
 
 Exact-file coverage for the implementation modules is measured with:

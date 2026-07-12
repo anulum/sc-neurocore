@@ -1,128 +1,155 @@
 {
-  "backend_summary": {
+  "backends": {
     "go": {
-      "backend": "go",
-      "median_ms": 37.796882999828085,
-      "min_ms": 37.63167999568395,
+      "available": true,
+      "event_count": 375000,
+      "event_count_matches_python": true,
+      "final_state": {
+        "u": 0.2514078836724436
+      },
+      "median_call_ms": 20.959187,
+      "minimum_call_ms": 18.865458,
       "parity_max_abs_diff": 0.0,
-      "speedup_vs_python": 6.7436969870579935,
-      "spikes": 131993
+      "speedup_vs_python": 11.590555969561224,
+      "used": true
     },
     "julia": {
-      "backend": "julia",
-      "median_ms": 36.655931995483115,
-      "min_ms": 35.76657301164232,
+      "available": true,
+      "event_count": 375000,
+      "event_count_matches_python": true,
+      "final_state": {
+        "u": 0.2514078836724436
+      },
+      "median_call_ms": 8.230079,
+      "minimum_call_ms": 8.035741,
       "parity_max_abs_diff": 0.0,
-      "speedup_vs_python": 6.953601017088661,
-      "spikes": 131993
+      "speedup_vs_python": 29.517168668733312,
+      "used": true
     },
     "mojo": {
-      "backend": "mojo",
-      "median_ms": 12.649924989091232,
-      "min_ms": 12.604543997440487,
-      "parity_max_abs_diff": 0.9992580911717543,
-      "speedup_vs_python": 20.149583987725723,
-      "spikes": 132209
+      "available": true,
+      "event_count": 375000,
+      "event_count_matches_python": true,
+      "final_state": {
+        "u": 0.2514078836724436
+      },
+      "median_call_ms": 19.524068,
+      "minimum_call_ms": 18.559452,
+      "parity_max_abs_diff": 6.80566714095221e-14,
+      "speedup_vs_python": 12.442521199987626,
+      "used": true
     },
     "python": {
-      "backend": "python",
-      "median_ms": 254.89072600612417,
-      "min_ms": 247.64505599159747,
+      "available": true,
+      "event_count": 375000,
+      "event_count_matches_python": true,
+      "final_state": {
+        "u": 0.2514078836724436
+      },
+      "median_call_ms": 242.92863,
+      "minimum_call_ms": 237.15247,
       "parity_max_abs_diff": 0.0,
       "speedup_vs_python": 1.0,
-      "spikes": 131993
+      "used": true
     },
     "rust": {
-      "backend": "rust",
-      "median_ms": 28.578949015354738,
-      "min_ms": 28.245699999388307,
+      "available": true,
+      "event_count": 375000,
+      "event_count_matches_python": true,
+      "final_state": {
+        "u": 0.2514078836724436
+      },
+      "median_call_ms": 10.79855,
+      "minimum_call_ms": 10.028273,
       "parity_max_abs_diff": 0.0,
-      "speedup_vs_python": 8.918827836152333,
-      "spikes": 131993
+      "speedup_vs_python": 22.496412018280232,
+      "used": true
     }
   },
-  "benchmark": "medvedev_map_simulate",
-  "environment": {
-    "isolation": "non-isolated (loaded workstation)",
-    "numpy": "2.3.5",
-    "platform": "Linux-6.17.0-35-generic-x86_64-with-glibc2.39",
-    "python": "3.12.3"
-  },
-  "results": [
-    {
-      "backend": "python",
-      "median_ms": 254.89072600612417,
-      "min_ms": 247.64505599159747,
-      "parity_max_abs_diff": 0.0,
-      "speedup_vs_python": 1.0,
-      "spikes": 131993
-    },
-    {
-      "backend": "rust",
-      "median_ms": 28.578949015354738,
-      "min_ms": 28.245699999388307,
-      "parity_max_abs_diff": 0.0,
-      "speedup_vs_python": 8.918827836152333,
-      "spikes": 131993
-    },
-    {
-      "backend": "julia",
-      "median_ms": 36.655931995483115,
-      "min_ms": 35.76657301164232,
-      "parity_max_abs_diff": 0.0,
-      "speedup_vs_python": 6.953601017088661,
-      "spikes": 131993
-    },
-    {
-      "backend": "go",
-      "median_ms": 37.796882999828085,
-      "min_ms": 37.63167999568395,
-      "parity_max_abs_diff": 0.0,
-      "speedup_vs_python": 6.7436969870579935,
-      "spikes": 131993
-    },
-    {
-      "backend": "mojo",
-      "median_ms": 12.649924989091232,
-      "min_ms": 12.604543997440487,
-      "parity_max_abs_diff": 0.9992580911717543,
-      "speedup_vs_python": 20.149583987725723,
-      "spikes": 132209
-    }
+  "kernel": "medvedev_map_simulate",
+  "measured_order": [
+    "julia",
+    "rust",
+    "mojo",
+    "go",
+    "python"
   ],
+  "meta": {
+    "affinity": [
+      4
+    ],
+    "cpu": "11th Gen Intel(R) Core(TM) i5-11600K @ 3.90GHz",
+    "governor": "powersave",
+    "kernel_isolated_cpus": "",
+    "load_average_end": [
+      4.9580078125,
+      5.5615234375,
+      6.2861328125
+    ],
+    "load_average_start": [
+      5.21923828125,
+      5.6318359375,
+      6.31689453125
+    ],
+    "measurement_scope": "single-logical-CPU affinity; kernel isolation and workstation load reported separately",
+    "platform": "Linux-6.17.0-35-generic-x86_64-with-glibc2.39",
+    "runtime_versions": {
+      "go": "go version go1.24.0 linux/amd64",
+      "julia": "julia version 1.12.6",
+      "mojo": "Mojo 1.0.0b1 (a9591de6)",
+      "numpy": "2.2.6",
+      "python": "3.12.3",
+      "rust": "rustc 1.96.0 (ac68faa20 2026-05-25)"
+    },
+    "single_cpu_pinned": true
+  },
+  "schema_version": "sc-neurocore.polyglot-benchmark.v1",
   "source_hashes": {
     "benchmarks/bench_medvedev_map": {
-      "py": "dd339b59ad221c059953d857e4d13410f2935c9f1e13cb69c21d041511fbb7f4"
+      "py": "61769f3d424061b86b9d423af4bda591ee2eec04a121716e895145f3f7e532f1"
     },
-    "benchmarks/bench_medvedev_map.py": "dd339b59ad221c059953d857e4d13410f2935c9f1e13cb69c21d041511fbb7f4",
+    "benchmarks/bench_medvedev_map.py": "61769f3d424061b86b9d423af4bda591ee2eec04a121716e895145f3f7e532f1",
+    "bridge/sc_neurocore_engine/__init__": {
+      "py": "7ef50ba856299e488407d2e68503967b62be2a35e44747ac2285fc32d05b1e08"
+    },
+    "bridge/sc_neurocore_engine/__init__.py": "7ef50ba856299e488407d2e68503967b62be2a35e44747ac2285fc32d05b1e08",
     "engine/src/lib": {
-      "rs": "2ff46fde73954a8fceb51bc8d8457a6acf70fb788297c1c6bfe367c81b8a9f5f"
+      "rs": "0f04be75f1e0285c0ff973a4c1e6bcb6abc961d78e9b5d0e6ba6ec83302e8aae"
     },
-    "engine/src/lib.rs": "2ff46fde73954a8fceb51bc8d8457a6acf70fb788297c1c6bfe367c81b8a9f5f",
+    "engine/src/lib.rs": "0f04be75f1e0285c0ff973a4c1e6bcb6abc961d78e9b5d0e6ba6ec83302e8aae",
     "engine/src/neurons/maps": {
-      "rs": "e2f9d1d6d9d460373ba83bb6b71f5765b934d1ff13859ba0a79fe18c405f78d4"
+      "rs": "d76f974fb1054bcf913f0d04f46cffd234a7b714b505027277502c252e1c7e91"
     },
-    "engine/src/neurons/maps.rs": "e2f9d1d6d9d460373ba83bb6b71f5765b934d1ff13859ba0a79fe18c405f78d4",
+    "engine/src/neurons/maps.rs": "d76f974fb1054bcf913f0d04f46cffd234a7b714b505027277502c252e1c7e91",
+    "src/sc_neurocore/accel/go/neurons/medvedev_map/libmedvedev": {
+      "h": "6450442071e8f52450774d0bc632a67c802eeb6c518d9e71b6a04a0293317e0d"
+    },
+    "src/sc_neurocore/accel/go/neurons/medvedev_map/libmedvedev.h": "6450442071e8f52450774d0bc632a67c802eeb6c518d9e71b6a04a0293317e0d",
     "src/sc_neurocore/accel/go/neurons/medvedev_map/medvedev_map": {
-      "go": "2d9da4b634b2acea3ab2df18dab64ce41f04019dca0883db5906ea1017a0bb45"
+      "go": "fab4be8a380f773ccd16c23d70727156ceb87d15bf679f7cac4a17f84f00a518"
     },
-    "src/sc_neurocore/accel/go/neurons/medvedev_map/medvedev_map.go": "2d9da4b634b2acea3ab2df18dab64ce41f04019dca0883db5906ea1017a0bb45",
+    "src/sc_neurocore/accel/go/neurons/medvedev_map/medvedev_map.go": "fab4be8a380f773ccd16c23d70727156ceb87d15bf679f7cac4a17f84f00a518",
     "src/sc_neurocore/accel/julia/neurons/medvedev_map": {
-      "jl": "20963c49ff36471801875efdeb62d323b73007ec8307b9993da68d8b0f33ec70"
+      "jl": "f63f14bcf74b8376f4d49874b3b9857e96ceac496535d83a05c56fc7246e8cb5"
     },
-    "src/sc_neurocore/accel/julia/neurons/medvedev_map.jl": "20963c49ff36471801875efdeb62d323b73007ec8307b9993da68d8b0f33ec70",
+    "src/sc_neurocore/accel/julia/neurons/medvedev_map.jl": "f63f14bcf74b8376f4d49874b3b9857e96ceac496535d83a05c56fc7246e8cb5",
     "src/sc_neurocore/accel/mojo/neurons/medvedev_map": {
-      "mojo": "1cefc322da3fdae33d3a7dec7a975aefea4503b8dbf2611b8fae871ee97abc86"
+      "mojo": "bbbb4e0ae1cccdcd2ee6bc9c1d2b052fa46338a0edf004c1731eefe9acf5fe15"
     },
-    "src/sc_neurocore/accel/mojo/neurons/medvedev_map.mojo": "1cefc322da3fdae33d3a7dec7a975aefea4503b8dbf2611b8fae871ee97abc86",
+    "src/sc_neurocore/accel/mojo/neurons/medvedev_map.mojo": "bbbb4e0ae1cccdcd2ee6bc9c1d2b052fa46338a0edf004c1731eefe9acf5fe15",
+    "src/sc_neurocore/accel/rust/safety/medvedev_map": {
+      "rs": "df01d6955c13e3003c64bf6fb3d0e6269bc5d95b7e1304f3e2ae0331e8633847"
+    },
+    "src/sc_neurocore/accel/rust/safety/medvedev_map.rs": "df01d6955c13e3003c64bf6fb3d0e6269bc5d95b7e1304f3e2ae0331e8633847",
     "src/sc_neurocore/neurons/models/medvedev_map": {
-      "py": "57a59de89e08779abbb63488ba4d966e1b06d3d7372e20b773e6e9300fe1a35a"
+      "py": "992b005b96454048ba0986925f234da0a8a9d70afc3c38a14c744cb9c628e049"
     },
-    "src/sc_neurocore/neurons/models/medvedev_map.py": "57a59de89e08779abbb63488ba4d966e1b06d3d7372e20b773e6e9300fe1a35a"
+    "src/sc_neurocore/neurons/models/medvedev_map.py": "992b005b96454048ba0986925f234da0a8a9d70afc3c38a14c744cb9c628e049"
   },
   "workload": {
-    "current": 0.1,
-    "n_steps": 2000000,
+    "current": 2.0,
+    "n_steps": 500000,
+    "parameters": "Medvedev 2005 disclosed first-return calibration",
     "repeats": 5
   }
 }

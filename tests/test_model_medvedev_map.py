@@ -4,308 +4,234 @@
 # © Code 2020–2026 Miroslav Šotek. All rights reserved.
 # ORCID: 0009-0009-3560-0851
 # Contact: www.anulum.li | protoscience@anulum.li
-# SC-NeuroCore — End-to-end test: MedvedevMapNeuron
+# SC-NeuroCore — Medvedev 2005 first-return model tests
 
-"""Full pipeline test for MedvedevMapNeuron (Medvedev 2005).
-
-1D piecewise-monotone spiking map:
-x_{n+1} = α·x_n + I          if x < β
-         = α·(1 - x_n) + I   if x ≥ β
-x_{n+1} = x_{n+1} mod 1
-
-Two branches: expansive (slope α=3.5) below β=0.5, folding above.
-mod 1 keeps x ∈ [0, 1). Chaotic dynamics (Lyapunov > 0 for α > 1).
-Spike on upward threshold crossing at x_threshold=0.9.
-FULL PIPELINE WIRED + PERFORMANCE."""
+"""Source, invariant and pipeline tests for the Medvedev first-return map."""
 
 from __future__ import annotations
 
-import time
+import hashlib
+import inspect
+import math
 
 import numpy as np
 import pytest
 
-from sc_neurocore.neurons.models.medvedev_map import MedvedevMapNeuron
-from sc_neurocore.network.population import Population
-from sc_neurocore.network.projection import Projection
-from sc_neurocore.network.network import Network
 from sc_neurocore.network.monitor import SpikeMonitor
-from sc_neurocore.network.stimulus import PoissonInput
-from sc_neurocore.analysis.spike_stats.basic import spike_count, firing_rate, isi
+from sc_neurocore.network.network import Network
+from sc_neurocore.network.population import Population
+from sc_neurocore.neurons.model_catalogue import load_descriptor_payload
+from sc_neurocore.neurons.models.medvedev_map import MedvedevMapNeuron
 
 
-def _run(neuron: MedvedevMapNeuron, current: float, steps: int) -> list[int]:
-    return [t for t in range(steps) if neuron.step(current) == 1]
+def _boundaries(neuron: MedvedevMapNeuron) -> tuple[float, float, float]:
+    """Return independently derived source branch boundaries."""
+    return (
+        neuron.beta_0 / (neuron.delta - neuron.beta_0),
+        neuron.beta_hc / (neuron.delta - neuron.beta_hc),
+        neuron.beta_sn / (neuron.delta - neuron.beta_sn),
+    )
 
 
-# ---------------------------------------------------------------------------
-# 1. ISOLATION
-# ---------------------------------------------------------------------------
-class TestMedvedevIsolation:
-    def test_defaults(self):
-        n = MedvedevMapNeuron()
-        assert n.x == 0.0 and n.alpha == 3.5
-        assert n.beta == 0.5 and n.x_threshold == 0.9
-
-    def test_step_returns_binary(self):
-        assert MedvedevMapNeuron().step(0.0) in (0, 1)
-
-    def test_state_evolves(self):
-        n = MedvedevMapNeuron()
-        n.step(0.2)
-        assert n.x != 0.0
-
-    def test_state_finite_long_run(self):
-        n = MedvedevMapNeuron()
-        for _ in range(100_000):
-            n.step(0.2)
-        assert np.isfinite(n.x)
-
-    def test_reset_restores_default(self):
-        n = MedvedevMapNeuron()
-        for _ in range(500):
-            n.step(0.2)
-        n.reset()
-        assert n.x == 0.0
-
-    def test_deterministic(self):
-        traces = []
-        for _ in range(2):
-            n = MedvedevMapNeuron()
-            trace = [(n.step(0.2), n.x) for _ in range(500)]
-            traces.append(trace)
-        assert traces[0] == traces[1]
+def _inner_reference(neuron: MedvedevMapNeuron, state: float, current: float) -> float:
+    """Independently evaluate the calibrated Eqs. 4.8 and 4.13 branch."""
+    u_1 = (1.0 - neuron.alpha_t0) * state + neuron.alpha_t0 * neuron.f_0
+    gap = neuron.beta_hc - neuron.delta * u_1 / (1.0 + u_1)
+    inner = neuron.f_1
+    if gap > 0.0:
+        scale = math.exp(neuron.homoclinic_exponent * math.log(neuron.d * gap))
+        inner = scale * (u_1 - neuron.f_1) + neuron.f_1
+    return inner + neuron.input_gain * current
 
 
-# ---------------------------------------------------------------------------
-# 2. ANALYTICAL — piecewise map, mod 1, branches
-# ---------------------------------------------------------------------------
-class TestMedvedevAnalytical:
-    def test_low_branch_formula(self):
-        """x < β: x_next = (α·x + I) mod 1."""
-        n = MedvedevMapNeuron()
-        n.x = 0.1
-        I = 0.05
-        expected = (n.alpha * 0.1 + I) % 1.0
-        n.step(I)
-        assert abs(n.x - expected) < 1e-12
-
-    def test_high_branch_formula(self):
-        """x ≥ β: x_next = (α·(1-x) + I) mod 1."""
-        n = MedvedevMapNeuron()
-        n.x = 0.7
-        I = 0.05
-        expected = (n.alpha * (1.0 - 0.7) + I) % 1.0
-        n.step(I)
-        assert abs(n.x - expected) < 1e-12
-
-    def test_mod_1_bounds(self):
-        """x is always in [0, 1) after mod operation."""
-        n = MedvedevMapNeuron()
-        for _ in range(10_000):
-            n.step(0.3)
-            assert 0.0 <= n.x < 1.0
-
-    def test_beta_is_branch_point(self):
-        """x=β-ε uses low branch, x=β uses high branch."""
-        n1 = MedvedevMapNeuron()
-        n1.x = 0.499
-        x_before = n1.x
-        n1.step(0.0)
-        x_low = n1.x
-        expected_low = (n1.alpha * 0.499) % 1.0
-        assert abs(x_low - expected_low) < 1e-10
-
-        n2 = MedvedevMapNeuron()
-        n2.x = 0.5
-        n2.step(0.0)
-        x_high = n2.x
-        expected_high = (n2.alpha * (1.0 - 0.5)) % 1.0
-        assert abs(x_high - expected_high) < 1e-12
-
-    def test_expansive_map(self):
-        """α=3.5 > 1 → map is expansive on both branches."""
-        n = MedvedevMapNeuron()
-        assert n.alpha > 1.0
-
-    def test_spike_on_upward_crossing(self):
-        """Spike iff x_prev < threshold and x_new ≥ threshold."""
-        n = MedvedevMapNeuron()
-        prev_x = n.x
-        for _ in range(10_000):
-            spike = n.step(0.2)
-            if spike == 1:
-                assert prev_x < n.x_threshold
-            prev_x = n.x
+def test_defaults_are_the_disclosed_source_calibration() -> None:
+    """The initial state is the Eq. 4.15 saddle-node return, not zero."""
+    neuron = MedvedevMapNeuron()
+    u_0, u_hc, u_sn = _boundaries(neuron)
+    assert u_0 == pytest.approx(0.1764705882352941)
+    assert u_hc == pytest.approx(0.25470514429109165)
+    assert u_sn == pytest.approx(0.2514078836724436)
+    assert neuron.u == u_sn
+    assert neuron.d > 127.996  # Signed Q8.8 cannot encode the calibrated scale.
 
 
-# ---------------------------------------------------------------------------
-# 3. CHAOTIC DYNAMICS
-# ---------------------------------------------------------------------------
-class TestMedvedevChaos:
-    def test_sensitive_dependence(self):
-        """Tiny initial perturbation amplifies exponentially."""
-        n1 = MedvedevMapNeuron(x=0.1)
-        n2 = MedvedevMapNeuron(x=0.1 + 1e-10)
-        for _ in range(100):
-            n1.step(0.2)
-            n2.step(0.2)
-        assert abs(n1.x - n2.x) > 1e-5
-
-    def test_ergodic_coverage(self):
-        """Chaotic map visits most of [0, 1) uniformly."""
-        n = MedvedevMapNeuron()
-        bins = np.zeros(10)
-        for _ in range(100_000):
-            n.step(0.2)
-            idx = min(int(n.x * 10), 9)
-            bins[idx] += 1
-        # All bins should have significant counts
-        assert all(b > 1000 for b in bins)
-
-    def test_irregular_isi(self):
-        """Chaotic dynamics → irregular ISI (high CV)."""
-        n = MedvedevMapNeuron()
-        spikes = _run(n, current=0.2, steps=50_000)
-        if len(spikes) >= 20:
-            isis = np.diff(spikes).astype(float)
-            cv = np.std(isis) / np.mean(isis)
-            assert cv > 0.2  # irregular
+def test_descriptor_structure_matches_map_runtime() -> None:
+    """The unit iteration belongs only to integration, never to parameters."""
+    payload = load_descriptor_payload("MedvedevMapNeuron")
+    assert payload is not None
+    assert "dt" not in inspect.signature(MedvedevMapNeuron).parameters
+    assert "dt" not in payload["parameters"]
+    assert payload["integration"] == {"dt": 1.0, "method": "map"}
+    assert set(payload["state"]) == {"u"}
+    assert set(payload["parameters"]) == {
+        "beta_0",
+        "beta_hc",
+        "beta_sn",
+        "delta",
+        "decay_t0",
+        "alpha_t0",
+        "f_0",
+        "f_1",
+        "homoclinic_exponent",
+        "d",
+        "input_gain",
+    }
 
 
-# ---------------------------------------------------------------------------
-# 4. DYNAMICS — f-I, silent/firing regions
-# ---------------------------------------------------------------------------
-class TestMedvedevDynamics:
-    def test_silent_at_zero(self):
-        """x=0 is fixed point at I=0: α·0 = 0."""
-        n = MedvedevMapNeuron()
-        assert len(_run(n, current=0.0, steps=5000)) == 0
-
-    def test_fires_with_input(self):
-        n = MedvedevMapNeuron()
-        assert len(_run(n, current=0.2, steps=5000)) >= 100
-
-    def test_rate_increases_with_input(self):
-        rates = []
-        for I in [0.1, 0.3, 0.5]:
-            n = MedvedevMapNeuron()
-            rates.append(len(_run(n, current=I, steps=5000)))
-        assert rates[-1] >= rates[0]
-
-    @pytest.mark.parametrize("current", [0.0, 0.1, 0.2, 0.3, 0.5])
-    def test_fi_sweep(self, current: float):
-        n = MedvedevMapNeuron()
-        for _ in range(5000):
-            n.step(current)
-        assert np.isfinite(n.x)
+def test_left_branch_matches_eq_4_4_calibration() -> None:
+    """The active left branch uses the calibrated exponential relaxation."""
+    neuron = MedvedevMapNeuron(u=0.1)
+    current = 2.0
+    expected = (
+        neuron.decay_t0 * neuron.u
+        + (1.0 - neuron.decay_t0) * neuron.f_0
+        + neuron.input_gain * current
+    )
+    assert neuron.step(current) == 1
+    assert neuron.u == expected
 
 
-# ---------------------------------------------------------------------------
-# 5. PARAMETER SENSITIVITY
-# ---------------------------------------------------------------------------
-class TestMedvedevParameters:
-    @pytest.mark.parametrize("alpha", [2.0, 3.5, 5.0])
-    def test_alpha_sweep(self, alpha: float):
-        n = MedvedevMapNeuron(alpha=alpha)
-        for _ in range(5000):
-            n.step(0.2)
-        assert 0.0 <= n.x < 1.0
-
-    @pytest.mark.parametrize("beta", [0.3, 0.5, 0.7])
-    def test_beta_sweep(self, beta: float):
-        n = MedvedevMapNeuron(beta=beta)
-        for _ in range(5000):
-            n.step(0.2)
-        assert np.isfinite(n.x)
-
-    @pytest.mark.parametrize("x_threshold", [0.5, 0.9, 0.95])
-    def test_threshold_sweep(self, x_threshold: float):
-        n = MedvedevMapNeuron(x_threshold=x_threshold)
-        spikes = len(_run(n, current=0.2, steps=5000))
-        assert isinstance(spikes, int)
+def test_inner_branch_matches_eq_4_8_and_eq_4_13_calibration() -> None:
+    """The middle branch composes the affine and homoclinic returns."""
+    neuron = MedvedevMapNeuron(u=0.2)
+    expected = _inner_reference(neuron, neuron.u, 2.0)
+    assert neuron.step(2.0) == 1
+    assert neuron.u == expected
 
 
-# ---------------------------------------------------------------------------
-# 6. PERFORMANCE
-# ---------------------------------------------------------------------------
-class TestMedvedevPerformance:
-    def test_isolation_throughput(self):
-        n = MedvedevMapNeuron()
-        N = 500_000
-        t0 = time.perf_counter()
-        for _ in range(N):
-            n.step(0.2)
-        elapsed = time.perf_counter() - t0
-        rate = N / elapsed
-        # Simple 1D map + mod
-        assert rate > 500_000, f"isolation: {rate:.0f} steps/s"
-
-    def test_network_throughput(self):
-        pop = Population(MedvedevMapNeuron, n=20, label="bench")
-        drive = PoissonInput(n=20, rate_hz=500.0, weight=0.2, dt=0.001, seed=42)
-        mon = SpikeMonitor(pop)
-        net = Network(pop, drive, mon)
-        t0 = time.perf_counter()
-        net.run(duration=0.5, dt=0.001, backend="python")
-        elapsed = time.perf_counter() - t0
-        neuron_steps = 20 * 500
-        rate = neuron_steps / elapsed
-        assert rate > 2_000, f"network: {rate:.0f} neuron-steps/s"
+def test_right_branch_is_exact_eq_4_15_return_without_input() -> None:
+    """External current does not perturb the slow right return."""
+    neuron = MedvedevMapNeuron(u=0.3)
+    _u_0, _u_hc, u_sn = _boundaries(neuron)
+    assert neuron.step(1000.0) == 0
+    assert neuron.u == u_sn
 
 
-# ---------------------------------------------------------------------------
-# 7. FULL PIPELINE
-# ---------------------------------------------------------------------------
-class TestMedvedevPipeline:
-    def test_population(self):
-        assert Population(MedvedevMapNeuron, n=10, label="med").n == 10
+def test_event_uses_pre_state_fast_return_region() -> None:
+    """The event is an observation of the pre-step active branch."""
+    neuron = MedvedevMapNeuron(u=0.3)
+    assert neuron.step(0.0) == 0
+    assert neuron.step(0.0) == 1
 
-    def test_projection_wiring(self):
-        src = Population(MedvedevMapNeuron, n=5, label="src")
-        tgt = Population(MedvedevMapNeuron, n=5, label="tgt")
-        drive = PoissonInput(n=5, rate_hz=500.0, weight=0.2, dt=0.001, seed=42)
-        proj = Projection(src, tgt, weight=0.1, probability=1.0, seed=42)
-        mon_src = SpikeMonitor(src)
-        mon_tgt = SpikeMonitor(tgt)
-        net = Network(src, tgt, drive, proj, mon_src, mon_tgt)
-        net.run(duration=1.0, dt=0.001, backend="python")
-        assert mon_src.count > 0
 
-    def test_network_spikes(self):
-        pop = Population(MedvedevMapNeuron, n=10, label="med")
-        drive = PoissonInput(n=10, rate_hz=500.0, weight=0.2, dt=0.001, seed=42)
-        mon = SpikeMonitor(pop)
-        net = Network(pop, drive, mon)
-        net.run(duration=1.0, dt=0.001, backend="python")
-        assert mon.count > 0
+def test_zero_current_golden_cycle() -> None:
+    """The source map reproduces its calibrated 100-step orbit."""
+    trace, events = MedvedevMapNeuron().simulate(100, 0.0, backend="python")
+    assert events == 100
+    assert trace[-1] == pytest.approx(0.19448491761002404, abs=1e-15)
+    assert float(np.mean(trace)) == pytest.approx(0.21623098362239998, abs=1e-15)
+    assert np.unique(trace).size == 7
 
-    def test_analysis_spike_count(self):
-        n = MedvedevMapNeuron()
-        train = np.array([float(n.step(0.2)) for _ in range(5000)])
-        sc = spike_count(train)
-        assert sc >= 50
 
-    def test_analysis_isi(self):
-        n = MedvedevMapNeuron()
-        train = np.array([float(n.step(0.2)) for _ in range(5000)])
-        intervals = isi(train, dt=0.001)
-        if intervals.size > 0:
-            assert np.all(np.isfinite(intervals))
+def test_driven_golden_cycle_and_event_vector() -> None:
+    """The maintained I=2 protocol has a four-state, 75-event cycle."""
+    trace, events = MedvedevMapNeuron().simulate(100, 2.0, backend="python")
+    expected_cycle = np.array(
+        [
+            0.20201527871456648,
+            0.23396543697847846,
+            0.26318342915295445,
+            0.2514078836724436,
+        ]
+    )
+    assert events == 75
+    np.testing.assert_array_equal(trace[:4], expected_cycle)
+    np.testing.assert_array_equal(trace, np.tile(expected_cycle, 25))
 
-    def test_analysis_firing_rate(self):
-        n = MedvedevMapNeuron()
-        train = np.array([float(n.step(0.2)) for _ in range(5000)])
-        rate = firing_rate(train, dt=0.001)
-        assert rate > 0
 
-    def test_analysis_cross_validation(self):
-        n = MedvedevMapNeuron()
-        train = np.array([float(n.step(0.2)) for _ in range(5000)])
-        sc = spike_count(train)
-        dt_sim = 0.001
-        duration = len(train) * dt_sim
-        rate = firing_rate(train, dt=dt_sim)
-        if sc > 0:
-            expected = sc / duration
-            assert abs(rate - expected) < expected * 0.1
+def test_reproducibility_hash_is_stable() -> None:
+    """The descriptor's 1000-step little-endian trace hash is exact."""
+    trace, events = MedvedevMapNeuron().simulate(1000, 2.0, backend="python")
+    digest = hashlib.sha256(trace.astype("<f8", copy=False).tobytes()).hexdigest()
+    assert events == 750
+    assert digest == "4e45193f652b8c4ab1fc860b179585a52c565cfbe1769b17e850ab770a232f2c"
+
+
+def test_batch_matches_repeated_checked_steps() -> None:
+    """The batch surface and single-step surface commit the same recurrence."""
+    batch = MedvedevMapNeuron()
+    trace, events = batch.simulate(300, 2.0, backend="python")
+    stepper = MedvedevMapNeuron()
+    manual = []
+    manual_events = 0
+    for _step in range(300):
+        manual_events += stepper.step(2.0)
+        manual.append(stepper.u)
+    np.testing.assert_array_equal(trace, np.asarray(manual, dtype=np.float64))
+    assert events == manual_events
+    assert batch.u == stepper.u
+
+
+@pytest.mark.parametrize("current", (0.0, 2.0, 16.0, 1024.0))
+def test_long_run_remains_finite(current: float) -> None:
+    """The enrolled operating envelope never commits non-finite state."""
+    trace, _events = MedvedevMapNeuron().simulate(10_000, current, backend="python")
+    assert np.isfinite(trace).all()
+
+
+@pytest.mark.parametrize(
+    "overrides",
+    (
+        {"beta_sn": 0.001},
+        {"beta_hc": 0.02},
+        {"decay_t0": 1.0},
+        {"alpha_t0": 0.0},
+        {"f_1": 2.0},
+        {"homoclinic_exponent": 0.0},
+        {"d": 0.0},
+        {"input_gain": -1.0},
+    ),
+)
+def test_invalid_parameter_topology_is_rejected(overrides: dict[str, float]) -> None:
+    """Invalid source topology cannot enter the runtime."""
+    with pytest.raises(ValueError):
+        MedvedevMapNeuron(**overrides)
+
+
+def test_failed_step_preserves_state() -> None:
+    """Non-finite input fails before state mutation."""
+    neuron = MedvedevMapNeuron()
+    before = neuron.u
+    with pytest.raises(ValueError, match="current must be finite"):
+        neuron.step(float("nan"))
+    assert neuron.u == before
+
+
+def test_failed_batch_preserves_state() -> None:
+    """A mutable parameter fault rejects the batch without state mutation."""
+    neuron = MedvedevMapNeuron()
+    before = neuron.u
+    neuron.d = float("inf")
+    with pytest.raises(ValueError, match="parameters must be finite"):
+        neuron.simulate(10, 2.0, backend="python")
+    assert neuron.u == before
+
+
+def test_request_validation() -> None:
+    """Batch bounds and backend selection are explicit."""
+    neuron = MedvedevMapNeuron()
+    with pytest.raises(ValueError, match="n_steps must be an integer"):
+        neuron.simulate(True)
+    with pytest.raises(ValueError, match="n_steps must be between"):
+        neuron.simulate(-1)
+    with pytest.raises(ValueError, match="backend must be"):
+        neuron.simulate(1, backend="cuda")
+
+
+def test_reset_restores_only_the_derived_return_state() -> None:
+    """Reset preserves calibration and recomputes u_SN from mutable parameters."""
+    neuron = MedvedevMapNeuron()
+    neuron.beta_sn = 0.0019
+    neuron.u = 0.3
+    neuron.reset()
+    assert neuron.u == neuron.beta_sn / (neuron.delta - neuron.beta_sn)
+    assert neuron.beta_sn == 0.0019
+
+
+def test_population_network_path_observes_events() -> None:
+    """The standard network loop can drive and monitor the renamed u state."""
+    population = Population(MedvedevMapNeuron, n=4, label="medvedev")
+    monitor = SpikeMonitor(population)
+    network = Network(population, monitor)
+    network.run(duration=0.01, dt=0.001, backend="python")
+    assert monitor.count > 0

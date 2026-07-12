@@ -66,14 +66,21 @@ intermediates, then saturated back to $W$ bits for the final result.
 
 ### 1.4 Piecewise LUT Approximation
 
-Transcendental functions ($\exp$, $\log$, $\tanh$, etc.) use 16-entry
-piecewise-constant lookup tables covering $[-8, +8)$:
+Transcendental functions use explicit, shared power-of-two LUT geometries so
+the Verilog and generated integer C/Rust paths select the same table entry:
 
-$$
-f_{\text{LUT}}(x) = \text{table}\left[\left\lfloor \frac{x + 8}{1} \right\rfloor\right]
-$$
+| Function family | Entries | Input domain | Step |
+|---|---:|---:|---:|
+| `exp`, `tanh`, `cosh`, `cos` | 256 | $[-16,16)$ | $1/8$ |
+| `log` | 256 | $[1/256,8+1/256)$ | $1/32$ |
+| `sqrt` legacy table | 16 | emitter index range $[-8,8)$ | $1$ |
 
-Accuracy: ~1–2% over the useful range for neuron dynamics.
+The logarithm table is deliberately positive-domain: non-positive arguments
+fail the expression contract rather than being folded into an unrelated
+symmetric bin. Its lower endpoint and step are exactly representable in binary,
+which keeps Q-format indexing deterministic. Model-level co-simulation remains
+the authority for the acceptable state and event envelope; a table size alone
+is not an accuracy claim.
 
 ---
 

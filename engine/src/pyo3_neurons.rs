@@ -721,7 +721,7 @@ py_neuron_default!("BrunelWangNeuron", PyBrunelWangNeuron, neurons::BrunelWangNe
 py_neuron_default!("ChialvoMapNeuron", PyChialvoMapNeuron, neurons::ChialvoMapNeuron, state x, state y);
 py_neuron_default!("RulkovMapNeuron", PyRulkovMapNeuron, neurons::RulkovMapNeuron, state x, state y);
 py_neuron_default!("IbarzTanakaMapNeuron", PyIbarzTanakaMapNeuron, neurons::IbarzTanakaMapNeuron, state x, state y);
-py_neuron_default!("MedvedevMapNeuron", PyMedvedevMapNeuron, neurons::MedvedevMapNeuron, state x);
+py_neuron_default!("MedvedevMapNeuron", PyMedvedevMapNeuron, neurons::MedvedevMapNeuron, state u);
 py_neuron_default!("CazellesMapNeuron", PyCazellesMapNeuron, neurons::CazellesMapNeuron, state x, state y);
 py_neuron_default!("CourageNekorkinMapNeuron", PyCourageNekorkinMapNeuron, neurons::CourageNekorkinMapNeuron, state x, state y);
 py_neuron_default!("AiharaMapNeuron", PyAiharaMapNeuron, neurons::AiharaMapNeuron, state x, state y);

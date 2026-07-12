@@ -8,19 +8,27 @@
 
 [metadata]
 schema_version = 2
-name = "MedvedevMapNeuron"
+name = "Medvedev Map"
 class_name = "MedvedevMapNeuron"
 module = "medvedev_map"
-display_name = ""
-summary = "Medvedev 2005 — 1D piecewise-monotone spiking map."
+display_name = "Medvedev slow-calcium first-return map"
+summary = "Source-derived Medvedev (2005) scalar first-return reduction of an excitable cell."
 family = "Map-based"
 category = "map-based"
 biophysical_detail = "point"
 maturity = "experimental"
-intended_use = []
-hardware_fit = []
+intended_use = [
+    "source-equation reference",
+    "slow-fast excitable-cell reduction",
+    "first-return dynamics",
+]
+hardware_fit = [
+    "Q16.16 logarithm-LUT co-simulation",
+]
 behavior_tags = [
-    "quiescent",
+    "excitable",
+    "irregular",
+    "tonic",
 ]
 
 [provenance]
@@ -30,41 +38,114 @@ authors = [
 year = 2005
 doi = "10.1016/j.physd.2005.01.021"
 
-[state.x]
-init = 0.0
+[state.u]
+init = 0.2514078836724436
 
-[parameters.alpha]
-default = 3.5
+[parameters.beta_0]
+default = 0.0015
 unit = "1"
-meaning = "slope of the piecewise-linear map branches"
+meaning = "source bifurcation parameter defining the left/inner boundary u_0"
 range = [
-    1.0,
-    5.0,
+    0.0001,
+    0.009,
 ]
 
-[parameters.beta]
-default = 0.5
+[parameters.beta_hc]
+default = 0.00203
 unit = "1"
-meaning = "breakpoint separating the rising and falling branches"
+meaning = "source homoclinic parameter defining u_HC"
+range = [
+    0.0001,
+    0.009,
+]
+
+[parameters.beta_sn]
+default = 0.002009000318382601
+unit = "1"
+meaning = "source saddle-node parameter defining the Eq. 4.15 return u_SN"
+range = [
+    0.0001,
+    0.009,
+]
+
+[parameters.delta]
+default = 0.01
+unit = "1"
+meaning = "slow calcium-removal coefficient used by the source branch boundaries"
+range = [
+    0.001,
+    0.1,
+]
+
+[parameters.decay_t0]
+default = 0.9903563355786734
+unit = "1"
+meaning = "calibrated exponential-relaxation factor for Eq. 4.4"
 range = [
     0.0,
     1.0,
 ]
 
-[parameters.x_threshold]
-default = 0.9
+[parameters.alpha_t0]
+default = 0.0096904656865853
 unit = "1"
-meaning = "level on x at which a spike is registered"
+meaning = "calibrated affine-return coefficient for Eq. 4.8"
+range = [
+    0.0,
+    1.0,
+]
+
+[parameters.f_0]
+default = 1.4713541429802286
+unit = "1"
+meaning = "calibrated fast-subsystem average on the active branch"
+range = [
+    0.0,
+    3.0,
+]
+
+[parameters.f_1]
+default = 0.1820152787145665
+unit = "1"
+meaning = "calibrated fast-subsystem average at the homoclinic boundary"
+range = [
+    0.0,
+    2.0,
+]
+
+[parameters.homoclinic_exponent]
+default = 0.02149298991339221
+unit = "1"
+meaning = "calibrated Eq. 4.13 boundary-layer exponent"
+range = [
+    0.0001,
+    1.0,
+]
+
+[parameters.d]
+default = 2271.192797740406
+unit = "1"
+meaning = "calibrated Eq. 4.13 logarithm argument scale"
+range = [
+    1.0,
+    5000.0,
+]
+
+[parameters.input_gain]
+default = 0.01
+unit = "1"
+meaning = "maintained external perturbation gain on active returns; zero current recovers the source map"
 range = [
     0.0,
     1.0,
 ]
 
 [integration]
-dt = 0.1
-method = "euler"
+dt = 1.0
+method = "map"
 
 [dynamics]
+u = "((decay_t0 * u + (1.0 - decay_t0) * f_0 + input_gain * I) if u <= (beta_0 / (delta - beta_0)) else ((((exp(homoclinic_exponent * log(d * (beta_hc - delta * ((1.0 - alpha_t0) * u + alpha_t0 * f_0) / (1.0 + ((1.0 - alpha_t0) * u + alpha_t0 * f_0))))) * (((1.0 - alpha_t0) * u + alpha_t0 * f_0) - f_1) + f_1) if (beta_hc - delta * ((1.0 - alpha_t0) * u + alpha_t0 * f_0) / (1.0 + ((1.0 - alpha_t0) * u + alpha_t0 * f_0))) > 0.0 else f_1) + input_gain * I) if u <= (beta_hc / (delta - beta_hc)) else (beta_sn / (delta - beta_sn))))"
 
 [backends.python]
 status = "implemented"
@@ -72,24 +153,38 @@ parity = "exact"
 
 [backends.rust]
 status = "implemented"
-parity = "exact"
+parity = "ulp-bounded"
 
 [backends.julia]
 status = "implemented"
-parity = "exact"
+parity = "ulp-bounded"
 
 [backends.go]
 status = "implemented"
-parity = "exact"
+parity = "ulp-bounded"
 
 [backends.mojo]
 status = "implemented"
-parity = "exact"
+parity = "ulp-bounded"
 
 [reproducibility]
 reference_config = "{\"n_steps\":1000,\"current\":2.0,\"backend\":\"python\",\"parameters\":\"defaults\"}"
-golden_trace_sha256 = "668946bab9868b28489bb906205ee1026045c8bcd3ca62a1bdf733c65491351b"
+golden_trace_sha256 = "4e45193f652b8c4ab1fc860b179585a52c565cfbe1769b17e850ab770a232f2c"
 
 [documentation]
 slug = "models/medvedev_map"
-notes = ""
+notes = "Maps source Eqs. 4.4/4.7, 4.8, 4.13 and 4.15. Because the paper does not uniquely tabulate global T(u) and F(u), the maintained calibration constants are explicit. I is an active-return perturbation and events are a maintained pre-state fast-return observable."
+
+[validation]
+dynamics_faithful = true
+metric = "trajectory"
+operating_point = "Medvedev first-return map at I=2 over 100 iterations"
+tolerance = "hand/TOML/JSON exact; Q16.16 exact 75-event vector with maximum u error below 0.007813"
+evidence = "tests/test_cosim_medvedev_map.py::test_q1616_event_vector_and_state_envelope"
+
+[silicon]
+compiles = true
+cosim_validated = true
+cosim_evidence = "tests/test_cosim_medvedev_map.py::test_q1616_event_vector_and_state_envelope"
+target_tier = "H1"
+terminal_reason = "Q16.16 is required because d exceeds Q8.8 range; higher tiers require synthesis and timing evidence."

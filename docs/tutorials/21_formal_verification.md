@@ -4,7 +4,7 @@
 
 Formal verification proves that hardware properties hold for **all
 possible inputs**, not just a finite test set. SC-NeuroCore currently ships
-61 SymbiYosys proof jobs and 209 formal statements (179 assert, 7 assume,
+62 SymbiYosys proof jobs and 210 formal statements (180 assert, 7 assume,
 23 cover) across the HDL formal tree.
 
 **Prerequisites**: [SymbiYosys](https://symbiyosys.readthedocs.io/),
@@ -24,13 +24,13 @@ The current inventory is:
 
 | Inventory | Count |
 |-----------|------:|
-| SymbiYosys `.sby` proof jobs | 61 |
-| `assert(...)` statements | 179 |
+| SymbiYosys `.sby` proof jobs | 62 |
+| `assert(...)` statements | 180 |
 | `assume(...)` statements | 7 |
 | `cover(...)` statements | 23 |
-| Total formal statements | 209 |
+| Total formal statements | 210 |
 
-**Total: 61 SymbiYosys proof jobs and 209 formal statements (179 assert, 7 assume, 23 cover).**
+**Total: 62 SymbiYosys proof jobs and 210 formal statements (180 assert, 7 assume, 23 cover).**
 
 The larger proof-job set covers the original stochastic-computing RTL blocks
 plus timing, masking, controller, queue, and sensor wrappers added after the
@@ -50,6 +50,15 @@ sby -f sc_lif_neuron.sby
 # SBY  0:00:01  sc_lif_neuron  engine_0: Status returned by engine: pass
 # SBY  0:00:01  sc_lif_neuron  summary: Elapsed clock time [H:MM:SS]: ...
 # SBY  0:00:01  sc_lif_neuron  DONE (PASS, rc=0)
+```
+
+Generated catalogue jobs live one level below the legacy cores. For example,
+the Medvedev job is deliberately Q16.16 because its calibrated
+`d=2271.1927977404063` parameter cannot fit a signed Q8.8 word:
+
+```bash
+cd hdl/formal/catalogue
+sby -f sc_medvedev_map.sby
 ```
 
 ## 3. Anatomy of a formal wrapper

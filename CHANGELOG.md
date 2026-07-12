@@ -5,6 +5,29 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 ## [Unreleased]
 
 ### Added
+- Replaced the falsely attributed Medvedev tent map with the scalar
+  slow-calcium first-return construction derived in Section 4 of Medvedev
+  (2005), DOI `10.1016/j.physd.2005.01.021`. The three source regions follow
+  equations 4.4/4.7, 4.8 with 4.13, and 4.15. The global return calibration,
+  non-zero-current perturbation, and pre-state event convention are disclosed
+  as maintained SC-NeuroCore choices rather than attributed to the paper.
+- Rebuilt the checked Python, Rust engine, Rust safety, Go, Julia, and Mojo
+  lanes around the same recurrence. Rust, Julia, and Go are trace-identical to
+  Python on the enrolled envelope; Mojo preserves event vectors with a measured
+  maximum trace difference below `5e-13`. The committed 500,000-iteration,
+  five-repeat benchmark records 375,000 events in every lane and medians of
+  8.230/10.799/19.524/20.959/242.929 ms for Julia/Rust/Mojo/Go/Python.
+- Added paired `medvedev_map` TOML/JSON schemas and an independent Section 4
+  reference contract. Hand model and both schemas agree exactly; at `I=2`,
+  emitted Q16.16 RTL preserves the complete 75-event, 100-iteration vector with
+  maximum state error below `0.007813`. Q16.16 is required because the disclosed
+  `d=2271.1927977404063` calibration cannot fit signed Q8.8. Verilog and generated
+  integer C/Rust now share a 256-entry positive-domain log LUT over
+  `[1/256, 8 + 1/256)` at step `1/32`.
+- Promoted the corrected model to S5/H1 with a generated Q16.16 catalogue core
+  and depth-4 SymbiYosys/Z3 safety proof. The public fidelity count remains 21,
+  schema-gap counts move to `32 / 121 / 123`, the formal catalogue moves to 25
+  jobs, and the full HDL tree moves to 62 jobs / 210 statements.
 - Refactored the 3,662-line Studio application godfile into a 147-line
   composition root, 16 responsibility-specific API routers, and dedicated
   runtime, security, schema, guard, preset-flow, and frontend support modules.

@@ -44,9 +44,9 @@ from .expr_lut_tables import SUPPORTED_FUNCTIONS, const_float
 from .verilog_compiler_config import Q88
 
 # Per-function LUT geometry, matching the calls in
-# ``_VerilogExprEmitter.visit_Call`` / ``visit_BinOp`` exactly. ``log``, ``sqrt``
-# (and the ``**0.5`` power) tabulate over [-8, 8) with unit step; every other
-# transcendental uses the shared symmetric [-16, 16) grid with step 0.125.
+# ``_VerilogExprEmitter.visit_Call`` / ``visit_BinOp`` exactly. ``sqrt`` (and
+# the ``**0.5`` power) retains its [-8, 8) unit-step geometry; ``log`` uses the
+# shared strictly-positive grid; every other transcendental uses [-16, 16).
 _SYMMETRIC_MIN = -16.0
 _SYMMETRIC_STEP = 0.125
 _UNIT_MIN = -8.0
@@ -66,12 +66,12 @@ def signed_q(q: Q88, value: float) -> int:
     raw &= mask
     if raw >= (1 << (q.data_width - 1)):
         raw -= 1 << q.data_width
-    return raw
+    return int(raw)
 
 
 _LUT_GEOMETRY: dict[str, tuple[float, float]] = {
     "exp": (_SYMMETRIC_MIN, _SYMMETRIC_STEP),
-    "log": (_UNIT_MIN, _UNIT_STEP),
+    "log": (expr_lut_tables.LOG_LUT_MIN, expr_lut_tables.LOG_LUT_STEP),
     "sqrt": (_UNIT_MIN, _UNIT_STEP),
     "tanh": (_SYMMETRIC_MIN, _SYMMETRIC_STEP),
     "cosh": (_SYMMETRIC_MIN, _SYMMETRIC_STEP),

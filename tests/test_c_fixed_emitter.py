@@ -71,8 +71,8 @@ class TestArithmetic:
         expr, *_ = _c("+a", state={"a": "s->a"})
         assert "s->a" in expr
 
-    def test_unsupported_binop_raises(self):
-        with pytest.raises(ValueError, match="Unsupported binary op"):
+    def test_non_literal_modulo_raises(self):
+        with pytest.raises(ValueError, match="Modulo divisor must be a positive numeric literal"):
             _c("a % b", state={"a": "s->a", "b": "s->b"})
 
     def test_unsupported_unaryop_raises(self):
@@ -193,11 +193,11 @@ class TestLutIndexMath:
         raw = next(s for s in stmts if "_raw" in s)
         assert "4096" in raw and ">> 5" in raw
 
-    def test_unit_step_offset_and_shift(self):
-        # log uses [-8,8) step 1 → offset 8<<8=2048, shift 8-0=8
+    def test_positive_log_offset_and_shift(self):
+        # log uses [1/256, 8+1/256) step 1/32 → offset 1, shift 8-5=3
         _e, stmts, *_ = _c("log(v)", state={"v": "s->v"})
         raw = next(s for s in stmts if "_raw" in s)
-        assert "2048" in raw and ">> 8" in raw
+        assert "- 1" in raw and ">> 3" in raw
 
     def test_lut_start_offsets_table_names(self):
         _e, _s, tables, _fv, count, _u = _c("exp(v)", state={"v": "s->v"}, lut_start=3)

@@ -1001,10 +1001,12 @@
     },
     "MedvedevMapNeuron": {
       "behavior_tags": [
-        "quiescent"
+        "excitable",
+        "irregular",
+        "tonic"
       ],
       "drivable": true,
-      "result_sha256": "8e70fdddba5cd82b5fca1e6d6247418115893ded2e39ab6e8d0c244ef74c5ea9",
+      "result_sha256": "6e02d6f4c41a24dc05a73b08a819eab0fe9ce4f7d758724f580475d52fb85389",
       "stochastic": false
     },
     "MetaPlasticNeuron": {
@@ -1618,7 +1620,7 @@
       "stochastic": false
     }
   },
-  "result_sha256": "64c96445ced07d3a9e02776149a96a5025b6ff37fd19161b0e4b5e3c808eb294",
+  "result_sha256": "8db314cfe77a9fd9addf81d431722adf56174ba3c44963dc4e26e3716357e966",
   "schema_version": "studio.behavior-probe.v1",
   "sweep": {
     "currents": [

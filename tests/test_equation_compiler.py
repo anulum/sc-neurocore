@@ -404,8 +404,8 @@ class TestTranscendentalFunctions:
     def test_all_lut_entries_are_integers(self):
         """Each LUT helper returns integer entries of its expected length.
 
-        The symmetric LUTs (exp/tanh/sigmoid/sin/cos) sample 256 points over
-        [-16, 16); the log/sqrt LUTs keep their 16-entry tables.
+        The symmetric LUTs and positive-domain log LUT sample 256 points; sqrt
+        retains its 16-entry table.
         """
         from sc_neurocore.compiler.equation_compiler import _VerilogExprEmitter, Q88
 
@@ -413,7 +413,7 @@ class TestTranscendentalFunctions:
         emitter = _VerilogExprEmitter(set(), {}, q)
         expected_len = {
             emitter._exp_lut_entries: 256,
-            emitter._log_lut_entries: 16,
+            emitter._log_lut_entries: 256,
             emitter._sqrt_lut_entries: 16,
             emitter._tanh_lut_entries: 256,
             emitter._sigmoid_lut_entries: 256,

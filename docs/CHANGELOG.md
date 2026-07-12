@@ -5,6 +5,32 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+### Medvedev slow-calcium first-return source-to-silicon correction
+- Replaced the repository's falsely attributed tent map with the scalar
+  slow-calcium first-return construction derived in Section 4 of Medvedev
+  (2005), DOI `10.1016/j.physd.2005.01.021`. Its three source regions follow
+  equations 4.4/4.7, 4.8 with 4.13, and 4.15. The paper does not tabulate one
+  unique global pair of return functions, so the complete calibration is
+  disclosed. Non-zero current and the pre-state event label remain explicit
+  SC-NeuroCore conventions.
+- Rebuilt the fail-closed Python, Rust engine, Rust safety, Go, Julia, and Mojo
+  paths around the same recurrence. Rust, Julia, and Go are trace-identical on
+  the enrolled envelope; Mojo retains exact event vectors below a `5e-13`
+  trace band. The source-hashed 500,000-iteration benchmark records 375,000
+  events in every lane and medians of 8.230 ms Julia, 10.799 ms Rust,
+  19.524 ms Mojo, 20.959 ms Go, and 242.929 ms Python on its recorded host.
+- Added paired TOML/JSON schemas and an independently re-derived Section 4
+  reference contract. At `I=2`, hand/TOML/JSON agree exactly and Q16.16 RTL
+  preserves the complete 75-event vector over 100 iterations with maximum
+  state error below `0.007813`. Q8.8 cannot represent the calibrated
+  `d=2271.1927977404063`, so both behavioural RTL and the generated catalogue
+  core use Q16.16. The shared log LUT has 256 positive-domain entries over
+  `[1/256, 8 + 1/256)` at step `1/32`.
+- The S5/H1 descriptor, readiness evidence, generated Q16.16 catalogue core,
+  and depth-4 Z3 proof are cross-wired. The public fidelity count remains 21,
+  schema-gap counts move to `32 / 121 / 123`, the catalogue inventory moves to
+  25, and the whole HDL inventory moves to 62 jobs / 210 statements.
+
 ### Studio responsibility-router and OpenAPI contract split
 - Reduced `src/sc_neurocore/studio/app.py` from 3,662 lines to a 147-line
   composition root. Sixteen routers now own system, jobs, audit, identity,

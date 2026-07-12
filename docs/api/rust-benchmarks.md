@@ -419,10 +419,18 @@ voltage-dependent rate functions). Other rows are earlier criterion medians.
 |-------|-------|--------|----------|-------|
 | Ibarz-Tanaka | 100k | 803 µs | **8.0 ns** | Chaotic bursting map |
 | Cazelles | 100k | 955 µs | **9.6 ns** | Coupled map lattice |
-| Medvedev | 100k | 1.13 ms | **11.3 ns** | Reduce-and-fire map |
+| Medvedev | 500k | 10.799 ms | **21.6 ns** | Controlled PyO3 batch; slow-calcium first-return map |
 | Courage-Nekorkin | 100k | 1.34 ms | **13.4 ns** | FHN-like map |
 | Rulkov | 100k | 1.67 ms | **16.7 ns** | Slow-fast bursting map |
 | Chialvo | 100k | 1.75 ms | **17.5 ns** | 2D excitable map |
+
+The Medvedev row supersedes the old tent-map Criterion result. It comes from
+the committed five-repeat controlled batch artefact rather than the older
+Criterion run, so it must not be compared as if the harnesses were identical.
+The source-derived recurrence produces 375,000 events in every Python, Rust,
+Julia, Go, and Mojo lane over 500,000 iterations at `I=2`. Rust's recorded
+median is 10.799 ms; the complete host metadata, source hashes, measured order,
+and parity fields are in `benchmarks/results/bench_medvedev_map.json`.
 
 ### Sensory — Additional (`neurons/sensory.rs`)
 

@@ -17,7 +17,7 @@ generated RTL. This module is the single source of truth for both:
 - the canonical function vocabulary (:data:`SUPPORTED_FUNCTIONS`),
 - the compile-time constant folder (:func:`const_float`) used to recognise
   fractional exponents such as ``1.0 / 3.0``,
-- the 256-point symmetric sample grid (:func:`symmetric_sample_points`), and
+- the 256-point symmetric and positive-log sample grids, and
 - the quantised LUT-entry generators for every supported transcendental,
   parameterised by the target fixed-point width and fraction.
 
@@ -51,6 +51,13 @@ SUPPORTED_FUNCTIONS: frozenset[str] = frozenset(
         "min",
     }
 )
+
+# ``log`` cannot share the signed symmetric grid because its domain is strictly
+# positive.  Use a power-of-two geometry so RTL indexing remains one subtract
+# plus one shift, with the smallest Q8.8-positive value as the lower endpoint.
+LOG_LUT_MIN = 1.0 / 256.0
+LOG_LUT_STEP = 1.0 / 32.0
+LOG_LUT_SIZE = 256
 
 
 def const_float(node: ast.AST) -> float | None:
@@ -108,6 +115,20 @@ def symmetric_sample_points() -> list[float]:
     return [-16.0 + i * 0.125 for i in range(256)]
 
 
+def log_sample_points() -> list[float]:
+    """Return the 256 positive ``log`` points over ``[1/256, 8+1/256)``.
+
+    The ``1/32`` spacing and ``1/256`` offset are both exactly representable in
+    Q8.8 and Q16.16, so every lowering backend derives the same integer index.
+
+    Returns
+    -------
+    list of float
+        The 256 strictly positive tabulation points.
+    """
+    return [LOG_LUT_MIN + i * LOG_LUT_STEP for i in range(LOG_LUT_SIZE)]
+
+
 def _signed_cap(data_width: int) -> int:
     """Return the largest signed value representable in ``data_width`` bits."""
     return (1 << (data_width - 1)) - 1
@@ -134,7 +155,7 @@ def exp_lut_entries(data_width: int, fraction: int) -> list[int]:
 
 
 def log_lut_entries(fraction: int) -> list[int]:
-    """Quantised ``log`` LUT (16 entries over ``[0.06, 7.56)`` at 0.5 spacing).
+    """Quantised ``log`` LUT on the canonical positive 256-point grid.
 
     Parameters
     ----------
@@ -144,10 +165,10 @@ def log_lut_entries(fraction: int) -> list[int]:
     Returns
     -------
     list of int
-        16 integer Q-format entries.
+        256 integer Q-format entries.
     """
     scale = 1 << fraction
-    return [int(round(math.log(max(0.06 + i * 0.5, 0.001)) * scale)) for i in range(16)]
+    return [int(round(math.log(value) * scale)) for value in log_sample_points()]
 
 
 def sqrt_lut_entries(fraction: int) -> list[int]:

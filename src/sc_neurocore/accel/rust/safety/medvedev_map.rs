@@ -4,58 +4,98 @@
 // © Code 2020–2026 Miroslav Šotek. All rights reserved.
 // ORCID: 0009-0009-3560-0851
 // Contact: www.anulum.li | protoscience@anulum.li
-// SC-NeuroCore — Rust safety for medvedev_map
+// SC-NeuroCore — Rust safety kernel for the Medvedev 2005 first-return map
 
+/// Calibrated slow-calcium first-return map derived from Medvedev (2005).
 #[derive(Debug, Clone)]
 pub struct MedvedevMapNeuron {
-    pub x: f64,
-    pub alpha: f64,
-    pub beta: f64,
-    pub x_threshold: f64,
+    pub u: f64,
+    pub beta_0: f64,
+    pub beta_hc: f64,
+    pub beta_sn: f64,
+    pub delta: f64,
+    pub decay_t0: f64,
+    pub alpha_t0: f64,
+    pub f_0: f64,
+    pub f_1: f64,
+    pub homoclinic_exponent: f64,
+    pub d: f64,
+    pub input_gain: f64,
 }
 
 impl MedvedevMapNeuron {
     pub fn new() -> Self {
         Self {
-            x: 0.0_f64,
-            alpha: 3.5_f64,
-            beta: 0.5_f64,
-            x_threshold: 0.9_f64,
+            u: 0.251_407_883_672_443_6,
+            beta_0: 0.0015,
+            beta_hc: 0.00203,
+            beta_sn: 0.002_009_000_318_382_601,
+            delta: 0.01,
+            decay_t0: 0.990_356_335_578_673_4,
+            alpha_t0: 0.009_690_465_686_585_3,
+            f_0: 1.471_354_142_980_228_6,
+            f_1: 0.182_015_278_714_566_5,
+            homoclinic_exponent: 0.021_492_989_913_392_21,
+            d: 2_271.192_797_740_406,
+            input_gain: 0.01,
         }
     }
 
-    pub fn step(&mut self, i_ext: f64) -> i32 {
-        if !validate_medvedev_map(self) || !i_ext.is_finite() {
-            return 0;
-        }
-        let x_prev = self.x;
-        // Medvedev piecewise-linear expanding circle map (models/medvedev_map.py step()):
-        //   x <- (alpha * x + I) mod 1        if x < beta
-        //   x <- (alpha * (1 - x) + I) mod 1  otherwise
-        // The multiply and add are kept as separate IEEE operations (never fused into a
-        // multiply-add) so the fast branch matches the Python `alpha * x + current` bit-for-bit.
-        let mapped = if self.x < self.beta {
-            self.alpha * self.x + i_ext
+    fn u_0(&self) -> f64 {
+        self.beta_0 / (self.delta - self.beta_0)
+    }
+
+    fn u_hc(&self) -> f64 {
+        self.beta_hc / (self.delta - self.beta_hc)
+    }
+
+    fn u_sn(&self) -> f64 {
+        self.beta_sn / (self.delta - self.beta_sn)
+    }
+
+    fn candidate(&self, current: f64) -> Option<f64> {
+        let candidate = if self.u <= self.u_0() {
+            self.decay_t0 * self.u + (1.0 - self.decay_t0) * self.f_0 + self.input_gain * current
+        } else if self.u <= self.u_hc() {
+            let u_1 = (1.0 - self.alpha_t0) * self.u + self.alpha_t0 * self.f_0;
+            let gap = self.beta_hc - self.delta * u_1 / (1.0 + u_1);
+            let inner_return = if gap <= 0.0 {
+                self.f_1
+            } else {
+                let log_argument = self.d * gap;
+                if !log_argument.is_finite() || log_argument <= 0.0 {
+                    return None;
+                }
+                let scale = (self.homoclinic_exponent * log_argument.ln()).exp();
+                scale * (u_1 - self.f_1) + self.f_1
+            };
+            inner_return + self.input_gain * current
         } else {
-            self.alpha * (1.0 - self.x) + i_ext
+            self.u_sn()
         };
-        if !mapped.is_finite() {
-            return 0;
+        candidate.is_finite().then_some(candidate)
+    }
+
+    /// Advance one checked return. Rejected input leaves `u` unchanged.
+    pub fn try_step(&mut self, current: f64) -> Option<i32> {
+        if !validate_medvedev_map(self) || !current.is_finite() {
+            return None;
         }
-        // Euclidean remainder: rem_euclid(1.0) is bit-identical to Python `x % 1.0` for the unit
-        // divisor (both fold into [0, 1)), so the chaotic orbit reproduces the reference exactly.
-        let x_new = mapped.rem_euclid(1.0);
-        if !x_new.is_finite() {
-            return 0;
-        }
-        self.x = x_new;
-        i32::from(self.x >= self.x_threshold && x_prev < self.x_threshold)
+        let event = i32::from(self.u <= self.u_hc());
+        let candidate = self.candidate(current)?;
+        self.u = candidate;
+        Some(event)
+    }
+
+    /// Compatibility surface: invalid input emits no event and preserves state.
+    pub fn step(&mut self, current: f64) -> i32 {
+        self.try_step(current).unwrap_or(0)
     }
 
     pub fn reset(&mut self) {
-        // Mirror models/medvedev_map.py `reset`: restore only the state variable x,
-        // never the parameters (alpha/beta/x_threshold are configuration, not state).
-        self.x = 0.0_f64;
+        if validate_parameters(self) {
+            self.u = self.u_sn();
+        }
     }
 }
 
@@ -65,94 +105,71 @@ impl Default for MedvedevMapNeuron {
     }
 }
 
+fn validate_parameters(state: &MedvedevMapNeuron) -> bool {
+    state.beta_0.is_finite()
+        && state.beta_hc.is_finite()
+        && state.beta_sn.is_finite()
+        && state.delta.is_finite()
+        && state.decay_t0.is_finite()
+        && state.alpha_t0.is_finite()
+        && state.f_0.is_finite()
+        && state.f_1.is_finite()
+        && state.homoclinic_exponent.is_finite()
+        && state.d.is_finite()
+        && state.input_gain.is_finite()
+        && 0.0 < state.beta_0
+        && state.beta_0 < state.beta_sn
+        && state.beta_sn < state.beta_hc
+        && state.beta_hc < state.delta
+        && 0.0 < state.decay_t0
+        && state.decay_t0 < 1.0
+        && 0.0 < state.alpha_t0
+        && state.alpha_t0 < 1.0
+        && 0.0 <= state.f_1
+        && state.f_1 < state.f_0
+        && state.homoclinic_exponent > 0.0
+        && state.d > 0.0
+        && state.input_gain >= 0.0
+}
+
 pub fn validate_medvedev_map(state: &MedvedevMapNeuron) -> bool {
-    state.x.is_finite()
-        && state.alpha.is_finite()
-        && state.beta.is_finite()
-        && state.x_threshold.is_finite()
+    state.u.is_finite() && validate_parameters(state)
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
 
-    // Independent re-derivation of one Medvedev map iteration, mirroring
-    // models/medvedev_map.py step() exactly, to cross-check step() on both branches.
-    fn map_reference(n: &MedvedevMapNeuron, current: f64) -> f64 {
-        let mapped = if n.x < n.beta {
-            n.alpha * n.x + current
-        } else {
-            n.alpha * (1.0 - n.x) + current
-        };
-        mapped.rem_euclid(1.0)
-    }
-
     #[test]
-    fn test_medvedev_map_new() {
-        let state = MedvedevMapNeuron::new();
-        assert!(validate_medvedev_map(&state));
-    }
-
-    #[test]
-    fn test_medvedev_map_step() {
-        let mut state = MedvedevMapNeuron::new();
-        let spike = state.step(10.0);
-        assert!(spike == 0 || spike == 1);
-    }
-
-    #[test]
-    fn test_medvedev_map_matches_reference_both_branches() {
-        // Branch x < beta: the linear-expansion arm.  Branch x >= beta: the reflected arm.
-        // Both fold through the unit Euclidean remainder into [0, 1).
-        for (x0, current) in [(0.3_f64, 0.2), (0.7, 0.1)] {
-            let mut state = MedvedevMapNeuron {
-                x: x0,
-                ..MedvedevMapNeuron::new()
-            };
-            let expected = map_reference(&state, current);
-            state.step(current);
-            assert_eq!(state.x, expected, "x0={x0}");
-            assert!((0.0..1.0).contains(&state.x), "folded into [0,1): x0={x0}");
-        }
-    }
-
-    #[test]
-    fn test_medvedev_map_invalid_current_preserves_state() {
-        let mut state = MedvedevMapNeuron::new();
-        state.x = 0.42;
-        let before = state.x;
-        assert_eq!(state.step(f64::NAN), 0);
-        assert_eq!(state.x, before);
-    }
-
-    #[test]
-    fn test_medvedev_map_overflow_preserves_state() {
-        let mut state = MedvedevMapNeuron::new();
-        state.x = 1.0e308;
-        let before = state.x;
-        // 3.5 * (1 - 1e308) overflows to -inf → fail-closed, state untouched.
-        assert_eq!(state.step(0.0), 0);
-        assert_eq!(state.x, before);
-    }
-
-    #[test]
-    fn matches_python_golden_spike_count() {
-        // Parity with models/medvedev_map.py (default parameters). The Medvedev map is a
-        // discrete-time piecewise-linear EXPANDING circle map (alpha = 3.5 > 1), so the orbit is
-        // chaotic — yet fully deterministic and, because every operation is exact IEEE arithmetic
-        // (multiply, add, Euclidean fold), bit-for-bit across the exact-arithmetic backends. The
-        // spike count is therefore an exact observable HERE for the Rust safety kernel (and the
-        // Go/Julia/Rust-engine lanes). NOTE: the FMA-fusing Mojo backend contracts alpha*x+I into
-        // one rounding; on an expanding map that single-ULP difference is amplified, so Mojo does
-        // NOT reproduce the exact spike count over long horizons (it is validated on a per-step
-        // ULP bound and structural invariants instead — by design, see
-        // test_medvedev_map_backends.py). Drive gates the regime: silent at I=0.0 (fixed point at
-        // 0), a 92-spike chaotic train at I=0.2, a 112-spike train at I=0.5, each over 1000
-        // iterations. Verified python-vs-rust max|Δ|=0.
-        for (current, want) in [(0.0_f64, 0_usize), (0.2, 92), (0.5, 112)] {
+    fn calibrated_goldens_match() {
+        for (current, expected_events, expected_final) in [
+            (0.0, 100, 0.194_484_917_610_024_04),
+            (2.0, 75, 0.251_407_883_672_443_6),
+        ] {
             let mut state = MedvedevMapNeuron::new();
-            let spikes = (0..1000).filter(|_| state.step(current) == 1).count();
-            assert_eq!(spikes, want, "I={current}");
+            let events: i32 = (0..100)
+                .map(|_| state.try_step(current).expect("finite source regime"))
+                .sum();
+            assert_eq!(events, expected_events, "current={current}");
+            assert!((state.u - expected_final).abs() < 1.0e-14);
         }
+    }
+
+    #[test]
+    fn invalid_current_preserves_state() {
+        let mut state = MedvedevMapNeuron::new();
+        let before = state.u;
+        assert_eq!(state.try_step(f64::NAN), None);
+        assert_eq!(state.u, before);
+    }
+
+    #[test]
+    fn reset_preserves_parameters() {
+        let mut state = MedvedevMapNeuron::new();
+        state.u = 0.2;
+        state.input_gain = 0.02;
+        state.reset();
+        assert_eq!(state.u, state.u_sn());
+        assert_eq!(state.input_gain, 0.02);
     }
 }

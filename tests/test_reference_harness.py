@@ -43,6 +43,7 @@ _DETERMINISTIC_SCHEMA_TRACES = {
     "lapicque": "lapicque_constant_current_closed_form",
     "lif": "lif_constant_current_closed_form",
     "mckean": "mckean_driven_oscillation_doi",
+    "medvedev_map": "medvedev_map_first_return_doi",
     "mihalas_niebur": "mihalas_niebur_driven_spiking_doi",
     "morris_lecar": "morris_lecar_driven_oscillation_doi",
     "pernarowski": "pernarowski_autonomous_bursting_doi",

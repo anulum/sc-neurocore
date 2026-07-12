@@ -6125,32 +6125,51 @@ fn py_ibarz_tanaka_map_simulate<'py>(
     (trace.into_pyarray(py), spikes, neuron.x, neuron.y)
 }
 
-/// Parity contract with
-/// `sc_neurocore.neurons.models.medvedev_map.MedvedevMapNeuron.simulate`: for
-/// the same parameters and constant input the returned `x` trace, upward-
-/// crossing spike count, and final `x` state are bit-identical to the Python
-/// reference (the map is exact floating-point arithmetic — a multiply, an add,
-/// and a fold into `[0, 1)`; `f64::rem_euclid(1.0)` equals Python's `x % 1.0`
-/// bit-for-bit). This is a one-dimensional map, so there is no `y` state.
+/// N-step Medvedev (2005) slow-calcium first-return simulation.
+///
+/// The recurrence matches the disclosed Section-4 calibration in
+/// `sc_neurocore.neurons.models.medvedev_map.MedvedevMapNeuron`. The returned
+/// trace records `u` after each map iteration and the event count identifies
+/// pre-step states in the active fast-return region `u <= u_HC`. Non-finite or
+/// topologically invalid inputs fail before a corrupt candidate is committed.
 #[pyfunction]
-#[pyo3(signature = (x0, alpha, beta, x_threshold, n_steps, current))]
+#[pyo3(signature = (u0, beta_0, beta_hc, beta_sn, delta, decay_t0, alpha_t0, f_0, f_1, homoclinic_exponent, d, input_gain, n_steps, current))]
+#[allow(clippy::too_many_arguments)]
 fn py_medvedev_map_simulate<'py>(
     py: Python<'py>,
-    x0: f64,
-    alpha: f64,
-    beta: f64,
-    x_threshold: f64,
+    u0: f64,
+    beta_0: f64,
+    beta_hc: f64,
+    beta_sn: f64,
+    delta: f64,
+    decay_t0: f64,
+    alpha_t0: f64,
+    f_0: f64,
+    f_1: f64,
+    homoclinic_exponent: f64,
+    d: f64,
+    input_gain: f64,
     n_steps: usize,
     current: f64,
-) -> (Bound<'py, PyArray1<f64>>, i64, f64) {
+) -> PyResult<(Bound<'py, PyArray1<f64>>, i64, f64)> {
     let mut neuron = crate::neurons::MedvedevMapNeuron {
-        x: x0,
-        alpha,
-        beta,
-        x_threshold,
+        u: u0,
+        beta_0,
+        beta_hc,
+        beta_sn,
+        delta,
+        decay_t0,
+        alpha_t0,
+        f_0,
+        f_1,
+        homoclinic_exponent,
+        d,
+        input_gain,
     };
-    let (trace, spikes) = neuron.simulate(n_steps, current);
-    (trace.into_pyarray(py), spikes, neuron.x)
+    let (trace, events) = neuron
+        .simulate(n_steps, current)
+        .map_err(PyFloatingPointError::new_err)?;
+    Ok((trace.into_pyarray(py), events, neuron.u))
 }
 
 /// Parity contract with

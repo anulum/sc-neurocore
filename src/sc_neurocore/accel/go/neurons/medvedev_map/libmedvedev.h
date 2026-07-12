@@ -21,7 +21,7 @@ extern const char *_GoStringPtr(_GoString_ s);
 /* Start of preamble from import "C" comments.  */
 
 
-#line 24 "medvedev_map.go"
+#line 13 "medvedev_map.go"
 
 #include <stdint.h>
 
@@ -87,7 +87,7 @@ typedef struct { void *data; GoInt len; GoInt cap; } GoSlice;
 extern "C" {
 #endif
 
-extern long long int medvedev_map_simulate_c(double x0, double alpha, double beta, double xThreshold, int nSteps, double current, double* tracePtr);
+extern long long int medvedev_map_simulate_c(double u0, double beta0, double betaHC, double betaSN, double delta, double decayT0, double alphaT0, double f0, double f1, double homoclinicExponent, double d, double inputGain, int nSteps, double current, double* tracePtr);
 
 #ifdef __cplusplus
 }

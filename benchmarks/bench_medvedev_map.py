@@ -5,210 +5,285 @@
 # © Code 2020–2026 Miroslav Šotek. All rights reserved.
 # ORCID: 0009-0009-3560-0851
 # Contact: www.anulum.li | protoscience@anulum.li
-# SC-NeuroCore — Medvedev 1D spiking map multi-language benchmark
+# SC-NeuroCore — Controlled Medvedev first-return polyglot benchmark
 
-"""Multi-language benchmark for ``MedvedevMapNeuron.simulate``.
+"""Benchmark every production Medvedev simulation lane on one logical CPU.
 
-Times the N-step 1D map recurrence across the polyglot backend chain
-(python / rust / julia / go / mojo), records the parity gap against the NumPy
-reference, and writes a JSON artefact.
-
-Usage::
-
-    python benchmarks/bench_medvedev_map.py
-    python benchmarks/bench_medvedev_map.py --json benchmarks/results/bench_medvedev_map.json
-
-Measurement note: functional / local-regression benchmark on a loaded
-workstation, explicitly **non-isolated** per
-`BROADCAST_2026-06-04_benchmark_core_isolation`; do not promote the speed
-numbers without an isolated-core rerun.
+The JSON report records affinity, isolation metadata, load, runtime versions,
+event parity, trajectory parity and exact hashes for every committed kernel
+surface. Missing backends or unpinned execution fail unless explicitly allowed.
 """
 
 from __future__ import annotations
 
 import argparse
+import gc
 import hashlib
 import json
-import os as _os
+import os
 import platform
+import shutil
+import statistics
+import subprocess
 import time
 from pathlib import Path
+from typing import Any
 
 import numpy as np
+import numpy.typing as npt
 
 from sc_neurocore.neurons.models import medvedev_map
 from sc_neurocore.neurons.models.medvedev_map import MedvedevMapNeuron
 
-N_STEPS = 2_000_000
-CURRENT = 0.1
+REPOSITORY = Path(__file__).resolve().parents[1]
+N_STEPS = 500_000
 N_REPEATS = 5
-REPO_ROOT = Path(__file__).resolve().parents[1]
-SOURCE_HASH_PATHS = (
+CURRENT = 2.0
+KERNEL = "medvedev_map_simulate"
+BACKENDS = ("python", "rust", "julia", "go", "mojo")
+SOURCE_PATHS = (
     "benchmarks/bench_medvedev_map.py",
-    "src/sc_neurocore/neurons/models/medvedev_map.py",
+    "bridge/sc_neurocore_engine/__init__.py",
     "engine/src/lib.rs",
     "engine/src/neurons/maps.rs",
+    "src/sc_neurocore/accel/go/neurons/medvedev_map/libmedvedev.h",
     "src/sc_neurocore/accel/go/neurons/medvedev_map/medvedev_map.go",
     "src/sc_neurocore/accel/julia/neurons/medvedev_map.jl",
     "src/sc_neurocore/accel/mojo/neurons/medvedev_map.mojo",
+    "src/sc_neurocore/accel/rust/safety/medvedev_map.rs",
+    "src/sc_neurocore/neurons/models/medvedev_map.py",
 )
 
 
-def _sha256(path: Path) -> str:
-    digest = hashlib.sha256()
-    with path.open("rb") as fh:
-        for chunk in iter(lambda: fh.read(1024 * 1024), b""):
-            digest.update(chunk)
-    return digest.hexdigest()
+def _cpu_model() -> str:
+    """Return the first Linux CPU model string, or a portable fallback."""
+    try:
+        cpuinfo = Path("/proc/cpuinfo").read_text(encoding="utf-8")
+    except OSError:
+        cpuinfo = ""
+    for line in cpuinfo.splitlines():
+        if line.startswith("model name"):
+            return line.split(":", 1)[1].strip()
+    return platform.processor() or "unknown"
+
+
+def _read_optional(path: Path) -> str:
+    """Read one host metadata file without making it a benchmark dependency."""
+    try:
+        return path.read_text(encoding="utf-8").strip()
+    except OSError:
+        return "unavailable"
+
+
+def _tool_path(name: str, fallback: Path | None = None) -> str | None:
+    """Resolve a runtime executable with one explicit fallback."""
+    resolved = shutil.which(name)
+    if resolved is not None:
+        return resolved
+    if fallback is not None and fallback.is_file():
+        return str(fallback)
+    return None
+
+
+def _tool_version(command: list[str]) -> str:
+    """Return the first version line for a runtime executable."""
+    if not command or command[0] == "":
+        return "unavailable"
+    try:
+        result = subprocess.run(
+            command,
+            capture_output=True,
+            text=True,
+            timeout=20,
+            check=False,
+        )
+    except (OSError, subprocess.TimeoutExpired):
+        return "unavailable"
+    output = result.stdout.strip() or result.stderr.strip()
+    return output.splitlines()[0] if output else f"exit {result.returncode}"
 
 
 def _source_hashes() -> dict[str, object]:
-    flat: dict[str, object] = {path: _sha256(REPO_ROOT / path) for path in SOURCE_HASH_PATHS}
+    """Hash every committed implementation and ABI surface used by the run."""
+    flat = {
+        relative: hashlib.sha256((REPOSITORY / relative).read_bytes()).hexdigest()
+        for relative in SOURCE_PATHS
+    }
     nested: dict[str, object] = {}
-    for path, digest in flat.items():
-        stem, suffix = path.rsplit(".", 1)
+    for relative, digest in flat.items():
+        stem, suffix = relative.rsplit(".", 1)
         nested[stem] = {suffix: digest}
     return {**flat, **nested}
 
 
-def _probe_rust() -> tuple[bool, str]:
-    return (
-        medvedev_map._HAS_RUST,
-        "" if medvedev_map._HAS_RUST else "engine wheel lacks the symbol",
+def _probe_backend(backend: str) -> tuple[bool, str]:
+    """Return availability plus a deterministic diagnostic."""
+    if backend == "python":
+        return True, ""
+    if backend == "rust":
+        available = medvedev_map._HAS_RUST
+        return available, "" if available else "engine batch function unavailable"
+    if backend == "julia":
+        available = medvedev_map._ensure_julia_loaded()
+        return available, "" if available else "juliacall or Julia module unavailable"
+    if backend == "go":
+        available = medvedev_map._ensure_go_loaded()
+        return available, "" if available else "libmedvedev.so Go build unavailable"
+    available = medvedev_map._ensure_mojo_loaded()
+    return available, "" if available else "libmedvedev.so Mojo build unavailable"
+
+
+def _measure_backend(
+    backend: str,
+) -> tuple[float, float, npt.NDArray[np.float64], int, float]:
+    """Warm one backend, then return five-call timing and final numerical state."""
+    MedvedevMapNeuron().simulate(2_000, CURRENT, backend=backend)
+    elapsed_ms: list[float] = []
+    trace: npt.NDArray[np.float64] = np.empty(0, dtype=np.float64)
+    events = 0
+    final_u = 0.0
+    for _repeat in range(N_REPEATS):
+        gc.collect()
+        neuron = MedvedevMapNeuron()
+        started = time.perf_counter_ns()
+        trace, events = neuron.simulate(N_STEPS, CURRENT, backend=backend)
+        elapsed_ms.append((time.perf_counter_ns() - started) / 1_000_000.0)
+        final_u = neuron.u
+    return statistics.median(elapsed_ms), min(elapsed_ms), trace, events, final_u
+
+
+def _runtime_versions() -> dict[str, str]:
+    """Record every language runtime involved in the parity claim."""
+    home = Path.home()
+    julia = _tool_path("julia", home / ".juliaup/bin/julia") or ""
+    mojo = _tool_path("mojo", home / ".pixi/bin/mojo") or ""
+    return {
+        "python": platform.python_version(),
+        "numpy": np.__version__,
+        "rust": _tool_version([_tool_path("rustc") or "", "--version"]),
+        "go": _tool_version([_tool_path("go") or "", "version"]),
+        "julia": _tool_version([julia, "--version"]),
+        "mojo": _tool_version([mojo, "--version"]),
+    }
+
+
+def _environment(load_start: tuple[float, float, float]) -> dict[str, Any]:
+    """Capture affinity and load without overstating kernel isolation."""
+    affinity = sorted(os.sched_getaffinity(0))
+    cpu = affinity[0] if len(affinity) == 1 else None
+    governor = (
+        _read_optional(Path(f"/sys/devices/system/cpu/cpu{cpu}/cpufreq/scaling_governor"))
+        if cpu is not None
+        else "mixed-or-unpinned"
     )
-
-
-def _probe_julia() -> tuple[bool, str]:
-    ok = medvedev_map._ensure_julia_loaded()
-    return (ok, "" if ok else "juliacall/.jl unavailable")
-
-
-def _probe_go() -> tuple[bool, str]:
-    ok = medvedev_map._ensure_go_loaded()
-    return (ok, "" if ok else "accel/go/neurons/medvedev_map/libmedvedev.so not built")
-
-
-def _probe_mojo() -> tuple[bool, str]:
-    if not _os.path.isfile(_os.path.expanduser("~/.pixi/bin/mojo")):
-        return False, "mojo binary not at ~/.pixi/bin/mojo"
-    ok = medvedev_map._ensure_mojo_loaded()
-    return (ok, "" if ok else "accel/mojo/neurons/libmedvedev.so not built")
-
-
-def _run(backend: str) -> tuple[float, float, np.ndarray, int]:
-    MedvedevMapNeuron().simulate(N_STEPS, CURRENT, backend=backend)  # warm-up (JIT for Julia)
-    times_ms: list[float] = []
-    trace = np.empty(0)
-    spikes = 0
-    for _ in range(N_REPEATS):
-        t0 = time.perf_counter()
-        trace, spikes = MedvedevMapNeuron().simulate(N_STEPS, CURRENT, backend=backend)
-        times_ms.append((time.perf_counter() - t0) * 1000.0)
-    times_ms.sort()
-    return times_ms[len(times_ms) // 2], times_ms[0], trace, int(spikes)
+    return {
+        "cpu": _cpu_model(),
+        "platform": platform.platform(),
+        "affinity": affinity,
+        "single_cpu_pinned": len(affinity) == 1,
+        "kernel_isolated_cpus": _read_optional(Path("/sys/devices/system/cpu/isolated")),
+        "governor": governor,
+        "load_average_start": list(load_start),
+        "load_average_end": list(os.getloadavg()),
+        "measurement_scope": (
+            "single-logical-CPU affinity; kernel isolation and workstation load reported separately"
+        ),
+        "runtime_versions": _runtime_versions(),
+    }
 
 
 def main(argv: list[str]) -> int:
-    parser = argparse.ArgumentParser(
-        description="Medvedev 1D spiking map multi-language benchmark."
-    )
-    parser.add_argument("--json", type=Path, default=None)
-    parser.add_argument(
-        "--allow-unavailable-backends",
-        action="store_true",
-        help="Record unavailable optional backends instead of failing the parity benchmark.",
-    )
+    """Run the controlled benchmark and write its evidence artefact."""
+    parser = argparse.ArgumentParser(description="Controlled Medvedev polyglot benchmark")
+    parser.add_argument("--json", type=Path, required=True)
+    parser.add_argument("--allow-unpinned", action="store_true")
+    parser.add_argument("--allow-unavailable-backends", action="store_true")
     args = parser.parse_args(argv)
 
-    print("# Medvedev 2005 1D spiking map N-step benchmark")
-    print(f"# Workload: {N_STEPS:,} steps, default params, current={CURRENT}")
-    print(f"# Repeats per backend: {N_REPEATS}")
-    print(f"# Python: {platform.python_version()}, NumPy: {np.__version__}")
-    print(f"# platform: {platform.platform()}")
-    print("# isolation: non-isolated (loaded workstation) — functional/regression evidence")
-    print()
-
-    backends = {
-        "python": (True, ""),
-        "rust": _probe_rust(),
-        "julia": _probe_julia(),
-        "go": _probe_go(),
-        "mojo": _probe_mojo(),
-    }
-
-    print(f"{'backend':<8}  {'available':<10}  reason")
-    print(f"{'-' * 8}  {'-' * 10}  {'-' * 50}")
-    for name, (avail, reason) in backends.items():
-        print(f"{name:<8}  {'yes' if avail else 'no':<10}  {reason}")
-    print()
-
-    missing = [name for name, (avail, _reason) in backends.items() if not avail]
-    if missing and not args.allow_unavailable_backends:
-        print(
-            "Missing required Medvedev backend(s): "
-            + ", ".join(missing)
-            + ". Build/install them or rerun with --allow-unavailable-backends for diagnostics only."
-        )
+    affinity = sorted(os.sched_getaffinity(0))
+    if len(affinity) != 1 and not args.allow_unpinned:
+        print(f"Refusing unpinned benchmark; affinity is {affinity}")
         return 2
 
-    reference: np.ndarray | None = None
-    python_median: float | None = None
-    rows: list[dict[str, object]] = []
+    load_start = os.getloadavg()
+    probes = {backend: _probe_backend(backend) for backend in BACKENDS}
+    missing = [backend for backend, (available, _reason) in probes.items() if not available]
+    if missing and not args.allow_unavailable_backends:
+        print("Missing required backend(s): " + ", ".join(missing))
+        return 2
 
-    print(f"{'backend':<8}  {'median ms':>12}  {'min ms':>12}  {'parity Δ':>12}  {'speedup':>9}")
-    print(f"{'-' * 8}  {'-' * 12}  {'-' * 12}  {'-' * 12}  {'-' * 9}")
-    for name, (avail, reason) in backends.items():
-        if not avail:
-            print(f"{name:<8}  {'(skip)':>12}  {'(skip)':>12}  {'-':>12}  {'-':>9}")
-            rows.append({"backend": name, "skipped": True, "unavailable_reason": reason})
+    rows: dict[str, dict[str, Any]] = {}
+    reference: npt.NDArray[np.float64] | None = None
+    reference_ms: float | None = None
+    reference_events: int | None = None
+    for backend in BACKENDS:
+        available, reason = probes[backend]
+        if not available:
+            rows[backend] = {
+                "available": False,
+                "used": False,
+                "unavailable_reason": reason,
+            }
             continue
-        median_ms, min_ms, trace, spikes = _run(name)
-        if name == "python":
+        median_ms, minimum_ms, trace, events, final_u = _measure_backend(backend)
+        if backend == "python":
             reference = trace
-            python_median = median_ms
+            reference_ms = median_ms
+            reference_events = events
             parity = 0.0
         else:
-            assert reference is not None
+            if reference is None or reference_ms is None or reference_events is None:
+                raise RuntimeError("Python reference must be measured first")
             parity = float(np.max(np.abs(trace - reference)))
-        speedup = (python_median / median_ms) if python_median and median_ms > 0 else float("nan")
-        print(f"{name:<8}  {median_ms:>12.2f}  {min_ms:>12.2f}  {parity:>12.2e}  {speedup:>8.2f}x")
-        rows.append(
-            {
-                "backend": name,
-                "median_ms": median_ms,
-                "min_ms": min_ms,
-                "parity_max_abs_diff": parity,
-                "speedup_vs_python": speedup,
-                "spikes": spikes,
-            }
-        )
+        rows[backend] = {
+            "available": True,
+            "used": True,
+            "median_call_ms": median_ms,
+            "minimum_call_ms": minimum_ms,
+            "speedup_vs_python": (reference_ms / median_ms) if reference_ms is not None else 1.0,
+            "parity_max_abs_diff": parity,
+            "event_count": events,
+            "event_count_matches_python": (
+                True if reference_events is None else events == reference_events
+            ),
+            "final_state": {"u": final_u},
+        }
 
-    print()
-    print("# Note: rust/julia/go reproduce the trace bit-for-bit (parity 0).")
-    print("# Mojo's release build contracts alpha*x+current into an FMA; this is")
-    print("# an expanding chaotic map, so a per-step ULP is amplified into a large")
-    print("# whole-trace gap (per-step agreement stays <=2 ULP). Use rust/julia/go")
-    print("# when bit-exactness is required.")
-
-    report = {
-        "benchmark": "medvedev_map_simulate",
-        "workload": {"n_steps": N_STEPS, "current": CURRENT, "repeats": N_REPEATS},
-        "environment": {
-            "python": platform.python_version(),
-            "numpy": np.__version__,
-            "platform": platform.platform(),
-            "isolation": "non-isolated (loaded workstation)",
+    measured_order = sorted(
+        (backend for backend in BACKENDS if rows[backend].get("used") is True),
+        key=lambda backend: float(rows[backend]["median_call_ms"]),
+    )
+    report: dict[str, Any] = {
+        "schema_version": "sc-neurocore.polyglot-benchmark.v1",
+        "kernel": KERNEL,
+        "workload": {
+            "n_steps": N_STEPS,
+            "repeats": N_REPEATS,
+            "current": CURRENT,
+            "parameters": "Medvedev 2005 disclosed first-return calibration",
         },
-        "results": rows,
-        "backend_summary": {
-            str(row["backend"]): row for row in rows if isinstance(row.get("backend"), str)
-        },
+        "meta": _environment(load_start),
+        "backends": rows,
+        "measured_order": measured_order,
         "source_hashes": _source_hashes(),
     }
-    if args.json is not None:
-        args.json.parent.mkdir(parents=True, exist_ok=True)
-        args.json.write_text(json.dumps(report, indent=2, sort_keys=True) + "\n", encoding="utf-8")
-        print(f"\nWrote {args.json}")
+    args.json.parent.mkdir(parents=True, exist_ok=True)
+    args.json.write_text(json.dumps(report, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+
+    print(f"Medvedev benchmark: {N_STEPS:,} iterations x {N_REPEATS} repeats")
+    for backend in measured_order:
+        row = rows[backend]
+        print(
+            f"{backend:>7}: {float(row['median_call_ms']):10.3f} ms  "
+            f"{float(row['speedup_vs_python']):8.2f}x  "
+            f"max|delta|={float(row['parity_max_abs_diff']):.3e}  "
+            f"events={int(row['event_count'])}"
+        )
+    print(f"Measured order: {', '.join(measured_order)}")
+    print(f"Wrote {args.json}")
+
+    if any(not bool(row.get("event_count_matches_python", True)) for row in rows.values()):
+        return 3
     return 0
 
 

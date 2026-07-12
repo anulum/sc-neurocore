@@ -72,6 +72,13 @@ class TestSamplePoints:
     def test_deterministic(self) -> None:
         assert tables.symmetric_sample_points() == tables.symmetric_sample_points()
 
+    def test_log_grid_is_positive_power_of_two_geometry(self) -> None:
+        points = tables.log_sample_points()
+        assert len(points) == tables.LOG_LUT_SIZE == 256
+        assert points[0] == tables.LOG_LUT_MIN == 1.0 / 256.0
+        assert points[1] - points[0] == tables.LOG_LUT_STEP == 1.0 / 32.0
+        assert points[-1] < tables.LOG_LUT_MIN + tables.LOG_LUT_SIZE * tables.LOG_LUT_STEP
+
 
 class TestLutEntries:
     def test_symmetric_luts_have_256_entries(self) -> None:
@@ -84,9 +91,16 @@ class TestLutEntries:
         assert len(tables.cos_lut_entries(8)) == 256
         assert len(tables.cbrt_lut_entries(8)) == 256
 
-    def test_short_luts_have_16_entries(self) -> None:
-        assert len(tables.log_lut_entries(8)) == 16
+    def test_log_and_sqrt_lut_sizes(self) -> None:
+        assert len(tables.log_lut_entries(8)) == 256
         assert len(tables.sqrt_lut_entries(8)) == 16
+
+    def test_log_entries_match_positive_grid(self) -> None:
+        entries = tables.log_lut_entries(8)
+        points = tables.log_sample_points()
+        assert entries[0] == int(round(math.log(1.0 / 256.0) * 256))
+        assert entries[128] == int(round(math.log(points[128]) * 256))
+        assert entries[-1] == int(round(math.log(points[-1]) * 256))
 
     def test_exp_zero_point_and_saturation(self) -> None:
         exp = tables.exp_lut_entries(16, 8)

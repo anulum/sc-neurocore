@@ -4,54 +4,127 @@
 # © Code 2020–2026 Miroslav Šotek. All rights reserved.
 # ORCID: 0009-0009-3560-0851
 # Contact: www.anulum.li | protoscience@anulum.li
-# SC-NeuroCore — Julia acceleration for the Medvedev 2005 1D spiking map
+# SC-NeuroCore — Julia acceleration for the Medvedev 2005 first-return map
 
-# Parity contract: `simulate_trace` reproduces
-# `sc_neurocore.neurons.models.medvedev_map.MedvedevMapNeuron.simulate`
-# bit-for-bit — the map is exact floating-point arithmetic (a multiply, an add,
-# and a fold into [0, 1)). The fold uses `mod(x, 1.0)` (floored remainder),
-# which equals Python's `x % 1.0` and Rust's `rem_euclid(1.0)` bit-for-bit; note
-# Julia's `%` operator is `rem` (truncated) and must NOT be used here.
-#
-# Reference: Medvedev, G.S. (2005). Physica D 202:37-59.
+# Source contract: calibrated Section-4 slow-calcium recurrence from Medvedev,
+# Physica D 202 (2005), 37-59, DOI 10.1016/j.physd.2005.01.021. The source map
+# is recovered at current=0; current is a maintained active-return perturbation.
 
 module MedvedevMapAccel
 
 export simulate_trace
 
-"""
-    simulate_trace(x0, alpha, beta, x_threshold, n_steps, current)
+function _valid_parameters(
+    beta_0::Float64,
+    beta_hc::Float64,
+    beta_sn::Float64,
+    delta::Float64,
+    decay_t0::Float64,
+    alpha_t0::Float64,
+    f_0::Float64,
+    f_1::Float64,
+    homoclinic_exponent::Float64,
+    d::Float64,
+    input_gain::Float64,
+)
+    values = (
+        beta_0,
+        beta_hc,
+        beta_sn,
+        delta,
+        decay_t0,
+        alpha_t0,
+        f_0,
+        f_1,
+        homoclinic_exponent,
+        d,
+        input_gain,
+    )
+    return all(isfinite, values) &&
+           0.0 < beta_0 < beta_sn < beta_hc < delta &&
+           0.0 < decay_t0 < 1.0 &&
+           0.0 < alpha_t0 < 1.0 &&
+           0.0 <= f_1 < f_0 &&
+           homoclinic_exponent > 0.0 &&
+           d > 0.0 &&
+           input_gain >= 0.0
+end
 
-Run `n_steps` of the Medvedev 1D map from state `x0` under a constant input
-`current`. Returns a named tuple `(trace, spikes, xf)` where `trace[t]` is `x`
-after step `t` (folded into [0, 1)), `spikes` counts upward crossings of
-`x_threshold`, and `xf` is the final state.
+"""
+    simulate_trace(u0, beta_0, beta_hc, beta_sn, delta, decay_t0,
+                   alpha_t0, f_0, f_1, homoclinic_exponent, d, input_gain,
+                   n_steps, current)
+
+Run the checked Medvedev slow-calcium first-return map. Return
+`(trace, events, uf)`, where events count pre-step states `u <= u_HC`.
 """
 function simulate_trace(
-    x0::Float64,
-    alpha::Float64,
-    beta::Float64,
-    x_threshold::Float64,
+    u0::Float64,
+    beta_0::Float64,
+    beta_hc::Float64,
+    beta_sn::Float64,
+    delta::Float64,
+    decay_t0::Float64,
+    alpha_t0::Float64,
+    f_0::Float64,
+    f_1::Float64,
+    homoclinic_exponent::Float64,
+    d::Float64,
+    input_gain::Float64,
     n_steps::Int,
     current::Float64,
 )
-    trace = Vector{Float64}(undef, n_steps)
-    x = x0
-    spikes = 0
-    for t in 1:n_steps
-        x_prev = x
-        if x < beta
-            x = alpha * x + current
-        else
-            x = alpha * (1.0 - x) + current
-        end
-        x = mod(x, 1.0)
-        trace[t] = x
-        if x >= x_threshold && x_prev < x_threshold
-            spikes += 1
-        end
+    if n_steps < 0 || !isfinite(u0) || !isfinite(current) ||
+       !_valid_parameters(
+        beta_0,
+        beta_hc,
+        beta_sn,
+        delta,
+        decay_t0,
+        alpha_t0,
+        f_0,
+        f_1,
+        homoclinic_exponent,
+        d,
+        input_gain,
+    )
+        throw(ArgumentError("invalid Medvedev first-return request"))
     end
-    return (trace = trace, spikes = spikes, xf = x)
+
+    u_0 = beta_0 / (delta - beta_0)
+    u_hc = beta_hc / (delta - beta_hc)
+    u_sn = beta_sn / (delta - beta_sn)
+    trace = Vector{Float64}(undef, n_steps)
+    u = u0
+    events = 0
+    for index in 1:n_steps
+        events += u <= u_hc
+        candidate = if u <= u_0
+            decay_t0 * u + (1.0 - decay_t0) * f_0 + input_gain * current
+        elseif u <= u_hc
+            u_1 = (1.0 - alpha_t0) * u + alpha_t0 * f_0
+            gap = beta_hc - delta * u_1 / (1.0 + u_1)
+            inner_return = if gap <= 0.0
+                f_1
+            else
+                log_argument = d * gap
+                if !isfinite(log_argument) || log_argument <= 0.0
+                    throw(DomainError(log_argument, "invalid Medvedev log argument"))
+                end
+                scale = exp(homoclinic_exponent * log(log_argument))
+                scale * (u_1 - f_1) + f_1
+            end
+            inner_return + input_gain * current
+        else
+            u_sn
+        end
+        if !isfinite(candidate)
+            throw(DomainError(candidate, "non-finite Medvedev candidate"))
+        end
+        u = candidate
+        trace[index] = u
+    end
+    return (trace = trace, events = events, uf = u)
 end
 
 end # module MedvedevMapAccel
