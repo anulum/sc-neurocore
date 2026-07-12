@@ -30,7 +30,6 @@ behavior_tags = [
     "excitable",
     "rate-coded",
     "tonic",
-    "stochastic",
 ]
 
 [provenance]

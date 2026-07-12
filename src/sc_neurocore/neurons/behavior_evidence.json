@@ -1442,6 +1442,16 @@
       "result_sha256": "4dc2578a3bea9dd77c600b4a1e5dcae8b9e1a204e0461d5c573ee89b1f0319d3",
       "stochastic": false
     },
+    "StochasticLIFNeuron": {
+      "behavior_tags": [
+        "excitable",
+        "rate-coded",
+        "tonic"
+      ],
+      "drivable": true,
+      "result_sha256": "8c7f12fac593e460b1b7d15ce2e9ea0d6fa838255c71a1c04152e1472cdfcd7e",
+      "stochastic": false
+    },
     "SuperSpikeNeuron": {
       "behavior_tags": [
         "excitable",
@@ -1620,7 +1630,7 @@
       "stochastic": false
     }
   },
-  "result_sha256": "8db314cfe77a9fd9addf81d431722adf56174ba3c44963dc4e26e3716357e966",
+  "result_sha256": "437a950acdd6d3a3c532e7d1aab79a969182b15c904e9d1fb80f53fdeafb556f",
   "schema_version": "studio.behavior-probe.v1",
   "sweep": {
     "currents": [

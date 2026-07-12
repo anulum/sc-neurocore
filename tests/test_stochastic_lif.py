@@ -9,7 +9,7 @@
 import numpy as np
 import pytest
 
-from sc_neurocore.neurons.stochastic_lif import StochasticLIFNeuron
+from sc_neurocore.neurons.stochastic_lif import LIF_NOISE_STD, StochasticLIFNeuron
 
 
 @pytest.mark.parametrize(
@@ -89,3 +89,38 @@ def test_refractory_period_holds_voltage_at_rest_for_integer_duration():
     assert neuron.step(1.0) == 0
     assert neuron.v == pytest.approx(neuron.v_rest)
     assert neuron.step(1.0) == 1
+
+
+class _ConstantEntropySource:
+    """Deterministic entropy stub returning a fixed noise sample every step."""
+
+    def __init__(self, value: float) -> None:
+        self._value = value
+
+    def sample_normal(self, mean: float, std: float) -> float:
+        """Return the fixed sample, ignoring the requested mean and std."""
+        return self._value
+
+
+def test_default_is_deterministic_but_positive_noise_exercises_the_stochastic_path() -> None:
+    """Separate measured-default behaviour from the stochastic capability.
+
+    The measured behaviour facet probes the default constructor, whose canonical
+    ``noise_std`` is ``LIF_NOISE_STD == 0.0``: the recurrence is deterministic, so
+    the descriptor correctly records ``[excitable, rate-coded, tonic]`` without a
+    ``stochastic`` tag. A positive ``noise_std`` still takes the entropy branch and
+    changes the spike train, so the Euler-Maruyama stochastic path stays real and
+    exercised — capability is kept distinct from the default behaviour tags.
+    """
+    assert LIF_NOISE_STD == 0.0
+    bits = np.ones(64, dtype=np.uint8)
+
+    baseline = StochasticLIFNeuron(noise_std=0.0).process_bitstream(bits, input_scale=0.08)
+    repeat = StochasticLIFNeuron(noise_std=0.0).process_bitstream(bits, input_scale=0.08)
+    assert np.array_equal(baseline, repeat)
+
+    noisy = StochasticLIFNeuron(
+        noise_std=0.2, entropy_source=_ConstantEntropySource(0.2)
+    ).process_bitstream(bits, input_scale=0.08)
+    assert not np.array_equal(noisy, baseline)
+    assert int(noisy.sum()) > int(baseline.sum())
