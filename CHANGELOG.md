@@ -535,6 +535,10 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
   code, polyglot mirror, benchmark dispatch, or benchmark artefact changed.
 
 ### Fixed
+- Removed the stale Rust safety-module registry entry left after the generated
+  CLI stub was deleted. Both Rust registries now resolve every declared module,
+  and a focused source-registry contract prevents future file/declaration drift.
+
 - Restored a green `main` after inherited tooling drift left three required checks red, with no
   behavioural change. The `pre-commit` and `lint` jobs reformatted 21 model/test/tool files to the
   pinned `ruff` 0.15.16 style — adjacent-string joins and single-line calls a staler formatter had

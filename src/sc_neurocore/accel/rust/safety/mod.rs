@@ -75,7 +75,6 @@ pub mod chip_spec;
 pub mod chiplet_gen;
 pub mod circadian_optimizer;
 pub mod circuit_primitives;
-pub mod cli;
 pub mod clif;
 pub mod clopath_stdp;
 pub mod coba_lif;
