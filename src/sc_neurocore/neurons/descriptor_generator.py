@@ -210,7 +210,7 @@ def _instance_state_init(cls: type, name: str) -> float | None:
 
 
 def _is_mirror_field(cls: type, name: str) -> bool:
-    """True when ``self.<name>`` is ever assigned from a wrapped object's attribute.
+    """Return ``True`` when ``self.<name>`` is assigned from a wrapped object's attribute.
 
     An adapter that wraps another model and exposes a compatibility pseudo-field
     (``self.v = self._astro.ca``) is mirroring the wrapped model's state, not
