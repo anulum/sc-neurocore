@@ -84,13 +84,14 @@ conformity.
   - `ScoreboardConfig` — Self-checking scoreboard
 
 #### chiplet — Multi-Die Chiplet Generator
-- **Source:** `src/sc_neurocore/chiplet/chiplet_gen.py`
-- **Tests:** `tests/test_chiplet/test_chiplet_gen.py` — **94 tests**
+- **Sources:** `src/sc_neurocore/chiplet/{topology,routing,thermal,rtl,link_protocols,power,partition}.py`
+- **Compatibility facade:** `src/sc_neurocore/chiplet/chiplet_gen.py`
+- **Tests:** `tests/test_chiplet/test_chiplet_*.py` — **172 focused tests**
 - **Key Classes:**
   - `ChipletGenerator` — Die-level generation with UCIe/BoW links
-  - `InterconnectTopo` — Die-to-die topology (mesh, ring, star)
-  - `ThermalModel` — Per-die thermal estimation
-  - `YieldEstimator` — Multi-die yield modelling
+  - `ChipletTopology` — Die-to-die topology and interposer-link model
+  - `DieThermal` / `PackageThermalReport` — Steady-state and transient thermal analysis
+  - `RoutingTable` / `PartitionAssignment` — Routing and graph-to-die placement
 
 ---
 
@@ -272,7 +273,7 @@ conformity.
 | hypervisor | `tests/test_hypervisor/` | 78 |
 | twinsync | `tests/test_twinsync/` | 72 |
 | spintronic | `tests/test_spintronic/` | 66 |
-| chiplet | `tests/test_chiplet/` | 94 |
+| chiplet | `tests/test_chiplet/` | 172 |
 | memristor | `tests/test_memristor/` | 70 |
 | analog_bridge | `tests/test_analog_bridge/` | 27 |
 | bioware | `tests/test_bioware/` | 121 |

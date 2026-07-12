@@ -4769,227 +4769,6 @@ CompilationResult
 
 ---
 
-## Module `chiplet.chiplet_gen`
-
-### Class `InterposerTech`
-
-### Class `InterposerLink`
-Timing model for a die-to-die link.
-
-- **__post_init__**()
-- **from_tech**(cls, src, dst, tech)
-  - Create link with technology-specific defaults.
-- **latency_cycles**()
-  - Latency in clock cycles at 200 MHz (5 ns period).
-- **fifo_depth_log2**()
-  - Minimum async FIFO depth (log2) to absorb jitter.
-
-### Class `ChipletDie`
-One die in a chiplet package.
-
-- **clock_period_ns**()
-
-### Class `ChipletTopology`
-Directed graph of dies + interposer links.
-
-- **add_die**(die)
-- **add_link**(link)
-- **mesh_2d**(cls, rows, cols, tech)
-  - Create a 2D mesh topology.
-- **ring**(cls, n_dies, tech)
-  - Create a ring topology.
-- **star**(cls, n_dies, tech)
-  - Create a star topology with die 0 as the hub.
-- **get_links_from**(die_id)
-- **get_links_to**(die_id)
-- **get_die**(die_id)
-- **num_dies**()
-
-### Class `RoutingEntry`
-One routing table entry: source neuron → target die + neuron.
-
-
-### Class `RoutingTable`
-Per-die AER routing table for inter-die communication.
-
-- **add_route**(src, dst_die, dst_neuron, weight)
-- **routes_to_die**(target_die)
-- **num_entries**()
-- **target_dies**()
-
-### Class `PackageEnergyReport`
-Energy report for the full chiplet package.
-
-- **total_nj**()
-
-### Class `CongestionReport`
-Link utilisation analysis.
-
-
-### Class `ChipletOutput`
-Generated output files for one chiplet topology.
-
-- **to_dict**()
-
-### Class `ChipletGenerator`
-Generates multi-die routing RTL from a chiplet topology.
-
-- **generate**(topology, routing)
-
-### Class `TimingSimResult`
-Result of interposer timing simulation.
-
-
-### Class `CDCConfig`
-Per-link CDC configuration for heterogeneous clock domains.
-
-- **ratio**()
-- **is_mesochronous**()
-
-### Class `DieThermal`
-Per-die thermal properties: power source, capacity, ambient path.
-
-`power_mw` and `temperature_c` are runtime state; the rest are
-geometry / packaging properties. The dataclass holds the data
-consumed by the package-level conductance-matrix solver below.
-
-- **is_throttled**()
-
-### Class `PackageThermalReport`
-Steady-state + transient thermal report for the full package.
-
-
-### Class `LinkProtection`
-ECC/CRC configuration for a die-to-die link.
-
-- **__post_init__**()
-- **effective_bandwidth_ratio**()
-
-### Class `CreditConfig`
-Per-link credit-based flow control parameters.
-
-- **__post_init__**()
-- **buffer_flits**()
-- **credit_width**()
-
-### Class `StackingType`
-
-### Class `TSVLink`
-Through-silicon via (TSV) link for 3D stacking.
-
-- **latency_ns**()
-- **bandwidth_gbps**()
-
-### Class `PowerDomain`
-Voltage island / power domain for a subset of dies.
-
-- **__post_init__**()
-- **is_gated**()
-- **die_mask**()
-
-### Class `PowerDomainMap`
-Maps dies to power domains for isolation/gating.
-
-- **add_domain**(domain)
-- **domain_for_die**(die_id)
-- **active_dies**()
-- **gated_dies**()
-
-### Class `PartitionAssignment`
-Maps neurons/layers to dies from the hierarchical partitioner.
-
-- **assign**(neuron_id, die_id)
-- **neurons_on_die**(die_id)
-- **to_routing_tables**(connectivity)
-  - Convert partition + connectivity to per-die routing tables.
-
-### Function `compute_decorrelation_seeds(topology)`
-Assign independent LFSR seeds per link for bitstream decorrelation.
-
-Uses golden-ratio hashing to ensure maximal separation between
-LFSR sequences across dies (avoids correlated bitstreams).
-
-### Function `link_energy_pj(link, bits)`
-Estimate total energy (pJ) for transmitting 'bits' over a link.
-
-### Function `estimate_package_energy(topology, bits_per_link)`
-Estimate total communication energy for one inference cycle.
-
-### Function `estimate_congestion(topology, routing_tables, events_per_cycle)`
-Estimate per-link utilisation given routing tables and traffic.
-
-Utilisation = (events × data_width) / (bandwidth × 1e9 × period_ns × 1e-9).
-A link with utilisation > 1.0 is over-saturated.
-
-### Function `find_disjoint_paths(topology, src_die, dst_die, max_paths)`
-Find up to max_paths link-disjoint paths between two dies.
-
-Uses iterative BFS with link exclusion to find alternative routes
-for fault-tolerant routing.
-
-### Function `simulate_timing(topology, src_die, dst_die)`
-BFS shortest-path timing simulation between two dies.
-
-### Function `make_torus(rows, cols, tech)`
-Create a 2D torus topology (mesh with wrap-around edges).
-
-### Function `compute_cdc_configs(topology)`
-Auto-compute per-link CDC configs from die clock frequencies.
-
-### Function `simulate_thermal(topology, power_per_die_mw, ambient_c)`
-Solve the full chiplet thermal network.
-
-Builds a per-die conductance matrix from `topology.links` (using
-per-technology thermal resistance) plus a per-die ambient path.
-The steady-state temperature is the solution to a linear system;
-a transient response can also be requested with implicit-Euler
-time-stepping.
-
-Parameters
-----------
-topology : ChipletTopology
-    Dies + interposer links.
-power_per_die_mw : dict, optional
-    Per-die power dissipation in mW. Defaults to 100 mW per
-    die when missing.
-ambient_c : float
-    Ambient air temperature in °C (default 25).
-die_state : dict, optional
-    Per-die thermal property overrides. When omitted, defaults
-    from `DieThermal` are used (10×10 mm² silicon die, 1.5 K/W
-    junction-to-ambient).
-transient_steps : int
-    If > 0, also compute a transient response of this many
-    steps. The trajectory and time array are placed in the
-    returned report.
-transient_dt_s : float
-    Time step (s) for transient integration. Default 1 ms is
-    appropriate for ~0.08 J/K dies under ~0.1 W loading
-    (thermal time constant ~0.1 s).
-
-### Function `adaptive_route(topology, src_die, dst_die, congestion, congestion_threshold)`
-Congestion-reactive routing: avoid saturated links.
-
-Uses BFS but excludes links with utilisation above the threshold.
-Falls back to shortest path if no uncongested route exists.
-
-### Function `emit_crc32_sv(data_width)`
-Emit IEEE 802.3 CRC-32 feedback logic for link error detection.
-
-### Function `bandwidth_aware_route(topology, src_die, dst_die, required_gbps)`
-Find a path where all links have bandwidth >= required_gbps.
-
-### Function `emit_credit_controller_sv(config, link_name)`
-Emit saturating credit-based flow control for a die-to-die link.
-
-### Function `add_3d_stack(topology, bottom_die, top_die, stacking)`
-Add a vertical (3D) link between stacked dies.
-
-### Function `emit_power_gating_sv(domain)`
-Emit sequenced isolation and switch control for a voltage island.
-
----
-
 ## Module `chiplet.hierarchical_partitioner`
 
 ### Class `HierarchyLevel`
@@ -5130,6 +4909,320 @@ Estimate MPI communication volume.
 
 ### Function `build_partition_report(graph, partitions, seeds, scc_budget)`
 Build a complete partition report.
+
+---
+
+## Module `chiplet.link_protocols`
+
+### Class `CDCConfig`
+Describe asynchronous crossing parameters for one directed link.
+
+- **__post_init__**()
+  - Validate clock, FIFO-depth, and synchronizer-stage boundaries.
+- **ratio**()
+  - Return source-to-destination clock ratio, or one for a zero destination clock.
+- **is_mesochronous**()
+  - Return whether source and destination clocks differ by less than one percent.
+
+### Class `LinkProtection`
+Describe frame-integrity overhead for one die-to-die link.
+
+- **__post_init__**()
+  - Validate the protection mode and derive its frame overhead.
+- **effective_bandwidth_ratio**()
+  - Return payload bits divided by payload plus protection bits.
+
+### Class `CreditConfig`
+Configure receiver-buffer credits for a package link.
+
+- **__post_init__**()
+  - Validate positive credit-count and credit-granularity boundaries.
+- **buffer_flits**()
+  - Return total receiver capacity represented by the credit counter.
+- **credit_width**()
+  - Return counter width sufficient to represent the full buffer.
+
+### Function `compute_cdc_configs(topology)`
+Derive per-link CDC settings from topology die clocks.
+
+### Function `emit_crc32_sv(data_width)`
+Emit an IEEE 802.3 CRC-32 frame checker for ``data_width`` bits.
+
+### Function `emit_credit_controller_sv(config, link_name)`
+Emit a saturating credit controller for ``link_name``.
+
+---
+
+## Module `chiplet.partition`
+
+### Class `PartitionAssignment`
+Store neuron identifiers grouped by their assigned die.
+
+- **assign**(neuron_id, die_id)
+  - Assign ``neuron_id`` to ``die_id``.
+- **neurons_on_die**(die_id)
+  - Return neurons assigned to ``die_id``.
+- **to_routing_tables**(connectivity)
+  - Convert cross-die connectivity into per-source-die routing tables.
+
+---
+
+## Module `chiplet.power`
+
+### Class `PowerDomain`
+Describe a voltage island spanning one or more package dies.
+
+- **__post_init__**()
+  - Validate domain identity, die ownership, and voltage boundaries.
+- **is_gated**()
+  - Return whether the domain is currently marked inactive.
+- **die_mask**()
+  - Return the 64-bit ownership mask used by generated RTL.
+
+### Class `PowerDomainMap`
+Maintain non-overlapping voltage-domain ownership for package dies.
+
+- **add_domain**(domain)
+  - Add a domain after rejecting duplicate die ownership.
+- **domain_for_die**(die_id)
+  - Return the domain owning ``die_id``, or ``None`` when unassigned.
+- **active_dies**()
+  - Return sorted dies belonging to active domains.
+- **gated_dies**()
+  - Return sorted dies belonging to inactive domains.
+
+### Function `emit_power_gating_sv(domain)`
+Emit a sequenced isolation and switch controller for ``domain``.
+
+---
+
+## Module `chiplet.routing`
+
+### Class `RoutingEntry`
+Map one source neuron to a remote die, neuron, and Q8.8 weight.
+
+
+### Class `RoutingTable`
+Store AER routes originating on one die.
+
+- **add_route**(src, dst_die, dst_neuron, weight)
+  - Append one source-to-destination route.
+- **routes_to_die**(target_die)
+  - Return entries whose destination is ``target_die``.
+- **num_entries**()
+  - Return the number of routes in the table.
+- **target_dies**()
+  - Return sorted unique destination die identifiers.
+
+### Class `PackageEnergyReport`
+Record per-link and aggregate communication energy.
+
+- **total_nj**()
+  - Return aggregate energy in nanojoules.
+
+### Class `CongestionReport`
+Record per-link utilisation and the highest-utilisation link.
+
+
+### Class `TimingSimResult`
+Summarise accumulated timing and reliability along one path.
+
+
+### Function `compute_decorrelation_seeds(topology)`
+Assign deterministic non-zero LFSR seeds to directed links.
+
+The golden-ratio sequence spreads adjacent link indices over the 16-bit
+state space while preserving reproducibility.
+
+### Function `link_energy_pj(link, bits)`
+Return energy in picojoules for ``bits`` transmitted over ``link``.
+
+### Function `estimate_package_energy(topology, bits_per_link)`
+Estimate communication energy for uniform traffic on every link.
+
+### Function `estimate_congestion(topology, routing_tables, events_per_cycle)`
+Estimate directed-link utilisation from AER routing tables.
+
+### Function `find_disjoint_paths(topology, src_die, dst_die, max_paths)`
+Find up to ``max_paths`` directed link-disjoint paths.
+
+### Function `simulate_timing(topology, src_die, dst_die)`
+Return the lowest-latency reachable path between two dies.
+
+### Function `adaptive_route(topology, src_die, dst_die, congestion, congestion_threshold)`
+Find a path avoiding links above ``congestion_threshold`` when possible.
+
+### Function `bandwidth_aware_route(topology, src_die, dst_die, required_gbps)`
+Find a path whose every link meets ``required_gbps``.
+
+---
+
+## Module `chiplet.rtl`
+
+### Class `ChipletOutput`
+Contain generated source and constraint artefacts for one topology.
+
+- **to_dict**()
+  - Return generated artefacts keyed by their output filename.
+
+### Class `ChipletGenerator`
+Generate connected multi-die routing RTL from a chiplet topology.
+
+- **generate**(topology, routing)
+  - Generate package RTL and timing constraints.
+
+---
+
+## Module `chiplet.thermal`
+
+### Class `DieThermal`
+Hold thermal properties and runtime state for one die.
+
+Parameters
+----------
+die_id
+    Non-negative package die identifier.
+temperature_c
+    Current junction temperature in degrees Celsius.
+power_mw
+    Dissipated power in milliwatts.
+heat_capacity_j_per_k
+    Positive die heat capacity in joules per kelvin.
+r_to_ambient_k_per_w
+    Positive junction-to-ambient resistance in kelvin per watt.
+r_spread_k_per_w
+    Non-negative within-die spreading resistance in kelvin per watt.
+max_temperature_c
+    Junction-temperature throttle threshold in degrees Celsius.
+
+- **__post_init__**()
+  - Validate the die identity and finite physical thermal properties.
+- **is_throttled**()
+  - Return whether the current temperature meets the throttle threshold.
+
+### Class `PackageThermalReport`
+Contain steady-state, transient, and conductance evidence for a package.
+
+
+### Function `simulate_thermal(topology, power_per_die_mw, ambient_c)`
+Solve the package thermal network.
+
+Parameters
+----------
+topology
+    Dies and interposer links forming the thermal network.
+power_per_die_mw
+    Optional per-die dissipation overrides in milliwatts.
+ambient_c
+    Ambient temperature in degrees Celsius.
+die_state
+    Optional per-die material and runtime-state overrides.
+transient_steps
+    Number of implicit-Euler transient samples after cold start.
+transient_dt_s
+    Positive transient integration step in seconds.
+
+Returns
+-------
+PackageThermalReport
+    Steady-state temperatures and optional transient trajectory.
+
+Raises
+------
+ValueError
+    If the topology is empty or any numerical contract is invalid.
+
+---
+
+## Module `chiplet.topology`
+
+### Class `InterposerTech`
+Supported die-to-die interconnect technology presets.
+
+
+### Class `InterposerLink`
+Describe one directed die-to-die link.
+
+Parameters
+----------
+src_die, dst_die
+    Non-negative source and destination die identifiers.
+technology
+    Interconnect technology used by the link.
+latency_ns, jitter_ns
+    Nominal latency and non-negative timing jitter in nanoseconds.
+bandwidth_gbps
+    Positive link bandwidth in gigabits per second.
+bit_error_rate
+    Per-bit error probability in the closed interval ``&#91;0, 1&#93;``.
+data_width
+    Positive payload width in bits.
+is_bidirectional
+    Whether package metadata treats the physical link as bidirectional.
+thermal_resistance_k_per_w
+    Optional measured bond resistance in kelvin per watt.
+
+- **__post_init__**()
+  - Validate endpoint identities and finite physical link properties.
+- **from_tech**(cls, src, dst, tech)
+  - Construct a link from a technology preset.
+- **latency_cycles**()
+  - Return rounded link latency at the historical 200 MHz reference clock.
+- **fifo_depth_log2**()
+  - Return the minimum asynchronous FIFO depth exponent for link jitter.
+
+### Class `ChipletDie`
+Describe one die and its local AER configuration.
+
+- **__post_init__**()
+  - Validate die identity, clock, seed, and local interface widths.
+- **clock_period_ns**()
+  - Return the die clock period in nanoseconds.
+
+### Class `ChipletTopology`
+Store the directed die and interposer graph for one package.
+
+- **add_die**(die)
+  - Append a die to the topology.
+- **add_link**(link)
+  - Append a directed interposer link to the topology.
+- **mesh_2d**(cls, rows, cols, tech)
+  - Construct a rectangular mesh without wrap-around links.
+- **ring**(cls, n_dies, tech)
+  - Construct a directed ring with one outgoing edge per die.
+- **star**(cls, n_dies, tech)
+  - Construct a bidirectional star with die zero as the hub.
+- **get_links_from**(die_id)
+  - Return all directed links originating at ``die_id``.
+- **get_links_to**(die_id)
+  - Return all directed links terminating at ``die_id``.
+- **get_die**(die_id)
+  - Return the die with ``die_id``, or ``None`` when it is absent.
+- **num_dies**()
+  - Return the number of dies registered in the topology.
+
+### Class `StackingType`
+Supported die-stacking geometries.
+
+
+### Class `TSVLink`
+Describe the physical geometry of a through-silicon-via link.
+
+- **latency_ns**()
+  - Return TSV latency in nanoseconds.
+- **bandwidth_gbps**()
+  - Return aggregate bandwidth at one bit per TSV and 200 MHz.
+
+### Function `make_torus(rows, cols, tech)`
+Construct a rectangular torus with right and downward wrap-around links.
+
+### Function `add_3d_stack(topology, bottom_die, top_die, stacking)`
+Add reciprocal links between vertically associated dies.
+
+Returns
+-------
+InterposerLink
+    The bottom-to-top link. The reciprocal link is also added to ``topology``.
 
 ---
 

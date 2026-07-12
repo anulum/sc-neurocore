@@ -971,7 +971,7 @@
     "python_model_classes": 158,
     "python_model_source_modules": 153,
     "rust_pyo3_model_wrappers": 176,
-    "test_files": 1130
+    "test_files": 1137
   },
   "documentation": {
     "public_pages": [
@@ -2947,9 +2947,16 @@
       "tests/test_chaotic_encoder.py",
       "tests/test_chialvo_map_backends.py",
       "tests/test_chip_compiler.py",
-      "tests/test_chiplet/test_chiplet_gen.py",
+      "tests/test_chiplet/test_chiplet_architecture.py",
       "tests/test_chiplet/test_chiplet_gen_edge_cases.py",
+      "tests/test_chiplet/test_chiplet_link_protocols.py",
+      "tests/test_chiplet/test_chiplet_partition.py",
+      "tests/test_chiplet/test_chiplet_power.py",
       "tests/test_chiplet/test_chiplet_public_api.py",
+      "tests/test_chiplet/test_chiplet_routing.py",
+      "tests/test_chiplet/test_chiplet_rtl.py",
+      "tests/test_chiplet/test_chiplet_thermal.py",
+      "tests/test_chiplet/test_chiplet_topology.py",
       "tests/test_chiplet/test_hierarchical_partitioner_perf.py",
       "tests/test_circuit_primitives.py",
       "tests/test_cli_architecture.py",

@@ -11,15 +11,17 @@
 
 Two suites:
 
-1. **chiplet_gen** — `make_torus(rows, cols)`,
+1. **chiplet control** — `make_torus(rows, cols)`,
    `compute_decorrelation_seeds`, `estimate_package_energy`,
-   `simulate_thermal` at multiple die counts.
+   `simulate_thermal`, and full `ChipletGenerator.generate()` at
+   multiple die counts.
 2. **hierarchical_partitioner** — `HierarchicalPartitioner.partition()`
    on multiple `(num_vertices, num_partitions)` cells.
 
-Median + min over 5 repeats reported per cell.
+Median + minimum over 30 repeats are reported per cell, together with source
+digests, scheduler affinity, and host load.
 
-**Multi-language acceleration policy** (per `feedback_multi_language_accel.md`):
+**Backend policy:**
 
 *chiplet_gen* ops (`make_torus`, `compute_decorrelation_seeds`,
 `estimate_package_energy`, `simulate_thermal`) all run at 3 µs –
@@ -31,12 +33,13 @@ native-language rewrite would at best halve that, often losing
 the gain in marshalling. These ops are therefore documented as
 EXEMPT rather than silently skipped.
 
-*HierarchicalPartitioner.partition* IS compute-heavy (2.6 ms – 25 ms
-post-#65 fix; was 23-963 ms before the O(V²·E) bug was patched).
-Multi-language ports are now meaningful — see follow-up #64 for the
-Rust + Julia + Go + Mojo backends. The current bench reports
-`PENDING-#64` for those backends to flag the open work without
-silently skipping.
+*HierarchicalPartitioner.partition* is compute-heavy. Its KL-refinement
+backends are measured separately by ``bench_kl_refine.py``.
+
+Historical Rust, Julia, Go, and Mojo files named for ``chiplet_gen`` were
+non-executable pasted-source or empty-return scaffolds. They are absent rather
+than being reported as acceleration. The backend block below describes the
+measured Python-only exemption for these package-control operations.
 
 Usage:
     python benchmarks/bench_chiplet.py
@@ -46,16 +49,22 @@ Usage:
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
+import os
 import platform
 import sys
 import time
+from collections.abc import Callable
 from pathlib import Path
+from typing import TypedDict
 
 import numpy as np
+import sc_neurocore.chiplet as chiplet_package
 
 from sc_neurocore.chiplet import (
     ChipletDie,
+    ChipletGenerator,
     ChipletTopology,
     CorrelationAwareGraph,
     CorrelationEdge,
@@ -69,10 +78,37 @@ from sc_neurocore.chiplet import (
 )
 
 
-N_REPEATS = 5
+N_REPEATS = 30
 
 
-def _bench(fn, repeats: int = N_REPEATS) -> tuple[float, float]:
+class BackendStatus(TypedDict):
+    """Availability and exemption evidence for one measured backend."""
+
+    available: bool
+    used: bool
+    exemption: str | None
+
+
+def _sha256(path: Path) -> str:
+    """Return the SHA-256 digest of ``path``."""
+    return hashlib.sha256(path.read_bytes()).hexdigest()
+
+
+def _source_hashes() -> dict[str, str]:
+    """Bind results to the imported chiplet source files."""
+    package_root = Path(chiplet_package.__file__).resolve().parent
+    return {path.name: _sha256(path) for path in sorted(package_root.glob("*.py"))}
+
+
+def _cpu_affinity() -> list[int] | None:
+    """Return the Linux scheduler affinity when the platform exposes it."""
+    try:
+        return sorted(os.sched_getaffinity(0))
+    except AttributeError:
+        return None
+
+
+def _bench(fn: Callable[[], object], repeats: int = N_REPEATS) -> tuple[float, float]:
     """Return (median_ms, min_ms) over `repeats` calls."""
     times_ms: list[float] = []
     fn()  # warm-up
@@ -147,6 +183,13 @@ def bench_simulate_thermal(n_dies: int) -> tuple[float, float]:
     return _bench(lambda: simulate_thermal(topo, power_per_die))
 
 
+def bench_generate(n_dies: int) -> tuple[float, float]:
+    """Measure connected RTL and constraint generation for ``n_dies``."""
+    topology = _build_topology(n_dies)
+    generator = ChipletGenerator()
+    return _bench(lambda: generator.generate(topology))
+
+
 # ─── hierarchical_partitioner suite ───────────────────────────────────
 
 
@@ -168,6 +211,8 @@ def main(argv: list[str]) -> int:
     print(f"# Repeats per cell: {N_REPEATS}")
     print(f"# Python: {platform.python_version()}, NumPy: {np.__version__}")
     print(f"# platform: {platform.platform()}")
+    print(f"# load average: {os.getloadavg()}")
+    print(f"# CPU affinity: {_cpu_affinity()}")
     print()
 
     print("## chiplet_gen")
@@ -209,12 +254,15 @@ def main(argv: list[str]) -> int:
             print(f"{label:<40}  (skipped: {str(exc)[:30]})")
             rows.append({"suite": "chiplet_gen", "op": label, "skipped": str(exc)})
 
+    for n_dies in [2, 8, 32]:
+        med, mn = bench_generate(n_dies)
+        label = f"ChipletGenerator.generate (n_dies={n_dies})"
+        print(f"{label:<40}  {med:>12.3f}  {mn:>12.3f}")
+        rows.append({"suite": "chiplet_gen", "op": label, "median_ms": med, "min_ms": mn})
+
     print()
     print("## hierarchical_partitioner")
-    print("# Two perf fixes applied (#65 edge cache + #64-prep")
-    print("# vector cost): V=200 now ~13 ms (was ~700 ms), V=1000")
-    print("# ~99 ms (was many minutes). #64 multi-lang port now")
-    print("# marginal (1-3 µs FFI vs 99 ms compute) — see backends.")
+    print("# KL-refinement backends are measured by bench_kl_refine.py.")
     print(f"{'operation':<40}  {'median ms':>12}  {'min ms':>12}")
     print(f"{'-' * 40}  {'-' * 12}  {'-' * 12}")
     for n_v, n_p in [(50, 2), (100, 4), (200, 4)]:
@@ -228,60 +276,56 @@ def main(argv: list[str]) -> int:
             print(f"{label:<40}  (skipped: {str(exc)[:30]})")
             rows.append({"suite": "partitioner", "op": label, "skipped": str(exc)})
 
-    # Per-op multi-language acceleration status. Sub-ms ops are
-    # EXEMPT (FFI overhead ≥ compute time); partition is
-    # BLOCKED-ON-#65 until the O(V²·E) bug in _spectral_bisect is
-    # fixed in Python, because a Rust port would inherit the same
-    # quadratic scan and the speedup claim would be dishonest.
-    backends_status = {
+    # Backend status for the chiplet package-control operations above.
+    # The partitioner's real multi-language KL kernels are measured by
+    # benchmarks/bench_kl_refine.py and are not represented by this block.
+    backends_status: dict[str, BackendStatus] = {
         "python": {
             "available": True,
             "used": True,
             "exemption": None,
         },
         "rust": {
-            "available": True,
+            "available": False,
             "used": False,
             "exemption": (
-                "chiplet_gen ops are 3-700 µs; PyO3 FFI overhead "
-                "(~1-5 µs) is 10-100% of compute → EXEMPT. "
-                "HierarchicalPartitioner.partition was BLOCKED on the "
-                "O(V²·E) bug; #65 is now fixed (partition runs in "
-                "2.6-25 ms). Multi-lang ports are tracked under #64."
+                "No installed chiplet-control Rust kernel: numerical analysis "
+                "operations are sub-ms, while RTL generation is text and graph "
+                "orchestration rather than a numerical kernel. The former "
+                "rust/safety/chiplet_gen.rs file was nonfunctional scaffold."
             ),
         },
         "julia": {
-            "available": True,
+            "available": False,
             "used": False,
             "exemption": (
-                "Same rationale as Rust. Julia would additionally pay "
-                "juliacall first-call JIT (~5 s) for ops that finish "
-                "in <1 ms steady state."
+                "No installed chiplet-control Julia kernel: numerical analysis "
+                "is sub-ms and juliacall first-call JIT is about 5 s; RTL emission "
+                "is textual orchestration. The former chiplet_gen.jl file was not valid Julia."
             ),
         },
         "go": {
-            "available": True,
+            "available": False,
             "used": False,
             "exemption": (
-                "Same rationale as Rust. Go cgo handover + ctypes marshalling is ~1-3 µs per call."
+                "No installed chiplet-control Go kernel: the numerical operations "
+                "are sub-ms and RTL emission is textual orchestration. The former "
+                "service contained empty functions."
             ),
         },
         "mojo": {
-            "available": True,
+            "available": False,
             "used": False,
             "exemption": (
-                "Mojo 0.26 `mojo build --emit shared-lib` + ctypes FFI "
-                "works (proven on LGSSM Kalman, #69 closed). chiplet_gen "
-                "ops still EXEMPT for the same FFI-overhead reason as "
-                "Rust/Julia/Go (1-3 µs FFI vs 3-700 µs compute is "
-                "10-100% overhead). Partition multi-lang port now "
-                "tracked under #64 (O(V²·E) bug fixed in #65)."
+                "No installed chiplet-control Mojo kernel: the numerical operations "
+                "are sub-ms and RTL emission is textual orchestration. The former "
+                "kernel stored Python lines as strings and returned zero."
             ),
         },
     }
 
     print()
-    print("# Multi-language backend status (per feedback_multi_language_accel.md)")
+    print("# Chiplet-control backend status")
     for name, info in backends_status.items():
         tag = "USED" if info["used"] else "EXEMPT"
         print(f"  {name:<8} {tag:<8}  {info['exemption'] or '-'}")
@@ -293,6 +337,10 @@ def main(argv: list[str]) -> int:
             "python": platform.python_version(),
             "numpy": np.__version__,
             "n_repeats": N_REPEATS,
+            "load_average": os.getloadavg(),
+            "cpu_affinity": _cpu_affinity(),
+            "benchmark_sha256": _sha256(Path(__file__)),
+            "source_sha256": _source_hashes(),
             "rows": rows,
             "backends": backends_status,
         }

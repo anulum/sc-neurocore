@@ -6,14 +6,7 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore — Tests for sc_neurocore.chiplet package public API
 
-"""Tests for the `sc_neurocore.chiplet` package re-exports.
-
-Antigravity authored `chiplet_gen.py` (~41 KB) and
-`hierarchical_partitioner.py` (~28 KB) but did not wire `__init__.py`
-to re-export the 57 public symbols. Arcane Sapience wired the
-re-exports in this batch (audit B1 pkg 3 of #57). This test pins
-the contract.
-"""
+"""Tests for the stable ``sc_neurocore.chiplet`` package surface."""
 
 from __future__ import annotations
 
@@ -105,6 +98,12 @@ def test_chiplet_gen_symbols_identity() -> None:
     """Top-level symbol IS the inner-module symbol (no shadow / no rebind)."""
     for sym in CHIPLET_GEN_SYMBOLS:
         assert getattr(ch, sym) is getattr(cg, sym)
+
+
+def test_chiplet_gen_qualified_names_remain_stable() -> None:
+    """Moved symbols retain historical pickle and introspection identities."""
+    for symbol in CHIPLET_GEN_SYMBOLS:
+        assert getattr(cg, symbol).__module__ == "sc_neurocore.chiplet.chiplet_gen"
 
 
 def test_hier_symbols_importable() -> None:

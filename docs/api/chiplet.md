@@ -1,495 +1,259 @@
-# `sc_neurocore.chiplet` — Multi-die chiplet generator
+# `sc_neurocore.chiplet` — Multi-die package generation
 
-## 1. Scope
+## Scope
 
-The `sc_neurocore.chiplet` package generates the SystemVerilog
-substrate, routing tables, and physical-design constraints for
-**multi-die SC-NeuroCore deployments** — the architectural form
-factor for ASIC + FPGA + interposer co-packages where a single
-silicon die is too small to host the full network.
+`sc_neurocore.chiplet` maps partitioned neuron networks onto multiple dies. It
+models package topology, derives AER routes, analyses communication and thermal
+constraints, and emits connected SystemVerilog plus XDC timing constraints.
+`sc_neurocore.chiplet.hierarchical_partitioner` supplies the upstream graph
+partition.
 
-It targets two complementary problems:
+The package is research-tier. Generated RTL is an input to downstream FPGA or
+ASIC verification and physical-design tools; it is not a foundry sign-off
+artefact.
 
-1. **Chiplet generation** (`chiplet_gen`) — given a target die
-   count, technology (UCIe / BoW / EMIB / CoWoS / Organic /
-   Custom), and topology (mesh / torus / star / ring / 3D
-   stacked), emit:
-   - per-die SystemVerilog wrappers
-   - die-to-die bridge IP (CDC, credit, CRC32 protection)
-   - top-level + Vivado XDC constraints
-   - link-energy + thermal + congestion + timing reports
-2. **Hierarchical partitioning** (`hierarchical_partitioner`) —
-   given a network graph (CSR + correlation edges), divide
-   neurons across the dies so that (a) inter-die traffic is
-   minimised, (b) per-die load is balanced, (c) ghost-cell halo
-   exchange is bounded, (d) LFSR-seed allocation prevents
-   correlation-induced bias.
+## Responsibility modules
 
-The package is the bridge between the SC-NeuroCore network
-description (`sc_neurocore.network`) and the physical-design
-back-end (`sc_neurocore.asic_flow` for tape-out,
-`sc_neurocore.uvm_gen` for verification).
+The historical `sc_neurocore.chiplet.chiplet_gen` import path remains a
+compatibility facade. Its 36 public objects are implemented by focused,
+acyclic modules:
 
-## 2. Public API surface
+| Module | Responsibility |
+|---|---|
+| `topology` | Dies, interposer links, mesh/ring/star/torus construction, and 3D stacking |
+| `routing` | AER routes, link-disjoint paths, timing, congestion, decorrelation seeds, and energy |
+| `thermal` | Steady-state and implicit-Euler transient package thermal solving |
+| `rtl` | Die wrappers, CDC bridges, routing tables, package top, and XDC emission |
+| `link_protocols` | Clock-domain configuration, CRC-32, and credit flow control |
+| `power` | Voltage-island ownership and sequenced power-gating RTL |
+| `partition` | Neuron-to-die assignments translated into routing tables |
 
-The package re-exports 57 symbols from two modules:
-
-- **`chiplet_gen`** — 36 symbols: 3 enums + 15 dataclasses +
-  18 generators / analysers / SV emitters.
-- **`hierarchical_partitioner`** — 21 symbols: 1 enum + 7
-  dataclasses + 13 orchestrators / metric functions.
-
-Top-level imports:
+The package root continues to re-export 57 objects: 36 from the historical
+chiplet-generator surface and 21 from `hierarchical_partitioner`.
 
 ```python
 from sc_neurocore.chiplet import (
-    InterposerTech, InterposerLink, ChipletDie, ChipletTopology,
-    ChipletGenerator, ChipletOutput, RoutingTable,
-    HierarchicalPartitioner, CSRGraph, CorrelationAwareGraph,
-    GhostCellManager, LFSRSeedAllocator, RankMapper,
-    estimate_package_energy, simulate_thermal, estimate_congestion,
-    make_torus, add_3d_stack, compute_decorrelation_seeds,
-    # ... 38 more — see `__all__` for the full list
+    ChipletGenerator,
+    ChipletTopology,
+    HierarchicalPartitioner,
+    InterposerTech,
+    RoutingTable,
+    estimate_congestion,
+    estimate_package_energy,
+    make_torus,
+    simulate_thermal,
 )
 ```
 
-`__tier__ = "research"` — appropriate for research-tier
-deployments where the user accepts that the generated artefacts
-are inputs to downstream physical-design tools (Vivado, Innovus,
-Genus) rather than tape-out-ready bitstreams on their own.
+Historical imports and pickle-qualified names remain valid:
 
-## 3. Interposer technology presets
+```python
+from sc_neurocore.chiplet.chiplet_gen import ChipletTopology
 
-`InterposerTech` enum has 6 members; `InterposerLink.from_tech(...)`
-constructs a link with technology-specific defaults:
+assert ChipletTopology.__module__ == "sc_neurocore.chiplet.chiplet_gen"
+```
 
-| Tech | Latency (ns) | Bandwidth (Gb/s) | BER (per bit) | Notes |
-|---|---:|---:|---:|---|
-| `UCIE` | 2.0 | 32.0 | 1e-15 | Universal Chiplet Interconnect Express, AMD/Intel/Arm consortium standard |
-| `BOW` | 1.5 | 16.0 | 1e-12 | Bunch-of-Wires, Open Compute Project standard |
-| `EMIB` | 1.0 | 64.0 | 1e-15 | Intel Embedded Multi-die Interconnect Bridge (silicon bridge) |
-| `COWOS` | 0.5 | 128.0 | 1e-16 | TSMC Chip-on-Wafer-on-Substrate (silicon interposer) |
-| `ORGANIC` | 5.0 | 8.0 | 1e-12 | Organic substrate (BGA-style routing, lowest cost, slowest) |
-| `CUSTOM` | 2.0 | 32.0 | 1e-15 | User-defined timing; pass `thermal_resistance_k_per_w` for custom thermal coupling |
+## Topology and interposer models
 
-Latency ordering: CoWoS (0.5 ns) < EMIB (1.0) < BoW (1.5) <
-UCIe = Custom (2.0) < Organic (5.0). Bandwidth is roughly in
-inverse order (highest for the most expensive interposer).
+`InterposerLink.from_tech(source, destination, technology)` applies the
+following default link contract:
 
-3D stacking (`StackingType.TSV_3D`, `HYBRID_BONDING`,
-`COPLANAR`) is handled by `add_3d_stack(...)` which constructs
-both forward and reverse `InterposerLink` records (3D links are
-inherently bidirectional).
+| Technology | Latency (ns) | Jitter (ns) | Bandwidth (Gb/s) | BER |
+|---|---:|---:|---:|---:|
+| UCIe | 2.0 | 0.05 | 32 | 1e-15 |
+| BoW | 1.5 | 0.03 | 16 | 1e-12 |
+| EMIB | 1.0 | 0.02 | 64 | 1e-15 |
+| CoWoS | 0.5 | 0.01 | 128 | 1e-16 |
+| Organic | 5.0 | 0.5 | 8 | 1e-12 |
+| Custom | 2.0 | 0.1 | 32 | 1e-15 |
 
-## 4. Routing model
+Link identifiers must be non-negative. Latency and jitter must be finite and
+non-negative; bandwidth and data width must be positive; BER must be in
+`[0, 1]`. A measured custom thermal resistance may be supplied in K/W and must
+be finite and positive.
 
-`compute_decorrelation_seeds(topology)` allocates a unique LFSR
-seed per inter-die link to prevent correlated-noise injection
-across the boundary. The function uses the **golden ratio
-(φ⁻¹ ≈ 0.6180)** as a low-discrepancy hash modulo 65 535 — this
-guarantees that the seeds form a quasi-uniform distribution over
-the 16-bit space even when the link count is small, while
-remaining deterministic.
+`ChipletTopology.mesh_2d`, `.ring`, `.star`, and `make_torus` construct
+deterministic layouts with non-zero per-die LFSR seeds. `add_3d_stack` adds
+reciprocal links for TSV, hybrid-bonded, or coplanar associations.
 
-The return type is `Dict[Tuple[int, int], int]` — the key is the
-`(src_die, dst_die)` tuple. (This was a `mypy`-found bug in
-Antigravity's draft: the signature said `Dict[int, int]` but the
-implementation already used tuple keys; the consumer at
-`ChipletGenerator.emit()` line 453 looked up the tuple key
-correctly. Fixed by Arcane Sapience in this batch.)
+## Routing and package analysis
 
-## 5. Energy + thermal + congestion analysis
+`RoutingTable` maps a source neuron to a destination die, destination neuron,
+and Q8.8 weight. `PartitionAssignment.to_routing_tables` omits local and
+unmapped connections and creates tables only for source dies with cross-die
+traffic.
 
-Per-link energy is computed by `link_energy_pj(link, bits)`
-using a per-technology `_ENERGY_PJ_PER_BIT` lookup table
-(values from `chiplet_gen.py` lines 262–269):
+`compute_decorrelation_seeds` assigns each directed link a deterministic
+non-zero 16-bit seed using a golden-ratio sequence. `find_disjoint_paths`,
+`adaptive_route`, and `bandwidth_aware_route` operate on the same directed
+topology graph.
 
-| Tech | pJ / bit |
+Communication energy uses the following package-model coefficients:
+
+| Technology | Energy (pJ/bit) |
 |---|---:|
-| UCIE | 0.5 |
+| UCIe | 0.5 |
 | BoW | 0.3 |
 | EMIB | 0.2 |
 | CoWoS | 0.1 |
 | Organic | 2.0 |
 | Custom | 0.5 |
 
-`estimate_package_energy(topology, bits_per_link=256)` applies
-this table to a single uniform `bits_per_link` count across all
-links and aggregates into a `PackageEnergyReport` (per-link
-breakdown, package total in pJ + nJ). The function does **not**
-take a per-link traffic matrix — earlier drafts of this page
-incorrectly described that.
+`estimate_package_energy(topology, bits_per_link)` applies uniform traffic to
+each directed link. `estimate_congestion` converts routed events at the
+historical 200 MHz reference clock into capacity utilisation. Negative traffic
+or event-rate inputs are rejected.
 
-`simulate_thermal(topology, power_per_die_mw=None,
-ambient_c=25.0, *, die_state=None, transient_steps=0,
-transient_dt_s=1e-3)` solves a HotSpot-style package thermal
-network. The solver builds a conductance matrix from die-to-ambient
-paths and interposer bonds, solves the steady-state linear system,
-and can also compute an implicit-Euler transient trajectory.
+## Thermal model
 
-Interposer thermal coupling uses technology defaults from
-`InterposerTech`; for `CUSTOM` or package-characterised links, set
-`InterposerLink(..., thermal_resistance_k_per_w=...)`. The value must
-be strictly positive and overrides the technology default in the
-conductance matrix. `die_state` can override die area, heat capacity,
-spreading resistance, ambient resistance, and maximum temperature.
+`simulate_thermal` builds a symmetric inter-die conductance matrix and a
+per-die ambient path. The steady state solves
 
-The returned `PackageThermalReport` includes per-die steady-state
-temperatures, package maximum, throttled dies, the off-diagonal
-conductance matrix, and optional transient temperatures/timestamps.
+\[
+(D-G)T=P+g_{amb}T_{amb},
+\]
 
-`estimate_congestion(topology, routing)` returns a
-`CongestionReport` describing per-link utilisation under the
-specified routing — useful for finding bottleneck links before
-silicon commitment.
+where `G` is the off-diagonal bond conductance and `D` contains row sums plus
+ambient conductance. Optional transients use implicit Euler:
 
-## 6. Hierarchical partitioner
+\[
+(C/\Delta t + D-G)T_{k+1}=C/\Delta t\,T_k + P + g_{amb}T_{amb}.
+\]
 
-`HierarchicalPartitioner(num_partitions=N)` divides a `CSRGraph`
-(compressed-sparse-row neuron connectivity) across N dies by
-recursive bisection. The objective is multi-criteria:
+The returned `PackageThermalReport` contains steady-state temperatures,
+throttled die identifiers, the exact conductance matrix, and optional transient
+time and temperature arrays. Empty topologies, non-finite values, negative
+power, non-positive time steps, duplicate die identifiers, and invalid material
+properties fail before solving.
 
-1. **Edge cut** — minimise inter-die communication
-   (`calculate_edge_cut`).
-2. **Load balance** — keep `vertex_count[i] / mean(vertex_count)`
-   within `imbalance_threshold` (`calculate_imbalance_ratio`).
-3. **Boundary stochastic correlation coefficient (SCC)** — per
-   `feedback_multi_language_accel.md`-style decorrelation, the
-   boundary's mean SCC should be below a configurable threshold
-   (`calculate_mean_boundary_scc`).
+## Generated RTL
 
-`MigrationRecommendation` captures a proposed `(vertex,
-src_partition, dst_partition, gain)` quad emitted when a
-partition is overloaded; consumers can apply or reject each
-recommendation.
+`ChipletGenerator.generate(topology, routing)` emits:
 
-`GhostCellManager` orchestrates halo-exchange — the per-rank
-overlap region used by MPI-distributed simulation
-(`sc_neurocore.network.MPIRunner`) — by tracking which neurons
-are owned by which rank and which need to be mirrored.
+- one die wrapper per die, including the local AER router and LFSR;
+- one asynchronous FIFO, latency pipe, and decorrelator per directed link;
+- optional per-die AER routing tables;
+- a package top that connects every die and bridge AXI-Stream port;
+- XDC clocks and link-delay constraints.
 
-`LFSRSeedAllocator` allocates one LFSR seed per partition such
-that no two partitions share a seed, preventing correlated
-noise across the partition boundary.
+`emit_crc32_sv` emits IEEE 802.3 normal and reflected CRC-32 feedback logic.
+`emit_credit_controller_sv` emits a saturating receiver-credit controller.
+`emit_power_gating_sv` isolates a voltage island before switch-off and waits
+four cycles after restoration before de-isolating it.
 
-`RankMapper` maps logical partition IDs onto MPI rank IDs,
-respecting NUMA topology hints when supplied.
+The modularisation preserves generated bytes for the canonical three-die EMIB
+ring, including die wrappers, bridges, routing table, package top, XDC, CRC,
+credit, and power-controller outputs.
 
-## 7. SystemVerilog emitters
+## Hierarchical partitioner
 
-The package emits SystemVerilog source files that are compiled
-by downstream EDA tools (Vivado for FPGA, Innovus for ASIC):
+`HierarchicalPartitioner` recursively bisects a correlation-aware CSR graph,
+then applies KL refinement. Its objective combines edge cut, load balance, and
+boundary stochastic correlation. Ghost-cell, boundary-synchronisation, LFSR
+seed-allocation, migration, and MPI-rank mapping objects are exposed through
+the same package root.
 
-- `emit_crc32_sv(data_width)` — IEEE 802.3 CRC32 link checker with
-  reflected-input support, frame reset, and expected-frame-CRC comparison
-- `emit_credit_controller_sv(config, link_name)` — credit-based
-  flow control to prevent buffer overflow at the receiver
-- `emit_power_gating_sv(domain)` — fine-grained power-gating
-  state machine for each `PowerDomain`
+The KL refinement has real Rust, Julia, Go, Mojo, and Python implementations
+behind a shared CSR-flat ABI. `benchmarks/bench_kl_refine.py` is the applicable
+cross-language benchmark; this chiplet-control refactor does not change those
+kernels.
 
-These are pure string emitters (template substitution); the
-generated code is consumed by `sc_neurocore.asic_flow` /
-`sc_neurocore.uvm_gen` for further synthesis + verification.
+## Pipeline wiring
 
-## 8. Pipeline wiring
+1. A network graph is partitioned across target dies.
+2. `PartitionAssignment` derives cross-die routing tables.
+3. `ChipletGenerator` emits connected RTL and constraints.
+4. Timing, energy, congestion, and thermal functions produce package evidence.
+5. Generated artefacts feed `sc_neurocore.asic_flow` and
+   `sc_neurocore.uvm_gen`.
 
-`sc_neurocore.chiplet` sits **between** the network description
-and the physical-design back-end:
+## Backend truth
 
-1. The user defines a network (`sc_neurocore.network.Network`).
-2. `HierarchicalPartitioner` divides the neurons across N dies.
-3. `ChipletGenerator(topology=..., routing=...)` emits the
-   per-die SystemVerilog + bridges + top-level + XDC.
-4. `simulate_thermal` + `estimate_package_energy` +
-   `estimate_congestion` produce signoff reports.
-5. The output (`ChipletOutput`) is fed to
-   `sc_neurocore.asic_flow` for tape-out or to
-   `sc_neurocore.uvm_gen` for verification testbench
-   generation.
+The chiplet-control operations have no installed non-Python compute backend.
+Historical files named for Rust, Julia, Go, and Mojo were non-executable
+scaffolds and are absent. This is distinct from the real multi-language KL
+refinement used by `hierarchical_partitioner`.
 
-The emitted `sc_chiplet_top` now declares and connects every generated
-AXI-Stream link between die wrappers and bridge modules. Per-die wrappers also
-drive outgoing stream payload/valid signals from their local AER router output
-and assert incoming ready, so generated port lists are connected rather than
-left as integration points.
+| Chiplet-control backend | Installed | Reason |
+|---|:---:|---|
+| Python | yes | Authoritative package-control and analysis path |
+| Rust | no | Numerical operations are sub-ms; RTL generation is textual graph orchestration |
+| Julia | no | Same boundary; first-call JIT also exceeds the numerical operation budget |
+| Go | no | Same boundary; the former service contained empty functions |
+| Mojo | no | Same boundary; the former kernel stored source text and returned zero |
 
-**Acceleration paths.** Two distinct compute profiles in this
-package:
+`benchmarks/results/bench_chiplet.json` records these backends as unavailable
+and exempt, rather than claiming that scaffold files are acceleration.
 
-- `chiplet_gen.py` — 4 hot ops (`make_torus`,
-  `compute_decorrelation_seeds`, `estimate_package_energy`,
-  `simulate_thermal`). Measured wall time is **3 µs – 700 µs per
-  call** (see §9). FFI dispatch overhead (1-5 µs for Rust PyO3,
-  ~0.5-10 µs for Julia juliacall, 1-3 µs for Go cgo+ctypes,
-  1-3 µs for Mojo `--emit shared-lib` + ctypes) is
-  **10-100 % of compute time** on
-  these sub-ms kernels — a native-language rewrite would at
-  best halve that, often losing the gain in marshalling.
-  These ops are therefore documented as **EXEMPT** from the
-  multi-language acceleration rule per
-  `feedback_multi_language_accel.md` (not silently skipped —
-  the bench JSON's `backends` block records the exemption
-  rationale per backend).
-- `hierarchical_partitioner.py` — `partition()` is a real
-  compute kernel (recursive spectral bisection + KL refinement).
-  Pre-#65 it was O(V²·E) (~700 ms for V=200); the #65 fix now
-  caches edge lookups in `CorrelationAwareGraph` (`(min, max) →
-  edge` dict, O(1) lookup) and hoists `set(vertices)` out of
-  the inner loop in `_spectral_bisect`. Post-fix the partition
-  runs in 2.6 ms (V=50) → 25 ms (V=200), a 22-29× speedup with
-  identical canonical output (regression test:
-  `test_hierarchical_partitioner_perf.py`). Multi-language
-  Rust/Julia/Go/Mojo ports of the now-fast algorithm are
-  tracked under follow-up #64.
+## Performance evidence
 
-## 9. Pure-Python performance
-
-Reproducible via the committed benchmark:
+Reproduce the committed Python measurement with:
 
 ```bash
-python benchmarks/bench_chiplet.py \
-    --json benchmarks/results/bench_chiplet.json
+PYTHONPATH=src taskset -c 10 .venv/bin/python benchmarks/bench_chiplet.py \
+  --json benchmarks/results/bench_chiplet.json
 ```
 
-5 repeats per cell, median + min reported. Hardware: Linux 6.17
-x86_64, NumPy 2.2.0, Python 3.12.3. Captured run in
-`benchmarks/results/bench_chiplet.json`.
+The committed run used Python 3.12.3, NumPy 2.2.6, Linux 6.17.0-35,
+30 repeats per cell, and scheduler affinity `[10]`. One-minute load was 17.65,
+so the numbers are diagnostic and are not isolated-core throughput claims.
+The JSON includes the runner hash and every imported chiplet source hash.
 
-### chiplet_gen
+| Operation | Size | Median (ms) | Minimum (ms) |
+|---|---:|---:|---:|
+| `make_torus` | 2×2 | 0.037 | 0.030 |
+| `make_torus` | 4×4 | 0.103 | 0.085 |
+| `make_torus` | 8×8 | 0.516 | 0.331 |
+| `compute_decorrelation_seeds` | 16 links | 0.008 | 0.006 |
+| `compute_decorrelation_seeds` | 64 links | 0.039 | 0.026 |
+| `compute_decorrelation_seeds` | 256 links | 0.134 | 0.083 |
+| `estimate_package_energy` | 4 dies | 0.003 | 0.003 |
+| `estimate_package_energy` | 16 dies | 0.012 | 0.011 |
+| `estimate_package_energy` | 64 dies | 0.046 | 0.045 |
+| `simulate_thermal` | 4 dies | 0.064 | 0.061 |
+| `simulate_thermal` | 16 dies | 0.134 | 0.109 |
+| `simulate_thermal` | 64 dies | 0.502 | 0.347 |
+| `ChipletGenerator.generate` | 2 dies | 0.427 | 0.243 |
+| `ChipletGenerator.generate` | 8 dies | 1.906 | 1.284 |
+| `ChipletGenerator.generate` | 32 dies | 8.219 | 5.711 |
+| `HierarchicalPartitioner.partition` | V=50, P=2 | 3.131 | 1.824 |
+| `HierarchicalPartitioner.partition` | V=100, P=4 | 6.697 | 3.703 |
+| `HierarchicalPartitioner.partition` | V=200, P=4 | 13.116 | 5.385 |
 
-| Operation | Problem size | Median | Min |
-|---|---|---:|---:|
-| `make_torus(rows, cols)` | 2×2 (4 dies) | 0.035 ms | 0.032 ms |
-| `make_torus(rows, cols)` | 4×4 (16 dies) | 0.146 ms | 0.143 ms |
-| `make_torus(rows, cols)` | 8×8 (64 dies) | 0.669 ms | 0.509 ms |
-| `compute_decorrelation_seeds` | 16 links | 0.010 ms | 0.005 ms |
-| `compute_decorrelation_seeds` | 64 links | 0.019 ms | 0.018 ms |
-| `compute_decorrelation_seeds` | 256 links | 0.083 ms | 0.058 ms |
-| `estimate_package_energy(bits=1M)` | 4 dies | 0.003 ms | 0.002 ms |
-| `estimate_package_energy(bits=1M)` | 16 dies | 0.009 ms | 0.007 ms |
-| `estimate_package_energy(bits=1M)` | 64 dies | 0.030 ms | 0.025 ms |
-| `simulate_thermal` | 4 dies | 0.013 ms | 0.010 ms |
-| `simulate_thermal` | 16 dies | 0.019 ms | 0.016 ms |
-| `simulate_thermal` | 64 dies | 0.079 ms | 0.066 ms |
+A same-process, alternating-order comparison against the pre-refactor source
+showed topology construction 26–33% faster, seed and energy operations within
+approximately ±10%, full RTL generation within −7% to +7%, and thermal solving
+22–38% slower because each die, power input, and solver boundary now validates
+finite physical values. The comparison was pinned but not exclusive and ran
+under high host load; it supports regression diagnosis, not a performance
+promotion claim.
 
-`ChipletGenerator.emit()` end-to-end is **not yet benchmarked**
-— follow-up #61 tracks adding it (depends on knowing the right
-`ChipletOutput` consumer to drive emit).
+## Verification
 
-#### Multi-language backend status (chiplet_gen)
+The focused chiplet cohort contains 172 tests and exercises package imports,
+historical identities, pickling, topology validation, route selection, thermal
+physics, byte-stable RTL generation, Icarus parsing and simulation, power-state
+timing, and the hierarchical partitioner boundary. The nine refactored
+production files cover 680 statements and 202 branches at 100%, with no misses
+or partial branches. Strict MyPy and Ruff cover the affected source, tests, and
+benchmark runner.
 
-Per the bench JSON's `backends` block. All 4 non-Python backends
-are documented EXEMPT with explicit reason:
+## Limitations
 
-| Backend | Status | Rationale |
-|---|---|---|
-| python | USED | baseline (ops already sub-ms via pure-Python control flow + dict ops) |
-| rust | EXEMPT | PyO3 FFI overhead ~1-5 µs is 10-100 % of 3-700 µs compute time |
-| julia | EXEMPT | juliacall first-call JIT ~5 s dwarfs the per-call <1 ms budget |
-| go | EXEMPT | cgo + ctypes marshalling ~1-3 µs is 10-100 % of compute |
-| mojo | EXEMPT | Mojo 0.26 `mojo build --emit shared-lib` + ctypes proven (closes #69 for LGSSM); for chiplet_gen the ~1-3 µs ctypes FFI is still 10-100 % of 3-700 µs compute, same exemption as Rust |
+- The package remains research-tier; physical PPA and foundry sign-off happen
+  in downstream flows.
+- Chiplet-control functions are Python-only by measured architectural choice.
+- Benchmark timings are host-load-sensitive and the committed run was not
+  exclusive.
+- `tests/test_debug/test_hierarchical_partitioner.py` remains historically
+  located outside `tests/test_chiplet`; moving it is separate test-layout work.
 
-### hierarchical_partitioner
+## References
 
-| Operation | Problem size | Median | Min |
-|---|---|---:|---:|
-| `HierarchicalPartitioner.partition()` | V=50, P=2 | 3.1 ms | 3.1 ms |
-| `HierarchicalPartitioner.partition()` | V=100, P=4 | 10.8 ms | 7.2 ms |
-| `HierarchicalPartitioner.partition()` | V=200, P=4 | 12.7 ms | 10.2 ms |
-| `HierarchicalPartitioner.partition()` | V=1000, P=4 | ~99 ms | — |
-
-#### KL refine multi-language backends
-
-The KL refinement step (the post-#65 hot path) is wired through
-`HierarchicalPartitioner(refine_backend="auto"|"rust"|"julia"|
-"go"|"mojo"|"python")`. All 4 native backends share the same
-CSR-flat ABI (offsets, neighbours, scc_abs, vertex_weights,
-part_map, parts_concat, parts_offsets) and produce **bit-exact
-identical** vertex→partition assignments to the Python reference
-(verified end-to-end by
-`tests/test_chiplet/test_hierarchical_partitioner_perf.py
-::TestAllBackendsParityViaDispatcher` on V=100 with kl_iters=3).
-
-Reproducible via `benchmarks/bench_kl_refine.py`. Measured
-wall-clock on Linux 6.17 x86_64, n_parts=4, kl_iters=3,
-repeats=5, seed=42:
-
-| V | python | rust | julia | go | mojo | fastest |
-|---:|---:|---:|---:|---:|---:|:---|
-| 100 | 6.65 | **0.04** | 0.12 | 0.50 | **0.03** | Mojo (222×) |
-| 200 | 8.74 | 0.04 | 0.07 | 0.55 | **0.04** | Mojo (218×) |
-| 500 | 24.50 | **0.10** | 0.17 | 0.93 | **0.10** | Rust = Mojo (245×) |
-| 1000 | 70.25 | 0.29 | 0.26 | 0.68 | **0.20** | Mojo (351×) |
-
-Mojo and Rust trade wins; Julia is within 30 % at the larger
-sizes; Go is consistently slowest of the four native backends
-because cgo + the Go runtime barrier add per-call overhead that
-the small kernel can't amortise. **None of these orderings would
-have been visible without the per-backend benchmark — empirical
-proof, not pre-pick** (per
-`feedback_multilang_workflow_canonical`).
-
-The CSR encoding's `parts_concat + parts_offsets` arrays carry
-the per-partition vertex insertion order from `_recursive_bisect`
-into every native kernel, so the KL iteration order matches
-Python's `for v in list(part)` exactly. Without those arrays,
-the native backends rebuilt parts[] from `part_map` alone (in
-vertex-id order) which gave 5/100 vertex disagreement at V=100;
-load-bearing detail locked by the dispatcher tests above.
-
-**Two compounding fixes** brought V=200 from the original 963 ms
-down to **12.7 ms** (76× wall-clock) on the same hardware
-(Linux 6.17 x86_64, NumPy 2.2.6, Python 3.12.3):
-
-1. **#65 — O(1) edge cache + hoisted `set(vertices)`** in
-   `CorrelationAwareGraph` and `_spectral_bisect`. Edge lookups
-   went from O(E) per call to O(1); per-vertex membership checks
-   went from O(V) to O(1).
-2. **#64-prep — single-pass per-partition cost vector** in
-   `_refine`. The original implementation called
-   `_boundary_cost(v, j, ...)` once per (vertex, target) pair
-   → O(P) redundant scans of the vertex's neighbours per KL
-   iteration. New helper `_per_partition_cost(v, n_parts, ...)`
-   returns the full length-P cost vector in ONE neighbour
-   scan; the inner KL loop just indexes into it. Algorithmic
-   parity vs the legacy `_boundary_cost(v, p)` is locked by
-   `TestPerPartitionCostMatchesBoundaryCost`.
-
-V=1000 partitions in ~99 ms (was "many minutes" pre-fix).
-Canonical partition output is bit-identical pre/post both
-fixes — regression-tested by
-`tests/test_chiplet/test_hierarchical_partitioner_perf.py`
-(9 tests: edge-cache correctness + lifecycle, vector-vs-legacy
-parity, sub-1s gate at V=200, doubling-ratio < 5× scaling).
-
-#### Multi-language backend status (partitioner)
-
-| Backend | Status | Rationale |
-|---|---|---|
-| python | USED | baseline (O(V·avg_degree) post-#65 fix) |
-| rust | **USED** | `engine/src/partition.rs` via PyO3 — Rust = Mojo wins at V=500 |
-| julia | **USED** | `accel/julia/chiplet/kl_refine.jl` via juliacall — within 30 % of Rust/Mojo |
-| go | **USED** | `accel/go/partition/partition.go` via cgo — slowest of 4 (per-call overhead) |
-| mojo | **USED — fastest at V=100/200/1000** | `accel/mojo/partition/partition.mojo` via shared-lib + raw-Int-addr |
-
-## 10. Test coverage
-
-Three test files cover this package:
-
-| File | Tests | LOC | What it covers |
-|---|---:|---:|---|
-| `tests/test_chiplet/test_chiplet_gen.py` | 94 | 565 | Antigravity-authored 14 unittest classes covering interposer links, dies, topology, routing tables, decorrelation, generator, timing, star + torus topologies, link energy, congestion, disjoint paths, CDC, thermal, adaptive routing |
-| `tests/test_debug/test_hierarchical_partitioner.py` | 52 | (existing) | Antigravity-authored partition correctness + correlation-aware partitioning + LFSR seed allocator + ghost cell manager + boundary sync |
-| `tests/test_chiplet/test_chiplet_public_api.py` | 12 | new | Arcane Sapience: package re-exports identity for both modules, `__all__` membership for 57 symbols, `InterposerTech` 6-member enum, `InterposerLink.from_tech` smoke for all 6 presets, `compute_decorrelation_seeds` returns tuple-keyed dict (regression test for the mypy-found bug), `make_torus` smoke, `HierarchicalPartitioner` constructor smoke |
-
-**Total: 158 tests.** All run in ~2 s combined; no skips, no
-failures.
-
-`tests/test_debug/test_hierarchical_partitioner.py` is mis-located
-(should be under `tests/test_chiplet/`) but moving it is deferred
-to a separate refactor commit.
-
-## 11. Audit completeness — 7-point rule
-
-| # | Criterion | Status | Notes |
-|---|-----------|--------|--------|
-| 1 | Pipeline wiring | ✅ PASS | All 57 symbols re-exported via `__init__.py`; verified by `test_chiplet_public_api.py` |
-| 2 | Multi-angle tests | ✅ PASS | 158 tests across 3 files; covers topology + routing + energy + thermal + partitioning + LFSR + ghost cells + boundary sync |
-| 3 | Acceleration path | ✅ PASS (explicit EXEMPT/BLOCKED) | chiplet_gen ops (3-700 µs) EXEMPT across all 4 backends — FFI overhead > compute. Partitioner BLOCKED-ON-#65 — fix O(V²·E) Python first, then port. Backends block explicit in bench JSON + §8/§9 tables |
-| 4 | Benchmarks | ✅ PASS | `benchmarks/bench_chiplet.py` committed; JSON in `benchmarks/results/bench_chiplet.json` carries `backends` block |
-| 5 | Performance docs | ✅ PASS | §9 with explicit "informal" caveat |
-| 6 | Documentation page | ✅ PASS | This page |
-| 7 | Rules followed | ✅ PASS | SPDX 2-line header on `__init__.py`, `chiplet_gen.py`, `hierarchical_partitioner.py` (`__init__.py` and `chiplet_gen.py` fixed in this batch from 1-line piped form; `chiplet_gen.py` also had `# mypy: ignore-errors` removed and 7 real mypy errors fixed). British English in this doc; source uses standard scientific-Python identifiers (acceptable per docs-vs-code rule). |
-
-Net: **0 WARN, 0 FAIL.**
-
-## 12. Known issues / follow-ups
-
-### 12.1 Committed benchmark
-
-`benchmarks/bench_chiplet.py` exists and is rerun to produce
-`benchmarks/results/bench_chiplet.json` on every remediation
-cycle. The JSON payload now includes a `backends` block with
-explicit USED / EXEMPT / BLOCKED-ON-#65 status per op family.
-
-### 12.2 Mypy fixes applied in this batch
-
-`chiplet_gen.py` had `# mypy: ignore-errors` masking 7 real
-type errors:
-
-1. Line 88 + 1125 + 1134: `**presets[tech]` unpacking failed
-   because `presets: dict[..., dict[str, float]]` was inferred
-   homogeneously but the dataclass receives `int` and `bool`
-   for some fields. Fixed by annotating
-   `presets: Dict[..., Dict[str, Any]]`.
-2. Line 255: `compute_decorrelation_seeds` declared
-   `Dict[int, int]` return type but actually returned
-   `Dict[Tuple[int, int], int]`. Annotation corrected.
-3. Line 453: dict.get with tuple key was rejected because the
-   variable was bound to the wrong-typed dict. Fixed by 12.2.2.
-4. Line 934: `__post_init__` missing `-> None` annotation.
-   Added.
-
-`hierarchical_partitioner.py` had 1 mypy error: line 703
-`recs = []` needed `list[MigrationRecommendation]` annotation.
-Added.
-
-### 12.3 `tests/test_debug/test_hierarchical_partitioner.py` mis-located
-
-The file lives under `tests/test_debug/` but exercises
-`sc_neurocore.chiplet.hierarchical_partitioner`. Should be moved
-to `tests/test_chiplet/test_hierarchical_partitioner.py` for
-discoverability. Deferred to a separate housekeeping commit.
-
-### 12.4 Pre-existing doc was a stub with fabricated names
-
-`docs/api/chiplet.md` was a 14-line `mkdocstrings` auto-gen
-stub. The `Quick Start` block listed FABRICATED import names:
-`InterconnectTopo`, `ThermalModel`, `YieldEstimator` — none of
-which exist in the module. The actual class names are
-`InterposerTech` (closest), `simulate_thermal` (function, not
-class), and there is no `YieldEstimator`. Replaced with this
-page in the same batch.
-
-### 12.5 No semantic bugs found
-
-Audit found:
-- `# mypy: ignore-errors` on `chiplet_gen.py` was masking 7
-  real type errors — all fixed (see 12.2).
-- `__init__.py` did not re-export the 57 public symbols. Wired.
-- 1-line piped SPDX header in `__init__.py` and `chiplet_gen.py`
-  (the latter actually had BOTH headers stacked: piped at
-  line 1 + canonical at line 7, with `# mypy: ignore-errors` at
-  line 6). Cleaned up.
-- 1-line piped SPDX in `hierarchical_partitioner.py` was
-  ALREADY canonical 2-line — no fix needed.
-
-No semantic bugs (sign errors, off-by-ones, wrong invariants,
-fabricated constants) found in either source file. The 146
-Antigravity tests pass; the 12 new public-API tests pass.
-
-## 13. References
-
-- Universal Chiplet Interconnect Express (UCIe) Consortium:
-  *UCIe Specification 1.0*. Beaverton OR: UCIe Forum, 2022.
-- Open Compute Project: *Bunch-of-Wires (BoW) Specification*.
-  Menlo Park CA: OCP, 2022.
-- Intel Foundry: *Embedded Multi-die Interconnect Bridge
-  (EMIB) White Paper*. Santa Clara CA, 2017.
-- TSMC: *Chip-on-Wafer-on-Substrate (CoWoS) Technology Brief*.
-  Hsinchu, 2018.
-- Karypis, G. & Kumar, V. (1998). *METIS — A Software Package
-  for Partitioning Unstructured Graphs and Computing
-  Fill-Reducing Orderings of Sparse Matrices*. University of
-  Minnesota.
-- Pellegrini, F. (2007). *Scotch and libScotch — Sparse Matrix
-  Ordering and Parallel Graph Partitioning*. INRIA Bordeaux.
-
-## 14. Audit batch identification
-
-This page was produced as part of the **Antigravity audit, batch
-B1, package 3** (per
-`docs/internal/antigravity_inventory_2026-04-17.md`). B1 closes
-with this commit. B2 (`bci_studio/`, `analog_bridge/`,
-`asic_flow/`, plus the existing `chip_compiler/`) follows in
-subsequent batches.
+- UCIe Consortium. *UCIe Specification 1.0*. 2022.
+- Open Compute Project. *Bunch of Wires Specification*. 2022.
+- Skadron, K. et al. “HotSpot: A Compact Thermal Modeling Methodology for
+  Early-Stage VLSI Design.” *IEEE Transactions on VLSI Systems*, 2006.
+- Karypis, G. and Kumar, V. *METIS: A Software Package for Partitioning
+  Unstructured Graphs and Computing Fill-Reducing Orderings of Sparse
+  Matrices*. University of Minnesota, 1998.

@@ -14,7 +14,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 319
+expected_file_count = 328
 
 [[file]]
 path = "src/sc_neurocore/__init__.py"
@@ -1219,6 +1219,42 @@ rationale = "Annealing schedules, spin gauges, and SC precision encodings."
 [[file]]
 path = "src/sc_neurocore/bridges/quantum_annealing.py"
 rationale = "Stable public quantum-annealing compatibility facade and historical exports."
+
+[[file]]
+path = "src/sc_neurocore/chiplet/__init__.py"
+rationale = "Public chiplet package facade and maintained responsibility-module export boundary."
+
+[[file]]
+path = "src/sc_neurocore/chiplet/chiplet_gen.py"
+rationale = "Historical chiplet import and pickle compatibility facade."
+
+[[file]]
+path = "src/sc_neurocore/chiplet/topology.py"
+rationale = "Validated chiplet-die, interposer-link, and package-topology contracts."
+
+[[file]]
+path = "src/sc_neurocore/chiplet/routing.py"
+rationale = "AER routing, congestion, energy, timing, and decorrelation analysis surfaces."
+
+[[file]]
+path = "src/sc_neurocore/chiplet/thermal.py"
+rationale = "Finite steady-state and transient package-thermal analysis surfaces."
+
+[[file]]
+path = "src/sc_neurocore/chiplet/rtl.py"
+rationale = "Byte-stable multi-die routing RTL and constraints generation surface."
+
+[[file]]
+path = "src/sc_neurocore/chiplet/link_protocols.py"
+rationale = "CDC, link-protection, credit-flow, and three-dimensional link RTL surfaces."
+
+[[file]]
+path = "src/sc_neurocore/chiplet/power.py"
+rationale = "Validated chiplet power-domain ownership and sequencing surface."
+
+[[file]]
+path = "src/sc_neurocore/chiplet/partition.py"
+rationale = "Graph-partition assignment to per-die routing-table translation surface."
 
 [[file]]
 path = "src/sc_neurocore/optics/photonic_emitter.py"

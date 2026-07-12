@@ -6,16 +6,20 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore — sc_neurocore.chiplet package public API surface
 
-"""sc_neurocore.chiplet — Multi-die chiplet generator with UCIe/BoW links.
+"""Multi-die chiplet generation and hierarchical graph partitioning.
 
 Tier: research.
 
-Two modules:
+The historical ``chiplet_gen`` module remains an import-compatible facade over
+focused responsibilities:
 
-- ``chiplet_gen`` — multi-die chiplet generator (interposer link
-  models, die abstractions, topology graph, routing tables, energy
-  + thermal + congestion analysis, timing simulator, 3D stacking,
-  CDC + credit + power-gating SystemVerilog emitters).
+- ``topology`` — die, interposer, planar-topology, and stack models.
+- ``routing`` — routes, timing, energy, and congestion analysis.
+- ``thermal`` — steady-state and transient package thermal solving.
+- ``rtl`` — connected package SystemVerilog and XDC generation.
+- ``link_protocols`` — CDC, CRC, and credit-flow contracts.
+- ``power`` — voltage-island ownership and power-gating RTL.
+- ``partition`` — neuron assignment to AER routing translation.
 - ``hierarchical_partitioner`` — exascale graph partitioner (CSR
   graph, correlation-aware partitioning, LFSR seed allocator,
   ghost-cell manager, boundary synchronisation, migration
@@ -87,11 +91,11 @@ from sc_neurocore.chiplet.hierarchical_partitioner import (
 __tier__ = "research"
 
 __all__ = [
-    # ─── chiplet_gen — enums
+    # ─── chiplet compatibility surface — enums
     "InterposerTech",
     "PowerDomain",
     "StackingType",
-    # ─── chiplet_gen — dataclasses
+    # ─── chiplet compatibility surface — dataclasses
     "CDCConfig",
     "ChipletDie",
     "ChipletOutput",
@@ -109,7 +113,7 @@ __all__ = [
     "RoutingTable",
     "TimingSimResult",
     "TSVLink",
-    # ─── chiplet_gen — generator + analysis
+    # ─── chiplet compatibility surface — generation + analysis
     "ChipletGenerator",
     "adaptive_route",
     "add_3d_stack",

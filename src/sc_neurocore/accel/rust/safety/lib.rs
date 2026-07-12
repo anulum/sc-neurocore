@@ -73,7 +73,6 @@ pub mod chay_keizer;
 pub mod checkpoint;
 pub mod chialvo_map;
 pub mod chip_spec;
-pub mod chiplet_gen;
 pub mod circadian_optimizer;
 pub mod circuit_primitives;
 pub mod clif;

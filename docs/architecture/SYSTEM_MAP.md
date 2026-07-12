@@ -264,7 +264,7 @@ Ordered stages, each with its entry symbol (verified end-to-end):
 11. **ASIC deck** — `OpenSourcePDKResolver.resolve()` (`asic_flow/asic_flow.py:200`);
     PDKs SKY130, GF180MCU, TSMC28, Intel16, custom.
 12. **Chiplet** — interposer models UCIe / BoW / EMIB / CoWoS
-    (`chiplet/chiplet_gen.py:73`).
+    (`chiplet/topology.py`, with RTL assembly in `chiplet/rtl.py`).
 13. **Safety evidence** — fail-closed traceability, caller-supplied FMEDA and
     formal-property records, timing assumptions, checklist bookkeeping, and
     atomic hash-manifest materialisation (`safety_cert/`, library-only; not a

@@ -5,6 +5,22 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+### Chiplet responsibility modularisation
+- Replaced the 1,744-line chiplet implementation and 1,223-line primary test
+  file with a 98-line compatibility facade, seven focused public-responsibility
+  modules, one private SystemVerilog helper, and focused tests below 500 lines.
+  All 36 historical imports, qualified names, and pickle identities remain
+  stable. Canonical three-die EMIB generation remains byte-identical.
+- Added finite physical-boundary validation and direct topology, routing,
+  thermal, RTL, link-protocol, power-domain, partition, and architecture
+  contracts. The focused package cohort passes 172 tests; exact-file coverage
+  reaches all 680 statements and 202 branches, with strict MyPy and Ruff clean.
+- Removed nonfunctional Rust, Go, Julia, and Mojo chiplet-control mirrors and
+  their Rust registry entries. The source-bound 30-repeat benchmark now records
+  the maintained Python path, including complete generation for 2, 8, and 32
+  dies. Non-exclusive host load and validation overhead make the old/new values
+  diagnostic evidence rather than promotion claims.
+
 ### Quantum-annealing GodFile modularisation
 - Replaced the 1,910-line quantum-annealing implementation and 1,001-line
   primary test GodFile with a 98-line compatibility facade, nine acyclic

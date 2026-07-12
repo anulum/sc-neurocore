@@ -1,98 +1,138 @@
 {
-  "platform": "Linux-6.17.0-20-generic-x86_64-with-glibc2.39",
+  "platform": "Linux-6.17.0-35-generic-x86_64-with-glibc2.39",
   "python": "3.12.3",
   "numpy": "2.2.6",
-  "n_repeats": 5,
+  "n_repeats": 30,
+  "load_average": [
+    17.64501953125,
+    15.5419921875,
+    16.6611328125
+  ],
+  "cpu_affinity": [
+    10
+  ],
+  "benchmark_sha256": "26b67647ace24eb0930a636e2a9879604f087a949b55899a47c8227af9193085",
+  "source_sha256": {
+    "__init__.py": "457c69214eab1895b2dcc4e9966a169873af61038bd0ea587364d0d2c6b26dea",
+    "_sv.py": "70adc63b66346d1289d122d655f738b69d5667edbe73eda855b0de816cb95e14",
+    "chiplet_gen.py": "8be94148ea1667b0b4467434fbd68ce74bb61c6fa3a3268b3e286e8f123b25c7",
+    "hierarchical_partitioner.py": "8820add4d13ff395e72624f32d03398dc5fdb678f1ce2ae7a78380072cc2d4ca",
+    "link_protocols.py": "c02303b3de2cb69ffb73ad6267dc87ac79f00eeb354a202d1dd0cbaa9d36bbca",
+    "partition.py": "bb61ef29d62dbb3ff9f8716725a658f2ce80702da7c1a5b69c21922217e707b7",
+    "power.py": "af6c76a291469d11deb6f4fac1519f37b716e2663dbb2782f0a337d0895852db",
+    "routing.py": "8ee96895df7c1459f62675991c0aae718ccfebbeae83d4adaf514d27d8cb604d",
+    "rtl.py": "004034ad5ee4e090c0ae14d397d3bc33c2543c7cc388a5298a4abe37d27aea1a",
+    "thermal.py": "5f73a15f71c60bf725f2e44deaa608ea4caf179e3367a80c757a170e2e811802",
+    "topology.py": "63b15a71fae87a7d359d4da17b503cd8687c33553ff0a9849cf56c5f547689c5"
+  },
   "rows": [
     {
       "suite": "chiplet_gen",
       "op": "make_torus(2, 2)",
-      "median_ms": 0.03603799268603325,
-      "min_ms": 0.03366300370544195
+      "median_ms": 0.03731902688741684,
+      "min_ms": 0.030378985684365034
     },
     {
       "suite": "chiplet_gen",
       "op": "make_torus(4, 4)",
-      "median_ms": 0.1353020197711885,
-      "min_ms": 0.12583800707943738
+      "median_ms": 0.10280398419126868,
+      "min_ms": 0.08457398507744074
     },
     {
       "suite": "chiplet_gen",
       "op": "make_torus(8, 8)",
-      "median_ms": 0.6949719972908497,
-      "min_ms": 0.5420899833552539
+      "median_ms": 0.5164130125194788,
+      "min_ms": 0.3312969929538667
     },
     {
       "suite": "chiplet_gen",
       "op": "compute_decorrelation_seeds (n_links=16)",
-      "median_ms": 0.00576098682358861,
-      "min_ms": 0.005391018930822611
+      "median_ms": 0.007867987733334303,
+      "min_ms": 0.006353016942739487
     },
     {
       "suite": "chiplet_gen",
       "op": "compute_decorrelation_seeds (n_links=64)",
-      "median_ms": 0.020763982320204377,
-      "min_ms": 0.01956801861524582
+      "median_ms": 0.03949698293581605,
+      "min_ms": 0.025735003873705864
     },
     {
       "suite": "chiplet_gen",
       "op": "compute_decorrelation_seeds (n_links=256)",
-      "median_ms": 0.08411399903707206,
-      "min_ms": 0.08032299228943884
+      "median_ms": 0.13352703535929322,
+      "min_ms": 0.08309498662129045
     },
     {
       "suite": "chiplet_gen",
       "op": "estimate_package_energy (n_dies=4)",
-      "median_ms": 0.0062219914980232716,
-      "min_ms": 0.004427973181009293
+      "median_ms": 0.0031469971872866154,
+      "min_ms": 0.0027370406314730644
     },
     {
       "suite": "chiplet_gen",
       "op": "estimate_package_energy (n_dies=16)",
-      "median_ms": 0.007955997716635466,
-      "min_ms": 0.006678019417449832
+      "median_ms": 0.011695025023072958,
+      "min_ms": 0.011135998647660017
     },
     {
       "suite": "chiplet_gen",
       "op": "estimate_package_energy (n_dies=64)",
-      "median_ms": 0.02862099790945649,
-      "min_ms": 0.02543002483434975
+      "median_ms": 0.04577601794153452,
+      "min_ms": 0.04476599860936403
     },
     {
       "suite": "chiplet_gen",
       "op": "simulate_thermal (n_dies=4)",
-      "median_ms": 0.05872300243936479,
-      "min_ms": 0.05331600550562143
+      "median_ms": 0.06434996612370014,
+      "min_ms": 0.06065296474844217
     },
     {
       "suite": "chiplet_gen",
       "op": "simulate_thermal (n_dies=16)",
-      "median_ms": 0.09765601134859025,
-      "min_ms": 0.0838089908938855
+      "median_ms": 0.13393897097557783,
+      "min_ms": 0.10865903459489346
     },
     {
       "suite": "chiplet_gen",
       "op": "simulate_thermal (n_dies=64)",
-      "median_ms": 0.29489200096577406,
-      "min_ms": 0.2633600088302046
+      "median_ms": 0.5019149975851178,
+      "min_ms": 0.346897984854877
+    },
+    {
+      "suite": "chiplet_gen",
+      "op": "ChipletGenerator.generate (n_dies=2)",
+      "median_ms": 0.42710499837994576,
+      "min_ms": 0.24306296836584806
+    },
+    {
+      "suite": "chiplet_gen",
+      "op": "ChipletGenerator.generate (n_dies=8)",
+      "median_ms": 1.906339020933956,
+      "min_ms": 1.2837519752793014
+    },
+    {
+      "suite": "chiplet_gen",
+      "op": "ChipletGenerator.generate (n_dies=32)",
+      "median_ms": 8.218885981477797,
+      "min_ms": 5.7105119922198355
     },
     {
       "suite": "partitioner",
       "op": "partition (V=50, P=2)",
-      "median_ms": 3.1331980135291815,
-      "min_ms": 3.050484985578805
+      "median_ms": 3.1310439808294177,
+      "min_ms": 1.8244399689137936
     },
     {
       "suite": "partitioner",
       "op": "partition (V=100, P=4)",
-      "median_ms": 10.766435996629298,
-      "min_ms": 7.181683002272621
+      "median_ms": 6.697005010209978,
+      "min_ms": 3.7029850063845515
     },
     {
       "suite": "partitioner",
       "op": "partition (V=200, P=4)",
-      "median_ms": 12.66785099869594,
-      "min_ms": 10.201727011008188
+      "median_ms": 13.115642999764532,
+      "min_ms": 5.385172960814089
     }
   ],
   "backends": {
@@ -102,24 +142,24 @@
       "exemption": null
     },
     "rust": {
-      "available": true,
+      "available": false,
       "used": false,
-      "exemption": "chiplet_gen ops are 3-700 \u00b5s; PyO3 FFI overhead (~1-5 \u00b5s) is 10-100% of compute \u2192 EXEMPT. HierarchicalPartitioner.partition was BLOCKED on the O(V\u00b2\u00b7E) bug; #65 is now fixed (partition runs in 2.6-25 ms). Multi-lang ports are tracked under #64."
+      "exemption": "No installed chiplet-control Rust kernel: numerical analysis operations are sub-ms, while RTL generation is text and graph orchestration rather than a numerical kernel. The former rust/safety/chiplet_gen.rs file was nonfunctional scaffold."
     },
     "julia": {
-      "available": true,
+      "available": false,
       "used": false,
-      "exemption": "Same rationale as Rust. Julia would additionally pay juliacall first-call JIT (~5 s) for ops that finish in <1 ms steady state."
+      "exemption": "No installed chiplet-control Julia kernel: numerical analysis is sub-ms and juliacall first-call JIT is about 5 s; RTL emission is textual orchestration. The former chiplet_gen.jl file was not valid Julia."
     },
     "go": {
-      "available": true,
+      "available": false,
       "used": false,
-      "exemption": "Same rationale as Rust. Go cgo handover + ctypes marshalling is ~1-3 \u00b5s per call."
+      "exemption": "No installed chiplet-control Go kernel: the numerical operations are sub-ms and RTL emission is textual orchestration. The former service contained empty functions."
     },
     "mojo": {
-      "available": true,
+      "available": false,
       "used": false,
-      "exemption": "Mojo 0.26 `mojo build --emit shared-lib` + ctypes FFI works (proven on LGSSM Kalman, #69 closed). chiplet_gen ops still EXEMPT for the same FFI-overhead reason as Rust/Julia/Go (1-3 \u00b5s FFI vs 3-700 \u00b5s compute is 10-100% overhead). Partition multi-lang port now tracked under #64 (O(V\u00b2\u00b7E) bug fixed in #65)."
+      "exemption": "No installed chiplet-control Mojo kernel: the numerical operations are sub-ms and RTL emission is textual orchestration. The former kernel stored Python lines as strings and returned zero."
     }
   }
 }
