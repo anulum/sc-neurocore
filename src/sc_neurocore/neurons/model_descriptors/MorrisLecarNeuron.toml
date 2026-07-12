@@ -175,7 +175,6 @@ parity = "ulp-bounded"
 reference_config = "{\"n_steps\":1000,\"current\":80.0,\"backend\":\"python\",\"parameters\":\"defaults\"}"
 golden_trace_sha256 = "9adb3f1cbcaf8a25ca6360f079e15d10a7be0cdc0cd536082a310b5226a7ee60"
 
-
 [documentation]
 slug = "models/morris_lecar"
 notes = ""

@@ -101,7 +101,6 @@ parity = "exact"
 reference_config = "{\"n_steps\":1000,\"current\":2.0,\"backend\":\"python\",\"parameters\":\"defaults\"}"
 golden_trace_sha256 = "4604bc3e85a75bc2c97152abdb61292a4cb61fe249560480e24c88ab6308a190"
 
-
 [documentation]
 slug = "models/lapicque"
 notes = ""

@@ -534,6 +534,7 @@ def test_merge_descriptor_payloads_preserves_curation_without_structural_drift()
         "metadata": {
             "schema_version": 999,
             "class_name": "WrongNeuron",
+            "name": "Curated AdEx Descriptive Name",
             "display_name": "Adaptive exponential IF",
             "summary": "Curated AdEx descriptor.",
             "maturity": "validated",
@@ -567,13 +568,23 @@ def test_merge_descriptor_payloads_preserves_curation_without_structural_drift()
             "target_tier": "H1",
             "terminal_reason": "point-neuron SC/RTL path; signed PPA out of scope",
         },
-        "documentation": {"notes": "Preserved reviewer note."},
+        "documentation": {
+            "notes": "Preserved reviewer note.",
+            "slug": "models/curated_adex_slug",
+        },
     }
 
     merged = merge_descriptor_payloads(curated, regenerated)
 
     assert merged["metadata"]["schema_version"] == MODEL_DESCRIPTOR_SCHEMA_VERSION
     assert merged["metadata"]["class_name"] == "AdExNeuron"
+    # The curated descriptive name and documentation slug are authoritative
+    # overlays: a hand-written name/slug is never overwritten by the generic
+    # generator default derived from the class/module name.
+    assert merged["metadata"]["name"] == "Curated AdEx Descriptive Name"
+    assert merged["metadata"]["name"] != regenerated["metadata"]["name"]
+    assert merged["documentation"]["slug"] == "models/curated_adex_slug"
+    assert merged["documentation"]["slug"] != regenerated["documentation"]["slug"]
     assert merged["metadata"]["display_name"] == "Adaptive exponential IF"
     assert merged["metadata"]["summary"] == "Curated AdEx descriptor."
     assert merged["metadata"]["intended_use"] == ["adaptive-spiking-reference"]

@@ -100,7 +100,6 @@ parity = "exact"
 reference_config = "{\"n_steps\":1000,\"current\":1.0,\"backend\":\"python\",\"parameters\":\"defaults\"}"
 golden_trace_sha256 = "65a77e5708b1713f91a8509e5b0df61808749c48810efa0754070530b04c4e6f"
 
-
 [documentation]
 slug = "models/dpi_neuron"
 notes = ""

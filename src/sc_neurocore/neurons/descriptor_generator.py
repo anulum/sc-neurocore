@@ -432,6 +432,7 @@ def generate_descriptor(class_name: str) -> ModelDescriptor:
 _PARAMETER_CURATION_KEYS = ("unit", "range", "biological_range", "meaning")
 _STATE_CURATION_KEYS = ("unit", "meaning")
 _METADATA_CURATION_KEYS = (
+    "name",
     "display_name",
     "family",
     "category",
@@ -452,10 +453,13 @@ def merge_descriptor_payloads(
     payload, which is read from the model code — so the corpus can never drift
     from the implementation. Curation fields (parameter units/ranges/meaning,
     state semantics, taxonomy, the backend matrix, reproducibility, notes,
-    validation evidence, silicon evidence anchors, and any richer provenance,
-    dynamics, or display fields) are preserved from the curated payload. The
-    result is the regenerated payload with curation overlaid, ready to be
-    re-serialised.
+    validation evidence, silicon evidence anchors, the curated display name and
+    documentation slug, and any richer provenance, dynamics, or display fields)
+    are preserved from the curated payload. The curated ``metadata.name`` and
+    ``documentation.slug`` are authoritative overlays: a hand-written descriptive
+    name (e.g. "Ermentrout-Kopell Theta Euler Map") is never overwritten by the
+    generic generator default. The result is the regenerated payload with
+    curation overlaid, ready to be re-serialised.
 
     Parameters
     ----------
@@ -520,6 +524,9 @@ def merge_descriptor_payloads(
     notes = cur_doc.get("notes")
     if isinstance(notes, str) and notes:
         merged.setdefault("documentation", {})["notes"] = notes
+    slug = cur_doc.get("slug")
+    if isinstance(slug, str) and slug:
+        merged.setdefault("documentation", {})["slug"] = slug
     return merged
 
 
