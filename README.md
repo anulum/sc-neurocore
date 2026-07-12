@@ -411,13 +411,14 @@ hdl/
   sc_event_neuron.v           -- Event-triggered LIF (power ∝ spike rate)
   sc_aer_router.v             -- AER event distribution to target neurons
   tb_sc_*.v (16 testbenches)  -- Self-checking simulation testbenches
-  formal/ (63 proof jobs)     -- catalogue dual-axis perfect + legacy SC cores
+  formal/ (44 proof jobs)     -- catalogue dual-axis perfect + legacy SC cores
 ```
 
-Formal verification inventory: **63 SymbiYosys proof jobs and 211 formal
-statements (181 assert, 7 assume, 23 cover)** under `hdl/formal/` (37
-non-catalogue jobs + **26 catalogue jobs** under `hdl/formal/catalogue/`). Re-emit with
-`tools/emit_catalogue_formal.py`.
+Formal verification inventory: **44 SymbiYosys proof jobs and 174 formal
+statements (144 assert, 7 assume, 23 cover)** under `hdl/formal/` (18
+non-catalogue jobs + **26 catalogue jobs** under `hdl/formal/catalogue/`). This
+counts the git-tracked jobs a clean checkout proves; re-emit the generated
+catalogue harnesses with `tools/emit_catalogue_formal.py`.
 
 ### GPU Acceleration
 

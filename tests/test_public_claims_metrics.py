@@ -10,6 +10,7 @@ from __future__ import annotations
 import importlib.util
 import json
 import re
+import subprocess
 import sys
 from pathlib import Path
 from types import ModuleType
@@ -89,21 +90,39 @@ def _rust_networkrunner_model_count() -> int:
     return len(re.findall(r'"[A-Za-z0-9_]+"', match.group("body")))
 
 
+def _tracked_formal_paths(suffixes: tuple[str, ...]) -> list[Path]:
+    """Return git-tracked ``hdl/formal`` files with one of ``suffixes``.
+
+    The count is taken from the git index, not an on-disk ``rglob``, so the
+    generated harnesses under the git-ignored ``hdl/formal/catalogue/*/``
+    directories never inflate the public inventory: the number a contributor
+    with a populated working tree sees must equal the number a clean CI
+    checkout proves.
+    """
+    root = _repo_root()
+    completed = subprocess.run(
+        ["git", "ls-files", "-z", "--", "hdl/formal"],
+        cwd=root,
+        check=True,
+        capture_output=True,
+        text=True,
+    )
+    return [
+        root / relative for relative in completed.stdout.split("\0") if relative.endswith(suffixes)
+    ]
+
+
 def _formal_inventory() -> tuple[int, dict[str, int]]:
     """Count formal proof jobs and statement types from committed HDL sources."""
-    formal_root = _repo_root() / "hdl/formal"
     statements = {"assert": 0, "assume": 0, "cover": 0}
-    formal_sources = [
-        path for extension in ("*.v", "*.sv", "*.svh") for path in formal_root.rglob(extension)
-    ]
     for path in sorted(
-        formal_sources,
-        key=lambda candidate: candidate.relative_to(formal_root).as_posix(),
+        _tracked_formal_paths((".v", ".sv", ".svh")),
+        key=lambda candidate: candidate.as_posix(),
     ):
         text = path.read_text(encoding="utf-8")
         for keyword in statements:
             statements[keyword] += len(re.findall(rf"\b{keyword}\s*(?:property)?\s*\(", text))
-    return len(list(formal_root.rglob("*.sby"))), statements
+    return len(_tracked_formal_paths((".sby",))), statements
 
 
 def _compact_whitespace(text: str) -> str:

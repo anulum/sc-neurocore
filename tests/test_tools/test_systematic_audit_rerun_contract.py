@@ -13,6 +13,8 @@ from __future__ import annotations
 import subprocess
 from pathlib import Path
 
+import pytest
+
 from tools import snn_memory_discipline_audit, spdx_header_audit
 
 
@@ -41,20 +43,30 @@ def test_systematic_audit_gitignore_and_todo_findings_stay_closed() -> None:
     assert "TODO" in _check_ignore("TODO")
     assert "docs/internal/" in _check_ignore("docs/internal/TODO.md")
     assert not (REPO_ROOT / "TODO").exists()
-    assert (REPO_ROOT / "docs/internal/TODO.md").is_file()
+    # The canonical TODO lives at docs/internal/TODO.md, which is git-ignored and
+    # therefore absent from a clean CI checkout; only assert its placement when the
+    # working tree actually carries the ignored internal docs.
+    if not (REPO_ROOT / "docs/internal/TODO.md").is_file():
+        pytest.skip("git-ignored docs/internal/TODO.md absent in a clean/CI checkout")
 
 
 def test_systematic_audit_spdx_and_memory_findings_stay_closed() -> None:
     """Rerun the old SPDX and SNN-memory audit classes deterministically."""
 
     missing_headers = spdx_header_audit.missing_direct_header_paths(REPO_ROOT)
+    assert missing_headers == []
+
+    # The SNN-memory audit reads stimulus records from the monorepo sibling tree
+    # (04_ARCANE_SAPIENCE/snn_stimuli), which a standalone/CI checkout does not
+    # contain; only rerun it when that tree is present.
+    if not SC_NEUROCORE_STIMULI.is_dir():
+        pytest.skip("monorepo SNN stimulus tree absent in a standalone/CI checkout")
     memory_audit = snn_memory_discipline_audit.audit_memory_discipline(
         REPO_ROOT,
         SC_NEUROCORE_STIMULI,
         "SC-NEUROCORE",
     )
 
-    assert missing_headers == []
     assert memory_audit.passed
     assert memory_audit.violations == ()
     assert memory_audit.to_json()["violation_count"] == 0
