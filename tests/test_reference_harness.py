@@ -29,9 +29,11 @@ _STOCHASTIC_SCHEMA_NAMES = frozenset({"escape_rate", "poisson"})
 _DETERMINISTIC_SCHEMA_TRACES = {
     "adex": "adex_resting_adaptation_doi",
     "cazelles_map": "cazelles_map_bursting_doi",
+    "chialvo_map": "chialvo_map_doi",
     "connor_stevens": "connor_stevens_driven_spiking_doi",
     "courage_nekorkin_map": "courage_nekorkin_map_autonomous_doi",
     "dpi_neuron": "dpi_neuron_driven_spiking_doi",
+    "ermentrout_kopell_map_neuron": "ermentrout_kopell_theta_euler_doi",
     "exp_if": "exp_if_resting_exponential_doi",
     "fitzhugh_nagumo": "fitzhugh_nagumo_driven_oscillation_doi",
     "fitzhugh_rinzel": "fitzhugh_rinzel_driven_bursting_doi",
