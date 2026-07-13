@@ -34,7 +34,7 @@ _DETERMINISTIC_SCHEMA_TRACES = {
     "courage_nekorkin_map": "courage_nekorkin_map_autonomous_doi",
     "dpi_neuron": "dpi_neuron_driven_spiking_doi",
     "ermentrout_kopell_map_neuron": "ermentrout_kopell_theta_euler_doi",
-    "exp_if": "exp_if_resting_exponential_doi",
+    "exp_if": "exp_if_driven_rk4_doi",
     "fitzhugh_nagumo": "fitzhugh_nagumo_driven_oscillation_doi",
     "fitzhugh_rinzel": "fitzhugh_rinzel_driven_bursting_doi",
     "glif": "glif_constant_current_threshold_adaptation",

@@ -97,7 +97,7 @@ SC-NeuroCore is positioned for neuromorphic R&D, stochastic accelerator design, 
 | Model documentation pages | 175 |
 | Rust PyO3 model wrappers | 176 |
 | Optional extras | 28 |
-| Python test files | 1204 |
+| Python test files | 1206 |
 | Public documentation pages | 569 |
 | GitHub Actions workflows | 19 |
 
@@ -202,6 +202,13 @@ Python, the Rust engine, Julia, Go, and Mojo. Its committed
 `benchmarks/results/bench_adex.json` artefact records exact event parity and a
 `5e-12` voltage-trace envelope; see the
 [AdEx model page](docs/api/models/adex.md) for backend and evidence boundaries.
+
+The ExpIF model exposes the Fourcaud-Trocmé candidate-first RK4 recurrence
+through the same five public paths. Its committed
+`benchmarks/results/local_python_2026-06-16_expif_rk4.json` artefact records
+exact event parity and a `5e-8` voltage-trace envelope; the
+[ExpIF model page](docs/api/models/expif.md) states the fitted defaults,
+Q32.32 co-simulation boundary, and refractory protocol.
 
 When installed, SC-NeuroCore automatically uses the Rust engine for:
 

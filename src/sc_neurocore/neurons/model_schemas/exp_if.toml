@@ -4,7 +4,7 @@
 # © Code 2020–2026 Miroslav Šotek. All rights reserved.
 # ORCID: 0009-0009-3560-0851
 # Contact: www.anulum.li | protoscience@anulum.li
-# SC-NeuroCore — Source/config provenance header
+# SC-NeuroCore — Source-bound Fourcaud-Trocmé ExpIF schema
 
 [metadata]
 schema_version = 1
@@ -12,34 +12,34 @@ name = "Exponential IF"
 author = "Fourcaud-Trocmé, N. et al."
 year = 2003
 doi = "10.1523/JNEUROSCI.23-37-11628.2003"
-description = "Exponential Integrate-and-Fire — sharpened spike initiation with exponential term"
+description = "Deterministic EIF current balance from Equations 6 and 10 with the paper's finite +30 mV simulation cutoff"
 
 [state]
-v = -70.0
+v = -65.0
 
 [parameters]
-v_rest = -70.0
-v_reset = -70.0
-v_threshold = -50.0
-v_peak = 20.0
-delta_t = 2.0
-tau_m = 10.0
-resistance = 1.0
+v_rest = -65.0
+v_reset = -68.0
+v_threshold = 30.0
+v_rh = -59.9
+delta_t = 3.48
+tau = 10.0
 
 [integration]
-dt = 0.1
-method = "euler"
+dt = 0.02
+method = "rk4"
 
 [dynamics]
-v = "(-(v - v_rest) + delta_t * exp((v - v_threshold) / delta_t) + resistance * I) / tau_m"
+v = "(-(min(v, v_threshold) - v_rest) + delta_t * exp((min(v, v_threshold) - v_rh) / delta_t) + I) / tau"
 
 [threshold]
-condition = "v > v_peak"
-detection = "crossing"
+condition = "v >= v_threshold"
+detection = "level"
 
 [reset]
 v = "v_reset"
 
 [extensions]
-spike_shape = "exponential"
-excitability = "Type-II"
+spike_shape = "exponential divergence"
+current_convention = "I is normalised by leak conductance"
+finite_cutoff = "30 mV, following the source simulation protocol"

@@ -2003,6 +2003,7 @@ impl PyExpIFNeuron {
     fn get_state(&self, py: Python<'_>) -> PyResult<Py<PyAny>> {
         let d = PyDict::new(py);
         d.set_item("v", self.inner.v)?;
+        d.set_item("refractory_remaining", self.inner.refractory_remaining)?;
         Ok(d.into_any().unbind())
     }
 }

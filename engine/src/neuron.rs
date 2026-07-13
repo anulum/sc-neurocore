@@ -457,6 +457,8 @@ pub struct ExpIfNeuron {
     pub delta_t: f64,
     pub tau: f64,
     pub dt: f64,
+    pub refractory_period: f64,
+    pub refractory_remaining: f64,
     /// Precomputed 1.0 / delta_t.
     pub inv_delta_t: f64,
     /// Precomputed dt / tau.
@@ -475,13 +477,15 @@ impl ExpIfNeuron {
             v: -65.0,
             v_rest: -65.0,
             v_reset: -68.0,
-            v_threshold: -50.0,
-            v_rh: -55.0,
-            delta_t: 2.0,
-            tau: 20.0,
-            dt: 0.1,
-            inv_delta_t: 1.0 / 2.0,
-            dt_div_tau: 0.1 / 20.0,
+            v_threshold: 30.0,
+            v_rh: -59.9,
+            delta_t: 3.48,
+            tau: 10.0,
+            dt: 0.02,
+            refractory_period: 0.0,
+            refractory_remaining: 0.0,
+            inv_delta_t: 1.0 / 3.48,
+            dt_div_tau: 0.02 / 10.0,
         }
     }
 
@@ -495,20 +499,34 @@ impl ExpIfNeuron {
             || !self.delta_t.is_finite()
             || !self.tau.is_finite()
             || !self.dt.is_finite()
+            || !self.refractory_period.is_finite()
+            || !self.refractory_remaining.is_finite()
             || self.delta_t <= 0.0
             || self.tau <= 0.0
             || self.dt <= 0.0
+            || self.refractory_period < 0.0
+            || self.refractory_remaining < 0.0
+            || self.refractory_remaining > self.refractory_period
+            || self.v_threshold <= self.v_rh
+            || self.v >= self.v_threshold
+            || self.v_rest >= self.v_threshold
+            || self.v_reset >= self.v_threshold
         {
             return 0;
         }
 
-        self.inv_delta_t = 1.0 / self.delta_t;
-        self.dt_div_tau = self.dt / self.tau;
-        let k1 = self.rhs(self.v, current);
-        let k2 = self.rhs(self.v + 0.5 * self.dt * k1, current);
-        let k3 = self.rhs(self.v + 0.5 * self.dt * k2, current);
-        let k4 = self.rhs(self.v + self.dt * k3, current);
-        let next_v = self.v + self.dt * (k1 + 2.0 * k2 + 2.0 * k3 + k4) / 6.0;
+        if self.refractory_remaining > 0.0 {
+            self.refractory_remaining = (self.refractory_remaining - self.dt).max(0.0);
+            self.v = self.v_reset;
+            return 0;
+        }
+
+        let inv_delta_t = 1.0 / self.delta_t;
+        let k1 = self.rhs(self.v, current, inv_delta_t);
+        let k2 = self.rhs(self.v + 0.5 * self.dt * k1, current, inv_delta_t);
+        let k3 = self.rhs(self.v + 0.5 * self.dt * k2, current, inv_delta_t);
+        let k4 = self.rhs(self.v + self.dt * k3, current, inv_delta_t);
+        let next_v = self.v + (self.dt / 6.0) * (k1 + 2.0 * k2 + 2.0 * k3 + k4);
         if !k1.is_finite()
             || !k2.is_finite()
             || !k3.is_finite()
@@ -517,24 +535,32 @@ impl ExpIfNeuron {
         {
             return 0;
         }
-        self.v = next_v;
 
-        if self.v >= self.v_threshold {
+        self.inv_delta_t = inv_delta_t;
+        self.dt_div_tau = self.dt / self.tau;
+        if next_v >= self.v_threshold {
             self.v = self.v_reset;
+            self.refractory_remaining = self.refractory_period;
             1
         } else {
+            self.v = next_v;
             0
         }
     }
 
     pub fn reset(&mut self) {
         self.v = self.v_rest;
+        self.refractory_remaining = 0.0;
     }
 
-    fn rhs(&self, v: f64, current: f64) -> f64 {
-        let exp_arg = ((v - self.v_rh) * self.inv_delta_t).clamp(-20.0, 20.0);
+    fn rhs(&self, v: f64, current: f64, inv_delta_t: f64) -> f64 {
+        if !v.is_finite() {
+            return f64::NAN;
+        }
+        let bounded_v = v.min(self.v_threshold);
+        let exp_arg = (bounded_v - self.v_rh) * inv_delta_t;
         let exp_term = self.delta_t * exp_arg.exp();
-        (-(v - self.v_rest) + exp_term + current) / self.tau
+        (-(bounded_v - self.v_rest) + exp_term + current) / self.tau
     }
 }
 
@@ -613,14 +639,15 @@ mod tests {
         let current = 10.0;
 
         let rhs = |v: f64| {
-            let exp_arg = ((v - n.v_rh) / n.delta_t).clamp(-20.0, 20.0);
-            (-(v - n.v_rest) + n.delta_t * exp_arg.exp() + current) / n.tau
+            let bounded_v = v.min(n.v_threshold);
+            let exp_arg = (bounded_v - n.v_rh) / n.delta_t;
+            (-(bounded_v - n.v_rest) + n.delta_t * exp_arg.exp() + current) / n.tau
         };
         let k1 = rhs(n.v);
         let k2 = rhs(n.v + 0.5 * n.dt * k1);
         let k3 = rhs(n.v + 0.5 * n.dt * k2);
         let k4 = rhs(n.v + n.dt * k3);
-        let expected_dv = n.dt * (k1 + 2.0 * k2 + 2.0 * k3 + k4) / 6.0;
+        let expected_dv = (n.dt / 6.0) * (k1 + 2.0 * k2 + 2.0 * k3 + k4);
 
         n.step(current);
         let got_dv = n.v - (-60.0); // Simple check since we only did one step
@@ -976,15 +1003,16 @@ mod tests {
         n.dt = 0.25;
         n.tau = 20.0;
         let rhs = |v: f64, s: &ExpIfNeuron, current: f64| {
-            let exp_arg = ((v - s.v_rh) / s.delta_t).clamp(-20.0, 20.0);
-            (-(v - s.v_rest) + s.delta_t * exp_arg.exp() + current) / s.tau
+            let bounded_v = v.min(s.v_threshold);
+            let exp_arg = (bounded_v - s.v_rh) / s.delta_t;
+            (-(bounded_v - s.v_rest) + s.delta_t * exp_arg.exp() + current) / s.tau
         };
         let current = 12.0;
         let k1 = rhs(n.v, &n, current);
         let k2 = rhs(n.v + 0.5 * n.dt * k1, &n, current);
         let k3 = rhs(n.v + 0.5 * n.dt * k2, &n, current);
         let k4 = rhs(n.v + n.dt * k3, &n, current);
-        let expected = n.v + n.dt * (k1 + 2.0 * k2 + 2.0 * k3 + k4) / 6.0;
+        let expected = n.v + (n.dt / 6.0) * (k1 + 2.0 * k2 + 2.0 * k3 + k4);
 
         assert_eq!(n.step(current), 0);
         assert!((n.v - expected).abs() < 1e-12);
@@ -1129,16 +1157,30 @@ mod tests {
     }
 
     #[test]
-    fn expif_fires_more_than_adex() {
-        // ExpIF has no adaptation, should fire at least as much as AdEx
-        let mut eif = ExpIfNeuron::new();
-        let mut adex = AdExNeuron::new();
-        let eif_spikes: i32 = (0..5000).map(|_| eif.step(500.0)).sum();
-        let adex_spikes: i32 = (0..5000).map(|_| adex.step(500.0)).sum();
-        assert!(
-            eif_spikes >= adex_spikes,
-            "ExpIF ({eif_spikes}) should fire >= AdEx ({adex_spikes}) due to no adaptation"
-        );
+    fn expif_enrolled_event_counts() {
+        for (current, expected) in [(0.0, 0), (5.0, 0), (20.0, 2)] {
+            let mut neuron = ExpIfNeuron::new();
+            let spikes: i32 = (0..1000).map(|_| neuron.step(current)).sum();
+            assert_eq!(spikes, expected, "current={current}");
+        }
+    }
+
+    #[test]
+    fn expif_refractory_hold_and_fail_closed_state() {
+        let mut neuron = ExpIfNeuron::new();
+        neuron.refractory_period = 1.7;
+        while neuron.step(50.0) == 0 {}
+        assert_eq!(neuron.refractory_remaining, 1.7);
+        for _ in 0..10 {
+            assert_eq!(neuron.step(50.0), 0);
+            assert_eq!(neuron.v, neuron.v_reset);
+        }
+        assert!((neuron.refractory_remaining - 1.5).abs() < 1.0e-12);
+
+        let before = (neuron.v, neuron.refractory_remaining);
+        neuron.refractory_remaining = 2.0;
+        assert_eq!(neuron.step(0.0), 0);
+        assert_eq!((neuron.v, neuron.refractory_remaining), (before.0, 2.0));
     }
 
     #[test]

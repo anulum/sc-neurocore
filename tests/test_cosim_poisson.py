@@ -24,7 +24,6 @@ _COSIM_MODELS = [
     "perfect_integrator",
 ]
 _TRANSCENDENTAL_COSIM_MODELS = ["theta"]
-_SCHEMA_GAP_COMPILE_ONLY = ["exp_if"]
 _SCHEMA_GAP_STOCHASTIC = ["poisson"]
 
 
@@ -49,4 +48,3 @@ class TestSchemaGapModelCosim:
         assert neuron.extensions.get("stochastic") is True
         assert model_name not in _COSIM_MODELS
         assert model_name not in _TRANSCENDENTAL_COSIM_MODELS
-        assert model_name not in _SCHEMA_GAP_COMPILE_ONLY

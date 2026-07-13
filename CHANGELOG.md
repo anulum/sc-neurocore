@@ -29,6 +29,18 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
   local regression diagnostics rather than throughput claims. Rust, Go,
   Julia, and Mojo are not applicable to this typed metadata/orchestration
   refactor; model-dynamics kernels remain unchanged.
+- Replaced the historical ExpIF approximation with the Fourcaud-Trocmé (2003)
+  exponential integrate-and-fire recurrence, candidate-first RK4 integration,
+  the fitted `-65/-68/-59.9/3.48/10` mV/ms parameter set, the paper's
+  `+30 mV` finite event cutoff, and its optional `1.7 ms` refractory
+  protocol. Python, Rust safety, the Rust engine, Go, Julia, and Mojo now share
+  the maintained event surface and fail closed on invalid state or candidates.
+- Added source-bound five-backend ExpIF parity, benchmark, reference,
+  descriptor, and Python-to-Verilog evidence. The compiled paths preserve
+  `0/0/2` events at `I=0/5/20` over 1,000 steps, the committed 100,000-step
+  run records 523 events in every lane within a `5e-8` voltage envelope, and
+  hand/TOML/JSON/Q32.32 co-simulation preserves the enrolled event counts. The
+  S5/H1 descriptor is linked to a generated depth-4 Z3 proof.
 - Completed the AdEx baseline-Euler acceleration chain across Rust safety, the
   Rust engine, Go, Julia, and Mojo, and exposed Julia/Go/Mojo through the public
   `simulate()` dispatcher. The compiled paths preserve the `0/4/12` event

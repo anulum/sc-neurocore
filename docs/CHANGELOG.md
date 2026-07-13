@@ -26,6 +26,27 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
   this typed NIR metadata and FPGA-orchestration refactor; neuron-dynamics
   implementations are unchanged.
 
+### ExpIF source-to-silicon fidelity closure
+- Bound `ExpIFNeuron` to Fourcaud-Trocmé et al. (2003), Eqs. 6 and 10, DOI
+  `10.1523/JNEUROSCI.23-37-11628.2003`. Python, Rust safety, the Rust engine,
+  Go, Julia, and Mojo now share the candidate-first RK4 recurrence, fitted
+  defaults, `+30 mV` finite cutoff, and fail-closed event handling. The
+  optional `1.7 ms` fitted refractory protocol remains explicit rather than
+  changing the zero-refractory catalogue default.
+- Dedicated production-boundary tests preserve `0/0/2` events at
+  `I=0/5/20` over 1,000 steps. Compiled traces stay within `5e-8` of Python;
+  Rust, Julia, Go, and Mojo expose real executable paths, while the Rust engine
+  boundary remains factory-default-only.
+- Replaced the resting approximation trace with an independently integrated
+  DOI-bound driven trace. Hand, TOML, JSON, and generated Q32.32 RTL preserve
+  the enrolled event counts; Q16.16 is explicitly excluded. The S5/H1
+  descriptor, readiness index, catalogue RTL, and depth-4 Z3 proof are
+  cross-wired, moving the formal catalogue from 26 to 27 jobs.
+- Added a source-hashed, single-logical-CPU five-backend benchmark. The
+  committed powersave-governor run records 523 events in every lane and a
+  maximum voltage difference below `5e-8`; its loaded-host timings are local
+  regression evidence rather than a throughput claim.
+
 ### AdEx five-backend baseline-Euler closure
 - Added executable Rust-safety, Go, Julia, and Mojo recurrence coverage around
   the maintained Python AdEx model and Rust engine path. Public dispatch carries

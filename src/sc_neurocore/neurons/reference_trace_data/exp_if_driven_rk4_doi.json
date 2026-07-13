@@ -1,33 +1,33 @@
 {
   "schema_version": "sc-neurocore.reference-trace.v1",
-  "name": "exp_if_resting_exponential_doi",
+  "name": "exp_if_driven_rk4_doi",
   "model": {
     "schema_name": "exp_if",
     "runner": "universal_dsl"
   },
   "protocol": {
-    "dt": 0.1,
-    "steps": 80,
+    "dt": 0.02,
+    "steps": 1000,
     "inputs": {
-      "I": 0.0
+      "I": 20.0
     },
     "state_variables": [
       "v"
     ]
   },
   "provenance": {
-    "kind": "independent_euler_reference",
+    "kind": "independent_rk4_reference",
     "source": "src/sc_neurocore/neurons/model_schemas/exp_if.toml",
-    "equation": "Zero-current exponential integrate-and-fire resting trace; the exponential membrane equation is advanced with the exact explicit-Euler recurrence, independently re-derived from the Fourcaud-Trocme (2003) model definition (spike peak not reached).",
+    "equation": "Driven deterministic EIF trace re-derived from Fourcaud-Trocme et al. (2003), Equations 6 and 10: fitted leak, exponential threshold and slope, +30 mV finite simulation cutoff, reset, and candidate-first RK4.",
     "citation": "doi:10.1523/JNEUROSCI.23-37-11628.2003"
   },
   "expected_features": {
-    "spike_count": 0.0,
-    "first_spike_step": -1.0,
-    "final.v": -69.99994983439869,
-    "min.v": -69.9999990920014,
-    "max.v": -69.99994983439869,
-    "mean.v": -69.99997127879661
+    "spike_count": 2.0,
+    "first_spike_step": 353.0,
+    "final.v": -59.00168087076545,
+    "min.v": -68.0,
+    "max.v": -16.54655951959612,
+    "mean.v": -59.45147602660842
   },
   "tolerances": {
     "default": {

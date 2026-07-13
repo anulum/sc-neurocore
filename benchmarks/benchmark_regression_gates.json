@@ -250,62 +250,78 @@
     },
     {
       "artefact": "benchmarks/results/local_python_2026-06-16_expif_rk4.json",
+      "description": "Source-bound Fourcaud-Trocmé ExpIF candidate-first RK4 five-backend simulation evidence.",
       "expected_values": {
-        "spdx_license": "AGPL-3.0-or-later",
-        "benchmark": "ExpIFNeuron candidate-first RK4 step",
-        "evidence_class": "local_regression_non_isolated",
-        "production_speed_claim": false,
-        "hardware_measurement_claimed": false
+        "backends.go.event_count_matches_python": true,
+        "backends.julia.event_count_matches_python": true,
+        "backends.mojo.event_count_matches_python": true,
+        "backends.rust.event_count_matches_python": true,
+        "kernel": "expif_fourcaud_rk4_simulate",
+        "meta.single_cpu_pinned": true,
+        "schema_version": "sc-neurocore.polyglot-benchmark.v1",
+        "workload.current": 50.0,
+        "workload.n_steps": 100000,
+        "workload.repeats": 7,
+        "workload.trace_atol": 5e-08
       },
       "id": "expif-rk4-multibackend-local-regression",
-      "required_numbers": [
-        "backend_summary.python.median_ns_per_step",
-        "backend_summary.python.min_ns_per_step",
-        "backend_summary.python.max_ns_per_step",
-        "backend_summary.python.spikes",
-        "backend_summary.rust.median_ns_per_step",
-        "backend_summary.rust.min_ns_per_step",
-        "backend_summary.rust.max_ns_per_step",
-        "backend_summary.rust.spikes",
-        "backend_summary.go.median_ns_per_step",
-        "backend_summary.go.min_ns_per_step",
-        "backend_summary.go.max_ns_per_step",
-        "backend_summary.go.spikes",
-        "backend_summary.julia.median_ns_per_step",
-        "backend_summary.julia.min_ns_per_step",
-        "backend_summary.julia.max_ns_per_step",
-        "backend_summary.julia.spikes",
-        "backend_summary.mojo.median_ns_per_step",
-        "backend_summary.mojo.min_ns_per_step",
-        "backend_summary.mojo.max_ns_per_step",
-        "backend_summary.mojo.spikes",
-        "steps",
-        "repeats",
-        "current"
-      ],
       "parity_groups": [
         {
           "paths": [
-            "backend_summary.python.spikes",
-            "backend_summary.rust.spikes",
-            "backend_summary.go.spikes",
-            "backend_summary.julia.spikes",
-            "backend_summary.mojo.spikes"
+            "backends.python.event_count",
+            "backends.rust.event_count",
+            "backends.julia.event_count",
+            "backends.go.event_count",
+            "backends.mojo.event_count"
           ],
-          "tolerance": 0
+          "tolerance": 0.0
         }
+      ],
+      "regression_limits": {
+        "backends.go.parity_max_abs_diff": {
+          "max": 5e-08
+        },
+        "backends.julia.parity_max_abs_diff": {
+          "max": 5e-08
+        },
+        "backends.mojo.parity_max_abs_diff": {
+          "max": 5e-08
+        },
+        "backends.rust.parity_max_abs_diff": {
+          "max": 5e-08
+        }
+      },
+      "required_numbers": [
+        "backends.python.median_call_ms",
+        "backends.python.minimum_call_ms",
+        "backends.python.parity_max_abs_diff",
+        "backends.python.event_count",
+        "backends.rust.median_call_ms",
+        "backends.rust.minimum_call_ms",
+        "backends.rust.parity_max_abs_diff",
+        "backends.rust.event_count",
+        "backends.julia.median_call_ms",
+        "backends.julia.minimum_call_ms",
+        "backends.julia.parity_max_abs_diff",
+        "backends.julia.event_count",
+        "backends.go.median_call_ms",
+        "backends.go.minimum_call_ms",
+        "backends.go.parity_max_abs_diff",
+        "backends.go.event_count",
+        "backends.mojo.median_call_ms",
+        "backends.mojo.minimum_call_ms",
+        "backends.mojo.parity_max_abs_diff",
+        "backends.mojo.event_count"
       ],
       "source_hashes": {
         "benchmarks/bench_model_expif.py": "source_hashes.benchmarks/bench_model_expif.py",
-        "engine/Cargo.toml": "source_hashes.engine/Cargo.toml",
-        "engine/examples/bench_expif_rk4.rs": "source_hashes.engine/examples/bench_expif_rk4.rs",
         "engine/src/neuron.rs": "source_hashes.engine/src/neuron.rs",
-        "src/sc_neurocore/neurons/models/expif.py": "source_hashes.src/sc_neurocore/neurons/models/expif.py",
+        "src/sc_neurocore/accel/go/neurons/expif/expif.go": "source_hashes.src/sc_neurocore/accel/go/neurons/expif/expif.go",
         "src/sc_neurocore/accel/go/services/expif.go": "source_hashes.src/sc_neurocore/accel/go/services/expif.go",
-        "src/sc_neurocore/accel/go/services/expif_test.go": "source_hashes.src/sc_neurocore/accel/go/services/expif_test.go",
         "src/sc_neurocore/accel/julia/neurons/expif.jl": "source_hashes.src/sc_neurocore/accel/julia/neurons/expif.jl",
         "src/sc_neurocore/accel/mojo/kernels/expif.mojo": "source_hashes.src/sc_neurocore/accel/mojo/kernels/expif.mojo",
-        "src/sc_neurocore/accel/rust/safety/expif.rs": "source_hashes.src/sc_neurocore/accel/rust/safety/expif.rs"
+        "src/sc_neurocore/accel/rust/safety/expif.rs": "source_hashes.src/sc_neurocore/accel/rust/safety/expif.rs",
+        "src/sc_neurocore/neurons/models/expif.py": "source_hashes.src/sc_neurocore/neurons/models/expif.py"
       }
     },
     {

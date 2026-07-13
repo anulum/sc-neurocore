@@ -62,6 +62,23 @@ def test_emitter_lists_every_perfect_model() -> None:
     assert not missing, f"perfect models missing from formal emitter: {sorted(missing)}"
 
 
+def test_expif_formal_job_uses_enrolled_q3232_precision() -> None:
+    """Keep the formal job aligned with the proven ExpIF fixed-point envelope."""
+    import importlib.util
+
+    name = "emit_catalogue_formal_expif_precision"
+    spec = importlib.util.spec_from_file_location(name, EMITTER)
+    assert spec is not None and spec.loader is not None
+    module = importlib.util.module_from_spec(spec)
+    sys.modules[name] = module
+    spec.loader.exec_module(module)
+
+    assert module.CLASS_TO_SCHEMA["ExpIFNeuron"] == "exp_if"
+    assert module.PRECISION_BY_SCHEMA["exp_if"] == (64, 32)
+    assert module.DEPTH_BY_SCHEMA["exp_if"] == 4
+    assert "exp_if" in module.MINIMAL_SAFETY_SCHEMAS
+
+
 def test_catalogue_formal_inventory_matches_perfect_count() -> None:
     """Committed catalogue jobs equal the number of dual-axis perfect models."""
     sby_jobs = sorted(CATALOGUE.glob("*.sby"))

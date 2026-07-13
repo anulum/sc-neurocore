@@ -1703,16 +1703,14 @@ def _adex_subthreshold_euler_features(*, current: float, dt: float, steps: int) 
     return _summarise({"v": v_values, "w": w_values}, spikes)
 
 
-def _exp_if_subthreshold_euler_features(
-    *, current: float, dt: float, steps: int
-) -> dict[str, float]:
-    """Return exact explicit-Euler features for the resting exponential-IF recurrence.
+def _exp_if_rk4_features(*, current: float, dt: float, steps: int) -> dict[str, float]:
+    """Return independent RK4 features for the source-bound driven EIF recurrence.
 
-    The Fourcaud-Trocme (2003) exponential integrate-and-fire membrane equation is
-    advanced with the same explicit-Euler update the schema runner applies. For the
-    resting zero-current protocol the ``v > 20`` peak is never reached, so the
-    ``v = v_reset`` reset stays inactive and the reference is an independent
-    re-derivation of the committed quiet trajectory.
+    Fourcaud-Trocmé et al. (2003), Equations 6 and 10, define the leak plus
+    exponential current. This re-derivation uses the fitted ``V_T``, slope,
+    leak, reset and the paper's ``+30 mV`` finite simulation cutoff. RK4 stages
+    are bounded at that event surface, matching the maintained deterministic
+    recurrence without importing the hand model or the schema runner.
 
     Parameters
     ----------
@@ -1726,25 +1724,31 @@ def _exp_if_subthreshold_euler_features(
     Returns
     -------
     dict of str to float
-        Reference feature map for the ``v`` state variable plus spike-count and
-        first-spike-step features.
+        Reference feature map for voltage, spike count, and first-spike step.
     """
-    v_rest = -70.0
-    v_reset = -70.0
-    v_threshold = -50.0
-    v_peak = 20.0
-    delta_t = 2.0
-    tau_m = 10.0
-    resistance = 1.0
-    v = -70.0
+    v_rest = -65.0
+    v_reset = -68.0
+    v_threshold = 30.0
+    v_rh = -59.9
+    delta_t = 3.48
+    tau = 10.0
+    v = -65.0
     v_values: list[float] = []
     spikes: list[int] = []
+
+    def rhs(stage_v: float) -> float:
+        bounded_v = min(stage_v, v_threshold)
+        return (
+            -(bounded_v - v_rest) + delta_t * math.exp((bounded_v - v_rh) / delta_t) + current
+        ) / tau
+
     for _ in range(steps):
-        dv = (
-            -(v - v_rest) + delta_t * math.exp((v - v_threshold) / delta_t) + resistance * current
-        ) / tau_m
-        v_next = v + dv * dt
-        if v_next > v_peak:
+        k1 = rhs(v)
+        k2 = rhs(v + 0.5 * dt * k1)
+        k3 = rhs(v + 0.5 * dt * k2)
+        k4 = rhs(v + dt * k3)
+        v_next = v + (dt / 6.0) * (k1 + 2.0 * k2 + 2.0 * k3 + k4)
+        if v_next >= v_threshold:
             spikes.append(1)
             v_next = v_reset
         else:

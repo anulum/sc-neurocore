@@ -21410,13 +21410,56 @@ Reference: Gerstner, W. (2000). Neural Comput. 12:43–89.
 ## Module `neurons.models.expif`
 
 ### Class `ExpIFNeuron`
-Exponential IF (no adaptation). Fourcaud-Trocmé et al. 2003.
+Fourcaud-Trocmé exponential integrate-and-fire neuron.
 
-Reference: Fourcaud-Trocmé, N. et al. (2003). J. Neurosci. 23:11628–11640.
+The deterministic voltage flow is
+
+``tau * dv/dt = -(v - v_rest) + delta_t * exp((v - v_rh) / delta_t) + current``.
+
+``v_rh`` is the soft threshold of the exponential current;
+``v_threshold`` is the finite numerical cutoff at which a spike is emitted
+and ``v`` resets. Runge-Kutta stages are bounded at that event surface, so
+stages that overshoot the cutoff cannot evaluate an irrelevant divergent
+voltage. ``refractory_period=1.7`` reproduces the refractory duration used
+for the paper's fitted Wang-Buzsáki comparison; the zero default is the
+deterministic schema-to-RTL contract.
+
+Parameters
+----------
+v:
+    Initial membrane voltage in millivolts.
+v_rest:
+    Leak reversal voltage in millivolts.
+v_reset:
+    Post-spike reset voltage in millivolts.
+v_threshold:
+    Finite numerical spike cutoff in millivolts.
+v_rh:
+    Soft exponential threshold in millivolts.
+delta_t:
+    Positive exponential slope factor in millivolts.
+tau:
+    Positive membrane time constant in milliseconds.
+dt:
+    Positive integration timestep in milliseconds.
+refractory_period:
+    Non-negative post-spike hold duration in milliseconds.
+refractory_remaining:
+    Non-negative runtime remainder of the refractory hold.
+
+References
+----------
+Fourcaud-Trocmé, N., Hansel, D., van Vreeswijk, C. & Brunel, N.
+(2003). *Journal of Neuroscience*, 23(37), 11628–11640.
+doi:10.1523/JNEUROSCI.23-37-11628.2003.
 
 - **__post_init__**()
 - **step**(current)
+  - Advance one timestep and return ``1`` on a spike, otherwise ``0``.
+- **simulate**(n_steps, current, backend)
+  - Advance a sequential trace through Python, Rust, Julia, Go, or Mojo.
 - **reset**()
+  - Restore resting voltage and clear any refractory hold.
 
 ---
 

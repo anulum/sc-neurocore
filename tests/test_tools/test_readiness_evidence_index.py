@@ -66,6 +66,15 @@ def test_enrolled_class_names_exist_in_descriptor_corpus(tool: ModuleType) -> No
     assert missing == [], f"missing descriptors: {missing}"
 
 
+def test_expif_is_enrolled_at_q3232_cosim_tier(tool: ModuleType) -> None:
+    """ExpIF no longer inherits the obsolete compile-only schema-gap claim."""
+    expif = next(e for e in tool.ENROLLED if e.class_name == "ExpIFNeuron")
+    assert expif.level == "h1_cosim"
+    assert expif.evidence == "tests/test_cosim_exp_if.py::test_expif_q3232_spike_parity"
+    assert "Q32.32" in expif.operating_point
+    assert "0/0/1/2/5/9" in expif.tolerance
+
+
 def test_build_rows_returns_one_row_per_enrolled(tool: ModuleType) -> None:
     """Inventory length matches the curated enrolment table."""
     rows = tool.build_rows()

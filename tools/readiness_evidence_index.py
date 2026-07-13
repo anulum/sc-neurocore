@@ -294,10 +294,13 @@ ENROLLED: tuple[EnrolledEvidence, ...] = (
     EnrolledEvidence(
         schema_name="exp_if",
         class_name="ExpIFNeuron",
-        level="h0_compile",
-        evidence="tests/test_cosimulation.py::TestSchemaGapModelCosim::_SCHEMA_GAP_COMPILE_ONLY",
-        operating_point="schema-DSL exp_if; iverilog-valid RTL only",
-        tolerance="compile-only (no spike-parity claim)",
+        level="h1_cosim",
+        evidence="tests/test_cosim_exp_if.py::test_expif_q3232_spike_parity",
+        operating_point=(
+            "Fourcaud-Trocme deterministic EIF; hand/TOML/JSON/Q32.32 RTL; "
+            "1000 RK4 steps at I=0,5,10,20,50,100"
+        ),
+        tolerance=("exact event counts 0/0/1/2/5/9; hand/TOML/JSON float envelope below 2e-10"),
     ),
     EnrolledEvidence(
         schema_name="hindmarsh_rose",

@@ -971,7 +971,7 @@
     "python_model_classes": 158,
     "python_model_source_modules": 153,
     "rust_pyo3_model_wrappers": 176,
-    "test_files": 1204
+    "test_files": 1206
   },
   "documentation": {
     "public_pages": [
@@ -2910,6 +2910,7 @@
       "tests/test_bench_cli_startup.py",
       "tests/test_bench_connor_stevens_mojo.py",
       "tests/test_bench_dna_mapper_import.py",
+      "tests/test_bench_expif.py",
       "tests/test_bench_hodgkin_huxley_mojo.py",
       "tests/test_bench_quantum_annealing_modularisation.py",
       "tests/test_bench_safety_certification.py",
@@ -3146,6 +3147,7 @@
       "tests/test_experimental_runner.py",
       "tests/test_experiments_bitstream_drive_contract.py",
       "tests/test_experiments_convergence_bundle_contract.py",
+      "tests/test_expif_backends.py",
       "tests/test_explain.py",
       "tests/test_explainability/test_explainability.py",
       "tests/test_explainability/test_explainability_validation.py",
