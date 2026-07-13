@@ -19,6 +19,7 @@ class OptionalCiLane(NamedTuple):
 
     name: str
     install_extra: str
+    requirements: str
     apt_packages: str
     test_selector: str
 
@@ -27,18 +28,21 @@ OPTIONAL_CI_LANES = (
     OptionalCiLane(
         name="annealing",
         install_extra=".[dev,annealing]",
+        requirements="requirements/ci-annealing.txt",
         apt_packages="",
         test_selector="tests/test_bridges/test_quantum_annealing_neal_parity.py",
     ),
     OptionalCiLane(
         name="onnx-protobuf",
         install_extra=".[dev]",
+        requirements="requirements/ci-dev.txt",
         apt_packages="",
         test_selector="tests/test_export/test_onnx_exporter.py",
     ),
     OptionalCiLane(
         name="mpi",
         install_extra=".[dev,mpi]",
+        requirements="requirements/ci-mpi.txt",
         apt_packages="libopenmpi-dev openmpi-bin",
         test_selector="tests/test_mpi_runner_real.py",
     ),
@@ -84,7 +88,8 @@ def test_optics_extra_ci_job_installs_profile_and_runs_selector() -> None:
 
     assert job["runs-on"] == "ubuntu-latest"
     assert job["env"]["PYTHONPATH"] == "src:."
-    assert 'python -m pip install -e ".[dev,optics]"' in run_text
+    assert "python tools/ci_install_editable_only.py" in run_text
+    assert "python -m pip install --require-hashes -r requirements/ci-optics.txt" in run_text
     assert "python -m pytest tests/test_optics -q -rs" in run_text
 
 
@@ -99,12 +104,13 @@ def test_optional_extra_ci_matrix_runs_import_skipped_selectors() -> None:
     assert job["runs-on"] == "ubuntu-latest"
     assert job["env"]["PYTHONPATH"] == "src:."
     assert job["strategy"]["fail-fast"] is False
-    assert 'python -m pip install -e "${{ matrix.install_extra }}"' in run_text
+    assert "python tools/ci_install_editable_only.py" in run_text
+    assert 'python -m pip install --require-hashes -r "${{ matrix.requirements }}"' in run_text
     assert "python -m pytest ${{ matrix.test_selector }} -q -rs" in run_text
     assert "sudo apt-get install -y -qq ${{ matrix.apt_packages }}" in run_text
 
     for lane in OPTIONAL_CI_LANES:
-        assert rows[lane.name]["install_extra"] == lane.install_extra
+        assert rows[lane.name]["requirements"] == lane.requirements
         assert rows[lane.name]["apt_packages"] == lane.apt_packages
         assert rows[lane.name]["test_selector"] == lane.test_selector
 
