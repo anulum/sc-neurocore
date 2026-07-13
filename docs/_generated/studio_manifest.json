@@ -82,7 +82,7 @@
     "boundaries": {
       "bounded": [
         "Network Rust/MPI paths cover a subset (plasticity/FIM/spike-gating are Python-only)",
-        "polyglot julia/go/mojo kernels are real but reachable only per-package, not via the canonical selector"
+        "julia/go/mojo per-package surfaces are mixed research prototypes; generated scaffolds are not execution authority and require per-module compile/parity evidence"
       ],
       "closed": [
         "speculative sci-fi modules are NOT in src/ (confined to repo-root research/, not importable as sc_neurocore.*)"
@@ -197,6 +197,12 @@
         "domain": "EDA / ASIC / verification",
         "name": "chiplet",
         "status": "library-only",
+        "tier": "core"
+      },
+      {
+        "domain": "Interop, serving & deployment",
+        "name": "cli",
+        "status": "wired",
         "tier": "core"
       },
       {
@@ -652,7 +658,7 @@
       {
         "domain": "EDA / ASIC / verification",
         "name": "safety_cert",
-        "status": "stub",
+        "status": "library-only",
         "tier": "core"
       },
       {
