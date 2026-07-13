@@ -5,6 +5,30 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 ## [Unreleased]
 
 ### Added
+- Replaced the 1,378-line Bioware implementation and 1,139-line primary test
+  file with a 129-line historical facade, nine responsibility modules, shared
+  validation, and 13 focused test modules. The largest implementation and test
+  files are 296 and 253 lines. Package-root and historical imports reuse the
+  same objects, qualified names and pickle paths remain stable, and the
+  responsibility graph is acyclic. The focused suite passes 200 tests with
+  exact 100 percent coverage over 1,052 statements and 384 branches; strict
+  MyPy, Ruff, NumPy docstrings, and architecture contracts pass.
+- Hardened biological-interface contracts around finite MEA matrices, fixed
+  16-bit AER epochs without silent wraparound, deterministic LFSR windows,
+  area-aware optical-power accounting, deterministic spike sorting, ordered
+  audit checksums, bounded Q8.8 state, and transactional session round counts.
+  Documentation now distinguishes research heuristics from safety or clinical
+  claims, records the pharmacology wash field as reserved, and identifies the
+  legacy `energy_mw` metric as an optimisation proxy.
+- Removed generated Bioware mirrors that did not implement executable parity:
+  empty Go functions, non-parsing Julia syntax, Mojo string/zero placeholders,
+  and Rust return-zero dead code. A source-bound 30-sample parent/candidate
+  benchmark proves the maintained deterministic pipeline remains identical at
+  6,865 bytes and SHA-256
+  `2491dc73a2de93a45a1cc944539c170b151403e42b973b18806143f318b7d669`.
+  Loaded-host timings regressed locally and are retained only as diagnostic
+  context, not performance claims; independent Julia plasticity solvers remain
+  separate from the Python-only orchestration.
 - Replaced the 1,414-line NIR hardware-graph implementation and three primary
   test files totalling 4,091 lines with an 84-line historical facade, seven
   acyclic responsibility modules, and 40 focused test/support modules. All 28

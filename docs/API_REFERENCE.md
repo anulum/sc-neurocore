@@ -3240,21 +3240,7 @@ ranked_indices : int64 array — gene indices sorted by weighted expression
 
 ---
 
-## Module `bioware.bioware`
-
-### Class `MEALayout`
-Standard MEA electrode layouts.
-
-
-### Class `MEAConfig`
-Multi-electrode array configuration.
-
-- **from_layout**(cls, layout)
-  - Create a configuration preset for a standard MEA layout.
-
-### Class `DetectedSpike`
-One detected spike event from MEA data.
-
+## Module `bioware.bioware_acquisition`
 
 ### Class `SpikeDetector`
 Threshold-based spike detector for MEA voltage traces.
@@ -3263,129 +3249,60 @@ Uses adaptive threshold: threshold = mean ± sigma * noise_estimate
 where noise_estimate = median(|x|) / 0.6745 (robust RMS).
 Supports configurable refractory period to prevent double-counting.
 
+- **__post_init__**()
+  - Validate detector configuration and refractory interval.
 - **estimate_noise**(voltage_data)
   - Estimate per-channel noise from voltage data.
 - **detect**(voltage_data, snippet_ms)
   - Detect spikes in multi-channel voltage data.
 
-### Class `AEREvent`
-Address-Event Representation packet.
-
-Compatible with sc_aer_encoder.v format:
-{valid, neuron_id, timestamp}
-
-
-### Class `MEAToAERTranscoder`
-Converts MEA spike events to AER events for hardware.
-
-Maps biological electrode channels to AER neuron IDs,
-converting real-time timestamps to hardware clock ticks.
-
-- **transcode**(spikes, t_start_s)
-  - Convert detected spikes to AER events.
-
-### Class `AERToSCConverter`
-Converts AER event streams to SC bitstreams.
-
-Uses a time-windowed rate code: count events per neuron per window,
-then LFSR-encode the resulting firing probabilities.
-
-- **convert**(events)
-  - Convert AER events to per-neuron SC bitstreams.
-
-### Class `StimProtocol`
-Optogenetic stimulation protocols.
-
-
-### Class `OptogeneticPulse`
-One optical stimulation pulse.
-
-
-### Class `SCToOptoEncoder`
-Encodes SC bitstream output as optogenetic pulse sequences.
-
-Maps SC bitstream density to optical stimulation intensity,
-enabling closed-loop feedback from in-silico → biological.
-Enforces total power budget for tissue safety.
-
-- **encode**(bitstreams, t_start_ms)
-  - Convert SC bitstreams to optogenetic pulses.
-
-### Class `BiologicalSTDP`
-Spike-Timing-Dependent Plasticity adapter for bio-hybrid loops.
-
-Bridges biological STDP time constants (∼20 ms) to SC clock
-rates (MHz) via a time-scaling factor. Computes ΔW from
-pre/post spike timing in biological time, then converts to
-Q8.8 weight updates for the SC domain.
-
-- **compute_dw**(dt_ms)
-  - Compute weight change from spike timing difference.
-- **update_weight**(current_q88, dt_ms)
-  - Update Q8.8 weight from spike timing.
-
-### Class `BCMPlasticity`
-Bienenstock-Cooper-Munro plasticity adapter.
-
-Implements sliding-threshold BCM rule where the modification
-threshold θ tracks the postsynaptic firing rate. Converts
-biological firing rates to Q8.8 weight deltas.
-
-- **update_theta**(post_rate_hz, dt_ms)
-  - Update the sliding threshold from postsynaptic activity.
-- **compute_dw**(pre_rate_hz, post_rate_hz)
-  - BCM weight change: ΔW = η * x * y * (y - θ).
-- **update_weight**(current_q88, pre_rate, post_rate)
-  - Apply the BCM update to a saturated Q8.8 synaptic weight.
-
-### Class `CultureHealth`
-Monitor organoid/culture viability from MEA activity.
-
-- **assess**(spike_counts, duration_s)
-  - Assess culture health from spike activity.
-
-### Class `BioHybridFrameResult`
-Strictly typed output packet detailing a full closed-loop step.
-
-Behaves both as a dataclass (``result.round``) and, for backward
-compatibility with pre-dataclass callers, as a mapping view of its
-fields (``result&#91;"round"&#93;``, ``"latency_us" in result``,
-``dict(result)``). The mapping surface is read-only.
-
-- **__getitem__**(key)
-  - Return a dataclass field through the legacy mapping interface.
-- **__contains__**(key)
-  - Return whether ``key`` names a public result field.
-- **keys**()
-  - Return the mapping-view field names in dataclass declaration order.
-
-### Class `BioHybridSession`
-Manages a complete bio-hybrid experiment session.
-
-Orchestrates: MEA recording → spike detection → AER transcoding →
-SC processing → optogenetic feedback → plasticity update.
-
-- **process_frame**(voltage_data, t_start_s, stim_times_s)
-  - Process one MEA data frame through the full pipeline.
-
 ### Class `SpikeSorter`
 Research spike sorter using PCA feature extraction and K-Means clustering.
 
-Extracts the dominant principal components from the input raw waveforms, and cleanly
-separates units. Handles missing datasets explicitly natively. Requires `scikit-learn` to execute correctly.
+Projects uniform waveforms onto their dominant principal components before
+clustering them into units. Fitting requires the optional ``scikit-learn``
+dependency; incomplete waveform sets remain explicitly unassigned.
 
+- **__post_init__**()
+  - Validate cluster count, projection width, and deterministic seed.
 - **fit**(spikes)
   - Fit PCA and KMeans models sequentially on available waveforms.
 - **assign**(spikes)
   - Assign cluster IDs based on PCA feature projections.
 
+### Class `ArtifactRejector`
+Blanks stimulation artifacts from voltage data.
+
+Zeros the voltage trace in a window around each stimulation onset.
+
+- **__post_init__**()
+  - Validate non-negative artifact-blanking intervals.
+- **blank**(voltage_data, stim_times_s, sample_rate_hz)
+  - Return voltage data with stimulus artifacts blanked.
+
+---
+
+## Module `bioware.bioware_analysis`
+
+### Class `CultureHealth`
+Monitor organoid/culture viability from MEA activity.
+
+- **__post_init__**()
+  - Validate rate thresholds used by the aggregate health heuristic.
+- **assess**(spike_counts, duration_s)
+  - Assess culture health from spike activity.
+
 ### Class `LFPBand`
 Frequency band definition for LFP extraction.
 
+- **__post_init__**()
+  - Validate a named half-open frequency interval.
 
 ### Class `LatencyBudget`
 Tracks and enforces closed-loop latency requirements.
 
+- **__post_init__**()
+  - Validate budget, history, and violation accounting.
 - **record**(latency_us)
   - Record a latency measurement. Returns True if within budget.
 - **mean_latency_us**()
@@ -3395,76 +3312,11 @@ Tracks and enforces closed-loop latency requirements.
 - **compliance_ratio**()
   - Return the fraction of samples inside the latency budget.
 
-### Class `PharmModel`
-Simulates effect of pharmacological agents on spike rate.
-
-Models excitatory (e.g., bicuculline) or inhibitory (e.g., TTX) agents
-as gain factors on firing rate.
-
-- **apply**(t_current_s)
-  - Mark the pharmacological agent as applied at the current time.
-- **effective_gain**(t_current_s)
-  - Return the active firing-rate gain at an experiment timestamp.
-- **modulate_spikes**(spike_counts, t_current_s)
-  - Modulate spike counts by pharmacological gain.
-- **modulate_spike_events**(spikes, t_current_s)
-  - Apply pharmacological rate gain to spike events.
-
-### Class `WellConfig`
-One well in a multi-well MEA plate.
-
-- **label**()
-  - Return the stable plate label for this well.
-
-### Class `MultiWellPlate`
-Multi-well plate (e.g., 6/24/48/96-well MEA plate).
-
-- **add_well**(well)
-  - Append a well configuration to the plate.
-- **standard_6_well**(cls, layout)
-  - Construct a six-well plate with uniform MEA layout presets.
-- **num_wells**()
-  - Return the number of configured wells.
-- **get_well**(well_id)
-  - Return a well by identifier.
-
 ### Class `NetworkBurst`
 Detected network-wide synchronised burst event.
 
-
-### Class `ArtifactRejector`
-Blanks stimulation artifacts from voltage data.
-
-Zeros the voltage trace in a window around each stimulation onset.
-
-- **blank**(voltage_data, stim_times_s, sample_rate_hz)
-  - Return voltage data with stimulus artifacts blanked.
-
-### Class `BioAuditEntry`
-One audit entry for a bio-hybrid session.
-
-
-### Class `BioAuditLog`
-Regulatory-grade audit log for bio-hybrid experiments.
-
-- **log**(entry)
-  - Append one audit entry to the session log.
-- **total_rounds**()
-  - Return the number of recorded audit entries.
-- **to_list**()
-  - Serialise audit entries to deterministic dictionaries.
-- **checksum**()
-  - SHA-256 of log contents for tamper detection.
-
-### Class `HomeostaticPlasticity`
-Intrinsic excitability scaling to maintain target firing rate.
-
-Implements homeostatic plasticity: if a neuron fires too fast,
-reduce its excitability (threshold up); too slow, increase it.
-Operates on Q8.8 threshold values.
-
-- **update_threshold**(current_q88, observed_rate_hz, dt_ms)
-  - Adjust threshold to drive firing rate toward target.
+- **__post_init__**()
+  - Validate a detected network-burst summary.
 
 ### Function `extract_lfp_power(voltage_data, sample_rate_hz, bands)`
 Extract per-channel power in each LFP band.
@@ -3478,11 +3330,180 @@ Detect network-wide synchronised bursts.
 Bins spikes in time, detects bins with activity > threshold_sigma
 above the mean, and requires participation from ≥ min_channels.
 
+---
+
+## Module `bioware.bioware_audit`
+
+### Class `BioAuditEntry`
+One audit entry for a bio-hybrid session.
+
+- **__post_init__**()
+  - Validate one timestamped session-audit record.
+
+### Class `BioAuditLog`
+Tamper-evident in-memory audit log for bio-hybrid experiments.
+
+- **__post_init__**()
+  - Validate experiment identity and strictly ordered audit entries.
+- **log**(entry)
+  - Append one audit entry to the session log.
+- **total_rounds**()
+  - Return the number of recorded audit entries.
+- **to_list**()
+  - Serialise audit entries to deterministic dictionaries.
+- **checksum**()
+  - Return a cross-environment SHA-256 over identity and log contents.
+
+---
+
+## Module `bioware.bioware_contracts`
+
+### Class `MEALayout`
+Standard MEA electrode layouts.
+
+
+### Class `MEAConfig`
+Multi-electrode array configuration.
+
+- **__post_init__**()
+  - Validate physical and acquisition configuration boundaries.
+- **from_layout**(cls, layout)
+  - Create a configuration preset for a standard MEA layout.
+
+### Class `DetectedSpike`
+One detected spike event from MEA data.
+
+- **__post_init__**()
+  - Validate spike identity, timing, amplitude, and optional waveform.
+
+### Class `AEREvent`
+Address-Event Representation packet.
+
+Compatible with sc_aer_encoder.v format:
+{valid, neuron_id, timestamp}
+
+- **__post_init__**()
+  - Validate the maintained unsigned 16-bit AER packet fields.
+
+### Class `StimProtocol`
+Optogenetic stimulation protocols.
+
+
+### Class `OptogeneticPulse`
+One optical stimulation pulse.
+
+- **__post_init__**()
+  - Validate timing, irradiance, wavelength, and illuminated area.
+- **power_mw**()
+  - Return optical power as irradiance multiplied by illuminated area.
+
+### Class `BioHybridFrameResult`
+Strictly typed output packet detailing a full closed-loop step.
+
+Behaves both as a dataclass (``result.round``) and, for backward
+compatibility with pre-dataclass callers, as a mapping view of its
+fields (``result&#91;"round"&#93;``, ``"latency_us" in result``,
+``dict(result)``). The mapping surface is read-only.
+
+- **__post_init__**()
+  - Validate counts and payload cardinalities for one closed-loop frame.
+- **__getitem__**(key)
+  - Return a dataclass field through the legacy mapping interface.
+- **__contains__**(key)
+  - Return whether ``key`` names a public result field.
+- **keys**()
+  - Return the mapping-view field names in dataclass declaration order.
+
+---
+
+## Module `bioware.bioware_encoding`
+
+### Class `MEAToAERTranscoder`
+Converts MEA spike events to AER events for hardware.
+
+Maps biological electrode channels to AER neuron IDs,
+converting real-time timestamps to hardware clock ticks.
+
+- **__post_init__**()
+  - Validate the hardware clock and optional channel mapping.
+- **transcode**(spikes, t_start_s)
+  - Convert spikes in one 16-bit hardware-clock epoch to AER events.
+
+### Class `AERToSCConverter`
+Converts AER event streams to SC bitstreams.
+
+Uses a time-windowed rate code: count events per neuron per window,
+then LFSR-encode the resulting firing probabilities.
+
+- **__post_init__**()
+  - Validate window, bitstream, neuron, and LFSR boundaries.
+- **convert**(events)
+  - Convert AER events to per-neuron SC bitstreams.
+
+### Class `SCToOptoEncoder`
+Encodes SC bitstream output as optogenetic pulse sequences.
+
+Maps SC bitstream density to optical stimulation intensity,
+enabling closed-loop feedback from in-silico → biological.
+Enforces total power budget for tissue safety.
+
+- **__post_init__**()
+  - Validate optical timing, irradiance, area, and power limits.
+- **encode**(bitstreams, t_start_ms)
+  - Convert SC bitstreams to optogenetic pulses.
+
 ### Function `decode_bitstream_rate(bitstreams, sc_clock_hz)`
 Decode SC bitstreams back to biological firing rates (Hz).
 
 Interprets popcount/length as probability, scales by SC clock
 to get equivalent biological firing rate.
+
+---
+
+## Module `bioware.bioware_experiment`
+
+### Class `PharmModel`
+Simulates effect of pharmacological agents on spike rate.
+
+Models excitatory (e.g., bicuculline) or inhibitory (e.g., TTX) agents
+as gain factors on firing rate.
+
+- **__post_init__**()
+  - Validate the pharmacological gain and experiment-time constants.
+- **apply**(t_current_s)
+  - Mark the pharmacological agent as applied at the current time.
+- **effective_gain**(t_current_s)
+  - Return the active firing-rate gain at an experiment timestamp.
+- **modulate_spikes**(spike_counts, t_current_s)
+  - Modulate spike counts by pharmacological gain.
+- **modulate_spike_events**(spikes, t_current_s)
+  - Apply pharmacological rate gain to spike events.
+
+### Class `WellConfig`
+One well in a multi-well MEA plate.
+
+- **__post_init__**()
+  - Validate well identity, culture label, passage, and MEA config.
+- **label**()
+  - Return the stable plate label for this well.
+
+### Class `MultiWellPlate`
+Multi-well plate (e.g., 6/24/48/96-well MEA plate).
+
+- **__post_init__**()
+  - Validate well types and unique well identifiers.
+- **add_well**(well)
+  - Append a well configuration to the plate.
+- **standard_6_well**(cls, layout)
+  - Construct a six-well plate with uniform MEA layout presets.
+- **num_wells**()
+  - Return the number of configured wells.
+- **get_well**(well_id)
+  - Return a well by identifier.
+
+---
+
+## Module `bioware.bioware_fitness`
 
 ### Function `mea_fitness_hook(detected_spikes, target_rate)`
 Organism fitness metrics derived from MEA response dynamics.
@@ -3493,11 +3514,128 @@ Designed to plug into the evo_substrate
 
 Accuracy is a bounded distance to the target mean per-channel firing
 rate when ``duration_s`` is supplied, or to the legacy per-channel
-spike count when it is omitted. ``energy_mw`` remains the documented
-spike-count proxy (0.5 mW / spike). ``latency_ms`` is either a caller
-supplied closed-loop measurement, the first response latency after
-``stimulus_time_s``, or the first spike timestamp relative to frame
-start.
+spike count when it is omitted. The legacy ``energy_mw`` key is a
+dimensionless optimisation proxy equal to ``0.5 * spike_count``; it is
+not a measured power or energy quantity. ``latency_ms`` is either a
+caller-supplied closed-loop measurement, the first response latency after
+``stimulus_time_s``, or the first spike timestamp relative to frame start.
+
+---
+
+## Module `bioware.bioware_plasticity`
+
+### Class `BiologicalSTDP`
+Spike-Timing-Dependent Plasticity adapter for bio-hybrid loops.
+
+Bridges biological STDP time constants (∼20 ms) to SC clock
+rates (MHz) via a time-scaling factor. Computes ΔW from
+pre/post spike timing in biological time, then converts to
+Q8.8 weight updates for the SC domain.
+
+- **__post_init__**()
+  - Validate time constants, amplitudes, and Q8.8 bounds.
+- **compute_dw**(dt_ms)
+  - Compute weight change from spike timing difference.
+- **update_weight**(current_q88, dt_ms)
+  - Update Q8.8 weight from spike timing.
+
+### Class `BCMPlasticity`
+Bienenstock-Cooper-Munro plasticity adapter.
+
+Implements sliding-threshold BCM rule where the modification
+threshold θ tracks the postsynaptic firing rate. Converts
+biological firing rates to Q8.8 weight deltas.
+
+- **__post_init__**()
+  - Validate BCM dynamics and Q8.8 weight bounds.
+- **update_theta**(post_rate_hz, dt_ms)
+  - Update the sliding threshold from postsynaptic activity.
+- **compute_dw**(pre_rate_hz, post_rate_hz)
+  - BCM weight change: ΔW = η * x * y * (y - θ).
+- **update_weight**(current_q88, pre_rate, post_rate)
+  - Apply the BCM update to a saturated Q8.8 synaptic weight.
+
+### Class `HomeostaticPlasticity`
+Intrinsic excitability scaling to maintain target firing rate.
+
+Implements homeostatic plasticity: if a neuron fires too fast,
+reduce its excitability (threshold up); too slow, increase it.
+Operates on Q8.8 threshold values.
+
+- **__post_init__**()
+  - Validate target dynamics and Q8.8 threshold bounds.
+- **update_threshold**(current_q88, observed_rate_hz, dt_ms)
+  - Adjust threshold to drive firing rate toward target.
+
+---
+
+## Module `bioware.bioware_session`
+
+### Class `BioHybridSession`
+Manages a complete bio-hybrid experiment session.
+
+Orchestrates MEA recording, spike detection, AER transcoding, stochastic
+conversion, optogenetic feedback, and culture-health assessment. The
+``stdp`` and ``homeostatic`` policies are retained for caller-managed
+updates; ``process_frame`` does not mutate plasticity state implicitly.
+
+- **__post_init__**()
+  - Validate component compatibility before processing live data.
+- **process_frame**(voltage_data, t_start_s, stim_times_s)
+  - Process one frame whose timestamps fit one AER counter epoch.
+
+---
+
+## Module `bioware.bioware_validation`
+
+### Function `require_finite(value, name)`
+Require a finite scalar value.
+
+Parameters
+----------
+value:
+    Scalar to validate.
+name:
+    Field name used in the error message.
+
+Raises
+------
+TypeError
+    If ``value`` is a boolean or not a real scalar.
+ValueError
+    If ``value`` is NaN or infinite.
+
+### Function `require_nonnegative(value, name)`
+Require a finite scalar greater than or equal to zero.
+
+### Function `require_positive(value, name)`
+Require a finite scalar strictly greater than zero.
+
+### Function `require_nonnegative_int(value, name)`
+Require a non-boolean integer greater than or equal to zero.
+
+### Function `require_positive_int(value, name)`
+Require a non-boolean integer strictly greater than zero.
+
+### Function `validate_voltage_matrix(voltage_data)`
+Validate a non-empty, finite two-dimensional MEA voltage matrix.
+
+Parameters
+----------
+voltage_data:
+    Matrix with shape ``(samples, channels)``.
+expected_channels:
+    Optional exact channel count.
+
+Raises
+------
+TypeError
+    If the input is not a NumPy array with a numeric dtype.
+ValueError
+    If dimensionality, shape, channel count, or finiteness is invalid.
+
+### Function `validate_binary_bitstream(bitstream)`
+Validate a one-dimensional NumPy bitstream containing only 0 and 1.
 
 ---
 

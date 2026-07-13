@@ -45,6 +45,7 @@ same checkout.
 | Script | Description |
 |--------|-------------|
 | `bench_nir_graph.py` | Interleaved monolithic-parent/modular-candidate comparison for NIR import, hardware-graph lowering, FPGA compilation, process wall time, and RSS; fails on generated-byte drift and records source hashes, affinity, governor, frequency, host load, and polyglot applicability |
+| `bench_bioware.py` | Interleaved monolithic-parent/modular-candidate comparison for cold import and a deterministic MEA→AER→SC→opto pipeline; fails on canonical-output drift and records all Bioware source hashes, affinity, load, RSS, and truthful Python-only applicability |
 | `bench_asic_flow.py` | Interleaved monolithic-parent/modular-candidate comparison for cold import, deterministic ASIC deck generation, manifest-bearing bundle writes, process wall time, and RSS; fails on generated-byte drift and records source hashes, affinity, load, and removed-mirror applicability |
 | `bench_quantum_annealing_modularisation.py` | Interleaved single-file-parent/modular-candidate comparison for cold import, deterministic SC-to-Ising compilation, Python solve, process wall time, and RSS; records raw samples, source hashes, affinity, and host-load limits |
 | `bench_safety_certification.py` | Interleaved parent/candidate comparison for safety-package import and deterministic in-memory evidence generation; records raw samples, source hashes, affinity, host-load limits, and non-applicability of removed report-generator mirrors |
@@ -133,6 +134,15 @@ PYTHONHASHSEED=0 PYTHONPATH=src taskset -c <cpu> \
   --candidate-root . \
   --iterations 30 --warmups 2 \
   --output benchmarks/results/bench_nir_graph.json
+
+# Bioware modularisation regression evidence
+PYTHONHASHSEED=0 PYTHONPATH=src taskset -c <cpu> \
+  .venv/bin/python benchmarks/bench_bioware.py \
+  --baseline-root <parent-root> \
+  --baseline-ref <parent-sha> \
+  --candidate-root . \
+  --iterations 30 --warmups 2 \
+  --output benchmarks/results/bench_bioware.json
 
 # Evolutionary substrate Python evidence (30 samples)
 PYTHONHASHSEED=0 PYTHONPATH=src taskset -c <cpu> \

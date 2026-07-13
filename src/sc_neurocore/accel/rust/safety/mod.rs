@@ -46,7 +46,6 @@ pub mod bci_studio;
 pub mod bcm;
 pub mod benda_herz;
 pub mod bertram_phantom;
-pub mod bioware;
 pub mod bipolar;
 pub mod bitstream_current_source;
 pub mod bitstreams;

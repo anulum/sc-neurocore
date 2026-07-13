@@ -129,3 +129,29 @@ Interpretation:
 | dense prepacked (64->32, L=1024) | 4.173 | 0.562 | 7.4x | 70x |
 | LIF (per-call, 100K) | 240.266 | 61.585 | 3.9x | 400x |
 | LIF (batch, 100K) | 240.266 | 1.496 | 160.6x | 400x |
+
+## Bioware modularisation diagnostics
+
+`benchmarks/results/bench_bioware.json` records 30 interleaved cold-process
+samples for parent `c4e492ff5` and the modular Bioware candidate. The probe
+executes a deterministic 50 ms, eight-channel MEA frame through spike
+detection, 16-bit AER, deterministic LFSR bitstreams, optical pulse proposals,
+culture analysis, LFP bands, and the legacy fitness adapter.
+
+Both variants produced exactly 6,865 canonical bytes with SHA-256
+`2491dc73a2de93a45a1cc944539c170b151403e42b973b18806143f318b7d669`
+(7 spikes, 7 AER events, 4 bitstreams, and 4 pulses).
+
+| Local diagnostic metric | Parent median | Modular candidate median | Delta |
+| --- | ---: | ---: | ---: |
+| Pipeline | 2.801 ms | 3.345 ms | +19.41% |
+| Import | 34.771 ms | 50.265 ms | +44.56% |
+| Subprocess wall | 579.937 ms | 535.945 ms | -7.59% |
+| Maximum RSS | 37,076 KiB | 37,154 KiB | +0.21% |
+
+The run used taskset affinity but not a kernel-reserved isolated core. The
+workstation was under concurrent load and its governor was `powersave`.
+Timings are local regression context only, not throughput or hardware claims.
+The maintained full pipeline is Python-only; removed generated Go, Julia,
+Mojo, and Rust placeholders were not executable backends. Independent Julia
+plasticity solvers remain outside this orchestration benchmark.

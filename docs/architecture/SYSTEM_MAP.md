@@ -362,6 +362,14 @@ evolutionary search is delegated to the Rust engine with no Python fallback) / D
 edge AER, HDC/VSA, self-replicating SC substrate. Mixed **MAINTAINED / DRAFT**;
 several are Research-tier (excluded from wheel). Detailed classification in audit.
 
+`bioware` preserves its historical import surface through a definition-free
+facade. Acquisition, contracts, validation, encoding, plasticity, analysis,
+experiment metadata, audit records, fitness, and session orchestration have
+separate modules in an acyclic import graph. The maintained full pipeline is
+Python-only; generated Go/Julia/Mojo/Rust placeholders are not capability
+backends. Independent Julia plasticity solvers remain separate numerical
+cross-checks.
+
 `evo_substrate` exposes its historical import path through a thin compatibility
 facade. Fourteen focused modules separate genome state, organisms, variation,
 fitness, speciation, lineage, selection, ecology, development, statistics,

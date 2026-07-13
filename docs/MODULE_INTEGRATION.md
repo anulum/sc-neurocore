@@ -225,13 +225,14 @@ conformity.
   - `autonomous_learning.PlasticityRule` (Go) — Go Cgo wrapper
 
 #### bioware — Biological-Hardware Interface
-- **Source:** `src/sc_neurocore/bioware/bioware.py`
-- **Tests:** `tests/test_bioware/test_bioware.py` — **121 tests**
+- **Source:** `src/sc_neurocore/bioware/` — historical facade plus nine responsibility modules and shared validation
+- **Tests:** `tests/test_bioware/` — **200 tests**
 - **Key Classes:**
-  - `BiowareInterface` — Wet-lab / in-silico bridge
-  - `OrganoidModel` — Cerebral organoid abstraction
-  - `MEAAdapter` — Multi-electrode array interface
-  - `SpikeProtocol` — Biological spike encoding
+  - `BioHybridSession` — Transactional one-frame MEA→AER→SC→opto orchestration
+  - `SpikeDetector` / `SpikeSorter` — MAD threshold detection and optional PCA/K-Means sorting
+  - `MEAToAERTranscoder` / `AERToSCConverter` — Bounded AER epoch and deterministic LFSR encoding
+  - `SCToOptoEncoder` — Area-aware optical-power budgeting
+  - `BiologicalSTDP` / `BCMPlasticity` / `HomeostaticPlasticity` — Caller-managed plasticity adapters
 
 #### federated — Federated SC Learning
 - **Source:** `src/sc_neurocore/federated/federated_sc.py`
@@ -303,7 +304,7 @@ conformity.
 | chiplet | `tests/test_chiplet/` | 172 |
 | memristor | `tests/test_memristor/` | 70 |
 | analog_bridge | `tests/test_analog_bridge/` | 27 |
-| bioware | `tests/test_bioware/` | 121 |
+| bioware | `tests/test_bioware/` | 200 |
 | meta_plasticity | `tests/test_meta_plasticity/` | 72 |
 | evo_substrate | `tests/test_evo_substrate/` | 160 |
 | federated | `tests/test_federated/` | 93 |

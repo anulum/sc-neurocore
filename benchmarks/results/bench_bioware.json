@@ -1,15 +1,957 @@
 {
-  "bioware_closed_loop_100frames": {
-    "wall_seconds_driver_side": 3.722231062987703,
-    "demo_reported_seconds": 0.69,
-    "final_identity_drift": 1.9001,
-    "total_network_bursts": 0,
-    "per_frame_latency_us": {
-      "frame_020": 5015.9,
-      "frame_040": 3615.0,
-      "frame_060": 4322.5,
-      "frame_080": 3532.2,
-      "frame_100": 4047.1
+  "benchmark_sha256": "10995c2db03ef043a5e4773d77bf268570a7503dae20734f328f5dc7412b0605",
+  "commands": {
+    "child": "[taskset --cpu-list <cpu>] <python> benchmarks/_bioware_probe.py",
+    "harness": "python benchmarks/bench_bioware.py --baseline-root <parent-root> --baseline-ref <parent-sha> --candidate-root <candidate-root> --output benchmarks/results/bench_bioware.json"
+  },
+  "comparison": {
+    "aer_event_count": 7,
+    "bitstream_count": 4,
+    "canonical_bytes": 6865,
+    "canonical_output_byte_identical": true,
+    "canonical_sha256": "2491dc73a2de93a45a1cc944539c170b151403e42b973b18806143f318b7d669",
+    "import_ns": {
+      "baseline_median": 34771288.0,
+      "candidate_delta_percent": 44.559577430666366,
+      "candidate_median": 50265227.0,
+      "candidate_minus_baseline": 15493939.0
+    },
+    "max_rss_kib": {
+      "baseline_median": 37076.0,
+      "candidate_delta_percent": 0.21037868162692153,
+      "candidate_median": 37154.0,
+      "candidate_minus_baseline": 78.0
+    },
+    "opto_pulse_count": 4,
+    "pipeline_ns": {
+      "baseline_median": 2801189.5,
+      "candidate_delta_percent": 19.40802291312316,
+      "candidate_median": 3344845.0,
+      "candidate_minus_baseline": 543655.5
+    },
+    "spike_count": 7,
+    "subprocess_wall_ns": {
+      "baseline_median": 579936533.0,
+      "candidate_delta_percent": -7.585508671515262,
+      "candidate_median": 535945397.0,
+      "candidate_minus_baseline": -43991136.0
     }
-  }
+  },
+  "configuration": {
+    "affinity_mode": "taskset affinity pinned; CPU not exclusively isolated",
+    "child_environment": {
+      "PYTHONDONTWRITEBYTECODE": "1",
+      "PYTHONHASHSEED": "0",
+      "PYTHONNOUSERSITE": "1"
+    },
+    "cpu": 0,
+    "interleaving": "variant order reverses on alternating rounds",
+    "iterations": 30,
+    "machine": "x86_64",
+    "pipeline_operations_per_sample": 12,
+    "platform": "Linux-6.17.0-35-generic-x86_64-with-glibc2.39",
+    "python_executable": "python",
+    "python_version": "3.12.3",
+    "warmups": 2
+  },
+  "evidence_class": "local_source_refactor_regression",
+  "external_eda_executed": false,
+  "generated_at_utc": "2026-07-13T07:26:07.266674+00:00",
+  "hardware_measurement_claimed": false,
+  "measurement_context": {
+    "concurrent_load_status": "non-exclusive workstation run; other heavy jobs may have been active",
+    "cpu_affinity": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11
+    ],
+    "cpu_frequency_mhz": {
+      "max_observed_mhz": 3800.038,
+      "min_observed_mhz": 3799.961,
+      "sampled_cpu_count": 12.0
+    },
+    "cpu_governor": [
+      "powersave"
+    ],
+    "cpu_isolation": "taskset affinity only when launched with taskset; no kernel-reserved isolated cores were detected on this workstation",
+    "host_load": "workstation under concurrent load during capture",
+    "load_average_after": [
+      30.4482421875,
+      31.02197265625,
+      36.859375
+    ],
+    "load_average_before": [
+      30.55517578125,
+      31.10205078125,
+      37.140625
+    ],
+    "production_rerun_requirement": "rerun on reserved isolated cores with recorded affinity, governor, frequency, versions, and host-load evidence before publishing performance claims",
+    "timing_interpretation": "use timing medians as local regression context only, not final throughput claims"
+  },
+  "operation": "cold import and deterministic MEA-to-opto pipeline",
+  "polyglot_applicability": {
+    "go": "not_applicable",
+    "julia": "not_applicable",
+    "mojo": "not_applicable",
+    "python": "measured_parent_candidate",
+    "reason": "The maintained Bioware orchestration is Python-only. Removed generated return-zero and invalid-syntax mirrors had no executable dispatch path; independent Julia plasticity solvers remain outside this full-pipeline benchmark.",
+    "rust": "not_applicable"
+  },
+  "probe_sha256": "6fe5c6970e56271a0be55c9342e68d684fea5e4c8882c38b9864dd910ef0337d",
+  "results": {
+    "candidate": {
+      "aer_event_count": 7,
+      "bitstream_count": 4,
+      "canonical_bytes": 6865,
+      "canonical_sha256": "2491dc73a2de93a45a1cc944539c170b151403e42b973b18806143f318b7d669",
+      "import_ns": {
+        "max": 114864106,
+        "mean": 55140743.56666667,
+        "median": 50265227.0,
+        "min": 19606564
+      },
+      "max_rss_kib": {
+        "max": 37236,
+        "mean": 37156.53333333333,
+        "median": 37154.0,
+        "min": 37108
+      },
+      "opto_pulse_count": 4,
+      "pipeline_ns": {
+        "max": 13500742,
+        "mean": 4363457.233333333,
+        "median": 3344845.0,
+        "min": 1784850
+      },
+      "sample_count": 30,
+      "samples": [
+        {
+          "aer_event_count": 7,
+          "bitstream_count": 4,
+          "canonical_bytes": 6865,
+          "canonical_sha256": "2491dc73a2de93a45a1cc944539c170b151403e42b973b18806143f318b7d669",
+          "import_ns": 63386701,
+          "max_rss_kib": 37176,
+          "opto_pulse_count": 4,
+          "pipeline_ns": 4297758,
+          "spike_count": 7,
+          "subprocess_wall_ns": 736306370
+        },
+        {
+          "aer_event_count": 7,
+          "bitstream_count": 4,
+          "canonical_bytes": 6865,
+          "canonical_sha256": "2491dc73a2de93a45a1cc944539c170b151403e42b973b18806143f318b7d669",
+          "import_ns": 64269375,
+          "max_rss_kib": 37164,
+          "opto_pulse_count": 4,
+          "pipeline_ns": 4649067,
+          "spike_count": 7,
+          "subprocess_wall_ns": 782274597
+        },
+        {
+          "aer_event_count": 7,
+          "bitstream_count": 4,
+          "canonical_bytes": 6865,
+          "canonical_sha256": "2491dc73a2de93a45a1cc944539c170b151403e42b973b18806143f318b7d669",
+          "import_ns": 51520901,
+          "max_rss_kib": 37188,
+          "opto_pulse_count": 4,
+          "pipeline_ns": 4041500,
+          "spike_count": 7,
+          "subprocess_wall_ns": 656905327
+        },
+        {
+          "aer_event_count": 7,
+          "bitstream_count": 4,
+          "canonical_bytes": 6865,
+          "canonical_sha256": "2491dc73a2de93a45a1cc944539c170b151403e42b973b18806143f318b7d669",
+          "import_ns": 31303858,
+          "max_rss_kib": 37176,
+          "opto_pulse_count": 4,
+          "pipeline_ns": 2094604,
+          "spike_count": 7,
+          "subprocess_wall_ns": 462568526
+        },
+        {
+          "aer_event_count": 7,
+          "bitstream_count": 4,
+          "canonical_bytes": 6865,
+          "canonical_sha256": "2491dc73a2de93a45a1cc944539c170b151403e42b973b18806143f318b7d669",
+          "import_ns": 85451191,
+          "max_rss_kib": 37236,
+          "opto_pulse_count": 4,
+          "pipeline_ns": 2888398,
+          "spike_count": 7,
+          "subprocess_wall_ns": 620835489
+        },
+        {
+          "aer_event_count": 7,
+          "bitstream_count": 4,
+          "canonical_bytes": 6865,
+          "canonical_sha256": "2491dc73a2de93a45a1cc944539c170b151403e42b973b18806143f318b7d669",
+          "import_ns": 54118431,
+          "max_rss_kib": 37120,
+          "opto_pulse_count": 4,
+          "pipeline_ns": 2966007,
+          "spike_count": 7,
+          "subprocess_wall_ns": 449622357
+        },
+        {
+          "aer_event_count": 7,
+          "bitstream_count": 4,
+          "canonical_bytes": 6865,
+          "canonical_sha256": "2491dc73a2de93a45a1cc944539c170b151403e42b973b18806143f318b7d669",
+          "import_ns": 50516414,
+          "max_rss_kib": 37156,
+          "opto_pulse_count": 4,
+          "pipeline_ns": 2490258,
+          "spike_count": 7,
+          "subprocess_wall_ns": 423155399
+        },
+        {
+          "aer_event_count": 7,
+          "bitstream_count": 4,
+          "canonical_bytes": 6865,
+          "canonical_sha256": "2491dc73a2de93a45a1cc944539c170b151403e42b973b18806143f318b7d669",
+          "import_ns": 24554122,
+          "max_rss_kib": 37148,
+          "opto_pulse_count": 4,
+          "pipeline_ns": 3259522,
+          "spike_count": 7,
+          "subprocess_wall_ns": 704690631
+        },
+        {
+          "aer_event_count": 7,
+          "bitstream_count": 4,
+          "canonical_bytes": 6865,
+          "canonical_sha256": "2491dc73a2de93a45a1cc944539c170b151403e42b973b18806143f318b7d669",
+          "import_ns": 61879779,
+          "max_rss_kib": 37136,
+          "opto_pulse_count": 4,
+          "pipeline_ns": 3329006,
+          "spike_count": 7,
+          "subprocess_wall_ns": 548718497
+        },
+        {
+          "aer_event_count": 7,
+          "bitstream_count": 4,
+          "canonical_bytes": 6865,
+          "canonical_sha256": "2491dc73a2de93a45a1cc944539c170b151403e42b973b18806143f318b7d669",
+          "import_ns": 113610042,
+          "max_rss_kib": 37152,
+          "opto_pulse_count": 4,
+          "pipeline_ns": 3021269,
+          "spike_count": 7,
+          "subprocess_wall_ns": 521859010
+        },
+        {
+          "aer_event_count": 7,
+          "bitstream_count": 4,
+          "canonical_bytes": 6865,
+          "canonical_sha256": "2491dc73a2de93a45a1cc944539c170b151403e42b973b18806143f318b7d669",
+          "import_ns": 33257673,
+          "max_rss_kib": 37148,
+          "opto_pulse_count": 4,
+          "pipeline_ns": 3596653,
+          "spike_count": 7,
+          "subprocess_wall_ns": 467249785
+        },
+        {
+          "aer_event_count": 7,
+          "bitstream_count": 4,
+          "canonical_bytes": 6865,
+          "canonical_sha256": "2491dc73a2de93a45a1cc944539c170b151403e42b973b18806143f318b7d669",
+          "import_ns": 20875145,
+          "max_rss_kib": 37168,
+          "opto_pulse_count": 4,
+          "pipeline_ns": 2130311,
+          "spike_count": 7,
+          "subprocess_wall_ns": 522226285
+        },
+        {
+          "aer_event_count": 7,
+          "bitstream_count": 4,
+          "canonical_bytes": 6865,
+          "canonical_sha256": "2491dc73a2de93a45a1cc944539c170b151403e42b973b18806143f318b7d669",
+          "import_ns": 58220345,
+          "max_rss_kib": 37124,
+          "opto_pulse_count": 4,
+          "pipeline_ns": 4351109,
+          "spike_count": 7,
+          "subprocess_wall_ns": 625695731
+        },
+        {
+          "aer_event_count": 7,
+          "bitstream_count": 4,
+          "canonical_bytes": 6865,
+          "canonical_sha256": "2491dc73a2de93a45a1cc944539c170b151403e42b973b18806143f318b7d669",
+          "import_ns": 29282145,
+          "max_rss_kib": 37148,
+          "opto_pulse_count": 4,
+          "pipeline_ns": 1867518,
+          "spike_count": 7,
+          "subprocess_wall_ns": 523172297
+        },
+        {
+          "aer_event_count": 7,
+          "bitstream_count": 4,
+          "canonical_bytes": 6865,
+          "canonical_sha256": "2491dc73a2de93a45a1cc944539c170b151403e42b973b18806143f318b7d669",
+          "import_ns": 62030162,
+          "max_rss_kib": 37192,
+          "opto_pulse_count": 4,
+          "pipeline_ns": 9197204,
+          "spike_count": 7,
+          "subprocess_wall_ns": 704606594
+        },
+        {
+          "aer_event_count": 7,
+          "bitstream_count": 4,
+          "canonical_bytes": 6865,
+          "canonical_sha256": "2491dc73a2de93a45a1cc944539c170b151403e42b973b18806143f318b7d669",
+          "import_ns": 49001308,
+          "max_rss_kib": 37188,
+          "opto_pulse_count": 4,
+          "pipeline_ns": 2040495,
+          "spike_count": 7,
+          "subprocess_wall_ns": 466796545
+        },
+        {
+          "aer_event_count": 7,
+          "bitstream_count": 4,
+          "canonical_bytes": 6865,
+          "canonical_sha256": "2491dc73a2de93a45a1cc944539c170b151403e42b973b18806143f318b7d669",
+          "import_ns": 80289637,
+          "max_rss_kib": 37168,
+          "opto_pulse_count": 4,
+          "pipeline_ns": 6600963,
+          "spike_count": 7,
+          "subprocess_wall_ns": 791325323
+        },
+        {
+          "aer_event_count": 7,
+          "bitstream_count": 4,
+          "canonical_bytes": 6865,
+          "canonical_sha256": "2491dc73a2de93a45a1cc944539c170b151403e42b973b18806143f318b7d669",
+          "import_ns": 44800244,
+          "max_rss_kib": 37144,
+          "opto_pulse_count": 4,
+          "pipeline_ns": 3421885,
+          "spike_count": 7,
+          "subprocess_wall_ns": 434358891
+        },
+        {
+          "aer_event_count": 7,
+          "bitstream_count": 4,
+          "canonical_bytes": 6865,
+          "canonical_sha256": "2491dc73a2de93a45a1cc944539c170b151403e42b973b18806143f318b7d669",
+          "import_ns": 27345471,
+          "max_rss_kib": 37164,
+          "opto_pulse_count": 4,
+          "pipeline_ns": 2082581,
+          "spike_count": 7,
+          "subprocess_wall_ns": 438676198
+        },
+        {
+          "aer_event_count": 7,
+          "bitstream_count": 4,
+          "canonical_bytes": 6865,
+          "canonical_sha256": "2491dc73a2de93a45a1cc944539c170b151403e42b973b18806143f318b7d669",
+          "import_ns": 42944745,
+          "max_rss_kib": 37120,
+          "opto_pulse_count": 4,
+          "pipeline_ns": 2888705,
+          "spike_count": 7,
+          "subprocess_wall_ns": 506604762
+        },
+        {
+          "aer_event_count": 7,
+          "bitstream_count": 4,
+          "canonical_bytes": 6865,
+          "canonical_sha256": "2491dc73a2de93a45a1cc944539c170b151403e42b973b18806143f318b7d669",
+          "import_ns": 48207814,
+          "max_rss_kib": 37160,
+          "opto_pulse_count": 4,
+          "pipeline_ns": 3763653,
+          "spike_count": 7,
+          "subprocess_wall_ns": 563631294
+        },
+        {
+          "aer_event_count": 7,
+          "bitstream_count": 4,
+          "canonical_bytes": 6865,
+          "canonical_sha256": "2491dc73a2de93a45a1cc944539c170b151403e42b973b18806143f318b7d669",
+          "import_ns": 44847092,
+          "max_rss_kib": 37136,
+          "opto_pulse_count": 4,
+          "pipeline_ns": 1784850,
+          "spike_count": 7,
+          "subprocess_wall_ns": 490372966
+        },
+        {
+          "aer_event_count": 7,
+          "bitstream_count": 4,
+          "canonical_bytes": 6865,
+          "canonical_sha256": "2491dc73a2de93a45a1cc944539c170b151403e42b973b18806143f318b7d669",
+          "import_ns": 114864106,
+          "max_rss_kib": 37140,
+          "opto_pulse_count": 4,
+          "pipeline_ns": 5079161,
+          "spike_count": 7,
+          "subprocess_wall_ns": 675505403
+        },
+        {
+          "aer_event_count": 7,
+          "bitstream_count": 4,
+          "canonical_bytes": 6865,
+          "canonical_sha256": "2491dc73a2de93a45a1cc944539c170b151403e42b973b18806143f318b7d669",
+          "import_ns": 19606564,
+          "max_rss_kib": 37108,
+          "opto_pulse_count": 4,
+          "pipeline_ns": 2648827,
+          "spike_count": 7,
+          "subprocess_wall_ns": 440640372
+        },
+        {
+          "aer_event_count": 7,
+          "bitstream_count": 4,
+          "canonical_bytes": 6865,
+          "canonical_sha256": "2491dc73a2de93a45a1cc944539c170b151403e42b973b18806143f318b7d669",
+          "import_ns": 64526438,
+          "max_rss_kib": 37128,
+          "opto_pulse_count": 4,
+          "pipeline_ns": 3119869,
+          "spike_count": 7,
+          "subprocess_wall_ns": 679208694
+        },
+        {
+          "aer_event_count": 7,
+          "bitstream_count": 4,
+          "canonical_bytes": 6865,
+          "canonical_sha256": "2491dc73a2de93a45a1cc944539c170b151403e42b973b18806143f318b7d669",
+          "import_ns": 44995238,
+          "max_rss_kib": 37112,
+          "opto_pulse_count": 4,
+          "pipeline_ns": 4774974,
+          "spike_count": 7,
+          "subprocess_wall_ns": 511536508
+        },
+        {
+          "aer_event_count": 7,
+          "bitstream_count": 4,
+          "canonical_bytes": 6865,
+          "canonical_sha256": "2491dc73a2de93a45a1cc944539c170b151403e42b973b18806143f318b7d669",
+          "import_ns": 50014040,
+          "max_rss_kib": 37204,
+          "opto_pulse_count": 4,
+          "pipeline_ns": 8930325,
+          "spike_count": 7,
+          "subprocess_wall_ns": 765501806
+        },
+        {
+          "aer_event_count": 7,
+          "bitstream_count": 4,
+          "canonical_bytes": 6865,
+          "canonical_sha256": "2491dc73a2de93a45a1cc944539c170b151403e42b973b18806143f318b7d669",
+          "import_ns": 49241410,
+          "max_rss_kib": 37160,
+          "opto_pulse_count": 4,
+          "pipeline_ns": 3360684,
+          "spike_count": 7,
+          "subprocess_wall_ns": 492793055
+        },
+        {
+          "aer_event_count": 7,
+          "bitstream_count": 4,
+          "canonical_bytes": 6865,
+          "canonical_sha256": "2491dc73a2de93a45a1cc944539c170b151403e42b973b18806143f318b7d669",
+          "import_ns": 100728630,
+          "max_rss_kib": 37184,
+          "opto_pulse_count": 4,
+          "pipeline_ns": 13500742,
+          "spike_count": 7,
+          "subprocess_wall_ns": 716513426
+        },
+        {
+          "aer_event_count": 7,
+          "bitstream_count": 4,
+          "canonical_bytes": 6865,
+          "canonical_sha256": "2491dc73a2de93a45a1cc944539c170b151403e42b973b18806143f318b7d669",
+          "import_ns": 68533286,
+          "max_rss_kib": 37148,
+          "opto_pulse_count": 4,
+          "pipeline_ns": 12725819,
+          "spike_count": 7,
+          "subprocess_wall_ns": 988201565
+        }
+      ],
+      "spike_count": 7,
+      "subprocess_wall_ns": {
+        "max": 988201565,
+        "mean": 590385123.4333333,
+        "median": 535945397.0,
+        "min": 423155399
+      }
+    },
+    "parent": {
+      "aer_event_count": 7,
+      "bitstream_count": 4,
+      "canonical_bytes": 6865,
+      "canonical_sha256": "2491dc73a2de93a45a1cc944539c170b151403e42b973b18806143f318b7d669",
+      "import_ns": {
+        "max": 150706982,
+        "mean": 46521617.13333333,
+        "median": 34771288.0,
+        "min": 18929442
+      },
+      "max_rss_kib": {
+        "max": 37140,
+        "mean": 37080.53333333333,
+        "median": 37076.0,
+        "min": 37032
+      },
+      "opto_pulse_count": 4,
+      "pipeline_ns": {
+        "max": 12886047,
+        "mean": 4047799.0,
+        "median": 2801189.5,
+        "min": 1477135
+      },
+      "sample_count": 30,
+      "samples": [
+        {
+          "aer_event_count": 7,
+          "bitstream_count": 4,
+          "canonical_bytes": 6865,
+          "canonical_sha256": "2491dc73a2de93a45a1cc944539c170b151403e42b973b18806143f318b7d669",
+          "import_ns": 76496699,
+          "max_rss_kib": 37092,
+          "opto_pulse_count": 4,
+          "pipeline_ns": 4610621,
+          "spike_count": 7,
+          "subprocess_wall_ns": 598316843
+        },
+        {
+          "aer_event_count": 7,
+          "bitstream_count": 4,
+          "canonical_bytes": 6865,
+          "canonical_sha256": "2491dc73a2de93a45a1cc944539c170b151403e42b973b18806143f318b7d669",
+          "import_ns": 45449495,
+          "max_rss_kib": 37100,
+          "opto_pulse_count": 4,
+          "pipeline_ns": 3729691,
+          "spike_count": 7,
+          "subprocess_wall_ns": 596113741
+        },
+        {
+          "aer_event_count": 7,
+          "bitstream_count": 4,
+          "canonical_bytes": 6865,
+          "canonical_sha256": "2491dc73a2de93a45a1cc944539c170b151403e42b973b18806143f318b7d669",
+          "import_ns": 150706982,
+          "max_rss_kib": 37140,
+          "opto_pulse_count": 4,
+          "pipeline_ns": 6116599,
+          "spike_count": 7,
+          "subprocess_wall_ns": 938506792
+        },
+        {
+          "aer_event_count": 7,
+          "bitstream_count": 4,
+          "canonical_bytes": 6865,
+          "canonical_sha256": "2491dc73a2de93a45a1cc944539c170b151403e42b973b18806143f318b7d669",
+          "import_ns": 23257262,
+          "max_rss_kib": 37112,
+          "opto_pulse_count": 4,
+          "pipeline_ns": 2552534,
+          "spike_count": 7,
+          "subprocess_wall_ns": 433911541
+        },
+        {
+          "aer_event_count": 7,
+          "bitstream_count": 4,
+          "canonical_bytes": 6865,
+          "canonical_sha256": "2491dc73a2de93a45a1cc944539c170b151403e42b973b18806143f318b7d669",
+          "import_ns": 26781403,
+          "max_rss_kib": 37056,
+          "opto_pulse_count": 4,
+          "pipeline_ns": 2810621,
+          "spike_count": 7,
+          "subprocess_wall_ns": 414931483
+        },
+        {
+          "aer_event_count": 7,
+          "bitstream_count": 4,
+          "canonical_bytes": 6865,
+          "canonical_sha256": "2491dc73a2de93a45a1cc944539c170b151403e42b973b18806143f318b7d669",
+          "import_ns": 28974528,
+          "max_rss_kib": 37040,
+          "opto_pulse_count": 4,
+          "pipeline_ns": 2791758,
+          "spike_count": 7,
+          "subprocess_wall_ns": 376469225
+        },
+        {
+          "aer_event_count": 7,
+          "bitstream_count": 4,
+          "canonical_bytes": 6865,
+          "canonical_sha256": "2491dc73a2de93a45a1cc944539c170b151403e42b973b18806143f318b7d669",
+          "import_ns": 70526231,
+          "max_rss_kib": 37048,
+          "opto_pulse_count": 4,
+          "pipeline_ns": 5055001,
+          "spike_count": 7,
+          "subprocess_wall_ns": 591475032
+        },
+        {
+          "aer_event_count": 7,
+          "bitstream_count": 4,
+          "canonical_bytes": 6865,
+          "canonical_sha256": "2491dc73a2de93a45a1cc944539c170b151403e42b973b18806143f318b7d669",
+          "import_ns": 23124802,
+          "max_rss_kib": 37072,
+          "opto_pulse_count": 4,
+          "pipeline_ns": 2775307,
+          "spike_count": 7,
+          "subprocess_wall_ns": 380172626
+        },
+        {
+          "aer_event_count": 7,
+          "bitstream_count": 4,
+          "canonical_bytes": 6865,
+          "canonical_sha256": "2491dc73a2de93a45a1cc944539c170b151403e42b973b18806143f318b7d669",
+          "import_ns": 28584539,
+          "max_rss_kib": 37060,
+          "opto_pulse_count": 4,
+          "pipeline_ns": 1477135,
+          "spike_count": 7,
+          "subprocess_wall_ns": 468429095
+        },
+        {
+          "aer_event_count": 7,
+          "bitstream_count": 4,
+          "canonical_bytes": 6865,
+          "canonical_sha256": "2491dc73a2de93a45a1cc944539c170b151403e42b973b18806143f318b7d669",
+          "import_ns": 38987368,
+          "max_rss_kib": 37076,
+          "opto_pulse_count": 4,
+          "pipeline_ns": 5626887,
+          "spike_count": 7,
+          "subprocess_wall_ns": 480547673
+        },
+        {
+          "aer_event_count": 7,
+          "bitstream_count": 4,
+          "canonical_bytes": 6865,
+          "canonical_sha256": "2491dc73a2de93a45a1cc944539c170b151403e42b973b18806143f318b7d669",
+          "import_ns": 30692828,
+          "max_rss_kib": 37052,
+          "opto_pulse_count": 4,
+          "pipeline_ns": 3115811,
+          "spike_count": 7,
+          "subprocess_wall_ns": 629614793
+        },
+        {
+          "aer_event_count": 7,
+          "bitstream_count": 4,
+          "canonical_bytes": 6865,
+          "canonical_sha256": "2491dc73a2de93a45a1cc944539c170b151403e42b973b18806143f318b7d669",
+          "import_ns": 34131278,
+          "max_rss_kib": 37108,
+          "opto_pulse_count": 4,
+          "pipeline_ns": 2052361,
+          "spike_count": 7,
+          "subprocess_wall_ns": 332372747
+        },
+        {
+          "aer_event_count": 7,
+          "bitstream_count": 4,
+          "canonical_bytes": 6865,
+          "canonical_sha256": "2491dc73a2de93a45a1cc944539c170b151403e42b973b18806143f318b7d669",
+          "import_ns": 18929442,
+          "max_rss_kib": 37132,
+          "opto_pulse_count": 4,
+          "pipeline_ns": 1750525,
+          "spike_count": 7,
+          "subprocess_wall_ns": 585733957
+        },
+        {
+          "aer_event_count": 7,
+          "bitstream_count": 4,
+          "canonical_bytes": 6865,
+          "canonical_sha256": "2491dc73a2de93a45a1cc944539c170b151403e42b973b18806143f318b7d669",
+          "import_ns": 28314812,
+          "max_rss_kib": 37032,
+          "opto_pulse_count": 4,
+          "pipeline_ns": 3734203,
+          "spike_count": 7,
+          "subprocess_wall_ns": 574139109
+        },
+        {
+          "aer_event_count": 7,
+          "bitstream_count": 4,
+          "canonical_bytes": 6865,
+          "canonical_sha256": "2491dc73a2de93a45a1cc944539c170b151403e42b973b18806143f318b7d669",
+          "import_ns": 34892681,
+          "max_rss_kib": 37048,
+          "opto_pulse_count": 4,
+          "pipeline_ns": 2624213,
+          "spike_count": 7,
+          "subprocess_wall_ns": 452697175
+        },
+        {
+          "aer_event_count": 7,
+          "bitstream_count": 4,
+          "canonical_bytes": 6865,
+          "canonical_sha256": "2491dc73a2de93a45a1cc944539c170b151403e42b973b18806143f318b7d669",
+          "import_ns": 34649895,
+          "max_rss_kib": 37108,
+          "opto_pulse_count": 4,
+          "pipeline_ns": 2596305,
+          "spike_count": 7,
+          "subprocess_wall_ns": 498652316
+        },
+        {
+          "aer_event_count": 7,
+          "bitstream_count": 4,
+          "canonical_bytes": 6865,
+          "canonical_sha256": "2491dc73a2de93a45a1cc944539c170b151403e42b973b18806143f318b7d669",
+          "import_ns": 30005529,
+          "max_rss_kib": 37036,
+          "opto_pulse_count": 4,
+          "pipeline_ns": 2428097,
+          "spike_count": 7,
+          "subprocess_wall_ns": 242922140
+        },
+        {
+          "aer_event_count": 7,
+          "bitstream_count": 4,
+          "canonical_bytes": 6865,
+          "canonical_sha256": "2491dc73a2de93a45a1cc944539c170b151403e42b973b18806143f318b7d669",
+          "import_ns": 56019295,
+          "max_rss_kib": 37044,
+          "opto_pulse_count": 4,
+          "pipeline_ns": 2238590,
+          "spike_count": 7,
+          "subprocess_wall_ns": 693584991
+        },
+        {
+          "aer_event_count": 7,
+          "bitstream_count": 4,
+          "canonical_bytes": 6865,
+          "canonical_sha256": "2491dc73a2de93a45a1cc944539c170b151403e42b973b18806143f318b7d669",
+          "import_ns": 42924360,
+          "max_rss_kib": 37076,
+          "opto_pulse_count": 4,
+          "pipeline_ns": 2585294,
+          "spike_count": 7,
+          "subprocess_wall_ns": 567799721
+        },
+        {
+          "aer_event_count": 7,
+          "bitstream_count": 4,
+          "canonical_bytes": 6865,
+          "canonical_sha256": "2491dc73a2de93a45a1cc944539c170b151403e42b973b18806143f318b7d669",
+          "import_ns": 26919058,
+          "max_rss_kib": 37108,
+          "opto_pulse_count": 4,
+          "pipeline_ns": 1957637,
+          "spike_count": 7,
+          "subprocess_wall_ns": 545306296
+        },
+        {
+          "aer_event_count": 7,
+          "bitstream_count": 4,
+          "canonical_bytes": 6865,
+          "canonical_sha256": "2491dc73a2de93a45a1cc944539c170b151403e42b973b18806143f318b7d669",
+          "import_ns": 22805591,
+          "max_rss_kib": 37052,
+          "opto_pulse_count": 4,
+          "pipeline_ns": 1859886,
+          "spike_count": 7,
+          "subprocess_wall_ns": 591895587
+        },
+        {
+          "aer_event_count": 7,
+          "bitstream_count": 4,
+          "canonical_bytes": 6865,
+          "canonical_sha256": "2491dc73a2de93a45a1cc944539c170b151403e42b973b18806143f318b7d669",
+          "import_ns": 22528491,
+          "max_rss_kib": 37084,
+          "opto_pulse_count": 4,
+          "pipeline_ns": 1537982,
+          "spike_count": 7,
+          "subprocess_wall_ns": 409583550
+        },
+        {
+          "aer_event_count": 7,
+          "bitstream_count": 4,
+          "canonical_bytes": 6865,
+          "canonical_sha256": "2491dc73a2de93a45a1cc944539c170b151403e42b973b18806143f318b7d669",
+          "import_ns": 73186502,
+          "max_rss_kib": 37140,
+          "opto_pulse_count": 4,
+          "pipeline_ns": 6124716,
+          "spike_count": 7,
+          "subprocess_wall_ns": 807035643
+        },
+        {
+          "aer_event_count": 7,
+          "bitstream_count": 4,
+          "canonical_bytes": 6865,
+          "canonical_sha256": "2491dc73a2de93a45a1cc944539c170b151403e42b973b18806143f318b7d669",
+          "import_ns": 95744946,
+          "max_rss_kib": 37120,
+          "opto_pulse_count": 4,
+          "pipeline_ns": 3313841,
+          "spike_count": 7,
+          "subprocess_wall_ns": 621465658
+        },
+        {
+          "aer_event_count": 7,
+          "bitstream_count": 4,
+          "canonical_bytes": 6865,
+          "canonical_sha256": "2491dc73a2de93a45a1cc944539c170b151403e42b973b18806143f318b7d669",
+          "import_ns": 27492171,
+          "max_rss_kib": 37060,
+          "opto_pulse_count": 4,
+          "pipeline_ns": 6005351,
+          "spike_count": 7,
+          "subprocess_wall_ns": 544336838
+        },
+        {
+          "aer_event_count": 7,
+          "bitstream_count": 4,
+          "canonical_bytes": 6865,
+          "canonical_sha256": "2491dc73a2de93a45a1cc944539c170b151403e42b973b18806143f318b7d669",
+          "import_ns": 75813527,
+          "max_rss_kib": 37104,
+          "opto_pulse_count": 4,
+          "pipeline_ns": 8053298,
+          "spike_count": 7,
+          "subprocess_wall_ns": 735804285
+        },
+        {
+          "aer_event_count": 7,
+          "bitstream_count": 4,
+          "canonical_bytes": 6865,
+          "canonical_sha256": "2491dc73a2de93a45a1cc944539c170b151403e42b973b18806143f318b7d669",
+          "import_ns": 60893777,
+          "max_rss_kib": 37056,
+          "opto_pulse_count": 4,
+          "pipeline_ns": 12886047,
+          "spike_count": 7,
+          "subprocess_wall_ns": 1033833032
+        },
+        {
+          "aer_event_count": 7,
+          "bitstream_count": 4,
+          "canonical_bytes": 6865,
+          "canonical_sha256": "2491dc73a2de93a45a1cc944539c170b151403e42b973b18806143f318b7d669",
+          "import_ns": 54798622,
+          "max_rss_kib": 37032,
+          "opto_pulse_count": 4,
+          "pipeline_ns": 2563120,
+          "spike_count": 7,
+          "subprocess_wall_ns": 636113709
+        },
+        {
+          "aer_event_count": 7,
+          "bitstream_count": 4,
+          "canonical_bytes": 6865,
+          "canonical_sha256": "2491dc73a2de93a45a1cc944539c170b151403e42b973b18806143f318b7d669",
+          "import_ns": 59808511,
+          "max_rss_kib": 37128,
+          "opto_pulse_count": 4,
+          "pipeline_ns": 7997754,
+          "spike_count": 7,
+          "subprocess_wall_ns": 738525974
+        },
+        {
+          "aer_event_count": 7,
+          "bitstream_count": 4,
+          "canonical_bytes": 6865,
+          "canonical_sha256": "2491dc73a2de93a45a1cc944539c170b151403e42b973b18806143f318b7d669",
+          "import_ns": 52207889,
+          "max_rss_kib": 37100,
+          "opto_pulse_count": 4,
+          "pipeline_ns": 8462785,
+          "spike_count": 7,
+          "subprocess_wall_ns": 886654894
+        }
+      ],
+      "spike_count": 7,
+      "subprocess_wall_ns": {
+        "max": 1033833032,
+        "mean": 580231548.8666667,
+        "median": 579936533.0,
+        "min": 242922140
+      }
+    }
+  },
+  "schema_version": "sc-neurocore.bioware-modularisation-benchmark.v1",
+  "source_file_count": 12,
+  "source_hashes": {
+    "src/sc_neurocore/bioware/__init__.py": "ba1e6f38b197ffb3992575948528a8d0e55eb0243c32d86f0939cd0a6bbf6864",
+    "src/sc_neurocore/bioware/bioware.py": "e6c60f24135a41abb1c1e43b8aaae45f3d355b727b74e0d7ff2eebc4672c04b2",
+    "src/sc_neurocore/bioware/bioware_acquisition.py": "198c5cdc772e8c88ced04eba85af0321198eddf1e7928a536da59b9cce229bab",
+    "src/sc_neurocore/bioware/bioware_analysis.py": "5e9a78cc5e16aeadbde50df2d6e7255ec1833ab7da2a68dce0814395b020debe",
+    "src/sc_neurocore/bioware/bioware_audit.py": "13acaafca65eb5a4eadf3b55004b1a3683856a351faa67e2d25213cb9f440485",
+    "src/sc_neurocore/bioware/bioware_contracts.py": "4cf08f7000c92f2f7486d5ba2ce19065513ab12dd07c8c3156064ccb42176db4",
+    "src/sc_neurocore/bioware/bioware_encoding.py": "4e0eec5573f2b1be8aa49bafcae219fcc87fc9a79cac3e4b2e36cb27f6baaff9",
+    "src/sc_neurocore/bioware/bioware_experiment.py": "47e68f2b08d96ad18c7b8b615b4e606b286f0b9bdff7808a67d668b737d23861",
+    "src/sc_neurocore/bioware/bioware_fitness.py": "1b55efd0f53a24e174ffd7fc45c62aead9f34284914ddb7f3dc0d502ab33072b",
+    "src/sc_neurocore/bioware/bioware_plasticity.py": "466a2d1a78e37639f09fece6fa06376819052268314fdbe3a80ed7a75dfabbea",
+    "src/sc_neurocore/bioware/bioware_session.py": "95063fca14dfa5b2fe3b959e627aaaad86c25ad94f616d6b221170f703b6b14c",
+    "src/sc_neurocore/bioware/bioware_validation.py": "1bfbea358cf00e05288c1e62ccddace74a83102420af3192461d29e8ad1e22ef"
+  },
+  "source_sha256": "e882d00ff16cda459bbb227f33819e595d37e05051e8328eb7dae3cd8d0247e0",
+  "variants": [
+    {
+      "git_head": null,
+      "label": "parent",
+      "local_path_recorded": false,
+      "source_file_count": 2,
+      "source_hashes": {
+        "src/sc_neurocore/bioware/__init__.py": "cfda96380d1c46415fe4ba7dba144dcb1ee8bceca4feab50d905ef2294c3f63e",
+        "src/sc_neurocore/bioware/bioware.py": "ace36e3aab30284af7370a02b3a499419d16aba09dc0215eb83e0a28c4888da1"
+      },
+      "source_ref": "c4e492ff5",
+      "source_sha256": "45796f1447021fcd42d2f73f7de19b6864d04a66da932ed3d8ffb1ec4e94618f",
+      "surface_dirty": null
+    },
+    {
+      "git_head": "c4e492ff5b6864153ba86286b9584e3b90b356a9",
+      "label": "candidate",
+      "local_path_recorded": false,
+      "source_file_count": 12,
+      "source_hashes": {
+        "src/sc_neurocore/bioware/__init__.py": "ba1e6f38b197ffb3992575948528a8d0e55eb0243c32d86f0939cd0a6bbf6864",
+        "src/sc_neurocore/bioware/bioware.py": "e6c60f24135a41abb1c1e43b8aaae45f3d355b727b74e0d7ff2eebc4672c04b2",
+        "src/sc_neurocore/bioware/bioware_acquisition.py": "198c5cdc772e8c88ced04eba85af0321198eddf1e7928a536da59b9cce229bab",
+        "src/sc_neurocore/bioware/bioware_analysis.py": "5e9a78cc5e16aeadbde50df2d6e7255ec1833ab7da2a68dce0814395b020debe",
+        "src/sc_neurocore/bioware/bioware_audit.py": "13acaafca65eb5a4eadf3b55004b1a3683856a351faa67e2d25213cb9f440485",
+        "src/sc_neurocore/bioware/bioware_contracts.py": "4cf08f7000c92f2f7486d5ba2ce19065513ab12dd07c8c3156064ccb42176db4",
+        "src/sc_neurocore/bioware/bioware_encoding.py": "4e0eec5573f2b1be8aa49bafcae219fcc87fc9a79cac3e4b2e36cb27f6baaff9",
+        "src/sc_neurocore/bioware/bioware_experiment.py": "47e68f2b08d96ad18c7b8b615b4e606b286f0b9bdff7808a67d668b737d23861",
+        "src/sc_neurocore/bioware/bioware_fitness.py": "1b55efd0f53a24e174ffd7fc45c62aead9f34284914ddb7f3dc0d502ab33072b",
+        "src/sc_neurocore/bioware/bioware_plasticity.py": "466a2d1a78e37639f09fece6fa06376819052268314fdbe3a80ed7a75dfabbea",
+        "src/sc_neurocore/bioware/bioware_session.py": "95063fca14dfa5b2fe3b959e627aaaad86c25ad94f616d6b221170f703b6b14c",
+        "src/sc_neurocore/bioware/bioware_validation.py": "1bfbea358cf00e05288c1e62ccddace74a83102420af3192461d29e8ad1e22ef"
+      },
+      "source_ref": "working-tree",
+      "source_sha256": "e882d00ff16cda459bbb227f33819e595d37e05051e8328eb7dae3cd8d0247e0",
+      "surface_dirty": true
+    }
+  ]
 }

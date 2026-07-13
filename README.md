@@ -97,7 +97,7 @@ SC-NeuroCore is positioned for neuromorphic R&D, stochastic accelerator design, 
 | Model documentation pages | 175 |
 | Rust PyO3 model wrappers | 176 |
 | Optional extras | 28 |
-| Python test files | 1206 |
+| Python test files | 1218 |
 | Public documentation pages | 569 |
 | GitHub Actions workflows | 19 |
 
@@ -141,7 +141,7 @@ Train biologically plausible rules using PyTorch surrogate autograd, then export
 
 ### Bio-hybrid Closed-Loop with ArcaneZenith (Experimental)
 
-The `bioware` module securely bridges biological real-world MEA setups into Stochastic Computing and Optogenetic laser outputs natively. It supports PCA/K-Means spike sorting, runtime health tracking, pharmacological wash simulations, and `ArcaneZenithCognitiveCore` bridged bindings.
+The experimental `bioware` module validates finite MEA frames and maps them through spike detection, 16-bit AER epochs, deterministic stochastic bitstreams, and optogenetic pulse proposals. It includes PCA/K-Means spike sorting, heuristic culture monitoring, an onset-gain pharmacology prototype, and an optional `ArcaneZenithCognitiveCore` callback. It is research software, not a clinical or tissue-safety controller; see [the maintained contract](docs/api/bioware.md).
 
 ```python
 import torch

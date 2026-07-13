@@ -14,7 +14,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 361
+expected_file_count = 371
 
 [[file]]
 path = "src/sc_neurocore/__init__.py"
@@ -974,7 +974,47 @@ rationale = "Public published neural decoder/encoder reference implementations (
 
 [[file]]
 path = "src/sc_neurocore/bioware/bioware.py"
-rationale = "Public MEA-to-AER, stochastic-computing, optogenetic, pharmacology, and audit-log bridge for biological closed-loop experiments."
+rationale = "Historical public compatibility facade for the modular biological closed-loop interface."
+
+[[file]]
+path = "src/sc_neurocore/bioware/bioware_acquisition.py"
+rationale = "Public MEA acquisition, spike detection, sorting, and artifact-handling boundaries."
+
+[[file]]
+path = "src/sc_neurocore/bioware/bioware_analysis.py"
+rationale = "Public culture-health, LFP, network-burst, and latency analysis helpers."
+
+[[file]]
+path = "src/sc_neurocore/bioware/bioware_audit.py"
+rationale = "Public deterministic in-memory audit records for biological sessions."
+
+[[file]]
+path = "src/sc_neurocore/bioware/bioware_contracts.py"
+rationale = "Public stable data contracts for MEA, AER, optogenetic, and frame-result payloads."
+
+[[file]]
+path = "src/sc_neurocore/bioware/bioware_encoding.py"
+rationale = "Public AER, stochastic-bitstream, and optogenetic encoding boundaries."
+
+[[file]]
+path = "src/sc_neurocore/bioware/bioware_experiment.py"
+rationale = "Public pharmacology prototype and multi-well experiment metadata."
+
+[[file]]
+path = "src/sc_neurocore/bioware/bioware_fitness.py"
+rationale = "Public compatibility adapter for MEA-derived evolutionary fitness metrics."
+
+[[file]]
+path = "src/sc_neurocore/bioware/bioware_plasticity.py"
+rationale = "Public biological STDP, BCM, and homeostatic plasticity adapters."
+
+[[file]]
+path = "src/sc_neurocore/bioware/bioware_session.py"
+rationale = "Public transactional one-frame biological-session orchestration."
+
+[[file]]
+path = "src/sc_neurocore/bioware/bioware_validation.py"
+rationale = "Shared fail-closed validation used by public biological-interface boundaries."
 
 [[file]]
 path = "src/sc_neurocore/bio/transcriptomic.py"

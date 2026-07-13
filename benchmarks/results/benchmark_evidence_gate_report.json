@@ -192,9 +192,13 @@
     {
       "artefact": "benchmarks/results/bench_nir_graph.json",
       "id": "nir-graph-modularisation-local-diagnostics"
+    },
+    {
+      "artefact": "benchmarks/results/bench_bioware.json",
+      "id": "bioware-modularisation-local-diagnostics"
     }
   ],
-  "failure_count": 47,
+  "failure_count": 48,
   "failures": [
     {
       "gate_id": "quadratic-if-exact-flow-multibackend-local-regression",
@@ -403,6 +407,11 @@
     },
     {
       "gate_id": "sfa-rk4-multibackend-local-regression",
+      "path": "src/sc_neurocore/accel/rust/safety/sfa.rs->source_hashes.src/sc_neurocore/accel/rust/safety/sfa.rs",
+      "reason": "source_hash_mismatch"
+    },
+    {
+      "gate_id": "sfa-rk4-multibackend-local-regression",
       "path": "src/sc_neurocore/neurons/models/sfa.py->source_hashes.src/sc_neurocore/neurons/models/sfa.py",
       "reason": "source_hash_mismatch"
     },
@@ -432,7 +441,7 @@
       "reason": "source_hash_mismatch"
     }
   ],
-  "gate_count": 48,
+  "gate_count": 49,
   "manifest": "benchmarks/benchmark_regression_gates.json",
   "passed": false,
   "schema_version": "sc-neurocore.benchmark-evidence-gate.v1"

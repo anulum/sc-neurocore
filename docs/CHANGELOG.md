@@ -5,6 +5,26 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+### Bioware responsibility modularisation
+- Replaced the 1,378-line biological-interface implementation and 1,139-line
+  test GodFile with a 129-line compatibility facade, nine focused
+  responsibility modules, shared validation, and 13 focused test modules. The
+  largest implementation and test files are 296 and 253 lines. All established
+  package and historical imports preserve object identity, qualified names,
+  and pickle compatibility through an acyclic dependency graph.
+- The 200-test focused suite covers all 1,052 statements and 384 branches.
+  Contracts now reject invalid MEA shapes and values, AER overflow, out-of-window
+  events, inconsistent payload counts, unsafe optical-power arithmetic, invalid
+  Q8.8 state, audit reordering, and partial session round advancement.
+- Removed non-executable generated Go, Julia, Mojo, and Rust Bioware mirrors.
+  The maintained full orchestration is Python-only; independent Julia
+  plasticity solvers remain a separate numerical surface.
+- Added a source-bound 30-sample parent/candidate benchmark. Both trees produce
+  the same 6,865-byte canonical MEA-to-opto payload at SHA-256
+  `2491dc73a2de93a45a1cc944539c170b151403e42b973b18806143f318b7d669`.
+  The affinity-only, loaded-host timing regression is documented as local
+  diagnostics and is not a throughput or hardware claim.
+
 ### NIR hardware-graph responsibility modularisation
 - Replaced the 1,414-line hardware-graph implementation and three primary test
   files totalling 4,091 lines with an 84-line compatibility facade, seven

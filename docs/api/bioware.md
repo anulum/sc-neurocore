@@ -1,758 +1,283 @@
-# Bioware Interface
+# Bioware interface
 
-Biological-hardware interface for cerebral organoids and multi-electrode
-array (MEA) systems. Bridges wet-lab experiments with in-silico SC
-simulations — spike detection, AER transcoding, stochastic-computing
-feedback, optogenetic encoding, Q8.8 homeostatic plasticity, PCA spike
-sorting, and a closed-loop session layer that orchestrates the full
-pipeline per frame.
+`sc_neurocore.bioware` is an **experimental research interface** for moving a
+finite multi-electrode-array (MEA) frame through spike detection, Address-Event
+Representation (AER), stochastic bitstream encoding, and an optogenetic pulse
+proposal. It is not a medical device, a clinical controller, or a tissue-safety
+certification surface.
+
+The maintained implementation is Python-only. Earlier generated Go, Julia,
+Mojo, and Rust files were non-executable placeholders with no dispatch path and
+have been removed. The separately maintained Julia plasticity solvers remain
+documented in [Julia solvers](julia_solvers.md); they are not a second
+implementation of this closed-loop orchestration.
 
 ```python
-from sc_neurocore.bioware.bioware import (
-    BioHybridSession, BioHybridFrameResult,
-    MEAConfig, MEALayout, SpikeDetector,
-    MEAToAERTranscoder, AERToSCConverter, SCToOptoEncoder,
-    CultureHealth, HomeostaticPlasticity, SpikeSorter,
-    mea_fitness_hook,
+from sc_neurocore.bioware import (
+    AERToSCConverter,
+    BioHybridSession,
+    CultureHealth,
+    MEAConfig,
+    MEAToAERTranscoder,
+    SCToOptoEncoder,
+    SpikeDetector,
 )
 ```
 
----
+## Maintained boundaries
 
-## 1. Mathematical formalism
+The historical module
+`sc_neurocore.bioware.bioware` is a compatibility facade. Implementations are
+owned by focused modules:
 
-### 1.1 Spike detection (adaptive threshold, MAD-based noise)
+| Module | Responsibility |
+| --- | --- |
+| `bioware_contracts.py` | Stable MEA, spike, AER, pulse, and frame-result records |
+| `bioware_validation.py` | Shared finite-value, shape, integer, and bitstream guards |
+| `bioware_acquisition.py` | MAD noise estimation, threshold detection, sorting, artifact blanking |
+| `bioware_encoding.py` | MEA→AER, AER→SC, SC→opto, and rate decoding |
+| `bioware_plasticity.py` | Pair-STDP, BCM, and homeostatic Q8.8 adapters |
+| `bioware_analysis.py` | Culture heuristic, LFP bands, latency, and network bursts |
+| `bioware_experiment.py` | Pharmacology prototype and multi-well metadata |
+| `bioware_audit.py` | Deterministic in-memory audit records and checksum |
+| `bioware_session.py` | One-frame closed-loop orchestration |
+| `bioware_fitness.py` | Legacy evolutionary fitness adapter |
 
-Raw MEA voltage $V_c(t)$ per channel $c$ is detected against an
-adaptive threshold derived from the **median absolute deviation**:
+Package-root objects, historical qualified names, and pickle lookup paths are
+preserved. The facade contains no implementation definitions.
 
-$$
-\sigma_c = \frac{\mathrm{median}_t |V_c(t)|}{0.6745},
-\qquad
-\theta_c = \alpha\,\sigma_c.
-$$
+## Signal contract
 
-The constant $0.6745$ converts MAD into an estimator of the Gaussian
-standard deviation (Donoho & Johnstone 1994); $\alpha = 5$ by default
-(``spike_threshold_sigma``). A spike is emitted when
-$|V_c(t)| > \theta_c$ and no spike was emitted on the same channel in
-the preceding ``refractory_samples = 30`` samples.
+### MEA frame and spike detection
 
-### 1.2 MEA → AER transcoding
+Input must be a non-empty, finite numeric NumPy matrix with shape
+`(samples, channels)`. Its channel count must exactly match `MEAConfig`.
 
-For a spike with real-time timestamp $t_s$ (seconds) and a hardware
-AER clock $f_\text{hw}$ (Hz), the AER event carries integer tick
+For channel (c), the detector estimates a robust noise scale
 
-$$
-\tau = \lfloor t_s \cdot f_\text{hw} \rfloor
-$$
+\[
+\hat\sigma_c = \frac{\operatorname{median}_t |V_{t,c}|}{0.6745}
+\]
 
-and neuron id derived from ``channel_map`` (or the channel number
-itself if no map is given). AER events are emitted sorted by $\tau$.
+and detects crossings of
 
-### 1.3 AER → SC bitstream conversion
+\[
+|V_{t,c}| > \alpha \hat\sigma_c,
+\]
 
-For each neuron id, the converter bins AER timestamps into a
-bitstream of length $L$ (default 1 024). For neuron $n$ observed
-over the window $[t_0, t_0 + T]$ with $k_n$ spikes:
+where `spike_threshold_sigma` is (alpha). The `0.6745` scaling is the
+standard Gaussian MAD conversion used in extracellular spike detection; see
+the primary-culture methods discussion in
+[Maccione et al.](https://pmc.ncbi.nlm.nih.gov/articles/PMC3213406/).
+The refractory interval is enforced independently per channel. Waveform
+snippets are edge-padded to a fixed length.
 
-$$
-p_n = \frac{k_n}{k_n + K},
-\qquad b_{n,i} \sim \mathrm{Bernoulli}(p_n),
-\qquad i \in [0, L).
-$$
+`SpikeSorter` is a deliberately small PCA + K-Means research adapter. It uses a
+fixed `random_state=0` by default, validates uniform waveform lengths, and
+requires the optional `scikit-learn` dependency only when enough waveforms are
+available to fit clusters.
 
-where $K$ is a smoothing constant (``smoothing_constant``, default 1).
-The resulting SC bitstream has mean activity equal to $p_n$.
+### AER epoch
 
-### 1.4 Optogenetic encoding (SC → opto pulses)
+`MEAToAERTranscoder` converts a spike timestamp and explicit origin to a clock
+tick:
 
-Given an output bitstream $b \in \{0, 1\}^L$ with density
-$d = \frac{1}{L}\sum_i b_i$, the optogenetic pulse uses intensity
+\[
+\tau = \left\lfloor (t_{spike} - t_0) f_{hw} \right\rfloor.
+\]
 
-$$
-I_\text{mW/mm²} = d \cdot I_\text{max},
-$$
+The maintained packet has a 16-bit unsigned timestamp. Therefore
+(0 \le \tau \le 65535); negative relative time and overflow are errors.
+The implementation never silently wraps timestamps. At the default 1 MHz
+clock, one frame must fit within approximately 65.536 ms. Longer recordings
+must be split into explicit epochs by the caller.
 
-and duration
+`BioHybridSession` treats detector timestamps as frame-relative. Its
+`t_start_s` argument is non-negative experiment time for optional experiment
+models; it does not change the frame-local AER origin.
 
-$$
-T_\text{ms} = T_\text{min} + (T_\text{max} - T_\text{min})\,d,
-$$
+### AER to stochastic bitstreams
 
-so bright / long pulses signal high-activity layers and dark / short
-pulses signal low-activity. The wavelength is fixed by the
-optogenetic channel (``wavelength_nm``, e.g. 470 nm for ChR2).
+For valid events inside `window_ticks`, the converter counts events per neuron.
+If (k_n) is the count for neuron (n), it uses
 
-### 1.5 Biological STDP (Bi & Poo 1998, exponential pair rule)
+\[
+p_n = \frac{k_n}{\max_j k_j}.
+\]
 
-For a post-spike timed at $t_\text{post}$ after a pre-spike at
-$t_\text{pre}$, let $\Delta t = t_\text{post} - t_\text{pre}$. The
-weight change is:
+`p_n` is encoded by a deterministic 16-bit LFSR into a bitstream of length
+`bitstream_length` (default 256). This is not an IID Bernoulli sampler and does
+not use a smoothing constant. The configured neuron count and window are hard
+bounds rather than unused metadata.
 
-$$
-\Delta w(\Delta t) =
+### Stochastic bitstreams to optical pulses
+
+For bitstream density (d_n), the encoder proposes
+
+\[
+I_n = d_n I_{max}, \qquad
+T_n = T_{min} + d_n(T_{max} - T_{min}).
+\]
+
+`intensity_mw_mm2` is irradiance. Optical power is computed with the illuminated
+area:
+
+\[
+P_n\,[\mathrm{mW}] = I_n\,[\mathrm{mW/mm^2}]\,A_n\,[\mathrm{mm^2}].
+\]
+
+The encoder accumulates (P_n) and omits a channel if including it would exceed
+`max_total_power_mw`. This software budget is a consistency guard, not a
+biological safety limit. Real optical safety depends on wavelength, duty cycle,
+geometry, absorption, scattering, thermal transport, and experimental
+calibration.
+
+## Plasticity adapters
+
+### Pair STDP
+
+`BiologicalSTDP` implements the parameterised exponential pair rule
+
+\[
+\Delta w =
 \begin{cases}
-A_+\, \exp(-\Delta t / \tau_+) & \Delta t > 0 \text{ (LTP)} \\
--A_-\, \exp(+\Delta t / \tau_-) & \Delta t < 0 \text{ (LTD)} \\
-0                              & \Delta t = 0
+A_+e^{-\Delta t/\tau_+}, & \Delta t > 0,\\
+-A_-e^{\Delta t/\tau_-}, & \Delta t < 0,\\
+0, & \Delta t = 0.
 \end{cases}
-$$
+\]
 
-Default $\tau_+ = \tau_- = 20$ ms, $A_+ = 0.005$, $A_- = 0.00525$,
-matching Bi & Poo 1998 hippocampal culture fits (1:1.05
-potentiation:depression asymmetry).
+Defaults are `tau_plus_ms = tau_minus_ms = 20`, `a_plus = 0.01`, and
+`a_minus = 0.012`. These are configurable model parameters, not claimed fits to
+one specific preparation. The biological timing reference is
+[Bi and Poo (1998)](https://doi.org/10.1523/JNEUROSCI.18-24-10464.1998).
 
-### 1.6 BCM metaplasticity (sliding-threshold variant)
+### BCM and homeostasis
 
-The BCM rule (Bienenstock, Cooper, Munro 1982) adjusts the LTP/LTD
-boundary as a function of post-synaptic activity $\bar y$:
+`BCMPlasticity` uses
 
-$$
-\Delta w = \eta\,x\,y\,(y - \theta_m),
-\qquad
-\theta_m = \kappa\, \bar y^2,
-$$
+\[
+\Delta w = \eta x y(y-\theta), \qquad
+\theta \leftarrow \theta + \frac{\Delta t}{\tau_\theta}(y^2-\theta),
+\]
 
-where $\bar y$ is the temporally-averaged post-synaptic rate and
-$\kappa > 0$ tunes the sliding-threshold curvature. Low-frequency
-activity below $\theta_m$ depresses; above, potentiates.
+following the sliding-threshold family introduced by
+[Bienenstock, Cooper, and Munro](https://doi.org/10.1523/JNEUROSCI.02-01-00032.1982).
 
-### 1.7 Q8.8 homeostatic controller
+`HomeostaticPlasticity` applies a bounded Q8.8 proportional update:
 
-``HomeostaticPlasticity.update_threshold`` implements a proportional
-negative-feedback controller in fixed-point Q8.8 arithmetic:
+\[
+\theta_{next}^{q88} = \operatorname{clip}\left(
+\theta^{q88} + \left\lfloor
+\frac{\Delta t}{\tau_h}(r-r^*)\,256
+\right\rfloor,\theta_{min}^{q88},\theta_{max}^{q88}\right).
+\]
 
-$$
-\alpha_t = \frac{\Delta t_\text{ms}}{\tau_\text{homeo}},
-\qquad
-\Delta \theta = \lfloor \alpha_t (r_t - r^\star) \cdot 256 \rfloor,
-$$
+`BioHybridSession` stores `stdp` and optional `homeostatic` policies for caller
+coordination, but `process_frame` does **not** update plasticity implicitly.
 
-$$
-\theta^{(q88)}_{t+1}
-= \mathrm{clip}\!\left(\theta^{(q88)}_t + \Delta \theta,
-\theta^{(q88)}_\text{min}, \theta^{(q88)}_\text{max}\right).
-$$
+## Session semantics
 
-The factor $256$ is the Q8.8 scale: one full threshold unit in
-floating-point corresponds to $256$ steps in the integer
-representation. A 1 Hz rate error sustained over one full time
-constant $\tau_\text{homeo}$ thus shifts the threshold by exactly one
-unit.
+`BioHybridSession.process_frame` executes these stages synchronously:
 
-### 1.8 PCA + KMeans spike sorting
+1. validate the frame, experiment time, AER epoch, and converter window;
+2. optionally blank stimulus artifacts;
+3. detect and optionally sort spikes;
+4. optionally apply the pharmacology rate prototype;
+5. transcode to AER and deterministic SC bitstreams;
+6. optionally pass decoded rates to an ArcaneZenith object;
+7. propose optogenetic pulses and calculate a culture-health snapshot;
+8. create a typed `BioHybridFrameResult`, record optional latency, and only
+   then advance `round_count`.
 
-Given a set of detected waveforms $\{w^{(i)}\}$, each a vector in
-$\mathbb{R}^D$ (with $D$ = ``int(2 · snippet_ms · sample_rate_hz /
-1000)``), sorting proceeds in two stages:
-
-1. **Dimensionality reduction** via principal component analysis:
-
-   $$
-   X = [w^{(1)}, \ldots, w^{(M)}]^\top \in \mathbb{R}^{M\times D},
-   \qquad
-   X = U \Sigma V^\top,
-   \qquad
-   Z = X \cdot V_{:k},
-   $$
-
-   with $k = \min(\text{n\_components}, M, D)$ (default
-   ``n_components = 3``).
-
-2. **Cluster assignment** via $k$-means with $k = \text{num\_units}$
-   and $n_\text{init} = 10$ restarts:
-
-   $$
-   \min_{\{\mu_c\}} \sum_{i=1}^M \min_{c \in \{1..k\}} \|z^{(i)} - \mu_c\|^2.
-   $$
-
-Waveforms flagged ``waveform is None`` (amplitude-only spikes) are
-skipped; the sorter is a no-op when fewer than ``num_units`` waveforms
-are available.
-
-### 1.9 Evo-substrate fitness hook
-
-The MEA → `ReplicationEngine` bridge computes three fitness scalars:
-
-$$
-\bar r = \frac{1}{|C|}\sum_{c \in C} \frac{k_c}{T_\mathrm{frame}},
-\qquad
-\mathrm{acc} =
-\mathrm{clip}\!\left(1 - \frac{|\bar r - r^\star|}{r^\star},\;
-0.1,\; 0.99\right),
-$$
-
-where $k_c$ is the per-channel spike count, $T_\mathrm{frame}$ is
-``duration_s`` when supplied, and $r^\star$ is the target rate
-(``target_rate = 10`` Hz by default). When ``duration_s`` is omitted,
-the hook preserves the legacy count-domain score for callers that do
-not know the frame length. Energy and latency:
-
-$$
-E = 0.5\,\text{mW} \cdot N_\text{spikes},
-\qquad
-T_\mathrm{lat} =
-\begin{cases}
-T_\mathrm{measured}, & \text{if measured latency is supplied},\\
-t_\mathrm{first\ response} - t_\mathrm{stim}, & \text{if stimulus time is supplied},\\
-t_\mathrm{first\ spike}, & \text{otherwise}.
-\end{cases}
-$$
-
----
-
-## 2. Theoretical context
-
-Bioware sits at the intersection of three active research frontiers.
-
-**Closed-loop biohybrid experiments.** Organoid cultures coupled to
-MEAs via optogenetic actuators form a real-time feedback loop between
-a digital controller and a living network. Kagan et al. (2022)
-demonstrated such a system learning Pong; DishBrain and similar
-platforms have generalised the paradigm to control tasks.
-SC-NeuroCore's ``BioHybridSession`` is the orchestration layer — it
-owns the MEA config, detector, transcoder, SC converter, opto
-encoder, and plasticity updates, and guarantees the end-to-end
-latency budget in a single ``process_frame`` call.
-
-**Stochastic computing over biological signals.** Traditional MEA
-pipelines output rates or spike trains; SC-NeuroCore converts rates
-directly into Bernoulli bitstreams consumed by the SC arithmetic
-stack. The conversion is lossless up to the SC bit budget —
-$L = 1024$ bits encodes $p_n$ with variance $p(1-p)/L \le 1/(4L)
-\approx 2.4 \times 10^{-4}$.
-
-**Hardware-grounded homeostatic plasticity.** The Q8.8 controller in
-§1.7 is directly synthesisable — the state variable is an integer,
-the update is additive with a constant shift, the clamp is a pair of
-comparators. The same mathematical form runs on the PYNQ-Z2 silicon
-(``sc_aer_encoder.v`` and friends) as in Python, so simulations
-quantitatively match hardware traces to Q8.8 precision. Turrigiano
-2012 provides the biological reference point: real neurons use much
-slower homeostatic timescales (seconds to hours), modelled here by
-the ``tau_homeo_ms`` parameter.
-
-**Spike sorting.** PCA + KMeans is the classical first-pass
-(Lewicki 1998); modern production systems use SpikeInterface,
-Kilosort or MountainSort. The SC-NeuroCore sorter is intentionally
-minimal — it exists so a single closed-loop run can demonstrate
-end-to-end separation of 2–4 units without external dependencies
-beyond scikit-learn, and so the evolutionary-substrate fitness hook
-has something to condition on when the MEA returns waveforms.
-
-The overall bioware contract is stricter than typical research code:
-every public surface is typed, exception-free for empty inputs,
-deterministic under a fixed seed, and round-trippable between
-dataclass and dict views. The contract is enforced by 121 focused tests in
-``tests/test_bioware/test_bioware.py``.
-
----
-
-## 3. Pipeline position
-
-Bioware is the *outer* of SC-NeuroCore's two closed loops. The inner
-loop is the SC arithmetic stack; the outer loop wraps it in a
-real-time bidirectional bridge with the biological substrate.
-
-```
-   ┌──────────── BioHybridSession.process_frame() ─────────────┐
-   │                                                            │
-   │  voltage_data (N_samples × N_channels)                    │
-   │        │                                                   │
-   │        ▼                                                   │
-   │   SpikeDetector ──────►  list[DetectedSpike]              │
-   │        │                        │                          │
-   │        │                        ├──► (opt) SpikeSorter     │
-   │        │                        ├──► (opt) ArtifactReject  │
-   │        │                        ▼                          │
-   │        │                  MEAToAERTranscoder               │
-   │        │                        │ list[AEREvent]           │
-   │        │                        ▼                          │
-   │        │                  AERToSCConverter                 │
-   │        │                        │ dict[id, np.ndarray]     │
-   │        │                        ▼                          │
-   │        │                  SCToOptoEncoder ──► OptoPulse    │
-   │        │                                                   │
-   │        └──► CultureHealth ──► health score                 │
-   │        └──► HomeostaticPlasticity (Q8.8 threshold update)  │
-   │        └──► ArcaneZenithCognitiveCore.step_from_bio_rates  │
-   │                                                            │
-   └────────► BioHybridFrameResult ──────────────────────────►  │
-                                                            caller
-```
-
-**Upstream inputs** — the MEA voltage matrix (from any MEA recording
-system — PYNQ-Z2 ADC, Intan, BlackRock, synthetic). Format is
-``np.ndarray`` shape ``(n_samples, n_channels)``.
-
-**Downstream outputs** — a :class:`BioHybridFrameResult` packet
-containing spike counts, AER events, SC bitstreams, optogenetic
-pulses, and a CultureHealth snapshot. Both dataclass-style
-(``result.round``) and mapping-style (``result["round"]``) access
-supported.
-
-The outer loop is driven by the caller — no threads, no background
-tasks inside ``process_frame``. Hardware latency / jitter is a
-caller concern.
-
----
-
-## 4. Features
-
-| Feature                                        | Detail                                                                 |
-| ---------------------------------------------- | ---------------------------------------------------------------------- |
-| MEA config presets                             | 60, 120, 256, 4 096 channel layouts with canonical electrode pitches  |
-| MAD-based spike detection                      | Robust σ estimator; per-channel adaptive threshold                     |
-| Configurable refractory                        | Default 30 samples; prevents double-counting                           |
-| Waveform snippet extraction                    | Per-spike 2 ms window, edge-padded                                     |
-| AER transcoding                                | Integer hardware timestamps; channel→neuron map; sorted output         |
-| AER → SC bitstream                             | Bernoulli density encoding with smoothing constant                     |
-| SC → optogenetic encoding                      | Bright+long for high density; bounded wavelength / intensity / duration |
-| Biological STDP                                | Exponential pair rule, Bi & Poo parameters                            |
-| BCM metaplasticity                             | Sliding-threshold variant                                             |
-| Q8.8 homeostatic plasticity                    | Proportional controller with 1 Hz · τ_homeo = 1 unit calibration       |
-| Culture health                                 | Rate-based aggregate score over the frame                             |
-| PCA + KMeans spike sorting                     | Optional; scikit-learn optional dep                                   |
-| Artifact rejection                             | Optional stim-window blanking                                         |
-| Pharmacology model                             | Optional onset-delay + gain model for neurotransmitter pulses          |
-| Latency budget                                 | Per-frame wall-clock recording                                         |
-| ArcaneZenith bridge                            | ``zenith_core.step_from_bio_rates(...)`` inside process_frame          |
-| Evo-substrate fitness hook                     | ``mea_fitness_hook(spikes, target_rate) → {acc, energy, latency}``     |
-| BioHybridFrameResult dual interface            | Dataclass attribute access + mapping ``result["key"]`` + ``in``        |
-| Audit log                                      | :class:`BioAuditLog` timestamp + entry record for every session        |
-| Multi-well plate support                       | :class:`MultiWellPlate` for parallel experiments                       |
-| 121 focused tests                              | Spike detection + AER + SC + Opto + STDP + BCM + Culture + Homeostasis |
-
----
-
-## 5. Usage example with output
+An exception before completion leaves `round_count` unchanged. The detector may
+still retain its internal noise estimate, and an external Zenith object may
+have its own state; callers needing distributed transactions must manage those
+resources explicitly.
 
 ```python
 import numpy as np
-from sc_neurocore.bioware.bioware import (
-    BioHybridSession, MEAConfig,
-    SpikeDetector, MEAToAERTranscoder, AERToSCConverter,
-    SCToOptoEncoder, BiologicalSTDP, CultureHealth,
-    HomeostaticPlasticity, SpikeSorter,
-)
 
-cfg = MEAConfig(num_channels=10, sample_rate_hz=20_000.0,
-                spike_threshold_sigma=5.0)
-
+config = MEAConfig(num_channels=8, sample_rate_hz=20_000.0)
 session = BioHybridSession(
-    mea_config=cfg,
-    detector=SpikeDetector(config=cfg, refractory_samples=30),
+    mea_config=config,
+    detector=SpikeDetector(config),
     transcoder=MEAToAERTranscoder(hw_clock_hz=1e6),
-    sc_converter=AERToSCConverter(bitstream_length=1024),
-    opto_encoder=SCToOptoEncoder(wavelength_nm=470,
-                                  max_intensity_mw_mm2=5.0),
-    stdp=BiologicalSTDP(),
-    health_monitor=CultureHealth(),
-    homeostatic=HomeostaticPlasticity(target_rate_hz=10.0),
-    sorter=SpikeSorter(num_units=3),
+    sc_converter=AERToSCConverter(
+        window_ticks=0x10000,
+        bitstream_length=512,
+        num_neurons=config.num_channels,
+    ),
+    opto_encoder=SCToOptoEncoder(
+        illuminated_area_mm2=1.0,
+        max_total_power_mw=50.0,
+    ),
 )
 
-rng = np.random.default_rng(42)
-V = rng.normal(0, 5, size=(2000, 10))
-V[::200, 0] = -80.0                    # spikes on channel 0
-V[100::200, 3] = -60.0                 # spikes on channel 3
-
-result = session.process_frame(V)
-
-print(f"round       : {result.round}")
-print(f"num_spikes  : {result.num_spikes}")
-print(f"num_aer     : {result.num_aer_events}")
-print(f"num_streams : {result.num_bitstreams}")
-print(f"num_opto    : {result.num_opto_pulses}")
-print(f"latency_us  : {result.latency_us:.1f}")
-
-# Dataclass AND mapping access both work:
-assert result["round"] == result.round
-assert "latency_us" in result
+# 1,000 / 20,000 Hz = 50 ms, inside one 16-bit epoch at 1 MHz.
+frame = np.zeros((1_000, config.num_channels), dtype=np.float64)
+result = session.process_frame(frame, t_start_s=0.0)
+assert result.round == result["round"] == 1
 ```
 
-Typical output:
+## Analysis, experiment, and audit limits
 
-```
-round       : 1
-num_spikes  : 16
-num_aer     : 16
-num_streams : 2
-num_opto    : 2
-latency_us  : 3178.4
-```
+- `CultureHealth` returns a bounded aggregate heuristic from channel rates. It
+  is not a viability assay or clinical endpoint.
+- `extract_lfp_power` is an FFT band-power helper, not a full spectral
+  estimator with windowing, leakage correction, or uncertainty intervals.
+- `detect_network_bursts` is a binned threshold heuristic.
+- `PharmModel` implements application time, onset interpolation, and a firing
+  gain. `wash_time_s` is reserved configuration and is not yet applied as a
+  washout curve.
+- `BioAuditLog` is an ordered, tamper-evident **in-memory** record. Its canonical
+  SHA-256 includes schema name, experiment identity, and entries. It does not
+  provide durable storage, signatures, access control, or regulatory
+  compliance.
+- The legacy fitness key `energy_mw` equals `0.5 * spike_count` for compatibility.
+  It is a dimensionless optimisation proxy, not measured power or energy.
 
-The `examples/14_bioware_closed_loop_demo.py` script extends this to a
-100-frame experiment with full SpikeSorter fit + ArcaneZenith cognitive
-core + MEA hardware simulation; measured end-to-end wall-clock in §7.
+## Verification and benchmark evidence
 
----
+Focused verification executes 200 tests and covers all 1,052 production
+statements and 384 branches in the Bioware package. Source and tests are
+responsibility-sized, the module import graph is acyclic, the facade and package
+objects are identical, and historical pickle paths remain valid.
 
-## 6. Technical reference
+`benchmarks/results/bench_bioware.json` is a 30-sample, interleaved comparison
+of parent `c4e492ff5` and the modular working tree. Both produced exactly 6,865
+canonical bytes with SHA-256
+`2491dc73a2de93a45a1cc944539c170b151403e42b973b18806143f318b7d669`:
 
-### 6.1 `MEAConfig` + `MEALayout`
+| Local diagnostic metric | Parent median | Modular candidate median | Delta |
+| --- | ---: | ---: | ---: |
+| Pipeline | 2.801 ms | 3.345 ms | +19.41% |
+| Import | 34.771 ms | 50.265 ms | +44.56% |
+| Subprocess wall | 579.937 ms | 535.945 ms | -7.59% |
+| Maximum RSS | 37,076 KiB | 37,154 KiB | +0.21% |
 
-```python
-class MEALayout(Enum):
-    MEA_60   = "60ch"
-    MEA_120  = "120ch"
-    MEA_256  = "256ch"
-    MEA_4096 = "4096ch"
-    CUSTOM   = "custom"
-
-@dataclass
-class MEAConfig:
-    layout: MEALayout = MEALayout.MEA_60
-    num_channels: int = 60
-    sample_rate_hz: float = 20_000.0
-    voltage_gain: float = 1000.0
-    noise_floor_uv: float = 5.0
-    spike_threshold_sigma: float = 5.0
-    electrode_pitch_um: float = 200.0
-
-    @classmethod
-    def from_layout(cls, layout: MEALayout) -> MEAConfig: ...
-```
-
-### 6.2 `SpikeDetector` + `DetectedSpike`
-
-```python
-@dataclass
-class DetectedSpike:
-    channel: int
-    timestamp_s: float
-    amplitude_uv: float
-    unit_id: int = 0
-    waveform: Optional[np.ndarray] = None
-
-@dataclass
-class SpikeDetector:
-    config: MEAConfig
-    refractory_samples: int = 30
-
-    def estimate_noise(self, voltage_data) -> np.ndarray
-    def detect(self, voltage_data, snippet_ms: float = 2.0) -> list[DetectedSpike]
-```
-
-### 6.3 `MEAToAERTranscoder` + `AERToSCConverter`
-
-```python
-@dataclass
-class AEREvent:
-    neuron_id: int
-    timestamp: int           # clock ticks
-    valid: bool = True
-    weight: int = 256        # Q8.8 = 1.0
-
-class MEAToAERTranscoder:
-    hw_clock_hz: float = 1e6
-    channel_map: Optional[dict[int, int]] = None
-
-    def transcode(self, spikes, t_start_s: float = 0.0) -> list[AEREvent]
-
-class AERToSCConverter:
-    bitstream_length: int = 1024
-    smoothing_constant: float = 1.0
-
-    def convert(self, events) -> dict[int, np.ndarray]
-```
-
-### 6.4 `SCToOptoEncoder` + `OptogeneticPulse`
-
-```python
-@dataclass
-class OptogeneticPulse:
-    wavelength_nm: int
-    intensity_mw_mm2: float
-    duration_ms: float
-    channel_id: int
-
-@dataclass
-class SCToOptoEncoder:
-    wavelength_nm: int = 470
-    max_intensity_mw_mm2: float = 5.0
-    min_pulse_ms: float = 1.0
-    max_pulse_ms: float = 50.0
-
-    def encode(self, bitstreams) -> list[OptogeneticPulse]
-```
-
-### 6.5 Plasticity classes
-
-```python
-@dataclass
-class BiologicalSTDP:
-    A_plus: float = 0.005
-    A_minus: float = 0.00525
-    tau_plus_ms: float = 20.0
-    tau_minus_ms: float = 20.0
-
-    def compute_dw(self, dt_ms: float) -> float
-
-@dataclass
-class HomeostaticPlasticity:
-    target_rate_hz: float = 10.0
-    tau_homeo_ms: float = 10000.0
-    max_threshold_q88: int = 512    # Q8.8 = 2.0
-    min_threshold_q88: int = 64     # Q8.8 = 0.25
-
-    def update_threshold(self, current_q88: int,
-                         observed_rate_hz: float,
-                         dt_ms: float) -> int
-
-@dataclass
-class PharmModel:
-    agent_name: str = "none"
-    gain: float = 1.0
-    onset_delay_s: float = 30.0
-    wash_time_s: float = 120.0
-
-    def apply(self, t_current_s: float) -> None
-    def effective_gain(self, t_current_s: float) -> float
-    def modulate_spikes(self, spike_counts: np.ndarray,
-                        t_current_s: float) -> np.ndarray
-    def modulate_spike_events(self, spikes: list[DetectedSpike],
-                              t_current_s: float) -> list[DetectedSpike]
-```
-
-``modulate_spike_events`` is the path used by
-``BioHybridSession.process_frame``. Inhibitory gains deterministically
-thin events across the observed response span, so the pharmacological
-model does not bias output toward the earliest detected spikes.
-Excitatory gains preserve the observed events and add
-template-derived events inside the observed temporal support.
-
-### 6.6 `SpikeSorter`
-
-```python
-@dataclass
-class SpikeSorter:
-    num_units: int = 4
-    n_components: int = 3
-
-    def fit(self, spikes: list[DetectedSpike]) -> None
-    def assign(self, spikes: list[DetectedSpike]) -> list[DetectedSpike]
-```
-
-``fit`` imports scikit-learn **only** when enough waveforms are
-present to cluster; amplitude-only spike lists no-op gracefully.
-
-### 6.7 `BioHybridSession` + `BioHybridFrameResult`
-
-```python
-@dataclass
-class BioHybridFrameResult:
-    round: int
-    num_spikes: int
-    num_aer_events: int
-    num_bitstreams: int
-    num_opto_pulses: int
-    latency_us: float
-    health: Dict[str, Any]
-    spikes: List[DetectedSpike]
-    aer_events: List[AEREvent]
-    bitstreams: Dict[int, np.ndarray]
-    opto_pulses: List[OptogeneticPulse]
-
-    def __getitem__(self, key: str) -> Any
-    def __contains__(self, key: object) -> bool
-    def keys(self) -> List[str]
-
-@dataclass
-class BioHybridSession:
-    mea_config: MEAConfig
-    detector: SpikeDetector
-    transcoder: MEAToAERTranscoder
-    sc_converter: AERToSCConverter
-    opto_encoder: SCToOptoEncoder
-    stdp: BiologicalSTDP = ...
-    health_monitor: CultureHealth = ...
-    artifact_rejector: Optional[ArtifactRejector] = None
-    pharm_model: Optional[PharmModel] = None
-    latency_budget: Optional[LatencyBudget] = None
-    homeostatic: Optional[HomeostaticPlasticity] = None
-    sorter: Optional[SpikeSorter] = None
-    zenith_core: Optional[ArcaneZenithCognitiveCore] = None
-    round_count: int = 0
-
-    def process_frame(
-        self,
-        voltage_data: np.ndarray,
-        t_start_s: float = 0.0,
-        stim_times_s: Optional[list[float]] = None,
-    ) -> BioHybridFrameResult
-```
-
-### 6.8 `mea_fitness_hook`
-
-```python
-def mea_fitness_hook(
-    detected_spikes: list[DetectedSpike],
-    target_rate: float = 10.0,
-    *,
-    duration_s: float | None = None,
-    stimulus_time_s: float | None = None,
-    measured_latency_ms: float | None = None,
-) -> dict[str, float]
-```
-
-Returns ``{"accuracy", "energy_mw", "latency_ms"}``. Empty input
-returns the floor ``{0.1, 0.0, 0.0}``; ``target_rate == 0`` also
-returns the floor accuracy. ``duration_s`` must be finite and
-positive when supplied. ``stimulus_time_s`` and
-``measured_latency_ms`` must be finite; measured latency must be
-non-negative. Groups spikes by ``DetectedSpike.channel`` (regression
-guard against the previous ``channel_id`` bug).
-
----
-
-## 7. Performance benchmarks
-
-All numbers measured 2026-04-20 on Linux x86-64 (Intel i5-11600K,
-CPython 3.12.3, scikit-learn 1.8, NumPy 2.2). Committed bench harness:
-``benchmarks/bench_bioware.py`` — JSON at
-``benchmarks/results/bench_bioware.json``. Reproducer scripts also in §7.4.
-
-Note: the demo uses uniform-random MEA voltage and ArcaneZenith receives
-a stochastic current stream; ``identity_drift`` and per-frame latency
-therefore vary ≈10 % between runs. The figures in the next two tables
-come from one concrete run; the demo wall-time (≈0.69 s on the
-reference host) is stable.
-
-### 7.1 End-to-end closed-loop latency
-
-| Scenario                                | Wall time | Per-frame latency |
-| --------------------------------------- | --------- | ----------------- |
-| 14_bioware_closed_loop_demo (100 frames)| **0.69 s**| **2 945 µs at frame 100** |
-
-Full pipeline: synthetic MEA → SpikeDetector →
-SpikeSorter (PCA-fitted on 177 training waveforms) →
-MEAToAERTranscoder → AERToSCConverter → SCToOptoEncoder →
-:class:`CultureHealth` + :class:`HomeostaticPlasticity` update +
-:class:`ArcaneZenithCognitiveCore.step_from_bio_rates`. Per-frame
-latency decays over the run as the pipeline warms up — the demo
-reports 6 916 µs at frame 20 dropping to 2 945 µs at frame 100.
-
-### 7.2 ArcaneZenith-coupled identity drift
-
-Over the same 100-frame demo the attached
-:class:`ArcaneZenithCognitiveCore` reports
-``identity_drift = 1.8625`` at frame 100 (printed as "Final ArcaneZenith
-identity drift: 1.8625" by the demo). Zero network bursts are detected
-in the default 100-frame window; the drift tracks the novelty signal
-produced by the closed loop.
-
-### 7.3 `HomeostaticPlasticity.update_threshold` microbenchmark
-
-| Input pattern                                 | Result                   |
-| --------------------------------------------- | ------------------------ |
-| target 10 Hz, observed 10 Hz, dt = 100 ms    | ``new == 256`` (no change) |
-| target 10 Hz, observed 50 Hz, dt = 1000 ms,  | ``new > 256`` (raised)   |
-| τ_homeo = 1000 ms                            |                          |
-| target 10 Hz, observed 1 Hz, dt = 1000 ms,   | ``new < 256`` (lowered)  |
-| τ_homeo = 1000 ms                            |                          |
-| 10 000 Hz error for 10 s                     | saturates at ``max_q88`` |
-| 0 Hz for 10 s                                | saturates at ``min_q88`` |
-
-All five cases are enforced by the ``TestHomeostaticPlasticity`` test
-group. The controller is pure integer arithmetic (subtraction,
-multiplication, floor-division, clamp) — CPU cost well below one
-microsecond per call.
-
-### 7.4 Reproducer
+The capture used taskset affinity but no exclusive isolated core, the CPU
+governor was `powersave`, and host load was high. These numbers are local
+regression context only. Rerun on reserved isolated hardware before publishing
+performance claims.
 
 ```bash
-# 7.1 + 7.2 end-to-end demo
-MPLBACKEND=Agg python examples/14_bioware_closed_loop_demo.py
+PYTHONPATH=src .venv/bin/pytest tests/test_bioware -q
 
-# 7.3 homeostatic controller
-python -c "
-from sc_neurocore.bioware.bioware import HomeostaticPlasticity
-hp = HomeostaticPlasticity(target_rate_hz=10.0, tau_homeo_ms=1000.0)
-print(hp.update_threshold(256, observed_rate_hz=10.0, dt_ms=100.0))  # 256
-print(hp.update_threshold(256, observed_rate_hz=50.0, dt_ms=1000.0)) # >256
-print(hp.update_threshold(256, observed_rate_hz=1.0,  dt_ms=1000.0)) # <256
-"
+.venv/bin/python benchmarks/bench_bioware.py \
+  --baseline-root <clean-parent-tree> \
+  --baseline-ref c4e492ff5 \
+  --candidate-root . \
+  --candidate-ref working-tree \
+  --iterations 30 \
+  --warmups 2 \
+  --output benchmarks/results/bench_bioware.json
 ```
 
-The demo prints ``[3] Experiment complete in 0.69s.`` on the
-reference host.
+The closed-loop biohybrid research context is exemplified by
+[Kagan et al. (2022)](https://doi.org/10.1016/j.neuron.2022.09.001); that work
+does not validate this software implementation or its safety.
 
----
-
-## 8. Citations
-
-1. **Bi, G.-Q. & Poo, M.-M.** (1998). *Synaptic modifications in
-   cultured hippocampal neurons: dependence on spike timing, synaptic
-   strength, and postsynaptic cell type.* Journal of Neuroscience
-   18(24): 10464–10472. — Exponential pair-based STDP used by
-   :class:`BiologicalSTDP`.
-2. **Bienenstock, E. L., Cooper, L. N., Munro, P. W.** (1982).
-   *Theory for the development of neuron selectivity: orientation
-   specificity and binocular interaction in visual cortex.* Journal
-   of Neuroscience 2(1): 32–48. — BCM metaplasticity used by
-   :class:`BCMPlasticity`.
-3. **Donoho, D. L. & Johnstone, I. M.** (1994). *Ideal spatial
-   adaptation by wavelet shrinkage.* Biometrika 81(3): 425–455. —
-   MAD / 0.6745 robust σ estimator used by
-   :class:`SpikeDetector.estimate_noise`.
-4. **Kagan, B. J., Kitchen, A. C., et al.** (2022). *In vitro neurons
-   learn and exhibit sentience when embodied in a simulated
-   game-world.* Neuron 110(23): 3952–3969.e8. — Reference closed-loop
-   MEA-opto experiment motivating :class:`BioHybridSession`.
-5. **Lewicki, M. S.** (1998). *A review of methods for spike sorting:
-   the detection and classification of neural action potentials.*
-   Network: Computation in Neural Systems 9(4): R53–R78. — Classical
-   PCA-based spike sorter; direct antecedent of
-   :class:`SpikeSorter`.
-6. **Turrigiano, G. G.** (2012). *Homeostatic synaptic plasticity:
-   local and global mechanisms for stabilizing neuronal function.*
-   Cold Spring Harbor Perspectives in Biology 4(1): a005736. —
-   Biological reference for the slow homeostatic timescales modelled
-   by :class:`HomeostaticPlasticity`.
-
----
-
-## 9. Limitations
-
-- **SpikeSorter needs scikit-learn.** Without it, ``fit`` raises a
-  clear ``ImportError`` with a pointer to the ``[bioware]`` extras.
-  The empty-input path is a no-op and does *not* require sklearn.
-- **PCA + KMeans is a minimal baseline.** Production spike-sorting
-  should use SpikeInterface, Kilosort 3+, or MountainSort. The
-  SC-NeuroCore sorter exists as a closed-loop demo.
-- **No real-time FPGA coupling inside this module.** The transcoder
-  produces AER events suitable for the PYNQ-Z2 hardware, but the
-  actual streaming to the FPGA is caller-owned (see ``hdl/``).
-- **Q8.8 homeostatic controller is proportional only.** A full
-  PID controller would need integral and derivative state; the
-  current single-step update is tuned to the slow ``tau_homeo`` regime
-  where P is sufficient (Turrigiano 2012).
-- **BioHybridFrameResult mapping view is read-only.** ``in``,
-  ``[key]``, and ``keys()`` work; ``result[key] = value`` raises.
-  Mutate the dataclass fields directly for reply-time updates.
-
----
-
-## Reference
-
-- Module: `src/sc_neurocore/bioware/bioware.py`.
-- Tests: `tests/test_bioware/test_bioware.py` (121 focused tests incl.
-  TestMEAConfig, TestSpikeDetector, TestMEAToAERTranscoder,
-  TestAERToSCConverter, TestSCToOptoEncoder, TestBiologicalSTDP,
-  TestBCMPlasticity, TestCultureHealth, TestBioHybridSession,
-  TestRefractoryPeriod, TestOptoSafety, TestEdgeCases,
-  TestSpikeSorter, TestLFPExtraction, TestLatencyBudget,
-  TestPharmModel, TestMultiWellPlate, TestNetworkBurstDetection,
-  TestArtifactRejection, TestBioAuditLog, TestBitstreamRateDecoder,
-  TestHomeostaticPlasticity, TestBioHybridFrameResult,
-  TestMEAFitnessHook).
-- Demo: `examples/14_bioware_closed_loop_demo.py` (100-frame end-to-end
-  closed loop with ArcaneZenith + PCA spike sorting).
-- Cross-references: :doc:`arcane_zenith` (``zenith_core`` attachment),
-  :doc:`evo_substrate` (``mea_fitness_hook``).
+## API reference
 
 ::: sc_neurocore.bioware.bioware
-    options:
-      show_root_heading: true
