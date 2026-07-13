@@ -172,12 +172,16 @@ ENROLLED: tuple[EnrolledEvidence, ...] = (
         schema_name="lapicque",
         class_name="LapicqueNeuron",
         level="h1_cosim",
-        evidence="tests/test_cosimulation.py::_COSIM_MODELS cosim suite (lapicque)",
-        operating_point=(
-            "schema-DSL lapicque (sibling schema 'lif' shares the same class "
-            "descriptor until a dedicated StochasticLIF descriptor exists)"
+        evidence=(
+            "tests/test_cosim_lapicque.py::test_q1616_preserves_event_vectors_and_voltage_bound"
         ),
-        tolerance="suite parity gate",
+        operating_point=(
+            "Lapicque exact constant-current RC flow at I=0.333,2.3,20.25 over 1000 steps"
+        ),
+        tolerance=(
+            "hand/TOML/JSON event-exact with state error at or below 2e-15; "
+            "Q16.16 event vectors exact with voltage error below 0.04"
+        ),
     ),
     EnrolledEvidence(
         schema_name="perfect_integrator",

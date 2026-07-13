@@ -1,8 +1,11 @@
 # LapicqueNeuron
 
 **Module:** `sc_neurocore.neurons.models.lapicque`
-**Reference:** Lapicque 1907
+
+**Reference:** Lapicque 1907; English translation DOI `10.1007/s00422-007-0189-6`
+
 **Family:** Integrate-and-fire (classical)
+
 **State variables:** `v` (voltage)
 
 ## Equations
@@ -42,65 +45,75 @@ The implementation rejects invalid state before mutation:
 These guards preserve the positive-rheobase RC contract and prevent overflowing
 inputs or time constants from poisoning membrane state.
 
-Python re-validates mutable runtime state on every `step()` call. Rust and Go
-return explicit errors for invalid currents, corrupted state, or non-finite
-exact-flow candidates; Julia raises `DomainError` for the same contract. The Mojo kernel
-surface remains a pure spike-flag function and fails closed with `0` for invalid
-inputs.
+Python re-validates mutable runtime state on every `step()` call. Julia, Go, and
+Mojo expose the complete state-and-parameter contract through executable native
+ABIs. Go and Mojo validate the complete run before writing the caller-visible
+trace, so rejected input cannot partially commit output or instance state. The
+Rust engine path is executable at factory defaults and rejects non-default
+instances explicitly instead of silently changing their parameters.
 
 ## Behaviour
 
-- **The original IF:** Lapicque 1907 — the first mathematical neuron model.
-  Simple RC circuit with threshold.
+- **Historical RC formulation:** the maintained recurrence follows Lapicque's
+  1907 polarisation model with a threshold and hard reset.
 - **Analytical rheobase:** I_rh = V_θ / R. Below rheobase, v settles to
   steady state R·I < V_θ. Above, periodic spiking.
 - **Deterministic:** Fully deterministic exact constant-current RC integration.
 - **Hard reset:** v → v_reset (not subtract-reset).
-- **Simplest conductance-free model:** No gating, no adaptation, no noise.
+- **Conductance-free point model:** no gating, adaptation, or noise state.
 
-## Infrastructure Pipeline
+## Execution and silicon pipeline
 
 ```
 LapicqueNeuron
 ├── step(current) → int {0,1}
-├── Population: PoissonInput(weight=2.0, rate=500Hz)
-├── Verilog: MAC + compare, ~10 LUTs
-└── Rust/Go/Julia/Mojo: finite exact-flow spike/reset contract with explicit errors where supported
+├── simulate(..., backend="auto|python|rust|julia|go|mojo")
+├── measured auto order: Mojo → Julia → Go → compatible Rust → Python
+├── paired TOML/JSON schema: exp_euler + inclusive candidate threshold
+├── generated Q16.16 RTL: event-vector parity at three operating points
+└── catalogue formal job: SymbiYosys/Z3 bounded proof, depth 20
 ```
 
-## Test Coverage
+## Verification evidence
 
-| Category | Tests | What is verified |
-|----------|------:|-----------------|
-| Isolation | 12 | construction, step binary, subthreshold, spikes, rheobase, rate increase, voltage clamp, hard reset, stability, reset, deterministic, custom tau |
-| Network | 2 | Population, spikes |
-| Analysis | 4 | spike_count, ISI, firing-rate, cross-validation |
-| Validation | 27 | finite parameters/current, positive RC scales, threshold geometry, corrupted runtime state, initial voltage below threshold, finite candidate before mutation |
-| Exact flow | 2 | closed-form update and separation from forward Euler |
-| **Total** | **68** | |
+| Surface | Evidence | Contract |
+|---------|----------|----------|
+| Python model | `tests/test_model_lapicque.py` | exact flow, rheobase, reset, validation, analysis, network use, and timing guard |
+| Public native dispatch | `tests/test_lapicque_backends.py` | executable Rust/Julia/Go/Mojo paths, complete parity, measured fall-through order, and mutation-free rejection |
+| Native loading | `tests/test_lapicque_backend_loading.py` | build/load separation, ABI declarations, cache behaviour, and actionable failures |
+| Reference | `tests/test_reference_lapicque.py` | independent closed-form feature re-derivation at `1e-12` absolute tolerance |
+| Python-to-Verilog | `tests/test_cosim_lapicque.py` | paired-schema event exactness, `2e-15` state envelope, and Q16.16 event-vector parity |
+| Benchmark | `tests/test_bench_lapicque.py` | public-path measurement, source hashes, environment metadata, partial-run disclosure, and fail-closed parity exits |
+
+The model and native-dispatch modules reach 100 percent statement and branch
+coverage under the focused closure cohort. The benchmark module reaches the
+same configured threshold; its command-line entry point is also exercised by
+the committed real measurement.
 
 
 ---
 
-## Measured Performance (2026-06-17)
+## Measured Performance (2026-07-13)
 
-Local non-isolated regression run. These numbers are recorded for
-regression comparison only and are not production throughput claims.
+The committed run was pinned to logical CPU 10, but that CPU was not reserved
+and the kernel isolated-CPU set was empty. The powersave-governor host load was
+29.73 at the start and 30.47 at the end. These are local regression timings,
+not production throughput claims.
 
 | Metric | Value |
 |--------|-------|
 | Evidence class | Local regression, non-isolated workstation |
 | Benchmark artefact | `benchmarks/results/local_python_2026-06-17_lapicque_exact_flow.json` |
-| Workload | 200000 steps, 5 repeats, I=5.0 |
-| Polyglot contract | Python, Rust engine, Rust safety, Go, Julia, and Mojo exact-flow surfaces aligned, with explicit errors where supported |
+| Workload | 100,000 steps, 7 repeats, I=5.0 |
+| Polyglot contract | Five public dispatch paths; 20,000 events in every lane; maximum voltage difference `4.44e-16` |
 
-| Backend | Median ns/step | Min ns/step | Max ns/step | Spikes |
-|---------|---------------:|------------:|------------:|-------:|
-| Python | 846.46715 | 830.075925 | 862.33738 | 40000 |
-| Rust engine | 27.70341 | 27.569665 | 29.568335 | 40000 |
-| Go service mirror | 21.63 | 20.55 | 26.82 | 40000 |
-| Julia mirror | 9.826215 | 9.099855 | 12.30926 | 40000 |
-| Mojo mirror | 2.8946799284312874 | 1.9408500520512462 | 3.284705016994849 | 40000 |
+| Backend | Median ms/call | Speedup vs Python | Maximum voltage difference | Events |
+|---------|---------------:|------------------:|---------------------------:|-------:|
+| Mojo | 1.075 | 256.07× | `4.44e-16` | 20,000 |
+| Julia | 6.147 | 44.77× | `0` | 20,000 |
+| Go | 8.138 | 33.82× | `0` | 20,000 |
+| Rust engine | 70.889 | 3.88× | `0` | 20,000 |
+| Python | 275.196 | 1.00× | `0` | 20,000 |
 
 ---
 
@@ -111,7 +124,7 @@ regression comparison only and are not production throughput claims.
 **Status: PASS**
 
 ### 2. step() → correct type
-Returns `int` (spike indicator) or `float` (rate/potential).
+Returns an integer spike indicator in `{0, 1}`.
 **Status: PASS**
 
 ### 3. Spiking behaviour
@@ -130,14 +143,32 @@ State returns to initial values after `reset()`.
 `Population(LapicqueNeuron, n=10)` creates correct instances.
 **Status: PASS**
 
-### 7. Polyglot safety surfaces
-Rust, Go, Julia, and Mojo carry the same finite exact-flow spike/reset contract.
+### 7. Public polyglot dispatch
+Rust, Julia, Go, and Mojo execute the same exact-flow event contract. Julia,
+Go, and Mojo carry non-default state and parameters; Rust retains its stated
+factory-default boundary.
+**Status: PASS**
+
+### 8. Python-to-Verilog parity
+Hand, TOML, and JSON traces agree to `2e-15`. Q16.16 RTL preserves the complete
+event vectors at I=0.333/2.3/20.25 over 1,000 steps (0/83/500 events) with
+maximum voltage error below `0.04`.
+**Status: PASS**
+
+### 9. Formal catalogue job
+The generated exponential-Euler RTL and inclusive threshold contract pass the
+depth-20 SymbiYosys/Z3 bounded proof.
+**Status: PASS**
 
 ---
 
-## Findings (measured 2026-06-17)
+## Findings (measured 2026-07-13)
 
-1. Constant-current integration now uses the closed-form RC update.
-2. All pipeline stages verified green.
-3. Polyglot contract aligned for Python, Rust engine, Rust safety, Go, Julia, and Mojo.
-4. Numerical stability confirmed over 20K steps.
+1. Constant-current integration uses the closed-form RC update on every public
+   runtime path.
+2. The measured public dispatcher order is Mojo, Julia, Go, compatible Rust,
+   then Python.
+3. All enrolled acceleration events match Python exactly; the largest measured
+   trace difference is `4.44e-16`.
+4. Paired schemas, Q16.16 RTL, readiness evidence, and the depth-20 formal job
+   describe the same inclusive candidate-first event contract.

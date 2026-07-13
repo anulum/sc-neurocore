@@ -25,6 +25,27 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
   The affinity-only, loaded-host timing regression is documented as local
   diagnostics and is not a throughput or hardware claim.
 
+### Lapicque exact-flow source-to-silicon closure
+- Exposed the maintained exact constant-current RC recurrence through Python,
+  the Rust engine, Julia, Go, and Mojo. The public dispatcher follows the
+  committed measured Mojo/Julia/Go/compatible-Rust/Python order; Julia, Go, and
+  Mojo transport the complete numeric contract, while the Rust engine retains
+  its explicit factory-default boundary. Dedicated native-path tests preserve
+  0/0/71/200/500 events at I=0/0.5/2/5/20 over 1,000 steps and bound every
+  compiled trace to `2e-15` from Python.
+- Replaced the earlier mirror-style benchmark with a source-hashed public-API
+  harness and committed five-backend result. The single-logical-CPU,
+  powersave-governor run records 20,000 events in every lane and a maximum
+  voltage difference of `4.44e-16`; its high host load and absent isolated-CPU
+  set make the timings local regression evidence rather than a throughput
+  claim.
+- Aligned the paired schemas and generated RTL with exponential-Euler lowering
+  and inclusive candidate thresholding. Hand, TOML, and JSON event vectors are
+  exact and their state traces remain within `2e-15`; Q16.16 RTL retains
+  complete event vectors at I=0.333/2.3/20.25 over 1,000 steps with voltage
+  error below `0.04`. The translation DOI, independent closed-form trace,
+  S5/H1 descriptor, readiness evidence, and depth-20 Z3 proof are cross-wired.
+
 ### NIR hardware-graph responsibility modularisation
 - Replaced the 1,414-line hardware-graph implementation and three primary test
   files totalling 4,091 lines with an 84-line compatibility facade, seven

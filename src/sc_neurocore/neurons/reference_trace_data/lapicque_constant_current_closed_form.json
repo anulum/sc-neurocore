@@ -19,7 +19,7 @@
     "kind": "analytic_closed_form",
     "source": "src/sc_neurocore/neurons/model_schemas/lapicque.toml",
     "equation": "v(t)=v_inf+(v0-v_inf)*exp(-t/tau), v_inf=v_rest+resistance*I",
-    "citation": "Lapicque 1907 schema metadata"
+    "citation": "doi:10.1007/s00422-007-0189-6"
   },
   "expected_features": {
     "spike_count": 0.0,
@@ -31,7 +31,7 @@
   },
   "tolerances": {
     "default": {
-      "absolute": 0.001,
+      "absolute": 1e-12,
       "relative": 0.0
     },
     "spike_count": {

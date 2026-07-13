@@ -37,7 +37,7 @@ table because their schemas are stochastic.
 | `izhikevich_regular_spiking_doi` | `izhikevich` | `universal_dsl` | Independent explicit-Euler re-derivation of the regular-spiking equations from `neurons/model_schemas/izhikevich.toml` with DOI-backed schema provenance |
 | `izhikevich2007_regular_spiking_doi` | `izhikevich2007` | `universal_dsl` | Independent explicit-Euler re-derivation of the biophysical quadratic equations from `neurons/model_schemas/izhikevich2007.toml` with DOI-backed schema provenance |
 | `lif_constant_current_closed_form` | `lif` | `universal_dsl` | Closed-form RC solution from `neurons/model_schemas/lif.toml` |
-| `lapicque_constant_current_closed_form` | `lapicque` | `universal_dsl` | Closed-form RC solution from `neurons/model_schemas/lapicque.toml` |
+| `lapicque_constant_current_closed_form` | `lapicque` | `universal_dsl` | Independent exact constant-current RC solution with provenance bound to the 2007 English translation of Lapicque (1907), DOI `10.1007/s00422-007-0189-6` |
 | `mckean_driven_oscillation_doi` | `mckean` | `universal_dsl` | Independent fourth-order Runge-Kutta re-derivation of the piecewise-linear relaxation oscillator (no reset, rising-edge `v >= 0.8` crossing) from `neurons/model_schemas/mckean.toml` with DOI-backed schema provenance |
 | `medvedev_map_first_return_doi` | `medvedev_map` | `universal_dsl` | Independent scalar iteration of Medvedev (2005) Section 4's three-region slow-calcium first-return construction, with the disclosed global calibration and maintained pre-state event convention separated from the DOI-sourced equations |
 | `mihalas_niebur_driven_spiking_doi` | `mihalas_niebur` | `universal_dsl` | Independent fourth-order Runge-Kutta re-derivation of the four-state adaptive-threshold flow from `neurons/model_schemas/mihalas_niebur.toml` with DOI-backed schema provenance |
@@ -55,7 +55,7 @@ table because their schemas are stochastic.
 All entries record spike count, first spike step, and final/min/max/mean
 features for the declared state variables. The tests independently recompute the
 LIF, QIF, perfect-integrator, resonate-fire, theta, Ermentrout-Kopell theta-Euler, GLIF, Izhikevich, Cazelles map, Chialvo map, Ibarz-Tanaka map, Medvedev map, Courbage-Nekorkin map,
-Izhikevich 2007, FitzHugh-Nagumo, FitzHugh-Rinzel, Pernarowski, Terman-Wang, Wilson-HR, McKean, AdEx, exponential-IF,
+Izhikevich 2007, FitzHugh-Nagumo, FitzHugh-Rinzel, Pernarowski, Terman-Wang, Wilson-HR, McKean, Lapicque, AdEx, exponential-IF,
 Hindmarsh-Rose, Morris-Lecar,
 Hodgkin-Huxley, Connor-Stevens, Wang-Buzsaki, DPI, and Mihalas-Niebur analytic,
 explicit-Euler, sequential Gauss-Seidel, or fourth-order Runge-Kutta solutions — every deterministic
@@ -115,6 +115,12 @@ linear recovery, with rising-edge `v >= v_peak` crossing detection and no reset;
 enrolled sustained-oscillation regime (`epsilon = 0.2`, `gamma = 0.5`, `I = 0.6`) it is a
 robust limit cycle whose sixteen upward crossings survive Q16.16 rounding, so the
 min/max branch selection lowers to fixed point without a look-up table.
+The Lapicque entry independently evaluates
+`v(t)=v_inf+(v0-v_inf)*exp(-t/tau)` for its 200-sample subthreshold protocol,
+without importing the hand model or schema recurrence. It reproduces every
+committed voltage feature within `1e-12`; event count and first-event sentinel
+remain exact. The provenance points to the English translation DOI while the
+exact-flow discretisation is stated as the maintained implementation contract.
 The Medvedev entry independently reconstructs the Section 4 slow-calcium return
 from its three source regions and the disclosed SC-NeuroCore global calibration.
 Its `I=2`, 100-iteration protocol reproduces the exact four-state cycle and 75

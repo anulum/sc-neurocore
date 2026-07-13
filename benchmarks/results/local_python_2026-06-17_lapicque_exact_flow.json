@@ -1,286 +1,152 @@
 {
-  "spdx_license": "AGPL-3.0-or-later",
-  "commercial_license": "available",
-  "copyright_concepts": "\u00a9 Concepts 1996\u20132026 Miroslav \u0160otek. All rights reserved.",
-  "copyright_code": "\u00a9 Code 2020\u20132026 Miroslav \u0160otek. All rights reserved.",
-  "orcid": "0009-0009-3560-0851",
-  "contact": "www.anulum.li | protoscience@anulum.li",
-  "benchmark": "LapicqueNeuron exact constant-current RC flow step",
-  "timestamp_utc": "2026-06-17T00:39:41+00:00",
-  "command": "PYTHONPATH=src .venv/bin/python benchmarks/bench_model_lapicque.py",
-  "evidence_class": "local_regression_non_isolated",
-  "production_speed_claim": false,
-  "hardware_measurement_claimed": false,
-  "python": "3.12.3",
-  "platform": "Linux-6.17.0-35-generic-x86_64-with-glibc2.39",
-  "processor": "x86_64",
-  "steps": 200000,
-  "repeats": 5,
-  "current": 5.0,
-  "results": [
-    {
-      "backend": "python",
-      "median_ns_per_step": 846.46715,
-      "min_ns_per_step": 830.075925,
-      "max_ns_per_step": 862.33738,
-      "spikes": 40000,
-      "results": [
-        {
-          "backend": "python",
-          "steps": 200000,
-          "current": 5.0,
-          "elapsed_ns": 166015185,
-          "ns_per_step": 830.075925,
-          "spikes": 40000,
-          "ending_state": [
-            0.0
-          ]
-        },
-        {
-          "backend": "python",
-          "steps": 200000,
-          "current": 5.0,
-          "elapsed_ns": 172039579,
-          "ns_per_step": 860.197895,
-          "spikes": 40000,
-          "ending_state": [
-            0.0
-          ]
-        },
-        {
-          "backend": "python",
-          "steps": 200000,
-          "current": 5.0,
-          "elapsed_ns": 169293430,
-          "ns_per_step": 846.46715,
-          "spikes": 40000,
-          "ending_state": [
-            0.0
-          ]
-        },
-        {
-          "backend": "python",
-          "steps": 200000,
-          "current": 5.0,
-          "elapsed_ns": 172467476,
-          "ns_per_step": 862.33738,
-          "spikes": 40000,
-          "ending_state": [
-            0.0
-          ]
-        },
-        {
-          "backend": "python",
-          "steps": 200000,
-          "current": 5.0,
-          "elapsed_ns": 169042137,
-          "ns_per_step": 845.210685,
-          "spikes": 40000,
-          "ending_state": [
-            0.0
-          ]
-        }
-      ]
-    },
-    {
-      "backend": "rust",
-      "timestamp_unix": 1781656778,
-      "command": "cargo run --manifest-path engine/Cargo.toml --example bench_lapicque_exact_flow",
-      "rustc": "rustc 1.96.0 (ac68faa20 2026-05-25)",
-      "target_os": "linux",
-      "target_arch": "x86_64",
-      "measurement_context": {
-        "host_load": "workstation under concurrent load during capture",
-        "cpu_isolation": "runtime cpuset shield when cgroup_effective_cpuset matches benchmark CPUs; kernel-reserved isolated cores were not detected on this workstation",
-        "cpu_affinity": "0-11",
-        "cgroup_effective_cpuset": "unavailable",
-        "runtime_cpuset_shield_claimed": false,
-        "load_average_before": "4.62 5.46 5.47 2/6183 1971560",
-        "load_average_after": "4.62 5.46 5.47 1/6183 1971570",
-        "cpu_governor": "powersave",
-        "cpu_frequency_mhz": "min=4599.052,max=4603.203,sampled_cpu_count=12",
-        "concurrent_load_status": "non-exclusive workstation run; other heavy jobs may have been active",
-        "timing_interpretation": "use timing medians as local regression context only, not final throughput claims",
-        "production_rerun_requirement": "rerun on reserved isolated cores with recorded affinity, governor, frequency, versions, and host-load evidence before publishing performance claims"
-      },
-      "steps": 200000,
-      "repeats": 5,
-      "current": 5,
-      "median_ns_per_step": 27.70341,
-      "min_ns_per_step": 27.569665,
-      "max_ns_per_step": 29.568335,
-      "results_ns_per_step": [
-        27.70341,
-        27.90403,
-        29.568335,
-        27.629585,
-        27.569665
-      ],
-      "spike_counts": [
-        40000,
-        40000,
-        40000,
-        40000,
-        40000
-      ],
-      "final_vs": [
-        0.0,
-        0.0,
-        0.0,
-        0.0,
-        0.0
-      ],
-      "spikes": 40000,
-      "driver_command": "cargo run --manifest-path engine/Cargo.toml --example bench_lapicque_exact_flow"
-    },
-    {
-      "backend": "go",
-      "command": "go test src/sc_neurocore/accel/go/services/lapicque.go src/sc_neurocore/accel/go/services/lapicque_test.go -run ^$ -bench BenchmarkLapicqueExactFlow$ -benchtime 200000x -count 5",
-      "steps": 200000,
-      "repeats": 5,
-      "current": 5.0,
-      "median_ns_per_step": 21.63,
-      "min_ns_per_step": 20.55,
-      "max_ns_per_step": 26.82,
-      "results_ns_per_step": [
-        26.82,
-        21.65,
-        21.63,
-        21.33,
-        20.55
-      ],
-      "spikes": 40000
-    },
-    {
-      "backend": "julia",
-      "command": "julia --project=. -e <lapicque exact-flow benchmark>",
-      "steps": 200000,
-      "repeats": 5,
-      "current": 5.0,
-      "median_ns_per_step": 9.826215,
-      "min_ns_per_step": 9.099855,
-      "max_ns_per_step": 12.30926,
-      "results_ns_per_step": [
-        9.099855,
-        9.754295,
-        12.30926,
-        10.84765,
-        9.826215
-      ],
-      "spikes": 40000,
-      "spike_counts": [
-        40000,
-        40000,
-        40000,
-        40000,
-        40000
-      ],
-      "final_vs": [
-        0.0,
-        0.0,
-        0.0,
-        0.0,
-        0.0
-      ]
-    },
-    {
-      "backend": "mojo",
-      "command": "mojo run --disable-warnings -I src/sc_neurocore/accel/mojo/kernels <temp lapicque benchmark>",
-      "steps": 200000,
-      "repeats": 5,
-      "current": 5.0,
-      "median_ns_per_step": 2.8946799284312874,
-      "min_ns_per_step": 1.9408500520512462,
-      "max_ns_per_step": 3.284705016994849,
-      "results_ns_per_step": [
-        1.9408500520512462,
-        2.488254976924509,
-        3.284705016994849,
-        2.915614895755425,
-        2.8946799284312874
-      ],
-      "spikes": 40000,
-      "spike_counts": [
-        40000,
-        40000,
-        40000,
-        40000,
-        40000
-      ]
-    }
-  ],
-  "backend_summary": {
-    "python": {
-      "median_ns_per_step": 846.46715,
-      "min_ns_per_step": 830.075925,
-      "max_ns_per_step": 862.33738,
-      "spikes": 40000
-    },
-    "rust": {
-      "median_ns_per_step": 27.70341,
-      "min_ns_per_step": 27.569665,
-      "max_ns_per_step": 29.568335,
-      "spikes": 40000
-    },
+  "backends": {
     "go": {
-      "median_ns_per_step": 21.63,
-      "min_ns_per_step": 20.55,
-      "max_ns_per_step": 26.82,
-      "spikes": 40000
+      "available": true,
+      "event_count": 20000,
+      "event_count_matches_python": true,
+      "final_state": {
+        "v": 0.0
+      },
+      "median_call_ms": 8.138179,
+      "minimum_call_ms": 7.753452,
+      "parity_max_abs_diff": 0.0,
+      "speedup_vs_python": 33.81547714789759,
+      "used": true
     },
     "julia": {
-      "median_ns_per_step": 9.826215,
-      "min_ns_per_step": 9.099855,
-      "max_ns_per_step": 12.30926,
-      "spikes": 40000
+      "available": true,
+      "event_count": 20000,
+      "event_count_matches_python": true,
+      "final_state": {
+        "v": 0.0
+      },
+      "median_call_ms": 6.14713,
+      "minimum_call_ms": 2.253373,
+      "parity_max_abs_diff": 0.0,
+      "speedup_vs_python": 44.76827495107474,
+      "used": true
     },
     "mojo": {
-      "median_ns_per_step": 2.8946799284312874,
-      "min_ns_per_step": 1.9408500520512462,
-      "max_ns_per_step": 3.284705016994849,
-      "spikes": 40000
+      "available": true,
+      "event_count": 20000,
+      "event_count_matches_python": true,
+      "final_state": {
+        "v": 0.0
+      },
+      "median_call_ms": 1.07471,
+      "minimum_call_ms": 1.028648,
+      "parity_max_abs_diff": 4.440892098500626e-16,
+      "speedup_vs_python": 256.0657349424496,
+      "used": true
+    },
+    "python": {
+      "available": true,
+      "event_count": 20000,
+      "event_count_matches_python": true,
+      "final_state": {
+        "v": 0.0
+      },
+      "median_call_ms": 275.196406,
+      "minimum_call_ms": 234.259983,
+      "parity_max_abs_diff": 0.0,
+      "speedup_vs_python": 1.0,
+      "used": true
+    },
+    "rust": {
+      "available": true,
+      "event_count": 20000,
+      "event_count_matches_python": true,
+      "final_state": {
+        "v": 0.0
+      },
+      "median_call_ms": 70.88892,
+      "minimum_call_ms": 64.605135,
+      "parity_max_abs_diff": 0.0,
+      "speedup_vs_python": 3.8820792586486017,
+      "used": true
     }
   },
+  "kernel": "lapicque_exact_constant_current_flow",
+  "measured_order": [
+    "mojo",
+    "julia",
+    "go",
+    "rust",
+    "python"
+  ],
+  "meta": {
+    "affinity": [
+      10
+    ],
+    "cpu": "11th Gen Intel(R) Core(TM) i5-11600K @ 3.90GHz",
+    "governor": "powersave",
+    "kernel_isolated_cpus": "",
+    "load_average_end": [
+      30.47021484375,
+      31.44775390625,
+      35.80322265625
+    ],
+    "load_average_start": [
+      29.7294921875,
+      31.42919921875,
+      35.91845703125
+    ],
+    "measurement_scope": "single-logical-CPU affinity; kernel isolation and workstation load reported separately",
+    "platform": "Linux-6.17.0-35-generic-x86_64-with-glibc2.39",
+    "runtime_versions": {
+      "go": "go version go1.24.0 linux/amd64",
+      "julia": "julia version 1.12.6",
+      "mojo": "Mojo 1.0.0b1 (a9591de6)",
+      "numpy": "2.2.6",
+      "python": "3.12.3",
+      "rust": "rustc 1.96.0 (ac68faa20 2026-05-25)"
+    },
+    "single_cpu_pinned": true
+  },
+  "schema_version": "sc-neurocore.polyglot-benchmark.v1",
   "source_hashes": {
-    "benchmarks/bench_model_lapicque.py": "2c9ba6c1c0e6818b608703fb39cfcbecd7cf2d477acc89c6f8042d53d328d3dd",
-    "engine/Cargo.toml": "2d82433cbadcb9e33e73e4e88f7608547bc08302dfd6ff53f87fd47d017fbe60",
-    "engine/examples/bench_lapicque_exact_flow.rs": "eb44aebe8b992529288a0ab2a32bc7b009c554ddffb4c2760b99426791c6742a",
-    "engine/src/neuron.rs": "5627c16c29ec9c323595cc9c33d5bddf227fea9e3205a7aa43922f2353506bb1",
-    "src/sc_neurocore/neurons/models/lapicque.py": "c4c251c91538cc7dc986d7943f580f12941d6119ca42d77d179d983249ce1f66",
-    "src/sc_neurocore/accel/go/services/lapicque.go": "501a740dc5ec26669de7ccd5caf7f846acb0d32ab1ef946043ae86bae1ac99cb",
-    "src/sc_neurocore/accel/go/services/lapicque_test.go": "3d661854a0e923ae940ca1d8f9c54595f12aeb24b338452a8112f02265936d43",
-    "src/sc_neurocore/accel/julia/neurons/lapicque.jl": "c3b136b5d19ec96ddcd7c1abc025be04c9ee6831fdf57e88c74355d61f755b9b",
-    "src/sc_neurocore/accel/mojo/kernels/lapicque.mojo": "3d32bc0d4f60d9adf1424f9033aa2fea89a3e0880922ceedd03347706927a87f",
-    "src/sc_neurocore/accel/rust/safety/lapicque.rs": "5be3c348a457f548134569c8c8f1fd26bf9ec6269f567ee3323f1960d17adc64",
     "benchmarks/bench_model_lapicque": {
-      "py": "2c9ba6c1c0e6818b608703fb39cfcbecd7cf2d477acc89c6f8042d53d328d3dd"
+      "py": "41c536476eb2f732204f7d2720472505864512a6d03f3ac90211271b792a38f2"
     },
-    "engine/Cargo": {
-      "toml": "2d82433cbadcb9e33e73e4e88f7608547bc08302dfd6ff53f87fd47d017fbe60"
-    },
-    "engine/examples/bench_lapicque_exact_flow": {
-      "rs": "eb44aebe8b992529288a0ab2a32bc7b009c554ddffb4c2760b99426791c6742a"
-    },
+    "benchmarks/bench_model_lapicque.py": "41c536476eb2f732204f7d2720472505864512a6d03f3ac90211271b792a38f2",
     "engine/src/neuron": {
-      "rs": "5627c16c29ec9c323595cc9c33d5bddf227fea9e3205a7aa43922f2353506bb1"
+      "rs": "85c3d206749df77704717cdcf18934551dae322e85d529c0973f464326dbec0b"
     },
-    "src/sc_neurocore/neurons/models/lapicque": {
-      "py": "c4c251c91538cc7dc986d7943f580f12941d6119ca42d77d179d983249ce1f66"
+    "engine/src/neuron.rs": "85c3d206749df77704717cdcf18934551dae322e85d529c0973f464326dbec0b",
+    "src/sc_neurocore/accel/go/neurons/lapicque/lapicque": {
+      "go": "7c93681da72cc72e663bc5cd9a866c8d5cc4c7447ba9956105a67f63a44ad2d9"
     },
+    "src/sc_neurocore/accel/go/neurons/lapicque/lapicque.go": "7c93681da72cc72e663bc5cd9a866c8d5cc4c7447ba9956105a67f63a44ad2d9",
     "src/sc_neurocore/accel/go/services/lapicque": {
       "go": "501a740dc5ec26669de7ccd5caf7f846acb0d32ab1ef946043ae86bae1ac99cb"
     },
-    "src/sc_neurocore/accel/go/services/lapicque_test": {
-      "go": "3d661854a0e923ae940ca1d8f9c54595f12aeb24b338452a8112f02265936d43"
-    },
+    "src/sc_neurocore/accel/go/services/lapicque.go": "501a740dc5ec26669de7ccd5caf7f846acb0d32ab1ef946043ae86bae1ac99cb",
     "src/sc_neurocore/accel/julia/neurons/lapicque": {
-      "jl": "c3b136b5d19ec96ddcd7c1abc025be04c9ee6831fdf57e88c74355d61f755b9b"
+      "jl": "ff9407665ba9c7ffc36196fb4990639f6e85e9174c3dd6a24f27f38a417fb839"
     },
+    "src/sc_neurocore/accel/julia/neurons/lapicque.jl": "ff9407665ba9c7ffc36196fb4990639f6e85e9174c3dd6a24f27f38a417fb839",
+    "src/sc_neurocore/accel/lapicque": {
+      "py": "b8429528351cfee48b9b11c469423b978173e87f2cffc15a5f65d698a5273dfb"
+    },
+    "src/sc_neurocore/accel/lapicque.py": "b8429528351cfee48b9b11c469423b978173e87f2cffc15a5f65d698a5273dfb",
     "src/sc_neurocore/accel/mojo/kernels/lapicque": {
-      "mojo": "3d32bc0d4f60d9adf1424f9033aa2fea89a3e0880922ceedd03347706927a87f"
+      "mojo": "e66d423cb90749fe3410e348ef7ec21f87478d6849fb471fc017aaa4a52f3962"
     },
+    "src/sc_neurocore/accel/mojo/kernels/lapicque.mojo": "e66d423cb90749fe3410e348ef7ec21f87478d6849fb471fc017aaa4a52f3962",
     "src/sc_neurocore/accel/rust/safety/lapicque": {
       "rs": "5be3c348a457f548134569c8c8f1fd26bf9ec6269f567ee3323f1960d17adc64"
-    }
+    },
+    "src/sc_neurocore/accel/rust/safety/lapicque.rs": "5be3c348a457f548134569c8c8f1fd26bf9ec6269f567ee3323f1960d17adc64",
+    "src/sc_neurocore/neurons/models/lapicque": {
+      "py": "173ec451629925f1a04897bc8ef0630774ee1572e5373b67d74d85ae7bfa4652"
+    },
+    "src/sc_neurocore/neurons/models/lapicque.py": "173ec451629925f1a04897bc8ef0630774ee1572e5373b67d74d85ae7bfa4652"
+  },
+  "workload": {
+    "current": 5.0,
+    "n_steps": 100000,
+    "parameters": "Lapicque factory defaults; exact constant-current RC flow; candidate-first threshold and hard reset",
+    "repeats": 7,
+    "trace_atol": 2e-15
   }
 }

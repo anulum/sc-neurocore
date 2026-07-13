@@ -25,17 +25,18 @@ resistance = 1.0
 
 [integration]
 dt = 1.0
-method = "euler"
+method = "exp_euler"
 
 [dynamics]
 v = "(-(v - v_rest) + resistance * I) / tau"
 
 [threshold]
-condition = "v > v_threshold"
+condition = "v >= v_threshold"
 detection = "crossing"
 
 [reset]
 v = "v_reset"
 
 [extensions]
-historical_note = "First mathematical neuron model, precursor to LIF"
+historical_note = "Historical RC threshold model and precursor to LIF"
+maintained_discretisation = "Exact constant-current RC flow via exponential Euler"

@@ -198,7 +198,7 @@
       "id": "bioware-modularisation-local-diagnostics"
     }
   ],
-  "failure_count": 48,
+  "failure_count": 44,
   "failures": [
     {
       "gate_id": "quadratic-if-exact-flow-multibackend-local-regression",
@@ -248,21 +248,6 @@
     {
       "gate_id": "morris-lecar-rk4-multibackend-local-regression",
       "path": "src/sc_neurocore/neurons/models/morris_lecar.py->source_hashes.src/sc_neurocore/neurons/models/morris_lecar.py",
-      "reason": "source_hash_mismatch"
-    },
-    {
-      "gate_id": "lapicque-exact-flow-multibackend-local-regression",
-      "path": "engine/Cargo.toml->source_hashes.engine/Cargo.toml",
-      "reason": "source_hash_mismatch"
-    },
-    {
-      "gate_id": "lapicque-exact-flow-multibackend-local-regression",
-      "path": "engine/src/neuron.rs->source_hashes.engine/src/neuron.rs",
-      "reason": "source_hash_mismatch"
-    },
-    {
-      "gate_id": "lapicque-exact-flow-multibackend-local-regression",
-      "path": "src/sc_neurocore/neurons/models/lapicque.py->source_hashes.src/sc_neurocore/neurons/models/lapicque.py",
       "reason": "source_hash_mismatch"
     },
     {
@@ -403,11 +388,6 @@
     {
       "gate_id": "coba-lif-rk4-multibackend-local-regression",
       "path": "src/sc_neurocore/neurons/models/coba_lif.py->source_hashes.src/sc_neurocore/neurons/models/coba_lif.py",
-      "reason": "source_hash_mismatch"
-    },
-    {
-      "gate_id": "sfa-rk4-multibackend-local-regression",
-      "path": "src/sc_neurocore/accel/rust/safety/sfa.rs->source_hashes.src/sc_neurocore/accel/rust/safety/sfa.rs",
       "reason": "source_hash_mismatch"
     },
     {

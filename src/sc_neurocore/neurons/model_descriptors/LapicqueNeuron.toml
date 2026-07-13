@@ -84,7 +84,7 @@ range = [
 
 [integration]
 dt = 1.0
-method = "euler"
+method = "exp_euler"
 
 [dynamics]
 v = "(-(v - v_rest) + resistance * I) / tau"
@@ -97,6 +97,18 @@ parity = "exact"
 status = "implemented"
 parity = "exact"
 
+[backends.julia]
+status = "implemented"
+parity = "ulp-bounded"
+
+[backends.go]
+status = "implemented"
+parity = "ulp-bounded"
+
+[backends.mojo]
+status = "implemented"
+parity = "ulp-bounded"
+
 [reproducibility]
 reference_config = "{\"n_steps\":1000,\"current\":2.0,\"backend\":\"python\",\"parameters\":\"defaults\"}"
 golden_trace_sha256 = "4604bc3e85a75bc2c97152abdb61292a4cb61fe249560480e24c88ab6308a190"
@@ -108,13 +120,13 @@ notes = ""
 [validation]
 dynamics_faithful = true
 metric = "parity"
-operating_point = "schema-DSL lapicque (sibling schema 'lif' shares the same class descriptor until a dedicated StochasticLIF descriptor exists)"
-tolerance = "suite parity gate"
-evidence = "tests/test_cosimulation.py::_COSIM_MODELS cosim suite (lapicque)"
+operating_point = "exact constant-current RC flow; varied hand/TOML/JSON drive; Q16.16 at I=0.333,2.3,20.25 for 1000 steps"
+tolerance = "hand/TOML/JSON event-exact and <=2e-15 state error; Q16.16 event vectors exact with maximum voltage error below 0.04"
+evidence = "tests/test_cosim_lapicque.py::test_q1616_preserves_event_vectors_and_voltage_bound"
 
 [silicon]
 compiles = true
 cosim_validated = true
-cosim_evidence = "tests/test_cosimulation.py::_COSIM_MODELS cosim suite (lapicque)"
+cosim_evidence = "tests/test_cosim_lapicque.py::test_q1616_preserves_event_vectors_and_voltage_bound"
 target_tier = "H1"
-terminal_reason = "Point-neuron schema→RTL path; higher silicon rungs need synth/timing/formal programmes."
+terminal_reason = "Q16.16 point-neuron event-vector parity is enrolled; higher silicon rungs require synthesis, timing, and hardware programmes."

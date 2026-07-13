@@ -5,350 +5,301 @@
 # © Code 2020–2026 Miroslav Šotek. All rights reserved.
 # ORCID: 0009-0009-3560-0851
 # Contact: www.anulum.li | protoscience@anulum.li
-# SC-NeuroCore — Lapicque exact-flow multi-backend local regression benchmark
+# SC-NeuroCore — Controlled Lapicque five-backend benchmark
+
+"""Measure the maintained Lapicque exact RC flow through public dispatch.
+
+The evidence record binds public-API timings to source hashes, CPU affinity,
+host load, runtime versions, event parity, and voltage-trace error. Missing
+backends or unpinned execution fail unless the operator explicitly permits
+that diagnostic condition.
+"""
 
 from __future__ import annotations
 
-from datetime import UTC, datetime
+import argparse
+import gc
 import hashlib
 import json
-from pathlib import Path
+import os
 import platform
-import re
+import shutil
 import statistics
 import subprocess
-import tempfile
-import textwrap
 import time
-from typing import Any, Protocol, cast
+from pathlib import Path
+from typing import Any
 
+import numpy as np
+import numpy.typing as npt
+
+from sc_neurocore.accel import lapicque as backends
 from sc_neurocore.neurons.models.lapicque import LapicqueNeuron
 
-
-STEPS = 200_000
-REPEATS = 5
+REPOSITORY = Path(__file__).resolve().parents[1]
+N_STEPS = 100_000
+N_REPEATS = 7
 CURRENT = 5.0
-OUTPUT = Path("benchmarks/results/local_python_2026-06-17_lapicque_exact_flow.json")
-REPO_ROOT = Path(__file__).resolve().parents[1]
-GO_BENCH_RE = re.compile(r"^BenchmarkLapicqueExactFlow-\d+\s+\d+\s+([0-9.]+)\s+ns/op")
-SOURCE_HASH_PATHS = {
-    "benchmarks/bench_model_lapicque.py": REPO_ROOT / "benchmarks/bench_model_lapicque.py",
-    "engine/Cargo.toml": REPO_ROOT / "engine/Cargo.toml",
-    "engine/examples/bench_lapicque_exact_flow.rs": REPO_ROOT
-    / "engine/examples/bench_lapicque_exact_flow.rs",
-    "engine/src/neuron.rs": REPO_ROOT / "engine/src/neuron.rs",
-    "src/sc_neurocore/neurons/models/lapicque.py": REPO_ROOT
-    / "src/sc_neurocore/neurons/models/lapicque.py",
-    "src/sc_neurocore/accel/go/services/lapicque.go": REPO_ROOT
-    / "src/sc_neurocore/accel/go/services/lapicque.go",
-    "src/sc_neurocore/accel/go/services/lapicque_test.go": REPO_ROOT
-    / "src/sc_neurocore/accel/go/services/lapicque_test.go",
-    "src/sc_neurocore/accel/julia/neurons/lapicque.jl": REPO_ROOT
-    / "src/sc_neurocore/accel/julia/neurons/lapicque.jl",
-    "src/sc_neurocore/accel/mojo/kernels/lapicque.mojo": REPO_ROOT
-    / "src/sc_neurocore/accel/mojo/kernels/lapicque.mojo",
-    "src/sc_neurocore/accel/rust/safety/lapicque.rs": REPO_ROOT
-    / "src/sc_neurocore/accel/rust/safety/lapicque.rs",
-}
+TRACE_ATOL = 2.0e-15
+KERNEL = "lapicque_exact_constant_current_flow"
+BACKENDS = ("python", "rust", "julia", "go", "mojo")
+SOURCE_PATHS = (
+    "benchmarks/bench_model_lapicque.py",
+    "engine/src/neuron.rs",
+    "src/sc_neurocore/accel/go/neurons/lapicque/lapicque.go",
+    "src/sc_neurocore/accel/go/services/lapicque.go",
+    "src/sc_neurocore/accel/julia/neurons/lapicque.jl",
+    "src/sc_neurocore/accel/mojo/kernels/lapicque.mojo",
+    "src/sc_neurocore/accel/rust/safety/lapicque.rs",
+    "src/sc_neurocore/neurons/models/lapicque.py",
+    "src/sc_neurocore/accel/lapicque.py",
+)
 
 
-class _StepNeuron(Protocol):
-    v: float
+def _cpu_model() -> str:
+    """Return the first Linux CPU model string, or a portable fallback."""
+    try:
+        cpuinfo = Path("/proc/cpuinfo").read_text(encoding="utf-8")
+    except OSError:
+        cpuinfo = ""
+    for line in cpuinfo.splitlines():
+        if line.startswith("model name"):
+            return line.split(":", 1)[1].strip()
+    return platform.processor() or "unknown"
 
-    def step(self, current: float) -> int: ...
+
+def _read_optional(path: Path) -> str:
+    """Read one host metadata file without making it a dependency."""
+    try:
+        return path.read_text(encoding="utf-8").strip()
+    except OSError:
+        return "unavailable"
 
 
-def _sha256(path: Path) -> str:
-    digest = hashlib.sha256()
-    with path.open("rb") as handle:
-        for chunk in iter(lambda: handle.read(1024 * 1024), b""):
-            digest.update(chunk)
-    return digest.hexdigest()
+def _tool_path(name: str, fallback: Path | None = None) -> str | None:
+    """Resolve a runtime executable with one explicit fallback."""
+    resolved = shutil.which(name)
+    if resolved is not None:
+        return resolved
+    if fallback is not None and fallback.is_file():
+        return str(fallback)
+    return None
+
+
+def _tool_version(command: list[str]) -> str:
+    """Return the first version line for a runtime executable."""
+    if not command or command[0] == "":
+        return "unavailable"
+    try:
+        result = subprocess.run(
+            command,
+            capture_output=True,
+            text=True,
+            timeout=20,
+            check=False,
+        )
+    except (OSError, subprocess.TimeoutExpired):
+        return "unavailable"
+    output = result.stdout.strip() or result.stderr.strip()
+    return output.splitlines()[0] if output else f"exit {result.returncode}"
 
 
 def _source_hashes() -> dict[str, object]:
-    flat = {source: _sha256(path) for source, path in SOURCE_HASH_PATHS.items()}
-    nested: dict[str, object] = dict(flat)
-    for source, path in SOURCE_HASH_PATHS.items():
-        stem, extension = source.rsplit(".", 1)
-        existing = nested.get(stem)
-        if isinstance(existing, dict):
-            existing[extension] = _sha256(path)
-        else:
-            nested[stem] = {extension: _sha256(path)}
-    return nested
+    """Hash every implementation and ABI surface relevant to this closure."""
+    flat = {
+        relative: hashlib.sha256((REPOSITORY / relative).read_bytes()).hexdigest()
+        for relative in SOURCE_PATHS
+    }
+    nested: dict[str, object] = {}
+    for relative, digest in flat.items():
+        stem, suffix = relative.rsplit(".", 1)
+        nested[stem] = {suffix: digest}
+    return {**flat, **nested}
 
 
-def _run_once(factory: Any, backend: str) -> dict[str, object]:
-    neuron: _StepNeuron = factory()
+def _probe_backend(backend: str) -> tuple[bool, str]:
+    """Return backend availability plus a deterministic diagnostic."""
+    if backend == "python":
+        return True, ""
+    if backend == "rust":
+        return (
+            backends._HAS_RUST,
+            "" if backends._HAS_RUST else "Rust engine Lapicque symbol unavailable",
+        )
+    if backend == "julia":
+        available = backends.ensure_julia_loaded()
+        return available, "" if available else "juliacall or Lapicque Julia module unavailable"
+    if backend == "go":
+        available = backends.ensure_go_loaded()
+        return available, "" if available else "compiled Go liblapicque.so unavailable"
+    available = backends.ensure_mojo_loaded()
+    return available, "" if available else "compiled Mojo liblapicque.so unavailable"
+
+
+def _measure_backend(
+    backend: str,
+) -> tuple[float, float, npt.NDArray[np.float64], int, tuple[float]]:
+    """Warm one backend, then return timings and final numerical state."""
+    LapicqueNeuron().simulate(20, CURRENT, backend=backend)
+    elapsed_ms: list[float] = []
+    trace: npt.NDArray[np.float64] = np.empty(0, dtype=np.float64)
     spikes = 0
-    start_ns = time.perf_counter_ns()
-    for _ in range(STEPS):
-        spikes += int(neuron.step(CURRENT))
-    elapsed_ns = time.perf_counter_ns() - start_ns
+    final_state = (0.0,)
+    for _repeat in range(N_REPEATS):
+        gc.collect()
+        neuron = LapicqueNeuron()
+        started = time.perf_counter_ns()
+        trace, spikes = neuron.simulate(N_STEPS, CURRENT, backend=backend)
+        elapsed_ms.append((time.perf_counter_ns() - started) / 1_000_000.0)
+        final_state = (neuron.v,)
+    return statistics.median(elapsed_ms), min(elapsed_ms), trace, spikes, final_state
+
+
+def _runtime_versions() -> dict[str, str]:
+    """Record all runtimes involved in the measured closure."""
+    home = Path.home()
+    mojo = _tool_path("mojo", home / ".pixi/bin/mojo") or ""
     return {
-        "backend": backend,
-        "steps": STEPS,
-        "current": CURRENT,
-        "elapsed_ns": elapsed_ns,
-        "ns_per_step": elapsed_ns / STEPS,
-        "spikes": spikes,
-        "ending_state": [float(neuron.v)],
-    }
-
-
-def _run_python_backend() -> dict[str, object]:
-    results = [_run_once(lambda: LapicqueNeuron(), "python") for _ in range(REPEATS)]
-    ns_per_step = [cast(float, result["ns_per_step"]) for result in results]
-    return {
-        "backend": "python",
-        "median_ns_per_step": statistics.median(ns_per_step),
-        "min_ns_per_step": min(ns_per_step),
-        "max_ns_per_step": max(ns_per_step),
-        "spikes": cast(int, results[0]["spikes"]),
-        "results": results,
-    }
-
-
-def _run_command(command: list[str]) -> subprocess.CompletedProcess[str]:
-    return subprocess.run(command, check=True, text=True, capture_output=True)
-
-
-def _run_rust_backend() -> dict[str, object]:
-    command = [
-        "cargo",
-        "run",
-        "--manifest-path",
-        "engine/Cargo.toml",
-        "--example",
-        "bench_lapicque_exact_flow",
-    ]
-    try:
-        completed = _run_command(command)
-    except (FileNotFoundError, subprocess.CalledProcessError) as exc:
-        return {"backend": "rust", "skipped": True, "reason": f"Rust benchmark failed: {exc}"}
-    report = cast(dict[str, object], json.loads(completed.stdout))
-    report["driver_command"] = " ".join(command)
-    return report
-
-
-def _run_go_backend(reference_spikes: int) -> dict[str, object]:
-    command = [
-        "go",
-        "test",
-        "src/sc_neurocore/accel/go/services/lapicque.go",
-        "src/sc_neurocore/accel/go/services/lapicque_test.go",
-        "-run",
-        "^$",
-        "-bench",
-        "BenchmarkLapicqueExactFlow$",
-        "-benchtime",
-        "200000x",
-        "-count",
-        str(REPEATS),
-    ]
-    try:
-        completed = _run_command(command)
-    except (FileNotFoundError, subprocess.CalledProcessError) as exc:
-        return {"backend": "go", "skipped": True, "reason": f"Go benchmark failed: {exc}"}
-    values = [
-        float(match.group(1))
-        for line in completed.stdout.splitlines()
-        if (match := GO_BENCH_RE.match(line))
-    ]
-    if not values:
-        return {
-            "backend": "go",
-            "skipped": True,
-            "reason": "Go benchmark output did not include BenchmarkLapicqueExactFlow ns/op rows",
-            "stdout": completed.stdout,
-        }
-    return {
-        "backend": "go",
-        "command": " ".join(command),
-        "steps": STEPS,
-        "repeats": len(values),
-        "current": CURRENT,
-        "median_ns_per_step": statistics.median(values),
-        "min_ns_per_step": min(values),
-        "max_ns_per_step": max(values),
-        "results_ns_per_step": values,
-        "spikes": reference_spikes,
-    }
-
-
-def _run_julia_backend() -> dict[str, object]:
-    script = f"""
-using Statistics
-include("src/sc_neurocore/accel/julia/neurons/lapicque.jl")
-const STEPS = {STEPS}
-const REPEATS = {REPEATS}
-const CURRENT = {CURRENT}
-function run_once()
-    s = LapicqueAccel.LapicqueNeuronState()
-    spikes = 0
-    start = time_ns()
-    for _ in 1:STEPS
-        spikes += LapicqueAccel.step!(s, CURRENT)
-    end
-    elapsed = time_ns() - start
-    return elapsed / STEPS, spikes, s.v
-end
-results = [run_once() for _ in 1:REPEATS]
-values = [r[1] for r in results]
-println("median_ns_per_step=", median(values))
-println("min_ns_per_step=", minimum(values))
-println("max_ns_per_step=", maximum(values))
-println("results_ns_per_step=", join(values, ","))
-println("spike_counts=", join([r[2] for r in results], ","))
-println("final_vs=", join([r[3] for r in results], ","))
-"""
-    command = ["julia", "--project=.", "-e", script]
-    try:
-        completed = _run_command(command)
-    except (FileNotFoundError, subprocess.CalledProcessError) as exc:
-        return {"backend": "julia", "skipped": True, "reason": f"Julia benchmark failed: {exc}"}
-    fields = dict(line.split("=", 1) for line in completed.stdout.splitlines() if "=" in line)
-    values = [float(value) for value in fields["results_ns_per_step"].split(",")]
-    return {
-        "backend": "julia",
-        "command": "julia --project=. -e <lapicque exact-flow benchmark>",
-        "steps": STEPS,
-        "repeats": len(values),
-        "current": CURRENT,
-        "median_ns_per_step": float(fields["median_ns_per_step"]),
-        "min_ns_per_step": float(fields["min_ns_per_step"]),
-        "max_ns_per_step": float(fields["max_ns_per_step"]),
-        "results_ns_per_step": values,
-        "spikes": int(fields["spike_counts"].split(",")[0]),
-        "spike_counts": [int(value) for value in fields["spike_counts"].split(",")],
-        "final_vs": [float(value) for value in fields["final_vs"].split(",")],
-    }
-
-
-def _run_mojo_backend(reference_spikes: int) -> dict[str, object]:
-    program = textwrap.dedent(
-        f"""
-        from lapicque import lapicque_step_spike
-        from std.time import perf_counter
-
-        alias STEPS = {STEPS}
-        alias REPEATS = {REPEATS}
-        alias CURRENT = {CURRENT}
-
-        def run_once() raises:
-            var spikes = 0
-            var start = perf_counter()
-            for i in range(STEPS):
-                var voltage = Float64(i % 20) / 20.0
-                spikes += lapicque_step_spike(voltage, CURRENT, 0.0, 0.0, 1.0, 20.0, 1.0, 1.0)
-            var elapsed = perf_counter() - start
-            print("ns_per_step=", Float64(elapsed) * 1000000000.0 / Float64(STEPS))
-            print("spikes=", spikes)
-
-        def main() raises:
-            for _ in range(REPEATS):
-                run_once()
-        """
-    )
-    with tempfile.NamedTemporaryFile("w", suffix=".mojo", encoding="utf-8") as handle:
-        handle.write(program)
-        handle.flush()
-        command = [
-            "mojo",
-            "run",
-            "--disable-warnings",
-            "-I",
-            "src/sc_neurocore/accel/mojo/kernels",
-            handle.name,
-        ]
-        try:
-            completed = _run_command(command)
-        except (FileNotFoundError, subprocess.CalledProcessError) as exc:
-            return {"backend": "mojo", "skipped": True, "reason": f"Mojo benchmark failed: {exc}"}
-    values = [
-        float(line.split("=", 1)[1])
-        for line in completed.stdout.splitlines()
-        if line.startswith("ns_per_step=")
-    ]
-    spike_counts = [
-        int(line.split("=", 1)[1])
-        for line in completed.stdout.splitlines()
-        if line.startswith("spikes=")
-    ]
-    if not values:
-        return {"backend": "mojo", "skipped": True, "reason": "Mojo benchmark produced no rows"}
-    return {
-        "backend": "mojo",
-        "command": "mojo run --disable-warnings -I src/sc_neurocore/accel/mojo/kernels <temp lapicque benchmark>",
-        "steps": STEPS,
-        "repeats": len(values),
-        "current": CURRENT,
-        "median_ns_per_step": statistics.median(values),
-        "min_ns_per_step": min(values),
-        "max_ns_per_step": max(values),
-        "results_ns_per_step": values,
-        "spikes": int(statistics.median(spike_counts)) if spike_counts else reference_spikes,
-        "spike_counts": spike_counts,
-    }
-
-
-def _backend_summary(payload: dict[str, object]) -> dict[str, object]:
-    if payload.get("skipped", False):
-        return {"skipped": True, "reason": str(payload.get("reason", "unknown"))}
-    median_ns_per_step = cast(float, payload["median_ns_per_step"])
-    min_ns_per_step = cast(float, payload["min_ns_per_step"])
-    max_ns_per_step = cast(float, payload["max_ns_per_step"])
-    spikes = cast(int, payload["spikes"])
-    return {
-        "median_ns_per_step": float(median_ns_per_step),
-        "min_ns_per_step": float(min_ns_per_step),
-        "max_ns_per_step": float(max_ns_per_step),
-        "spikes": int(spikes),
-    }
-
-
-def main() -> int:
-    python = _run_python_backend()
-    python_spikes = cast(int, python["spikes"])
-    rust = _run_rust_backend()
-    go = _run_go_backend(python_spikes)
-    julia = _run_julia_backend()
-    mojo = _run_mojo_backend(python_spikes)
-    payload = {
-        "spdx_license": "AGPL-3.0-or-later",
-        "commercial_license": "available",
-        "copyright_concepts": "© Concepts 1996–2026 Miroslav Šotek. All rights reserved.",
-        "copyright_code": "© Code 2020–2026 Miroslav Šotek. All rights reserved.",
-        "orcid": "0009-0009-3560-0851",
-        "contact": "www.anulum.li | protoscience@anulum.li",
-        "benchmark": "LapicqueNeuron exact constant-current RC flow step",
-        "timestamp_utc": datetime.now(UTC).isoformat(timespec="seconds"),
-        "command": "PYTHONPATH=src .venv/bin/python benchmarks/bench_model_lapicque.py",
-        "evidence_class": "local_regression_non_isolated",
-        "production_speed_claim": False,
-        "hardware_measurement_claimed": False,
         "python": platform.python_version(),
+        "numpy": np.__version__,
+        "rust": _tool_version([_tool_path("rustc") or "", "--version"]),
+        "julia": _tool_version([_tool_path("julia") or "", "--version"]),
+        "go": _tool_version([_tool_path("go") or "", "version"]),
+        "mojo": _tool_version([mojo, "--version"]),
+    }
+
+
+def _environment(load_start: tuple[float, float, float]) -> dict[str, Any]:
+    """Capture affinity and load without claiming kernel isolation."""
+    affinity = sorted(os.sched_getaffinity(0))
+    cpu = affinity[0] if len(affinity) == 1 else None
+    governor = (
+        _read_optional(Path(f"/sys/devices/system/cpu/cpu{cpu}/cpufreq/scaling_governor"))
+        if cpu is not None
+        else "mixed-or-unpinned"
+    )
+    return {
+        "cpu": _cpu_model(),
         "platform": platform.platform(),
-        "processor": platform.processor(),
-        "steps": STEPS,
-        "repeats": REPEATS,
-        "current": CURRENT,
-        "results": [python, rust, go, julia, mojo],
-        "backend_summary": {
-            "python": _backend_summary(python),
-            "rust": _backend_summary(rust),
-            "go": _backend_summary(go),
-            "julia": _backend_summary(julia),
-            "mojo": _backend_summary(mojo),
+        "affinity": affinity,
+        "single_cpu_pinned": len(affinity) == 1,
+        "kernel_isolated_cpus": _read_optional(Path("/sys/devices/system/cpu/isolated")),
+        "governor": governor,
+        "load_average_start": list(load_start),
+        "load_average_end": list(os.getloadavg()),
+        "measurement_scope": (
+            "single-logical-CPU affinity; kernel isolation and workstation load reported separately"
+        ),
+        "runtime_versions": _runtime_versions(),
+    }
+
+
+def main(argv: list[str]) -> int:
+    """Run the controlled benchmark and write its evidence artefact."""
+    parser = argparse.ArgumentParser(description="Controlled Lapicque five-backend benchmark")
+    parser.add_argument("--json", type=Path, required=True)
+    parser.add_argument("--allow-unpinned", action="store_true")
+    parser.add_argument("--allow-unavailable-backends", action="store_true")
+    args = parser.parse_args(argv)
+
+    affinity = sorted(os.sched_getaffinity(0))
+    if len(affinity) != 1 and not args.allow_unpinned:
+        print(f"Refusing unpinned benchmark; affinity is {affinity}")
+        return 2
+
+    load_start = os.getloadavg()
+    probes = {backend: _probe_backend(backend) for backend in BACKENDS}
+    missing = [backend for backend, (available, _reason) in probes.items() if not available]
+    if missing and not args.allow_unavailable_backends:
+        print("Missing required backend(s): " + ", ".join(missing))
+        return 2
+
+    rows: dict[str, dict[str, Any]] = {}
+    reference: npt.NDArray[np.float64] | None = None
+    reference_ms: float | None = None
+    reference_spikes: int | None = None
+    for backend in BACKENDS:
+        available, reason = probes[backend]
+        if not available:
+            rows[backend] = {
+                "available": False,
+                "used": False,
+                "unavailable_reason": reason,
+            }
+            continue
+        median_ms, minimum_ms, trace, spikes, final_state = _measure_backend(backend)
+        if backend == "python":
+            reference = trace
+            reference_ms = median_ms
+            reference_spikes = spikes
+            parity = 0.0
+        else:
+            if reference is None or reference_ms is None or reference_spikes is None:
+                raise RuntimeError("Python reference must be measured first")
+            parity = float(np.max(np.abs(trace - reference))) if trace.size else 0.0
+        rows[backend] = {
+            "available": True,
+            "used": True,
+            "median_call_ms": median_ms,
+            "minimum_call_ms": minimum_ms,
+            "speedup_vs_python": (reference_ms / median_ms if reference_ms is not None else 1.0),
+            "parity_max_abs_diff": parity,
+            "event_count": spikes,
+            "event_count_matches_python": (
+                True if reference_spikes is None else spikes == reference_spikes
+            ),
+            "final_state": dict(zip(("v",), final_state, strict=True)),
+        }
+
+    measured_order = sorted(
+        (backend for backend in BACKENDS if rows[backend].get("used") is True),
+        key=lambda backend: float(rows[backend]["median_call_ms"]),
+    )
+    report: dict[str, Any] = {
+        "schema_version": "sc-neurocore.polyglot-benchmark.v1",
+        "kernel": KERNEL,
+        "workload": {
+            "n_steps": N_STEPS,
+            "repeats": N_REPEATS,
+            "current": CURRENT,
+            "parameters": (
+                "Lapicque factory defaults; exact constant-current RC flow; "
+                "candidate-first threshold and hard reset"
+            ),
+            "trace_atol": TRACE_ATOL,
         },
+        "meta": _environment(load_start),
+        "backends": rows,
+        "measured_order": measured_order,
         "source_hashes": _source_hashes(),
     }
-    OUTPUT.parent.mkdir(parents=True, exist_ok=True)
-    OUTPUT.write_text(json.dumps(payload, indent=2) + "\n", encoding="utf-8")
-    print(json.dumps(payload, indent=2))
+    args.json.parent.mkdir(parents=True, exist_ok=True)
+    args.json.write_text(json.dumps(report, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+
+    print(f"Lapicque benchmark: {N_STEPS} steps x {N_REPEATS} repeats")
+    for backend in measured_order:
+        row = rows[backend]
+        print(
+            f"{backend:>7}: {float(row['median_call_ms']):10.3f} ms  "
+            f"{float(row['speedup_vs_python']):8.2f}x  "
+            f"max|delta|={float(row['parity_max_abs_diff']):.3e}  "
+            f"events={int(row['event_count'])}"
+        )
+    print(f"Measured order: {', '.join(measured_order)}")
+    print(f"Wrote {args.json}")
+
+    if any(not bool(row.get("event_count_matches_python", True)) for row in rows.values()):
+        return 3
+    if any(
+        float(row.get("parity_max_abs_diff", 0.0)) > TRACE_ATOL
+        for row in rows.values()
+        if row.get("used") is True
+    ):
+        return 4
     return 0
 
 
 if __name__ == "__main__":
-    raise SystemExit(main())
+    import sys
+
+    raise SystemExit(main(sys.argv[1:]))

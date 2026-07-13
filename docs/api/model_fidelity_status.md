@@ -53,6 +53,7 @@ parity note.
 | Hodgkin-Huxley | ✅ | ✅ | ✅ | ✅ shared-lib | spike count — 0/6/9 @ I=0/10/20 over 100 macro steps (gate-first baseline-Euler with 100 sub-steps, exp); Mojo C ABI preserves every event and the four-state trace within `2e-9` over the enrolled envelope | `this commit` |
 | AdEx | ✅ | ✅ | ✅ | ✅ shared-lib | accel event count — 0/4/12 @ I=0/200/500 over 1000 baseline-Euler steps; all compiled traces stay within `5e-12` of Python and transport the complete maintained numeric contract except the factory-default Rust engine boundary; existing Q16.16 RTL co-simulation retains its declared two-percent event-count envelope at I=1000 over 500 steps | `this commit` |
 | ExpIF | ✅ | ✅ | ✅ | ✅ shared-lib | accel event count — 0/0/2 @ I=0/5/20 over 1000 candidate-first RK4 steps; every compiled lane preserves the events and stays within `5e-8` of Python, with the factory-default Rust engine boundary stated separately; hand/TOML/JSON and Q32.32 RTL preserve the enrolled event counts, and the generated depth-4 Z3 job passes | `this commit` |
+| Lapicque | ✅ | ✅ | ✅ | ✅ shared-lib | accel event count — 0/0/71/200/500 @ I=0/0.5/2/5/20 over 1,000 exact constant-current RC steps; all compiled events are exact and traces stay within `2e-15` of Python, with the factory-default Rust engine boundary stated separately; hand/TOML/JSON events are exact and state error stays within `2e-15`, Q16.16 RTL preserves the complete 0/83/500 event vectors at I=0.333/2.3/20.25 with voltage error below 0.04, and the generated depth-20 Z3 job passes | `this commit` |
 | McKean | ✅ | ✅ | ✅ | ✅ shared-lib | bit-exact — 0/1/7 @ I=0/0.2/0.5 over 20000 steps (RK4, exact piecewise-linear RHS) | `059871140` |
 | Hindmarsh-Rose | ✅ | ✅ | ✅ | ✅ shared-lib | bit-exact accel — 0/26/52 @ I=0/3/5 over 2000 steps; co-sim exact hand/TOML/JSON/Q16.16 counts — 0/0/26/40/52 @ I=0/2/3/4/5 over 2000 RK4 steps; declared Q16.16 +1 crossing boundary over 5000 steps at I=2 through I=5; formal Q8.8 BMC depth 4 | `this commit` |
 | FitzHugh-Rinzel | ✅ | ✅ | ✅ | ✅ shared-lib | bit-exact accel — 0/1/8 @ I=0/0.3/0.5; co-sim exact spike count — hand/schema/Q16.16 RTL 8 @ I=0.5 (3000 RK4 steps, cubic RHS) | `498376221` |
@@ -72,7 +73,8 @@ parity note.
 
 Each model carries a committed benchmark: a Go `Benchmark*` in the services lane for the
 conductance models (Wang-Buzsaki, Morris-Lecar, Connor-Stevens, Hodgkin-Huxley, FitzHugh-Nagumo),
-plus source-hashed executable closure benchmarks for Connor-Stevens, Hodgkin-Huxley, AdEx, and ExpIF,
+plus source-hashed executable closure benchmarks for Connor-Stevens, Hodgkin-Huxley, AdEx, ExpIF,
+and Lapicque,
 and a committed `benchmarks/bench_<model>*.py` harness with its recorded per-backend result for the
 FFI-dispatched models (McKean, Hindmarsh-Rose, FitzHugh-Rinzel, Pernarowski, Terman-Wang, Wilson-HR,
 Rulkov map, GLIF, Mihalas-Niebur, Medvedev map, Cazelles map, Courbage-Nekorkin map, Izhikevich 2007,
@@ -91,7 +93,7 @@ Rust engine acceleration path), but its four `accel/{rust,go,julia,mojo}` kernel
 or not yet verified** — the polyglot-stub-remediation sweep is replacing them model-by-model. Those
 models are **deliberately not ticked here**: per-model status is promoted onto this page only after a
 unit is closed and verified at source, so this table never claims completion it has not proven. As of
-the latest landed commit that is **twenty-three polyglot-complete models** out of the full catalogue; the
+the latest landed commit that is **twenty-four polyglot-complete models** out of the full catalogue; the
 remainder are Python-faithful with an acceleration chain still under remediation.
 
 ## How a model graduates onto this page

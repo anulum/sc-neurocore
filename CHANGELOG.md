@@ -29,6 +29,20 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
   Loaded-host timings regressed locally and are retained only as diagnostic
   context, not performance claims; independent Julia plasticity solvers remain
   separate from the Python-only orchestration.
+- Completed Lapicque end-to-end fidelity across Python, Rust safety and engine,
+  Go, Julia, Mojo, the paired schema formats, and generated Q16.16 RTL. Public
+  simulation now follows the measured Mojo/Julia/Go/compatible-Rust/Python
+  order, carries the complete numeric contract through Julia/Go/Mojo, retains
+  the Rust engine's explicit factory-default boundary, and fails before state
+  mutation on invalid inputs or non-finite candidates.
+- Added source-bound Lapicque backend, benchmark, reference, co-simulation,
+  descriptor, readiness, and formal evidence. The 100,000-step pinned run
+  records 20,000 events in every lane and a maximum voltage difference of
+  `4.44e-16`; the loaded, non-reserved host context is recorded and is not a
+  throughput claim. Hand/TOML/JSON event vectors agree exactly and their state
+  traces remain within `2e-15`; Q16.16 RTL preserves the complete event vectors
+  at three operating points with voltage error below `0.04`, and the generated
+  depth-20 Z3 job passes.
 - Replaced the 1,414-line NIR hardware-graph implementation and three primary
   test files totalling 4,091 lines with an 84-line historical facade, seven
   acyclic responsibility modules, and 40 focused test/support modules. All 28

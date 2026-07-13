@@ -4,18 +4,70 @@
 # © Code 2020–2026 Miroslav Šotek. All rights reserved.
 # ORCID: 0009-0009-3560-0851
 # Contact: www.anulum.li | protoscience@anulum.li
-# SC-NeuroCore — Mojo SIMD acceleration for lapicque
+# SC-NeuroCore — Mojo Lapicque exact-flow simulator
+#
+# Build:
+#   mojo build --emit shared-lib -o liblapicque.so lapicque.mojo
+#
+# The caller supplies n_steps+1 Float64 slots: the post-step voltage trace and
+# final voltage. Rejected contracts leave the buffer untouched because a
+# validation pass completes before emission.
 
-from std.math import exp
+from std.math import exp, isfinite
+from std.memory import UnsafePointer
 
 
-fn _finite(x: Float64) -> Bool:
-    return (
-        x == x and x <= 1.7976931348623157e308 and x >= -1.7976931348623157e308
-    )
+struct Lapicque(Copyable, Movable):
+    var v_rest: Float64
+    var v_reset: Float64
+    var v_threshold: Float64
+    var tau: Float64
+    var resistance: Float64
+    var dt: Float64
+
+    def __init__(
+        out self,
+        v_rest: Float64,
+        v_reset: Float64,
+        v_threshold: Float64,
+        tau: Float64,
+        resistance: Float64,
+        dt: Float64,
+    ):
+        self.v_rest = v_rest
+        self.v_reset = v_reset
+        self.v_threshold = v_threshold
+        self.tau = tau
+        self.resistance = resistance
+        self.dt = dt
+
+    @always_inline
+    def valid(self, v: Float64) -> Bool:
+        return (
+            isfinite(v)
+            and isfinite(self.v_rest)
+            and isfinite(self.v_reset)
+            and isfinite(self.v_threshold)
+            and self.v_threshold > self.v_rest
+            and self.v_threshold > self.v_reset
+            and v < self.v_threshold
+            and isfinite(self.tau)
+            and self.tau > 0.0
+            and isfinite(self.resistance)
+            and self.resistance > 0.0
+            and isfinite(self.dt)
+            and self.dt > 0.0
+        )
 
 
-fn lapicque_valid(
+@always_inline
+def _candidate(model: Lapicque, v: Float64, current: Float64) -> Float64:
+    var v_inf = model.v_rest + model.resistance * current
+    var decay = exp(-model.dt / model.tau)
+    return v_inf + (v - v_inf) * decay
+
+
+def lapicque_valid(
     v: Float64,
     v_rest: Float64,
     v_reset: Float64,
@@ -24,24 +76,10 @@ fn lapicque_valid(
     resistance: Float64,
     dt: Float64,
 ) -> Bool:
-    return (
-        _finite(v)
-        and _finite(v_rest)
-        and _finite(v_reset)
-        and _finite(v_threshold)
-        and v_threshold > v_rest
-        and v_threshold > v_reset
-        and v < v_threshold
-        and _finite(tau)
-        and tau > 0.0
-        and _finite(resistance)
-        and resistance > 0.0
-        and _finite(dt)
-        and dt > 0.0
-    )
+    return Lapicque(v_rest, v_reset, v_threshold, tau, resistance, dt).valid(v)
 
 
-fn lapicque_step_spike(
+def lapicque_step_spike(
     v: Float64,
     current: Float64,
     v_rest: Float64,
@@ -51,16 +89,65 @@ fn lapicque_step_spike(
     resistance: Float64,
     dt: Float64,
 ) -> Int:
-    if not _finite(current):
+    var model = Lapicque(v_rest, v_reset, v_threshold, tau, resistance, dt)
+    if not isfinite(current) or not model.valid(v):
         return 0
-    if not lapicque_valid(v, v_rest, v_reset, v_threshold, tau, resistance, dt):
+    var next_v = _candidate(model, v, current)
+    if not isfinite(next_v):
         return 0
+    return Int(next_v >= v_threshold)
 
-    var v_inf = v_rest + resistance * current
-    var decay = exp(-dt / tau)
-    var next_v = v_inf + (v - v_inf) * decay
-    if not _finite(v_inf) or not _finite(decay) or not _finite(next_v):
-        return 0
-    if next_v >= v_threshold:
-        return 1
-    return 0
+
+def _run_lapicque(
+    model: Lapicque,
+    v0: Float64,
+    n_steps: Int,
+    current: Float64,
+    output_addr: Int,
+    write_output: Bool,
+) -> Int64:
+    var v = v0
+    if not model.valid(v):
+        return -1
+    var output = UnsafePointer[Float64, MutAnyOrigin](
+        unsafe_from_address=output_addr
+    )
+    var spikes: Int64 = 0
+    for index in range(n_steps):
+        var next_v = _candidate(model, v, current)
+        if not isfinite(next_v):
+            return -1
+        if next_v >= model.v_threshold:
+            v = model.v_reset
+            spikes += 1
+        else:
+            v = next_v
+        if write_output:
+            output[index] = v
+    if write_output:
+        output[n_steps] = v
+    return spikes
+
+
+@export
+def lapicque_simulate_c(
+    v0: Float64,
+    v_rest: Float64,
+    v_reset: Float64,
+    v_threshold: Float64,
+    tau: Float64,
+    resistance: Float64,
+    dt: Float64,
+    n_steps: Int,
+    current: Float64,
+    output_addr: Int,
+) -> Int64:
+    if n_steps < 0 or output_addr == 0 or not isfinite(current):
+        return -1
+    var model = Lapicque(v_rest, v_reset, v_threshold, tau, resistance, dt)
+    var validated = _run_lapicque(
+        model, v0, n_steps, current, output_addr, False
+    )
+    if validated < 0:
+        return -1
+    return _run_lapicque(model, v0, n_steps, current, output_addr, True)

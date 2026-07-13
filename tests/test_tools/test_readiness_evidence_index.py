@@ -81,6 +81,17 @@ def test_expif_is_enrolled_at_q3232_cosim_tier(tool: ModuleType) -> None:
     assert "0/0/1/2/5/9" in expif.tolerance
 
 
+def test_lapicque_is_enrolled_with_dedicated_exact_flow_evidence(tool: ModuleType) -> None:
+    """Replace the generic suite pointer with the measured Lapicque contract."""
+    lapicque = next(e for e in tool.ENROLLED if e.class_name == "LapicqueNeuron")
+    assert lapicque.level == "h1_cosim"
+    assert lapicque.evidence == (
+        "tests/test_cosim_lapicque.py::test_q1616_preserves_event_vectors_and_voltage_bound"
+    )
+    assert "I=0.333,2.3,20.25" in lapicque.operating_point
+    assert "Q16.16 event vectors exact" in lapicque.tolerance
+
+
 def test_build_rows_returns_one_row_per_enrolled(tool: ModuleType) -> None:
     """Inventory length matches the curated enrolment table."""
     rows = tool.build_rows()

@@ -57,6 +57,7 @@ same checkout.
 | `bench_hodgkin_huxley_mojo.py` | Source-hashed Python/Rust/Mojo parity and timing for the executable Hodgkin-Huxley Mojo lane, including exact events, bounded four-state traces, affinity, runtime versions, governor, and host load |
 | `bench_adex.py` | Source-hashed Python/Rust/Julia/Go/Mojo parity and timing for the maintained AdEx baseline-Euler recurrence, including exact events, bounded voltage traces, final state, affinity, runtime versions, governor, and host load |
 | `bench_model_expif.py` | Source-hashed Python/Rust/Julia/Go/Mojo parity and timing for the Fourcaud-Trocmé ExpIF candidate-first RK4 recurrence, including exact events, bounded voltage traces, final state, affinity, runtime versions, governor, and host load |
+| `bench_model_lapicque.py` | Source-hashed Python/Rust/Julia/Go/Mojo public-dispatch parity and timing for the Lapicque exact constant-current RC flow, including exact events, bounded voltage traces, measured order, final state, affinity, runtime versions, governor, and host load |
 | `bench_neuron_integrators.py` | Research-only cross-language RK4 neuron integrator parity and timing for Python / Rust / Julia / Go / Mojo |
 | `bench_live_control_updates.py` | Local regression evidence for generated live-control update sequences, static RTL regeneration, staged overflow/underflow trap capture, and selected sticky-trap clear semantics |
 | `benchmark_regression_gates.json` | Manifest of benchmark artefacts and metrics enforced by `tools/benchmark_evidence_gate.py` |
@@ -99,6 +100,11 @@ PYTHONPATH=src:bridge taskset -c <cpu> .venv/bin/python \
 PYTHONPATH=src:bridge taskset -c <cpu> .venv/bin/python \
   benchmarks/bench_model_expif.py \
   --json benchmarks/results/local_python_2026-06-16_expif_rk4.json
+
+# Lapicque five-backend exact-flow closure
+PYTHONPATH=src:bridge taskset -c <cpu> .venv/bin/python \
+  benchmarks/bench_model_lapicque.py \
+  --json benchmarks/results/local_python_2026-06-17_lapicque_exact_flow.json
 
 # DNA mapper refactor regression evidence
 python benchmarks/bench_dna_mapper_import.py \

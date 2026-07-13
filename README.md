@@ -97,7 +97,7 @@ SC-NeuroCore is positioned for neuromorphic R&D, stochastic accelerator design, 
 | Model documentation pages | 175 |
 | Rust PyO3 model wrappers | 176 |
 | Optional extras | 28 |
-| Python test files | 1218 |
+| Python test files | 1225 |
 | Public documentation pages | 569 |
 | GitHub Actions workflows | 19 |
 
@@ -209,6 +209,14 @@ through the same five public paths. Its committed
 exact event parity and a `5e-8` voltage-trace envelope; the
 [ExpIF model page](docs/api/models/expif.md) states the fitted defaults,
 Q32.32 co-simulation boundary, and refractory protocol.
+
+The Lapicque model exposes its exact constant-current RC flow through Python,
+the factory-default Rust engine boundary, Julia, Go, and Mojo. The measured
+dispatcher order is Mojo, Julia, Go, compatible Rust, then Python. Its committed
+`benchmarks/results/local_python_2026-06-17_lapicque_exact_flow.json` artefact
+records 20,000 events in every lane over 100,000 steps and a maximum voltage
+difference of `4.44e-16`; the [Lapicque model page](docs/api/models/lapicque.md)
+states the loaded-host benchmark boundary and Q16.16 co-simulation evidence.
 
 When installed, SC-NeuroCore automatically uses the Rust engine for:
 
