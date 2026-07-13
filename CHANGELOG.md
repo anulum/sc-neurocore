@@ -5,6 +5,30 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 ## [Unreleased]
 
 ### Added
+- Replaced the 1,414-line NIR hardware-graph implementation and three primary
+  test files totalling 4,091 lines with an 84-line historical facade, seven
+  acyclic responsibility modules, and 40 focused test/support modules. All 28
+  established definitions retain their historical imports, qualified names,
+  object identities, and pickle paths. The focused package passes 240 tests
+  with two optional-runtime skips and covers all 651 statements and 324
+  branches; strict touched MyPy, Ruff, NumPy docstrings, architecture, and
+  package-boundary contracts pass.
+- Added a dedicated Python 3.12 CI step that measures the complete
+  `neuron_graph*.py` surface with branch coverage and an exact 100 percent
+  threshold independently of the broader NIR coverage exclusions. The split
+  test package preserves parser, framework-adapter, SC-NIR export, FPGA
+  compilation, file-I/O, hierarchy, dense-lowering, delay, threshold, and
+  metadata workflows through their maintained production boundaries.
+- Added a source-bound 30-sample parent/candidate NIR-to-FPGA benchmark. The
+  canonical two-population, two-connection graph still emits an identical
+  22,860-byte compilation payload at SHA-256
+  `32498fa1106229a4fe064862e20b86e0f0b1f0d42f8598d1988e06e68c13ef13`.
+  Graph lowering and FPGA compilation medians changed by +7.09 and +24.98
+  percent, while cold import and process wall medians changed by -23.26 and
+  -16.98 percent. The CPU was affinity-pinned but not reserved, so timings are
+  local regression diagnostics rather than throughput claims. Rust, Go,
+  Julia, and Mojo are not applicable to this typed metadata/orchestration
+  refactor; model-dynamics kernels remain unchanged.
 - Completed the AdEx baseline-Euler acceleration chain across Rust safety, the
   Rust engine, Go, Julia, and Mojo, and exposed Julia/Go/Mojo through the public
   `simulate()` dispatcher. The compiled paths preserve the `0/4/12` event

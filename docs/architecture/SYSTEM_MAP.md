@@ -244,29 +244,34 @@ a stored measured artifact — treat as unverified until benchmarked.
 
 Ordered stages, each with its entry symbol (verified end-to-end):
 
-1. **Python model** → neuron equations (strings / IR graph).
-2. **SC-NIR build** — `build_scnir_from_neuron_graph()` (`ir/scnir_convert.py`).
-3. **Precision analysis** — `compile_for_chip()` (`chip_compiler/compiler.py:70`).
-4. **Fixed-point quantisation** — `compile_adaptive_precision()`
+1. **Python or external NIR model** → neuron equations / parsed `SCNetwork`
+   (`nir_bridge.from_nir()`).
+2. **Hardware graph lowering** — `nir_bridge.from_scnetwork()` preserves
+   dense weights, delays, thresholds, flatten dimensions, recurrent edges, and
+   nested hierarchy in a `NeuronGraph`; its historical facade delegates to
+   seven acyclic responsibility modules.
+3. **SC-NIR build** — `build_scnir_from_neuron_graph()` (`ir/scnir_convert.py`).
+4. **Precision analysis** — `compile_for_chip()` (`chip_compiler/compiler.py:70`).
+5. **Fixed-point quantisation** — `compile_adaptive_precision()`
    (`compiler/compiler_impl.py:25`, dual-datapath with hysteresis).
-5. **AST → Verilog** — `compile_to_verilog()` / `_emit_expr()`
+6. **AST → Verilog** — `compile_to_verilog()` / `_emit_expr()`
    (`compiler/verilog_compiler.py:19`, `verilog_expr_emitter.py:19`).
-6. **HDL bundle** — `build_scnir_source_bundle()` (`ir/scnir_hdl.py:87`).
-7. **Top-level assembly** — `VerilogGenerator.generate()`
+7. **HDL bundle** — `build_scnir_source_bundle()` (`ir/scnir_hdl.py:87`).
+8. **Top-level assembly** — `VerilogGenerator.generate()`
    (`hdl_gen/verilog_generator.py:59`).
-8. **Formal** — `compile_dense_lif_fixture_rtl()` (`formal/property_compiler.py`),
+9. **Formal** — `compile_dense_lif_fixture_rtl()` (`formal/property_compiler.py`),
    `generate_sby_script()` (SymbiYosys BMC), Lean 4 proof inventory
    (`formal/lean_bridge.py`).
-9. **MLIR** — `CompilerPipeline.compile_mlir_to_verilog()` (`compiler/pipeline.py:47`,
+10. **MLIR** — `CompilerPipeline.compile_mlir_to_verilog()` (`compiler/pipeline.py:47`,
    shells `firtool`).
-10. **Synthesis / P&R** — `run_synthesis()` (Yosys), `run_pnr()` (nextpnr)
+11. **Synthesis / P&R** — `run_synthesis()` (Yosys), `run_pnr()` (nextpnr)
     (`compiler/pipeline.py:80,105`).
-11. **ASIC deck** — `OpenSourcePDKResolver.resolve()` (`asic_flow/pdk.py`) feeds
+12. **ASIC deck** — `OpenSourcePDKResolver.resolve()` (`asic_flow/pdk.py`) feeds
     deterministic bundle orchestration in `asic_flow/flow.py`; PDKs SKY130,
     GF180MCU, TSMC28, Intel16, and custom.
-12. **Chiplet** — interposer models UCIe / BoW / EMIB / CoWoS
+13. **Chiplet** — interposer models UCIe / BoW / EMIB / CoWoS
     (`chiplet/topology.py`, with RTL assembly in `chiplet/rtl.py`).
-13. **Safety evidence** — fail-closed traceability, caller-supplied FMEDA and
+14. **Safety evidence** — fail-closed traceability, caller-supplied FMEDA and
     formal-property records, timing assumptions, checklist bookkeeping, and
     atomic hash-manifest materialisation (`safety_cert/`, library-only; not a
     certification or approval service).

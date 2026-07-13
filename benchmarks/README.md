@@ -44,6 +44,7 @@ same checkout.
 
 | Script | Description |
 |--------|-------------|
+| `bench_nir_graph.py` | Interleaved monolithic-parent/modular-candidate comparison for NIR import, hardware-graph lowering, FPGA compilation, process wall time, and RSS; fails on generated-byte drift and records source hashes, affinity, governor, frequency, host load, and polyglot applicability |
 | `bench_asic_flow.py` | Interleaved monolithic-parent/modular-candidate comparison for cold import, deterministic ASIC deck generation, manifest-bearing bundle writes, process wall time, and RSS; fails on generated-byte drift and records source hashes, affinity, load, and removed-mirror applicability |
 | `bench_quantum_annealing_modularisation.py` | Interleaved single-file-parent/modular-candidate comparison for cold import, deterministic SC-to-Ising compilation, Python solve, process wall time, and RSS; records raw samples, source hashes, affinity, and host-load limits |
 | `bench_safety_certification.py` | Interleaved parent/candidate comparison for safety-package import and deterministic in-memory evidence generation; records raw samples, source hashes, affinity, host-load limits, and non-applicability of removed report-generator mirrors |
@@ -118,6 +119,15 @@ PYTHONHASHSEED=0 PYTHONPATH=src python benchmarks/bench_asic_flow.py \
   --iterations 30 --warmups 2 \
   --output benchmarks/results/bench_asic_flow.json
 
+# NIR hardware-graph modularisation regression evidence
+PYTHONHASHSEED=0 PYTHONPATH=src taskset -c <cpu> \
+  .venv/bin/python benchmarks/bench_nir_graph.py \
+  --baseline-root <parent-root> \
+  --baseline-ref <parent-sha> \
+  --candidate-root . \
+  --iterations 30 --warmups 2 \
+  --output benchmarks/results/bench_nir_graph.json
+
 # Evolutionary substrate Python evidence (30 samples)
 PYTHONHASHSEED=0 PYTHONPATH=src taskset -c <cpu> \
   .venv/bin/python benchmarks/bench_evo_substrate.py \
@@ -177,6 +187,17 @@ CPU affinity was not exclusive and the workstation was under concurrent load,
 so the timings are diagnostic only. Rust, Go, Julia, and Mojo entries record
 the removal of nonfunctional mirrors rather than invented speed comparisons;
 the maintained execution boundary is Yosys/OpenROAD/OpenSTA/KLayout/Magic/Netgen.
+
+The NIR hardware-graph harness measures typed parser-to-FPGA orchestration rather
+than neuron-dynamics arithmetic. Its parent and candidate payloads are
+byte-identical at SHA-256
+`32498fa1106229a4fe064862e20b86e0f0b1f0d42f8598d1988e06e68c13ef13` and
+22,860 bytes. Across 30 interleaved samples, graph-lowering, FPGA-compilation,
+cold-import, process-wall, and maximum-RSS medians changed by +7.09%, +24.98%,
+-23.26%, -16.98%, and -0.97%. The run used CPU affinity without a reserved
+core while other jobs could be active, so these values are local regression
+diagnostics only. Rust, Go, Julia, and Mojo are not applicable to this metadata
+lowering surface; the model-specific cross-language dynamics paths are separate.
 
 ## Rust Benchmarks
 

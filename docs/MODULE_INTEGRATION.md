@@ -93,6 +93,25 @@ conformity.
   - `DieThermal` / `PackageThermalReport` — Steady-state and transient thermal analysis
   - `RoutingTable` / `PartitionAssignment` — Routing and graph-to-die placement
 
+#### nir_bridge — NIR-to-Silicon Interchange
+- **Hardware-graph sources:** `src/sc_neurocore/nir_bridge/neuron_graph.py`
+  is the historical facade over seven acyclic responsibility modules for graph
+  contracts, node classification, hierarchy inlining, dense lowering,
+  connection traversal, metadata, and conversion orchestration
+- **Focused tests:** `tests/test_nir_bridge/` owns parser, export, execution,
+  framework interop, SC-NIR/FPGA integration, graph architecture, and malformed
+  lowering contracts
+- **Pipeline:** `from_nir()` parses an external NIR graph; `from_scnetwork()`
+  produces a hardware `NeuronGraph`; `compile_network_to_fpga()` consumes the
+  graph without an adapter or duplicate intermediate representation
+- **Compatibility:** `NeuronSpec`, `ConnectionSpec`, `HierarchyInstanceSpec`,
+  `NeuronGraph`, and `from_scnetwork` retain their historical qualified names
+  and serialisation paths
+- **Boundaries:** nested graphs are flattened with hierarchy provenance;
+  flatten/scale/delay/threshold metadata is preserved or rejected when it
+  cannot be represented exactly; this orchestration surface has no numerical
+  Rust, Go, Julia, or Mojo kernel counterpart
+
 ---
 
 ### Physical Substrates

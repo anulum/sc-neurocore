@@ -5,6 +5,27 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+### NIR hardware-graph responsibility modularisation
+- Replaced the 1,414-line hardware-graph implementation and three primary test
+  files totalling 4,091 lines with an 84-line compatibility facade, seven
+  acyclic responsibility modules, and 40 focused test/support modules. All 28
+  established definitions preserve their historical imports, qualified names,
+  identities, and pickle paths.
+- The focused package passes 240 tests with two optional-runtime skips and
+  covers all 651 statements and 324 branches. A dedicated Python 3.12 workflow
+  enforces exact statement and branch coverage over every `neuron_graph*.py`
+  module independently of broader NIR exclusions. Parser, optional-framework,
+  SC-NIR, FPGA, file-I/O, hierarchy, dense, delay, threshold, and metadata
+  boundaries remain exercised through their maintained entry points.
+- Added a source-bound 30-sample parent/candidate benchmark. The maintained
+  two-population graph produces the same 22,860-byte FPGA compilation payload
+  at SHA-256
+  `32498fa1106229a4fe064862e20b86e0f0b1f0d42f8598d1988e06e68c13ef13`.
+  Affinity-only, non-reserved CPU timing medians are local regression
+  diagnostics, not throughput claims. Cross-language kernels do not apply to
+  this typed NIR metadata and FPGA-orchestration refactor; neuron-dynamics
+  implementations are unchanged.
+
 ### AdEx five-backend baseline-Euler closure
 - Added executable Rust-safety, Go, Julia, and Mojo recurrence coverage around
   the maintained Python AdEx model and Rust engine path. Public dispatch carries

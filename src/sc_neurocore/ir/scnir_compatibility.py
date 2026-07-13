@@ -86,7 +86,10 @@ _MATRIX: tuple[SCNIRCompatibilityRow, ...] = (
         scnir_stream_metadata=("signal_kind=spike", "encoding=unipolar", "delay_steps=0"),
         source_metadata=("lfsr16", "sobol16", "seed", "bitstream_length", "precision"),
         hdl_support="canonical ODE module plus direct or AER interconnect",
-        audit_evidence=("tests/test_scnir_fpga_integration.py", "tests/test_nir_fpga_pipeline.py"),
+        audit_evidence=(
+            "tests/test_nir_bridge/test_fpga_scnir_base.py",
+            "tests/test_nir_fpga_pipeline.py",
+        ),
         limitation="Shared RTL neuron module requires homogeneous per-neuron parameters.",
     ),
     SCNIRCompatibilityRow(
@@ -108,7 +111,10 @@ _MATRIX: tuple[SCNIRCompatibilityRow, ...] = (
         scnir_stream_metadata=("signal_kind=analogue_state", "encoding=bipolar", "delay_steps=0"),
         source_metadata=("lfsr16", "sobol16", "seed", "bitstream_length", "precision"),
         hdl_support="canonical ODE module with direct analogue-state MAC routing",
-        audit_evidence=("tests/test_scnir_fpga_integration.py", "tests/test_nir_fpga_pipeline.py"),
+        audit_evidence=(
+            "tests/test_nir_bridge/test_fpga_scnir_base.py",
+            "tests/test_nir_fpga_pipeline.py",
+        ),
         limitation="Analogue-state streams stay on direct fixed-point MAC routes in mixed graphs.",
     ),
     SCNIRCompatibilityRow(
@@ -119,7 +125,10 @@ _MATRIX: tuple[SCNIRCompatibilityRow, ...] = (
         scnir_stream_metadata=("signal_kind=analogue_state", "encoding=bipolar", "delay_steps=0"),
         source_metadata=("lfsr16", "sobol16", "seed", "bitstream_length", "precision"),
         hdl_support="canonical integrator state-update module with direct analogue-state MAC routing",
-        audit_evidence=("tests/test_scnir_convert.py", "tests/test_scnir_fpga_integration.py"),
+        audit_evidence=(
+            "tests/test_nir_bridge/test_neuron_graph_builder_validation.py",
+            "tests/test_nir_bridge/test_fpga_scnir_metadata.py",
+        ),
         limitation="Shared RTL neuron module requires homogeneous integrator gain r.",
     ),
     SCNIRCompatibilityRow(
@@ -141,7 +150,10 @@ _MATRIX: tuple[SCNIRCompatibilityRow, ...] = (
         scnir_stream_metadata=("signal_kind=analogue_state", "encoding=bipolar", "delay_steps=0"),
         source_metadata=("lfsr16", "sobol16", "seed", "bitstream_length", "precision"),
         hdl_support="canonical two-state ODE module with direct analogue-state MAC routing",
-        audit_evidence=("tests/test_scnir_fpga_integration.py", "tests/test_nir_fpga_pipeline.py"),
+        audit_evidence=(
+            "tests/test_nir_bridge/test_fpga_scnir_base.py",
+            "tests/test_nir_fpga_pipeline.py",
+        ),
         limitation="Analogue-state streams stay on direct fixed-point MAC routes in mixed graphs.",
     ),
     SCNIRCompatibilityRow(
@@ -152,7 +164,10 @@ _MATRIX: tuple[SCNIRCompatibilityRow, ...] = (
         scnir_stream_metadata=("signal_kind=weight", "encoding=bipolar", "delay_steps=0"),
         source_metadata=("lfsr16", "sobol16", "seed", "bitstream_length", "precision"),
         hdl_support="weight ROM plus direct or weighted-event interconnect",
-        audit_evidence=("tests/test_scnir_fpga_integration.py", "tests/test_nir_fpga_pipeline.py"),
+        audit_evidence=(
+            "tests/test_nir_bridge/test_fpga_scnir_base.py",
+            "tests/test_nir_fpga_pipeline.py",
+        ),
         limitation="The downstream neuron population owns the connection stream layer.",
     ),
     SCNIRCompatibilityRow(
@@ -163,7 +178,10 @@ _MATRIX: tuple[SCNIRCompatibilityRow, ...] = (
         scnir_stream_metadata=("signal_kind=weight", "encoding=bipolar", "delay_steps=0_or_1"),
         source_metadata=("lfsr16", "sobol16", "seed", "bitstream_length", "precision"),
         hdl_support="weight ROM plus direct or weighted-event interconnect",
-        audit_evidence=("tests/test_scnir_fpga_integration.py", "tests/test_nir_fpga_pipeline.py"),
+        audit_evidence=(
+            "tests/test_nir_bridge/test_fpga_scnir_base.py",
+            "tests/test_nir_fpga_pipeline.py",
+        ),
         limitation="Parser-inserted recurrent unit-delay streams are represented as delay_steps=1.",
     ),
     SCNIRCompatibilityRow(
@@ -174,7 +192,7 @@ _MATRIX: tuple[SCNIRCompatibilityRow, ...] = (
         scnir_stream_metadata=("signal_kind=weight", "folded_weight_scale"),
         source_metadata=("lfsr16", "sobol16", "seed", "bitstream_length", "precision"),
         hdl_support="folded fixed-point gain in direct/AER weight terms",
-        audit_evidence=("tests/test_scnir_fpga_integration.py",),
+        audit_evidence=("tests/test_nir_bridge/test_fpga_scnir_metadata.py",),
         limitation=(
             "Scale is hardware-closed only when adjacent to an Affine/Linear "
             "connection; ambiguous fan-in/fan-out or incompatible scale lengths "
@@ -189,7 +207,10 @@ _MATRIX: tuple[SCNIRCompatibilityRow, ...] = (
         scnir_stream_metadata=("signal_kind=weight", "threshold_transform"),
         source_metadata=("seed", "bitstream_length", "precision"),
         hdl_support="fixed-point comparator before weighted event contribution or destination current",
-        audit_evidence=("tests/test_scnir_convert.py", "tests/test_scnir_fpga_integration.py"),
+        audit_evidence=(
+            "tests/test_nir_bridge/test_neuron_graph_metadata.py",
+            "tests/test_nir_bridge/test_fpga_scnir_metadata.py",
+        ),
         limitation=(
             "Threshold is hardware-closed only when adjacent to an Affine/Linear "
             "connection with scalar or exact-width threshold vectors; multiple "
@@ -204,7 +225,10 @@ _MATRIX: tuple[SCNIRCompatibilityRow, ...] = (
         scnir_stream_metadata=("signal_kind=weight", "shape_preserving_flatten"),
         source_metadata=("seed", "bitstream_length", "precision"),
         hdl_support="folded fixed-point weight indexing with exact flattened width checks",
-        audit_evidence=("tests/test_scnir_convert.py", "tests/test_scnir_fpga_integration.py"),
+        audit_evidence=(
+            "tests/test_nir_bridge/test_neuron_graph_metadata.py",
+            "tests/test_nir_bridge/test_fpga_scnir_metadata.py",
+        ),
         limitation=(
             "Flatten is hardware-closed only when NIR shape metadata proves "
             "the flattened element count exactly matches adjacent weight and "
@@ -219,7 +243,10 @@ _MATRIX: tuple[SCNIRCompatibilityRow, ...] = (
         scnir_stream_metadata=("signal_kind=weight", "delay_steps>=0 or vector[int>=0]"),
         source_metadata=("seed", "bitstream_length", "precision"),
         hdl_support="direct-interconnect source register chains with per-source delay taps",
-        audit_evidence=("tests/test_scnir_fpga_integration.py", "tests/test_nir_fpga_pipeline.py"),
+        audit_evidence=(
+            "tests/test_nir_bridge/test_fpga_scnir_base.py",
+            "tests/test_nir_fpga_pipeline.py",
+        ),
         limitation=(
             "Delay is hardware-closed for scalar and exact source-width vector delays "
             "feeding Affine/Linear population connections; invalid vector widths fail closed."
@@ -233,7 +260,10 @@ _MATRIX: tuple[SCNIRCompatibilityRow, ...] = (
         scnir_stream_metadata=("signal_kind=weight", "pool2d_lowered_weight"),
         source_metadata=("lfsr16", "sobol16", "seed", "bitstream_length", "precision"),
         hdl_support="dense pooling fixed-point MAC terms through the weight-stream path",
-        audit_evidence=("tests/test_scnir_convert.py", "tests/test_scnir_fpga_integration.py"),
+        audit_evidence=(
+            "tests/test_nir_bridge/test_neuron_graph_dense.py",
+            "tests/test_nir_bridge/test_fpga_scnir_dense.py",
+        ),
         limitation=(
             "SumPool2d is hardware-closed only when NIR provides exact CHW "
             "input/output shape metadata and positive kernel/stride geometry."
@@ -247,7 +277,10 @@ _MATRIX: tuple[SCNIRCompatibilityRow, ...] = (
         scnir_stream_metadata=("signal_kind=weight", "pool2d_lowered_weight"),
         source_metadata=("lfsr16", "sobol16", "seed", "bitstream_length", "precision"),
         hdl_support="dense pooling fixed-point MAC terms scaled by kernel area",
-        audit_evidence=("tests/test_scnir_convert.py", "tests/test_scnir_fpga_integration.py"),
+        audit_evidence=(
+            "tests/test_nir_bridge/test_neuron_graph_dense.py",
+            "tests/test_nir_bridge/test_fpga_scnir_dense.py",
+        ),
         limitation=(
             "AvgPool2d is hardware-closed only when NIR provides exact CHW "
             "input/output shape metadata and positive kernel/stride geometry."
@@ -261,7 +294,10 @@ _MATRIX: tuple[SCNIRCompatibilityRow, ...] = (
         scnir_stream_metadata=("signal_kind=weight", "convolution_lowered_weight"),
         source_metadata=("lfsr16", "sobol16", "seed", "bitstream_length", "precision"),
         hdl_support="dense Toeplitz-style fixed-point MAC terms through the weight-stream path",
-        audit_evidence=("tests/test_scnir_convert.py", "tests/test_scnir_fpga_integration.py"),
+        audit_evidence=(
+            "tests/test_nir_bridge/test_neuron_graph_dense.py",
+            "tests/test_nir_bridge/test_fpga_scnir_dense.py",
+        ),
         limitation=(
             "Conv1d is hardware-closed only when NIR provides finite integer "
             "input_shape, numeric padding, positive stride/dilation/groups, "
@@ -276,7 +312,10 @@ _MATRIX: tuple[SCNIRCompatibilityRow, ...] = (
         scnir_stream_metadata=("signal_kind=weight", "convolution_lowered_weight"),
         source_metadata=("lfsr16", "sobol16", "seed", "bitstream_length", "precision"),
         hdl_support="dense 2D convolution fixed-point MAC terms through the weight-stream path",
-        audit_evidence=("tests/test_scnir_convert.py", "tests/test_scnir_fpga_integration.py"),
+        audit_evidence=(
+            "tests/test_nir_bridge/test_neuron_graph_dense.py",
+            "tests/test_nir_bridge/test_fpga_scnir_dense.py",
+        ),
         limitation=(
             "Conv2d is hardware-closed only when NIR provides finite integer "
             "input_shape, numeric padding, positive stride/dilation/groups, "
@@ -317,8 +356,8 @@ _MATRIX: tuple[SCNIRCompatibilityRow, ...] = (
             "instances, and packed hierarchy weight outputs consumed by the top-level MAC"
         ),
         audit_evidence=(
-            "tests/test_scnir_convert.py",
-            "tests/test_scnir_fpga_integration.py",
+            "tests/test_nir_bridge/test_neuron_graph_hierarchy.py",
+            "tests/test_nir_bridge/test_fpga_scnir_hierarchy.py",
             "tests/test_cli_nir.py",
             "tests/test_scnir_handoff_audit.py",
         ),

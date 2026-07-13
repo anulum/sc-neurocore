@@ -66,13 +66,19 @@ EXPECTED_ROWS = (
         import_name="snntorch",
         distribution="snntorch",
         declared_extra=None,
-        test_paths=("tests/test_nir_bridge.py", "docs/guides/nir_integration.md"),
+        test_paths=(
+            "tests/test_nir_bridge/test_snntorch_interop.py",
+            "docs/guides/nir_integration.md",
+        ),
     ),
     DependencyRow(
         import_name="spikingjelly",
         distribution="spikingjelly",
         declared_extra=None,
-        test_paths=("tests/test_nir_bridge.py", "docs/guides/nir_integration.md"),
+        test_paths=(
+            "tests/test_nir_bridge/test_spikingjelly_interop.py",
+            "docs/guides/nir_integration.md",
+        ),
     ),
     DependencyRow(
         import_name="cupy",

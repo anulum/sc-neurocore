@@ -183,6 +183,19 @@ jobs:
             pytest -n auto --dist loadfile tests/ -q --junitxml=test-results.xml
           fi
 
+      - name: NIR graph exact coverage
+        if: matrix.python-version == '3.12'
+        shell: bash
+        run: |
+          COVERAGE_FILE=.coverage-nir-graph python -m coverage run \
+            --rcfile=/dev/null --branch \
+            --include='src/sc_neurocore/nir_bridge/neuron_graph*.py' \
+            -m pytest tests/test_nir_bridge -q
+          COVERAGE_FILE=.coverage-nir-graph python -m coverage report \
+            --rcfile=/dev/null \
+            --include='src/sc_neurocore/nir_bridge/neuron_graph*.py' \
+            --fail-under=100 --show-missing
+
       - name: Upload test results
         if: always()
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7

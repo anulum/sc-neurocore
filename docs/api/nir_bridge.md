@@ -26,6 +26,32 @@ emission: the compiler rejects empty networks, non-matrix weights, inconsistent
 source/destination widths, invalid bias or threshold vectors, and invalid
 connection delays with stable `ValueError` contracts.
 
+## Hardware Neuron Graph
+
+::: sc_neurocore.nir_bridge.neuron_graph
+    options:
+      show_root_heading: true
+      members:
+        - NeuronSpec
+        - ConnectionSpec
+        - HierarchyInstanceSpec
+        - NeuronGraph
+        - from_scnetwork
+
+`from_scnetwork()` is the boundary between the executable parser graph and FPGA
+lowering. The historical module remains a compatibility facade: graph records
+and the converter retain their established qualified names and pickle paths,
+while focused modules own contracts, node classification, nested hierarchy,
+dense operators, connection traversal, metadata, and conversion orchestration.
+
+The lowering path preserves source and destination scales, scalar or
+per-channel delays, thresholds, flatten widths, nested-instance provenance,
+and recurrent delayed edges. Ambiguous pass-through fan-in/fan-out, malformed
+flatten dimensions, non-finite dense parameters, unsupported nested boundaries,
+and hierarchy cycles fail before an incomplete hardware graph can be emitted.
+The resulting `NeuronGraph` is consumed directly by
+`compile_network_to_fpga()` and SC-NIR conversion.
+
 ## Parser
 
 ::: sc_neurocore.nir_bridge.parser

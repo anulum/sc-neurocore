@@ -20355,9 +20355,9 @@ Integrator options:
 - ``rosenbrock`` is a linearly implicit stiff-system path over the same
   AdEx ODEs
 
-``simulate`` supports ``backend`` values ``python``, ``rust``, and ``auto``
-(prefer Rust when the factory-default Euler contract holds and the engine
-wheel is present).
+``simulate`` exposes the baseline-Euler Python, Rust, Julia, Go and Mojo
+paths. ``auto`` follows the committed measured order Mojo, Julia, Go,
+compatible Rust, then Python.
 
 - **__post_init__**()
 - **step**(current)
@@ -24561,112 +24561,114 @@ Write Loihi 2/SpiNNaker2 adapter manifests and reports to disk.
 
 ---
 
-## Module `nir_bridge.neuron_graph`
+## Module `nir_bridge.neuron_graph_builder`
+
+### Function `from_scnetwork(network, dt)`
+Convert a parsed SCNetwork to the FPGA-targeted neuron graph.
+
+Parameters
+----------
+network : SCNetwork
+    Parsed SC-NeuroCore network returned by :func:`from_nir`.
+dt : float or None, optional
+    Simulation timestep override. When omitted, each neuron node retains
+    its imported timestep and the first population supplies the graph
+    timestep.
+
+Returns
+-------
+NeuronGraph
+    Ordered populations, lowered weighted connections, graph boundaries,
+    and preserved nested hierarchy metadata.
+
+Raises
+------
+ValueError
+    If nested graph boundaries are ambiguous, pass-through metadata cannot
+    be represented exactly, or no neuron population remains after lowering.
+
+---
+
+## Module `nir_bridge.neuron_graph_contracts`
 
 ### Class `NeuronSpec`
-One neuron population (layer) in the compiled graph.
+Describe one neuron population in the compiled graph.
 
-Attributes
+Parameters
 ----------
 name : str
-    Unique population identifier (matches the NIR node name).
+    Unique population identifier matching the NIR node name.
 neuron_type : str
-    Canonical neuron type: ``"lif"``, ``"if"``, ``"li"``,
-    ``"cuba_lif"``, ``"cuba_li"``.
+    Canonical neuron type such as ``"lif"``, ``"if"``, ``"li"``,
+    ``"cuba_lif"``, or ``"cuba_li"``.
 n_neurons : int
-    Number of neurons in this population.
-params : dict&#91;str, np.ndarray&#91;Any, Any&#93;&#93;
-    Neuron parameters keyed by canonical names:
-    ``tau``, ``r``, ``v_leak``, ``v_threshold``, ``v_reset``,
-    ``tau_syn``, ``tau_mem``, ``w_in`` (type-dependent).
+    Number of neurons in the population.
+params : dict&#91;str, numpy.ndarray&#93;
+    Canonical neuron parameters stored as arrays.
 dt : float
-    Simulation timestep used during NIR import.
+    Simulation timestep inherited from NIR import.
 
 
 ### Class `ConnectionSpec`
-Weighted edge between two neuron populations.
+Describe a weighted edge between neuron populations.
 
-Attributes
+Parameters
 ----------
 src : str
     Source population name.
 dst : str
     Destination population name.
-weights : np.ndarray&#91;Any, Any&#93;
-    Weight matrix of shape ``(n_dst, n_src)`` in float32.
-    Row *i* contains the weights from all source neurons to
-    destination neuron *i*.
-bias : np.ndarray&#91;Any, Any&#93; | None
-    Optional bias vector of shape ``(n_dst,)``.
-delay_steps : int | tuple&#91;int, ...&#93;
-    Number of explicit unit-delay timesteps on this connection.  A scalar
-    applies to all source columns; a tuple carries one delay per source
-    column for heterogeneous NIR ``Delay`` vectors.
-source_threshold : np.ndarray&#91;Any, Any&#93; | None
-    Optional threshold vector applied to source signals before the weight
-    matrix.  Represents NIR ``Threshold`` on the source side.
-destination_threshold : np.ndarray&#91;Any, Any&#93; | None
-    Optional threshold vector applied after this connection's affine
-    accumulation and before the destination population input.
+weights : numpy.ndarray
+    Weight matrix with shape ``(n_dst, n_src)``.
+bias : numpy.ndarray or None
+    Optional destination bias vector with shape ``(n_dst,)``.
+delay_steps : int or tuple&#91;int, ...&#93;
+    Scalar delay or one explicit delay per source column.
+source_threshold : numpy.ndarray or None
+    Optional threshold applied before the weight matrix.
+destination_threshold : numpy.ndarray or None
+    Optional threshold applied after affine accumulation.
 
 
 ### Class `HierarchyInstanceSpec`
-Flattened nested graph provenance preserved for SC-NIR hierarchy export.
-
-
-### Class `NeuronGraph`
-Complete network description ready for FPGA compilation.
-
-Attributes
-----------
-populations : list&#91;NeuronSpec&#93;
-    Ordered list of neuron populations (topological order).
-connections : list&#91;ConnectionSpec&#93;
-    Weighted connections between populations.
-input_pop : str
-    Name of the input population.
-output_pop : str
-    Name of the output population.
-dt : float
-    Global simulation timestep.
-hierarchy : tuple&#91;HierarchyInstanceSpec, ...&#93;
-    Nested NIR graph instances that were inlined for flat hardware lowering
-    but must remain visible in SC-NIR hierarchy metadata.
-
-- **total_neurons**()
-  - Total neuron count across all populations.
-- **total_synapses**()
-  - Total synapse count across all connections.
-- **neuron_types**()
-  - Set of unique neuron types in the graph.
-- **summary**()
-  - Human-readable summary of the network graph.
-
-### Function `from_scnetwork(network, dt)`
-Convert a parsed SCNetwork to a NeuronGraph for FPGA compilation.
-
-Walks the topologically-sorted node list and partitions nodes into
-neuron populations and weighted connections.  Pass-through nodes
-(Input, Output, Scale, Flatten, Threshold) are folded into the
-adjacent edges.
+Preserve provenance for a nested graph flattened into hardware IR.
 
 Parameters
 ----------
-network : SCNetwork
-    A parsed SC-NeuroCore network (from ``from_nir()``).
-dt : float, optional
-    Override the simulation timestep.  If ``None``, uses the
-    timestep stored in the network's neuron nodes.
+instance_id : str
+    Parent-graph node name of the nested graph instance.
+module_name : str
+    Stable HDL module identifier assigned to the instance boundary.
+node_name_prefix : str
+    Namespace prefix applied to the nested nodes during flattening.
 
-Returns
--------
-NeuronGraph
-    Network description ready for FPGA compilation.
 
-Raises
-------
-ValueError
-    If the network contains no neuron populations or no connections.
+### Class `NeuronGraph`
+Describe a complete network ready for FPGA compilation.
+
+Parameters
+----------
+populations : list&#91;NeuronSpec&#93;
+    Populations in deterministic topological order.
+connections : list&#91;ConnectionSpec&#93;
+    Weighted connections between populations.
+input_pop : str
+    Input boundary or first population name.
+output_pop : str
+    Output boundary or final population name.
+dt : float
+    Global simulation timestep.
+hierarchy : tuple&#91;HierarchyInstanceSpec, ...&#93;
+    Nested instances flattened for hardware lowering.
+
+- **total_neurons**()
+  - Return the neuron count across all populations.
+- **total_synapses**()
+  - Return the matrix-entry count across all connections.
+- **neuron_types**()
+  - Return the canonical neuron types present in the graph.
+- **summary**()
+  - Return a deterministic human-readable graph summary.
 
 ---
 

@@ -375,7 +375,7 @@ COVERAGE_FILE=/tmp/sc_neurocore_cli.coverage \
 python -m coverage run --append --branch --source=sc_neurocore.cli \
   -m pytest -q \
   tests/test_scnir_schema.py \
-  tests/test_scnir_convert.py \
+  tests/test_nir_bridge/test_scnir_export.py \
   tests/test_scnir_handoff_audit.py \
   tests/test_scnir_compatibility.py \
   tests/test_studio_backup_plan.py \
