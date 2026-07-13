@@ -289,8 +289,11 @@ jobs:
           python-version: "3.12"
           cache: pip
 
-      - name: Install with optics extra
-        run: python -m pip install -e ".[dev,optics]"
+      - name: Editable install (local package, no deps)
+        run: python tools/ci_install_editable_only.py
+
+      - name: Install hash-pinned optics dependencies
+        run: python -m pip install --require-hashes -r requirements/ci-optics.txt
 
       - name: Run optics tests with gdsfactory
         run: python -m pytest tests/test_optics -q -rs
@@ -303,15 +306,15 @@ jobs:
       matrix:
         include:
           - name: annealing
-            install_extra: ".[dev,annealing]"
+            requirements: requirements/ci-annealing.txt
             apt_packages: ""
             test_selector: tests/test_bridges/test_quantum_annealing_neal_parity.py
           - name: onnx-protobuf
-            install_extra: ".[dev]"
+            requirements: requirements/ci-dev.txt
             apt_packages: ""
             test_selector: tests/test_export/test_onnx_exporter.py
           - name: mpi
-            install_extra: ".[dev,mpi]"
+            requirements: requirements/ci-mpi.txt
             apt_packages: "libopenmpi-dev openmpi-bin"
             test_selector: tests/test_mpi_runner_real.py
     env:
@@ -330,8 +333,11 @@ jobs:
           sudo apt-get update -qq
           sudo apt-get install -y -qq ${{ matrix.apt_packages }}
 
-      - name: Install optional profile
-        run: python -m pip install -e "${{ matrix.install_extra }}"
+      - name: Editable install (local package, no deps)
+        run: python tools/ci_install_editable_only.py
+
+      - name: Install hash-pinned optional-profile dependencies
+        run: python -m pip install --require-hashes -r "${{ matrix.requirements }}"
 
       - name: Run optional selector
         run: python -m pytest ${{ matrix.test_selector }} -q -rs
