@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import importlib as _importlib
 import math
+import os as _os
 from dataclasses import dataclass
 from typing import Any, Literal, Optional
 
@@ -21,10 +22,11 @@ from sc_neurocore.solvers import RK4Solver, RosenbrockEuler
 # ───────────────────────── backend detection ─────────────────────────
 #
 # ``step`` advances one integrator update. ``simulate`` is an N-step sequential
-# recurrence. The Rust engine class ``AdExNeuron`` implements the same
-# factory-default baseline-Euler update as the pure-NumPy path and reproduces
-# its voltage trace bit-for-bit under that contract (no parameter injection on
-# the engine class). RK4 and Rosenbrock remain Python-only here.
+# recurrence and therefore benefits from a compiled inner loop. The Rust engine
+# class implements the factory-default baseline-Euler contract. Julia, Go and
+# Mojo accept the complete maintained numeric state and parameter surface. RK4
+# and Rosenbrock remain on their already-established polyglot dispatcher and the
+# local Python path; these model-specific kernels implement baseline Euler.
 
 _EngineAdEx = Any
 
@@ -40,6 +42,95 @@ try:
 except (ImportError, AttributeError):
     _EngineAdExCls = None
     _HAS_RUST = False
+
+_julia_module: Any | None = None
+_HAS_JULIA = False
+_go_lib: Any | None = None
+_HAS_GO = False
+_mojo_lib: Any | None = None
+_HAS_MOJO = False
+
+_ACCEL_ROOT = _os.path.abspath(_os.path.join(_os.path.dirname(__file__), "..", "..", "accel"))
+
+
+def _ensure_julia_loaded() -> bool:
+    """Load the executable AdEx Julia module when its runtime is available."""
+    global _julia_module, _HAS_JULIA
+    if _julia_module is not None:
+        return True
+    import importlib.util as importlib_util
+
+    if importlib_util.find_spec("juliacall") is None:
+        return False
+    source_path = _os.path.join(_ACCEL_ROOT, "julia", "neurons", "adex.jl")
+    if not _os.path.isfile(source_path):
+        return False
+    try:
+        juliacall = _importlib.import_module("juliacall")
+        julia = juliacall.Main
+        julia.include(source_path)
+        _julia_module = julia.AdexAccel
+    except (ImportError, AttributeError, RuntimeError):
+        return False
+    _HAS_JULIA = True
+    return True
+
+
+def _ensure_go_loaded() -> bool:
+    """Load the compiled AdEx Go C-ABI bridge when it is available."""
+    global _go_lib, _HAS_GO
+    if _go_lib is not None:
+        return True
+    import ctypes
+
+    library_path = _os.path.join(_ACCEL_ROOT, "go", "neurons", "adex", "libadex.so")
+    if not _os.path.isfile(library_path):
+        return False
+    try:
+        library = ctypes.CDLL(library_path)
+    except OSError:
+        return False
+    simulate = getattr(library, "adex_simulate_c", None)
+    if simulate is None:
+        return False
+    simulate.argtypes = [ctypes.c_double] * 13 + [
+        ctypes.c_int64,
+        ctypes.c_double,
+        ctypes.POINTER(ctypes.c_double),
+    ]
+    simulate.restype = ctypes.c_int64
+    _go_lib = library
+    _HAS_GO = True
+    return True
+
+
+def _ensure_mojo_loaded() -> bool:
+    """Load the compiled AdEx Mojo C ABI when it is available."""
+    global _mojo_lib, _HAS_MOJO
+    if _mojo_lib is not None:
+        return True
+    import ctypes
+
+    library_path = _os.path.join(_ACCEL_ROOT, "mojo", "kernels", "libadex.so")
+    if not _os.path.isfile(library_path):
+        return False
+    try:
+        library = ctypes.CDLL(library_path)
+    except OSError:
+        return False
+    simulate = getattr(library, "adex_simulate_c", None)
+    if simulate is None:
+        return False
+    simulate.argtypes = [ctypes.c_double] * 13 + [
+        ctypes.c_int64,
+        ctypes.c_double,
+        ctypes.c_int64,
+    ]
+    simulate.restype = ctypes.c_int64
+    _mojo_lib = library
+    _HAS_MOJO = True
+    return True
+
 
 # Factory defaults for the Rust engine path (no parameter/state injection).
 _RUST_ENGINE_DEFAULTS: dict[str, float] = {
@@ -75,9 +166,9 @@ class AdExNeuron:
     - ``rosenbrock`` is a linearly implicit stiff-system path over the same
       AdEx ODEs
 
-    ``simulate`` supports ``backend`` values ``python``, ``rust``, and ``auto``
-    (prefer Rust when the factory-default Euler contract holds and the engine
-    wheel is present).
+    ``simulate`` exposes the baseline-Euler Python, Rust, Julia, Go and Mojo
+    paths. ``auto`` follows the committed measured order Mojo, Julia, Go,
+    compatible Rust, then Python.
     """
 
     v: float = -65.0
@@ -210,10 +301,11 @@ class AdExNeuron:
             Constant injected current for every step (must be finite).
         backend:
             ``"python"`` always uses the local ``step`` loop. ``"rust"`` uses
-            the engine ``AdExNeuron`` under the factory-default baseline-Euler
-            contract and raises when that contract is not met or the engine is
-            unavailable. ``"auto"`` prefers Rust when the contract holds and the
-            engine is present, otherwise Python.
+            the engine ``AdExNeuron`` under its factory-default baseline-Euler
+            contract. ``"julia"``, ``"go"`` and ``"mojo"`` run their compiled
+            baseline-Euler kernels with the complete maintained numeric state
+            and parameter surface. ``"auto"`` chooses an available compiled
+            baseline-Euler path before the Python floor.
 
         Returns
         -------
@@ -226,21 +318,38 @@ class AdExNeuron:
             If ``n_steps`` is negative, ``current`` is non-finite, or ``backend``
             is unknown.
         RuntimeError
-            If ``backend="rust"`` is requested but the engine is missing or the
-            instance is outside the default Euler contract.
+            If a requested compiled backend is unavailable or the selected
+            backend does not support the configured integrator contract.
         """
         if n_steps < 0:
             raise ValueError("n_steps must be non-negative")
-        if backend not in ("auto", "python", "rust"):
-            raise ValueError(f"backend must be auto/python/rust, got {backend!r}")
+        if backend not in ("auto", "python", "rust", "julia", "go", "mojo"):
+            raise ValueError(f"backend must be auto/python/rust/julia/go/mojo, got {backend!r}")
         if not math.isfinite(current):
             raise ValueError("current must be finite")
         self._validate_runtime_state()
 
-        prefer_rust = backend == "rust" or (
-            backend == "auto" and _HAS_RUST and self._matches_rust_engine_contract()
-        )
-        if prefer_rust:
+        if backend in {"julia", "go", "mojo"} and self.integrator != "baseline_euler":
+            raise RuntimeError(
+                f"{backend.title()} AdEx backend requires baseline_euler integrator."
+            )
+
+        selected = backend
+        if backend == "auto":
+            if self.integrator != "baseline_euler":
+                selected = "python"
+            elif _ensure_mojo_loaded():
+                selected = "mojo"
+            elif _ensure_julia_loaded():
+                selected = "julia"
+            elif _ensure_go_loaded():
+                selected = "go"
+            elif _HAS_RUST and self._matches_rust_engine_contract():
+                selected = "rust"
+            else:
+                selected = "python"
+
+        if selected == "rust":
             if not _HAS_RUST or _EngineAdExCls is None:
                 raise RuntimeError(
                     "Rust AdEx backend requested but sc_neurocore_engine is unavailable."
@@ -252,11 +361,29 @@ class AdExNeuron:
                     f"(v={_RUST_ENGINE_DEFAULTS['v']}, w={_RUST_ENGINE_DEFAULTS['w']})."
                 )
             trace, spikes, state = self._simulate_rust(n_steps, current)
-        else:
-            if backend == "rust":
+        elif selected == "julia":
+            if not _ensure_julia_loaded():
                 raise RuntimeError(
-                    "Rust AdEx backend requested but sc_neurocore_engine is unavailable."
+                    "Julia AdEx backend requested but juliacall or the AdEx module is unavailable."
                 )
+            trace, spikes, state = self._simulate_julia(n_steps, current)
+        elif selected == "go":
+            if not _ensure_go_loaded():
+                raise RuntimeError(
+                    "Go AdEx backend requested but libadex.so is not built; run "
+                    "go build -buildmode=c-shared -o libadex.so adex.go in "
+                    "accel/go/neurons/adex."
+                )
+            trace, spikes, state = self._simulate_go(n_steps, current)
+        elif selected == "mojo":
+            if not _ensure_mojo_loaded():
+                raise RuntimeError(
+                    "Mojo AdEx backend requested but libadex.so is not built; run "
+                    "mojo build --emit shared-lib -o libadex.so adex.mojo in "
+                    "accel/mojo/kernels."
+                )
+            trace, spikes, state = self._simulate_mojo(n_steps, current)
+        else:
             trace, spikes, state = self._simulate_python(n_steps, current)
         self.v, self.w = state
         return trace, spikes
@@ -286,6 +413,101 @@ class AdExNeuron:
             trace[t] = float(state["v"])
         final = neuron.get_state()
         return trace, spikes, (float(final["v"]), float(final["w"]))
+
+    def _simulate_julia(
+        self, n_steps: int, current: float
+    ) -> tuple[npt.NDArray[np.float64], int, tuple[float, float]]:
+        """Run the Julia baseline-Euler kernel with the full numeric contract."""
+        assert _julia_module is not None
+        result = _julia_module.simulate_trace(
+            float(self.v),
+            float(self.w),
+            float(self.v_rest),
+            float(self.v_reset),
+            float(self.v_threshold),
+            float(self.v_rh),
+            float(self.delta_t),
+            float(self.tau),
+            float(self.tau_w),
+            float(self.a),
+            float(self.b),
+            float(self.c_m),
+            float(self.dt),
+            int(n_steps),
+            float(current),
+        )
+        trace = np.ascontiguousarray(np.asarray(result.trace, dtype=np.float64))
+        return trace, int(result.spikes), (float(result.vf), float(result.wf))
+
+    def _simulate_go(
+        self, n_steps: int, current: float
+    ) -> tuple[npt.NDArray[np.float64], int, tuple[float, float]]:
+        """Run the Go service recurrence through its C-ABI bridge."""
+        assert _go_lib is not None
+        import ctypes
+
+        output = np.empty(n_steps + 2, dtype=np.float64)
+        spikes = int(
+            _go_lib.adex_simulate_c(
+                self.v,
+                self.w,
+                self.v_rest,
+                self.v_reset,
+                self.v_threshold,
+                self.v_rh,
+                self.delta_t,
+                self.tau,
+                self.tau_w,
+                self.a,
+                self.b,
+                self.c_m,
+                self.dt,
+                n_steps,
+                current,
+                output.ctypes.data_as(ctypes.POINTER(ctypes.c_double)),
+            )
+        )
+        if spikes < 0:
+            raise FloatingPointError("Go AdEx kernel rejected the simulation contract.")
+        return (
+            np.ascontiguousarray(output[:n_steps]),
+            spikes,
+            (float(output[n_steps]), float(output[n_steps + 1])),
+        )
+
+    def _simulate_mojo(
+        self, n_steps: int, current: float
+    ) -> tuple[npt.NDArray[np.float64], int, tuple[float, float]]:
+        """Run the Mojo baseline-Euler recurrence through its C ABI."""
+        assert _mojo_lib is not None
+        output = np.empty(n_steps + 2, dtype=np.float64)
+        spikes = int(
+            _mojo_lib.adex_simulate_c(
+                self.v,
+                self.w,
+                self.v_rest,
+                self.v_reset,
+                self.v_threshold,
+                self.v_rh,
+                self.delta_t,
+                self.tau,
+                self.tau_w,
+                self.a,
+                self.b,
+                self.c_m,
+                self.dt,
+                n_steps,
+                current,
+                int(output.ctypes.data),
+            )
+        )
+        if spikes < 0:
+            raise FloatingPointError("Mojo AdEx kernel rejected the simulation contract.")
+        return (
+            np.ascontiguousarray(output[:n_steps]),
+            spikes,
+            (float(output[n_steps]), float(output[n_steps + 1])),
+        )
 
     def reset(self) -> None:
         self.v = self.v_rest

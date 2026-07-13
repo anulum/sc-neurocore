@@ -971,7 +971,7 @@
     "python_model_classes": 158,
     "python_model_source_modules": 153,
     "rust_pyo3_model_wrappers": 176,
-    "test_files": 1165
+    "test_files": 1167
   },
   "documentation": {
     "public_pages": [
@@ -2868,6 +2868,7 @@
       "tests/test_adc_to_spike_kernel_parity.py",
       "tests/test_adc_to_spike_quantiser.py",
       "tests/test_adc_to_spike_quantiser_synth.py",
+      "tests/test_adex_backends.py",
       "tests/test_advanced_layers.py",
       "tests/test_advanced_plasticity.py",
       "tests/test_aer_priority_queue.py",
@@ -2905,6 +2906,7 @@
       "tests/test_behavior_tags.py",
       "tests/test_behavior_taxonomy.py",
       "tests/test_behavioral_equivalence.py",
+      "tests/test_bench_adex.py",
       "tests/test_bench_cli_startup.py",
       "tests/test_bench_connor_stevens_mojo.py",
       "tests/test_bench_dna_mapper_import.py",

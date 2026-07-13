@@ -19,7 +19,7 @@ var (
 	ErrAdExNonFiniteUpdate = errors.New("adex integrator update must remain finite")
 )
 
-// AdExNeuronState holds the neuron state
+// AdExNeuronState holds the complete maintained baseline-Euler state and parameters.
 type AdExNeuronState struct {
 	V          float64
 	W          float64
@@ -36,7 +36,7 @@ type AdExNeuronState struct {
 	Dt         float64
 }
 
-// NewAdExNeuron creates a new AdExNeuron neuron with default parameters
+// NewAdExNeuron creates an AdEx neuron with the maintained Python defaults.
 func NewAdExNeuron() *AdExNeuronState {
 	return &AdExNeuronState{
 		V:          -65.0,
@@ -110,7 +110,13 @@ func (s *AdExNeuronState) Step(iExt float64) (int, error) {
 	return 0, nil
 }
 
-// SimulateAdExNeuron runs the neuron for n steps
+// Reset restores the dynamic state while preserving configured parameters.
+func (s *AdExNeuronState) Reset() {
+	s.V = s.VRest
+	s.W = 0.0
+}
+
+// SimulateAdExNeuron runs the default neuron for n steps under a constant current.
 func SimulateAdExNeuron(nSteps int, iExt float64) ([]float64, int) {
 	s := NewAdExNeuron()
 	trace := make([]float64, nSteps)

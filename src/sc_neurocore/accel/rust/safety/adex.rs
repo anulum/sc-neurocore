@@ -6,8 +6,6 @@
 // Contact: www.anulum.li | protoscience@anulum.li
 // SC-NeuroCore — Rust safety for adex
 
-#![allow(unused_variables, dead_code, non_snake_case)]
-
 #[derive(Debug, Clone)]
 pub struct AdExNeuron {
     pub v: f64,
@@ -30,6 +28,12 @@ pub enum AdExError {
     InvalidInput,
     InvalidState,
     NonFiniteUpdate,
+}
+
+impl Default for AdExNeuron {
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 impl AdExNeuron {
@@ -133,6 +137,34 @@ mod tests {
     }
 
     #[test]
+    fn test_adex_matches_python_golden_spike_counts() {
+        for (current, expected) in [(0.0, 0), (200.0, 4), (500.0, 12)] {
+            let mut state = AdExNeuron::new();
+            let spikes: i32 = (0..1_000).map(|_| state.step(current).unwrap()).sum();
+            assert_eq!(spikes, expected, "current={current}");
+        }
+    }
+
+    #[test]
+    fn test_adex_one_step_matches_independent_euler_reference() {
+        let mut state = AdExNeuron::new();
+        state.v = -60.0;
+        state.w = 3.0;
+        let current = 250.0;
+        let arg = ((state.v - state.v_rh) / state.delta_t).clamp(-20.0, 20.0);
+        let exp_term = state.delta_t * arg.exp();
+        let dv =
+            (-(state.v - state.v_rest) + exp_term) / state.tau + (-state.w + current) / state.c_m;
+        let dw = (state.a * (state.v - state.v_rest) - state.w) / state.tau_w;
+        let expected_v = state.v + dv * state.dt;
+        let expected_w = state.w + dw * state.dt;
+
+        assert_eq!(state.step(current), Ok(0));
+        assert_eq!(state.v, expected_v);
+        assert_eq!(state.w, expected_w);
+    }
+
+    #[test]
     fn test_adex_rejects_invalid_input_without_mutation() {
         let mut state = AdExNeuron::new();
         let before = (state.v, state.w);
@@ -147,5 +179,28 @@ mod tests {
         let before = (state.v, state.w);
         assert_eq!(state.step(1.0e308), Err(AdExError::NonFiniteUpdate));
         assert_eq!((state.v, state.w), before);
+    }
+
+    #[test]
+    fn test_adex_rejects_invalid_runtime_state_without_mutation() {
+        let mut state = AdExNeuron::new();
+        state.w = f64::NAN;
+        let before = (state.v, state.w);
+        assert_eq!(state.step(0.0), Err(AdExError::InvalidState));
+        assert_eq!(state.v, before.0);
+        assert!(state.w.is_nan() && before.1.is_nan());
+    }
+
+    #[test]
+    fn test_adex_reset_preserves_parameters() {
+        let mut state = AdExNeuron::new();
+        state.v_rest = -63.0;
+        state.dt = 0.2;
+        state.a = 0.75;
+        state.v = -51.0;
+        state.w = 9.0;
+        state.reset();
+        assert_eq!((state.v, state.w), (-63.0, 0.0));
+        assert_eq!((state.dt, state.a), (0.2, 0.75));
     }
 }

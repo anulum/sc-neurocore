@@ -237,7 +237,7 @@ class TestAdExSimulate:
         with pytest.raises(ValueError, match="n_steps"):
             n.simulate(-1, current=0.0, backend="python")
         with pytest.raises(ValueError, match="backend"):
-            n.simulate(10, current=0.0, backend="julia")
+            n.simulate(10, current=0.0, backend="cuda")
         with pytest.raises(ValueError, match="current"):
             n.simulate(10, current=float("nan"), backend="python")
 

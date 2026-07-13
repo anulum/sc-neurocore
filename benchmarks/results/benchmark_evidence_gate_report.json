@@ -182,6 +182,10 @@
       "id": "hodgkin-huxley-mojo-closure-local-regression"
     },
     {
+      "artefact": "benchmarks/results/bench_adex.json",
+      "id": "adex-five-backend-closure-local-regression"
+    },
+    {
       "artefact": "benchmarks/results/bench_asic_flow.json",
       "id": "asic-flow-modularisation-local-diagnostics"
     }
@@ -424,7 +428,7 @@
       "reason": "source_hash_mismatch"
     }
   ],
-  "gate_count": 46,
+  "gate_count": 47,
   "manifest": "benchmarks/benchmark_regression_gates.json",
   "passed": false,
   "schema_version": "sc-neurocore.benchmark-evidence-gate.v1"

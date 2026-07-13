@@ -97,7 +97,7 @@ SC-NeuroCore is positioned for neuromorphic R&D, stochastic accelerator design, 
 | Model documentation pages | 175 |
 | Rust PyO3 model wrappers | 176 |
 | Optional extras | 28 |
-| Python test files | 1165 |
+| Python test files | 1167 |
 | Public documentation pages | 569 |
 | GitHub Actions workflows | 19 |
 
@@ -196,6 +196,12 @@ The committed Brunel balanced-network scaling artefact
 `benchmarks/results/rust_scaling_benchmark.json` records 39-202x speedups
 against Brian2 for its 10K-100K rows. Treat that as workload-specific evidence,
 not as a blanket claim for every engine path.
+
+The AdEx model also exposes source-bound baseline-Euler simulation through
+Python, the Rust engine, Julia, Go, and Mojo. Its committed
+`benchmarks/results/bench_adex.json` artefact records exact event parity and a
+`5e-12` voltage-trace envelope; see the
+[AdEx model page](docs/api/models/adex.md) for backend and evidence boundaries.
 
 When installed, SC-NeuroCore automatically uses the Rust engine for:
 

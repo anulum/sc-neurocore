@@ -5,6 +5,20 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+### AdEx five-backend baseline-Euler closure
+- Added executable Rust-safety, Go, Julia, and Mojo recurrence coverage around
+  the maintained Python AdEx model and Rust engine path. Public dispatch carries
+  the complete numeric contract through Julia/Go/Mojo, keeps the factory-default
+  Rust boundary explicit, and fails closed on invalid state or candidates.
+- Dedicated parity tests preserve `0/4/12` events at `I=0/200/500` over 1,000
+  steps and bound every compiled voltage trace to `5e-12` from Python. The
+  existing DOI-backed independent reference and Q16.16 Python-to-Verilog
+  co-simulation remain the declared source and H1 hardware evidence.
+- Added a source-hashed, single-logical-CPU benchmark for all five public paths.
+  The committed powersave-governor run records 1065 events in every lane and a
+  maximum trace error of `7.40e-13`; its loaded-host timings are local regression
+  evidence, not a hardware throughput claim.
+
 ### Hodgkin-Huxley executable Mojo lane
 - Replaced the non-executable parity note with a compiled C ABI for the
   complete four-state Hodgkin-Huxley recurrence. The Python dispatcher carries

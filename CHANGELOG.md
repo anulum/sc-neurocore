@@ -5,6 +5,17 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 ## [Unreleased]
 
 ### Added
+- Completed the AdEx baseline-Euler acceleration chain across Rust safety, the
+  Rust engine, Go, Julia, and Mojo, and exposed Julia/Go/Mojo through the public
+  `simulate()` dispatcher. The compiled paths preserve the `0/4/12` event
+  goldens at `I=0/200/500`, remain within `5e-12` of Python, transport the full
+  maintained numeric state and parameter surface where the backend supports it,
+  and reject invalid inputs without partially committing state.
+- Added a source-hashed, five-backend AdEx benchmark and regression contract.
+  The single-logical-CPU, powersave-governor run measured Mojo, Julia, Go, Rust,
+  and Python medians of 4.658, 5.040, 12.807, 58.988, and 2202.136 ms per
+  100,000 steps, with 1065 events in every lane and maximum trace error
+  `7.40e-13`. The loaded-host timings are local regression evidence only.
 - Replaced the Hodgkin-Huxley Mojo parity note with an executable C-ABI kernel
   for the complete four-state, gate-first baseline-Euler model. The public
   `simulate(..., backend="mojo")` path transports every maintained numeric

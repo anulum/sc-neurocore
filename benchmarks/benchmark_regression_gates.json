@@ -2222,6 +2222,82 @@
       }
     },
     {
+      "artefact": "benchmarks/results/bench_adex.json",
+      "description": "Source-bound AdEx baseline-Euler five-backend simulation evidence.",
+      "expected_values": {
+        "backends.go.event_count_matches_python": true,
+        "backends.julia.event_count_matches_python": true,
+        "backends.mojo.event_count_matches_python": true,
+        "backends.rust.event_count_matches_python": true,
+        "kernel": "adex_baseline_euler_simulate",
+        "meta.single_cpu_pinned": true,
+        "schema_version": "sc-neurocore.polyglot-benchmark.v1",
+        "workload.current": 500.0,
+        "workload.n_steps": 100000,
+        "workload.repeats": 7,
+        "workload.trace_atol": 5e-12
+      },
+      "id": "adex-five-backend-closure-local-regression",
+      "parity_groups": [
+        {
+          "paths": [
+            "backends.python.event_count",
+            "backends.rust.event_count",
+            "backends.julia.event_count",
+            "backends.go.event_count",
+            "backends.mojo.event_count"
+          ],
+          "tolerance": 0.0
+        }
+      ],
+      "regression_limits": {
+        "backends.go.parity_max_abs_diff": {
+          "max": 5e-12
+        },
+        "backends.julia.parity_max_abs_diff": {
+          "max": 5e-12
+        },
+        "backends.mojo.parity_max_abs_diff": {
+          "max": 5e-12
+        },
+        "backends.rust.parity_max_abs_diff": {
+          "max": 5e-12
+        }
+      },
+      "required_numbers": [
+        "backends.python.median_call_ms",
+        "backends.python.minimum_call_ms",
+        "backends.python.parity_max_abs_diff",
+        "backends.python.event_count",
+        "backends.rust.median_call_ms",
+        "backends.rust.minimum_call_ms",
+        "backends.rust.parity_max_abs_diff",
+        "backends.rust.event_count",
+        "backends.julia.median_call_ms",
+        "backends.julia.minimum_call_ms",
+        "backends.julia.parity_max_abs_diff",
+        "backends.julia.event_count",
+        "backends.go.median_call_ms",
+        "backends.go.minimum_call_ms",
+        "backends.go.parity_max_abs_diff",
+        "backends.go.event_count",
+        "backends.mojo.median_call_ms",
+        "backends.mojo.minimum_call_ms",
+        "backends.mojo.parity_max_abs_diff",
+        "backends.mojo.event_count"
+      ],
+      "source_hashes": {
+        "benchmarks/bench_adex.py": "source_hashes.benchmarks/bench_adex.py",
+        "engine/src/neuron.rs": "source_hashes.engine/src/neuron.rs",
+        "src/sc_neurocore/accel/go/neurons/adex/adex.go": "source_hashes.src/sc_neurocore/accel/go/neurons/adex/adex.go",
+        "src/sc_neurocore/accel/go/services/adex.go": "source_hashes.src/sc_neurocore/accel/go/services/adex.go",
+        "src/sc_neurocore/accel/julia/neurons/adex.jl": "source_hashes.src/sc_neurocore/accel/julia/neurons/adex.jl",
+        "src/sc_neurocore/accel/mojo/kernels/adex.mojo": "source_hashes.src/sc_neurocore/accel/mojo/kernels/adex.mojo",
+        "src/sc_neurocore/accel/rust/safety/adex.rs": "source_hashes.src/sc_neurocore/accel/rust/safety/adex.rs",
+        "src/sc_neurocore/neurons/models/adex.py": "source_hashes.src/sc_neurocore/neurons/models/adex.py"
+      }
+    },
+    {
       "artefact": "benchmarks/results/bench_asic_flow.json",
       "description": "Source-bound parent/candidate ASIC deck and bundle-generation diagnostics.",
       "expected_values": {

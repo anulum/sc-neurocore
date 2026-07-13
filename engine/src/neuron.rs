@@ -386,20 +386,56 @@ impl AdExNeuron {
     }
 
     pub fn step(&mut self, current: f64) -> i32 {
+        if !self.v.is_finite()
+            || !self.w.is_finite()
+            || !self.v_rest.is_finite()
+            || !self.v_reset.is_finite()
+            || !self.v_threshold.is_finite()
+            || !self.v_rh.is_finite()
+            || !self.delta_t.is_finite()
+            || !self.tau.is_finite()
+            || !self.tau_w.is_finite()
+            || !self.a.is_finite()
+            || !self.b.is_finite()
+            || !self.c_m.is_finite()
+            || !self.dt.is_finite()
+            || !current.is_finite()
+            || self.delta_t <= 0.0
+            || self.tau <= 0.0
+            || self.tau_w <= 0.0
+            || self.c_m <= 0.0
+            || self.dt <= 0.0
+        {
+            return 0;
+        }
         // Brette & Gerstner 2005: C dV/dt = -g_L(V-E_L) + g_L ΔT exp((V-V_T)/ΔT) - w + I
         let exp_arg = ((self.v - self.v_rh) / self.delta_t).clamp(-20.0, 20.0);
         let exp_term = self.delta_t * exp_arg.exp();
         let dv = ((-(self.v - self.v_rest) + exp_term) / self.tau + (-self.w + current) / self.c_m)
             * self.dt;
         let dw = (self.a * (self.v - self.v_rest) - self.w) / self.tau_w * self.dt;
-        self.v += dv;
-        self.w += dw;
+        let next_v = self.v + dv;
+        let next_w = self.w + dw;
+        if !exp_term.is_finite()
+            || !dv.is_finite()
+            || !dw.is_finite()
+            || !next_v.is_finite()
+            || !next_w.is_finite()
+        {
+            return 0;
+        }
 
-        if self.v >= self.v_threshold {
+        if next_v >= self.v_threshold {
+            let spike_w = next_w + self.b;
+            if !spike_w.is_finite() {
+                return 0;
+            }
             self.v = self.v_reset;
-            self.w += self.b;
+            self.w = spike_w;
             1
         } else {
+            self.v = next_v;
+            self.w = next_w;
             0
         }
     }
@@ -886,6 +922,32 @@ mod tests {
             next_100 <= first_100 + 5,
             "adaptation should not increase rate: first={first_100}, next={next_100}"
         );
+    }
+
+    #[test]
+    fn adex_matches_python_golden_spike_counts() {
+        for (current, expected) in [(0.0, 0), (200.0, 4), (500.0, 12)] {
+            let mut n = AdExNeuron::new();
+            let spikes: i32 = (0..1_000).map(|_| n.step(current)).sum();
+            assert_eq!(spikes, expected, "current={current}");
+        }
+    }
+
+    #[test]
+    fn adex_invalid_input_is_mutation_free() {
+        let mut n = AdExNeuron::new();
+        let before = (n.v, n.w);
+        assert_eq!(n.step(f64::INFINITY), 0);
+        assert_eq!((n.v, n.w), before);
+    }
+
+    #[test]
+    fn adex_nonfinite_candidate_is_mutation_free() {
+        let mut n = AdExNeuron::new();
+        n.dt = 1.0e308;
+        let before = (n.v, n.w);
+        assert_eq!(n.step(1.0e308), 0);
+        assert_eq!((n.v, n.w), before);
     }
 
     // ── ExpIF tests ───────────────────────────────────────────────

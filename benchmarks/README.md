@@ -53,6 +53,7 @@ same checkout.
 | `bench_evo_substrate_multilang.py` | Fail-closed Rust/Julia/Go/Mojo/Python kernel parity and timing with interleaved samples, source digest, toolchain context, and explicit unavailable-backend reporting |
 | `bench_connor_stevens_mojo.py` | Source-hashed Python/Rust/Mojo parity and timing for the executable Connor-Stevens Mojo lane, including exact events, bounded six-state traces, affinity, runtime versions, and host load |
 | `bench_hodgkin_huxley_mojo.py` | Source-hashed Python/Rust/Mojo parity and timing for the executable Hodgkin-Huxley Mojo lane, including exact events, bounded four-state traces, affinity, runtime versions, governor, and host load |
+| `bench_adex.py` | Source-hashed Python/Rust/Julia/Go/Mojo parity and timing for the maintained AdEx baseline-Euler recurrence, including exact events, bounded voltage traces, final state, affinity, runtime versions, governor, and host load |
 | `bench_neuron_integrators.py` | Research-only cross-language RK4 neuron integrator parity and timing for Python / Rust / Julia / Go / Mojo |
 | `bench_live_control_updates.py` | Local regression evidence for generated live-control update sequences, static RTL regeneration, staged overflow/underflow trap capture, and selected sticky-trap clear semantics |
 | `benchmark_regression_gates.json` | Manifest of benchmark artefacts and metrics enforced by `tools/benchmark_evidence_gate.py` |
@@ -85,6 +86,11 @@ PYTHONPATH=src taskset -c <cpu> .venv/bin/python \
 PYTHONPATH=src:bridge taskset -c <cpu> .venv/bin/python \
   benchmarks/bench_hodgkin_huxley_mojo.py \
   --json benchmarks/results/bench_hodgkin_huxley_mojo.json
+
+# AdEx five-backend baseline-Euler closure
+PYTHONPATH=src:bridge taskset -c <cpu> .venv/bin/python \
+  benchmarks/bench_adex.py \
+  --json benchmarks/results/bench_adex.json
 
 # DNA mapper refactor regression evidence
 python benchmarks/bench_dna_mapper_import.py \
