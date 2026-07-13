@@ -1,0 +1,192 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Commercial license available
+# Copyright (c) Concepts 1996-2026 Miroslav Sotek. All rights reserved.
+# Copyright (c) Code 2020-2026 Miroslav Sotek. All rights reserved.
+# ORCID: 0009-0009-3560-0851
+# Contact: www.anulum.li | protoscience@anulum.li
+# SC-NeuroCore - Studio platform administration route policies
+
+"""Platform administration route-policy catalogue."""
+
+from __future__ import annotations
+
+from sc_neurocore.studio.platform.policy_models import RouteVisibility
+
+PLATFORM_ROUTES: tuple[tuple[str, str, RouteVisibility, str], ...] = (
+    ("GET", "/api/health", RouteVisibility.PUBLIC, "studio.health.read"),
+    (
+        "GET",
+        "/api/studio/capabilities",
+        RouteVisibility.PUBLIC,
+        "studio.capabilities.read",
+    ),
+    (
+        "GET",
+        "/api/studio/capabilities/{capability_id}",
+        RouteVisibility.PUBLIC,
+        "studio.capabilities.read",
+    ),
+    (
+        "GET",
+        "/api/studio/audit/status",
+        RouteVisibility.PUBLIC,
+        "studio.audit.status.read",
+    ),
+    (
+        "GET",
+        "/api/studio/jobs/status",
+        RouteVisibility.PUBLIC,
+        "studio.jobs.status.read",
+    ),
+    ("GET", "/api/studio/jobs", RouteVisibility.ADMIN, "studio.jobs.list"),
+    (
+        "GET",
+        "/api/studio/jobs/{job_id}",
+        RouteVisibility.ADMIN,
+        "studio.jobs.detail",
+    ),
+    (
+        "GET",
+        "/api/studio/jobs/{job_id}/artifacts/{artifact_path:path}",
+        RouteVisibility.ADMIN,
+        "studio.jobs.artifact.read",
+    ),
+    (
+        "GET",
+        "/api/studio/operator/status",
+        RouteVisibility.ADMIN,
+        "studio.operator.status.read",
+    ),
+    (
+        "GET",
+        "/api/studio/audit/export",
+        RouteVisibility.ADMIN,
+        "studio.audit.export",
+    ),
+    (
+        "GET",
+        "/api/studio/audit/quarantine/export",
+        RouteVisibility.ADMIN,
+        "studio.audit.quarantine.export",
+    ),
+    (
+        "POST",
+        "/api/studio/audit/quarantine/archive",
+        RouteVisibility.ADMIN,
+        "studio.audit.quarantine.archive",
+    ),
+    (
+        "POST",
+        "/api/studio/audit/quarantine/archive/validate",
+        RouteVisibility.ADMIN,
+        "studio.audit.quarantine.archive.validate",
+    ),
+    (
+        "GET",
+        "/api/studio/audit/quarantine/archive/retention",
+        RouteVisibility.ADMIN,
+        "studio.audit.quarantine.archive.retention",
+    ),
+    (
+        "POST",
+        "/api/studio/audit/quarantine/archive/restore",
+        RouteVisibility.ADMIN,
+        "studio.audit.quarantine.archive.restore",
+    ),
+    (
+        "POST",
+        "/api/studio/audit/quarantine/archive/purge",
+        RouteVisibility.ADMIN,
+        "studio.audit.quarantine.archive.purge",
+    ),
+    (
+        "POST",
+        "/api/studio/evidence/bundle",
+        RouteVisibility.ADMIN,
+        "studio.evidence.bundle.create",
+    ),
+    (
+        "POST",
+        "/api/studio/training/weight-restore",
+        RouteVisibility.ADMIN,
+        "studio.training.weight_restore.materialize",
+    ),
+    (
+        "POST",
+        "/api/studio/training/weight-restore/attach",
+        RouteVisibility.ADMIN,
+        "studio.training.weight_restore.attach",
+    ),
+    (
+        "POST",
+        "/api/studio/training/weight-restore/attach/live",
+        RouteVisibility.ADMIN,
+        "studio.training.weight_restore.attach_live",
+    ),
+    (
+        "POST",
+        "/api/studio/auth/login",
+        RouteVisibility.PUBLIC,
+        "studio.auth.login",
+    ),
+    (
+        "GET",
+        "/api/studio/auth/session",
+        RouteVisibility.AUTHENTICATED,
+        "studio.auth.session.read",
+    ),
+    (
+        "POST",
+        "/api/studio/auth/logout",
+        RouteVisibility.AUTHENTICATED,
+        "studio.auth.logout",
+    ),
+    (
+        "GET",
+        "/api/studio/identity/service-accounts",
+        RouteVisibility.ADMIN,
+        "studio.identity.service_accounts.list",
+    ),
+    (
+        "GET",
+        "/api/studio/identity/browser-users",
+        RouteVisibility.ADMIN,
+        "studio.identity.browser_users.list",
+    ),
+    (
+        "POST",
+        "/api/studio/identity/browser-users",
+        RouteVisibility.ADMIN,
+        "studio.identity.browser_users.create",
+    ),
+    (
+        "GET",
+        "/api/studio/identity/browser-users/{username}",
+        RouteVisibility.ADMIN,
+        "studio.identity.browser_users.detail",
+    ),
+    (
+        "PATCH",
+        "/api/studio/identity/browser-users/{username}",
+        RouteVisibility.ADMIN,
+        "studio.identity.browser_users.update",
+    ),
+    (
+        "POST",
+        "/api/studio/identity/browser-users/{username}/password",
+        RouteVisibility.ADMIN,
+        "studio.identity.browser_users.password.rotate",
+    ),
+    (
+        "GET",
+        "/api/studio/identity/service-accounts/{principal_id}",
+        RouteVisibility.ADMIN,
+        "studio.identity.service_accounts.detail",
+    ),
+    (
+        "PATCH",
+        "/api/studio/identity/service-accounts/{principal_id}",
+        RouteVisibility.ADMIN,
+        "studio.identity.service_accounts.update",
+    ),
+)

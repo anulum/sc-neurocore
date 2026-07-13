@@ -32690,7 +32690,53 @@ ValueError
 
 ---
 
-## Module `studio.platform.policy`
+## Module `studio.platform.policy_audit`
+
+### Class `JsonlAuditSink`
+Append-only JSONL audit sink for Studio policy decisions.
+
+- **__init__**(path)
+  - Configure an append-only audit log and bounded rotation policy.
+- **path**()
+  - Return the configured JSONL audit log path.
+- **record**(event)
+  - Append a Studio policy audit event as one JSON object.
+- **status**()
+  - Return status for the persistent JSONL audit sink.
+- **export_recent**(limit)
+  - Export the most recent persisted audit rows without exposing paths.
+- **export_quarantine**(limit)
+  - Export quarantined retained audit rows without exposing local paths.
+
+---
+
+## Module `studio.platform.policy_gateway`
+
+### Class `RoutePolicyRegistry`
+Registry of Studio route policies keyed by HTTP method and path.
+
+- **__init__**()
+  - Create an empty method-and-path policy registry.
+- **register**(method, path_template, policy)
+  - Register one Studio route policy.
+- **policy_for**(method, path_template)
+  - Return the policy for one HTTP method and path template.
+- **policies**()
+  - Return registered route policies in stable method/path order.
+- **missing_policies**(routes)
+  - Return route signatures that have no registered Studio policy.
+
+### Class `PolicyGateway`
+Fail-closed Studio route authorization gateway.
+
+- **__init__**(audit_sink, clock)
+  - Bind the required audit sink and optional deterministic clock.
+- **authorize**(policy)
+  - Authorize a caller against a Studio route policy.
+
+---
+
+## Module `studio.platform.policy_models`
 
 ### Class `AuditSinkError`
 Raised when a Studio audit sink cannot persist an event.
@@ -32750,6 +32796,7 @@ Append-only sink for Studio policy audit events.
 Append-only in-memory audit sink for local Studio policy tests.
 
 - **__init__**()
+  - Create an empty process-local audit event buffer.
 - **events**()
   - Return recorded audit events in insertion order.
 - **record**(event)
@@ -32757,40 +32804,9 @@ Append-only in-memory audit sink for local Studio policy tests.
 - **status**()
   - Return status for the non-persistent in-memory audit sink.
 
-### Class `JsonlAuditSink`
-Append-only JSONL audit sink for Studio policy decisions.
+---
 
-- **__init__**(path)
-- **path**()
-  - Return the configured JSONL audit log path.
-- **record**(event)
-  - Append a Studio policy audit event as one JSON object.
-- **status**()
-  - Return status for the persistent JSONL audit sink.
-- **export_recent**(limit)
-  - Export the most recent persisted audit rows without exposing paths.
-- **export_quarantine**(limit)
-  - Export quarantined retained audit rows without exposing local paths.
-
-### Class `RoutePolicyRegistry`
-Registry of Studio route policies keyed by HTTP method and path.
-
-- **__init__**()
-- **register**(method, path_template, policy)
-  - Register one Studio route policy.
-- **policy_for**(method, path_template)
-  - Return the policy for one HTTP method and path template.
-- **policies**()
-  - Return registered route policies in stable method/path order.
-- **missing_policies**(routes)
-  - Return route signatures that have no registered Studio policy.
-
-### Class `PolicyGateway`
-Fail-closed Studio route authorization gateway.
-
-- **__init__**(audit_sink, clock)
-- **authorize**(policy)
-  - Authorize a caller against a Studio route policy.
+## Module `studio.platform.policy_routes`
 
 ### Function `build_default_studio_route_policy_registry()`
 Build route policies for the current Studio platform API surface.

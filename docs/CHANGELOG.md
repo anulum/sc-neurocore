@@ -5,6 +5,25 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+### Studio policy responsibility modularisation
+
+- Replaced the 1,319-line Studio policy GodFile and its 1,135-line test file
+  with a 78-line compatibility facade, nine focused implementation modules,
+  shared test support, eight focused test modules, and an import-only sentinel.
+  The largest implementation and test files are 249 and 272 lines. Historical
+  package and module imports preserve object identity, qualified names, and
+  pickle compatibility through an acyclic responsibility graph.
+- The 53-test focused suite covers all 412 statements and 96 branches, and the
+  full 1,165-test Studio suite remains green. A dedicated Python 3.12 workflow
+  enforces exact coverage independently of the repository-wide Studio
+  exclusion. The parent and candidate retain the same duplicate-free 114-route
+  registry at SHA-256
+  `452152885f8f5dbf97b4a76b2d30868c3fbded2984d2828dfe273e57834d5084`.
+- Verified parent-produced pickle compatibility and an isolated installed-wheel
+  import of every split module. This is a Python-only Studio control-plane and
+  security contract, not a numerical kernel, so no cross-language mirror or
+  throughput benchmark is claimed.
+
 ### Theta exact-flow source-to-silicon closure
 
 - Exposed the tangent-half-angle exact constant-current flow through Python,

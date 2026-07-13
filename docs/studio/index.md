@@ -136,6 +136,11 @@ runtime features:
   protected Studio API surfaces. Public routes may run without a principal;
   authenticated and admin routes require an explicit policy and emit audit
   decisions.
+- Policy implementation ownership is split by responsibility: immutable public
+  contracts, tamper-evident audit persistence and integrity, authorization,
+  and the platform/discovery/compute/workspace route catalogues are independent
+  modules. `sc_neurocore.studio.platform.policy` remains the stable historical
+  import and pickle facade for callers.
 - Runtime route-policy enforcement is opt-in for the development preview via
   `SC_NEUROCORE_STUDIO_ENFORCE_ROUTE_POLICIES=true`. When enabled, protected
   HTTP routes and `/ws/progress` require an authenticated principal.

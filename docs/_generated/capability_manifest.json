@@ -971,7 +971,7 @@
     "python_model_classes": 158,
     "python_model_source_modules": 153,
     "rust_pyo3_model_wrappers": 176,
-    "test_files": 1256
+    "test_files": 1265
   },
   "documentation": {
     "public_pages": [
@@ -2849,6 +2849,7 @@
       "tests/module_reload.py",
       "tests/performance_guard.py",
       "tests/studio_job_tasks.py",
+      "tests/studio_policy_support.py",
       "tests/test_accel/test_accel_mirror_authority.py",
       "tests/test_accel/test_ffi_contiguity.py",
       "tests/test_accel/test_jax_custom_vjp.py",
@@ -3915,6 +3916,14 @@
       "tests/test_studio_pipeline_process.py",
       "tests/test_studio_platform.py",
       "tests/test_studio_policy.py",
+      "tests/test_studio_policy_architecture.py",
+      "tests/test_studio_policy_audit_export.py",
+      "tests/test_studio_policy_audit_failures.py",
+      "tests/test_studio_policy_audit_integrity.py",
+      "tests/test_studio_policy_audit_recording.py",
+      "tests/test_studio_policy_audit_rotation.py",
+      "tests/test_studio_policy_gateway.py",
+      "tests/test_studio_policy_routes.py",
       "tests/test_studio_preflight.py",
       "tests/test_studio_preset_routes.py",
       "tests/test_studio_progress.py",
