@@ -970,8 +970,8 @@
     "public_documentation_pages": 569,
     "python_model_classes": 158,
     "python_model_source_modules": 153,
-    "rust_pyo3_model_wrappers": 176,
-    "test_files": 1275
+    "rust_pyo3_model_wrappers": 175,
+    "test_files": 1278
   },
   "documentation": {
     "public_pages": [
@@ -2567,7 +2567,6 @@
       "ConnorStevensNeuron",
       "CourageNekorkinMapNeuron",
       "DCNNeuron",
-      "DPINeuron",
       "DeSchutterPurkinjeNeuron",
       "DendrifyNeuron",
       "DestexheThalamicNeuron",
@@ -2913,6 +2912,7 @@
       "tests/test_bench_cli_startup.py",
       "tests/test_bench_connor_stevens_mojo.py",
       "tests/test_bench_dna_mapper_import.py",
+      "tests/test_bench_dpi_neuron.py",
       "tests/test_bench_expif.py",
       "tests/test_bench_hodgkin_huxley_mojo.py",
       "tests/test_bench_lapicque.py",
@@ -3123,6 +3123,8 @@
       "tests/test_docs_navigation_policy.py",
       "tests/test_doctor.py",
       "tests/test_dot_product.py",
+      "tests/test_dpi_neuron_backend_loading.py",
+      "tests/test_dpi_neuron_backends.py",
       "tests/test_dsl_to_verilog.py",
       "tests/test_eda_toolchain_versions.py",
       "tests/test_edge/test_aer_router_daemon.py",

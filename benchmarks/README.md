@@ -61,6 +61,7 @@ same checkout.
 | `bench_model_perfect_integrator.py` | Source-hashed Python/Rust/Julia/Go/Mojo public-dispatch parity and timing for the Perfect Integrator candidate-first Euler recurrence, including bit-exact traces and events, measured order, final state, affinity, runtime versions, governor, and host load |
 | `bench_model_quadratic_if.py` | Source-hashed Python/Rust/Julia/Go/Mojo public-dispatch parity and timing for the Quadratic IF exact constant-current Riccati flow, including exact events, bounded voltage traces, executable Rust-safety evidence, measured warm-call order, final state, affinity, runtime versions, governor, and host load |
 | `bench_model_theta.py` | Source-hashed Python/Rust/Julia/Go/Mojo public-dispatch parity and timing for the Theta tangent-half-angle exact constant-current flow, including exact events, bounded circular phase, executable Rust-safety evidence, stable dispatcher and measured warm-call orders, final state, affinity, runtime versions, governor, and host load |
+| `bench_model_dpi_neuron.py` | Source-hashed Python/Rust/Julia/Go/Mojo public-dispatch parity and timing for the coupled Indiveri-Stefanini-Chicca (2010) DPI equations, including exact events, bounded membrane traces, all final states, executable Rust-safety evidence, stable dispatcher and measured warm-call orders, affinity, runtime versions, governor, and host load |
 | `bench_neuron_integrators.py` | Research-only cross-language RK4 neuron integrator parity and timing for Python / Rust / Julia / Go / Mojo |
 | `bench_live_control_updates.py` | Local regression evidence for generated live-control update sequences, static RTL regeneration, staged overflow/underflow trap capture, and selected sticky-trap clear semantics |
 | `benchmark_regression_gates.json` | Manifest of benchmark artefacts and metrics enforced by `tools/benchmark_evidence_gate.py` |
@@ -123,6 +124,11 @@ PYTHONPATH=src:bridge taskset -c <cpu> .venv/bin/python \
 PYTHONPATH=src:bridge taskset -c <cpu> .venv/bin/python \
   benchmarks/bench_model_theta.py \
   --json benchmarks/results/local_python_2026-06-16_theta_exact_flow.json
+
+# DPI five-backend coupled-circuit Euler closure
+PYTHONPATH=src taskset -c <cpu> .venv/bin/python \
+  benchmarks/bench_model_dpi_neuron.py \
+  --json benchmarks/results/local_python_2026-07-13_dpi_neuron_circuit.json
 
 # DNA mapper refactor regression evidence
 python benchmarks/bench_dna_mapper_import.py \

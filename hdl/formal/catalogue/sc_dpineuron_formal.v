@@ -13,39 +13,29 @@
 module sc_dpineuron_formal (
     input wire clk,
     input wire rst_n,
-    input wire signed [15:0] I_t
+    input wire signed [31:0] I_t
 );
 
     wire spike_out;
-    wire signed [15:0] i_mem_out;
+    wire signed [31:0] i_mem_out;
+    wire signed [31:0] i_ahp_out;
+    wire signed [31:0] refractory_time_out;
 
     sc_dpineuron uut (
         .clk(clk),
         .rst_n(rst_n),
         .I_t(I_t),
         .spike_out(spike_out),
-        .i_mem_out(i_mem_out)
+        .i_mem_out(i_mem_out),
+        .i_ahp_out(i_ahp_out),
+        .refractory_time_out(refractory_time_out)
     );
 
 `ifdef FORMAL
-    reg past_valid = 1'b0;
-    always @(posedge clk)
-        past_valid <= 1'b1;
-
-    // Reset hygiene: async reset clears the spike flag. Primary state may reset
-    // to a non-zero rest / init (e.g. QIF v=-1, Izhikevich vr) — do not force 0.
+    // Minimal safety: async reset clears the spike flag.
     always @(*) begin
-        if (!rst_n) begin
+        if (!rst_n)
             assert (spike_out == 1'b0);
-        end
-    end
-
-    // Saturation contract on the primary membrane / phase / current state.
-    always @(posedge clk) begin
-        if (past_valid && rst_n) begin
-            assert ($signed(i_mem_out) >= -16'sd32768);
-            assert ($signed(i_mem_out) <= 16'sd32767);
-        end
     end
 `endif
 

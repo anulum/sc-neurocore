@@ -50,6 +50,10 @@
       "id": "theta-exact-flow-multibackend-local-regression"
     },
     {
+      "artefact": "benchmarks/results/local_python_2026-07-13_dpi_neuron_circuit.json",
+      "id": "dpi-neuron-circuit-multibackend-local-regression"
+    },
+    {
       "artefact": "benchmarks/results/local_python_2026-06-17_morris_lecar_rk4.json",
       "id": "morris-lecar-rk4-multibackend-local-regression"
     },
@@ -413,7 +417,7 @@
       "reason": "source_hash_mismatch"
     }
   ],
-  "gate_count": 52,
+  "gate_count": 53,
   "manifest": "benchmarks/benchmark_regression_gates.json",
   "passed": false,
   "schema_version": "sc-neurocore.benchmark-evidence-gate.v1"

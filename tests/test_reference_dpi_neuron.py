@@ -23,7 +23,7 @@ _PARITY_CASES: list[tuple[str, str, str, str, Callable[[ReferenceTraceSpec], dic
         "dpi_neuron_driven_spiking_doi",
         "dpi_neuron",
         "independent_euler_reference",
-        "doi:10.1109/JPROC.2014.2313954",
+        "doi:10.1109/ISCAS.2010.5536980",
         lambda spec: _dpi_neuron_driven_euler_features(
             current=spec.protocol.inputs["I"], dt=spec.protocol.dt, steps=spec.protocol.steps
         ),

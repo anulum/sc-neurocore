@@ -1453,7 +1453,14 @@ impl PySpiNNaker2Neuron {
     }
 }
 
-py_neuron_default!("DPINeuron", PyDPINeuron, neurons::DPINeuron, state i_mem);
+py_neuron_default!(
+    "DPINeuron",
+    PyDPINeuron,
+    neurons::DPINeuron,
+    state i_mem,
+    state i_ahp,
+    state refractory_time
+);
 
 #[pyclass(
     name = "AkidaNeuron",

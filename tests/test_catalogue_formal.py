@@ -79,6 +79,23 @@ def test_expif_formal_job_uses_enrolled_q3232_precision() -> None:
     assert "exp_if" in module.MINIMAL_SAFETY_SCHEMAS
 
 
+def test_dpi_formal_job_uses_enrolled_q1616_precision() -> None:
+    """Keep formal DPI RTL aligned with its three-state co-simulation envelope."""
+    import importlib.util
+
+    name = "emit_catalogue_formal_dpi_precision"
+    spec = importlib.util.spec_from_file_location(name, EMITTER)
+    assert spec is not None and spec.loader is not None
+    module = importlib.util.module_from_spec(spec)
+    sys.modules[name] = module
+    spec.loader.exec_module(module)
+
+    assert module.CLASS_TO_SCHEMA["DPINeuron"] == "dpi_neuron"
+    assert module.PRECISION_BY_SCHEMA["dpi_neuron"] == (32, 16)
+    assert module.DEPTH_BY_SCHEMA["dpi_neuron"] == 4
+    assert "dpi_neuron" in module.MINIMAL_SAFETY_SCHEMAS
+
+
 def test_catalogue_formal_inventory_matches_perfect_count() -> None:
     """Committed catalogue jobs equal the number of dual-axis perfect models."""
     sby_jobs = sorted(CATALOGUE.glob("*.sby"))

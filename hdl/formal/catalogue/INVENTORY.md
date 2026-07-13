@@ -12,7 +12,7 @@ Jobs: **27**
 | ChialvoMapNeuron | chialvo_map | `sc_chialvo_map` | `x_out` | Q8.8 | 4 |
 | ConnorStevensNeuron | connor_stevens | `sc_connor_stevens` | `v_out` | Q8.8 | 4 |
 | CourageNekorkinMapNeuron | courage_nekorkin_map | `sc_courbage_nekorkin_map` | `x_out` | Q8.8 | 4 |
-| DPINeuron | dpi_neuron | `sc_dpineuron` | `i_mem_out` | Q8.8 | 20 |
+| DPINeuron | dpi_neuron | `sc_dpineuron` | `i_mem_out` | Q16.16 | 4 |
 | ErmentroutKopellMapNeuron | ermentrout_kopell_map_neuron | `sc_ermentrout_kopell_map_neuron` | `theta_out` | Q8.8 | 4 |
 | ExpIFNeuron | exp_if | `sc_exponential_if` | `v_out` | Q32.32 | 4 |
 | FitzHughNagumoNeuron | fitzhugh_nagumo | `sc_fitzhugh_nagumo` | `v_out` | Q8.8 | 4 |

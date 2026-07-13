@@ -360,6 +360,31 @@ order is returned verbatim.
 
 ---
 
+## Module `accel.dpi_neuron`
+
+### Function `ensure_julia_loaded()`
+Load the executable DPI Julia module when available.
+
+### Function `ensure_go_loaded()`
+Load the compiled DPI Go C ABI when available.
+
+### Function `ensure_mojo_loaded()`
+Load the compiled DPI Mojo C ABI when available.
+
+### Function `simulate_rust(n_steps, current)`
+Run the factory-default Rust engine recurrence.
+
+### Function `simulate_julia(i_mem, i_ahp, refractory_time, i_threshold, i_reset, i_rest, i_tau, i_g, i_tau_ahp, i_ga, i_spike, i_0, kappa, alpha, tau, tau_ahp, refractory_period, dt, n_steps, current)`
+Run the Julia recurrence with the complete circuit contract.
+
+### Function `simulate_go(i_mem, i_ahp, refractory_time, i_threshold, i_reset, i_rest, i_tau, i_g, i_tau_ahp, i_ga, i_spike, i_0, kappa, alpha, tau, tau_ahp, refractory_period, dt, n_steps, current)`
+Run the Go recurrence through its C ABI.
+
+### Function `simulate_mojo(i_mem, i_ahp, refractory_time, i_threshold, i_reset, i_rest, i_tau, i_g, i_tau_ahp, i_ga, i_spike, i_0, kappa, alpha, tau, tau_ahp, refractory_period, dt, n_steps, current)`
+Run the Mojo recurrence through its C ABI.
+
+---
+
 ## Module `accel.gpu_backend`
 
 ### Function `to_device(arr)`
@@ -21752,21 +21777,51 @@ non-negative centre/surround weights; finite preferred direction and state.
 ## Module `neurons.models.dpi_neuron`
 
 ### Class `DPINeuron`
-Indiveri et al. 2011 — DYNAP-SE differential-pair integrator.
+Current-mode conductance-based DPI silicon neuron.
 
-Subthreshold log-domain dynamics modelling analog VLSI circuits.
-tau dI_mem/dt = -I_mem + I_syn + I_leak
-Spike when I_mem >= I_threshold, reset to I_reset.
-All variables in current domain (nA), mirroring transistor currents.
+This class advances the coupled subthreshold equations derived for the
+differential-pair-integrator circuit by Indiveri, Stefanini, and Chicca
+(2010), Eqs. (2)--(3):
 
-Reference: Chicca, E. et al. (2014). Proc. IEEE 102:1367–1388.
+.. math::
 
-``simulate`` supports ``backend`` values ``python``, ``rust``, and ``auto``.
+   I_{fb} = I_0^{1/(\kappa+1)} I_{mem}^{\kappa/(\kappa+1)}
+            \left&#91;1 + e^{-\alpha(I_{mem}-I_{th})}\right&#93;^{-1}
 
-- **step**(i_syn)
+.. math::
+
+   \tau \dot I_{mem} = \frac{I_{mem}}{I_\tau}
+   \left(\frac{I_{rest}+I_{inj}}{1 + I_{mem}/I_g}
+   - I_\tau + I_{fb} - I_{ahp}\right)
+
+.. math::
+
+   \tau_{ahp} \dot I_{ahp} = \frac{I_{ahp}}{I_{\tau ahp}}
+   \left(\frac{I_{spk} r(t)}{1 + I_{ahp}/I_{ga}}
+   - I_{\tau ahp}\right).
+
+``r(t)`` is one for the programmable refractory pulse and zero otherwise.
+The membrane is held at ``i_reset`` during that pulse. The continuous
+equations use a simultaneous explicit-Euler update; a threshold crossing
+starts the pulse for the following step, matching the schema and RTL
+macro-step ordering.
+
+References
+----------
+Indiveri, G., Stefanini, F., & Chicca, E. (2010). *Spike-based learning
+with a generalized integrate and fire silicon neuron*. ISCAS,
+doi:10.1109/ISCAS.2010.5536980.
+
+Indiveri, G. et al. (2011). *Neuromorphic Silicon Neuron Circuits*.
+Frontiers in Neuroscience 5:73, doi:10.3389/fnins.2011.00073.
+
+- **__post_init__**()
+- **step**(current)
+  - Advance one mutation-atomic Euler update of the published circuit.
 - **simulate**(n_steps, current, backend)
-  - Advance ``n_steps`` updates, returning ``(i_mem_trace, spikes)``.
+  - Advance a sequential trace through Python or a compiled backend.
 - **reset**()
+  - Restore the physical leakage-current baseline and clear the pulse.
 
 ---
 

@@ -5,6 +5,26 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+### DPI coupled-circuit source-to-silicon closure
+
+- Replaced the historical one-state DPI surrogate with the coupled
+  current-domain silicon-neuron equations from Indiveri, Stefanini, and Chicca
+  (2010), Eqs. (2)–(3). The maintained Python, Rust engine and safety, Go,
+  Julia, and Mojo paths now share nonlinear positive feedback, membrane and
+  after-hyperpolarisation states, simultaneous explicit Euler updates,
+  post-update reset, and spike-driven refractory-pulse semantics.
+- Added source-bound parity and fail-closed ABI contracts over the enrolled
+  current vector. All five runtime lanes preserve `0/0/0/0/1/3/6/11/21`
+  events at `I=-0.1/0/1/2/3/5/10/20/50` over 1,000 steps, with floating-state
+  differences below `5e-13` and invalid work rejected before visible state or
+  buffer mutation.
+- Enrolled paired TOML/JSON schemas, generated Q16.16 RTL, co-simulation,
+  reference-trace, descriptor, benchmark, and formal evidence. The fixed-point
+  path preserves 13 events at `I=5` over 5,000 steps within its declared state
+  and timing envelopes, and the generated depth-4 Z3 proof passes. Controlled
+  benchmark timings remain explicitly local, loaded-host evidence rather than
+  isolated throughput claims.
+
 ### Cortical-column responsibility modularisation
 
 - Replaced the 1,259-line cortical-column GodFile with a 733-line historical

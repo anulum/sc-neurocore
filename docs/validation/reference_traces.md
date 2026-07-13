@@ -25,7 +25,7 @@ table because their schemas are stochastic.
 | `chialvo_map_doi` | `chialvo_map` | `universal_dsl` | Independent simultaneous iteration of Chialvo (1995), Eq. 1 (`method="map"`), with the maintained upward `x_threshold` observation separated from DOI-sourced dynamics |
 | `connor_stevens_driven_spiking_doi` | `connor_stevens` | `universal_dsl` | Independent macro-step RK4 re-derivation of the driven A-current oscillator (100 inner `dt=0.01` sub-steps per 1 ms macro step, no reset, macro-boundary `v >= 0` crossing) from `neurons/model_schemas/connor_stevens.toml` with DOI-backed schema provenance |
 | `courage_nekorkin_map_autonomous_doi` | `courage_nekorkin_map` | `universal_dsl` | Independent simultaneous iteration of Courbage, Nekorkin & Vdovin (2007), equations 3–5 (`method="map"`, three fast branches, Heaviside discontinuity, upward `x >= x_threshold` crossing), with DOI-backed schema provenance |
-| `dpi_neuron_driven_spiking_doi` | `dpi_neuron` | `universal_dsl` | Independent explicit-Euler re-derivation of the current-mode differential-pair-integrator membrane from `neurons/model_schemas/dpi_neuron.toml` with DOI-backed schema provenance |
+| `dpi_neuron_driven_spiking_doi` | `dpi_neuron` | `universal_dsl` | Independent simultaneous explicit-Euler re-derivation of Indiveri, Stefanini & Chicca (2010), Eqs. (2)–(3): nonlinear membrane feedback, after-hyperpolarisation DPI, threshold reset, and spike-driven refractory pulse |
 | `ermentrout_kopell_theta_euler_doi` | `ermentrout_kopell_map_neuron` | `universal_dsl` | Independent forward-Euler iteration of the Ermentrout-Kopell (1986) theta flow with maintained `dt=0.1`, gain, pre-wrap upward `theta=pi` event, and modulo `2*pi`; the implementation conventions are separated from the DOI-sourced continuous equation |
 | `exp_if_driven_rk4_doi` | `exp_if` | `universal_dsl` | Independent RK4 re-derivation of the driven Fourcaud-Trocmé EIF equation, fitted parameters, +30 mV finite cutoff, and reset |
 | `fitzhugh_nagumo_driven_oscillation_doi` | `fitzhugh_nagumo` | `universal_dsl` | Independent fourth-order Runge-Kutta re-derivation of the driven relaxation oscillator (no reset, rising-edge `v >= 1` crossing) from `neurons/model_schemas/fitzhugh_nagumo.toml` with DOI-backed schema provenance |
@@ -70,9 +70,11 @@ re-derives the exact regular-spiking explicit-Euler recurrence including its
 `v = c`, `u = u + d` reset; the FitzHugh-Nagumo entry re-derives its cubic
 relaxation oscillator with the faithful four-stage RK4 step and rising-edge
 `v >= 1` crossing detection (no reset — the re-enrolled model is a genuine
-relaxation oscillator, not integrate-and-fire); and the DPI entry re-derives its
-current-mode leaky-integrator recurrence with the `i_mem = i_reset` reset, its
-non-negative drive keeping the source model's `max(i_mem, 0)` rectification inert.
+relaxation oscillator, not integrate-and-fire); and the DPI entry independently
+advances the coupled membrane and after-hyperpolarisation currents from the 2010
+source equations, including the nonlinear feedback gate, threshold reset,
+refractory pulse, and all three post-step states over the 13-event driven
+protocol.
 The FitzHugh-Rinzel entry extends that independent cubic RK4 recurrence with the
 ultra-slow `y` modulation equation. It advances `v`, `w`, and `y` simultaneously,
 uses the same no-reset upward-crossing decision, and reproduces all three state

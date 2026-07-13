@@ -415,13 +415,13 @@
     },
     "DPINeuron": {
       "behavior_tags": [
+        "adapting",
         "excitable",
-        "phasic",
         "rate-coded",
         "tonic"
       ],
       "drivable": true,
-      "result_sha256": "6d52e496bb3d82861719c5974717ba6dfe0afb09ff111e9824ef9353dcac92e1",
+      "result_sha256": "d34b435d5ea1b199f2136fbb2c64a8d8659033f156b7456364aa96335a267373",
       "stochastic": false
     },
     "DeSchutterPurkinjeNeuron": {
@@ -1631,7 +1631,7 @@
       "stochastic": false
     }
   },
-  "result_sha256": "9e27067ad16f9009441952c03660fc86837d25839c0043cc3bdf1106f07eff35",
+  "result_sha256": "c08347f091fe1497f10f7a81e78fb324210c03273a2b4b4d686e28c3ae09aa2e",
   "schema_version": "studio.behavior-probe.v1",
   "sweep": {
     "currents": [

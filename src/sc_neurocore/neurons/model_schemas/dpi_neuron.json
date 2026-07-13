@@ -2,36 +2,55 @@
   "metadata": {
     "schema_version": 1,
     "name": "DPINeuron",
-    "author": "Chicca, E.; Indiveri, G.",
-    "year": 2014,
-    "doi": "10.1109/JPROC.2014.2313954",
-    "description": "DYNAP-SE differential-pair integrator subthreshold current-mode LIF (Chicca et al. 2014) — explicit-Euler discretisation"
+    "author": "Indiveri, G.; Stefanini, F.; Chicca, E.",
+    "year": 2010,
+    "doi": "10.1109/ISCAS.2010.5536980",
+    "description": "Current-mode DPI adaptive integrate-and-fire circuit — full coupled membrane, positive-feedback, and spike-triggered adaptation equations"
   },
   "state": {
-    "i_mem": 0.0
+    "i_mem": 0.01,
+    "i_ahp": 0.01,
+    "refractory_time": 0.0
   },
   "parameters": {
     "i_threshold": 1.0,
-    "i_reset": 0.0,
-    "i_leak": 0.01,
+    "i_reset": 0.01,
+    "i_rest": 0.1,
+    "i_tau": 1.0,
+    "i_g": 1.0,
+    "i_tau_ahp": 0.1,
+    "i_ga": 1.0,
+    "i_spike": 5.0,
+    "i_0": 0.01,
+    "kappa": 0.7,
+    "alpha": 10.0,
     "tau": 20.0,
-    "gain": 1.0
+    "tau_ahp": 100.0,
+    "refractory_period": 2.0,
+    "dt": 0.1
   },
   "integration": {
-    "dt": 1.0,
+    "dt": 0.1,
     "method": "euler"
   },
   "dynamics": {
-    "i_mem": "(-i_mem + gain * I + i_leak) / tau"
+    "i_mem": "0.0 if refractory_time > 0.0 else (i_mem / (tau * i_tau)) * ((i_rest + I) / (1.0 + i_mem / i_g) - i_tau + exp((log(i_0) + kappa * log(i_mem)) / (kappa + 1.0)) * sigmoid(alpha * (i_mem - i_threshold)) - i_ahp)",
+    "i_ahp": "(i_ahp / (tau_ahp * i_tau_ahp)) * ((i_spike if refractory_time > 0.0 else 0.0) / (1.0 + i_ahp / i_ga) - i_tau_ahp)",
+    "refractory_time": "((-refractory_time / dt) if refractory_time < dt else -1.0) if refractory_time > 0.0 else 0.0"
   },
   "threshold": {
     "condition": "i_mem >= i_threshold",
     "detection": "level"
   },
   "reset": {
-    "i_mem": "i_reset"
+    "i_mem": "i_reset",
+    "i_ahp": "i_ahp",
+    "refractory_time": "refractory_period"
   },
   "extensions": {
-    "current_domain_note": "State and input are transistor currents (nA), so i_mem stays non-negative under any non-negative drive; the source model's max(i_mem, 0) rectification guard is therefore inert across this schema's operating regime and is omitted from the continuous update."
+    "source_equations": "Indiveri, Stefanini, and Chicca (2010), Eqs. (2)-(3)",
+    "spike_pulse": "During refractory_time > 0, i_mem is held at i_reset and i_spike drives the adaptation DPI.",
+    "event_order": "Simultaneous explicit-Euler state update, post-update threshold detection, then reset and refractory-pulse start.",
+    "dt_contract": "The parameter dt mirrors integration.dt so the refractory timer reaches zero exactly on the final pulse step."
   }
 }

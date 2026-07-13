@@ -4,59 +4,124 @@
 # © Code 2020–2026 Miroslav Šotek. All rights reserved.
 # ORCID: 0009-0009-3560-0851
 # Contact: www.anulum.li | protoscience@anulum.li
-# SC-NeuroCore — DPI neuron co-simulation contracts
+# SC-NeuroCore — Published DPI Python-to-Verilog co-simulation contracts
 
-"""DPI schema, hand-model, and Q16.16 RTL parity contracts."""
+"""DPI hand model, schema, generated Q16.16 RTL, and event parity."""
 
 from __future__ import annotations
 
-import pytest
+import json
+from pathlib import Path
+import tomllib
+
+import numpy as np
 
 from sc_neurocore.neurons.models.dpi_neuron import DPINeuron
 from sc_neurocore.neurons.universal_dsl import UniversalNeuron
-from tests.cosim_support import (
-    HAS_IVERILOG,
-    _dpi_neuron_hand_spike_count,
-    _python_spike_count,
-    _verilog_spike_count_q1616,
-)
+from tests.cosim_support import HAS_IVERILOG, _dpi_neuron_verilog_q1616_trace
+
+_REPOSITORY = Path(__file__).resolve().parents[1]
 
 
-class TestTierBModelCosim:
-    """WC-A5 Tier-B DPI neuron enrolment."""
+def test_dpi_toml_and_json_schemas_are_identical() -> None:
+    """Keep both public serialisations on the same full circuit contract."""
+    root = _REPOSITORY / "src/sc_neurocore/neurons/model_schemas"
+    with (root / "dpi_neuron.toml").open("rb") as stream:
+        toml_schema = tomllib.load(stream)
+    json_schema = json.loads((root / "dpi_neuron.json").read_text(encoding="utf-8"))
+    assert toml_schema == json_schema
+    assert set(toml_schema["state"]) == {"i_mem", "i_ahp", "refractory_time"}
+    assert toml_schema["metadata"]["doi"] == "10.1109/ISCAS.2010.5536980"
 
-    def test_dpi_neuron_schema_matches_hand_euler_sequence(self) -> None:
-        """The schema mirrors the DPI current-mode Euler step law and reset over a sequence.
 
-        The bundled ``dpi_neuron`` schema is the explicit-Euler discretisation of the
-        DYNAP-SE differential-pair integrator (``DPINeuron``). Because the drive is
-        non-negative the source model's ``max(i_mem, 0)`` current rectification never
-        engages, so this three-way anchor asserts the schema reproduces the hand model's
-        spike decision *and* the membrane current at every step of a varied non-negative
-        drive, catching any silent drift from the published circuit model.
-        """
-        hand = DPINeuron()
-        schema = UniversalNeuron.from_schema("dpi_neuron")
+def test_dpi_schema_matches_hand_model_for_all_states_and_events() -> None:
+    """Prove exact float recurrence parity through adaptation and refractory pulses."""
+    hand = DPINeuron()
+    schema = UniversalNeuron.from_schema("dpi_neuron")
+    currents = [0.0] * 20 + [5.0] * 1_200 + [2.0] * 300 + [10.0] * 500
 
-        for current in (0.0, 1.5, 3.0, 0.5, 5.0, 0.0, 2.0):
-            assert int(bool(schema.step(I=current))) == hand.step(current)
-            assert schema.state["i_mem"] == hand.i_mem
+    hand_events: list[int] = []
+    schema_events: list[int] = []
+    for index, current in enumerate(currents):
+        if hand.step(current):
+            hand_events.append(index)
+        if schema.step(I=current):
+            schema_events.append(index)
+        np.testing.assert_allclose(
+            [
+                schema.state["i_mem"],
+                schema.state["i_ahp"],
+                schema.state["refractory_time"],
+            ],
+            [hand.i_mem, hand.i_ahp, hand.refractory_time],
+            rtol=0.0,
+            atol=1.0e-13,
+        )
 
-    @pytest.mark.skipif(not HAS_IVERILOG, reason="Icarus Verilog not available")
-    def test_dpi_neuron_q1616_matches_hand_and_verilog(self) -> None:
-        """DPI (Euler) has exact Q16.16 spike-count parity across all three paths.
+    assert hand_events == schema_events
+    assert len(hand_events) >= 5
 
-        The subthreshold operating point (``I=1.5`` nA, 200 steps) fires a partial train
-        (9 of 200 steps) after ~22 steps of leaky accumulation, so the test exercises the
-        current-mode integrator's asymptotic threshold approach rather than a saturated
-        every-step spike. ``i_leak=0.01`` and the ``1/tau=1/20`` membrane gain are not
-        exactly representable in Q16.16, so the fixed-point datapath is genuinely stressed,
-        yet the linear right-hand side and 32-bit word reproduce the float spike train
-        exactly across the hand model, the schema runner and the emitted RTL.
-        """
-        hand_spikes = _dpi_neuron_hand_spike_count(200, 1.5)
-        schema_spikes = _python_spike_count("dpi_neuron", 200, 1.5)
-        verilog_spikes = _verilog_spike_count_q1616("dpi_neuron", 200, 1.5)
 
-        assert 0 < schema_spikes < 200  # a partial train, neither saturated nor silent
-        assert hand_spikes == schema_spikes == verilog_spikes
+def test_generated_rtl_contains_the_full_coupled_dynamics() -> None:
+    """Prevent replacement by the retired one-state linear surrogate."""
+    rtl = UniversalNeuron.from_schema("dpi_neuron").to_verilog(
+        module_name="sc_dpineuron_contract",
+        data_width=32,
+        fraction=16,
+    )
+    for required in (
+        "i_mem_out",
+        "i_ahp_out",
+        "refractory_time_out",
+        "P_I_TAU_AHP",
+        "P_I_SPIKE",
+        "P_KAPPA",
+        "P_ALPHA",
+        "_log_lut",
+        "_exp_lut",
+        "_sigmoid_lut",
+    ):
+        assert required in rtl
+    assert "gain" not in rtl.lower()
+    assert "i_leak" not in rtl.lower()
+
+
+def test_q1616_rtl_preserves_events_and_measured_state_envelope() -> None:
+    """Co-simulate the full nonlinear datapath without hiding state divergence.
+
+    Q16.16 division and the compiler's 256-entry nonlinear LUTs intentionally
+    approximate float64. The enrolled envelope therefore checks all three
+    states before the first event, spike-count parity over 5,000 steps, the
+    measured first-spike timing displacement, and the refractory/AHP pulse.
+    """
+    assert HAS_IVERILOG, "Icarus Verilog is required for DPI fidelity closure"
+    steps = 5_000
+    current = 5.0
+    rtl = _dpi_neuron_verilog_q1616_trace(steps, current)
+
+    hand = DPINeuron()
+    hand_rows: list[tuple[int, float, float, float]] = []
+    for _ in range(steps):
+        event = hand.step(current)
+        hand_rows.append((event, hand.i_mem, hand.i_ahp, hand.refractory_time))
+
+    hand_events = [index for index, row in enumerate(hand_rows) if row[0] == 1]
+    rtl_events = [index for index, row in enumerate(rtl) if row[0] == 1]
+    assert len(hand_events) == len(rtl_events) == 13
+    assert abs(rtl_events[0] - hand_events[0]) <= 3
+
+    pre_spike = 100
+    i_mem_error = max(abs(rtl[index][1] - hand_rows[index][1]) for index in range(pre_spike))
+    i_ahp_error = max(abs(rtl[index][2] - hand_rows[index][2]) for index in range(pre_spike))
+    assert i_mem_error <= 0.0032
+    assert i_ahp_error <= 0.0006
+    assert all(rtl[index][3] == 0.0 for index in range(pre_spike))
+
+    first = rtl_events[0]
+    q_lsb = 1.0 / (1 << 16)
+    assert abs(rtl[first][1] - 0.01) <= q_lsb
+    assert rtl[first][3] == 2.0
+    assert rtl[first + 1][2] > rtl[first][2]
+    assert rtl[first + 1][3] < rtl[first][3]
+    assert abs(rtl[first + 20][3]) <= q_lsb
+    assert all(row[1] > 0.0 and row[2] >= 0.0 and row[3] >= 0.0 for row in rtl)

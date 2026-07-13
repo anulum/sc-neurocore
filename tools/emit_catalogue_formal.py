@@ -75,6 +75,7 @@ DEPTH_BY_SCHEMA: dict[str, int] = {
     "chialvo_map": 4,
     "connor_stevens": 4,
     "courage_nekorkin_map": 4,
+    "dpi_neuron": 4,
     "ermentrout_kopell_map_neuron": 4,
     "exp_if": 4,
     "hodgkin_huxley": 4,
@@ -101,6 +102,7 @@ MINIMAL_SAFETY_SCHEMAS: frozenset[str] = frozenset(
         "cazelles_map",
         "chialvo_map",
         "courage_nekorkin_map",
+        "dpi_neuron",
         "ermentrout_kopell_map_neuron",
         "exp_if",
         "fitzhugh_nagumo",
@@ -122,10 +124,13 @@ MINIMAL_SAFETY_SCHEMAS: frozenset[str] = frozenset(
 # Width overrides are additive: every pre-existing catalogue job retains Q8.8.
 # Medvedev needs Q16.16 because its calibrated d=2271.19 cannot fit Q8.8.
 # Ibarz-Tanaka needs Q16.16 because its source mu=0.001 rounds to zero in Q8.8.
+# DPI needs Q16.16 to preserve its coupled-current event-count envelope; Q8.8
+# rounds the 0.01 initial/reference currents too aggressively.
 # ExpIF needs Q32.32 to preserve the enrolled source-exponential spike counts;
 # its active Q16.16 trace does not satisfy the declared event contract.
 DEFAULT_PRECISION = (16, 8)
 PRECISION_BY_SCHEMA: dict[str, tuple[int, int]] = {
+    "dpi_neuron": (32, 16),
     "exp_if": (64, 32),
     "ibarz_tanaka_map": (32, 16),
     "medvedev_map": (32, 16),

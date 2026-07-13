@@ -11,7 +11,8 @@ All measurements via Criterion 0.8, single-threaded, pure CPU.
 Hardware: 11th Gen Intel Core i5-11600K @ 3.90 GHz (6C/12T), DDR4-2400, Ubuntu 24.04.
 Verified via `lscpu` on 2026-05-31.
 
-Last updated: 2026-06-04.
+Last updated: 2026-07-13 for the DPI row; other rows retain their stated
+historical measurement dates.
 
 ## How to Run
 
@@ -375,9 +376,15 @@ compute cycles for the 64x32 dense contract.
 | Loihi CUBA | 100k | 342 µs | **3.4 ns** | Intel 2-variable integer IF |
 | Loihi2 | 100k | 416 µs | **4.2 ns** | Intel 3-compartment integer |
 | SpiNNaker LIF | 10k | 44.5 µs | **4.5 ns** | ARM LIF emulation |
-| DPI | 100k | 1.27 ms | **12.7 ns** | Differential pair integrator |
+| DPI | 100k | 5.28 ms | **52.8 ns** | Coupled membrane/AHP DPI, Eq. (2)–(3) feedback and pulse |
 | BrainScaleS AdEx | 1k | 31.4 µs | **31.4 ns** | Analog accelerated AdEx |
 | NeuroGrid | 1k | 43.6 µs | **43.6 ns** | Subthreshold analog, 2-comp |
+
+The DPI row was remeasured after the 2010 coupled-circuit fidelity pass with
+`cargo bench --no-default-features --bench full_bench dpi_100k_steps`. Criterion
+reported a 95% interval of 5.1153–5.4610 ms for 100,000 steps on the loaded,
+non-isolated workstation. It is a local regression measurement, not a reserved-
+core throughput claim.
 
 ### AI-Optimised (`neurons/ai_optimized.rs`)
 

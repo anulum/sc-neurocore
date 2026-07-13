@@ -6,32 +6,42 @@
     "runner": "universal_dsl"
   },
   "protocol": {
-    "dt": 1.0,
-    "steps": 200,
+    "dt": 0.1,
+    "steps": 5000,
     "inputs": {
-      "I": 1.5
+      "I": 5.0
     },
     "state_variables": [
-      "i_mem"
+      "i_mem",
+      "i_ahp",
+      "refractory_time"
     ]
   },
   "provenance": {
     "kind": "independent_euler_reference",
     "source": "src/sc_neurocore/neurons/model_schemas/dpi_neuron.toml",
-    "equation": "Driven differential-pair-integrator trace with nine i_mem>=i_threshold resets; the current-mode leaky-integrator membrane tau dI_mem/dt = -I_mem + gain*I_syn + I_leak is advanced with the exact explicit-Euler recurrence, independently re-derived from the DYNAP-SE DPI neuron (Chicca et al. 2014) including the i_mem=i_reset threshold reset. The drive is non-negative, so the source model's max(i_mem, 0) current rectification is inert and omitted.",
-    "citation": "doi:10.1109/JPROC.2014.2313954"
+    "equation": "Independent re-derivation of Indiveri, Stefanini, and Chicca (2010), Eqs. (2)-(3): nonlinear positive-feedback membrane DPI plus spike-triggered adaptation DPI, simultaneous explicit-Euler update, membrane hold and adaptation drive during the refractory pulse, post-update threshold detection, and reset/pulse start.",
+    "citation": "doi:10.1109/ISCAS.2010.5536980"
   },
   "expected_features": {
-    "spike_count": 9.0,
-    "first_spike_step": 22.0,
-    "final.i_mem": 0.147225,
-    "min.i_mem": 0.0,
-    "max.i_mem": 0.9957519443049462,
-    "mean.i_mem": 0.576695712619271
+    "spike_count": 13.0,
+    "first_spike_step": 296.0,
+    "final.i_mem": 0.24977022450967534,
+    "min.i_mem": 0.01,
+    "max.i_mem": 0.9999535265826078,
+    "mean.i_mem": 0.27260882078555826,
+    "final.i_ahp": 0.9597926317799105,
+    "min.i_ahp": 0.007436772821951523,
+    "max.i_ahp": 1.2251754460150988,
+    "mean.i_ahp": 0.4611872727959323,
+    "final.refractory_time": 0.0,
+    "min.refractory_time": 0.0,
+    "max.refractory_time": 2.0,
+    "mean.refractory_time": 0.054599999999999975
   },
   "tolerances": {
     "default": {
-      "absolute": 1e-09,
+      "absolute": 1e-12,
       "relative": 1e-12
     },
     "spike_count": {

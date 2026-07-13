@@ -486,6 +486,90 @@
       }
     },
     {
+      "artefact": "benchmarks/results/local_python_2026-07-13_dpi_neuron_circuit.json",
+      "expected_values": {
+        "backends.go.event_count_matches_python": true,
+        "backends.julia.event_count_matches_python": true,
+        "backends.mojo.event_count_matches_python": true,
+        "backends.rust.event_count_matches_python": true,
+        "kernel": "dpi_neuron_indiveri_2010_eq2_eq3_euler_constant_current",
+        "meta.single_cpu_pinned": true,
+        "schema_version": "sc-neurocore.polyglot-benchmark.v1",
+        "verification.rust_safety.passed": true,
+        "workload.current": 5.0,
+        "workload.n_steps": 100000,
+        "workload.repeats": 7,
+        "workload.state_atol": 5e-13
+      },
+      "id": "dpi-neuron-circuit-multibackend-local-regression",
+      "required_numbers": [
+        "backends.python.median_call_ms",
+        "backends.python.minimum_call_ms",
+        "backends.python.parity_max_abs_diff",
+        "backends.python.event_count",
+        "backends.rust.median_call_ms",
+        "backends.rust.minimum_call_ms",
+        "backends.rust.parity_max_abs_diff",
+        "backends.rust.event_count",
+        "backends.julia.median_call_ms",
+        "backends.julia.minimum_call_ms",
+        "backends.julia.parity_max_abs_diff",
+        "backends.julia.event_count",
+        "backends.go.median_call_ms",
+        "backends.go.minimum_call_ms",
+        "backends.go.parity_max_abs_diff",
+        "backends.go.event_count",
+        "backends.mojo.median_call_ms",
+        "backends.mojo.minimum_call_ms",
+        "backends.mojo.parity_max_abs_diff",
+        "backends.mojo.event_count"
+      ],
+      "parity_groups": [
+        {
+          "paths": [
+            "backends.python.event_count",
+            "backends.rust.event_count",
+            "backends.julia.event_count",
+            "backends.go.event_count",
+            "backends.mojo.event_count"
+          ],
+          "tolerance": 0.0
+        }
+      ],
+      "regression_limits": {
+        "backends.go.parity_max_abs_diff": {
+          "max": 5e-13
+        },
+        "backends.julia.parity_max_abs_diff": {
+          "max": 5e-13
+        },
+        "backends.mojo.parity_max_abs_diff": {
+          "max": 5e-13
+        },
+        "backends.rust.parity_max_abs_diff": {
+          "max": 5e-13
+        }
+      },
+      "source_hashes": {
+        "benchmarks/bench_model_dpi_neuron.py": "source_hashes.benchmarks/bench_model_dpi_neuron.py",
+        "engine/src/neurons/hardware.rs": "source_hashes.engine/src/neurons/hardware.rs",
+        "engine/src/pyo3_neurons.rs": "source_hashes.engine/src/pyo3_neurons.rs",
+        "src/sc_neurocore/accel/dpi_neuron.py": "source_hashes.src/sc_neurocore/accel/dpi_neuron.py",
+        "src/sc_neurocore/accel/go/neurons/dpi_neuron/dpi_neuron.go": "source_hashes.src/sc_neurocore/accel/go/neurons/dpi_neuron/dpi_neuron.go",
+        "src/sc_neurocore/accel/go/neurons/dpi_neuron/libdpi_neuron.h": "source_hashes.src/sc_neurocore/accel/go/neurons/dpi_neuron/libdpi_neuron.h",
+        "src/sc_neurocore/accel/go/services/dpi_neuron.go": "source_hashes.src/sc_neurocore/accel/go/services/dpi_neuron.go",
+        "src/sc_neurocore/accel/go/services/dpi_neuron_test.go": "source_hashes.src/sc_neurocore/accel/go/services/dpi_neuron_test.go",
+        "src/sc_neurocore/accel/julia/dpi_neuron_parity_test.jl": "source_hashes.src/sc_neurocore/accel/julia/dpi_neuron_parity_test.jl",
+        "src/sc_neurocore/accel/julia/neurons/dpi_neuron.jl": "source_hashes.src/sc_neurocore/accel/julia/neurons/dpi_neuron.jl",
+        "src/sc_neurocore/accel/mojo/kernels/dpi_neuron.mojo": "source_hashes.src/sc_neurocore/accel/mojo/kernels/dpi_neuron.mojo",
+        "src/sc_neurocore/accel/rust/examples/dpi_neuron_trace.rs": "source_hashes.src/sc_neurocore/accel/rust/examples/dpi_neuron_trace.rs",
+        "src/sc_neurocore/accel/rust/safety/dpi_neuron.rs": "source_hashes.src/sc_neurocore/accel/rust/safety/dpi_neuron.rs",
+        "src/sc_neurocore/neurons/model_schemas/dpi_neuron.json": "source_hashes.src/sc_neurocore/neurons/model_schemas/dpi_neuron.json",
+        "src/sc_neurocore/neurons/model_schemas/dpi_neuron.toml": "source_hashes.src/sc_neurocore/neurons/model_schemas/dpi_neuron.toml",
+        "src/sc_neurocore/neurons/models/dpi_neuron.py": "source_hashes.src/sc_neurocore/neurons/models/dpi_neuron.py"
+      }
+    },
+    {
       "artefact": "benchmarks/results/local_python_2026-06-17_morris_lecar_rk4.json",
       "expected_values": {
         "spdx_license": "AGPL-3.0-or-later",

@@ -5,6 +5,20 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 ## [Unreleased]
 
 ### Added
+- Replaced the historical one-state DPI surrogate with the coupled
+  current-domain silicon-neuron equations of Indiveri, Stefanini, and Chicca
+  (2010), Eqs. (2)–(3): nonlinear positive feedback, membrane and
+  after-hyperpolarisation DPIs, simultaneous explicit Euler, post-update event
+  reset, and a spike-driven refractory pulse. Python, Rust safety and engine,
+  Go, Julia, and Mojo now share the maintained event surface and reject invalid
+  work before visible state mutation or buffer writes.
+- Added source-bound five-backend DPI parity, benchmark, reference, descriptor,
+  schema, Q16.16 co-simulation, and formal evidence. The compiled paths preserve
+  `0/0/0/0/1/3/6/11/21` events at
+  `I=-0.1/0/1/2/3/5/10/20/50` over 1,000 steps within a `5e-13` float-state
+  envelope. Hand/TOML/JSON states agree within `1e-13`; generated Q16.16 RTL
+  preserves 13 events at `I=5` over 5,000 steps with its fixed-point state and
+  timing envelopes declared, and the generated depth-4 Z3 job passes.
 - Completed Theta end-to-end fidelity across the tangent-half-angle exact-flow
   Python reference, Rust engine and safety module, full-contract Julia and Go,
   the Mojo shared library, paired Euler schemas, and generated Q16.16 RTL.

@@ -11,7 +11,9 @@ backend implements that surface.
 > (`accel/{rust,go,julia,mojo}`) is real and Python-parity-proven — is tracked
 > separately on the [Model Fidelity & Polyglot Status](model_fidelity_status.md)
 > page. Polyglot-complete today: Wang-Buzsaki, FitzHugh-Nagumo, Morris-Lecar,
-> Connor-Stevens, Hodgkin-Huxley, AdEx, ExpIF, Lapicque, Perfect Integrator, Quadratic IF, Theta, McKean, Hindmarsh-Rose, FitzHugh-Rinzel, Pernarowski, Terman-Wang,
+> Connor-Stevens, Hodgkin-Huxley, AdEx, ExpIF, Lapicque, Perfect Integrator,
+> Quadratic IF, Theta, DPI, McKean, Hindmarsh-Rose, FitzHugh-Rinzel,
+> Pernarowski, Terman-Wang,
 > Wilson-HR, Rulkov map, GLIF, Mihalas-Niebur, Medvedev map, Cazelles map, Chialvo map, Courbage-Nekorkin map,
 > Izhikevich 2007, Ibarz-Tanaka map, Ermentrout-Kopell. All other models are Python-faithful with their
 > acceleration chain still under remediation.
@@ -276,7 +278,7 @@ raw TOML descriptor.
 | `BrainScaleSAdExNeuron` | `BrainScaleSAdExNeuron` | Schemmel et al. 2010 |
 | `SpiNNakerLIFNeuron` | `SpiNNakerLIFNeuron` | Furber et al. 2014 |
 | `SpiNNaker2Neuron` | `SpiNNaker2Neuron` | TU Dresden 2024 |
-| `DPINeuron` | `DPINeuron` | Bartolozzi & Indiveri 2007 |
+| `DPINeuron` | `DPINeuron` | Indiveri, Stefanini & Chicca 2010 |
 | `AkidaNeuron` | `AkidaNeuron` | BrainChip |
 | `NeuroGridNeuron` | `NeuroGridNeuron` | Boahen 2014 |
 

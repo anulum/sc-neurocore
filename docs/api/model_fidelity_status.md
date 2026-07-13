@@ -57,6 +57,7 @@ parity note.
 | Perfect Integrator | ✅ | ✅ | ✅ | ✅ shared-lib | bit-exact accel traces and event counts — 0/32/66/200/250/500/1000 @ I=0/0.333/0.7/2/3/5/20 over 1,000 candidate-first Euler steps; the Rust engine retains its factory-default boundary while Julia/Go/Mojo carry the complete numeric contract; hand/schema/Q8.8 RTL are event-exact with 66 events at I=0.7 over 1,000 steps, the quantisation boundary at I=0.333 is declared as 32/32/31, and the generated depth-20 Z3 job passes | `this commit` |
 | Quadratic IF | ✅ | ✅ | ✅ | ✅ shared-lib | exact accel events — 0/2/3/6/11/26/100/250 @ I=0/0.333/0.5/1/2/5/20/50 over 1,000 exact Riccati-flow steps, with every compiled trace within `2e-12` of Python; the Rust safety module is exercised independently and the engine retains its factory-default boundary; hand/TOML/JSON events remain exact with state error below `0.006`, both schema formats reset inclusively at configured `v_peak`, Q16.16 RTL preserves the enrolled cycle-level event vectors with voltage error below `0.011`, the I=0.1 timing boundary is declared, and the generated depth-20 Z3 job passes | `this commit` |
 | Theta | ✅ | ✅ | ✅ | ✅ shared-lib | exact accel events — 0/0/0/1/2/2/3/5/7/14/23 @ I=-1/-0.5/0/0.1/0.333/0.5/1/2/5/20/50 over 1,000 tangent-half-angle exact-flow steps, with every compiled trace within `2e-12` circular phase error; the Rust safety module is exercised independently and the engine retains its factory-default boundary; paired Euler schemas preserve the enrolled counts, generated Q16.16 RTL is count-exact across the vector with circular phase error below `0.17` rad at the declared moderate regimes, the I=1 one-cycle timing displacement is explicit, and the generated depth-6 Z3 job passes | `this commit` |
+| DPI | ✅ | ✅ | ✅ | ✅ shared-lib | exact accel events — 0/0/0/0/1/3/6/11/21 @ I=-0.1/0/1/2/3/5/10/20/50 over 1,000 simultaneous-Euler steps of the coupled Indiveri-Stefanini-Chicca (2010) current-domain equations; compiled states remain within `5e-13`, the Rust safety module carries the complete 18-field contract and the engine retains its factory-default boundary; hand/TOML/JSON states remain within `1e-13`, generated Q16.16 RTL preserves 13 events at I=5 over 5,000 steps with declared state/timing envelopes, and the generated depth-4 Z3 job passes | `this commit` |
 | McKean | ✅ | ✅ | ✅ | ✅ shared-lib | bit-exact — 0/1/7 @ I=0/0.2/0.5 over 20000 steps (RK4, exact piecewise-linear RHS) | `059871140` |
 | Hindmarsh-Rose | ✅ | ✅ | ✅ | ✅ shared-lib | bit-exact accel — 0/26/52 @ I=0/3/5 over 2000 steps; co-sim exact hand/TOML/JSON/Q16.16 counts — 0/0/26/40/52 @ I=0/2/3/4/5 over 2000 RK4 steps; declared Q16.16 +1 crossing boundary over 5000 steps at I=2 through I=5; formal Q8.8 BMC depth 4 | `this commit` |
 | FitzHugh-Rinzel | ✅ | ✅ | ✅ | ✅ shared-lib | bit-exact accel — 0/1/8 @ I=0/0.3/0.5; co-sim exact spike count — hand/schema/Q16.16 RTL 8 @ I=0.5 (3000 RK4 steps, cubic RHS) | `498376221` |
@@ -77,7 +78,7 @@ parity note.
 Each model carries a committed benchmark: a Go `Benchmark*` in the services lane for the
 conductance models (Wang-Buzsaki, Morris-Lecar, Connor-Stevens, Hodgkin-Huxley, FitzHugh-Nagumo),
 plus source-hashed executable closure benchmarks for Connor-Stevens, Hodgkin-Huxley, AdEx, ExpIF,
-Lapicque, Perfect Integrator, Quadratic IF, and Theta,
+Lapicque, Perfect Integrator, Quadratic IF, Theta, and DPI,
 and a committed `benchmarks/bench_<model>*.py` harness with its recorded per-backend result for the
 FFI-dispatched models (McKean, Hindmarsh-Rose, FitzHugh-Rinzel, Pernarowski, Terman-Wang, Wilson-HR,
 Rulkov map, GLIF, Mihalas-Niebur, Medvedev map, Cazelles map, Courbage-Nekorkin map, Izhikevich 2007,
@@ -96,7 +97,7 @@ Rust engine acceleration path), but its four `accel/{rust,go,julia,mojo}` kernel
 or not yet verified** — the polyglot-stub-remediation sweep is replacing them model-by-model. Those
 models are **deliberately not ticked here**: per-model status is promoted onto this page only after a
 unit is closed and verified at source, so this table never claims completion it has not proven. As of
-the latest landed commit that is **twenty-seven polyglot-complete models** out of the full catalogue; the
+the latest landed commit that is **twenty-eight polyglot-complete models** out of the full catalogue; the
 remainder are Python-faithful with an acceleration chain still under remediation.
 
 ## How a model graduates onto this page
