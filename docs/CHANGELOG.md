@@ -5,6 +5,28 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+### Studio jobs responsibility modularisation
+
+- Replaced the 1,311-line Studio jobs GodFile and its 1,496-line test GodFile
+  with a 95-line historical facade, nine focused implementation modules,
+  shared architecture support, seven responsibility-focused behavior suites,
+  an architecture suite, and a compact adversarial sentinel. The largest
+  implementation and test files are 295 and 284 lines. The exact 18-name public
+  export contract preserves object identity, qualified names, and pickle paths
+  through an acyclic runtime import graph.
+- The 64-test focused suite covers all 650 statements and 120 branches exactly,
+  and the full 1,174-test Studio prefix remains green. A dedicated Python 3.12
+  workflow measures the jobs modules independently of the repository-wide
+  Studio coverage exclusion. Adversarial cases cover malformed control
+  payloads, seed-size boundaries, corrupt stored job paths, symlink escape,
+  absent work directories, invalid seed types, and cross-drive path handling.
+- Parent and candidate retain the same 18-export, five-route jobs contract at
+  SHA-256
+  `8bc27f16c8d97e33cc0cb5d21c15a775c5c070354282c12e84e52732a3fefd5c`.
+- This is a Python-only Studio control-plane and filesystem-confinement
+  refactor. It preserves thread and isolated-process execution behavior and
+  makes no numerical-kernel, cross-language-mirror, or throughput claim.
+
 ### Studio policy responsibility modularisation
 
 - Replaced the 1,319-line Studio policy GodFile and its 1,135-line test file

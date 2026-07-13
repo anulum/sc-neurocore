@@ -971,7 +971,7 @@
     "python_model_classes": 158,
     "python_model_source_modules": 153,
     "rust_pyo3_model_wrappers": 176,
-    "test_files": 1265
+    "test_files": 1274
   },
   "documentation": {
     "public_pages": [
@@ -2849,6 +2849,7 @@
       "tests/module_reload.py",
       "tests/performance_guard.py",
       "tests/studio_job_tasks.py",
+      "tests/studio_jobs_support.py",
       "tests/studio_policy_support.py",
       "tests/test_accel/test_accel_mirror_authority.py",
       "tests/test_accel/test_ffi_contiguity.py",
@@ -3906,6 +3907,14 @@
       "tests/test_studio_identity_route_failures.py",
       "tests/test_studio_integration.py",
       "tests/test_studio_jobs.py",
+      "tests/test_studio_jobs_architecture.py",
+      "tests/test_studio_jobs_artifacts.py",
+      "tests/test_studio_jobs_context.py",
+      "tests/test_studio_jobs_process.py",
+      "tests/test_studio_jobs_process_control.py",
+      "tests/test_studio_jobs_process_failures.py",
+      "tests/test_studio_jobs_routes.py",
+      "tests/test_studio_jobs_thread.py",
       "tests/test_studio_model_catalogue_api.py",
       "tests/test_studio_model_scan.py",
       "tests/test_studio_model_scan_budget.py",

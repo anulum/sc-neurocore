@@ -32501,7 +32501,69 @@ Verify a raw browser-user password against an encoded verifier.
 
 ---
 
-## Module `studio.platform.jobs`
+## Module `studio.platform.jobs_context`
+
+### Class `StudioJobContext`
+Execution context passed to one local Studio job task.
+
+- **__init__**()
+  - Bind one job identifier to its confined task resources.
+- **cancelled**()
+  - Return whether the manager requested cooperative cancellation.
+- **artifacts**()
+  - Return artifacts written through this context.
+- **check_cancelled**()
+  - Raise when the manager requested cooperative cancellation.
+- **write_artifact**(relative_path, payload)
+  - Write one size-bounded artifact below the job directory.
+- **append_artifact_event**(relative_path, payload)
+  - Append one size-bounded JSON event to a confined live log.
+- **publish_existing_artifact**(relative_path)
+  - Validate and declare an existing confined artifact in the manifest.
+- **read_seed_input**(relative_path)
+  - Read one confined, size-bounded submission seed payload.
+- **poll_control_command**()
+  - Consume one pending JSON control command exactly once.
+- **read_control_seed**(relative_path)
+  - Read one confined, size-bounded control seed payload.
+
+---
+
+## Module `studio.platform.jobs_manager`
+
+### Class `StudioJobManager`
+Manage local Studio jobs inside per-job sandbox directories.
+
+- **__init__**()
+  - Configure bounded execution and immutable in-memory job state.
+- **submit**()
+  - Submit one local task to the bounded thread supervisor.
+- **submit_process_task**()
+  - Submit one importable task to an isolated Python process.
+- **send_control_command**(job_id)
+  - Atomically deliver control data to one running process job.
+- **cancel**(job_id)
+  - Request cooperative cancellation for one job.
+- **wait**(job_id, timeout_seconds)
+  - Wait for one job and return its latest immutable record.
+- **record**(job_id)
+  - Return the latest immutable record for one job.
+- **list_records**()
+  - Return all known jobs in creation order.
+- **list_snapshot**()
+  - Return a path-free snapshot of every known job.
+- **purge_terminal_record**(job_id)
+  - Delete one terminal job directory and its in-memory state.
+- **read_artifact**(job_id, relative_path)
+  - Read and verify one manifest-declared artifact.
+- **read_live_artifact_bytes**(job_id, relative_path)
+  - Read one bounded slice from a confined live artifact.
+- **status**()
+  - Return aggregate path-free manager health.
+
+---
+
+## Module `studio.platform.jobs_models`
 
 ### Class `StudioJobRejected`
 Raised when a Studio job request violates the local sandbox policy.
@@ -32518,15 +32580,6 @@ Raised when a declared Studio job artifact cannot be safely served.
 ### Class `StudioJobArtifact`
 Path-free manifest entry for one Studio job artifact.
 
-Parameters
-----------
-relative_path:
-    Artifact path relative to the job directory.
-size_bytes:
-    Number of bytes written to the artifact.
-sha256:
-    SHA-256 digest of the artifact payload.
-
 - **to_public_dict**()
   - Return a path-free JSON representation of this artifact.
 
@@ -32538,17 +32591,6 @@ Immutable public state for one local Studio job.
 
 ### Class `StudioJobResourceProfile`
 Path-free execution limits for one Studio job kind.
-
-Parameters
-----------
-kind:
-    Job kind covered by this profile.
-default_timeout_seconds:
-    Default wall-clock timeout applied when a job omits an override.
-max_artifact_bytes:
-    Maximum size for each artifact written through ``StudioJobContext``.
-execution_models:
-    Supported manager execution models for this job kind.
 
 - **to_public_dict**()
   - Return a JSON-serializable, path-free resource profile.
@@ -32568,58 +32610,6 @@ Path-free list payload for Studio job operator views.
 ### Class `StudioJobArtifactPayload`
 Verified payload for one declared Studio job artifact.
 
-
-### Class `StudioJobContext`
-Execution context passed to one local Studio job task.
-
-- **__init__**()
-- **cancelled**()
-  - Return whether the manager requested cooperative cancellation.
-- **artifacts**()
-  - Return artifacts written through this context.
-- **check_cancelled**()
-  - Raise when the manager requested cooperative cancellation.
-- **write_artifact**(relative_path, payload)
-  - Write a confined artifact into the job directory.
-- **append_artifact_event**(relative_path, payload)
-  - Append one JSON event to a confined live artifact log.
-- **publish_existing_artifact**(relative_path)
-  - Declare an already-written confined artifact in the manifest.
-- **read_seed_input**(relative_path)
-  - Read one confined seed-input payload provided at job submission.
-- **poll_control_command**()
-  - Consume one pending control command delivered to a running job.
-- **read_control_seed**(relative_path)
-  - Read one confined seed payload delivered with a control command.
-
-### Class `StudioJobManager`
-Manage local Studio jobs inside per-job sandbox directories.
-
-- **__init__**()
-- **submit**()
-  - Submit one local job to the bounded worker supervisor.
-- **submit_process_task**()
-  - Submit an importable Studio job task to an isolated Python process.
-- **send_control_command**(job_id)
-  - Deliver a control command and confined seeds to a running process job.
-- **cancel**(job_id)
-  - Request cooperative cancellation for one job.
-- **wait**(job_id, timeout_seconds)
-  - Wait for one job to finish and return its latest record.
-- **record**(job_id)
-  - Return the latest immutable record for one job.
-- **list_records**()
-  - Return all known jobs in creation order.
-- **list_snapshot**()
-  - Return a path-free snapshot of all known jobs.
-- **purge_terminal_record**(job_id)
-  - Delete one terminal job directory and remove its in-memory record.
-- **read_artifact**(job_id, relative_path)
-  - Return a verified payload for one declared job artifact.
-- **read_live_artifact_bytes**(job_id, relative_path)
-  - Return newly appended bytes from a confined live artifact.
-- **status**()
-  - Return aggregate, path-free job manager health.
 
 ---
 

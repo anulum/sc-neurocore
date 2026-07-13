@@ -248,6 +248,19 @@ jobs:
             --include='src/sc_neurocore/studio/platform/policy*.py' \
             --fail-under=100 --show-missing
 
+      - name: Studio jobs exact coverage
+        if: matrix.python-version == '3.12'
+        shell: bash
+        run: |
+          COVERAGE_FILE=.coverage-studio-jobs python -m coverage run \
+            --rcfile=/dev/null --branch \
+            --include='src/sc_neurocore/studio/platform/jobs*.py' \
+            -m pytest tests/test_studio_jobs*.py -q
+          COVERAGE_FILE=.coverage-studio-jobs python -m coverage report \
+            --rcfile=/dev/null \
+            --include='src/sc_neurocore/studio/platform/jobs*.py' \
+            --fail-under=100 --show-missing
+
       - name: Upload test results
         if: always()
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7

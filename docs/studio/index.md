@@ -360,6 +360,11 @@ runtime features:
   known classification and terminal-status vocabularies for Admin/UI consumers,
   so client code can render available classes without hard-coded duplicate
   lists.
+- Studio job sandbox ownership is split by responsibility across immutable
+  contracts, confined path resolution, task context I/O, thread supervision,
+  process protocol and control, record/artifact access, and the public manager.
+  `sc_neurocore.studio.platform.jobs` remains the stable historical import and
+  pickle facade, while implementation modules form an acyclic runtime graph.
 - `/api/studio/jobs` and `/api/studio/jobs/{job_id}` return admin-only,
   path-free job records for the Admin panel queue view. Records include job
   status, owner, request ID, timestamps, result metadata, and artifact
