@@ -155,3 +155,40 @@ Timings are local regression context only, not throughput or hardware claims.
 The maintained full pipeline is Python-only; removed generated Go, Julia,
 Mojo, and Rust placeholders were not executable backends. Independent Julia
 plasticity solvers remain outside this orchestration benchmark.
+
+## Autonomous-learning modularisation diagnostics
+
+`benchmarks/results/bench_learning_bridge.json` records five interleaved
+cold-process samples for parent `5f3d5d254` and the modular learning-bridge
+candidate. Each sample executes 1,024 deterministic STDP events through the
+Python-to-Rust scalar and batched wrappers, a Rayon layer, the Torch transition,
+the Go cgo adapter, and the Julia C-FFI adapter. The evidence hashes both source
+trees and both exact native libraries; it records no local filesystem paths.
+
+Every path converged to the same weight (Rust/Torch
+`0.7806524634361267`, Go `0.780652463`, Julia `0.78065246`). Parent and
+candidate produced the same 314-byte normalized canonical payload with SHA-256
+`020da9895ff4d7f1150fd7159c30e7c476afe9ff46c6d652bf0ad73fa6cf309d`.
+Rayon weight and opaque-state hashes were also identical.
+
+| Local diagnostic metric | Parent median | Modular candidate median | Delta |
+| --- | ---: | ---: | ---: |
+| Cold import | 4,793.066 ms | 4,627.645 ms | -3.45% |
+| Rust scalar, 1,024 calls | 3.538 ms | 10.845 ms | +206.51% |
+| Rust batched, 1,024 events | 0.586 ms | 0.924 ms | +57.53% |
+| Rayon layer, 1,024 synapses | 1.522 ms | 2.296 ms | +50.85% |
+| Torch, 1,024 updates | 380.845 ms | 448.397 ms | +17.74% |
+| Go process | 1,190.849 ms | 1,316.371 ms | +10.54% |
+| Julia process | 942.785 ms | 995.434 ms | +5.58% |
+| Subprocess wall | 10,261.711 ms | 9,640.037 ms | -6.06% |
+| Maximum RSS | 658,592 KiB | 660,072 KiB | +0.22% |
+
+These timings were captured with taskset affinity but without an isolated core.
+Host load was 29.17/29.63/36.99 before and 27.88/28.42/35.54 after the run, so small-kernel
+medians are scheduler-sensitive and must not be used as throughput or release
+promotion claims. The scalar candidate additionally performs fail-closed
+Boolean, finite-value, rule-domain, and timestep validation that the parent
+omitted; production event arrays should use the checked batched or layer APIs
+to amortize FFI crossings. A publishable performance claim requires a rerun on
+reserved isolated cores with recorded governor, frequency, versions, and idle
+load. The committed result is correctness and local regression evidence only.

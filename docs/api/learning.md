@@ -101,6 +101,35 @@ native library is present, and marks `hardware_measurement_claimed=false`.
 
 ::: sc_neurocore._native.learning_bridge.RustOnlineO1Synapse
 
+## Native Autonomous-Learning Layers
+
+The historical `sc_neurocore._native.learning_bridge` import is a thin facade
+over focused runtime, validation, Rust-owner, Rayon, WGPU, Torch, precision,
+autograd, and factory modules. Rust choices remain importable without Torch.
+Every native owner supports explicit `close()` and context-manager cleanup.
+
+Scalar and vector boundaries reject unsafe types, invalid rule identifiers,
+non-finite values, mismatched lengths, and non-positive timesteps before FFI.
+Rayon state restore uses the versioned, length-aware Rust state codec and
+performs an atomic handle swap only after full validation. WGPU restore writes
+validated weights through the native ABI rather than accepting a no-op.
+
+::: sc_neurocore._native.learning_bridge.RustPlasticityRule
+
+::: sc_neurocore._native.learning_bridge.RustEligentLearner
+
+::: sc_neurocore._native.learning_bridge.RustRuleLayer
+
+::: sc_neurocore._native.learning_bridge.RustWgpuRuleLayer
+
+::: sc_neurocore._native.learning_bridge.create_plasticity_layer
+
+When the optional Torch dependency is installed, the facade additionally
+exports `TorchRuleLayer` and its compatibility alias `AutogradSTDPLayer`.
+`TorchRuleLayer` validates shape and numeric domains, applies optional
+per-synapse precision controls, and enters the custom autograd dispatcher only
+when constructed with `autograd=True`.
+
 ## Meta-Learning (MAML, Finn et al. 2017)
 
 ::: sc_neurocore.learning.advanced.MetaLearner

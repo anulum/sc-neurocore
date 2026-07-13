@@ -1,156 +1,150 @@
+#!/usr/bin/env python3
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Commercial license available
 # © Concepts 1996–2026 Miroslav Šotek. All rights reserved.
 # © Code 2020–2026 Miroslav Šotek. All rights reserved.
 # ORCID: 0009-0009-3560-0851
 # Contact: www.anulum.li | protoscience@anulum.li
-# SC-NeuroCore — Source/config provenance header
+# SC-NeuroCore — Source-bound autonomous-learning benchmark
 
-import time
-import numpy as np
+"""Compare deterministic autonomous-learning paths across two source trees."""
 
-try:
-    from sc_neurocore._native.learning_bridge import (
-        is_available,
-        RustPlasticityRule,
-        RustRuleLayer,
-        TorchRuleLayer,
-        RULE_STDP,
+from __future__ import annotations
+
+import argparse
+from collections.abc import Sequence
+from datetime import datetime, timezone
+import hashlib
+import json
+from pathlib import Path
+import platform
+from typing import Any
+
+from _benchmark_context import load_average, measurement_context
+from _learning_benchmark_support import (
+    PROBE,
+    Variant,
+    compare,
+    metadata,
+    sample,
+    select_affinity,
+    summarize,
+    validate_args,
+)
+
+_SCHEMA = "sc-neurocore.learning-bridge-modularisation-benchmark.v1"
+_SUPPORT = Path(__file__).with_name("_learning_benchmark_support.py")
+
+
+def _parser() -> argparse.ArgumentParser:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--baseline-root", type=Path, required=True)
+    parser.add_argument("--candidate-root", type=Path, default=Path(__file__).resolve().parents[1])
+    parser.add_argument("--baseline-lib", type=Path, required=True)
+    parser.add_argument("--candidate-lib", type=Path, required=True)
+    parser.add_argument("--baseline-ref", required=True)
+    parser.add_argument("--candidate-ref", default="working-tree")
+    parser.add_argument("--baseline-label", default="parent")
+    parser.add_argument("--candidate-label", default="candidate")
+    parser.add_argument("--iterations", type=int, default=10)
+    parser.add_argument("--warmups", type=int, default=1)
+    parser.add_argument("--steps", type=int, default=4096)
+    parser.add_argument("--output", type=Path, required=True)
+    parser.add_argument("--cpu", type=int)
+    parser.add_argument("--no-affinity", action="store_true")
+    return parser
+
+
+def run(args: argparse.Namespace) -> dict[str, Any]:
+    """Return source-bound, interleaved parent/candidate evidence."""
+    validate_args(args)
+    variants = (
+        Variant(
+            args.baseline_label,
+            args.baseline_root.resolve(),
+            args.baseline_lib.resolve(),
+            args.baseline_ref,
+        ),
+        Variant(
+            args.candidate_label,
+            args.candidate_root.resolve(),
+            args.candidate_lib.resolve(),
+            args.candidate_ref,
+        ),
     )
+    cpu, taskset, affinity = select_affinity(args)
+    load_before = load_average()
+    for index in range(args.warmups):
+        for variant in variants if index % 2 == 0 else reversed(variants):
+            sample(variant, args.steps, cpu, taskset)
+    samples: dict[str, list[dict[str, Any]]] = {variant.label: [] for variant in variants}
+    for index in range(args.iterations):
+        for variant in variants if index % 2 == 0 else reversed(variants):
+            samples[variant.label].append(sample(variant, args.steps, cpu, taskset))
+    results = {variant.label: summarize(samples[variant.label]) for variant in variants}
+    variants_metadata = [metadata(variant) for variant in variants]
+    candidate = variants_metadata[1]
+    return {
+        "schema_version": _SCHEMA,
+        "generated_at_utc": datetime.now(timezone.utc).isoformat(),
+        "evidence_class": "local_source_and_native_library_regression",
+        "hardware_measurement_claimed": False,
+        "operation": "deterministic STDP scalar, batched, layer, Torch, Go, and Julia paths",
+        "configuration": {
+            "iterations": args.iterations,
+            "warmups": args.warmups,
+            "steps": args.steps,
+            "interleaving": "variant order reverses on alternating rounds",
+            "python_version": platform.python_version(),
+            "platform": platform.platform(),
+            "machine": platform.machine(),
+            "cpu": cpu,
+            "affinity_mode": affinity,
+        },
+        "commands": {
+            "harness": (
+                "python benchmarks/bench_autonomous_learning.py --baseline-root <root> "
+                "--baseline-lib <lib> --baseline-ref <sha> --candidate-lib <lib> "
+                "--output <json>"
+            ),
+            "child": (
+                "[taskset --cpu-list <cpu>] <python> benchmarks/_learning_bridge_probe.py "
+                "--root <root> --steps <n>"
+            ),
+        },
+        "benchmark_sha256": hashlib.sha256(Path(__file__).read_bytes()).hexdigest(),
+        "support_sha256": hashlib.sha256(_SUPPORT.read_bytes()).hexdigest(),
+        "probe_sha256": hashlib.sha256(PROBE.read_bytes()).hexdigest(),
+        "source_sha256": candidate["source_sha256"],
+        "source_file_count": candidate["source_file_count"],
+        "source_hashes": candidate["source_hashes"],
+        "variants": variants_metadata,
+        "results": results,
+        "comparison": compare(results[variants[0].label], results[variants[1].label]),
+        "polyglot_applicability": {
+            "python": "measured",
+            "rust": "measured",
+            "torch": "measured",
+            "go": "measured_when_executable_available",
+            "julia": "measured_when_executable_available",
+        },
+        "measurement_context": measurement_context(load_before),
+    }
 
-    FFI_AVAILABLE = is_available()
-except ImportError:
-    FFI_AVAILABLE = False
 
-
-def run_benchmark(timesteps: int = 100_000):
-    print("Benchmarking Autonomous Learning (Rust FFI over Python via C-Types)...")
-    print(f"Timesteps: {timesteps}")
-
-    if not FFI_AVAILABLE:
-        print("Rust FFI is not available. Skipping benchmark.")
-        return
-
-    # Create deterministic synthetic spike trains (10% firing rate uniformly distributed)
-    rng = np.random.default_rng(42)
-    pre_spikes = rng.random(timesteps) < 0.1
-    post_spikes = rng.random(timesteps) < 0.1
-    rewards = rng.random(timesteps) * 0.1
-
-    # Sequential Execution
-    rule_seq = RustPlasticityRule(rule_type=RULE_STDP, weight=0.5, param_a=0.1, param_b=0.05)
-    start_t_seq = time.perf_counter()
-    for t in range(timesteps):
-        rule_seq.step(bool(pre_spikes[t]), bool(post_spikes[t]), float(rewards[t]))
-    end_t_seq = time.perf_counter()
-
-    elapsed_seq_ms = (end_t_seq - start_t_seq) * 1000.0
-    ns_per_step_seq = (elapsed_seq_ms * 1e6) / timesteps
-
-    # Batched Execution
-    rule_batched = RustPlasticityRule(rule_type=RULE_STDP, weight=0.5, param_a=0.1, param_b=0.05)
-    start_t_batched = time.perf_counter()
-    rule_batched.step_batched(pre_spikes, post_spikes, rewards)
-    end_t_batched = time.perf_counter()
-
-    elapsed_batched_ms = (end_t_batched - start_t_batched) * 1000.0
-    ns_per_step_batched = (elapsed_batched_ms * 1e6) / timesteps
-
-    # Spatial Layer Parallelization Execution
-    layer_spatial = RustRuleLayer(
-        count=timesteps, rule_type=RULE_STDP, weight=0.5, param_a=0.1, param_b=0.05
-    )
-    start_t_spatial = time.perf_counter()
-    layer_spatial.step(pre_spikes, post_spikes, rewards)
-    end_t_spatial = time.perf_counter()
-
-    elapsed_spatial_ms = (end_t_spatial - start_t_spatial) * 1000.0
-    ns_per_step_spatial = (elapsed_spatial_ms * 1e6) / timesteps
-
-    # Check that spatial mapping works correctly, index 0 weight should match batched.
-    spatial_weights = layer_spatial.get_weights()
-    spatial_w0 = spatial_weights[0] if len(spatial_weights) > 0 else 0.0
-
-    # GPU Tensor Parallelization Execution (CUDA/ROCm)
+def main(argv: Sequence[str] | None = None) -> int:
+    """Run the benchmark and write its evidence JSON."""
+    parser = _parser()
+    args = parser.parse_args(argv)
     try:
-        import torch
-
-        has_torch = True
-    except ImportError:
-        has_torch = False
-
-    if has_torch:
-        layer_gpu = TorchRuleLayer(
-            count=timesteps, rule_type=RULE_STDP, weight=0.5, param_a=0.1, param_b=0.05
-        )
-        # Pre-cache tensors onto GPU so data-transfer time is not counted in kernel dispatch execution time
-        gpu_pre = torch.tensor(pre_spikes, device=layer_gpu._device, dtype=torch.bool)
-        gpu_post = torch.tensor(post_spikes, device=layer_gpu._device, dtype=torch.bool)
-        gpu_rew = torch.tensor(rewards, device=layer_gpu._device, dtype=torch.float32)
-
-        # Warm-up (important for CUDA to initialize contexts)
-        layer_gpu.step(gpu_pre, gpu_post, gpu_rew)
-        # Reset trace for accurate bench
-        layer_gpu._pre_trace.zero_()
-        layer_gpu._post_trace.zero_()
-        layer_gpu._weights.fill_(0.5)
-        if torch.cuda.is_available():
-            torch.cuda.synchronize()
-
-        start_t_gpu = time.perf_counter()
-        layer_gpu.step(gpu_pre, gpu_post, gpu_rew)
-        if torch.cuda.is_available():
-            torch.cuda.synchronize()
-        end_t_gpu = time.perf_counter()
-
-        elapsed_gpu_ms = (end_t_gpu - start_t_gpu) * 1000.0
-        ns_per_step_gpu = (elapsed_gpu_ms * 1e6) / timesteps
-        gpu_w0 = layer_gpu.get_weights()[0]
-    else:
-        elapsed_gpu_ms = 0.0
-        ns_per_step_gpu = 0.0
-        gpu_w0 = 0.0
-
-    print("-" * 50)
-    print("SEQUENTIAL EXECUTION")
-    print(f"Total time   : {elapsed_seq_ms:.4f} ms")
-    print(f"Latency/step : {ns_per_step_seq:.4f} ns")
-    print(f"Final weight : {rule_seq.weight:.4f}")
-    print("-" * 50)
-    print("BATCHED TEMPORAL VECTORIZATION (Single Thread Loop)")
-    print(f"Total time   : {elapsed_batched_ms:.4f} ms")
-    print(f"Latency/step : {ns_per_step_batched:.4f} ns")
-    print(f"Final weight : {rule_batched.weight:.4f}")
-    if elapsed_batched_ms > 0:
-        speedup = elapsed_seq_ms / elapsed_batched_ms
-        print(f"-> Speedup Factor: {speedup:.2f}X over Sequential")
-    print("-" * 50)
-    print("SPATIAL LAYER PARALLELIZATION (Rayon Multi-Core)")
-    print(f"Total time   : {elapsed_spatial_ms:.4f} ms")
-    print(f"Latency/step : {ns_per_step_spatial:.4f} ns")
-    print(f"Sample weight: {spatial_w0:.4f}")
-    if elapsed_spatial_ms > 0:
-        speedup = elapsed_seq_ms / elapsed_spatial_ms
-        print(f"-> Speedup Factor: {speedup:.2f}X over Sequential")
-        speedup2 = elapsed_batched_ms / elapsed_spatial_ms
-        print(f"-> Multicore Scale: {speedup2:.2f}X over Batched Single Thread")
-    print("-" * 50)
-
-    if has_torch:
-        device_name = "CUDA" if torch.cuda.is_available() else "CPU"
-        print(f"GPU TENSOR EXECUTION (PyTorch {device_name})")
-        print(f"Total time   : {elapsed_gpu_ms:.4f} ms")
-        print(f"Latency/step : {ns_per_step_gpu:.4f} ns")
-        print(f"Sample weight: {gpu_w0:.4f}")
-        if elapsed_gpu_ms > 0:
-            speedup = elapsed_seq_ms / elapsed_gpu_ms
-            print(f"-> Speedup Factor: {speedup:.2f}X over Sequential")
-            speedup2 = elapsed_batched_ms / elapsed_gpu_ms
-            print(f"-> GPU Bound Scale: {speedup2:.2f}X over Batched Single Thread")
-            speedup3 = elapsed_spatial_ms / elapsed_gpu_ms
-            print(f"-> GPU Bound Scale: {speedup3:.2f}X over Rayon CPU")
-        print("-" * 50)
+        evidence = run(args)
+    except (OSError, RuntimeError, ValueError) as exc:
+        parser.error(str(exc))
+    args.output.parent.mkdir(parents=True, exist_ok=True)
+    args.output.write_text(json.dumps(evidence, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    print(f"Autonomous-learning benchmark written: {args.output}")
+    return 0
 
 
 if __name__ == "__main__":
-    run_benchmark(10_000_000)
+    raise SystemExit(main())

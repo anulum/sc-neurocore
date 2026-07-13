@@ -43,6 +43,29 @@ Package-level reference:
 
 - `sc_neurocore.accel.julia.AUTHORITATIVE_JULIA_ENTRYPOINTS`
 
+## Autonomous-learning polyglot chain
+
+Autonomous learning is a maintained C-FFI chain rather than an algorithm
+transcript mirror:
+
+- authority: `crates/autonomous_learning/src/`
+- Python facade: `src/sc_neurocore/_native/learning_bridge.py` and its focused
+  `learning_*` implementation modules
+- Go adapter: `src/sc_neurocore/accel/go/autonomous_learning/learning_bridge.go`
+- Julia adapter: `src/sc_neurocore/accel/julia/_native/learning_bridge.jl`
+
+Python and Julia accept the exact artifact through
+`SC_NEUROCORE_LIB_PATH`; Go links and loads that artifact from its parent
+directory. Live parity tests exercise invalid-domain rejection and compare
+learned weights across the three language adapters. The source-bound benchmark
+also executes Torch, scalar Rust, batched Rust, and Rayon state paths.
+
+The deleted `src/sc_neurocore/accel/rust/safety/learning_bridge.rs` file was a
+non-dispatched transcript and is not a backend. Do not recreate a second Rust
+implementation in the safety-mirror crate. Add rule behavior and ABI changes to
+the authoritative `crates/autonomous_learning` crate, then update every
+maintained adapter and parity test in the same change.
+
 ## Current authoritative Mojo entrypoints
 
 The maintained Mojo surface is currently limited to Python loaders and compiled

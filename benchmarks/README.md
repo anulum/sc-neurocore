@@ -156,6 +156,18 @@ PYTHONHASHSEED=0 PYTHONPATH=src taskset -c <cpu> \
   --iterations 30 --warmups 2 \
   --output benchmarks/results/bench_bioware.json
 
+# Autonomous-learning Python/Rust/Torch/Go/Julia regression evidence
+PYTHONHASHSEED=0 PYTHONPATH=src \
+  .venv/bin/python benchmarks/bench_autonomous_learning.py \
+  --baseline-root <parent-root> \
+  --baseline-lib <parent-libautonomous_learning.so> \
+  --baseline-ref <parent-sha> \
+  --candidate-root . \
+  --candidate-lib <candidate-libautonomous_learning.so> \
+  --candidate-ref working-tree-learning-bridge \
+  --iterations 5 --warmups 1 --steps 1024 \
+  --output benchmarks/results/bench_learning_bridge.json
+
 # Evolutionary substrate Python evidence (30 samples)
 PYTHONHASHSEED=0 PYTHONPATH=src taskset -c <cpu> \
   .venv/bin/python benchmarks/bench_evo_substrate.py \

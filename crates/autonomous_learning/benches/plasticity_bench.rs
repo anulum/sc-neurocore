@@ -10,6 +10,8 @@
 use autonomous_learning::{BcmRule, EligentRule, PlasticityRule, RewardStdpRule, StdpRule};
 use criterion::{black_box, criterion_group, criterion_main, BenchmarkId, Criterion};
 
+const DEFAULT_DT: f32 = 0.001;
+
 fn bench_stdp_step(c: &mut Criterion) {
     let mut group = c.benchmark_group("stdp_step");
     for steps in [100, 1000, 10000] {
@@ -17,7 +19,7 @@ fn bench_stdp_step(c: &mut Criterion) {
             bench.iter(|| {
                 let mut rule = StdpRule::new(0.5, 0.1, 0.05, 20.0, 20.0);
                 for i in 0..n {
-                    rule.step(i % 3 == 0, i % 5 == 0, 0.0);
+                    rule.step(i % 3 == 0, i % 5 == 0, 0.0, DEFAULT_DT);
                 }
                 black_box(rule.weight())
             });
@@ -34,7 +36,7 @@ fn bench_rstdp_step(c: &mut Criterion) {
                 let mut rule = RewardStdpRule::new(0.5, 0.1, 0.05, 20.0, 20.0, 0.95);
                 for i in 0..n {
                     let reward = if i % 10 == 0 { 1.0 } else { 0.0 };
-                    rule.step(i % 3 == 0, i % 5 == 0, reward);
+                    rule.step(i % 3 == 0, i % 5 == 0, reward, DEFAULT_DT);
                 }
                 black_box(rule.weight())
             });
@@ -50,7 +52,7 @@ fn bench_bcm_step(c: &mut Criterion) {
             bench.iter(|| {
                 let mut rule = BcmRule::new(0.5, 0.01, 10.0);
                 for i in 0..n {
-                    rule.step(i % 3 == 0, i % 5 == 0, 0.0);
+                    rule.step(i % 3 == 0, i % 5 == 0, 0.0, DEFAULT_DT);
                 }
                 black_box(rule.weight())
             });
@@ -76,7 +78,7 @@ fn bench_eligent_step(c: &mut Criterion) {
                 };
                 for i in 0..n {
                     let reward = if i % 10 == 0 { 1.0 } else { 0.0 };
-                    rule.step(i % 3 == 0, i % 5 == 0, reward);
+                    rule.step(i % 3 == 0, i % 5 == 0, reward, DEFAULT_DT);
                 }
                 black_box(rule.weight())
             });

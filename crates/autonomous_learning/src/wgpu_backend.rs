@@ -65,9 +65,13 @@ pub struct WgpuRuleLayer {
 }
 
 impl WgpuRuleLayer {
+    // The constructor mirrors the fixed WGSL parameter block; collapsing these
+    // independent rule constants would obscure the C-ABI-to-shader mapping.
+    #[allow(clippy::too_many_arguments)]
     pub fn new(
         count: usize,
         rule_type: u32,
+        initial_weight: f32,
         a_plus: f32,
         a_minus: f32,
         tau_plus: f32,
@@ -75,6 +79,31 @@ impl WgpuRuleLayer {
         param_c: f32,
         param_d: f32,
     ) -> Option<Self> {
+        let parameters = [
+            initial_weight,
+            a_plus,
+            a_minus,
+            tau_plus,
+            tau_minus,
+            param_c,
+            param_d,
+        ];
+        let storage_bytes = count.checked_mul(std::mem::size_of::<f32>())?;
+        if count == 0
+            || count > u32::MAX as usize
+            || storage_bytes > 1024 * 1024 * 1024
+            || rule_type > 3
+            || parameters.iter().any(|value| !value.is_finite())
+            || !(0.0..=1.0).contains(&initial_weight)
+            || a_plus < 0.0
+            || a_minus < 0.0
+            || tau_plus <= 0.0
+            || tau_minus <= 0.0
+            || param_c <= 0.0
+            || param_d < 0.0
+        {
+            return None;
+        }
         // Global Singleton context mapping replacing costly per-layer adapter querying over PCI-e
         let ctx_opt = WGPU_CONTEXT.get_or_init(|| {
             let instance = wgpu::Instance::new(wgpu::InstanceDescriptor {
@@ -266,14 +295,8 @@ impl WgpuRuleLayer {
         };
         param_extra2_init.fill(param_extra2_val);
 
-        // Robustness: limit wrapper for sizes escaping safe VRAM chunks linearly
-        let max_size: u64 = 1024 * 1024 * 1024;
-        if count as u64 * 4 > max_size {
-            panic!("Requested {} nodes mapping to {} bytes, which exceeds WGPU storage buffer limit of {}", count, count * 4, max_size);
-        }
-
         Some(Self {
-            weights_buf: create_storage_buf(&device, &vec![0.5f32; count]),
+            weights_buf: create_storage_buf(&device, &vec![initial_weight; count]),
             pre_trace_buf: create_storage_buf(&device, &zeros),
             post_trace_buf: create_storage_buf(&device, &zeros),
             pre_probs_buf: create_storage_buf(&device, &zeros),
@@ -444,7 +467,22 @@ impl WgpuRuleLayer {
         self.device.poll(wgpu::Maintain::Wait);
     }
 
-    pub fn get_weights(&self) -> Vec<f32> {
+    /// Replace all weights after the caller has validated length and domain.
+    pub fn set_weights(&mut self, weights: &[f32]) -> bool {
+        if weights.len() != self.count as usize
+            || weights
+                .iter()
+                .any(|weight| !weight.is_finite() || !(0.0..=1.0).contains(weight))
+        {
+            return false;
+        }
+        self.queue
+            .write_buffer(&self.weights_buf, 0, bytemuck::cast_slice(weights));
+        self.device.poll(wgpu::Maintain::Wait);
+        true
+    }
+
+    pub fn get_weights(&self) -> Option<Vec<f32>> {
         let size = (self.count as usize * std::mem::size_of::<f32>()) as u64;
         let staging_buf = self.device.create_buffer(&wgpu::BufferDescriptor {
             label: None,
@@ -461,15 +499,34 @@ impl WgpuRuleLayer {
 
         let buffer_slice = staging_buf.slice(..);
         let (sender, receiver) = std::sync::mpsc::channel();
-        buffer_slice.map_async(wgpu::MapMode::Read, move |v| sender.send(v).unwrap());
+        buffer_slice.map_async(wgpu::MapMode::Read, move |result| {
+            let _ = sender.send(result);
+        });
 
         self.device.poll(wgpu::Maintain::Wait);
-        receiver.recv().unwrap().unwrap();
+        receiver.recv().ok()?.ok()?;
 
         let data = buffer_slice.get_mapped_range();
         let result: Vec<f32> = bytemuck::cast_slice(&data).to_vec();
         drop(data);
         staging_buf.unmap();
-        result
+        Some(result)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::WgpuRuleLayer;
+
+    #[test]
+    fn rejects_oversized_buffer_before_requesting_an_adapter() {
+        let count = 1024 * 1024 * 1024 / std::mem::size_of::<f32>() + 1;
+        assert!(WgpuRuleLayer::new(count, 1, 0.5, 0.01, 0.005, 20.0, 20.0, 20.0, 1.0).is_none());
+    }
+
+    #[test]
+    fn rejects_invalid_configuration_before_requesting_an_adapter() {
+        assert!(WgpuRuleLayer::new(1, 4, 0.5, 0.01, 0.005, 20.0, 20.0, 20.0, 1.0).is_none());
+        assert!(WgpuRuleLayer::new(1, 1, f32::NAN, 0.01, 0.005, 20.0, 20.0, 20.0, 1.0).is_none());
     }
 }

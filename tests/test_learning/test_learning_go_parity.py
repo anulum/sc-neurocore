@@ -40,6 +40,7 @@ package main
 
 import (
     "fmt"
+    "log"
     "{GO_IMPORT_PATH}"
 )
 
@@ -51,8 +52,12 @@ func main() {{
     }}
     defer rule.Destroy()
 
-    rule.Step(true, false, 0.0)
-    rule.Step(false, true, 0.0)
+    if err := rule.Step(true, false, 0.0); err != nil {{
+        log.Fatal(err)
+    }}
+    if err := rule.Step(false, true, 0.0); err != nil {{
+        log.Fatal(err)
+    }}
     fmt.Printf("%.9f\\n", rule.Weight())
 }}
 """
@@ -62,9 +67,16 @@ def _go_env() -> dict[str, str]:
     """Return the environment needed for local CGO learning bridge execution."""
     env = dict(os.environ)
     env["CGO_ENABLED"] = "1"
-    existing = env.get("LD_LIBRARY_PATH")
-    native_path = str(NATIVE_DIR)
-    env["LD_LIBRARY_PATH"] = native_path if not existing else f"{native_path}:{existing}"
+    existing_runtime = env.get("LD_LIBRARY_PATH")
+    existing_linker = env.get("CGO_LDFLAGS")
+    configured = env.get("SC_NEUROCORE_LIB_PATH")
+    native_path = str(Path(configured).resolve().parent) if configured else str(NATIVE_DIR)
+    env["CGO_LDFLAGS"] = (
+        f"-L{native_path}" if not existing_linker else f"-L{native_path} {existing_linker}"
+    )
+    env["LD_LIBRARY_PATH"] = (
+        native_path if not existing_runtime else f"{native_path}:{existing_runtime}"
+    )
     return env
 
 
@@ -138,18 +150,45 @@ def test_go_bridge_passes_default_timestep_to_rust_ffi() -> None:
     )
 
 
+def test_go_bridge_guards_native_pointer_and_slice_domains() -> None:
+    """Lock zero-length, non-finite, and closed-handle checks ahead of CGO."""
+    source = GO_BRIDGE_SOURCE.read_text(encoding="utf-8")
+    assert "if count <= 0" in source
+    assert "len(preSpikes) != l.count" in source
+    assert "learning reward must be finite" in source
+    assert "learning timestep must be finite and positive" in source
+    assert "if l == nil || l.ptr == nil" in source
+
+
 def test_go_env_prepends_native_library_path(monkeypatch: pytest.MonkeyPatch) -> None:
     """Check that local dynamic linking sees the checked-in native library first."""
+    monkeypatch.delenv("SC_NEUROCORE_LIB_PATH", raising=False)
+    monkeypatch.delenv("CGO_LDFLAGS", raising=False)
     monkeypatch.setenv("LD_LIBRARY_PATH", "/existing")
     env = _go_env()
     assert env["CGO_ENABLED"] == "1"
+    assert env["CGO_LDFLAGS"] == f"-L{NATIVE_DIR}"
     assert env["LD_LIBRARY_PATH"] == f"{NATIVE_DIR}:/existing"
 
 
 def test_go_env_sets_native_library_path_when_absent(monkeypatch: pytest.MonkeyPatch) -> None:
     """Check local dynamic linking setup when no path was already configured."""
+    monkeypatch.delenv("SC_NEUROCORE_LIB_PATH", raising=False)
+    monkeypatch.delenv("CGO_LDFLAGS", raising=False)
     monkeypatch.delenv("LD_LIBRARY_PATH", raising=False)
-    assert _go_env()["LD_LIBRARY_PATH"] == str(NATIVE_DIR)
+    env = _go_env()
+    assert env["CGO_LDFLAGS"] == f"-L{NATIVE_DIR}"
+    assert env["LD_LIBRARY_PATH"] == str(NATIVE_DIR)
+
+
+def test_go_env_uses_configured_fresh_library(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Keep parity execution on the same explicitly built Rust artifact."""
+    monkeypatch.setenv("SC_NEUROCORE_LIB_PATH", "/tmp/fresh/libautonomous_learning.so")
+    monkeypatch.setenv("CGO_LDFLAGS", "-Wl,--as-needed")
+    monkeypatch.delenv("LD_LIBRARY_PATH", raising=False)
+    env = _go_env()
+    assert env["CGO_LDFLAGS"] == "-L/tmp/fresh -Wl,--as-needed"
+    assert env["LD_LIBRARY_PATH"] == "/tmp/fresh"
 
 
 @pytest.mark.parametrize(

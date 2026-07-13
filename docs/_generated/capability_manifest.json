@@ -971,7 +971,7 @@
     "python_model_classes": 158,
     "python_model_source_modules": 153,
     "rust_pyo3_model_wrappers": 176,
-    "test_files": 1228
+    "test_files": 1238
   },
   "documentation": {
     "public_pages": [
@@ -2919,6 +2919,7 @@
       "tests/test_benchmark_context.py",
       "tests/test_benchmark_evidence_docs.py",
       "tests/test_benchmark_harness_contracts.py",
+      "tests/test_benchmarks/test_bench_autonomous_learning.py",
       "tests/test_benchmarks_neurobench.py",
       "tests/test_bio/test_dna_storage.py",
       "tests/test_bio/test_grn.py",
@@ -3520,7 +3521,16 @@
       "tests/test_nas.py",
       "tests/test_native/test_array_guards.py",
       "tests/test_native/test_core_engine_bridge.py",
-      "tests/test_native/test_learning_bridge.py",
+      "tests/test_native/test_learning_bridge_architecture.py",
+      "tests/test_native/test_learning_bridge_runtime.py",
+      "tests/test_native/test_learning_bridge_rust.py",
+      "tests/test_native/test_learning_bridge_rust_layer.py",
+      "tests/test_native/test_learning_bridge_support.py",
+      "tests/test_native/test_learning_bridge_torch.py",
+      "tests/test_native/test_learning_bridge_torch_autograd.py",
+      "tests/test_native/test_learning_bridge_torch_support.py",
+      "tests/test_native/test_learning_bridge_validation.py",
+      "tests/test_native/test_learning_bridge_wgpu.py",
       "tests/test_network/test_projection.py",
       "tests/test_network/test_to_torch_bridge.py",
       "tests/test_network_basic.py",

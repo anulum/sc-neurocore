@@ -27,7 +27,12 @@ package autonomous_learning
 // void get_rule_layer_weights(const void* layer_ptr, float* out_weights);
 // void destroy_rule_layer(void* layer_ptr);
 import "C"
-import "unsafe"
+import (
+	"errors"
+	"fmt"
+	"math"
+	"unsafe"
+)
 
 // Rule Type Constants
 const (
@@ -40,6 +45,44 @@ const (
 // DefaultDt matches the Python bridge default timestep for one-step helpers.
 const DefaultDt float32 = 0.001
 
+var (
+	// ErrClosed reports use of a nil or already destroyed native handle.
+	ErrClosed = errors.New("autonomous-learning handle is closed")
+	// ErrInvalidTimestep reports a non-finite or non-positive timestep.
+	ErrInvalidTimestep = errors.New("learning timestep must be finite and positive")
+	// ErrInvalidReward reports a non-finite reward value.
+	ErrInvalidReward = errors.New("learning reward must be finite")
+	// ErrLengthMismatch reports buffers that do not match the layer count.
+	ErrLengthMismatch = errors.New("learning-layer slice size mismatch")
+)
+
+func finite(value float32) bool {
+	converted := float64(value)
+	return !math.IsNaN(converted) && !math.IsInf(converted, 0)
+}
+
+func validRuleType(ruleType uint32) bool {
+	return ruleType <= RuleBcm
+}
+
+func validWeight(weight float32) bool {
+	return finite(weight) && weight >= 0 && weight <= 1
+}
+
+func validateTimestep(dt float32) error {
+	if !finite(dt) || dt <= 0 {
+		return fmt.Errorf("%w: got %v", ErrInvalidTimestep, dt)
+	}
+	return nil
+}
+
+func validateReward(reward float32) error {
+	if !finite(reward) {
+		return fmt.Errorf("%w: got %v", ErrInvalidReward, reward)
+	}
+	return nil
+}
+
 // PlasticityRule represents a handle to the Rust plasticity engine.
 type PlasticityRule struct {
 	ptr unsafe.Pointer
@@ -47,6 +90,9 @@ type PlasticityRule struct {
 
 // NewPlasticityRule creates a new rule instance safely.
 func NewPlasticityRule(ruleType uint32, weight, paramA, paramB float32) *PlasticityRule {
+	if !validRuleType(ruleType) || !validWeight(weight) || !finite(paramA) || paramA < 0 || !finite(paramB) || paramB < 0 {
+		return nil
+	}
 	ptr := C.create_rule(C.uint32_t(ruleType), C.float(weight), C.float(paramA), C.float(paramB))
 	if ptr == nil {
 		return nil
@@ -55,28 +101,55 @@ func NewPlasticityRule(ruleType uint32, weight, paramA, paramB float32) *Plastic
 }
 
 // Step advances the rule by one timestep.
-func (r *PlasticityRule) Step(preSpike, postSpike bool, reward float32) {
-	r.StepDt(preSpike, postSpike, reward, DefaultDt)
+func (r *PlasticityRule) Step(preSpike, postSpike bool, reward float32) error {
+	return r.StepDt(preSpike, postSpike, reward, DefaultDt)
 }
 
 // StepDt advances the rule by one timestep using an explicit timestep.
-func (r *PlasticityRule) StepDt(preSpike, postSpike bool, reward, dt float32) {
+func (r *PlasticityRule) StepDt(preSpike, postSpike bool, reward, dt float32) error {
+	if r == nil || r.ptr == nil {
+		return ErrClosed
+	}
+	if err := validateReward(reward); err != nil {
+		return err
+	}
+	if err := validateTimestep(dt); err != nil {
+		return err
+	}
 	C.step_rule(r.ptr, C.bool(preSpike), C.bool(postSpike), C.float(reward), C.float(dt))
+	return nil
 }
 
-// Weight gets the current computed weight from the rule.
+// TryWeight gets the current computed weight or reports a closed handle.
+func (r *PlasticityRule) TryWeight() (float32, error) {
+	if r == nil || r.ptr == nil {
+		return 0, ErrClosed
+	}
+	return float32(C.get_rule_weight(r.ptr)), nil
+}
+
+// Weight gets the current computed weight, panicking only for legacy callers
+// that use a closed handle. New code should use TryWeight.
 func (r *PlasticityRule) Weight() float32 {
-	return float32(C.get_rule_weight(r.ptr))
+	weight, err := r.TryWeight()
+	if err != nil {
+		panic(err)
+	}
+	return weight
 }
 
 // Reset clears traces / intermediate states.
-func (r *PlasticityRule) Reset() {
+func (r *PlasticityRule) Reset() error {
+	if r == nil || r.ptr == nil {
+		return ErrClosed
+	}
 	C.reset_rule(r.ptr)
+	return nil
 }
 
 // Destroy frees the memory on the Rust side.
 func (r *PlasticityRule) Destroy() {
-	if r.ptr != nil {
+	if r != nil && r.ptr != nil {
 		C.destroy_rule(r.ptr)
 		r.ptr = nil
 	}
@@ -89,6 +162,9 @@ type EligentLearner struct {
 
 // NewEligentLearner creates a new learner instance safely.
 func NewEligentLearner(threshold, targetRate, weight float32) *EligentLearner {
+	if !finite(threshold) || threshold <= 0 || !finite(targetRate) || targetRate < 0 || !validWeight(weight) {
+		return nil
+	}
 	ptr := C.create_learner(C.float(threshold), C.float(targetRate), C.float(weight))
 	if ptr == nil {
 		return nil
@@ -97,18 +173,28 @@ func NewEligentLearner(threshold, targetRate, weight float32) *EligentLearner {
 }
 
 // Step advances the learner.
-func (l *EligentLearner) Step(fired, preSpike bool, globalReward float32) {
-	l.StepDt(fired, preSpike, globalReward, DefaultDt)
+func (l *EligentLearner) Step(fired, preSpike bool, globalReward float32) error {
+	return l.StepDt(fired, preSpike, globalReward, DefaultDt)
 }
 
 // StepDt advances the learner using an explicit timestep.
-func (l *EligentLearner) StepDt(fired, preSpike bool, globalReward, dt float32) {
+func (l *EligentLearner) StepDt(fired, preSpike bool, globalReward, dt float32) error {
+	if l == nil || l.ptr == nil {
+		return ErrClosed
+	}
+	if err := validateReward(globalReward); err != nil {
+		return err
+	}
+	if err := validateTimestep(dt); err != nil {
+		return err
+	}
 	C.step_learner(l.ptr, C.bool(fired), C.bool(preSpike), C.float(globalReward), C.float(dt))
+	return nil
 }
 
 // Destroy frees the memory on the Rust side.
 func (l *EligentLearner) Destroy() {
-	if l.ptr != nil {
+	if l != nil && l.ptr != nil {
 		C.destroy_learner(l.ptr)
 		l.ptr = nil
 	}
@@ -122,6 +208,9 @@ type RuleLayer struct {
 
 // NewRuleLayer creates an array of rules natively.
 func NewRuleLayer(count int, ruleType uint32, weight, paramA, paramB float32) *RuleLayer {
+	if count <= 0 || uint64(count) > uint64(^uint32(0)) || !validRuleType(ruleType) || !validWeight(weight) || !finite(paramA) || paramA < 0 || !finite(paramB) || paramB < 0 {
+		return nil
+	}
 	ptr := C.create_rule_layer(C.size_t(count), C.uint32_t(ruleType), C.float(weight), C.float(paramA), C.float(paramB))
 	if ptr == nil {
 		return nil
@@ -130,14 +219,32 @@ func NewRuleLayer(count int, ruleType uint32, weight, paramA, paramB float32) *R
 }
 
 // Step advances the entire layer concurrently.
-func (l *RuleLayer) Step(preSpikes, postSpikes []bool, rewards []float32) {
-	l.StepDt(preSpikes, postSpikes, rewards, DefaultDt)
+func (l *RuleLayer) Step(preSpikes, postSpikes []bool, rewards []float32) error {
+	return l.StepDt(preSpikes, postSpikes, rewards, DefaultDt)
 }
 
 // StepDt advances the entire layer concurrently using an explicit timestep.
-func (l *RuleLayer) StepDt(preSpikes, postSpikes []bool, rewards []float32, dt float32) {
+func (l *RuleLayer) StepDt(preSpikes, postSpikes []bool, rewards []float32, dt float32) error {
+	if l == nil || l.ptr == nil {
+		return ErrClosed
+	}
 	if len(preSpikes) != l.count || len(postSpikes) != l.count || len(rewards) != l.count {
-		panic("Slice size mismatch in RuleLayer.Step")
+		return fmt.Errorf(
+			"%w: expected %d, got pre=%d post=%d rewards=%d",
+			ErrLengthMismatch,
+			l.count,
+			len(preSpikes),
+			len(postSpikes),
+			len(rewards),
+		)
+	}
+	if err := validateTimestep(dt); err != nil {
+		return err
+	}
+	for _, reward := range rewards {
+		if err := validateReward(reward); err != nil {
+			return err
+		}
 	}
 	C.step_rule_layer(
 		l.ptr,
@@ -146,21 +253,35 @@ func (l *RuleLayer) StepDt(preSpikes, postSpikes []bool, rewards []float32, dt f
 		(*C.float)(unsafe.Pointer(&rewards[0])),
 		C.float(dt),
 	)
+	return nil
 }
 
-// GetWeights retrieves all concurrent weights in a single slice.
-func (l *RuleLayer) GetWeights() []float32 {
+// TryGetWeights retrieves all concurrent weights or reports a closed handle.
+func (l *RuleLayer) TryGetWeights() ([]float32, error) {
+	if l == nil || l.ptr == nil {
+		return nil, ErrClosed
+	}
 	out := make([]float32, l.count)
 	C.get_rule_layer_weights(
 		l.ptr,
 		(*C.float)(unsafe.Pointer(&out[0])),
 	)
-	return out
+	return out, nil
+}
+
+// GetWeights retrieves all concurrent weights, panicking only for legacy
+// callers that use a closed handle. New code should use TryGetWeights.
+func (l *RuleLayer) GetWeights() []float32 {
+	weights, err := l.TryGetWeights()
+	if err != nil {
+		panic(err)
+	}
+	return weights
 }
 
 // Destroy cleans up the layer handles.
 func (l *RuleLayer) Destroy() {
-	if l.ptr != nil {
+	if l != nil && l.ptr != nil {
 		C.destroy_rule_layer(l.ptr)
 		l.ptr = nil
 	}

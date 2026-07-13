@@ -15,12 +15,16 @@ C-FFI bridges.
 │                                                          │
 │  accel/vector_ops.py ──── vec_popcount(), vec_scc()      │
 │         │                                                │
-│  meta_plasticity.py ──── RustPlasticityRule               │
+│  plasticity.py ──────── create_plasticity_layer           │
 │         │                                                │
 │  bci_studio/bci_primitives.py ── RustEligentLearner      │
 │         │                                                │
 │  _native/core_engine_bridge.py ────┐                     │
-│  _native/learning_bridge.py ───────┤                     │
+│  _native/learning_bridge.py facade ┤                     │
+│    ├─ learning_runtime.py (ABI)    │                     │
+│    ├─ learning_rust*.py (owners)   │                     │
+│    ├─ learning_wgpu.py             │                     │
+│    └─ learning_torch*.py           │                     │
 └─────────────────────────────────┬──┘                     │
                                   │ ctypes zero-copy        │
                                   ▼                         │
@@ -33,11 +37,11 @@ C-FFI bridges.
 │  lfsr_create, lfsr_step, lfsr_encode, lfsr_destroy     │
 │  sc_saturating_sub, bitstream_free                      │
 ├────────────────────────────────────────────────────────┤
-│          _native/libautonomous_learning.so (430KB)      │
-│  8 C-FFI symbols:                                       │
-│  create_rule, step_rule, get_rule_weight, reset_rule   │
-│  destroy_rule, create_learner, step_learner            │
-│  destroy_learner                                        │
+│          _native/libautonomous_learning.so              │
+│  34 C-FFI symbols grouped as:                           │
+│  scalar rules / ELIGENT / bounded Online O(1)           │
+│  batched rules / Rayon layers / checked state transport │
+│  WGPU construction, stepping, seeding, and restore      │
 └────────────────────────────────────────────────────────┘
 ```
 
@@ -80,7 +84,7 @@ go test -v ./...
 | Sandbox Module | Mainline Consumer | Bridge |
 |------------------|-------------------|--------|
 | core_engine (Rust) | accel/vector_ops.py | ctypes zero-copy |
-| autonomous_learning (Rust) | meta_plasticity.py, bci_primitives.py | ctypes RAII class |
+| autonomous_learning (Rust) | plasticity.py, bci_primitives.py, benchmarks/online_o1_adaptation.py | typed ctypes owners |
 | tinysc_riscv (Rust no_std) | — (standalone firmware) | — |
 | dynamic_adaptation (Rust) | debug/stochastic_doctor.py (overlap) | — |
 | hil_debugger (Go) | — (standalone server) | WebSocket |
@@ -111,6 +115,35 @@ reference-path tests:
 | `safety/dna_mapper.rs` | `sc_neurocore.bridges.dna_mapper` | sequence constraints, nearest-neighbour thermodynamics, strand-displacement and enzymatic gate compilation, kinetics, GF(4), plate layout | `tests/test_bridges_dna_mapper.py`, `tests/test_bridges/test_dna_mapper.py` |
 | `safety/predictive_model.rs` | `sc_neurocore.world_model.predictive_model` | LGSSM shape checks, positive-definite covariance checks, Cholesky solve path, Joseph-form covariance update, log-likelihood | `tests/test_world_model.py`, `tests/test_world_model/test_predictive_model.py`, `tests/test_world_model/test_predictive_model_backends.py` |
 | `safety/analysis.rs` | `sc_neurocore.studio.analysis` | bifurcation sweeps, sensitivity ordering, nullcline contour extraction, heatmaps, STA, frequency response, fixed-point error reporting | `tests/test_studio_analysis.py` |
+
+`autonomous_learning` is not a safety mirror. Its authority is the compiled
+crate under `crates/autonomous_learning/`, reached through the maintained C ABI.
+The former `accel/rust/safety/learning_bridge.rs` transcript was removed so a
+second, non-dispatched implementation cannot be mistaken for runtime parity.
+
+## Autonomous-learning boundary contract
+
+`learning_bridge.py` is a compatibility facade only. Runtime loading,
+validation, scalar ownership, Rayon layers, WGPU layers, Torch dynamics, mixed
+precision, and backend selection live in focused `learning_*` modules. Public
+classes retain the historical `sc_neurocore._native.learning_bridge` identity
+for imports and serialized objects.
+
+Set `SC_NEUROCORE_LIB_PATH` to select an exact library artifact. Python and the
+maintained Julia bridge both honor that path; Go links the same artifact by its
+parent directory through `CGO_LDFLAGS` and `LD_LIBRARY_PATH`. The loader binds
+the required ABI atomically: a missing required symbol leaves the backend
+unavailable instead of publishing a partially typed library.
+
+All owning Python wrappers implement `close()` and the context-manager
+protocol. Scalar and array inputs are checked for type, shape, length, finite
+values, and documented domains before crossing FFI. `RustRuleLayer` restores
+opaque state only through `set_rule_layer_state_mem_checked(ptr, buffer, len)`.
+The Rust parser validates magic, version, rule identifier, counts, trace
+lengths, finite values, truncation, and trailing bytes before swapping any
+state. The legacy length-less symbol remains ABI-compatible but is not used by
+the maintained Python restore path. WGPU weights are restored through the
+length-aware `set_wgpu_weights` ABI rather than a warn-and-ignore placeholder.
 
 The Python import side treats optional engine submodules as optional
 accelerators.  If a wheel exposes only the compiled extension module and not

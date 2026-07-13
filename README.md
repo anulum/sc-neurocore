@@ -97,7 +97,7 @@ SC-NeuroCore is positioned for neuromorphic R&D, stochastic accelerator design, 
 | Model documentation pages | 175 |
 | Rust PyO3 model wrappers | 176 |
 | Optional extras | 28 |
-| Python test files | 1228 |
+| Python test files | 1238 |
 | Public documentation pages | 569 |
 | GitHub Actions workflows | 19 |
 
@@ -439,12 +439,12 @@ hdl/
   sc_event_neuron.v           -- Event-triggered LIF (power ∝ spike rate)
   sc_aer_router.v             -- AER event distribution to target neurons
   tb_sc_*.v (16 testbenches)  -- Self-checking simulation testbenches
-  formal/ (44 proof jobs)     -- catalogue dual-axis perfect + legacy SC cores
+  formal/ (45 proof jobs)     -- catalogue dual-axis perfect + legacy SC cores
 ```
 
-Formal verification inventory: **44 SymbiYosys proof jobs and 174 formal
-statements (144 assert, 7 assume, 23 cover)** under `hdl/formal/` (18
-non-catalogue jobs + **26 catalogue jobs** under `hdl/formal/catalogue/`). This
+Formal verification inventory: **45 SymbiYosys proof jobs and 175 formal
+statements (145 assert, 7 assume, 23 cover)** under `hdl/formal/` (18
+non-catalogue jobs + **27 catalogue jobs** under `hdl/formal/catalogue/`). This
 counts the git-tracked jobs a clean checkout proves; re-emit the generated
 catalogue harnesses with `tools/emit_catalogue_formal.py`.
 

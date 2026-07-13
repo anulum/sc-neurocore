@@ -2533,6 +2533,70 @@
         "benchmarks/_bioware_probe.py": "probe_sha256",
         "benchmarks/bench_bioware.py": "benchmark_sha256"
       }
+    },
+    {
+      "artefact": "benchmarks/results/bench_learning_bridge.json",
+      "description": "Source- and native-library-bound Python, Rust, Torch, Go, and Julia autonomous-learning diagnostics.",
+      "expected_values": {
+        "comparison.canonical_output_equivalent": true,
+        "configuration.iterations": 5,
+        "configuration.steps": 1024,
+        "configuration.warmups": 1,
+        "evidence_class": "local_source_and_native_library_regression",
+        "hardware_measurement_claimed": false,
+        "measurement_context.concurrent_load_status": "non-exclusive workstation run; other heavy jobs may have been active",
+        "measurement_context.timing_interpretation": "use timing medians as local regression context only, not final throughput claims",
+        "polyglot_applicability.go": "measured_when_executable_available",
+        "polyglot_applicability.julia": "measured_when_executable_available",
+        "polyglot_applicability.python": "measured",
+        "polyglot_applicability.rust": "measured",
+        "polyglot_applicability.torch": "measured",
+        "results.learning-modular.canonical_bytes": 314,
+        "results.learning-modular.canonical_sha256": "020da9895ff4d7f1150fd7159c30e7c476afe9ff46c6d652bf0ad73fa6cf309d",
+        "schema_version": "sc-neurocore.learning-bridge-modularisation-benchmark.v1",
+        "source_file_count": 16,
+        "source_sha256": "646bbdc37682325962761312c5a096275692693ab174fac407cf1aa71b94240d"
+      },
+      "id": "autonomous-learning-modularisation-local-diagnostics",
+      "parity_groups": [
+        {
+          "paths": [
+            "results.learning-modular.rust_scalar_weight",
+            "results.learning-modular.rust_batched_weight",
+            "results.learning-modular.torch_weight",
+            "results.learning-modular.go_weight",
+            "results.learning-modular.julia_weight"
+          ],
+          "tolerance": 0.000001
+        }
+      ],
+      "required_numbers": [
+        "results.parent-5f3d5d254.sample_count",
+        "results.parent-5f3d5d254.subprocess_wall_ns.median",
+        "results.parent-5f3d5d254.import_ns.median",
+        "results.parent-5f3d5d254.rust_scalar_ns.median",
+        "results.parent-5f3d5d254.rust_batched_ns.median",
+        "results.parent-5f3d5d254.rust_layer_ns.median",
+        "results.parent-5f3d5d254.torch_ns.median",
+        "results.parent-5f3d5d254.go_process_ns.median",
+        "results.parent-5f3d5d254.julia_process_ns.median",
+        "results.parent-5f3d5d254.max_rss_kib.median",
+        "results.learning-modular.sample_count",
+        "results.learning-modular.subprocess_wall_ns.median",
+        "results.learning-modular.import_ns.median",
+        "results.learning-modular.rust_scalar_ns.median",
+        "results.learning-modular.rust_batched_ns.median",
+        "results.learning-modular.rust_layer_ns.median",
+        "results.learning-modular.torch_ns.median",
+        "results.learning-modular.go_process_ns.median",
+        "results.learning-modular.julia_process_ns.median",
+        "results.learning-modular.max_rss_kib.median"
+      ],
+      "source_hashes": {
+        "benchmarks/_learning_benchmark_support.py": "support_sha256",
+        "benchmarks/_learning_bridge_probe.py": "probe_sha256",
+        "benchmarks/bench_autonomous_learning.py": "benchmark_sha256"
+      }
     }
   ],
   "schema_version": "sc-neurocore.benchmark-regression-gates.v1"

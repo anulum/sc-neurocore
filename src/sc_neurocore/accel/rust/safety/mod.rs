@@ -236,7 +236,6 @@ pub mod lapicque;
 pub mod larter_breakspear;
 pub mod lava_bridge;
 pub mod leaky_compete_fire;
-pub mod learning_bridge;
 pub mod lfsr;
 pub mod lifelong;
 pub mod lnm;

@@ -138,9 +138,12 @@ in the private audit.)
   `RewardModulatedSTDPSynapse`.
 - Plasticity (`learning/`, `plasticity.py`, `meta_plasticity/`, `online_learning/`):
   pair/triplet/voltage STDP, BCM, STP, e-prop, R-STDP, BPTT/TBPTT, EWC, MAML,
-  homeostatic, structural. `_native/learning_bridge.py` exposes Rust STDP/BCM/
-  Reward-STDP/ELIGENT rules; a Torch autograd path (`learning_bridge.py:719`)
-  computes exact Jacobians of biological traces.
+  homeostatic, structural. `_native/learning_bridge.py` is the stable facade for
+  Rust STDP/BCM/Reward-STDP/ELIGENT rules. Focused `learning_runtime`,
+  `learning_validation`, `learning_rust*`, `learning_wgpu`, `learning_torch*`,
+  and `learning_factory` modules own the implementation. The Torch transition
+  computes documented rule-specific surrogate gradients only when autograd is
+  enabled; native Rust choices do not import Torch.
 
 ### SC arithmetic & encoders (`core/`, `math/`, `utils/`, `encoding/`)
 
@@ -203,7 +206,9 @@ not shims** (e.g. `accel/julia/.../phi_estimation.jl` Cholesky Φ*;
 `accel/mojo/kernels.mojo` SIMD popcount + AND/OR/XOR/MUX). They are **research-
 stage**: invoked by their own per-package dispatchers (e.g. neuron `HAS_RUST`
 flags, `accel/mojo_dispatch.py`), **not** through the canonical
-`get_backend`/`sc_forward` path.
+`get_backend`/`sc_forward` path. The autonomous-learning Go and Julia C-FFI
+adapters are a narrower maintained exception: both consume the same explicit
+`libautonomous_learning` artifact and have live cross-language parity tests.
 
 ### 5.4 Optional accelerators (feature-gated by import guards)
 
@@ -220,8 +225,10 @@ flags, `accel/mojo_dispatch.py`), **not** through the canonical
 
 `tinysc_riscv`, `core_engine`, `autonomous_learning`, `neuro_symbolic`,
 `spike_stats_core`, `evo_substrate_core`, `stochastic_doctor_core`. Mostly
-standalone (C-FFI / Criterion-benched); `autonomous_learning` is reachable from
-Python via `_native/learning_bridge.py`. (Wiring completeness: see Audit.)
+standalone (C-FFI / Criterion-benched); `autonomous_learning` is reached from
+Python, Go, and Julia through one C ABI. Python uses the historical
+`_native/learning_bridge.py` facade, while the Go and Julia adapters bind the
+same source-selected library artifact. (Wiring completeness: see Audit.)
 
 ### 5.6 Hardware tier — `hdl/`
 
@@ -309,6 +316,15 @@ most-imported module (in-degree 10). **MAINTAINED.**
 `distillation`
 → STDP family, e-prop, BCM, EWC/MAML, meta-plasticity. **MAINTAINED** (learning,
 meta_plasticity, few_shot) / DRAFT (continual, contrastive, transfer, distillation).
+
+The native autonomous-learning boundary is an acyclic compatibility graph:
+`learning_bridge` exports stable identities; `learning_factory` selects Torch,
+Rust-Rayon, or Rust-WGPU; typed owners depend on `learning_runtime` and
+`learning_validation`; Torch precision/support/autograd helpers do not depend
+back on the facade. Rayon persistence uses a bounds-checked, endian-stable Rust
+codec and atomic handle replacement. WGPU weight restore is a real,
+length-checked native operation. The compiled crate is authoritative; the
+former `accel/rust/safety/learning_bridge.rs` transcript mirror was removed.
 
 ### E. Network & dynamics — *Core*
 `network` · `layers` · `reservoir` · `topology` · `graphs` · `ensembles` ·

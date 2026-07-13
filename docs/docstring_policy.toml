@@ -14,7 +14,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 371
+expected_file_count = 381
 
 [[file]]
 path = "src/sc_neurocore/__init__.py"
@@ -70,7 +70,47 @@ rationale = "Public legacy model-zoo plugin API with audited simulation validati
 
 [[file]]
 path = "src/sc_neurocore/_native/learning_bridge.py"
-rationale = "Public native autonomous-learning bridge for Rust, Rust-WGPU, and Torch plasticity layers."
+rationale = "Historical autonomous-learning compatibility facade preserving public imports and serialized object identities."
+
+[[file]]
+path = "src/sc_neurocore/_native/learning_factory.py"
+rationale = "Public backend selector that keeps Rust and Rust-WGPU construction independent of the optional Torch dependency."
+
+[[file]]
+path = "src/sc_neurocore/_native/learning_runtime.py"
+rationale = "Atomic dynamic-library loader and typed autonomous-learning C-ABI contract."
+
+[[file]]
+path = "src/sc_neurocore/_native/learning_rust.py"
+rationale = "Memory-safe scalar Rust owners with validated FFI inputs and deterministic lifecycle methods."
+
+[[file]]
+path = "src/sc_neurocore/_native/learning_rust_layer.py"
+rationale = "Rayon learning-layer owner with length-checked vectors and atomic versioned state restoration."
+
+[[file]]
+path = "src/sc_neurocore/_native/learning_torch.py"
+rationale = "Torch implementation of autonomous plasticity rules, public state, precision, and optional autograd behavior."
+
+[[file]]
+path = "src/sc_neurocore/_native/learning_torch_autograd.py"
+rationale = "Documented biological transition and rule-specific surrogate-gradient kernel."
+
+[[file]]
+path = "src/sc_neurocore/_native/learning_torch_precision.py"
+rationale = "Validated mixed-precision bit specifications, clipping domains, and tensor quantization helpers."
+
+[[file]]
+path = "src/sc_neurocore/_native/learning_torch_support.py"
+rationale = "Torch option normalization and fail-closed public tensor validation contract."
+
+[[file]]
+path = "src/sc_neurocore/_native/learning_validation.py"
+rationale = "Shared scalar, identifier, shape, length, finite-value, and probability-domain validation boundary."
+
+[[file]]
+path = "src/sc_neurocore/_native/learning_wgpu.py"
+rationale = "Memory-safe WGPU learning-layer owner with deterministic seeding and real native state restoration."
 
 [[file]]
 path = "src/sc_neurocore/nas/sc_nas_engine.py"

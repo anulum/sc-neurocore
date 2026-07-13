@@ -19,7 +19,9 @@
 
 use rayon::prelude::*;
 
+mod state_codec;
 pub mod wgpu_backend;
+use state_codec::RuleState;
 use wgpu_backend::WgpuRuleLayer;
 
 // ---------------------------------------------------------------------------
@@ -350,7 +352,7 @@ impl OnlineO1Config {
         if weight_bits == 0 || weight_bits > 31 {
             return Err("weight_bits must be in 1..=31");
         }
-        if trace_bits < 2 || trace_bits > 30 {
+        if !(2..=30).contains(&trace_bits) {
             return Err("trace_bits must be in 2..=30");
         }
         if reward_bits == 0 || reward_bits > 30 {
@@ -477,8 +479,7 @@ impl OnlineO1Synapse {
         self.eligibility = (decayed_eligibility + potentiation - depression)
             .clamp(self.config.min_eligibility(), self.config.max_eligibility());
 
-        let weight_delta =
-            ((reward as i64 * self.eligibility as i64) >> self.config.learning_shift) as i64;
+        let weight_delta = (reward as i64 * self.eligibility as i64) >> self.config.learning_shift;
         self.weight =
             (self.weight as i64 + weight_delta).clamp(0, self.config.max_weight() as i64) as u32;
         self.snapshot()
@@ -636,6 +637,16 @@ pub extern "C" fn create_rule(
     param_a: f32,
     param_b: f32,
 ) -> *mut RuleHandle {
+    if rule_type > 3
+        || !weight.is_finite()
+        || !(0.0..=1.0).contains(&weight)
+        || !param_a.is_finite()
+        || param_a < 0.0
+        || !param_b.is_finite()
+        || param_b < 0.0
+    {
+        return std::ptr::null_mut();
+    }
     let handle = match rule_type {
         0 => RuleHandle::Eligent(EligentRule {
             threshold: 1.0,
@@ -675,6 +686,15 @@ pub extern "C" fn create_learner(
     target_rate: f32,
     weight: f32,
 ) -> *mut EligentRule {
+    if !threshold.is_finite()
+        || threshold <= 0.0
+        || !target_rate.is_finite()
+        || target_rate < 0.0
+        || !weight.is_finite()
+        || !(0.0..=1.0).contains(&weight)
+    {
+        return std::ptr::null_mut();
+    }
     let state = EligentRule {
         threshold,
         target_rate,
@@ -700,7 +720,7 @@ pub unsafe extern "C" fn step_rule(
     reward: f32,
     dt: f32,
 ) {
-    if ptr.is_null() {
+    if ptr.is_null() || !reward.is_finite() || !dt.is_finite() || dt <= 0.0 {
         return;
     }
     let handle = unsafe { &mut *ptr };
@@ -769,6 +789,11 @@ pub extern "C" fn create_online_o1_synapse(
 }
 
 #[no_mangle]
+/// Advance one bounded fixed-point synapse.
+///
+/// # Safety
+/// `ptr` must be live and must have been returned by
+/// [`create_online_o1_synapse`].
 pub unsafe extern "C" fn step_online_o1_synapse(
     ptr: *mut OnlineO1Synapse,
     pre_spike: bool,
@@ -782,6 +807,11 @@ pub unsafe extern "C" fn step_online_o1_synapse(
 }
 
 #[no_mangle]
+/// Return the fixed-point state footprint for one live synapse.
+///
+/// # Safety
+/// `ptr` must be null or a live pointer returned by
+/// [`create_online_o1_synapse`].
 pub unsafe extern "C" fn online_o1_per_synapse_state_bits(ptr: *const OnlineO1Synapse) -> u32 {
     if ptr.is_null() {
         return 0;
@@ -790,6 +820,11 @@ pub unsafe extern "C" fn online_o1_per_synapse_state_bits(ptr: *const OnlineO1Sy
 }
 
 #[no_mangle]
+/// Release one bounded fixed-point synapse.
+///
+/// # Safety
+/// A non-null `ptr` must have been returned by [`create_online_o1_synapse`]
+/// and must not have been released previously.
 pub unsafe extern "C" fn destroy_online_o1_synapse(ptr: *mut OnlineO1Synapse) {
     if !ptr.is_null() {
         let _ = unsafe { Box::from_raw(ptr) };
@@ -797,15 +832,18 @@ pub unsafe extern "C" fn destroy_online_o1_synapse(ptr: *mut OnlineO1Synapse) {
 }
 
 /// Backward-compatible FFI for ELIGENT learner step.
+///
+/// # Safety
+/// `ptr` must be null or a live pointer returned by [`create_learner`].
 #[no_mangle]
-pub extern "C" fn step_learner(
+pub unsafe extern "C" fn step_learner(
     ptr: *mut EligentRule,
     fired: bool,
     pre_spike: bool,
     global_reward: f32,
     dt: f32,
 ) {
-    if ptr.is_null() {
+    if ptr.is_null() || !global_reward.is_finite() || !dt.is_finite() || dt <= 0.0 {
         return;
     }
     let state = unsafe { &mut *ptr };
@@ -813,8 +851,12 @@ pub extern "C" fn step_learner(
 }
 
 /// Backward-compatible FFI for ELIGENT learner destruction.
+///
+/// # Safety
+/// A non-null `ptr` must have been returned by [`create_learner`] and must not
+/// have been released previously.
 #[no_mangle]
-pub extern "C" fn destroy_learner(ptr: *mut EligentRule) {
+pub unsafe extern "C" fn destroy_learner(ptr: *mut EligentRule) {
     if !ptr.is_null() {
         unsafe {
             let _ = Box::from_raw(ptr);
@@ -827,6 +869,10 @@ pub extern "C" fn destroy_learner(ptr: *mut EligentRule) {
 // ---------------------------------------------------------------------------
 
 /// Batched FFI execution for vector arrays.
+///
+/// # Safety
+/// `ptr` must be live, and each input pointer must reference `count` readable
+/// values for the duration of the call.
 #[no_mangle]
 pub unsafe extern "C" fn step_rule_batched(
     ptr: *mut RuleHandle,
@@ -836,13 +882,22 @@ pub unsafe extern "C" fn step_rule_batched(
     count: usize,
     dt: f32,
 ) {
-    if ptr.is_null() || pre_spikes.is_null() || post_spikes.is_null() || rewards.is_null() {
+    if ptr.is_null()
+        || pre_spikes.is_null()
+        || post_spikes.is_null()
+        || rewards.is_null()
+        || !dt.is_finite()
+        || dt <= 0.0
+    {
         return;
     }
     let handle = unsafe { &mut *ptr };
     let pre_slice = std::slice::from_raw_parts(pre_spikes, count);
     let post_slice = std::slice::from_raw_parts(post_spikes, count);
     let rew_slice = std::slice::from_raw_parts(rewards, count);
+    if rew_slice.iter().any(|reward| !reward.is_finite()) {
+        return;
+    }
 
     let rule = handle.as_rule();
     for i in 0..count {
@@ -851,6 +906,10 @@ pub unsafe extern "C" fn step_rule_batched(
 }
 
 /// Batched FFI execution for ELIGENT legacy vectors.
+///
+/// # Safety
+/// `ptr` must be live, and each input pointer must reference `count` readable
+/// values for the duration of the call.
 #[no_mangle]
 pub unsafe extern "C" fn step_learner_batched(
     ptr: *mut EligentRule,
@@ -860,23 +919,82 @@ pub unsafe extern "C" fn step_learner_batched(
     count: usize,
     dt: f32,
 ) {
-    if ptr.is_null() || fired.is_null() || pre_spikes.is_null() || rewards.is_null() {
+    if ptr.is_null()
+        || fired.is_null()
+        || pre_spikes.is_null()
+        || rewards.is_null()
+        || !dt.is_finite()
+        || dt <= 0.0
+    {
         return;
     }
     let state = unsafe { &mut *ptr };
     let fired_slice = std::slice::from_raw_parts(fired, count);
     let pre_slice = std::slice::from_raw_parts(pre_spikes, count);
     let rew_slice = std::slice::from_raw_parts(rewards, count);
+    if rew_slice.iter().any(|reward| !reward.is_finite()) {
+        return;
+    }
 
     for i in 0..count {
         state.step(pre_slice[i], fired_slice[i], rew_slice[i], dt);
     }
 }
 
-/// WGPU Backend FFI
+// WGPU backend FFI.
+
+// This helper mirrors the fixed public ABI and shader parameter block.
+#[allow(clippy::too_many_arguments)]
+fn create_wgpu_layer_impl(
+    count: usize,
+    rule_type: u32,
+    initial_weight: f32,
+    a_plus: f32,
+    a_minus: f32,
+    tau_plus: f32,
+    tau_minus: f32,
+    param_c: f32,
+    param_d: f32,
+) -> *mut WgpuRuleLayer {
+    let parameters = [
+        initial_weight,
+        a_plus,
+        a_minus,
+        tau_plus,
+        tau_minus,
+        param_c,
+        param_d,
+    ];
+    if count == 0
+        || count > u32::MAX as usize
+        || rule_type > 3
+        || parameters.iter().any(|value| !value.is_finite())
+        || !(0.0..=1.0).contains(&initial_weight)
+        || a_plus < 0.0
+        || a_minus < 0.0
+        || tau_plus <= 0.0
+        || tau_minus <= 0.0
+        || param_c <= 0.0
+        || param_d < 0.0
+    {
+        return std::ptr::null_mut();
+    }
+    WgpuRuleLayer::new(
+        count,
+        rule_type,
+        initial_weight,
+        a_plus,
+        a_minus,
+        tau_plus,
+        tau_minus,
+        param_c,
+        param_d,
+    )
+    .map_or(std::ptr::null_mut(), |layer| Box::into_raw(Box::new(layer)))
+}
 
 #[no_mangle]
-pub unsafe extern "C" fn create_wgpu_layer(
+pub extern "C" fn create_wgpu_layer(
     count: usize,
     rule_type: u32,
     a_plus: f32,
@@ -886,20 +1004,43 @@ pub unsafe extern "C" fn create_wgpu_layer(
     param_c: f32,
     param_d: f32,
 ) -> *mut WgpuRuleLayer {
-    println!(
-        "Initializing WGPU backend (Rule {}, Scale {})",
-        rule_type, count
-    );
-    if let Some(layer) = WgpuRuleLayer::new(
-        count, rule_type, a_plus, a_minus, tau_plus, tau_minus, param_c, param_d,
-    ) {
-        Box::into_raw(Box::new(layer))
-    } else {
-        println!("Warning: WGPU initialization failed gracefully on host. Returning NULL pointer.");
-        std::ptr::null_mut()
-    }
+    create_wgpu_layer_impl(
+        count, rule_type, 0.5, a_plus, a_minus, tau_plus, tau_minus, param_c, param_d,
+    )
 }
 
+#[no_mangle]
+// This exported signature is a stable C ABI, not an internal Rust API.
+#[allow(clippy::too_many_arguments)]
+pub extern "C" fn create_wgpu_layer_with_weight(
+    count: usize,
+    rule_type: u32,
+    initial_weight: f32,
+    a_plus: f32,
+    a_minus: f32,
+    tau_plus: f32,
+    tau_minus: f32,
+    param_c: f32,
+    param_d: f32,
+) -> *mut WgpuRuleLayer {
+    create_wgpu_layer_impl(
+        count,
+        rule_type,
+        initial_weight,
+        a_plus,
+        a_minus,
+        tau_plus,
+        tau_minus,
+        param_c,
+        param_d,
+    )
+}
+
+/// Advance one WGPU rule layer.
+///
+/// # Safety
+/// `mgr` must be live, while `pre_probs` and `post_probs` must each reference
+/// `mgr.count` values. A non-null `rewards` pointer has the same requirement.
 #[no_mangle]
 pub unsafe extern "C" fn step_wgpu_layer(
     mgr: *mut WgpuRuleLayer,
@@ -908,14 +1049,15 @@ pub unsafe extern "C" fn step_wgpu_layer(
     rewards: *const f32,
     dt: f32,
 ) {
-    if mgr.is_null() {
+    if mgr.is_null() || pre_probs.is_null() || post_probs.is_null() || !dt.is_finite() || dt <= 0.0
+    {
         return;
     }
-    let layer = &mut *mgr;
-    let pre_slice = std::slice::from_raw_parts(pre_probs, layer.count as usize);
-    let post_slice = std::slice::from_raw_parts(post_probs, layer.count as usize);
+    let layer = unsafe { &mut *mgr };
+    let pre_slice = unsafe { std::slice::from_raw_parts(pre_probs, layer.count as usize) };
+    let post_slice = unsafe { std::slice::from_raw_parts(post_probs, layer.count as usize) };
     let reward_slice = if !rewards.is_null() {
-        std::slice::from_raw_parts(rewards, layer.count as usize)
+        unsafe { std::slice::from_raw_parts(rewards, layer.count as usize) }
     } else {
         &[]
     };
@@ -923,16 +1065,48 @@ pub unsafe extern "C" fn step_wgpu_layer(
     layer.step(pre_slice, post_slice, reward_slice, dt);
 }
 
+/// Copy every WGPU weight into a caller-owned buffer.
+///
+/// # Safety
+/// `mgr` must be live and `out_weights` must reference at least `mgr.count`
+/// writable `f32` values.
 #[no_mangle]
 pub unsafe extern "C" fn get_wgpu_weights(mgr: *mut WgpuRuleLayer, out_weights: *mut f32) {
     if mgr.is_null() || out_weights.is_null() {
         return;
     }
     let layer = &*mgr;
-    let weights = layer.get_weights();
+    let Some(weights) = layer.get_weights() else {
+        return;
+    };
     std::ptr::copy_nonoverlapping(weights.as_ptr(), out_weights, layer.count as usize);
 }
 
+/// Replace every WGPU weight through a length-aware buffer boundary.
+///
+/// # Safety
+/// `mgr` must be live and `weights` must reference `count` readable values.
+#[no_mangle]
+pub unsafe extern "C" fn set_wgpu_weights(
+    mgr: *mut WgpuRuleLayer,
+    weights: *const f32,
+    count: usize,
+) -> bool {
+    if mgr.is_null() || weights.is_null() {
+        return false;
+    }
+    let layer = unsafe { &mut *mgr };
+    if count != layer.count as usize {
+        return false;
+    }
+    let input = unsafe { std::slice::from_raw_parts(weights, count) };
+    layer.set_weights(input)
+}
+
+/// Select deterministic WGPU event sampling for one layer.
+///
+/// # Safety
+/// `mgr` must be null or a live pointer returned by a WGPU layer constructor.
 #[no_mangle]
 pub unsafe extern "C" fn set_wgpu_layer_seed(mgr: *mut WgpuRuleLayer, seed: u32) {
     if mgr.is_null() {
@@ -955,6 +1129,11 @@ pub unsafe extern "C" fn reset_wgpu_layer(mgr: *mut WgpuRuleLayer) {
     layer.reset();
 }
 
+/// Release one WGPU layer.
+///
+/// # Safety
+/// A non-null `mgr` must have been returned by a WGPU layer constructor and
+/// must not have been released previously.
 #[no_mangle]
 pub unsafe extern "C" fn free_wgpu_layer(mgr: *mut WgpuRuleLayer) {
     if !mgr.is_null() {
@@ -970,14 +1149,26 @@ pub struct RuleLayerHandle {
     pub rules: Vec<Box<dyn PlasticityRule>>,
 }
 
+/// Create a validated Rayon rule layer and return its owned handle.
 #[no_mangle]
-pub unsafe extern "C" fn create_rule_layer(
+pub extern "C" fn create_rule_layer(
     count: usize,
     rule_type: u32,
     weight: f32,
     param_a: f32,
     param_b: f32,
 ) -> *mut RuleLayerHandle {
+    if count == 0
+        || rule_type > 3
+        || !weight.is_finite()
+        || !(0.0..=1.0).contains(&weight)
+        || !param_a.is_finite()
+        || param_a < 0.0
+        || !param_b.is_finite()
+        || param_b < 0.0
+    {
+        return std::ptr::null_mut();
+    }
     let mut rules = Vec::with_capacity(count);
     for _ in 0..count {
         let rule: Box<dyn PlasticityRule> = match rule_type {
@@ -1021,6 +1212,11 @@ pub unsafe extern "C" fn create_rule_layer(
     Box::into_raw(Box::new(RuleLayerHandle { rules }))
 }
 
+/// Advance every rule from equal-length spike and reward arrays.
+///
+/// # Safety
+/// `layer_ptr` must be live, and all input pointers must reference at least the
+/// layer's rule count in readable values.
 #[no_mangle]
 pub unsafe extern "C" fn step_rule_layer(
     layer_ptr: *mut RuleLayerHandle,
@@ -1029,7 +1225,13 @@ pub unsafe extern "C" fn step_rule_layer(
     rewards: *const f32,
     dt: f32,
 ) {
-    if layer_ptr.is_null() || pre_spikes.is_null() || post_spikes.is_null() || rewards.is_null() {
+    if layer_ptr.is_null()
+        || pre_spikes.is_null()
+        || post_spikes.is_null()
+        || rewards.is_null()
+        || !dt.is_finite()
+        || dt <= 0.0
+    {
         return;
     }
     let layer = unsafe { &mut *layer_ptr };
@@ -1038,6 +1240,9 @@ pub unsafe extern "C" fn step_rule_layer(
     let pre_slice = std::slice::from_raw_parts(pre_spikes, count);
     let post_slice = std::slice::from_raw_parts(post_spikes, count);
     let rew_slice = std::slice::from_raw_parts(rewards, count);
+    if rew_slice.iter().any(|reward| !reward.is_finite()) {
+        return;
+    }
 
     layer
         .rules
@@ -1050,6 +1255,11 @@ pub unsafe extern "C" fn step_rule_layer(
         });
 }
 
+/// Sample analog probabilities and advance every rule deterministically.
+///
+/// # Safety
+/// `layer_ptr` must be live, and all input pointers must reference at least the
+/// layer's rule count in readable values.
 #[no_mangle]
 pub unsafe extern "C" fn step_rule_layer_analog(
     layer_ptr: *mut RuleLayerHandle,
@@ -1059,7 +1269,13 @@ pub unsafe extern "C" fn step_rule_layer_analog(
     seed: u64,
     dt: f32,
 ) {
-    if layer_ptr.is_null() || pre_probs.is_null() || post_probs.is_null() || rewards.is_null() {
+    if layer_ptr.is_null()
+        || pre_probs.is_null()
+        || post_probs.is_null()
+        || rewards.is_null()
+        || !dt.is_finite()
+        || dt <= 0.0
+    {
         return;
     }
     let layer = unsafe { &mut *layer_ptr };
@@ -1068,6 +1284,13 @@ pub unsafe extern "C" fn step_rule_layer_analog(
     let pre_slice = std::slice::from_raw_parts(pre_probs, count);
     let post_slice = std::slice::from_raw_parts(post_probs, count);
     let rew_slice = std::slice::from_raw_parts(rewards, count);
+    let invalid_probability = |value: &f32| !value.is_finite() || !(0.0..=1.0).contains(value);
+    if pre_slice.iter().any(invalid_probability)
+        || post_slice.iter().any(invalid_probability)
+        || rew_slice.iter().any(|reward| !reward.is_finite())
+    {
+        return;
+    }
 
     use rand::{RngExt, SeedableRng};
     use rand_xoshiro::Xoshiro256PlusPlus;
@@ -1093,6 +1316,11 @@ pub unsafe extern "C" fn step_rule_layer_analog(
         });
 }
 
+/// Copy every Rayon-layer weight into a caller-owned buffer.
+///
+/// # Safety
+/// `layer_ptr` must be live and `out_weights` must reference at least the
+/// layer's rule count in writable `f32` values.
 #[no_mangle]
 pub unsafe extern "C" fn get_rule_layer_weights(
     layer_ptr: *const RuleLayerHandle,
@@ -1114,6 +1342,11 @@ pub unsafe extern "C" fn get_rule_layer_weights(
         });
 }
 
+/// Save the versioned layer state to a UTF-8 filesystem path.
+///
+/// # Safety
+/// `layer_ptr` must be live and `filepath` must reference a terminated C string
+/// for the duration of the call.
 #[no_mangle]
 pub unsafe extern "C" fn save_rule_layer_batched(
     layer_ptr: *const RuleLayerHandle,
@@ -1142,6 +1375,11 @@ pub unsafe extern "C" fn save_rule_layer_batched(
     }
 }
 
+/// Load and atomically restore the versioned state from a filesystem path.
+///
+/// # Safety
+/// `layer_ptr` must be live and `filepath` must reference a terminated C string
+/// for the duration of the call.
 #[no_mangle]
 pub unsafe extern "C" fn load_rule_layer_batched(
     layer_ptr: *mut RuleLayerHandle,
@@ -1163,12 +1401,17 @@ pub unsafe extern "C" fn load_rule_layer_batched(
             return false;
         }
 
-        set_rule_layer_state_mem(layer_ptr, byte_buffer.as_ptr())
+        set_rule_layer_state_mem_checked(layer_ptr, byte_buffer.as_ptr(), byte_buffer.len())
     } else {
         false
     }
 }
 
+/// Release one Rayon rule layer.
+///
+/// # Safety
+/// A non-null `layer_ptr` must have been returned by [`create_rule_layer`] and
+/// must not have been released previously.
 #[no_mangle]
 pub unsafe extern "C" fn destroy_rule_layer(layer_ptr: *mut RuleLayerHandle) {
     if !layer_ptr.is_null() {
@@ -1193,20 +1436,25 @@ pub unsafe extern "C" fn reset_rule_layer(layer_ptr: *mut RuleLayerHandle) {
     layer.rules.par_iter_mut().for_each(|rule| rule.reset());
 }
 
+/// Return the encoded byte length required for one layer state.
+///
+/// # Safety
+/// `layer_ptr` must be null or a live pointer returned by
+/// [`create_rule_layer`].
 #[no_mangle]
 pub unsafe extern "C" fn get_rule_layer_state_size(layer_ptr: *const RuleLayerHandle) -> usize {
     if layer_ptr.is_null() {
         return 0;
     }
-    let layer = &*layer_ptr;
-    let mut total_f32 = 0;
-    for rule in &layer.rules {
-        total_f32 += rule.get_state().len();
-    }
-    // 4 magic + 4 version + 4 count + per_rule(4 id + 4 len) + f32 bytes
-    12 + layer.rules.len() * 8 + total_f32 * 4
+    let layer = unsafe { &*layer_ptr };
+    encode_rule_layer(layer).map_or(0, |buffer| buffer.len())
 }
 
+/// Copy the encoded state into a caller-owned buffer.
+///
+/// # Safety
+/// `layer_ptr` must be a live rule layer and `out_buffer` must reference at
+/// least `get_rule_layer_state_size(layer_ptr)` writable bytes.
 #[no_mangle]
 pub unsafe extern "C" fn get_rule_layer_state_mem(
     layer_ptr: *const RuleLayerHandle,
@@ -1215,37 +1463,20 @@ pub unsafe extern "C" fn get_rule_layer_state_mem(
     if layer_ptr.is_null() || out_buffer.is_null() {
         return false;
     }
-    let layer = &*layer_ptr;
-
-    let mut offset = 0;
-    let size = get_rule_layer_state_size(layer_ptr);
-    let out_slice = std::slice::from_raw_parts_mut(out_buffer, size);
-
-    out_slice[offset..offset + 4].copy_from_slice(b"SCAL");
-    offset += 4;
-    out_slice[offset..offset + 4].copy_from_slice(&1u32.to_le_bytes());
-    offset += 4;
-    out_slice[offset..offset + 4].copy_from_slice(&(layer.rules.len() as u32).to_le_bytes());
-    offset += 4;
-
-    for rule in &layer.rules {
-        out_slice[offset..offset + 4].copy_from_slice(&rule.rule_id().to_le_bytes());
-        offset += 4;
-        let rs = rule.get_state();
-        out_slice[offset..offset + 4].copy_from_slice(&(rs.len() as u32).to_le_bytes());
-        offset += 4;
-
-        let byte_size = rs.len() * 4;
-        std::ptr::copy_nonoverlapping(
-            rs.as_ptr() as *const u8,
-            out_slice[offset..].as_mut_ptr(),
-            byte_size,
-        );
-        offset += byte_size;
-    }
+    let layer = unsafe { &*layer_ptr };
+    let Some(encoded) = encode_rule_layer(layer) else {
+        return false;
+    };
+    unsafe { std::ptr::copy_nonoverlapping(encoded.as_ptr(), out_buffer, encoded.len()) };
     true
 }
 
+/// Restore state using the legacy pointer-only ABI.
+///
+/// # Safety
+/// `layer_ptr` must be live and `in_buffer` must reference at least the exact
+/// encoded size implied by the current layer. New callers must use
+/// [`set_rule_layer_state_mem_checked`] so the allocation length is explicit.
 #[no_mangle]
 pub unsafe extern "C" fn set_rule_layer_state_mem(
     layer_ptr: *mut RuleLayerHandle,
@@ -1254,52 +1485,56 @@ pub unsafe extern "C" fn set_rule_layer_state_mem(
     if layer_ptr.is_null() || in_buffer.is_null() {
         return false;
     }
-    let layer = &mut *layer_ptr;
-
-    let magic = std::slice::from_raw_parts(in_buffer, 4);
-    if magic != b"SCAL" {
+    let expected_len = get_rule_layer_state_size(layer_ptr);
+    if expected_len == 0 {
         return false;
-    } // Strict Magic Verify
+    }
+    set_rule_layer_state_mem_checked(layer_ptr, in_buffer, expected_len)
+}
 
-    let mut offset = 4;
-    let version_bytes = std::slice::from_raw_parts(in_buffer.add(offset), 4);
-    let version = u32::from_le_bytes(version_bytes.try_into().unwrap());
-    offset += 4;
-    if version != 1 {
+/// Restore a rule layer from an allocation whose byte length is explicit.
+///
+/// The complete payload is parsed before any rule is mutated, making malformed
+/// input fail atomically.
+///
+/// # Safety
+/// `layer_ptr` must be a live rule layer and `in_buffer` must reference
+/// `in_buffer_len` readable bytes.
+#[no_mangle]
+pub unsafe extern "C" fn set_rule_layer_state_mem_checked(
+    layer_ptr: *mut RuleLayerHandle,
+    in_buffer: *const u8,
+    in_buffer_len: usize,
+) -> bool {
+    if layer_ptr.is_null() || in_buffer.is_null() || in_buffer_len == 0 {
         return false;
-    } // Unsupported version
-
-    let count_bytes = std::slice::from_raw_parts(in_buffer.add(offset), 4);
-    let count = u32::from_le_bytes(count_bytes.try_into().unwrap());
-    offset += 4;
-
-    if count as usize != layer.rules.len() {
+    }
+    let layer = unsafe { &mut *layer_ptr };
+    let expected: Vec<(u32, usize)> = layer
+        .rules
+        .iter()
+        .map(|rule| (rule.rule_id(), rule.get_state().len()))
+        .collect();
+    let input = unsafe { std::slice::from_raw_parts(in_buffer, in_buffer_len) };
+    let Some(records) = state_codec::decode(input, &expected) else {
         return false;
-    } // Layer dimension mismatch
-
-    for rule in &mut layer.rules {
-        let rule_id = u32::from_le_bytes(
-            std::slice::from_raw_parts(in_buffer.add(offset), 4)
-                .try_into()
-                .unwrap(),
-        );
-        offset += 4;
-        if rule_id != rule.rule_id() {
-            return false;
-        } // Rule mapping mismatch
-
-        let trace_count = u32::from_le_bytes(
-            std::slice::from_raw_parts(in_buffer.add(offset), 4)
-                .try_into()
-                .unwrap(),
-        ) as usize;
-        offset += 4;
-
-        let traces = std::slice::from_raw_parts(in_buffer.add(offset) as *const f32, trace_count);
-        rule.set_state(traces);
-        offset += trace_count * 4;
+    };
+    for (rule, record) in layer.rules.iter_mut().zip(records) {
+        rule.set_state(&record.values);
     }
     true
+}
+
+fn encode_rule_layer(layer: &RuleLayerHandle) -> Option<Vec<u8>> {
+    let records: Vec<RuleState> = layer
+        .rules
+        .iter()
+        .map(|rule| RuleState {
+            rule_id: rule.rule_id(),
+            values: rule.get_state(),
+        })
+        .collect();
+    state_codec::encode(&records)
 }
 
 // ---------------------------------------------------------------------------
@@ -1456,8 +1691,54 @@ mod tests {
     fn backward_compat_eligent_ffi() {
         let ptr = create_learner(1.0, 0.1, 0.5);
         assert!(!ptr.is_null());
-        step_learner(ptr, true, true, 1.0, 1.0);
-        destroy_learner(ptr);
+        unsafe {
+            step_learner(ptr, true, true, 1.0, 1.0);
+            destroy_learner(ptr);
+        }
+    }
+
+    #[test]
+    fn ffi_constructors_reject_invalid_numeric_domains() {
+        assert!(create_rule(1, f32::NAN, 0.1, 0.2).is_null());
+        assert!(create_rule(1, 1.1, 0.1, 0.2).is_null());
+        assert!(create_rule(1, 0.5, -0.1, 0.2).is_null());
+        assert!(create_learner(0.0, 0.1, 0.5).is_null());
+        assert!(create_learner(1.0, -0.1, 0.5).is_null());
+        let layer = create_rule_layer(0, 1, 0.5, 0.1, 0.2);
+        assert!(layer.is_null());
+    }
+
+    #[test]
+    fn ffi_rule_rejects_non_finite_events() {
+        let ptr = create_rule(1, 0.5, 0.1, 0.2);
+        assert!(!ptr.is_null());
+        let before = unsafe { get_rule_weight(ptr) };
+        unsafe {
+            step_rule(ptr, true, true, f32::NAN, 1.0);
+            step_rule(ptr, true, true, 1.0, 0.0);
+        }
+        assert_eq!(unsafe { get_rule_weight(ptr) }, before);
+        unsafe { destroy_rule(ptr) };
+    }
+
+    #[test]
+    fn checked_rule_layer_state_is_length_aware() {
+        let layer = create_rule_layer(2, 1, 0.5, 0.1, 0.2);
+        assert!(!layer.is_null());
+        let size = unsafe { get_rule_layer_state_size(layer) };
+        let mut encoded = vec![0_u8; size];
+        assert!(unsafe { get_rule_layer_state_mem(layer, encoded.as_mut_ptr()) });
+        assert!(unsafe {
+            set_rule_layer_state_mem_checked(layer, encoded.as_ptr(), encoded.len())
+        });
+        assert!(!unsafe {
+            set_rule_layer_state_mem_checked(layer, encoded.as_ptr(), encoded.len() - 1)
+        });
+        encoded.push(0);
+        assert!(!unsafe {
+            set_rule_layer_state_mem_checked(layer, encoded.as_ptr(), encoded.len())
+        });
+        unsafe { destroy_rule_layer(layer) };
     }
 
     #[test]

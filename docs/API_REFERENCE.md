@@ -46,93 +46,232 @@ Encode an LFSR-16 stochastic bitstream as a uint8 0/1 numpy array.
 
 ## Module `_native.learning_bridge`
 
-### Class `OnlineO1SnapshotFFI`
-ctypes representation of the Rust fixed-point online O(1) snapshot.
+### Function `is_available()`
+Return whether the required autonomous-learning Rust ABI is loaded.
 
+### Function `set_deterministic_mode(seed)`
+Set the shared deterministic seed for analogue and WGPU paths.
+
+### Function `__getattr__(name)`
+Expose read-only historical runtime diagnostics for compatibility.
+
+---
+
+## Module `_native.learning_factory`
+
+### Function `create_plasticity_layer(count, rule_type, backend, autograd)`
+Construct a Torch, Rust-Rayon, or Rust-WGPU plasticity layer.
+
+Rust backends remain available when PyTorch is not installed.  Torch is
+imported only when explicitly selected so optional dependency failures do
+not disable native learning.
+
+---
+
+## Module `_native.learning_runtime`
+
+### Class `OnlineO1SnapshotFFI`
+ctypes representation of the bounded Rust online O(1) snapshot.
+
+
+### Function `is_available()`
+Return whether the required autonomous-learning ABI is loaded.
+
+### Function `has_symbol(name)`
+Return whether the loaded library exposes ``name``.
+
+### Function `require_symbol(name)`
+Return a typed dynamic symbol or raise for an incompatible library.
+
+### Function `destroy_noexcept(symbol, pointer)`
+Destroy a native handle without leaking exceptions from finalizers.
+
+### Function `set_deterministic_mode(seed)`
+Set a shared deterministic seed for CPU analogue and WGPU paths.
+
+### Function `deterministic_seed()`
+Return the configured shared deterministic seed.
+
+---
+
+## Module `_native.learning_rust`
 
 ### Class `RustOnlineO1Synapse`
-RAII wrapper for the Rust bounded fixed-point online O(1) learner.
+Own one bounded fixed-point online O(1) Rust learner.
 
 - **__init__**()
 - **step**()
   - Advance one timestep and return the bounded fixed-point state.
 - **per_synapse_state_bits**()
   - Return the Rust-reported fixed-point state footprint in bits.
-- **__del__**()
 
 ### Class `RustPlasticityRule`
-RAII wrapper around a Rust plasticity rule handle.
-
-rule_type: RULE_STDP(0), RULE_BCM(1), RULE_REWARD_STDP(2), RULE_ELIGENT(3)
+Own one scalar Rust STDP, R-STDP, BCM, or ELIGENT rule.
 
 - **__init__**(rule_type, weight, param_a, param_b)
 - **step**(pre_spike, post_spike, dt, reward)
-  - Advance one plasticity-rule timestep through the Rust FFI.
+  - Advance one scalar plasticity timestep through the Rust ABI.
 - **step_batched**(pre_spikes, post_spikes, rewards, dt)
-  - Process Numpy arrays in a single FFI boundary crossing.
+  - Advance equally sized vectors in one native boundary crossing.
 - **weight**()
   - Return the current Rust-managed rule weight.
 - **reset**()
-  - Reset rule traces while preserving the Rust rule handle.
-- **__del__**()
+  - Clear rule traces while retaining the learned weight.
 
 ### Class `RustEligentLearner`
-RAII wrapper around a Rust ELIGENT learner handle.
+Own one backward-compatible scalar Rust ELIGENT learner.
 
 - **__init__**(threshold, target_rate, weight)
 - **step**(fired, pre_spike, global_reward, dt)
-  - Advance one ELIGENT learner timestep through the Rust FFI.
+  - Advance one scalar ELIGENT timestep through the Rust ABI.
 - **step_batched**(fired_slice, pre_spikes, rewards, dt)
-  - Process batched ELIGENT learner events in one FFI call.
-- **__del__**()
+  - Advance equally sized ELIGENT vectors through one native call.
+
+---
+
+## Module `_native.learning_rust_layer`
 
 ### Class `RustRuleLayer`
-RAII wrapper around a Rust RuleLayerHandle for parallelized spatial (layer) execution.
+Own a parallel Rust rule layer with length-checked array boundaries.
 
 - **__init__**(count, rule_type, weight, param_a, param_b)
 - **__getstate__**()
+  - Return validated metadata and Rust-owned serialization bytes.
 - **get_state_dict**()
-  - Return a Python state dictionary with Rust serialization bytes.
+  - Return a Python state dictionary containing Rust serialization.
 - **__setstate__**(state)
+  - Atomically replace this layer from a validated serialized state.
 - **load_state_dict**(state_dict)
-  - Restore a Rust rule layer from a Python state dictionary.
+  - Atomically restore this layer from a Python state dictionary.
 - **step**(pre_spikes, post_spikes, rewards, dt)
-  - Process spatial Numpy arrays natively across Rayon Rust threads.
+  - Process one exactly sized spatial batch on Rayon threads.
 - **step_analog**(pre_probs, post_probs, rewards, dt, seed)
-  - Process MTJ analogue probability states directly into sampled stochastic spikes using Rayon RNG.
+  - Sample probability vectors natively using an explicit safe seed.
 - **get_weights**()
-  - Return layer weights copied from the Rust rule layer.
+  - Return a detached copy of every native rule weight.
 - **save**(path)
-  - Serialize the internal traces and weights to a binary file natively.
+  - Write the checked in-memory state format to ``path``.
 - **load**(path)
-  - Deserialize traces and weights from a binary file directly into memory.
+  - Read and atomically restore a checked state payload from ``path``.
 - **reset**()
-  - Zero each rule's plasticity traces; learned weights are preserved.
-- **__del__**()
+  - Clear every rule trace while preserving learned weights.
+
+---
+
+## Module `_native.learning_torch`
+
+### Class `TorchRuleLayer`
+Execute biological plasticity with optional surrogate autograd.
+
+- **__init__**(count, rule_type, weight, param_a, param_b, autograd)
+- **reset**()
+  - Clear only the mutable traces defined by the selected rule.
+- **forward**(pre_spikes, post_spikes, rewards, dt)
+  - Advance one vector timestep and return the resulting weights.
+- **step**(pre_spikes, post_spikes, rewards, dt)
+  - Compatibility wrapper accepting Torch or NumPy vectors.
+- **get_state_dict**()
+  - Return the standard Torch state as a plain dictionary.
+- **load_state_dict**(state_dict, strict, assign)
+  - Restore a standard Torch state dictionary.
+- **get_weights**()
+  - Return a detached CPU copy of every weight.
+
+---
+
+## Module `_native.learning_torch_precision`
+
+### Function `normalise_bit_spec(spec)`
+Return a per-synapse integer bit vector within the supported domain.
+
+### Function `normalise_clip(value)`
+Return a finite, positive symmetric quantisation limit.
+
+### Function `quantise_tensor(values, bits, clip)`
+Symmetrically quantise a tensor, preserving its device and dtype.
+
+---
+
+## Module `_native.learning_torch_support`
+
+### Function `rule_parameters(rule_type, param_a, param_b, kwargs)`
+Build the five validated scalar parameters shared by every rule.
+
+### Function `validate_input(values)`
+Move a finite one-dimensional public input onto the layer device.
+
+---
+
+## Module `_native.learning_validation`
+
+### Function `require_integral()`
+Return an integer after rejecting booleans and non-integral values.
+
+### Function `require_non_negative_integral()`
+Return a non-negative integer for an unsigned native ABI field.
+
+### Function `require_integral_range()`
+Return an integer inside the inclusive native ABI domain.
+
+### Function `require_count(value)`
+Return a positive layer size that can safely cross ``size_t``.
+
+### Function `require_rule_type(value)`
+Return one of the four native plasticity rule identifiers.
+
+### Function `require_bool()`
+Return a real Python boolean for the C ``bool`` ABI.
+
+### Function `require_finite_float()`
+Return a finite real scalar after rejecting booleans.
+
+### Function `require_positive_float()`
+Return a finite strictly positive scalar.
+
+### Function `require_non_negative_float()`
+Return a finite non-negative scalar.
+
+### Function `require_unit_interval()`
+Return a finite scalar in the closed unit interval.
+
+### Function `require_u32_seed()`
+Return a deterministic seed accepted by CPU and WGPU paths.
+
+### Function `require_u64_seed()`
+Return an explicit seed accepted by the Rayon analogue path.
+
+### Function `saturate(value, lower, upper)`
+Clamp an already validated integer into inclusive bounds.
+
+### Function `as_bool_vector(values)`
+Return a contiguous Boolean vector without truthiness coercion.
+
+### Function `as_float_vector(values)`
+Return a contiguous finite ``float32`` vector.
+
+### Function `as_probability_vector(values)`
+Return a contiguous finite probability vector in ``&#91;0, 1&#93;``.
+
+---
+
+## Module `_native.learning_wgpu`
 
 ### Class `RustWgpuRuleLayer`
-RAII wrapper around explicit Rust WGPU execution instances computing via WGSL bindings.
+Own one explicit WGPU rule layer with safe host-buffer boundaries.
 
 - **__init__**(count, rule_type, weight, param_a, param_b, tau_e, target_sum_weights)
 - **step**(pre_spikes, post_spikes, rewards, dt)
-  - Advance one Rust-WGPU rule-layer step.
+  - Advance one exactly sized WGPU probability batch.
 - **step_analog**(pre_probs, post_probs, rewards, dt, seed)
-  - Advance analog probabilities through the Rust-WGPU step path.
+  - Advance probability vectors after optionally reseeding WGPU.
 - **get_weights**()
-  - Return weights copied from the Rust-WGPU layer.
+  - Return a detached copy of all WGPU-managed weights.
 - **get_state_dict**()
-  - Return the minimal serializable Rust-WGPU weight state.
+  - Return the portable WGPU weight state.
 - **load_state_dict**(state_dict)
-  - Warn that Rust-WGPU state restore relies on reinitialization.
+  - Restore weights through the length-aware WGPU Rust ABI.
 - **reset**()
-  - Zero WGSL plasticity traces; weights preserved. See `WgpuRuleLayer::reset`.
-- **__del__**()
-
-### Function `set_deterministic_mode(seed)`
-Force exact random generator seeds for bit-true SC formal verification.
-
-### Function `is_available()`
-Return True if the Rust learning engine is loaded.
+  - Clear WGPU plasticity traces while preserving weights.
 
 ---
 
