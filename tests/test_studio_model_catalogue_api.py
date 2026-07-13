@@ -120,6 +120,16 @@ def test_get_model_detail_serves_descriptor_parameters_and_dynamics() -> None:
     assert detail["family"] == "Integrate-and-Fire"
 
 
+def test_model_detail_exposes_measured_golden_trace_digest_variants() -> None:
+    """Studio clients can verify every typed platform-compatible trace digest."""
+    detail = get_model_detail("HodgkinHuxleyNeuron")
+    assert detail is not None
+    reproducibility = cast(dict[str, object], detail["reproducibility"])
+    assert reproducibility["golden_trace_sha256_variants"] == [
+        "4d626b852b03a1f029534b5f535af96f5f1b7b48da421d1ca482ae08eb71610c"
+    ]
+
+
 def test_model_facets_cover_the_whole_catalogue() -> None:
     facets = model_facets()
     assert facets["total"] == len(list_models())

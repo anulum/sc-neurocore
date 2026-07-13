@@ -20579,8 +20579,15 @@ Implementation status and numeric parity for one compute backend.
 ### Class `Reproducibility`
 Reference-run reproducibility anchors for a model.
 
+``golden_trace_sha256_variants`` is a finite allowlist for measured
+byte-level variants of the same numerically bounded trace, such as NumPy
+transcendental kernels selected by different x86 SIMD capabilities. The
+primary digest remains mandatory for a reproducible descriptor.
+
 - **is_reproducible**()
   - True when a reference config and a golden trace digest are present.
+- **golden_trace_digests**()
+  - Return the primary digest followed by measured compatible variants.
 
 ### Class `Validation`
 Class-correct validation evidence for a model's dynamics.

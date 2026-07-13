@@ -782,6 +782,13 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
   code, polyglot mirror, benchmark dispatch, or benchmark artefact changed.
 
 ### Fixed
+- Made Tier-3 golden-trace verification portable across NumPy's AVX-512 and
+  non-AVX-512 transcendental kernels. Chialvo and Hodgkin-Huxley now declare
+  the two measured, byte-exact SHA-256 variants; the gate accepts only those
+  hashes and separately proves their traces remain inside the existing
+  `1e-9` numeric-parity bound. This covers the two digests observed across the
+  Python 3.10-3.14 CI matrix without weakening deterministic models to an
+  unconstrained tolerance check.
 - Removed the stale Rust safety-module registry entry left after the generated
   CLI stub was deleted. Both Rust registries now resolve every declared module,
   and a focused source-registry contract prevents future file/declaration drift.

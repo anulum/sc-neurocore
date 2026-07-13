@@ -138,6 +138,18 @@ missing metadata, non-table sections, scalar tag fields, non-numeric values,
 malformed ranges, invalid provenance years, and invalid digest formats before a
 descriptor reaches the catalogue or Studio browser surface.
 
+Tier-3 golden traces remain exact-hash contracts. When a scalar transcendental
+has two measured NumPy SIMD results on heterogeneous x86 hosts, the descriptor's
+`[reproducibility]` table may add `golden_trace_sha256_variants`; the typed parser
+requires every entry to be a unique, non-primary, lowercase SHA-256. The
+reproducibility gate accepts only that finite allowlist, reruns variant-bearing
+models with AVX-512 disabled, and requires the native and portable traces to stay
+within the same `1e-9` bound used for ULP-bounded backend parity. This records
+platform-level rounding honestly without turning the golden gate into a broad
+approximate comparison. Studio model-detail responses expose the typed variant
+list so clients can verify either measured platform trace without parsing the
+raw TOML descriptor.
+
 ### Trivial IF Variants (18 models)
 
 | Python Class | Rust Class | Reference |

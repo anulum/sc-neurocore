@@ -347,6 +347,9 @@ def _descriptor_detail(descriptor: ModelDescriptor) -> dict[str, Any]:
             "reproducibility": {
                 "reference_config": descriptor.reproducibility.reference_config,
                 "golden_trace_sha256": descriptor.reproducibility.golden_trace_sha256,
+                "golden_trace_sha256_variants": list(
+                    descriptor.reproducibility.golden_trace_sha256_variants
+                ),
                 "reproducible": descriptor.reproducibility.is_reproducible,
             },
             "readiness": _readiness_detail(descriptor),

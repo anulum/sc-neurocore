@@ -163,6 +163,45 @@ def test_parse_rejects_invalid_controlled_fields(
         parse_model_descriptor(payload)
 
 
+def test_parse_reads_measured_golden_trace_digest_variants() -> None:
+    """Measured platform variants remain typed, ordered, and primary-prefixed."""
+    primary = "a" * 64
+    variant = "b" * 64
+    payload = _minimal_payload()
+    payload["reproducibility"] = {
+        "reference_config": "golden/adex.json",
+        "golden_trace_sha256": primary,
+        "golden_trace_sha256_variants": [variant],
+    }
+
+    reproducibility = parse_model_descriptor(payload).reproducibility
+
+    assert reproducibility.golden_trace_sha256_variants == (variant,)
+    assert reproducibility.golden_trace_digests == (primary, variant)
+
+
+@pytest.mark.parametrize(
+    "variants",
+    [
+        "b" * 64,
+        ["not-a-digest"],
+        ["a" * 64],
+        ["b" * 64, "b" * 64],
+    ],
+)
+def test_parse_rejects_invalid_golden_trace_digest_variants(variants: object) -> None:
+    """Variant digests must be a unique, non-primary lowercase SHA-256 list."""
+    payload = _minimal_payload()
+    payload["reproducibility"] = {
+        "reference_config": "golden/adex.json",
+        "golden_trace_sha256": "a" * 64,
+        "golden_trace_sha256_variants": variants,
+    }
+
+    with pytest.raises(ModelDescriptorError, match="golden_trace_sha256_variants"):
+        parse_model_descriptor(payload)
+
+
 @pytest.mark.parametrize(
     ("mutate", "match"),
     [

@@ -119,6 +119,7 @@ parity = "ulp-bounded"
 [reproducibility]
 reference_config = "{\"n_steps\":1000,\"current\":1.0,\"backend\":\"python\",\"parameters\":\"defaults\"}"
 golden_trace_sha256 = "abd66ecaf834f6872c2af639df18df4abbc562ff666a1f741224b147c1da3900"
+golden_trace_sha256_variants = ["e3fe85af7298f88f59be81d9d74a1ae6287387ffac31366ffcce89204c032725"]
 
 [documentation]
 slug = "models/chialvo_map"

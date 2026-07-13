@@ -24,6 +24,18 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
   across every workload and backend. Affinity-only, powersave-governor timings
   are explicitly diagnostic and do not claim isolated throughput.
 
+### Portable Tier-3 golden traces
+- Replaced the false assumption that NumPy transcendental traces are byte-
+  identical across heterogeneous x86 runners with an explicit exact-hash
+  variant contract. The Chialvo and Hodgkin-Huxley descriptors record the
+  measured AVX-512 and portable-kernel digests; no arbitrary digest is
+  accepted.
+- Added a regression that reruns every variant-bearing model with AVX-512
+  disabled, confirms both the native and portable digests are declared, and
+  enforces the existing `1e-9` numeric-parity ceiling. The observed boundaries
+  are one ULP for Chialvo and `1.902e-11` maximum absolute error for Hodgkin-
+  Huxley, with unchanged events.
+
 ### Quadratic IF exact-flow source-to-silicon closure
 - Exposed the exact constant-current Riccati flow through Python, the Rust
   engine, Julia, Go, and Mojo. Julia, Go, and Mojo carry the complete numeric

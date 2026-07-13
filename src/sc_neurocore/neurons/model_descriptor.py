@@ -139,17 +139,31 @@ class BackendSupport:
 
 @dataclass(frozen=True, slots=True)
 class Reproducibility:
-    """Reference-run reproducibility anchors for a model."""
+    """Reference-run reproducibility anchors for a model.
+
+    ``golden_trace_sha256_variants`` is a finite allowlist for measured
+    byte-level variants of the same numerically bounded trace, such as NumPy
+    transcendental kernels selected by different x86 SIMD capabilities. The
+    primary digest remains mandatory for a reproducible descriptor.
+    """
 
     reference_config: str = ""
     seed: int | None = None
     golden_trace_sha256: str = ""
+    golden_trace_sha256_variants: tuple[str, ...] = ()
     golden_citation: str = ""
 
     @property
     def is_reproducible(self) -> bool:
         """True when a reference config and a golden trace digest are present."""
         return bool(self.reference_config) and bool(self.golden_trace_sha256)
+
+    @property
+    def golden_trace_digests(self) -> tuple[str, ...]:
+        """Return the primary digest followed by measured compatible variants."""
+        if not self.golden_trace_sha256:
+            return self.golden_trace_sha256_variants
+        return (self.golden_trace_sha256, *self.golden_trace_sha256_variants)
 
 
 @dataclass(frozen=True, slots=True)
@@ -548,11 +562,24 @@ def _parse_reproducibility(section: Mapping[str, object]) -> Reproducibility:
     digest = _opt_str(section, "golden_trace_sha256")
     if digest and not _SHA256_HEX.fullmatch(digest):
         raise ModelDescriptorError(f"invalid golden_trace_sha256 {digest!r}")
+    raw_variants = section.get("golden_trace_sha256_variants", ())
+    if not isinstance(raw_variants, Sequence) or isinstance(raw_variants, str):
+        raise ModelDescriptorError("golden_trace_sha256_variants must be a list of SHA-256 strings")
+    variants: list[str] = []
+    for variant in raw_variants:
+        if not isinstance(variant, str) or not _SHA256_HEX.fullmatch(variant):
+            raise ModelDescriptorError(f"invalid golden_trace_sha256_variants entry {variant!r}")
+        variants.append(variant)
+    if variants and not digest:
+        raise ModelDescriptorError("golden_trace_sha256_variants require a primary digest")
+    if len(set((digest, *variants))) != 1 + len(variants):
+        raise ModelDescriptorError("golden_trace_sha256_variants must be unique and non-primary")
     seed = section.get("seed")
     return Reproducibility(
         reference_config=_opt_str(section, "reference_config"),
         seed=seed if isinstance(seed, int) and not isinstance(seed, bool) else None,
         golden_trace_sha256=digest,
+        golden_trace_sha256_variants=tuple(variants),
         golden_citation=_opt_str(section, "golden_citation"),
     )
 

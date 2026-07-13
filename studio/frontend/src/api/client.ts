@@ -116,7 +116,12 @@ export interface ModelDetail extends ModelSummary {
   dynamics: Record<string, string>;
   integration_method: string;
   backends: ModelBackendSupport[];
-  reproducibility: { reference_config: string; golden_trace_sha256: string; reproducible: boolean };
+  reproducibility: {
+    reference_config: string;
+    golden_trace_sha256: string;
+    golden_trace_sha256_variants?: string[];
+    reproducible: boolean;
+  };
   documentation_slug: string;
 }
 
