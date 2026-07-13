@@ -273,7 +273,7 @@ class DPINeuron:
             if not _backends.ensure_go_loaded():
                 raise RuntimeError(
                     "Go DPI backend requested but libdpi_neuron.so is not built; run "
-                    "go build -buildmode=c-shared -o libdpi_neuron.so dpi_neuron.go "
+                    "go build -buildmode=c-shared -o libdpi_neuron.so . "
                     "in accel/go/neurons/dpi_neuron."
                 )
             trace, spikes, state = self._simulate_full_contract(

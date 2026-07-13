@@ -9,6 +9,12 @@
 
 """SC-NeuroCore Engine package re-exports, SIMD primitives, and IR compiler."""
 
+from pkgutil import extend_path as _extend_path
+
+
+# Pytest loads the checkout bridge before the extension installed by maturin develop.
+__path__ = _extend_path(__path__, __name__)
+
 try:
     from sc_neurocore_engine.sc_neurocore_engine import (
         __version__,

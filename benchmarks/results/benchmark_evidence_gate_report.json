@@ -214,7 +214,7 @@
       "id": "hierarchical-kl-refine-five-backend-local-diagnostics"
     }
   ],
-  "failure_count": 40,
+  "failure_count": 44,
   "failures": [
     {
       "gate_id": "morris-lecar-rk4-multibackend-local-regression",
@@ -368,7 +368,17 @@
     },
     {
       "gate_id": "ibarz-tanaka-map-five-backend-controlled-regression",
+      "path": "bridge/sc_neurocore_engine/__init__.py->source_hashes.bridge/sc_neurocore_engine/__init__.py",
+      "reason": "source_hash_mismatch"
+    },
+    {
+      "gate_id": "ibarz-tanaka-map-five-backend-controlled-regression",
       "path": "engine/src/lib.rs->source_hashes.engine/src/lib.rs",
+      "reason": "source_hash_mismatch"
+    },
+    {
+      "gate_id": "medvedev-map-five-backend-controlled-regression",
+      "path": "bridge/sc_neurocore_engine/__init__.py->source_hashes.bridge/sc_neurocore_engine/__init__.py",
       "reason": "source_hash_mismatch"
     },
     {
@@ -403,7 +413,17 @@
     },
     {
       "gate_id": "connor-stevens-mojo-closure-local-regression",
+      "path": "bridge/sc_neurocore_engine/__init__.py->source_hashes.bridge/sc_neurocore_engine/__init__.py",
+      "reason": "source_hash_mismatch"
+    },
+    {
+      "gate_id": "connor-stevens-mojo-closure-local-regression",
       "path": "engine/src/pyo3_neurons.rs->source_hashes.engine/src/pyo3_neurons.rs",
+      "reason": "source_hash_mismatch"
+    },
+    {
+      "gate_id": "hodgkin-huxley-mojo-closure-local-regression",
+      "path": "bridge/sc_neurocore_engine/__init__.py->source_hashes.bridge/sc_neurocore_engine/__init__.py",
       "reason": "source_hash_mismatch"
     },
     {

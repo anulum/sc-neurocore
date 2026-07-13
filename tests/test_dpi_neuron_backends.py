@@ -341,6 +341,31 @@ def test_requested_rust_backend_reports_unavailable(monkeypatch: pytest.MonkeyPa
         DPINeuron().simulate(1, 0.0, backend="rust")
 
 
+def test_go_build_hint_uses_reproducible_package_mode(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Build the public Go hint without changing the committed C header."""
+    monkeypatch.setattr(backends, "ensure_go_loaded", lambda: False)
+    with pytest.raises(RuntimeError) as error:
+        DPINeuron().simulate(1, 0.0, backend="go")
+    expected_command = "go build -buildmode=c-shared -o libdpi_neuron.so ."
+    assert expected_command in str(error.value)
+
+    source = _REPOSITORY / "src" / "sc_neurocore" / "accel" / "go" / "neurons" / "dpi_neuron"
+    output = tmp_path / "libdpi_neuron.so"
+    subprocess.run(
+        ["go", "build", "-buildmode=c-shared", "-o", str(output), "."],
+        cwd=source,
+        check=True,
+        capture_output=True,
+        text=True,
+        timeout=120,
+    )
+    generated_header = output.with_suffix(".h")
+    assert generated_header.read_bytes() == (source / "libdpi_neuron.h").read_bytes()
+
+
 def test_dispatcher_runners_reject_missing_loaded_handles(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:

@@ -13,6 +13,11 @@ from __future__ import annotations
 import ctypes
 import importlib
 import os
+from pathlib import Path
+import shutil
+import subprocess
+import sys
+import sysconfig
 
 import pytest
 
@@ -105,3 +110,43 @@ def test_loaded_runtime_is_reused_without_reprobing(
 def test_engine_loader_returns_the_extension_class() -> None:
     """Bind the import helper to the real DPINeuron engine symbol."""
     assert backends._load_engine_dpi().__name__ == "DPINeuron"
+
+
+def test_checkout_bridge_discovers_maturin_developed_extension(tmp_path: Path) -> None:
+    """Load the installed extension when a source checkout shadows its package."""
+    repository = Path(__file__).resolve().parents[1]
+    source_package = repository / "bridge" / "sc_neurocore_engine"
+    checkout_package = tmp_path / "sc_neurocore_engine"
+    shutil.copytree(
+        source_package,
+        checkout_package,
+        ignore=shutil.ignore_patterns("*.so", "*.pyd", "__pycache__"),
+    )
+
+    extension_suffix = sysconfig.get_config_var("EXT_SUFFIX")
+    assert isinstance(extension_suffix, str) and extension_suffix
+    purelib = Path(sysconfig.get_path("purelib"))
+    installed_package = purelib / "sc_neurocore_engine"
+    installed_extensions = sorted(installed_package.glob(f"sc_neurocore_engine*{extension_suffix}"))
+    assert installed_extensions, "maturin-developed engine extension is required"
+
+    environment = dict(os.environ)
+    environment["PYTHONPATH"] = os.pathsep.join((str(tmp_path), str(purelib)))
+    script = (
+        "import importlib, pathlib, sys; "
+        "package = importlib.import_module('sc_neurocore_engine'); "
+        "extension = importlib.import_module('sc_neurocore_engine.sc_neurocore_engine'); "
+        "expected = pathlib.Path(sys.argv[1]).resolve(); "
+        "actual = pathlib.Path(extension.__file__).resolve(); "
+        "assert actual == expected, (actual, expected); "
+        "assert package.DPINeuron is extension.DPINeuron"
+    )
+    subprocess.run(
+        [sys.executable, "-S", "-c", script, str(installed_extensions[-1])],
+        cwd=tmp_path,
+        env=environment,
+        check=True,
+        capture_output=True,
+        text=True,
+        timeout=30,
+    )

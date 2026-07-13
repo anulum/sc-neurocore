@@ -24,6 +24,10 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
   and timing envelopes, and the generated depth-4 Z3 proof passes. Controlled
   benchmark timings remain explicitly local, loaded-host evidence rather than
   isolated throughput claims.
+- Corrected clean-checkout native loading and regeneration. The source bridge
+  now resolves the extension installed by `maturin develop`, while the Go build
+  hint compiles the package so the generated C header retains its committed
+  package identity and source digest.
 
 ### Cortical-column responsibility modularisation
 

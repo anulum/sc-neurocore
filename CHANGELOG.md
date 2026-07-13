@@ -808,6 +808,10 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
   code, polyglot mirror, benchmark dispatch, or benchmark artefact changed.
 
 ### Fixed
+- Made the DPI developer build path reproducible from a clean checkout. The
+  source bridge now discovers the extension installed by `maturin develop`
+  instead of shadowing it, and the Go backend hint builds the package rather
+  than the single source file so cgo preserves the committed header identity.
 - Made Tier-3 golden-trace verification portable across NumPy's AVX-512 and
   non-AVX-512 transcendental kernels. Chialvo and Hodgkin-Huxley now declare
   the two measured, byte-exact SHA-256 variants; the gate accepts only those
