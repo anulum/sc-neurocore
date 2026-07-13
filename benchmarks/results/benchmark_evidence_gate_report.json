@@ -174,11 +174,15 @@
       "id": "energy-lif-exact-flow-multibackend-local-regression"
     },
     {
+      "artefact": "benchmarks/results/bench_connor_stevens_mojo.json",
+      "id": "connor-stevens-mojo-closure-local-regression"
+    },
+    {
       "artefact": "benchmarks/results/bench_asic_flow.json",
       "id": "asic-flow-modularisation-local-diagnostics"
     }
   ],
-  "failure_count": 48,
+  "failure_count": 47,
   "failures": [
     {
       "gate_id": "expif-rk4-multibackend-local-regression",
@@ -402,11 +406,6 @@
     },
     {
       "gate_id": "sfa-rk4-multibackend-local-regression",
-      "path": "src/sc_neurocore/accel/rust/safety/sfa.rs->source_hashes.src/sc_neurocore/accel/rust/safety/sfa.rs",
-      "reason": "source_hash_mismatch"
-    },
-    {
-      "gate_id": "sfa-rk4-multibackend-local-regression",
       "path": "src/sc_neurocore/neurons/models/sfa.py->source_hashes.src/sc_neurocore/neurons/models/sfa.py",
       "reason": "source_hash_mismatch"
     },
@@ -421,7 +420,7 @@
       "reason": "source_hash_mismatch"
     }
   ],
-  "gate_count": 44,
+  "gate_count": 45,
   "manifest": "benchmarks/benchmark_regression_gates.json",
   "passed": false,
   "schema_version": "sc-neurocore.benchmark-evidence-gate.v1"

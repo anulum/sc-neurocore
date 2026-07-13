@@ -10,8 +10,9 @@ from __future__ import annotations
 
 import importlib as _importlib
 import math
+import os as _os
 from dataclasses import dataclass
-from typing import Any, ClassVar, Optional
+from typing import Any, ClassVar, Optional, cast
 
 import numpy as np
 import numpy.typing as npt
@@ -24,6 +25,39 @@ try:
 except (ImportError, AttributeError):
     _EngineCls = None
     _HAS_RUST = False
+
+_mojo_lib: Optional[Any] = None
+_HAS_MOJO = False
+_ACCEL_ROOT = _os.path.abspath(_os.path.join(_os.path.dirname(__file__), "..", "..", "accel"))
+
+
+def _ensure_mojo_loaded() -> bool:
+    """Load the compiled Connor-Stevens Mojo kernel when available."""
+    global _mojo_lib, _HAS_MOJO
+    if _mojo_lib is not None:
+        return True
+    import ctypes
+
+    library_path = _os.path.join(_ACCEL_ROOT, "mojo", "kernels", "libconnor_stevens.so")
+    if not _os.path.isfile(library_path):
+        return False
+    try:
+        library = ctypes.CDLL(library_path)
+    except OSError:
+        return False
+    simulate = getattr(library, "connor_stevens_simulate_c", None)
+    if simulate is None:
+        return False
+    simulate.argtypes = [ctypes.c_double] * 17 + [
+        ctypes.c_int64,
+        ctypes.c_double,
+        ctypes.c_int64,
+    ]
+    simulate.restype = ctypes.c_int64
+    _mojo_lib = library
+    _HAS_MOJO = True
+    return True
+
 
 _RUST_ENGINE_DEFAULTS: dict[str, float] = {
     "v": -68.0,
@@ -305,19 +339,29 @@ class ConnorStevensNeuron:
     ) -> tuple[npt.NDArray[np.float64], int]:
         """Advance ``n_steps`` macro-steps, returning ``(v_trace, spikes)``.
 
-        Rust path uses the engine under factory defaults; parity is ULP-bounded
-        (not bit-identical) due to transcendental rate functions.
+        Rust uses the engine under factory defaults. Mojo accepts the complete
+        maintained state and parameter surface through its compiled C ABI.
+        Cross-language parity is spike-count exact with a bounded state gap
+        because the rate equations contain transcendental functions.
         """
         if n_steps < 0:
             raise ValueError("n_steps must be non-negative")
-        if backend not in ("auto", "python", "rust"):
-            raise ValueError(f"backend must be auto/python/rust, got {backend!r}")
+        if backend not in ("auto", "python", "rust", "mojo"):
+            raise ValueError(f"backend must be auto/python/rust/mojo, got {backend!r}")
         if not math.isfinite(current):
             raise ValueError("current must be finite")
         prefer_rust = backend == "rust" or (
             backend == "auto" and _HAS_RUST and self._matches_rust_engine_contract()
         )
-        if prefer_rust:
+        if backend == "mojo":
+            if not _ensure_mojo_loaded():
+                raise RuntimeError(
+                    "Mojo ConnorStevens backend requested but libconnor_stevens.so is not built; "
+                    "run mojo build --emit shared-lib -o libconnor_stevens.so "
+                    "connor_stevens.mojo in accel/mojo/kernels."
+                )
+            trace, spikes, state = self._simulate_mojo(n_steps, current)
+        elif prefer_rust:
             if not _HAS_RUST or _EngineCls is None:
                 raise RuntimeError(
                     "Rust ConnorStevens backend requested but sc_neurocore_engine is unavailable."
@@ -371,6 +415,45 @@ class ConnorStevensNeuron:
                 float(st["b"]),
             ),
         )
+
+    def _simulate_mojo(
+        self, n_steps: int, current: float
+    ) -> tuple[npt.NDArray[np.float64], int, tuple[float, float, float, float, float, float]]:
+        assert _mojo_lib is not None
+        self._validate_runtime_state()
+        output = np.empty(n_steps + 6, dtype=np.float64)
+        result = int(
+            _mojo_lib.connor_stevens_simulate_c(
+                self.v,
+                self.m,
+                self.h,
+                self.n,
+                self.a,
+                self.b,
+                self.g_na,
+                self.g_k,
+                self.g_a,
+                self.g_l,
+                self.e_na,
+                self.e_k,
+                self.e_a,
+                self.e_l,
+                self.c_m,
+                self.dt,
+                self.v_threshold,
+                n_steps,
+                current,
+                output.ctypes.data,
+            )
+        )
+        if result < 0:
+            raise FloatingPointError("Mojo Connor-Stevens kernel rejected the simulation")
+        final = output[n_steps : n_steps + 6]
+        state = cast(
+            tuple[float, float, float, float, float, float],
+            tuple(float(value) for value in final),
+        )
+        return output[:n_steps].copy(), result, state
 
     def reset(self) -> None:
         self.v = -68.0

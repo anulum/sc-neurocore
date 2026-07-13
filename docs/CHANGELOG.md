@@ -5,6 +5,21 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+### Connor-Stevens executable Mojo lane
+- Replaced the non-executable Mojo parity note with a compiled C ABI for the
+  complete six-state Connor-Stevens recurrence. The public Python dispatcher
+  carries the maintained state and parameter surface, uses the same 100
+  candidate-first RK4 sub-steps per macro-step, and fails closed on invalid
+  inputs or candidates.
+- Dedicated production-boundary tests preserve the established `0/2/9` event
+  counts at `I=0/10/20` over 100 macro-steps. Mojo's transcendental/FMA trace
+  remains within the measured `2e-6` absolute envelope, including non-default
+  state and parameter transport.
+- Added a source-hashed, single-logical-CPU benchmark for Python, the Rust
+  engine, and Mojo. The recorded timings are loaded-host local regression
+  evidence; event parity, trace bounds, source digests, final states, affinity,
+  load, and runtime versions are the maintained contracts.
+
 ### ASIC-flow GodFile modularisation
 - Replaced the 1,451-line implementation and 814-line primary test file with a
   123-line compatibility facade, nine acyclic responsibility modules, and 11

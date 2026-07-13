@@ -5,6 +5,17 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 ## [Unreleased]
 
 ### Added
+- Replaced the Connor-Stevens Mojo parity note with an executable C-ABI kernel
+  for the complete six-state, candidate-first RK4 model. The public
+  `simulate(..., backend="mojo")` path transports every maintained state and
+  parameter, rejects invalid inputs without committing state, preserves the
+  established `0/2/9` event counts at `I=0/10/20`, and keeps the enrolled
+  100-macro-step trace within `2e-6` of Python.
+- Added a source-hashed Connor-Stevens closure benchmark with exact event
+  parity, bounded voltage-trace evidence, final states, affinity, runtime
+  versions, and loaded-host context. The single-logical-CPU run measured Mojo,
+  Rust, and Python medians of 5.327, 10.377, and 379.390 ms per 100 macro-steps;
+  the non-isolated timings are local regression evidence only.
 - Replaced the 1,451-line ASIC-flow GodFile and 814-line primary test file with
   a 123-line historical facade, nine acyclic responsibility modules, and 11
   focused test modules. The largest implementation and test files are 319 and

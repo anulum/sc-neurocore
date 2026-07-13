@@ -102,7 +102,7 @@ and positive. Constructor gate values must be finite and physically bounded.
 | Go service | Candidate-first RK4, `(spike, error)` step contract, module-specific tests |
 | Julia mirror | Candidate-first RK4, `-1` invalid-input sentinel, direct local validation |
 | Rust safety mirror | Candidate-first RK4, no-spike sentinel, standalone `rustc --test` coverage |
-| Mojo notes | Non-executable parity notes documenting the state order and RK4 contract |
+| Mojo shared library | Compiled C ABI, complete state/parameter transport, negative fail-closed sentinel |
 
 ## Behavioural tests
 
@@ -119,7 +119,9 @@ Module-specific tests in `tests/test_model_connor_stevens.py` verify:
 - invalid constructor parameters and fail-closed runtime mutation boundaries.
 
 Additional module-owned checks cover the Go service, Rust engine, Julia mirror,
-and Rust safety mirror.
+Rust safety mirror, and the compiled Mojo C ABI. The Mojo test pins exact
+`0/2/9` crossing counts at `I=0/10/20` over 100 macro-steps and bounds the
+six-state transcendental trace to `2e-6` against the Python reference.
 
 ## Benchmarks
 
@@ -135,16 +137,29 @@ sub-step evaluates four derivative stages and rejects invalid candidates before
 commit. The benchmark is retained as evidence of runtime cost, not as a target
 for numerical shortcuts.
 
+The executable Mojo closure was measured on 2026-07-13 with single-logical-CPU
+affinity. The host was loaded and the core was not kernel-isolated, so these
+numbers are functional/local-regression evidence rather than production speed
+claims.
+
+| Runtime | Workload | Median | Per macro-step | Parity max abs diff |
+|---------|----------|-------:|---------------:|--------------------:|
+| Python | 100 macro-steps x 11 repeats | 379.390 ms | 3.794 ms | 0 |
+| Rust engine | 100 macro-steps x 11 repeats | 10.377 ms | 103.769 us | `6.253e-13` |
+| Mojo shared library | 100 macro-steps x 11 repeats | 5.327 ms | 53.275 us | `7.910e-7` |
+
+All three paths produced nine events at `I=20`. The complete affinity, load,
+runtime-version, source-hash, timing, parity, and final-state record is
+`benchmarks/results/bench_connor_stevens_mojo.json`.
+
 ## Example
 
 ```python
 from sc_neurocore.neurons.models.connor_stevens import ConnorStevensNeuron
 
 neuron = ConnorStevensNeuron()
-spikes = 0
-for _ in range(500):
-    spikes += neuron.step(10.0)
-print(neuron.v, spikes)
+trace, spikes = neuron.simulate(100, current=20.0, backend="mojo")
+print(trace[-1], spikes)
 ```
 
 ## Notes

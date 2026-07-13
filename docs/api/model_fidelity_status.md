@@ -41,17 +41,16 @@ catalogue already has:
 ## Polyglot-complete models
 
 Every lane below carries the real model dynamics with an executed Python-parity proof. The Mojo
-column distinguishes an executable kernel from a maintained parity note: the Mojo neuron-kernel lane
-has not yet been promoted to a build/CI target (a separate cross-cutting task), so some models
-specify the Mojo contract as an honest note rather than executable code. No lane below is a fake
-stub.
+column distinguishes an executable kernel from a maintained parity note. Hodgkin-Huxley retains the
+remaining honest note while its Mojo build target is still open; every other listed Mojo surface is
+executable. No lane below is a fake stub.
 
 | Model | Rust safety | Go | Julia | Mojo | Parity basis (golden) | Landed |
 |---|---|---|---|---|---|---|
 | Wang-Buzsaki | ✅ | ✅ | ✅ | ✅ executable | spike count — 3 AP @ I=10, 20 macro steps (Gauss-Seidel) | `0ebf4ea88` |
 | FitzHugh-Nagumo | ✅ | ✅ | ✅ | ✅ shared-lib | bit-exact — 1 AP @ I=10/100 steps, 5-spike train @ I=0.5/2000 steps (RK4, exact RHS) | `729e0a2ea` |
 | Morris-Lecar | ✅ | ✅ | ✅ | ✅ executable | spike count — 0/3/5 @ I=0/50/100 over 2000 steps (RK4, tanh/cosh) | `bc46a0fb5` |
-| Connor-Stevens | ✅ | ✅ | ✅ | 🔶 parity note | spike count — 0/2/9 @ I=0/10/20 over 100 macro steps (RK4, exp) | `4776283ba` |
+| Connor-Stevens | ✅ | ✅ | ✅ | ✅ shared-lib | spike count — 0/2/9 @ I=0/10/20 over 100 macro steps (candidate-first RK4 with 100 sub-steps, exp); Mojo C ABI preserves every event and the six-state trace within `2e-6` over the enrolled envelope | `this commit` |
 | Hodgkin-Huxley | ✅ | ✅ | ✅ | 🔶 parity note | spike count — 0/6/9 @ I=0/10/20 over 100 macro steps (baseline-Euler, exp) | `0b23b5653` |
 | McKean | ✅ | ✅ | ✅ | ✅ shared-lib | bit-exact — 0/1/7 @ I=0/0.2/0.5 over 20000 steps (RK4, exact piecewise-linear RHS) | `059871140` |
 | Hindmarsh-Rose | ✅ | ✅ | ✅ | ✅ shared-lib | bit-exact accel — 0/26/52 @ I=0/3/5 over 2000 steps; co-sim exact hand/TOML/JSON/Q16.16 counts — 0/0/26/40/52 @ I=0/2/3/4/5 over 2000 RK4 steps; declared Q16.16 +1 crossing boundary over 5000 steps at I=2 through I=5; formal Q8.8 BMC depth 4 | `this commit` |
@@ -72,6 +71,7 @@ stub.
 
 Each model carries a committed benchmark: a Go `Benchmark*` in the services lane for the
 conductance models (Wang-Buzsaki, Morris-Lecar, Connor-Stevens, Hodgkin-Huxley, FitzHugh-Nagumo),
+plus the source-hashed `bench_connor_stevens_mojo.py` closure benchmark for Connor-Stevens,
 and a committed `benchmarks/bench_<model>*.py` harness with its recorded per-backend result for the
 FFI-dispatched models (McKean, Hindmarsh-Rose, FitzHugh-Rinzel, Pernarowski, Terman-Wang, Wilson-HR,
 Rulkov map, GLIF, Mihalas-Niebur, Medvedev map, Cazelles map, Courbage-Nekorkin map, Izhikevich 2007,

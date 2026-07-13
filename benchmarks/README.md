@@ -51,6 +51,7 @@ same checkout.
 | `bench_dna_mapper_import.py` | Interleaved flat-parent/modular comparison for DNA mapper import, repeated one-gate compilation, process wall time, and maximum RSS; records raw samples, source hashes, and host limitations |
 | `bench_evo_substrate.py` | Source-bound Python evolutionary-operator timings with raw samples, summary statistics, affinity, governor, frequency, and host-load evidence |
 | `bench_evo_substrate_multilang.py` | Fail-closed Rust/Julia/Go/Mojo/Python kernel parity and timing with interleaved samples, source digest, toolchain context, and explicit unavailable-backend reporting |
+| `bench_connor_stevens_mojo.py` | Source-hashed Python/Rust/Mojo parity and timing for the executable Connor-Stevens Mojo lane, including exact events, bounded six-state traces, affinity, runtime versions, and host load |
 | `bench_neuron_integrators.py` | Research-only cross-language RK4 neuron integrator parity and timing for Python / Rust / Julia / Go / Mojo |
 | `bench_live_control_updates.py` | Local regression evidence for generated live-control update sequences, static RTL regeneration, staged overflow/underflow trap capture, and selected sticky-trap clear semantics |
 | `benchmark_regression_gates.json` | Manifest of benchmark artefacts and metrics enforced by `tools/benchmark_evidence_gate.py` |
@@ -73,6 +74,11 @@ python benchmarks/bench_v2_vs_v3.py
 
 # RK4 neuron integrator parity + timing
 python benchmarks/bench_neuron_integrators.py
+
+# Connor-Stevens executable Mojo-lane closure
+PYTHONPATH=src taskset -c <cpu> .venv/bin/python \
+  benchmarks/bench_connor_stevens_mojo.py \
+  --json benchmarks/results/bench_connor_stevens_mojo.json
 
 # DNA mapper refactor regression evidence
 python benchmarks/bench_dna_mapper_import.py \
@@ -119,6 +125,12 @@ non-exclusive workstation without kernel-reserved isolated cores. They record
 the loaded-host condition and are local regression context only. Rerun both
 producers on reserved isolated cores, with affinity, governor, frequency,
 versions, and load evidence retained, before publishing performance claims.
+
+The Connor-Stevens closure artefact was captured with single-logical-CPU
+affinity but without a kernel-reserved core while the workstation was loaded.
+Its timings are local regression evidence only. Its scientific contract is the
+exact `0/2/9` event envelope at `I=0/10/20` and the measured `2e-6` Mojo trace
+bound over 100 candidate-first RK4 macro-steps.
 
 The DNA import harness measures Python orchestration only. Its maintained Rust
 safety mirror has a separate six-test contract. Earlier generated Julia and

@@ -1,0 +1,137 @@
+{
+  "backends": {
+    "mojo": {
+      "available": true,
+      "event_count": 9,
+      "event_count_matches_python": true,
+      "final_state": {
+        "a": 0.7477258134908621,
+        "b": 0.049111674678897245,
+        "h": 0.3742691885736849,
+        "m": 0.9352218688849527,
+        "n": 0.5162641019382758,
+        "v": 43.41446053939869
+      },
+      "median_call_ms": 5.327496,
+      "minimum_call_ms": 4.769974,
+      "parity_max_abs_diff": 7.910253874143791e-07,
+      "speedup_vs_python": 71.21348922645836,
+      "used": true
+    },
+    "python": {
+      "available": true,
+      "event_count": 9,
+      "event_count_matches_python": true,
+      "final_state": {
+        "a": 0.7477258113981685,
+        "b": 0.04911167479985322,
+        "h": 0.37426919288336785,
+        "m": 0.935221863599606,
+        "n": 0.5162640994287648,
+        "v": 43.41446009137186
+      },
+      "median_call_ms": 379.389579,
+      "minimum_call_ms": 348.728969,
+      "parity_max_abs_diff": 0.0,
+      "speedup_vs_python": 1.0,
+      "used": true
+    },
+    "rust": {
+      "available": true,
+      "event_count": 9,
+      "event_count_matches_python": true,
+      "final_state": {
+        "a": 0.7477258113981676,
+        "b": 0.049111674799853275,
+        "h": 0.37426919288336974,
+        "m": 0.935221863599604,
+        "n": 0.516264099428764,
+        "v": 43.414460091371694
+      },
+      "median_call_ms": 10.376919,
+      "minimum_call_ms": 6.51192,
+      "parity_max_abs_diff": 6.252776074688882e-13,
+      "speedup_vs_python": 36.560907818592405,
+      "used": true
+    }
+  },
+  "kernel": "connor_stevens_mojo_simulate",
+  "measured_order": [
+    "mojo",
+    "rust",
+    "python"
+  ],
+  "meta": {
+    "affinity": [
+      10
+    ],
+    "cpu": "11th Gen Intel(R) Core(TM) i5-11600K @ 3.90GHz",
+    "governor": "powersave",
+    "kernel_isolated_cpus": "",
+    "load_average_end": [
+      31.5830078125,
+      30.607421875,
+      28.853515625
+    ],
+    "load_average_start": [
+      35.3232421875,
+      31.275390625,
+      29.04736328125
+    ],
+    "measurement_scope": "single-logical-CPU affinity; kernel isolation and workstation load reported separately",
+    "platform": "Linux-6.17.0-35-generic-x86_64-with-glibc2.39",
+    "runtime_versions": {
+      "mojo": "Mojo 1.0.0b1 (a9591de6)",
+      "numpy": "2.2.6",
+      "python": "3.12.3",
+      "rust": "rustc 1.96.0 (ac68faa20 2026-05-25)"
+    },
+    "single_cpu_pinned": true
+  },
+  "schema_version": "sc-neurocore.polyglot-benchmark.v1",
+  "source_hashes": {
+    "benchmarks/bench_connor_stevens_mojo": {
+      "py": "56e7a29961e0ce869909e30b4687a007572c8d97a4dbc850e0455be76ab467f4"
+    },
+    "benchmarks/bench_connor_stevens_mojo.py": "56e7a29961e0ce869909e30b4687a007572c8d97a4dbc850e0455be76ab467f4",
+    "bridge/sc_neurocore_engine/__init__": {
+      "py": "7ef50ba856299e488407d2e68503967b62be2a35e44747ac2285fc32d05b1e08"
+    },
+    "bridge/sc_neurocore_engine/__init__.py": "7ef50ba856299e488407d2e68503967b62be2a35e44747ac2285fc32d05b1e08",
+    "engine/src/neurons/biophysical": {
+      "rs": "3eb8f0f0f9ab285a6244252ce94394d84239b41d3ccb94142d0a352125fbeb96"
+    },
+    "engine/src/neurons/biophysical.rs": "3eb8f0f0f9ab285a6244252ce94394d84239b41d3ccb94142d0a352125fbeb96",
+    "engine/src/pyo3_neurons": {
+      "rs": "febf5e1d985cb4719cf300e30bca2a82430ad23c7a7b92802618e218d85e62da"
+    },
+    "engine/src/pyo3_neurons.rs": "febf5e1d985cb4719cf300e30bca2a82430ad23c7a7b92802618e218d85e62da",
+    "src/sc_neurocore/accel/go/services/connor_stevens": {
+      "go": "c0e5f54829b644790c2dab7894df47fd3e09720cfe9771b0454ab63496697995"
+    },
+    "src/sc_neurocore/accel/go/services/connor_stevens.go": "c0e5f54829b644790c2dab7894df47fd3e09720cfe9771b0454ab63496697995",
+    "src/sc_neurocore/accel/julia/neurons/connor_stevens": {
+      "jl": "4cfaff39275e3b08669615a56de435de1546312e02c1bd7e5f4e2d3fcc6212c1"
+    },
+    "src/sc_neurocore/accel/julia/neurons/connor_stevens.jl": "4cfaff39275e3b08669615a56de435de1546312e02c1bd7e5f4e2d3fcc6212c1",
+    "src/sc_neurocore/accel/mojo/kernels/connor_stevens": {
+      "mojo": "b53d5b3c0f245780ad2c14b2d2931993c378fc567800177ed201a5bb3e563864"
+    },
+    "src/sc_neurocore/accel/mojo/kernels/connor_stevens.mojo": "b53d5b3c0f245780ad2c14b2d2931993c378fc567800177ed201a5bb3e563864",
+    "src/sc_neurocore/accel/rust/safety/connor_stevens": {
+      "rs": "585c84439c576d755f1594e4a9404ac1d9aef5fb3225e8b19c134d522705a634"
+    },
+    "src/sc_neurocore/accel/rust/safety/connor_stevens.rs": "585c84439c576d755f1594e4a9404ac1d9aef5fb3225e8b19c134d522705a634",
+    "src/sc_neurocore/neurons/models/connor_stevens": {
+      "py": "cb51411939a3af79ecd22478afaed530970078e7c6f0369d3854011f2dab6d9c"
+    },
+    "src/sc_neurocore/neurons/models/connor_stevens.py": "cb51411939a3af79ecd22478afaed530970078e7c6f0369d3854011f2dab6d9c"
+  },
+  "workload": {
+    "current": 20.0,
+    "mojo_trace_atol": 2e-06,
+    "n_steps": 100,
+    "parameters": "Connor-Stevens defaults; 100 candidate-first RK4 sub-steps per macro-step",
+    "repeats": 11
+  }
+}

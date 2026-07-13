@@ -2104,6 +2104,65 @@
       }
     },
     {
+      "artefact": "benchmarks/results/bench_connor_stevens_mojo.json",
+      "description": "Source-bound Connor-Stevens Mojo executable-lane closure against the Python and Rust-engine simulation paths.",
+      "expected_values": {
+        "backends.mojo.event_count_matches_python": true,
+        "backends.rust.event_count_matches_python": true,
+        "kernel": "connor_stevens_mojo_simulate",
+        "meta.single_cpu_pinned": true,
+        "schema_version": "sc-neurocore.polyglot-benchmark.v1",
+        "workload.current": 20.0,
+        "workload.mojo_trace_atol": 0.000002,
+        "workload.n_steps": 100,
+        "workload.repeats": 11
+      },
+      "id": "connor-stevens-mojo-closure-local-regression",
+      "parity_groups": [
+        {
+          "paths": [
+            "backends.python.event_count",
+            "backends.rust.event_count",
+            "backends.mojo.event_count"
+          ],
+          "tolerance": 0.0
+        }
+      ],
+      "regression_limits": {
+        "backends.mojo.parity_max_abs_diff": {
+          "max": 0.000002
+        },
+        "backends.rust.parity_max_abs_diff": {
+          "max": 1e-09
+        }
+      },
+      "required_numbers": [
+        "backends.python.median_call_ms",
+        "backends.python.minimum_call_ms",
+        "backends.python.parity_max_abs_diff",
+        "backends.python.event_count",
+        "backends.rust.median_call_ms",
+        "backends.rust.minimum_call_ms",
+        "backends.rust.parity_max_abs_diff",
+        "backends.rust.event_count",
+        "backends.mojo.median_call_ms",
+        "backends.mojo.minimum_call_ms",
+        "backends.mojo.parity_max_abs_diff",
+        "backends.mojo.event_count"
+      ],
+      "source_hashes": {
+        "benchmarks/bench_connor_stevens_mojo.py": "source_hashes.benchmarks/bench_connor_stevens_mojo.py",
+        "bridge/sc_neurocore_engine/__init__.py": "source_hashes.bridge/sc_neurocore_engine/__init__.py",
+        "engine/src/neurons/biophysical.rs": "source_hashes.engine/src/neurons/biophysical.rs",
+        "engine/src/pyo3_neurons.rs": "source_hashes.engine/src/pyo3_neurons.rs",
+        "src/sc_neurocore/accel/go/services/connor_stevens.go": "source_hashes.src/sc_neurocore/accel/go/services/connor_stevens.go",
+        "src/sc_neurocore/accel/julia/neurons/connor_stevens.jl": "source_hashes.src/sc_neurocore/accel/julia/neurons/connor_stevens.jl",
+        "src/sc_neurocore/accel/mojo/kernels/connor_stevens.mojo": "source_hashes.src/sc_neurocore/accel/mojo/kernels/connor_stevens.mojo",
+        "src/sc_neurocore/accel/rust/safety/connor_stevens.rs": "source_hashes.src/sc_neurocore/accel/rust/safety/connor_stevens.rs",
+        "src/sc_neurocore/neurons/models/connor_stevens.py": "source_hashes.src/sc_neurocore/neurons/models/connor_stevens.py"
+      }
+    },
+    {
       "artefact": "benchmarks/results/bench_asic_flow.json",
       "description": "Source-bound parent/candidate ASIC deck and bundle-generation diagnostics.",
       "expected_values": {
