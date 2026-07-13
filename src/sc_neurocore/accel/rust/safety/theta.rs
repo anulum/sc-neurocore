@@ -25,27 +25,57 @@ impl ThetaNeuron {
             return Err("theta state/current must be finite with positive dt");
         }
 
-        let theta_prev = self.theta;
-        let cos_theta = self.theta.cos();
-        let dtheta = ((1.0 - cos_theta) + (1.0 + cos_theta) * i_ext) * self.dt;
-        let next_theta = self.theta + dtheta;
-        if !dtheta.is_finite() || !next_theta.is_finite() {
-            return Err("theta phase increment became non-finite");
+        let (next_theta, spiked) = self.exact_candidate(i_ext);
+        if !next_theta.is_finite() {
+            return Err("theta exact-flow update became non-finite");
         }
 
-        let spike = if theta_prev < std::f64::consts::PI * 0.99
-            && next_theta >= std::f64::consts::PI * 0.99
-        {
-            1
-        } else {
-            0
-        };
         self.theta = wrap_phase(next_theta);
-        Ok(spike)
+        if spiked {
+            Ok(1)
+        } else {
+            Ok(0)
+        }
     }
 
     pub fn reset(&mut self) {
         self.theta = 0.0_f64;
+    }
+
+    fn exact_candidate(&self, i_ext: f64) -> (f64, bool) {
+        let y = (self.theta / 2.0).tan();
+        if i_ext > 0.0 {
+            let root_i = i_ext.sqrt();
+            let phase = (y / root_i).atan();
+            let next_phase = phase + root_i * self.dt;
+            let spiked = next_phase >= std::f64::consts::FRAC_PI_2;
+            if next_phase.cos().abs() <= 1.0e-15 {
+                return (-std::f64::consts::PI, spiked);
+            }
+            return (wrap_phase(2.0 * (root_i * next_phase.tan()).atan()), spiked);
+        }
+        if i_ext == 0.0 {
+            let denominator = 1.0 - y * self.dt;
+            if denominator.abs() <= 1.0e-15 {
+                return (-std::f64::consts::PI, true);
+            }
+            let next_y = y / denominator;
+            return (wrap_phase(2.0 * next_y.atan()), denominator <= 0.0);
+        }
+
+        let root_i = (-i_ext).sqrt();
+        if (y + root_i).abs() <= 1.0e-15 {
+            return (self.theta, false);
+        }
+        let ratio = (y - root_i) / (y + root_i);
+        let evolved = ratio * (2.0 * root_i * self.dt).exp();
+        let denominator = 1.0 - evolved;
+        let spiked = (ratio < 1.0 && evolved >= 1.0) || denominator.abs() <= 1.0e-15;
+        if spiked && denominator.abs() <= 1.0e-15 {
+            return (-std::f64::consts::PI, true);
+        }
+        let next_y = root_i * (1.0 + evolved) / denominator;
+        (wrap_phase(2.0 * next_y.atan()), spiked)
     }
 }
 
@@ -78,6 +108,42 @@ mod tests {
         let mut state = ThetaNeuron::new();
         let spike = state.step(10.0).expect("valid step must succeed");
         assert!(spike == 0 || spike == 1);
+    }
+
+    #[test]
+    fn test_exact_positive_flow_matches_closed_form() {
+        let mut state = ThetaNeuron {
+            theta: 1.0,
+            dt: 0.2,
+        };
+        let current = 2.0_f64;
+        let root_i = current.sqrt();
+        let next_phase = ((state.theta / 2.0).tan() / root_i).atan() + root_i * state.dt;
+        let expected = wrap_phase(2.0 * (root_i * next_phase.tan()).atan());
+        let spike = state.step(current).unwrap();
+        assert_eq!(spike, 0);
+        assert!((state.theta - expected).abs() < 1.0e-12);
+    }
+
+    #[test]
+    fn test_exact_flow_reports_within_step_crossing() {
+        let mut state = ThetaNeuron {
+            theta: 2.5,
+            dt: 1.0,
+        };
+        assert_eq!(state.step(1.0).unwrap(), 1);
+        assert!(state.theta >= -std::f64::consts::PI);
+        assert!(state.theta <= std::f64::consts::PI);
+    }
+
+    #[test]
+    fn test_negative_current_fixed_point_is_preserved() {
+        let mut state = ThetaNeuron {
+            theta: -std::f64::consts::FRAC_PI_2,
+            dt: 100.0,
+        };
+        assert_eq!(state.step(-1.0).unwrap(), 0);
+        assert!((state.theta + std::f64::consts::FRAC_PI_2).abs() < 1.0e-12);
     }
 
     #[test]
@@ -118,5 +184,27 @@ mod tests {
         state.reset();
         assert_eq!(state.theta, 0.0);
         assert_eq!(state.dt, 0.005);
+    }
+
+    #[test]
+    fn test_enrolled_event_vector_matches_python_reference() {
+        let cases = [
+            (-1.0, 0),
+            (-0.5, 0),
+            (0.0, 0),
+            (0.1, 1),
+            (0.333, 2),
+            (0.5, 2),
+            (1.0, 3),
+            (2.0, 5),
+            (5.0, 7),
+            (20.0, 14),
+            (50.0, 23),
+        ];
+        for (current, expected) in cases {
+            let mut state = ThetaNeuron::new();
+            let spikes: i32 = (0..1_000).map(|_| state.step(current).unwrap()).sum();
+            assert_eq!(spikes, expected, "current={current}");
+        }
     }
 }

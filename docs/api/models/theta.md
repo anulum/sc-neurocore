@@ -1,265 +1,153 @@
 # ThetaNeuron
 
 **Module:** `sc_neurocore.neurons.models.theta`
-**Reference:** Ermentrout & Kopell 1986
-**Family:** Phase model (canonical Type-I on unit circle)
-**State variables:** `theta` (phase angle, wrapped to [−π, π])
-
----
-
-## Equations
-
-### Phase dynamics
-
-$$\frac{d\theta}{dt} = (1 - \cos\theta) + (1 + \cos\theta) \cdot I$$
-
-### Spike detection
-
-Upward crossing of $0.99\pi$ (slightly below π to avoid numerical issues):
-
-$$\text{spike} = \begin{cases} 1 & \text{if } \theta_{prev} < 0.99\pi \text{ and } \theta \geq 0.99\pi \\ 0 & \text{otherwise} \end{cases}$$
-
-### Phase wrapping
-
-After each step: $\theta \leftarrow ((\theta + \pi) \bmod 2\pi) - \pi$.
-
-### Relationship to QIF
-
-The theta neuron is the **QIF mapped to the unit circle** via:
-
-$$V = \tan(\theta/2)$$
-
-This transforms the infinite V range of QIF into the bounded $\theta \in [-\pi, \pi]$.
-The dynamics, bifurcation structure, and f–I curve are mathematically identical.
-
----
-
-## Parameters
-
-| Parameter | Default | Description |
-|-----------|---------|-------------|
-| `theta` | 0.0 | Phase angle (radians) |
-| `dt` | 0.01 | Time step |
-
----
-
-### Validation contract
-
-The implementation preserves the compact-circle state contract before mutation:
-
-- initial `theta`, `dt`, and input current must be finite;
-- `dt` must be positive;
-- initial `theta` is normalised into `[-pi, pi]`;
-- each tangent-half-angle exact-flow candidate phase must remain finite before assignment.
-- runtime `theta` and `dt` are revalidated before exact-flow evaluation so
-  corrupted objects fail closed without mutating phase.
-
-These guards prevent finite but numerically explosive inputs from turning the
-phase state into `NaN` while preserving the theta/QIF phase-map semantics.
-Native Go and Rust mirrors return explicit errors for invalid scalar state,
-Julia throws `DomainError`, and Mojo returns `-1` as the invalid sentinel.
-
-The schema-level reference-trace corpus pins
-`theta_constant_current_phase_analytic`, a constant-current protocol derived
-with the tangent half-angle transform. That trace validates final/min/max/mean
-phase features and silent spike features through the public `UniversalNeuron`
-runner while keeping the Euler discretisation tolerance explicit.
-
-## Behaviour
-
-### Saddle-node bifurcation at I=0
-
-At I<0: two fixed points on the circle (one stable, one unstable). The
-neuron rests at the stable point $\theta^* = -\arccos\!\bigl(\frac{1+I}{1-I}\bigr)$.
-
-At I=0: fixed points coalesce. theta remains at 0.
-
-At I>0: no fixed points. theta increases monotonically (with angular
-velocity depending on position), cycling through the full circle. Each
-crossing of ~π constitutes a spike.
-
-### Analytical ISI = π/√I
-
-In continuous time, the period of the limit cycle is:
-
-$$T = \frac{\pi}{\sqrt{I}}$$
-
-This gives the firing rate $f = \sqrt{I}/\pi$ Hz. Verified at four
-current levels — all match to within 2%:
-
-| Current | ISI (measured, steps) | ISI × dt (time) | π/√I (analytical) | Error |
-|---------|----------------------|------------------|---------------------|-------|
-| 0.5 | 444 | 4.44 | 4.443 | < 0.1% |
-| 1.0 | 314 | 3.14 | 3.142 | < 0.1% |
-| 2.0 | 222 | 2.22 | 2.221 | < 0.1% |
-| 5.0 | 140 | 1.40 | 1.405 | < 0.4% |
-
-### √I rate scaling
-
-$f(4I)/f(I) = \sqrt{4} = 2.0$. Measured: ratio between I=4 and I=1
-rates is within (1.8, 2.2).
-
-### Fixed point at negative I
-
-At I=−0.5: $\theta^* = -\arccos(1/3) \approx -1.231$. Measured:
-theta converges to within 0.01 of this value after 100k steps.
-
-### Near-constant ISI
-
-ISI alternates between floor and ceil of the analytical value (e.g.,
-314 and 315 at I=1.0) due to discrete spike detection at 0.99π.
-Only 2 unique ISI values, differing by exactly 1 step.
-
----
-
-## Measured Dynamics
-
-| Current | Spikes (50k) | Mean ISI | Regime |
-|---------|-------------|----------|--------|
-| −1.0 | 0 | — | Stable FP at θ = −π/2 |
-| −0.5 | 0 | — | Stable FP at θ ≈ −1.231 |
-| 0.0 | 0 | — | FP at θ = 0 |
-| 0.1 | 50 | 993 | Very slow cycling |
-| 0.5 | 113 | 444 | Slow cycling |
-| 1.0 | 159 | 314 | Moderate cycling |
-| 2.0 | 225 | 222 | Fast cycling |
-| 5.0 | 356 | 140 | Rapid cycling |
-
----
-
-## Comparison with QIF
-
-| Property | QIF | Theta |
-|----------|-----|-------|
-| State variable | V ∈ (−∞, ∞) | θ ∈ [−π, π] |
-| Spike | V ≥ V_peak → reset | θ crosses ~π → wrap |
-| Fixed points (I<0) | V* = ±√(−I) | θ* = ±arccos((1+I)/(1-I)) |
-| ISI (continuous) | π/√I | π/√I (identical) |
-| f–I scaling | √I / π | √I / π (identical) |
-| Numerical range | V can diverge | θ always bounded |
-| Reset mechanism | Hard reset V → V_reset | Phase wrapping (continuous) |
-
-The theta neuron is preferred for analytical work because the state is
-bounded (no divergence risk) and the phase space is compact (S¹).
-
----
-
-## Numerical Considerations
-
-- **Phase wrapping ensures boundedness:** theta never diverges because it's
-  wrapped to [−π, π] at construction and after every accepted step. Non-finite
-  exact-flow candidates are rejected before state mutation.
-- **0.99π detection threshold:** The spike detection uses 0.99π instead of
-  exact π to avoid missing spikes due to discrete stepping. This introduces
-  ±1 step ISI jitter.
-- **dt invariance of ISI_time:** Verified: ISI_steps × dt gives the same
-  physical time at dt=0.01 and dt=0.005 (within 0.1 time units).
-- **cos() calls:** Two per step. These are the dominant computational cost.
-
----
-
-## Implementation Notes
-
-- **Source:** `src/sc_neurocore/neurons/models/theta.py` — 36 lines.
-- **NumPy dependency:** `np.cos` and `np.pi` for phase dynamics.
-- **Polyglot surfaces:** Rust, Go, Julia, and Mojo theta surfaces use the same finite-state, compact-phase, positive-`dt`, finite-increment, and spike-crossing contract as the Python model.
-
----
-
-## Test Coverage
-
-| Category | Tests | What is verified |
-|----------|------:|-----------------|
-| Isolation | 6 | defaults, binary, evolution, wrapping [−π,π], finite 100k, reset |
-| Bifurcation | 5 | I<0 silent (2 values), I=0 stays at 0, I>0 fires, continuous onset, fixed point θ* verified analytically |
-| Analytical ISI | 6 | ISI×dt matches π/√I to <2% (4 currents), near-constant ISI (±1 step), √I scaling f(4I)/f(I)≈2 |
-| Phase space | 3 | full circle traversal, spike at ~π, dynamics equation dθ/dt check |
-| Parameters | 4 | dt stability (3 values), dt invariance of ISI_time |
-| Edge cases | 2 | wrapping under large dt, deterministic |
-| **Pipeline** | 4 | **Population, Network+PoissonInput, Projection src→tgt propagation, full analysis (spike_count + isi + firing_rate cross-validated)** |
-| Validation | 10 | finite phase/current/dt, compact initial phase, finite phase increment before mutation |
-| **Total** | **42** | |
-
----
-
-## Findings
-
-1. **ISI = π/√I verified to < 0.4%** at all four tested currents. The
-   discrete-time simulation matches the continuous analytical prediction
-   with remarkable precision.
-2. **Fixed point at I=−0.5 verified:** theta converges to −arccos(1/3) ≈
-   −1.231 within 0.01 after 100k steps.
-3. **√I rate scaling confirmed:** f(4)/f(1) = 2.0 ± 0.2.
-4. **Phase wrapping ensures numerical robustness:** theta stays in [−π, π]
-   regardless of input magnitude or simulation length.
-5. **ISI jitter = ±1 step:** The 0.99π detection threshold causes ISI to
-   alternate between floor and ceil. Only 2 unique ISI values observed.
-6. **dt invariance:** ISI in physical time units is the same at dt=0.01
-   and dt=0.005 (within 0.1 time units).
-7. **Projection wiring confirmed:** Source neurons drive target neurons
-   through Projection. Both source and target produce spikes.
-
-
----
-
-## Measured Performance (2026-06-16)
-
-Local non-isolated regression run. These numbers are recorded for
-regression comparison only and are not production throughput claims.
-
-| Metric | Value |
-|--------|-------|
-| Evidence class | Local regression, non-isolated workstation |
-| Benchmark artefact | `benchmarks/results/local_python_2026-06-16_theta_exact_flow.json` |
-| Workload | 200000 steps, 5 repeats, I=0.5 |
-| Polyglot contract | Python, Rust engine, Go, Julia, and Mojo spike-kernel surfaces aligned where maintained |
-
-| Backend | Median ns/step | Min ns/step | Max ns/step | Spikes |
-|---------|---------------:|------------:|------------:|-------:|
-| Python | 1115.22545 | 1019.392715 | 1574.31564 | 450 |
-| Rust engine | 138.5801 | 120.986305 | 147.37324 | 450 |
-| Go service mirror | 156.5 | 150.7 | 179.7 | 450 |
-| Julia mirror | 127.33956 | 126.497845 | 128.39905 | 450 |
-| Mojo mirror | 104.11917013698258 | 98.57875003945082 | 106.32325502228923 | 450 |
-
----
-
-## Pipeline Verification (End-to-End)
-
-### 1. Construction
-`ThetaNeuron()` instantiates with documented defaults.
-**Status: PASS**
-
-### 2. step() → correct type
-Returns `int` (spike indicator) or `float` (rate/potential).
-**Status: PASS**
-
-### 3. Spiking behaviour
-71 spikes in 10,000 steps at I=5.0.
-**Status: PASS**
-
-### 4. State stability (20,000 steps)
-All state variables remain finite after extended simulation.
-**Status: PASS**
-
-### 5. reset()
-State returns to initial values after `reset()`.
-**Status: PASS**
-
-### 6. Population
-`Population(ThetaNeuron, n=10)` creates correct instances.
-**Status: PASS**
-
-### 7. Polyglot safety surfaces
-Rust, Go, Julia, and Mojo carry the same spike-crossing and compact-phase validation contract.
-
----
-
-## Findings (measured 2026-06-16)
-
-1. Local Python median: 1115.22545 ns/step, about 897K steps/s in the
-   non-isolated regression run.
-2. Rust engine, Go, Julia, and Mojo measurements are present in the benchmark
-   artefact; no maintained backend is skipped.
-3. Polyglot contract aligned for Rust, Go, Julia, and Mojo.
-4. Numerical stability confirmed over 20K steps.
+**Reference:** Ermentrout and Kopell (1986), DOI `10.1137/0146017`
+**Family:** canonical Type-I phase model on the unit circle
+**State:** `theta`, normalised to `[-pi, pi]`
+
+## Dynamics
+
+The maintained hand model follows
+
+$$
+\frac{d\theta}{dt} = (1 - \cos\theta) + (1 + \cos\theta)I.
+$$
+
+With the tangent half-angle substitution $y=\tan(\theta/2)$, the equation becomes
+
+$$
+\frac{dy}{dt}=y^2+I.
+$$
+
+`ThetaNeuron.step()` integrates this transformed equation analytically for a
+constant current during each timestep. It does not use a forward-Euler phase
+increment.
+
+- For $I>0$, the flow advances
+  $\operatorname{atan}(y/\sqrt I)$ by $\sqrt I\,dt$.
+- For $I=0$, the flow is $y' = y/(1-y\,dt)$.
+- For $I<0$, with $a=\sqrt{-I}$ and $r=(y-a)/(y+a)$, the flow advances
+  $r' = r\exp(2a\,dt)$ and recovers $y'=a(1+r')/(1-r')$.
+
+The result is mapped back with $\theta'=2\operatorname{atan}(y')$ and wrapped
+onto the compact circle. A spike is reported when the analytic trajectory
+crosses $\pi$ within the timestep. The state remains wrapped after that event;
+there is no separate voltage-style reset parameter.
+
+For positive current, the continuous-time period is
+
+$$
+T=\frac{\pi}{\sqrt I},\qquad f=\frac{\sqrt I}{\pi}.
+$$
+
+For negative current the stable phase is
+
+$$
+\theta^*=-\arccos\!\left(\frac{1+I}{1-I}\right).
+$$
+
+## Public parameters and state
+
+| Field | Default | Contract |
+|---|---:|---|
+| `theta` | `0.0` | finite phase; normalised at construction |
+| `dt` | `0.01` | finite and strictly positive |
+| `current` | `0.0` | finite constant drive for each call |
+
+Every runtime path rejects invalid current, phase, timestep, or non-finite
+analytic candidates before committing state. `reset()` restores `theta=0.0`
+while preserving `dt`.
+
+## Acceleration and dispatch
+
+`simulate()` exposes `python`, `rust`, `julia`, `go`, `mojo`, and `auto`.
+Julia, Go, and Mojo transport the complete initial-phase and timestep contract.
+The Rust engine entry point retains its factory-default boundary; the separate
+Rust safety module accepts the explicit `theta` and `dt` state and is exercised
+by an executable trace probe.
+
+Auto dispatch probes Go, Julia, Mojo, compatible Rust, then Python. Go is
+probed before Julia so a built shared library avoids initialising the Julia
+runtime. The controlled benchmark records both this stable dispatcher order
+and the timing order observed during the individual host run.
+
+The enrolled 1,000-step current vector is:
+
+| Current | Events |
+|---:|---:|
+| `-1.0` | 0 |
+| `-0.5` | 0 |
+| `0.0` | 0 |
+| `0.1` | 1 |
+| `0.333` | 2 |
+| `0.5` | 2 |
+| `1.0` | 3 |
+| `2.0` | 5 |
+| `5.0` | 7 |
+| `20.0` | 14 |
+| `50.0` | 23 |
+
+All four compiled lanes preserve these event counts exactly. Across that
+vector, the measured circular phase difference from Python is below `2e-12`.
+On the current host, Rust and Mojo were bit-identical to Python; Julia and Go
+reached maximum circular differences of approximately `2.1e-13`. The declared
+portable contract remains the `2e-12` envelope because transcendental library
+implementations can differ by a small number of ULPs.
+
+## Schema and generated RTL boundary
+
+The Python hand model and acceleration chain use the analytic constant-current
+flow. The paired `theta.toml` and `theta.json` schema/compiler surfaces retain
+an explicit Euler step, a phase threshold at `3.11`, and subtraction of
+`6.2832` on a crossing. That is an intentional fixed-point hardware
+approximation, not an exact-flow or bit-true claim.
+
+The generated Q16.16 RTL preserves the complete event-count vector above over
+1,000 steps. For currents `-1`, `-0.5`, `0`, `0.333`, `0.5`, `1`, and `2`, its
+maximum shortest-arc phase error remains below `0.17` rad. At `I=1`, all three
+events are preserved but each is displaced by one cycle, producing six binary
+event-sample differences. The higher-current points retain event-count evidence
+only; no bounded trajectory claim is made for those rapidly rotating traces.
+
+The committed Q8.8 formal job proves the generated port-level reset and bounded
+state properties to depth 6 with Z3. Q8.8 count deviations are not presented as
+Q16.16 parity.
+
+## Controlled local benchmark
+
+The committed artefact is
+`benchmarks/results/local_python_2026-06-16_theta_exact_flow.json`, generated by
+`benchmarks/bench_model_theta.py`. It measures 100,000 public-dispatch steps at
+`I=0.5`, seven repeats, with affinity pinned to one logical CPU. The workstation
+was not otherwise isolated and was under concurrent load, so these numbers are
+local regression evidence rather than production throughput claims.
+
+| Backend | Median call (ms) | Minimum call (ms) | Events | Max circular difference |
+|---|---:|---:|---:|---:|
+| Julia | 26.968 | 19.258 | 225 | `7.20e-14` |
+| Go | 29.810 | 24.015 | 225 | `1.99e-13` |
+| Mojo | 49.078 | 44.728 | 225 | `0` |
+| Rust engine | 147.012 | 101.517 | 225 | `0` |
+| Python | 365.536 | 253.950 | 225 | `0` |
+
+The artefact records runtime versions, CPU affinity, governor, host load,
+source hashes for every implementation/ABI surface, final phase, exact event
+parity, and a successful Rust-safety test receipt.
+
+## Verification surfaces
+
+- `tests/test_model_theta.py`: analytic dynamics, phase geometry, validation,
+  network integration, and public simulation behaviour.
+- `tests/test_theta_backends.py`: executable four-lane parity, full-parameter
+  ABIs, fail-closed buffers, fallback order, and the Rust-safety trace probe.
+- `tests/test_theta_backend_loading.py`: optional-runtime loading failures.
+- `tests/test_cosim_theta.py`: paired schemas, Q16.16 event counts, circular
+  phase bounds, and the declared timing boundary.
+- `tests/test_bench_theta.py`: controlled benchmark and source-hash contract.
+- `src/sc_neurocore/accel/julia/theta_parity_test.jl`: standalone Julia event
+  vector, configured-state, empty-run, and rejection assertions.
+- `src/sc_neurocore/accel/rust/safety/theta.rs`: standalone exact-flow safety
+  unit tests.
+
+The touched Python dispatcher and backend wrapper each have focused 100%
+statement coverage.

@@ -5,6 +5,18 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 ## [Unreleased]
 
 ### Added
+- Completed Theta end-to-end fidelity across the tangent-half-angle exact-flow
+  Python reference, Rust engine and safety module, full-contract Julia and Go,
+  the Mojo shared library, paired Euler schemas, and generated Q16.16 RTL.
+  The public dispatcher exposes every lane and probes
+  Go/Julia/Mojo/compatible-Rust/Python while avoiding Julia initialisation when
+  the Go shared library is available.
+- Added source-bound Theta backend, benchmark, co-simulation, descriptor, and
+  formal evidence. Every compiled acceleration lane preserves
+  0/0/0/1/2/2/3/5/7/14/23 events over the enrolled 1,000-step current vector and
+  remains within `2e-12` circular phase error. Generated Q16.16 RTL preserves
+  the same counts, with its Euler/fixed-point phase and one-cycle timing bounds
+  stated separately from the exact-flow software contract.
 - Completed Quadratic IF end-to-end fidelity across the exact-flow Python
   reference, the Rust safety crate and engine, full-contract Julia and Go, the
   Mojo shared library, paired schemas, and generated Q16.16 RTL. The public

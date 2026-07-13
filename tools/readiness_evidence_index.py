@@ -211,9 +211,16 @@ ENROLLED: tuple[EnrolledEvidence, ...] = (
         schema_name="theta",
         class_name="ThetaNeuron",
         level="h1_cosim",
-        evidence="tests/test_cosimulation.py::_TRANSCENDENTAL_COSIM_MODELS",
-        operating_point="schema-DSL theta phase oscillator; Q8.8/Q16 paths",
-        tolerance="transcendental tolerance band",
+        evidence=("tests/test_cosim_theta.py::test_q1616_preserves_complete_event_count_vector"),
+        operating_point=(
+            "Theta exact flow and Euler schema/RTL at "
+            "I=-1,-0.5,0,0.1,0.333,0.5,1,2,5,20,50 over 1000 steps"
+        ),
+        tolerance=(
+            "paired TOML/JSON and Q16.16 event counts exact; Q16.16 circular phase error "
+            "below 0.17 rad at I=-1,-0.5,0,0.333,0.5,1,2; I=1 one-cycle timing "
+            "boundary declared"
+        ),
     ),
     EnrolledEvidence(
         schema_name="adex",

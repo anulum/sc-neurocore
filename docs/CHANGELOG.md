@@ -5,6 +5,23 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+### Theta exact-flow source-to-silicon closure
+
+- Exposed the tangent-half-angle exact constant-current flow through Python,
+  the Rust engine and safety module, Julia, Go, and Mojo. Julia, Go, and Mojo
+  carry the complete phase/timestep contract; the Rust engine retains its
+  explicit factory-default boundary, and an executable safety probe covers the
+  standalone Rust implementation.
+- Added an executable 11-point current vector for every compiled lane, bounded
+  circular phase parity at `2e-12`, fail-closed C ABI buffer contracts, focused
+  100% coverage for the Python dispatcher and backend wrapper, and a controlled
+  single-CPU benchmark with source hashes and host-load evidence.
+- Preserved the existing Euler schema/compiler boundary and upgraded its proof:
+  paired TOML/JSON schemas and generated Q16.16 RTL retain the complete event
+  count vector, moderate-regime circular phase error stays below `0.17` rad,
+  the I=1 one-cycle timing displacement is explicit, and the generated depth-6
+  Z3 formal job remains enrolled.
+
 ### Hierarchical partitioner responsibility modularisation
 - Replaced the 1,324-line hierarchical partitioner and its two oversized test
   surfaces with a 104-line compatibility facade, ten focused implementation

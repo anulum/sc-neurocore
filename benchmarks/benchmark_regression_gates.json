@@ -408,57 +408,81 @@
     {
       "artefact": "benchmarks/results/local_python_2026-06-16_theta_exact_flow.json",
       "expected_values": {
-        "spdx_license": "AGPL-3.0-or-later",
-        "benchmark": "ThetaNeuron tangent-half-angle exact constant-current flow step",
-        "evidence_class": "local_regression_non_isolated",
-        "production_speed_claim": false
+        "backends.go.event_count_matches_python": true,
+        "backends.julia.event_count_matches_python": true,
+        "backends.mojo.event_count_matches_python": true,
+        "backends.rust.event_count_matches_python": true,
+        "kernel": "theta_tangent_half_angle_exact_constant_current_flow",
+        "meta.single_cpu_pinned": true,
+        "schema_version": "sc-neurocore.polyglot-benchmark.v1",
+        "verification.rust_safety.passed": true,
+        "workload.circular_phase_atol": 2e-12,
+        "workload.current": 0.5,
+        "workload.n_steps": 100000,
+        "workload.repeats": 7
       },
       "id": "theta-exact-flow-multibackend-local-regression",
       "required_numbers": [
-        "backend_summary.python.median_ns_per_step",
-        "backend_summary.python.min_ns_per_step",
-        "backend_summary.python.max_ns_per_step",
-        "backend_summary.python.spikes",
-        "backend_summary.rust.median_ns_per_step",
-        "backend_summary.rust.min_ns_per_step",
-        "backend_summary.rust.max_ns_per_step",
-        "backend_summary.rust.spikes",
-        "backend_summary.go.median_ns_per_step",
-        "backend_summary.go.min_ns_per_step",
-        "backend_summary.go.max_ns_per_step",
-        "backend_summary.go.spikes",
-        "backend_summary.julia.median_ns_per_step",
-        "backend_summary.julia.min_ns_per_step",
-        "backend_summary.julia.max_ns_per_step",
-        "backend_summary.julia.spikes",
-        "backend_summary.mojo.median_ns_per_step",
-        "backend_summary.mojo.min_ns_per_step",
-        "backend_summary.mojo.max_ns_per_step",
-        "backend_summary.mojo.spikes",
-        "steps",
-        "repeats",
-        "current"
+        "backends.python.median_call_ms",
+        "backends.python.minimum_call_ms",
+        "backends.python.parity_max_circular_phase_diff",
+        "backends.python.event_count",
+        "backends.rust.median_call_ms",
+        "backends.rust.minimum_call_ms",
+        "backends.rust.parity_max_circular_phase_diff",
+        "backends.rust.event_count",
+        "backends.julia.median_call_ms",
+        "backends.julia.minimum_call_ms",
+        "backends.julia.parity_max_circular_phase_diff",
+        "backends.julia.event_count",
+        "backends.go.median_call_ms",
+        "backends.go.minimum_call_ms",
+        "backends.go.parity_max_circular_phase_diff",
+        "backends.go.event_count",
+        "backends.mojo.median_call_ms",
+        "backends.mojo.minimum_call_ms",
+        "backends.mojo.parity_max_circular_phase_diff",
+        "backends.mojo.event_count"
       ],
       "parity_groups": [
         {
           "paths": [
-            "backend_summary.python.spikes",
-            "backend_summary.rust.spikes",
-            "backend_summary.go.spikes",
-            "backend_summary.julia.spikes",
-            "backend_summary.mojo.spikes"
+            "backends.python.event_count",
+            "backends.rust.event_count",
+            "backends.julia.event_count",
+            "backends.go.event_count",
+            "backends.mojo.event_count"
           ],
-          "tolerance": 0
+          "tolerance": 0.0
         }
       ],
+      "regression_limits": {
+        "backends.go.parity_max_circular_phase_diff": {
+          "max": 2e-12
+        },
+        "backends.julia.parity_max_circular_phase_diff": {
+          "max": 2e-12
+        },
+        "backends.mojo.parity_max_circular_phase_diff": {
+          "max": 2e-12
+        },
+        "backends.rust.parity_max_circular_phase_diff": {
+          "max": 2e-12
+        }
+      },
       "source_hashes": {
         "benchmarks/bench_model_theta.py": "source_hashes.benchmarks/bench_model_theta.py",
-        "src/sc_neurocore/neurons/models/theta.py": "source_hashes.src/sc_neurocore/neurons/models/theta.py",
         "engine/src/neurons/trivial.rs": "source_hashes.engine/src/neurons/trivial.rs",
+        "src/sc_neurocore/accel/go/neurons/theta/theta.go": "source_hashes.src/sc_neurocore/accel/go/neurons/theta/theta.go",
         "src/sc_neurocore/accel/go/services/theta.go": "source_hashes.src/sc_neurocore/accel/go/services/theta.go",
         "src/sc_neurocore/accel/go/services/theta_test.go": "source_hashes.src/sc_neurocore/accel/go/services/theta_test.go",
         "src/sc_neurocore/accel/julia/neurons/theta.jl": "source_hashes.src/sc_neurocore/accel/julia/neurons/theta.jl",
-        "src/sc_neurocore/accel/mojo/kernels/theta.mojo": "source_hashes.src/sc_neurocore/accel/mojo/kernels/theta.mojo"
+        "src/sc_neurocore/accel/julia/theta_parity_test.jl": "source_hashes.src/sc_neurocore/accel/julia/theta_parity_test.jl",
+        "src/sc_neurocore/accel/mojo/kernels/theta.mojo": "source_hashes.src/sc_neurocore/accel/mojo/kernels/theta.mojo",
+        "src/sc_neurocore/accel/rust/examples/theta_trace.rs": "source_hashes.src/sc_neurocore/accel/rust/examples/theta_trace.rs",
+        "src/sc_neurocore/accel/rust/safety/theta.rs": "source_hashes.src/sc_neurocore/accel/rust/safety/theta.rs",
+        "src/sc_neurocore/accel/theta.py": "source_hashes.src/sc_neurocore/accel/theta.py",
+        "src/sc_neurocore/neurons/models/theta.py": "source_hashes.src/sc_neurocore/neurons/models/theta.py"
       }
     },
     {

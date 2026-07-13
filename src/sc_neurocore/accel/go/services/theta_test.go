@@ -72,6 +72,82 @@ func TestThetaNonFiniteExactCandidatePreservesState(t *testing.T) {
 	}
 }
 
+func TestThetaSimulateTraceMatchesEventVector(t *testing.T) {
+	cases := []struct {
+		current float64
+		spikes  int
+	}{
+		{-1.0, 0},
+		{-0.5, 0},
+		{0.0, 0},
+		{0.1, 1},
+		{0.333, 2},
+		{0.5, 2},
+		{1.0, 3},
+		{2.0, 5},
+		{5.0, 7},
+		{20.0, 14},
+		{50.0, 23},
+	}
+	for _, test := range cases {
+		trace, spikes, finalTheta, err := SimulateThetaTrace(*NewThetaNeuron(), 1_000, test.current)
+		if err != nil {
+			t.Fatalf("current=%v: unexpected error: %v", test.current, err)
+		}
+		if len(trace) != 1_000 || spikes != test.spikes || finalTheta != trace[len(trace)-1] {
+			t.Fatalf(
+				"current=%v: len=%d spikes=%d final=%.17g",
+				test.current,
+				len(trace),
+				spikes,
+				finalTheta,
+			)
+		}
+	}
+}
+
+func TestThetaSimulateTracePreservesConfiguredAndEmptyContracts(t *testing.T) {
+	initial := ThetaNeuronState{Theta: 0.37, Dt: 0.037}
+	trace, spikes, finalTheta, err := SimulateThetaTrace(initial, 400, 2.2)
+	if err != nil {
+		t.Fatalf("unexpected configured error: %v", err)
+	}
+	if len(trace) != 400 || spikes != 7 || finalTheta != trace[len(trace)-1] {
+		t.Fatalf("unexpected configured result: len=%d spikes=%d final=%.17g", len(trace), spikes, finalTheta)
+	}
+
+	empty, emptySpikes, emptyFinal, err := SimulateThetaTrace(initial, 0, 2.2)
+	if err != nil {
+		t.Fatalf("unexpected empty error: %v", err)
+	}
+	if len(empty) != 0 || emptySpikes != 0 || emptyFinal != initial.Theta {
+		t.Fatalf("unexpected empty result: len=%d spikes=%d final=%.17g", len(empty), emptySpikes, emptyFinal)
+	}
+}
+
+func TestThetaSimulateTraceRejectsInvalidContracts(t *testing.T) {
+	valid := *NewThetaNeuron()
+	cases := []struct {
+		state   ThetaNeuronState
+		steps   int
+		current float64
+	}{
+		{valid, -1, 0.0},
+		{ThetaNeuronState{Theta: math.NaN(), Dt: 0.01}, 1, 0.0},
+		{ThetaNeuronState{Theta: 0.0, Dt: 0.0}, 1, 0.0},
+		{valid, 1, math.Inf(1)},
+	}
+	for _, test := range cases {
+		trace, spikes, finalTheta, err := SimulateThetaTrace(test.state, test.steps, test.current)
+		if err != ErrThetaInvalidState {
+			t.Fatalf("expected invalid-state error, got %v", err)
+		}
+		if trace != nil || spikes != 0 || math.Float64bits(finalTheta) != math.Float64bits(test.state.Theta) {
+			t.Fatalf("rejected contract emitted state: trace=%v spikes=%d final=%v", trace, spikes, finalTheta)
+		}
+	}
+}
+
 func BenchmarkThetaExactFlow(b *testing.B) {
 	s := NewThetaNeuron()
 	spikes := 0

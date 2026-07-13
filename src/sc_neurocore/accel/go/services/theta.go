@@ -98,20 +98,34 @@ func (s *ThetaNeuronState) Reset() {
 
 // SimulateThetaNeuron runs the neuron for n steps.
 func SimulateThetaNeuron(nSteps int, iExt float64) ([]float64, int) {
-	s := NewThetaNeuron()
+	trace, spikes, _, err := SimulateThetaTrace(*NewThetaNeuron(), nSteps, iExt)
+	if err != nil {
+		panic(err)
+	}
+	return trace, spikes
+}
+
+// SimulateThetaTrace executes a complete phase and integration contract.
+func SimulateThetaTrace(
+	initial ThetaNeuronState,
+	nSteps int,
+	iExt float64,
+) ([]float64, int, float64, error) {
+	if nSteps < 0 || !finiteTheta(iExt) || !initial.Valid() {
+		return nil, 0, initial.Theta, ErrThetaInvalidState
+	}
+	s := initial
 	trace := make([]float64, nSteps)
 	spikes := 0
 	for t := 0; t < nSteps; t++ {
 		result, err := s.Step(iExt)
 		if err != nil {
-			panic(err)
+			return nil, 0, initial.Theta, err
 		}
 		trace[t] = s.Theta
-		if result > 0 {
-			spikes++
-		}
+		spikes += result
 	}
-	return trace, spikes
+	return trace, spikes, s.Theta, nil
 }
 
 var (

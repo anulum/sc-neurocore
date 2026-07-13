@@ -19,6 +19,7 @@ import math
 import numpy as np
 import pytest
 
+import sc_neurocore.accel.theta as backends
 from sc_neurocore.neurons.models.theta import ThetaNeuron
 from sc_neurocore.network.population import Population
 from sc_neurocore.network.projection import Projection
@@ -64,33 +65,33 @@ def _exact_theta_candidate(theta: float, current: float, dt: float) -> tuple[flo
 
 
 class TestThetaIsolation:
-    def test_construction_defaults(self):
+    def test_construction_defaults(self) -> None:
         n = ThetaNeuron()
         assert n.theta == 0.0
         assert n.dt == 0.01
 
-    def test_step_returns_binary(self):
+    def test_step_returns_binary(self) -> None:
         assert ThetaNeuron().step(0.0) in (0, 1)
 
-    def test_theta_evolves(self):
+    def test_theta_evolves(self) -> None:
         n = ThetaNeuron()
         n.step(1.0)
         assert n.theta != 0.0
 
-    def test_theta_wrapped_to_minus_pi_pi(self):
+    def test_theta_wrapped_to_minus_pi_pi(self) -> None:
         """theta is wrapped to [-π, π] after each step."""
         n = ThetaNeuron()
         for _ in range(10000):
             n.step(5.0)
         assert -np.pi <= n.theta <= np.pi
 
-    def test_state_finite_long_run(self):
+    def test_state_finite_long_run(self) -> None:
         n = ThetaNeuron()
         for _ in range(100000):
             n.step(2.0)
         assert np.isfinite(n.theta)
 
-    def test_reset(self):
+    def test_reset(self) -> None:
         n = ThetaNeuron()
         for _ in range(100):
             n.step(2.0)
@@ -100,29 +101,29 @@ class TestThetaIsolation:
 
 class TestThetaValidation:
     @pytest.mark.parametrize("theta", [np.nan, np.inf, -np.inf])
-    def test_rejects_non_finite_initial_phase(self, theta: float):
+    def test_rejects_non_finite_initial_phase(self, theta: float) -> None:
         with pytest.raises(ValueError, match="theta"):
             ThetaNeuron(theta=theta)
 
     @pytest.mark.parametrize("dt", [0.0, -1.0, np.nan, np.inf])
-    def test_rejects_non_positive_or_non_finite_dt(self, dt: float):
+    def test_rejects_non_positive_or_non_finite_dt(self, dt: float) -> None:
         with pytest.raises(ValueError, match="dt"):
             ThetaNeuron(dt=dt)
 
     @pytest.mark.parametrize("current", [np.nan, np.inf, -np.inf])
-    def test_rejects_non_finite_current_before_phase_mutation(self, current: float):
+    def test_rejects_non_finite_current_before_phase_mutation(self, current: float) -> None:
         n = ThetaNeuron(theta=0.25)
         before = n.theta
         with pytest.raises(ValueError, match="current"):
             n.step(current)
         assert n.theta == before
 
-    def test_initial_phase_is_wrapped_to_compact_circle(self):
+    def test_initial_phase_is_wrapped_to_compact_circle(self) -> None:
         n = ThetaNeuron(theta=4.0 * np.pi + 0.5)
         assert -np.pi <= n.theta <= np.pi
         assert abs(n.theta - 0.5) < 1e-12
 
-    def test_rejects_non_finite_exact_candidate_before_state_mutation(self):
+    def test_rejects_non_finite_exact_candidate_before_state_mutation(self) -> None:
         n = ThetaNeuron(theta=0.25, dt=1.0e308)
         before = n.theta
         with pytest.raises(ValueError, match="exact-flow candidate"):
@@ -130,7 +131,7 @@ class TestThetaValidation:
         assert n.theta == before
 
     @pytest.mark.parametrize("field", ["theta", "dt"])
-    def test_rejects_corrupted_runtime_state_before_phase_mutation(self, field: str):
+    def test_rejects_corrupted_runtime_state_before_phase_mutation(self, field: str) -> None:
         n = ThetaNeuron(theta=0.25)
         before = n.theta
         setattr(n, field, np.nan)
@@ -139,7 +140,7 @@ class TestThetaValidation:
         if field != "theta":
             assert n.theta == before
 
-    def test_rejects_runtime_dt_that_is_no_longer_positive(self):
+    def test_rejects_runtime_dt_that_is_no_longer_positive(self) -> None:
         n = ThetaNeuron(theta=0.25)
         before = n.theta
         n.dt = 0.0
@@ -151,27 +152,27 @@ class TestThetaValidation:
 class TestThetaBifurcation:
     """Saddle-node bifurcation at I=0 — same as QIF."""
 
-    def test_negative_current_silent(self):
+    def test_negative_current_silent(self) -> None:
         """I<0 → stable fixed point. No spikes."""
         for I in [-1.0, -0.5]:
             n = ThetaNeuron()
             spikes = _run(n, current=I, steps=50000)
             assert len(spikes) == 0, f"I={I}: {len(spikes)} spikes"
 
-    def test_zero_current_silent(self):
+    def test_zero_current_silent(self) -> None:
         """I=0 → theta stays at 0 (fixed point)."""
         n = ThetaNeuron()
         for _ in range(50000):
             n.step(0.0)
         assert abs(n.theta) < 1e-10
 
-    def test_positive_current_fires(self):
+    def test_positive_current_fires(self) -> None:
         """I>0 → periodic spiking."""
         n = ThetaNeuron()
         spikes = _run(n, current=0.5, steps=50000)
         assert len(spikes) >= 50
 
-    def test_continuous_onset(self):
+    def test_continuous_onset(self) -> None:
         """Rate rises continuously from zero at I=0+ (Type-I)."""
         n01 = ThetaNeuron()
         n10 = ThetaNeuron()
@@ -179,7 +180,7 @@ class TestThetaBifurcation:
         s10 = len(_run(n10, current=1.0, steps=100000))
         assert 0 < s01 < s10
 
-    def test_fixed_point_at_negative_I(self):
+    def test_fixed_point_at_negative_I(self) -> None:
         """At I=-0.5, theta should converge to stable FP: θ* = -arccos((1+I)/(1-I))."""
         # For I=-0.5: (1+I)/(1-I) = 0.5/1.5 = 1/3, θ* = -arccos(1/3) ≈ -1.231
         n = ThetaNeuron()
@@ -195,7 +196,7 @@ class TestThetaAnalyticalISI:
     """ISI = π/√I (continuous time). ISI_steps = π/(√I · dt)."""
 
     @pytest.mark.parametrize("I", [0.5, 1.0, 2.0, 5.0])
-    def test_isi_matches_analytical(self, I: float):
+    def test_isi_matches_analytical(self, I: float) -> None:
         """Measured ISI × dt should equal π/√I within 2%."""
         n = ThetaNeuron()
         spikes = _run(n, current=I, steps=100000)
@@ -209,7 +210,7 @@ class TestThetaAnalyticalISI:
             f"error={rel_error:.4f}"
         )
 
-    def test_near_constant_isi(self):
+    def test_near_constant_isi(self) -> None:
         """ISI is near-constant, with only discrete step quantisation jitter."""
         n = ThetaNeuron()
         spikes = _run(n, current=1.0, steps=50000)
@@ -218,7 +219,7 @@ class TestThetaAnalyticalISI:
         assert len(unique_isis) <= 2, f"Too many ISI values: {unique_isis}"
         assert max(unique_isis) - min(unique_isis) <= 1, f"ISI jitter > 1: {unique_isis}"
 
-    def test_sqrt_scaling(self):
+    def test_sqrt_scaling(self) -> None:
         """f(4I)/f(I) ≈ 2 (since f ∝ √I)."""
         n1 = ThetaNeuron()
         n4 = ThetaNeuron()
@@ -231,7 +232,7 @@ class TestThetaAnalyticalISI:
 class TestThetaPhaseSpace:
     """Phase dynamics on the unit circle."""
 
-    def test_theta_traverses_full_circle(self):
+    def test_theta_traverses_full_circle(self) -> None:
         """At I>0, theta should cycle through [-π, π]."""
         n = ThetaNeuron()
         thetas = set()
@@ -241,7 +242,7 @@ class TestThetaPhaseSpace:
         # Should visit many distinct theta values
         assert len(thetas) > 20
 
-    def test_spike_at_pi(self):
+    def test_spike_at_pi(self) -> None:
         """Spike is detected when the exact flow crosses π from below."""
         n = ThetaNeuron()
         for _ in range(50000):
@@ -250,7 +251,7 @@ class TestThetaPhaseSpace:
                 return
         pytest.fail("No spike in 50k steps at I=1.0")
 
-    def test_dynamics_equation(self):
+    def test_dynamics_equation(self) -> None:
         """Verify the tangent-half-angle exact constant-current flow."""
         n = ThetaNeuron(theta=1.0)
         expected, spiked = _exact_theta_candidate(n.theta, 2.0, n.dt)
@@ -258,7 +259,7 @@ class TestThetaPhaseSpace:
         assert result == int(spiked)
         assert abs(n.theta - expected) < 1e-12
 
-    def test_exact_positive_flow_separates_from_forward_euler(self):
+    def test_exact_positive_flow_separates_from_forward_euler(self) -> None:
         n = ThetaNeuron(theta=1.0, dt=0.2)
         current = 2.0
         euler = _wrap_phase(
@@ -270,14 +271,14 @@ class TestThetaPhaseSpace:
         assert abs(n.theta - expected) < 1e-12
         assert abs(n.theta - euler) > 1e-4
 
-    def test_exact_flow_reports_within_step_crossing(self):
+    def test_exact_flow_reports_within_step_crossing(self) -> None:
         n = ThetaNeuron(theta=2.5, dt=1.0)
         expected, spiked = _exact_theta_candidate(n.theta, 1.0, n.dt)
         assert spiked
         assert n.step(1.0) == 1
         assert abs(n.theta - expected) < 1e-12
 
-    def test_negative_current_stable_fixed_point_is_preserved(self):
+    def test_negative_current_stable_fixed_point_is_preserved(self) -> None:
         n = ThetaNeuron(theta=-math.pi / 2.0, dt=100.0)
         assert n.step(-1.0) == 0
         assert abs(n.theta + math.pi / 2.0) < 1e-12
@@ -285,13 +286,13 @@ class TestThetaPhaseSpace:
 
 class TestThetaParameters:
     @pytest.mark.parametrize("dt", [0.005, 0.01, 0.02])
-    def test_dt_stability(self, dt: float):
+    def test_dt_stability(self, dt: float) -> None:
         n = ThetaNeuron(dt=dt)
         for _ in range(50000):
             n.step(2.0)
         assert np.isfinite(n.theta)
 
-    def test_dt_affects_isi_steps_not_time(self):
+    def test_dt_affects_isi_steps_not_time(self) -> None:
         """Finer dt → more steps per ISI, but ISI_time stays the same."""
         n1 = ThetaNeuron(dt=0.01)
         n2 = ThetaNeuron(dt=0.005)
@@ -304,20 +305,45 @@ class TestThetaParameters:
 
 
 class TestThetaEdgeCases:
-    def test_theta_wrapping_correct(self):
+    def test_theta_wrapping_correct(self) -> None:
         """After large positive dtheta, theta stays in [-π, π]."""
         n = ThetaNeuron(theta=3.0, dt=0.5)
         n.step(10.0)  # large jump
         assert -np.pi <= n.theta <= np.pi
 
-    def test_candidate_phase_is_validated_before_assignment(self):
+    def test_candidate_phase_is_validated_before_assignment(self) -> None:
         n = ThetaNeuron(theta=0.25, dt=1.0e308)
         before = n.theta
         with pytest.raises(ValueError, match="exact-flow candidate"):
             n.step(-1.0e308)
         assert n.theta == before
 
-    def test_deterministic(self):
+    def test_positive_flow_singularity_wraps_and_reports_crossing(self) -> None:
+        n = ThetaNeuron(theta=0.0, dt=math.pi / 2.0)
+        assert n.step(1.0) == 1
+        assert n.theta == -math.pi
+
+    def test_zero_current_singularity_wraps_and_reports_crossing(self) -> None:
+        n = ThetaNeuron(theta=math.pi / 2.0, dt=1.0)
+        assert n.step(0.0) == 1
+        assert n.theta == -math.pi
+
+    def test_negative_flow_exponential_overflow_is_rejected_without_mutation(self) -> None:
+        n = ThetaNeuron(theta=0.25, dt=400.0)
+        before = n.theta
+        with pytest.raises(ValueError, match="exact-flow candidate"):
+            n.step(-1.0)
+        assert n.theta == before
+
+    def test_negative_flow_singularity_wraps_and_reports_crossing(self) -> None:
+        theta = 2.0
+        y = math.tan(theta / 2.0)
+        ratio = (y - 1.0) / (y + 1.0)
+        n = ThetaNeuron(theta=theta, dt=-math.log(ratio) / 2.0)
+        assert n.step(-1.0) == 1
+        assert n.theta == -math.pi
+
+    def test_deterministic(self) -> None:
         traces = []
         for _ in range(2):
             n = ThetaNeuron()
@@ -327,10 +353,10 @@ class TestThetaEdgeCases:
 
 
 class TestThetaPipeline:
-    def test_population(self):
+    def test_population(self) -> None:
         assert Population(ThetaNeuron, n=10, label="theta").n == 10
 
-    def test_network_with_drive(self):
+    def test_network_with_drive(self) -> None:
         pop = Population(ThetaNeuron, n=10, label="theta")
         drive = PoissonInput(n=10, rate_hz=500.0, weight=5.0, dt=0.001, seed=42)
         mon = SpikeMonitor(pop)
@@ -338,7 +364,7 @@ class TestThetaPipeline:
         net.run(duration=1.0, dt=0.001, backend="python")
         assert mon.count > 0
 
-    def test_projection_propagates(self):
+    def test_projection_propagates(self) -> None:
         src = Population(ThetaNeuron, n=10, label="src")
         tgt = Population(ThetaNeuron, n=10, label="tgt")
         drive = PoissonInput(n=10, rate_hz=500.0, weight=5.0, dt=0.001, seed=42)
@@ -350,7 +376,7 @@ class TestThetaPipeline:
         assert mon_src.count > 0
         assert mon_tgt.count > 0
 
-    def test_analysis_pipeline(self):
+    def test_analysis_pipeline(self) -> None:
         n = ThetaNeuron()
         train = np.array([float(n.step(2.0)) for _ in range(50000)])
         sc = spike_count(train)
@@ -375,7 +401,7 @@ class TestThetaSimulate:
         assert n.theta == float(trace[-1])
 
     def test_simulate_rust_matches_python(self) -> None:
-        pytest.importorskip("sc_neurocore_engine", reason="Rust engine not built")
+        assert backends._HAS_RUST
         py = ThetaNeuron()
         rs = ThetaNeuron()
         tr_py, sp_py = py.simulate(1000, current=1.0, backend="python")
@@ -384,7 +410,7 @@ class TestThetaSimulate:
         assert np.array_equal(tr_py, tr_rs)
 
     def test_simulate_rust_rejects_non_default(self) -> None:
-        pytest.importorskip("sc_neurocore_engine", reason="Rust engine not built")
+        assert backends._HAS_RUST
         n = ThetaNeuron(dt=0.02)
         with pytest.raises(RuntimeError, match="factory-default"):
             n.simulate(10, current=0.0, backend="rust")

@@ -105,6 +105,20 @@ def test_quadratic_if_is_enrolled_with_dedicated_exact_flow_evidence(
     assert "Q16.16 event vectors exact" in quadratic_if.tolerance
 
 
+def test_theta_is_enrolled_with_dedicated_exact_flow_evidence(
+    tool: ModuleType,
+) -> None:
+    """Replace the generic transcendental-suite pointer with measured Theta evidence."""
+    theta = next(e for e in tool.ENROLLED if e.class_name == "ThetaNeuron")
+    assert theta.level == "h1_cosim"
+    assert theta.evidence == (
+        "tests/test_cosim_theta.py::test_q1616_preserves_complete_event_count_vector"
+    )
+    assert "I=-1,-0.5,0,0.1,0.333,0.5,1,2,5,20,50" in theta.operating_point
+    assert "Q16.16 event counts exact" in theta.tolerance
+    assert "below 0.17 rad" in theta.tolerance
+
+
 def test_build_rows_returns_one_row_per_enrolled(tool: ModuleType) -> None:
     """Inventory length matches the curated enrolment table."""
     rows = tool.build_rows()

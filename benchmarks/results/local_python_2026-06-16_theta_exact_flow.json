@@ -1,271 +1,193 @@
 {
-  "spdx_license": "AGPL-3.0-or-later",
-  "commercial_license": "available",
-  "copyright_concepts": "\u00a9 Concepts 1996\u20132026 Miroslav \u0160otek. All rights reserved.",
-  "copyright_code": "\u00a9 Code 2020\u20132026 Miroslav \u0160otek. All rights reserved.",
-  "orcid": "0009-0009-3560-0851",
-  "contact": "www.anulum.li | protoscience@anulum.li",
-  "benchmark": "ThetaNeuron tangent-half-angle exact constant-current flow step",
-  "timestamp_utc": "2026-06-17T00:27:45+00:00",
-  "command": "PYTHONPATH=src ./.venv/bin/python benchmarks/bench_model_theta.py",
-  "evidence_class": "local_regression_non_isolated",
-  "production_speed_claim": false,
-  "isolation": "non-isolated loaded workstation",
-  "python": "3.12.3",
-  "platform": "Linux-6.17.0-35-generic-x86_64-with-glibc2.39",
-  "processor": "x86_64",
-  "steps": 200000,
-  "repeats": 5,
-  "current": 0.5,
-  "results": [
-    {
-      "backend": "python",
-      "median_ns_per_step": 1115.22545,
-      "min_ns_per_step": 1019.392715,
-      "max_ns_per_step": 1574.31564,
-      "spikes": [
-        450,
-        450,
-        450,
-        450,
-        450
-      ],
-      "results": [
-        {
-          "backend": "python",
-          "steps": 200000,
-          "current": 0.5,
-          "elapsed_ns": 203878543,
-          "ns_per_step": 1019.392715,
-          "spikes": 450
-        },
-        {
-          "backend": "python",
-          "steps": 200000,
-          "current": 0.5,
-          "elapsed_ns": 217965466,
-          "ns_per_step": 1089.82733,
-          "spikes": 450
-        },
-        {
-          "backend": "python",
-          "steps": 200000,
-          "current": 0.5,
-          "elapsed_ns": 229477223,
-          "ns_per_step": 1147.386115,
-          "spikes": 450
-        },
-        {
-          "backend": "python",
-          "steps": 200000,
-          "current": 0.5,
-          "elapsed_ns": 223045090,
-          "ns_per_step": 1115.22545,
-          "spikes": 450
-        },
-        {
-          "backend": "python",
-          "steps": 200000,
-          "current": 0.5,
-          "elapsed_ns": 314863128,
-          "ns_per_step": 1574.31564,
-          "spikes": 450
-        }
-      ]
-    },
-    {
-      "backend": "rust",
-      "timestamp_unix": 1781656059,
-      "command": "cargo run --manifest-path engine/Cargo.toml --example bench_theta_exact_flow",
-      "rustc": "rustc 1.96.0 (ac68faa20 2026-05-25)",
-      "target_os": "linux",
-      "target_arch": "x86_64",
-      "measurement_context": {
-        "host_load": "workstation under concurrent load during capture",
-        "cpu_isolation": "runtime cpuset shield when cgroup_effective_cpuset matches benchmark CPUs; kernel-reserved isolated cores were not detected on this workstation",
-        "cpu_affinity": "0-11",
-        "cgroup_effective_cpuset": "unavailable",
-        "runtime_cpuset_shield_claimed": false,
-        "load_average_before": "8.58 5.54 5.46 28/6297 1882889",
-        "load_average_after": "8.58 5.54 5.46 6/6325 1883068",
-        "cpu_governor": "powersave",
-        "cpu_frequency_mhz": "min=4100.000,max=4100.214,sampled_cpu_count=12",
-        "concurrent_load_status": "non-exclusive workstation run; other heavy jobs may have been active",
-        "timing_interpretation": "use timing medians as local regression context only, not final throughput claims",
-        "production_rerun_requirement": "rerun on reserved isolated cores with recorded affinity, governor, frequency, versions, and host-load evidence before publishing performance claims"
-      },
-      "steps": 200000,
-      "repeats": 5,
-      "current": 0.5,
-      "median_ns_per_step": 138.5801,
-      "min_ns_per_step": 120.986305,
-      "max_ns_per_step": 147.37324,
-      "results_ns_per_step": [
-        142.914075,
-        130.128345,
-        138.5801,
-        147.37324,
-        120.986305
-      ],
-      "spike_counts": [
-        450,
-        450,
-        450,
-        450,
-        450
-      ],
-      "final_thetas": [
-        0.7322706365982774,
-        0.7322706365982774,
-        0.7322706365982774,
-        0.7322706365982774,
-        0.7322706365982774
-      ],
-      "driver_command": "cargo run --manifest-path engine/Cargo.toml --example bench_theta_exact_flow"
-    },
-    {
-      "backend": "go",
-      "command": "go test src/sc_neurocore/accel/go/services/theta.go src/sc_neurocore/accel/go/services/theta_test.go -run ^$ -bench BenchmarkThetaExactFlow$ -benchtime 200000x -count 5",
-      "steps": 200000,
-      "repeats": 5,
-      "current": 0.5,
-      "median_ns_per_step": 156.5,
-      "min_ns_per_step": 150.7,
-      "max_ns_per_step": 179.7,
-      "results_ns_per_step": [
-        177.1,
-        156.5,
-        153.3,
-        179.7,
-        150.7
-      ],
-      "spikes": 450
-    },
-    {
-      "backend": "julia",
-      "command": "julia --project=. -e <theta exact-flow benchmark>",
-      "steps": 200000,
-      "repeats": 5,
-      "current": 0.5,
-      "median_ns_per_step": 127.33956,
-      "min_ns_per_step": 126.497845,
-      "max_ns_per_step": 128.39905,
-      "results_ns_per_step": [
-        126.652165,
-        128.39905,
-        127.874265,
-        126.497845,
-        127.33956
-      ],
-      "spike_counts": [
-        450,
-        450,
-        450,
-        450,
-        450
-      ],
-      "final_thetas": [
-        0.7322706365983036,
-        0.7322706365983036,
-        0.7322706365983036,
-        0.7322706365983036,
-        0.7322706365983036
-      ],
-      "spikes": 450
-    },
-    {
-      "backend": "mojo",
-      "command": "mojo run --disable-warnings -I src/sc_neurocore/accel/mojo/kernels <temp theta benchmark>",
-      "steps": 200000,
-      "repeats": 5,
-      "current": 0.5,
-      "median_ns_per_step": 104.11917013698258,
-      "min_ns_per_step": 98.57875003945082,
-      "max_ns_per_step": 106.32325502228923,
-      "results_ns_per_step": [
-        106.32325502228923,
-        104.11917013698258,
-        104.123249911936,
-        98.57875003945082,
-        99.36684000422247
-      ],
-      "spikes": 450,
-      "spike_counts": [
-        450,
-        450,
-        450,
-        450,
-        450
-      ],
-      "final_thetas": [
-        0.7322706365982774,
-        0.7322706365982774,
-        0.7322706365982774,
-        0.7322706365982774,
-        0.7322706365982774
-      ]
-    }
-  ],
-  "backend_summary": {
-    "python": {
-      "median_ns_per_step": 1115.22545,
-      "min_ns_per_step": 1019.392715,
-      "max_ns_per_step": 1574.31564,
-      "spikes": 450
-    },
-    "rust": {
-      "median_ns_per_step": 138.5801,
-      "min_ns_per_step": 120.986305,
-      "max_ns_per_step": 147.37324,
-      "spikes": 450
-    },
+  "backends": {
     "go": {
-      "median_ns_per_step": 156.5,
-      "min_ns_per_step": 150.7,
-      "max_ns_per_step": 179.7,
-      "spikes": 450
+      "available": true,
+      "event_count": 225,
+      "event_count_matches_python": true,
+      "final_state": {
+        "theta": 0.3549750607569697
+      },
+      "median_call_ms": 29.810077,
+      "minimum_call_ms": 24.014682,
+      "parity_max_circular_phase_diff": 1.9895196601282805e-13,
+      "speedup_vs_python": 12.262157994425843,
+      "used": true
     },
     "julia": {
-      "median_ns_per_step": 127.33956,
-      "min_ns_per_step": 126.497845,
-      "max_ns_per_step": 128.39905,
-      "spikes": 450
+      "available": true,
+      "event_count": 225,
+      "event_count_matches_python": true,
+      "final_state": {
+        "theta": 0.3549750607568738
+      },
+      "median_call_ms": 26.967588,
+      "minimum_call_ms": 19.257556,
+      "parity_max_circular_phase_diff": 7.194245199571014e-14,
+      "speedup_vs_python": 13.55463729273823,
+      "used": true
     },
     "mojo": {
-      "median_ns_per_step": 104.11917013698258,
-      "min_ns_per_step": 98.57875003945082,
-      "max_ns_per_step": 106.32325502228923,
-      "spikes": 450
+      "available": true,
+      "event_count": 225,
+      "event_count_matches_python": true,
+      "final_state": {
+        "theta": 0.3549750607569022
+      },
+      "median_call_ms": 49.078121,
+      "minimum_call_ms": 44.727772,
+      "parity_max_circular_phase_diff": 0.0,
+      "speedup_vs_python": 7.44804133801292,
+      "used": true
+    },
+    "python": {
+      "available": true,
+      "event_count": 225,
+      "event_count_matches_python": true,
+      "final_state": {
+        "theta": 0.3549750607569022
+      },
+      "median_call_ms": 365.535874,
+      "minimum_call_ms": 253.94979,
+      "parity_max_circular_phase_diff": 0.0,
+      "speedup_vs_python": 1.0,
+      "used": true
+    },
+    "rust": {
+      "available": true,
+      "event_count": 225,
+      "event_count_matches_python": true,
+      "final_state": {
+        "theta": 0.3549750607569022
+      },
+      "median_call_ms": 147.011729,
+      "minimum_call_ms": 101.516563,
+      "parity_max_circular_phase_diff": 0.0,
+      "speedup_vs_python": 2.48644020777417,
+      "used": true
     }
   },
+  "dispatcher_order": [
+    "go",
+    "julia",
+    "mojo",
+    "rust",
+    "python"
+  ],
+  "dispatcher_order_rationale": "Go and Julia medians are close and host-load-sensitive; Go is probed first to avoid Julia runtime initialisation when its shared library is available.",
+  "kernel": "theta_tangent_half_angle_exact_constant_current_flow",
+  "measured_order": [
+    "julia",
+    "go",
+    "mojo",
+    "rust",
+    "python"
+  ],
+  "meta": {
+    "affinity": [
+      0
+    ],
+    "cpu": "11th Gen Intel(R) Core(TM) i5-11600K @ 3.90GHz",
+    "governor": "powersave",
+    "kernel_isolated_cpus": "",
+    "load_average_end": [
+      31.74169921875,
+      34.75634765625,
+      35.61572265625
+    ],
+    "load_average_start": [
+      32.36279296875,
+      35.18994140625,
+      35.77880859375
+    ],
+    "measurement_scope": "single-logical-CPU affinity; kernel isolation and workstation load reported separately",
+    "platform": "Linux-6.17.0-35-generic-x86_64-with-glibc2.39",
+    "runtime_versions": {
+      "go": "go version go1.24.0 linux/amd64",
+      "julia": "julia version 1.12.6",
+      "mojo": "Mojo 1.0.0b1 (a9591de6)",
+      "numpy": "2.2.6",
+      "python": "3.12.3",
+      "rust": "rustc 1.96.0 (ac68faa20 2026-05-25)"
+    },
+    "single_cpu_pinned": true
+  },
+  "schema_version": "sc-neurocore.polyglot-benchmark.v1",
   "source_hashes": {
-    "benchmarks/bench_model_theta.py": "94183cb8ed3389ba1c156b706de7e51ff063ae6ca467d745b23ee322601873cd",
-    "src/sc_neurocore/neurons/models/theta.py": "7fa6736b2e1b6c425dae49b7844b50032ae96e59f51a97b6a311bf5c47e9f752",
-    "engine/src/neurons/trivial.rs": "521d1b68d1fd1371b8ed51f7b83d07355f60ba338883a7721763a223e4b09db1",
-    "src/sc_neurocore/accel/go/services/theta.go": "f569b96aa7d99ff6a65c6010a7630ae533e0fc08eb5c732ef62ee8ddafc84480",
-    "src/sc_neurocore/accel/go/services/theta_test.go": "fc20379b199a4d3e32b50fd774aea53eceb0bd5787cca70fda0deee0cb1717a8",
-    "src/sc_neurocore/accel/julia/neurons/theta.jl": "c59028502154a237fc6ae155323e529f0dc6c63bb8cdc31b7a0a5debb310250f",
-    "src/sc_neurocore/accel/mojo/kernels/theta.mojo": "3699cca7ed50d6d352ba588b3b0e8daac2aff061d95f20a756768d4ab3927b84",
     "benchmarks/bench_model_theta": {
-      "py": "94183cb8ed3389ba1c156b706de7e51ff063ae6ca467d745b23ee322601873cd"
+      "py": "1f05ebade4e8188da24847f74e6203f9e0a95e74c0a6490792802f395650400f"
     },
-    "src/sc_neurocore/neurons/models/theta": {
-      "py": "7fa6736b2e1b6c425dae49b7844b50032ae96e59f51a97b6a311bf5c47e9f752"
-    },
+    "benchmarks/bench_model_theta.py": "1f05ebade4e8188da24847f74e6203f9e0a95e74c0a6490792802f395650400f",
     "engine/src/neurons/trivial": {
       "rs": "521d1b68d1fd1371b8ed51f7b83d07355f60ba338883a7721763a223e4b09db1"
     },
+    "engine/src/neurons/trivial.rs": "521d1b68d1fd1371b8ed51f7b83d07355f60ba338883a7721763a223e4b09db1",
+    "src/sc_neurocore/accel/go/neurons/theta/theta": {
+      "go": "4d733e264631c2657d66061eb8a2587e4b63191283e34f9997edca8a8f1e43cc"
+    },
+    "src/sc_neurocore/accel/go/neurons/theta/theta.go": "4d733e264631c2657d66061eb8a2587e4b63191283e34f9997edca8a8f1e43cc",
     "src/sc_neurocore/accel/go/services/theta": {
-      "go": "f569b96aa7d99ff6a65c6010a7630ae533e0fc08eb5c732ef62ee8ddafc84480"
+      "go": "767dea65a634116b6df58da94d778ab7974b994e6f3e2a12b91d11d01aefcc1a"
     },
+    "src/sc_neurocore/accel/go/services/theta.go": "767dea65a634116b6df58da94d778ab7974b994e6f3e2a12b91d11d01aefcc1a",
     "src/sc_neurocore/accel/go/services/theta_test": {
-      "go": "fc20379b199a4d3e32b50fd774aea53eceb0bd5787cca70fda0deee0cb1717a8"
+      "go": "6890b77fd67c204a8afe1e7eda9b4424e565844a2f630fb5a0204c64a1d99173"
     },
+    "src/sc_neurocore/accel/go/services/theta_test.go": "6890b77fd67c204a8afe1e7eda9b4424e565844a2f630fb5a0204c64a1d99173",
     "src/sc_neurocore/accel/julia/neurons/theta": {
-      "jl": "c59028502154a237fc6ae155323e529f0dc6c63bb8cdc31b7a0a5debb310250f"
+      "jl": "b2bf6d6a010f271340fc5c5312169999760ab4b7ce25f324208df8114743b2e9"
     },
+    "src/sc_neurocore/accel/julia/neurons/theta.jl": "b2bf6d6a010f271340fc5c5312169999760ab4b7ce25f324208df8114743b2e9",
+    "src/sc_neurocore/accel/julia/theta_parity_test": {
+      "jl": "79b92a60cac87f3eaaea64d18b90ed5b3d1f79d02c801097721180beaca6cbc9"
+    },
+    "src/sc_neurocore/accel/julia/theta_parity_test.jl": "79b92a60cac87f3eaaea64d18b90ed5b3d1f79d02c801097721180beaca6cbc9",
     "src/sc_neurocore/accel/mojo/kernels/theta": {
-      "mojo": "3699cca7ed50d6d352ba588b3b0e8daac2aff061d95f20a756768d4ab3927b84"
+      "mojo": "ace9e34613cdeeb21c65b57decc2deb75b4332c93e99bb95754cbb13654f4b1e"
+    },
+    "src/sc_neurocore/accel/mojo/kernels/theta.mojo": "ace9e34613cdeeb21c65b57decc2deb75b4332c93e99bb95754cbb13654f4b1e",
+    "src/sc_neurocore/accel/rust/examples/theta_trace": {
+      "rs": "cb43dfc904f7806b74487a510c6f5d3eb1270f1a3079fd3e73c74490ab352e7b"
+    },
+    "src/sc_neurocore/accel/rust/examples/theta_trace.rs": "cb43dfc904f7806b74487a510c6f5d3eb1270f1a3079fd3e73c74490ab352e7b",
+    "src/sc_neurocore/accel/rust/safety/theta": {
+      "rs": "1ed97639224ffb7adcb96cabd9132ebc267d52cc9494889eb23905f41a5b42e0"
+    },
+    "src/sc_neurocore/accel/rust/safety/theta.rs": "1ed97639224ffb7adcb96cabd9132ebc267d52cc9494889eb23905f41a5b42e0",
+    "src/sc_neurocore/accel/theta": {
+      "py": "58ea61bdcf08c74fe0bd591c4270dfb50e11afd36903551ffa1972fab5e63112"
+    },
+    "src/sc_neurocore/accel/theta.py": "58ea61bdcf08c74fe0bd591c4270dfb50e11afd36903551ffa1972fab5e63112",
+    "src/sc_neurocore/neurons/models/theta": {
+      "py": "a948cb09b2a190494f17f0ff308485a146da3448b4b2e784cd82736ce2564f33"
+    },
+    "src/sc_neurocore/neurons/models/theta.py": "a948cb09b2a190494f17f0ff308485a146da3448b4b2e784cd82736ce2564f33"
+  },
+  "verification": {
+    "rust_safety": {
+      "command": "cargo test --release --manifest-path src/sc_neurocore/accel/rust/Cargo.toml theta::tests",
+      "output_tail": [
+        "test theta::tests::test_invalid_phase_increment_does_not_mutate_state ... ok",
+        "test theta::tests::test_negative_current_fixed_point_is_preserved ... ok",
+        "test theta::tests::test_positive_current_spikes_and_wraps ... ok",
+        "test theta::tests::test_reset_preserves_dt ... ok",
+        "test theta::tests::test_theta_new ... ok",
+        "test theta::tests::test_theta_step ... ok",
+        "",
+        "test result: ok. 10 passed; 0 failed; 0 ignored; 0 measured; 976 filtered out; finished in 0.04s",
+        "",
+        "",
+        "    Finished `release` profile [optimized] target(s) in 0.07s",
+        "     Running unittests safety/lib.rs (src/sc_neurocore/accel/rust/target/release/deps/sc_neurocore_safety-cbe1a14dec3b0ed8)"
+      ],
+      "passed": true,
+      "returncode": 0
     }
+  },
+  "workload": {
+    "circular_phase_atol": 2e-12,
+    "current": 0.5,
+    "n_steps": 100000,
+    "parameters": "Theta factory defaults; tangent-half-angle exact constant-current flow",
+    "repeats": 7
   }
 }

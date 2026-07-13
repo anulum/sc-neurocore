@@ -625,6 +625,31 @@ numpy.ndarray
 
 ---
 
+## Module `accel.theta`
+
+### Function `ensure_julia_loaded()`
+Load the executable Theta Julia module when available.
+
+### Function `ensure_go_loaded()`
+Load the compiled Theta Go C ABI when available.
+
+### Function `ensure_mojo_loaded()`
+Load the compiled Theta Mojo C ABI when available.
+
+### Function `simulate_rust(n_steps, current)`
+Run the factory-default Rust engine exact-flow recurrence.
+
+### Function `simulate_julia(theta, dt, n_steps, current)`
+Run the Julia recurrence with the complete numeric contract.
+
+### Function `simulate_go(theta, dt, n_steps, current)`
+Run the Go recurrence through its C ABI.
+
+### Function `simulate_mojo(theta, dt, n_steps, current)`
+Run the Mojo recurrence through its C ABI.
+
+---
+
 ## Module `accel.vector_ops`
 
 ### Function `pack_bitstream(bitstream)`
@@ -23773,14 +23798,16 @@ Ermentrout & Kopell 1986.
 
 Reference: Ermentrout, G.B. & Kopell, N. (1986). SIAM J. Appl. Math. 46:233–253.
 
-``simulate`` supports ``backend`` values ``python``, ``rust``, and ``auto``
-(prefer Rust under the factory-default contract when the engine is present).
+``simulate`` exposes the Python reference and all four compiled acceleration
+lanes. The Rust engine retains its factory-default boundary; Julia, Go, and
+Mojo transport the complete phase and integration contract.
 
 - **__post_init__**()
 - **step**(current)
 - **simulate**(n_steps, current, backend)
-  - Advance ``n_steps`` updates, returning ``(theta_trace, spikes)``.
+  - Advance a sequential trace through Python, Rust, Julia, Go, or Mojo.
 - **reset**()
+  - Restore the runtime phase while preserving the integration step.
 
 ---
 

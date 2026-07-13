@@ -4,30 +4,38 @@
 # © Code 2020–2026 Miroslav Šotek. All rights reserved.
 # ORCID: 0009-0009-3560-0851
 # Contact: www.anulum.li | protoscience@anulum.li
-# SC-NeuroCore — Mojo SIMD acceleration for theta
+# SC-NeuroCore — Mojo Theta exact-flow sequential simulator
+#
+# Build:
+#   mojo build --emit shared-lib -o libtheta.so theta.mojo
+#
+# The caller supplies n_steps+1 Float64 slots: the post-step phase trace and
+# final phase. Rejected contracts leave the buffer untouched because a
+# validation pass completes before emission.
 
 from std.math import atan, cos, exp, floor, sqrt, tan
+from std.memory import UnsafePointer
 
 comptime PI = 3.14159265358979323846
 
 
-fn _finite(x: Float64) -> Bool:
+def _finite(x: Float64) -> Bool:
     return (
         x == x and x <= 1.7976931348623157e308 and x >= -1.7976931348623157e308
     )
 
 
-fn theta_valid(theta: Float64, dt: Float64) -> Bool:
+def theta_valid(theta: Float64, dt: Float64) -> Bool:
     return _finite(theta) and _finite(dt) and dt > 0.0
 
 
-fn _abs(x: Float64) -> Float64:
+def _abs(x: Float64) -> Float64:
     if x < 0.0:
         return -x
     return x
 
 
-fn theta_step_spike(theta: Float64, current: Float64, dt: Float64) -> Int:
+def theta_step_spike(theta: Float64, current: Float64, dt: Float64) -> Int:
     if not _finite(current):
         return -1
     if not theta_valid(theta, dt):
@@ -38,11 +46,13 @@ fn theta_step_spike(theta: Float64, current: Float64, dt: Float64) -> Int:
         var root_i = sqrt(current)
         var phase = atan(y / root_i)
         var next_phase = phase + root_i * dt
+        if _abs(cos(next_phase)) <= 1.0e-15:
+            return 1
+        if next_phase >= PI / 2.0:
+            return 1
         var next_y = root_i * tan(next_phase)
         if not _finite(next_y):
             return -1
-        if next_phase >= PI / 2.0:
-            return 1
         return 0
     if current == 0.0:
         var denominator = 1.0 - y * dt
@@ -58,19 +68,21 @@ fn theta_step_spike(theta: Float64, current: Float64, dt: Float64) -> Int:
     var crossing_denominator = 1.0 - evolved
     if not _finite(evolved) or not _finite(crossing_denominator):
         return -1
-    if (ratio < 1.0 and evolved >= 1.0) or _abs(crossing_denominator) <= 1.0e-15:
+    if (ratio < 1.0 and evolved >= 1.0) or _abs(
+        crossing_denominator
+    ) <= 1.0e-15:
         return 1
     return 0
 
 
-fn _wrap_phase(theta: Float64) -> Float64:
+def _wrap_phase(theta: Float64) -> Float64:
     var two_pi = 2.0 * PI
     var wrapped = theta + PI
     wrapped = wrapped - floor(wrapped / two_pi) * two_pi
     return wrapped - PI
 
 
-fn theta_next_theta(theta: Float64, current: Float64, dt: Float64) -> Float64:
+def theta_next_theta(theta: Float64, current: Float64, dt: Float64) -> Float64:
     if not _finite(current):
         return 0.0 / 0.0
     if not theta_valid(theta, dt):
@@ -98,6 +110,57 @@ fn theta_next_theta(theta: Float64, current: Float64, dt: Float64) -> Float64:
     var denominator_neg = 1.0 - evolved
     if not _finite(evolved) or not _finite(denominator_neg):
         return 0.0 / 0.0
-    if ((ratio < 1.0 and evolved >= 1.0) or _abs(denominator_neg) <= 1.0e-15) and _abs(denominator_neg) <= 1.0e-15:
+    if (
+        (ratio < 1.0 and evolved >= 1.0) or _abs(denominator_neg) <= 1.0e-15
+    ) and _abs(denominator_neg) <= 1.0e-15:
         return -PI
-    return _wrap_phase(2.0 * atan(root_i_neg * (1.0 + evolved) / denominator_neg))
+    return _wrap_phase(
+        2.0 * atan(root_i_neg * (1.0 + evolved) / denominator_neg)
+    )
+
+
+def _run_theta(
+    theta0: Float64,
+    dt: Float64,
+    n_steps: Int,
+    current: Float64,
+    output_addr: Int,
+    write_output: Bool,
+) -> Int64:
+    var theta = theta0
+    if not _finite(current) or not theta_valid(theta, dt):
+        return -1
+    var output = UnsafePointer[Float64, MutAnyOrigin](
+        unsafe_from_address=output_addr
+    )
+    var spikes: Int64 = 0
+    for index in range(n_steps):
+        var spike = theta_step_spike(theta, current, dt)
+        if spike < 0:
+            return -1
+        var next_theta = theta_next_theta(theta, current, dt)
+        if not _finite(next_theta):
+            return -1
+        theta = next_theta
+        spikes += Int64(spike)
+        if write_output:
+            output[index] = theta
+    if write_output:
+        output[n_steps] = theta
+    return spikes
+
+
+@export
+def theta_simulate_c(
+    theta0: Float64,
+    dt: Float64,
+    n_steps: Int,
+    current: Float64,
+    output_addr: Int,
+) -> Int64:
+    if n_steps < 0 or output_addr == 0 or not _finite(current):
+        return -1
+    var validated = _run_theta(theta0, dt, n_steps, current, output_addr, False)
+    if validated < 0:
+        return -1
+    return _run_theta(theta0, dt, n_steps, current, output_addr, True)

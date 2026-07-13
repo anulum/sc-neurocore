@@ -204,20 +204,14 @@
     {
       "artefact": "benchmarks/results/bench_learning_bridge.json",
       "id": "autonomous-learning-modularisation-local-diagnostics"
+    },
+    {
+      "artefact": "benchmarks/results/bench_kl_refine.json",
+      "id": "hierarchical-kl-refine-five-backend-local-diagnostics"
     }
   ],
-  "failure_count": 42,
+  "failure_count": 40,
   "failures": [
-    {
-      "gate_id": "theta-exact-flow-multibackend-local-regression",
-      "path": "benchmarks/bench_model_theta.py->source_hashes.benchmarks/bench_model_theta.py",
-      "reason": "source_hash_mismatch"
-    },
-    {
-      "gate_id": "theta-exact-flow-multibackend-local-regression",
-      "path": "src/sc_neurocore/neurons/models/theta.py->source_hashes.src/sc_neurocore/neurons/models/theta.py",
-      "reason": "source_hash_mismatch"
-    },
     {
       "gate_id": "morris-lecar-rk4-multibackend-local-regression",
       "path": "engine/Cargo.toml->source_hashes.engine/Cargo.toml",
@@ -419,7 +413,7 @@
       "reason": "source_hash_mismatch"
     }
   ],
-  "gate_count": 51,
+  "gate_count": 52,
   "manifest": "benchmarks/benchmark_regression_gates.json",
   "passed": false,
   "schema_version": "sc-neurocore.benchmark-evidence-gate.v1"

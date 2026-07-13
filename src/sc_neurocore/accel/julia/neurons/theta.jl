@@ -8,7 +8,7 @@
 
 module ThetaAccel
 
-export step!, simulate, ThetaNeuronState, valid, reset!, wrap_phase
+export step!, simulate, simulate_trace, ThetaNeuronState, valid, reset!, wrap_phase
 
 mutable struct ThetaNeuronState
     theta::Float64
@@ -64,12 +64,13 @@ function step!(s::ThetaNeuronState, I_ext::Float64=0.0; dt::Float64=s.dt)::Int
         throw(DomainError((s.theta, s.dt, I_ext), "Theta state/current must be finite with positive dt"))
     end
 
-    s.dt = dt
-    next_theta, spiked = _exact_candidate(s, I_ext)
+    candidate_state = ThetaNeuronState(s.theta, dt)
+    next_theta, spiked = _exact_candidate(candidate_state, I_ext)
     if !isfinite(next_theta)
         throw(DomainError(next_theta, "Theta exact-flow update became non-finite"))
     end
 
+    s.dt = dt
     s.theta = wrap_phase(next_theta)
     return spiked ? 1 : 0
 end
@@ -80,17 +81,30 @@ function reset!(s::ThetaNeuronState)::Nothing
 end
 
 function simulate(n_steps::Int=1000; I_ext::Float64=10.0, dt::Float64=0.01)
-    s = ThetaNeuronState()
+    result = simulate_trace(0.0, dt, n_steps, I_ext)
+    return result.trace, result.spikes
+end
+
+function simulate_trace(
+    theta::Float64,
+    dt::Float64,
+    n_steps::Int,
+    I_ext::Float64,
+)
+    if n_steps < 0
+        throw(ArgumentError("Theta n_steps must be non-negative"))
+    end
+    if !all(isfinite, (theta, dt, I_ext)) || dt <= 0.0
+        throw(DomainError((theta, dt, I_ext), "Theta state/current must be finite with positive dt"))
+    end
+    s = ThetaNeuronState(wrap_phase(theta), dt)
     trace = zeros(n_steps)
     spikes = 0
     for t in 1:n_steps
-        result = step!(s, I_ext; dt=dt)
+        spikes += step!(s, I_ext)
         trace[t] = s.theta
-        if result > 0
-            spikes += 1
-        end
     end
-    return trace, spikes
+    return (trace=trace, spikes=spikes, thetaf=s.theta)
 end
 
 end # module ThetaAccel
