@@ -1,37 +1,36 @@
 # ASIC Flow
 
-Multi-PDK ASIC generation pipeline. The open-source path targets Sky130 and
-GF180MCU through Yosys/OpenROAD-compatible script generation, PDK path
-resolution, SC-aware synthesis optimisation, timing constraints, power-grid
-analysis, DRC/LVS script generation, and formal verification linkage.
+The ASIC-flow package materialises deterministic Yosys, OpenROAD, OpenSTA,
+KLayout, Magic, and Netgen inputs for Sky130, GF180MCU, commercial-template,
+and custom process configurations. It does not execute those external tools or
+claim physical area, power, timing, DRC, LVS, or GDSII closure.
 
-Commercial PDK entries are templates only; they require user-provided Liberty,
-LEF, technology LEF, DRC, and LVS decks.
+## Architecture
 
-## Quick Start
+The historical `sc_neurocore.asic_flow.asic_flow` import remains available, but
+implementation ownership is split by responsibility:
+
+| Module | Responsibility |
+| --- | --- |
+| `pdk` | PDK presets, path resolution, installation checks, and validation |
+| `design` | physical-design and stochastic-synthesis parameters |
+| `decks` | Yosys, OpenROAD, SDC, and GDSII scripts |
+| `signoff` | STA/DRC/LVS scripts, PVT corners, OCV, and summaries |
+| `constraints` | CDC, IR-drop, IO-placement, and equivalence scripts |
+| `estimation` | deterministic pre-synthesis screening estimates |
+| `flow` | complete deck generation, bundle writes, and evidence manifests |
+| `hierarchy` | per-block synthesis and hard-macro top integration |
+| `readiness` | evidence-derived tape-out checklist state |
+
+The modules form an acyclic import graph. All 38 historical definitions retain
+their original qualified names and pickle paths. The package root intentionally
+keeps the narrower one-command API:
 
 ```python
-from sc_neurocore.asic_flow.asic_flow import (
-    PDKConfig,
-    PDKType,
-    OpenSourcePDKResolver,
-    ASICFlowGenerator,
-    DesignParams,
-)
-
-pdk = PDKConfig.from_pdk_type(PDKType.SKY130)
-resolution = OpenSourcePDKResolver.resolve(pdk, pdk_root="/path/to/pdks")
-
-flow = ASICFlowGenerator().generate(resolution.pdk, DesignParams())
+from sc_neurocore.asic_flow import ASICFlowBundle, generate_asic_flow_bundle
 ```
 
-::: sc_neurocore.asic_flow.asic_flow
-
-## 2026-04-30 one-command bundle helper
-
-The Python API now includes `generate_asic_flow_bundle(...)` for the
-roadmap "one-command ASIC flow" path. It writes the complete Yosys/OpenROAD
-deck set plus `asic_flow_manifest.json` into a chosen output directory:
+## Generate a bundle
 
 ```python
 from sc_neurocore.asic_flow.asic_flow import DesignParams, generate_asic_flow_bundle
@@ -39,30 +38,61 @@ from sc_neurocore.asic_flow.asic_flow import DesignParams, generate_asic_flow_bu
 bundle = generate_asic_flow_bundle(
     "build/asic/sky130_demo",
     pdk_type="sky130",
-    design=DesignParams(top_module="sc_neurocore_top", rtl_files=["rtl/top.sv"]),
+    design=DesignParams(
+        top_module="sc_neurocore_top",
+        rtl_files=["rtl/top.sv"],
+    ),
     pdk_root="/opt/pdks",
+    require_pdk_files=True,
     n_neurons=32,
     n_synapses=512,
     bitstream_width=256,
     n_aer_ports=8,
+    formal_evidence_artifacts=[
+        "formal/sc_neurocore_top.sby",
+        "formal/report.json",
+    ],
 )
 
 print(bundle.manifest_path)
-print(bundle.estimate.dynamic_power_mw)
+print(bundle.pdk_resolution.usable_for_synthesis)
 ```
 
-The helper does not run external EDA tools. The manifest explicitly records
-`external_eda_executed: false` and `physical_ppa_claim_allowed: false` until a
-real Yosys/OpenROAD run, exact OpenROAD binary or container digest, and PDK
-revision are attached as evidence. When `require_pdk_files=True`, missing
-Liberty/LEF/tech LEF paths are listed as blockers instead of being hidden.
+The bundle contains nine generated flow files and
+`asic_flow_manifest.json`. When `require_pdk_files=True`, missing Liberty,
+cell-LEF, technology-LEF, setup, DRC, and LVS inputs are recorded rather than
+hidden. Formal evidence is complete for a claim only when at least one proof
+source (`.sby`, `.sv`, or `.sva`) and one report (`.json`, `.txt`, or `.log`)
+are attached.
 
-The package facade also exposes the helper for stable application imports:
+The manifest always reports `external_eda_executed: false` and
+`physical_ppa_claim_allowed: false`. A downstream run must attach exact tool,
+container, PDK revision, command, and signoff artefacts before physical claims
+are made.
 
-```python
-from sc_neurocore.asic_flow import ASICFlowBundle, generate_asic_flow_bundle
-```
+## Polyglot boundary
 
-`tests/test_asic_flow/test_asic_flow_package_api.py` locks the package-level
-exports and verifies that the facade generates a manifest-bearing
-`ASICFlowBundle` without running external EDA tools.
+Deck construction is typed text and filesystem orchestration, not a numerical
+kernel. Earlier Rust, Go, Julia, and Mojo files named for `asic_flow` were
+nonfunctional generated mirrors and have been removed. The maintained execution
+boundary is the external EDA toolchain; no language-speed comparison is claimed
+for removed code.
+
+## Verification and benchmark evidence
+
+The focused suite contains 100 tests and covers all 580 statements and 66
+branches across the 11 package files. It locks the historical facade, exclusive
+symbol ownership, the real import DAG, pickle paths, package API, responsibility
+size limits, removed false mirrors, and live benchmark hashes.
+
+`benchmarks/bench_asic_flow.py` compares the pre-refactor source archive with
+the modular candidate over 30 interleaved cold processes. Both variants emit
+the same 10,465-byte canonical payload at SHA-256
+`ae901f9b10bdc61f0997964d6143568994625bdf89080f02cd58efbc83099653`.
+The committed capture used CPU affinity without exclusive isolation while the
+workstation was under load, so its timing medians are local regression context,
+not publishable throughput evidence.
+
+## API reference
+
+::: sc_neurocore.asic_flow.asic_flow

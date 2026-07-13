@@ -261,8 +261,9 @@ Ordered stages, each with its entry symbol (verified end-to-end):
    shells `firtool`).
 10. **Synthesis / P&R** — `run_synthesis()` (Yosys), `run_pnr()` (nextpnr)
     (`compiler/pipeline.py:80,105`).
-11. **ASIC deck** — `OpenSourcePDKResolver.resolve()` (`asic_flow/asic_flow.py:200`);
-    PDKs SKY130, GF180MCU, TSMC28, Intel16, custom.
+11. **ASIC deck** — `OpenSourcePDKResolver.resolve()` (`asic_flow/pdk.py`) feeds
+    deterministic bundle orchestration in `asic_flow/flow.py`; PDKs SKY130,
+    GF180MCU, TSMC28, Intel16, and custom.
 12. **Chiplet** — interposer models UCIe / BoW / EMIB / CoWoS
     (`chiplet/topology.py`, with RTL assembly in `chiplet/rtl.py`).
 13. **Safety evidence** — fail-closed traceability, caller-supplied FMEDA and

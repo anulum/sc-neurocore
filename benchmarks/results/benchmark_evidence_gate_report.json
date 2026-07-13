@@ -172,6 +172,10 @@
     {
       "artefact": "benchmarks/results/local_python_2026-06-18_energy_lif_exact_flow.json",
       "id": "energy-lif-exact-flow-multibackend-local-regression"
+    },
+    {
+      "artefact": "benchmarks/results/bench_asic_flow.json",
+      "id": "asic-flow-modularisation-local-diagnostics"
     }
   ],
   "failure_count": 48,
@@ -417,7 +421,7 @@
       "reason": "source_hash_mismatch"
     }
   ],
-  "gate_count": 43,
+  "gate_count": 44,
   "manifest": "benchmarks/benchmark_regression_gates.json",
   "passed": false,
   "schema_version": "sc-neurocore.benchmark-evidence-gate.v1"

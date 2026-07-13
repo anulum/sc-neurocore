@@ -2277,15 +2277,184 @@ Seamless factory configuring a unified ArcaneZenith primitive running entirely c
 
 ---
 
-## Module `asic_flow.asic_flow`
+## Module `asic_flow.constraints`
+
+### Class `CDCCheckGenerator`
+Generates clock-domain crossing lint scripts.
+
+- **generate**(design, clock_domains)
+  - Render CDC checks for explicit domains or the design clock.
+
+### Class `IRDropGenerator`
+Generates IR drop analysis scripts for OpenROAD.
+
+- **generate**(pdk, design, toggle_rate)
+  - Render OpenROAD power-grid analysis at an input toggle fraction.
+
+### Class `IOPin`
+Specification for one IO pad.
+
+
+### Class `IOConstraintGenerator`
+Generates IO placement constraint files.
+
+- **generate**(pins, design)
+  - Render one OpenROAD ``place_pin`` command per supplied IO pin.
+- **auto_assign**(signal_names, sides)
+  - Auto-assign pins to die edges round-robin.
+
+### Class `LECGenerator`
+Generates Logic Equivalence Checking scripts.
+
+- **generate**(design)
+  - Render a Yosys equivalence proof between synthesis and routed RTL.
+
+---
+
+## Module `asic_flow.decks`
+
+### Class `SynthesisGenerator`
+Generates Yosys synthesis TCL scripts.
+
+- **generate**(pdk, design)
+  - Render the Yosys synthesis script for ``design`` and ``pdk``.
+
+### Class `FloorplanGenerator`
+Generates OpenROAD floorplan TCL scripts.
+
+- **generate**(pdk, design)
+  - Render the OpenROAD floorplan and optional two-net power grid.
+
+### Class `PlaceRouteGenerator`
+Generates OpenROAD place-and-route TCL scripts.
+
+- **generate**(pdk, design)
+  - Render the OpenROAD placement, clock-tree, and routing script.
+
+### Class `SDCGenerator`
+Generates Synopsys Design Constraints (SDC) for STA.
+
+- **generate**(pdk, design)
+  - Render clock, IO-delay, reset, fanout, and load constraints.
+
+### Class `GDSIIExporter`
+Generates GDSII stream-out scripts.
+
+- **generate**(pdk, design)
+  - Render open-PDK stream-out commands or a vendor-tool boundary.
+
+---
+
+## Module `asic_flow.design`
+
+### Class `SCASICOptimisationConfig`
+SC-specific synthesis settings for stochastic neuromorphic datapaths.
+
+- **yosys_passes**()
+  - Return the ordered Yosys passes selected for the SC datapath.
+
+### Class `DesignParams`
+ASIC design parameters.
+
+- **clock_period_ns**()
+  - Return the target clock period in nanoseconds.
+- **die_width_um**()
+  - Return the die width in micrometres.
+- **die_height_um**()
+  - Return the die height in micrometres.
+- **core_area_mm2**()
+  - Return the rectangular core area in square millimetres.
+
+---
+
+## Module `asic_flow.estimation`
+
+### Class `DesignEstimate`
+Uncalibrated pre-synthesis screening estimate for an SC module.
+
+
+### Class `PreSynthEstimator`
+Compute deterministic screening values before synthesis.
+
+The legacy coefficients are architectural scaling assumptions, not
+foundry-characterised PPA models:
+
+- Bitstream ops: ~10 gates/bit
+- LIF neuron: ~500 gates
+- STDP synapse: ~200 gates
+- AER router: ~100 gates/port
+
+Outputs support relative design screening only. They are not physical
+evidence and must not be presented as post-synthesis or signoff results.
+
+- **estimate**(cls, n_neurons, n_synapses, bitstream_width, n_aer_ports, pdk)
+  - Estimate design metrics from architectural parameters.
+
+---
+
+## Module `asic_flow.flow`
+
+### Class `ASICFlowOutput`
+Complete output of the ASIC tape-out flow.
+
+- **to_dict**()
+  - Map canonical bundle filenames to their generated contents.
+
+### Class `ASICFlowGenerator`
+Top-level generator for the complete ASIC tape-out pipeline.
+
+- **generate**(pdk, design)
+  - Generate all deterministic decks for one PDK/design pair.
+
+### Class `ASICFlowBundle`
+Generated ASIC flow files plus the evidence manifest path.
+
+- **to_dict**()
+  - Serialise bundle paths, PDK resolution, and screening estimate.
+
+### Function `generate_asic_flow_bundle(output_dir)`
+Write a complete ASIC flow deck and evidence manifest in one call.
+
+The helper deliberately does not run Yosys/OpenROAD. It materialises the
+scripts, resolves the requested PDK paths, records missing artefacts, and
+adds a pre-synthesis estimate so Python API users can inspect the bundle
+before launching external EDA tools.
+
+---
+
+## Module `asic_flow.hierarchy`
+
+### Class `BlockConfig`
+One block in a hierarchical ASIC flow.
+
+
+### Class `HierarchicalFlow`
+Multi-block ASIC flow with per-block synthesis + top integration.
+
+- **add_block**(block)
+  - Append one logical or hard-macro block to the flow.
+- **block_names**()
+  - Return block names in deterministic insertion order.
+- **generate_block_scripts**(pdk)
+  - Generate one Yosys synthesis script per configured block.
+- **generate_top_integration**(pdk)
+  - Render top-level netlist linkage and hard-macro LEF reads.
+
+---
+
+## Module `asic_flow.pdk`
 
 ### Class `PDKType`
+Process-design-kit families supported by the deck templates.
+
 
 ### Class `PDKConfig`
 Process Design Kit configuration.
 
 - **from_pdk_type**(cls, pdk)
+  - Construct the maintained preset for a process family.
 - **is_open_source**()
+  - Return whether the process has a maintained open-source file map.
 - **with_pdk_root**(pdk_root)
   - Return a copy with ``$PDK_ROOT`` variables bound to ``pdk_root``.
 
@@ -2293,13 +2462,17 @@ Process Design Kit configuration.
 Resolved file paths required by the open-source ASIC flow.
 
 - **required_paths**()
+  - Return the Liberty, cell-LEF, and technology-LEF paths.
 - **optional_paths**()
+  - Return optional setup, DRC-deck, and LVS-setup paths.
 
 ### Class `PDKResolution`
 Outcome of resolving a PDK against the local filesystem.
 
 - **usable_for_synthesis**()
+  - Return whether every synthesis-required PDK file was found.
 - **usable_for_signoff**()
+  - Return whether required and optional signoff files were found.
 
 ### Class `OpenSourcePDKResolver`
 Resolve Sky130/GF180 file locations without requiring OpenLane at import time.
@@ -2307,38 +2480,35 @@ Resolve Sky130/GF180 file locations without requiring OpenLane at import time.
 - **resolve**(pdk, pdk_root, require_existing)
   - Bind ``$PDK_ROOT`` and report missing PDK artefacts.
 
-### Class `SCASICOptimisationConfig`
-SC-specific synthesis settings for stochastic neuromorphic datapaths.
+### Class `PDKValidationResult`
+Result of PDK sanity check.
 
-- **yosys_passes**()
 
-### Class `DesignParams`
-ASIC design parameters.
+### Function `validate_pdk(pdk)`
+Check PDK configuration for obvious errors.
 
-- **clock_period_ns**()
-- **die_width_um**()
-- **die_height_um**()
-- **core_area_mm2**()
+### Function `validate_pdk_installation(pdk, pdk_root, require_signoff)`
+Check whether the resolved open-source PDK files are present locally.
 
-### Class `SynthesisGenerator`
-Generates Yosys synthesis TCL scripts.
+---
 
-- **generate**(pdk, design)
+## Module `asic_flow.readiness`
 
-### Class `FloorplanGenerator`
-Generates OpenROAD floorplan TCL scripts.
+### Class `TapeOutChecklist`
+Go/no-go checklist for ASIC tape-out.
 
-- **generate**(pdk, design)
+- **readiness_score**()
+  - Return the fraction of the ten required checks that passed.
+- **is_tape_out_ready**()
+  - Return whether all ten readiness checks passed.
+- **failing_checks**()
+  - Return stable field names for every incomplete readiness check.
+- **from_signoff**(summary)
+  - Populate from a signoff summary.
 
-### Class `PlaceRouteGenerator`
-Generates OpenROAD place-and-route TCL scripts.
+---
 
-- **generate**(pdk, design)
-
-### Class `SDCGenerator`
-Generates Synopsys Design Constraints (SDC) for STA.
-
-- **generate**(pdk, design)
+## Module `asic_flow.signoff`
 
 ### Class `SignoffCheckResult`
 Result of one signoff check.
@@ -2356,88 +2526,35 @@ Generates signoff scripts and evaluates results.
 - **evaluate_timing**(wns, tns, clock_period_ns)
   - Evaluate timing signoff from worst/total negative slack.
 - **evaluate_power**(dynamic_mw, leakage_mw, budget_mw)
+  - Compare dynamic plus leakage power against a milliwatt budget.
 - **evaluate_area**(cell_count, used_area_um2, die_area_um2)
-
-### Class `GDSIIExporter`
-Generates GDSII stream-out scripts.
-
-- **generate**(pdk, design)
-
-### Class `ASICFlowOutput`
-Complete output of the ASIC tape-out flow.
-
-- **to_dict**()
-
-### Class `ASICFlowGenerator`
-Top-level generator for the complete ASIC tape-out pipeline.
-
-- **generate**(pdk, design)
-
-### Class `ASICFlowBundle`
-Generated ASIC flow files plus the evidence manifest path.
-
-- **to_dict**()
-
-### Class `DesignEstimate`
-Pre-synthesis area/power/timing estimate for an SC module.
-
-
-### Class `PreSynthEstimator`
-Estimates area, power, and timing before synthesis.
-
-Uses empirical models based on SC circuit characteristics:
-- Bitstream ops: ~10 gates/bit
-- LIF neuron: ~500 gates
-- STDP synapse: ~200 gates
-- AER router: ~100 gates/port
-
-- **estimate**(cls, n_neurons, n_synapses, bitstream_width, n_aer_ports, pdk)
-  - Estimate design metrics from architectural parameters.
+  - Compare placed-cell area with the 85 percent utilisation limit.
 
 ### Class `CornerType`
+Process-corner combinations used by multi-corner timing analysis.
+
 
 ### Class `PVTCorner`
 Process-Voltage-Temperature corner definition.
 
 - **label**()
+  - Return a stable corner-temperature-voltage label.
 
 ### Class `MultiCornerAnalysis`
 Generates multi-corner STA scripts for all PVT corners.
 
 - **generate**(pdk, design, corners)
+  - Render one OpenSTA analysis section per selected PVT corner.
 - **worst_slack**(per_corner_wns)
-
-### Class `CDCCheckGenerator`
-Generates clock-domain crossing lint scripts.
-
-- **generate**(design, clock_domains)
-
-### Class `IRDropGenerator`
-Generates IR drop analysis scripts for OpenROAD.
-
-- **generate**(pdk, design, toggle_rate)
-
-### Class `IOPin`
-Specification for one IO pad.
-
-
-### Class `IOConstraintGenerator`
-Generates IO placement constraint files.
-
-- **generate**(pins, design)
-- **auto_assign**(signal_names, sides)
-  - Auto-assign pins to die edges round-robin.
-
-### Class `LECGenerator`
-Generates Logic Equivalence Checking scripts.
-
-- **generate**(design)
+  - Return the corner with the smallest worst negative slack.
 
 ### Class `OCVConfig`
 On-Chip Variation derating factors.
 
 - **generate_sdc_fragment**()
+  - Render early and late cell/net derates as an SDC fragment.
 - **conservative**(cls)
+  - Return wider early/late derates for screening runs.
 
 ### Class `DRCViolation`
 One DRC rule violation.
@@ -2447,47 +2564,11 @@ One DRC rule violation.
 Structured signoff summary with pass/fail per check.
 
 - **drc_clean**()
+  - Return whether no counted error-severity DRC violation exists.
 - **all_pass**()
+  - Return whether timing, power, area, DRC, and LVS all pass.
 - **to_dict**()
-
-### Class `PDKValidationResult`
-Result of PDK sanity check.
-
-
-### Class `BlockConfig`
-One block in a hierarchical ASIC flow.
-
-
-### Class `HierarchicalFlow`
-Multi-block ASIC flow with per-block synthesis + top integration.
-
-- **add_block**(block)
-- **block_names**()
-- **generate_block_scripts**(pdk)
-- **generate_top_integration**(pdk)
-
-### Class `TapeOutChecklist`
-Go/no-go checklist for ASIC tape-out.
-
-- **readiness_score**()
-- **is_tape_out_ready**()
-- **failing_checks**()
-- **from_signoff**(summary)
-  - Populate from a signoff summary.
-
-### Function `generate_asic_flow_bundle(output_dir)`
-Write a complete ASIC flow deck and evidence manifest in one call.
-
-The helper deliberately does not run Yosys/OpenROAD. It materialises the
-scripts, resolves the requested PDK paths, records missing artefacts, and
-adds a pre-synthesis estimate so Python API users can inspect the bundle
-before launching external EDA tools.
-
-### Function `validate_pdk(pdk)`
-Check PDK configuration for obvious errors.
-
-### Function `validate_pdk_installation(pdk, pdk_root, require_signoff)`
-Check whether the resolved open-source PDK files are present locally.
+  - Serialise the signoff decision and counted DRC violations.
 
 ---
 

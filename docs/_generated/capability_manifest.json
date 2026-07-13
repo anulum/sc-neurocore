@@ -971,7 +971,7 @@
     "python_model_classes": 158,
     "python_model_source_modules": 153,
     "rust_pyo3_model_wrappers": 176,
-    "test_files": 1152
+    "test_files": 1161
   },
   "documentation": {
     "public_pages": [
@@ -2879,8 +2879,17 @@
       "tests/test_analysis_causality_contracts.py",
       "tests/test_arcane_zenith/__init__.py",
       "tests/test_arcane_zenith/test_arcane_zenith.py",
-      "tests/test_asic_flow/test_asic_flow.py",
+      "tests/test_asic_flow/test_architecture.py",
       "tests/test_asic_flow/test_asic_flow_package_api.py",
+      "tests/test_asic_flow/test_constraints.py",
+      "tests/test_asic_flow/test_decks.py",
+      "tests/test_asic_flow/test_design.py",
+      "tests/test_asic_flow/test_estimation.py",
+      "tests/test_asic_flow/test_flow.py",
+      "tests/test_asic_flow/test_hierarchy.py",
+      "tests/test_asic_flow/test_pdk.py",
+      "tests/test_asic_flow/test_readiness.py",
+      "tests/test_asic_flow/test_signoff.py",
       "tests/test_astrocyte_adapter.py",
       "tests/test_audio_evs_contracts.py",
       "tests/test_audio_package_api.py",

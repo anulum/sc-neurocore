@@ -5,6 +5,21 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+### ASIC-flow GodFile modularisation
+- Replaced the 1,451-line implementation and 814-line primary test file with a
+  123-line compatibility facade, nine acyclic responsibility modules, and 11
+  focused test modules. The largest implementation and test files are 319 and
+  234 lines. All 38 historical definitions retain identity, qualified names,
+  and pickle compatibility.
+- The focused suite passes 100 tests and covers all 580 statements and 66
+  branches. Strict touched MyPy, Ruff, NumPy docstrings, architecture, package,
+  and benchmark-source contracts pass.
+- Removed nonfunctional Rust, Go, Julia, and Mojo ASIC-flow mirrors. The real
+  boundary remains Python deck generation followed by external EDA execution.
+  A source-bound 30-sample benchmark proves the 10,465-byte parent/candidate
+  output is identical. Its affinity-only, loaded-host timings are local
+  regression context rather than throughput or physical-design evidence.
+
 ### Evolutionary-substrate GodFile modularisation
 - Replaced the 1,737-line implementation and 1,227-line primary test file with
   a 156-line compatibility facade, 14 acyclic responsibility modules, and 18

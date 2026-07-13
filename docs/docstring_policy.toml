@@ -14,7 +14,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 343
+expected_file_count = 353
 
 [[file]]
 path = "src/sc_neurocore/__init__.py"
@@ -651,6 +651,46 @@ rationale = "Public UVM generator package entry point that re-exports verificati
 [[file]]
 path = "src/sc_neurocore/asic_flow/__init__.py"
 rationale = "Public ASIC flow package entry point that re-exports one-command bundle generation APIs."
+
+[[file]]
+path = "src/sc_neurocore/asic_flow/asic_flow.py"
+rationale = "Historical ASIC flow compatibility facade for stable imports and pickle paths."
+
+[[file]]
+path = "src/sc_neurocore/asic_flow/constraints.py"
+rationale = "Public CDC, IR-drop, IO-placement, and logic-equivalence deck generators."
+
+[[file]]
+path = "src/sc_neurocore/asic_flow/decks.py"
+rationale = "Public Yosys, OpenROAD, SDC, and GDSII deck generators."
+
+[[file]]
+path = "src/sc_neurocore/asic_flow/design.py"
+rationale = "Public ASIC geometry and stochastic-computing synthesis parameters."
+
+[[file]]
+path = "src/sc_neurocore/asic_flow/estimation.py"
+rationale = "Public pre-synthesis gate, area, power, and timing estimate surface."
+
+[[file]]
+path = "src/sc_neurocore/asic_flow/flow.py"
+rationale = "Public deterministic ASIC bundle and evidence-manifest orchestration surface."
+
+[[file]]
+path = "src/sc_neurocore/asic_flow/hierarchy.py"
+rationale = "Public multi-block synthesis and hard-macro integration surface."
+
+[[file]]
+path = "src/sc_neurocore/asic_flow/pdk.py"
+rationale = "Public process-design-kit configuration, resolution, and validation surface."
+
+[[file]]
+path = "src/sc_neurocore/asic_flow/readiness.py"
+rationale = "Public evidence-derived ASIC tape-out readiness checklist."
+
+[[file]]
+path = "src/sc_neurocore/asic_flow/signoff.py"
+rationale = "Public timing, power, area, PVT, OCV, DRC, and LVS signoff surface."
 
 [[file]]
 path = "src/sc_neurocore/audio/__init__.py"

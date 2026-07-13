@@ -31,7 +31,6 @@ pub mod analyzer;
 pub mod ann_to_snn;
 pub mod app;
 pub mod arcane_neuron;
-pub mod asic_flow;
 pub mod astrocyte;
 pub mod astrocyte_adapter;
 pub mod astrocyte_lif;

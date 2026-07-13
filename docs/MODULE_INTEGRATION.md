@@ -63,15 +63,15 @@ conformity.
 ### ASIC & Hardware
 
 #### asic_flow — Multi-PDK ASIC Generation
-- **Source:** `src/sc_neurocore/asic_flow/asic_flow.py`
-- **Tests:** `tests/test_asic_flow/test_asic_flow.py` — **67 tests**
+- **Sources:** `src/sc_neurocore/asic_flow/{pdk,design,decks,signoff,constraints,estimation,flow,hierarchy,readiness}.py`
+- **Compatibility facade:** `src/sc_neurocore/asic_flow/asic_flow.py`
+- **Tests:** `tests/test_asic_flow/` — **100 focused tests**
 - **Key Classes:**
-  - `PDKConfig` — Process Design Kit configuration (Sky130, GF12, TSMC)
-  - `FloorplanGenerator` — Automated floorplanning
-  - `TimingAnalyzer` — Static timing analysis
-  - `PowerEstimator` — Dynamic/leakage power estimation
-  - `DesignRuleChecker` — DRC violation detection
-  - `FormalPropertyLink` — SymbiYosys integration
+  - `PDKConfig`, `OpenSourcePDKResolver` — Sky130/GF180MCU and custom PDK inputs
+  - `ASICFlowGenerator`, `ASICFlowBundle` — deterministic decks and evidence manifests
+  - `SynthesisGenerator`, `FloorplanGenerator`, `PlaceRouteGenerator` — Yosys/OpenROAD decks
+  - `SignoffGenerator`, `MultiCornerAnalysis`, `OCVConfig` — signoff scripts and conditions
+  - `TapeOutChecklist` — evidence-derived readiness state
 
 #### uvm_gen — UVM Testbench Generator
 - **Source:** `src/sc_neurocore/uvm_gen/uvm_gen.py`
@@ -275,7 +275,7 @@ conformity.
 | Module | Location | Tests |
 |--------|----------|------:|
 | safety_cert | `tests/test_safety_cert/` | 456 |
-| asic_flow | `tests/test_asic_flow/` | 67 |
+| asic_flow | `tests/test_asic_flow/` | 100 |
 | fault_injection | `tests/test_fault_injection/` | 22 |
 | uvm_gen | `tests/test_uvm_gen/` | 72 |
 | hypervisor | `tests/test_hypervisor/` | 78 |

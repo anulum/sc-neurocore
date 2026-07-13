@@ -2102,6 +2102,45 @@
         "src/sc_neurocore/accel/rust/safety/energy_lif.rs": "source_hashes.src/sc_neurocore/accel/rust/safety/energy_lif.rs",
         "src/sc_neurocore/neurons/models/energy_lif.py": "source_hashes.src/sc_neurocore/neurons/models/energy_lif.py"
       }
+    },
+    {
+      "artefact": "benchmarks/results/bench_asic_flow.json",
+      "description": "Source-bound parent/candidate ASIC deck and bundle-generation diagnostics.",
+      "expected_values": {
+        "comparison.generated_output_byte_identical": true,
+        "comparison.generated_sha256": "ae901f9b10bdc61f0997964d6143568994625bdf89080f02cd58efbc83099653",
+        "configuration.iterations": 30,
+        "configuration.warmups": 2,
+        "evidence_class": "local_source_refactor_regression",
+        "external_eda_executed": false,
+        "hardware_measurement_claimed": false,
+        "measurement_context.concurrent_load_status": "non-exclusive workstation run; other heavy jobs may have been active",
+        "measurement_context.timing_interpretation": "use timing medians as local regression context only, not final throughput claims",
+        "polyglot_applicability.go": "removed_empty_generated_mirror",
+        "polyglot_applicability.julia": "removed_non_parsing_generated_mirror",
+        "polyglot_applicability.mojo": "removed_zero_return_generated_mirror",
+        "polyglot_applicability.python": "measured_parent_candidate",
+        "polyglot_applicability.rust": "removed_nonfunctional_generated_mirror",
+        "schema_version": "sc-neurocore.asic-flow-modularisation-benchmark.v1",
+        "source_file_count": 11,
+        "source_sha256": "802bcb529c04758d8492d6330a02d27c80ad1d4699f4a5b278bca4458b7a0870"
+      },
+      "id": "asic-flow-modularisation-local-diagnostics",
+      "required_numbers": [
+        "comparison.generated_bytes",
+        "results.parent.sample_count",
+        "results.parent.subprocess_wall_ns.median",
+        "results.parent.import_ns.median",
+        "results.parent.deck_generation_ns.median",
+        "results.parent.bundle_write_ns.median",
+        "results.parent.max_rss_kib.median",
+        "results.candidate.sample_count",
+        "results.candidate.subprocess_wall_ns.median",
+        "results.candidate.import_ns.median",
+        "results.candidate.deck_generation_ns.median",
+        "results.candidate.bundle_write_ns.median",
+        "results.candidate.max_rss_kib.median"
+      ]
     }
   ],
   "schema_version": "sc-neurocore.benchmark-regression-gates.v1"

@@ -44,6 +44,7 @@ same checkout.
 
 | Script | Description |
 |--------|-------------|
+| `bench_asic_flow.py` | Interleaved monolithic-parent/modular-candidate comparison for cold import, deterministic ASIC deck generation, manifest-bearing bundle writes, process wall time, and RSS; fails on generated-byte drift and records source hashes, affinity, load, and removed-mirror applicability |
 | `bench_quantum_annealing_modularisation.py` | Interleaved single-file-parent/modular-candidate comparison for cold import, deterministic SC-to-Ising compilation, Python solve, process wall time, and RSS; records raw samples, source hashes, affinity, and host-load limits |
 | `bench_safety_certification.py` | Interleaved parent/candidate comparison for safety-package import and deterministic in-memory evidence generation; records raw samples, source hashes, affinity, host-load limits, and non-applicability of removed report-generator mirrors |
 | `bench_cli_startup.py` | Interleaved parent/candidate cold-start comparison for Python CLI import, `--version` dispatch, process wall time, and maximum RSS; records source hashes, affinity, governor, and host-load limits |
@@ -91,6 +92,14 @@ python benchmarks/bench_quantum_annealing_modularisation.py \
   --candidate-root . \
   --output benchmarks/results/local_python_2026-07-12_quantum_annealing_modularisation.json
 
+# ASIC-flow modularisation regression evidence
+PYTHONHASHSEED=0 PYTHONPATH=src python benchmarks/bench_asic_flow.py \
+  --baseline-root <parent-root> \
+  --baseline-ref <parent-sha> \
+  --candidate-root . \
+  --iterations 30 --warmups 2 \
+  --output benchmarks/results/bench_asic_flow.json
+
 # Evolutionary substrate Python evidence (30 samples)
 PYTHONHASHSEED=0 PYTHONPATH=src taskset -c <cpu> \
   .venv/bin/python benchmarks/bench_evo_substrate.py \
@@ -134,6 +143,16 @@ capture, so the artefact is regression context rather than publishable
 throughput or quantum-speedup evidence. The maintained Rust authority is
 `engine/src/quantum.rs`; removed generated Rust safety, Go, Julia, and Mojo
 files were nonfunctional mirrors, not comparison backends.
+
+The ASIC-flow harness measures Python deck and bundle orchestration without
+executing external EDA. Its parent and candidate payloads are byte-identical at
+SHA-256 `ae901f9b10bdc61f0997964d6143568994625bdf89080f02cd58efbc83099653`.
+The 30-sample capture records median cold import, deck generation, bundle write,
+process wall, and RSS changes of +9.81%, +3.07%, +22.61%, -8.33%, and -7.41%.
+CPU affinity was not exclusive and the workstation was under concurrent load,
+so the timings are diagnostic only. Rust, Go, Julia, and Mojo entries record
+the removal of nonfunctional mirrors rather than invented speed comparisons;
+the maintained execution boundary is Yosys/OpenROAD/OpenSTA/KLayout/Magic/Netgen.
 
 ## Rust Benchmarks
 
