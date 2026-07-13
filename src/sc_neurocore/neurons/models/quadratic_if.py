@@ -6,25 +6,19 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore — Quadratic Integrate-and-Fire — canonical Type-I excitability
 
+"""Exact-flow Quadratic Integrate-and-Fire dynamics and public dispatch."""
+
 from __future__ import annotations
 
-import importlib as _importlib
 import math
 from dataclasses import dataclass
-from typing import Any, Optional
+from collections.abc import Callable
+from typing import cast
 
 import numpy as np
 import numpy.typing as npt
 
-# Rust engine path: factory-default exact-flow step is bit-identical to pure Python.
-try:
-    _EngineCls: Optional[type[Any]] = _importlib.import_module(
-        "sc_neurocore_engine"
-    ).QuadraticIFNeuron
-    _HAS_RUST = True
-except (ImportError, AttributeError):
-    _EngineCls = None
-    _HAS_RUST = False
+from sc_neurocore.accel import quadratic_if as _backends
 
 _RUST_ENGINE_DEFAULTS: dict[str, float] = {
     "v": -1.0,
@@ -43,8 +37,9 @@ class QuadraticIFNeuron:
 
     Reference: Latham, P.E. et al. (2000). J. Neurophysiol. 83:808–827.
 
-    ``simulate`` supports ``backend`` values ``python``, ``rust``, and ``auto``
-    (prefer Rust under the factory-default contract when the engine is present).
+    ``simulate`` exposes the Python reference and all four compiled acceleration
+    lanes. The Rust engine retains its factory-default boundary; Julia, Go, and
+    Mojo transport the complete numeric state and parameter contract.
     """
 
     v: float = -1.0
@@ -53,6 +48,7 @@ class QuadraticIFNeuron:
     dt: float = 0.01
 
     def __post_init__(self) -> None:
+        """Validate the finite ordered state and integration contract."""
         for field in ("v", "v_reset", "v_peak"):
             if not math.isfinite(getattr(self, field)):
                 raise ValueError(f"{field} must be finite")
@@ -103,6 +99,18 @@ class QuadraticIFNeuron:
         return (self.v_reset, True) if next_v >= self.v_peak else (next_v, False)
 
     def step(self, current: float) -> int:
+        """Advance one exact constant-current Riccati-flow update.
+
+        Parameters
+        ----------
+        current:
+            Finite constant drive over this update.
+
+        Returns
+        -------
+        int
+            One when the within-step flow reaches ``v_peak``; otherwise zero.
+        """
         if not math.isfinite(current):
             raise ValueError("current must be finite")
         next_v, spiked = self._exact_candidate(current)
@@ -114,31 +122,43 @@ class QuadraticIFNeuron:
     def simulate(
         self, n_steps: int, current: float = 0.0, backend: str = "auto"
     ) -> tuple[npt.NDArray[np.float64], int]:
-        """Advance ``n_steps`` updates, returning ``(v_trace, spikes)``.
+        """Advance a sequential trace through Python, Rust, Julia, Go, or Mojo.
 
         Parameters
         ----------
         n_steps:
-            Number of updates (non-negative).
+            Non-negative number of sequential exact-flow updates.
         current:
             Constant injected current (finite).
         backend:
-            ``python``, ``rust`` (factory defaults only), or ``auto``.
+            One of ``"auto"``, ``"python"``, ``"rust"``, ``"julia"``,
+            ``"go"``, or ``"mojo"``. Auto uses the committed production order
+            Go, Julia, Mojo, compatible Rust, then Python; the Go shared library
+            avoids Julia runtime initialisation on the first call.
         """
-        if n_steps < 0:
-            raise ValueError("n_steps must be non-negative")
-        if backend not in ("auto", "python", "rust"):
-            raise ValueError(f"backend must be auto/python/rust, got {backend!r}")
+        if not isinstance(n_steps, int) or isinstance(n_steps, bool) or n_steps < 0:
+            raise ValueError("n_steps must be a non-negative integer")
+        if backend not in ("auto", "python", "rust", "julia", "go", "mojo"):
+            raise ValueError(f"backend must be auto/python/rust/julia/go/mojo, got {backend!r}")
         if not math.isfinite(current):
             raise ValueError("current must be finite")
-        if not math.isfinite(self.v):
-            raise ValueError("runtime v must be finite")
+        self.__post_init__()
 
-        prefer_rust = backend == "rust" or (
-            backend == "auto" and _HAS_RUST and self._matches_rust_engine_contract()
-        )
-        if prefer_rust:
-            if not _HAS_RUST or _EngineCls is None:
+        selected = backend
+        if selected == "auto":
+            if _backends.ensure_go_loaded():
+                selected = "go"
+            elif _backends.ensure_julia_loaded():
+                selected = "julia"
+            elif _backends.ensure_mojo_loaded():
+                selected = "mojo"
+            elif _backends._HAS_RUST and self._matches_rust_engine_contract():
+                selected = "rust"
+            else:
+                selected = "python"
+
+        if selected == "rust":
+            if not _backends._HAS_RUST or _backends._EngineQuadraticIFCls is None:
                 raise RuntimeError(
                     "Rust QuadraticIF backend requested but sc_neurocore_engine is unavailable."
                 )
@@ -147,15 +167,63 @@ class QuadraticIFNeuron:
                     "Rust QuadraticIF backend requires factory-default parameters "
                     "and initial state."
                 )
-            trace, spikes, state_v = self._simulate_rust(n_steps, current)
-        else:
-            if backend == "rust":
+            trace, spikes, state_v = _backends.simulate_rust(n_steps, current)
+        elif selected == "julia":
+            if not _backends.ensure_julia_loaded():
                 raise RuntimeError(
-                    "Rust QuadraticIF backend requested but sc_neurocore_engine is unavailable."
+                    "Julia QuadraticIF backend requested but juliacall or the module is "
+                    "unavailable."
                 )
+            trace, spikes, state_v = self._simulate_full_contract(
+                _backends.simulate_julia, n_steps, current
+            )
+        elif selected == "go":
+            if not _backends.ensure_go_loaded():
+                raise RuntimeError(
+                    "Go QuadraticIF backend requested but libquadratic_if.so is not built; "
+                    "run go build -buildmode=c-shared -o libquadratic_if.so "
+                    "quadratic_if.go in accel/go/neurons/quadratic_if."
+                )
+            trace, spikes, state_v = self._simulate_full_contract(
+                _backends.simulate_go, n_steps, current
+            )
+        elif selected == "mojo":
+            if not _backends.ensure_mojo_loaded():
+                raise RuntimeError(
+                    "Mojo QuadraticIF backend requested but libquadratic_if.so is not built; "
+                    "run mojo build --emit shared-lib -o libquadratic_if.so "
+                    "quadratic_if.mojo in accel/mojo/kernels."
+                )
+            trace, spikes, state_v = self._simulate_full_contract(
+                _backends.simulate_mojo, n_steps, current
+            )
+        else:
             trace, spikes, state_v = self._simulate_python(n_steps, current)
         self.v = state_v
         return trace, spikes
+
+    def _simulate_full_contract(
+        self,
+        runner: object,
+        n_steps: int,
+        current: float,
+    ) -> tuple[npt.NDArray[np.float64], int, float]:
+        """Pass every maintained numeric field to a native runner."""
+        native = cast(
+            Callable[
+                [float, float, float, float, int, float],
+                tuple[npt.NDArray[np.float64], int, float],
+            ],
+            runner,
+        )
+        return native(
+            self.v,
+            self.v_reset,
+            self.v_peak,
+            self.dt,
+            n_steps,
+            current,
+        )
 
     def _simulate_python(
         self, n_steps: int, current: float
@@ -167,17 +235,6 @@ class QuadraticIFNeuron:
             trace[t] = self.v
         return trace, spikes, self.v
 
-    def _simulate_rust(
-        self, n_steps: int, current: float
-    ) -> tuple[npt.NDArray[np.float64], int, float]:
-        assert _EngineCls is not None
-        neuron = _EngineCls()
-        trace = np.empty(n_steps, dtype=np.float64)
-        spikes = 0
-        for t in range(n_steps):
-            spikes += int(neuron.step(float(current)))
-            trace[t] = float(neuron.get_state()["v"])
-        return trace, spikes, float(neuron.get_state()["v"])
-
     def reset(self) -> None:
+        """Restore the runtime voltage while preserving configured parameters."""
         self.v = self.v_reset

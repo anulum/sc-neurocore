@@ -11,7 +11,11 @@
   "parameters": { "v_reset": -1.0, "v_peak": 1.0 },
   "integration": { "dt": 0.01, "method": "euler" },
   "dynamics": { "v": "v**2 + I" },
-  "threshold": { "condition": "v > 1.0", "detection": "crossing" },
+  "threshold": { "condition": "v >= v_peak", "detection": "crossing" },
   "reset": { "v": "-1.0" },
-  "extensions": { "bifurcation": "saddle-node", "excitability": "Type-I" }
+  "extensions": {
+    "bifurcation": "saddle-node",
+    "excitability": "Type-I",
+    "maintained_discretisation": "Python uses the exact constant-current Riccati flow; schema and RTL use candidate-first Euler with an enrolled Q16.16 event-exact envelope"
+  }
 }

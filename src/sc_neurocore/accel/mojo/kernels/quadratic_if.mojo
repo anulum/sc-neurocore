@@ -4,24 +4,32 @@
 # © Code 2020–2026 Miroslav Šotek. All rights reserved.
 # ORCID: 0009-0009-3560-0851
 # Contact: www.anulum.li | protoscience@anulum.li
-# SC-NeuroCore — Mojo SIMD acceleration for quadratic_if
+# SC-NeuroCore — Mojo Quadratic IF sequential simulator
+#
+# Build:
+#   mojo build --emit shared-lib -o libquadratic_if.so quadratic_if.mojo
+#
+# The caller supplies n_steps+1 Float64 slots: the post-step voltage trace and
+# final voltage. Rejected contracts leave the buffer untouched because a
+# validation pass completes before emission.
 
 from std.math import atan, exp, sqrt, tan
+from std.memory import UnsafePointer
 
 
-fn _finite(x: Float64) -> Bool:
+def _finite(x: Float64) -> Bool:
     return (
         x == x and x <= 1.7976931348623157e308 and x >= -1.7976931348623157e308
     )
 
 
-fn _abs(x: Float64) -> Float64:
+def _abs(x: Float64) -> Float64:
     if x < 0.0:
         return -x
     return x
 
 
-fn quadratic_if_valid(
+def quadratic_if_valid(
     v: Float64, v_reset: Float64, v_peak: Float64, dt: Float64
 ) -> Bool:
     return (
@@ -35,7 +43,7 @@ fn quadratic_if_valid(
     )
 
 
-fn quadratic_if_step_spike(
+def quadratic_if_step_spike(
     v: Float64, current: Float64, v_reset: Float64, v_peak: Float64, dt: Float64
 ) -> Int:
     if not _finite(current):
@@ -83,7 +91,7 @@ fn quadratic_if_step_spike(
     return 0
 
 
-fn quadratic_if_next_v(
+def quadratic_if_next_v(
     v: Float64, current: Float64, v_reset: Float64, v_peak: Float64, dt: Float64
 ) -> Float64:
     if not _finite(current):
@@ -120,3 +128,58 @@ fn quadratic_if_next_v(
     if next_neg >= v_peak:
         return v_reset
     return next_neg
+
+
+def _run_quadratic_if(
+    v0: Float64,
+    v_reset: Float64,
+    v_peak: Float64,
+    dt: Float64,
+    n_steps: Int,
+    current: Float64,
+    output_addr: Int,
+    write_output: Bool,
+) -> Int64:
+    var v = v0
+    if not _finite(current) or not quadratic_if_valid(v, v_reset, v_peak, dt):
+        return -1
+    var output = UnsafePointer[Float64, MutAnyOrigin](
+        unsafe_from_address=output_addr
+    )
+    var spikes: Int64 = 0
+    for index in range(n_steps):
+        var spike = quadratic_if_step_spike(v, current, v_reset, v_peak, dt)
+        if spike < 0:
+            return -1
+        var next_v = quadratic_if_next_v(v, current, v_reset, v_peak, dt)
+        if not _finite(next_v):
+            return -1
+        v = next_v
+        spikes += Int64(spike)
+        if write_output:
+            output[index] = v
+    if write_output:
+        output[n_steps] = v
+    return spikes
+
+
+@export
+def quadratic_if_simulate_c(
+    v0: Float64,
+    v_reset: Float64,
+    v_peak: Float64,
+    dt: Float64,
+    n_steps: Int,
+    current: Float64,
+    output_addr: Int,
+) -> Int64:
+    if n_steps < 0 or output_addr == 0 or not _finite(current):
+        return -1
+    var validated = _run_quadratic_if(
+        v0, v_reset, v_peak, dt, n_steps, current, output_addr, False
+    )
+    if validated < 0:
+        return -1
+    return _run_quadratic_if(
+        v0, v_reset, v_peak, dt, n_steps, current, output_addr, True
+    )

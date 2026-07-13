@@ -544,6 +544,31 @@ Run the Mojo recurrence through its C ABI.
 
 ---
 
+## Module `accel.quadratic_if`
+
+### Function `ensure_julia_loaded()`
+Load the executable Quadratic IF Julia module when available.
+
+### Function `ensure_go_loaded()`
+Load the compiled Quadratic IF Go C ABI when available.
+
+### Function `ensure_mojo_loaded()`
+Load the compiled Quadratic IF Mojo C ABI when available.
+
+### Function `simulate_rust(n_steps, current)`
+Run the factory-default Rust engine exact-flow recurrence.
+
+### Function `simulate_julia(v, v_reset, v_peak, dt, n_steps, current)`
+Run the Julia recurrence with the complete numeric contract.
+
+### Function `simulate_go(v, v_reset, v_peak, dt, n_steps, current)`
+Run the Go recurrence through its C ABI.
+
+### Function `simulate_mojo(v, v_reset, v_peak, dt, n_steps, current)`
+Run the Mojo recurrence through its C ABI.
+
+---
+
 ## Module `accel.sc_inference`
 
 ### Function `sc_forward_numpy(weights_packed, input_probs, length, seed)`
@@ -23220,14 +23245,18 @@ Reset when v >= v_peak.
 
 Reference: Latham, P.E. et al. (2000). J. Neurophysiol. 83:808–827.
 
-``simulate`` supports ``backend`` values ``python``, ``rust``, and ``auto``
-(prefer Rust under the factory-default contract when the engine is present).
+``simulate`` exposes the Python reference and all four compiled acceleration
+lanes. The Rust engine retains its factory-default boundary; Julia, Go, and
+Mojo transport the complete numeric state and parameter contract.
 
 - **__post_init__**()
+  - Validate the finite ordered state and integration contract.
 - **step**(current)
+  - Advance one exact constant-current Riccati-flow update.
 - **simulate**(n_steps, current, backend)
-  - Advance ``n_steps`` updates, returning ``(v_trace, spikes)``.
+  - Advance a sequential trace through Python, Rust, Julia, Go, or Mojo.
 - **reset**()
+  - Restore the runtime voltage while preserving configured parameters.
 
 ---
 

@@ -195,9 +195,17 @@ ENROLLED: tuple[EnrolledEvidence, ...] = (
         schema_name="quadratic_if",
         class_name="QuadraticIFNeuron",
         level="h1_cosim",
-        evidence="tests/test_cosimulation.py::_RK4_EXACT_MODELS + _COSIM_MODELS",
-        operating_point="schema-DSL quadratic_if; RK4 emitter exact suite",
-        tolerance="RK4 golden track",
+        evidence=(
+            "tests/test_cosim_quadratic_if.py::test_q1616_preserves_event_vectors_and_voltage_bound"
+        ),
+        operating_point=(
+            "Quadratic IF exact Riccati flow at I=0,0.333,0.5,1,2,5,20,50 over 1000 steps"
+        ),
+        tolerance=(
+            "hand/TOML/JSON event-exact with schema state error below 0.006; "
+            "Q16.16 event vectors exact with voltage error below 0.011; "
+            "I=0.1 reset-timing boundary declared"
+        ),
     ),
     EnrolledEvidence(
         schema_name="theta",

@@ -30,7 +30,7 @@ the closed-form Riccati flow rather than a forward-Euler increment:
 | $I < 0$ | $a(1 + q)/(1 - q)$, $a=\sqrt{-I}$, $q=((V-a)/(V+a))\exp(2a\,dt)$ |
 
 The candidate is computed before mutation. If the candidate is non-finite,
-the call fails without changing state. If the candidate crosses
+the call fails without changing state. If the candidate reaches or crosses
 `v_peak`, the membrane resets to `v_reset` and emits one spike. Python, Rust
 engine, Rust safety, Go service, Julia, and Mojo surfaces use the same
 candidate-first exact-flow contract.
@@ -189,12 +189,13 @@ $V_{\text{reset}} = -1$), corrections scale as $O(1/\sqrt{I})$.
 | Bifurcation | 4 | I=−0.5 stable (0 spikes/50k), I=0 stable (0 spikes/50k), I=0.5 periodic (≥50 spikes), Type-I onset ratio I=0.1 vs I=1.0 |
 | f–I curve | 2 | monotonic 4-point sweep (0.5, 1.0, 2.0, 5.0), sub-linear scaling f(4I)/f(I) ∈ (1.5, 4.0) |
 | ISI | 2 | constant ISI at steady state (CV < 0.02, first 5 spikes excluded), ISI shortens monotonically with current |
-| Edge cases | 4 | V² positive feedback from V=0.5, custom V_peak (lower peak → more spikes), dt stability at 0.005/0.01/0.02 |
+| Edge cases | 7 | V² positive feedback, exact-flow/Euler separation, within-step peak crossing, custom V_peak, and dt stability at 0.005/0.01/0.02 |
 | Determinism | 1 | bit-exact reproducibility across 2 independent runs (200 steps each) |
 | Network | 2 | Population(n=10) construction, Network produces spikes with PoissonInput(rate=500Hz, weight=2.0) |
 | Analysis | 2 | spike_count ≥ 100 in 50k steps at I=1.0, spike_count matches manual np.sum |
-| Validation | 9 | finite parameters, peak/reset geometry, initial voltage below peak, finite current, finite exact-flow candidate before mutation |
-| **Total** | **40** | |
+| Validation | 15 | finite parameters, peak/reset geometry, initial voltage below peak, finite current, finite exact-flow candidate before mutation |
+| Public simulation | 3 | Python trace contract, Rust/Python parity, and explicit non-default Rust boundary |
+| **Total** | **43** | |
 
 ---
 
@@ -236,25 +237,28 @@ phase coordinates) serves as the canonical phase model.
 
 ---
 
-## Measured Performance (2026-06-16)
+## Measured Performance (2026-07-13)
 
-Local non-isolated regression run. These numbers are recorded for
-regression comparison only and are not production throughput claims.
+This is a single-logical-CPU public-dispatch regression run on a loaded,
+non-isolated workstation. The affinity, powersave governor, empty kernel
+isolation set, runtime versions, and host load are retained in the artefact.
+These timings are local regression context, not production throughput claims.
 
 | Metric | Value |
 |--------|-------|
-| Evidence class | Local regression, non-isolated workstation |
+| Evidence class | CPU-10 affinity, non-isolated loaded workstation |
 | Benchmark artefact | `benchmarks/results/local_python_2026-06-16_quadratic_if_exact_flow.json` |
-| Workload | 200000 steps, 5 repeats, I=0.5 |
-| Polyglot contract | Python, Rust engine, Rust safety, Go, Julia, and Mojo exact-flow surfaces aligned, with explicit errors where supported |
+| Workload | 100,000 steps, 7 repeats, I=5.0 |
+| Polyglot contract | Python, Rust engine, Julia, Go, and Mojo through public dispatch; independent executable Rust-safety gate |
+| Parity | 2,631 events in every lane; observed maximum trace difference 0.0 |
 
-| Backend | Median ns/step | Min ns/step | Max ns/step | Spikes |
-|---------|---------------:|------------:|------------:|-------:|
-| Python | 459.99869 | 439.83584 | 478.183125 | 738 |
-| Rust engine | 46.570625 | 43.884265 | 47.170375 | 738 |
-| Go service mirror | 45.52 | 44.87 | 48.73 | 738 |
-| Julia mirror | 42.52687 | 42.26953 | 43.0555 | 738 |
-| Mojo mirror | 34.84739994746633 | 34.430494997650385 | 35.246850020485 | 738 |
+| Backend | Median call ms | Minimum call ms | Speedup vs Python | Events |
+|---------|---------------:|----------------:|------------------:|-------:|
+| Go | 10.886287 | 9.736645 | 9.33x | 2,631 |
+| Julia | 11.118205 | 8.717117 | 9.14x | 2,631 |
+| Mojo | 19.905727 | 12.312144 | 5.10x | 2,631 |
+| Rust engine | 58.509447 | 36.265872 | 1.74x | 2,631 |
+| Python | 101.614219 | 89.947513 | 1.00x | 2,631 |
 
 ---
 
@@ -286,15 +290,32 @@ State returns to initial values after `reset()`.
 
 ### 7. Polyglot safety surfaces
 Rust engine, Rust safety, Go, Julia, and Mojo carry the same exact-flow,
-candidate-first spike/reset contract.
+candidate-first spike/reset contract. Julia, Go, and Mojo transport every
+maintained numeric field; the Rust engine's factory-default boundary is explicit.
+**Status: PASS**
+
+### 8. Python-to-Verilog co-simulation
+The paired Euler schemas preserve the exact-flow hand model's event sequence
+over a varied 1,000-step drive with state error below `0.006`. Q16.16 RTL is
+cycle/event exact at I=0/0.333/0.5/1/2/5/20/50 with voltage error below
+`0.011`. At I=0.1, total events remain 1/1 but the RTL reset is displaced by
+one cycle; that boundary is excluded from the cycle-exact envelope. TOML,
+JSON, and generated RTL use the configured `v_peak` with an inclusive `>=`
+comparison, so an exactly-equal candidate resets in the same cycle. The
+generated depth-20 Z3 job proves its public-port safety contract.
+**Status: PASS with declared I=0.1 boundary**
 
 ---
 
-## Findings (measured 2026-06-16)
+## Findings (measured 2026-07-13)
 
-1. Local Python median: 459.99869 ns/step, about 2.17M steps/s in the
-   non-isolated regression run.
-2. Rust engine, Go, Julia, and Mojo measurements are present in the benchmark
-   artefact; no maintained backend is skipped.
-3. Exact-flow spike counts match across all five measured backends.
-4. Numerical stability confirmed over 20K steps.
+1. All five public-dispatch lanes record 2,631 events and the same final
+   voltage; the measured trace difference is zero on this host.
+2. The actual `accel/rust/safety` module passes eight focused tests and an
+   executable trace probe independently of the Rust engine dispatcher.
+3. Go, Julia, and Mojo execute the complete numeric contract. Failed Julia
+   candidates preserve state, while rejected C-ABI work leaves caller buffers untouched.
+4. Auto dispatch uses Go, Julia, Mojo, Rust engine, then Python so a present Go
+   shared library avoids Julia runtime initialisation. Warm-call ordering is
+   retained separately in the artefact; heavy host load, powersave governor,
+   and no reserved CPUs prohibit a production speed claim.

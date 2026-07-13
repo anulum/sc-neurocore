@@ -8,7 +8,7 @@
 
 module QuadraticIfAccel
 
-export step!, simulate, QuadraticIFNeuronState, valid, reset!
+export step!, simulate, simulate_trace, QuadraticIFNeuronState, valid, reset!
 
 mutable struct QuadraticIFNeuronState
     v::Float64
@@ -69,12 +69,13 @@ function step!(s::QuadraticIFNeuronState, I_ext::Float64=0.0; dt::Float64=s.dt):
         throw(DomainError((s.v, I_ext), "QuadraticIF state/current must be finite and well-formed"))
     end
 
-    s.dt = dt
-    next_v, spiked = _exact_candidate(s, I_ext)
+    candidate_state = QuadraticIFNeuronState(s.v, s.v_reset, s.v_peak, dt)
+    next_v, spiked = _exact_candidate(candidate_state, I_ext)
     if !isfinite(next_v)
         throw(DomainError(next_v, "QuadraticIF exact-flow update became non-finite"))
     end
 
+    s.dt = dt
     s.v = next_v
     if spiked
         return 1
@@ -88,17 +89,38 @@ function reset!(s::QuadraticIFNeuronState)::Nothing
 end
 
 function simulate(n_steps::Int=1000; I_ext::Float64=10.0, dt::Float64=0.01)
-    s = QuadraticIFNeuronState()
+    result = simulate_trace(-1.0, -1.0, 1.0, dt, n_steps, I_ext)
+    return result.trace, result.spikes
+end
+
+function simulate_trace(
+    v::Float64,
+    v_reset::Float64,
+    v_peak::Float64,
+    dt::Float64,
+    n_steps::Int,
+    I_ext::Float64,
+)
+    if n_steps < 0
+        throw(ArgumentError("QuadraticIF n_steps must be non-negative"))
+    end
+    if !isfinite(I_ext)
+        throw(DomainError(I_ext, "QuadraticIF input current must be finite"))
+    end
+    s = QuadraticIFNeuronState(v, v_reset, v_peak, dt)
+    if !valid(s)
+        throw(DomainError(v, "QuadraticIF state must satisfy the finite ordered contract"))
+    end
     trace = zeros(n_steps)
     spikes = 0
     for t in 1:n_steps
-        result = step!(s, I_ext; dt=dt)
+        result = step!(s, I_ext)
         trace[t] = s.v
         if result > 0
             spikes += 1
         end
     end
-    return trace, spikes
+    return (trace=trace, spikes=spikes, vf=s.v)
 end
 
 end # module QuadraticIfAccel

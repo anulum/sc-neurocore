@@ -5,6 +5,28 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+### Quadratic IF exact-flow source-to-silicon closure
+- Exposed the exact constant-current Riccati flow through Python, the Rust
+  engine, Julia, Go, and Mojo. Julia, Go, and Mojo carry the complete numeric
+  contract through real executable ABIs; the Rust engine retains its explicit
+  factory-default boundary, and an independent executable probe exercises the
+  actual Rust-safety module. Dedicated tests preserve exact events at eight
+  currents and bound every compiled voltage trace to `2e-12` from Python.
+- Replaced the raw mirror-style timing record with a source-hashed public-API
+  benchmark and executable Rust-safety gate. The CPU-10 affinity-pinned,
+  non-reserved powersave-governor run records 2,631 events and zero observed
+  trace difference in every lane. Its heavy host load and empty isolated-CPU
+  set make the timings local regression evidence rather than a throughput
+  claim.
+- Added dedicated hand/schema/RTL fidelity evidence. The paired Euler schemas
+  preserve the exact-flow hand model's event sequence over a varied 1,000-step
+  drive with state error below `0.006` and reset inclusively at the configured
+  `v_peak`, including an exactly-equal Euler candidate. Q16.16 RTL retains the
+  complete enrolled event vectors at I=0/0.333/0.5/1/2/5/20/50 with voltage
+  error below `0.011`. The I=0.1 one-cycle reset displacement is declared
+  rather than hidden, and the regenerated depth-20 Z3 job proves the inclusive
+  threshold RTL.
+
 ### Perfect Integrator source-to-silicon fidelity closure
 - Exposed the candidate-first non-leaky Euler recurrence through Python, the
   Rust engine, Julia, Go, and Mojo. Julia, Go, and Mojo carry the complete

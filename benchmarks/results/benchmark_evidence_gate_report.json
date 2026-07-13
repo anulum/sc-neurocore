@@ -206,18 +206,8 @@
       "id": "autonomous-learning-modularisation-local-diagnostics"
     }
   ],
-  "failure_count": 45,
+  "failure_count": 42,
   "failures": [
-    {
-      "gate_id": "quadratic-if-exact-flow-multibackend-local-regression",
-      "path": "engine/Cargo.toml->source_hashes.engine/Cargo.toml",
-      "reason": "source_hash_mismatch"
-    },
-    {
-      "gate_id": "quadratic-if-exact-flow-multibackend-local-regression",
-      "path": "src/sc_neurocore/neurons/models/quadratic_if.py->source_hashes.src/sc_neurocore/neurons/models/quadratic_if.py",
-      "reason": "source_hash_mismatch"
-    },
     {
       "gate_id": "theta-exact-flow-multibackend-local-regression",
       "path": "benchmarks/bench_model_theta.py->source_hashes.benchmarks/bench_model_theta.py",
@@ -396,11 +386,6 @@
     {
       "gate_id": "coba-lif-rk4-multibackend-local-regression",
       "path": "src/sc_neurocore/neurons/models/coba_lif.py->source_hashes.src/sc_neurocore/neurons/models/coba_lif.py",
-      "reason": "source_hash_mismatch"
-    },
-    {
-      "gate_id": "sfa-rk4-multibackend-local-regression",
-      "path": "src/sc_neurocore/accel/rust/safety/sfa.rs->source_hashes.src/sc_neurocore/accel/rust/safety/sfa.rs",
       "reason": "source_hash_mismatch"
     },
     {

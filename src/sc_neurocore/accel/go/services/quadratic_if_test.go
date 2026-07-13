@@ -77,6 +77,36 @@ func TestQuadraticIFExactFlowResetsOnPeakCrossing(t *testing.T) {
 	}
 }
 
+func TestQuadraticIFTraceCarriesFullContract(t *testing.T) {
+	initial := QuadraticIFNeuronState{
+		V:      -0.37,
+		VReset: -1.3,
+		VPeak:  1.7,
+		Dt:     0.037,
+	}
+	trace, spikes, finalV, err := SimulateQuadraticIFTrace(initial, 400, 2.2)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if len(trace) != 400 || spikes <= 0 || finalV != trace[len(trace)-1] {
+		t.Fatalf("bad trace contract: len=%d spikes=%d final=%.17g", len(trace), spikes, finalV)
+	}
+}
+
+func TestQuadraticIFTraceRejectsBeforeEmission(t *testing.T) {
+	initial := *NewQuadraticIFNeuron()
+	trace, spikes, finalV, err := SimulateQuadraticIFTrace(initial, 1, math.NaN())
+	if err == nil || trace != nil || spikes != 0 || finalV != initial.V {
+		t.Fatalf(
+			"rejection contract failed: err=%v trace=%v spikes=%d final=%.17g",
+			err,
+			trace,
+			spikes,
+			finalV,
+		)
+	}
+}
+
 func BenchmarkQuadraticIFExactFlow(b *testing.B) {
 	s := NewQuadraticIFNeuron()
 	spikes := 0

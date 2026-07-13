@@ -113,20 +113,34 @@ func (s *QuadraticIFNeuronState) Reset() {
 
 // SimulateQuadraticIFNeuron runs the neuron for n steps.
 func SimulateQuadraticIFNeuron(nSteps int, iExt float64) ([]float64, int) {
-	s := NewQuadraticIFNeuron()
+	trace, spikes, _, err := SimulateQuadraticIFTrace(*NewQuadraticIFNeuron(), nSteps, iExt)
+	if err != nil {
+		panic(err)
+	}
+	return trace, spikes
+}
+
+// SimulateQuadraticIFTrace executes a complete state and parameter contract.
+func SimulateQuadraticIFTrace(
+	initial QuadraticIFNeuronState,
+	nSteps int,
+	iExt float64,
+) ([]float64, int, float64, error) {
+	if nSteps < 0 || !quadraticIFFinite(iExt) || !initial.Valid() {
+		return nil, 0, initial.V, ErrQuadraticIFInvalidState
+	}
+	s := initial
 	trace := make([]float64, nSteps)
 	spikes := 0
 	for t := 0; t < nSteps; t++ {
 		result, err := s.Step(iExt)
 		if err != nil {
-			panic(err)
+			return nil, 0, initial.V, err
 		}
 		trace[t] = s.V
-		if result > 0 {
-			spikes++
-		}
+		spikes += result
 	}
-	return trace, spikes
+	return trace, spikes, s.V, nil
 }
 
 var (

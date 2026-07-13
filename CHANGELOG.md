@@ -5,6 +5,20 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 ## [Unreleased]
 
 ### Added
+- Completed Quadratic IF end-to-end fidelity across the exact-flow Python
+  reference, the Rust safety crate and engine, full-contract Julia and Go, the
+  Mojo shared library, paired schemas, and generated Q16.16 RTL. The public
+  dispatcher follows the Go/Julia/Mojo/compatible-Rust/Python production order,
+  avoiding Julia runtime initialisation when the Go shared library is present;
+  invalid native work is rejected before caller-visible state or buffer writes.
+- Added source-bound Quadratic IF backend, benchmark, co-simulation,
+  descriptor, readiness, and formal evidence. Every acceleration lane preserves
+  0/2/3/6/11/26/100/250 events at I=0/0.333/0.5/1/2/5/20/50 over 1,000 steps
+  and stays within `2e-12` of Python. Hand/TOML/JSON events remain exact with
+  state error below `0.006`; both schema formats now reset inclusively at the
+  configured `v_peak`, including exact equality. Q16.16 RTL preserves the
+  enrolled cycle-level event vectors with voltage error below `0.011`, while
+  the I=0.1 reset-timing boundary is recorded explicitly.
 - Completed Perfect Integrator end-to-end fidelity across Python, Rust safety
   and engine, Go, Julia, Mojo, the paired schema formats, and generated Q8.8
   RTL. Julia/Go/Mojo now transport the complete numeric contract through real

@@ -92,6 +92,19 @@ def test_lapicque_is_enrolled_with_dedicated_exact_flow_evidence(tool: ModuleTyp
     assert "Q16.16 event vectors exact" in lapicque.tolerance
 
 
+def test_quadratic_if_is_enrolled_with_dedicated_exact_flow_evidence(
+    tool: ModuleType,
+) -> None:
+    """Replace the removed generic-suite pointer with measured QIF evidence."""
+    quadratic_if = next(e for e in tool.ENROLLED if e.class_name == "QuadraticIFNeuron")
+    assert quadratic_if.level == "h1_cosim"
+    assert quadratic_if.evidence == (
+        "tests/test_cosim_quadratic_if.py::test_q1616_preserves_event_vectors_and_voltage_bound"
+    )
+    assert "I=0,0.333,0.5,1,2,5,20,50" in quadratic_if.operating_point
+    assert "Q16.16 event vectors exact" in quadratic_if.tolerance
+
+
 def test_build_rows_returns_one_row_per_enrolled(tool: ModuleType) -> None:
     """Inventory length matches the curated enrolment table."""
     rows = tool.build_rows()

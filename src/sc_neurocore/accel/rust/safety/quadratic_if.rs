@@ -174,4 +174,23 @@ mod tests {
         assert_eq!(state.v_peak, 2.0);
         assert_eq!(state.dt, 0.005);
     }
+
+    #[test]
+    fn test_enrolled_event_vector_matches_python_reference() {
+        let cases = [
+            (0.0, 0),
+            (0.333, 2),
+            (0.5, 3),
+            (1.0, 6),
+            (2.0, 11),
+            (5.0, 26),
+            (20.0, 100),
+            (50.0, 250),
+        ];
+        for (current, expected) in cases {
+            let mut state = QuadraticIFNeuron::new();
+            let spikes: i32 = (0..1_000).map(|_| state.step(current).unwrap()).sum();
+            assert_eq!(spikes, expected, "current={current}");
+        }
+    }
 }
