@@ -10,8 +10,9 @@ from __future__ import annotations
 
 import importlib as _importlib
 import math
+import os as _os
 from dataclasses import dataclass
-from typing import Any, Literal, Optional
+from typing import Any, Literal, Optional, cast
 
 import numpy as np
 import numpy.typing as npt
@@ -26,6 +27,39 @@ try:
 except (ImportError, AttributeError):
     _EngineCls = None
     _HAS_RUST = False
+
+_mojo_lib: Optional[Any] = None
+_HAS_MOJO = False
+_ACCEL_ROOT = _os.path.abspath(_os.path.join(_os.path.dirname(__file__), "..", "..", "accel"))
+
+
+def _ensure_mojo_loaded() -> bool:
+    """Load the compiled Hodgkin-Huxley Mojo kernel when available."""
+    global _mojo_lib, _HAS_MOJO
+    if _mojo_lib is not None:
+        return True
+    import ctypes
+
+    library_path = _os.path.join(_ACCEL_ROOT, "mojo", "kernels", "libhodgkin_huxley.so")
+    if not _os.path.isfile(library_path):
+        return False
+    try:
+        library = ctypes.CDLL(library_path)
+    except OSError:
+        return False
+    simulate = getattr(library, "hodgkin_huxley_simulate_c", None)
+    if simulate is None:
+        return False
+    simulate.argtypes = [ctypes.c_double] * 13 + [
+        ctypes.c_int64,
+        ctypes.c_double,
+        ctypes.c_int64,
+    ]
+    simulate.restype = ctypes.c_int64
+    _mojo_lib = library
+    _HAS_MOJO = True
+    return True
+
 
 _RUST_ENGINE_DEFAULTS: dict[str, float] = {
     "v": -65.0,
@@ -130,19 +164,33 @@ class HodgkinHuxleyNeuron:
     ) -> tuple[npt.NDArray[np.float64], int]:
         """Advance ``n_steps`` updates, returning ``(v_trace, spikes)``.
 
-        Rust path requires factory-default ``baseline_euler``; parity is
-        ULP-bounded against the pure-Python path.
+        Rust requires the factory-default ``baseline_euler`` contract. The
+        explicit Mojo path accepts the full maintained numeric state and
+        parameter surface for ``baseline_euler`` through its compiled C ABI.
+        Both transcendental paths use bounded-trace, event-exact parity.
         """
         if n_steps < 0:
             raise ValueError("n_steps must be non-negative")
-        if backend not in ("auto", "python", "rust"):
-            raise ValueError(f"backend must be auto/python/rust, got {backend!r}")
+        if backend not in ("auto", "python", "rust", "mojo"):
+            raise ValueError(f"backend must be auto/python/rust/mojo, got {backend!r}")
         if not math.isfinite(current):
             raise ValueError("current must be finite")
         prefer_rust = backend == "rust" or (
             backend == "auto" and _HAS_RUST and self._matches_rust_engine_contract()
         )
-        if prefer_rust:
+        if backend == "mojo":
+            if self.integrator != "baseline_euler":
+                raise RuntimeError(
+                    "Mojo HodgkinHuxley backend requires the baseline_euler integrator."
+                )
+            if not _ensure_mojo_loaded():
+                raise RuntimeError(
+                    "Mojo HodgkinHuxley backend requested but libhodgkin_huxley.so is not built; "
+                    "run mojo build --emit shared-lib -o libhodgkin_huxley.so "
+                    "hodgkin_huxley.mojo in accel/mojo/kernels."
+                )
+            trace, spikes, state = self._simulate_mojo(n_steps, current)
+        elif prefer_rust:
             if not _HAS_RUST or _EngineCls is None:
                 raise RuntimeError(
                     "Rust HodgkinHuxley backend requested but sc_neurocore_engine is unavailable."
@@ -189,6 +237,37 @@ class HodgkinHuxleyNeuron:
             spikes,
             (float(st["v"]), float(st["m"]), float(st["h"]), float(st["n"])),
         )
+
+    def _simulate_mojo(
+        self, n_steps: int, current: float
+    ) -> tuple[npt.NDArray[np.float64], int, tuple[float, float, float, float]]:
+        assert _mojo_lib is not None
+        output = np.empty(n_steps + 4, dtype=np.float64)
+        result = int(
+            _mojo_lib.hodgkin_huxley_simulate_c(
+                self.v,
+                self.m,
+                self.h,
+                self.n,
+                self.c_m,
+                self.g_na,
+                self.g_k,
+                self.g_l,
+                self.e_na,
+                self.e_k,
+                self.e_l,
+                self.dt,
+                self.v_threshold,
+                n_steps,
+                current,
+                output.ctypes.data,
+            )
+        )
+        if result < 0:
+            raise FloatingPointError("Mojo Hodgkin-Huxley kernel rejected the simulation")
+        final = output[n_steps : n_steps + 4]
+        state = cast(tuple[float, float, float, float], tuple(float(value) for value in final))
+        return output[:n_steps].copy(), result, state
 
     def _rhs(self, _t: float, state: np.ndarray[Any, Any], current: float) -> np.ndarray[Any, Any]:
         v, m, h, n = (float(value) for value in state)

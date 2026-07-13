@@ -971,7 +971,7 @@
     "python_model_classes": 158,
     "python_model_source_modules": 153,
     "rust_pyo3_model_wrappers": 176,
-    "test_files": 1163
+    "test_files": 1165
   },
   "documentation": {
     "public_pages": [
@@ -2908,6 +2908,7 @@
       "tests/test_bench_cli_startup.py",
       "tests/test_bench_connor_stevens_mojo.py",
       "tests/test_bench_dna_mapper_import.py",
+      "tests/test_bench_hodgkin_huxley_mojo.py",
       "tests/test_bench_quantum_annealing_modularisation.py",
       "tests/test_bench_safety_certification.py",
       "tests/test_benchmark_context.py",
@@ -3244,6 +3245,7 @@
       "tests/test_hh_validation.py",
       "tests/test_hindmarsh_rose_backends.py",
       "tests/test_hls_export.py",
+      "tests/test_hodgkin_huxley_mojo.py",
       "tests/test_holonomic_adapter_stack_contract.py",
       "tests/test_holonomic_l13_source_contracts.py",
       "tests/test_holonomic_l6_plan_contracts.py",

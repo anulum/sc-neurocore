@@ -2163,6 +2163,65 @@
       }
     },
     {
+      "artefact": "benchmarks/results/bench_hodgkin_huxley_mojo.json",
+      "description": "Source-bound Hodgkin-Huxley Mojo executable-lane closure against the Python and Rust-engine simulation paths.",
+      "expected_values": {
+        "backends.mojo.event_count_matches_python": true,
+        "backends.rust.event_count_matches_python": true,
+        "kernel": "hodgkin_huxley_mojo_simulate",
+        "meta.single_cpu_pinned": true,
+        "schema_version": "sc-neurocore.polyglot-benchmark.v1",
+        "workload.current": 20.0,
+        "workload.mojo_trace_atol": 2e-09,
+        "workload.n_steps": 100,
+        "workload.repeats": 11
+      },
+      "id": "hodgkin-huxley-mojo-closure-local-regression",
+      "parity_groups": [
+        {
+          "paths": [
+            "backends.python.event_count",
+            "backends.rust.event_count",
+            "backends.mojo.event_count"
+          ],
+          "tolerance": 0.0
+        }
+      ],
+      "regression_limits": {
+        "backends.mojo.parity_max_abs_diff": {
+          "max": 2e-09
+        },
+        "backends.rust.parity_max_abs_diff": {
+          "max": 1e-09
+        }
+      },
+      "required_numbers": [
+        "backends.python.median_call_ms",
+        "backends.python.minimum_call_ms",
+        "backends.python.parity_max_abs_diff",
+        "backends.python.event_count",
+        "backends.rust.median_call_ms",
+        "backends.rust.minimum_call_ms",
+        "backends.rust.parity_max_abs_diff",
+        "backends.rust.event_count",
+        "backends.mojo.median_call_ms",
+        "backends.mojo.minimum_call_ms",
+        "backends.mojo.parity_max_abs_diff",
+        "backends.mojo.event_count"
+      ],
+      "source_hashes": {
+        "benchmarks/bench_hodgkin_huxley_mojo.py": "source_hashes.benchmarks/bench_hodgkin_huxley_mojo.py",
+        "bridge/sc_neurocore_engine/__init__.py": "source_hashes.bridge/sc_neurocore_engine/__init__.py",
+        "engine/src/neurons/biophysical.rs": "source_hashes.engine/src/neurons/biophysical.rs",
+        "engine/src/pyo3_neurons.rs": "source_hashes.engine/src/pyo3_neurons.rs",
+        "src/sc_neurocore/accel/go/services/hodgkin_huxley.go": "source_hashes.src/sc_neurocore/accel/go/services/hodgkin_huxley.go",
+        "src/sc_neurocore/accel/julia/neurons/hodgkin_huxley.jl": "source_hashes.src/sc_neurocore/accel/julia/neurons/hodgkin_huxley.jl",
+        "src/sc_neurocore/accel/mojo/kernels/hodgkin_huxley.mojo": "source_hashes.src/sc_neurocore/accel/mojo/kernels/hodgkin_huxley.mojo",
+        "src/sc_neurocore/accel/rust/safety/hodgkin_huxley.rs": "source_hashes.src/sc_neurocore/accel/rust/safety/hodgkin_huxley.rs",
+        "src/sc_neurocore/neurons/models/hodgkin_huxley.py": "source_hashes.src/sc_neurocore/neurons/models/hodgkin_huxley.py"
+      }
+    },
+    {
       "artefact": "benchmarks/results/bench_asic_flow.json",
       "description": "Source-bound parent/candidate ASIC deck and bundle-generation diagnostics.",
       "expected_values": {

@@ -5,6 +5,17 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 ## [Unreleased]
 
 ### Added
+- Replaced the Hodgkin-Huxley Mojo parity note with an executable C-ABI kernel
+  for the complete four-state, gate-first baseline-Euler model. The public
+  `simulate(..., backend="mojo")` path transports every maintained numeric
+  state and parameter, rejects invalid inputs without committing state,
+  preserves the established `0/6/9` event counts at `I=0/10/20`, and keeps the
+  enrolled 100-macro-step voltage trace within `2e-9` of Python.
+- Added a source-hashed Hodgkin-Huxley closure benchmark with exact event
+  parity, bounded trace evidence, final states, affinity, runtime versions,
+  and loaded-host context. The single-logical-CPU run measured Mojo, Rust, and
+  Python medians of 1.238, 1.543, and 187.566 ms per 100 macro-steps; the
+  non-isolated, powersave-governor timings are local regression evidence only.
 - Replaced the Connor-Stevens Mojo parity note with an executable C-ABI kernel
   for the complete six-state, candidate-first RK4 model. The public
   `simulate(..., backend="mojo")` path transports every maintained state and

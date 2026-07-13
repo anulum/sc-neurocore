@@ -40,10 +40,9 @@ catalogue already has:
 
 ## Polyglot-complete models
 
-Every lane below carries the real model dynamics with an executed Python-parity proof. The Mojo
-column distinguishes an executable kernel from a maintained parity note. Hodgkin-Huxley retains the
-remaining honest note while its Mojo build target is still open; every other listed Mojo surface is
-executable. No lane below is a fake stub.
+Every lane below carries the real model dynamics with an executed Python-parity proof. Every Mojo
+surface in this promoted set is now executable; no lane below is a fake stub or documentation-only
+parity note.
 
 | Model | Rust safety | Go | Julia | Mojo | Parity basis (golden) | Landed |
 |---|---|---|---|---|---|---|
@@ -51,7 +50,7 @@ executable. No lane below is a fake stub.
 | FitzHugh-Nagumo | ✅ | ✅ | ✅ | ✅ shared-lib | bit-exact — 1 AP @ I=10/100 steps, 5-spike train @ I=0.5/2000 steps (RK4, exact RHS) | `729e0a2ea` |
 | Morris-Lecar | ✅ | ✅ | ✅ | ✅ executable | spike count — 0/3/5 @ I=0/50/100 over 2000 steps (RK4, tanh/cosh) | `bc46a0fb5` |
 | Connor-Stevens | ✅ | ✅ | ✅ | ✅ shared-lib | spike count — 0/2/9 @ I=0/10/20 over 100 macro steps (candidate-first RK4 with 100 sub-steps, exp); Mojo C ABI preserves every event and the six-state trace within `2e-6` over the enrolled envelope | `this commit` |
-| Hodgkin-Huxley | ✅ | ✅ | ✅ | 🔶 parity note | spike count — 0/6/9 @ I=0/10/20 over 100 macro steps (baseline-Euler, exp) | `0b23b5653` |
+| Hodgkin-Huxley | ✅ | ✅ | ✅ | ✅ shared-lib | spike count — 0/6/9 @ I=0/10/20 over 100 macro steps (gate-first baseline-Euler with 100 sub-steps, exp); Mojo C ABI preserves every event and the four-state trace within `2e-9` over the enrolled envelope | `this commit` |
 | McKean | ✅ | ✅ | ✅ | ✅ shared-lib | bit-exact — 0/1/7 @ I=0/0.2/0.5 over 20000 steps (RK4, exact piecewise-linear RHS) | `059871140` |
 | Hindmarsh-Rose | ✅ | ✅ | ✅ | ✅ shared-lib | bit-exact accel — 0/26/52 @ I=0/3/5 over 2000 steps; co-sim exact hand/TOML/JSON/Q16.16 counts — 0/0/26/40/52 @ I=0/2/3/4/5 over 2000 RK4 steps; declared Q16.16 +1 crossing boundary over 5000 steps at I=2 through I=5; formal Q8.8 BMC depth 4 | `this commit` |
 | FitzHugh-Rinzel | ✅ | ✅ | ✅ | ✅ shared-lib | bit-exact accel — 0/1/8 @ I=0/0.3/0.5; co-sim exact spike count — hand/schema/Q16.16 RTL 8 @ I=0.5 (3000 RK4 steps, cubic RHS) | `498376221` |
@@ -71,7 +70,7 @@ executable. No lane below is a fake stub.
 
 Each model carries a committed benchmark: a Go `Benchmark*` in the services lane for the
 conductance models (Wang-Buzsaki, Morris-Lecar, Connor-Stevens, Hodgkin-Huxley, FitzHugh-Nagumo),
-plus the source-hashed `bench_connor_stevens_mojo.py` closure benchmark for Connor-Stevens,
+plus source-hashed executable-Mojo closure benchmarks for Connor-Stevens and Hodgkin-Huxley,
 and a committed `benchmarks/bench_<model>*.py` harness with its recorded per-backend result for the
 FFI-dispatched models (McKean, Hindmarsh-Rose, FitzHugh-Rinzel, Pernarowski, Terman-Wang, Wilson-HR,
 Rulkov map, GLIF, Mihalas-Niebur, Medvedev map, Cazelles map, Courbage-Nekorkin map, Izhikevich 2007,
@@ -98,8 +97,7 @@ remainder are Python-faithful with an acceleration chain still under remediation
 A model moves from "the rest" to **polyglot-complete** when a remediation unit delivers, and this
 page records, all of:
 
-- real dynamics in `accel/rust/safety`, `accel/go`, `accel/julia`, `accel/mojo` (Mojo may be a
-  maintained parity note until the Mojo build-target lane is promoted — never a fake stub);
+- real executable dynamics in `accel/rust/safety`, `accel/go`, `accel/julia`, and `accel/mojo`;
 - an executed Python-parity test per lane (bit-exact, or spike-count with the transcendental caveat);
 - an honest committed benchmark.
 

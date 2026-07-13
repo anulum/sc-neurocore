@@ -1,0 +1,131 @@
+{
+  "backends": {
+    "mojo": {
+      "available": true,
+      "event_count": 9,
+      "event_count_matches_python": true,
+      "final_state": {
+        "h": 0.33980454597957904,
+        "m": 0.04463063892153461,
+        "n": 0.4793337094301593,
+        "v": -65.85312343949775
+      },
+      "median_call_ms": 1.238484,
+      "minimum_call_ms": 0.852861,
+      "parity_max_abs_diff": 1.6047962958509743e-10,
+      "speedup_vs_python": 151.44839578064796,
+      "used": true
+    },
+    "python": {
+      "available": true,
+      "event_count": 9,
+      "event_count_matches_python": true,
+      "final_state": {
+        "h": 0.33980454597964965,
+        "m": 0.044630638921627476,
+        "n": 0.47933370943008335,
+        "v": -65.85312343949003
+      },
+      "median_call_ms": 187.566415,
+      "minimum_call_ms": 159.737823,
+      "parity_max_abs_diff": 0.0,
+      "speedup_vs_python": 1.0,
+      "used": true
+    },
+    "rust": {
+      "available": true,
+      "event_count": 9,
+      "event_count_matches_python": true,
+      "final_state": {
+        "h": 0.33980454597964915,
+        "m": 0.04463063892162733,
+        "n": 0.47933370943008374,
+        "v": -65.85312343949006
+      },
+      "median_call_ms": 1.543207,
+      "minimum_call_ms": 0.897462,
+      "parity_max_abs_diff": 9.485745522397337e-13,
+      "speedup_vs_python": 121.54326347664312,
+      "used": true
+    }
+  },
+  "kernel": "hodgkin_huxley_mojo_simulate",
+  "measured_order": [
+    "mojo",
+    "rust",
+    "python"
+  ],
+  "meta": {
+    "affinity": [
+      10
+    ],
+    "cpu": "11th Gen Intel(R) Core(TM) i5-11600K @ 3.90GHz",
+    "governor": "powersave",
+    "kernel_isolated_cpus": "",
+    "load_average_end": [
+      31.0830078125,
+      25.61767578125,
+      20.20947265625
+    ],
+    "load_average_start": [
+      31.0029296875,
+      25.509765625,
+      20.1455078125
+    ],
+    "measurement_scope": "single-logical-CPU affinity; kernel isolation and workstation load reported separately",
+    "platform": "Linux-6.17.0-35-generic-x86_64-with-glibc2.39",
+    "runtime_versions": {
+      "mojo": "Mojo 1.0.0b1 (a9591de6)",
+      "numpy": "2.2.6",
+      "python": "3.12.3",
+      "rust": "rustc 1.96.0 (ac68faa20 2026-05-25)"
+    },
+    "single_cpu_pinned": true
+  },
+  "schema_version": "sc-neurocore.polyglot-benchmark.v1",
+  "source_hashes": {
+    "benchmarks/bench_hodgkin_huxley_mojo": {
+      "py": "c64b6e4329f64a6c9f11f1eae2ecb1259a894e19e85de0891d948598aa89e360"
+    },
+    "benchmarks/bench_hodgkin_huxley_mojo.py": "c64b6e4329f64a6c9f11f1eae2ecb1259a894e19e85de0891d948598aa89e360",
+    "bridge/sc_neurocore_engine/__init__": {
+      "py": "7ef50ba856299e488407d2e68503967b62be2a35e44747ac2285fc32d05b1e08"
+    },
+    "bridge/sc_neurocore_engine/__init__.py": "7ef50ba856299e488407d2e68503967b62be2a35e44747ac2285fc32d05b1e08",
+    "engine/src/neurons/biophysical": {
+      "rs": "3eb8f0f0f9ab285a6244252ce94394d84239b41d3ccb94142d0a352125fbeb96"
+    },
+    "engine/src/neurons/biophysical.rs": "3eb8f0f0f9ab285a6244252ce94394d84239b41d3ccb94142d0a352125fbeb96",
+    "engine/src/pyo3_neurons": {
+      "rs": "febf5e1d985cb4719cf300e30bca2a82430ad23c7a7b92802618e218d85e62da"
+    },
+    "engine/src/pyo3_neurons.rs": "febf5e1d985cb4719cf300e30bca2a82430ad23c7a7b92802618e218d85e62da",
+    "src/sc_neurocore/accel/go/services/hodgkin_huxley": {
+      "go": "630937354359111414f1dac84f36b666acd9a1f199f9d548fab97c4e9e342271"
+    },
+    "src/sc_neurocore/accel/go/services/hodgkin_huxley.go": "630937354359111414f1dac84f36b666acd9a1f199f9d548fab97c4e9e342271",
+    "src/sc_neurocore/accel/julia/neurons/hodgkin_huxley": {
+      "jl": "3dae186c32e26bb86123a97fc78678b9b3f209c52e731255765054312dd1428e"
+    },
+    "src/sc_neurocore/accel/julia/neurons/hodgkin_huxley.jl": "3dae186c32e26bb86123a97fc78678b9b3f209c52e731255765054312dd1428e",
+    "src/sc_neurocore/accel/mojo/kernels/hodgkin_huxley": {
+      "mojo": "41dc848a739e60544cb0575ea02d73ec91cd461cac019f55ab57d09774ae8e8b"
+    },
+    "src/sc_neurocore/accel/mojo/kernels/hodgkin_huxley.mojo": "41dc848a739e60544cb0575ea02d73ec91cd461cac019f55ab57d09774ae8e8b",
+    "src/sc_neurocore/accel/rust/safety/hodgkin_huxley": {
+      "rs": "01c76cdb19f6e1bec6a29fb6eecc8859b2a78722e95f0ef13d3982de46fb1b6b"
+    },
+    "src/sc_neurocore/accel/rust/safety/hodgkin_huxley.rs": "01c76cdb19f6e1bec6a29fb6eecc8859b2a78722e95f0ef13d3982de46fb1b6b",
+    "src/sc_neurocore/neurons/models/hodgkin_huxley": {
+      "py": "d601fddcbca62adaa261fd2d68133fdb755c633e905d6bade6049350b5464ca1"
+    },
+    "src/sc_neurocore/neurons/models/hodgkin_huxley.py": "d601fddcbca62adaa261fd2d68133fdb755c633e905d6bade6049350b5464ca1"
+  },
+  "workload": {
+    "current": 20.0,
+    "mojo_trace_atol": 2e-09,
+    "n_steps": 100,
+    "parameters": "Hodgkin-Huxley defaults; 100 gate-first baseline-Euler substeps per macro-step",
+    "repeats": 11
+  }
+}

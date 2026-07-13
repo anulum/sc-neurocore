@@ -5,6 +5,22 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+### Hodgkin-Huxley executable Mojo lane
+- Replaced the non-executable parity note with a compiled C ABI for the
+  complete four-state Hodgkin-Huxley recurrence. The Python dispatcher carries
+  the maintained numeric state and parameter surface, mirrors the historical
+  gate-first baseline-Euler schedule, and fails closed on invalid inputs or
+  candidates without partially committing state.
+- Dedicated production-boundary tests preserve `0/6/9` events at `I=0/10/20`
+  over 100 macro-steps. Mojo's exp/FMA trace stays within the measured `2e-9`
+  envelope, including non-default state and parameter transport; an
+  RK4-configured instance is rejected rather than silently changing its
+  integrator.
+- Added a source-hashed, single-logical-CPU benchmark for Python, the Rust
+  engine, and Mojo. The recorded timings are loaded-host local regression
+  evidence; event parity, trace bounds, source digests, final states, affinity,
+  governor, load, and runtime versions are the maintained contracts.
+
 ### Connor-Stevens executable Mojo lane
 - Replaced the non-executable Mojo parity note with a compiled C ABI for the
   complete six-state Connor-Stevens recurrence. The public Python dispatcher

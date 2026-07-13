@@ -52,6 +52,7 @@ same checkout.
 | `bench_evo_substrate.py` | Source-bound Python evolutionary-operator timings with raw samples, summary statistics, affinity, governor, frequency, and host-load evidence |
 | `bench_evo_substrate_multilang.py` | Fail-closed Rust/Julia/Go/Mojo/Python kernel parity and timing with interleaved samples, source digest, toolchain context, and explicit unavailable-backend reporting |
 | `bench_connor_stevens_mojo.py` | Source-hashed Python/Rust/Mojo parity and timing for the executable Connor-Stevens Mojo lane, including exact events, bounded six-state traces, affinity, runtime versions, and host load |
+| `bench_hodgkin_huxley_mojo.py` | Source-hashed Python/Rust/Mojo parity and timing for the executable Hodgkin-Huxley Mojo lane, including exact events, bounded four-state traces, affinity, runtime versions, governor, and host load |
 | `bench_neuron_integrators.py` | Research-only cross-language RK4 neuron integrator parity and timing for Python / Rust / Julia / Go / Mojo |
 | `bench_live_control_updates.py` | Local regression evidence for generated live-control update sequences, static RTL regeneration, staged overflow/underflow trap capture, and selected sticky-trap clear semantics |
 | `benchmark_regression_gates.json` | Manifest of benchmark artefacts and metrics enforced by `tools/benchmark_evidence_gate.py` |
@@ -79,6 +80,11 @@ python benchmarks/bench_neuron_integrators.py
 PYTHONPATH=src taskset -c <cpu> .venv/bin/python \
   benchmarks/bench_connor_stevens_mojo.py \
   --json benchmarks/results/bench_connor_stevens_mojo.json
+
+# Hodgkin-Huxley executable Mojo-lane closure
+PYTHONPATH=src:bridge taskset -c <cpu> .venv/bin/python \
+  benchmarks/bench_hodgkin_huxley_mojo.py \
+  --json benchmarks/results/bench_hodgkin_huxley_mojo.json
 
 # DNA mapper refactor regression evidence
 python benchmarks/bench_dna_mapper_import.py \

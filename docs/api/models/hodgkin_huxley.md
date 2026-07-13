@@ -543,20 +543,20 @@ assert!((neuron.v - (-65.0)).abs() < 1e-12);
 | Method | Signature | Returns | Description |
 |--------|-----------|---------|-------------|
 | `step` | `step(current: float) → int` | 0 or 1 | Advance 1 ms (100 sub-steps), return spike |
+| `simulate` | `simulate(n_steps, current=0.0, backend="auto")` | `(v_trace, spikes)` | Run Python, default-contract Rust, or explicit compiled Mojo |
 | `reset` | `reset() → None` | — | Restore v, m, h, n to initial values |
 
-### Python/Rust Parity
+### Python/Rust/Mojo parity
 
-| Property | Python | Rust | Match |
-|----------|--------|------|-------|
-| Rate constants (6) | Explicit methods | `safe_rate()` + inline | EXACT |
-| Integration | Forward Euler, simultaneous | Forward Euler, simultaneous | EXACT |
-| Sub-steps | `round(1.0/dt)` = 100 | `(1.0/dt) as usize` = 100 | EXACT |
-| Gate order | m, h, n before currents | m, h, n before currents | EXACT |
-| Spike detection | Upward crossing | Upward crossing | EXACT |
-| Reset | v, m, h, n to defaults | v, m, h, n to defaults | EXACT |
-| Singularity guard | `abs(d) < 1e-7` | `d.abs() < 1e-7` | EXACT |
-| Parameters (13) | All f64 defaults | All f64 defaults | EXACT |
+| Property | Python | Rust engine | Mojo shared library |
+|----------|--------|-------------|---------------------|
+| Rate constants (6) | Explicit methods | `safe_rate()` + inline | Analytic singular limits + inline exp |
+| Integration | Gate-first baseline Euler | Gate-first baseline Euler | Gate-first baseline Euler |
+| Default sub-steps | `round(1.0/dt)` = 100 | `(1.0/dt) as usize` = 100 | half-even `round(1.0/dt)` = 100 |
+| Spike detection | Upward crossing | Upward crossing | Upward macro-boundary crossing |
+| Numeric surface | Full state/parameters | Factory defaults only | Full numeric state/parameters |
+| Enrolled events | 0/6/9 | 0/6/9 | 0/6/9 |
+| Enrolled trace | Reference | Below `1e-9` | Below `2e-9` |
 
 ### Supported operations
 
@@ -574,6 +574,31 @@ assert!((neuron.v - (-65.0)).abs() < 1e-12);
 ---
 
 ## Performance Benchmarks
+
+### Executable Mojo closure (2026-07-13)
+
+The source-hashed closure run used one logical CPU, 100 macro-steps, and 11
+repeats at `I=20`. CPU 10 was affinity-pinned but not kernel-isolated, the
+governor was `powersave`, and workstation load was non-zero. These values are
+local functional/regression evidence, not general throughput claims.
+
+| Runtime | Median per 100 macro-steps | Per macro-step | Events | Max voltage gap |
+|---------|---------------------------:|---------------:|-------:|----------------:|
+| Mojo shared library | 1.238 ms | 12.385 µs | 9 | `1.605e-10` |
+| Rust engine | 1.543 ms | 15.432 µs | 9 | `9.486e-13` |
+| Python | 187.566 ms | 1.876 ms | 9 | reference |
+
+The complete affinity, load, governor, runtime-version, source-hash, timing,
+parity, and final-state record is
+`benchmarks/results/bench_hodgkin_huxley_mojo.json`.
+
+```python
+from sc_neurocore.neurons.models.hodgkin_huxley import HodgkinHuxleyNeuron
+
+neuron = HodgkinHuxleyNeuron()
+trace, spikes = neuron.simulate(100, current=20.0, backend="mojo")
+print(trace[-1], spikes)
+```
 
 ### Criterion 0.8 (Rust engine)
 
