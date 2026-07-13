@@ -5,6 +5,26 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+### Cortical-column responsibility modularisation
+
+- Replaced the 1,259-line cortical-column GodFile with a 733-line historical
+  public runtime, a 146-line optional-backend discovery boundary, a 395-line
+  sparse-connectivity builder, and a 121-line published-parameter module.
+  Architecture contracts enforce the acyclic dependency direction and bounded
+  file sizes.
+- Preserved the exact public constructor signature, class module and qualified
+  name, direct constant re-exports, backend capability flags, reload patch
+  points, and RNG draw order. Parent and candidate fingerprints match for the
+  single-delay per-pair, distributed-delay per-pair, and distributed-delay
+  block-CSR modes.
+- The 76 focused passing tests plus one optional-backend skip cover all 553
+  statements and 170 branches exactly. Strict MyPy is clean across the four
+  source and two strict contract files; Ruff, Bandit, scoped NumPy-docstring,
+  SPDX, generated API-reference, and capability-manifest checks pass.
+- This is a behaviour-preserving Python responsibility split. The existing
+  Rust, Julia, Go, and Mojo sparse-kernel contracts are unchanged, and no new
+  throughput or scientific-fidelity claim is introduced.
+
 ### Studio jobs responsibility modularisation
 
 - Replaced the 1,311-line Studio jobs GodFile and its 1,496-line test GodFile

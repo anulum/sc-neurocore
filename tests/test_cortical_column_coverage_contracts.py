@@ -10,12 +10,15 @@
 
 from __future__ import annotations
 
+import logging
+import sys
 from typing import Any
 
 import numpy as np
 import pytest
 from scipy import sparse
 
+from sc_neurocore.network import _cortical_column_backends as backend_discovery
 from sc_neurocore.network import cortical_column as cortical_column_module
 from sc_neurocore.network.cortical_column import CorticalColumn, POPULATIONS
 
@@ -36,6 +39,55 @@ def test_population_sizes_rejects_out_of_domain_scale(scale: float) -> None:
     """Static size queries reject the same scale domain as full construction."""
     with pytest.raises(ValueError, match="scale must be in"):
         CorticalColumn.population_sizes(scale=scale)
+
+
+def test_native_discovery_handles_absent_ctypes_libraries(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Missing optional shared libraries leave Go and Mojo unavailable."""
+    monkeypatch.setitem(sys.modules, "juliacall", None)
+    monkeypatch.setattr(backend_discovery.os.path, "exists", lambda _path: False)
+
+    def missing_engine(name: str) -> Any:
+        raise ImportError(name)
+
+    discovered = backend_discovery.discover_native_backends(
+        __file__,
+        logging.getLogger(__name__),
+        missing_engine,
+    )
+
+    assert discovered.go_multi_spmv is None
+    assert discovered.mojo_multi_spmv is None
+
+
+def test_spmv_into_accepts_precomputed_rust_arrays(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """The Rust SpMV path accepts the constructor's precomputed CSR arrays."""
+    block = sparse.csr_matrix(([2.0], ([1], [0])), shape=(3, 2))
+    arrays = _block_arrays(block)
+    x = np.array([4.0, 0.0])
+    y = np.zeros(3)
+
+    def fake_spmv(
+        indptr: np.ndarray[Any, Any],
+        indices: np.ndarray[Any, Any],
+        data: np.ndarray[Any, Any],
+        x_arg: np.ndarray[Any, Any],
+        y_arg: np.ndarray[Any, Any],
+    ) -> None:
+        y_arg += sparse.csr_matrix(
+            (data, indices, indptr),
+            shape=(y_arg.size, x_arg.size),
+        ).dot(x_arg)
+
+    monkeypatch.setattr(cortical_column_module, "_HAS_RUST_CSR_SPMV", True)
+    monkeypatch.setattr(cortical_column_module, "_rust_csr_spmv_add", fake_spmv)
+
+    CorticalColumn._spmv_into(block, x, y, arrays)
+
+    np.testing.assert_allclose(y, [0.0, 8.0, 0.0])
 
 
 def test_auto_block_csr_uses_single_rust_fallback_when_multi_backend_absent(

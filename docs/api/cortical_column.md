@@ -1,8 +1,8 @@
 # Cortical Column Microcircuit
 
 **Module:** `sc_neurocore.network.cortical_column`
-**Source:** `src/sc_neurocore/network/cortical_column.py`
-**Status (v3.14.0):** full Potjans & Diesmann 2014 implementation —
+**Public source:** `src/sc_neurocore/network/cortical_column.py`
+**Status (v3.16.0):** full Potjans & Diesmann 2014 implementation —
 8 populations, Table 5 connectivity, current-based exponential PSCs,
 LIF integration with refractory window, sparse adjacency with
 multapses, per-source delay buffers, scale-aware in-degree
@@ -168,18 +168,46 @@ Numerical constants (all from Potjans Table 5):
 
 ### 2.4 Delay handling
 
-Two ring buffers are kept per population, keyed by the source
-type (E or I). Their lengths are `round(DELAY_E / dt)` and
-`round(DELAY_I / dt)`, both clamped to ≥ 1 step. At step `k` the
-read head for the E buffer is `(k − len_E) mod len_E` and for the
-I buffer `(k − len_I) mod len_I`. This implements the Potjans
-"single mean delay per source-type" simplification without
-allocating a per-connection delay queue (which at full scale
-would dominate memory).
+By default, each connection receives a positive Gaussian delay
+sampled from the Potjans source-type distribution. The samples for
+each target/source pair are divided into `n_delay_bins = 5`
+quantile groups, and each group receives a separate CSR matrix and
+integer-step delay. This retains a bounded number of sparse
+matrix-vector products without allocating a queue per synapse.
+
+With `use_block_csr=True`, connections snap to one global quantile
+grid per source type and are stacked into `2 × n_delay_bins`
+weighted block-CSR matrices. That layout is consumed by the
+optional Rust, Julia, Go, and Mojo batched SpMV kernels. With
+`delay_distribution=False`, the implementation retains the legacy
+single delays `DELAY_E = 1.5 ms` and `DELAY_I = 0.8 ms`.
+
+Two ring buffers are kept per population, keyed by excitatory or
+inhibitory source type. Their lengths equal the largest quantised
+delay needed by that source type and are always at least one step.
 
 `step(dt)` initialises the buffers on the first call and refuses
 any later call with a different `dt`; `reset_state()` drops the
 buffers so the next `step` can pick a new `dt`.
+
+### 2.5 Responsibility layout
+
+The historical module remains the public compatibility and runtime
+surface. Internal responsibilities are acyclic:
+
+- `_cortical_column_parameters.py` owns the published constants and
+  scale-to-population-size mapping.
+- `_cortical_column_connectivity.py` owns sparse graph, multapse,
+  delay-bin, and block-CSR construction.
+- `_cortical_column_backends.py` owns optional native discovery and
+  C-ABI symbol configuration.
+- `cortical_column.py` defines `CorticalColumn`, retains all
+  historical constant exports and backend capability flags, and
+  owns time stepping, analysis, reset, and introspection.
+
+The split does not change the constructor signature, class module
+or qualified name, RNG draw order, sparse layouts, or numerical
+results.
 
 ---
 
@@ -193,6 +221,9 @@ class CorticalColumn:
         bg_rate: float = 8.0,
         g_inh: float = 4.0,
         scale_correction: bool = True,
+        delay_distribution: bool = True,
+        n_delay_bins: int = 5,
+        use_block_csr: bool = False,
         seed: int | None = None,
         backend: str = "auto",
     ) -> None: ...

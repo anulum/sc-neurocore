@@ -19476,6 +19476,32 @@ Return a candidate copy with compatible bitstream/decorrelator settings.
 
 ---
 
+## Module `network._cortical_column_backends`
+
+### Class `NativeBackends`
+Native kernels discovered for one import of the public module.
+
+
+### Function `discover_native_backends(public_module_file, logger, import_module)`
+Discover optional Rust, Julia, Go, and Mojo cortical-column kernels.
+
+Discovery is invoked by the public module on every import or reload so its
+historical module-level capability flags remain truthful and monkeypatchable.
+Missing optional runtimes fail closed to the Python implementation.
+
+---
+
+## Module `network._cortical_column_parameters`
+
+### Function `population_sizes(scale)`
+Return Potjans population sizes at ``scale`` without building connectivity.
+
+The full published column has roughly 77k neurons and hundreds of
+millions of synapses. Size contracts must therefore be observable without
+materialising the full synapse graph.
+
+---
+
 ## Module `network._torch_bridge`
 
 ### Class `NetworkTorchBridge`

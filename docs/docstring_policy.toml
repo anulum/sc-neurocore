@@ -14,7 +14,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 381
+expected_file_count = 384
 
 [[file]]
 path = "src/sc_neurocore/__init__.py"
@@ -915,6 +915,18 @@ rationale = "Public spike-based next-state predictor."
 [[file]]
 path = "src/sc_neurocore/world_model/predictive_model.py"
 rationale = "Public linear-Gaussian state-space world model with Kalman filtering and RTS smoothing."
+
+[[file]]
+path = "src/sc_neurocore/network/_cortical_column_backends.py"
+rationale = "Internal optional-backend discovery boundary for the public cortical-column runtime."
+
+[[file]]
+path = "src/sc_neurocore/network/_cortical_column_connectivity.py"
+rationale = "Internal sparse-connectivity and delay-bin builder for the cortical-column runtime."
+
+[[file]]
+path = "src/sc_neurocore/network/_cortical_column_parameters.py"
+rationale = "Published Potjans parameters and population metadata re-exported by the public module."
 
 [[file]]
 path = "src/sc_neurocore/network/cortical_column.py"

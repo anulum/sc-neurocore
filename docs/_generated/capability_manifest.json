@@ -971,7 +971,7 @@
     "python_model_classes": 158,
     "python_model_source_modules": 153,
     "rust_pyo3_model_wrappers": 176,
-    "test_files": 1274
+    "test_files": 1275
   },
   "documentation": {
     "public_pages": [
@@ -3050,6 +3050,7 @@
       "tests/test_core_orchestrator_contracts.py",
       "tests/test_core_tensor_stream_contracts.py",
       "tests/test_cortical_column.py",
+      "tests/test_cortical_column_architecture.py",
       "tests/test_cortical_column_coverage_contracts.py",
       "tests/test_cortical_column_dynamics.py",
       "tests/test_cortical_column_go_parity.py",
