@@ -21,8 +21,8 @@ from tests.cosim_support import (
     _verilog_spike_count,
 )
 
-_N_STEPS = 200
-_INPUT_CURRENT = 50.0
+_N_STEPS = 1_000
+_INPUT_CURRENT = 0.7
 
 
 class TestTierBModelCosim:
@@ -44,4 +44,14 @@ class TestTierBModelCosim:
         schema_spikes = _python_spike_count("perfect_integrator", _N_STEPS, _INPUT_CURRENT)
         verilog_spikes = _verilog_spike_count("perfect_integrator", _N_STEPS, _INPUT_CURRENT)
 
-        assert hand_spikes == schema_spikes == verilog_spikes == _N_STEPS
+        assert hand_spikes == schema_spikes == verilog_spikes == 66
+
+    @pytest.mark.skipif(not HAS_IVERILOG, reason="Icarus Verilog not available")
+    def test_perfect_integrator_q88_declares_fractional_boundary(self) -> None:
+        """Record the one-event Q8.8 boundary instead of hiding it as parity."""
+        current = 0.333
+        hand_spikes = _perfect_integrator_hand_spike_count(_N_STEPS, current)
+        schema_spikes = _python_spike_count("perfect_integrator", _N_STEPS, current)
+        verilog_spikes = _verilog_spike_count("perfect_integrator", _N_STEPS, current)
+
+        assert (hand_spikes, schema_spikes, verilog_spikes) == (32, 32, 31)

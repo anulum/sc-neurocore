@@ -8,7 +8,10 @@
 
 package services
 
-import "errors"
+import (
+	"errors"
+	"math"
+)
 
 // PerfectIntegratorNeuronState holds the neuron state.
 type PerfectIntegratorNeuronState struct {
@@ -32,23 +35,23 @@ func NewPerfectIntegratorNeuron() *PerfectIntegratorNeuronState {
 
 // Valid reports whether the state satisfies the non-leaky integration contract.
 func (s PerfectIntegratorNeuronState) Valid() bool {
-	return finite(s.V) &&
-		finite(s.CM) && s.CM > 0.0 &&
-		finite(s.VThreshold) &&
-		finite(s.VReset) && s.VThreshold > s.VReset &&
+	return finitePerfectIntegrator(s.V) &&
+		finitePerfectIntegrator(s.CM) && s.CM > 0.0 &&
+		finitePerfectIntegrator(s.VThreshold) &&
+		finitePerfectIntegrator(s.VReset) && s.VThreshold > s.VReset &&
 		s.V < s.VThreshold &&
-		finite(s.Dt) && s.Dt > 0.0
+		finitePerfectIntegrator(s.Dt) && s.Dt > 0.0
 }
 
 // Step advances the neuron by one timestep. Invalid inputs do not mutate state.
 func (s *PerfectIntegratorNeuronState) Step(iExt float64) (int, error) {
-	if !finite(iExt) || !s.Valid() {
+	if !finitePerfectIntegrator(iExt) || !s.Valid() {
 		return 0, ErrPerfectIntegratorInvalidState
 	}
 
 	voltageIncrement := iExt / s.CM * s.Dt
 	nextV := s.V + voltageIncrement
-	if !finite(voltageIncrement) || !finite(nextV) {
+	if !finitePerfectIntegrator(voltageIncrement) || !finitePerfectIntegrator(nextV) {
 		return 0, ErrPerfectIntegratorNonFiniteUpdate
 	}
 
@@ -67,20 +70,40 @@ func (s *PerfectIntegratorNeuronState) Reset() {
 
 // SimulatePerfectIntegratorNeuron runs the neuron for n steps.
 func SimulatePerfectIntegratorNeuron(nSteps int, iExt float64) ([]float64, int) {
-	s := NewPerfectIntegratorNeuron()
-	trace := make([]float64, nSteps)
-	spikes := 0
-	for t := 0; t < nSteps; t++ {
-		result, err := s.Step(iExt)
-		if err != nil {
-			panic(err)
-		}
-		trace[t] = s.V
-		if result > 0 {
-			spikes++
-		}
+	trace, spikes, err := SimulatePerfectIntegratorTrace(
+		*NewPerfectIntegratorNeuron(), nSteps, iExt,
+	)
+	if err != nil {
+		panic(err)
 	}
 	return trace, spikes
+}
+
+// SimulatePerfectIntegratorTrace executes a complete state/parameter contract.
+func SimulatePerfectIntegratorTrace(
+	initial PerfectIntegratorNeuronState,
+	nSteps int,
+	iExt float64,
+) ([]float64, int, error) {
+	if nSteps < 0 || !finitePerfectIntegrator(iExt) || !initial.Valid() {
+		return nil, 0, ErrPerfectIntegratorInvalidState
+	}
+	state := initial
+	trace := make([]float64, nSteps)
+	spikes := 0
+	for index := 0; index < nSteps; index++ {
+		spike, err := state.Step(iExt)
+		if err != nil {
+			return nil, 0, err
+		}
+		spikes += spike
+		trace[index] = state.V
+	}
+	return trace, spikes, nil
+}
+
+func finitePerfectIntegrator(value float64) bool {
+	return !math.IsNaN(value) && !math.IsInf(value, 0)
 }
 
 var (

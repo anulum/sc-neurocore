@@ -58,6 +58,10 @@
       "id": "lapicque-exact-flow-multibackend-local-regression"
     },
     {
+      "artefact": "benchmarks/results/local_python_2026-07-13_perfect_integrator_euler.json",
+      "id": "perfect-integrator-euler-multibackend-local-regression"
+    },
+    {
       "artefact": "benchmarks/results/local_python_2026-06-18_gutkin_ermentrout_rk4.json",
       "id": "gutkin-ermentrout-rk4-multibackend-local-regression"
     },
@@ -421,7 +425,7 @@
       "reason": "source_hash_mismatch"
     }
   ],
-  "gate_count": 49,
+  "gate_count": 50,
   "manifest": "benchmarks/benchmark_regression_gates.json",
   "passed": false,
   "schema_version": "sc-neurocore.benchmark-evidence-gate.v1"

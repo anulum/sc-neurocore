@@ -81,10 +81,24 @@ mod tests {
     }
 
     #[test]
-    fn test_perfect_integrator_step() {
-        let mut state = PerfectIntegratorNeuron::new();
-        let spike = state.step(10.0).unwrap();
-        assert!(spike == 0 || spike == 1);
+    fn test_source_golden_event_counts() {
+        let goldens = [
+            (0.0, 0),
+            (0.333, 32),
+            (0.7, 66),
+            (2.0, 200),
+            (3.0, 250),
+            (5.0, 500),
+            (20.0, 1000),
+        ];
+        for (current, expected) in goldens {
+            let mut state = PerfectIntegratorNeuron::new();
+            let mut spikes = 0;
+            for _ in 0..1000 {
+                spikes += state.step(current).unwrap();
+            }
+            assert_eq!(spikes, expected, "current={current}");
+        }
     }
 
     #[test]

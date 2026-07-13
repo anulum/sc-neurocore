@@ -77,6 +77,18 @@ parity = "exact"
 status = "implemented"
 parity = "exact"
 
+[backends.julia]
+status = "implemented"
+parity = "exact"
+
+[backends.go]
+status = "implemented"
+parity = "exact"
+
+[backends.mojo]
+status = "implemented"
+parity = "exact"
+
 [reproducibility]
 reference_config = "{\"n_steps\":1000,\"current\":1.0,\"backend\":\"python\",\"parameters\":\"defaults\"}"
 golden_trace_sha256 = "b214f61993fe65ffb313000e59aa48b0cdd501b985eabc955beb7c45e2126e74"
@@ -88,13 +100,13 @@ notes = ""
 [validation]
 dynamics_faithful = true
 metric = "parity"
-operating_point = "schema-DSL perfect_integrator; hand/schema/RTL path"
-tolerance = "exact or suite-defined band"
-evidence = "tests/test_cosimulation.py perfect_integrator enrolment"
+operating_point = "candidate-first Euler; accel I=0/0.333/0.7/2/3/5/20 for 1000 steps; hand/schema/Q8.8 RTL at I=0.7 for 1000 steps"
+tolerance = "accel bit-exact; hand/schema/Q8.8 event-exact at I=0.7; declared Q8.8 boundary 32/32/31 at I=0.333"
+evidence = "tests/test_perfect_integrator_backends.py::test_compiled_backends_match_python_golden"
 
 [silicon]
 compiles = true
 cosim_validated = true
-cosim_evidence = "tests/test_cosimulation.py perfect_integrator enrolment"
+cosim_evidence = "tests/test_cosim_perfect_integrator.py::TestTierBModelCosim::test_perfect_integrator_q88_matches_hand_model_and_verilog"
 target_tier = "H1"
-terminal_reason = "Point-neuron schema→RTL path; higher silicon rungs need synth/timing/formal programmes."
+terminal_reason = "Q8.8 point-neuron event parity and depth-20 BMC are enrolled; higher silicon rungs require synthesis, timing, and hardware programmes."

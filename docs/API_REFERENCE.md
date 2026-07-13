@@ -380,6 +380,31 @@ nodes.
 
 ---
 
+## Module `accel.perfect_integrator`
+
+### Function `ensure_julia_loaded()`
+Load the executable Perfect Integrator Julia module when available.
+
+### Function `ensure_go_loaded()`
+Load the compiled Perfect Integrator Go C ABI when available.
+
+### Function `ensure_mojo_loaded()`
+Load the compiled Perfect Integrator Mojo C ABI when available.
+
+### Function `simulate_rust(n_steps, current)`
+Run the factory-default Rust engine recurrence.
+
+### Function `simulate_julia(v, c_m, v_threshold, v_reset, dt, n_steps, current)`
+Run the Julia recurrence with the complete numeric contract.
+
+### Function `simulate_go(v, c_m, v_threshold, v_reset, dt, n_steps, current)`
+Run the Go recurrence through its C ABI.
+
+### Function `simulate_mojo(v, c_m, v_threshold, v_reset, dt, n_steps, current)`
+Run the Mojo recurrence through its C ABI.
+
+---
+
 ## Module `accel.sc_inference`
 
 ### Function `sc_forward_numpy(weights_packed, input_probs, length, seed)`
@@ -22787,13 +22812,14 @@ dV/dt = I / C
 
 Reference: Gerstner, W. et al. (2014). Neuronal Dynamics. Cambridge Univ. Press, §1.3.
 
-``simulate`` supports ``backend`` values ``python``, ``rust``, and ``auto``
-(prefer Rust under the factory-default contract when the engine is present).
+``simulate`` exposes the Python reference and all four compiled acceleration
+lanes. The Rust engine retains its factory-default boundary; Julia, Go, and
+Mojo transport the complete numeric state and parameter contract.
 
 - **__post_init__**()
 - **step**(current)
 - **simulate**(n_steps, current, backend)
-  - Advance ``n_steps`` updates, returning ``(v_trace, spikes)``.
+  - Advance a sequential trace through Python, Rust, Julia, Go, or Mojo.
 - **reset**()
 
 ---

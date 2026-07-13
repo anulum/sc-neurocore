@@ -5,6 +5,22 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+### Perfect Integrator source-to-silicon fidelity closure
+- Exposed the candidate-first non-leaky Euler recurrence through Python, the
+  Rust engine, Julia, Go, and Mojo. Julia, Go, and Mojo carry the complete
+  numeric contract; the Rust engine keeps its explicit factory-default
+  boundary. Dedicated source-golden tests preserve bit-exact traces and
+  0/32/66/200/250/500/1,000 events at I=0/0.333/0.7/2/3/5/20 over 1,000 steps.
+- Added a source-hashed five-backend public-dispatch benchmark. The CPU-10
+  affinity-pinned, non-reserved powersave-governor run records 50,000 events
+  and zero trace difference in every lane. Its high host load and empty
+  isolated-CPU set make the timings local regression evidence rather than a
+  production throughput claim.
+- Strengthened the existing schema-to-RTL evidence from a saturated-only point
+  to 66-event hand/schema/Q8.8 parity at I=0.7 over 1,000 steps. The I=0.333
+  quantisation boundary is recorded honestly as 32/32/31; the existing analytic
+  sawtooth reference and generated depth-20 Z3 proof remain cross-wired.
+
 ### Bioware responsibility modularisation
 - Replaced the 1,378-line biological-interface implementation and 1,139-line
   test GodFile with a 129-line compatibility facade, nine focused

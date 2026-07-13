@@ -5,6 +5,16 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 ## [Unreleased]
 
 ### Added
+- Completed Perfect Integrator end-to-end fidelity across Python, Rust safety
+  and engine, Go, Julia, Mojo, the paired schema formats, and generated Q8.8
+  RTL. Julia/Go/Mojo now transport the complete numeric contract through real
+  executable paths, while the Rust engine retains its explicit factory-default
+  boundary; every path rejects invalid inputs before visible mutation.
+- Added source-bound Perfect Integrator backend, benchmark, analytic-reference,
+  co-simulation, descriptor, and formal evidence. All acceleration traces and
+  events are bit-exact at seven enrolled currents; hand/schema/Q8.8 RTL preserve
+  66 events at I=0.7 over 1,000 steps, while the I=0.333 quantisation boundary is
+  stated explicitly as 32/32/31 rather than misreported as parity.
 - Replaced the 1,378-line Bioware implementation and 1,139-line primary test
   file with a 129-line historical facade, nine responsibility modules, shared
   validation, and 13 focused test modules. The largest implementation and test

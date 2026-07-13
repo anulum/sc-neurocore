@@ -1,0 +1,152 @@
+{
+  "backends": {
+    "go": {
+      "available": true,
+      "event_count": 50000,
+      "event_count_matches_python": true,
+      "final_state": {
+        "v": 0.0
+      },
+      "median_call_ms": 2.644466,
+      "minimum_call_ms": 2.35844,
+      "parity_max_abs_diff": 0.0,
+      "speedup_vs_python": 55.6395979377311,
+      "used": true
+    },
+    "julia": {
+      "available": true,
+      "event_count": 50000,
+      "event_count_matches_python": true,
+      "final_state": {
+        "v": 0.0
+      },
+      "median_call_ms": 1.632979,
+      "minimum_call_ms": 1.399938,
+      "parity_max_abs_diff": 0.0,
+      "speedup_vs_python": 90.10343978703952,
+      "used": true
+    },
+    "mojo": {
+      "available": true,
+      "event_count": 50000,
+      "event_count_matches_python": true,
+      "final_state": {
+        "v": 0.0
+      },
+      "median_call_ms": 0.965336,
+      "minimum_call_ms": 0.768961,
+      "parity_max_abs_diff": 0.0,
+      "speedup_vs_python": 152.42053026096613,
+      "used": true
+    },
+    "python": {
+      "available": true,
+      "event_count": 50000,
+      "event_count_matches_python": true,
+      "final_state": {
+        "v": 0.0
+      },
+      "median_call_ms": 147.137025,
+      "minimum_call_ms": 123.475135,
+      "parity_max_abs_diff": 0.0,
+      "speedup_vs_python": 1.0,
+      "used": true
+    },
+    "rust": {
+      "available": true,
+      "event_count": 50000,
+      "event_count_matches_python": true,
+      "final_state": {
+        "v": 0.0
+      },
+      "median_call_ms": 60.26753,
+      "minimum_call_ms": 52.423061,
+      "parity_max_abs_diff": 0.0,
+      "speedup_vs_python": 2.4413979633809446,
+      "used": true
+    }
+  },
+  "kernel": "perfect_integrator_candidate_first_euler",
+  "measured_order": [
+    "mojo",
+    "julia",
+    "go",
+    "rust",
+    "python"
+  ],
+  "meta": {
+    "affinity": [
+      10
+    ],
+    "cpu": "11th Gen Intel(R) Core(TM) i5-11600K @ 3.90GHz",
+    "governor": "powersave",
+    "kernel_isolated_cpus": "",
+    "load_average_end": [
+      30.7646484375,
+      39.587890625,
+      38.4990234375
+    ],
+    "load_average_start": [
+      30.27783203125,
+      39.9326171875,
+      38.58935546875
+    ],
+    "measurement_scope": "single-logical-CPU affinity; kernel isolation and workstation load reported separately",
+    "platform": "Linux-6.17.0-35-generic-x86_64-with-glibc2.39",
+    "runtime_versions": {
+      "go": "go version go1.24.0 linux/amd64",
+      "julia": "julia version 1.12.6",
+      "mojo": "Mojo 1.0.0b1 (a9591de6)",
+      "numpy": "2.2.6",
+      "python": "3.12.3",
+      "rust": "rustc 1.96.0 (ac68faa20 2026-05-25)"
+    },
+    "single_cpu_pinned": true
+  },
+  "schema_version": "sc-neurocore.polyglot-benchmark.v1",
+  "source_hashes": {
+    "benchmarks/bench_model_perfect_integrator": {
+      "py": "ccfa9326a7e20719ce079efa7dbec7413c8f7a9034e9751981f3b3774729a024"
+    },
+    "benchmarks/bench_model_perfect_integrator.py": "ccfa9326a7e20719ce079efa7dbec7413c8f7a9034e9751981f3b3774729a024",
+    "engine/src/neuron": {
+      "rs": "85c3d206749df77704717cdcf18934551dae322e85d529c0973f464326dbec0b"
+    },
+    "engine/src/neuron.rs": "85c3d206749df77704717cdcf18934551dae322e85d529c0973f464326dbec0b",
+    "src/sc_neurocore/accel/go/neurons/perfect_integrator/perfect_integrator": {
+      "go": "716a969b7a31c67fb30b9af9849fed4c9823be964caa5337d95bffb04343ceba"
+    },
+    "src/sc_neurocore/accel/go/neurons/perfect_integrator/perfect_integrator.go": "716a969b7a31c67fb30b9af9849fed4c9823be964caa5337d95bffb04343ceba",
+    "src/sc_neurocore/accel/go/services/perfect_integrator": {
+      "go": "6bcd188368f94cfdd9ffbbd1fea471876cacc66cee05d6bc9b437d2c4de7a6a5"
+    },
+    "src/sc_neurocore/accel/go/services/perfect_integrator.go": "6bcd188368f94cfdd9ffbbd1fea471876cacc66cee05d6bc9b437d2c4de7a6a5",
+    "src/sc_neurocore/accel/julia/neurons/perfect_integrator": {
+      "jl": "3e83a19a070557b827594fb23a33554ea8e2d9c221658690e4128ba80ea01ab3"
+    },
+    "src/sc_neurocore/accel/julia/neurons/perfect_integrator.jl": "3e83a19a070557b827594fb23a33554ea8e2d9c221658690e4128ba80ea01ab3",
+    "src/sc_neurocore/accel/mojo/kernels/perfect_integrator": {
+      "mojo": "f1a2b5b94841407b5dbfebc5e6ae73d55101c2723e66f204c3c4d2b98621c315"
+    },
+    "src/sc_neurocore/accel/mojo/kernels/perfect_integrator.mojo": "f1a2b5b94841407b5dbfebc5e6ae73d55101c2723e66f204c3c4d2b98621c315",
+    "src/sc_neurocore/accel/perfect_integrator": {
+      "py": "192fdbfe1eb9612eb2b6fb58e1740ca2dde623a69a41eb413bff4b6a1eb82d8d"
+    },
+    "src/sc_neurocore/accel/perfect_integrator.py": "192fdbfe1eb9612eb2b6fb58e1740ca2dde623a69a41eb413bff4b6a1eb82d8d",
+    "src/sc_neurocore/accel/rust/safety/perfect_integrator": {
+      "rs": "cf3e9df254badaa109c880a207d25425ca4142012e389b92268b4edcd6d64e7c"
+    },
+    "src/sc_neurocore/accel/rust/safety/perfect_integrator.rs": "cf3e9df254badaa109c880a207d25425ca4142012e389b92268b4edcd6d64e7c",
+    "src/sc_neurocore/neurons/models/perfect_integrator": {
+      "py": "b05c775e9e87bef5aca7b3d0259d5db3dd59b46e75775027dafd1406334ba105"
+    },
+    "src/sc_neurocore/neurons/models/perfect_integrator.py": "b05c775e9e87bef5aca7b3d0259d5db3dd59b46e75775027dafd1406334ba105"
+  },
+  "workload": {
+    "current": 5.0,
+    "n_steps": 100000,
+    "parameters": "Perfect Integrator factory defaults; candidate-first Euler; hard reset",
+    "repeats": 7,
+    "trace_atol": 0.0
+  }
+}

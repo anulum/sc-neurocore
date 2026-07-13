@@ -577,6 +577,83 @@
       }
     },
     {
+      "artefact": "benchmarks/results/local_python_2026-07-13_perfect_integrator_euler.json",
+      "description": "Controlled Perfect Integrator candidate-first Euler five-backend public-dispatch evidence.",
+      "expected_values": {
+        "backends.go.event_count_matches_python": true,
+        "backends.julia.event_count_matches_python": true,
+        "backends.mojo.event_count_matches_python": true,
+        "backends.rust.event_count_matches_python": true,
+        "kernel": "perfect_integrator_candidate_first_euler",
+        "meta.single_cpu_pinned": true,
+        "schema_version": "sc-neurocore.polyglot-benchmark.v1",
+        "workload.current": 5.0,
+        "workload.n_steps": 100000,
+        "workload.repeats": 7,
+        "workload.trace_atol": 0.0
+      },
+      "id": "perfect-integrator-euler-multibackend-local-regression",
+      "parity_groups": [
+        {
+          "paths": [
+            "backends.python.event_count",
+            "backends.rust.event_count",
+            "backends.julia.event_count",
+            "backends.go.event_count",
+            "backends.mojo.event_count"
+          ],
+          "tolerance": 0.0
+        }
+      ],
+      "regression_limits": {
+        "backends.go.parity_max_abs_diff": {
+          "max": 0.0
+        },
+        "backends.julia.parity_max_abs_diff": {
+          "max": 0.0
+        },
+        "backends.mojo.parity_max_abs_diff": {
+          "max": 0.0
+        },
+        "backends.rust.parity_max_abs_diff": {
+          "max": 0.0
+        }
+      },
+      "required_numbers": [
+        "backends.python.median_call_ms",
+        "backends.python.minimum_call_ms",
+        "backends.python.parity_max_abs_diff",
+        "backends.python.event_count",
+        "backends.rust.median_call_ms",
+        "backends.rust.minimum_call_ms",
+        "backends.rust.parity_max_abs_diff",
+        "backends.rust.event_count",
+        "backends.julia.median_call_ms",
+        "backends.julia.minimum_call_ms",
+        "backends.julia.parity_max_abs_diff",
+        "backends.julia.event_count",
+        "backends.go.median_call_ms",
+        "backends.go.minimum_call_ms",
+        "backends.go.parity_max_abs_diff",
+        "backends.go.event_count",
+        "backends.mojo.median_call_ms",
+        "backends.mojo.minimum_call_ms",
+        "backends.mojo.parity_max_abs_diff",
+        "backends.mojo.event_count"
+      ],
+      "source_hashes": {
+        "benchmarks/bench_model_perfect_integrator.py": "source_hashes.benchmarks/bench_model_perfect_integrator.py",
+        "engine/src/neuron.rs": "source_hashes.engine/src/neuron.rs",
+        "src/sc_neurocore/accel/go/neurons/perfect_integrator/perfect_integrator.go": "source_hashes.src/sc_neurocore/accel/go/neurons/perfect_integrator/perfect_integrator.go",
+        "src/sc_neurocore/accel/go/services/perfect_integrator.go": "source_hashes.src/sc_neurocore/accel/go/services/perfect_integrator.go",
+        "src/sc_neurocore/accel/julia/neurons/perfect_integrator.jl": "source_hashes.src/sc_neurocore/accel/julia/neurons/perfect_integrator.jl",
+        "src/sc_neurocore/accel/mojo/kernels/perfect_integrator.mojo": "source_hashes.src/sc_neurocore/accel/mojo/kernels/perfect_integrator.mojo",
+        "src/sc_neurocore/accel/rust/safety/perfect_integrator.rs": "source_hashes.src/sc_neurocore/accel/rust/safety/perfect_integrator.rs",
+        "src/sc_neurocore/neurons/models/perfect_integrator.py": "source_hashes.src/sc_neurocore/neurons/models/perfect_integrator.py",
+        "src/sc_neurocore/accel/perfect_integrator.py": "source_hashes.src/sc_neurocore/accel/perfect_integrator.py"
+      }
+    },
+    {
       "artefact": "benchmarks/results/local_python_2026-06-18_gutkin_ermentrout_rk4.json",
       "expected_values": {
         "spdx_license": "AGPL-3.0-or-later",
