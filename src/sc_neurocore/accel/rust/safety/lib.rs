@@ -178,7 +178,6 @@ pub mod hardware_aware;
 pub mod hardware_bridge;
 pub mod hay_l5;
 pub mod heat;
-pub mod hierarchical_partitioner;
 pub mod hil_client;
 pub mod hill_tononi;
 pub mod hindmarsh_rose;

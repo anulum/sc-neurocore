@@ -23,22 +23,22 @@ from std.memory import UnsafePointer, alloc
 
 
 @always_inline
-fn _ptr_i64(addr: Int) -> UnsafePointer[Int64, MutAnyOrigin]:
+def _ptr_i64(addr: Int) -> UnsafePointer[Int64, MutAnyOrigin]:
     return UnsafePointer[Int64, MutAnyOrigin](unsafe_from_address=addr)
 
 
 @always_inline
-fn _ptr_i32(addr: Int) -> UnsafePointer[Int32, MutAnyOrigin]:
+def _ptr_i32(addr: Int) -> UnsafePointer[Int32, MutAnyOrigin]:
     return UnsafePointer[Int32, MutAnyOrigin](unsafe_from_address=addr)
 
 
 @always_inline
-fn _ptr_f64(addr: Int) -> UnsafePointer[Float64, MutAnyOrigin]:
+def _ptr_f64(addr: Int) -> UnsafePointer[Float64, MutAnyOrigin]:
     return UnsafePointer[Float64, MutAnyOrigin](unsafe_from_address=addr)
 
 
 @export
-fn kl_refine_c(
+def kl_refine_c(
     adj_offsets_addr: Int,
     adj_neighbours_addr: Int,
     adj_scc_abs_addr: Int,
@@ -137,11 +137,11 @@ fn kl_refine_c(
                     if pos >= 0:
                         for k_shift in range(pos, len_i - 1):
                             parts_buf[i * V + k_shift] = parts_buf[i * V + k_shift + 1]
-                        parts_len[i] = len_i - 1
+                        parts_len[i] = Int64(len_i - 1)
                     var bt = Int(best_target)
                     var bt_len = Int(parts_len[bt])
                     parts_buf[bt * V + bt_len] = v32
-                    parts_len[bt] = bt_len + 1
+                    parts_len[bt] = Int64(bt_len + 1)
                     part_map[v] = best_target
                     total_moves += 1
                     improved = True

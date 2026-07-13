@@ -2618,6 +2618,67 @@
         "benchmarks/_learning_bridge_probe.py": "probe_sha256",
         "benchmarks/bench_autonomous_learning.py": "benchmark_sha256"
       }
+    },
+    {
+      "artefact": "benchmarks/results/bench_kl_refine.json",
+      "description": "Source-bound five-backend hierarchical KL-refinement parity and local timing diagnostics.",
+      "expected_values": {
+        "backends.go.available": true,
+        "backends.julia.available": true,
+        "backends.mojo.available": true,
+        "backends.python.available": true,
+        "backends.rust.available": true,
+        "canonical_equivalence": true,
+        "canonical_partition_sha256": "258b5c0c54ea33758f60090e68b7ce2a7657800ec16a6c90bc0eb52fbbd3585f",
+        "environment.isolated_cpu_claim": false,
+        "environment.timing_class": "loaded-host diagnostic",
+        "kl_iterations": 3,
+        "label": "candidate",
+        "n_parts": 4,
+        "n_repeats": 5,
+        "schema_version": "sc-neurocore.kl-refine-benchmark.v1"
+      },
+      "id": "hierarchical-kl-refine-five-backend-local-diagnostics",
+      "required_numbers": [
+        "timings_ms.v100.python",
+        "timings_ms.v100.rust",
+        "timings_ms.v100.julia",
+        "timings_ms.v100.go",
+        "timings_ms.v100.mojo",
+        "timings_ms.v200.python",
+        "timings_ms.v200.rust",
+        "timings_ms.v200.julia",
+        "timings_ms.v200.go",
+        "timings_ms.v200.mojo",
+        "timings_ms.v500.python",
+        "timings_ms.v500.rust",
+        "timings_ms.v500.julia",
+        "timings_ms.v500.go",
+        "timings_ms.v500.mojo",
+        "timings_ms.v1000.python",
+        "timings_ms.v1000.rust",
+        "timings_ms.v1000.julia",
+        "timings_ms.v1000.go",
+        "timings_ms.v1000.mojo"
+      ],
+      "source_hashes": {
+        "benchmarks/bench_kl_refine.py": "gate_source_hashes.runner",
+        "engine/src/partition.rs": "gate_source_hashes.engine__src__partition_rs",
+        "src/sc_neurocore/accel/go/partition/partition.go": "gate_source_hashes.src__sc_neurocore__accel__go__partition__partition_go",
+        "src/sc_neurocore/accel/julia/chiplet/kl_refine.jl": "gate_source_hashes.src__sc_neurocore__accel__julia__chiplet__kl_refine_jl",
+        "src/sc_neurocore/accel/mojo/partition/partition.mojo": "gate_source_hashes.src__sc_neurocore__accel__mojo__partition__partition_mojo",
+        "src/sc_neurocore/chiplet/hierarchical_backend_runtime.py": "gate_source_hashes.src__sc_neurocore__chiplet__hierarchical_backend_runtime_py",
+        "src/sc_neurocore/chiplet/hierarchical_backends.py": "gate_source_hashes.src__sc_neurocore__chiplet__hierarchical_backends_py",
+        "src/sc_neurocore/chiplet/hierarchical_balancing.py": "gate_source_hashes.src__sc_neurocore__chiplet__hierarchical_balancing_py",
+        "src/sc_neurocore/chiplet/hierarchical_bisection.py": "gate_source_hashes.src__sc_neurocore__chiplet__hierarchical_bisection_py",
+        "src/sc_neurocore/chiplet/hierarchical_boundary.py": "gate_source_hashes.src__sc_neurocore__chiplet__hierarchical_boundary_py",
+        "src/sc_neurocore/chiplet/hierarchical_core.py": "gate_source_hashes.src__sc_neurocore__chiplet__hierarchical_core_py",
+        "src/sc_neurocore/chiplet/hierarchical_graph.py": "gate_source_hashes.src__sc_neurocore__chiplet__hierarchical_graph_py",
+        "src/sc_neurocore/chiplet/hierarchical_metrics.py": "gate_source_hashes.src__sc_neurocore__chiplet__hierarchical_metrics_py",
+        "src/sc_neurocore/chiplet/hierarchical_partitioner.py": "gate_source_hashes.src__sc_neurocore__chiplet__hierarchical_partitioner_py",
+        "src/sc_neurocore/chiplet/hierarchical_refinement.py": "gate_source_hashes.src__sc_neurocore__chiplet__hierarchical_refinement_py",
+        "src/sc_neurocore/chiplet/hierarchical_reporting.py": "gate_source_hashes.src__sc_neurocore__chiplet__hierarchical_reporting_py"
+      }
     }
   ],
   "schema_version": "sc-neurocore.benchmark-regression-gates.v1"

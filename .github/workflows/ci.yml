@@ -222,6 +222,19 @@ jobs:
             --include='src/sc_neurocore/_native/learning*.py' \
             --fail-under=100 --show-missing
 
+      - name: Hierarchical partitioner exact coverage
+        if: matrix.python-version == '3.12'
+        shell: bash
+        run: |
+          COVERAGE_FILE=.coverage-hierarchical-partitioner python -m coverage run \
+            --rcfile=/dev/null --branch \
+            --include='src/sc_neurocore/chiplet/hierarchical*.py' \
+            -m pytest tests/test_chiplet/test_hierarchical_partitioner_*.py -q
+          COVERAGE_FILE=.coverage-hierarchical-partitioner python -m coverage report \
+            --rcfile=/dev/null \
+            --include='src/sc_neurocore/chiplet/hierarchical*.py' \
+            --fail-under=100 --show-missing
+
       - name: Upload test results
         if: always()
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7

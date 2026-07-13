@@ -116,6 +116,12 @@ def test_hier_symbols_identity() -> None:
         assert getattr(ch, sym) is getattr(hp, sym)
 
 
+def test_hier_symbols_qualified_names_remain_stable() -> None:
+    """Moved partitioner symbols retain their historical module identity."""
+    for symbol in HIER_SYMBOLS:
+        assert getattr(hp, symbol).__module__ == ("sc_neurocore.chiplet.hierarchical_partitioner")
+
+
 def test_all_symbols_in_all() -> None:
     """Every documented symbol from both modules must appear in __all__."""
     public = set(ch.__all__)

@@ -5202,146 +5202,216 @@ CompilationResult
 
 ---
 
-## Module `chiplet.hierarchical_partitioner`
+## Module `chiplet.hierarchical_backends`
 
-### Class `HierarchyLevel`
-
-### Class `CSRGraph`
-Compressed Sparse Row graph for billion-neuron scale.
-
-O(1) adjacency access per vertex, O(E) total memory.
-
-- **from_edge_list**(cls, num_vertices, edges, vertex_weights)
-  - Build CSR from edge list (symmetric: adds both directions).
-- **neighbors**(v)
-- **degree**(v)
-- **edge_conn**(v)
-- **edge_scc**(v)
-- **num_edges**()
-
-### Class `CorrelationEdge`
-An edge with both connection weight and SC correlation weight.
+### Class `RefinementOwner`
+Structural interface required by backend dispatch.
 
 
-### Class `CorrelationAwareGraph`
-Adjacency representation with per-edge SCC weights.
+### Function `encode_csr(partitions, adjacency, graph)`
+Encode adjacency and ordered partitions into the shared flat ABI.
 
-Edge lookups (`edge_weight`, `edge_scc`) are O(1) via a cached
-`(min_uv, max_uv) → CorrelationEdge` dict, lazily built on first
-access. Was O(E) per call (linear scan), which made the
-partitioner O(V²·E) on V vertices — see commit notes for #65.
+### Function `decode_part_map(part_map, partition_count)`
+Decode a flat vertex-to-partition mapping.
 
-- **adjacency**()
-- **edge_weight**(u, v)
-- **edge_scc**(u, v)
-- **num_edges**()
-- **to_csr**()
-  - Convert to CSR representation.
+### Function `refine_rust(owner, partitions, adjacency, graph)`
+Run the PyO3 Rust kernel and decode its partition map.
 
-### Class `LFSRSeedAllocator`
-Assigns independent LFSR seeds per partition.
+### Function `refine_julia(owner, partitions, adjacency, graph)`
+Run the Julia kernel and decode its partition map.
 
-Uses co-prime spacing to ensure maximal-length LFSR sequences
-do not overlap between partitions.
+### Function `refine_go(owner, partitions, adjacency, graph)`
+Run the typed Go C-shared kernel and decode its partition map.
 
-- **__init__**(base_seed)
-- **allocate**(num_partitions)
-  - Return a list of unique, well-separated LFSR seeds.
-- **verify_uniqueness**(seeds)
+### Function `refine_mojo(owner, partitions, adjacency, graph)`
+Run the Mojo raw-address kernel and decode its partition map.
 
-### Class `HierarchicalPartitioner`
-Multi-level graph partitioner with correlation awareness.
+### Function `dispatch_refine(owner, partitions, adjacency, graph)`
+Dispatch to the requested kernel or the Python reference.
 
-- **__init__**(num_partitions, coarsen_threshold, kl_iterations, correlation_penalty, seed, refine_backend)
-- **partition**(graph)
-  - Partition the graph. Returns (partitions, seeds).
-- **repartition_incremental**(graph, partitions, max_moves)
-  - Incremental repartitioning: migrate high-cost boundary vertices.
+---
 
-### Class `GhostCellManager`
-Computes halo/ghost regions for boundary communication.
-
-Ghost cells are copies of neurons on neighboring partitions that
-a partition needs to read but not write.
-
-- **compute_halos**(graph, partitions)
-  - Return {partition_id: set of ghost vertex IDs needed}.
-- **halo_sizes**(graph, partitions)
-  - Return {partition_id: number_of_ghost_cells}.
-
-### Class `BoundarySyncConfig`
-Configuration for boundary synchronization.
-
-
-### Class `BoundarySyncProtocol`
-Manages decorrelation at partition boundaries.
-
-Each boundary edge gets a decorrelation buffer (XOR with independent
-LFSR seed) to prevent correlation blow-up at partition interfaces.
-
-- **__init__**(config)
-- **init_buffers**(graph, partitions, seeds)
-  - Initialise decorrelation buffers at boundary edges.
-- **check_scc_budget**(graph, partitions)
-  - Check which boundary edges exceed SCC budget.
-- **num_buffers**()
+## Module `chiplet.hierarchical_balancing`
 
 ### Class `LoadMetrics`
-Per-partition load metrics.
+Load and boundary metrics for one partition.
 
 
 ### Class `MigrationRecommendation`
-Recommendation to migrate a vertex between partitions.
+A scored proposal to move one vertex between partitions.
 
 
 ### Class `CorrelationLoadBalancer`
-Runtime load balancer with SCC awareness.
-
-Monitors per-partition load imbalance and boundary correlation,
-and generates migration recommendations.
+Recommend balancing moves while accounting for boundary correlation.
 
 - **__init__**(imbalance_threshold, scc_weight)
+  - Configure the imbalance trigger and SCC penalty.
 - **compute_load_metrics**(graph, partitions)
-  - Compute load metrics for each partition.
+  - Compute vertex, weight, boundary-SCC, and ghost counts.
 - **recommend_migrations**(graph, partitions, max_recommendations)
-  - Generate migration recommendations.
+  - Return highest-gain moves from overloaded to underloaded partitions.
 
 ### Class `RankMapper`
-Maps partitions to MPI ranks with topology awareness.
+Map partitions to ranks and count inter-rank boundary edges.
 
 - **__init__**(num_ranks, hierarchy)
+  - Configure rank count and physical hierarchy.
 - **assign**(partitions, graph)
-  - Assign partition_id → rank.
+  - Assign every partition to an MPI rank.
 - **cross_rank_edges**(graph, partitions)
-  - Count edges that cross MPI rank boundaries.
+  - Count partition-boundary edges that also cross rank boundaries.
 
-### Class `PartitionReport`
-Report from a partitioning run.
+---
 
-- **summary**()
+## Module `chiplet.hierarchical_bisection`
+
+### Class `BisectionMixin`
+Private multilevel-bisection behaviour for the public partitioner.
+
+
+---
+
+## Module `chiplet.hierarchical_boundary`
+
+### Class `GhostCellManager`
+Compute read-only halo vertices required by each partition.
+
+- **compute_halos**(graph, partitions)
+  - Return the external neighbour vertices required by each partition.
+- **halo_sizes**(graph, partitions)
+  - Return each partition's ghost-cell count.
+
+### Class `BoundarySyncConfig`
+Configuration for decorrelated boundary synchronisation.
+
+
+### Class `BoundarySyncProtocol`
+Manage decorrelation seeds and SCC-budget violations at boundaries.
+
+- **__init__**(config)
+  - Initialise empty buffers and violation state.
+- **init_buffers**(graph, partitions, seeds)
+  - Initialise a non-zero XOR-derived seed for every boundary edge.
+- **check_scc_budget**(graph, partitions)
+  - Return boundary edges whose absolute SCC exceeds the budget.
+- **num_buffers**()
+  - Return the number of initialised decorrelation buffers.
+
+---
+
+## Module `chiplet.hierarchical_core`
+
+### Class `HierarchicalPartitioner`
+Multi-level graph partitioner with selectable KL-refinement backend.
+
+- **__init__**(num_partitions, coarsen_threshold, kl_iterations, correlation_penalty, seed, refine_backend)
+  - Configure deterministic bisection and refinement.
+- **partition**(graph)
+  - Partition the graph and return partitions with independent seeds.
+
+---
+
+## Module `chiplet.hierarchical_graph`
+
+### Class `HierarchyLevel`
+Physical hierarchy levels available to the MPI rank mapper.
+
+
+### Class `CorrelationEdge`
+An undirected edge with connection and SC-correlation weights.
+
+
+### Class `CSRGraph`
+Compressed sparse-row graph with constant-time adjacency slices.
+
+- **from_edge_list**(cls, num_vertices, edges, vertex_weights)
+  - Build a symmetric CSR graph from an undirected edge list.
+- **neighbors**(vertex)
+  - Return the adjacent-vertex slice for the vertex.
+- **degree**(vertex)
+  - Return the number of neighbours of the vertex.
+- **edge_conn**(vertex)
+  - Return connection weights aligned with the neighbour slice.
+- **edge_scc**(vertex)
+  - Return SCC weights aligned with the neighbour slice.
+- **num_edges**()
+  - Return the undirected edge count.
+
+### Class `CorrelationAwareGraph`
+Adjacency graph with cached constant-time correlation-edge lookups.
+
+- **adjacency**()
+  - Return a symmetric adjacency mapping.
+- **edge_weight**(u, v)
+  - Return the connection weight for an edge, or zero if absent.
+- **edge_scc**(u, v)
+  - Return the SCC weight for an edge, or zero if absent.
+- **num_edges**()
+  - Return the undirected edge count.
+- **to_csr**()
+  - Convert this graph to its symmetric CSR representation.
+
+### Class `LFSRSeedAllocator`
+Allocate deterministic, separated non-zero 16-bit LFSR seeds.
+
+- **__init__**(base_seed)
+  - Initialise the allocator with a 16-bit base seed.
+- **allocate**(num_partitions)
+  - Return one deterministic seed for every requested partition.
+- **verify_uniqueness**(seeds)
+  - Return whether all supplied seeds are unique.
+
+---
+
+## Module `chiplet.hierarchical_metrics`
 
 ### Function `calculate_edge_cut(graph, partitions)`
-Count cross-partition edges.
+Count edges whose endpoints belong to different partitions.
 
 ### Function `calculate_boundary_scc(graph, partitions)`
-Maximum SCC on boundary edges.
+Return the maximum absolute SCC across boundary edges.
 
 ### Function `calculate_mean_boundary_scc(graph, partitions)`
-Mean SCC on boundary edges.
+Return the mean absolute SCC across boundary edges.
 
 ### Function `calculate_total_boundary_scc(graph, partitions)`
-Total SCC on boundary edges.
+Return the total absolute SCC across boundary edges.
 
 ### Function `calculate_imbalance_ratio(partitions)`
-Imbalance ratio: max_size / ideal_size - 1.
-
-0.0 = perfect balance, >0.0 = imbalanced.
+Return maximum size divided by ideal size, minus one.
 
 ### Function `calculate_comm_volume(graph, partitions, bytes_per_spike, bitstream_length)`
-Estimate MPI communication volume.
+Estimate messages and bytes transferred across partition boundaries.
+
+---
+
+## Module `chiplet.hierarchical_partitioner`
+
+### Function `__getattr__(name)`
+Expose historical read-only backend diagnostics.
+
+---
+
+## Module `chiplet.hierarchical_refinement`
+
+### Class `RefinementMixin`
+Private reference-refinement behaviour for the public partitioner.
+
+- **repartition_incremental**(graph, partitions, max_moves)
+  - Move the best boundary vertex repeatedly until no gain remains.
+
+---
+
+## Module `chiplet.hierarchical_reporting`
+
+### Class `PartitionReport`
+Metrics and deterministic seeds from one partitioning run.
+
+- **summary**()
+  - Return a concise human-readable report.
 
 ### Function `build_partition_report(graph, partitions, seeds, scc_budget)`
-Build a complete partition report.
+Compose all partition metrics and SCC-budget violations.
 
 ---
 

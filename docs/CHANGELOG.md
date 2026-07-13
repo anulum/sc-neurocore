@@ -5,6 +5,25 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+### Hierarchical partitioner responsibility modularisation
+- Replaced the 1,324-line hierarchical partitioner and its two oversized test
+  surfaces with a 104-line compatibility facade, ten focused implementation
+  modules, shared test support, and nine focused test modules. The largest
+  implementation and test files are 258 and 291 lines. All 21 established
+  public definitions preserve their package and historical imports, identities,
+  qualified names, and pickle paths through an acyclic responsibility graph.
+- The exact 111-test owning suite covers all 664 statements and 186 branches.
+  Backend decoding fails closed on incomplete, duplicate, or out-of-range
+  partition maps; architecture tests enforce one public owner, dynamic runtime
+  diagnostics, file-size limits, the CI gate, and the distinction between real
+  kernels and generated mirrors.
+- Retained the maintained Rust, Julia, Go, Mojo, and Python KL-refinement chain
+  and removed four non-executable generated mirrors. The source-bound parent and
+  candidate benchmarks produce the same canonical partition SHA-256
+  `258b5c0c54ea33758f60090e68b7ce2a7657800ec16a6c90bc0eb52fbbd3585f`
+  across every workload and backend. Affinity-only, powersave-governor timings
+  are explicitly diagnostic and do not claim isolated throughput.
+
 ### Quadratic IF exact-flow source-to-silicon closure
 - Exposed the exact constant-current Riccati flow through Python, the Rust
   engine, Julia, Go, and Mojo. Julia, Go, and Mojo carry the complete numeric

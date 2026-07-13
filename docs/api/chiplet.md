@@ -14,9 +14,10 @@ artefact.
 
 ## Responsibility modules
 
-The historical `sc_neurocore.chiplet.chiplet_gen` import path remains a
-compatibility facade. Its 36 public objects are implemented by focused,
-acyclic modules:
+The historical `sc_neurocore.chiplet.chiplet_gen` and
+`sc_neurocore.chiplet.hierarchical_partitioner` import paths remain
+compatibility facades. The 36 chiplet-generator objects are implemented by
+focused, acyclic modules:
 
 | Module | Responsibility |
 |---|---|
@@ -153,10 +154,29 @@ boundary stochastic correlation. Ghost-cell, boundary-synchronisation, LFSR
 seed-allocation, migration, and MPI-rank mapping objects are exposed through
 the same package root.
 
+The historical module is a 104-line facade. Its 21 public definitions retain
+their established import identity, qualified names, and pickle paths while ten
+acyclic implementation modules own one responsibility each:
+
+| Module | Responsibility |
+|---|---|
+| `hierarchical_graph` | Typed graph, edge, CSR, hierarchy, and deterministic seed models |
+| `hierarchical_backend_runtime` | Lazy discovery and loading of installed backend runtimes |
+| `hierarchical_backends` | Shared flat-buffer ABI encoding, validation, dispatch, and result decoding |
+| `hierarchical_bisection` | Coarsening, deterministic spectral scoring, and recursive bisection |
+| `hierarchical_refinement` | Python reference KL refinement and incremental repartitioning |
+| `hierarchical_core` | Public partitioning orchestration and backend selection |
+| `hierarchical_metrics` | Edge-cut, SCC-boundary, imbalance, and communication metrics |
+| `hierarchical_boundary` | Ghost-cell discovery and SCC-budgeted boundary synchronisation |
+| `hierarchical_balancing` | Runtime load metrics, migrations, and MPI rank mapping |
+| `hierarchical_reporting` | Stable report model and deterministic report composition |
+
 The KL refinement has real Rust, Julia, Go, Mojo, and Python implementations
-behind a shared CSR-flat ABI. `benchmarks/bench_kl_refine.py` is the applicable
-cross-language benchmark; this chiplet-control refactor does not change those
-kernels.
+behind a shared CSR-flat ABI. Backend output must decode to one complete,
+duplicate-free partition map before it can replace the Python result. Auto
+dispatch tries only installed maintained backends and falls back to the Python
+reference; an explicitly requested unavailable or malformed backend fails
+closed.
 
 ## Pipeline wiring
 
@@ -185,6 +205,13 @@ refinement used by `hierarchical_partitioner`.
 `benchmarks/results/bench_chiplet.json` records these backends as unavailable
 and exempt, rather than claiming that scaffold files are acceleration.
 
+The partitioner is a different boundary. Its maintained implementations are
+`engine/src/partition.rs`, `accel/julia/chiplet/kl_refine.jl`,
+`accel/go/partition/partition.go`, and
+`accel/mojo/partition/partition.mojo`. Historical files named
+`hierarchical_partitioner` in generated acceleration directories were
+non-executable mirrors and are absent; they are not counted as backends.
+
 ## Performance evidence
 
 Reproduce the committed Python measurement with:
@@ -195,30 +222,30 @@ PYTHONPATH=src taskset -c 10 .venv/bin/python benchmarks/bench_chiplet.py \
 ```
 
 The committed run used Python 3.12.3, NumPy 2.2.6, Linux 6.17.0-35,
-30 repeats per cell, and scheduler affinity `[10]`. One-minute load was 17.65,
+30 repeats per cell, and scheduler affinity `[10]`. One-minute load was 20.27,
 so the numbers are diagnostic and are not isolated-core throughput claims.
 The JSON includes the runner hash and every imported chiplet source hash.
 
 | Operation | Size | Median (ms) | Minimum (ms) |
 |---|---:|---:|---:|
-| `make_torus` | 2×2 | 0.037 | 0.030 |
-| `make_torus` | 4×4 | 0.103 | 0.085 |
-| `make_torus` | 8×8 | 0.516 | 0.331 |
-| `compute_decorrelation_seeds` | 16 links | 0.008 | 0.006 |
-| `compute_decorrelation_seeds` | 64 links | 0.039 | 0.026 |
-| `compute_decorrelation_seeds` | 256 links | 0.134 | 0.083 |
-| `estimate_package_energy` | 4 dies | 0.003 | 0.003 |
-| `estimate_package_energy` | 16 dies | 0.012 | 0.011 |
-| `estimate_package_energy` | 64 dies | 0.046 | 0.045 |
-| `simulate_thermal` | 4 dies | 0.064 | 0.061 |
-| `simulate_thermal` | 16 dies | 0.134 | 0.109 |
-| `simulate_thermal` | 64 dies | 0.502 | 0.347 |
-| `ChipletGenerator.generate` | 2 dies | 0.427 | 0.243 |
-| `ChipletGenerator.generate` | 8 dies | 1.906 | 1.284 |
-| `ChipletGenerator.generate` | 32 dies | 8.219 | 5.711 |
-| `HierarchicalPartitioner.partition` | V=50, P=2 | 3.131 | 1.824 |
-| `HierarchicalPartitioner.partition` | V=100, P=4 | 6.697 | 3.703 |
-| `HierarchicalPartitioner.partition` | V=200, P=4 | 13.116 | 5.385 |
+| `make_torus` | 2×2 | 0.034 | 0.031 |
+| `make_torus` | 4×4 | 0.150 | 0.126 |
+| `make_torus` | 8×8 | 0.590 | 0.529 |
+| `compute_decorrelation_seeds` | 16 links | 0.008 | 0.008 |
+| `compute_decorrelation_seeds` | 64 links | 0.033 | 0.031 |
+| `compute_decorrelation_seeds` | 256 links | 0.135 | 0.124 |
+| `estimate_package_energy` | 4 dies | 0.003 | 0.002 |
+| `estimate_package_energy` | 16 dies | 0.011 | 0.010 |
+| `estimate_package_energy` | 64 dies | 0.042 | 0.040 |
+| `simulate_thermal` | 4 dies | 0.065 | 0.058 |
+| `simulate_thermal` | 16 dies | 0.185 | 0.155 |
+| `simulate_thermal` | 64 dies | 0.504 | 0.464 |
+| `ChipletGenerator.generate` | 2 dies | 0.437 | 0.385 |
+| `ChipletGenerator.generate` | 8 dies | 2.200 | 1.808 |
+| `ChipletGenerator.generate` | 32 dies | 8.166 | 3.561 |
+| `HierarchicalPartitioner.partition` | V=50, P=2 | 1.198 | 0.980 |
+| `HierarchicalPartitioner.partition` | V=100, P=4 | 3.226 | 2.031 |
+| `HierarchicalPartitioner.partition` | V=200, P=4 | 8.796 | 4.176 |
 
 A same-process, alternating-order comparison against the pre-refactor source
 showed topology construction 26–33% faster, seed and energy operations within
@@ -228,15 +255,44 @@ finite physical values. The comparison was pinned but not exclusive and ran
 under high host load; it supports regression diagnosis, not a performance
 promotion claim.
 
+The maintained cross-language KL evidence is reproduced with:
+
+```bash
+PYTHONPATH=src .venv/bin/python benchmarks/bench_kl_refine.py \
+  --label candidate --json benchmarks/results/bench_kl_refine.json
+```
+
+The source-bound parent (`d9c172c84`) and candidate runs produced the same
+canonical partition SHA-256,
+`258b5c0c54ea33758f60090e68b7ce2a7657800ec16a6c90bc0eb52fbbd3585f`,
+for every workload and all five backends. The V=1000 medians are diagnostic:
+
+| Backend | Parent (ms) | Candidate (ms) | Exact membership parity |
+|---|---:|---:|:---:|
+| Python | 287.309 | 113.720 | yes |
+| Rust | 0.275 | 0.180 | yes |
+| Julia | 0.473 | 0.260 | yes |
+| Go | 0.767 | 0.360 | yes |
+| Mojo | 0.495 | 0.240 | yes |
+
+The committed result hashes the benchmark runner, all eleven Python
+partitioner modules, every maintained kernel source, and the available compiled
+binaries. The host used the powersave governor, affinity CPUs 0–11, and no
+isolated CPU reservation, so timing is local regression evidence rather than a
+throughput claim.
+
 ## Verification
 
-The focused chiplet cohort contains 172 tests and exercises package imports,
-historical identities, pickling, topology validation, route selection, thermal
-physics, byte-stable RTL generation, Icarus parsing and simulation, power-state
-timing, and the hierarchical partitioner boundary. The nine refactored
-production files cover 680 statements and 202 branches at 100%, with no misses
-or partial branches. Strict MyPy and Ruff cover the affected source, tests, and
-benchmark runner.
+The partitioner-owning exact cohort contains 111 tests and covers all 664
+statements and 186 branches across the eleven `hierarchical*.py` modules, with
+no misses or partial branches. The broader public-API, architecture, and
+benchmark cohort contains 134 passing tests, and the complete chiplet package
+contains 238 passing tests. Architecture tests enforce the
+acyclic dependency graph, one implementation owner per public object, dynamic
+backend diagnostics, historical pickling, maintained kernel presence, false
+mirror absence, the exact CI gate, and maximum file sizes of 258 production
+lines and 291 test lines. Strict MyPy, complete public docstrings, and Ruff
+cover the affected source, tests, and benchmark runner.
 
 ## Limitations
 
@@ -245,8 +301,6 @@ benchmark runner.
 - Chiplet-control functions are Python-only by measured architectural choice.
 - Benchmark timings are host-load-sensitive and the committed run was not
   exclusive.
-- `tests/test_debug/test_hierarchical_partitioner.py` remains historically
-  located outside `tests/test_chiplet`; moving it is separate test-layout work.
 
 ## References
 

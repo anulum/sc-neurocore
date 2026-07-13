@@ -4,9 +4,9 @@
   "numpy": "2.2.6",
   "n_repeats": 30,
   "load_average": [
-    17.64501953125,
-    15.5419921875,
-    16.6611328125
+    19.3701171875,
+    29.2607421875,
+    31.2294921875
   ],
   "cpu_affinity": [
     10
@@ -16,7 +16,17 @@
     "__init__.py": "457c69214eab1895b2dcc4e9966a169873af61038bd0ea587364d0d2c6b26dea",
     "_sv.py": "70adc63b66346d1289d122d655f738b69d5667edbe73eda855b0de816cb95e14",
     "chiplet_gen.py": "8be94148ea1667b0b4467434fbd68ce74bb61c6fa3a3268b3e286e8f123b25c7",
-    "hierarchical_partitioner.py": "8820add4d13ff395e72624f32d03398dc5fdb678f1ce2ae7a78380072cc2d4ca",
+    "hierarchical_backend_runtime.py": "952f6de28144783b4d9e1846da6c15b2df54e2ca322f3557aac483fc997a34ac",
+    "hierarchical_backends.py": "4340f91b7582d0f927ca9058a2b47ed748ce9b78ace05385c8d48ab78422090a",
+    "hierarchical_balancing.py": "0510f31442b9b17dca09d552b59cc50e4f6624f44881a2b0c92667e9e091b27c",
+    "hierarchical_bisection.py": "47f5253f51c8be3f499ed8621112d12166067e43e819f9250391e98be4ec4703",
+    "hierarchical_boundary.py": "c1f6fa11925ed4d2a506e1888b14cef6fd6ba00feda1fcc5301418933da0d26b",
+    "hierarchical_core.py": "a29cf3afdc41b6691d78fdd9424171cfdf847f51419eb751b5ec1cdab30dd81c",
+    "hierarchical_graph.py": "c68200d5eda63efbeb42baaa5152ffeac5bacd79f4c144198acb3ebf9f9fd391",
+    "hierarchical_metrics.py": "58d853d5fad65ae6ad20061b0dd8d8d532795d1c8ab419d1203223fc97aab8b1",
+    "hierarchical_partitioner.py": "042931099911c3a223fee2308902755d34961973c20374663cd43468651df13d",
+    "hierarchical_refinement.py": "4e40e99ce66fdb24261761456c1407fed1e69259ba72e125f1cb8e5cecb88fb9",
+    "hierarchical_reporting.py": "af975cdad834eb3414a705640c236b69090e7332e51e7ba7d990fe24ecd5a271",
     "link_protocols.py": "c02303b3de2cb69ffb73ad6267dc87ac79f00eeb354a202d1dd0cbaa9d36bbca",
     "partition.py": "bb61ef29d62dbb3ff9f8716725a658f2ce80702da7c1a5b69c21922217e707b7",
     "power.py": "af6c76a291469d11deb6f4fac1519f37b716e2663dbb2782f0a337d0895852db",
@@ -29,110 +39,110 @@
     {
       "suite": "chiplet_gen",
       "op": "make_torus(2, 2)",
-      "median_ms": 0.03731902688741684,
-      "min_ms": 0.030378985684365034
+      "median_ms": 0.0335020013153553,
+      "min_ms": 0.03148801624774933
     },
     {
       "suite": "chiplet_gen",
       "op": "make_torus(4, 4)",
-      "median_ms": 0.10280398419126868,
-      "min_ms": 0.08457398507744074
+      "median_ms": 0.15013199299573898,
+      "min_ms": 0.12605800293385983
     },
     {
       "suite": "chiplet_gen",
       "op": "make_torus(8, 8)",
-      "median_ms": 0.5164130125194788,
-      "min_ms": 0.3312969929538667
+      "median_ms": 0.5898610106669366,
+      "min_ms": 0.5292269634082913
     },
     {
       "suite": "chiplet_gen",
       "op": "compute_decorrelation_seeds (n_links=16)",
-      "median_ms": 0.007867987733334303,
-      "min_ms": 0.006353016942739487
+      "median_ms": 0.008367002010345459,
+      "min_ms": 0.008098024409264326
     },
     {
       "suite": "chiplet_gen",
       "op": "compute_decorrelation_seeds (n_links=64)",
-      "median_ms": 0.03949698293581605,
-      "min_ms": 0.025735003873705864
+      "median_ms": 0.03300403477624059,
+      "min_ms": 0.030816008802503347
     },
     {
       "suite": "chiplet_gen",
       "op": "compute_decorrelation_seeds (n_links=256)",
-      "median_ms": 0.13352703535929322,
-      "min_ms": 0.08309498662129045
+      "median_ms": 0.1348719815723598,
+      "min_ms": 0.12410496128723025
     },
     {
       "suite": "chiplet_gen",
       "op": "estimate_package_energy (n_dies=4)",
-      "median_ms": 0.0031469971872866154,
-      "min_ms": 0.0027370406314730644
+      "median_ms": 0.003101013135164976,
+      "min_ms": 0.0021919840946793556
     },
     {
       "suite": "chiplet_gen",
       "op": "estimate_package_energy (n_dies=16)",
-      "median_ms": 0.011695025023072958,
-      "min_ms": 0.011135998647660017
+      "median_ms": 0.01057301415130496,
+      "min_ms": 0.009700946975499392
     },
     {
       "suite": "chiplet_gen",
       "op": "estimate_package_energy (n_dies=64)",
-      "median_ms": 0.04577601794153452,
-      "min_ms": 0.04476599860936403
+      "median_ms": 0.042374012991786,
+      "min_ms": 0.04021800123155117
     },
     {
       "suite": "chiplet_gen",
       "op": "simulate_thermal (n_dies=4)",
-      "median_ms": 0.06434996612370014,
-      "min_ms": 0.06065296474844217
+      "median_ms": 0.06521400064229965,
+      "min_ms": 0.05827599670737982
     },
     {
       "suite": "chiplet_gen",
       "op": "simulate_thermal (n_dies=16)",
-      "median_ms": 0.13393897097557783,
-      "min_ms": 0.10865903459489346
+      "median_ms": 0.18535996787250042,
+      "min_ms": 0.15526299830526114
     },
     {
       "suite": "chiplet_gen",
       "op": "simulate_thermal (n_dies=64)",
-      "median_ms": 0.5019149975851178,
-      "min_ms": 0.346897984854877
+      "median_ms": 0.5035640206187963,
+      "min_ms": 0.46444800682365894
     },
     {
       "suite": "chiplet_gen",
       "op": "ChipletGenerator.generate (n_dies=2)",
-      "median_ms": 0.42710499837994576,
-      "min_ms": 0.24306296836584806
+      "median_ms": 0.4365009954199195,
+      "min_ms": 0.3850639914162457
     },
     {
       "suite": "chiplet_gen",
       "op": "ChipletGenerator.generate (n_dies=8)",
-      "median_ms": 1.906339020933956,
-      "min_ms": 1.2837519752793014
+      "median_ms": 2.200374030508101,
+      "min_ms": 1.808377041015774
     },
     {
       "suite": "chiplet_gen",
       "op": "ChipletGenerator.generate (n_dies=32)",
-      "median_ms": 8.218885981477797,
-      "min_ms": 5.7105119922198355
+      "median_ms": 8.165739011019468,
+      "min_ms": 3.5605450393632054
     },
     {
       "suite": "partitioner",
       "op": "partition (V=50, P=2)",
-      "median_ms": 3.1310439808294177,
-      "min_ms": 1.8244399689137936
+      "median_ms": 1.1981650022789836,
+      "min_ms": 0.980356999207288
     },
     {
       "suite": "partitioner",
       "op": "partition (V=100, P=4)",
-      "median_ms": 6.697005010209978,
-      "min_ms": 3.7029850063845515
+      "median_ms": 3.2264170004054904,
+      "min_ms": 2.030984964221716
     },
     {
       "suite": "partitioner",
       "op": "partition (V=200, P=4)",
-      "median_ms": 13.115642999764532,
-      "min_ms": 5.385172960814089
+      "median_ms": 8.795935951638967,
+      "min_ms": 4.175567999482155
     }
   ],
   "backends": {
