@@ -17,9 +17,15 @@ from __future__ import annotations
 
 import importlib.util
 import json
+import sys
 from pathlib import Path
 from types import ModuleType
 from typing import Any
+
+if sys.version_info >= (3, 11):
+    import tomllib
+else:
+    import tomli as tomllib
 
 import pytest
 import tomli_w
@@ -142,7 +148,6 @@ def test_apply_writes_facets_and_raises_live_tiers(
     src_path = catalogue.descriptor_path("AdExNeuron")
     assert src_path.is_file()
     tmp_desc = tmp_path / "AdExNeuron.toml"
-    import tomllib
 
     raw = src_path.read_text(encoding="utf-8")
     body = "\n".join(line for line in raw.splitlines() if not line.startswith("#"))
@@ -167,8 +172,6 @@ def test_apply_writes_facets_and_raises_live_tiers(
 
     def _payload(class_name: str) -> dict[str, Any] | None:
         if class_name == "AdExNeuron":
-            import tomllib
-
             raw = tmp_desc.read_text(encoding="utf-8")
             body = "\n".join(line for line in raw.splitlines() if not line.startswith("#"))
             return tomllib.loads(body)
@@ -220,8 +223,6 @@ def test_apply_preserves_stronger_rulkov_facets(
 
     def _payload(class_name: str) -> dict[str, Any] | None:
         if class_name == "RulkovMapNeuron":
-            import tomllib
-
             raw = temporary.read_text(encoding="utf-8")
             body = "\n".join(line for line in raw.splitlines() if not line.startswith("#"))
             return tomllib.loads(body)
