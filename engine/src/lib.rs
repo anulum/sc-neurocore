@@ -6026,7 +6026,7 @@ fn py_cazelles_map_simulate<'py>(
     tau_e, tau_i, v_threshold, v_reset, refractory_period, dt, n_steps,
     current, delta_ge, delta_gi
 ))]
-#[allow(clippy::too_many_arguments)]
+#[allow(clippy::too_many_arguments, clippy::type_complexity)]
 fn py_coba_lif_simulate<'py>(
     py: Python<'py>,
     v0: f64,
@@ -6101,7 +6101,7 @@ fn py_coba_lif_simulate<'py>(
     v0, v_rest, v_reset, v_threshold, tau_m, rho_0, delta_u, resistance,
     dt, rng_state, n_steps, current
 ))]
-#[allow(clippy::too_many_arguments)]
+#[allow(clippy::too_many_arguments, clippy::type_complexity)]
 fn py_escape_rate_simulate<'py>(
     py: Python<'py>,
     v0: f64,
@@ -6190,7 +6190,7 @@ fn py_poisson_simulate<'py>(
 /// Full-contract Wu et al. (2021) IQIF integer batch.
 #[pyfunction]
 #[pyo3(signature = (v, v_rest, v_threshold, v_reset, a, b, v_max, v_min, n_steps, current))]
-#[allow(clippy::too_many_arguments)]
+#[allow(clippy::too_many_arguments, clippy::type_complexity)]
 fn py_iqif_simulate<'py>(
     py: Python<'py>,
     v: i32,

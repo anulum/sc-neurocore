@@ -52,6 +52,7 @@ ane = "ane"       # Apple Neural Engine profile identifier
 VALU = "VALU"     # AMD vector ALU block naming
 useed = "useed"   # Posit arithmetic useed term: 2^(2^es)
 evn = "evn"       # ECP5 EVN board identifier
+hace = "hace"     # Verilog hex literal 16'hACE1 (EscapeRate LFSR RNG seed), tokenised as "hace"
 # Scientific journal abbreviations
 Reson = "Reson"   # Journal abbreviation, e.g. J. Magn. Reson.
 sur = "sur"       # French bibliography title word

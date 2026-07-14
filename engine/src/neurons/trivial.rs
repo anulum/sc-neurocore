@@ -561,7 +561,7 @@ impl EscapeRateNeuron {
         }
         let mut sample = self.rng_state;
         for _ in 0..8 {
-            let feedback = ((sample >> 0) ^ (sample >> 2) ^ (sample >> 3) ^ (sample >> 5)) & 1;
+            let feedback = (sample ^ (sample >> 2) ^ (sample >> 3) ^ (sample >> 5)) & 1;
             sample = (sample >> 1) | (feedback << 15);
         }
         let threshold = if p_spike <= 0.0 {
