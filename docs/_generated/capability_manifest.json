@@ -971,7 +971,7 @@
     "python_model_classes": 158,
     "python_model_source_modules": 153,
     "rust_pyo3_model_wrappers": 175,
-    "test_files": 1335
+    "test_files": 1336
   },
   "documentation": {
     "public_pages": [
@@ -4037,6 +4037,7 @@
       "tests/test_tools/test_cosim_q88_import_contract.py",
       "tests/test_tools/test_criterion_to_bencher.py",
       "tests/test_tools/test_eda_toolchain_versions.py",
+      "tests/test_tools/test_engine_monolith_guard.py",
       "tests/test_tools/test_extract_orca_nmr.py",
       "tests/test_tools/test_extract_orca_params.py",
       "tests/test_tools/test_generate_model_descriptors.py",

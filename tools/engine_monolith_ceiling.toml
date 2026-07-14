@@ -1,0 +1,20 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Commercial license available
+# © Concepts 1996–2026 Miroslav Šotek. All rights reserved.
+# © Code 2020–2026 Miroslav Šotek. All rights reserved.
+# ORCID: 0009-0009-3560-0851
+# Contact: www.anulum.li | protoscience@anulum.li
+# SC-NeuroCore — Engine crate-root monolith ceiling (DOWN-only ratchet)
+
+# DOWN-only ratchet on the engine PyO3 crate root. Every ceiling here may only
+# stay the same or decrease; `tools/engine_monolith_guard.py --update` refuses
+# to raise a ceiling. New PyO3 bindings must be added under
+# engine/src/bindings/<neuron>.rs with a register() function
+# (see engine/src/bindings/mcculloch_pitts.rs), never appended to
+# engine/src/lib.rs. See docs/internal/TODO.md — S-MONO-RUST.
+
+schema_version = 1
+
+[targets."engine/src/lib.rs"]
+max_lines = 7116
+max_pyfunctions = 212
