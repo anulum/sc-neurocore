@@ -8,10 +8,10 @@ workstation under concurrent load and without exclusive CPU core isolation.
 Use them as committed contract/regression evidence only. Production throughput
 claims require a rerun on isolated cores with recorded CPU affinity, host-load,
 governor, and frequency evidence. The 2026-06-05 mixed-dense,
-block-floating, precision-envelope, precision-trap, and live-control update
-reruns below are pinned to CPUs `8-9` by process affinity and record that
-affinity in the raw artefacts; they are not kernel-reserved isolated-core
-claims.
+block-floating, precision-envelope, and precision-trap reruns plus the
+2026-07-14 live-control update rerun below are pinned to CPUs `8-9` by process
+affinity and record that affinity in the raw artefacts; they are not
+kernel-reserved isolated-core claims.
 
 | Benchmark | Backend | Iterations | Avg Latency | Throughput |
 |-----------|---------|------------|-------------|------------|
@@ -44,7 +44,7 @@ claims.
 | Precision envelope report block-floating dense (64x32 safe/underflow) | Python | 2000 | 90.475 us | max_abs_bound=78032768, underflow_probe=32, width=28/12/+4 |
 | Precision envelope report block-floating dense (64x32 safe/underflow) | Rust | 20000 | 9.874 us | max_abs_bound=78032768, underflow_probe=32, width=28/12/+4 |
 | Precision envelope guard | HDL/Yosys | N_OUTPUTS=32 | 67 cells | `$adff`+`$gt`+`$mux`+`$reduce_or` |
-| Live-control parameter update sequence | Python+SystemVerilog | 20000 | 13.822 us AXI4-Lite; 13.589 us PCIe-MMIO | process affinity `8-9`, CRC32 update guard, checksum-mismatch, invalid-selection, read-only-bank, and partial-write traps, AXI trap simulation passed, PCIe commit simulation passed |
+| Live-control parameter update sequence | Python+SystemVerilog | 20000 | 15.466 us AXI4-Lite; 16.588 us PCIe-MMIO | process affinity `8-9`, CRC32 update guard, checksum-mismatch, invalid-selection, read-only-bank, and partial-write traps, AXI trap simulation passed, PCIe commit simulation passed |
 | AER strict-priority queue backpressure | Python+SystemVerilog | 4096 events x 100 repeats | 4.138 us/event | runtime cpuset shield 10-11, priority=0 violations, FIFO=0 violations, drop/deadline traps latched |
 | ADC-to-spike quantiser | Python+SystemVerilog | 4096 samples x 100 repeats | 3.705 us/sample | cpuset 10-11, formal pass, Yosys 7675 cells |
 | DCLS Q8.8 tent-kernel layer | Python+PyTorch+SystemVerilog | 4096 samples x 100 repeats | 6.349 us/sample | cpuset 10-11, PyTorch parity 5/5, formal pass, Yosys 106003 cells |
@@ -106,11 +106,11 @@ Both artefacts record runtime cpuset evidence. This is deterministic
 resource-planning and HDL-elaboration evidence. It does not claim Vivado
 board-level timing closure or replace the generic stochastic dense path.
 
-## Live-control AXI4-Lite / PCIe-MMIO register window - 2026-06-04
+## Live-control AXI4-Lite / PCIe-MMIO register window - 2026-07-14
 
 | Artefact | Cpuset | Surfaces | Key result |
 | --- | --- | --- | --- |
-| `local_python_2026-06-04_live_control_updates.json` | process affinity `8-9` | Python, SystemVerilog, AXI4-Lite, PCIe-MMIO | AXI4-Lite staged-update sequence median `13822.271` ns; PCIe-MMIO staged-update sequence median `13588.656` ns; AXI trap simulation and PCIe commit simulation both passed |
+| `local_python_2026-06-04_live_control_updates.json` | process affinity `8-9`; no kernel-isolated core | Python, SystemVerilog, AXI4-Lite, PCIe-MMIO | staged-update medians: AXI4-Lite `15466.492` ns, PCIe-MMIO `16588.369` ns; static-regeneration medians: AXI4-Lite `96171.857` ns, PCIe-MMIO `146003.571` ns; AXI trap and PCIe commit simulations passed |
 
 The PCIe surface is a register-window adapter contract over the same staged
 parameter-bank core used by AXI4-Lite. The update guard is

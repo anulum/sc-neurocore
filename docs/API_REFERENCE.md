@@ -16607,10 +16607,106 @@ Read a known baseline primitive as UTF-8 text.
 
 ---
 
+## Module `hdl_gen._bus_wrappers`
+
+### Function `render_axi_lite_wrapper(inner_module, params, data_width, addr_width, bus_data_width)`
+Render an AXI4-Lite slave wrapper around a neuron module.
+
+Parameters
+----------
+inner_module : str
+    Name of the generated neuron module to instantiate.
+params : dict&#91;str, int&#93;
+    Parameter-port names mapped to their bit widths.
+data_width : int
+    Neuron datapath width.
+addr_width : int
+    AXI address width.
+bus_data_width : int
+    AXI register data width.
+
+Returns
+-------
+str
+    Complete SystemVerilog wrapper source.
+
+### Function `render_wishbone_wrapper(inner_module, params, data_width, addr_width, bus_data_width)`
+Render a Wishbone B4 slave wrapper around a neuron module.
+
+Parameters
+----------
+inner_module : str
+    Name of the generated neuron module to instantiate.
+params : dict&#91;str, int&#93;
+    Parameter-port names mapped to their bit widths.
+data_width : int
+    Neuron datapath width.
+addr_width : int
+    Wishbone address width.
+bus_data_width : int
+    Wishbone register data width.
+
+Returns
+-------
+str
+    Complete SystemVerilog wrapper source.
+
+---
+
 ## Module `hdl_gen._ident`
 
 ### Function `sanitize_ident(name, context)`
 Validate an HDL-facing identifier before interpolating it into source.
+
+---
+
+## Module `hdl_gen._live_parameter_bank`
+
+### Function `render_axi_live_parameter_bank(spec)`
+Render the AXI4-Lite live-parameter bank core.
+
+Parameters
+----------
+spec : MMIOUpdateSpec
+    Validated live-control register and parameter-bank contract.
+module_name : str
+    SystemVerilog module identifier for the generated core.
+addr_width : int or None
+    Optional AXI address width override.
+bus_data_width : int
+    AXI data width. The maintained core requires 32 bits.
+block_ram_threshold_bits : int
+    Minimum bank capacity that receives a block-RAM style hint.
+
+Returns
+-------
+str
+    Complete SystemVerilog source for the AXI4-Lite parameter bank.
+
+---
+
+## Module `hdl_gen._pcie_live_parameter_bank`
+
+### Function `render_pcie_live_parameter_bank(spec)`
+Render a PCIe-MMIO adapter around the AXI4-Lite parameter-bank core.
+
+Parameters
+----------
+spec : MMIOUpdateSpec
+    Validated PCIe live-control contract.
+module_name : str
+    SystemVerilog module identifier for the generated adapter.
+addr_width : int or None
+    Optional MMIO address width override.
+bus_data_width : int
+    MMIO data width. The maintained adapter requires 32 bits.
+block_ram_threshold_bits : int
+    Minimum parameter-bank capacity that receives a block-RAM hint.
+
+Returns
+-------
+str
+    PCIe adapter source followed by its generated AXI4-Lite core.
 
 ---
 
@@ -16637,19 +16733,19 @@ Generate a bus-attached wrapper around a compiled neuron module.
 Parameters
 ----------
 inner_module : str
-    Name of the inner Verilog neuron module (e.g. ``"sc_lif"``).
+    Name of the inner Verilog neuron module (for example, ``"sc_lif"``).
 params : dict&#91;str, int&#93;
     Mapping from Verilog parameter name to bit width.
-bus : str
+bus : BusProtocol
     Bus protocol: ``"axi_lite"`` or ``"wishbone"``.
 data_width : int
-    Neuron fixed-point data width (e.g. 16 for Q8.8).
+    Neuron fixed-point data width.
 addr_width : int
-    Address bus width (default 8 → 256 bytes → 64 registers).
+    Address bus width.
 bus_data_width : int
-    Bus data width (default 32 for standard SoC buses).
+    Bus register data width.
 base_address : int
-    Base address for documentation (not used in RTL).
+    Reserved documentation address retained for API compatibility.
 
 Returns
 -------
@@ -16664,7 +16760,7 @@ Parameters
 params : dict&#91;str, int&#93;
     Parameter names and their bit widths.
 base_address : int
-    Starting address.
+    Starting byte address.
 
 Returns
 -------
@@ -16676,13 +16772,27 @@ Generate a live-parameter bank from an MMIO update spec.
 
 The emitted RTL stores each parameter bank in distributed RAM or BRAM and
 exposes the fixed live-control register map through either AXI4-Lite or a
-PCIe MMIO register-window adapter.  The PCIe path intentionally models the
-endpoint-adapter contract only: upstream PCIe hard IP must decode posted
-writes and reads into the single-clock MMIO strobes exposed here.
+PCIe MMIO register-window adapter. The PCIe path models the endpoint
+adapter contract: upstream PCIe hard IP decodes posted writes and reads
+into the single-clock MMIO strobes exposed here.
 
-Both protocol paths stage low/high data words, commit updates only after a
-checksum-valid update/apply handshake, and export a flattened
-``parameter_words`` bus for downstream dense, BFP, or phase-coupling RTL.
+Parameters
+----------
+spec : MMIOUpdateSpec
+    Validated live-control register and parameter-bank contract.
+module_name : str
+    SystemVerilog module identifier.
+addr_width : int or None
+    Optional address-width override.
+bus_data_width : int
+    Bus data width. Maintained live-control paths require 32 bits.
+block_ram_threshold_bits : int
+    Minimum bank capacity that receives a block-RAM style hint.
+
+Returns
+-------
+str
+    Complete SystemVerilog source for the selected live-control protocol.
 
 ---
 

@@ -162,6 +162,27 @@ re-latch stale saturation telemetry. Optional
 `SC_NEUROCORE_ASSERTIONS` properties bind the no-silent-overflow and
 sticky-latch contracts for formal or simulation audit runs.
 
+#### Bus-interface responsibility boundary
+
+`sc_neurocore.hdl_gen.bus_interface` is the stable public facade for
+`generate_bus_wrapper(...)`, `generate_register_map(...)`, and
+`generate_live_parameter_bank(...)`. The implementation is deliberately
+one-way and responsibility-bounded:
+
+- `_bus_wrappers.py` renders the legacy AXI4-Lite and Wishbone neuron wrappers;
+- `_live_parameter_bank.py` renders the validated AXI4-Lite live-control core;
+- `_pcie_live_parameter_bank.py` adapts that core to the decoded PCIe MMIO
+  register window; and
+- the public facade performs protocol selection while retaining historical
+  signatures and qualified names.
+
+The PCIe adapter depends on the AXI core; neither renderer imports the facade,
+so there is no reverse dependency or protocol-specific reimplementation. The
+architecture contract also pins representative AXI4-Lite, Wishbone, AXI
+live-control, and PCIe live-control output digests to the pre-decomposition
+bytes. This is an emitter-organisation change, not a neuron-dynamics or
+polyglot-kernel change.
+
 Live-control parameter banks are generated from `MMIOUpdateSpec` with
 `generate_live_parameter_bank(...)`. The emitted AXI4-Lite RTL uses
 BRAM/distributed RAM style hints per bank, fixed control/status register

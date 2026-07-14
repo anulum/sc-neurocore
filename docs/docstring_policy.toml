@@ -14,7 +14,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 384
+expected_file_count = 385
 
 [[file]]
 path = "src/sc_neurocore/__init__.py"
@@ -23,6 +23,10 @@ rationale = "Public root package entry point that exposes the lazy import facade
 [[file]]
 path = "src/sc_neurocore/constants.py"
 rationale = "Public constants ledger with audited citation values, source adoption boundary, and Rust parity warning."
+
+[[file]]
+path = "src/sc_neurocore/hdl_gen/bus_interface.py"
+rationale = "Historical public bus-interface facade with audited wrapper, register-map, and live-control generation contracts."
 
 [[file]]
 path = "scripts/generate_docs.py"

@@ -28,7 +28,7 @@ but the workstation still did not expose kernel-reserved isolated cores to this
 user session.  Treat the refreshed medians as local regression evidence and the
 proof fields as the authoritative contract evidence.
 
-The 2026-06-05 live-control AXI4-Lite/PCIe-MMIO rerun was executed with
+The 2026-07-14 live-control AXI4-Lite/PCIe-MMIO rerun was executed with
 process affinity pinned to CPUs `8-9`, and the raw artefact records that the
 process affinity matched the requested benchmark cpuset.  The workstation did
 not expose kernel-reserved isolated cores to this user session, so these numbers
@@ -128,7 +128,7 @@ No Rust, Julia, Go, or Mojo counterpart exists for this HDL-only queue surface
 as of 2026-06-04.  Cross-language comparison therefore means Python reference
 contract versus SystemVerilog RTL elaboration/simulation for this task.
 
-### Live-control AXI4-Lite / PCIe-MMIO Register Window (2026-06-05)
+### Live-control AXI4-Lite / PCIe-MMIO Register Window (2026-07-14)
 
 This benchmark covers the live-parameter update contract for hot-swappable
 weights and Kuramoto coupling parameters.  Both protocols use the same
@@ -138,12 +138,19 @@ hard IP to present decoded single-clock MMIO strobes.
 
 | Path | Workload | Result | Raw evidence |
 |------|----------|--------|--------------|
-| Python update-sequence builder | 20,000 deterministic staged writes x 7 repeats | AXI4-Lite median `14.139 us/sequence`; PCIe-MMIO median `14.216 us/sequence` under process affinity `8-9` | `benchmarks/results/local_python_2026-06-04_live_control_updates.json` |
+| Python update-sequence builder | 20,000 deterministic staged writes x 7 repeats | AXI4-Lite median `15.466 us/sequence`; PCIe-MMIO median `16.588 us/sequence` under process affinity `8-9` | `benchmarks/results/local_python_2026-06-04_live_control_updates.json` |
+| Python static RTL regeneration | 7 batches of 7 generations per protocol | AXI4-Lite median `96.172 us/source`; PCIe-MMIO median `146.004 us/source` | `benchmarks/results/local_python_2026-06-04_live_control_updates.json` |
 | SystemVerilog AXI4-Lite core | Generated trap-capture simulation | `trap_capture.passed=true`; staged overflow and underflow traps latched without mutating active coefficients | `benchmarks/results/local_python_2026-06-04_live_control_updates.json` |
 | SystemVerilog PCIe-MMIO wrapper | Generated commit simulation | `pcie_mmio_commit_capture.passed=true`; partial write strobes raise sticky `partial_write`, stale CRC32 guard raises sticky `checksum_mismatch`, invalid bank selection and invalid active readback raise sticky `invalid_selection`, read-only bank writes raise sticky `read_only_bank`, and retargeting selection registers after shadow load cannot redirect the committed bank | `benchmarks/results/local_python_2026-06-04_live_control_updates.json` |
 
+The 2026-07-14 capture used process affinity `8-9` but no kernel-reserved
+isolated cores. One-minute host load was `10.132` before and `9.801` after the
+run, and the CPU governor was `powersave`. These timings are local diagnostic
+regression evidence only; the successful RTL simulations and deterministic
+checksums are the functional evidence.
+
 No Rust, Julia, Go, or Mojo counterpart exists for this HDL bus-adapter surface
-as of 2026-06-04.  Cross-language comparison therefore means Python control
+as of 2026-07-14. Cross-language comparison therefore means Python control
 contract generation versus SystemVerilog RTL simulation for AXI4-Lite and
 PCIe-MMIO.
 
