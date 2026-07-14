@@ -1,0 +1,76 @@
+{
+  "metadata": {
+    "schema_version": 1,
+    "name": "COBALIFNeuron",
+    "author": "Brette, R. et al.",
+    "year": 2007,
+    "doi": "10.1007/s10827-007-0038-6",
+    "description": "Brette et al. Benchmark 1 conductance-based LIF cell with the maintained coupled RK4 and absolute refractory schedule"
+  },
+  "state": {
+    "v": -60,
+    "g_e": 0,
+    "g_i": 0,
+    "refractory_time": 0,
+    "spike_flag": 0,
+    "phase": 0,
+    "base_v": -60,
+    "base_ge": 0,
+    "base_gi": 0,
+    "last_k_v": 0,
+    "last_k_ge": 0,
+    "last_k_gi": 0,
+    "weighted_v": 0,
+    "weighted_ge": 0,
+    "weighted_gi": 0
+  },
+  "parameters": {
+    "c_m": 200,
+    "g_l": 10,
+    "e_l": -60,
+    "e_e": 0,
+    "e_i": -80,
+    "tau_e": 5,
+    "tau_i": 10,
+    "v_threshold": -50,
+    "v_reset": -60,
+    "refractory_period": 5,
+    "dt": 0.1,
+    "delta_ge": 0,
+    "delta_gi": 0
+  },
+  "integration": {
+    "dt": 0.1,
+    "method": "map",
+    "substeps": 4
+  },
+  "dynamics": {
+    "v": "(v_reset if refractory_time > 0.0 else (v_reset if (base_v + (dt / 6.0) * (weighted_v + ((-g_l * ((base_v + dt * last_k_v) - e_l) - ((base_ge + dt * last_k_ge) * ((base_v + dt * last_k_v) - e_e) + (base_gi + dt * last_k_gi) * ((base_v + dt * last_k_v) - e_i)) + I) / c_m))) >= v_threshold else (base_v + (dt / 6.0) * (weighted_v + ((-g_l * ((base_v + dt * last_k_v) - e_l) - ((base_ge + dt * last_k_ge) * ((base_v + dt * last_k_v) - e_e) + (base_gi + dt * last_k_gi) * ((base_v + dt * last_k_v) - e_i)) + I) / c_m))))) if phase > 2.5 else v",
+    "g_e": "base_ge + (dt / 6.0) * (weighted_ge + (-(base_ge + dt * last_k_ge) / tau_e)) if phase > 2.5 else g_e",
+    "g_i": "base_gi + (dt / 6.0) * (weighted_gi + (-(base_gi + dt * last_k_gi) / tau_i)) if phase > 2.5 else g_i",
+    "refractory_time": "((0.0 if refractory_time <= dt * (1.0 + 1.0e-12) else refractory_time - dt) if refractory_time > 0.0 else (refractory_period if (base_v + (dt / 6.0) * (weighted_v + ((-g_l * ((base_v + dt * last_k_v) - e_l) - ((base_ge + dt * last_k_ge) * ((base_v + dt * last_k_v) - e_e) + (base_gi + dt * last_k_gi) * ((base_v + dt * last_k_v) - e_i)) + I) / c_m))) >= v_threshold else 0.0)) if phase > 2.5 else refractory_time",
+    "spike_flag": "(0.0 if refractory_time > 0.0 else (1.0 if (base_v + (dt / 6.0) * (weighted_v + ((-g_l * ((base_v + dt * last_k_v) - e_l) - ((base_ge + dt * last_k_ge) * ((base_v + dt * last_k_v) - e_e) + (base_gi + dt * last_k_gi) * ((base_v + dt * last_k_v) - e_i)) + I) / c_m))) >= v_threshold else 0.0)) if phase > 2.5 else spike_flag",
+    "phase": "(phase + 1.0) % 4.0",
+    "base_v": "v if phase < 0.5 else base_v",
+    "base_ge": "(g_e + delta_ge) if phase < 0.5 else base_ge",
+    "base_gi": "(g_i + delta_gi) if phase < 0.5 else base_gi",
+    "last_k_v": "0.0 if refractory_time > 0.0 else (((-g_l * (v - e_l) - ((g_e + delta_ge) * (v - e_e) + (g_i + delta_gi) * (v - e_i)) + I) / c_m) if phase < 0.5 else (((-g_l * ((base_v + dt * last_k_v) - e_l) - ((base_ge + dt * last_k_ge) * ((base_v + dt * last_k_v) - e_e) + (base_gi + dt * last_k_gi) * ((base_v + dt * last_k_v) - e_i)) + I) / c_m) if phase > 2.5 else ((-g_l * ((base_v + 0.5 * dt * last_k_v) - e_l) - ((base_ge + 0.5 * dt * last_k_ge) * ((base_v + 0.5 * dt * last_k_v) - e_e) + (base_gi + 0.5 * dt * last_k_gi) * ((base_v + 0.5 * dt * last_k_v) - e_i)) + I) / c_m)))",
+    "last_k_ge": "(-(g_e + delta_ge) / tau_e) if phase < 0.5 else ((-(base_ge + dt * last_k_ge) / tau_e) if phase > 2.5 else (-(base_ge + 0.5 * dt * last_k_ge) / tau_e))",
+    "last_k_gi": "(-(g_i + delta_gi) / tau_i) if phase < 0.5 else ((-(base_gi + dt * last_k_gi) / tau_i) if phase > 2.5 else (-(base_gi + 0.5 * dt * last_k_gi) / tau_i))",
+    "weighted_v": "0.0 if refractory_time > 0.0 else (((-g_l * (v - e_l) - ((g_e + delta_ge) * (v - e_e) + (g_i + delta_gi) * (v - e_i)) + I) / c_m) if phase < 0.5 else (weighted_v + 2.0 * ((-g_l * ((base_v + 0.5 * dt * last_k_v) - e_l) - ((base_ge + 0.5 * dt * last_k_ge) * ((base_v + 0.5 * dt * last_k_v) - e_e) + (base_gi + 0.5 * dt * last_k_gi) * ((base_v + 0.5 * dt * last_k_v) - e_i)) + I) / c_m) if phase < 2.5 else weighted_v))",
+    "weighted_ge": "(-(g_e + delta_ge) / tau_e) if phase < 0.5 else (weighted_ge + 2.0 * (-(base_ge + 0.5 * dt * last_k_ge) / tau_e) if phase < 2.5 else weighted_ge)",
+    "weighted_gi": "(-(g_i + delta_gi) / tau_i) if phase < 0.5 else (weighted_gi + 2.0 * (-(base_gi + 0.5 * dt * last_k_gi) / tau_i) if phase < 2.5 else weighted_gi)"
+  },
+  "threshold": {
+    "condition": "spike_flag >= 0.5",
+    "detection": "crossing"
+  },
+  "extensions": {
+    "source_equations": "Brette et al. (2007), Appendix 2, Benchmark 1: conductance-based integrate-and-fire cell.",
+    "discretisation": "The source continuous equations are advanced by one maintained four-stage classical RK4 macro step. method=map plus integration.substeps=4 carries the explicit stage registers without integrating the stage recurrences again.",
+    "event_order": "At stage 0 apply boundary delta_ge and delta_gi; evaluate RK4 stages 1-4; hold voltage and RK4-decay conductances while refractory; at stage 4 validate and compare the raw candidate, set spike_flag, reset voltage, and load refractory_period.",
+    "refractory_contract": "The timer updates only after stage 4 and clamps at dt with a 1e-12 relative roundoff guard, so the 5 ms interval at dt=0.1 contains exactly 50 held macro steps without a floating-point residue step.",
+    "conductance_event_contract": "delta_ge and delta_gi are schema parameters representing constant per-macro-step boundary events; event-driven Python callers may vary them on each public step.",
+    "auxiliary_state_contract": "spike_flag, phase, base_*, last_k_*, and weighted_* are deterministic RK4/event lowering registers, not biological state. Four internal map substeps are folded into one public macro step and one rising spike_flag decision."
+  }
+}

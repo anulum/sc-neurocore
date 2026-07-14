@@ -43,6 +43,7 @@ CLASS_TO_SCHEMA: dict[str, str] = {
     "AdExNeuron": "adex",
     "CazellesMapNeuron": "cazelles_map",
     "ChialvoMapNeuron": "chialvo_map",
+    "COBALIFNeuron": "coba_lif",
     "ConnorStevensNeuron": "connor_stevens",
     "CourageNekorkinMapNeuron": "courage_nekorkin_map",
     "DPINeuron": "dpi_neuron",
@@ -73,6 +74,7 @@ CLASS_TO_SCHEMA: dict[str, str] = {
 DEPTH_BY_SCHEMA: dict[str, int] = {
     "cazelles_map": 4,
     "chialvo_map": 4,
+    "coba_lif": 4,
     "connor_stevens": 4,
     "courage_nekorkin_map": 4,
     "dpi_neuron": 4,
@@ -101,6 +103,7 @@ MINIMAL_SAFETY_SCHEMAS: frozenset[str] = frozenset(
     {
         "cazelles_map",
         "chialvo_map",
+        "coba_lif",
         "courage_nekorkin_map",
         "dpi_neuron",
         "ermentrout_kopell_map_neuron",
@@ -128,8 +131,11 @@ MINIMAL_SAFETY_SCHEMAS: frozenset[str] = frozenset(
 # rounds the 0.01 initial/reference currents too aggressively.
 # ExpIF needs Q32.32 to preserve the enrolled source-exponential spike counts;
 # its active Q16.16 trace does not satisfy the declared event contract.
+# COBA LIF needs Q24.24 to preserve its four-stage RK4 event schedule and
+# four-state co-simulation envelope; Q16.16 adds a refractory residue step.
 DEFAULT_PRECISION = (16, 8)
 PRECISION_BY_SCHEMA: dict[str, tuple[int, int]] = {
+    "coba_lif": (48, 24),
     "dpi_neuron": (32, 16),
     "exp_if": (64, 32),
     "ibarz_tanaka_map": (32, 16),

@@ -1,0 +1,63 @@
+{
+  "schema_version": "sc-neurocore.reference-trace.v1",
+  "name": "coba_lif_conductance_rk4_doi",
+  "model": {
+    "schema_name": "coba_lif",
+    "runner": "universal_dsl"
+  },
+  "protocol": {
+    "dt": 0.1,
+    "steps": 400,
+    "inputs": {
+      "I": 650.0,
+      "delta_ge": 0.15,
+      "delta_gi": 0.07
+    },
+    "state_variables": [
+      "v",
+      "g_e",
+      "g_i",
+      "refractory_time"
+    ]
+  },
+  "provenance": {
+    "kind": "independent_coupled_rk4_reference",
+    "source": "Brette et al. (2007), Appendix 2, Benchmark 1; repository RK4 discretisation independently re-derived in tests/test_reference_coba_lif.py",
+    "equation": "Boundary conductance increments; coupled classical RK4 for C*dV/dt=-gL*(V-EL)-ge*(V-Ee)-gi*(V-Ei)+I, dge/dt=-ge/tau_e, dgi/dt=-gi/tau_i; raw-candidate threshold/reset; 5 ms absolute refractory voltage hold with RK4 conductance decay.",
+    "citation": "doi:10.1007/s10827-007-0038-6"
+  },
+  "expected_features": {
+    "spike_count": 6.0,
+    "first_spike_step": 30.0,
+    "final.v": -60.0,
+    "min.v": -60.0,
+    "max.v": -50.193594807329426,
+    "mean.v": -58.115213738950295,
+    "final.g_e": 7.422759114593433,
+    "min.g_e": 0.147029801,
+    "max.g_e": 7.422759114593433,
+    "mean.g_e": 6.50665263885552,
+    "final.g_i": 6.837488840500173,
+    "min.g_i": 0.06930348836250001,
+    "max.g_i": 6.837488840500173,
+    "mean.g_i": 5.264218739861609,
+    "final.refractory_time": 5.0,
+    "min.refractory_time": 0.0,
+    "max.refractory_time": 5.0,
+    "mean.refractory_time": 1.606250000000001
+  },
+  "tolerances": {
+    "default": {
+      "absolute": 1e-12,
+      "relative": 1e-12
+    },
+    "spike_count": {
+      "absolute": 0.0,
+      "relative": 0.0
+    },
+    "first_spike_step": {
+      "absolute": 0.0,
+      "relative": 0.0
+    }
+  }
+}

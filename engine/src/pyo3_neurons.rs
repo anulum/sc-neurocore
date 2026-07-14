@@ -13,6 +13,7 @@
 //!   #[pymethods] impl Py<Model> { #[new] fn new(...) -> Self; fn step(...); fn reset(&mut self); fn get_state(...) }
 
 use numpy::{IntoPyArray, PyArray1};
+use pyo3::exceptions::PyValueError;
 use pyo3::prelude::*;
 use pyo3::types::PyDict;
 
@@ -592,14 +593,55 @@ pub struct PyCOBALIFNeuron {
 #[pymethods]
 impl PyCOBALIFNeuron {
     #[new]
-    fn new() -> Self {
-        Self {
-            inner: neurons::COBALIFNeuron::new(),
-        }
+    #[pyo3(signature = (
+        v=-60.0, g_e=0.0, g_i=0.0, refractory_time=0.0, c_m=200.0,
+        g_l=10.0, e_l=-60.0, e_e=0.0, e_i=-80.0, tau_e=5.0,
+        tau_i=10.0, v_threshold=-50.0, v_reset=-60.0,
+        refractory_period=5.0, dt=0.1
+    ))]
+    #[allow(clippy::too_many_arguments)]
+    fn new(
+        v: f64,
+        g_e: f64,
+        g_i: f64,
+        refractory_time: f64,
+        c_m: f64,
+        g_l: f64,
+        e_l: f64,
+        e_e: f64,
+        e_i: f64,
+        tau_e: f64,
+        tau_i: f64,
+        v_threshold: f64,
+        v_reset: f64,
+        refractory_period: f64,
+        dt: f64,
+    ) -> PyResult<Self> {
+        let inner = neurons::COBALIFNeuron {
+            v,
+            g_e,
+            g_i,
+            refractory_time,
+            c_m,
+            g_l,
+            e_l,
+            e_e,
+            e_i,
+            tau_e,
+            tau_i,
+            v_threshold,
+            v_reset,
+            refractory_period,
+            dt,
+        };
+        inner.validate().map_err(PyValueError::new_err)?;
+        Ok(Self { inner })
     }
     #[pyo3(signature = (current, delta_ge=0.0, delta_gi=0.0))]
-    fn step(&mut self, current: f64, delta_ge: f64, delta_gi: f64) -> i32 {
-        self.inner.step(current, delta_ge, delta_gi)
+    fn step(&mut self, current: f64, delta_ge: f64, delta_gi: f64) -> PyResult<i32> {
+        self.inner
+            .try_step(current, delta_ge, delta_gi)
+            .map_err(PyValueError::new_err)
     }
     fn reset(&mut self) {
         self.inner.reset();
@@ -609,6 +651,7 @@ impl PyCOBALIFNeuron {
         d.set_item("v", self.inner.v)?;
         d.set_item("g_e", self.inner.g_e)?;
         d.set_item("g_i", self.inner.g_i)?;
+        d.set_item("refractory_time", self.inner.refractory_time)?;
         Ok(d.into_any().unbind())
     }
 }

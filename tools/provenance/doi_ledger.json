@@ -155,6 +155,19 @@
     "verified_utc": "2026-07-11T09:31:35+00:00",
     "year_match": true
   },
+  "10.1007/s10827-007-0038-6": {
+    "author_match": true,
+    "model": "COBALIFNeuron",
+    "registry": "crossref",
+    "registry_first_author": "brette",
+    "registry_year": 2007,
+    "resolves": true,
+    "title": "Simulation of networks of spiking neurons: A review of tools and strategies",
+    "translation": false,
+    "verified": true,
+    "verified_utc": "2026-07-14T01:58:36+00:00",
+    "year_match": true
+  },
   "10.1007/s10955-013-0733-9": {
     "author_match": true,
     "model": "GalvesLocherbachNeuron",
@@ -436,19 +449,6 @@
     "registry_year": 2009,
     "resolves": true,
     "title": "Tripartite synapses: astrocytes process and control synaptic information",
-    "translation": false,
-    "verified": true,
-    "verified_utc": "2026-07-11T09:31:35+00:00",
-    "year_match": true
-  },
-  "10.1016/s0306-4522(01)00344-x": {
-    "author_match": true,
-    "model": "COBALIFNeuron",
-    "registry": "crossref",
-    "registry_first_author": "destexhe",
-    "registry_year": 2001,
-    "resolves": true,
-    "title": "Fluctuating synaptic conductances recreate in vivo-like activity in neocortical neurons",
     "translation": false,
     "verified": true,
     "verified_utc": "2026-07-11T09:31:35+00:00",

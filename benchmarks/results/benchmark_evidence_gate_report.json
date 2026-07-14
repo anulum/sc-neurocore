@@ -214,8 +214,13 @@
       "id": "hierarchical-kl-refine-five-backend-local-diagnostics"
     }
   ],
-  "failure_count": 44,
+  "failure_count": 46,
   "failures": [
+    {
+      "gate_id": "dpi-neuron-circuit-multibackend-local-regression",
+      "path": "engine/src/pyo3_neurons.rs->source_hashes.engine/src/pyo3_neurons.rs",
+      "reason": "source_hash_mismatch"
+    },
     {
       "gate_id": "morris-lecar-rk4-multibackend-local-regression",
       "path": "engine/Cargo.toml->source_hashes.engine/Cargo.toml",
@@ -249,6 +254,11 @@
     {
       "gate_id": "gutkin-ermentrout-rk4-multibackend-local-regression",
       "path": "engine/Cargo.toml->source_hashes.engine/Cargo.toml",
+      "reason": "source_hash_mismatch"
+    },
+    {
+      "gate_id": "gutkin-ermentrout-rk4-multibackend-local-regression",
+      "path": "engine/src/neurons/simple_spiking.rs->source_hashes.engine/src/neurons/simple_spiking.rs",
       "reason": "source_hash_mismatch"
     },
     {
@@ -392,8 +402,8 @@
       "reason": "source_hash_mismatch"
     },
     {
-      "gate_id": "coba-lif-rk4-multibackend-local-regression",
-      "path": "src/sc_neurocore/neurons/models/coba_lif.py->source_hashes.src/sc_neurocore/neurons/models/coba_lif.py",
+      "gate_id": "sfa-rk4-multibackend-local-regression",
+      "path": "src/sc_neurocore/accel/rust/safety/sfa.rs->source_hashes.src/sc_neurocore/accel/rust/safety/sfa.rs",
       "reason": "source_hash_mismatch"
     },
     {

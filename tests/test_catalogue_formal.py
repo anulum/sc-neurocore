@@ -96,6 +96,23 @@ def test_dpi_formal_job_uses_enrolled_q1616_precision() -> None:
     assert "dpi_neuron" in module.MINIMAL_SAFETY_SCHEMAS
 
 
+def test_coba_lif_formal_job_uses_enrolled_q2424_precision() -> None:
+    """Keep formal COBA LIF RTL aligned with its four-state co-simulation envelope."""
+    import importlib.util
+
+    name = "emit_catalogue_formal_coba_lif_precision"
+    spec = importlib.util.spec_from_file_location(name, EMITTER)
+    assert spec is not None and spec.loader is not None
+    module = importlib.util.module_from_spec(spec)
+    sys.modules[name] = module
+    spec.loader.exec_module(module)
+
+    assert module.CLASS_TO_SCHEMA["COBALIFNeuron"] == "coba_lif"
+    assert module.PRECISION_BY_SCHEMA["coba_lif"] == (48, 24)
+    assert module.DEPTH_BY_SCHEMA["coba_lif"] == 4
+    assert "coba_lif" in module.MINIMAL_SAFETY_SCHEMAS
+
+
 def test_catalogue_formal_inventory_matches_perfect_count() -> None:
     """Committed catalogue jobs equal the number of dual-axis perfect models."""
     sby_jobs = sorted(CATALOGUE.glob("*.sby"))

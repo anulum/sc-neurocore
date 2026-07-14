@@ -587,6 +587,16 @@ except ImportError:
 
 try:
     from sc_neurocore_engine.sc_neurocore_engine import (
+        py_coba_lif_simulate,
+    )
+
+    __all__ += ["py_coba_lif_simulate"]
+    _coba_lif_rust_available = True
+except ImportError:
+    _coba_lif_rust_available = False
+
+try:
+    from sc_neurocore_engine.sc_neurocore_engine import (
         py_mihalas_niebur_simulate,
     )
 

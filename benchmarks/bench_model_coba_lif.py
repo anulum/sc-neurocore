@@ -5,410 +5,458 @@
 # © Code 2020–2026 Miroslav Šotek. All rights reserved.
 # ORCID: 0009-0009-3560-0851
 # Contact: www.anulum.li | protoscience@anulum.li
-# SC-NeuroCore — COBA LIF RK4 multi-backend local regression benchmark
+# SC-NeuroCore — Controlled COBA LIF five-backend benchmark
+
+"""Measure the maintained COBA LIF batch through every public dispatcher lane.
+
+The evidence binds real conductance-driven timings to exact event parity,
+bounded four-state parity, source hashes, CPU affinity, host load, runtime
+versions, and an executable Rust-safety check. Missing backends or unpinned
+execution fail unless explicitly acknowledged.
+"""
 
 from __future__ import annotations
 
-from datetime import UTC, datetime
+import argparse
+import gc
 import hashlib
 import json
-from pathlib import Path
+import os
 import platform
-import re
+import shutil
 import statistics
 import subprocess
 import tempfile
-import textwrap
 import time
-from typing import Protocol, cast
+from pathlib import Path
+from typing import Any
 
+import numpy as np
+import numpy.typing as npt
+
+from sc_neurocore.accel import coba_lif as backends
 from sc_neurocore.neurons.models.coba_lif import COBALIFNeuron
 
-
-STEPS = 200_000
-REPEATS = 5
-CURRENT = 500.0
-OUTPUT = Path("benchmarks/results/local_python_2026-06-18_coba_lif_rk4.json")
-REPO_ROOT = Path(__file__).resolve().parents[1]
-GO_BENCH_RE = re.compile(r"^BenchmarkCOBALIFRK4-\d+\s+\d+\s+([0-9.]+)\s+ns/op")
-GO_SPIKES_RE = re.compile(r"\s([0-9.]+)\s+spikes(?:\s|$)")
-SOURCE_HASH_PATHS = {
-    "benchmarks/bench_model_coba_lif.py": REPO_ROOT / "benchmarks/bench_model_coba_lif.py",
-    "src/sc_neurocore/neurons/models/coba_lif.py": REPO_ROOT
-    / "src/sc_neurocore/neurons/models/coba_lif.py",
-    "src/sc_neurocore/accel/go/services/coba_lif.go": REPO_ROOT
-    / "src/sc_neurocore/accel/go/services/coba_lif.go",
-    "src/sc_neurocore/accel/go/services/coba_lif_test.go": REPO_ROOT
-    / "src/sc_neurocore/accel/go/services/coba_lif_test.go",
-    "src/sc_neurocore/accel/julia/neurons/coba_lif.jl": REPO_ROOT
-    / "src/sc_neurocore/accel/julia/neurons/coba_lif.jl",
-    "src/sc_neurocore/accel/mojo/kernels/coba_lif.mojo": REPO_ROOT
-    / "src/sc_neurocore/accel/mojo/kernels/coba_lif.mojo",
-    "src/sc_neurocore/accel/rust/safety/coba_lif.rs": REPO_ROOT
-    / "src/sc_neurocore/accel/rust/safety/coba_lif.rs",
-}
-
-
-class _COBALIFStep(Protocol):
-    v: float
-    g_e: float
-    g_i: float
-
-    def step(self, current: float) -> int: ...
+REPOSITORY = Path(__file__).resolve().parents[1]
+N_STEPS = 200_000
+N_REPEATS = 7
+WARMUP_STEPS = 1_000
+CURRENT = 650.0
+DELTA_GE = 0.15
+DELTA_GI = 0.07
+TRACE_ATOL = 1.0e-13
+KERNEL = "coba_lif_coupled_rk4_conductance_batch"
+BACKENDS = ("python", "rust", "julia", "go", "mojo")
+SOURCE_PATHS = (
+    "benchmarks/bench_model_coba_lif.py",
+    "bridge/sc_neurocore_engine/__init__.py",
+    "engine/src/lib.rs",
+    "engine/src/neurons/simple_spiking.rs",
+    "engine/src/pyo3_neurons.rs",
+    "src/sc_neurocore/accel/coba_lif.py",
+    "src/sc_neurocore/accel/go/neurons/coba_lif/coba_lif.go",
+    "src/sc_neurocore/accel/go/neurons/coba_lif/libcoba_lif.h",
+    "src/sc_neurocore/accel/go/services/coba_lif.go",
+    "src/sc_neurocore/accel/go/services/coba_lif_test.go",
+    "src/sc_neurocore/accel/julia/neurons/coba_lif.jl",
+    "src/sc_neurocore/accel/mojo/kernels/coba_lif.mojo",
+    "src/sc_neurocore/accel/rust/safety/coba_lif.rs",
+    "src/sc_neurocore/neurons/model_schemas/coba_lif.json",
+    "src/sc_neurocore/neurons/model_schemas/coba_lif.toml",
+    "src/sc_neurocore/neurons/models/coba_lif.py",
+)
 
 
-def _sha256(path: Path) -> str:
-    digest = hashlib.sha256()
-    with path.open("rb") as handle:
-        for chunk in iter(lambda: handle.read(1024 * 1024), b""):
-            digest.update(chunk)
-    return digest.hexdigest()
+def _configured() -> COBALIFNeuron:
+    """Return a non-default four-state cell exercising the complete native ABI."""
+    return COBALIFNeuron(
+        v=-59.0,
+        g_e=1.25,
+        g_i=0.75,
+        refractory_time=0.3,
+        c_m=190.0,
+        g_l=11.0,
+        e_l=-61.0,
+        e_e=2.0,
+        e_i=-82.0,
+        tau_e=4.5,
+        tau_i=11.0,
+        v_threshold=-50.5,
+        v_reset=-62.0,
+        refractory_period=3.7,
+        dt=0.1,
+    )
+
+
+def _cpu_model() -> str:
+    """Return the first Linux CPU model string, or a portable fallback."""
+    try:
+        cpuinfo = Path("/proc/cpuinfo").read_text(encoding="utf-8")
+    except OSError:
+        cpuinfo = ""
+    for line in cpuinfo.splitlines():
+        if line.startswith("model name"):
+            return line.split(":", 1)[1].strip()
+    return platform.processor() or "unknown"
+
+
+def _read_optional(path: Path) -> str:
+    """Read one host metadata file without making it a dependency."""
+    try:
+        return path.read_text(encoding="utf-8").strip()
+    except OSError:
+        return "unavailable"
+
+
+def _tool_path(name: str, fallback: Path | None = None) -> str | None:
+    """Resolve a runtime executable with one explicit fallback."""
+    resolved = shutil.which(name)
+    if resolved is not None:
+        return resolved
+    if fallback is not None and fallback.is_file():
+        return str(fallback)
+    return None
+
+
+def _tool_version(command: list[str]) -> str:
+    """Return the first version line for a runtime executable."""
+    if not command or command[0] == "":
+        return "unavailable"
+    try:
+        result = subprocess.run(
+            command,
+            capture_output=True,
+            text=True,
+            timeout=20,
+            check=False,
+        )
+    except (OSError, subprocess.TimeoutExpired):
+        return "unavailable"
+    output = result.stdout.strip() or result.stderr.strip()
+    return output.splitlines()[0] if output else f"exit {result.returncode}"
 
 
 def _source_hashes() -> dict[str, object]:
-    flat = {source: _sha256(path) for source, path in SOURCE_HASH_PATHS.items()}
-    nested: dict[str, object] = dict(flat)
-    for source, path in SOURCE_HASH_PATHS.items():
-        stem, extension = source.rsplit(".", 1)
-        existing = nested.get(stem)
-        if isinstance(existing, dict):
-            existing[extension] = _sha256(path)
-        else:
-            nested[stem] = {extension: _sha256(path)}
-    return nested
-
-
-def _run_command(command: list[str]) -> subprocess.CompletedProcess[str]:
-    return subprocess.run(command, check=True, text=True, capture_output=True)
-
-
-def _parse_key_value_stdout(stdout: str) -> dict[str, str]:
-    return dict(line.split("=", 1) for line in stdout.splitlines() if "=" in line)
-
-
-def _run_python_backend() -> dict[str, object]:
-    results: list[dict[str, object]] = []
-    for _ in range(REPEATS):
-        neuron: _COBALIFStep = COBALIFNeuron()
-        spikes = 0
-        start_ns = time.perf_counter_ns()
-        for _ in range(STEPS):
-            spikes += neuron.step(CURRENT)
-        elapsed_ns = time.perf_counter_ns() - start_ns
-        results.append(
-            {
-                "backend": "python",
-                "steps": STEPS,
-                "current": CURRENT,
-                "elapsed_ns": elapsed_ns,
-                "ns_per_step": elapsed_ns / STEPS,
-                "spikes": spikes,
-                "ending_state": [float(neuron.v), float(neuron.g_e), float(neuron.g_i)],
-            }
-        )
-    ns_per_step = [cast(float, result["ns_per_step"]) for result in results]
-    return {
-        "backend": "python",
-        "median_ns_per_step": statistics.median(ns_per_step),
-        "min_ns_per_step": min(ns_per_step),
-        "max_ns_per_step": max(ns_per_step),
-        "spikes": cast(int, results[0]["spikes"]),
-        "results": results,
+    """Hash every implementation and ABI surface relevant to this closure."""
+    flat = {
+        relative: hashlib.sha256((REPOSITORY / relative).read_bytes()).hexdigest()
+        for relative in SOURCE_PATHS
     }
+    nested: dict[str, object] = {}
+    for relative, digest in flat.items():
+        stem, suffix = relative.rsplit(".", 1)
+        grouped = nested.setdefault(stem, {})
+        if not isinstance(grouped, dict):
+            raise RuntimeError(f"source hash namespace collision at {stem}")
+        grouped[suffix] = digest
+    return {**flat, **nested}
 
 
-def _run_rust_backend() -> dict[str, object]:
-    program = textwrap.dedent(
-        f"""
-        include!(r#"{(REPO_ROOT / "src/sc_neurocore/accel/rust/safety/coba_lif.rs").as_posix()}"#);
-        use std::time::Instant;
+def _trace_digest(trace: npt.NDArray[np.float64]) -> str:
+    """Return a byte-order-stable SHA-256 digest for one measured trace."""
+    return hashlib.sha256(np.asarray(trace, dtype="<f8").tobytes()).hexdigest()
 
-        const STEPS: usize = {STEPS};
-        const REPEATS: usize = {REPEATS};
-        const CURRENT: f64 = {CURRENT};
 
-        fn run_once() -> (f64, i32, f64, f64, f64) {{
-            let mut state = COBALIFNeuron::new();
-            let mut spikes = 0_i32;
-            let start = Instant::now();
-            for _ in 0..STEPS {{
-                let result = state.step(CURRENT).expect("invalid RK4 step");
-                spikes += result;
-            }}
-            let elapsed_ns = start.elapsed().as_nanos() as f64;
-            (elapsed_ns / STEPS as f64, spikes, state.v, state.g_e, state.g_i)
-        }}
+def _probe_backend(backend: str) -> tuple[bool, str]:
+    """Return backend availability plus a deterministic diagnostic."""
+    if backend == "python":
+        return True, ""
+    if backend == "rust":
+        return backends._HAS_RUST, "" if backends._HAS_RUST else "Rust engine batch unavailable"
+    if backend == "julia":
+        available = backends.ensure_julia_loaded()
+        return available, "" if available else "juliacall or COBA LIF module unavailable"
+    if backend == "go":
+        available = backends.ensure_go_loaded()
+        return available, "" if available else "compiled Go libcoba_lif.so unavailable"
+    available = backends.ensure_mojo_loaded()
+    return available, "" if available else "compiled Mojo libcoba_lif.so unavailable"
 
-        fn main() {{
-            let mut values = Vec::with_capacity(REPEATS);
-            let mut spikes = Vec::with_capacity(REPEATS);
-            let mut final_vs = Vec::with_capacity(REPEATS);
-            let mut final_ges = Vec::with_capacity(REPEATS);
-            let mut final_gis = Vec::with_capacity(REPEATS);
-            for _ in 0..REPEATS {{
-                let (ns, spike_count, v, g_e, g_i) = run_once();
-                values.push(ns);
-                spikes.push(spike_count);
-                final_vs.push(v);
-                final_ges.push(g_e);
-                final_gis.push(g_i);
-            }}
-            let mut sorted = values.clone();
-            sorted.sort_by(|a, b| a.total_cmp(b));
-            println!("median_ns_per_step={{}}", sorted[sorted.len() / 2]);
-            println!("min_ns_per_step={{}}", sorted[0]);
-            println!("max_ns_per_step={{}}", sorted[sorted.len() - 1]);
-            println!("results_ns_per_step={{}}", values.iter().map(|v| v.to_string()).collect::<Vec<_>>().join(","));
-            println!("spike_counts={{}}", spikes.iter().map(|v| v.to_string()).collect::<Vec<_>>().join(","));
-            println!("final_vs={{}}", final_vs.iter().map(|v| v.to_string()).collect::<Vec<_>>().join(","));
-            println!("final_ges={{}}", final_ges.iter().map(|v| v.to_string()).collect::<Vec<_>>().join(","));
-            println!("final_gis={{}}", final_gis.iter().map(|v| v.to_string()).collect::<Vec<_>>().join(","));
-        }}
-        """
+
+def _measure_backend(
+    backend: str,
+) -> tuple[
+    float,
+    float,
+    float,
+    list[float],
+    npt.NDArray[np.float64],
+    int,
+    tuple[float, float, float, float],
+]:
+    """Warm one public batch lane, then return timings and final numerical state."""
+    _configured().simulate(
+        min(WARMUP_STEPS, N_STEPS),
+        CURRENT,
+        DELTA_GE,
+        DELTA_GI,
+        backend=backend,
     )
-    with tempfile.TemporaryDirectory() as temp_dir:
-        source = Path(temp_dir) / "bench_coba_lif.rs"
-        binary = Path(temp_dir) / "bench_coba_lif"
-        source.write_text(program, encoding="utf-8")
-        try:
-            _run_command(["rustc", "-O", str(source), "-o", str(binary)])
-            completed = _run_command([str(binary)])
-        except (FileNotFoundError, subprocess.CalledProcessError) as exc:
-            return {"backend": "rust", "skipped": True, "reason": f"Rust benchmark failed: {exc}"}
-    fields = _parse_key_value_stdout(completed.stdout)
-    values = [float(value) for value in fields["results_ns_per_step"].split(",")]
-    spike_counts = [int(value) for value in fields["spike_counts"].split(",")]
-    return {
-        "backend": "rust",
-        "command": "rustc -O <temp coba_lif safety benchmark> && <temp benchmark>",
-        "steps": STEPS,
-        "repeats": len(values),
-        "current": CURRENT,
-        "median_ns_per_step": float(fields["median_ns_per_step"]),
-        "min_ns_per_step": float(fields["min_ns_per_step"]),
-        "max_ns_per_step": float(fields["max_ns_per_step"]),
-        "results_ns_per_step": values,
-        "spikes": int(statistics.median(spike_counts)),
-        "spike_counts": spike_counts,
-        "final_vs": [float(value) for value in fields["final_vs"].split(",")],
-        "final_ges": [float(value) for value in fields["final_ges"].split(",")],
-        "final_gis": [float(value) for value in fields["final_gis"].split(",")],
-    }
-
-
-def _run_go_backend() -> dict[str, object]:
-    command = [
-        "go",
-        "test",
-        "src/sc_neurocore/accel/go/services/coba_lif.go",
-        "src/sc_neurocore/accel/go/services/coba_lif_test.go",
-        "-run",
-        "^$",
-        "-bench",
-        "BenchmarkCOBALIFRK4$",
-        "-benchtime",
-        "200000x",
-        "-count",
-        str(REPEATS),
-    ]
-    try:
-        completed = _run_command(command)
-    except (FileNotFoundError, subprocess.CalledProcessError) as exc:
-        return {"backend": "go", "skipped": True, "reason": f"Go benchmark failed: {exc}"}
-    values: list[float] = []
-    spike_counts: list[int] = []
-    for line in completed.stdout.splitlines():
-        if match := GO_BENCH_RE.match(line):
-            values.append(float(match.group(1)))
-            if spike_match := GO_SPIKES_RE.search(line):
-                spike_counts.append(int(float(spike_match.group(1))))
-    if not values:
-        return {"backend": "go", "skipped": True, "reason": "Go benchmark produced no rows"}
-    return {
-        "backend": "go",
-        "command": " ".join(command),
-        "steps": STEPS,
-        "repeats": len(values),
-        "current": CURRENT,
-        "median_ns_per_step": statistics.median(values),
-        "min_ns_per_step": min(values),
-        "max_ns_per_step": max(values),
-        "results_ns_per_step": values,
-        "spikes": int(statistics.median(spike_counts)) if spike_counts else 0,
-        "spike_counts": spike_counts,
-    }
-
-
-def _run_julia_backend() -> dict[str, object]:
-    script = f"""
-using Statistics
-include("src/sc_neurocore/accel/julia/neurons/coba_lif.jl")
-const STEPS = {STEPS}
-const REPEATS = {REPEATS}
-const CURRENT = {CURRENT}
-function run_once()
-    s = CobaLifAccel.COBALIFNeuronState()
+    elapsed_ms: list[float] = []
+    trace: npt.NDArray[np.float64] = np.empty(0, dtype=np.float64)
     spikes = 0
-    start = time_ns()
-    for _ in 1:STEPS
-        result = CobaLifAccel.step!(s, CURRENT)
-        if result < 0
-            error("invalid RK4 step")
-        end
-        spikes += result
-    end
-    elapsed = time_ns() - start
-    return elapsed / STEPS, spikes, s.v, s.g_e, s.g_i
-end
-results = [run_once() for _ in 1:REPEATS]
-values = [r[1] for r in results]
-println("median_ns_per_step=", median(values))
-println("min_ns_per_step=", minimum(values))
-println("max_ns_per_step=", maximum(values))
-println("results_ns_per_step=", join(values, ","))
-println("spike_counts=", join([r[2] for r in results], ","))
-println("final_vs=", join([r[3] for r in results], ","))
-println("final_ges=", join([r[4] for r in results], ","))
-println("final_gis=", join([r[5] for r in results], ","))
-"""
-    command = ["julia", "--project=.", "-e", script]
-    try:
-        completed = _run_command(command)
-    except (FileNotFoundError, subprocess.CalledProcessError) as exc:
-        return {"backend": "julia", "skipped": True, "reason": f"Julia benchmark failed: {exc}"}
-    fields = _parse_key_value_stdout(completed.stdout)
-    values = [float(value) for value in fields["results_ns_per_step"].split(",")]
-    spike_counts = [int(value) for value in fields["spike_counts"].split(",")]
-    return {
-        "backend": "julia",
-        "command": "julia --project=. -e <coba_lif RK4 benchmark>",
-        "steps": STEPS,
-        "repeats": len(values),
-        "current": CURRENT,
-        "median_ns_per_step": float(fields["median_ns_per_step"]),
-        "min_ns_per_step": float(fields["min_ns_per_step"]),
-        "max_ns_per_step": float(fields["max_ns_per_step"]),
-        "results_ns_per_step": values,
-        "spikes": int(statistics.median(spike_counts)),
-        "spike_counts": spike_counts,
-        "final_vs": [float(value) for value in fields["final_vs"].split(",")],
-        "final_ges": [float(value) for value in fields["final_ges"].split(",")],
-        "final_gis": [float(value) for value in fields["final_gis"].split(",")],
-    }
-
-
-def _run_mojo_backend() -> dict[str, object]:
-    program = textwrap.dedent(
-        f"""
-        from coba_lif import coba_lif_next_ge, coba_lif_next_gi, coba_lif_next_v, coba_lif_step_spike
-        from std.time import perf_counter
-
-        alias STEPS = {STEPS}
-        alias REPEATS = {REPEATS}
-        alias CURRENT = {CURRENT}
-
-        def run_once() raises:
-            var v = -65.0
-            var g_e = 0.0
-            var g_i = 0.0
-            var spikes = 0
-            var start = perf_counter()
-            for _ in range(STEPS):
-                var next_v = coba_lif_next_v(v, g_e, g_i, CURRENT, 200.0, 10.0, -65.0, 0.0, -80.0, 5.0, 10.0, -50.0, -65.0, 0.1)
-                var next_ge = coba_lif_next_ge(v, g_e, g_i, CURRENT, 200.0, 10.0, -65.0, 0.0, -80.0, 5.0, 10.0, -50.0, -65.0, 0.1)
-                var next_gi = coba_lif_next_gi(v, g_e, g_i, CURRENT, 200.0, 10.0, -65.0, 0.0, -80.0, 5.0, 10.0, -50.0, -65.0, 0.1)
-                var spike = coba_lif_step_spike(v, g_e, g_i, CURRENT, 200.0, 10.0, -65.0, 0.0, -80.0, 5.0, 10.0, -50.0, -65.0, 0.1)
-                if spike < 0:
-                    raise Error("invalid RK4 step")
-                v = next_v
-                g_e = next_ge
-                g_i = next_gi
-                if spike == 1:
-                    v = -65.0
-                    spikes += 1
-            var elapsed = perf_counter() - start
-            print("ns_per_step=", Float64(elapsed) * 1000000000.0 / Float64(STEPS))
-            print("spikes=", spikes)
-            print("final_v=", v)
-            print("final_ge=", g_e)
-            print("final_gi=", g_i)
-
-        def main() raises:
-            for _ in range(REPEATS):
-                run_once()
-        """
+    final_state = (-59.0, 1.25, 0.75, 0.3)
+    for _repeat in range(N_REPEATS):
+        gc.collect()
+        neuron = _configured()
+        started = time.perf_counter_ns()
+        trace, spikes = neuron.simulate(
+            N_STEPS,
+            CURRENT,
+            DELTA_GE,
+            DELTA_GI,
+            backend=backend,
+        )
+        elapsed_ms.append((time.perf_counter_ns() - started) / 1_000_000.0)
+        final_state = (neuron.v, neuron.g_e, neuron.g_i, neuron.refractory_time)
+    return (
+        statistics.median(elapsed_ms),
+        min(elapsed_ms),
+        max(elapsed_ms),
+        elapsed_ms,
+        trace,
+        spikes,
+        final_state,
     )
-    with tempfile.TemporaryDirectory() as temp_dir:
-        source = Path(temp_dir) / "bench_coba_lif.mojo"
-        source.write_text(program, encoding="utf-8")
-        command = [
-            "mojo",
-            "-I",
-            str(REPO_ROOT / "src/sc_neurocore/accel/mojo/kernels"),
+
+
+def _verify_rust_safety() -> dict[str, Any]:
+    """Compile and execute the actual standalone Rust-safety test module."""
+    source = REPOSITORY / "src/sc_neurocore/accel/rust/safety/coba_lif.rs"
+    with tempfile.TemporaryDirectory(prefix="sc_neurocore_coba_lif_safety_") as temp_dir:
+        binary = Path(temp_dir) / "coba_lif_safety_tests"
+        compile_command = [
+            "rustc",
+            "--edition=2021",
+            "--test",
             str(source),
+            "-O",
+            "-o",
+            str(binary),
         ]
         try:
-            completed = _run_command(command)
-        except (FileNotFoundError, subprocess.CalledProcessError) as exc:
-            return {"backend": "mojo", "skipped": True, "reason": f"Mojo benchmark failed: {exc}"}
-    fields: dict[str, list[str]] = {}
-    for line in completed.stdout.splitlines():
-        if "=" in line:
-            key, value = line.split("=", 1)
-            fields.setdefault(key.strip(), []).append(value.strip())
-    values = [float(value) for value in fields.get("ns_per_step", [])]
-    spike_counts = [int(value) for value in fields.get("spikes", [])]
-    if not values:
-        return {"backend": "mojo", "skipped": True, "reason": "Mojo benchmark produced no rows"}
+            compiled = subprocess.run(
+                compile_command,
+                cwd=REPOSITORY,
+                capture_output=True,
+                text=True,
+                timeout=120,
+                check=False,
+            )
+            if compiled.returncode == 0:
+                executed = subprocess.run(
+                    [str(binary)],
+                    cwd=REPOSITORY,
+                    capture_output=True,
+                    text=True,
+                    timeout=120,
+                    check=False,
+                )
+            else:
+                executed = compiled
+        except (OSError, subprocess.TimeoutExpired) as exc:
+            return {
+                "command": " ".join(compile_command) + " && <compiled-test-binary>",
+                "passed": False,
+                "returncode": -1,
+                "output_tail": [str(exc)],
+            }
+    output = (executed.stdout + "\n" + executed.stderr).strip().splitlines()
     return {
-        "backend": "mojo",
-        "command": "mojo -I src/sc_neurocore/accel/mojo/kernels <temp coba_lif benchmark>",
-        "steps": STEPS,
-        "repeats": len(values),
-        "current": CURRENT,
-        "median_ns_per_step": statistics.median(values),
-        "min_ns_per_step": min(values),
-        "max_ns_per_step": max(values),
-        "results_ns_per_step": values,
-        "spikes": int(statistics.median(spike_counts)),
-        "spike_counts": spike_counts,
-        "final_vs": [float(value) for value in fields.get("final_v", [])],
-        "final_ges": [float(value) for value in fields.get("final_ge", [])],
-        "final_gis": [float(value) for value in fields.get("final_gi", [])],
+        "command": " ".join(compile_command[:-2]) + " -o <temp-binary> && <temp-binary>",
+        "passed": compiled.returncode == 0 and executed.returncode == 0,
+        "returncode": executed.returncode if compiled.returncode == 0 else compiled.returncode,
+        "output_tail": output[-12:],
     }
 
 
-def main() -> int:
-    """Run the local multi-backend COBA LIF RK4 benchmark."""
-
-    backend_summary = {
-        "python": _run_python_backend(),
-        "rust": _run_rust_backend(),
-        "go": _run_go_backend(),
-        "julia": _run_julia_backend(),
-        "mojo": _run_mojo_backend(),
+def _runtime_versions() -> dict[str, str]:
+    """Record every runtime involved in the measured closure."""
+    home = Path.home()
+    mojo = _tool_path("mojo", home / ".pixi/bin/mojo") or ""
+    return {
+        "python": platform.python_version(),
+        "numpy": np.__version__,
+        "rust": _tool_version([_tool_path("rustc") or "", "--version"]),
+        "julia": _tool_version([_tool_path("julia") or "", "--version"]),
+        "go": _tool_version([_tool_path("go") or "", "version"]),
+        "mojo": _tool_version([mojo, "--version"]),
     }
-    payload = {
-        "spdx_license": "AGPL-3.0-or-later",
-        "benchmark": "COBALIFNeuron candidate-first RK4 conductance ODE",
-        "evidence_class": "local_regression_non_isolated",
+
+
+def _environment(load_start: tuple[float, float, float]) -> dict[str, Any]:
+    """Capture affinity and load without overstating exclusive isolation."""
+    affinity = sorted(os.sched_getaffinity(0))
+    cpu = affinity[0] if len(affinity) == 1 else None
+    governor = (
+        _read_optional(Path(f"/sys/devices/system/cpu/cpu{cpu}/cpufreq/scaling_governor"))
+        if cpu is not None
+        else "mixed-or-unpinned"
+    )
+    return {
+        "cpu": _cpu_model(),
+        "platform": platform.platform(),
+        "affinity": affinity,
+        "single_cpu_pinned": len(affinity) == 1,
+        "exclusive_cpu_isolation_claimed": False,
+        "kernel_isolated_cpus": _read_optional(Path("/sys/devices/system/cpu/isolated")),
+        "kernel_nohz_full_cpus": _read_optional(Path("/sys/devices/system/cpu/nohz_full")),
+        "governor": governor,
+        "load_average_start": list(load_start),
+        "load_average_end": list(os.getloadavg()),
+        "measurement_scope": (
+            "single-logical-CPU taskset affinity; CPU is not claimed exclusively isolated"
+        ),
+        "runtime_versions": _runtime_versions(),
+    }
+
+
+def main(argv: list[str]) -> int:
+    """Run the controlled benchmark and write its evidence artifact."""
+    parser = argparse.ArgumentParser(description="Controlled COBA LIF five-backend benchmark")
+    parser.add_argument("--json", type=Path, required=True)
+    parser.add_argument("--allow-unpinned", action="store_true")
+    parser.add_argument("--allow-unavailable-backends", action="store_true")
+    args = parser.parse_args(argv)
+
+    affinity = sorted(os.sched_getaffinity(0))
+    if len(affinity) != 1 and not args.allow_unpinned:
+        print(f"Refusing unpinned benchmark; affinity is {affinity}")
+        return 2
+
+    load_start = os.getloadavg()
+    probes = {backend: _probe_backend(backend) for backend in BACKENDS}
+    missing = [backend for backend, (available, _reason) in probes.items() if not available]
+    if missing and not args.allow_unavailable_backends:
+        print("Missing required backend(s): " + ", ".join(missing))
+        return 2
+
+    rows: dict[str, dict[str, Any]] = {}
+    reference: npt.NDArray[np.float64] | None = None
+    reference_ms: float | None = None
+    reference_spikes: int | None = None
+    reference_state: tuple[float, float, float, float] | None = None
+    for backend in BACKENDS:
+        available, reason = probes[backend]
+        if not available:
+            rows[backend] = {"available": False, "used": False, "unavailable_reason": reason}
+            continue
+        median_ms, minimum_ms, maximum_ms, samples_ms, trace, spikes, final_state = (
+            _measure_backend(backend)
+        )
+        if backend == "python":
+            reference = trace
+            reference_ms = median_ms
+            reference_spikes = spikes
+            reference_state = final_state
+            trace_parity = 0.0
+            state_parity = 0.0
+        else:
+            if (
+                reference is None
+                or reference_ms is None
+                or reference_spikes is None
+                or reference_state is None
+            ):
+                raise RuntimeError("Python reference must be measured first")
+            trace_parity = float(np.max(np.abs(trace - reference))) if trace.size else 0.0
+            state_parity = max(
+                abs(candidate - expected)
+                for candidate, expected in zip(final_state, reference_state, strict=True)
+            )
+        rows[backend] = {
+            "available": True,
+            "used": True,
+            "median_call_ms": median_ms,
+            "minimum_call_ms": minimum_ms,
+            "maximum_call_ms": maximum_ms,
+            "samples_call_ms": samples_ms,
+            "median_ns_per_step": median_ms * 1_000_000.0 / N_STEPS,
+            "speedup_vs_python": reference_ms / median_ms if reference_ms is not None else 1.0,
+            "trace_max_abs_diff": trace_parity,
+            "state_max_abs_diff": state_parity,
+            "parity_max_abs_diff": max(trace_parity, state_parity),
+            "event_count": spikes,
+            "event_count_matches_python": (
+                True if reference_spikes is None else spikes == reference_spikes
+            ),
+            "trace_sha256": _trace_digest(trace),
+            "final_state": dict(
+                zip(("v", "g_e", "g_i", "refractory_time"), final_state, strict=True)
+            ),
+        }
+
+    measured_order = sorted(
+        (backend for backend in BACKENDS if rows[backend].get("used") is True),
+        key=lambda backend: float(rows[backend]["median_call_ms"]),
+    )
+    native_order = [backend for backend in measured_order if backend != "python"]
+    rust_safety = _verify_rust_safety()
+    report: dict[str, Any] = {
+        "schema_version": "sc-neurocore.polyglot-benchmark.v1",
+        "kernel": KERNEL,
+        "evidence_class": "local_regression_single_cpu_affinity_non_exclusive",
         "production_speed_claim": False,
         "hardware_measurement_claimed": False,
-        "timestamp_utc": datetime.now(UTC).isoformat(),
-        "host": platform.node(),
-        "platform": platform.platform(),
-        "python": platform.python_version(),
-        "steps": STEPS,
-        "repeats": REPEATS,
-        "current": CURRENT,
-        "backend_summary": backend_summary,
+        "timestamp_utc": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
+        "command": (
+            "taskset --cpu-list <cpu> env PYTHONPATH=src:. .venv/bin/python "
+            "benchmarks/bench_model_coba_lif.py --json <artifact>"
+        ),
+        "workload": {
+            "n_steps": N_STEPS,
+            "repeats": N_REPEATS,
+            "warmup_steps": WARMUP_STEPS,
+            "current": CURRENT,
+            "delta_ge": DELTA_GE,
+            "delta_gi": DELTA_GI,
+            "initial_state": {
+                "v": -59.0,
+                "g_e": 1.25,
+                "g_i": 0.75,
+                "refractory_time": 0.3,
+            },
+            "parameters": "complete non-default 15-double native ABI configuration",
+            "trace_atol": TRACE_ATOL,
+        },
+        "meta": _environment(load_start),
+        "backends": rows,
+        "measured_order": measured_order,
+        "recommended_auto_backend": native_order[0] if native_order else "python",
+        "verification": {"rust_safety": rust_safety},
         "source_hashes": _source_hashes(),
     }
-    OUTPUT.parent.mkdir(parents=True, exist_ok=True)
-    OUTPUT.write_text(json.dumps(payload, indent=2, sort_keys=True) + "\n", encoding="utf-8")
-    print(json.dumps(payload, indent=2, sort_keys=True))
+    args.json.parent.mkdir(parents=True, exist_ok=True)
+    args.json.write_text(json.dumps(report, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+
+    print(f"COBA LIF benchmark: {N_STEPS} steps x {N_REPEATS} repeats")
+    for backend in measured_order:
+        row = rows[backend]
+        print(
+            f"{backend:>7}: {float(row['median_call_ms']):10.3f} ms  "
+            f"{float(row['speedup_vs_python']):8.2f}x  "
+            f"max|delta|={float(row['parity_max_abs_diff']):.3e}  "
+            f"events={int(row['event_count'])}"
+        )
+    print(f"Measured order: {', '.join(measured_order)}")
+    print(f"Recommended auto backend: {report['recommended_auto_backend']}")
+    print(f"Rust safety tests: {'PASS' if rust_safety['passed'] else 'FAIL'}")
+    print(f"Wrote {args.json}")
+
+    if not rust_safety["passed"]:
+        return 5
+    if any(not bool(row.get("event_count_matches_python", True)) for row in rows.values()):
+        return 3
+    if any(
+        float(row.get("parity_max_abs_diff", 0.0)) > TRACE_ATOL
+        for row in rows.values()
+        if row.get("used") is True
+    ):
+        return 4
     return 0
 
 
 if __name__ == "__main__":
-    raise SystemExit(main())
+    import sys
+
+    raise SystemExit(main(sys.argv[1:]))

@@ -1,0 +1,18 @@
+# SymbiYosys job for catalogue model sc_cobalifneuron
+# Dual-axis perfect model formal (BMC)
+
+[options]
+mode bmc
+depth 4
+
+[engines]
+smtbmc z3
+
+[script]
+read -formal sc_cobalifneuron_formal.v
+read -formal sc_cobalifneuron.v
+prep -top sc_cobalifneuron_formal
+
+[files]
+sc_cobalifneuron_formal.v
+sc_cobalifneuron.v

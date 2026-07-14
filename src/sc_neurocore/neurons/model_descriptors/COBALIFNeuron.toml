@@ -11,15 +11,21 @@ schema_version = 2
 name = "COBALIFNeuron"
 class_name = "COBALIFNeuron"
 module = "coba_lif"
-display_name = ""
-summary = "Conductance-based LIF with coupled RK4 synaptic conductance state."
-family = "Hardware / neuromorphic"
-category = "hardware-neuromorphic"
-biophysical_detail = "point"
-maturity = "experimental"
-intended_use = []
-hardware_fit = []
+display_name = "Conductance-based LIF"
+summary = "Brette et al. Benchmark 1 conductance-based LIF cell with coupled RK4 synaptic state and absolute refractoriness."
+family = "Integrate-and-Fire"
+category = "integrate-and-fire"
+biophysical_detail = "conductance"
+maturity = "validated"
+intended_use = [
+    "deterministic conductance-based point-neuron simulation",
+    "cross-backend and schema-to-RTL parity reference",
+]
+hardware_fit = [
+    "fixed-point point-neuron RTL",
+]
 behavior_tags = [
+    "conductance-based",
     "excitable",
     "rate-coded",
     "tonic",
@@ -27,31 +33,61 @@ behavior_tags = [
 
 [provenance]
 authors = [
-    "Destexhe, A.",
+    "Brette, R.",
     "Rudolph, M.",
-    "Fellous, J.-M.",
-    "Sejnowski, T. J.",
+    "Carnevale, T.",
+    "Hines, M.",
+    "Beeman, D.",
+    "Bower, J. M.",
+    "Diesmann, M.",
+    "Morrison, A.",
+    "Goodman, P. H.",
+    "Harris, F. C. Jr.",
+    "Zirpe, M.",
+    "Natschläger, T.",
+    "Pecevski, D.",
+    "Ermentrout, B.",
+    "Djurfeldt, M.",
+    "Lansner, A.",
+    "Rochel, O.",
+    "Vieville, T.",
+    "Muller, E.",
+    "Davison, A. P.",
+    "El Boustani, S.",
+    "Destexhe, A.",
 ]
-year = 2001
-doi = "10.1016/s0306-4522(01)00344-x"
-paper_title = "Fluctuating synaptic conductances recreate in vivo-like activity in neocortical neurons"
+year = 2007
+doi = "10.1007/s10827-007-0038-6"
+paper_title = "Simulation of networks of spiking neurons: A review of tools and strategies"
+url = "https://doi.org/10.1007/s10827-007-0038-6"
 
 [state.v]
-init = -65.0
+init = -60.0
+unit = "mV"
+meaning = "membrane voltage after the most recent complete macro step"
 
 [state.g_e]
 init = 0.0
+unit = "nS"
+meaning = "excitatory synaptic conductance"
 
 [state.g_i]
 init = 0.0
+unit = "nS"
+meaning = "inhibitory synaptic conductance"
+
+[state.refractory_time]
+init = 0.0
+unit = "ms"
+meaning = "remaining absolute refractory voltage-hold interval"
 
 [parameters.c_m]
 default = 200.0
 unit = "pF"
 meaning = "membrane capacitance"
 range = [
-    50.0,
-    500.0,
+    1.0,
+    1000.0,
 ]
 
 [parameters.g_l]
@@ -59,84 +95,142 @@ default = 10.0
 unit = "nS"
 meaning = "leak conductance"
 range = [
-    1.0,
-    50.0,
+    0.0,
+    100.0,
 ]
 
 [parameters.e_l]
-default = -65.0
+default = -60.0
 unit = "mV"
 meaning = "leak reversal potential"
 range = [
-    -80.0,
-    -50.0,
+    -100.0,
+    -30.0,
 ]
 
 [parameters.e_e]
 default = 0.0
 unit = "mV"
-meaning = "excitatory synapse reversal potential"
+meaning = "excitatory synaptic reversal potential"
 range = [
-    -10.0,
-    10.0,
+    -30.0,
+    30.0,
 ]
 
 [parameters.e_i]
 default = -80.0
 unit = "mV"
-meaning = "inhibitory synapse reversal potential"
+meaning = "inhibitory synaptic reversal potential"
 range = [
-    -90.0,
-    -60.0,
+    -120.0,
+    -40.0,
 ]
 
 [parameters.tau_e]
 default = 5.0
 unit = "ms"
-meaning = "excitatory synaptic conductance time constant"
+meaning = "excitatory conductance decay time constant"
 range = [
-    1.0,
-    20.0,
+    0.01,
+    1000.0,
 ]
 
 [parameters.tau_i]
 default = 10.0
 unit = "ms"
-meaning = "inhibitory synaptic conductance time constant"
+meaning = "inhibitory conductance decay time constant"
 range = [
-    1.0,
-    30.0,
+    0.01,
+    1000.0,
 ]
 
 [parameters.v_threshold]
 default = -50.0
 unit = "mV"
-meaning = "spike threshold"
+meaning = "post-RK4 raw-candidate spike threshold"
 range = [
-    -60.0,
-    -30.0,
+    -100.0,
+    100.0,
 ]
 
 [parameters.v_reset]
-default = -65.0
+default = -60.0
 unit = "mV"
-meaning = "post-spike reset potential"
+meaning = "post-spike and refractory-hold voltage"
 range = [
-    -90.0,
-    -50.0,
+    -200.0,
+    100.0,
+]
+
+[parameters.refractory_period]
+default = 5.0
+unit = "ms"
+meaning = "absolute refractory voltage-hold duration"
+range = [
+    0.001,
+    1000.0,
 ]
 
 [integration]
 dt = 0.1
-method = "euler"
+method = "map"
 
 [dynamics]
+v = "(v_reset if refractory_time > 0.0 else (v_reset if (base_v + (dt / 6.0) * (weighted_v + ((-g_l * ((base_v + dt * last_k_v) - e_l) - ((base_ge + dt * last_k_ge) * ((base_v + dt * last_k_v) - e_e) + (base_gi + dt * last_k_gi) * ((base_v + dt * last_k_v) - e_i)) + I) / c_m))) >= v_threshold else (base_v + (dt / 6.0) * (weighted_v + ((-g_l * ((base_v + dt * last_k_v) - e_l) - ((base_ge + dt * last_k_ge) * ((base_v + dt * last_k_v) - e_e) + (base_gi + dt * last_k_gi) * ((base_v + dt * last_k_v) - e_i)) + I) / c_m))))) if phase > 2.5 else v"
+g_e = "base_ge + (dt / 6.0) * (weighted_ge + (-(base_ge + dt * last_k_ge) / tau_e)) if phase > 2.5 else g_e"
+g_i = "base_gi + (dt / 6.0) * (weighted_gi + (-(base_gi + dt * last_k_gi) / tau_i)) if phase > 2.5 else g_i"
+refractory_time = "((0.0 if refractory_time <= dt * (1.0 + 1.0e-12) else refractory_time - dt) if refractory_time > 0.0 else (refractory_period if (base_v + (dt / 6.0) * (weighted_v + ((-g_l * ((base_v + dt * last_k_v) - e_l) - ((base_ge + dt * last_k_ge) * ((base_v + dt * last_k_v) - e_e) + (base_gi + dt * last_k_gi) * ((base_v + dt * last_k_v) - e_i)) + I) / c_m))) >= v_threshold else 0.0)) if phase > 2.5 else refractory_time"
+spike_flag = "(0.0 if refractory_time > 0.0 else (1.0 if (base_v + (dt / 6.0) * (weighted_v + ((-g_l * ((base_v + dt * last_k_v) - e_l) - ((base_ge + dt * last_k_ge) * ((base_v + dt * last_k_v) - e_e) + (base_gi + dt * last_k_gi) * ((base_v + dt * last_k_v) - e_i)) + I) / c_m))) >= v_threshold else 0.0)) if phase > 2.5 else spike_flag"
+phase = "(phase + 1.0) % 4.0"
+base_v = "v if phase < 0.5 else base_v"
+base_ge = "(g_e + delta_ge) if phase < 0.5 else base_ge"
+base_gi = "(g_i + delta_gi) if phase < 0.5 else base_gi"
+last_k_v = "0.0 if refractory_time > 0.0 else (((-g_l * (v - e_l) - ((g_e + delta_ge) * (v - e_e) + (g_i + delta_gi) * (v - e_i)) + I) / c_m) if phase < 0.5 else (((-g_l * ((base_v + dt * last_k_v) - e_l) - ((base_ge + dt * last_k_ge) * ((base_v + dt * last_k_v) - e_e) + (base_gi + dt * last_k_gi) * ((base_v + dt * last_k_v) - e_i)) + I) / c_m) if phase > 2.5 else ((-g_l * ((base_v + 0.5 * dt * last_k_v) - e_l) - ((base_ge + 0.5 * dt * last_k_ge) * ((base_v + 0.5 * dt * last_k_v) - e_e) + (base_gi + 0.5 * dt * last_k_gi) * ((base_v + 0.5 * dt * last_k_v) - e_i)) + I) / c_m)))"
+last_k_ge = "(-(g_e + delta_ge) / tau_e) if phase < 0.5 else ((-(base_ge + dt * last_k_ge) / tau_e) if phase > 2.5 else (-(base_ge + 0.5 * dt * last_k_ge) / tau_e))"
+last_k_gi = "(-(g_i + delta_gi) / tau_i) if phase < 0.5 else ((-(base_gi + dt * last_k_gi) / tau_i) if phase > 2.5 else (-(base_gi + 0.5 * dt * last_k_gi) / tau_i))"
+weighted_v = "0.0 if refractory_time > 0.0 else (((-g_l * (v - e_l) - ((g_e + delta_ge) * (v - e_e) + (g_i + delta_gi) * (v - e_i)) + I) / c_m) if phase < 0.5 else (weighted_v + 2.0 * ((-g_l * ((base_v + 0.5 * dt * last_k_v) - e_l) - ((base_ge + 0.5 * dt * last_k_ge) * ((base_v + 0.5 * dt * last_k_v) - e_e) + (base_gi + 0.5 * dt * last_k_gi) * ((base_v + 0.5 * dt * last_k_v) - e_i)) + I) / c_m) if phase < 2.5 else weighted_v))"
+weighted_ge = "(-(g_e + delta_ge) / tau_e) if phase < 0.5 else (weighted_ge + 2.0 * (-(base_ge + 0.5 * dt * last_k_ge) / tau_e) if phase < 2.5 else weighted_ge)"
+weighted_gi = "(-(g_i + delta_gi) / tau_i) if phase < 0.5 else (weighted_gi + 2.0 * (-(base_gi + 0.5 * dt * last_k_gi) / tau_i) if phase < 2.5 else weighted_gi)"
 
 [backends.python]
 status = "implemented"
+parity = "exact"
+
+[backends.rust]
+status = "implemented"
+parity = "exact"
+
+[backends.julia]
+status = "implemented"
+parity = "exact"
+
+[backends.go]
+status = "implemented"
+parity = "exact"
+
+[backends.mojo]
+status = "implemented"
+parity = "ulp-bounded"
 
 [reproducibility]
+reference_config = "{\"n_steps\":400,\"current\":650.0,\"backend\":\"python\",\"parameters\":\"defaults\"}"
+golden_trace_sha256 = "da7c58509d55ae4cebb323ebdba9698e2994920e6a55fcbf0048e539e8c03e9c"
+golden_citation = "doi:10.1007/s10827-007-0038-6"
 
 [documentation]
 slug = "models/coba_lif"
-notes = ""
+notes = "The continuous equations and factory defaults are Brette et al. (2007), Appendix 2, Benchmark 1. RK4 is the maintained repository discretisation, not a method prescribed by the paper. The method=map schema lowers one coupled RK4 macro step into four explicit stage-register substeps, then makes one raw-candidate threshold/reset decision. Auxiliary schema stage registers are not biological state."
+
+[validation]
+dynamics_faithful = true
+metric = "parity"
+operating_point = "Brette Benchmark 1 defaults; independent 400-step I=650 pA trace with 0.15/0.07 nS boundary events; complete non-default four-state native ABI trace"
+tolerance = "independent/schema float features <=1e-12; native spike counts exact and states <=1e-13; Q24.24 spike events exact with voltage <=1e-5 mV and conductances <=5e-6 nS"
+evidence = "tests/test_reference_coba_lif.py::test_trace_features_match_independent_source_equations"
+
+[silicon]
+compiles = true
+cosim_validated = true
+cosim_evidence = "tests/test_cosim_coba_lif.py::test_q2424_rtl_preserves_spikes_and_all_physical_states"
+target_tier = "H1"
+terminal_reason = "The four-state point-neuron recurrence has compile-clean Q24.24 RTL, real Python-to-Verilog event/state co-simulation, and bounded catalogue formal checks; higher rungs require synthesis, timing, and hardware programmes."
