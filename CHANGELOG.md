@@ -5,6 +5,18 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 ## [Unreleased]
 
 ### Added
+- Replaced the 1,138-line UVM generator GodFile with a 55-line historical
+  facade and six bounded responsibility modules for RTL parsing, configuration,
+  artifact packaging, UVM component emission, simulator/formal harnesses, and
+  orchestration. The exact 13-name package API, callable signatures, class
+  identities, pickle paths, and six representative parent-generated payload
+  digests are preserved.
+- Added UVM architecture contracts for exclusive definition ownership, the
+  acyclic import graph, module-specific size ceilings, and deterministic bundle
+  fingerprints. The 82-test focused cohort covers all 422 statements and 112
+  branches across the eight governed package modules exactly. The split does
+  not promote the draft emitted UVM/formal surface or its unrelated
+  Go/Rust/Julia/Mojo placeholders, and introduces no throughput claim.
 - Replaced the 1,145-line CMOS profile registration GodFile with a 67-line
   historical facade and five bounded responsibility modules for FPGA targets,
   conventional accelerators, embedded processors, architecture paradigms, and

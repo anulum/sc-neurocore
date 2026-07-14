@@ -74,14 +74,18 @@ conformity.
   - `TapeOutChecklist` — evidence-derived readiness state
 
 #### uvm_gen — UVM Testbench Generator
-- **Source:** `src/sc_neurocore/uvm_gen/uvm_gen.py`
-- **Tests:** `tests/test_uvm_gen/test_uvm_gen.py` — **72 tests**
+- **Compatibility facade:** `src/sc_neurocore/uvm_gen/uvm_gen.py`
+- **Sources:** `src/sc_neurocore/uvm_gen/{_rtl,_config,_benchmark,_component_emitters,_harness_emitters,_generator}.py`
+- **Tests:** `tests/test_uvm_gen/` — **82 focused tests**
 - **Key Classes:**
   - `UVMGenerator` — Full UVM testbench emission
   - `RTLModule` — RTL module abstraction
   - `StimulusConfig` — Constrained-random stimulus
   - `CoverageSpec` — Functional coverage specification
   - `ScoreboardConfig` — Self-checking scoreboard
+- **Evidence boundary:** Stable Python API and byte-exact deterministic text;
+  emitted vendor-UVM/formal execution remains draft and is not promoted by the
+  responsibility split.
 
 #### chiplet — Multi-Die Chiplet Generator
 - **Sources:** `src/sc_neurocore/chiplet/{topology,routing,thermal,rtl,link_protocols,power,partition}.py`

@@ -36219,7 +36219,56 @@ array(&#91; True,  True,  True,  True,  True&#93;)
 
 ---
 
-## Module `uvm_gen.uvm_gen`
+## Module `uvm_gen._benchmark`
+
+### Class `UVMBenchmark`
+Complete generated UVM testbench.
+
+- **to_dict**()
+  - Return generated artefacts keyed by their output filenames.
+
+---
+
+## Module `uvm_gen._config`
+
+### Class `StimulusConfig`
+Configuration for randomised SC bitstream stimulus.
+
+
+### Class `CoverageSpec`
+Functional coverage specification.
+
+
+### Class `ScoreboardConfig`
+Scoreboard configuration for golden model comparison.
+
+
+### Class `FormalLink`
+Link between UVM assertions and SymbiYosys formal proofs.
+
+
+### Class `SimTarget`
+Simulation tool target for Makefile generation.
+
+
+---
+
+## Module `uvm_gen._generator`
+
+### Class `UVMGenerator`
+Generates complete UVM verification IP from an RTL module spec.
+
+- **__init__**(stimulus, coverage, scoreboard)
+- **generate**(rtl)
+  - Generate the complete UVM testbench for an RTL module.
+- **generate_multi**(modules)
+  - Generate UVM testbenches for multiple modules.
+- **generate_formal_links**(rtl)
+  - Generate formal-to-dynamic links for existing SymbiYosys modules.
+
+---
+
+## Module `uvm_gen._rtl`
 
 ### Class `PortDirection`
 SystemVerilog port direction tokens accepted by the UVM generator.
@@ -36260,43 +36309,6 @@ Parsed RTL module specification.
   - Total data-input width excluding clock and reset ports.
 - **total_output_bits**()
   - Total output width observed by generated verification components.
-
-### Class `StimulusConfig`
-Configuration for randomised SC bitstream stimulus.
-
-
-### Class `CoverageSpec`
-Functional coverage specification.
-
-
-### Class `ScoreboardConfig`
-Scoreboard configuration for golden model comparison.
-
-
-### Class `FormalLink`
-Link between UVM assertions and SymbiYosys formal proofs.
-
-
-### Class `SimTarget`
-Simulation tool target for Makefile generation.
-
-
-### Class `UVMBenchmark`
-Complete generated UVM testbench.
-
-- **to_dict**()
-  - Return generated artefacts keyed by their output filenames.
-
-### Class `UVMGenerator`
-Generates complete UVM verification IP from an RTL module spec.
-
-- **__init__**(stimulus, coverage, scoreboard)
-- **generate**(rtl)
-  - Generate the complete UVM testbench for an RTL module.
-- **generate_multi**(modules)
-  - Generate UVM testbenches for multiple modules.
-- **generate_formal_links**(rtl)
-  - Generate formal-to-dynamic links for existing SymbiYosys modules.
 
 ---
 

@@ -971,7 +971,7 @@
     "python_model_classes": 158,
     "python_model_source_modules": 153,
     "rust_pyo3_model_wrappers": 175,
-    "test_files": 1293
+    "test_files": 1294
   },
   "documentation": {
     "public_pages": [
@@ -4090,6 +4090,7 @@
       "tests/test_utils_extended.py",
       "tests/test_utils_rng_contracts.py",
       "tests/test_uvm_gen/test_uvm_gen.py",
+      "tests/test_uvm_gen/test_uvm_gen_architecture.py",
       "tests/test_uvm_gen/test_uvm_gen_package_api.py",
       "tests/test_validate_experimental_reports.py",
       "tests/test_variability_edge_cases.py",

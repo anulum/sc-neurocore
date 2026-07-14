@@ -14,7 +14,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 386
+expected_file_count = 392
 
 [[file]]
 path = "src/sc_neurocore/__init__.py"
@@ -686,7 +686,31 @@ rationale = "Public neuromorphic symbolic-reasoning package entry point."
 
 [[file]]
 path = "src/sc_neurocore/uvm_gen/uvm_gen.py"
-rationale = "Public UVM/SystemVerilog verification-IP generator documented in API and module-integration guides."
+rationale = "Historical UVM generator compatibility facade for stable imports and pickle-qualified names."
+
+[[file]]
+path = "src/sc_neurocore/uvm_gen/_rtl.py"
+rationale = "Parsed RTL contracts and module-header parser used by the public UVM generator."
+
+[[file]]
+path = "src/sc_neurocore/uvm_gen/_config.py"
+rationale = "Public stimulus, coverage, scoreboard, formal-link, and simulator-target contracts."
+
+[[file]]
+path = "src/sc_neurocore/uvm_gen/_benchmark.py"
+rationale = "Public deterministic UVM benchmark artifact contract."
+
+[[file]]
+path = "src/sc_neurocore/uvm_gen/_generator.py"
+rationale = "Public UVM benchmark generation orchestrator behind the stable facade."
+
+[[file]]
+path = "src/sc_neurocore/uvm_gen/_component_emitters.py"
+rationale = "Deterministic UVM transaction, sequence, component, and environment emitters."
+
+[[file]]
+path = "src/sc_neurocore/uvm_gen/_harness_emitters.py"
+rationale = "Deterministic top-level, formal, simulator, and regression harness emitters."
 
 [[file]]
 path = "src/sc_neurocore/uvm_gen/__init__.py"

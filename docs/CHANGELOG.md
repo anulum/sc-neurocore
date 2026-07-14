@@ -5,6 +5,25 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+### UVM generator responsibility modularisation
+
+- Replaced the 1,138-line mixed UVM generator with a 55-line historical facade
+  over RTL-contract/parser (183 lines), configuration (103), generated-artifact
+  packaging (57), UVM component emitters (509), simulator/formal harness
+  emitters (268), and orchestration (125).
+- Preserved the exact 13 package exports, signatures, object identities,
+  pickle-qualified paths, private emitter methods, and six representative
+  default/configured parent payload SHA-256 values. Those payloads cover every
+  generated artifact, file-list entry, and formal link.
+- Architecture contracts pin exclusive class ownership, the acyclic dependency
+  graph, facade and module ceilings, and deterministic payloads. The 82-test
+  focused package cohort covers all 422 statements and 112 branches exactly;
+  strict MyPy, Ruff, NumPy docstrings, and Bandit pass on the split surface.
+- This is a behaviour-preserving Python text-generator refactor. The
+  architecture map still labels emitted UVM/formal execution as draft; no
+  vendor-UVM compile, polyglot, or throughput promotion is claimed. Existing
+  generated Go/Rust/Julia/Mojo placeholders remain explicit adjacent debt.
+
 ### CMOS profile responsibility modularisation
 
 - Replaced the 1,145-line CMOS profile registration GodFile with a 67-line
