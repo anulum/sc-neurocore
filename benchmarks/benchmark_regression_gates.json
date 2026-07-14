@@ -3711,6 +3711,114 @@
         "src/sc_neurocore/neurons/model_schemas/threshold_linear_rate.toml": "source_hashes.src/sc_neurocore/neurons/model_schemas/threshold_linear_rate.toml",
         "src/sc_neurocore/neurons/models/threshold_linear_rate.py": "source_hashes.src/sc_neurocore/neurons/models/threshold_linear_rate.py"
       }
+    },
+    {
+      "artefact": "benchmarks/results/bench_wilson_cowan.json",
+      "description": "Normalised coupled Wilson-Cowan E/I RK4 trajectories across five public batch dispatchers.",
+      "expected_values": {
+        "backends.go.available": true,
+        "backends.go.final_state_matches_python": true,
+        "backends.go.trace_matches_python": true,
+        "backends.go.trace_mismatch_count": 0,
+        "backends.go.used": true,
+        "backends.julia.available": true,
+        "backends.julia.final_state_matches_python": true,
+        "backends.julia.trace_matches_python": true,
+        "backends.julia.trace_mismatch_count": 0,
+        "backends.julia.used": true,
+        "backends.mojo.available": true,
+        "backends.mojo.final_state_matches_python": true,
+        "backends.mojo.trace_matches_python": true,
+        "backends.mojo.trace_mismatch_count": 0,
+        "backends.mojo.used": true,
+        "backends.python.available": true,
+        "backends.python.final_state_matches_python": true,
+        "backends.python.trace_matches_python": true,
+        "backends.python.trace_mismatch_count": 0,
+        "backends.python.used": true,
+        "backends.rust.available": true,
+        "backends.rust.final_state_matches_python": true,
+        "backends.rust.trace_matches_python": true,
+        "backends.rust.trace_mismatch_count": 0,
+        "backends.rust.used": true,
+        "evidence_class": "local_regression_single_cpu_affinity_non_exclusive",
+        "hardware_measurement_claimed": false,
+        "kernel": "wilson_cowan_rk4_batch",
+        "meta.exclusive_cpu_isolation_claimed": false,
+        "meta.single_cpu_pinned": true,
+        "production_speed_claim": false,
+        "schema_version": "sc-neurocore.polyglot-benchmark.v1",
+        "verification.rust_safety.passed": true,
+        "workload.current": 1.5,
+        "workload.n_steps": 100000,
+        "workload.repeats": 5,
+        "workload.warmup_steps": 1000
+      },
+      "id": "wilson-cowan-rk4-five-backend-local-regression",
+      "regression_limits": {
+        "backends.go.parity_max_abs_diff": {
+          "max": 1e-09
+        },
+        "backends.go.trace_mismatch_count": {
+          "max": 0
+        },
+        "backends.julia.parity_max_abs_diff": {
+          "max": 1e-09
+        },
+        "backends.julia.trace_mismatch_count": {
+          "max": 0
+        },
+        "backends.mojo.parity_max_abs_diff": {
+          "max": 1e-08
+        },
+        "backends.mojo.trace_mismatch_count": {
+          "max": 0
+        },
+        "backends.rust.parity_max_abs_diff": {
+          "max": 1e-09
+        },
+        "backends.rust.trace_mismatch_count": {
+          "max": 0
+        }
+      },
+      "required_numbers": [
+        "backends.python.median_call_ns",
+        "backends.python.median_ns_per_step",
+        "backends.python.parity_max_abs_diff",
+        "backends.rust.median_call_ns",
+        "backends.rust.median_ns_per_step",
+        "backends.rust.parity_max_abs_diff",
+        "backends.julia.median_call_ns",
+        "backends.julia.median_ns_per_step",
+        "backends.julia.parity_max_abs_diff",
+        "backends.go.median_call_ns",
+        "backends.go.median_ns_per_step",
+        "backends.go.parity_max_abs_diff",
+        "backends.mojo.median_call_ns",
+        "backends.mojo.median_ns_per_step",
+        "backends.mojo.parity_max_abs_diff",
+        "binary_hashes.go_shared_library.size_bytes",
+        "binary_hashes.mojo_shared_library.size_bytes",
+        "binary_hashes.rust_extension.size_bytes"
+      ],
+      "source_hashes": {
+        "benchmarks/bench_wilson_cowan.py": "source_hashes.benchmarks/bench_wilson_cowan.py",
+        "bridge/sc_neurocore_engine/__init__.py": "source_hashes.bridge/sc_neurocore_engine/__init__.py",
+        "engine/src/lib.rs": "source_hashes.engine/src/lib.rs",
+        "engine/src/wilson_cowan.rs": "source_hashes.engine/src/wilson_cowan.rs",
+        "src/sc_neurocore/accel/wilson_cowan.py": "source_hashes.src/sc_neurocore/accel/wilson_cowan.py",
+        "src/sc_neurocore/accel/go/wilson_cowan/__init__.py": "source_hashes.src/sc_neurocore/accel/go/wilson_cowan/__init__.py",
+        "src/sc_neurocore/accel/go/wilson_cowan/wilson_cowan.go": "source_hashes.src/sc_neurocore/accel/go/wilson_cowan/wilson_cowan.go",
+        "src/sc_neurocore/accel/julia/neurons/__init__.py": "source_hashes.src/sc_neurocore/accel/julia/neurons/__init__.py",
+        "src/sc_neurocore/accel/julia/neurons/wilson_cowan.jl": "source_hashes.src/sc_neurocore/accel/julia/neurons/wilson_cowan.jl",
+        "src/sc_neurocore/accel/mojo/wilson_cowan/__init__.py": "source_hashes.src/sc_neurocore/accel/mojo/wilson_cowan/__init__.py",
+        "src/sc_neurocore/accel/mojo/wilson_cowan/wilson_cowan.mojo": "source_hashes.src/sc_neurocore/accel/mojo/wilson_cowan/wilson_cowan.mojo",
+        "src/sc_neurocore/accel/rust/safety/wilson_cowan.rs": "source_hashes.src/sc_neurocore/accel/rust/safety/wilson_cowan.rs",
+        "src/sc_neurocore/neurons/model_descriptors/WilsonCowanUnit.toml": "source_hashes.src/sc_neurocore/neurons/model_descriptors/WilsonCowanUnit.toml",
+        "src/sc_neurocore/neurons/model_schemas/wilson_cowan.json": "source_hashes.src/sc_neurocore/neurons/model_schemas/wilson_cowan.json",
+        "src/sc_neurocore/neurons/model_schemas/wilson_cowan.toml": "source_hashes.src/sc_neurocore/neurons/model_schemas/wilson_cowan.toml",
+        "src/sc_neurocore/neurons/models/wilson_cowan.py": "source_hashes.src/sc_neurocore/neurons/models/wilson_cowan.py"
+      }
     }
   ],
   "schema_version": "sc-neurocore.benchmark-regression-gates.v1"

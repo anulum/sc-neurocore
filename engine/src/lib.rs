@@ -745,7 +745,8 @@ fn py_wilson_cowan_simulate<'py>(
     let (e_final, i_final) = wilson_cowan::simulate(
         e_init, i_init, w_ee, w_ei, w_ie, w_ii, tau_e, tau_i, a, theta, dt, ext, &mut e_out,
         &mut i_out,
-    );
+    )
+    .map_err(PyValueError::new_err)?;
     let d = PyDict::new(py);
     d.set_item("e", e_out.into_pyarray(py))?;
     d.set_item("i", i_out.into_pyarray(py))?;

@@ -1062,6 +1062,31 @@ Count the total set bits in a packed array, for integration/accumulation.
 
 ---
 
+## Module `accel.wilson_cowan`
+
+### Function `backend_available(backend)`
+Return whether one public execution lane is ready.
+
+### Function `auto_backend()`
+Choose the first available lane from committed measured evidence.
+
+### Function `normalise_result(e_trace, i_trace, e_final, i_final)`
+Reject malformed or non-atomic backend output before public commit.
+
+### Function `simulate_rust(e, i, w_ee, w_ei, w_ie, w_ii, tau_e, tau_i, a, theta, dt, n_steps, current)`
+Run the complete contract through the production Rust engine.
+
+### Function `simulate_julia(e, i, w_ee, w_ei, w_ie, w_ii, tau_e, tau_i, a, theta, dt, n_steps, current)`
+Run the Julia recurrence through its JuliaCall facade.
+
+### Function `simulate_go(e, i, w_ee, w_ei, w_ie, w_ii, tau_e, tau_i, a, theta, dt, n_steps, current)`
+Run the Go recurrence through its generated C ABI.
+
+### Function `simulate_mojo(e, i, w_ee, w_ei, w_ie, w_ii, tau_e, tau_i, a, theta, dt, n_steps, current)`
+Run the Mojo recurrence through its exported C ABI.
+
+---
+
 ## Module `adapters.base`
 
 ### Class `BaseStochasticAdapter`
@@ -24758,17 +24783,24 @@ Reference: Wendling, F. et al. (2002). Biol. Cybern. 86:97–108.
 ## Module `neurons.models.wilson_cowan`
 
 ### Class `WilsonCowanUnit`
-Wilson-Cowan 1972 — excitatory/inhibitory population rate model.
+Normalised Wilson-Cowan excitatory/inhibitory population-rate model.
 
 τ_e dE/dt = -E + S(w_ee·E - w_ei·I + I_ext)
 τ_i dI/dt = -I + S(w_ie·E - w_ii·I)
 S(x) = 1/(1 + exp(-a(x-θ))) - 1/(1 + exp(aθ))
 
-Reference: Wilson, H.R. & Cowan, J.D. (1972). Biophys. J. 12:1–24.
+This maintained reduction omits the original availability/refractory
+factors and an independent inhibitory external drive. It preserves the
+coupled E/I population structure and shifted sigmoid, and advances both
+continuous rates with fixed-step RK4.
 
 - **__post_init__**()
 - **step**(ext_input)
+  - Advance one finite excitatory-drive sample and return the E rate.
+- **simulate**(n_steps, current, backend)
+  - Return atomic post-step E/I traces through one maintained backend.
 - **reset**()
+  - Reset the two rates while preserving the configured dynamics.
 
 ---
 

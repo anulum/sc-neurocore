@@ -174,6 +174,31 @@ logical CPU but not exclusively isolated, and its recorded load average was
 high. These timings are local regression evidence, not production, cross-host,
 hardware, or universal-ranking claims.
 
+## Wilson-Cowan coupled E/I RK4 batch
+
+The committed `benchmarks/results/bench_wilson_cowan.json` records the complete
+normalised excitatory/inhibitory trajectory through all five public
+dispatchers. Five 100,000-step samples follow a 1,000-step warm-up. The run was
+pinned to logical CPU 4 on the same i5-11600K host, without exclusive CPU
+isolation and under high concurrent load.
+
+| Backend | Median call | Median ns/step | Maximum E/I difference | Trace mismatches |
+|---|---:|---:|---:|---:|
+| Rust | 17.259 ms | 172.592 | `0` | 0 |
+| Julia | 21.205 ms | 212.050 | `1.699e-14` | 0 |
+| Go | 37.515 ms | 375.150 | `8.871e-14` | 0 |
+| Mojo | 39.706 ms | 397.060 | `4.815e-9` | 0 |
+| Python | 1,113.715 ms | 11,137.151 | `0` | 0 |
+
+Rust is byte-identical to the Python interleaved E/I trace, whose SHA-256 is
+`0033492a00af00c389e88bee83b5a48cad74137f311a4bfb36e9882c42b6c50e`.
+Julia and Go remain within the declared `1e-9` absolute trajectory envelope;
+Mojo remains within its measured `1e-8` envelope over the complete horizon.
+The host-matched auto order is Rust, Julia, Go, Mojo, then the always-available
+Python floor. The artefact binds exact sources and loaded Rust/Go/Mojo binaries;
+these timings are local diagnostic regression evidence, not production,
+hardware, cross-host, or universal-ranking claims.
+
 ## Chialvo map polyglot batch loop
 
 The committed `benchmarks/bench_chialvo_map.py` runs the same

@@ -1,0 +1,39 @@
+{
+  "metadata": {
+    "schema_version": 1,
+    "name": "WilsonCowanUnit",
+    "author": "Wilson, H.R. & Cowan, J.D.",
+    "year": 1972,
+    "doi": "10.1016/S0006-3495(72)86068-5",
+    "description": "Normalised coupled excitatory/inhibitory population-rate reduction with shifted sigmoid response"
+  },
+  "state": {
+    "e": 0.1,
+    "i": 0.05
+  },
+  "parameters": {
+    "w_ee": 10.0,
+    "w_ei": 6.0,
+    "w_ie": 10.0,
+    "w_ii": 1.0,
+    "tau_e": 1.0,
+    "tau_i": 2.0,
+    "a": 1.2,
+    "theta": 4.0
+  },
+  "integration": {
+    "dt": 0.1,
+    "method": "rk4"
+  },
+  "dynamics": {
+    "e": "(-e + (1.0/(1.0+exp(-a*((w_ee*e-w_ei*i+I)-theta))) - 1.0/(1.0+exp(a*theta)))) / tau_e",
+    "i": "(-i + (1.0/(1.0+exp(-a*((w_ie*e-w_ii*i)-theta))) - 1.0/(1.0+exp(a*theta)))) / tau_i"
+  },
+  "extensions": {
+    "family": "rate-mean-field",
+    "model_type": "coupled_population_ode",
+    "transfer_note": "sigmoid(x)=logistic(a*(x-theta))-logistic(-a*theta)",
+    "source_scope_note": "Wilson and Cowan 1972 support the coupled E/I population framework; this maintained normalised reduction omits the original availability/refractory factors and independent inhibitory external input",
+    "state_scope_note": "e and i are continuous normalised population activities in the [-beta, 1] state envelope, where beta=logistic(-a*theta); neither is a binary spike event"
+  }
+}

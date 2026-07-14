@@ -67,9 +67,11 @@ def _ensure_wilson_cowan_loaded() -> Any:
 
 def _as_wilson_cowan_ext_input(ext_input: npt.ArrayLike) -> npt.NDArray[np.float64]:
     """Convert the Wilson-Cowan drive into a one-dimensional float64 vector."""
-    ext = np.asarray(ext_input, dtype=np.float64)
+    ext = np.ascontiguousarray(ext_input, dtype=np.float64)
     if ext.ndim != 1:
         raise ValueError(f"ext_input must be one-dimensional: got shape {ext.shape}")
+    if not np.isfinite(ext).all():
+        raise ValueError("ext_input must contain only finite values")
     return ext
 
 

@@ -11,14 +11,20 @@ schema_version = 2
 name = "WilsonCowanUnit"
 class_name = "WilsonCowanUnit"
 module = "wilson_cowan"
-display_name = ""
-summary = "Wilson-Cowan 1972 — excitatory/inhibitory population rate model."
+display_name = "Wilson-Cowan E/I population rates"
+summary = "Validated normalised two-population Wilson-Cowan reduction with a shifted sigmoid and fixed-step RK4 integration."
 family = "Rate / mean-field"
 category = "rate-mean-field"
 biophysical_detail = "point"
-maturity = "experimental"
-intended_use = []
-hardware_fit = []
+maturity = "validated"
+intended_use = [
+    "deterministic excitatory/inhibitory population-rate experiments",
+    "coupled mean-field dynamics and oscillation studies",
+    "cross-runtime RK4 trajectory validation",
+]
+hardware_fit = [
+    "software and floating-point accelerator reference",
+]
 behavior_tags = [
     "excitable",
     "tonic",
@@ -30,15 +36,18 @@ authors = [
 ]
 year = 1972
 doi = "10.1016/S0006-3495(72)86068-5"
+paper_title = "Excitatory and Inhibitory Interactions in Localized Populations of Model Neurons"
+url = "https://pmc.ncbi.nlm.nih.gov/articles/PMC1484078/"
 
 [state.e]
 init = 0.1
+unit = "normalised excitatory population activity"
+meaning = "continuous excitatory population rate in the normalised [-beta, 1] state envelope"
 
 [state.i]
 init = 0.05
-
-[state.theta]
-init = 4.0
+unit = "normalised inhibitory population activity"
+meaning = "continuous inhibitory population rate in the normalised [-beta, 1] state envelope"
 
 [parameters.w_ee]
 default = 10.0
@@ -78,42 +87,90 @@ range = [
 
 [parameters.tau_e]
 default = 1.0
-unit = "ms"
+unit = "model time"
 meaning = "excitatory population time constant"
 range = [
-    1.0,
+    0.001,
     100.0,
 ]
 
 [parameters.tau_i]
 default = 2.0
-unit = "ms"
+unit = "model time"
 meaning = "inhibitory population time constant"
 range = [
-    1.0,
+    0.001,
     100.0,
 ]
 
 [parameters.a]
 default = 1.2
-unit = "1"
-meaning = "steepness of the population response (sigmoid) function"
+unit = "1/input"
+meaning = "positive steepness of the shifted sigmoid"
 range = [
     0.1,
     10.0,
 ]
 
+[parameters.theta]
+default = 4.0
+unit = "input"
+meaning = "finite midpoint of the shifted sigmoid"
+range = [
+    -100.0,
+    100.0,
+]
+
 [integration]
 dt = 0.1
-method = "euler"
+method = "rk4"
 
 [dynamics]
+e = "tau_e*dE/dt=-E+S(w_ee*E-w_ei*I+I_ext)"
+i = "tau_i*dI/dt=-I+S(w_ie*E-w_ii*I)"
+sigmoid = "logistic(a*(x-theta)) - logistic(-a*theta)"
+transfer = "S(x)=logistic(a*(x-theta))-logistic(-a*theta), so S(0)=0"
+scope = "normalised reduction of the coupled Wilson-Cowan family; availability/refractory factors and an independent inhibitory external drive are omitted"
 
 [backends.python]
 status = "implemented"
+parity = "exact"
+
+[backends.rust]
+status = "implemented"
+parity = "ulp-bounded"
+
+[backends.julia]
+status = "implemented"
+parity = "ulp-bounded"
+
+[backends.go]
+status = "implemented"
+parity = "ulp-bounded"
+
+[backends.mojo]
+status = "implemented"
+parity = "approximate"
 
 [reproducibility]
+reference_config = "{\"e\":0.1,\"i\":0.05,\"w_ee\":10.0,\"w_ei\":6.0,\"w_ie\":10.0,\"w_ii\":1.0,\"tau_e\":1.0,\"tau_i\":2.0,\"a\":1.2,\"theta\":4.0,\"dt\":0.1,\"n_steps\":100000,\"current\":1.5}"
+golden_trace_sha256 = "293a1307bc020d8cc222ff10d7256b1f2ecbf53d9c994e3f12b7b6187b20b275"
+golden_citation = "doi:10.1016/S0006-3495(72)86068-5; normalised reduction scope declared"
 
 [documentation]
 slug = "models/wilson_cowan"
-notes = ""
+notes = "Wilson and Cowan 1972 derive coupled excitatory and inhibitory population equations with availability/refractory factors. The maintained normalised reduction explicitly omits those factors and a separate inhibitory external drive. E and I are continuous rates, not binary spikes."
+
+[validation]
+dynamics_faithful = true
+metric = "trajectory"
+operating_point = "E=0.1, I=0.05, default weights/time constants/sigmoid, dt=0.1, current=1.5, 100000 RK4 steps"
+tolerance = "complete E/I traces and final rates agree within absolute 1e-9 for Rust/Julia/Go and 1e-8 for Mojo"
+evidence = "tests/test_wilson_cowan_backends.py::test_complete_configured_contract_matches_python"
+
+[silicon]
+compiles = false
+cosim_validated = false
+cosim_evidence = "not enrolled; this continuous exp-based population-rate unit has no committed fixed-point RTL"
+target_tier = ""
+terminal_reason = "Software polyglot completion does not claim quantisation, RTL, formal equivalence, synthesis, timing, or hardware evidence."

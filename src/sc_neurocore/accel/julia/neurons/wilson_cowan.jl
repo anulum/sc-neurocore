@@ -16,9 +16,11 @@ Per step:
   dI/dt = (−I + sigmoid(w_ie · E − w_ii · I)) / τ_i
   (E, I) advance through one fixed-step RK4 update.
 
-where `sigmoid(x) = 1 / (1 + exp(−a·(x − θ)))`. Deterministic — no
-noise — so bit-exact parity with the Python / Rust / Go / Mojo
-backends requires only matching arithmetic.
+where `sigmoid(x) = logistic(a·(x − θ)) − logistic(−a·θ)`. This is the
+maintained normalised reduction: the original availability/refractory factors
+and independent inhibitory external drive are outside its declared scope. No
+noise is present; the public bounded floating-point trajectory contract keeps
+the RK4 arithmetic order aligned while allowing small libm differences.
 """
 module WilsonCowanAccel
 
@@ -36,7 +38,7 @@ end
 @inline function finite_rate_wc(x::Real, a::Real, theta::Real)::Bool
     xf = Float64(x)
     baseline = logistic_wc(-Float64(a) * Float64(theta))
-    return isfinite(xf) && -baseline <= xf <= 1.0 - baseline
+    return isfinite(xf) && -baseline <= xf <= 1.0
 end
 
 @inline function sigmoid_wc(a::Real, theta::Real, x::Real)::Float64
@@ -134,6 +136,8 @@ function simulate_wilson_cowan!(
     δt = Float64(dt)
     validate_wc(e, i, wee, wei, wie, wii, τe, τi, af, θ, δt) ||
         throw(ArgumentError("invalid Wilson-Cowan numerical configuration"))
+    next_e_out = Vector{Float64}(undef, n)
+    next_i_out = Vector{Float64}(undef, n)
 
     @inbounds for t in 1:n
         ext = Float64(ext_input[t])
@@ -184,9 +188,11 @@ function simulate_wilson_cowan!(
             throw(ArgumentError("invalid Wilson-Cowan candidate state"))
         e = next_e
         i = next_i
-        e_out[t] = e
-        i_out[t] = i
+        next_e_out[t] = e
+        next_i_out[t] = i
     end
+    copyto!(e_out, next_e_out)
+    copyto!(i_out, next_i_out)
     return (e, i)
 end
 

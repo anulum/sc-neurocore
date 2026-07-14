@@ -86,18 +86,14 @@ impl WilsonCowanUnit {
     }
 
     pub fn reset(&mut self) {
-        // self.e, self.i = 0.1, 0.05
         self.e = 0.1_f64;
         self.i = 0.05_f64;
-        self.w_ee = 10.0_f64;
-        self.w_ei = 6.0_f64;
-        self.w_ie = 10.0_f64;
-        self.w_ii = 1.0_f64;
-        self.tau_e = 1.0_f64;
-        self.tau_i = 2.0_f64;
-        self.a = 1.2_f64;
-        self.theta = 4.0_f64;
-        self.dt = 0.1_f64;
+    }
+}
+
+impl Default for WilsonCowanUnit {
+    fn default() -> Self {
+        Self::new()
     }
 }
 
@@ -125,7 +121,7 @@ pub fn validate_wilson_cowan(state: &WilsonCowanUnit) -> bool {
 
 fn finite_rate(value: f64, a: f64, theta: f64) -> bool {
     let baseline = logistic(-a * theta);
-    value.is_finite() && value >= -baseline && value <= 1.0 - baseline
+    value.is_finite() && value >= -baseline && value <= 1.0
 }
 
 fn logistic(z: f64) -> f64 {
@@ -155,6 +151,18 @@ mod tests {
     }
 
     #[test]
+    fn test_wilson_cowan_accepts_saturated_initial_boundary() {
+        let mut state = WilsonCowanUnit {
+            e: 1.0,
+            i: 1.0,
+            ..WilsonCowanUnit::new()
+        };
+        assert!(validate_wilson_cowan(&state));
+        assert!(state.step(2.0).is_ok());
+        assert!(state.e <= 1.0 && state.i <= 1.0);
+    }
+
+    #[test]
     fn test_wilson_cowan_rejects_invalid_runtime_state() {
         let mut state = WilsonCowanUnit::new();
         state.e = 1.5;
@@ -177,5 +185,47 @@ mod tests {
         assert!((state.i - 0.13798020053932203_f64).abs() < 1e-15);
         assert!((state.e - euler_e).abs() > 1e-2);
         assert!((state.i - euler_i).abs() > 1e-2);
+    }
+
+    #[test]
+    fn test_wilson_cowan_rejects_input_without_mutation() {
+        let mut state = WilsonCowanUnit::new();
+        let before = state.clone();
+        assert!(state.step(f64::NAN).is_err());
+        assert_eq!(state.e, before.e);
+        assert_eq!(state.i, before.i);
+    }
+
+    #[test]
+    fn test_wilson_cowan_reset_preserves_configuration() {
+        let mut state = WilsonCowanUnit {
+            e: 0.4,
+            i: 0.3,
+            w_ee: 12.0,
+            w_ei: 7.0,
+            w_ie: 9.0,
+            w_ii: 2.0,
+            tau_e: 3.0,
+            tau_i: 4.0,
+            a: 1.5,
+            theta: 3.0,
+            dt: 0.05,
+        };
+        state.reset();
+        assert_eq!((state.e, state.i), (0.1, 0.05));
+        assert_eq!(
+            (
+                state.w_ee,
+                state.w_ei,
+                state.w_ie,
+                state.w_ii,
+                state.tau_e,
+                state.tau_i,
+                state.a,
+                state.theta,
+                state.dt,
+            ),
+            (12.0, 7.0, 9.0, 2.0, 3.0, 4.0, 1.5, 3.0, 0.05)
+        );
     }
 }

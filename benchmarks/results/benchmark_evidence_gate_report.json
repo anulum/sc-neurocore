@@ -232,9 +232,13 @@
     {
       "artefact": "benchmarks/results/local_python_2026-07-14_threshold_linear_rate.json",
       "id": "threshold-linear-rate-five-backend-local-regression"
+    },
+    {
+      "artefact": "benchmarks/results/bench_wilson_cowan.json",
+      "id": "wilson-cowan-rk4-five-backend-local-regression"
     }
   ],
-  "failure_count": 66,
+  "failure_count": 68,
   "failures": [
     {
       "gate_id": "quadratic-if-exact-flow-multibackend-local-regression",
@@ -432,6 +436,11 @@
       "reason": "source_hash_mismatch"
     },
     {
+      "gate_id": "mcculloch-pitts-five-backend-local-regression",
+      "path": "src/sc_neurocore/neurons/model_descriptors/McCullochPittsNeuron.toml->source_hashes.src/sc_neurocore/neurons/model_descriptors/McCullochPittsNeuron.toml",
+      "reason": "source_hash_mismatch"
+    },
+    {
       "gate_id": "cazelles-map-five-backend-local-regression",
       "path": "engine/src/lib.rs->source_hashes.engine/src/lib.rs",
       "reason": "source_hash_mismatch"
@@ -565,9 +574,14 @@
       "gate_id": "sigmoid-rate-five-backend-local-regression",
       "path": "engine/src/pyo3_neurons.rs->source_hashes.engine/src/pyo3_neurons.rs",
       "reason": "source_hash_mismatch"
+    },
+    {
+      "gate_id": "threshold-linear-rate-five-backend-local-regression",
+      "path": "src/sc_neurocore/neurons/model_descriptors/ThresholdLinearRateNeuron.toml->source_hashes.src/sc_neurocore/neurons/model_descriptors/ThresholdLinearRateNeuron.toml",
+      "reason": "source_hash_mismatch"
     }
   ],
-  "gate_count": 58,
+  "gate_count": 59,
   "manifest": "benchmarks/benchmark_regression_gates.json",
   "passed": false,
   "schema_version": "sc-neurocore.benchmark-evidence-gate.v1"

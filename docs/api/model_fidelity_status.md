@@ -14,8 +14,8 @@ implements the *real* model dynamics and each is proven against the Python refer
    comment body, a dummy return, or fake placeholder dynamics.
 2. **Proven parity** — an executed test asserting each lane reproduces the Python golden. Where the
    right-hand side is exact arithmetic the parity is **bit-for-bit**; where gating uses
-   transcendentals (`exp`/`tanh`/…) the trace is not bit-exact across libms, so the **spike count**
-   is the declared, stable parity observable.
+   transcendentals (`exp`/`tanh`/…) the declared stable observable is either event count or the
+   complete continuous trajectory inside an explicit numerical tolerance.
 3. **Honest benchmark** — a runnable, committed per-backend benchmark producing a real number (no
    fabricated figures).
 
@@ -65,6 +65,7 @@ parity note.
 | McCulloch-Pitts | ✅ | ✅ | ✅ | ✅ shared-lib | McCulloch and Pitts' 1943 all-or-none rule: a positive active-excitatory-afferent count threshold with absolute veto by any active inhibitory afferent, without later real-weight substitution or fake internal state; Python, Rust engine+safety, Julia, Go, Mojo, paired stateless TOML/JSON schemas, and the independent primary-paper truth table are bit-exact; registered and folded signed-Q32.0 RTL preserve every enrolled row using `-1` only as the inhibition sentinel; the depth-4 Z3 safety job passes; the source/binary-bound 200,000-row benchmark emits 102,273 events and trace SHA-256 `52a05b62…aee4` with zero mismatch in every lane | `this commit` |
 | Sigmoid Rate | ✅ | ✅ | ✅ | ✅ shared-lib | complete configurable exact-relaxation rate traces over 200,000 steps: Python, Rust, Julia and Go are byte-identical; Mojo remains within `3.08e-14`, below the declared `5e-12` float tolerance; reset preserves `tau`, `beta`, `theta` and `dt`; the source/binary-bound five-backend benchmark is local non-exclusive evidence and no spike, RTL or hardware claim is made | `this commit` |
 | Threshold-linear Rate | ✅ | ✅ | ✅ | ✅ shared-lib | complete configurable algebraic rate traces over 200,000 evaluations: Python, Rust, Julia, Go, and Mojo are bit-exact for `r=gain*max(0,I-theta)`; below-threshold, equality, and above-threshold branches are executed; reset preserves `theta` and `gain`; positive rates are not counted as spikes; the source/binary-bound benchmark is local non-exclusive evidence and no RTL or hardware claim is made | `this commit` |
+| Wilson-Cowan | ✅ | ✅ | ✅ | ✅ shared-lib | normalised coupled E/I population reduction with shifted sigmoid and candidate-first RK4; complete configurable 100,000-step Rust/Julia/Go trajectories and final rates remain within `1e-9` of Python and Mojo remains within `1e-8`; reset preserves all dynamics parameters; native failures are atomic; availability/refractory factors and independent inhibitory drive are explicitly outside scope; continuous rates are not spikes and no RTL or hardware claim is made | `this commit` |
 | McKean | ✅ | ✅ | ✅ | ✅ shared-lib | bit-exact — 0/1/7 @ I=0/0.2/0.5 over 20000 steps (RK4, exact piecewise-linear RHS) | `059871140` |
 | Hindmarsh-Rose | ✅ | ✅ | ✅ | ✅ shared-lib | bit-exact accel — 0/26/52 @ I=0/3/5 over 2000 steps; co-sim exact hand/TOML/JSON/Q16.16 counts — 0/0/26/40/52 @ I=0/2/3/4/5 over 2000 RK4 steps; declared Q16.16 +1 crossing boundary over 5000 steps at I=2 through I=5; formal Q8.8 BMC depth 4 | `this commit` |
 | FitzHugh-Rinzel | ✅ | ✅ | ✅ | ✅ shared-lib | bit-exact accel — 0/1/8 @ I=0/0.3/0.5; co-sim exact spike count — hand/schema/Q16.16 RTL 8 @ I=0.5 (3000 RK4 steps, cubic RHS) | `498376221` |
@@ -86,7 +87,7 @@ Each model carries a committed benchmark: a Go `Benchmark*` in the services lane
 conductance models (Wang-Buzsaki, Morris-Lecar, Connor-Stevens, Hodgkin-Huxley, FitzHugh-Nagumo),
 plus source-hashed executable closure benchmarks for Connor-Stevens, Hodgkin-Huxley, AdEx, ExpIF,
 Lapicque, Perfect Integrator, Quadratic IF, Theta, DPI, COBA LIF, Escape Rate, Poisson, IQIF,
-McCulloch-Pitts, Sigmoid Rate, and Threshold-linear Rate,
+McCulloch-Pitts, Sigmoid Rate, Threshold-linear Rate, and Wilson-Cowan,
 and a committed `benchmarks/bench_<model>*.py` harness with its recorded per-backend result for the
 FFI-dispatched models (McKean, Hindmarsh-Rose, FitzHugh-Rinzel, Pernarowski, Terman-Wang, Wilson-HR,
 Rulkov map, GLIF, Mihalas-Niebur, Medvedev map, Cazelles map, Courbage-Nekorkin map, Izhikevich 2007,
@@ -105,7 +106,7 @@ Rust engine acceleration path), but its four `accel/{rust,go,julia,mojo}` kernel
 or not yet verified** — the polyglot-stub-remediation sweep is replacing them model-by-model. Those
 models are **deliberately not ticked here**: per-model status is promoted onto this page only after a
 unit is closed and verified at source, so this table never claims completion it has not proven. As of
-the latest landed commit that is **thirty-five polyglot-complete models** out of the full catalogue; the
+the latest landed commit that is **thirty-six polyglot-complete models** out of the full catalogue; the
 remainder are Python-faithful with an acceleration chain still under remediation.
 
 ## How a model graduates onto this page

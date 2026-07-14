@@ -21,12 +21,14 @@ The `.so` is platform-specific and gitignored; `.go` source + generated
 from __future__ import annotations
 
 import ctypes
+import math
 from pathlib import Path
 
 import numpy as np
 import numpy.typing as npt
 
 _LIB_PATH = Path(__file__).resolve().parent / "libwilson_cowan.so"
+_MAX_STEPS = (1 << 31) - 1
 
 
 def _configure_library(lib: ctypes.CDLL) -> ctypes.CDLL:
@@ -70,7 +72,39 @@ def _as_ext_input(ext_input: npt.ArrayLike) -> npt.NDArray[np.float64]:
     ext = np.ascontiguousarray(ext_input, dtype=np.float64)
     if ext.ndim != 1:
         raise ValueError(f"ext_input must be one-dimensional: got shape {ext.shape}")
+    if ext.size > _MAX_STEPS:
+        raise ValueError(f"ext_input length must be at most {_MAX_STEPS}")
+    if not np.isfinite(ext).all():
+        raise ValueError("ext_input must contain only finite values")
     return ext
+
+
+def _validate_configuration(
+    e: float,
+    i: float,
+    w_ee: float,
+    w_ei: float,
+    w_ie: float,
+    w_ii: float,
+    tau_e: float,
+    tau_i: float,
+    a: float,
+    theta: float,
+    dt: float,
+) -> None:
+    """Reject unsafe scalars before crossing the generated C boundary."""
+    values = (e, i, w_ee, w_ei, w_ie, w_ii, tau_e, tau_i, a, theta, dt)
+    if not all(math.isfinite(value) for value in values):
+        raise ValueError("Wilson-Cowan configuration must be finite")
+    if any(weight < 0.0 for weight in (w_ee, w_ei, w_ie, w_ii)):
+        raise ValueError("Wilson-Cowan weights must be non-negative")
+    if tau_e <= 0.0 or tau_i <= 0.0 or a <= 0.0 or dt <= 0.0:
+        raise ValueError("Wilson-Cowan time constants, gain, and dt must be positive")
+    z = -a * theta
+    exp_z = math.exp(z) if z < 0.0 else math.exp(-z)
+    baseline = exp_z / (1.0 + exp_z) if z < 0.0 else 1.0 / (1.0 + exp_z)
+    if not -baseline <= e <= 1.0 or not -baseline <= i <= 1.0:
+        raise ValueError("Wilson-Cowan initial rates are outside the state envelope")
 
 
 def simulate_wilson_cowan(
@@ -94,6 +128,19 @@ def simulate_wilson_cowan(
     library never receives an implicitly flattened matrix.
     """
     ext = _as_ext_input(ext_input)
+    _validate_configuration(
+        e_init,
+        i_init,
+        w_ee,
+        w_ei,
+        w_ie,
+        w_ii,
+        tau_e,
+        tau_i,
+        a,
+        theta,
+        dt,
+    )
     if _lib is None:
         raise ImportError(
             f"libwilson_cowan.so not built. Run: cd {_LIB_PATH.parent} && "

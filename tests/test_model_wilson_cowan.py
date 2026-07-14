@@ -16,14 +16,19 @@ coverage/load, not production throughput."""
 
 from __future__ import annotations
 
+import json
 import math
+from pathlib import Path
 import time
+import tomllib
 
 import numpy as np
 import pytest
 
 from sc_neurocore.neurons.models.wilson_cowan import WilsonCowanUnit
 from sc_neurocore.network.population import Population
+
+_REPOSITORY = Path(__file__).resolve().parents[1]
 
 
 def _rk4_expected_state(unit: WilsonCowanUnit, drive: float) -> tuple[float, float]:
@@ -71,11 +76,34 @@ class TestWilsonCowanIsolation:
         assert np.isfinite(n.e) and np.isfinite(n.i)
 
     def test_reset(self):
-        n = WilsonCowanUnit()
+        n = WilsonCowanUnit(w_ee=12.0, tau_i=3.0, theta=3.5, dt=0.05)
         for _ in range(100):
             n.step(5.0)
         n.reset()
         assert n.e == 0.1 and n.i == 0.05
+        assert (n.w_ee, n.tau_i, n.theta, n.dt) == (12.0, 3.0, 3.5, 0.05)
+
+    @pytest.mark.parametrize("n_steps", [-1, 1.5, True, 1 << 31])
+    def test_simulate_rejects_invalid_batch_length(self, n_steps: object):
+        n = WilsonCowanUnit()
+        before = (n.e, n.i)
+        with pytest.raises(ValueError, match="n_steps"):
+            n.simulate(n_steps)  # type: ignore[arg-type]
+        assert (n.e, n.i) == before
+
+    def test_simulate_rejects_non_finite_current_before_mutation(self):
+        n = WilsonCowanUnit()
+        before = (n.e, n.i)
+        with pytest.raises(ValueError, match="current"):
+            n.simulate(4, math.nan)
+        assert (n.e, n.i) == before
+
+    def test_python_batch_numerical_failure_is_atomic(self):
+        n = WilsonCowanUnit(dt=1.0e308)
+        before = (n.e, n.i)
+        with pytest.raises((ValueError, FloatingPointError)):
+            n.simulate(2, 1.5, backend="python")
+        assert (n.e, n.i) == before
 
 
 class TestWilsonCowanSigmoid:
@@ -187,21 +215,28 @@ class TestWilsonCowanEIDynamics:
 
 class TestWilsonCowanOscillation:
     def test_can_oscillate(self):
-        """With appropriate parameters, E should oscillate."""
+        """The enrolled feedback regime sustains a non-trivial E limit cycle."""
         n = WilsonCowanUnit(w_ee=16.0, w_ei=12.0, w_ie=15.0, theta=4.0)
         es = []
         for _ in range(5000):
-            n.step(5.0)
+            n.step(1.5)
             es.append(n.e)
         es = np.array(es[1000:])
-        # Check for oscillation: multiple crossings of mean
         mean_e = np.mean(es)
         crossings = np.sum(np.diff(np.sign(es - mean_e)) != 0)
-        # May or may not oscillate — just verify it ran and E is finite
-        assert np.isfinite(es[-1])
+        assert np.ptp(es) > 0.9
+        assert crossings >= 30
 
 
 class TestWilsonCowanParameters:
+    def test_accepts_normalised_saturation_boundary(self):
+        n = WilsonCowanUnit(e=1.0, i=1.0)
+
+        n.step(2.0)
+
+        assert math.isfinite(n.e) and math.isfinite(n.i)
+        assert n.e <= 1.0 and n.i <= 1.0
+
     @pytest.mark.parametrize(
         ("field", "value"),
         [
@@ -330,3 +365,14 @@ class TestWilsonCowanPipeline:
         result = n.step(5.0)
         assert isinstance(result, float)
         # The model is a RATE model, not a spiking model
+
+    def test_paired_declarative_schemas_match_runtime_defaults(self):
+        schema_root = _REPOSITORY / "src/sc_neurocore/neurons/model_schemas"
+        toml_payload = tomllib.loads((schema_root / "wilson_cowan.toml").read_text())
+        json_payload = json.loads((schema_root / "wilson_cowan.json").read_text())
+        assert toml_payload == json_payload
+        unit = WilsonCowanUnit()
+        assert toml_payload["state"] == {"e": unit.e, "i": unit.i}
+        for name, value in toml_payload["parameters"].items():
+            assert getattr(unit, name) == value
+        assert toml_payload["integration"] == {"dt": unit.dt, "method": "rk4"}

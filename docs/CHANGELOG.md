@@ -5,6 +5,19 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+### Wilson-Cowan polyglot closure
+
+- Promoted the declared normalised Wilson-Cowan coupled E/I equations through
+  Python, the modular Rust engine, independent Rust safety, Julia, Go C-shared,
+  and Mojo shared-library execution. Every runtime advances both continuous
+  rates with the same shifted-sigmoid, candidate-first RK4 contract.
+- Added public atomic batch dispatch, paired TOML/JSON schemas, bounded
+  complete-trajectory parity, configuration-preserving reset, native invalid-
+  contract buffer tests, and source/binary-bound local benchmark evidence.
+  Availability/refractory factors and independent inhibitory external drive
+  remain explicitly outside this reduction; no spike, RTL, or hardware claim
+  is made.
+
 ### Schema and descriptor contract reconciliation
 
 - Unified schema validation and execution around the same exact event-only

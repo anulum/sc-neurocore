@@ -20,6 +20,15 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
   real public contracts instead of a universal ``n_steps``/float/tuple shape.
 
 ### Added
+- Promoted the normalised `WilsonCowanUnit` coupled E/I population-rate
+  reduction across Python, the modular Rust engine, independent Rust safety,
+  Julia, Go C-shared, and Mojo shared-library lanes. Every batch carries the
+  complete configurable shifted-sigmoid RK4 contract and commits E/I together.
+- Added a public atomic dispatcher, paired TOML/JSON schemas, explicit
+  Wilson-Cowan source boundary, five-runtime trajectory parity, native failure-
+  atomicity tests, configuration-preserving reset, and a source/binary-bound
+  benchmark. Continuous rates are not spikes; no production-speed, fixed-point
+  RTL, or hardware result is claimed.
 - Completed `ThresholdLinearRateNeuron` as a validated memoryless
   `gain * max(0, current - theta)` continuous-rate contract across Python, a
   modular Rust-engine batch, independent Rust safety, Julia, Go, and callable
