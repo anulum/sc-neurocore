@@ -4,161 +4,146 @@
 # © Code 2020–2026 Miroslav Šotek. All rights reserved.
 # ORCID: 0009-0009-3560-0851
 # Contact: www.anulum.li | protoscience@anulum.li
-# SC-NeuroCore — End-to-end test: ThresholdLinearRateNeuron
+# SC-NeuroCore — End-to-end threshold-linear rate model tests
 
-"""Full pipeline test for ThresholdLinearRateNeuron (Dayan & Abbott 2001).
-
-Simplest rate model: r = gain · max(0, I - θ) (ReLU). Returns float.
-Memoryless — r computed from current input, no state accumulation."""
+"""Validate the memoryless ``gain * max(0, I-theta)`` rate contract."""
 
 from __future__ import annotations
 
-import os
-import time
+from typing import cast
 
+import numpy as np
 import pytest
 
-from sc_neurocore.neurons.models.threshold_linear_rate import ThresholdLinearRateNeuron
 from sc_neurocore.network.population import Population
+from sc_neurocore.neurons.model_catalogue import load_descriptor_payload
+from sc_neurocore.neurons.models.threshold_linear_rate import ThresholdLinearRateNeuron
+from sc_neurocore.neurons.universal_dsl import UniversalNeuron
 
 
-class TestThresholdLinearIsolation:
-    def test_defaults(self):
-        n = ThresholdLinearRateNeuron()
-        assert n.r == 0.0 and n.theta == 0.0 and n.gain == 1.0
-
-    def test_step_returns_float(self):
-        assert isinstance(ThresholdLinearRateNeuron().step(1.0), float)
-
-    def test_reset(self):
-        n = ThresholdLinearRateNeuron()
-        n.step(5.0)
-        n.reset()
-        assert n.r == 0.0
+def test_defaults_and_float_output() -> None:
+    neuron = ThresholdLinearRateNeuron()
+    assert (neuron.r, neuron.theta, neuron.gain) == (0.0, 0.0, 1.0)
+    assert isinstance(neuron.step(1.0), float)
 
 
-class TestThresholdLinearReLU:
-    """Core: r = gain · max(0, I - θ). Pure ReLU."""
-
-    def test_relu_below_threshold(self):
-        """I < θ → r = 0."""
-        n = ThresholdLinearRateNeuron(theta=2.0)
-        r = n.step(1.0)
-        assert r == 0.0
-
-    def test_relu_at_threshold(self):
-        """I = θ → r = 0."""
-        n = ThresholdLinearRateNeuron(theta=2.0)
-        r = n.step(2.0)
-        assert r == 0.0
-
-    def test_relu_above_threshold(self):
-        """I > θ → r = gain · (I - θ)."""
-        n = ThresholdLinearRateNeuron(theta=2.0, gain=1.0)
-        r = n.step(5.0)
-        assert abs(r - 3.0) < 1e-10
-
-    def test_gain_scaling(self):
-        """r = gain · max(0, I - θ). gain=2 → double output."""
-        n = ThresholdLinearRateNeuron(theta=0.0, gain=2.0)
-        r = n.step(3.0)
-        assert abs(r - 6.0) < 1e-10
-
-    def test_negative_input(self):
-        """I < 0 (and θ=0) → r = 0 (ReLU clips negatives)."""
-        n = ThresholdLinearRateNeuron(theta=0.0)
-        r = n.step(-5.0)
-        assert r == 0.0
-
-    def test_linearity_above_threshold(self):
-        """Above θ, output is linear in I."""
-        n = ThresholdLinearRateNeuron(theta=1.0, gain=1.0)
-        r2 = n.step(3.0)  # r = 2.0
-        n.reset()
-        r4 = n.step(5.0)  # r = 4.0
-        assert abs(r4 / r2 - 2.0) < 1e-10
-
-    def test_memoryless(self):
-        """r depends only on current input, not history."""
-        n = ThresholdLinearRateNeuron()
-        n.step(10.0)
-        r = n.step(0.0)
-        assert r == 0.0  # no memory from previous input
-
-    @pytest.mark.parametrize("theta", [-2.0, 0.0, 5.0, 10.0])
-    def test_theta_shifts_activation(self, theta: float):
-        n = ThresholdLinearRateNeuron(theta=theta)
-        # At I = theta + 1: r = gain * 1 = 1.0
-        r = n.step(theta + 1.0)
-        assert abs(r - 1.0) < 1e-10
+@pytest.mark.parametrize(
+    ("current", "expected"),
+    [(1.0, 0.0), (1.5, 0.0), (3.0, 3.0), (-4.0, 0.0)],
+)
+def test_piecewise_linear_branches(current: float, expected: float) -> None:
+    neuron = ThresholdLinearRateNeuron(r=0.25, theta=1.5, gain=2.0)
+    assert neuron.step(current) == expected
+    assert neuron.r == expected
 
 
-class TestThresholdLinearValidation:
-    @pytest.mark.parametrize("value", [float("nan"), float("inf"), -float("inf"), -1.0])
-    def test_rejects_negative_or_non_finite_initial_rate(self, value: float):
-        with pytest.raises(ValueError, match="r"):
-            ThresholdLinearRateNeuron(r=value)
-
-    @pytest.mark.parametrize("value", [float("nan"), float("inf"), -float("inf")])
-    def test_rejects_non_finite_threshold(self, value: float):
-        with pytest.raises(ValueError, match="theta"):
-            ThresholdLinearRateNeuron(theta=value)
-
-    @pytest.mark.parametrize("value", [float("nan"), float("inf"), -float("inf"), -1.0])
-    def test_rejects_negative_or_non_finite_gain(self, value: float):
-        with pytest.raises(ValueError, match="gain"):
-            ThresholdLinearRateNeuron(gain=value)
-
-    @pytest.mark.parametrize("current", [float("nan"), float("inf"), -float("inf")])
-    def test_rejects_non_finite_current_before_rate_mutation(self, current: float):
-        n = ThresholdLinearRateNeuron(r=0.25)
-        before = n.r
-        with pytest.raises(ValueError, match="current"):
-            n.step(current)
-        assert n.r == before
-
-    def test_rejects_non_finite_runtime_rate_before_update(self):
-        n = ThresholdLinearRateNeuron(r=0.25)
-        n.r = float("nan")
-        with pytest.raises(ValueError, match="runtime rate state"):
-            n.step(1.0)
-        assert n.r != n.r
-
-    def test_rejects_non_finite_rate_output_before_mutation(self):
-        n = ThresholdLinearRateNeuron(r=0.25, gain=1.0e308)
-        before = n.r
-        with pytest.raises(ValueError, match="rate output"):
-            n.step(1.0e308)
-        assert n.r == before
+def test_output_is_memoryless() -> None:
+    neuron = ThresholdLinearRateNeuron(theta=1.5, gain=2.0)
+    assert neuron.step(3.0) == 3.0
+    assert neuron.step(1.0) == 0.0
 
 
-class TestThresholdLinearPerformance:
-    def test_isolation_throughput(self):
-        """ReLU is the fastest possible — no exp, no ODE."""
-        n = ThresholdLinearRateNeuron()
-        N = 500000
-        t0 = time.perf_counter()
-        for _ in range(N):
-            n.step(3.0)
-        elapsed = time.perf_counter() - t0
-        rate = N / elapsed
-        minimum_rate = 400000 if os.environ.get("CI") else 500000
-        assert n.r == 3.0
-        assert rate > minimum_rate, f"isolation: {rate:.0f} steps/s, minimum={minimum_rate}"
-
-    def test_deterministic(self):
-        traces = []
-        for _ in range(2):
-            n = ThresholdLinearRateNeuron()
-            trace = [n.step(float(x)) for x in range(100)]
-            traces.append(trace)
-        assert traces[0] == traces[1]
+def test_reset_preserves_configuration() -> None:
+    neuron = ThresholdLinearRateNeuron(r=0.25, theta=-0.4, gain=2.5)
+    neuron.step(3.0)
+    neuron.reset()
+    assert (neuron.r, neuron.theta, neuron.gain) == (0.0, -0.4, 2.5)
 
 
-class TestThresholdLinearPipeline:
-    def test_population_creates(self):
-        assert Population(ThresholdLinearRateNeuron, n=10, label="relu").n == 10
+def test_python_batch_matches_scalar_steps() -> None:
+    scalar = ThresholdLinearRateNeuron(r=0.25, theta=1.5, gain=2.0)
+    expected = np.asarray([scalar.step(3.0) for _ in range(32)])
+    batched = ThresholdLinearRateNeuron(r=0.25, theta=1.5, gain=2.0)
+    actual = batched.simulate(32, 3.0, backend="python")
+    np.testing.assert_array_equal(actual, expected)
+    assert batched.r == scalar.r
 
-    def test_returns_float_not_spike(self):
-        n = ThresholdLinearRateNeuron()
-        assert isinstance(n.step(5.0), float)
+
+def test_empty_batch_preserves_cached_output() -> None:
+    neuron = ThresholdLinearRateNeuron(r=0.25, theta=1.5, gain=2.0)
+    np.testing.assert_array_equal(neuron.simulate(0, 3.0, backend="python"), np.empty(0))
+    assert neuron.r == 0.25
+
+
+def test_descriptor_tracks_parameters_and_algebraic_scope() -> None:
+    payload = load_descriptor_payload("ThresholdLinearRateNeuron")
+    assert payload is not None
+    assert set(payload["state"]) == {"r"}
+    assert set(payload["parameters"]) == {"theta", "gain"}
+    assert payload["integration"] == {"dt": 1.0, "method": "map"}
+    assert set(payload["backends"]) == {"python", "rust", "julia", "go", "mojo"}
+    assert "no ODE" in payload["dynamics"]["scope"]
+
+
+def test_schema_map_matches_hand_model() -> None:
+    configured = {"theta": 1.5, "gain": 2.0}
+    schema = UniversalNeuron.from_schema("threshold_linear_rate", parameter_overrides=configured)
+    hand = ThresholdLinearRateNeuron(**configured)
+    currents = [1.0, 1.5, 3.0, -4.0]
+    schema_trace: list[float] = []
+    hand_trace: list[float] = []
+    for current in currents:
+        schema.step(I=current)
+        schema_trace.append(schema.state["r"])
+        hand_trace.append(hand.step(current))
+    np.testing.assert_array_equal(schema_trace, hand_trace)
+
+
+@pytest.mark.parametrize("field", ["r", "theta", "gain"])
+@pytest.mark.parametrize("value", [np.nan, np.inf, -np.inf])
+def test_rejects_non_finite_constructor_values(field: str, value: float) -> None:
+    with pytest.raises(ValueError, match=field):
+        ThresholdLinearRateNeuron(**{field: value})
+
+
+@pytest.mark.parametrize(("field", "value"), [("r", -1.0), ("gain", -1.0)])
+def test_rejects_negative_rate_or_gain(field: str, value: float) -> None:
+    with pytest.raises(ValueError, match=field):
+        ThresholdLinearRateNeuron(**{field: value})
+
+
+@pytest.mark.parametrize("current", [np.nan, np.inf, -np.inf])
+def test_rejects_non_finite_current_without_mutation(current: float) -> None:
+    neuron = ThresholdLinearRateNeuron(r=0.25)
+    with pytest.raises(ValueError, match="current"):
+        neuron.step(current)
+    assert neuron.r == 0.25
+
+
+@pytest.mark.parametrize("field", ["r", "theta", "gain"])
+def test_rejects_corrupted_runtime_contract_without_mutation(field: str) -> None:
+    neuron = ThresholdLinearRateNeuron(r=0.25, theta=1.5, gain=2.0)
+    setattr(neuron, field, np.nan)
+    with pytest.raises(ValueError, match=field):
+        neuron.step(3.0)
+    if field != "r":
+        assert neuron.r == 0.25
+
+
+def test_rejects_overflowing_output_without_mutation() -> None:
+    neuron = ThresholdLinearRateNeuron(r=0.25, gain=1.0e308)
+    with pytest.raises(ValueError, match="rate output"):
+        neuron.step(1.0e308)
+    assert neuron.r == 0.25
+
+
+@pytest.mark.parametrize("n_steps", [-1, 1.5, True])
+def test_rejects_invalid_batch_length_without_mutation(n_steps: object) -> None:
+    neuron = ThresholdLinearRateNeuron(r=0.25)
+    with pytest.raises(ValueError, match="n_steps"):
+        neuron.simulate(cast(int, n_steps), 3.0, backend="python")
+    assert neuron.r == 0.25
+
+
+def test_rejects_unknown_backend_without_mutation() -> None:
+    neuron = ThresholdLinearRateNeuron(r=0.25)
+    with pytest.raises(ValueError, match="backend must be"):
+        neuron.simulate(1, 3.0, backend="cuda")
+    assert neuron.r == 0.25
+
+
+def test_deterministic_and_population_compatible() -> None:
+    first = ThresholdLinearRateNeuron(theta=1.0, gain=2.0).simulate(100, 3.0, backend="python")
+    second = ThresholdLinearRateNeuron(theta=1.0, gain=2.0).simulate(100, 3.0, backend="python")
+    np.testing.assert_array_equal(first, second)
+    assert Population(ThresholdLinearRateNeuron, n=10, label="tlr").n == 10

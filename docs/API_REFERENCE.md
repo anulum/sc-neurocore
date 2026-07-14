@@ -981,6 +981,40 @@ Run the Mojo recurrence through its C ABI.
 
 ---
 
+## Module `accel.threshold_linear_rate`
+
+### Function `ensure_julia_loaded()`
+Load the committed Julia module when ``juliacall`` is available.
+
+### Function `ensure_go_loaded()`
+Load the staged Go threshold-linear C-shared library.
+
+### Function `ensure_mojo_loaded()`
+Load the staged Mojo threshold-linear shared library.
+
+### Function `backend_available(backend)`
+Return whether one public execution lane is ready.
+
+### Function `auto_backend()`
+Choose the first available lane from committed measured evidence.
+
+### Function `normalise_result(trace, final_rate)`
+Reject malformed or non-atomic backend output before public commit.
+
+### Function `simulate_rust(r, theta, gain, n_steps, current)`
+Run the complete contract through the production Rust engine.
+
+### Function `simulate_julia(r, theta, gain, n_steps, current)`
+Run the complete contract through the committed Julia module.
+
+### Function `simulate_go(r, theta, gain, n_steps, current)`
+Run the Go transfer through its generated C ABI.
+
+### Function `simulate_mojo(r, theta, gain, n_steps, current)`
+Run the Mojo transfer through its exported C ABI.
+
+---
+
 ## Module `accel.vector_ops`
 
 ### Function `pack_bitstream(bitstream)`
@@ -24529,15 +24563,29 @@ Mojo transport the complete phase and integration contract.
 ## Module `neurons.models.threshold_linear_rate`
 
 ### Class `ThresholdLinearRateNeuron`
-Threshold-linear (ReLU) rate neuron. Dayan & Abbott 2001.
+Threshold-linear continuous-rate transfer with cached output.
 
-r = gain * max(0, input - theta)
+Parameters
+----------
+r:
+    Initial cached output rate. It must be finite and non-negative.
+theta:
+    Finite input threshold.
+gain:
+    Finite, non-negative slope above threshold.
 
-Reference: Gerstner, W. et al. (2014). Neuronal Dynamics. Cambridge Univ. Press, §15.2.
+Notes
+-----
+Each call evaluates ``gain * max(0, current - theta)`` directly. No time
+integration or hidden history is part of this model.
 
 - **__post_init__**()
 - **step**(current)
+  - Evaluate one finite input and atomically cache the resulting rate.
+- **simulate**(n_steps, current, backend)
+  - Return a post-evaluation rate trace through one maintained backend.
 - **reset**()
+  - Clear the cached output while preserving threshold and gain.
 
 ---
 

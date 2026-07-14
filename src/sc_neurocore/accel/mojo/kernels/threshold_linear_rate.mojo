@@ -4,15 +4,21 @@
 # © Code 2020–2026 Miroslav Šotek. All rights reserved.
 # ORCID: 0009-0009-3560-0851
 # Contact: www.anulum.li | protoscience@anulum.li
-# SC-NeuroCore — Mojo SIMD acceleration for threshold_linear_rate
+# SC-NeuroCore — Executable threshold-linear rate kernel and C ABI
+#
+# Build: mojo build --emit shared-lib -o libthreshold_linear_rate.so threshold_linear_rate.mojo
+
+from std.memory import UnsafePointer
 
 
-fn _threshold_linear_rate_finite(value: Float64) -> Bool:
+@always_inline
+def _threshold_linear_rate_finite(value: Float64) -> Bool:
     var residual = value - value
     return value == value and residual == 0.0
 
 
-fn threshold_linear_rate_valid(r: Float64, theta: Float64, gain: Float64) -> Bool:
+@always_inline
+def threshold_linear_rate_valid(r: Float64, theta: Float64, gain: Float64) -> Bool:
     return (
         _threshold_linear_rate_finite(r)
         and r >= 0.0
@@ -22,8 +28,13 @@ fn threshold_linear_rate_valid(r: Float64, theta: Float64, gain: Float64) -> Boo
     )
 
 
-fn threshold_linear_rate_step(r: Float64, theta: Float64, gain: Float64, current: Float64) -> Float64:
-    if not threshold_linear_rate_valid(r, theta, gain) or not _threshold_linear_rate_finite(current):
+@always_inline
+def threshold_linear_rate_step(
+    r: Float64, theta: Float64, gain: Float64, current: Float64
+) -> Float64:
+    if not threshold_linear_rate_valid(r, theta, gain):
+        return -1.0
+    if not _threshold_linear_rate_finite(current):
         return -1.0
     var drive = current - theta
     if drive < 0.0:
@@ -34,5 +45,48 @@ fn threshold_linear_rate_step(r: Float64, theta: Float64, gain: Float64, current
     return next_r
 
 
-fn reset() -> Float64:
-    return 0.0
+def _run_threshold_linear_rate(
+    r0: Float64,
+    theta: Float64,
+    gain: Float64,
+    n_steps: Int,
+    current: Float64,
+    output_addr: Int,
+    write_output: Bool,
+) -> Int64:
+    if n_steps < 0 or output_addr == 0:
+        return -1
+    if not threshold_linear_rate_valid(r0, theta, gain):
+        return -1
+    if not _threshold_linear_rate_finite(current):
+        return -1
+    var output = UnsafePointer[Float64, MutAnyOrigin](unsafe_from_address=output_addr)
+    var rate = r0
+    for index in range(n_steps):
+        rate = threshold_linear_rate_step(rate, theta, gain, current)
+        if rate < 0.0:
+            return -1
+        if write_output:
+            output[index] = rate
+    if write_output:
+        output[n_steps] = rate
+    return 0
+
+
+@export
+def threshold_linear_rate_simulate_c(
+    r: Float64,
+    theta: Float64,
+    gain: Float64,
+    n_steps: Int,
+    current: Float64,
+    output_addr: Int,
+) -> Int64:
+    var validated = _run_threshold_linear_rate(
+        r, theta, gain, n_steps, current, output_addr, False
+    )
+    if validated != 0:
+        return -1
+    return _run_threshold_linear_rate(
+        r, theta, gain, n_steps, current, output_addr, True
+    )

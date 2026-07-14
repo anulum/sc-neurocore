@@ -24,6 +24,8 @@ use crate::neurons;
 mod mcculloch_pitts_binding;
 #[path = "bindings/sigmoid_rate.rs"]
 mod sigmoid_rate_binding;
+#[path = "bindings/threshold_linear_rate.rs"]
+mod threshold_linear_rate_binding;
 
 macro_rules! py_neuron_default {
     ($pylit:literal, $pyname:ident, $rust:ty $(, state $sname:ident)*) => {
@@ -1689,16 +1691,25 @@ pub struct PyThresholdLinearRateNeuron {
 #[pymethods]
 impl PyThresholdLinearRateNeuron {
     #[new]
-    fn new() -> Self {
-        Self {
-            inner: neurons::ThresholdLinearRateNeuron::new(),
-        }
+    #[pyo3(signature = (r=0.0, theta=0.0, gain=1.0))]
+    fn new(r: f64, theta: f64, gain: f64) -> PyResult<Self> {
+        Ok(Self {
+            inner: neurons::ThresholdLinearRateNeuron::with_parameters(r, theta, gain)
+                .map_err(PyValueError::new_err)?,
+        })
     }
-    fn step(&mut self, current: f64) -> f64 {
-        self.inner.step(current)
+    fn step(&mut self, current: f64) -> PyResult<f64> {
+        self.inner.try_step(current).map_err(PyValueError::new_err)
     }
     fn reset(&mut self) {
         self.inner.reset();
+    }
+    fn get_state(&self, py: Python<'_>) -> PyResult<Py<PyAny>> {
+        let d = PyDict::new(py);
+        d.set_item("r", self.inner.r)?;
+        d.set_item("theta", self.inner.theta)?;
+        d.set_item("gain", self.inner.gain)?;
+        Ok(d.into_any().unbind())
     }
 }
 
@@ -2246,6 +2257,7 @@ pub fn register_neuron_classes(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_class::<PySigmoidRateNeuron>()?;
     sigmoid_rate_binding::register(m)?;
     m.add_class::<PyThresholdLinearRateNeuron>()?;
+    threshold_linear_rate_binding::register(m)?;
     m.add_class::<PyAstrocyteModel>()?;
     m.add_class::<PyTsodyksMarkramNeuron>()?;
     m.add_class::<PyLiquidTimeConstantNeuron>()?;

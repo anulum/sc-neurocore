@@ -5,6 +5,18 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+### Threshold-linear rate polyglot closure
+
+- Promoted `ThresholdLinearRateNeuron` to the explicit algebraic contract
+  `r = gain * max(0, I - theta)` across the Python reference, modular Rust
+  engine, independent Rust safety, Julia, Go C-shared, and Mojo shared-library
+  lanes. The cached rate is not integrated state and is never counted as a
+  binary spike.
+- Added real five-runtime build/loading and bit-exact parity tests, failure-
+  atomic native buffers, configuration-preserving reset, a map schema, curated
+  Gerstner-et-al. provenance, and source/binary-bound local benchmark evidence.
+  No production-speed, fixed-point RTL, or hardware result is claimed.
+
 ### Sigmoid-rate polyglot closure
 
 - Added a configurable `SigmoidRateNeuron.simulate` dispatcher across Python,

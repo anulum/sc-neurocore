@@ -127,6 +127,7 @@ nav:
       - IQIF Source Fidelity: validation/iqif_source_fidelity.md
       - McCulloch-Pitts Source Fidelity: validation/mcculloch_pitts_source_fidelity.md
       - Sigmoid Rate Source Fidelity: validation/sigmoid_rate_source_fidelity.md
+      - Threshold-linear Rate Source Fidelity: validation/threshold_linear_rate_source_fidelity.md
       - Conductance Oscillator Co-Simulation Fidelity: validation/conductance_oscillator_cosim_fidelity.md
       - LIF f-I Curve: validation/lif_fi_curve.md
       - Izhikevich 20 Patterns: validation/izhikevich_patterns.md

@@ -97,8 +97,8 @@ SC-NeuroCore is positioned for neuromorphic R&D, stochastic accelerator design, 
 | Model documentation pages | 175 |
 | Rust PyO3 model wrappers | 175 |
 | Optional extras | 28 |
-| Python test files | 1339 |
-| Public documentation pages | 575 |
+| Python test files | 1342 |
+| Public documentation pages | 576 |
 | GitHub Actions workflows | 19 |
 
 Evidence boundary: this snapshot is a static inventory. Performance, coverage, hardware, and scientific-fidelity claims require their own committed evidence artefacts.
@@ -224,6 +224,14 @@ Its source-bound benchmark records bit-exact traces and event counts across all
 five paths; the [Perfect Integrator model page](docs/api/models/perfect_integrator.md)
 states the loaded-host timing boundary, complete native numeric contract, Q8.8
 co-simulation operating point, and the declared fractional-current boundary.
+
+The threshold-linear rate model exposes its memoryless
+`gain * max(0, current - theta)` transfer through Python, a configurable Rust
+engine batch, independent Rust safety, Julia, Go, and Mojo. Its committed
+source- and binary-bound benchmark requires bit-exact complete rate traces in
+all five lanes and records only local non-exclusive regression timings. The
+[model page](docs/api/models/threshold_linear_rate.md) states the continuous-
+rate, no-spike, and no-RTL boundaries.
 
 When installed, SC-NeuroCore automatically uses the Rust engine for:
 

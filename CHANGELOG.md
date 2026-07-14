@@ -5,6 +5,15 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 ## [Unreleased]
 
 ### Added
+- Completed `ThresholdLinearRateNeuron` as a validated memoryless
+  `gain * max(0, current - theta)` continuous-rate contract across Python, a
+  modular Rust-engine batch, independent Rust safety, Julia, Go, and callable
+  Mojo shared-library paths. Every native failure is atomic, reset preserves
+  configuration, and positive rates are no longer misreported as spike counts.
+- Added the algebraic TOML schema, curated Gerstner-et-al. source boundary,
+  exact five-backend trace parity, real backend-loading tests, and a source-
+  and binary-bound local benchmark. The benchmark is non-exclusive regression
+  evidence and makes no production-speed, RTL, or hardware claim.
 - Completed `SigmoidRateNeuron` across the Python reference, modular Rust-engine
   batch, independent Rust-safety module, Julia, Go, and callable Mojo shared
   library. Every lane carries the full configurable exact-relaxation contract;

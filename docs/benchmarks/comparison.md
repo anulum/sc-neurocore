@@ -150,6 +150,30 @@ isolation and reported high load averages. These figures are local diagnostic
 regression evidence, not production, hardware, cross-host, or cross-framework
 performance claims.
 
+## Threshold-linear algebraic rate batch
+
+The committed
+`benchmarks/results/local_python_2026-07-14_threshold_linear_rate.json`
+records the configurable `gain * max(0, current - theta)` transfer through all
+five public dispatchers. Five 200,000-value samples follow a 1,000-value warm-
+up. Every runtime produces the same little-endian float64 trace SHA-256,
+`cdb90f105692311ba359cfbf0574faa23586215e1a253ddcad29276b9bf69402`.
+
+| Backend | Median call | Median ns/evaluation | Trace mismatches |
+|---|---:|---:|---:|
+| Python | 1.621 ms | 8.107 | 0 |
+| Mojo | 3.388 ms | 16.938 | 0 |
+| Rust | 3.892 ms | 19.458 | 0 |
+| Go | 9.824 ms | 49.122 | 0 |
+| Julia | 12.425 ms | 62.123 | 0 |
+
+The Python path uses a vectorised constant fill and was the shortest raw call.
+The compiled dispatcher keeps Python as its always-available floor and orders
+the measured native lanes Mojo, Rust, Go, then Julia. The run was pinned to one
+logical CPU but not exclusively isolated, and its recorded load average was
+high. These timings are local regression evidence, not production, cross-host,
+hardware, or universal-ranking claims.
+
 ## Chialvo map polyglot batch loop
 
 The committed `benchmarks/bench_chialvo_map.py` runs the same

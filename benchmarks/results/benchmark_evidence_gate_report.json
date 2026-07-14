@@ -228,9 +228,13 @@
     {
       "artefact": "benchmarks/results/local_python_2026-07-14_sigmoid_rate.json",
       "id": "sigmoid-rate-five-backend-local-regression"
+    },
+    {
+      "artefact": "benchmarks/results/local_python_2026-07-14_threshold_linear_rate.json",
+      "id": "threshold-linear-rate-five-backend-local-regression"
     }
   ],
-  "failure_count": 64,
+  "failure_count": 66,
   "failures": [
     {
       "gate_id": "quadratic-if-exact-flow-multibackend-local-regression",
@@ -509,11 +513,6 @@
     },
     {
       "gate_id": "sfa-rk4-multibackend-local-regression",
-      "path": "src/sc_neurocore/accel/rust/safety/sfa.rs->source_hashes.src/sc_neurocore/accel/rust/safety/sfa.rs",
-      "reason": "source_hash_mismatch"
-    },
-    {
-      "gate_id": "sfa-rk4-multibackend-local-regression",
       "path": "src/sc_neurocore/neurons/models/sfa.py->source_hashes.src/sc_neurocore/neurons/models/sfa.py",
       "reason": "source_hash_mismatch"
     },
@@ -551,9 +550,24 @@
       "gate_id": "adex-five-backend-closure-local-regression",
       "path": "engine/src/neuron.rs->source_hashes.engine/src/neuron.rs",
       "reason": "source_hash_mismatch"
+    },
+    {
+      "gate_id": "sigmoid-rate-five-backend-local-regression",
+      "path": "bridge/sc_neurocore_engine/__init__.py->source_hashes.bridge/sc_neurocore_engine/__init__.py",
+      "reason": "source_hash_mismatch"
+    },
+    {
+      "gate_id": "sigmoid-rate-five-backend-local-regression",
+      "path": "engine/src/neurons/rate.rs->source_hashes.engine/src/neurons/rate.rs",
+      "reason": "source_hash_mismatch"
+    },
+    {
+      "gate_id": "sigmoid-rate-five-backend-local-regression",
+      "path": "engine/src/pyo3_neurons.rs->source_hashes.engine/src/pyo3_neurons.rs",
+      "reason": "source_hash_mismatch"
     }
   ],
-  "gate_count": 57,
+  "gate_count": 58,
   "manifest": "benchmarks/benchmark_regression_gates.json",
   "passed": false,
   "schema_version": "sc-neurocore.benchmark-evidence-gate.v1"

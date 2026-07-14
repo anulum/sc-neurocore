@@ -967,11 +967,11 @@
     "model_documentation_pages": 175,
     "optional_extras": 28,
     "public_api_exports": 45,
-    "public_documentation_pages": 575,
+    "public_documentation_pages": 576,
     "python_model_classes": 158,
     "python_model_source_modules": 153,
     "rust_pyo3_model_wrappers": 175,
-    "test_files": 1339
+    "test_files": 1342
   },
   "documentation": {
     "public_pages": [
@@ -1549,7 +1549,8 @@
       "docs/validation/neurobench_shd.md",
       "docs/validation/poisson_stochastic_fidelity.md",
       "docs/validation/reference_traces.md",
-      "docs/validation/sigmoid_rate_source_fidelity.md"
+      "docs/validation/sigmoid_rate_source_fidelity.md",
+      "docs/validation/threshold_linear_rate_source_fidelity.md"
     ]
   },
   "evidence_boundary": "Counts are file-system and static-source inventory only; benchmark, coverage, hardware, and scientific-fidelity claims remain governed by their dedicated evidence artefacts.",
@@ -2934,6 +2935,7 @@
       "tests/test_bench_safety_certification.py",
       "tests/test_bench_sigmoid_rate.py",
       "tests/test_bench_theta.py",
+      "tests/test_bench_threshold_linear_rate.py",
       "tests/test_bench_verilog_compiler.py",
       "tests/test_benchmark_context.py",
       "tests/test_benchmark_evidence_docs.py",
@@ -4031,6 +4033,8 @@
       "tests/test_terman_wang_backends.py",
       "tests/test_theta_backend_loading.py",
       "tests/test_theta_backends.py",
+      "tests/test_threshold_linear_rate_backend_loading.py",
+      "tests/test_threshold_linear_rate_backends.py",
       "tests/test_timing_framework.py",
       "tests/test_tools/test_audit_cadence_contract.py",
       "tests/test_tools/test_audit_model_docs.py",

@@ -4,9 +4,7 @@
 // © Code 2020–2026 Miroslav Šotek. All rights reserved.
 // ORCID: 0009-0009-3560-0851
 // Contact: www.anulum.li | protoscience@anulum.li
-// SC-NeuroCore — Rust safety for threshold_linear_rate
-
-#![allow(unused_variables, dead_code, non_snake_case)]
+// SC-NeuroCore — Independent Rust safety contract for threshold-linear rate
 
 #[derive(Debug, Clone)]
 pub struct ThresholdLinearRateNeuron {
@@ -24,23 +22,30 @@ pub enum ThresholdLinearRateError {
 
 impl ThresholdLinearRateNeuron {
     pub fn new() -> Self {
-        Self {
-            r: 0.0_f64,
-            theta: 0.0_f64,
-            gain: 1.0_f64,
-        }
+        Self::with_parameters(0.0, 0.0, 1.0)
+            .expect("the default threshold-linear contract is valid")
     }
 
-    pub fn step(&mut self, i_ext: f64) -> Result<f64, ThresholdLinearRateError> {
-        if !i_ext.is_finite() {
+    pub fn with_parameters(
+        r: f64,
+        theta: f64,
+        gain: f64,
+    ) -> Result<Self, ThresholdLinearRateError> {
+        let state = Self { r, theta, gain };
+        if !validate_threshold_linear_rate(&state) {
+            return Err(ThresholdLinearRateError::InvalidState);
+        }
+        Ok(state)
+    }
+
+    pub fn step(&mut self, current: f64) -> Result<f64, ThresholdLinearRateError> {
+        if !current.is_finite() {
             return Err(ThresholdLinearRateError::InvalidInput);
         }
         if !validate_threshold_linear_rate(self) {
             return Err(ThresholdLinearRateError::InvalidState);
         }
-
-        let drive = (i_ext - self.theta).max(0.0);
-        let next_r = self.gain * drive;
+        let next_r = self.gain * (current - self.theta).max(0.0);
         if !next_r.is_finite() || next_r < 0.0 {
             return Err(ThresholdLinearRateError::NonFiniteOutput);
         }
@@ -49,7 +54,13 @@ impl ThresholdLinearRateNeuron {
     }
 
     pub fn reset(&mut self) {
-        self.r = 0.0_f64;
+        self.r = 0.0;
+    }
+}
+
+impl Default for ThresholdLinearRateNeuron {
+    fn default() -> Self {
+        Self::new()
     }
 }
 
@@ -66,38 +77,52 @@ mod tests {
     use super::*;
 
     #[test]
-    fn test_threshold_linear_rate_new() {
-        let state = ThresholdLinearRateNeuron::new();
-        assert!(validate_threshold_linear_rate(&state));
+    fn default_contract_is_valid() {
+        assert!(validate_threshold_linear_rate(
+            &ThresholdLinearRateNeuron::new()
+        ));
     }
 
     #[test]
-    fn test_threshold_linear_rate_step() {
-        let mut state = ThresholdLinearRateNeuron::new();
-        assert_eq!(state.step(10.0), Ok(10.0));
+    fn configured_transfer_covers_all_threshold_branches() {
+        let mut state = ThresholdLinearRateNeuron::with_parameters(0.25, 1.5, 2.0).unwrap();
+        assert_eq!(state.step(1.0), Ok(0.0));
+        assert_eq!(state.step(1.5), Ok(0.0));
+        assert_eq!(state.step(3.0), Ok(3.0));
     }
 
     #[test]
-    fn test_threshold_linear_rate_rejects_invalid_input_without_mutation() {
-        let mut state = ThresholdLinearRateNeuron::new();
-        let before = state.r;
+    fn invalid_input_does_not_mutate_output_cache() {
+        let mut state = ThresholdLinearRateNeuron::with_parameters(0.25, 1.5, 2.0).unwrap();
         assert_eq!(
             state.step(f64::INFINITY),
             Err(ThresholdLinearRateError::InvalidInput)
         );
-        assert_eq!(state.r, before);
+        assert_eq!(state.r, 0.25);
     }
 
     #[test]
-    fn test_threshold_linear_rate_rejects_nonfinite_output_without_mutation() {
-        let mut state = ThresholdLinearRateNeuron::new();
-        state.gain = 1.0e308;
-        state.r = 0.25;
-        let before = state.r;
+    fn nonfinite_output_does_not_mutate_output_cache() {
+        let mut state = ThresholdLinearRateNeuron::with_parameters(0.25, 0.0, 1.0e308).unwrap();
         assert_eq!(
             state.step(1.0e308),
             Err(ThresholdLinearRateError::NonFiniteOutput)
         );
-        assert_eq!(state.r, before);
+        assert_eq!(state.r, 0.25);
+    }
+
+    #[test]
+    fn reset_preserves_configuration() {
+        let mut state = ThresholdLinearRateNeuron::with_parameters(0.25, -0.4, 2.5).unwrap();
+        state.step(3.0).unwrap();
+        state.reset();
+        assert_eq!((state.r, state.theta, state.gain), (0.0, -0.4, 2.5));
+    }
+
+    #[test]
+    fn constructor_rejects_invalid_contracts() {
+        assert!(ThresholdLinearRateNeuron::with_parameters(-0.1, 0.0, 1.0).is_err());
+        assert!(ThresholdLinearRateNeuron::with_parameters(0.0, f64::NAN, 1.0).is_err());
+        assert!(ThresholdLinearRateNeuron::with_parameters(0.0, 0.0, -1.0).is_err());
     }
 }

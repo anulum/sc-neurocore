@@ -4,21 +4,28 @@
 # © Code 2020–2026 Miroslav Šotek. All rights reserved.
 # ORCID: 0009-0009-3560-0851
 # Contact: www.anulum.li | protoscience@anulum.li
-# SC-NeuroCore — Source/config provenance header
+# SC-NeuroCore — Threshold-linear rate source/config provenance
 
 [metadata]
 schema_version = 2
 name = "ThresholdLinearRateNeuron"
 class_name = "ThresholdLinearRateNeuron"
 module = "threshold_linear_rate"
-display_name = ""
-summary = "Threshold-linear (ReLU) rate neuron. Dayan & Abbott 2001."
+display_name = "Threshold-linear rate transfer"
+summary = "Validated memoryless piecewise-linear population-rate gain function based on Gerstner et al. 2014 Eq. 18.23."
 family = "Rate / mean-field"
 category = "rate-mean-field"
 biophysical_detail = "point"
-maturity = "experimental"
-intended_use = []
-hardware_fit = []
+maturity = "validated"
+intended_use = [
+    "continuous-rate network gain functions",
+    "piecewise-linear population response experiments",
+    "cross-runtime algebraic transfer validation",
+]
+hardware_fit = [
+    "software and floating-point accelerator reference",
+    "fixed-point subtract-compare-multiply candidate for separate RTL enrolment",
+]
 behavior_tags = [
     "excitable",
     "rate-coded",
@@ -27,37 +34,87 @@ behavior_tags = [
 
 [provenance]
 authors = [
-    "Gerstner, W., Kistler, W.M., Naud, R. & Paninski, L.",
+    "Gerstner, W.",
+    "Kistler, W. M.",
+    "Naud, R.",
+    "Paninski, L.",
 ]
 year = 2014
 doi = "10.1017/CBO9781107447615"
+paper_title = "Neuronal Dynamics: From Single Neurons to Networks and Models of Cognition"
+url = "https://neuronaldynamics.epfl.ch/online/Ch18.S2.html"
 
 [state.r]
 init = 0.0
+unit = "rate"
+meaning = "cached latest continuous output; not integrated state or a binary spike"
 
-[state.theta]
-init = 0.0
+[parameters.theta]
+default = 0.0
+unit = "input"
+meaning = "input level at which the rectified response begins"
+range = [
+    -100.0,
+    100.0,
+]
 
 [parameters.gain]
 default = 1.0
-unit = "1"
-meaning = "slope of the threshold-linear (rectified) input-output function"
+unit = "rate/input"
+meaning = "non-negative slope of the response above threshold"
 range = [
     0.0,
-    10.0,
+    100.0,
 ]
 
 [integration]
-dt = 0.1
-method = "euler"
+dt = 1.0
+method = "map"
 
 [dynamics]
+r = "r_next=gain*max(0,I-theta)"
+transfer = "direct algebraic piecewise-linear gain evaluation"
+scope = "r is overwritten on every non-empty evaluation; no ODE, time step, memory, stochastic event, or spike counter is introduced"
 
 [backends.python]
 status = "implemented"
+parity = "exact"
+
+[backends.rust]
+status = "implemented"
+parity = "exact"
+
+[backends.julia]
+status = "implemented"
+parity = "exact"
+
+[backends.go]
+status = "implemented"
+parity = "exact"
+
+[backends.mojo]
+status = "implemented"
+parity = "exact"
 
 [reproducibility]
+reference_config = "{\"r\":0.25,\"theta\":1.5,\"gain\":2.0,\"n_steps\":200000,\"current\":3.0}"
+golden_trace_sha256 = "cdb90f105692311ba359cfbf0574faa23586215e1a253ddcad29276b9bf69402"
+golden_citation = "doi:10.1017/CBO9781107447615; Eq. 18.23 piecewise-linear gain scope declared"
 
 [documentation]
 slug = "models/threshold_linear_rate"
-notes = ""
+notes = "Gerstner et al. 2014 Eq. 18.23 defines the piecewise-linear gain F(h)=[h]+. The maintained class exposes the translated and scaled form gain*max(0,I-theta). It is a continuous-rate transfer, not a spiking neuron and not a temporal relaxation model."
+
+[validation]
+dynamics_faithful = true
+metric = "trajectory"
+operating_point = "r=0.25, theta=1.5, gain=2, current=3, 200000 algebraic evaluations"
+tolerance = "complete Python/Rust/Julia/Go/Mojo rate traces and final cached output agree bit-for-bit; below-threshold, threshold-equality, and above-threshold branches are exercised"
+evidence = "tests/test_threshold_linear_rate_backends.py::test_complete_configured_contract_matches_python"
+
+[silicon]
+compiles = false
+cosim_validated = false
+cosim_evidence = "not enrolled; the software model has no committed fixed-point RTL in this unit"
+target_tier = ""
+terminal_reason = "Software polyglot completion does not claim quantisation, RTL, formal equivalence, synthesis, timing, or hardware evidence."
