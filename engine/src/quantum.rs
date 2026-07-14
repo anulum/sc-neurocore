@@ -14,6 +14,8 @@
 //! - **Gauge transform**: Batch gauge generation and application
 //! - **Problem decomposition**: Greedy graph partitioning
 
+pub(crate) mod bindings;
+
 use rayon::prelude::*;
 use std::collections::HashMap;
 
