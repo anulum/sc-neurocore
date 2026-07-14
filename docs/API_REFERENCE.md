@@ -578,6 +578,43 @@ Run the Mojo recurrence through its C ABI.
 
 ---
 
+## Module `accel.mcculloch_pitts`
+
+### Function `ensure_julia_loaded()`
+Load the committed Julia module when ``juliacall`` is available.
+
+### Function `ensure_go_loaded()`
+Load the staged Go C-shared McCulloch--Pitts library.
+
+### Function `ensure_mojo_loaded()`
+Load the staged Mojo McCulloch--Pitts shared library.
+
+### Function `backend_available(backend)`
+Return whether one public execution lane is ready.
+
+### Function `auto_backend()`
+Choose the first available lane from committed measured evidence.
+
+### Function `normalise_result(result)`
+Reject malformed native output before returning the public binary trace.
+
+### Function `math_is_finite_integer(value)`
+Return whether a converted backend scalar is finite and integral.
+
+### Function `evaluate_rust(theta, counts, flags)`
+Evaluate the complete batch through the production Rust engine.
+
+### Function `evaluate_julia(theta, counts, flags)`
+Evaluate the complete batch through the committed Julia module.
+
+### Function `evaluate_go(theta, counts, flags)`
+Evaluate the Go recurrence through its generated C ABI.
+
+### Function `evaluate_mojo(theta, counts, flags)`
+Evaluate the Mojo recurrence through its shared-library ABI.
+
+---
+
 ## Module `accel.mojo.runner`
 
 ### Class `MojoKernelRunner`
@@ -6625,6 +6662,75 @@ RuntimeError
 
 ---
 
+## Module `compiler._verilog_folded_datapath`
+
+### Function `compile_to_datapath(neuron, module_name, data_width, fraction)`
+Compile an EquationNeuron to a **combinational** processing element.
+
+State is carried on ports — ``<var>_reg`` inputs and ``<var>_next_out``
+outputs — instead of internal registers, so one PE can be time-multiplexed
+across many neurons (the folded interconnect stores per-neuron state in BRAM
+and streams it through this PE one neuron per cycle). ``spike_out`` and each
+``<var>_next_out`` are the post-threshold, post-reset next values, computed by
+the same fragments as :func:`compile_to_verilog` — so the folded datapath is
+bit-for-bit identical to the per-instance module.
+
+``param_ports`` names the parameters to carry on **input ports** instead of
+baking them as module ``parameter`` defaults. A folded population whose neurons
+have heterogeneous parameters drives these ports from a per-neuron parameter ROM
+(one value per neuron, streamed by the sequencer), the parameter-space analogue of
+the state BRAM. Because the arithmetic body references each parameter by the same
+``P_<NAME>`` identifier whether it is a ``parameter`` or an ``input wire``, moving a
+parameter to a port changes only its declaration — the datapath stays bit-for-bit
+identical. Every name must be a real neuron parameter/constant; the rest stay baked.
+Escape-rate models additionally expose the already-advanced 16-bit ``rng_sample``
+input: the folded population owns one LFSR state per neuron in BRAM and supplies
+that sample on the same cycle as the corresponding membrane state.
+
+Pipelining is not supported here (a combinational PE has no register stages);
+the folded sequencer provides the one-cycle-per-neuron timing instead.
+
+Unsigned emission is rejected because the expression and derivative
+datapaths use signed fixed-point arithmetic. Product rounding accepts
+``"truncate"``, ``"nearest"``, or ``"bankers"``; ``"stochastic"`` is
+rejected because the PE has no caller-owned product-rounding LFSR.
+
+---
+
+## Module `compiler._verilog_registered_module`
+
+### Function `compile_to_verilog(neuron, module_name, data_width, fraction)`
+Compile an EquationNeuron to synthesizable Verilog RTL.
+
+Parameters
+----------
+neuron : EquationNeuron
+    The neuron defined by arbitrary ODE strings.
+module_name : str
+    Name of the generated Verilog module.
+data_width : int
+    Bit width for fixed-point arithmetic (default 16 = Q8.8).
+fraction : int
+    Number of fractional bits (default 8).
+signed : bool
+    Must be ``True``. Unsigned emission is rejected because the expression
+    and derivative datapaths use signed fixed-point arithmetic.
+overflow : str
+    Overflow mode: ``"saturate"`` (default), ``"wrap"``, or ``"trap"``.
+rounding : str
+    Rounding mode: ``"truncate"`` (default), ``"nearest"``,
+    or ``"bankers"``. ``"stochastic"`` is rejected because the generated
+    datapath has no caller-owned product-rounding LFSR.
+pipeline_stages : int
+    ``0`` disables global pipelining; any positive value registers multiply
+    outputs. Must be non-negative and cannot be combined with
+    ``pipeline_points``.
+pipeline_points : list&#91;str&#93;, optional
+    Unique intermediate multiply names to register instead of enabling the
+    global pipeline.
+
+---
+
 ## Module `compiler.auto_tune`
 
 ### Function `precision_plan_manifest(assignments)`
@@ -7107,6 +7213,14 @@ Returns
 -------
 list of float
     The 256 strictly positive tabulation points.
+
+### Function `sqrt_sample_points()`
+Return the 16 non-negative ``sqrt`` points from zero through 7.5.
+
+Returns
+-------
+list of float
+    The 16 half-unit tabulation points.
 
 ### Function `exp_lut_entries(data_width, fraction)`
 Quantised ``exp`` LUT over the symmetric grid, saturated to the word max.
@@ -11405,68 +11519,16 @@ str
 
 ---
 
-## Module `compiler.verilog_compiler`
-
-### Function `compile_to_verilog(neuron, module_name, data_width, fraction)`
-Compile an EquationNeuron to synthesizable Verilog RTL.
-
-Parameters
-----------
-neuron : EquationNeuron
-    The neuron defined by arbitrary ODE strings.
-module_name : str
-    Name of the generated Verilog module.
-data_width : int
-    Bit width for fixed-point arithmetic (default 16 = Q8.8).
-fraction : int
-    Number of fractional bits (default 8).
-signed : bool
-    True for signed two's complement (default), False for unsigned.
-overflow : str
-    Overflow mode: ``"saturate"`` (default), ``"wrap"``, or ``"trap"``.
-rounding : str
-    Rounding mode: ``"truncate"`` (default), ``"nearest"``,
-    ``"bankers"``, or ``"stochastic"``.
-pipeline_stages : int
-    Number of pipeline register stages to insert at multiply outputs.
-pipeline_points : list&#91;str&#93;, optional
-    Explicit list of intermediate signal names.
-
-### Function `compile_to_datapath(neuron, module_name, data_width, fraction)`
-Compile an EquationNeuron to a **combinational** processing element.
-
-State is carried on ports — ``<var>_reg`` inputs and ``<var>_next_out``
-outputs — instead of internal registers, so one PE can be time-multiplexed
-across many neurons (the folded interconnect stores per-neuron state in BRAM
-and streams it through this PE one neuron per cycle). ``spike_out`` and each
-``<var>_next_out`` are the post-threshold, post-reset next values, computed by
-the same fragments as :func:`compile_to_verilog` — so the folded datapath is
-bit-for-bit identical to the per-instance module.
-
-``param_ports`` names the parameters to carry on **input ports** instead of
-baking them as module ``parameter`` defaults. A folded population whose neurons
-have heterogeneous parameters drives these ports from a per-neuron parameter ROM
-(one value per neuron, streamed by the sequencer), the parameter-space analogue of
-the state BRAM. Because the arithmetic body references each parameter by the same
-``P_<NAME>`` identifier whether it is a ``parameter`` or an ``input wire``, moving a
-parameter to a port changes only its declaration — the datapath stays bit-for-bit
-identical. Every name must be a real neuron parameter/constant; the rest stay baked.
-Escape-rate models additionally expose the already-advanced 16-bit ``rng_sample``
-input: the folded population owns one LFSR state per neuron in BRAM and supplies
-that sample on the same cycle as the corresponding membrane state.
-
-Pipelining is not supported here (a combinational PE has no register stages);
-the folded sequencer provides the one-cycle-per-neuron timing instead.
-
----
-
 ## Module `compiler.verilog_compiler_config`
 
 ### Class `Q88`
-Fixed-point format configuration for Verilog code generation.
+Describe a fixed-point word used by compiler diagnostics and emitters.
 
-Supports arbitrary precision modes via ``data_width`` / ``fraction``,
-with configurable signedness, overflow handling, and rounding.
+The historical class name is retained for API compatibility, but
+``data_width`` and ``fraction`` are configurable. Unsigned instances are
+valid for range analysis and raw-word encoding. The equation-to-Verilog
+emitters currently reject unsigned instances because their state and
+expression datapaths are signed.
 
 ============  ==========  ===============  =================  ===============
 Mode          data_width  fraction         Integer range      Resolution
@@ -11479,33 +11541,50 @@ Mode          data_width  fraction         Integer range      Resolution
 
 Overflow Modes
 ~~~~~~~~~~~~~~
-- ``"saturate"`` — clamp to &#91;min, max&#93; (default, safest)
+- ``"saturate"`` — clamp to the representable interval (default)
 - ``"wrap"``     — two's complement wrap-around (Loihi 2 hardware behaviour)
-- ``"trap"``     — emit ``$fatal`` assertion (DO-254 / IEC 61508 safety)
+- ``"trap"``     — emit a simulation-only ``$fatal`` assertion
 
 Rounding Modes
 ~~~~~~~~~~~~~~
-- ``"truncate"``   — floor towards -∞ (default, fastest)
+- ``"truncate"``   — arithmetic shift towards negative infinity (default)
 - ``"nearest"``    — round to nearest, ties away from zero
 - ``"bankers"``    — round to nearest, ties to even (IEEE 754 default)
-- ``"stochastic"`` — probabilistic rounding via LFSR (reduces long-run bias)
+- ``"stochastic"`` — reserved label; equation-to-Verilog emission rejects it
 
+Parameters
+----------
+data_width : int
+    Total number of bits in the encoded word.
+fraction : int
+    Number of fractional bits.
+signed : bool
+    Whether range diagnostics interpret the word as two's-complement.
+overflow : str
+    Overflow policy consumed by the Verilog emitters.
+rounding : str
+    Product-rounding policy consumed by the expression emitter. The public
+    equation-to-Verilog paths reject ``"stochastic"`` because they do not
+    own a rounding LFSR.
+
+- **__post_init__**()
+  - Validate the fixed-point geometry and declared arithmetic modes.
 - **integer_bits**()
-  - Number of integer bits (excluding sign bit if signed).
+  - Return the number of magnitude bits above the binary point.
 - **max_value**()
-  - Maximum representable positive value.
+  - Return the largest representable value.
 - **min_value**()
-  - Minimum (most negative) representable value.
+  - Return the smallest representable value.
 - **resolution**()
-  - Smallest representable non-zero step.
+  - Return the spacing between adjacent encoded values.
 - **encode**(value)
-  - Encode a float to unsigned Q-format integer representation.
+  - Encode a value as its fixed-width raw bit pattern.
 - **encode_signed_literal**(value)
   - Encode a float as a Verilog signed decimal literal.
 - **check_range**(value, label)
-  - Check if a value fits in the integer range. Returns warnings.
+  - Return diagnostic messages when a value is outside the format.
 - **precision_report**(dt, params)
-  - Generate a human-readable precision diagnostics report.
+  - Build a fixed-point quantisation diagnostics report.
 
 ---
 
@@ -23354,15 +23433,43 @@ Reference: Kobayashi, R. et al. (2009). Front. Comput. Neurosci. 3:9.
 ## Module `neurons.models.mcculloch_pitts`
 
 ### Class `McCullochPittsNeuron`
-McCulloch & Pitts 1943 — binary threshold neuron.
+McCulloch and Pitts' 1943 all-or-none logical neuron.
 
-y = 1 if sum(w_i * x_i) >= theta, else 0.
+Parameters
+----------
+theta : int, default=1
+    Positive number of simultaneously active excitatory afferents required
+    to excite the neuron when no inhibitory afferent is active.
 
-Reference: McCulloch, W.S. & Pitts, W. (1943). Bull. Math. Biophys. 5:115–133.
+Notes
+-----
+:meth:`step` maps afferent activity at one network instant to activity one
+synaptic delay later.  The delay belongs to the network scheduler; the
+formal neuron has no evolving membrane state.  Any active inhibitory
+afferent is an absolute veto, independent of the excitatory count.
+
+References
+----------
+McCulloch, W. S., & Pitts, W. (1943). A logical calculus of the ideas
+immanent in nervous activity. *Bulletin of Mathematical Biophysics*, 5,
+115--133. https://doi.org/10.1007/BF02478259
 
 - **__post_init__**()
-- **step**(weighted_input)
+  - Normalise the fixed excitatory-count threshold.
+- **step**(excitatory_count, inhibitory_active)
+  - Return the source-faithful all-or-none output for one delay.
+- **simulate**(excitatory_counts, inhibitory_flags, backend)
+  - Evaluate a varying-input batch through one maintained backend.
 - **reset**()
+  - Validate the fixed parameter; the formal neuron has no live state.
+
+### Function `encode_hardware_input(excitatory_count, inhibitory_active)`
+Encode the two-input source contract on the signed Q32.0 RTL port.
+
+Non-negative values carry the active excitatory-afferent count.  ``-1`` is
+the sole inhibitory-veto sentinel.  Because ``theta`` is strictly positive,
+the schema condition ``I >= theta`` is equivalent to the public two-input
+rule for every valid input.
 
 ---
 
@@ -24669,7 +24776,9 @@ steps:
 inputs:
     Constant keyword inputs passed to ``UniversalNeuron.step``.
 state_variables:
-    State variables to record after each timestep.
+    State variables to record after each timestep. May be empty for a
+    genuinely stateless deterministic threshold model; event features are
+    still recorded.
 
 
 ### Class `ReferenceTraceSpec`
@@ -24767,12 +24876,15 @@ ValueError
     an unsupported runner or bundled neuron schema.
 
 ### Function `list_reference_trace_specs()`
-Return all committed reference-trace names.
+Return all committed deterministic Universal-DSL trace names.
 
 Returns
 -------
 tuple&#91;str, ...&#93;
-    Sorted stable identifiers for every JSON payload in the corpus.
+    Sorted stable identifiers for every deterministic scalar-feature
+    payload in the corpus. Seeded statistical artifacts use a separate
+    runner and dedicated validators, so they are not coerced into this
+    trace contract.
 
 ### Function `load_reference_trace_spec(name)`
 Load one committed reference-trace specification.

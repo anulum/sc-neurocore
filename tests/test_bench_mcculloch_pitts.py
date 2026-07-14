@@ -1,0 +1,331 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Commercial license available
+# © Concepts 1996–2026 Miroslav Šotek. All rights reserved.
+# © Code 2020–2026 Miroslav Šotek. All rights reserved.
+# ORCID: 0009-0009-3560-0851
+# Contact: www.anulum.li | protoscience@anulum.li
+# SC-NeuroCore — McCulloch-Pitts five-backend benchmark contract tests
+
+"""Production-path tests for the controlled source-rule benchmark."""
+
+from __future__ import annotations
+
+import hashlib
+import json
+import os
+from pathlib import Path
+import platform
+import shutil
+import subprocess
+
+import numpy as np
+import numpy.typing as npt
+import pytest
+
+from benchmarks import bench_model_mcculloch_pitts as benchmark
+from sc_neurocore.accel import mcculloch_pitts as backends
+
+
+def _passing_safety() -> dict[str, object]:
+    """Return one successful focused Rust-safety result."""
+    return {"command": "focused", "passed": True, "returncode": 0, "output_tail": []}
+
+
+def test_real_benchmark_writes_five_backend_exact_parity_evidence(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Exercise all five dispatchers with varying count and inhibition rows."""
+    monkeypatch.setattr(benchmark, "N_ROWS", 32)
+    monkeypatch.setattr(benchmark, "N_REPEATS", 1)
+    monkeypatch.setattr(benchmark, "WARMUP_ROWS", 1)
+    monkeypatch.setattr(benchmark, "_verify_rust_safety", _passing_safety)
+    output = tmp_path / "mcculloch-pitts.json"
+
+    assert benchmark.main(["--json", str(output), "--allow-unpinned"]) == 0
+    payload = json.loads(output.read_text(encoding="utf-8"))
+
+    assert payload["schema_version"] == "sc-neurocore.polyglot-benchmark.v1"
+    assert payload["kernel"] == benchmark.KERNEL
+    assert payload["workload"]["n_rows"] == 32
+    assert payload["workload"]["theta"] == benchmark.THETA
+    assert set(payload["measured_order"]) == set(benchmark.BACKENDS)
+    assert payload["auto_backend_order"][-1] == "python"
+    reference_hash = payload["backends"]["python"]["trace_sha256"]
+    assert all(row["trace_matches_python"] for row in payload["backends"].values())
+    assert all(row["event_count_matches_python"] for row in payload["backends"].values())
+    assert all(row["trace_sha256"] == reference_hash for row in payload["backends"].values())
+    assert payload["backends"]["python"]["event_count"] == 17
+
+
+def test_source_hashes_cover_declared_implementation_surfaces() -> None:
+    """Pin every declared source digest to the live file bytes."""
+    hashes = benchmark._source_hashes()
+    for relative in benchmark.SOURCE_PATHS:
+        expected = hashlib.sha256((benchmark.REPOSITORY / relative).read_bytes()).hexdigest()
+        assert hashes[relative] == expected
+        assert len(expected) == 64
+
+
+def test_binary_hashes_bind_loaded_native_artifacts() -> None:
+    """Pin every measured native lane to the exact loaded file bytes."""
+    records = benchmark._binary_hashes()
+    assert set(records) == {"rust_extension", "go_shared_library", "mojo_shared_library"}
+    for record in records.values():
+        path = Path(str(record["path"]))
+        if not path.is_absolute():
+            path = benchmark.REPOSITORY / path
+        assert path.is_file()
+        assert record["sha256"] == hashlib.sha256(path.read_bytes()).hexdigest()
+        assert record["size_bytes"] == path.stat().st_size
+
+
+def test_committed_evidence_matches_live_sources_and_full_parity() -> None:
+    """Bind the measured five-lane artifact to current code and behavior."""
+    artifact = (
+        benchmark.REPOSITORY / "benchmarks/results/local_python_2026-07-14_mcculloch_pitts.json"
+    )
+    payload = json.loads(artifact.read_text(encoding="utf-8"))
+
+    assert payload["schema_version"] == "sc-neurocore.polyglot-benchmark.v1"
+    assert payload["kernel"] == benchmark.KERNEL
+    assert payload["evidence_class"] == ("local_regression_single_cpu_affinity_non_exclusive")
+    assert payload["production_speed_claim"] is False
+    assert payload["hardware_measurement_claimed"] is False
+    counts, flags = benchmark._inputs(benchmark.N_ROWS)
+    assert payload["workload"] == {
+        "n_rows": benchmark.N_ROWS,
+        "repeats": benchmark.N_REPEATS,
+        "warmup_rows": benchmark.WARMUP_ROWS,
+        "theta": benchmark.THETA,
+        "input_pattern": (
+            "count=index mod 16 with final int32 max; inhibition on index mod 11 zero"
+        ),
+        **benchmark._input_digests(counts, flags),
+    }
+    assert set(payload["measured_order"]) == set(benchmark.BACKENDS)
+    native_order = [name for name in payload["measured_order"] if name != "python"]
+    assert payload["fastest_measured_native_backend"] == native_order[0]
+    assert payload["auto_backend_order"] == [*native_order, "python"]
+    assert payload["recommended_auto_backend"] == native_order[0]
+    assert payload["verification"]["rust_safety"]["passed"] is True
+    assert payload["meta"]["single_cpu_pinned"] is True
+    assert payload["meta"]["exclusive_cpu_isolation_claimed"] is False
+
+    reference = payload["backends"]["python"]
+    for backend in benchmark.BACKENDS:
+        row = payload["backends"][backend]
+        assert row["available"] is True
+        assert row["used"] is True
+        assert row["trace_sha256"] == reference["trace_sha256"]
+        assert row["trace_matches_python"] is True
+        assert row["trace_mismatch_count"] == 0
+        assert row["event_count"] == reference["event_count"]
+        assert row["event_count_matches_python"] is True
+
+    hashes = payload["source_hashes"]
+    for relative in benchmark.SOURCE_PATHS:
+        expected = hashlib.sha256((benchmark.REPOSITORY / relative).read_bytes()).hexdigest()
+        assert hashes[relative] == expected
+    assert payload["binary_hashes"] == benchmark._binary_hashes()
+
+
+def test_real_rust_safety_gate_executes_enrolled_module() -> None:
+    """Compile and execute the benchmark's independent Rust-safety module."""
+    result = benchmark._verify_rust_safety()
+    assert result["passed"] is True
+    assert result["returncode"] == 0
+    assert "mcculloch_pitts.rs" in str(result["command"])
+    assert any("9 passed" in line for line in result["output_tail"])
+
+
+def test_unpinned_run_is_rejected_before_measurement(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Require explicit acknowledgement for multi-CPU affinity."""
+    monkeypatch.setattr(os, "sched_getaffinity", lambda _pid: {0, 1})
+    assert benchmark.main(["--json", str(tmp_path / "unused.json")]) == 2
+
+
+def test_missing_backend_is_rejected_by_default(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Refuse to publish a partial report without an explicit override."""
+    monkeypatch.setattr(os, "sched_getaffinity", lambda _pid: {0})
+    monkeypatch.setattr(
+        benchmark,
+        "_probe_backend",
+        lambda backend: (backend == "python", "missing" if backend != "python" else ""),
+    )
+    assert benchmark.main(["--json", str(tmp_path / "unused.json")]) == 2
+
+
+@pytest.mark.parametrize(
+    ("compiled_trace", "compiled_count"),
+    [
+        (np.array([1], dtype=np.uint8), 0),
+        (np.array([0], dtype=np.uint8), 1),
+    ],
+)
+def test_trace_and_event_count_parity_fail_closed(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    compiled_trace: npt.NDArray[np.uint8],
+    compiled_count: int,
+) -> None:
+    """Reject binary-trace or event-count divergence."""
+    monkeypatch.setattr(benchmark, "BACKENDS", ("python", "mojo"))
+    monkeypatch.setattr(benchmark, "N_ROWS", 1)
+    monkeypatch.setattr(os, "sched_getaffinity", lambda _pid: {0})
+    monkeypatch.setattr(benchmark, "_probe_backend", lambda _backend: (True, ""))
+    monkeypatch.setattr(benchmark, "_source_hashes", lambda: {})
+    monkeypatch.setattr(benchmark, "_binary_hashes", lambda: {})
+    monkeypatch.setattr(benchmark, "_environment", lambda _load: {})
+    monkeypatch.setattr(benchmark, "_verify_rust_safety", _passing_safety)
+
+    def measured(
+        backend: str,
+    ) -> tuple[float, float, float, list[float], npt.NDArray[np.uint8], int]:
+        if backend == "python":
+            return 1.0, 1.0, 1.0, [1.0], np.array([0], dtype=np.uint8), 0
+        return 0.5, 0.5, 0.5, [0.5], compiled_trace, compiled_count
+
+    monkeypatch.setattr(benchmark, "_measure_backend", measured)
+    assert benchmark.main(["--json", str(tmp_path / "failure.json")]) == 3
+
+
+def test_backend_probes_report_each_runtime(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Bind every backend name to its real availability probe."""
+    monkeypatch.setattr(backends, "_HAS_RUST", True)
+    monkeypatch.setattr(backends, "ensure_julia_loaded", lambda: False)
+    monkeypatch.setattr(backends, "ensure_go_loaded", lambda: True)
+    monkeypatch.setattr(backends, "ensure_mojo_loaded", lambda: False)
+
+    assert benchmark._probe_backend("python") == (True, "")
+    assert benchmark._probe_backend("rust") == (True, "")
+    assert benchmark._probe_backend("julia")[0] is False
+    assert benchmark._probe_backend("go") == (True, "")
+    assert benchmark._probe_backend("mojo")[0] is False
+
+
+def test_host_metadata_helpers_use_portable_fallbacks(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Missing Linux metadata and PATH entries remain explicit in evidence."""
+    original_read_text = Path.read_text
+
+    def selective_read(
+        path: Path,
+        encoding: str | None = None,
+        errors: str | None = None,
+    ) -> str:
+        if path == Path("/proc/cpuinfo") or path == tmp_path / "missing":
+            raise OSError("metadata unavailable")
+        return original_read_text(path, encoding=encoding, errors=errors)
+
+    monkeypatch.setattr(Path, "read_text", selective_read)
+    monkeypatch.setattr(platform, "processor", lambda: "")
+    monkeypatch.setattr(shutil, "which", lambda _name: None)
+
+    fallback = tmp_path / "runtime"
+    fallback.touch()
+    assert benchmark._cpu_model() == "unknown"
+    assert benchmark._read_optional(tmp_path / "missing") == "unavailable"
+    assert benchmark._tool_path("runtime", fallback) == str(fallback)
+    assert benchmark._tool_path("runtime", tmp_path / "absent") is None
+
+
+def test_rust_safety_gate_reports_compile_and_execution_failures(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """The benchmark cannot promote when its independent safety gate fails."""
+    failure = subprocess.CompletedProcess(["rustc"], 1, stdout="", stderr="compile failed")
+    monkeypatch.setattr(subprocess, "run", lambda *_args, **_kwargs: failure)
+    result = benchmark._verify_rust_safety()
+    assert result["passed"] is False
+    assert result["returncode"] == 1
+    assert result["output_tail"] == ["compile failed"]
+
+    monkeypatch.setattr(
+        subprocess,
+        "run",
+        lambda *_args, **_kwargs: (_ for _ in ()).throw(OSError("rustc unavailable")),
+    )
+    result = benchmark._verify_rust_safety()
+    assert result["passed"] is False
+    assert result["returncode"] == -1
+    assert result["output_tail"] == ["rustc unavailable"]
+
+
+def _measured_python(
+    _backend: str,
+) -> tuple[float, float, float, list[float], npt.NDArray[np.uint8], int]:
+    """Return one deterministic benchmark row for CLI gate tests."""
+    return 1.0, 1.0, 1.0, [1.0], np.array([0], dtype=np.uint8), 0
+
+
+def test_allowed_unavailable_backend_is_recorded_without_execution(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """An explicit diagnostic override retains an unavailable backend row."""
+    monkeypatch.setattr(benchmark, "BACKENDS", ("python", "mojo"))
+    monkeypatch.setattr(benchmark, "N_ROWS", 1)
+    monkeypatch.setattr(os, "sched_getaffinity", lambda _pid: {0})
+    monkeypatch.setattr(
+        benchmark,
+        "_probe_backend",
+        lambda backend: (backend == "python", "missing" if backend == "mojo" else ""),
+    )
+    monkeypatch.setattr(benchmark, "_measure_backend", _measured_python)
+    monkeypatch.setattr(benchmark, "_binary_hashes", lambda: {})
+    monkeypatch.setattr(benchmark, "_environment", lambda _load: {})
+    monkeypatch.setattr(benchmark, "_source_hashes", lambda: {})
+    monkeypatch.setattr(benchmark, "_verify_rust_safety", _passing_safety)
+    output = tmp_path / "partial.json"
+
+    assert benchmark.main(["--json", str(output), "--allow-unavailable-backends"]) == 0
+    payload = json.loads(output.read_text(encoding="utf-8"))
+    assert payload["backends"]["mojo"] == {
+        "available": False,
+        "used": False,
+        "unavailable_reason": "missing",
+    }
+
+
+def test_python_reference_must_be_measured_before_native_rows(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Reject a benchmark configuration that measures a native lane first."""
+    monkeypatch.setattr(benchmark, "BACKENDS", ("mojo", "python"))
+    monkeypatch.setattr(os, "sched_getaffinity", lambda _pid: {0})
+    monkeypatch.setattr(benchmark, "_probe_backend", lambda _backend: (True, ""))
+    monkeypatch.setattr(benchmark, "_measure_backend", _measured_python)
+
+    with pytest.raises(RuntimeError, match="Python reference must be measured first"):
+        benchmark.main(["--json", str(tmp_path / "invalid.json")])
+
+
+def test_failed_rust_safety_gate_returns_dedicated_exit_code(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """A failed safety module blocks an otherwise matching report."""
+    monkeypatch.setattr(benchmark, "BACKENDS", ("python",))
+    monkeypatch.setattr(benchmark, "N_ROWS", 1)
+    monkeypatch.setattr(os, "sched_getaffinity", lambda _pid: {0})
+    monkeypatch.setattr(benchmark, "_probe_backend", lambda _backend: (True, ""))
+    monkeypatch.setattr(benchmark, "_measure_backend", _measured_python)
+    monkeypatch.setattr(benchmark, "_binary_hashes", lambda: {})
+    monkeypatch.setattr(benchmark, "_environment", lambda _load: {})
+    monkeypatch.setattr(benchmark, "_source_hashes", lambda: {})
+    monkeypatch.setattr(
+        benchmark,
+        "_verify_rust_safety",
+        lambda: {"command": "focused", "passed": False, "returncode": 1, "output_tail": []},
+    )
+    assert benchmark.main(["--json", str(tmp_path / "failed.json")]) == 5

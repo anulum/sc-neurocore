@@ -97,8 +97,8 @@ SC-NeuroCore is positioned for neuromorphic R&D, stochastic accelerator design, 
 | Model documentation pages | 175 |
 | Rust PyO3 model wrappers | 175 |
 | Optional extras | 28 |
-| Python test files | 1322 |
-| Public documentation pages | 573 |
+| Python test files | 1335 |
+| Public documentation pages | 574 |
 | GitHub Actions workflows | 19 |
 
 Evidence boundary: this snapshot is a static inventory. Performance, coverage, hardware, and scientific-fidelity claims require their own committed evidence artefacts.
@@ -174,7 +174,7 @@ dependency matrix and research-only boundaries.
 ### Rust Engine and Benchmark Evidence
 
 The optional Rust engine provides SIMD-accelerated simulation, 175 Rust PyO3
-model wrappers, a 161-model NetworkRunner dispatch list, and fused E-I network
+model wrappers, a 162-model NetworkRunner dispatch list, and fused E-I network
 simulation. Release automation builds pre-built `sc_neurocore_engine` wheels
 with `maturin` for Python 3.10-3.14 on Linux x86_64/aarch64, macOS, and Windows.
 Use a matching release wheel first:
@@ -227,7 +227,7 @@ co-simulation operating point, and the declared fractional-current boundary.
 
 When installed, SC-NeuroCore automatically uses the Rust engine for:
 
-- **NetworkRunner:** 161-model fused Rayon-parallel simulation loop
+- **NetworkRunner:** 162-model fused Rayon-parallel simulation loop
 - **E-I network:** single Rust call for connectivity + Poisson + Euler + spike detection
 - **Batch simulate:** model dispatch loop in compiled Rust
 - **SIMD bitstream ops:** 190 Gbit/s popcount (AVX-512)
@@ -369,7 +369,7 @@ graph TD
         B --> F{Backend?}
         F -->|CPU| G[NumPy / Numba SIMD]
         F -->|GPU| H[CuPy CUDA]
-        F -->|Rust| I[sc_neurocore_engine<br/>Brunel benchmark artefact: 39-202x vs Brian2<br/>175 Rust PyO3 wrappers · 161-model NetworkRunner]
+        F -->|Rust| I[sc_neurocore_engine<br/>Brunel benchmark artefact: 39-202x vs Brian2<br/>175 Rust PyO3 wrappers · 162-model NetworkRunner]
         F -->|MPI| MPI[mpi4py distributed<br/>billion-neuron scale]
     end
 
@@ -380,7 +380,7 @@ graph TD
         K --> L[Verilog RTL<br/>AXI-Lite + LIF Core]
         K2 --> L
         L --> M[FPGA Bitstream<br/>Xilinx / Intel]
-        L --> V[Formal Verification<br/>49 proof jobs · catalogue + legacy]
+        L --> V[Formal Verification<br/>50 proof jobs · catalogue + legacy]
     end
 
     subgraph "Domain Bridges (optional)"
@@ -445,12 +445,12 @@ hdl/
   sc_event_neuron.v           -- Event-triggered LIF (power ∝ spike rate)
   sc_aer_router.v             -- AER event distribution to target neurons
   tb_sc_*.v (16 testbenches)  -- Self-checking simulation testbenches
-  formal/ (49 proof jobs)     -- catalogue dual-axis perfect + legacy SC cores
+  formal/ (50 proof jobs)     -- catalogue dual-axis perfect + legacy SC cores
 ```
 
-Formal verification inventory: **49 SymbiYosys proof jobs and 179 formal
-statements (149 assert, 7 assume, 23 cover)** under `hdl/formal/` (18
-non-catalogue jobs + **31 catalogue jobs** under `hdl/formal/catalogue/`). This
+Formal verification inventory: **50 SymbiYosys proof jobs and 180 formal
+statements (150 assert, 7 assume, 23 cover)** under `hdl/formal/` (18
+non-catalogue jobs + **32 catalogue jobs** under `hdl/formal/catalogue/`). This
 counts the git-tracked jobs a clean checkout proves; re-emit the generated
 catalogue harnesses with `tools/emit_catalogue_formal.py`.
 
@@ -663,10 +663,10 @@ pip install -r requirements.txt       # runtime only
 pip install -r requirements-dev.txt   # runtime + dev tools
 ```
 
-## Rust Engine (175 PyO3 Wrappers, 161-Model NetworkRunner)
+## Rust Engine (175 PyO3 Wrappers, 162-Model NetworkRunner)
 
 The `sc_neurocore_engine` crate provides 175 Rust PyO3 model wrappers callable
-from Python (including ArcaneNeuron), a 161-model NetworkRunner with
+from Python (including ArcaneNeuron), a 162-model NetworkRunner with
 Rayon-parallel population simulation (100K+ neurons), and SIMD-accelerated
 primitives with dispatch across five ISAs (AVX-512, AVX2, NEON, SVE,
 RISC-V V). Rust test totals are maintained by the Rust workspace; public
@@ -685,8 +685,8 @@ evidence before publication.
 | Category | Scope |
 |----------|-------|
 | Primitives | Bernoulli + Sobol bitstream, pack/unpack, popcount, SIMD (5 ISAs) |
-| Neurons | 175 PyO3 model wrappers; 161 names wired into NetworkRunner |
-| NetworkRunner | 161-model fused simulation loop with CSR projections and Rayon parallelism |
+| Neurons | 175 PyO3 model wrappers; 162 names wired into NetworkRunner |
+| NetworkRunner | 162-model fused simulation loop with CSR projections and Rayon parallelism |
 | Synapses | Static, STDP, Reward-STDP |
 | Layers | Dense, Conv2D, Recurrent, Learning, Fusion, Memristive, Attention |
 | Networks | Brunel, GNN, Spike recorder, Connectome, Fault injection |

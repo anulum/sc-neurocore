@@ -1,0 +1,33 @@
+{
+  "metadata": {
+    "schema_version": 1,
+    "name": "McCullochPittsNeuron",
+    "author": "McCulloch, W. S.; Pitts, W.",
+    "year": 1943,
+    "doi": "10.1007/BF02478259",
+    "description": "All-or-none excitatory-count threshold with absolute inhibitory veto"
+  },
+  "state": {},
+  "parameters": {
+    "theta": 1
+  },
+  "integration": {
+    "dt": 1.0,
+    "method": "euler"
+  },
+  "dynamics": {},
+  "threshold": {
+    "condition": "I >= theta",
+    "detection": "level",
+    "description": "I is a signed Q32.0 transport: non-negative excitatory count, or -1 when any inhibitory afferent is active"
+  },
+  "extensions": {
+    "family": "logical",
+    "model_type": "stateless_threshold",
+    "discrete_time": true,
+    "input_encoding": "I=-1 means absolute inhibitory veto; I in [0, 2^31-1] is active excitatory-afferent count",
+    "source_scope_note": "The hand API exposes excitatory_count and inhibitory_active separately. The schema folds them through encode_hardware_input only at the RTL boundary.",
+    "delay_scope_note": "One schema step maps afferents at t-1 to activity at t; no hidden membrane or delay state is introduced.",
+    "silicon_cosim_note": "Signed Q32.0 represents the complete input domain exactly and preserves both registered and folded truth tables."
+  }
+}

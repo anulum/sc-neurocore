@@ -11,6 +11,8 @@
 from __future__ import annotations
 
 from dataclasses import replace
+import json
+from pathlib import Path
 
 import pytest
 
@@ -18,6 +20,7 @@ from sc_neurocore.neurons.reference_traces import (
     ReferenceTraceSpec,
     list_reference_trace_specs,
     load_reference_trace_spec,
+    reference_trace_spec_from_payload,
     simulate_reference_trace,
     validate_all_reference_traces,
     validate_reference_trace,
@@ -26,10 +29,15 @@ from sc_neurocore.neurons.reference_traces import (
 from sc_neurocore.neurons.universal_dsl import list_bundled_schemas
 
 _STOCHASTIC_SCHEMA_NAMES = frozenset({"escape_rate", "poisson"})
+_EXTERNAL_SOURCE_PREFIXES = {
+    "coba_lif": "Brette et al. (2007)",
+    "iqif": "https://github.com/twetto/iq-neuron/blob/",
+}
 _DETERMINISTIC_SCHEMA_TRACES = {
     "adex": "adex_resting_adaptation_doi",
     "cazelles_map": "cazelles_map_bursting_doi",
     "chialvo_map": "chialvo_map_doi",
+    "coba_lif": "coba_lif_conductance_rk4_doi",
     "connor_stevens": "connor_stevens_driven_spiking_doi",
     "courage_nekorkin_map": "courage_nekorkin_map_autonomous_doi",
     "dpi_neuron": "dpi_neuron_driven_spiking_doi",
@@ -43,9 +51,11 @@ _DETERMINISTIC_SCHEMA_TRACES = {
     "izhikevich": "izhikevich_regular_spiking_doi",
     "izhikevich2007": "izhikevich2007_regular_spiking_doi",
     "ibarz_tanaka_map": "ibarz_tanaka_map_2007_doi",
+    "iqif": "iqif_a8752eb_tutorial",
     "lapicque": "lapicque_constant_current_closed_form",
     "lif": "lif_constant_current_closed_form",
     "mckean": "mckean_driven_oscillation_doi",
+    "mcculloch_pitts": "mcculloch_pitts_1943_truth_table",
     "medvedev_map": "medvedev_map_first_return_doi",
     "mihalas_niebur": "mihalas_niebur_driven_spiking_doi",
     "morris_lecar": "morris_lecar_driven_oscillation_doi",
@@ -67,6 +77,8 @@ def test_seeded_corpus_has_analytic_schema_entries() -> None:
 
     assert names == tuple(sorted(names))
     assert set(_DETERMINISTIC_SCHEMA_TRACES.values()) <= set(names)
+    assert "escape_rate_lfsr16_statistical_v1" not in names
+    assert "poisson_lfsr16_statistical_v1" not in names
 
     spec = load_reference_trace_spec("lif_constant_current_closed_form")
     assert isinstance(spec, ReferenceTraceSpec)
@@ -85,7 +97,11 @@ def test_reference_trace_corpus_covers_every_deterministic_bundled_schema() -> N
         spec = load_reference_trace_spec(trace_name)
         assert spec.schema_name == schema_name
         assert spec.runner == "universal_dsl"
-        assert spec.provenance.source.endswith(f"/{schema_name}.toml")
+        external_prefix = _EXTERNAL_SOURCE_PREFIXES.get(schema_name)
+        if external_prefix is None:
+            assert spec.provenance.source.endswith(f"/{schema_name}.toml")
+        else:
+            assert spec.provenance.source.startswith(external_prefix)
         assert spec.provenance.citation is not None
         assert spec.provenance.citation
         if "doi" in trace_name:
@@ -107,6 +123,20 @@ def test_simulation_exercises_universal_schema_runner() -> None:
     assert simulation.features["spike_count"] == 0.0
     assert simulation.features["first_spike_step"] == -1.0
     assert simulation.features["max.v"] == max(simulation.trace["v"])
+
+
+def test_stateless_reference_trace_records_event_features_only() -> None:
+    """The corpus can validate logical activity without fake membrane state."""
+    artifact = (
+        Path(__file__).resolve().parents[1]
+        / "src/sc_neurocore/neurons/reference_trace_data/mcculloch_pitts_1943_truth_table.json"
+    )
+    spec = reference_trace_spec_from_payload(json.loads(artifact.read_text(encoding="utf-8")))
+    simulation = simulate_reference_trace(spec)
+
+    assert dict(simulation.trace) == {}
+    assert simulation.spikes == (1, 1, 1, 1)
+    assert simulation.features == {"spike_count": 4.0, "first_spike_step": 1.0}
 
 
 def test_reference_trace_validation_accepts_seeded_corpus() -> None:

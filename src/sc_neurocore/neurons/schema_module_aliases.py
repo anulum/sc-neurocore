@@ -57,6 +57,7 @@ SCHEMA_TO_CLASS: dict[str, str] = {
     "lapicque": "LapicqueNeuron",
     "lif": "LapicqueNeuron",
     "mckean": "McKeanNeuron",
+    "mcculloch_pitts": "McCullochPittsNeuron",
     "mihalas_niebur": "MihalasNieburNeuron",
     "morris_lecar": "MorrisLecarNeuron",
     "perfect_integrator": "PerfectIntegratorNeuron",

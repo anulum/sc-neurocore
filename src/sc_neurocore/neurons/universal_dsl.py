@@ -294,10 +294,19 @@ class UniversalNeuron:
         detection = threshold_config.get("detection", "level")
         rate_expression = threshold_config.get("rate_expression")
         probability_expression = threshold_config.get("probability_expression")
-        if not dynamics and not (detection == "poisson" and probability_expression):
+        stateless_level_threshold = bool(
+            not state
+            and detection == "level"
+            and isinstance(threshold_expr, str)
+            and threshold_expr.strip()
+        )
+        if not dynamics and not (
+            (detection == "poisson" and probability_expression) or stateless_level_threshold
+        ):
             raise ValueError(
                 "Schema must define at least one ODE in [dynamics], unless it is a "
-                "stateless Poisson schema with probability_expression"
+                "stateless Poisson probability schema or a stateless deterministic "
+                "level-threshold schema"
             )
         rng_seed = (
             rng_seed_override

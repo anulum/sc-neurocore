@@ -4,303 +4,224 @@
 # © Code 2020–2026 Miroslav Šotek. All rights reserved.
 # ORCID: 0009-0009-3560-0851
 # Contact: www.anulum.li | protoscience@anulum.li
-# SC-NeuroCore — End-to-end test: McCullochPittsNeuron
+# SC-NeuroCore — Source-faithful McCulloch-Pitts model contracts
 
-"""Full pipeline test for McCullochPittsNeuron (McCulloch & Pitts 1943).
-
-The first mathematical neuron model (1943). Stateless binary threshold:
-y = 1 if Σ(w_i · x_i) ≥ θ, else 0.
-
-No state variables, no dynamics, no reset. Pure combinational logic.
-Implements any linearly separable Boolean function. Can compose
-AND, OR, NOT gates. Fastest model in zoo: ~2.3M steps/s.
-FULL PIPELINE WIRED + PERFORMANCE."""
+"""Exact source rule, validation, batch and network tests for model 33."""
 
 from __future__ import annotations
 
-import time
+import dataclasses
+from typing import cast
 
 import numpy as np
 import pytest
 
-from sc_neurocore.neurons.models.mcculloch_pitts import McCullochPittsNeuron
-from sc_neurocore.network.population import Population
-from sc_neurocore.network.projection import Projection
-from sc_neurocore.network.network import Network
+from sc_neurocore.analysis.spike_stats.basic import firing_rate, spike_count
 from sc_neurocore.network.monitor import SpikeMonitor
+from sc_neurocore.network.network import Network
+from sc_neurocore.network.population import Population
 from sc_neurocore.network.stimulus import PoissonInput
-from sc_neurocore.analysis.spike_stats.basic import spike_count, firing_rate
+from sc_neurocore.neurons.models.mcculloch_pitts import (
+    McCullochPittsNeuron,
+    encode_hardware_input,
+)
+
+_INT32_MAX = (1 << 31) - 1
 
 
-def _run(neuron: McCullochPittsNeuron, current: float, steps: int) -> list[int]:
-    return [t for t in range(steps) if neuron.step(current) == 1]
+def test_defaults_are_a_stateless_positive_count_contract() -> None:
+    """The default is one excitatory afferent and no invented membrane state."""
+    neuron = McCullochPittsNeuron()
+    assert dataclasses.is_dataclass(neuron)
+    assert neuron.theta == 1
+    assert type(neuron.theta) is int
+    assert not hasattr(neuron, "v")
 
 
-# ---------------------------------------------------------------------------
-# 1. ISOLATION — defaults, binary output, stateless, reset
-# ---------------------------------------------------------------------------
-class TestMPIsolation:
-    def test_defaults(self):
-        n = McCullochPittsNeuron()
-        assert n.theta == 1.0
-
-    def test_step_returns_binary(self):
-        assert McCullochPittsNeuron().step(0.0) in (0, 1)
-
-    def test_stateless(self):
-        """Same input always gives same output regardless of history."""
-        n = McCullochPittsNeuron()
-        n.step(5.0)
-        n.step(5.0)
-        assert n.step(0.5) == 0
-        assert n.step(5.0) == 1
-
-    def test_no_state_variables(self):
-        """Only has theta (parameter), no evolving state."""
-        n = McCullochPittsNeuron()
-        n.step(5.0)
-        n.step(0.0)
-        # No v, no w, no gating — only theta
-        assert not hasattr(n, "v")
-
-    def test_reset_noop(self):
-        n = McCullochPittsNeuron()
-        n.step(5.0)
-        n.reset()
-        assert n.theta == 1.0
-
-    def test_deterministic(self):
-        n1 = McCullochPittsNeuron()
-        n2 = McCullochPittsNeuron()
-        for i in range(200):
-            x = float(i) / 100.0 - 0.5
-            assert n1.step(x) == n2.step(x)
+@pytest.mark.parametrize(
+    ("count", "expected"),
+    ((0, 0), (1, 1), (2, 1)),
+)
+def test_or_gate_is_the_theta_one_truth_table(count: int, expected: int) -> None:
+    """One or more active excitatory afferents implement inclusive OR."""
+    assert McCullochPittsNeuron(theta=1).step(count) == expected
 
 
-# ---------------------------------------------------------------------------
-# 2. ANALYTICAL — threshold comparison, boundary, transfer function
-# ---------------------------------------------------------------------------
-class TestMPAnalytical:
-    def test_below_threshold(self):
-        n = McCullochPittsNeuron()
-        assert n.step(0.5) == 0
-        assert n.step(0.999) == 0
-
-    def test_at_threshold(self):
-        """At x == θ: fires (≥ condition)."""
-        n = McCullochPittsNeuron()
-        assert n.step(1.0) == 1
-
-    def test_above_threshold(self):
-        n = McCullochPittsNeuron()
-        assert n.step(5.0) == 1
-
-    def test_negative_input(self):
-        assert McCullochPittsNeuron().step(-1.0) == 0
-
-    def test_boundary_precision(self):
-        """Float boundary: theta - epsilon → 0, theta → 1."""
-        n = McCullochPittsNeuron()
-        eps = 1e-15
-        assert n.step(n.theta - eps) == 0
-        assert n.step(n.theta) == 1
-
-    def test_transfer_function_is_heaviside(self):
-        """y(x) = H(x - θ): Heaviside step function."""
-        n = McCullochPittsNeuron()
-        for x in np.linspace(-2.0, 3.0, 100):
-            expected = 1 if x >= n.theta else 0
-            assert n.step(float(x)) == expected
-
-    @pytest.mark.parametrize("theta", [0.0, 0.5, 1.0, 2.0, 10.0])
-    def test_custom_theta(self, theta: float):
-        n = McCullochPittsNeuron(theta=theta)
-        assert n.step(theta) == 1
-        if theta > 0:
-            assert n.step(theta - 0.001) == 0
-
-    def test_zero_theta_fires_at_zero(self):
-        """θ=0 → fires at x≥0."""
-        n = McCullochPittsNeuron(theta=0.0)
-        assert n.step(0.0) == 1
-        assert n.step(-0.001) == 0
-
-    def test_negative_theta(self):
-        """θ<0 → fires at negative inputs too."""
-        n = McCullochPittsNeuron(theta=-1.0)
-        assert n.step(-0.5) == 1
-        assert n.step(-2.0) == 0
+@pytest.mark.parametrize(
+    ("count", "expected"),
+    ((0, 0), (1, 0), (2, 1)),
+)
+def test_and_gate_is_the_theta_two_truth_table(count: int, expected: int) -> None:
+    """Both of two excitatory afferents are required at theta two."""
+    assert McCullochPittsNeuron(theta=2).step(count) == expected
 
 
-# ---------------------------------------------------------------------------
-# 3. LOGIC GATES — universal computation basis
-# ---------------------------------------------------------------------------
-class TestMPLogicGates:
-    def test_and_gate(self):
-        """AND: θ=2, inputs ∈ {0,1}."""
-        n = McCullochPittsNeuron(theta=2.0)
-        assert n.step(0.0 + 0.0) == 0
-        assert n.step(1.0 + 0.0) == 0
-        assert n.step(0.0 + 1.0) == 0
-        assert n.step(1.0 + 1.0) == 1
-
-    def test_or_gate(self):
-        """OR: θ=1, inputs ∈ {0,1}."""
-        n = McCullochPittsNeuron(theta=1.0)
-        assert n.step(0.0 + 0.0) == 0
-        assert n.step(1.0 + 0.0) == 1
-        assert n.step(0.0 + 1.0) == 1
-        assert n.step(1.0 + 1.0) == 1
-
-    def test_not_gate(self):
-        """NOT: θ=0, input negated (w=-1). y = 1 if -x ≥ 0."""
-        n = McCullochPittsNeuron(theta=0.0)
-        # NOT(1): weighted_input = -1 → -1 < 0 → 0
-        assert n.step(-1.0) == 0
-        # NOT(0): weighted_input = 0 → 0 ≥ 0 → 1
-        assert n.step(0.0) == 1
-
-    def test_nand_gate(self):
-        """NAND: θ=-1 with weights w1=w2=-1. Input = -x1 - x2."""
-        n = McCullochPittsNeuron(theta=-1.0)
-        assert n.step(-0.0 - 0.0) == 1  # NAND(0,0) = 1
-        assert n.step(-1.0 - 0.0) == 1  # NAND(1,0) = 1
-        assert n.step(-0.0 - 1.0) == 1  # NAND(0,1) = 1
-        assert n.step(-1.0 - 1.0) == 0  # NAND(1,1) = 0
-
-    def test_three_input_majority(self):
-        """Majority gate (3 inputs): θ=2."""
-        n = McCullochPittsNeuron(theta=2.0)
-        assert n.step(0.0) == 0  # 0+0+0
-        assert n.step(1.0) == 0  # 1+0+0
-        assert n.step(2.0) == 1  # 1+1+0
-        assert n.step(3.0) == 1  # 1+1+1
-
-    def test_linear_separability(self):
-        """MP can represent any linearly separable function."""
-        # XOR is NOT linearly separable → single MP cannot compute it
-        n = McCullochPittsNeuron(theta=1.0)
-        xor_inputs = [(0, 0, 0), (1, 0, 1), (0, 1, 1), (1, 1, 0)]
-        # No single theta can separate all 4 correctly
-        results = [n.step(float(a) + float(b)) for a, b, _ in xor_inputs]
-        expected_xor = [e for _, _, e in xor_inputs]
-        assert results != expected_xor  # Cannot implement XOR
+def test_absolute_inhibition_vetoes_every_excitatory_count() -> None:
+    """One inhibitory afferent dominates even an int32-maximum excitation."""
+    neuron = McCullochPittsNeuron(theta=1)
+    assert neuron.step(0, True) == 0
+    assert neuron.step(1, True) == 0
+    assert neuron.step(_INT32_MAX, True) == 0
 
 
-class TestMPValidation:
-    @pytest.mark.parametrize("theta", [np.nan, np.inf, -np.inf])
-    def test_rejects_non_finite_threshold(self, theta: float):
-        with pytest.raises(ValueError, match="theta"):
-            McCullochPittsNeuron(theta=theta)
-
-    @pytest.mark.parametrize("weighted_input", [np.nan, np.inf, -np.inf])
-    def test_rejects_non_finite_weighted_input(self, weighted_input: float):
-        with pytest.raises(ValueError, match="weighted_input"):
-            McCullochPittsNeuron().step(weighted_input)
-
-    @pytest.mark.parametrize("theta", [np.nan, np.inf, -np.inf])
-    def test_rejects_corrupted_runtime_threshold_before_comparison(self, theta: float):
-        n = McCullochPittsNeuron(theta=1.0)
-        n.theta = theta
-        with pytest.raises(ValueError, match="theta"):
-            n.step(2.0)
-
-    def test_runtime_threshold_comparison_matches_heaviside_boundary_after_mutation(self):
-        n = McCullochPittsNeuron(theta=1.0)
-        n.theta = 2.0
-        assert n.step(1.999999999999999) == 0
-        assert n.step(2.0) == 1
+def test_conjoined_negation_uses_the_source_inhibitory_wire() -> None:
+    """The 1943 not-B conjunction is an absolute veto, not a negative weight."""
+    neuron = McCullochPittsNeuron(theta=1)
+    truth = {
+        (0, False): 0,
+        (1, False): 1,
+        (0, True): 0,
+        (1, True): 0,
+    }
+    assert {key: neuron.step(*key) for key in truth} == truth
 
 
-# ---------------------------------------------------------------------------
-# 4. DYNAMICS — firing rate under constant/varying input
-# ---------------------------------------------------------------------------
-class TestMPDynamics:
-    def test_fires_every_step_above_threshold(self):
-        """Stateless → fires every step if input ≥ θ."""
-        n = McCullochPittsNeuron()
-        assert all(n.step(2.0) == 1 for _ in range(1000))
-
-    def test_never_fires_below_threshold(self):
-        n = McCullochPittsNeuron()
-        assert all(n.step(0.5) == 0 for _ in range(1000))
-
-    def test_rate_is_binary(self):
-        """Rate is either 0% or 100% — no intermediate rates."""
-        n = McCullochPittsNeuron()
-        train_above = [n.step(2.0) for _ in range(1000)]
-        train_below = [n.step(0.5) for _ in range(1000)]
-        assert sum(train_above) == 1000
-        assert sum(train_below) == 0
+def test_three_input_majority_uses_a_fixed_excitatory_count() -> None:
+    """Theta two implements the majority of three binary excitatory afferents."""
+    neuron = McCullochPittsNeuron(theta=2)
+    assert [neuron.step(count) for count in range(4)] == [0, 0, 1, 1]
 
 
-# ---------------------------------------------------------------------------
-# 5. PERFORMANCE — fastest model in zoo
-# ---------------------------------------------------------------------------
-class TestMPPerformance:
-    def test_isolation_throughput(self):
-        n = McCullochPittsNeuron()
-        N = 1_000_000
-        t0 = time.perf_counter()
-        for _ in range(N):
-            n.step(2.0)
-        elapsed = time.perf_counter() - t0
-        rate = N / elapsed
-        # Pure comparison — should be ~2M+ steps/s
-        assert rate > 500_000, f"isolation: {rate:.0f} steps/s"
-
-    def test_network_throughput(self):
-        pop = Population(McCullochPittsNeuron, n=50, label="bench")
-        drive = PoissonInput(n=50, rate_hz=500.0, weight=2.0, dt=0.001, seed=42)
-        mon = SpikeMonitor(pop)
-        net = Network(pop, drive, mon)
-        t0 = time.perf_counter()
-        net.run(duration=0.5, dt=0.001, backend="python")
-        elapsed = time.perf_counter() - t0
-        neuron_steps = 50 * 500
-        rate = neuron_steps / elapsed
-        assert rate > 5_000, f"network: {rate:.0f} neuron-steps/s"
+def test_calls_are_stateless_and_reset_is_a_validating_noop() -> None:
+    """History cannot affect one-delay logical activity."""
+    neuron = McCullochPittsNeuron(theta=2)
+    assert [neuron.step(value) for value in (2, 0, 2, 0)] == [1, 0, 1, 0]
+    neuron.reset()
+    assert neuron.theta == 2
 
 
-# ---------------------------------------------------------------------------
-# 6. FULL PIPELINE — Population, Projection, Network, Analysis
-# ---------------------------------------------------------------------------
-class TestMPPipeline:
-    def test_population(self):
-        assert Population(McCullochPittsNeuron, n=10, label="mp").n == 10
+@pytest.mark.parametrize(
+    "theta",
+    (0, -1, 1.5, True, np.nan, np.inf, -np.inf, _INT32_MAX + 1, "1"),
+)
+def test_constructor_rejects_non_positive_or_lossy_thresholds(theta: object) -> None:
+    """The fixed threshold is a positive signed-ABI-safe afferent count."""
+    with pytest.raises(ValueError, match="theta"):
+        McCullochPittsNeuron(theta=cast(int, theta))
 
-    def test_projection_wiring(self):
-        src = Population(McCullochPittsNeuron, n=5, label="src")
-        tgt = Population(McCullochPittsNeuron, n=5, label="tgt")
-        drive = PoissonInput(n=5, rate_hz=500.0, weight=2.0, dt=0.001, seed=42)
-        proj = Projection(src, tgt, weight=1.0, probability=1.0, seed=42)
-        mon_src = SpikeMonitor(src)
-        mon_tgt = SpikeMonitor(tgt)
-        net = Network(src, tgt, drive, proj, mon_src, mon_tgt)
-        net.run(duration=1.0, dt=0.001, backend="python")
-        assert mon_src.count > 0
 
-    def test_network_spikes(self):
-        pop = Population(McCullochPittsNeuron, n=10, label="mp")
-        drive = PoissonInput(n=10, rate_hz=500.0, weight=2.0, dt=0.001, seed=42)
-        mon = SpikeMonitor(pop)
-        net = Network(pop, drive, mon)
-        net.run(duration=1.0, dt=0.001, backend="python")
-        assert mon.count > 0
+@pytest.mark.parametrize(
+    "count",
+    (-1, 0.5, True, np.nan, np.inf, -np.inf, _INT32_MAX + 1, "1", object()),
+)
+def test_step_rejects_invalid_excitatory_counts(count: object) -> None:
+    """Negative, fractional, Boolean and out-of-domain counts fail closed."""
+    with pytest.raises(ValueError, match="excitatory_count"):
+        McCullochPittsNeuron().step(count)
 
-    def test_analysis_spike_count(self):
-        n = McCullochPittsNeuron()
-        train = np.array([float(n.step(2.0)) for _ in range(5000)])
-        sc = spike_count(train)
-        assert sc == 5000  # fires every step above threshold
 
-    def test_analysis_firing_rate(self):
-        n = McCullochPittsNeuron()
-        train = np.array([float(n.step(2.0)) for _ in range(5000)])
-        rate = firing_rate(train, dt=0.001)
-        assert rate > 0
+@pytest.mark.parametrize("flag", (0, 1, 0.0, 1.0, "false", None))
+def test_step_requires_an_exact_inhibitory_boolean(flag: object) -> None:
+    """Numeric truthiness cannot silently alter the absolute-veto wire."""
+    with pytest.raises(ValueError, match="inhibitory_active"):
+        McCullochPittsNeuron().step(1, flag)
 
-    def test_analysis_zero_below_threshold(self):
-        n = McCullochPittsNeuron()
-        train = np.array([float(n.step(0.5)) for _ in range(5000)])
-        assert spike_count(train) == 0
+
+def test_integer_valued_transport_floats_and_numpy_scalars_are_normalised() -> None:
+    """Network Float64 transport remains usable without accepting fractions."""
+    neuron = McCullochPittsNeuron(theta=cast(int, np.float64(2.0)))
+    assert type(neuron.theta) is int
+    assert neuron.step(np.float64(2.0), np.bool_(False)) == 1
+    assert neuron.step(np.int32(1), np.bool_(False)) == 0
+
+
+def test_runtime_threshold_corruption_fails_closed() -> None:
+    """Public dataclass mutation is revalidated on step and reset."""
+    neuron = McCullochPittsNeuron(theta=2)
+    neuron.theta = cast(int, 1.25)
+    with pytest.raises(ValueError, match="theta"):
+        neuron.step(2)
+    with pytest.raises(ValueError, match="theta"):
+        neuron.reset()
+
+
+@pytest.mark.parametrize(
+    ("count", "inhibited", "encoded"),
+    ((0, False, 0), (7, False, 7), (_INT32_MAX, False, _INT32_MAX), (7, True, -1)),
+)
+def test_signed_q320_encoding_is_bijective_over_valid_logical_inputs(
+    count: int,
+    inhibited: bool,
+    encoded: int,
+) -> None:
+    """The RTL input uses -1 only for inhibition and non-negative values for counts."""
+    assert encode_hardware_input(count, inhibited) == encoded
+
+
+def test_python_batch_matches_scalar_truth_rows() -> None:
+    """Varying excitation and inhibition return an exact contiguous binary trace."""
+    counts = np.array([0, 1, 2, 3, _INT32_MAX], dtype=np.int64)
+    flags = np.array([False, False, False, True, True], dtype=np.bool_)
+    neuron = McCullochPittsNeuron(theta=2)
+    events, event_count = neuron.simulate(counts, flags, backend="python")
+    assert events.tolist() == [0, 0, 1, 0, 0]
+    assert events.dtype == np.uint8
+    assert events.flags.c_contiguous
+    assert event_count == 1 == int(events.sum())
+    assert [neuron.step(count, flag) for count, flag in zip(counts, flags, strict=True)] == (
+        events.tolist()
+    )
+
+
+def test_batch_defaults_to_no_inhibition_and_accepts_empty_input() -> None:
+    """Absent flags mean no veto; an empty stateless batch has zero events."""
+    neuron = McCullochPittsNeuron(theta=2)
+    events, count = neuron.simulate([0.0, 1.0, 2.0], backend="python")
+    assert events.tolist() == [0, 0, 1]
+    assert count == 1
+    empty, empty_count = neuron.simulate([], [], backend="python")
+    assert empty.shape == (0,)
+    assert empty_count == 0
+
+
+@pytest.mark.parametrize(
+    ("counts", "flags", "message"),
+    (
+        (np.array(1), None, "one-dimensional"),
+        (np.zeros((1, 1)), None, "one-dimensional"),
+        ([0, 1], [False], "match"),
+        ([0, 1], np.zeros((1, 2), dtype=np.bool_), "one-dimensional"),
+        ([0, 1], [False, 1], "inhibitory_flags"),
+        ([0, -1], None, r"excitatory_counts\[1\]"),
+    ),
+)
+def test_batch_validation_fails_before_dispatch(
+    counts: object,
+    flags: object,
+    message: str,
+) -> None:
+    """Malformed shapes and values cannot reach a native pointer boundary."""
+    with pytest.raises(ValueError, match=message):
+        McCullochPittsNeuron().simulate(
+            cast(list[object], counts),
+            cast(list[object] | None, flags),
+            backend="python",
+        )
+
+
+def test_unknown_and_unavailable_backends_do_not_fall_through(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Explicit backend selection is fail-closed."""
+    neuron = McCullochPittsNeuron()
+    with pytest.raises(ValueError, match="backend"):
+        neuron.simulate([1], backend="cuda")
+
+    from sc_neurocore.accel import mcculloch_pitts as backends
+
+    monkeypatch.setattr(backends, "backend_available", lambda _backend: False)
+    with pytest.raises(RuntimeError, match="Go"):
+        neuron.simulate([1], backend="go")
+
+
+def test_population_network_and_analysis_accept_integer_valued_transport() -> None:
+    """The source contract remains usable through the generic Float64 network accumulator."""
+    population = Population(McCullochPittsNeuron, n=8, label="mp")
+    drive = PoissonInput(n=8, rate_hz=500.0, weight=2.0, dt=0.001, seed=42)
+    monitor = SpikeMonitor(population)
+    Network(population, drive, monitor).run(duration=0.05, dt=0.001, backend="python")
+    assert monitor.count > 0
+
+    train = np.asarray([McCullochPittsNeuron().step(1) for _ in range(100)], dtype=float)
+    assert spike_count(train) == 100
+    assert firing_rate(train, dt=0.001) == pytest.approx(1000.0)

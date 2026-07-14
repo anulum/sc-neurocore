@@ -14,7 +14,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 409
+expected_file_count = 416
 
 [[file]]
 path = "src/sc_neurocore/__init__.py"
@@ -1651,3 +1651,31 @@ rationale = "DOI- and source-bound signed-integer IQIF model with exact branch, 
 [[file]]
 path = "src/sc_neurocore/accel/iqif.py"
 rationale = "Typed Rust, Julia, Go, and Mojo loader and validation surface for the complete signed-integer IQIF contract."
+
+[[file]]
+path = "src/sc_neurocore/neurons/models/mcculloch_pitts.py"
+rationale = "DOI-bound stateless all-or-none excitatory-count rule with absolute inhibition, exact integer domains, and five-backend batch dispatch."
+
+[[file]]
+path = "src/sc_neurocore/accel/mcculloch_pitts.py"
+rationale = "Typed Rust, Julia, Go, and Mojo loader and fail-closed result validation for the source-faithful McCulloch-Pitts batch contract."
+
+[[file]]
+path = "src/sc_neurocore/compiler/_verilog_folded_datapath.py"
+rationale = "Audited folded equation-neuron datapath emitter extracted from the public Verilog compiler without changing its bit-true arithmetic contract."
+
+[[file]]
+path = "src/sc_neurocore/compiler/_verilog_integrators.py"
+rationale = "Audited fixed-point integrator lowering shared by registered and folded equation-neuron Verilog emission."
+
+[[file]]
+path = "src/sc_neurocore/compiler/_verilog_neuron_core.py"
+rationale = "Audited shared equation-neuron next-state, event, and reset fragments used by the public Verilog compiler surfaces."
+
+[[file]]
+path = "src/sc_neurocore/compiler/_verilog_registered_module.py"
+rationale = "Audited state-owning equation-neuron Verilog emitter preserving the public registered-module compiler contract."
+
+[[file]]
+path = "tests/test_equation_compiler_cli.py"
+rationale = "Maintained public CLI contract coverage for equation-to-Verilog file generation, module naming, and missing-equation handling."

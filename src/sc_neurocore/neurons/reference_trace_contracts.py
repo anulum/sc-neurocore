@@ -87,7 +87,9 @@ class ReferenceTraceProtocol:
     inputs:
         Constant keyword inputs passed to ``UniversalNeuron.step``.
     state_variables:
-        State variables to record after each timestep.
+        State variables to record after each timestep. May be empty for a
+        genuinely stateless deterministic threshold model; event features are
+        still recorded.
     """
 
     dt: float

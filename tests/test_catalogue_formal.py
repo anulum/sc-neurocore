@@ -176,6 +176,29 @@ def test_iqif_formal_job_uses_bit_true_q320_precision() -> None:
     assert ports.bit_outputs == ("spike_out",)
 
 
+def test_mcculloch_pitts_formal_job_is_stateless_q320_safety() -> None:
+    """Keep the count/sentinel rule on its exact signed integer carrier."""
+    import importlib.util
+
+    name = "emit_catalogue_formal_mcculloch_pitts_precision"
+    spec = importlib.util.spec_from_file_location(name, EMITTER)
+    assert spec is not None and spec.loader is not None
+    module = importlib.util.module_from_spec(spec)
+    sys.modules[name] = module
+    spec.loader.exec_module(module)
+
+    assert module.CLASS_TO_SCHEMA["McCullochPittsNeuron"] == "mcculloch_pitts"
+    assert module.PRECISION_BY_SCHEMA["mcculloch_pitts"] == (32, 0)
+    assert module.DEPTH_BY_SCHEMA["mcculloch_pitts"] == 4
+    assert "mcculloch_pitts" in module.MINIMAL_SAFETY_SCHEMAS
+    ports = module._parse_module_ports(
+        (CATALOGUE / "sc_mccullochpittsneuron.v").read_text(encoding="utf-8")
+    )
+    assert ports.primary_state is None
+    assert ports.signed_outputs == ()
+    assert ports.bit_outputs == ("spike_out",)
+
+
 def test_catalogue_formal_inventory_matches_perfect_count() -> None:
     """Committed catalogue jobs equal the number of dual-axis perfect models."""
     sby_jobs = sorted(CATALOGUE.glob("*.sby"))
@@ -209,6 +232,7 @@ def test_catalogue_formal_rtl_is_equation_compiler_output() -> None:
         "sc_quadratic_if.sby",
         "sc_dpineuron.sby",
         "sc_integerqifneuron.sby",
+        "sc_mccullochpittsneuron.sby",
         "sc_poissonneuron.sby",
     ],
 )

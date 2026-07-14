@@ -153,6 +153,44 @@ wrap_i32_input!(
     IntegerQIFNeuron::default()
 );
 
+/// Source-faithful stateless logical input on the signed transport.
+#[derive(Clone, Debug)]
+pub struct WrMcCullochPitts(pub McCullochPittsNeuron);
+
+impl WrMcCullochPitts {
+    pub fn new() -> Self {
+        Self(McCullochPittsNeuron::default())
+    }
+
+    pub fn step(&mut self, current: f64) -> i32 {
+        if current == -1.0 {
+            return self.0.try_step(0, true).unwrap_or(0);
+        }
+        if !current.is_finite()
+            || current.fract() != 0.0
+            || current < 0.0
+            || current > f64::from(i32::MAX)
+        {
+            return 0;
+        }
+        self.0.try_step(current as i32, false).unwrap_or(0)
+    }
+
+    pub fn reset(&mut self) {
+        debug_assert!(self.0.validate().is_ok());
+    }
+
+    pub fn v(&self) -> f64 {
+        0.0
+    }
+}
+
+impl Default for WrMcCullochPitts {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 // Graded/rate output wrappers (threshold at 0.5 for rates, 0.0 for sensory)
 wrap_graded!(WrSigmoidRate, SigmoidRateNeuron, r, 0.5);
 wrap_graded!(WrThresholdLinear, ThresholdLinearRateNeuron, r, 0.5);
@@ -363,6 +401,7 @@ pub enum NeuronVariant {
     WrSpiNNaker2Cell(WrSpiNNaker2),
     WrTrueNorthCell(WrTrueNorth),
     WrIntegerQIFCell(WrIntegerQIF),
+    WrMcCullochPittsCell(WrMcCullochPitts),
     // Graded/rate output
     WrSigmoidRateCell(WrSigmoidRate),
     WrThresholdLinearCell(WrThresholdLinear),
@@ -433,6 +472,7 @@ macro_rules! all_variants {
             WrAlphaCell, WrCOBALIFCell, WrCompteWMCell, WrTsodyksMarkramCell,
             WrPinskyRinzelCell, WrHayL5Cell, WrTwoCompLIFCell,
             WrLoihiCUBACell, WrLoihi2Cell, WrSpiNNaker2Cell, WrTrueNorthCell, WrIntegerQIFCell,
+            WrMcCullochPittsCell,
             WrSigmoidRateCell, WrThresholdLinearCell, WrAstrocyteCell,
             WrInnerHairCellCell, WrOuterHairCellCell,
             WrRodPhotoreceptorCell, WrConePhotoreceptorCell, WrTasteReceptorCell,
@@ -613,6 +653,7 @@ impl NeuronVariant {
             NeuronVariant::WrSpiNNaker2Cell(n) => n.v(),
             NeuronVariant::WrTrueNorthCell(n) => n.v(),
             NeuronVariant::WrIntegerQIFCell(n) => n.v(),
+            NeuronVariant::WrMcCullochPittsCell(n) => n.v(),
             NeuronVariant::WrSigmoidRateCell(n) => n.v(),
             NeuronVariant::WrThresholdLinearCell(n) => n.v(),
             NeuronVariant::WrAstrocyteCell(n) => n.v(),
@@ -1229,6 +1270,9 @@ pub fn create_neuron(name: &str) -> Result<NeuronVariant, String> {
         "IntegerQIFNeuron" | "IntegerQIF" => {
             Ok(NeuronVariant::WrIntegerQIFCell(WrIntegerQIF::new()))
         }
+        "McCullochPittsNeuron" | "McCullochPitts" => {
+            Ok(NeuronVariant::WrMcCullochPittsCell(WrMcCullochPitts::new()))
+        }
         // Wrapped graded/rate output
         "SigmoidRateNeuron" | "SigmoidRate" => {
             Ok(NeuronVariant::WrSigmoidRateCell(WrSigmoidRate::new()))
@@ -1419,6 +1463,7 @@ pub fn supported_models() -> Vec<&'static str> {
         "SpiNNaker2Neuron",
         "TrueNorthNeuron",
         "IntegerQIFNeuron",
+        "McCullochPittsNeuron",
         // wrapped graded/rate output
         "SigmoidRateNeuron",
         "ThresholdLinearRateNeuron",
@@ -1615,6 +1660,19 @@ mod tests {
                 result.err()
             );
         }
+    }
+
+    #[test]
+    fn mcculloch_pitts_network_wrapper_preserves_signed_logical_transport() {
+        let mut neuron = create_neuron("McCullochPittsNeuron").unwrap();
+        assert_eq!(neuron.step(0.0), 0);
+        assert_eq!(neuron.step(1.0), 1);
+        assert_eq!(neuron.step(-1.0), 0);
+        assert_eq!(neuron.step(1.5), 0);
+        assert_eq!(neuron.step(f64::NAN), 0);
+        assert_eq!(neuron.soma_voltage(), 0.0);
+        neuron.reset();
+        assert_eq!(neuron.step(1.0), 1);
     }
 
     // ── Pipeline integration: interneurons ────────────────────────

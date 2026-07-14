@@ -5,6 +5,16 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 ## [Unreleased]
 
 ### Added
+- Completed the source-faithful McCulloch-Pitts 1943 logical neuron across
+  Python, the Rust engine and independent safety module, Julia, Go, and Mojo.
+  The maintained contract is a positive active-excitatory-afferent count
+  threshold with absolute veto by any active inhibitory afferent; it does not
+  substitute the later real-weighted threshold abstraction.
+- Added paired stateless TOML/JSON schemas, an independent primary-paper truth
+  table, exact varying-input five-backend parity, signed-Q32.0 registered and
+  folded RTL co-simulation, and a depth-4 Z3 safety job. The source- and
+  binary-hashed benchmark is explicitly local, affinity-pinned,
+  non-exclusive regression evidence rather than a portable speed claim.
 - Replaced the 1,018-line predictive-model GodFile with a 63-line stable facade
   and six bounded responsibility modules for contracts, native dispatch,
   Kalman filtering, RTS smoothing, controlled EM, and planning forecasts.
@@ -17,9 +27,9 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
   observation-wider-than-state regression that pins the bounded Mojo workspace
   repair. The source-bound 25-sample benchmark records all raw data and
   loaded-host limitations without making a universal performance claim.
-- Expanded the tracked formal inventory with the IQIF catalogue job: 49 proof
-  jobs and 179 statements (149 assert, 7 assume, 23 cover), split across 18
-  non-catalogue and 31 catalogue jobs.
+- Expanded the tracked formal inventory through the McCulloch-Pitts catalogue
+  job: 50 proof jobs and 180 statements (150 assert, 7 assume, 23 cover), split
+  across 18 non-catalogue and 32 catalogue jobs.
 - Replaced the historical `IntegerQIFNeuron` square-law approximation with the
   exact piecewise-linear, signed-integer Q0.3 recurrence from the Wu et al.
   (2021) coauthor implementation pinned at `twetto/iq-neuron` commit

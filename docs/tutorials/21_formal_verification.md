@@ -4,7 +4,7 @@
 
 Formal verification proves that hardware properties hold for **all
 possible inputs**, not just a finite test set. SC-NeuroCore currently ships
-49 SymbiYosys proof jobs and 179 formal statements (149 assert, 7 assume,
+50 SymbiYosys proof jobs and 180 formal statements (150 assert, 7 assume,
 23 cover) across the HDL formal tree.
 
 **Prerequisites**: [SymbiYosys](https://symbiyosys.readthedocs.io/),
@@ -24,13 +24,13 @@ The current inventory is:
 
 | Inventory | Count |
 |-----------|------:|
-| SymbiYosys `.sby` proof jobs | 49 |
-| `assert(...)` statements | 149 |
+| SymbiYosys `.sby` proof jobs | 50 |
+| `assert(...)` statements | 150 |
 | `assume(...)` statements | 7 |
 | `cover(...)` statements | 23 |
-| Total formal statements | 179 |
+| Total formal statements | 180 |
 
-**Total: 49 SymbiYosys proof jobs and 179 formal statements (149 assert, 7 assume, 23 cover).**
+**Total: 50 SymbiYosys proof jobs and 180 formal statements (150 assert, 7 assume, 23 cover).**
 
 The larger proof-job set covers the original stochastic-computing RTL blocks
 plus timing, masking, controller, queue, and sensor wrappers added after the
@@ -74,6 +74,15 @@ spike, and signed-state safety at depth 4:
 
 ```bash
 sby -f sc_integerqifneuron.sby
+```
+
+The stateless McCulloch-Pitts job also uses signed Q32.0. Non-negative words
+carry active excitatory-afferent counts and `-1` is the enrolled absolute-
+inhibition sentinel; its depth-4 job proves reset/output safety without
+inventing membrane state:
+
+```bash
+sby -f sc_mccullochpittsneuron.sby
 ```
 
 ## 3. Anatomy of a formal wrapper

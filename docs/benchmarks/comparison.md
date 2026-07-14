@@ -72,9 +72,9 @@ SC-NeuroCore-specific.
 | Category | SC-NeuroCore | snnTorch | Norse | Brian2 | Lava |
 |----------|:---:|:---:|:---:|:---:|:---:|
 | Python models | **158 lazy-loaded classes / 153 source modules** | 11 | 6 | Custom eq. | 3 |
-| Rust/compiled models | **175 Rust PyO3 wrappers / 161-model NetworkRunner** | — | — | C++ codegen | — |
+| Rust/compiled models | **175 Rust PyO3 wrappers / 162-model NetworkRunner** | — | — | C++ codegen | — |
 | Hardware emulators | **9** | — | — | — | Loihi only |
-| Formal verification | **49 SymbiYosys proof jobs and 179 formal statements (149 assert, 7 assume, 23 cover)** | — | — | — | — |
+| Formal verification | **50 SymbiYosys proof jobs and 180 formal statements (150 assert, 7 assume, 23 cover)** | — | — | — | — |
 | Train-to-FPGA export | **Yes** | No | No | No | No |
 
 ## IQIF signed-integer polyglot batch loop
@@ -100,6 +100,32 @@ artifact binds the source and exact loaded Rust/Go/Mojo binaries, runtime
 versions, affinity, governor, load averages, and raw timing samples. It is
 neither a hardware measurement nor a production or cross-host performance
 claim.
+
+## McCulloch-Pitts logical batch loop
+
+The committed
+`benchmarks/results/local_python_2026-07-14_mcculloch_pitts.json` records the
+source-faithful active-excitatory-count threshold and absolute-inhibition rule
+through all five public dispatchers. Each call validates 200,000 varying rows
+before execution, so the numbers include the shared Python-side public input
+contract rather than timing an isolated inner comparator. One 1,000-row warm-up
+precedes seven samples per backend.
+
+| Backend | Median call | Median ns/row | Events | Trace mismatches |
+|---|---:|---:|---:|---:|
+| Rust | 234.741 ms | 1,173.704 | 102,273 | 0 |
+| Go | 306.158 ms | 1,530.789 | 102,273 | 0 |
+| Python | 328.712 ms | 1,643.559 | 102,273 | 0 |
+| Mojo | 625.298 ms | 3,126.492 | 102,273 | 0 |
+| Julia | 821.117 ms | 4,105.586 | 102,273 | 0 |
+
+Every lane has binary-event SHA-256
+`52a05b62f801b9a9856ccac9f6d79f2821d564239b85fd06d454d1d44e28aee4`.
+The measured native order used by `auto` is Rust, Go, Mojo, then Julia, with
+Python retained as the always-available floor. The run was pinned to logical
+CPU 4 under the `powersave` governor, but load averages were high and the CPU
+was not isolated. These timings are same-host regression evidence only, not a
+hardware result, portable throughput claim, or cross-framework comparison.
 
 ## Chialvo map polyglot batch loop
 

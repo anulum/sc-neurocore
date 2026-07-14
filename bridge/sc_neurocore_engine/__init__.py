@@ -617,6 +617,16 @@ except ImportError:
 
 try:
     from sc_neurocore_engine.sc_neurocore_engine import (
+        py_mcculloch_pitts_evaluate_batch,
+    )
+
+    __all__ += ["py_mcculloch_pitts_evaluate_batch"]
+    _mcculloch_pitts_rust_available = True
+except ImportError:
+    _mcculloch_pitts_rust_available = False
+
+try:
+    from sc_neurocore_engine.sc_neurocore_engine import (
         py_iqif_simulate,
     )
 

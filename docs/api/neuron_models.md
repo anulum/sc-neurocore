@@ -10,9 +10,9 @@ backend implements that surface.
 > A stricter bar — a model whose whole four-language acceleration chain
 > (`accel/{rust,go,julia,mojo}`) is real and Python-parity-proven — is tracked
 > separately on the [Model Fidelity & Polyglot Status](model_fidelity_status.md)
-> page. Polyglot-complete today (32 models): Wang-Buzsaki, FitzHugh-Nagumo, Morris-Lecar,
+> page. Polyglot-complete today (33 models): Wang-Buzsaki, FitzHugh-Nagumo, Morris-Lecar,
 > Connor-Stevens, Hodgkin-Huxley, AdEx, ExpIF, Lapicque, Perfect Integrator,
-> Quadratic IF, Theta, DPI, COBA LIF, Escape Rate, Poisson, IQIF, McKean, Hindmarsh-Rose, FitzHugh-Rinzel,
+> Quadratic IF, Theta, DPI, COBA LIF, Escape Rate, Poisson, IQIF, McCulloch-Pitts, McKean, Hindmarsh-Rose, FitzHugh-Rinzel,
 > Pernarowski, Terman-Wang,
 > Wilson-HR, Rulkov map, GLIF, Mihalas-Niebur, Medvedev map, Cazelles map, Chialvo map, Courbage-Nekorkin map,
 > Izhikevich 2007, Ibarz-Tanaka map, Ermentrout-Kopell. All other models are Python-faithful with their
@@ -41,7 +41,7 @@ spike = hh_rs.step(current=10.0)
 
 Backends use identical class names where parity wrappers exist (for example,
 `HodgkinHuxleyNeuron`). The Rust engine provides 176 Rust PyO3 model wrappers,
-161 of which are wired into the NetworkRunner pipeline.
+162 of which are wired into the NetworkRunner pipeline.
 
 The package-level `sc_neurocore.neurons` facade remains lazy: core neuron
 symbols are available immediately, while model classes are resolved on first
@@ -104,7 +104,10 @@ enrolled exceptions: their Python, Rust, Julia, Go, Mojo, schema, and RTL
 surfaces share one explicit seeded LFSR16 event-stream contract.
 `IntegerQIFNeuron` is the deterministic integer counterpart: every maintained
 runtime and Q32.0 RTL form reproduces the pinned Wu et al. source trajectory
-bit-for-bit. `ChayKeizerNeuron`
+bit-for-bit. `McCullochPittsNeuron` preserves the original 1943 logical rule:
+a fixed positive active-excitatory-afferent count threshold, absolute veto by
+any active inhibitory afferent, and no internal cell state; signed Q32.0 uses
+`-1` only as the hardware inhibition sentinel. `ChayKeizerNeuron`
 remains an expected parity divergence because the Python model is the
 five-dimensional Chay-Keizer burster while the current Rust kernel is the older
 reduced form.

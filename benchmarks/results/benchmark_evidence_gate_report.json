@@ -102,6 +102,10 @@
       "id": "iqif-integer-q03-five-backend-local-regression"
     },
     {
+      "artefact": "benchmarks/results/local_python_2026-07-14_mcculloch_pitts.json",
+      "id": "mcculloch-pitts-five-backend-local-regression"
+    },
+    {
       "artefact": "benchmarks/results/bench_cazelles_map.json",
       "id": "cazelles-map-five-backend-local-regression"
     },
@@ -222,7 +226,7 @@
       "id": "hierarchical-kl-refine-five-backend-local-diagnostics"
     }
   ],
-  "failure_count": 55,
+  "failure_count": 58,
   "failures": [
     {
       "gate_id": "quadratic-if-exact-flow-multibackend-local-regression",
@@ -375,6 +379,21 @@
       "reason": "source_hash_mismatch"
     },
     {
+      "gate_id": "iqif-integer-q03-five-backend-local-regression",
+      "path": "bridge/sc_neurocore_engine/__init__.py->source_hashes.bridge/sc_neurocore_engine/__init__.py",
+      "reason": "source_hash_mismatch"
+    },
+    {
+      "gate_id": "iqif-integer-q03-five-backend-local-regression",
+      "path": "engine/src/network_runner.rs->source_hashes.engine/src/network_runner.rs",
+      "reason": "source_hash_mismatch"
+    },
+    {
+      "gate_id": "iqif-integer-q03-five-backend-local-regression",
+      "path": "engine/src/pyo3_neurons.rs->source_hashes.engine/src/pyo3_neurons.rs",
+      "reason": "source_hash_mismatch"
+    },
+    {
       "gate_id": "cazelles-map-five-backend-local-regression",
       "path": "engine/src/lib.rs->source_hashes.engine/src/lib.rs",
       "reason": "source_hash_mismatch"
@@ -500,7 +519,7 @@
       "reason": "source_hash_mismatch"
     }
   ],
-  "gate_count": 55,
+  "gate_count": 56,
   "manifest": "benchmarks/benchmark_regression_gates.json",
   "passed": false,
   "schema_version": "sc-neurocore.benchmark-evidence-gate.v1"

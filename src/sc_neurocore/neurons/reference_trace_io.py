@@ -32,6 +32,8 @@ from sc_neurocore.neurons.reference_trace_contracts import (
 )
 from sc_neurocore.neurons.universal_dsl import list_bundled_schemas
 
+_STATISTICAL_REFERENCE_RUNNER = "hand_and_universal_dsl"
+
 
 def reference_trace_spec_from_payload(payload: Mapping[str, object]) -> ReferenceTraceSpec:
     """Parse and validate a reference-trace corpus payload.
@@ -97,12 +99,15 @@ def reference_trace_spec_from_payload(payload: Mapping[str, object]) -> Referenc
 
 
 def list_reference_trace_specs() -> tuple[str, ...]:
-    """Return all committed reference-trace names.
+    """Return all committed deterministic Universal-DSL trace names.
 
     Returns
     -------
     tuple[str, ...]
-        Sorted stable identifiers for every JSON payload in the corpus.
+        Sorted stable identifiers for every deterministic scalar-feature
+        payload in the corpus. Seeded statistical artifacts use a separate
+        runner and dedicated validators, so they are not coerced into this
+        trace contract.
     """
     return tuple(spec.name for spec in _load_all_specs())
 
@@ -140,12 +145,17 @@ def _load_all_specs() -> tuple[ReferenceTraceSpec, ...]:
         ),
         key=lambda path: path.name,
     )
-    return tuple(_load_spec_file(path) for path in files)
+    loaded = (_load_spec_file(path) for path in files)
+    return tuple(spec for spec in loaded if spec is not None)
 
 
-def _load_spec_file(path: Traversable) -> ReferenceTraceSpec:
+def _load_spec_file(path: Traversable) -> ReferenceTraceSpec | None:
     payload = cast(object, json.loads(path.read_text(encoding="utf-8")))
-    return reference_trace_spec_from_payload(_mapping_value(payload, path.name))
+    mapping = _mapping_value(payload, path.name)
+    model = _mapping_field(mapping, "model")
+    if _string_field(model, "runner") == _STATISTICAL_REFERENCE_RUNNER:
+        return None
+    return reference_trace_spec_from_payload(mapping)
 
 
 def _reference_trace_data_dir() -> Traversable:
@@ -229,7 +239,7 @@ def _string_tuple_field(payload: Mapping[str, object], key: str) -> tuple[str, .
     if not isinstance(value, list):
         raise ValueError(f"reference trace field {key!r} must be a list")
     result = tuple(item for item in value if isinstance(item, str) and item != "")
-    if len(result) != len(value) or not result:
+    if len(result) != len(value):
         raise ValueError(f"reference trace field {key!r} must contain non-empty strings")
     return result
 

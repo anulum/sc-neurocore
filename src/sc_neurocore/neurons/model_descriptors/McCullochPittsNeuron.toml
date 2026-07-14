@@ -8,17 +8,24 @@
 
 [metadata]
 schema_version = 2
-name = "McCullochPittsNeuron"
+name = "McCulloch-Pitts"
 class_name = "McCullochPittsNeuron"
 module = "mcculloch_pitts"
-display_name = ""
-summary = "McCulloch & Pitts 1943 — binary threshold neuron."
+display_name = "McCulloch-Pitts formal neuron"
+summary = "McCulloch and Pitts' 1943 all-or-none excitatory-count threshold with absolute inhibition."
 family = "Statistical"
 category = "statistical"
 biophysical_detail = "point"
-maturity = "experimental"
-intended_use = []
-hardware_fit = []
+maturity = "validated"
+intended_use = [
+    "source-faithful logical-neuron truth-table experiments",
+    "stateless threshold and inhibition network primitives",
+    "cross-runtime and RTL rule validation",
+]
+hardware_fit = [
+    "single signed-count comparator with inhibition sentinel",
+    "stateless Q32.0 registered and folded RTL",
+]
 behavior_tags = [
     "excitable",
     "rate-coded",
@@ -27,27 +34,71 @@ behavior_tags = [
 
 [provenance]
 authors = [
-    "McCulloch, W.S. & Pitts, W.",
+    "McCulloch, W. S.",
+    "Pitts, W.",
 ]
 year = 1943
 doi = "10.1007/BF02478259"
+paper_title = "A Logical Calculus of the Ideas Immanent in Nervous Activity"
+url = "https://link.springer.com/article/10.1007/BF02478259"
 
-[state.theta]
-init = 1.0
+[state]
+# No cell state: one synaptic delay belongs to network scheduling.
 
-[parameters]
+[parameters.theta]
+default = 1.0
+unit = "active afferents"
+meaning = "positive number of simultaneously active excitatory afferents required in the absence of inhibition"
+range = [1.0, 2147483647.0]
 
 [integration]
-dt = 0.1
-method = "euler"
+dt = 1.0
+method = "map"
 
 [dynamics]
+activation = "output=1 exactly when excitatory_count >= theta and inhibitory_active is false"
+inhibition = "any active inhibitory afferent vetoes output regardless of the excitatory count"
+delay_scope = "afferent activity at one network instant determines output one synaptic delay later; the cell has no membrane state"
 
 [backends.python]
 status = "implemented"
+parity = "exact"
+
+[backends.rust]
+status = "implemented"
+parity = "exact"
+
+[backends.julia]
+status = "implemented"
+parity = "exact"
+
+[backends.go]
+status = "implemented"
+parity = "exact"
+
+[backends.mojo]
+status = "implemented"
+parity = "exact"
 
 [reproducibility]
+reference_config = "{\"theta\":[1,2],\"excitatory_count\":[0,1,2],\"inhibitory_active\":[false,true],\"backend\":\"python\"}"
+golden_trace_sha256 = "2aebd2a5ed6ea8a9409b7452d603441d91e2c8b610da8446668452492ee73db4"
+golden_citation = "doi:10.1007/BF02478259"
 
 [documentation]
 slug = "models/mcculloch_pitts"
-notes = ""
+notes = "McCulloch and Pitts (1943) specify all-or-none activity, a fixed active excitatory-afferent threshold, and an absolute inhibitory veto. A general negative-weight or real-valued weighted-threshold unit is a later abstraction and is not substituted here. The public API carries the excitatory count and inhibition separately; signed Q32.0 RTL uses -1 only as the inhibition sentinel and non-negative values as counts."
+
+[validation]
+dynamics_faithful = true
+metric = "trajectory"
+operating_point = "complete theta-one OR and theta-two AND rows, threshold equality, zero excitation, maximum signed count and absolute inhibition"
+tolerance = "eight primary-paper truth rows and varying-input Python/Rust/Julia/Go/Mojo/TOML/JSON/registered-RTL/folded-RTL outputs exact; invalid thresholds, counts, flags and native results fail closed before output"
+evidence = "tests/test_reference_mcculloch_pitts.py::test_committed_truth_table_matches_independent_source_rule"
+
+[silicon]
+compiles = true
+cosim_validated = true
+cosim_evidence = "tests/test_cosim_mcculloch_pitts.py::test_q320_registered_and_folded_match_source_truth_rows"
+target_tier = "H1"
+terminal_reason = "The stateless rule has compile-clean registered and folded Q32.0 RTL, exact source-truth co-simulation and bounded catalogue formal safety; higher tiers require synthesis, timing, equivalence and hardware evidence."

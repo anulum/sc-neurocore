@@ -5,6 +5,28 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+### McCulloch-Pitts source-to-silicon closure
+
+- Replaced the later real-weighted threshold abstraction with McCulloch and
+  Pitts' 1943 all-or-none rule: a fixed positive count of simultaneously
+  active excitatory afferents is required, while any active inhibitory
+  afferent absolutely vetoes output. One synaptic delay remains a network
+  scheduling boundary; the formal cell has no evolving membrane state.
+- Added exact Python, Rust-engine, independent Rust-safety, Julia, Go, and Mojo
+  varying-input execution with strict signed-ABI validation and atomic native
+  failures. Paired stateless TOML/JSON schemas and an independent primary-paper
+  truth table preserve the same OR, AND, equality, maximum-count, and
+  inhibitory-veto rows.
+- Kept the new PyO3 batch implementation in its per-neuron binding module and
+  registered it through the existing neuron registry, leaving the Rust crate
+  root unchanged relative to the accepted parent.
+- Added registered and folded signed-Q32.0 Python-to-Verilog co-simulation and
+  a depth-4 Z3 catalogue safety job. The signed value `-1` is reserved as the
+  hardware inhibition sentinel; non-negative values carry excitatory counts.
+- Added a source- and binary-hashed five-backend benchmark. Its timings are
+  single-logical-CPU, non-exclusive local regression evidence, not production,
+  cross-host, hardware, or universal performance claims.
+
 ### Predictive-model responsibility modularisation
 
 - Replaced the 1,018-line mixed linear-Gaussian implementation with a 63-line
@@ -46,8 +68,8 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
   final-state mismatches. The committed timings are non-exclusive local
   regression evidence, not a production, cross-host, hardware, or universal
   speed claim.
-- Expanded the public formal inventory to 49 proof jobs and 179 statements
-  (149 assert, 7 assume, 23 cover), split across 18 non-catalogue and 31
+- Expanded the public formal inventory to 50 proof jobs and 180 statements
+  (150 assert, 7 assume, 23 cover), split across 18 non-catalogue and 32
   catalogue jobs.
 
 ### Poisson source-to-silicon closure

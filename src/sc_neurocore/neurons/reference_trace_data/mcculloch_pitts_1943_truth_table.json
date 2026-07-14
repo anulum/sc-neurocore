@@ -1,0 +1,53 @@
+{
+  "schema_version": "sc-neurocore.reference-trace.v1",
+  "name": "mcculloch_pitts_1943_truth_table",
+  "model": {
+    "schema_name": "mcculloch_pitts",
+    "runner": "universal_dsl"
+  },
+  "protocol": {
+    "dt": 1.0,
+    "steps": 4,
+    "inputs": {
+      "I": 1
+    },
+    "state_variables": []
+  },
+  "provenance": {
+    "kind": "published_logical_rule",
+    "source": "src/sc_neurocore/neurons/model_schemas/mcculloch_pitts.toml",
+    "equation": "Output is one exactly when the fixed excitatory-afferent count is met and no inhibitory afferent is active; activity is evaluated one synaptic delay later.",
+    "citation": "doi:10.1007/BF02478259",
+    "paper_url": "https://link.springer.com/article/10.1007/BF02478259",
+    "reprint_url": "https://gwern.net/doc/ai/nn/1943-mcculloch.pdf",
+    "oracle_rows_sha256": "2aebd2a5ed6ea8a9409b7452d603441d91e2c8b610da8446668452492ee73db4"
+  },
+  "truth_table": {
+    "columns": [
+      "theta",
+      "excitatory_count",
+      "inhibitory_active",
+      "output"
+    ],
+    "rows": [
+      [1, 0, false, 0],
+      [1, 1, false, 1],
+      [1, 0, true, 0],
+      [1, 1, true, 0],
+      [2, 0, false, 0],
+      [2, 1, false, 0],
+      [2, 2, false, 1],
+      [2, 2, true, 0]
+    ]
+  },
+  "expected_features": {
+    "spike_count": 4.0,
+    "first_spike_step": 1.0
+  },
+  "tolerances": {
+    "default": {
+      "absolute": 0.0,
+      "relative": 0.0
+    }
+  }
+}

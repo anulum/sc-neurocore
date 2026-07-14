@@ -70,6 +70,16 @@ def test_payload_without_optional_citation_remains_valid() -> None:
     assert spec.provenance.citation is None
 
 
+def test_payload_accepts_a_genuinely_stateless_event_trace() -> None:
+    """An empty state list records event features without inventing cell state."""
+    payload = _valid_payload()
+    _section(payload, "protocol")["state_variables"] = []
+
+    spec = reference_trace_spec_from_payload(payload)
+
+    assert spec.protocol.state_variables == ()
+
+
 def test_payload_validation_rejects_malformed_corpus_contracts() -> None:
     """The public payload parser must fail closed on malformed corpus entries."""
     cases: list[tuple[PayloadMutation, str]] = [

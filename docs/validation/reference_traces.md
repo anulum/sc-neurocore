@@ -9,8 +9,9 @@ executes the same `UniversalNeuron` runner used by public schema workflows, and
 reports feature-level mismatches without falling back to another trace.
 
 This page documents the WC-A1 deterministic schema corpus, the pinned IQIF
-source-implementation trace, and the separate seeded EscapeRate and Poisson
-statistical references. It does not claim NEST, Brian2,
+source-implementation trace, the stateless McCulloch-Pitts primary-source truth
+table, and the separate seeded EscapeRate and Poisson statistical references.
+It does not claim NEST, Brian2,
 NEURON, or published-figure replay coverage; those remain separate external-
 simulator validation surfaces.
 
@@ -19,7 +20,11 @@ simulator validation surfaces.
 The committed deterministic corpus has one reference entry for every
 deterministic bundled schema model. `escape_rate` and `poisson` are stochastic
 and therefore have separate exhaustive seeded references immediately after the
-table rather than deterministic feature rows.
+table rather than deterministic feature rows. The generic corpus loader
+enumerates only `universal_dsl` scalar-feature traces; it deliberately leaves
+the two `hand_and_universal_dsl` statistical artifacts to their dedicated
+full-period validators instead of silently coercing their RNG, distribution,
+and event-hash fields into the deterministic trace schema.
 
 | Trace | Schema | Runner | Provenance |
 |-------|--------|--------|------------|
@@ -42,6 +47,7 @@ table rather than deterministic feature rows.
 | `izhikevich2007_regular_spiking_doi` | `izhikevich2007` | `universal_dsl` | Independent explicit-Euler re-derivation of the biophysical quadratic equations from `neurons/model_schemas/izhikevich2007.toml` with DOI-backed schema provenance |
 | `lif_constant_current_closed_form` | `lif` | `universal_dsl` | Closed-form RC solution from `neurons/model_schemas/lif.toml` |
 | `lapicque_constant_current_closed_form` | `lapicque` | `universal_dsl` | Independent exact constant-current RC solution with provenance bound to the 2007 English translation of Lapicque (1907), DOI `10.1007/s00422-007-0189-6` |
+| `mcculloch_pitts_1943_truth_table` | `mcculloch_pitts` | `universal_dsl` | Independent all-or-none excitatory-count rule from McCulloch and Pitts (1943): fixed positive threshold, absolute inhibitory veto, no fabricated cell state, and a network-scoped one-synaptic-delay boundary; the eight canonical source rows are SHA-256 pinned |
 | `mckean_driven_oscillation_doi` | `mckean` | `universal_dsl` | Independent fourth-order Runge-Kutta re-derivation of the piecewise-linear relaxation oscillator (no reset, rising-edge `v >= 0.8` crossing) from `neurons/model_schemas/mckean.toml` with DOI-backed schema provenance |
 | `medvedev_map_first_return_doi` | `medvedev_map` | `universal_dsl` | Independent scalar iteration of Medvedev (2005) Section 4's three-region slow-calcium first-return construction, with the disclosed global calibration and maintained pre-state event convention separated from the DOI-sourced equations |
 | `mihalas_niebur_driven_spiking_doi` | `mihalas_niebur` | `universal_dsl` | Independent fourth-order Runge-Kutta re-derivation of the four-state adaptive-threshold flow from `neurons/model_schemas/mihalas_niebur.toml` with DOI-backed schema provenance |
@@ -101,7 +107,7 @@ not a deterministic scalar-feature trace or an external-simulator claim.
 
 All entries record spike count, first spike step, and final/min/max/mean
 features for the declared state variables. The tests independently recompute the
-LIF, QIF, IQIF, perfect-integrator, resonate-fire, theta, Ermentrout-Kopell theta-Euler, GLIF, Izhikevich, Cazelles map, Chialvo map, Ibarz-Tanaka map, Medvedev map, Courbage-Nekorkin map,
+LIF, QIF, IQIF, McCulloch-Pitts, perfect-integrator, resonate-fire, theta, Ermentrout-Kopell theta-Euler, GLIF, Izhikevich, Cazelles map, Chialvo map, Ibarz-Tanaka map, Medvedev map, Courbage-Nekorkin map,
 Izhikevich 2007, FitzHugh-Nagumo, FitzHugh-Rinzel, Pernarowski, Terman-Wang, Wilson-HR, McKean, Lapicque, AdEx, exponential-IF,
 Hindmarsh-Rose, Morris-Lecar,
 Hodgkin-Huxley, Connor-Stevens, Wang-Buzsaki, DPI, and Mihalas-Niebur analytic,

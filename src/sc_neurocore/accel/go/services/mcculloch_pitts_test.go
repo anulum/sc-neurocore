@@ -4,46 +4,99 @@
 // © Code 2020–2026 Miroslav Šotek. All rights reserved.
 // ORCID: 0009-0009-3560-0851
 // Contact: www.anulum.li | protoscience@anulum.li
-// SC-NeuroCore — Go tests for mcculloch_pitts
+// SC-NeuroCore — Go tests for the source-faithful McCulloch-Pitts service
 
 package services
 
 import (
-	"math"
+	"reflect"
 	"testing"
 )
 
-func TestMcCullochPittsStepMatchesHeavisideBoundary(t *testing.T) {
+func TestMcCullochPittsDefaultAndResetlessState(t *testing.T) {
 	state := NewMcCullochPittsNeuron()
-	state.Theta = 2.0
-
-	below, err := state.Step(1.999999999999999)
-	if err != nil {
-		t.Fatalf("unexpected error below threshold: %v", err)
-	}
-	at, err := state.Step(2.0)
-	if err != nil {
-		t.Fatalf("unexpected error at threshold: %v", err)
-	}
-
-	if below != 0 || at != 1 {
-		t.Fatalf("expected Heaviside boundary 0 then 1, got %d then %d", below, at)
+	if !ValidateMcCullochPitts(state) || state.Theta != 1 {
+		t.Fatalf("invalid default state: %+v", state)
 	}
 }
 
-func TestMcCullochPittsRejectsInvalidRuntimeThreshold(t *testing.T) {
+func TestMcCullochPittsThetaOneIsOR(t *testing.T) {
 	state := NewMcCullochPittsNeuron()
-	state.Theta = math.NaN()
-
-	if _, err := state.Step(1.0); err == nil {
-		t.Fatalf("expected invalid threshold to fail")
+	for count, want := range []int{0, 1, 1} {
+		got, err := state.Step(int64(count), false)
+		if err != nil || got != want {
+			t.Fatalf("count %d: got (%d, %v), want %d", count, got, err, want)
+		}
 	}
 }
 
-func TestMcCullochPittsRejectsNonFiniteInput(t *testing.T) {
-	state := NewMcCullochPittsNeuron()
+func TestMcCullochPittsThetaTwoIsAND(t *testing.T) {
+	state, err := NewMcCullochPittsNeuronWithTheta(2)
+	if err != nil {
+		t.Fatal(err)
+	}
+	for count, want := range []int{0, 0, 1} {
+		got, stepErr := state.Step(int64(count), false)
+		if stepErr != nil || got != want {
+			t.Fatalf("count %d: got (%d, %v), want %d", count, got, stepErr, want)
+		}
+	}
+}
 
-	if _, err := state.Step(math.Inf(1)); err == nil {
-		t.Fatalf("expected non-finite weighted input to fail")
+func TestMcCullochPittsAbsoluteInhibition(t *testing.T) {
+	got, err := NewMcCullochPittsNeuron().Step(maxMcCullochPittsCount, true)
+	if err != nil || got != 0 {
+		t.Fatalf("absolute inhibition returned (%d, %v)", got, err)
+	}
+}
+
+func TestMcCullochPittsRejectsInvalidThresholdAndCount(t *testing.T) {
+	for _, theta := range []int64{0, -1, maxMcCullochPittsCount + 1} {
+		if _, err := NewMcCullochPittsNeuronWithTheta(theta); err == nil {
+			t.Fatalf("theta %d did not fail", theta)
+		}
+	}
+	for _, count := range []int64{-1, maxMcCullochPittsCount + 1} {
+		if _, err := NewMcCullochPittsNeuron().Step(count, false); err == nil {
+			t.Fatalf("count %d did not fail", count)
+		}
+	}
+}
+
+func TestMcCullochPittsBatchIsExact(t *testing.T) {
+	events, count, err := EvaluateMcCullochPittsBatch(
+		2,
+		[]int64{0, 1, 2, maxMcCullochPittsCount},
+		[]uint8{0, 0, 0, 1},
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !reflect.DeepEqual(events, []uint8{0, 0, 1, 0}) || count != 1 {
+		t.Fatalf("got (%v, %d)", events, count)
+	}
+}
+
+func TestMcCullochPittsEmptyBatch(t *testing.T) {
+	events, count, err := EvaluateMcCullochPittsBatch(1, nil, nil)
+	if err != nil || len(events) != 0 || count != 0 {
+		t.Fatalf("got (%v, %d, %v)", events, count, err)
+	}
+}
+
+func TestMcCullochPittsMalformedBatchFails(t *testing.T) {
+	cases := []struct {
+		counts []int64
+		flags  []uint8
+	}{
+		{[]int64{1}, nil},
+		{[]int64{-1}, []uint8{0}},
+		{[]int64{maxMcCullochPittsCount + 1}, []uint8{0}},
+		{[]int64{1}, []uint8{2}},
+	}
+	for _, testCase := range cases {
+		if _, _, err := EvaluateMcCullochPittsBatch(1, testCase.counts, testCase.flags); err == nil {
+			t.Fatalf("malformed batch did not fail: %+v", testCase)
+		}
 	}
 }

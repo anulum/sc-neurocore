@@ -59,6 +59,7 @@ CLASS_TO_SCHEMA: dict[str, str] = {
     "IntegerQIFNeuron": "iqif",
     "Izhikevich2007Neuron": "izhikevich2007",
     "LapicqueNeuron": "lapicque",
+    "McCullochPittsNeuron": "mcculloch_pitts",
     "McKeanNeuron": "mckean",
     "MedvedevMapNeuron": "medvedev_map",
     "MihalasNieburNeuron": "mihalas_niebur",
@@ -87,6 +88,7 @@ DEPTH_BY_SCHEMA: dict[str, int] = {
     "hodgkin_huxley": 4,
     "ibarz_tanaka_map": 4,
     "iqif": 4,
+    "mcculloch_pitts": 4,
     "morris_lecar": 3,
     "fitzhugh_nagumo": 4,
     "fitzhugh_rinzel": 4,
@@ -119,6 +121,7 @@ MINIMAL_SAFETY_SCHEMAS: frozenset[str] = frozenset(
         "fitzhugh_rinzel",
         "hindmarsh_rose",
         "mckean",
+        "mcculloch_pitts",
         "medvedev_map",
         "mihalas_niebur",
         "morris_lecar",
@@ -142,7 +145,9 @@ MINIMAL_SAFETY_SCHEMAS: frozenset[str] = frozenset(
 # COBA LIF needs Q24.24 to preserve its four-stage RK4 event schedule and
 # four-state co-simulation envelope; Q16.16 adds a refractory residue step.
 # IQIF uses Q32.0 to retain the pinned signed-integer recurrence and its Q0.3
-# arithmetic shift without introducing a fractional rescale.
+# arithmetic shift without introducing a fractional rescale. McCulloch-Pitts
+# uses the same Q32.0 carrier for the non-negative excitatory-afferent count;
+# -1 is the sole absolute-inhibition sentinel.
 DEFAULT_PRECISION = (16, 8)
 PRECISION_BY_SCHEMA: dict[str, tuple[int, int]] = {
     "coba_lif": (48, 24),
@@ -151,6 +156,7 @@ PRECISION_BY_SCHEMA: dict[str, tuple[int, int]] = {
     "exp_if": (64, 32),
     "ibarz_tanaka_map": (32, 16),
     "iqif": (32, 0),
+    "mcculloch_pitts": (32, 0),
     "medvedev_map": (32, 16),
     "poisson": (48, 24),
 }

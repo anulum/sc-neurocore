@@ -224,7 +224,7 @@ def _rust_source_names() -> set[str]:
     source_text = "\n".join(
         (_repo_root() / path).read_text(encoding="utf-8") for path in _RUST_SOURCE_PATHS
     )
-    macro_names = re.findall(r'py_neuron_default!\("([^"]+)"', source_text)
+    macro_names = re.findall(r'py_neuron_default!\(\s*"([^"]+)"', source_text)
     explicit_names = re.findall(
         r'#\[pyclass\(\s*name\s*=\s*"([^"]+)"',
         source_text,

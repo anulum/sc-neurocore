@@ -8,27 +8,43 @@
 
 //! Rate-based models, synaptic plasticity neurons, and other special types.
 
-/// McCulloch-Pitts 1943 — binary threshold unit.
+/// McCulloch-Pitts 1943 — excitatory-count threshold with absolute inhibition.
 #[derive(Clone, Debug)]
 pub struct McCullochPittsNeuron {
-    pub theta: f64,
+    pub theta: i32,
 }
 
 impl McCullochPittsNeuron {
-    pub fn new(theta: f64) -> Self {
-        Self { theta }
-    }
-    pub fn step(&self, weighted_input: f64) -> i32 {
-        if weighted_input >= self.theta {
-            1
-        } else {
-            0
+    /// Construct a source-faithful neuron with a positive afferent-count threshold.
+    pub fn new(theta: i32) -> Result<Self, String> {
+        if theta <= 0 {
+            return Err("theta must be a positive signed 32-bit integer".into());
         }
+        Ok(Self { theta })
+    }
+
+    /// Revalidate the public fixed threshold before any execution boundary.
+    pub fn validate(&self) -> Result<(), String> {
+        if self.theta <= 0 {
+            return Err("theta must be a positive signed 32-bit integer".into());
+        }
+        Ok(())
+    }
+
+    /// Evaluate one preceding-instant afferent pattern without cell state.
+    pub fn try_step(&self, excitatory_count: i32, inhibitory_active: bool) -> Result<i32, String> {
+        self.validate()?;
+        if excitatory_count < 0 {
+            return Err("excitatory_count must be a non-negative signed 32-bit integer".into());
+        }
+        Ok(i32::from(
+            !inhibitory_active && excitatory_count >= self.theta,
+        ))
     }
 }
 impl Default for McCullochPittsNeuron {
     fn default() -> Self {
-        Self::new(1.0)
+        Self::new(1).expect("the default McCulloch-Pitts threshold is valid")
     }
 }
 
@@ -699,8 +715,8 @@ mod tests {
     #[test]
     fn mcp_threshold() {
         let n = McCullochPittsNeuron::default();
-        assert_eq!(n.step(2.0), 1);
-        assert_eq!(n.step(0.5), 0);
+        assert_eq!(n.try_step(2, false), Ok(1));
+        assert_eq!(n.try_step(0, false), Ok(0));
     }
     #[test]
     fn sigmoid_rate() {
@@ -781,11 +797,44 @@ mod tests {
     #[test]
     fn mcp_below_threshold() {
         let n = McCullochPittsNeuron::default();
-        assert_eq!(n.step(0.0), 0);
+        assert_eq!(n.try_step(0, false), Ok(0));
     }
     #[test]
-    fn mcp_nan_no_panic() {
-        McCullochPittsNeuron::default().step(f64::NAN);
+    fn mcp_absolute_inhibition_vetoes_maximum_excitation() {
+        let n = McCullochPittsNeuron::default();
+        assert_eq!(n.try_step(i32::MAX, true), Ok(0));
+    }
+    #[test]
+    fn mcp_theta_two_is_and() {
+        let n = McCullochPittsNeuron::new(2).unwrap();
+        assert_eq!(n.try_step(0, false), Ok(0));
+        assert_eq!(n.try_step(1, false), Ok(0));
+        assert_eq!(n.try_step(2, false), Ok(1));
+    }
+    #[test]
+    fn mcp_rejects_non_positive_thresholds() {
+        assert!(McCullochPittsNeuron::new(0).is_err());
+        assert!(McCullochPittsNeuron::new(-1).is_err());
+    }
+    #[test]
+    fn mcp_rejects_negative_excitation() {
+        let n = McCullochPittsNeuron::default();
+        assert!(n.try_step(-1, false).is_err());
+    }
+    #[test]
+    fn mcp_revalidates_public_threshold_mutation() {
+        let mut n = McCullochPittsNeuron::default();
+        n.theta = 0;
+        assert!(n.try_step(1, false).is_err());
+    }
+    #[test]
+    fn mcp_is_stateless_across_history() {
+        let n = McCullochPittsNeuron::new(2).unwrap();
+        let outputs: Vec<i32> = [2, 0, 2, 0]
+            .into_iter()
+            .map(|count| n.try_step(count, false).unwrap())
+            .collect();
+        assert_eq!(outputs, vec![1, 0, 1, 0]);
     }
 
     // -- SigmoidRate --
