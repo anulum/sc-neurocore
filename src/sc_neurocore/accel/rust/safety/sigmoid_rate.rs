@@ -6,8 +6,6 @@
 // Contact: www.anulum.li | protoscience@anulum.li
 // SC-NeuroCore — Rust safety for sigmoid_rate
 
-#![allow(unused_variables, dead_code, non_snake_case)]
-
 #[derive(Debug, Clone)]
 pub struct SigmoidRateNeuron {
     pub r: f64,
@@ -19,13 +17,28 @@ pub struct SigmoidRateNeuron {
 
 impl SigmoidRateNeuron {
     pub fn new() -> Self {
-        Self {
-            r: 0.0_f64,
-            tau: 10.0_f64,
-            beta: 1.0_f64,
-            theta: 0.0_f64,
-            dt: 0.1_f64,
+        Self::with_parameters(0.0, 10.0, 1.0, 0.0, 0.1)
+            .expect("the default sigmoid-rate contract is valid")
+    }
+
+    pub fn with_parameters(
+        r: f64,
+        tau: f64,
+        beta: f64,
+        theta: f64,
+        dt: f64,
+    ) -> Result<Self, &'static str> {
+        let state = Self {
+            r,
+            tau,
+            beta,
+            theta,
+            dt,
+        };
+        if !validate_sigmoid_rate(&state) {
+            return Err("sigmoid-rate state and parameters are invalid");
         }
+        Ok(state)
     }
 
     pub fn step(&mut self, i_ext: f64) -> Result<f64, &'static str> {
@@ -42,12 +55,13 @@ impl SigmoidRateNeuron {
     }
 
     pub fn reset(&mut self) {
-        // self.r = 0.0
-        self.r = 0.0_f64;
-        self.tau = 10.0_f64;
-        self.beta = 1.0_f64;
-        self.theta = 0.0_f64;
-        self.dt = 0.1_f64;
+        self.r = 0.0;
+    }
+}
+
+impl Default for SigmoidRateNeuron {
+    fn default() -> Self {
+        Self::new()
     }
 }
 
@@ -156,5 +170,25 @@ mod tests {
         assert!(high > low);
         assert!((0.0..=1.0).contains(&high));
         assert!((0.0..=1.0).contains(&low));
+    }
+
+    #[test]
+    fn test_sigmoid_rate_reset_preserves_configuration() {
+        let mut state = SigmoidRateNeuron::with_parameters(0.25, 7.0, 2.5, -0.4, 0.2).unwrap();
+        state.step(3.0).unwrap();
+        state.reset();
+        assert_eq!(state.r, 0.0);
+        assert_eq!(state.tau, 7.0);
+        assert_eq!(state.beta, 2.5);
+        assert_eq!(state.theta, -0.4);
+        assert_eq!(state.dt, 0.2);
+    }
+
+    #[test]
+    fn test_sigmoid_rate_configurable_constructor_rejects_invalid_contracts() {
+        assert!(SigmoidRateNeuron::with_parameters(-0.1, 10.0, 1.0, 0.0, 0.1).is_err());
+        assert!(SigmoidRateNeuron::with_parameters(0.0, 0.0, 1.0, 0.0, 0.1).is_err());
+        assert!(SigmoidRateNeuron::with_parameters(0.0, 10.0, f64::NAN, 0.0, 0.1).is_err());
+        assert!(SigmoidRateNeuron::with_parameters(0.0, 10.0, 1.0, 0.0, f64::INFINITY).is_err());
     }
 }

@@ -637,6 +637,16 @@ except ImportError:
 
 try:
     from sc_neurocore_engine.sc_neurocore_engine import (
+        py_sigmoid_rate_simulate,
+    )
+
+    __all__ += ["py_sigmoid_rate_simulate"]
+    _sigmoid_rate_rust_available = True
+except ImportError:
+    _sigmoid_rate_rust_available = False
+
+try:
+    from sc_neurocore_engine.sc_neurocore_engine import (
         py_mihalas_niebur_simulate,
     )
 

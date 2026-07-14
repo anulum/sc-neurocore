@@ -922,6 +922,40 @@ numpy.ndarray
 
 ---
 
+## Module `accel.sigmoid_rate`
+
+### Function `ensure_julia_loaded()`
+Load the committed Julia module when ``juliacall`` is available.
+
+### Function `ensure_go_loaded()`
+Load the staged Go sigmoid-rate C-shared library.
+
+### Function `ensure_mojo_loaded()`
+Load the staged Mojo sigmoid-rate shared library.
+
+### Function `backend_available(backend)`
+Return whether one public execution lane is ready.
+
+### Function `auto_backend()`
+Choose the first available lane from committed measured evidence.
+
+### Function `normalise_result(trace, final_rate)`
+Reject malformed or non-atomic backend output before public commit.
+
+### Function `simulate_rust(r, tau, beta, theta, dt, n_steps, current)`
+Run the complete contract through the production Rust engine.
+
+### Function `simulate_julia(r, tau, beta, theta, dt, n_steps, current)`
+Run the complete contract through the committed Julia module.
+
+### Function `simulate_go(r, tau, beta, theta, dt, n_steps, current)`
+Run the Go recurrence through its generated C ABI.
+
+### Function `simulate_mojo(r, tau, beta, theta, dt, n_steps, current)`
+Run the Mojo recurrence through its exported C ABI.
+
+---
+
 ## Module `accel.theta`
 
 ### Function `ensure_julia_loaded()`
@@ -24196,15 +24230,20 @@ modulation. IEEE Trans. Neural Netw. Learn. Syst. (DOI 10.1109/tnnls.2016.252602
 ## Module `neurons.models.sigmoid_rate`
 
 ### Class `SigmoidRateNeuron`
-Continuous rate model with sigmoidal transfer. Wilson & Cowan 1972 style.
+Scalar rate relaxation with a stable logistic transfer.
 
 tau dr/dt = -r + sigma(beta * (input - theta))
 
-Reference: Wilson, H.R. & Cowan, J.D. (1972). Biophys. J. 12:1–24.
+Wilson and Cowan (1972) derive the coupled population framework that
+motivates this reduced single-unit motif. The complete excitatory and
+inhibitory model is represented separately by ``WilsonCowanUnit``.
 
 - **__post_init__**()
 - **step**(current)
+- **simulate**(n_steps, current, backend)
+  - Return a post-step rate trace through one maintained backend.
 - **reset**()
+  - Restore the dynamic rate without changing configuration.
 
 ---
 

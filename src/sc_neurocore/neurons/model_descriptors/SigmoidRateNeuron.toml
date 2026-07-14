@@ -11,14 +11,20 @@ schema_version = 2
 name = "SigmoidRateNeuron"
 class_name = "SigmoidRateNeuron"
 module = "sigmoid_rate"
-display_name = ""
-summary = "Continuous rate model with sigmoidal transfer. Wilson & Cowan 1972 style."
+display_name = "Sigmoid rate relaxation"
+summary = "Validated scalar first-order relaxation to a logistic target, inspired by the population-rate motif in Wilson and Cowan 1972."
 family = "Rate / mean-field"
 category = "rate-mean-field"
 biophysical_detail = "point"
-maturity = "experimental"
-intended_use = []
-hardware_fit = []
+maturity = "validated"
+intended_use = [
+    "deterministic continuous-rate experiments",
+    "single-population relaxation and low-pass response studies",
+    "cross-runtime floating-point recurrence validation",
+]
+hardware_fit = [
+    "software and floating-point accelerator reference",
+]
 behavior_tags = [
     "excitable",
     "tonic",
@@ -30,12 +36,13 @@ authors = [
 ]
 year = 1972
 doi = "10.1016/S0006-3495(72)86068-5"
+paper_title = "Excitatory and Inhibitory Interactions in Localized Populations of Model Neurons"
+url = "https://pmc.ncbi.nlm.nih.gov/articles/PMC1484078/"
 
 [state.r]
 init = 0.0
-
-[state.theta]
-init = 0.0
+unit = "normalised population activity"
+meaning = "live continuous rate constrained to [0,1]"
 
 [parameters.tau]
 default = 10.0
@@ -55,17 +62,63 @@ range = [
     20.0,
 ]
 
+[parameters.theta]
+default = 0.0
+unit = "input"
+meaning = "midpoint of the logistic transfer"
+range = [
+    -100.0,
+    100.0,
+]
+
 [integration]
 dt = 0.1
-method = "euler"
+method = "exp_euler"
 
 [dynamics]
+r = "tau*dr/dt=-r+sigma(beta*(I-theta)); constant-current target is integrated by exact first-order relaxation"
+transfer = "branch-stable logistic with finite overflow saturation and fail-closed non-saturating NaN"
+scope = "reduced single-population motif; not the full coupled excitatory/inhibitory Wilson-Cowan system"
 
 [backends.python]
 status = "implemented"
+parity = "ulp-bounded"
+
+[backends.rust]
+status = "implemented"
+parity = "ulp-bounded"
+
+[backends.julia]
+status = "implemented"
+parity = "ulp-bounded"
+
+[backends.go]
+status = "implemented"
+parity = "ulp-bounded"
+
+[backends.mojo]
+status = "implemented"
+parity = "ulp-bounded"
 
 [reproducibility]
+reference_config = "{\"r\":0.25,\"tau\":10.0,\"beta\":2.0,\"theta\":1.0,\"dt\":0.5,\"n_steps\":200000,\"current\":3.0}"
+golden_trace_sha256 = "5241be414683ce92ba9886c13c0a9f5ef84886d5d48ddda05fc892b72274e07d"
+golden_citation = "doi:10.1016/S0006-3495(72)86068-5; reduced scalar relaxation scope declared"
 
 [documentation]
 slug = "models/sigmoid_rate"
-notes = ""
+notes = "Wilson and Cowan 1972 derive coupled excitatory and inhibitory population equations. SigmoidRateNeuron is explicitly a reduced scalar relaxation-to-logistic motif, while WilsonCowanUnit represents the coupled family. The exact finite-step update is faithful to the declared scalar ODE for constant current."
+
+[validation]
+dynamics_faithful = true
+metric = "trajectory"
+operating_point = "r=0.25, tau=10, beta=2, theta=1, dt=0.5, current=3, 200000 steps"
+tolerance = "complete Python/Rust/Julia/Go/Mojo rate traces and final rate agree within absolute 5e-12; every state remains in [0,1]"
+evidence = "tests/test_sigmoid_rate_backends.py::test_complete_configured_contract_matches_python"
+
+[silicon]
+compiles = false
+cosim_validated = false
+cosim_evidence = "not enrolled; exp-based floating-point rate dynamics have no fixed-point RTL claim in this unit"
+target_tier = ""
+terminal_reason = "The model is polyglot-complete in software; fixed-point approximation, RTL, formal equivalence, synthesis, timing, and hardware evidence remain separate work."

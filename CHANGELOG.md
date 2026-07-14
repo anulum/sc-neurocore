@@ -5,6 +5,15 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 ## [Unreleased]
 
 ### Added
+- Completed `SigmoidRateNeuron` across the Python reference, modular Rust-engine
+  batch, independent Rust-safety module, Julia, Go, and callable Mojo shared
+  library. Every lane carries the full configurable exact-relaxation contract;
+  reset preserves configuration and native failures are atomic.
+- Added executed five-backend trace parity and a source- and binary-bound
+  benchmark. Python, Rust, Julia, and Go are byte-identical on the enrolled
+  200,000-step trace; Mojo remains within `3.08e-14`. Timings are explicitly
+  local, affinity-pinned, non-exclusive regression evidence, not production or
+  hardware performance claims.
 - Completed the source-faithful McCulloch-Pitts 1943 logical neuron across
   Python, the Rust engine and independent safety module, Julia, Go, and Mojo.
   The maintained contract is a positive active-excitatory-afferent count

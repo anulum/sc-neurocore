@@ -127,6 +127,29 @@ CPU 4 under the `powersave` governor, but load averages were high and the CPU
 was not isolated. These timings are same-host regression evidence only, not a
 hardware result, portable throughput claim, or cross-framework comparison.
 
+## Sigmoid-rate exact-relaxation batch loop
+
+The committed `benchmarks/results/local_python_2026-07-14_sigmoid_rate.json`
+records the configurable scalar exact-relaxation equation through Python, the
+Rust engine, Julia, Go, and Mojo. One 1,000-step warm-up precedes five
+200,000-step samples per backend.
+
+| Backend | Median call | Median ns/step | Trace mismatches | Maximum error |
+|---|---:|---:|---:|---:|
+| Python | 73.788 ms | 368.938 | 0 | 0 |
+| Rust | 46.985 ms | 234.926 | 0 | 0 |
+| Julia | 17.493 ms | 87.467 | 0 | 0 |
+| Go | 97.270 ms | 486.350 | 0 | 0 |
+| Mojo | 14.610 ms | 73.048 | 0 | `3.08e-14` |
+
+Python, Rust, Julia, and Go share trace SHA-256
+`5241be414683ce92ba9886c13c0a9f5ef84886d5d48ddda05fc892b72274e07d`.
+Mojo remains within the declared `5e-12` absolute tolerance but has a distinct
+binary trace hash. The host was pinned to logical CPU 4 without exclusive
+isolation and reported high load averages. These figures are local diagnostic
+regression evidence, not production, hardware, cross-host, or cross-framework
+performance claims.
+
 ## Chialvo map polyglot batch loop
 
 The committed `benchmarks/bench_chialvo_map.py` runs the same

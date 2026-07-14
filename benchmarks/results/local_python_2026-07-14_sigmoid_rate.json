@@ -1,0 +1,287 @@
+{
+  "auto_backend_order": [
+    "mojo",
+    "julia",
+    "rust",
+    "go",
+    "python"
+  ],
+  "auto_backend_selection_basis": "same-host measured warm batch order; non-exclusive timings remain diagnostic",
+  "backends": {
+    "go": {
+      "available": true,
+      "final_rate": 0.9820137900379067,
+      "final_rate_matches_python": true,
+      "max_call_ns": 106592884,
+      "median_call_ns": 97270022.0,
+      "median_ns_per_step": 486.35011,
+      "min_call_ns": 39288604,
+      "parity_max_abs_diff": 0.0,
+      "samples_ns": [
+        66824497,
+        39288604,
+        97270022,
+        97584947,
+        106592884
+      ],
+      "trace_matches_python": true,
+      "trace_mismatch_count": 0,
+      "trace_sha256": "5241be414683ce92ba9886c13c0a9f5ef84886d5d48ddda05fc892b72274e07d",
+      "used": true
+    },
+    "julia": {
+      "available": true,
+      "final_rate": 0.9820137900379067,
+      "final_rate_matches_python": true,
+      "max_call_ns": 28301122,
+      "median_call_ns": 17493348.0,
+      "median_ns_per_step": 87.46674,
+      "min_call_ns": 10284215,
+      "parity_max_abs_diff": 0.0,
+      "samples_ns": [
+        28301122,
+        10284215,
+        17493348,
+        17691472,
+        14976475
+      ],
+      "trace_matches_python": true,
+      "trace_mismatch_count": 0,
+      "trace_sha256": "5241be414683ce92ba9886c13c0a9f5ef84886d5d48ddda05fc892b72274e07d",
+      "used": true
+    },
+    "mojo": {
+      "available": true,
+      "final_rate": 0.9820137900379374,
+      "final_rate_matches_python": true,
+      "max_call_ns": 23895622,
+      "median_call_ns": 14609628.0,
+      "median_ns_per_step": 73.04814,
+      "min_call_ns": 13049037,
+      "parity_max_abs_diff": 3.0753177782116836e-14,
+      "samples_ns": [
+        17626520,
+        14288879,
+        13049037,
+        14609628,
+        23895622
+      ],
+      "trace_matches_python": true,
+      "trace_mismatch_count": 0,
+      "trace_sha256": "2ab8cd40dc54ec2d0f17806d2440d0a352571ee3f5391e5d55c1406e5e7f132a",
+      "used": true
+    },
+    "python": {
+      "available": true,
+      "final_rate": 0.9820137900379067,
+      "final_rate_matches_python": true,
+      "max_call_ns": 109872435,
+      "median_call_ns": 73787572.0,
+      "median_ns_per_step": 368.93786,
+      "min_call_ns": 69394225,
+      "parity_max_abs_diff": 0.0,
+      "samples_ns": [
+        95826100,
+        71307204,
+        73787572,
+        69394225,
+        109872435
+      ],
+      "trace_matches_python": true,
+      "trace_mismatch_count": 0,
+      "trace_sha256": "5241be414683ce92ba9886c13c0a9f5ef84886d5d48ddda05fc892b72274e07d",
+      "used": true
+    },
+    "rust": {
+      "available": true,
+      "final_rate": 0.9820137900379067,
+      "final_rate_matches_python": true,
+      "max_call_ns": 55904029,
+      "median_call_ns": 46985163.0,
+      "median_ns_per_step": 234.925815,
+      "min_call_ns": 24619785,
+      "parity_max_abs_diff": 0.0,
+      "samples_ns": [
+        53202903,
+        45767303,
+        55904029,
+        46985163,
+        24619785
+      ],
+      "trace_matches_python": true,
+      "trace_mismatch_count": 0,
+      "trace_sha256": "5241be414683ce92ba9886c13c0a9f5ef84886d5d48ddda05fc892b72274e07d",
+      "used": true
+    }
+  },
+  "benchmark": "SigmoidRateNeuron five-backend exact-relaxation batch",
+  "binary_hashes": {
+    "go_shared_library": {
+      "path": "src/sc_neurocore/accel/go/neurons/sigmoid_rate/libsigmoid_rate.so",
+      "sha256": "b746c17e99cbd5e312749634025f06fdda15e3af600be5216ef94ab5a012474f",
+      "size_bytes": 2022560
+    },
+    "mojo_shared_library": {
+      "path": "src/sc_neurocore/accel/mojo/kernels/libsigmoid_rate.so",
+      "sha256": "1607639d1fbdc469cbf724ae1e4291be0963821dd7a3402869076e91de20caed",
+      "size_bytes": 15288
+    },
+    "rust_extension": {
+      "path": "bridge/sc_neurocore_engine/sc_neurocore_engine.cpython-312-x86_64-linux-gnu.so",
+      "sha256": "219d5c46f4056d8e21ae24783131489d4d9c9d25edf9c70d3430c1da25dd4ecd",
+      "size_bytes": 33854905
+    }
+  },
+  "command": "taskset -c <cpu> env PYTHONPATH=bridge:src:. .venv/bin/python benchmarks/bench_model_sigmoid_rate.py --json benchmarks/results/local_python_2026-07-14_sigmoid_rate.json",
+  "environment": {
+    "affinity": [
+      4
+    ],
+    "go": "go version go1.24.0 linux/amd64",
+    "julia": "julia version 1.12.6",
+    "load_average": [
+      69.9150390625,
+      66.23095703125,
+      61.1162109375
+    ],
+    "mojo": "Mojo 1.0.0b1 (a9591de6)",
+    "platform": "Linux-6.17.0-35-generic-x86_64-with-glibc2.39",
+    "processor": "x86_64",
+    "python": "3.12.3",
+    "rustc": "rustc 1.96.0 (ac68faa20 2026-05-25)"
+  },
+  "evidence_class": "local_regression_single_cpu_affinity_non_exclusive",
+  "fastest_measured_native_backend": "mojo",
+  "hardware_measurement_claimed": false,
+  "kernel": "sigmoid_rate_exact_relaxation_batch",
+  "measured_order": [
+    "python",
+    "rust",
+    "julia",
+    "go",
+    "mojo"
+  ],
+  "meta": {
+    "exclusive_cpu_isolation_claimed": false,
+    "runtime_cpuset_shield_claimed": false,
+    "single_cpu_pinned": true
+  },
+  "parity_contract": {
+    "absolute_tolerance": 5e-12,
+    "observable": "complete post-step float64 rate trace and final rate",
+    "reason": "exp implementations are not promised bit-identical across libm runtimes"
+  },
+  "production_speed_claim": false,
+  "recommended_auto_backend": "mojo",
+  "schema_version": "sc-neurocore.polyglot-benchmark.v1",
+  "source_hashes": {
+    "benchmarks/bench_model_sigmoid_rate": {
+      "py": "d2d596ef680b9e1de9b61db3e46dc2f778584eb41e6c4f4839a74e80afdd6735"
+    },
+    "benchmarks/bench_model_sigmoid_rate.py": "d2d596ef680b9e1de9b61db3e46dc2f778584eb41e6c4f4839a74e80afdd6735",
+    "bridge/sc_neurocore_engine/__init__": {
+      "py": "b736128b103cee5ca5c2745bb7ef2b3f212171c4f21f374287c178e26d59cd5c"
+    },
+    "bridge/sc_neurocore_engine/__init__.py": "b736128b103cee5ca5c2745bb7ef2b3f212171c4f21f374287c178e26d59cd5c",
+    "engine/src/bindings/sigmoid_rate": {
+      "rs": "a8ec35efbefb306a9bd9d2f4f205a1948871265ce6f947c3ffa137767877ad5c"
+    },
+    "engine/src/bindings/sigmoid_rate.rs": "a8ec35efbefb306a9bd9d2f4f205a1948871265ce6f947c3ffa137767877ad5c",
+    "engine/src/neurons/rate": {
+      "rs": "ccecb3c85ea669f227eb580af40c0347f8499e2ce860a4f5686e9668d31013e3"
+    },
+    "engine/src/neurons/rate.rs": "ccecb3c85ea669f227eb580af40c0347f8499e2ce860a4f5686e9668d31013e3",
+    "engine/src/pyo3_neurons": {
+      "rs": "fdf6d38748ccdcaadf733c98b174b18aea07d446e52434111ff5689478b1a6ae"
+    },
+    "engine/src/pyo3_neurons.rs": "fdf6d38748ccdcaadf733c98b174b18aea07d446e52434111ff5689478b1a6ae",
+    "src/sc_neurocore/accel/go/neurons/sigmoid_rate/libsigmoid_rate": {
+      "h": "6633a86cd30bf25e4f2870b1a7e7fceb3d5f63dff9c6d54aeb8c066e67905b27"
+    },
+    "src/sc_neurocore/accel/go/neurons/sigmoid_rate/libsigmoid_rate.h": "6633a86cd30bf25e4f2870b1a7e7fceb3d5f63dff9c6d54aeb8c066e67905b27",
+    "src/sc_neurocore/accel/go/neurons/sigmoid_rate/sigmoid_rate": {
+      "go": "871ea24cc981a70eb1366b55fed259a75d823bad9c29c36bbe2f3bbb6955549a"
+    },
+    "src/sc_neurocore/accel/go/neurons/sigmoid_rate/sigmoid_rate.go": "871ea24cc981a70eb1366b55fed259a75d823bad9c29c36bbe2f3bbb6955549a",
+    "src/sc_neurocore/accel/go/services/sigmoid_rate": {
+      "go": "07659fdfd5cca02c4cc2d882d94687fea76fadeef0e620f3fc6f41fbcaa2d205"
+    },
+    "src/sc_neurocore/accel/go/services/sigmoid_rate.go": "07659fdfd5cca02c4cc2d882d94687fea76fadeef0e620f3fc6f41fbcaa2d205",
+    "src/sc_neurocore/accel/go/services/sigmoid_rate_test": {
+      "go": "f684e40b99ca97cdc1f5fcedfc809a2323793e5188adaff8b7e726a189effb21"
+    },
+    "src/sc_neurocore/accel/go/services/sigmoid_rate_test.go": "f684e40b99ca97cdc1f5fcedfc809a2323793e5188adaff8b7e726a189effb21",
+    "src/sc_neurocore/accel/julia/neurons/sigmoid_rate": {
+      "jl": "f7c3c2d1cc9e5760729399a15961183f17f90f88da631801d4b0269c05cb0464"
+    },
+    "src/sc_neurocore/accel/julia/neurons/sigmoid_rate.jl": "f7c3c2d1cc9e5760729399a15961183f17f90f88da631801d4b0269c05cb0464",
+    "src/sc_neurocore/accel/mojo/kernels/sigmoid_rate": {
+      "mojo": "306e466207dc4a27a8d0ecceff6439e496098a547e6239b775855ad371553687"
+    },
+    "src/sc_neurocore/accel/mojo/kernels/sigmoid_rate.mojo": "306e466207dc4a27a8d0ecceff6439e496098a547e6239b775855ad371553687",
+    "src/sc_neurocore/accel/rust/safety/sigmoid_rate": {
+      "rs": "de4f1e8af1c83e10f54733c3a7c70e737341c63269e46518b4f5eb2605d4e524"
+    },
+    "src/sc_neurocore/accel/rust/safety/sigmoid_rate.rs": "de4f1e8af1c83e10f54733c3a7c70e737341c63269e46518b4f5eb2605d4e524",
+    "src/sc_neurocore/accel/sigmoid_rate": {
+      "py": "838b4805989362244d1c7d5c23378246fcbe95261d6b0b28ac8e38a3a0aed6c9"
+    },
+    "src/sc_neurocore/accel/sigmoid_rate.py": "838b4805989362244d1c7d5c23378246fcbe95261d6b0b28ac8e38a3a0aed6c9",
+    "src/sc_neurocore/neurons/model_descriptors/SigmoidRateNeuron": {
+      "toml": "2f62f854ffc82dbc17787e65ac332a26503f16d78dc4aaa04bf1749845336da6"
+    },
+    "src/sc_neurocore/neurons/model_descriptors/SigmoidRateNeuron.toml": "2f62f854ffc82dbc17787e65ac332a26503f16d78dc4aaa04bf1749845336da6",
+    "src/sc_neurocore/neurons/model_schemas/sigmoid_rate": {
+      "toml": "5e851c38e17cc666fbf8484c25ada0b8f0c6c536dad402d793e398bfc800c864"
+    },
+    "src/sc_neurocore/neurons/model_schemas/sigmoid_rate.toml": "5e851c38e17cc666fbf8484c25ada0b8f0c6c536dad402d793e398bfc800c864",
+    "src/sc_neurocore/neurons/models/sigmoid_rate": {
+      "py": "3340acd62fd8a8a9eceea20903b4375f2fbddbcc00c6572bda965839041f2fec"
+    },
+    "src/sc_neurocore/neurons/models/sigmoid_rate.py": "3340acd62fd8a8a9eceea20903b4375f2fbddbcc00c6572bda965839041f2fec"
+  },
+  "timestamp_utc": "2026-07-14T16:12:55+00:00",
+  "verification": {
+    "rust_safety": {
+      "command": [
+        "rustc",
+        "--edition",
+        "2021",
+        "--test",
+        "/media/anulum/GOTM/aaa_God_of_the_Math_Collection/03_CODE/SC-NEUROCORE/src/sc_neurocore/accel/rust/safety/sigmoid_rate.rs",
+        "-o",
+        "/tmp/sigmoid-rate-rust-tcqe3ix_/sigmoid_rate_tests"
+      ],
+      "output_tail": [
+        "",
+        "running 8 tests",
+        "test tests::test_sigmoid_rate_configurable_constructor_rejects_invalid_contracts ... ok",
+        "test tests::test_sigmoid_rate_exact_relaxation_matches_reference ... ok",
+        "test tests::test_sigmoid_rate_extreme_drive_saturates ... ok",
+        "test tests::test_sigmoid_rate_large_timestep_remains_bounded ... ok",
+        "test tests::test_sigmoid_rate_new ... ok",
+        "test tests::test_sigmoid_rate_rejects_invalid_state_without_mutation ... ok",
+        "test tests::test_sigmoid_rate_reset_preserves_configuration ... ok",
+        "test tests::test_sigmoid_rate_step ... ok",
+        "",
+        "test result: ok. 8 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s",
+        ""
+      ],
+      "passed": true,
+      "returncode": 0
+    }
+  },
+  "workload": {
+    "current": 3.0,
+    "initial_state": {
+      "beta": 2.0,
+      "dt": 0.5,
+      "r": 0.25,
+      "tau": 10.0,
+      "theta": 1.0
+    },
+    "n_steps": 200000,
+    "repeats": 5,
+    "warmup_steps": 1000
+  }
+}

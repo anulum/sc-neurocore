@@ -8,7 +8,7 @@
 
 module SigmoidRateAccel
 
-export step!, simulate, SigmoidRateNeuronState, valid, reset!
+export step!, simulate, simulate_trace, SigmoidRateNeuronState, valid, reset!
 
 mutable struct SigmoidRateNeuronState
     r::Float64
@@ -44,7 +44,7 @@ function sigmoid_transfer(beta::Float64, I_ext::Float64, theta::Float64)::Float6
     return exp_z / (1.0 + exp_z)
 end
 
-function step!(s::SigmoidRateNeuronState, I_ext::Float64=0.0; dt::Float64=0.1)
+function step!(s::SigmoidRateNeuronState, I_ext::Float64=0.0)::Float64
     if !isfinite(I_ext) || !valid(s)
         throw(DomainError((s.r, I_ext), "SigmoidRate state/current must be finite and well-formed"))
     end
@@ -67,18 +67,40 @@ function reset!(s::SigmoidRateNeuronState)::Nothing
     return nothing
 end
 
-function simulate(n_steps::Int=1000; I_ext::Float64=10.0, dt::Float64=0.1)
-    s = SigmoidRateNeuronState()
-    trace = zeros(n_steps)
-    spikes = 0
-    for t in 1:n_steps
-        result = step!(s, I_ext; dt=dt)
-        trace[t] = s.r
-        if result isa Number && result > 0
-            spikes += 1
-        end
+function simulate_trace(
+    r::Float64,
+    tau::Float64,
+    beta::Float64,
+    theta::Float64,
+    dt::Float64,
+    n_steps::Int,
+    I_ext::Float64,
+)
+    if n_steps < 0
+        throw(DomainError(n_steps, "SigmoidRate step count must be non-negative"))
     end
-    return trace, spikes
+    s = SigmoidRateNeuronState(r, tau, beta, theta, dt)
+    if !valid(s) || !isfinite(I_ext)
+        throw(DomainError((r, I_ext), "SigmoidRate batch contract is invalid"))
+    end
+    trace = Vector{Float64}(undef, n_steps)
+    for index in eachindex(trace)
+        trace[index] = step!(s, I_ext)
+    end
+    return (trace=trace, rf=s.r)
+end
+
+function simulate(
+    n_steps::Int=1000;
+    I_ext::Float64=10.0,
+    r::Float64=0.0,
+    tau::Float64=10.0,
+    beta::Float64=1.0,
+    theta::Float64=0.0,
+    dt::Float64=0.1,
+)
+    result = simulate_trace(r, tau, beta, theta, dt, n_steps, I_ext)
+    return result.trace, result.rf
 end
 
 end # module SigmoidRateAccel

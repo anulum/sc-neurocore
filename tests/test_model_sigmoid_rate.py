@@ -6,19 +6,24 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore — End-to-end test: SigmoidRateNeuron
 
-"""Full pipeline test for SigmoidRateNeuron (Wilson & Cowan style).
+"""Full pipeline tests for the reduced sigmoid-rate relaxation model.
 
-Continuous rate model: τ dr/dt = -r + σ(β(I-θ)). Returns float (rate),
-not int spike. Network incompatible (float return)."""
+The maintained scalar equation is ``τ dr/dt = -r + σ(β(I-θ))``. It is inspired
+by the population-rate motif in Wilson and Cowan (1972), not their full coupled
+excitatory/inhibitory system.
+"""
 
 from __future__ import annotations
 
 import time
+from typing import cast
 
 import numpy as np
 import pytest
 
+from sc_neurocore.neurons.model_catalogue import load_descriptor_payload
 from sc_neurocore.neurons.models.sigmoid_rate import SigmoidRateNeuron
+from sc_neurocore.neurons.universal_dsl import UniversalNeuron
 from sc_neurocore.network.population import Population
 
 
@@ -55,11 +60,47 @@ class TestSigmoidRateIsolation:
         assert np.isfinite(n.r)
 
     def test_reset(self):
-        n = SigmoidRateNeuron()
+        n = SigmoidRateNeuron(tau=7.0, beta=2.5, theta=-0.4, dt=0.2)
         for _ in range(100):
             n.step(5.0)
         n.reset()
         assert n.r == 0.0
+        assert (n.tau, n.beta, n.theta, n.dt) == (7.0, 2.5, -0.4, 0.2)
+
+    def test_python_batch_matches_scalar_steps(self):
+        scalar = SigmoidRateNeuron(r=0.25, tau=10.0, beta=2.0, theta=1.0, dt=0.5)
+        expected = np.asarray([scalar.step(3.0) for _ in range(32)])
+        batched = SigmoidRateNeuron(r=0.25, tau=10.0, beta=2.0, theta=1.0, dt=0.5)
+        actual = batched.simulate(32, 3.0, backend="python")
+        np.testing.assert_array_equal(actual, expected)
+        assert batched.r == scalar.r
+
+
+class TestSigmoidRateSchema:
+    def test_descriptor_tracks_theta_as_configuration(self):
+        payload = load_descriptor_payload("SigmoidRateNeuron")
+        assert payload is not None
+        assert set(payload["state"]) == {"r"}
+        assert set(payload["parameters"]) == {"tau", "beta", "theta"}
+        assert payload["integration"] == {"dt": 0.1, "method": "exp_euler"}
+
+    def test_schema_exp_euler_matches_hand_model(self):
+        configured = {"tau": 10.0, "beta": 2.0, "theta": 1.0}
+        schema = UniversalNeuron.from_schema(
+            "sigmoid_rate",
+            parameter_overrides=configured,
+            dt_override=0.5,
+        )
+        hand = SigmoidRateNeuron(**configured, dt=0.5)
+
+        schema_trace = []
+        hand_trace = []
+        for _ in range(32):
+            schema.step(I=3.0)
+            schema_trace.append(schema.state["r"])
+            hand_trace.append(hand.step(3.0))
+
+        np.testing.assert_allclose(schema_trace, hand_trace, rtol=0.0, atol=5.0e-12)
 
 
 class TestSigmoidRateTransferFunction:
@@ -226,6 +267,19 @@ class TestSigmoidRateValidation:
             low = n.step(-1.0e308)
         assert 0.0 < high <= 1.0
         assert 0.0 <= low < high
+
+    @pytest.mark.parametrize("n_steps", [-1, 1.5, True])
+    def test_rejects_invalid_batch_length_without_mutation(self, n_steps: object):
+        n = SigmoidRateNeuron(r=0.25)
+        with pytest.raises(ValueError, match="n_steps"):
+            n.simulate(cast(int, n_steps), 3.0, backend="python")
+        assert n.r == 0.25
+
+    def test_rejects_unknown_backend_without_mutation(self):
+        n = SigmoidRateNeuron(r=0.25)
+        with pytest.raises(ValueError, match="backend must be"):
+            n.simulate(1, 3.0, backend="cuda")
+        assert n.r == 0.25
 
 
 class TestSigmoidRatePerformance:

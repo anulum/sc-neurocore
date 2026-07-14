@@ -5,6 +5,22 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+### Sigmoid-rate polyglot closure
+
+- Added a configurable `SigmoidRateNeuron.simulate` dispatcher across Python,
+  the modular Rust-engine batch, Julia, generated Go C-shared ABI, and exported
+  Mojo C ABI. The independent Rust-safety reset now restores only the dynamic
+  rate and preserves `tau`, `beta`, `theta`, and `dt`.
+- Added executed complete-trace parity, empty/large-step/invalid-contract
+  boundaries, atomic native-output tests, and a source- and binary-hashed
+  five-backend benchmark. The local timings are non-exclusive regression
+  evidence and make no production, cross-host, hardware, or universal ranking
+  claim.
+- Clarified the scientific boundary: Wilson and Cowan (1972) motivate the
+  population-rate sigmoid motif, while this class is a reduced scalar
+  relaxation and does not claim the paper's full coupled excitatory/inhibitory
+  system.
+
 ### McCulloch-Pitts source-to-silicon closure
 
 - Replaced the later real-weighted threshold abstraction with McCulloch and

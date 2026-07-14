@@ -1,0 +1,35 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Commercial license available
+# © Concepts 1996–2026 Miroslav Šotek. All rights reserved.
+# © Code 2020–2026 Miroslav Šotek. All rights reserved.
+# ORCID: 0009-0009-3560-0851
+# Contact: www.anulum.li | protoscience@anulum.li
+# SC-NeuroCore — Sigmoid-rate exact-relaxation schema
+
+[metadata]
+schema_version = 1
+name = "SigmoidRateNeuron"
+author = "Wilson, H. R.; Cowan, J. D."
+year = 1972
+doi = "10.1016/S0006-3495(72)86068-5"
+description = "Scalar first-order relaxation to a logistic population-rate target"
+
+[state]
+r = 0.0
+
+[parameters]
+tau = 10.0
+beta = 1.0
+theta = 0.0
+
+[integration]
+dt = 0.1
+method = "exp_euler"
+
+[dynamics]
+r = "(-r + sigmoid(beta * (I - theta))) / tau"
+
+[extensions]
+family = "rate-mean-field"
+source_scope_note = "Reduced single-population motif; not the full coupled excitatory/inhibitory Wilson-Cowan system"
+maintained_discretisation = "Exact constant-current first-order flow via exponential Euler"

@@ -33,7 +33,7 @@ func NewSigmoidRateNeuron() *SigmoidRateNeuronState {
 	}
 }
 
-// Step advances the neuron by one timestep
+// Valid reports whether the complete mutable rate contract is well formed.
 func (s SigmoidRateNeuronState) Valid() bool {
 	return sigmoidRateFinite(s.R) &&
 		sigmoidRateFinite(s.Tau) &&
@@ -67,27 +67,45 @@ func (s *SigmoidRateNeuronState) Reset() {
 	s.R = 0.0
 }
 
-// SimulateSigmoidRateNeuron runs the neuron for n steps
-func SimulateSigmoidRateNeuron(nSteps int, iExt float64) ([]float64, int) {
-	s := NewSigmoidRateNeuron()
-	trace := make([]float64, nSteps)
-	spikes := 0
-	for t := 0; t < nSteps; t++ {
-		result, err := s.Step(iExt)
-		if err != nil {
-			panic(err)
-		}
-		trace[t] = s.R
-		if result > 0 {
-			spikes++
-		}
+// SimulateSigmoidRateTrace runs a configurable constant-current batch.
+// The input state is copied, so failures never mutate caller-owned state.
+func SimulateSigmoidRateTrace(
+	initial SigmoidRateNeuronState,
+	nSteps int,
+	iExt float64,
+) ([]float64, SigmoidRateNeuronState, error) {
+	if nSteps < 0 {
+		return nil, initial, ErrSigmoidRateInvalidStepCount
 	}
-	return trace, spikes
+	state := initial
+	if !state.Valid() || !sigmoidRateFinite(iExt) {
+		return nil, initial, ErrSigmoidRateInvalidState
+	}
+	trace := make([]float64, nSteps)
+	for index := range trace {
+		value, err := state.Step(iExt)
+		if err != nil {
+			return nil, initial, err
+		}
+		trace[index] = value
+	}
+	return trace, state, nil
+}
+
+// SimulateSigmoidRateNeuron preserves the historical default-only helper.
+// A rate model has no binary spikes, so the second return is always zero.
+func SimulateSigmoidRateNeuron(nSteps int, iExt float64) ([]float64, int) {
+	trace, _, err := SimulateSigmoidRateTrace(*NewSigmoidRateNeuron(), nSteps, iExt)
+	if err != nil {
+		panic(err)
+	}
+	return trace, 0
 }
 
 var (
-	ErrSigmoidRateInvalidState    = errors.New("sigmoid-rate state/current must be finite and well-formed")
-	ErrSigmoidRateNonFiniteUpdate = errors.New("sigmoid-rate exact relaxation update became non-finite or left [0,1]")
+	ErrSigmoidRateInvalidState     = errors.New("sigmoid-rate state/current must be finite and well-formed")
+	ErrSigmoidRateNonFiniteUpdate  = errors.New("sigmoid-rate exact relaxation update became non-finite or left [0,1]")
+	ErrSigmoidRateInvalidStepCount = errors.New("sigmoid-rate step count must be non-negative")
 )
 
 func sigmoidRateFinite(x float64) bool {
