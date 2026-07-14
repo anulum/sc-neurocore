@@ -25073,6 +25073,29 @@ Integrator options:
 
 ---
 
+## Module `neurons.schema_contracts`
+
+### Function `stateless_event_kind(schema)`
+Return the supported event-only contract declared by ``schema``.
+
+A schema is event-only only when both its state and dynamics tables are
+present and empty. Deterministic schemas must provide a non-empty level
+threshold; stochastic Poisson schemas must provide a non-empty probability
+expression. Free-form extension labels are deliberately ignored.
+
+Parameters
+----------
+schema:
+    Parsed schema mapping.
+
+Returns
+-------
+StatelessEventKind or None
+    The exact supported event contract, or ``None`` when the schema must
+    declare ordinary state and dynamics.
+
+---
+
 ## Module `neurons.schema_module_aliases`
 
 ### Function `schema_for_module(module)`
