@@ -1,3 +1,11 @@
+<!-- SPDX-License-Identifier: AGPL-3.0-or-later -->
+<!-- Commercial license available -->
+<!-- © Concepts 1996–2026 Miroslav Šotek. All rights reserved. -->
+<!-- © Code 2020–2026 Miroslav Šotek. All rights reserved. -->
+<!-- ORCID: 0009-0009-3560-0851 -->
+<!-- Contact: www.anulum.li | protoscience@anulum.li -->
+<!-- SC-NeuroCore — System architecture map -->
+
 # SC-NeuroCore — System Architecture Map
 
 > Canonical architecture map. Package version `3.16.0`; refreshed against the
@@ -261,8 +269,12 @@ Ordered stages, each with its entry symbol (verified end-to-end):
 4. **Precision analysis** — `compile_for_chip()` (`chip_compiler/compiler.py:70`).
 5. **Fixed-point quantisation** — `compile_adaptive_precision()`
    (`compiler/compiler_impl.py:25`, dual-datapath with hysteresis).
-6. **AST → Verilog** — `compile_to_verilog()` / `_emit_expr()`
-   (`compiler/verilog_compiler.py:19`, `verilog_expr_emitter.py:19`).
+6. **AST → Verilog** — the stable `compiler/verilog_compiler.py` facade routes
+   registered and folded emission through `_verilog_registered_module.py` and
+   `_verilog_folded_datapath.py`; both share `_verilog_neuron_core.py`, the five
+   lowerers in `_verilog_integrators.py`, `verilog_expr_emitter.py`, and the LUT
+   geometry in `expr_lut_tables.py`. `compiler/intelligence/bit_true_kernel.py`
+   reuses the integer C/Rust expression path for cross-language codegen parity.
 7. **HDL bundle** — `build_scnir_source_bundle()` (`ir/scnir_hdl.py:87`).
 8. **Top-level assembly** — `VerilogGenerator.generate()`
    (`hdl_gen/verilog_generator.py:59`).

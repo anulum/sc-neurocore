@@ -278,11 +278,22 @@ class TestEdgeDetectionRunner:
 
     @pytest.mark.parametrize("detection", ["poisson", "escape_rate"])
     def test_stochastic_detection_markers_accepted_without_edge(self, detection: str) -> None:
-        """Stochastic detection markers construct but never engage edge logic."""
+        """Zero-probability stochastic trials advance RNG without level spikes."""
+        probability_expression = "0.0" if detection == "poisson" else None
+        rate_expression = "0.0" if detection == "escape_rate" else None
         neuron = EquationNeuron(
-            equations={"v": "I"}, state={"v": 0.0}, threshold="v >= 1.0", detection=detection
+            equations={"v": "I"},
+            state={"v": 0.0},
+            threshold="stochastic",
+            detection=detection,
+            probability_expression=probability_expression,
+            rate_expression=rate_expression,
         )
-        assert neuron._edge_detection is False
+        initial_rng = neuron.stochastic_rng_state
+
+        assert [neuron.step(I=10.0) for _ in range(4)] == [0, 0, 0, 0]
+        assert neuron.state["v"] == pytest.approx(4.0)
+        assert neuron.stochastic_rng_state != initial_rng
 
 
 # --- Verilog emitter ------------------------------------------------------------------

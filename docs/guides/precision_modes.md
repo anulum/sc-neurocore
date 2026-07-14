@@ -3,6 +3,8 @@
 <!-- © Concepts 1996–2026 Miroslav Šotek. All rights reserved. -->
 <!-- © Code 2020–2026 Miroslav Šotek. All rights reserved. -->
 <!-- ORCID: 0009-0009-3560-0851 -->
+<!-- Contact: www.anulum.li | protoscience@anulum.li -->
+<!-- SC-NeuroCore — Fixed-point precision modes guide -->
 
 # Fixed-Point Precision Modes
 
@@ -14,9 +16,9 @@ and **hardware resource cost** (DSP/gate utilisation).
 
 ## Quick Reference — All 11 Modes
 
-| # | Mode | CLI Key | Bits | Integer Range | Resolution | Best For |
+| # | Mode | CLI Key | Bits | Integer Range | Resolution | Example use |
 |---|------|---------|:----:|--------------|-----------|----------|
-| 1 | **Q1.7** | `q17` | 8 | [-1, +0.99] | 1/128 | Ultra-compact (Loihi/TrueNorth-class) |
+| 1 | **Q1.7** | `q17` | 8 | [-1, +0.99] | 1/128 | Compact event-driven profiles |
 | 2 | **Q8.8** | `q88` | 16 | [-128, +127.996] | 1/256 | mV-scale models (default) |
 | 3 | **Q4.12** | `q412` | 16 | [-8, +7.9998] | 1/4096 | Normalised dynamics (FHN, Theta) |
 | 4 | **Q1.15** | `q115` | 16 | [-1, +1.0] | 1/32768 | ARM CMSIS-DSP standard |
@@ -24,8 +26,8 @@ and **hardware resource cost** (DSP/gate utilisation).
 | 6 | **Q12.12** | `q1212` | 24 | [-2048, +2047.999] | 1/4096 | Loihi-2 native / audio-grade |
 | 7 | **Q14.13** | `q1413` | 27 | [-8192, +8191.999] | 1/8192 | Intel Stratix 27×27 DSP |
 | 8 | **Q20.12** | `q2012` | 32 | [-524288, +524287] | 1/4096 | Network-level accumulation |
-| 9 | **Q16.16** | `q1616` | 32 | [-32768, +32767] | 1/65536 | Gold standard |
-| 10 | **Q8.24** | `q824` | 32 | [-128, +128] | 1/16.7M | Ultra-precision (EP training) |
+| 9 | **Q16.16** | `q1616` | 32 | [-32768, +32767] | 1/65536 | General 32-bit fixed point |
+| 10 | **Q8.24** | `q824` | 32 | [-128, +128] | 1/16.7M | Fine-resolution EP training |
 | 11 | **Q18.18** | `q1818` | 36 | [-131072, +131072] | 1/262144 | UltraScale DSP48E2-native |
 
 ## Mathematical Foundation
@@ -127,8 +129,8 @@ python -m sc_neurocore.neurons compile lif -p q1413 -o lif_stratix.v
 | Mode | Use Case | Key Feature |
 |------|----------|-------------|
 | **Q20.12** | Network-level accumulation | ±524K range with Q4.12 precision |
-| **Q16.16** | Gold standard | Widest range + high precision |
-| **Q8.24** | Equilibrium propagation training | Ultra-fine gradients (dt=1µs) |
+| **Q16.16** | General 32-bit fixed point | Wide range and fine resolution |
+| **Q8.24** | Equilibrium propagation training | Fine gradients (dt=1µs) |
 
 ```bash
 python -m sc_neurocore.neurons compile lif -p q2012 -o lif_net.v
@@ -158,7 +160,7 @@ verilog = neuron.to_verilog(
     data_width=16, fraction=10,
 )
 
-# Ultra-wide: Q32.32 (64-bit)
+# 64-bit custom format: Q32.32
 verilog = neuron.to_verilog(
     module_name="sc_lif_64",
     data_width=64, fraction=32,
@@ -419,11 +421,18 @@ Recommendation: Q8.8 (smallest compatible format)
 Precision modes can be combined with overflow and rounding settings. See the
 [Hardware Profiles Guide](hardware_profiles.md) for full details.
 
+For equation-to-Verilog products, `truncate` is a signed arithmetic right shift
+(negative non-integral values round towards negative infinity), `nearest`
+rounds half-way cases away from zero, and `bankers` rounds half-way cases to
+even. The public emitters reject `stochastic` product rounding because they do
+not own a rounding LFSR. This is separate from stochastic model thresholds,
+which carry an explicit RNG interface.
+
 ```bash
 # Q8.8 with banker's rounding (IEEE 754)
 python -m sc_neurocore.neurons compile lif -p q88 --rounding bankers -o lif.v
 
-# Q16.16 with overflow trapping (safety-critical)
+# Q16.16 with a simulation-only overflow trap
 python -m sc_neurocore.neurons compile lif -p q1616 --overflow trap -o lif.v
 ```
 
@@ -449,7 +458,7 @@ q = Q88(data_width=24, fraction=12, overflow="wrap", rounding="nearest")
 print(q.overflow)    # "wrap"
 print(q.rounding)    # "nearest"
 
-# Unsigned Q-format
+# Unsigned range diagnostics and raw-word encoding
 q = Q88(data_width=16, fraction=8, signed=False)
 print(q.min_value)   # 0.0
 print(q.max_value)   # 255.996 (double the positive range)
@@ -465,12 +474,23 @@ report = q.precision_report(
 print(report)
 ```
 
+Unsigned `Q88` instances support range analysis and `encode()`. The registered
+and folded equation-to-Verilog emitters require `signed=True` because their
+state, derivative, and expression datapaths are signed. They reject
+`signed=False` instead of emitting mixed-signed RTL. Correspondingly,
+`encode_signed_literal()` rejects an unsigned configuration.
+
+`Q88` records the requested mode, while the equation compiler validates the
+emission contract. Supported product modes are `truncate`, `nearest`, and
+`bankers`; `stochastic` fails closed before RTL generation. When `fraction=0`,
+the widened product narrows directly without a shift or rounding bias.
+
 ## Arithmetic Operations in Generated Verilog
 
 ### Multiplication
 
-All multiplications widen to 2×DW bits, then truncate (with configurable
-rounding) back to DW bits:
+All multiplications widen to 2×DW bits, then apply the selected deterministic
+rounding policy before narrowing back to DW bits:
 
 ```verilog
 // a * b in Q8.8 → 32-bit product, then truncate back to 16-bit

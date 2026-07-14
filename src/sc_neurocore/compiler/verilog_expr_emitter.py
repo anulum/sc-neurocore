@@ -24,7 +24,10 @@ class _VerilogExprEmitter(ast.NodeVisitor):
     Handles: +, -, *, /, signed floor division by a positive integer
     power-of-two literal, positive-literal %, **, unary minus, comparisons,
     names, constants.
-    Multiplications emit wide product with arithmetic right shift.
+    Multiplications emit a wide product and deterministic signed narrowing:
+    arithmetic-shift truncation, nearest with half-way cases away from zero, or
+    bankers' half-to-even rounding. Stochastic product rounding fails closed
+    because the public compiler does not own a rounding LFSR.
     """
 
     def __init__(
@@ -79,15 +82,30 @@ class _VerilogExprEmitter(ast.NodeVisitor):
         sign = "signed " if self.q.signed else ""
         rounding = self.q.rounding
 
-        if rounding == "truncate":
+        if rounding == "stochastic":
+            raise NotImplementedError(
+                "stochastic product rounding requires a caller-owned LFSR, which the "
+                "equation-to-Verilog emitters do not provide"
+            )
+        if rounding not in {"truncate", "nearest", "bankers"}:
+            raise ValueError(f"Unknown rounding mode: {rounding!r}")
+        if frac == 0:
+            self.intermediates.append(f"wire {sign}[{dw - 1}:0] {trunc_name} = {wide_name};")
+        elif rounding == "truncate":
             self.intermediates.append(
                 f"wire {sign}[{dw - 1}:0] {trunc_name} = ({wide_name} >>> {frac});"
             )
         elif rounding == "nearest":
+            bias = f"_rnd_bias{self._trunc_count}"
             half = f"_rnd_half{self._trunc_count}"
+            positive_bias = 1 << (frac - 1)
+            negative_bias = positive_bias - 1
             self.intermediates.append(
-                f"wire {sign}[{2 * dw - 1}:0] {half} = {wide_name} + {1 << (frac - 1)};"
+                f"wire {sign}[{2 * dw - 1}:0] {bias} = "
+                f"{wide_name}[{2 * dw - 1}] ? "
+                f"{2 * dw}'sd{negative_bias} : {2 * dw}'sd{positive_bias};"
             )
+            self.intermediates.append(f"wire {sign}[{2 * dw - 1}:0] {half} = {wide_name} + {bias};")
             self.intermediates.append(
                 f"wire {sign}[{dw - 1}:0] {trunc_name} = ({half} >>> {frac});"
             )
@@ -105,17 +123,6 @@ class _VerilogExprEmitter(ast.NodeVisitor):
                 f"({biased} >>> {frac}) & "
                 f"(({guard}) ? ~{dw}'d1 : {{{dw}{{1'b1}}}});"
             )
-        elif rounding == "stochastic":
-            stoch = f"_rnd_stoch{self._trunc_count}"
-            self.intermediates.append(
-                f"wire {sign}[{2 * dw - 1}:0] {stoch} = "
-                f"{wide_name} + {{{{({2 * dw - frac}){{1'b0}}}}, _lfsr[{frac - 1}:0]}};"
-            )
-            self.intermediates.append(
-                f"wire {sign}[{dw - 1}:0] {trunc_name} = ({stoch} >>> {frac});"
-            )
-        else:
-            raise ValueError(f"Unknown rounding mode: {rounding!r}")
 
         return trunc_name
 
@@ -307,7 +314,11 @@ class _VerilogExprEmitter(ast.NodeVisitor):
                 return self._emit_lut_call("_cbrt_lut", left, self._cbrt_lut_entries())
             if frac_exp is not None and abs(frac_exp - 0.5) < 1e-6:
                 return self._emit_lut_call(
-                    "_sqrt_lut", left, self._sqrt_lut_entries(), lut_min=-8.0, lut_step=1.0
+                    "_sqrt_lut",
+                    left,
+                    self._sqrt_lut_entries(),
+                    lut_min=expr_lut_tables.SQRT_LUT_MIN,
+                    lut_step=expr_lut_tables.SQRT_LUT_STEP,
                 )
             raise ValueError(
                 f"Only integer powers 2-8 and 1/2, 1/3 supported in Verilog, "
@@ -393,7 +404,11 @@ class _VerilogExprEmitter(ast.NodeVisitor):
             )
         elif fname == "sqrt":
             return self._emit_lut_call(
-                "_sqrt_lut", arg, self._sqrt_lut_entries(), lut_min=-8.0, lut_step=1.0
+                "_sqrt_lut",
+                arg,
+                self._sqrt_lut_entries(),
+                lut_min=expr_lut_tables.SQRT_LUT_MIN,
+                lut_step=expr_lut_tables.SQRT_LUT_STEP,
             )
         elif fname == "tanh":
             return self._emit_lut_call("_tanh_lut", arg, self._tanh_lut_entries())

@@ -17,7 +17,7 @@ generated RTL. This module is the single source of truth for both:
 - the canonical function vocabulary (:data:`SUPPORTED_FUNCTIONS`),
 - the compile-time constant folder (:func:`const_float`) used to recognise
   fractional exponents such as ``1.0 / 3.0``,
-- the 256-point symmetric and positive-log sample grids, and
+- the symmetric, positive-log, and non-negative square-root sample grids, and
 - the quantised LUT-entry generators for every supported transcendental,
   parameterised by the target fixed-point width and fraction.
 
@@ -58,6 +58,13 @@ SUPPORTED_FUNCTIONS: frozenset[str] = frozenset(
 LOG_LUT_MIN = 1.0 / 256.0
 LOG_LUT_STEP = 1.0 / 32.0
 LOG_LUT_SIZE = 256
+
+# ``sqrt`` is defined only for non-negative inputs. Its compact table covers
+# half-unit samples from zero through 7.5, with out-of-range inputs clamped by
+# the emitters to the nearest endpoint.
+SQRT_LUT_MIN = 0.0
+SQRT_LUT_STEP = 0.5
+SQRT_LUT_SIZE = 16
 
 
 def const_float(node: ast.AST) -> float | None:
@@ -129,6 +136,17 @@ def log_sample_points() -> list[float]:
     return [LOG_LUT_MIN + i * LOG_LUT_STEP for i in range(LOG_LUT_SIZE)]
 
 
+def sqrt_sample_points() -> list[float]:
+    """Return the 16 non-negative ``sqrt`` points from zero through 7.5.
+
+    Returns
+    -------
+    list of float
+        The 16 half-unit tabulation points.
+    """
+    return [SQRT_LUT_MIN + i * SQRT_LUT_STEP for i in range(SQRT_LUT_SIZE)]
+
+
 def _signed_cap(data_width: int) -> int:
     """Return the largest signed value representable in ``data_width`` bits."""
     return (1 << (data_width - 1)) - 1
@@ -185,7 +203,7 @@ def sqrt_lut_entries(fraction: int) -> list[int]:
         16 integer Q-format entries.
     """
     scale = 1 << fraction
-    return [int(round(math.sqrt(max(i * 0.5, 0)) * scale)) for i in range(16)]
+    return [int(round(math.sqrt(value) * scale)) for value in sqrt_sample_points()]
 
 
 def tanh_lut_entries(fraction: int) -> list[int]:

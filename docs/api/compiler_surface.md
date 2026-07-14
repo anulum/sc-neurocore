@@ -3,6 +3,8 @@
 <!-- © Concepts 1996–2026 Miroslav Šotek. All rights reserved. -->
 <!-- © Code 2020–2026 Miroslav Šotek. All rights reserved. -->
 <!-- ORCID: 0009-0009-3560-0851 -->
+<!-- Contact: www.anulum.li | protoscience@anulum.li -->
+<!-- SC-NeuroCore — Compiler surface policy -->
 
 # Compiler Surface Policy
 
@@ -21,6 +23,10 @@ can change without a deprecation window.
 | Module | Status | Decision |
 | --- | --- | --- |
 | `_sby_runner` | internal build tool | Shared SymbiYosys task runner behind the equivalence and property proof runners. |
+| `_verilog_folded_datapath` | internal build tool | Combinational processing-element emitter reached through the stable Verilog compiler facade. |
+| `_verilog_integrators` | internal build tool | Fixed-point lowering for Euler, Gauss-Seidel, RK4, exponential-Euler, and map recurrences. |
+| `_verilog_neuron_core` | internal build tool | Shared next-state, event, stochastic-threshold, and reset fragment builder for both RTL forms. |
+| `_verilog_registered_module` | internal build tool | Clocked state-owning module emitter reached through the stable Verilog compiler facade. |
 | `adaptive_precision` | public facade | Package-level exports provide the adaptive precision planning API. |
 | `auto_tune` | internal build tool | Internal heuristic helper used by precision planning workflows. |
 | `block_floating` | direct public module | Shared-exponent format types are imported directly by quantization workflows. |
@@ -81,9 +87,9 @@ can change without a deprecation window.
 | `synapse_precision` | internal build tool | Validated row model behind adaptive precision synapse manifests. |
 | `testbench_gen` | direct public module | Verilog testbench generator has direct tests and documentation. |
 | `validation` | direct public module | Adaptive-runtime validation is re-exported by a compatibility facade. |
-| `verilog_compiler` | internal build tool | Backend implementation reached through `equation_compiler`. |
-| `verilog_compiler_config` | internal build tool | Backend configuration record for Verilog emission. |
-| `verilog_expr_emitter` | internal build tool | Expression emitter behind the equation compiler. |
+| `verilog_compiler` | compatibility facade | Historical two-function import surface delegating to the registered and folded emitters. |
+| `verilog_compiler_config` | internal build tool | Fixed-point geometry, range diagnostics, and backend policy record for Verilog emission. |
+| `verilog_expr_emitter` | internal build tool | Fixed-point AST lowerer with deterministic product rounding, shared LUT geometry, and fail-closed stochastic rounding. |
 | `whitebox_taps` | internal build tool | Instruments a module to expose internal state as taps for unbounded equivalence proofs. |
 
 ## Enforcement

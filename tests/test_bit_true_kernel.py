@@ -282,19 +282,36 @@ class TestTranscendentalStatements:
 
 
 class TestModesAndValidation:
-    def test_nearest_rounding_adds_half(self) -> None:
+    def test_nearest_rounding_uses_sign_aware_bias_in_c(self) -> None:
         code = generate_bittrue_kernel_from_neuron(_lif(), "sc_lif", rounding="nearest")
-        assert "(1 << (FRAC_BITS - 1))" in code
+        assert "((int64_t)1 << (FRAC_BITS - 1))" in code
+        assert "product < 0 ? half - 1 : half" in code
 
     def test_wrap_overflow_uses_sc_wrap(self) -> None:
         code = generate_bittrue_kernel_from_neuron(_lif(), "sc_lif", overflow="wrap")
         assert "sc_wrap(((int64_t)s->v)" in code
 
-    def test_nearest_rounding_rust(self) -> None:
+    def test_nearest_rounding_uses_sign_aware_bias_in_rust(self) -> None:
         code = generate_bittrue_kernel_from_neuron(
             _lif(), "sc_lif", rounding="nearest", language="rust"
         )
-        assert "(1 << (FRAC_BITS - 1))" in code
+        assert "1i64 << (FRAC_BITS - 1)" in code
+        assert "if product < 0 { half - 1 } else { half }" in code
+
+    @pytest.mark.parametrize("language", ["c", "rust"])
+    def test_nearest_rounding_with_zero_fraction_emits_no_negative_shift(
+        self, language: str
+    ) -> None:
+        code = generate_bittrue_kernel_from_neuron(
+            _lif(),
+            "sc_lif_integer",
+            fraction=0,
+            rounding="nearest",
+            language=language,
+        )
+
+        assert "FRAC_BITS - 1" not in code
+        assert "product < 0" not in code
 
     def test_bad_language_simple(self) -> None:
         with pytest.raises(ValueError, match="language must be"):

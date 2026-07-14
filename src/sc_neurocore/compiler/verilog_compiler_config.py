@@ -15,10 +15,13 @@ from dataclasses import dataclass
 
 @dataclass
 class Q88:
-    """Fixed-point format configuration for Verilog code generation.
+    """Describe a fixed-point word used by compiler diagnostics and emitters.
 
-    Supports arbitrary precision modes via ``data_width`` / ``fraction``,
-    with configurable signedness, overflow handling, and rounding.
+    The historical class name is retained for API compatibility, but
+    ``data_width`` and ``fraction`` are configurable. Unsigned instances are
+    valid for range analysis and raw-word encoding. The equation-to-Verilog
+    emitters currently reject unsigned instances because their state and
+    expression datapaths are signed.
 
     ============  ==========  ===============  =================  ===============
     Mode          data_width  fraction         Integer range      Resolution
@@ -31,16 +34,31 @@ class Q88:
 
     Overflow Modes
     ~~~~~~~~~~~~~~
-    - ``"saturate"`` — clamp to [min, max] (default, safest)
+    - ``"saturate"`` — clamp to the representable interval (default)
     - ``"wrap"``     — two's complement wrap-around (Loihi 2 hardware behaviour)
-    - ``"trap"``     — emit ``$fatal`` assertion (DO-254 / IEC 61508 safety)
+    - ``"trap"``     — emit a simulation-only ``$fatal`` assertion
 
     Rounding Modes
     ~~~~~~~~~~~~~~
-    - ``"truncate"``   — floor towards -∞ (default, fastest)
+    - ``"truncate"``   — arithmetic shift towards negative infinity (default)
     - ``"nearest"``    — round to nearest, ties away from zero
     - ``"bankers"``    — round to nearest, ties to even (IEEE 754 default)
-    - ``"stochastic"`` — probabilistic rounding via LFSR (reduces long-run bias)
+    - ``"stochastic"`` — reserved label; equation-to-Verilog emission rejects it
+
+    Parameters
+    ----------
+    data_width : int
+        Total number of bits in the encoded word.
+    fraction : int
+        Number of fractional bits.
+    signed : bool
+        Whether range diagnostics interpret the word as two's-complement.
+    overflow : str
+        Overflow policy consumed by the Verilog emitters.
+    rounding : str
+        Product-rounding policy consumed by the expression emitter. The public
+        equation-to-Verilog paths reject ``"stochastic"`` because they do not
+        own a rounding LFSR.
     """
 
     data_width: int = 16
@@ -49,32 +67,59 @@ class Q88:
     overflow: str = "saturate"  # saturate | wrap | trap
     rounding: str = "truncate"  # truncate | nearest | bankers | stochastic
 
+    def __post_init__(self) -> None:
+        """Validate the fixed-point geometry and declared arithmetic modes.
+
+        Raises
+        ------
+        TypeError
+            If a geometry or mode field has the wrong runtime type.
+        ValueError
+            If the word geometry is impossible.
+        """
+        if type(self.data_width) is not int:
+            raise TypeError(f"data_width must be an integer, got {self.data_width!r}")
+        if self.data_width < 1:
+            raise ValueError(f"data_width must be positive, got {self.data_width}")
+        if type(self.fraction) is not int:
+            raise TypeError(f"fraction must be an integer, got {self.fraction!r}")
+        if type(self.signed) is not bool:
+            raise TypeError(f"signed must be a boolean, got {self.signed!r}")
+        if not 0 <= self.fraction <= self.data_width:
+            raise ValueError(
+                f"fraction must satisfy 0 <= fraction <= {self.data_width}; got {self.fraction}"
+            )
+        if type(self.overflow) is not str:
+            raise TypeError(f"overflow must be a string, got {self.overflow!r}")
+        if type(self.rounding) is not str:
+            raise TypeError(f"rounding must be a string, got {self.rounding!r}")
+
     @property
     def integer_bits(self) -> int:
-        """Number of integer bits (excluding sign bit if signed)."""
-        return self.data_width - self.fraction - (1 if self.signed else 0)
+        """Return the number of magnitude bits above the binary point."""
+        return max(0, self.data_width - self.fraction - (1 if self.signed else 0))
 
     @property
     def max_value(self) -> float:
-        """Maximum representable positive value."""
+        """Return the largest representable value."""
         if self.signed:
             return ((1 << (self.data_width - 1)) - 1) / (1 << self.fraction)
         return ((1 << self.data_width) - 1) / (1 << self.fraction)
 
     @property
     def min_value(self) -> float:
-        """Minimum (most negative) representable value."""
+        """Return the smallest representable value."""
         if self.signed:
             return -(1 << (self.data_width - 1)) / (1 << self.fraction)
         return 0.0
 
     @property
     def resolution(self) -> float:
-        """Smallest representable non-zero step."""
+        """Return the spacing between adjacent encoded values."""
         return 1.0 / (1 << self.fraction)
 
     def encode(self, value: float) -> int:
-        """Encode a float to unsigned Q-format integer representation.
+        """Encode a value as its fixed-width raw bit pattern.
 
         Parameters
         ----------
@@ -84,8 +129,13 @@ class Q88:
         Returns
         -------
         int
-            The unsigned two's complement representation, masked to
-            ``data_width`` bits.  Example: -65.0 in Q8.8 → 48896.
+            The encoded word masked to ``data_width`` bits. For a signed
+            format, negative inputs use two's-complement representation.
+
+        Notes
+        -----
+        This method does not apply the configured overflow policy. Call
+        :meth:`check_range` before encoding externally supplied values.
         """
         raw = int(round(value * (1 << self.fraction)))
         mask = (1 << self.data_width) - 1
@@ -106,32 +156,72 @@ class Q88:
         -------
         str
             Verilog literal, e.g. ``"16'sd48896"`` for -65.0 in Q8.8.
+
+        Raises
+        ------
+        ValueError
+            If this configuration is unsigned and therefore cannot be
+            represented by a signed-literal contract.
         """
+        if not self.signed:
+            raise ValueError("signed Verilog literals require signed=True")
         raw = int(round(value * (1 << self.fraction)))
         if raw < 0:
             raw = raw & ((1 << self.data_width) - 1)
         return f"{self.data_width}'sd{raw}"
 
     def check_range(self, value: float, label: str = "") -> list[str]:
-        """Check if a value fits in the integer range. Returns warnings."""
-        warnings = []
+        """Return diagnostic messages when a value is outside the format.
+
+        Parameters
+        ----------
+        value : float
+            Value to compare with the representable interval.
+        label : str
+            Optional name included in diagnostic messages.
+
+        Returns
+        -------
+        list[str]
+            An empty list for an in-range value, otherwise one overflow or
+            underflow message.
+        """
+        warnings: list[str] = []
+        prefix = "Q" if self.signed else "UQ"
         if value > self.max_value:
             warnings.append(
-                f"Overflow: {label}={value} exceeds Q{self.data_width - self.fraction}.{self.fraction} "
+                f"Overflow: {label}={value} exceeds "
+                f"{prefix}{self.data_width - self.fraction}.{self.fraction} "
                 f"max={self.max_value:.4f}"
             )
         elif value < self.min_value:
             warnings.append(
-                f"Underflow: {label}={value} below Q{self.data_width - self.fraction}.{self.fraction} "
+                f"Underflow: {label}={value} below "
+                f"{prefix}{self.data_width - self.fraction}.{self.fraction} "
                 f"min={self.min_value:.4f}"
             )
         return warnings
 
     def precision_report(self, dt: float, params: dict[str, float] | None = None) -> str:
-        """Generate a human-readable precision diagnostics report."""
+        """Build a fixed-point quantisation diagnostics report.
+
+        Parameters
+        ----------
+        dt : float
+            Integration step to quantise in the configured format.
+        params : dict[str, float], optional
+            Named values to quantise and range-check.
+
+        Returns
+        -------
+        str
+            Multi-line format, timestep, and parameter diagnostics.
+        """
+        prefix = "Q" if self.signed else "UQ"
+        signedness = "signed" if self.signed else "unsigned"
         lines = [
-            f"Fixed-point format: Q{self.data_width - self.fraction}.{self.fraction} "
-            f"({self.data_width}-bit signed)",
+            f"Fixed-point format: {prefix}{self.data_width - self.fraction}.{self.fraction} "
+            f"({self.data_width}-bit {signedness})",
             f"  Integer range: [{self.min_value:.4f}, {self.max_value:.4f}]",
             f"  Resolution: {self.resolution:.6f}",
         ]
@@ -140,11 +230,16 @@ class Q88:
         dt_raw = int(round(dt * (1 << self.fraction)))
         dt_actual = dt_raw / (1 << self.fraction) if dt_raw != 0 else 0.0
         dt_error = (
-            abs(dt_actual - dt) / dt * 100
+            abs(dt_actual - dt) / abs(dt) * 100
             if dt != 0 and dt_raw != 0
             else (100.0 if dt != 0 else 0.0)
         )
-        dt_status = "✓" if dt_raw > 0 else "✗ UNDERFLOW"
+        if dt == 0.0:
+            dt_status = "✓ ZERO STEP"
+        elif dt_raw == 0:
+            dt_status = "✗ UNDERFLOW"
+        else:
+            dt_status = "✓"
         lines.append(
             f"  dt={dt} → Q-value={dt_raw} (actual={dt_actual:.6f}, "
             f"error={dt_error:.1f}%) {dt_status}"

@@ -3,14 +3,16 @@
 <!-- © Concepts 1996–2026 Miroslav Šotek. All rights reserved. -->
 <!-- © Code 2020–2026 Miroslav Šotek. All rights reserved. -->
 <!-- ORCID: 0009-0009-3560-0851 -->
+<!-- Contact: www.anulum.li | protoscience@anulum.li -->
+<!-- SC-NeuroCore — Compiler API reference -->
 
 # Compiler API Reference
 
-Complete API reference for the SC-NeuroCore compilation pipeline.
-Covers the ODE-to-Verilog equation compiler, MLIR/CIRCT emitter,
-weight quantiser, adaptive precision, IR type checker, static analysis,
-and deployment orchestrator.  This is the authoritative reference for
-all compiler-facing Python functions.
+Reference for the maintained SC-NeuroCore compiler surfaces documented here.
+It covers the ODE-to-Verilog equation compiler, MLIR/CIRCT emitter, weight
+quantiser, adaptive precision, IR type checker, static analysis, and deployment
+orchestrator. Module-level APIs outside this page retain their own source and
+surface-policy contracts.
 
 The root package boundary is defined in
 [Compiler Surface Policy](compiler_surface.md). That page states which
@@ -23,18 +25,22 @@ modules, compatibility facades, or internal build tools.
 
 ### 1.1 ODE Discretisation
 
-The compiler transforms continuous ODEs to discrete fixed-point
-computations using the forward Euler method:
+The equation compiler lowers the integration method selected by
+`EquationNeuron`. Simultaneous forward Euler uses:
 
 $$
 x[n+1] = x[n] + \Delta t \cdot f(x[n], I[n])
 $$
 
-In Q$m$.$f$ format with shift-based division by $\tau$:
+Five recurrence families share the same fixed-point expression emitter:
 
-$$
-x_{\text{next}} = x + \frac{I - (x - x_{\text{rest}})}{2^{\lceil\log_2 \tau\rceil}}
-$$
+| Method | State update |
+| --- | --- |
+| `euler` | Simultaneous Euler; every derivative reads the committed state. |
+| `gauss_seidel` | Sequential Euler; later equations read earlier candidate states. |
+| `rk4` | Classical four-stage Runge–Kutta. |
+| `exp_euler` | Diagonal exponential Euler using the symbolic Jacobian and `exprel`. |
+| `map` | Direct discrete recurrence $x[n+1]=f(x[n])$ without a timestep multiply. |
 
 ### 1.2 Fixed-Point Encoding
 
@@ -48,21 +54,36 @@ The range is $[-2^{m-1}, 2^{m-1} - 2^{-f}]$ with precision $2^{-f}$.
 
 | Format | Total Bits | Integer | Fraction | Range | Precision |
 |--------|:----------:|:-------:|:--------:|:-----:|:---------:|
-| Q8.8 | 16 | 8 | 8 | ±127 | 0.0039 |
-| Q16.16 | 32 | 16 | 16 | ±32767 | 0.000015 |
-| Q12.20 | 32 | 12 | 20 | ±2047 | 0.00000095 |
+| Q8.8 | 16 | 8 | 8 | $[-128,127.99609375]$ | 0.00390625 |
+| Q16.16 | 32 | 16 | 16 | $[-32768,32767.9999847412]$ | 0.0000152588 |
+| Q12.20 | 32 | 12 | 20 | $[-2048,2047.9999990463]$ | 0.000000953674 |
+
+#### Equation-to-Verilog product rounding
+
+| Mode | Signed integer semantics |
+| --- | --- |
+| `truncate` | Arithmetic right shift; negative non-integral products round towards negative infinity. |
+| `nearest` | Round to nearest; exact half-way cases round away from zero using a sign-aware bias. |
+| `bankers` | Round to nearest; exact half-way cases round to the even output code. |
+| `stochastic` | Rejected: the public emitters do not own the rounding LFSR required by this policy. |
+
+With `fraction=0`, the emitter performs direct narrowing without a shift or
+rounding bias. Stochastic threshold sampling is a separate model feature and
+does not provide an implicit product-rounding random source.
 
 ### 1.3 Guard Bit Computation
 
-Guard bits prevent intermediate overflow during multiply-accumulate:
+The static-analysis helper estimates the extra width required to add
+$N_{\text{terms}}$ same-scale terms:
 
 $$
 G = \lceil \log_2(N_{\text{terms}}) \rceil
 $$
 
-where $N_{\text{terms}}$ is the maximum number of additions in the
-datapath.  The data width is extended to $W + G$ bits for
-intermediates, then saturated back to $W$ bits for the final result.
+This $W+G$ planning bound does not describe every generated wire. Expression
+multiplications use a signed $2W$ product before rounding back to $W$, while
+next-state overflow checks use a signed $W+1$ candidate before applying
+`saturate`, `wrap`, or the simulation-only `trap` policy.
 
 ### 1.4 Piecewise LUT Approximation
 
@@ -71,9 +92,9 @@ the Verilog and generated integer C/Rust paths select the same table entry:
 
 | Function family | Entries | Input domain | Step |
 |---|---:|---:|---:|
-| `exp`, `tanh`, `cosh`, `cos` | 256 | $[-16,16)$ | $1/8$ |
+| `exp`, `tanh`, `cosh`, `exprel`, `sigmoid`/`expit`, `sin`, `cos`, cube root | 256 | $[-16,16)$ | $1/8$ |
 | `log` | 256 | $[1/256,8+1/256)$ | $1/32$ |
-| `sqrt` legacy table | 16 | emitter index range $[-8,8)$ | $1$ |
+| `sqrt` | 16 | $[0,7.5]$ | $1/2$ |
 
 The logarithm table is deliberately positive-domain: non-positive arguments
 fail the expression contract rather than being folded into an unrelated
@@ -93,26 +114,25 @@ flowchart TB
     subgraph Input
         A["ODE string<br/>'dv/dt = -(v-E_L)/tau + I/C'"]
     end
-    subgraph Parse
-        B["Python AST parser"]
-        C["_VerilogExprEmitter"]
+    subgraph Lower
+        B["Validated EquationNeuron"]
+        C["Integrator lowerer"]
+        D["_VerilogExprEmitter"]
     end
-    subgraph Emit
-        D["Q-format parameters"]
-        E["Multiply pipelines"]
-        F["LUT for exp/log/tanh"]
-        G["Saturating next-state"]
-        H["Threshold + reset logic"]
+    subgraph Core
+        E["Q-format parameters"]
+        F["Multiply pipelines and LUTs"]
+        G["Candidate state"]
+        H["Threshold, stochastic event, reset"]
     end
     subgraph Output
-        I["Synthesizable Verilog"]
-        J["Testbench"]
+        I["Registered Verilog module"]
+        J["Folded combinational PE"]
     end
 
-    A --> B --> C
-    C --> D & E & F & G & H
-    D & E & F & G & H --> I
-    I --> J
+    A --> B --> C --> D
+    D --> E & F & G & H
+    E & F & G & H --> I & J
 
     style Input fill:#e1f5fe
     style Output fill:#e8f5e9
@@ -122,7 +142,13 @@ flowchart TB
 
 ```
 sc_neurocore.compiler
-├── equation_compiler   # ODE → Verilog
+├── equation_compiler               # Public equation-to-FPGA facade
+│   └── verilog_compiler            # Historical two-function facade
+│       ├── _verilog_registered_module
+│       ├── _verilog_folded_datapath
+│       └── _verilog_neuron_core
+│           └── _verilog_integrators
+│               └── verilog_expr_emitter
 ├── pipeline            # Yosys → nextpnr → bitstream
 ├── mlir_emitter        # MLIR/CIRCT backend
 ├── quantizer           # Float → Q-format
@@ -198,11 +224,26 @@ verilog = compile_to_verilog(
 )
 ```
 
+The stable facade exposes two forms:
+
+| Function | State ownership | Intended consumer |
+| --- | --- | --- |
+| `compile_to_verilog` | Internal registers and clocked commit logic | Direct/AER instances and standalone modules. |
+| `compile_to_datapath` | State and selected parameters on ports | Folded populations with scheduler-owned BRAM state. |
+
+Both forms call the same `_verilog_neuron_core` arithmetic builder. Registered
+modules may insert multiply pipeline registers. Folded processing elements are
+combinational and expose an `rng_sample` input for stochastic models.
+
+Both emitters require `signed=True`. The former unsigned option mixed signed
+ports and expression arithmetic with unsigned next-state clamps; it now fails
+closed rather than attaching an invalid unsigned fixed-point contract to RTL.
+
 #### Supported Functions
 
 | Category | Functions |
 |----------|-----------|
-| Transcendental | `exp`, `log`, `sqrt`, `tanh`, `sigmoid`, `sin`, `cos` |
+| Transcendental | `exp`, `log`, `sqrt`, `tanh`, `cosh`, `exprel`, `sigmoid`/`expit`, `sin`, `cos` |
 | Arithmetic | `abs`, `clip(x, lo, hi)`, `max(a, b)`, `min(a, b)` |
 | Polynomial | `x**2` through `x**8` |
 | Operators | `+`, `-`, `*`, `/`, `%` by a finite positive numeric literal, unary `-` |
@@ -495,13 +536,16 @@ Q16.16 codes `[1056736, -1069024]` with zero overflow/underflow, while a
 max-exponent saturating payload must raise one overflow trap and clamp to
 `2147483647` rather than wrapping.
 
-#### Rounding Modes
+#### Tensor quantiser rounding modes
 
 | Mode | Description | Use Case |
 |------|-------------|----------|
-| `nearest` | Round to nearest representable value | Default |
-| `stochastic` | Probabilistic rounding | Training |
-| `floor` | Round toward zero | Conservative |
+| `nearest` | Round to nearest, ties to even (`numpy.rint`) | Default |
+| `stochastic` | Choose the adjacent floor/ceiling code probabilistically | Training |
+| `floor` | Round towards negative infinity (`numpy.floor`) | Conservative lower bound |
+
+These modes belong to array weight quantisation. They are distinct from the
+equation-to-Verilog product-rounding contract in Section 1.2.
 
 ### 4.4 Adaptive Precision
 
@@ -685,17 +729,16 @@ unless a downstream tool execution record is attached.
 @dataclass
 class CompilationResult:
     target: str
-    verilog: str
     verilog_lines: int
     data_width: int
     fraction: int
-    overflow: str           # "saturate" or "wrap"
-    rounding: str           # "nearest", "stochastic", "floor"
+    overflow: str
+    rounding: str
     estimated_luts: int
     estimated_dsps: int
     estimated_ffs: int
     guard_bits: int
-    max_freq_mhz: float
+    max_freq_mhz: int | None
 ```
 
 ### 6.2 OverflowProofResult
@@ -737,58 +780,69 @@ class ResourceEstimate:
 
 ---
 
-## 7. Performance Characteristics
+## 7. Performance Evidence
 
-### 7.1 Compilation Speed
+### 7.1 Loaded-host compiler timings
 
-| Neuron Type | State Vars | Compile Time | Lines |
-|------------|:----------:|:------------:|:-----:|
-| LIF | 1 | ~5 ms | ~80 |
-| Izhikevich | 2 | ~8 ms | ~120 |
-| AdEx | 2 | ~10 ms | ~140 |
-| HH | 4 | ~20 ms | ~250 |
-| Custom (10 vars) | 10 | ~50 ms | ~600 |
+`benchmarks/results/bench_verilog_compiler.json` contains 25 rotating samples
+per case plus source/output hashes, affinity, governor, and load context.
 
-### 7.2 Generated Verilog Quality
+| Workload | Median compile time | Output lines |
+| --- | ---: | ---: |
+| Euler registered | 0.114013 ms | 50 |
+| Euler folded with parameter port | 0.301826 ms | 38 |
+| RK4 registered | 0.401448 ms | 90 |
+| Four-substep RK4 registered | 0.730636 ms | 136 |
+| Escape-rate registered | 4.565140 ms | 900 |
+| Square-root map registered | 0.260231 ms | 65 |
+| Negative half-LSB nearest map registered | 0.136080 ms | 45 |
 
-| Metric | LIF Q8.8 | Izh Q16.16 | HH Q16.16 |
-|--------|:--------:|:----------:|:---------:|
-| Lines | 80 | 120 | 250 |
-| LUTs (Artix-7) | ~80 | ~200 | ~500 |
-| DSPs | 1 | 3 | 8 |
-| Fmax | 450 MHz | 400 MHz | 350 MHz |
-| Power (28nm) | 0.003 mW | 0.008 mW | 0.06 mW |
+The run used a 12-logical-CPU affinity mask, the `powersave` governor, and a
+loaded workstation with another repository lane active. No CPU was reserved.
+The table is local regression evidence, not a promotion-grade latency or
+throughput claim.
 
-### 7.3 LUT Accuracy
+No cross-language compiler timings are reported. The removed Go, Julia, Mojo,
+and Rust-safety mirrors were unwired, non-executable generated stubs rather
+than maintained compiler implementations.
 
-| Function | LUT Entries | Range | Max Error |
-|----------|:----------:|:-----:|:---------:|
-| `exp` | 16 | [-8, 8) | 1.5% |
-| `log` | 16 | (0, 8) | 2.0% |
-| `tanh` | 16 | [-8, 8) | 1.0% |
-| `sigmoid` | 16 | [-8, 8) | 1.2% |
-| `sqrt` | 16 | [0, 8) | 1.8% |
+### 7.2 Hardware evidence boundary
+
+Generated line counts and compiler wall time do not establish FPGA or ASIC
+area, timing, power, or energy. Those properties depend on the model, Q format,
+target, tool versions, constraints, and physical flow. Retain named synthesis,
+place-and-route, timing, and power reports before making any such claim.
+
+### 7.3 LUT accuracy boundary
+
+The exact table geometries are documented in Section 1.4. They do not imply a
+single global error percentage across functions, Q formats, or model state
+envelopes. Bit-true model co-simulation supplies the applicable error and event
+contract.
 
 ---
 
 ## 8. Test Suite and Verification
 
-### 8.1 Equation Compiler Test
+### 8.1 Equation compiler verification
 
 ```bash
-python -c "
-from sc_neurocore.neurons.equation_builder import from_equations
-from sc_neurocore.compiler.equation_compiler import compile_to_verilog
+python -m pytest \
+  tests/test_verilog_compiler_architecture.py \
+  tests/test_verilog_compiler_contracts.py \
+  tests/test_equation_compiler.py \
+  tests/test_equation_compiler_cli.py \
+  tests/test_cosim_emitters.py \
+  tests/test_cosim_poisson.py \
+  tests/test_folded_datapath.py \
+  tests/test_pipeline_cosim.py \
+  tests/test_pipeline_stages.py
 
-n = from_equations('dv/dt = -(v-E_L)/tau_m + I/C',
-    threshold='v > -50', reset='v = -65',
-    params=dict(E_L=-65, tau_m=10, C=1), init=dict(v=-65))
-v = compile_to_verilog(n, module_name='sc_lif')
-assert 'module sc_lif' in v
-assert 'spike' in v
-assert len(v.splitlines()) > 50
-print(f'Equation compiler: PASS ({len(v.splitlines())} lines)')
-"
+python benchmarks/bench_verilog_compiler.py \
+  --samples 25 --warmup 5 \
+  --json benchmarks/results/bench_verilog_compiler.json \
+  --other-heavy-jobs-running unknown \
+  --other-heavy-jobs-note "disclose the current workstation load"
 ```
 
 ### 8.2 Multi-Target Compilation Test

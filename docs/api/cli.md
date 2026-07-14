@@ -382,7 +382,7 @@ python -m coverage run --append --branch --source=sc_neurocore.cli \
   tests/test_studio_deployment_profiles.py \
   tests/test_studio_identity_bootstrap.py \
   tests/test_optimizer/test_synthesis_evidence_cli.py \
-  tests/test_equation_compiler.py::TestCompileCLI \
+  tests/test_equation_compiler_cli.py \
   -k cli
 
 COVERAGE_FILE=/tmp/sc_neurocore_cli.coverage \

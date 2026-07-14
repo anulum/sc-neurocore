@@ -76,10 +76,18 @@ def _preamble_c(q: Q88) -> list[str]:
     ctype = _ctype(dw)
     max_val = (1 << (dw - 1)) - 1
     min_val = -(1 << (dw - 1))
-    if q.rounding == "nearest":
-        prod = "sc_wrap(sc_wrap(a * b, WIDE_BITS) + (1 << (FRAC_BITS - 1)), WIDE_BITS)"
+    if q.rounding == "nearest" and frac > 0:
+        fxmul_body = [
+            "    int64_t product = sc_wrap(a * b, WIDE_BITS);",
+            "    int64_t half = ((int64_t)1 << (FRAC_BITS - 1));",
+            "    int64_t bias = product < 0 ? half - 1 : half;",
+            "    product = sc_wrap(product + bias, WIDE_BITS);",
+            f"    return ({ctype})sc_wrap(product >> FRAC_BITS, WORD_BITS);",
+        ]
     else:
-        prod = "sc_wrap(a * b, WIDE_BITS)"
+        fxmul_body = [
+            f"    return ({ctype})sc_wrap(sc_wrap(a * b, WIDE_BITS) >> FRAC_BITS, WORD_BITS);"
+        ]
     return [
         "#include <stdint.h>",
         "",
@@ -104,7 +112,7 @@ def _preamble_c(q: Q88) -> list[str]:
         "}",
         "",
         f"static inline {ctype} fxmul(int64_t a, int64_t b) {{",
-        f"    return ({ctype})sc_wrap({prod} >> FRAC_BITS, WORD_BITS);",
+        *fxmul_body,
         "}",
         "",
         f"static inline {ctype} fxmod(int64_t value, int64_t period) {{",
@@ -123,10 +131,16 @@ def _preamble_rust(q: Q88) -> list[str]:
     rtype = _rtype(dw)
     max_val = (1 << (dw - 1)) - 1
     min_val = -(1 << (dw - 1))
-    if q.rounding == "nearest":
-        prod = "sc_wrap(sc_wrap(a * b, WIDE_BITS) + (1 << (FRAC_BITS - 1)), WIDE_BITS)"
+    if q.rounding == "nearest" and frac > 0:
+        fxmul_body = [
+            "    let mut product = sc_wrap(a * b, WIDE_BITS);",
+            "    let half = 1i64 << (FRAC_BITS - 1);",
+            "    let bias = if product < 0 { half - 1 } else { half };",
+            "    product = sc_wrap(product + bias, WIDE_BITS);",
+            f"    sc_wrap(product >> FRAC_BITS, WORD_BITS) as {rtype}",
+        ]
     else:
-        prod = "sc_wrap(a * b, WIDE_BITS)"
+        fxmul_body = [f"    sc_wrap(sc_wrap(a * b, WIDE_BITS) >> FRAC_BITS, WORD_BITS) as {rtype}"]
     return [
         f"const FRAC_BITS: u32 = {frac};",
         f"const WIDE_BITS: u32 = {2 * dw};",
@@ -147,7 +161,7 @@ def _preamble_rust(q: Q88) -> list[str]:
         "}",
         "",
         f"fn fxmul(a: i64, b: i64) -> {rtype} {{",
-        f"    sc_wrap({prod} >> FRAC_BITS, WORD_BITS) as {rtype}",
+        *fxmul_body,
         "}",
         "",
         f"fn fxmod(value: i64, period: i64) -> {rtype} {{",

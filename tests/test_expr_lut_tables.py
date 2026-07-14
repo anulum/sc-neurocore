@@ -79,6 +79,13 @@ class TestSamplePoints:
         assert points[1] - points[0] == tables.LOG_LUT_STEP == 1.0 / 32.0
         assert points[-1] < tables.LOG_LUT_MIN + tables.LOG_LUT_SIZE * tables.LOG_LUT_STEP
 
+    def test_sqrt_grid_is_non_negative_half_unit_geometry(self) -> None:
+        points = tables.sqrt_sample_points()
+        assert len(points) == tables.SQRT_LUT_SIZE == 16
+        assert points[0] == tables.SQRT_LUT_MIN == 0.0
+        assert points[1] - points[0] == tables.SQRT_LUT_STEP == 0.5
+        assert points[-1] == 7.5
+
 
 class TestLutEntries:
     def test_symmetric_luts_have_256_entries(self) -> None:
@@ -101,6 +108,14 @@ class TestLutEntries:
         assert entries[0] == int(round(math.log(1.0 / 256.0) * 256))
         assert entries[128] == int(round(math.log(points[128]) * 256))
         assert entries[-1] == int(round(math.log(points[-1]) * 256))
+
+    def test_sqrt_entries_match_non_negative_grid(self) -> None:
+        entries = tables.sqrt_lut_entries(8)
+        points = tables.sqrt_sample_points()
+        assert entries[0] == 0
+        assert entries[2] == 256
+        assert entries[8] == 512
+        assert entries[-1] == int(round(math.sqrt(points[-1]) * 256))
 
     def test_exp_zero_point_and_saturation(self) -> None:
         exp = tables.exp_lut_entries(16, 8)
@@ -145,7 +160,7 @@ class TestEmitterDelegationParity:
     """The Verilog emitter must return byte-identical tables after delegation."""
 
     def _emitter(self, data_width: int = 16, fraction: int = 8) -> _VerilogExprEmitter:
-        return _VerilogExprEmitter(set(), {}, Q88(data_width=data_width, fraction=fraction))
+        return _VerilogExprEmitter({}, {}, Q88(data_width=data_width, fraction=fraction))
 
     def test_emitter_luts_match_module(self) -> None:
         e = self._emitter()

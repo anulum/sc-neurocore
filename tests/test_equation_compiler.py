@@ -12,52 +12,11 @@ import pint
 
 from sc_neurocore.neurons.equation_builder import EquationNeuron, from_equations
 from sc_neurocore.compiler.equation_compiler import (
-    Q88,
     compile_to_verilog,
     equation_to_fpga,
 )
 
 UNIT_REGISTRY = pint.UnitRegistry()
-
-
-class TestQ88:
-    def test_encode_zero(self):
-        q = Q88()
-        assert q.encode(0.0) == 0
-
-    def test_encode_one(self):
-        q = Q88()
-        assert q.encode(1.0) == 256
-
-    def test_encode_half(self):
-        q = Q88()
-        assert q.encode(0.5) == 128
-
-    def test_encode_negative(self):
-        q = Q88()
-        raw = q.encode(-1.0)
-        assert raw == (65536 - 256)
-
-    def test_signed_literal_positive(self):
-        q = Q88()
-        lit = q.encode_signed_literal(1.0)
-        assert "256" in lit
-
-    def test_signed_literal_negative(self):
-        q = Q88()
-        lit = q.encode_signed_literal(-1.0)
-        # -1.0 in Q8.8 = -256, two's complement = 65280
-        assert "65280" in lit or "-256" in lit
-
-    def test_unsigned_range_uses_full_width_and_zero_floor(self):
-        q = Q88(signed=False)
-        # An unsigned UQ8.8 reaches the full 2**16-1 magnitude and floors at zero.
-        assert q.max_value == ((1 << 16) - 1) / (1 << 8)
-        assert q.min_value == 0.0
-
-    def test_check_range_flags_underflow(self):
-        warnings = Q88().check_range(-1000.0, label="v")
-        assert any("Underflow" in warning for warning in warnings)
 
 
 class TestCompileLIF:
@@ -778,46 +737,6 @@ class TestEdgeCaseCoverage:
         verilog = compile_to_verilog(neuron, module_name="max1")
         assert "module max1" in verilog
 
-    def test_trunc_emits_nearest_rounding_pair(self):
-        """Nearest rounding adds a half-LSB bias wire before the shift."""
-        from sc_neurocore.compiler.equation_compiler import _VerilogExprEmitter, Q88
-
-        emitter = _VerilogExprEmitter({}, {}, Q88(rounding="nearest"))
-        trunc_name = emitter._trunc("_wide")
-        joined = "\n".join(emitter.intermediates)
-        assert "_rnd_half" in joined
-        assert trunc_name.startswith("_t")
-
-    def test_trunc_emits_bankers_rounding_guard(self):
-        """Banker's rounding adds a tie-detect guard alongside the biased sum."""
-        from sc_neurocore.compiler.equation_compiler import _VerilogExprEmitter, Q88
-
-        emitter = _VerilogExprEmitter({}, {}, Q88(rounding="bankers"))
-        emitter._trunc("_wide")
-        joined = "\n".join(emitter.intermediates)
-        assert "_rnd_biased" in joined
-        assert "_rnd_guard" in joined
-
-    def test_trunc_emits_stochastic_rounding_lfsr_dither(self):
-        """Stochastic rounding dithers the low fraction bits with the LFSR."""
-        from sc_neurocore.compiler.equation_compiler import _VerilogExprEmitter, Q88
-
-        emitter = _VerilogExprEmitter({}, {}, Q88(rounding="stochastic"))
-        emitter._trunc("_wide")
-        joined = "\n".join(emitter.intermediates)
-        assert "_rnd_stoch" in joined
-        assert "_lfsr" in joined
-
-    def test_trunc_rejects_unknown_rounding_mode(self):
-        """An unrecognised rounding mode is rejected by the truncation emitter."""
-        import pytest
-
-        from sc_neurocore.compiler.equation_compiler import _VerilogExprEmitter, Q88
-
-        emitter = _VerilogExprEmitter({}, {}, Q88(rounding="dither-supreme"))
-        with pytest.raises(ValueError, match="Unknown rounding mode"):
-            emitter._trunc("_wide")
-
     def test_multiply_with_global_pipeline_flag_registers_product(self):
         """The global pipeline flag registers the wide product before truncation."""
         from sc_neurocore.compiler.verilog_expr_emitter import _emit_expr
@@ -838,105 +757,6 @@ class TestEdgeCaseCoverage:
             "v * v", {"v": "v"}, {}, Q88(), pipeline_points={"_mul0"}
         )
         assert pipeline_regs
-
-
-class TestCompileCLI:
-    """Tests for the sc-neurocore compile CLI command."""
-
-    def test_compile_command_generates_verilog(self, tmp_path):
-        from unittest.mock import patch
-        from sc_neurocore.cli import main
-
-        out = str(tmp_path / "out")
-        with patch(
-            "sys.argv",
-            [
-                "sc-neurocore",
-                "compile",
-                "dv/dt = -(v - E_L)/tau_m + I/C",
-                "--threshold",
-                "v > -50",
-                "--reset",
-                "v = -65",
-                "--params",
-                "E_L=-65,tau_m=10,C=1",
-                "--init",
-                "v=-65",
-                "-o",
-                out,
-            ],
-        ):
-            ret = main()
-        assert ret == 0
-        import os
-
-        v_path = os.path.join(out, "sc_equation_neuron.v")
-        assert os.path.exists(v_path)
-        content = (tmp_path / "out" / "sc_equation_neuron.v").read_text()
-        assert "module sc_equation_neuron" in content
-        assert "endmodule" in content
-
-    def test_compile_with_testbench(self, tmp_path):
-        from unittest.mock import patch
-        from sc_neurocore.cli import main
-
-        out = str(tmp_path / "tb_out")
-        with patch(
-            "sys.argv",
-            [
-                "sc-neurocore",
-                "compile",
-                "dv/dt = I",
-                "--init",
-                "v=0",
-                "--testbench",
-                "-o",
-                out,
-                "--module-name",
-                "simple",
-            ],
-        ):
-            ret = main()
-        assert ret == 0
-        import os
-
-        assert os.path.exists(os.path.join(out, "simple.v"))
-        assert os.path.exists(os.path.join(out, "tb_simple.v"))
-
-    def test_compile_no_ode_shows_usage(self, capsys):
-        from unittest.mock import patch
-        from sc_neurocore.cli import main
-
-        with patch("sys.argv", ["sc-neurocore", "compile"]):
-            ret = main()
-        assert ret == 1
-        captured = capsys.readouterr()
-        assert "compile requires an ODE string" in captured.out
-
-    def test_compile_with_custom_module_name(self, tmp_path):
-        from unittest.mock import patch
-        from sc_neurocore.cli import main
-
-        out = str(tmp_path / "custom")
-        with patch(
-            "sys.argv",
-            [
-                "sc-neurocore",
-                "compile",
-                "dv/dt = -v + I",
-                "--module-name",
-                "my_custom_lif",
-                "-o",
-                out,
-            ],
-        ):
-            ret = main()
-        assert ret == 0
-        import os
-
-        assert os.path.exists(os.path.join(out, "my_custom_lif.v"))
-        content = (tmp_path / "custom" / "my_custom_lif.v").read_text()
-        assert "module my_custom_lif" in content
 
 
 class TestDtUnderflowGuard:
@@ -1102,46 +922,3 @@ class TestDtUnderflowGuard:
             pytest.raises(ValueError, match="underflows in Q8.8"),
         ):
             main()
-
-
-class TestOverflowAndSignednessModes:
-    """Codegen branches for the non-default overflow modes and unsigned format."""
-
-    def _unsigned_neuron(self):
-        # Non-negative parameters/initial state so the unsigned Q-format can
-        # encode every literal.
-        return from_equations("dv/dt = -v/tau + I", params=dict(tau=10), init=dict(v=0))
-
-    def _signed_neuron(self):
-        return from_equations(
-            "dv/dt = -(v - E_L)/tau_m + I/C",
-            threshold="v > -50",
-            reset="v = -65",
-            params=dict(E_L=-65, tau_m=10, C=1),
-            init=dict(v=-65),
-        )
-
-    def test_unsigned_saturate_emits_unsigned_clamp(self):
-        verilog = compile_to_verilog(self._unsigned_neuron(), signed=False, overflow="saturate")
-        assert "16'd65535" in verilog  # unsigned saturate ceiling
-        assert "16'd0" in verilog  # underflow floor for unsigned
-        assert "signed" not in verilog.split("_next")[0].split("\n")[-1]
-
-    def test_wrap_overflow_passes_raw_low_bits(self):
-        verilog = compile_to_verilog(self._signed_neuron(), overflow="wrap")
-        assert "_next = " in verilog
-        assert "[15:0];" in verilog
-        assert "OVERFLOW TRAP" not in verilog
-
-    def test_trap_overflow_signed_emits_simulation_assertion(self):
-        verilog = compile_to_verilog(self._signed_neuron(), overflow="trap")
-        assert "OVERFLOW TRAP" in verilog
-        assert "// synthesis translate_off" in verilog
-        assert "// synthesis translate_on" in verilog
-        assert "$fatal" in verilog
-
-    def test_trap_overflow_unsigned_emits_simulation_assertion(self):
-        verilog = compile_to_verilog(self._unsigned_neuron(), signed=False, overflow="trap")
-        assert "OVERFLOW TRAP" in verilog
-        assert "[16]) " in verilog  # unsigned carry-out overflow check
-        assert "$fatal" in verilog

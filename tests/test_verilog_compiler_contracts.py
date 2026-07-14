@@ -13,6 +13,7 @@ from __future__ import annotations
 from pathlib import Path
 import shutil
 import subprocess
+from typing import cast
 
 import pytest
 
@@ -55,6 +56,61 @@ def test_compile_to_verilog_rejects_unknown_overflow_mode() -> None:
 
     with pytest.raises(ValueError, match="Unknown overflow mode"):
         compile_to_verilog(neuron, overflow="explode")
+
+
+def test_public_compilers_reject_unknown_rounding_mode() -> None:
+    """Both RTL surfaces validate rounding even when an equation has no multiply."""
+    neuron = _lif_without_threshold()
+
+    with pytest.raises(ValueError, match="Unknown rounding mode"):
+        compile_to_verilog(neuron, rounding="dither-supreme")
+    with pytest.raises(ValueError, match="Unknown rounding mode"):
+        compile_to_datapath(neuron, rounding="dither-supreme")
+
+
+def test_public_compilers_reject_unwired_stochastic_rounding() -> None:
+    """Neither public RTL surface may emit references to an undeclared rounding LFSR."""
+    neuron = _lif_without_threshold()
+
+    with pytest.raises(NotImplementedError, match="no rounding LFSR"):
+        compile_to_verilog(neuron, rounding="stochastic")
+    with pytest.raises(NotImplementedError, match="no rounding LFSR"):
+        compile_to_datapath(neuron, rounding="stochastic")
+
+
+@pytest.mark.parametrize("pipeline_stages", [True, -1])
+def test_registered_compiler_rejects_invalid_pipeline_stage_counts(
+    pipeline_stages: int,
+) -> None:
+    """Boolean and negative pipeline counts fail instead of changing mode silently."""
+    error = TypeError if pipeline_stages is True else ValueError
+
+    with pytest.raises(error, match="pipeline_stages"):
+        compile_to_verilog(_lif_without_threshold(), pipeline_stages=pipeline_stages)
+
+
+def test_registered_compiler_validates_explicit_pipeline_points() -> None:
+    """Explicit pipeline points require a unique string list and no global mode."""
+    neuron = _lif_without_threshold()
+
+    with pytest.raises(TypeError, match="list of strings"):
+        compile_to_verilog(neuron, pipeline_points=cast(list[str], ("mul0",)))
+    with pytest.raises(TypeError, match="entries must all be strings"):
+        compile_to_verilog(neuron, pipeline_points=[cast(str, 1)])
+    with pytest.raises(ValueError, match="must not contain duplicates"):
+        compile_to_verilog(neuron, pipeline_points=["mul0", "mul0"])
+    with pytest.raises(ValueError, match="mutually exclusive"):
+        compile_to_verilog(neuron, pipeline_stages=1, pipeline_points=["mul0"])
+
+
+def test_registered_and_folded_compilers_reject_unsigned_formats() -> None:
+    """Both public emitters fail closed instead of producing mixed-signed RTL."""
+    neuron = _lif_without_threshold()
+
+    with pytest.raises(NotImplementedError, match="unsigned equation-to-Verilog"):
+        compile_to_verilog(neuron, signed=False)
+    with pytest.raises(NotImplementedError, match="unsigned equation-to-Verilog"):
+        compile_to_datapath(neuron, signed=False)
 
 
 def test_compile_to_verilog_resets_from_candidate_and_exposes_post_reset_state() -> None:
@@ -257,12 +313,32 @@ def test_compile_to_datapath_rejects_unrepresentable_timestep() -> None:
         compile_to_datapath(neuron)
 
 
+def test_compile_to_datapath_accepts_zero_timestep() -> None:
+    """A zero timestep remains a legal frozen-state folded datapath."""
+    verilog = compile_to_datapath(_lif_without_threshold(dt=0.0), module_name="frozen_pe")
+
+    assert "module frozen_pe" in verilog
+    assert "_dt_mul_v" in verilog
+
+
 def test_compile_to_datapath_rejects_unknown_parameter_ports() -> None:
     """Folded parameter ports must name real neuron parameters."""
     neuron = _lif_without_threshold()
 
     with pytest.raises(ValueError, match="param_ports names are not parameters"):
         compile_to_datapath(neuron, param_ports=("not_a_parameter",))
+
+
+def test_compile_to_datapath_validates_parameter_port_sequence() -> None:
+    """Bare text, non-string entries, and duplicate parameter ports fail closed."""
+    neuron = _lif_without_threshold()
+
+    with pytest.raises(TypeError, match="not text"):
+        compile_to_datapath(neuron, param_ports="tau")
+    with pytest.raises(TypeError, match="entries must all be strings"):
+        compile_to_datapath(neuron, param_ports=[cast(str, 1)])
+    with pytest.raises(ValueError, match="must not contain duplicates"):
+        compile_to_datapath(neuron, param_ports=("tau", "tau"))
 
 
 def test_compile_to_datapath_carries_named_parameters_on_ports() -> None:
@@ -286,6 +362,33 @@ def test_compile_to_datapath_without_threshold_uses_passthrough_state() -> None:
 
     assert "assign spike_out = 1'b0;" in verilog
     assert "assign v_next_out = v_next;" in verilog
+
+
+def test_generated_registered_and_folded_rtl_carry_licence_headers() -> None:
+    """Both public emitters return HDL with the repository's seven-line header."""
+    common = (
+        "// SPDX-License-Identifier: AGPL-3.0-or-later",
+        "// Commercial license available",
+        "// © Concepts 1996–2026 Miroslav Šotek. All rights reserved.",
+        "// © Code 2020–2026 Miroslav Šotek. All rights reserved.",
+        "// ORCID: 0009-0009-3560-0851",
+        "// Contact: www.anulum.li | protoscience@anulum.li",
+    )
+    registered_header = "\n".join(
+        (
+            *common,
+            "// SC-NeuroCore — Generated fixed-point RTL",
+        )
+    )
+    folded_header = "\n".join(
+        (
+            *common,
+            "// SC-NeuroCore — Generated folded fixed-point RTL",
+        )
+    )
+
+    assert compile_to_verilog(_lif_without_threshold()).startswith(registered_header)
+    assert compile_to_datapath(_lif_without_threshold()).startswith(folded_header)
 
 
 def test_escape_rate_registered_rtl_owns_seeded_eight_advance_lfsr() -> None:
@@ -341,3 +444,35 @@ def test_escape_rate_rtl_rejects_unsigned_or_pipelined_contracts() -> None:
         compile_to_verilog(neuron, signed=False)
     with pytest.raises(NotImplementedError, match="pipelining"):
         compile_to_verilog(neuron, pipeline_stages=1)
+
+
+def test_stochastic_compilation_rejects_mutated_missing_probability() -> None:
+    """Poisson compilation fails closed if its public expression is cleared."""
+    neuron = EquationNeuron(
+        equations={"v": "I"},
+        state={"v": 0.0},
+        detection="poisson",
+        probability_expression="0.25",
+    )
+    neuron.probability_expression = None
+
+    with pytest.raises(ValueError, match="requires a probability expression"):
+        compile_to_verilog(neuron)
+
+
+def test_stochastic_compilation_rejects_mutated_missing_rate() -> None:
+    """Escape-rate compilation fails closed if its public expression is cleared."""
+    neuron = _escape_rate_neuron()
+    neuron.rate_expression = None
+
+    with pytest.raises(ValueError, match="requires a rate expression"):
+        compile_to_verilog(neuron)
+
+
+def test_stochastic_compilation_rejects_mutated_missing_rng() -> None:
+    """Registered stochastic RTL refuses a model whose RNG was removed."""
+    neuron = _escape_rate_neuron()
+    neuron._stochastic_rng = None
+
+    with pytest.raises(ValueError, match="has no initial RNG seed"):
+        compile_to_verilog(neuron)
