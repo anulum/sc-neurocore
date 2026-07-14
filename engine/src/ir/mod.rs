@@ -21,6 +21,7 @@
 //! - **Acyclic**: The operation list forms a DAG (verified by `verify()`).
 //! - **Portable**: No external dependencies; pure Rust enums and structs.
 
+pub(crate) mod bindings;
 pub mod builder;
 pub mod emit_mlir;
 pub mod emit_sv;
