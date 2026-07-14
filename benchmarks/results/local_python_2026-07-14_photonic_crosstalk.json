@@ -1,7 +1,7 @@
 {
   "benchmark": "photonic_crosstalk_pairs",
   "evidence_class": "local_regression_non_isolated",
-  "generated_at_utc": "2026-07-14T05:26:09.141872+00:00",
+  "generated_at_utc": "2026-07-14T18:19:43.216170+00:00",
   "host": {
     "affinity": [
       0
@@ -9,9 +9,9 @@
     "governor": "powersave",
     "isolated_cpus": "",
     "load_average_start": [
-      6.04833984375,
-      6.2109375,
-      6.26953125
+      33.0068359375,
+      33.9150390625,
+      36.4375
     ],
     "logical_cpu_count": 12,
     "platform": "Linux-6.17.0-35-generic-x86_64-with-glibc2.39",
@@ -20,9 +20,9 @@
   },
   "interpretation": "Local single-affinity regression evidence only. The host has no isolated CPU; native runtimes use different call boundaries, so latency is not a universal speed claim.",
   "load_average_end": [
-    5.7265625,
-    6.13720703125,
-    6.2451171875
+    40.3125,
+    35.85107421875,
+    36.95751953125
   ],
   "max_absolute_first_pair_error": {
     "go": 1.7763568394002505e-15,
@@ -44,7 +44,7 @@
         0.02576835896240242,
         15.889132382696776
       ],
-      "median_ns_per_batch": 422255.0,
+      "median_ns_per_batch": 1155023.0,
       "mode": "native Go package batch",
       "samples": 3.0
     },
@@ -54,7 +54,7 @@
         0.02576835896240243,
         15.889132382696774
       ],
-      "median_ns_per_batch": 219187.32,
+      "median_ns_per_batch": 773916.86,
       "mode": "warm native Julia module batch"
     },
     "mojo": {
@@ -64,9 +64,9 @@
         15.889132382561453
       ],
       "iterations_per_sample": 250.0,
-      "maximum_ns_per_batch": 158254.016,
-      "median_ns_per_batch": 143765.28,
-      "minimum_ns_per_batch": 140974.712,
+      "maximum_ns_per_batch": 511492.056,
+      "median_ns_per_batch": 356642.144,
+      "minimum_ns_per_batch": 307026.388,
       "mode": "warm Mojo shared-library C ABI batch",
       "samples": 9.0
     },
@@ -77,9 +77,9 @@
         15.889132382696774
       ],
       "iterations_per_sample": 12.0,
-      "maximum_ns_per_batch": 15733268.5,
-      "median_ns_per_batch": 12785015.833333334,
-      "minimum_ns_per_batch": 12192926.416666666,
+      "maximum_ns_per_batch": 49104565.166666664,
+      "median_ns_per_batch": 37903791.75,
+      "minimum_ns_per_batch": 33696291.666666664,
       "mode": "public validated Python fallback",
       "samples": 9.0
     },
@@ -89,7 +89,7 @@
         0.02576835896240243,
         15.889132382696774
       ],
-      "median_ns_per_batch": 165482.376,
+      "median_ns_per_batch": 272912.336,
       "mode": "native optimised Rust safety batch"
     }
   },
@@ -97,7 +97,7 @@
   "source_hashes": {
     "benchmarks/_photonic_crosstalk_native.py": "8e060bc96cc984c2b2fafcc3da751d0b0476fc06b8614e035fc745135bb8788e",
     "benchmarks/bench_photonic_crosstalk.py": "95cc510ecfe73a2b4b8ff5ce4c4c3f755afbdd1369d425a18185ed3e5bfcf8d7",
-    "engine/src/photonic.rs": "46876cb13c8d9dd0385e1242e9661a6af327db5296bf8e87d7d02252c3962ea9",
+    "engine/src/photonic.rs": "d39cee4ac20061d72986b16b763bae6766176f6b2569d172c623e38047338534",
     "src/sc_neurocore/accel/go/services/photonic_emitter/photonic_emitter.go": "711f39c3e5200bf8deaf7cce0eabe0f6e05a6b97cde6fdeabb12fe4fc9100148",
     "src/sc_neurocore/accel/go/services/photonic_emitter/photonic_emitter_test.go": "674bf04c57fa97feac08a483dbb6ba081ad24259be4710e7da68e518454c458b",
     "src/sc_neurocore/accel/julia/optics/photonic_emitter.jl": "ca21283a00fb475afb96a643cf4457dd4d600ac1002d653d822da2f7f9c65f0b",

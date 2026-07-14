@@ -14,6 +14,8 @@
 //! - **MZI transfer matrix** — 2×2 unitary matrix cascade
 //! - **Power budget** — path loss accumulation
 
+pub(crate) mod bindings;
+
 use rayon::prelude::*;
 
 // ── Constants ────────────────────────────────────────────────────────
