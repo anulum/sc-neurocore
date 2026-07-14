@@ -25,7 +25,7 @@ import sys
 
 from ci_install_common import install_editable
 
-_EXTRAS = "dev,units,nir,compression,training,research,bioware,studio"
+_EXTRAS = "dev,units,nir,compression,training,research,bioware,studio,julia"
 if sys.version_info >= (3, 12):
     _EXTRAS += ",federation"
 
