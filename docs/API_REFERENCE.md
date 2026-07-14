@@ -25767,16 +25767,150 @@ lr : float
 
 ---
 
-## Module `optics.photonic_emitter`
+## Module `optics._photonic_compiler`
+
+### Class `CompilationResult`
+Result of a photonic compilation pass.
+
+- **__post_init__**()
+  - Validate compilation metadata before export.
+- **to_gdsii**(filename, mzi_length_um, pitch_um)
+  - Export the compiled MZI cascade to GDSII through gdsfactory.
+
+### Class `PhotonicCompiler`
+Compile an SC bitstream into optical mapping, netlist, and co-simulation.
+
+- **__init__**(target)
+- **compile_bitstream**(bitstream, run_fdtd, fdtd_steps)
+  - Compile one non-empty binary SC bitstream to a photonic deployment.
+- **generate_mzi_verilog**(bit_width)
+  - Generate SystemVerilog for an MZI modulator.
+- **generate_microring_verilog**(bit_width)
+  - Generate SystemVerilog for a microring resonator.
+
+---
+
+## Module `optics._photonic_conversion`
+
+### Class `BitstreamToOptical`
+Convert SC bitstreams into optical pulse trains.
+
+- **__init__**(target)
+- **convert**(bitstream, pulse_duration_ps)
+  - Map a binary SC bitstream to an optical pulse train.
+- **to_phase_array**(bitstream)
+  - Return the vectorised phase encoding in radians.
+- **to_amplitude_array**(bitstream)
+  - Return the vectorised normalised amplitude encoding.
+- **optical_power_profile**(bitstream, input_power_mw)
+  - Compute output power after the target insertion loss.
+
+---
+
+## Module `optics._photonic_crosstalk`
+
+### Class `WaveguidePair`
+Physical contract for one pair of adjacent optical waveguides.
+
+- **__post_init__**()
+  - Validate the coupled-mode domain before numerical evaluation.
+- **effective_index_diff**()
+  - Return the Marcatili-form even/odd effective-index difference.
+- **coupling_coefficient**()
+  - Return coupling coefficient κ per micrometre.
+- **coupling_ratio**()
+  - Return power coupling ratio at the end of the parallel run.
+- **isolation_db**()
+  - Return pair isolation in decibels with a 300 dB numeric ceiling.
+
+### Class `CrosstalkModel`
+Evaluate evanescent crosstalk between parallel waveguide runs.
+
+- **__init__**()
+- **add_pair**(pair)
+  - Append one validated waveguide pair to the analyzer batch.
+- **transfer_matrix**(pair)
+  - Return the two-by-two unitary directional-coupler matrix.
+- **compute_crosstalk**(pair, input_power)
+  - Return output power on both waveguides for two input amplitudes.
+- **worst_case_isolation**()
+  - Return minimum isolation across registered pairs in decibels.
+- **analyze_bank**(waveguides, gap_nm, coupling_length_um, wavelength_nm, core_index, cladding_index)
+  - Analyze adjacent and next-nearest pairs in a uniform waveguide bank.
+- **analyze_pairs**(pair_indices, gaps_nm, coupling_lengths_um, wavelength_nm, core_index, cladding_index)
+  - Analyze per-pair crosstalk for arbitrary waveguide geometry.
+
+---
+
+## Module `optics._photonic_emitter`
 
 ### Class `PhotonicEmitter`
-Industrial-grade Photonic Emitter.
-
-Uses topological sorting to ensure optical ports are defined before being coupled.
+Emit photonic netlists in dependency order for a selected PDK.
 
 - **__init__**(target_pdk)
 - **emit_lumerical_netlist**(ir_graph)
   - Emit a Lumerical-compatible photonic netlist from an IR graph.
+
+---
+
+## Module `optics._photonic_fdtd`
+
+### Class `FDTDSolver`
+One-dimensional Yee-grid solver for waveguide co-simulation.
+
+The solver applies a quadratic-ramp multiplicative absorbing boundary at
+each end. It is a bounded reference implementation for pulse propagation,
+dispersion, and loss checks; use :class:`FDTD2DSolver` when split-field
+Berenger PML is required.
+
+- **__init__**(grid_size, dx_um, dt_factor, refractive_index, boundary_cells)
+- **set_loss**(loss_db_per_cm)
+  - Set non-negative propagation loss in decibels per centimetre.
+- **inject_pulse**(position, wavelength_nm, amplitude, phase)
+  - Inject a Gaussian-envelope optical pulse at a grid position.
+- **step**(n_steps)
+  - Advance the simulation by ``n_steps`` timesteps.
+- **field_energy**()
+  - Return total squared electromagnetic field energy.
+- **snapshot**()
+  - Return independent copies of the electric and magnetic fields.
+
+### Class `FDTD2DSolver`
+Two-dimensional TE Yee-grid solver with split-field Berenger PML.
+
+- **__init__**(nx, ny, dx_um, dy_um, dt_factor, pml_layers)
+- **set_waveguide**(y_center, width_cells, refractive_index, x_start, x_end)
+  - Define a horizontal waveguide stripe on the material map.
+- **inject_source**(x, y, wavelength_nm, amplitude, sigma_cells)
+  - Inject a two-dimensional Gaussian electric-field source.
+- **step**(n_steps)
+  - Advance the TE simulation by ``n_steps`` timesteps.
+- **field_energy**()
+  - Return total squared electromagnetic field energy.
+- **field_at_point**(x, y)
+  - Return the electric field at one in-bounds grid point.
+- **cross_section**(x)
+  - Return an independent electric-field cross-section at ``x``.
+- **snapshot**()
+  - Return independent copies of all field components.
+
+---
+
+## Module `optics._photonic_meep`
+
+### Class `MeepAdapter`
+Build and execute Meep waveguide simulations when Meep is installed.
+
+- **is_available**()
+  - Return whether the optional Meep dependency is importable.
+- **build_waveguide_geometry**(target, waveguide_width_um, length_um, substrate_index)
+  - Build a serialisable Meep waveguide-geometry description.
+- **run_simulation**(geometry, run_time)
+  - Execute a real Meep simulation and return its transmission record.
+
+---
+
+## Module `optics._photonic_types`
 
 ### Class `OpticalModulation`
 Optical modulation scheme.
@@ -25785,6 +25919,8 @@ Optical modulation scheme.
 ### Class `PhotonicTarget`
 Hardware target specification for a photonic backend.
 
+- **__post_init__**()
+  - Validate target metadata before it reaches a compiler backend.
 - **lightmatter**(cls)
   - Return a Lightmatter-style photonic target profile.
 - **silicon_photonics**(cls)
@@ -25795,132 +25931,8 @@ Hardware target specification for a photonic backend.
 ### Class `OpticalPulse`
 Single optical pulse with phase and amplitude.
 
-
-### Class `BitstreamToOptical`
-Converts SC bitstreams into optical pulse trains.
-
-- **__init__**(target)
-- **convert**(bitstream, pulse_duration_ps)
-  - Map a boolean SC bitstream to an optical pulse train.
-- **to_phase_array**(bitstream)
-  - Vectorised phase extraction.
-- **to_amplitude_array**(bitstream)
-  - Vectorised amplitude extraction.
-- **optical_power_profile**(bitstream, input_power_mw)
-  - Compute output power profile accounting for insertion loss.
-
-### Class `FDTDSolver`
-1D finite-difference time-domain solver for waveguide co-simulation.
-
-Solves Maxwell's equations on a 1D grid with Yee discretisation.
-Suitable for verifying pulse propagation, dispersion, and loss in
-simple waveguide geometries.
-
-Boundary condition: a quadratic-ramp multiplicative **absorbing
-boundary** at each end (not a Berenger split-field PML; 1D does not
-require the σ-matched split formulation because there is no transverse
-dimension into which energy could scatter). Field amplitude is tapered
-by ``s_i = 1 − 0.8·((N−i)/N)²`` for the outermost ``N`` cells on each
-side. Reflection is < −30 dB for wavelengths much smaller than the
-boundary depth; for higher-fidelity absorption use :class:`FDTD2DSolver`
-which implements full split-field Berenger PML.
-
-- **__init__**(grid_size, dx_um, dt_factor, refractive_index, boundary_cells)
-- **set_loss**(loss_db_per_cm)
-  - Set propagation loss.
-- **inject_pulse**(position, wavelength_nm, amplitude, phase)
-  - Inject a Gaussian-envelope optical pulse at a grid position.
-- **step**(n_steps)
-  - Advance the simulation by *n_steps* timesteps.
-- **field_energy**()
-  - Total electromagnetic energy in the grid.
-- **snapshot**()
-  - Return a copy of the current E and H fields.
-
-### Class `CompilationResult`
-Result of a photonic compilation pass.
-
-- **to_gdsii**(filename, mzi_length_um, pitch_um)
-  - Export the compiled MZI cascade to a GDSII file via gdsfactory.
-
-### Class `PhotonicCompiler`
-End-to-end compiler: SC IR → optical mapping → netlist → co-sim.
-
-- **__init__**(target)
-- **compile_bitstream**(bitstream, run_fdtd, fdtd_steps)
-  - Compile a single SC bitstream to a photonic deployment.
-- **generate_mzi_verilog**(bit_width)
-  - Generate SystemVerilog for an MZI modulator.
-- **generate_microring_verilog**(bit_width)
-  - Generate SystemVerilog for a microring resonator.
-
-### Class `FDTD2DSolver`
-2D finite-difference time-domain solver (TE mode).
-
-Yee grid with optional PML absorbing boundaries.
-Solves for Ez, Hx, Hy on a 2D cross-section of the photonic chip.
-
-- **__init__**(nx, ny, dx_um, dy_um, dt_factor, pml_layers)
-- **set_waveguide**(y_center, width_cells, refractive_index, x_start, x_end)
-  - Define a horizontal waveguide stripe.
-- **inject_source**(x, y, wavelength_nm, amplitude, sigma_cells)
-  - Inject a 2D Gaussian source.
-- **step**(n_steps)
-  - Advance TE simulation by n_steps.
-- **field_energy**()
-  - Total EM energy in the grid.
-- **field_at_point**(x, y)
-  - Read Ez at a grid point.
-- **cross_section**(x)
-  - Return Ez cross-section at a given x position.
-- **snapshot**()
-  - Return copies of all field components.
-
-### Class `MeepAdapter`
-Optional adapter for the Meep FDTD solver.
-
-Provides a thin wrapper that translates SC-NeuroCore photonic
-configurations into Meep simulation objects. Meep is an optional
-dependency; all methods gracefully degrade if not installed.
-
-- **is_available**()
-  - Check if Meep is installed.
-- **build_waveguide_geometry**(target, waveguide_width_um, length_um, substrate_index)
-  - Build a Meep geometry dict (usable even without Meep).
-- **run_simulation**(geometry, run_time)
-  - Run a Meep simulation or return a mock result if unavailable.
-
-### Class `WaveguidePair`
-A pair of adjacent waveguides for crosstalk analysis.
-
-- **effective_index_diff**()
-  - Approximate effective index difference between even/odd modes.
-- **coupling_coefficient**()
-  - Coupling coefficient κ (per micrometre).
-- **coupling_ratio**()
-  - Power coupling ratio at the end of the coupling length.
-- **isolation_db**()
-  - Isolation in dB (lower coupling = better isolation).
-
-### Class `CrosstalkModel`
-Models evanescent crosstalk between adjacent waveguides.
-
-Uses coupled-mode theory to compute power transfer between
-parallel waveguide runs on a photonic chip.
-
-- **__init__**()
-- **add_pair**(pair)
-  - Append one waveguide pair to the analyzer batch.
-- **transfer_matrix**(pair)
-  - 2×2 transfer matrix for a directional coupler.
-- **compute_crosstalk**(pair, input_power)
-  - Compute output power on both waveguides.
-- **worst_case_isolation**()
-  - Worst-case isolation across all pairs (minimum dB).
-- **analyze_bank**(waveguides, gap_nm, coupling_length_um, wavelength_nm, core_index, cladding_index)
-  - Geometric crosstalk for a uniform bank of parallel waveguides.
-- **analyze_pairs**(pair_indices, gaps_nm, coupling_lengths_um, wavelength_nm, core_index, cladding_index)
-  - Per-pair crosstalk for arbitrary waveguide geometry — the O(N²) path.
+- **__post_init__**()
+  - Validate the physical pulse boundary.
 
 ---
 

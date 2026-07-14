@@ -1,0 +1,124 @@
+{
+  "benchmark": "photonic_crosstalk_pairs",
+  "evidence_class": "local_regression_non_isolated",
+  "generated_at_utc": "2026-07-14T05:26:09.141872+00:00",
+  "host": {
+    "affinity": [
+      0
+    ],
+    "governor": "powersave",
+    "isolated_cpus": "",
+    "load_average_start": [
+      6.04833984375,
+      6.2109375,
+      6.26953125
+    ],
+    "logical_cpu_count": 12,
+    "platform": "Linux-6.17.0-35-generic-x86_64-with-glibc2.39",
+    "processor": "x86_64",
+    "selected_cpu": 0
+  },
+  "interpretation": "Local single-affinity regression evidence only. The host has no isolated CPU; native runtimes use different call boundaries, so latency is not a universal speed claim.",
+  "load_average_end": [
+    5.7265625,
+    6.13720703125,
+    6.2451171875
+  ],
+  "max_absolute_first_pair_error": {
+    "go": 1.7763568394002505e-15,
+    "julia": 0.0,
+    "mojo": 1.3532108766867168e-10,
+    "rust": 0.0
+  },
+  "parity_envelope": {
+    "go": 3e-15,
+    "julia": 1e-15,
+    "mojo": 2e-10,
+    "rust": 1e-15
+  },
+  "promotion_eligible": false,
+  "runtimes": {
+    "go": {
+      "first_pair": [
+        0.020152848841395347,
+        0.02576835896240242,
+        15.889132382696776
+      ],
+      "median_ns_per_batch": 422255.0,
+      "mode": "native Go package batch",
+      "samples": 3.0
+    },
+    "julia": {
+      "first_pair": [
+        0.02015284884139535,
+        0.02576835896240243,
+        15.889132382696774
+      ],
+      "median_ns_per_batch": 219187.32,
+      "mode": "warm native Julia module batch"
+    },
+    "mojo": {
+      "first_pair": [
+        0.02015284884137828,
+        0.02576835896235916,
+        15.889132382561453
+      ],
+      "iterations_per_sample": 250.0,
+      "maximum_ns_per_batch": 158254.016,
+      "median_ns_per_batch": 143765.28,
+      "minimum_ns_per_batch": 140974.712,
+      "mode": "warm Mojo shared-library C ABI batch",
+      "samples": 9.0
+    },
+    "python": {
+      "first_pair": [
+        0.02015284884139535,
+        0.02576835896240243,
+        15.889132382696774
+      ],
+      "iterations_per_sample": 12.0,
+      "maximum_ns_per_batch": 15733268.5,
+      "median_ns_per_batch": 12785015.833333334,
+      "minimum_ns_per_batch": 12192926.416666666,
+      "mode": "public validated Python fallback",
+      "samples": 9.0
+    },
+    "rust": {
+      "first_pair": [
+        0.02015284884139535,
+        0.02576835896240243,
+        15.889132382696774
+      ],
+      "median_ns_per_batch": 165482.376,
+      "mode": "native optimised Rust safety batch"
+    }
+  },
+  "schema_version": 1,
+  "source_hashes": {
+    "benchmarks/_photonic_crosstalk_native.py": "8e060bc96cc984c2b2fafcc3da751d0b0476fc06b8614e035fc745135bb8788e",
+    "benchmarks/bench_photonic_crosstalk.py": "95cc510ecfe73a2b4b8ff5ce4c4c3f755afbdd1369d425a18185ed3e5bfcf8d7",
+    "engine/src/photonic.rs": "46876cb13c8d9dd0385e1242e9661a6af327db5296bf8e87d7d02252c3962ea9",
+    "src/sc_neurocore/accel/go/services/photonic_emitter/photonic_emitter.go": "711f39c3e5200bf8deaf7cce0eabe0f6e05a6b97cde6fdeabb12fe4fc9100148",
+    "src/sc_neurocore/accel/go/services/photonic_emitter/photonic_emitter_test.go": "674bf04c57fa97feac08a483dbb6ba081ad24259be4710e7da68e518454c458b",
+    "src/sc_neurocore/accel/julia/optics/photonic_emitter.jl": "ca21283a00fb475afb96a643cf4457dd4d600ac1002d653d822da2f7f9c65f0b",
+    "src/sc_neurocore/accel/julia/photonic_emitter_parity_test.jl": "a2b354f8d0078f61e83b0d2687e38655a2f042bbe67b4abd02239d63be7855e3",
+    "src/sc_neurocore/accel/mojo/kernels/photonic_emitter.mojo": "0ee1cdd2ef36c6760dc0c5cd5b1b56b3afb98532894e3b265fb6f698011847c9",
+    "src/sc_neurocore/accel/rust/safety/photonic_emitter.rs": "a4a3f9a590bedee54b1cf3bca0c4b521bd0c198f048bf68fa6cd908eabed7a3b",
+    "src/sc_neurocore/optics/_photonic_crosstalk.py": "d8c2ce0f60ca492c81a02bf9a2135b76c772f2c3d779b8033b1aa1e5f10b26ad"
+  },
+  "versions": {
+    "go": "go version go1.24.0 linux/amd64",
+    "julia": "julia version 1.12.6",
+    "mojo": "Mojo 1.0.0b1 (a9591de6)",
+    "python": "3.12.3",
+    "rust": "rustc 1.96.0 (ac68faa20 2026-05-25)"
+  },
+  "workload": {
+    "cladding_index": 1.45,
+    "core_index": 3.48,
+    "coupling_length_um": "8 + index mod 17",
+    "gap_nm": "180 + index mod 64",
+    "pair_count": 4096,
+    "wavelength_nm": 1550.0
+  }
+}

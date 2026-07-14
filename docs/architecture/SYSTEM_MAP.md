@@ -1,7 +1,7 @@
 # SC-NeuroCore — System Architecture Map
 
 > Canonical architecture map. Package version `3.16.0`; refreshed against the
-> current tree on 2026-07-12. Supersedes the earlier `architecture.md` and
+> current tree on 2026-07-14. Supersedes the earlier `architecture.md` and
 > `COMPONENT_INVENTORY.md` in this directory, which are stale (see *Provenance*).
 >
 > Purpose: a single, factual reference to SC-NeuroCore's capabilities, data flow,
@@ -377,6 +377,15 @@ evolutionary search is delegated to the Rust engine with no Python fallback) / D
 → Device-substrate models (memristor/spintronic/photonic), MEA bio-hybrid,
 edge AER, HDC/VSA, self-replicating SC substrate. Mixed **MAINTAINED / DRAFT**;
 several are Research-tier (excluded from wheel). Detailed classification in audit.
+
+`optics.photonic_emitter` is a definition-free compatibility facade over seven
+bounded modules for types, bitstream conversion, FDTD, compilation, Meep,
+crosstalk, and emitter state. The responsibility graph is acyclic and public
+class identities remain anchored to the historical path. The Rust engine and
+executable standalone Rust/Go/Julia/Mojo mirrors implement only the coupled-mode
+crosstalk kernel; Python remains the sole owner of FDTD, Meep, netlist, GDSII,
+and filesystem effects. An unavailable Meep runtime fails closed instead of
+returning fabricated simulation data.
 
 `bioware` preserves its historical import surface through a definition-free
 facade. Acquisition, contracts, validation, encoding, plasticity, analysis,

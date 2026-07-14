@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import math
 from pathlib import Path
+import sys
 from typing import Callable
 
 import numpy as np
@@ -79,15 +80,16 @@ def test_photonic_compiler_microring_netlist_and_fdtd() -> None:
     assert result.fdtd_energy >= 0.0
 
 
-def test_meep_adapter_build_and_mock_run() -> None:
+def test_meep_adapter_build_and_unavailable_run_fails_closed(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     target = PhotonicTarget.lightmatter()
     geometry = MeepAdapter.build_waveguide_geometry(target, waveguide_width_um=0.6, length_um=12.0)
     assert geometry["cell_size"][0] == 12.0
     assert geometry["sources"][0]["type"] == "ContinuousSource"
-    result = MeepAdapter.run_simulation({"wavelength_nm": 1310.0}, run_time=12.5)
-    assert result["mock"] is True
-    assert result["run_time"] == 12.5
-    assert result["wavelength_nm"] == 1310.0
+    monkeypatch.setitem(sys.modules, "meep", None)
+    with pytest.raises(ImportError, match="Meep is not installed"):
+        MeepAdapter.run_simulation(geometry, run_time=12.5)
 
 
 def test_coupled_waveguide_analyzer_paths() -> None:
@@ -176,6 +178,7 @@ def test_to_gdsii_activates_generic_pdk_when_none_active(
     )
 
     real_get_active_pdk: Callable[[], object] = gf.get_active_pdk
+    monkeypatch.setattr(gf, "gpdk", object())
     calls = {"n": 0}
 
     def _raise_first_then_real() -> object:

@@ -278,10 +278,10 @@ fn pair_coupling(
     // Power coupling ratio for uniform parallel coupler of length L.
     let kl = kappa * coupling_length_um;
     let ratio = kl.sin().powi(2);
-    let iso_db = if ratio > 1.0e-30 {
-        -10.0 * ratio.log10()
-    } else {
+    let iso_db = if ratio < 1.0e-15 {
         300.0
+    } else {
+        -10.0 * ratio.max(1.0e-30).log10()
     };
     (kappa, ratio, iso_db)
 }
@@ -547,5 +547,12 @@ mod tests {
         // Isolation monotonically increases (inverse of ratio).
         assert!(out[0].isolation_db <= out[1].isolation_db);
         assert!(out[1].isolation_db <= out[2].isolation_db);
+    }
+
+    #[test]
+    fn crosstalk_zero_length_uses_public_isolation_ceiling() {
+        let result = analyze_crosstalk_pairs(&[(0, 1, 200.0, 0.0)], 1550.0, 3.48, 1.45);
+        assert_eq!(result[0].coupling_ratio, 0.0);
+        assert_eq!(result[0].isolation_db, 300.0);
     }
 }

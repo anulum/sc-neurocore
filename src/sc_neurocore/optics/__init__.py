@@ -6,9 +6,11 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore — sc_neurocore.optics
 
-"""sc_neurocore.optics -- Photonic computation, compilation and physical modeling.
+"""Photonic computation, compilation, and physical modelling.
 
-Requires `pip install "sc-neurocore[optics]"` for gdsfactory + full Rust paths.
+The historical emitter API is re-exported from a bounded responsibility split.
+Install ``sc-neurocore[optics]`` for GDSII support; optional Rust and Meep
+runtimes are detected independently and fail closed when unavailable.
 """
 
 from .photonic_layer import PhotonicBitstreamLayer

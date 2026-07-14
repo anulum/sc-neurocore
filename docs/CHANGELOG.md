@@ -5,6 +5,26 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+### Photonic emitter responsibility modularisation
+
+- Replaced the 1,109-line mixed photonic emitter with a 64-line definition-free
+  compatibility facade over types (106 lines), bitstream conversion (117), FDTD
+  (297), compilation/GDSII (281), Meep (218), crosstalk (321), and bitstream
+  emission (83).
+- Preserved the historical public exports, callable signatures, class identity,
+  pickle paths, monkey-patchable engine boundary, and deterministic valid-output
+  digests. Architecture contracts pin exclusive ownership, the acyclic import
+  graph, facade purity, and per-module ceilings.
+- Hardened finite and physical validation, fixed zero-length and 2D waveguide
+  edge cases, and made unavailable Meep execution raise ``ImportError`` instead
+  of returning synthetic results. The 102-test focused cohort covers every one
+  of the 702 statements and 214 branches in the eight governed Python modules.
+- Replaced crosstalk placeholders with executable Rust, Go, Julia, and Mojo
+  pair/bank/batch contracts. These mirrors cover crosstalk only; Python owns
+  FDTD, Meep, compilation, netlist, GDSII, and filesystem effects. The committed
+  4,096-pair benchmark is local, loaded, non-isolated evidence and is explicitly
+  ineligible for a universal performance claim.
+
 ### UVM generator responsibility modularisation
 
 - Replaced the 1,138-line mixed UVM generator with a 55-line historical facade
@@ -2791,7 +2811,7 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 #### Added
 - `sc_neurocore.arcane_zenith.ArcaneZenithCognitiveCore` — three-compartment ArcaneNeuron (fast / working / deep membrane states) coupled via attention gate + self-model predictor, wired to four reward-modulated plasticity rules via a sharpened sigmoid that maps weights into biological ranges for `tau_deep`, `surprise_baseline`, `delta_conf`, `lr_base`. Factory `create_arcane_neuron_with_zenith_plasticity(backend=…)`, plus `step_from_bio_rates` (MEA rate dict) and `step_from_genome` (evo_substrate bridge). 32 multi-angle tests in `tests/test_arcane_zenith/`.
-- `sc_neurocore.optics.photonic_emitter` — full rewrite of `CrosstalkModel.analyze_bank` on Marcatili coupled-mode theory (adjacent + next-nearest pairs); new `analyze_pairs` for O(N²) arbitrary geometry. Rust FFI `py_ph_analyze_crosstalk_bank` / `py_ph_analyze_crosstalk_pairs` (with 4 cargo tests); Python fallback matches to 1e-9. `FDTD2DSolver` split-field Berenger PML (Ezx + Ezy with σ-matched magnetic conductivity). `CompilationResult.to_gdsii` now produces real GDSII via `gdsfactory` + `klayout` (PDK auto-activation, `allow_duplicate` cells, netlist string to GDS TEXT layer 63/0). 43 tests in `tests/test_optics/`.
+- `sc_neurocore.optics.photonic_emitter` — full rewrite of `CrosstalkModel.analyze_bank` on Marcatili coupled-mode theory (adjacent + next-nearest pairs); new `analyze_pairs` for O(N²) arbitrary geometry. Rust FFI `py_ph_analyze_crosstalk_bank` / `py_ph_analyze_crosstalk_pairs` (with 4 cargo tests); Python fallback matches to 1e-9. `FDTD2DSolver` split-field Berenger PML (Ezx + Ezy with σ-matched magnetic conductivity). `CompilationResult.to_gdsii` now produces real GDSII via `gdsfactory` + `klayout` (PDK auto-activation, `allow_duplicate` cells, netlist string to GDS TEXT layer 63/0). This historical release snapshot had 43 optics tests; the current evidence is recorded in the Unreleased photonic modularisation entry.
 - `sc_neurocore.bioware` closed-loop surface: `BioHybridSession.process_frame` returns `BioHybridFrameResult` (typed dataclass with legacy mapping view — `result["round"]` + `result.round` both valid). `SpikeSorter` fit/assign with sklearn PCA+KMeans, no-op on empty input. `HomeostaticPlasticity.update_threshold` Q8.8 proportional controller (error × α × 256, clamped to min/max). New `mea_fitness_hook` — converts MEA spike dynamics to `{accuracy, energy_mw, latency_ms}` for evo_substrate's `ReplicationEngine(metrics_fn=…)`. Matching PCA / Berenger / closed-loop regression tests added.
 - `sc_neurocore.accel.mojo.MojoKernelRunner` + `kernels.mojo` — Mojo SIMD primitives (packed SC ops, `sc_and/or/xor/mux/sub/not`, pack/unpack, `vec_mac`, `stdp_update`, `reward_modulated_stdp`, `hdc_bind`). Pixi-managed toolchain; `_HAS_MOJO` flag never raises on missing tooling. `benchmarks/bench_mojo_vs_rust.py` pure-text side-by-side harness.
 - `sc_neurocore.edge.aer_router.AERRoutingDaemon` — Python lifecycle wrapper for the Go AER UDP mesh router (`accel/go/services/aer_router/main.go`). Three sibling Go modules: `hil_debugger` (WebSocket telemetry), `services` / `services_ext` (service coordination). Each with its own `go.mod` + `main_test.go`.

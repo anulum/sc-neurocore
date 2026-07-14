@@ -4,7 +4,10 @@ End-to-end photonic stack for SC-NeuroCore: truly-random bitstream
 generation via laser interference, compilation of SC IR onto
 Mach-Zehnder cascades, FDTD co-simulation (1D absorbing boundary + 2D
 split-field Berenger PML), coupled-mode crosstalk analysis for
-parallel waveguide banks, and GDSII export via ``gdsfactory``.
+parallel waveguide banks, and GDSII export via ``gdsfactory``. The stable
+``photonic_emitter`` import path is a definition-free compatibility facade;
+seven bounded modules own types, conversion, FDTD, compilation, Meep,
+crosstalk, and emitter responsibilities.
 
 Install the Rust acceleration + layout tooling with:
 
@@ -13,8 +16,11 @@ pip install "sc-neurocore[optics]"
 ```
 
 The Rust engine (``libsc_neurocore_engine``) exposes parallel Rayon
-kernels for the crosstalk analysis; a pure-Python fallback mirrors the
-same math to 1e-9 parity when the engine wheel is absent.
+kernels for crosstalk analysis; a validated pure-Python fallback uses the
+same closed-form model when the engine wheel is absent. Standalone Rust, Go,
+Julia, and Mojo implementations mirror only that numeric crosstalk contract.
+FDTD, Meep, compilation, netlist emission, and filesystem work remain owned by
+Python and are not presented as cross-language capabilities.
 
 ---
 
@@ -299,13 +305,13 @@ file. None of the stages is mandatory: most users stop at
 | ``CompilationResult.to_gdsii``            | Real GDSII file via gdsfactory + KLayout; PDK auto-activation; header + netlist labels |
 | ``FDTDSolver`` (1D)                       | Yee leap-frog + multiplicative absorbing boundary; configurable boundary_cells       |
 | ``FDTD2DSolver`` (2D)                     | Split-field Berenger PML; cubic sigma ramp; matched impedance σ* = σ·(μ₀/ε₀)        |
-| ``MeepAdapter``                           | Optional bridge to `pymeep` for higher-order / dispersive simulations               |
+| ``MeepAdapter``                           | Optional bridge to `pymeep`; unavailable runtimes raise ``ImportError`` and never fabricate simulation results |
 | ``CrosstalkModel.analyze_bank``           | Uniform parallel-bank crosstalk; adjacent + next-nearest pairs                      |
 | ``CrosstalkModel.analyze_pairs``          | Per-pair O(N²) crosstalk for arbitrary geometry; Rust parallel via Rayon            |
 | ``WaveguidePair``                         | Coupled-mode properties as lazy Python properties                                   |
 | Rust acceleration                         | ``py_ph_route_waveguides``, ``py_ph_cascade_mzi``, ``py_ph_analyze_power_budget``, ``py_ph_analyze_crosstalk_bank``, ``py_ph_analyze_crosstalk_pairs`` |
-| Rust-vs-Python parity                     | 1e-9 max absolute error on every metric, enforced by tests                          |
-| 43-test coverage                          | 20 crosstalk + 18 FDTD + 5 GDSII                                                    |
+| Native crosstalk parity                   | Engine Rust and standalone Rust/Go/Julia/Mojo execute source-bound parity contracts against Python |
+| Focused verification                      | 102 tests; exact 100% coverage over 702 statements and 214 branches in the facade and seven responsibility modules |
 
 ---
 
@@ -555,122 +561,58 @@ per unitary $T$.
 | ``py_ph_analyze_crosstalk_bank`` | Uniform parallel bank — closed-form per-pair + aggregate stats             |
 | ``py_ph_analyze_crosstalk_pairs``| Per-pair geometric crosstalk — O(N²) Rayon-parallel over pairs             |
 
-Python fallbacks mirror each Rust call bit-identically (to within
-float64 precision) and are exercised when ``_HAS_RUST_PH == False``.
+The validated Python fallback is exercised when ``_HAS_RUST_PH == False``.
+Focused engine tests require relative tolerance ``1e-9`` and absolute
+tolerance ``1e-12``. The separate source-bound Rust, Go, Julia, and Mojo
+crosstalk mirrors compile and execute against tighter per-runtime envelopes;
+they do not mirror the routing, MZI, power-budget, FDTD, Meep, netlist, or GDS
+surfaces.
 
 ---
 
 ## 7. Performance benchmarks
 
-All numbers measured on Linux x86-64 (Intel i5-11600K, CPython 3.12.3,
-sc-neurocore-engine compiled with ``maturin develop --release``),
-2026-04-20. Committed bench harness:
-``benchmarks/bench_optics.py`` — raw JSON at
-``benchmarks/results/bench_optics.json``. Reproducer scripts also live
-inline in §7.4.
+The committed crosstalk harness is
+``benchmarks/bench_photonic_crosstalk.py``. It validates source hashes and the
+first output tuple before recording timing data in
+``benchmarks/results/local_python_2026-07-14_photonic_crosstalk.json``.
 
-### 7.1 ``analyze_bank`` — uniform-bank crosstalk
+### 7.1 Enrolled workload and parity
 
-| Path        | Throughput (calls/s) | Relative |
-| ----------- | -------------------- | -------- |
-| Rust (FFI)  | **833 652**          | 1.00×    |
-| Python      | 149 997              | 0.18×    |
+The workload contains 4,096 pairs. Gap is ``180 + index mod 64`` nm and
+coupling length is ``8 + index mod 17`` µm at 1550 nm with core/cladding
+indices 3.48/1.45. The final measured first-pair maximum absolute differences
+from Python were:
 
-Input: 100 waveguides, 200 nm gap, 10 µm coupling length. Measured by
-1 000 back-to-back calls after 10 warmup calls. Rust speedup: **5.56×**.
-Output parity: Python and Rust return identical floats for every
-field to within float64 precision (``0.00e+00`` max absolute
-difference enforced by
-``tests/test_optics/test_crosstalk.py::TestBackendParity::test_analyze_bank_rust_matches_python``).
+| Runtime | Maximum absolute difference | Enrolled envelope |
+| ------- | ---------------------------: | ----------------: |
+| Rust    | ``0``                        | ``1e-15``         |
+| Go      | ``1.78e-15``                 | ``3e-15``         |
+| Julia   | ``0``                        | ``1e-15``         |
+| Mojo    | ``1.35e-10``                 | ``2e-10``         |
 
-### 7.2 ``analyze_pairs`` — per-pair O(N²)
+The runtime-specific envelopes reflect ordinary floating-point-library and ABI
+differences. They are correctness bounds, not a claim that the implementations
+are bit-identical.
 
-| Path        | Wall time (best of 5) | Relative |
-| ----------- | --------------------- | -------- |
-| Rust (FFI)  | **0.67 ms**           | 1.00×    |
-| Python      | 9.03 ms               | 13.4×    |
+### 7.2 Local regression timings
 
-Input: 5 000 random pairs with uniform gaps ∈ [100, 600] nm and
-lengths ∈ [5, 50] µm. Warm-cache best-of-5 after 3 warmup calls. Rust
-parallelises over pairs via Rayon; Python iterates serially. Max
-absolute difference on ``isolation_db``: ``0.00e+00``.
+| Runtime | Median time per 4,096-pair batch |
+| ------- | -------------------------------: |
+| Python  | 12.785 ms                        |
+| Rust    | 0.165 ms                         |
+| Go      | 0.422 ms                         |
+| Julia   | 0.219 ms                         |
+| Mojo    | 0.144 ms                         |
 
-### 7.3 FDTD2D — split-field Berenger PML
+These results were recorded on Linux x86-64 with CPython 3.12.3, Rust 1.96.0,
+Go 1.24.0, Julia 1.12.6, and Mojo 1.0.0b1. The process was pinned to logical
+CPU 0, but the host had no isolated CPUs, used the ``powersave`` governor, and
+was loaded. Native runtimes also use different call boundaries. The artefact is
+therefore marked ``local_regression_non_isolated`` and
+``promotion_eligible: false``: it is reproducible local diagnostic evidence,
+not a universal speed or production-throughput claim.
 
-| Grid        | Steps | Wall time | Cell-updates/s |
-| ----------- | ----- | --------- | -------------- |
-| 200 × 100   | 500   | 102.5 ms  | **97.5 M cell-steps/s** |
-
-PML: 12 layers. A 10-cell-wide waveguide strip at ``y=50`` with
-``n=3.48`` is placed before source injection at (50, 50) at 1550 nm
-with ``sigma_cells=8``. After a 50-step warmup the 500-step wall time
-is 109.7 ms; final ``field_energy = 1.38 × 10⁻²`` a.u. (peak energy
-is already attenuated by PML absorption at step 500). Note that
-skipping the waveguide setup or the warmup changes the numerical
-profile of the simulation (unset ``n_map`` = 1.0 everywhere → Yee
-update runs with cheaper coefficients) so the 91 M cell-steps/s
-figure applies specifically to the reproducer in §7.4. The 2D
-solver is pure NumPy — no Cython / Rust backend yet.
-
-### 7.4 Reproducer
-
-```python
-import time, random
-from sc_neurocore.optics.photonic_emitter import (
-    CrosstalkModel, FDTD2DSolver, WaveguidePair,
-)
-import sc_neurocore.optics.photonic_emitter as mod
-
-# Bench 7.1
-cm = CrosstalkModel()
-for _ in range(10):
-    cm.analyze_bank(waveguides=100, gap_nm=200.0, coupling_length_um=10.0)
-N = 1000
-t0 = time.perf_counter()
-for _ in range(N):
-    cm.analyze_bank(waveguides=100, gap_nm=200.0, coupling_length_um=10.0)
-print(f"bank rust: {N/(time.perf_counter()-t0):,.0f} calls/s")
-orig = mod._HAS_RUST_PH; mod._HAS_RUST_PH = False
-t0 = time.perf_counter()
-for _ in range(N):
-    CrosstalkModel().analyze_bank(waveguides=100, gap_nm=200.0, coupling_length_um=10.0)
-print(f"bank py: {N/(time.perf_counter()-t0):,.0f} calls/s")
-mod._HAS_RUST_PH = orig
-
-# Bench 7.2
-random.seed(42)
-pairs = [(i, i+1) for i in range(5000)]
-gaps = [random.uniform(100, 600) for _ in range(5000)]
-lens = [random.uniform(5, 50) for _ in range(5000)]
-t0 = time.perf_counter(); cm.analyze_pairs(pairs, gaps, lens)
-print(f"pairs rust: {(time.perf_counter()-t0)*1000:.2f} ms")
-
-# Bench 7.3
-s = FDTD2DSolver(nx=200, ny=100, pml_layers=12)
-s.set_waveguide(y_center=50, width_cells=10, refractive_index=3.48)
-s.inject_source(x=50, y=50, wavelength_nm=1550.0, amplitude=1.0, sigma_cells=8)
-s.step(50)  # warmup
-t0 = time.perf_counter(); s.step(500); dt = time.perf_counter() - t0
-print(f"FDTD2D 200x100: 500 steps in {dt*1000:.1f} ms")
-```
-
----
-
-### Output from `bench_optics.py`
-
-```text
-Benchmark                                           Value
-----------------------------------------------------------
-analyze_bank rust                             61161 calls/s
-analyze_bank python                           58879 calls/s
-analyze_bank speedup                                1.04x
-analyze_pairs rust                              11.307 ms
-analyze_pairs python                            11.462 ms
-analyze_pairs speedup                               1.01x
-fdtd2d 500 steps                              134.1 ms, 74.5 Mcell-steps/s
-
-Results written to /media/anulum/724AA8E84AA8AA75/aaa_God_of_the_Math_Collection/03_CODE/SC-NEUROCORE/benchmarks/results/bench_optics.json
-```
 ## 8. Citations
 
 1. **Abhari, N., Hofmann, G. W., Reiter, R.** (2019). *True random
@@ -711,8 +653,12 @@ Results written to /media/anulum/724AA8E84AA8AA75/aaa_God_of_the_Math_Collection
   take a 1D slice.
 - **``CompilationResult.to_gdsii`` requires gdsfactory.** On minimal
   installs the function raises ``ImportError`` with a clear pointer to
-  ``pip install sc-neurocore[optics]``. Tests hard-require the extra
-  (no ``importorskip``).
+  ``pip install sc-neurocore[optics]``. The optional-extra CI job installs and
+  executes the GDSII tests; minimal environments skip that dependency-gated
+  slice.
+- **``MeepAdapter.run_simulation`` requires pymeep.** An unavailable Meep
+  runtime raises ``ImportError``. The adapter does not return synthetic field,
+  flux, or energy data as a substitute for a simulation.
 - **The 2D FDTD solver is pure NumPy.** Grids larger than ~1 M cells
   run slowly. A Rust port is a future work item (see §7.3 for current
   throughput numbers).
@@ -731,13 +677,22 @@ Results written to /media/anulum/724AA8E84AA8AA75/aaa_God_of_the_Math_Collection
 
 ## Reference
 
-- Module: `src/sc_neurocore/optics/photonic_emitter.py` (1 070 lines).
+- Stable facade: `src/sc_neurocore/optics/photonic_emitter.py` (64 lines).
+- Responsibility modules:
+  `src/sc_neurocore/optics/_photonic_{types,conversion,fdtd,compiler,meep,crosstalk,emitter}.py`
+  (106, 117, 297, 281, 218, 321, and 83 lines respectively). Their dependency
+  graph and per-module ceilings are executable architecture contracts.
 - Layer module: `src/sc_neurocore/optics/photonic_layer.py`.
-- Tests: `tests/test_optics/` (43 tests: 20 crosstalk + 18 FDTD +
-  5 GDSII). Rust-vs-Python parity enforced by
-  `test_crosstalk.py::TestBackendParity`.
-- Rust engine: `engine/src/photonic.rs` (353 lines of Rust + 96 lines
-  of PyO3 wrappers in `engine/src/lib.rs`, plus 16 cargo unit tests).
+- Focused verification: 102 tests, including public compatibility, deterministic
+  valid-output digests, validation, FDTD, GDSII, bridge integration, native
+  engine parity, and executable standalone Rust/Go/Julia/Mojo crosstalk parity.
+  The facade and seven responsibility modules have exact 100% statement and
+  branch coverage over 702 statements and 214 branches.
+- Rust engine: `engine/src/photonic.rs`; the crosstalk floor and zero-length
+  contract are shared with the standalone mirrors.
+- Benchmark: `benchmarks/bench_photonic_crosstalk.py`, with native-build helpers
+  in `benchmarks/_photonic_crosstalk_native.py` and committed local evidence in
+  `benchmarks/results/local_python_2026-07-14_photonic_crosstalk.json`.
 - Demo: `examples/15_photonic_compilation_demo.py` (produces a real
   11.6 KB GDSII file via ``gdsfactory`` + ``klayout``).
 

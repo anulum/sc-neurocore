@@ -97,7 +97,7 @@ SC-NeuroCore is positioned for neuromorphic R&D, stochastic accelerator design, 
 | Model documentation pages | 175 |
 | Rust PyO3 model wrappers | 175 |
 | Optional extras | 28 |
-| Python test files | 1294 |
+| Python test files | 1298 |
 | Public documentation pages | 570 |
 | GitHub Actions workflows | 19 |
 
@@ -341,6 +341,12 @@ Research and extended modules are available from source (`pip install -e ".[dev]
 | **Domain bridges** | quantum (Qiskit/PennyLane), bridges/quantum_annealing (Ising/QUBO), adapters/holonomic (JAX), scpn (Petri nets) | Yes | Heavy backends require the `[quantum]`, `[annealing]`, or `[jax]` extra |
 | **Research** | robotics, physics, bio, optics, chaos, sleep, interfaces | No | Tested. Available from source. |
 | **Speculative** | `research/` (eschaton, exotic, meta, post_silicon, transcendent) | No | Theoretical. See `research/README.md`. |
+
+The source-only optics surface preserves its historical API through bounded
+photonic-emitter responsibility modules. FDTD, Meep, netlist, and GDSII work
+remain Python-only; the engine and executable Rust/Go/Julia/Mojo mirrors cover
+the coupled-mode crosstalk kernel only. Local timing evidence is explicitly
+non-isolated and is not a production-throughput claim.
 
 The safety_cert package is a source-only, library-only safety-evidence
 organiser. It materialises hash-bound reports from explicit inputs; it does not

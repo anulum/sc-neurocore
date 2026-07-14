@@ -146,6 +146,22 @@ conformity.
   - `DACModel` — Digital-to-analog output model
   - `ADCModel` — Analog-to-digital input model
 
+#### optics — Photonic compilation and crosstalk analysis
+- **Compatibility facade:** `src/sc_neurocore/optics/photonic_emitter.py`
+- **Sources:** seven bounded `_photonic_*` responsibility modules for types,
+  conversion, FDTD, compilation, Meep, crosstalk, and bitstream emission
+- **Focused verification:** **102 tests**, with exact 100% coverage over 702
+  statements and 214 branches in the facade and responsibility modules
+- **Key Classes:**
+  - `PhotonicCompiler` and `CompilationResult` — validated optical compilation,
+    netlist, FDTD, and GDSII orchestration
+  - `FDTDSolver` and `FDTD2DSolver` — NumPy Yee-grid simulation
+  - `MeepAdapter` — fail-closed optional pymeep bridge
+  - `CrosstalkModel` and `WaveguidePair` — coupled-mode crosstalk contracts
+- **Backend boundary:** the engine plus standalone Rust, Go, Julia, and Mojo
+  mirrors cover only crosstalk mathematics. Python exclusively owns FDTD,
+  Meep, compilation, netlist, GDSII, and filesystem behaviour.
+
 ---
 
 ### Exascale & Runtime

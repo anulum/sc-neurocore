@@ -971,7 +971,7 @@
     "python_model_classes": 158,
     "python_model_source_modules": 153,
     "rust_pyo3_model_wrappers": 175,
-    "test_files": 1294
+    "test_files": 1298
   },
   "documentation": {
     "public_pages": [
@@ -2919,6 +2919,7 @@
       "tests/test_bench_hodgkin_huxley_mojo.py",
       "tests/test_bench_lapicque.py",
       "tests/test_bench_perfect_integrator.py",
+      "tests/test_bench_photonic_crosstalk.py",
       "tests/test_bench_quadratic_if.py",
       "tests/test_bench_quantum_annealing_modularisation.py",
       "tests/test_bench_safety_certification.py",
@@ -3651,6 +3652,9 @@
       "tests/test_optics/test_crosstalk.py",
       "tests/test_optics/test_fdtd.py",
       "tests/test_optics/test_gdsii.py",
+      "tests/test_optics/test_photonic_contract_validation.py",
+      "tests/test_optics/test_photonic_crosstalk_backends.py",
+      "tests/test_optics/test_photonic_emitter_architecture.py",
       "tests/test_optics/test_photonic_emitter_branches.py",
       "tests/test_optics/test_photonic_layer.py",
       "tests/test_optics.py",

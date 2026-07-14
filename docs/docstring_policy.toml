@@ -14,7 +14,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 392
+expected_file_count = 399
 
 [[file]]
 path = "src/sc_neurocore/__init__.py"
@@ -1510,7 +1510,35 @@ rationale = "Graph-partition assignment to per-die routing-table translation sur
 
 [[file]]
 path = "src/sc_neurocore/optics/photonic_emitter.py"
-rationale = "Public photonic-emitter and crosstalk-analysis surface with optional Rust acceleration."
+rationale = "Historical photonic-emitter compatibility facade and public export boundary."
+
+[[file]]
+path = "src/sc_neurocore/optics/_photonic_types.py"
+rationale = "Photonic target, pulse, modulation, compilation-result, and waveguide contracts."
+
+[[file]]
+path = "src/sc_neurocore/optics/_photonic_conversion.py"
+rationale = "Validated bitstream-to-optical conversion surface."
+
+[[file]]
+path = "src/sc_neurocore/optics/_photonic_fdtd.py"
+rationale = "Validated one- and two-dimensional FDTD solver surfaces."
+
+[[file]]
+path = "src/sc_neurocore/optics/_photonic_compiler.py"
+rationale = "Photonic compilation, netlist, FDTD, and GDSII orchestration surface."
+
+[[file]]
+path = "src/sc_neurocore/optics/_photonic_meep.py"
+rationale = "Fail-closed optional Meep geometry and simulation adapter."
+
+[[file]]
+path = "src/sc_neurocore/optics/_photonic_crosstalk.py"
+rationale = "Validated coupled-mode crosstalk analysis and optional Rust dispatch surface."
+
+[[file]]
+path = "src/sc_neurocore/optics/_photonic_emitter.py"
+rationale = "Validated photonic bitstream emitter state and sampling surface."
 
 [[file]]
 path = "src/sc_neurocore/studio/app.py"
