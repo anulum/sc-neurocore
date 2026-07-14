@@ -21,7 +21,8 @@ from .verilog_compiler_config import Q88
 class _VerilogExprEmitter(ast.NodeVisitor):
     """Walk a Python AST and emit equivalent Verilog fixed-point expressions.
 
-    Handles: +, -, *, /, positive-literal %, **, unary minus, comparisons,
+    Handles: +, -, *, /, signed floor division by a positive integer
+    power-of-two literal, positive-literal %, **, unary minus, comparisons,
     names, constants.
     Multiplications emit wide product with arithmetic right shift.
     """
@@ -119,7 +120,9 @@ class _VerilogExprEmitter(ast.NodeVisitor):
         return trunc_name
 
     def visit_BinOp(self, node: ast.BinOp) -> str:
-        """Emit Verilog for a binary operation (add, sub, mul, div)."""
+        """Emit Verilog for a binary operation, including narrow floor division."""
+        if isinstance(node.op, ast.FloorDiv) and not self.q.signed:
+            raise ValueError("Floor divisor requires signed fixed-point state")
         left: str = self.visit(node.left)
         right: str = self.visit(node.right)
 
@@ -182,6 +185,44 @@ class _VerilogExprEmitter(ast.NodeVisitor):
                 f"wire signed [{dw - 1}:0] {res_name} = {div_tmp}[{dw - 1}:0];"
             )
             return res_name
+        elif isinstance(node.op, ast.FloorDiv):
+            if (
+                not isinstance(node.right, ast.Constant)
+                or isinstance(node.right.value, bool)
+                or not isinstance(node.right.value, int)
+            ):
+                raise ValueError("Floor divisor must be a positive integer power-of-two literal")
+            divisor = node.right.value
+            if divisor <= 0 or divisor & (divisor - 1):
+                raise ValueError("Floor divisor must be a positive integer power-of-two literal")
+            if divisor > self.q.max_value:
+                raise ValueError(
+                    f"Floor divisor {divisor} exceeds fixed-point maximum {self.q.max_value}"
+                )
+
+            op_index = self._mul_count
+            self._mul_count += 1
+            dw = self.q.data_width
+            frac = self.q.fraction
+            shift = frac + divisor.bit_length() - 1
+            dividend = f"_floordiv{op_index}_dividend"
+            quotient = f"_floordiv{op_index}_integer"
+            result = f"_floordiv{op_index}"
+            # A Q-format dividend stores x*2**frac. Python ``x // 2**k``
+            # first floors to a whole integer and then represents that integer
+            # in the same Q format. An arithmetic shift by frac+k performs the
+            # signed floor; shifting back by frac restores the scale.
+            self.intermediates.append(f"wire signed [{dw - 1}:0] {dividend} = {left};")
+            self.intermediates.append(
+                f"wire signed [{dw - 1}:0] {quotient} = $signed({dividend}) >>> {shift};"
+            )
+            if frac == 0:
+                self.intermediates.append(f"wire signed [{dw - 1}:0] {result} = {quotient};")
+            else:
+                self.intermediates.append(
+                    f"wire signed [{dw - 1}:0] {result} = {quotient} <<< {frac};"
+                )
+            return result
         elif isinstance(node.op, ast.Mod):
             if not self.q.signed:
                 raise ValueError("Positive-literal modulo requires signed fixed-point state")

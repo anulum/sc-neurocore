@@ -20,7 +20,8 @@ from sc_neurocore.neurons.models.hodgkin_huxley import HodgkinHuxleyNeuron
 Schema-driven models can be checked against committed reference-trace feature
 contracts through `sc_neurocore.neurons.reference_traces`. The current corpus
 covers every deterministic bundled schema model through the package-local
-`UniversalNeuron` runner. `poisson` and `escape_rate` remain outside this
+`UniversalNeuron` runner, including the pinned Wu et al. IQIF source tutorial.
+`poisson` and `escape_rate` remain outside this
 deterministic corpus because their schemas are stochastic. External NEST,
 Brian2, NEURON, and published-figure traces remain separate simulator-backed
 validation surfaces.
@@ -65,7 +66,7 @@ table, validation commands, and external simulator boundary.
 
 ## Extended Model Library (`neurons/models/`)
 
-### Integrate-and-Fire Variants (21)
+### Integrate-and-Fire Variants (27)
 
 | Model | File | Reference |
 |-------|------|-----------|
@@ -89,7 +90,7 @@ table, validation commands, and external simulator boundary.
 | Sigma-Delta | `sigma_delta.py` | Yoon 2017 |
 | TC-LIF | `tc_lif.py` | AAAI 2024 |
 | Benda-Herz | `benda_herz.py` | Benda 2003 |
-| Integer QIF | `iqif.py` | Lo 2021, fixed-point |
+| Integer QIF | `iqif.py` | Wu et al. 2021, piecewise-linear Q0.3 integer soma |
 | Complementary LIF | `clif.py` | ICML 2024, dual paths |
 | K-LIF | `klif.py` | Learnable scaling |
 | Inhibitory LIF | `ilif.py` | 2025, temporal inhibition |

@@ -474,14 +474,34 @@ pub struct PyIntegerQIFNeuron {
 #[pymethods]
 impl PyIntegerQIFNeuron {
     #[new]
-    #[pyo3(signature = (k=6, v_threshold=1024))]
-    fn new(k: i32, v_threshold: i32) -> Self {
-        Self {
-            inner: neurons::IntegerQIFNeuron::new(k, v_threshold),
-        }
+    #[pyo3(signature = (v=128, v_rest=128, v_threshold=200, v_reset=128, a=1, b=1, v_max=255, v_min=0))]
+    #[allow(clippy::too_many_arguments)]
+    fn new(
+        v: i32,
+        v_rest: i32,
+        v_threshold: i32,
+        v_reset: i32,
+        a: i32,
+        b: i32,
+        v_max: i32,
+        v_min: i32,
+    ) -> PyResult<Self> {
+        Ok(Self {
+            inner: neurons::IntegerQIFNeuron::with_parameters(
+                v,
+                v_rest,
+                v_threshold,
+                v_reset,
+                a,
+                b,
+                v_max,
+                v_min,
+            )
+            .map_err(PyValueError::new_err)?,
+        })
     }
-    fn step(&mut self, current: i32) -> i32 {
-        self.inner.step(current)
+    fn step(&mut self, current: i32) -> PyResult<i32> {
+        self.inner.try_step(current).map_err(PyValueError::new_err)
     }
     fn reset(&mut self) {
         self.inner.reset();
@@ -489,6 +509,13 @@ impl PyIntegerQIFNeuron {
     fn get_state(&self, py: Python<'_>) -> PyResult<Py<PyAny>> {
         let d = PyDict::new(py);
         d.set_item("v", self.inner.v)?;
+        d.set_item("v_rest", self.inner.v_rest)?;
+        d.set_item("v_threshold", self.inner.v_threshold)?;
+        d.set_item("v_reset", self.inner.v_reset)?;
+        d.set_item("a", self.inner.a)?;
+        d.set_item("b", self.inner.b)?;
+        d.set_item("v_max", self.inner.v_max)?;
+        d.set_item("v_min", self.inner.v_min)?;
         Ok(d.into_any().unbind())
     }
 }

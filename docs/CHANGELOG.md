@@ -26,10 +26,29 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
   samples, raw timing distributions, parity deltas, runtime versions, hashes,
   affinity, governor, load, and an explicit loaded-host disclosure. It is local
   regression evidence, not a cross-host or exclusive-core performance claim.
-- Reconciled the public formal inventory after the accepted Poisson parent:
-  README, comparison, and tutorial surfaces now report the live 48 proof jobs
-  and 176 statements (146 assert, 7 assume, 23 cover), including the exact
-  18 non-catalogue plus 30 catalogue job split.
+
+### IQIF source-to-silicon closure
+
+- Replaced the unsupported square-law approximation with the exact signed
+  integer recurrence in the Wu et al. (2021) coauthor implementation, pinned
+  to `twetto/iq-neuron` commit
+  `a8752eba49dba9ba43a64be74090b91a51044b2f`. The source is piecewise linear,
+  uses a C++-truncated branch point and Q0.3 arithmetic shift, emits only above
+  `v_max`, hard-resets, and otherwise applies the lower clamp.
+- Added complete-contract Python, Rust-engine, independent Rust-safety, Julia,
+  Go, and Mojo execution with atomic failure semantics and configured-parameter
+  parity. Paired TOML/JSON schemas reproduce the independent 400-tick source
+  trace exactly.
+- Added registered and folded signed-Q32.0 Python-to-Verilog co-simulation and
+  a depth-4 Z3 catalogue job. IQIF relies only on the signed compiler path; the
+  evidence makes no unsigned-mode claim.
+- Added a source-hashed five-backend benchmark with zero trajectory, event, or
+  final-state mismatches. The committed timings are non-exclusive local
+  regression evidence, not a production, cross-host, hardware, or universal
+  speed claim.
+- Expanded the public formal inventory to 49 proof jobs and 179 statements
+  (149 assert, 7 assume, 23 cover), split across 18 non-catalogue and 31
+  catalogue jobs.
 
 ### Poisson source-to-silicon closure
 

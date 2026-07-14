@@ -14,7 +14,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 407
+expected_file_count = 409
 
 [[file]]
 path = "src/sc_neurocore/__init__.py"
@@ -1643,3 +1643,11 @@ rationale = "DOI-backed homogeneous Poisson binary-bin model with seeded replay,
 [[file]]
 path = "src/sc_neurocore/accel/poisson.py"
 rationale = "Typed Rust, Julia, Go, and Mojo loader and execution surface for the complete seeded Poisson contract."
+
+[[file]]
+path = "src/sc_neurocore/neurons/models/iqif.py"
+rationale = "DOI- and source-bound signed-integer IQIF model with exact branch, event, reset, backend, and atomic-state contracts."
+
+[[file]]
+path = "src/sc_neurocore/accel/iqif.py"
+rationale = "Typed Rust, Julia, Go, and Mojo loader and validation surface for the complete signed-integer IQIF contract."

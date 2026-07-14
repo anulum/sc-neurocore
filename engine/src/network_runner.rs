@@ -150,7 +150,7 @@ wrap_i32_input!(
     WrIntegerQIF,
     IntegerQIFNeuron,
     v,
-    IntegerQIFNeuron::new(1, 1000)
+    IntegerQIFNeuron::default()
 );
 
 // Graded/rate output wrappers (threshold at 0.5 for rates, 0.0 for sensory)

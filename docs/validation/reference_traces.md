@@ -8,8 +8,9 @@ tolerances. The production validator loads those JSON entries from the package,
 executes the same `UniversalNeuron` runner used by public schema workflows, and
 reports feature-level mismatches without falling back to another trace.
 
-This page documents the WC-A1 deterministic schema corpus and the separate
-seeded EscapeRate and Poisson statistical references. It does not claim NEST, Brian2,
+This page documents the WC-A1 deterministic schema corpus, the pinned IQIF
+source-implementation trace, and the separate seeded EscapeRate and Poisson
+statistical references. It does not claim NEST, Brian2,
 NEURON, or published-figure replay coverage; those remain separate external-
 simulator validation surfaces.
 
@@ -36,6 +37,7 @@ table rather than deterministic feature rows.
 | `hindmarsh_rose_short_bursting_prefix` | `hindmarsh_rose` | `universal_dsl` | Independent fourth-order Runge-Kutta re-derivation of the driven three-state bursting flow (no reset, rising-edge `x >= 1` crossing) from `neurons/model_schemas/hindmarsh_rose.toml` with DOI-backed schema provenance |
 | `hodgkin_huxley_driven_spiking_doi` | `hodgkin_huxley` | `universal_dsl` | Independent macro-step RK4 re-derivation of the driven repetitive-spiking membrane (100 inner `dt=0.01` sub-steps per 1 ms macro step, no reset, macro-boundary `v >= 0` crossing) from `neurons/model_schemas/hodgkin_huxley.toml` with DOI-backed schema provenance |
 | `ibarz_tanaka_map_2007_doi` | `ibarz_tanaka_map` | `universal_dsl` | Independent simultaneous iteration of Ibarz et al. (2007), Eqs. 2–3 (four fast branches, slow `u` update, source reset-branch event), without importing the hand model or schema expressions |
+| `iqif_a8752eb_tutorial` | `iqif` | `universal_dsl` | Independent literal iteration of the pinned `twetto/iq-neuron@a8752eba49` C++ tutorial: C++-truncated branch point, Q0.3 arithmetic shift, strict upper event, hard reset, and lower clamp; DOI and both source-file hashes are pinned |
 | `izhikevich_regular_spiking_doi` | `izhikevich` | `universal_dsl` | Independent explicit-Euler re-derivation of the regular-spiking equations from `neurons/model_schemas/izhikevich.toml` with DOI-backed schema provenance |
 | `izhikevich2007_regular_spiking_doi` | `izhikevich2007` | `universal_dsl` | Independent explicit-Euler re-derivation of the biophysical quadratic equations from `neurons/model_schemas/izhikevich2007.toml` with DOI-backed schema provenance |
 | `lif_constant_current_closed_form` | `lif` | `universal_dsl` | Closed-form RC solution from `neurons/model_schemas/lif.toml` |
@@ -99,7 +101,7 @@ not a deterministic scalar-feature trace or an external-simulator claim.
 
 All entries record spike count, first spike step, and final/min/max/mean
 features for the declared state variables. The tests independently recompute the
-LIF, QIF, perfect-integrator, resonate-fire, theta, Ermentrout-Kopell theta-Euler, GLIF, Izhikevich, Cazelles map, Chialvo map, Ibarz-Tanaka map, Medvedev map, Courbage-Nekorkin map,
+LIF, QIF, IQIF, perfect-integrator, resonate-fire, theta, Ermentrout-Kopell theta-Euler, GLIF, Izhikevich, Cazelles map, Chialvo map, Ibarz-Tanaka map, Medvedev map, Courbage-Nekorkin map,
 Izhikevich 2007, FitzHugh-Nagumo, FitzHugh-Rinzel, Pernarowski, Terman-Wang, Wilson-HR, McKean, Lapicque, AdEx, exponential-IF,
 Hindmarsh-Rose, Morris-Lecar,
 Hodgkin-Huxley, Connor-Stevens, Wang-Buzsaki, DPI, and Mihalas-Niebur analytic,

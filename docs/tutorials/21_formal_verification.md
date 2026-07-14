@@ -4,7 +4,7 @@
 
 Formal verification proves that hardware properties hold for **all
 possible inputs**, not just a finite test set. SC-NeuroCore currently ships
-48 SymbiYosys proof jobs and 176 formal statements (146 assert, 7 assume,
+49 SymbiYosys proof jobs and 179 formal statements (149 assert, 7 assume,
 23 cover) across the HDL formal tree.
 
 **Prerequisites**: [SymbiYosys](https://symbiyosys.readthedocs.io/),
@@ -24,13 +24,13 @@ The current inventory is:
 
 | Inventory | Count |
 |-----------|------:|
-| SymbiYosys `.sby` proof jobs | 48 |
-| `assert(...)` statements | 146 |
+| SymbiYosys `.sby` proof jobs | 49 |
+| `assert(...)` statements | 149 |
 | `assume(...)` statements | 7 |
 | `cover(...)` statements | 23 |
-| Total formal statements | 176 |
+| Total formal statements | 179 |
 
-**Total: 48 SymbiYosys proof jobs and 176 formal statements (146 assert, 7 assume, 23 cover).**
+**Total: 49 SymbiYosys proof jobs and 179 formal statements (149 assert, 7 assume, 23 cover).**
 
 The larger proof-job set covers the original stochastic-computing RTL blocks
 plus timing, masking, controller, queue, and sensor wrappers added after the
@@ -66,6 +66,14 @@ quantises to zero in Q8.8. Its depth-4 Z3 job is:
 
 ```bash
 sby -f sc_ibarz_tanaka_rulkov_map.sby
+```
+
+The IQIF job uses signed Q32.0 because its enrolled contract is exact integer
+arithmetic rather than a fractional fixed-point approximation. It bounds reset,
+spike, and signed-state safety at depth 4:
+
+```bash
+sby -f sc_integerqifneuron.sby
 ```
 
 ## 3. Anatomy of a formal wrapper

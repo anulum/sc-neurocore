@@ -51,6 +51,7 @@ SCHEMA_TO_CLASS: dict[str, str] = {
     "glif": "GLIFNeuron",
     "hindmarsh_rose": "HindmarshRoseNeuron",
     "hodgkin_huxley": "HodgkinHuxleyNeuron",
+    "iqif": "IntegerQIFNeuron",
     "izhikevich": "Izhikevich2007Neuron",
     "izhikevich2007": "Izhikevich2007Neuron",
     "lapicque": "LapicqueNeuron",

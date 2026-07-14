@@ -1,0 +1,42 @@
+{
+  "schema_version": "sc-neurocore.reference-trace.v1",
+  "name": "iqif_a8752eb_tutorial",
+  "model": {
+    "schema_name": "iqif",
+    "runner": "universal_dsl"
+  },
+  "protocol": {
+    "dt": 1.0,
+    "steps": 400,
+    "inputs": {
+      "I": 10
+    },
+    "state_variables": [
+      "v"
+    ]
+  },
+  "provenance": {
+    "kind": "source_implementation_reference",
+    "source": "https://github.com/twetto/iq-neuron/blob/a8752eba49dba9ba43a64be74090b91a51044b2f/src/iq_neuron.cpp",
+    "equation": "Pinned 2021 C++ recurrence: f=a*(rest-v) below trunc((b*threshold+a*rest)/(a+b)), otherwise f=b*(v-threshold); v += (f>>3)+I with noise=0; emit and reset when v>255, otherwise clamp to 0.",
+    "citation": "doi:10.1109/AICAS51828.2021.9458572",
+    "source_commit": "a8752eba49dba9ba43a64be74090b91a51044b2f",
+    "source_cpp_sha256": "1c7fb3184a82a1fdd8a2c29a7420da62987fce953bf8ce33a5b08fea2f880b99",
+    "source_header_sha256": "4beac58c1685cb19332ec6067bfa5eb2ce3c15d9196ba6ddd6aaa2ca608f9de1",
+    "oracle_text_sha256": "57c6916aac726033546610a2e784a22cf5b57d70657779abc7269510e9e64bf3"
+  },
+  "expected_features": {
+    "spike_count": 26.0,
+    "first_spike_step": 15.0,
+    "final.v": 198.0,
+    "min.v": 128.0,
+    "max.v": 242.0,
+    "mean.v": 179.76
+  },
+  "tolerances": {
+    "default": {
+      "absolute": 0.0,
+      "relative": 0.0
+    }
+  }
+}

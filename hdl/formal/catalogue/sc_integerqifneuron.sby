@@ -1,0 +1,18 @@
+# SymbiYosys job for catalogue model sc_integerqifneuron
+# Dual-axis perfect model formal (BMC)
+
+[options]
+mode bmc
+depth 4
+
+[engines]
+smtbmc z3
+
+[script]
+read -formal sc_integerqifneuron_formal.v
+read -formal sc_integerqifneuron.v
+prep -top sc_integerqifneuron_formal
+
+[files]
+sc_integerqifneuron_formal.v
+sc_integerqifneuron.v

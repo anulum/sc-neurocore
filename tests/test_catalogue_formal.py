@@ -153,6 +153,29 @@ def test_poisson_formal_job_supports_a_stateless_seeded_q2424_module() -> None:
     assert ports.bit_outputs == ("spike_out",)
 
 
+def test_iqif_formal_job_uses_bit_true_q320_precision() -> None:
+    """Keep the IQIF formal job on its exact signed-integer datapath."""
+    import importlib.util
+
+    name = "emit_catalogue_formal_iqif_precision"
+    spec = importlib.util.spec_from_file_location(name, EMITTER)
+    assert spec is not None and spec.loader is not None
+    module = importlib.util.module_from_spec(spec)
+    sys.modules[name] = module
+    spec.loader.exec_module(module)
+
+    assert module.CLASS_TO_SCHEMA["IntegerQIFNeuron"] == "iqif"
+    assert module.PRECISION_BY_SCHEMA["iqif"] == (32, 0)
+    assert module.DEPTH_BY_SCHEMA["iqif"] == 4
+    assert "iqif" not in module.MINIMAL_SAFETY_SCHEMAS
+    ports = module._parse_module_ports(
+        (CATALOGUE / "sc_integerqifneuron.v").read_text(encoding="utf-8")
+    )
+    assert ports.primary_state == "v_out"
+    assert ports.signed_outputs == ("v_out",)
+    assert ports.bit_outputs == ("spike_out",)
+
+
 def test_catalogue_formal_inventory_matches_perfect_count() -> None:
     """Committed catalogue jobs equal the number of dual-axis perfect models."""
     sby_jobs = sorted(CATALOGUE.glob("*.sby"))
@@ -185,6 +208,7 @@ def test_catalogue_formal_rtl_is_equation_compiler_output() -> None:
         "sc_perfect_integrator.sby",
         "sc_quadratic_if.sby",
         "sc_dpineuron.sby",
+        "sc_integerqifneuron.sby",
         "sc_poissonneuron.sby",
     ],
 )

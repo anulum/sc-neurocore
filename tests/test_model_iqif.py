@@ -4,220 +4,235 @@
 # © Code 2020–2026 Miroslav Šotek. All rights reserved.
 # ORCID: 0009-0009-3560-0851
 # Contact: www.anulum.li | protoscience@anulum.li
-# SC-NeuroCore — End-to-end test: IntegerQIFNeuron
+# SC-NeuroCore — Source-faithful Wu et al. 2021 IQIF model contracts
 
-"""Full pipeline test for IntegerQIFNeuron (Lo et al. 2021).
-
-Fixed-point quadratic integrate-and-fire, all integer arithmetic:
-V[t+1] = max(V_min, V[t] + (V[t]² >> k) + I)
-Spike: V → V_reset when V ≥ V_threshold.
-
-V: int, k=6 (right-shift for V²), V_threshold=1024, V_reset=-1024.
-V_min=-2048 (clipping). >> operator requires integer operands.
-Population.step_all passes float → TypeError documented.
-FULL PIPELINE WIRED (isolation only) + PERFORMANCE."""
+"""Exact state, validation, reset, batch, and dynamics tests for IQIF."""
 
 from __future__ import annotations
 
-import time
-import os
+import dataclasses
+from typing import cast
 
 import numpy as np
 import pytest
 
 from sc_neurocore.neurons.models.iqif import IntegerQIFNeuron
-from sc_neurocore.network.population import Population
-from sc_neurocore.network.monitor import SpikeMonitor
-from sc_neurocore.network.stimulus import PoissonInput
-from sc_neurocore.network.network import Network
-from sc_neurocore.analysis.spike_stats.basic import spike_count
 
 
-def _run(neuron: IntegerQIFNeuron, current: int, steps: int) -> list[int]:
-    return [t for t in range(steps) if neuron.step(current) == 1]
+def _trace(neuron: IntegerQIFNeuron, steps: int, current: int) -> tuple[list[int], list[int]]:
+    values: list[int] = []
+    spikes: list[int] = []
+    for index in range(steps):
+        if neuron.step(current):
+            spikes.append(index)
+        values.append(neuron.v)
+    return values, spikes
 
 
-# ---------------------------------------------------------------------------
-# 1. ISOLATION
-# ---------------------------------------------------------------------------
-class TestIQIFIsolation:
-    def test_defaults(self):
-        n = IntegerQIFNeuron()
-        assert n.v == 0 and n.k == 6
-        assert n.v_threshold == 1024 and n.v_reset == -1024
-        assert n.v_min == -2048
-
-    def test_integer_state(self):
-        """V is integer — hardware constraint."""
-        n = IntegerQIFNeuron()
-        n.step(100)
-        assert isinstance(n.v, int)
-
-    def test_step_returns_binary(self):
-        assert IntegerQIFNeuron().step(100) in (0, 1)
-
-    def test_reset_restores_default(self):
-        n = IntegerQIFNeuron()
-        for _ in range(100):
-            n.step(100)
-        n.reset()
-        assert n.v == 0
-
-    def test_deterministic(self):
-        traces = []
-        for _ in range(2):
-            n = IntegerQIFNeuron()
-            trace = [(n.step(100), n.v) for _ in range(200)]
-            traces.append(trace)
-        assert traces[0] == traces[1]
+def test_defaults_and_branch_point_match_pinned_source() -> None:
+    """The public constructor is the 2021 repository tutorial contract."""
+    neuron = IntegerQIFNeuron()
+    assert dataclasses.is_dataclass(neuron)
+    assert (
+        neuron.v,
+        neuron.v_rest,
+        neuron.v_threshold,
+        neuron.v_reset,
+        neuron.a,
+        neuron.b,
+        neuron.v_max,
+        neuron.v_min,
+    ) == (128, 128, 200, 128, 1, 1, 255, 0)
+    assert neuron.branch_point == 164
+    assert neuron.dt == 1.0
+    assert neuron.SLOPE_FRACTION_BITS == 3
 
 
-# ---------------------------------------------------------------------------
-# 2. ANALYTICAL — integer arithmetic, right-shift, clipping
-# ---------------------------------------------------------------------------
-class TestIQIFAnalytical:
-    def test_update_formula(self):
-        """V = max(V_min, V + (V² >> k) + I)."""
-        n = IntegerQIFNeuron()
-        v0 = n.v  # 0
-        I = 100
-        expected = max(n.v_min, v0 + (v0 * v0 >> n.k) + I)
-        n.step(I)
-        assert n.v == expected
-
-    def test_right_shift_is_integer_divide(self):
-        """V² >> 6 = V² // 64."""
-        v = 100
-        assert (v * v >> 6) == (v * v // 64)
-
-    def test_quadratic_acceleration(self):
-        """V² term: larger V → faster growth (positive feedback)."""
-        n = IntegerQIFNeuron()
-        n.v = 10
-        v1 = n.v + (n.v * n.v >> n.k) + 0  # at V=10: 10 + (100>>6) = 10+1=11
-        n2 = IntegerQIFNeuron()
-        n2.v = 100
-        v2 = n2.v + (n2.v * n2.v >> n2.k) + 0  # at V=100: 100 + (10000>>6) = 100+156=256
-        assert v2 - 100 > v1 - 10
-
-    def test_v_min_clipping(self):
-        """V clipped to V_min=-2048."""
-        n = IntegerQIFNeuron()
-        n.v = -2000
-        n.step(-1000)  # would go below V_min
-        assert n.v >= n.v_min
-
-    def test_spike_reset(self):
-        """On V ≥ threshold: V → V_reset."""
-        n = IntegerQIFNeuron()
-        for _ in range(10_000):
-            if n.step(100) == 1:
-                assert n.v == n.v_reset
-                break
-
-    def test_requires_integer_input(self):
-        """>> operator requires int. Float contamination → TypeError."""
-        n = IntegerQIFNeuron()
-        n.step(100.5)  # v becomes float (0 + 0 + 100.5 = 100.5)
-        with pytest.raises(TypeError):
-            n.step(100)  # now v*v is float, float >> 6 → TypeError
+def test_source_tutorial_trace_is_exact() -> None:
+    """The 400-tick source tutorial has its exact 15-step orbit and features."""
+    values, spike_indices = _trace(IntegerQIFNeuron(), 400, 10)
+    assert values[:15] == [
+        138,
+        146,
+        153,
+        159,
+        165,
+        170,
+        176,
+        183,
+        190,
+        198,
+        207,
+        217,
+        229,
+        242,
+        128,
+    ]
+    assert spike_indices == list(range(14, 400, 15))
+    assert len(spike_indices) == 26
+    assert (min(values), max(values), values[-1], sum(values)) == (128, 242, 198, 71_904)
+    assert sum(values) / len(values) == 179.76
 
 
-# ---------------------------------------------------------------------------
-# 3. DYNAMICS
-# ---------------------------------------------------------------------------
-class TestIQIFDynamics:
-    def test_fires_with_positive_input(self):
-        n = IntegerQIFNeuron()
-        spikes = _run(n, current=100, steps=5000)
-        assert len(spikes) >= 10
+def test_piecewise_force_uses_pre_step_state_and_arithmetic_q03_shift() -> None:
+    """Both restoring-force branches use the source's signed arithmetic shift."""
+    lower = IntegerQIFNeuron(v=150)
+    assert lower.branch_point == 164
+    assert lower.step(0) == 0
+    assert lower.v == 147  # 150 + ((128 - 150) >> 3)
 
-    def test_rate_monotonic(self):
-        s_low = len(_run(IntegerQIFNeuron(), 50, 5000))
-        s_high = len(_run(IntegerQIFNeuron(), 500, 5000))
-        assert s_high >= s_low
+    upper = IntegerQIFNeuron(v=201)
+    assert upper.step(0) == 0
+    assert upper.v == 201  # (201 - 200) >> 3 == 0
 
-    @pytest.mark.parametrize("current", [10, 50, 100, 200, 500])
-    def test_fi_sweep(self, current: int):
-        n = IntegerQIFNeuron()
-        for _ in range(5000):
-            n.step(current)
-        assert isinstance(n.v, int)
-
-    def test_silent_at_zero(self):
-        """V=0, I=0: V² >> 6 = 0 → V stays 0."""
-        n = IntegerQIFNeuron()
-        assert len(_run(n, current=0, steps=1000)) == 0
+    upper.v = 208
+    assert upper.step(0) == 0
+    assert upper.v == 209  # (208 - 200) >> 3 == 1
 
 
-# ---------------------------------------------------------------------------
-# 4. PARAMETERS
-# ---------------------------------------------------------------------------
-class TestIQIFParameters:
-    @pytest.mark.parametrize("k", [4, 6, 8])
-    def test_k_shift_sweep(self, k: int):
-        n = IntegerQIFNeuron(k=k)
-        for _ in range(5000):
-            n.step(100)
-        assert isinstance(n.v, int)
-
-    @pytest.mark.parametrize("v_threshold", [512, 1024, 2048])
-    def test_threshold_sweep(self, v_threshold: int):
-        n = IntegerQIFNeuron(v_threshold=v_threshold)
-        spikes = len(_run(n, current=100, steps=5000))
-        assert isinstance(spikes, int)
-
-
-# ---------------------------------------------------------------------------
-# 5. PERFORMANCE
-# ---------------------------------------------------------------------------
-class TestIQIFPerformance:
-    def test_isolation_throughput(self):
-        n = IntegerQIFNeuron()
-        N = 500_000
-        t0 = time.perf_counter()
-        for _ in range(N):
-            n.step(100)
-        elapsed = time.perf_counter() - t0
-        rate = N / elapsed
-        min_rate = 400_000 if os.getenv("CI") else 500_000
-        assert rate > min_rate, f"isolation: {rate:.0f} steps/s, minimum={min_rate}"
+def test_branch_point_uses_cpp_truncation_not_python_floor() -> None:
+    """A negative non-integral numerator truncates toward zero like C++."""
+    neuron = IntegerQIFNeuron(
+        v=-20,
+        v_rest=-20,
+        v_threshold=11,
+        v_reset=-20,
+        a=2,
+        b=1,
+        v_max=100,
+        v_min=-100,
+    )
+    assert (neuron.b * neuron.v_threshold + neuron.a * neuron.v_rest) == -29
+    assert neuron.branch_point == -9
+    assert -29 // 3 == -10
 
 
-# ---------------------------------------------------------------------------
-# 6. PIPELINE (isolation + incompatibility documented)
-# ---------------------------------------------------------------------------
-class TestIQIFPipeline:
-    def test_population_creates(self):
-        assert Population(IntegerQIFNeuron, n=5, label="iqif").n == 5
+def test_spike_boundary_is_strict_and_reset_is_hard() -> None:
+    """A candidate equal to v_max survives; v_max+1 emits and hard-resets."""
+    equal = IntegerQIFNeuron(v=255)
+    assert equal.step(-6) == 0
+    assert equal.v == 255
 
-    def test_network_incompatible(self):
-        """Integer >> on float from Population.step_all → TypeError."""
-        pop = Population(IntegerQIFNeuron, n=5, label="t")
-        drive = PoissonInput(n=5, rate_hz=500.0, weight=100.0, dt=0.001, seed=42)
-        mon = SpikeMonitor(pop)
-        net = Network(pop, drive, mon)
-        with pytest.raises(TypeError):
-            net.run(duration=0.1, dt=0.001, backend="python")
-
-    def test_analysis_isolation(self):
-        n = IntegerQIFNeuron()
-        train = np.array([float(n.step(100)) for _ in range(5000)])
-        sc = spike_count(train)
-        assert sc >= 5
+    above = IntegerQIFNeuron(v=255)
+    assert above.step(-5) == 1
+    assert above.v == above.v_reset == 128
 
 
-# Salvaged model-specific behavioural contracts from retired aggregate test file.
-class TestIntegerQIF:
-    def test_fires(self):
-        from sc_neurocore.neurons.models.iqif import IntegerQIFNeuron
+def test_lower_clamp_and_zero_coefficient_profiles_are_supported() -> None:
+    """The lower bound is inclusive and source burst profiles may set one slope to zero."""
+    neuron = IntegerQIFNeuron(v=0, a=0, b=3)
+    assert neuron.step(-10) == 0
+    assert neuron.v == neuron.v_min == 0
 
-        n = IntegerQIFNeuron()
-        assert sum(n.step(10) for _ in range(200)) > 0
 
-    def test_integer_arithmetic(self):
-        from sc_neurocore.neurons.models.iqif import IntegerQIFNeuron
+@pytest.mark.parametrize(
+    "kwargs",
+    (
+        {"a": -1},
+        {"b": -1},
+        {"a": 0, "b": 0},
+        {"v_min": 128},
+        {"v_rest": 200},
+        {"v_threshold": 255},
+        {"v_reset": 256},
+        {"v": -1},
+        {"v_max": 1 << 31},
+    ),
+)
+def test_constructor_rejects_invalid_contracts(kwargs: dict[str, int]) -> None:
+    """Every ordering, coefficient, state, and width invariant fails closed."""
+    with pytest.raises(ValueError):
+        IntegerQIFNeuron(**kwargs)
 
-        n = IntegerQIFNeuron()
-        n.step(5)
-        assert isinstance(n.v, int)
+
+@pytest.mark.parametrize("value", (True, 10.0, 10.5, "10", object()))
+def test_current_requires_an_exact_integer_without_mutation(value: object) -> None:
+    """No Boolean or Float64 contamination crosses the integer soma boundary."""
+    neuron = IntegerQIFNeuron()
+    before = neuron.v
+    with pytest.raises(ValueError, match="current"):
+        neuron.step(cast(int, value))
+    assert neuron.v == before
+
+
+def test_numpy_integer_is_accepted_and_normalised() -> None:
+    """Integer scalar protocols remain usable without accepting float coercion."""
+    neuron = IntegerQIFNeuron(v=np.int64(128))
+    assert type(neuron.v) is int
+    assert neuron.step(np.int32(10)) == 0
+    assert neuron.v == 138
+
+
+def test_runtime_parameter_corruption_fails_before_state_mutation() -> None:
+    """Public dataclass mutation is revalidated on every state-changing call."""
+    neuron = IntegerQIFNeuron()
+    neuron.a = -1
+    before = neuron.v
+    with pytest.raises(ValueError, match="non-negative"):
+        neuron.step(10)
+    assert neuron.v == before
+
+
+def test_reset_restores_rest_only() -> None:
+    """Reset restores v_rest while preserving all configured parameters."""
+    neuron = IntegerQIFNeuron(
+        v=150,
+        v_rest=100,
+        v_threshold=180,
+        v_reset=140,
+        a=2,
+        b=7,
+        v_max=250,
+        v_min=3,
+    )
+    parameters = (neuron.v_rest, neuron.v_threshold, neuron.v_reset, neuron.a, neuron.b)
+    neuron.reset()
+    assert neuron.v == 100
+    assert (neuron.v_rest, neuron.v_threshold, neuron.v_reset, neuron.a, neuron.b) == parameters
+
+
+def test_python_batch_is_exact_and_commits_final_state() -> None:
+    """The public Python batch returns contiguous int64 state and exact events."""
+    neuron = IntegerQIFNeuron()
+    trace, spikes = neuron.simulate(400, 10, backend="python")
+    assert trace.dtype == np.int64
+    assert trace.flags.c_contiguous
+    assert trace.shape == (400,)
+    assert spikes == 26
+    assert neuron.v == trace[-1] == 198
+
+
+def test_empty_batch_preserves_state() -> None:
+    """Zero ticks allocate no phantom state or event."""
+    neuron = IntegerQIFNeuron(v=150)
+    trace, spikes = neuron.simulate(0, 10, backend="python")
+    assert trace.shape == (0,)
+    assert spikes == 0
+    assert neuron.v == 150
+
+
+@pytest.mark.parametrize("n_steps", (-1, True, 1.0, 1 << 31))
+def test_invalid_batch_length_fails_before_mutation(n_steps: object) -> None:
+    """The public batch has one bounded integer length contract."""
+    neuron = IntegerQIFNeuron()
+    with pytest.raises(ValueError, match="n_steps"):
+        neuron.simulate(cast(int, n_steps), 10)
+    assert neuron.v == 128
+
+
+def test_invalid_backend_fails_before_mutation() -> None:
+    """Unknown dispatch selectors cannot silently fall through to Python."""
+    neuron = IntegerQIFNeuron()
+    with pytest.raises(ValueError, match="backend"):
+        neuron.simulate(1, 10, backend="cuda")
+    assert neuron.v == 128
+
+
+def test_firing_rate_is_monotonic_over_the_source_tutorial_currents() -> None:
+    """The enrolled tonic regime increases event count with integer drive."""
+    counts = []
+    for current in (5, 10, 20, 40):
+        _, spikes = IntegerQIFNeuron().simulate(3_000, current, backend="python")
+        counts.append(spikes)
+    assert counts == sorted(counts)
+    assert len(set(counts)) == len(counts)

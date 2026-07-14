@@ -10,9 +10,9 @@ backend implements that surface.
 > A stricter bar — a model whose whole four-language acceleration chain
 > (`accel/{rust,go,julia,mojo}`) is real and Python-parity-proven — is tracked
 > separately on the [Model Fidelity & Polyglot Status](model_fidelity_status.md)
-> page. Polyglot-complete today (31 models): Wang-Buzsaki, FitzHugh-Nagumo, Morris-Lecar,
+> page. Polyglot-complete today (32 models): Wang-Buzsaki, FitzHugh-Nagumo, Morris-Lecar,
 > Connor-Stevens, Hodgkin-Huxley, AdEx, ExpIF, Lapicque, Perfect Integrator,
-> Quadratic IF, Theta, DPI, COBA LIF, Escape Rate, Poisson, McKean, Hindmarsh-Rose, FitzHugh-Rinzel,
+> Quadratic IF, Theta, DPI, COBA LIF, Escape Rate, Poisson, IQIF, McKean, Hindmarsh-Rose, FitzHugh-Rinzel,
 > Pernarowski, Terman-Wang,
 > Wilson-HR, Rulkov map, GLIF, Mihalas-Niebur, Medvedev map, Cazelles map, Chialvo map, Courbage-Nekorkin map,
 > Izhikevich 2007, Ibarz-Tanaka map, Ermentrout-Kopell. All other models are Python-faithful with their
@@ -101,7 +101,10 @@ PyO3 source declarations, and the built Rust engine when the optional engine is
 installed. Stochastic models without a shared RNG remain binding-covered but
 outside exact spike-train parity. `EscapeRateNeuron` and `PoissonNeuron` are the
 enrolled exceptions: their Python, Rust, Julia, Go, Mojo, schema, and RTL
-surfaces share one explicit seeded LFSR16 event-stream contract. `ChayKeizerNeuron`
+surfaces share one explicit seeded LFSR16 event-stream contract.
+`IntegerQIFNeuron` is the deterministic integer counterpart: every maintained
+runtime and Q32.0 RTL form reproduces the pinned Wu et al. source trajectory
+bit-for-bit. `ChayKeizerNeuron`
 remains an expected parity divergence because the Python model is the
 five-dimensional Chay-Keizer burster while the current Rust kernel is the older
 reduced form.
@@ -174,7 +177,7 @@ raw TOML descriptor.
 | `AdaptiveThresholdIFNeuron` | `AdaptiveThresholdIFNeuron` | Platkiewicz & Brette 2010 |
 | `SigmaDeltaNeuron` | `SigmaDeltaNeuron` | — |
 | `EnergyLIFNeuron` | `EnergyLIFNeuron` | Sengupta et al. 2013 |
-| `IntegerQIFNeuron` | `IntegerQIFNeuron` | — |
+| `IntegerQIFNeuron` | `IntegerQIFNeuron` | Wu et al. 2021, DOI `10.1109/AICAS51828.2021.9458572` |
 | `ClosedFormContinuousNeuron` | `ClosedFormContinuousNeuron` | Hasani et al. 2022 |
 
 ### Simple Spiking (21 models)

@@ -667,13 +667,35 @@ class TestEdgeCaseCoverage:
             with pytest.raises(ValueError, match="Modulo divisor"):
                 compile_to_verilog(neuron)
 
-    def test_unsupported_binop_raises(self) -> None:
-        """Floor division remains outside the synthesizable expression subset."""
+    def test_signed_power_of_two_floor_division_lowers_exactly(self) -> None:
+        """Floor division keeps Python's negative-floor semantics in Q format."""
+        neuron = EquationNeuron(
+            equations={"v": "v // 8"},
+            state={"v": -10.0},
+            dt=1.0,
+            method="map",
+        )
+
+        verilog = compile_to_verilog(neuron, module_name="signed_floor_division")
+
+        assert "_floordiv0_dividend" in verilog
+        assert "$signed(_floordiv0_dividend) >>> 11" in verilog
+        assert "_floordiv0_integer <<< 8" in verilog
+
+    def test_floor_division_rejects_dynamic_or_non_power_of_two_divisors(self) -> None:
+        """The synthesizable floor subset remains literal and shift-only."""
         import pytest
 
-        neuron = EquationNeuron(equations={"v": "v // 2"}, state={"v": 1.0}, dt=0.1)
-        with pytest.raises(ValueError, match="Unsupported binary op"):
-            compile_to_verilog(neuron)
+        for expression in ("v // period", "v // 0", "v // -2", "v // 3", "v // 8.0"):
+            neuron = EquationNeuron(
+                equations={"v": expression},
+                parameters={"period": 8.0},
+                state={"v": 1.0},
+                dt=1.0,
+                method="map",
+            )
+            with pytest.raises(ValueError, match="Floor divisor"):
+                compile_to_verilog(neuron)
 
     def test_chained_comparison_advances_the_left_operand(self) -> None:
         """``a < b <= c`` must lower as ``a < b && b <= c``."""

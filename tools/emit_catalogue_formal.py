@@ -56,6 +56,7 @@ CLASS_TO_SCHEMA: dict[str, str] = {
     "HindmarshRoseNeuron": "hindmarsh_rose",
     "HodgkinHuxleyNeuron": "hodgkin_huxley",
     "IbarzTanakaMapNeuron": "ibarz_tanaka_map",
+    "IntegerQIFNeuron": "iqif",
     "Izhikevich2007Neuron": "izhikevich2007",
     "LapicqueNeuron": "lapicque",
     "McKeanNeuron": "mckean",
@@ -85,6 +86,7 @@ DEPTH_BY_SCHEMA: dict[str, int] = {
     "exp_if": 4,
     "hodgkin_huxley": 4,
     "ibarz_tanaka_map": 4,
+    "iqif": 4,
     "morris_lecar": 3,
     "fitzhugh_nagumo": 4,
     "fitzhugh_rinzel": 4,
@@ -139,6 +141,8 @@ MINIMAL_SAFETY_SCHEMAS: frozenset[str] = frozenset(
 # its active Q16.16 trace does not satisfy the declared event contract.
 # COBA LIF needs Q24.24 to preserve its four-stage RK4 event schedule and
 # four-state co-simulation envelope; Q16.16 adds a refractory residue step.
+# IQIF uses Q32.0 to retain the pinned signed-integer recurrence and its Q0.3
+# arithmetic shift without introducing a fractional rescale.
 DEFAULT_PRECISION = (16, 8)
 PRECISION_BY_SCHEMA: dict[str, tuple[int, int]] = {
     "coba_lif": (48, 24),
@@ -146,6 +150,7 @@ PRECISION_BY_SCHEMA: dict[str, tuple[int, int]] = {
     "escape_rate": (48, 24),
     "exp_if": (64, 32),
     "ibarz_tanaka_map": (32, 16),
+    "iqif": (32, 0),
     "medvedev_map": (32, 16),
     "poisson": (48, 24),
 }

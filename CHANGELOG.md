@@ -17,9 +17,19 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
   observation-wider-than-state regression that pins the bounded Mojo workspace
   repair. The source-bound 25-sample benchmark records all raw data and
   loaded-host limitations without making a universal performance claim.
-- Reconciled the three public formal-inventory claims with the accepted Poisson
-  parent: 48 tracked proof jobs and 176 statements (146 assert, 7 assume,
-  23 cover), split across 18 non-catalogue and 30 catalogue jobs.
+- Expanded the tracked formal inventory with the IQIF catalogue job: 49 proof
+  jobs and 179 statements (149 assert, 7 assume, 23 cover), split across 18
+  non-catalogue and 31 catalogue jobs.
+- Replaced the historical `IntegerQIFNeuron` square-law approximation with the
+  exact piecewise-linear, signed-integer Q0.3 recurrence from the Wu et al.
+  (2021) coauthor implementation pinned at `twetto/iq-neuron` commit
+  `a8752eba49dba9ba43a64be74090b91a51044b2f`.
+- Added atomic full-contract execution through Python, the Rust engine and
+  independent safety module, Julia, Go, and Mojo, plus TOML/JSON schema parity,
+  registered and folded signed-Q32.0 RTL co-simulation, and a depth-4 Z3 job.
+- Added an independently evaluated 400-tick source trace and a source-hashed
+  five-backend benchmark. Its timings are non-exclusive local regression
+  evidence, not production, cross-host, hardware, or universal speed claims.
 - Completed homogeneous Poisson binary-bin generation across the maintained
   Python model and dispatcher, the Rust engine and independent safety module,
   Julia, Go, and Mojo. Every runtime now uses the finite-bin probability

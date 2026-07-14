@@ -1,0 +1,47 @@
+{
+  "metadata": {
+    "schema_version": 1,
+    "name": "IntegerQIFNeuron",
+    "author": "Wu, W.-C.; Yeh, C.-F.; White, A.J.; Wang, C.-T.; Yeh, Z.-W.; Hsieh, C.-C.; Liu, R.-S.; Tang, K.-T.; Lo, C.-C.",
+    "year": 2021,
+    "doi": "10.1109/AICAS51828.2021.9458572",
+    "description": "Piecewise-linear integer integrate-and-fire recurrence with Q0.3 slopes"
+  },
+  "state": {
+    "v": 128
+  },
+  "parameters": {
+    "v_rest": 128,
+    "v_threshold": 200,
+    "v_reset": 128,
+    "a": 1,
+    "b": 1,
+    "v_max": 255,
+    "v_min": 0,
+    "branch_point": 164
+  },
+  "integration": {
+    "dt": 1.0,
+    "method": "map"
+  },
+  "dynamics": {
+    "v": "max(v_min, v + (((a * (v_rest - v)) // 8 if v < branch_point else (b * (v - v_threshold)) // 8) + I))"
+  },
+  "threshold": {
+    "condition": "v > v_max",
+    "detection": "level"
+  },
+  "reset": {
+    "v": "v_reset"
+  },
+  "extensions": {
+    "family": "integrate-and-fire",
+    "model_type": "integer_map",
+    "discrete_time": true,
+    "coefficient_format": "a and b are non-negative Q0.3 numerators; the force is arithmetic-shifted right by three",
+    "branch_point_note": "branch_point is trunc((b*v_threshold+a*v_rest)/(a+b)); overrides of a, b, v_rest or v_threshold must supply the recomputed value",
+    "soma_scope_note": "The schema implements paper Eq. 2. Paper Eq. 3 is a network-level exponential synaptic-current generator and is not hidden inside the soma.",
+    "source_binding": "twetto/iq-neuron commit a8752eba49dba9ba43a64be74090b91a51044b2f, include/iq_neuron.h and src/iq_neuron.cpp; optional noise fixed to zero",
+    "silicon_cosim_note": "Q32.0 preserves all source integers and the complete 400-step tutorial trace exactly."
+  }
+}

@@ -124,6 +124,7 @@ nav:
       - COBA-LIF Fidelity: validation/coba_lif_cosim_fidelity.md
       - EscapeRate Stochastic Fidelity: validation/escape_rate_stochastic_fidelity.md
       - Poisson Stochastic Fidelity: validation/poisson_stochastic_fidelity.md
+      - IQIF Source Fidelity: validation/iqif_source_fidelity.md
       - Conductance Oscillator Co-Simulation Fidelity: validation/conductance_oscillator_cosim_fidelity.md
       - LIF f-I Curve: validation/lif_fi_curve.md
       - Izhikevich 20 Patterns: validation/izhikevich_patterns.md

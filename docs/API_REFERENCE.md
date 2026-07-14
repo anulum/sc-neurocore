@@ -478,6 +478,40 @@ Returns
 
 ---
 
+## Module `accel.iqif`
+
+### Function `ensure_julia_loaded()`
+Load the committed Julia IQIF module when ``juliacall`` is available.
+
+### Function `ensure_go_loaded()`
+Load the staged Go IQIF C-shared library.
+
+### Function `ensure_mojo_loaded()`
+Load the staged Mojo IQIF shared library.
+
+### Function `backend_available(backend)`
+Return whether one public execution lane is ready.
+
+### Function `auto_backend()`
+Choose the first available lane from committed measured evidence.
+
+### Function `normalise_result(trace, spikes, final_v)`
+Reject malformed or lossy backend output before narrowing to int64.
+
+### Function `simulate_rust(v, v_rest, v_threshold, v_reset, a, b, v_max, v_min, n_steps, current)`
+Run the complete contract through the production Rust engine.
+
+### Function `simulate_julia(v, v_rest, v_threshold, v_reset, a, b, v_max, v_min, n_steps, current)`
+Run the complete contract through the committed Julia module.
+
+### Function `simulate_go(v, v_rest, v_threshold, v_reset, a, b, v_max, v_min, n_steps, current)`
+Run the Go recurrence through its generated C ABI.
+
+### Function `simulate_mojo(v, v_rest, v_threshold, v_reset, a, b, v_max, v_min, n_steps, current)`
+Run the Mojo recurrence through its shared-library ABI.
+
+---
+
 ## Module `accel.jax_backend`
 
 ### Function `to_jax(arr)`
@@ -22925,14 +22959,48 @@ Reference: Gerstner, W. et al. (2014). Neuronal Dynamics. Cambridge Univ. Press,
 ## Module `neurons.models.iqif`
 
 ### Class `IntegerQIFNeuron`
-Lo et al. 2021 — fixed-point quadratic integrate-and-fire.
+Wu et al. (2021) piecewise-linear integer QIF soma.
 
-V&#91;t+1&#93; = V&#91;t&#93; + (V&#91;t&#93;^2 >> k) + I, all integer arithmetic.
+Parameters
+----------
+v : int, default=128
+    Live integer membrane state.
+v_rest : int, default=128
+    Resting state and state restored by :meth:`reset`.
+v_threshold : int, default=200
+    Upper piecewise-force reference, not the spike threshold.
+v_reset : int, default=128
+    State committed after a candidate exceeds ``v_max``.
+a, b : int, default=1
+    Non-negative Q0.3 numerator coefficients.  The recurrence applies
+    ``(coefficient * difference) >> 3``.
+v_max, v_min : int, default=255, 0
+    Strict upper event boundary and inclusive lower state clamp.
 
-Reference: Izhikevich, E.M. (2007). Dynamical Systems in Neuroscience. MIT Press, §4.1.
+Notes
+-----
+The branch point is ``trunc((b*v_threshold + a*v_rest)/(a+b))``.
+One step computes the source force from the pre-step state, applies the
+Q0.3 arithmetic shift and current, emits when the candidate is strictly
+greater than ``v_max``, then hard-resets to ``v_reset``.  Otherwise the
+candidate is clamped only at ``v_min``.
 
+References
+----------
+Wu, W.-C., Yeh, C.-F., White, A. J., et al. (2021). Integer Quadratic
+Integrate-and-Fire (IQIF): A Neuron Model for Digital Neuromorphic Systems.
+https://doi.org/10.1109/AICAS51828.2021.9458572
+
+- **__post_init__**()
+  - Normalise and validate the complete source contract.
+- **branch_point**()
+  - Return the source's C++-truncated piecewise boundary.
 - **step**(current)
+  - Advance one integer tick and return a binary spike indicator.
+- **simulate**(n_steps, current, backend)
+  - Return an exact post-step trace through one maintained backend.
 - **reset**()
+  - Restore ``v_rest`` without changing any parameter.
 
 ---
 

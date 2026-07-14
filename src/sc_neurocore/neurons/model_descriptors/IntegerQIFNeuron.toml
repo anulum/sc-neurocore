@@ -8,17 +8,24 @@
 
 [metadata]
 schema_version = 2
-name = "IntegerQIFNeuron"
+name = "Integer QIF"
 class_name = "IntegerQIFNeuron"
 module = "iqif"
-display_name = ""
-summary = "Lo et al. 2021 — fixed-point quadratic integrate-and-fire."
+display_name = "Integer Quadratic Integrate-and-Fire (IQIF)"
+summary = "Wu et al. 2021 piecewise-linear integer neuron with Q0.3 restoring-force coefficients and a strict upper reset boundary."
 family = "Integrate-and-Fire"
 category = "integrate-and-fire"
 biophysical_detail = "point"
-maturity = "experimental"
-intended_use = []
-hardware_fit = []
+maturity = "validated"
+intended_use = [
+    "bit-true digital neuromorphic soma reference",
+    "integer-only firing-rate experiments",
+    "cross-runtime and RTL recurrence validation",
+]
+hardware_fit = [
+    "adder-shifter piecewise-linear soma",
+    "Q32.0 registered and folded RTL",
+]
 behavior_tags = [
     "excitable",
     "rate-coded",
@@ -27,61 +34,116 @@ behavior_tags = [
 
 [provenance]
 authors = [
-    "Wu, T., Yeh, C.-H., Lo, C.-C. et al.",
+    "Wu, W.-C.",
+    "Yeh, C.-F.",
+    "White, A. J.",
+    "Wang, C.-T.",
+    "Yeh, Z.-W.",
+    "Hsieh, C.-C.",
+    "Liu, R.-S.",
+    "Tang, K.-T.",
+    "Lo, C.-C.",
 ]
 year = 2021
 doi = "10.1109/AICAS51828.2021.9458572"
+paper_title = "Integer Quadratic Integrate-and-Fire (IQIF): A Neuron Model for Digital Neuromorphic Systems"
+url = "https://ieeexplore.ieee.org/document/9458572"
 
 [state.v]
-init = 0.0
+init = 128.0
+unit = "integer"
+meaning = "live integer membrane state"
 
-[parameters.k]
-default = 6.0
-unit = "1"
-meaning = "integer curvature (bit-shift) coefficient of the quadratic term"
-range = [
-    1.0,
-    16.0,
-]
+[parameters.v_rest]
+default = 128.0
+unit = "integer"
+meaning = "resting state and public reset target"
+range = [-2147483648.0, 2147483647.0]
 
 [parameters.v_threshold]
-default = 1024.0
-unit = "1"
-meaning = "integer fixed-point membrane level at which a spike is registered"
-range = [
-    1.0,
-    32768.0,
-]
+default = 200.0
+unit = "integer"
+meaning = "upper restoring-force reference; the event boundary is v_max"
+range = [-2147483648.0, 2147483647.0]
 
 [parameters.v_reset]
-default = -1024.0
-unit = "1"
-meaning = "integer fixed-point membrane level reset to after a spike"
-range = [
-    -32768.0,
-    0.0,
-]
+default = 128.0
+unit = "integer"
+meaning = "hard-reset state after a candidate strictly exceeds v_max"
+range = [-2147483648.0, 2147483647.0]
+
+[parameters.a]
+default = 1.0
+unit = "Q0.3 numerator"
+meaning = "non-negative lower-branch restoring-force coefficient divided by eight"
+range = [0.0, 2147483647.0]
+
+[parameters.b]
+default = 1.0
+unit = "Q0.3 numerator"
+meaning = "non-negative upper-branch restoring-force coefficient divided by eight"
+range = [0.0, 2147483647.0]
+
+[parameters.v_max]
+default = 255.0
+unit = "integer"
+meaning = "strict upper candidate boundary for spike emission"
+range = [-2147483648.0, 2147483647.0]
 
 [parameters.v_min]
-default = -2048.0
-unit = "1"
-meaning = "integer fixed-point lower clamp on the membrane level"
-range = [
-    -65536.0,
-    0.0,
-]
+default = 0.0
+unit = "integer"
+meaning = "inclusive lower clamp for non-spiking candidates"
+range = [-2147483648.0, 2147483647.0]
 
 [integration]
-dt = 0.1
-method = "euler"
+dt = 1.0
+method = "map"
 
 [dynamics]
+v = "max(v_min, v + (((a * (v_rest - v)) // 8 if v < 164 else (b * (v - v_threshold)) // 8) + I))"
+branch_point = "trunc((b * v_threshold + a * v_rest) / (a + b)); default 164"
+event = "candidate > v_max; hard reset to v_reset"
 
 [backends.python]
 status = "implemented"
+parity = "exact"
+
+[backends.rust]
+status = "implemented"
+parity = "exact"
+
+[backends.julia]
+status = "implemented"
+parity = "exact"
+
+[backends.go]
+status = "implemented"
+parity = "exact"
+
+[backends.mojo]
+status = "implemented"
+parity = "exact"
 
 [reproducibility]
+reference_config = "{\"n_steps\":400,\"current\":10,\"backend\":\"python\",\"parameters\":\"source tutorial defaults\"}"
+golden_trace_sha256 = "57c6916aac726033546610a2e784a22cf5b57d70657779abc7269510e9e64bf3"
+golden_citation = "doi:10.1109/AICAS51828.2021.9458572; twetto/iq-neuron@a8752eba49dba9ba43a64be74090b91a51044b2f"
 
 [documentation]
 slug = "models/iqif"
-notes = ""
+notes = "The paper's Eq. 2 is a piecewise-linear integer recurrence despite the historical IQIF name. a and b are Q0.3 numerators in the pinned implementation (arithmetic shift by three). Eq. 3 defines a network-level exponential synaptic current; the soma receives I(t). Optional implementation noise is intentionally omitted because the enrolled source tutorial sets it to zero."
+
+[validation]
+dynamics_faithful = true
+metric = "trajectory"
+operating_point = "pinned 2021 source tutorial: v=rest=reset=128, threshold=200, a=b=1, min=0, max=255, current=10, 400 ticks"
+tolerance = "400-state trace, 26 events, first one-based event at 15, final 198, min 128, max 242 and mean 179.76 exact across source oracle, Python, Rust, Julia, Go, Mojo, TOML/JSON DSL and Q32.0 RTL"
+evidence = "tests/test_reference_iqif.py::test_source_trace_and_runtime_features_are_exact"
+
+[silicon]
+compiles = true
+cosim_validated = true
+cosim_evidence = "tests/test_cosim_iqif.py::test_iqif_q320_registered_and_folded_match_source_trace"
+target_tier = "H1"
+terminal_reason = "The integer map has compile-clean registered and folded Q32.0 RTL, exact source-trace co-simulation and bounded catalogue formal safety; higher tiers require synthesis, timing, equivalence and hardware evidence."

@@ -817,7 +817,7 @@
         "tonic"
       ],
       "drivable": true,
-      "result_sha256": "c051b385e8c59d36bdfdfb5b1f3b8ce4910b0cbee69f32c0d818f345df5ee6ab",
+      "result_sha256": "dda15b27d32b8ea3028faea82cf398c1b21a3b7f6b2ad3cb7c815f4741be505d",
       "stochastic": false
     },
     "Izhikevich2007Neuron": {
@@ -1631,7 +1631,7 @@
       "stochastic": false
     }
   },
-  "result_sha256": "c08347f091fe1497f10f7a81e78fb324210c03273a2b4b4d686e28c3ae09aa2e",
+  "result_sha256": "ad5a25af20e14a760584ec39477b65f681ac5aabeb9296d93005eaa454c6c6e3",
   "schema_version": "studio.behavior-probe.v1",
   "sweep": {
     "currents": [
