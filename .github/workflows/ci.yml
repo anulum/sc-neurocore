@@ -196,6 +196,14 @@ jobs:
           cp crates/autonomous_learning/target/release/libautonomous_learning.so \
              src/sc_neurocore/_native/libautonomous_learning.so
 
+      # Bootstrap juliacall's Julia ONCE, serially, before the parallel pytest
+      # run. On first import juliacall's juliapkg installs + precompiles Julia
+      # into the shared ~/.julia depot; under `pytest -n auto` several xdist
+      # workers hit that lazily at once, race on the depot and OOM ("node down").
+      # Warming it here means the workers reuse the ready depot.
+      - name: Warm up juliacall (Julia depot)
+        run: python -c "import juliacall; juliacall.Main.seval('1+1')"
+
       - name: Test + coverage
         shell: bash
         run: |
