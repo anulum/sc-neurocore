@@ -7,6 +7,7 @@
 // SC-NeuroCore — Spike train analysis (Rust engine)
 
 pub mod basic;
+pub(crate) mod bindings;
 pub mod causality;
 pub mod correlation;
 pub mod decoding;
