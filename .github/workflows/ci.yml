@@ -155,11 +155,22 @@ jobs:
 
       # Mojo toolchain via pixi (accel/mojo/pixi.toml, public MAX conda channel)
       # so test_*_backends.py `mojo build --emit shared-lib` builds succeed.
-      # activate-environment puts the pixi env `mojo` on PATH. TIER 0, not skips.
+      # NOT activate-environment: that prepends the pixi env's Python to PATH and
+      # shadows the CI setup-python, breaking every later `python`/`pip` step.
+      # Instead expose only `mojo` via a wrapper that delegates to `pixi run`,
+      # keeping the CI Python primary. TIER 0: real Mojo builds, not skips.
       - uses: prefix-dev/setup-pixi@a09b6247153796b190642a2b53fac4241043cf6f # v0.10.0
         with:
           manifest-path: src/sc_neurocore/accel/mojo/pixi.toml
-          activate-environment: true
+
+      - name: Expose mojo without shadowing the CI Python
+        run: |
+          sudo tee /usr/local/bin/mojo >/dev/null <<SH
+          #!/usr/bin/env bash
+          exec pixi run --manifest-path "$GITHUB_WORKSPACE/src/sc_neurocore/accel/mojo/pixi.toml" mojo "\$@"
+          SH
+          sudo chmod +x /usr/local/bin/mojo
+          mojo --version
 
       - name: Install HDL simulator
         run: |
