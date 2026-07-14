@@ -38,7 +38,7 @@ Current documented mirrors:
 | `safety/analysis.rs` | `studio.analysis` | Rust unit tests plus `tests/test_studio_analysis.py` |
 | `safety/dna_mapper.rs` | `bridges.dna_mapper` | 6 standalone Rust tests plus 316 focused Python/consumer tests |
 | `safety/l7_symbolic.rs` | `scpn.layers.l7_symbolic` | Rust unit tests plus L7 and cross-layer contract tests |
-| `safety/predictive_model.rs` | `world_model.predictive_model` | Rust unit tests plus 77 passed predictive-model tests, with 3 optional-path skips |
+| `safety/predictive_model.rs` | `world_model.predictive_model` | Rust unit tests plus dedicated Python filter, smoother, EM, backend, architecture, and benchmark contracts |
 
 Safety-evidence report assembly is not an acceleration kernel. Former
 safety_cert Rust, Julia, Go, and Mojo files were generated scaffolds without a
@@ -51,6 +51,37 @@ Cargo command:
 ```bash
 cargo test --manifest-path src/sc_neurocore/accel/rust/Cargo.toml --lib --no-default-features
 ```
+
+## Optional LGSSM forward-filter runtimes
+
+The predictive-model forward filter is a maintained optional polyglot surface,
+not an inferred mirror. `KalmanFilter.filter` names and validates each runtime
+explicitly:
+
+| Backend | Runtime boundary | Source |
+|---|---|---|
+| Mojo | raw-address C ABI | `mojo/world_model/lgssm.mojo` |
+| Go | typed-pointer C ABI | `go/lgssm/lgssm.go` |
+| Rust | PyO3 engine | `engine/src/lgssm.rs` |
+| Julia | `juliacall` | `julia/world_model/predictive_model.jl` |
+| Python | NumPy fallback | `world_model/_lgssm_filter.py` |
+
+Automatic dispatch follows the source-bound availability and initialisation
+policy Mojo, Go, Rust, Julia, then Python. Rust precedes the lazily initialised
+Julia runtime even when Julia's warm median is lower. An explicit missing
+backend raises rather than silently selecting another language. All returned
+moments cross the same finite shape, symmetry, covariance, and likelihood
+validation boundary.
+
+The Mojo gain workspace is dimensioned `d x p` and its row-wise solve is
+covered for `p > d`; the five-backend regression uses `d = 1, p = 3` to guard
+the native buffer boundary as well as numerical parity.
+
+RTS smoothing and EM learning are Python-only responsibilities. The
+[predictive-model page](world_model/predictive_model.md) documents the
+mathematics and evidence boundary; `benchmarks/results/bench_predictive_model.json`
+contains raw timing samples, parity deltas, source hashes, binary hashes, host
+load, and isolation disclosure.
 
 ## Backend Selector
 

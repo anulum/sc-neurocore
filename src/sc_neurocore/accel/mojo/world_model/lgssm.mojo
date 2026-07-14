@@ -189,12 +189,10 @@ fn kalman_filter_c(
     var y_hat = _alloc(p_dim)
     var innov = _alloc(p_dim)
     var S_mat = _alloc(p_dim * p_dim)
-    var P_C_T = _alloc(d_dim * p_dim)        # P_pred · C^T
-    var K_gain = _alloc(d_dim * p_dim)        # K = P_C_T · S^{-1}
+    var K_gain = _alloc(d_dim * p_dim)        # K = (P_pred · C^T) · S^{-1}
     var I_minus_KC = _alloc(d_dim * d_dim)
     var tmp_dd = _alloc(d_dim * d_dim)        # scratch (d × d)
     var tmp_dp = _alloc(d_dim * p_dim)        # scratch (d × p)
-    var tmp_pp = _alloc(p_dim * p_dim)        # scratch (p × p)
     var s_inv_innov = _alloc(p_dim)
     var s_inv_col = _alloc(p_dim)              # column of S^{-1} during K solve
 
@@ -254,9 +252,9 @@ fn kalman_filter_c(
         if chol_status != 0:
             log_lik[0] = nan[DType.float64]()
             _free(x_pred); _free(P_pred); _free(x_filt); _free(P_filt)
-            _free(y_hat); _free(innov); _free(S_mat); _free(P_C_T)
+            _free(y_hat); _free(innov); _free(S_mat)
             _free(K_gain); _free(I_minus_KC); _free(tmp_dd); _free(tmp_dp)
-            _free(tmp_pp); _free(s_inv_innov); _free(s_inv_col)
+            _free(s_inv_innov); _free(s_inv_col)
             return
 
         # log |S| = 2 sum log diag(L)
@@ -278,15 +276,8 @@ fn kalman_filter_c(
 
         # K = P_pred * C^T * S^{-1}
         # We already have tmp_dp = P_pred * C^T  (d × p).
-        # Compute K column-by-column: for each col j of K,
-        # solve S * K[:,j] = tmp_dp[:,j]  → K[:,j] = S^{-1} tmp_dp[:,j]
-        for j in range(p_dim):
-            for i in range(p_dim):
-                s_inv_col[i] = tmp_dp[i * p_dim + j]
-            # Wait — tmp_dp is (d × p), not (p × p).  We want K[i,j] for
-            # i ∈ [0,d).  Use the fact that K[i,j] = sum_k tmp_dp[i,k] * S^{-1}[k,j].
-            # Easier: compute each ROW of K via two triangular solves on
-            # the row of tmp_dp.
+        # S is symmetric, so solve one transposed row of P_pred * C^T at
+        # a time: S * K[i,:]^T = (P_pred * C^T)[i,:]^T.
         for i in range(d_dim):
             for k in range(p_dim):
                 s_inv_col[k] = tmp_dp[i * p_dim + k]
@@ -356,6 +347,6 @@ fn kalman_filter_c(
 
     # Free working buffers
     _free(x_pred); _free(P_pred); _free(x_filt); _free(P_filt)
-    _free(y_hat); _free(innov); _free(S_mat); _free(P_C_T)
+    _free(y_hat); _free(innov); _free(S_mat)
     _free(K_gain); _free(I_minus_KC); _free(tmp_dd); _free(tmp_dp)
-    _free(tmp_pp); _free(s_inv_innov); _free(s_inv_col)
+    _free(s_inv_innov); _free(s_inv_col)

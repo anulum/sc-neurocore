@@ -36852,6 +36852,198 @@ Generates a standalone HTML file to visualize the SC Network.
 
 ---
 
+## Module `world_model._lgssm_backends`
+
+### Function `probe_backend(backend)`
+Return runtime availability and a precise unavailability reason.
+
+### Function `resolve_backend(backend)`
+Resolve an explicit or fastest-first automatic backend selection.
+
+### Function `filter_native(backend, model, observations, controls)`
+Execute a resolved non-Python backend with validated float64 buffers.
+
+---
+
+## Module `world_model._lgssm_em`
+
+### Class `EMLearner`
+Estimate selected LGSSM parameters by expectation-maximisation.
+
+Parameters
+----------
+max_iter : int, default=50
+    Positive maximum number of E/M iterations.
+tol : float, default=1e-4
+    Non-negative absolute log-likelihood convergence threshold.
+
+Notes
+-----
+The M-step updates ``A``, ``C``, ``Q``, ``R``, ``mu_0``, and
+``Sigma_0``. ``B`` and ``D`` are treated as known, but their control
+contributions are subtracted from the transition and observation
+sufficient statistics as required by Shumway and Stoffer (1982).
+
+Raises
+------
+ValueError
+    If ``max_iter`` or ``tol`` is outside its documented domain.
+
+- **__init__**(max_iter, tol)
+- **fit**(observations, initial_model, controls, backend)
+  - Estimate model parameters from one observation sequence.
+
+---
+
+## Module `world_model._lgssm_filter`
+
+### Class `KalmanFilter`
+Forward Kalman filter for a linear Gaussian state-space model.
+
+Parameters
+----------
+model : LinearGaussianSSM
+    Validated model parameters shared by the Python and native paths.
+
+- **__init__**(model)
+- **filter**(observations, controls, backend)
+  - Filter an observation sequence.
+
+---
+
+## Module `world_model._lgssm_smoothing`
+
+### Class `RTSSmoother`
+Rauch-Tung-Striebel backward smoother.
+
+Parameters
+----------
+model : LinearGaussianSSM
+    Model used to produce the corresponding forward-filter result.
+
+Notes
+-----
+The recursion follows Rauch, Tung, and Striebel (1965). The returned
+lag-one covariance is oriented as ``Cov&#91;x_t, x_{t+1} | y&#93;``.
+
+- **__init__**(model)
+- **smooth**(filter_result)
+  - Smooth every state in a validated forward-filter result.
+
+---
+
+## Module `world_model._lgssm_types`
+
+### Class `LinearGaussianSSM`
+Parameters of a discrete-time linear Gaussian state-space model.
+
+Parameters
+----------
+A : numpy.ndarray, shape (d, d)
+    State-transition matrix.
+B : numpy.ndarray, shape (d, m)
+    Control-input matrix. Use an empty second dimension when ``m = 0``.
+C : numpy.ndarray, shape (p, d)
+    Observation matrix.
+D : numpy.ndarray, shape (p, m)
+    Direct control-to-observation matrix.
+Q : numpy.ndarray, shape (d, d)
+    Symmetric positive-semidefinite process covariance.
+R : numpy.ndarray, shape (p, p)
+    Symmetric positive-definite observation covariance.
+mu_0 : numpy.ndarray, shape (d,)
+    Prior state mean.
+Sigma_0 : numpy.ndarray, shape (d, d)
+    Symmetric positive-definite prior covariance.
+
+Raises
+------
+ValueError
+    If a parameter has an incompatible shape, non-finite value, or invalid
+    covariance contract.
+
+- **__post_init__**()
+  - Copy parameters into finite, C-contiguous float64 arrays and validate them.
+- **state_dim**()
+  - Return the latent-state dimension ``d``.
+- **obs_dim**()
+  - Return the observation dimension ``p``.
+- **control_dim**()
+  - Return the control-input dimension ``m``.
+- **random**(cls, state_dim, obs_dim, control_dim, seed)
+  - Construct a stable random model for initialisation and examples.
+
+### Class `FilterResult`
+Forward-filter posterior and one-step prediction moments.
+
+Parameters
+----------
+means : numpy.ndarray, shape (T, d)
+    Filtered state means.
+covariances : numpy.ndarray, shape (T, d, d)
+    Filtered state covariances.
+pred_means : numpy.ndarray, shape (T, d)
+    One-step predicted state means before observing each sample.
+pred_covariances : numpy.ndarray, shape (T, d, d)
+    One-step predicted state covariances.
+log_likelihood : float
+    Sequence log-likelihood under the model.
+
+- **__post_init__**()
+  - Validate result shapes, finiteness, symmetry, and covariance signs.
+
+### Class `SmoothResult`
+Rauch-Tung-Striebel smoothed state moments.
+
+Parameters
+----------
+means : numpy.ndarray, shape (T, d)
+    Smoothed state means.
+covariances : numpy.ndarray, shape (T, d, d)
+    Smoothed state covariances.
+cross_covariances : numpy.ndarray, shape (T - 1, d, d)
+    Lag-one covariances ``Cov&#91;x_t, x_{t+1} | y_{0:T-1}&#93;``.
+
+- **__post_init__**()
+  - Validate smoothed moment shapes, finiteness, and covariance signs.
+
+---
+
+## Module `world_model._predictive_world_model`
+
+### Class `PredictiveWorldModel`
+Forecast latent-state means and covariances through an LGSSM.
+
+Parameters
+----------
+state_dim : int
+    Positive latent-state dimension.
+action_dim : int
+    Non-negative action dimension.
+seed : int, default=42
+    Seed used to initialise the stable random LGSSM.
+
+Notes
+-----
+This class preserves the historical planning-facing API. Use
+:class:`LinearGaussianSSM`, :class:`KalmanFilter`, and
+:class:`RTSSmoother` when observations are available.
+
+- **__post_init__**()
+  - Initialise a validated stable state-transition model.
+- **reset**()
+  - Reset the stored belief moments to the model prior.
+- **predict_next_state**(current_state, action)
+  - Predict the next latent-state mean.
+- **predict_next_state_with_cov**(current_state, current_cov, action)
+  - Predict the next latent-state mean and covariance.
+- **forecast**(initial_state, actions)
+  - Forecast a deterministic mean trajectory.
+- **forecast_with_cov**(initial_state, initial_cov, actions)
+  - Forecast a mean and covariance trajectory.
+
+---
+
 ## Module `world_model.planner`
 
 ### Class `SCPlanner`
@@ -36866,125 +37058,8 @@ A planner that uses a PredictiveWorldModel to select actions.
 
 ## Module `world_model.predictive_model`
 
-### Class `LinearGaussianSSM`
-Parameters of a discrete-time linear Gaussian state-space model.
-
-All matrices are NumPy arrays of dtype float64. Shapes:
-
-- ``A``: (d, d) state transition
-- ``B``: (d, m) control input
-- ``C``: (p, d) observation
-- ``D``: (p, m) feed-through
-- ``Q``: (d, d) process noise covariance (PSD)
-- ``R``: (p, p) observation noise covariance (PSD)
-- ``mu_0``: (d,) prior mean
-- ``Sigma_0``: (d, d) prior covariance
-
-- **state_dim**()
-  - Return the latent state dimension.
-- **obs_dim**()
-  - Return the observation dimension.
-- **control_dim**()
-  - Return the control-input dimension.
-- **__post_init__**()
-  - Validate the state-space matrix dimensions.
-- **random**(cls, state_dim, obs_dim, control_dim, seed)
-  - Construct a stable random LGSSM for smoke tests / initialisation.
-
-### Class `FilterResult`
-Output of `KalmanFilter.filter()`.
-
-Attributes
-----------
-means : np.ndarray, shape (T, d)
-    Filtered means E&#91;x_t | y_{1:t}, u_{1:t}&#93;.
-covariances : np.ndarray, shape (T, d, d)
-    Filtered covariances Cov&#91;x_t | y_{1:t}, u_{1:t}&#93;.
-pred_means : np.ndarray, shape (T, d)
-    One-step-ahead predicted means E&#91;x_t | y_{1:t-1}, u_{1:t-1}&#93;.
-pred_covariances : np.ndarray, shape (T, d, d)
-    One-step-ahead predicted covariances.
-log_likelihood : float
-    Log p(y_{1:T} | u_{1:T}) under the model — used by EM.
-
-
-### Class `KalmanFilter`
-Forward Kalman filter for `LinearGaussianSSM`.
-
-Computes the filtering distribution p(x_t | y_{1:t}, u_{1:t})
-for a fully-observed sequence of observations + (optional)
-controls. Algorithm: standard Kalman update equations
-(Bishop 2006 §13.3.1).
-
-- **__init__**(model)
-- **filter**(observations, controls, backend)
-  - Run forward filtering on a sequence.
-
-### Class `SmoothResult`
-Output of `RTSSmoother.smooth()`.
-
-Attributes
-----------
-means : np.ndarray, shape (T, d)
-    Smoothed means E&#91;x_t | y_{1:T}, u_{1:T}&#93;.
-covariances : np.ndarray, shape (T, d, d)
-    Smoothed covariances Cov&#91;x_t | y_{1:T}, u_{1:T}&#93;.
-cross_covariances : np.ndarray, shape (T-1, d, d)
-    Lag-1 smoothed cross-covariances Cov&#91;x_t, x_{t+1} | y_{1:T}&#93;.
-    Required by the EM M-step.
-
-
-### Class `RTSSmoother`
-Rauch-Tung-Striebel backward smoother (1965).
-
-Consumes a `FilterResult` (forward pass) and produces the
-smoothing distribution p(x_t | y_{1:T}, u_{1:T}) for every t.
-
-- **__init__**(model)
-- **smooth**(filter_result)
-  - Run RTS smoothing over a forward-filter result.
-
-### Class `EMLearner`
-Expectation-Maximisation parameter estimator for LGSSM.
-
-Reference: Shumway & Stoffer (1982), Bishop (2006) §13.3.2.
-
-Per iteration:
-  E-step: run Kalman filter + RTS smoother → posterior means,
-          covariances, cross-covariances.
-  M-step: closed-form update for {A, C, Q, R, mu_0, Sigma_0}
-          from the smoothed posterior. (B and D are treated
-          as known; estimating them simultaneously requires
-          a more involved derivation.)
-
-Convergence: log-likelihood is monotone non-decreasing
-across iterations under exact arithmetic.
-
-- **__init__**(max_iter, tol)
-- **fit**(observations, initial_model, controls)
-  - Estimate model parameters from a single observation sequence.
-
-### Class `PredictiveWorldModel`
-Probabilistic predictive world model based on a Linear Gaussian SSM.
-
-The legacy 65-LOC `predict_next_state` / `forecast` API is
-preserved as a thin wrapper on the proper `LinearGaussianSSM`
-+ `KalmanFilter` infrastructure above. The previous
-deterministic linear matmul + clip implementation was replaced
-2026-04-17 per `feedback_sophisticated_from_start.md`.
-
-- **__post_init__**()
-  - Initialise the underlying linear-Gaussian state-space model.
-- **reset**()
-  - Reset the running belief state to the prior mean.
-- **predict_next_state**(current_state, action)
-  - Predict E&#91;x_{t+1} | x_t, u_t&#93; under the SSM dynamics.
-- **predict_next_state_with_cov**(current_state, current_cov, action)
-  - Predict mean + covariance of x_{t+1} given (x_t, Σ_t, u_t).
-- **forecast**(initial_state, actions)
-  - Multi-step deterministic forecast (mean trajectory).
-- **forecast_with_cov**(initial_state, initial_cov, actions)
-  - Multi-step probabilistic forecast (mean + cov trajectory).
+### Function `__getattr__(name)`
+Return the live historical Rust-availability flag on private access.
 
 ---
 

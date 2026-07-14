@@ -93,6 +93,26 @@ go test -v ./...
 | neuro_safe_monitor (SV) | uvm_gen/ (testbench) | — |
 | proto/ | HIL telemetry/debug consumers | Protobuf schema generation (`protoc`, `prost`, `protoc-gen-go`) |
 
+## PyO3 LGSSM boundary
+
+The world-model forward Kalman filter uses PyO3 rather than the core-engine C
+ABI. `bridge/sc_neurocore_engine/world_model.py` exposes the compiled
+`py_lgssm_kalman_filter` callable from `engine/src/lgssm.rs`; the Python loader
+also accepts the root extension export for wheel-layout compatibility.
+
+Before crossing PyO3, the dispatcher normalises observations, controls, and
+model arrays into finite C-contiguous `float64` buffers. The Rust result then
+passes through the same `FilterResult` shape, symmetry, positive-semidefinite,
+and finite-likelihood validation used by every other backend. Explicit Rust
+selection fails closed if neither export is present. RTS smoothing and EM
+learning do not cross this boundary.
+
+The source-bound artifact at
+`benchmarks/results/bench_predictive_model.json` hashes `engine/src/lgssm.rs`,
+the registration source, the bridge wrapper, and the installed extension used
+for the measured run. It also records Rust/Python parity on the same controlled
+workload used by Mojo, Go, Julia, and Python.
+
 ## Rust Safety Mirror Library
 
 The nested crate at `src/sc_neurocore/accel/rust/` contains safety and
@@ -113,7 +133,7 @@ reference-path tests:
 |---|---|---|---|
 | `safety/l7_symbolic.rs` | `sc_neurocore.scpn.layers.l7_symbolic` | parameter validation, deterministic stepping, meridian/acupoint bounds, geometry metrics, bitstream emission | `tests/test_scpn_l7_symbolic_contracts.py`, `tests/test_scpn_cross_layer.py`, `tests/test_advanced_layers.py` |
 | `safety/dna_mapper.rs` | `sc_neurocore.bridges.dna_mapper` | sequence constraints, nearest-neighbour thermodynamics, strand-displacement and enzymatic gate compilation, kinetics, GF(4), plate layout | `tests/test_bridges_dna_mapper.py`, `tests/test_bridges/test_dna_mapper.py` |
-| `safety/predictive_model.rs` | `sc_neurocore.world_model.predictive_model` | LGSSM shape checks, positive-definite covariance checks, Cholesky solve path, Joseph-form covariance update, log-likelihood | `tests/test_world_model.py`, `tests/test_world_model/test_predictive_model.py`, `tests/test_world_model/test_predictive_model_backends.py` |
+| `safety/predictive_model.rs` | `sc_neurocore.world_model.predictive_model` | LGSSM shape checks, positive-definite covariance checks, Cholesky solve path, Joseph-form covariance update, log-likelihood | `tests/test_world_model/test_linear_gaussian_ssm.py`, `tests/test_world_model/test_kalman_filter.py`, `tests/test_world_model/test_rts_smoother.py`, `tests/test_world_model/test_em_learner.py`, `tests/test_world_model/test_predictive_model_backends.py` |
 | `safety/analysis.rs` | `sc_neurocore.studio.analysis` | bifurcation sweeps, sensitivity ordering, nullcline contour extraction, heatmaps, STA, frequency response, fixed-point error reporting | `tests/test_studio_analysis.py` |
 
 `autonomous_learning` is not a safety mirror. Its authority is the compiled
@@ -146,10 +166,11 @@ the maintained Python restore path. WGPU weights are restored through the
 length-aware `set_wgpu_weights` ABI rather than a warn-and-ignore placeholder.
 
 The Python import side treats optional engine submodules as optional
-accelerators.  If a wheel exposes only the compiled extension module and not
-`sc_neurocore_engine.dna`, `.world_model`, `.studio`, `.quantum`, or
-`.photonics`, the Python implementation remains importable and the Rust path is
-disabled until the corresponding engine submodule is present.
+accelerators. The LGSSM loader prefers `sc_neurocore_engine.world_model` and
+then checks the root extension export, so either supported wheel layout works.
+If neither callable is present, the Python implementation remains importable
+and explicit Rust selection fails closed. Other optional engine integrations
+retain their own documented submodule requirements.
 
 The core-engine C-FFI bridge follows the same fail-closed boundary.  Python
 fallbacks remain importable when `libcore_engine.so` is absent or raises during

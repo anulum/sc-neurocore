@@ -5,6 +5,32 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+### Predictive-model responsibility modularisation
+
+- Replaced the 1,018-line mixed linear-Gaussian implementation with a 63-line
+  historical facade over six bounded responsibility modules for contracts,
+  native dispatch, filtering, smoothing, controlled EM, and planning-facing
+  forecasts. Public imports, class identities, constructor names, and pickle
+  paths remain stable.
+- Corrected controlled EM sufficient statistics, lag-one covariance
+  orientation, covariance validation, and fail-closed native result shapes.
+  Filtering uses Cholesky solves and Joseph covariance updates without explicit
+  matrix inverses. Every M-step candidate is likelihood-checked before
+  acceptance, including the candidate produced by the final allowed iteration.
+  Architecture contracts pin exclusive ownership, an acyclic import graph, the
+  definition-free facade, and per-module size ceilings.
+- Removed an out-of-bounds Mojo gain-workspace read for observation dimensions
+  wider than the latent state. A real `d=1, p=3` parity case now exercises
+  Python, Rust, Julia, Go, and Mojo through the maintained loading path.
+- The source- and binary-bound five-backend artifact records 25 interleaved
+  samples, raw timing distributions, parity deltas, runtime versions, hashes,
+  affinity, governor, load, and an explicit loaded-host disclosure. It is local
+  regression evidence, not a cross-host or exclusive-core performance claim.
+- Reconciled the public formal inventory after the accepted Poisson parent:
+  README, comparison, and tutorial surfaces now report the live 48 proof jobs
+  and 176 statements (146 assert, 7 assume, 23 cover), including the exact
+  18 non-catalogue plus 30 catalogue job split.
+
 ### Poisson source-to-silicon closure
 
 - Replaced the process-local random generator with the canonical seeded LFSR16

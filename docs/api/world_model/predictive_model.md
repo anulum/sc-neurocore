@@ -1,357 +1,288 @@
-# `sc_neurocore.world_model.predictive_model` — Linear Gaussian SSM
+# Linear Gaussian predictive model
 
-## 1. Scope
+`sc_neurocore.world_model.predictive_model` exposes filtering, smoothing,
+learning, and planning-compatible forecasts for a controlled linear Gaussian
+state-space model (LGSSM).
 
-This module implements a **Linear Gaussian State-Space Model
-(LGSSM)** with the standard inference + learning trinity:
-**Kalman filter** (forward), **Rauch-Tung-Striebel (RTS)
-smoother** (backward), and **Expectation-Maximisation (EM)**
-parameter learner. It serves as the probabilistic predictive
-substrate for `sc_neurocore.world_model.planner.SCPlanner` and
-for any downstream consumer that needs to predict, smooth, or
-fit linear-Gaussian dynamics over noisy observations.
+## Model
 
-Implementation references:
+For latent state \(x_t \in \mathbb{R}^d\), observation
+\(y_t \in \mathbb{R}^p\), and control \(u_t \in \mathbb{R}^m\):
 
-- Kalman, R.E. (1960). *A New Approach to Linear Filtering and
-  Prediction Problems.* J. Basic Engineering 82(1): 35-45.
-- Rauch, H.E., Tung, F. & Striebel, C.T. (1965). *Maximum
-  likelihood estimates of linear dynamic systems.* AIAA J 3(8):
-  1445-1450. (the RTS smoother)
-- Shumway, R.H. & Stoffer, D.S. (1982). *An approach to time
-  series smoothing and forecasting using the EM algorithm.*
-  J Time Series Analysis 3(4): 253-264.
-- Bishop, C.M. (2006). *Pattern Recognition and Machine
-  Learning*, Springer. §13.3 (linear dynamical systems).
-- Murphy, K.P. (2023). *Probabilistic Machine Learning:
-  Advanced Topics*, MIT Press. §29 (state-space models).
+\[
+x_{t+1} = A x_t + B u_t + w_t, \qquad w_t \sim \mathcal{N}(0, Q),
+\]
 
-The previous implementation was a **deterministic linear
-matmul** on a randomly-initialised matrix that called itself
-"stochastic" and admitted "(simplified)" in a comment. It was
-replaced 2026-04-17 per
-`feedback_sophisticated_from_start.md`.
+\[
+y_t = C x_t + D u_t + v_t, \qquad v_t \sim \mathcal{N}(0, R),
+\]
 
-## 2. Model
+with prior \(x_0 \sim \mathcal{N}(\mu_0, \Sigma_0)\).
 
-Latent state ``x_t ∈ R^d``, observation ``y_t ∈ R^p``,
-control ``u_t ∈ R^m``:
+`LinearGaussianSSM` copies every parameter into a finite, C-contiguous
+`float64` array. It validates all dimensions, requires `Q` to be symmetric
+positive semidefinite, and requires `R` and `Sigma_0` to be symmetric positive
+definite. A positive diagonal alone is not accepted as a covariance proof.
 
-```
-x_{t+1} = A · x_t + B · u_t + w_t,    w_t ~ N(0, Q)
-y_t     = C · x_t + D · u_t + v_t,    v_t ~ N(0, R)
-```
-
-with prior ``x_0 ~ N(μ_0, Σ_0)``. All parameters
-``{A, B, C, D, Q, R, μ_0, Σ_0}`` are estimable from data via
-the EM algorithm (Shumway & Stoffer 1982).
-
-## 3. Public API
+## Public API and compatibility
 
 ```python
 from sc_neurocore.world_model.predictive_model import (
-    LinearGaussianSSM,    # the model parameters (dataclass)
-    KalmanFilter,         # forward inference
-    RTSSmoother,          # backward smoothing
-    EMLearner,            # parameter estimation via EM
-    PredictiveWorldModel, # legacy wrapper (still re-exported)
-    FilterResult,         # KalmanFilter output
-    SmoothResult,         # RTSSmoother output
+    EMLearner,
+    FilterResult,
+    KalmanFilter,
+    LinearGaussianSSM,
+    PredictiveWorldModel,
+    RTSSmoother,
+    SmoothResult,
 )
 ```
 
-`LinearGaussianSSM.random(state_dim, obs_dim, control_dim)`
-constructs a random stable LGSSM (spectral radius < 1) for
-smoke tests and EM initialisation.
+The import path, constructor parameter names, public class identities, and
+pickle references remain `sc_neurocore.world_model.predictive_model`. The
+implementation is partitioned by responsibility behind that facade:
 
-## 4. Algorithm details
+| Responsibility | Owner |
+|---|---|
+| parameter and result contracts | `_lgssm_types.py` |
+| native discovery, selection, and FFI marshalling | `_lgssm_backends.py` |
+| Python and native forward-filter dispatch | `_lgssm_filter.py` |
+| RTS backward recursion | `_lgssm_smoothing.py` |
+| controlled EM learning | `_lgssm_em.py` |
+| planning-compatible state forecasts | `_predictive_world_model.py` |
 
-### 4.1 Kalman filter (forward pass)
+The private import graph is one-way and acyclic. The facade contains no
+algorithm implementation.
 
-Per step `t`:
+## Forward filtering
 
-1. **Predict**: `x_pred = A x_filt + B u`,
-   `P_pred = A P_filt A^T + Q`.
-2. **Update** (Joseph form for numerical stability):
-   - innovation `e_t = y_t - C x_pred - D u_t`,
-   - innovation covariance `S = C P_pred C^T + R`,
-   - Kalman gain `K = P_pred C^T S^{-1}`,
-   - filtered mean `x_filt = x_pred + K e_t`,
-   - filtered covariance `P_filt = (I - K C) P_pred (I - K C)^T + K R K^T`.
-3. **Log-likelihood contribution**: `-½ (p log 2π + log |S| + e_t^T S^{-1} e_t)`.
+`KalmanFilter.filter(observations, controls=None, backend="auto")` returns:
 
-### 4.2 RTS smoother (backward pass)
+- filtered state means and covariances;
+- one-step predicted means and covariances before each observation; and
+- the sequence log-likelihood.
 
-Per step `t = T-2 ... 0`:
+Observations must have shape `(T, p)` with `T > 0`. Controls are required for a
+model with `m > 0` and must have shape `(T, m)`. Every input and returned moment
+must be finite. Result covariance stacks are checked in one vectorised
+symmetry/eigenvalue pass before being exposed to the caller.
 
-1. **RTS gain**: `J_t = P_filt(t) A^T P_pred(t+1)^{-1}`.
-2. **Smoothed mean**: `x_smooth(t) = x_filt(t) + J_t (x_smooth(t+1) - x_pred(t+1))`.
-3. **Smoothed covariance**: `P_smooth(t) = P_filt(t) + J_t (P_smooth(t+1) - P_pred(t+1)) J_t^T`.
-4. **Lag-1 cross-covariance**: `C_smooth(t,t+1) = J_t P_smooth(t+1)`. (Required by EM.)
+The Python update factors each innovation covariance once with Cholesky. It
+uses triangular solves for the innovation quadratic form and Kalman gain; it
+does not form a matrix inverse. The covariance update uses Joseph form:
 
-The smoother is invariant at `t = T-1` (no future to incorporate)
-and reduces uncertainty for all earlier steps (verified by
-`test_rts_smoother_reduces_uncertainty`).
+\[
+P_{t|t} = (I-K_t C)P_{t|t-1}(I-K_t C)^T + K_t R K_t^T.
+\]
 
-### 4.3 EM learner
+A non-positive-definite innovation covariance fails closed with
+`numpy.linalg.LinAlgError`.
 
-Per iteration:
+## Native forward-filter chain
 
-- **E-step**: Kalman filter + RTS smoother → posterior moments.
-- **M-step** (closed-form, A and C only — B/D held fixed):
-  - `A_new = (Σ E[x_{t+1} x_t^T])(Σ E[x_t x_t^T])^{-1}` (sum
-    over t = 0..T-2).
-  - `Q_new = (1/(T-1)) Σ (E[x_{t+1} x_{t+1}^T] - A E[x_{t+1} x_t^T]^T - ...)`
-    (collapsed RHS).
-  - `C_new = (Σ y_t E[x_t]^T)(Σ E[x_t x_t^T])^{-1}` (sum
-    over t = 0..T-1).
-  - `R_new = (1/T) Σ ((y_t - C E[x_t])(y_t - C E[x_t])^T + C P_t C^T)`.
-  - `μ_0, Σ_0` ← smoothed first state.
+The maintained forward filter has five execution paths:
 
-EM theory (Dempster et al. 1977) guarantees the log-likelihood
-is monotone non-decreasing across iterations under exact
-arithmetic; the Python implementation respects this to within
-a few units of float64 round-off
-(test_em_log_likelihood_monotone_non_decreasing).
-
-## 5. Identifiability
-
-Linear Gaussian SSMs have a **well-known sign + scale
-ambiguity** (Bishop 2006 §13.3.4): the pair `(A, C)` and
-`(αA, C/α)` are observationally equivalent for any `α > 0`.
-Direct parameter recovery is therefore brittle — what IS
-identifiable is the observation likelihood. Tests verify
-recovery via held-out log-likelihood, not raw parameter
-agreement.
-
-## 6. Pipeline wiring
-
-`PredictiveWorldModel` is consumed by:
-
-- `sc_neurocore.world_model.planner.SCPlanner` — calls
-  `predict_next_state` / `forecast` to evaluate candidate
-  action sequences.
-- `tests/test_world_model/test_predictive_model.py` — exercises
-  predictive-model contracts, likelihood behaviour, and legacy API compatibility.
-
-Re-exported via `sc_neurocore.world_model.__init__`:
-
-```python
-from sc_neurocore.world_model import PredictiveWorldModel
-```
-
-## 7. Multi-language acceleration chain
-
-Per `feedback_multi_language_accel.md` (Rust + Julia + Go +
-Mojo + Python fallback). Current state:
-
-| Backend | Status | Source |
+| Backend | Boundary | Numerical source |
 |---|---|---|
-| **python** (NumPy `linalg.solve`) | ✅ implemented | this module |
-| **rust** (PyO3 + `ndarray` Cholesky) | ✅ implemented | `engine/src/lgssm.rs` |
-| **julia** (juliacall + `LinearAlgebra` LAPACK) | ✅ implemented | `src/sc_neurocore/accel/julia/world_model/predictive_model.jl` |
-| **go** (cgo + ctypes shared library) | ✅ implemented | `src/sc_neurocore/accel/go/lgssm/lgssm.go` |
-| **mojo** (Mojo `--emit shared-lib` + ctypes) | ✅ implemented | `src/sc_neurocore/accel/mojo/world_model/lgssm.mojo` |
+| Python | NumPy | `_lgssm_filter.py` |
+| Mojo | C ABI via `ctypes` | `accel/mojo/world_model/lgssm.mojo` |
+| Go | C shared library via `ctypes` | `accel/go/lgssm/lgssm.go` |
+| Rust | PyO3 | `engine/src/lgssm.rs` |
+| Julia | `juliacall` | `accel/julia/world_model/predictive_model.jl` |
 
-All 5 backends are implemented. The dispatcher
-(`KalmanFilter.filter(backend='auto'|'rust'|'julia'|'go'|'mojo'|'python')`)
-keeps Rust as the `'auto'` default for backwards compatibility;
-explicit `backend='mojo'` is the fastest measured choice (see §8).
-All five backends return identical (means, covariances,
-log-likelihood) results to atol=1e-9 on the parity tests
-(`test_four_backend_parity_when_all_available` covers the four
-non-Mojo backends; Mojo parity verified ad-hoc at ≤1e-15
-absolute tolerance on means and covariances, ≤1e-7 on the
-log-likelihood scalar — see commit message for the parity probe).
-
-The benchmark
-`benchmarks/bench_predictive_model.py` runs the workload on
-every available backend and records `unavailable_reason` for the
-ones not yet wired. The `accel/julia/world_model/predictive_model.jl`
-file that previously existed was non-functional
-(Python syntax inside a Julia `module`) and was deleted in the
-#68 commit; #69 (Mojo LGSSM) is now closed.
-
-**Mojo @export FFI pattern** (per `feedback_mojo_026_ffi_pattern`):
-the @export decorator forbids parametric signatures, so the
-`kalman_filter_c` function accepts every matrix as a raw `Int`
-address (numpy `arr.ctypes.data`) and the Mojo body reconstructs
-`UnsafePointer[Float64, MutAnyOrigin](unsafe_from_address=addr)`
-inside. Working buffers are heap-allocated via `std.memory.alloc`
-and re-cast to the same origin for uniform helper signatures.
-All matrix algebra (matmul, transpose-matmul, Cholesky,
-triangular solve) is hand-rolled in 100 lines of Mojo to keep
-the @export boundary minimal — no parametric helpers leak into
-the C ABI.
-
-## 8. Performance
-
-Reproducible via:
-
-```bash
-python benchmarks/bench_predictive_model.py \
-    --json benchmarks/results/bench_predictive_model.json
-```
-
-Workload: 4-D state, 3-D obs, T=200 sequence sampled from the
-true model. Median + min over 5 repeats. Hardware: Linux 6.17
-x86_64, NumPy 2.2.0, Python 3.12.3.
-
-| Workload | Backend | Median | Min | Speedup vs Python |
-|---|---|---:|---:|---:|
-| Forward Kalman filter | python | 10.18 ms | 8.15 ms | 1.0× |
-| Forward Kalman filter | rust | 1.77 ms | 1.09 ms | 5.7× |
-| Forward Kalman filter | julia | 1.99 ms | 0.98 ms | 5.1× |
-| Forward Kalman filter | go | 3.14 ms | 2.63 ms | 3.2× |
-| Forward Kalman filter | **mojo** | **0.22 ms** | **0.20 ms** | **46×** |
-| RTS smoother | python | ~11 ms | — | 1.0× |
-| EM (10 iters) | python | ~145 ms | — | 1.0× |
-
-All five implemented backends produce **identical
-log-likelihood** (-288.0601) on this workload (parity verified
-at ≤ 1e-15 abs-tol on means/covariances, ≤ 1e-7 on the
-scalar log-lik).
-
-**Mojo is the fastest** on this (T=200, d=4, p=3) workload by
-a wide margin — 8× over Rust, 46× over NumPy. The reason: the
-Mojo kernel does ALL matrix algebra in one straight-line
-function (no PyO3/cgo per-call marshalling, no LAPACK setup
-overhead, no dynamic dispatch), and the LLVM backend produces
-tight SIMD-friendly inner loops with the constant 4×4 matrix
-shapes inferred at JIT time. Rust is second (PyO3 marshalling
-adds ~0.5 ms), Julia third (juliacall has comparable overhead
-to PyO3), Go fourth (ctypes call overhead is the highest of
-the four FFI paths).
-
-The auto dispatcher still prefers Rust under `'auto'` for
-backwards-compatibility — change to `backend='mojo'` explicitly
-to take the speedup. A future cleanup will switch the auto
-priority to fastest-first per the
-`feedback_fallback_chain_ordering` rule.
-
-The RTS smoother and EM learner currently dispatch only to the
-Python path. Extending all 5 accel backends to RTS + EM is
-deferred — the marginal value is low because RTS smoothing is
-already sub-15 ms even in pure Python.
-
-Captured run in
-`benchmarks/results/bench_predictive_model.json`.
-
-## 9. Tests
-
-- `tests/test_world_model/test_predictive_model.py` — 20 cases:
-  shape validation, PSD invariance, log-likelihood
-  monotonicity, RTS smoother covariance reduction, low-noise
-  tracking, high-noise prior reliance, EM held-out
-  log-likelihood improvement, legacy wrapper compatibility.
-- `tests/test_planner.py` — updated: dropped the 3 tests that
-  enforced the legacy `transition_matrix` design;
-  added `test_predict_next_state_obeys_ssm_dynamics`
-  asserting `output == A·x + B·u`.
-- `tests/test_world_model/test_predictive_model.py` — dedicated predictive-model
-  tests for the legacy API and LGSSM behaviour; API preserved for backwards
-  compatibility.
-- `src/sc_neurocore/accel/rust/safety/predictive_model.rs` —
-  Rust safety mirror for the LGSSM Kalman contract, including
-  shape validation, positive-definite covariance validation,
-  Cholesky solve, Joseph-form covariance update, and log-likelihood.
-
-Focused verification: `PYTHONPATH=bridge:src .venv/bin/python -m pytest
--q tests/test_world_model.py
-tests/test_world_model/test_predictive_model.py
-tests/test_world_model/test_predictive_model_backends.py --no-cov`
-→ **77 passed, 3 skipped**.
-
-## 10. Audit completeness — 7-point rule
-
-| # | Criterion | Status | Notes |
-|---|-----------|--------|--------|
-| 1 | Pipeline wiring | ✅ PASS | `world_model/__init__` re-exports preserved; SCPlanner consumer still passes |
-| 2 | Multi-angle tests | ✅ PASS | 77 focused predictive-model tests passed, 3 skipped for unavailable optional paths; PSD invariance, EM monotonicity, identifiability caveat |
-| 3 | Acceleration path | ✅ PASS | python + rust + julia + go + mojo forward Kalman paths documented above; Rust safety mirror validates the LGSSM contract independently |
-| 4 | Benchmarks | ✅ PASS | `benchmarks/bench_predictive_model.py` committed; multi-backend harness handles unavailable backends gracefully |
-| 5 | Performance docs | ✅ PASS | §8 with measured numbers |
-| 6 | Documentation page | ✅ PASS | This page |
-| 7 | Rules followed | ✅ PASS | SPDX/copyright header present. No `# mypy: ignore-errors`. Citation list cites 5 published references. |
-
-Net: **0 WARN, 0 FAIL** for the documented forward Kalman filter surface.
-
-## 11. Known issues / followups
-
-### 11.1 Forward Kalman acceleration scope
-
-The forward Kalman filter is the implemented multi-language acceleration
-surface.  RTS smoothing and EM learning stay on the Python path; the
-benchmark harness records this explicitly instead of reporting unavailable
-backends as failures.
-
-### 11.2 EM does not estimate B and D
-
-The M-step in `EMLearner` updates only `A`, `C`, `Q`, `R`,
-`μ_0`, `Σ_0`. Joint estimation of `B` and `D` requires
-augmenting the sufficient statistics with control terms; this
-is documented in Shumway & Stoffer (1982) Appendix A but not
-implemented here. Open follow-up: extend EMLearner to optimise
-B and D when controls are present.
-
-### 11.3 Identifiability test is held-out-LL not parameter recovery
-
-By design — see §5. Direct parameter recovery is brittle due
-to the LGSSM sign+scale ambiguity. The held-out log-likelihood
-test is the proper identifiability check.
-
-## 12. Audit batch identification
-
-This page was produced as part of the **Antigravity audit**
-(#66 / #62) — third complete audit cycle (after `chiplet_gen.simulate_thermal`
-and `physics/heat.py`). One commit per task per
-`feedback_per_task_full_workflow.md`.
-
-
-## 7. Performance benchmarks
-
-
-### Output from `bench_predictive_model.py`
+An explicit unavailable backend raises `RuntimeError`; it never silently
+changes language. `backend="auto"` follows the stable availability- and
+initialisation-aware order:
 
 ```text
-# LGSSM Kalman / RTS / EM benchmark
-# Workload: 4-D state, 3-D obs, T=200
-# Repeats per cell: 5
-# Python: 3.12.3, NumPy: 2.2.6
-# platform: Linux-6.17.0-20-generic-x86_64-with-glibc2.39
-
-backend     available   reason / status
-----------  ----------  ------------------------------------------------------------
-python      yes
-rust        no          sc_neurocore_engine wheel not installed
-julia       yes
-mojo        yes
-go          yes
-
-## Forward Kalman filter
-backend        median ms        min ms         log_lik
-----------  ------------  ------------  --------------
-python             9.693         8.402       -288.0601
-rust              (skip)        (skip)               -
-julia              0.644         0.623       -288.0601
-mojo               0.121         0.119       -288.0601
-go                 0.972         0.937       -288.0601
-
-## RTS smoother (backward pass)
-backend        median ms        min ms
-----------  ------------  ------------
-python             2.897         2.887
-rust              (skip)        (skip)
-julia             (skip)        (skip)
-mojo              (skip)        (skip)
-go                (skip)        (skip)
-
-## EM learner (10 iterations)
-backend        median ms        min ms
-----------  ------------  ------------
-python           140.372       138.624
-rust              (skip)        (skip)
-julia             (skip)        (skip)
-mojo              (skip)        (skip)
-go                (skip)        (skip)
+Mojo -> Go -> Rust -> Julia -> Python
 ```
+
+The source-bound controlled workload described below rejects any unexplained
+ordering with a material warm-timing inversion greater than 10%. Rust is the
+one declared exception: it precedes Julia because it is loaded during package
+import, while probing Julia may initialise a separate runtime. Adjacent timings
+inside the loaded-host noise band retain their stable order. The artifact
+records both post-import probe cost and the exact warm median ranking. Python is
+always the final maintained fallback. All native results pass through the same
+`FilterResult` validation boundary as Python results.
+
+The Mojo kernel solves each row of the \(d \times p\) gain workspace
+independently; it never indexes that workspace as though it were
+\(p \times p\). A dedicated \(d = 1, p = 3\) test exercises the
+observation-wider-than-state case through all five backends and verifies
+complete moment and likelihood parity.
+
+## RTS smoothing
+
+`RTSSmoother.smooth(filter_result)` performs the Rauch-Tung-Striebel backward
+recursion with positive-definite solves. It returns full-sequence posterior
+moments and lag-one covariance blocks oriented as:
+
+\[
+\operatorname{Cov}[x_t, x_{t+1} \mid y_{0:T-1}].
+\]
+
+That orientation is part of the public result contract. The EM transition
+update explicitly transposes each lag block when it needs
+(E[x_{t+1}x_t^T]). A multivariate exact batch-conditioning test verifies the
+means, covariance blocks, and lag orientation.
+
+RTS smoothing is currently a Python/NumPy responsibility. The native chain
+accelerates only the forward filter.
+
+## Controlled expectation-maximisation
+
+`EMLearner.fit` updates `A`, `C`, `Q`, `R`, `mu_0`, and `Sigma_0`. `B` and `D`
+are treated as known parameters and are preserved exactly.
+
+Controls still participate in the M-step. The transition statistics subtract
+`B @ u_t`, and the observation statistics subtract `D @ u_t`, before solving
+for `A` and `C`. Omitting those terms biases a controlled fit even when `B` and
+`D` themselves are fixed.
+
+All normal-equation right solves use Cholesky factors rather than explicit
+inverses. Learned covariance matrices are symmetrised and projected only as
+needed to restore the documented positive-semidefinite or positive-definite
+contract. Every M-step candidate, including the candidate from the final
+allowed iteration, is filtered and checked before it becomes the returned
+model. A material likelihood decrease raises `RuntimeError`; convergence uses
+the configured absolute tolerance. `log_likelihood_history` starts with the
+initial model and records each evaluated candidate.
+
+The default EM forward-filter backend is Python, making the complete learning
+workload deterministic and explicit. A caller may select another maintained
+forward backend for the E-step, but the smoother and M-step remain Python.
+
+Latent-state bases are not uniquely identifiable: an invertible change of
+basis can alter `A` and `C` while preserving the observation distribution.
+Accordingly, recovery tests judge held-out likelihood and posterior moments,
+not raw parameter equality alone.
+
+## Planning-compatible forecasts
+
+`PredictiveWorldModel` preserves the historical planning surface:
+
+```python
+import numpy as np
+
+from sc_neurocore.world_model import PredictiveWorldModel
+
+world_model = PredictiveWorldModel(state_dim=4, action_dim=2, seed=42)
+mean, covariance = world_model.predict_next_state_with_cov(
+    current_state=np.zeros(4),
+    current_cov=np.eye(4),
+    action=np.array([0.25, -0.10]),
+)
+```
+
+`predict_next_state` returns (A x_t + B u_t).
+`predict_next_state_with_cov` additionally returns
+(A P_t A^T + Q). `forecast` and `forecast_with_cov` return independent arrays
+for every step, so mutating one returned state cannot alter another.
+
+## Benchmark evidence
+
+`benchmarks/bench_predictive_model.py` runs one controlled workload through all
+five forward backends and fails if array or likelihood parity exceeds the
+declared tolerances. It warms every backend before timing, then rotates the
+starting backend across interleaved sampling rounds so changing host load does
+not systematically favour a later block. The same run separately measures the
+Python-only RTS and EM workloads; unsupported native RTS/EM rows are not
+represented as skips.
+
+The committed artifact is
+`benchmarks/results/bench_predictive_model.json`. It records:
+
+- every timing sample, median, minimum, maximum, post-import probe cost, exact
+  warm measured rank, stable dispatch policy, and interleaving policy;
+- parity deltas against the Python result;
+- source SHA-256 hashes for the facade, responsibility modules, native
+  implementations, bridge, engine registration, and benchmark harness;
+- binary hashes for the selected Rust, Go, and Mojo runtimes;
+- language versions, CPU model, affinity, frequency governor, and load averages;
+- the exact invocation and explicit heavy-job/isolation disclosure.
+
+Reproduce the local evidence with:
+
+```bash
+taskset -c 2 env PYTHONPATH=src .venv/bin/python \
+  benchmarks/bench_predictive_model.py \
+  --backends python rust julia go mojo \
+  --steps 200 \
+  --repeats 25 \
+  --em-iterations 10 \
+  --other-heavy-jobs-running yes \
+  --other-heavy-jobs-note "shared workstation with concurrent repository work" \
+  --isolation-note "single-CPU affinity; no exclusive-core reservation" \
+  --json benchmarks/results/bench_predictive_model.json
+```
+
+The measurements are loaded-host local-regression evidence. CPU affinity does
+not imply an exclusive core, so the artifact does not support a promotion-grade
+cross-host performance claim.
+
+### Latest committed local run
+
+The 2026-07-14 source-bound run used 200 time steps, 25 interleaved samples per
+backend, four latent states, three observations, and two controls. It ran on
+logical CPU 2 of an Intel i5-11600K under the `powersave` governor while other
+heavy repository work was active. The core was affinity-pinned but not
+reserved. These numbers are regression evidence for this host only.
+
+| Backend | Probe (ms) | Median (ms) | Min (ms) | Max (ms) | Python / median | Max array delta | Likelihood delta |
+|---|---:|---:|---:|---:|---:|---:|---:|
+| Python | 0.005959 | 13.847860 | 12.020334 | 15.800676 | 1.000000 | 0 | 0 |
+| Rust | 0.003617 | 2.806096 | 2.519172 | 5.343638 | 4.934920 | 6.22e-15 | 1.71e-13 |
+| Julia | 6259.491127 | 2.140998 | 1.976630 | 136.903510 | 6.467946 | 5.33e-15 | 1.14e-13 |
+| Go | 1.802784 | 1.827930 | 1.572094 | 3.094846 | 7.575706 | 5.33e-15 | 2.27e-13 |
+| Mojo | 67.868924 | 1.553183 | 1.382646 | 2.595167 | 8.915794 | 4.00e-15 | 8.52e-08 |
+
+The exact warm ranking was Mojo, Go, Julia, Rust, Python. The stable dispatch
+remains Mojo, Go, Rust, Julia, Python: the artifact records Rust-before-Julia
+as the sole declared warm-order exception because Rust is already imported and
+the Julia probe incurred 6.26 seconds of runtime initialisation. All parity
+deltas remain inside the committed `1e-9` array and `1e-7` likelihood limits.
+
+Python-only RTS smoothing measured 6.222437 ms median
+(5.728943–9.343452 ms). Ten EM iterations measured 234.127058 ms median
+(217.413576–265.916984 ms). The artifact records every raw sample, so timing
+dispersion remains visible rather than being discarded.
+
+## Verification surfaces
+
+- `test_linear_gaussian_ssm.py`: parameter, covariance, and result contracts.
+- `test_kalman_filter.py`: analytic updates, controls, covariance stability,
+  validation, and installed-backend parity.
+- `test_rts_smoother.py`: exact multivariate batch conditioning and lag
+  orientation.
+- `test_em_learner.py`: controlled sufficient statistics, monotonicity,
+  held-out likelihood, convergence, and fail-closed behavior.
+- `test_predictive_world_model.py`: planning-facing mean/covariance forecasts.
+- `test_predictive_model_backends.py`: loader and FFI boundaries.
+- `test_predictive_model_architecture.py`: facade identity, pickle compatibility,
+  responsibility ownership, import DAG, structured solves, and module bounds.
+- `test_predictive_model_benchmark.py`: artifact provenance, all-backend parity,
+  loaded-host disclosure, and the reduced real CLI.
+
+Focused tests cover every executable line in the seven Python responsibility
+modules. The only uncovered branch arcs are the exits of static `Protocol`
+declarations; no coverage exclusions or test skips are used.
+
+## API reference
+
+::: sc_neurocore.world_model.predictive_model
+    options:
+      show_root_heading: true
+      members_order: source
+
+## References
+
+- Kalman, R. E. (1960), “A New Approach to Linear Filtering and Prediction
+  Problems.”
+- Rauch, H. E., Tung, F., and Striebel, C. T. (1965), “Maximum Likelihood
+  Estimates of Linear Dynamic Systems.”
+- Shumway, R. H., and Stoffer, D. S. (1982), “An Approach to Time Series
+  Smoothing and Forecasting Using the EM Algorithm.”
+- Bishop, C. M. (2006), *Pattern Recognition and Machine Learning*, section
+  13.3.

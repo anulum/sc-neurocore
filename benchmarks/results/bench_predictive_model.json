@@ -1,130 +1,437 @@
 {
-  "platform": "Linux-6.17.0-20-generic-x86_64-with-glibc2.39",
-  "python": "3.12.3",
-  "numpy": "2.2.6",
-  "n_repeats": 5,
-  "workload": {
-    "state_dim": 4,
-    "obs_dim": 3,
-    "T": 200
-  },
-  "backends": {
-    "python": {
+  "backend_availability": {
+    "go": {
       "available": true,
-      "reason": ""
-    },
-    "rust": {
-      "available": true,
+      "post_import_probe_ms": 1.802784,
       "reason": ""
     },
     "julia": {
       "available": true,
+      "post_import_probe_ms": 6259.491127,
       "reason": ""
     },
     "mojo": {
       "available": true,
+      "post_import_probe_ms": 67.868924,
       "reason": ""
     },
-    "go": {
+    "python": {
       "available": true,
+      "post_import_probe_ms": 0.005959,
+      "reason": ""
+    },
+    "rust": {
+      "available": true,
+      "post_import_probe_ms": 0.003617,
       "reason": ""
     }
   },
-  "rows": [
-    {
-      "workload": "kalman_filter",
-      "backend": "python",
-      "median_ms": 10.180121986195445,
-      "min_ms": 8.144697989337146,
-      "log_likelihood": -288.06006407439685
+  "binary_evidence": {
+    "go": {
+      "path": "src/sc_neurocore/accel/go/lgssm/liblgssm.so",
+      "sha256": "8524867b2974da0073789888f18519f4b6645ea72e88d2d5942612f8fe0ede2c",
+      "size_bytes": 2038832
     },
-    {
-      "workload": "kalman_filter",
-      "backend": "rust",
-      "median_ms": 1.7652079986874014,
-      "min_ms": 1.0882139904424548,
-      "log_likelihood": -288.06006407439685
+    "mojo": {
+      "path": "src/sc_neurocore/accel/mojo/world_model/liblgssm.so",
+      "sha256": "c0862bca1e558e177345b0bdcfa8a1dde53439ec97d912b3b2e047c91d4849dd",
+      "size_bytes": 26264
     },
-    {
-      "workload": "kalman_filter",
-      "backend": "julia",
-      "median_ms": 1.9856379949487746,
-      "min_ms": 0.9765299910213798,
-      "log_likelihood": -288.0600640743968
-    },
-    {
-      "workload": "kalman_filter",
-      "backend": "mojo",
-      "median_ms": 0.22240701946429908,
-      "min_ms": 0.19928000983782113,
-      "log_likelihood": -288.06006406058316
-    },
-    {
-      "workload": "kalman_filter",
-      "backend": "go",
-      "median_ms": 3.1441229803021997,
-      "min_ms": 2.633799012983218,
-      "log_likelihood": -288.0600640743968
-    },
-    {
-      "workload": "rts_smoother",
-      "backend": "python",
-      "median_ms": 11.16710397764109,
-      "min_ms": 8.60577798448503
-    },
-    {
-      "workload": "rts_smoother",
-      "backend": "rust",
-      "skipped": true,
-      "unavailable_reason": ""
-    },
-    {
-      "workload": "rts_smoother",
-      "backend": "julia",
-      "skipped": true,
-      "unavailable_reason": ""
-    },
-    {
-      "workload": "rts_smoother",
-      "backend": "mojo",
-      "skipped": true,
-      "unavailable_reason": ""
-    },
-    {
-      "workload": "rts_smoother",
-      "backend": "go",
-      "skipped": true,
-      "unavailable_reason": ""
-    },
-    {
-      "workload": "em_10iters",
-      "backend": "python",
-      "median_ms": 144.92750199860893,
-      "min_ms": 128.82645899662748
-    },
-    {
-      "workload": "em_10iters",
-      "backend": "rust",
-      "skipped": true,
-      "unavailable_reason": ""
-    },
-    {
-      "workload": "em_10iters",
-      "backend": "julia",
-      "skipped": true,
-      "unavailable_reason": ""
-    },
-    {
-      "workload": "em_10iters",
-      "backend": "mojo",
-      "skipped": true,
-      "unavailable_reason": ""
-    },
-    {
-      "workload": "em_10iters",
-      "backend": "go",
-      "skipped": true,
-      "unavailable_reason": ""
+    "rust": {
+      "path": ".venv/lib/python3.12/site-packages/sc_neurocore_engine/sc_neurocore_engine.cpython-312-x86_64-linux-gnu.so",
+      "sha256": "95380a7e6d6f2979f279bcc343a076e418b33f613545b78afb5115860f227217",
+      "size_bytes": 33830329
     }
-  ]
+  },
+  "command": ".venv/bin/python benchmarks/bench_predictive_model.py --backends python rust julia go mojo --steps 200 --repeats 25 --em-iterations 10 --other-heavy-jobs-running yes --other-heavy-jobs-note 'shared workstation with concurrent repository work' --isolation-note 'single-CPU affinity; no exclusive-core reservation' --json benchmarks/results/bench_predictive_model.json",
+  "dispatch_order": [
+    "mojo",
+    "go",
+    "rust",
+    "julia",
+    "python"
+  ],
+  "dispatch_policy": {
+    "basis": "post_import_probe_cost_then_interleaved_median_ms",
+    "material_inversion_ratio": 1.1,
+    "tie_policy": "preserve_stable_order",
+    "warm_order_exceptions": [
+      "rust_before_julia_avoids_lazy_julia_initialisation"
+    ]
+  },
+  "evidence_class": "local_regression",
+  "forward_filter": {
+    "go": {
+      "log_likelihood": -505.5453559553387,
+      "max_ms": 3.094846,
+      "median_ms": 1.82793,
+      "min_ms": 1.572094,
+      "parity_vs_python": {
+        "covariances_max_abs": 2.220446049250313e-16,
+        "log_likelihood_abs": 2.2737367544323206e-13,
+        "means_max_abs": 3.552713678800501e-15,
+        "pred_covariances_max_abs": 2.220446049250313e-16,
+        "pred_means_max_abs": 5.329070518200751e-15
+      },
+      "python_median_ratio": 7.575705853068772,
+      "samples_ms": [
+        1.712147,
+        1.572094,
+        1.849479,
+        1.828009,
+        1.754514,
+        1.920984,
+        2.884572,
+        1.70405,
+        1.766608,
+        1.678227,
+        1.634283,
+        1.896412,
+        3.094846,
+        2.249378,
+        1.745354,
+        1.82793,
+        1.763446,
+        1.915576,
+        2.272201,
+        2.029003,
+        1.759841,
+        1.704593,
+        1.674528,
+        2.167357,
+        2.012042
+      ]
+    },
+    "julia": {
+      "log_likelihood": -505.5453559553384,
+      "max_ms": 136.90351,
+      "median_ms": 2.140998,
+      "min_ms": 1.97663,
+      "parity_vs_python": {
+        "covariances_max_abs": 1.1102230246251565e-16,
+        "log_likelihood_abs": 1.1368683772161603e-13,
+        "means_max_abs": 5.329070518200751e-15,
+        "pred_covariances_max_abs": 1.1102230246251565e-16,
+        "pred_means_max_abs": 4.884981308350689e-15
+      },
+      "python_median_ratio": 6.4679462568391,
+      "samples_ms": [
+        2.387269,
+        2.078283,
+        2.341678,
+        2.073508,
+        136.90351,
+        3.31483,
+        2.120583,
+        2.335286,
+        2.264696,
+        2.090616,
+        1.97663,
+        1.977341,
+        3.897305,
+        2.104293,
+        2.16176,
+        2.140998,
+        2.11771,
+        2.175639,
+        2.111742,
+        2.329039,
+        2.166412,
+        2.134871,
+        2.117534,
+        2.067795,
+        3.088549
+      ]
+    },
+    "mojo": {
+      "log_likelihood": -505.54535604051415,
+      "max_ms": 2.595167,
+      "median_ms": 1.553183,
+      "min_ms": 1.382646,
+      "parity_vs_python": {
+        "covariances_max_abs": 1.1102230246251565e-16,
+        "log_likelihood_abs": 8.517565674992511e-08,
+        "means_max_abs": 3.552713678800501e-15,
+        "pred_covariances_max_abs": 1.1102230246251565e-16,
+        "pred_means_max_abs": 3.9968028886505635e-15
+      },
+      "python_median_ratio": 8.915794210984798,
+      "samples_ms": [
+        1.42937,
+        1.528304,
+        1.382646,
+        1.569324,
+        1.509757,
+        1.506301,
+        1.584335,
+        1.523693,
+        1.470946,
+        1.605843,
+        1.414369,
+        1.582797,
+        2.045019,
+        2.002865,
+        1.5738,
+        1.528448,
+        1.553183,
+        2.595167,
+        1.685364,
+        1.83728,
+        1.607025,
+        1.51673,
+        1.447998,
+        2.293644,
+        1.486691
+      ]
+    },
+    "python": {
+      "log_likelihood": -505.5453559553385,
+      "max_ms": 15.800676,
+      "median_ms": 13.84786,
+      "min_ms": 12.020334,
+      "parity_vs_python": {
+        "covariances_max_abs": 0.0,
+        "log_likelihood_abs": 0.0,
+        "means_max_abs": 0.0,
+        "pred_covariances_max_abs": 0.0,
+        "pred_means_max_abs": 0.0
+      },
+      "python_median_ratio": 1.0,
+      "samples_ms": [
+        12.656594,
+        13.848134,
+        12.38043,
+        13.9894,
+        12.026361,
+        12.899847,
+        12.971772,
+        12.560859,
+        12.434236,
+        14.101397,
+        12.020334,
+        13.84786,
+        14.870463,
+        13.856225,
+        15.106929,
+        15.800676,
+        13.53886,
+        15.330269,
+        14.183863,
+        14.922043,
+        13.70948,
+        12.8462,
+        14.043371,
+        15.714053,
+        13.257471
+      ]
+    },
+    "rust": {
+      "log_likelihood": -505.54535595533866,
+      "max_ms": 5.343638,
+      "median_ms": 2.806096,
+      "min_ms": 2.519172,
+      "parity_vs_python": {
+        "covariances_max_abs": 1.1102230246251565e-16,
+        "log_likelihood_abs": 1.7053025658242404e-13,
+        "means_max_abs": 3.552713678800501e-15,
+        "pred_covariances_max_abs": 1.1102230246251565e-16,
+        "pred_means_max_abs": 6.217248937900877e-15
+      },
+      "python_median_ratio": 4.934920259321135,
+      "samples_ms": [
+        2.920969,
+        2.571817,
+        2.67468,
+        4.42041,
+        2.560376,
+        2.806096,
+        2.583236,
+        2.905528,
+        3.505671,
+        2.596592,
+        2.519172,
+        2.606758,
+        3.861059,
+        2.889414,
+        2.661814,
+        3.311946,
+        2.724619,
+        5.343638,
+        2.678968,
+        3.694295,
+        2.966707,
+        2.793188,
+        3.958494,
+        3.10144,
+        2.784347
+      ]
+    }
+  },
+  "git": {
+    "head": "934c494562b5510a66ab9aee2b1fbac604a8b8fc",
+    "source_binding": "sha256_per_file",
+    "tracked_worktree_dirty": true
+  },
+  "host": {
+    "benchmark_elapsed_seconds": 20.760587698954623,
+    "cpu_model": "11th Gen Intel(R) Core(TM) i5-11600K @ 3.90GHz",
+    "exclusive_core_reserved": false,
+    "load_average_after": [
+      4.88427734375,
+      4.38232421875,
+      5.11962890625
+    ],
+    "load_average_before": [
+      4.30615234375,
+      4.23828125,
+      5.08984375
+    ],
+    "logical_cpu_count": 12,
+    "machine": "x86_64",
+    "platform": "Linux-6.17.0-35-generic-x86_64-with-glibc2.39",
+    "process_affinity": [
+      2
+    ],
+    "scaling_current_khz_after": "3883580",
+    "scaling_current_khz_before": "4572332",
+    "scaling_governor": "powersave",
+    "taskset_pinned_to_one_cpu": true
+  },
+  "interpretation": "Timings are suitable for regression comparison on this disclosed host only; they are not promotion-grade cross-host or exclusive-core evidence.",
+  "isolation": {
+    "classification": "loaded_host",
+    "exclusive_core_reserved": false,
+    "note": "single-CPU affinity; no exclusive-core reservation",
+    "other_heavy_jobs_note": "shared workstation with concurrent repository work",
+    "other_heavy_jobs_running": "yes"
+  },
+  "measured_at_utc": "2026-07-14T08:45:15.079441+00:00",
+  "measured_order": [
+    "mojo",
+    "go",
+    "julia",
+    "rust",
+    "python"
+  ],
+  "parity_tolerances": {
+    "array_max_abs": 1e-09,
+    "log_likelihood_abs": 1e-07
+  },
+  "python_only_workloads": {
+    "em_learner": {
+      "implementation_scope": "python_only",
+      "iterations_per_sample": 10,
+      "max_ms": 265.916984,
+      "median_ms": 234.127058,
+      "min_ms": 217.413576,
+      "samples_ms": [
+        220.362588,
+        228.982883,
+        243.587292,
+        235.15754,
+        238.159251,
+        226.994089,
+        240.992865,
+        234.127058,
+        225.761771,
+        239.890165,
+        237.007344,
+        234.248701,
+        228.60234,
+        226.97708,
+        257.431848,
+        265.916984,
+        238.824218,
+        228.688472,
+        230.952055,
+        241.523819,
+        230.888168,
+        217.413576,
+        233.144182,
+        233.505391,
+        242.222774
+      ]
+    },
+    "rts_smoother": {
+      "implementation_scope": "python_only",
+      "max_ms": 9.343452,
+      "median_ms": 6.222437,
+      "min_ms": 5.728943,
+      "samples_ms": [
+        8.043623,
+        7.61357,
+        6.968002,
+        6.008272,
+        5.958335,
+        5.945625,
+        5.855409,
+        5.902109,
+        9.343452,
+        7.022152,
+        8.455836,
+        7.31968,
+        5.891641,
+        5.787095,
+        5.728943,
+        5.898895,
+        6.179962,
+        7.949197,
+        7.743883,
+        8.472633,
+        7.685842,
+        6.467222,
+        5.944632,
+        6.222437,
+        5.950984
+      ]
+    }
+  },
+  "requested_backends": [
+    "python",
+    "rust",
+    "julia",
+    "go",
+    "mojo"
+  ],
+  "runtime_versions": {
+    "go": "go version go1.24.0 linux/amd64",
+    "julia": "1.11.9",
+    "juliacall": "0.9.31",
+    "mojo": "Mojo 1.0.0b1 (a9591de6)",
+    "numpy": "2.2.6",
+    "python": "3.12.3",
+    "rust_engine_package": "3.16.0",
+    "rust_extension": ".venv/lib/python3.12/site-packages/sc_neurocore_engine/sc_neurocore_engine.cpython-312-x86_64-linux-gnu.so",
+    "rustc": "rustc 1.96.0 (ac68faa20 2026-05-25)"
+  },
+  "schema_version": 2,
+  "source_sha256": {
+    "benchmarks/bench_predictive_model.py": "31e20068bde1bb5813503692ab3d889c0edc97e583a4187cf8401cd127570c1e",
+    "bridge/sc_neurocore_engine/__init__.py": "64761e14898ba83fb46af689836981c4f73b909fd9ae6cf675f312024f981588",
+    "bridge/sc_neurocore_engine/world_model.py": "ba54bf0ac3d41487b93e702fce3744764711a41d606b8834a33884d74cb27fe2",
+    "engine/src/lgssm.rs": "654ea16b17f35e2ca27c8e35a8903e2c206c8f041f22a55f9651449e2d4c8145",
+    "engine/src/lib.rs": "23d52cdb9a0431dbbf609158689379d6fad87fffa3b0cd5a9ab710392e5f1c0f",
+    "src/sc_neurocore/accel/go/lgssm/lgssm.go": "0950d11e2a602ef3d39ad497031bf7443bc678f0eba172a85aec41ffcb94df79",
+    "src/sc_neurocore/accel/julia/world_model/predictive_model.jl": "9125448c41ecabaaf0debebf4273024b624d3557a94ddffdee33f0e0b9b7b69c",
+    "src/sc_neurocore/accel/mojo/world_model/lgssm.mojo": "b1ec7b274facf6ae02252ca47f6118fb1009518fe5e8cac065f9cb7a9e2bc660",
+    "src/sc_neurocore/accel/rust/safety/predictive_model.rs": "7d05afc97b543dab961c687eb38dada2d052c8ec08dc4bbff81c9c90a6e8f675",
+    "src/sc_neurocore/world_model/_lgssm_backends.py": "75c2fed9e7a20afba04f1905bd14bfa0f40d02e1791fd583255d3022bcefe8c5",
+    "src/sc_neurocore/world_model/_lgssm_em.py": "d112f368ed85d7436c6ba95267da7600158df509cc42139a2cf620d57a539c71",
+    "src/sc_neurocore/world_model/_lgssm_filter.py": "ec55673c0b7fda8eeeb9193d892d3c6364eb42afa9e32bc80eedb98a072139eb",
+    "src/sc_neurocore/world_model/_lgssm_smoothing.py": "1ef63b06bf0dfd2f09e8293a42d7345d3c2111e8dfa6ca828798ff08e0f7c808",
+    "src/sc_neurocore/world_model/_lgssm_types.py": "d40d3f052db5b5810ddc2b79856685943dd31edf401eb702de92621db55b1e37",
+    "src/sc_neurocore/world_model/_predictive_world_model.py": "5bb4d9091ab3ac1bc74e712200c71e53a6b4b6cc8d177091dbf4511e7ff15da2",
+    "src/sc_neurocore/world_model/predictive_model.py": "9fef8640b86e86398c63326a2886caf376a7be06cb2b39de6ba246cc8aeda16a"
+  },
+  "working_directory": "repository_root",
+  "workload": {
+    "control_dim": 2,
+    "forward_sampling": "round_robin_rotating_start",
+    "observation_dim": 3,
+    "repeats": 25,
+    "seed": 20260714,
+    "state_dim": 4,
+    "time_steps": 200,
+    "warmups_per_cell": 1
+  }
 }

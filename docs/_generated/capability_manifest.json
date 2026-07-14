@@ -971,7 +971,7 @@
     "python_model_classes": 158,
     "python_model_source_modules": 153,
     "rust_pyo3_model_wrappers": 175,
-    "test_files": 1308
+    "test_files": 1316
   },
   "documentation": {
     "public_pages": [
@@ -4136,8 +4136,16 @@
       "tests/test_wong_wang_julia_parity.py",
       "tests/test_wong_wang_mojo_parity.py",
       "tests/test_wong_wang_parity.py",
+      "tests/test_world_model/_predictive_model_test_support.py",
+      "tests/test_world_model/test_em_learner.py",
+      "tests/test_world_model/test_kalman_filter.py",
+      "tests/test_world_model/test_linear_gaussian_ssm.py",
       "tests/test_world_model/test_predictive_model.py",
+      "tests/test_world_model/test_predictive_model_architecture.py",
       "tests/test_world_model/test_predictive_model_backends.py",
+      "tests/test_world_model/test_predictive_model_benchmark.py",
+      "tests/test_world_model/test_predictive_world_model.py",
+      "tests/test_world_model/test_rts_smoother.py",
       "tests/test_world_model.py",
       "tests/test_world_model_planner_contracts.py"
     ]

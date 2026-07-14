@@ -14,7 +14,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 401
+expected_file_count = 407
 
 [[file]]
 path = "src/sc_neurocore/__init__.py"
@@ -943,6 +943,30 @@ rationale = "Public spike-based next-state predictor."
 [[file]]
 path = "src/sc_neurocore/world_model/predictive_model.py"
 rationale = "Public linear-Gaussian state-space world model with Kalman filtering and RTS smoothing."
+
+[[file]]
+path = "src/sc_neurocore/world_model/_lgssm_types.py"
+rationale = "Validated array, model, filter-result, and smoothing-result contracts behind the public linear-Gaussian facade."
+
+[[file]]
+path = "src/sc_neurocore/world_model/_lgssm_backends.py"
+rationale = "Fail-closed optional-runtime discovery, selection, FFI marshalling, and native-result validation for the public linear-Gaussian filter."
+
+[[file]]
+path = "src/sc_neurocore/world_model/_lgssm_filter.py"
+rationale = "Numerically stable Python Kalman filter and validated native-dispatch owner behind the public linear-Gaussian facade."
+
+[[file]]
+path = "src/sc_neurocore/world_model/_lgssm_smoothing.py"
+rationale = "Rauch-Tung-Striebel smoothing responsibility with an explicit lag-one covariance orientation contract."
+
+[[file]]
+path = "src/sc_neurocore/world_model/_lgssm_em.py"
+rationale = "Controlled linear-Gaussian expectation-maximisation responsibility with monotonicity and covariance-stability guards."
+
+[[file]]
+path = "src/sc_neurocore/world_model/_predictive_world_model.py"
+rationale = "Planning-compatible next-state and multi-step forecast responsibility behind the historical public world-model facade."
 
 [[file]]
 path = "src/sc_neurocore/network/_cortical_column_backends.py"

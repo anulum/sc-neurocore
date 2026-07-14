@@ -5,6 +5,21 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 ## [Unreleased]
 
 ### Added
+- Replaced the 1,018-line predictive-model GodFile with a 63-line stable facade
+  and six bounded responsibility modules for contracts, native dispatch,
+  Kalman filtering, RTS smoothing, controlled EM, and planning forecasts.
+  Historical public identities and pickle paths remain stable; architecture
+  tests enforce exclusive ownership, an acyclic import graph, and module-size
+  ceilings.
+- Corrected controlled EM statistics, lag covariance orientation, covariance
+  validation, final-candidate likelihood acceptance, and native-result shape
+  enforcement. The five maintained forward backends now include a real
+  observation-wider-than-state regression that pins the bounded Mojo workspace
+  repair. The source-bound 25-sample benchmark records all raw data and
+  loaded-host limitations without making a universal performance claim.
+- Reconciled the three public formal-inventory claims with the accepted Poisson
+  parent: 48 tracked proof jobs and 176 statements (146 assert, 7 assume,
+  23 cover), split across 18 non-catalogue and 30 catalogue jobs.
 - Completed homogeneous Poisson binary-bin generation across the maintained
   Python model and dispatcher, the Rust engine and independent safety module,
   Julia, Go, and Mojo. Every runtime now uses the finite-bin probability

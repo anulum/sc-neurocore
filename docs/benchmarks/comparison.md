@@ -74,7 +74,7 @@ SC-NeuroCore-specific.
 | Python models | **158 lazy-loaded classes / 153 source modules** | 11 | 6 | Custom eq. | 3 |
 | Rust/compiled models | **175 Rust PyO3 wrappers / 161-model NetworkRunner** | — | — | C++ codegen | — |
 | Hardware emulators | **9** | — | — | — | Loihi only |
-| Formal verification | **45 SymbiYosys proof jobs and 175 formal statements (145 assert, 7 assume, 23 cover)** | — | — | — | — |
+| Formal verification | **48 SymbiYosys proof jobs and 176 formal statements (146 assert, 7 assume, 23 cover)** | — | — | — | — |
 | Train-to-FPGA export | **Yes** | No | No | No | No |
 
 ## Chialvo map polyglot batch loop

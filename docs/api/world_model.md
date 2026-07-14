@@ -28,16 +28,23 @@ Gaussian State-Space Model (LGSSM)** with Kalman filter
 References: Kalman 1960, Rauch-Tung-Striebel 1965, Shumway &
 Stoffer 1982, Bishop 2006 §13.3.
 
+Model parameters and returned moments are finite `float64` arrays with
+fail-closed shape and covariance validation. The Python inference path uses
+Cholesky solves and Joseph-form covariance updates without explicit matrix
+inverses. The forward filter is cross-wired to Mojo, Go, Rust, Julia, and
+Python backends; `backend="auto"` follows that stable availability-aware
+order. RTS smoothing and the EM M-step remain explicit Python/NumPy
+responsibilities.
+
 Provides `predict_next_state()` (deterministic mean),
 `predict_next_state_with_cov()` (mean + covariance),
 `forecast()` / `forecast_with_cov()` for multi-step rollouts.
 
-The previous "linear transition matrix + clip-to-[0,1]"
-implementation was replaced 2026-04-17 per
-`feedback_sophisticated_from_start.md`. See [Predictive Model
-detailed page](world_model/predictive_model.md) for the full
-LGSSM + Kalman + RTS + EM derivations, performance numbers,
-and the multi-language backend status.
+In controlled EM fits, `B` and `D` are fixed but their `B @ u_t` and `D @ u_t`
+contributions are subtracted from the sufficient statistics. Lag-one smoother
+covariances have the documented `Cov[x_t, x_{t+1} | y]` orientation. See the
+[predictive-model detail page](world_model/predictive_model.md) for contracts,
+backend boundaries, source-bound benchmark evidence, and verification.
 
 ## SCPlanner — Greedy Action Selection
 
