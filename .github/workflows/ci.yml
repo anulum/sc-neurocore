@@ -153,6 +153,14 @@ jobs:
         with:
           go-version: "1.24"
 
+      # Mojo toolchain via pixi (accel/mojo/pixi.toml, public MAX conda channel)
+      # so test_*_backends.py `mojo build --emit shared-lib` builds succeed.
+      # activate-environment puts the pixi env `mojo` on PATH. TIER 0, not skips.
+      - uses: prefix-dev/setup-pixi@a09b6247153796b190642a2b53fac4241043cf6f # v0.10.0
+        with:
+          manifest-path: src/sc_neurocore/accel/mojo/pixi.toml
+          activate-environment: true
+
       - name: Install HDL simulator
         run: |
           sudo apt-get update -qq
