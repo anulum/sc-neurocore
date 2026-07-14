@@ -58,43 +58,64 @@ meaning = "live integer membrane state"
 default = 128.0
 unit = "integer"
 meaning = "resting state and public reset target"
-range = [-2147483648.0, 2147483647.0]
+range = [
+    -2147483648.0,
+    2147483647.0,
+]
 
 [parameters.v_threshold]
 default = 200.0
 unit = "integer"
 meaning = "upper restoring-force reference; the event boundary is v_max"
-range = [-2147483648.0, 2147483647.0]
+range = [
+    -2147483648.0,
+    2147483647.0,
+]
 
 [parameters.v_reset]
 default = 128.0
 unit = "integer"
 meaning = "hard-reset state after a candidate strictly exceeds v_max"
-range = [-2147483648.0, 2147483647.0]
+range = [
+    -2147483648.0,
+    2147483647.0,
+]
 
 [parameters.a]
 default = 1.0
 unit = "Q0.3 numerator"
 meaning = "non-negative lower-branch restoring-force coefficient divided by eight"
-range = [0.0, 2147483647.0]
+range = [
+    0.0,
+    2147483647.0,
+]
 
 [parameters.b]
 default = 1.0
 unit = "Q0.3 numerator"
 meaning = "non-negative upper-branch restoring-force coefficient divided by eight"
-range = [0.0, 2147483647.0]
+range = [
+    0.0,
+    2147483647.0,
+]
 
 [parameters.v_max]
 default = 255.0
 unit = "integer"
 meaning = "strict upper candidate boundary for spike emission"
-range = [-2147483648.0, 2147483647.0]
+range = [
+    -2147483648.0,
+    2147483647.0,
+]
 
 [parameters.v_min]
 default = 0.0
 unit = "integer"
 meaning = "inclusive lower clamp for non-spiking candidates"
-range = [-2147483648.0, 2147483647.0]
+range = [
+    -2147483648.0,
+    2147483647.0,
+]
 
 [integration]
 dt = 1.0
@@ -126,7 +147,7 @@ status = "implemented"
 parity = "exact"
 
 [reproducibility]
-reference_config = "{\"n_steps\":400,\"current\":10,\"backend\":\"python\",\"parameters\":\"source tutorial defaults\"}"
+reference_config = "{\"n_steps\":400,\"current\":10,\"backend\":\"python\",\"parameters\":\"source tutorial defaults\",\"digest_encoding\":\"index_event_state_text_v1\",\"state_field\":\"v\"}"
 golden_trace_sha256 = "57c6916aac726033546610a2e784a22cf5b57d70657779abc7269510e9e64bf3"
 golden_citation = "doi:10.1109/AICAS51828.2021.9458572; twetto/iq-neuron@a8752eba49dba9ba43a64be74090b91a51044b2f"
 

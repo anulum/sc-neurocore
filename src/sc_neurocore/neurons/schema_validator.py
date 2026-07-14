@@ -33,6 +33,8 @@ import re
 from pathlib import Path
 from typing import Any
 
+from sc_neurocore.neurons.schema_contracts import stateless_event_kind
+
 logger = logging.getLogger(__name__)
 
 _SCHEMAS_DIR = Path(__file__).parent / "model_schemas"
@@ -95,9 +97,14 @@ def validate_schema_dict(data: dict[str, Any], name: str = "") -> list[SchemaErr
                 SchemaError("warning", f"Missing recommended field '{field}'", "metadata")
             )
 
+    # State and dynamics may both be empty only for the exact event-only
+    # contracts accepted by UniversalNeuron. Keeping this predicate shared
+    # prevents the static validator from rejecting schemas the runtime executes.
+    event_only = stateless_event_kind(data) is not None
+
     # State validation
     state = data["state"]
-    if not state:
+    if not state and not event_only:
         errors.append(SchemaError("error", "State section is empty", "state"))
 
     for var, val in state.items():
@@ -122,7 +129,7 @@ def validate_schema_dict(data: dict[str, Any], name: str = "") -> list[SchemaErr
 
     # Dynamics validation
     dynamics = data["dynamics"]
-    if not dynamics:
+    if not dynamics and not event_only:
         errors.append(SchemaError("error", "Dynamics section is empty", "dynamics"))
 
     state_vars = set(state.keys())
@@ -230,10 +237,20 @@ def validate_schema(name: str) -> list[SchemaError]:
             json_data = json.load(f)
         errors.extend(validate_schema_dict(json_data, f"{name}.json"))
 
-    # Parity check
+    # Parity check. Matching keys are insufficient: a timestep, equation, or
+    # threshold value can drift while preserving the same shape, so compare the
+    # complete authored contract after retaining the more specific key error.
     if toml_data and json_data:
-        # Compare key fields
-        for section in ("state", "parameters", "dynamics"):
+        for section in (
+            "metadata",
+            "state",
+            "parameters",
+            "integration",
+            "dynamics",
+            "threshold",
+            "reset",
+            "extensions",
+        ):
             toml_section = toml_data.get(section, {})
             json_section = json_data.get(section, {})
             if set(toml_section.keys()) != set(json_section.keys()):
@@ -243,6 +260,14 @@ def validate_schema(name: str) -> list[SchemaError]:
                         f"TOML/JSON key mismatch in '{section}': "
                         f"TOML={sorted(toml_section.keys())}, "
                         f"JSON={sorted(json_section.keys())}",
+                        f"{name} parity",
+                    )
+                )
+            elif toml_section != json_section:
+                errors.append(
+                    SchemaError(
+                        "error",
+                        f"TOML/JSON value mismatch in '{section}'",
                         f"{name} parity",
                     )
                 )

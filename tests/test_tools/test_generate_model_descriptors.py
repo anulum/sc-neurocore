@@ -76,3 +76,25 @@ def test_map_descriptor_uses_schema_iteration_dt_without_public_dt_parameter() -
     assert "dt" not in inspect.signature(RulkovMapNeuron).parameters
     assert descriptor.dt == 1.0
     assert descriptor.integration_method == "map"
+
+
+def test_schema_alias_and_event_only_integration_contracts_are_preserved() -> None:
+    """Aliases and event-only schemas retain their authored integration semantics."""
+    from sc_neurocore.neurons.descriptor_generator import generate_descriptor
+
+    exp_if = generate_descriptor("ExpIFNeuron")
+    mcculloch_pitts = generate_descriptor("McCullochPittsNeuron")
+    poisson = generate_descriptor("PoissonNeuron")
+
+    assert (exp_if.dt, exp_if.integration_method) == (0.02, "rk4")
+    assert (mcculloch_pitts.dt, mcculloch_pitts.integration_method) == (1.0, "map")
+    assert (poisson.dt, poisson.integration_method) == (1.0, "poisson_interval")
+
+
+def test_public_rng_state_properties_are_materialised() -> None:
+    """Seeded stochastic descriptors expose replay state from their public property."""
+    from sc_neurocore.neurons.descriptor_generator import generate_descriptor
+
+    for model in ("EscapeRateNeuron", "PoissonNeuron"):
+        state = {item.name: item.init for item in generate_descriptor(model).state}
+        assert state["rng_state"] == 44257.0

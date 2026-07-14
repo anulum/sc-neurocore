@@ -5,6 +5,23 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+### Schema and descriptor contract reconciliation
+
+- Unified schema validation and execution around the same exact event-only
+  predicate: empty state and dynamics are valid only for a non-empty
+  deterministic level threshold or a Poisson probability expression. Added
+  paired JSON schemas for both rate models and moved the live schema inventory
+  baseline to 38 unique stems.
+- Bound descriptor generation to the canonical schema/module alias table,
+  public stochastic replay state, and the semantic integration labels for
+  state-free maps and Poisson intervals. Regenerated only the nine descriptors
+  affected by those rules and serializer normalisation.
+- Reworked the Tier-3 evidence runner to retain integer currents, apply declared
+  constructor configuration, accept both spiking tuples and continuous-rate
+  arrays, and verify explicitly declared source-text digest encodings. This
+  keeps IQIF and McCulloch-Pitts source-oracle hashes distinct from ordinary
+  float-trace hashes while exercising every model's maintained public API.
+
 ### Threshold-linear rate polyglot closure
 
 - Promoted `ThresholdLinearRateNeuron` to the explicit algebraic contract

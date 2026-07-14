@@ -1,0 +1,30 @@
+{
+  "metadata": {
+    "schema_version": 1,
+    "name": "ThresholdLinearRateNeuron",
+    "author": "Gerstner, W.; Kistler, W. M.; Naud, R.; Paninski, L.",
+    "year": 2014,
+    "doi": "10.1017/CBO9781107447615",
+    "description": "Memoryless piecewise-linear population-rate gain function with explicit threshold and gain"
+  },
+  "state": {
+    "r": 0.0
+  },
+  "parameters": {
+    "theta": 0.0,
+    "gain": 1.0
+  },
+  "integration": {
+    "dt": 1.0,
+    "method": "map"
+  },
+  "dynamics": {
+    "r": "gain * max(0.0, I - theta)"
+  },
+  "extensions": {
+    "family": "rate-mean-field",
+    "model_type": "algebraic_transfer",
+    "source_scope_note": "Gerstner et al. 2014 Eq. 18.23 defines F(h)=[h]+; theta and gain expose the translated and scaled form",
+    "state_scope_note": "r caches the latest continuous output; it is not integrated state and positive r is not a binary spike"
+  }
+}

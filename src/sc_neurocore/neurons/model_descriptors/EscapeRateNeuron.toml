@@ -55,49 +55,73 @@ meaning = "non-zero 16-bit state used by the next eight-advance Bernoulli sample
 default = -70.0
 unit = "mV"
 meaning = "resting membrane potential and public reset destination"
-range = [-120.0, 80.0]
+range = [
+    -120.0,
+    80.0,
+]
 
 [parameters.v_reset]
 default = -70.0
 unit = "mV"
 meaning = "membrane potential committed after an escape event"
-range = [-120.0, 80.0]
+range = [
+    -120.0,
+    80.0,
+]
 
 [parameters.v_threshold]
 default = -50.0
 unit = "mV"
 meaning = "reference voltage in the exponential soft-threshold intensity"
-range = [-120.0, 80.0]
+range = [
+    -120.0,
+    80.0,
+]
 
 [parameters.tau_m]
 default = 10.0
 unit = "ms"
 meaning = "positive passive-membrane time constant"
-range = [0.000001, 1000000.0]
+range = [
+    1e-06,
+    1000000.0,
+]
 
 [parameters.rho_0]
 default = 0.001
 unit = "1/ms"
 meaning = "positive instantaneous escape intensity at v_threshold"
-range = [0.000000000001, 1000000.0]
+range = [
+    1e-12,
+    1000000.0,
+]
 
 [parameters.delta_u]
 default = 3.0
 unit = "mV"
 meaning = "positive voltage scale controlling exponential threshold softness"
-range = [0.000001, 1000000.0]
+range = [
+    1e-06,
+    1000000.0,
+]
 
 [parameters.resistance]
 default = 1.0
 unit = "mV/current-unit"
 meaning = "positive normalised resistance mapping injected current to steady-state voltage"
-range = [0.000001, 1000000.0]
+range = [
+    1e-06,
+    1000000.0,
+]
 
 [parameters.seed]
 default = 44257.0
 unit = "integer"
 meaning = "replay seed; zero maps to 0xACE1 and explicit None requests fresh entropy in Python"
-range = [0.0, 65535.0]
+range = [
+    0.0,
+    65535.0,
+]
 
 [integration]
 dt = 1.0

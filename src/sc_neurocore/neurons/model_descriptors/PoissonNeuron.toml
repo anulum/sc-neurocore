@@ -52,19 +52,28 @@ meaning = "non-zero 16-bit execution state used by the next eight-advance Bernou
 default = 100.0
 unit = "Hz"
 meaning = "constant event intensity of the homogeneous point process"
-range = [0.0, 1000000000.0]
+range = [
+    0.0,
+    1000000000.0,
+]
 
 [parameters.dt_ms]
 default = 1.0
 unit = "ms"
 meaning = "positive binary-bin width used to integrate the event intensity"
-range = [0.000001, 1000000.0]
+range = [
+    1e-06,
+    1000000.0,
+]
 
 [parameters.seed]
 default = 44257.0
 unit = "integer"
 meaning = "replay seed; zero maps to 0xACE1 and explicit None requests fresh entropy in Python"
-range = [0.0, 65535.0]
+range = [
+    0.0,
+    65535.0,
+]
 
 [integration]
 dt = 1.0

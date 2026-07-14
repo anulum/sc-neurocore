@@ -4,7 +4,7 @@
 # © Code 2020–2026 Miroslav Šotek. All rights reserved.
 # ORCID: 0009-0009-3560-0851
 # Contact: www.anulum.li | protoscience@anulum.li
-# SC-NeuroCore — Threshold-linear rate source/config provenance
+# SC-NeuroCore — Source/config provenance header
 
 [metadata]
 schema_version = 2

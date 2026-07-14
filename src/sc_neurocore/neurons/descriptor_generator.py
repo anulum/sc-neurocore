@@ -35,6 +35,8 @@ from sc_neurocore.neurons.model_descriptor import (
     ModelDescriptor,
     parse_model_descriptor,
 )
+from sc_neurocore.neurons.schema_contracts import stateless_event_kind
+from sc_neurocore.neurons.schema_module_aliases import schema_for_module
 from sc_neurocore.neurons.model_taxonomy import model_family
 from sc_neurocore.neurons.models import _CLASS_TO_MODULE
 
@@ -64,10 +66,12 @@ _KNOWN_STATE_VARS = frozenset(
         "y",
         "z",
         "time_since_spike",
+        "rng_state",
     }
 )
 _PARAM_PREFIXES = ("v_", "e_", "g_", "tau_", "c_", "sigma", "alpha", "beta")
 _PARAM_SUFFIXES = ("_threshold", "_reset", "_rest", "_rev", "_max", "_min")
+_PUBLIC_STATE_PROPERTIES = frozenset({"rng_state"})
 _DOI_IN_TEXT = re.compile(r"10\.\d{4,9}/[^\s,)]+")
 
 
@@ -252,7 +256,7 @@ def _load_v1_schema(module: str) -> dict[str, Any]:
     from sc_neurocore.neurons.universal_dsl import load_schema
 
     try:
-        return load_schema(module)
+        return load_schema(schema_for_module(module))
     except FileNotFoundError:
         return {}
 
@@ -300,13 +304,21 @@ def generate_descriptor_payload(class_name: str) -> dict[str, Any]:
     v1_state = v1.get("state", {}) if isinstance(v1.get("state"), Mapping) else {}
     v1_params = v1.get("parameters", {}) if isinstance(v1.get("parameters"), Mapping) else {}
     v1_integration = v1.get("integration", {}) if isinstance(v1.get("integration"), Mapping) else {}
-    integration_method = str(v1_integration.get("method", "euler"))
+    event_kind = stateless_event_kind(v1)
+    if event_kind == "level_threshold":
+        integration_method = "map"
+    elif event_kind == "poisson":
+        integration_method = "poisson_interval"
+    else:
+        integration_method = str(v1_integration.get("method", "euler"))
 
     specs = _field_specs(cls)
     dyn_state = _dynamic_state_fields(cls)
     state: dict[str, Any] = {}
     parameters: dict[str, Any] = {}
-    schema_dt = v1_integration.get("dt") if integration_method == "map" else None
+    schema_dt = (
+        v1_integration.get("dt") if integration_method == "map" or event_kind is not None else None
+    )
     dt = float(schema_dt) if _is_number(schema_dt) else 0.1
     for name, default in specs:
         if name == "dt":
@@ -336,6 +348,18 @@ def generate_descriptor_payload(class_name: str) -> dict[str, Any]:
         if _is_param(name) or not _is_state_var(name):
             continue
         if _is_mirror_field(cls, name):
+            continue
+        init = _instance_state_init(cls, name)
+        if init is not None:
+            state[name] = {"init": init}
+    # A public read-only property can expose execution state held by a private
+    # implementation object. Recognised numeric state properties (currently the
+    # shared RNG state contract) are as real and reproducibility-relevant as
+    # ordinary dataclass fields, so materialise their initial value too.
+    for name, member in vars(cls).items():
+        if not isinstance(member, property) or name not in _PUBLIC_STATE_PROPERTIES:
+            continue
+        if name in state or name in parameters or name in v1_params:
             continue
         init = _instance_state_init(cls, name)
         if init is not None:

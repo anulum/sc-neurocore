@@ -4,7 +4,7 @@
 # © Code 2020–2026 Miroslav Šotek. All rights reserved.
 # ORCID: 0009-0009-3560-0851
 # Contact: www.anulum.li | protoscience@anulum.li
-# SC-NeuroCore — Published DPI circuit model descriptor
+# SC-NeuroCore — Source/config provenance header
 
 [metadata]
 schema_version = 2
@@ -52,85 +52,127 @@ meaning = "remaining spike/refractory pulse duration"
 default = 1.0
 unit = "normalised current"
 meaning = "post-Euler membrane-current event threshold"
-range = [0.001, 100.0]
+range = [
+    0.001,
+    100.0,
+]
 
 [parameters.i_reset]
 default = 0.01
 unit = "normalised current"
 meaning = "membrane current held during the refractory pulse"
-range = [0.000001, 10.0]
+range = [
+    1e-06,
+    10.0,
+]
 
 [parameters.i_rest]
 default = 0.1
 unit = "normalised current"
 meaning = "constant resting input current added to injected drive"
-range = [0.0, 100.0]
+range = [
+    0.0,
+    100.0,
+]
 
 [parameters.i_tau]
 default = 1.0
 unit = "normalised current"
 meaning = "membrane DPI leakage current"
-range = [0.000001, 100.0]
+range = [
+    1e-06,
+    100.0,
+]
 
 [parameters.i_g]
 default = 1.0
 unit = "normalised current"
 meaning = "membrane input saturation current"
-range = [0.000001, 100.0]
+range = [
+    1e-06,
+    100.0,
+]
 
 [parameters.i_tau_ahp]
 default = 0.1
 unit = "normalised current"
 meaning = "adaptation DPI leakage current"
-range = [0.000001, 100.0]
+range = [
+    1e-06,
+    100.0,
+]
 
 [parameters.i_ga]
 default = 1.0
 unit = "normalised current"
 meaning = "adaptation input saturation current"
-range = [0.000001, 100.0]
+range = [
+    1e-06,
+    100.0,
+]
 
 [parameters.i_spike]
 default = 5.0
 unit = "normalised current"
 meaning = "current injected into the adaptation DPI while the spike pulse is active"
-range = [0.000001, 1000.0]
+range = [
+    1e-06,
+    1000.0,
+]
 
 [parameters.i_0]
 default = 0.01
 unit = "normalised current"
 meaning = "subthreshold transistor reference current in the positive-feedback term"
-range = [0.000001, 100.0]
+range = [
+    1e-06,
+    100.0,
+]
 
 [parameters.kappa]
 default = 0.7
 unit = "1"
 meaning = "subthreshold slope factor"
-range = [0.01, 1.0]
+range = [
+    0.01,
+    1.0,
+]
 
 [parameters.alpha]
 default = 10.0
 unit = "1 / normalised current"
 meaning = "inverter transition steepness in the positive-feedback gate"
-range = [0.01, 1000.0]
+range = [
+    0.01,
+    1000.0,
+]
 
 [parameters.tau]
 default = 20.0
 unit = "normalised time"
 meaning = "membrane DPI time constant"
-range = [0.001, 10000.0]
+range = [
+    0.001,
+    10000.0,
+]
 
 [parameters.tau_ahp]
 default = 100.0
 unit = "normalised time"
 meaning = "adaptation DPI time constant"
-range = [0.001, 100000.0]
+range = [
+    0.001,
+    100000.0,
+]
 
 [parameters.refractory_period]
 default = 2.0
 unit = "normalised time"
 meaning = "spike pulse duration that drives adaptation and holds the membrane reset"
-range = [0.001, 1000.0]
+range = [
+    0.001,
+    1000.0,
+]
 
 [integration]
 dt = 0.1

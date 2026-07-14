@@ -70,6 +70,8 @@ dt = 0.05
 method = "euler"
 
 [dynamics]
+x = "b * x - omega * y + I"
+y = "omega * x + b * y"
 
 [backends.python]
 status = "implemented"

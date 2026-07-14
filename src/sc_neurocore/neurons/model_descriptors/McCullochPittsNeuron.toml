@@ -43,13 +43,15 @@ paper_title = "A Logical Calculus of the Ideas Immanent in Nervous Activity"
 url = "https://link.springer.com/article/10.1007/BF02478259"
 
 [state]
-# No cell state: one synaptic delay belongs to network scheduling.
 
 [parameters.theta]
 default = 1.0
 unit = "active afferents"
 meaning = "positive number of simultaneously active excitatory afferents required in the absence of inhibition"
-range = [1.0, 2147483647.0]
+range = [
+    1.0,
+    2147483647.0,
+]
 
 [integration]
 dt = 1.0
@@ -81,7 +83,7 @@ status = "implemented"
 parity = "exact"
 
 [reproducibility]
-reference_config = "{\"theta\":[1,2],\"excitatory_count\":[0,1,2],\"inhibitory_active\":[false,true],\"backend\":\"python\"}"
+reference_config = "{\"kind\":\"truth_table\",\"digest_encoding\":\"truth_table_text_v1\",\"columns\":[\"theta\",\"excitatory_count\",\"inhibitory_active\",\"output\"],\"constructor_fields\":[\"theta\"],\"simulate_fields\":[\"excitatory_count\",\"inhibitory_active\"],\"expected_field\":\"output\",\"rows\":[[1,0,false,0],[1,1,false,1],[1,0,true,0],[1,1,true,0],[2,0,false,0],[2,1,false,0],[2,2,false,1],[2,2,true,0]],\"backend\":\"python\"}"
 golden_trace_sha256 = "2aebd2a5ed6ea8a9409b7452d603441d91e2c8b610da8446668452492ee73db4"
 golden_citation = "doi:10.1007/BF02478259"
 

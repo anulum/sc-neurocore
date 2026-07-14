@@ -86,6 +86,65 @@ def test_empty_dynamics_section_is_reported() -> None:
     assert _levels(errors, "Dynamics section is empty")
 
 
+@pytest.mark.parametrize(
+    "threshold",
+    [
+        {"condition": "I >= theta", "detection": "level"},
+        {
+            "condition": "stochastic",
+            "detection": "poisson",
+            "probability_expression": "1.0 - exp(-rate_hz * dt_ms / 1000.0)",
+        },
+    ],
+)
+def test_supported_event_only_schemas_match_runtime_contract(
+    threshold: dict[str, str],
+) -> None:
+    """Validator and runtime accept the same exact state-free event contracts."""
+    from sc_neurocore.neurons.universal_dsl import UniversalNeuron
+
+    schema: dict[str, Any] = {
+        "metadata": {"schema_version": 1, "name": "event-only"},
+        "state": {},
+        "parameters": {"theta": 1.0, "rate_hz": 100.0, "dt_ms": 1.0},
+        "dynamics": {},
+        "integration": {"dt": 1.0, "method": "euler"},
+        "threshold": threshold,
+    }
+
+    errors = validate_schema_dict(schema, "event-only")
+
+    assert not [error for error in errors if error.level == "error"]
+    UniversalNeuron(schema)
+
+
+@pytest.mark.parametrize(
+    "threshold",
+    [
+        {"condition": "", "detection": "level"},
+        {"condition": "stochastic", "detection": "poisson"},
+        {
+            "condition": "stochastic",
+            "detection": "poisson",
+            "probability_expression": "   ",
+        },
+    ],
+)
+def test_malformed_event_only_schema_still_requires_state_and_dynamics(
+    threshold: dict[str, str],
+) -> None:
+    """Labels alone never waive the ordinary state and dynamics requirements."""
+    schema = _valid_schema()
+    schema["state"] = {}
+    schema["dynamics"] = {}
+    schema["threshold"] = threshold
+
+    errors = validate_schema_dict(schema, "malformed-event-only")
+
+    assert _levels(errors, "State section is empty")
+    assert _levels(errors, "Dynamics section is empty")
+
+
 def test_state_variable_without_dynamics_equation_warns() -> None:
     """A state variable that has no dynamics equation produces a warning."""
     schema = _valid_schema()
@@ -149,6 +208,27 @@ def test_validate_schema_flags_toml_json_key_mismatch(
     errors = validate_schema("mm")
 
     assert _levels(errors, "TOML/JSON key mismatch in 'state'")
+
+
+def test_validate_schema_flags_toml_json_value_mismatch(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    """Equal section keys cannot hide a different authored timestep value."""
+    monkeypatch.setattr(schema_validator, "_SCHEMAS_DIR", tmp_path)
+    toml_text = (
+        '[metadata]\nschema_version = 1\nname = "mm"\n'
+        "[state]\nv = 0.0\n"
+        '[dynamics]\nv = "v + I"\n'
+        '[integration]\ndt = 0.1\nmethod = "euler"\n'
+    )
+    json_data = _valid_schema()
+    json_data["metadata"]["name"] = "mm"
+    json_data["integration"]["dt"] = 0.2
+    _write_schema_files(tmp_path, "mm", toml=toml_text, data=json_data)
+
+    errors = validate_schema("mm")
+
+    assert _levels(errors, "TOML/JSON value mismatch in 'integration'")
 
 
 def test_validate_schema_warns_when_json_variant_missing(
