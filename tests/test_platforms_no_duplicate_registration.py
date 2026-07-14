@@ -33,7 +33,16 @@ from sc_neurocore.compiler.platforms.registry import (
 )
 
 _NAME_PATTERN = re.compile(r'name="([^"]+)"')
-_BUILTIN_MODULES = ("cmos_profiles", "exotic_profiles", "neuromorphic_profiles")
+_BUILTIN_MODULES = (
+    "_cmos_accelerator_profiles",
+    "_cmos_architecture_profiles",
+    "_cmos_fpga_profiles",
+    "_cmos_processor_profiles",
+    "_cmos_reference_profiles",
+    "cmos_profiles",
+    "exotic_profiles",
+    "neuromorphic_profiles",
+)
 
 
 def _source_profile_names() -> list[str]:

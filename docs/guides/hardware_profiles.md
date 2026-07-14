@@ -6,8 +6,8 @@
 
 # Hardware Platform Profiles
 
-SC-NeuroCore ships with **175 pre-configured hardware profiles** across **31
-platform classes** and **100+ vendors**, covering every FPGA vendor (including
+SC-NeuroCore ships with **194 pre-configured hardware profiles** across **38
+platform classes** and **121 vendors**, covering FPGA vendors (including
 rad-hard and eFPGA), AI accelerator, DSP processor, neuromorphic chip, ASIC
 target, photonic/optical compute, processing-in-memory, chiplet/UCIe,
 automotive/edge AI, sovereign/defence, superconducting/cryogenic, spintronic,
@@ -16,10 +16,24 @@ emerging compute paradigm, and simulation reference. Each profile encodes the
 optimal fixed-point configuration (bit width, fraction, overflow handling,
 rounding semantics) for its target platform.
 
+## Registry Architecture
+
+The public API remains `sc_neurocore.compiler.platforms`: callers use
+`HardwareProfile`, `get_profile()`, `list_profiles()`, and
+`list_profile_names()` without depending on the source layout. The historical
+`cmos_profiles` module is a registration facade. Five private modules own the
+FPGA, conventional-accelerator, embedded-processor, architecture-paradigm, and
+ASIC/simulation profile families.
+
+The facade invokes those private registrars in the established sequence. This
+preserves all 72 CMOS-family profile values and registry insertion order while
+the registry continues to reject accidental duplicate names. Importing or
+reloading a private definition module alone has no registration side effect.
+
 ## Quick Start
 
 ```bash
-# List all 175 hardware profiles
+# List all 194 hardware profiles
 python -m sc_neurocore.neurons platforms
 
 # Compile a LIF neuron for Intel Loihi 2 (auto-selects Q12.12, wrap overflow)
@@ -69,7 +83,7 @@ for p in list_profiles(vendor="Xilinx"):
 
 ## Supported Platforms
 
-### FPGA Platforms (28 profiles)
+### CMOS/FPGA Platforms (31 profiles)
 
 | Profile | Vendor | Family | Format | Bits | DSP Block | DSP Width |
 |---------|--------|--------|--------|:----:|-----------|-----------|
@@ -132,7 +146,7 @@ for p in list_profiles(vendor="Xilinx"):
 | `sim_q88` | Icarus Verilog Q8.8 reference | Q8.8 |
 | `sim_q1616` | Icarus Verilog Q16.16 gold standard | Q16.16 |
 
-### AI / ML Accelerators (13 profiles)
+### AI / ML Accelerators (15 profiles)
 
 | Profile | Vendor | Family | Format | Bits | Overflow | Rounding |
 |---------|--------|--------|--------|:----:|----------|----------|

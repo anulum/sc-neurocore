@@ -5,6 +5,34 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+### CMOS profile responsibility modularisation
+
+- Replaced the 1,145-line CMOS profile registration GodFile with a 67-line
+  stable facade over bounded FPGA (562 lines), conventional-accelerator (295),
+  architecture-paradigm (181), embedded-processor (140), and ASIC/simulation
+  reference (90) modules.
+- Preserved every field of all 72 profiles at SHA-256
+  `0d72e74b9a779dd3a98b70817a12fac902528e741cea3772a7dc6bf37be20fc9`,
+  their historical registry insertion order, the facade's public
+  `HardwareProfile` identity, and duplicate-registration failure semantics.
+- Architecture contracts pin exact responsibility ownership, a registry-only
+  private import graph, facade composition order, side-effect-free private
+  module reloads, and module-specific ceilings. The 197-test focused platform
+  cohort covers all 111 statements and two branches exactly.
+- Strict MyPy, Ruff lint/format, NumPy docstrings, Bandit, public-docstring and
+  generated-doc checks, capability-manifest checks, and strict MkDocs pass.
+  The installed wheel contains all five private modules, preserves the exact
+  digest/order and CLI surface, and has SHA-256
+  `60092f90bb902fa57e5c8f41e7adbc5ee22536c5fa726685729e650446544e01`.
+- The generated API/capability refresh is based on accepted parent
+  `f431710c3`: it includes that commit's COBA-LIF API, validation page, and five
+  tests plus this lane's architecture test. No uncommitted peer work is
+  represented in those generated surfaces.
+- Refreshed the hardware-profile guide against the live registry: 194 profiles,
+  38 classes, and 121 vendors. The split only reorganises static Python
+  metadata; no numerical kernel, Rust/Go/Julia/Mojo mirror, or throughput claim
+  applies.
+
 ### Studio training responsibility modularisation
 
 - Replaced the 1,208-line Studio training GodFile with a 311-line historical

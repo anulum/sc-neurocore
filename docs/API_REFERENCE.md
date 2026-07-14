@@ -360,6 +360,31 @@ order is returned verbatim.
 
 ---
 
+## Module `accel.coba_lif`
+
+### Function `ensure_julia_loaded()`
+Load the executable COBA LIF Julia module when available.
+
+### Function `ensure_go_loaded()`
+Load the compiled COBA LIF Go C ABI when available.
+
+### Function `ensure_mojo_loaded()`
+Load the compiled COBA LIF Mojo C ABI when available.
+
+### Function `simulate_rust(v, g_e, g_i, refractory_time, c_m, g_l, e_l, e_e, e_i, tau_e, tau_i, v_threshold, v_reset, refractory_period, dt, n_steps, current, delta_ge, delta_gi)`
+Run the complete contract through the production Rust engine.
+
+### Function `simulate_julia(v, g_e, g_i, refractory_time, c_m, g_l, e_l, e_e, e_i, tau_e, tau_i, v_threshold, v_reset, refractory_period, dt, n_steps, current, delta_ge, delta_gi)`
+Run the Julia recurrence with the complete public contract.
+
+### Function `simulate_go(v, g_e, g_i, refractory_time, c_m, g_l, e_l, e_e, e_i, tau_e, tau_i, v_threshold, v_reset, refractory_period, dt, n_steps, current, delta_ge, delta_gi)`
+Run the Go recurrence through its C ABI.
+
+### Function `simulate_mojo(v, g_e, g_i, refractory_time, c_m, g_l, e_l, e_e, e_i, tau_e, tau_i, v_threshold, v_reset, refractory_period, dt, n_steps, current, delta_ge, delta_gi)`
+Run the Mojo recurrence through its C ABI.
+
+---
+
 ## Module `accel.dpi_neuron`
 
 ### Function `ensure_julia_loaded()`
@@ -21642,18 +21667,33 @@ The public spike contract is ternary: +1 for positive-threshold crossing,
 ## Module `neurons.models.coba_lif`
 
 ### Class `COBALIFNeuron`
-Conductance-based LIF with coupled RK4 synaptic conductance state.
+Brette et al. conductance-based integrate-and-fire benchmark cell.
 
 C dV/dt = -g_L(V - E_L) - g_e(V - E_e) - g_i(V - E_i) + I
 dg_e/dt = -g_e / tau_e, dg_i/dt = -g_i / tau_i.
 
-Conductance injections are applied before integration. The full
-``(v, g_e, g_i)`` candidate is advanced with RK4 and committed only after
-finite-value and envelope checks pass.
+Boundary conductance increments are applied before integration. Outside
+refractory periods, the full ``(v, g_e, g_i)`` candidate is advanced with
+coupled RK4. After a spike the voltage remains at ``v_reset`` for the
+source's 5 ms refractory interval while both conductances continue their
+RK4 decay. Every update is candidate-first and mutation-atomic.
+
+The continuous equations and factory defaults reproduce Benchmark 1 in
+Brette et al. (2007). RK4 is the maintained repository discretisation; the
+paper compared Euler, second-order Runge--Kutta, and spike-interpolated
+Euler implementations rather than prescribing RK4.
+
+References
+----------
+Brette, R. et al. (2007). *Simulation of networks of spiking neurons: a
+review of tools and strategies*. Journal of Computational Neuroscience,
+23, 349--398. doi:10.1007/s10827-007-0038-6.
 
 - **__post_init__**()
 - **step**(current, delta_ge, delta_gi)
   - Advance one candidate-first RK4 timestep.
+- **simulate**(n_steps, current, delta_ge, delta_gi, backend)
+  - Advance a constant-input trace through Python or a native backend.
 - **reset**()
   - Restore the membrane to leak reversal and clear conductances.
 

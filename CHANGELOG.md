@@ -5,6 +5,23 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 ## [Unreleased]
 
 ### Added
+- Replaced the 1,145-line CMOS profile registration GodFile with a 67-line
+  historical facade and five bounded responsibility modules for FPGA targets,
+  conventional accelerators, embedded processors, architecture paradigms, and
+  ASIC/simulation references. The exact 72-profile value digest, historical
+  registry insertion order, public `HardwareProfile` alias, and duplicate-name
+  guard are preserved; private definition-module reloads are side-effect free.
+- Added architecture contracts for profile ownership, one-way registry-only
+  dependencies, facade composition order, and module-specific size ceilings.
+  The 197-test focused platform cohort covers all 111 statements and two
+  branches in the six governed production modules exactly. Strict typing,
+  lint, NumPy docstrings, security, generated documentation, strict MkDocs,
+  and installed-wheel checks pass. This is static hardware metadata, not a
+  numerical kernel, so no polyglot mirror or throughput claim is introduced.
+- Refreshed the generated API and capability inventory on the accepted
+  COBA-LIF parent. That generated delta contains the parent's committed COBA
+  API, validation page, and five tests plus this lane's architecture test; it
+  does not absorb uncommitted peer work.
 - Replaced the historical one-state DPI surrogate with the coupled
   current-domain silicon-neuron equations of Indiveri, Stefanini, and Chicca
   (2010), Eqs. (2)–(3): nonlinear positive feedback, membrane and

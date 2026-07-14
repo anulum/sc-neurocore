@@ -166,7 +166,7 @@ rationale = "Public hardware-profile registry that backs documented platform cou
 
 [[file]]
 path = "src/sc_neurocore/compiler/platforms/cmos_profiles.py"
-rationale = "Static CMOS and FPGA hardware-profile registrations included in the public registry."
+rationale = "Stable CMOS-family registration facade backed by private responsibility modules and included in the public registry."
 
 [[file]]
 path = "src/sc_neurocore/compiler/platforms/neuromorphic_profiles.py"
