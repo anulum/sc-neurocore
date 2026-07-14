@@ -1,10 +1,10 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Commercial license available
-# Copyright (c) Concepts 1996-2026 Miroslav Sotek. All rights reserved.
-# Copyright (c) Code 2020-2026 Miroslav Sotek. All rights reserved.
+# © Concepts 1996–2026 Miroslav Šotek. All rights reserved.
+# © Code 2020–2026 Miroslav Šotek. All rights reserved.
 # ORCID: 0009-0009-3560-0851
 # Contact: www.anulum.li | protoscience@anulum.li
-# SC-NeuroCore - Studio training weight-restore attach tests
+# SC-NeuroCore — Studio training weight-restore attach tests
 
 """Tests for the admin training weight-restore warm-start attach endpoint."""
 
@@ -15,7 +15,7 @@ import json
 import threading
 import time
 from pathlib import Path
-from typing import cast
+from typing import Any, cast
 
 import pytest
 from starlette.testclient import TestClient
@@ -32,14 +32,13 @@ from sc_neurocore.studio.platform import (
     training_architecture_fingerprint,
     write_training_weight_checkpoint,
 )
-from sc_neurocore.studio.training import TrainingJob
+from sc_neurocore.studio.platform.training_process import run_training_process_task
 
 _SOURCE_CONFIG = {"dataset": "synthetic", "hidden": [16]}
 
 
 def _build_client(tmp_path: Path) -> TestClient:
     """Return a TestClient backed by a durable Studio job root."""
-
     settings = StudioRuntimeSettings(
         job_root_path=str(tmp_path / "jobs"),
         audit_log_path=str(tmp_path / "audit" / "studio.jsonl"),
@@ -51,13 +50,12 @@ def _build_client(tmp_path: Path) -> TestClient:
 
 def _job_manager(client: TestClient) -> StudioJobManager:
     """Return the app-local Studio job manager."""
-
-    return cast(StudioJobManager, client.app.state.studio_job_manager)
+    application = cast(Any, client.app)
+    return cast(StudioJobManager, application.state.studio_job_manager)
 
 
 def _source_weights_bytes(n_output: int) -> bytes:
     """Return a torch checkpoint matching the synthetic-dataset architecture."""
-
     torch = pytest.importorskip("torch")
     from sc_neurocore.training import SpikingNet
 
@@ -91,14 +89,17 @@ def _submit_source_job(
                     "model_state_dict"
                 ].values()
             )
-            weight_checkpoint = write_training_weight_checkpoint(
-                context,
-                weights_payload=weights_bytes,
-                config=dict(_SOURCE_CONFIG),
-                architecture="64->16->10",
-                parameter_count=int(parameter_count),
-                final_metrics={"val_accuracy": 0.5},
-            ).to_public_dict()
+            weight_checkpoint = cast(
+                dict[str, object],
+                write_training_weight_checkpoint(
+                    context,
+                    weights_payload=weights_bytes,
+                    config=dict(_SOURCE_CONFIG),
+                    architecture="64->16->10",
+                    parameter_count=int(parameter_count),
+                    final_metrics={"val_accuracy": 0.5},
+                ).to_public_dict(),
+            )
         return {
             "training_status": "completed",
             "final_metrics": {"val_accuracy": 0.5},
@@ -118,7 +119,6 @@ def _submit_source_job(
 
 def test_attach_warm_start_trains_and_writes_attach_evidence(tmp_path: Path) -> None:
     """A compatible attach warm-starts a job that emits attach evidence."""
-
     pytest.importorskip("torch")
     client = _build_client(tmp_path)
     manager = _job_manager(client)
@@ -153,7 +153,6 @@ def test_attach_warm_start_trains_and_writes_attach_evidence(tmp_path: Path) -> 
 
 def test_attach_incompatible_architecture_fails_closed(tmp_path: Path) -> None:
     """An architecture mismatch fails the warm-start job before training."""
-
     pytest.importorskip("torch")
     client = _build_client(tmp_path)
     manager = _job_manager(client)
@@ -181,7 +180,6 @@ def test_attach_incompatible_architecture_fails_closed(tmp_path: Path) -> None:
 
 def test_attach_rejects_unknown_job(tmp_path: Path) -> None:
     """The attach endpoint returns 404 for an unknown source training job."""
-
     client = _build_client(tmp_path)
 
     response = client.post(
@@ -195,7 +193,6 @@ def test_attach_rejects_unknown_job(tmp_path: Path) -> None:
 
 def test_attach_rejects_job_without_weights(tmp_path: Path) -> None:
     """The attach endpoint returns 409 when the source published no weights."""
-
     client = _build_client(tmp_path)
     manager = _job_manager(client)
     source_job_id = _submit_source_job(manager, weights_bytes=None)
@@ -211,7 +208,6 @@ def test_attach_rejects_job_without_weights(tmp_path: Path) -> None:
 
 def test_attach_rejects_config_digest_mismatch(tmp_path: Path) -> None:
     """The attach endpoint returns 422 when the expected config digest mismatches."""
-
     pytest.importorskip("torch")
     client = _build_client(tmp_path)
     manager = _job_manager(client)
@@ -235,7 +231,6 @@ def _control_command_context(
     weights_bytes: bytes,
 ) -> tuple[StudioJobContext, dict[str, object]]:
     """Return a context seeded with a live attach control command and seeds."""
-
     work_dir = tmp_path / "live"
     src_dir = tmp_path / "live-src"
     src_ctx = StudioJobContext(
@@ -269,7 +264,7 @@ def _control_command_context(
         cancel_event=threading.Event(),
         max_artifact_bytes=50_000_000,
     )
-    command = {
+    command: dict[str, object] = {
         "action": "attach_weights",
         "restore_plan": plan,
         "architecture_fingerprint": training_architecture_fingerprint(dict(_SOURCE_CONFIG)),
@@ -279,46 +274,60 @@ def _control_command_context(
     return context, command
 
 
+def _write_control_command(work_dir: Path, command: dict[str, object]) -> None:
+    """Write one operator control command into the production mailbox path."""
+    command_dir = work_dir / STUDIO_CONTROL_DIR
+    command_dir.mkdir(parents=True, exist_ok=True)
+    (command_dir / STUDIO_CONTROL_COMMAND_FILE).write_text(
+        json.dumps(command),
+        encoding="utf-8",
+    )
+
+
 def test_live_attach_handler_loads_compatible_weights(tmp_path: Path) -> None:
-    """A compatible live attach loads the weights and records attach evidence."""
-
+    """A compatible command loads weights during real process-task execution."""
     pytest.importorskip("torch")
-    from sc_neurocore.training import SpikingNet
-
     context, command = _control_command_context(tmp_path, weights_bytes=_source_weights_bytes(10))
-    job = TrainingJob(dict(_SOURCE_CONFIG), job_id="sj_live")
-    model = SpikingNet(n_input=64, n_hidden=16, n_output=10, n_layers=1)
+    _write_control_command(tmp_path / "live", command)
 
-    job._apply_live_attach(context, model, command, epoch=2)
+    result = run_training_process_task(
+        context,
+        {**_SOURCE_CONFIG, "epochs": 1, "batch_size": 1024, "timesteps": 1},
+    )
 
-    assert job.live_attach_evidence is not None
-    assert job.live_attach_evidence["mode"] == "live"
-    assert job.live_attach_evidence["target_job_id"] == "sj_live"
+    assert result["training_status"] == "completed"
+    evidence = json.loads(
+        (tmp_path / "live" / "training" / "weight-restore-attach.json").read_text()
+    )
+    assert evidence["mode"] == "live"
+    assert evidence["target_job_id"] == "sj_live"
     assert (tmp_path / "live" / "training" / "weight-restore-attach.json").is_file()
 
 
 def test_live_attach_handler_rejects_incompatible_without_crashing(tmp_path: Path) -> None:
-    """An incompatible live attach is rejected and never crashes the run."""
-
+    """An incompatible command is rejected while the real run completes."""
     pytest.importorskip("torch")
-    from sc_neurocore.training import SpikingNet
-
     context, command = _control_command_context(tmp_path, weights_bytes=_source_weights_bytes(10))
-    job = TrainingJob(dict(_SOURCE_CONFIG), job_id="sj_live")
-    incompatible = SpikingNet(n_input=64, n_hidden=16, n_output=2, n_layers=1)
+    _write_control_command(tmp_path / "live", command)
 
-    job._apply_live_attach(context, incompatible, command, epoch=1)
+    result = run_training_process_task(
+        context,
+        {
+            "dataset": "synthetic",
+            "hidden": [8],
+            "epochs": 1,
+            "batch_size": 1024,
+            "timesteps": 1,
+        },
+    )
 
-    assert job.live_attach_evidence is None
+    assert result["training_status"] == "completed"
     assert not (tmp_path / "live" / "training" / "weight-restore-attach.json").is_file()
 
 
 def test_live_attach_poll_ignores_unrelated_command(tmp_path: Path) -> None:
-    """The poll ignores commands that are not weight attaches."""
-
+    """The real process task ignores commands that are not weight attaches."""
     pytest.importorskip("torch")
-    from sc_neurocore.training import SpikingNet
-
     work_dir = tmp_path / "live"
     (work_dir / STUDIO_CONTROL_DIR).mkdir(parents=True)
     (work_dir / STUDIO_CONTROL_DIR / STUDIO_CONTROL_COMMAND_FILE).write_text(
@@ -328,19 +337,52 @@ def test_live_attach_poll_ignores_unrelated_command(tmp_path: Path) -> None:
         job_id="sj_live",
         work_dir=work_dir,
         cancel_event=threading.Event(),
-        max_artifact_bytes=4096,
+        max_artifact_bytes=1_048_576,
     )
-    job = TrainingJob(dict(_SOURCE_CONFIG), job_id="sj_live")
-    model = SpikingNet(n_input=64, n_hidden=16, n_output=10, n_layers=1)
+    result = run_training_process_task(
+        context,
+        {**_SOURCE_CONFIG, "epochs": 1, "batch_size": 1024, "timesteps": 1},
+    )
 
-    job._poll_live_attach(context, model, epoch=0)
+    assert result["training_status"] == "completed"
+    assert not (tmp_path / "live" / "training" / "weight-restore-attach.json").exists()
 
-    assert job.live_attach_evidence is None
+
+@pytest.mark.parametrize(
+    "command_payload",
+    ["{not-json", json.dumps({"action": "attach_weights"})],
+)
+def test_live_attach_rejects_invalid_control_commands(
+    tmp_path: Path,
+    command_payload: str,
+) -> None:
+    """Malformed and incomplete control commands are rejected without job loss."""
+    pytest.importorskip("torch")
+    work_dir = tmp_path / "live"
+    command_dir = work_dir / STUDIO_CONTROL_DIR
+    command_dir.mkdir(parents=True)
+    (command_dir / STUDIO_CONTROL_COMMAND_FILE).write_text(
+        command_payload,
+        encoding="utf-8",
+    )
+    context = StudioJobContext(
+        job_id="sj_live",
+        work_dir=work_dir,
+        cancel_event=threading.Event(),
+        max_artifact_bytes=50_000_000,
+    )
+
+    result = run_training_process_task(
+        context,
+        {**_SOURCE_CONFIG, "epochs": 1, "batch_size": 1024, "timesteps": 1},
+    )
+
+    assert result["training_status"] == "completed"
+    assert not (work_dir / "training" / "weight-restore-attach.json").exists()
 
 
 def _wait_for_running(manager: StudioJobManager, job_id: str) -> None:
     """Block until a process job reaches the running state."""
-
     deadline = time.monotonic() + 5.0
     while manager.record(job_id).status != "running":
         if time.monotonic() >= deadline:
@@ -350,7 +392,6 @@ def _wait_for_running(manager: StudioJobManager, job_id: str) -> None:
 
 def test_live_attach_delivers_command_to_running_target(tmp_path: Path) -> None:
     """The live endpoint delivers a control command to a running target job."""
-
     pytest.importorskip("torch")
     client = _build_client(tmp_path)
     manager = _job_manager(client)
@@ -381,7 +422,6 @@ def test_live_attach_delivers_command_to_running_target(tmp_path: Path) -> None:
 
 def test_live_attach_rejects_unknown_target(tmp_path: Path) -> None:
     """The live endpoint returns 404 for an unknown target job."""
-
     client = _build_client(tmp_path)
 
     response = client.post(
@@ -395,7 +435,6 @@ def test_live_attach_rejects_unknown_target(tmp_path: Path) -> None:
 
 def test_live_attach_rejects_non_running_target(tmp_path: Path) -> None:
     """The live endpoint returns 409 when the target job is not running."""
-
     pytest.importorskip("torch")
     client = _build_client(tmp_path)
     manager = _job_manager(client)
@@ -412,7 +451,6 @@ def test_live_attach_rejects_non_running_target(tmp_path: Path) -> None:
 
 def test_live_attach_rejects_source_without_weights(tmp_path: Path) -> None:
     """The live endpoint returns 409 when the source published no weights."""
-
     client = _build_client(tmp_path)
     manager = _job_manager(client)
     target = manager.submit_process_task(

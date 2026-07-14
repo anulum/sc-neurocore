@@ -365,6 +365,11 @@ runtime features:
   process protocol and control, record/artifact access, and the public manager.
   `sc_neurocore.studio.platform.jobs` remains the stable historical import and
   pickle facade, while implementation modules form an acyclic runtime graph.
+- Training Monitor ownership is split behind the stable
+  `sc_neurocore.studio.training` facade into PyTorch execution, parent-process
+  control, weight-attach orchestration, and portable event codecs. The service
+  remains Python/PyTorch-only; no Rust, Julia, Go, or Mojo training-service
+  backend is wired or claimed.
 - `/api/studio/jobs` and `/api/studio/jobs/{job_id}` return admin-only,
   path-free job records for the Admin panel queue view. Records include job
   status, owner, request ID, timestamps, result metadata, and artifact
@@ -401,13 +406,15 @@ runtime features:
   fingerprint that gated compatibility.
 - `/api/studio/training/weight-restore/attach/live` is an admin-only endpoint
   that delivers the verified weights of a completed source job to a running
-  target training job through the confined control channel — a reserved control
-  directory in the job sandbox that the worker polls at each epoch boundary. The
-  worker verifies and loads the weights with a strict `load_state_dict` at the
-  next boundary and writes a `studio.training.weight-restore-attach.v1`
-  (`mode: live`) evidence artifact. An incompatible or malformed attach is
-  rejected without interrupting the running job, so a bad live attach can never
-  crash an in-flight training run.
+  process-backed target training job through the confined control channel — a
+  reserved control directory in the job sandbox that the worker polls at each
+  epoch boundary. Thread-backed targets and workers that stop during delivery
+  fail closed with the existing conflict contract. The worker verifies and
+  loads the weights with a strict `load_state_dict` at the next boundary and
+  writes a `studio.training.weight-restore-attach.v1` (`mode: live`) evidence
+  artifact. An incompatible or malformed attach is rejected without
+  interrupting the running job, so a bad live attach can never crash an
+  in-flight training run.
 - `/api/studio/evidence/bundle` creates an admin-only evidence export as a
   bounded `studio-evidence` worker job. The request can name one saved project,
   selected `studio.simulation-run.v1` simulation responses, selected

@@ -971,7 +971,7 @@
     "python_model_classes": 158,
     "python_model_source_modules": 153,
     "rust_pyo3_model_wrappers": 175,
-    "test_files": 1282
+    "test_files": 1287
   },
   "documentation": {
     "public_pages": [
@@ -3955,8 +3955,13 @@
       "tests/test_studio_synthesis_provenance.py",
       "tests/test_studio_templates.py",
       "tests/test_studio_training.py",
+      "tests/test_studio_training_architecture.py",
+      "tests/test_studio_training_attach_failures.py",
       "tests/test_studio_training_checkpoint.py",
+      "tests/test_studio_training_control.py",
+      "tests/test_studio_training_events.py",
       "tests/test_studio_training_evidence.py",
+      "tests/test_studio_training_job.py",
       "tests/test_studio_training_process.py",
       "tests/test_studio_training_weight_attach.py",
       "tests/test_studio_training_weight_restore.py",

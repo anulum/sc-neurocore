@@ -30645,6 +30645,35 @@ Set ``SC_NEUROCORE_NO_RUST=1`` to force Python path.
 
 ---
 
+## Module `studio._training_job`
+
+### Class `TrainingJob`
+Manage one Studio training run for thread or process execution.
+
+Parameters
+----------
+config : dict&#91;str, Any&#93;
+    Training configuration consumed by the Studio Training Monitor.
+job_id : str or None, optional
+    Stable platform job identifier. A random legacy identifier is generated
+    when omitted.
+cancelled : Callable&#91;&#91;&#93;, bool&#93; or None, optional
+    Cooperative process-worker cancellation probe.
+event_sink : Callable&#91;&#91;dict&#91;str, object&#93;&#93;, None&#93; or None, optional
+    Sink used to persist path-free JSON events from a process worker.
+initial_state_dict : Mapping&#91;str, object&#93; or None, optional
+    Verified model state loaded before the first optimisation step.
+
+- **__init__**(config)
+- **start**()
+  - Start the legacy in-process training thread.
+- **stop**()
+  - Request cooperative cancellation at the next training boundary.
+- **run_blocking**(context)
+  - Run this training job inside a bounded Studio job context.
+
+---
+
 ## Module `studio.analysis`
 
 ### Function `bifurcation_sweep(simulate_fn, base_config, param_name, param_min, param_max, n_values)`
@@ -34123,143 +34152,189 @@ Return one curated Studio equation template by name.
 
 ## Module `studio.training`
 
-### Class `TrainingJob`
-Manage one Studio training run for thread or process execution.
-
-- **__init__**(config)
-- **start**()
-  - Start this training job in its legacy background thread.
-- **stop**()
-  - Request cooperative cancellation for this training job.
-- **run_blocking**(context)
-  - Run this training job inside a bounded Studio job context.
-
 ### Function `list_surrogates()`
-Return available surrogate-gradient functions for the Studio UI.
+Return surrogate-gradient choices exposed by the Studio UI.
+
+Returns
+-------
+list&#91;dict&#91;str, Any&#93;&#93;
+    Ordered names with an ``available`` flag reflecting the installed Torch
+    training backend.
 
 ### Function `list_cell_types()`
-Return available training cell types for the Studio UI.
+Return training cell types exposed by the Studio UI.
+
+Returns
+-------
+list&#91;dict&#91;str, Any&#93;&#93;
+    Ordered cell names with an ``available`` flag reflecting the installed
+    Torch training backend.
 
 ### Function `start_training(config, job_manager)`
 Start a Studio training job.
 
 When ``job_manager`` is supplied, execution is delegated to the bounded
-Studio job sandbox. Without it, the legacy in-process training thread is
-used for direct module tests and backward compatibility.
+Studio process sandbox. Without it, the historical in-process training
+thread is retained for direct callers.
+
+Parameters
+----------
+config : dict&#91;str, Any&#93;
+    Training Monitor configuration.
+job_manager : StudioJobManager or None, optional
+    Bounded job manager used by the Studio HTTP route.
+
+Returns
+-------
+dict&#91;str, Any&#93;
+    Path-free job identifier and initial ``running`` status.
 
 ### Function `start_training_attach(source_job_id, config, job_manager)`
 Start a warm-start training job seeded with restored, verified weights.
 
-Builds the canonical restore plan from the source training job's stored
-checkpoint metadata, fetches the integrity-checked weight and metadata
-artifacts, and submits a bounded process job that materializes and verifies
-the weights before loading them into the target model at the epoch-zero
-checkpoint boundary. The verified weights are delivered to the worker as
-confined seed inputs, never through the API response.
+The source checkpoint and binary artifacts are verified before a bounded
+process job loads them at the epoch-zero boundary. Raw tensors remain inside
+the confined worker and never enter the API response.
 
 Parameters
 ----------
-source_job_id:
-    Studio job ID of a completed training job that published weights.
-config:
-    Target training configuration for the warm-started job.
-job_manager:
-    Bounded Studio job manager that owns artifact reads and job submission.
-expected_config_sha256:
-    Optional source configuration digest that the checkpoint must match.
+source_job_id : str
+    Completed source training job that published model weights.
+config : dict&#91;str, Any&#93;
+    Target training configuration.
+job_manager : StudioJobManager
+    Bounded manager owning artifact reads and process submission.
+expected_config_sha256 : str or None, optional
+    Optional digest that the source configuration must match.
 
 Returns
 -------
 dict&#91;str, Any&#93;
-    ``{"job_id", "status"}`` for the warm-started job, or ``{"error"}`` when
-    the source job is unknown or published no usable weight checkpoint.
+    Warm-start job metadata, or a stable ``error`` code when a source
+    precondition is unavailable.
 
 Raises
 ------
 ValueError
-    If the restore plan cannot be built from the source checkpoint.
+    If source checkpoint metadata or its expected digest is invalid.
 
 ### Function `request_live_training_weight_attach(target_job_id, source_job_id, job_manager)`
-Deliver verified weights to a running training job for a live attach.
+Deliver verified weights to a running training job.
 
-Validates that the target job is running, that the source job published a
-weight checkpoint, and that the source and target architectures are
-compatible, then delivers the integrity-checked weight artifacts to the
-running worker as a confined control command. The worker applies the attach
-at its next epoch boundary; an incompatible attach is rejected without
-interrupting the running job.
+The command is confined to the worker control channel and applied at the
+next epoch boundary. Incompatible artifacts are rejected without stopping
+the target job.
 
 Parameters
 ----------
-target_job_id:
-    Studio job ID of the running training job to attach weights into.
-source_job_id:
-    Studio job ID of a completed training job that published weights.
-job_manager:
-    Bounded Studio job manager that owns artifact reads and control delivery.
-expected_config_sha256:
-    Optional source configuration digest that the checkpoint must match.
+target_job_id : str
+    Running target training job.
+source_job_id : str
+    Completed source training job that published model weights.
+job_manager : StudioJobManager
+    Manager owning artifact reads and control-command delivery.
+expected_config_sha256 : str or None, optional
+    Optional digest that the source configuration must match.
 
 Returns
 -------
 dict&#91;str, Any&#93;
-    ``{"target_job_id", "status", "architecture_fingerprint"}`` when the
-    attach command is delivered, or ``{"error"}`` for a precondition failure.
+    Attach-request metadata, or a stable ``error`` code for a failed
+    precondition.
 
 Raises
 ------
 ValueError
-    If the restore plan cannot be built from the source checkpoint.
+    If source checkpoint metadata or its expected digest is invalid.
 
 ### Function `stop_training(job_id, job_manager)`
 Request cooperative stop for a Studio training job.
 
+Parameters
+----------
+job_id : str
+    Training Monitor job identifier.
+job_manager : StudioJobManager or None, optional
+    Manager used to propagate cancellation into a process worker.
+
+Returns
+-------
+dict&#91;str, Any&#93;
+    ``stopping`` metadata, or an error payload for an unknown job.
+
 ### Function `get_training_status(job_id, job_manager)`
 Return path-free status for one Studio training job.
 
+Parameters
+----------
+job_id : str
+    Training Monitor job identifier.
+job_manager : StudioJobManager or None, optional
+    Manager used to reconcile process state and verified evidence.
+
+Returns
+-------
+dict&#91;str, Any&#93;
+    Current training status, metrics, checkpoint metadata, and optional
+    evidence summary; unknown jobs return an error payload.
+
 ### Function `stream_metrics(job_id, job_manager)`
-Generator that yields SSE-formatted metric events.
+Yield Server-Sent Events for one Studio training job.
+
+Parameters
+----------
+job_id : str
+    Training Monitor job identifier.
+job_manager : StudioJobManager or None, optional
+    Manager used to tail process-worker JSONL events.
+
+Yields
+------
+str
+    One SSE-formatted metric, heartbeat, terminal, or error event.
 
 ### Function `list_jobs()`
 Return path-free summaries for known Studio training jobs.
+
+Returns
+-------
+list&#91;dict&#91;str, Any&#93;&#93;
+    Registry-order job identifiers, statuses, and configurations.
 
 ### Function `export_training_checkpoint(job_id, job_manager)`
 Return a portable checkpoint for one Studio training job.
 
 Parameters
 ----------
-job_id:
+job_id : str
     Training Monitor job identifier.
-job_manager:
-    Optional Studio job manager used to attach terminal worker evidence
-    metadata when the job has reached a terminal state.
+job_manager : StudioJobManager or None, optional
+    Manager used to attach verified terminal worker evidence.
 
 Returns
 -------
 dict&#91;str, Any&#93;
-    `studio.training.checkpoint.v1` payload, or an error payload when the
-    training job is unknown to the parent-process Training Monitor
-    registry.
+    ``studio.training.checkpoint.v1`` payload, or an error payload for an
+    unknown job.
 
 ### Function `import_training_checkpoint(data)`
-Validate a portable checkpoint and return its training config.
+Validate a portable checkpoint and return its training configuration.
 
 Parameters
 ----------
-data:
-    JSON object submitted to `/api/training/checkpoint/import`.
+data : dict&#91;str, Any&#93;
+    JSON object submitted to ``/api/training/checkpoint/import``.
 
 Returns
 -------
 dict&#91;str, Any&#93;
-    Validated checkpoint import payload containing restored training
-    configuration and source-job metadata.
+    Validated source metadata, configuration, and optional weight-restore
+    plan.
 
 Raises
 ------
 ValueError
-    If the checkpoint schema, config digest, or checkpoint digest is
-    invalid.
+    If the checkpoint schema or any protected digest is invalid.
 
 ---
 

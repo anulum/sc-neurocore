@@ -5,6 +5,30 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+### Studio training responsibility modularisation
+
+- Replaced the 1,208-line Studio training GodFile with a 311-line historical
+  facade and bounded execution, parent-control, weight-attach, and event-codec
+  modules. Architecture contracts enforce the one-way dependency graph and
+  module-specific size ceilings.
+- Preserved the 14-name public export set, callable signatures,
+  stream-generator contract, pickle identity, and all 12 composed HTTP routes.
+  A seeded real-Torch run retains the established metrics, `64->8->10`
+  architecture, 610 parameters, and learned tensor-state digest.
+- The 131-test focused training cohort covers all 562 statements and 128
+  branches across the five split modules. Live attach now fails closed for a
+  thread-backed target or a target that stops during control delivery instead
+  of acknowledging a command that cannot be consumed.
+- Strict MyPy, Ruff lint/format and NumPy docstrings, Bandit, scoped public
+  docstrings, SPDX, generated API/capability and OpenAPI checks, and strict
+  MkDocs pass. The installed wheel contains every responsibility module,
+  preserves facade and pickle identity, and completes a real Torch training
+  smoke; its SHA-256 is
+  `10ffc95f29937cc34783ad9e7ac478622d5a41708390522700508c4c0b2dcdd0`.
+- This is a behaviour-preserving Python/PyTorch service refactor. No functional
+  Rust, Julia, Go, or Mojo Training Monitor counterpart is wired, and no
+  cross-language or throughput claim is introduced.
+
 ### DPI coupled-circuit source-to-silicon closure
 
 - Replaced the historical one-state DPI surrogate with the coupled

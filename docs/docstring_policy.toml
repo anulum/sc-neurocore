@@ -14,7 +14,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 385
+expected_file_count = 386
 
 [[file]]
 path = "src/sc_neurocore/__init__.py"
@@ -1491,6 +1491,10 @@ rationale = "Public photonic-emitter and crosstalk-analysis surface with optiona
 [[file]]
 path = "src/sc_neurocore/studio/app.py"
 rationale = "Public Visual SNN Studio FastAPI application factory and request-schema surface."
+
+[[file]]
+path = "src/sc_neurocore/studio/training.py"
+rationale = "Historical Training Monitor facade with audited job, status, checkpoint, streaming, and weight-attach contracts."
 
 [[file]]
 path = "src/sc_neurocore/studio/models.py"

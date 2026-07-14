@@ -58,7 +58,6 @@ def run_training_process_task(
         If ``payload`` is not a JSON object suitable for a training
         configuration.
     """
-
     config = _training_config_from_payload(payload)
     job = TrainingJob(
         config,
@@ -107,7 +106,6 @@ def run_training_attach_process_task(
         If the payload is malformed or the restored weights are incompatible
         with the target architecture.
     """
-
     config = _training_config_from_payload(_required_mapping(payload, "config"))
     restore_plan = _required_mapping(payload, "restore_plan")
     fingerprint = payload.get("architecture_fingerprint")
@@ -153,7 +151,6 @@ def run_training_attach_process_task(
 
 def _required_mapping(payload: Mapping[str, object], field_name: str) -> dict[str, object]:
     """Return a required JSON object field from a worker payload."""
-
     value = payload.get(field_name)
     if not isinstance(value, Mapping):
         raise ValueError(f"Training weight attach payload requires {field_name}.")
@@ -162,7 +159,6 @@ def _required_mapping(payload: Mapping[str, object], field_name: str) -> dict[st
 
 def _training_config_from_payload(payload: Mapping[str, object]) -> dict[str, object]:
     """Return a mutable training configuration copied from worker payload."""
-
     return dict(payload)
 
 

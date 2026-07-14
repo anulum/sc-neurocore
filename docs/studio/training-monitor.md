@@ -99,6 +99,33 @@ idle → starting → running → completed | stopped | failed
 Multiple training jobs can run concurrently. Each job has a unique ID
 used for status queries and SSE stream subscription.
 
+### Service Responsibility Boundary
+
+`sc_neurocore.studio.training` remains the historical public facade. Its
+implementation is separated into bounded, one-way responsibilities:
+
+- `_training_job` owns PyTorch discovery, dataset construction, the training
+  loop, checkpoint publication, and worker-side live-attach application.
+- `_training_control` owns the parent-process registry, status reconciliation,
+  checkpoint import/export, cancellation, and SSE streaming.
+- `_training_attach` owns warm-start and live-attach orchestration across
+  verified job artifacts and confined worker channels.
+- `_training_events` owns portable JSON values, event persistence, and
+  platform-status event translation.
+- `platform.training_process` remains the importable process-task entry point.
+
+The facade depends on these modules; implementation modules do not import the
+facade. Architecture tests enforce that dependency direction, stable public
+exports and signatures, pickle identity, file-size ceilings, and all 12
+composed HTTP routes.
+
+The Training Monitor execution backend is Python with PyTorch. No callable
+Rust, Julia, Go, or Mojo counterpart is wired to this service contract, so the
+responsibility split makes no cross-language parity or throughput claim. A
+seeded real-Torch regression pins the established metrics, architecture,
+parameter count, and learned tensor-state digest while the algorithm remains
+unchanged.
+
 Completed jobs expose a Training Monitor evidence summary for
 `training/evidence.json`, result artifacts, replay route, and terminal status
 without host-local paths. The summary validates `training` evidence
@@ -358,7 +385,8 @@ attach evidence can be supplied to `POST /api/studio/evidence/bundle` under
 ### POST /api/studio/training/weight-restore/attach/live
 
 Admin-only. Delivers the verified weights of a completed source job to a
-**running** target training job, which applies them at its next epoch boundary.
+**running process-backed** target training job, which applies them at its next
+epoch boundary.
 Request body:
 
 ```json
@@ -369,17 +397,20 @@ Request body:
 }
 ```
 
-The endpoint validates that the target job is running and, when both job
-configurations are known, that their architecture fingerprints match (a mismatch
-is rejected with `409`). It builds the canonical restore plan from the source
-checkpoint and delivers the integrity-checked weight and metadata artifacts to
-the running worker through the confined control channel — a reserved control
-directory in the job sandbox that the worker polls at each epoch boundary. The
-worker verifies and loads the weights with a strict `load_state_dict` and writes
-a path-free `studio.training.weight-restore-attach.v1` (`mode: live`) evidence
-artifact. An incompatible or malformed attach is rejected with an
-`attach_rejected` metric event and never interrupts the running job. The
-response is returned immediately on delivery:
+The endpoint validates that the target is a running process worker and, when
+both job configurations are known, that their architecture fingerprints match
+(a mismatch is rejected with `409`). A thread-backed target or a worker that
+stops during command delivery also fails closed with `409`; the API never
+acknowledges a control command that cannot be consumed. It builds the canonical
+restore plan from the source checkpoint and delivers the integrity-checked
+weight and metadata artifacts to the running worker through the confined
+control channel — a reserved control directory in the job sandbox that the
+worker polls at each epoch boundary. The worker verifies and loads the weights
+with a strict `load_state_dict` and writes a path-free
+`studio.training.weight-restore-attach.v1` (`mode: live`) evidence artifact. An
+incompatible or malformed attach is rejected with an `attach_rejected` metric
+event and never interrupts the running job. The response is returned
+immediately on delivery:
 
 ```json
 {
