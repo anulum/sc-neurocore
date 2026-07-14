@@ -5,6 +5,29 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 ## [Unreleased]
 
 ### Added
+- Replaced the 1,065-line mixed neuromorphic-profile registration module with
+  a 65-line historical facade and five bounded responsibility modules for
+  event-driven hardware, programmable/aerospace targets, heterogeneous
+  accelerators, memory compute, and physical-compute platforms. All 70 profile
+  values retain the exact parent digest, registry insertion order, public
+  `HardwareProfile` identity, and duplicate-name failure semantics.
+- Added architecture contracts for exclusive profile ownership, registry-only
+  private dependencies, the 18-step facade composition order, typed and
+  documented registrars, side-effect-free private reloads, public lookup/class
+  filtering, and module-specific size ceilings. The 206-test focused platform
+  cohort covers all 108 statements and two branches in the six governed
+  production modules exactly. This catalogue is static Python metadata, not a
+  numerical kernel, so no polyglot mirror or throughput claim applies.
+- Refreshed the generated API and capability inventory on accepted parent
+  `33d74f904`. That generated delta contains the parent's EscapeRate API, one
+  validation page, and four tests plus this lane's architecture test; it does
+  not represent the nine unrelated uncommitted Rust safety files.
+- Registered the accepted COBA-LIF and EscapeRate evidence pages in the public
+  validation navigation, closing their inherited navigation-policy gap.
+- Strict typing, lint, NumPy docstrings, security, generated documentation,
+  strict MkDocs, and clean-overlay installed-wheel checks pass. The installed
+  wheel contains every new private module and preserves the 194-profile public
+  registry, exact 70-profile digest/order, and documented platform CLI.
 - Replaced the 1,109-line photonic-emitter GodFile with a 64-line historical
   facade and seven bounded responsibility modules for types, conversion, FDTD,
   compilation, Meep, crosstalk, and bitstream emission. The exact public

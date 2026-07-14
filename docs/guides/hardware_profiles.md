@@ -21,14 +21,20 @@ rounding semantics) for its target platform.
 The public API remains `sc_neurocore.compiler.platforms`: callers use
 `HardwareProfile`, `get_profile()`, `list_profiles()`, and
 `list_profile_names()` without depending on the source layout. The historical
-`cmos_profiles` module is a registration facade. Five private modules own the
-FPGA, conventional-accelerator, embedded-processor, architecture-paradigm, and
-ASIC/simulation profile families.
+`cmos_profiles` and `neuromorphic_profiles` modules are registration facades.
+Five private CMOS modules own FPGA, conventional-accelerator,
+embedded-processor, architecture-paradigm, and ASIC/simulation families. Five
+additional private modules own event-driven hardware, programmable/aerospace
+targets, heterogeneous accelerators, memory compute, and physical-compute
+platforms.
 
-The facade invokes those private registrars in the established sequence. This
-preserves all 72 CMOS-family profile values and registry insertion order while
-the registry continues to reject accidental duplicate names. Importing or
-reloading a private definition module alone has no registration side effect.
+Each facade invokes its private registrars in the established sequence. This
+preserves all 72 CMOS-family and 70 event-driven/specialised profile values and
+their registry insertion order while the registry continues to reject
+accidental duplicate names. Importing or reloading a private definition module
+alone has no registration side effect. These entries are configuration
+metadata; they do not by themselves constitute vendor-specification or
+deployment validation.
 
 ## Quick Start
 

@@ -410,6 +410,31 @@ Run the Mojo recurrence through its C ABI.
 
 ---
 
+## Module `accel.escape_rate`
+
+### Function `ensure_julia_loaded()`
+Load the committed Julia module when ``juliacall`` is available.
+
+### Function `ensure_go_loaded()`
+Load the staged Go C-shared EscapeRate library.
+
+### Function `ensure_mojo_loaded()`
+Load the staged Mojo EscapeRate shared library.
+
+### Function `simulate_rust(v, v_rest, v_reset, v_threshold, tau_m, rho_0, delta_u, resistance, dt, rng_state, n_steps, current)`
+Run the complete contract through the production Rust engine.
+
+### Function `simulate_julia(v, v_rest, v_reset, v_threshold, tau_m, rho_0, delta_u, resistance, dt, rng_state, n_steps, current)`
+Run the committed Julia recurrence with the complete contract.
+
+### Function `simulate_go(v, v_rest, v_reset, v_threshold, tau_m, rho_0, delta_u, resistance, dt, rng_state, n_steps, current)`
+Run the Go recurrence through its generated C ABI.
+
+### Function `simulate_mojo(v, v_rest, v_reset, v_threshold, tau_m, rho_0, delta_u, resistance, dt, rng_state, n_steps, current)`
+Run the Mojo recurrence through its shared-library ABI.
+
+---
+
 ## Module `accel.gpu_backend`
 
 ### Function `to_device(arr)`
@@ -11241,6 +11266,9 @@ the state BRAM. Because the arithmetic body references each parameter by the sam
 ``P_<NAME>`` identifier whether it is a ``parameter`` or an ``input wire``, moving a
 parameter to a port changes only its declaration — the datapath stays bit-for-bit
 identical. Every name must be a real neuron parameter/constant; the rest stay baked.
+Escape-rate models additionally expose the already-advanced 16-bit ``rng_sample``
+input: the folded population owns one LFSR state per neuron in BRAM and supplies
+that sample on the same cycle as the corresponding membrane state.
 
 Pipelining is not supported here (a combinational PE has no register stages);
 the folded sequencer provides the one-cycle-per-neuron timing instead.
@@ -20134,6 +20162,53 @@ Verify a high-level neuro-symbolic inference result against its observation.
 
 ---
 
+## Module `neurons._stochastic_threshold`
+
+### Class `Lfsr16Threshold`
+Stateful advance-before-compare Bernoulli sampler with replayable reset.
+
+- **__init__**(seed)
+- **initial_seed**()
+  - Return the normalised seed restored by :meth:`reset`.
+- **state**()
+  - Return the last emitted LFSR sample/state.
+- **trial**(probability)
+  - Take one eight-advance sample and perform one quantised trial.
+- **restore**(state)
+  - Restore a validated live state returned by a native backend.
+- **reset**()
+  - Restore the exact explicit or entropy-derived initial seed.
+
+### Function `normalise_lfsr16_seed(seed)`
+Return a valid non-zero 16-bit seed.
+
+``None`` requests independent entropy for ordinary Python model instances.
+Explicit zero uses the documented hardware fallback seed so that a C ABI or
+RTL parameter can never lock the maximal-length recurrence in the all-zero
+state.
+
+### Function `lfsr16_advance(state)`
+Advance the canonical right-shift x^16+x^14+x^13+x^11+1 LFSR.
+
+### Function `lfsr16_trial_sample(state)`
+Return the decimated sample used by one Bernoulli trial.
+
+Eight primitive advances suppress the strong adjacent-state correlation of
+a raw shift-register word. Eight is coprime with the 65,535-state period,
+so decimation retains the complete non-zero state cycle and exact rate
+quantisation rather than shortening the generator period.
+
+### Function `probability_to_lfsr16_threshold(probability)`
+Map ``p`` to an unbiased comparator threshold over 65,535 states.
+
+A trial advances the LFSR first and compares its non-zero sample with the
+returned 17-bit threshold. For ``0 < p < 1`` the realised probability is
+``floor(p * 65535) / 65535``; the absolute quantisation error is therefore
+strictly below one LFSR period quantum. Zero never fires and one always
+fires, while both still consume one RNG sample.
+
+---
+
 ## Module `neurons._units`
 
 ### Function `require_pint()`
@@ -20431,7 +20506,7 @@ and the special variable `I` (input current).
 ``units="strict"`` enables opt-in pint-based dimensional
 validation before the expressions are compiled for runtime.
 
-- **__init__**(equations, parameters, state, threshold, reset, constants, dt, method, units, input_unit, detection, substeps)
+- **__init__**(equations, parameters, state, threshold, reset, constants, dt, method, units, input_unit, detection, substeps, rate_expression, rng_seed)
   - Initialise an equation-defined neuron from ODE strings.
 - **initial_threshold_active**()
   - Return whether the threshold condition holds on the INITIAL committed state.
@@ -20439,6 +20514,10 @@ validation before the expressions are compiled for runtime.
   - Advance the neuron by one macro timestep; return 1 if it spikes.
 - **get_state**()
   - Return current state, with units if in strict mode.
+- **escape_rng_initial_seed**()
+  - Return the emitted escape-threshold seed, or ``None`` for other models.
+- **escape_rng_state**()
+  - Return the live escape-threshold LFSR state, or ``None`` when unused.
 - **reset**()
   - Reset state to initial values.
 - **__repr__**()
@@ -22087,7 +22166,13 @@ the finite-step escape hazard.
 Reference: Gerstner, W. (2000). Neural Comput. 12:43–89.
 
 - **__post_init__**()
+- **initial_seed**()
+  - Return the concrete seed used by this instance.
+- **rng_state**()
+  - Return the current canonical LFSR16 state.
 - **step**(current)
+- **simulate**(n_steps, current, backend)
+  - Run a constant-current trace on Python or one real native backend.
 - **reset**()
 
 ---

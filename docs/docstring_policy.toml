@@ -170,7 +170,7 @@ rationale = "Stable CMOS-family registration facade backed by private responsibi
 
 [[file]]
 path = "src/sc_neurocore/compiler/platforms/neuromorphic_profiles.py"
-rationale = "Static neuromorphic hardware-profile registrations included in the public registry."
+rationale = "Stable event-driven and specialised hardware-profile registration facade backed by private responsibility modules."
 
 [[file]]
 path = "src/sc_neurocore/compiler/platforms/exotic_profiles.py"

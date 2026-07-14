@@ -5,6 +5,37 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+### Neuromorphic profile responsibility modularisation
+
+- Replaced the 1,065-line mixed registration module with a 65-line stable
+  facade over bounded event-driven (194 lines), programmable/aerospace (202),
+  heterogeneous-accelerator (271), memory-compute (225), and physical-compute
+  (249) modules.
+- Preserved every field of all 70 profiles at SHA-256
+  `c21e2075bb98787db31afbaa0c41cb6300e6707663de49b6630d6b5dbb3d1d41`,
+  their historical registry insertion order, the facade's public
+  `HardwareProfile` identity, and duplicate-registration failure semantics.
+- Architecture contracts pin exact responsibility ownership, registry-only
+  private dependencies, the 18-step facade composition order, fully typed and
+  documented registrars, side-effect-free private reloads, public class
+  filters, and module-specific ceilings. The 206-test focused platform cohort
+  covers all 108 statements and two branches exactly.
+- Refreshed the generated API and capability inventory on accepted parent
+  `33d74f904`. The generated delta includes that commit's EscapeRate API, one
+  validation page, and four tests plus this lane's architecture test; the nine
+  unrelated uncommitted Rust safety files are not represented.
+- Registered the already-landed COBA-LIF and EscapeRate evidence pages under
+  the public Validation navigation, closing their inherited policy gap.
+- Strict MyPy, Ruff lint/format, NumPy docstrings, Bandit, generated API and
+  capability checks, SPDX, navigation policy, and strict MkDocs pass. A clean
+  `33d74f904` overlay wheel contains all five private modules, preserves the
+  194-profile registry, exact 70-profile digest/order, and 349-line platform
+  CLI output, and has SHA-256
+  `5bfb86a0c65ccb2c394fbededbb6992368a8b3825842b4dc7654f8ebd579e185`.
+- The split only reorganises static Python catalogue metadata. It does not
+  validate vendor specifications, alter a numerical runtime kernel, introduce
+  Rust/Go/Julia/Mojo ownership, or create a throughput claim.
+
 ### Photonic emitter responsibility modularisation
 
 - Replaced the 1,109-line mixed photonic emitter with a 64-line definition-free
