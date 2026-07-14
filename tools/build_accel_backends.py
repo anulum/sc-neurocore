@@ -239,6 +239,10 @@ def _default_runner(cmd: list[str], cwd: Path) -> subprocess.CompletedProcess[st
     env = dict(os.environ)
     if cmd[:1] == ["go"]:
         env["CGO_ENABLED"] = "1"
+        # The accel go.mod pins a newer Go than CI's setup-go installs; force
+        # toolchain auto-management so Go fetches the version go.mod requires
+        # instead of failing under a GOTOOLCHAIN=local runner.
+        env["GOTOOLCHAIN"] = "auto"
     return subprocess.run(  # noqa: S603 - fixed argv from trusted recipes, no shell
         cmd,
         cwd=cwd,

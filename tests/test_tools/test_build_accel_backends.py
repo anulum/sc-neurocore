@@ -225,6 +225,8 @@ def test_build_target_toolchain_missing(tmp_path: Path) -> None:
 
 def test_default_runner_sets_cgo_for_go(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     captured: dict[str, Any] = {}
+    # Control the ambient toolchain env so the assertions are deterministic.
+    monkeypatch.delenv("GOTOOLCHAIN", raising=False)
 
     def fake_run(cmd: list[str], **kwargs: Any) -> subprocess.CompletedProcess[str]:
         captured["cmd"] = cmd
@@ -234,11 +236,15 @@ def test_default_runner_sets_cgo_for_go(tmp_path: Path, monkeypatch: pytest.Monk
     monkeypatch.setattr(MOD.subprocess, "run", fake_run)
     MOD._default_runner(["go", "build"], tmp_path)
     assert captured["env"]["CGO_ENABLED"] == "1"
-    # non-go command leaves CGO untouched (delegates to inherited env)
+    # Toolchain auto-management so the newer go.mod requirement is fetched
+    # instead of failing under a GOTOOLCHAIN=local CI runner.
+    assert captured["env"]["GOTOOLCHAIN"] == "auto"
+    # non-go command leaves CGO/toolchain untouched (delegates to inherited env)
     captured.clear()
     monkeypatch.setattr(MOD.subprocess, "run", fake_run)
     MOD._default_runner(["mojo", "build"], tmp_path)
     assert "cmd" in captured
+    assert "GOTOOLCHAIN" not in captured["env"]
 
 
 # ---- main ------------------------------------------------------------------
