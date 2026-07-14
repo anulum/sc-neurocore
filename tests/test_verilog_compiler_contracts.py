@@ -10,10 +10,15 @@
 
 from __future__ import annotations
 
+from pathlib import Path
+import shutil
+import subprocess
+
 import pytest
 
 from sc_neurocore.compiler.verilog_compiler import compile_to_datapath, compile_to_verilog
 from sc_neurocore.neurons.equation_builder import EquationNeuron, from_equations
+from sc_neurocore.neurons.universal_dsl import UniversalNeuron
 
 
 def _lif_without_threshold(dt: float = 0.01) -> EquationNeuron:
@@ -37,6 +42,11 @@ def _candidate_reset_neuron() -> EquationNeuron:
         dt=1.0,
         method="rk4",
     )
+
+
+def _escape_rate_neuron() -> EquationNeuron:
+    """Load the canonical stochastic schema through the production DSL."""
+    return UniversalNeuron.from_schema("escape_rate").to_equation_neuron()
 
 
 def test_compile_to_verilog_rejects_unknown_overflow_mode() -> None:
@@ -276,3 +286,58 @@ def test_compile_to_datapath_without_threshold_uses_passthrough_state() -> None:
 
     assert "assign spike_out = 1'b0;" in verilog
     assert "assign v_next_out = v_next;" in verilog
+
+
+def test_escape_rate_registered_rtl_owns_seeded_eight_advance_lfsr() -> None:
+    """Registered RTL advances the canonical model-scoped RNG once per trial."""
+    verilog = compile_to_verilog(
+        _escape_rate_neuron(), module_name="sc_escape_rate", data_width=48, fraction=24
+    )
+    assert "parameter [15:0] RNG_SEED = 16'hace1" in verilog
+    assert verilog.count("= _escape_advance(") == 8
+    assert "wire [15:0] _escape_sample = _escape_sample_8;" in verilog
+    assert "17'd65536" in verilog
+    assert "{1'b0, _escape_sample} < _escape_threshold" in verilog
+    assert "(RNG_SEED == 16'd0) ? 16'hace1 : RNG_SEED" in verilog
+
+
+def test_escape_rate_folded_datapath_requires_caller_owned_rng_sample() -> None:
+    """A folded population explicitly carries its per-neuron RNG state in BRAM."""
+    verilog = compile_to_datapath(
+        _escape_rate_neuron(), module_name="sc_escape_rate_pe", data_width=48, fraction=24
+    )
+    assert "input wire [15:0] rng_sample," in verilog
+    assert "{1'b0, rng_sample} < _escape_threshold" in verilog
+    assert "assign spike_out = _escape_spike;" in verilog
+
+
+@pytest.mark.parametrize("folded", [False, True])
+def test_escape_rate_emitted_rtl_passes_iverilog_syntax(folded: bool, tmp_path: Path) -> None:
+    """Both registered and folded stochastic modules are real Verilog inputs."""
+    if shutil.which("iverilog") is None:
+        pytest.skip("Icarus Verilog not available")
+    compiler = compile_to_datapath if folded else compile_to_verilog
+    verilog = compiler(
+        _escape_rate_neuron(),
+        module_name="sc_escape_rate_syntax",
+        data_width=48,
+        fraction=24,
+    )
+    source = tmp_path / "sc_escape_rate_syntax.v"
+    source.write_text(verilog, encoding="utf-8")
+    subprocess.run(
+        ["iverilog", "-g2012", "-tnull", str(source)],
+        check=True,
+        capture_output=True,
+        text=True,
+        timeout=30,
+    )
+
+
+def test_escape_rate_rtl_rejects_unsigned_or_pipelined_contracts() -> None:
+    """Unsupported stochastic datapaths fail closed instead of drifting."""
+    neuron = _escape_rate_neuron()
+    with pytest.raises(NotImplementedError, match="signed"):
+        compile_to_verilog(neuron, signed=False)
+    with pytest.raises(NotImplementedError, match="pipelining"):
+        compile_to_verilog(neuron, pipeline_stages=1)

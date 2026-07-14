@@ -99,6 +99,46 @@ func TestEscapeRateRejectsNonFiniteHazardBeforeMutation(t *testing.T) {
 	}
 }
 
+func TestEscapeRateSeededSequenceAndResetReplay(t *testing.T) {
+	state := NewEscapeRateNeuronWithSeed(42)
+	first := make([]uint8, 1000)
+	for index := range first {
+		spike, err := state.Step(30.0)
+		if err != nil {
+			t.Fatalf("unexpected error: %v", err)
+		}
+		first[index] = uint8(spike)
+	}
+	finalRNG := state.RNGState
+	state.Reset()
+	for index, expected := range first {
+		spike, err := state.Step(30.0)
+		if err != nil {
+			t.Fatalf("unexpected replay error: %v", err)
+		}
+		if uint8(spike) != expected {
+			t.Fatalf("event mismatch at %d: got %d want %d", index, spike, expected)
+		}
+	}
+	if state.RNGState != finalRNG {
+		t.Fatalf("RNG replay mismatch: got %d want %d", state.RNGState, finalRNG)
+	}
+}
+
+func TestSimulateEscapeRateTracePreservesCallerState(t *testing.T) {
+	initial := *NewEscapeRateNeuronWithSeed(0xACE1)
+	trace, events, final, err := SimulateEscapeRateTrace(initial, 128, 30.0)
+	if err != nil {
+		t.Fatalf("unexpected batch error: %v", err)
+	}
+	if len(trace) != 128 || len(events) != 128 || final.RNGState == initial.RNGState {
+		t.Fatalf("malformed batch result")
+	}
+	if initial.V != -70.0 || initial.RNGState != 0xACE1 {
+		t.Fatalf("batch mutated caller state")
+	}
+}
+
 func BenchmarkEscapeRateExactFlow(b *testing.B) {
 	state := NewEscapeRateNeuron()
 	for i := 0; i < b.N; i++ {

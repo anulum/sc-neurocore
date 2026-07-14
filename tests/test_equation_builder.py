@@ -8,6 +8,7 @@
 
 from __future__ import annotations
 
+import numpy as np
 import pytest
 
 
@@ -407,3 +408,96 @@ class TestFromEquations:
         )
         spikes = sum(n.step(I=5.0) for _ in range(200))
         assert spikes > 0
+
+    def test_escape_rate_detection_replays_state_and_rng(self) -> None:
+        from sc_neurocore.neurons.equation_builder import EquationNeuron
+
+        neuron = EquationNeuron(
+            equations={"v": "I"},
+            parameters={"rate": 0.3},
+            state={"v": 0.0},
+            reset={"v": "0.0"},
+            dt=0.25,
+            detection="escape_rate",
+            rate_expression="rate",
+            rng_seed=0x1234,
+        )
+        first = [neuron.step(I=1.0) for _ in range(1024)]
+        first_state = (dict(neuron.state), neuron.escape_rng_state)
+        neuron.reset()
+        replay = [neuron.step(I=1.0) for _ in range(1024)]
+        assert replay == first
+        assert (neuron.state, neuron.escape_rng_state) == first_state
+        assert neuron.escape_rng_initial_seed == 0x1234
+
+    def test_escape_rate_does_not_consume_global_numpy_rng_for_zero_noise(self) -> None:
+        from sc_neurocore.neurons.equation_builder import EquationNeuron
+
+        neuron = EquationNeuron(
+            equations={"v": "0.0"},
+            parameters={"rate": 0.3},
+            state={"v": 0.0},
+            dt=1.0,
+            detection="escape_rate",
+            rate_expression="rate",
+            rng_seed=42,
+        )
+        np.random.seed(123)
+        expected = np.random.random()
+        np.random.seed(123)
+        neuron.step(I=0.0)
+        assert np.random.random() == expected
+
+    def test_escape_rate_failure_rolls_back_integrated_state_and_rng(self) -> None:
+        from sc_neurocore.neurons.equation_builder import EquationNeuron
+
+        neuron = EquationNeuron(
+            equations={"v": "I"},
+            parameters={"zero": 0.0},
+            state={"v": 2.0},
+            dt=1.0,
+            detection="escape_rate",
+            rate_expression="1.0 / zero",
+            rng_seed=42,
+        )
+        before = (dict(neuron.state), neuron.escape_rng_state)
+        with pytest.raises(ZeroDivisionError):
+            neuron.step(I=1.0)
+        assert (neuron.state, neuron.escape_rng_state) == before
+
+    def test_escape_rate_reset_failure_rolls_back_consumed_rng(self) -> None:
+        from sc_neurocore.neurons.equation_builder import EquationNeuron
+
+        neuron = EquationNeuron(
+            equations={"v": "I"},
+            parameters={"rate": 1.0e308, "zero": 0.0},
+            state={"v": 2.0},
+            reset={"v": "1.0 / zero"},
+            dt=1.0,
+            detection="escape_rate",
+            rate_expression="rate",
+            rng_seed=42,
+        )
+        before = (dict(neuron.state), neuron.escape_rng_state)
+        with pytest.raises(ZeroDivisionError):
+            neuron.step(I=1.0)
+        assert (neuron.state, neuron.escape_rng_state) == before
+
+    def test_escape_rate_configuration_rejects_ambiguous_thresholds(self) -> None:
+        from sc_neurocore.neurons.equation_builder import EquationNeuron
+
+        with pytest.raises(ValueError, match="requires rate_expression"):
+            EquationNeuron(
+                equations={"v": "0.0"},
+                state={"v": 0.0},
+                detection="escape_rate",
+            )
+
+        with pytest.raises(ValueError, match="cannot combine"):
+            EquationNeuron(
+                equations={"v": "0.0"},
+                state={"v": 0.0},
+                threshold="v > 1.0",
+                detection="escape_rate",
+                rate_expression="0.1",
+            )

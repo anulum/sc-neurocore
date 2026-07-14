@@ -81,6 +81,23 @@ def test_expif_is_enrolled_at_q3232_cosim_tier(tool: ModuleType) -> None:
     assert "0/0/1/2/5/9" in expif.tolerance
 
 
+def test_escape_rate_is_enrolled_with_class_correct_statistical_metric(
+    tool: ModuleType,
+) -> None:
+    """Stochastic fidelity must never be relabelled as deterministic parity."""
+    escape = next(e for e in tool.ENROLLED if e.class_name == "EscapeRateNeuron")
+    assert escape.level == "h1_cosim"
+    assert escape.metric == "statistical"
+    assert escape.evidence == (
+        "tests/test_cosim_escape_rate.py::"
+        "test_seeded_full_period_event_stream_and_distribution_match_python"
+    )
+    assert "65,535-state" in escape.operating_point
+    assert "ISI mean/CV" in escape.tolerance
+    validation = tool.validation_section(escape, has_dynamics=True)
+    assert validation["metric"] == "statistical"
+
+
 def test_lapicque_is_enrolled_with_dedicated_exact_flow_evidence(tool: ModuleType) -> None:
     """Replace the generic suite pointer with the measured Lapicque contract."""
     lapicque = next(e for e in tool.ENROLLED if e.class_name == "LapicqueNeuron")
@@ -125,6 +142,7 @@ def test_build_rows_returns_one_row_per_enrolled(tool: ModuleType) -> None:
     assert len(rows) == len(tool.ENROLLED)
     names = {row.class_name for row in rows}
     assert "AdExNeuron" in names
+    assert "EscapeRateNeuron" in names
     assert "WangBuzsakiNeuron" in names
 
 

@@ -6,8 +6,6 @@
 // Contact: www.anulum.li | protoscience@anulum.li
 // SC-NeuroCore — Rust safety for escape_rate
 
-#![allow(unused_variables, dead_code, non_snake_case)]
-
 #[derive(Debug, Clone)]
 pub struct EscapeRateNeuron {
     pub v: f64,
@@ -19,10 +17,17 @@ pub struct EscapeRateNeuron {
     pub delta_u: f64,
     pub resistance: f64,
     pub dt: f64,
+    pub rng_state: u16,
+    pub initial_seed: u16,
 }
 
 impl EscapeRateNeuron {
     pub fn new() -> Self {
+        Self::new_with_seed(0xACE1)
+    }
+
+    pub fn new_with_seed(seed: u16) -> Self {
+        let initial_seed = if seed == 0 { 0xACE1 } else { seed };
         Self {
             v: -70.0_f64,
             v_rest: -70.0_f64,
@@ -33,6 +38,8 @@ impl EscapeRateNeuron {
             delta_u: 3.0_f64,
             resistance: 1.0_f64,
             dt: 1.0_f64,
+            rng_state: initial_seed,
+            initial_seed,
         }
     }
 
@@ -58,7 +65,20 @@ impl EscapeRateNeuron {
         if !p_spike.is_finite() || !(0.0..=1.0).contains(&p_spike) {
             return Err("escape rate spike probability must remain finite and bounded");
         }
-        if p_spike >= 1.0 {
+        let mut sample = self.rng_state;
+        for _ in 0..8 {
+            let feedback = ((sample >> 0) ^ (sample >> 2) ^ (sample >> 3) ^ (sample >> 5)) & 1;
+            sample = (sample >> 1) | (feedback << 15);
+        }
+        let threshold = if p_spike <= 0.0 {
+            0_u32
+        } else if p_spike >= 1.0 {
+            65_536_u32
+        } else {
+            (p_spike * 65_535.0).floor() as u32 + 1
+        };
+        self.rng_state = sample;
+        if u32::from(sample) < threshold {
             self.v = self.v_reset;
             return Ok(1);
         }
@@ -68,6 +88,7 @@ impl EscapeRateNeuron {
 
     pub fn reset(&mut self) {
         self.v = self.v_rest;
+        self.rng_state = self.initial_seed;
     }
 }
 
@@ -86,6 +107,7 @@ pub fn validate_escape_rate(state: &EscapeRateNeuron) -> bool {
         && state.resistance > 0.0
         && state.dt.is_finite()
         && state.dt > 0.0
+        && state.rng_state != 0
 }
 
 fn safe_exp(x: f64) -> f64 {
@@ -105,9 +127,24 @@ mod tests {
 
     #[test]
     fn test_escape_rate_step() {
-        let mut state = EscapeRateNeuron::new();
+        let mut state = EscapeRateNeuron::new_with_seed(42);
         let spike = state.step(10.0).expect("valid step must succeed");
         assert!(spike == 0 || spike == 1);
+    }
+
+    #[test]
+    fn test_seeded_sequence_and_reset_are_replayable() {
+        let mut state = EscapeRateNeuron::new_with_seed(42);
+        let first: Vec<i32> = (0..1000)
+            .map(|_| state.step(30.0).expect("valid step"))
+            .collect();
+        let final_rng = state.rng_state;
+        state.reset();
+        let replay: Vec<i32> = (0..1000)
+            .map(|_| state.step(30.0).expect("valid step"))
+            .collect();
+        assert_eq!(first, replay);
+        assert_eq!(state.rng_state, final_rng);
     }
 
     #[test]

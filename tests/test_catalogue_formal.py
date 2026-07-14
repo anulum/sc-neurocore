@@ -113,6 +113,23 @@ def test_coba_lif_formal_job_uses_enrolled_q2424_precision() -> None:
     assert "coba_lif" in module.MINIMAL_SAFETY_SCHEMAS
 
 
+def test_escape_rate_formal_job_uses_seeded_q2424_precision() -> None:
+    """Keep formal stochastic RTL aligned with the full-period co-simulation."""
+    import importlib.util
+
+    name = "emit_catalogue_formal_escape_rate_precision"
+    spec = importlib.util.spec_from_file_location(name, EMITTER)
+    assert spec is not None and spec.loader is not None
+    module = importlib.util.module_from_spec(spec)
+    sys.modules[name] = module
+    spec.loader.exec_module(module)
+
+    assert module.CLASS_TO_SCHEMA["EscapeRateNeuron"] == "escape_rate"
+    assert module.PRECISION_BY_SCHEMA["escape_rate"] == (48, 24)
+    assert module.DEPTH_BY_SCHEMA["escape_rate"] == 4
+    assert "escape_rate" in module.MINIMAL_SAFETY_SCHEMAS
+
+
 def test_catalogue_formal_inventory_matches_perfect_count() -> None:
     """Committed catalogue jobs equal the number of dual-axis perfect models."""
     sby_jobs = sorted(CATALOGUE.glob("*.sby"))

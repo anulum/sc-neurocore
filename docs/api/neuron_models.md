@@ -10,9 +10,9 @@ backend implements that surface.
 > A stricter bar — a model whose whole four-language acceleration chain
 > (`accel/{rust,go,julia,mojo}`) is real and Python-parity-proven — is tracked
 > separately on the [Model Fidelity & Polyglot Status](model_fidelity_status.md)
-> page. Polyglot-complete today: Wang-Buzsaki, FitzHugh-Nagumo, Morris-Lecar,
+> page. Polyglot-complete today (30 models): Wang-Buzsaki, FitzHugh-Nagumo, Morris-Lecar,
 > Connor-Stevens, Hodgkin-Huxley, AdEx, ExpIF, Lapicque, Perfect Integrator,
-> Quadratic IF, Theta, DPI, COBA LIF, McKean, Hindmarsh-Rose, FitzHugh-Rinzel,
+> Quadratic IF, Theta, DPI, COBA LIF, Escape Rate, McKean, Hindmarsh-Rose, FitzHugh-Rinzel,
 > Pernarowski, Terman-Wang,
 > Wilson-HR, Rulkov map, GLIF, Mihalas-Niebur, Medvedev map, Cazelles map, Chialvo map, Courbage-Nekorkin map,
 > Izhikevich 2007, Ibarz-Tanaka map, Ermentrout-Kopell. All other models are Python-faithful with their
@@ -98,8 +98,10 @@ Python-only boundary rationale:
 
 The parity test checks this map against the Python registry, committed Rust
 PyO3 source declarations, and the built Rust engine when the optional engine is
-installed. Stochastic models remain binding-covered but outside exact
-spike-train parity until a shared RNG contract exists. `ChayKeizerNeuron`
+installed. Stochastic models without a shared RNG remain binding-covered but
+outside exact spike-train parity. `EscapeRateNeuron` is the enrolled exception:
+its Python, Rust, Julia, Go, Mojo, schema, and RTL surfaces share one explicit
+seeded LFSR16 event-stream contract. `ChayKeizerNeuron`
 remains an expected parity divergence because the Python model is the
 five-dimensional Chay-Keizer burster while the current Rust kernel is the older
 reduced form.

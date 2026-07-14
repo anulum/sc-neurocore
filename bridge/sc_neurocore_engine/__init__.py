@@ -597,6 +597,16 @@ except ImportError:
 
 try:
     from sc_neurocore_engine.sc_neurocore_engine import (
+        py_escape_rate_simulate,
+    )
+
+    __all__ += ["py_escape_rate_simulate"]
+    _escape_rate_rust_available = True
+except ImportError:
+    _escape_rate_rust_available = False
+
+try:
+    from sc_neurocore_engine.sc_neurocore_engine import (
         py_mihalas_niebur_simulate,
     )
 

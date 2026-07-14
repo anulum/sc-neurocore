@@ -53,6 +53,10 @@ from typing import Any
 
 import numpy as np
 
+from sc_neurocore.neurons._stochastic_threshold import (
+    DEFAULT_LFSR16_SEED,
+    Lfsr16Threshold,
+)
 from sc_neurocore.neurons.equation_namespace import build_eval_namespace
 from sc_neurocore.neurons.equation_safety import EVAL_GLOBALS, ExpressionSafetyValidator
 from sc_neurocore.neurons.equation_units_runtime import (
@@ -100,6 +104,8 @@ class EquationNeuron:
         input_unit: Any | None = None,
         detection: str = "level",
         substeps: int = 1,
+        rate_expression: str | None = None,
+        rng_seed: int = DEFAULT_LFSR16_SEED,
     ) -> None:
         """Initialise an equation-defined neuron from ODE strings."""
         if units not in {"none", "strict"}:
@@ -123,6 +129,23 @@ class EquationNeuron:
         self.method = method
         self.detection = detection
         self.substeps = substeps
+        self.rate_expression = rate_expression
+        self._escape_rate_enabled = detection == "escape_rate" and rate_expression is not None
+        if detection != "escape_rate" and rate_expression is not None:
+            raise ValueError("rate_expression is only valid with detection='escape_rate'")
+        if detection == "escape_rate" and rate_expression is None:
+            raise ValueError("escape_rate detection requires rate_expression")
+        if self._escape_rate_enabled:
+            if threshold not in (None, "stochastic"):
+                raise ValueError(
+                    "escape_rate detection cannot combine rate_expression with a level threshold"
+                )
+            if not math.isfinite(float(dt)) or float(dt) <= 0.0:
+                raise ValueError("escape_rate dt must be finite and positive")
+            self.threshold_expr = None
+            self._escape_rng: Lfsr16Threshold | None = Lfsr16Threshold(rng_seed)
+        else:
+            self._escape_rng = None
         # Rising-edge (``crossing``) detection is only engaged for a NON-resetting model:
         # a reset that drops the state back below threshold already clears the condition
         # every spike, so ``level`` and ``crossing`` are identical there and the simpler
@@ -183,6 +206,11 @@ class EquationNeuron:
         all_exprs = list(self.equations.values()) + list(self.reset_rules.values())
         if self.threshold_expr:
             all_exprs.append(self.threshold_expr)
+        if self.rate_expression:
+            all_exprs.append(self.rate_expression)
+        self._escape_uses_diffusion_noise = self._escape_rate_enabled and any(
+            re.search(r"\bxi\b", expression) is not None for expression in all_exprs
+        )
         for expr in all_exprs:
             self._safety.validate(expr)
 
@@ -191,6 +219,9 @@ class EquationNeuron:
         }
         self._compiled_threshold = (
             compile(self.threshold_expr, "<threshold>", "eval") if self.threshold_expr else None
+        )
+        self._compiled_rate = (
+            compile(self.rate_expression, "<escape-rate>", "eval") if self.rate_expression else None
         )
         self._compiled_reset = {
             var: compile(expr, f"<reset:{var}>", "eval") for var, expr in self.reset_rules.items()
@@ -278,7 +309,13 @@ class EquationNeuron:
         env: dict[str, object] = dict(self._namespace)
         # Euler-Maruyama: noise scaled by sqrt(dt)/dt so that after deriv*dt
         # the net noise is noise_scale * sqrt(dt) * N(0,1)
-        env["xi"] = self._noise_scale * np.random.randn() / max(self.dt, 1e-12) ** 0.5
+        if self._escape_rate_enabled and not self._escape_uses_diffusion_noise:
+            # The canonical escape model owns an explicit model-scoped LFSR. Do
+            # not consume NumPy's process-global stream when none of its authored
+            # equations, rate, or reset expressions references diffusion noise.
+            env["xi"] = 0.0
+        else:
+            env["xi"] = self._noise_scale * np.random.randn() / max(self.dt, 1e-12) ** 0.5
         env.update(self.parameters)
         env.update(self.constants)
         env.update(self.state)
@@ -317,11 +354,48 @@ class EquationNeuron:
                 for name, value in kwargs.items()
             }
         previous_state = dict(self.state)
-        for _ in range(self.substeps):
-            self._integrate_once(**kwargs)
+        try:
+            for _ in range(self.substeps):
+                self._integrate_once(**kwargs)
+        except Exception:
+            if self._escape_rate_enabled:
+                self.state = previous_state
+            raise
 
         spike = 0
-        if self._compiled_threshold:
+        if self._escape_rate_enabled:
+            escape_rng = self._escape_rng
+            if escape_rng is None or self._compiled_rate is None:  # pragma: no cover - invariant
+                raise RuntimeError("escape-rate RNG contract was not initialised")
+            previous_rng = escape_rng.state
+            try:
+                env_post = self._build_env(**kwargs)
+                env_post.update(_previous_state_aliases(previous_state))
+                # nosec B307: AST-whitelisted compiled escape-rate expression.
+                rate = float(eval(self._compiled_rate, self._EVAL_GLOBALS, env_post))  # nosec B307
+                hazard = rate * self.dt
+                if not math.isfinite(rate) or rate < 0.0:
+                    raise FloatingPointError("escape rate must remain finite and non-negative")
+                if not math.isfinite(hazard) or hazard < 0.0:
+                    raise FloatingPointError("escape hazard must remain finite and non-negative")
+                probability = -math.expm1(-hazard)
+                if not math.isfinite(probability) or not 0.0 <= probability <= 1.0:
+                    raise FloatingPointError("escape probability must remain finite and bounded")
+                fired = escape_rng.trial(probability)
+                if fired:
+                    spike = 1
+                    reset_env = self._build_env(**kwargs)
+                    reset_env.update(_previous_state_aliases(previous_state))
+                    for var, code in self._compiled_reset.items():
+                        # nosec B307: AST-whitelisted compiled reset rule.
+                        self.state[var] = float(  # nosec B307
+                            eval(code, self._EVAL_GLOBALS, reset_env)  # nosec B307
+                        )
+            except Exception:
+                self.state = previous_state
+                escape_rng.restore(previous_rng)
+                raise
+        elif self._compiled_threshold:
             env_post = self._build_env(**kwargs)
             env_post.update(_previous_state_aliases(previous_state))
             # nosec B307: AST-whitelisted compiled threshold expression.
@@ -475,9 +549,21 @@ class EquationNeuron:
             }
         return dict(self.state)
 
+    @property
+    def escape_rng_initial_seed(self) -> int | None:
+        """Return the emitted escape-threshold seed, or ``None`` for other models."""
+        return self._escape_rng.initial_seed if self._escape_rng is not None else None
+
+    @property
+    def escape_rng_state(self) -> int | None:
+        """Return the live escape-threshold LFSR state, or ``None`` when unused."""
+        return self._escape_rng.state if self._escape_rng is not None else None
+
     def reset(self) -> None:
         """Reset state to initial values."""
         self.state = deepcopy(self.initial_state)
+        if self._escape_rng is not None:
+            self._escape_rng.reset()
         self._prev_threshold_active = (
             self.initial_threshold_active() if self._edge_detection else False
         )

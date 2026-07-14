@@ -51,11 +51,50 @@ class _NeuronCore:
     deriv_wires: list[str]
     next_wires: list[str]
     threshold_verilog: str
+    escape_probability_verilog: str
     reset_expressions: dict[str, str]
 
     @property
     def total_pipeline_latency(self) -> int:
         return len(self.pipeline_regs)
+
+
+def _escape_threshold_wires(
+    probability_expression: str,
+    sample_expression: str,
+    *,
+    data_width: int,
+    fraction: int,
+) -> list[str]:
+    """Lower one Q-format probability and one LFSR sample to a spike bit.
+
+    The 17-bit threshold mirrors ``probability_to_lfsr16_threshold`` exactly:
+    zero never fires, one always fires, and an interior probability realises
+    ``floor(p*65535)/65535`` under the strict ``sample < threshold`` compare.
+    """
+    one = 1 << fraction
+    product_width = data_width + 16
+    return [
+        (f"wire signed [{data_width - 1}:0] _escape_probability = {probability_expression};"),
+        (
+            f"wire [{data_width - 1}:0] _escape_probability_clamped = "
+            f"_escape_probability[{data_width - 1}] ? {data_width}'d0 : "
+            f"((_escape_probability >= {data_width}'sd{one}) ? "
+            f"{data_width}'d{one} : _escape_probability);"
+        ),
+        (
+            f"wire [{product_width - 1}:0] _escape_threshold_product = "
+            "$unsigned(_escape_probability_clamped) * 16'd65535;"
+        ),
+        (f"wire [15:0] _escape_threshold_floor = _escape_threshold_product >> {fraction};"),
+        (
+            "wire [16:0] _escape_threshold = "
+            f"(_escape_probability <= {data_width}'sd0) ? 17'd0 : "
+            f"((_escape_probability >= {data_width}'sd{one}) ? 17'd65536 : "
+            "({1'b0, _escape_threshold_floor} + 17'd1));"
+        ),
+        f"wire _escape_spike = {{1'b0, {sample_expression}}} < _escape_threshold;",
+    ]
 
 
 def _emit_euler_deriv_wires(
@@ -610,7 +649,34 @@ def _build_neuron_core(
             raise ValueError(f"Unknown overflow mode: {q.overflow!r}")
 
     threshold_verilog = ""
-    if neuron.threshold_expr:
+    escape_probability_verilog = ""
+    if getattr(neuron, "_escape_rate_enabled", False):
+        rate_expression = getattr(neuron, "rate_expression", None)
+        if not rate_expression:
+            raise ValueError("escape-rate compilation requires a rate expression")
+        stochastic_param_map = dict(param_map)
+        for var in neuron.equations:
+            safe_var = state_var_map[var]
+            stochastic_param_map[var] = f"{safe_var}_next"
+            stochastic_param_map[f"{var}_prev"] = f"{safe_var}_reg"
+        probability_expression = f"1.0 - exp(-(({rate_expression}) * {neuron.dt!r}))"
+        (
+            escape_probability_verilog,
+            probability_intermediates,
+            _mc,
+            _tc,
+            probability_pregs,
+        ) = _emit_expr(
+            probability_expression,
+            {},
+            stochastic_param_map,
+            q,
+            mul_start=_mc,
+            trunc_start=_tc,
+        )
+        all_intermediates.extend(probability_intermediates)
+        all_pipeline_regs.extend(probability_pregs)
+    elif neuron.threshold_expr:
         thr_param_map = dict(param_map)
         for var in neuron.equations:
             safe_var = state_var_map[var]
@@ -656,6 +722,7 @@ def _build_neuron_core(
         deriv_wires=deriv_wires,
         next_wires=next_wires,
         threshold_verilog=threshold_verilog,
+        escape_probability_verilog=escape_probability_verilog,
         reset_expressions=reset_expressions,
     )
 
@@ -731,8 +798,24 @@ def compile_to_verilog(
     deriv_wires = core.deriv_wires
     next_wires = core.next_wires
     threshold_verilog = core.threshold_verilog
+    escape_probability_verilog = core.escape_probability_verilog
     reset_expressions = core.reset_expressions
     total_pipeline_latency = core.total_pipeline_latency
+    stochastic_escape = bool(escape_probability_verilog)
+    if stochastic_escape and not signed:
+        raise NotImplementedError("escape-rate RTL requires a signed membrane datapath")
+    if stochastic_escape and total_pipeline_latency > 0:
+        raise NotImplementedError(
+            "escape-rate RTL does not yet support multiply pipelining; use pipeline_stages=0"
+        )
+    if stochastic_escape:
+        initial_seed = neuron.escape_rng_initial_seed
+        if initial_seed is None:  # pragma: no cover - constructor invariant
+            raise ValueError("escape-rate RTL has no initial RNG seed")
+        param_decls = [
+            *param_decls,
+            f"    parameter [15:0] RNG_SEED = 16'h{initial_seed:04x}",
+        ]
     # Mirror the Python golden's edge/level decision exactly (see EquationNeuron): edge
     # logic is engaged only for a crossing, non-resetting model, so reset-based models use
     # the identical level datapath whether they declare ``level`` or ``crossing``.
@@ -808,6 +891,23 @@ def compile_to_verilog(
         safe_var = state_var_map[var]
         lines.append(f"reg signed [{data_width - 1}:0] {safe_var}_reg;")
 
+    if stochastic_escape:
+        lines.append("reg [15:0] _escape_lfsr;")
+        lines.append("function [15:0] _escape_advance;")
+        lines.append("    input [15:0] value;")
+        lines.append("    begin")
+        lines.append(
+            "        _escape_advance = {value[0] ^ value[2] ^ value[3] ^ value[5], value[15:1]};"
+        )
+        lines.append("    end")
+        lines.append("endfunction")
+        previous_sample = "_escape_lfsr"
+        for advance in range(1, 9):
+            sample_name = f"_escape_sample_{advance}"
+            lines.append(f"wire [15:0] {sample_name} = _escape_advance({previous_sample});")
+            previous_sample = sample_name
+        lines.append("wire [15:0] _escape_sample = _escape_sample_8;")
+
     if edge_detection:
         # 1-bit history of the threshold condition for rising-edge (``crossing``) detection.
         lines.append("reg _thr_prev;")
@@ -837,6 +937,17 @@ def compile_to_verilog(
     for wire in next_wires:
         lines.append(wire)
     lines.append("")
+
+    if stochastic_escape:
+        lines.extend(
+            _escape_threshold_wires(
+                escape_probability_verilog,
+                "_escape_sample",
+                data_width=data_width,
+                fraction=fraction,
+            )
+        )
+        lines.append("")
 
     if all_pipeline_regs:
         # Reset the staging registers to 0 so an unfilled pipeline never injects X into the
@@ -883,8 +994,11 @@ def compile_to_verilog(
         step_lines.append("        end else begin")
         step_lines.append("            spike_out <= 1'b0;")
         step_lines.append("        end")
-    elif threshold_verilog:
-        if edge_detection:
+    elif threshold_verilog or stochastic_escape:
+        if stochastic_escape:
+            spike_cond = "_escape_spike"
+            step_lines.append("        _escape_lfsr <= _escape_sample;")
+        elif edge_detection:
             # Edge detection: spike only on the rising transition of the condition. ``_thr_prev``
             # holds the condition evaluated on the previously committed (next) state, so a
             # non-resetting oscillator fires exactly once per upward crossing — bit-matching the
@@ -939,6 +1053,8 @@ def compile_to_verilog(
         lines.append(f"        {safe_var}_reg <= {init_val};")
         lines.append(f"        {safe_var}_out <= {init_val};")
     lines.append("        spike_out <= 1'b0;")
+    if stochastic_escape:
+        lines.append("        _escape_lfsr <= (RNG_SEED == 16'd0) ? 16'hace1 : RNG_SEED;")
     if edge_detection:
         # Seed the edge history from the initial state (bit-matching the Python golden's
         # ``initial_threshold_active``); an oscillator starting below threshold seeds 0.
@@ -998,6 +1114,9 @@ def compile_to_datapath(
     ``P_<NAME>`` identifier whether it is a ``parameter`` or an ``input wire``, moving a
     parameter to a port changes only its declaration — the datapath stays bit-for-bit
     identical. Every name must be a real neuron parameter/constant; the rest stay baked.
+    Escape-rate models additionally expose the already-advanced 16-bit ``rng_sample``
+    input: the folded population owns one LFSR state per neuron in BRAM and supplies
+    that sample on the same cycle as the corresponding membrane state.
 
     Pipelining is not supported here (a combinational PE has no register stages);
     the folded sequencer provides the one-cycle-per-neuron timing instead.
@@ -1029,6 +1148,9 @@ def compile_to_datapath(
         pipeline_points=None,
     )
     state_var_map = core.state_var_map
+    stochastic_escape = bool(core.escape_probability_verilog)
+    if stochastic_escape and not signed:
+        raise NotImplementedError("escape-rate RTL requires a signed membrane datapath")
 
     # Partition parameters into those baked as module ``parameter`` defaults and those
     # carried on input ports (``param_ports``), so a folded population can stream
@@ -1060,6 +1182,8 @@ def compile_to_datapath(
     # Heterogeneous parameters carried on input ports, streamed from a per-neuron ROM.
     for vname in port_vnames:
         lines.append(f"    input wire signed [{data_width - 1}:0] {vname},")
+    if stochastic_escape:
+        lines.append("    input wire [15:0] rng_sample,")
     # State carried in on ports (named <var>_reg so the shared core wires match).
     for var in neuron.equations:
         safe_var = state_var_map[var]
@@ -1082,8 +1206,21 @@ def compile_to_datapath(
         lines.append(wire)
     lines.append("")
 
+    if stochastic_escape:
+        lines.extend(
+            _escape_threshold_wires(
+                core.escape_probability_verilog,
+                "rng_sample",
+                data_width=data_width,
+                fraction=fraction,
+            )
+        )
+        lines.append("")
+
     # Spike is the combinational threshold over the candidate next state.
-    if core.threshold_verilog:
+    if stochastic_escape:
+        lines.append("assign spike_out = _escape_spike;")
+    elif core.threshold_verilog:
         lines.append(f"assign spike_out = ({core.threshold_verilog});")
     else:
         lines.append("assign spike_out = 1'b0;")
@@ -1094,7 +1231,7 @@ def compile_to_datapath(
     for var in neuron.equations:
         safe_var = state_var_map[var]
         on_spike = core.reset_expressions.get(safe_var, f"{safe_var}_next")
-        if core.threshold_verilog:
+        if core.threshold_verilog or stochastic_escape:
             lines.append(
                 f"assign {safe_var}_next_out = spike_out ? ({on_spike}) : {safe_var}_next;"
             )

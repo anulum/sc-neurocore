@@ -27,6 +27,7 @@ import sys
 from pathlib import Path
 from typing import Any
 
+import numpy as np
 import pytest
 from _pytest.monkeypatch import MonkeyPatch
 
@@ -78,6 +79,15 @@ class TestSchemaLoading:
         schema = load_schema("adex")
         assert schema["metadata"]["year"] == 2005
         assert "delta_T" in schema["parameters"]
+
+    def test_escape_rate_toml_and_json_are_semantically_identical(self) -> None:
+        schema_dir = Path(__file__).parent.parent / "src/sc_neurocore/neurons/model_schemas"
+        toml = load_schema(schema_dir / "escape_rate.toml")
+        json_schema = load_schema(schema_dir / "escape_rate.json")
+        assert toml == json_schema
+        assert toml["metadata"]["doi"] == "10.1162/089976600300015899"
+        assert toml["integration"]["method"] == "exp_euler"
+        assert toml["threshold"]["rng_seed"] == 0xACE1
 
     def test_nonexistent_schema_raises(self) -> None:
         with pytest.raises(FileNotFoundError):
@@ -181,6 +191,28 @@ class TestUniversalNeuronSimulation:
         spikes = sum(neuron.step(I=500.0) for _ in range(500))
         assert spikes > 0, "AdEx should spike with strong current"
 
+    def test_escape_rate_schema_matches_hand_model_events_state_and_rng(self) -> None:
+        from sc_neurocore.neurons.models.escape_rate import EscapeRateNeuron
+
+        seed = 0xBEEF
+        hand = EscapeRateNeuron(seed=seed)
+        schema = UniversalNeuron.from_schema("escape_rate", rng_seed_override=seed)
+        hand_events: list[int] = []
+        schema_events: list[int] = []
+        hand_trace: list[float] = []
+        schema_trace: list[float] = []
+        for _ in range(4096):
+            hand_events.append(hand.step(17.0))
+            schema_events.append(schema.step(I=17.0))
+            hand_trace.append(hand.v)
+            schema_trace.append(schema.state["v"])
+
+        assert schema_events == hand_events
+        np.testing.assert_allclose(schema_trace, hand_trace, rtol=0.0, atol=1.0e-14)
+        equation = schema.to_equation_neuron()
+        assert equation.escape_rng_initial_seed == seed
+        assert equation.escape_rng_state == hand.rng_state
+
 
 class TestParameterOverrides:
     """Test runtime parameter overrides."""
@@ -198,6 +230,10 @@ class TestParameterOverrides:
         spikes = sum(neuron.step(I=50.0) for _ in range(400))
         # With dt=0.5 (half the default 1.0), the neuron should still spike
         assert spikes > 0, "LIF with dt_override should still produce spikes"
+
+    def test_zero_escape_rate_dt_override_is_rejected_not_ignored(self) -> None:
+        with pytest.raises(ValueError, match="dt"):
+            UniversalNeuron.from_schema("escape_rate", dt_override=0.0)
 
 
 class TestResetAndState:

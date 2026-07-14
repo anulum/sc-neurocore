@@ -8,15 +8,17 @@ tolerances. The production validator loads those JSON entries from the package,
 executes the same `UniversalNeuron` runner used by public schema workflows, and
 reports feature-level mismatches without falling back to another trace.
 
-This page documents the WC-A1 deterministic schema corpus. It does not claim
-NEST, Brian2, NEURON, or published-figure replay coverage; those remain separate
-external-simulator validation surfaces.
+This page documents the WC-A1 deterministic schema corpus and the separate
+seeded EscapeRate statistical reference. It does not claim NEST, Brian2,
+NEURON, or published-figure replay coverage; those remain separate external-
+simulator validation surfaces.
 
 ## Current Corpus
 
-The committed corpus has one reference entry for every deterministic bundled
-schema model. `poisson` and `escape_rate` are excluded from this deterministic
-table because their schemas are stochastic.
+The committed deterministic corpus has one reference entry for every
+deterministic bundled schema model. `poisson` remains excluded from this table.
+`escape_rate` is stochastic and therefore has a separate exhaustive seeded
+reference immediately after the table rather than a deterministic feature row.
 
 | Trace | Schema | Runner | Provenance |
 |-------|--------|--------|------------|
@@ -51,6 +53,31 @@ table because their schemas are stochastic.
 | `rulkov_map_driven_spiking_doi` | `rulkov_map` | `universal_dsl` | Independent piecewise-map iteration (Rulkov 2002, `method="map"`, rising `x >= 0` crossing) from `neurons/model_schemas/rulkov_map.toml` with DOI-backed schema provenance |
 | `theta_constant_current_phase_analytic` | `theta` | `universal_dsl` | Analytic tangent half-angle phase solution from `neurons/model_schemas/theta.toml` with DOI-backed schema provenance |
 | `wang_buzsaki_driven_spiking_doi` | `wang_buzsaki` | `universal_dsl` | Independent macro-step Gauss-Seidel re-derivation of the driven fast-spiking interneuron (50 inner `dt=0.01` sub-steps per 0.5 ms macro step, gates `h`/`n` updated before `v`, no reset, macro-boundary `v >= v_threshold` crossing) from `neurons/model_schemas/wang_buzsaki.toml` with DOI-backed schema provenance |
+
+## Seeded stochastic reference
+
+`escape_rate_lfsr16_statistical_v1.json` is a separate statistical artifact,
+validated by `tests/test_reference_escape_rate.py`. Its independent recurrence
+does not import the production RNG helper: it re-evaluates the documented
+right-shift LFSR16 polynomial, performs eight primitive advances per logical
+trial, applies the 17-bit probability threshold, and hashes the resulting event
+bytes.
+
+The full-period protocol holds the voltage and escape intensity constant with
+`rho*dt=0.25`. Across all 65,535 non-zero LFSR states it records exactly 14,496
+events, final state `0xACE1`, mean inter-event interval
+`4.520869265263884`, CV `0.8842846076062356`, and event SHA-256
+`6f118617f2ecb7a54c5a7ca68ee38a80a68dd15494e361c77aa228397614bfa8`.
+The same artifact pins 4,096-step event hashes, counts, and final RNG states for
+five seeds: `1`, `42`, `0xACE1`, `0xBEEF`, and `0xFFFF`.
+
+Gerstner (2000), Eqs. (2.13)–(2.15), supplies the conditional intensity,
+survival function, and firing-time density; DOI
+`10.1162/089976600300015899` anchors that source. The exact RC step,
+piecewise-constant finite-step hazard transform, LFSR polynomial and
+decimation, comparator quantisation, and default seed are explicitly maintained
+SC-NeuroCore conventions. This seeded artifact extends the evidence corpus; it
+is not presented as a deterministic `UniversalNeuron` feature trace.
 
 All entries record spike count, first spike step, and final/min/max/mean
 features for the declared state variables. The tests independently recompute the

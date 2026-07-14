@@ -19,33 +19,46 @@ var (
 	ErrEscapeRateNonFiniteUpdate    = errors.New("escape rate membrane candidate must remain finite")
 	ErrEscapeRateNonFiniteHazard    = errors.New("escape rate hazard must remain finite and non-negative")
 	ErrEscapeRateInvalidProbability = errors.New("escape rate spike probability must remain finite and bounded")
+	ErrEscapeRateInvalidSteps       = errors.New("escape rate step count must be non-negative")
 )
 
 // EscapeRateNeuronState holds the neuron state
 type EscapeRateNeuronState struct {
-	V          float64
-	VRest      float64
-	VReset     float64
-	VThreshold float64
-	TauM       float64
-	Rho0       float64
-	DeltaU     float64
-	Resistance float64
-	Dt         float64
+	V           float64
+	VRest       float64
+	VReset      float64
+	VThreshold  float64
+	TauM        float64
+	Rho0        float64
+	DeltaU      float64
+	Resistance  float64
+	Dt          float64
+	RNGState    uint16
+	InitialSeed uint16
 }
 
 // NewEscapeRateNeuron creates a new EscapeRateNeuron neuron with default parameters
 func NewEscapeRateNeuron() *EscapeRateNeuronState {
+	return NewEscapeRateNeuronWithSeed(0xACE1)
+}
+
+// NewEscapeRateNeuronWithSeed creates a replayable canonical LFSR16 stream.
+func NewEscapeRateNeuronWithSeed(seed uint16) *EscapeRateNeuronState {
+	if seed == 0 {
+		seed = 0xACE1
+	}
 	return &EscapeRateNeuronState{
-		V:          -70.0,
-		VRest:      -70.0,
-		VReset:     -70.0,
-		VThreshold: -50.0,
-		TauM:       10.0,
-		Rho0:       0.001,
-		DeltaU:     3.0,
-		Resistance: 1.0,
-		Dt:         1.0,
+		V:           -70.0,
+		VRest:       -70.0,
+		VReset:      -70.0,
+		VThreshold:  -50.0,
+		TauM:        10.0,
+		Rho0:        0.001,
+		DeltaU:      3.0,
+		Resistance:  1.0,
+		Dt:          1.0,
+		RNGState:    seed,
+		InitialSeed: seed,
 	}
 }
 
@@ -72,7 +85,19 @@ func (s *EscapeRateNeuronState) Step(iExt float64) (int, error) {
 	if !finite(pSpike) || pSpike < 0.0 || pSpike > 1.0 {
 		return 0, ErrEscapeRateInvalidProbability
 	}
+	sample := s.RNGState
+	for advance := 0; advance < 8; advance++ {
+		feedback := ((sample >> 0) ^ (sample >> 2) ^ (sample >> 3) ^ (sample >> 5)) & 1
+		sample = (sample >> 1) | (feedback << 15)
+	}
+	threshold := uint32(0)
 	if pSpike >= 1.0 {
+		threshold = 65536
+	} else if pSpike > 0.0 {
+		threshold = uint32(math.Floor(pSpike*65535.0)) + 1
+	}
+	s.RNGState = sample
+	if uint32(sample) < threshold {
 		s.V = s.VReset
 		return 1, nil
 	}
@@ -90,7 +115,42 @@ func ValidateEscapeRate(s *EscapeRateNeuronState) bool {
 		finite(s.Rho0) && s.Rho0 > 0.0 &&
 		finite(s.DeltaU) && s.DeltaU > 0.0 &&
 		finite(s.Resistance) && s.Resistance > 0.0 &&
-		finite(s.Dt) && s.Dt > 0.0
+		finite(s.Dt) && s.Dt > 0.0 &&
+		s.RNGState != 0 && s.InitialSeed != 0
+}
+
+// Reset restores the membrane and exact initial RNG seed.
+func (s *EscapeRateNeuronState) Reset() {
+	s.V = s.VRest
+	s.RNGState = s.InitialSeed
+}
+
+// SimulateEscapeRateTrace runs a complete state without mutating the caller's value.
+func SimulateEscapeRateTrace(
+	state EscapeRateNeuronState,
+	nSteps int,
+	iExt float64,
+) ([]float64, []uint8, EscapeRateNeuronState, error) {
+	if nSteps < 0 {
+		return nil, nil, state, ErrEscapeRateInvalidSteps
+	}
+	if !finite(iExt) {
+		return nil, nil, state, ErrEscapeRateInvalidInput
+	}
+	if !ValidateEscapeRate(&state) {
+		return nil, nil, state, ErrEscapeRateInvalidState
+	}
+	trace := make([]float64, nSteps)
+	events := make([]uint8, nSteps)
+	for index := 0; index < nSteps; index++ {
+		spike, err := state.Step(iExt)
+		if err != nil {
+			return nil, nil, state, err
+		}
+		trace[index] = state.V
+		events[index] = uint8(spike)
+	}
+	return trace, events, state, nil
 }
 
 func safeExp(x float64) float64 {
@@ -99,16 +159,14 @@ func safeExp(x float64) float64 {
 
 // SimulateEscapeRateNeuron runs the neuron for n steps
 func SimulateEscapeRateNeuron(nSteps int, iExt float64) ([]float64, int) {
-	s := NewEscapeRateNeuron()
-	trace := make([]float64, nSteps)
+	initial := *NewEscapeRateNeuron()
+	trace, events, _, err := SimulateEscapeRateTrace(initial, nSteps, iExt)
+	if err != nil {
+		panic(err)
+	}
 	spikes := 0
-	for t := 0; t < nSteps; t++ {
-		result, err := s.Step(iExt)
-		if err != nil {
-			panic(err)
-		}
-		trace[t] = s.V
-		if result > 0 {
+	for _, event := range events {
+		if event > 0 {
 			spikes++
 		}
 	}

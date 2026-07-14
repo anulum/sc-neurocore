@@ -1,7 +1,7 @@
 {
   "metadata": {
     "schema_version": 1,
-    "name": "Escape Rate",
+    "name": "EscapeRateNeuron",
     "author": "Gerstner, W.",
     "year": 2000,
     "doi": "10.1162/089976600300015899",
@@ -12,11 +12,12 @@
     "v_rest": -70.0, "v_reset": -70.0, "v_threshold": -50.0,
     "tau_m": 10.0, "rho_0": 0.001, "delta_u": 3.0, "resistance": 1.0
   },
-  "integration": { "dt": 1.0, "method": "euler" },
+  "integration": { "dt": 1.0, "method": "exp_euler" },
   "dynamics": { "v": "(-(v - v_rest) + resistance * I) / tau_m" },
   "threshold": {
     "condition": "stochastic", "detection": "escape_rate",
-    "rate_expression": "rho_0 * exp((v - v_threshold) / delta_u)"
+    "rate_expression": "rho_0 * exp(clip((v - v_threshold) / delta_u, -700.0, 700.0))",
+    "rng_seed": 44257
   },
   "reset": { "v": "v_reset" },
   "extensions": { "noise_type": "escape_rate", "stochastic": true }

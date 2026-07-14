@@ -80,6 +80,7 @@ from copy import deepcopy
 from pathlib import Path
 from typing import Any
 
+from sc_neurocore.neurons._stochastic_threshold import DEFAULT_LFSR16_SEED
 from sc_neurocore.neurons.equation_builder import EquationNeuron
 
 logger = logging.getLogger(__name__)
@@ -259,6 +260,7 @@ class UniversalNeuron:
         parameter_overrides: dict[str, float] | None = None,
         dt_override: float | None = None,
         method_override: str | None = None,
+        rng_seed_override: int | None = None,
     ) -> None:
         """Initialise from a validated schema dictionary."""
         self._schema = deepcopy(schema)
@@ -279,8 +281,10 @@ class UniversalNeuron:
 
         # Integration config
         integration = self._schema.get("integration", {})
-        dt = dt_override or integration.get("dt", 0.1)
-        method = method_override or integration.get("method", "euler")
+        dt = dt_override if dt_override is not None else integration.get("dt", 0.1)
+        method = (
+            method_override if method_override is not None else integration.get("method", "euler")
+        )
         # ``substeps`` (default 1) advances the integrator this many inner steps per
         # macro ``step()`` before a single spike decision, mirroring the conductance
         # hand models' fixed sub-stepping (e.g. 100 dt sub-steps per 1 ms macro step).
@@ -290,6 +294,14 @@ class UniversalNeuron:
         threshold_config = self._schema.get("threshold", {})
         threshold_expr = threshold_config.get("condition")
         detection = threshold_config.get("detection", "level")
+        rate_expression = threshold_config.get("rate_expression")
+        rng_seed = (
+            rng_seed_override
+            if rng_seed_override is not None
+            else threshold_config.get("rng_seed", DEFAULT_LFSR16_SEED)
+        )
+        if detection == "escape_rate" and threshold_expr == "stochastic":
+            threshold_expr = None
         reset_config = self._schema.get("reset", {})
 
         # Extensions (stored for future use, not consumed by EquationNeuron)
@@ -313,6 +325,8 @@ class UniversalNeuron:
             method=method,
             detection=detection,
             substeps=substeps,
+            rate_expression=rate_expression,
+            rng_seed=rng_seed,
         )
 
         logger.debug(

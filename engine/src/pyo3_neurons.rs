@@ -506,10 +506,10 @@ pub struct PyEscapeRateNeuron {
 #[pymethods]
 impl PyEscapeRateNeuron {
     #[new]
-    #[pyo3(signature = (seed=42))]
-    fn new(seed: u64) -> Self {
+    #[pyo3(signature = (seed=0xACE1))]
+    fn new(seed: u16) -> Self {
         Self {
-            inner: neurons::EscapeRateNeuron::new(seed),
+            inner: neurons::EscapeRateNeuron::new(u64::from(seed)),
         }
     }
     fn step(&mut self, current: f64) -> i32 {
@@ -521,6 +521,8 @@ impl PyEscapeRateNeuron {
     fn get_state(&self, py: Python<'_>) -> PyResult<Py<PyAny>> {
         let d = PyDict::new(py);
         d.set_item("v", self.inner.v)?;
+        d.set_item("rng_state", self.inner.rng_state)?;
+        d.set_item("initial_seed", self.inner.initial_seed)?;
         Ok(d.into_any().unbind())
     }
 }

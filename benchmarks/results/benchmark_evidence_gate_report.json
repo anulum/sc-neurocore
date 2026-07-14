@@ -90,8 +90,8 @@
       "id": "rall-cable-implicit-multibackend-local-regression"
     },
     {
-      "artefact": "benchmarks/results/local_python_2026-06-17_escape_rate_exact_flow.json",
-      "id": "escape-rate-exact-flow-multibackend-local-regression"
+      "artefact": "benchmarks/results/local_python_2026-07-14_escape_rate_lfsr16.json",
+      "id": "escape-rate-seeded-lfsr16-five-backend-local-regression"
     },
     {
       "artefact": "benchmarks/results/bench_cazelles_map.json",
@@ -214,8 +214,18 @@
       "id": "hierarchical-kl-refine-five-backend-local-diagnostics"
     }
   ],
-  "failure_count": 46,
+  "failure_count": 48,
   "failures": [
+    {
+      "gate_id": "quadratic-if-exact-flow-multibackend-local-regression",
+      "path": "engine/src/neurons/trivial.rs->source_hashes.engine/src/neurons/trivial.rs",
+      "reason": "source_hash_mismatch"
+    },
+    {
+      "gate_id": "theta-exact-flow-multibackend-local-regression",
+      "path": "engine/src/neurons/trivial.rs->source_hashes.engine/src/neurons/trivial.rs",
+      "reason": "source_hash_mismatch"
+    },
     {
       "gate_id": "dpi-neuron-circuit-multibackend-local-regression",
       "path": "engine/src/pyo3_neurons.rs->source_hashes.engine/src/pyo3_neurons.rs",
@@ -322,21 +332,6 @@
       "reason": "source_hash_mismatch"
     },
     {
-      "gate_id": "escape-rate-exact-flow-multibackend-local-regression",
-      "path": "engine/Cargo.toml->source_hashes.engine/Cargo.toml",
-      "reason": "source_hash_mismatch"
-    },
-    {
-      "gate_id": "escape-rate-exact-flow-multibackend-local-regression",
-      "path": "src/sc_neurocore/accel/go/services/escape_rate.go->source_hashes.src/sc_neurocore/accel/go/services/escape_rate.go",
-      "reason": "source_hash_mismatch"
-    },
-    {
-      "gate_id": "escape-rate-exact-flow-multibackend-local-regression",
-      "path": "src/sc_neurocore/neurons/models/escape_rate.py->source_hashes.src/sc_neurocore/neurons/models/escape_rate.py",
-      "reason": "source_hash_mismatch"
-    },
-    {
       "gate_id": "cazelles-map-five-backend-local-regression",
       "path": "engine/src/lib.rs->source_hashes.engine/src/lib.rs",
       "reason": "source_hash_mismatch"
@@ -399,6 +394,21 @@
     {
       "gate_id": "medvedev-map-five-backend-controlled-regression",
       "path": "engine/src/neurons/maps.rs->source_hashes.engine/src/neurons/maps.rs",
+      "reason": "source_hash_mismatch"
+    },
+    {
+      "gate_id": "coba-lif-rk4-multibackend-local-regression",
+      "path": "bridge/sc_neurocore_engine/__init__.py->source_hashes.bridge/sc_neurocore_engine/__init__.py",
+      "reason": "source_hash_mismatch"
+    },
+    {
+      "gate_id": "coba-lif-rk4-multibackend-local-regression",
+      "path": "engine/src/lib.rs->source_hashes.engine/src/lib.rs",
+      "reason": "source_hash_mismatch"
+    },
+    {
+      "gate_id": "coba-lif-rk4-multibackend-local-regression",
+      "path": "engine/src/pyo3_neurons.rs->source_hashes.engine/src/pyo3_neurons.rs",
       "reason": "source_hash_mismatch"
     },
     {

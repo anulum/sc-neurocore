@@ -5,366 +5,435 @@
 # © Code 2020–2026 Miroslav Šotek. All rights reserved.
 # ORCID: 0009-0009-3560-0851
 # Contact: www.anulum.li | protoscience@anulum.li
-# SC-NeuroCore — Escape-rate exact-flow multi-backend local regression benchmark
+# SC-NeuroCore — Controlled EscapeRate five-backend benchmark
+
+"""Measure the canonical seeded EscapeRate batch through every public dispatcher.
+
+The evidence binds real exact-RC/hazard timings to full trace parity, exact event
+counts, exact final LFSR16 state, source hashes, CPU affinity, runtime versions,
+and an executable Rust-safety check. Missing backends or unpinned execution fail
+unless explicitly acknowledged.
+"""
 
 from __future__ import annotations
 
-from datetime import UTC, datetime
+import argparse
+import gc
 import hashlib
 import json
-from pathlib import Path
+import os
 import platform
-import re
+import shutil
 import statistics
 import subprocess
 import tempfile
-import textwrap
 import time
-from typing import Any, Protocol, cast
+from pathlib import Path
+from typing import Any
 
+import numpy as np
+import numpy.typing as npt
+
+from sc_neurocore.accel import escape_rate as backends
 from sc_neurocore.neurons.models.escape_rate import EscapeRateNeuron
 
-
-STEPS = 200_000
-REPEATS = 5
-CURRENT = 30.0
-OUTPUT = Path("benchmarks/results/local_python_2026-06-17_escape_rate_exact_flow.json")
-REPO_ROOT = Path(__file__).resolve().parents[1]
-GO_BENCH_RE = re.compile(r"^BenchmarkEscapeRateExactFlow-\d+\s+\d+\s+([0-9.]+)\s+ns/op")
-SOURCE_HASH_PATHS = {
-    "benchmarks/bench_model_escape_rate.py": REPO_ROOT / "benchmarks/bench_model_escape_rate.py",
-    "engine/Cargo.toml": REPO_ROOT / "engine/Cargo.toml",
-    "engine/examples/bench_escape_rate_exact_flow.rs": REPO_ROOT
-    / "engine/examples/bench_escape_rate_exact_flow.rs",
-    "engine/src/neurons/trivial.rs": REPO_ROOT / "engine/src/neurons/trivial.rs",
-    "src/sc_neurocore/neurons/models/escape_rate.py": REPO_ROOT
-    / "src/sc_neurocore/neurons/models/escape_rate.py",
-    "src/sc_neurocore/accel/go/services/escape_rate.go": REPO_ROOT
-    / "src/sc_neurocore/accel/go/services/escape_rate.go",
-    "src/sc_neurocore/accel/go/services/escape_rate_test.go": REPO_ROOT
-    / "src/sc_neurocore/accel/go/services/escape_rate_test.go",
-    "src/sc_neurocore/accel/julia/neurons/escape_rate.jl": REPO_ROOT
-    / "src/sc_neurocore/accel/julia/neurons/escape_rate.jl",
-    "src/sc_neurocore/accel/mojo/kernels/escape_rate.mojo": REPO_ROOT
-    / "src/sc_neurocore/accel/mojo/kernels/escape_rate.mojo",
-    "src/sc_neurocore/accel/rust/safety/escape_rate.rs": REPO_ROOT
-    / "src/sc_neurocore/accel/rust/safety/escape_rate.rs",
-}
-
-
-class _StepNeuron(Protocol):
-    v: float
-
-    def step(self, current: float) -> int: ...
+REPOSITORY = Path(__file__).resolve().parents[1]
+N_STEPS = 200_000
+N_REPEATS = 7
+WARMUP_STEPS = 1_000
+CURRENT = 17.0
+TRACE_ATOL = 2.0e-14
+KERNEL = "escape_rate_exact_rc_hazard_lfsr16_batch"
+BACKENDS = ("python", "rust", "julia", "go", "mojo")
+SOURCE_PATHS = (
+    "benchmarks/bench_model_escape_rate.py",
+    "bridge/sc_neurocore_engine/__init__.py",
+    "engine/src/lib.rs",
+    "engine/src/neurons/trivial.rs",
+    "engine/src/pyo3_neurons.rs",
+    "src/sc_neurocore/accel/escape_rate.py",
+    "src/sc_neurocore/accel/go/neurons/escape_rate/escape_rate.go",
+    "src/sc_neurocore/accel/go/neurons/escape_rate/libescape_rate.h",
+    "src/sc_neurocore/accel/go/services/escape_rate.go",
+    "src/sc_neurocore/accel/go/services/escape_rate_test.go",
+    "src/sc_neurocore/accel/julia/neurons/escape_rate.jl",
+    "src/sc_neurocore/accel/mojo/kernels/escape_rate.mojo",
+    "src/sc_neurocore/accel/rust/safety/escape_rate.rs",
+    "src/sc_neurocore/neurons/_stochastic_threshold.py",
+    "src/sc_neurocore/neurons/model_schemas/escape_rate.json",
+    "src/sc_neurocore/neurons/model_schemas/escape_rate.toml",
+    "src/sc_neurocore/neurons/models/escape_rate.py",
+)
 
 
-def _sha256(path: Path) -> str:
-    digest = hashlib.sha256()
-    with path.open("rb") as handle:
-        for chunk in iter(lambda: handle.read(1024 * 1024), b""):
-            digest.update(chunk)
-    return digest.hexdigest()
+def _configured() -> EscapeRateNeuron:
+    """Return a non-default cell exercising the complete seeded native ABI."""
+    return EscapeRateNeuron(
+        v=-64.0,
+        v_rest=-68.0,
+        v_reset=-66.0,
+        v_threshold=-52.0,
+        tau_m=12.5,
+        rho_0=0.02,
+        delta_u=4.0,
+        resistance=1.3,
+        dt=0.25,
+        seed=0x1234,
+    )
+
+
+def _cpu_model() -> str:
+    """Return the first Linux CPU model string, or a portable fallback."""
+    try:
+        cpuinfo = Path("/proc/cpuinfo").read_text(encoding="utf-8")
+    except OSError:
+        cpuinfo = ""
+    for line in cpuinfo.splitlines():
+        if line.startswith("model name"):
+            return line.split(":", 1)[1].strip()
+    return platform.processor() or "unknown"
+
+
+def _read_optional(path: Path) -> str:
+    """Read one host metadata file without making it a dependency."""
+    try:
+        return path.read_text(encoding="utf-8").strip()
+    except OSError:
+        return "unavailable"
+
+
+def _tool_path(name: str, fallback: Path | None = None) -> str | None:
+    """Resolve a runtime executable with one explicit fallback."""
+    resolved = shutil.which(name)
+    if resolved is not None:
+        return resolved
+    if fallback is not None and fallback.is_file():
+        return str(fallback)
+    return None
+
+
+def _tool_version(command: list[str]) -> str:
+    """Return the first version line for a runtime executable."""
+    if not command or command[0] == "":
+        return "unavailable"
+    try:
+        result = subprocess.run(
+            command,
+            capture_output=True,
+            text=True,
+            timeout=20,
+            check=False,
+        )
+    except (OSError, subprocess.TimeoutExpired):
+        return "unavailable"
+    output = result.stdout.strip() or result.stderr.strip()
+    return output.splitlines()[0] if output else f"exit {result.returncode}"
 
 
 def _source_hashes() -> dict[str, object]:
-    flat = {source: _sha256(path) for source, path in SOURCE_HASH_PATHS.items()}
-    nested: dict[str, object] = dict(flat)
-    for source, path in SOURCE_HASH_PATHS.items():
-        stem, extension = source.rsplit(".", 1)
-        existing = nested.get(stem)
-        if isinstance(existing, dict):
-            existing[extension] = _sha256(path)
-        else:
-            nested[stem] = {extension: _sha256(path)}
-    return nested
+    """Hash every implementation and ABI surface relevant to this closure."""
+    flat = {
+        relative: hashlib.sha256((REPOSITORY / relative).read_bytes()).hexdigest()
+        for relative in SOURCE_PATHS
+    }
+    nested: dict[str, object] = {}
+    for relative, digest in flat.items():
+        stem, suffix = relative.rsplit(".", 1)
+        grouped = nested.setdefault(stem, {})
+        if not isinstance(grouped, dict):
+            raise RuntimeError(f"source hash namespace collision at {stem}")
+        grouped[suffix] = digest
+    return {**flat, **nested}
 
 
-def _run_once(factory: Any, backend: str) -> dict[str, object]:
-    neuron: _StepNeuron = factory()
+def _trace_digest(trace: npt.NDArray[np.float64]) -> str:
+    """Return a byte-order-stable SHA-256 digest for one measured trace."""
+    return hashlib.sha256(np.asarray(trace, dtype="<f8").tobytes()).hexdigest()
+
+
+def _probe_backend(backend: str) -> tuple[bool, str]:
+    """Return backend availability plus a deterministic diagnostic."""
+    if backend == "python":
+        return True, ""
+    if backend == "rust":
+        return backends._HAS_RUST, "" if backends._HAS_RUST else "Rust engine batch unavailable"
+    if backend == "julia":
+        available = backends.ensure_julia_loaded()
+        return available, "" if available else "juliacall or EscapeRate module unavailable"
+    if backend == "go":
+        available = backends.ensure_go_loaded()
+        return available, "" if available else "compiled Go libescape_rate.so unavailable"
+    available = backends.ensure_mojo_loaded()
+    return available, "" if available else "compiled Mojo libescape_rate.so unavailable"
+
+
+def _measure_backend(
+    backend: str,
+) -> tuple[
+    float,
+    float,
+    float,
+    list[float],
+    npt.NDArray[np.float64],
+    int,
+    tuple[float, int],
+]:
+    """Warm one public batch lane, then return timings and final state."""
+    _configured().simulate(min(WARMUP_STEPS, N_STEPS), CURRENT, backend=backend)
+    elapsed_ms: list[float] = []
+    trace: npt.NDArray[np.float64] = np.empty(0, dtype=np.float64)
     spikes = 0
-    start_ns = time.perf_counter_ns()
-    for _ in range(STEPS):
-        spikes += int(neuron.step(CURRENT))
-    elapsed_ns = time.perf_counter_ns() - start_ns
-    return {
-        "backend": backend,
-        "steps": STEPS,
-        "current": CURRENT,
-        "elapsed_ns": elapsed_ns,
-        "ns_per_step": elapsed_ns / STEPS,
-        "spikes": spikes,
-        "ending_state": [float(neuron.v)],
-    }
-
-
-def _run_python_backend() -> dict[str, object]:
-    results = [_run_once(lambda: EscapeRateNeuron(), "python") for _ in range(REPEATS)]
-    ns_per_step = [cast(float, result["ns_per_step"]) for result in results]
-    return {
-        "backend": "python",
-        "median_ns_per_step": statistics.median(ns_per_step),
-        "min_ns_per_step": min(ns_per_step),
-        "max_ns_per_step": max(ns_per_step),
-        "spikes": cast(int, results[0]["spikes"]),
-        "results": results,
-    }
-
-
-def _run_command(command: list[str]) -> subprocess.CompletedProcess[str]:
-    return subprocess.run(command, check=True, text=True, capture_output=True)
-
-
-def _run_rust_backend() -> dict[str, object]:
-    command = [
-        "cargo",
-        "run",
-        "--manifest-path",
-        "engine/Cargo.toml",
-        "--example",
-        "bench_escape_rate_exact_flow",
-    ]
-    try:
-        completed = _run_command(command)
-    except (FileNotFoundError, subprocess.CalledProcessError) as exc:
-        return {"backend": "rust", "skipped": True, "reason": f"Rust benchmark failed: {exc}"}
-    report = cast(dict[str, object], json.loads(completed.stdout))
-    report["driver_command"] = " ".join(command)
-    return report
-
-
-def _run_go_backend() -> dict[str, object]:
-    command = [
-        "go",
-        "test",
-        "src/sc_neurocore/accel/go/services/escape_rate.go",
-        "src/sc_neurocore/accel/go/services/escape_rate_test.go",
-        "-run",
-        "^$",
-        "-bench",
-        "BenchmarkEscapeRateExactFlow$",
-        "-benchtime",
-        "200000x",
-        "-count",
-        str(REPEATS),
-    ]
-    try:
-        completed = _run_command(command)
-    except (FileNotFoundError, subprocess.CalledProcessError) as exc:
-        return {"backend": "go", "skipped": True, "reason": f"Go benchmark failed: {exc}"}
-    values = [
-        float(match.group(1))
-        for line in completed.stdout.splitlines()
-        if (match := GO_BENCH_RE.match(line))
-    ]
-    if not values:
-        return {
-            "backend": "go",
-            "skipped": True,
-            "reason": "Go benchmark output did not include BenchmarkEscapeRateExactFlow ns/op rows",
-            "stdout": completed.stdout,
-        }
-    return {
-        "backend": "go",
-        "command": " ".join(command),
-        "steps": STEPS,
-        "repeats": len(values),
-        "current": CURRENT,
-        "median_ns_per_step": statistics.median(values),
-        "min_ns_per_step": min(values),
-        "max_ns_per_step": max(values),
-        "results_ns_per_step": values,
-        "spikes": 0,
-    }
-
-
-def _run_julia_backend() -> dict[str, object]:
-    script = f"""
-using Random
-using Statistics
-include("src/sc_neurocore/accel/julia/neurons/escape_rate.jl")
-const STEPS = {STEPS}
-const REPEATS = {REPEATS}
-const CURRENT = {CURRENT}
-function run_once(seed)
-    Random.seed!(seed)
-    s = EscapeRateAccel.EscapeRateNeuronState()
-    spikes = 0
-    start = time_ns()
-    for _ in 1:STEPS
-        spikes += EscapeRateAccel.step!(s, CURRENT)
-    end
-    elapsed = time_ns() - start
-    return elapsed / STEPS, spikes, s.v
-end
-results = [run_once(42 + i) for i in 1:REPEATS]
-values = [r[1] for r in results]
-println("median_ns_per_step=", median(values))
-println("min_ns_per_step=", minimum(values))
-println("max_ns_per_step=", maximum(values))
-println("results_ns_per_step=", join(values, ","))
-println("spike_counts=", join([r[2] for r in results], ","))
-println("final_vs=", join([r[3] for r in results], ","))
-"""
-    command = ["julia", "--project=.", "-e", script]
-    try:
-        completed = _run_command(command)
-    except (FileNotFoundError, subprocess.CalledProcessError) as exc:
-        return {"backend": "julia", "skipped": True, "reason": f"Julia benchmark failed: {exc}"}
-    fields = dict(line.split("=", 1) for line in completed.stdout.splitlines() if "=" in line)
-    values = [float(value) for value in fields["results_ns_per_step"].split(",")]
-    spike_counts = [int(value) for value in fields["spike_counts"].split(",")]
-    return {
-        "backend": "julia",
-        "command": "julia --project=. -e <escape-rate exact-flow benchmark>",
-        "steps": STEPS,
-        "repeats": len(values),
-        "current": CURRENT,
-        "median_ns_per_step": float(fields["median_ns_per_step"]),
-        "min_ns_per_step": float(fields["min_ns_per_step"]),
-        "max_ns_per_step": float(fields["max_ns_per_step"]),
-        "results_ns_per_step": values,
-        "spikes": int(statistics.median(spike_counts)),
-        "spike_counts": spike_counts,
-        "final_vs": [float(value) for value in fields["final_vs"].split(",")],
-    }
-
-
-def _run_mojo_backend() -> dict[str, object]:
-    program = textwrap.dedent(
-        f"""
-        from escape_rate import escape_rate_next_v, escape_rate_step_spike
-        from std.time import perf_counter
-
-        alias STEPS = {STEPS}
-        alias REPEATS = {REPEATS}
-        alias CURRENT = {CURRENT}
-
-        def run_once() raises:
-            var v = -70.0
-            var spikes = 0
-            var start = perf_counter()
-            for i in range(STEPS):
-                var threshold = Float64(i % 1000) / 1000.0
-                var next_v = escape_rate_next_v(v, CURRENT, -70.0, -70.0, -50.0, 10.0, 0.001, 3.0, 1.0, 1.0)
-                var spike = escape_rate_step_spike(v, CURRENT, -70.0, -70.0, -50.0, 10.0, 0.001, 3.0, 1.0, 1.0, threshold)
-                if spike == 1:
-                    v = -70.0
-                    spikes += 1
-                else:
-                    v = next_v
-            var elapsed = perf_counter() - start
-            print("ns_per_step=", Float64(elapsed) * 1000000000.0 / Float64(STEPS))
-            print("spikes=", spikes)
-            print("final_v=", v)
-
-        def main() raises:
-            for _ in range(REPEATS):
-                run_once()
-        """
+    final_state = (-64.0, 0x1234)
+    for _repeat in range(N_REPEATS):
+        gc.collect()
+        neuron = _configured()
+        started = time.perf_counter_ns()
+        trace, spikes = neuron.simulate(N_STEPS, CURRENT, backend=backend)
+        elapsed_ms.append((time.perf_counter_ns() - started) / 1_000_000.0)
+        final_state = (neuron.v, neuron.rng_state)
+    return (
+        statistics.median(elapsed_ms),
+        min(elapsed_ms),
+        max(elapsed_ms),
+        elapsed_ms,
+        trace,
+        spikes,
+        final_state,
     )
-    with tempfile.NamedTemporaryFile("w", suffix=".mojo", encoding="utf-8") as handle:
-        handle.write(program)
-        handle.flush()
-        command = [
-            "mojo",
-            "run",
-            "--disable-warnings",
-            "-I",
-            "src/sc_neurocore/accel/mojo/kernels",
-            handle.name,
+
+
+def _verify_rust_safety() -> dict[str, Any]:
+    """Compile and execute the actual standalone Rust-safety test module."""
+    source = REPOSITORY / "src/sc_neurocore/accel/rust/safety/escape_rate.rs"
+    with tempfile.TemporaryDirectory(prefix="sc_neurocore_escape_rate_safety_") as temp_dir:
+        binary = Path(temp_dir) / "escape_rate_safety_tests"
+        compile_command = [
+            "rustc",
+            "--edition=2021",
+            "--test",
+            str(source),
+            "-O",
+            "-o",
+            str(binary),
         ]
         try:
-            completed = _run_command(command)
-        except (FileNotFoundError, subprocess.CalledProcessError) as exc:
-            return {"backend": "mojo", "skipped": True, "reason": f"Mojo benchmark failed: {exc}"}
-    values = [
-        float(line.split("=", 1)[1])
-        for line in completed.stdout.splitlines()
-        if line.startswith("ns_per_step=")
-    ]
-    spike_counts = [
-        int(line.split("=", 1)[1])
-        for line in completed.stdout.splitlines()
-        if line.startswith("spikes=")
-    ]
-    final_vs = [
-        float(line.split("=", 1)[1])
-        for line in completed.stdout.splitlines()
-        if line.startswith("final_v=")
-    ]
-    if not values:
-        return {"backend": "mojo", "skipped": True, "reason": "Mojo benchmark produced no rows"}
+            compiled = subprocess.run(
+                compile_command,
+                cwd=REPOSITORY,
+                capture_output=True,
+                text=True,
+                timeout=120,
+                check=False,
+            )
+            if compiled.returncode == 0:
+                executed = subprocess.run(
+                    [str(binary)],
+                    cwd=REPOSITORY,
+                    capture_output=True,
+                    text=True,
+                    timeout=120,
+                    check=False,
+                )
+            else:
+                executed = compiled
+        except (OSError, subprocess.TimeoutExpired) as exc:
+            return {
+                "command": " ".join(compile_command) + " && <compiled-test-binary>",
+                "passed": False,
+                "returncode": -1,
+                "output_tail": [str(exc)],
+            }
+    output = (executed.stdout + "\n" + executed.stderr).strip().splitlines()
     return {
-        "backend": "mojo",
-        "command": "mojo run --disable-warnings -I src/sc_neurocore/accel/mojo/kernels <temp escape-rate benchmark>",
-        "steps": STEPS,
-        "repeats": len(values),
-        "current": CURRENT,
-        "median_ns_per_step": statistics.median(values),
-        "min_ns_per_step": min(values),
-        "max_ns_per_step": max(values),
-        "results_ns_per_step": values,
-        "spikes": int(statistics.median(spike_counts)),
-        "spike_counts": spike_counts,
-        "final_vs": final_vs,
+        "command": " ".join(compile_command[:-2]) + " -o <temp-binary> && <temp-binary>",
+        "passed": compiled.returncode == 0 and executed.returncode == 0,
+        "returncode": executed.returncode if compiled.returncode == 0 else compiled.returncode,
+        "output_tail": output[-12:],
     }
 
 
-def _backend_summary(payload: dict[str, object]) -> dict[str, object]:
-    if payload.get("skipped", False):
-        return {"skipped": True, "reason": str(payload.get("reason", "unknown"))}
-    median_ns_per_step = cast(float, payload["median_ns_per_step"])
-    min_ns_per_step = cast(float, payload["min_ns_per_step"])
-    max_ns_per_step = cast(float, payload["max_ns_per_step"])
-    spikes = cast(int, payload["spikes"])
+def _runtime_versions() -> dict[str, str]:
+    """Record every runtime involved in the measured closure."""
+    home = Path.home()
+    mojo = _tool_path("mojo", home / ".pixi/bin/mojo") or ""
     return {
-        "median_ns_per_step": float(median_ns_per_step),
-        "min_ns_per_step": float(min_ns_per_step),
-        "max_ns_per_step": float(max_ns_per_step),
-        "spikes": int(spikes),
+        "python": platform.python_version(),
+        "numpy": np.__version__,
+        "rust": _tool_version([_tool_path("rustc") or "", "--version"]),
+        "julia": _tool_version([_tool_path("julia") or "", "--version"]),
+        "go": _tool_version([_tool_path("go") or "", "version"]),
+        "mojo": _tool_version([mojo, "--version"]),
     }
 
 
-def main() -> int:
-    python = _run_python_backend()
-    rust = _run_rust_backend()
-    go = _run_go_backend()
-    julia = _run_julia_backend()
-    mojo = _run_mojo_backend()
-    payload = {
-        "spdx_license": "AGPL-3.0-or-later",
-        "commercial_license": "available",
-        "copyright_concepts": "© Concepts 1996–2026 Miroslav Šotek. All rights reserved.",
-        "copyright_code": "© Code 2020–2026 Miroslav Šotek. All rights reserved.",
-        "orcid": "0009-0009-3560-0851",
-        "contact": "www.anulum.li | protoscience@anulum.li",
-        "benchmark": "EscapeRateNeuron exact membrane flow with finite-step escape hazard",
-        "timestamp_utc": datetime.now(UTC).isoformat(timespec="seconds"),
-        "command": "PYTHONPATH=src .venv/bin/python benchmarks/bench_model_escape_rate.py",
-        "evidence_class": "local_regression_non_isolated",
+def _environment(load_start: tuple[float, float, float]) -> dict[str, Any]:
+    """Capture affinity and load without overstating exclusive isolation."""
+    affinity = sorted(os.sched_getaffinity(0))
+    cpu = affinity[0] if len(affinity) == 1 else None
+    governor = (
+        _read_optional(Path(f"/sys/devices/system/cpu/cpu{cpu}/cpufreq/scaling_governor"))
+        if cpu is not None
+        else "mixed-or-unpinned"
+    )
+    return {
+        "cpu": _cpu_model(),
+        "platform": platform.platform(),
+        "affinity": affinity,
+        "single_cpu_pinned": len(affinity) == 1,
+        "exclusive_cpu_isolation_claimed": False,
+        "kernel_isolated_cpus": _read_optional(Path("/sys/devices/system/cpu/isolated")),
+        "kernel_nohz_full_cpus": _read_optional(Path("/sys/devices/system/cpu/nohz_full")),
+        "governor": governor,
+        "load_average_start": list(load_start),
+        "load_average_end": list(os.getloadavg()),
+        "measurement_scope": (
+            "single-logical-CPU taskset affinity; CPU is not claimed exclusively isolated"
+        ),
+        "runtime_versions": _runtime_versions(),
+    }
+
+
+def main(argv: list[str]) -> int:
+    """Run the controlled benchmark and write its evidence artifact."""
+    parser = argparse.ArgumentParser(description="Controlled EscapeRate five-backend benchmark")
+    parser.add_argument("--json", type=Path, required=True)
+    parser.add_argument("--allow-unpinned", action="store_true")
+    parser.add_argument("--allow-unavailable-backends", action="store_true")
+    args = parser.parse_args(argv)
+
+    affinity = sorted(os.sched_getaffinity(0))
+    if len(affinity) != 1 and not args.allow_unpinned:
+        print(f"Refusing unpinned benchmark; affinity is {affinity}")
+        return 2
+
+    load_start = os.getloadavg()
+    probes = {backend: _probe_backend(backend) for backend in BACKENDS}
+    missing = [backend for backend, (available, _reason) in probes.items() if not available]
+    if missing and not args.allow_unavailable_backends:
+        print("Missing required backend(s): " + ", ".join(missing))
+        return 2
+
+    rows: dict[str, dict[str, Any]] = {}
+    reference: npt.NDArray[np.float64] | None = None
+    reference_ms: float | None = None
+    reference_spikes: int | None = None
+    reference_state: tuple[float, int] | None = None
+    for backend in BACKENDS:
+        available, reason = probes[backend]
+        if not available:
+            rows[backend] = {"available": False, "used": False, "unavailable_reason": reason}
+            continue
+        median_ms, minimum_ms, maximum_ms, samples_ms, trace, spikes, final_state = (
+            _measure_backend(backend)
+        )
+        if backend == "python":
+            reference = trace
+            reference_ms = median_ms
+            reference_spikes = spikes
+            reference_state = final_state
+            trace_parity = 0.0
+            state_parity = 0.0
+        else:
+            if (
+                reference is None
+                or reference_ms is None
+                or reference_spikes is None
+                or reference_state is None
+            ):
+                raise RuntimeError("Python reference must be measured first")
+            trace_parity = float(np.max(np.abs(trace - reference))) if trace.size else 0.0
+            state_parity = abs(final_state[0] - reference_state[0])
+        rows[backend] = {
+            "available": True,
+            "used": True,
+            "median_call_ms": median_ms,
+            "minimum_call_ms": minimum_ms,
+            "maximum_call_ms": maximum_ms,
+            "samples_call_ms": samples_ms,
+            "median_ns_per_step": median_ms * 1_000_000.0 / N_STEPS,
+            "speedup_vs_python": reference_ms / median_ms if reference_ms is not None else 1.0,
+            "trace_max_abs_diff": trace_parity,
+            "state_max_abs_diff": state_parity,
+            "parity_max_abs_diff": max(trace_parity, state_parity),
+            "event_count": spikes,
+            "event_count_matches_python": (
+                True if reference_spikes is None else spikes == reference_spikes
+            ),
+            "rng_state_matches_python": (
+                True if reference_state is None else final_state[1] == reference_state[1]
+            ),
+            "trace_sha256": _trace_digest(trace),
+            "final_state": {"v": final_state[0], "rng_state": final_state[1]},
+        }
+
+    measured_order = sorted(
+        (backend for backend in BACKENDS if rows[backend].get("used") is True),
+        key=lambda backend: float(rows[backend]["median_call_ms"]),
+    )
+    native_order = [backend for backend in measured_order if backend != "python"]
+    rust_safety = _verify_rust_safety()
+    report: dict[str, Any] = {
+        "schema_version": "sc-neurocore.polyglot-benchmark.v1",
+        "kernel": KERNEL,
+        "evidence_class": "local_regression_single_cpu_affinity_non_exclusive",
         "production_speed_claim": False,
         "hardware_measurement_claimed": False,
-        "python": platform.python_version(),
-        "platform": platform.platform(),
-        "processor": platform.processor(),
-        "steps": STEPS,
-        "repeats": REPEATS,
-        "current": CURRENT,
-        "results": [python, rust, go, julia, mojo],
-        "backend_summary": {
-            "python": _backend_summary(python),
-            "rust": _backend_summary(rust),
-            "go": _backend_summary(go),
-            "julia": _backend_summary(julia),
-            "mojo": _backend_summary(mojo),
+        "timestamp_utc": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
+        "command": (
+            "taskset --cpu-list <cpu> env PYTHONPATH=src:. .venv/bin/python "
+            "benchmarks/bench_model_escape_rate.py --json <artifact>"
+        ),
+        "workload": {
+            "n_steps": N_STEPS,
+            "repeats": N_REPEATS,
+            "warmup_steps": WARMUP_STEPS,
+            "current": CURRENT,
+            "initial_state": {"v": -64.0, "rng_state": 0x1234},
+            "parameters": "complete non-default 9-double plus seeded LFSR16 native ABI",
+            "trace_atol": TRACE_ATOL,
         },
+        "meta": _environment(load_start),
+        "backends": rows,
+        "measured_order": measured_order,
+        "recommended_auto_backend": native_order[0] if native_order else "python",
+        "verification": {"rust_safety": rust_safety},
         "source_hashes": _source_hashes(),
     }
-    OUTPUT.parent.mkdir(parents=True, exist_ok=True)
-    OUTPUT.write_text(json.dumps(payload, indent=2) + "\n", encoding="utf-8")
-    print(json.dumps(payload, indent=2))
+    args.json.parent.mkdir(parents=True, exist_ok=True)
+    args.json.write_text(json.dumps(report, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+
+    print(f"EscapeRate benchmark: {N_STEPS} steps x {N_REPEATS} repeats")
+    for backend in measured_order:
+        row = rows[backend]
+        print(
+            f"{backend:>7}: {float(row['median_call_ms']):10.3f} ms  "
+            f"{float(row['speedup_vs_python']):8.2f}x  "
+            f"max|delta|={float(row['parity_max_abs_diff']):.3e}  "
+            f"events={int(row['event_count'])}  rng={int(row['final_state']['rng_state'])}"
+        )
+    print(f"Measured order: {', '.join(measured_order)}")
+    print(f"Recommended auto backend: {report['recommended_auto_backend']}")
+    print(f"Rust safety tests: {'PASS' if rust_safety['passed'] else 'FAIL'}")
+    print(f"Wrote {args.json}")
+
+    if not rust_safety["passed"]:
+        return 5
+    if any(
+        not bool(row.get("event_count_matches_python", True))
+        or not bool(row.get("rng_state_matches_python", True))
+        for row in rows.values()
+    ):
+        return 3
+    if any(
+        float(row.get("parity_max_abs_diff", 0.0)) > TRACE_ATOL
+        for row in rows.values()
+        if row.get("used") is True
+    ):
+        return 4
     return 0
 
 
 if __name__ == "__main__":
-    raise SystemExit(main())
+    import sys
+
+    raise SystemExit(main(sys.argv[1:]))

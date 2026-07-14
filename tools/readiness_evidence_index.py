@@ -75,6 +75,7 @@ _DESCRIPTOR_HEADER = (
 )
 
 EvidenceLevel = Literal["h0_compile", "h1_cosim"]
+ValidationMetric = Literal["parity", "statistical", "trajectory", "per_compartment"]
 
 
 @dataclass(frozen=True, slots=True)
@@ -87,6 +88,7 @@ class EnrolledEvidence:
     evidence: str
     operating_point: str
     tolerance: str
+    metric: ValidationMetric = "parity"
     # Excluded from apply when True (active peer lane / WIP).
     skip_apply: bool = False
     skip_reason: str = ""
@@ -269,6 +271,24 @@ ENROLLED: tuple[EnrolledEvidence, ...] = (
         evidence="tests/test_cosimulation.py dpi_neuron three-way enrolment",
         operating_point="schema-DSL dpi_neuron (DYNAP-SE class)",
         tolerance="exact three-way spike parity",
+    ),
+    EnrolledEvidence(
+        schema_name="escape_rate",
+        class_name="EscapeRateNeuron",
+        level="h1_cosim",
+        evidence=(
+            "tests/test_cosim_escape_rate.py::"
+            "test_seeded_full_period_event_stream_and_distribution_match_python"
+        ),
+        operating_point=(
+            "Gerstner exponential escape intensity over one complete 65,535-state "
+            "LFSR16 period at rho*dt=0.25 and seed 0xACE1"
+        ),
+        tolerance=(
+            "Python/Q24.24 RTL events, count, threshold, voltage, and final RNG exact; "
+            "realised rate error below 1/65535; ISI mean/CV within 0.001/0.01"
+        ),
+        metric="statistical",
     ),
     EnrolledEvidence(
         schema_name="mihalas_niebur",
@@ -537,7 +557,7 @@ def validation_section(entry: EnrolledEvidence, *, has_dynamics: bool) -> dict[s
     if entry.level == "h1_cosim" and has_dynamics:
         return {
             "dynamics_faithful": True,
-            "metric": "parity",
+            "metric": entry.metric,
             "operating_point": entry.operating_point,
             "tolerance": entry.tolerance,
             "evidence": entry.evidence,

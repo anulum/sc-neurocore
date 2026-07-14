@@ -480,11 +480,14 @@ pub struct EscapeRateNeuron {
     pub delta_u: f64,
     pub resistance: f64,
     pub dt: f64,
-    rng: Xoshiro256PlusPlus,
+    pub rng_state: u16,
+    pub initial_seed: u16,
 }
 
 impl EscapeRateNeuron {
     pub fn new(seed: u64) -> Self {
+        let narrowed = (seed & u64::from(u16::MAX)) as u16;
+        let initial_seed = if narrowed == 0 { 0xACE1 } else { narrowed };
         Self {
             v: -70.0,
             v_rest: -70.0,
@@ -495,11 +498,30 @@ impl EscapeRateNeuron {
             delta_u: 3.0,
             resistance: 1.0,
             dt: 1.0,
-            rng: Xoshiro256PlusPlus::seed_from_u64(seed),
+            rng_state: initial_seed,
+            initial_seed,
         }
     }
 
-    pub fn step(&mut self, current: f64) -> i32 {
+    pub fn valid(&self) -> bool {
+        self.v.is_finite()
+            && self.v_rest.is_finite()
+            && self.v_reset.is_finite()
+            && self.v_threshold.is_finite()
+            && self.tau_m.is_finite()
+            && self.tau_m > 0.0
+            && self.rho_0.is_finite()
+            && self.rho_0 > 0.0
+            && self.delta_u.is_finite()
+            && self.delta_u > 0.0
+            && self.resistance.is_finite()
+            && self.resistance > 0.0
+            && self.dt.is_finite()
+            && self.dt > 0.0
+            && self.rng_state != 0
+    }
+
+    pub fn try_step(&mut self, current: f64) -> Result<i32, &'static str> {
         if !self.v.is_finite()
             || !self.v_rest.is_finite()
             || !self.v_reset.is_finite()
@@ -514,15 +536,16 @@ impl EscapeRateNeuron {
             || self.resistance <= 0.0
             || !self.dt.is_finite()
             || self.dt <= 0.0
+            || self.rng_state == 0
             || !current.is_finite()
         {
-            return 0;
+            return Err("invalid escape-rate state or input");
         }
         let v_inf = self.v_rest + self.resistance * current;
         let decay = (-self.dt / self.tau_m).exp();
         let next_v = v_inf + (self.v - v_inf) * decay;
         if !v_inf.is_finite() || !decay.is_finite() || !next_v.is_finite() {
-            return 0;
+            return Err("non-finite escape-rate membrane candidate");
         }
         let hazard = self.rho_0
             * ((next_v - self.v_threshold) / self.delta_u)
@@ -530,23 +553,41 @@ impl EscapeRateNeuron {
                 .exp()
             * self.dt;
         if !hazard.is_finite() || hazard < 0.0 {
-            return 0;
+            return Err("non-finite escape hazard");
         }
         let p_spike = -(-hazard).exp_m1();
         if !p_spike.is_finite() || !(0.0..=1.0).contains(&p_spike) {
-            return 0;
+            return Err("invalid escape probability");
         }
-        if self.rng.random::<f64>() < p_spike {
+        let mut sample = self.rng_state;
+        for _ in 0..8 {
+            let feedback = ((sample >> 0) ^ (sample >> 2) ^ (sample >> 3) ^ (sample >> 5)) & 1;
+            sample = (sample >> 1) | (feedback << 15);
+        }
+        let threshold = if p_spike <= 0.0 {
+            0_u32
+        } else if p_spike >= 1.0 {
+            65_536_u32
+        } else {
+            (p_spike * 65_535.0).floor() as u32 + 1
+        };
+        self.rng_state = sample;
+        if u32::from(sample) < threshold {
             self.v = self.v_reset;
-            1
+            Ok(1)
         } else {
             self.v = next_v;
-            0
+            Ok(0)
         }
+    }
+
+    pub fn step(&mut self, current: f64) -> i32 {
+        self.try_step(current).unwrap_or(0)
     }
 
     pub fn reset(&mut self) {
         self.v = self.v_rest;
+        self.rng_state = self.initial_seed;
     }
 }
 
