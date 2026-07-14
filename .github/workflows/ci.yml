@@ -196,6 +196,20 @@ jobs:
           cp crates/autonomous_learning/target/release/libautonomous_learning.so \
              src/sc_neurocore/_native/libautonomous_learning.so
 
+      # Compile each neuron's Go c-shared and Mojo shared library into the path
+      # its ctypes loader opens (beside the source). These lib*.so are gitignored
+      # build artefacts, so without this step every compiled-backend and
+      # benchmark test fails with "lib<name>.so is not built". `mojo` resolves to
+      # the pixi wrapper installed above. TIER 0: real backend builds, not skips.
+      # --require lists the strict backends whose absence is a hard RuntimeError
+      # (not a graceful skip), so a missing toolchain fails CI loudly.
+      - name: Build accelerator backends (Go + Mojo)
+        shell: bash
+        run: |
+          REQUIRED=theta,dpi_neuron,quadratic_if,perfect_integrator,lapicque,expif,adex,sigmoid_rate,mcculloch_pitts,iqif,coba_lif,poisson,escape_rate
+          python tools/build_accel_backends.py --language go --require "$REQUIRED"
+          python tools/build_accel_backends.py --language mojo --require "$REQUIRED"
+
       # Bootstrap juliacall's Julia ONCE, serially, before the parallel pytest
       # run. On first import juliacall's juliapkg installs + precompiles Julia
       # into the shared ~/.julia depot; under `pytest -n auto` several xdist
