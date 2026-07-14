@@ -5,6 +5,21 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+### Poisson source-to-silicon closure
+
+- Replaced the process-local random generator with the canonical seeded LFSR16
+  threshold contract shared by Python, the Rust engine and safety module,
+  Julia, Go, Mojo, the schema interpreters, and generated Q24.24 RTL.
+- The maintained binary-bin recurrence uses
+  `p = 1 - exp(-rate_hz * dt_ms / 1000)`, advances exactly one trial per
+  accepted bin, preserves deterministic reset replay, and rejects invalid work
+  before committing the caller-visible RNG state.
+- Added full-contract backend parity and loading tests, a complete-period
+  statistical reference artifact, registered/folded RTL co-simulation, a
+  depth-4 Z3 safety job, descriptor/readiness evidence, and a source-hashed
+  five-backend benchmark. Recorded timings are labelled non-exclusive local
+  regression evidence rather than a universal performance claim.
+
 ### Neuromorphic profile responsibility modularisation
 
 - Replaced the 1,065-line mixed registration module with a 65-line stable

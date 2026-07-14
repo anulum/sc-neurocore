@@ -1275,6 +1275,171 @@
       }
     },
     {
+      "artefact": "benchmarks/results/local_python_2026-07-14_poisson_lfsr16.json",
+      "description": "Poisson binary-bin probability with canonical seeded LFSR16 across five public batch dispatchers.",
+      "expected_values": {
+        "auto_backend_order": [
+          "rust",
+          "mojo",
+          "go",
+          "julia",
+          "python"
+        ],
+        "auto_backend_selection_basis": "integrated production path; non-exclusive warm timings remain diagnostic",
+        "backends.go.available": true,
+        "backends.go.event_count_matches_python": true,
+        "backends.go.event_mismatch_count": 0,
+        "backends.go.event_sha256": "edf44e21373abf717fefaa6de1b527400c1cb1a4cbbab62d6aec86b5b7f642be",
+        "backends.go.event_stream_matches_python": true,
+        "backends.go.rng_state_matches_python": true,
+        "backends.go.used": true,
+        "backends.julia.available": true,
+        "backends.julia.event_count_matches_python": true,
+        "backends.julia.event_mismatch_count": 0,
+        "backends.julia.event_sha256": "edf44e21373abf717fefaa6de1b527400c1cb1a4cbbab62d6aec86b5b7f642be",
+        "backends.julia.event_stream_matches_python": true,
+        "backends.julia.rng_state_matches_python": true,
+        "backends.julia.used": true,
+        "backends.mojo.available": true,
+        "backends.mojo.event_count_matches_python": true,
+        "backends.mojo.event_mismatch_count": 0,
+        "backends.mojo.event_sha256": "edf44e21373abf717fefaa6de1b527400c1cb1a4cbbab62d6aec86b5b7f642be",
+        "backends.mojo.event_stream_matches_python": true,
+        "backends.mojo.rng_state_matches_python": true,
+        "backends.mojo.used": true,
+        "backends.python.available": true,
+        "backends.python.event_count": 44256,
+        "backends.python.event_count_matches_python": true,
+        "backends.python.event_mismatch_count": 0,
+        "backends.python.event_sha256": "edf44e21373abf717fefaa6de1b527400c1cb1a4cbbab62d6aec86b5b7f642be",
+        "backends.python.event_stream_matches_python": true,
+        "backends.python.final_state.rng_state": 46746,
+        "backends.python.rng_state_matches_python": true,
+        "backends.python.used": true,
+        "backends.rust.available": true,
+        "backends.rust.event_count_matches_python": true,
+        "backends.rust.event_mismatch_count": 0,
+        "backends.rust.event_sha256": "edf44e21373abf717fefaa6de1b527400c1cb1a4cbbab62d6aec86b5b7f642be",
+        "backends.rust.event_stream_matches_python": true,
+        "backends.rust.rng_state_matches_python": true,
+        "backends.rust.used": true,
+        "evidence_class": "local_regression_single_cpu_affinity_non_exclusive",
+        "hardware_measurement_claimed": false,
+        "kernel": "poisson_binary_bin_lfsr16_batch",
+        "meta.exclusive_cpu_isolation_claimed": false,
+        "meta.single_cpu_pinned": true,
+        "production_speed_claim": false,
+        "recommended_auto_backend": "rust",
+        "schema_version": "sc-neurocore.polyglot-benchmark.v1",
+        "verification.rust_safety.passed": true,
+        "workload.dt_ms": 1.0,
+        "workload.initial_state.rng_state": 4660,
+        "workload.n_steps": 200000,
+        "workload.rate_hz": 250.0,
+        "workload.rate_override": -1.0,
+        "workload.repeats": 7,
+        "workload.warmup_steps": 1000
+      },
+      "id": "poisson-seeded-lfsr16-five-backend-local-regression",
+      "parity_groups": [
+        {
+          "paths": [
+            "backends.python.event_count",
+            "backends.rust.event_count",
+            "backends.julia.event_count",
+            "backends.go.event_count",
+            "backends.mojo.event_count"
+          ],
+          "tolerance": 0
+        },
+        {
+          "paths": [
+            "backends.python.final_state.rng_state",
+            "backends.rust.final_state.rng_state",
+            "backends.julia.final_state.rng_state",
+            "backends.go.final_state.rng_state",
+            "backends.mojo.final_state.rng_state"
+          ],
+          "tolerance": 0
+        }
+      ],
+      "regression_limits": {
+        "backends.go.parity_max_abs_diff": {
+          "max": 0
+        },
+        "backends.julia.parity_max_abs_diff": {
+          "max": 0
+        },
+        "backends.mojo.parity_max_abs_diff": {
+          "max": 0
+        },
+        "backends.rust.parity_max_abs_diff": {
+          "max": 0
+        }
+      },
+      "required_numbers": [
+        "backends.python.median_call_ms",
+        "backends.python.minimum_call_ms",
+        "backends.python.maximum_call_ms",
+        "backends.python.median_ns_per_step",
+        "backends.python.event_count",
+        "backends.python.event_mismatch_count",
+        "backends.python.parity_max_abs_diff",
+        "backends.python.final_state.rng_state",
+        "backends.rust.median_call_ms",
+        "backends.rust.minimum_call_ms",
+        "backends.rust.maximum_call_ms",
+        "backends.rust.median_ns_per_step",
+        "backends.rust.event_count",
+        "backends.rust.event_mismatch_count",
+        "backends.rust.parity_max_abs_diff",
+        "backends.rust.final_state.rng_state",
+        "backends.julia.median_call_ms",
+        "backends.julia.minimum_call_ms",
+        "backends.julia.maximum_call_ms",
+        "backends.julia.median_ns_per_step",
+        "backends.julia.event_count",
+        "backends.julia.event_mismatch_count",
+        "backends.julia.parity_max_abs_diff",
+        "backends.julia.final_state.rng_state",
+        "backends.go.median_call_ms",
+        "backends.go.minimum_call_ms",
+        "backends.go.maximum_call_ms",
+        "backends.go.median_ns_per_step",
+        "backends.go.event_count",
+        "backends.go.event_mismatch_count",
+        "backends.go.parity_max_abs_diff",
+        "backends.go.final_state.rng_state",
+        "backends.mojo.median_call_ms",
+        "backends.mojo.minimum_call_ms",
+        "backends.mojo.maximum_call_ms",
+        "backends.mojo.median_ns_per_step",
+        "backends.mojo.event_count",
+        "backends.mojo.event_mismatch_count",
+        "backends.mojo.parity_max_abs_diff",
+        "backends.mojo.final_state.rng_state"
+      ],
+      "source_hashes": {
+        "benchmarks/bench_model_poisson.py": "source_hashes.benchmarks/bench_model_poisson.py",
+        "bridge/sc_neurocore_engine/__init__.py": "source_hashes.bridge/sc_neurocore_engine/__init__.py",
+        "engine/src/lib.rs": "source_hashes.engine/src/lib.rs",
+        "engine/src/neurons/special.rs": "source_hashes.engine/src/neurons/special.rs",
+        "engine/src/pyo3_neurons.rs": "source_hashes.engine/src/pyo3_neurons.rs",
+        "src/sc_neurocore/accel/poisson.py": "source_hashes.src/sc_neurocore/accel/poisson.py",
+        "src/sc_neurocore/accel/go/neurons/poisson/poisson.go": "source_hashes.src/sc_neurocore/accel/go/neurons/poisson/poisson.go",
+        "src/sc_neurocore/accel/go/neurons/poisson/libpoisson.h": "source_hashes.src/sc_neurocore/accel/go/neurons/poisson/libpoisson.h",
+        "src/sc_neurocore/accel/go/services/poisson.go": "source_hashes.src/sc_neurocore/accel/go/services/poisson.go",
+        "src/sc_neurocore/accel/go/services/poisson_test.go": "source_hashes.src/sc_neurocore/accel/go/services/poisson_test.go",
+        "src/sc_neurocore/accel/julia/neurons/poisson.jl": "source_hashes.src/sc_neurocore/accel/julia/neurons/poisson.jl",
+        "src/sc_neurocore/accel/mojo/kernels/poisson.mojo": "source_hashes.src/sc_neurocore/accel/mojo/kernels/poisson.mojo",
+        "src/sc_neurocore/accel/rust/safety/poisson.rs": "source_hashes.src/sc_neurocore/accel/rust/safety/poisson.rs",
+        "src/sc_neurocore/neurons/_stochastic_threshold.py": "source_hashes.src/sc_neurocore/neurons/_stochastic_threshold.py",
+        "src/sc_neurocore/neurons/model_schemas/poisson.json": "source_hashes.src/sc_neurocore/neurons/model_schemas/poisson.json",
+        "src/sc_neurocore/neurons/model_schemas/poisson.toml": "source_hashes.src/sc_neurocore/neurons/model_schemas/poisson.toml",
+        "src/sc_neurocore/neurons/models/poisson.py": "source_hashes.src/sc_neurocore/neurons/models/poisson.py"
+      }
+    },
+    {
       "artefact": "benchmarks/results/bench_cazelles_map.json",
       "description": "Cazelles 2001 bursting-map five-backend simulation evidence.",
       "expected_values": {

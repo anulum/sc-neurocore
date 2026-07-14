@@ -1,0 +1,18 @@
+# SymbiYosys job for catalogue model sc_poissonneuron
+# Dual-axis perfect model formal (BMC)
+
+[options]
+mode bmc
+depth 4
+
+[engines]
+smtbmc z3
+
+[script]
+read -formal sc_poissonneuron_formal.v
+read -formal sc_poissonneuron.v
+prep -top sc_poissonneuron_formal
+
+[files]
+sc_poissonneuron_formal.v
+sc_poissonneuron.v

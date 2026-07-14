@@ -276,8 +276,6 @@ class UniversalNeuron:
 
         # Build dynamics (ODE right-hand sides)
         dynamics = dict(self._schema.get("dynamics", {}))
-        if not dynamics:
-            raise ValueError("Schema must define at least one ODE in [dynamics]")
 
         # Integration config
         integration = self._schema.get("integration", {})
@@ -295,12 +293,18 @@ class UniversalNeuron:
         threshold_expr = threshold_config.get("condition")
         detection = threshold_config.get("detection", "level")
         rate_expression = threshold_config.get("rate_expression")
+        probability_expression = threshold_config.get("probability_expression")
+        if not dynamics and not (detection == "poisson" and probability_expression):
+            raise ValueError(
+                "Schema must define at least one ODE in [dynamics], unless it is a "
+                "stateless Poisson schema with probability_expression"
+            )
         rng_seed = (
             rng_seed_override
             if rng_seed_override is not None
             else threshold_config.get("rng_seed", DEFAULT_LFSR16_SEED)
         )
-        if detection == "escape_rate" and threshold_expr == "stochastic":
+        if detection in {"escape_rate", "poisson"} and threshold_expr == "stochastic":
             threshold_expr = None
         reset_config = self._schema.get("reset", {})
 
@@ -326,6 +330,7 @@ class UniversalNeuron:
             detection=detection,
             substeps=substeps,
             rate_expression=rate_expression,
+            probability_expression=probability_expression,
             rng_seed=rng_seed,
         )
 

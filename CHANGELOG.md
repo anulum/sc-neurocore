@@ -5,6 +5,15 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 ## [Unreleased]
 
 ### Added
+- Completed homogeneous Poisson binary-bin generation across the maintained
+  Python model and dispatcher, the Rust engine and independent safety module,
+  Julia, Go, and Mojo. Every runtime now uses the finite-bin probability
+  `1 - exp(-rate_hz * dt_ms / 1000)` and the shared seeded LFSR16 contract,
+  including deterministic reset and fail-closed batch state updates.
+- Added paired Poisson schemas, registered and folded Q24.24 RTL co-simulation,
+  a depth-4 formal safety job, independent full-period statistical evidence,
+  and a source-hashed five-backend benchmark. The benchmark record is explicitly
+  non-exclusive local-regression evidence and makes no production speed claim.
 - Replaced the 1,065-line mixed neuromorphic-profile registration module with
   a 65-line historical facade and five bounded responsibility modules for
   event-driven hardware, programmable/aerospace targets, heterogeneous

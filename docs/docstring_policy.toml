@@ -14,7 +14,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 399
+expected_file_count = 401
 
 [[file]]
 path = "src/sc_neurocore/__init__.py"
@@ -1611,3 +1611,11 @@ rationale = "Safety change-impact and re-verification tracking surface."
 [[file]]
 path = "src/sc_neurocore/safety_cert/evidence.py"
 rationale = "Path-safe evidence manifests, SHA-256 indexing, and on-disk verification."
+
+[[file]]
+path = "src/sc_neurocore/neurons/models/poisson.py"
+rationale = "DOI-backed homogeneous Poisson binary-bin model with seeded replay, backend dispatch, and atomic RNG-state contracts."
+
+[[file]]
+path = "src/sc_neurocore/accel/poisson.py"
+rationale = "Typed Rust, Julia, Go, and Mojo loader and execution surface for the complete seeded Poisson contract."

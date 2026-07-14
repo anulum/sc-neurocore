@@ -1,0 +1,101 @@
+{
+  "schema_version": "sc-neurocore.reference-trace.v1",
+  "name": "poisson_lfsr16_statistical_v1",
+  "model": {
+    "schema_name": "poisson",
+    "runner": "hand_and_universal_dsl"
+  },
+  "protocol": {
+    "steps": 65535,
+    "inputs": {
+      "rate_override": -1.0
+    },
+    "parameters": {
+      "rate_hz": 250.0,
+      "dt_ms": 1.0
+    },
+    "rng": {
+      "kind": "right_shift_lfsr16",
+      "polynomial": "x^16 + x^14 + x^13 + x^11 + 1",
+      "seed": 44257,
+      "advances_per_trial": 8,
+      "advance_before_compare": true,
+      "zero_seed_fallback": 44257,
+      "period": 65535
+    }
+  },
+  "provenance": {
+    "kind": "independent_analytic_and_exhaustive_lfsr_reference",
+    "source": "Gerstner, Kistler, Naud, and Paninski (2014), Sections 7.2 and 7.7, for the homogeneous Poisson process, exponential waiting-time law, and finite-interval event probability; binary-bin collapse and the model-scoped LFSR16 discretisation are SC-NeuroCore engineering choices.",
+    "equation": "p=1-exp(-rate_hz*dt_ms/1000). At the enrolled constant intensity, the interval hazard is 0.25. The trial advances the maximal-length LFSR eight primitive states, then compares the non-zero 16-bit sample with floor(p*65535)+1.",
+    "citation": "doi:10.1017/CBO9781107447615"
+  },
+  "expected_features": {
+    "continuous_probability": 0.22119921692859512,
+    "realised_probability": 0.22119478141451132,
+    "threshold": 14497,
+    "spike_count": 14496,
+    "first_spike_step": 0,
+    "last_spike_step": 65530,
+    "final_rng_state": 44257,
+    "mean_isi_steps": 4.520869265263884,
+    "std_isi_steps": 3.9977351042729645,
+    "cv_isi": 0.8842846076062356,
+    "event_sha256": "6f118617f2ecb7a54c5a7ca68ee38a80a68dd15494e361c77aa228397614bfa8"
+  },
+  "seed_corpus": [
+    {
+      "seed": 1,
+      "steps": 4096,
+      "spike_count": 952,
+      "final_rng_state": 1021,
+      "event_sha256": "5ad272c2f63e0c20b22105f7f7cae471168fff26f3653b62c5e89f25f565ffe2"
+    },
+    {
+      "seed": 42,
+      "steps": 4096,
+      "spike_count": 923,
+      "final_rng_state": 28757,
+      "event_sha256": "2a180708f42802bb2db7de4fa0b52db03ee33a29611d2abe6f47f42c088b7d1b"
+    },
+    {
+      "seed": 44257,
+      "steps": 4096,
+      "spike_count": 943,
+      "final_rng_state": 57261,
+      "event_sha256": "7795df3f0668eabfa5eefe827fba5f8eb78e42ad10210878bacc6a427e208544"
+    },
+    {
+      "seed": 48879,
+      "steps": 4096,
+      "spike_count": 918,
+      "final_rng_state": 11145,
+      "event_sha256": "30cb558aaa56c242b1c3e29b0ece4a267c23decf1a985eb8d49d0189e20152f9"
+    },
+    {
+      "seed": 65535,
+      "steps": 4096,
+      "spike_count": 916,
+      "final_rng_state": 65195,
+      "event_sha256": "6bfa5a01d43c13af9b33845f0170ef7e9b5203c13f0b1106eec3ad3968320741"
+    }
+  ],
+  "tolerances": {
+    "event_stream": {
+      "absolute": 0.0,
+      "relative": 0.0
+    },
+    "rate_quantisation": {
+      "absolute": 0.000015259021896696422,
+      "relative": 0.0
+    },
+    "isi_mean": {
+      "absolute": 0.001,
+      "relative": 0.0
+    },
+    "isi_cv": {
+      "absolute": 0.01,
+      "relative": 0.0
+    }
+  }
+}

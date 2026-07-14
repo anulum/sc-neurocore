@@ -65,7 +65,7 @@ SCHEMA_TO_CLASS: dict[str, str] = {
     "theta": "ThetaNeuron",
     "wang_buzsaki": "WangBuzsakiNeuron",
     "escape_rate": "EscapeRateNeuron",
-    "poisson": "InhomogeneousPoissonNeuron",
+    "poisson": "PoissonNeuron",
 }
 
 # Source-module stems that are aliases of another schema stem (schema_gap report).

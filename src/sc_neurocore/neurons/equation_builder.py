@@ -105,6 +105,7 @@ class EquationNeuron:
         detection: str = "level",
         substeps: int = 1,
         rate_expression: str | None = None,
+        probability_expression: str | None = None,
         rng_seed: int = DEFAULT_LFSR16_SEED,
     ) -> None:
         """Initialise an equation-defined neuron from ODE strings."""
@@ -130,22 +131,34 @@ class EquationNeuron:
         self.detection = detection
         self.substeps = substeps
         self.rate_expression = rate_expression
+        self.probability_expression = probability_expression
         self._escape_rate_enabled = detection == "escape_rate" and rate_expression is not None
+        self._poisson_enabled = detection == "poisson" and probability_expression is not None
+        self._stochastic_threshold_enabled = self._escape_rate_enabled or self._poisson_enabled
         if detection != "escape_rate" and rate_expression is not None:
             raise ValueError("rate_expression is only valid with detection='escape_rate'")
+        if detection != "poisson" and probability_expression is not None:
+            raise ValueError("probability_expression is only valid with detection='poisson'")
         if detection == "escape_rate" and rate_expression is None:
             raise ValueError("escape_rate detection requires rate_expression")
-        if self._escape_rate_enabled:
+        if detection == "escape_rate" and probability_expression is not None:
+            raise ValueError("escape_rate detection cannot define probability_expression")
+        if detection == "poisson" and probability_expression is None:
+            raise ValueError("poisson detection requires probability_expression")
+        if detection == "poisson" and rate_expression is not None:
+            raise ValueError("poisson detection cannot define rate_expression")
+        if self._stochastic_threshold_enabled:
             if threshold not in (None, "stochastic"):
                 raise ValueError(
-                    "escape_rate detection cannot combine rate_expression with a level threshold"
+                    f"{detection} detection cannot combine a stochastic expression "
+                    "with a level threshold"
                 )
             if not math.isfinite(float(dt)) or float(dt) <= 0.0:
-                raise ValueError("escape_rate dt must be finite and positive")
+                raise ValueError(f"{detection} dt must be finite and positive")
             self.threshold_expr = None
-            self._escape_rng: Lfsr16Threshold | None = Lfsr16Threshold(rng_seed)
+            self._stochastic_rng: Lfsr16Threshold | None = Lfsr16Threshold(rng_seed)
         else:
-            self._escape_rng = None
+            self._stochastic_rng = None
         # Rising-edge (``crossing``) detection is only engaged for a NON-resetting model:
         # a reset that drops the state back below threshold already clears the condition
         # every spike, so ``level`` and ``crossing`` are identical there and the simpler
@@ -208,7 +221,9 @@ class EquationNeuron:
             all_exprs.append(self.threshold_expr)
         if self.rate_expression:
             all_exprs.append(self.rate_expression)
-        self._escape_uses_diffusion_noise = self._escape_rate_enabled and any(
+        if self.probability_expression:
+            all_exprs.append(self.probability_expression)
+        self._stochastic_uses_diffusion_noise = self._stochastic_threshold_enabled and any(
             re.search(r"\bxi\b", expression) is not None for expression in all_exprs
         )
         for expr in all_exprs:
@@ -222,6 +237,11 @@ class EquationNeuron:
         )
         self._compiled_rate = (
             compile(self.rate_expression, "<escape-rate>", "eval") if self.rate_expression else None
+        )
+        self._compiled_probability = (
+            compile(self.probability_expression, "<poisson-probability>", "eval")
+            if self.probability_expression
+            else None
         )
         self._compiled_reset = {
             var: compile(expr, f"<reset:{var}>", "eval") for var, expr in self.reset_rules.items()
@@ -309,10 +329,10 @@ class EquationNeuron:
         env: dict[str, object] = dict(self._namespace)
         # Euler-Maruyama: noise scaled by sqrt(dt)/dt so that after deriv*dt
         # the net noise is noise_scale * sqrt(dt) * N(0,1)
-        if self._escape_rate_enabled and not self._escape_uses_diffusion_noise:
-            # The canonical escape model owns an explicit model-scoped LFSR. Do
+        if self._stochastic_threshold_enabled and not self._stochastic_uses_diffusion_noise:
+            # Canonical stochastic-threshold models own an explicit model-scoped LFSR. Do
             # not consume NumPy's process-global stream when none of its authored
-            # equations, rate, or reset expressions references diffusion noise.
+            # equations, probability/rate, or reset expressions references diffusion noise.
             env["xi"] = 0.0
         else:
             env["xi"] = self._noise_scale * np.random.randn() / max(self.dt, 1e-12) ** 0.5
@@ -358,30 +378,39 @@ class EquationNeuron:
             for _ in range(self.substeps):
                 self._integrate_once(**kwargs)
         except Exception:
-            if self._escape_rate_enabled:
+            if self._stochastic_threshold_enabled:
                 self.state = previous_state
             raise
 
         spike = 0
-        if self._escape_rate_enabled:
-            escape_rng = self._escape_rng
-            if escape_rng is None or self._compiled_rate is None:  # pragma: no cover - invariant
-                raise RuntimeError("escape-rate RNG contract was not initialised")
-            previous_rng = escape_rng.state
+        if self._stochastic_threshold_enabled:
+            stochastic_rng = self._stochastic_rng
+            compiled_stochastic = (
+                self._compiled_rate if self._escape_rate_enabled else self._compiled_probability
+            )
+            if stochastic_rng is None or compiled_stochastic is None:
+                raise RuntimeError("stochastic-threshold runtime was not initialised")
+            previous_rng = stochastic_rng.state
             try:
                 env_post = self._build_env(**kwargs)
                 env_post.update(_previous_state_aliases(previous_state))
-                # nosec B307: AST-whitelisted compiled escape-rate expression.
-                rate = float(eval(self._compiled_rate, self._EVAL_GLOBALS, env_post))  # nosec B307
-                hazard = rate * self.dt
-                if not math.isfinite(rate) or rate < 0.0:
-                    raise FloatingPointError("escape rate must remain finite and non-negative")
-                if not math.isfinite(hazard) or hazard < 0.0:
-                    raise FloatingPointError("escape hazard must remain finite and non-negative")
-                probability = -math.expm1(-hazard)
+                if self._escape_rate_enabled:
+                    rate = float(eval(compiled_stochastic, self._EVAL_GLOBALS, env_post))
+                    hazard = rate * self.dt
+                    if not math.isfinite(rate) or rate < 0.0:
+                        raise FloatingPointError("escape rate must remain finite and non-negative")
+                    if not math.isfinite(hazard) or hazard < 0.0:
+                        raise FloatingPointError(
+                            "escape hazard must remain finite and non-negative"
+                        )
+                    probability = -math.expm1(-hazard)
+                else:
+                    probability = float(eval(compiled_stochastic, self._EVAL_GLOBALS, env_post))
                 if not math.isfinite(probability) or not 0.0 <= probability <= 1.0:
-                    raise FloatingPointError("escape probability must remain finite and bounded")
-                fired = escape_rng.trial(probability)
+                    raise FloatingPointError(
+                        "stochastic spike probability must remain finite and bounded"
+                    )
+                fired = stochastic_rng.trial(probability)
                 if fired:
                     spike = 1
                     reset_env = self._build_env(**kwargs)
@@ -393,7 +422,7 @@ class EquationNeuron:
                         )
             except Exception:
                 self.state = previous_state
-                escape_rng.restore(previous_rng)
+                stochastic_rng.restore(previous_rng)
                 raise
         elif self._compiled_threshold:
             env_post = self._build_env(**kwargs)
@@ -551,19 +580,29 @@ class EquationNeuron:
 
     @property
     def escape_rng_initial_seed(self) -> int | None:
-        """Return the emitted escape-threshold seed, or ``None`` for other models."""
-        return self._escape_rng.initial_seed if self._escape_rng is not None else None
+        """Return the emitted stochastic-threshold seed (legacy API name)."""
+        return self.stochastic_rng_initial_seed
 
     @property
     def escape_rng_state(self) -> int | None:
-        """Return the live escape-threshold LFSR state, or ``None`` when unused."""
-        return self._escape_rng.state if self._escape_rng is not None else None
+        """Return the live stochastic-threshold state (legacy API name)."""
+        return self.stochastic_rng_state
+
+    @property
+    def stochastic_rng_initial_seed(self) -> int | None:
+        """Return the emitted stochastic-threshold seed, or ``None`` when unused."""
+        return self._stochastic_rng.initial_seed if self._stochastic_rng is not None else None
+
+    @property
+    def stochastic_rng_state(self) -> int | None:
+        """Return the live stochastic-threshold LFSR state, or ``None`` when unused."""
+        return self._stochastic_rng.state if self._stochastic_rng is not None else None
 
     def reset(self) -> None:
         """Reset state to initial values."""
         self.state = deepcopy(self.initial_state)
-        if self._escape_rng is not None:
-            self._escape_rng.reset()
+        if self._stochastic_rng is not None:
+            self._stochastic_rng.reset()
         self._prev_threshold_active = (
             self.initial_threshold_active() if self._edge_detection else False
         )

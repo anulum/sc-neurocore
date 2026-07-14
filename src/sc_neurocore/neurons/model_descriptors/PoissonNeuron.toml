@@ -11,58 +11,111 @@ schema_version = 2
 name = "Poisson"
 class_name = "PoissonNeuron"
 module = "poisson"
-display_name = ""
-summary = "Poisson spike generator — stochastic input layer at rate lambda"
+display_name = "Homogeneous Poisson event generator"
+summary = "Seeded homogeneous Poisson point process with binary time-bin events and a shared maximal-period LFSR16 hardware sampler."
 family = "Statistical"
 category = "statistical"
 biophysical_detail = "point"
-maturity = "experimental"
-intended_use = []
-hardware_fit = []
+maturity = "validated"
+intended_use = [
+    "reproducible stochastic input-event generation",
+    "cross-runtime Poisson rate and inter-event-interval validation",
+]
+hardware_fit = [
+    "registered fixed-point stochastic event-source RTL",
+    "folded population datapath with caller-owned per-source RNG state",
+]
 behavior_tags = [
-    "excitable",
+    "irregular",
+    "memoryless",
     "stochastic",
 ]
 
 [provenance]
 authors = [
-    "Gerstner, W. et al.",
+    "Gerstner, W.",
+    "Kistler, W. M.",
+    "Naud, R.",
+    "Paninski, L.",
 ]
 year = 2014
 doi = "10.1017/CBO9781107447615"
+paper_title = "Neuronal Dynamics: From Single Neurons to Networks and Models of Cognition"
+url = "https://doi.org/10.1017/CBO9781107447615"
 
-[state]
+[state.rng_state]
+init = 44257.0
+unit = "integer"
+meaning = "non-zero 16-bit execution state used by the next eight-advance Bernoulli sample"
 
 [parameters.rate_hz]
 default = 100.0
 unit = "Hz"
-meaning = "mean firing rate of the Poisson spike process"
-range = [
-    0.0,
-    1000.0,
-]
+meaning = "constant event intensity of the homogeneous point process"
+range = [0.0, 1000000000.0]
 
 [parameters.dt_ms]
 default = 1.0
 unit = "ms"
-meaning = "timestep used to convert the rate to a per-step spike probability"
-range = [
-    0.01,
-    10.0,
-]
+meaning = "positive binary-bin width used to integrate the event intensity"
+range = [0.000001, 1000000.0]
+
+[parameters.seed]
+default = 44257.0
+unit = "integer"
+meaning = "replay seed; zero maps to 0xACE1 and explicit None requests fresh entropy in Python"
+range = [0.0, 65535.0]
 
 [integration]
-dt = 0.1
-method = "euler"
+dt = 1.0
+method = "poisson_interval"
 
 [dynamics]
-phase = "rate_hz * dt_ms / 1000.0"
+intensity = "lambda(t)=rate_hz, or a finite non-negative per-bin rate override"
+interval_probability = "p=1-exp(-lambda*dt_ms/1000), the probability of at least one event in a finite bin"
+event_encoding = "the event is one when at least one arrival occurs; multiple same-bin arrivals collapse to one bit"
+rng_state = "advance the right-shift x^16+x^14+x^13+x^11+1 LFSR eight primitive states, then compare sample < floor(p*65535)+1"
 
 [backends.python]
 status = "implemented"
+parity = "exact"
+
+[backends.rust]
+status = "implemented"
+parity = "exact"
+
+[backends.julia]
+status = "implemented"
+parity = "exact"
+
+[backends.go]
+status = "implemented"
+parity = "exact"
+
+[backends.mojo]
+status = "implemented"
+parity = "exact"
 
 [reproducibility]
+reference_config = "{\"n_steps\":4096,\"current\":250.0,\"backend\":\"python\",\"parameters\":\"defaults\",\"seed\":44257}"
+seed = 44257
+golden_trace_sha256 = "bb4f4000d34594fec3976819b482b3c8bd3d61c1c52b7991aa65eee2b4b99a98"
+golden_citation = "doi:10.1017/CBO9781107447615"
 
 [documentation]
 slug = "models/poisson"
-notes = ""
+notes = "Gerstner, Kistler, Naud, and Paninski (2014), Sections 7.2 and 7.7, describe the homogeneous Poisson process, exponential waiting-time law, and finite-interval event probability. Binary-bin collapse, the 16-bit polynomial, eight-state decimation, integer comparator quantisation, and default replay seed are explicit SC-NeuroCore engineering choices. Eight is coprime with the 65,535-state period, retaining every non-zero state. This is a seeded point-process generator, not a diffusion-noise membrane model or a cryptographic RNG."
+
+[validation]
+dynamics_faithful = true
+metric = "statistical"
+operating_point = "homogeneous 250 Hz intensity with 1 ms bins; complete 65,535-state p=1-exp(-0.25) cycle at seed 0xACE1; five-seed 4096-bin corpus; configured 4096-bin Python/Rust/Julia/Go/Mojo event trace"
+tolerance = "full-period and seed-corpus event hashes/counts/RNG states exact; realised rate quantisation error below 1/65535; inter-event mean within 0.001 bin and coefficient of variation within 0.01 of geometric targets; all five runtime event streams and final RNG states exact; Q24.24 RTL event stream, count, threshold, probability, and final RNG exact"
+evidence = "tests/test_reference_poisson.py::test_full_period_features_match_independent_equations"
+
+[silicon]
+compiles = true
+cosim_validated = true
+cosim_evidence = "tests/test_cosim_poisson.py::test_seeded_full_period_registered_and_folded_streams_match_python"
+target_tier = "H1"
+terminal_reason = "The stochastic event recurrence has compile-clean registered and folded Q24.24 RTL, seeded full-period event co-simulation, and bounded catalogue formal safety; higher rungs require synthesis, timing, equivalence, and hardware programmes."

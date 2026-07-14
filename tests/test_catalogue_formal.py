@@ -130,6 +130,29 @@ def test_escape_rate_formal_job_uses_seeded_q2424_precision() -> None:
     assert "escape_rate" in module.MINIMAL_SAFETY_SCHEMAS
 
 
+def test_poisson_formal_job_supports_a_stateless_seeded_q2424_module() -> None:
+    """Keep the spike-only Poisson job aligned with full-period co-simulation."""
+    import importlib.util
+
+    name = "emit_catalogue_formal_poisson_precision"
+    spec = importlib.util.spec_from_file_location(name, EMITTER)
+    assert spec is not None and spec.loader is not None
+    module = importlib.util.module_from_spec(spec)
+    sys.modules[name] = module
+    spec.loader.exec_module(module)
+
+    assert module.CLASS_TO_SCHEMA["PoissonNeuron"] == "poisson"
+    assert module.PRECISION_BY_SCHEMA["poisson"] == (48, 24)
+    assert module.DEPTH_BY_SCHEMA["poisson"] == 4
+    assert "poisson" in module.MINIMAL_SAFETY_SCHEMAS
+    ports = module._parse_module_ports(
+        (CATALOGUE / "sc_poissonneuron.v").read_text(encoding="utf-8")
+    )
+    assert ports.primary_state is None
+    assert ports.signed_outputs == ()
+    assert ports.bit_outputs == ("spike_out",)
+
+
 def test_catalogue_formal_inventory_matches_perfect_count() -> None:
     """Committed catalogue jobs equal the number of dual-axis perfect models."""
     sby_jobs = sorted(CATALOGUE.glob("*.sby"))
@@ -162,6 +185,7 @@ def test_catalogue_formal_rtl_is_equation_compiler_output() -> None:
         "sc_perfect_integrator.sby",
         "sc_quadratic_if.sby",
         "sc_dpineuron.sby",
+        "sc_poissonneuron.sby",
     ],
 )
 def test_catalogue_formal_smoke_pass(sby_name: str) -> None:

@@ -967,11 +967,11 @@
     "model_documentation_pages": 175,
     "optional_extras": 28,
     "public_api_exports": 45,
-    "public_documentation_pages": 571,
+    "public_documentation_pages": 572,
     "python_model_classes": 158,
     "python_model_source_modules": 153,
     "rust_pyo3_model_wrappers": 175,
-    "test_files": 1303
+    "test_files": 1308
   },
   "documentation": {
     "public_pages": [
@@ -1545,6 +1545,7 @@
       "docs/validation/izhikevich_patterns.md",
       "docs/validation/lif_fi_curve.md",
       "docs/validation/neurobench_shd.md",
+      "docs/validation/poisson_stochastic_fidelity.md",
       "docs/validation/reference_traces.md"
     ]
   },
@@ -2922,6 +2923,7 @@
       "tests/test_bench_lapicque.py",
       "tests/test_bench_perfect_integrator.py",
       "tests/test_bench_photonic_crosstalk.py",
+      "tests/test_bench_poisson.py",
       "tests/test_bench_quadratic_if.py",
       "tests/test_bench_quantum_annealing_modularisation.py",
       "tests/test_bench_safety_certification.py",
@@ -3692,6 +3694,9 @@
       "tests/test_platforms.py",
       "tests/test_platforms_no_duplicate_registration.py",
       "tests/test_platforms_registry_edges.py",
+      "tests/test_poisson_backend_loading.py",
+      "tests/test_poisson_backends.py",
+      "tests/test_poisson_schema_dsl.py",
       "tests/test_power_estimator.py",
       "tests/test_precision_envelope_guard_hdl.py",
       "tests/test_precision_overflow_trap_hdl.py",
@@ -3758,6 +3763,7 @@
       "tests/test_reference_morris_lecar.py",
       "tests/test_reference_perfect_integrator.py",
       "tests/test_reference_pernarowski.py",
+      "tests/test_reference_poisson.py",
       "tests/test_reference_quadratic_if.py",
       "tests/test_reference_resonate_fire.py",
       "tests/test_reference_rulkov_map.py",

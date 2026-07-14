@@ -987,18 +987,32 @@ pub struct PyPoissonNeuron {
 #[pymethods]
 impl PyPoissonNeuron {
     #[new]
-    #[pyo3(signature = (rate_hz=100.0, dt_ms=1.0, seed=42))]
-    fn new(rate_hz: f64, dt_ms: f64, seed: u64) -> Self {
-        Self {
-            inner: neurons::PoissonNeuron::new(rate_hz, dt_ms, seed),
+    #[pyo3(signature = (rate_hz=100.0, dt_ms=1.0, seed=0xACE1))]
+    fn new(rate_hz: f64, dt_ms: f64, seed: u64) -> PyResult<Self> {
+        let inner = neurons::PoissonNeuron::new(rate_hz, dt_ms, seed);
+        if !inner.valid() {
+            return Err(PyValueError::new_err(
+                "invalid Poisson rate, timestep, or seed",
+            ));
         }
+        Ok(Self { inner })
     }
     #[pyo3(signature = (rate_override=-1.0))]
-    fn step(&mut self, rate_override: f64) -> i32 {
-        self.inner.step(rate_override)
+    fn step(&mut self, rate_override: f64) -> PyResult<i32> {
+        self.inner
+            .try_step(rate_override)
+            .map_err(PyValueError::new_err)
     }
     fn reset(&mut self) {
         self.inner.reset();
+    }
+    fn get_state(&self, py: Python<'_>) -> PyResult<Py<PyAny>> {
+        let d = PyDict::new(py);
+        d.set_item("rate_hz", self.inner.rate_hz)?;
+        d.set_item("dt_ms", self.inner.dt_ms)?;
+        d.set_item("rng_state", self.inner.rng_state)?;
+        d.set_item("initial_seed", self.inner.initial_seed)?;
+        Ok(d.into_any().unbind())
     }
 }
 

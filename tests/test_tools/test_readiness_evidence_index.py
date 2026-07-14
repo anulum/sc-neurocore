@@ -98,6 +98,21 @@ def test_escape_rate_is_enrolled_with_class_correct_statistical_metric(
     assert validation["metric"] == "statistical"
 
 
+def test_poisson_is_enrolled_with_full_period_statistical_cosim(tool: ModuleType) -> None:
+    """Bind the stochastic event source to its registered and folded RTL evidence."""
+    poisson = next(e for e in tool.ENROLLED if e.class_name == "PoissonNeuron")
+    assert poisson.level == "h1_cosim"
+    assert poisson.metric == "statistical"
+    assert poisson.evidence == (
+        "tests/test_cosim_poisson.py::"
+        "test_seeded_full_period_registered_and_folded_streams_match_python"
+    )
+    assert "65,535-state" in poisson.operating_point
+    assert "registered Q24.24 RTL" in poisson.tolerance
+    validation = tool.validation_section(poisson, has_dynamics=True)
+    assert validation["metric"] == "statistical"
+
+
 def test_lapicque_is_enrolled_with_dedicated_exact_flow_evidence(tool: ModuleType) -> None:
     """Replace the generic suite pointer with the measured Lapicque contract."""
     lapicque = next(e for e in tool.ENROLLED if e.class_name == "LapicqueNeuron")
@@ -143,6 +158,7 @@ def test_build_rows_returns_one_row_per_enrolled(tool: ModuleType) -> None:
     names = {row.class_name for row in rows}
     assert "AdExNeuron" in names
     assert "EscapeRateNeuron" in names
+    assert "PoissonNeuron" in names
     assert "WangBuzsakiNeuron" in names
 
 

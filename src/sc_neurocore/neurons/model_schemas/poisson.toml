@@ -8,15 +8,14 @@
 
 [metadata]
 schema_version = 1
-name = "Poisson"
+name = "PoissonNeuron"
 author = "Gerstner, W. et al."
 year = 2014
 doi = "10.1017/CBO9781107447615"
-description = "Poisson spike generator — stochastic input layer at rate lambda"
+description = "Homogeneous Poisson binary-bin event generator at rate lambda"
 
 [state]
 # No membrane state — pure stochastic point process
-phase = 0.0
 
 [parameters]
 rate_hz = 100.0
@@ -27,16 +26,14 @@ dt = 1.0
 method = "euler"
 
 [dynamics]
-# Phase accumulates proportional to rate; spikes when exceeding 1.0
-phase = "rate_hz * dt_ms / 1000.0"
+# No membrane dynamics — the RNG state is an execution concern, not neuronal state.
 
 [threshold]
 condition = "stochastic"
 detection = "poisson"
-description = "P(spike in dt) = rate_hz * dt_ms / 1000"
-
-[reset]
-phase = "0.0"
+probability_expression = "1.0 - exp(-(((rate_hz if I < 0.0 else I) * dt_ms) / 1000.0))"
+rng_seed = 44257
+description = "P(at least one event in dt) = 1 - exp(-rate_hz * dt_ms / 1000); multiple within-bin events collapse to one bit"
 
 [extensions]
 layer_type = "input"

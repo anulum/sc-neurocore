@@ -60,6 +60,7 @@ parity note.
 | DPI | ✅ | ✅ | ✅ | ✅ shared-lib | exact accel events — 0/0/0/0/1/3/6/11/21 @ I=-0.1/0/1/2/3/5/10/20/50 over 1,000 simultaneous-Euler steps of the coupled Indiveri-Stefanini-Chicca (2010) current-domain equations; compiled states remain within `5e-13`, the Rust safety module carries the complete 18-field contract and the engine retains its factory-default boundary; hand/TOML/JSON states remain within `1e-13`, generated Q16.16 RTL preserves 13 events at I=5 over 5,000 steps with declared state/timing envelopes, and the generated depth-4 Z3 job passes | `this commit` |
 | COBA LIF | ✅ | ✅ | ✅ | ✅ shared-lib | exact 3,077-event parity over the controlled 200,000-step complete non-default contract; Rust/Julia/Go traces are exact and Mojo stays within `7.11e-15`; hand/TOML/JSON preserve the complete four-state RK4 trace and six enrolled events exactly, generated Q24.24 RTL preserves all six event indices with voltage/conductance/timer errors below `1e-5`/`5e-6`/`3e-6`/`2e-6`, the independent Brette-2007 DOI trace matches every feature within `1e-12`, and the generated depth-4 Z3 reset-safety job passes | `this commit` |
 | Escape Rate | ✅ | ✅ | ✅ | ✅ shared-lib | seeded exact 29-event parity over the configured 4,096-step complete contract: Rust/Julia/Go voltage traces are exact, Mojo stays within `2e-14`, and every lane finishes at RNG state 45,999; the independent five-seed/full-period artifact pins event hashes, rate, and geometric-ISI statistics; hand/TOML/JSON preserve private RNG and failure atomicity; generated Q24.24 RTL reproduces the complete 65,535-bit event stream with 14,496 events and final seed `0xACE1`; the depth-4 Z3 safety job passes; the controlled 200,000-step benchmark records 1,523 exact events and final RNG 46,746 in all five lanes | `this commit` |
+| Poisson | ✅ | ✅ | ✅ | ✅ shared-lib | seeded exact 918-event parity over the configured 4,096-bin rate/dt/RNG contract, with every runtime finishing at RNG state 45,999; the independent exhaustive artifact pins the 65,535-state event hash, 14,496-event rate, and geometric-ISI statistics; hand/TOML/JSON preserve private RNG and failure atomicity; registered and folded Q24.24 RTL reproduce the complete event stream, threshold, probability word, and final seed `0xACE1`; the depth-4 Z3 safety job passes; the source-hashed 200,000-bin benchmark records 44,256 exact events and final RNG 46,746 in all five lanes | `this commit` |
 | McKean | ✅ | ✅ | ✅ | ✅ shared-lib | bit-exact — 0/1/7 @ I=0/0.2/0.5 over 20000 steps (RK4, exact piecewise-linear RHS) | `059871140` |
 | Hindmarsh-Rose | ✅ | ✅ | ✅ | ✅ shared-lib | bit-exact accel — 0/26/52 @ I=0/3/5 over 2000 steps; co-sim exact hand/TOML/JSON/Q16.16 counts — 0/0/26/40/52 @ I=0/2/3/4/5 over 2000 RK4 steps; declared Q16.16 +1 crossing boundary over 5000 steps at I=2 through I=5; formal Q8.8 BMC depth 4 | `this commit` |
 | FitzHugh-Rinzel | ✅ | ✅ | ✅ | ✅ shared-lib | bit-exact accel — 0/1/8 @ I=0/0.3/0.5; co-sim exact spike count — hand/schema/Q16.16 RTL 8 @ I=0.5 (3000 RK4 steps, cubic RHS) | `498376221` |
@@ -80,7 +81,7 @@ parity note.
 Each model carries a committed benchmark: a Go `Benchmark*` in the services lane for the
 conductance models (Wang-Buzsaki, Morris-Lecar, Connor-Stevens, Hodgkin-Huxley, FitzHugh-Nagumo),
 plus source-hashed executable closure benchmarks for Connor-Stevens, Hodgkin-Huxley, AdEx, ExpIF,
-Lapicque, Perfect Integrator, Quadratic IF, Theta, DPI, COBA LIF, and Escape Rate,
+Lapicque, Perfect Integrator, Quadratic IF, Theta, DPI, COBA LIF, Escape Rate, and Poisson,
 and a committed `benchmarks/bench_<model>*.py` harness with its recorded per-backend result for the
 FFI-dispatched models (McKean, Hindmarsh-Rose, FitzHugh-Rinzel, Pernarowski, Terman-Wang, Wilson-HR,
 Rulkov map, GLIF, Mihalas-Niebur, Medvedev map, Cazelles map, Courbage-Nekorkin map, Izhikevich 2007,
@@ -99,7 +100,7 @@ Rust engine acceleration path), but its four `accel/{rust,go,julia,mojo}` kernel
 or not yet verified** — the polyglot-stub-remediation sweep is replacing them model-by-model. Those
 models are **deliberately not ticked here**: per-model status is promoted onto this page only after a
 unit is closed and verified at source, so this table never claims completion it has not proven. As of
-the latest landed commit that is **thirty polyglot-complete models** out of the full catalogue; the
+the latest landed commit that is **thirty-one polyglot-complete models** out of the full catalogue; the
 remainder are Python-faithful with an acceleration chain still under remediation.
 
 ## How a model graduates onto this page

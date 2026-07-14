@@ -11,36 +11,80 @@
 use rand::{RngExt, SeedableRng};
 use rand_xoshiro::Xoshiro256PlusPlus;
 
-/// Poisson spike generator — P(spike in dt) = λ·dt.
+/// Homogeneous Poisson binary-bin generator with a replayable LFSR16 stream.
 #[derive(Clone, Debug)]
 pub struct PoissonNeuron {
     pub rate_hz: f64,
     pub dt_ms: f64,
-    rng: Xoshiro256PlusPlus,
+    pub rng_state: u16,
+    pub initial_seed: u16,
 }
 
 impl PoissonNeuron {
     pub fn new(rate_hz: f64, dt_ms: f64, seed: u64) -> Self {
+        let narrowed = (seed & u64::from(u16::MAX)) as u16;
+        let initial_seed = if narrowed == 0 { 0xACE1 } else { narrowed };
         Self {
             rate_hz,
             dt_ms,
-            rng: Xoshiro256PlusPlus::seed_from_u64(seed),
+            rng_state: initial_seed,
+            initial_seed,
         }
     }
-    pub fn step(&mut self, rate_override: f64) -> i32 {
+
+    pub fn valid(&self) -> bool {
+        self.rate_hz.is_finite()
+            && self.rate_hz >= 0.0
+            && self.dt_ms.is_finite()
+            && self.dt_ms > 0.0
+            && self.rng_state != 0
+            && self.initial_seed != 0
+    }
+
+    pub fn try_step(&mut self, rate_override: f64) -> Result<i32, &'static str> {
+        if !self.valid() || !rate_override.is_finite() {
+            return Err("invalid Poisson state or rate override");
+        }
         let r = if rate_override < 0.0 {
             self.rate_hz
         } else {
             rate_override
         };
-        let p = r * self.dt_ms / 1000.0;
-        if self.rng.random::<f64>() < p {
-            1
-        } else {
-            0
+        if !r.is_finite() || r < 0.0 {
+            return Err("invalid active Poisson rate");
         }
+        let hazard = r * self.dt_ms / 1000.0;
+        if !hazard.is_finite() || hazard < 0.0 {
+            return Err("non-finite Poisson interval hazard");
+        }
+        let probability = -(-hazard).exp_m1();
+        if !probability.is_finite() || !(0.0..=1.0).contains(&probability) {
+            return Err("invalid Poisson spike probability");
+        }
+        let mut sample = self.rng_state;
+        for _ in 0..8 {
+            let feedback = (sample ^ (sample >> 2) ^ (sample >> 3) ^ (sample >> 5)) & 1;
+            sample = (sample >> 1) | (feedback << 15);
+        }
+        let threshold = if probability <= 0.0 {
+            0_u32
+        } else if probability >= 1.0 {
+            65_536_u32
+        } else {
+            (probability * 65_535.0).floor() as u32 + 1
+        };
+        self.rng_state = sample;
+        Ok(i32::from(u32::from(sample) < threshold))
     }
-    pub fn reset(&mut self) {}
+
+    /// Preserve the engine runner's infallible dispatch boundary.
+    pub fn step(&mut self, rate_override: f64) -> i32 {
+        self.try_step(rate_override).unwrap_or(0)
+    }
+
+    pub fn reset(&mut self) {
+        self.rng_state = self.initial_seed;
+    }
 }
 
 /// Inhomogeneous Poisson — rate passed per step.
@@ -793,7 +837,9 @@ mod tests {
     #[test]
     fn poisson_fires() {
         let mut n = PoissonNeuron::new(200.0, 1.0, 42);
-        let t: i32 = (0..1000).map(|_| n.step(-1.0)).sum();
+        let t: i32 = (0..1000)
+            .map(|_| n.try_step(-1.0).expect("valid Poisson step"))
+            .sum();
         assert!(t > 10);
     }
     #[test]
@@ -902,23 +948,42 @@ mod tests {
     #[test]
     fn poisson_reset_no_panic() {
         let mut n = PoissonNeuron::new(200.0, 1.0, 42);
-        for _ in 0..100 {
-            n.step(-1.0);
-        }
+        let first: Vec<i32> = (0..100)
+            .map(|_| n.try_step(-1.0).expect("valid Poisson step"))
+            .collect();
         n.reset();
+        let replay: Vec<i32> = (0..100)
+            .map(|_| n.try_step(-1.0).expect("valid Poisson step"))
+            .collect();
+        assert_eq!(first, replay);
     }
     #[test]
-    fn poisson_nan_no_panic() {
+    fn poisson_nan_fails_closed() {
         let mut n = PoissonNeuron::new(200.0, 1.0, 42);
-        n.step(f64::NAN);
+        let before = n.rng_state;
+        assert!(n.try_step(f64::NAN).is_err());
+        assert_eq!(n.rng_state, before);
     }
     #[test]
     fn poisson_seed_varies() {
         let mut n1 = PoissonNeuron::new(200.0, 1.0, 1);
         let mut n2 = PoissonNeuron::new(200.0, 1.0, 999);
-        let t1: i32 = (0..1000).map(|_| n1.step(-1.0)).sum();
-        let t2: i32 = (0..1000).map(|_| n2.step(-1.0)).sum();
-        assert!(t1 > 0 && t2 > 0);
+        let t1: Vec<i32> = (0..1000)
+            .map(|_| n1.try_step(-1.0).expect("valid Poisson step"))
+            .collect();
+        let t2: Vec<i32> = (0..1000)
+            .map(|_| n2.try_step(-1.0).expect("valid Poisson step"))
+            .collect();
+        assert_ne!(t1, t2);
+    }
+    #[test]
+    fn poisson_full_period_matches_quantised_exact_hazard() {
+        let mut n = PoissonNeuron::new(250.0, 1.0, 0xACE1);
+        let spikes: i32 = (0..65_535)
+            .map(|_| n.try_step(-1.0).expect("valid Poisson step"))
+            .sum();
+        assert_eq!(spikes, 14_496);
+        assert_eq!(n.rng_state, 0xACE1);
     }
 
     // -- InhomogeneousPoisson --

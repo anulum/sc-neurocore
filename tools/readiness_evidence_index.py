@@ -291,6 +291,25 @@ ENROLLED: tuple[EnrolledEvidence, ...] = (
         metric="statistical",
     ),
     EnrolledEvidence(
+        schema_name="poisson",
+        class_name="PoissonNeuron",
+        level="h1_cosim",
+        evidence=(
+            "tests/test_cosim_poisson.py::"
+            "test_seeded_full_period_registered_and_folded_streams_match_python"
+        ),
+        operating_point=(
+            "homogeneous 250 Hz intensity with 1 ms binary bins over one complete "
+            "65,535-state LFSR16 period at seed 0xACE1"
+        ),
+        tolerance=(
+            "Python, registered Q24.24 RTL, and folded Q24.24 RTL event streams, "
+            "event count, threshold, probability word, and final RNG exact; "
+            "ISI mean/CV within 0.001/0.01"
+        ),
+        metric="statistical",
+    ),
+    EnrolledEvidence(
         schema_name="mihalas_niebur",
         class_name="MihalasNieburNeuron",
         level="h1_cosim",

@@ -1010,6 +1010,7 @@ fn sc_neurocore_engine(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_function(wrap_pyfunction!(py_terman_wang_simulate, m)?)?;
     m.add_function(wrap_pyfunction!(py_coba_lif_simulate, m)?)?;
     m.add_function(wrap_pyfunction!(py_escape_rate_simulate, m)?)?;
+    m.add_function(wrap_pyfunction!(py_poisson_simulate, m)?)?;
     m.add_function(wrap_pyfunction!(py_mihalas_niebur_simulate, m)?)?;
     m.add_function(wrap_pyfunction!(py_glif_simulate, m)?)?;
     m.add_function(wrap_pyfunction!(py_rulkov_map_simulate, m)?)?;
@@ -6151,6 +6152,38 @@ fn py_escape_rate_simulate<'py>(
         neuron.v,
         neuron.rng_state,
     ))
+}
+
+/// Full-contract homogeneous-Poisson batch with the canonical LFSR16 trial.
+#[pyfunction]
+#[pyo3(signature = (rate_hz, dt_ms, rng_state, n_steps, rate_override=-1.0))]
+fn py_poisson_simulate<'py>(
+    py: Python<'py>,
+    rate_hz: f64,
+    dt_ms: f64,
+    rng_state: u16,
+    n_steps: usize,
+    rate_override: f64,
+) -> PyResult<(Bound<'py, PyArray1<u8>>, u16)> {
+    let mut neuron = crate::neurons::PoissonNeuron {
+        rate_hz,
+        dt_ms,
+        rng_state,
+        initial_seed: rng_state,
+    };
+    if !neuron.valid() || !rate_override.is_finite() {
+        return Err(PyValueError::new_err(
+            "invalid Poisson simulation state or rate override",
+        ));
+    }
+    let mut events = Vec::with_capacity(n_steps);
+    for _ in 0..n_steps {
+        let spike = neuron
+            .try_step(rate_override)
+            .map_err(PyValueError::new_err)?;
+        events.push(spike as u8);
+    }
+    Ok((events.into_pyarray(py), neuron.rng_state))
 }
 
 /// N-step Courbage-Nekorkin-Vdovin (2007) discontinuous spiking-map simulation.

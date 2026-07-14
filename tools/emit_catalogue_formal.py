@@ -67,6 +67,7 @@ CLASS_TO_SCHEMA: dict[str, str] = {
     "TermanWangOscillator": "terman_wang",
     "WilsonHRNeuron": "wilson_hr",
     "PerfectIntegratorNeuron": "perfect_integrator",
+    "PoissonNeuron": "poisson",
     "QuadraticIFNeuron": "quadratic_if",
     "ThetaNeuron": "theta",
 }
@@ -92,6 +93,7 @@ DEPTH_BY_SCHEMA: dict[str, int] = {
     "medvedev_map": 4,
     "mihalas_niebur": 3,
     "pernarowski": 4,
+    "poisson": 4,
     "rulkov_map": 4,
     "terman_wang": 4,
     "wilson_hr": 4,
@@ -119,6 +121,7 @@ MINIMAL_SAFETY_SCHEMAS: frozenset[str] = frozenset(
         "mihalas_niebur",
         "morris_lecar",
         "pernarowski",
+        "poisson",
         "rulkov_map",
         "terman_wang",
         "connor_stevens",
@@ -144,6 +147,7 @@ PRECISION_BY_SCHEMA: dict[str, tuple[int, int]] = {
     "exp_if": (64, 32),
     "ibarz_tanaka_map": (32, 16),
     "medvedev_map": (32, 16),
+    "poisson": (48, 24),
 }
 
 
@@ -154,7 +158,7 @@ class EmitResult:
     schema: str
     class_name: str
     module: str
-    state_port: str
+    state_port: str | None
     rtl_path: Path
     formal_path: Path
     sby_path: Path
@@ -183,7 +187,7 @@ class ModulePorts:
     """Parsed equation-compiler module surface."""
 
     name: str
-    primary_state: str
+    primary_state: str | None
     signed_outputs: tuple[str, ...]
     bit_outputs: tuple[str, ...]
     has_current_input: bool
@@ -200,9 +204,7 @@ def _parse_module_ports(rtl: str) -> ModulePorts:
     # ``signed`` from ``output reg signed [15:0] …``.
     bit_outs = tuple(re.findall(r"output\s+reg\s+(?!signed\b)(\w+)", rtl))
     bit_outs = tuple(b for b in bit_outs if b not in signed_outs)
-    if not signed_outs:
-        raise ValueError(f"{module}: no signed reg outputs found")
-    primary = signed_outs[0]
+    primary = signed_outs[0] if signed_outs else None
     for preferred in ("v_out", "i_mem_out", "theta_out", "w_out", "u_out"):
         if preferred in signed_outs:
             primary = preferred
@@ -261,6 +263,8 @@ def _formal_wrapper(ports: ModulePorts, *, minimal: bool, data_width: int = 16) 
 `endif
 """
     else:
+        if state_port is None:
+            raise ValueError(f"{module}: non-minimal formal job requires a signed state output")
         formal_body = f"""
 `ifdef FORMAL
     reg past_valid = 1'b0;
@@ -392,9 +396,10 @@ def emit_all() -> list[EmitResult]:
         "| --- | --- | --- | --- | --- | ---: |",
     ]
     for row in results:
+        state_port = f"`{row.state_port}`" if row.state_port is not None else "—"
         lines.append(
             f"| {row.class_name} | {row.schema} | `{row.module}` | "
-            f"`{row.state_port}` | Q{row.data_width - row.fraction}.{row.fraction} | "
+            f"{state_port} | Q{row.data_width - row.fraction}.{row.fraction} | "
             f"{row.depth} |"
         )
     inventory.write_text("\n".join(lines) + "\n", encoding="utf-8")

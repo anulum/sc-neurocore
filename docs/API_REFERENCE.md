@@ -619,6 +619,157 @@ Run the Mojo recurrence through its C ABI.
 
 ---
 
+## Module `accel.poisson`
+
+### Function `ensure_julia_loaded()`
+Load the committed Julia module when ``juliacall`` is available.
+
+Returns
+-------
+bool
+    ``True`` when the Julia recurrence is ready for execution, otherwise
+    ``False``. Import, source, or runtime failures remain non-fatal probes.
+
+### Function `ensure_go_loaded()`
+Load the staged Go C-shared Poisson library.
+
+Returns
+-------
+bool
+    ``True`` when the library exports the configured Poisson ABI, otherwise
+    ``False``.
+
+### Function `ensure_mojo_loaded()`
+Load the staged Mojo Poisson shared library.
+
+Returns
+-------
+bool
+    ``True`` when the library exports the configured Poisson ABI, otherwise
+    ``False``.
+
+### Function `simulate_rust(rate_hz, dt_ms, rng_state, n_steps, rate_override)`
+Run the complete contract through the production Rust engine.
+
+Parameters
+----------
+rate_hz : float
+    Configured homogeneous rate in hertz.
+dt_ms : float
+    Bin width in milliseconds.
+rng_state : int
+    Non-zero 16-bit LFSR state at batch entry.
+n_steps : int
+    Number of binary time bins to generate.
+rate_override : float
+    Batch rate in hertz, or a negative value to select ``rate_hz``.
+
+Returns
+-------
+events : numpy.ndarray
+    Validated contiguous ``uint8`` event trace.
+final_rng : int
+    Non-zero 16-bit LFSR state at batch exit.
+
+Raises
+------
+RuntimeError
+    If the Rust engine boundary is unavailable.
+FloatingPointError
+    If the engine returns malformed event or RNG data.
+
+### Function `simulate_julia(rate_hz, dt_ms, rng_state, n_steps, rate_override)`
+Run the committed Julia recurrence with the complete contract.
+
+Parameters
+----------
+rate_hz : float
+    Configured homogeneous rate in hertz.
+dt_ms : float
+    Bin width in milliseconds.
+rng_state : int
+    Non-zero 16-bit LFSR state at batch entry.
+n_steps : int
+    Number of binary time bins to generate.
+rate_override : float
+    Batch rate in hertz, or a negative value to select ``rate_hz``.
+
+Returns
+-------
+events : numpy.ndarray
+    Validated contiguous ``uint8`` event trace.
+final_rng : int
+    Non-zero 16-bit LFSR state at batch exit.
+
+Raises
+------
+RuntimeError
+    If the Julia module is unavailable.
+FloatingPointError
+    If the module returns malformed event or RNG data.
+
+### Function `simulate_go(rate_hz, dt_ms, rng_state, n_steps, rate_override)`
+Run the Go recurrence through its generated C ABI.
+
+Parameters
+----------
+rate_hz : float
+    Configured homogeneous rate in hertz.
+dt_ms : float
+    Bin width in milliseconds.
+rng_state : int
+    Non-zero 16-bit LFSR state at batch entry.
+n_steps : int
+    Number of binary time bins to generate.
+rate_override : float
+    Batch rate in hertz, or a negative value to select ``rate_hz``.
+
+Returns
+-------
+events : numpy.ndarray
+    Validated contiguous ``uint8`` event trace.
+final_rng : int
+    Non-zero 16-bit LFSR state at batch exit.
+
+Raises
+------
+RuntimeError
+    If the Go shared library is unavailable.
+FloatingPointError
+    If the C ABI rejects the contract or returns inconsistent data.
+
+### Function `simulate_mojo(rate_hz, dt_ms, rng_state, n_steps, rate_override)`
+Run the Mojo recurrence through its shared-library ABI.
+
+Parameters
+----------
+rate_hz : float
+    Configured homogeneous rate in hertz.
+dt_ms : float
+    Bin width in milliseconds.
+rng_state : int
+    Non-zero 16-bit LFSR state at batch entry.
+n_steps : int
+    Number of binary time bins to generate.
+rate_override : float
+    Batch rate in hertz, or a negative value to select ``rate_hz``.
+
+Returns
+-------
+events : numpy.ndarray
+    Validated contiguous ``uint8`` event trace.
+final_rng : int
+    Non-zero 16-bit LFSR state at batch exit.
+
+Raises
+------
+RuntimeError
+    If the Mojo shared library is unavailable.
+FloatingPointError
+    If the C ABI rejects the contract or returns inconsistent data.
+
+---
+
 ## Module `accel.quadratic_if`
 
 ### Function `ensure_julia_loaded()`
@@ -20506,7 +20657,7 @@ and the special variable `I` (input current).
 ``units="strict"`` enables opt-in pint-based dimensional
 validation before the expressions are compiled for runtime.
 
-- **__init__**(equations, parameters, state, threshold, reset, constants, dt, method, units, input_unit, detection, substeps, rate_expression, rng_seed)
+- **__init__**(equations, parameters, state, threshold, reset, constants, dt, method, units, input_unit, detection, substeps, rate_expression, probability_expression, rng_seed)
   - Initialise an equation-defined neuron from ODE strings.
 - **initial_threshold_active**()
   - Return whether the threshold condition holds on the INITIAL committed state.
@@ -20515,9 +20666,13 @@ validation before the expressions are compiled for runtime.
 - **get_state**()
   - Return current state, with units if in strict mode.
 - **escape_rng_initial_seed**()
-  - Return the emitted escape-threshold seed, or ``None`` for other models.
+  - Return the emitted stochastic-threshold seed (legacy API name).
 - **escape_rng_state**()
-  - Return the live escape-threshold LFSR state, or ``None`` when unused.
+  - Return the live stochastic-threshold state (legacy API name).
+- **stochastic_rng_initial_seed**()
+  - Return the emitted stochastic-threshold seed, or ``None`` when unused.
+- **stochastic_rng_state**()
+  - Return the live stochastic-threshold LFSR state, or ``None`` when unused.
 - **reset**()
   - Reset state to initial values.
 - **__repr__**()
@@ -23542,15 +23697,45 @@ Reference: Fang, W. et al. (2021). Proc. AAAI Conf. Artif. Intell. 35(3):2661–
 ## Module `neurons.models.poisson`
 
 ### Class `PoissonNeuron`
-Poisson spike generator — stochastic firing at rate λ.
+Generate homogeneous Poisson events in discrete binary time bins.
 
-P(spike in dt) = 1 - exp(-λ · dt). Essential for input layer generation.
+Parameters
+----------
+rate_hz : float, default=100.0
+    Non-negative homogeneous event rate in hertz.
+dt_ms : float, default=1.0
+    Positive bin width in milliseconds. Multiple arrivals within one bin
+    collapse to one event.
+seed : int or None, default=0xACE1
+    Replay seed for the canonical 16-bit LFSR. ``None`` draws one concrete
+    non-zero seed from system entropy and retains it for subsequent resets.
 
-Reference: Gerstner, W. et al. (2014). Neuronal Dynamics. Cambridge Univ. Press, §7.2.
+Notes
+-----
+Each accepted bin uses the exact finite-interval event probability
+``1 - exp(-rate_hz * dt_ms / 1000)`` and advances the shared LFSR16 by
+exactly one trial (eight primitive shifts). The generator therefore models
+a binary-bin observation of a homogeneous Poisson process, not an
+unbounded within-bin arrival count.
+
+References
+----------
+Gerstner, W., Kistler, W. M., Naud, R., & Paninski, L. (2014).
+*Neuronal Dynamics*, Sections 7.2 and 7.7.
+https://doi.org/10.1017/CBO9781107447615
 
 - **__post_init__**()
+  - Validate physical parameters and initialise the replayable RNG.
+- **initial_seed**()
+  - Return the concrete seed restored by :meth:`reset`.
+- **rng_state**()
+  - Return the live canonical LFSR16 state.
 - **step**(rate_override)
+  - Advance one binary time bin and return whether an event occurred.
+- **simulate**(n_steps, rate_override, backend)
+  - Return the binary event trace from Python or one real native backend.
 - **reset**()
+  - Restore the construction-time replay seed.
 
 ---
 

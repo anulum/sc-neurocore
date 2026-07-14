@@ -1,0 +1,299 @@
+{
+  "auto_backend_order": [
+    "rust",
+    "mojo",
+    "go",
+    "julia",
+    "python"
+  ],
+  "auto_backend_selection_basis": "integrated production path; non-exclusive warm timings remain diagnostic",
+  "backends": {
+    "go": {
+      "available": true,
+      "event_count": 44256,
+      "event_count_matches_python": true,
+      "event_mismatch_count": 0,
+      "event_sha256": "edf44e21373abf717fefaa6de1b527400c1cb1a4cbbab62d6aec86b5b7f642be",
+      "event_stream_matches_python": true,
+      "final_state": {
+        "rng_state": 46746
+      },
+      "maximum_call_ms": 20.073006,
+      "median_call_ms": 11.758502,
+      "median_ns_per_step": 58.79251,
+      "minimum_call_ms": 9.104295,
+      "parity_max_abs_diff": 0.0,
+      "rng_state_matches_python": true,
+      "samples_call_ms": [
+        16.304101,
+        15.160634,
+        20.073006,
+        10.146633,
+        11.758502,
+        10.100504,
+        9.104295
+      ],
+      "speedup_vs_python": 65.67355382513861,
+      "used": true
+    },
+    "julia": {
+      "available": true,
+      "event_count": 44256,
+      "event_count_matches_python": true,
+      "event_mismatch_count": 0,
+      "event_sha256": "edf44e21373abf717fefaa6de1b527400c1cb1a4cbbab62d6aec86b5b7f642be",
+      "event_stream_matches_python": true,
+      "final_state": {
+        "rng_state": 46746
+      },
+      "maximum_call_ms": 11.251761,
+      "median_call_ms": 8.818947,
+      "median_ns_per_step": 44.094735,
+      "minimum_call_ms": 5.424208,
+      "parity_max_abs_diff": 0.0,
+      "rng_state_matches_python": true,
+      "samples_call_ms": [
+        8.818947,
+        5.424208,
+        7.800625,
+        9.296285,
+        8.147694,
+        11.251761,
+        10.83461
+      ],
+      "speedup_vs_python": 87.56403842771705,
+      "used": true
+    },
+    "mojo": {
+      "available": true,
+      "event_count": 44256,
+      "event_count_matches_python": true,
+      "event_mismatch_count": 0,
+      "event_sha256": "edf44e21373abf717fefaa6de1b527400c1cb1a4cbbab62d6aec86b5b7f642be",
+      "event_stream_matches_python": true,
+      "final_state": {
+        "rng_state": 46746
+      },
+      "maximum_call_ms": 10.831954,
+      "median_call_ms": 6.840362,
+      "median_ns_per_step": 34.20181,
+      "minimum_call_ms": 6.414751,
+      "parity_max_abs_diff": 0.0,
+      "rng_state_matches_python": true,
+      "samples_call_ms": [
+        6.620231,
+        8.012386,
+        10.831954,
+        6.840362,
+        7.090717,
+        6.751073,
+        6.414751
+      ],
+      "speedup_vs_python": 112.89206828527497,
+      "used": true
+    },
+    "python": {
+      "available": true,
+      "event_count": 44256,
+      "event_count_matches_python": true,
+      "event_mismatch_count": 0,
+      "event_sha256": "edf44e21373abf717fefaa6de1b527400c1cb1a4cbbab62d6aec86b5b7f642be",
+      "event_stream_matches_python": true,
+      "final_state": {
+        "rng_state": 46746
+      },
+      "maximum_call_ms": 887.095392,
+      "median_call_ms": 772.222614,
+      "median_ns_per_step": 3861.11307,
+      "minimum_call_ms": 724.661833,
+      "parity_max_abs_diff": 0.0,
+      "rng_state_matches_python": true,
+      "samples_call_ms": [
+        805.719557,
+        887.095392,
+        794.738387,
+        724.661833,
+        772.222614,
+        761.058083,
+        763.197793
+      ],
+      "speedup_vs_python": 1.0,
+      "used": true
+    },
+    "rust": {
+      "available": true,
+      "event_count": 44256,
+      "event_count_matches_python": true,
+      "event_mismatch_count": 0,
+      "event_sha256": "edf44e21373abf717fefaa6de1b527400c1cb1a4cbbab62d6aec86b5b7f642be",
+      "event_stream_matches_python": true,
+      "final_state": {
+        "rng_state": 46746
+      },
+      "maximum_call_ms": 9.061067,
+      "median_call_ms": 5.972108,
+      "median_ns_per_step": 29.86054,
+      "minimum_call_ms": 5.588041,
+      "parity_max_abs_diff": 0.0,
+      "rng_state_matches_python": true,
+      "samples_call_ms": [
+        5.972108,
+        5.804593,
+        8.939185,
+        5.994853,
+        5.734579,
+        5.588041,
+        9.061067
+      ],
+      "speedup_vs_python": 129.30486421210065,
+      "used": true
+    }
+  },
+  "command": "taskset --cpu-list <cpu> env PYTHONPATH=src:. .venv/bin/python benchmarks/bench_model_poisson.py --json <artifact>",
+  "evidence_class": "local_regression_single_cpu_affinity_non_exclusive",
+  "fastest_measured_native_backend": "rust",
+  "hardware_measurement_claimed": false,
+  "kernel": "poisson_binary_bin_lfsr16_batch",
+  "measured_order": [
+    "rust",
+    "mojo",
+    "julia",
+    "go",
+    "python"
+  ],
+  "meta": {
+    "affinity": [
+      4
+    ],
+    "cpu": "11th Gen Intel(R) Core(TM) i5-11600K @ 3.90GHz",
+    "exclusive_cpu_isolation_claimed": false,
+    "governor": "powersave",
+    "kernel_isolated_cpus": "",
+    "kernel_nohz_full_cpus": "(null)",
+    "load_average_end": [
+      8.69677734375,
+      6.82958984375,
+      6.375
+    ],
+    "load_average_start": [
+      6.0009765625,
+      6.18701171875,
+      6.16064453125
+    ],
+    "measurement_scope": "single-logical-CPU taskset affinity; CPU is not claimed exclusively isolated",
+    "platform": "Linux-6.17.0-35-generic-x86_64-with-glibc2.39",
+    "runtime_versions": {
+      "go": "go version go1.24.0 linux/amd64",
+      "julia": "julia version 1.12.6",
+      "mojo": "Mojo 1.0.0b1 (a9591de6)",
+      "numpy": "2.2.6",
+      "python": "3.12.3",
+      "rust": "rustc 1.96.0 (ac68faa20 2026-05-25)"
+    },
+    "single_cpu_pinned": true
+  },
+  "production_speed_claim": false,
+  "recommended_auto_backend": "rust",
+  "schema_version": "sc-neurocore.polyglot-benchmark.v1",
+  "source_hashes": {
+    "benchmarks/bench_model_poisson": {
+      "py": "c8bf47176c12d3ee6bfe90686304e9d08cf40f34881ba3fa27ae96dbcb691cbb"
+    },
+    "benchmarks/bench_model_poisson.py": "c8bf47176c12d3ee6bfe90686304e9d08cf40f34881ba3fa27ae96dbcb691cbb",
+    "bridge/sc_neurocore_engine/__init__": {
+      "py": "64761e14898ba83fb46af689836981c4f73b909fd9ae6cf675f312024f981588"
+    },
+    "bridge/sc_neurocore_engine/__init__.py": "64761e14898ba83fb46af689836981c4f73b909fd9ae6cf675f312024f981588",
+    "engine/src/lib": {
+      "rs": "23d52cdb9a0431dbbf609158689379d6fad87fffa3b0cd5a9ab710392e5f1c0f"
+    },
+    "engine/src/lib.rs": "23d52cdb9a0431dbbf609158689379d6fad87fffa3b0cd5a9ab710392e5f1c0f",
+    "engine/src/neurons/special": {
+      "rs": "062fbf073e2f9d2d5b0650cd95084b5760c8c71ca308f4115ee33deeb7624df8"
+    },
+    "engine/src/neurons/special.rs": "062fbf073e2f9d2d5b0650cd95084b5760c8c71ca308f4115ee33deeb7624df8",
+    "engine/src/pyo3_neurons": {
+      "rs": "e161f080777df16b438f82f72934927d260779e6e4d04a3a575f7a6514059cd8"
+    },
+    "engine/src/pyo3_neurons.rs": "e161f080777df16b438f82f72934927d260779e6e4d04a3a575f7a6514059cd8",
+    "src/sc_neurocore/accel/go/neurons/poisson/libpoisson": {
+      "h": "2102cdea225e99566e314740c5c32000576539fb11bcef7585eba58e580c3d15"
+    },
+    "src/sc_neurocore/accel/go/neurons/poisson/libpoisson.h": "2102cdea225e99566e314740c5c32000576539fb11bcef7585eba58e580c3d15",
+    "src/sc_neurocore/accel/go/neurons/poisson/poisson": {
+      "go": "85969b9e1150c8d9da9d6a6290ec7cb68d0fb52e8623f5cde209dd05094a7900"
+    },
+    "src/sc_neurocore/accel/go/neurons/poisson/poisson.go": "85969b9e1150c8d9da9d6a6290ec7cb68d0fb52e8623f5cde209dd05094a7900",
+    "src/sc_neurocore/accel/go/services/poisson": {
+      "go": "a3a3087c464e38cd920f608cf12b199da5e84c335b487bc393a27007c9775d3d"
+    },
+    "src/sc_neurocore/accel/go/services/poisson.go": "a3a3087c464e38cd920f608cf12b199da5e84c335b487bc393a27007c9775d3d",
+    "src/sc_neurocore/accel/go/services/poisson_test": {
+      "go": "5bc06ac515fee7cb53e8c9387aa81d103e26611adeb6231435fb0a2ebadd79ff"
+    },
+    "src/sc_neurocore/accel/go/services/poisson_test.go": "5bc06ac515fee7cb53e8c9387aa81d103e26611adeb6231435fb0a2ebadd79ff",
+    "src/sc_neurocore/accel/julia/neurons/poisson": {
+      "jl": "7df21f3bf3a20c8f7bd8bcd520fb4fe6bac9686f50162d59904f18dce4fff09d"
+    },
+    "src/sc_neurocore/accel/julia/neurons/poisson.jl": "7df21f3bf3a20c8f7bd8bcd520fb4fe6bac9686f50162d59904f18dce4fff09d",
+    "src/sc_neurocore/accel/mojo/kernels/poisson": {
+      "mojo": "2a242d181d207943d6b89d5b94748a7be9831f061ca6687407bd143f02ec4404"
+    },
+    "src/sc_neurocore/accel/mojo/kernels/poisson.mojo": "2a242d181d207943d6b89d5b94748a7be9831f061ca6687407bd143f02ec4404",
+    "src/sc_neurocore/accel/poisson": {
+      "py": "a6ac588593f4f44eea4600a972b39287a8c8c83d0c334d85604378a5e7a22e48"
+    },
+    "src/sc_neurocore/accel/poisson.py": "a6ac588593f4f44eea4600a972b39287a8c8c83d0c334d85604378a5e7a22e48",
+    "src/sc_neurocore/accel/rust/safety/poisson": {
+      "rs": "fa4ac713474bbf576733c00a245d8576041ff48b930ae4857166df62dd93597d"
+    },
+    "src/sc_neurocore/accel/rust/safety/poisson.rs": "fa4ac713474bbf576733c00a245d8576041ff48b930ae4857166df62dd93597d",
+    "src/sc_neurocore/neurons/_stochastic_threshold": {
+      "py": "e8197e9fb1a2127c9c1bd18c9b2bee902d6dcf3bd85c06dcdd56358d43f3475a"
+    },
+    "src/sc_neurocore/neurons/_stochastic_threshold.py": "e8197e9fb1a2127c9c1bd18c9b2bee902d6dcf3bd85c06dcdd56358d43f3475a",
+    "src/sc_neurocore/neurons/model_schemas/poisson": {
+      "json": "b6d3f229232b7e00c8c63dc372ba7d2b1c388f8300ec6397fb7f0195440b34f9",
+      "toml": "6bb93ce73dc4808b2720ac7dc555ab9b7f3d520dba41c36a9f4b4ebcaa8371e6"
+    },
+    "src/sc_neurocore/neurons/model_schemas/poisson.json": "b6d3f229232b7e00c8c63dc372ba7d2b1c388f8300ec6397fb7f0195440b34f9",
+    "src/sc_neurocore/neurons/model_schemas/poisson.toml": "6bb93ce73dc4808b2720ac7dc555ab9b7f3d520dba41c36a9f4b4ebcaa8371e6",
+    "src/sc_neurocore/neurons/models/poisson": {
+      "py": "49268de9662241280b6bd576a733b0dc05e98200f514c198055ff7a74e49c181"
+    },
+    "src/sc_neurocore/neurons/models/poisson.py": "49268de9662241280b6bd576a733b0dc05e98200f514c198055ff7a74e49c181"
+  },
+  "timestamp_utc": "2026-07-14T08:03:23Z",
+  "verification": {
+    "rust_safety": {
+      "command": "rustc --edition=2021 --test /media/anulum/GOTM/aaa_God_of_the_Math_Collection/03_CODE/SC-NEUROCORE/src/sc_neurocore/accel/rust/safety/poisson.rs -O -o <temp-binary> && <temp-binary>",
+      "output_tail": [
+        "running 8 tests",
+        "test tests::test_full_period_has_exact_quarter_hazard_count ... ok",
+        "test tests::test_high_rate_saturates ... ok",
+        "test tests::test_invalid_runtime_state_fails ... ok",
+        "test tests::test_non_finite_interval_hazard_fails ... ok",
+        "test tests::test_non_finite_rate_override_fails ... ok",
+        "test tests::test_poisson_new ... ok",
+        "test tests::test_poisson_step ... ok",
+        "test tests::test_seeded_sequence_and_reset_are_replayable ... ok",
+        "",
+        "test result: ok. 8 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s"
+      ],
+      "passed": true,
+      "returncode": 0
+    }
+  },
+  "workload": {
+    "dt_ms": 1.0,
+    "initial_state": {
+      "rng_state": 4660
+    },
+    "n_steps": 200000,
+    "parameters": "complete rate/dt plus seeded LFSR16 native ABI",
+    "rate_hz": 250.0,
+    "rate_override": -1.0,
+    "repeats": 7,
+    "warmup_steps": 1000
+  }
+}

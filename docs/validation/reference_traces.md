@@ -9,16 +9,16 @@ executes the same `UniversalNeuron` runner used by public schema workflows, and
 reports feature-level mismatches without falling back to another trace.
 
 This page documents the WC-A1 deterministic schema corpus and the separate
-seeded EscapeRate statistical reference. It does not claim NEST, Brian2,
+seeded EscapeRate and Poisson statistical references. It does not claim NEST, Brian2,
 NEURON, or published-figure replay coverage; those remain separate external-
 simulator validation surfaces.
 
 ## Current Corpus
 
 The committed deterministic corpus has one reference entry for every
-deterministic bundled schema model. `poisson` remains excluded from this table.
-`escape_rate` is stochastic and therefore has a separate exhaustive seeded
-reference immediately after the table rather than a deterministic feature row.
+deterministic bundled schema model. `escape_rate` and `poisson` are stochastic
+and therefore have separate exhaustive seeded references immediately after the
+table rather than deterministic feature rows.
 
 | Trace | Schema | Runner | Provenance |
 |-------|--------|--------|------------|
@@ -78,6 +78,24 @@ piecewise-constant finite-step hazard transform, LFSR polynomial and
 decimation, comparator quantisation, and default seed are explicitly maintained
 SC-NeuroCore conventions. This seeded artifact extends the evidence corpus; it
 is not presented as a deterministic `UniversalNeuron` feature trace.
+
+`poisson_lfsr16_statistical_v1.json` separately binds the homogeneous Poisson
+source to the same hardware sampler. It independently computes
+`p=1-exp(-rate_hz*dt_ms/1000)`, then re-evaluates the LFSR and comparator over
+the complete period. At 250 Hz with 1 ms bins and seed `0xACE1`, it records the
+same exact 14,496-event vector and distribution features because the interval
+hazard is also 0.25. The artifact additionally pins the comparator threshold
+14,497, continuous and realised probabilities, first and last event indices,
+final RNG state, and the same five-seed corpus. Its test compares the independent
+result with the hand `PoissonNeuron`, paired TOML/JSON `UniversalNeuron`
+surfaces, and every native backend.
+
+Gerstner, Kistler, Naud, and Paninski (2014), Sections 7.2 and 7.7, supply the
+homogeneous process, exponential waiting-time law, and finite-interval event
+probability; DOI `10.1017/CBO9781107447615` anchors that source. Binary-bin
+collapse, polynomial, decimation, comparator quantisation, and replay seed are
+explicit SC-NeuroCore conventions. The artifact is statistical seeded evidence,
+not a deterministic scalar-feature trace or an external-simulator claim.
 
 All entries record spike count, first spike step, and final/min/max/mean
 features for the declared state variables. The tests independently recompute the
