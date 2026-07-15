@@ -120,7 +120,7 @@ class TestConstruction:
         assert float(core.lr_rule.get_weights()[0]) == pytest.approx(0.1, abs=1e-6)
 
     def test_unknown_backend_rejected(self):
-        with pytest.raises(ValueError, match="Unknown backend"):
+        with pytest.raises(ValueError, match="unknown backend"):
             ArcaneZenithCognitiveCore(backend="not-a-backend")
 
 

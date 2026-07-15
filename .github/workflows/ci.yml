@@ -211,6 +211,22 @@ jobs:
           python tools/build_accel_backends.py --language go --require "$REQUIRED"
           python tools/build_accel_backends.py --language mojo --require "$REQUIRED"
 
+          # Self-contained backends live in accel/<lang>/<model>/ and locate their
+          # library with a Path(__file__).resolve().parent / "lib<model>.so" loader.
+          # build_accel_backends.py discovery recognises only the _ACCEL_ROOT-anchored
+          # loader idiom, so it does not yet find these; wilson_cowan and wong_wang
+          # have failing compiled-backend parity/bench tests, so build them explicitly
+          # (both toolchains, per the recipes in their loaders). Extending discovery to
+          # the whole self-contained convention (also dcls_tent, mixed_dense,
+          # adc_to_spike, rk4_neurons) is tracked separately: it needs per-backend test
+          # verification before those additional builds are turned on.
+          for model in wilson_cowan wong_wang; do
+            ( cd "src/sc_neurocore/accel/go/${model}" \
+                && go build -buildmode=c-shared -o "lib${model}.so" "${model}.go" )
+            ( cd "src/sc_neurocore/accel/mojo/${model}" \
+                && mojo build --emit shared-lib -o "lib${model}.so" "${model}.mojo" )
+          done
+
       # Bootstrap juliacall's Julia ONCE, serially, before the parallel pytest
       # run. On first import juliacall's juliapkg installs + precompiles Julia
       # into the shared ~/.julia depot; under `pytest -n auto` several xdist
