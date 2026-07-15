@@ -20,6 +20,17 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
   real public contracts instead of a universal ``n_steps``/float/tuple shape.
 
 ### Added
+- Promoted the Wong and Wang (2006) two-choice Appendix reduction across
+  Python, the modular Rust engine, independent Rust safety, Julia, Go C-shared,
+  and Mojo shared-library execution. Every runtime carries the same
+  pre-update transfer, simultaneous explicit-Euler NMDA gating, AMPA
+  Ornstein-Uhlenbeck current states, and explicit Gaussian-sample boundary.
+- Added a public atomic six-trace/four-final-state batch, paired TOML/JSON
+  schemas, an independent DOI and author-source-pinned reference trace,
+  five-runtime configured parity, failure-atomic native contracts, and a
+  source/binary-bound local benchmark. Generated Q32.32 RTL is bounded by
+  co-simulation only; no synthesis, timing, formal-equivalence, production-
+  speed, or hardware result is claimed.
 - Promoted the normalised `WilsonCowanUnit` coupled E/I population-rate
   reduction across Python, the modular Rust engine, independent Rust safety,
   Julia, Go C-shared, and Mojo shared-library lanes. Every batch carries the

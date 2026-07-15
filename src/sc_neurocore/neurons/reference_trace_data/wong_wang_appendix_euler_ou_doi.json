@@ -1,0 +1,95 @@
+{
+  "schema_version": "sc-neurocore.reference-trace.v1",
+  "name": "wong_wang_appendix_euler_ou_doi",
+  "model": {
+    "schema_name": "wong_wang",
+    "runner": "hand_model"
+  },
+  "protocol": {
+    "dt": 0.0001,
+    "steps": 256,
+    "inputs": {
+      "stim1_formula": "0.02 + 0.01 * sin(step * 0.07)",
+      "stim2_formula": "-0.01 + 0.008 * cos(step * 0.11)",
+      "xi1_formula": "sin((2 * step) * 0.17)",
+      "xi2_formula": "sin((2 * step + 1) * 0.17)"
+    },
+    "initial_state": {
+      "s1": 0.1,
+      "s2": 0.1,
+      "noise1": 0.0,
+      "noise2": 0.0
+    },
+    "parameters": {
+      "tau_s": 0.1,
+      "tau_ampa": 0.002,
+      "gamma": 0.641,
+      "j_n": 0.2609,
+      "j_cross": 0.0497,
+      "i_0": 0.3255,
+      "sigma": 0.02,
+      "a": 270.0,
+      "b": 108.0,
+      "d": 0.154
+    },
+    "trace_layout": [
+      "post_step.s1",
+      "post_step.s2",
+      "post_step.noise1",
+      "post_step.noise2",
+      "pre_step.r1",
+      "pre_step.r2"
+    ]
+  },
+  "provenance": {
+    "kind": "independent_appendix_euler_ou_reference",
+    "source": "https://github.com/xjwanglab/wong-wang-2006/blob/c39c6742329f89f1b5137f32910d55ad52d4bc24/wong06.m",
+    "source_commit": "c39c6742329f89f1b5137f32910d55ad52d4bc24",
+    "equation": "The two reduced NMDA gating equations and two AMPA Ornstein-Uhlenbeck current states are re-derived independently with simultaneous explicit Euler updates. Rates use the pre-update physical state and externally supplied Gaussian samples.",
+    "citation": "doi:10.1523/JNEUROSCI.3733-05.2006",
+    "timestep_note": "The paper Methods state dt=0.1 ms; the pinned author-lab trial script uses dt=0.5 ms. This enrolled reference uses the paper value."
+  },
+  "expected_features": {
+    "first.s1": 0.10007293244741858,
+    "final.s1": 0.12211897338360549,
+    "min.s1": 0.10007293244741858,
+    "max.s1": 0.12211897338360549,
+    "mean.s1": 0.11212554898047991,
+    "first.s2": 0.09999583388716032,
+    "final.s2": 0.0954730209784481,
+    "min.s2": 0.0954730209784481,
+    "max.s2": 0.10038548362451129,
+    "mean.s2": 0.09799028384473663,
+    "first.noise1": 0.0,
+    "final.noise1": -0.007838745953751891,
+    "min.noise1": -0.01339308327541422,
+    "max.noise1": 0.021783365169883728,
+    "mean.noise1": 0.0011261304010557224,
+    "first.noise2": 0.0007566064662138025,
+    "final.noise2": -0.00956589612785117,
+    "min.noise2": -0.013393883620703737,
+    "max.noise2": 0.02173433083737052,
+    "mean.noise2": 0.0011207684594493569,
+    "first.r1": 2.9976156598816934,
+    "final.r1": 2.5545071907708055,
+    "min.r1": 1.7560474909676704,
+    "max.r1": 5.791912616052469,
+    "mean.r1": 3.4855578939783505,
+    "first.r2": 1.6611871582652227,
+    "final.r2": 0.8214517340723227,
+    "min.r2": 0.6656656194805318,
+    "max.r2": 2.76122247333744,
+    "mean.r2": 1.38939848705864,
+    "interleaved_f64le_sha256": "d39f219d3cd21d505c71749a1d9547d4cef550299f8e829bb2aa2a30d66daf44"
+  },
+  "tolerances": {
+    "default": {
+      "absolute": 1e-12,
+      "relative": 0.0
+    },
+    "interleaved_f64le_sha256": {
+      "absolute": 0.0,
+      "relative": 0.0
+    }
+  }
+}

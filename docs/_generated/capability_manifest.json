@@ -967,11 +967,11 @@
     "model_documentation_pages": 175,
     "optional_extras": 28,
     "public_api_exports": 45,
-    "public_documentation_pages": 577,
+    "public_documentation_pages": 578,
     "python_model_classes": 158,
     "python_model_source_modules": 153,
     "rust_pyo3_model_wrappers": 175,
-    "test_files": 1345
+    "test_files": 1349
   },
   "documentation": {
     "public_pages": [
@@ -1551,7 +1551,8 @@
       "docs/validation/reference_traces.md",
       "docs/validation/sigmoid_rate_source_fidelity.md",
       "docs/validation/threshold_linear_rate_source_fidelity.md",
-      "docs/validation/wilson_cowan_source_fidelity.md"
+      "docs/validation/wilson_cowan_source_fidelity.md",
+      "docs/validation/wong_wang_source_fidelity.md"
     ]
   },
   "evidence_boundary": "Counts are file-system and static-source inventory only; benchmark, coverage, hardware, and scientific-fidelity claims remain governed by their dedicated evidence artefacts.",
@@ -2939,6 +2940,7 @@
       "tests/test_bench_threshold_linear_rate.py",
       "tests/test_bench_verilog_compiler.py",
       "tests/test_bench_wilson_cowan.py",
+      "tests/test_bench_wong_wang.py",
       "tests/test_benchmark_context.py",
       "tests/test_benchmark_evidence_docs.py",
       "tests/test_benchmark_harness_contracts.py",
@@ -3118,6 +3120,7 @@
       "tests/test_cosim_theta.py",
       "tests/test_cosim_wang_buzsaki.py",
       "tests/test_cosim_wilson_hr.py",
+      "tests/test_cosim_wong_wang.py",
       "tests/test_cosimulation.py",
       "tests/test_courage_nekorkin_map_backends.py",
       "tests/test_dashboard/test_text_dashboard.py",
@@ -3796,6 +3799,7 @@
       "tests/test_reference_traces.py",
       "tests/test_reference_wang_buzsaki.py",
       "tests/test_reference_wilson_hr.py",
+      "tests/test_reference_wong_wang.py",
       "tests/test_registry.py",
       "tests/test_release_surface_consistency.py",
       "tests/test_reservoir.py",
@@ -4165,6 +4169,7 @@
       "tests/test_wilson_cowan_parity.py",
       "tests/test_wilson_hr_backends.py",
       "tests/test_wong_wang_accel_dispatch_contracts.py",
+      "tests/test_wong_wang_backends.py",
       "tests/test_wong_wang_dynamics.py",
       "tests/test_wong_wang_go_parity.py",
       "tests/test_wong_wang_julia_parity.py",

@@ -199,6 +199,31 @@ Python floor. The artefact binds exact sources and loaded Rust/Go/Mojo binaries;
 these timings are local diagnostic regression evidence, not production,
 hardware, cross-host, or universal-ranking claims.
 
+## Wong-Wang two-population Euler/OU batch
+
+The committed `benchmarks/results/bench_wong_wang.json` records all six
+post-update state/rate traces and four final-state receipts through the five
+public runtimes. Five 100,000-step samples follow a 1,000-step warm-up. The run
+was pinned to logical CPU 11 on the same i5-11600K host, without exclusive CPU
+isolation and with a recorded one-minute load average of 18.16.
+
+| Backend | Median call | Median ns/step | Maximum trace difference | Trace mismatches |
+|---|---:|---:|---:|---:|
+| Rust | 18.253 ms | 182.534 | `0` | 0 |
+| Mojo | 22.803 ms | 228.032 | `1.206e-11` | 0 |
+| Julia | 25.579 ms | 255.793 | `2.842e-14` | 0 |
+| Go | 30.692 ms | 306.919 | `7.105e-15` | 0 |
+| Python | 910.511 ms | 9,105.110 | `0` | 0 |
+
+Rust is byte-identical to the Python interleaved trace, whose SHA-256 is
+`1961d77ec5b028c3fedcd3d731d688b1a1aa54691c6b2dda84bbf098aa9bd827`.
+Julia, Go, and Mojo remain within their declared complete-trace absolute
+envelopes. The ascending native median order for this recorded run is Rust,
+Mojo, Julia, then Go, followed by the always-available Python floor. The
+artefact binds the exact sources and loaded Rust/Go/Mojo binaries; these are
+local diagnostic regression timings, not production, hardware, cross-host, or
+universal-ranking claims.
+
 ## Chialvo map polyglot batch loop
 
 The committed `benchmarks/bench_chialvo_map.py` runs the same

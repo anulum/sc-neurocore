@@ -5,6 +5,20 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+### Wong-Wang source-to-co-simulation closure
+
+- Promoted the Wong and Wang (2006) Appendix decision circuit through Python,
+  the modular Rust engine, independent Rust safety, Julia, Go C-shared, and
+  Mojo shared-library execution. All lanes use pre-update firing rates,
+  simultaneous explicit-Euler NMDA gating, AMPA Ornstein-Uhlenbeck current
+  states, and caller-supplied Gaussian samples.
+- Added public atomic batch dispatch, paired serial-input schemas, an
+  independent DOI and author-code-pinned trace, configured five-runtime
+  trajectory parity, native invalid-buffer tests, source/binary-bound local
+  benchmark evidence, and bounded generated Q32.32 co-simulation. The paper's
+  0.1 ms timestep is retained and the author-script 0.5 ms discrepancy is
+  explicit; no higher silicon or production-speed result is claimed.
+
 ### Wilson-Cowan polyglot closure
 
 - Promoted the declared normalised Wilson-Cowan coupled E/I equations through

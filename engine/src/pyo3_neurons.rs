@@ -26,6 +26,8 @@ mod mcculloch_pitts_binding;
 mod sigmoid_rate_binding;
 #[path = "bindings/threshold_linear_rate.rs"]
 mod threshold_linear_rate_binding;
+#[path = "bindings/wong_wang.rs"]
+mod wong_wang_binding;
 
 macro_rules! py_neuron_default {
     ($pylit:literal, $pyname:ident, $rust:ty $(, state $sname:ident)*) => {
@@ -1307,8 +1309,20 @@ impl PyWongWangUnit {
         }
     }
     #[pyo3(signature = (stim1=0.0, stim2=0.0))]
-    fn step(&mut self, stim1: f64, stim2: f64) -> (f64, f64) {
-        self.inner.step(stim1, stim2)
+    fn step(&mut self, stim1: f64, stim2: f64) -> PyResult<(f64, f64)> {
+        self.inner.step(stim1, stim2).map_err(PyValueError::new_err)
+    }
+    #[pyo3(signature = (stim1=0.0, stim2=0.0, xi1=0.0, xi2=0.0))]
+    fn step_with_gaussian_samples(
+        &mut self,
+        stim1: f64,
+        stim2: f64,
+        xi1: f64,
+        xi2: f64,
+    ) -> PyResult<(f64, f64)> {
+        self.inner
+            .step_with_gaussian_samples(stim1, stim2, xi1, xi2)
+            .map_err(PyValueError::new_err)
     }
     fn reset(&mut self) {
         self.inner.reset();
@@ -1317,6 +1331,8 @@ impl PyWongWangUnit {
         let d = PyDict::new(py);
         d.set_item("s1", self.inner.s1)?;
         d.set_item("s2", self.inner.s2)?;
+        d.set_item("noise1", self.inner.noise1)?;
+        d.set_item("noise2", self.inner.noise2)?;
         Ok(d.into_any().unbind())
     }
 }
@@ -2238,6 +2254,7 @@ pub fn register_neuron_classes(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_class::<PyWilsonCowanUnit>()?;
     m.add_class::<PyJansenRitUnit>()?;
     m.add_class::<PyWongWangUnit>()?;
+    wong_wang_binding::register(m)?;
     m.add_class::<PyErmentroutKopellPopulation>()?;
     m.add_class::<PyWendlingNeuron>()?;
     m.add_class::<PyLarterBreakspearNeuron>()?;

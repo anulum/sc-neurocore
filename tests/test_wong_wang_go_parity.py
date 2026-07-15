@@ -4,155 +4,58 @@
 # © Code 2020–2026 Miroslav Šotek. All rights reserved.
 # ORCID: 0009-0009-3560-0851
 # Contact: www.anulum.li | protoscience@anulum.li
-# SC-NeuroCore — Parity: Python primary vs Go simulator (Wong-Wang)
+# SC-NeuroCore — Python/Go Wong-Wang Euler/OU parity
 
-"""Bit-exact parity between the Python primary and the Go cgo simulator."""
+"""Compare the Go C-shared batch with the deterministic Python golden."""
 
 from __future__ import annotations
 
 import numpy as np
+import numpy.typing as npt
 import pytest
 
-from sc_neurocore.neurons.models.wong_wang import WongWangUnit
+from sc_neurocore.accel.go.wong_wang import _HAS_GO_WONG_WANG, simulate_wong_wang
+from sc_neurocore.accel.wong_wang import simulate_python
 
-from sc_neurocore.accel.go.wong_wang import (
-    _HAS_GO_WONG_WANG,
-    simulate_wong_wang,
-)
+_PARAMETERS = (0.24, 0.11, 0.01, -0.02, 0.12, 0.003, 0.7, 0.28, 0.06, 0.31, 0.015, 0.0002)
 
-if not _HAS_GO_WONG_WANG:
-    pytest.skip(
-        "libwong_wang.so not built (run go build in accel/go/wong_wang)",
-        allow_module_level=True,
+
+def _inputs(steps: int) -> tuple[npt.NDArray[np.float64], ...]:
+    index = np.arange(steps, dtype=np.float64)
+    return (
+        0.02 + 0.01 * np.sin(index * 0.07),
+        -0.01 + 0.008 * np.cos(index * 0.11),
+        np.sin(np.arange(2 * steps, dtype=np.float64) * 0.17),
     )
 
-DEFAULT_PARAMS = dict(
-    tau_s=0.1,
-    gamma=0.641,
-    j_n=0.2609,
-    j_cross=0.0497,
-    i_0=0.3255,
-    sigma=0.02,
-    dt=0.001,
-)
+
+def test_go_shared_library_is_available() -> None:
+    """Keep the maintained native lane fail-closed."""
+    assert _HAS_GO_WONG_WANG
 
 
-def _run_python(n: int, stim1, stim2, seed):
-    np.random.seed(seed)
-    u = WongWangUnit(**DEFAULT_PARAMS)
-    s1 = np.empty(n, dtype=np.float64)
-    s2 = np.empty(n, dtype=np.float64)
-    for t in range(n):
-        u.step(float(stim1[t]), float(stim2[t]))
-        s1[t], s2[t] = u.s1, u.s2
-    return s1, s2
+@pytest.mark.parametrize("steps", (0, 1, 128, 1024))
+def test_go_complete_mapping_matches_python(steps: int) -> None:
+    """Compare all traces and final receipts under one explicit sample stream."""
+    inputs = _inputs(steps)
+    expected = simulate_python(*_PARAMETERS, *inputs)
+    actual = simulate_wong_wang(*_PARAMETERS, *inputs)
+    for key in ("s1", "s2", "noise1", "noise2", "r1", "r2"):
+        np.testing.assert_allclose(actual[key], expected[key], rtol=0.0, atol=1.0e-12)
+    for key in ("s1_final", "s2_final", "noise1_final", "noise2_final"):
+        assert float(actual[key]) == pytest.approx(float(expected[key]), abs=1.0e-12)
 
 
-def _run_go(n: int, stim1, stim2, seed):
-    np.random.seed(seed)
-    xi = np.random.randn(2 * n).astype(np.float64)
-    out = simulate_wong_wang(
-        0.1,
-        0.1,
-        DEFAULT_PARAMS["tau_s"],
-        DEFAULT_PARAMS["gamma"],
-        DEFAULT_PARAMS["j_n"],
-        DEFAULT_PARAMS["j_cross"],
-        DEFAULT_PARAMS["i_0"],
-        DEFAULT_PARAMS["sigma"],
-        DEFAULT_PARAMS["dt"],
-        np.asarray(stim1, dtype=np.float64),
-        np.asarray(stim2, dtype=np.float64),
-        xi,
-    )
-    return out["s1"], out["s2"]
+def test_go_rejects_non_finite_samples() -> None:
+    """Reject invalid arrays before the C boundary."""
+    stim1, stim2, xi = _inputs(2)
+    xi[1] = np.nan
+    with pytest.raises(ValueError, match="finite"):
+        simulate_wong_wang(*_PARAMETERS, stim1, stim2, xi)
 
 
-class TestPythonGoParity:
-    def test_parity_quiescent(self):
-        n = 5_000
-        p1, p2 = _run_python(n, np.zeros(n), np.zeros(n), seed=42)
-        g1, g2 = _run_go(n, np.zeros(n), np.zeros(n), seed=42)
-        assert np.allclose(p1, g1, atol=1e-12, rtol=0)
-        assert np.allclose(p2, g2, atol=1e-12, rtol=0)
-
-    def test_parity_biased(self):
-        n = 5_000
-        stim1 = np.full(n, 0.1)
-        stim2 = np.zeros(n)
-        p1, p2 = _run_python(n, stim1, stim2, seed=123)
-        g1, g2 = _run_go(n, stim1, stim2, seed=123)
-        assert np.allclose(p1, g1, atol=1e-12, rtol=0)
-        assert np.allclose(p2, g2, atol=1e-12, rtol=0)
-
-    def test_parity_across_seeds(self):
-        n = 2_000
-        stim1 = np.full(n, 0.1)
-        stim2 = np.zeros(n)
-        for seed in (0, 1, 42, 100, 2025):
-            p1, p2 = _run_python(n, stim1, stim2, seed=seed)
-            g1, g2 = _run_go(n, stim1, stim2, seed=seed)
-            assert np.allclose(p1, g1, atol=1e-12, rtol=0), f"seed={seed}: diverged"
-
-
-class TestRustGoCrossParity:
-    """Rust + Go must agree bit-exact under shared xi."""
-
-    def test_rust_go_identical(self):
-        rs = pytest.importorskip(
-            "sc_neurocore_engine", reason="Rust engine not built"
-        ).py_wong_wang_simulate
-        n = 5_000
-        np.random.seed(17)
-        xi = np.random.randn(2 * n).astype(np.float64)
-        stim1 = np.full(n, 0.15)
-        stim2 = np.full(n, 0.05)
-        r = rs(
-            0.1,
-            0.1,
-            DEFAULT_PARAMS["tau_s"],
-            DEFAULT_PARAMS["gamma"],
-            DEFAULT_PARAMS["j_n"],
-            DEFAULT_PARAMS["j_cross"],
-            DEFAULT_PARAMS["i_0"],
-            DEFAULT_PARAMS["sigma"],
-            DEFAULT_PARAMS["dt"],
-            stim1,
-            stim2,
-            xi,
-        )
-        g = simulate_wong_wang(
-            0.1,
-            0.1,
-            DEFAULT_PARAMS["tau_s"],
-            DEFAULT_PARAMS["gamma"],
-            DEFAULT_PARAMS["j_n"],
-            DEFAULT_PARAMS["j_cross"],
-            DEFAULT_PARAMS["i_0"],
-            DEFAULT_PARAMS["sigma"],
-            DEFAULT_PARAMS["dt"],
-            stim1,
-            stim2,
-            xi,
-        )
-        assert np.allclose(r["s1"], g["s1"], atol=1e-12, rtol=0)
-        assert np.allclose(r["s2"], g["s2"], atol=1e-12, rtol=0)
-
-
-class TestInputValidation:
-    def test_xi_length_mismatch_raises(self):
-        with pytest.raises(ValueError, match="xi length must be 2 \\* n_steps"):
-            simulate_wong_wang(
-                0.1,
-                0.1,
-                DEFAULT_PARAMS["tau_s"],
-                DEFAULT_PARAMS["gamma"],
-                DEFAULT_PARAMS["j_n"],
-                DEFAULT_PARAMS["j_cross"],
-                DEFAULT_PARAMS["i_0"],
-                DEFAULT_PARAMS["sigma"],
-                DEFAULT_PARAMS["dt"],
-                np.zeros(100),
-                np.zeros(100),
-                np.zeros(50),
-            )
+def test_go_native_error_is_reported() -> None:
+    """Map a rejected scalar configuration into a Python runtime error."""
+    invalid = (*_PARAMETERS[:-1], -0.0002)
+    with pytest.raises(RuntimeError, match="code 2"):
+        simulate_wong_wang(*invalid, *_inputs(1))

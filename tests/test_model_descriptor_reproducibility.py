@@ -25,7 +25,8 @@ import json
 import os
 import subprocess
 import sys
-from typing import Any
+from collections.abc import Callable, Mapping, Sequence
+from typing import Any, ParamSpec, TypeVar, cast
 
 import numpy as np
 import numpy.typing as npt
@@ -37,6 +38,8 @@ from sc_neurocore.neurons.models import _CLASS_TO_MODULE
 from sc_neurocore.studio.models import _load_class
 
 _ULP_TOLERANCE = 1e-9
+_P = ParamSpec("_P")
+_R = TypeVar("_R")
 _AVX512_FEATURES = (
     "AVX512F",
     "AVX512CD",
@@ -45,6 +48,20 @@ _AVX512_FEATURES = (
     "AVX512_CNL",
     "AVX512_ICL",
 )
+
+
+def _parametrize(
+    argnames: str,
+    argvalues: object,
+) -> Callable[[Callable[_P, _R]], Callable[_P, _R]]:
+    """Return a typed view of pytest's externally untyped parametriser."""
+    marker = cast(
+        "Callable[[str, object], Callable[[Callable[_P, _R]], Callable[_P, _R]]]",
+        pytest.mark.parametrize,
+    )
+    return marker(argnames, argvalues)
+
+
 _REFERENCE_TRACE_CHILD = """
 import inspect
 import json
@@ -60,8 +77,20 @@ cls = _load_class(model)
 constructor = inspect.signature(cls).parameters
 kwargs = {key: value for key, value in config.items() if key in constructor}
 instance = cls(**kwargs)
-result = instance.simulate(config["n_steps"], config["current"], backend="python")
-trace = result[0] if isinstance(result, tuple) else result
+if config.get("kind") == "sampled_batch_v1":
+    arguments = []
+    for field in config["simulate_fields"]:
+        spec = config["inputs"][field]
+        index = np.arange(config["n_steps"] * spec.get("length_multiplier", 1), dtype=float)
+        angle = spec.get("angular_frequency", 0.0) * index + spec.get("phase", 0.0)
+        function = spec.get("function", "constant")
+        wave = np.sin(angle) if function == "sin" else np.cos(angle) if function == "cos" else np.ones_like(index)
+        arguments.append(spec.get("offset", 0.0) + spec.get("amplitude", 0.0) * wave)
+    result = instance.simulate(*arguments, backend="python")
+    trace = np.column_stack([np.asarray(result[field], dtype=float) for field in config["trace_fields"]]).reshape(-1)
+else:
+    result = instance.simulate(config["n_steps"], config["current"], backend="python")
+    trace = result[0] if isinstance(result, tuple) else result
 sys.stdout.buffer.write(np.asarray(trace, dtype="<f8").tobytes())
 """
 
@@ -94,11 +123,115 @@ def _construct_instance(model: str, config: dict[str, object]) -> Any:
     return cls(**kwargs)
 
 
-def _result_trace(model: str, result: object) -> npt.NDArray[np.float64]:
-    """Normalise tuple-returning spiking and array-returning rate simulations."""
+def _result_trace(
+    model: str,
+    result: object,
+    trace_fields: Sequence[str] = (),
+) -> npt.NDArray[np.float64]:
+    """Normalise scalar or named multi-observable simulation results."""
+    if trace_fields:
+        assert isinstance(result, Mapping), (
+            f"{model} sampled batch must return a mapping for named trace fields"
+        )
+        columns: list[npt.NDArray[np.float64]] = []
+        expected_shape: tuple[int, ...] | None = None
+        for field in trace_fields:
+            assert field in result, f"{model} sampled batch omitted trace field {field!r}"
+            column = np.asarray(result[field], dtype=float)
+            assert column.ndim == 1, f"{model}.{field} is not a vector"
+            if expected_shape is None:
+                expected_shape = column.shape
+            assert column.shape == expected_shape, f"{model} sampled trace shapes disagree"
+            columns.append(column)
+        assert columns, f"{model} sampled batch declared no trace fields"
+        return np.asarray(np.column_stack(columns).reshape(-1), dtype=float)
     raw_trace = result[0] if isinstance(result, tuple) else result
     trace = np.asarray(raw_trace, dtype=float)
     assert trace.ndim == 1, f"{model} reference simulation returned a non-vector trace"
+    return trace
+
+
+def _numeric_spec_value(
+    model: str,
+    field: str,
+    spec: Mapping[str, object],
+    key: str,
+    default: float,
+) -> float:
+    """Return one finite numeric sampled-input setting."""
+    value = spec.get(key, default)
+    assert isinstance(value, (int, float)) and not isinstance(value, bool), (
+        f"{model}.{field}.{key} must be numeric"
+    )
+    converted = float(value)
+    assert np.isfinite(converted), f"{model}.{field}.{key} must be finite"
+    return converted
+
+
+def _sampled_input(
+    model: str,
+    field: str,
+    raw_spec: object,
+    n_steps: int,
+) -> npt.NDArray[np.float64]:
+    """Build one safe declarative sinusoid, cosinusoid, or constant input."""
+    assert isinstance(raw_spec, Mapping), f"{model}.{field} sampled input must be an object"
+    multiplier = raw_spec.get("length_multiplier", 1)
+    assert isinstance(multiplier, int) and not isinstance(multiplier, bool) and multiplier > 0, (
+        f"{model}.{field}.length_multiplier must be a positive integer"
+    )
+    function = raw_spec.get("function", "constant")
+    assert function in {"constant", "sin", "cos"}, (
+        f"{model}.{field}.function must be constant, sin, or cos"
+    )
+    offset = _numeric_spec_value(model, field, raw_spec, "offset", 0.0)
+    amplitude = _numeric_spec_value(model, field, raw_spec, "amplitude", 0.0)
+    angular_frequency = _numeric_spec_value(model, field, raw_spec, "angular_frequency", 0.0)
+    phase = _numeric_spec_value(model, field, raw_spec, "phase", 0.0)
+    index: npt.NDArray[np.float64] = np.arange(
+        n_steps * multiplier,
+        dtype=np.float64,
+    )
+    angle = angular_frequency * index + phase
+    if function == "sin":
+        wave = np.sin(angle)
+    elif function == "cos":
+        wave = np.cos(angle)
+    else:
+        wave = np.ones_like(index)
+    return np.asarray(offset + amplitude * wave, dtype=float)
+
+
+def _sampled_batch_trace(
+    model: str,
+    backend: str,
+    config: dict[str, object],
+) -> npt.NDArray[np.float64]:
+    """Execute a declarative multi-input batch and interleave named traces."""
+    n_steps = config.get("n_steps")
+    raw_fields = config.get("simulate_fields")
+    raw_inputs = config.get("inputs")
+    raw_trace_fields = config.get("trace_fields")
+    assert isinstance(n_steps, int) and not isinstance(n_steps, bool) and n_steps >= 0
+    assert isinstance(raw_fields, list) and all(isinstance(field, str) for field in raw_fields)
+    assert isinstance(raw_inputs, Mapping)
+    assert isinstance(raw_trace_fields, list) and all(
+        isinstance(field, str) for field in raw_trace_fields
+    )
+    fields = list(raw_fields)
+    trace_fields = list(raw_trace_fields)
+    assert fields, f"{model} sampled batch declared no simulate fields"
+    assert len(set(fields)) == len(fields), f"{model} sampled batch fields must be unique"
+    assert len(set(trace_fields)) == len(trace_fields), (
+        f"{model} sampled trace fields must be unique"
+    )
+    arguments = [_sampled_input(model, field, raw_inputs.get(field), n_steps) for field in fields]
+    instance = _construct_instance(model, config)
+    result = instance.simulate(*arguments, backend=backend)
+    trace = _result_trace(model, result, trace_fields)
+    assert trace.shape == (n_steps * len(trace_fields),), (
+        f"{model} sampled batch returned {trace.shape}"
+    )
     return trace
 
 
@@ -160,6 +293,8 @@ def _reference_trace(model: str, backend: str) -> npt.NDArray[np.float64]:
     config = _reference_config(model)
     if config.get("kind") == "truth_table":
         return _truth_table_trace(model, backend, config)
+    if config.get("kind") == "sampled_batch_v1":
+        return _sampled_batch_trace(model, backend, config)
     n_steps = config.get("n_steps")
     assert isinstance(n_steps, int) and not isinstance(n_steps, bool)
     assert "current" in config
@@ -240,7 +375,17 @@ def _reference_trace_without_avx512(model: str) -> npt.NDArray[np.float64]:
         env=environment,
     )
     trace = np.frombuffer(completed.stdout, dtype="<f8").copy()
-    assert trace.shape == (n_steps,), f"{model} portable reference trace has the wrong length"
+    trace_fields = config.get("trace_fields", ())
+    if config.get("kind") == "sampled_batch_v1":
+        assert isinstance(trace_fields, list) and all(
+            isinstance(field, str) for field in trace_fields
+        )
+        expected_length = n_steps * len(trace_fields)
+    else:
+        expected_length = n_steps
+    assert trace.shape == (expected_length,), (
+        f"{model} portable reference trace has the wrong length"
+    )
     return trace
 
 
@@ -250,7 +395,7 @@ def test_at_least_one_model_reaches_tier3() -> None:
     assert _tier3_models(), "no Tier-3 descriptors — backend/reproducibility regression"
 
 
-@pytest.mark.parametrize("model", _tier3_models())
+@_parametrize("model", _tier3_models())
 def test_golden_trace_is_reproducible(model: str) -> None:
     """Re-running the reference config reproduces a measured equivalent digest."""
 
@@ -263,7 +408,7 @@ def test_golden_trace_is_reproducible(model: str) -> None:
     )
 
 
-@pytest.mark.parametrize(
+@_parametrize(
     "model",
     [model for model in _tier3_models() if len(_declared_golden_digests(model)) > 1],
 )
@@ -281,7 +426,7 @@ def test_declared_simd_golden_variants_remain_ulp_bounded(model: str) -> None:
     )
 
 
-@pytest.mark.parametrize("model", _tier3_models())
+@_parametrize("model", _tier3_models())
 def test_declared_backend_parity_holds(model: str) -> None:
     """Each available declared backend matches Python within its declared parity."""
 

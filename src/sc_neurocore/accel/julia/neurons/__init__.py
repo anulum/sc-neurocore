@@ -81,12 +81,14 @@ def _as_wong_wang_inputs(
     xi: npt.ArrayLike,
 ) -> tuple[npt.NDArray[np.float64], npt.NDArray[np.float64], npt.NDArray[np.float64]]:
     """Convert and validate Wong-Wang input traces for Julia dispatch."""
-    stim1_arr = np.asarray(stim1, dtype=np.float64)
-    stim2_arr = np.asarray(stim2, dtype=np.float64)
-    xi_arr = np.asarray(xi, dtype=np.float64)
+    stim1_arr = np.ascontiguousarray(stim1, dtype=np.float64)
+    stim2_arr = np.ascontiguousarray(stim2, dtype=np.float64)
+    xi_arr = np.ascontiguousarray(xi, dtype=np.float64)
     for name, array in (("stim1", stim1_arr), ("stim2", stim2_arr), ("xi", xi_arr)):
         if array.ndim != 1:
             raise ValueError(f"{name} must be one-dimensional: got shape {array.shape}")
+        if not np.isfinite(array).all():
+            raise ValueError(f"{name} must contain only finite values")
     n = stim1_arr.size
     if stim2_arr.size != n:
         raise ValueError(f"stim1 and stim2 length mismatch: {n} vs {stim2_arr.size}")
@@ -116,7 +118,10 @@ def _normalise_model_name(model_name: str) -> str:
 def simulate_wong_wang(
     s1_init: float,
     s2_init: float,
+    noise1_init: float,
+    noise2_init: float,
     tau_s: float,
+    tau_ampa: float,
     gamma: float,
     j_n: float,
     j_cross: float,
@@ -127,25 +132,51 @@ def simulate_wong_wang(
     stim2: npt.ArrayLike,
     xi: npt.ArrayLike,
 ) -> dict[str, npt.NDArray[np.float64] | float]:
-    """Run the Julia-accelerated N-step Wong-Wang simulator.
+    """Run the Julia implementation of the published Euler/OU recurrence.
 
-    The stimulus and noise traces must be one-dimensional time-series. The
-    wrapper validates their shapes before Julia dispatch so the kernel never
-    receives implicitly flattened matrices. Returned values match
-    ``sc_neurocore_engine.py_wong_wang_simulate``: per-step ``s1``, ``s2``,
-    ``r1``, and ``r2`` arrays plus final scalar states.
+    Parameters
+    ----------
+    s1_init, s2_init : float
+        Initial NMDA gating fractions.
+    noise1_init, noise2_init : float
+        Initial AMPA Ornstein-Uhlenbeck current states.
+    tau_s, tau_ampa, gamma, j_n, j_cross, i_0, sigma, dt : float
+        Published reduced-model parameters.
+    stim1, stim2 : ArrayLike
+        Per-step external currents.
+    xi : ArrayLike
+        Interleaved standard-normal samples of length ``2 * n_steps``.
+
+    Returns
+    -------
+    dict[str, numpy.ndarray | float]
+        Six post-update traces and four final dynamic states.
+
+    Raises
+    ------
+    ImportError
+        If the Julia bridge is unavailable.
+    FileNotFoundError
+        If the maintained Wong-Wang kernel is absent.
+    ValueError
+        If an input stream violates the public shape or finite-value contract.
     """
     stim1_arr, stim2_arr, xi_arr = _as_wong_wang_inputs(stim1, stim2, xi)
     mod = _ensure_wong_wang_loaded()
     n = stim1_arr.size
     s1_out: npt.NDArray[np.float64] = np.empty(n, dtype=np.float64)
     s2_out: npt.NDArray[np.float64] = np.empty(n, dtype=np.float64)
+    noise1_out: npt.NDArray[np.float64] = np.empty(n, dtype=np.float64)
+    noise2_out: npt.NDArray[np.float64] = np.empty(n, dtype=np.float64)
     r1_out: npt.NDArray[np.float64] = np.empty(n, dtype=np.float64)
     r2_out: npt.NDArray[np.float64] = np.empty(n, dtype=np.float64)
-    s1_final, s2_final = mod.simulate_wong_wang_b(
+    s1_final, s2_final, noise1_final, noise2_final = mod.simulate_wong_wang_b(
         s1_init,
         s2_init,
+        noise1_init,
+        noise2_init,
         tau_s,
+        tau_ampa,
         gamma,
         j_n,
         j_cross,
@@ -157,16 +188,22 @@ def simulate_wong_wang(
         xi_arr,
         s1_out,
         s2_out,
+        noise1_out,
+        noise2_out,
         r1_out,
         r2_out,
     )
     return {
         "s1": s1_out,
         "s2": s2_out,
+        "noise1": noise1_out,
+        "noise2": noise2_out,
         "r1": r1_out,
         "r2": r2_out,
         "s1_final": float(s1_final),
         "s2_final": float(s2_final),
+        "noise1_final": float(noise1_final),
+        "noise2_final": float(noise2_final),
     }
 
 

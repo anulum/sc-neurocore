@@ -129,6 +129,7 @@ nav:
       - Sigmoid Rate Source Fidelity: validation/sigmoid_rate_source_fidelity.md
       - Threshold-linear Rate Source Fidelity: validation/threshold_linear_rate_source_fidelity.md
       - Wilson-Cowan Source Fidelity: validation/wilson_cowan_source_fidelity.md
+      - Wong-Wang Source Fidelity: validation/wong_wang_source_fidelity.md
       - Conductance Oscillator Co-Simulation Fidelity: validation/conductance_oscillator_cosim_fidelity.md
       - LIF f-I Curve: validation/lif_fi_curve.md
       - Izhikevich 20 Patterns: validation/izhikevich_patterns.md

@@ -4,7 +4,7 @@
 // © Code 2020–2026 Miroslav Šotek. All rights reserved.
 // ORCID: 0009-0009-3560-0851
 // Contact: www.anulum.li | protoscience@anulum.li
-// SC-NeuroCore — Go tests for Wong-Wang RK4 dynamics
+// SC-NeuroCore — Go tests for Wong-Wang Euler/OU dynamics
 
 package services
 
@@ -13,36 +13,42 @@ import (
 	"testing"
 )
 
-func TestWongWangStepUsesRK4CoupledState(t *testing.T) {
+func TestWongWangStepUsesPublishedEulerAndOUUpdate(t *testing.T) {
 	state := NewWongWangUnit()
-	state.S1 = 0.24
-	state.S2 = 0.11
-	state.Sigma = 0.0
-	state.Dt = 0.02
-
-	r1, r2, err := state.Step(0.17, 0.03, 0.0, 0.0)
+	state.S1, state.S2 = 0.24, 0.11
+	state.Noise1, state.Noise2 = 0.01, -0.02
+	old := *state
+	rate1, rate2, err := state.Step(0.17, 0.03, 0.5, -1.0)
 	if err != nil {
 		t.Fatalf("step failed: %v", err)
 	}
-
-	eulerS1 := math.Min(1.0, math.Max(0.0, 0.24+(-0.24/0.1+(1.0-0.24)*0.641*r1)*0.02))
-	eulerS2 := math.Min(1.0, math.Max(0.0, 0.11+(-0.11/0.1+(1.0-0.11)*0.641*r2)*0.02))
-	if math.Abs(state.S1-eulerS1) <= 1e-5 {
-		t.Fatalf("s1 followed forward Euler: got %.17g, euler %.17g", state.S1, eulerS1)
-	}
-	if math.Abs(state.S2-eulerS2) <= 1e-5 {
-		t.Fatalf("s2 followed forward Euler: got %.17g, euler %.17g", state.S2, eulerS2)
+	expectedS1 := old.S1 + old.Dt*(-old.S1/old.TauS+(1.0-old.S1)*old.Gamma*rate1)
+	expectedS2 := old.S2 + old.Dt*(-old.S2/old.TauS+(1.0-old.S2)*old.Gamma*rate2)
+	if state.S1 != expectedS1 || state.S2 != expectedS2 {
+		t.Fatalf("Euler mismatch: got %.17g %.17g", state.S1, state.S2)
 	}
 }
 
-func TestWongWangRejectsCorruptedRuntimeParameters(t *testing.T) {
+func TestWongWangRejectsInvalidInputAtomically(t *testing.T) {
 	state := NewWongWangUnit()
-	state.Dt = 0.0
-	beforeS1, beforeS2 := state.S1, state.S2
-	if _, _, err := state.Step(0.1, 0.0, 0.0, 0.0); err == nil {
-		t.Fatal("expected invalid runtime parameter error")
+	before := *state
+	if _, _, err := state.Step(0.0, 0.0, 0.0, math.NaN()); err == nil {
+		t.Fatal("expected invalid Gaussian sample error")
 	}
-	if state.S1 != beforeS1 || state.S2 != beforeS2 {
-		t.Fatalf("state mutated on invalid parameters: got %.17g %.17g", state.S1, state.S2)
+	if state.S1 != before.S1 || state.Noise2 != before.Noise2 {
+		t.Fatal("state mutated after rejected input")
+	}
+}
+
+func TestWongWangResetPreservesParameters(t *testing.T) {
+	state := NewWongWangUnit()
+	state.TauS, state.TauAMPA, state.Dt = 0.12, 0.003, 0.0002
+	state.S1, state.Noise1 = 0.2, 0.4
+	state.Reset()
+	if state.S1 != 0.1 || state.Noise1 != 0.0 {
+		t.Fatal("dynamic state was not restored")
+	}
+	if state.TauS != 0.12 || state.TauAMPA != 0.003 || state.Dt != 0.0002 {
+		t.Fatal("reset changed configured parameters")
 	}
 }

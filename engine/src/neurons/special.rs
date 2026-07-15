@@ -527,113 +527,8 @@ impl Default for JansenRitUnit {
     }
 }
 
-/// Wong-Wang 2006 — attractor decision-making model.
-#[derive(Clone, Debug)]
-pub struct WongWangUnit {
-    pub s1: f64,
-    pub s2: f64,
-    pub tau_s: f64,
-    pub gamma: f64,
-    pub j_n: f64,
-    pub j_cross: f64,
-    pub i_0: f64,
-    pub sigma: f64,
-    pub dt: f64,
-    rng: Xoshiro256PlusPlus,
-}
-
-impl WongWangUnit {
-    pub fn new(seed: u64) -> Self {
-        Self {
-            s1: 0.1,
-            s2: 0.1,
-            tau_s: 0.1,
-            gamma: 0.641,
-            j_n: 0.2609,
-            j_cross: 0.0497,
-            i_0: 0.3255,
-            sigma: 0.02,
-            dt: 0.001,
-            rng: Xoshiro256PlusPlus::seed_from_u64(seed),
-        }
-    }
-    fn phi(&self, i_total: f64) -> f64 {
-        let a = 270.0;
-        let b = 108.0;
-        let d = 0.154;
-        let x = a * i_total - b;
-        let denom = 1.0 - (-d * x).exp();
-        if denom.abs() < 1e-10 {
-            1.0 / d
-        } else {
-            x / denom
-        }
-    }
-    fn derivatives(
-        &self,
-        s1: f64,
-        s2: f64,
-        stim1: f64,
-        stim2: f64,
-        noise1: f64,
-        noise2: f64,
-    ) -> (f64, f64, f64, f64) {
-        let i1 = self.j_n * s1 - self.j_cross * s2 + self.i_0 + stim1 + noise1;
-        let i2 = self.j_n * s2 - self.j_cross * s1 + self.i_0 + stim2 + noise2;
-        let r1 = self.phi(i1);
-        let r2 = self.phi(i2);
-        (
-            -s1 / self.tau_s + self.gamma * (1.0 - s1) * r1,
-            -s2 / self.tau_s + self.gamma * (1.0 - s2) * r2,
-            r1,
-            r2,
-        )
-    }
-    fn randn(&mut self) -> f64 {
-        let u1 = self.rng.random::<f64>().max(1e-30);
-        let u2 = self.rng.random::<f64>();
-        (-2.0 * u1.ln()).sqrt() * (2.0 * std::f64::consts::PI * u2).cos()
-    }
-    pub fn step(&mut self, stim1: f64, stim2: f64) -> (f64, f64) {
-        let noise1 = self.sigma * self.randn();
-        let noise2 = self.sigma * self.randn();
-        let (k1_s1, k1_s2, r1, r2) =
-            self.derivatives(self.s1, self.s2, stim1, stim2, noise1, noise2);
-        let (k2_s1, k2_s2, _, _) = self.derivatives(
-            self.s1 + 0.5 * self.dt * k1_s1,
-            self.s2 + 0.5 * self.dt * k1_s2,
-            stim1,
-            stim2,
-            noise1,
-            noise2,
-        );
-        let (k3_s1, k3_s2, _, _) = self.derivatives(
-            self.s1 + 0.5 * self.dt * k2_s1,
-            self.s2 + 0.5 * self.dt * k2_s2,
-            stim1,
-            stim2,
-            noise1,
-            noise2,
-        );
-        let (k4_s1, k4_s2, _, _) = self.derivatives(
-            self.s1 + self.dt * k3_s1,
-            self.s2 + self.dt * k3_s2,
-            stim1,
-            stim2,
-            noise1,
-            noise2,
-        );
-        self.s1 =
-            (self.s1 + self.dt * (k1_s1 + 2.0 * k2_s1 + 2.0 * k3_s1 + k4_s1) / 6.0).clamp(0.0, 1.0);
-        self.s2 =
-            (self.s2 + self.dt * (k1_s2 + 2.0 * k2_s2 + 2.0 * k3_s2 + k4_s2) / 6.0).clamp(0.0, 1.0);
-        (r1, r2)
-    }
-    pub fn reset(&mut self) {
-        self.s1 = 0.1;
-        self.s2 = 0.1;
-    }
-}
+/// Canonical Wong-Wang implementation lives in the dedicated engine module.
+pub use crate::wong_wang::WongWangUnit;
 
 /// Ermentrout-Kopell / Montbrió theta-neuron mean field. Montbrió et al. 2015.
 #[derive(Clone, Debug)]
@@ -908,7 +803,7 @@ mod tests {
     fn ww_diverges() {
         let mut n = WongWangUnit::new(42);
         for _ in 0..5000 {
-            n.step(0.02, 0.0);
+            n.step(0.02, 0.0).unwrap();
         }
         assert!((n.s1 - n.s2).abs() > 0.001);
     }
@@ -1165,7 +1060,7 @@ mod tests {
     fn ww_reset_clears() {
         let mut n = WongWangUnit::new(42);
         for _ in 0..1000 {
-            n.step(0.02, 0.0);
+            n.step(0.02, 0.0).unwrap();
         }
         n.reset();
         assert!((n.s1 - 0.1).abs() < 1e-10);
@@ -1175,14 +1070,14 @@ mod tests {
     fn ww_bounded() {
         let mut n = WongWangUnit::new(42);
         for _ in 0..5000 {
-            n.step(1.0, 0.0);
+            n.step(1.0, 0.0).unwrap();
         }
         assert!(n.s1.is_finite());
         assert!(n.s2.is_finite());
     }
     #[test]
     fn ww_nan_no_panic() {
-        WongWangUnit::new(42).step(f64::NAN, 0.0);
+        assert!(WongWangUnit::new(42).step(f64::NAN, 0.0).is_err());
     }
 
     // -- ErmentroutKopellPopulation --

@@ -11,14 +11,20 @@ schema_version = 2
 name = "WongWangUnit"
 class_name = "WongWangUnit"
 module = "wong_wang"
-display_name = ""
-summary = "Wong & Wang 2006 — reduced decision-making attractor model."
+display_name = "Wong-Wang two-choice decision circuit"
+summary = "Validated two-population Wong-Wang reduction with NMDA gating, AMPA Ornstein-Uhlenbeck current noise, and explicit-Euler integration."
 family = "Rate / mean-field"
 category = "rate-mean-field"
-biophysical_detail = "point"
-maturity = "experimental"
-intended_use = []
-hardware_fit = []
+biophysical_detail = "reduced"
+maturity = "validated"
+intended_use = [
+    "two-choice perceptual-decision and attractor experiments",
+    "deterministic replay of stochastic reduced mean-field trajectories",
+    "cross-runtime Euler/Ornstein-Uhlenbeck trajectory validation",
+]
+hardware_fit = [
+    "generated fixed-point Q32.32 co-simulation reference with external Gaussian samples",
+]
 behavior_tags = [
     "excitable",
     "tonic",
@@ -30,35 +36,60 @@ authors = [
 ]
 year = 2006
 doi = "10.1523/JNEUROSCI.3733-05.2006"
+paper_title = "A Recurrent Network Mechanism of Time Integration in Perceptual Decisions"
+url = "https://doi.org/10.1523/JNEUROSCI.3733-05.2006"
 
 [state.s1]
 init = 0.1
+unit = "1"
+meaning = "NMDA gating fraction of selective population one"
 
 [state.s2]
 init = 0.1
+unit = "1"
+meaning = "NMDA gating fraction of selective population two"
+
+[state.noise1]
+init = 0.0
+unit = "nA"
+meaning = "Ornstein-Uhlenbeck AMPA input-current state of population one"
+
+[state.noise2]
+init = 0.0
+unit = "nA"
+meaning = "Ornstein-Uhlenbeck AMPA input-current state of population two"
 
 [parameters.tau_s]
 default = 0.1
 unit = "s"
 meaning = "NMDA gating-variable time constant"
 range = [
-    0.01,
-    0.5,
+    0.001,
+    1.0,
+]
+
+[parameters.tau_ampa]
+default = 0.002
+unit = "s"
+meaning = "AMPA input-noise time constant"
+range = [
+    0.0001,
+    0.1,
 ]
 
 [parameters.gamma]
 default = 0.641
 unit = "1"
-meaning = "kinetic conversion factor of the gating variable"
+meaning = "NMDA kinetic conversion factor"
 range = [
-    0.0,
+    0.001,
     2.0,
 ]
 
 [parameters.j_n]
 default = 0.2609
 unit = "nA"
-meaning = "recurrent (self) synaptic coupling strength"
+meaning = "recurrent self-coupling strength"
 range = [
     0.0,
     1.0,
@@ -67,9 +98,9 @@ range = [
 [parameters.j_cross]
 default = 0.0497
 unit = "nA"
-meaning = "cross-population synaptic coupling strength"
+meaning = "cross-population inhibitory coupling magnitude"
 range = [
-    -1.0,
+    0.0,
     1.0,
 ]
 
@@ -78,30 +109,82 @@ default = 0.3255
 unit = "nA"
 meaning = "constant background input current"
 range = [
-    0.0,
+    -1.0,
     1.0,
 ]
 
 [parameters.sigma]
 default = 0.02
 unit = "nA"
-meaning = "standard deviation of the input noise"
+meaning = "stationary amplitude of the AMPA input-current noise"
 range = [
     0.0,
     1.0,
 ]
 
 [integration]
-dt = 0.001
-method = "euler"
+dt = 0.0001
+method = "map"
 
 [dynamics]
+s1 = "dS1/dt=-S1/tau_s+(1-S1)*gamma*r1"
+s2 = "dS2/dt=-S2/tau_s+(1-S2)*gamma*r2"
+noise1 = "noise1 - (dt / tau_ampa) * noise1 + sqrt_dt_over_tau_ampa * sigma * xi1_latched if phase > 4.5 else noise1"
+noise2 = "noise2 - (dt / tau_ampa) * noise2 + sqrt_dt_over_tau_ampa * sigma * xi2_latched if phase > 4.5 else noise2"
+r1 = "max(0.0, (1.0 / d) / exprel(-d * x1)) if abs(phase - 4.0) < 0.5 else r1"
+r2 = "max(0.0, (1.0 / d) / exprel(-d * x2)) if abs(phase - 4.0) < 0.5 else r2"
+x1 = "a * (j_n * s1 - j_cross * s2 + i_0 + stim1_latched + noise1) - b if abs(phase - 3.0) < 0.5 else x1"
+x2 = "a * (j_n * s2 - j_cross * s1 + i_0 + stim2_latched + noise2) - b if abs(phase - 3.0) < 0.5 else x2"
+phase = "(phase + 1.0) % 6.0"
+stim1_latched = "I if phase < 0.5 else stim1_latched"
+stim2_latched = "I if abs(phase - 1.0) < 0.5 else stim2_latched"
+xi1_latched = "I if abs(phase - 2.0) < 0.5 else xi1_latched"
+xi2_latched = "I if abs(phase - 3.0) < 0.5 else xi2_latched"
+current1 = "I1=J_N*S1-J_cross*S2+I0+stim1+noise1"
+current2 = "I2=J_N*S2-J_cross*S1+I0+stim2+noise2"
+transfer = "r=max(0,(a*I-b)/(1-exp(-d*(a*I-b)))) with a=270 Hz/nA, b=108 Hz, d=0.154 s"
+noise = "noise_next=noise+(dt/tau_ampa)*(-noise)+sqrt(dt/tau_ampa)*sigma*xi"
+scope = "Appendix reduced two-choice model without recurrent AMPA; rates use the pre-update state, Gaussian samples are external, and all four physical states commit simultaneously"
 
 [backends.python]
 status = "implemented"
+parity = "exact"
+
+[backends.rust]
+status = "implemented"
+parity = "ulp-bounded"
+
+[backends.julia]
+status = "implemented"
+parity = "ulp-bounded"
+
+[backends.go]
+status = "implemented"
+parity = "ulp-bounded"
+
+[backends.mojo]
+status = "implemented"
+parity = "approximate"
 
 [reproducibility]
+reference_config = "{\"kind\":\"sampled_batch_v1\",\"s1\":0.1,\"s2\":0.1,\"noise1\":0.0,\"noise2\":0.0,\"tau_s\":0.1,\"tau_ampa\":0.002,\"gamma\":0.641,\"j_n\":0.2609,\"j_cross\":0.0497,\"i_0\":0.3255,\"sigma\":0.02,\"dt\":0.0001,\"n_steps\":256,\"simulate_fields\":[\"stim1\",\"stim2\",\"xi\"],\"inputs\":{\"stim1\":{\"function\":\"sin\",\"offset\":0.02,\"amplitude\":0.01,\"angular_frequency\":0.07},\"stim2\":{\"function\":\"cos\",\"offset\":-0.01,\"amplitude\":0.008,\"angular_frequency\":0.11},\"xi\":{\"function\":\"sin\",\"amplitude\":1.0,\"angular_frequency\":0.17,\"length_multiplier\":2}},\"trace_fields\":[\"s1\",\"s2\",\"noise1\",\"noise2\",\"r1\",\"r2\"]}"
+golden_trace_sha256 = "d39f219d3cd21d505c71749a1d9547d4cef550299f8e829bb2aa2a30d66daf44"
+golden_citation = "doi:10.1523/JNEUROSCI.3733-05.2006; author-lab source commit c39c6742329f89f1b5137f32910d55ad52d4bc24"
 
 [documentation]
 slug = "models/wong_wang"
-notes = ""
+notes = "The paper Methods state dt=0.1 ms, while the pinned author-lab trial script uses 0.5 ms; the maintained default follows the paper. The deterministic accelerator boundary accepts explicit standard-normal samples and does not generate randomness internally."
+
+[validation]
+dynamics_faithful = true
+metric = "trajectory"
+operating_point = "two varied external-current streams and explicit sinusoidal Gaussian samples over 128 steps, including non-default physical states and parameters"
+tolerance = "complete six-trace and four-final-state agreement within absolute 1e-12 for Rust, Julia, and Go and 1e-9 for Mojo"
+evidence = "tests/test_wong_wang_backends.py::test_complete_configured_contract_matches_python"
+
+[silicon]
+compiles = true
+cosim_validated = true
+cosim_evidence = "tests/test_cosim_wong_wang.py::test_q3232_rtl_preserves_published_update_envelopes"
+target_tier = "H1"
+terminal_reason = "The Q32.32 generated datapath is validated through co-simulation; synthesis, timing, formal equivalence, and PPA evidence are not enrolled."

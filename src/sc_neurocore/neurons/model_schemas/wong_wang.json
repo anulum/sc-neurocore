@@ -1,0 +1,69 @@
+{
+  "metadata": {
+    "schema_version": 2,
+    "name": "WongWangUnit",
+    "author": "Wong, K.-F. & Wang, X.-J.",
+    "year": 2006,
+    "doi": "10.1523/JNEUROSCI.3733-05.2006",
+    "description": "Reduced two-choice decision circuit with explicit-Euler NMDA gating and AMPA Ornstein-Uhlenbeck current noise"
+  },
+  "state": {
+    "s1": 0.1,
+    "s2": 0.1,
+    "noise1": 0.0,
+    "noise2": 0.0,
+    "r1": 0.0,
+    "r2": 0.0,
+    "x1": 0.0,
+    "x2": 0.0,
+    "phase": 0.0,
+    "stim1_latched": 0.0,
+    "stim2_latched": 0.0,
+    "xi1_latched": 0.0,
+    "xi2_latched": 0.0
+  },
+  "parameters": {
+    "tau_s": 0.1,
+    "tau_ampa": 0.002,
+    "gamma": 0.641,
+    "j_n": 0.2609,
+    "j_cross": 0.0497,
+    "i_0": 0.3255,
+    "sigma": 0.02,
+    "dt": 0.0001,
+    "a": 270.0,
+    "b": 108.0,
+    "d": 0.154,
+    "sqrt_dt_over_tau_ampa": 0.22360679774997896
+  },
+  "integration": {
+    "dt": 0.0001,
+    "method": "map",
+    "substeps": 1
+  },
+  "dynamics": {
+    "s1": "s1 + dt * (-s1 / tau_s + (1.0 - s1) * gamma * r1) if phase > 4.5 else s1",
+    "s2": "s2 + dt * (-s2 / tau_s + (1.0 - s2) * gamma * r2) if phase > 4.5 else s2",
+    "noise1": "noise1 - (dt / tau_ampa) * noise1 + sqrt_dt_over_tau_ampa * sigma * xi1_latched if phase > 4.5 else noise1",
+    "noise2": "noise2 - (dt / tau_ampa) * noise2 + sqrt_dt_over_tau_ampa * sigma * xi2_latched if phase > 4.5 else noise2",
+    "r1": "max(0.0, (1.0 / d) / exprel(-d * x1)) if abs(phase - 4.0) < 0.5 else r1",
+    "r2": "max(0.0, (1.0 / d) / exprel(-d * x2)) if abs(phase - 4.0) < 0.5 else r2",
+    "x1": "a * (j_n * s1 - j_cross * s2 + i_0 + stim1_latched + noise1) - b if abs(phase - 3.0) < 0.5 else x1",
+    "x2": "a * (j_n * s2 - j_cross * s1 + i_0 + stim2_latched + noise2) - b if abs(phase - 3.0) < 0.5 else x2",
+    "phase": "(phase + 1.0) % 6.0",
+    "stim1_latched": "I if phase < 0.5 else stim1_latched",
+    "stim2_latched": "I if abs(phase - 1.0) < 0.5 else stim2_latched",
+    "xi1_latched": "I if abs(phase - 2.0) < 0.5 else xi1_latched",
+    "xi2_latched": "I if abs(phase - 3.0) < 0.5 else xi2_latched"
+  },
+  "extensions": {
+    "family": "rate-mean-field",
+    "model_type": "stochastic_coupled_population_map",
+    "source_equations": "Wong and Wang 2006 Appendix reduced model without recurrent AMPA; DOI 10.1523/JNEUROSCI.3733-05.2006",
+    "discretisation": "One explicit-Euler NMDA and AMPA Ornstein-Uhlenbeck update with paper-default dt=0.1 ms",
+    "serial_input_protocol": "Six rising clock edges form one physical update: edges one through four ingest stim1, stim2, xi1, and xi2; edge four also computes the pre-update transfer arguments, edge five evaluates r1/r2, and edge six commits all four physical states simultaneously.",
+    "state_scope_note": "s1, s2, noise1, and noise2 are physical states; r1/r2 are pre-update rate observables; x1/x2, phase, and *_latched are deterministic protocol registers.",
+    "stochastic_boundary": "Gaussian generation remains outside the generated deterministic datapath; xi1/xi2 are explicit source samples, matching all accelerator batch ABIs.",
+    "derived_parameter_note": "sqrt_dt_over_tau_ampa is sqrt(dt/tau_ampa) for the published default dt and tau_ampa; keeping the derived constant explicit avoids replacing the 0.1 ms OU scale with the hardware compiler's coarse generic square-root LUT."
+  }
+}

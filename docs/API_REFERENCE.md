@@ -1087,6 +1087,111 @@ Run the Mojo recurrence through its exported C ABI.
 
 ---
 
+## Module `accel.wong_wang`
+
+### Function `backend_available(backend)`
+Return whether one named execution lane is ready.
+
+Parameters
+----------
+backend : str
+    One of ``python``, ``rust``, ``julia``, ``go``, or ``mojo``.
+
+Returns
+-------
+bool
+    ``True`` when the corresponding runtime and compiled artefact exist.
+
+### Function `auto_backend()`
+Return the first available backend in ascending measured-latency order.
+
+Returns
+-------
+str
+    Available runtime name, with ``python`` as the fail-safe floor.
+
+### Function `normalise_result(result)`
+Validate a complete backend result before exposing it publicly.
+
+Parameters
+----------
+result : dict&#91;str, object&#93;
+    Mapping produced by one runtime facade.
+n_steps : int
+    Required trace length.
+initial : tuple&#91;float, float, float, float&#93;
+    Initial dynamic states used for empty-batch final validation.
+
+Returns
+-------
+dict&#91;str, numpy.ndarray | float&#93;
+    Contiguous, finite traces and mutually consistent final states.
+
+Raises
+------
+FloatingPointError
+    If any trace, range, or final-state invariant is violated.
+
+### Function `simulate_python(s1, s2, noise1, noise2, tau_s, tau_ampa, gamma, j_n, j_cross, i_0, sigma, dt, stim1, stim2, xi)`
+Run the deterministic-sample batch through the Python golden model.
+
+Parameters
+----------
+s1, s2 : float
+    Initial NMDA gating fractions.
+noise1, noise2 : float
+    Initial Ornstein-Uhlenbeck input-current states.
+tau_s, tau_ampa, gamma, j_n, j_cross, i_0, sigma, dt : float
+    Published reduced-model parameters.
+stim1, stim2 : ArrayLike
+    Per-step external currents.
+xi : ArrayLike
+    Interleaved standard-normal samples of length ``2 * n_steps``.
+
+Returns
+-------
+dict&#91;str, numpy.ndarray | float&#93;
+    Validated state/rate traces and final dynamic states.
+
+Raises
+------
+ValueError
+    If a state, parameter, or input violates the numerical contract.
+FloatingPointError
+    If a complete candidate result violates a state invariant.
+
+### Function `simulate_wong_wang(s1, s2, noise1, noise2, tau_s, tau_ampa, gamma, j_n, j_cross, i_0, sigma, dt, stim1, stim2, xi)`
+Run one complete Wong-Wang batch on a selected execution lane.
+
+Parameters
+----------
+s1, s2, noise1, noise2 : float
+    Initial dynamic states.
+tau_s, tau_ampa, gamma, j_n, j_cross, i_0, sigma, dt : float
+    Published reduced-model parameters.
+stim1, stim2 : ArrayLike
+    Per-step external currents.
+xi : ArrayLike
+    Interleaved standard-normal samples.
+backend : str, default="auto"
+    Explicit runtime name or ascending measured-latency selection.
+
+Returns
+-------
+dict&#91;str, numpy.ndarray | float&#93;
+    Validated state/rate traces and final dynamic states.
+
+Raises
+------
+ValueError
+    If inputs or the backend name violate the public contract.
+RuntimeError
+    If an explicitly selected runtime is unavailable.
+FloatingPointError
+    If a runtime returns malformed or physically invalid output.
+
+---
+
 ## Module `adapters.base`
 
 ### Class `BaseStochasticAdapter`
@@ -24827,13 +24932,49 @@ a threshold event followed by Wilson-HR hard voltage reset.
 ## Module `neurons.models.wong_wang`
 
 ### Class `WongWangUnit`
-Wong & Wang 2006 — reduced decision-making attractor model.
+Reduced two-choice decision circuit from Wong and Wang (2006).
 
-Reference: Wong, K.-F. & Wang, X.-J. (2006). J. Neurosci. 26:1314–1328.
+Parameters
+----------
+s1, s2 : float, default=0.1
+    Initial NMDA gating fractions for the two selective populations.
+noise1, noise2 : float, default=0.0
+    Initial Ornstein-Uhlenbeck input-current states in nA.
+tau_s : float, default=0.1
+    NMDA gating time constant in seconds.
+tau_ampa : float, default=0.002
+    AMPA input-noise time constant in seconds.
+gamma : float, default=0.641
+    NMDA kinetic conversion factor.
+j_n : float, default=0.2609
+    Recurrent self-coupling in nA.
+j_cross : float, default=0.0497
+    Cross-population inhibitory coupling magnitude in nA.
+i_0 : float, default=0.3255
+    Constant background current in nA.
+sigma : float, default=0.02
+    Stationary input-current noise amplitude in nA.
+dt : float, default=0.0001
+    Explicit-Euler step in seconds.  The default is the 0.1 ms step stated
+    in the paper; the pinned author-lab trial code uses 0.5 ms.
+
+Notes
+-----
+A call returns the firing rates computed from the pre-update state.  The
+caller-visible random path consumes two standard-normal samples per step.
+:meth:`step_with_gaussian_samples` exposes the same update deterministically
+for accelerator parity and source-oracle replay.
 
 - **__post_init__**()
+  - Normalise parameters and validate the initial dynamic state.
+- **step_with_gaussian_samples**(stim1, stim2, xi1, xi2)
+  - Advance one published Euler/OU step with supplied noise samples.
 - **step**(stim1, stim2)
+  - Advance one stochastic Euler/OU step.
+- **simulate**(stim1, stim2, xi)
+  - Run an atomic deterministic-sample batch on one maintained runtime.
 - **reset**()
+  - Restore the four dynamic states while preserving parameters.
 
 ---
 

@@ -4,25 +4,9 @@
 # © Code 2020–2026 Miroslav Šotek. All rights reserved.
 # ORCID: 0009-0009-3560-0851
 # Contact: www.anulum.li | protoscience@anulum.li
-# SC-NeuroCore — Julia N-step simulator for Wong-Wang 2006 decision unit
+# SC-NeuroCore — Julia batch mirror for Wong-Wang 2006
 
-"""
-Batch parity with `WongWangUnit.step` in
-`src/sc_neurocore/neurons/models/wong_wang.py` (Wong & Wang 2006,
-J. Neurosci. 26:1314–1328).
-
-Per step:
-  1. iₖ = j_n · sₖ − j_cross · s₍₃₋ₖ₎ + i₀ + stimₖ + σ · ξ
-  2. rₖ = φ(iₖ) where φ(i) = (a·i − b) / (1 − exp(−d·(a·i − b)))
-     with singularity guard `|a·i − b| < 1e-6 → 1/d`.
-  3. advance the coupled s₁/s₂ ODE with fixed-step RK4 while holding
-     the pre-drawn noise sample constant over that step.
-  4. clamp sₖ into [0, 1] after the finite candidate state is computed.
-
-Caller passes pre-drawn `xi` of length `2 * length(stim1)` so the
-trajectory is bit-exact with the Python `numpy.random.randn()` order
-(matches the Rust + PINGCircuit pattern: Python owns the RNG).
-"""
+"""Publication-faithful explicit-Euler NMDA and AMPA OU recurrence."""
 module WongWangAccel
 
 export simulate_wong_wang!, phi_wong_wang, validate_wong_wang
@@ -32,52 +16,30 @@ const B = 108.0
 const D = 0.154
 
 @inline function phi_wong_wang(i_syn::Real)::Float64
-    i_value = Float64(i_syn)
-    isfinite(i_value) || throw(ArgumentError("synaptic current must be finite"))
-    x = A * i_value - B
-    if abs(x) < 1e-6
-        return 1.0 / D
+    current = Float64(i_syn)
+    isfinite(current) || throw(ArgumentError("synaptic current must be finite"))
+    x = A * current - B
+    scaled = -D * x
+    response = if scaled > 700.0
+        0.0
+    elseif abs(x) < 1.0e-7
+        1.0 / D
+    else
+        x / -expm1(scaled)
     end
-    exponent = -D * x
-    if exponent > 700.0
-        return 0.0
-    end
-    response = x / (1.0 - exp(exponent))
-    isfinite(response) && response >= 0.0 ||
-        throw(ArgumentError("invalid Wong-Wang transfer response"))
-    return response
+    isfinite(response) || throw(ArgumentError("invalid Wong-Wang transfer response"))
+    return max(0.0, response)
 end
 
-@inline finite_gate(x::Real)::Bool = isfinite(Float64(x)) && 0.0 <= Float64(x) <= 1.0
-
-@inline function wong_wang_derivatives(
-    s1::Float64,
-    s2::Float64,
-    drive1::Float64,
-    drive2::Float64,
-    noise1::Float64,
-    noise2::Float64,
-    τs::Float64,
-    γ::Float64,
-    jn::Float64,
-    jx::Float64,
-    i0::Float64,
-)::Tuple{Float64,Float64,Float64,Float64}
-    i1 = jn * s1 - jx * s2 + i0 + drive1 + noise1
-    i2 = jn * s2 - jx * s1 + i0 + drive2 + noise2
-    r1 = phi_wong_wang(i1)
-    r2 = phi_wong_wang(i2)
-    ds1 = -s1 / τs + (1.0 - s1) * γ * r1
-    ds2 = -s2 / τs + (1.0 - s2) * γ * r2
-    isfinite(ds1) && isfinite(ds2) ||
-        throw(ArgumentError("invalid Wong-Wang derivative"))
-    return (ds1, ds2, r1, r2)
-end
+@inline finite_gate(value::Real)::Bool = isfinite(Float64(value)) && 0.0 <= Float64(value) <= 1.0
 
 function validate_wong_wang(
     s1::Real,
     s2::Real,
+    noise1::Real,
+    noise2::Real,
     tau_s::Real,
+    tau_ampa::Real,
     gamma::Real,
     j_n::Real,
     j_cross::Real,
@@ -85,29 +47,24 @@ function validate_wong_wang(
     sigma::Real,
     dt::Real,
 )::Bool
-    values = Float64.((tau_s, gamma, j_n, j_cross, i_0, sigma, dt))
-    return finite_gate(s1) &&
-        finite_gate(s2) &&
-        all(isfinite, values) &&
-        values[1] > 0.0 &&
-        values[2] > 0.0 &&
-        values[3] >= 0.0 &&
-        values[4] >= 0.0 &&
-        values[6] >= 0.0 &&
-        values[7] > 0.0
+    values = Float64.((noise1, noise2, tau_s, tau_ampa, gamma, j_n, j_cross, i_0, sigma, dt))
+    return finite_gate(s1) && finite_gate(s2) && all(isfinite, values) &&
+        values[3] > 0.0 && values[4] > 0.0 && values[5] > 0.0 &&
+        values[6] >= 0.0 && values[7] >= 0.0 && values[9] >= 0.0 && values[10] > 0.0
 end
 
 """
-Run `length(stim1)` Wong-Wang iterations into caller-allocated output
-buffers. Accepts `Real` for every scalar so PythonCall / juliacall can
-pass `Int64` / `Float64` without dispatch-fail.
+Advance a deterministic-sample Wong-Wang batch into caller-owned buffers.
 
-Returns `(s1_final, s2_final)` as a tuple.
+The returned tuple contains final ``s1``, ``s2``, ``noise1``, and ``noise2``.
 """
 function simulate_wong_wang!(
     s1_init::Real,
     s2_init::Real,
+    noise1_init::Real,
+    noise2_init::Real,
     tau_s::Real,
+    tau_ampa::Real,
     gamma::Real,
     j_n::Real,
     j_cross::Real,
@@ -119,92 +76,69 @@ function simulate_wong_wang!(
     xi::AbstractVector{<:Real},
     s1_out::AbstractVector{<:Real},
     s2_out::AbstractVector{<:Real},
+    noise1_out::AbstractVector{<:Real},
+    noise2_out::AbstractVector{<:Real},
     r1_out::AbstractVector{<:Real},
     r2_out::AbstractVector{<:Real},
 )
-    n = length(stim1)
-    length(stim2) == n || throw(ArgumentError("stim1 and stim2 length mismatch"))
-    length(xi) == 2 * n || throw(ArgumentError("xi length must be 2 * n_steps"))
-    length(s1_out) == n || throw(ArgumentError("s1_out length mismatch"))
-    length(s2_out) == n || throw(ArgumentError("s2_out length mismatch"))
-    length(r1_out) == n || throw(ArgumentError("r1_out length mismatch"))
-    length(r2_out) == n || throw(ArgumentError("r2_out length mismatch"))
+    steps = length(stim1)
+    length(stim2) == steps || throw(ArgumentError("stim1 and stim2 length mismatch"))
+    length(xi) == 2 * steps || throw(ArgumentError("xi length must be 2 * n_steps"))
+    for (name, output) in (
+        ("s1", s1_out),
+        ("s2", s2_out),
+        ("noise1", noise1_out),
+        ("noise2", noise2_out),
+        ("r1", r1_out),
+        ("r2", r2_out),
+    )
+        length(output) == steps || throw(ArgumentError("$(name)_out length mismatch"))
+    end
 
     s1 = Float64(s1_init)
     s2 = Float64(s2_init)
-    τs = Float64(tau_s)
-    γ = Float64(gamma)
+    noise1 = Float64(noise1_init)
+    noise2 = Float64(noise2_init)
+    tau = Float64(tau_s)
+    tau_noise = Float64(tau_ampa)
+    gm = Float64(gamma)
     jn = Float64(j_n)
     jx = Float64(j_cross)
-    i0 = Float64(i_0)
-    σ = Float64(sigma)
-    δt = Float64(dt)
-    validate_wong_wang(s1, s2, τs, γ, jn, jx, i0, σ, δt) ||
-        throw(ArgumentError("invalid Wong-Wang numerical configuration"))
+    background = Float64(i_0)
+    noise_sigma = Float64(sigma)
+    step_size = Float64(dt)
+    validate_wong_wang(
+        s1, s2, noise1, noise2, tau, tau_noise, gm, jn, jx, background, noise_sigma, step_size
+    ) || throw(ArgumentError("invalid Wong-Wang numerical configuration"))
+    noise_scale = sqrt(step_size / tau_noise) * noise_sigma
+    noise_decay = step_size / tau_noise
 
-    @inbounds for t in 1:n
-        xi1 = Float64(xi[2 * t - 1])
-        xi2 = Float64(xi[2 * t])
-        drive1 = Float64(stim1[t])
-        drive2 = Float64(stim2[t])
-        all(isfinite, (xi1, xi2, drive1, drive2)) ||
-            throw(ArgumentError("stimuli and noise must be finite"))
-        noise1 = σ * xi1
-        noise2 = σ * xi2
-        k1_s1, k1_s2, r1, r2 = wong_wang_derivatives(
-            s1, s2, drive1, drive2, noise1, noise2, τs, γ, jn, jx, i0
-        )
-        k2_s1, k2_s2, _, _ = wong_wang_derivatives(
-            s1 + 0.5 * δt * k1_s1,
-            s2 + 0.5 * δt * k1_s2,
-            drive1,
-            drive2,
-            noise1,
-            noise2,
-            τs,
-            γ,
-            jn,
-            jx,
-            i0,
-        )
-        k3_s1, k3_s2, _, _ = wong_wang_derivatives(
-            s1 + 0.5 * δt * k2_s1,
-            s2 + 0.5 * δt * k2_s2,
-            drive1,
-            drive2,
-            noise1,
-            noise2,
-            τs,
-            γ,
-            jn,
-            jx,
-            i0,
-        )
-        k4_s1, k4_s2, _, _ = wong_wang_derivatives(
-            s1 + δt * k3_s1,
-            s2 + δt * k3_s2,
-            drive1,
-            drive2,
-            noise1,
-            noise2,
-            τs,
-            γ,
-            jn,
-            jx,
-            i0,
-        )
-        next_s1 = s1 + δt * (k1_s1 + 2.0 * k2_s1 + 2.0 * k3_s1 + k4_s1) / 6.0
-        next_s2 = s2 + δt * (k1_s2 + 2.0 * k2_s2 + 2.0 * k3_s2 + k4_s2) / 6.0
-        isfinite(next_s1) && isfinite(next_s2) ||
+    @inbounds for step in 1:steps
+        drive1 = Float64(stim1[step])
+        drive2 = Float64(stim2[step])
+        xi1 = Float64(xi[2 * step - 1])
+        xi2 = Float64(xi[2 * step])
+        all(isfinite, (drive1, drive2, xi1, xi2)) ||
+            throw(ArgumentError("stimuli and Gaussian samples must be finite"))
+        rate1 = phi_wong_wang(jn * s1 - jx * s2 + background + drive1 + noise1)
+        rate2 = phi_wong_wang(jn * s2 - jx * s1 + background + drive2 + noise2)
+        next_s1 = s1 + step_size * (-s1 / tau + (1.0 - s1) * gm * rate1)
+        next_s2 = s2 + step_size * (-s2 / tau + (1.0 - s2) * gm * rate2)
+        next_noise1 = noise1 - noise_decay * noise1 + noise_scale * xi1
+        next_noise2 = noise2 - noise_decay * noise2 + noise_scale * xi2
+        finite_gate(next_s1) && finite_gate(next_s2) &&
+            isfinite(next_noise1) && isfinite(next_noise2) ||
             throw(ArgumentError("invalid Wong-Wang candidate state"))
-        s1 = clamp(next_s1, 0.0, 1.0)
-        s2 = clamp(next_s2, 0.0, 1.0)
-        s1_out[t] = s1
-        s2_out[t] = s2
-        r1_out[t] = r1
-        r2_out[t] = r2
+        s1, s2 = next_s1, next_s2
+        noise1, noise2 = next_noise1, next_noise2
+        s1_out[step] = s1
+        s2_out[step] = s2
+        noise1_out[step] = noise1
+        noise2_out[step] = noise2
+        r1_out[step] = rate1
+        r2_out[step] = rate2
     end
-    return (s1, s2)
+    return (s1, s2, noise1, noise2)
 end
 
 end # module WongWangAccel

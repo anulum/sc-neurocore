@@ -478,75 +478,6 @@ fn py_simulate_ei_network<'py>(
     Ok(d.into_any().unbind())
 }
 
-// ── Wong-Wang 2006 decision unit — batch PyO3 wrapper ─────────────────
-
-/// Simulate a single Wong-Wang unit for `stim1.len()` steps and return
-/// the per-step state traces + firing-rate traces.
-///
-/// Parity contract with `sc_neurocore.neurons.models.wong_wang.WongWangUnit`:
-/// the caller pre-draws `2 * n_steps` N(0, 1) samples so Python-side
-/// `numpy.random` ordering is preserved bit-for-bit.
-///
-/// Returns a dict with keys: `s1`, `s2`, `r1`, `r2`
-/// (1-D float64 arrays of length `n_steps`) and the final scalar
-/// `s1_final`, `s2_final`.
-#[pyfunction]
-#[pyo3(signature = (
-    s1_init, s2_init,
-    tau_s, gamma, j_n, j_cross, i_0, sigma, dt,
-    stim1, stim2, xi,
-))]
-#[allow(clippy::too_many_arguments)]
-fn py_wong_wang_simulate<'py>(
-    py: Python<'py>,
-    s1_init: f64,
-    s2_init: f64,
-    tau_s: f64,
-    gamma: f64,
-    j_n: f64,
-    j_cross: f64,
-    i_0: f64,
-    sigma: f64,
-    dt: f64,
-    stim1: PyReadonlyArray1<'py, f64>,
-    stim2: PyReadonlyArray1<'py, f64>,
-    xi: PyReadonlyArray1<'py, f64>,
-) -> PyResult<Py<PyAny>> {
-    let stim1 = stim1.as_slice()?;
-    let stim2 = stim2.as_slice()?;
-    let xi = xi.as_slice()?;
-    let n = stim1.len();
-    if stim2.len() != n {
-        return Err(PyValueError::new_err(format!(
-            "stim1 and stim2 length mismatch: {n} vs {}",
-            stim2.len()
-        )));
-    }
-    if xi.len() != 2 * n {
-        return Err(PyValueError::new_err(format!(
-            "xi length must be 2 * n_steps ({}): got {}",
-            2 * n,
-            xi.len()
-        )));
-    }
-    let mut s1o = vec![0.0_f64; n];
-    let mut s2o = vec![0.0_f64; n];
-    let mut r1o = vec![0.0_f64; n];
-    let mut r2o = vec![0.0_f64; n];
-    let (s1_final, s2_final) = wong_wang::simulate(
-        s1_init, s2_init, tau_s, gamma, j_n, j_cross, i_0, sigma, dt, stim1, stim2, xi, &mut s1o,
-        &mut s2o, &mut r1o, &mut r2o,
-    );
-    let d = PyDict::new(py);
-    d.set_item("s1", s1o.into_pyarray(py))?;
-    d.set_item("s2", s2o.into_pyarray(py))?;
-    d.set_item("r1", r1o.into_pyarray(py))?;
-    d.set_item("r2", r2o.into_pyarray(py))?;
-    d.set_item("s1_final", s1_final)?;
-    d.set_item("s2_final", s2_final)?;
-    Ok(d.into_any().unbind())
-}
-
 // ── DCLS-max Q8.8 tent kernel — batch PyO3 wrapper ───────────────────
 
 /// Batched DCLS-max triangular (tent) contraction in bit-true Q8.8 arithmetic.
@@ -773,7 +704,6 @@ fn sc_neurocore_engine(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_function(wrap_pyfunction!(batch_lif_run_varying, m)?)?;
     m.add_function(wrap_pyfunction!(batch_encode, m)?)?;
     m.add_function(wrap_pyfunction!(batch_encode_numpy, m)?)?;
-    m.add_function(wrap_pyfunction!(py_wong_wang_simulate, m)?)?;
     m.add_function(wrap_pyfunction!(py_dcls_max_forward_batch_q88, m)?)?;
     m.add_function(wrap_pyfunction!(py_mixed_dense_forward_batch_q88_q1616, m)?)?;
     m.add_function(wrap_pyfunction!(py_adc_to_spike_windows, m)?)?;

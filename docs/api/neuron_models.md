@@ -122,7 +122,9 @@ to each entry's stated source. For example, the Ermentrout-Kopell hand-class
 enrolment independently advances the sourced theta flow with the maintained
 Euler, event, and circular-wrap conventions over 2,000 steps. A corpus entry is
 model-specific evidence, not a claim that every class below has external
-simulator parity.
+simulator parity. The Wong-Wang enrolment separately re-derives all four
+Euler/Ornstein-Uhlenbeck states and both pre-update rates from the 2006 Appendix
+and pins the paper-versus-author-code timestep discrepancy.
 
 ## Model Catalogue
 
@@ -336,6 +338,10 @@ Neural mass models return `float` (firing rate or EEG potential):
 - `WilsonCowanUnit`, `JansenRitUnit`, `WendlingNeuron`
 - `ErmentroutKopellPopulation`, `LarterBreakspearNeuron`
 - `SigmoidRateNeuron`, `SiegertTransferFunction`
+
+`WongWangUnit.step(stim1, stim2)` returns the two continuous pre-update rates as
+`(r1, r2)`. Its deterministic batch additionally accepts interleaved external
+Gaussian samples and returns six complete traces plus four final states.
 
 ### AI-Optimized (9 models)
 

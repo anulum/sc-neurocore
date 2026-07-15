@@ -22,6 +22,7 @@ from __future__ import annotations
 
 import ctypes
 from pathlib import Path
+from types import ModuleType
 
 import numpy as np
 import pytest
@@ -44,7 +45,13 @@ class TestLibraryNotBuiltRaisesImportError:
     with a helpful message telling the caller how to rebuild."""
 
     @pytest.mark.parametrize("module,fn_name,_label", CTYPES_DISPATCHERS)
-    def test_missing_lib_raises(self, monkeypatch, module, fn_name, _label):
+    def test_missing_lib_raises(
+        self,
+        monkeypatch: pytest.MonkeyPatch,
+        module: ModuleType,
+        fn_name: str,
+        _label: str,
+    ) -> None:
         monkeypatch.setattr(module, "_lib", None)
         fn = getattr(module, fn_name)
         kwargs = (
@@ -59,13 +66,16 @@ class TestLibraryNotBuiltRaisesImportError:
                 fn(
                     0.1,
                     0.1,
+                    0.0,
+                    0.0,
                     0.1,
+                    0.002,
                     0.641,
                     0.2609,
                     0.0497,
                     0.3255,
                     0.02,
-                    0.001,
+                    0.0001,
                     **kwargs,
                 )
 
@@ -75,12 +85,18 @@ class TestNonZeroReturnRaisesRuntimeError:
     ``RuntimeError`` with the offending return code in the message."""
 
     @pytest.mark.parametrize("module,fn_name,_label", CTYPES_DISPATCHERS)
-    def test_nonzero_return(self, monkeypatch, module, fn_name, _label):
+    def test_nonzero_return(
+        self,
+        monkeypatch: pytest.MonkeyPatch,
+        module: ModuleType,
+        fn_name: str,
+        _label: str,
+    ) -> None:
         class FakeCShim:
             argtypes: list[object] = []
             restype: object = ctypes.c_int
 
-            def __call__(self, *args, **kwargs):
+            def __call__(self, *args: object, **kwargs: object) -> int:
                 return 42  # arbitrary non-zero
 
         class FakeLib:
@@ -93,19 +109,23 @@ class TestNonZeroReturnRaisesRuntimeError:
         monkeypatch.setattr(module, "_lib", lib)
 
         fn = getattr(module, fn_name)
+        args: tuple[object, ...]
         if "wilson" in fn_name:
             args = (0.1, 0.05, 10.0, 6.0, 10.0, 1.0, 1.0, 2.0, 1.2, 4.0, 0.1, np.zeros(10))
         else:
             args = (
                 0.1,
                 0.1,
+                0.0,
+                0.0,
                 0.1,
+                0.002,
                 0.641,
                 0.2609,
                 0.0497,
                 0.3255,
                 0.02,
-                0.001,
+                0.0001,
                 np.zeros(10),
                 np.zeros(10),
                 np.zeros(20),
@@ -118,7 +138,11 @@ class TestCDLLOpenFailureSetsSentinelFalse:
     """Importing the dispatcher when the `.so` cannot be loaded sets the
     `_HAS_*` sentinel to False rather than crashing the interpreter."""
 
-    def test_missing_so_on_nonexistent_path_sets_false(self, monkeypatch, tmp_path):
+    def test_missing_so_on_nonexistent_path_sets_false(
+        self,
+        monkeypatch: pytest.MonkeyPatch,
+        tmp_path: Path,
+    ) -> None:
         """Simulate a missing shared library by pointing CDLL at a
         nonexistent path and re-importing the module."""
         missing_lib_dir = tmp_path / "missing_accel"
@@ -144,7 +168,7 @@ class TestJuliaMissingKernelFile:
     """The Julia `_ensure_wong_wang_loaded` / `_ensure_wilson_cowan_loaded`
     helpers raise `FileNotFoundError` when the `.jl` kernel is absent."""
 
-    def test_wong_wang_missing_jl_raises(self, monkeypatch):
+    def test_wong_wang_missing_jl_raises(self, monkeypatch: pytest.MonkeyPatch) -> None:
         import sc_neurocore.accel.julia.neurons as mod
 
         if not mod._HAS_JULIA_NEURONS:
@@ -156,7 +180,7 @@ class TestJuliaMissingKernelFile:
         with pytest.raises(FileNotFoundError, match="wong_wang.jl missing"):
             mod._ensure_wong_wang_loaded()
 
-    def test_wilson_cowan_missing_jl_raises(self, monkeypatch):
+    def test_wilson_cowan_missing_jl_raises(self, monkeypatch: pytest.MonkeyPatch) -> None:
         import sc_neurocore.accel.julia.neurons as mod
 
         if not mod._HAS_JULIA_NEURONS:
@@ -171,7 +195,7 @@ class TestJuliaWithoutJuliacallInstalled:
     """When juliacall is not installed, calling the dispatchers raises
     ImportError with the install-extras hint."""
 
-    def test_wong_wang_without_juliacall(self, monkeypatch):
+    def test_wong_wang_without_juliacall(self, monkeypatch: pytest.MonkeyPatch) -> None:
         import sc_neurocore.accel.julia.neurons as mod
 
         monkeypatch.setattr(mod, "_jl", None)
@@ -179,7 +203,7 @@ class TestJuliaWithoutJuliacallInstalled:
         with pytest.raises(ImportError, match="juliacall not available"):
             mod._ensure_wong_wang_loaded()
 
-    def test_wilson_cowan_without_juliacall(self, monkeypatch):
+    def test_wilson_cowan_without_juliacall(self, monkeypatch: pytest.MonkeyPatch) -> None:
         import sc_neurocore.accel.julia.neurons as mod
 
         monkeypatch.setattr(mod, "_jl", None)
@@ -191,7 +215,7 @@ class TestJuliaWithoutJuliacallInstalled:
 class TestInputValidationBranches:
     """The shape-mismatch ValueError paths in every dispatcher."""
 
-    def test_go_wilson_stim_mismatch(self):
+    def test_go_wilson_stim_mismatch(self) -> None:
         # Wilson-Cowan has only `ext_input`; there is no stim1/stim2 in its
         # signature. This test is the degenerate case: empty array works.
         # Requires the compiled Go cdylib — skip in environments where
@@ -217,4 +241,6 @@ class TestInputValidationBranches:
             0.1,
             np.zeros(0),
         )
-        assert out["e"].shape == (0,)
+        e_trace = out["e"]
+        assert isinstance(e_trace, np.ndarray)
+        assert e_trace.shape == (0,)
