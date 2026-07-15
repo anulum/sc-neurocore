@@ -218,25 +218,25 @@
     },
     "benchmarks/bench_model_iqif.py": "afe6990a5e83c1aec01777bcddb2667cb8d23f4cad8a154858d690744b026f98",
     "bridge/sc_neurocore_engine/__init__": {
-      "py": "33dc8cf21860b5fe6510dc337a06f8b615e54a54dcd359509c7fe3ea8ff11ea5"
+      "py": "de26d23e04c29b5b3b28bb2491bf2910f8c0dc43b15168a1b6e2d03af6c8618a"
     },
-    "bridge/sc_neurocore_engine/__init__.py": "33dc8cf21860b5fe6510dc337a06f8b615e54a54dcd359509c7fe3ea8ff11ea5",
+    "bridge/sc_neurocore_engine/__init__.py": "de26d23e04c29b5b3b28bb2491bf2910f8c0dc43b15168a1b6e2d03af6c8618a",
     "engine/src/lib": {
-      "rs": "9a328618aa4e35346878c50ee32ff81b9d45af6d96826c39cd97632f09cbbbb5"
+      "rs": "8c97f62fb9b358ecc4e21d78705789ca7c3fb33db7aea485ceecc624229ead20"
     },
-    "engine/src/lib.rs": "9a328618aa4e35346878c50ee32ff81b9d45af6d96826c39cd97632f09cbbbb5",
+    "engine/src/lib.rs": "8c97f62fb9b358ecc4e21d78705789ca7c3fb33db7aea485ceecc624229ead20",
     "engine/src/network_runner": {
-      "rs": "6071d14bfc4e95c0d09c382437b177159fb96138c93b2f0eb43b15efe988870e"
+      "rs": "1faa640535c3eba913bceb64a665669c3eecd728a7c461896d2cf9f7700a6fd2"
     },
-    "engine/src/network_runner.rs": "6071d14bfc4e95c0d09c382437b177159fb96138c93b2f0eb43b15efe988870e",
+    "engine/src/network_runner.rs": "1faa640535c3eba913bceb64a665669c3eecd728a7c461896d2cf9f7700a6fd2",
     "engine/src/neurons/trivial": {
-      "rs": "c8cb1cab179cd8cae6e1f2e5ed34742a300ce72e87ec89836145fbc67599350b"
+      "rs": "2e2bbaefa198f8e065f866b07d20ab71273bf6892570cf6f97a83567ba8f269e"
     },
-    "engine/src/neurons/trivial.rs": "c8cb1cab179cd8cae6e1f2e5ed34742a300ce72e87ec89836145fbc67599350b",
+    "engine/src/neurons/trivial.rs": "2e2bbaefa198f8e065f866b07d20ab71273bf6892570cf6f97a83567ba8f269e",
     "engine/src/pyo3_neurons": {
-      "rs": "6d3b6815411930e9e787b3d35ec15abd73d6691c42a7d0a0b7f65624dfe2c2f4"
+      "rs": "b5141eb2105969c9f0215842b4b59eca069c076b3a4495dfd965f8f9681548e7"
     },
-    "engine/src/pyo3_neurons.rs": "6d3b6815411930e9e787b3d35ec15abd73d6691c42a7d0a0b7f65624dfe2c2f4",
+    "engine/src/pyo3_neurons.rs": "b5141eb2105969c9f0215842b4b59eca069c076b3a4495dfd965f8f9681548e7",
     "src/sc_neurocore/accel/go/neurons/iqif/iqif": {
       "go": "aee3bb93c3d74fdfab0b62652a410896fc63bdbed0df195d244e878945a328fd"
     },

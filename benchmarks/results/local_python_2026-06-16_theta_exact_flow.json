@@ -118,9 +118,9 @@
     },
     "benchmarks/bench_model_theta.py": "1f05ebade4e8188da24847f74e6203f9e0a95e74c0a6490792802f395650400f",
     "engine/src/neurons/trivial": {
-      "rs": "521d1b68d1fd1371b8ed51f7b83d07355f60ba338883a7721763a223e4b09db1"
+      "rs": "2e2bbaefa198f8e065f866b07d20ab71273bf6892570cf6f97a83567ba8f269e"
     },
-    "engine/src/neurons/trivial.rs": "521d1b68d1fd1371b8ed51f7b83d07355f60ba338883a7721763a223e4b09db1",
+    "engine/src/neurons/trivial.rs": "2e2bbaefa198f8e065f866b07d20ab71273bf6892570cf6f97a83567ba8f269e",
     "src/sc_neurocore/accel/go/neurons/theta/theta": {
       "go": "4d733e264631c2657d66061eb8a2587e4b63191283e34f9997edca8a8f1e43cc"
     },

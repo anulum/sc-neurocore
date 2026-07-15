@@ -193,29 +193,29 @@
     },
     "benchmarks/bench_model_mcculloch_pitts.py": "7e7e0bf9b6c989c06b64cdf4f34a03be402a907806aef46e49df43247e56fd09",
     "bridge/sc_neurocore_engine/__init__": {
-      "py": "f4a15435d7aaeaeadc3beaa3b37b615de893a6fcd0b016f3b28ef19c71747ea9"
+      "py": "de26d23e04c29b5b3b28bb2491bf2910f8c0dc43b15168a1b6e2d03af6c8618a"
     },
-    "bridge/sc_neurocore_engine/__init__.py": "f4a15435d7aaeaeadc3beaa3b37b615de893a6fcd0b016f3b28ef19c71747ea9",
+    "bridge/sc_neurocore_engine/__init__.py": "de26d23e04c29b5b3b28bb2491bf2910f8c0dc43b15168a1b6e2d03af6c8618a",
     "engine/src/bindings/mcculloch_pitts": {
       "rs": "8d4a9d357af7468e335dbdfa873a7c89cb323f3bd91a8c5d1d775edc91c93b00"
     },
     "engine/src/bindings/mcculloch_pitts.rs": "8d4a9d357af7468e335dbdfa873a7c89cb323f3bd91a8c5d1d775edc91c93b00",
     "engine/src/lib": {
-      "rs": "9a328618aa4e35346878c50ee32ff81b9d45af6d96826c39cd97632f09cbbbb5"
+      "rs": "8c97f62fb9b358ecc4e21d78705789ca7c3fb33db7aea485ceecc624229ead20"
     },
-    "engine/src/lib.rs": "9a328618aa4e35346878c50ee32ff81b9d45af6d96826c39cd97632f09cbbbb5",
+    "engine/src/lib.rs": "8c97f62fb9b358ecc4e21d78705789ca7c3fb33db7aea485ceecc624229ead20",
     "engine/src/network_runner": {
       "rs": "1faa640535c3eba913bceb64a665669c3eecd728a7c461896d2cf9f7700a6fd2"
     },
     "engine/src/network_runner.rs": "1faa640535c3eba913bceb64a665669c3eecd728a7c461896d2cf9f7700a6fd2",
     "engine/src/neurons/rate": {
-      "rs": "13de693b265d38987a741e16ad48b0beb094808dcebb4cf08581c57f3d4ae936"
+      "rs": "7f8ee8555fbf218a9c8e4998de5db0b5dc505047eb95b2010feae24cf3d61054"
     },
-    "engine/src/neurons/rate.rs": "13de693b265d38987a741e16ad48b0beb094808dcebb4cf08581c57f3d4ae936",
+    "engine/src/neurons/rate.rs": "7f8ee8555fbf218a9c8e4998de5db0b5dc505047eb95b2010feae24cf3d61054",
     "engine/src/pyo3_neurons": {
-      "rs": "dc31c1e69a70dce687034e341975764cb8fb6e0c4a97770fb7b0b5682bfc91bf"
+      "rs": "b5141eb2105969c9f0215842b4b59eca069c076b3a4495dfd965f8f9681548e7"
     },
-    "engine/src/pyo3_neurons.rs": "dc31c1e69a70dce687034e341975764cb8fb6e0c4a97770fb7b0b5682bfc91bf",
+    "engine/src/pyo3_neurons.rs": "b5141eb2105969c9f0215842b4b59eca069c076b3a4495dfd965f8f9681548e7",
     "src/sc_neurocore/accel/go/neurons/mcculloch_pitts/libmcculloch_pitts": {
       "h": "91341ca3fd814f56a80e4a7e41e6d22f1022137646e796666a88b1253a596e6d"
     },
@@ -249,9 +249,9 @@
     },
     "src/sc_neurocore/accel/rust/safety/mcculloch_pitts.rs": "d84542eb9d86346d4df8da52577b1bae883346dbafe493a4a15ecf1349bb3e5e",
     "src/sc_neurocore/neurons/model_descriptors/McCullochPittsNeuron": {
-      "toml": "d60be960bff0435ef99c8fe9170f86847a6128b89818225a157773a2a39f5729"
+      "toml": "80484a7b872ef971e35f60ea94d820cbd870570c658a7a53a4b5aea6d7c1415d"
     },
-    "src/sc_neurocore/neurons/model_descriptors/McCullochPittsNeuron.toml": "d60be960bff0435ef99c8fe9170f86847a6128b89818225a157773a2a39f5729",
+    "src/sc_neurocore/neurons/model_descriptors/McCullochPittsNeuron.toml": "80484a7b872ef971e35f60ea94d820cbd870570c658a7a53a4b5aea6d7c1415d",
     "src/sc_neurocore/neurons/model_schemas/mcculloch_pitts": {
       "json": "334c96c92b43627471a880f51bab43a031077e776945f147c455cd5ffa38f8e5",
       "toml": "ed1381065f9f8e12031af05269cadaf5cf16719eec16b198ee15e1f2a7b1469b"

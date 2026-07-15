@@ -201,21 +201,21 @@
     },
     "benchmarks/bench_model_poisson.py": "c8bf47176c12d3ee6bfe90686304e9d08cf40f34881ba3fa27ae96dbcb691cbb",
     "bridge/sc_neurocore_engine/__init__": {
-      "py": "64761e14898ba83fb46af689836981c4f73b909fd9ae6cf675f312024f981588"
+      "py": "de26d23e04c29b5b3b28bb2491bf2910f8c0dc43b15168a1b6e2d03af6c8618a"
     },
-    "bridge/sc_neurocore_engine/__init__.py": "64761e14898ba83fb46af689836981c4f73b909fd9ae6cf675f312024f981588",
+    "bridge/sc_neurocore_engine/__init__.py": "de26d23e04c29b5b3b28bb2491bf2910f8c0dc43b15168a1b6e2d03af6c8618a",
     "engine/src/lib": {
-      "rs": "23d52cdb9a0431dbbf609158689379d6fad87fffa3b0cd5a9ab710392e5f1c0f"
+      "rs": "8c97f62fb9b358ecc4e21d78705789ca7c3fb33db7aea485ceecc624229ead20"
     },
-    "engine/src/lib.rs": "23d52cdb9a0431dbbf609158689379d6fad87fffa3b0cd5a9ab710392e5f1c0f",
+    "engine/src/lib.rs": "8c97f62fb9b358ecc4e21d78705789ca7c3fb33db7aea485ceecc624229ead20",
     "engine/src/neurons/special": {
       "rs": "062fbf073e2f9d2d5b0650cd95084b5760c8c71ca308f4115ee33deeb7624df8"
     },
     "engine/src/neurons/special.rs": "062fbf073e2f9d2d5b0650cd95084b5760c8c71ca308f4115ee33deeb7624df8",
     "engine/src/pyo3_neurons": {
-      "rs": "e161f080777df16b438f82f72934927d260779e6e4d04a3a575f7a6514059cd8"
+      "rs": "b5141eb2105969c9f0215842b4b59eca069c076b3a4495dfd965f8f9681548e7"
     },
-    "engine/src/pyo3_neurons.rs": "e161f080777df16b438f82f72934927d260779e6e4d04a3a575f7a6514059cd8",
+    "engine/src/pyo3_neurons.rs": "b5141eb2105969c9f0215842b4b59eca069c076b3a4495dfd965f8f9681548e7",
     "src/sc_neurocore/accel/go/neurons/poisson/libpoisson": {
       "h": "2102cdea225e99566e314740c5c32000576539fb11bcef7585eba58e580c3d15"
     },

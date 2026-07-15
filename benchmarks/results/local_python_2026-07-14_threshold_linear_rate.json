@@ -234,9 +234,9 @@
     },
     "src/sc_neurocore/accel/threshold_linear_rate.py": "d067f04854032220305738348f00d297f8e478686a492a827df6f10db995db3c",
     "src/sc_neurocore/neurons/model_descriptors/ThresholdLinearRateNeuron": {
-      "toml": "6f0c53ad7e32e8947aff65fe5d78348e22df09df4b63b135d90ac04edb015f9a"
+      "toml": "244041d9769c53e5d509134e90a78671ed8323c7686fb392836b91950161c566"
     },
-    "src/sc_neurocore/neurons/model_descriptors/ThresholdLinearRateNeuron.toml": "6f0c53ad7e32e8947aff65fe5d78348e22df09df4b63b135d90ac04edb015f9a",
+    "src/sc_neurocore/neurons/model_descriptors/ThresholdLinearRateNeuron.toml": "244041d9769c53e5d509134e90a78671ed8323c7686fb392836b91950161c566",
     "src/sc_neurocore/neurons/model_schemas/threshold_linear_rate": {
       "toml": "95334b84572a3d920bb845f077a63e9cd97dc9d03197a03bfeb4ff52992151c7"
     },

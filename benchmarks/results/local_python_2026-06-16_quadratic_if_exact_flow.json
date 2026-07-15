@@ -110,9 +110,9 @@
     },
     "benchmarks/bench_model_quadratic_if.py": "834dc6226e42a29151d78f5ecafd62e78aa8b63019f098b570f40d2504fcf35e",
     "engine/src/neurons/trivial": {
-      "rs": "521d1b68d1fd1371b8ed51f7b83d07355f60ba338883a7721763a223e4b09db1"
+      "rs": "2e2bbaefa198f8e065f866b07d20ab71273bf6892570cf6f97a83567ba8f269e"
     },
-    "engine/src/neurons/trivial.rs": "521d1b68d1fd1371b8ed51f7b83d07355f60ba338883a7721763a223e4b09db1",
+    "engine/src/neurons/trivial.rs": "2e2bbaefa198f8e065f866b07d20ab71273bf6892570cf6f97a83567ba8f269e",
     "src/sc_neurocore/accel/go/neurons/quadratic_if/quadratic_if": {
       "go": "16f09c0ef9e8fe3d1dc89d6bb80e194c00a8e08801506574818b4b17b559df24"
     },
