@@ -1,6 +1,6 @@
 # ConePhotoreceptor
 
-**Module:** `engine/src/neurons/sensory.rs`
+**Module:** `engine/src/neurons/sensory/cone_photoreceptor.rs`
 **Reference:** Schnapf et al. 1990; Baylor 1987
 **Family:** Graded sensory receptor, photopic phototransduction
 **State variables:** `v` (membrane potential), `cgmp` (normalised cGMP concentration)
@@ -60,11 +60,11 @@ $$V = V_{hyper} + (V_{dark} - V_{hyper}) \cdot f_{CNG}$$
 
 | Checklist | Status |
 |-----------|--------|
-| Rust implementation | `engine/src/neurons/sensory.rs` |
+| Rust implementation | `engine/src/neurons/sensory/cone_photoreceptor.rs` |
 | PyO3 wrapper | `py_sensory_graded!` macro in `pyo3_neurons.rs` |
 | NetworkRunner wired | **No** — graded model, `step()` returns `f64` |
 | `create_neuron("ConePhotoreceptor")` | No (not in NetworkRunner variant enum) |
-| coverage tests | 3 (hyperpolarise, faster-than-rod comparative, reset) |
+| coverage tests | 4 (hyperpolarise, faster-than-rod comparative, reset, constructor/default equivalence) |
 | NaN/extreme input test | Inherits rod's cGMP clamping logic |
 | Benchmark | Not benchmarked (shares arch with rod, ~30 ns/step) |
 

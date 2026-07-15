@@ -2,6 +2,7 @@
 
 **Module:** `sc_neurocore.neurons.models.cochlear_hair_cell`
 **Rust path:** `sc_neurocore_engine::neurons::sensory::CochlearHairCell`
+**Rust source:** `engine/src/neurons/sensory/cochlear_hair_cell.rs`
 **Reference:** Meddis (2006), Zilany et al. (2009, 2014)
 **Family:** Auditory sensory transduction
 **State variables:** `v` (receptor potential), `glutamate_release` (graded output)
@@ -509,9 +510,9 @@ Decorated with `@dataclass`. Defined in
 
 | Equation | Python | Rust engine | Go | Julia | Rust safety |
 |----------|--------|-------------|----|-------|-------------|
-| stable Boltzmann $P_{open}$ | `cochlear_hair_cell.py` | `sensory.rs` | `cochlear_hair_cell.go` | `cochlear_hair_cell.jl` | `cochlear_hair_cell.rs` |
-| exact membrane relaxation | `cochlear_hair_cell.py` | `sensory.rs` | `cochlear_hair_cell.go` | `cochlear_hair_cell.jl` | `cochlear_hair_cell.rs` |
-| graded release $\max(V+60,0)/40$ | `cochlear_hair_cell.py` | `sensory.rs` | `cochlear_hair_cell.go` | `cochlear_hair_cell.jl` | `cochlear_hair_cell.rs` |
+| stable Boltzmann $P_{open}$ | `cochlear_hair_cell.py` | `sensory/cochlear_hair_cell.rs` | `cochlear_hair_cell.go` | `cochlear_hair_cell.jl` | `cochlear_hair_cell.rs` |
+| exact membrane relaxation | `cochlear_hair_cell.py` | `sensory/cochlear_hair_cell.rs` | `cochlear_hair_cell.go` | `cochlear_hair_cell.jl` | `cochlear_hair_cell.rs` |
+| graded release $\max(V+60,0)/40$ | `cochlear_hair_cell.py` | `sensory/cochlear_hair_cell.rs` | `cochlear_hair_cell.go` | `cochlear_hair_cell.jl` | `cochlear_hair_cell.rs` |
 
 ### Benchmark Evidence
 

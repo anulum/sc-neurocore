@@ -181,7 +181,7 @@ compute cycles for the 64x32 dense contract.
 > for Wang-Buzsáki gating stability. SST/VIP/Martinotti use 4 sub-steps
 > (dt=0.025 ms, 0.1 ms per call) with Pospischil-style gating.
 
-### Sensory Neurons (`neurons/sensory.rs`) — Sensory model group
+### Sensory Neurons (`neurons/sensory/`) — Sensory model group
 
 | Model | 10k steps | Per step | Type | Notes |
 |-------|-----------|----------|------|-------|
@@ -447,7 +447,7 @@ but the host is loaded and has no kernel-isolated CPU set. Source hashes and
 the complete environment are in
 `benchmarks/results/bench_ibarz_tanaka_map.json`.
 
-### Sensory — Additional (`neurons/sensory.rs`)
+### Sensory — Additional (`neurons/sensory/`)
 
 | Model | Steps | Median | Per step | Notes |
 |-------|-------|--------|----------|-------|

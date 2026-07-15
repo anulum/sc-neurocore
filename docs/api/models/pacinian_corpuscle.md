@@ -7,7 +7,7 @@
 <!-- SC-NeuroCore — PacinianCorpuscle model reference -->
 # PacinianCorpuscle
 
-**Module:** `engine/src/neurons/sensory.rs`
+**Module:** `engine/src/neurons/sensory/pacinian_corpuscle.rs`
 **Reference:** Loewenstein & Skalak 1966; Bell et al. 1994
 **Family:** Spiking sensory receptor, rapidly adapting type II (RAII) mechanoreceptor
 **State variables:** `v` (membrane potential), `prev_pressure` (previous input), `adapt` (fast adaptation variable)
@@ -86,11 +86,11 @@ $$\text{if } V \geq V_{threshold}: \quad V \leftarrow V_{reset}, \quad \text{emi
 
 | Checklist | Status |
 |-----------|--------|
-| Rust implementation | `engine/src/neurons/sensory.rs` |
+| Rust implementation | `engine/src/neurons/sensory/pacinian_corpuscle.rs` |
 | PyO3 wrapper | `py_neuron_default!` macro in `pyo3_neurons.rs` |
 | NetworkRunner wired | `NeuronVariant::Pacinian` |
 | `create_neuron("Pacinian")` or `create_neuron("PacinianCorpuscle")` | Yes |
-| coverage tests | 8 (fires on onset, adapts to sustained, no-fire at rest, reset, exact relaxation, invalid input, corrupted state, invalid voltage) |
+| coverage tests | 10 (onset firing, adaptation, rest, reset, exact relaxation, invalid input/state/voltage, non-finite candidate, constructor/default equivalence) |
 | NaN/extreme input test | Module-owned Pacinian tests plus NetworkRunner `all_models_*` tests |
 | Benchmark | `pacinian_10k_steps`: **489.26 µs** (48.93 ns/step), i5-11600K |
 

@@ -1,6 +1,6 @@
 # InnerHairCell
 
-**Module:** `engine/src/neurons/sensory.rs` (Rust) / `sc_neurocore_engine.InnerHairCell` (PyO3)
+**Module:** `engine/src/neurons/sensory/inner_hair_cell.rs` (Rust) / `sc_neurocore_engine.InnerHairCell` (PyO3)
 **References:**
 - Meddis, R. (2006). Auditory-nerve first-spike latency and auditory absolute threshold: A computer model. *JASA* 119(1), 406–417.
 - Lopez-Poveda, E. A. & Eustaquio-Martín, A. (2006). A biophysical model of the inner hair cell. *JASA* 119(1), 416–432.
@@ -210,12 +210,12 @@ Time constants of adaptation:
 
 | Checklist | Status |
 |-----------|--------|
-| Rust implementation | `engine/src/neurons/sensory.rs:53` |
+| Rust implementation | `engine/src/neurons/sensory/inner_hair_cell.rs` |
 | PyO3 wrapper | `InnerHairCell` via `py_sensory_graded!` macro |
 | NetworkRunner wired | Yes (graded pathway) |
 | `create_neuron("InnerHairCell")` | Yes |
 | `supported_models()` | Includes "InnerHairCell" |
-| Tests (Rust) | 10 test functions in `sensory.rs` |
+| Tests (Rust) | 12 test functions in `sensory/inner_hair_cell.rs` |
 | Spike behaviour | **Graded** — returns receptor potential, not spikes |
 
 ---
@@ -459,19 +459,12 @@ The different SR types arise from differences in ribbon synapse position on the 
 
 ## Testing
 
-### Rust unit tests (engine/src/neurons/sensory.rs)
+### Rust unit tests (`engine/src/neurons/sensory/inner_hair_cell.rs`)
 
-10 test functions covering:
-1. `test_ihc_resting` — at zero displacement, V stays at v_rest
-2. `test_ihc_depolarises` — positive displacement depolarises (V > v_rest)
-3. `test_ihc_saturates` — large displacement saturates near 0 mV
-4. `test_ihc_ca_rises` — Ca²⁺ rises with depolarisation
-5. `test_ihc_vesicle_release` — cleft concentration c increases with Ca²⁺
-6. `test_ihc_adaptation` — sustained stimulus depletes q
-7. `test_ihc_recovery` — q recovers after stimulus offset
-8. `test_ihc_pool_conservation` — q + c + w approximately conserved
-9. `test_ihc_reset` — reset() restores initial state
-10. `test_ihc_nan_guard` — NaN input produces finite output
+12 test functions cover resting and stimulated voltage, Ca²⁺ dynamics,
+vesicle depletion, cleft release, reprocessing, pool bounds, reset,
+constructor/default equivalence, non-finite state recovery, and the focused
+performance contract.
 
 ### Integration verification
 
@@ -555,7 +548,7 @@ At zero displacement ($p_{open} = 0.5$ due to resting tension on tip links), the
 
 ---
 
-*Generated from `engine/src/neurons/sensory.rs:53` (Rust source of truth). All equations verified against Meddis 2006 and Lopez-Poveda 2006. All parameter defaults match code. Analytical results computed independently and cross-checked against source.*
+*Generated from `engine/src/neurons/sensory/inner_hair_cell.rs` (Rust source of truth). All equations verified against Meddis 2006 and Lopez-Poveda 2006. All parameter defaults match code. Analytical results computed independently and cross-checked against source.*
 
 1. Meddis, R. (2006). Auditory-nerve first-spike latency and auditory absolute threshold: A computer model. *J. Acoust. Soc. Am.* 119(1), 406–417. doi:10.1121/1.2139628
 2. Lopez-Poveda, E. A. & Eustaquio-Martín, A. (2006). A biophysical model of the inner hair cell: the contribution of potassium currents to peripheral auditory compression. *J. Acoust. Soc. Am.* 119(1), 416–432. doi:10.1121/1.2133496

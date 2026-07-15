@@ -7,7 +7,7 @@
 <!-- SC-NeuroCore — Nociceptor model documentation -->
 # Nociceptor
 
-**Module:** `engine/src/neurons/sensory.rs`
+**Module:** `engine/src/neurons/sensory/nociceptor.rs`
 **Reference:** Basbaum et al. 2009; Gold & Gebhart 2010
 **Family:** Spiking sensory receptor, high-threshold pain neuron with sensitisation
 **State variables:** `v` (membrane potential), `sensitisation` (threshold reduction)
@@ -87,7 +87,7 @@ The model rejects non-finite input and corrupted internal state without mutating
 
 | Checklist | Status |
 |-----------|--------|
-| Rust implementation | `engine/src/neurons/sensory.rs` |
+| Rust implementation | `engine/src/neurons/sensory/nociceptor.rs` |
 | PyO3 wrapper | `py_neuron_default!` macro in `pyo3_neurons.rs` |
 | NetworkRunner wired | `NeuronVariant::NociceptorCell` |
 | `create_neuron("Nociceptor")` | Yes |

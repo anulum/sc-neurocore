@@ -1,7 +1,7 @@
 # RetinalGanglionCell
 
-**Module:** `engine/src/neurons/sensory.rs`
-**Rust struct:** `RetinalGanglionCell` (line 497)
+**Module:** `engine/src/neurons/sensory/retinal_ganglion_cell.rs`
+**Rust struct:** `RetinalGanglionCell`
 **Reference:** Pillow et al., Nature 437:1258, 2005; Pillow et al., J Neurosci 28:11003, 2008
 **Family:** Generalised Linear Model (GLM) — stimulus filter + history filter + exponential nonlinearity
 **State variables:** `stim_buffer` (ring buffer, 20 taps), `hist_buffer` (ring buffer, 30 taps), `stim_idx`, `hist_idx`
@@ -240,7 +240,8 @@ sustained firing to ~200–300 Hz, which matches biological RGC maximum rates.
 
 ## Parameters
 
-All defaults from `RetinalGanglionCell::new()` in `sensory.rs:518`:
+All defaults from `RetinalGanglionCell::new()` in
+`engine/src/neurons/sensory/retinal_ganglion_cell.rs`:
 
 | Parameter | Default | Type | Description |
 |-----------|---------|------|-------------|
@@ -260,7 +261,7 @@ All defaults from `RetinalGanglionCell::new()` in `sensory.rs:518`:
 
 ## Implementation Details
 
-### Code structure (`sensory.rs:588–620`)
+### Code structure (`engine/src/neurons/sensory/retinal_ganglion_cell.rs`)
 
 ```
 step(input) → i32:
@@ -429,11 +430,11 @@ To use with this model, pre-filter the stimulus spatially:
 
 | Checklist | Status |
 |-----------|--------|
-| Rust implementation | `engine/src/neurons/sensory.rs:497` |
+| Rust implementation | `engine/src/neurons/sensory/retinal_ganglion_cell.rs` |
 | PyO3 wrapper | `pyo3_neurons.rs` |
 | NetworkRunner wired | `NeuronVariant::RetinalGanglion` |
 | `create_neuron("RetinalGanglion")` | Yes |
-| coverage tests | 5 (ON fires, OFF fires, no-fire, refractory period, reset) |
+| coverage tests | 8 (filter contracts, temporal response, ON/OFF firing, no-fire, refractoriness, reset, constructor/default equivalence) |
 | Benchmark | `rgc_10k_steps`: **130 µs** (13 ns/step), i5-11600K |
 
 ---
@@ -518,7 +519,7 @@ println!("ON: {}, OFF: {}", on_count, off_count);
    Verified from kernel construction.
 5. **GLM architecture.** stimulus filter → history filter → exp → threshold. Not
    a simple LIF. Verified from step() implementation.
-6. **Rate cap.** λ capped at 1000 to prevent exp overflow. Verified in code (line 606).
+6. **Rate cap.** λ capped at 1000 to prevent exp overflow. Verified in the Rust implementation.
 7. **Reset.** Clears both ring buffers and indices. Verified.
 
 ---
@@ -563,7 +564,7 @@ println!("ON: {}, OFF: {}", on_count, off_count);
 
 ---
 
-*Document verified against Rust source `engine/src/neurons/sensory.rs:497–632`.
+*Document verified against Rust source `engine/src/neurons/sensory/retinal_ganglion_cell.rs`.
 All equations, filter construction, and default values read directly from the
 implementation. The STUB incorrectly described this as a simple LIF with refractory
 period — the actual implementation is a full GLM with convolution filters.*

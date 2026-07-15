@@ -1,6 +1,6 @@
 # TasteReceptorCell
 
-**Module:** `engine/src/neurons/sensory.rs`
+**Module:** `engine/src/neurons/sensory/taste_receptor_cell.rs`
 **Reference:** Chaudhari & Roper 2010; Liman et al. 2014
 **Family:** Graded sensory receptor, gustatory IP3/Ca2+/ATP signalling
 **State variables:** `v` (receptor potential), `ca` (intracellular Ca2+), `ip3` (IP3 concentration), `atp_release` (ATP output)
@@ -84,11 +84,11 @@ ATP release is directly proportional to intracellular Ca2+.
 
 | Checklist | Status |
 |-----------|--------|
-| Rust implementation | `engine/src/neurons/sensory.rs` |
+| Rust implementation | `engine/src/neurons/sensory/taste_receptor_cell.rs` |
 | PyO3 wrapper | `py_sensory_graded!` macro in `pyo3_neurons.rs` |
 | NetworkRunner wired | **No** — graded model, `step()` returns `f64` |
 | `create_neuron("TasteReceptorCell")` | No (not in NetworkRunner variant enum) |
-| coverage tests | 5 (depolarise, ATP release, no-response, Ca bounded, reset) |
+| coverage tests | 6 (depolarise, ATP release, no-response, Ca²⁺ bounds, reset, constructor/default equivalence) |
 | NaN/extreme input test | Covered by `ca_bounded` test (10k steps at extreme input) |
 | Benchmark | Not benchmarked (shares arch with olfactory, ~100 ns/step) |
 

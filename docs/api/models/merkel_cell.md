@@ -7,8 +7,8 @@
 <!-- SC-NeuroCore — MerkelCell model reference -->
 # MerkelCell
 
-**Module:** `engine/src/neurons/sensory.rs`
-**Rust struct:** `MerkelCell` (line 652)
+**Module:** `engine/src/neurons/sensory/merkel_cell.rs`
+**Rust struct:** `MerkelCell`
 **Reference:** Lesniak et al., PNAS 111:6461, 2014
 **Family:** Spiking sensory receptor, slowly adapting type I (SAI) mechanoreceptor
 **State variables:** `v` (membrane potential), `adapt` (slow adaptation variable)
@@ -265,7 +265,8 @@ The interspike interval lengthens as adaptation builds:
 
 ## Parameters
 
-All defaults from `MerkelCell::new()` in `sensory.rs:666`:
+All defaults from `MerkelCell::new()` in
+`engine/src/neurons/sensory/merkel_cell.rs`:
 
 | Parameter | Default | Unit | Description |
 |-----------|---------|------|-------------|
@@ -284,7 +285,7 @@ All defaults from `MerkelCell::new()` in `sensory.rs:666`:
 
 ## Implementation Details
 
-### Code structure (`sensory.rs:682–694`)
+### Code structure (`engine/src/neurons/sensory/merkel_cell.rs`)
 
 ```
 step(pressure) → i32:
@@ -474,11 +475,11 @@ somatosensory arrays (e.g., robotic skin with 1000+ touch sensors).
 
 | Checklist | Status |
 |-----------|--------|
-| Rust implementation | `engine/src/neurons/sensory.rs:652` |
+| Rust implementation | `engine/src/neurons/sensory/merkel_cell.rs` |
 | PyO3 wrapper | `pyo3_neurons.rs` via `py_neuron_default!` |
 | NetworkRunner wired | `NeuronVariant::Merkel` |
 | `create_neuron("MerkelCell")` | Yes |
-| coverage tests | 8 (firing, slow adaptation, no-fire, reset, exact relaxation, invalid input, corrupted state, invalid voltage) |
+| coverage tests | 10 (firing, adaptation, no-fire, reset, exact relaxation, invalid input/state/voltage, non-finite candidate, constructor/default equivalence) |
 | Benchmark | `merkel_10k_steps`: **312.93 µs** (31.29 ns/step), i5-11600K |
 
 ---
@@ -544,7 +545,7 @@ println!("Spikes: {}, adapt: {:.3}", total, cell.adapt);
 3. **a_adapt = 0.3 balances onset vs sustained rate.** Moderate adaptation that
    doesn't fully silence the cell. Verified.
 4. **Reset clears adaptation.** V returns to V_rest, adapt returns to 0. Verified.
-5. **Pressure rectification.** Negative pressure clamped to 0. Verified in code (line 683).
+5. **Pressure rectification.** Negative pressure clamped to 0. Verified in the Rust implementation.
 
 ---
 
@@ -588,5 +589,5 @@ println!("Spikes: {}, adapt: {:.3}", total, cell.adapt);
 
 ---
 
-*Document verified against Rust source `engine/src/neurons/sensory.rs:652–706`.
+*Document verified against Rust source `engine/src/neurons/sensory/merkel_cell.rs`.
 All equations, parameters, and default values read directly from the implementation.*

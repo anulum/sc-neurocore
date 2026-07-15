@@ -2,6 +2,7 @@
 
 **Module:** `sc_neurocore.neurons.models.direction_selective_rgc`
 **Rust path:** `sc_neurocore_engine::neurons::sensory::DirectionSelectiveRGC`
+**Rust source:** `engine/src/neurons/sensory/direction_selective_rgc.rs`
 **Reference:** Gollisch & Meister (2010), Masland (2012)
 **Family:** Retinal sensory neuron
 **State:** `v`, previous centre intensity, surround estimate

@@ -1,7 +1,7 @@
 # OlfactoryReceptorNeuron
 
-**Module:** `engine/src/neurons/sensory.rs`
-**Rust struct:** `OlfactoryReceptorNeuron` (line 869)
+**Module:** `engine/src/neurons/sensory/olfactory_receptor_neuron.rs`
+**Rust struct:** `OlfactoryReceptorNeuron`
 **Reference:** Rospars et al., J Neurosci 28:2659, 2008; Firestein, Nature 413:211, 2001
 **Family:** Spiking sensory receptor, olfactory cAMP cascade with Ca²⁺/CaM + PDE4 dual adaptation
 **State variables:** `v` (membrane potential), `camp` (cAMP), `adapt` (Ca²⁺/CaM), `pde4` (PDE4 activity)
@@ -333,7 +333,8 @@ its non-adapted value.
 
 ## Parameters
 
-All defaults from `OlfactoryReceptorNeuron::new()` in `sensory.rs:887`:
+All defaults from `OlfactoryReceptorNeuron::new()` in
+`engine/src/neurons/sensory/olfactory_receptor_neuron.rs`:
 
 | Parameter | Default | Unit | Description |
 |-----------|---------|------|-------------|
@@ -356,7 +357,7 @@ All defaults from `OlfactoryReceptorNeuron::new()` in `sensory.rs:887`:
 
 ## Implementation Details
 
-### Code structure (`sensory.rs:907–940`)
+### Code structure (`engine/src/neurons/sensory/olfactory_receptor_neuron.rs`)
 
 ```
 step(concentration) → i32:
@@ -487,12 +488,12 @@ adapted firing rate → reduced dynamic range.
 
 | Checklist | Status |
 |-----------|--------|
-| Rust implementation | `engine/src/neurons/sensory.rs:869` |
+| Rust implementation | `engine/src/neurons/sensory/olfactory_receptor_neuron.rs` |
 | PyO3 wrapper | `pyo3_neurons.rs` via `py_neuron_default!` (state: v, camp, adapt, pde4) |
 | NetworkRunner wired | `NeuronVariant::OlfactoryReceptor` |
 | `create_neuron("OlfactoryReceptorNeuron")` | Yes |
 | `supported_models()` | Includes "OlfactoryReceptorNeuron" |
-| coverage tests | 7 (fires, adapts, no-fire, reset, PDE4 activates, PDE4 reduces cAMP, PDE4 enhances adaptation) |
+| coverage tests | 8 (fires, adapts, no-fire, reset, PDE4 activation/reduction/adaptation, constructor/default equivalence) |
 | Benchmark | `olfactory_10k_steps`: **334 µs** (33.4 ns/step), i5-11600K |
 
 ---
@@ -568,8 +569,8 @@ println!("Spikes: {}, cAMP: {:.3}, PDE4: {:.3}, adapt: {:.3}",
 4. **PDE4 enhances adaptation.** Late firing rate with both pathways is lower than with
    CaM alone (k_pde4=0). Verified.
 5. **Reset clears all state.** V returns to V_rest, cAMP=0, adapt=0, PDE4=0. Verified.
-6. **Negative input handling.** Concentration clamped to ≥ 0 at input. Verified in code
-   (line 908).
+6. **Negative input handling.** Concentration clamped to ≥ 0 at input. Verified in the
+   Rust implementation.
 7. **Normalised variables.** cAMP, adapt, and PDE4 all clamped to [0, 1]. Verified.
 
 ---

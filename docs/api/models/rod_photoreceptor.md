@@ -1,7 +1,7 @@
 # RodPhotoreceptor
 
-**Module:** `engine/src/neurons/sensory.rs`
-**Rust struct:** `RodPhotoreceptor` (line 313)
+**Module:** `engine/src/neurons/sensory/rod_photoreceptor.rs`
+**Rust struct:** `RodPhotoreceptor`
 **Reference:** Nikonov et al., J Gen Physiol 127:359, 2006; Hamer et al., J Gen Physiol 125:287, 2005
 **Family:** Graded sensory receptor, scotopic phototransduction with Ca²⁺ feedback
 **State variables:** `v` (membrane potential), `cgmp` (normalised cGMP), `ca` (normalised Ca²⁺)
@@ -321,7 +321,8 @@ The model captures phase 1 (fast adaptation via Ca²⁺ feedback) but not phases
 
 ## Parameters
 
-All defaults from `RodPhotoreceptor::new()` in `sensory.rs:330`:
+All defaults from `RodPhotoreceptor::new()` in
+`engine/src/neurons/sensory/rod_photoreceptor.rs`:
 
 | Parameter | Default | Unit | Description |
 |-----------|---------|------|-------------|
@@ -347,7 +348,7 @@ loop, not a single recovery time constant.
 
 ## Implementation Details
 
-### Code structure (`sensory.rs:358–387`)
+### Code structure (`engine/src/neurons/sensory/rod_photoreceptor.rs`)
 
 ```
 step(light) → f64:
@@ -425,11 +426,11 @@ The cgmp³ is one multiply + one squaring. Both are DSP-friendly.
 
 | Checklist | Status |
 |-----------|--------|
-| Rust implementation | `engine/src/neurons/sensory.rs:313` |
+| Rust implementation | `engine/src/neurons/sensory/rod_photoreceptor.rs` |
 | PyO3 wrapper | `py_sensory_graded!` macro |
 | NetworkRunner wired | **No** — graded model, returns f64 |
 | `create_neuron("RodPhotoreceptor")` | No (not in variant enum) |
-| coverage tests | 5 (hyperpolarise, dark stability, slow recovery, cGMP bounded, performance) |
+| coverage tests | 8 (light response, dark stability, slow recovery, cGMP bounds, Ca²⁺ feedback, performance, constructor/default equivalence, non-finite recovery) |
 | Benchmark | `rod_10k_steps`: **308 µs** (30.8 ns/step), i5-11600K |
 
 ---
@@ -496,10 +497,10 @@ println!("V: {:.1}, cGMP: {:.3}, Ca: {:.3}", rod.v, rod.cgmp, rod.ca);
    Verified.
 3. **Slow recovery.** After light offset, V recovers slowly due to Ca²⁺ feedback loop
    kinetics. Much slower than activation. Verified.
-4. **cGMP bounded.** cGMP clamped to [0, 1.5]. Verified in code (line 366).
+4. **cGMP bounded.** cGMP clamped to [0, 1.5]. Verified in the Rust implementation.
 5. **Ca²⁺ feedback.** Low Ca²⁺ during light activates GC → cGMP resynthesis →
    adaptation. This is the key mechanism not described in the original STUB. Verified.
-6. **Negative light clamped.** light_clamped = max(light, 0). Verified (line 359).
+6. **Negative light clamped.** light_clamped = max(light, 0). Verified in the Rust implementation.
 7. **NaN safety.** V, cGMP, and Ca all checked for finite values. Verified.
 
 ---
@@ -569,6 +570,6 @@ After light off: Ca²⁺ drops → GC activates → cGMP slowly recovers → V r
 
 ---
 
-*Document verified against Rust source `engine/src/neurons/sensory.rs:313–387`.
+*Document verified against Rust source `engine/src/neurons/sensory/rod_photoreceptor.rs`.
 All equations, parameters, and default values read directly from the implementation.
 The STUB incorrectly omitted Ca²⁺ feedback and listed a non-existent tau_rec parameter.*

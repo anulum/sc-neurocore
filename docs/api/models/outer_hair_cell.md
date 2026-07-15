@@ -1,7 +1,7 @@
 # OuterHairCell
 
-**Module:** `engine/src/neurons/sensory.rs`
-**Rust struct:** `OuterHairCell` (line 206)
+**Module:** `engine/src/neurons/sensory/outer_hair_cell.rs`
+**Rust struct:** `OuterHairCell`
 **Reference:** Dallos et al., Neuron 58:333, 2008; Santos-Sacchi et al., J Neurosci 26:3992, 2006
 **Family:** Graded sensory receptor, auditory electromotility
 **State variables:** `v` (receptor potential), `motility` (somatic length change)
@@ -304,7 +304,8 @@ Total range: ~4.0 nm peak-to-peak (asymmetric: 2.6 nm contraction vs 1.4 nm elon
 
 ## Parameters
 
-All defaults from `OuterHairCell::new()` in `sensory.rs:225`:
+All defaults from `OuterHairCell::new()` in
+`engine/src/neurons/sensory/outer_hair_cell.rs`:
 
 | Parameter | Default | Unit | Description |
 |-----------|---------|------|-------------|
@@ -327,7 +328,7 @@ All defaults from `OuterHairCell::new()` in `sensory.rs:225`:
 
 ## Implementation Details
 
-### Code structure (`sensory.rs:252–274`)
+### Code structure (`engine/src/neurons/sensory/outer_hair_cell.rs`)
 
 ```
 step(displacement: f64) → f64:
@@ -463,11 +464,11 @@ FPGA pipeline could simulate many OHCs time-multiplexed.
 
 | Checklist | Status |
 |-----------|--------|
-| Rust implementation | `engine/src/neurons/sensory.rs:206` |
+| Rust implementation | `engine/src/neurons/sensory/outer_hair_cell.rs` |
 | PyO3 wrapper | `py_sensory_graded!` macro in `pyo3_neurons.rs` |
 | NetworkRunner wired | **No** — graded model, returns f64 |
 | `create_neuron("OuterHairCell")` | No (not in variant enum) |
-| coverage tests | 3 (depolarise + motility, reset, bounded) |
+| coverage tests | 7 (depolarisation and motility, prestin direction/asymmetry, reset, bounds, constructor/default equivalence, non-finite recovery) |
 | Benchmark | ~20 ns/step (estimated, comparable to IHC) |
 
 ---
@@ -536,7 +537,7 @@ println!("Final V: {:.1}, motility: {:.3} nm", ohc.v, ohc.motility);
 4. **Faster τ (0.3 ms) than IHC (0.5 ms).** OHCs need to follow cycle-by-cycle
    basilar membrane motion. Verified.
 5. **Motility resets to zero on `reset()`.** V returns to V_rest = -70 mV. Verified.
-6. **NaN safety.** Non-finite V resets to V_rest. Verified in code (line 270).
+6. **NaN safety.** Non-finite V resets to V_rest. Verified in the Rust implementation.
 
 ---
 
