@@ -810,7 +810,7 @@ py_neuron_default!("KilincBhattMapNeuron", PyKilincBhattMapNeuron, neurons::Kili
 py_neuron_default!("ErmentroutKopellMapNeuron", PyErmentroutKopellMapNeuron, neurons::ErmentroutKopellMapNeuron, state theta);
 
 // ═══════════════════════════════════════════════════════════════════
-// biophysical.rs models
+// biophysical/ model modules
 // ═══════════════════════════════════════════════════════════════════
 
 py_neuron_default!("HodgkinHuxleyNeuron", PyHodgkinHuxleyNeuron, neurons::HodgkinHuxleyNeuron, state v, state m, state h, state n);

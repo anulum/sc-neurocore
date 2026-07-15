@@ -484,7 +484,7 @@ Signature: `step(current: f64) → i32`.
 | File | Lines | Description |
 |------|-------|-------------|
 | `src/sc_neurocore/neurons/models/yamada.py` | 57 | Python reference |
-| `engine/src/neurons/biophysical.rs` | (shared) | Rust implementation |
+| `engine/src/neurons/biophysical/yamada.rs` | (bounded) | Rust implementation |
 | `tests/test_model_yamada.py` | ~200 | 23 tests |
 
 ---

@@ -216,7 +216,7 @@ pub enum NeuronVariant {
     Lapicque(LapicqueNeuron),
     HomeostaticLif(HomeostaticLif),
 
-    // biophysical.rs
+    // biophysical/ model modules
     HodgkinHuxley(HodgkinHuxleyNeuron),
     TraubMiles(TraubMilesNeuron),
     WangBuzsaki(WangBuzsakiNeuron),

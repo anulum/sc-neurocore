@@ -198,6 +198,7 @@ def test_main_check_passes_on_live_tree(capsys: pytest.CaptureFixture[str]) -> N
     assert tool.main(["--check", "--repo", str(_repo_root())]) == 0
     output = capsys.readouterr().out
     assert "engine/src/lib.rs" in output
+    assert "engine/src/neurons/biophysical.rs" in output
     assert "engine/src/neurons/misc.rs" in output
 
 

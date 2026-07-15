@@ -289,7 +289,7 @@ compute cycles for the 64x32 dense contract.
 | Smooth muscle | 1k | 198 µs | **198 ns** | CaL + BK + IP3R/SERCA, 4 sub-steps |
 | Beta cell | 1k | 196 µs | **196 ns** | CaL + K_dr + K_ATP + K_Ca, 4 sub-steps |
 
-### Biophysical Models (`neurons/biophysical.rs`)
+### Biophysical Models (`neurons/biophysical/`)
 
 | Model | Steps | Median | Per step | Sub-steps | Notes |
 |-------|-------|--------|----------|-----------|-------|

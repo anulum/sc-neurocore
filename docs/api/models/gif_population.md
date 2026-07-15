@@ -94,7 +94,7 @@ Invalid inputs or invalid runtime parameters fail closed: the method returns `0`
 | Surface | File | Status |
 | --- | --- | --- |
 | Python reference | `src/sc_neurocore/neurons/models/gif_population.py` | Exact subthreshold flow and seeded escape-rate sampling |
-| Rust engine | `engine/src/neurons/biophysical.rs` | Same exact flow and bounded probability |
+| Rust engine | `engine/src/neurons/biophysical/gif_population.rs` | Same exact flow and bounded probability |
 | PyO3 class | `sc_neurocore_engine.GIFPopulationNeuron(seed=42)` | Rust engine exposure |
 | Go service | `src/sc_neurocore/accel/go/services/gif_population.go` | Same scalar contract with deterministic seed |
 | Julia kernel | `src/sc_neurocore/accel/julia/neurons/gif_population.jl` | Same scalar contract |

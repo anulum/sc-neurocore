@@ -381,7 +381,7 @@ Signature: `step(current: f64) → i32`.
 | File | Lines | Description |
 |------|-------|-------------|
 | `src/sc_neurocore/neurons/models/wang_buzsaki.py` | 71 | Python reference |
-| `engine/src/neurons/biophysical.rs` | (shared) | Rust implementation |
+| `engine/src/neurons/biophysical/wang_buzsaki.rs` | (bounded) | Rust implementation |
 | `tests/test_model_wang_buzsaki.py` | ~250 | 19 tests |
 
 ### Numerical considerations
@@ -463,7 +463,7 @@ cost is consistent across all biophysical models.
 | `wb_nan_no_panic` | No panic on NaN input |
 
 See `tests/test_model_wang_buzsaki.py` (Python) and
-`engine/src/neurons/biophysical.rs` (Rust).
+`engine/src/neurons/biophysical/wang_buzsaki.rs` (Rust).
 
 ### Pipeline verification summary (measured 2026-04-04)
 

@@ -172,7 +172,7 @@ Measured 2026-04-05 on i5-11600K @ 3.90 GHz, Criterion 0.8.
 
 ## Implementation Notes
 
-- **Source (Rust):** `engine/src/neurons/biophysical.rs`
+- **Source (Rust):** `engine/src/neurons/biophysical/huber_braun.rs`
 - **Source (Python):** `src/sc_neurocore/neurons/models/huber_braun.py`
 - **State:** 3 variables (v, a_sd, a_sr) + parameters
 - **Spike detection:** Threshold crossing at V = −20 mV

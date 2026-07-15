@@ -179,7 +179,7 @@ Measured 2026-04-05 on i5-11600K @ 3.90 GHz, Criterion 0.8.
 
 ## Implementation Notes
 
-- **Source (Rust):** `engine/src/neurons/biophysical.rs`
+- **Source (Rust):** `engine/src/neurons/biophysical/golomb_fs.rs`
 - **Source (Python):** `src/sc_neurocore/neurons/models/golomb_fs.py`
 - **State:** 4 variables (v, h, n, p) + conductance parameters
 - **Rust wiring:** `NeuronVariant::GolombFS` in network_runner.rs

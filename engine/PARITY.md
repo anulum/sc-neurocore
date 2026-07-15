@@ -44,7 +44,7 @@ Python reference implementation (`src/sc_neurocore/`).
 | Trivial IF variants | 18 | `neurons/trivial.rs` | Done |
 | Simple spiking (2D+) | 20 | `neurons/simple_spiking.rs` | Done |
 | Discrete maps | 6 | `neurons/maps.rs` | Done |
-| Biophysical (HH-type) | 20 | `neurons/biophysical.rs` | Done |
+| Biophysical (HH-type) | 20 | `neurons/biophysical/` + facade | Done |
 | Multi-compartment | 7 | `neurons/multi_compartment.rs` | Done |
 | Stochastic/population | 13 | `neurons/special.rs` | Done |
 | Hardware emulators | 9 | `neurons/hardware.rs` | Done |

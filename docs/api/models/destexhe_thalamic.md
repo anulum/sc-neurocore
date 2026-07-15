@@ -427,7 +427,7 @@ Signature: `step(current: f64) → i32`.
 | File | Lines | Description |
 |------|-------|-------------|
 | `src/sc_neurocore/neurons/models/destexhe_thalamic.py` | 74 | Python reference |
-| `engine/src/neurons/biophysical.rs` | (shared) | Rust implementation |
+| `engine/src/neurons/biophysical/destexhe_thalamic.rs` | (bounded) | Rust implementation |
 | `tests/test_model_destexhe_thalamic.py` | 262 | 38 tests |
 
 ### Numerical considerations
@@ -507,7 +507,7 @@ due to its low sub-step count (5 vs 50–100 in other models).
 | `destexhe_nan_no_panic` | No panic on NaN input |
 
 See `tests/test_model_destexhe_thalamic.py` (Python) and
-`engine/src/neurons/biophysical.rs` (Rust).
+`engine/src/neurons/biophysical/destexhe_thalamic.rs` (Rust).
 
 ---
 

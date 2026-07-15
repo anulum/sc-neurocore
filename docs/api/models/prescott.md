@@ -57,7 +57,7 @@ Validation is fail-closed:
 | Surface | File | Status |
 | --- | --- | --- |
 | Python reference | `src/sc_neurocore/neurons/models/prescott.py` | Candidate-first RK4 source of truth |
-| Rust engine / PyO3 | `engine/src/neurons/biophysical.rs`, `engine/src/pyo3_neurons.rs` | Candidate-first RK4 exposed through `get_state()` |
+| Rust engine / PyO3 | `engine/src/neurons/biophysical/prescott.rs`, `engine/src/pyo3_neurons.rs` | Candidate-first RK4 exposed through `get_state()` |
 | Go service | `src/sc_neurocore/accel/go/services/prescott.go` | Candidate-first RK4 with state-preserving invalid-input handling |
 | Julia mirror | `src/sc_neurocore/accel/julia/neurons/prescott.jl` | Candidate-first RK4 returning `-1` on invalid input or candidate |
 | Mojo kernel note | `src/sc_neurocore/accel/mojo/kernels/prescott.mojo` | RK4 stage contract documented for future compiled kernel work |

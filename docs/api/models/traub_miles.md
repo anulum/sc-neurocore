@@ -51,7 +51,7 @@ The spike flag is `1` only when the updated voltage crosses `v_threshold` from b
 | Surface | File | Status |
 | --- | --- | --- |
 | Python reference | `src/sc_neurocore/neurons/models/traub_miles.py` | Candidate-first RK4 source of truth |
-| Rust engine / PyO3 | `engine/src/neurons/biophysical.rs`, `engine/src/pyo3_neurons.rs` | RK4 parity surface exposed through `get_state()` |
+| Rust engine / PyO3 | `engine/src/neurons/biophysical/traub_miles.rs`, `engine/src/pyo3_neurons.rs` | RK4 parity surface exposed through `get_state()` |
 | Go service | `src/sc_neurocore/accel/go/services/traub_miles.go` | RK4 mirror with fail-closed error return |
 | Julia mirror | `src/sc_neurocore/accel/julia/neurons/traub_miles.jl` | RK4 mirror returning `-1` on invalid candidate |
 | Mojo kernel note | `src/sc_neurocore/accel/mojo/kernels/traub_miles.mojo` | RK4 stage contract documented for future compiled kernel work |

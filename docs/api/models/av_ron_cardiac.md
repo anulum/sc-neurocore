@@ -82,7 +82,7 @@ spike = v_next >= v_threshold and v_old < v_threshold
 | Surface | File | Contract |
 | --- | --- | --- |
 | Python reference | `src/sc_neurocore/neurons/models/av_ron_cardiac.py` | candidate-first RK4 |
-| Rust engine | `engine/src/neurons/biophysical.rs` | candidate-first RK4 |
+| Rust engine | `engine/src/neurons/biophysical/av_ron_cardiac.rs` | candidate-first RK4 |
 | PyO3 | `sc_neurocore_engine.AvRonCardiacNeuron` | Rust engine exposure |
 | Go service | `src/sc_neurocore/accel/go/services/av_ron_cardiac.go` | candidate-first RK4 |
 | Julia kernel | `src/sc_neurocore/accel/julia/neurons/av_ron_cardiac.jl` | candidate-first RK4 |

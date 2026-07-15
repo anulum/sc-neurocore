@@ -519,7 +519,7 @@ voltage-dependent). Python and Rust now produce equivalent traces.
 | File | Lines | Description |
 |------|-------|-------------|
 | `src/sc_neurocore/neurons/models/durstewitz_dopamine.py` | 64 | Python reference |
-| `engine/src/neurons/biophysical.rs` | (shared) | Rust implementation |
+| `engine/src/neurons/biophysical/durstewitz_dopamine.rs` | (bounded) | Rust implementation |
 | `tests/test_model_durstewitz_dopamine.py` | 120 | 12 tests |
 
 ---

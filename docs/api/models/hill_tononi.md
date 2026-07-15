@@ -435,7 +435,7 @@ print(f"m_h={state['m_h']:.3f}, h_t={state['h_t']:.3f}")
 
 | Aspect | Python | Rust |
 |--------|--------|------|
-| Source | `hill_tononi.py` (85 lines) | `biophysical.rs:1373-1479` |
+| Source | `hill_tononi.py` (85 lines) | `engine/src/neurons/biophysical/hill_tononi.rs` |
 | Gating sigmoids | Identical (6 Boltzmann functions) | Identical |
 | Time constants | Identical (4 voltage-dependent) | Identical (after b515e5c fix) |
 | Currents | 6 currents, same formulae | 6 currents, same formulae |
@@ -524,7 +524,7 @@ functions (exp, powf) that limit vectorisation gains.
 
 ### 8.2 Rust Tests (7 total)
 
-**File:** `engine/src/neurons/biophysical.rs`
+**File:** `engine/src/neurons/biophysical/hill_tononi.rs`
 
 | Test | What is verified |
 |------|-----------------|

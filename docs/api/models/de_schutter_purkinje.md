@@ -531,7 +531,7 @@ Rust engine, Rust safety, Go, Julia, and Mojo at the pinned spike anchor.
 | File | Lines | Description |
 |------|-------|-------------|
 | `src/sc_neurocore/neurons/models/de_schutter_purkinje.py` | Python RK4 reference |
-| `engine/src/neurons/biophysical.rs` | Rust engine implementation |
+| `engine/src/neurons/biophysical/de_schutter_purkinje.rs` | Rust engine implementation |
 | `src/sc_neurocore/accel/go/services/de_schutter_purkinje.go` | Go RK4 service |
 | `src/sc_neurocore/accel/julia/neurons/de_schutter_purkinje.jl` | Julia RK4 mirror |
 | `src/sc_neurocore/accel/mojo/kernels/de_schutter_purkinje.mojo` | Mojo RK4 kernel |
