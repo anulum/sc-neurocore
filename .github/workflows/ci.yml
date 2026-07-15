@@ -223,9 +223,16 @@ jobs:
           for model in wilson_cowan wong_wang; do
             ( cd "src/sc_neurocore/accel/go/${model}" \
                 && go build -buildmode=c-shared -o "lib${model}.so" "${model}.go" )
+            # --target-cpu x86-64-v3 keeps this explicit build within the same portable ISA
+            # baseline as tools/build_accel_backends.py, so it cannot emit AVX-512 that SIGILLs
+            # on a runner without AVX-512F. The drift gate below enforces this on every library.
             ( cd "src/sc_neurocore/accel/mojo/${model}" \
-                && mojo build --emit shared-lib -o "lib${model}.so" "${model}.mojo" )
+                && mojo build --emit shared-lib --target-cpu x86-64-v3 -o "lib${model}.so" "${model}.mojo" )
           done
+
+      - name: Enforce Mojo ISA baseline (no AVX-512 drift)
+        shell: bash
+        run: python tools/check_mojo_isa_baseline.py
 
       # Bootstrap juliacall's Julia ONCE, serially, before the parallel pytest
       # run. On first import juliacall's juliapkg installs + precompiles Julia
