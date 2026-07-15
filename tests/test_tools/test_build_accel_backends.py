@@ -225,6 +225,9 @@ def test_mojo_command(tmp_path: Path) -> None:
         "build",
         "--emit",
         "shared-lib",
+        # Portable ISA baseline so the library runs on any x86-64 CI runner (AVX2, no AVX-512).
+        "--target-cpu",
+        "x86-64-v3",
         "-o",
         "libx.so",
         "src.go",

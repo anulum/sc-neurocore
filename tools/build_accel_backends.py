@@ -244,6 +244,15 @@ def _mojo_command(target: BackendTarget, mojo_command: Sequence[str]) -> list[st
         "build",
         "--emit",
         "shared-lib",
+        # Pin a portable ISA baseline (x86-64-v3 == AVX2/FMA/BMI, no AVX-512). Mojo's
+        # --target-cpu defaults to the host CPU, so a build host that reports AVX-512 emits
+        # AVX-512 mask ops (e.g. `kmovd`) into the kernel. A CI runner whose CPU lacks AVX-512F
+        # then raises SIGILL (Illegal instruction) executing its own freshly-built library,
+        # crashing the parity tests. x86-64-v3 is the actual capability ceiling of the hosted
+        # GitHub runners (AVX2 present, AVX-512 absent), so it keeps 256-bit SIMD while running
+        # everywhere. Production builds may override with a wider --target-cpu.
+        "--target-cpu",
+        "x86-64-v3",
         "-o",
         target.output.name,
         target.source.name,
