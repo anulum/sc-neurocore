@@ -8,7 +8,7 @@
 
 # UnipolarBrushCell
 
-**Module:** `engine/src/neurons/cerebellar.rs`
+**Module:** `engine/src/neurons/cerebellar/unipolar_brush.rs`
 **Reference:** Bhatt et al., *J Comp Neurol* 349:560–576, 1994; Diana et al., *J Neurosci* 27:4374–4384, 2007
 **Family:** LIF + slow persistent (NMDA-like) current
 **State variables:** `v` (membrane potential), `persistent` (slow persistent current)
@@ -487,7 +487,7 @@ A minimal vestibulocerebellar model:
 
 | Checklist | Status |
 |-----------|--------|
-| Rust implementation | `engine/src/neurons/cerebellar.rs:739` |
+| Rust implementation | `engine/src/neurons/cerebellar/unipolar_brush.rs` |
 | PyO3 wrapper | `pyo3_neurons.rs` via `py_neuron_default!` (state: v, persistent) |
 | NetworkRunner wired | `NeuronVariant::UnipolarBrush` |
 | `create_neuron("UnipolarBrushCell")` | Yes |

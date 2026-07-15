@@ -9,7 +9,7 @@
 # StellateCell
 
 **Python module:** `src/sc_neurocore/neurons/models/stellate_cell.py`<br>
-**Rust engine:** `engine/src/neurons/cerebellar.rs`<br>
+**Rust engine:** `engine/src/neurons/cerebellar/stellate.rs`<br>
 **Reference:** Sultan & Bower, *Journal of Comparative Neurology* 409:63,
 1999; Häusser & Clark, *Neuron* 19:665, 1997<br>
 **Family:** Wang-Buzsáki sodium/potassium core with Kv3.1 activation

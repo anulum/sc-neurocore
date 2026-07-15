@@ -22,6 +22,10 @@ max_pyfunctions = 68
 max_lines = 71
 max_pyfunctions = 0
 
+[targets."engine/src/neurons/cerebellar.rs"]
+max_lines = 26
+max_pyfunctions = 0
+
 [targets."engine/src/neurons/misc.rs"]
 max_lines = 26
 max_pyfunctions = 0

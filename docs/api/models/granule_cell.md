@@ -9,7 +9,7 @@
 # GranuleCell
 
 **Module:** `src/sc_neurocore/neurons/models/granule_cell.py`<br>
-**Rust engine:** `engine/src/neurons/cerebellar.rs`<br>
+**Rust engine:** `engine/src/neurons/cerebellar/granule.rs`<br>
 **Reference:** D'Angelo et al., *Journal of Neuroscience* 21(3), 2001<br>
 **Family:** conductance-based cerebellar granule-cell model with tonic GABA
 

@@ -219,7 +219,7 @@ compute cycles for the 64x32 dense contract.
 > Alpha motor is the most expensive per-step model due to WB gating (50 sub-steps),
 > PIC evaluation, Ca2+ dynamics, and AHP computation at each sub-step.
 
-### Cerebellar Neurons (`neurons/cerebellar.rs`) — Cerebellar model group
+### Cerebellar Neurons (`neurons/cerebellar/`) — Cerebellar model group
 
 | Model | Steps | Median | Per step | Sub-steps | Notes |
 |-------|-------|--------|----------|-----------|-------|

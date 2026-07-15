@@ -8,7 +8,7 @@
 
 # GolgiCell
 
-**Module:** `engine/src/neurons/cerebellar.rs`
+**Module:** `engine/src/neurons/cerebellar/golgi.rs`
 **Reference:** Solinas et al., Front Cell Neurosci 1:2, 2007
 **Family:** Full Hodgkin-Huxley with 11 ionic currents, exact first-order gates, exact calcium relaxation, and conductance-form membrane integration
 **State variables:** `v`, `m`, `h`, `p_na`, `n`, `a`, `b`, `w`, `m_t`, `s`, `c_n`, `r`, `ca`
@@ -96,7 +96,7 @@ $$\frac{d[Ca]}{dt} = -\frac{(I_{Ca_T} + I_{Ca_N})_{inward} \cdot 0.001}{\text{vo
 
 | Checklist | Status |
 |-----------|--------|
-| Rust implementation | `engine/src/neurons/cerebellar.rs` |
+| Rust implementation | `engine/src/neurons/cerebellar/golgi.rs` |
 | PyO3 wrapper | `pyo3_neurons.rs` (state: v, m, h, p_na, n, a, b, w, m_t, s, c_n, r, ca) |
 | NetworkRunner wired | `NeuronVariant::Golgi` |
 | `create_neuron("GolgiCell")` | Yes |

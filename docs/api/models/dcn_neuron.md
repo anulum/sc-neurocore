@@ -8,7 +8,7 @@
 
 # DCNNeuron
 
-**Module:** `engine/src/neurons/cerebellar.rs`
+**Module:** `engine/src/neurons/cerebellar/dcn.rs`
 **Reference:** Llinás & Mühlethaler, J Physiol 404:241, 1988; Jahnsen, J Physiol 372:129, 1986
 **Family:** WB Na+/K+ + persistent Na + T-type Ca²⁺ + Ca²⁺-AHP + Ih
 **State variables:** `v`, `h`, `n`, `p` (NaP), `s` (T-type inact), `r` (Ih), `ca`
@@ -89,7 +89,7 @@ raises before mutation.
 
 | Checklist | Status |
 |-----------|--------|
-| Rust implementation | `engine/src/neurons/cerebellar.rs` |
+| Rust implementation | `engine/src/neurons/cerebellar/dcn.rs` |
 | PyO3 wrapper | `pyo3_neurons.rs` (state: v, h, n, p, s, r, ca) |
 | NetworkRunner wired | `NeuronVariant::DCN` |
 | `create_neuron("DCNNeuron")` | Yes |
