@@ -26,9 +26,12 @@ hardware_fit = [
     "folded population datapath with caller-owned per-source RNG state",
 ]
 behavior_tags = [
+    "bursting",
+    "chaotic",
+    "excitable",
     "irregular",
-    "memoryless",
-    "stochastic",
+    "phasic",
+    "rate-coded",
 ]
 
 [provenance]

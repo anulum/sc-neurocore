@@ -333,12 +333,16 @@ class TestEscapeRateValidation:
 class TestEscapeRatePerformance:
     def test_isolation_throughput(self):
         n = EscapeRateNeuron()
+        for _ in range(1000):
+            n.step(30.0)
         N = 50000
         t0 = time.perf_counter()
         for _ in range(N):
             n.step(30.0)
         elapsed = time.perf_counter() - t0
-        assert N / elapsed > 20000
+        # Coarse regression smoke only: CI runs this concurrently under xdist;
+        # controlled performance claims live in bench_model_escape_rate.py.
+        assert N / elapsed > 10000
 
     def test_network_throughput(self):
         pop = Population(EscapeRateNeuron, n=50, label="bench")

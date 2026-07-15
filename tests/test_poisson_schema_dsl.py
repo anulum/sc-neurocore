@@ -84,7 +84,11 @@ def test_schema_reset_replays_rng_without_inventing_membrane_state() -> None:
 def test_registered_and_folded_rtl_are_stateless_poisson_datapaths() -> None:
     """Both production emitters carry probability and RNG logic without phase state."""
     schema = UniversalNeuron.from_schema("poisson", rng_seed_override=0xACE1)
-    registered = schema.to_verilog(module_name="sc_poisson_schema_contract", fraction=24)
+    registered = schema.to_verilog(
+        module_name="sc_poisson_schema_contract",
+        data_width=48,
+        fraction=24,
+    )
     folded = compile_to_datapath(
         schema.to_equation_neuron(),
         module_name="sc_poisson_folded_contract",

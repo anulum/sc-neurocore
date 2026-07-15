@@ -25,7 +25,6 @@ hardware_fit = [
     "fixed-point point-neuron RTL",
 ]
 behavior_tags = [
-    "conductance-based",
     "excitable",
     "rate-coded",
     "tonic",

@@ -66,7 +66,9 @@ _DETERMINISTIC_SCHEMA_TRACES = {
     "quadratic_if": "quadratic_if_zero_current_analytic",
     "resonate_fire": "resonate_fire_subthreshold_resonance_doi",
     "rulkov_map": "rulkov_map_driven_spiking_doi",
+    "sigmoid_rate": "sigmoid_rate_exact_relaxation_doi",
     "theta": "theta_constant_current_phase_analytic",
+    "threshold_linear_rate": "threshold_linear_rate_rectifier_doi",
     "wang_buzsaki": "wang_buzsaki_driven_spiking_doi",
 }
 

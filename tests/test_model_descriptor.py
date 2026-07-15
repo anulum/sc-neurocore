@@ -661,6 +661,14 @@ def test_every_model_generates_a_valid_descriptor(class_name: str) -> None:
         real_fields = {f.name for f in dataclasses.fields(cls)}
     else:
         real_fields = set(inspect.signature(cls).parameters)
+    # A public read-only property is part of the model's real state surface even
+    # when its storage is private (for example the canonical LFSR ``rng_state``).
+    real_fields.update(
+        name
+        for base in cls.__mro__
+        for name, member in vars(base).items()
+        if isinstance(member, property)
+    )
     # The synthetic fallback state "v" is allowed when a model declares none.
     invented = declared - real_fields - {"v"}
     assert invented == set(), f"{class_name}: descriptor names not in the model: {sorted(invented)}"

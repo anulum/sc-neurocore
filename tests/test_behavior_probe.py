@@ -188,13 +188,14 @@ def test_probe_strong_drive_reveals_tonic_firing() -> None:
     assert "tonic" in profile.behavior_tags
 
 
-def test_probe_detects_stochastic_model() -> None:
-    """A model with an internal unseeded RNG is flagged stochastic."""
+def test_probe_records_seeded_poisson_default_as_reproducible() -> None:
+    """The fixed replay seed keeps the measured default Poisson trace stable."""
 
     profile = probe_model_behavior("PoissonNeuron")
-    assert profile.stochastic is True
-    assert "stochastic" in profile.behavior_tags
+    assert profile.stochastic is False
+    assert "stochastic" not in profile.behavior_tags
     assert "excitable" in profile.behavior_tags
+    assert all(observation.reproducible for observation in profile.observations)
 
 
 def test_probe_all_models_manifest_shape() -> None:

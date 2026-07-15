@@ -533,12 +533,11 @@
     "EscapeRateNeuron": {
       "behavior_tags": [
         "excitable",
-        "irregular",
         "rate-coded",
         "tonic"
       ],
       "drivable": true,
-      "result_sha256": "abac74f7f027ce5a650653ecbe205054cc5178166f6b83f86ea5cb624f71edfb",
+      "result_sha256": "547f1b16a6e06fca71ec5a749a3158edadaa1bd33d05028778b981af031bc4c8",
       "stochastic": false
     },
     "ExpIFNeuron": {
@@ -1200,12 +1199,16 @@
     },
     "PoissonNeuron": {
       "behavior_tags": [
+        "bursting",
+        "chaotic",
         "excitable",
-        "stochastic"
+        "irregular",
+        "phasic",
+        "rate-coded"
       ],
       "drivable": true,
-      "result_sha256": "7aa12f41e41f9fe8e7844081d8d89a24022e532ea5dd656042cd4638b0d324e1",
-      "stochastic": true
+      "result_sha256": "e42fa892d0e1cb4e55bef22978552b4e69c2109381f0a4e54bb65bb959076a60",
+      "stochastic": false
     },
     "PospischilNeuron": {
       "behavior_tags": [
@@ -1631,7 +1634,7 @@
       "stochastic": false
     }
   },
-  "result_sha256": "ad5a25af20e14a760584ec39477b65f681ac5aabeb9296d93005eaa454c6c6e3",
+  "result_sha256": "86e9d0e76e38bef9ea1a07f0b801a1b89d4f4928519386819851b56e6e54b59f",
   "schema_version": "studio.behavior-probe.v1",
   "sweep": {
     "currents": [

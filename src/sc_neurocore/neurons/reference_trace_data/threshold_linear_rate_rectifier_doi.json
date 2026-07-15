@@ -1,0 +1,38 @@
+{
+  "schema_version": "sc-neurocore.reference-trace.v1",
+  "name": "threshold_linear_rate_rectifier_doi",
+  "model": {
+    "schema_name": "threshold_linear_rate",
+    "runner": "universal_dsl"
+  },
+  "protocol": {
+    "dt": 1.0,
+    "steps": 32,
+    "inputs": {
+      "I": 3.0
+    },
+    "state_variables": [
+      "r"
+    ]
+  },
+  "provenance": {
+    "kind": "analytic_closed_form",
+    "source": "src/sc_neurocore/neurons/model_schemas/threshold_linear_rate.toml",
+    "equation": "r_n=gain*max(0,I-theta)=3 for theta=0 and gain=1",
+    "citation": "doi:10.1017/CBO9781107447615"
+  },
+  "expected_features": {
+    "spike_count": 0.0,
+    "first_spike_step": -1.0,
+    "final.r": 3.0,
+    "min.r": 3.0,
+    "max.r": 3.0,
+    "mean.r": 3.0
+  },
+  "tolerances": {
+    "default": {
+      "absolute": 0.0,
+      "relative": 0.0
+    }
+  }
+}
