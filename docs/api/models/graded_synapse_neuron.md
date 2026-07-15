@@ -1,6 +1,6 @@
 # GradedSynapseNeuron
 
-**Module:** `engine/src/neurons/misc.rs`
+**Module:** `engine/src/neurons/misc/graded_synapse.rs`
 **Reference:** Roberts & Bush, *J Comp Physiol A* 185:549–564, 1999
 **Family:** Non-spiking interneuron with graded transmitter release
 **State variables:** `v` (membrane potential)
@@ -435,7 +435,7 @@ approximation of the continuous exponential.
 
 | Checklist | Status |
 |-----------|--------|
-| Rust implementation | `engine/src/neurons/misc.rs:37` |
+| Rust implementation | `engine/src/neurons/misc/graded_synapse.rs:34` |
 | PyO3 wrapper | Yes (state: v) |
 | NetworkRunner wired | `NeuronVariant::GradedSynapse` |
 | `create_neuron("GradedSynapseNeuron")` | Yes |

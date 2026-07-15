@@ -1,6 +1,6 @@
 # MyelinatedAxon
 
-**Module:** `engine/src/neurons/misc.rs`
+**Module:** `engine/src/neurons/misc/myelinated_axon.rs`
 **Reference:** McIntyre, Richardson & Grill, *J Neurophysiol* 87:995–1006, 2002
 **Family:** Saltatory conduction segment (node + internode double-cable)
 **State variables:** `node.v` (nodal membrane potential), `node.m`, `node.h`, `node.p`, `node.s` (gating), `v_inter` (internode voltage)
@@ -546,7 +546,7 @@ This validation requires multi-segment simulation (not single-segment).
 
 | Checklist | Status |
 |-----------|--------|
-| Rust implementation | `engine/src/neurons/misc.rs:648` |
+| Rust implementation | `engine/src/neurons/misc/myelinated_axon.rs:428` |
 | PyO3 wrapper | Yes (state: v_inter) |
 | NetworkRunner wired | `NeuronVariant::MyelinAxon` |
 | `create_neuron("MyelinatedAxon")` | Yes |

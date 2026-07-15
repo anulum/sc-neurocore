@@ -1,6 +1,6 @@
 # GapJunctionNeuron
 
-**Module:** `engine/src/neurons/misc.rs`
+**Module:** `engine/src/neurons/misc/gap_junction.rs`
 **Reference:** Connors & Long, *Annu Rev Neurosci* 27:393–418, 2004; Vervaeke et al., *Neuron* 65:801–813, 2010
 **Family:** LIF with electrical synapse coupling and Cx36 rectification
 **State variables:** `v` (membrane potential)
@@ -472,7 +472,7 @@ At 100 MHz:
 
 | Checklist | Status |
 |-----------|--------|
-| Rust implementation | `engine/src/neurons/misc.rs:137` |
+| Rust implementation | `engine/src/neurons/misc/gap_junction.rs:41` |
 | PyO3 wrapper | Yes (state: v) |
 | NetworkRunner wired | `NeuronVariant::GapJunction` |
 | `create_neuron("GapJunctionNeuron")` | Yes |

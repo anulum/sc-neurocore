@@ -1,6 +1,6 @@
 # FrankenhaeUserHuxleyAxon
 
-**Module:** `engine/src/neurons/misc.rs`
+**Module:** `engine/src/neurons/misc/myelinated_axon.rs`
 **Reference:** Frankenhaeuser & Huxley, *J Physiol* 171:302–315, 1964
 **Family:** Myelinated nerve fibre (permeability-based HH variant)
 **State variables:** `v` (membrane potential, relative to rest), `m` (Na activation), `h` (Na inactivation), `n` (K delayed rectifier), `p` (slow non-specific)
@@ -546,7 +546,7 @@ The wide dynamic range of the α/β functions makes Q8.8 inadequate.
 
 | Checklist | Status |
 |-----------|--------|
-| Rust implementation | `engine/src/neurons/misc.rs:259` |
+| Rust implementation | `engine/src/neurons/misc/myelinated_axon.rs:39` |
 | PyO3 wrapper | Yes (state: v, m, h, n, p) |
 | NetworkRunner wired | `NeuronVariant::FHAxon` |
 | `create_neuron("FrankenhaeUserHuxleyAxon")` | Yes |

@@ -74,7 +74,7 @@ jobs:
       - name: Capability manifest drift
         run: python tools/capability_manifest.py --check
 
-      - name: Engine crate-root monolith guard
+      - name: Engine monolith no-growth guard
         run: python tools/engine_monolith_guard.py --check
 
       - name: API reference drift

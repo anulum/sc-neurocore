@@ -1,6 +1,6 @@
 # NodeOfRanvier
 
-**Module:** `engine/src/neurons/misc.rs`
+**Module:** `engine/src/neurons/misc/myelinated_axon.rs`
 **Reference:** McIntyre, Richardson & Grill, *J Neurophysiol* 87:995–1006, 2002
 **Family:** Mammalian myelinated axon node (MRG 2002)
 **State variables:** `v` (membrane potential), `m` (Nav1.6 transient activation), `h` (Nav1.6 inactivation), `p` (Nav1.6 persistent activation), `s` (Kv7 slow K activation)
@@ -447,7 +447,7 @@ At 100 MHz with 20 sub-steps:
 
 | Checklist | Status |
 |-----------|--------|
-| Rust implementation | `engine/src/neurons/misc.rs:486` |
+| Rust implementation | `engine/src/neurons/misc/myelinated_axon.rs:266` |
 | PyO3 wrapper | Yes (state: v, m, h, p, s) |
 | NetworkRunner wired | `NeuronVariant::NodeOfRanvier` |
 | `create_neuron("NodeOfRanvier")` | Yes |

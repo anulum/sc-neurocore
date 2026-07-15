@@ -4,18 +4,18 @@
 # © Code 2020–2026 Miroslav Šotek. All rights reserved.
 # ORCID: 0009-0009-3560-0851
 # Contact: www.anulum.li | protoscience@anulum.li
-# SC-NeuroCore — Engine crate-root monolith no-growth guard
+# SC-NeuroCore — Engine monolith no-growth guard
 
-"""Freeze the engine PyO3 crate root against monolith growth.
+"""Freeze decomposed engine Rust surfaces against monolith regrowth.
 
 The engine crate root ``engine/src/lib.rs`` accreted a new
 ``py_<neuron>_simulate`` wrapper for every fidelity unit, turning it into the
 largest file in the repository while the Python model surfaces were being
-decomposed (S-MONO-01…). This guard closes that loop: it holds a **DOWN-only**
-ratchet on the crate root's line count and ``#[pyfunction]`` count. A wrapper
-appended to ``engine/src/lib.rs`` pushes a count over its frozen ceiling and
-fails the check, forcing the binding into ``engine/src/bindings/<neuron>.rs``
-(the McCulloch-Pitts pattern) with its own ``register`` function instead.
+decomposed (S-MONO-01…). Other engine files collected unrelated model families
+behind similarly broad names. This guard closes both loops with **DOWN-only**
+line-count and ``#[pyfunction]`` ratchets for every target in the ceiling
+document. New code must live in the appropriate bounded responsibility module;
+it may not regrow a decomposed facade or crate root.
 
 Usage::
 
@@ -59,14 +59,13 @@ _CEILING_HEADER = """\
 # © Code 2020–2026 Miroslav Šotek. All rights reserved.
 # ORCID: 0009-0009-3560-0851
 # Contact: www.anulum.li | protoscience@anulum.li
-# SC-NeuroCore — Engine crate-root monolith ceiling (DOWN-only ratchet)
+# SC-NeuroCore — Engine monolith ceilings (DOWN-only ratchets)
 
-# DOWN-only ratchet on the engine PyO3 crate root. Every ceiling here may only
+# DOWN-only ratchets on decomposed engine Rust surfaces. Every ceiling may only
 # stay the same or decrease; `tools/engine_monolith_guard.py --update` refuses
-# to raise a ceiling. New PyO3 bindings must be added under
-# engine/src/bindings/<neuron>.rs with a register() function
-# (see engine/src/bindings/mcculloch_pitts.rs), never appended to
-# engine/src/lib.rs. See docs/internal/TODO.md — S-MONO-RUST.
+# to raise one. New PyO3 bindings belong under engine/src/bindings/<neuron>.rs;
+# model implementations belong in their bounded responsibility modules, never
+# in a decomposed facade. See docs/internal/TODO.md — S-MONO-RUST.
 """
 
 
@@ -140,17 +139,16 @@ def format_report(report: dict[str, Any]) -> str:
 def format_violations(report: dict[str, Any]) -> str:
     """Render an actionable failure message for a failed evaluation."""
 
-    lines = ["engine crate root grew beyond its frozen ceiling:"]
+    lines = ["engine source grew beyond its frozen monolith ceiling:"]
     for violation in report["violations"]:
         lines.append(
             f"  {violation['path']} {violation['metric']}: "
             f"{violation['actual']} > {violation['ceiling']} (+{violation['delta']})"
         )
     lines.append(
-        "The engine crate root is frozen DOWN-only (S-MONO-RUST). Add new PyO3 "
-        "bindings under engine/src/bindings/<neuron>.rs with a register() "
-        "function (see engine/src/bindings/mcculloch_pitts.rs), not in "
-        "engine/src/lib.rs. After moving code out, tighten the ceiling with "
+        "Engine monolith ceilings are frozen DOWN-only (S-MONO-RUST). Add new "
+        "code to the appropriate bounded responsibility module, not to a "
+        "decomposed facade or crate root. After moving code out, tighten with "
         "`python tools/engine_monolith_guard.py --update`."
     )
     return "\n".join(lines)
@@ -175,7 +173,7 @@ def tightened_ceiling(repo: Path, ceiling: dict[str, Any]) -> dict[str, Any]:
             if got > cap:
                 raise CeilingRaiseError(
                     f"refusing to raise ceiling for {rel_path} {metric}: "
-                    f"{got} > {cap}; move bindings out of the crate root first"
+                    f"{got} > {cap}; move code into a bounded module first"
                 )
             new_target[ceiling_key] = got
         updated_targets[rel_path] = new_target
@@ -196,7 +194,7 @@ def render_ceiling_toml(ceiling: dict[str, Any]) -> str:
 
 
 def main(argv: Iterable[str] | None = None) -> int:
-    """Entry point: print, check, or ratchet the crate-root ceiling."""
+    """Entry point: print, check, or ratchet engine monolith ceilings."""
 
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--repo", type=Path, default=Path.cwd())

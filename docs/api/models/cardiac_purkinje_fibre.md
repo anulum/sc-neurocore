@@ -1,6 +1,6 @@
 # CardiacPurkinjeFibre
 
-**Module:** `engine/src/neurons/misc.rs`
+**Module:** `engine/src/neurons/misc/cardiac_purkinje.rs`
 **Reference:** DiFrancesco & Noble, *Phil Trans R Soc Lond B* 307:353–398, 1985
 **Family:** Cardiac conduction cell with pacemaker capability
 **State variables:** `v`, `m`, `h` (Na⁺), `d`, `f` (CaL), `x_r` (IKr), `y` (If/HCN)
@@ -572,7 +572,7 @@ if the rate is faster than in vivo.
 
 | Checklist | Status |
 |-----------|--------|
-| Rust implementation | `engine/src/neurons/misc.rs:745` |
+| Rust implementation | `engine/src/neurons/misc/cardiac_purkinje.rs:40` |
 | PyO3 wrapper | Yes (state: v, d, f, y) |
 | NetworkRunner wired | `NeuronVariant::CardiacPurkinje` |
 | `create_neuron("CardiacPurkinjeFibre")` | Yes |

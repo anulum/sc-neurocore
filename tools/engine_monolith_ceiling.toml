@@ -4,17 +4,20 @@
 # © Code 2020–2026 Miroslav Šotek. All rights reserved.
 # ORCID: 0009-0009-3560-0851
 # Contact: www.anulum.li | protoscience@anulum.li
-# SC-NeuroCore — Engine crate-root monolith ceiling (DOWN-only ratchet)
+# SC-NeuroCore — Engine monolith ceilings (DOWN-only ratchets)
 
-# DOWN-only ratchet on the engine PyO3 crate root. Every ceiling here may only
+# DOWN-only ratchets on decomposed engine Rust surfaces. Every ceiling may only
 # stay the same or decrease; `tools/engine_monolith_guard.py --update` refuses
-# to raise a ceiling. New PyO3 bindings must be added under
-# engine/src/bindings/<neuron>.rs with a register() function
-# (see engine/src/bindings/mcculloch_pitts.rs), never appended to
-# engine/src/lib.rs. See docs/internal/TODO.md — S-MONO-RUST.
+# to raise one. New PyO3 bindings belong under engine/src/bindings/<neuron>.rs;
+# model implementations belong in their bounded responsibility modules, never
+# in a decomposed facade. See docs/internal/TODO.md — S-MONO-RUST.
 
 schema_version = 1
 
 [targets."engine/src/lib.rs"]
 max_lines = 3769
 max_pyfunctions = 68
+
+[targets."engine/src/neurons/misc.rs"]
+max_lines = 26
+max_pyfunctions = 0

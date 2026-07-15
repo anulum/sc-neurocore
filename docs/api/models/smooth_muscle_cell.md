@@ -1,6 +1,6 @@
 # SmoothMuscleCell
 
-**Module:** `engine/src/neurons/misc.rs`
+**Module:** `engine/src/neurons/misc/smooth_muscle.rs`
 **Reference:** Hirst & Edwards, *J Physiol* 531:567–584, 2001; Imtiaz et al., *Biophys J* 83:1877–1890, 2002
 **Family:** Visceral/vascular smooth muscle with Ca²⁺ oscillations
 **State variables:** `v`, `d` (CaL activation), `f` (CaL inactivation), `ca` (cytosolic Ca²⁺), `ca_store` (ER/SR Ca²⁺)
@@ -596,7 +596,7 @@ spurious Ca²⁺ creation.
 
 | Checklist | Status |
 |-----------|--------|
-| Rust implementation | `engine/src/neurons/misc.rs:928` |
+| Rust implementation | `engine/src/neurons/misc/smooth_muscle.rs:32` |
 | PyO3 wrapper | Yes (state: v, ca, ca_store) |
 | NetworkRunner wired | `NeuronVariant::SmoothMuscle` |
 | `create_neuron("SmoothMuscleCell")` | Yes |

@@ -1,6 +1,6 @@
 # EndocrineBetaCell
 
-**Module:** `engine/src/neurons/misc.rs`
+**Module:** `engine/src/neurons/misc/endocrine_beta_cell.rs`
 **Reference:** Chay & Keizer, *Biophys J* 42:181–190, 1983; Sherman et al., *Biophys J* 54:411–425, 1988
 **Family:** Pancreatic beta cell with glucose-dependent bursting
 **State variables:** `v`, `n` (K_dr activation), `ca` (intracellular Ca²⁺)
@@ -524,7 +524,7 @@ Gilon & Henquin, 2001).
 
 | Checklist | Status |
 |-----------|--------|
-| Rust implementation | `engine/src/neurons/misc.rs:1098` |
+| Rust implementation | `engine/src/neurons/misc/endocrine_beta_cell.rs:35` |
 | PyO3 wrapper | Yes (state: v, n, ca) |
 | NetworkRunner wired | `NeuronVariant::BetaCell` |
 | `create_neuron("EndocrineBetaCell")` | Yes |
