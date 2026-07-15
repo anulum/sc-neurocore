@@ -1,7 +1,7 @@
 # LearnableNeuronModel
 
-**Module:** `engine/src/neurons/simple_spiking.rs`
-**Rust struct:** `LearnableNeuronModel` (line 1041)
+**Module:** `engine/src/neurons/simple_spiking/lnm.rs`
+**Rust struct:** `LearnableNeuronModel`
 **Reference:** Jahns et al., 2025
 **Family:** Integrate-and-fire (fully learnable, parameterised activation + decay)
 **State variables:** `v` (membrane potential)
@@ -190,7 +190,8 @@ With γ feedback, the effective input is slightly higher, reducing ISI.
 
 ## Parameters
 
-All defaults from `LearnableNeuronModel::new()` in `simple_spiking.rs:1052`:
+All defaults from `LearnableNeuronModel::new()` in
+`engine/src/neurons/simple_spiking/lnm.rs`:
 
 | Parameter | Default | Unit | Description |
 |-----------|---------|------|-------------|
@@ -206,7 +207,7 @@ All defaults from `LearnableNeuronModel::new()` in `simple_spiking.rs:1052`:
 
 ## Implementation Details
 
-### Code structure (`simple_spiking.rs:1063–1071`)
+### Code structure (`engine/src/neurons/simple_spiking/lnm.rs`)
 
 ```
 step(current) → i32:
@@ -368,7 +369,7 @@ for FPGA deployment, avoiding the exp() entirely.
 
 | Checklist | Status |
 |-----------|--------|
-| Rust implementation | `engine/src/neurons/simple_spiking.rs:1041` |
+| Rust implementation | `engine/src/neurons/simple_spiking/lnm.rs` |
 | PyO3 wrapper | `pyo3_neurons.rs` |
 | NetworkRunner wired | `NeuronVariant::LNM` |
 | `create_neuron("LearnableNeuronModel")` | Yes |
@@ -567,5 +568,5 @@ aspects of neural dynamics.
 
 ---
 
-*Document verified against Rust source `engine/src/neurons/simple_spiking.rs:1041–1081`.
+*Document verified against Rust source `engine/src/neurons/simple_spiking/lnm.rs`.
 All equations, parameters, and default values read directly from the implementation.*

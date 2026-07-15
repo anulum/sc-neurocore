@@ -72,7 +72,7 @@ The module-specific behavioural test surface verifies:
 |---------|----------|
 | `tests/test_model_mckean.py` | Python RK4 reference, branch equations, dynamics, validation, public network workflow |
 | `tests/test_mckean_backends.py` | Cross-backend `simulate` parity (rust/julia/go bit-exact, mojo ULP-bounded) |
-| `engine/src/neurons/simple_spiking.rs` | Rust engine RK4 `step`/`simulate` candidate and fail-closed state preservation |
+| `engine/src/neurons/simple_spiking/mckean.rs` | Rust engine RK4 `step`/`simulate` candidate and fail-closed state preservation |
 | `src/sc_neurocore/accel/julia/neurons/mckean.jl` | Julia RK4 `simulate_trace` parity |
 | `src/sc_neurocore/accel/go/neurons/mckean/mckean.go` | Go RK4 c-shared `simulate` parity |
 | `src/sc_neurocore/accel/mojo/neurons/mckean.mojo` | Mojo RK4 FFI `simulate` (FMA ULP-bounded) |

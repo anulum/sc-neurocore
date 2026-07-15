@@ -200,6 +200,7 @@ def test_main_check_passes_on_live_tree(capsys: pytest.CaptureFixture[str]) -> N
     assert "engine/src/lib.rs" in output
     assert "engine/src/neurons/biophysical.rs" in output
     assert "engine/src/neurons/misc.rs" in output
+    assert "engine/src/neurons/simple_spiking.rs" in output
 
 
 def test_script_entrypoint_exits_zero(monkeypatch: pytest.MonkeyPatch) -> None:

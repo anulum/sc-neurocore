@@ -37,12 +37,12 @@ Python reference implementation (`src/sc_neurocore/`).
 | Homeostatic LIF | `HomeostaticLIFNeuron` | `neuron.rs::HomeostaticLif` | Done |
 | Dendritic neuron | `DendriticNeuron` | `neuron.rs::DendriticNeuron` | Done |
 
-## Extended Neuron Models (104 bio + 1 AI in `neurons/`)
+## Extended Neuron Models (106 bio + 1 AI in `neurons/`)
 
 | Category | Count | Rust module | Status |
 |----------|-------|-------------|--------|
 | Trivial IF variants | 18 | `neurons/trivial.rs` | Done |
-| Simple spiking (2D+) | 20 | `neurons/simple_spiking.rs` | Done |
+| Simple spiking (2D+) | 22 | `neurons/simple_spiking/` + facade | Done |
 | Discrete maps | 6 | `neurons/maps.rs` | Done |
 | Biophysical (HH-type) | 20 | `neurons/biophysical/` + facade | Done |
 | Multi-compartment | 7 | `neurons/multi_compartment.rs` | Done |

@@ -502,34 +502,37 @@ the speedup achievable through Rust compilation alone.
 | `test_fires` | Fires under drive |
 | `test_w_recovery` | w variable evolves |
 
-### 8.2 Rust Tests (7 total)
+### 8.2 Rust Tests (10 total)
 
-**File:** `engine/src/neurons/simple_spiking.rs`
+**File:** `engine/src/neurons/simple_spiking/morris_lecar.rs`
 
 | Test | What is verified |
 |------|-----------------|
-| `ml_fires` | Fires at I=200 |
+| `default_matches_constructor_state` | `Default` and `new` start from the same voltage |
+| `morris_lecar_fires` | Fires under sustained drive |
 | `ml_silent_without_input` | v bounded at I=0 |
 | `ml_reset_clears_state` | v=-60.0, w=0.0 after reset |
 | `ml_moderate_input_stable` | v finite at moderate drive |
-| `ml_w_bounded` | 0 ≤ w ≤ 1 (activation range) |
+| `ml_rk4_separates_from_forward_euler` | RK4 candidate differs from one Euler step |
 | `ml_nan_no_panic` | NaN input does not crash |
+| `ml_overflow_candidate_preserves_state` | Invalid RK4 candidate fails closed |
 | `ml_negative_no_crash` | v finite at negative drive |
+| `ml_k_gating_bounded` | 0 ≤ w ≤ 1 (activation range) |
 
 ### 8.3 Coverage Summary
 
 | Category | Python | Rust | Total |
 |----------|--------|------|-------|
-| Construction/reset | 3 | 1 | 4 |
+| Construction/reset | 3 | 2 | 5 |
 | Activation functions | 4 | 0 | 4 |
-| Dynamics/spiking | 10 | 2 | 12 |
-| Equations/nullclines | 4 | 0 | 4 |
+| Dynamics/spiking | 10 | 3 | 13 |
+| Equations/nullclines | 4 | 1 | 5 |
 | Excitability types | 4 | 0 | 4 |
 | Parameters | 6 | 0 | 6 |
-| Numerical stability | 5 | 3 | 8 |
+| Numerical stability | 5 | 4 | 9 |
 | Performance | 2 | 0 | 2 |
 | Pipeline | 4 | 0 | 4 |
-| **Total** | **42** | **7** | **49** |
+| **Total** | **42** | **10** | **52** |
 
 ---
 

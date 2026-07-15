@@ -318,7 +318,7 @@ compute cycles for the 64x32 dense contract.
 > loops. HH is most expensive (100 sub-steps at dt=0.01 ms).
 > Measured 2026-04-05 on i5-11600K @ 3.90 GHz.
 
-### Simple Spiking (`neurons/simple_spiking.rs`)
+### Simple Spiking (`neurons/simple_spiking/` + facade)
 
 | Model | Steps | Median | Per step | Notes |
 |-------|-------|--------|----------|-------|

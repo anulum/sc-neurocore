@@ -82,7 +82,7 @@ Invalid runtime contracts are fail-closed:
 |---------|----------|
 | `tests/test_model_wilson_hr.py` | Python RK4 reference, polynomial equation, dynamics, validation, public network workflow |
 | `tests/test_wilson_hr_backends.py` | Cross-backend `simulate` parity (rust/julia/go bit-exact, mojo ULP-bounded) |
-| `engine/src/neurons/simple_spiking.rs` | Rust engine RK4 `step`/`simulate` candidate and invalid-state preservation |
+| `engine/src/neurons/simple_spiking/wilson_hr.rs` | Rust engine RK4 `step`/`simulate` candidate and invalid-state preservation |
 | `src/sc_neurocore/accel/julia/neurons/wilson_hr.jl` | Julia RK4 `simulate_trace` parity |
 | `src/sc_neurocore/accel/go/neurons/wilson_hr/wilson_hr.go` | Go RK4 c-shared `simulate` parity |
 | `src/sc_neurocore/accel/mojo/neurons/wilson_hr.mojo` | Mojo RK4 FFI `simulate` (FMA ULP-bounded) |

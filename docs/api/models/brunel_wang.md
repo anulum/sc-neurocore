@@ -229,7 +229,7 @@ BrunelWang is the most biophysically detailed synaptic model in SC-NeuroCore.
 - **State:** v + 5 private synaptic vars + refractory timer.
 - **Dataclass + __post_init__:** Private state initialised after construction.
 - **get_state():** Returns {v, ref_remaining} for debugging.
-- **Rust implementation:** `engine/src/neurons/simple_spiking.rs` — full Rust port with `step()` (single-current) and `step_full()` (4-arg synaptic). Wired into `NeuronVariant::BrunelWang` with `WrBrunelWang` adapter for single-current pipeline.
+- **Rust implementation:** `engine/src/neurons/simple_spiking/brunel_wang.rs` — full Rust port with `step()` (single-current) and `step_full()` (4-arg synaptic). Wired into `NeuronVariant::BrunelWang` with `WrBrunelWang` adapter for single-current pipeline.
 
 ---
 
@@ -400,7 +400,7 @@ sc_neurocore Pipeline
 
 | Aspect | Python | Rust |
 |--------|--------|------|
-| Source | `brunel_wang.py` (106 lines) | `simple_spiking.rs:1151-1252` |
+| Source | `brunel_wang.py` (106 lines) | `engine/src/neurons/simple_spiking/brunel_wang.rs` |
 | NMDA Mg²⁺ block | `1/(1 + [Mg]/3.57 * exp(-0.062V))` | identical |
 | Synaptic currents | 4 conductance-based | identical |
 | Membrane eq. | `i_leak + (i_syn)/C_m` | identical |
@@ -522,10 +522,11 @@ print(f"Spikes: {spikes}, v={state['v']:.2f}")
 | Dynamics | 2 | Rate increase with I, voltage bounded |
 | Pipeline | 3 | Population, network spikes, analysis |
 
-### Rust Tests (10 total)
+### Rust Tests (11 total)
 
 | Test | What is verified |
 |------|-----------------|
+| `default_matches_constructor_state` | `Default` and `new` start from the same voltage |
 | `brunel_wang_fires_with_ampa_ext` | Fires under AMPA drive |
 | `brunel_wang_silent_without_input` | Silent at I=0 |
 | `brunel_wang_nmda_mg_block` | Mg²⁺ block correct at -70/0 mV |
@@ -541,13 +542,13 @@ print(f"Spikes: {spikes}, v={state['v']:.2f}")
 
 | Category | Python | Rust | Total |
 |----------|--------|------|-------|
-| Construction/reset | 2 | 2 | 4 |
+| Construction/reset | 2 | 3 | 5 |
 | Synaptic mechanisms | 4 | 4 | 8 |
 | Dynamics | 2 | 1 | 3 |
 | Numerical stability | 0 | 2 | 2 |
 | Pipeline | 3 | 0 | 3 |
 | Performance | 0 | 1 | 1 |
-| **Total** | **12** | **10** | **22** |
+| **Total** | **12** | **11** | **23** |
 
 ---
 

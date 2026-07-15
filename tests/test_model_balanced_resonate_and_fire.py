@@ -17,8 +17,8 @@ import numpy as np
 import pytest
 
 from sc_neurocore.neurons import BalancedResonateAndFireNeuron as PublicBRF
-from sc_neurocore.neurons.models import BalancedResonateAndFireNeuron
 from sc_neurocore.neurons.models.balanced_resonate_and_fire import (
+    BalancedResonateAndFireNeuron,
     sustain_oscillation_boundary,
 )
 from sc_neurocore.network.population import Population
@@ -179,7 +179,7 @@ class TestBRFProjectWiring:
     def test_polyglot_mirror_files_exist_with_brf_equations(self) -> None:
         equation_paths = [
             "src/sc_neurocore/accel/rust/safety/balanced_resonate_and_fire.rs",
-            "engine/src/neurons/simple_spiking.rs",
+            "engine/src/neurons/simple_spiking/balanced_resonate_and_fire.rs",
             "src/sc_neurocore/accel/go/services/balanced_resonate_and_fire.go",
             "src/sc_neurocore/accel/julia/neurons/balanced_resonate_and_fire.jl",
             "src/sc_neurocore/accel/mojo/kernels/balanced_resonate_and_fire.mojo",

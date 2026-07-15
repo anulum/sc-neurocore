@@ -388,7 +388,7 @@ print(f"Bursts: {len(bursts)}, Mean spikes/burst: {sum(len(b) for b in bursts)/l
 
 | Aspect | Python | Rust |
 |--------|--------|------|
-| Source | `hindmarsh_rose.py` (45 lines) | `simple_spiking.rs:130-179` |
+| Source | `hindmarsh_rose.py` (45 lines) | `engine/src/neurons/simple_spiking/hindmarsh_rose.rs` |
 | Integration | RK4 default, Euler regression option | RK4 |
 | Exp per step | 0 | 0 |
 | Dependencies | None (pure arithmetic) | None (pure arithmetic) |
@@ -533,16 +533,18 @@ slowest of the polynomial models, so the speedups are the highest (24–37×).
 | `test_fires` | Fires under drive |
 | `test_z_adaptation` | z variable evolves |
 
-### 8.2 Rust Tests (6 total)
+### 8.2 Rust Tests (8 total)
 
-**File:** `engine/src/neurons/simple_spiking.rs`
+**File:** `engine/src/neurons/simple_spiking/hindmarsh_rose.rs`
 
 | Test | What is verified |
 |------|-----------------|
-| `hr_fires` | Fires at I=5 |
-| `hr_silent_without_input` | x bounded at I=0 |
+| `default_matches_constructor_state` | `Default` and `new` start from the same x state |
+| `simulate_matches_repeated_step` | Batched simulation is identical to repeated `step` calls |
+| `hr_fires` | Fires under sustained drive |
 | `hr_reset_clears_state` | x=-1.6, y=-10, z=2 after reset |
-| `hr_moderate_bounded` | All state finite at moderate I |
+| `hr_moderate_input_stable` | All state finite at moderate drive |
+| `hr_slow_z_evolves` | Slow adaptation state evolves |
 | `hr_nan_no_panic` | NaN input does not crash |
 | `hr_negative_no_crash` | State finite at negative I |
 
@@ -550,15 +552,15 @@ slowest of the polynomial models, so the speedups are the highest (24–37×).
 
 | Category | Python | Rust | Total |
 |----------|--------|------|-------|
-| Construction/reset | 3 | 1 | 4 |
-| Dynamics/spiking | 6 | 2 | 8 |
+| Construction/reset | 3 | 2 | 5 |
+| Dynamics/spiking | 6 | 3 | 9 |
 | Equations | 3 | 0 | 3 |
 | Bursting | 4 | 0 | 4 |
 | Parameters | 4 | 0 | 4 |
 | Numerical stability | 1 | 3 | 4 |
 | Performance | 2 | 0 | 2 |
 | Pipeline | 4 | 0 | 4 |
-| **Total** | **30** | **6** | **36** |
+| **Total** | **30** | **8** | **38** |
 
 ---
 

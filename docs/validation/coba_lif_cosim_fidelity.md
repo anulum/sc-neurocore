@@ -93,7 +93,7 @@ condition.
 
 - Python model: `src/sc_neurocore/neurons/models/coba_lif.py`
 - Native loader: `src/sc_neurocore/accel/coba_lif.py`
-- Rust engine and PyO3: `engine/src/neurons/simple_spiking.rs`,
+- Rust engine and PyO3: `engine/src/neurons/simple_spiking/coba_lif.rs`,
   `engine/src/pyo3_neurons.rs`, and `engine/src/lib.rs`
 - Rust safety: `src/sc_neurocore/accel/rust/safety/coba_lif.rs`
 - Julia, Go, Mojo: `src/sc_neurocore/accel/{julia,go,mojo}`

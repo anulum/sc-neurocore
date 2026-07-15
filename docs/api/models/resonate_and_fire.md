@@ -418,7 +418,7 @@ sc_neurocore Pipeline
 
 | Aspect | Python | Rust |
 |--------|--------|------|
-| Source | `resonate_and_fire.py` (44 lines) | `simple_spiking.rs:186-225` |
+| Source | `resonate_and_fire.py` (44 lines) | `engine/src/neurons/simple_spiking/resonate_and_fire.rs` |
 | Integration | Simultaneous Euler | Simultaneous Euler (fixed 775e3bd) |
 | sqrt per step | 1 (numpy) | 1 (f64::sqrt) |
 | Amplitude check | numpy.sqrt(x²+y²) | (x*x + y*y).sqrt() |
@@ -556,10 +556,11 @@ print(f"Spikes: {spikes}, x={state['x']:.4f}, y={state['y']:.4f}")
 | Pipeline | 4 | Population, projection, network spikes, analysis |
 | Stability | 2 | Extended run, extreme drive |
 
-### Rust Tests (6 total)
+### Rust Tests (7 total)
 
 | Test | What is verified |
 |------|-----------------|
+| `default_matches_constructor_state` | `Default` and `new` start from the same oscillator state |
 | `rnf_fires` | Fires under drive |
 | `rnf_reset_clears_state` | x=0, y=0 after reset |
 | `rnf_bounded` | State finite under drive |
@@ -571,13 +572,13 @@ print(f"Spikes: {spikes}, x={state['x']:.4f}, y={state['y']:.4f}")
 
 | Category | Python | Rust | Total |
 |----------|--------|------|-------|
-| Construction/reset | 3 | 1 | 4 |
+| Construction/reset | 3 | 2 | 5 |
 | Resonance/dynamics | 10 | 1 | 11 |
 | Parameters | 4 | 0 | 4 |
 | Numerical stability | 2 | 3 | 5 |
 | Performance | 2 | 0 | 2 |
 | Pipeline | 4 | 0 | 4 |
-| **Total** | **27** | **6** | **33** |
+| **Total** | **27** | **7** | **34** |
 
 ---
 

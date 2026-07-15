@@ -78,7 +78,7 @@ values or `NaN` candidates appropriate to their low-level surface.
 ```
 GutkinErmentroutNeuron
 ├── Python: sc_neurocore.neurons.models.gutkin_ermentrout
-├── Rust engine: engine/src/neurons/simple_spiking.rs
+├── Rust engine: engine/src/neurons/simple_spiking/gutkin_ermentrout.rs
 ├── Rust safety: src/sc_neurocore/accel/rust/safety/gutkin_ermentrout.rs
 ├── Go service: src/sc_neurocore/accel/go/services/gutkin_ermentrout.go
 ├── Julia mirror: src/sc_neurocore/accel/julia/neurons/gutkin_ermentrout.jl
