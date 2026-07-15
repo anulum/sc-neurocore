@@ -44,7 +44,7 @@ from pathlib import Path
 
 _REPO_ROOT = Path(__file__).resolve().parent.parent
 _ACCEL_ROOT = _REPO_ROOT / "src" / "sc_neurocore" / "accel"
-_MODEL_ROOT = _REPO_ROOT / "src" / "sc_neurocore" / "neurons" / "models"
+_PRUNED_DIRS = frozenset({".pixi", "__pycache__", ".git", "node_modules", "target"})
 
 # Authoritative build recipes embedded in the model / accel modules.
 _GO_HINT = re.compile(r"buildmode=c-shared -o (lib[a-z0-9_]+\.so) ([a-z0-9_]+\.go)")
@@ -89,23 +89,41 @@ def _hint_pairs(text: str, pattern: re.Pattern[str]) -> dict[str, str]:
     return pairs
 
 
-def _os_path_join_parts(node: ast.AST) -> list[str] | None:
-    """Return the string segments of an ``os.path.join(_ACCEL_ROOT, ...)`` call.
+def _loader_lib_parts(node: ast.AST) -> tuple[str, list[str]] | None:
+    """Return ``(root_name, segments)`` for a library path a loader constructs.
 
-    Only calls rooted at an ``*ACCEL_ROOT`` name are accepted, so an arbitrary
-    ``join`` elsewhere in the module cannot be mistaken for a library path.
+    Two idioms are recognised, both anchored on a ``*_ROOT`` name so an arbitrary
+    expression elsewhere in the module is never mistaken for a library path:
+
+    * ``os.path.join(_ACCEL_ROOT, "go", "neurons", "theta", "libtheta.so")``
+    * ``_PACKAGE_ROOT / "accel" / "mojo" / "world_model" / "liblgssm.so"``
     """
-    if not (
+    if (
         isinstance(node, ast.Call)
         and isinstance(node.func, ast.Attribute)
         and node.func.attr == "join"
     ):
-        return None
-    rooted = any(isinstance(a, ast.Name) and "ACCEL_ROOT" in a.id for a in node.args)
-    if not rooted:
-        return None
-    parts = [a.value for a in node.args if isinstance(a, ast.Constant) and isinstance(a.value, str)]
-    return parts or None
+        root = next(
+            (a.id for a in node.args if isinstance(a, ast.Name) and a.id.endswith("ROOT")),
+            None,
+        )
+        if root is None:
+            return None
+        parts = [
+            a.value for a in node.args if isinstance(a, ast.Constant) and isinstance(a.value, str)
+        ]
+        return (root, parts) if parts else None
+    if isinstance(node, ast.BinOp) and isinstance(node.op, ast.Div):
+        segments: list[str] = []
+        cursor: ast.AST = node
+        while isinstance(cursor, ast.BinOp) and isinstance(cursor.op, ast.Div):
+            if not (isinstance(cursor.right, ast.Constant) and isinstance(cursor.right.value, str)):
+                return None
+            segments.append(cursor.right.value)
+            cursor = cursor.left
+        if isinstance(cursor, ast.Name) and cursor.id.endswith("ROOT"):
+            return (cursor.id, list(reversed(segments)))
+    return None
 
 
 def _loader_output_paths(language: str, py_files: Sequence[Path], accel_root: Path) -> set[Path]:
@@ -115,6 +133,7 @@ def _loader_output_paths(language: str, py_files: Sequence[Path], accel_root: Pa
     opens exactly the path this returns, so producing the library there is what
     makes the compiled-backend tests pass.
     """
+    package_root = accel_root.parent
     outputs: set[Path] = set()
     for py_file in py_files:
         try:
@@ -122,31 +141,53 @@ def _loader_output_paths(language: str, py_files: Sequence[Path], accel_root: Pa
         except (OSError, SyntaxError, UnicodeDecodeError):
             continue
         for node in ast.walk(tree):
-            parts = _os_path_join_parts(node)
-            if parts and parts[-1].endswith(".so") and language in parts:
-                outputs.add(accel_root.joinpath(*parts))
+            matched = _loader_lib_parts(node)
+            if matched is None:
+                continue
+            root, parts = matched
+            if not (parts[-1].endswith(".so") and language in parts):
+                continue
+            base = accel_root if "ACCEL" in root else package_root
+            outputs.add(base.joinpath(*parts))
     return outputs
+
+
+def _iter_files(root: Path, suffix: str) -> list[Path]:
+    """All ``*<suffix>`` files under ``root``, skipping vendored/build directories.
+
+    Loaders live in several packages (``neurons/models``, ``accel``,
+    ``world_model`` ...) and Mojo build recipes live in the ``.mojo`` sources,
+    so the whole tree is scanned; pruning ``.pixi``/``__pycache__`` keeps it fast.
+    """
+    found: list[Path] = []
+    for dirpath, dirnames, filenames in os.walk(root):
+        dirnames[:] = [d for d in dirnames if d not in _PRUNED_DIRS]
+        found.extend(Path(dirpath) / name for name in filenames if name.endswith(suffix))
+    return sorted(found)
 
 
 def discover_targets(
     language: str,
     *,
     accel_root: Path = _ACCEL_ROOT,
-    model_root: Path = _MODEL_ROOT,
 ) -> list[BackendTarget]:
     """Discover every buildable backend for ``language`` ("go" or "mojo").
 
-    The loader ``os.path.join`` calls give the authoritative output directory
+    The loader library-path expressions give the authoritative output directory
     and name (unambiguous), and the embedded build recipes give the matching
     source file name (``libhr.so`` <- ``hindmarsh_rose.go``). The source sits
     beside its library, so the two together pin one concrete build per backend.
+    The whole package tree is scanned so loaders outside ``neurons/models`` /
+    ``accel`` (e.g. ``world_model`` LGSSM) are discovered too.
     """
-    py_files = sorted(model_root.glob("*.py")) + sorted(accel_root.glob("*.py"))
+    py_files = _iter_files(accel_root.parent, ".py")
     pattern = _GO_HINT if language == "go" else _MOJO_HINT
     suffix = ".go" if language == "go" else ".mojo"
-    source_for_output = {
-        out: src for src, out in _hint_pairs(_read_text(py_files), pattern).items()
-    }
+    # Recipes live both in the Python model modules and in the source-file header
+    # comments (Mojo recipes such as ``libhr.so <- hindmarsh_rose.mojo`` only
+    # appear beside the ``.mojo`` source), so read both for the source pairing.
+    recipe_text = _read_text(py_files + _iter_files(accel_root, suffix))
+    source_for_output = {out: src for src, out in _hint_pairs(recipe_text, pattern).items()}
 
     targets: list[BackendTarget] = []
     for output in sorted(_loader_output_paths(language, py_files, accel_root)):

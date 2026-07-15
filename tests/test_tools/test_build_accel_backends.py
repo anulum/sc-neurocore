@@ -36,20 +36,33 @@ MOD = _load_tool()
 
 
 def _make_tree(tmp_path: Path) -> tuple[Path, Path]:
-    """Create a miniature accel/model tree covering every discovery branch."""
+    """Create a miniature accel/package tree covering every discovery branch."""
     accel = tmp_path / "accel"
     models = tmp_path / "models"
-    # Go sources: a conventional one (libtheta.so <- theta.go) and a renamed one
-    # (libhr.so <- hindmarsh_rose.go) that only the recipe hint can pair.
+    # Go sources: conventional (libtheta.so <- theta.go), renamed via recipe
+    # (libhr.so <- hindmarsh_rose.go), and an LGSSM-style world_model backend
+    # whose loader uses a pathlib `/` expression rather than os.path.join.
     (accel / "go" / "neurons" / "theta").mkdir(parents=True)
     (accel / "go" / "neurons" / "theta" / "theta.go").write_text("package main\n")
     (accel / "go" / "neurons" / "hindmarsh_rose").mkdir(parents=True)
     (accel / "go" / "neurons" / "hindmarsh_rose" / "hindmarsh_rose.go").write_text("package main\n")
+    (accel / "go" / "lgssm").mkdir(parents=True)
+    (accel / "go" / "lgssm" / "lgssm.go").write_text("package main\n")
     # A loader output whose source is absent -> must be skipped.
     (accel / "go" / "neurons" / "ghost").mkdir(parents=True)
-    # Mojo source (conventional).
+    # Mojo sources: conventional kernel + a renamed one whose recipe lives only in
+    # the .mojo header comment (not any .py), plus the LGSSM world_model source.
     (accel / "mojo" / "kernels").mkdir(parents=True)
     (accel / "mojo" / "kernels" / "theta.mojo").write_text("fn main():\n    pass\n")
+    (accel / "mojo" / "neurons").mkdir(parents=True)
+    (accel / "mojo" / "neurons" / "hindmarsh_rose.mojo").write_text(
+        "# mojo build --emit shared-lib -o libhr.so hindmarsh_rose.mojo\nfn main():\n    pass\n"
+    )
+    (accel / "mojo" / "world_model").mkdir(parents=True)
+    (accel / "mojo" / "world_model" / "lgssm.mojo").write_text("fn main():\n    pass\n")
+    # A pruned vendored dir must not be scanned (would crash on non-utf8 / noise).
+    (accel / "mojo" / ".pixi").mkdir(parents=True)
+    (accel / "mojo" / ".pixi" / "poison.py").write_text("this is not valid python !!!\n")
     models.mkdir()
     (models / "theta.py").write_text(
         "import os\n"
@@ -66,7 +79,20 @@ def _make_tree(tmp_path: Path) -> tuple[Path, Path]:
         '_ACCEL_ROOT = "x"\n'
         "def ensure_go_loaded():\n"
         '    p = os.path.join(_ACCEL_ROOT, "go", "neurons", "hindmarsh_rose", "libhr.so")\n'
+        "def ensure_mojo_loaded():\n"
+        '    m = os.path.join(_ACCEL_ROOT, "mojo", "neurons", "libhr.so")\n'
         "# build via: go build -buildmode=c-shared -o libhr.so hindmarsh_rose.go\n"
+    )
+    # LGSSM-style loader outside neurons/models, using pathlib rooted at PACKAGE_ROOT.
+    world = tmp_path / "world_model"
+    world.mkdir()
+    (world / "_lgssm.py").write_text(
+        "from pathlib import Path\n"
+        "_PACKAGE_ROOT = Path('x')\n"
+        "def _ensure_go_loaded():\n"
+        '    p = _PACKAGE_ROOT / "accel" / "go" / "lgssm" / "liblgssm.so"\n'
+        "def _ensure_mojo_loaded():\n"
+        '    m = _PACKAGE_ROOT / "accel" / "mojo" / "world_model" / "liblgssm.so"\n'
     )
     (models / "ghost.py").write_text(
         "import os\n"
@@ -86,29 +112,32 @@ def _target(tmp_path: Path, language: str = "go") -> Any:
 # ---- discovery -------------------------------------------------------------
 
 
-def test_discover_go_pairs_convention_and_recipe(tmp_path: Path) -> None:
-    accel, models = _make_tree(tmp_path)
-    targets = MOD.discover_targets("go", accel_root=accel, model_root=models)
-    names = {t.name for t in targets}
-    assert names == {"theta", "hindmarsh_rose"}  # ghost skipped (no source)
+def test_discover_go_pairs_convention_recipe_and_pathlib(tmp_path: Path) -> None:
+    accel, _ = _make_tree(tmp_path)
+    targets = MOD.discover_targets("go", accel_root=accel)
     by_name = {t.name: t for t in targets}
+    assert set(by_name) == {"theta", "hindmarsh_rose", "lgssm"}  # ghost skipped (no source)
     assert by_name["theta"].output.name == "libtheta.so"
-    assert by_name["hindmarsh_rose"].output.name == "libhr.so"
+    assert by_name["hindmarsh_rose"].output.name == "libhr.so"  # recipe-paired
     assert by_name["hindmarsh_rose"].source.name == "hindmarsh_rose.go"
+    # LGSSM discovered through a pathlib loader rooted at _PACKAGE_ROOT.
+    assert by_name["lgssm"].output == accel / "go" / "lgssm" / "liblgssm.so"
+    assert by_name["lgssm"].source == accel / "go" / "lgssm" / "lgssm.go"
 
 
-def test_discover_mojo_uses_convention(tmp_path: Path) -> None:
-    accel, models = _make_tree(tmp_path)
-    targets = MOD.discover_targets("mojo", accel_root=accel, model_root=models)
-    assert [t.name for t in targets] == ["theta"]
-    assert targets[0].output.name == "libtheta.so"
-    assert targets[0].source.name == "theta.mojo"
+def test_discover_mojo_uses_convention_recipe_and_pathlib(tmp_path: Path) -> None:
+    accel, _ = _make_tree(tmp_path)
+    by_name = {t.name: t for t in MOD.discover_targets("mojo", accel_root=accel)}
+    assert set(by_name) == {"theta", "hindmarsh_rose", "lgssm"}
+    # hindmarsh_rose mojo is paired only by the recipe in its .mojo header comment.
+    assert by_name["hindmarsh_rose"].output.name == "libhr.so"
+    assert by_name["hindmarsh_rose"].source.name == "hindmarsh_rose.mojo"
+    assert by_name["lgssm"].output == accel / "mojo" / "world_model" / "liblgssm.so"
 
 
 def test_loader_output_paths_ignores_unrooted_joins(tmp_path: Path) -> None:
     accel, models = _make_tree(tmp_path)
-    py_files = sorted(models.glob("*.py"))
-    outs = MOD._loader_output_paths("go", py_files, accel)
+    outs = MOD._loader_output_paths("go", sorted(models.glob("*.py")), accel)
     names = {p.name for p in outs}
     assert "libtheta.so" in names and "libhr.so" in names
     assert "here.so" not in names  # the unrooted os.path.join is not a backend
@@ -120,11 +149,41 @@ def test_loader_output_paths_skips_unparseable(tmp_path: Path) -> None:
     assert MOD._loader_output_paths("go", [bad], tmp_path) == set()
 
 
-def test_os_path_join_parts_rejects_non_join() -> None:
+def test_iter_files_prunes_vendored_dirs(tmp_path: Path) -> None:
+    (tmp_path / "keep").mkdir()
+    (tmp_path / "keep" / "a.py").write_text("x = 1\n")
+    (tmp_path / ".pixi" / "deep").mkdir(parents=True)
+    (tmp_path / ".pixi" / "deep" / "skip.py").write_text("y = 2\n")
+    found = {p.name for p in MOD._iter_files(tmp_path, ".py")}
+    assert found == {"a.py"}
+
+
+def test_loader_lib_parts_matches_and_rejects() -> None:
     import ast
 
-    call = ast.parse("os.path.dirname(x)", mode="eval").body
-    assert MOD._os_path_join_parts(call) is None
+    def expr(src: str) -> ast.AST:
+        return ast.parse(src, mode="eval").body
+
+    # os.path.join rooted at *_ROOT
+    assert MOD._loader_lib_parts(expr('os.path.join(_ACCEL_ROOT, "go", "x.so")')) == (
+        "_ACCEL_ROOT",
+        ["go", "x.so"],
+    )
+    # pathlib chain rooted at *_ROOT
+    assert MOD._loader_lib_parts(expr('_PACKAGE_ROOT / "accel" / "go" / "l.so"')) == (
+        "_PACKAGE_ROOT",
+        ["accel", "go", "l.so"],
+    )
+    # not a join / not a division -> None
+    assert MOD._loader_lib_parts(expr("os.path.dirname(x)")) is None
+    # join without a *_ROOT anchor -> None
+    assert MOD._loader_lib_parts(expr('os.path.join("a", "b")')) is None
+    # join with a *_ROOT anchor but no string parts -> None
+    assert MOD._loader_lib_parts(expr("os.path.join(_ACCEL_ROOT, other)")) is None
+    # pathlib chain whose right operand is not a string constant -> None
+    assert MOD._loader_lib_parts(expr("_PACKAGE_ROOT / other / x")) is None
+    # pathlib chain not rooted at a *_ROOT name -> None
+    assert MOD._loader_lib_parts(expr('base / "accel" / "x.so"')) is None
 
 
 def test_conventional_source_name() -> None:
