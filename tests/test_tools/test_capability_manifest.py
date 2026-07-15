@@ -51,6 +51,22 @@ def test_manifest_scans_core_capability_surfaces() -> None:
     assert "adex.md" in manifest["models"]["documentation_pages"]
 
 
+def test_rust_wrapper_scan_includes_modular_binding_siblings(tmp_path: Path) -> None:
+    tool = _load_tool()
+    facade = tmp_path / "engine/src/pyo3_neurons.rs"
+    binding = tmp_path / "engine/src/bindings/jansen_rit.rs"
+    _write_file(
+        facade,
+        'py_neuron_default!("FacadeModel", PyFacadeModel, FacadeModel);\n',
+    )
+    _write_file(
+        binding,
+        '#[pyclass(name = "ModularModel", module = "example")]\nstruct PyModularModel;\n',
+    )
+
+    assert tool._rust_pyo3_wrapper_names(facade) == ["FacadeModel", "ModularModel"]
+
+
 def test_manifest_validation_rejects_count_drift() -> None:
     tool = _load_tool()
     manifest = tool.build_capability_manifest(_repo_root())

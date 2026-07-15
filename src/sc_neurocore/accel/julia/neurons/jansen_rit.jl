@@ -4,105 +4,104 @@
 # © Code 2020–2026 Miroslav Šotek. All rights reserved.
 # ORCID: 0009-0009-3560-0851
 # Contact: www.anulum.li | protoscience@anulum.li
-# SC-NeuroCore — Julia for jansen_rit
+# SC-NeuroCore — Julia batch mirror for Jansen–Rit 1995
 
+"""Equation-(6) explicit-Euler recurrence for one cortical column."""
 module JansenRitAccel
 
-export step!, simulate, JansenRitUnitState
+export simulate_jansen_rit!, sigmoid_jansen_rit, validate_jansen_rit
 
-mutable struct JansenRitUnitState
-    y0::Float64
-    y3::Float64
-    y1::Float64
-    y4::Float64
-    y2::Float64
-    y5::Float64
-    a_exc::Float64
-    b_exc::Float64
-    a_rate::Float64
-    b_rate::Float64
-    c::Float64
-    e0::Float64
-    v0::Float64
-    r::Float64
-    dt::Float64
-end
-
-function JansenRitUnitState()
-    JansenRitUnitState(0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 3.25, 22.0, 100.0, 50.0, 135.0, 2.5, 6.0, 0.56, 0.001)
-end
-
-function _valid(s::JansenRitUnitState)
-    return all(isfinite, (
-        s.y0, s.y3, s.y1, s.y4, s.y2, s.y5,
-        s.a_exc, s.b_exc, s.a_rate, s.b_rate, s.c, s.e0, s.v0, s.r, s.dt,
-    )) &&
-        s.a_exc > 0.0 &&
-        s.b_exc > 0.0 &&
-        s.a_rate > 0.0 &&
-        s.b_rate > 0.0 &&
-        s.c >= 0.0 &&
-        s.e0 > 0.0 &&
-        s.r > 0.0 &&
-        s.dt > 0.0
-end
-
-function _sigmoid(s::JansenRitUnitState, x)
-    if !isfinite(x)
-        return NaN
-    end
-    exponent = s.r * (s.v0 - x)
+@inline function sigmoid_jansen_rit(voltage::Real, e0::Real, v0::Real, slope::Real)::Float64
+    value = Float64(voltage)
+    all(isfinite, (value, e0, v0, slope)) ||
+        throw(ArgumentError("Jansen–Rit sigmoid values must be finite"))
+    exponent = Float64(slope) * (Float64(v0) - value)
     if exponent >= 0.0
         exp_neg = exp(-exponent)
-        return 2.0 * s.e0 * exp_neg / (1.0 + exp_neg)
+        return 2.0 * Float64(e0) * exp_neg / (1.0 + exp_neg)
     end
-    return 2.0 * s.e0 / (1.0 + exp(exponent))
+    return 2.0 * Float64(e0) / (1.0 + exp(exponent))
 end
 
-function step!(s::JansenRitUnitState, I_ext::Float64=220.0; dt::Float64=s.dt)
-    if !isfinite(I_ext) || !isfinite(dt) || dt <= 0.0 || !_valid(s)
-        throw(ArgumentError("Jansen-Rit input, state, and timestep must be finite and physical"))
-    end
-    s1 = _sigmoid(s, s.y1 - s.y2)
-    s0 = _sigmoid(s, s.c * 0.8 * s.y0)
-    s2 = _sigmoid(s, s.c * 0.25 * s.y0)
-    dy0 = s.y3
-    dy3 = s.a_exc * s.a_rate * s1 - 2.0 * s.a_rate * s.y3 - s.a_rate ^ 2 * s.y0
-    dy1 = s.y4
-    dy4 = s.a_exc * s.a_rate * (I_ext + s.c * 0.8 * s0) - 2.0 * s.a_rate * s.y4 - s.a_rate ^ 2 * s.y1
-    dy2 = s.y5
-    dy5 = s.b_exc * s.b_rate * s.c * 0.25 * s2 - 2.0 * s.b_rate * s.y5 - s.b_rate ^ 2 * s.y2
-
-    next_y0 = s.y0 + dy0 * dt
-    next_y3 = s.y3 + dy3 * dt
-    next_y1 = s.y1 + dy1 * dt
-    next_y4 = s.y4 + dy4 * dt
-    next_y2 = s.y2 + dy2 * dt
-    next_y5 = s.y5 + dy5 * dt
-    if !all(isfinite, (next_y0, next_y3, next_y1, next_y4, next_y2, next_y5))
-        throw(ArgumentError("Jansen-Rit candidate state became non-finite"))
-    end
-    s.y0 = next_y0
-    s.y3 = next_y3
-    s.y1 = next_y1
-    s.y4 = next_y4
-    s.y2 = next_y2
-    s.y5 = next_y5
-    return s.y1 - s.y2
+function validate_jansen_rit(values::NTuple{15, Float64})::Bool
+    return all(isfinite, values) &&
+        values[7] > 0.0 && values[8] > 0.0 &&
+        values[9] > 0.0 && values[10] > 0.0 && values[11] >= 0.0 &&
+        values[12] > 0.0 && values[14] > 0.0 && values[15] > 0.0
 end
 
-function simulate(n_steps::Int=1000; I_ext::Float64=220.0, dt::Float64=0.001)
-    s = JansenRitUnitState()
-    trace = zeros(n_steps)
-    spikes = 0
-    for t in 1:n_steps
-        result = step!(s, I_ext; dt=dt)
-        trace[t] = result
-        if result isa Number && result > 0
-            spikes += 1
-        end
+"""
+Advance a Jansen–Rit drive batch into seven caller-owned trace buffers.
+
+The returned tuple contains final ``y0``, ``y3``, ``y1``, ``y4``, ``y2``,
+and ``y5`` in the public state order.
+"""
+function simulate_jansen_rit!(
+    y0_init::Real,
+    y3_init::Real,
+    y1_init::Real,
+    y4_init::Real,
+    y2_init::Real,
+    y5_init::Real,
+    a_exc::Real,
+    b_exc::Real,
+    a_rate::Real,
+    b_rate::Real,
+    c::Real,
+    e0::Real,
+    v0::Real,
+    slope::Real,
+    dt::Real,
+    p_ext::AbstractVector{<:Real},
+    y0_out::AbstractVector{<:Real},
+    y3_out::AbstractVector{<:Real},
+    y1_out::AbstractVector{<:Real},
+    y4_out::AbstractVector{<:Real},
+    y2_out::AbstractVector{<:Real},
+    y5_out::AbstractVector{<:Real},
+    eeg_out::AbstractVector{<:Real},
+)
+    steps = length(p_ext)
+    for (name, output) in (
+        ("y0", y0_out), ("y3", y3_out), ("y1", y1_out),
+        ("y4", y4_out), ("y2", y2_out), ("y5", y5_out), ("eeg", eeg_out),
+    )
+        length(output) == steps || throw(ArgumentError("$(name)_out length mismatch"))
     end
-    return trace, spikes
+    values = Float64.((
+        y0_init, y3_init, y1_init, y4_init, y2_init, y5_init,
+        a_exc, b_exc, a_rate, b_rate, c, e0, v0, slope, dt,
+    ))
+    configuration = Tuple(values)
+    validate_jansen_rit(configuration) ||
+        throw(ArgumentError("invalid Jansen–Rit numerical configuration"))
+    all(isfinite, p_ext) || throw(ArgumentError("p_ext must contain only finite values"))
+
+    y0, y3, y1, y4, y2, y5 = values[1:6]
+    gain_a, gain_b = values[7], values[8]
+    rate_a, rate_b, c1 = values[9], values[10], values[11]
+    e0f, v0f, rf, step_size = values[12], values[13], values[14], values[15]
+    c2, c3, c4 = 0.8 * c1, 0.25 * c1, 0.25 * c1
+    @inbounds for step in 1:steps
+        s_pyramidal = sigmoid_jansen_rit(y1 - y2, e0f, v0f, rf)
+        s_excitatory = sigmoid_jansen_rit(c1 * y0, e0f, v0f, rf)
+        s_inhibitory = sigmoid_jansen_rit(c3 * y0, e0f, v0f, rf)
+        candidate = (
+            y0 + step_size * y3,
+            y3 + step_size * (gain_a * rate_a * s_pyramidal - 2.0 * rate_a * y3 - rate_a^2 * y0),
+            y1 + step_size * y4,
+            y4 + step_size * (gain_a * rate_a * (Float64(p_ext[step]) + c2 * s_excitatory) - 2.0 * rate_a * y4 - rate_a^2 * y1),
+            y2 + step_size * y5,
+            y5 + step_size * (gain_b * rate_b * c4 * s_inhibitory - 2.0 * rate_b * y5 - rate_b^2 * y2),
+        )
+        all(isfinite, candidate) || throw(ArgumentError("invalid Jansen–Rit candidate state"))
+        y0, y3, y1, y4, y2, y5 = candidate
+        y0_out[step], y3_out[step] = y0, y3
+        y1_out[step], y4_out[step] = y1, y4
+        y2_out[step], y5_out[step] = y2, y5
+        eeg_out[step] = y1 - y2
+    end
+    return (y0, y3, y1, y4, y2, y5)
 end
 
 end # module JansenRitAccel

@@ -125,6 +125,10 @@ model-specific evidence, not a claim that every class below has external
 simulator parity. The Wong-Wang enrolment separately re-derives all four
 Euler/Ornstein-Uhlenbeck states and both pre-update rates from the 2006 Appendix
 and pins the paper-versus-author-code timestep discrepancy.
+The Jansen–Rit enrolment independently advances all six equation-(6) states,
+pins the published `C1/C2/C3/C4` connectivity placement and Brian2 source
+commit, and records that the maintained 0.1 ms Euler step is implementation
+scope rather than a solver prescribed by the continuous paper equations.
 
 ## Model Catalogue
 
@@ -342,6 +346,10 @@ Neural mass models return `float` (firing rate or EEG potential):
 `WongWangUnit.step(stim1, stim2)` returns the two continuous pre-update rates as
 `(r1, r2)`. Its deterministic batch additionally accepts interleaved external
 Gaussian samples and returns six complete traces plus four final states.
+
+`JansenRitUnit.step(p_ext)` returns the post-update continuous `y1-y2` EEG
+proxy. Its atomic batch accepts one external-drive sample per Euler step and
+returns all six state traces, the EEG trace, and six final-state receipts.
 
 ### AI-Optimized (9 models)
 

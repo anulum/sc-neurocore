@@ -5,6 +5,20 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+### Jansen–Rit source-to-co-simulation closure
+
+- Promoted the Jansen and Rit (1995) equation-(6) neural mass through Python,
+  the modular Rust engine, independent Rust safety, Julia, Go C-shared, and
+  Mojo shared-library execution. All lanes use the published
+  `C2*S(C1*y0)`/`C4*S(C3*y0)` connectivity placement and simultaneous six-state
+  explicit-Euler update.
+- Added public atomic batch dispatch, paired schemas, an independent DOI and
+  Brian2-commit-pinned trace, configured five-runtime trajectory parity,
+  native invalid-contract tests, source/binary-bound local benchmark evidence,
+  and bounded generated Q32.32 co-simulation. The default solver step is
+  documented as implementation scope; no higher silicon or production-speed
+  result is claimed.
+
 ### Wong-Wang source-to-co-simulation closure
 
 - Promoted the Wong and Wang (2006) Appendix decision circuit through Python,

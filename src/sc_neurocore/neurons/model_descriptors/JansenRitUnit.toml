@@ -11,14 +11,20 @@ schema_version = 2
 name = "JansenRitUnit"
 class_name = "JansenRitUnit"
 module = "jansen_rit"
-display_name = ""
-summary = "Jansen & Rit 1995 — neural mass model for EEG generation."
+display_name = "Jansen–Rit cortical-column neural mass"
+summary = "Validated six-state Jansen–Rit equation-(6) neural mass with explicit-Euler integration and a continuous EEG proxy."
 family = "Rate / mean-field"
 category = "rate-mean-field"
-biophysical_detail = "point"
-maturity = "experimental"
-intended_use = []
-hardware_fit = []
+biophysical_detail = "reduced"
+maturity = "validated"
+intended_use = [
+    "cortical-column population-potential experiments",
+    "deterministic replay of equation-(6) neural-mass trajectories",
+    "cross-runtime explicit-Euler trajectory validation",
+]
+hardware_fit = [
+    "generated fixed-point Q32.32 co-simulation reference",
+]
 behavior_tags = [
     "excitable",
     "tonic",
@@ -26,106 +32,170 @@ behavior_tags = [
 
 [provenance]
 authors = [
-    "Jansen, B.H. & Rit, V.G.",
+    "Jansen, B. H. & Rit, V. G.",
 ]
 year = 1995
 doi = "10.1007/BF00199471"
+paper_title = "Electroencephalogram and visual evoked potential generation in a mathematical model of coupled cortical columns"
+url = "https://doi.org/10.1007/BF00199471"
 
 [state.y0]
 init = 0.0
+unit = "mV"
+meaning = "pyramidal-population postsynaptic potential state"
 
 [state.y3]
 init = 0.0
+unit = "mV/s"
+meaning = "first derivative of y0"
 
 [state.y1]
 init = 0.0
+unit = "mV"
+meaning = "excitatory-interneuron postsynaptic potential state"
 
 [state.y4]
 init = 0.0
+unit = "mV/s"
+meaning = "first derivative of y1"
 
 [state.y2]
 init = 0.0
+unit = "mV"
+meaning = "inhibitory-interneuron postsynaptic potential state"
 
 [state.y5]
 init = 0.0
-
-[state.r]
-init = 0.56
+unit = "mV/s"
+meaning = "first derivative of y2"
 
 [parameters.a_exc]
 default = 3.25
 unit = "mV"
-meaning = "excitatory synaptic gain"
+meaning = "excitatory synaptic gain A"
 range = [
-    0.0,
+    0.001,
     20.0,
 ]
 
 [parameters.b_exc]
 default = 22.0
 unit = "mV"
-meaning = "inhibitory synaptic gain"
+meaning = "inhibitory synaptic gain B"
 range = [
-    0.0,
+    0.001,
     50.0,
 ]
 
 [parameters.a_rate]
 default = 100.0
 unit = "1/s"
-meaning = "excitatory synaptic rate constant"
+meaning = "excitatory inverse synaptic time constant a"
 range = [
-    10.0,
-    500.0,
+    1.0,
+    1000.0,
 ]
 
 [parameters.b_rate]
 default = 50.0
 unit = "1/s"
-meaning = "inhibitory synaptic rate constant"
+meaning = "inhibitory inverse synaptic time constant b"
 range = [
-    10.0,
-    200.0,
+    1.0,
+    1000.0,
 ]
 
 [parameters.c]
 default = 135.0
 unit = "1"
-meaning = "average synaptic connectivity within the column"
+meaning = "base connectivity C1; C2=0.8*C1 and C3=C4=0.25*C1"
 range = [
-    1.0,
-    500.0,
+    0.0,
+    2000.0,
 ]
 
 [parameters.e0]
 default = 2.5
-unit = "Hz"
-meaning = "half of the maximum population firing rate"
+unit = "1/s"
+meaning = "half the maximum population firing rate"
 range = [
-    0.0,
-    10.0,
+    0.001,
+    20.0,
 ]
 
 [parameters.v0]
 default = 6.0
 unit = "mV"
-meaning = "midpoint of the sigmoidal firing-rate function"
+meaning = "sigmoid midpoint"
 range = [
-    0.0,
-    20.0,
+    -100.0,
+    100.0,
+]
+
+[parameters.r]
+default = 0.56
+unit = "1/mV"
+meaning = "sigmoid slope"
+range = [
+    0.001,
+    10.0,
 ]
 
 [integration]
-dt = 0.001
+dt = 0.0001
 method = "euler"
 
 [dynamics]
+y0 = "dy0/dt=y3"
+y3 = "dy3/dt=A*a*S(y1-y2)-2*a*y3-a^2*y0"
+y1 = "dy1/dt=y4"
+y4 = "dy4/dt=A*a*(p+C2*S(C1*y0))-2*a*y4-a^2*y1"
+y2 = "dy2/dt=y5"
+y5 = "dy5/dt=B*b*C4*S(C3*y0)-2*b*y5-b^2*y2"
+connectivity = "C1=c, C2=0.8*c, C3=C4=0.25*c"
+sigmoid = "S(v)=2*e0/(1+exp(r*(v0-v)))"
+output = "EEG proxy=y1-y2 after each simultaneous Euler update"
+scope = "one deterministic cortical column; the external pulse-density drive is caller supplied and neither stochastic input generation nor inter-column coupling is internal"
 
 [backends.python]
 status = "implemented"
+parity = "exact"
+
+[backends.rust]
+status = "implemented"
+parity = "ulp-bounded"
+
+[backends.julia]
+status = "implemented"
+parity = "ulp-bounded"
+
+[backends.go]
+status = "implemented"
+parity = "ulp-bounded"
+
+[backends.mojo]
+status = "implemented"
+parity = "approximate"
 
 [reproducibility]
+reference_config = "{\"kind\":\"sampled_batch_v1\",\"y0\":0.0,\"y3\":0.0,\"y1\":0.0,\"y4\":0.0,\"y2\":0.0,\"y5\":0.0,\"a_exc\":3.25,\"b_exc\":22.0,\"a_rate\":100.0,\"b_rate\":50.0,\"c\":135.0,\"e0\":2.5,\"v0\":6.0,\"r\":0.56,\"dt\":0.0001,\"n_steps\":256,\"simulate_fields\":[\"p_ext\"],\"inputs\":{\"p_ext\":{\"function\":\"sin\",\"offset\":220.0,\"amplitude\":100.0,\"angular_frequency\":0.037}},\"trace_fields\":[\"y0\",\"y3\",\"y1\",\"y4\",\"y2\",\"y5\",\"eeg\"]}"
+golden_trace_sha256 = "84e9273e381d543a5fb32a510a4c82ea977c32cdd267e88b790296e6e8364933"
+golden_citation = "doi:10.1007/BF00199471; brian-team/brian2 source commit 1bfa1a9275bd9672b49f4bf61ffbaf6f7cb55fc9"
 
 [documentation]
 slug = "models/jansen_rit"
-notes = ""
+notes = "The maintained e0=2.5 with a 2*e0 numerator is equivalent to the pinned source's e0=5. The 0.1 ms Euler step follows the pinned implementation; the continuous paper equations do not mandate a solver. The enrolled deterministic drive is a parity protocol, not a paper-figure reproduction."
+
+[validation]
+dynamics_faithful = true
+metric = "trajectory"
+operating_point = "six non-zero initial states, non-default configured batch, and varied external drive over 128 steps"
+tolerance = "complete seven-trace and six-final-state agreement within absolute 1e-11 for Rust, Julia, and Go and 1e-8 for Mojo"
+evidence = "tests/test_jansen_rit_backends.py::test_complete_configured_contract_matches_python"
+
+[silicon]
+compiles = true
+cosim_validated = true
+cosim_evidence = "tests/test_cosim_jansen_rit.py::test_q3232_rtl_preserves_equation_six_trajectory_envelope"
+target_tier = "H1"
+terminal_reason = "The Q32.32 generated datapath is validated through co-simulation; synthesis, timing, formal equivalence, and PPA evidence are not enrolled."

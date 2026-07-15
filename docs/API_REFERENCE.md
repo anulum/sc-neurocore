@@ -512,6 +512,35 @@ Run the Mojo recurrence through its shared-library ABI.
 
 ---
 
+## Module `accel.jansen_rit`
+
+### Function `backend_available(backend)`
+Return whether one named execution lane is ready.
+
+Parameters
+----------
+backend : str
+    One of ``python``, ``rust``, ``julia``, ``go``, or ``mojo``.
+
+Returns
+-------
+bool
+    ``True`` when the corresponding runtime and artefact are available.
+
+### Function `auto_backend()`
+Return the first available runtime in measured ascending-latency order.
+
+### Function `normalise_result(result)`
+Validate all traces and final-state receipts from one backend.
+
+### Function `simulate_python(y0, y3, y1, y4, y2, y5, a_exc, b_exc, a_rate, b_rate, c, e0, v0, r, dt, p_ext)`
+Run the equation-(6) batch through the Python golden model.
+
+### Function `simulate_jansen_rit(y0, y3, y1, y4, y2, y5, a_exc, b_exc, a_rate, b_rate, c, e0, v0, r, dt, p_ext)`
+Run one complete Jansen–Rit batch on a selected execution lane.
+
+---
+
 ## Module `accel.jax_backend`
 
 ### Function `to_jax(arr)`
@@ -23308,15 +23337,43 @@ importer: pF, nS, mV, ms, and pA.
 ## Module `neurons.models.jansen_rit`
 
 ### Class `JansenRitUnit`
-Jansen & Rit 1995 — neural mass model for EEG generation.
+Represent one Jansen–Rit cortical-column neural mass.
 
-6 ODEs: 3 populations (pyramidal, excitatory, inhibitory) x 2 states.
+The six first-order states implement equation (6) from Jansen and Rit
+(1995).  ``e0`` is half the maximum firing rate because :meth:`_sigmoid`
+returns ``2 * e0 / (1 + exp(r * (v0 - v)))``.  The default explicit-Euler
+step is 0.1 ms, matching the pinned Brian2 implementation used for the
+source-bound trace; the continuous equations do not prescribe a solver.
 
-Reference: Jansen, B.H. & Rit, V.G. (1995). Biol. Cybern. 73:357–366.
+Parameters
+----------
+y0, y3, y1, y4, y2, y5 : float, default=0.0
+    Initial postsynaptic-potential states and their first derivatives.
+a_exc, b_exc : float
+    Excitatory and inhibitory synaptic gains ``A`` and ``B`` in mV.
+a_rate, b_rate : float
+    Excitatory and inhibitory inverse time constants in s⁻¹.
+c : float
+    Base connectivity ``C1``.  Derived couplings are ``C2=0.8*C1`` and
+    ``C3=C4=0.25*C1``.
+e0, v0, r : float
+    Sigmoid half-maximum rate, midpoint, and slope.
+dt : float, default=0.0001
+    Explicit-Euler step in seconds.
+
+References
+----------
+Jansen, B. H. and Rit, V. G. (1995), Biological Cybernetics 73, 357–366.
+https://doi.org/10.1007/BF00199471
 
 - **__post_init__**()
+  - Normalise scalar fields and reject an invalid configuration.
 - **step**(p_ext)
+  - Advance one explicit-Euler step and return the post-update EEG proxy.
+- **simulate**(p_ext)
+  - Run an atomic batch on one maintained execution backend.
 - **reset**()
+  - Restore all six dynamic states while preserving parameters.
 
 ---
 
@@ -25142,9 +25199,8 @@ Returns
 -------
 tuple&#91;str, ...&#93;
     Sorted stable identifiers for every deterministic scalar-feature
-    payload in the corpus. Seeded statistical artifacts use a separate
-    runner and dedicated validators, so they are not coerced into this
-    trace contract.
+    payload in the corpus. Hand-model and seeded statistical artefacts use
+    dedicated validators, so they are not coerced into this trace contract.
 
 ### Function `load_reference_trace_spec(name)`
 Load one committed reference-trace specification.

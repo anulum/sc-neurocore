@@ -460,73 +460,6 @@ impl Default for WilsonCowanUnit {
     }
 }
 
-/// Jansen-Rit 1995 — neural mass model for EEG generation.
-#[derive(Clone, Debug)]
-pub struct JansenRitUnit {
-    pub y: [f64; 6],
-    pub a_exc: f64,
-    pub b_exc: f64,
-    pub a_rate: f64,
-    pub b_rate: f64,
-    pub c: f64,
-    pub e0: f64,
-    pub v0: f64,
-    pub r: f64,
-    pub dt: f64,
-}
-
-impl JansenRitUnit {
-    pub fn new() -> Self {
-        Self {
-            y: [0.0; 6],
-            a_exc: 3.25,
-            b_exc: 22.0,
-            a_rate: 100.0,
-            b_rate: 50.0,
-            c: 135.0,
-            e0: 2.5,
-            v0: 6.0,
-            r: 0.56,
-            dt: 0.001,
-        }
-    }
-    fn sigmoid(&self, x: f64) -> f64 {
-        2.0 * self.e0 / (1.0 + (self.r * (self.v0 - x)).exp())
-    }
-    pub fn step(&mut self, p_ext: f64) -> f64 {
-        let s1 = self.sigmoid(self.y[1] - self.y[2]);
-        let s0 = self.sigmoid(self.c * 0.8 * self.y[0]);
-        let s2 = self.sigmoid(self.c * 0.25 * self.y[0]);
-        let dy0 = self.y[3];
-        let dy3 = self.a_exc * self.a_rate * s1
-            - 2.0 * self.a_rate * self.y[3]
-            - self.a_rate.powi(2) * self.y[0];
-        let dy1 = self.y[4];
-        let dy4 = self.a_exc * self.a_rate * (p_ext + self.c * 0.8 * s0)
-            - 2.0 * self.a_rate * self.y[4]
-            - self.a_rate.powi(2) * self.y[1];
-        let dy2 = self.y[5];
-        let dy5 = self.b_exc * self.b_rate * self.c * 0.25 * s2
-            - 2.0 * self.b_rate * self.y[5]
-            - self.b_rate.powi(2) * self.y[2];
-        self.y[0] += dy0 * self.dt;
-        self.y[3] += dy3 * self.dt;
-        self.y[1] += dy1 * self.dt;
-        self.y[4] += dy4 * self.dt;
-        self.y[2] += dy2 * self.dt;
-        self.y[5] += dy5 * self.dt;
-        self.y[1] - self.y[2]
-    }
-    pub fn reset(&mut self) {
-        self.y = [0.0; 6];
-    }
-}
-impl Default for JansenRitUnit {
-    fn default() -> Self {
-        Self::new()
-    }
-}
-
 /// Canonical Wong-Wang implementation lives in the dedicated engine module.
 pub use crate::wong_wang::WongWangUnit;
 
@@ -788,18 +721,6 @@ mod tests {
         assert!(changes > 0);
     }
     #[test]
-    fn jr_produces_eeg() {
-        let mut n = JansenRitUnit::new();
-        let mut nz = 0;
-        for _ in 0..5000 {
-            let v = n.step(220.0);
-            if v.abs() > 0.001 {
-                nz += 1;
-            }
-        }
-        assert!(nz > 0);
-    }
-    #[test]
     fn ww_diverges() {
         let mut n = WongWangUnit::new(42);
         for _ in 0..5000 {
@@ -1030,29 +951,6 @@ mod tests {
     #[test]
     fn wc_nan_no_panic() {
         WilsonCowanUnit::new().step(f64::NAN);
-    }
-
-    // -- JansenRit --
-    #[test]
-    fn jr_reset_clears() {
-        let mut n = JansenRitUnit::new();
-        for _ in 0..1000 {
-            n.step(220.0);
-        }
-        n.reset();
-        assert!(n.y.iter().all(|&x| x == 0.0));
-    }
-    #[test]
-    fn jr_bounded() {
-        let mut n = JansenRitUnit::new();
-        for _ in 0..5000 {
-            n.step(1e3);
-        }
-        assert!(n.y.iter().all(|x| x.is_finite()));
-    }
-    #[test]
-    fn jr_nan_no_panic() {
-        JansenRitUnit::new().step(f64::NAN);
     }
 
     // -- WongWang --

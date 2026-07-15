@@ -33,6 +33,7 @@ except ImportError:
 
 _KERNEL_DIR = Path(__file__).resolve().parent
 _WONG_WANG_LOADED = False
+_JANSEN_RIT_LOADED = False
 _WILSON_COWAN_LOADED = False
 _RK4_NEURONS_LOADED = False
 
@@ -49,6 +50,20 @@ def _ensure_wong_wang_loaded() -> Any:
         _jl.include(str(jl_path))
         _WONG_WANG_LOADED = True
     return _jl.WongWangAccel
+
+
+def _ensure_jansen_rit_loaded() -> Any:
+    """Include `jansen_rit.jl` into Julia Main on first use; return the module."""
+    global _JANSEN_RIT_LOADED
+    if _jl is None:
+        raise ImportError("juliacall not available; install the `julia` extra")
+    if not _JANSEN_RIT_LOADED:
+        jl_path = _KERNEL_DIR / "jansen_rit.jl"
+        if not jl_path.is_file():
+            raise FileNotFoundError(f"jansen_rit.jl missing at {jl_path}")
+        _jl.include(str(jl_path))
+        _JANSEN_RIT_LOADED = True
+    return _jl.JansenRitAccel
 
 
 def _ensure_wilson_cowan_loaded() -> Any:
@@ -95,6 +110,16 @@ def _as_wong_wang_inputs(
     if xi_arr.size != 2 * n:
         raise ValueError(f"xi length must be 2 * n_steps ({2 * n}): got {xi_arr.size}")
     return stim1_arr, stim2_arr, xi_arr
+
+
+def _as_jansen_rit_input(p_ext: npt.ArrayLike) -> npt.NDArray[np.float64]:
+    """Convert the Jansen–Rit drive into a finite one-dimensional vector."""
+    drive = np.ascontiguousarray(p_ext, dtype=np.float64)
+    if drive.ndim != 1:
+        raise ValueError(f"p_ext must be one-dimensional: got shape {drive.shape}")
+    if not np.isfinite(drive).all():
+        raise ValueError("p_ext must contain only finite values")
+    return drive
 
 
 def _ensure_rk4_neurons_loaded() -> Any:
@@ -205,6 +230,58 @@ def simulate_wong_wang(
         "noise1_final": float(noise1_final),
         "noise2_final": float(noise2_final),
     }
+
+
+def simulate_jansen_rit(
+    y0_init: float,
+    y3_init: float,
+    y1_init: float,
+    y4_init: float,
+    y2_init: float,
+    y5_init: float,
+    a_exc: float,
+    b_exc: float,
+    a_rate: float,
+    b_rate: float,
+    c: float,
+    e0: float,
+    v0: float,
+    r: float,
+    dt: float,
+    p_ext: npt.ArrayLike,
+) -> dict[str, npt.NDArray[np.float64] | float]:
+    """Run the Julia equation-(6) recurrence and return complete traces."""
+    drive = _as_jansen_rit_input(p_ext)
+    module = _ensure_jansen_rit_loaded()
+    traces: list[npt.NDArray[np.float64]] = [
+        np.empty(drive.size, dtype=np.float64) for _ in range(7)
+    ]
+    finals = module.simulate_jansen_rit_b(
+        y0_init,
+        y3_init,
+        y1_init,
+        y4_init,
+        y2_init,
+        y5_init,
+        a_exc,
+        b_exc,
+        a_rate,
+        b_rate,
+        c,
+        e0,
+        v0,
+        r,
+        dt,
+        drive,
+        *traces,
+    )
+    keys = ("y0", "y3", "y1", "y4", "y2", "y5", "eeg")
+    result: dict[str, npt.NDArray[np.float64] | float] = {
+        key: trace for key, trace in zip(keys, traces, strict=True)
+    }
+    for key, final in zip(keys[:6], finals, strict=True):
+        result[f"{key}_final"] = float(final)
+    return result
 
 
 def simulate_wilson_cowan(

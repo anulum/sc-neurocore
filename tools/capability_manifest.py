@@ -568,10 +568,19 @@ def _python_model_classes(models_root: Path, *, repo: Path) -> list[dict[str, st
 
 
 def _rust_pyo3_wrapper_names(path: Path) -> list[str]:
-    text = path.read_text(encoding="utf-8")
-    macro_names = re.findall(r'py_neuron_default!\("([^"]+)"', text)
-    explicit_names = re.findall(r'#\[pyclass\(\s*name\s*=\s*"([^"]+)"', text, flags=re.S)
-    return sorted(set(macro_names + explicit_names))
+    """Return wrapper names from the facade and its modular binding siblings."""
+    sources = sorted(path.rglob("*.rs")) if path.is_dir() else [path]
+    if path.is_file():
+        bindings = path.parent / "bindings"
+        if bindings.is_dir():
+            sources.extend(sorted(bindings.rglob("*.rs")))
+
+    names: set[str] = set()
+    for source in sources:
+        text = source.read_text(encoding="utf-8")
+        names.update(re.findall(r'py_neuron_default!\("([^"]+)"', text))
+        names.update(re.findall(r'#\[pyclass\(\s*name\s*=\s*"([^"]+)"', text, flags=re.S))
+    return sorted(names)
 
 
 def _project_extras(pyproject: dict[str, Any]) -> list[str]:

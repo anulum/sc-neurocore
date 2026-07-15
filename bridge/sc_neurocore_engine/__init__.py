@@ -826,6 +826,14 @@ except ImportError:
     _parallel_csr_spmv_rust_available = False
 
 try:
+    from sc_neurocore_engine.sc_neurocore_engine import py_jansen_rit_simulate
+
+    __all__ += ["py_jansen_rit_simulate"]
+    _jansen_rit_rust_available = True
+except ImportError:
+    _jansen_rit_rust_available = False
+
+try:
     from sc_neurocore_engine.sc_neurocore_engine import py_wong_wang_simulate
 
     __all__ += ["py_wong_wang_simulate"]

@@ -20,6 +20,8 @@ use pyo3::types::PyDict;
 use crate::neuron;
 use crate::neurons;
 
+#[path = "bindings/jansen_rit.rs"]
+mod jansen_rit_binding;
 #[path = "bindings/mcculloch_pitts.rs"]
 mod mcculloch_pitts_binding;
 #[path = "bindings/sigmoid_rate.rs"]
@@ -1257,38 +1259,6 @@ impl PyWilsonCowanUnit {
     }
 }
 
-// JansenRitUnit: step returns f64
-#[pyclass(
-    name = "JansenRitUnit",
-    module = "sc_neurocore_engine.sc_neurocore_engine"
-)]
-#[derive(Clone)]
-pub struct PyJansenRitUnit {
-    inner: neurons::JansenRitUnit,
-}
-
-#[pymethods]
-impl PyJansenRitUnit {
-    #[new]
-    fn new() -> Self {
-        Self {
-            inner: neurons::JansenRitUnit::new(),
-        }
-    }
-    #[pyo3(signature = (p_ext=220.0))]
-    fn step(&mut self, p_ext: f64) -> f64 {
-        self.inner.step(p_ext)
-    }
-    fn reset(&mut self) {
-        self.inner.reset();
-    }
-    fn get_state(&self, py: Python<'_>) -> PyResult<Py<PyAny>> {
-        let d = PyDict::new(py);
-        d.set_item("y", self.inner.y.to_vec())?;
-        Ok(d.into_any().unbind())
-    }
-}
-
 // WongWangUnit: step(stim1, stim2) -> (f64, f64)
 #[pyclass(
     name = "WongWangUnit",
@@ -2252,7 +2222,7 @@ pub fn register_neuron_classes(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_class::<PySpikeResponseNeuron>()?;
     m.add_class::<PyGLMNeuron>()?;
     m.add_class::<PyWilsonCowanUnit>()?;
-    m.add_class::<PyJansenRitUnit>()?;
+    jansen_rit_binding::register(m)?;
     m.add_class::<PyWongWangUnit>()?;
     wong_wang_binding::register(m)?;
     m.add_class::<PyErmentroutKopellPopulation>()?;

@@ -27,14 +27,18 @@ from types import ModuleType
 import numpy as np
 import pytest
 
+from sc_neurocore.accel.go import jansen_rit as go_jansen
 from sc_neurocore.accel.go import wilson_cowan as go_wilson
 from sc_neurocore.accel.go import wong_wang as go_wong
+from sc_neurocore.accel.mojo import jansen_rit as mojo_jansen
 from sc_neurocore.accel.mojo import wilson_cowan as mojo_wilson
 from sc_neurocore.accel.mojo import wong_wang as mojo_wong
 
 CTYPES_DISPATCHERS = [
+    (go_jansen, "simulate_jansen_rit", "Jansen–Rit"),
     (go_wilson, "simulate_wilson_cowan", "Wilson-Cowan"),
     (go_wong, "simulate_wong_wang", "Wong-Wang"),
+    (mojo_jansen, "simulate_jansen_rit", "Jansen–Rit"),
     (mojo_wilson, "simulate_wilson_cowan", "Wilson-Cowan"),
     (mojo_wong, "simulate_wong_wang", "Wong-Wang"),
 ]
@@ -54,14 +58,34 @@ class TestLibraryNotBuiltRaisesImportError:
     ) -> None:
         monkeypatch.setattr(module, "_lib", None)
         fn = getattr(module, fn_name)
-        kwargs = (
-            dict(ext_input=np.zeros(10))
-            if "wilson" in fn_name
-            else dict(stim1=np.zeros(10), stim2=np.zeros(10), xi=np.zeros(20))
-        )
+        if "wilson" in fn_name:
+            kwargs = dict(ext_input=np.zeros(10))
+        elif "jansen" in fn_name:
+            kwargs = dict(p_ext=np.zeros(10))
+        else:
+            kwargs = dict(stim1=np.zeros(10), stim2=np.zeros(10), xi=np.zeros(20))
         with pytest.raises(ImportError, match="not built"):
             if "wilson" in fn_name:
                 fn(0.1, 0.05, 10.0, 6.0, 10.0, 1.0, 1.0, 2.0, 1.2, 4.0, 0.1, **kwargs)
+            elif "jansen" in fn_name:
+                fn(
+                    0.1,
+                    0.2,
+                    0.3,
+                    -0.4,
+                    -0.1,
+                    0.5,
+                    3.25,
+                    22.0,
+                    100.0,
+                    50.0,
+                    135.0,
+                    2.5,
+                    6.0,
+                    0.56,
+                    0.0001,
+                    **kwargs,
+                )
             else:
                 fn(
                     0.1,
@@ -103,7 +127,12 @@ class TestNonZeroReturnRaisesRuntimeError:
             pass
 
         # Real lib is loaded; inject a stub that returns 42.
-        c_fn_attr = "wilson_cowan_simulate_c" if "wilson" in fn_name else "wong_wang_simulate_c"
+        if "wilson" in fn_name:
+            c_fn_attr = "wilson_cowan_simulate_c"
+        elif "jansen" in fn_name:
+            c_fn_attr = "jansen_rit_simulate_c"
+        else:
+            c_fn_attr = "wong_wang_simulate_c"
         lib = FakeLib()
         setattr(lib, c_fn_attr, FakeCShim())
         monkeypatch.setattr(module, "_lib", lib)
@@ -112,6 +141,25 @@ class TestNonZeroReturnRaisesRuntimeError:
         args: tuple[object, ...]
         if "wilson" in fn_name:
             args = (0.1, 0.05, 10.0, 6.0, 10.0, 1.0, 1.0, 2.0, 1.2, 4.0, 0.1, np.zeros(10))
+        elif "jansen" in fn_name:
+            args = (
+                0.1,
+                0.2,
+                0.3,
+                -0.4,
+                -0.1,
+                0.5,
+                3.25,
+                22.0,
+                100.0,
+                50.0,
+                135.0,
+                2.5,
+                6.0,
+                0.56,
+                0.0001,
+                np.zeros(10),
+            )
         else:
             args = (
                 0.1,
@@ -165,8 +213,17 @@ class TestCDLLOpenFailureSetsSentinelFalse:
 
 
 class TestJuliaMissingKernelFile:
-    """The Julia `_ensure_wong_wang_loaded` / `_ensure_wilson_cowan_loaded`
-    helpers raise `FileNotFoundError` when the `.jl` kernel is absent."""
+    """Julia loader helpers fail closed when a maintained kernel is absent."""
+
+    def test_jansen_rit_missing_jl_raises(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        import sc_neurocore.accel.julia.neurons as mod
+
+        if not mod._HAS_JULIA_NEURONS:
+            pytest.skip("juliacall not installed")
+        monkeypatch.setattr(mod, "_JANSEN_RIT_LOADED", False)
+        monkeypatch.setattr(mod, "_KERNEL_DIR", Path("/tmp/nonexistent_jansen_rit_dir"))
+        with pytest.raises(FileNotFoundError, match="jansen_rit.jl missing"):
+            mod._ensure_jansen_rit_loaded()
 
     def test_wong_wang_missing_jl_raises(self, monkeypatch: pytest.MonkeyPatch) -> None:
         import sc_neurocore.accel.julia.neurons as mod
@@ -194,6 +251,14 @@ class TestJuliaMissingKernelFile:
 class TestJuliaWithoutJuliacallInstalled:
     """When juliacall is not installed, calling the dispatchers raises
     ImportError with the install-extras hint."""
+
+    def test_jansen_rit_without_juliacall(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        import sc_neurocore.accel.julia.neurons as mod
+
+        monkeypatch.setattr(mod, "_jl", None)
+        monkeypatch.setattr(mod, "_JANSEN_RIT_LOADED", False)
+        with pytest.raises(ImportError, match="juliacall not available"):
+            mod._ensure_jansen_rit_loaded()
 
     def test_wong_wang_without_juliacall(self, monkeypatch: pytest.MonkeyPatch) -> None:
         import sc_neurocore.accel.julia.neurons as mod

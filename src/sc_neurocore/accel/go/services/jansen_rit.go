@@ -4,15 +4,16 @@
 // © Code 2020–2026 Miroslav Šotek. All rights reserved.
 // ORCID: 0009-0009-3560-0851
 // Contact: www.anulum.li | protoscience@anulum.li
-// SC-NeuroCore — Go service for jansen_rit
+// SC-NeuroCore — Go service for the Jansen–Rit neural mass
 
 package services
 
 import (
+	"errors"
 	"math"
 )
 
-// JansenRitUnitState holds the neuron state
+// JansenRitUnitState holds six equation-(6) states and their parameters.
 type JansenRitUnitState struct {
 	Y0    float64
 	Y3    float64
@@ -31,70 +32,60 @@ type JansenRitUnitState struct {
 	Dt    float64
 }
 
-// NewJansenRitUnit creates a new JansenRitUnit neuron with default parameters
+// NewJansenRitUnit returns the published parameter set at a 0.1 ms Euler step.
 func NewJansenRitUnit() *JansenRitUnitState {
 	return &JansenRitUnitState{
-		Y0:    0.0,
-		Y3:    0.0,
-		Y1:    0.0,
-		Y4:    0.0,
-		Y2:    0.0,
-		Y5:    0.0,
-		AExc:  3.25,
-		BExc:  22.0,
-		ARate: 100.0,
-		BRate: 50.0,
-		C:     135.0,
-		E0:    2.5,
-		V0:    6.0,
-		R:     0.56,
-		Dt:    0.001,
+		AExc: 3.25, BExc: 22.0, ARate: 100.0, BRate: 50.0,
+		C: 135.0, E0: 2.5, V0: 6.0, R: 0.56, Dt: 0.0001,
 	}
 }
 
-// Step advances the neuron by one timestep
-func (s *JansenRitUnitState) Step(iExt float64) int {
-	if !finiteJansenRit(iExt) || !ValidateJansenRitUnit(s) {
-		return -1
+// Step advances atomically and returns the post-update EEG proxy y1-y2.
+func (state *JansenRitUnitState) Step(pExt float64) (float64, error) {
+	if !finiteJansenRit(pExt) || !ValidateJansenRitUnit(state) {
+		return 0.0, errors.New("Jansen–Rit input, state, and parameters must be finite and physical")
 	}
-	s1 := s.sigmoid(s.Y1 - s.Y2)
-	s0 := s.sigmoid(s.C * 0.8 * s.Y0)
-	s2 := s.sigmoid(s.C * 0.25 * s.Y0)
+	c1 := state.C
+	c2 := 0.8 * c1
+	c3 := 0.25 * c1
+	c4 := 0.25 * c1
+	sPyramidal := state.sigmoid(state.Y1 - state.Y2)
+	sExcitatory := state.sigmoid(c1 * state.Y0)
+	sInhibitory := state.sigmoid(c3 * state.Y0)
 
-	dy0 := s.Y3
-	dy3 := s.AExc*s.ARate*s1 - 2.0*s.ARate*s.Y3 - math.Pow(s.ARate, 2)*s.Y0
-	dy1 := s.Y4
-	dy4 := s.AExc*s.ARate*(iExt+s.C*0.8*s0) - 2.0*s.ARate*s.Y4 - math.Pow(s.ARate, 2)*s.Y1
-	dy2 := s.Y5
-	dy5 := s.BExc*s.BRate*s.C*0.25*s2 - 2.0*s.BRate*s.Y5 - math.Pow(s.BRate, 2)*s.Y2
+	dy0 := state.Y3
+	dy3 := state.AExc*state.ARate*sPyramidal - 2.0*state.ARate*state.Y3 - state.ARate*state.ARate*state.Y0
+	dy1 := state.Y4
+	dy4 := state.AExc*state.ARate*(pExt+c2*sExcitatory) - 2.0*state.ARate*state.Y4 - state.ARate*state.ARate*state.Y1
+	dy2 := state.Y5
+	dy5 := state.BExc*state.BRate*c4*sInhibitory - 2.0*state.BRate*state.Y5 - state.BRate*state.BRate*state.Y2
 
-	next := *s
-	next.Y0 += dy0 * s.Dt
-	next.Y3 += dy3 * s.Dt
-	next.Y1 += dy1 * s.Dt
-	next.Y4 += dy4 * s.Dt
-	next.Y2 += dy2 * s.Dt
-	next.Y5 += dy5 * s.Dt
+	next := *state
+	next.Y0 += dy0 * state.Dt
+	next.Y3 += dy3 * state.Dt
+	next.Y1 += dy1 * state.Dt
+	next.Y4 += dy4 * state.Dt
+	next.Y2 += dy2 * state.Dt
+	next.Y5 += dy5 * state.Dt
 	if !ValidateJansenRitUnit(&next) {
-		return -1
+		return 0.0, errors.New("Jansen–Rit candidate state became non-finite")
 	}
-	*s = next
-	return 0
+	*state = next
+	return state.Y1 - state.Y2, nil
 }
 
-// SimulateJansenRitUnit runs the neuron for n steps
-func SimulateJansenRitUnit(nSteps int, iExt float64) ([]float64, int) {
-	s := NewJansenRitUnit()
-	trace := make([]float64, nSteps)
-	spikes := 0
-	for t := 0; t < nSteps; t++ {
-		result := s.Step(iExt)
-		trace[t] = s.Y1 - s.Y2
-		if result > 0 {
-			spikes++
+// SimulateJansenRitUnit runs a complete caller-owned drive sequence.
+func SimulateJansenRitUnit(pExt []float64) ([]float64, error) {
+	state := NewJansenRitUnit()
+	trace := make([]float64, len(pExt))
+	for index, drive := range pExt {
+		eeg, err := state.Step(drive)
+		if err != nil {
+			return nil, err
 		}
+		trace[index] = eeg
 	}
-	return trace, spikes
+	return trace, nil
 }
 
 func finiteJansenRit(values ...float64) bool {
@@ -106,32 +97,25 @@ func finiteJansenRit(values ...float64) bool {
 	return true
 }
 
-func ValidateJansenRitUnit(s *JansenRitUnitState) bool {
-	if s == nil {
+// ValidateJansenRitUnit enforces the shared scalar state contract.
+func ValidateJansenRitUnit(state *JansenRitUnitState) bool {
+	if state == nil {
 		return false
 	}
 	return finiteJansenRit(
-		s.Y0, s.Y3, s.Y1, s.Y4, s.Y2, s.Y5,
-		s.AExc, s.BExc, s.ARate, s.BRate, s.C, s.E0, s.V0, s.R, s.Dt,
-	) &&
-		s.AExc > 0.0 &&
-		s.BExc > 0.0 &&
-		s.ARate > 0.0 &&
-		s.BRate > 0.0 &&
-		s.C >= 0.0 &&
-		s.E0 > 0.0 &&
-		s.R > 0.0 &&
-		s.Dt > 0.0
+		state.Y0, state.Y3, state.Y1, state.Y4, state.Y2, state.Y5,
+		state.AExc, state.BExc, state.ARate, state.BRate, state.C,
+		state.E0, state.V0, state.R, state.Dt,
+	) && state.AExc > 0.0 && state.BExc > 0.0 &&
+		state.ARate > 0.0 && state.BRate > 0.0 && state.C >= 0.0 &&
+		state.E0 > 0.0 && state.R > 0.0 && state.Dt > 0.0
 }
 
-func (s *JansenRitUnitState) sigmoid(x float64) float64 {
-	if !finiteJansenRit(x) {
-		return math.NaN()
-	}
-	exponent := s.R * (s.V0 - x)
+func (state *JansenRitUnitState) sigmoid(voltage float64) float64 {
+	exponent := state.R * (state.V0 - voltage)
 	if exponent >= 0.0 {
 		expNeg := math.Exp(-exponent)
-		return 2.0 * s.E0 * expNeg / (1.0 + expNeg)
+		return 2.0 * state.E0 * expNeg / (1.0 + expNeg)
 	}
-	return 2.0 * s.E0 / (1.0 + math.Exp(exponent))
+	return 2.0 * state.E0 / (1.0 + math.Exp(exponent))
 }

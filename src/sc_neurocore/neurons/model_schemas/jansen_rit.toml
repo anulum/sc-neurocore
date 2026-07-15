@@ -1,0 +1,59 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Commercial license available
+# © Concepts 1996–2026 Miroslav Šotek. All rights reserved.
+# © Code 2020–2026 Miroslav Šotek. All rights reserved.
+# ORCID: 0009-0009-3560-0851
+# Contact: www.anulum.li | protoscience@anulum.li
+# SC-NeuroCore — Jansen–Rit equation-(6) neural-mass schema
+
+[metadata]
+schema_version = 2
+name = "JansenRitUnit"
+author = "Jansen, B. H. & Rit, V. G."
+year = 1995
+doi = "10.1007/BF00199471"
+description = "Six-state cortical-column neural mass with equation-(6) connectivity and explicit-Euler integration"
+
+[state]
+y0 = 0.0
+y3 = 0.0
+y1 = 0.0
+y4 = 0.0
+y2 = 0.0
+y5 = 0.0
+
+[parameters]
+a_exc = 3.25
+b_exc = 22.0
+a_rate = 100.0
+b_rate = 50.0
+c1 = 135.0
+c2 = 108.0
+c3 = 33.75
+c4 = 33.75
+e0 = 2.5
+v0 = 6.0
+r = 0.56
+
+[integration]
+dt = 0.0001
+method = "euler"
+substeps = 1
+
+[dynamics]
+y0 = "y3"
+y3 = "a_exc * a_rate * (2.0 * e0 / (1.0 + exp(r * (v0 - (y1 - y2))))) - 2.0 * a_rate * y3 - a_rate**2 * y0"
+y1 = "y4"
+y4 = "a_exc * a_rate * (I + c2 * (2.0 * e0 / (1.0 + exp(r * (v0 - c1 * y0))))) - 2.0 * a_rate * y4 - a_rate**2 * y1"
+y2 = "y5"
+y5 = "b_exc * b_rate * c4 * (2.0 * e0 / (1.0 + exp(r * (v0 - c3 * y0)))) - 2.0 * b_rate * y5 - b_rate**2 * y2"
+
+[extensions]
+family = "rate-mean-field"
+model_type = "cortical_column_neural_mass_ode"
+source_equations = "Jansen and Rit 1995 equation (6); DOI 10.1007/BF00199471"
+source_implementation = "brian-team/brian2@1bfa1a9275bd9672b49f4bf61ffbaf6f7cb55fc9 examples/frompapers/Jansen_Rit_1995_single_column.py"
+discretisation = "Explicit Euler at 0.1 ms; the publication defines the continuous equations and does not require this solver"
+connectivity_note = "C2=0.8*C1 and C3=C4=0.25*C1; C1 is inside the excitatory sigmoid and C2 multiplies its output"
+sigmoid_note = "The maintained e0=2.5 is half the maximum rate, so 2*e0 is equivalent to the source implementation's e0=5"
+output_note = "The continuous EEG proxy is y1-y2; no binary spike semantics are claimed"

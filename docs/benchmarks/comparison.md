@@ -199,6 +199,32 @@ Python floor. The artefact binds exact sources and loaded Rust/Go/Mojo binaries;
 these timings are local diagnostic regression evidence, not production,
 hardware, cross-host, or universal-ranking claims.
 
+## Jansen–Rit six-state Euler batch
+
+The committed `benchmarks/results/bench_jansen_rit.json` records all six
+post-update states, the `y1-y2` EEG proxy, and six final-state receipts through
+the five public runtimes. Five 50,000-step samples follow a 1,000-step warm-up.
+The run was pinned to logical CPU 11 on the same i5-11600K host, without
+exclusive CPU isolation and with a recorded one-minute load average of 6.38.
+
+| Backend | Median call | Median ns/step | Maximum trace difference | Trace mismatches |
+|---|---:|---:|---:|---:|
+| Rust | 3.473 ms | 69.451 | `0` | 0 |
+| Julia | 6.569 ms | 131.370 | `1.421e-14` | 0 |
+| Go | 6.744 ms | 134.888 | `6.189e-12` | 0 |
+| Mojo | 7.491 ms | 149.811 | `2.660e-10` | 0 |
+| Python | 386.629 ms | 7,732.583 | `0` | 0 |
+
+Rust is byte-identical to the Python interleaved seven-trace result, whose
+SHA-256 is
+`3a68f6230ea59312a32bfba9c90783db231fbfce2c301d7dc1187e2c784bad15`.
+Julia, Go, and Mojo remain within their declared complete-trajectory absolute
+envelopes. The ascending native median order for this recorded run is Rust,
+Julia, Go, then Mojo, followed by the always-available Python floor. The
+artefact binds exact sources and loaded Rust/Go/Mojo binaries; these are local
+diagnostic regression timings, not production, hardware, cross-host, or
+universal-ranking claims.
+
 ## Wong-Wang two-population Euler/OU batch
 
 The committed `benchmarks/results/bench_wong_wang.json` records all six

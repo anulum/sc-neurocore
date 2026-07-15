@@ -1,0 +1,102 @@
+{
+  "schema_version": "sc-neurocore.reference-trace.v1",
+  "name": "jansen_rit_eq6_euler_brian2",
+  "model": {
+    "schema_name": "jansen_rit",
+    "runner": "hand_model"
+  },
+  "protocol": {
+    "dt": 0.0001,
+    "steps": 256,
+    "inputs": {
+      "p_ext_formula": "220.0 + 100.0 * sin(step * 0.037)"
+    },
+    "initial_state": {
+      "y0": 0.0,
+      "y3": 0.0,
+      "y1": 0.0,
+      "y4": 0.0,
+      "y2": 0.0,
+      "y5": 0.0
+    },
+    "parameters": {
+      "a_exc": 3.25,
+      "b_exc": 22.0,
+      "a_rate": 100.0,
+      "b_rate": 50.0,
+      "c1": 135.0,
+      "c2": 108.0,
+      "c3": 33.75,
+      "c4": 33.75,
+      "e0_half_max": 2.5,
+      "v0": 6.0,
+      "r": 0.56
+    },
+    "trace_layout": [
+      "post_step.y0",
+      "post_step.y3",
+      "post_step.y1",
+      "post_step.y4",
+      "post_step.y2",
+      "post_step.y5",
+      "post_step.eeg_y1_minus_y2"
+    ]
+  },
+  "provenance": {
+    "kind": "independent_equation_6_euler_reference",
+    "source": "https://github.com/brian-team/brian2/blob/1bfa1a9275bd9672b49f4bf61ffbaf6f7cb55fc9/examples/frompapers/Jansen_Rit_1995_single_column.py",
+    "source_commit": "1bfa1a9275bd9672b49f4bf61ffbaf6f7cb55fc9",
+    "equation": "Equation (6) is re-derived independently with simultaneous explicit-Euler updates: Se=S(C1*y0), C2=0.8*C1, Si=S(C3*y0), and C3=C4=0.25*C1.",
+    "citation": "doi:10.1007/BF00199471",
+    "timestep_note": "The pinned Brian2 implementation uses 0.1 ms Euler integration. The original paper defines continuous equations rather than requiring this solver.",
+    "input_note": "The deterministic sinusoidal 120-to-320 pulse/s drive is a reproducible parity protocol, not a reproduction of the paper's stochastic figure."
+  },
+  "expected_features": {
+    "first.y0": 0.0,
+    "final.y0": 0.01833861923689742,
+    "min.y0": 0.0,
+    "max.y0": 0.01833861923689742,
+    "mean.y0": 0.005659400964456764,
+    "first.y3": 0.005454998783240909,
+    "final.y3": 1.6514840794226506,
+    "min.y3": 0.005454998783240909,
+    "max.y3": 1.6514840794226506,
+    "mean.y3": 0.7228034236265506,
+    "first.y1": 0.0,
+    "final.y1": 6.127331227221701,
+    "min.y1": 0.0,
+    "max.y1": 6.127331227221701,
+    "mean.y1": 3.0478293117550126,
+    "first.y4": 7.739139868590019,
+    "final.y4": 250.1423052833442,
+    "min.y4": 7.739139868590019,
+    "max.y4": 363.01207575654485,
+    "mean.y4": 240.32599444336077,
+    "first.y2": 0.0,
+    "final.y2": 0.979287219269285,
+    "min.y2": 0.0,
+    "max.y2": 0.979287219269285,
+    "mean.y2": 0.388466445144396,
+    "first.y5": 0.6231287071625192,
+    "final.y5": 54.9202526274432,
+    "min.y5": 0.6231287071625192,
+    "max.y5": 54.9202526274432,
+    "mean.y5": 38.467939239532384,
+    "first.eeg": 0.0,
+    "final.eeg": 5.148044007952416,
+    "min.eeg": 0.0,
+    "max.eeg": 5.148044007952416,
+    "mean.eeg": 2.659362866610617,
+    "interleaved_f64le_sha256": "84e9273e381d543a5fb32a510a4c82ea977c32cdd267e88b790296e6e8364933"
+  },
+  "tolerances": {
+    "default": {
+      "absolute": 1e-12,
+      "relative": 0.0
+    },
+    "interleaved_f64le_sha256": {
+      "absolute": 0.0,
+      "relative": 0.0
+    }
+  }
+}
