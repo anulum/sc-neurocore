@@ -14,6 +14,8 @@
 //! 2. **Cross-hybridization** — O(n²) pairwise alignment scoring (rayon-parallelized)
 //! 3. **Kinetic simulation** — RK4 mass-action integrator with Arrhenius scaling
 
+pub(crate) mod bindings;
+
 use rand::RngExt;
 use rand::SeedableRng;
 use rand_xoshiro::Xoshiro256PlusPlus;

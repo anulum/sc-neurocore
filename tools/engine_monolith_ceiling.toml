@@ -16,5 +16,5 @@
 schema_version = 1
 
 [targets."engine/src/lib.rs"]
-max_lines = 3969
-max_pyfunctions = 74
+max_lines = 3839
+max_pyfunctions = 69
