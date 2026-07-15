@@ -28,7 +28,7 @@ from sc_neurocore.neurons.reference_traces import (
 )
 from sc_neurocore.neurons.universal_dsl import list_bundled_schemas
 
-_STOCHASTIC_SCHEMA_NAMES = frozenset({"escape_rate", "poisson"})
+_SUPPORTED_REFERENCE_RUNNERS = frozenset({"universal_dsl", "hand_model", "hand_and_universal_dsl"})
 _EXTERNAL_SOURCE_PREFIXES = {
     "coba_lif": "Brette et al. (2007)",
     "iqif": "https://github.com/twetto/iq-neuron/blob/",
@@ -73,6 +73,17 @@ _DETERMINISTIC_SCHEMA_TRACES = {
 }
 
 
+def _committed_reference_routes() -> dict[str, tuple[str, str]]:
+    """Return artefact name to schema/runner routes from committed JSON."""
+    data_dir = Path(__file__).resolve().parents[1] / "src/sc_neurocore/neurons/reference_trace_data"
+    routes: dict[str, tuple[str, str]] = {}
+    for path in sorted(data_dir.glob("*.json")):
+        payload = json.loads(path.read_text(encoding="utf-8"))
+        model = payload["model"]
+        routes[payload["name"]] = (model["schema_name"], model["runner"])
+    return routes
+
+
 def test_seeded_corpus_has_analytic_schema_entries() -> None:
     """The seed corpus must expose deterministic analytic schema references."""
     names = list_reference_trace_specs()
@@ -81,6 +92,7 @@ def test_seeded_corpus_has_analytic_schema_entries() -> None:
     assert set(_DETERMINISTIC_SCHEMA_TRACES.values()) <= set(names)
     assert "escape_rate_lfsr16_statistical_v1" not in names
     assert "poisson_lfsr16_statistical_v1" not in names
+    assert "wong_wang_appendix_euler_ou_doi" not in names
 
     spec = load_reference_trace_spec("lif_constant_current_closed_form")
     assert isinstance(spec, ReferenceTraceSpec)
@@ -90,11 +102,25 @@ def test_seeded_corpus_has_analytic_schema_entries() -> None:
     assert spec.protocol.inputs["I"] == 1.0
 
 
-def test_reference_trace_corpus_covers_every_deterministic_bundled_schema() -> None:
-    """Every deterministic bundled schema must have one committed trace."""
-    deterministic_schemas = set(list_bundled_schemas()) - _STOCHASTIC_SCHEMA_NAMES
+def test_reference_trace_corpus_dispatches_every_artefact_by_runner_class() -> None:
+    """Every committed artefact uses a supported generic or dedicated route."""
+    routes = _committed_reference_routes()
+    runners = {runner for _, runner in routes.values()}
+    generic_routes = {
+        schema_name: trace_name
+        for trace_name, (schema_name, runner) in routes.items()
+        if runner == "universal_dsl"
+    }
+    dedicated_trace_names = {
+        trace_name for trace_name, (_, runner) in routes.items() if runner != "universal_dsl"
+    }
 
-    assert set(_DETERMINISTIC_SCHEMA_TRACES) == deterministic_schemas
+    assert runners <= _SUPPORTED_REFERENCE_RUNNERS
+    assert generic_routes == _DETERMINISTIC_SCHEMA_TRACES
+    assert set(list_reference_trace_specs()) == set(generic_routes.values())
+    assert dedicated_trace_names.isdisjoint(list_reference_trace_specs())
+    assert {schema_name for schema_name, _ in routes.values()} <= set(list_bundled_schemas())
+
     for schema_name, trace_name in _DETERMINISTIC_SCHEMA_TRACES.items():
         spec = load_reference_trace_spec(trace_name)
         assert spec.schema_name == schema_name

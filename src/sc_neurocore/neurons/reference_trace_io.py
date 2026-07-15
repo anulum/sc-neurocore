@@ -32,7 +32,14 @@ from sc_neurocore.neurons.reference_trace_contracts import (
 )
 from sc_neurocore.neurons.universal_dsl import list_bundled_schemas
 
-_STATISTICAL_REFERENCE_RUNNER = "hand_and_universal_dsl"
+_UNIVERSAL_DSL_REFERENCE_RUNNER = "universal_dsl"
+_RUNNER_USES_DEDICATED_VALIDATOR: Mapping[str, bool] = MappingProxyType(
+    {
+        _UNIVERSAL_DSL_REFERENCE_RUNNER: False,
+        "hand_model": True,
+        "hand_and_universal_dsl": True,
+    }
+)
 
 
 def reference_trace_spec_from_payload(payload: Mapping[str, object]) -> ReferenceTraceSpec:
@@ -69,7 +76,7 @@ def reference_trace_spec_from_payload(payload: Mapping[str, object]) -> Referenc
     name = _string_field(payload, "name")
     schema_name = _string_field(model, "schema_name")
     runner = _string_field(model, "runner")
-    if runner != "universal_dsl":
+    if runner != _UNIVERSAL_DSL_REFERENCE_RUNNER:
         raise ValueError(f"reference trace runner {runner!r} is not supported")
     if schema_name not in set(list_bundled_schemas()):
         raise ValueError(f"reference trace schema {schema_name!r} is not bundled")
@@ -105,9 +112,8 @@ def list_reference_trace_specs() -> tuple[str, ...]:
     -------
     tuple[str, ...]
         Sorted stable identifiers for every deterministic scalar-feature
-        payload in the corpus. Seeded statistical artifacts use a separate
-        runner and dedicated validators, so they are not coerced into this
-        trace contract.
+        payload in the corpus. Hand-model and seeded statistical artefacts use
+        dedicated validators, so they are not coerced into this trace contract.
     """
     return tuple(spec.name for spec in _load_all_specs())
 
@@ -153,7 +159,12 @@ def _load_spec_file(path: Traversable) -> ReferenceTraceSpec | None:
     payload = cast(object, json.loads(path.read_text(encoding="utf-8")))
     mapping = _mapping_value(payload, path.name)
     model = _mapping_field(mapping, "model")
-    if _string_field(model, "runner") == _STATISTICAL_REFERENCE_RUNNER:
+    runner = _string_field(model, "runner")
+    try:
+        uses_dedicated_validator = _RUNNER_USES_DEDICATED_VALIDATOR[runner]
+    except KeyError as exc:
+        raise ValueError(f"reference trace runner {runner!r} is not supported") from exc
+    if uses_dedicated_validator:
         return None
     return reference_trace_spec_from_payload(mapping)
 

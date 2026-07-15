@@ -35,6 +35,40 @@ class TestValidateSchemaDict:
         real_errors = [e for e in errors if e.level == "error"]
         assert len(real_errors) == 0
 
+    def test_valid_v2_schema_recognises_all_knowledge_layers(self) -> None:
+        """Version 2 knowledge layers are supported structured sections."""
+        schema = {
+            "metadata": {"schema_version": 2, "name": "Test v2"},
+            "state": {"v": 0.0},
+            "parameters": {},
+            "integration": {"dt": 0.01, "method": "euler"},
+            "dynamics": {"v": "v + I"},
+            "science": {"equations_as_published": "dv/dt = v + I"},
+            "validation": {"metric": "trajectory"},
+            "provenance": {"contributors": ["A. Researcher"]},
+            "hints": {"recommended_precision": "Q16.16"},
+        }
+
+        errors = validate_schema_dict(schema, "test-v2")
+
+        assert not [error for error in errors if error.level == "error"]
+        assert not [error for error in errors if "Unknown section" in error.message]
+
+    def test_v2_knowledge_layers_must_be_objects(self) -> None:
+        """Malformed version 2 knowledge layers fail before runtime access."""
+        schema = {
+            "metadata": {"schema_version": 2, "name": "Test v2"},
+            "state": {"v": 0.0},
+            "parameters": {},
+            "integration": {"dt": 0.01, "method": "euler"},
+            "dynamics": {"v": "v + I"},
+            "science": ["not", "an", "object"],
+        }
+
+        errors = validate_schema_dict(schema, "test-v2")
+
+        assert any("Section 'science' must be an object" in error.message for error in errors)
+
     def test_missing_required_section(self) -> None:
         schema = {
             "metadata": {"schema_version": 1, "name": "Test"},
@@ -127,6 +161,13 @@ class TestValidateBundledSchemas:
         errors = validate_schema("glif")
         real_errors = [e for e in errors if e.level == "error"]
         assert len(real_errors) == 0
+
+    def test_wong_wang_v2_validates_without_version_or_layer_warnings(self) -> None:
+        """The paired Wong-Wang v2 schema passes the complete static validator."""
+        errors = validate_schema("wong_wang")
+
+        assert not [error for error in errors if error.level == "error"]
+        assert not [error for error in errors if "Unknown section" in error.message]
 
 
 class TestValidateNonexistent:

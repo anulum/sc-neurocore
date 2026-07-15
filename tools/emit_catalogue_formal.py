@@ -68,6 +68,7 @@ CLASS_TO_SCHEMA: dict[str, str] = {
     "RulkovMapNeuron": "rulkov_map",
     "TermanWangOscillator": "terman_wang",
     "WilsonHRNeuron": "wilson_hr",
+    "WongWangUnit": "wong_wang",
     "PerfectIntegratorNeuron": "perfect_integrator",
     "PoissonNeuron": "poisson",
     "QuadraticIFNeuron": "quadratic_if",
@@ -101,6 +102,7 @@ DEPTH_BY_SCHEMA: dict[str, int] = {
     "rulkov_map": 4,
     "terman_wang": 4,
     "wilson_hr": 4,
+    "wong_wang": 4,
     "theta": 6,
     "adex": 6,
     "glif": 6,
@@ -132,6 +134,7 @@ MINIMAL_SAFETY_SCHEMAS: frozenset[str] = frozenset(
         "connor_stevens",
         "hodgkin_huxley",
         "ibarz_tanaka_map",
+        "wong_wang",
     }
 )
 
@@ -148,6 +151,9 @@ MINIMAL_SAFETY_SCHEMAS: frozenset[str] = frozenset(
 # arithmetic shift without introducing a fractional rescale. McCulloch-Pitts
 # uses the same Q32.0 carrier for the non-negative excitatory-afferent count;
 # -1 is the sole absolute-inhibition sentinel.
+# Wong-Wang stays on its enrolled Q32.32 co-simulation carrier: Q8.8 cannot
+# represent the published 0.1 ms timestep. Its catalogue job is bounded reset
+# safety only and does not claim formal equivalence or silicon H4.
 DEFAULT_PRECISION = (16, 8)
 PRECISION_BY_SCHEMA: dict[str, tuple[int, int]] = {
     "coba_lif": (48, 24),
@@ -159,6 +165,7 @@ PRECISION_BY_SCHEMA: dict[str, tuple[int, int]] = {
     "mcculloch_pitts": (32, 0),
     "medvedev_map": (32, 16),
     "poisson": (48, 24),
+    "wong_wang": (64, 32),
 }
 
 

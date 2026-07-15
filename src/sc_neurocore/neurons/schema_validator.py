@@ -38,9 +38,30 @@ from sc_neurocore.neurons.schema_contracts import stateless_event_kind
 logger = logging.getLogger(__name__)
 
 _SCHEMAS_DIR = Path(__file__).parent / "model_schemas"
-_SUPPORTED_VERSIONS = {1}
+_SUPPORTED_VERSIONS = {1, 2}
 _REQUIRED_SECTIONS = {"metadata", "state", "dynamics", "integration"}
-_OPTIONAL_SECTIONS = {"parameters", "threshold", "reset", "extensions"}
+_V2_KNOWLEDGE_SECTIONS = {"science", "validation", "provenance", "hints"}
+_OPTIONAL_SECTIONS = {
+    "parameters",
+    "threshold",
+    "reset",
+    "extensions",
+    *_V2_KNOWLEDGE_SECTIONS,
+}
+_PARITY_SECTIONS = (
+    "metadata",
+    "state",
+    "parameters",
+    "integration",
+    "dynamics",
+    "threshold",
+    "reset",
+    "extensions",
+    "science",
+    "validation",
+    "provenance",
+    "hints",
+)
 _REQUIRED_METADATA = {"schema_version", "name"}
 _REQUIRED_INTEGRATION = {"dt", "method"}
 
@@ -96,6 +117,11 @@ def validate_schema_dict(data: dict[str, Any], name: str = "") -> list[SchemaErr
             errors.append(
                 SchemaError("warning", f"Missing recommended field '{field}'", "metadata")
             )
+
+    for section in _V2_KNOWLEDGE_SECTIONS:
+        value = data.get(section)
+        if value is not None and not isinstance(value, dict):
+            errors.append(SchemaError("error", f"Section '{section}' must be an object", section))
 
     # State and dynamics may both be empty only for the exact event-only
     # contracts accepted by UniversalNeuron. Keeping this predicate shared
@@ -241,18 +267,11 @@ def validate_schema(name: str) -> list[SchemaError]:
     # threshold value can drift while preserving the same shape, so compare the
     # complete authored contract after retaining the more specific key error.
     if toml_data and json_data:
-        for section in (
-            "metadata",
-            "state",
-            "parameters",
-            "integration",
-            "dynamics",
-            "threshold",
-            "reset",
-            "extensions",
-        ):
+        for section in _PARITY_SECTIONS:
             toml_section = toml_data.get(section, {})
             json_section = json_data.get(section, {})
+            if not isinstance(toml_section, dict) or not isinstance(json_section, dict):
+                continue
             if set(toml_section.keys()) != set(json_section.keys()):
                 errors.append(
                     SchemaError(
