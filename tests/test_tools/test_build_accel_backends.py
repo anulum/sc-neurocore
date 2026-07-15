@@ -143,7 +143,7 @@ def test_loader_output_paths_ignores_unrooted_joins(tmp_path: Path) -> None:
     assert "here.so" not in names  # the unrooted os.path.join is not a backend
 
 
-def test_loader_output_paths_skips_unparseable(tmp_path: Path) -> None:
+def test_loader_output_paths_skips_unparsable(tmp_path: Path) -> None:
     bad = tmp_path / "broken.py"
     bad.write_text("def f(:\n")  # SyntaxError
     assert MOD._loader_output_paths("go", [bad], tmp_path) == set()
