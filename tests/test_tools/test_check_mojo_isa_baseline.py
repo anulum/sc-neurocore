@@ -58,7 +58,10 @@ def test_discover_libraries_recurses_filters_and_sorts(tmp_path: Path) -> None:
     (tmp_path / "liba.so").write_bytes(b"")
     (tmp_path / "notes.txt").write_bytes(b"")
     found = MOD.discover_libraries(tmp_path)
-    assert {p.name for p in found} == {"liba.so", "libnested.so"}  # rglob recursion + lib*.so filter
+    assert {p.name for p in found} == {
+        "liba.so",
+        "libnested.so",
+    }  # rglob recursion + lib*.so filter
     assert found == sorted(found)  # stable, deterministic order
 
 

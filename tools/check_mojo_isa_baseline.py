@@ -96,11 +96,15 @@ def main(argv: Sequence[str] | None = None) -> int:
 
     offenders = check(args.root)
     if not offenders:
-        print(f"check_mojo_isa_baseline: {len(libraries)} Mojo librar(ies) within x86-64-v3 baseline")
+        print(
+            f"check_mojo_isa_baseline: {len(libraries)} Mojo librar(ies) within x86-64-v3 baseline"
+        )
         return 0
 
     for library, hits in offenders.items():
-        print(f"ISA DRIFT: {library} carries AVX-512 above the x86-64-v3 baseline:", file=sys.stderr)
+        print(
+            f"ISA DRIFT: {library} carries AVX-512 above the x86-64-v3 baseline:", file=sys.stderr
+        )
         for line in hits[:5]:
             print(f"    {line}", file=sys.stderr)
     print(
