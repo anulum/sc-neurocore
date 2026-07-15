@@ -99,6 +99,26 @@ def test_wong_wang_formal_job_uses_enrolled_q3232_bounded_safety() -> None:
     assert "Saturation contract" not in harness
 
 
+def test_jansen_rit_formal_job_uses_enrolled_q3232_bounded_safety() -> None:
+    """Keep Jansen-Rit formal emission inside its Q32.32 H1 evidence boundary."""
+    import importlib.util
+
+    name = "emit_catalogue_formal_jansen_rit_precision"
+    spec = importlib.util.spec_from_file_location(name, EMITTER)
+    assert spec is not None and spec.loader is not None
+    module = importlib.util.module_from_spec(spec)
+    sys.modules[name] = module
+    spec.loader.exec_module(module)
+
+    assert module.CLASS_TO_SCHEMA["JansenRitUnit"] == "jansen_rit"
+    assert module.PRECISION_BY_SCHEMA["jansen_rit"] == (64, 32)
+    assert module.DEPTH_BY_SCHEMA["jansen_rit"] == 4
+    assert "jansen_rit" in module.MINIMAL_SAFETY_SCHEMAS
+    harness = (CATALOGUE / "sc_jansenritunit_formal.v").read_text(encoding="utf-8")
+    assert "Minimal safety: async reset clears the spike flag" in harness
+    assert "Saturation contract" not in harness
+
+
 def test_dpi_formal_job_uses_enrolled_q1616_precision() -> None:
     """Keep formal DPI RTL aligned with its three-state co-simulation envelope."""
     import importlib.util

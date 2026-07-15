@@ -58,6 +58,7 @@ CLASS_TO_SCHEMA: dict[str, str] = {
     "IbarzTanakaMapNeuron": "ibarz_tanaka_map",
     "IntegerQIFNeuron": "iqif",
     "Izhikevich2007Neuron": "izhikevich2007",
+    "JansenRitUnit": "jansen_rit",
     "LapicqueNeuron": "lapicque",
     "McCullochPittsNeuron": "mcculloch_pitts",
     "McKeanNeuron": "mckean",
@@ -89,6 +90,7 @@ DEPTH_BY_SCHEMA: dict[str, int] = {
     "hodgkin_huxley": 4,
     "ibarz_tanaka_map": 4,
     "iqif": 4,
+    "jansen_rit": 4,
     "mcculloch_pitts": 4,
     "morris_lecar": 3,
     "fitzhugh_nagumo": 4,
@@ -134,6 +136,7 @@ MINIMAL_SAFETY_SCHEMAS: frozenset[str] = frozenset(
         "connor_stevens",
         "hodgkin_huxley",
         "ibarz_tanaka_map",
+        "jansen_rit",
         "wong_wang",
     }
 )
@@ -151,9 +154,9 @@ MINIMAL_SAFETY_SCHEMAS: frozenset[str] = frozenset(
 # arithmetic shift without introducing a fractional rescale. McCulloch-Pitts
 # uses the same Q32.0 carrier for the non-negative excitatory-afferent count;
 # -1 is the sole absolute-inhibition sentinel.
-# Wong-Wang stays on its enrolled Q32.32 co-simulation carrier: Q8.8 cannot
-# represent the published 0.1 ms timestep. Its catalogue job is bounded reset
-# safety only and does not claim formal equivalence or silicon H4.
+# Wong-Wang and Jansen-Rit stay on their enrolled Q32.32 co-simulation carriers:
+# Q8.8 cannot represent their sub-unit published timesteps. Their catalogue
+# jobs are bounded reset safety only and do not claim formal equivalence or H4.
 DEFAULT_PRECISION = (16, 8)
 PRECISION_BY_SCHEMA: dict[str, tuple[int, int]] = {
     "coba_lif": (48, 24),
@@ -162,6 +165,7 @@ PRECISION_BY_SCHEMA: dict[str, tuple[int, int]] = {
     "exp_if": (64, 32),
     "ibarz_tanaka_map": (32, 16),
     "iqif": (32, 0),
+    "jansen_rit": (64, 32),
     "mcculloch_pitts": (32, 0),
     "medvedev_map": (32, 16),
     "poisson": (48, 24),
