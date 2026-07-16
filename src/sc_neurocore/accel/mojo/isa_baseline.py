@@ -39,8 +39,8 @@ def pin_isa(argv: list[str]) -> list[str]:
     out = list(argv)
     if "--target-cpu" in out:
         return out
-    for index, token in enumerate(out):
-        if token == "mojo" and index + 1 < len(out) and out[index + 1] in ("build", "run"):
+    for index, argument in enumerate(out):
+        if argument == "mojo" and index + 1 < len(out) and out[index + 1] in ("build", "run"):
             out[index + 2 : index + 2] = ["--target-cpu", MOJO_TARGET_CPU]
             return out
     return out
