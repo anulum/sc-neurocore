@@ -11,12 +11,13 @@
 from __future__ import annotations
 
 import ctypes
-from pathlib import Path
 import shutil
 import subprocess
+from pathlib import Path
 
 import numpy as np
 
+from sc_neurocore.accel.mojo.isa_baseline import pin_isa
 from sc_neurocore.optics.photonic_emitter import WaveguidePair
 
 _REPOSITORY = Path(__file__).resolve().parents[2]
@@ -113,15 +114,17 @@ def test_mojo_pair_and_batch_abi_match_python_atomically(tmp_path: Path) -> None
     """Build the Mojo C ABI and compare valid and rejected calls to Python."""
     library_path = tmp_path / "libphotonic_emitter.so"
     _run(
-        [
-            _require_tool("mojo"),
-            "build",
-            "--emit",
-            "shared-lib",
-            "-o",
-            str(library_path),
-            str(_MOJO_SOURCE),
-        ]
+        pin_isa(
+            [
+                _require_tool("mojo"),
+                "build",
+                "--emit",
+                "shared-lib",
+                "-o",
+                str(library_path),
+                str(_MOJO_SOURCE),
+            ]
+        )
     )
     library = ctypes.CDLL(str(library_path))
     pair_kernel = library.photonic_crosstalk_pair_c

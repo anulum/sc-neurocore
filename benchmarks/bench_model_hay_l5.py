@@ -9,17 +9,18 @@
 
 from __future__ import annotations
 
-from datetime import datetime, timezone
 import hashlib
 import json
-from pathlib import Path
 import platform
 import re
 import statistics
 import subprocess
 import time
+from datetime import datetime, timezone
+from pathlib import Path
 from typing import Protocol, cast
 
+from sc_neurocore.accel.mojo.isa_baseline import pin_isa
 from sc_neurocore.neurons.models.hay_l5 import HayL5PyramidalNeuron
 
 STEPS = 20_000
@@ -220,12 +221,14 @@ println("final_cas=", join([r[4] for r in results], ","))
 
 
 def _run_mojo_backend() -> dict[str, object]:
-    command = [
-        "mojo",
-        "run",
-        "--disable-warnings",
-        "src/sc_neurocore/accel/mojo/kernels/hay_l5.mojo",
-    ]
+    command = pin_isa(
+        [
+            "mojo",
+            "run",
+            "--disable-warnings",
+            "src/sc_neurocore/accel/mojo/kernels/hay_l5.mojo",
+        ]
+    )
     try:
         completed = _run_command(command)
     except (FileNotFoundError, subprocess.CalledProcessError) as exc:

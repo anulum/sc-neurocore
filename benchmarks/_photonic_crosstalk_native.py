@@ -12,16 +12,18 @@ from __future__ import annotations
 
 import ctypes
 import gc
-from pathlib import Path
 import re
 import statistics
 
 # The benchmark invokes fixed toolchain commands without a shell.
 import subprocess  # nosec B404
 import time
+from pathlib import Path
 from typing import Any, Callable
 
 import numpy as np
+
+from sc_neurocore.accel.mojo.isa_baseline import pin_isa
 
 REPOSITORY = Path(__file__).resolve().parents[1]
 RUST_SOURCE = REPOSITORY / "src/sc_neurocore/accel/rust/safety/photonic_emitter.rs"
@@ -217,15 +219,17 @@ def mojo_benchmark(
     """Build and measure the Mojo batch C ABI from a warm loaded library."""
     library_path = temp / "libphotonic_emitter.so"
     _run(
-        [
-            "mojo",
-            "build",
-            "--emit",
-            "shared-lib",
-            "-o",
-            str(library_path),
-            str(MOJO_SOURCE),
-        ]
+        pin_isa(
+            [
+                "mojo",
+                "build",
+                "--emit",
+                "shared-lib",
+                "-o",
+                str(library_path),
+                str(MOJO_SOURCE),
+            ]
+        )
     )
     library = ctypes.CDLL(str(library_path))
     kernel = library.photonic_crosstalk_batch_c

@@ -11,12 +11,13 @@
 from __future__ import annotations
 
 import ctypes
-from pathlib import Path
 import subprocess
+from pathlib import Path
 
 import pytest
 
 from sc_neurocore.accel import coba_lif as backends
+from sc_neurocore.accel.mojo.isa_baseline import pin_isa
 
 _REPOSITORY = Path(__file__).resolve().parents[1]
 
@@ -111,7 +112,7 @@ def test_mojo_shared_build_exports_the_real_batch_symbol(tmp_path: Path) -> None
     source = _REPOSITORY / "src/sc_neurocore/accel/mojo/kernels/coba_lif.mojo"
     output = tmp_path / "libcoba_lif.so"
     subprocess.run(
-        ["mojo", "build", "--emit", "shared-lib", "-o", str(output), str(source)],
+        pin_isa(["mojo", "build", "--emit", "shared-lib", "-o", str(output), str(source)]),
         check=True,
         capture_output=True,
         text=True,

@@ -28,8 +28,8 @@ of letting missing optional toolchains pass silently.
 
 from __future__ import annotations
 
-import json
 import importlib
+import json
 import shutil
 import subprocess
 import sys
@@ -37,6 +37,8 @@ from pathlib import Path
 from typing import Any, Protocol, cast
 
 import pytest
+
+from sc_neurocore.accel.mojo.isa_baseline import pin_isa
 
 JsonObject = dict[str, Any]
 
@@ -164,7 +166,7 @@ def mojo_output(cfg_json: str) -> JsonObject:
     if pixi is None or not (mojo_dir / "pixi.toml").exists():
         pytest.skip("pixi/Mojo toolchain not available")
     return _run_subprocess(
-        [pixi, "run", "mojo", "run", "kernels/evo_runner.mojo"],
+        pin_isa([pixi, "run", "mojo", "run", "kernels/evo_runner.mojo"]),
         cfg_json,
         cwd=str(mojo_dir),
     )

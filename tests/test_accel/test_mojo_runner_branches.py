@@ -93,7 +93,15 @@ def test_build_success_invokes_pixi(monkeypatch: pytest.MonkeyPatch, tmp_path: P
 
     monkeypatch.setattr(subprocess, "run", fake_run)
     assert runner.build() is True
-    assert captured["cmd"] == ["/fake/pixi", "run", "mojo", "build", "kernels.mojo"]
+    assert captured["cmd"] == [
+        "/fake/pixi",
+        "run",
+        "mojo",
+        "build",
+        "--target-cpu",
+        "x86-64-v3",
+        "kernels.mojo",
+    ]
     assert captured["cwd"] == str(tmp_path)
     assert captured["check"] is True
 

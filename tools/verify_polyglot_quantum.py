@@ -28,6 +28,8 @@ import tempfile
 import time
 from pathlib import Path
 
+from sc_neurocore.accel.mojo.isa_baseline import pin_isa
+
 _QC_DIR = Path(__file__).resolve().parent.parent / "src" / "sc_neurocore" / "quantum_cognition"
 
 # Colours
@@ -144,7 +146,7 @@ def _check_mojo() -> tuple[str, bool, float]:
     t0 = time.monotonic()
     try:
         result = subprocess.run(
-            ["mojo", "run", str(mojo_file)],
+            pin_isa(["mojo", "run", str(mojo_file)]),
             capture_output=True,
             text=True,
             timeout=120,

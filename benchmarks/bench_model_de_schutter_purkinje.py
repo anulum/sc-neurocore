@@ -9,10 +9,8 @@
 
 from __future__ import annotations
 
-from datetime import datetime, timezone
 import hashlib
 import json
-from pathlib import Path
 import platform
 import re
 import statistics
@@ -20,8 +18,11 @@ import subprocess
 import tempfile
 import textwrap
 import time
+from datetime import datetime, timezone
+from pathlib import Path
 from typing import Protocol, cast
 
+from sc_neurocore.accel.mojo.isa_baseline import pin_isa
 from sc_neurocore.neurons.models.de_schutter_purkinje import DeSchutterPurkinjeNeuron
 
 STEPS = 20_000
@@ -243,14 +244,16 @@ def _run_mojo_backend() -> dict[str, object]:
     with tempfile.NamedTemporaryFile("w", suffix=".mojo", encoding="utf-8") as handle:
         handle.write(program)
         handle.flush()
-        command = [
-            "mojo",
-            "run",
-            "--disable-warnings",
-            "-I",
-            "src/sc_neurocore/accel/mojo/kernels",
-            handle.name,
-        ]
+        command = pin_isa(
+            [
+                "mojo",
+                "run",
+                "--disable-warnings",
+                "-I",
+                "src/sc_neurocore/accel/mojo/kernels",
+                handle.name,
+            ]
+        )
         try:
             completed = _run_command(command)
         except (FileNotFoundError, subprocess.CalledProcessError) as exc:

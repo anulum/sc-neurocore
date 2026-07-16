@@ -26,6 +26,8 @@ from typing import Any, cast
 
 import pytest
 
+from sc_neurocore.accel.mojo.isa_baseline import pin_isa
+
 JsonObject = dict[str, Any]
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
@@ -83,7 +85,7 @@ def _run_mojo(cfg: str) -> JsonObject:
     # for the slowest cold run without hiding a genuine hang.
     assert PIXI is not None
     proc = subprocess.run(
-        [str(PIXI), "run", "mojo", "run", "kernels/evo_runner.mojo"],
+        pin_isa([str(PIXI), "run", "mojo", "run", "kernels/evo_runner.mojo"]),
         input=cfg,
         capture_output=True,
         text=True,

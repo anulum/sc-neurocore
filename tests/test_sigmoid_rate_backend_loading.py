@@ -12,12 +12,13 @@ from __future__ import annotations
 
 import ctypes
 import importlib
-from pathlib import Path
 import subprocess
+from pathlib import Path
 
 import numpy as np
 
 from sc_neurocore.accel import sigmoid_rate as backends
+from sc_neurocore.accel.mojo.isa_baseline import pin_isa
 
 _REPOSITORY = Path(__file__).resolve().parents[1]
 _GO_ROOT = _REPOSITORY / "src/sc_neurocore/accel/go"
@@ -47,15 +48,17 @@ def _build_go() -> None:
 
 def _build_mojo() -> None:
     subprocess.run(
-        [
-            "mojo",
-            "build",
-            "--emit",
-            "shared-lib",
-            "-o",
-            str(_MOJO_LIBRARY),
-            str(_MOJO_SOURCE),
-        ],
+        pin_isa(
+            [
+                "mojo",
+                "build",
+                "--emit",
+                "shared-lib",
+                "-o",
+                str(_MOJO_LIBRARY),
+                str(_MOJO_SOURCE),
+            ]
+        ),
         cwd=_REPOSITORY,
         check=True,
         capture_output=True,

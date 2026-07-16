@@ -29,6 +29,8 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Final
 
+from sc_neurocore.accel.mojo.isa_baseline import pin_isa
+
 MOJO_HELPER_BACKEND: Final = "python-fallback"
 """Backend used by scalar helper methods on ``MojoKernelRunner`` today."""
 
@@ -95,7 +97,7 @@ class MojoKernelRunner:
         """
         try:
             subprocess.run(
-                [self._pixi_bin, "run", "mojo", "build", "kernels.mojo"],
+                pin_isa([self._pixi_bin, "run", "mojo", "build", "kernels.mojo"]),
                 cwd=str(self._mojo_dir),
                 check=True,
             )
@@ -121,7 +123,7 @@ class MojoKernelRunner:
         """
         try:
             result = subprocess.run(
-                [self._pixi_bin, "run", "mojo", "run", "kernels.mojo"],
+                pin_isa([self._pixi_bin, "run", "mojo", "run", "kernels.mojo"]),
                 capture_output=True,
                 text=True,
                 check=True,

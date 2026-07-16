@@ -10,19 +10,20 @@
 
 from __future__ import annotations
 
-from collections.abc import Callable
 import ctypes
 import importlib
 import importlib.util as importlib_util
 import os
-from pathlib import Path
 import subprocess
+from collections.abc import Callable
+from pathlib import Path
 from types import ModuleType
 
 import numpy as np
 import pytest
 
 from sc_neurocore.accel import mcculloch_pitts as backends
+from sc_neurocore.accel.mojo.isa_baseline import pin_isa
 
 _REPOSITORY = Path(__file__).resolve().parents[1]
 _COUNTS = np.asarray([0, 1, 2, 2, (1 << 31) - 1], dtype=np.int64)
@@ -104,7 +105,7 @@ def test_mojo_shared_build_exports_exact_batch(tmp_path: Path) -> None:
     source = _REPOSITORY / "src/sc_neurocore/accel/mojo/kernels/mcculloch_pitts.mojo"
     output = tmp_path / "libmcculloch_pitts.so"
     subprocess.run(
-        ["mojo", "build", "--emit", "shared-lib", "-o", str(output), str(source)],
+        pin_isa(["mojo", "build", "--emit", "shared-lib", "-o", str(output), str(source)]),
         check=True,
         capture_output=True,
         text=True,

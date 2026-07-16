@@ -11,25 +11,26 @@
 from __future__ import annotations
 
 import argparse
-from collections.abc import Callable, Sequence
-from datetime import datetime, timezone
 import hashlib
 import importlib
 import json
 import math
-from pathlib import Path
 import platform
 import re
 import shutil
 import statistics
 import subprocess
 import time
+from collections.abc import Callable, Sequence
+from datetime import datetime, timezone
+from pathlib import Path
 from typing import Protocol, cast
 
 import numpy as np
+from _benchmark_context import load_average, measurement_context
 from numpy.typing import NDArray
 
-from _benchmark_context import load_average, measurement_context
+from sc_neurocore.accel.mojo.isa_baseline import pin_isa
 
 _SCHEMA_VERSION = "sc-neurocore.evo-substrate-multilang-benchmark.v2"
 _REPO_ROOT = Path(__file__).resolve().parents[1]
@@ -246,7 +247,7 @@ def _mojo() -> Samples | None:
     if pixi is None or not (directory / "pixi.toml").is_file():
         return None
     completed = subprocess.run(
-        [pixi, "run", "mojo", "run", "kernels/evo_substrate_bench.mojo"],
+        pin_isa([pixi, "run", "mojo", "run", "kernels/evo_substrate_bench.mojo"]),
         cwd=directory,
         capture_output=True,
         text=True,
