@@ -288,6 +288,18 @@
     ]
   },
   "schema_version": 1,
+  "source_hashes": {
+    "benchmarks/bench_verilog_compiler.py": "9641c7d2abc5401c9148158b70ec0a053c0ba9c2f3a3f49e71f1bee0f942dfa1",
+    "src/sc_neurocore/compiler/_verilog_folded_datapath.py": "1e8c73d37d26dad1a1ff986bcf9d545415209994ed0270989903796a23af6d31",
+    "src/sc_neurocore/compiler/_verilog_integrators.py": "224d492ebb51131a08ff9217b135b4e627570df620bcc5e660a97e9d43072cbb",
+    "src/sc_neurocore/compiler/_verilog_neuron_core.py": "909fc486fd3c27428fc5c6b793dc648bfba4a217b35bd9d7e2b9c6e0c3cea1ba",
+    "src/sc_neurocore/compiler/_verilog_registered_module.py": "3638d300a07878f4613d4879b7af430a4af2778c3ca709695206118f5b31a27a",
+    "src/sc_neurocore/compiler/expr_lut_tables.py": "e50e237324e5e1ed120a13de6ad50ae46481db5fad717e5519b3e1f09c1027c5",
+    "src/sc_neurocore/compiler/verilog_compiler.py": "b57f59b6652cad794f56c0af12b497fa9b2e90c4458f6938a36d0c8bd08a74ae",
+    "src/sc_neurocore/compiler/verilog_compiler_config.py": "a0726cfd8ca73fe1e1e3d066c0d8debbab013e9088642d8743a4b907a4d61fa7",
+    "src/sc_neurocore/compiler/verilog_expr_emitter.py": "7bebdf3cf03ba763471da6b0be7792d97f9f1af409d227ae96dd08588bc55155",
+    "src/sc_neurocore/neurons/equation_builder.py": "64e2ef38cafefd719e9355e134adfaee2c66950042e8461b3dec810f12a8b250"
+  },
   "source_sha256": {
     "benchmarks/bench_verilog_compiler.py": "9641c7d2abc5401c9148158b70ec0a053c0ba9c2f3a3f49e71f1bee0f942dfa1",
     "src/sc_neurocore/compiler/_verilog_folded_datapath.py": "1e8c73d37d26dad1a1ff986bcf9d545415209994ed0270989903796a23af6d31",

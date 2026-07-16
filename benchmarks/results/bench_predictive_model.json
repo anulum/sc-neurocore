@@ -405,6 +405,24 @@
     "rustc": "rustc 1.96.0 (ac68faa20 2026-05-25)"
   },
   "schema_version": 2,
+  "source_hashes": {
+    "benchmarks/bench_predictive_model.py": "31e20068bde1bb5813503692ab3d889c0edc97e583a4187cf8401cd127570c1e",
+    "bridge/sc_neurocore_engine/__init__.py": "94f170fb4145586709085b926ea7c9e595b251fb32d5d4d33fce06fcdfdce40d",
+    "bridge/sc_neurocore_engine/world_model.py": "ba54bf0ac3d41487b93e702fce3744764711a41d606b8834a33884d74cb27fe2",
+    "engine/src/lgssm.rs": "654ea16b17f35e2ca27c8e35a8903e2c206c8f041f22a55f9651449e2d4c8145",
+    "engine/src/lib.rs": "1994799708483d8d20d4eb6079873d1ee81e37fede08de0a6acb15e298bfb0e9",
+    "src/sc_neurocore/accel/go/lgssm/lgssm.go": "0950d11e2a602ef3d39ad497031bf7443bc678f0eba172a85aec41ffcb94df79",
+    "src/sc_neurocore/accel/julia/world_model/predictive_model.jl": "9125448c41ecabaaf0debebf4273024b624d3557a94ddffdee33f0e0b9b7b69c",
+    "src/sc_neurocore/accel/mojo/world_model/lgssm.mojo": "b1ec7b274facf6ae02252ca47f6118fb1009518fe5e8cac065f9cb7a9e2bc660",
+    "src/sc_neurocore/accel/rust/safety/predictive_model.rs": "7d05afc97b543dab961c687eb38dada2d052c8ec08dc4bbff81c9c90a6e8f675",
+    "src/sc_neurocore/world_model/_lgssm_backends.py": "75c2fed9e7a20afba04f1905bd14bfa0f40d02e1791fd583255d3022bcefe8c5",
+    "src/sc_neurocore/world_model/_lgssm_em.py": "d112f368ed85d7436c6ba95267da7600158df509cc42139a2cf620d57a539c71",
+    "src/sc_neurocore/world_model/_lgssm_filter.py": "ec55673c0b7fda8eeeb9193d892d3c6364eb42afa9e32bc80eedb98a072139eb",
+    "src/sc_neurocore/world_model/_lgssm_smoothing.py": "1ef63b06bf0dfd2f09e8293a42d7345d3c2111e8dfa6ca828798ff08e0f7c808",
+    "src/sc_neurocore/world_model/_lgssm_types.py": "d40d3f052db5b5810ddc2b79856685943dd31edf401eb702de92621db55b1e37",
+    "src/sc_neurocore/world_model/_predictive_world_model.py": "5bb4d9091ab3ac1bc74e712200c71e53a6b4b6cc8d177091dbf4511e7ff15da2",
+    "src/sc_neurocore/world_model/predictive_model.py": "9fef8640b86e86398c63326a2886caf376a7be06cb2b39de6ba246cc8aeda16a"
+  },
   "source_sha256": {
     "benchmarks/bench_predictive_model.py": "31e20068bde1bb5813503692ab3d889c0edc97e583a4187cf8401cd127570c1e",
     "bridge/sc_neurocore_engine/__init__.py": "64761e14898ba83fb46af689836981c4f73b909fd9ae6cf675f312024f981588",

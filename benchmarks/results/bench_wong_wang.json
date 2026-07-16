@@ -227,9 +227,9 @@
     },
     "benchmarks/bench_wong_wang.py": "ddae7d02a761d84d181c4e0befaf05515242c6582bd2ef7aefbd1fbb3ba49c31",
     "bridge/sc_neurocore_engine/__init__": {
-      "py": "de26d23e04c29b5b3b28bb2491bf2910f8c0dc43b15168a1b6e2d03af6c8618a"
+      "py": "94f170fb4145586709085b926ea7c9e595b251fb32d5d4d33fce06fcdfdce40d"
     },
-    "bridge/sc_neurocore_engine/__init__.py": "de26d23e04c29b5b3b28bb2491bf2910f8c0dc43b15168a1b6e2d03af6c8618a",
+    "bridge/sc_neurocore_engine/__init__.py": "94f170fb4145586709085b926ea7c9e595b251fb32d5d4d33fce06fcdfdce40d",
     "engine/src/bindings/wong_wang": {
       "rs": "59d69deca4c6238c00de600a7aaa0bb3cbd2a33551a789ac25c59c7a790ba29b"
     },
@@ -239,13 +239,13 @@
     },
     "engine/src/lib.rs": "1994799708483d8d20d4eb6079873d1ee81e37fede08de0a6acb15e298bfb0e9",
     "engine/src/neurons/special": {
-      "rs": "8c27c8c110456e21ef78956a3809b26d5fd0249c4c7bc523dd976b9521957435"
+      "rs": "e01efe61fccddde3f1cd3af5a31e350ab3ce10ac7f30ce0440aef98f4d61a8c8"
     },
-    "engine/src/neurons/special.rs": "8c27c8c110456e21ef78956a3809b26d5fd0249c4c7bc523dd976b9521957435",
+    "engine/src/neurons/special.rs": "e01efe61fccddde3f1cd3af5a31e350ab3ce10ac7f30ce0440aef98f4d61a8c8",
     "engine/src/pyo3_neurons": {
-      "rs": "d0a6be6df0b2a76048eb52f16068c579ec3068c20ece32c3c3093d21cbbe98f7"
+      "rs": "9b54714e8fe171880f83bab4932912921dfbedd229d3ffe231493cf05f6ea9a4"
     },
-    "engine/src/pyo3_neurons.rs": "d0a6be6df0b2a76048eb52f16068c579ec3068c20ece32c3c3093d21cbbe98f7",
+    "engine/src/pyo3_neurons.rs": "9b54714e8fe171880f83bab4932912921dfbedd229d3ffe231493cf05f6ea9a4",
     "engine/src/wong_wang": {
       "rs": "f05c3f21bb6a96d26e71d9291035d1e67b81e0a61d5edb5bf6c5839b22c7c2e1"
     },
@@ -271,9 +271,9 @@
     },
     "src/sc_neurocore/accel/go/wong_wang/wong_wang.go": "7af6ffeead601fff7b07a4a31bf49f4986c964d0c027009eab936b1368d54858",
     "src/sc_neurocore/accel/julia/neurons/__init__": {
-      "py": "ff59542deeb8c057b234ca2a9bf50d52090499262984370c69d5b07256029c51"
+      "py": "30fa23a9fc5d3cff07e437bb27c0ed19334ef6ba2bdb9ddfdc6214a393d48cd1"
     },
-    "src/sc_neurocore/accel/julia/neurons/__init__.py": "ff59542deeb8c057b234ca2a9bf50d52090499262984370c69d5b07256029c51",
+    "src/sc_neurocore/accel/julia/neurons/__init__.py": "30fa23a9fc5d3cff07e437bb27c0ed19334ef6ba2bdb9ddfdc6214a393d48cd1",
     "src/sc_neurocore/accel/julia/neurons/wong_wang": {
       "jl": "cb70bd024f16d6b6f805e178c4acf346b7e6f2ba4aa7018ad0e734fd61fe497d"
     },
