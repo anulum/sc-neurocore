@@ -67,6 +67,12 @@ _ALLOWED_AST_NODES = {
 _DEFAULT_MAX_AST_DEPTH = 20
 """Maximum expression AST nesting depth (stack-exhaustion / obfuscation guard)."""
 
+_MAX_POW_EXPONENT = 64
+"""Largest literal ``**`` exponent; neuron dynamics use small integer/rational powers."""
+
+_MAX_CONSTANT_MAGNITUDE = 1e15
+"""Largest permitted numeric literal, rejecting giant constants used for eval blow-up."""
+
 _BLOCKED_NAMES = {
     # Python builtins that enable code execution or introspection
     "__import__",
@@ -164,6 +170,37 @@ class ExpressionSafetyValidator:
                     )
                 if node.attr in _BLOCKED_NAMES:
                     raise ValueError(f"Blocked attribute {node.attr!r} in equation: {expr!r}")
+            if (
+                isinstance(node, ast.Constant)
+                and isinstance(node.value, (int, float))
+                and not isinstance(node.value, bool)
+                and abs(node.value) > _MAX_CONSTANT_MAGNITUDE
+            ):
+                raise ValueError(
+                    f"Numeric constant {node.value!r} exceeds magnitude limit "
+                    f"{_MAX_CONSTANT_MAGNITUDE:g} in equation: {expr!r}"
+                )
+            if isinstance(node, ast.BinOp) and isinstance(node.op, ast.Pow):
+                exponent = node.right
+                if (
+                    isinstance(exponent, ast.Constant)
+                    and isinstance(exponent.value, (int, float))
+                    and not isinstance(exponent.value, bool)
+                    and abs(exponent.value) > _MAX_POW_EXPONENT
+                ):
+                    raise ValueError(
+                        f"Exponent {exponent.value!r} exceeds limit {_MAX_POW_EXPONENT} "
+                        f"in equation: {expr!r}"
+                    )
+                # Chained exponents (``a ** b ** c``) blow up under eval even with small
+                # literals, so reject any ``**`` nested inside another's exponent.
+                if any(
+                    isinstance(inner, ast.BinOp) and isinstance(inner.op, ast.Pow)
+                    for inner in ast.walk(exponent)
+                ):
+                    raise ValueError(
+                        f"Nested exponentiation blocked (eval blow-up risk): {expr!r}"
+                    )
 
     @staticmethod
     def _ast_depth(node: ast.AST) -> int:

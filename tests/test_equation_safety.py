@@ -89,3 +89,34 @@ def test_eval_globals_is_an_empty_builtins_sandbox() -> None:
     """The eval globals expose only ``__import__`` inside a scoped builtins map."""
     assert set(EVAL_GLOBALS) == {"__builtins__"}
     assert set(EVAL_GLOBALS["__builtins__"]) == {"__import__"}
+
+
+def test_nested_exponentiation_is_rejected() -> None:
+    """Chained exponents (``9**9**9**9``) blow up under eval and are refused."""
+    with pytest.raises(ValueError, match="Nested exponentiation blocked"):
+        ExpressionSafetyValidator().validate("9**9**9**9")
+
+
+def test_oversized_literal_exponent_is_rejected() -> None:
+    """A single ``**`` with a huge literal exponent is refused before eval."""
+    with pytest.raises(ValueError, match="Exponent .* exceeds limit"):
+        ExpressionSafetyValidator().validate("9 ** 999999")
+
+
+def test_oversized_numeric_constant_is_rejected() -> None:
+    """A literal whose magnitude overflows the sandbox ceiling is refused."""
+    with pytest.raises(ValueError, match="exceeds magnitude limit"):
+        ExpressionSafetyValidator().validate("1e400")
+
+
+def test_bounded_powers_and_nested_bases_are_permitted() -> None:
+    """Small integer/rational powers and nested *bases* stay valid dynamics."""
+    validator = ExpressionSafetyValidator()
+    validator.validate("v**2")
+    validator.validate("x**0.5")
+    validator.validate("(a**2)**3")
+
+
+def test_montbrio_rate_equation_still_validates() -> None:
+    """Regression guard: the MPR firing-rate expression is not caught by the new caps."""
+    ExpressionSafetyValidator().validate("delta/(3.141592653589793*tau**2) + 2.0*r*v/tau")
