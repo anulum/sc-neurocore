@@ -649,8 +649,13 @@ Evaluate the Mojo recurrence through its shared-library ABI.
 ### Function `pin_isa(argv)`
 Return ``argv`` with ``--target-cpu x86-64-v3`` after its mojo subcommand.
 
-Finds the ``mojo`` token followed by ``build`` or ``run`` and inserts the
-baseline flag immediately after the subcommand. Idempotent: an argv that
+Finds the ``mojo`` executable followed by ``build`` or ``run`` and inserts
+the baseline flag immediately after the subcommand. The executable is matched
+by basename, so a resolved absolute path (e.g. ``shutil.which("mojo")`` →
+``/home/user/.local/bin/mojo``) is pinned exactly like the bare ``mojo``
+token — otherwise an absolute-path call site would build an unpinned kernel
+that SIGILLs on a non-AVX-512 runner. A ``*.mojo`` source file is not matched
+(its basename ends in ``.mojo``, not ``mojo``). Idempotent: an argv that
 already carries ``--target-cpu`` is returned unchanged. A copy is returned;
 the input list is not mutated.
 
