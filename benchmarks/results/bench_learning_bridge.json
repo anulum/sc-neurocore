@@ -499,7 +499,7 @@
     "src/sc_neurocore/accel/go/autonomous_learning/learning_bridge.go": "1468937f02fc39a6be5c2f3e6f5b43ef0dfff3f18b4984200c1f823cdccc7b97",
     "src/sc_neurocore/accel/julia/_native/learning_bridge.jl": "aaa64049ce45768d3157917ae4d6aa9a51855435c1d89c21aeefb7f17572c2ea"
   },
-  "source_sha256": "646bbdc37682325962761312c5a096275692693ab174fac407cf1aa71b94240d",
+  "source_sha256": "07028f5a86a1a0e4b822f6542b6eeabe2ebc6db9b87e30ee585aa40465cae605",
   "support_sha256": "1b6bc333a52a40f5f58b0f44b1500f5295717efbb0a9c7d6186d1487891c5b2e",
   "variants": [
     {
@@ -546,7 +546,7 @@
         "src/sc_neurocore/accel/julia/_native/learning_bridge.jl": "aaa64049ce45768d3157917ae4d6aa9a51855435c1d89c21aeefb7f17572c2ea"
       },
       "source_ref": "working-tree-learning-bridge",
-      "source_sha256": "646bbdc37682325962761312c5a096275692693ab174fac407cf1aa71b94240d",
+      "source_sha256": "07028f5a86a1a0e4b822f6542b6eeabe2ebc6db9b87e30ee585aa40465cae605",
       "surface_dirty": true
     }
   ]
