@@ -51,20 +51,30 @@ def test_every_acceleration_backend_is_executable() -> None:
 
 def test_missing_rust_engine_is_detected_at_import(monkeypatch: pytest.MonkeyPatch) -> None:
     """Exercise the optional-engine import boundary without leaving module drift."""
-    real_import = importlib.import_module
+    original_namespace = adex.__dict__.copy()
+    try:
+        real_import = importlib.import_module
 
-    def without_engine(name: str, package: str | None = None) -> object:
-        if name == "sc_neurocore_engine":
-            raise ImportError("engine intentionally hidden")
-        return real_import(name, package)
+        def without_engine(name: str, package: str | None = None) -> object:
+            if name == "sc_neurocore_engine":
+                raise ImportError("engine intentionally hidden")
+            return real_import(name, package)
 
-    with monkeypatch.context() as patch:
-        patch.setattr(importlib, "import_module", without_engine)
-        reloaded = importlib.reload(adex)
-        assert reloaded._HAS_RUST is False
-        assert reloaded._EngineAdExCls is None
-    importlib.reload(adex)
-    assert adex._HAS_RUST is True
+        with monkeypatch.context() as patch:
+            patch.setattr(importlib, "import_module", without_engine)
+            reloaded = importlib.reload(adex)
+            assert reloaded._HAS_RUST is False
+            assert reloaded._EngineAdExCls is None
+        importlib.reload(adex)
+        assert adex._HAS_RUST is True
+    finally:
+        # Reload mutates the shared module in place and rebinds AdExNeuron.
+        # Restore its original namespace so later tests retain their imported
+        # class identity instead of observing a stale pre-reload class.
+        adex.__dict__.clear()
+        adex.__dict__.update(original_namespace)
+
+    assert adex.AdExNeuron is AdExNeuron
 
 
 def test_invalid_integrator_and_runtime_voltage_fail_closed() -> None:
