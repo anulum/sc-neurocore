@@ -1,7 +1,7 @@
 # TTypeCaNeuron
 
-**Module:** `engine/src/neurons/channels.rs`
-**Rust struct:** `TTypeCaNeuron` (line 296)
+**Module:** `engine/src/neurons/channels/t_type_ca.rs`
+**Rust struct:** `TTypeCaNeuron` (line 25)
 **Reference:** Huguenard, Annu Rev Physiol 58:329, 1996; Destexhe et al., J Neurophysiol 76:2049, 1996
 **Family:** Wang–Buzsáki Na⁺/K⁺ base + T-type Ca²⁺ (IT, low-voltage-activated)
 **State variables:** `v` (membrane potential), `h` (Na⁺ inactivation), `n` (Kdr activation), `s` (T-type inactivation)
@@ -303,7 +303,7 @@ The code uses `s *= 0.3` on spike. If changed:
 
 ## Parameters
 
-All defaults from `TTypeCaNeuron::new()` in `channels.rs:325`:
+All defaults from `TTypeCaNeuron::new()` in `channels/t_type_ca.rs:54`:
 
 | Parameter | Default | Unit | Description |
 |-----------|---------|------|-------------|
@@ -336,7 +336,7 @@ the first depolarising input. After a few hundred ms at rest, s will decay to ~0
 
 ## Implementation Details
 
-### Code structure (`channels.rs:347–405`)
+### Code structure (`channels/t_type_ca.rs:76–134`)
 
 ```
 step(current) → i32:
@@ -454,7 +454,7 @@ only during spike sub-steps. In FPGA, this can be a conditional multiply-by-cons
 
 | Checklist | Status |
 |-----------|--------|
-| Rust implementation | `engine/src/neurons/channels.rs:296` |
+| Rust implementation | `engine/src/neurons/channels/t_type_ca.rs:25` |
 | PyO3 wrapper | `pyo3_neurons.rs` via `py_neuron_default!` (state: v, h, n, s) |
 | NetworkRunner wired | `NeuronVariant::TTypeCa` |
 | `create_neuron("TTypeCa")` | Yes |

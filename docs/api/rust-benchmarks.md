@@ -247,7 +247,7 @@ compute cycles for the 64x32 dense contract.
 > Granule cell uses four exact-integration sub-steps for D'Angelo-style
 > conductance dynamics and tonic GABA inhibition.
 
-### Ion Channel Variant Neurons (`neurons/channels.rs`) — Ion-channel variant group
+### Ion Channel Variant Neurons (`neurons/channels/`) — Ion-channel variant group
 
 | Model | Steps | Median | Per step | Sub-steps | Notes |
 |-------|-------|--------|----------|-----------|-------|

@@ -1,7 +1,7 @@
 # PersistentNaNeuron
 
-**Module:** `engine/src/neurons/channels.rs`
-**Rust struct:** `PersistentNaNeuron` (line 31)
+**Module:** `engine/src/neurons/channels/persistent_na.rs`
+**Rust struct:** `PersistentNaNeuron` (line 21)
 **Reference:** Crill, Annu Rev Physiol 58:349, 1996; French et al., Neuroscience 42:363, 1990
 **Family:** Wang–Buzsáki Na⁺/K⁺ base + persistent Na⁺ current (INaP)
 **State variables:** `v` (membrane potential), `h` (Na⁺ inactivation), `n` (Kdr activation), `p` (INaP activation)
@@ -285,7 +285,7 @@ The leak conductance must be balanced against INaP to maintain stability:
 
 ## Parameters
 
-All defaults from `PersistentNaNeuron::new()` in `channels.rs:59`:
+All defaults from `PersistentNaNeuron::new()` in `channels/persistent_na.rs:49`:
 
 | Parameter | Default | Unit | Description |
 |-----------|---------|------|-------------|
@@ -310,7 +310,7 @@ All defaults from `PersistentNaNeuron::new()` in `channels.rs:59`:
 
 ## Implementation Details
 
-### Code structure (`channels.rs:80–137`)
+### Code structure (`channels/persistent_na.rs:70–127`)
 
 ```
 step(current) → i32:
@@ -434,7 +434,7 @@ exponential, saving ~20 LUTs per evaluation compared to exp-based τ formulas.
 
 | Checklist | Status |
 |-----------|--------|
-| Rust implementation | `engine/src/neurons/channels.rs:31` |
+| Rust implementation | `engine/src/neurons/channels/persistent_na.rs:21` |
 | PyO3 wrapper | `pyo3_neurons.rs` via `py_neuron_default!` (state: v, h, n, p) |
 | NetworkRunner wired | `NeuronVariant::PersistentNa` |
 | `create_neuron("PersistentNa")` | Yes |
@@ -568,5 +568,5 @@ a simulation.
 
 ---
 
-*Document verified against Rust source `engine/src/neurons/channels.rs:31–142`.
+*Document verified against Rust source `engine/src/neurons/channels/persistent_na.rs:21–132`.
 All equations, parameters, and default values read directly from the implementation.*

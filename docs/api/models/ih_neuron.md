@@ -1,7 +1,7 @@
 # IhNeuron
 
-**Module:** `engine/src/neurons/channels.rs`
-**Rust struct:** `IhNeuron` (line 162)
+**Module:** `engine/src/neurons/channels/ih.rs`
+**Rust struct:** `IhNeuron` (line 24)
 **Reference:** Robinson & Bhatt, Neuron 11:953, 1993; Pape, Annu Rev Physiol 58:299, 1996
 **Family:** Wang–Buzsáki Na⁺/K⁺ base + Ih (HCN, hyperpolarisation-activated cation current)
 **State variables:** `v` (membrane potential), `h` (Na⁺ inactivation), `n` (Kdr activation), `r` (Ih activation)
@@ -297,7 +297,7 @@ Na⁺/K⁺ permeability ratio (PNa/PK ≈ 0.2–0.4).
 
 ## Parameters
 
-All defaults from `IhNeuron::new()` in `channels.rs:191`:
+All defaults from `IhNeuron::new()` in `channels/ih.rs:53`:
 
 | Parameter | Default | Unit | Description |
 |-----------|---------|------|-------------|
@@ -338,7 +338,7 @@ All defaults from `IhNeuron::new()` in `channels.rs:191`:
 
 ## Implementation Details
 
-### Code structure (`channels.rs:213–270`)
+### Code structure (`channels/ih.rs:75–132`)
 
 ```
 step(current) → i32:
@@ -507,7 +507,7 @@ voltage sag.
 
 | Checklist | Status |
 |-----------|--------|
-| Rust implementation | `engine/src/neurons/channels.rs:162` |
+| Rust implementation | `engine/src/neurons/channels/ih.rs:24` |
 | PyO3 wrapper | `pyo3_neurons.rs` via `py_neuron_default!` (state: v, h, n, r) |
 | NetworkRunner wired | `NeuronVariant::Ih` |
 | `create_neuron("Ih")` | Yes |

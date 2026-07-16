@@ -1,6 +1,6 @@
 # ATypeKNeuron
 
-**Module:** `engine/src/neurons/channels.rs`
+**Module:** `engine/src/neurons/channels/a_type_k.rs`
 **Reference:** Connor & Stevens, *J Physiol* 213:31–53, 1971; Hoffman et al., *Nature* 387:869–875, 1997
 **Family:** WB Na⁺/K⁺ base + A-type K⁺ (IA, transient outward)
 **State variables:** `v`, `h` (Na⁺ inactivation), `n` (K_dr activation), `a` (IA activation), `b` (IA inactivation)
@@ -462,13 +462,13 @@ At 100 MHz with 50 sub-steps:
 
 | Checklist | Status |
 |-----------|--------|
-| Rust implementation | `engine/src/neurons/channels.rs:430` |
+| Rust implementation | `engine/src/neurons/channels/a_type_k.rs:24` |
 | PyO3 wrapper | `pyo3_neurons.rs` via `py_neuron_default!` (state: v, h, n, a, b) |
 | NetworkRunner wired | `NeuronVariant::ATypeK` |
 | `create_neuron("ATypeK")` | Yes |
 | `supported_models()` | Includes "ATypeK" |
 | coverage tests | 10 |
-| Benchmark | from channels.rs family: ~3 µs/step range, i5-11600K |
+| Benchmark | from `channels/a_type_k.rs` family: ~3 µs/step range, i5-11600K |
 
 ---
 

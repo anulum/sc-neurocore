@@ -1,6 +1,6 @@
 # NMDANeuron
 
-**Module:** `engine/src/neurons/channels.rs`
+**Module:** `engine/src/neurons/channels/nmda.rs`
 **Reference:** Jahr & Stevens, *J Neurosci* 10:1830–1835, 1990; Wang, *Neuron* 22:409–413, 1999
 **Family:** WB Na⁺/K⁺ base + NMDA receptor-gated channel with Mg²⁺ voltage block
 **State variables:** `v`, `h` (Na⁺ inactivation), `n` (K_dr activation), `s_nmda` (NMDA synaptic variable)
@@ -453,7 +453,7 @@ At 100 MHz with 50 sub-steps:
 
 | Checklist | Status |
 |-----------|--------|
-| Rust implementation | `engine/src/neurons/channels.rs:833` |
+| Rust implementation | `engine/src/neurons/channels/nmda.rs:27` |
 | PyO3 wrapper | `pyo3_neurons.rs` via `py_neuron_default!` (state: v, h, n, s_nmda) |
 | NetworkRunner wired | `NeuronVariant::NMDA` |
 | `create_neuron("NMDA")` | Yes |

@@ -1,6 +1,6 @@
 # SKNeuron
 
-**Module:** `engine/src/neurons/channels.rs`
+**Module:** `engine/src/neurons/channels/sk.rs`
 **Reference:** Bhatt & Storm, *J Physiol* 557:329–352, 2003; Stocker, *Nat Rev Neurosci* 5:758–770, 2004
 **Family:** WB (Wang–Buzsáki) Na⁺/K⁺ base + SK (small conductance Ca²⁺-activated K⁺)
 **State variables:** `v`, `h` (Na⁺ inactivation), `n` (K_dr activation), `ca` (intracellular Ca²⁺)
@@ -467,7 +467,7 @@ At 100 MHz with 50 sub-steps:
 
 | Checklist | Status |
 |-----------|--------|
-| Rust implementation | `engine/src/neurons/channels.rs:698` |
+| Rust implementation | `engine/src/neurons/channels/sk.rs:24` |
 | PyO3 wrapper | `pyo3_neurons.rs` via `py_neuron_default!` (state: v, h, n, ca) |
 | NetworkRunner wired | `NeuronVariant::SK` |
 | `create_neuron("SK")` | Yes |

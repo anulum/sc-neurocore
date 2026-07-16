@@ -1,7 +1,7 @@
 # BKNeuron
 
-**Module:** `engine/src/neurons/channels.rs`
-**Rust struct:** `BKNeuron` (line 562)
+**Module:** `engine/src/neurons/channels/bk.rs`
+**Rust struct:** `BKNeuron` (line 26)
 **Reference:** Bhatt & Storm, J Physiol 557:329, 2003; Faber & Bhatt, PNAS 100:2813, 2003
 **Family:** Wang–Buzsáki Na⁺/K⁺ base + BK (big conductance Ca²⁺-activated K⁺)
 **State variables:** `v` (membrane potential), `h` (Na⁺ inactivation), `n` (Kdr activation), `ca` (intracellular Ca²⁺)
@@ -330,7 +330,7 @@ The burst duration and inter-burst interval depend on input strength and g_BK.
 
 ## Parameters
 
-All defaults from `BKNeuron::new()` in `channels.rs:591`:
+All defaults from `BKNeuron::new()` in `channels/bk.rs:55`:
 
 | Parameter | Default | Unit | Description |
 |-----------|---------|------|-------------|
@@ -370,7 +370,7 @@ All defaults from `BKNeuron::new()` in `channels.rs:591`:
 
 ## Implementation Details
 
-### Code structure (`channels.rs:613–673`)
+### Code structure (`channels/bk.rs:77–137`)
 
 ```
 step(current) → i32:
@@ -548,7 +548,7 @@ BK channel mutations (KCNMA1) are associated with several human disorders:
 
 | Checklist | Status |
 |-----------|--------|
-| Rust implementation | `engine/src/neurons/channels.rs:562` |
+| Rust implementation | `engine/src/neurons/channels/bk.rs:26` |
 | PyO3 wrapper | `pyo3_neurons.rs` via `py_neuron_default!` (state: v, h, n, ca) |
 | NetworkRunner wired | `NeuronVariant::BK` |
 | `create_neuron("BK")` | Yes |
