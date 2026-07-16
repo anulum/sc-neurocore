@@ -17,7 +17,7 @@ from __future__ import annotations
 
 import ctypes as ct
 from types import TracebackType
-from typing import Any, Self
+from typing import TYPE_CHECKING, Any
 
 from . import learning_runtime as runtime
 from .learning_validation import (
@@ -41,6 +41,12 @@ from .learning_validation import (
     require_unit_interval,
     saturate,
 )
+
+if TYPE_CHECKING:
+    # ``typing.Self`` only exists on Python >= 3.11; import it lazily from
+    # ``typing_extensions`` so the runtime import never executes on 3.10 while
+    # type checkers still resolve the ``__enter__`` return annotation.
+    from typing_extensions import Self
 
 
 def _require_native() -> None:
