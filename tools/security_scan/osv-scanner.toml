@@ -10,3 +10,18 @@
 id = "RUSTSEC-2024-0436"
 ignoreUntil = "2026-08-31T23:59:59Z"
 reason = "Transitive wgpu -> metal dependency pulls paste on non-Linux target support; cargo audit classifies this as an unmaintained warning rather than a vulnerability. Review by 2026-08-31 and replace or upgrade the GPU backend dependency path if upstream still carries paste."
+
+[[IgnoredVulns]]
+id = "GHSA-vj7q-gjh5-988w"
+ignoreUntil = "2026-10-31T23:59:59Z"
+reason = "CVE-2026-59950 in mcp (MCP Python SDK) WebSocket server transport Host/Origin validation. mcp is an UNCONDITIONAL transitive of semgrep (bare mcp==1.23.3 in semgrep's requires_dist, no extra marker), a CI-only SAST tool in requirements/semgrep.* that is NOT a runtime/wheel dependency (absent from pyproject). semgrep hard-pins mcp==1.23.3 through its latest release 1.170.0, so mcp==1.28.1 cannot co-resolve and no clean bump exists yet. This repo invokes 'semgrep scan' via tools/security_scan/run_semgrep_scanners.py and NEVER starts an MCP server ('semgrep mcp'), so the vulnerable server-transport code is unreachable. Tracked in issue #162; bump the moment a semgrep release ships a patched mcp."
+
+[[IgnoredVulns]]
+id = "GHSA-jpw9-pfvf-9f58"
+ignoreUntil = "2026-10-31T23:59:59Z"
+reason = "CVE-2026-52869 in mcp (MCP Python SDK) HTTP transport session verification. Same reachability invariant as GHSA-vj7q-gjh5-988w: mcp is an unconditional transitive of the CI-only semgrep SAST tool (semgrep hard-pins mcp==1.23.3 through 1.170.0; not a runtime/wheel dep); the repo runs 'semgrep scan', never 'semgrep mcp', so the MCP-server transport path is unreachable. Tracked in issue #162; bump when semgrep ships a patched mcp."
+
+[[IgnoredVulns]]
+id = "GHSA-hvrp-rf83-w775"
+ignoreUntil = "2026-10-31T23:59:59Z"
+reason = "CVE-2026-52870 in mcp (MCP Python SDK) experimental task handlers. Same reachability invariant: mcp is an unconditional transitive of the CI-only semgrep SAST tool (semgrep hard-pins mcp==1.23.3 through 1.170.0; not a runtime/wheel dep); the repo runs 'semgrep scan', never 'semgrep mcp', so the MCP-server task-handler code is unreachable. Tracked in issue #162; bump when semgrep ships a patched mcp."
