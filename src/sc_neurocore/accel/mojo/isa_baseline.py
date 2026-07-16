@@ -23,6 +23,8 @@ drift off the baseline; ``tools/check_mojo_isa_pin.py`` enforces this statically
 
 from __future__ import annotations
 
+from pathlib import Path
+
 #: The portable baseline shared with the CI build step (.github/workflows/ci.yml)
 #: and ``tools/build_accel_backends.py``. AVX2/FMA/BMI only — never AVX-512.
 MOJO_TARGET_CPU = "x86-64-v3"
@@ -31,8 +33,13 @@ MOJO_TARGET_CPU = "x86-64-v3"
 def pin_isa(argv: list[str]) -> list[str]:
     """Return ``argv`` with ``--target-cpu x86-64-v3`` after its mojo subcommand.
 
-    Finds the ``mojo`` token followed by ``build`` or ``run`` and inserts the
-    baseline flag immediately after the subcommand. Idempotent: an argv that
+    Finds the ``mojo`` executable followed by ``build`` or ``run`` and inserts
+    the baseline flag immediately after the subcommand. The executable is matched
+    by basename, so a resolved absolute path (e.g. ``shutil.which("mojo")`` →
+    ``/home/user/.local/bin/mojo``) is pinned exactly like the bare ``mojo``
+    token — otherwise an absolute-path call site would build an unpinned kernel
+    that SIGILLs on a non-AVX-512 runner. A ``*.mojo`` source file is not matched
+    (its basename ends in ``.mojo``, not ``mojo``). Idempotent: an argv that
     already carries ``--target-cpu`` is returned unchanged. A copy is returned;
     the input list is not mutated.
     """
@@ -40,7 +47,11 @@ def pin_isa(argv: list[str]) -> list[str]:
     if "--target-cpu" in out:
         return out
     for index, argument in enumerate(out):
-        if argument == "mojo" and index + 1 < len(out) and out[index + 1] in ("build", "run"):
+        if (
+            Path(argument).name == "mojo"
+            and index + 1 < len(out)
+            and out[index + 1] in ("build", "run")
+        ):
             out[index + 2 : index + 2] = ["--target-cpu", MOJO_TARGET_CPU]
             return out
     return out

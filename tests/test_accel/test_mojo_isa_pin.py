@@ -26,8 +26,12 @@ _REPO_ROOT = Path(__file__).resolve().parents[2]
 # (local editable venvs are ``.venv-py313`` etc., so match by prefix not equality).
 _SKIP_PREFIXES = (".venv", ".pixi", ".git", "node_modules", "__pycache__", "target", ".mypy_cache")
 
-# Adjacent-token argv shapes that name an actual Mojo build/run subprocess.
-_MOJO_ARGV = re.compile(r'"mojo",\s*"(?:build|run)"|"run",\s*"mojo",\s*"(?:build|run)"')
+# Adjacent-token argv shapes that name an actual Mojo build/run subprocess. The
+# optional ``)`` also catches a resolver-call executable such as
+# ``_require_tool("mojo"), "build"`` / ``shutil.which("mojo"), "run"`` — an
+# absolute-path shape that the bare-token pattern would miss (and that must still
+# be routed through pin_isa so it carries --target-cpu).
+_MOJO_ARGV = re.compile(r'"mojo"\)?,\s*"(?:build|run)"|"run",\s*"mojo",\s*"(?:build|run)"')
 
 # Call sites where the token pair is a monkeypatched stub, not a real invocation:
 # ``_default_runner`` never launches Mojo (subprocess.run is patched) and the real
@@ -57,6 +61,41 @@ def test_pin_isa_inserts_baseline_after_run_through_pixi() -> None:
         MOJO_TARGET_CPU,
         "k.mojo",
     ]
+
+
+def test_pin_isa_pins_absolute_path_mojo_executable() -> None:
+    # shutil.which("mojo") / _require_tool("mojo") resolves to an absolute path;
+    # it must be pinned exactly like the bare token or the built kernel SIGILLs.
+    argv = ["/home/anulum/.local/bin/mojo", "build", "--emit", "shared-lib", "x.mojo"]
+    assert pin_isa(argv) == [
+        "/home/anulum/.local/bin/mojo",
+        "build",
+        "--target-cpu",
+        MOJO_TARGET_CPU,
+        "--emit",
+        "shared-lib",
+        "x.mojo",
+    ]
+
+
+def test_pin_isa_pins_resolved_mojo_run_through_pixi() -> None:
+    argv = ["/opt/pixi/bin/pixi", "run", "/usr/bin/mojo", "run", "k.mojo"]
+    assert pin_isa(argv) == [
+        "/opt/pixi/bin/pixi",
+        "run",
+        "/usr/bin/mojo",
+        "run",
+        "--target-cpu",
+        MOJO_TARGET_CPU,
+        "k.mojo",
+    ]
+
+
+def test_pin_isa_ignores_mojo_source_file_basename() -> None:
+    # A ``*.mojo`` source path has basename ``x.mojo`` (not ``mojo``) and is not
+    # followed by a subcommand, so it must never be mistaken for the executable.
+    argv = ["python", "compile.py", "kernels/x.mojo", "build"]
+    assert pin_isa(argv) == argv
 
 
 def test_pin_isa_is_idempotent() -> None:
