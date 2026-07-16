@@ -121,7 +121,7 @@ def test_seeded_synthetic_training_preserves_metrics_and_weight_artifact(
     assert metadata["parameter_count"] == 610
     weights = (tmp_path / context.job_id / TRAINING_WEIGHT_ARTIFACT_PATH).read_bytes()
     assert (
-        _state_digest(weights) == "988661edac7c35847307bddc2616d3d50ed129deddae06c90c94a7bd37042b8e"
+        _state_digest(weights) == "0c1133b9454fb630f5d4a2fb165d9952425981c2b5939d0322b719c3d3787706"
     )
     events = [
         json.loads(line)

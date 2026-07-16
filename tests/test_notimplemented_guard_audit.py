@@ -124,19 +124,49 @@ _APPROVED_NOTIMPLEMENTED_GUARDS = {
         "not yet supported",
     ),
     _RaiseSite(
-        "src/sc_neurocore/optics/photonic_emitter.py",
+        "src/sc_neurocore/optics/_photonic_compiler.py",
         "CompilationResult.to_gdsii",
         "num_modulators > 0",
     ),
     _RaiseSite(
-        "src/sc_neurocore/compiler/verilog_compiler.py",
+        "src/sc_neurocore/compiler/_verilog_registered_module.py",
         "compile_to_verilog",
         "substeps > 1 is only supported for edge-crossing",
     ),
     _RaiseSite(
-        "src/sc_neurocore/compiler/verilog_compiler.py",
+        "src/sc_neurocore/compiler/_verilog_registered_module.py",
         "compile_to_verilog",
         "substeps > 1 is not supported with multiply pipelining",
+    ),
+    _RaiseSite(
+        "src/sc_neurocore/compiler/_verilog_registered_module.py",
+        "compile_to_verilog",
+        "signed must be True",
+    ),
+    _RaiseSite(
+        "src/sc_neurocore/compiler/_verilog_registered_module.py",
+        "compile_to_verilog",
+        "stochastic-threshold RTL does not yet support multiply pipelining",
+    ),
+    _RaiseSite(
+        "src/sc_neurocore/compiler/_verilog_neuron_core.py",
+        "_build_neuron_core",
+        "stochastic product rounding is not supported",
+    ),
+    _RaiseSite(
+        "src/sc_neurocore/compiler/verilog_expr_emitter.py",
+        "_VerilogExprEmitter._trunc",
+        "requires a caller-owned LFSR",
+    ),
+    _RaiseSite(
+        "src/sc_neurocore/compiler/_verilog_folded_datapath.py",
+        "compile_to_datapath",
+        "signed must be True",
+    ),
+    _RaiseSite(
+        "src/sc_neurocore/studio/platform/policy_audit_integrity.py",
+        "_JsonlAuditIntegrityMixin._export_paths",
+        "<abstract>",
     ),
 }
 

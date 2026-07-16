@@ -11,6 +11,7 @@
 from __future__ import annotations
 
 import ast
+import enum
 import hashlib
 import inspect
 import json
@@ -115,6 +116,15 @@ _EXPECTED_SIGNATURES = {
     "'List[str]' = <factory>) -> None",
     "UVMGenerator": "(stimulus: 'Optional[StimulusConfig]' = None, coverage: "
     "'Optional[CoverageSpec]' = None, scoreboard: 'Optional[ScoreboardConfig]' = None)",
+}
+# ``PortDirection`` and ``PortType`` are ``enum.Enum`` subclasses. ``inspect``
+# reports the CPython enum-metaclass call signature for them, and that string
+# varies across interpreter versions (3.11 emits the full functional-API form,
+# 3.12+ collapses it to ``(*values)``), so the stable public contract we pin is
+# the member map rather than that interpreter-specific noise.
+_EXPECTED_ENUM_MEMBERS = {
+    "PortDirection": {"INPUT": "input", "OUTPUT": "output", "INOUT": "inout"},
+    "PortType": {"LOGIC": "logic", "WIRE": "wire", "REG": "reg"},
 }
 _SOURCE_CASES = {
     "dense": """module dense(
@@ -266,7 +276,12 @@ def test_uvm_facades_preserve_exports_signatures_and_pickle_identity() -> None:
         facade_definition: Any = getattr(historical_facade, name)
         assert package_definition is facade_definition
         assert facade_definition.__module__ == "sc_neurocore.uvm_gen.uvm_gen"
-        assert str(inspect.signature(facade_definition)) == expected_signature
+        if isinstance(facade_definition, type) and issubclass(facade_definition, enum.Enum):
+            assert {
+                member.name: member.value for member in facade_definition
+            } == _EXPECTED_ENUM_MEMBERS[name]
+        else:
+            assert str(inspect.signature(facade_definition)) == expected_signature
         assert pickle.loads(pickle.dumps(facade_definition)) is facade_definition
 
     assert uvm_gen.SIM_TARGETS is historical_facade.SIM_TARGETS
