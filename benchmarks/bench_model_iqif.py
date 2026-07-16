@@ -50,7 +50,7 @@ SOURCE_PATHS = (
     "bridge/sc_neurocore_engine/__init__.py",
     "engine/src/lib.rs",
     "engine/src/network_runner.rs",
-    "engine/src/neurons/trivial.rs",
+    "engine/src/neurons/trivial/integer_qif.rs",
     "engine/src/pyo3_neurons.rs",
     "src/sc_neurocore/accel/iqif.py",
     "src/sc_neurocore/accel/go/neurons/iqif/iqif.go",

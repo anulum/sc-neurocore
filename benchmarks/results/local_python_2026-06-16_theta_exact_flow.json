@@ -114,13 +114,13 @@
   "schema_version": "sc-neurocore.polyglot-benchmark.v1",
   "source_hashes": {
     "benchmarks/bench_model_theta": {
-      "py": "1f05ebade4e8188da24847f74e6203f9e0a95e74c0a6490792802f395650400f"
+      "py": "e4f14dc990766f17a0b66150546aaf68091679f08974c79c1a831e17bafa4069"
     },
-    "benchmarks/bench_model_theta.py": "1f05ebade4e8188da24847f74e6203f9e0a95e74c0a6490792802f395650400f",
-    "engine/src/neurons/trivial": {
-      "rs": "2e2bbaefa198f8e065f866b07d20ab71273bf6892570cf6f97a83567ba8f269e"
+    "benchmarks/bench_model_theta.py": "e4f14dc990766f17a0b66150546aaf68091679f08974c79c1a831e17bafa4069",
+    "engine/src/neurons/trivial/theta": {
+      "rs": "e9ac0f16cc7aa9201f0bce11cd7f9b82312bf3892323b2026170f4fb9d875279"
     },
-    "engine/src/neurons/trivial.rs": "2e2bbaefa198f8e065f866b07d20ab71273bf6892570cf6f97a83567ba8f269e",
+    "engine/src/neurons/trivial/theta.rs": "e9ac0f16cc7aa9201f0bce11cd7f9b82312bf3892323b2026170f4fb9d875279",
     "src/sc_neurocore/accel/go/neurons/theta/theta": {
       "go": "4d733e264631c2657d66061eb8a2587e4b63191283e34f9997edca8a8f1e43cc"
     },

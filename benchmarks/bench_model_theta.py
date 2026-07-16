@@ -46,7 +46,7 @@ BACKENDS = ("python", "rust", "julia", "go", "mojo")
 DISPATCH_ORDER = ("go", "julia", "mojo", "rust", "python")
 SOURCE_PATHS = (
     "benchmarks/bench_model_theta.py",
-    "engine/src/neurons/trivial.rs",
+    "engine/src/neurons/trivial/theta.rs",
     "src/sc_neurocore/accel/go/neurons/theta/theta.go",
     "src/sc_neurocore/accel/go/services/theta.go",
     "src/sc_neurocore/accel/go/services/theta_test.go",

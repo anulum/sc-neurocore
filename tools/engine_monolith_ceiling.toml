@@ -37,3 +37,7 @@ max_pyfunctions = 0
 [targets."engine/src/neurons/simple_spiking.rs"]
 max_lines = 60
 max_pyfunctions = 0
+
+[targets."engine/src/neurons/trivial.rs"]
+max_lines = 53
+max_pyfunctions = 0

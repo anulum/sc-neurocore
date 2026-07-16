@@ -106,13 +106,13 @@
   "schema_version": "sc-neurocore.polyglot-benchmark.v1",
   "source_hashes": {
     "benchmarks/bench_model_quadratic_if": {
-      "py": "834dc6226e42a29151d78f5ecafd62e78aa8b63019f098b570f40d2504fcf35e"
+      "py": "224118b6ab2f61966dcea69e396d8cb45986b78d4eb67e7ebd0c68202673114e"
     },
-    "benchmarks/bench_model_quadratic_if.py": "834dc6226e42a29151d78f5ecafd62e78aa8b63019f098b570f40d2504fcf35e",
-    "engine/src/neurons/trivial": {
-      "rs": "2e2bbaefa198f8e065f866b07d20ab71273bf6892570cf6f97a83567ba8f269e"
+    "benchmarks/bench_model_quadratic_if.py": "224118b6ab2f61966dcea69e396d8cb45986b78d4eb67e7ebd0c68202673114e",
+    "engine/src/neurons/trivial/quadratic_if": {
+      "rs": "722d277b78c555def0bc80d848fc0d17b37d1f382e80fc19d711fce51eb8e2b8"
     },
-    "engine/src/neurons/trivial.rs": "2e2bbaefa198f8e065f866b07d20ab71273bf6892570cf6f97a83567ba8f269e",
+    "engine/src/neurons/trivial/quadratic_if.rs": "722d277b78c555def0bc80d848fc0d17b37d1f382e80fc19d711fce51eb8e2b8",
     "src/sc_neurocore/accel/go/neurons/quadratic_if/quadratic_if": {
       "go": "16f09c0ef9e8fe3d1dc89d6bb80e194c00a8e08801506574818b4b17b559df24"
     },

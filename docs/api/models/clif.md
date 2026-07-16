@@ -497,7 +497,7 @@ for I in [0.1, 0.3, 0.5, 1.0, 2.0]:
 | File | Lines | Description |
 |------|-------|-------------|
 | `src/sc_neurocore/neurons/models/clif.py` | ~52 | Python reference |
-| `engine/src/neurons/trivial.rs` | (shared) | Rust implementation |
+| `engine/src/neurons/trivial/complementary_lif.rs` | ~97 | Rust implementation and focused tests |
 | `tests/test_model_clif.py` | ~310 | 29 tests |
 
 ---

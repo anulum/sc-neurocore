@@ -229,7 +229,8 @@ Record `cell.initial_seed` if the resulting run must later be reproduced.
 - Paired schemas and DSL: `model_schemas/escape_rate.{toml,json}`,
   `equation_builder.py`, and `universal_dsl.py`
 - Native dispatcher: `sc_neurocore.accel.escape_rate`
-- Engine and PyO3: `engine/src/neurons/trivial.rs`, `engine/src/pyo3_neurons.rs`
+- Engine and PyO3: `engine/src/neurons/trivial/escape_rate.rs`,
+  `engine/src/pyo3_neurons.rs`
 - Julia, Go, Mojo, and Rust safety: `src/sc_neurocore/accel/`
 - Verilog compiler and co-simulation: `verilog_compiler.py` and
   `tests/test_cosim_escape_rate.py`

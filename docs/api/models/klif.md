@@ -1,7 +1,7 @@
 # KLIFNeuron
 
-**Module:** `engine/src/neurons/trivial.rs`
-**Rust struct:** `KLIFNeuron` (line 404)
+**Module:** `engine/src/neurons/trivial/klif.rs`
+**Rust struct:** `KLIFNeuron`
 **Reference:** Eshraghian et al., Proc IEEE 111:1016, 2021 (snnTorch framework)
 **Family:** Integrate-and-fire (learnable, hardware-optimised)
 **State variables:** `v` (membrane potential)
@@ -200,7 +200,9 @@ KLIF is simpler (1 parameter vs 2) but less expressive.
 
 ## Parameters
 
-All defaults from `KLIFNeuron::default()` → `KLIFNeuron::new(10.0, 1.0, 1.0)` in `trivial.rs:438`:
+All defaults from `KLIFNeuron::default()` →
+`KLIFNeuron::new(10.0, 1.0, 1.0)` in
+`engine/src/neurons/trivial/klif.rs`:
 
 | Parameter | Default | Unit | Description |
 |-----------|---------|------|-------------|
@@ -217,7 +219,7 @@ The constructor `new(tau, k, dt)` computes α at creation time.
 
 ## Implementation Details
 
-### Code structure (`trivial.rs:423–431`)
+### Code structure (`engine/src/neurons/trivial/klif.rs`)
 
 ```
 step(current) → i32:
@@ -393,7 +395,7 @@ in parallel, processing 110 × 50M = 5.5 billion neuron-steps/s.
 
 | Checklist | Status |
 |-----------|--------|
-| Rust implementation | `engine/src/neurons/trivial.rs:404` |
+| Rust implementation | `engine/src/neurons/trivial/klif.rs` |
 | PyO3 wrapper | `pyo3_neurons.rs` |
 | NetworkRunner wired | `NeuronVariant::KLIF` |
 | `create_neuron("KLIFNeuron")` | Yes |
@@ -569,5 +571,5 @@ directly translates to longer battery life.
 
 ---
 
-*Document verified against Rust source `engine/src/neurons/trivial.rs:404–442`.
+*Document verified against Rust source `engine/src/neurons/trivial/klif.rs`.
 All equations, parameters, and default values read directly from the implementation.*

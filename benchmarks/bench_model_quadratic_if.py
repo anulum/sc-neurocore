@@ -45,7 +45,7 @@ KERNEL = "quadratic_if_exact_constant_current_flow"
 BACKENDS = ("python", "rust", "julia", "go", "mojo")
 SOURCE_PATHS = (
     "benchmarks/bench_model_quadratic_if.py",
-    "engine/src/neurons/trivial.rs",
+    "engine/src/neurons/trivial/quadratic_if.rs",
     "src/sc_neurocore/accel/go/neurons/quadratic_if/quadratic_if.go",
     "src/sc_neurocore/accel/go/services/quadratic_if.go",
     "src/sc_neurocore/accel/go/services/quadratic_if_test.go",

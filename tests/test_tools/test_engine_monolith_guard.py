@@ -202,6 +202,7 @@ def test_main_check_passes_on_live_tree(capsys: pytest.CaptureFixture[str]) -> N
     assert "engine/src/neurons/cerebellar.rs" in output
     assert "engine/src/neurons/misc.rs" in output
     assert "engine/src/neurons/sensory.rs" in output
+    assert "engine/src/neurons/trivial.rs" in output
     assert "engine/src/neurons/simple_spiking.rs" in output
 
 

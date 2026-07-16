@@ -41,7 +41,7 @@ Python reference implementation (`src/sc_neurocore/`).
 
 | Category | Count | Rust module | Status |
 |----------|-------|-------------|--------|
-| Trivial IF variants | 18 | `neurons/trivial.rs` | Done |
+| Trivial IF variants | 18 | `neurons/trivial/` + facade | Done |
 | Simple spiking (2D+) | 22 | `neurons/simple_spiking/` + facade | Done |
 | Discrete maps | 6 | `neurons/maps.rs` | Done |
 | Biophysical (HH-type) | 20 | `neurons/biophysical/` + facade | Done |

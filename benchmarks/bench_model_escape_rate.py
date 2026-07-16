@@ -49,7 +49,7 @@ SOURCE_PATHS = (
     "benchmarks/bench_model_escape_rate.py",
     "bridge/sc_neurocore_engine/__init__.py",
     "engine/src/lib.rs",
-    "engine/src/neurons/trivial.rs",
+    "engine/src/neurons/trivial/escape_rate.rs",
     "engine/src/pyo3_neurons.rs",
     "src/sc_neurocore/accel/escape_rate.py",
     "src/sc_neurocore/accel/go/neurons/escape_rate/escape_rate.go",

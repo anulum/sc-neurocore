@@ -214,9 +214,9 @@
   "schema_version": "sc-neurocore.polyglot-benchmark.v1",
   "source_hashes": {
     "benchmarks/bench_model_iqif": {
-      "py": "afe6990a5e83c1aec01777bcddb2667cb8d23f4cad8a154858d690744b026f98"
+      "py": "8bf68fb0397c0b4dd058f5c4e5652c92c8e057906c479f70aa727ce9c69784b6"
     },
-    "benchmarks/bench_model_iqif.py": "afe6990a5e83c1aec01777bcddb2667cb8d23f4cad8a154858d690744b026f98",
+    "benchmarks/bench_model_iqif.py": "8bf68fb0397c0b4dd058f5c4e5652c92c8e057906c479f70aa727ce9c69784b6",
     "bridge/sc_neurocore_engine/__init__": {
       "py": "94f170fb4145586709085b926ea7c9e595b251fb32d5d4d33fce06fcdfdce40d"
     },
@@ -229,10 +229,10 @@
       "rs": "489da494fb41ed2b807a3ead59f485474cbf51b7f2f7b344620d66425c25295d"
     },
     "engine/src/network_runner.rs": "489da494fb41ed2b807a3ead59f485474cbf51b7f2f7b344620d66425c25295d",
-    "engine/src/neurons/trivial": {
-      "rs": "2e2bbaefa198f8e065f866b07d20ab71273bf6892570cf6f97a83567ba8f269e"
+    "engine/src/neurons/trivial/integer_qif": {
+      "rs": "ae42b6d38209177678b36df55b4d721789a92b154644355c201cf45ce51e782e"
     },
-    "engine/src/neurons/trivial.rs": "2e2bbaefa198f8e065f866b07d20ab71273bf6892570cf6f97a83567ba8f269e",
+    "engine/src/neurons/trivial/integer_qif.rs": "ae42b6d38209177678b36df55b4d721789a92b154644355c201cf45ce51e782e",
     "engine/src/pyo3_neurons": {
       "rs": "9b54714e8fe171880f83bab4932912921dfbedd229d3ffe231493cf05f6ea9a4"
     },

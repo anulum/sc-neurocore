@@ -193,9 +193,9 @@
   "schema_version": "sc-neurocore.polyglot-benchmark.v1",
   "source_hashes": {
     "benchmarks/bench_model_escape_rate": {
-      "py": "49be632c189a54924805043597a791346737bcac1f9c7c189a4c832fa7154be6"
+      "py": "b688476c8e99ba7cce1f3e4315bbb5ef270e7f4d461df8c2bff7753a8f76af0b"
     },
-    "benchmarks/bench_model_escape_rate.py": "49be632c189a54924805043597a791346737bcac1f9c7c189a4c832fa7154be6",
+    "benchmarks/bench_model_escape_rate.py": "b688476c8e99ba7cce1f3e4315bbb5ef270e7f4d461df8c2bff7753a8f76af0b",
     "bridge/sc_neurocore_engine/__init__": {
       "py": "94f170fb4145586709085b926ea7c9e595b251fb32d5d4d33fce06fcdfdce40d"
     },
@@ -204,10 +204,10 @@
       "rs": "1994799708483d8d20d4eb6079873d1ee81e37fede08de0a6acb15e298bfb0e9"
     },
     "engine/src/lib.rs": "1994799708483d8d20d4eb6079873d1ee81e37fede08de0a6acb15e298bfb0e9",
-    "engine/src/neurons/trivial": {
-      "rs": "2e2bbaefa198f8e065f866b07d20ab71273bf6892570cf6f97a83567ba8f269e"
+    "engine/src/neurons/trivial/escape_rate": {
+      "rs": "31a580c360ea9f910dcd5e8536c85e5d5a355de24979e22a1461d56c6af27afe"
     },
-    "engine/src/neurons/trivial.rs": "2e2bbaefa198f8e065f866b07d20ab71273bf6892570cf6f97a83567ba8f269e",
+    "engine/src/neurons/trivial/escape_rate.rs": "31a580c360ea9f910dcd5e8536c85e5d5a355de24979e22a1461d56c6af27afe",
     "engine/src/pyo3_neurons": {
       "rs": "9b54714e8fe171880f83bab4932912921dfbedd229d3ffe231493cf05f6ea9a4"
     },

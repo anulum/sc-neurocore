@@ -506,7 +506,7 @@ and Rust. The statistical properties (rate, CV_ISI) match.
 | File | Lines | Description |
 |------|-------|-------------|
 | `src/sc_neurocore/neurons/models/stochastic_if.py` | ~37 | Python reference |
-| `engine/src/neurons/trivial.rs` | (shared) | Rust implementation |
+| `engine/src/neurons/special.rs` | (shared) | Rust implementation |
 | `tests/test_model_stochastic_if.py` | ~240 | 21 tests |
 
 ---

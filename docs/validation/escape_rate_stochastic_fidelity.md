@@ -160,7 +160,7 @@ an instruction to substitute a local full-suite or preflight run.
 - Model and private RNG: `src/sc_neurocore/neurons/models/escape_rate.py` and
   `src/sc_neurocore/neurons/_stochastic_threshold.py`
 - Native dispatcher: `src/sc_neurocore/accel/escape_rate.py`
-- Rust engine and PyO3: `engine/src/neurons/trivial.rs`,
+- Rust engine and PyO3: `engine/src/neurons/trivial/escape_rate.rs`,
   `engine/src/pyo3_neurons.rs`, and `engine/src/lib.rs`
 - Julia, Go, Mojo, Rust safety: `src/sc_neurocore/accel/`
 - Paired schemas: `src/sc_neurocore/neurons/model_schemas/escape_rate.{toml,json}`

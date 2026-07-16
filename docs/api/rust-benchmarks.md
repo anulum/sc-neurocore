@@ -455,7 +455,7 @@ the complete environment are in
 | Taste receptor | 10k | 120 µs | **12.0 ns** | Gustatory transduction |
 | Cone photoreceptor | 10k | 135 µs | **13.5 ns** | Colour vision, cGMP cascade |
 
-### Trivial IF Variants (`neurons/trivial.rs`)
+### Trivial IF Variants (`neurons/trivial/`)
 
 | Model | Steps | Median | Per step | Notes |
 |-------|-------|--------|----------|-------|
