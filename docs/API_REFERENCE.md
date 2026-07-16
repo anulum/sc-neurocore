@@ -644,6 +644,18 @@ Evaluate the Mojo recurrence through its shared-library ABI.
 
 ---
 
+## Module `accel.mojo.isa_baseline`
+
+### Function `pin_isa(argv)`
+Return ``argv`` with ``--target-cpu x86-64-v3`` after its mojo subcommand.
+
+Finds the ``mojo`` token followed by ``build`` or ``run`` and inserts the
+baseline flag immediately after the subcommand. Idempotent: an argv that
+already carries ``--target-cpu`` is returned unchanged. A copy is returned;
+the input list is not mutated.
+
+---
+
 ## Module `accel.mojo.runner`
 
 ### Class `MojoKernelRunner`
