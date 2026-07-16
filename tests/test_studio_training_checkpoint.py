@@ -24,7 +24,7 @@ fastapi = pytest.importorskip("fastapi")
 
 from starlette.testclient import TestClient
 
-# datetime.UTC is Python 3.11+; alias the timezone so the module imports on 3.10.
+# timezone.utc is Python 3.11+; alias the timezone so the module imports on 3.10.
 UTC = timezone.utc
 
 from sc_neurocore.studio.app import create_app

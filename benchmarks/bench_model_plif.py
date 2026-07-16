@@ -13,7 +13,7 @@ from pathlib import Path
 import platform
 import statistics
 import time
-from datetime import UTC, datetime
+from datetime import datetime, timezone
 
 from sc_neurocore.neurons.models.plif import ParametricLIFNeuron
 
@@ -46,7 +46,7 @@ def main() -> int:
     ns_per_step = [float(result["ns_per_step"]) for result in results]
     report = {
         "benchmark": "ParametricLIFNeuron Python candidate-first step",
-        "timestamp_utc": datetime.now(UTC).replace(microsecond=0).isoformat(),
+        "timestamp_utc": datetime.now(timezone.utc).replace(microsecond=0).isoformat(),
         "command": "PYTHONPATH=src .venv/bin/python benchmarks/bench_model_plif.py",
         "python": platform.python_version(),
         "platform": platform.platform(),

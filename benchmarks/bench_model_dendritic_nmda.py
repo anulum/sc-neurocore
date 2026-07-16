@@ -9,7 +9,7 @@
 
 from __future__ import annotations
 
-from datetime import UTC, datetime
+from datetime import datetime, timezone
 import hashlib
 import json
 from pathlib import Path
@@ -253,7 +253,7 @@ def _run_mojo_backend() -> dict[str, object]:
 def main() -> None:
     report: dict[str, object] = {
         "benchmark": "dendritic_nmda_rk4",
-        "generated_at_utc": datetime.now(UTC).isoformat(),
+        "generated_at_utc": datetime.now(timezone.utc).isoformat(),
         "python": platform.python_version(),
         "platform": platform.platform(),
         "steps": STEPS,

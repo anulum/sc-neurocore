@@ -191,7 +191,10 @@ class EmitResult:
 
 def _perfect_class_names() -> list[str]:
     sys.path.insert(0, str(ROOT / "src"))
-    import tomllib
+    try:
+        import tomllib
+    except ModuleNotFoundError:  # Python < 3.11
+        import tomli as tomllib
 
     from sc_neurocore.neurons.descriptor_tiers import is_perfect
     from sc_neurocore.neurons.model_descriptor import parse_model_descriptor

@@ -12,7 +12,11 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
-import tomllib
+
+try:
+    import tomllib
+except ModuleNotFoundError:  # Python < 3.11
+    import tomli as tomllib
 
 import numpy as np
 

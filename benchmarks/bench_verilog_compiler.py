@@ -26,7 +26,7 @@ import sys
 import time
 from collections.abc import Callable, Sequence
 from dataclasses import dataclass
-from datetime import UTC, datetime
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import cast
 
@@ -261,7 +261,7 @@ def run_benchmark(
     frequency_root = Path(f"/sys/devices/system/cpu/cpu{cpu}/cpufreq")
     return {
         "schema_version": 1,
-        "generated_at": datetime.now(UTC).isoformat(),
+        "generated_at": datetime.now(timezone.utc).isoformat(),
         "evidence_class": "local_regression",
         "command": command,
         "working_directory": "repository_root",

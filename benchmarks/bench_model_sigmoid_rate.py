@@ -11,7 +11,7 @@
 from __future__ import annotations
 
 import argparse
-from datetime import UTC, datetime
+from datetime import datetime, timezone
 import hashlib
 import importlib
 import json
@@ -342,7 +342,7 @@ def main(argv: list[str] | None = None) -> int:
         "schema_version": "sc-neurocore.polyglot-benchmark.v1",
         "benchmark": "SigmoidRateNeuron five-backend exact-relaxation batch",
         "kernel": KERNEL,
-        "timestamp_utc": datetime.now(UTC).replace(microsecond=0).isoformat(),
+        "timestamp_utc": datetime.now(timezone.utc).replace(microsecond=0).isoformat(),
         "command": (
             "taskset -c <cpu> env PYTHONPATH=bridge:src:. .venv/bin/python "
             "benchmarks/bench_model_sigmoid_rate.py --json "

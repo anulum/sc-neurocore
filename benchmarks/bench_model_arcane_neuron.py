@@ -8,7 +8,7 @@
 
 from __future__ import annotations
 
-from datetime import UTC, datetime
+from datetime import datetime, timezone
 import json
 from pathlib import Path
 import platform
@@ -47,7 +47,7 @@ def main() -> int:
     ns_per_step = [float(result["ns_per_step"]) for result in results]
     report = {
         "benchmark": "ArcaneNeuron Python exact-relaxation candidate-first step",
-        "timestamp_utc": datetime.now(UTC).replace(microsecond=0).isoformat(),
+        "timestamp_utc": datetime.now(timezone.utc).replace(microsecond=0).isoformat(),
         "command": "PYTHONPATH=src .venv/bin/python benchmarks/bench_model_arcane_neuron.py",
         "python": platform.python_version(),
         "platform": platform.platform(),

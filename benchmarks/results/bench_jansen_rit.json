@@ -233,9 +233,9 @@
   "schema_version": "sc-neurocore.polyglot-benchmark.v1",
   "source_hashes": {
     "benchmarks/bench_jansen_rit": {
-      "py": "f6628630cb52c026c816a8010efcd6443b25e969dceba81c01cf6c154d1977ce"
+      "py": "074dfc9323c711e2d46d963b5beb3e80edf8cf9c3c31f4986e3b4542529103f1"
     },
-    "benchmarks/bench_jansen_rit.py": "f6628630cb52c026c816a8010efcd6443b25e969dceba81c01cf6c154d1977ce",
+    "benchmarks/bench_jansen_rit.py": "074dfc9323c711e2d46d963b5beb3e80edf8cf9c3c31f4986e3b4542529103f1",
     "bridge/sc_neurocore_engine/__init__": {
       "py": "94f170fb4145586709085b926ea7c9e595b251fb32d5d4d33fce06fcdfdce40d"
     },

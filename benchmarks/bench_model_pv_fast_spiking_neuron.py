@@ -9,7 +9,7 @@
 
 from __future__ import annotations
 
-from datetime import UTC, datetime
+from datetime import datetime, timezone
 import hashlib
 import json
 from pathlib import Path
@@ -325,7 +325,7 @@ def main() -> None:
     payload = {
         "spdx_license": "AGPL-3.0-or-later",
         "benchmark": "PVFastSpikingNeuron candidate-first RK4 Wang-Buzsaki + Kv3 fast-spiking step",
-        "timestamp_utc": datetime.now(UTC).isoformat(timespec="seconds"),
+        "timestamp_utc": datetime.now(timezone.utc).isoformat(timespec="seconds"),
         "command": "PYTHONPATH=src .venv/bin/python benchmarks/bench_model_pv_fast_spiking_neuron.py",
         "evidence_class": "local_regression_non_isolated",
         "production_speed_claim": False,

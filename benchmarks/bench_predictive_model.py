@@ -31,7 +31,7 @@ import subprocess
 import sys
 import time
 from dataclasses import dataclass
-from datetime import UTC, datetime
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Callable, TypeVar, cast
 
@@ -515,7 +515,7 @@ def run(config: BenchmarkConfig) -> dict[str, object]:
     affinity = _affinity()
     load_before = list(os.getloadavg())
     host = _host_metadata(affinity)
-    measured_at = datetime.now(UTC).isoformat()
+    measured_at = datetime.now(timezone.utc).isoformat()
     benchmark_started = time.perf_counter()
     availability: dict[str, dict[str, object]] = {}
     for backend in config.backends:

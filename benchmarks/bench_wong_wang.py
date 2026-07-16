@@ -11,7 +11,7 @@
 from __future__ import annotations
 
 import argparse
-from datetime import UTC, datetime
+from datetime import datetime, timezone
 import hashlib
 import importlib
 import json
@@ -367,7 +367,7 @@ def main(argv: list[str] | None = None) -> int:
         "schema_version": "sc-neurocore.polyglot-benchmark.v1",
         "benchmark": "WongWangUnit five-runtime Euler/OU batch",
         "kernel": KERNEL,
-        "timestamp_utc": datetime.now(UTC).replace(microsecond=0).isoformat(),
+        "timestamp_utc": datetime.now(timezone.utc).replace(microsecond=0).isoformat(),
         "command": (
             "taskset -c <cpu> env PYTHONPATH=src:. .venv/bin/python "
             "benchmarks/bench_wong_wang.py --json "

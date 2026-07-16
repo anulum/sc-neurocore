@@ -9,7 +9,7 @@
 from __future__ import annotations
 
 import json
-from datetime import UTC, datetime
+from datetime import datetime, timezone
 from pathlib import Path
 import platform
 import statistics
@@ -194,7 +194,7 @@ def main() -> int:
     report = {
         "benchmark": "block_floating_dense_q16_64x32",
         "language": "Python",
-        "timestamp_utc": datetime.now(UTC).replace(microsecond=0).isoformat(),
+        "timestamp_utc": datetime.now(timezone.utc).replace(microsecond=0).isoformat(),
         "command": (
             "taskset -c 8-9 env PYTHONPATH=src "
             ".venv/bin/python benchmarks/bench_block_floating_dense.py"

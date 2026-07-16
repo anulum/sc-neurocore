@@ -176,9 +176,9 @@
   "schema_version": "sc-neurocore.polyglot-benchmark.v1",
   "source_hashes": {
     "benchmarks/bench_model_sigmoid_rate": {
-      "py": "d2d596ef680b9e1de9b61db3e46dc2f778584eb41e6c4f4839a74e80afdd6735"
+      "py": "fb4381759d2a48ea7a528fb2e775bc0ffb17675241184eacbcd364d76360b2df"
     },
-    "benchmarks/bench_model_sigmoid_rate.py": "d2d596ef680b9e1de9b61db3e46dc2f778584eb41e6c4f4839a74e80afdd6735",
+    "benchmarks/bench_model_sigmoid_rate.py": "fb4381759d2a48ea7a528fb2e775bc0ffb17675241184eacbcd364d76360b2df",
     "bridge/sc_neurocore_engine/__init__": {
       "py": "94f170fb4145586709085b926ea7c9e595b251fb32d5d4d33fce06fcdfdce40d"
     },

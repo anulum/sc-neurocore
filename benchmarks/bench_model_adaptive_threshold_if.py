@@ -10,7 +10,7 @@
 from __future__ import annotations
 
 import argparse
-from datetime import UTC, datetime
+from datetime import datetime, timezone
 import json
 from pathlib import Path
 import platform
@@ -56,7 +56,7 @@ def main() -> None:
     ns_per_step = [float(result["ns_per_step"]) for result in results]
     payload = {
         "benchmark": "AdaptiveThresholdIFNeuron Python exact-relaxation step",
-        "timestamp_utc": datetime.now(UTC).isoformat(timespec="seconds"),
+        "timestamp_utc": datetime.now(timezone.utc).isoformat(timespec="seconds"),
         "command": "PYTHONPATH=src .venv/bin/python benchmarks/bench_model_adaptive_threshold_if.py",
         "python": platform.python_version(),
         "platform": platform.platform(),

@@ -9,7 +9,7 @@
 
 from __future__ import annotations
 
-from datetime import UTC, datetime
+from datetime import datetime, timezone
 import hashlib
 import json
 from pathlib import Path
@@ -385,7 +385,7 @@ def main() -> int:
         "evidence_class": "local_regression_non_isolated",
         "production_speed_claim": False,
         "hardware_measurement_claimed": False,
-        "timestamp_utc": datetime.now(UTC).isoformat(),
+        "timestamp_utc": datetime.now(timezone.utc).isoformat(),
         "host": platform.node(),
         "platform": platform.platform(),
         "python": platform.python_version(),

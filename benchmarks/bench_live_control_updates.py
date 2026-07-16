@@ -9,7 +9,7 @@
 from __future__ import annotations
 
 import json
-from datetime import UTC, datetime
+from datetime import datetime, timezone
 import os
 from pathlib import Path
 import platform
@@ -691,7 +691,7 @@ def main() -> int:
         "benchmark": "live_control_update_and_trap_evidence",
         "benchmark_isolation_mode": "process-affinity-cpuset",
         "language": "Python+SystemVerilog",
-        "timestamp_utc": datetime.now(UTC).replace(microsecond=0).isoformat(),
+        "timestamp_utc": datetime.now(timezone.utc).replace(microsecond=0).isoformat(),
         "command": (
             f"taskset -c {BENCHMARK_CPUSET} env PYTHONPATH=src "
             ".venv/bin/python benchmarks/bench_live_control_updates.py"

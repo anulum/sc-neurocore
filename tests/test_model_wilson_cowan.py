@@ -20,7 +20,11 @@ import json
 import math
 from pathlib import Path
 import time
-import tomllib
+
+try:
+    import tomllib
+except ModuleNotFoundError:  # Python < 3.11
+    import tomli as tomllib
 
 import numpy as np
 import pytest
