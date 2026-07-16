@@ -144,9 +144,7 @@ def test_main_reports_and_strict_fails_on_unguarded(
 def test_main_dispatched_only_passes_strict(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
 ) -> None:
-    monkeypatch.setattr(
-        MOD, "scan", lambda _root: [MOD.LibraryScan(tmp_path / "libd.so", 5, 2)]
-    )
+    monkeypatch.setattr(MOD, "scan", lambda _root: [MOD.LibraryScan(tmp_path / "libd.so", 5, 2)])
     assert MOD.main(["--root", str(tmp_path), "--strict"]) == 0  # dispatched is advisory only
     assert "dispatched" in capsys.readouterr().out
 
