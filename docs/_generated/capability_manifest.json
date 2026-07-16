@@ -971,7 +971,7 @@
     "python_model_classes": 158,
     "python_model_source_modules": 153,
     "rust_pyo3_model_wrappers": 175,
-    "test_files": 1375
+    "test_files": 1377
   },
   "documentation": {
     "public_pages": [
@@ -4078,6 +4078,7 @@
       "tests/test_tools/test_compiler_e2e_workflow_contract.py",
       "tests/test_tools/test_cosim_q88_import_contract.py",
       "tests/test_tools/test_criterion_to_bencher.py",
+      "tests/test_tools/test_dcls_verilator_lint.py",
       "tests/test_tools/test_eda_toolchain_versions.py",
       "tests/test_tools/test_engine_monolith_guard.py",
       "tests/test_tools/test_extract_orca_nmr.py",
@@ -4179,6 +4180,7 @@
       "tests/test_verilog_compiler_contracts.py",
       "tests/test_verilog_compiler_numeric_contracts.py",
       "tests/test_verilog_compiler_temporal_contracts.py",
+      "tests/test_verilog_directive_hygiene.py",
       "tests/test_verilog_expr_emitter.py",
       "tests/test_verilog_integration.py",
       "tests/test_version_surface_audit.py",

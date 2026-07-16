@@ -20,7 +20,11 @@ module sc_dcls_axonal_delay #(
     reg [DEPTH-1:0] buffer_reg;
     reg [PTR_WIDTH-1:0] head;
     wire [PTR_WIDTH-1:0] read_idx;
+    // DEPTH reduced into the pointer width on purpose: the circular buffer wraps modulo
+    // 2**PTR_WIDTH, so DEPTH_VALUE carries DEPTH mod 2**PTR_WIDTH for the wrap-around add below.
+    /* verilator lint_off WIDTHTRUNC */
     localparam [PTR_WIDTH-1:0] DEPTH_VALUE = DEPTH;
+    /* verilator lint_on WIDTHTRUNC */
 
     assign read_idx = (head >= read_offset)
         ? (head - read_offset)

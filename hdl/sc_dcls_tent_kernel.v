@@ -47,11 +47,24 @@ module sc_dcls_tent_kernel #(
         accumulator_wide = 64'sd0;
         centre_ext = {{(64-DATA_WIDTH){centre_q88[DATA_WIDTH-1]}}, centre_q88};
         sigma_ext = {{(64-DATA_WIDTH){sigma_q88[DATA_WIDTH-1]}}, sigma_q88};
+        // Default the per-tap scratch registers so every control path assigns them: on the
+        // invalid-sigma path and the non-spiking tap path they are otherwise unwritten, which
+        // infers a combinational latch. Each is always reassigned before it is read on the
+        // paths that use it, so these defaults never reach an output — they only make the
+        // block fully combinational (no latch) and behaviourally identical.
+        weight_q88 = {DATA_WIDTH{1'b0}};
+        delay_q88 = 64'sd0;
+        distance_q88 = 64'sd0;
+        numerator_q88 = 64'sd0;
+        gate_q88 = 64'sd0;
+        contribution_q16_16 = 64'sd0;
 
         if (!invalid_sigma) begin
             for (tap_idx = 0; tap_idx < N_TAPS; tap_idx = tap_idx + 1) begin
                 weight_q88 = tap_weights_q88[tap_idx*DATA_WIDTH +: DATA_WIDTH];
-                delay_q88 = tap_idx <<< FRACTION;
+                // Widen the 32-bit loop index to the 64-bit accumulator width before shifting
+                // so the shift is evaluated at full width (tap_idx is always non-negative).
+                delay_q88 = $signed({{32{1'b0}}, tap_idx}) <<< FRACTION;
                 if (delay_q88 >= centre_ext) begin
                     distance_q88 = delay_q88 - centre_ext;
                 end else begin
@@ -86,7 +99,12 @@ module sc_dcls_tent_kernel #(
                 weighted_sum_q88 = {1'b1, {(DATA_WIDTH-1){1'b0}}};
                 overflow = 1'b1;
             end else begin
+                // This branch is only reached when accumulator_wide is within the Q16.16 range
+                // [I16_MIN_Q16_16, I16_MAX_Q16_16], so the arithmetic right shift fits the Q8.8
+                // output exactly; the narrowing assignment is therefore intentional and lossless.
+                /* verilator lint_off WIDTHTRUNC */
                 weighted_sum_q88 = accumulator_wide >>> FRACTION;
+                /* verilator lint_on WIDTHTRUNC */
             end
         end
     end
