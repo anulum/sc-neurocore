@@ -128,6 +128,12 @@ jobs:
 
   test:
     runs-on: ubuntu-latest
+    # Fail-fast backstop for a hung leg. The 3.12 leg alone runs the full suite
+    # under --cov (the coverage tracer roughly doubles wall-clock: ~82 min vs
+    # ~50-66 min for the uninstrumented legs), so the cap is generous. Its job is
+    # to kill a genuine deadlock at the cap instead of letting it burn the shared
+    # runner for the 6h GitHub default — a hung job is worse than a clean red.
+    timeout-minutes: 150
     strategy:
       fail-fast: false
       matrix:
