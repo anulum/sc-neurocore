@@ -214,13 +214,13 @@ jobs:
           # Self-contained backends live in accel/<lang>/<model>/ and locate their
           # library with a Path(__file__).resolve().parent / "lib<model>.so" loader.
           # build_accel_backends.py discovery recognises only the _ACCEL_ROOT-anchored
-          # loader idiom, so it does not yet find these; wilson_cowan and wong_wang
-          # have failing compiled-backend parity/bench tests, so build them explicitly
-          # (both toolchains, per the recipes in their loaders). Extending discovery to
-          # the whole self-contained convention (also dcls_tent, mixed_dense,
-          # adc_to_spike, rk4_neurons) is tracked separately: it needs per-backend test
-          # verification before those additional builds are turned on.
-          for model in wilson_cowan wong_wang; do
+          # loader idiom, so it does not yet find these; wilson_cowan, wong_wang and
+          # jansen_rit have failing compiled-backend parity/bench tests, so build them
+          # explicitly (both toolchains, per the recipes in their loaders). Extending
+          # discovery to the whole self-contained convention (also dcls_tent,
+          # mixed_dense, adc_to_spike, rk4_neurons) is tracked separately: it needs
+          # per-backend test verification before those additional builds are turned on.
+          for model in wilson_cowan wong_wang jansen_rit; do
             ( cd "src/sc_neurocore/accel/go/${model}" \
                 && go build -buildmode=c-shared -o "lib${model}.so" "${model}.go" )
             # --target-cpu x86-64-v3 keeps this explicit build within the same portable ISA
