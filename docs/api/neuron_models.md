@@ -1,8 +1,8 @@
-# Neuron Model Reference — 158 Python Classes / 176 Rust PyO3 Wrappers
+# Neuron Model Reference — 158 Python Classes / 175 Rust PyO3 Wrappers
 
 SC-NeuroCore currently exposes 158 lazy-loaded Python model classes across
 153 Python model source modules in `src/sc_neurocore/neurons/models/`, plus
-176 Rust PyO3 model wrappers in the optional engine. Matching model classes
+175 Rust PyO3 model wrappers in the optional engine. Matching model classes
 use the same `step()` / `reset()` / `get_state()` interface shape where the
 backend implements that surface.
 
@@ -10,12 +10,14 @@ backend implements that surface.
 > A stricter bar — a model whose whole four-language acceleration chain
 > (`accel/{rust,go,julia,mojo}`) is real and Python-parity-proven — is tracked
 > separately on the [Model Fidelity & Polyglot Status](model_fidelity_status.md)
-> page. Polyglot-complete today (33 models): Wang-Buzsaki, FitzHugh-Nagumo, Morris-Lecar,
+> page. Polyglot-complete today (39 models): Wang-Buzsaki, FitzHugh-Nagumo, Morris-Lecar,
 > Connor-Stevens, Hodgkin-Huxley, AdEx, ExpIF, Lapicque, Perfect Integrator,
 > Quadratic IF, Theta, DPI, COBA LIF, Escape Rate, Poisson, IQIF, McCulloch-Pitts, McKean, Hindmarsh-Rose, FitzHugh-Rinzel,
 > Pernarowski, Terman-Wang,
 > Wilson-HR, Rulkov map, GLIF, Mihalas-Niebur, Medvedev map, Cazelles map, Chialvo map, Courbage-Nekorkin map,
-> Izhikevich 2007, Ibarz-Tanaka map, Ermentrout-Kopell. All other models are Python-faithful with their
+> Izhikevich 2007, Ibarz-Tanaka map, Ermentrout-Kopell, Sigmoid Rate,
+> Threshold Linear Rate, Wilson-Cowan, Wong-Wang, Jansen-Rit, and
+> Montbrió-Pazó-Roxin (`ErmentroutKopellPopulation`). All other models are Python-faithful with their
 > acceleration chain still under remediation.
 
 ## Quick Start
@@ -40,7 +42,7 @@ spike = hh_rs.step(current=10.0)
 | Rust | `sc_neurocore_engine.sc_neurocore_engine` | Production, benchmarks, batch simulation |
 
 Backends use identical class names where parity wrappers exist (for example,
-`HodgkinHuxleyNeuron`). The Rust engine provides 176 Rust PyO3 model wrappers,
+`HodgkinHuxleyNeuron`). The Rust engine provides 175 Rust PyO3 model wrappers,
 162 of which are wired into the NetworkRunner pipeline.
 
 The package-level `sc_neurocore.neurons` facade remains lazy: core neuron
@@ -129,6 +131,12 @@ The Jansen–Rit enrolment independently advances all six equation-(6) states,
 pins the published `C1/C2/C3/C4` connectivity placement and Brian2 source
 commit, and records that the maintained 0.1 ms Euler step is implementation
 scope rather than a solver prescribed by the continuous paper equations.
+The `ErmentroutKopellPopulation` enrolment corrects that legacy public name to
+Montbrió, Pazó, and Roxin (2015), restores the printed dimensionless
+equation-(12) variables through `R=tau*r` and `t'=t/tau`, independently
+advances both states, and records that simultaneous explicit Euler is
+maintained implementation scope rather than a solver prescribed by the
+continuous paper.
 
 ## Model Catalogue
 
@@ -350,6 +358,12 @@ Gaussian samples and returns six complete traces plus four final states.
 `JansenRitUnit.step(p_ext)` returns the post-update continuous `y1-y2` EEG
 proxy. Its atomic batch accepts one external-drive sample per Euler step and
 returns all six state traces, the EEG trace, and six final-state receipts.
+
+`ErmentroutKopellPopulation.step(ext_input)` returns the post-update continuous
+population firing rate from the Montbrió–Pazó–Roxin exact QIF-network mean
+field. Its atomic batch returns complete `r` and `v` traces plus both final-
+state receipts; the compatibility name does not denote the 1986 single-cell
+Ermentrout–Kopell theta equation.
 
 ### AI-Optimized (9 models)
 

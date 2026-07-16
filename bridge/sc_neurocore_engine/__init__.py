@@ -834,6 +834,14 @@ except ImportError:
     _jansen_rit_rust_available = False
 
 try:
+    from sc_neurocore_engine.sc_neurocore_engine import py_ermentrout_kopell_pop_simulate
+
+    __all__ += ["py_ermentrout_kopell_pop_simulate"]
+    _ermentrout_kopell_pop_rust_available = True
+except ImportError:
+    _ermentrout_kopell_pop_rust_available = False
+
+try:
     from sc_neurocore_engine.sc_neurocore_engine import py_wong_wang_simulate
 
     __all__ += ["py_wong_wang_simulate"]

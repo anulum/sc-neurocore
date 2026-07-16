@@ -1,0 +1,46 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Commercial license available
+# © Concepts 1996–2026 Miroslav Šotek. All rights reserved.
+# © Code 2020–2026 Miroslav Šotek. All rights reserved.
+# ORCID: 0009-0009-3560-0851
+# Contact: www.anulum.li | protoscience@anulum.li
+# SC-NeuroCore — Montbrió–Pazó–Roxin equation-(12) population schema
+
+[metadata]
+schema_version = 2
+name = "ErmentroutKopellPopulation"
+author = "Montbrió, E.; Pazó, D.; Roxin, A."
+year = 2015
+doi = "10.1103/PhysRevX.5.021028"
+description = "Exact two-state QIF-network firing-rate equations with explicit-Euler integration"
+
+[state]
+r = 0.1
+v = -2.0
+
+[parameters]
+tau = 1.0
+delta = 1.0
+eta_bar = -5.0
+j = 15.0
+pi = 3.141592653589793
+
+[integration]
+dt = 0.01
+method = "euler"
+substeps = 1
+
+[dynamics]
+r = "delta / (pi * tau**2) + 2.0 * r * v / tau"
+v = "(v**2 + eta_bar + I + j * tau * r - (pi * tau * r)**2) / tau"
+
+[extensions]
+family = "rate-mean-field"
+model_type = "exact_qif_network_mean_field_ode"
+source_equations = "Montbrio, Pazo, and Roxin 2015 equations (12a-b); DOI 10.1103/PhysRevX.5.021028"
+source_dimensionless_form = "dR/dt'=delta/pi+2*R*v; dv/dt'=v^2+eta_bar+j*R+I-(pi*R)^2"
+source_change_of_variables = "R=tau*r and t'=t/tau, so dR/dt'=tau^2*dr/dt and dv/dt'=tau*dv/dt"
+discretisation = "Simultaneous explicit Euler; the publication defines the continuous equations and does not require this solver"
+time_scale_note = "The maintained tau-expanded flow follows exactly from the recorded change of variables; it is not the form printed as equation (12)"
+identity_note = "The public class name is legacy compatibility; these are not the Ermentrout-Kopell 1986 single-cell theta equations"
+output_note = "r is a continuous population firing rate; no binary spike semantics are claimed"

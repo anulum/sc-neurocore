@@ -20,6 +20,20 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
   real public contracts instead of a universal ``n_steps``/float/tuple shape.
 
 ### Added
+- Corrected the legacy-named `ErmentroutKopellPopulation` provenance and
+  promoted the actual Montbrió, Pazó, and Roxin (2015) equation-(12) exact QIF
+  mean field across Python, the modular Rust engine, independent Rust safety,
+  Julia, Go C-shared, and Mojo shared-library execution. Every lane restores
+  the maintained variables exactly through `R=tau*r` and `t'=t/tau`, then uses
+  the same simultaneous two-state Euler update without the previous
+  undocumented firing-rate clamp.
+- Added public atomic batch dispatch, paired TOML/JSON schemas, an independent
+  DOI-pinned equation trace, configured five-runtime trajectory parity,
+  failure-closed native contracts, and source/binary-bound local benchmark
+  evidence. Generated Q32.32 RTL is bounded by co-simulation and a depth-4
+  reset-and-event-silence catalogue job; continuous rates are not spikes,
+  explicit Euler is implementation scope, and no formal-equivalence,
+  production-speed, or higher-silicon result is claimed.
 - Promoted the Jansen and Rit (1995) equation-(6) cortical-column neural mass
   across Python, the modular Rust engine, independent Rust safety, Julia, Go
   C-shared, and Mojo shared-library execution. Every lane now preserves the

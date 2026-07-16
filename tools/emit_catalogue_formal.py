@@ -48,6 +48,7 @@ CLASS_TO_SCHEMA: dict[str, str] = {
     "CourageNekorkinMapNeuron": "courage_nekorkin_map",
     "DPINeuron": "dpi_neuron",
     "ErmentroutKopellMapNeuron": "ermentrout_kopell_map_neuron",
+    "ErmentroutKopellPopulation": "ermentrout_kopell_pop",
     "EscapeRateNeuron": "escape_rate",
     "ExpIFNeuron": "exp_if",
     "FitzHughNagumoNeuron": "fitzhugh_nagumo",
@@ -85,6 +86,7 @@ DEPTH_BY_SCHEMA: dict[str, int] = {
     "courage_nekorkin_map": 4,
     "dpi_neuron": 4,
     "ermentrout_kopell_map_neuron": 4,
+    "ermentrout_kopell_pop": 4,
     "escape_rate": 4,
     "exp_if": 4,
     "hodgkin_huxley": 4,
@@ -110,7 +112,9 @@ DEPTH_BY_SCHEMA: dict[str, int] = {
     "glif": 6,
 }
 
-# Heavy multi-state / transcendental cores: prove only reset-spike safety at tiny BMC depth.
+# Heavy multi-state / transcendental cores: prove bounded public spike-port
+# safety at tiny BMC depth. Event-silent schemas add their explicit zero-output
+# invariant without claiming equation equivalence.
 MINIMAL_SAFETY_SCHEMAS: frozenset[str] = frozenset(
     {
         "cazelles_map",
@@ -119,6 +123,7 @@ MINIMAL_SAFETY_SCHEMAS: frozenset[str] = frozenset(
         "courage_nekorkin_map",
         "dpi_neuron",
         "ermentrout_kopell_map_neuron",
+        "ermentrout_kopell_pop",
         "escape_rate",
         "exp_if",
         "fitzhugh_nagumo",
@@ -141,6 +146,9 @@ MINIMAL_SAFETY_SCHEMAS: frozenset[str] = frozenset(
     }
 )
 
+# Continuous-rate models with a public spike port that must remain silent.
+EVENT_SILENT_SCHEMAS: frozenset[str] = frozenset({"ermentrout_kopell_pop"})
+
 # Width overrides are additive: every pre-existing catalogue job retains Q8.8.
 # Medvedev needs Q16.16 because its calibrated d=2271.19 cannot fit Q8.8.
 # Ibarz-Tanaka needs Q16.16 because its source mu=0.001 rounds to zero in Q8.8.
@@ -154,13 +162,15 @@ MINIMAL_SAFETY_SCHEMAS: frozenset[str] = frozenset(
 # arithmetic shift without introducing a fractional rescale. McCulloch-Pitts
 # uses the same Q32.0 carrier for the non-negative excitatory-afferent count;
 # -1 is the sole absolute-inhibition sentinel.
-# Wong-Wang and Jansen-Rit stay on their enrolled Q32.32 co-simulation carriers:
-# Q8.8 cannot represent their sub-unit published timesteps. Their catalogue
-# jobs are bounded reset safety only and do not claim formal equivalence or H4.
+# Wong-Wang, Jansen-Rit, and MPR stay on their enrolled Q32.32 co-simulation
+# carriers: Q8.8 cannot represent their sub-unit timesteps. Their catalogue jobs
+# are bounded public spike-port safety only and do not claim formal equivalence
+# or H4.
 DEFAULT_PRECISION = (16, 8)
 PRECISION_BY_SCHEMA: dict[str, tuple[int, int]] = {
     "coba_lif": (48, 24),
     "dpi_neuron": (32, 16),
+    "ermentrout_kopell_pop": (64, 32),
     "escape_rate": (48, 24),
     "exp_if": (64, 32),
     "ibarz_tanaka_map": (32, 16),
@@ -191,9 +201,9 @@ class EmitResult:
 
 def _perfect_class_names() -> list[str]:
     sys.path.insert(0, str(ROOT / "src"))
-    try:
+    if sys.version_info >= (3, 11):
         import tomllib
-    except ModuleNotFoundError:  # Python < 3.11
+    else:
         import tomli as tomllib
 
     from sc_neurocore.neurons.descriptor_tiers import is_perfect
@@ -256,7 +266,13 @@ def _spdx_header(title: str) -> str:
     )
 
 
-def _formal_wrapper(ports: ModulePorts, *, minimal: bool, data_width: int = 16) -> str:
+def _formal_wrapper(
+    ports: ModulePorts,
+    *,
+    minimal: bool,
+    event_silent: bool = False,
+    data_width: int = 16,
+) -> str:
     """Build a port-only formal harness (no hierarchical probes)."""
     module = ports.name
     state_port = ports.primary_state
@@ -278,14 +294,27 @@ def _formal_wrapper(ports: ModulePorts, *, minimal: bool, data_width: int = 16) 
     conn_block = ",\n        ".join(connections)
     wires = "\n".join(wire_decls)
     if minimal:
-        formal_body = """
+        event_silence = (
+            """
+    reg past_valid = 1'b0;
+    always @(posedge clk) begin
+        past_valid <= 1'b1;
+        if (past_valid && rst_n)
+            assert (spike_out == 1'b0);
+    end
+
+"""
+            if event_silent
+            else ""
+        )
+        formal_body = f"""
 `ifdef FORMAL
     // Minimal safety: async reset clears the spike flag.
     always @(*) begin
         if (!rst_n)
             assert (spike_out == 1'b0);
     end
-`endif
+{event_silence}`endif
 """
     else:
         if state_port is None:
@@ -383,6 +412,7 @@ def emit_one(class_name: str) -> EmitResult:
         _formal_wrapper(
             ports,
             minimal=schema in MINIMAL_SAFETY_SCHEMAS,
+            event_silent=schema in EVENT_SILENT_SCHEMAS,
             data_width=data_width,
         ),
         encoding="utf-8",

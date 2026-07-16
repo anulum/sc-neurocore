@@ -119,6 +119,31 @@ def test_jansen_rit_formal_job_uses_enrolled_q3232_bounded_safety() -> None:
     assert "Saturation contract" not in harness
 
 
+def test_mpr_formal_job_uses_enrolled_q3232_bounded_safety() -> None:
+    """Keep MPR formal emission inside its Q32.32 H1 evidence boundary."""
+    import importlib.util
+
+    name = "emit_catalogue_formal_mpr_precision"
+    spec = importlib.util.spec_from_file_location(name, EMITTER)
+    assert spec is not None and spec.loader is not None
+    module = importlib.util.module_from_spec(spec)
+    sys.modules[name] = module
+    spec.loader.exec_module(module)
+
+    assert module.CLASS_TO_SCHEMA["ErmentroutKopellPopulation"] == "ermentrout_kopell_pop"
+    assert module.PRECISION_BY_SCHEMA["ermentrout_kopell_pop"] == (64, 32)
+    assert module.DEPTH_BY_SCHEMA["ermentrout_kopell_pop"] == 4
+    assert "ermentrout_kopell_pop" in module.MINIMAL_SAFETY_SCHEMAS
+    assert "ermentrout_kopell_pop" in module.EVENT_SILENT_SCHEMAS
+    harness = (CATALOGUE / "sc_ermentroutkopellpopulation_formal.v").read_text(encoding="utf-8")
+    assert "Minimal safety: async reset clears the spike flag" in harness
+    assert "reg past_valid = 1'b0;" in harness
+    assert "if (past_valid && rst_n)" in harness
+    assert harness.count("assert (spike_out == 1'b0);") == 2
+    assert "uut." not in harness
+    assert "Saturation contract" not in harness
+
+
 def test_dpi_formal_job_uses_enrolled_q1616_precision() -> None:
     """Keep formal DPI RTL aligned with its three-state co-simulation envelope."""
     import importlib.util

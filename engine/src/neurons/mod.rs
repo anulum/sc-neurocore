@@ -10,6 +10,7 @@ pub mod ai_optimized;
 pub mod biophysical;
 pub mod cerebellar;
 pub mod channels;
+pub mod ermentrout_kopell_pop;
 pub mod hardware;
 pub mod interneurons;
 pub mod jansen_rit;

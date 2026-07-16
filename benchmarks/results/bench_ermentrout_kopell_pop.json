@@ -1,0 +1,400 @@
+{
+  "auto_backend_order": [
+    "julia",
+    "mojo",
+    "go",
+    "rust",
+    "python"
+  ],
+  "auto_backend_selection_basis": "same-host measured warm batch order; non-exclusive timings remain diagnostic",
+  "backends": {
+    "go": {
+      "available": true,
+      "final_state": {
+        "r": 0.0802951376979217,
+        "v": -1.2247262965360526
+      },
+      "final_state_matches_python": true,
+      "final_state_max_abs_diff": 0.0,
+      "max_call_ns": 5279358,
+      "median_call_ms": 4.57145,
+      "median_call_ns": 4571450.0,
+      "median_ns_per_step": 91.429,
+      "min_call_ns": 2906682,
+      "parity_atol": 1e-12,
+      "parity_max_abs_diff": 0.0,
+      "samples_ns": [
+        2906682,
+        4731203,
+        5279358,
+        4571450,
+        4079525
+      ],
+      "trace_matches_python": true,
+      "trace_mismatch_count": 0,
+      "trace_sha256": "0e9c59cbe73cb9019d309fc484fa67c838ae503d0c9f9f7a6825bb6fa857cb7b",
+      "used": true
+    },
+    "julia": {
+      "available": true,
+      "final_state": {
+        "r": 0.0802951376979217,
+        "v": -1.2247262965360526
+      },
+      "final_state_matches_python": true,
+      "final_state_max_abs_diff": 0.0,
+      "max_call_ns": 4551116,
+      "median_call_ms": 3.843744,
+      "median_call_ns": 3843744.0,
+      "median_ns_per_step": 76.87488,
+      "min_call_ns": 3003731,
+      "parity_atol": 1e-12,
+      "parity_max_abs_diff": 0.0,
+      "samples_ns": [
+        3003731,
+        3843744,
+        3530348,
+        4034077,
+        4551116
+      ],
+      "trace_matches_python": true,
+      "trace_mismatch_count": 0,
+      "trace_sha256": "0e9c59cbe73cb9019d309fc484fa67c838ae503d0c9f9f7a6825bb6fa857cb7b",
+      "used": true
+    },
+    "mojo": {
+      "available": true,
+      "final_state": {
+        "r": 0.08029513769792171,
+        "v": -1.2247262965360524
+      },
+      "final_state_matches_python": true,
+      "final_state_max_abs_diff": 2.220446049250313e-16,
+      "max_call_ns": 5038381,
+      "median_call_ms": 4.088033,
+      "median_call_ns": 4088033.0,
+      "median_ns_per_step": 81.76066,
+      "min_call_ns": 3707514,
+      "parity_atol": 1e-10,
+      "parity_max_abs_diff": 2.220446049250313e-16,
+      "samples_ns": [
+        4692039,
+        5038381,
+        3982143,
+        3707514,
+        4088033
+      ],
+      "trace_matches_python": true,
+      "trace_mismatch_count": 0,
+      "trace_sha256": "9d2cac570108b5e9605fad3b4754303bd2dda94f7530edf3639db0b1a47e469c",
+      "used": true
+    },
+    "python": {
+      "available": true,
+      "final_state": {
+        "r": 0.0802951376979217,
+        "v": -1.2247262965360526
+      },
+      "final_state_matches_python": true,
+      "final_state_max_abs_diff": 0.0,
+      "max_call_ns": 226807669,
+      "median_call_ms": 170.959086,
+      "median_call_ns": 170959086.0,
+      "median_ns_per_step": 3419.18172,
+      "min_call_ns": 152793841,
+      "parity_atol": 0.0,
+      "parity_max_abs_diff": 0.0,
+      "samples_ns": [
+        226807669,
+        173245607,
+        170959086,
+        152793841,
+        155490301
+      ],
+      "trace_matches_python": true,
+      "trace_mismatch_count": 0,
+      "trace_sha256": "0e9c59cbe73cb9019d309fc484fa67c838ae503d0c9f9f7a6825bb6fa857cb7b",
+      "used": true
+    },
+    "rust": {
+      "available": true,
+      "final_state": {
+        "r": 0.0802951376979217,
+        "v": -1.2247262965360526
+      },
+      "final_state_matches_python": true,
+      "final_state_max_abs_diff": 0.0,
+      "max_call_ns": 5476862,
+      "median_call_ms": 4.702923,
+      "median_call_ns": 4702923.0,
+      "median_ns_per_step": 94.05846,
+      "min_call_ns": 4452929,
+      "parity_atol": 1e-12,
+      "parity_max_abs_diff": 0.0,
+      "samples_ns": [
+        5476862,
+        5309473,
+        4585814,
+        4702923,
+        4452929
+      ],
+      "trace_matches_python": true,
+      "trace_mismatch_count": 0,
+      "trace_sha256": "0e9c59cbe73cb9019d309fc484fa67c838ae503d0c9f9f7a6825bb6fa857cb7b",
+      "used": true
+    }
+  },
+  "benchmark": "ErmentroutKopellPopulation five-runtime equation-(12) batch",
+  "binary_hashes": {
+    "go_shared_library": {
+      "path": "src/sc_neurocore/accel/go/ermentrout_kopell_pop/libermentrout_kopell_pop.so",
+      "sha256": "e8be2df409ea432c3e99a1d5fcf54c8c8ba531bcacd20ee9dfbd1020cfc2172d",
+      "size_bytes": 2015456
+    },
+    "mojo_shared_library": {
+      "path": "src/sc_neurocore/accel/mojo/ermentrout_kopell_pop/libermentrout_kopell_pop.so",
+      "sha256": "2749e9c982be2a0b5e578ca3747b4a78f810d79bcba8632496793fd0eb5ea40a",
+      "size_bytes": 15416
+    },
+    "rust_extension": {
+      "path": "$WHEEL_SITE/sc_neurocore_engine/sc_neurocore_engine.cpython-312-x86_64-linux-gnu.so",
+      "sha256": "2600e0bcb9f4a27ab5c941a8159050d967f24ead098b2d1a8fba441ff2cd8e11",
+      "size_bytes": 33875640
+    }
+  },
+  "command": "taskset -c <cpu> env PYTHONPATH=$WHEEL_SITE:src:. .venv/bin/python benchmarks/bench_ermentrout_kopell_pop.py --json benchmarks/results/bench_ermentrout_kopell_pop.json",
+  "environment": {
+    "affinity": [
+      10
+    ],
+    "go_binary": {
+      "binary": "src/sc_neurocore/accel/go/ermentrout_kopell_pop/libermentrout_kopell_pop.so",
+      "build_settings": {
+        "-buildmode": "c-shared",
+        "-compiler": "gc",
+        "CGO_CFLAGS": "",
+        "CGO_CPPFLAGS": "",
+        "CGO_CXXFLAGS": "",
+        "CGO_ENABLED": "1",
+        "CGO_LDFLAGS": "",
+        "GOAMD64": "v1",
+        "GOARCH": "amd64",
+        "GOOS": "linux"
+      },
+      "cgo_enabled": "1",
+      "go_version": "go1.26.3",
+      "module": "github.com/anulum/sc-neurocore/accel",
+      "package": "github.com/anulum/sc-neurocore/accel/ermentrout_kopell_pop"
+    },
+    "go_cli": "go version go1.24.0 linux/amd64",
+    "julia_cli": "julia version 1.12.6",
+    "julia_runtime": "1.11.9",
+    "load_average": [
+      23.64990234375,
+      32.7890625,
+      43.0078125
+    ],
+    "mojo_cli": "Mojo 1.0.0b1 (a9591de6)",
+    "mojo_pixi": "Mojo 0.26.2.0 (d627decc)",
+    "numpy": "2.2.6",
+    "platform": "Linux-6.17.0-35-generic-x86_64-with-glibc2.39",
+    "processor": "x86_64",
+    "python": "3.12.3",
+    "rustc": "rustc 1.96.0 (ac68faa20 2026-05-25)"
+  },
+  "evidence_class": "local_regression_single_cpu_affinity_non_exclusive",
+  "hardware_measurement_claimed": false,
+  "kernel": "ermentrout_kopell_pop_euler_batch",
+  "lowest_median_native_backend": "julia",
+  "measured_order": [
+    "python",
+    "rust",
+    "julia",
+    "go",
+    "mojo"
+  ],
+  "meta": {
+    "cpu": "11th Gen Intel(R) Core(TM) i5-11600K @ 3.90GHz",
+    "exclusive_cpu_isolation_claimed": false,
+    "runtime_cpuset_shield_claimed": false,
+    "single_cpu_pinned": true
+  },
+  "parity_contract": {
+    "comparison": {
+      "go": 1e-12,
+      "julia": 1e-12,
+      "mojo": 1e-10,
+      "python": 0.0,
+      "rust": 1e-12
+    },
+    "observable": "two complete float64 traces and two final states",
+    "reason": "independent compiler evaluation orders may differ by bounded ulps"
+  },
+  "production_speed_claim": false,
+  "recommended_auto_backend": "julia",
+  "schema_version": "sc-neurocore.polyglot-benchmark.v1",
+  "source_hashes": {
+    "Cargo": {
+      "lock": "a85822fed330afa018ccd9e4cbefcab4a351b1d68f96c52f7a9b76fddedf47d4"
+    },
+    "Cargo.lock": "a85822fed330afa018ccd9e4cbefcab4a351b1d68f96c52f7a9b76fddedf47d4",
+    "benchmarks/bench_ermentrout_kopell_pop": {
+      "py": "217a57273633e8eb0fa952d0d794adf9f4ca83d796b62e1bba1fc979c3029e4b"
+    },
+    "benchmarks/bench_ermentrout_kopell_pop.py": "217a57273633e8eb0fa952d0d794adf9f4ca83d796b62e1bba1fc979c3029e4b",
+    "bridge/sc_neurocore_engine/__init__": {
+      "py": "fb5bd14e81f5e82755bfef0f2583b5f62f2abcd53c19633dff524a7a82de26d5"
+    },
+    "bridge/sc_neurocore_engine/__init__.py": "fb5bd14e81f5e82755bfef0f2583b5f62f2abcd53c19633dff524a7a82de26d5",
+    "engine/Cargo": {
+      "toml": "f865140d1217dbb82acb4de0c7eb44ae0f148b6a0354d9a123b6eaaf40101454"
+    },
+    "engine/Cargo.toml": "f865140d1217dbb82acb4de0c7eb44ae0f148b6a0354d9a123b6eaaf40101454",
+    "engine/src/bindings/ermentrout_kopell_pop": {
+      "rs": "f8e44affaf710a562d0d2dfd3381a89f60dac98c9d2acd5526379e4152f5edd9"
+    },
+    "engine/src/bindings/ermentrout_kopell_pop.rs": "f8e44affaf710a562d0d2dfd3381a89f60dac98c9d2acd5526379e4152f5edd9",
+    "engine/src/neurons/ermentrout_kopell_pop": {
+      "rs": "5b0837cdb401bfddde77a052895093b4cbec20122b1aff9c54e9801ada18ca2e"
+    },
+    "engine/src/neurons/ermentrout_kopell_pop.rs": "5b0837cdb401bfddde77a052895093b4cbec20122b1aff9c54e9801ada18ca2e",
+    "engine/src/neurons/mod": {
+      "rs": "7a1b60f3a0c93e4e5a4258464e14e86a13526ef8eb2bf52cd29f7c307358b102"
+    },
+    "engine/src/neurons/mod.rs": "7a1b60f3a0c93e4e5a4258464e14e86a13526ef8eb2bf52cd29f7c307358b102",
+    "engine/src/neurons/special": {
+      "rs": "4a28e8ccce86f3d6d04448831a55204709cdd3129a68f544a09aa3a730d1dd76"
+    },
+    "engine/src/neurons/special.rs": "4a28e8ccce86f3d6d04448831a55204709cdd3129a68f544a09aa3a730d1dd76",
+    "engine/src/pyo3_neurons": {
+      "rs": "a03b1bb41420fb7f8b4e8b7a0991493f1882444a0c888a0b2881e9287afcf2ce"
+    },
+    "engine/src/pyo3_neurons.rs": "a03b1bb41420fb7f8b4e8b7a0991493f1882444a0c888a0b2881e9287afcf2ce",
+    "pyproject": {
+      "toml": "9a8065ba35055580a14c7851a1d6b75b2b2bc4b5d14b022f65ed0f93e133f14a"
+    },
+    "pyproject.toml": "9a8065ba35055580a14c7851a1d6b75b2b2bc4b5d14b022f65ed0f93e133f14a",
+    "src/sc_neurocore/accel/ermentrout_kopell_pop": {
+      "py": "6a4bf4259c981c65d085a179d4147bdefdae710915ecff80ad08d0aad75ead2a"
+    },
+    "src/sc_neurocore/accel/ermentrout_kopell_pop.py": "6a4bf4259c981c65d085a179d4147bdefdae710915ecff80ad08d0aad75ead2a",
+    "src/sc_neurocore/accel/go/ermentrout_kopell_pop/__init__": {
+      "py": "26eed5c8b05e74595fb56106f0bb212615db9fe2c19f6a57d0522fd0d2216111"
+    },
+    "src/sc_neurocore/accel/go/ermentrout_kopell_pop/__init__.py": "26eed5c8b05e74595fb56106f0bb212615db9fe2c19f6a57d0522fd0d2216111",
+    "src/sc_neurocore/accel/go/ermentrout_kopell_pop/ermentrout_kopell_pop": {
+      "go": "84be6b7c615892780c676a8236f35f79103c16848f8960652f7c368e3011198a"
+    },
+    "src/sc_neurocore/accel/go/ermentrout_kopell_pop/ermentrout_kopell_pop.go": "84be6b7c615892780c676a8236f35f79103c16848f8960652f7c368e3011198a",
+    "src/sc_neurocore/accel/go/ermentrout_kopell_pop/libermentrout_kopell_pop": {
+      "h": "8bb71cc3c2e9e88924084bf6c9f1cdaa0ec77b3b15a34a834496d52f8f19511a"
+    },
+    "src/sc_neurocore/accel/go/ermentrout_kopell_pop/libermentrout_kopell_pop.h": "8bb71cc3c2e9e88924084bf6c9f1cdaa0ec77b3b15a34a834496d52f8f19511a",
+    "src/sc_neurocore/accel/go/go": {
+      "mod": "110d18275a3be94bb8361d230f163253f651be13d1aa3b59d1d1d14fd523e097"
+    },
+    "src/sc_neurocore/accel/go/go.mod": "110d18275a3be94bb8361d230f163253f651be13d1aa3b59d1d1d14fd523e097",
+    "src/sc_neurocore/accel/go/services/ermentrout_kopell_pop": {
+      "go": "fd8e4d471c304d79bea7b7991b73a9b69eec8ae5a99c987de80e6520e7612b63"
+    },
+    "src/sc_neurocore/accel/go/services/ermentrout_kopell_pop.go": "fd8e4d471c304d79bea7b7991b73a9b69eec8ae5a99c987de80e6520e7612b63",
+    "src/sc_neurocore/accel/go/services/ermentrout_kopell_pop_test": {
+      "go": "a41d2dc31fbd47fcc145f1f2679d79bb917bdabb7a12dafcc56def7849817ff6"
+    },
+    "src/sc_neurocore/accel/go/services/ermentrout_kopell_pop_test.go": "a41d2dc31fbd47fcc145f1f2679d79bb917bdabb7a12dafcc56def7849817ff6",
+    "src/sc_neurocore/accel/julia/neurons/__init__": {
+      "py": "9abfc804ad931dc7e5ff5f9d2eade25bd5edc06014140eed9bd5c2c19544913e"
+    },
+    "src/sc_neurocore/accel/julia/neurons/__init__.py": "9abfc804ad931dc7e5ff5f9d2eade25bd5edc06014140eed9bd5c2c19544913e",
+    "src/sc_neurocore/accel/julia/neurons/ermentrout_kopell_pop": {
+      "jl": "0a82c4bf7d5505b94ae7f50783f4f3a7fe010be19520b2495763305aa798d349"
+    },
+    "src/sc_neurocore/accel/julia/neurons/ermentrout_kopell_pop.jl": "0a82c4bf7d5505b94ae7f50783f4f3a7fe010be19520b2495763305aa798d349",
+    "src/sc_neurocore/accel/mojo/ermentrout_kopell_pop/__init__": {
+      "py": "01769ca1643207617c2f8a76b933229c30ff2d639ec153ceffaca7a2781be69f"
+    },
+    "src/sc_neurocore/accel/mojo/ermentrout_kopell_pop/__init__.py": "01769ca1643207617c2f8a76b933229c30ff2d639ec153ceffaca7a2781be69f",
+    "src/sc_neurocore/accel/mojo/ermentrout_kopell_pop/ermentrout_kopell_pop": {
+      "mojo": "eaeacb07b0a97d47714c3ce92ca65872d1957af89e772d2a8691f3ad54d50ab8"
+    },
+    "src/sc_neurocore/accel/mojo/ermentrout_kopell_pop/ermentrout_kopell_pop.mojo": "eaeacb07b0a97d47714c3ce92ca65872d1957af89e772d2a8691f3ad54d50ab8",
+    "src/sc_neurocore/accel/mojo/pixi": {
+      "lock": "3afe7c06237ffff3bc5f516f90b7a43cd2559439d9f703645bd52c9876ad345a",
+      "toml": "e3ba41dfb28dbdefecd4869fab374735845a0be5e93cd3e055dcbee7f847ad1a"
+    },
+    "src/sc_neurocore/accel/mojo/pixi.lock": "3afe7c06237ffff3bc5f516f90b7a43cd2559439d9f703645bd52c9876ad345a",
+    "src/sc_neurocore/accel/mojo/pixi.toml": "e3ba41dfb28dbdefecd4869fab374735845a0be5e93cd3e055dcbee7f847ad1a",
+    "src/sc_neurocore/accel/rust/safety/ermentrout_kopell_pop": {
+      "rs": "0337e66f2577841e425d23e1678eebe6b82adb4c830a437dff4e1c62f86b7754"
+    },
+    "src/sc_neurocore/accel/rust/safety/ermentrout_kopell_pop.rs": "0337e66f2577841e425d23e1678eebe6b82adb4c830a437dff4e1c62f86b7754",
+    "src/sc_neurocore/neurons/model_descriptors/ErmentroutKopellPopulation": {
+      "toml": "fbbfa81e3ca82fe9094ac9bcd667acb48953a2c9e233f62e43d966f6f7388983"
+    },
+    "src/sc_neurocore/neurons/model_descriptors/ErmentroutKopellPopulation.toml": "fbbfa81e3ca82fe9094ac9bcd667acb48953a2c9e233f62e43d966f6f7388983",
+    "src/sc_neurocore/neurons/model_schemas/ermentrout_kopell_pop": {
+      "json": "33bdd1bdaa8e05859ee3f92e60bb06fc298b431cfffd361231b4a182d4807153",
+      "toml": "7213b12aea906f4ef91c780bfb3ce80e6c05a9df055f6c2f2ccc168ccab6c8bf"
+    },
+    "src/sc_neurocore/neurons/model_schemas/ermentrout_kopell_pop.json": "33bdd1bdaa8e05859ee3f92e60bb06fc298b431cfffd361231b4a182d4807153",
+    "src/sc_neurocore/neurons/model_schemas/ermentrout_kopell_pop.toml": "7213b12aea906f4ef91c780bfb3ce80e6c05a9df055f6c2f2ccc168ccab6c8bf",
+    "src/sc_neurocore/neurons/models/ermentrout_kopell_pop": {
+      "py": "f5fd47f45d5b35cc5204ef35dc4d521ef779a6ace9a7e8ed9496ad764e95efe0"
+    },
+    "src/sc_neurocore/neurons/models/ermentrout_kopell_pop.py": "f5fd47f45d5b35cc5204ef35dc4d521ef779a6ace9a7e8ed9496ad764e95efe0",
+    "src/sc_neurocore/neurons/reference_trace_data/ermentrout_kopell_pop_eq12_euler_doi": {
+      "json": "d8618c37256eee3104b0f63234e2c81af2a624c77e2361a5add831b0e418bc71"
+    },
+    "src/sc_neurocore/neurons/reference_trace_data/ermentrout_kopell_pop_eq12_euler_doi.json": "d8618c37256eee3104b0f63234e2c81af2a624c77e2361a5add831b0e418bc71",
+    "tools/build_accel_backends": {
+      "py": "8f3e92b0cf9f34764466c0d5b5eff84019146cbaa7089feceaa3aec6baba4387"
+    },
+    "tools/build_accel_backends.py": "8f3e92b0cf9f34764466c0d5b5eff84019146cbaa7089feceaa3aec6baba4387",
+    "tools/check_mojo_isa_baseline": {
+      "py": "9041c9b2d63ca0362cfd163e84bd228a4bc483610941fcdb881038f1cc8043e0"
+    },
+    "tools/check_mojo_isa_baseline.py": "9041c9b2d63ca0362cfd163e84bd228a4bc483610941fcdb881038f1cc8043e0"
+  },
+  "timestamp_utc": "2026-07-16T16:27:47+00:00",
+  "verification": {
+    "rust_safety": {
+      "command": [
+        "rustc",
+        "--edition",
+        "2021",
+        "--test",
+        "src/sc_neurocore/accel/rust/safety/ermentrout_kopell_pop.rs",
+        "-o",
+        "<temporary>/ermentrout_kopell_pop_tests"
+      ],
+      "output_tail": [
+        "",
+        "running 4 tests",
+        "test tests::configured_trajectory_remains_finite ... ok",
+        "test tests::invalid_input_does_not_mutate_state ... ok",
+        "test tests::one_step_matches_source_equations ... ok",
+        "test tests::reset_preserves_parameters ... ok",
+        "",
+        "test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s",
+        ""
+      ],
+      "passed": true,
+      "returncode": 0
+    }
+  },
+  "workload": {
+    "initial_state": {
+      "delta": 0.8,
+      "dt": 0.004,
+      "eta_bar": -4.2,
+      "j": 12.5,
+      "r": 0.13,
+      "tau": 1.3,
+      "v": -1.7
+    },
+    "input_formula": "1.5 + 0.5*sin(step*0.037) + 0.25*cos(step*0.011)",
+    "n_steps": 50000,
+    "repeats": 5,
+    "warmup_steps": 1000
+  }
+}

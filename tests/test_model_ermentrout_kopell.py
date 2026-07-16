@@ -4,189 +4,228 @@
 # © Code 2020–2026 Miroslav Šotek. All rights reserved.
 # ORCID: 0009-0009-3560-0851
 # Contact: www.anulum.li | protoscience@anulum.li
-# SC-NeuroCore — End-to-end test: ErmentroutKopellPopulation
+# SC-NeuroCore — MPR scalar and atomic-batch contracts
 
-"""Full pipeline test for ErmentroutKopellPopulation (Montbrio et al. 2015).
-
-Exact mean-field of QIF/theta neuron network. Returns firing rate r (float),
-not binary spike. Population clips to {0,1}."""
+"""Verify equation-(12) state, safety, and public simulation semantics."""
 
 from __future__ import annotations
 
+import math
+from typing import cast
+
 import numpy as np
-
-import time
-
+import numpy.typing as npt
 import pytest
 
-from sc_neurocore.neurons.models.ermentrout_kopell_pop import ErmentroutKopellPopulation
-from sc_neurocore.network.population import Population
-from sc_neurocore.network.projection import Projection
-from sc_neurocore.network.network import Network
-from sc_neurocore.network.monitor import SpikeMonitor
-from sc_neurocore.network.stimulus import PoissonInput
+from sc_neurocore.neurons.models.ermentrout_kopell_pop import (
+    ErmentroutKopellPopulation,
+)
 
 
-class TestErmentroutKopellIsolation:
-    def test_construction(self):
-        n = ErmentroutKopellPopulation()
-        assert n.r == 0.1
-        assert n.v == -2.0
-
-    def test_step_returns_float(self):
-        """Mean-field model returns firing rate (float), not binary spike."""
-        n = ErmentroutKopellPopulation()
-        result = n.step(0.0)
-        assert isinstance(result, float)
-
-    def test_rate_increases_with_input(self):
-        n1 = ErmentroutKopellPopulation()
-        n2 = ErmentroutKopellPopulation()
-        for _ in range(500):
-            r1 = n1.step(0.0)
-            r2 = n2.step(10.0)
-        # Higher input should give higher rate (or different trajectory)
-        assert r1 != r2
-
-    def test_rate_nonnegative(self):
-        n = ErmentroutKopellPopulation()
-        for _ in range(5000):
-            r = n.step(5.0)
-        assert r >= 0
-
-    def test_state_finite(self):
-        n = ErmentroutKopellPopulation()
-        for _ in range(10000):
-            n.step(5.0)
-        assert np.isfinite(n.r)
-        assert np.isfinite(n.v)
-
-    def test_reset(self):
-        n = ErmentroutKopellPopulation()
-        for _ in range(100):
-            n.step(5.0)
-        n.reset()
-        assert n.r == 0.1
-        assert n.v == -2.0
-
-    def test_deterministic(self):
-        traces = []
-        for _ in range(2):
-            n = ErmentroutKopellPopulation()
-            trace = [(n.step(5.0), n.r, n.v) for _ in range(200)]
-            traces.append(trace)
-        assert traces[0] == traces[1]
+def test_source_bound_defaults_and_legacy_identity_boundary() -> None:
+    unit = ErmentroutKopellPopulation()
+    assert (unit.r, unit.v) == (0.1, -2.0)
+    assert (unit.tau, unit.delta, unit.eta_bar, unit.j, unit.dt) == (
+        1.0,
+        1.0,
+        -5.0,
+        15.0,
+        0.01,
+    )
+    assert "Montbrió, Pazó, and Roxin" in (unit.__class__.__doc__ or "")
+    assert "Ermentrout–Kopell theta model" in (unit.__class__.__doc__ or "")
 
 
-class TestErmentroutKopellAnalytical:
-    def test_dr_formula_one_step(self):
-        """dr = (Δ/(π·τ) + 2·r·v) / τ · dt."""
-        n = ErmentroutKopellPopulation()
-        r0, v0 = n.r, n.v
-        expected_dr = (n.delta / (np.pi * n.tau) + 2.0 * r0 * v0) / n.tau * n.dt
-        n.step(0.0)
-        # r = max(0, r0 + dr)
-        expected_r = max(0.0, r0 + expected_dr)
-        assert abs(n.r - expected_r) < 1e-12
-
-    def test_dv_formula_one_step(self):
-        """dv = (v² + η̄ + I + J·τ·r - (π·τ·r)²) / τ · dt."""
-        n = ErmentroutKopellPopulation()
-        r0, v0 = n.r, n.v
-        I = 5.0
-        expected_dv = (
-            (v0**2 + n.eta_bar + I + n.j * n.tau * r0 - (np.pi * n.tau * r0) ** 2) / n.tau * n.dt
+def test_one_step_matches_equations_twelve_with_explicit_tau() -> None:
+    unit = ErmentroutKopellPopulation(
+        r=0.2,
+        v=-1.5,
+        tau=2.0,
+        delta=0.7,
+        eta_bar=-3.0,
+        j=12.0,
+        dt=0.005,
+    )
+    drive = 1.25
+    old_r, old_v = unit.r, unit.v
+    expected_r = old_r + unit.dt * (
+        unit.delta / (math.pi * unit.tau**2) + 2.0 * old_r * old_v / unit.tau
+    )
+    expected_v = old_v + unit.dt * (
+        (
+            old_v**2
+            + unit.eta_bar
+            + drive
+            + unit.j * unit.tau * old_r
+            - (math.pi * unit.tau * old_r) ** 2
         )
-        n.step(I)
-        # r was updated first, then v, but dr uses old r
-        # Actually looking at source: dr computed, then r updated, then dv uses old v
-        # dv is computed from original v0 and r0
-        # But wait — r is updated before dv calculation? Let me re-read...
-        # Source: dr computed from old state, dv computed from old state,
-        # then r updated, then v updated. So both use old values.
-        # Actually: dv is computed BEFORE r is updated (lines 27-38 compute dr and dv,
-        # then line 39 updates r, line 40 updates v)
-        # Wait no - let me re-read: dr is computed (line 27), dv is computed (line 28-37),
-        # then self.r = max(0, self.r + dr) (line 39), self.v += dv (line 40)
-        # So dv uses the OLD r0 and v0. Good.
-        actual_dv = n.v - v0
-        assert abs(actual_dv - expected_dv) < 1e-10
-
-    def test_rate_non_negative(self):
-        """r = max(0, ...) ensures non-negative rate."""
-        n = ErmentroutKopellPopulation(r=0.001)
-        for _ in range(1000):
-            n.step(-10.0)  # strong inhibition
-        assert n.r >= 0.0
-
-    @pytest.mark.parametrize("eta", [-10.0, -5.0, 0.0, 5.0])
-    def test_eta_sweep(self, eta: float):
-        n = ErmentroutKopellPopulation(eta_bar=eta)
-        for _ in range(1000):
-            n.step(0.0)
-        assert np.isfinite(n.r) and np.isfinite(n.v)
-
-    @pytest.mark.parametrize("j", [5.0, 15.0, 30.0])
-    def test_j_coupling_sweep(self, j: float):
-        n = ErmentroutKopellPopulation(j=j)
-        for _ in range(1000):
-            n.step(0.0)
-        assert np.isfinite(n.r)
+        / unit.tau
+    )
+    returned = unit.step(drive)
+    assert unit.r == expected_r
+    assert unit.v == expected_v
+    assert returned == expected_r
 
 
-class TestErmentroutKopellPerformance:
-    def test_isolation_throughput(self):
-        n = ErmentroutKopellPopulation()
-        N = 100_000
-        t0 = time.perf_counter()
-        for _ in range(N):
-            n.step(5.0)
-        elapsed = time.perf_counter() - t0
-        rate = N / elapsed
-        assert rate > 50_000, f"isolation: {rate:.0f} steps/s"
-
-    def test_network_throughput(self):
-        pop = Population(ErmentroutKopellPopulation, n=20, label="bench")
-        drive = PoissonInput(n=20, rate_hz=500.0, weight=5.0, dt=0.001, seed=42)
-        mon = SpikeMonitor(pop)
-        net = Network(pop, drive, mon)
-        t0 = time.perf_counter()
-        net.run(duration=0.5, dt=0.001, backend="python")
-        elapsed = time.perf_counter() - t0
-        neuron_steps = 20 * 500
-        rate = neuron_steps / elapsed
-        assert rate > 2_000, f"network: {rate:.0f} neuron-steps/s"
+@pytest.mark.parametrize(
+    "kwargs",
+    (
+        {"r": -0.1},
+        {"tau": 0.0},
+        {"tau": -1.0},
+        {"delta": -0.1},
+        {"dt": 0.0},
+        {"v": math.nan},
+        {"eta_bar": math.inf},
+        {"j": -math.inf},
+    ),
+)
+def test_invalid_configuration_is_rejected(kwargs: dict[str, float]) -> None:
+    with pytest.raises(ValueError):
+        ErmentroutKopellPopulation(**kwargs)
 
 
-class TestErmentroutKopellPipeline:
-    def test_population(self):
-        pop = Population(ErmentroutKopellPopulation, n=5, label="ek")
-        assert pop.n == 5
+@pytest.mark.parametrize(
+    ("name", "value"),
+    (
+        ("r", None),
+        ("v", object()),
+        ("tau", "not-a-number"),
+    ),
+)
+def test_non_numeric_configuration_raises_value_error(
+    name: str,
+    value: object,
+) -> None:
+    kwargs: dict[str, float] = {name: cast(float, value)}
+    with pytest.raises(ValueError, match=rf"^{name} must be numeric$"):
+        ErmentroutKopellPopulation(**kwargs)
 
-    def test_projection_wiring(self):
-        src = Population(ErmentroutKopellPopulation, n=5, label="src")
-        tgt = Population(ErmentroutKopellPopulation, n=5, label="tgt")
-        drive = PoissonInput(n=5, rate_hz=500.0, weight=5.0, dt=0.001, seed=42)
-        proj = Projection(src, tgt, weight=2.0, probability=1.0, seed=42)
-        mon_src = SpikeMonitor(src)
-        net = Network(src, tgt, drive, proj, mon_src)
-        net.run(duration=1.0, dt=0.001, backend="python")
-        # Float return → Population clips to {0,1}
-        assert mon_src.count > 0
 
-    def test_network_spikes(self):
-        pop = Population(ErmentroutKopellPopulation, n=10, label="ek")
-        drive = PoissonInput(n=10, rate_hz=500.0, weight=5.0, dt=0.001, seed=42)
-        mon = SpikeMonitor(pop)
-        net = Network(pop, drive, mon)
-        net.run(duration=0.5, dt=0.001, backend="python")
-        assert mon.count > 0
+def test_rejected_input_and_candidate_are_atomic() -> None:
+    unit = ErmentroutKopellPopulation()
+    before = (unit.r, unit.v)
+    with pytest.raises(ValueError, match="external input"):
+        unit.step(math.nan)
+    assert (unit.r, unit.v) == before
 
-    def test_field_state_after_run(self):
-        pop = Population(ErmentroutKopellPopulation, n=5, label="ek")
-        drive = PoissonInput(n=5, rate_hz=500.0, weight=5.0, dt=0.001, seed=42)
-        net = Network(pop, drive)
-        net.run(duration=0.1, dt=0.001, backend="python")
-        for neuron in pop.neurons:
-            assert np.isfinite(neuron.r)
-            assert np.isfinite(neuron.v)
+    with pytest.raises(ValueError, match="external input must be numeric"):
+        unit.step(cast(float, None))
+    assert (unit.r, unit.v) == before
+
+    unstable = ErmentroutKopellPopulation(
+        r=1.0,
+        v=-100.0,
+        delta=0.0,
+        dt=0.01,
+    )
+    before_unstable = (unstable.r, unstable.v)
+    with pytest.raises(FloatingPointError, match="negative"):
+        unstable.step(0.0)
+    assert (unstable.r, unstable.v) == before_unstable
+
+
+def test_corrupted_state_is_rejected_without_mutating_peer_state() -> None:
+    unit = ErmentroutKopellPopulation()
+    unit.v = math.inf
+    before = (unit.r, unit.v)
+    with pytest.raises(ValueError, match="state"):
+        unit.step(0.0)
+    assert (unit.r, unit.v) == before
+
+
+@pytest.mark.parametrize(
+    ("name", "value", "message"),
+    (
+        ("r", object(), "numeric"),
+        ("r", -0.1, "non-negative"),
+    ),
+)
+def test_corrupted_state_type_or_rate_is_rejected_atomically(
+    name: str,
+    value: object,
+    message: str,
+) -> None:
+    unit = ErmentroutKopellPopulation()
+    setattr(unit, name, value)
+    before = (unit.r, unit.v)
+    with pytest.raises(ValueError, match=message):
+        unit.step(0.0)
+    assert (unit.r, unit.v) == before
+
+
+@pytest.mark.parametrize(
+    ("name", "value"),
+    (
+        ("tau", 0.0),
+        ("delta", -0.1),
+        ("eta_bar", math.inf),
+        ("j", math.nan),
+        ("dt", -0.01),
+    ),
+)
+def test_corrupted_parameter_is_rejected_without_mutating_state(
+    name: str,
+    value: float,
+) -> None:
+    unit = ErmentroutKopellPopulation()
+    setattr(unit, name, value)
+    before = (unit.r, unit.v)
+    with pytest.raises(ValueError):
+        unit.step(0.0)
+    assert (unit.r, unit.v) == before
+
+
+def test_corrupted_parameter_type_is_rejected_atomically() -> None:
+    unit = ErmentroutKopellPopulation()
+    unit.tau = cast(float, object())
+    before = (unit.r, unit.v)
+    with pytest.raises(ValueError, match="parameters must be numeric"):
+        unit.step(0.0)
+    assert (unit.r, unit.v) == before
+
+
+def test_nonfinite_candidate_is_rejected_atomically() -> None:
+    unit = ErmentroutKopellPopulation(v=1.0e154, dt=2.0)
+    before = (unit.r, unit.v)
+    with pytest.raises(FloatingPointError, match="candidate must remain finite"):
+        unit.step(0.0)
+    assert (unit.r, unit.v) == before
+
+
+def test_reset_preserves_parameters_and_restores_dynamic_state() -> None:
+    unit = ErmentroutKopellPopulation(tau=2.0, delta=0.7, j=12.0, dt=0.005)
+    for _ in range(100):
+        unit.step(1.5)
+    unit.reset()
+    assert (unit.r, unit.v) == (0.1, -2.0)
+    assert (unit.tau, unit.delta, unit.j, unit.dt) == (2.0, 0.7, 12.0, 0.005)
+
+
+def test_python_batch_returns_both_states_and_consistent_finals() -> None:
+    drive = np.linspace(0.5, 2.5, 64)
+    unit = ErmentroutKopellPopulation(
+        r=0.13,
+        v=-1.7,
+        tau=1.3,
+        delta=0.8,
+        eta_bar=-4.2,
+        j=12.5,
+        dt=0.004,
+    )
+    result = unit.simulate(drive, backend="python")
+    for key in ("r", "v"):
+        trace = cast(npt.NDArray[np.float64], result[key])
+        assert trace.shape == (64,)
+        assert np.isfinite(trace).all()
+    assert unit.r == result["r_final"] == cast(npt.NDArray[np.float64], result["r"])[-1]
+    assert unit.v == result["v_final"] == cast(npt.NDArray[np.float64], result["v"])[-1]
+
+
+def test_empty_python_batch_preserves_initial_state() -> None:
+    unit = ErmentroutKopellPopulation(r=0.13, v=-1.7)
+    result = unit.simulate([], backend="python")
+    assert cast(npt.NDArray[np.float64], result["r"]).shape == (0,)
+    assert cast(npt.NDArray[np.float64], result["v"]).shape == (0,)
+    assert (unit.r, unit.v) == (0.13, -1.7)
+    assert (result["r_final"], result["v_final"]) == (0.13, -1.7)

@@ -410,6 +410,113 @@ Run the Mojo recurrence through its C ABI.
 
 ---
 
+## Module `accel.ermentrout_kopell_pop`
+
+### Function `backend_available(backend)`
+Return whether one named execution lane is ready.
+
+Parameters
+----------
+backend : str
+    One of ``python``, ``rust``, ``julia``, ``go``, or ``mojo``.
+
+Returns
+-------
+bool
+    ``True`` when the corresponding runtime and artefact are available.
+
+### Function `auto_backend()`
+Return the first available runtime in measured ascending-latency order.
+
+Returns
+-------
+str
+    Available backend name, with ``python`` as the total fallback.
+
+### Function `normalise_result(result)`
+Validate traces and final-state receipts from one backend.
+
+Parameters
+----------
+result : dict&#91;str, object&#93;
+    Backend mapping containing ``r``, ``v``, and both final receipts.
+n_steps : int
+    Required trace length.
+initial : tuple&#91;float, float&#93;
+    Initial ``r`` and ``v`` used to validate an empty batch.
+
+Returns
+-------
+dict&#91;str, numpy.ndarray | float&#93;
+    Contiguous finite traces and consistent scalar final receipts.
+
+Raises
+------
+FloatingPointError
+    If a trace or final receipt is absent, malformed, non-finite,
+    physically invalid, or inconsistent with the complete trajectory.
+
+### Function `simulate_python(r, v, tau, delta, eta_bar, coupling, dt, ext_input)`
+Run the complete batch through the Python golden model.
+
+Parameters
+----------
+r, v : float
+    Initial population firing rate and mean membrane potential.
+tau, delta, eta_bar, coupling, dt : float
+    Complete MPR configuration and explicit-Euler step.
+ext_input : ArrayLike
+    One finite external drive per step.
+
+Returns
+-------
+dict&#91;str, numpy.ndarray | float&#93;
+    Complete post-update state traces and final-state receipts.
+
+Raises
+------
+ValueError
+    If the configuration or input vector violates the public contract.
+FloatingPointError
+    If a candidate state violates the finite non-negative-rate contract.
+
+### Function `simulate_ermentrout_kopell_pop(r, v, tau, delta, eta_bar, coupling, dt, ext_input)`
+Run one complete MPR Euler batch on a selected execution lane.
+
+Parameters
+----------
+r, v : float
+    Initial population firing rate and mean membrane potential.
+tau, delta, eta_bar, coupling, dt : float
+    Complete MPR configuration and explicit-Euler step.
+ext_input : ArrayLike
+    One finite external drive value per step.
+backend : str, default="auto"
+    ``python``, ``rust``, ``julia``, ``go``, ``mojo``, or measured
+    ascending-latency selection.
+
+Returns
+-------
+dict&#91;str, numpy.ndarray | float&#93;
+    Complete post-update ``r`` and ``v`` traces plus final receipts.
+
+Raises
+------
+ValueError
+    If the configuration, input vector, or backend name is invalid.
+RuntimeError
+    If an explicitly requested compiled backend is unavailable.
+FloatingPointError
+    If a backend returns malformed, non-finite, negative-rate, or
+    internally inconsistent results.
+
+Notes
+-----
+All native results pass through :func:`normalise_result`; no partially
+validated backend mapping is returned to the caller.
+
+---
+
 ## Module `accel.escape_rate`
 
 ### Function `ensure_julia_loaded()`
@@ -22658,12 +22765,51 @@ Reference: Ermentrout & Kopell (1986) SIAM J Appl Math 46:233–253.
 ## Module `neurons.models.ermentrout_kopell_pop`
 
 ### Class `ErmentroutKopellPopulation`
-Montbrio, Pazo & Roxin 2015 — exact mean-field of QIF/theta network.
+Represent the exact macroscopic QIF firing-rate equations.
 
-Reference: Ermentrout, G.B. & Kopell, N. (1986). SIAM J. Appl. Math. 46:233–253.
+The public class name is retained for compatibility.  Its dynamics are
+equations (12a–b) of Montbrió, Pazó, and Roxin (2015), not the single-cell
+Ermentrout–Kopell theta model.  ``tau`` restores an explicit membrane time
+scale to the dimensionless source equations, so the maintained flow is
 
+``dr/dt = delta/(pi*tau**2) + 2*r*v/tau``
+
+``dv/dt = (v**2 + eta_bar + I + j*tau*r - (pi*tau*r)**2)/tau``.
+
+One call to :meth:`step` applies a simultaneous explicit-Euler update.
+That solver is an implementation contract; the publication specifies the
+continuous ordinary differential equations.
+
+Parameters
+----------
+r : float, default=0.1
+    Initial population firing rate.  It must be non-negative.
+v : float, default=-2.0
+    Initial mean membrane potential.
+tau : float, default=1.0
+    Positive membrane time scale.
+delta : float, default=1.0
+    Non-negative half-width of the Lorentzian excitability distribution.
+eta_bar : float, default=-5.0
+    Centre of the excitability distribution.
+j : float, default=15.0
+    Recurrent coupling strength.
+dt : float, default=0.01
+    Positive explicit-Euler step.
+
+References
+----------
+Montbrió, E., Pazó, D., and Roxin, A. (2015), Physical Review X 5,
+021028. https://doi.org/10.1103/PhysRevX.5.021028
+
+- **__post_init__**()
+  - Normalise scalar fields and reject an invalid configuration.
 - **step**(ext_input)
+  - Advance one Euler step atomically and return the firing rate.
+- **simulate**(ext_input)
+  - Run one atomic batch through a maintained execution backend.
 - **reset**()
+  - Restore the two dynamic states while preserving parameters.
 
 ---
 

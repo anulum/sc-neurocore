@@ -97,8 +97,8 @@ SC-NeuroCore is positioned for neuromorphic R&D, stochastic accelerator design, 
 | Model documentation pages | 175 |
 | Rust PyO3 model wrappers | 175 |
 | Optional extras | 28 |
-| Python test files | 1362 |
-| Public documentation pages | 579 |
+| Python test files | 1373 |
+| Public documentation pages | 580 |
 | GitHub Actions workflows | 19 |
 
 Evidence boundary: this snapshot is a static inventory. Performance, coverage, hardware, and scientific-fidelity claims require their own committed evidence artefacts.
@@ -388,7 +388,7 @@ graph TD
         K --> L[Verilog RTL<br/>AXI-Lite + LIF Core]
         K2 --> L
         L --> M[FPGA Bitstream<br/>Xilinx / Intel]
-        L --> V[Formal Verification<br/>50 proof jobs · catalogue + legacy]
+        L --> V[Formal Verification<br/>53 proof jobs · catalogue + legacy]
     end
 
     subgraph "Domain Bridges (optional)"
@@ -453,12 +453,12 @@ hdl/
   sc_event_neuron.v           -- Event-triggered LIF (power ∝ spike rate)
   sc_aer_router.v             -- AER event distribution to target neurons
   tb_sc_*.v (16 testbenches)  -- Self-checking simulation testbenches
-  formal/ (50 proof jobs)     -- catalogue dual-axis perfect + legacy SC cores
+  formal/ (53 proof jobs)     -- catalogue dual-axis perfect + legacy SC cores
 ```
 
-Formal verification inventory: **52 SymbiYosys proof jobs and 182 formal
-statements (152 assert, 7 assume, 23 cover)** under `hdl/formal/` (18
-non-catalogue jobs + **34 catalogue jobs** under `hdl/formal/catalogue/`). This
+Formal verification inventory: **53 SymbiYosys proof jobs and 184 formal
+statements (154 assert, 7 assume, 23 cover)** under `hdl/formal/` (18
+non-catalogue jobs + **35 catalogue jobs** under `hdl/formal/catalogue/`). This
 counts the git-tracked jobs a clean checkout proves; re-emit the generated
 catalogue harnesses with `tools/emit_catalogue_formal.py`.
 

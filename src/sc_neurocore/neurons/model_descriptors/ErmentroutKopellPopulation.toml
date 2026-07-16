@@ -11,67 +11,80 @@ schema_version = 2
 name = "ErmentroutKopellPopulation"
 class_name = "ErmentroutKopellPopulation"
 module = "ermentrout_kopell_pop"
-display_name = ""
-summary = "Montbrio, Pazo & Roxin 2015 — exact mean-field of QIF/theta network."
+display_name = "Montbrió–Pazó–Roxin exact QIF-network mean field"
+summary = "Validated two-state Montbrió–Pazó–Roxin equation-(12) firing-rate system with simultaneous explicit-Euler integration."
 family = "Rate / mean-field"
 category = "rate-mean-field"
-biophysical_detail = "point"
-maturity = "experimental"
-intended_use = []
-hardware_fit = []
+biophysical_detail = "reduced"
+maturity = "validated"
+intended_use = [
+    "macroscopic QIF-network population-dynamics experiments",
+    "deterministic replay of equation-(12) firing-rate trajectories",
+    "cross-runtime explicit-Euler trajectory validation",
+]
+hardware_fit = [
+    "generated fixed-point Q32.32 co-simulation reference",
+]
 behavior_tags = [
     "excitable",
-    "irregular",
     "tonic",
 ]
 
 [provenance]
 authors = [
-    "Ermentrout, G.B. & Kopell, N.",
+    "Montbrió, E.",
+    "Pazó, D.",
+    "Roxin, A.",
 ]
-year = 1986
-doi = "10.1137/0146017"
+year = 2015
+doi = "10.1103/PhysRevX.5.021028"
+paper_title = "Macroscopic Description for Networks of Spiking Neurons"
+url = "https://doi.org/10.1103/PhysRevX.5.021028"
 
 [state.r]
 init = 0.1
+unit = "1/time"
+meaning = "population firing rate"
 
 [state.v]
 init = -2.0
+unit = "1"
+meaning = "population mean membrane potential"
 
 [parameters.tau]
 default = 1.0
-unit = "ms"
-meaning = "population time constant"
+unit = "time"
+meaning = "positive membrane time scale"
 range = [
-    1.0,
+    0.001,
     100.0,
 ]
 
 [parameters.delta]
 default = 1.0
 unit = "1"
-meaning = "width of the heterogeneous-input (Lorentzian) distribution"
+meaning = "non-negative half-width of the Lorentzian excitability distribution"
 range = [
-    0.001,
-    2.0,
+    0.0,
+    100.0,
 ]
 
 [parameters.eta_bar]
 default = -5.0
 unit = "1"
-meaning = "mean external drive to the population"
+meaning = "centre of the Lorentzian excitability distribution"
 range = [
-    -5.0,
-    5.0,
+    -100.0,
+    100.0,
 ]
 
 [parameters.j]
 default = 15.0
 unit = "1"
-meaning = "synaptic coupling strength"
+meaning = "recurrent coupling strength"
 range = [
-    -20.0,
-    20.0,
+    -100.0,
+    100.0,
 ]
 
 [integration]
@@ -79,12 +92,53 @@ dt = 0.01
 method = "euler"
 
 [dynamics]
+r = "dr/dt=delta/(pi*tau^2)+2*r*v/tau"
+v = "dv/dt=(v^2+eta_bar+I+j*tau*r-(pi*tau*r)^2)/tau"
+source_dimensionless = "dR/dt'=delta/pi+2*R*v; dv/dt'=v^2+eta_bar+j*R+I-(pi*R)^2"
+source_change_of_variables = "R=tau*r and t'=t/tau, so dR/dt'=tau^2*dr/dt and dv/dt'=tau*dv/dt"
+output = "continuous population firing rate r after each simultaneous Euler update"
+scope = "one exact thermodynamic-limit mean field for an all-to-all QIF network with Lorentzian excitability; finite-size fluctuations, delay, adaptation, and stochastic drive are outside the maintained kernel"
+identity = "ErmentroutKopellPopulation is retained only as a public compatibility name; its maintained dynamics are Montbrio-Pazo-Roxin 2015 equations (12a-b), not Ermentrout-Kopell 1986"
 
 [backends.python]
 status = "implemented"
+parity = "exact"
+
+[backends.rust]
+status = "implemented"
+parity = "ulp-bounded"
+
+[backends.julia]
+status = "implemented"
+parity = "ulp-bounded"
+
+[backends.go]
+status = "implemented"
+parity = "ulp-bounded"
+
+[backends.mojo]
+status = "implemented"
+parity = "approximate"
 
 [reproducibility]
+reference_config = "{\"kind\":\"sampled_batch_v1\",\"r\":0.1,\"v\":-2.0,\"tau\":1.0,\"delta\":1.0,\"eta_bar\":-5.0,\"j\":15.0,\"dt\":0.01,\"n_steps\":256,\"simulate_fields\":[\"ext_input\"],\"inputs\":{\"ext_input\":{\"function\":\"sin\",\"offset\":1.5,\"amplitude\":0.5,\"angular_frequency\":0.037}},\"trace_fields\":[\"r\",\"v\"]}"
+golden_trace_sha256 = "6bf2d0b8611cba646e5b575ed3253090e1e02955c75c01efac13e603578edae5"
+golden_citation = "doi:10.1103/PhysRevX.5.021028 equations (12a-b)"
 
 [documentation]
 slug = "models/ermentrout_kopell_pop"
-notes = ""
+notes = "The paper prints dimensionless equations in R and t'. The maintained tau-expanded flow follows exactly from R=tau*r and t'=t/tau. Explicit Euler is the deterministic integration contract. The enrolled varied drive is a parity protocol, not a paper-figure reproduction."
+
+[validation]
+dynamics_faithful = true
+metric = "trajectory"
+operating_point = "non-zero initial states, non-default configured batch, and varied external drive over 128 steps"
+tolerance = "complete two-trace and two-final-state agreement within absolute 1e-12 for Rust, Julia, and Go and 1e-10 for Mojo"
+evidence = "tests/test_ermentrout_kopell_pop_backends.py::test_complete_configured_contract_matches_python"
+
+[silicon]
+compiles = true
+cosim_validated = true
+cosim_evidence = "tests/test_cosim_ermentrout_kopell_pop.py::test_q3232_rtl_preserves_equation_twelve_trajectory_envelope"
+target_tier = "H1"
+terminal_reason = "The Q32.32 generated datapath is validated through co-simulation; synthesis, timing, formal equivalence, and PPA evidence are not enrolled."

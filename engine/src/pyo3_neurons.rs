@@ -20,6 +20,8 @@ use pyo3::types::PyDict;
 use crate::neuron;
 use crate::neurons;
 
+#[path = "bindings/ermentrout_kopell_pop.rs"]
+mod ermentrout_kopell_pop_binding;
 #[path = "bindings/jansen_rit.rs"]
 mod jansen_rit_binding;
 #[path = "bindings/mcculloch_pitts.rs"]
@@ -1307,39 +1309,6 @@ impl PyWongWangUnit {
     }
 }
 
-// ErmentroutKopellPopulation: step returns f64
-#[pyclass(
-    name = "ErmentroutKopellPopulation",
-    module = "sc_neurocore_engine.sc_neurocore_engine"
-)]
-#[derive(Clone)]
-pub struct PyErmentroutKopellPopulation {
-    inner: neurons::ErmentroutKopellPopulation,
-}
-
-#[pymethods]
-impl PyErmentroutKopellPopulation {
-    #[new]
-    fn new() -> Self {
-        Self {
-            inner: neurons::ErmentroutKopellPopulation::new(),
-        }
-    }
-    #[pyo3(signature = (ext_input=0.0))]
-    fn step(&mut self, ext_input: f64) -> f64 {
-        self.inner.step(ext_input)
-    }
-    fn reset(&mut self) {
-        self.inner.reset();
-    }
-    fn get_state(&self, py: Python<'_>) -> PyResult<Py<PyAny>> {
-        let d = PyDict::new(py);
-        d.set_item("r", self.inner.r)?;
-        d.set_item("v", self.inner.v)?;
-        Ok(d.into_any().unbind())
-    }
-}
-
 // WendlingNeuron: step returns f64
 #[pyclass(
     name = "WendlingNeuron",
@@ -2225,7 +2194,7 @@ pub fn register_neuron_classes(m: &Bound<'_, PyModule>) -> PyResult<()> {
     jansen_rit_binding::register(m)?;
     m.add_class::<PyWongWangUnit>()?;
     wong_wang_binding::register(m)?;
-    m.add_class::<PyErmentroutKopellPopulation>()?;
+    ermentrout_kopell_pop_binding::register(m)?;
     m.add_class::<PyWendlingNeuron>()?;
     m.add_class::<PyLarterBreakspearNeuron>()?;
     // hardware

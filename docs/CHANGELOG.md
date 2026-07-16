@@ -5,6 +5,22 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+### Montbrió–Pazó–Roxin source-to-co-simulation closure
+
+- Corrected the legacy `ErmentroutKopellPopulation` attribution and promoted
+  the actual Montbrió, Pazó, and Roxin (2015) equations (12a–b) through Python,
+  the modular Rust engine, independent Rust safety, Julia, Go C-shared, and
+  Mojo shared-library execution. All lanes restore the maintained variables
+  through `R=tau*r` and `t'=t/tau` and use one simultaneous two-state Euler
+  update.
+- Added public atomic batch dispatch, paired schemas, an independently derived
+  DOI-pinned trace, configured five-runtime trajectory parity, native invalid-
+  contract tests, source/binary-bound local benchmark evidence, bounded
+  generated Q32.32 co-simulation, and a depth-4 reset-and-event-silence
+  catalogue job. The compatibility name, continuous-rate output, Euler solver
+  boundary, and absence of formal-equivalence, higher-silicon, or
+  production-speed evidence are explicit.
+
 ### Jansen–Rit source-to-co-simulation closure
 
 - Promoted the Jansen and Rit (1995) equation-(6) neural mass through Python,

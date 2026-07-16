@@ -463,51 +463,8 @@ impl Default for WilsonCowanUnit {
 /// Canonical Wong-Wang implementation lives in the dedicated engine module.
 pub use crate::wong_wang::WongWangUnit;
 
-/// Ermentrout-Kopell / Montbrió theta-neuron mean field. Montbrió et al. 2015.
-#[derive(Clone, Debug)]
-pub struct ErmentroutKopellPopulation {
-    pub r: f64,
-    pub v: f64,
-    pub tau: f64,
-    pub delta: f64,
-    pub eta_bar: f64,
-    pub j: f64,
-    pub dt: f64,
-}
-
-impl ErmentroutKopellPopulation {
-    pub fn new() -> Self {
-        Self {
-            r: 0.1,
-            v: -2.0,
-            tau: 1.0,
-            delta: 1.0,
-            eta_bar: -5.0,
-            j: 15.0,
-            dt: 0.01,
-        }
-    }
-    pub fn step(&mut self, ext_input: f64) -> f64 {
-        let dr =
-            (self.delta / (std::f64::consts::PI * self.tau) + 2.0 * self.r * self.v) / self.tau;
-        let dv = (self.v * self.v + self.eta_bar + ext_input + self.j * self.tau * self.r
-            - std::f64::consts::PI.powi(2) * self.tau.powi(2) * self.r.powi(2))
-            / self.tau;
-        self.r += dr * self.dt;
-        self.v += dv * self.dt;
-        self.r = self.r.max(0.0);
-        self.r
-    }
-    pub fn reset(&mut self) {
-        self.r = 0.1;
-        self.v = -2.0;
-    }
-}
-impl Default for ErmentroutKopellPopulation {
-    fn default() -> Self {
-        Self::new()
-    }
-}
+/// Canonical Montbrió population implementation lives in a dedicated module.
+pub use crate::neurons::ermentrout_kopell_pop::ErmentroutKopellPopulation;
 
 /// Wendling et al. 2002 — extended Jansen-Rit with slow GABA_B.
 #[derive(Clone, Debug)]
@@ -1000,7 +957,10 @@ mod tests {
     }
     #[test]
     fn ek_pop_nan_no_panic() {
-        ErmentroutKopellPopulation::new().step(f64::NAN);
+        let mut n = ErmentroutKopellPopulation::new();
+        let before = (n.r, n.v);
+        assert_eq!(n.step(f64::NAN), before.0);
+        assert_eq!((n.r, n.v), before);
     }
 
     // -- Wendling --

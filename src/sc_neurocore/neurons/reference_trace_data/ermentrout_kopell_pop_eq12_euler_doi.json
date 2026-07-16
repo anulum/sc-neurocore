@@ -1,0 +1,62 @@
+{
+  "schema_version": "sc-neurocore.reference-trace.v1",
+  "name": "ermentrout_kopell_pop_eq12_euler_doi",
+  "model": {
+    "schema_name": "ermentrout_kopell_pop",
+    "runner": "hand_model"
+  },
+  "protocol": {
+    "dt": 0.01,
+    "steps": 256,
+    "inputs": {
+      "ext_input_formula": "1.5 + 0.5 * sin(step * 0.037)"
+    },
+    "initial_state": {
+      "r": 0.1,
+      "v": -2.0
+    },
+    "parameters": {
+      "tau": 1.0,
+      "delta": 1.0,
+      "eta_bar": -5.0,
+      "j": 15.0
+    },
+    "trace_layout": [
+      "post_step.r",
+      "post_step.v"
+    ]
+  },
+  "provenance": {
+    "kind": "independent_equations_12_euler_reference",
+    "source": "https://doi.org/10.1103/PhysRevX.5.021028",
+    "equation": "The printed dimensionless equations are dR/dt'=Delta/pi+2*R*v and dv/dt'=v^2+eta_bar+J*R+I-(pi*R)^2.",
+    "change_of_variables": "R=tau*r and t'=t/tau, so dR/dt'=tau^2*dr/dt and dv/dt'=tau*dv/dt",
+    "citation": "doi:10.1103/PhysRevX.5.021028",
+    "timestep_note": "The paper specifies continuous ordinary differential equations. The 0.01 explicit-Euler step is the maintained deterministic implementation contract, not a paper requirement.",
+    "input_note": "The bounded deterministic sinusoidal drive is a reproducible parity protocol, not a reproduction of a paper figure.",
+    "identity_note": "The legacy public class name does not imply Ermentrout-Kopell 1986 dynamics; the maintained flow is the recorded variable restoration of Montbrio-Pazo-Roxin 2015 equations (12a-b)."
+  },
+  "expected_features": {
+    "first.r": 0.09918309886183792,
+    "final.r": 0.1187257439981787,
+    "min.r": 0.0930424311286599,
+    "max.r": 0.1187257439981787,
+    "mean.r": 0.1062105008716353,
+    "first.v": -1.980986960440109,
+    "final.v": -1.3003662558458333,
+    "min.v": -1.980986960440109,
+    "max.v": -1.2877404849091132,
+    "mean.v": -1.4692854745771335,
+    "interleaved_f64le_sha256": "6bf2d0b8611cba646e5b575ed3253090e1e02955c75c01efac13e603578edae5"
+  },
+  "tolerances": {
+    "default": {
+      "absolute": 1e-12,
+      "relative": 0.0
+    },
+    "interleaved_f64le_sha256": {
+      "absolute": 0.0,
+      "relative": 0.0
+    }
+  }
+}

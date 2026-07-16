@@ -23,19 +23,28 @@ import numpy as np
 import numpy.typing as npt
 
 try:
+    from juliacall import JuliaError as _JuliacallError
     from juliacall import Main as _jl
 
+    _JULIA_ERROR_TYPE: type[BaseException] | None = _JuliacallError
     _HAS_JULIA_NEURONS = True
 except ImportError:
     _jl = None
+    _JULIA_ERROR_TYPE = None
     _HAS_JULIA_NEURONS = False
 
 
 _KERNEL_DIR = Path(__file__).resolve().parent
+_ERMENTROUT_KOPELL_POP_LOADED = False
 _WONG_WANG_LOADED = False
 _JANSEN_RIT_LOADED = False
 _WILSON_COWAN_LOADED = False
 _RK4_NEURONS_LOADED = False
+
+
+def is_julia_error(error: BaseException) -> bool:
+    """Return whether ``error`` is the maintained Julia bridge exception."""
+    return _JULIA_ERROR_TYPE is not None and isinstance(error, _JULIA_ERROR_TYPE)
 
 
 def _ensure_wong_wang_loaded() -> Any:
@@ -64,6 +73,20 @@ def _ensure_jansen_rit_loaded() -> Any:
         _jl.include(str(jl_path))
         _JANSEN_RIT_LOADED = True
     return _jl.JansenRitAccel
+
+
+def _ensure_ermentrout_kopell_pop_loaded() -> Any:
+    """Include the maintained MPR kernel on first use; return its module."""
+    global _ERMENTROUT_KOPELL_POP_LOADED
+    if _jl is None:
+        raise ImportError("juliacall not available; install the `julia` extra")
+    if not _ERMENTROUT_KOPELL_POP_LOADED:
+        jl_path = _KERNEL_DIR / "ermentrout_kopell_pop.jl"
+        if not jl_path.is_file():
+            raise FileNotFoundError(f"ermentrout_kopell_pop.jl missing at {jl_path}")
+        _jl.include(str(jl_path))
+        _ERMENTROUT_KOPELL_POP_LOADED = True
+    return _jl.ErmentroutKopellPopAccel
 
 
 def _ensure_wilson_cowan_loaded() -> Any:
@@ -119,6 +142,18 @@ def _as_jansen_rit_input(p_ext: npt.ArrayLike) -> npt.NDArray[np.float64]:
         raise ValueError(f"p_ext must be one-dimensional: got shape {drive.shape}")
     if not np.isfinite(drive).all():
         raise ValueError("p_ext must contain only finite values")
+    return drive
+
+
+def _as_ermentrout_kopell_pop_input(
+    ext_input: npt.ArrayLike,
+) -> npt.NDArray[np.float64]:
+    """Convert the MPR drive into a finite one-dimensional vector."""
+    drive = np.ascontiguousarray(ext_input, dtype=np.float64)
+    if drive.ndim != 1:
+        raise ValueError(f"ext_input must be one-dimensional: got shape {drive.shape}")
+    if not np.isfinite(drive).all():
+        raise ValueError("ext_input must contain only finite values")
     return drive
 
 
@@ -282,6 +317,78 @@ def simulate_jansen_rit(
     for key, final in zip(keys[:6], finals, strict=True):
         result[f"{key}_final"] = float(final)
     return result
+
+
+def simulate_ermentrout_kopell_pop(
+    r_init: float,
+    v_init: float,
+    tau: float,
+    delta: float,
+    eta_bar: float,
+    coupling: float,
+    dt: float,
+    ext_input: npt.ArrayLike,
+) -> dict[str, npt.NDArray[np.float64] | float]:
+    """Run the Julia implementation of the complete MPR recurrence.
+
+    Parameters
+    ----------
+    r_init, v_init : float
+        Initial population firing rate and mean membrane potential.
+    tau, delta, eta_bar, coupling, dt : float
+        Complete MPR configuration and explicit-Euler step.
+    ext_input : ArrayLike
+        One finite external drive value per step.
+
+    Returns
+    -------
+    dict[str, numpy.ndarray | float]
+        Post-update ``r`` and ``v`` traces plus both final-state receipts.
+
+    Raises
+    ------
+    ImportError
+        If the Julia bridge is unavailable.
+    FileNotFoundError
+        If the maintained MPR Julia kernel is absent.
+    ValueError
+        If the drive, configuration, or caller-owned buffers violate the
+        maintained contract.
+    FloatingPointError
+        If a finite valid-entry recurrence produces an invalid candidate state.
+    """
+    drive = _as_ermentrout_kopell_pop_input(ext_input)
+    module = _ensure_ermentrout_kopell_pop_loaded()
+    r_out = np.empty(drive.size, dtype=np.float64)
+    v_out = np.empty(drive.size, dtype=np.float64)
+    try:
+        r_final, v_final = module.simulate_ermentrout_kopell_pop_b(
+            r_init,
+            v_init,
+            tau,
+            delta,
+            eta_bar,
+            coupling,
+            dt,
+            drive,
+            r_out,
+            v_out,
+        )
+    except Exception as exc:
+        if not is_julia_error(exc):
+            raise
+        julia_exception = getattr(exc, "exception", None)
+        if module.is_configuration_error(julia_exception):
+            raise ValueError(str(exc)) from exc
+        if module.is_candidate_error(julia_exception):
+            raise FloatingPointError(str(exc)) from exc
+        raise
+    return {
+        "r": r_out,
+        "v": v_out,
+        "r_final": float(r_final),
+        "v_final": float(v_final),
+    }
 
 
 def simulate_wilson_cowan(
