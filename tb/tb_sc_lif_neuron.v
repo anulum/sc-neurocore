@@ -101,4 +101,3 @@ module tb_sc_lif_neuron;
     end
 
 endmodule
-`
