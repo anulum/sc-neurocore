@@ -88,3 +88,21 @@ class TestPopcountNumpy:
     def test_empty(self):
         packed = np.array([], dtype=np.uint64)
         assert v3.popcount_numpy(packed) == 0
+
+
+class TestPopcountRoutesNumpyZeroCopy:
+    """``popcount`` takes the zero-copy numpy path yet stays result-identical (KR-4)."""
+
+    def test_numpy_matches_popcount_numpy(self):
+        packed = np.array([0xFFFFFFFFFFFFFFFF, 0x0F0F0F0F0F0F0F0F], dtype=np.uint64)
+        assert v3.popcount(packed) == v3.popcount_numpy(packed) == 96
+
+    def test_numpy_matches_list_variant(self):
+        """The fast numpy path and the list-extract path agree on a large bitstream."""
+        rng = np.random.RandomState(7)
+        bits = rng.randint(0, 2, 10000).astype(np.uint8)
+        packed = v3.pack_bitstream_numpy(bits)
+        assert v3.popcount(packed) == v3.popcount(packed.tolist()) == int(bits.sum())
+
+    def test_numpy_empty(self):
+        assert v3.popcount(np.array([], dtype=np.uint64)) == 0

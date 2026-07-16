@@ -1123,6 +1123,14 @@ fn unpack_bitstream(
 
 #[pyfunction]
 fn popcount(packed: &Bound<'_, PyAny>) -> PyResult<u64> {
+    // Zero-copy fast path: a 1-D numpy uint64 array borrows its buffer straight into the
+    // SIMD dispatch instead of deep-copying every word into a Vec, as the `extract::<Vec…>`
+    // paths below do. External review (KR-4) flagged that path as a large-array footgun;
+    // this mirrors `popcount_numpy` so `popcount(np.ndarray)` no longer copies.
+    if let Ok(array) = packed.extract::<PyReadonlyArray1<'_, u64>>() {
+        return Ok(simd::popcount_dispatch(array.as_slice()?));
+    }
+
     if let Ok(rows) = packed.extract::<Vec<Vec<u64>>>() {
         return Ok(rows
             .iter()
