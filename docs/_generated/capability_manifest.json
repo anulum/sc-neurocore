@@ -971,7 +971,7 @@
     "python_model_classes": 158,
     "python_model_source_modules": 153,
     "rust_pyo3_model_wrappers": 175,
-    "test_files": 1373
+    "test_files": 1375
   },
   "documentation": {
     "public_pages": [
@@ -2858,6 +2858,7 @@
       "tests/equivalence/test_neuron_equiv.py",
       "tests/module_reload.py",
       "tests/performance_guard.py",
+      "tests/reload_guard.py",
       "tests/studio_job_tasks.py",
       "tests/studio_jobs_support.py",
       "tests/studio_policy_support.py",
@@ -3826,6 +3827,7 @@
       "tests/test_reference_wong_wang.py",
       "tests/test_registry.py",
       "tests/test_release_surface_consistency.py",
+      "tests/test_reload_identity_guard.py",
       "tests/test_reservoir.py",
       "tests/test_residual.py",
       "tests/test_resilience.py",

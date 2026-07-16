@@ -19,6 +19,8 @@ import numpy as np
 import pytest
 from filelock import FileLock
 
+from tests.reload_guard import restore_first_party_reloads
+
 _REPO_ROOT = Path(__file__).resolve().parents[1]
 _CARGO_LIB_LOCK = _REPO_ROOT / "engine" / "target" / ".cargo-lib-test.lock"
 
@@ -88,3 +90,17 @@ def seed_random() -> Iterator[None]:
     """Seed numpy RNG before every test for deterministic results."""
     np.random.seed(42)
     yield
+
+
+@pytest.fixture(autouse=True)
+def restore_first_party_module_identity() -> Iterator[None]:
+    """Restore any first-party module reloaded during a test to its original identities.
+
+    ``importlib.reload`` of an ``sc_neurocore`` module rebinds its classes to fresh objects; a
+    test that forgets to restore them leaks those identities to whichever later test lands in
+    the same worker, which passes under ``-n auto --dist loadfile`` but fails a serial run
+    deterministically. This guard makes the whole reload-without-restore class a no-op — see
+    :mod:`tests.reload_guard`.
+    """
+    with restore_first_party_reloads():
+        yield
