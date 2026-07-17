@@ -122,10 +122,17 @@ _BLOCKED_NAMES = {
 }
 """Identifier and attribute names rejected regardless of AST position."""
 
-EVAL_GLOBALS = {
-    "__builtins__": {"__import__": __import__},
+EVAL_GLOBALS: dict[str, dict[str, object]] = {
+    "__builtins__": {},
 }
-"""Globals for the compiled-expression ``eval`` sites: an empty builtins sandbox."""
+"""Globals for the compiled-expression ``eval`` sites: a truly empty builtins sandbox.
+
+``__builtins__`` is the empty dict, so ``__import__``/``eval``/``exec`` and every
+other builtin are absent from the eval namespace entirely — a compiled expression
+cannot reach them even if the AST name-block were somehow bypassed. This makes the
+empty sandbox the primary control and the :data:`_BLOCKED_NAMES` allowlist a
+defence-in-depth backup, rather than the sole barrier.
+"""
 
 
 class ExpressionSafetyValidator:
