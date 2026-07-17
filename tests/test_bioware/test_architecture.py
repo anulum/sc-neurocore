@@ -164,7 +164,8 @@ def test_ci_enforces_exact_bioware_coverage_on_python_312() -> None:
         "- name: Upload test results", maxsplit=1
     )[0]
 
-    assert "if: matrix.python-version == '3.12'" in step
+    # Gated on the `primary` matrix flag (the exact-patch 3.12 leg).
+    assert "if: matrix.primary" in step
     assert "COVERAGE_FILE=.coverage-bioware" in step
     assert "--rcfile=/dev/null --branch" in step
     assert "--include='src/sc_neurocore/bioware/*.py'" in step

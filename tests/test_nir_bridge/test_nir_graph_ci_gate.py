@@ -23,7 +23,9 @@ def test_ci_enforces_exact_neuron_graph_coverage_on_python_312() -> None:
         "- name: Upload test results", maxsplit=1
     )[0]
 
-    assert "if: matrix.python-version == '3.12'" in step
+    # The coverage leg is gated on the `primary` matrix flag (the single leg
+    # that also runs the aggregate --cov), which is the exact-patch 3.12 entry.
+    assert "if: matrix.primary" in step
     assert "COVERAGE_FILE=.coverage-nir-graph" in step
     assert "--rcfile=/dev/null --branch" in step
     assert "--include='src/sc_neurocore/nir_bridge/neuron_graph*.py'" in step

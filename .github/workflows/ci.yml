@@ -14,34 +14,18 @@ permissions:
 on:
   workflow_dispatch:
   push:
+    # No push.paths filter (run-always). A restrictive path filter previously
+    # let benchmark-, asset- or config-only commits skip the test gate entirely:
+    # a false-green masking hole where a bench-evidence-only fix could not
+    # satisfy its own completed-green by push alone and needed a manual
+    # workflow_dispatch to exercise the matrix. Running the full CI on every
+    # push to a non-dependabot branch is the honest default. Dependabot branches
+    # are excluded here; their PRs still run CI via pull_request below.
     branches-ignore:
       - "dependabot/**"
-    # Path filter kept for direct-to-branch pushes to save CI minutes on
-    # docs-only or asset-only commits. Pull requests are NOT filtered
-    # (see below) so the required status checks in branch protection
-    # always report a concrete SUCCESS / FAILURE.
-    paths:
-      - ".github/workflows/**"
-      - "bridge/**"
-      - "crates/**"
-      - "engine/**"
-      - "src/**"
-      - "studio/frontend/**"
-      - "tests/**"
-      - "tools/**"
-      - "docs/_generated/**"
-      - "docs/internal/capability_manifest_adoption.md"
-      - "hdl/**"
-      - "Cargo.toml"
-      - "README.md"
-      - "mkdocs.yml"
-      - "pyproject.toml"
-      - "requirements/**"
-  # Pull requests run CI unconditionally. Branch protection requires
-  # these status checks (`lint`, `frontend`, `test (3.10-3.14)`,
-  # `test-training`, `spdx-guard`, `pre-commit`, `build`) to report SUCCESS before
-  # merge — a path filter here would leave frontend-only / deps-only
-  # PRs with eternally "pending" contexts and permanently unmergeable.
+  # Pull requests run CI unconditionally so the branch-protection required
+  # status checks (`lint`, `test (3.10-3.14)`, `spdx-guard`, `pre-commit`)
+  # always report a concrete SUCCESS / FAILURE and never sit "pending".
   pull_request:
 
 concurrency:
@@ -60,7 +44,7 @@ jobs:
 
       - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
         with:
-          python-version: "3.12"
+          python-version: "3.12.13"
           cache: pip
 
       - name: Install tools
@@ -102,7 +86,7 @@ jobs:
 
       - uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6
         with:
-          node-version: "22"
+          node-version: "22.23.1"
           cache: npm
           cache-dependency-path: studio/frontend/package-lock.json
 
@@ -127,6 +111,7 @@ jobs:
         run: npm run test:e2e
 
   test:
+    name: test (${{ matrix.python-minor }})
     runs-on: ubuntu-latest
     # Fail-fast backstop for a hung leg. The 3.12 leg alone runs the full suite
     # under --cov (the coverage tracer roughly doubles wall-clock: ~82 min vs
@@ -137,15 +122,39 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python-version: ["3.10", "3.11", "3.12", "3.13", "3.14"]
+        # Exact interpreter patch pins shrink the setup-python mutable-manifest
+        # surface (actions/python-versions is fetched at runtime with no
+        # per-artifact digest — accepted + tracked residual, see
+        # docs/internal/ci_supply_chain_residuals.md). `python-minor` keeps the
+        # branch-protection-required job names `test (3.10)`..`test (3.14)`
+        # stable across patch bumps (via the job `name:` above); `primary` flags
+        # the single leg that runs coverage + the exact-coverage gates.
+        include:
+          - python-minor: "3.10"
+            python-version: "3.10.20"
+          - python-minor: "3.11"
+            python-version: "3.11.15"
+          - python-minor: "3.12"
+            python-version: "3.12.13"
+            primary: true
+          - python-minor: "3.13"
+            python-version: "3.13.14"
+          - python-minor: "3.14"
+            python-version: "3.14.6"
     steps:
       - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
 
-      - uses: dtolnay/rust-toolchain@631a55b12751854ce901bb631d5902ceb48146f7 # stable
+      - uses: dtolnay/rust-toolchain@631a55b12751854ce901bb631d5902ceb48146f7 # 1.97.1
+        with:
+          toolchain: "1.97.1"
 
       - uses: Swatinem/rust-cache@c19371144df3bb44fab255c43d04cbc2ab54d1c4 # v2.9.1
         with:
           workspaces: engine
+          # Repo- and lockfile-bound cache key so a poisoned cross-repo cache
+          # cannot be restored into this workspace (Swatinem/rust-cache already
+          # scopes by lockfile; github.repository makes the binding explicit).
+          key: ${{ github.repository }}-${{ hashFiles('**/Cargo.lock') }}
 
       - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
         with:
@@ -168,6 +177,11 @@ jobs:
       # keeping the CI Python primary. TIER 0: real Mojo builds, not skips.
       - uses: prefix-dev/setup-pixi@a09b6247153796b190642a2b53fac4241043cf6f # v0.10.0
         with:
+          # Pin the pixi executable to an exact release (the default `latest`
+          # downloads/executes a moving target). Residual: the pinned release is
+          # still fetched from the official prefix-dev endpoint without a
+          # per-artifact digest — accepted + tracked (ci_supply_chain_residuals).
+          pixi-version: v0.73.0
           manifest-path: src/sc_neurocore/accel/mojo/pixi.toml
 
       - name: Expose mojo without shadowing the CI Python
@@ -181,12 +195,26 @@ jobs:
 
       - name: Install HDL simulator
         run: |
+          set -euo pipefail
           sudo apt-get update -qq
           sudo apt-get install -y -qq cvc5 git iverilog make verilator yosys
           python -m pip install --require-hashes -r requirements/sby.txt
-          curl -fsSL --retry 3 --retry-delay 2 --retry-all-errors https://github.com/YosysHQ/sby/archive/0cb15210a857e4d20030484b37a6b9b6386bd01d.tar.gz -o /tmp/sby.tar.gz
-          mkdir -p /tmp/sby
-          tar -xzf /tmp/sby.tar.gz -C /tmp/sby --strip-components=1
+          # Build SBY from a PINNED SOURCE COMMIT, not an unverified release
+          # archive. The GitHub-generated tarball carried no upstream
+          # checksum/signature and no tag points at the exact commit, so a
+          # curl|tar|make of it was an unverified fetch-execute. Instead git
+          # fetches exactly this commit object and we assert HEAD == the pin:
+          # the installed source is content-addressed by the git object model and
+          # the step fails closed (set -e + explicit test) on any mismatch.
+          SBY_COMMIT=0cb15210a857e4d20030484b37a6b9b6386bd01d
+          git init -q /tmp/sby
+          git -C /tmp/sby remote add origin https://github.com/YosysHQ/sby
+          for attempt in 1 2 3; do
+            git -C /tmp/sby fetch -q --depth 1 origin "$SBY_COMMIT" && break
+            sleep 2
+          done
+          git -C /tmp/sby checkout -q --detach "$SBY_COMMIT"
+          test "$(git -C /tmp/sby rev-parse HEAD)" = "$SBY_COMMIT"
           sudo make -C /tmp/sby install PREFIX=/usr/local
           sby --version
 
@@ -254,7 +282,7 @@ jobs:
       - name: Test + coverage
         shell: bash
         run: |
-          if [[ "${{ matrix.python-version }}" == "3.12" ]]; then
+          if [[ "${{ matrix.primary }}" == "true" ]]; then
             pytest -n auto --dist loadfile tests/ -q \
               --cov=sc_neurocore \
               --cov-report=term-missing \
@@ -268,7 +296,7 @@ jobs:
           fi
 
       - name: NIR graph exact coverage
-        if: matrix.python-version == '3.12'
+        if: matrix.primary
         shell: bash
         run: |
           COVERAGE_FILE=.coverage-nir-graph python -m coverage run \
@@ -281,7 +309,7 @@ jobs:
             --fail-under=100 --show-missing
 
       - name: Bioware exact coverage
-        if: matrix.python-version == '3.12'
+        if: matrix.primary
         shell: bash
         run: |
           COVERAGE_FILE=.coverage-bioware python -m coverage run \
@@ -294,7 +322,7 @@ jobs:
             --fail-under=100 --show-missing
 
       - name: Autonomous-learning bridge exact coverage
-        if: matrix.python-version == '3.12'
+        if: matrix.primary
         shell: bash
         run: |
           COVERAGE_FILE=.coverage-learning python -m coverage run \
@@ -307,7 +335,7 @@ jobs:
             --fail-under=100 --show-missing
 
       - name: Hierarchical partitioner exact coverage
-        if: matrix.python-version == '3.12'
+        if: matrix.primary
         shell: bash
         run: |
           COVERAGE_FILE=.coverage-hierarchical-partitioner python -m coverage run \
@@ -320,7 +348,7 @@ jobs:
             --fail-under=100 --show-missing
 
       - name: Studio policy exact coverage
-        if: matrix.python-version == '3.12'
+        if: matrix.primary
         shell: bash
         run: |
           COVERAGE_FILE=.coverage-studio-policy python -m coverage run \
@@ -333,7 +361,7 @@ jobs:
             --fail-under=100 --show-missing
 
       - name: Studio jobs exact coverage
-        if: matrix.python-version == '3.12'
+        if: matrix.primary
         shell: bash
         run: |
           COVERAGE_FILE=.coverage-studio-jobs python -m coverage run \
@@ -349,11 +377,11 @@ jobs:
         if: always()
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         with:
-          name: test-results-py${{ matrix.python-version }}
+          name: test-results-py${{ matrix.python-minor }}
           path: test-results.xml
 
       - name: Upload coverage report
-        if: matrix.python-version == '3.12'
+        if: matrix.primary
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         with:
           name: coverage-report
@@ -366,14 +394,18 @@ jobs:
 
       - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
         with:
-          python-version: "3.12"
+          python-version: "3.12.13"
           cache: pip
 
-      - uses: dtolnay/rust-toolchain@631a55b12751854ce901bb631d5902ceb48146f7 # stable
+      - uses: dtolnay/rust-toolchain@631a55b12751854ce901bb631d5902ceb48146f7 # 1.97.1
+        with:
+          toolchain: "1.97.1"
 
       - uses: Swatinem/rust-cache@c19371144df3bb44fab255c43d04cbc2ab54d1c4 # v2.9.1
         with:
           workspaces: crates/autonomous_learning
+          # Repo- and lockfile-bound cache key (see the engine workspace note).
+          key: ${{ github.repository }}-${{ hashFiles('**/Cargo.lock') }}
 
       - name: Install with training extras
         run: python tools/ci_install_dev.py
@@ -396,7 +428,7 @@ jobs:
 
       - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
         with:
-          python-version: "3.12"
+          python-version: "3.12.13"
           cache: pip
 
       - name: Editable install (local package, no deps)
@@ -448,7 +480,7 @@ jobs:
 
       - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
         with:
-          python-version: "3.12"
+          python-version: "3.12.13"
           cache: pip
 
       - name: Install system packages
@@ -480,15 +512,21 @@ jobs:
     steps:
       - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
 
-      - uses: dtolnay/rust-toolchain@631a55b12751854ce901bb631d5902ceb48146f7 # stable
+      - uses: dtolnay/rust-toolchain@631a55b12751854ce901bb631d5902ceb48146f7 # 1.97.1
+        with:
+          toolchain: "1.97.1"
 
       - uses: Swatinem/rust-cache@c19371144df3bb44fab255c43d04cbc2ab54d1c4 # v2.9.1
         with:
           workspaces: engine
+          # Repo- and lockfile-bound cache key so a poisoned cross-repo cache
+          # cannot be restored into this workspace (Swatinem/rust-cache already
+          # scopes by lockfile; github.repository makes the binding explicit).
+          key: ${{ github.repository }}-${{ hashFiles('**/Cargo.lock') }}
 
       - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
         with:
-          python-version: "3.12"
+          python-version: "3.12.13"
 
       - run: pip install --require-hashes -r requirements/build.txt -r requirements/maturin.txt
 

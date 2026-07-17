@@ -7,5 +7,10 @@
 # SC-NeuroCore — Source/config provenance header
 
 [toolchain]
-channel = "stable"
+# Exact toolchain pin (not the mutable "stable" channel) so the compiler is
+# deterministic and matches the exact `toolchain:` pinned in .github/workflows/ci.yml.
+# Bump both together. Residual: rustup still resolves this version from the
+# official mutable dist channel without a per-artifact digest — accepted + tracked
+# in docs/internal/ci_supply_chain_residuals.md.
+channel = "1.97.1"
 components = ["rustfmt", "clippy"]
