@@ -87,7 +87,9 @@ def test_manifest_lightweight_commands_match_runner_contract() -> None:
     assert "--cache-dir security/ruff-cache" in manifest_by_name["ruff"]
     assert "src tools tests" in manifest_by_name["ruff"]
 
-    assert manifest_by_name["bandit"].startswith("bandit -q -r src/sc_neurocore tools")
+    assert manifest_by_name["bandit"].startswith(
+        "bandit -q -c pyproject.toml -r src/sc_neurocore tools"
+    )
     assert "src/sc_neurocore/accel/mojo/.pixi" in manifest_by_name["bandit"]
     assert "security/bandit.json" in manifest_by_name["bandit"]
 

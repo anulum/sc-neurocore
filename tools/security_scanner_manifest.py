@@ -287,7 +287,7 @@ _MANDATORY_SCANNERS = (
         cadence="on-push",
         blocking_policy="blocking",
         command=(
-            "bandit -q -r src/sc_neurocore tools "
+            "bandit -q -c pyproject.toml -r src/sc_neurocore tools "
             "-x src/sc_neurocore/accel/mojo/.pixi "
             "--severity-level medium --format json --output security/bandit.json"
         ),

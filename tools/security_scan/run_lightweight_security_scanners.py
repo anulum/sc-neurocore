@@ -122,10 +122,16 @@ def run_lightweight_scanners(
     )
 
     bandit_output = security_dir / "bandit.json"
+    # Honour the repository's reviewed bandit policy (pyproject.toml [tool.bandit]
+    # skips), identical to the preflight bandit gate. Without it the scanner uses
+    # bandit's default policy and re-flags already-reviewed controlled patterns
+    # (e.g. B307 eval of pre-compiled neuron equations), yielding a false red.
     bandit = _run(
         [
             "bandit",
             "-q",
+            "-c",
+            "pyproject.toml",
             "-r",
             "src/sc_neurocore",
             "tools",
