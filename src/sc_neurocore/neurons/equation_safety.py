@@ -198,9 +198,7 @@ class ExpressionSafetyValidator:
                     isinstance(inner, ast.BinOp) and isinstance(inner.op, ast.Pow)
                     for inner in ast.walk(exponent)
                 ):
-                    raise ValueError(
-                        f"Nested exponentiation blocked (eval blow-up risk): {expr!r}"
-                    )
+                    raise ValueError(f"Nested exponentiation blocked (eval blow-up risk): {expr!r}")
 
     @staticmethod
     def _ast_depth(node: ast.AST) -> int:

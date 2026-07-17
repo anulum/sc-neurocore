@@ -3320,7 +3320,7 @@
         "results.learning-modular.canonical_sha256": "020da9895ff4d7f1150fd7159c30e7c476afe9ff46c6d652bf0ad73fa6cf309d",
         "schema_version": "sc-neurocore.learning-bridge-modularisation-benchmark.v1",
         "source_file_count": 16,
-        "source_sha256": "646bbdc37682325962761312c5a096275692693ab174fac407cf1aa71b94240d"
+        "source_sha256": "07028f5a86a1a0e4b822f6542b6eeabe2ebc6db9b87e30ee585aa40465cae605"
       },
       "id": "autonomous-learning-modularisation-local-diagnostics",
       "parity_groups": [
