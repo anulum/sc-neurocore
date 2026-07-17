@@ -329,9 +329,9 @@
     },
     "src/sc_neurocore/accel/rust/safety/ermentrout_kopell_pop.rs": "0337e66f2577841e425d23e1678eebe6b82adb4c830a437dff4e1c62f86b7754",
     "src/sc_neurocore/neurons/model_descriptors/ErmentroutKopellPopulation": {
-      "toml": "fbbfa81e3ca82fe9094ac9bcd667acb48953a2c9e233f62e43d966f6f7388983"
+      "toml": "150c37fed103e0c8cd76f9c19251447655bd39677dd68efb75ec53d1fe1f576b"
     },
-    "src/sc_neurocore/neurons/model_descriptors/ErmentroutKopellPopulation.toml": "fbbfa81e3ca82fe9094ac9bcd667acb48953a2c9e233f62e43d966f6f7388983",
+    "src/sc_neurocore/neurons/model_descriptors/ErmentroutKopellPopulation.toml": "150c37fed103e0c8cd76f9c19251447655bd39677dd68efb75ec53d1fe1f576b",
     "src/sc_neurocore/neurons/model_schemas/ermentrout_kopell_pop": {
       "json": "33bdd1bdaa8e05859ee3f92e60bb06fc298b431cfffd361231b4a182d4807153",
       "toml": "7213b12aea906f4ef91c780bfb3ce80e6c05a9df055f6c2f2ccc168ccab6c8bf"
