@@ -22,6 +22,28 @@ from sc_neurocore.chiplet import (
 )
 from tests.test_chiplet.hierarchical_partitioner_support import build_graph as _build_graph
 
+_TIMING_REPEATS = 5
+
+
+def _min_partition_ms(n_vertices: int) -> float:
+    """Return the minimum ``HierarchicalPartitioner.partition`` wall-clock in ms.
+
+    The minimum over ``_TIMING_REPEATS`` runs is the sample least contaminated by
+    shared-runner preemption, so a single noisy-neighbour spike cannot inflate a
+    wall-clock timing assertion, while a genuine super-linear regression still
+    shows in every repeat and is caught. A warm-up run first pays the one-time
+    process/JIT cost so only steady-state partition compute is measured.
+    """
+    partitioner = HierarchicalPartitioner(num_partitions=4)
+    partitioner.partition(_build_graph(50, seed=7))  # warm process / JIT / imports
+    best_ms = float("inf")
+    for _ in range(_TIMING_REPEATS):
+        graph = _build_graph(n_vertices, avg_degree=8, seed=42)
+        start = time.perf_counter()
+        partitioner.partition(graph)
+        best_ms = min(best_ms, (time.perf_counter() - start) * 1000.0)
+    return best_ms
+
 
 def test_historical_flat_buffer_wrappers_cover_invalid_partition_ids() -> None:
     """The historical private ABI wrappers retain their filtering contract."""
@@ -177,38 +199,30 @@ class TestPartitionScalingIsLinearish:
     def test_v200_finishes_under_one_second(self) -> None:
         # Pre-fix this took ~700 ms on the dev box; post-fix ~30 ms.
         # 1 s is a generous CI margin (covers slow shared runners).
-        hp = HierarchicalPartitioner(num_partitions=4)
-        g = _build_graph(200, avg_degree=8, seed=42)
-        t0 = time.perf_counter()
-        hp.partition(g)
-        elapsed_ms = (time.perf_counter() - t0) * 1000.0
-        assert elapsed_ms < 1000.0, (
-            f"V=200 partition took {elapsed_ms:.1f} ms — perf fix #65 "
-            "may have regressed (expected < 1 s, was ~700 ms before fix)"
+        # The minimum over repeats is the sample least contaminated by
+        # shared-runner preemption, so a single noisy-neighbour spike cannot
+        # produce a false failure (a spike once pushed this to ~964 ms).
+        best_ms = _min_partition_ms(200)
+        assert best_ms < 1000.0, (
+            f"V=200 partition min over {_TIMING_REPEATS} runs took {best_ms:.1f} ms — "
+            "perf fix #65 may have regressed (expected < 1 s, was ~700 ms before fix)"
         )
 
     def test_scaling_better_than_quadratic(self) -> None:
         """Doubling V should not cause >5× wall-clock increase."""
-        hp = HierarchicalPartitioner(num_partitions=4)
-        # Warm any caches first — the first call always pays init cost.
-        g_warm = _build_graph(50, seed=7)
-        hp.partition(g_warm)
-
-        def time_partition(n: int) -> float:
-            g = _build_graph(n, avg_degree=8, seed=42)
-            t0 = time.perf_counter()
-            hp.partition(g)
-            return (time.perf_counter() - t0) * 1000.0
-
-        t100 = time_partition(100)
-        t200 = time_partition(200)
+        t100 = _min_partition_ms(100)
+        t200 = _min_partition_ms(200)
         # Pre-fix ratio was ~3.6× for V doubling. Quadratic would be 4×.
         # Cubic O(V²·E) gave the actual measured ratio of ~3.6× because
         # E grows linearly with V at fixed degree. We require strictly
-        # better than 5× to leave headroom for noise on slow runners.
+        # better than 5× to leave headroom for noise on slow runners. Each
+        # measurement is a minimum over repeats, so a single scheduling spike
+        # (which once produced a 154× false failure on a green base) can no
+        # longer inflate the ratio; a genuine super-linear regression still
+        # shows in every repeat and is caught.
         ratio = t200 / max(t100, 0.5)  # avoid div-by-zero on very fast hosts
         assert ratio < 5.0, (
             f"V doubling caused {ratio:.1f}× wall-clock increase "
-            f"(t100={t100:.1f} ms → t200={t200:.1f} ms); the #65 fix "
+            f"(min t100={t100:.1f} ms → min t200={t200:.1f} ms); the #65 fix "
             "should keep this near-linear"
         )
