@@ -255,10 +255,10 @@
     }
   ],
   "source_hashes": {
-    "benchmarks/bench_model_martinotti_neuron.py": "b1d32bb47304b1d22ffeea103d0c812d2a321929281f5e3833737ca386c99f3e",
-    "engine/Cargo.toml": "9c26bb3c7babf47d7ee71e22133053b9b95e2d122873e515710dae77ac98a36f",
+    "benchmarks/bench_model_martinotti_neuron.py": "46334243b2e3b5c03e23a5de88c9cc2a170852b567ae302f3708b34489fdb4a9",
+    "engine/Cargo.toml": "f865140d1217dbb82acb4de0c7eb44ae0f148b6a0354d9a123b6eaaf40101454",
     "engine/examples/bench_martinotti_neuron_rk4.rs": "abd0fad38ce939943133d3eacd6812522480cdb9cdb9d15250cb55108f142211",
-    "engine/src/neurons/interneurons.rs": "bce84b3bf217b9352d28ef6e16871a2359fdde5119ef74ef3608bb8c9299a9b1",
+    "engine/src/neurons/interneurons.rs": "0acd161325ff9bf35d0379df8cbd5a72402fc7fd330a0eec7bbdf1b0b6a6a093",
     "src/sc_neurocore/neurons/models/martinotti_neuron.py": "eb9dc7bebca43a6dd7c827b0c75ff82141ab32a5014eebebe3d7bc75192571bb",
     "src/sc_neurocore/accel/go/services/martinotti_neuron.go": "7f8d2f699bec27b7c35f8cbaf673932f344d141b3274ddaf1964d5da56251de6",
     "src/sc_neurocore/accel/go/services/martinotti_neuron_test.go": "7d0c645fda44b5ddc9f7bb148c40fb87b0228ef3fb104231f92c65dd9692e9ae",

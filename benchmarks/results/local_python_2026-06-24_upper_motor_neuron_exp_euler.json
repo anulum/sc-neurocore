@@ -255,11 +255,11 @@
     }
   ],
   "source_hashes": {
-    "benchmarks/bench_model_upper_motor_neuron.py": "b800c85a99b51a396c8667c0628260a8c534b00e55fa1d9dbdb2f8d8d13ea579",
-    "engine/Cargo.toml": "68cde8723028edceba308383934dae0f2ada2befe629cf74f4b0611e1800961a",
+    "benchmarks/bench_model_upper_motor_neuron.py": "81a6fc5bdd9dc68f8640100b1ac21299537a448b35ae4e44323c566456697007",
+    "engine/Cargo.toml": "f865140d1217dbb82acb4de0c7eb44ae0f148b6a0354d9a123b6eaaf40101454",
     "engine/examples/bench_upper_motor_neuron_exp_euler.rs": "43fd42567cf57dc7cb3a1c9cadb6b542b0353c8f14bcbd538dc5f6c3b1c7e401",
     "engine/src/neurons/motor.rs": "403eb33b5745adc0a7e7a6ff6e7460cf581c099fdfdec4e496743452edc5c828",
-    "src/sc_neurocore/neurons/models/upper_motor_neuron.py": "f31bfb8de6bfa893dbe52aad34170830b498db42c6cdb3e89fcfcc9bb5e3f84a",
+    "src/sc_neurocore/neurons/models/upper_motor_neuron.py": "24c0eff5c84d86a0a20668df4902d0eb8f9d48b7af66b0aaa39f2a49c79d466a",
     "src/sc_neurocore/accel/go/services/upper_motor_neuron.go": "6e0d51749b436755c46b14e7acf46dc0bb246bd1a19ee6a52e8c5f6dbbcba406",
     "src/sc_neurocore/accel/go/services/upper_motor_neuron_test.go": "005ecfa7d8d54e329750a4a8deb0e6dd5d3b4400829f750646d83b5b8fc80b8e",
     "src/sc_neurocore/accel/julia/neurons/upper_motor_neuron.jl": "102179b7f621acf0b8a37a3a9d8ffff5fefc4b2e65f80165789cbf6e1e73b793",

@@ -96,13 +96,13 @@
     },
     "benchmarks/bench_cazelles_map.py": "c9b2f2e410d3e402efb71b4972dadd17662227a6da2a9b270169effc7327bf96",
     "engine/src/lib": {
-      "rs": "2ff46fde73954a8fceb51bc8d8457a6acf70fb788297c1c6bfe367c81b8a9f5f"
+      "rs": "1994799708483d8d20d4eb6079873d1ee81e37fede08de0a6acb15e298bfb0e9"
     },
-    "engine/src/lib.rs": "2ff46fde73954a8fceb51bc8d8457a6acf70fb788297c1c6bfe367c81b8a9f5f",
+    "engine/src/lib.rs": "1994799708483d8d20d4eb6079873d1ee81e37fede08de0a6acb15e298bfb0e9",
     "engine/src/neurons/maps": {
-      "rs": "e2f9d1d6d9d460373ba83bb6b71f5765b934d1ff13859ba0a79fe18c405f78d4"
+      "rs": "dac37998dc471fc9f3f3d9288b72a3d18ed9c93881cbdfd9b50442ffd9231483"
     },
-    "engine/src/neurons/maps.rs": "e2f9d1d6d9d460373ba83bb6b71f5765b934d1ff13859ba0a79fe18c405f78d4",
+    "engine/src/neurons/maps.rs": "dac37998dc471fc9f3f3d9288b72a3d18ed9c93881cbdfd9b50442ffd9231483",
     "src/sc_neurocore/accel/go/neurons/cazelles_map/cazelles_map": {
       "go": "edf95baa85c18aeade3e186e6cb11b73e04adc97a8c160fa1144ee41885cbdd5"
     },

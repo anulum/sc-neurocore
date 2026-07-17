@@ -274,11 +274,11 @@
     }
   ],
   "source_hashes": {
-    "benchmarks/bench_model_multicompartment_mcn.py": "4c2ff0c4fb47938218ae7e38afa5680dd02fc891e64869433e4d49a0d0d021a7",
-    "engine/Cargo.toml": "497ca1396cd117ac752ca9f59fd55ba9df7dd451b76405211394fac8c58f0f5b",
+    "benchmarks/bench_model_multicompartment_mcn.py": "4fb5f26e863fd9fb02447822812797d1abe7c482d6cb5eda5c584619f8613f31",
+    "engine/Cargo.toml": "f865140d1217dbb82acb4de0c7eb44ae0f148b6a0354d9a123b6eaaf40101454",
     "engine/examples/bench_multicompartment_mcn_rk4.rs": "1e8c496f2cd816d0b8398045402b267a92f9b59b6be3e712bc0f4f336b69f98f",
-    "engine/src/neurons/multi_compartment.rs": "acc46ff25d880760bb1d7be795c80a203f69e1ce47780b39c1887dabf5435196",
-    "src/sc_neurocore/neurons/models/multicompartment_mcn.py": "452f5c85b71db197427e64dda2fbab6df9b456623fad856ffcb85c04ef3bf299",
+    "engine/src/neurons/multi_compartment.rs": "15cdea6c5f8fc095c4942016b2db4ea04e0bd1bb5596b10f7b03de93779d9bea",
+    "src/sc_neurocore/neurons/models/multicompartment_mcn.py": "c50f84dc732a9876f6184a837e26ae1b3629f2398f3fbec34ede175fcd844596",
     "src/sc_neurocore/accel/go/services/multicompartment_mcn.go": "9aabac2f2093a0e828f06771728a437beb67b2cd402ecbf81779e4839e79166a",
     "src/sc_neurocore/accel/go/services/multicompartment_mcn_test.go": "7c09de47b70ff65ba47b459f0fd40edaa056e3ea0ee255d1ef119e0d3cbf31da",
     "src/sc_neurocore/accel/julia/neurons/multicompartment_mcn.jl": "8e6c50a8ca1b1563be4b4dadea29289cd53af935630a40034fd0195075b4999b",

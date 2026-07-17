@@ -255,11 +255,11 @@
     }
   ],
   "source_hashes": {
-    "benchmarks/bench_model_de_schutter_purkinje.py": "3a3ad2b127255d82981200bdcf58f3d1796feadc3b1f1f3658fe68028ce25d04",
-    "engine/Cargo.toml": "21d601390455583066a26a78262ed8bfa80b19a4e5a69051f805d2a68805cf45",
+    "benchmarks/bench_model_de_schutter_purkinje.py": "21afe4f4105083887ae282ba963c88671f35130cd1d40a83bbabf8bcf7af271f",
+    "engine/Cargo.toml": "f865140d1217dbb82acb4de0c7eb44ae0f148b6a0354d9a123b6eaaf40101454",
     "engine/examples/bench_de_schutter_purkinje_rk4.rs": "ed1aee4f6224978db49bdb70bcf733c7949a34d17386708996b8478fea9d6d44",
-    "engine/src/neurons/biophysical.rs": "3eb8f0f0f9ab285a6244252ce94394d84239b41d3ccb94142d0a352125fbeb96",
-    "src/sc_neurocore/neurons/models/de_schutter_purkinje.py": "4c7912cbf0c3030807ca1959ad2665991ea00c42c69b92069876d88cba3a5f54",
+    "engine/src/neurons/biophysical.rs": "9776fe629c58d03e74d324fae5e224dd4e320e9dc26ae88e21ae75e1ca46a4bf",
+    "src/sc_neurocore/neurons/models/de_schutter_purkinje.py": "15be6f9349aad36a7792d2936f0c6de962cff6fa3ce149268a7de7491f34b9ad",
     "src/sc_neurocore/accel/go/services/de_schutter_purkinje.go": "bc199955fc51ba02c2920e53e0c3db3803386767ff579acfa9000fe296674371",
     "src/sc_neurocore/accel/go/services/de_schutter_purkinje_test.go": "daeb1476a74830f446dadfcd53c5677c387849121b484989586b751aace4f69c",
     "src/sc_neurocore/accel/julia/neurons/de_schutter_purkinje.jl": "ae0674bc3fbafc080ac2506a600137838488959a0626f84d9a11e05c567824d5",

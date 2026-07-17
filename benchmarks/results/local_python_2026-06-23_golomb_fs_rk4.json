@@ -255,10 +255,10 @@
     }
   ],
   "source_hashes": {
-    "benchmarks/bench_model_golomb_fs.py": "88d2685cb002980955192c9d07cfda362fd67401a5c904f382702ffa209e5627",
-    "engine/Cargo.toml": "dbe0f233ae4a6f0db034715675fb577d57f30ee41876c274450bc557e1e73e3d",
+    "benchmarks/bench_model_golomb_fs.py": "aff562d6583820f3258d6bc0a3ea6e8e94070a8787f42ae34660def084dc711a",
+    "engine/Cargo.toml": "f865140d1217dbb82acb4de0c7eb44ae0f148b6a0354d9a123b6eaaf40101454",
     "engine/examples/bench_golomb_fs_rk4.rs": "3021e7102bf6207d3b3568fa39c351320a867e862bf071e10be3ad7d4787313c",
-    "engine/src/neurons/biophysical.rs": "95b83ea83ad4a9d8d0dc1f9b630955cae35cf97548917342b1295e29c49999a0",
+    "engine/src/neurons/biophysical.rs": "9776fe629c58d03e74d324fae5e224dd4e320e9dc26ae88e21ae75e1ca46a4bf",
     "src/sc_neurocore/neurons/models/golomb_fs.py": "913db4992f7af1be9b2db9e78ce2d33d1ecc5c0c9f75a47eb9e5ec0d7277e5d3",
     "src/sc_neurocore/accel/go/services/golomb_fs.go": "1ee8344c78f7e3cad9c82d8a75ff7a7c3d3ca24b600b1fef3ede5ce565b536f4",
     "src/sc_neurocore/accel/go/services/golomb_fs_test.go": "d89dfa195a5b893db7afc90d1ae10a647bbbd2476c45f9a8f6dd41df6f5e74c0",

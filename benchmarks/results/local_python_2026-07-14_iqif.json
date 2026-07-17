@@ -218,9 +218,9 @@
     },
     "benchmarks/bench_model_iqif.py": "8bf68fb0397c0b4dd058f5c4e5652c92c8e057906c479f70aa727ce9c69784b6",
     "bridge/sc_neurocore_engine/__init__": {
-      "py": "94f170fb4145586709085b926ea7c9e595b251fb32d5d4d33fce06fcdfdce40d"
+      "py": "fb5bd14e81f5e82755bfef0f2583b5f62f2abcd53c19633dff524a7a82de26d5"
     },
-    "bridge/sc_neurocore_engine/__init__.py": "94f170fb4145586709085b926ea7c9e595b251fb32d5d4d33fce06fcdfdce40d",
+    "bridge/sc_neurocore_engine/__init__.py": "fb5bd14e81f5e82755bfef0f2583b5f62f2abcd53c19633dff524a7a82de26d5",
     "engine/src/lib": {
       "rs": "1994799708483d8d20d4eb6079873d1ee81e37fede08de0a6acb15e298bfb0e9"
     },
@@ -234,9 +234,9 @@
     },
     "engine/src/neurons/trivial/integer_qif.rs": "ae42b6d38209177678b36df55b4d721789a92b154644355c201cf45ce51e782e",
     "engine/src/pyo3_neurons": {
-      "rs": "9b54714e8fe171880f83bab4932912921dfbedd229d3ffe231493cf05f6ea9a4"
+      "rs": "a03b1bb41420fb7f8b4e8b7a0991493f1882444a0c888a0b2881e9287afcf2ce"
     },
-    "engine/src/pyo3_neurons.rs": "9b54714e8fe171880f83bab4932912921dfbedd229d3ffe231493cf05f6ea9a4",
+    "engine/src/pyo3_neurons.rs": "a03b1bb41420fb7f8b4e8b7a0991493f1882444a0c888a0b2881e9287afcf2ce",
     "src/sc_neurocore/accel/go/neurons/iqif/iqif": {
       "go": "aee3bb93c3d74fdfab0b62652a410896fc63bdbed0df195d244e878945a328fd"
     },

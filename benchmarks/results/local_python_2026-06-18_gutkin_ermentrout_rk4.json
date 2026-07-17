@@ -269,30 +269,30 @@
     }
   ],
   "source_hashes": {
-    "benchmarks/bench_model_gutkin_ermentrout.py": "473de963a3654f58dac619d2bd931af60360f98b92222947b475f7cd9285a967",
-    "engine/Cargo.toml": "b2378d0293e90a551db3d73bc19fefb4399d9276bc2b4fbe6700ef2b05dfa4c1",
+    "benchmarks/bench_model_gutkin_ermentrout.py": "9248fe4172650116d44c78bee68d35169fde7c463845c7b69152e74c15a218b9",
+    "engine/Cargo.toml": "f865140d1217dbb82acb4de0c7eb44ae0f148b6a0354d9a123b6eaaf40101454",
     "engine/examples/bench_gutkin_ermentrout_rk4.rs": "f9cf08248b539250407380208713e1741293b49bc4a43658edc8dde281c794bd",
-    "engine/src/neurons/simple_spiking.rs": "67a1ab9fe1241d1ff3192887f19cc56e5f76f58922fdf7e2a3ccb5e5632dce93",
-    "src/sc_neurocore/neurons/models/gutkin_ermentrout.py": "d2621abffa959c222083866f207ad8e72545c428eb868b9225656d3ac93bd690",
+    "engine/src/neurons/simple_spiking.rs": "851b06ce4b74bdaebe6c7f41439e0273d31a71149e4bb5fe115ea18db7ae8603",
+    "src/sc_neurocore/neurons/models/gutkin_ermentrout.py": "3ef8cbbd876f80e80396ce0a3f498fd67b387dd06fd599c1d590599bee5c2b9f",
     "src/sc_neurocore/accel/go/services/gutkin_ermentrout.go": "eb600316c73f4eabca23298c360de0db6b3e416e6ea6e532b07d8e8fa05f52e9",
     "src/sc_neurocore/accel/go/services/gutkin_ermentrout_test.go": "ac4210f411c5a98a03aafc93f7d73ced73a70f6a93265e05036818649848c247",
     "src/sc_neurocore/accel/julia/neurons/gutkin_ermentrout.jl": "a916947aee44ceb1ba2e1f7f068422cac924d45217fd71541a31c49722a11837",
     "src/sc_neurocore/accel/mojo/kernels/gutkin_ermentrout.mojo": "db1e69262dea2de30621d589029692424b1a4a20d24aeb0b4a1975efde80fadb",
     "src/sc_neurocore/accel/rust/safety/gutkin_ermentrout.rs": "b2f899adffdf37eaac9df31f31e8cd97cdacdd9fc49eb25cd86c5ec2a33026f7",
     "benchmarks/bench_model_gutkin_ermentrout": {
-      "py": "473de963a3654f58dac619d2bd931af60360f98b92222947b475f7cd9285a967"
+      "py": "9248fe4172650116d44c78bee68d35169fde7c463845c7b69152e74c15a218b9"
     },
     "engine/Cargo": {
-      "toml": "b2378d0293e90a551db3d73bc19fefb4399d9276bc2b4fbe6700ef2b05dfa4c1"
+      "toml": "f865140d1217dbb82acb4de0c7eb44ae0f148b6a0354d9a123b6eaaf40101454"
     },
     "engine/examples/bench_gutkin_ermentrout_rk4": {
       "rs": "f9cf08248b539250407380208713e1741293b49bc4a43658edc8dde281c794bd"
     },
     "engine/src/neurons/simple_spiking": {
-      "rs": "67a1ab9fe1241d1ff3192887f19cc56e5f76f58922fdf7e2a3ccb5e5632dce93"
+      "rs": "851b06ce4b74bdaebe6c7f41439e0273d31a71149e4bb5fe115ea18db7ae8603"
     },
     "src/sc_neurocore/neurons/models/gutkin_ermentrout": {
-      "py": "d2621abffa959c222083866f207ad8e72545c428eb868b9225656d3ac93bd690"
+      "py": "3ef8cbbd876f80e80396ce0a3f498fd67b387dd06fd599c1d590599bee5c2b9f"
     },
     "src/sc_neurocore/accel/go/services/gutkin_ermentrout": {
       "go": "eb600316c73f4eabca23298c360de0db6b3e416e6ea6e532b07d8e8fa05f52e9"

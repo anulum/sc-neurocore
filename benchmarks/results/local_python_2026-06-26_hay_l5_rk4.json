@@ -209,15 +209,15 @@
   "python": "3.12.3",
   "repeats": 5,
   "source_hashes": {
-    "benchmarks/bench_model_hay_l5.py": "aa8871b0c7c90d835fc422e174babb86032b62aa10a17be3cbbf1541c901f0a9",
-    "engine/Cargo.toml": "4a58caa69ed03fa13c4d99601bccf239178381697d6da74bf731e150923acb31",
+    "benchmarks/bench_model_hay_l5.py": "12b237d92caef3eb84493e50b7154120b3ca788266aea9acd7e4d99a2e6d7065",
+    "engine/Cargo.toml": "f865140d1217dbb82acb4de0c7eb44ae0f148b6a0354d9a123b6eaaf40101454",
     "engine/examples/bench_hay_l5_rk4.rs": "03b5d278e5a25c44dca633546bff20e23de2519084e85df5a6141ee595836627",
-    "engine/src/neurons/multi_compartment.rs": "9e07d631caba3ec59b760d8b19470952a8db659ea5c0a71a8892053493a9698b",
+    "engine/src/neurons/multi_compartment.rs": "15cdea6c5f8fc095c4942016b2db4ea04e0bd1bb5596b10f7b03de93779d9bea",
     "src/sc_neurocore/accel/go/services/hay_l5.go": "b42c754b1e72b5ba860d43a4f2f7f0af2371839a1b3d7241c235bab03b78a8cb",
     "src/sc_neurocore/accel/go/services/hay_l5_test.go": "3e336208d7ad786c71aa7e2f40647a2b58fd753afdb0421dc32251e2333c1a64",
     "src/sc_neurocore/accel/julia/neurons/hay_l5.jl": "87fce58bfc7b4378ef77d145695843a4d65bdbacb05eac0dedc1794974618170",
     "src/sc_neurocore/accel/mojo/kernels/hay_l5.mojo": "3bae11bd4b15698b8eb9a1d3d4ec742db64a371ec3ac63dcd962f4860e46ebc6",
-    "src/sc_neurocore/neurons/models/hay_l5.py": "618f896ba1fdea69316606ac1d46ca607f7277df6c09515d87698aa348a9a7d4"
+    "src/sc_neurocore/neurons/models/hay_l5.py": "0900f8255df87a7c8868cd0ae1309cf932145813cd6bafac368703cc3e10a3c3"
   },
   "steps": 20000
 }

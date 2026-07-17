@@ -115,9 +115,9 @@
     },
     "benchmarks/bench_adex.py": "18cf92da7507746cdb592b7e0c6d59662cafac2ef662c76d7b47302b86d9ebb6",
     "engine/src/neuron": {
-      "rs": "e2b622e0f3cfed50669b105adfbc158b20a2276dc8a6dd61ffbc3c2c52368f64"
+      "rs": "85c3d206749df77704717cdcf18934551dae322e85d529c0973f464326dbec0b"
     },
-    "engine/src/neuron.rs": "e2b622e0f3cfed50669b105adfbc158b20a2276dc8a6dd61ffbc3c2c52368f64",
+    "engine/src/neuron.rs": "85c3d206749df77704717cdcf18934551dae322e85d529c0973f464326dbec0b",
     "src/sc_neurocore/accel/go/neurons/adex/adex": {
       "go": "74b7afd5c8e15fda980b1b499cb0ea2b789e8d70f6fe1347514def48d52b4044"
     },

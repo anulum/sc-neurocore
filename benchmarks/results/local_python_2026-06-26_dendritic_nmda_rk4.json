@@ -215,15 +215,15 @@
   "python": "3.12.3",
   "repeats": 5,
   "source_hashes": {
-    "benchmarks/bench_model_dendritic_nmda.py": "e446405e98489ef74ba8b37977460f52392b676a4b732a0d1dcbfa82bc758c85",
-    "engine/Cargo.toml": "8f2b9fb7a40d1777d24bd3f405caae860e7e38d9c557cad71405f78fef14b42f",
+    "benchmarks/bench_model_dendritic_nmda.py": "f05cf1487369e10a69bd392c763574b4a559e48c928691a31cd944042a3dc38e",
+    "engine/Cargo.toml": "f865140d1217dbb82acb4de0c7eb44ae0f148b6a0354d9a123b6eaaf40101454",
     "engine/examples/bench_dendritic_nmda_rk4.rs": "d95126ac3e1a4be74cec5d39175569f812439bc95e081a18ffea643d69fdae05",
-    "engine/src/neurons/multi_compartment.rs": "c4782ecbf2ff0b34329b8731ae35236cb6cd1462706a02bfd305bc5000096e44",
+    "engine/src/neurons/multi_compartment.rs": "15cdea6c5f8fc095c4942016b2db4ea04e0bd1bb5596b10f7b03de93779d9bea",
     "src/sc_neurocore/accel/go/services/dendritic_nmda.go": "d5bce7303c0df4b1020a6c4d5f5af46b480b517c74dc0b3e68e36ca538a197e9",
     "src/sc_neurocore/accel/go/services/dendritic_nmda_test.go": "ec27f0657ffab903205333651f0abecede046b5898e2acb34599f92425b819b6",
     "src/sc_neurocore/accel/julia/neurons/dendritic_nmda.jl": "ffa829e528ce95e550ba2ebc1dcab2a2335ccb4bfba8c1cb100b9fdda0693365",
     "src/sc_neurocore/accel/mojo/kernels/dendritic_nmda.mojo": "c46c69220da340e5e57964e373da3c7aafeaa7b6c469a3176f4f118f10142c7e",
-    "src/sc_neurocore/neurons/models/dendritic_nmda.py": "22ea0bf130f0f52455e8497c0908eb7101890ebd718bc7355a8f8b45c5e979d8"
+    "src/sc_neurocore/neurons/models/dendritic_nmda.py": "a934e25a403a00e4059300888d5b61607de1673ae4a5df5e5c50051a9d6df25e"
   },
   "steps": 20000
 }

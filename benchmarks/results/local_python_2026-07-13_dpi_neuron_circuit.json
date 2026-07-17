@@ -132,9 +132,9 @@
     },
     "engine/src/neurons/hardware.rs": "e32bcc977e8c4f61ef5f541718380411a0b1da344e496cb4c3a882ba0ac490a0",
     "engine/src/pyo3_neurons": {
-      "rs": "9b54714e8fe171880f83bab4932912921dfbedd229d3ffe231493cf05f6ea9a4"
+      "rs": "a03b1bb41420fb7f8b4e8b7a0991493f1882444a0c888a0b2881e9287afcf2ce"
     },
-    "engine/src/pyo3_neurons.rs": "9b54714e8fe171880f83bab4932912921dfbedd229d3ffe231493cf05f6ea9a4",
+    "engine/src/pyo3_neurons.rs": "a03b1bb41420fb7f8b4e8b7a0991493f1882444a0c888a0b2881e9287afcf2ce",
     "src/sc_neurocore/accel/dpi_neuron": {
       "py": "8912b0ca0ca455b95855300b71e2cddbdceaec42dc0b65590b330f4148cf5193"
     },

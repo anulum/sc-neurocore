@@ -753,6 +753,19 @@
     "verified_utc": "2026-07-12T21:53:58+00:00",
     "year_match": true
   },
+  "10.1103/PhysRevX.5.021028": {
+    "author_match": true,
+    "model": "ErmentroutKopellPopulation",
+    "registry": "crossref",
+    "registry_first_author": "montbrio",
+    "registry_year": 2015,
+    "resolves": true,
+    "title": "Macroscopic Description for Networks of Spiking Neurons",
+    "translation": false,
+    "verified": true,
+    "verified_utc": "2026-07-17T00:07:39+00:00",
+    "year_match": true
+  },
   "10.1109/AICAS51828.2021.9458572": {
     "author_match": true,
     "model": "IntegerQIFNeuron",

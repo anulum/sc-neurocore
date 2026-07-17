@@ -255,11 +255,11 @@
     }
   ],
   "source_hashes": {
-    "benchmarks/bench_model_hill_tononi.py": "48f6b153ba1703180d27e2a71da95aaeb02d43887c3d93bce4ccc743108a4cb6",
-    "engine/Cargo.toml": "356d2914c6b193575400ae422fdf14aa03687a53949e63b836f36a04ae351d6a",
+    "benchmarks/bench_model_hill_tononi.py": "de6c29e5d6a34a091b4fc6d627ce2d94e07396445612ed86503eb684c40d7afd",
+    "engine/Cargo.toml": "f865140d1217dbb82acb4de0c7eb44ae0f148b6a0354d9a123b6eaaf40101454",
     "engine/examples/bench_hill_tononi_rk4.rs": "583b7ce08d0af976d10add889ada78cc2b5359bce81e5f564cbe7cacc149e08b",
-    "engine/src/neurons/biophysical.rs": "adfccc3bb0f97a676ca9f302953360655792ff4b6cfada1e974a4caece448073",
-    "src/sc_neurocore/neurons/models/hill_tononi.py": "8459ac7593880fb7eeb575260718f5f2426b983274a7ebf4222b1ef0f4c6de83",
+    "engine/src/neurons/biophysical.rs": "9776fe629c58d03e74d324fae5e224dd4e320e9dc26ae88e21ae75e1ca46a4bf",
+    "src/sc_neurocore/neurons/models/hill_tononi.py": "7259a5eb8ca245b57583569f8421068eba88ca10def89110d1aecd5b747833b3",
     "src/sc_neurocore/accel/go/services/hill_tononi.go": "110c9a0ad251b8b0eafe7e695de3d5636d1a3bc4c4f02ded1363c41e505c6c5b",
     "src/sc_neurocore/accel/go/services/hill_tononi_test.go": "375f0e5f50da5c7d037386928eac3aa55e61225273895da862a7c5c94c1bdb1b",
     "src/sc_neurocore/accel/julia/neurons/hill_tononi.jl": "420b35db5b1f0c91248ee95db7ebc532cd16ae75eb2c3580d8fa5d7dbb9847e3",

@@ -249,9 +249,9 @@
   "repeats": 5,
   "source_hashes": {
     "benchmarks/bench_model_mat": {
-      "py": "fa78140dd050afe248490b34d1e48d4bce3a12a2c316d7b1b6709d0693ceaeb9"
+      "py": "d570f819c253a16c51cd2f5f3793ccce65498efd58044cab22db8612c631b1ec"
     },
-    "benchmarks/bench_model_mat.py": "fa78140dd050afe248490b34d1e48d4bce3a12a2c316d7b1b6709d0693ceaeb9",
+    "benchmarks/bench_model_mat.py": "d570f819c253a16c51cd2f5f3793ccce65498efd58044cab22db8612c631b1ec",
     "src/sc_neurocore/accel/go/services/mat": {
       "go": "41ab28d2761d3f105704372252321975d4638bc12189dce14427a1386687a8db"
     },
@@ -273,9 +273,9 @@
     },
     "src/sc_neurocore/accel/rust/safety/mat.rs": "d6d125068ce186d1b21e2af2199b1a64e0bbf4cd485511c3b0a6b6a16e47fc8c",
     "src/sc_neurocore/neurons/models/mat": {
-      "py": "b72b04b4e92da557aa95f4343c94821c5367ec2547202a43344bd27e32a0ef66"
+      "py": "13e6197f1c6af0afcee4b0a0edc802561e92edf7a7e16aa37b0170a694e22fdf"
     },
-    "src/sc_neurocore/neurons/models/mat.py": "b72b04b4e92da557aa95f4343c94821c5367ec2547202a43344bd27e32a0ef66"
+    "src/sc_neurocore/neurons/models/mat.py": "13e6197f1c6af0afcee4b0a0edc802561e92edf7a7e16aa37b0170a694e22fdf"
   },
   "spdx_license": "AGPL-3.0-or-later",
   "steps": 200000,

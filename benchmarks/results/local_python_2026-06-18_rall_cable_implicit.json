@@ -272,30 +272,30 @@
     }
   ],
   "source_hashes": {
-    "benchmarks/bench_model_rall_cable.py": "04091fd9d1bedfd7269c48859fea51af303e2b0ac7aadddcf3d6e28a17b6843d",
-    "engine/Cargo.toml": "b800894b7f0464759c83932ccced02e0647826925b058236ed9ecf237c3a6f02",
+    "benchmarks/bench_model_rall_cable.py": "fdb64f32b00e66d930fa7296397789546864b6d9f17576321a34ef2e23515eb4",
+    "engine/Cargo.toml": "f865140d1217dbb82acb4de0c7eb44ae0f148b6a0354d9a123b6eaaf40101454",
     "engine/examples/bench_rall_cable_implicit.rs": "f80b16c983ca4f6803d22c196ac96e895a4151377a3f890563018d7d24eaa441",
-    "engine/src/neurons/multi_compartment.rs": "174ed48c869ae978caa9b743eba16d5a82d2d3a309c7c45ffe17c2e2d6ede539",
-    "src/sc_neurocore/neurons/models/rall_cable.py": "3d78e9f5d3e5e4c8f900bac824fd998154aef21f68b52624fd51a84df6d23d61",
+    "engine/src/neurons/multi_compartment.rs": "15cdea6c5f8fc095c4942016b2db4ea04e0bd1bb5596b10f7b03de93779d9bea",
+    "src/sc_neurocore/neurons/models/rall_cable.py": "cd2d7b1d414584b52ff149ea6a8406ced1cebea80c928cbaf4b4aced75fbb179",
     "src/sc_neurocore/accel/go/services/rall_cable.go": "3a059d8f5c4766ef99f2032b0e0f22c88d00425484a6386c8b5508c25f785c10",
     "src/sc_neurocore/accel/go/services/rall_cable_test.go": "ca83b14433f4369fc403f1c02d5879d2eebc5a3c9b4c64a360d94a10a2ea3d42",
     "src/sc_neurocore/accel/julia/neurons/rall_cable.jl": "b3b421485d985d0ce56a79f2220737b5cf2608a5c092fd0af244f81da3cf8f0c",
     "src/sc_neurocore/accel/mojo/kernels/rall_cable.mojo": "aca3070df22e6ba0060daa14ee5222defb0440bc64b5da05557bc8170d3c0744",
     "src/sc_neurocore/accel/rust/safety/rall_cable.rs": "66f055e5bab3311d6eccf214ec4e840ac4420ea36938530f9479f5caec0c50d0",
     "benchmarks/bench_model_rall_cable": {
-      "py": "04091fd9d1bedfd7269c48859fea51af303e2b0ac7aadddcf3d6e28a17b6843d"
+      "py": "fdb64f32b00e66d930fa7296397789546864b6d9f17576321a34ef2e23515eb4"
     },
     "engine/Cargo": {
-      "toml": "b800894b7f0464759c83932ccced02e0647826925b058236ed9ecf237c3a6f02"
+      "toml": "f865140d1217dbb82acb4de0c7eb44ae0f148b6a0354d9a123b6eaaf40101454"
     },
     "engine/examples/bench_rall_cable_implicit": {
       "rs": "f80b16c983ca4f6803d22c196ac96e895a4151377a3f890563018d7d24eaa441"
     },
     "engine/src/neurons/multi_compartment": {
-      "rs": "174ed48c869ae978caa9b743eba16d5a82d2d3a309c7c45ffe17c2e2d6ede539"
+      "rs": "15cdea6c5f8fc095c4942016b2db4ea04e0bd1bb5596b10f7b03de93779d9bea"
     },
     "src/sc_neurocore/neurons/models/rall_cable": {
-      "py": "3d78e9f5d3e5e4c8f900bac824fd998154aef21f68b52624fd51a84df6d23d61"
+      "py": "cd2d7b1d414584b52ff149ea6a8406ced1cebea80c928cbaf4b4aced75fbb179"
     },
     "src/sc_neurocore/accel/go/services/rall_cable": {
       "go": "3a059d8f5c4766ef99f2032b0e0f22c88d00425484a6386c8b5508c25f785c10"

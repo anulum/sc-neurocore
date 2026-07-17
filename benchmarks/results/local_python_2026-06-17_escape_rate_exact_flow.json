@@ -249,45 +249,45 @@
     }
   },
   "source_hashes": {
-    "benchmarks/bench_model_escape_rate.py": "f1a45de672dbde2433173e7f3be7cc0b5080dc846ae8d33e3fe68919e35737ba",
-    "engine/Cargo.toml": "2d82433cbadcb9e33e73e4e88f7608547bc08302dfd6ff53f87fd47d017fbe60",
+    "benchmarks/bench_model_escape_rate.py": "b688476c8e99ba7cce1f3e4315bbb5ef270e7f4d461df8c2bff7753a8f76af0b",
+    "engine/Cargo.toml": "f865140d1217dbb82acb4de0c7eb44ae0f148b6a0354d9a123b6eaaf40101454",
     "engine/examples/bench_escape_rate_exact_flow.rs": "cb00d2968a05249e52b76669a585a6d0c4f9b16041b39bd5521d9c2eb69057d9",
-    "engine/src/neurons/trivial.rs": "521d1b68d1fd1371b8ed51f7b83d07355f60ba338883a7721763a223e4b09db1",
-    "src/sc_neurocore/neurons/models/escape_rate.py": "0f29e31b778cea3fce4765816a409ac4668837521af03aeb5209a428c672d26a",
-    "src/sc_neurocore/accel/go/services/escape_rate.go": "a8eeb1664e764b04a5df63b10c205aa1636b2930e5282f3aebef59c18f4915af",
-    "src/sc_neurocore/accel/go/services/escape_rate_test.go": "e52340e6eaf02307ca4388e813f6055f5ee700048ed5c713ce84a309b345d5e4",
-    "src/sc_neurocore/accel/julia/neurons/escape_rate.jl": "806bb0348c24680846cdb1f9c8c8408c77971f6c34aaabd32f5888b97494c113",
-    "src/sc_neurocore/accel/mojo/kernels/escape_rate.mojo": "6198785abb259a54f168fb2860479f7a0b9424be5121ef6519e60cba3dada5b5",
-    "src/sc_neurocore/accel/rust/safety/escape_rate.rs": "efbfc9d681468cd6f7897d5b6c4b4c7b43a9e60280e096a3db2035d7f5b0408a",
+    "engine/src/neurons/trivial.rs": "da8d899c8507eb1aaeaa547fca97162fea7da6019484a30e46dbb838b3228770",
+    "src/sc_neurocore/neurons/models/escape_rate.py": "792bcb47ea6c1e099044f7c2bd634b1a18a141f7730dc5806fa1920729d6eed9",
+    "src/sc_neurocore/accel/go/services/escape_rate.go": "cf55c0e3765e84724d52414278e36b7ff0f5aa0a875103234763f01334844a17",
+    "src/sc_neurocore/accel/go/services/escape_rate_test.go": "0af02919e815ffe7661b8857d48479bc98769f7367b212d43a607430af39df45",
+    "src/sc_neurocore/accel/julia/neurons/escape_rate.jl": "197a709367249ae732215c7fc499d8d6cb9b4f92acff28f750f5ab8ce39339ce",
+    "src/sc_neurocore/accel/mojo/kernels/escape_rate.mojo": "ee616301b4f8198fe0932b249c9efe4419d4c4d67683971f8a14e648f18b4c2e",
+    "src/sc_neurocore/accel/rust/safety/escape_rate.rs": "7cb69a16fde4b532a1f1797a1e4270eba9c2b6b3e79257fab2e94492dd318a0e",
     "benchmarks/bench_model_escape_rate": {
-      "py": "f1a45de672dbde2433173e7f3be7cc0b5080dc846ae8d33e3fe68919e35737ba"
+      "py": "b688476c8e99ba7cce1f3e4315bbb5ef270e7f4d461df8c2bff7753a8f76af0b"
     },
     "engine/Cargo": {
-      "toml": "2d82433cbadcb9e33e73e4e88f7608547bc08302dfd6ff53f87fd47d017fbe60"
+      "toml": "f865140d1217dbb82acb4de0c7eb44ae0f148b6a0354d9a123b6eaaf40101454"
     },
     "engine/examples/bench_escape_rate_exact_flow": {
       "rs": "cb00d2968a05249e52b76669a585a6d0c4f9b16041b39bd5521d9c2eb69057d9"
     },
     "engine/src/neurons/trivial": {
-      "rs": "521d1b68d1fd1371b8ed51f7b83d07355f60ba338883a7721763a223e4b09db1"
+      "rs": "da8d899c8507eb1aaeaa547fca97162fea7da6019484a30e46dbb838b3228770"
     },
     "src/sc_neurocore/neurons/models/escape_rate": {
-      "py": "0f29e31b778cea3fce4765816a409ac4668837521af03aeb5209a428c672d26a"
+      "py": "792bcb47ea6c1e099044f7c2bd634b1a18a141f7730dc5806fa1920729d6eed9"
     },
     "src/sc_neurocore/accel/go/services/escape_rate": {
-      "go": "a8eeb1664e764b04a5df63b10c205aa1636b2930e5282f3aebef59c18f4915af"
+      "go": "cf55c0e3765e84724d52414278e36b7ff0f5aa0a875103234763f01334844a17"
     },
     "src/sc_neurocore/accel/go/services/escape_rate_test": {
-      "go": "e52340e6eaf02307ca4388e813f6055f5ee700048ed5c713ce84a309b345d5e4"
+      "go": "0af02919e815ffe7661b8857d48479bc98769f7367b212d43a607430af39df45"
     },
     "src/sc_neurocore/accel/julia/neurons/escape_rate": {
-      "jl": "806bb0348c24680846cdb1f9c8c8408c77971f6c34aaabd32f5888b97494c113"
+      "jl": "197a709367249ae732215c7fc499d8d6cb9b4f92acff28f750f5ab8ce39339ce"
     },
     "src/sc_neurocore/accel/mojo/kernels/escape_rate": {
-      "mojo": "6198785abb259a54f168fb2860479f7a0b9424be5121ef6519e60cba3dada5b5"
+      "mojo": "ee616301b4f8198fe0932b249c9efe4419d4c4d67683971f8a14e648f18b4c2e"
     },
     "src/sc_neurocore/accel/rust/safety/escape_rate": {
-      "rs": "efbfc9d681468cd6f7897d5b6c4b4c7b43a9e60280e096a3db2035d7f5b0408a"
+      "rs": "7cb69a16fde4b532a1f1797a1e4270eba9c2b6b3e79257fab2e94492dd318a0e"
     }
   }
 }

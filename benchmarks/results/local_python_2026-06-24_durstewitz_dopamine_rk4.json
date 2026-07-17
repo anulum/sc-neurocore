@@ -255,10 +255,10 @@
     }
   ],
   "source_hashes": {
-    "benchmarks/bench_model_durstewitz_dopamine.py": "9829d796126d11e372327dc571df1412b9a4b272e5ee0712035d76bc19961bc4",
-    "engine/Cargo.toml": "35b84bf1f2933e9fb4b5c80ac8dd04fd68ebec6e6dac7eb8d552cbd7a8e8e130",
+    "benchmarks/bench_model_durstewitz_dopamine.py": "d4db15761af1d98831182ad224e5a9d1299bdc03032886a86bce8b54ee3820a0",
+    "engine/Cargo.toml": "f865140d1217dbb82acb4de0c7eb44ae0f148b6a0354d9a123b6eaaf40101454",
     "engine/examples/bench_durstewitz_dopamine_rk4.rs": "cd18c8d2e0f64fb6f92344afbd9b95fd5b6bc7fdc57e7d0f1d90d9b388d3e6a0",
-    "engine/src/neurons/biophysical.rs": "29633316a5eb238e732a2a666c5afb60c3832a06cef7b25a45d83f8dbcba08ea",
+    "engine/src/neurons/biophysical.rs": "9776fe629c58d03e74d324fae5e224dd4e320e9dc26ae88e21ae75e1ca46a4bf",
     "src/sc_neurocore/neurons/models/durstewitz_dopamine.py": "7615aaca44343ef49860af4744dccd4c5b74645c79cccca1ac853b64fe343bc1",
     "src/sc_neurocore/accel/go/services/durstewitz_dopamine.go": "d53dca91f3e7f9b65c94a2c086c59353e6efa6b43ed3a50ef2ef46964932d880",
     "src/sc_neurocore/accel/go/services/durstewitz_dopamine_test.go": "4f0ed5cba0a1756ac678c120da450f1060500c11523c773f2675d45894dd20de",

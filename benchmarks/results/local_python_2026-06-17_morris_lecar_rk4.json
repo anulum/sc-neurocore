@@ -269,45 +269,45 @@
     }
   ],
   "source_hashes": {
-    "benchmarks/bench_model_morris_lecar.py": "59bfa21560b6699306a5b4de3e28edfbb07f0274237f22d5359f96be3a22b1cb",
-    "engine/Cargo.toml": "2d82433cbadcb9e33e73e4e88f7608547bc08302dfd6ff53f87fd47d017fbe60",
+    "benchmarks/bench_model_morris_lecar.py": "5dfd005487940db28b526ccd24babf1c6ed08c0442e22bf0ae338a4a8a81e452",
+    "engine/Cargo.toml": "f865140d1217dbb82acb4de0c7eb44ae0f148b6a0354d9a123b6eaaf40101454",
     "engine/examples/bench_morris_lecar_rk4.rs": "b6cc638e2572191fed853143767f879b54f6df5df4293c55ae6f04d2ed2c5e04",
-    "engine/src/neurons/simple_spiking.rs": "52817fb9531c2a286ffd715b1fd17e72e5c29901b4b6790ffef3d3b7f10986a8",
-    "src/sc_neurocore/neurons/models/morris_lecar.py": "b90196793ab9673e3c8f0fe6f839201f538f3682716628e07bc3b3dc1a1e8910",
+    "engine/src/neurons/simple_spiking.rs": "851b06ce4b74bdaebe6c7f41439e0273d31a71149e4bb5fe115ea18db7ae8603",
+    "src/sc_neurocore/neurons/models/morris_lecar.py": "7732c4bbb2ba350b04db329a051a7e0212ce22949f16c429b4546605c669a006",
     "src/sc_neurocore/accel/go/services/morris_lecar.go": "b3aa3ce8e184cd47cc2745a74b8af7814ea655b11ac85f985752359eb8d92050",
-    "src/sc_neurocore/accel/go/services/morris_lecar_test.go": "d68d821f6f07507d36b0e490524b943cdfdbad79312ece61cf8a9091d6cce8bf",
+    "src/sc_neurocore/accel/go/services/morris_lecar_test.go": "5fedb4163148266b6bb60d99c5cde7b2922665200ae0dcc12a80077e6493be11",
     "src/sc_neurocore/accel/julia/neurons/morris_lecar.jl": "0b1516066d50b55be0ddcd19286f83f6be11f1f76f73356b8ec4311248b883e7",
-    "src/sc_neurocore/accel/mojo/kernels/morris_lecar.mojo": "b7f413681044b5b04164a6ebde31efcf46ab0e5b95742de8855bd5816bc7fb67",
-    "src/sc_neurocore/accel/rust/safety/morris_lecar.rs": "944f9614db7afbf3eb4e4390667b903964e1cf28f1f8df11517828524afebfd2",
+    "src/sc_neurocore/accel/mojo/kernels/morris_lecar.mojo": "9fe6224bfb9c78404fcc815715716c6e5f9c8b32819b97862836d7327e93c537",
+    "src/sc_neurocore/accel/rust/safety/morris_lecar.rs": "8ed4aa20e8c49dbbf2d0344c3df561fcc254dd2a03f20a376ed4f28bbfaee3ef",
     "benchmarks/bench_model_morris_lecar": {
-      "py": "59bfa21560b6699306a5b4de3e28edfbb07f0274237f22d5359f96be3a22b1cb"
+      "py": "5dfd005487940db28b526ccd24babf1c6ed08c0442e22bf0ae338a4a8a81e452"
     },
     "engine/Cargo": {
-      "toml": "2d82433cbadcb9e33e73e4e88f7608547bc08302dfd6ff53f87fd47d017fbe60"
+      "toml": "f865140d1217dbb82acb4de0c7eb44ae0f148b6a0354d9a123b6eaaf40101454"
     },
     "engine/examples/bench_morris_lecar_rk4": {
       "rs": "b6cc638e2572191fed853143767f879b54f6df5df4293c55ae6f04d2ed2c5e04"
     },
     "engine/src/neurons/simple_spiking": {
-      "rs": "52817fb9531c2a286ffd715b1fd17e72e5c29901b4b6790ffef3d3b7f10986a8"
+      "rs": "851b06ce4b74bdaebe6c7f41439e0273d31a71149e4bb5fe115ea18db7ae8603"
     },
     "src/sc_neurocore/neurons/models/morris_lecar": {
-      "py": "b90196793ab9673e3c8f0fe6f839201f538f3682716628e07bc3b3dc1a1e8910"
+      "py": "7732c4bbb2ba350b04db329a051a7e0212ce22949f16c429b4546605c669a006"
     },
     "src/sc_neurocore/accel/go/services/morris_lecar": {
       "go": "b3aa3ce8e184cd47cc2745a74b8af7814ea655b11ac85f985752359eb8d92050"
     },
     "src/sc_neurocore/accel/go/services/morris_lecar_test": {
-      "go": "d68d821f6f07507d36b0e490524b943cdfdbad79312ece61cf8a9091d6cce8bf"
+      "go": "5fedb4163148266b6bb60d99c5cde7b2922665200ae0dcc12a80077e6493be11"
     },
     "src/sc_neurocore/accel/julia/neurons/morris_lecar": {
       "jl": "0b1516066d50b55be0ddcd19286f83f6be11f1f76f73356b8ec4311248b883e7"
     },
     "src/sc_neurocore/accel/mojo/kernels/morris_lecar": {
-      "mojo": "b7f413681044b5b04164a6ebde31efcf46ab0e5b95742de8855bd5816bc7fb67"
+      "mojo": "9fe6224bfb9c78404fcc815715716c6e5f9c8b32819b97862836d7327e93c537"
     },
     "src/sc_neurocore/accel/rust/safety/morris_lecar": {
-      "rs": "944f9614db7afbf3eb4e4390667b903964e1cf28f1f8df11517828524afebfd2"
+      "rs": "8ed4aa20e8c49dbbf2d0344c3df561fcc254dd2a03f20a376ed4f28bbfaee3ef"
     }
   }
 }

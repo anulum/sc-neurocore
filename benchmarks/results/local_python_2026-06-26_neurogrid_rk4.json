@@ -199,10 +199,10 @@
   "python": "3.12.3",
   "repeats": 5,
   "source_hashes": {
-    "benchmarks/bench_model_neurogrid.py": "64b3b00f1d57ca0052465a92390c0d6d2e8f56de58497d6af59ef75f62271d53",
-    "engine/Cargo.toml": "7d994d24f04c50fda35ab5d2ea596c58cec7f1014c3cb2d442b47d57d1ce79b1",
+    "benchmarks/bench_model_neurogrid.py": "ccc3269f7b57175e195c0fe6a21f551251b6b9b43e816f5aaca9d66d966ed8d2",
+    "engine/Cargo.toml": "f865140d1217dbb82acb4de0c7eb44ae0f148b6a0354d9a123b6eaaf40101454",
     "engine/examples/bench_neurogrid_rk4.rs": "3c46824828ce221874ad23b243b7b837d86c3fdb87a66c5a86ff917d949f6469",
-    "engine/src/neurons/hardware.rs": "6e03a7a77fc0bda221609b3b006f862a740f74d914b57c096ab31d76797b0ab5",
+    "engine/src/neurons/hardware.rs": "e32bcc977e8c4f61ef5f541718380411a0b1da344e496cb4c3a882ba0ac490a0",
     "src/sc_neurocore/accel/go/services/neurogrid.go": "6fba972be700a31f1b9849201c6b1a95c920792dc11501d3580b32bf8d8c53dd",
     "src/sc_neurocore/accel/go/services/neurogrid_test.go": "c15134fc3d92d9f3fe90ee71131408332c448ba26c830de323f906245d91e4dd",
     "src/sc_neurocore/accel/julia/neurons/neurogrid.jl": "cb9a8b88c650d9601ad91d2bd8bca1aa3c863141f334a5ed28e871c45d3cb6de",

@@ -255,10 +255,10 @@
     }
   ],
   "source_hashes": {
-    "benchmarks/bench_model_pospischil.py": "a83a29d2944cb5ce560b1ada9ed0b5a98afcd6f4e25e21e4fc177708b85ea2bd",
-    "engine/Cargo.toml": "278a8089691c138c69e864a4bd514f9c3488a486f1be29ac05ba6c1493dfc5c0",
+    "benchmarks/bench_model_pospischil.py": "90ffd3d24a937cae272d16fea5c86078aedf6c026eee33fa4f9b869746690910",
+    "engine/Cargo.toml": "f865140d1217dbb82acb4de0c7eb44ae0f148b6a0354d9a123b6eaaf40101454",
     "engine/examples/bench_pospischil_rk4.rs": "5a5353b08683fe0c691f48842d3fae8afcfee87cd2f8b2d01daa6f67d1d599d3",
-    "engine/src/neurons/biophysical.rs": "95a536724a8a6c4d3626bae115ccabf235d863e58cba73174cfb985dca91f2db",
+    "engine/src/neurons/biophysical.rs": "9776fe629c58d03e74d324fae5e224dd4e320e9dc26ae88e21ae75e1ca46a4bf",
     "src/sc_neurocore/neurons/models/pospischil.py": "49b4dd82de778cef4dcb2ea40015119d4063a82c52b0f3cbedb493c4ed5e25ac",
     "src/sc_neurocore/accel/go/services/pospischil.go": "f868326f1c2899d6715adeff0a78a388ecae113572e14f6c33a09e6a5abec64c",
     "src/sc_neurocore/accel/go/services/pospischil_test.go": "fd393812fd585f06294cb120a5d9aff9585319754e443cb73ad9cd12236af4d8",

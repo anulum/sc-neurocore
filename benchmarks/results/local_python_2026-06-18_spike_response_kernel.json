@@ -223,9 +223,9 @@
   "repeats": 5,
   "source_hashes": {
     "benchmarks/bench_model_spike_response": {
-      "py": "c2a1b1b9c657902655edc88de5b4b16b93772350e7a1550e899880a1a6962dd6"
+      "py": "f0268d39f3052717b3faee902299d1ebfcc09ef35273fb55a913200054e92844"
     },
-    "benchmarks/bench_model_spike_response.py": "c2a1b1b9c657902655edc88de5b4b16b93772350e7a1550e899880a1a6962dd6",
+    "benchmarks/bench_model_spike_response.py": "f0268d39f3052717b3faee902299d1ebfcc09ef35273fb55a913200054e92844",
     "src/sc_neurocore/accel/go/services/spike_response": {
       "go": "c26b40dda3ba44906b352c8d9f7aaff27be7e58ad86f619d2106135f98bf1396"
     },
@@ -247,9 +247,9 @@
     },
     "src/sc_neurocore/accel/rust/safety/spike_response.rs": "e695abbbbfb009ff01c597546412ca20f412767b46f69df94cd416a86994a447",
     "src/sc_neurocore/neurons/models/spike_response": {
-      "py": "200fe721e0d18da65fae6d3153b17fe4c3c9ab198a991bac2d2c9e4200578630"
+      "py": "f044800eb889ba8424d3afa72f7396ccc630bda7f16306c37250ecc73d4956f9"
     },
-    "src/sc_neurocore/neurons/models/spike_response.py": "200fe721e0d18da65fae6d3153b17fe4c3c9ab198a991bac2d2c9e4200578630"
+    "src/sc_neurocore/neurons/models/spike_response.py": "f044800eb889ba8424d3afa72f7396ccc630bda7f16306c37250ecc73d4956f9"
   },
   "spdx_license": "AGPL-3.0-or-later",
   "steps": 200000,
