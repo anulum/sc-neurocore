@@ -842,6 +842,14 @@ except ImportError:
     _ermentrout_kopell_pop_rust_available = False
 
 try:
+    from sc_neurocore_engine.sc_neurocore_engine import py_resonate_and_fire_simulate
+
+    __all__ += ["py_resonate_and_fire_simulate"]
+    _resonate_and_fire_rust_available = True
+except ImportError:
+    _resonate_and_fire_rust_available = False
+
+try:
     from sc_neurocore_engine.sc_neurocore_engine import py_wong_wang_simulate
 
     __all__ += ["py_wong_wang_simulate"]

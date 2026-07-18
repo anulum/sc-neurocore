@@ -1019,6 +1019,115 @@ Run the Mojo recurrence through its C ABI.
 
 ---
 
+## Module `accel.resonate_and_fire`
+
+### Function `backend_available(backend)`
+Return whether one maintained execution lane is ready.
+
+Parameters
+----------
+backend : str
+    One of ``python``, ``rust``, ``julia``, ``go``, or ``mojo``.
+
+Returns
+-------
+bool
+    ``True`` when the named runtime and its Model40 artefact are available.
+
+### Function `auto_backend()`
+Return the first available runtime in measured ascending-latency order.
+
+Returns
+-------
+str
+    An available backend name, with ``python`` as the total fallback.
+
+### Function `normalise_result(result)`
+Validate complete state/spike traces and scalar final receipts.
+
+Parameters
+----------
+result : dict&#91;str, object&#93;
+    Backend mapping with ``x``, ``y``, ``spikes``, both final states, and
+    an integral ``spike_count``.
+n_steps : int
+    Required length of every trajectory.
+initial : tuple&#91;float, float&#93;
+    Initial ``x`` and ``y`` used to validate an empty batch.
+threshold : float
+    Source voltage-coordinate threshold used to validate spike resets.
+
+Returns
+-------
+dict&#91;str, numpy.ndarray | float | int&#93;
+    Contiguous finite trajectories and mutually consistent final receipts.
+
+Raises
+------
+FloatingPointError
+    If any backend field is missing, malformed, non-finite, inconsistent,
+    non-binary, or violates the source reset contract.
+
+### Function `simulate_python(x, y, b, omega, threshold, dt, current)`
+Run the complete batch through the Python golden model.
+
+Parameters
+----------
+x, y : float
+    Initial current-like and voltage-like state coordinates.
+b, omega, threshold, dt : float
+    Complete exact-flow configuration.
+current : ArrayLike
+    One finite real piecewise-constant current per maintained step.
+
+Returns
+-------
+dict&#91;str, numpy.ndarray | float | int&#93;
+    Complete post-update traces, final states, and sampled crossing count.
+
+Raises
+------
+ValueError
+    If the configuration or current vector violates the public contract.
+FloatingPointError
+    If an exact-flow candidate or returned receipt is non-finite.
+
+### Function `simulate_resonate_and_fire(x, y, b, omega, threshold, dt, current)`
+Run one complete exact-flow batch on a selected execution lane.
+
+Parameters
+----------
+x, y : float, default: 0.0
+    Initial current-like and voltage-like state coordinates.
+b : float, default: -1.0
+    Radial damping or growth coefficient.
+omega : float, default: 10.0
+    Positive angular resonance frequency.
+threshold : float, default: 1.0
+    Positive spike threshold on the voltage-like ``y`` coordinate.
+dt : float, default: 0.01
+    Positive piecewise-constant-input sampling interval.
+current : ArrayLike
+    One finite real current value per maintained step.
+backend : str, default: "auto"
+    ``auto``, ``python``, ``rust``, ``julia``, ``go``, or ``mojo``.
+
+Returns
+-------
+dict&#91;str, numpy.ndarray | float | int&#93;
+    Complete state/spike trajectories and final receipts.
+
+Raises
+------
+ValueError
+    If the configuration, current, or backend name is invalid.
+RuntimeError
+    If an explicitly requested maintained backend is unavailable.
+FloatingPointError
+    If a numerical candidate or backend result violates the contract.
+
+---
+
 ## Module `accel.sc_inference`
 
 ### Function `sc_forward_numpy(weights_packed, input_probs, length, seed)`
@@ -24521,9 +24630,36 @@ Reference: Renshaw (1941); Windhorst (1996) Prog Neurobiol 46(5).
 ## Module `neurons.models.resonate_and_fire`
 
 ### Class `ResonateAndFireNeuron`
+Damped complex resonator from Izhikevich (2001).
+
+The source defines ``z = x + i y`` and
+
+``dz/dt = (b + i * omega) * z + I``.
+
+``x`` is current-like and ``y`` is voltage-like. A spike is emitted on an
+upward sampled crossing of ``y = threshold``. The source post-spike reset
+is ``z = i``; the generalized implementation therefore installs
+``(x, y) = (0, threshold)``. The maintained numerical step is the exact
+constant-real-input flow over one ``dt`` interval.
+
+Defaults ``b=-1``, ``omega=10``, and ``threshold=1`` are the parameter set
+used for most illustrations in the source paper. ``dt=0.01`` is an
+implementation sampling interval, not a parameter asserted by the paper.
+
+Reference
+---------
+Izhikevich, E. M. (2001). Resonate-and-fire neurons.
+Neural Networks 14(6-7), 883-894.
+https://doi.org/10.1016/S0893-6080(01)00078-8
+
 - **__post_init__**()
+  - Normalise scalar fields and reject an invalid configuration.
 - **step**(current)
+  - Advance one exact-flow interval and return a binary spike event.
+- **simulate**(current)
+  - Run one atomic piecewise-constant-input batch on a maintained backend.
 - **reset**()
+  - Restore the quiescent initial state while preserving parameters.
 
 ---
 

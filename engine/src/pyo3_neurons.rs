@@ -26,6 +26,8 @@ mod ermentrout_kopell_pop_binding;
 mod jansen_rit_binding;
 #[path = "bindings/mcculloch_pitts.rs"]
 mod mcculloch_pitts_binding;
+#[path = "bindings/resonate_and_fire.rs"]
+mod resonate_and_fire_binding;
 #[path = "bindings/sigmoid_rate.rs"]
 mod sigmoid_rate_binding;
 #[path = "bindings/threshold_linear_rate.rs"]
@@ -2120,6 +2122,7 @@ pub fn register_neuron_classes(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_class::<PyMorrisLecarNeuron>()?;
     m.add_class::<PyHindmarshRoseNeuron>()?;
     m.add_class::<PyResonateAndFireNeuron>()?;
+    resonate_and_fire_binding::register(m)?;
     m.add_class::<PyBalancedResonateAndFireNeuron>()?;
     m.add_class::<PyFitzHughRinzelNeuron>()?;
     m.add_class::<PyMcKeanNeuron>()?;

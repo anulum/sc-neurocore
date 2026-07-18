@@ -1,24 +1,46 @@
 {
   "metadata": {
-    "schema_version": 1,
+    "schema_version": 2,
     "name": "Resonate-and-Fire",
     "author": "Izhikevich, E.M.",
     "year": 2001,
-    "doi": "10.1162/089976601300014538",
-    "description": "Resonator neuron — subthreshold oscillations with spike threshold"
+    "doi": "10.1016/S0893-6080(01)00078-8",
+    "description": "Complex-linear resonator with voltage-coordinate threshold and z=i post-spike reset"
   },
-  "state": { "x": 0.0, "y": 0.0 },
-  "parameters": { "omega": 0.5, "b": -0.1, "v_threshold": 1.0 },
-  "integration": { "dt": 0.1, "method": "euler" },
+  "state": {
+    "x": 0.0,
+    "y": 0.0
+  },
+  "parameters": {
+    "b": -1.0,
+    "omega": 10.0,
+    "v_threshold": 1.0,
+    "dt": 0.01
+  },
+  "integration": {
+    "dt": 0.01,
+    "method": "map"
+  },
   "dynamics": {
-    "x": "b * x - omega * y + I",
-    "y": "omega * x + b * y"
+    "x": "(-b * I / (b * b + omega * omega)) + exp(b * dt) * ((x + b * I / (b * b + omega * omega)) * cos(omega * dt) - (y - omega * I / (b * b + omega * omega)) * sin(omega * dt))",
+    "y": "(omega * I / (b * b + omega * omega)) + exp(b * dt) * ((x + b * I / (b * b + omega * omega)) * sin(omega * dt) + (y - omega * I / (b * b + omega * omega)) * cos(omega * dt))"
   },
-  "threshold": { "condition": "x > v_threshold", "detection": "crossing" },
-  "reset": { "x": "0.0", "y": "0.0" },
+  "threshold": {
+    "condition": "y_prev < v_threshold <= y",
+    "detection": "level"
+  },
+  "reset": {
+    "x": "0.0",
+    "y": "v_threshold"
+  },
   "extensions": {
-    "excitability": "Type-II",
-    "resonance": true,
+    "model_type": "continuous_linear_ode_with_sampled_event",
+    "source_equations": "z=x+i*y; dz/dt=(b+i*omega)*z+I; x is current-like and y is voltage-like",
+    "source_default_scope": "b=-1 and omega=10 are used in most source-paper illustrations; threshold y=1 and post-spike reset z=i are explicit source contracts",
+    "input_scope": "I is a real piecewise-constant current; the source also permits complex pulse coefficients",
+    "maintained_discretisation": "Each map step is the exact constant-real-input matrix-exponential flow over parameter dt",
+    "event_order": "Compute the exact candidate, detect y_prev < v_threshold <= y, then install x=0 and y=v_threshold",
+    "sampling_limit": "Crossings are detected at maintained step boundaries; no within-step root localization is claimed",
     "frequency_preference": "omega / (2 * pi)"
   }
 }

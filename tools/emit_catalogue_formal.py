@@ -74,6 +74,7 @@ CLASS_TO_SCHEMA: dict[str, str] = {
     "PerfectIntegratorNeuron": "perfect_integrator",
     "PoissonNeuron": "poisson",
     "QuadraticIFNeuron": "quadratic_if",
+    "ResonateAndFireNeuron": "resonate_fire",
     "ThetaNeuron": "theta",
 }
 
@@ -104,6 +105,7 @@ DEPTH_BY_SCHEMA: dict[str, int] = {
     "pernarowski": 4,
     "poisson": 4,
     "rulkov_map": 4,
+    "resonate_fire": 4,
     "terman_wang": 4,
     "wilson_hr": 4,
     "wong_wang": 4,
@@ -137,6 +139,7 @@ MINIMAL_SAFETY_SCHEMAS: frozenset[str] = frozenset(
         "pernarowski",
         "poisson",
         "rulkov_map",
+        "resonate_fire",
         "terman_wang",
         "connor_stevens",
         "hodgkin_huxley",
@@ -162,10 +165,10 @@ EVENT_SILENT_SCHEMAS: frozenset[str] = frozenset({"ermentrout_kopell_pop"})
 # arithmetic shift without introducing a fractional rescale. McCulloch-Pitts
 # uses the same Q32.0 carrier for the non-negative excitatory-afferent count;
 # -1 is the sole absolute-inhibition sentinel.
-# Wong-Wang, Jansen-Rit, and MPR stay on their enrolled Q32.32 co-simulation
-# carriers: Q8.8 cannot represent their sub-unit timesteps. Their catalogue jobs
-# are bounded public spike-port safety only and do not claim formal equivalence
-# or H4.
+# Wong-Wang, Jansen-Rit, MPR, and resonate-and-fire stay on their enrolled
+# Q32.32 co-simulation carriers: Q8.8 cannot represent their sub-unit timesteps.
+# Their catalogue jobs are bounded public spike-port safety only and do not
+# claim formal equivalence or H4.
 DEFAULT_PRECISION = (16, 8)
 PRECISION_BY_SCHEMA: dict[str, tuple[int, int]] = {
     "coba_lif": (48, 24),
@@ -179,6 +182,7 @@ PRECISION_BY_SCHEMA: dict[str, tuple[int, int]] = {
     "mcculloch_pitts": (32, 0),
     "medvedev_map": (32, 16),
     "poisson": (48, 24),
+    "resonate_fire": (64, 32),
     "wong_wang": (64, 32),
 }
 

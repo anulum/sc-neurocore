@@ -11,17 +11,23 @@ schema_version = 2
 name = "ResonateAndFireNeuron"
 class_name = "ResonateAndFireNeuron"
 module = "resonate_and_fire"
-display_name = ""
-summary = "ResonateAndFireNeuron(x: 'float' = 0.0, y: 'float' = 0.0, b: 'float' = -0.1, omega: 'float' = 1.0, threshold: 'float' = 1.0, dt: 'float' = 0.05)"
+display_name = "Izhikevich resonate-and-fire neuron"
+summary = "Validated complex-linear resonator with exact constant-real-input flow, voltage-coordinate threshold, and source z=i post-spike reset."
 family = "Resonate-and-Fire"
 category = "resonate-and-fire"
 biophysical_detail = "point"
-maturity = "experimental"
-intended_use = []
-hardware_fit = []
+maturity = "validated"
+intended_use = [
+    "subthreshold resonance experiments",
+    "Type-II excitability studies",
+    "cross-runtime exact-linear-flow validation",
+]
+hardware_fit = [
+    "generated fixed-point co-simulation reference",
+]
 behavior_tags = [
     "excitable",
-    "rate-coded",
+    "phasic",
     "tonic",
 ]
 
@@ -31,53 +37,97 @@ authors = [
 ]
 year = 2001
 doi = "10.1016/S0893-6080(01)00078-8"
+paper_title = "Resonate-and-fire neurons"
+url = "https://doi.org/10.1016/S0893-6080(01)00078-8"
 
 [state.x]
 init = 0.0
+unit = "1"
+meaning = "current-like real coordinate of z=x+i*y"
 
 [state.y]
 init = 0.0
+unit = "1"
+meaning = "voltage-like imaginary coordinate of z=x+i*y"
 
 [parameters.b]
-default = -0.1
-unit = "1/ms"
-meaning = "damping rate of the subthreshold oscillation (negative for a stable spiral)"
+default = -1.0
+unit = "1/time"
+meaning = "radial damping or growth coefficient; negative values create an attracting focus"
 range = [
-    -2.0,
-    2.0,
+    -100.0,
+    100.0,
 ]
 
 [parameters.omega]
-default = 1.0
-unit = "1/ms"
-meaning = "angular frequency of the subthreshold oscillation"
+default = 10.0
+unit = "rad/time"
+meaning = "positive angular frequency of the subthreshold resonance"
 range = [
-    0.01,
-    50.0,
+    0.001,
+    1000.0,
 ]
 
 [parameters.threshold]
 default = 1.0
 unit = "1"
-meaning = "amplitude threshold on the complex state at which a spike is registered"
+meaning = "positive threshold on the voltage-like y coordinate"
 range = [
-    0.0,
-    10.0,
+    0.001,
+    100.0,
 ]
 
 [integration]
-dt = 0.05
-method = "euler"
+dt = 0.01
+method = "map"
 
 [dynamics]
-x = "b * x - omega * y + I"
-y = "omega * x + b * y"
+complex = "dz/dt=(b+i*omega)*z+I with z=x+i*y"
+x = "dx/dt=b*x-omega*y+I"
+y = "dy/dt=omega*x+b*y"
+exact_flow = "z(t+dt)=z_ss+exp((b+i*omega)*dt)*(z(t)-z_ss), z_ss=-I/(b+i*omega)"
+event = "spike on sampled upward crossing y_prev<threshold<=y; post-spike z=i*threshold"
+scope = "real piecewise-constant input; complex pulse coefficients permitted by the paper remain outside the scalar pipeline"
 
 [backends.python]
 status = "implemented"
+parity = "exact"
+
+[backends.rust]
+status = "implemented"
+parity = "ulp-bounded"
+
+[backends.julia]
+status = "implemented"
+parity = "ulp-bounded"
+
+[backends.go]
+status = "implemented"
+parity = "ulp-bounded"
+
+[backends.mojo]
+status = "implemented"
+parity = "approximate"
 
 [reproducibility]
+reference_config = "{\"kind\":\"sampled_batch_v1\",\"x\":0.0,\"y\":0.0,\"b\":-1.0,\"omega\":10.0,\"threshold\":1.0,\"dt\":0.01,\"n_steps\":256,\"simulate_fields\":[\"current\"],\"inputs\":{\"current\":{\"function\":\"sin\",\"offset\":0.35,\"amplitude\":0.2,\"angular_frequency\":0.037}},\"trace_fields\":[\"x\",\"y\",\"spikes\"]}"
+golden_trace_sha256 = "d91c7ef4a469f7b50498943419288b12329b17ba8380bcc876d4963480ae7130"
+golden_citation = "doi:10.1016/S0893-6080(01)00078-8 equations (1)-(3)"
 
 [documentation]
 slug = "models/resonate_and_fire"
-notes = ""
+notes = "The source explicitly identifies x as current-like and y as voltage-like, thresholds y at 1, and resets z to i. b=-1 and omega=10 are the source's commonly illustrated values. dt=0.01 and sampled event detection are maintained engineering contracts, not source parameters."
+
+[validation]
+dynamics_faithful = true
+metric = "trajectory"
+operating_point = "non-zero configured initial state with varied real piecewise-constant input over 128 exact-flow steps"
+tolerance = "complete state, spike-vector, final-state, and spike-count agreement within absolute 1e-12 for Rust, Julia, and Go and 1e-10 for Mojo"
+evidence = "tests/test_resonate_and_fire_backends.py::test_complete_configured_contract_matches_python"
+
+[silicon]
+compiles = true
+cosim_validated = true
+cosim_evidence = "tests/test_cosim_resonate_and_fire.py::test_generated_q3232_rtl_tracks_exact_map_envelope"
+target_tier = "H1"
+terminal_reason = "Generated fixed-point co-simulation is validated; synthesis, timing, formal equivalence, and PPA evidence are not enrolled."

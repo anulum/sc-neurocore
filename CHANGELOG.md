@@ -20,6 +20,19 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
   real public contracts instead of a universal ``n_steps``/float/tuple shape.
 
 ### Added
+- Reconstructed `ResonateAndFireNeuron` from Izhikevich's 2001 complex
+  resonator: `x` remains current-like, `y` remains voltage-like, the maintained
+  step is the exact constant-input linear flow, events are sampled upward
+  crossings of `y=threshold`, and the post-event state is the generalised
+  source reset `z=i*threshold` rather than a radius test or origin reset.
+- Added configured atomic batch execution through Python, the modular Rust
+  engine, independent Rust safety, Julia, Go C-shared, and Mojo shared-library
+  lanes; an independently derived DOI trace; paired TOML/JSON schemas;
+  five-runtime complete-trajectory parity; source/binary-bound benchmark
+  evidence; bounded Q32.32 H1 co-simulation; and a depth-4 reset-safety job.
+  Sampled event timing, the non-monotone high-drive response, the lookup-grid
+  envelope, and the absence of formal equivalence or higher-silicon evidence
+  are explicit.
 - Corrected the legacy-named `ErmentroutKopellPopulation` provenance and
   promoted the actual Montbrió, Pazó, and Roxin (2015) equation-(12) exact QIF
   mean field across Python, the modular Rust engine, independent Rust safety,

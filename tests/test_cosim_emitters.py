@@ -12,6 +12,7 @@ from __future__ import annotations
 
 import pytest
 
+from sc_neurocore.compiler.equation_compiler import generate_testbench
 from sc_neurocore.neurons.equation_builder import EquationNeuron
 from tests.cosim_support import (
     HAS_IVERILOG,
@@ -21,6 +22,7 @@ from tests.cosim_support import (
     _verilog_spike_count,
     _verilog_spike_count_generic,
     compile_to_verilog,
+    simulate as _simulate,
     spike_count_method as _spike_count_method,
     verilog_spike_count_method as _verilog_spike_count_method,
 )
@@ -41,7 +43,6 @@ _COSIM_MODELS = [
     "lapicque",
     "quadratic_if",
     "izhikevich",
-    "resonate_fire",
     "perfect_integrator",
 ]
 
@@ -209,7 +210,7 @@ _MV_RANGE_MODES = {
 # Expected: Q8.8, Q9.9, Q12.12, Q16.16, Q8.24, Q18.18
 
 # Models that work reliably for accuracy comparison at mV-range modes
-_MV_ACCURACY_MODELS = ["lif", "lapicque", "resonate_fire"]
+_MV_ACCURACY_MODELS = ["lif", "lapicque"]
 
 
 @pytest.mark.skipif(not HAS_IVERILOG, reason="Icarus Verilog not available")
@@ -427,18 +428,17 @@ class TestRK4Emitter:
 
 # Models whose emitted exp-Euler step reproduces the Python golden spike count exactly
 # at Q16.16. The set spans the linearisation's regimes: constant-Jacobian gating
-# (lif, lapicque — the canonical d/dt=(x_inf−x)/tau exponential-Euler win), a linear
-# multi-variable oscillator (resonate_fire, exercising the simultaneous forward update),
-# and a transcendental, state-dependent Jacobian (adex A = (exp(...)−1)/tau; theta
-# A = (1−I)·… via the sin LUT) — proving the A datapath and the exprel/exp hardware LUTs
-# lower bit-true where the golden's exprel path lands on a tabulated point. The stiff
+# (lif, lapicque — the canonical d/dt=(x_inf−x)/tau exponential-Euler win) and a
+# transcendental, state-dependent Jacobian (adex A = (exp(...)−1)/tau; theta
+# A = (1−I)·… via the sin LUT). A local synthetic two-state oscillator below preserves
+# the simultaneous multi-variable forward-update guard without coupling this generic
+# integrator test to a production model's maintained discretisation. The stiff
 # hybrids (quadratic_if, izhikevich — the 0.04·v² / v² spike explosion) are a documented
 # per-model range limit at this word length, the same limit the Euler and RK4 baselines
 # carry, not an emitter defect.
 _EXP_EULER_EXACT_MODELS = [
     ("lif", 50.0, 300),
     ("lapicque", 50.0, 300),
-    ("resonate_fire", 5.0, 300),
     ("adex", 1000.0, 500),
     ("theta", 50.0, 300),
 ]
@@ -450,6 +450,50 @@ _EXP_EULER_Q_FORMATS = [
     ("Q18.18", 36, 18),
     ("Q20.12", 32, 12),
 ]
+
+
+def _linear_oscillator(method: str) -> EquationNeuron:
+    """Return a synthetic two-state oscillator for generic integrator tests."""
+    return EquationNeuron(
+        equations={"x": "-1.0*x - 10.0*y + I", "y": "10.0*x - 1.0*y"},
+        state={"x": 0.0, "y": 0.0},
+        threshold="y >= 1.0",
+        reset={"x": "0.0", "y": "1.0"},
+        dt=0.01,
+        method=method,
+        detection="crossing",
+    )
+
+
+def _linear_oscillator_spike_count(method: str, n_steps: int, current: float) -> int:
+    """Return the Python spike count for the synthetic linear oscillator."""
+    neuron = _linear_oscillator(method)
+    return sum(neuron.step(I=current) for _ in range(n_steps))
+
+
+def _linear_oscillator_verilog_spike_count(
+    method: str,
+    n_steps: int,
+    current: float,
+) -> int:
+    """Return the Q16.16 RTL spike count for the synthetic linear oscillator."""
+    neuron = _linear_oscillator(method)
+    module_name = f"sc_linear_oscillator_{method}"
+    verilog = compile_to_verilog(
+        neuron,
+        module_name=module_name,
+        data_width=32,
+        fraction=16,
+    )
+    testbench = generate_testbench(
+        neuron,
+        module_name=module_name,
+        n_steps=n_steps,
+        input_current=current,
+        data_width=32,
+        fraction=16,
+    )
+    return _simulate(verilog, testbench, module_name)
 
 
 @pytest.mark.skipif(not HAS_IVERILOG, reason="Icarus Verilog not available")
@@ -479,6 +523,12 @@ class TestExpEulerEmitter:
             f"{model_name} exp-Euler mismatch: Python={py_spikes}, Verilog={vlog_spikes}"
         )
 
+    def test_exp_euler_tracks_two_state_linear_oscillator(self) -> None:
+        """A synthetic coupled oscillator keeps multi-variable exp-Euler coverage."""
+        py_spikes = _linear_oscillator_spike_count("exp_euler", 300, 50.0)
+        vlog_spikes = _linear_oscillator_verilog_spike_count("exp_euler", 300, 50.0)
+        assert vlog_spikes == py_spikes == 147
+
     def test_exp_euler_collapses_to_forward_euler_at_zero_jacobian(self) -> None:
         """With A=0 (perfect integrator) exprel(0)=1, so exp-Euler *is* forward Euler.
 
@@ -497,17 +547,14 @@ class TestExpEulerEmitter:
     def test_exp_euler_path_is_distinct_from_euler(self) -> None:
         """The exp-Euler emitter is a genuine linearised step, not aliased to Euler.
 
-        The resonate-and-fire linear oscillator at ``I=10`` is stiff enough that
-        forward Euler is unstable and fires every step, while the exponential-Euler
-        linearisation stays on the true half-rate limit cycle: the emitted exp-Euler
-        differs from the emitted Euler and reproduces the Python exp-Euler golden
-        exactly at Q16.16. (As with the RK4 distinctness test, the faithful FHN
-        oscillator is integrator-robust, so a stiff linear model demonstrates the
-        exponential correction's effect more sharply.)
+        A synthetic coupled linear oscillator at ``I=30`` is stiff enough that
+        forward Euler and exponential-Euler resolve different crossing counts. Keeping
+        this fixture local prevents a generic integrator test from overriding a
+        production model's maintained exact-map discretisation.
         """
-        py_exp = _spike_count_method("resonate_fire", 300, 10.0, "exp_euler")
-        vlog_exp = _verilog_spike_count_method("resonate_fire", 300, 10.0, 32, 16, "exp_euler")
-        vlog_euler = _verilog_spike_count_method("resonate_fire", 300, 10.0, 32, 16, "euler")
+        py_exp = _linear_oscillator_spike_count("exp_euler", 300, 30.0)
+        vlog_exp = _linear_oscillator_verilog_spike_count("exp_euler", 300, 30.0)
+        vlog_euler = _linear_oscillator_verilog_spike_count("euler", 300, 30.0)
         assert vlog_exp != vlog_euler, "exp-Euler output must differ from Euler for a stiff model"
         gap_pct = abs(py_exp - vlog_exp) / max(py_exp, 1) * 100
         assert gap_pct <= 6.0, f"exp-Euler gap {gap_pct:.1f}% (Python={py_exp}, Verilog={vlog_exp})"

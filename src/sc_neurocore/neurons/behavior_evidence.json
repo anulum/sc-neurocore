@@ -523,11 +523,10 @@
     "ErmentroutKopellPopulation": {
       "behavior_tags": [
         "excitable",
-        "irregular",
         "tonic"
       ],
       "drivable": true,
-      "result_sha256": "b80b7f10aba464f143be8da7ace6505f9a7408db88fcf9ad92ecdf33e39b28aa",
+      "result_sha256": "038045ac68c99d35faef687ac58bb755b5e9ca81061336ca15cc70f35681fa38",
       "stochastic": false
     },
     "EscapeRateNeuron": {
@@ -1284,11 +1283,11 @@
     "ResonateAndFireNeuron": {
       "behavior_tags": [
         "excitable",
-        "rate-coded",
+        "phasic",
         "tonic"
       ],
       "drivable": true,
-      "result_sha256": "56039fe9e5e759b36b554ee995acbb9f66839e0d33e040418ca4ba4747e0ceae",
+      "result_sha256": "fdaa6cc5ada66f3168123736c7a39e1d1c5b41ef4b9666cdefa6077ee9296040",
       "stochastic": false
     },
     "RulkovMapNeuron": {
@@ -1634,7 +1633,7 @@
       "stochastic": false
     }
   },
-  "result_sha256": "86e9d0e76e38bef9ea1a07f0b801a1b89d4f4928519386819851b56e6e54b59f",
+  "result_sha256": "d6380f3723710a1b922de0aa4dfd1852a2c3452be53818f5e6bd9dead87754fc",
   "schema_version": "studio.behavior-probe.v1",
   "sweep": {
     "currents": [

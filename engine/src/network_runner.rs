@@ -519,7 +519,7 @@ impl NeuronVariant {
             NeuronVariant::FitzHughNagumo(n) => n.v,
             NeuronVariant::MorrisLecar(n) => n.v,
             NeuronVariant::HindmarshRose(n) => n.x,
-            NeuronVariant::ResonateAndFire(n) => n.x,
+            NeuronVariant::ResonateAndFire(n) => n.y,
             NeuronVariant::BalancedResonateAndFire(n) => n.x,
             NeuronVariant::FitzHughRinzel(n) => n.v,
             NeuronVariant::McKean(n) => n.v,
@@ -1673,6 +1673,20 @@ mod tests {
         assert_eq!(neuron.soma_voltage(), 0.0);
         neuron.reset();
         assert_eq!(neuron.step(1.0), 1);
+    }
+
+    #[test]
+    fn resonate_and_fire_network_voltage_is_source_voltage_coordinate() {
+        let mut neuron = create_neuron("ResonateAndFireNeuron").unwrap();
+        assert_eq!(neuron.step(5.0), 0);
+        let reported = neuron.soma_voltage();
+        match neuron {
+            NeuronVariant::ResonateAndFire(inner) => {
+                assert_eq!(reported, inner.y);
+                assert_ne!(inner.x, inner.y);
+            }
+            _ => panic!("factory returned the wrong neuron variant"),
+        }
     }
 
     // ── Pipeline integration: interneurons ────────────────────────

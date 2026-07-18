@@ -28,7 +28,7 @@ mod lnm;
 mod mckean;
 mod morris_lecar;
 mod pernarowski;
-mod resonate_and_fire;
+pub mod resonate_and_fire;
 mod sherman_rinzel_keizer;
 mod superspike_neuron;
 mod terman_wang;

@@ -4,14 +4,16 @@
 # © Code 2020–2026 Miroslav Šotek. All rights reserved.
 # ORCID: 0009-0009-3560-0851
 # Contact: www.anulum.li | protoscience@anulum.li
-# SC-NeuroCore — Mojo SIMD acceleration for resonate_and_fire
+# SC-NeuroCore — Mojo scalar kernel for Izhikevich resonate-and-fire
 
-from std.math import cos, exp, sin, sqrt
+from std.math import cos, exp, sin
 
 
-fn _finite(x: Float64) -> Bool:
+fn _finite(value: Float64) -> Bool:
     return (
-        x == x and x <= 1.7976931348623157e308 and x >= -1.7976931348623157e308
+        value == value
+        and value <= 1.7976931348623157e308
+        and value >= -1.7976931348623157e308
     )
 
 
@@ -45,8 +47,6 @@ fn resonate_and_fire_exact_x(
     dt: Float64,
 ) -> Float64:
     var denominator = b * b + omega * omega
-    if not _finite(denominator) or denominator <= 0.0:
-        return 0.0 / 0.0
     var x_ss = -b * current / denominator
     var y_ss = omega * current / denominator
     var decay = exp(b * dt)
@@ -54,7 +54,9 @@ fn resonate_and_fire_exact_x(
     var cos_angle = cos(angle)
     var sin_angle = sin(angle)
     if (
-        not _finite(x_ss)
+        not _finite(denominator)
+        or denominator <= 0.0
+        or not _finite(x_ss)
         or not _finite(y_ss)
         or not _finite(decay)
         or not _finite(angle)
@@ -76,8 +78,6 @@ fn resonate_and_fire_exact_y(
     dt: Float64,
 ) -> Float64:
     var denominator = b * b + omega * omega
-    if not _finite(denominator) or denominator <= 0.0:
-        return 0.0 / 0.0
     var x_ss = -b * current / denominator
     var y_ss = omega * current / denominator
     var decay = exp(b * dt)
@@ -85,7 +85,9 @@ fn resonate_and_fire_exact_y(
     var cos_angle = cos(angle)
     var sin_angle = sin(angle)
     if (
-        not _finite(x_ss)
+        not _finite(denominator)
+        or denominator <= 0.0
+        or not _finite(x_ss)
         or not _finite(y_ss)
         or not _finite(decay)
         or not _finite(angle)
@@ -111,18 +113,10 @@ fn resonate_and_fire_step_spike(
         return -1
     if not resonate_and_fire_valid(x, y, b, omega, threshold, dt):
         return -1
-
     var next_x = resonate_and_fire_exact_x(x, y, current, b, omega, dt)
     var next_y = resonate_and_fire_exact_y(x, y, current, b, omega, dt)
-    var radius_squared = next_x * next_x + next_y * next_y
-    var radius = sqrt(radius_squared)
-    if (
-        not _finite(next_x)
-        or not _finite(next_y)
-        or not _finite(radius_squared)
-        or not _finite(radius)
-    ):
+    if not _finite(next_x) or not _finite(next_y):
         return -1
-    if radius >= threshold:
+    if y < threshold and next_y >= threshold:
         return 1
     return 0

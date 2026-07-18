@@ -31,6 +31,20 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
   quantisation and the absence of formal, synthesis, timing, device, or PPA
   evidence are explicit.
 
+### Resonate-and-fire source-to-co-simulation closure
+
+- Reconstructed the Izhikevich (2001) complex resonator across Python, the
+  modular Rust engine, independent Rust safety, Julia, Go C-shared, and Mojo
+  shared-library execution. Every lane preserves the current-like `x`,
+  voltage-like `y`, exact constant-input flow, sampled upward voltage crossing,
+  and generalised source reset `z=i*threshold`.
+- Added public atomic batch dispatch, paired schemas, an independently derived
+  DOI trace, configured five-runtime trajectory parity, native invalid-contract
+  tests, source/binary-bound local benchmark evidence, bounded generated
+  Q32.32 H1 co-simulation, and a depth-4 reset-safety job. Sampled event timing,
+  non-monotone high-drive behaviour, the fixed lookup-grid envelope, and the
+  absence of formal equivalence or higher-silicon evidence are explicit.
+
 ### Montbrió–Pazó–Roxin source-to-co-simulation closure
 
 - Corrected the legacy `ErmentroutKopellPopulation` attribution and promoted

@@ -36,6 +36,7 @@ except ImportError:
 
 _KERNEL_DIR = Path(__file__).resolve().parent
 _ERMENTROUT_KOPELL_POP_LOADED = False
+_RESONATE_AND_FIRE_LOADED = False
 _WONG_WANG_LOADED = False
 _JANSEN_RIT_LOADED = False
 _WILSON_COWAN_LOADED = False
@@ -87,6 +88,20 @@ def _ensure_ermentrout_kopell_pop_loaded() -> Any:
         _jl.include(str(jl_path))
         _ERMENTROUT_KOPELL_POP_LOADED = True
     return _jl.ErmentroutKopellPopAccel
+
+
+def _ensure_resonate_and_fire_loaded() -> Any:
+    """Include the maintained resonate-and-fire kernel on first use."""
+    global _RESONATE_AND_FIRE_LOADED
+    if _jl is None:
+        raise ImportError("juliacall not available; install the `julia` extra")
+    if not _RESONATE_AND_FIRE_LOADED:
+        jl_path = _KERNEL_DIR / "resonate_and_fire.jl"
+        if not jl_path.is_file():
+            raise FileNotFoundError(f"resonate_and_fire.jl missing at {jl_path}")
+        _jl.include(str(jl_path))
+        _RESONATE_AND_FIRE_LOADED = True
+    return _jl.ResonateAndFireAccel
 
 
 def _ensure_wilson_cowan_loaded() -> Any:
@@ -154,6 +169,18 @@ def _as_ermentrout_kopell_pop_input(
         raise ValueError(f"ext_input must be one-dimensional: got shape {drive.shape}")
     if not np.isfinite(drive).all():
         raise ValueError("ext_input must contain only finite values")
+    return drive
+
+
+def _as_resonate_and_fire_input(
+    current: npt.ArrayLike,
+) -> npt.NDArray[np.float64]:
+    """Convert resonate-and-fire drive into a finite one-dimensional vector."""
+    drive = np.ascontiguousarray(current, dtype=np.float64)
+    if drive.ndim != 1:
+        raise ValueError(f"current must be one-dimensional: got shape {drive.shape}")
+    if not np.isfinite(drive).all():
+        raise ValueError("current must contain only finite values")
     return drive
 
 
@@ -388,6 +415,53 @@ def simulate_ermentrout_kopell_pop(
         "v": v_out,
         "r_final": float(r_final),
         "v_final": float(v_final),
+    }
+
+
+def simulate_resonate_and_fire(
+    x_init: float,
+    y_init: float,
+    b: float,
+    omega: float,
+    threshold: float,
+    dt: float,
+    current: npt.ArrayLike,
+) -> dict[str, npt.NDArray[np.float64] | float | int]:
+    """Run the Julia exact-flow recurrence with typed failure translation."""
+    drive = _as_resonate_and_fire_input(current)
+    module = _ensure_resonate_and_fire_loaded()
+    x_out = np.empty(drive.size, dtype=np.float64)
+    y_out = np.empty(drive.size, dtype=np.float64)
+    spikes_out = np.empty(drive.size, dtype=np.float64)
+    try:
+        x_final, y_final, spike_count = module.simulate_resonate_and_fire_b(
+            x_init,
+            y_init,
+            b,
+            omega,
+            threshold,
+            dt,
+            drive,
+            x_out,
+            y_out,
+            spikes_out,
+        )
+    except Exception as exc:
+        if not is_julia_error(exc):
+            raise
+        julia_exception = getattr(exc, "exception", None)
+        if module.is_configuration_error(julia_exception):
+            raise ValueError(str(exc)) from exc
+        if module.is_candidate_error(julia_exception):
+            raise FloatingPointError(str(exc)) from exc
+        raise
+    return {
+        "x": x_out,
+        "y": y_out,
+        "spikes": spikes_out,
+        "x_final": float(x_final),
+        "y_final": float(y_final),
+        "spike_count": int(spike_count),
     }
 
 

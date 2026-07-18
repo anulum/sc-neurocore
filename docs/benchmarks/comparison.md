@@ -74,7 +74,7 @@ SC-NeuroCore-specific.
 | Python models | **158 lazy-loaded classes / 153 source modules** | 11 | 6 | Custom eq. | 3 |
 | Rust/compiled models | **175 Rust PyO3 wrappers / 162-model NetworkRunner** | — | — | C++ codegen | — |
 | Hardware emulators | **9** | — | — | — | Loihi only |
-| Formal verification | **53 SymbiYosys proof jobs and 184 formal statements (154 assert, 7 assume, 23 cover)** | — | — | — | — |
+| Formal verification | **54 SymbiYosys proof jobs and 185 formal statements (155 assert, 7 assume, 23 cover)** | — | — | — | — |
 | Train-to-FPGA export | **Yes** | No | No | No | No |
 
 ## IQIF signed-integer polyglot batch loop
@@ -279,6 +279,36 @@ followed by the always-available Python floor. The artefact binds exact source
 and loaded Rust/Go/Mojo binary hashes; these timings are local diagnostic
 regression evidence, not production, hardware, cross-host, or universal-ranking
 claims.
+
+## Resonate-and-fire exact-flow batch
+
+The committed `benchmarks/results/bench_resonate_and_fire.json` records the
+complete post-update current-like and voltage-like traces, both final states,
+and sampled upward voltage-threshold events through all five public runtimes.
+Five 50,000-step samples follow a 1,000-step warm-up. The run was pinned to
+logical CPU 11 on the same i5-11600K host, without exclusive CPU isolation and
+with a recorded one-minute load average of 47.75. The artifact distinguishes
+the measured JuliaCall runtime (1.11.9) from the PATH Julia CLI (1.12.6), the
+Go shared library's embedded builder (1.26.3) from the PATH Go CLI (1.24.0),
+and the pinned Pixi Mojo builder (0.26.2) from the PATH Mojo CLI (1.0.0b1).
+
+| Backend | Median call | Median ns/step | Maximum trace difference | Events |
+|---|---:|---:|---:|---:|
+| Rust | 16.515 ms | 330.297 | `0` | 295 |
+| Mojo | 20.724 ms | 414.471 | `9.992e-16` | 295 |
+| Go | 57.190 ms | 1,143.798 | `0` | 295 |
+| Julia | 57.445 ms | 1,148.901 | `0` | 295 |
+| Python | 550.033 ms | 11,000.669 | `0` | 295 |
+
+Python, Rust, Julia, and Go are byte-identical, with trace SHA-256
+`0fec5ca1ed5a3ab21f3f839799b6f8ef4be9a5140247b3f7b7daac1da0221e18`.
+Mojo remains event-exact and within its declared `1e-10`
+complete-trajectory envelope. The ascending native median order for this run
+is Rust, Mojo, Go, then Julia, followed by the always-available Python floor.
+The artifact binds exact source and loaded Rust/Go/Mojo binary hashes and
+includes a passing seven-test standalone Rust safety receipt. These timings are
+local diagnostic regression evidence, not production, hardware, cross-host,
+or universal-ranking claims.
 
 ## Chialvo map polyglot batch loop
 

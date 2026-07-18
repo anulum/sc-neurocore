@@ -163,6 +163,7 @@ _DOC_PATH = Path("docs/api/neuron_models.md")
 _RUST_SOURCE_PATHS = (
     Path("engine/src/bindings/ermentrout_kopell_pop.rs"),
     Path("engine/src/bindings/jansen_rit.rs"),
+    Path("engine/src/bindings/resonate_and_fire.rs"),
     Path("engine/src/pyo3_neurons.rs"),
     Path("engine/src/lib.rs"),
 )
