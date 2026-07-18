@@ -67,7 +67,7 @@ EXPECTED_ROWS = (
         distribution="snntorch",
         declared_extra=None,
         test_paths=(
-            "tests/test_nir_bridge/test_snntorch_interop.py",
+            "tests/test_nir_bridge/test_scalar_broadcast.py",
             "docs/guides/nir_integration.md",
         ),
     ),

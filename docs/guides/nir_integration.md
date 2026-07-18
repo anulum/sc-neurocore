@@ -227,6 +227,9 @@ network = from_nir(graph, dt=1e-4, reset_mode="subtract")
 **Note on snnTorch interop:** snnTorch uses subtract-reset (`v = v - threshold`)
 but exports `v_reset=0` to NIR. Pass `reset_mode="subtract"` to match.
 snnTorch hardcodes `dt=1e-4` in its export; use the same value in `from_nir()`.
+The reproduced exporter profile uses `snntorch==0.9.4`, `nirtorch==2.6`, and
+`nir==1.0.8`; snnTorch 1.0.0 currently fails inside its upstream NIR exporter
+before SC-NeuroCore receives a graph.
 Some configurations show spike mismatches (measured 6-8% across 600 steps on
 12 configs) caused by float32 (torch) vs float64 (numpy) precision divergence
 at threshold boundaries. The equations are algorithmically equivalent.
@@ -250,8 +253,12 @@ network = from_nir(graph, dt=1e-4)
 **Note on SpikingJelly interop:** Verified exact spike match across 27
 configurations (3 seeds, 3 tau values, 3 inputs, 1350 total steps, 0
 mismatches). SpikingJelly exports LIFNode as `nir.LIF` with `tau=tau*dt`.
-Requires `spikingjelly>=0.0.0.0.15` (install from GitHub for NIR support).
-SpikingJelly's `CUBALIFNode` is not yet mapped by their NIR export.
+The reproduced profile uses upstream commit
+`2797c5575515b59d7f09a3d5b732d6d25e148d13` with `nir==1.0.7`. NIR 1.0.8
+removed the `input_type` and `output_type` constructor arguments that this
+SpikingJelly exporter still supplies, so that latest/latest pairing currently
+fails before SC-NeuroCore receives the graph. SpikingJelly's `CUBALIFNode` is
+not yet mapped by their NIR export.
 
 ### Import from Sinabs
 
@@ -382,8 +389,8 @@ python examples/norse_nir_roundtrip.py
 **SpikingJelly weights + LIF roundtrip** (requires SpikingJelly, torch):
 
 ```bash
-pip install sc-neurocore nir torch
-pip install spikingjelly  # or install from GitHub for NIR support
+pip install sc-neurocore 'nir==1.0.7' torch
+pip install 'spikingjelly @ git+https://github.com/fangwei123456/spikingjelly.git@2797c5575515b59d7f09a3d5b732d6d25e148d13'
 python examples/spikingjelly_nir_roundtrip.py
 ```
 

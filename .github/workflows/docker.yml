@@ -116,7 +116,7 @@ jobs:
           IMAGE_REF: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ steps.meta.outputs.version }}
         run: |
           test -n "${IMAGE_REF}"
-          for attempt in {1..12}; do
+          for _ in {1..12}; do
             if docker pull "${IMAGE_REF}"; then
               exit 0
             fi
