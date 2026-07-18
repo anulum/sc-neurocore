@@ -4,7 +4,7 @@
 pytest>=9.1.1
 pytest-cov>=7.1.0
 hypothesis>=6.156.4
-mypy>=2.2.0
+mypy>=2.3.0
 ruff>=0.15.20
 bandit>=1.7
 pyyaml>=6.0
