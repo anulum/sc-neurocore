@@ -6,4 +6,4 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore release-only Semgrep requirements
 
-semgrep==1.168.0
+semgrep==1.170.0
