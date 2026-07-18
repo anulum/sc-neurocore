@@ -71,27 +71,20 @@ def test_osv_config_tracks_bounded_paste_unmaintained_exception() -> None:
     assert "cargo audit" in ignored["RUSTSEC-2024-0436"]["reason"]
 
 
-def test_osv_config_waives_unreachable_mcp_transitive_of_ci_only_semgrep() -> None:
-    """The 3 mcp CVEs are waived only with the exact reachability invariant + expiry.
-
-    mcp is an unconditional transitive of the CI-only semgrep SAST tool; the CVEs are in
-    mcp's MCP-server transports which this repo never starts. The waiver must keep stating
-    that reachability ground and stay expiring + issue-tracked, so it cannot silently
-    become an open-ended blanket ignore.
-    """
+def test_semgrep_overrides_remove_mcp_waivers() -> None:
+    """Patched scanner dependencies must replace, not coexist with, MCP waivers."""
     config = tomllib.loads(
         (_repo_root() / "tools" / "security_scan" / "osv-scanner.toml").read_text(encoding="utf-8")
     )
     ignored = {entry["id"]: entry for entry in config["IgnoredVulns"]}
+    overrides = (_repo_root() / "requirements" / "semgrep-overrides.txt").read_text(
+        encoding="utf-8"
+    )
 
     for ghsa in ("GHSA-vj7q-gjh5-988w", "GHSA-jpw9-pfvf-9f58", "GHSA-hvrp-rf83-w775"):
-        assert ghsa in ignored, f"{ghsa} mcp waiver missing"
-        entry = ignored[ghsa]
-        assert entry["ignoreUntil"] == "2026-10-31T23:59:59Z"
-        reason = entry["reason"]
-        assert "semgrep" in reason and "mcp" in reason
-        assert "'semgrep scan'" in reason and "never" in reason.lower()
-        assert "issue #162" in reason
+        assert ghsa not in ignored
+    assert "click==8.3.3" in overrides
+    assert "mcp==1.28.1" in overrides
 
 
 def test_runner_writes_osv_report_and_summary(tmp_path: Path) -> None:

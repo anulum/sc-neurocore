@@ -147,7 +147,9 @@ def test_security_scanner_workflow_runs_source_policy_scanner_lanes() -> None:
 
     run_text = "\n".join(step["run"] for step in steps if isinstance(step, dict) and "run" in step)
 
-    assert "python -m pip install --require-hashes -r requirements/semgrep.txt" in run_text
+    assert (
+        "python -m pip install --no-deps --require-hashes -r requirements/semgrep.txt" in run_text
+    )
     assert "go install github.com/zricethezav/gitleaks/v8@v8.20.1" in run_text
     assert "go install github.com/aquasecurity/trivy/cmd/trivy@v0.58.1" in run_text
 

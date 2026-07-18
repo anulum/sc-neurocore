@@ -178,7 +178,7 @@ _MANDATORY_SCANNERS = (
         ),
         owner="SC-NeuroCore security lane owner",
         noise="low",
-        pinned_version="semgrep==1.168.0",
+        pinned_version="semgrep==1.170.0",
         allowed_to_fail_rationale=None,
     ),
     ScannerManifestEntry(

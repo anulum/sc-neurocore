@@ -63,7 +63,9 @@ jobs:
           sudo apt-get update -qq
           sudo apt-get install -y -qq shellcheck
           python -m pip install --require-hashes -r requirements/security-scanners.txt
-          python -m pip install --require-hashes -r requirements/semgrep.txt
+          # semgrep-overrides.txt deliberately replaces two vulnerable upstream
+          # constraints; the lock contains the complete dependency set.
+          python -m pip install --no-deps --require-hashes -r requirements/semgrep.txt
           python -m pip install --require-hashes -r requirements/fuzz.txt
           go install github.com/rhysd/actionlint/cmd/actionlint@v1.7.12
           go install github.com/google/osv-scanner/v2/cmd/osv-scanner@v2.3.8

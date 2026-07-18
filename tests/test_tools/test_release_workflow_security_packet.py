@@ -77,7 +77,9 @@ def test_release_workflow_installs_real_release_sweep_tools() -> None:
     assert (
         "python -m pip install --require-hashes -r requirements/security-scanners.txt" in run_text
     )
-    assert "python -m pip install --require-hashes -r requirements/semgrep.txt" in run_text
+    assert (
+        "python -m pip install --no-deps --require-hashes -r requirements/semgrep.txt" in run_text
+    )
     assert "python -m pip install --require-hashes -r requirements/fuzz.txt" in run_text
     assert "go install github.com/rhysd/actionlint/cmd/actionlint@v1.7.12" in run_text
     assert "go install github.com/google/osv-scanner/v2/cmd/osv-scanner@v2.3.8" in run_text

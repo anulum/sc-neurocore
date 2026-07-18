@@ -6,4 +6,6 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore release-only Semgrep requirements
 
+# Compile with requirements/semgrep-overrides.txt. The override replaces two
+# vulnerable transitive pins that Semgrep's scan path does not require.
 semgrep==1.170.0

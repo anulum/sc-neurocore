@@ -80,7 +80,7 @@ Tagged releases also run Semgrep from the repository-owned `.semgrep.yml`
 policy instead of registry-hosted rule packs:
 
 ```bash
-python -m pip install --require-hashes -r requirements/semgrep.txt
+python -m pip install --no-deps --require-hashes -r requirements/semgrep.txt
 python tools/security_scan/run_semgrep_scanners.py \
   --output-dir security/ci-security-packet
 ```
