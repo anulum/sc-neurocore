@@ -485,9 +485,13 @@ def model_facets() -> dict[str, Any]:
     family_counts: Counter[tuple[str, str]] = Counter()
     maturity_counts: Counter[str] = Counter()
     behavior_counts: Counter[str] = Counter()
+    science_tier_counts: Counter[str] = Counter()
+    silicon_tier_counts: Counter[str] = Counter()
     for model in models:
         family_counts[(str(model["family"]), str(model["category_slug"]))] += 1
         maturity_counts[str(model["maturity"])] += 1
+        science_tier_counts[str(model.get("science_label", "S0"))] += 1
+        silicon_tier_counts[str(model.get("silicon_label", "none"))] += 1
         for tag in model.get("behavior_tags", []):
             behavior_counts[str(tag)] += 1
     families = [
@@ -504,6 +508,8 @@ def model_facets() -> dict[str, Any]:
         "families": families,
         "maturities": dict(sorted(maturity_counts.items())),
         "behaviors": behaviors,
+        "science_tiers": dict(sorted(science_tier_counts.items())),
+        "silicon_tiers": dict(sorted(silicon_tier_counts.items())),
     }
 
 

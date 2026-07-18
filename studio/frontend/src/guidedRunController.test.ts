@@ -158,6 +158,40 @@ describe("buildGuidedRunController", () => {
     expect(controller.blockerReason).toBe("Guided compile requires ODE source mode.");
   });
 
+  it("supports the catalogue model path through sim and analysis before the ODE compile gate", async () => {
+    const calls: GuidedRunActionKey[] = [];
+    const runActions = actions(calls);
+
+    await buildGuidedRunController({
+      exportReady: false,
+      flow: flow({ modelSelected: true }),
+      sourceMode: "model",
+    }, runActions).runNextStep();
+    await buildGuidedRunController({
+      exportReady: false,
+      flow: flow({ modelSelected: true, simulationComplete: true }),
+      sourceMode: "model",
+    }, runActions).runNextStep();
+
+    expect(calls).toEqual(["run-simulation", "run-analysis"]);
+
+    const afterAnalysis = buildGuidedRunController({
+      exportReady: false,
+      flow: flow({
+        analysisComplete: true,
+        modelSelected: true,
+        simulationComplete: true,
+        trainingSkipped: true,
+      }),
+      sourceMode: "model",
+    }, runActions);
+    expect(afterAnalysis.nextActionKey).toBe("blocked");
+    expect(afterAnalysis.blockerReason).toBe("Guided compile requires ODE source mode.");
+    expect(afterAnalysis.completedEvidence).toEqual(
+      expect.arrayContaining(["Design", "Simulate", "Analyse", "Train"]),
+    );
+  });
+
   it("reports failed actions without claiming progress", async () => {
     const controller = buildGuidedRunController({
       exportReady: false,

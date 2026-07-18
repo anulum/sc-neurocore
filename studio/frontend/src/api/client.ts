@@ -87,6 +87,12 @@ export interface ModelProvenance {
 export interface ModelSummary {
   name: string; module: string; category: string;
   tier: number; evidence_kind: string;
+  /** Dual-axis science readiness S0–S5 (catalogue contract). */
+  science_tier: number;
+  science_label: string;
+  /** Dual-axis silicon readiness H0–H5, or null when not enrolled. */
+  silicon_tier: number | null;
+  silicon_label: string;
   category_slug: string; category_source: string; family: string;
   maturity: string; biophysical_detail: string;
   n_state_vars: number; n_params: number; state_var_names: string[];
@@ -109,6 +115,18 @@ export interface ModelBackendSupport {
   name: string; status: string; parity: string;
 }
 
+export interface ModelReadiness {
+  science_tier: number;
+  science_label: string;
+  silicon_tier: number | null;
+  silicon_label: string;
+  is_perfect?: boolean;
+  validation?: Record<string, unknown>;
+  silicon?: Record<string, unknown>;
+  terminal_silicon_tier?: number | null;
+  terminal_reason?: string | null;
+}
+
 export interface ModelDetail extends ModelSummary {
   docstring: string; display_name: string;
   state_vars: ModelStateVariable[];
@@ -116,6 +134,7 @@ export interface ModelDetail extends ModelSummary {
   dynamics: Record<string, string>;
   integration_method: string;
   backends: ModelBackendSupport[];
+  readiness?: ModelReadiness;
   reproducibility: {
     reference_config: string;
     golden_trace_sha256: string;
@@ -130,6 +149,10 @@ export interface ModelFacets {
   families: { family: string; category_slug: string; count: number }[];
   maturities: Record<string, number>;
   behaviors: { tag: string; count: number }[];
+  /** Counts by science tier label (S0–S5). */
+  science_tiers?: Record<string, number>;
+  /** Counts by silicon label (none, H0–H5). */
+  silicon_tiers?: Record<string, number>;
 }
 
 export interface ModelDoc {

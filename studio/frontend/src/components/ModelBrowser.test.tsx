@@ -16,13 +16,43 @@ interface BrowseModel {
   category: string;
   family: string;
   tier: number;
+  science_tier: number;
+  silicon_tier: number | null;
 }
 
 const CATALOGUE: BrowseModel[] = [
-  { name: "AdExNeuron", category: "Integrate-and-Fire", family: "Integrate-and-Fire", tier: 2 },
-  { name: "GLIFNeuron", category: "Integrate-and-Fire", family: "Integrate-and-Fire", tier: 3 },
-  { name: "GolgiCell", category: "Cerebellar", family: "Cerebellar", tier: 1 },
-  { name: "RulkovMapNeuron", category: "Map-based", family: "Map-based", tier: 3 },
+  {
+    name: "AdExNeuron",
+    category: "Integrate-and-Fire",
+    family: "Integrate-and-Fire",
+    tier: 2,
+    science_tier: 5,
+    silicon_tier: 1,
+  },
+  {
+    name: "GLIFNeuron",
+    category: "Integrate-and-Fire",
+    family: "Integrate-and-Fire",
+    tier: 3,
+    science_tier: 3,
+    silicon_tier: 0,
+  },
+  {
+    name: "GolgiCell",
+    category: "Cerebellar",
+    family: "Cerebellar",
+    tier: 1,
+    science_tier: 1,
+    silicon_tier: null,
+  },
+  {
+    name: "RulkovMapNeuron",
+    category: "Map-based",
+    family: "Map-based",
+    tier: 3,
+    science_tier: 5,
+    silicon_tier: 2,
+  },
 ];
 
 const NONE: Record<string, ModelBehavior> = {};
@@ -172,5 +202,76 @@ describe("ModelBrowser", () => {
       behaviorFilter: "chaotic",
     });
     expect(Object.values(grouped).flat()).toEqual([]);
+  });
+
+  it("restricts the catalogue to a minimum science dual-axis tier", () => {
+    const s5 = filterAndGroupModels(CATALOGUE, {
+      modelFilter: "",
+      familyFilter: "",
+      patternFilter: "",
+      minTier: 0,
+      minScienceTier: 5,
+      behaviors: NONE,
+    });
+    expect(Object.values(s5).flat().map((m) => m.name).sort()).toEqual([
+      "AdExNeuron",
+      "RulkovMapNeuron",
+    ]);
+
+    const s3 = filterAndGroupModels(CATALOGUE, {
+      modelFilter: "",
+      familyFilter: "",
+      patternFilter: "",
+      minTier: 0,
+      minScienceTier: 3,
+      behaviors: NONE,
+    });
+    expect(Object.values(s3).flat().map((m) => m.name).sort()).toEqual([
+      "AdExNeuron",
+      "GLIFNeuron",
+      "RulkovMapNeuron",
+    ]);
+  });
+
+  it("restricts the catalogue to silicon-enrolled models and H floors", () => {
+    const enrolled = filterAndGroupModels(CATALOGUE, {
+      modelFilter: "",
+      familyFilter: "",
+      patternFilter: "",
+      minTier: 0,
+      siliconEnrolledOnly: true,
+      behaviors: NONE,
+    });
+    expect(Object.values(enrolled).flat().map((m) => m.name).sort()).toEqual([
+      "AdExNeuron",
+      "GLIFNeuron",
+      "RulkovMapNeuron",
+    ]);
+
+    const h1 = filterAndGroupModels(CATALOGUE, {
+      modelFilter: "",
+      familyFilter: "",
+      patternFilter: "",
+      minTier: 0,
+      minSiliconTier: 1,
+      behaviors: NONE,
+    });
+    expect(Object.values(h1).flat().map((m) => m.name).sort()).toEqual([
+      "AdExNeuron",
+      "RulkovMapNeuron",
+    ]);
+  });
+
+  it("combines dual-axis floors with family search", () => {
+    const grouped = filterAndGroupModels(CATALOGUE, {
+      modelFilter: "integrate",
+      familyFilter: "",
+      patternFilter: "",
+      minTier: 0,
+      minScienceTier: 5,
+      minSiliconTier: 1,
+      behaviors: NONE,
+    });
+    expect(Object.values(grouped).flat().map((m) => m.name)).toEqual(["AdExNeuron"]);
   });
 });

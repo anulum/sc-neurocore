@@ -57,3 +57,69 @@ export default function EvidenceTierBadge({
     </span>
   );
 }
+
+/** Dual-axis science (S0–S5) + silicon (none / H0–H5) readiness badges. */
+export function DualAxisBadge({
+  scienceLabel,
+  siliconLabel,
+  scienceTier,
+  siliconTier,
+  full = false,
+}: {
+  scienceLabel: string;
+  siliconLabel: string;
+  scienceTier?: number;
+  siliconTier?: number | null;
+  full?: boolean;
+}) {
+  const sColor =
+    (scienceTier ?? 0) >= 5
+      ? "var(--success)"
+      : (scienceTier ?? 0) >= 3
+        ? "var(--accent)"
+        : "var(--text-muted)";
+  const hEnrolled = siliconTier !== null && siliconTier !== undefined;
+  const hColor =
+    hEnrolled && (siliconTier as number) >= 2
+      ? "var(--success)"
+      : hEnrolled
+        ? "var(--accent)"
+        : "var(--bg-tertiary)";
+  const sTitle = `Science readiness ${scienceLabel}${scienceTier !== undefined ? ` (S${scienceTier})` : ""}`;
+  const hTitle = hEnrolled
+    ? `Silicon readiness ${siliconLabel} (H${siliconTier})`
+    : "Silicon readiness not enrolled (none)";
+  return (
+    <span style={{ display: "inline-flex", gap: 2, alignItems: "center" }}>
+      <span
+        title={sTitle}
+        style={{
+          fontSize: 8,
+          padding: "0 4px",
+          borderRadius: 2,
+          fontWeight: 700,
+          color: "var(--bg-primary)",
+          background: sColor,
+          whiteSpace: "nowrap",
+        }}
+      >
+        {full ? `science ${scienceLabel}` : scienceLabel}
+      </span>
+      <span
+        title={hTitle}
+        style={{
+          fontSize: 8,
+          padding: "0 4px",
+          borderRadius: 2,
+          fontWeight: 700,
+          color: hEnrolled ? "var(--bg-primary)" : "var(--text-muted)",
+          background: hColor,
+          whiteSpace: "nowrap",
+          border: hEnrolled ? "none" : "1px solid var(--border)",
+        }}
+      >
+        {full ? `silicon ${siliconLabel}` : siliconLabel}
+      </span>
+    </span>
+  );
+}

@@ -18,7 +18,7 @@ import {
 import EvidenceSummaryStrip, {
     type EvidenceSummaryItem,
 } from "./EvidenceSummaryStrip";
-import EvidenceTierBadge from "./EvidenceTierBadge";
+import EvidenceTierBadge, { DualAxisBadge } from "./EvidenceTierBadge";
 
 const MATURITY_COLORS: Record<string, string> = {
     validated: "#81c784",
@@ -74,19 +74,30 @@ interface ModelGroupFilters {
     familyFilter: string;
     patternFilter: string;
     minTier: number;
+    /** Minimum science dual-axis tier (S0–S5). 0 means no filter. */
+    minScienceTier?: number;
+    /**
+     * Minimum silicon dual-axis tier (H0–H5). 0 means no filter.
+     * Models with null / unenrolled silicon never pass a positive min.
+     */
+    minSiliconTier?: number;
+    /** When true, only models with silicon_tier !== null. */
+    siliconEnrolledOnly?: boolean;
     behaviors: Record<string, ModelBehavior>;
     behaviorFilter?: string;
 }
 
 /** Filter the catalogue by search text, family, measured behaviour tag, live
- *  firing pattern, and minimum evidence tier, then group the survivors by their
- *  displayed family. */
+ *  firing pattern, legacy evidence tier, and dual-axis science/silicon floors,
+ *  then group the survivors by their displayed family. */
 export function filterAndGroupModels<
     T extends {
         name: string;
         category: string;
         family: string;
         tier?: number;
+        science_tier?: number;
+        silicon_tier?: number | null;
         behavior_tags?: string[];
     },
 >(models: T[], filters: ModelGroupFilters): Record<string, T[]> {
@@ -96,7 +107,8 @@ export function filterAndGroupModels<
         filtered = filtered.filter(
             (m) =>
                 m.name.toLowerCase().includes(q) ||
-                m.category.toLowerCase().includes(q),
+                m.category.toLowerCase().includes(q) ||
+                m.family.toLowerCase().includes(q),
         );
     }
     if (filters.familyFilter) {
@@ -109,6 +121,24 @@ export function filterAndGroupModels<
     }
     if (filters.minTier > 0) {
         filtered = filtered.filter((m) => (m.tier ?? 0) >= filters.minTier);
+    }
+    if ((filters.minScienceTier ?? 0) > 0) {
+        const floor = filters.minScienceTier ?? 0;
+        filtered = filtered.filter((m) => (m.science_tier ?? 0) >= floor);
+    }
+    if (filters.siliconEnrolledOnly) {
+        filtered = filtered.filter(
+            (m) => m.silicon_tier !== null && m.silicon_tier !== undefined,
+        );
+    }
+    if ((filters.minSiliconTier ?? 0) > 0) {
+        const floor = filters.minSiliconTier ?? 0;
+        filtered = filtered.filter(
+            (m) =>
+                m.silicon_tier !== null &&
+                m.silicon_tier !== undefined &&
+                (m.silicon_tier as number) >= floor,
+        );
     }
     if (filters.patternFilter) {
         filtered = filtered.filter(
@@ -144,6 +174,9 @@ export default function ModelBrowser() {
     const [familyFilter, setFamilyFilter] = useState<string>("");
     const [behaviorFilter, setBehaviorFilter] = useState<string>("");
     const [minTier, setMinTier] = useState<number>(0);
+    const [minScienceTier, setMinScienceTier] = useState<number>(0);
+    const [minSiliconTier, setMinSiliconTier] = useState<number>(0);
+    const [siliconEnrolledOnly, setSiliconEnrolledOnly] = useState(false);
 
     useEffect(() => {
         loadModels();
@@ -174,6 +207,9 @@ export default function ModelBrowser() {
                 familyFilter,
                 patternFilter,
                 minTier,
+                minScienceTier,
+                minSiliconTier,
+                siliconEnrolledOnly,
                 behaviors,
                 behaviorFilter,
             }),
@@ -183,6 +219,9 @@ export default function ModelBrowser() {
             familyFilter,
             patternFilter,
             minTier,
+            minScienceTier,
+            minSiliconTier,
+            siliconEnrolledOnly,
             behaviors,
             behaviorFilter,
         ],
@@ -320,7 +359,11 @@ export default function ModelBrowser() {
                 </div>
             )}
 
-            <div style={{ display: "flex", gap: 3, marginBottom: 4 }}>
+            <div
+                style={{ display: "flex", gap: 3, marginBottom: 4, flexWrap: "wrap" }}
+                role="group"
+                aria-label="Filter by legacy evidence tier"
+            >
                 {[
                     { tier: 0, label: "all evidence" },
                     { tier: 2, label: "curated+" },
@@ -354,6 +397,97 @@ export default function ModelBrowser() {
                         {o.label}
                     </span>
                 ))}
+            </div>
+
+            <div
+                style={{ display: "flex", gap: 3, marginBottom: 4, flexWrap: "wrap" }}
+                role="group"
+                aria-label="Filter by science readiness axis"
+            >
+                {[
+                    { tier: 0, label: "all science" },
+                    { tier: 3, label: "S3+" },
+                    { tier: 5, label: "S5" },
+                ].map((o) => (
+                    <span
+                        key={`s-${o.tier}`}
+                        onClick={() => setMinScienceTier(o.tier)}
+                        style={{
+                            fontSize: 9,
+                            padding: "1px 6px",
+                            borderRadius: 3,
+                            cursor: "pointer",
+                            background:
+                                minScienceTier === o.tier
+                                    ? "var(--accent)"
+                                    : "var(--bg-tertiary)",
+                            color:
+                                minScienceTier === o.tier
+                                    ? "var(--bg-primary)"
+                                    : "var(--text-muted)",
+                        }}
+                        title={
+                            o.tier === 0
+                                ? "No science-axis floor"
+                                : o.tier === 3
+                                  ? "Science axis S3 or higher"
+                                  : "Science axis S5 only"
+                        }
+                    >
+                        {o.label}
+                    </span>
+                ))}
+            </div>
+
+            <div
+                style={{ display: "flex", gap: 3, marginBottom: 4, flexWrap: "wrap" }}
+                role="group"
+                aria-label="Filter by silicon readiness axis"
+            >
+                {[
+                    { tier: 0, label: "all silicon", enrolled: false },
+                    { tier: 0, label: "H enrolled", enrolled: true },
+                    { tier: 1, label: "H1+", enrolled: false },
+                ].map((o) => {
+                    const active = o.enrolled
+                        ? siliconEnrolledOnly && minSiliconTier === 0
+                        : !siliconEnrolledOnly && minSiliconTier === o.tier;
+                    return (
+                        <span
+                            key={`h-${o.label}`}
+                            onClick={() => {
+                                if (o.enrolled) {
+                                    setSiliconEnrolledOnly(true);
+                                    setMinSiliconTier(0);
+                                } else {
+                                    setSiliconEnrolledOnly(false);
+                                    setMinSiliconTier(o.tier);
+                                }
+                            }}
+                            style={{
+                                fontSize: 9,
+                                padding: "1px 6px",
+                                borderRadius: 3,
+                                cursor: "pointer",
+                                background: active
+                                    ? "var(--accent)"
+                                    : "var(--bg-tertiary)",
+                                color: active
+                                    ? "var(--bg-primary)"
+                                    : "var(--text-muted)",
+                            }}
+                            title={
+                                o.enrolled
+                                    ? "Only models with silicon facet enrolled (H0+)"
+                                    : o.tier === 0
+                                      ? "No silicon-axis floor (includes unenrolled)"
+                                      : "Silicon axis H1 or higher"
+                            }
+                        >
+                            {o.label}
+                        </span>
+                    );
+                })}
             </div>
 
             {patterns.length > 0 && (
@@ -472,6 +606,21 @@ export default function ModelBrowser() {
                                                 alignItems: "center",
                                             }}
                                         >
+                                            <DualAxisBadge
+                                                scienceLabel={
+                                                    m.science_label ??
+                                                    `S${m.science_tier ?? 0}`
+                                                }
+                                                siliconLabel={
+                                                    m.silicon_label ??
+                                                    (m.silicon_tier === null ||
+                                                    m.silicon_tier === undefined
+                                                        ? "none"
+                                                        : `H${m.silicon_tier}`)
+                                                }
+                                                scienceTier={m.science_tier}
+                                                siliconTier={m.silicon_tier}
+                                            />
                                             <EvidenceTierBadge
                                                 tier={m.tier}
                                                 evidenceKind={m.evidence_kind}

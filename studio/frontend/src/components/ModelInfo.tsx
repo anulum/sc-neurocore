@@ -9,7 +9,7 @@
 import { useState } from "react";
 import { useStudioStore } from "../stores/studio";
 import { formatCitation } from "../citation";
-import EvidenceTierBadge from "./EvidenceTierBadge";
+import EvidenceTierBadge, { DualAxisBadge } from "./EvidenceTierBadge";
 
 export default function ModelInfo() {
   const { sourceMode, modelDetail, equations, odeParams, odeInit, dt, duration } = useStudioStore();
@@ -33,6 +33,27 @@ export default function ModelInfo() {
           {modelDetail.docstring || modelDetail.name}
         </div>
         <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginBottom: 4, alignItems: "center" }}>
+          <DualAxisBadge
+            scienceLabel={
+              modelDetail.readiness?.science_label ??
+              modelDetail.science_label ??
+              `S${modelDetail.science_tier ?? 0}`
+            }
+            siliconLabel={
+              modelDetail.readiness?.silicon_label ??
+              modelDetail.silicon_label ??
+              (modelDetail.silicon_tier === null || modelDetail.silicon_tier === undefined
+                ? "none"
+                : `H${modelDetail.silicon_tier}`)
+            }
+            scienceTier={modelDetail.readiness?.science_tier ?? modelDetail.science_tier}
+            siliconTier={
+              modelDetail.readiness?.silicon_tier !== undefined
+                ? modelDetail.readiness.silicon_tier
+                : modelDetail.silicon_tier
+            }
+            full
+          />
           <EvidenceTierBadge tier={modelDetail.tier} evidenceKind={modelDetail.evidence_kind} full />
           {modelDetail.family && (
             <span style={{ fontSize: 10, color: "var(--accent)" }}>{modelDetail.family}</span>
@@ -42,6 +63,17 @@ export default function ModelInfo() {
               fontSize: 8, padding: "0 4px", borderRadius: 2,
               background: "var(--bg-tertiary)", color: "var(--text-muted)", textTransform: "uppercase",
             }}>{modelDetail.maturity}</span>
+          )}
+          {modelDetail.readiness?.is_perfect === true && (
+            <span
+              title="Dual-axis perfect: science S5 and terminal silicon target met"
+              style={{
+                fontSize: 8, padding: "0 4px", borderRadius: 2, fontWeight: 700,
+                background: "var(--success)", color: "var(--bg-primary)",
+              }}
+            >
+              perfect
+            </span>
           )}
         </div>
         {prov && (prov.doi || prov.authors.length > 0) && (

@@ -142,6 +142,15 @@ def test_model_facets_cover_the_whole_catalogue() -> None:
     assert all({"tag", "count"} <= set(entry) for entry in behaviors)
     counts = [entry["count"] for entry in behaviors]
     assert counts == sorted(counts, reverse=True)
+    # Dual-axis discovery counts cover the whole catalogue exactly once each.
+    science_tiers = cast(dict[str, int], facets["science_tiers"])
+    silicon_tiers = cast(dict[str, int], facets["silicon_tiers"])
+    assert sum(science_tiers.values()) == facets["total"]
+    assert sum(silicon_tiers.values()) == facets["total"]
+    assert all(label.startswith("S") for label in science_tiers)
+    assert "none" in silicon_tiers or any(
+        label.startswith("H") for label in silicon_tiers
+    )
 
 
 def test_introspected_fallback_flags_inferred_category() -> None:
