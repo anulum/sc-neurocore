@@ -181,8 +181,6 @@ def _build_sum_pool2d_without_shape_lif_graph() -> Any:
                 kernel_size=np.array([2, 2]),
                 stride=np.array([1, 1]),
                 padding=np.array([0, 0]),
-                input_type={"input": None},
-                output_type={"output": None},
             ),
             "lif": nir.LIF(
                 tau=np.full(4, 20.0),

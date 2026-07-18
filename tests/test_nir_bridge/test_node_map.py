@@ -121,7 +121,7 @@ class TestNodeMapping:
         assert sc.forward(np.array([0.3]))[0] == 0.0
 
     def test_map_flatten(self) -> None:
-        node = nir.Flatten(start_dim=0, end_dim=-1)
+        node = nir.Flatten(input_type={"input": np.array([2, 3])}, start_dim=0, end_dim=-1)
         sc = map_node("flat", node)
         assert isinstance(sc, SCFlattenNode)
         out = sc.forward(np.arange(6).reshape(2, 3))

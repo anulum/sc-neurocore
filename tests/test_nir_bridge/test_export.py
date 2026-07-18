@@ -87,7 +87,7 @@ class TestExport:
             "lin": nir.Linear(weight=np.eye(2, dtype=np.float32)),
             "scale": nir.Scale(scale=np.array([2.0, 2.0])),
             "thr": nir.Threshold(threshold=np.array([0.5, 0.5])),
-            "flat": nir.Flatten(start_dim=0, end_dim=-1),
+            "flat": nir.Flatten(input_type={"input": np.array([2])}, start_dim=0, end_dim=-1),
             "output": nir.Output(output_type={"output": np.array([2])}),
         }
         edges = [
