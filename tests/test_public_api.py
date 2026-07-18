@@ -149,7 +149,7 @@ def test_install_extras_cover_documented_workflow_groups() -> None:
         "networkx",
         "onnx",
         "torch>=2.0",
-        "nir>=1.0,<1.0.8",
+        "nir>=1.0,<1.0.9",
         "fastapi>=0.100",
         "uvicorn[standard]>=0.20",
         "httpx>=0.27",

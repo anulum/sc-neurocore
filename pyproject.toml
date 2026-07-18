@@ -90,7 +90,7 @@ full = [
   # nir 1.0.8 made Flatten.input_type a required argument (breaking the nir_bridge
   # Flatten construction); cap below it to the pinned/tested 1.0.7 line until the bridge
   # is updated for the newer API. The NIR canary still tracks the latest nir separately.
-  "nir>=1.0,<1.0.8",
+  "nir>=1.0,<1.0.9",
   "fastapi>=0.100",
   "uvicorn[standard]>=0.20",
   "httpx>=0.27",
@@ -118,7 +118,7 @@ julia = ["juliacall>=0.9"]
 annealing = ["dwave-neal", "dimod"]
 quantum = ["qiskit", "pennylane", "qiskit-aer", "qiskit-ibm-runtime"]
 quantum-cognition = ["sc-neurocore[quantum]"]  # Fisher-Posner experimental layer
-nir = ["nir>=1.0,<1.0.8"]  # 1.0.8 requires Flatten.input_type; see the `full` extra note
+nir = ["nir>=1.0,<1.0.9"]  # nir 1.0.8 makes Flatten.input_type mandatory; supplied by nir_bridge.export
 mpi = ["mpi4py>=3.0"]
 lava = ["lava-nc; python_version < '3.11'"]
 studio = ["fastapi>=0.100", "uvicorn[standard]>=0.20", "httpx>=0.27", "httpx2>=2.5,<3"]

@@ -76,7 +76,17 @@ def _node_to_nir(name: str, node) -> nir.NIRNode | None:  # type: ignore[no-unty
     if isinstance(node, SCThresholdNode):
         return nir.Threshold(threshold=node.threshold.copy())
     if isinstance(node, SCFlattenNode):
-        return nir.Flatten(start_dim=node.start_dim, end_dim=node.end_dim)
+        if node.input_shape is None:
+            raise ValueError(
+                f"Cannot export Flatten node {node.name!r} to NIR: input_shape is unknown "
+                "(NIR >= 1.0.8 requires Flatten.input_type). Import the source graph with "
+                "shape metadata before exporting."
+            )
+        return nir.Flatten(
+            input_type={"input": np.array(list(node.input_shape))},
+            start_dim=node.start_dim,
+            end_dim=node.end_dim,
+        )
     if isinstance(node, SCCubaLIFNode):
         return nir.CubaLIF(
             tau_syn=node.tau_syn.copy(),

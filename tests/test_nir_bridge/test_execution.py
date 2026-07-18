@@ -161,25 +161,40 @@ class TestExecution:
         np.testing.assert_allclose(reset_first["output"], [1.0])
 
     def test_flatten_respects_dim_range(self) -> None:
-        node = map_node("flat", nir.Flatten(start_dim=1, end_dim=1))
+        node = map_node(
+            "flat",
+            nir.Flatten(input_type={"input": np.array([2, 3, 4])}, start_dim=1, end_dim=1),
+        )
         out = node.forward(np.arange(24).reshape(2, 3, 4))
         assert out.shape == (2, 3, 4)
 
-        node = map_node("flat_all", nir.Flatten(start_dim=1, end_dim=-1))
+        node = map_node(
+            "flat_all",
+            nir.Flatten(input_type={"input": np.array([2, 3, 4])}, start_dim=1, end_dim=-1),
+        )
         out = node.forward(np.arange(24).reshape(2, 3, 4))
         assert out.shape == (2, 12)
 
     def test_flatten_invalid_dims_raise(self) -> None:
-        node = map_node("flat", nir.Flatten(start_dim=2, end_dim=1))
+        node = map_node(
+            "flat",
+            nir.Flatten(input_type={"input": np.array([2, 3])}, start_dim=2, end_dim=1),
+        )
         with pytest.raises(ValueError, match="Invalid flatten dims"):
             node.forward(np.arange(6).reshape(2, 3))
 
     def test_flatten_scalar_input(self) -> None:
-        node = map_node("flat", nir.Flatten(start_dim=0, end_dim=-1))
+        node = map_node(
+            "flat",
+            nir.Flatten(input_type={"input": np.array([1])}, start_dim=0, end_dim=-1),
+        )
         out = node.forward(np.array(3.0))
         np.testing.assert_allclose(out, [3.0])
 
     def test_flatten_scalar_invalid_dims_raise(self) -> None:
-        node = map_node("flat", nir.Flatten(start_dim=1, end_dim=1))
+        node = map_node(
+            "flat",
+            nir.Flatten(input_type={"input": np.array([1])}, start_dim=1, end_dim=1),
+        )
         with pytest.raises(ValueError, match="Invalid flatten dims"):
             node.forward(np.array(3.0))
