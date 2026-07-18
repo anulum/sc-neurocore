@@ -963,7 +963,7 @@
     ]
   },
   "counts": {
-    "github_workflows": 19,
+    "github_workflows": 20,
     "model_documentation_pages": 175,
     "optional_extras": 28,
     "public_api_exports": 45,
@@ -971,7 +971,7 @@
     "python_model_classes": 158,
     "python_model_source_modules": 153,
     "rust_pyo3_model_wrappers": 175,
-    "test_files": 1391
+    "test_files": 1392
   },
   "documentation": {
     "public_pages": [
@@ -2832,6 +2832,7 @@
       ".github/workflows/nir-canary.yml",
       ".github/workflows/pre-commit.yml",
       ".github/workflows/publish.yml",
+      ".github/workflows/pypi-downloads.yml",
       ".github/workflows/release.yml",
       ".github/workflows/scorecard.yml",
       ".github/workflows/security-scanners.yml",
@@ -4112,6 +4113,7 @@
       "tests/test_tools/test_optics_extra_ci_contract.py",
       "tests/test_tools/test_optional_dependency_matrix.py",
       "tests/test_tools/test_perf_gate_contract.py",
+      "tests/test_tools/test_pypi_downloads.py",
       "tests/test_tools/test_pytest_plugin_policy.py",
       "tests/test_tools/test_python_code_scanner_plan.py",
       "tests/test_tools/test_readiness_evidence_index.py",

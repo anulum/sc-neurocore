@@ -33,7 +33,7 @@ Start here if you need to understand what the software is for:
 
 ## Key Features
 
-- **158 lazy-loaded Python model classes** — 152 Python model source modules spanning McCulloch-Pitts (1943) through ArcaneNeuron (2026), hardware chip emulators, and AI-optimised research paths
+- **158 lazy-loaded Python model classes** — 153 Python model source modules spanning McCulloch-Pitts (1943) through ArcaneNeuron (2026), hardware chip emulators, and AI-optimised research paths
 - **175 Rust PyO3 model wrappers** — optional acceleration wrappers with a 162-model NetworkRunner dispatch list and Rayon parallelism
 - **ArcaneNeuron** — primary self-referential cognition model with 3 coupled compartments (fast / working / deep) + attention gate + self-model predictor
 - **Identity substrate** — persistent spiking network with checkpointing, trace encoding/decoding, L16 Director control

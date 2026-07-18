@@ -268,10 +268,10 @@ dependabot PRs merged.
 
 - Package metadata, generated capability snapshot, and public docs report
   version 3.16.0.
-- Current generated static inventory: 44 public exports, 152 Python model
+- Current generated static inventory: 45 public exports, 153 Python model
   source modules, 158 Python model classes, 175 Rust PyO3 model wrappers,
-  976 Python files under `tests/`, 561 public documentation pages, and
-  17 GitHub Actions workflows.
+  1,392 Python files under `tests/`, 581 public documentation pages, and
+  20 GitHub Actions workflows.
 - Current HDL static inventory: 43 top-level non-testbench Verilog RTL modules
   and 16 `tb_sc_*.v` simulation testbenches.
 - Current CI coverage gate is 98%; 100% remains the programme target.

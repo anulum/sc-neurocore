@@ -97,9 +97,9 @@ SC-NeuroCore is positioned for neuromorphic R&D, stochastic accelerator design, 
 | Model documentation pages | 175 |
 | Rust PyO3 model wrappers | 175 |
 | Optional extras | 28 |
-| Python test files | 1391 |
+| Python test files | 1392 |
 | Public documentation pages | 581 |
-| GitHub Actions workflows | 19 |
+| GitHub Actions workflows | 20 |
 
 Evidence boundary: this snapshot is a static inventory. Performance, coverage, hardware, and scientific-fidelity claims require their own committed evidence artefacts.
 <!-- capability-snapshot:end -->
@@ -557,16 +557,19 @@ bridge install. For source-tree runs against local bridge code, use
 
 ## CI/CD
 
-17 GitHub Actions workflows (`.github/workflows/`), all SHA-pinned:
+20 GitHub Actions workflows (`.github/workflows/`), all third-party actions SHA-pinned:
 
 | Workflow | Purpose |
 |----------|---------|
+| **audit-cadence.yml** | Scheduled repository, release-evidence, and policy audits |
 | **ci.yml** | Lint (ruff format + ruff check + bandit) + Test (Python 3.10-3.14, coverage gate enforced in CI) + Build |
+| **compiler-e2e.yml** | Compiler end-to-end lowering, simulation, and evidence gates |
 | **v3-engine.yml** | Rust engine `cargo test` + `cargo clippy` |
 | **v3-wheels.yml** | Cross-platform wheels (Linux, macOS, Windows × Python 3.10–3.14) |
 | **docker.yml** | Build & push Docker image to GHCR on release tags |
 | **docs.yml** | MkDocs → GitHub Pages |
 | **publish.yml** | Publish `sc-neurocore`, engine wheels, and `engine/` crate releases; retries skip already-published PyPI/crates.io versions |
+| **pypi-downloads.yml** | Daily PyPI download history on the serialized `metrics` branch |
 | **release.yml** | Build sdist/SBOM/security packet, support tagged-release backfills, and attach release assets to GitHub Release |
 | **benchmark.yml** | Performance regression tracking |
 | **codeql.yml** | CodeQL security analysis (weekly + on push) |
