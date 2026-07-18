@@ -279,7 +279,7 @@ sc-neurocore studio              # opens browser at http://127.0.0.1:8001
 
 | Feature | What it does |
 |---------|-------------|
-| **118 Model Browser** | Browse all neuron models by category, simulate with parameter sliders |
+| **160-entry Model Browser** | Browse every registered catalogue entry by category, simulate with parameter sliders |
 | **18+ Analysis Views** | Trace, phase portrait, ISI, f-I curve, bifurcation, heatmap, STA, frequency response, characterisation dashboard |
 | **Compiler Inspector** | Build SC IR from equations, verify, emit SystemVerilog |
 | **Synthesis Dashboard** | One-click Yosys synthesis to ice40/ECP5/Gowin/Xilinx, multi-target comparison, resource bars |
@@ -388,7 +388,7 @@ graph TD
         K --> L[Verilog RTL<br/>AXI-Lite + LIF Core]
         K2 --> L
         L --> M[FPGA Bitstream<br/>Xilinx / Intel]
-        L --> V[Formal Verification<br/>53 proof jobs · catalogue + legacy]
+        L --> V[Formal Verification<br/>57 proof jobs · catalogue + legacy]
     end
 
     subgraph "Domain Bridges (optional)"
@@ -453,12 +453,12 @@ hdl/
   sc_event_neuron.v           -- Event-triggered LIF (power ∝ spike rate)
   sc_aer_router.v             -- AER event distribution to target neurons
   tb_sc_*.v (16 testbenches)  -- Self-checking simulation testbenches
-  formal/ (54 proof jobs)     -- catalogue dual-axis perfect + legacy SC cores
+  formal/ (57 proof jobs)     -- catalogue dual-axis perfect + legacy SC cores
 ```
 
-Formal verification inventory: **54 SymbiYosys proof jobs and 185 formal
-statements (155 assert, 7 assume, 23 cover)** under `hdl/formal/` (18
-non-catalogue jobs + **36 catalogue jobs** under `hdl/formal/catalogue/`). This
+Formal verification inventory: **57 SymbiYosys proof jobs and 191 formal
+statements (161 assert, 7 assume, 23 cover)** under `hdl/formal/` (18
+non-catalogue jobs + **39 catalogue jobs** under `hdl/formal/catalogue/`). This
 counts the git-tracked jobs a clean checkout proves; re-emit the generated
 catalogue harnesses with `tools/emit_catalogue_formal.py`.
 
@@ -701,6 +701,12 @@ evidence before publication.
 | Compiler | IR builder/parser/verifier, SystemVerilog + MLIR emitters, IR bridge |
 | Domain | HDC, Kuramoto, SSGF geometry |
 | Training | 6 surrogate gradient functions + property tests |
+
+The NetworkRunner and formal inventories above are source-gated by
+`tests/test_public_claims_metrics.py` against `supported_models()`, git-tracked
+proof jobs, and HDL statements. The Studio figure is the current live
+`list_models()` inventory. These are different inventories and are
+intentionally not collapsed into one “model count”.
 
 ## Community
 
