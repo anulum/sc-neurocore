@@ -5,6 +5,15 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+### Sigmoid-rate generated-RTL co-simulation
+
+- Added paired-schema and generated Q32.32 Verilog trajectory co-simulation
+  for `SigmoidRateNeuron`. The 256-step sign-changing drive stays within
+  `0.016` absolute rate error through the public RTL outputs, keeps every rate
+  in `[0, 1]`, and keeps the event output silent. The lookup-table
+  quantisation and the absence of formal, synthesis, timing, device, or PPA
+  evidence are explicit.
+
 ### Montbrió–Pazó–Roxin source-to-co-simulation closure
 
 - Corrected the legacy `ErmentroutKopellPopulation` attribution and promoted

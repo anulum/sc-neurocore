@@ -62,6 +62,22 @@ fifty times the time constant, explicit-unavailable backends, malformed native
 results, and invalid Go/Mojo contracts whose output buffers must remain
 unchanged.
 
+## Generated fixed-point co-simulation
+
+The paired TOML and JSON schemas preserve the hand exact-relaxation trajectory
+within `5e-12` over a 256-step sign-changing input. The production equation
+compiler lowers the same schema to a Q32.32 Verilog module. Icarus Verilog
+co-simulation reads the public `r_out` and `spike_out` ports and establishes:
+
+- maximum absolute rate difference `0.014879114367180313`, below `0.016`;
+- every emitted rate remains in `[0, 1]`;
+- `spike_out` remains zero on every step, so positive rates are not recast as
+  binary events.
+
+The state bound includes the 0.125-argument sigmoid and
+exponential-relative lookup-table quantisation. It is an H1 generated-RTL
+trajectory result, not bit identity for transcendental functions.
+
 ## Controlled benchmark
 
 `benchmarks/bench_model_sigmoid_rate.py` measures the full 200,000-step trace
@@ -94,8 +110,8 @@ difference is real and disclosed.
 - The paper citation does not turn the scalar unit into the full coupled
   Wilson-Cowan model.
 - The benchmark is local regression evidence, not a deployment claim.
-- No fixed-point schema, RTL, formal equivalence, synthesis, timing, or device
-  result is claimed.
+- The generated Q32.32 claim is bounded co-simulation only. No formal
+  equivalence, synthesis, timing, device, or PPA result is claimed.
 
 ## Reproduction
 
@@ -106,6 +122,7 @@ cargo test --manifest-path src/sc_neurocore/accel/rust/Cargo.toml \
 
 PYTHONPATH=bridge:src:. .venv/bin/python -m pytest -q \
   tests/test_model_sigmoid_rate.py \
+  tests/test_cosim_sigmoid_rate.py \
   tests/test_sigmoid_rate_backend_loading.py \
   tests/test_sigmoid_rate_backends.py \
   tests/test_bench_sigmoid_rate.py

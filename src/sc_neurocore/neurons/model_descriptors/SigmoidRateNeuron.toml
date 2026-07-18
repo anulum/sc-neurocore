@@ -24,6 +24,7 @@ intended_use = [
 ]
 hardware_fit = [
     "software and floating-point accelerator reference",
+    "generated Q32.32 continuous-rate datapath with bounded co-simulation evidence",
 ]
 behavior_tags = [
     "excitable",
@@ -117,8 +118,8 @@ tolerance = "complete Python/Rust/Julia/Go/Mojo rate traces and final rate agree
 evidence = "tests/test_sigmoid_rate_backends.py::test_complete_configured_contract_matches_python"
 
 [silicon]
-compiles = false
-cosim_validated = false
-cosim_evidence = "not enrolled; exp-based floating-point rate dynamics have no fixed-point RTL claim in this unit"
-target_tier = ""
-terminal_reason = "The model is polyglot-complete in software; fixed-point approximation, RTL, formal equivalence, synthesis, timing, and hardware evidence remain separate work."
+compiles = true
+cosim_validated = true
+cosim_evidence = "tests/test_cosim_sigmoid_rate.py::test_q3232_rtl_preserves_rate_trajectory_and_event_silence"
+target_tier = "H1"
+terminal_reason = "Generated Q32.32 rate-trajectory co-simulation is enrolled; higher silicon rungs require formal, synthesis, timing, and device programmes."

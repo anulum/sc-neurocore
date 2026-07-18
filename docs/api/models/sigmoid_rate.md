@@ -91,6 +91,21 @@ used because separate `exp` implementations are not promised bit-identical.
 The batch is a rate trace, not a spike train. No positive-rate-as-spike count is
 part of the contract.
 
+## Fixed-point co-simulation
+
+The paired TOML and JSON schemas preserve the exact-relaxation hand trajectory
+within `5e-12` across a 256-step sign-changing input. The production equation
+compiler emits a Q32.32 Verilog module from the same schema. Icarus Verilog
+co-simulation reads the module's public `r_out` and `spike_out` ports over that
+trajectory: every rate remains in `[0, 1]`, every event output remains zero, and
+the measured maximum absolute rate difference from the hand model is
+`0.014879114367180313`, below the declared `0.016` envelope.
+
+The bound reflects the 0.125-argument spacing of the sigmoid and
+exponential-relative lookup tables. This is generated-RTL co-simulation
+evidence only. It does not claim bit identity for transcendental functions,
+formal equivalence, synthesis, timing closure, device execution, or PPA.
+
 ## Local benchmark evidence
 
 The committed artifact is
@@ -116,9 +131,9 @@ no production-speed, cross-host, hardware, or universal ranking claim.
 positive rate as a spike. Rate-network scheduling and coupling remain the
 caller's responsibility.
 
-No fixed-point schema, RTL, formal-equivalence, synthesis, timing, or physical
-hardware claim is made by this closure. The four acceleration languages and
-the Rust engine are floating-point software execution surfaces.
+The four acceleration languages and the Rust engine remain floating-point
+software execution surfaces. The separate generated Q32.32 surface carries
+only the bounded co-simulation claim above.
 
 ## Files and reproduction
 
@@ -131,10 +146,14 @@ the Rust engine are floating-point software execution surfaces.
 - Go: `src/sc_neurocore/accel/go/services/sigmoid_rate.go` and
   `src/sc_neurocore/accel/go/neurons/sigmoid_rate/sigmoid_rate.go`
 - Mojo: `src/sc_neurocore/accel/mojo/kernels/sigmoid_rate.mojo`
+- paired schemas:
+  `src/sc_neurocore/neurons/model_schemas/sigmoid_rate.{toml,json}`
+- generated-RTL co-simulation: `tests/test_cosim_sigmoid_rate.py`
 
 ```bash
 PYTHONPATH=bridge:src:. .venv/bin/python -m pytest -q \
   tests/test_model_sigmoid_rate.py \
+  tests/test_cosim_sigmoid_rate.py \
   tests/test_sigmoid_rate_backend_loading.py \
   tests/test_sigmoid_rate_backends.py \
   tests/test_bench_sigmoid_rate.py
