@@ -963,37 +963,6 @@ def _theta_constant_current_features(*, current: float, dt: float, steps: int) -
     }
 
 
-def _resonate_fire_linear_euler_features(
-    *, current: float, dt: float, steps: int
-) -> dict[str, float]:
-    """Return exact Euler features for the linear resonate-and-fire schema."""
-    omega = 0.5
-    damping = -0.1
-    threshold = 1.0
-    x = 0.0
-    y = 0.0
-    x_values: list[float] = []
-    y_values: list[float] = []
-    spikes: list[int] = []
-    for _ in range(steps):
-        dx = damping * x - omega * y + current
-        dy = omega * x + damping * y
-        x_next = x + dt * dx
-        y_next = y + dt * dy
-        if x_next > threshold:
-            spikes.append(1)
-            x = 0.0
-            y = 0.0
-        else:
-            spikes.append(0)
-            x = x_next
-            y = y_next
-        x_values.append(x)
-        y_values.append(y)
-
-    return _summarise({"x": x_values, "y": y_values}, spikes)
-
-
 def _glif_driven_rk4_features(*, current: float, dt: float, steps: int) -> dict[str, float]:
     """Return classical-RK4 features for the driven GLIF5 flow and adaptive reset.
 

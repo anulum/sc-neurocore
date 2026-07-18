@@ -92,7 +92,7 @@ conductance models (Wang-Buzsaki, Morris-Lecar, Connor-Stevens, Hodgkin-Huxley, 
 plus source-hashed executable closure benchmarks for Connor-Stevens, Hodgkin-Huxley, AdEx, ExpIF,
 Lapicque, Perfect Integrator, Quadratic IF, Theta, DPI, COBA LIF, Escape Rate, Poisson, IQIF,
 McCulloch-Pitts, Sigmoid Rate, Threshold-linear Rate, Wilson-Cowan, Jansen–Rit,
-Montbrió–Pazó–Roxin, and Wong-Wang,
+Montbrió–Pazó–Roxin, Resonate-and-Fire, and Wong-Wang,
 and a committed `benchmarks/bench_<model>*.py` harness with its recorded per-backend result for the
 FFI-dispatched models (McKean, Hindmarsh-Rose, FitzHugh-Rinzel, Pernarowski, Terman-Wang, Wilson-HR,
 Rulkov map, GLIF, Mihalas-Niebur, Medvedev map, Cazelles map, Courbage-Nekorkin map, Izhikevich 2007,
