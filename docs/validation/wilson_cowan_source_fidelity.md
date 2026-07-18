@@ -62,6 +62,24 @@ batches, explicit-unavailable
 backends, malformed native results, corrupted mutable state, invalid external
 drive, and Go/Mojo contracts whose caller buffers must remain unchanged.
 
+## Generated-RTL co-simulation
+
+`tests/test_cosim_wilson_cowan.py` first proves that the authored TOML and JSON
+schemas are structurally identical and that both reproduce the maintained hand
+RK4 trajectory within `1e-15`. It then generates the production Q32.32 Verilog
+module and executes it with Icarus/Verilog over 96 mixed-drive samples:
+
+- 8 samples at `I_ext=0`;
+- 16 each at `I_ext=1.5`, `3.0`, and `5.0`;
+- 8 at `I_ext=-1.0`;
+- 32 sinusoidally varied samples centred at `2.0`.
+
+The measured maximum absolute error across both public E/I outputs is
+`0.019371701775768302`, below the declared `0.021` envelope. Both rates remain
+inside the normalised Wilson-Cowan state envelope and every `spike_out` value
+is zero. The test asserts Icarus availability instead of skipping, so missing
+hardware tooling fails the lane closed.
+
 ## Controlled benchmark
 
 `benchmarks/bench_wilson_cowan.py` measures the complete 100,000-step E/I
@@ -91,8 +109,9 @@ inherited failures are retained in the report rather than suppressed.
 - Only the excitatory population receives an exposed external drive.
 - RK4 is a maintained numerical choice, not a method prescribed by the paper.
 - The benchmark is local non-exclusive regression evidence.
-- No fixed-point execution, RTL, formal equivalence, synthesis, timing, or
-  device result is claimed.
+- Generated Q32.32 trajectory execution is H1 co-simulation evidence only.
+- No formal equivalence, synthesis, timing, device, PPA, or production-speed
+  result is claimed.
 
 ## Reproduction
 
@@ -106,7 +125,8 @@ PYTHONPATH=bridge:src:. .venv/bin/python -m pytest -q \
   tests/test_model_wilson_cowan.py \
   tests/test_wilson_cowan_accel_dispatch_contracts.py \
   tests/test_wilson_cowan_backends.py \
-  tests/test_bench_wilson_cowan.py
+  tests/test_bench_wilson_cowan.py \
+  tests/test_cosim_wilson_cowan.py
 
 taskset -c 4 env PYTHONPATH=bridge:src:. .venv/bin/python \
   benchmarks/bench_wilson_cowan.py \

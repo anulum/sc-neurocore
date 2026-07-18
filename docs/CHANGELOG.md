@@ -5,6 +5,15 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+### Wilson-Cowan generated-RTL co-simulation
+
+- Added paired-schema and generated Q32.32 Verilog trajectory co-simulation
+  for `WilsonCowanUnit`. The 96-sample mixed-drive RK4 trace keeps both public
+  E/I rates within `0.021` absolute error and inside the declared state
+  envelope while the event output remains silent. Lookup-table quantisation
+  and the absence of formal, synthesis, timing, device, or PPA evidence are
+  explicit.
+
 ### Threshold-linear-rate generated-RTL co-simulation
 
 - Added paired-schema and generated Q16.16 Verilog co-simulation for

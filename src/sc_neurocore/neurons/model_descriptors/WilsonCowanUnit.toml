@@ -24,6 +24,7 @@ intended_use = [
 ]
 hardware_fit = [
     "software and floating-point accelerator reference",
+    "generated Q32.32 shifted-sigmoid RK4 datapath with bounded E/I co-simulation",
 ]
 behavior_tags = [
     "excitable",
@@ -169,8 +170,8 @@ tolerance = "complete E/I traces and final rates agree within absolute 1e-9 for 
 evidence = "tests/test_wilson_cowan_backends.py::test_complete_configured_contract_matches_python"
 
 [silicon]
-compiles = false
-cosim_validated = false
-cosim_evidence = "not enrolled; this continuous exp-based population-rate unit has no committed fixed-point RTL"
-target_tier = ""
-terminal_reason = "Software polyglot completion does not claim quantisation, RTL, formal equivalence, synthesis, timing, or hardware evidence."
+compiles = true
+cosim_validated = true
+cosim_evidence = "tests/test_cosim_wilson_cowan.py::test_q3232_rtl_preserves_bounded_ei_trajectory_and_silent_events"
+target_tier = "H1"
+terminal_reason = "Generated Q32.32 E/I trajectory co-simulation is enrolled; higher silicon rungs require formal, synthesis, timing, and device programmes."

@@ -113,6 +113,7 @@ The focused cohort covers:
 - empty batches, unavailable runtimes, malformed results, and atomic failures;
 - configuration-preserving reset;
 - paired TOML/JSON declarative schemas;
+- generated Q32.32 public E/I trajectory co-simulation with silent events;
 - source- and native-binary-bound local benchmark evidence.
 
 See [Wilson-Cowan source fidelity](../../validation/wilson_cowan_source_fidelity.md)
@@ -120,9 +121,15 @@ for the evidence matrix and reproduction commands.
 
 ## Hardware boundary
 
-This unit makes no fixed-point schema-execution, RTL, formal-equivalence,
-synthesis, timing, or device claim. Its exponential transfer and continuous
-coupled state require a separate quantisation and silicon-enrolment study.
+The paired schemas generate a Q32.32 RK4 datapath with lookup-table exponential
+terms. A fail-closed Icarus/Verilog co-simulation drives 96 mixed excitatory
+inputs through the public `e_out`, `i_out`, and `spike_out` ports. Both coupled
+rates remain in the declared state envelope and within `0.021` absolute error
+of the maintained floating-point trajectory; the event output remains silent.
+
+This is H1 co-simulation evidence only. Lookup-table and fixed-point
+quantisation explain the bounded, non-bit-exact result. No formal equivalence,
+synthesis, timing, device, PPA, or production-throughput claim is made.
 
 ## Reference
 
