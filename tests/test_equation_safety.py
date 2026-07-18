@@ -85,10 +85,22 @@ def test_ast_depth_of_a_leaf_is_one() -> None:
     assert ExpressionSafetyValidator._ast_depth(leaf) == 1
 
 
-def test_eval_globals_is_an_empty_builtins_sandbox() -> None:
-    """The eval globals expose only ``__import__`` inside a scoped builtins map."""
-    assert set(EVAL_GLOBALS) == {"__builtins__"}
-    assert set(EVAL_GLOBALS["__builtins__"]) == {"__import__"}
+def test_eval_globals_expose_only_import_in_scoped_builtins() -> None:
+    """``__builtins__`` exposes ``__import__`` and no other capability.
+
+    ``__import__`` is intentional and unreachable from expressions (the AST
+    allowlist blocks its name plus all dunder access); it must stay present because
+    CPython's ``eval`` dereferences ``__builtins__['__import__']`` for some safe
+    expressions. ``EVAL_GLOBALS`` is shared across eval sites, so the interpreter
+    may inject a transient ``__warningregistry__`` (warning-filter state, not a
+    builtin) into it when a warning fires during eval; that artefact carries no
+    capability and is ignored, while any genuine leak would still surface as an
+    extra key.
+    """
+    assert set(EVAL_GLOBALS) - {"__warningregistry__"} == {"__builtins__"}
+    builtins_map = EVAL_GLOBALS["__builtins__"]
+    assert builtins_map["__import__"] is __import__
+    assert set(builtins_map) == {"__import__"}
 
 
 def test_nested_exponentiation_is_rejected() -> None:
