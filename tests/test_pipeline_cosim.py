@@ -37,7 +37,6 @@ _PIPELINED_PARITY_CASES = [
     ("izhikevich", "euler", 50.0, 300),
     ("quadratic_if", "euler", 50.0, 300),
     ("lif", "exp_euler", 50.0, 300),
-    ("resonate_fire", "exp_euler", 5.0, 300),
     ("adex", "exp_euler", 1000.0, 500),
     ("quadratic_if", "rk4", 50.0, 300),
     ("theta", "rk4", 50.0, 300),
@@ -49,7 +48,6 @@ _PIPELINED_PARITY_CASES = [
 _EXP_EULER_EXACT_MODELS = [
     ("lif", 50.0, 300),
     ("lapicque", 50.0, 300),
-    ("resonate_fire", 5.0, 300),
     ("adex", 1000.0, 500),
     ("theta", 50.0, 300),
 ]

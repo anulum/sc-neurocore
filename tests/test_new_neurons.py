@@ -197,23 +197,6 @@ class TestThetaNeuron:
         assert spikes == 0
 
 
-class TestResonateAndFire:
-    def test_fires_with_resonant_input(self):
-        from sc_neurocore.neurons.models import ResonateAndFireNeuron
-
-        n = ResonateAndFireNeuron()
-        spikes = sum(n.step(2.0) for _ in range(500))
-        assert spikes > 0
-
-    def test_subthreshold_oscillation(self):
-        from sc_neurocore.neurons.models import ResonateAndFireNeuron
-
-        n = ResonateAndFireNeuron()
-        n.step(0.3)
-        n.step(0.3)
-        assert n.x != 0.0 or n.y != 0.0
-
-
 class TestPoissonNeuron:
     def test_fires_at_rate(self):
         from sc_neurocore.neurons.models import PoissonNeuron

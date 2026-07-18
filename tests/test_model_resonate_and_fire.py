@@ -205,6 +205,13 @@ def test_zero_current_quiescent_state_remains_quiescent() -> None:
     assert (neuron.x, neuron.y) == (0.0, 0.0)
 
 
+@pytest.mark.parametrize(("current", "expected_spikes"), ((5.0, 0), (10.0, 15)))
+def test_source_default_constant_drive_regimes(current: float, expected_spikes: int) -> None:
+    """Separate the source-default subthreshold and spiking regimes."""
+    neuron = ResonateAndFireNeuron()
+    assert sum(neuron.step(current) for _ in range(500)) == expected_spikes
+
+
 def test_long_varied_run_is_finite_and_deterministic() -> None:
     drive = 4.0 + 1.2 * np.sin(np.arange(20_000, dtype=np.float64) * 0.013)
     first = ResonateAndFireNeuron()
