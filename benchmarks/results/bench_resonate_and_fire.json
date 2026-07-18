@@ -343,9 +343,9 @@
     },
     "src/sc_neurocore/accel/rust/safety/resonate_and_fire.rs": "7f23e55f0fbd364efe2451b7c0b20e25bc346d78630675c71c18f36de250ef6c",
     "src/sc_neurocore/neurons/model_descriptors/ResonateAndFireNeuron": {
-      "toml": "779942addac03b3c950dfca874f1b58035b7a9accbe9af762bd6c51e391983a1"
+      "toml": "d3e4f465f66e0455cca8f475ccae24aeb0d56f1a23c31dd7ecb977a66d9230f4"
     },
-    "src/sc_neurocore/neurons/model_descriptors/ResonateAndFireNeuron.toml": "779942addac03b3c950dfca874f1b58035b7a9accbe9af762bd6c51e391983a1",
+    "src/sc_neurocore/neurons/model_descriptors/ResonateAndFireNeuron.toml": "d3e4f465f66e0455cca8f475ccae24aeb0d56f1a23c31dd7ecb977a66d9230f4",
     "src/sc_neurocore/neurons/model_schemas/resonate_fire": {
       "json": "c8fba8240f79fe2155df196cd752a1fa3b774c484852da15b61fec5dfc844d08",
       "toml": "18e14fbe711727dfc67683f6e94d41764e45bb95c21c3af720f97476c6ea2aa9"
@@ -357,9 +357,9 @@
     },
     "src/sc_neurocore/neurons/models/resonate_and_fire.py": "e730253cbee5655ec843d02fcbcbdcfdb49ab140e6e0757c47cbbd87e8b22dba",
     "src/sc_neurocore/neurons/reference_trace_data/resonate_fire_subthreshold_resonance_doi": {
-      "json": "8924add306e66629ee0a6cf6d2b5dcca0193ccb7250d36ed9955f2e509f0d0bb"
+      "json": "af52cdd834c1e875ca2fe6d386b1866e6d5c41914442784733612eaf33531bda"
     },
-    "src/sc_neurocore/neurons/reference_trace_data/resonate_fire_subthreshold_resonance_doi.json": "8924add306e66629ee0a6cf6d2b5dcca0193ccb7250d36ed9955f2e509f0d0bb",
+    "src/sc_neurocore/neurons/reference_trace_data/resonate_fire_subthreshold_resonance_doi.json": "af52cdd834c1e875ca2fe6d386b1866e6d5c41914442784733612eaf33531bda",
     "tools/build_accel_backends": {
       "py": "8f3e92b0cf9f34764466c0d5b5eff84019146cbaa7089feceaa3aec6baba4387"
     },

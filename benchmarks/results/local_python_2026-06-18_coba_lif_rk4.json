@@ -202,21 +202,21 @@
     },
     "benchmarks/bench_model_coba_lif.py": "f4e2c2d5f1cd7c05e4c0fdd1ca151bb77f6d44a41ba913d364ebf1af9dfb44e1",
     "bridge/sc_neurocore_engine/__init__": {
-      "py": "fb5bd14e81f5e82755bfef0f2583b5f62f2abcd53c19633dff524a7a82de26d5"
+      "py": "dc04a0b7a4538fea93bb369834bdf1a60362808005dc2519248fd27e85c5c1f3"
     },
-    "bridge/sc_neurocore_engine/__init__.py": "fb5bd14e81f5e82755bfef0f2583b5f62f2abcd53c19633dff524a7a82de26d5",
+    "bridge/sc_neurocore_engine/__init__.py": "dc04a0b7a4538fea93bb369834bdf1a60362808005dc2519248fd27e85c5c1f3",
     "engine/src/lib": {
       "rs": "2474fd38ee7b4caf7795aa965b413a491dae7f7b47e96225853ba0452b0d7e06"
     },
     "engine/src/lib.rs": "2474fd38ee7b4caf7795aa965b413a491dae7f7b47e96225853ba0452b0d7e06",
     "engine/src/neurons/simple_spiking": {
-      "rs": "851b06ce4b74bdaebe6c7f41439e0273d31a71149e4bb5fe115ea18db7ae8603"
+      "rs": "a26d549b8d0c81d1b9671cccc9677755ff95205f43bca3c7f8b2abc00d447326"
     },
-    "engine/src/neurons/simple_spiking.rs": "851b06ce4b74bdaebe6c7f41439e0273d31a71149e4bb5fe115ea18db7ae8603",
+    "engine/src/neurons/simple_spiking.rs": "a26d549b8d0c81d1b9671cccc9677755ff95205f43bca3c7f8b2abc00d447326",
     "engine/src/pyo3_neurons": {
-      "rs": "a03b1bb41420fb7f8b4e8b7a0991493f1882444a0c888a0b2881e9287afcf2ce"
+      "rs": "b2df9b7a5bb04d9bf0ab5cca7c152d3fb756b7217c7c53891c307d47a4597744"
     },
-    "engine/src/pyo3_neurons.rs": "a03b1bb41420fb7f8b4e8b7a0991493f1882444a0c888a0b2881e9287afcf2ce",
+    "engine/src/pyo3_neurons.rs": "b2df9b7a5bb04d9bf0ab5cca7c152d3fb756b7217c7c53891c307d47a4597744",
     "src/sc_neurocore/accel/coba_lif": {
       "py": "606230a50f874033799090677ea0edad15d39ca4652e5380b4fc858885195bd6"
     },

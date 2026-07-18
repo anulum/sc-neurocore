@@ -272,7 +272,7 @@
     "benchmarks/bench_model_gutkin_ermentrout.py": "9248fe4172650116d44c78bee68d35169fde7c463845c7b69152e74c15a218b9",
     "engine/Cargo.toml": "f865140d1217dbb82acb4de0c7eb44ae0f148b6a0354d9a123b6eaaf40101454",
     "engine/examples/bench_gutkin_ermentrout_rk4.rs": "f9cf08248b539250407380208713e1741293b49bc4a43658edc8dde281c794bd",
-    "engine/src/neurons/simple_spiking.rs": "851b06ce4b74bdaebe6c7f41439e0273d31a71149e4bb5fe115ea18db7ae8603",
+    "engine/src/neurons/simple_spiking.rs": "a26d549b8d0c81d1b9671cccc9677755ff95205f43bca3c7f8b2abc00d447326",
     "src/sc_neurocore/neurons/models/gutkin_ermentrout.py": "3ef8cbbd876f80e80396ce0a3f498fd67b387dd06fd599c1d590599bee5c2b9f",
     "src/sc_neurocore/accel/go/services/gutkin_ermentrout.go": "eb600316c73f4eabca23298c360de0db6b3e416e6ea6e532b07d8e8fa05f52e9",
     "src/sc_neurocore/accel/go/services/gutkin_ermentrout_test.go": "ac4210f411c5a98a03aafc93f7d73ced73a70f6a93265e05036818649848c247",
@@ -289,7 +289,7 @@
       "rs": "f9cf08248b539250407380208713e1741293b49bc4a43658edc8dde281c794bd"
     },
     "engine/src/neurons/simple_spiking": {
-      "rs": "851b06ce4b74bdaebe6c7f41439e0273d31a71149e4bb5fe115ea18db7ae8603"
+      "rs": "a26d549b8d0c81d1b9671cccc9677755ff95205f43bca3c7f8b2abc00d447326"
     },
     "src/sc_neurocore/neurons/models/gutkin_ermentrout": {
       "py": "3ef8cbbd876f80e80396ce0a3f498fd67b387dd06fd599c1d590599bee5c2b9f"

@@ -272,7 +272,7 @@
     "benchmarks/bench_model_morris_lecar.py": "5dfd005487940db28b526ccd24babf1c6ed08c0442e22bf0ae338a4a8a81e452",
     "engine/Cargo.toml": "f865140d1217dbb82acb4de0c7eb44ae0f148b6a0354d9a123b6eaaf40101454",
     "engine/examples/bench_morris_lecar_rk4.rs": "b6cc638e2572191fed853143767f879b54f6df5df4293c55ae6f04d2ed2c5e04",
-    "engine/src/neurons/simple_spiking.rs": "851b06ce4b74bdaebe6c7f41439e0273d31a71149e4bb5fe115ea18db7ae8603",
+    "engine/src/neurons/simple_spiking.rs": "a26d549b8d0c81d1b9671cccc9677755ff95205f43bca3c7f8b2abc00d447326",
     "src/sc_neurocore/neurons/models/morris_lecar.py": "7732c4bbb2ba350b04db329a051a7e0212ce22949f16c429b4546605c669a006",
     "src/sc_neurocore/accel/go/services/morris_lecar.go": "b3aa3ce8e184cd47cc2745a74b8af7814ea655b11ac85f985752359eb8d92050",
     "src/sc_neurocore/accel/go/services/morris_lecar_test.go": "5fedb4163148266b6bb60d99c5cde7b2922665200ae0dcc12a80077e6493be11",
@@ -289,7 +289,7 @@
       "rs": "b6cc638e2572191fed853143767f879b54f6df5df4293c55ae6f04d2ed2c5e04"
     },
     "engine/src/neurons/simple_spiking": {
-      "rs": "851b06ce4b74bdaebe6c7f41439e0273d31a71149e4bb5fe115ea18db7ae8603"
+      "rs": "a26d549b8d0c81d1b9671cccc9677755ff95205f43bca3c7f8b2abc00d447326"
     },
     "src/sc_neurocore/neurons/models/morris_lecar": {
       "py": "7732c4bbb2ba350b04db329a051a7e0212ce22949f16c429b4546605c669a006"

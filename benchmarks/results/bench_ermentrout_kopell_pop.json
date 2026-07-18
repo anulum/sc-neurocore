@@ -243,9 +243,9 @@
     },
     "benchmarks/bench_ermentrout_kopell_pop.py": "217a57273633e8eb0fa952d0d794adf9f4ca83d796b62e1bba1fc979c3029e4b",
     "bridge/sc_neurocore_engine/__init__": {
-      "py": "fb5bd14e81f5e82755bfef0f2583b5f62f2abcd53c19633dff524a7a82de26d5"
+      "py": "dc04a0b7a4538fea93bb369834bdf1a60362808005dc2519248fd27e85c5c1f3"
     },
-    "bridge/sc_neurocore_engine/__init__.py": "fb5bd14e81f5e82755bfef0f2583b5f62f2abcd53c19633dff524a7a82de26d5",
+    "bridge/sc_neurocore_engine/__init__.py": "dc04a0b7a4538fea93bb369834bdf1a60362808005dc2519248fd27e85c5c1f3",
     "engine/Cargo": {
       "toml": "f865140d1217dbb82acb4de0c7eb44ae0f148b6a0354d9a123b6eaaf40101454"
     },
@@ -267,9 +267,9 @@
     },
     "engine/src/neurons/special.rs": "4a28e8ccce86f3d6d04448831a55204709cdd3129a68f544a09aa3a730d1dd76",
     "engine/src/pyo3_neurons": {
-      "rs": "a03b1bb41420fb7f8b4e8b7a0991493f1882444a0c888a0b2881e9287afcf2ce"
+      "rs": "b2df9b7a5bb04d9bf0ab5cca7c152d3fb756b7217c7c53891c307d47a4597744"
     },
-    "engine/src/pyo3_neurons.rs": "a03b1bb41420fb7f8b4e8b7a0991493f1882444a0c888a0b2881e9287afcf2ce",
+    "engine/src/pyo3_neurons.rs": "b2df9b7a5bb04d9bf0ab5cca7c152d3fb756b7217c7c53891c307d47a4597744",
     "pyproject": {
       "toml": "9a8065ba35055580a14c7851a1d6b75b2b2bc4b5d14b022f65ed0f93e133f14a"
     },
@@ -303,9 +303,9 @@
     },
     "src/sc_neurocore/accel/go/services/ermentrout_kopell_pop_test.go": "a41d2dc31fbd47fcc145f1f2679d79bb917bdabb7a12dafcc56def7849817ff6",
     "src/sc_neurocore/accel/julia/neurons/__init__": {
-      "py": "9abfc804ad931dc7e5ff5f9d2eade25bd5edc06014140eed9bd5c2c19544913e"
+      "py": "37987d58ca00dc81ac6f21d645362728fb11890f290591603608aa61445535d1"
     },
-    "src/sc_neurocore/accel/julia/neurons/__init__.py": "9abfc804ad931dc7e5ff5f9d2eade25bd5edc06014140eed9bd5c2c19544913e",
+    "src/sc_neurocore/accel/julia/neurons/__init__.py": "37987d58ca00dc81ac6f21d645362728fb11890f290591603608aa61445535d1",
     "src/sc_neurocore/accel/julia/neurons/ermentrout_kopell_pop": {
       "jl": "0a82c4bf7d5505b94ae7f50783f4f3a7fe010be19520b2495763305aa798d349"
     },
@@ -329,9 +329,9 @@
     },
     "src/sc_neurocore/accel/rust/safety/ermentrout_kopell_pop.rs": "0337e66f2577841e425d23e1678eebe6b82adb4c830a437dff4e1c62f86b7754",
     "src/sc_neurocore/neurons/model_descriptors/ErmentroutKopellPopulation": {
-      "toml": "150c37fed103e0c8cd76f9c19251447655bd39677dd68efb75ec53d1fe1f576b"
+      "toml": "fbbfa81e3ca82fe9094ac9bcd667acb48953a2c9e233f62e43d966f6f7388983"
     },
-    "src/sc_neurocore/neurons/model_descriptors/ErmentroutKopellPopulation.toml": "150c37fed103e0c8cd76f9c19251447655bd39677dd68efb75ec53d1fe1f576b",
+    "src/sc_neurocore/neurons/model_descriptors/ErmentroutKopellPopulation.toml": "fbbfa81e3ca82fe9094ac9bcd667acb48953a2c9e233f62e43d966f6f7388983",
     "src/sc_neurocore/neurons/model_schemas/ermentrout_kopell_pop": {
       "json": "33bdd1bdaa8e05859ee3f92e60bb06fc298b431cfffd361231b4a182d4807153",
       "toml": "7213b12aea906f4ef91c780bfb3ce80e6c05a9df055f6c2f2ccc168ccab6c8bf"

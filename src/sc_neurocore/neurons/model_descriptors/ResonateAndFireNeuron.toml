@@ -82,9 +82,9 @@ dt = 0.01
 method = "map"
 
 [dynamics]
-complex = "dz/dt=(b+i*omega)*z+I with z=x+i*y"
 x = "dx/dt=b*x-omega*y+I"
 y = "dy/dt=omega*x+b*y"
+complex = "dz/dt=(b+i*omega)*z+I with z=x+i*y"
 exact_flow = "z(t+dt)=z_ss+exp((b+i*omega)*dt)*(z(t)-z_ss), z_ss=-I/(b+i*omega)"
 event = "spike on sampled upward crossing y_prev<threshold<=y; post-spike z=i*threshold"
 scope = "real piecewise-constant input; complex pulse coefficients permitted by the paper remain outside the scalar pipeline"
