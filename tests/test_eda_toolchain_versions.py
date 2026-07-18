@@ -51,6 +51,10 @@ def test_collect_inventory_records_available_tools_and_environment() -> None:
                 ("vivado", "-version"): _completed("Vivado v2025.2\n"),
                 ("yosys", "--version"): _completed("Yosys 0.63+173\n"),
                 ("openroad", "-version"): _completed("OpenROAD 2.0-test\n"),
+                ("icepack", "--help"): _completed(
+                    stderr="Usage: icepack [options] [input-file [output-file]]\n",
+                    returncode=1,
+                ),
             }
         ),
         version_lookup=lambda name: "3.0.1" if name == "pynq" else "",
@@ -66,6 +70,8 @@ def test_collect_inventory_records_available_tools_and_environment() -> None:
     assert report["tools"]["vivado"]["version"] == "Vivado v2025.2"
     assert report["tools"]["yosys"]["version"] == "Yosys 0.63+173"
     assert report["tools"]["nextpnr_ice40"]["available"] is False
+    assert report["tools"]["icepack"]["available"] is True
+    assert report["tools"]["icepack"]["version"].startswith("Usage: icepack")
     assert report["tools"]["pynq"]["version"] == "3.0.1"
     assert report["environment"] == {
         "openroad_image_digest": "sha256:" + "a" * 64,

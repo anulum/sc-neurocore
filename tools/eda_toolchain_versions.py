@@ -32,6 +32,7 @@ class ToolSpec:
     key: str
     label: str
     commands: tuple[tuple[str, ...], ...]
+    accepted_returncodes: tuple[int, ...] = (0,)
 
 
 @dataclass(frozen=True)
@@ -52,7 +53,9 @@ TOOL_SPECS: tuple[ToolSpec, ...] = (
     ToolSpec("yosys", "Yosys", (("yosys", "--version"), ("yosys", "-V"))),
     ToolSpec("nextpnr_ice40", "nextpnr iCE40", (("nextpnr-ice40", "--version"),)),
     ToolSpec("nextpnr_ecp5", "nextpnr ECP5", (("nextpnr-ecp5", "--version"),)),
-    ToolSpec("icepack", "Project IceStorm icepack", (("icepack", "--version"),)),
+    # icepack has no version flag. Its help/usage path exits 1 even when the
+    # executable is healthy, so treat that documented probe result as presence.
+    ToolSpec("icepack", "Project IceStorm icepack", (("icepack", "--help"),), (0, 1)),
     ToolSpec("ecppack", "Project Trellis ecppack", (("ecppack", "--version"),)),
     ToolSpec("quartus", "Intel Quartus", (("quartus_sh", "--version"),)),
     ToolSpec("lattice_diamond", "Lattice Diamond", (("diamondc", "--version"),)),
@@ -133,7 +136,7 @@ def _probe_tool(spec: ToolSpec, *, runner: Runner) -> dict[str, Any]:
             return _tool_record(spec, command, False, None, "timeout")
 
         output = _normalise_output(result.stdout, result.stderr)
-        if result.returncode == 0:
+        if result.returncode in spec.accepted_returncodes:
             return _tool_record(spec, command, True, output, None)
         last_error = output or f"exit {result.returncode}"
 
