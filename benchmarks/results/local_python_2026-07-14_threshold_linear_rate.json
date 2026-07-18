@@ -1,9 +1,9 @@
 {
   "auto_backend_order": [
-    "mojo",
     "rust",
-    "go",
     "julia",
+    "mojo",
+    "go",
     "python"
   ],
   "auto_backend_selection_basis": "same-host measured warm batch order; non-exclusive timings remain diagnostic",
@@ -12,18 +12,18 @@
       "available": true,
       "final_rate": 3.0,
       "final_rate_matches_python": true,
-      "max_call_ns": 165286631,
-      "median_call_ms": 9.824318,
-      "median_call_ns": 9824318.0,
-      "median_ns_per_step": 49.12159,
-      "min_call_ns": 7535230,
+      "max_call_ns": 12951778,
+      "median_call_ms": 8.565484,
+      "median_call_ns": 8565484.0,
+      "median_ns_per_step": 42.82742,
+      "min_call_ns": 7771448,
       "parity_max_abs_diff": 0.0,
       "samples_ns": [
-        165286631,
-        9824318,
-        7535230,
-        11986735,
-        7783268
+        9680869,
+        12951778,
+        8565484,
+        7771448,
+        8023876
       ],
       "trace_matches_python": true,
       "trace_mismatch_count": 0,
@@ -34,18 +34,18 @@
       "available": true,
       "final_rate": 3.0,
       "final_rate_matches_python": true,
-      "max_call_ns": 23226544,
-      "median_call_ms": 12.424665,
-      "median_call_ns": 12424665.0,
-      "median_ns_per_step": 62.123325,
-      "min_call_ns": 9351711,
+      "max_call_ns": 5950767,
+      "median_call_ms": 4.185058,
+      "median_call_ns": 4185058.0,
+      "median_ns_per_step": 20.92529,
+      "min_call_ns": 2616017,
       "parity_max_abs_diff": 0.0,
       "samples_ns": [
-        12424665,
-        12640143,
-        9351711,
-        23226544,
-        9829052
+        5950767,
+        5643674,
+        4185058,
+        2616017,
+        3170286
       ],
       "trace_matches_python": true,
       "trace_mismatch_count": 0,
@@ -56,18 +56,18 @@
       "available": true,
       "final_rate": 3.0,
       "final_rate_matches_python": true,
-      "max_call_ns": 4592756,
-      "median_call_ms": 3.387611,
-      "median_call_ns": 3387611.0,
-      "median_ns_per_step": 16.938055,
-      "min_call_ns": 2686795,
+      "max_call_ns": 5385961,
+      "median_call_ms": 4.3475,
+      "median_call_ns": 4347500.0,
+      "median_ns_per_step": 21.7375,
+      "min_call_ns": 4028802,
       "parity_max_abs_diff": 0.0,
       "samples_ns": [
-        3981618,
-        4592756,
-        2686795,
-        2713032,
-        3387611
+        4346743,
+        5385961,
+        4028802,
+        5368683,
+        4347500
       ],
       "trace_matches_python": true,
       "trace_mismatch_count": 0,
@@ -78,18 +78,18 @@
       "available": true,
       "final_rate": 3.0,
       "final_rate_matches_python": true,
-      "max_call_ns": 2480170,
-      "median_call_ms": 1.621337,
-      "median_call_ns": 1621337.0,
-      "median_ns_per_step": 8.106685,
-      "min_call_ns": 705908,
+      "max_call_ns": 3379808,
+      "median_call_ms": 2.676296,
+      "median_call_ns": 2676296.0,
+      "median_ns_per_step": 13.38148,
+      "min_call_ns": 1754762,
       "parity_max_abs_diff": 0.0,
       "samples_ns": [
-        1621337,
-        1862568,
-        2480170,
-        797949,
-        705908
+        2592373,
+        3379808,
+        2676296,
+        3058142,
+        1754762
       ],
       "trace_matches_python": true,
       "trace_mismatch_count": 0,
@@ -100,18 +100,18 @@
       "available": true,
       "final_rate": 3.0,
       "final_rate_matches_python": true,
-      "max_call_ns": 4251781,
-      "median_call_ms": 3.891646,
-      "median_call_ns": 3891646.0,
-      "median_ns_per_step": 19.45823,
-      "min_call_ns": 3189458,
+      "max_call_ns": 6089983,
+      "median_call_ms": 3.699976,
+      "median_call_ns": 3699976.0,
+      "median_ns_per_step": 18.49988,
+      "min_call_ns": 2638801,
       "parity_max_abs_diff": 0.0,
       "samples_ns": [
-        4080447,
-        3891646,
-        3189458,
-        4251781,
-        3283955
+        5895487,
+        6089983,
+        3699976,
+        2638801,
+        2759860
       ],
       "trace_matches_python": true,
       "trace_mismatch_count": 0,
@@ -123,31 +123,31 @@
   "binary_hashes": {
     "go_shared_library": {
       "path": "src/sc_neurocore/accel/go/neurons/threshold_linear_rate/libthreshold_linear_rate.so",
-      "sha256": "e06074a08024d39a329bfbfe6c26196574422e92552581ff19283ec3cccced90",
-      "size_bytes": 2017104
+      "sha256": "8c57771647070a62f3987baa81957ae18c8019ddb7fcad669ee4c406cbbc0119",
+      "size_bytes": 2017112
     },
     "mojo_shared_library": {
       "path": "src/sc_neurocore/accel/mojo/kernels/libthreshold_linear_rate.so",
-      "sha256": "a073394fabd711e02b4d6712c3185ed43b11ec708008aa440600f1d12793a28e",
+      "sha256": "3f7d7e375a6ef55533309f4eb501b67924041bc86da51d18c6d7eaa869d61112",
       "size_bytes": 15024
     },
     "rust_extension": {
-      "path": "bridge/sc_neurocore_engine/sc_neurocore_engine.cpython-312-x86_64-linux-gnu.so",
-      "sha256": "4874cfa836229cd2a76d6d1af70b2b079c165a012f93a4128edd518c4c413691",
-      "size_bytes": 33863097
+      "path": "/media/anulum/GOTM/_scratch/scn-ci-repair-wheel-site-3314012-5835d605/sc_neurocore_engine/sc_neurocore_engine.cpython-312-x86_64-linux-gnu.so",
+      "sha256": "866ba40414a7fbace3c1dd6048fb98f83e53f65848e3ba882eae22b9e0eff4e6",
+      "size_bytes": 33883768
     }
   },
   "command": "taskset -c <cpu> env PYTHONPATH=bridge:src:. .venv/bin/python benchmarks/bench_model_threshold_linear_rate.py --json benchmarks/results/local_python_2026-07-14_threshold_linear_rate.json",
   "environment": {
     "affinity": [
-      4
+      6
     ],
     "go": "go version go1.24.0 linux/amd64",
     "julia": "julia version 1.12.6",
     "load_average": [
-      40.6337890625,
-      35.6826171875,
-      37.89013671875
+      14.5849609375,
+      25.63330078125,
+      32.48486328125
     ],
     "mojo": "Mojo 1.0.0b1 (a9591de6)",
     "platform": "Linux-6.17.0-35-generic-x86_64-with-glibc2.39",
@@ -156,7 +156,7 @@
     "rustc": "rustc 1.96.0 (ac68faa20 2026-05-25)"
   },
   "evidence_class": "local_regression_single_cpu_affinity_non_exclusive",
-  "fastest_measured_native_backend": "mojo",
+  "fastest_measured_native_backend": "rust",
   "hardware_measurement_claimed": false,
   "kernel": "threshold_linear_rate_algebraic_batch",
   "measured_order": [
@@ -178,7 +178,7 @@
     "reason": "the maintained transfer uses only subtraction, maximum, and multiplication"
   },
   "production_speed_claim": false,
-  "recommended_auto_backend": "mojo",
+  "recommended_auto_backend": "rust",
   "schema_version": "sc-neurocore.polyglot-benchmark.v1",
   "source_hashes": {
     "benchmarks/bench_model_threshold_linear_rate": {
@@ -234,9 +234,9 @@
     },
     "src/sc_neurocore/accel/threshold_linear_rate.py": "d067f04854032220305738348f00d297f8e478686a492a827df6f10db995db3c",
     "src/sc_neurocore/neurons/model_descriptors/ThresholdLinearRateNeuron": {
-      "toml": "244041d9769c53e5d509134e90a78671ed8323c7686fb392836b91950161c566"
+      "toml": "6e9c94f48cadba1cbf2fdd5e9ad3906078a97362f514a97e88adec4e89f26e7f"
     },
-    "src/sc_neurocore/neurons/model_descriptors/ThresholdLinearRateNeuron.toml": "244041d9769c53e5d509134e90a78671ed8323c7686fb392836b91950161c566",
+    "src/sc_neurocore/neurons/model_descriptors/ThresholdLinearRateNeuron.toml": "6e9c94f48cadba1cbf2fdd5e9ad3906078a97362f514a97e88adec4e89f26e7f",
     "src/sc_neurocore/neurons/model_schemas/threshold_linear_rate": {
       "toml": "95334b84572a3d920bb845f077a63e9cd97dc9d03197a03bfeb4ff52992151c7"
     },
@@ -246,7 +246,7 @@
     },
     "src/sc_neurocore/neurons/models/threshold_linear_rate.py": "b95bc8fa72b515ffa48aeea56e0a3f46c12f6c559d633163af5295787287f44c"
   },
-  "timestamp_utc": "2026-07-14T18:09:11+00:00",
+  "timestamp_utc": "2026-07-18T21:37:49+00:00",
   "verification": {
     "rust_safety": {
       "command": [
@@ -254,9 +254,9 @@
         "--edition",
         "2021",
         "--test",
-        "/media/anulum/GOTM/_scratch/model35-1425524-37f7fe75/src/sc_neurocore/accel/rust/safety/threshold_linear_rate.rs",
+        "/media/anulum/GOTM/_scratch/scn-remote-hygiene-3314012-20260718T2112/src/sc_neurocore/accel/rust/safety/threshold_linear_rate.rs",
         "-o",
-        "/tmp/threshold-linear-rate-rust-ztoty9wx/threshold_linear_rate_tests"
+        "/tmp/threshold-linear-rate-rust-dt8_803d/threshold_linear_rate_tests"
       ],
       "output_tail": [
         "",
@@ -268,7 +268,7 @@
         "test tests::nonfinite_output_does_not_mutate_output_cache ... ok",
         "test tests::reset_preserves_configuration ... ok",
         "",
-        "test result: ok. 6 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s",
+        "test result: ok. 6 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s",
         ""
       ],
       "passed": true,

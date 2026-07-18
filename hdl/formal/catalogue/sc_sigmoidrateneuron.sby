@@ -1,0 +1,18 @@
+# SymbiYosys job for catalogue model sc_sigmoidrateneuron
+# Dual-axis perfect model formal (BMC)
+
+[options]
+mode bmc
+depth 4
+
+[engines]
+smtbmc z3
+
+[script]
+read -formal sc_sigmoidrateneuron_formal.v
+read -formal sc_sigmoidrateneuron.v
+prep -top sc_sigmoidrateneuron_formal
+
+[files]
+sc_sigmoidrateneuron_formal.v
+sc_sigmoidrateneuron.v

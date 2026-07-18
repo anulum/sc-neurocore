@@ -75,7 +75,10 @@ CLASS_TO_SCHEMA: dict[str, str] = {
     "PoissonNeuron": "poisson",
     "QuadraticIFNeuron": "quadratic_if",
     "ResonateAndFireNeuron": "resonate_fire",
+    "SigmoidRateNeuron": "sigmoid_rate",
     "ThetaNeuron": "theta",
+    "ThresholdLinearRateNeuron": "threshold_linear_rate",
+    "WilsonCowanUnit": "wilson_cowan",
 }
 
 # BMC depth: small for huge LUT models; deeper for compact IF cores.
@@ -106,8 +109,11 @@ DEPTH_BY_SCHEMA: dict[str, int] = {
     "poisson": 4,
     "rulkov_map": 4,
     "resonate_fire": 4,
+    "sigmoid_rate": 4,
     "terman_wang": 4,
+    "threshold_linear_rate": 4,
     "wilson_hr": 4,
+    "wilson_cowan": 4,
     "wong_wang": 4,
     "theta": 6,
     "adex": 6,
@@ -140,7 +146,10 @@ MINIMAL_SAFETY_SCHEMAS: frozenset[str] = frozenset(
         "poisson",
         "rulkov_map",
         "resonate_fire",
+        "sigmoid_rate",
         "terman_wang",
+        "threshold_linear_rate",
+        "wilson_cowan",
         "connor_stevens",
         "hodgkin_huxley",
         "ibarz_tanaka_map",
@@ -150,7 +159,19 @@ MINIMAL_SAFETY_SCHEMAS: frozenset[str] = frozenset(
 )
 
 # Continuous-rate models with a public spike port that must remain silent.
-EVENT_SILENT_SCHEMAS: frozenset[str] = frozenset({"ermentrout_kopell_pop"})
+EVENT_SILENT_SCHEMAS: frozenset[str] = frozenset(
+    {
+        "ermentrout_kopell_pop",
+        "sigmoid_rate",
+        "threshold_linear_rate",
+        "wilson_cowan",
+    }
+)
+
+# Wilson-Cowan's generated Q32.32 RTL contains many exponential LUTs feeding
+# public E/I outputs that are outside this bounded spike-port safety claim.
+# Flattening lets Yosys prune those unobserved cones before the SMT handoff.
+FLATTEN_FORMAL_SCHEMAS: frozenset[str] = frozenset({"wilson_cowan"})
 
 # Width overrides are additive: every pre-existing catalogue job retains Q8.8.
 # Medvedev needs Q16.16 because its calibrated d=2271.19 cannot fit Q8.8.
@@ -183,6 +204,9 @@ PRECISION_BY_SCHEMA: dict[str, tuple[int, int]] = {
     "medvedev_map": (32, 16),
     "poisson": (48, 24),
     "resonate_fire": (64, 32),
+    "sigmoid_rate": (64, 32),
+    "threshold_linear_rate": (32, 16),
+    "wilson_cowan": (64, 32),
     "wong_wang": (64, 32),
 }
 
@@ -367,7 +391,8 @@ endmodule
 """
 
 
-def _sby_script(module: str, depth: int) -> str:
+def _sby_script(module: str, depth: int, *, flatten: bool = False) -> str:
+    prep = f"prep -top {module}_formal" + (" -flatten" if flatten else "")
     return (
         f"# SymbiYosys job for catalogue model {module}\n"
         f"# Dual-axis perfect model formal (BMC)\n"
@@ -383,7 +408,7 @@ def _sby_script(module: str, depth: int) -> str:
         "[script]\n"
         f"read -formal {module}_formal.v\n"
         f"read -formal {module}.v\n"
-        f"prep -top {module}_formal\n"
+        f"{prep}\n"
         "\n"
         "[files]\n"
         f"{module}_formal.v\n"
@@ -421,7 +446,14 @@ def emit_one(class_name: str) -> EmitResult:
         ),
         encoding="utf-8",
     )
-    sby_path.write_text(_sby_script(module, depth), encoding="utf-8")
+    sby_path.write_text(
+        _sby_script(
+            module,
+            depth,
+            flatten=schema in FLATTEN_FORMAL_SCHEMAS,
+        ),
+        encoding="utf-8",
+    )
 
     return EmitResult(
         schema=schema,

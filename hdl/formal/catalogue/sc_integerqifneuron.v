@@ -30,12 +30,12 @@ module sc_integerqifneuron #(
 reg signed [31:0] v_reg;
 
 wire signed [63:0] _mul0 = P_A * (P_V_REST - v_reg);
-wire signed [31:0] _t0 = (_mul0 >>> 0);
+wire signed [31:0] _t0 = _mul0;
 wire signed [31:0] _floordiv1_dividend = _t0;
 wire signed [31:0] _floordiv1_integer = $signed(_floordiv1_dividend) >>> 3;
 wire signed [31:0] _floordiv1 = _floordiv1_integer;
 wire signed [63:0] _mul2 = P_B * (v_reg - P_V_THRESHOLD);
-wire signed [31:0] _t1 = (_mul2 >>> 0);
+wire signed [31:0] _t1 = _mul2;
 wire signed [31:0] _floordiv3_dividend = _t1;
 wire signed [31:0] _floordiv3_integer = $signed(_floordiv3_dividend) >>> 3;
 wire signed [31:0] _floordiv3 = _floordiv3_integer;

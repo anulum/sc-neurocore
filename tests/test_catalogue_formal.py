@@ -168,6 +168,52 @@ def test_resonate_and_fire_formal_job_is_q3232_reset_safety_only() -> None:
     assert "Saturation contract" not in harness
 
 
+@pytest.mark.parametrize(
+    ("class_name", "schema", "precision", "module_name", "flatten"),
+    (
+        ("SigmoidRateNeuron", "sigmoid_rate", (64, 32), "sc_sigmoidrateneuron", False),
+        (
+            "ThresholdLinearRateNeuron",
+            "threshold_linear_rate",
+            (32, 16),
+            "sc_thresholdlinearrateneuron",
+            False,
+        ),
+        ("WilsonCowanUnit", "wilson_cowan", (64, 32), "sc_wilsoncowanunit", True),
+    ),
+)
+def test_rate_formal_jobs_match_enrolled_cosim_precision_and_event_silence(
+    class_name: str,
+    schema: str,
+    precision: tuple[int, int],
+    module_name: str,
+    flatten: bool,
+) -> None:
+    """Keep continuous-rate formal jobs within their enrolled H1 boundary."""
+    import importlib.util
+
+    name = f"emit_catalogue_formal_{schema}_precision"
+    spec = importlib.util.spec_from_file_location(name, EMITTER)
+    assert spec is not None and spec.loader is not None
+    module = importlib.util.module_from_spec(spec)
+    sys.modules[name] = module
+    spec.loader.exec_module(module)
+
+    assert module.CLASS_TO_SCHEMA[class_name] == schema
+    assert module.PRECISION_BY_SCHEMA[schema] == precision
+    assert module.DEPTH_BY_SCHEMA[schema] == 4
+    assert schema in module.MINIMAL_SAFETY_SCHEMAS
+    assert schema in module.EVENT_SILENT_SCHEMAS
+    assert (schema in module.FLATTEN_FORMAL_SCHEMAS) is flatten
+
+    harness = (CATALOGUE / f"{module_name}_formal.v").read_text(encoding="utf-8")
+    assert harness.count("assert (spike_out == 1'b0);") == 2
+    assert "Saturation contract" not in harness
+
+    sby = (CATALOGUE / f"{module_name}.sby").read_text(encoding="utf-8")
+    assert (" -flatten" in sby) is flatten
+
+
 def test_dpi_formal_job_uses_enrolled_q1616_precision() -> None:
     """Keep formal DPI RTL aligned with its three-state co-simulation envelope."""
     import importlib.util
