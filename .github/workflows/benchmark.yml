@@ -41,6 +41,9 @@ jobs:
   benchmark:
     name: Run Benchmarks
     runs-on: ubuntu-latest
+    concurrency:
+      group: metrics-branch-writer
+      cancel-in-progress: false
     permissions:
       contents: write
       deployments: write
@@ -78,6 +81,8 @@ jobs:
           output-file-path: benchmark_output.txt
           github-token: ${{ secrets.GITHUB_TOKEN }}
           auto-push: true
+          gh-pages-branch: metrics
+          benchmark-data-dir-path: benchmarks/criterion
           alert-threshold: "500%"
           comment-on-alert: true
           fail-on-alert: true
