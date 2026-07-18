@@ -12,10 +12,14 @@ Equation-defined neurons compile user-supplied expression strings and evaluate
 them with :func:`eval`. Before an expression is ever compiled it is validated
 here against an AST allowlist: only the whitelisted maths/comparison node types
 survive, dangerous builtins and sandbox-escape dunder chains are rejected by
-name, and pathologically deep trees are refused. Together with the empty
-``__builtins__`` in :data:`EVAL_GLOBALS` (so ``eval``/``exec``/``__import__``
-are unreachable from inside a compiled expression) this is the security boundary
-that makes the ``# nosec B307`` eval sites at the runtime call sites sound.
+name, and pathologically deep trees are refused. :data:`EVAL_GLOBALS` gives the
+``eval`` a minimal ``__builtins__`` holding only ``__import__`` — which CPython's
+own ``eval`` machinery dereferences while evaluating some otherwise-safe
+expressions (numpy overflow/warning paths), so it must remain present — yet the
+AST allowlist already rejects the ``__import__`` identifier and every
+sandbox-escape dunder by name, so ``eval``/``exec``/``import`` stay unreachable
+from inside a compiled expression. Together these are the security boundary that
+makes the ``# nosec B307`` eval sites at the runtime call sites sound.
 
 Extracting the validator into its own module makes the sandbox independently
 testable and keeps the rationale for every ``nosec`` co-located with the gate it
@@ -125,7 +129,17 @@ _BLOCKED_NAMES = {
 EVAL_GLOBALS = {
     "__builtins__": {"__import__": __import__},
 }
-"""Globals for the compiled-expression ``eval`` sites: an empty builtins sandbox."""
+"""Globals for the compiled-expression ``eval`` sites.
+
+``__builtins__`` is deliberately restricted to the single entry ``__import__``:
+CPython's ``eval`` internals dereference ``__builtins__['__import__']`` while
+evaluating some otherwise-safe expressions (e.g. numpy overflow/warning handling
+of ``exp(v + 710.0)``), so emptying it breaks safe-expression eval rather than
+hardening the sandbox. It is *not* an attacker vector — the AST allowlist
+(:data:`_BLOCKED_NAMES` with :class:`ExpressionSafetyValidator`) rejects the
+``__import__`` identifier and all dunder access before an expression is compiled,
+so no compiled expression can name or reach it.
+"""
 
 
 class ExpressionSafetyValidator:
