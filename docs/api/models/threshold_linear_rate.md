@@ -104,12 +104,18 @@ The focused test cohort covers:
 See [Threshold-linear rate source fidelity](../../validation/threshold_linear_rate_source_fidelity.md)
 for the evidence matrix and reproduction commands.
 
-## Hardware boundary
+## Fixed-point co-simulation
 
-The subtract/compare/multiply transfer is a plausible fixed-point hardware
-candidate, but this unit makes no RTL claim. Quantisation, registered or folded
-RTL, formal equivalence, synthesis, timing, and device measurements require a
-separate silicon-enrolment artifact.
+The paired TOML and JSON schemas reproduce the configured hand transfer
+exactly. The production equation compiler emits a Q16.16 Verilog module with
+`theta=1.5` and `gain=2.0`. Icarus Verilog co-simulation drives all 193 inputs
+from `-4.0` through `8.0` in `1/16` increments, covering below-threshold,
+equality, and above-threshold branches. Every public `r_out` word is
+cycle-exact against the quantised hand result and every `spike_out` value is
+zero.
+
+This is generated-RTL H1 co-simulation evidence. No formal equivalence,
+synthesis, timing closure, device execution, or PPA result is claimed.
 
 ## Reference
 

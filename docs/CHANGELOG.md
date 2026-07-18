@@ -5,6 +5,14 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+### Threshold-linear-rate generated-RTL co-simulation
+
+- Added paired-schema and generated Q16.16 Verilog co-simulation for
+  `ThresholdLinearRateNeuron`. The configured subtract-compare-multiply
+  datapath preserves all 193 public rate words cycle-exactly across below,
+  equality, and above-threshold inputs and keeps the event output silent. The
+  absence of formal, synthesis, timing, device, or PPA evidence is explicit.
+
 ### Sigmoid-rate generated-RTL co-simulation
 
 - Added paired-schema and generated Q32.32 Verilog trajectory co-simulation

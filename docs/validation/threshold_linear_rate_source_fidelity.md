@@ -53,6 +53,18 @@ above-threshold branches, empty batches, explicit-unavailable backends,
 overflow rejection, corrupted runtime state, and invalid Go/Mojo contracts
 whose caller buffers must remain unchanged.
 
+## Generated fixed-point co-simulation
+
+The paired TOML and JSON schemas reproduce the configured hand transfer
+exactly. The production equation compiler lowers the same schema to Q16.16
+Verilog with `theta=1.5` and `gain=2.0`. Icarus Verilog co-simulation drives
+193 representable inputs from `-4.0` through `8.0` in `1/16` increments and
+establishes cycle-exact public `r_out` words across the below-threshold,
+equality, and above-threshold branches. `spike_out` remains zero throughout.
+
+This is an H1 generated-RTL result for the declared algebraic transfer. It does
+not recast positive rates as binary events.
+
 ## Controlled benchmark
 
 `benchmarks/bench_model_threshold_linear_rate.py` measures the complete
@@ -92,8 +104,8 @@ those inherited refreshes are not presented as Model35 failures.
 - The book equation supports the rectified gain; the explicit threshold and
   gain are the declared translated/scaled form.
 - The benchmark is local non-exclusive regression evidence.
-- No fixed-point schema, RTL, formal equivalence, synthesis, timing, or device
-  result is claimed.
+- The generated Q16.16 claim is cycle-exact co-simulation only. No formal
+  equivalence, synthesis, timing, device, or PPA result is claimed.
 
 ## Reproduction
 
@@ -106,6 +118,7 @@ rustc --edition 2021 --test \
 
 PYTHONPATH=bridge:src:. .venv/bin/python -m pytest -q \
   tests/test_model_threshold_linear_rate.py \
+  tests/test_cosim_threshold_linear_rate.py \
   tests/test_threshold_linear_rate_backend_loading.py \
   tests/test_threshold_linear_rate_backends.py \
   tests/test_bench_threshold_linear_rate.py

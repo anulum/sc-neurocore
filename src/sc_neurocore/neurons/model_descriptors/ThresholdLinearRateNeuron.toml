@@ -24,7 +24,7 @@ intended_use = [
 ]
 hardware_fit = [
     "software and floating-point accelerator reference",
-    "fixed-point subtract-compare-multiply candidate for separate RTL enrolment",
+    "generated Q16.16 subtract-compare-multiply datapath with cycle-exact co-simulation",
 ]
 behavior_tags = [
     "excitable",
@@ -113,8 +113,8 @@ tolerance = "complete Python/Rust/Julia/Go/Mojo rate traces and final cached out
 evidence = "tests/test_threshold_linear_rate_backends.py::test_complete_configured_contract_matches_python"
 
 [silicon]
-compiles = false
-cosim_validated = false
-cosim_evidence = "not enrolled; the software model has no committed fixed-point RTL in this unit"
-target_tier = ""
-terminal_reason = "Software polyglot completion does not claim quantisation, RTL, formal equivalence, synthesis, timing, or hardware evidence."
+compiles = true
+cosim_validated = true
+cosim_evidence = "tests/test_cosim_threshold_linear_rate.py::test_q1616_rtl_is_cycle_exact_and_event_silent"
+target_tier = "H1"
+terminal_reason = "Generated Q16.16 transfer-vector co-simulation is enrolled; higher silicon rungs require formal, synthesis, timing, and device programmes."
