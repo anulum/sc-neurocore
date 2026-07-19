@@ -11,6 +11,9 @@ import { useStudioStore } from "./stores/studio";
 import type { ViewTab } from "./stores/studio";
 import { panelCapabilityState } from "./capabilityShell";
 import type { PanelCapabilityState, PanelKey } from "./capabilityShell";
+import type { AnalysisJobKind } from "./api/client";
+import { useStudioAnalysisJobIntegration } from "./useStudioAnalysisJobIntegration";
+import AnalysisJobControl from "./components/AnalysisJobControl";
 import { useEvidenceCartSession } from "./useEvidenceCartSession";
 import EvidenceCartStrip from "./components/EvidenceCartStrip";
 import DevelopmentPreviewBanner from "./components/DevelopmentPreviewBanner";
@@ -103,11 +106,7 @@ export default function App() {
   const [guidedTrainingSkipped, setGuidedTrainingSkipped] = useState(false);
   const evidenceSession = useEvidenceCartSession();
   const s = useStudioStore();
-  const loadCapabilities = s.loadCapabilities;
-  const loadAuditStatus = s.loadAuditStatus;
-  const loadAuthSession = s.loadAuthSession;
-  const loadOperatorStatus = s.loadOperatorStatus;
-  const loadPresets = s.loadPresets;
+  const { loadCapabilities, loadAuditStatus, loadAuthSession, loadOperatorStatus, loadPresets } = s;
   const vars = s.result ? Object.keys(s.result.states) : [];
   const hasPhase = vars.length >= 2;
   const hasISI = s.result?.stats?.isi_histogram != null;
@@ -116,6 +115,17 @@ export default function App() {
   const panelState = (panelKey: PanelKey) => panelCapabilityState(s.capabilities, panelKey);
   const activePanelState = panelState(s.activeTab as PanelKey);
   const panelUnavailable = (panelKey: PanelKey) => !panelState(panelKey).available;
+  const analysisKind: AnalysisJobKind = s.activeTab === "bifurcation" ? "bifurcation" : s.activeTab === "heatmap" ? "heatmap" : s.activeTab === "sensitivity" ? "sensitivity" : "fi_curve";
+  const analysisPanel: PanelKey = analysisKind === "fi_curve" ? "fi-curve" : analysisKind;
+  const analysisJob = useStudioAnalysisJobIntegration({
+    simulation: {
+      sourceMode: s.sourceMode, selectedModelName: s.selectedModelName,
+      modelParams: s.modelParams, equations: s.equations, threshold: s.threshold,
+      reset: s.reset, odeParams: s.odeParams, odeInit: s.odeInit,
+      dt: s.dt, duration: s.duration, current: s.current, protocol: s.protocol,
+    }, analysis: analysisKind, sweepParam: s.sweepParam, sweepParamY: s.sweepParamY,
+  }, { disabled: s.isSimulating, capabilityEnabled: !panelUnavailable(analysisPanel),
+    applyPatch: (patch) => useStudioStore.setState(patch) });
 
   const guidedFlowInputs: GuidedFlowInputs = {
     modelSelected: s.sourceMode === "ode" ? s.equations.length > 0 : s.selectedModelName.length > 0,
@@ -373,41 +383,30 @@ export default function App() {
           disabled={s.isSimulating || s.sourceMode !== "model" || panelUnavailable("characterize")}
           title={panelState("characterize").message}
           color="#fff176" />
-        <Btn label="f-I" onClick={s.runFICurve}
-          disabled={s.isSimulating || panelUnavailable("fi-curve")}
-          title={panelState("fi-curve").message}
-          color="var(--success)" />
-        <Btn label="Sens" onClick={s.runSensitivity}
-          disabled={s.isSimulating || panelUnavailable("sensitivity")}
-          title={panelState("sensitivity").message}
-          color="#ce93d8" />
         <Btn label="Code" onClick={s.runCodegen}
           disabled={panelUnavailable("code")}
           title={panelState("code").message}
           color="#90a4ae" />
-
         {paramKeys.length > 0 && (
           <div style={{ display: "flex", alignItems: "center", gap: 2 }}>
             <select value={s.sweepParam} onChange={(e) => s.setSweepParam(e.target.value)}
-              style={{ fontSize: 9, padding: "1px 2px", maxWidth: 70 }}>
+              style={{ fontSize: 9, padding: "1px 2px", maxWidth: 70 }}
+              title={panelState("bifurcation").message}>
               <option value="">X...</option>
               {paramKeys.map((k) => <option key={k} value={k}>{k}</option>)}
             </select>
-            <Btn label="Bif" onClick={s.runBifurcation}
-              disabled={s.isSimulating || !s.sweepParam || panelUnavailable("bifurcation")}
-              title={panelState("bifurcation").message}
-              color="#ef9a9a" />
             <select value={s.sweepParamY} onChange={(e) => s.setSweepParamY(e.target.value)}
-              style={{ fontSize: 9, padding: "1px 2px", maxWidth: 70 }}>
+              style={{ fontSize: 9, padding: "1px 2px", maxWidth: 70 }}
+              title={panelState("heatmap").message}>
               <option value="">Y...</option>
               {paramKeys.filter((k) => k !== s.sweepParam).map((k) => <option key={k} value={k}>{k}</option>)}
             </select>
-            <Btn label="2D" onClick={s.runHeatmap}
-              disabled={s.isSimulating || !s.sweepParam || !s.sweepParamY || panelUnavailable("heatmap")}
-              title={panelState("heatmap").message}
-              color="#ffab91" />
           </div>
         )}
+        <div data-testid="analysis-job-host" title={panelState(analysisPanel).message}>
+          <AnalysisJobControl busy={analysisJob.busy} canSubmit={analysisJob.canSubmit}
+            request={analysisJob.request} startJob={analysisJob.startJob} state={analysisJob.state}
+            selectedAnalysisLabel={analysisJob.selectedAnalysisLabel ?? "analysis"} /></div>
 
         {s.sourceMode === "ode" && (
           <>
