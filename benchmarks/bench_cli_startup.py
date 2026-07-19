@@ -297,7 +297,7 @@ def run(args: argparse.Namespace) -> dict[str, object]:
             "iterations": args.iterations,
             "warmups": args.warmups,
             "interleaving": "variant order reverses on alternating rounds",
-            "python_executable": sys.executable,
+            "python_executable": Path(sys.executable).name,
             "python_version": platform.python_version(),
             "platform": platform.platform(),
             "machine": platform.machine(),

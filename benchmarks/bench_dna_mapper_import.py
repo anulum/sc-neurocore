@@ -316,7 +316,7 @@ def run(args: argparse.Namespace) -> dict[str, object]:
             "warmups": args.warmups,
             "operations_per_sample": 10,
             "interleaving": "variant order reverses on alternating rounds",
-            "python_executable": sys.executable,
+            "python_executable": Path(sys.executable).name,
             "python_version": platform.python_version(),
             "platform": platform.platform(),
             "machine": platform.machine(),

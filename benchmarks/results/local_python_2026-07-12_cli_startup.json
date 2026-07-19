@@ -35,7 +35,7 @@
     "iterations": 30,
     "machine": "x86_64",
     "platform": "Linux-6.17.0-35-generic-x86_64-with-glibc2.39",
-    "python_executable": "/home/anulum/.local/bin/python",
+    "python_executable": "python",
     "python_version": "3.12.3",
     "warmups": 5
   },

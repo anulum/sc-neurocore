@@ -68,6 +68,9 @@ def test_cli_startup_benchmark_writes_path_free_comparison(tmp_path: Path) -> No
     payload: object = json.loads(raw)
     assert isinstance(payload, dict)
     assert payload["schema_version"] == "sc-neurocore.cli-startup-benchmark.v1"
+    configuration = payload["configuration"]
+    assert isinstance(configuration, dict)
+    assert configuration["python_executable"] == Path(sys.executable).name
     variants = payload["variants"]
     assert isinstance(variants, list)
     assert len(variants) == 2
@@ -125,6 +128,7 @@ def test_committed_cli_startup_result_matches_candidate_source() -> None:
     assert isinstance(configuration, dict)
     assert configuration["iterations"] == 30
     assert configuration["warmups"] == 5
+    assert configuration["python_executable"] == Path(sys.executable).name
     variants = payload["variants"]
     assert isinstance(variants, list)
     candidate = next(
