@@ -41,12 +41,25 @@ def test_studio_job_status_endpoint_is_path_free(tmp_path: Path) -> None:
     assert response.status_code == 200
     assert response.json() == {
         "active_count": 0,
-        "allowed_kinds": ["compiler", "evidence", "synthesis", "training"],
+        "allowed_kinds": [
+            "analysis",
+            "compiler",
+            "evidence",
+            "model_scan",
+            "synthesis",
+            "training",
+        ],
         "completed_count": 0,
         "configured": True,
         "failed_count": 0,
         "process_count": 0,
         "resource_profiles": [
+            {
+                "default_timeout_seconds": 3.0,
+                "execution_models": ["thread", "process"],
+                "kind": "analysis",
+                "max_artifact_bytes": 16777216,
+            },
             {
                 "default_timeout_seconds": 3.0,
                 "execution_models": ["thread", "process"],
@@ -57,6 +70,12 @@ def test_studio_job_status_endpoint_is_path_free(tmp_path: Path) -> None:
                 "default_timeout_seconds": 3.0,
                 "execution_models": ["thread", "process"],
                 "kind": "evidence",
+                "max_artifact_bytes": 16777216,
+            },
+            {
+                "default_timeout_seconds": 3.0,
+                "execution_models": ["thread", "process"],
+                "kind": "model_scan",
                 "max_artifact_bytes": 16777216,
             },
             {

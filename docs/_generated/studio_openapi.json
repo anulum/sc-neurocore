@@ -186,6 +186,31 @@
         "title": "AdaptivePrecisionFormalBundleRequest",
         "type": "object"
       },
+      "AnalysisJobRequest": {
+        "description": "Request body for asynchronous heavy analysis job submission.\n\nThe ``analysis`` field selects the synchronous analysis kind. ``payload``\nmust match the corresponding synchronous request schema (for example\n:class:`BifurcationRequest` when ``analysis`` is ``bifurcation``).",
+        "properties": {
+          "analysis": {
+            "enum": [
+              "fi_curve",
+              "bifurcation",
+              "heatmap",
+              "sensitivity"
+            ],
+            "title": "Analysis",
+            "type": "string"
+          },
+          "payload": {
+            "additionalProperties": true,
+            "title": "Payload",
+            "type": "object"
+          }
+        },
+        "required": [
+          "analysis"
+        ],
+        "title": "AnalysisJobRequest",
+        "type": "object"
+      },
       "BenchmarkContributeRequest": {
         "description": "Request body for benchmark-databank contribution uploads.",
         "properties": {
@@ -2187,6 +2212,47 @@
         "summary": "Api Adaptive Precision Formal Bundle"
       }
     },
+    "/api/analysis/jobs": {
+      "post": {
+        "description": "Submit a heavy analysis run as an asynchronous Studio job.\n\nUse this when a synchronous analysis route returns\n``execution_mode=job_required``. The job result carries the same\nanalysis payload shape as the corresponding synchronous endpoint.",
+        "operationId": "api_analysis_job_api_analysis_jobs_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AnalysisJobRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response Api Analysis Job Api Analysis Jobs Post",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Api Analysis Job"
+      }
+    },
     "/api/benchmarks/contribute": {
       "post": {
         "operationId": "api_benchmark_contribute_api_benchmarks_contribute_post",
@@ -3326,6 +3392,7 @@
     },
     "/api/models/scan": {
       "get": {
+        "description": "Run a budgeted synchronous catalogue model scan.\n\nFull-catalogue scans that exceed the synchronous analysis budget are\nrejected with ``execution_mode=job_required`` so operators use\n:func:`api_model_scan_job` instead of blocking the HTTP request thread.",
         "operationId": "api_model_scan_api_models_scan_get",
         "responses": {
           "200": {
@@ -3340,6 +3407,27 @@
           }
         },
         "summary": "Api Model Scan"
+      }
+    },
+    "/api/models/scan/jobs": {
+      "post": {
+        "description": "Submit a full-catalogue model scan as an asynchronous Studio job.\n\nReturns a path-free job record immediately. Poll\n``GET /api/studio/jobs/{job_id}`` for completion; the completed job\n``result`` carries ``studio.model-scan.v1`` payload with evidence class.",
+        "operationId": "api_model_scan_job_api_models_scan_jobs_post",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response Api Model Scan Job Api Models Scan Jobs Post",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Api Model Scan Job"
       }
     },
     "/api/models/simulate": {

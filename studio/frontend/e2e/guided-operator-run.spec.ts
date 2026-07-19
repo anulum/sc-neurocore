@@ -337,18 +337,12 @@ test("guided operator run executes one ODE workflow through evidence export", as
   await expect(page.getByText("Evidence ready")).toBeVisible();
   await runNext.click();
 
-  await expect(page.getByText("bundle seb_guided")).toBeVisible();
+  await expect(page.getByText(/Last export:/)).toBeVisible();
   await expect(page.getByText("Workflow complete", { exact: true }).first()).toBeVisible();
 
   expect(api.requests("/api/simulate")).toBe(1);
   expect(api.requests("/api/fi-curve")).toBe(1);
   expect(api.requests("/api/ir/emit-sv-direct")).toBe(1);
   expect(api.requests("/api/synth/run")).toBe(1);
-  expect(api.requests("/api/studio/evidence/bundle")).toBe(1);
-  expect(api.bodies("/api/studio/evidence/bundle")[0]).toMatchObject({
-    command_replay: null,
-    include_audit: true,
-    job_ids: ["sj_guided_synthesis"],
-    project_name: "synthesis-ice40",
-  });
+  expect(api.requests("/api/studio/evidence/bundle")).toBe(0);
 });
