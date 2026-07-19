@@ -21,8 +21,8 @@ import {
   purgeStudioAuditQuarantineArchiveRetention,
   restoreStudioAuditQuarantineArchive,
   rotateStudioIdentityBrowserUserPassword,
-  simulateODE, simulateModel, fetchFICurve, compileVerilog,
-  fetchBifurcation, fetchSensitivity, fetchPrecision, fetchHeatmap, fetchCodegen,
+  simulateODE, simulateModel, compileVerilog,
+  fetchPrecision, fetchCodegen,
   fetchCompare, fetchNullclines, fetchFreqResponse,
   fetchCharacterize, fetchMultiSimulate, importTrace, simulateNetwork,
   buildIR, emitSV, emitSVDirect,
@@ -69,6 +69,7 @@ import {
   type StudioIdentityBrowserUserCreate,
   type StudioIdentityServiceAccount, type StudioJobRecord, type StudioJobStatus,
   type StudioOperatorStatus,
+  type AnalysisJobKind,
   createStudioIdentityBrowserUser,
   setStudioAuthToken,
   updateStudioIdentityBrowserUser,
@@ -144,11 +145,8 @@ import {
 import { readStudioStartupHashState } from "../studioStartupRuntime";
 import { studioTraceImportRequest } from "../studioTraceImport";
 import {
-  studioBifurcationRequest,
   studioCodegenRequest,
-  studioFICurveRequest,
   studioFrequencyResponseRequest,
-  studioHeatmapRequest,
   studioPrecisionRequest,
   studioSimulationConfig,
   type StudioSimulationConfigInput,
@@ -158,22 +156,20 @@ import {
   studioAnalysisFailureState,
   studioAnalysisIdleState,
   studioAnalysisStartState,
-  studioBifurcationResultState,
   studioCodegenResultState,
   studioCodegenStartState,
   studioCompareResultState,
-  studioFICurveResultState,
   studioFrequencyResultState,
-  studioHeatmapResultState,
   studioImportedTraceState,
   studioMultiResultsState,
   studioNetworkResultState,
   studioNullclineResultState,
   studioPrecisionResultState,
-  studioSensitivityResultState,
   studioSimulationResultState,
   studioSTAResultState,
 } from "../studioAnalysisState";
+import { buildStudioAnalysisJobSelection } from "../studioAnalysisJobSelection";
+import { runStudioAnalysisJob } from "../studioAnalysisJobRunner";
 import {
   simulationExportPlan,
 } from "../simulationExports";
@@ -552,6 +548,37 @@ function simulationConfigInput(s: StudioState): StudioSimulationConfigInput {
     current: s.current,
     protocol: s.protocol,
   };
+}
+
+/** W12-D: heavy analyses via async job runner (stable method names, sweep guards). */
+async function runStoreHeavyAnalysis(
+  kind: AnalysisJobKind,
+  get: () => StudioState,
+  set: (partial: Partial<StudioState>) => void,
+): Promise<void> {
+  const s = get();
+  if (s.isSimulating) return;
+  if (kind === "bifurcation" && !s.sweepParam) return;
+  if (kind === "heatmap" && (!s.sweepParam || !s.sweepParamY)) return;
+  const selection = buildStudioAnalysisJobSelection({
+    analysis: kind,
+    sourceMode: s.sourceMode,
+    modelParams: s.modelParams,
+    odeParams: s.odeParams,
+    sweepParam: s.sweepParam,
+    sweepParamY: s.sweepParamY,
+  });
+  if (!selection.ok) {
+    set(studioAnalysisFailureState(selection.error));
+    return;
+  }
+  const outcome = await runStudioAnalysisJob(
+    { simulation: simulationConfigInput(s), selection: selection.selection },
+    { applyPatch: (patch) => set(patch) },
+  );
+  if (!outcome.ok && outcome.stage === "request") {
+    set(studioAnalysisFailureState(outcome.error));
+  }
 }
 
 export const useStudioStore = create<StudioState>((set, get) => ({
@@ -959,42 +986,9 @@ export const useStudioStore = create<StudioState>((set, get) => ({
     }
   },
 
-  runFICurve: async () => {
-    const s = get();
-    if (s.isSimulating) return;
-    set(studioAnalysisStartState("fi-curve"));
-    try {
-      const cfg = studioSimulationConfig(simulationConfigInput(s));
-      const fiResult = await fetchFICurve(studioFICurveRequest(cfg, s.current));
-      set(studioFICurveResultState(fiResult));
-    } catch (e) { set(studioAnalysisFailureState(e)); }
-  },
-
-  runBifurcation: async () => {
-    const s = get();
-    if (s.isSimulating || !s.sweepParam) return;
-    set(studioAnalysisStartState("bifurcation"));
-    try {
-      const cfg = studioSimulationConfig(simulationConfigInput(s));
-      const paramVal = (s.sourceMode === "model" ? s.modelParams : s.odeParams)[s.sweepParam] ?? 0;
-      const bifResult = await fetchBifurcation(studioBifurcationRequest(cfg, {
-        sweepParam: s.sweepParam,
-        parameterValue: paramVal,
-      }));
-      set(studioBifurcationResultState(bifResult));
-    } catch (e) { set(studioAnalysisFailureState(e)); }
-  },
-
-  runSensitivity: async () => {
-    const s = get();
-    if (s.isSimulating) return;
-    set(studioAnalysisStartState("sensitivity"));
-    try {
-      const cfg = studioSimulationConfig(simulationConfigInput(s));
-      const sensResult = await fetchSensitivity(cfg);
-      set(studioSensitivityResultState(sensResult));
-    } catch (e) { set(studioAnalysisFailureState(e)); }
-  },
+  runFICurve: () => runStoreHeavyAnalysis("fi_curve", get, set),
+  runBifurcation: () => runStoreHeavyAnalysis("bifurcation", get, set),
+  runSensitivity: () => runStoreHeavyAnalysis("sensitivity", get, set),
 
   runPrecision: async () => {
     const s = get();
@@ -1021,24 +1015,7 @@ export const useStudioStore = create<StudioState>((set, get) => ({
     } catch (e) { set(compilerFailureState(e)); }
   },
 
-  runHeatmap: async () => {
-    const s = get();
-    if (s.isSimulating || !s.sweepParam || !s.sweepParamY) return;
-    set(studioAnalysisStartState("heatmap"));
-    try {
-      const params = s.sourceMode === "model" ? s.modelParams : s.odeParams;
-      const xVal = params[s.sweepParam] ?? 0;
-      const yVal = params[s.sweepParamY] ?? 0;
-      const cfg = studioSimulationConfig(simulationConfigInput(s));
-      const heatmapResult = await fetchHeatmap(studioHeatmapRequest(cfg, {
-        sweepParamX: s.sweepParam,
-        parameterValueX: xVal,
-        sweepParamY: s.sweepParamY,
-        parameterValueY: yVal,
-      }));
-      set(studioHeatmapResultState(heatmapResult));
-    } catch (e) { set(studioAnalysisFailureState(e)); }
-  },
+  runHeatmap: () => runStoreHeavyAnalysis("heatmap", get, set),
 
   runCodegen: async () => {
     const s = get();
