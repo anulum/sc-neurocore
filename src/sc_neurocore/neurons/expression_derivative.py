@@ -37,7 +37,9 @@ from typing import cast
 import sympy
 
 
-class exprel(sympy.Function):  # type: ignore[misc]  # noqa: N801 - DSL/print token
+class exprel(  # noqa: N801 - DSL/print token
+    sympy.Function  # type: ignore[misc,unused-ignore]
+):
     """SymPy image of the DSL ``exprel(x) = (exp(x) - 1) / x`` (exprel(0) = 1)."""
 
     def fdiff(self, argindex: int = 1) -> sympy.Expr:
@@ -47,7 +49,9 @@ class exprel(sympy.Function):  # type: ignore[misc]  # noqa: N801 - DSL/print to
         return _as_expr(numerator / x**2)
 
 
-class sigmoid(sympy.Function):  # type: ignore[misc]  # noqa: N801 - DSL/print token
+class sigmoid(  # noqa: N801 - DSL/print token
+    sympy.Function  # type: ignore[misc,unused-ignore]
+):
     """SymPy image of the DSL logistic ``sigmoid(x) = 1/(1 + exp(-x))``."""
 
     def fdiff(self, argindex: int = 1) -> sympy.Expr:
@@ -116,12 +120,14 @@ def _as_expr(value: object) -> sympy.Expr:
 
 def _diff(expr: sympy.Expr, symbol: sympy.Expr) -> sympy.Expr:
     """Return ``d(expr)/d(symbol)`` through SymPy's untyped differentiator."""
-    return cast(sympy.Expr, sympy.diff(expr, symbol))
+    differentiate = cast(Callable[[sympy.Expr, sympy.Expr], object], sympy.diff)
+    return cast(sympy.Expr, differentiate(expr, symbol))
 
 
 def _float(value: float) -> sympy.Expr:
     """Return a SymPy float through SymPy's untyped constructor."""
-    return cast(sympy.Expr, sympy.Float(value))
+    construct = cast(Callable[[float], object], sympy.Float)
+    return cast(sympy.Expr, construct(value))
 
 
 def _integer(value: int) -> sympy.Expr:
@@ -131,7 +137,8 @@ def _integer(value: int) -> sympy.Expr:
 
 def _symbol(name: str) -> sympy.Expr:
     """Return a SymPy symbol through SymPy's untyped constructor."""
-    return cast(sympy.Expr, sympy.Symbol(name))
+    construct = cast(Callable[[str], object], sympy.Symbol)
+    return cast(sympy.Expr, construct(name))
 
 
 def _exprel_expr(*args: sympy.Expr) -> sympy.Expr:
@@ -213,16 +220,20 @@ class _Converter:
         return _GrammarPrinter(self._sources).render(expr)
 
 
-class _GrammarPrinter(sympy.printing.str.StrPrinter):  # type: ignore[misc]
+class _GrammarPrinter(
+    sympy.printing.str.StrPrinter  # type: ignore[misc,unused-ignore]
+):
     """Print SymPy expressions using DSL-grammar tokens and opaque source text."""
 
     def __init__(self, sources: dict[str, str]) -> None:
-        super().__init__()
+        initialise = cast(Callable[[], None], super().__init__)
+        initialise()
         self._sources = sources
 
     def render(self, expr: sympy.Expr) -> str:
         """Return the DSL string representation of ``expr``."""
-        return str(self.doprint(expr))
+        print_expression = cast(Callable[[sympy.Expr], object], self.doprint)
+        return str(print_expression(expr))
 
     def _print_Symbol(self, expr: sympy.Symbol) -> str:
         source = self._sources.get(expr.name)
