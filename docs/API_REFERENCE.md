@@ -814,6 +814,13 @@ outputs : numpy.ndarray of shape (n_neurons,)
 
 ---
 
+## Module `accel.julia.neurons.adaptive_threshold_if`
+
+### Function `simulate_adaptive_threshold_if(v_init, theta_init, v_rest, v_reset, theta_rest, delta_theta, tau_m, tau_theta, dt, current)`
+Run the Julia exact-relaxation recurrence with typed failure translation.
+
+---
+
 ## Module `accel.lapicque`
 
 ### Function `ensure_julia_loaded()`
