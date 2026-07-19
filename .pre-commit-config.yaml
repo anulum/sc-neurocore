@@ -40,3 +40,24 @@ repos:
         # Auto-generated Rust stubs whose `// ...` docs are Python pseudocode
         # truncated mid-word at ~80 cols — not spell-checkable.
         exclude: '^src/sc_neurocore/accel/rust/safety/'
+
+  - repo: local
+    hooks:
+      - id: capability-manifest-drift
+        name: capability manifest drift
+        entry: python tools/capability_manifest.py --check
+        language: system
+        pass_filenames: false
+        files: '^(\.pre-commit-config\.yaml|README\.md|pyproject\.toml|src/|tests/|docs/|\.github/workflows/|tools/(capability_manifest\.py|capability_manifest\.toml|architecture_map\.toml))'
+      - id: engine-monolith-no-growth
+        name: engine monolith no-growth guard
+        entry: python tools/engine_monolith_guard.py --check
+        language: system
+        pass_filenames: false
+        files: '^(\.pre-commit-config\.yaml|engine/src/.*\.rs|tools/(engine_monolith_guard\.py|engine_monolith_ceiling\.toml))$'
+      - id: api-reference-drift
+        name: API reference drift
+        entry: python scripts/generate_docs.py --check
+        language: system
+        pass_filenames: false
+        files: '^(\.pre-commit-config\.yaml|src/.*\.py|scripts/generate_docs\.py|docs/API_REFERENCE\.md)$'
