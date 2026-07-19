@@ -7,6 +7,7 @@
 // SC-NeuroCore — Neurons Module
 
 pub mod ai_optimized;
+pub mod aihara_map;
 pub mod biophysical;
 pub mod cerebellar;
 pub mod channels;
@@ -26,6 +27,7 @@ pub mod special;
 pub mod trivial;
 
 pub use ai_optimized::*;
+pub use aihara_map::*;
 pub use biophysical::*;
 pub use cerebellar::*;
 pub use channels::*;
