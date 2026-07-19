@@ -311,6 +311,36 @@ includes a passing eight-test standalone Rust safety receipt. These timings are
 local diagnostic regression evidence, not production, hardware, cross-host,
 or universal-ranking claims.
 
+## Alpha-synapse exact-flow batch
+
+The committed `benchmarks/results/bench_alpha.json` records the complete
+membrane, both alpha-rise, both synaptic-current, and spike traces, all five
+final states, and candidate-crossing events through all five public runtimes.
+Five 200,000-step samples follow a 1,000-step warm-up. The run was pinned to
+logical CPU 0 on the same i5-11600K host, without exclusive CPU isolation and
+with a recorded one-minute load average of 17.61. The artifact distinguishes
+the measured JuliaCall runtime (1.11.9) from the PATH Julia CLI (1.12.6), the
+Go shared library's embedded builder (1.26.3) from the PATH Go CLI (1.24.0),
+and the pinned Pixi Mojo builder (0.26.2) from the PATH Mojo CLI (1.0.0b1).
+
+| Backend | Median call | Median ns/step | Maximum trace difference | Events |
+|---|---:|---:|---:|---:|
+| Mojo | 15.598 ms | 77.988 | `8.882e-15` | 4,829 |
+| Rust | 20.768 ms | 103.841 | `0` | 4,829 |
+| Julia | 35.574 ms | 177.872 | `0` | 4,829 |
+| Go | 37.095 ms | 185.473 | `3.797e-14` | 4,829 |
+| Python | 965.595 ms | 4,827.973 | `0` | 4,829 |
+
+Python, Rust, and Julia are byte-identical, with trace SHA-256
+`91f7e62e2276a1d3d1ac761421b342ba350f897dfb90ba5168453917d036d286`.
+Mojo remains event-exact and within its declared `1e-10` complete-trajectory
+envelope, and Go stays within its declared `1e-12` bound. The ascending native
+median order for this run is Mojo, Rust, Julia, then Go, followed by the
+always-available Python floor. The artifact binds exact source and loaded
+Rust/Go/Mojo binary hashes and includes a passing eight-test standalone Rust
+safety receipt. These timings are local diagnostic regression evidence, not
+production, hardware, cross-host, or universal-ranking claims.
+
 ## Resonate-and-fire exact-flow batch
 
 The committed `benchmarks/results/bench_resonate_and_fire.json` records the

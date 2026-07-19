@@ -1,129 +1,128 @@
 # AlphaNeuron
 
-**Module:** `sc_neurocore.neurons.models.alpha`
-**Reference:** Rall, Ann. N.Y. Acad. Sci. 96, 1962; Gerstner & Kistler, *Spiking Neuron Models*, §4.1
-**Family:** Integrate-and-fire neuron with current-based alpha synapses
-**State variables:** `v` (membrane potential), `a_exc`/`i_exc` (excitatory alpha rise/current states), `a_inh`/`i_inh` (inhibitory alpha rise/current states)
+**Class:** `sc_neurocore.neurons.models.alpha.AlphaNeuron`
+**Module:** `sc_neurocore/neurons/models/alpha.py`
+**Identity:** dual excitatory/inhibitory alpha-synapse leaky integrate-and-fire
+**Sources:** Rall (1967), *Distinguishing theoretical synaptic potentials*, J. Neurophysiol. 30(5), 1138–1168 (the alpha kernel); Gerstner & Kistler (2002), *Spiking Neuron Models*, Cambridge University Press, §4.1, [DOI 10.1017/CBO9780511815706](https://doi.org/10.1017/CBO9780511815706)
 
 ---
 
-## Equations
+## What this model is (and is not)
 
-For constant input over one timestep, the maintained implementation advances the full linear alpha-cascade system exactly before applying the spike reset.
+The model is a **dual excitatory/inhibitory current-based alpha-synapse
+LIF**: a leaky membrane driven by two synaptic currents, each carried by a
+two-state alpha cascade reproducing Rall's alpha kernel
+`alpha(t) ~ (t/tau) * exp(1 - t/tau)`. The maintained numerical step is the
+exact piecewise-constant-input flow: each filter relaxes exactly and the
+membrane update integrates the alpha currents with the exact convolution
+(including the equal-time-constant limit). That exact flow is the
+engineering contract, not a biological publication claim.
 
-### Excitatory alpha synapse
+An earlier public-docs line citing Rall 1962 (Ann. N.Y. Acad. Sci. 96) was
+a misattribution for this artefact: the alpha kernel belongs to Rall 1967.
+Defaults (`tau_v=20`, `tau_exc=5`, `tau_inh=10`, dimensionless scale) are
+catalogue/model-family choices, not source-derived parameters.
 
-$$\frac{dA_{exc}}{dt} = -\frac{A_{exc}}{\tau_{exc}} + I_{exc,input}$$
+## Equations and the exact maintained step
 
-$$\frac{dI_{exc}}{dt} = \frac{A_{exc} - I_{exc}}{\tau_{exc}}$$
+Membrane (leaky integrate-and-fire, exact relaxation plus exact alpha
+convolution):
 
-### Inhibitory alpha synapse
+$$\tau_v \frac{dV}{dt} = -(V - V_{rest}) + i_{exc} - i_{inh}$$
 
-$$\frac{dA_{inh}}{dt} = -\frac{A_{inh}}{\tau_{inh}} + I_{inh,input}$$
+Synaptic cascade per channel (exact filter relaxation):
 
-$$\frac{dI_{inh}}{dt} = \frac{A_{inh} - I_{inh}}{\tau_{inh}}$$
+$$\frac{da}{dt} = -\frac{a - \tau I}{\tau}, \qquad
+\frac{di}{dt} = -\frac{i - \tau I}{\tau} + \frac{a - \tau I}{\tau^2}\,dt \;\Rightarrow\;
+i(t) \sim \frac{t}{\tau} e^{1 - t/\tau}$$
 
-### Membrane potential
+Spike event (candidate crossing):
 
-$$\tau_v \frac{dV}{dt} = -(V - V_{rest}) + I_{exc} - I_{inh}$$
+$$V_{t+dt} \ge V_{threshold}:\quad V \leftarrow V_{rest}$$
 
-### Spike and reset
+Only the membrane potential resets; the synaptic cascade states evolve
+continuously across spikes.
 
-$$V(t + \Delta t) \geq V_{threshold}: \quad V \leftarrow V_{rest}, \quad \text{return } 1$$
+## Parameters and state
 
-The synaptic alpha states are not reset by a somatic spike; they continue to carry the causal input history.
+| Name | Default | Role |
+|---|---|---|
+| `v` | 0.0 | membrane potential (state; only state reset at a spike) |
+| `a_exc` / `a_inh` | 0.0 | alpha-rise cascade states |
+| `i_exc` / `i_inh` | 0.0 | excitatory / inhibitory synaptic currents |
+| `v_rest` | 0.0 | leak reversal potential; also the somatic reset |
+| `v_threshold` | 1.0 | spike threshold; must exceed `v_rest` |
+| `tau_v` | 20.0 | membrane time constant |
+| `tau_exc` / `tau_inh` | 5.0 / 10.0 | alpha time constants |
+| `dt` | 1.0 | piecewise-constant-input sampling interval |
 
----
+## Scalar and batch use
 
-## Alpha-function interpretation
+```python
+from sc_neurocore.neurons.models.alpha import AlphaNeuron
 
-The two-state synaptic cascade is the Rall/Gerstner alpha kernel. A unit impulse injected into `A` with zero initial current gives
+neuron = AlphaNeuron()
+spike = neuron.step(2.0, 0.5)                      # one exact-flow interval
 
-$$I(t) = \frac{t}{\tau} e^{-t/\tau}$$
+result = neuron.simulate([2.0] * 500, 0.5)         # batch on the fastest lane
+print(result["spike_count"], result["v_final"])
+```
 
-up to the configured input scaling. Constant drive relaxes both `A` and `I` to the same steady state `tau * input`, while the current state rises with the alpha delay rather than jumping as a single-pole filter.
+Every `simulate` batch returns the complete `v`, `a_exc`, `i_exc`,
+`a_inh`, `i_inh`, and `spikes` trajectories plus the five final-state
+receipts and `spike_count`, and leaves the instance at the final state.
+Invalid input, configuration, or a non-finite candidate never mutates
+state.
 
----
+## Executable runtimes
 
-## Exact timestep flow
+| Lane | Surface | Parity to the Python golden |
+|---|---|---|
+| Python | `AlphaNeuron.step` / `simulate(backend="python")` | exact (reference) |
+| Rust engine | `sc_neurocore_engine.py_alpha_simulate` | `1e-12` |
+| Rust safety | `accel/rust/safety/alpha.rs` (standalone `rustc --test`) | `2e-15` |
+| Julia | `accel/julia/neurons/alpha.jl` via juliacall | `1e-12` |
+| Go | `accel/go/alpha/libalpha.so` (C ABI) | `1e-12` |
+| Mojo | `accel/mojo/alpha/libalpha.so` (C ABI) | `1e-10` |
 
-For each synapse, with `S = tau * input`, `D_A = A_0 - S`, `D_I = I_0 - S`, and `q = exp(-dt / tau)`:
+## Reproducibility and benchmark evidence
 
-$$A_{next} = S + D_A q$$
+The descriptor pins a 256-step sampled dual-drive batch (non-default state)
+with golden trace SHA-256 `de6081c3…ae976eca`. The committed five-runtime
+benchmark (`benchmarks/results/bench_alpha.json`) records 200,000-step runs
+on one pinned logical CPU with all five lanes returning matching traces,
+final states, and spike counts within the declared tolerances; it is local
+regression evidence only, not a speed claim.
 
-$$I_{next} = S + q(D_I + D_A\Delta t / \tau)$$
+## Python-to-Verilog and the formal boundary
 
-The membrane uses the corresponding closed-form convolution of the two alpha currents with the membrane filter. Candidate `A`, `I`, and `V` values are computed first and committed only if all are finite.
+Generated Q32.32 RTL tracks the exact flow at the enrolled grid-exact
+operating point (`tau_v=8`, `tau_exc=4`, `tau_inh=2`: all exponential
+arguments on the 0.125-step lookup grid, all rates distinct). The measured
+maximum state error over a 256-step sign-changing drive is `1.95e-8`
+(declared envelope `0.01`), with the complete 24-event vector identical at
+two enrolled inhibitory levels. A depth-4 Z3 bounded job proves reset
+safety only. No formal equivalence, synthesis timing, device, or PPA claim
+is made; the silicon tier is H1.
 
----
+## Scope boundary
 
-## Parameters
+- The equal-time-constant convolution limit is implemented in every
+  production lane; the schemas encode the general branch and document the
+  boundary.
+- The inhibitory drive is an overridable schema parameter so the generated
+  single-input RTL remains well-formed; the production model accepts a
+  full per-step inhibitory vector.
+- Defaults are catalogue/model-family choices, not source parameters.
 
-| Parameter | Default | Unit | Description |
-|-----------|---------|------|-------------|
-| `v` | 0.0 | a.u. | Membrane potential |
-| `a_exc` | 0.0 | a.u. | Excitatory alpha rise state |
-| `i_exc` | 0.0 | a.u. | Excitatory synaptic current |
-| `a_inh` | 0.0 | a.u. | Inhibitory alpha rise state |
-| `i_inh` | 0.0 | a.u. | Inhibitory synaptic current |
-| `v_rest` | 0.0 | a.u. | Resting potential |
-| `v_threshold` | 1.0 | a.u. | Spike threshold |
-| `tau_v` | 20.0 | ms | Membrane time constant |
-| `tau_exc` | 5.0 | ms | Excitatory synaptic time constant |
-| `tau_inh` | 10.0 | ms | Inhibitory synaptic time constant |
-| `dt` | 1.0 | ms | Integration timestep |
+See the [source-fidelity page](../../validation/alpha_source_fidelity.md)
+for the complete primary-source analysis and evidence index.
 
-All state variables, voltage parameters, currents, and candidate updates must be finite. `tau_v`, `tau_exc`, `tau_inh`, and `dt` must be finite and positive at construction and before every step.
+## References
 
----
+Rall, W. (1967). Distinguishing theoretical synaptic potentials computed
+for different soma-dendritic distributions of synaptic input. *Journal of
+Neurophysiology* 30(5), 1138–1168.
 
-## Behaviour
-
-### Dual-input firing
-
-`step(exc_current, inh_current=0.0)` accepts separate excitatory and inhibitory drives.
-
-With excitatory drive and no inhibition, `a_exc` rises first, `i_exc` follows with the alpha delay, and the membrane integrates the filtered current toward threshold. With inhibitory drive, `a_inh` and `i_inh` subtract from the membrane drive and can suppress threshold crossings.
-
-### Time constant hierarchy
-
-The default hierarchy is
-
-$$\tau_{exc} = 5\text{ ms} < \tau_{inh} = 10\text{ ms} < \tau_v = 20\text{ ms}$$
-
-Fast excitation, slower inhibition, and slow membrane integration create a finite temporal integration window. The exact flow remains bounded for large `dt` whenever the configured linear system has finite positive time constants.
-
-### Reset semantics
-
-A spike resets only `v` to `v_rest`. The alpha synapse states preserve their continuous trajectory, matching a current-based synaptic input history rather than a voltage-reset artefact.
-
----
-
-## Pipeline compatibility
-
-The standard SC-NeuroCore pipeline calls `step(current)` with one float, so the inhibitory input defaults to `0.0` during ordinary `Population` and `Network` execution. Standalone users can call `step(exc_current, inh_current)` to exercise both channels.
-
-Python, Go, Julia, and Rust safety mirrors share the same exact alpha-cascade contract. Go and Rust return errors on invalid runtime state; Python and Julia raise before mutation.
-
----
-
-## Numerical contract
-
-- **Exact linear flow:** no raw timestep increment is used for the alpha or membrane states.
-- **Candidate-first update:** all candidate states are computed and checked before mutation.
-- **Equal time constants:** the membrane convolution uses the analytic limit when `tau_v` equals a synaptic time constant.
-- **Finite-domain boundary:** non-finite currents, corrupted state, non-positive time constants, and non-finite candidates fail before state mutation.
-
----
-
-## Performance
-
-Fresh local benchmark evidence:
-
-| Runtime | Command | Median |
-|---------|---------|--------|
-| Python | `PYTHONPATH=src .venv/bin/python benchmarks/bench_model_alpha.py` | 3483.5833 ns/step |
-
-Benchmark artefact: `benchmarks/results/local_python_2026-06-01_alpha.json`.
-
-The benchmark runs 5 repeats of 50,000 candidate-first exact alpha-cascade steps with `exc_current=2.0`, `inh_current=0.35`, and `v_threshold=100.0` to measure the continuous subthreshold flow without reset events.
+Gerstner, W. & Kistler, W.M. (2002). *Spiking Neuron Models*. Cambridge
+University Press, §4.1. <https://doi.org/10.1017/CBO9780511815706>

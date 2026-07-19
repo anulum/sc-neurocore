@@ -41,6 +41,7 @@ DESC_DIR = ROOT / "src" / "sc_neurocore" / "neurons" / "model_descriptors"
 # Schema stem used by UniversalNeuron.from_schema for each perfect class.
 CLASS_TO_SCHEMA: dict[str, str] = {
     "AdaptiveThresholdIFNeuron": "adaptive_threshold_if",
+    "AlphaNeuron": "alpha",
     "AdExNeuron": "adex",
     "CazellesMapNeuron": "cazelles_map",
     "ChialvoMapNeuron": "chialvo_map",
@@ -85,6 +86,7 @@ CLASS_TO_SCHEMA: dict[str, str] = {
 # BMC depth: small for huge LUT models; deeper for compact IF cores.
 DEPTH_BY_SCHEMA: dict[str, int] = {
     "adaptive_threshold_if": 4,
+    "alpha": 4,
     "cazelles_map": 4,
     "chialvo_map": 4,
     "coba_lif": 4,
@@ -128,6 +130,7 @@ DEPTH_BY_SCHEMA: dict[str, int] = {
 MINIMAL_SAFETY_SCHEMAS: frozenset[str] = frozenset(
     {
         "adaptive_threshold_if",
+        "alpha",
         "cazelles_map",
         "chialvo_map",
         "coba_lif",
@@ -196,6 +199,7 @@ FLATTEN_FORMAL_SCHEMAS: frozenset[str] = frozenset({"wilson_cowan"})
 DEFAULT_PRECISION = (16, 8)
 PRECISION_BY_SCHEMA: dict[str, tuple[int, int]] = {
     "adaptive_threshold_if": (64, 32),
+    "alpha": (64, 32),
     "coba_lif": (48, 24),
     "dpi_neuron": (32, 16),
     "ermentrout_kopell_pop": (64, 32),

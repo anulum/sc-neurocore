@@ -1,0 +1,59 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Commercial license available
+# © Concepts 1996–2026 Miroslav Šotek. All rights reserved.
+# © Code 2020–2026 Miroslav Šotek. All rights reserved.
+# ORCID: 0009-0009-3560-0851
+# Contact: www.anulum.li | protoscience@anulum.li
+# SC-NeuroCore — Exact-flow dual alpha-synapse LIF schema
+
+[metadata]
+schema_version = 2
+name = "Alpha-Synapse LIF"
+author = "Rall, W.; Gerstner, W. & Kistler, W.M."
+year = 1967
+doi = "10.1017/CBO9780511815706"
+description = "Dual excitatory/inhibitory current-based alpha-synapse LIF: exact piecewise-constant-input filter cascade and alpha-current convolution"
+
+[state]
+v = 0.0
+a_exc = 0.0
+i_exc = 0.0
+a_inh = 0.0
+i_inh = 0.0
+
+[parameters]
+v_rest = 0.0
+v_threshold = 1.0
+tau_v = 20.0
+tau_exc = 5.0
+tau_inh = 10.0
+dt = 1.0
+inh_drive = 0.5
+
+[integration]
+dt = 1.0
+method = "map"
+
+[dynamics]
+a_exc = "(tau_exc * I) + (a_exc - (tau_exc * I)) * exp(-dt / tau_exc)"
+i_exc = "(tau_exc * I) + ((i_exc - (tau_exc * I)) + (a_exc - (tau_exc * I)) * dt / tau_exc) * exp(-dt / tau_exc)"
+a_inh = "(tau_inh * inh_drive) + (a_inh - (tau_inh * inh_drive)) * exp(-dt / tau_inh)"
+i_inh = "(tau_inh * inh_drive) + ((i_inh - (tau_inh * inh_drive)) + (a_inh - (tau_inh * inh_drive)) * dt / tau_inh) * exp(-dt / tau_inh)"
+v = "(v_rest + tau_exc * I - tau_inh * inh_drive) + (v - (v_rest + tau_exc * I - tau_inh * inh_drive)) * exp(-dt / tau_v) + (1.0 / tau_v) * ((i_exc - tau_exc * I) * (exp(-dt / tau_exc) - exp(-dt / tau_v)) / (1.0 / tau_v - 1.0 / tau_exc) + (a_exc - tau_exc * I) / tau_exc * (exp(-dt / tau_exc) * ((1.0 / tau_v - 1.0 / tau_exc) * dt - 1.0) + exp(-dt / tau_v)) / ((1.0 / tau_v - 1.0 / tau_exc) * (1.0 / tau_v - 1.0 / tau_exc))) - (1.0 / tau_v) * ((i_inh - tau_inh * inh_drive) * (exp(-dt / tau_inh) - exp(-dt / tau_v)) / (1.0 / tau_v - 1.0 / tau_inh) + (a_inh - tau_inh * inh_drive) / tau_inh * (exp(-dt / tau_inh) * ((1.0 / tau_v - 1.0 / tau_inh) * dt - 1.0) + exp(-dt / tau_v)) / ((1.0 / tau_v - 1.0 / tau_inh) * (1.0 / tau_v - 1.0 / tau_inh)))"
+
+[threshold]
+condition = "v >= v_threshold"
+detection = "level"
+
+[reset]
+v = "v_rest"
+
+[extensions]
+model_type = "linear_ode_exact_map_with_sampled_event"
+source_equations = "tau_v*dV/dt=-(V-v_rest)+i_exc-i_inh; two-state alpha cascade (a,i) per synapse reproducing Rall's alpha kernel (Rall 1967, J. Neurophysiol. 30:1138-1168); on spike only v resets"
+source_default_scope = "alpha kernel from Rall 1967; LIF+filtered-currents framing from Gerstner-Kistler 2002 §4.1 (DOI 10.1017/CBO9780511815706); defaults are catalogue/model-family choices, not source-derived"
+input_scope = "I is the real piecewise-constant excitatory drive; inh_drive is the inhibitory drive level exposed as an overridable schema parameter so generated single-input RTL remains well-formed"
+maintained_discretisation = "Each map step is the exact piecewise-constant-input flow: exact alpha-filter relaxation plus the exact alpha-current convolution; no Euler downgrade"
+event_order = "Compute all five exact candidates, detect v >= v_threshold, then reset only v <- v_rest; the cascade states are preserved across spikes"
+sampling_limit = "Crossings are detected at maintained step boundaries; no within-step root localisation is claimed"
+equal_tau_boundary = "The schema encodes the general exact convolution; configurations with tau_v == tau_exc or tau_v == tau_inh hit the analytic equal-time-constant limit that only the production lanes implement via their dedicated limit branch, so such configurations are outside this schema"

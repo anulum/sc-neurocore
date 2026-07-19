@@ -19,6 +19,16 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
   enrolled grid-exact operating point with the complete event vector
   identical; a depth-4 Z3 reset-safety job; and a source/binary-hashed
   five-runtime 200,000-step benchmark.
+- Reconstructed `AlphaNeuron` as the dual excitatory/inhibitory alpha-synapse
+  leaky integrate-and-fire on the Rall (1967) alpha kernel and the
+  Gerstner-Kistler (2002) LIF framing. Every maintained runtime now executes
+  the same exact piecewise-constant-input filter relaxation and alpha-current
+  convolution, with somatic-only reset and atomic failure semantics.
+- Added the modular Rust/PyO3, Rust-safety, Julia, Go and Mojo execution lanes;
+  paired schemas; an independent dual-drive reference trace; Q32.32 generated
+  RTL co-simulation with the complete event vector preserved at both enrolled
+  inhibitory levels; a depth-4 reset-safety proof; and source/binary-bound
+  five-runtime benchmark evidence.
 
 ### Fixed
 - Restricted the PyPI download metrics client to the exact HTTPS pypistats API

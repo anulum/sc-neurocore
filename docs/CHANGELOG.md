@@ -25,6 +25,19 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
   depth-4 Z3 reset-safety job; a source/binary-hashed five-runtime
   200,000-step benchmark; and descriptor, catalogue, fidelity, validation,
   and generated documentation surfaces.
+
+### Alpha-synapse LIF source-to-co-simulation closure
+
+- Reconstructed `AlphaNeuron` from the Rall (1967) alpha kernel and the
+  Gerstner-Kistler (2002) LIF framing, correcting the public Rall (1962)
+  misattribution. The five-state exact piecewise-constant-input map now runs
+  consistently through Python, modular Rust/PyO3, standalone Rust safety,
+  Julia, Go and Mojo, with somatic-only reset and atomic failure semantics.
+- Added paired TOML/JSON schemas, an independent dual-drive reference trace,
+  Q32.32 generated-RTL co-simulation with the full event vector preserved at
+  both enrolled inhibitory levels, a depth-4 reset-safety job, and an honest
+  source/binary-bound 200,000-step five-runtime benchmark.
+
 ### Wilson-Cowan generated-RTL co-simulation
 
 - Added paired-schema and generated Q32.32 Verilog trajectory co-simulation

@@ -29,10 +29,14 @@ from __future__ import annotations
 
 import json
 import sys
-import tomllib
 from pathlib import Path
 
 import pytest
+
+try:
+    import tomllib
+except ImportError:
+    import tomli as tomllib
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 LEDGER_PATH = REPO_ROOT / "tools" / "provenance" / "doi_ledger.json"

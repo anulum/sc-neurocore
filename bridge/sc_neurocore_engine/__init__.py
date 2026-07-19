@@ -866,6 +866,14 @@ except ImportError:
     _wong_wang_rust_available = False
 
 try:
+    from sc_neurocore_engine.sc_neurocore_engine import py_alpha_simulate
+
+    __all__ += ["py_alpha_simulate"]
+    _alpha_rust_available = True
+except ImportError:
+    _alpha_rust_available = False
+
+try:
     from sc_neurocore_engine.sc_neurocore_engine import py_wilson_cowan_simulate
 
     __all__ += ["py_wilson_cowan_simulate"]

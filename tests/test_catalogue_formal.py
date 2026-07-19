@@ -168,6 +168,30 @@ def test_resonate_and_fire_formal_job_is_q3232_reset_safety_only() -> None:
     assert "Saturation contract" not in harness
 
 
+def test_alpha_formal_job_is_q3232_reset_safety_only() -> None:
+    """Keep Model42 formal evidence inside its H1 public-port boundary."""
+    import importlib.util
+
+    name = "emit_catalogue_formal_alpha_precision"
+    spec = importlib.util.spec_from_file_location(name, EMITTER)
+    assert spec is not None and spec.loader is not None
+    module = importlib.util.module_from_spec(spec)
+    sys.modules[name] = module
+    spec.loader.exec_module(module)
+
+    assert module.CLASS_TO_SCHEMA["AlphaNeuron"] == "alpha"
+    assert module.PRECISION_BY_SCHEMA["alpha"] == (64, 32)
+    assert module.DEPTH_BY_SCHEMA["alpha"] == 4
+    assert "alpha" in module.MINIMAL_SAFETY_SCHEMAS
+    assert "alpha" not in module.EVENT_SILENT_SCHEMAS
+    harness = (CATALOGUE / "sc_alpha_synapse_lif_formal.v").read_text(encoding="utf-8")
+    assert "Minimal safety: async reset clears the spike flag" in harness
+    assert harness.count("assert (spike_out == 1'b0);") == 1
+    assert "past_valid" not in harness
+    assert "uut." not in harness
+    assert "Saturation contract" not in harness
+
+
 @pytest.mark.parametrize(
     ("class_name", "schema", "precision", "module_name", "flatten"),
     (

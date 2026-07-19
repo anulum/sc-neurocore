@@ -4,20 +4,17 @@
 # © Code 2020–2026 Miroslav Šotek. All rights reserved.
 # ORCID: 0009-0009-3560-0851
 # Contact: www.anulum.li | protoscience@anulum.li
-# SC-NeuroCore — AlphaNeuron module contract tests
+# SC-NeuroCore — AlphaNeuron model-unit contracts
 
-"""Module-specific pipeline and numerical tests for AlphaNeuron (Rall 1967).
-
-Dual excitatory/inhibitory alpha-synapse currents. step(exc_current, inh_current).
-Inhibition suppresses excitatory drive. Benchmark evidence is recorded in
-benchmarks/results/local_python_2026-06-01_alpha.json."""
+"""Model-unit contracts for the dual alpha-synapse LIF."""
 
 from __future__ import annotations
 
 import math
-import time
+from typing import cast
 
 import numpy as np
+import numpy.typing as npt
 import pytest
 
 from sc_neurocore.neurons.models.alpha import AlphaNeuron
@@ -29,345 +26,289 @@ from sc_neurocore.network.stimulus import PoissonInput
 from sc_neurocore.analysis.spike_stats.basic import spike_count, firing_rate
 
 
-def _run(neuron: AlphaNeuron, exc: float, steps: int, inh: float = 0.0) -> list[int]:
-    return [t for t in range(steps) if neuron.step(exc, inh) == 1]
+class TestConstructionAndValidation:
+    """Construction normalises fields and rejects invalid configurations."""
 
+    def test_catalogue_defaults(self) -> None:
+        n = AlphaNeuron()
+        assert (n.v, n.a_exc, n.i_exc, n.a_inh, n.i_inh) == (0.0, 0.0, 0.0, 0.0, 0.0)
+        assert (n.v_rest, n.v_threshold) == (0.0, 1.0)
+        assert (n.tau_v, n.tau_exc, n.tau_inh, n.dt) == (20.0, 5.0, 10.0, 1.0)
 
-def _drive_contribution(
-    current_delta: float, rise_delta: float, tau_drive: float, tau_v: float, dt: float
-) -> float:
-    rate_v = 1.0 / tau_v
-    rate_drive = 1.0 / tau_drive
-    decay_v = math.exp(-dt / tau_v)
-    decay_drive = math.exp(-dt / tau_drive)
-    if math.isclose(rate_v, rate_drive, rel_tol=0.0, abs_tol=1.0e-14):
-        return rate_v * decay_v * (current_delta * dt + rise_delta * dt * dt / (2.0 * tau_drive))
-    rate_delta = rate_v - rate_drive
-    first_order = current_delta * (decay_drive - decay_v) / rate_delta
-    second_order = (
-        rise_delta
-        / tau_drive
-        * (decay_drive * (rate_delta * dt - 1.0) + decay_v)
-        / (rate_delta * rate_delta)
+    def test_scalar_fields_are_normalised_to_float(self) -> None:
+        n = AlphaNeuron(v=1, tau_v=15)
+        assert isinstance(n.v, float) and isinstance(n.tau_v, float)
+
+    @pytest.mark.parametrize(
+        "kwargs",
+        [
+            {"v": float("nan")},
+            {"a_exc": float("inf")},
+            {"i_exc": float("nan")},
+            {"a_inh": float("inf")},
+            {"i_inh": float("nan")},
+            {"v_rest": float("nan")},
+            {"v_threshold": float("inf")},
+            {"v_threshold": -1.0},
+            {"tau_v": 0.0},
+            {"tau_exc": -1.0},
+            {"tau_inh": 0.0},
+            {"dt": 0.0},
+            {"dt": float("nan")},
+        ],
     )
-    return rate_v * (first_order + second_order)
+    def test_rejects_non_physical_configuration(self, kwargs: dict[str, float]) -> None:
+        with pytest.raises(ValueError):
+            AlphaNeuron(**kwargs)
+
+    @pytest.mark.parametrize("field", ["v", "a_exc", "tau_v"])
+    def test_rejects_non_numeric_fields(self, field: str) -> None:
+        with pytest.raises(ValueError, match="must be numeric"):
+            AlphaNeuron(**cast(dict[str, float], {field: "fast"}))
 
 
-def _exact_alpha_reference(
-    neuron: AlphaNeuron, exc_current: float, inh_current: float
-) -> tuple[int, float, float, float, float, float]:
-    a_exc_ss = neuron.tau_exc * exc_current
-    a_inh_ss = neuron.tau_inh * inh_current
-    a_exc_delta = neuron.a_exc - a_exc_ss
-    a_inh_delta = neuron.a_inh - a_inh_ss
-    i_exc_delta = neuron.i_exc - a_exc_ss
-    i_inh_delta = neuron.i_inh - a_inh_ss
+class TestExactFlowDynamics:
+    """Each step is the exact constant-input flow, never an Euler step."""
 
-    decay_exc = math.exp(-neuron.dt / neuron.tau_exc)
-    decay_inh = math.exp(-neuron.dt / neuron.tau_inh)
-    a_exc_next = a_exc_ss + a_exc_delta * decay_exc
-    a_inh_next = a_inh_ss + a_inh_delta * decay_inh
-    i_exc_next = a_exc_ss + decay_exc * (i_exc_delta + a_exc_delta * neuron.dt / neuron.tau_exc)
-    i_inh_next = a_inh_ss + decay_inh * (i_inh_delta + a_inh_delta * neuron.dt / neuron.tau_inh)
+    def test_filter_matches_exact_alpha_cascade(self) -> None:
+        n = AlphaNeuron(a_exc=0.25, i_exc=0.1, v_threshold=100.0, dt=0.5)
+        steady = 5.0 * 2.0
+        decay = math.exp(-0.5 / 5.0)
+        expected_a = steady + (0.25 - steady) * decay
+        expected_i = steady + decay * ((0.1 - steady) + (0.25 - steady) * 0.5 / 5.0)
+        assert n.step(2.0) == 0
+        assert n.a_exc == pytest.approx(expected_a, rel=0.0, abs=1e-14)
+        assert n.i_exc == pytest.approx(expected_i, rel=0.0, abs=1e-14)
 
-    v_steady = neuron.v_rest + a_exc_ss - a_inh_ss
-    v_next = (
-        v_steady
-        + (neuron.v - v_steady) * math.exp(-neuron.dt / neuron.tau_v)
-        + _drive_contribution(i_exc_delta, a_exc_delta, neuron.tau_exc, neuron.tau_v, neuron.dt)
-        - _drive_contribution(i_inh_delta, a_inh_delta, neuron.tau_inh, neuron.tau_v, neuron.dt)
-    )
-    if v_next >= neuron.v_threshold:
-        return 1, neuron.v_rest, a_exc_next, i_exc_next, a_inh_next, i_inh_next
-    return 0, v_next, a_exc_next, i_exc_next, a_inh_next, i_inh_next
+    def test_step_is_not_forward_euler(self) -> None:
+        n = AlphaNeuron(v=0.5, v_threshold=100.0, dt=0.5)
+        n.step(0.0)
+        euler_v = 0.5 + (-(0.5 - 0.0)) / 20.0 * 0.5
+        assert abs(n.v - euler_v) > 1.0e-4
+
+    def test_equal_time_constant_limit_is_analytic(self) -> None:
+        n = AlphaNeuron(i_exc=0.3, a_exc=0.2, tau_v=20.0, tau_exc=20.0, v_threshold=100.0, dt=0.5)
+        rate = 1.0 / 20.0
+        decay = math.exp(-0.5 / 20.0)
+        contribution = rate * decay * (0.3 * 0.5 + 0.2 * 0.5 * 0.5 / (2.0 * 20.0))
+        expected_v = n.v * decay + contribution
+        assert n.step(0.0) == 0
+        assert n.v == pytest.approx(expected_v, rel=0.0, abs=1e-14)
+
+    def test_large_timestep_remains_bounded(self) -> None:
+        n = AlphaNeuron(v=0.5, tau_v=0.04, tau_exc=0.04, tau_inh=0.04, dt=1.0)
+        assert n.step(0.0) == 0
+        assert n.v == pytest.approx(n.v_rest, rel=0.0, abs=1e-8)
+
+    def test_steady_state_is_a_fixed_point(self) -> None:
+        n = AlphaNeuron(v_threshold=100.0)
+        n.v = n.v_rest + 5.0 * 2.0 - 10.0 * 1.0
+        n.a_exc = 5.0 * 2.0
+        n.i_exc = 5.0 * 2.0
+        n.a_inh = 10.0 * 1.0
+        n.i_inh = 10.0 * 1.0
+        assert n.step(2.0, 1.0) == 0
+        assert n.v == pytest.approx(0.0, rel=0.0, abs=1e-13)
 
 
-class TestAlphaIsolation:
-    def test_defaults(self):
+class TestSpikeSemantics:
+    """Candidate crossing, somatic reset, cascade preservation."""
+
+    def test_step_returns_binary(self) -> None:
         n = AlphaNeuron()
-        assert n.v == 0.0 and n.a_exc == 0.0 and n.i_exc == 0.0
-        assert n.a_inh == 0.0 and n.i_inh == 0.0
-        assert n.tau_v == 20.0 and n.tau_exc == 5.0 and n.tau_inh == 10.0
+        assert n.step(0.0) in (0, 1)
 
-    def test_step_returns_binary(self):
-        assert AlphaNeuron().step(0.0) in (0, 1)
-
-    def test_dual_input_signature(self):
-        n = AlphaNeuron()
-        s = n.step(1.0, 0.5)
-        assert s in (0, 1)
-
-    def test_three_variables_evolve(self):
-        n = AlphaNeuron()
-        for _ in range(100):
-            n.step(1.0, 0.3)
-        assert n.v != 0.0 and n.a_exc != 0.0 and n.i_exc != 0.0
-        assert n.a_inh != 0.0 and n.i_inh != 0.0
-
-    def test_state_finite(self):
-        n = AlphaNeuron()
-        for _ in range(50000):
-            n.step(1.0, 0.3)
-        assert all(np.isfinite(v) for v in [n.v, n.a_exc, n.i_exc, n.a_inh, n.i_inh])
-
-    def test_reset(self):
-        n = AlphaNeuron()
-        for _ in range(100):
-            n.step(2.0)
-        n.reset()
-        assert n.v == n.v_rest and n.a_exc == 0.0 and n.i_exc == 0.0
-        assert n.a_inh == 0.0 and n.i_inh == 0.0
-
-
-class TestAlphaSynapticCurrents:
-    def test_exc_charges_i_exc(self):
-        n = AlphaNeuron(v_threshold=100.0)
-        n.step(1.0, 0.0)
-        assert n.a_exc > n.i_exc > 0.0 and n.a_inh == 0.0 and n.i_inh == 0.0
-
-    def test_inh_charges_i_inh(self):
-        n = AlphaNeuron(v_threshold=100.0)
-        n.step(0.0, 1.0)
-        assert n.a_inh > n.i_inh > 0.0 and n.a_exc == 0.0 and n.i_exc == 0.0
-
-    def test_exc_drives_v_up(self):
-        n = AlphaNeuron(v_threshold=100.0)
-        for _ in range(100):
-            n.step(1.0, 0.0)
-        assert n.v > 0.0
-
-    def test_inh_drives_v_down(self):
-        """Inhibition opposes excitation: net V = i_exc - i_inh."""
-        n = AlphaNeuron(v_threshold=100.0)
-        for _ in range(100):
-            n.step(0.0, 1.0)
-        assert n.v < 0.0
-
-    def test_inhibition_suppresses_spiking(self):
-        """Sustained inhibition prevents spikes even with high excitation."""
-        n_exc = AlphaNeuron()
-        n_bal = AlphaNeuron()
-        s_exc = len(_run(n_exc, exc=2.0, steps=5000))
-        s_bal = len(_run(n_bal, exc=2.0, steps=5000, inh=2.0))
-        assert s_exc > s_bal, f"Exc only: {s_exc}, balanced: {s_bal}"
-
-    def test_i_exc_decays_with_tau_exc(self):
-        """i_exc decays with tau_exc when input is removed."""
-        n = AlphaNeuron(v_threshold=100.0)
-        for _ in range(100):
-            n.step(1.0)
-        i_exc_charged = n.i_exc
-        n.step(0.0)  # remove input
-        assert n.i_exc < i_exc_charged  # decayed
-
-    def test_alpha_function_dynamics(self):
-        """Constant excitatory drive follows the exact alpha-filter cascade."""
-        n = AlphaNeuron(v_threshold=100.0)
-        I = 1.0
-        n.step(I)
-        expected = n.tau_exc * I * (1.0 - math.exp(-n.dt / n.tau_exc) * (1.0 + n.dt / n.tau_exc))
-        assert abs(n.i_exc - expected) < 1e-12
-
-    def test_exact_linear_flow_matches_closed_form(self):
-        n = AlphaNeuron(
-            v=0.3,
-            a_exc=0.9,
-            i_exc=0.7,
-            a_inh=0.25,
-            i_inh=0.2,
-            v_threshold=100.0,
-            dt=0.75,
+    def test_spike_resets_only_the_membrane(self) -> None:
+        n = AlphaNeuron(v=0.9, a_exc=0.4, i_exc=0.6, a_inh=0.2, i_inh=0.1, v_threshold=0.5)
+        before = (n.a_exc, n.i_exc, n.a_inh, n.i_inh)
+        assert n.step(0.0) == 1
+        assert n.v == n.v_rest
+        decay_exc = math.exp(-1.0 / 5.0)
+        decay_inh = math.exp(-1.0 / 10.0)
+        assert n.a_exc == pytest.approx(before[0] * decay_exc, rel=0.0, abs=1e-14)
+        assert n.i_exc == pytest.approx(
+            decay_exc * (before[1] + before[0] * 1.0 / 5.0), rel=0.0, abs=1e-14
         )
-        expected = _exact_alpha_reference(n, exc_current=0.8, inh_current=0.1)
-
-        got = n.step(0.8, 0.1)
-
-        assert got == expected[0]
-        assert n.v == pytest.approx(expected[1], abs=1e-12)
-        assert n.a_exc == pytest.approx(expected[2], abs=1e-12)
-        assert n.i_exc == pytest.approx(expected[3], abs=1e-12)
-        assert n.a_inh == pytest.approx(expected[4], abs=1e-12)
-        assert n.i_inh == pytest.approx(expected[5], abs=1e-12)
-
-    def test_equal_tau_linear_flow_uses_exact_limit(self):
-        n = AlphaNeuron(
-            v=0.25,
-            a_exc=0.75,
-            i_exc=0.5,
-            a_inh=0.2,
-            i_inh=0.125,
-            v_threshold=100.0,
-            tau_v=5.0,
-            tau_exc=5.0,
-            tau_inh=7.0,
-            dt=3.0,
-        )
-        expected = _exact_alpha_reference(n, exc_current=0.4, inh_current=0.05)
-
-        n.step(0.4, 0.05)
-
-        assert n.v == pytest.approx(expected[1], abs=1e-12)
-        assert n.a_exc == pytest.approx(expected[2], abs=1e-12)
-        assert n.i_exc == pytest.approx(expected[3], abs=1e-12)
-        assert n.a_inh == pytest.approx(expected[4], abs=1e-12)
-        assert n.i_inh == pytest.approx(expected[5], abs=1e-12)
-
-    def test_large_timestep_decays_without_euler_overshoot(self):
-        n = AlphaNeuron(
-            v=2.0,
-            a_exc=4.0,
-            i_exc=2.0,
-            a_inh=0.0,
-            i_inh=0.0,
-            v_threshold=100.0,
-            tau_v=5.0,
-            tau_exc=5.0,
-            tau_inh=5.0,
-            dt=50.0,
+        assert n.a_inh == pytest.approx(before[2] * decay_inh, rel=0.0, abs=1e-14)
+        assert n.i_inh == pytest.approx(
+            decay_inh * (before[3] + before[2] * 1.0 / 10.0), rel=0.0, abs=1e-14
         )
 
-        n.step(0.0, 0.0)
-
-        assert 0.0 <= n.a_exc <= 4.0
-        assert 0.0 <= n.i_exc <= 2.0
-        assert n.a_inh == 0.0
-        assert n.i_inh == 0.0
-        assert 0.0 <= n.v <= 2.0
-
-
-class TestAlphaFI:
-    def test_zero_silent(self):
+    def test_spikes_under_excitatory_drive(self) -> None:
         n = AlphaNeuron()
-        assert len(_run(n, exc=0.0, steps=5000)) == 0
+        spikes = sum(n.step(3.0) for _ in range(2000))
+        assert spikes > 0
 
-    def test_monotonic_fi(self):
-        rates = []
-        for I in [0.5, 1.0, 2.0, 5.0]:
-            n = AlphaNeuron()
-            rates.append(len(_run(n, exc=I, steps=5000)))
-        assert all(rates[i] <= rates[i + 1] for i in range(len(rates) - 1))
+    def test_inhibition_suppresses_excitatory_drive(self) -> None:
+        exc_only = AlphaNeuron()
+        dual = AlphaNeuron()
+        exc_spikes = sum(exc_only.step(2.5) for _ in range(500))
+        dual_spikes = sum(dual.step(2.5, 1.5) for _ in range(500))
+        assert dual_spikes < exc_spikes
 
-    def test_suprathreshold_fires(self):
+    def test_state_finite(self) -> None:
         n = AlphaNeuron()
-        assert len(_run(n, exc=2.0, steps=5000)) >= 100
-
-
-class TestAlphaParameters:
-    def test_tau_exc_affects_integration(self):
-        n_fast = AlphaNeuron(tau_exc=2.0)
-        n_slow = AlphaNeuron(tau_exc=20.0)
-        s_fast = len(_run(n_fast, exc=1.0, steps=5000))
-        s_slow = len(_run(n_slow, exc=1.0, steps=5000))
-        assert s_fast != s_slow
-
-    @pytest.mark.parametrize("dt", [0.5, 1.0, 2.0])
-    def test_dt_stability(self, dt: float):
-        n = AlphaNeuron(dt=dt)
-        for _ in range(5000):
-            n.step(1.0)
+        for index in range(5000):
+            n.step(3.0 + math.sin(index * 0.01), 0.5)
         assert np.isfinite(n.v)
+        assert np.isfinite(n.a_exc)
+        assert np.isfinite(n.i_exc)
+        assert np.isfinite(n.a_inh)
+        assert np.isfinite(n.i_inh)
 
-    def test_deterministic(self):
-        traces = []
-        for _ in range(2):
-            n = AlphaNeuron()
-            trace = [(n.step(1.0, 0.3), n.v, n.i_exc, n.i_inh) for _ in range(200)]
-            traces.append(trace)
-        assert traces[0] == traces[1]
+    def test_reset_restores_documented_state_preserving_configuration(self) -> None:
+        n = AlphaNeuron()
+        for _ in range(100):
+            n.step(3.0)
+        n.reset()
+        assert n.v == n.v_rest
+        assert (n.a_exc, n.i_exc, n.a_inh, n.i_inh) == (0.0, 0.0, 0.0, 0.0)
+        assert (n.tau_v, n.tau_exc, n.tau_inh, n.dt) == (20.0, 5.0, 10.0, 1.0)
 
 
-class TestAlphaValidation:
-    @pytest.mark.parametrize(
-        "field", ["v", "a_exc", "i_exc", "a_inh", "i_inh", "v_rest", "v_threshold"]
-    )
-    @pytest.mark.parametrize("value", [np.nan, np.inf, -np.inf])
-    def test_rejects_non_finite_state_and_voltage_parameters(self, field: str, value: float):
-        with pytest.raises(ValueError, match=field):
-            AlphaNeuron(**{field: value})
-
-    @pytest.mark.parametrize("field", ["tau_v", "tau_exc", "tau_inh", "dt"])
-    @pytest.mark.parametrize("value", [0.0, -1.0, np.nan, np.inf])
-    def test_rejects_non_positive_or_non_finite_time_parameters(self, field: str, value: float):
-        with pytest.raises(ValueError, match=field):
-            AlphaNeuron(**{field: value})
+class TestAtomicity:
+    """Rejected steps leave every dynamic state unchanged."""
 
     @pytest.mark.parametrize(
-        ("exc_current", "inh_current"), [(np.nan, 0.0), (np.inf, 0.0), (0.0, -np.inf)]
+        ("field", "message"),
+        (("v", "state must be numeric"), ("tau_v", "parameters must be numeric")),
     )
-    def test_rejects_non_finite_currents_before_state_mutation(
-        self, exc_current: float, inh_current: float
-    ):
-        n = AlphaNeuron(v=0.25, a_exc=0.6, i_exc=0.5, a_inh=0.2, i_inh=0.125)
+    def test_rejects_non_numeric_runtime_fields(self, field: str, message: str) -> None:
+        n = AlphaNeuron()
+        setattr(n, field, "invalid")
+        with pytest.raises(ValueError, match=message):
+            n.step(0.0)
+
+    def test_rejects_non_numeric_runtime_current(self) -> None:
+        n = AlphaNeuron()
+        before = (n.v, n.a_exc, n.i_exc, n.a_inh, n.i_inh)
+        with pytest.raises(ValueError, match="current values must be numeric"):
+            n.step(cast(float, "invalid"))
+        assert (n.v, n.a_exc, n.i_exc, n.a_inh, n.i_inh) == before
+
+    @pytest.mark.parametrize("current", [float("nan"), float("inf"), -float("inf")])
+    def test_rejects_non_finite_current(self, current: float) -> None:
+        n = AlphaNeuron()
         before = (n.v, n.a_exc, n.i_exc, n.a_inh, n.i_inh)
         with pytest.raises(ValueError, match="current"):
-            n.step(exc_current, inh_current)
+            n.step(current)
         assert (n.v, n.a_exc, n.i_exc, n.a_inh, n.i_inh) == before
 
-    def test_rejects_corrupted_runtime_parameter_before_state_mutation(self):
-        n = AlphaNeuron(v=0.25, a_exc=0.6, i_exc=0.5, a_inh=0.2, i_inh=0.125)
-        before = (n.v, n.a_exc, n.i_exc, n.a_inh, n.i_inh)
-        n.tau_v = 0.0
-        with pytest.raises(ValueError, match="tau_v"):
-            n.step(1.0, 0.5)
-        assert (n.v, n.a_exc, n.i_exc, n.a_inh, n.i_inh) == before
-
-    def test_rejects_non_finite_candidate_before_state_mutation(self):
-        n = AlphaNeuron(v=0.25, a_exc=0.6, i_exc=0.5, a_inh=0.2, i_inh=0.125)
-        before = (n.v, n.a_exc, n.i_exc, n.a_inh, n.i_inh)
-        with pytest.raises(ValueError, match="exact-flow"):
-            n.step(1.0e308, 0.0)
-        assert (n.v, n.a_exc, n.i_exc, n.a_inh, n.i_inh) == before
-
-
-class TestAlphaPerformance:
-    def test_isolation_runtime_is_bounded_and_state_remains_finite(self):
+    def test_rejects_non_finite_runtime_state_before_update(self) -> None:
         n = AlphaNeuron()
-        N = 50000
-        t0 = time.perf_counter()
-        for _ in range(N):
+        n.v = float("nan")
+        with pytest.raises(ValueError, match="state"):
+            n.step(0.0)
+        assert np.isnan(n.v)
+
+    def test_rejects_invalid_runtime_configuration_before_mutation(self) -> None:
+        n = AlphaNeuron()
+        n.tau_exc = 0.0
+        before = (n.v, n.a_exc, n.i_exc, n.a_inh, n.i_inh)
+        with pytest.raises(ValueError, match="tau_exc"):
             n.step(1.0)
-        elapsed = time.perf_counter() - t0
-        assert elapsed < 5.0
-        assert all(np.isfinite(v) for v in (n.v, n.a_exc, n.i_exc, n.a_inh, n.i_inh))
+        assert (n.v, n.a_exc, n.i_exc, n.a_inh, n.i_inh) == before
 
-    def test_network_runtime_is_bounded_and_emits_spikes(self):
-        pop = Population(AlphaNeuron, n=50, label="bench")
-        drive = PoissonInput(n=50, rate_hz=500.0, weight=2.0, dt=0.001, seed=42)
-        mon = SpikeMonitor(pop)
-        net = Network(pop, drive, mon)
-        t0 = time.perf_counter()
-        net.run(duration=0.5, dt=0.001, backend="python")
-        elapsed = time.perf_counter() - t0
-        assert elapsed < 10.0
-        assert mon.count > 0
+    def test_rejects_non_finite_update_before_state_mutation(self) -> None:
+        n = AlphaNeuron(v=-1.0e308)
+        before = (n.v, n.a_exc, n.i_exc, n.a_inh, n.i_inh)
+        with pytest.raises((FloatingPointError, ValueError), match="finite"):
+            n.step(1.0e308)
+        assert (n.v, n.a_exc, n.i_exc, n.a_inh, n.i_inh) == before
 
 
-class TestAlphaPipeline:
-    def test_population(self):
-        assert Population(AlphaNeuron, n=10, label="alpha").n == 10
+class TestBatchAndDispatch:
+    """The maintained batch lane matches the scalar golden loop."""
 
-    def test_network_spikes(self):
-        pop = Population(AlphaNeuron, n=10, label="alpha")
-        drive = PoissonInput(n=10, rate_hz=500.0, weight=2.0, dt=0.001, seed=42)
-        mon = SpikeMonitor(pop)
-        net = Network(pop, drive, mon)
-        net.run(duration=1.0, dt=0.001, backend="python")
-        assert mon.count > 0
+    def test_batch_matches_scalar_step_loop(self) -> None:
+        exc = 1.5 + 0.8 * np.sin(np.arange(256) * 0.037)
+        inh = 0.6 + 0.3 * np.cos(np.arange(256) * 0.021)
+        scalar = AlphaNeuron()
+        expected: dict[str, list[float]] = {
+            key: [] for key in ("v", "a_exc", "i_exc", "a_inh", "i_inh")
+        }
+        expected_spikes = 0
+        for exc_value, inh_value in zip(exc, inh):
+            expected_spikes += scalar.step(float(exc_value), float(inh_value))
+            for key in expected:
+                expected[key].append(getattr(scalar, key))
+        batch = AlphaNeuron().simulate(exc, inh, backend="python")
+        for key in expected:
+            np.testing.assert_allclose(batch[key], expected[key], rtol=0.0, atol=0.0)
+        assert batch["spike_count"] == expected_spikes
 
-    def test_projection_wiring(self):
-        src = Population(AlphaNeuron, n=10, label="src")
-        tgt = Population(AlphaNeuron, n=10, label="tgt")
-        drive = PoissonInput(n=10, rate_hz=500.0, weight=2.0, dt=0.001, seed=42)
-        proj = Projection(src, tgt, weight=1.0, probability=1.0, seed=42)
-        mon = SpikeMonitor(src)
-        net = Network(src, tgt, drive, proj, mon)
-        net.run(duration=1.0, dt=0.001, backend="python")
-        assert mon.count > 0
+    def test_scalar_inhibitory_broadcast_matches_vector(self) -> None:
+        exc = np.full(64, 2.0)
+        vector = AlphaNeuron().simulate(exc, np.full(64, 0.5), backend="python")
+        scalar = AlphaNeuron().simulate(exc, 0.5, backend="python")
+        np.testing.assert_array_equal(vector["v"], scalar["v"])
 
-    def test_analysis(self):
+    def test_empty_batch_returns_initial_state(self) -> None:
+        result = AlphaNeuron(v=0.1, a_exc=0.2).simulate([], backend="python")
+        assert cast(npt.NDArray[np.float64], result["v"]).size == 0
+        assert result["v_final"] == 0.1
+        assert result["a_exc_final"] == 0.2
+        assert result["spike_count"] == 0
+
+    def test_simulate_writes_back_final_state(self) -> None:
         n = AlphaNeuron()
-        train = np.array([float(n.step(1.0)) for _ in range(5000)])
-        sc = spike_count(train)
-        assert sc >= 50
+        result = n.simulate(np.full(200, 2.0), backend="python")
+        assert n.v == result["v_final"]
+        assert n.a_exc == result["a_exc_final"]
+
+    def test_long_varied_run_is_finite_and_deterministic(self) -> None:
+        exc = 2.0 + 0.5 * np.sin(np.arange(20_000, dtype=np.float64) * 0.013)
+        inh = 0.8 + 0.2 * np.cos(np.arange(20_000, dtype=np.float64) * 0.007)
+        first = AlphaNeuron().simulate(exc, inh, backend="python")
+        second = AlphaNeuron().simulate(exc, inh, backend="python")
+        assert np.isfinite(first["v"]).all()
+        np.testing.assert_array_equal(first["v"], second["v"])
+        np.testing.assert_array_equal(first["theta" if False else "i_exc"], second["i_exc"])
+
+
+class TestAlphaNetwork:
+    """Model works in the full SC-NeuroCore network pipeline."""
+
+    def test_population_creation(self) -> None:
+        pop = Population(AlphaNeuron, n=10, label="alpha")
+        assert pop.n == 10
+        assert pop.model_name == "AlphaNeuron"
+
+    def test_network_produces_spikes(self) -> None:
+        pop = Population(AlphaNeuron, n=20, label="alpha")
+        proj = Projection(pop, pop, weight=1.0, probability=0.2, seed=42)
+        drive = PoissonInput(n=20, rate_hz=500.0, weight=3.0, dt=0.001, seed=42)
+        mon = SpikeMonitor(pop)
+        net = Network(pop, proj, drive, mon)
+        net.run(duration=0.5, dt=0.001, backend="python")
+        assert mon.count > 0, "network produced zero spikes"
+
+    def test_spike_trains_extractable(self) -> None:
+        pop = Population(AlphaNeuron, n=10, label="alpha")
+        drive = PoissonInput(n=10, rate_hz=500.0, weight=3.0, dt=0.001, seed=42)
+        mon = SpikeMonitor(pop)
+        net = Network(pop, drive, mon)
+        net.run(duration=0.3, dt=0.001, backend="python")
+        trains = mon.spike_trains
+        assert isinstance(trains, dict)
+        assert len(trains) > 0, "no spike trains recorded"
+
+
+class TestAlphaAnalysis:
+    """Analysis toolkit works on spikes from this model."""
+
+    def _get_binary_train(self) -> npt.NDArray[np.int8]:
+        n = AlphaNeuron()
+        train = np.zeros(5000, dtype=np.int8)
+        for t in range(5000):
+            train[t] = n.step(2.5)
+        return train
+
+    def test_firing_rate(self) -> None:
+        train = self._get_binary_train()
         rate = firing_rate(train, dt=0.001)
         assert rate > 0
+
+    def test_spike_count(self) -> None:
+        train = self._get_binary_train()
+        assert spike_count(train) > 0

@@ -139,6 +139,14 @@ equation-(12) variables through `R=tau*r` and `t'=t/tau`, independently
 advances both states, and records that simultaneous explicit Euler is
 maintained implementation scope rather than a solver prescribed by the
 continuous paper.
+The `AlphaNeuron` enrolment carries the dual excitatory/inhibitory
+alpha-synapse LIF with the Rall 1967 alpha kernel in two-state cascades,
+the exact piecewise-constant-input filter relaxation and alpha-current
+convolution, and the somatic spike rule that resets only the membrane
+potential; the public Rall 1962 misattribution is corrected, and the
+exact timestep is documented as an engineering contract rather than a
+biological publication claim.
+
 The `ResonateAndFireNeuron` enrolment independently evaluates the exact
 constant-input flow of Izhikevich's (2001) complex resonator, preserves `x` as
 current-like and `y` as voltage-like, thresholds only an upward sampled

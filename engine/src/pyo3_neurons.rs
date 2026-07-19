@@ -22,6 +22,8 @@ use crate::neurons;
 
 #[path = "bindings/adaptive_threshold_if.rs"]
 mod adaptive_threshold_if_binding;
+#[path = "bindings/alpha.rs"]
+mod alpha_binding;
 #[path = "bindings/ermentrout_kopell_pop.rs"]
 mod ermentrout_kopell_pop_binding;
 #[path = "bindings/jansen_rit.rs"]
@@ -2133,6 +2135,7 @@ pub fn register_neuron_classes(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_class::<PyBendaHerzNeuron>()?;
     m.add_class::<PyBrunelWangNeuron>()?;
     m.add_class::<PyAlphaNeuron>()?;
+    alpha_binding::register(m)?;
     m.add_class::<PyCOBALIFNeuron>()?;
     m.add_class::<PyGutkinErmentroutNeuron>()?;
     m.add_class::<PyWilsonHRNeuron>()?;

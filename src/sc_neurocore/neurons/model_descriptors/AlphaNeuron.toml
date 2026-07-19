@@ -11,14 +11,20 @@ schema_version = 2
 name = "AlphaNeuron"
 class_name = "AlphaNeuron"
 module = "alpha"
-display_name = ""
-summary = "Alpha-synapse neuron. Rall 1967."
-family = "Synaptic dynamics"
-category = "synaptic-dynamics"
+display_name = "Dual excitatory/inhibitory alpha-synapse leaky integrate-and-fire neuron"
+summary = "Exact constant-input flow for the dual alpha-synapse LIF: exact filter cascade and alpha-current convolution; somatic spike resets only v."
+family = "Integrate-and-Fire"
+category = "integrate-and-fire"
 biophysical_detail = "point"
-maturity = "experimental"
-intended_use = []
-hardware_fit = []
+maturity = "validated"
+intended_use = [
+    "alpha-synapse excitability studies",
+    "dual excitatory/inhibitory current filtering",
+    "cross-runtime exact-flow validation",
+]
+hardware_fit = [
+    "generated fixed-point co-simulation reference",
+]
 behavior_tags = [
     "excitable",
     "rate-coded",
@@ -27,47 +33,62 @@ behavior_tags = [
 
 [provenance]
 authors = [
+    "Rall, W.",
     "Gerstner, W. & Kistler, W.M.",
 ]
-year = 2002
+year = 1967
 doi = "10.1017/CBO9780511815706"
+secondary_doi = ""
+paper_title = "Spiking Neuron Models"
+url = "https://doi.org/10.1017/CBO9780511815706"
+reduction_boundary = "The alpha kernel is Rall 1967 (J. Neurophysiol. 30:1138-1168); the LIF-with-filtered-currents framing is Gerstner-Kistler 2002 §4.1. The maintained exact piecewise-constant-input timestep is a derived exact flow, not itself a biological publication claim. An earlier public-docs line citing Rall 1962 (Ann. N.Y. Acad. Sci. 96) was a misattribution for this artefact and is corrected. Defaults (tau_v=20, tau_exc=5, tau_inh=10, dimensionless scale) are catalogue/model-family choices, not source-derived."
 
 [state.v]
 init = 0.0
+unit = "1"
+meaning = "membrane potential; the only state reset at a spike"
 
 [state.i_exc]
 init = 0.0
+unit = "1"
+meaning = "excitatory synaptic current"
 
 [state.i_inh]
 init = 0.0
+unit = "1"
+meaning = "inhibitory synaptic current"
 
 [state.a_exc]
 init = 0.0
+unit = "1"
+meaning = "excitatory alpha-rise state"
 
 [state.a_inh]
 init = 0.0
+unit = "1"
+meaning = "inhibitory alpha-rise state"
 
 [parameters.v_rest]
 default = 0.0
 unit = "1"
-meaning = "resting potential"
+meaning = "leak reversal potential; also the somatic spike reset"
 range = [
-    -1.0,
-    1.0,
+    -90.0,
+    0.0,
 ]
 
 [parameters.v_threshold]
 default = 1.0
 unit = "1"
-meaning = "firing threshold"
+meaning = "spike threshold; must exceed v_rest"
 range = [
     0.0,
-    5.0,
+    20.0,
 ]
 
 [parameters.tau_v]
 default = 20.0
-unit = "ms"
+unit = "1"
 meaning = "membrane time constant"
 range = [
     1.0,
@@ -76,33 +97,74 @@ range = [
 
 [parameters.tau_exc]
 default = 5.0
-unit = "ms"
-meaning = "time constant of the excitatory alpha synapse"
+unit = "1"
+meaning = "excitatory alpha time constant"
 range = [
     0.1,
-    50.0,
+    100.0,
 ]
 
 [parameters.tau_inh]
 default = 10.0
-unit = "ms"
-meaning = "time constant of the inhibitory alpha synapse"
+unit = "1"
+meaning = "inhibitory alpha time constant"
 range = [
     0.1,
-    50.0,
+    200.0,
 ]
 
 [integration]
 dt = 1.0
-method = "euler"
+method = "map"
 
 [dynamics]
+a_exc = "alpha-rise cascade state, exact filter relaxation"
+i_exc = "excitatory current, exact alpha-filter relaxation"
+a_inh = "inhibitory alpha-rise cascade state, exact filter relaxation"
+i_inh = "inhibitory current, exact alpha-filter relaxation"
+v = "tau_v*dV/dt=-(V-v_rest)+i_exc-i_inh; exact piecewise-constant-input relaxation plus exact alpha-current convolution (general form; equal-tau limit is production-only)"
+event = "spike on candidate crossing next_v >= v_threshold; only v resets to v_rest; cascade states preserved"
+scope = "real piecewise-constant excitatory/inhibitory drives; equal-time-constant configurations are schema-excluded (documented boundary)"
 
 [backends.python]
 status = "implemented"
+parity = "exact"
+
+[backends.rust]
+status = "implemented"
+parity = "ulp-bounded"
+
+[backends.julia]
+status = "implemented"
+parity = "ulp-bounded"
+
+[backends.go]
+status = "implemented"
+parity = "ulp-bounded"
+
+[backends.mojo]
+status = "implemented"
+parity = "approximate"
 
 [reproducibility]
+reference_config = "{\"kind\":\"sampled_batch_v1\",\"v\":0.1,\"a_exc\":0.05,\"i_exc\":0.02,\"a_inh\":0.03,\"i_inh\":0.01,\"v_rest\":0.0,\"v_threshold\":1.0,\"tau_v\":20.0,\"tau_exc\":5.0,\"tau_inh\":10.0,\"dt\":1.0,\"n_steps\":256,\"simulate_fields\":[\"exc_current\",\"inh_current\"],\"inputs\":{\"exc_current\":{\"function\":\"sin\",\"offset\":1.5,\"amplitude\":0.8,\"angular_frequency\":0.05},\"inh_current\":{\"function\":\"cos\",\"offset\":0.6,\"amplitude\":0.3,\"angular_frequency\":0.031}},\"trace_fields\":[\"v\",\"a_exc\",\"i_exc\",\"a_inh\",\"i_inh\",\"spikes\"]}"
+golden_trace_sha256 = "de6081c3c013049b48947cee8ca69a280a713a5dc307e068656b0425ae976eca"
+golden_citation = "Rall 1967 alpha kernel; Gerstner-Kistler 2002 §4.1 dual alpha-synapse LIF"
 
 [documentation]
 slug = "models/alpha"
-notes = ""
+notes = "Dual alpha-synapse LIF with exact constant-input flow. The alpha kernel is Rall 1967; the LIF framing is Gerstner-Kistler 2002 §4.1. The exact timestep is an engineering contract (derived exact flow), not a biological publication claim. Defaults are catalogue/model-family choices. The equal-time-constant convolution limit is implemented in all production lanes; schemas carry the general form with the documented boundary."
+
+[validation]
+dynamics_faithful = true
+metric = "trajectory"
+operating_point = "non-zero configured initial state with varied dual drives over 256 exact-flow steps"
+tolerance = "complete state, spike-vector, final-state, and spike-count agreement within absolute 1e-12 for Rust, Julia, and Go and 1e-10 for Mojo"
+evidence = "tests/test_alpha_backends.py::test_complete_configured_contract_matches_python"
+
+[silicon]
+compiles = true
+cosim_validated = true
+cosim_evidence = "tests/test_cosim_alpha.py::test_q3232_rtl_tracks_exact_flow_and_complete_event_vector"
+target_tier = "H1"
+terminal_reason = "Generated fixed-point co-simulation is validated; synthesis, timing, formal equivalence, and PPA evidence are not enrolled."

@@ -400,6 +400,99 @@ FloatingPointError
 
 ---
 
+## Module `accel.alpha`
+
+### Function `backend_available(backend)`
+Return whether one maintained execution lane is ready.
+
+Parameters
+----------
+backend : str
+    One of ``python``, ``rust``, ``julia``, ``go``, or ``mojo``.
+
+Returns
+-------
+bool
+    ``True`` when the named runtime and its Model42 artefact are available.
+
+### Function `auto_backend()`
+Return the first available runtime in measured ascending-latency order.
+
+Returns
+-------
+str
+    An available backend name, with ``python`` as the total fallback.
+
+### Function `normalise_result(result)`
+Validate complete state/spike traces and scalar final receipts.
+
+Parameters
+----------
+result : dict&#91;str, object&#93;
+    Backend mapping with the five state traces, ``spikes``, the five
+    final states, and an integral ``spike_count``.
+n_steps : int
+    Required length of every trajectory.
+initial : tuple&#91;float, float, float, float, float&#93;
+    Initial ``v, a_exc, i_exc, a_inh, i_inh`` used to validate an empty
+    batch.
+v_rest : float
+    Membrane-potential reset installed at every spike.
+
+Returns
+-------
+dict&#91;str, numpy.ndarray | float | int&#93;
+    Contiguous finite trajectories and mutually consistent final receipts.
+
+Raises
+------
+FloatingPointError
+    If any backend field is missing, malformed, non-finite, inconsistent,
+    non-binary, or violates the somatic reset contract.
+
+### Function `simulate_python(v, a_exc, i_exc, a_inh, i_inh, v_rest, v_threshold, tau_v, tau_exc, tau_inh, dt, exc_current, inh_current)`
+Run the complete batch through the Python golden model.
+
+### Function `simulate_alpha(v, a_exc, i_exc, a_inh, i_inh, v_rest, v_threshold, tau_v, tau_exc, tau_inh, dt, exc_current, inh_current)`
+Run one complete exact-flow batch on a selected execution lane.
+
+Parameters
+----------
+v, a_exc, i_exc, a_inh, i_inh : float, default: 0.0
+    Initial membrane potential and synaptic cascade states.
+v_rest : float, default: 0.0
+    Leak reversal potential, also the somatic spike reset.
+v_threshold : float, default: 1.0
+    Spike threshold; must exceed ``v_rest``.
+tau_v : float, default: 20.0
+    Positive membrane time constant.
+tau_exc, tau_inh : float, default: 5.0 / 10.0
+    Positive excitatory and inhibitory alpha time constants.
+dt : float, default: 1.0
+    Positive piecewise-constant-input sampling interval.
+exc_current : ArrayLike
+    One finite real excitatory drive value per maintained step.
+inh_current : ArrayLike or float, default: 0.0
+    Inhibitory drive, scalar or matching the excitatory length.
+backend : str, default: "auto"
+    ``auto``, ``python``, ``rust``, ``julia``, ``go``, or ``mojo``.
+
+Returns
+-------
+dict&#91;str, numpy.ndarray | float | int&#93;
+    Complete state/spike trajectories and final receipts.
+
+Raises
+------
+ValueError
+    If the configuration, currents, or backend name is invalid.
+RuntimeError
+    If an explicitly requested maintained backend is unavailable.
+FloatingPointError
+    If a numerical candidate or backend result violates the contract.
+
+---
+
 ## Module `accel.backend`
 
 ### Class `Backend`
@@ -22140,15 +22233,46 @@ Reference: BrainChip Inc. (2021). Akida Neuromorphic Processor Reference Manual.
 ## Module `neurons.models.alpha`
 
 ### Class `AlphaNeuron`
-Alpha-synapse neuron. Rall 1967.
+Dual excitatory/inhibitory alpha-synapse leaky integrate-and-fire neuron.
 
-Dual excitatory/inhibitory synaptic currents with alpha-function kinetics.
+The membrane equation is the leaky integrate-and-fire relaxation
 
-Reference: Gerstner, W. & Kistler, W.M. (2002). Spiking Neuron Models. Cambridge Univ. Press, §4.1.
+``tau_v * dV/dt = -(V - v_rest) + i_exc - i_inh``,
+
+and each synaptic current is carried by a two-state alpha cascade
+(rise ``a``, current ``i``) that reproduces Rall's alpha kernel
+``alpha(t) ~ (t/tau) * exp(1 - t/tau)`` for a pulse input. A spike is
+emitted when the candidate membrane potential reaches ``v_threshold``;
+only the membrane potential resets (``v <- v_rest``); the synaptic
+cascade states are preserved across spikes.
+
+The maintained numerical step is the exact piecewise-constant-input
+flow: each alpha filter relaxes exactly, and the membrane update
+integrates the alpha currents with the exact convolution, including the
+equal-time-constant limit. This exact flow is the engineering contract,
+not a biological publication claim.
+
+Defaults ``tau_v=20``, ``tau_exc=5``, ``tau_inh=10``, ``v_rest=0``,
+``v_threshold=1``, and ``dt=1.0`` are catalogue/model-family choices,
+not source-derived parameters.
+
+References
+----------
+Rall, W. (1967). Distinguishing theoretical synaptic potentials computed
+for different soma-dendritic distributions of synaptic input. Journal of
+Neurophysiology 30(5), 1138–1168. (The alpha kernel.)
+
+Gerstner, W. & Kistler, W.M. (2002). Spiking Neuron Models. Cambridge
+University Press, §4.1. https://doi.org/10.1017/CBO9780511815706
 
 - **__post_init__**()
+  - Normalise scalar fields and reject an invalid configuration.
 - **step**(exc_current, inh_current)
+  - Advance one exact-flow interval and return a binary spike event.
+- **simulate**(exc_current, inh_current)
+  - Run one atomic piecewise-constant-input batch on a maintained backend.
 - **reset**()
+  - Restore the documented rest state while preserving configuration.
 
 ---
 

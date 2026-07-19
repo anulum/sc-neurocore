@@ -11,7 +11,7 @@
 //! Each model owns its implementation and tests in a bounded child module
 //! while the historical public re-exports remain unchanged.
 
-mod alpha;
+pub mod alpha;
 mod balanced_resonate_and_fire;
 mod benda_herz;
 mod brunel_wang;

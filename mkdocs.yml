@@ -134,6 +134,7 @@ nav:
       - Wong-Wang Source Fidelity: validation/wong_wang_source_fidelity.md
       - Resonate-and-Fire Source Fidelity: validation/resonate_and_fire_source_fidelity.md
       - Adaptive-Threshold IF Source Fidelity: validation/adaptive_threshold_if_source_fidelity.md
+      - Alpha-Synapse LIF Source Fidelity: validation/alpha_source_fidelity.md
       - Conductance Oscillator Co-Simulation Fidelity: validation/conductance_oscillator_cosim_fidelity.md
       - LIF f-I Curve: validation/lif_fi_curve.md
       - Izhikevich 20 Patterns: validation/izhikevich_patterns.md

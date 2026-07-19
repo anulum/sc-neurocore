@@ -1,0 +1,67 @@
+{
+  "schema_version": "sc-neurocore.reference-trace.v1",
+  "name": "alpha_dual_synapse_doi",
+  "model": {
+    "schema_name": "alpha",
+    "runner": "universal_dsl"
+  },
+  "protocol": {
+    "dt": 1.0,
+    "steps": 160,
+    "inputs": {
+      "I_exc": 2.5,
+      "I_inh": 0.5
+    },
+    "state_variables": [
+      "v",
+      "a_exc",
+      "i_exc",
+      "a_inh",
+      "i_inh"
+    ]
+  },
+  "provenance": {
+    "kind": "analytic_exact_flow_reference",
+    "source": "src/sc_neurocore/neurons/model_schemas/alpha.toml",
+    "equation": "Exact piecewise-constant-input alpha-filter relaxation for both cascades plus the exact alpha-current convolution for tau_v*dV/dt=-(V-v_rest)+i_exc-i_inh; on candidate crossing v>=v_threshold only v resets to v_rest. Alpha kernel from Rall 1967 (J. Neurophysiol. 30:1138-1168); LIF framing from Gerstner-Kistler 2002 §4.1 (DOI 10.1017/CBO9780511815706).",
+    "citation": "doi:10.1017/CBO9780511815706 and Rall 1967 J. Neurophysiol. 30(5):1138-1168"
+  },
+  "expected_features": {
+    "spike_count": 51.0,
+    "first_spike_step": 8.0,
+    "final.v": 0.0,
+    "min.v": 0.0,
+    "max.v": 0.8822817913190322,
+    "mean.v": 0.3628704400161565,
+    "final.a_exc": 12.499999999999842,
+    "min.a_exc": 2.2658655865252264,
+    "max.a_exc": 12.499999999999842,
+    "mean.a_exc": 12.147136283896334,
+    "final.i_exc": 12.499999999994776,
+    "min.i_exc": 0.21903870383027346,
+    "max.i_exc": 12.499999999994776,
+    "mean.i_exc": 11.757810767190966,
+    "final.a_inh": 4.999999437324125,
+    "min.a_inh": 0.47581290982020263,
+    "max.a_inh": 4.999999437324125,
+    "mean.a_inh": 4.702864660163962,
+    "final.i_inh": 4.999990434510149,
+    "min.i_inh": 0.023394200802222542,
+    "max.i_inh": 4.999990434510149,
+    "mean.i_inh": 4.390625516822796
+  },
+  "tolerances": {
+    "default": {
+      "absolute": 1e-12,
+      "relative": 1e-12
+    },
+    "spike_count": {
+      "absolute": 0.0,
+      "relative": 0.0
+    },
+    "first_spike_step": {
+      "absolute": 0.0,
+      "relative": 0.0
+    }
+  }
+}
