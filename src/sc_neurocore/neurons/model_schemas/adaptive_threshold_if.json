@@ -1,0 +1,48 @@
+{
+  "metadata": {
+    "schema_version": 2,
+    "name": "Adaptive-Threshold IF",
+    "author": "Mihalas, S. & Niebur, E.; Platkiewicz, J. & Brette, R.",
+    "year": 2009,
+    "doi": "10.1162/neco.2008.12-07-680",
+    "description": "Composite reduced adaptive-threshold leaky integrate-and-fire: exact LIF membrane relaxation, a=0 Mihalas-Niebur threshold-decay limit, Platkiewicz-Brette fixed post-spike threshold shift"
+  },
+  "state": {
+    "v": -65.0,
+    "theta": -50.0
+  },
+  "parameters": {
+    "v_rest": -65.0,
+    "v_reset": -65.0,
+    "theta_rest": -50.0,
+    "delta_theta": 5.0,
+    "tau_m": 10.0,
+    "tau_theta": 50.0,
+    "dt": 0.1
+  },
+  "integration": {
+    "dt": 0.1,
+    "method": "map"
+  },
+  "dynamics": {
+    "v": "(v_rest + I) + (v - (v_rest + I)) * exp(-dt / tau_m)",
+    "theta": "theta_rest + (theta - theta_rest) * exp(-dt / tau_theta)"
+  },
+  "threshold": {
+    "condition": "v >= theta",
+    "detection": "level"
+  },
+  "reset": {
+    "v": "v_reset",
+    "theta": "theta + delta_theta"
+  },
+  "extensions": {
+    "model_type": "linear_ode_exact_map_with_sampled_event",
+    "source_equations": "tau_m*dV/dt=-(V-v_rest)+I; dtheta/dt=-(theta-theta_rest)/tau_theta; on spike V<-v_reset and theta<-theta+delta_theta",
+    "source_default_scope": "composite identity: a=0 limit of the Mihalas-Niebur 2009 threshold equation dTheta/dt=a(V-E_L)-b(Theta-Theta_inf) (DOI 10.1162/neco.2008.12-07-680) plus the fixed post-spike threshold shift derived in Platkiewicz-Brette 2010 (DOI 10.1371/journal.pcbi.1000850); defaults are catalogue/model-family choices, not source-derived",
+    "input_scope": "I is a real piecewise-constant current in mV-equivalent units",
+    "maintained_discretisation": "Each map step is the exact constant-input relaxation over parameter dt; no Euler downgrade",
+    "event_order": "Compute both exact-relaxation candidates, detect v >= theta, then install v_reset and theta+delta_theta",
+    "sampling_limit": "Crossings are detected at maintained step boundaries; no within-step root localization is claimed"
+  }
+}

@@ -275,6 +275,131 @@ Own one explicit WGPU rule layer with safe host-buffer boundaries.
 
 ---
 
+## Module `accel.adaptive_threshold_if`
+
+### Function `backend_available(backend)`
+Return whether one maintained execution lane is ready.
+
+Parameters
+----------
+backend : str
+    One of ``python``, ``rust``, ``julia``, ``go``, or ``mojo``.
+
+Returns
+-------
+bool
+    ``True`` when the named runtime and its Model41 artefact are available.
+
+### Function `auto_backend()`
+Return the first available runtime in measured ascending-latency order.
+
+Returns
+-------
+str
+    An available backend name, with ``python`` as the total fallback.
+
+### Function `normalise_result(result)`
+Validate complete state/spike traces and scalar final receipts.
+
+Parameters
+----------
+result : dict&#91;str, object&#93;
+    Backend mapping with ``v``, ``theta``, ``spikes``, both final states,
+    and an integral ``spike_count``.
+n_steps : int
+    Required length of every trajectory.
+initial : tuple&#91;float, float&#93;
+    Initial ``v`` and ``theta`` used to validate an empty batch.
+v_reset : float
+    Membrane potential reset installed at every spike.
+theta_rest : float
+    Baseline threshold of the exact relaxation.
+delta_theta : float
+    Fixed post-spike threshold shift.
+tau_theta : float
+    Threshold relaxation time constant.
+dt : float
+    Sampling interval.
+
+Returns
+-------
+dict&#91;str, numpy.ndarray | float | int&#93;
+    Contiguous finite trajectories and mutually consistent final receipts.
+
+Raises
+------
+FloatingPointError
+    If any backend field is missing, malformed, non-finite, inconsistent,
+    non-binary, or violates the reset/shift contract.
+
+### Function `simulate_python(v, theta, v_rest, v_reset, theta_rest, delta_theta, tau_m, tau_theta, dt, current)`
+Run the complete batch through the Python golden model.
+
+Parameters
+----------
+v, theta : float
+    Initial membrane potential and adaptive threshold.
+v_rest, v_reset, theta_rest, delta_theta, tau_m, tau_theta, dt : float
+    Complete exact-relaxation configuration.
+current : ArrayLike
+    One finite real piecewise-constant current per maintained step.
+
+Returns
+-------
+dict&#91;str, numpy.ndarray | float | int&#93;
+    Complete post-update traces, final states, and spike count.
+
+Raises
+------
+ValueError
+    If the configuration or current vector violates the public contract.
+FloatingPointError
+    If a candidate or returned receipt is non-finite.
+
+### Function `simulate_adaptive_threshold_if(v, theta, v_rest, v_reset, theta_rest, delta_theta, tau_m, tau_theta, dt, current)`
+Run one complete exact-relaxation batch on a selected execution lane.
+
+Parameters
+----------
+v : float, default: -65.0
+    Initial membrane potential in millivolts.
+theta : float, default: -50.0
+    Initial adaptive threshold in millivolts.
+v_rest : float, default: -65.0
+    Leak reversal potential in millivolts.
+v_reset : float, default: -65.0
+    Post-spike membrane reset in millivolts.
+theta_rest : float, default: -50.0
+    Baseline threshold in millivolts; must exceed ``v_rest`` and ``v_reset``.
+delta_theta : float, default: 5.0
+    Fixed non-negative post-spike threshold shift in millivolts.
+tau_m : float, default: 10.0
+    Positive membrane time constant in milliseconds.
+tau_theta : float, default: 50.0
+    Positive threshold relaxation time constant in milliseconds.
+dt : float, default: 0.1
+    Positive piecewise-constant-input sampling interval in milliseconds.
+current : ArrayLike
+    One finite real current value per maintained step.
+backend : str, default: "auto"
+    ``auto``, ``python``, ``rust``, ``julia``, ``go``, or ``mojo``.
+
+Returns
+-------
+dict&#91;str, numpy.ndarray | float | int&#93;
+    Complete state/spike trajectories and final receipts.
+
+Raises
+------
+ValueError
+    If the configuration, current, or backend name is invalid.
+RuntimeError
+    If an explicitly requested maintained backend is unavailable.
+FloatingPointError
+    If a numerical candidate or backend result violates the contract.
+
+---
+
 ## Module `accel.backend`
 
 ### Class `Backend`
@@ -21746,17 +21871,49 @@ Return every class name that the taxonomy classifies.
 ## Module `neurons.models.adaptive_threshold_if`
 
 ### Class `AdaptiveThresholdIFNeuron`
-Integrate-and-fire with dynamic threshold. Platkiewicz & Bhatt 2010.
+Composite reduced adaptive-threshold leaky integrate-and-fire neuron.
 
-C dV/dt = -g_L(V - V_rest) + I
-dtheta/dt = -(theta - theta_rest) / tau_theta
-On spike: V -> V_reset, theta += delta_theta
+The membrane equation is the leaky integrate-and-fire relaxation
 
-Reference: Platkiewicz, J. & Brette, R. (2010). PLoS Comput. Biol. 6(7):e1000850.
+``tau_m * dV/dt = -(V - v_rest) + I``,
+
+integrated with the exact constant-input flow over one ``dt`` interval.
+The threshold equation is
+
+``dtheta/dt = -(theta - theta_rest) / tau_theta``,
+
+which is the Mihalas and Niebur (2009) threshold equation
+``dTheta/dt = a(V - E_L) - b(Theta - Theta_inf)`` taken at zero voltage
+coupling (``a = 0``), integrated with the same exact relaxation. A spike
+is emitted when the candidate membrane potential reaches the candidate
+threshold; the membrane potential then resets to ``v_reset`` and the
+threshold increases by the fixed amount ``delta_theta`` — the fixed
+post-spike threshold shift derived in Platkiewicz and Brette (2010).
+
+Reduction boundary: the Mihalas–Niebur voltage-coupling term ``a(V - E_L)``
+and the Platkiewicz–Brette voltage-dependent threshold equilibrium
+``theta_inf(V)`` are outside this reduced model, as is any adaptation
+current. Defaults are catalogue/model-family choices, not source-derived
+parameters.
+
+References
+----------
+Mihalas, S. and Niebur, E. (2009). A generalized linear integrate-and-fire
+neural model produces diverse spiking behaviors. Neural Computation 21(3),
+704–718. https://doi.org/10.1162/neco.2008.12-07-680
+
+Platkiewicz, J. and Brette, R. (2010). A threshold equation for action
+potential initiation. PLoS Computational Biology 6(7), e1000850.
+https://doi.org/10.1371/journal.pcbi.1000850
 
 - **__post_init__**()
+  - Normalise scalar fields and reject an invalid configuration.
 - **step**(current)
+  - Advance one exact-relaxation interval and return a binary spike event.
+- **simulate**(current)
+  - Run one atomic piecewise-constant-input batch on a maintained backend.
 - **reset**()
+  - Restore the documented rest state while preserving configuration.
 
 ---
 

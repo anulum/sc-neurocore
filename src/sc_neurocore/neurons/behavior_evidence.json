@@ -183,7 +183,7 @@
         "stochastic"
       ],
       "drivable": true,
-      "result_sha256": "b14c88610b4bb4df68f78bb472140abbef313e5f7afad052e41f7ad2ee8188e6",
+      "result_sha256": "d5950d38848a307ed1bbec5e7ad55eb98ee4a00bc2874c7d65348949c9be361d",
       "stochastic": true
     },
     "BertramPhantomBurster": {
@@ -244,7 +244,7 @@
         "tonic"
       ],
       "drivable": true,
-      "result_sha256": "d44a66b4265e7b6bf05354176c47f8c404f28a0bd408d2f734588cfa029b76ba",
+      "result_sha256": "0452274cce83a6916789a4450f083d54810c2b4a975bddb3358014cab6cf03a1",
       "stochastic": false
     },
     "CazellesMapNeuron": {
@@ -486,7 +486,7 @@
         "tonic"
       ],
       "drivable": true,
-      "result_sha256": "e0a6c1f1f914e7eebaa07a96f6d988c8698bb3e875ad18ff4d3997ea3bdb368d",
+      "result_sha256": "fca0581573031d0fe7db70373b5cca8e64a3cfdb99d571d81960f6695a154b9b",
       "stochastic": false
     },
     "EPropALIFNeuron": {
@@ -546,7 +546,7 @@
         "tonic"
       ],
       "drivable": true,
-      "result_sha256": "631ad6e916779c305b10d44aa246cae381055151562ce7dccdaf603ca00656a3",
+      "result_sha256": "915bddbd129ff5dd397eae9713aa9f1ccf10461c83f7a724b12fce1623d7d4ce",
       "stochastic": false
     },
     "FitzHughNagumoNeuron": {
@@ -606,7 +606,7 @@
         "stochastic"
       ],
       "drivable": true,
-      "result_sha256": "663e239554718a2a3aebd2e344617d2f01f650d2517b8e8155df1b3ec82820e9",
+      "result_sha256": "331112b50f1639987b427d09e0fb82eadd522bc92d41724c884ef11e0f92dba5",
       "stochastic": true
     },
     "GalvesLocherbachNeuron": {
@@ -637,7 +637,7 @@
         "stochastic"
       ],
       "drivable": true,
-      "result_sha256": "5cf173499dcb805d2523918185f4ffb801c8928a140095fada43dac9bce71885",
+      "result_sha256": "b17d2d20fb8ec88ec724dd22f604183aac286ba026f2e489dd59b197d7bd1227",
       "stochastic": true
     },
     "GatedLIFNeuron": {
@@ -668,7 +668,7 @@
         "tonic"
       ],
       "drivable": true,
-      "result_sha256": "8f710d3f6e8b485ad7991376464afb4caf91dfb6d87426064cd57208d2bd2243",
+      "result_sha256": "16480c5562fa6608182bed156da18c5bb3c356fc90b17b53d72bb40e0e0e020f",
       "stochastic": false
     },
     "GranuleCell": {
@@ -694,25 +694,22 @@
     },
     "HayL5PyramidalNeuron": {
       "behavior_tags": [
-        "bursting",
-        "chaotic",
         "excitable",
         "irregular",
         "phasic"
       ],
       "drivable": true,
-      "result_sha256": "ee6796ae52160b72fa8357c890b0743237b7be18570a1b2c4c11e2c7361b93d1",
+      "result_sha256": "a5cd4fb2be52d5d90ed5a4d2d65a3c9c687ccd2675e62b930493a5c1a4b4491e",
       "stochastic": false
     },
     "HillTononiNeuron": {
       "behavior_tags": [
         "bursting",
-        "chaotic",
         "excitable",
         "phasic"
       ],
       "drivable": true,
-      "result_sha256": "b7f9ac4382604cbee42d6595bb5c6cd90595ad0afd8c46521e7a2ec7b9499b0a",
+      "result_sha256": "7c0e6cf74e822383ebef48db4fd7603eee32459e5140032165f944b231cded4d",
       "stochastic": false
     },
     "HindmarshRoseNeuron": {
@@ -835,7 +832,7 @@
         "tonic"
       ],
       "drivable": true,
-      "result_sha256": "1957de377216ce33d7103d2f7fbeb9ddf2f567558bd045bfd75e52c209ad0957",
+      "result_sha256": "ff493440c76686ee6dba2bb6e08e97e58b34238c097f49359f432b8c4381b1fc",
       "stochastic": false
     },
     "KLIFNeuron": {
@@ -959,23 +956,23 @@
     },
     "MarderSTGNeuron": {
       "behavior_tags": [
-        "bursting",
-        "chaotic",
+        "adapting",
         "excitable",
-        "irregular"
+        "phasic"
       ],
       "drivable": true,
-      "result_sha256": "79e1a62e2dbe9b8998db906e10fadb01db49b053d4bef9ef2ad540877dd2f0ea",
+      "result_sha256": "2caac9d75b9168b0e0ab6110b7b4e462d091a41f128ca331fbdf4f136db50e62",
       "stochastic": false
     },
     "MartinottiNeuron": {
       "behavior_tags": [
+        "adapting",
         "excitable",
-        "irregular",
-        "phasic"
+        "phasic",
+        "tonic"
       ],
       "drivable": true,
-      "result_sha256": "fcb9d1444fd051932c7707af032e64aa60a8fb5cb6ce7155614380e66e9b2761",
+      "result_sha256": "151f354d7739bf6fb0c08b80945dbec5a21164b5ef2322593668382af9cc8ffb",
       "stochastic": false
     },
     "McCullochPittsNeuron": {
@@ -1062,12 +1059,11 @@
     "MulticompartmentMCNNeuron": {
       "behavior_tags": [
         "excitable",
-        "irregular",
         "rate-coded",
         "tonic"
       ],
       "drivable": true,
-      "result_sha256": "0089054bee22ff8e799d7e487a6ac4a45f2bce8cbcca1b010a685f17f4aa20ff",
+      "result_sha256": "ab190beebb7ef3a1742fd397d02dd71e7bad93a6fbc05b3cb417fdc2dd973ec4",
       "stochastic": false
     },
     "NMDANeuron": {
@@ -1089,7 +1085,7 @@
         "rate-coded"
       ],
       "drivable": true,
-      "result_sha256": "df605c2db05b62dc61f4bc8abf3a013d55e714427ddf53850809eaaf95b81570",
+      "result_sha256": "b395f2b2f2f3efff0f2bb727239dfca1e4ef96df5ce013cf122b409ae001dac5",
       "stochastic": false
     },
     "NonResettingLIFNeuron": {
@@ -1122,7 +1118,7 @@
         "phasic"
       ],
       "drivable": true,
-      "result_sha256": "7b84d39857a6f6c0ba51d3ae273949a6896a08b917651e6726d8293d0f66fb3d",
+      "result_sha256": "bc222487d85f9a263c3b2c83ff333307c736f94f543e98d7da585619e5d4efaf",
       "stochastic": false
     },
     "ParallelSpikingNeuron": {
@@ -1178,13 +1174,14 @@
     },
     "PinskyRinzelNeuron": {
       "behavior_tags": [
+        "adapting",
+        "chaotic",
         "excitable",
         "irregular",
-        "phasic",
-        "tonic"
+        "phasic"
       ],
       "drivable": true,
-      "result_sha256": "f73fb1817610305c55677e13253906bb5c8764a53f41c5fc33e95e61f4837b6e",
+      "result_sha256": "635f97cc5b8b4fd85998cec0adcd11b022d4ef89222a6e6e22e9b5dc7cba77bb",
       "stochastic": false
     },
     "PlantR15Neuron": {
@@ -1216,7 +1213,7 @@
         "tonic"
       ],
       "drivable": true,
-      "result_sha256": "4b00c0eef85c5ce39ed2681429fcd8e3d2e90891ed788378cc8baf9226090298",
+      "result_sha256": "c01b1c00b291117c4d49f7fc8777c6e1a06eea88ae36b79e7fab657b92bd4f1c",
       "stochastic": false
     },
     "PredictiveCodingNeuron": {
@@ -1339,10 +1336,11 @@
       "behavior_tags": [
         "excitable",
         "irregular",
-        "phasic"
+        "phasic",
+        "tonic"
       ],
       "drivable": true,
-      "result_sha256": "31894be837b45c75e004dce640a2dc1a0247dc0d2c23ba4d1a76e3bfaf4082b5",
+      "result_sha256": "be0ee05f38df3ba1322597f28c55a6b19cf926550313767e5dcf3adaf1fe1130",
       "stochastic": false
     },
     "SelfReferentialNeuron": {
@@ -1559,10 +1557,11 @@
       "behavior_tags": [
         "excitable",
         "irregular",
-        "phasic"
+        "phasic",
+        "tonic"
       ],
       "drivable": true,
-      "result_sha256": "3e290533c91d0b9477d1729ff09d84f29be9cb597809537c4e45b02db315d72e",
+      "result_sha256": "7040ae7dba286062fa66f4f773d9b3bcf07911aaa703b20fdd2ccfc182feab15",
       "stochastic": false
     },
     "VIPNeuron": {
@@ -1573,7 +1572,7 @@
         "tonic"
       ],
       "drivable": true,
-      "result_sha256": "c6d8b617cc21c04a5ed7d2f3e750b8c90526aeeeb32a71b1f650dc04d70a1384",
+      "result_sha256": "d1f1d92964a05ccd9b9673fe58f06079d4dfca3fd748e77b4029ae539fbd3b08",
       "stochastic": false
     },
     "WangBuzsakiNeuron": {
@@ -1619,7 +1618,7 @@
         "tonic"
       ],
       "drivable": true,
-      "result_sha256": "699d8ec7dc096842271a9b642016646e25aa7c8146f9f7bedd54edddd4defac9",
+      "result_sha256": "02d8b0fa6ced8141765528a03030fbdd65c74d4d30f97d8cf32380fe03ec334d",
       "stochastic": false
     },
     "YamadaNeuron": {
@@ -1633,7 +1632,7 @@
       "stochastic": false
     }
   },
-  "result_sha256": "d6380f3723710a1b922de0aa4dfd1852a2c3452be53818f5e6bd9dead87754fc",
+  "result_sha256": "215ab5a2b5ef97eed3db389c8667a93bcbddf235681d045ef3e01724f9ccfd0b",
   "schema_version": "studio.behavior-probe.v1",
   "sweep": {
     "currents": [

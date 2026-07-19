@@ -10,14 +10,15 @@ backend implements that surface.
 > A stricter bar — a model whose whole four-language acceleration chain
 > (`accel/{rust,go,julia,mojo}`) is real and Python-parity-proven — is tracked
 > separately on the [Model Fidelity & Polyglot Status](model_fidelity_status.md)
-> page. Polyglot-complete today (40 models): Wang-Buzsaki, FitzHugh-Nagumo, Morris-Lecar,
+> page. Polyglot-complete today (41 models): Wang-Buzsaki, FitzHugh-Nagumo, Morris-Lecar,
 > Connor-Stevens, Hodgkin-Huxley, AdEx, ExpIF, Lapicque, Perfect Integrator,
 > Quadratic IF, Theta, DPI, COBA LIF, Escape Rate, Poisson, IQIF, McCulloch-Pitts, McKean, Hindmarsh-Rose, FitzHugh-Rinzel,
 > Pernarowski, Terman-Wang,
 > Wilson-HR, Rulkov map, GLIF, Mihalas-Niebur, Medvedev map, Cazelles map, Chialvo map, Courbage-Nekorkin map,
 > Izhikevich 2007, Ibarz-Tanaka map, Ermentrout-Kopell, Sigmoid Rate,
 > Threshold Linear Rate, Wilson-Cowan, Wong-Wang, Jansen-Rit,
-> Montbrió-Pazó-Roxin (`ErmentroutKopellPopulation`), and Resonate-and-Fire.
+> Montbrió-Pazó-Roxin (`ErmentroutKopellPopulation`), Resonate-and-Fire, and
+> Adaptive-Threshold IF.
 > All other models are Python-faithful with their
 > acceleration chain still under remediation.
 
@@ -143,6 +144,12 @@ constant-input flow of Izhikevich's (2001) complex resonator, preserves `x` as
 current-like and `y` as voltage-like, thresholds only an upward sampled
 crossing of `y`, and checks the generalised source reset `z=i*threshold` rather
 than a radius test or origin reset.
+The `AdaptiveThresholdIFNeuron` enrolment is an explicitly composite reduced
+adaptive-threshold LIF: an exact leaky-integrate-and-fire membrane relaxation,
+the Mihalas–Niebur (2009) threshold equation at zero voltage coupling, and the
+Platkiewicz–Brette (2010) fixed post-spike threshold shift; the
+voltage-dependent threshold equilibrium, voltage coupling, and adaptation
+currents remain outside the model and are stated as its reduction boundary.
 
 ## Model Catalogue
 

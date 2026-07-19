@@ -21,7 +21,6 @@ intended_use = []
 hardware_fit = []
 behavior_tags = [
     "bursting",
-    "chaotic",
     "excitable",
     "phasic",
 ]

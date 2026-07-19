@@ -12,7 +12,7 @@
 //! live in bounded child modules while historical public re-exports remain
 //! unchanged.
 
-mod adaptive_threshold_if;
+pub mod adaptive_threshold_if;
 mod closed_form_continuous;
 mod complementary_lif;
 mod energy_lif;

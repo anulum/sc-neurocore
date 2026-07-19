@@ -11,14 +11,20 @@ schema_version = 2
 name = "AdaptiveThresholdIFNeuron"
 class_name = "AdaptiveThresholdIFNeuron"
 module = "adaptive_threshold_if"
-display_name = ""
-summary = "Integrate-and-fire with dynamic threshold. Platkiewicz & Bhatt 2010."
+display_name = "Composite reduced adaptive-threshold leaky integrate-and-fire neuron"
+summary = "Exact-relaxation LIF membrane with the a=0 Mihalas-Niebur threshold-decay limit and the Platkiewicz-Brette fixed post-spike threshold shift."
 family = "Integrate-and-Fire"
 category = "integrate-and-fire"
 biophysical_detail = "point"
-maturity = "experimental"
-intended_use = []
-hardware_fit = []
+maturity = "validated"
+intended_use = [
+    "adaptive-threshold excitability studies",
+    "spike-frequency adaptation through threshold dynamics",
+    "cross-runtime exact-relaxation validation",
+]
+hardware_fit = [
+    "generated fixed-point co-simulation reference",
+]
 behavior_tags = [
     "adapting",
     "excitable",
@@ -28,16 +34,25 @@ behavior_tags = [
 
 [provenance]
 authors = [
+    "Mihalas, S. & Niebur, E.",
     "Platkiewicz, J. & Brette, R.",
 ]
-year = 2010
-doi = "10.1371/journal.pcbi.1000850"
+year = 2009
+doi = "10.1162/neco.2008.12-07-680"
+secondary_doi = "10.1371/journal.pcbi.1000850"
+paper_title = "A generalized linear integrate-and-fire neural model produces diverse spiking behaviors"
+url = "https://doi.org/10.1162/neco.2008.12-07-680"
+reduction_boundary = "Composite reduced model: exact LIF membrane relaxation plus the Mihalas-Niebur 2009 threshold equation at zero voltage coupling (a=0) plus the fixed post-spike threshold shift derived in Platkiewicz-Brette 2010. The Mihalas-Niebur voltage-coupling term a(V-E_L) and the Platkiewicz-Brette voltage-dependent threshold equilibrium theta_inf(V) are outside this reduced model; defaults are catalogue/model-family choices, not source-derived."
 
 [state.v]
 init = -65.0
+unit = "mV"
+meaning = "membrane potential"
 
 [state.theta]
 init = -50.0
+unit = "mV"
+meaning = "adaptive spike threshold"
 
 [parameters.v_rest]
 default = -65.0
@@ -69,7 +84,7 @@ range = [
 [parameters.delta_theta]
 default = 5.0
 unit = "mV"
-meaning = "threshold increment added at each spike"
+meaning = "fixed threshold increment added at each spike"
 range = [
     0.0,
     20.0,
@@ -95,15 +110,53 @@ range = [
 
 [integration]
 dt = 0.1
-method = "euler"
+method = "map"
 
 [dynamics]
+v = "tau_m*dV/dt=-(V-v_rest)+I; exact constant-input relaxation over dt"
+theta = "dtheta/dt=-(theta-theta_rest)/tau_theta; a=0 Mihalas-Niebur limit, exact relaxation over dt"
+event = "spike on candidate crossing next_v>=next_theta; post-spike V<-v_reset and theta<-theta+delta_theta (fixed Platkiewicz-Brette shift)"
+scope = "real piecewise-constant input; no adaptation current and no voltage-dependent threshold equilibrium in this reduced model"
 
 [backends.python]
 status = "implemented"
+parity = "exact"
+
+[backends.rust]
+status = "implemented"
+parity = "ulp-bounded"
+
+[backends.julia]
+status = "implemented"
+parity = "ulp-bounded"
+
+[backends.go]
+status = "implemented"
+parity = "ulp-bounded"
+
+[backends.mojo]
+status = "implemented"
+parity = "approximate"
 
 [reproducibility]
+reference_config = "{\"kind\":\"sampled_batch_v1\",\"v\":-65.0,\"theta\":-50.0,\"v_rest\":-65.0,\"v_reset\":-65.0,\"theta_rest\":-50.0,\"delta_theta\":5.0,\"tau_m\":10.0,\"tau_theta\":50.0,\"dt\":0.1,\"n_steps\":256,\"simulate_fields\":[\"current\"],\"inputs\":{\"current\":{\"function\":\"sin\",\"offset\":22.0,\"amplitude\":6.0,\"angular_frequency\":0.037}},\"trace_fields\":[\"v\",\"theta\",\"spikes\"]}"
+golden_trace_sha256 = "014ba91d669fe694a856015749aa94d0cccfd19c9eb058b025a411de9feb3fb5"
+golden_citation = "doi:10.1162/neco.2008.12-07-680 threshold subsystem at a=0; doi:10.1371/journal.pcbi.1000850 fixed post-spike threshold shift"
 
 [documentation]
 slug = "models/adaptive_threshold_if"
-notes = ""
+notes = "Composite reduced adaptive-threshold LIF. Exact identity: leaky membrane exact relaxation plus the a=0 Mihalas-Niebur threshold-decay limit plus the Platkiewicz-Brette fixed post-spike threshold shift. Not an exact Platkiewicz-Brette model (no voltage-dependent threshold equilibrium) and not an exact Mihalas-Niebur model (no voltage coupling, no adaptation current). Defaults are catalogue/model-family choices. dt=0.1 and sampled candidate-event detection are maintained engineering contracts, not source parameters."
+
+[validation]
+dynamics_faithful = true
+metric = "trajectory"
+operating_point = "non-zero configured initial state with varied real piecewise-constant input over 256 exact-relaxation steps"
+tolerance = "complete state, spike-vector, final-state, and spike-count agreement within absolute 1e-12 for Rust, Julia, and Go and 1e-10 for Mojo"
+evidence = "tests/test_adaptive_threshold_if_backends.py::test_complete_configured_contract_matches_python"
+
+[silicon]
+compiles = true
+cosim_validated = true
+cosim_evidence = "tests/test_cosim_adaptive_threshold_if.py::test_q1616_rtl_tracks_exact_relaxation_and_complete_event_vector"
+target_tier = "H1"
+terminal_reason = "Generated fixed-point co-simulation is validated; synthesis, timing, formal equivalence, and PPA evidence are not enrolled."

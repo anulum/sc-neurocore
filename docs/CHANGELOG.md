@@ -5,6 +5,26 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+### Adaptive-threshold IF source-to-co-simulation closure
+
+- Reconstructed `AdaptiveThresholdIFNeuron` as an explicitly composite
+  reduced adaptive-threshold LIF: exact constant-input LIF membrane
+  relaxation, the Mihalas–Niebur (2009) threshold equation at zero voltage
+  coupling, and the Platkiewicz–Brette (2010) fixed post-spike threshold
+  shift. Corrected the "Platkiewicz & Bhatt" typographical attribution and
+  the descriptor's `integration.method = "euler"` mismatch; the
+  voltage-dependent threshold equilibrium, voltage coupling, and adaptation
+  current are recorded as the reduction boundary. Defaults are documented as
+  catalogue/model-family choices.
+- Closed the complete contract end to end: validating atomic Python model
+  with a five-runtime measured-order dispatch; modular Rust engine and PyO3
+  batch binding; standalone Rust safety mirror; Julia, Go, and Mojo kernels
+  with real C ABIs; paired TOML/JSON exact-map schemas; an independent DOI
+  reference trace; Q32.32 co-simulation at the enrolled grid-exact operating
+  point (complete event vector identical, state error below `1.22e-8`); a
+  depth-4 Z3 reset-safety job; a source/binary-hashed five-runtime
+  200,000-step benchmark; and descriptor, catalogue, fidelity, validation,
+  and generated documentation surfaces.
 ### Wilson-Cowan generated-RTL co-simulation
 
 - Added paired-schema and generated Q32.32 Verilog trajectory co-simulation

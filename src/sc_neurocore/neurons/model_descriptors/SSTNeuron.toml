@@ -23,6 +23,7 @@ behavior_tags = [
     "excitable",
     "irregular",
     "phasic",
+    "tonic",
 ]
 
 [provenance]

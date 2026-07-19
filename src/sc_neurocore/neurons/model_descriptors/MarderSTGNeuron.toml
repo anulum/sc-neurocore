@@ -20,10 +20,9 @@ maturity = "experimental"
 intended_use = []
 hardware_fit = []
 behavior_tags = [
-    "bursting",
-    "chaotic",
+    "adapting",
     "excitable",
-    "irregular",
+    "phasic",
 ]
 
 [provenance]

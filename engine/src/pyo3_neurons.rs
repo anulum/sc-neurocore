@@ -20,6 +20,8 @@ use pyo3::types::PyDict;
 use crate::neuron;
 use crate::neurons;
 
+#[path = "bindings/adaptive_threshold_if.rs"]
+mod adaptive_threshold_if_binding;
 #[path = "bindings/ermentrout_kopell_pop.rs"]
 mod ermentrout_kopell_pop_binding;
 #[path = "bindings/jansen_rit.rs"]
@@ -2113,6 +2115,7 @@ pub fn register_neuron_classes(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_class::<PyParametricLIFNeuron>()?;
     m.add_class::<PyNonResettingLIFNeuron>()?;
     m.add_class::<PyAdaptiveThresholdIFNeuron>()?;
+    adaptive_threshold_if_binding::register(m)?;
     m.add_class::<PySigmaDeltaNeuron>()?;
     m.add_class::<PyEnergyLIFNeuron>()?;
     m.add_class::<PyIntegerQIFNeuron>()?;

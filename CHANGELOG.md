@@ -4,7 +4,28 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ## [Unreleased]
 
+### Added
+- Reconstructed `AdaptiveThresholdIFNeuron` as an explicitly composite
+  reduced adaptive-threshold leaky integrate-and-fire: exact constant-input
+  LIF membrane relaxation, the Mihalas–Niebur (2009) threshold equation at
+  zero voltage coupling, and the Platkiewicz–Brette (2010) fixed post-spike
+  threshold shift; the voltage-dependent threshold equilibrium, voltage
+  coupling, and adaptation current are recorded as the reduction boundary,
+  with defaults documented as catalogue/model-family choices.
+- Added configured atomic batch execution through Python, the modular Rust
+  engine, independent Rust safety, Julia, Go C-shared, and Mojo shared-library
+  lanes; an independently derived composite-DOI reference trace; paired
+  TOML/JSON exact-map schemas; Q32.32 generated-RTL co-simulation at the
+  enrolled grid-exact operating point with the complete event vector
+  identical; a depth-4 Z3 reset-safety job; and a source/binary-hashed
+  five-runtime 200,000-step benchmark.
+
 ### Fixed
+- Corrected the `AdaptiveThresholdIFNeuron` "Platkiewicz & Bhatt 2010"
+  typographical attribution and the descriptor `integration.method = "euler"`
+  mismatch (production always used the exact constant-input relaxation);
+  replaced the Rust engine's forward-Euler step with the maintained exact
+  relaxation so every lane executes the same contract.
 - Reconciled schema validation with the runtime's exact state-free level-
   threshold and Poisson contracts through one shared semantic predicate. Added
   the missing JSON peers for both rate-model schemas and refreshed the live

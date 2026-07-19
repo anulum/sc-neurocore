@@ -1,0 +1,51 @@
+{
+  "schema_version": "sc-neurocore.reference-trace.v1",
+  "name": "adaptive_threshold_if_tonic_adaptation_doi",
+  "model": {
+    "schema_name": "adaptive_threshold_if",
+    "runner": "universal_dsl"
+  },
+  "protocol": {
+    "dt": 0.1,
+    "steps": 160,
+    "inputs": {
+      "I": 20.0
+    },
+    "state_variables": [
+      "v",
+      "theta"
+    ]
+  },
+  "provenance": {
+    "kind": "analytic_exact_relaxation_reference",
+    "source": "src/sc_neurocore/neurons/model_schemas/adaptive_threshold_if.toml",
+    "equation": "Exact constant-input relaxations v<-(v_rest+I)+(v-(v_rest+I))*exp(-dt/tau_m) and theta<-theta_rest+(theta-theta_rest)*exp(-dt/tau_theta); on candidate crossing v>=theta install v_reset and theta+delta_theta. Composite identity: a=0 Mihalas-Niebur 2009 threshold-decay limit plus the Platkiewicz-Brette 2010 fixed post-spike threshold shift.",
+    "citation": "doi:10.1162/neco.2008.12-07-680 and doi:10.1371/journal.pcbi.1000850"
+  },
+  "expected_features": {
+    "spike_count": 1.0,
+    "first_spike_step": 138.0,
+    "final.v": -61.21168491940377,
+    "min.v": -65.0,
+    "max.v": -50.03157106119515,
+    "mean.v": -56.78944787827739,
+    "final.theta": -45.20565109713756,
+    "min.theta": -50.0,
+    "max.theta": -45.0,
+    "mean.theta": -49.326732766903746
+  },
+  "tolerances": {
+    "default": {
+      "absolute": 1e-12,
+      "relative": 1e-12
+    },
+    "spike_count": {
+      "absolute": 0.0,
+      "relative": 0.0
+    },
+    "first_spike_step": {
+      "absolute": 0.0,
+      "relative": 0.0
+    }
+  }
+}

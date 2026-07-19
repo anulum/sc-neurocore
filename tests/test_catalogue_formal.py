@@ -214,6 +214,30 @@ def test_rate_formal_jobs_match_enrolled_cosim_precision_and_event_silence(
     assert (" -flatten" in sby) is flatten
 
 
+def test_adaptive_threshold_if_formal_job_is_q3232_reset_safety_only() -> None:
+    """Keep Model41 formal evidence inside its H1 public-port boundary."""
+    import importlib.util
+
+    name = "emit_catalogue_formal_adaptive_threshold_if_precision"
+    spec = importlib.util.spec_from_file_location(name, EMITTER)
+    assert spec is not None and spec.loader is not None
+    module = importlib.util.module_from_spec(spec)
+    sys.modules[name] = module
+    spec.loader.exec_module(module)
+
+    assert module.CLASS_TO_SCHEMA["AdaptiveThresholdIFNeuron"] == "adaptive_threshold_if"
+    assert module.PRECISION_BY_SCHEMA["adaptive_threshold_if"] == (64, 32)
+    assert module.DEPTH_BY_SCHEMA["adaptive_threshold_if"] == 4
+    assert "adaptive_threshold_if" in module.MINIMAL_SAFETY_SCHEMAS
+    assert "adaptive_threshold_if" not in module.EVENT_SILENT_SCHEMAS
+    harness = (CATALOGUE / "sc_adaptive_threshold_if_formal.v").read_text(encoding="utf-8")
+    assert "Minimal safety: async reset clears the spike flag" in harness
+    assert harness.count("assert (spike_out == 1'b0);") == 1
+    assert "past_valid" not in harness
+    assert "uut." not in harness
+    assert "Saturation contract" not in harness
+
+
 def test_dpi_formal_job_uses_enrolled_q1616_precision() -> None:
     """Keep formal DPI RTL aligned with its three-state co-simulation envelope."""
     import importlib.util
