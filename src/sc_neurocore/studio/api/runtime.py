@@ -40,7 +40,9 @@ from sc_neurocore.studio.platform import (
 from sc_neurocore.studio.synthesis import EdaProcessLimits
 
 
-DEFAULT_STUDIO_JOB_KINDS = frozenset({"compiler", "evidence", "synthesis", "training"})
+DEFAULT_STUDIO_JOB_KINDS = frozenset(
+    {"analysis", "compiler", "evidence", "model_scan", "synthesis", "training"}
+)
 
 
 @dataclass(slots=True)

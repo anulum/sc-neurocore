@@ -22,6 +22,8 @@ from sc_neurocore.studio.api.schemas import (
     BenchmarkRunRequest,
     DclsEvaluateRequest,
 )
+from sc_neurocore.studio.platform.jobs_context import StudioJobContext
+from sc_neurocore.studio.platform.jobs_models import StudioJobRejected
 from sc_neurocore.studio.benchmark_contribution import (
     ALLOWED_ENVIRONMENT_KEYS,
     FORBIDDEN_KEYS,
@@ -50,6 +52,7 @@ def build_catalogue_router(context: StudioApiContext) -> APIRouter:
     """Build the catalogue and benchmark router over shared Studio runtime state."""
     router = APIRouter()
     analysis_budget = context.analysis_budget
+    studio_job_manager = context.studio_job_manager
 
     @router.get("/api/templates")
     def api_templates() -> list[dict[str, Any]]:
@@ -68,6 +71,13 @@ def build_catalogue_router(context: StudioApiContext) -> APIRouter:
 
     @router.get("/api/models/scan")
     def api_model_scan() -> Any:
+        """Run a budgeted synchronous catalogue model scan.
+
+        Full-catalogue scans that exceed the synchronous analysis budget are
+        rejected with ``execution_mode=job_required`` so operators use
+        :func:`api_model_scan_job` instead of blocking the HTTP request thread.
+        """
+
         duration = 100.0
         _guard_model_scan_request(
             analysis_budget,
@@ -75,6 +85,40 @@ def build_catalogue_router(context: StudioApiContext) -> APIRouter:
             duration=duration,
         )
         return _safe(lambda: scan_all_models(current=10.0, duration=duration))
+
+    @router.post("/api/models/scan/jobs")
+    def api_model_scan_job() -> dict[str, Any]:
+        """Submit a full-catalogue model scan as an asynchronous Studio job.
+
+        Returns a path-free job record immediately. Poll
+        ``GET /api/studio/jobs/{job_id}`` for completion; the completed job
+        ``result`` carries ``studio.model-scan.v1`` payload with evidence class.
+        """
+
+        duration = 100.0
+        current = 10.0
+
+        def _task(_job_context: StudioJobContext) -> dict[str, object]:
+            payload = scan_all_models(current=current, duration=duration)
+            return dict(payload)
+
+        try:
+            record = studio_job_manager.submit(
+                kind="model_scan",
+                owner="studio",
+                request_id=None,
+                task=_task,
+            )
+        except StudioJobRejected as exc:
+            raise HTTPException(status_code=422, detail=str(exc)) from None
+        public = record.to_public_dict()
+        return {
+            "execution_mode": "async_job",
+            "job": public,
+            "job_id": record.job_id,
+            "schema_version": "studio.model-scan.job.v1",
+            "status_route": f"/api/studio/jobs/{record.job_id}",
+        }
 
     @router.get("/api/models/facets")
     def api_model_facets() -> Any:

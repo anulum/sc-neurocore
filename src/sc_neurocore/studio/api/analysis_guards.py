@@ -78,7 +78,17 @@ def _guard_analysis_request(
         )
         enforce_analysis_budget(cost, budget)
     except AnalysisBudgetError as exc:
-        raise HTTPException(status_code=422, detail=exc.to_public_detail()) from None
+        detail = dict(exc.to_public_detail())
+        detail.update(
+            {
+                "async_required": True,
+                "evidence_classification": "analysis",
+                "execution_mode": "job_required",
+                "recommended_route": "POST /api/analysis/jobs",
+                "schema_version": "studio.analysis.budget.v1",
+            }
+        )
+        raise HTTPException(status_code=422, detail=detail) from None
 
 
 def _guard_multi_config_analysis_request(
@@ -164,7 +174,9 @@ def _guard_model_scan_request(
     ------
     HTTPException
         With status 422 and a path-free budget detail when the scan exceeds the
-        configured synchronous analysis budget.
+        configured synchronous analysis budget. The detail marks the scan as
+        ``job_required`` so clients must use the async model-scan job route
+        rather than blocking the HTTP worker on a full-catalogue simulation.
     """
     try:
         cost = evaluate_model_scan_cost(
@@ -174,7 +186,17 @@ def _guard_model_scan_request(
         )
         enforce_analysis_budget(cost, budget)
     except AnalysisBudgetError as exc:
-        raise HTTPException(status_code=422, detail=exc.to_public_detail()) from None
+        detail = dict(exc.to_public_detail())
+        detail.update(
+            {
+                "async_required": True,
+                "evidence_classification": "analysis",
+                "execution_mode": "job_required",
+                "recommended_route": "POST /api/models/scan/jobs",
+                "schema_version": "studio.model-scan.v1",
+            }
+        )
+        raise HTTPException(status_code=422, detail=detail) from None
 
 
 def _config_duration_dt(config: dict[str, Any]) -> tuple[float, float | None]:
