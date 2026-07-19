@@ -7,14 +7,13 @@
 // SC-NeuroCore — Analysis job session policy (outside UI)
 
 /**
- * Pure state machine and session lifecycle for POST /api/analysis/jobs.
- * No invented progress percentages; polling stops on dispose/terminal.
+ * Pure view-state machine for POST /api/analysis/jobs.
+ * Timer/API lifecycle lives in analysisJobSession.ts.
  */
 
 import type {
   AnalysisJobKind,
   AnalysisJobReceipt,
-  AnalysisJobRequestBody,
   AnalysisJobResult,
   StudioJobRecord,
 } from "./api/client";
@@ -25,6 +24,12 @@ import {
 } from "./analysisJobValidation";
 
 export { validateAnalysisJobResult } from "./analysisJobValidation";
+export {
+  createAnalysisJobSession,
+  type AnalysisJobApi,
+  type AnalysisJobSession,
+  type AnalysisJobSessionOptions,
+} from "./analysisJobSession";
 
 export type AnalysisJobPhase =
   | "idle"
@@ -274,142 +279,4 @@ export function reduceAnalysisJob(
       return _exhaustive;
     }
   }
-}
-
-export interface AnalysisJobApi {
-  fetchJob: (statusRoute: string) => Promise<StudioJobRecord>;
-  submit: (request: AnalysisJobRequestBody) => Promise<AnalysisJobReceipt>;
-}
-
-export interface AnalysisJobSessionOptions {
-  api: AnalysisJobApi;
-  clearTimeoutFn?: typeof clearTimeout;
-  onChange?: (state: AnalysisJobViewState) => void;
-  pollIntervalMs?: number;
-  setTimeoutFn?: typeof setTimeout;
-}
-
-export interface AnalysisJobSession {
-  dispose: () => void;
-  getState: () => AnalysisJobViewState;
-  startJob: (request: AnalysisJobRequestBody) => Promise<void>;
-}
-
-/**
- * Create a non-React analysis-job session (submit + poll to terminal).
- */
-export function createAnalysisJobSession(
-  options: AnalysisJobSessionOptions,
-): AnalysisJobSession {
-  const pollIntervalMs = options.pollIntervalMs ?? 500;
-  const setTimeoutFn = options.setTimeoutFn ?? setTimeout;
-  const clearTimeoutFn = options.clearTimeoutFn ?? clearTimeout;
-  let state = initialAnalysisJobState();
-  let disposed = false;
-  let timer: ReturnType<typeof setTimeout> | null = null;
-  let generation = 0;
-
-  const publish = (next: AnalysisJobViewState) => {
-    state = next;
-    options.onChange?.(state);
-  };
-
-  const apply = (event: AnalysisJobEvent) => {
-    if (disposed) {
-      return;
-    }
-    publish(reduceAnalysisJob(state, event));
-  };
-
-  const stopPolling = () => {
-    if (timer !== null) {
-      clearTimeoutFn(timer);
-      timer = null;
-    }
-  };
-
-  const schedulePoll = (gen: number, statusRoute: string) => {
-    stopPolling();
-    timer = setTimeoutFn(() => {
-      void (async () => {
-        if (disposed || gen !== generation) {
-          return;
-        }
-        try {
-          const record = await options.api.fetchJob(statusRoute);
-          if (disposed || gen !== generation) {
-            return;
-          }
-          apply({ type: "poll", record });
-          if (state.phase === "pending" || state.phase === "running") {
-            schedulePoll(gen, statusRoute);
-          } else {
-            stopPolling();
-          }
-        } catch (error: unknown) {
-          if (disposed || gen !== generation) {
-            return;
-          }
-          const message =
-            error instanceof Error ? error.message : "analysis_poll_failed";
-          apply({ type: "poll_failed", message });
-          stopPolling();
-        }
-      })();
-    }, pollIntervalMs);
-  };
-
-  return {
-    dispose: () => {
-      disposed = true;
-      generation += 1;
-      stopPolling();
-    },
-    getState: () => state,
-    startJob: async (request) => {
-      if (disposed || !canSubmitAnalysisJob(state)) {
-        return;
-      }
-      generation += 1;
-      const gen = generation;
-      stopPolling();
-      apply({ type: "submit_started", analysis: request.analysis });
-      try {
-        const receipt = await options.api.submit(request);
-        if (disposed || gen !== generation) {
-          return;
-        }
-        apply({ type: "submit_succeeded", receipt });
-        if (state.phase === "pending" || state.phase === "running") {
-          const route = state.statusRoute;
-          if (route !== null) {
-            try {
-              const record = await options.api.fetchJob(route);
-              if (disposed || gen !== generation) {
-                return;
-              }
-              apply({ type: "poll", record });
-              if (state.phase === "pending" || state.phase === "running") {
-                schedulePoll(gen, route);
-              }
-            } catch (error: unknown) {
-              if (disposed || gen !== generation) {
-                return;
-              }
-              const message =
-                error instanceof Error ? error.message : "analysis_poll_failed";
-              apply({ type: "poll_failed", message });
-            }
-          }
-        }
-      } catch (error: unknown) {
-        if (disposed || gen !== generation) {
-          return;
-        }
-        const message =
-          error instanceof Error ? error.message : "analysis_submit_failed";
-        apply({ type: "submit_failed", message });
-      }
-    },
-  };
 }

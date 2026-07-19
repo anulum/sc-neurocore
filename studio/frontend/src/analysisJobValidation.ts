@@ -13,36 +13,22 @@
 
 import type {
   AnalysisJobKind,
-  AnalysisJobReceipt,
   AnalysisJobResult,
   AnalysisResultMetadata,
   BifurcationResponse,
   FICurveResponse,
   HeatmapResponse,
   SensitivityResponse,
-  StudioJobRecord,
 } from "./api/client";
+import type { ValidationResult } from "./analysisJobRecordValidation";
 
-export type ValidationResult<T> =
-  | { ok: true; value: T }
-  | { ok: false; error: string };
+export type { ValidationResult } from "./analysisJobRecordValidation";
+export {
+  validateAnalysisJobReceipt,
+  validateAnalysisPollRecord,
+} from "./analysisJobRecordValidation";
 
 const HEX64 = /^[0-9a-fA-F]{64}$/;
-const JOB_STATUSES = new Set([
-  "pending",
-  "running",
-  "completed",
-  "failed",
-  "cancelling",
-  "cancelled",
-  "timed_out",
-]);
-const ANALYSIS_KINDS = new Set<AnalysisJobKind>([
-  "fi_curve",
-  "bifurcation",
-  "heatmap",
-  "sensitivity",
-]);
 const ANALYSIS_SOURCES = new Set(["ode", "model", "mixed", "unknown"]);
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -314,128 +300,4 @@ export function validateAnalysisJobResult(
       return { ok: false, error: `analysis_kind_unsupported:${_exhaustive}` };
     }
   }
-}
-
-/**
- * Validate an analysis job submit receipt and bind kind/id.
- */
-export function validateAnalysisJobReceipt(
-  receipt: unknown,
-  expectedKind: AnalysisJobKind,
-): ValidationResult<AnalysisJobReceipt> {
-  if (!isRecord(receipt)) {
-    return { ok: false, error: "analysis_job_receipt_invalid" };
-  }
-  if (receipt.schema_version !== "studio.analysis.job.v1") {
-    return { ok: false, error: "analysis_job_receipt_schema_invalid" };
-  }
-  if (receipt.execution_mode !== "async_job") {
-    return { ok: false, error: "analysis_job_receipt_mode_invalid" };
-  }
-  if (receipt.analysis !== expectedKind || !ANALYSIS_KINDS.has(receipt.analysis as AnalysisJobKind)) {
-    return { ok: false, error: "analysis_job_receipt_analysis_mismatch" };
-  }
-  if (!isNonEmptyString(receipt.job_id)) {
-    return { ok: false, error: "analysis_job_receipt_job_id_invalid" };
-  }
-  if (!isNonEmptyString(receipt.status_route)) {
-    return { ok: false, error: "analysis_job_receipt_status_route_invalid" };
-  }
-  if (!isRecord(receipt.job)) {
-    return { ok: false, error: "analysis_job_receipt_job_missing" };
-  }
-  if (receipt.job.kind !== "analysis") {
-    return { ok: false, error: "analysis_job_receipt_kind_mismatch" };
-  }
-  if (receipt.job.job_id !== receipt.job_id) {
-    return { ok: false, error: "analysis_job_receipt_job_id_mismatch" };
-  }
-  const jobStatus = receipt.job.status;
-  if (typeof jobStatus !== "string" || !JOB_STATUSES.has(jobStatus)) {
-    return { ok: false, error: "analysis_job_receipt_status_invalid" };
-  }
-  const job: StudioJobRecord = {
-    artifacts: Array.isArray(receipt.job.artifacts)
-      ? (receipt.job.artifacts as StudioJobRecord["artifacts"])
-      : [],
-    created_at_utc:
-      typeof receipt.job.created_at_utc === "string" ? receipt.job.created_at_utc : "",
-    error: typeof receipt.job.error === "string" ? receipt.job.error : null,
-    execution_model: receipt.job.execution_model === "process" ? "process" : "thread",
-    finished_at_utc:
-      typeof receipt.job.finished_at_utc === "string" ? receipt.job.finished_at_utc : null,
-    job_id: receipt.job_id,
-    kind: "analysis",
-    owner: typeof receipt.job.owner === "string" ? receipt.job.owner : "studio",
-    request_id:
-      typeof receipt.job.request_id === "string" ? receipt.job.request_id : null,
-    result: isRecord(receipt.job.result) ? receipt.job.result : null,
-    started_at_utc:
-      typeof receipt.job.started_at_utc === "string" ? receipt.job.started_at_utc : null,
-    status: jobStatus as StudioJobRecord["status"],
-  };
-  const value: AnalysisJobReceipt = {
-    analysis: expectedKind,
-    execution_mode: "async_job",
-    job,
-    job_id: receipt.job_id,
-    schema_version: "studio.analysis.job.v1",
-    status_route: receipt.status_route,
-  };
-  if (isFiniteNumber(receipt.projected_simulations)) {
-    value.projected_simulations = receipt.projected_simulations;
-  }
-  if (isFiniteNumber(receipt.duration_ms)) {
-    value.duration_ms = receipt.duration_ms;
-  }
-  if (isFiniteNumber(receipt.dt_ms)) {
-    value.dt_ms = receipt.dt_ms;
-  }
-  return { ok: true, value };
-}
-
-/**
- * Bind a polled job record to the retained analysis job id and kind.
- */
-export function validateAnalysisPollRecord(
-  record: unknown,
-  expectedJobId: string | null,
-): ValidationResult<StudioJobRecord> {
-  if (!isRecord(record)) {
-    return { ok: false, error: "analysis_poll_record_invalid" };
-  }
-  if (!isNonEmptyString(record.job_id)) {
-    return { ok: false, error: "analysis_poll_job_id_invalid" };
-  }
-  if (record.kind !== "analysis") {
-    return { ok: false, error: "analysis_poll_kind_mismatch" };
-  }
-  if (expectedJobId === null || record.job_id !== expectedJobId) {
-    return { ok: false, error: "analysis_poll_job_id_mismatch" };
-  }
-  if (typeof record.status !== "string" || !JOB_STATUSES.has(record.status)) {
-    return { ok: false, error: "analysis_poll_status_invalid" };
-  }
-  return {
-    ok: true,
-    value: {
-      artifacts: Array.isArray(record.artifacts)
-        ? (record.artifacts as StudioJobRecord["artifacts"])
-        : [],
-      created_at_utc:
-        typeof record.created_at_utc === "string" ? record.created_at_utc : "",
-      error: typeof record.error === "string" ? record.error : null,
-      execution_model: record.execution_model === "process" ? "process" : "thread",
-      finished_at_utc:
-        typeof record.finished_at_utc === "string" ? record.finished_at_utc : null,
-      job_id: record.job_id,
-      kind: "analysis",
-      owner: typeof record.owner === "string" ? record.owner : "studio",
-      request_id: typeof record.request_id === "string" ? record.request_id : null,
-      result: isRecord(record.result) ? record.result : null,
-      started_at_utc:
-        typeof record.started_at_utc === "string" ? record.started_at_utc : null,
-      status: record.status as StudioJobRecord["status"],
-    },
-  };
 }

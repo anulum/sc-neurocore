@@ -110,6 +110,24 @@ describe("validateAnalysisJobResult by kind", () => {
   });
 });
 
+function jobEnvelope(overrides: Record<string, unknown> = {}) {
+  return {
+    artifacts: [],
+    created_at_utc: "2026-07-19T00:00:00Z",
+    error: null,
+    execution_model: "thread",
+    finished_at_utc: null,
+    job_id: "sj_a1",
+    kind: "analysis",
+    owner: "studio",
+    request_id: null,
+    result: null,
+    started_at_utc: null,
+    status: "pending",
+    ...overrides,
+  };
+}
+
 describe("receipt and poll binding", () => {
   const receipt = {
     analysis: "fi_curve",
@@ -117,7 +135,7 @@ describe("receipt and poll binding", () => {
     job_id: "sj_a1",
     schema_version: "studio.analysis.job.v1",
     status_route: "/api/studio/jobs/sj_a1",
-    job: { job_id: "sj_a1", kind: "analysis", status: "pending" },
+    job: jobEnvelope(),
   };
 
   it("rejects receipt analysis/id/kind mismatches", () => {
@@ -125,13 +143,13 @@ describe("receipt and poll binding", () => {
     expect(validateAnalysisJobReceipt(receipt, "heatmap").ok).toBe(false);
     expect(
       validateAnalysisJobReceipt(
-        { ...receipt, job: { ...receipt.job, kind: "model_scan" } },
+        { ...receipt, job: jobEnvelope({ kind: "model_scan" }) },
         "fi_curve",
       ).ok,
     ).toBe(false);
     expect(
       validateAnalysisJobReceipt(
-        { ...receipt, job: { ...receipt.job, job_id: "sj_other" } },
+        { ...receipt, job: jobEnvelope({ job_id: "sj_other" }) },
         "fi_curve",
       ).ok,
     ).toBe(false);
@@ -140,19 +158,79 @@ describe("receipt and poll binding", () => {
   it("rejects poll id/kind mismatches", () => {
     expect(
       validateAnalysisPollRecord(
-        { job_id: "sj_a1", kind: "analysis", status: "running" },
+        jobEnvelope({ status: "running" }),
         "sj_a1",
       ).ok,
     ).toBe(true);
     expect(
       validateAnalysisPollRecord(
-        { job_id: "sj_other", kind: "analysis", status: "running" },
+        jobEnvelope({ job_id: "sj_other", status: "running" }),
         "sj_a1",
       ).ok,
     ).toBe(false);
     expect(
       validateAnalysisPollRecord(
-        { job_id: "sj_a1", kind: "model_scan", status: "running" },
+        jobEnvelope({ kind: "model_scan", status: "running" }),
+        "sj_a1",
+      ).ok,
+    ).toBe(false);
+  });
+
+  it("rejects fail-open envelopes: empty artifacts, invalid model, nullables, metrics", () => {
+    expect(
+      validateAnalysisJobReceipt(
+        {
+          ...receipt,
+          job: jobEnvelope({ artifacts: [{}] }),
+        },
+        "fi_curve",
+      ).ok,
+    ).toBe(false);
+    expect(
+      validateAnalysisJobReceipt(
+        {
+          ...receipt,
+          job: jobEnvelope({ execution_model: "fiber" }),
+        },
+        "fi_curve",
+      ).ok,
+    ).toBe(false);
+    expect(
+      validateAnalysisJobReceipt(
+        {
+          ...receipt,
+          job: jobEnvelope({ created_at_utc: 1 }),
+        },
+        "fi_curve",
+      ).ok,
+    ).toBe(false);
+    expect(
+      validateAnalysisJobReceipt(
+        {
+          ...receipt,
+          job: jobEnvelope({ error: 12 }),
+        },
+        "fi_curve",
+      ).ok,
+    ).toBe(false);
+    expect(
+      validateAnalysisJobReceipt(
+        {
+          ...receipt,
+          job: jobEnvelope({ result: "nope" }),
+        },
+        "fi_curve",
+      ).ok,
+    ).toBe(false);
+    expect(
+      validateAnalysisJobReceipt(
+        { ...receipt, projected_simulations: "many" },
+        "fi_curve",
+      ).ok,
+    ).toBe(false);
+    expect(
+      validateAnalysisPollRecord(
+        jobEnvelope({ artifacts: [{}], status: "running" }),
         "sj_a1",
       ).ok,
     ).toBe(false);
