@@ -58,12 +58,32 @@ function simulateResult(overrides: Partial<SimulateResponse> = {}): SimulateResp
 
 describe("decideSimulationEnqueue", () => {
   it("includes states and ODE identity; skips failed or unchanged results", () => {
-    const before = simulationResultIdentity(simulateResult({ spike_count: 0 }));
+    const priorMeta = {
+      dt: 0.1,
+      evidence_classification: "simulation" as const,
+      input_sha256: "a".repeat(64),
+      n_steps: 3,
+      result_sha256: "0".repeat(64),
+      sample_count: 3,
+      schema_version: "studio.simulation-run.v1" as const,
+      source: "model" as const,
+      spike_count: 0,
+      status: "completed" as const,
+      state_variables: ["v"],
+    };
+    const successMeta = {
+      ...priorMeta,
+      result_sha256: "b".repeat(64),
+      spike_count: 1,
+    };
+    const before = simulationResultIdentity(
+      simulateResult({ spike_count: 0, run_metadata: priorMeta }),
+    );
     const success = decideSimulationEnqueue(emptyEvidenceCart(), {
       runSucceeded: true,
       sourceMode: "ode",
       selectedModelName: "stale-model",
-      result: simulateResult({ model_name: undefined }),
+      result: simulateResult({ model_name: undefined, run_metadata: successMeta }),
       resultIdentityBefore: before,
     });
     expect(success.action).toBe("enqueue");
@@ -93,6 +113,84 @@ describe("decideSimulationEnqueue", () => {
     });
     expect(same.action).toBe("skip");
     expect(same.action === "skip" && same.reason).toBe("simulation_result_unchanged");
+  });
+
+  it("enqueues same-shape results when result_sha256 differs (no shape-only collision)", () => {
+    const shape = {
+      time: [0, 0.1, 0.2],
+      states: { v: [-65, -60, -55] as number[] },
+      current_trace: [10, 10, 10],
+      spikes: [0.2],
+      spike_count: 1,
+      dt: 0.1,
+      n_steps: 3,
+    };
+    const first = simulateResult({
+      ...shape,
+      run_metadata: {
+        dt: 0.1,
+        evidence_classification: "simulation",
+        input_sha256: "a".repeat(64),
+        n_steps: 3,
+        result_sha256: "1".repeat(64),
+        sample_count: 3,
+        schema_version: "studio.simulation-run.v1",
+        source: "model",
+        spike_count: 1,
+        status: "completed",
+        state_variables: ["v"],
+      },
+    });
+    const second = simulateResult({
+      ...shape,
+      // Distinct values, identical counts/lengths/keys/dt.
+      states: { v: [-64, -59, -50] },
+      spikes: [0.15],
+      run_metadata: {
+        dt: 0.1,
+        evidence_classification: "simulation",
+        input_sha256: "c".repeat(64),
+        n_steps: 3,
+        result_sha256: "2".repeat(64),
+        sample_count: 3,
+        schema_version: "studio.simulation-run.v1",
+        source: "model",
+        spike_count: 1,
+        status: "completed",
+        state_variables: ["v"],
+      },
+    });
+    expect(simulationResultIdentity(first)).not.toBe(simulationResultIdentity(second));
+    expect(first.spike_count).toBe(second.spike_count);
+    expect(first.n_steps).toBe(second.n_steps);
+    expect(first.dt).toBe(second.dt);
+    expect(Object.keys(first.states)).toEqual(Object.keys(second.states));
+
+    const afterFirst = decideSimulationEnqueue(emptyEvidenceCart(), {
+      runSucceeded: true,
+      sourceMode: "model",
+      selectedModelName: "LIFNeuron",
+      result: first,
+      resultIdentityBefore: null,
+    });
+    expect(afterFirst.action).toBe("enqueue");
+    if (afterFirst.action !== "enqueue") {
+      return;
+    }
+    const afterSecond = decideSimulationEnqueue(afterFirst.cart, {
+      runSucceeded: true,
+      sourceMode: "model",
+      selectedModelName: "LIFNeuron",
+      result: second,
+      resultIdentityBefore: simulationResultIdentity(first),
+    });
+    expect(afterSecond.action).toBe("enqueue");
+    if (afterSecond.action !== "enqueue") {
+      return;
+    }
+    expect(afterSecond.cart.items).toHaveLength(2);
+    expect((afterSecond.cart.items[1]?.payload as { states: { v: number[] } }).states.v)
+      .toEqual([-64, -59, -50]);
   });
 });
 

@@ -52,20 +52,20 @@ export type QueueDecision =
   | { action: "skip"; reason: string; cart: EvidenceCart };
 
 /**
- * Build a stable identity string for a simulation result snapshot.
+ * Build a content-faithful identity for a simulation result snapshot.
+ *
+ * Uses the authoritative ``run_metadata.result_sha256`` so two same-shape
+ * traces with different values cannot collide and be treated as unchanged.
  */
 export function simulationResultIdentity(result: SimulateResponse | null): string | null {
   if (result === null) {
     return null;
   }
-  return [
-    result.spike_count,
-    result.n_steps,
-    result.dt,
-    result.time.length,
-    result.spikes.length,
-    Object.keys(result.states).sort().join(","),
-  ].join("|");
+  const digest = result.run_metadata?.result_sha256;
+  if (typeof digest !== "string" || digest.length === 0) {
+    return null;
+  }
+  return digest;
 }
 
 /**
