@@ -26,13 +26,14 @@ export type StudioDeploymentProfile = "development" | "production" | string | nu
  * as non-production (safe default: loud preview).
  */
 export function shouldShowDevelopmentPreviewBanner(
-  deploymentProfile: StudioDeploymentProfile,
+  _deploymentProfile: StudioDeploymentProfile,
   options: { releaseValidated?: boolean } = {},
 ): boolean {
   if (options.releaseValidated === true) {
     return false;
   }
-  // Always show until releaseValidated; profile only changes tone.
+  // Always show until releaseValidated; profile only changes tone in banner copy.
+  void _deploymentProfile;
   return true;
 }
 
