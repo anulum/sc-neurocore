@@ -98,13 +98,13 @@ Neurons are taken only from the polyglot-complete set in
 | # | Notebook | What you learn | Evidence boundary |
 |---|----------|---------------|-------------------|
 | 41 | `41_one_model_five_views` | Hodgkin–Huxley, Morris–Lecar, AdEx: dynamics, f–I, SC rate pedagogy, didactic Q8.8 voltage quantisation, hardware-path pointers | Local figures only; not polyglot parity, FPGA power/timing, or full RTL co-sim for all three |
-| 42 | `42_fault_tolerance_theatre` | Perfect Integrator baseline plus SC unipolar product vs float under controlled BER | Local BER trends only; not radiation qualification or FIT rates |
+| 42 | `42_fault_tolerance_theatre` | Perfect Integrator baseline plus production-injected SC bit-flip sensitivity | Local SC BER trend only; no fixed-point comparison, radiation qualification, or FIT rates |
 | 43 | `43_studio_evidence_cart_lab` | AdEx run plus pedagogical SHA-256 ledger aligned with `studio.evidence-cart.v1` field names | Python in-process digests only; not Studio browser cart or server evidence-bundle product export |
 | 44 | `44_shd_real_spike_walkthrough` | Local SHD H5 sample raster + Vertex `training_log.csv` curves when present | Local files only; no download, no leaderboard, no FPGA claim |
 | 45 | `45_nir_passport` | NIR LIF graph → `from_nir` → step → write/reload | Toy NIR LIF graph interop; not full HF catalogue export |
 | 46 | `46_energy_proxy_honest` | Perfect Integrator population toggle proxy (event vs clock) | Toggle counts only — not joules/PPA |
-| 47 | `47_closed_loop_in_silico` | Spike encode/decode + toy plant + PI companion | Simulation only; not clinical BCI |
-| 48 | `48_fail_closed_gallery` | Digest identity rejects + encoder gap notes + HF happy path | Not a full security audit |
+| 47 | `47_closed_loop_in_silico` | Production lossless SpikeCodec round-trip + toy plant + PI companion | Simulation only; not clinical BCI |
+| 48 | `48_fail_closed_gallery` | Production SC-NIR/STDP refusal paths and valid controls | Four demonstrated guards only; not a full security audit |
 
 ## Priority C demo scripts (`examples/`)
 
@@ -184,6 +184,14 @@ Every notebook topic has a corresponding test suite in `tests/`:
 | Neuro-symbolic self-verification evidence (37) | `test_notebooks/test_neuro_symbolic_self_verification_notebook.py` | 2 |
 | Formal SNN verification standard evidence (38) | `test_notebooks/test_formal_snn_verification_standard_notebook.py` | 2 |
 | Self-hosted hub evidence (39) | `test_notebooks/test_self_hosted_hub_notebook.py` | 2 |
+| One model, five views (41) | `test_notebooks/test_one_model_five_views_notebook.py` | 2 |
+| SC bit-flip sensitivity (42) | `test_notebooks/test_fault_tolerance_theatre_notebook.py` | 2 |
+| Studio evidence-cart lab (43) | `test_notebooks/test_studio_evidence_cart_lab_notebook.py` | 2 |
+| SHD real-spike walkthrough (44) | `test_notebooks/test_shd_real_spike_walkthrough_notebook.py` | 2 |
+| NIR passport (45) | `test_notebooks/test_nir_passport_notebook.py` | 2 |
+| Honest energy proxy (46) | `test_notebooks/test_energy_proxy_honest_notebook.py` | 2 |
+| Closed-loop in silico (47) | `test_notebooks/test_closed_loop_in_silico_notebook.py` | 2 |
+| Fail-closed gallery (48) | `test_notebooks/test_fail_closed_gallery_notebook.py` | 2 |
 | SCPN (—) | `test_scpn_integrated.py` | 17 |
 | CORDIV (14) | `test_cordiv_division.py` | 10 |
 | Monitors (—) | `test_network_monitors_stimulus.py` | 19 |

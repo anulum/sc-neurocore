@@ -103,24 +103,25 @@ def main() -> int:
         if not meta:
             print("  (no utilization summary lines matched)")
             continue
-        for k, v in meta.items():
-            print(f"  {k}: {v}")
+        for key, value in meta.items():
+            print(f"  {key}: {value}")
 
+    unreadable = 0
     for path in json_files[:12]:
         print(f"\n== {path.name} ==")
         try:
             summary = parse_yosys_json(path)
         except (OSError, json.JSONDecodeError) as exc:
             print(f"  unreadable: {type(exc).__name__}")
+            unreadable += 1
             continue
-        for k, v in summary.items():
-            print(f"  {k}: {v}")
+        for summary_key, summary_value in summary.items():
+            print(f"  {summary_key}: {summary_value}")
 
     print(
-        "\nDM-04 complete. Numbers above are from committed files only — "
-        "not a live synthesis run."
+        "\nDM-04 complete. Numbers above are from committed files only — not a live synthesis run."
     )
-    return 0
+    return 1 if unreadable else 0
 
 
 if __name__ == "__main__":

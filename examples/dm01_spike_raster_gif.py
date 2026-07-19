@@ -53,6 +53,7 @@ def main() -> int:
         matplotlib.use("Agg")
         import matplotlib.pyplot as plt
         from matplotlib import animation
+        from matplotlib.artist import Artist
     except ImportError as exc:
         raise SystemExit(f"matplotlib required: {exc}") from exc
 
@@ -63,17 +64,15 @@ def main() -> int:
     ax.set_ylim(float(voltage.min()) - 5.0, float(voltage.max()) + 5.0)
     ax.set_xlabel("time")
     ax.set_ylabel("v")
-    ax.set_title(
-        f"HodgkinHuxleyNeuron I={args.current} spikes={spikes} (local demo, not a claim)"
-    )
+    ax.set_title(f"HodgkinHuxleyNeuron I={args.current} spikes={spikes} (local demo, not a claim)")
     ax.grid(True, alpha=0.3)
     chunk = max(len(voltage) // args.frames, 1)
 
-    def init():
+    def init() -> tuple[Artist]:
         line.set_data([], [])
         return (line,)
 
-    def update(frame: int):
+    def update(frame: int) -> tuple[Artist]:
         end = min((frame + 1) * chunk, len(voltage))
         line.set_data(t[:end], voltage[:end])
         return (line,)
@@ -86,13 +85,13 @@ def main() -> int:
         interval=80,
         blit=True,
     )
-    try:
+    if animation.writers.is_available("pillow"):
         anim.save(args.out, writer="pillow", fps=12)
         print(f"wrote GIF {args.out}")
-    except Exception as exc:
+    else:
         png = args.out.with_suffix(".png")
         fig.savefig(png, dpi=120)
-        print(f"GIF save failed ({type(exc).__name__}); wrote static PNG {png}")
+        print(f"pillow writer unavailable; wrote static PNG {png}")
     plt.close(fig)
     return 0
 

@@ -36,13 +36,13 @@ monorepo plan
 | Notebook | Models | Story |
 | --- | --- | --- |
 | `41_one_model_five_views.ipynb` | Hodgkin–Huxley, Morris–Lecar, AdEx | Dynamics → f–I → SC rate pedagogy → quant demo → hardware pointers |
-| `42_fault_tolerance_theatre.ipynb` | Perfect Integrator | SC product vs float under bit flips |
+| `42_fault_tolerance_theatre.ipynb` | Perfect Integrator | Production-injected SC bit-flip sensitivity; no fixed-point comparison |
 | `43_studio_evidence_cart_lab.ipynb` | AdEx | Pedagogical ledger digests (Studio cart companion) |
 | `44_shd_real_spike_walkthrough.ipynb` | local SHD/Vertex data | Real artefacts on disk only |
 | `45_nir_passport.ipynb` | NIR LIF graph | Interop write/reload |
 | `46_energy_proxy_honest.ipynb` | Perfect Integrator pop | Toggles, not joules |
-| `47_closed_loop_in_silico.ipynb` | codec + PI | Simulation-only loop |
-| `48_fail_closed_gallery.ipynb` | AdEx / PI | Correct rejections + API gaps |
+| `47_closed_loop_in_silico.ipynb` | production SpikeCodec + PI | Bit-exact lossless round-trip and simulation-only loop |
+| `48_fail_closed_gallery.ipynb` | SC-NIR / STDP | Four concrete production refusal paths |
 
 ### Priority C demo scripts (`examples/`)
 
