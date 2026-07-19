@@ -9,10 +9,10 @@
         "i_mem": 0.06286757888007447,
         "refractory_time": 0.0
       },
-      "median_call_ms": 12.982104,
-      "minimum_call_ms": 12.031026,
+      "median_call_ms": 12.133218,
+      "minimum_call_ms": 10.521626,
       "parity_max_abs_diff": 1.1102230246251565e-16,
-      "speedup_vs_python": 52.71583427462914,
+      "speedup_vs_python": 45.86733132133619,
       "used": true
     },
     "julia": {
@@ -24,10 +24,10 @@
         "i_mem": 0.06286757888007447,
         "refractory_time": 0.0
       },
-      "median_call_ms": 7.322406,
-      "minimum_call_ms": 5.948601,
+      "median_call_ms": 5.52971,
+      "minimum_call_ms": 5.095118,
       "parity_max_abs_diff": 0.0,
-      "speedup_vs_python": 93.46141732649077,
+      "speedup_vs_python": 100.64150380399695,
       "used": true
     },
     "mojo": {
@@ -39,10 +39,10 @@
         "i_mem": 0.06286757888007447,
         "refractory_time": 0.0
       },
-      "median_call_ms": 10.990682,
-      "minimum_call_ms": 10.330169,
+      "median_call_ms": 10.345567,
+      "minimum_call_ms": 10.05684,
       "parity_max_abs_diff": 2.567945855957987e-13,
-      "speedup_vs_python": 62.26751379031802,
+      "speedup_vs_python": 53.79292696089059,
       "used": true
     },
     "python": {
@@ -54,8 +54,8 @@
         "i_mem": 0.06286757888007447,
         "refractory_time": 0.0
       },
-      "median_call_ms": 684.362443,
-      "minimum_call_ms": 635.735322,
+      "median_call_ms": 556.51833,
+      "minimum_call_ms": 548.620349,
       "parity_max_abs_diff": 0.0,
       "speedup_vs_python": 1.0,
       "used": true
@@ -69,10 +69,10 @@
         "i_mem": 0.06286757888007447,
         "refractory_time": 0.0
       },
-      "median_call_ms": 60.234146,
-      "minimum_call_ms": 54.535398,
+      "median_call_ms": 49.834536,
+      "minimum_call_ms": 47.379669,
       "parity_max_abs_diff": 0.0,
-      "speedup_vs_python": 11.36170243037894,
+      "speedup_vs_python": 11.167322396660822,
       "used": true
     }
   },
@@ -94,20 +94,20 @@
   ],
   "meta": {
     "affinity": [
-      2
+      0
     ],
     "cpu": "11th Gen Intel(R) Core(TM) i5-11600K @ 3.90GHz",
     "governor": "powersave",
     "kernel_isolated_cpus": "",
     "load_average_end": [
-      12.1474609375,
-      10.22314453125,
-      14.47705078125
+      5.10107421875,
+      10.37255859375,
+      15.7041015625
     ],
     "load_average_start": [
-      9.42333984375,
-      9.6328125,
-      14.35986328125
+      5.45654296875,
+      10.89501953125,
+      16.01416015625
     ],
     "measurement_scope": "single-logical-CPU affinity; kernel isolation and workstation load reported separately",
     "platform": "Linux-6.17.0-35-generic-x86_64-with-glibc2.39",
@@ -132,9 +132,9 @@
     },
     "engine/src/neurons/hardware.rs": "e32bcc977e8c4f61ef5f541718380411a0b1da344e496cb4c3a882ba0ac490a0",
     "engine/src/pyo3_neurons": {
-      "rs": "b2df9b7a5bb04d9bf0ab5cca7c152d3fb756b7217c7c53891c307d47a4597744"
+      "rs": "b69571347e26f09da292df35bf44cf055295038a16b04d82e4b619a50e764322"
     },
-    "engine/src/pyo3_neurons.rs": "b2df9b7a5bb04d9bf0ab5cca7c152d3fb756b7217c7c53891c307d47a4597744",
+    "engine/src/pyo3_neurons.rs": "b69571347e26f09da292df35bf44cf055295038a16b04d82e4b619a50e764322",
     "src/sc_neurocore/accel/dpi_neuron": {
       "py": "8912b0ca0ca455b95855300b71e2cddbdceaec42dc0b65590b330f4148cf5193"
     },
@@ -190,17 +190,17 @@
     "rust_safety": {
       "command": "cargo test --release --manifest-path src/sc_neurocore/accel/rust/Cargo.toml dpi_neuron::tests",
       "output_tail": [
-        "test dpi_neuron::tests::non_finite_candidate_does_not_mutate_state ... ok",
         "test dpi_neuron::tests::one_step_matches_coupled_euler_reference ... ok",
         "test dpi_neuron::tests::refractory_pulse_holds_reset_and_drives_adaptation ... ok",
         "test dpi_neuron::tests::reset_preserves_parameters ... ok",
         "test dpi_neuron::tests::sustained_drive_exhibits_spike_frequency_adaptation ... ok",
         "test dpi_neuron::tests::threshold_crossing_starts_refractory_pulse ... ok",
         "",
-        "test result: ok. 12 passed; 0 failed; 0 ignored; 0 measured; 984 filtered out; finished in 0.00s",
+        "test result: ok. 12 passed; 0 failed; 0 ignored; 0 measured; 1007 filtered out; finished in 0.00s",
         "",
         "",
-        "    Finished `release` profile [optimized] target(s) in 0.01s",
+        "   Compiling sc-neurocore-safety v3.12.0 (/media/anulum/GOTM/_scratch/scn-ci-remediation-3314012-20260719T1758/src/sc_neurocore/accel/rust)",
+        "    Finished `release` profile [optimized] target(s) in 16.00s",
         "     Running unittests safety/lib.rs (src/sc_neurocore/accel/rust/target/release/deps/sc_neurocore_safety-cbe1a14dec3b0ed8)"
       ],
       "passed": true,
