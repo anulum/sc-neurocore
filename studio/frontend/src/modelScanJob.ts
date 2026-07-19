@@ -18,6 +18,13 @@ import type {
   ModelScanResponse,
   StudioJobRecord,
 } from "./api/client";
+import {
+  validateModelScanJobReceipt,
+  validateModelScanJobResult,
+  validateModelScanPollRecord,
+} from "./modelScanJobValidation";
+
+export { validateModelScanJobResult } from "./modelScanJobValidation";
 
 /** Terminal and in-flight phases shown to the operator (no invented progress %). */
 export type ModelScanJobPhase =
@@ -111,48 +118,6 @@ export function modelScanJobPhaseLabel(phase: ModelScanJobPhase): string {
   }
 }
 
-/**
- * Validate a completed job ``result`` as ``studio.model-scan.v1`` evidence.
- */
-export function validateModelScanJobResult(
-  result: unknown,
-):
-  | { ok: true; payload: ModelScanResponse }
-  | { ok: false; error: string } {
-  if (result === null || typeof result !== "object" || Array.isArray(result)) {
-    return { ok: false, error: "model_scan_result_not_object" };
-  }
-  const body = result as Record<string, unknown>;
-  if (body.schema_version !== "studio.model-scan.v1") {
-    return { ok: false, error: "model_scan_schema_mismatch" };
-  }
-  if (!Array.isArray(body.models)) {
-    return { ok: false, error: "model_scan_models_missing" };
-  }
-  const meta = body.scan_metadata;
-  if (meta === null || typeof meta !== "object" || Array.isArray(meta)) {
-    return { ok: false, error: "model_scan_metadata_missing" };
-  }
-  const metadata = meta as Record<string, unknown>;
-  if (metadata.schema_version !== "studio.model-scan.v1") {
-    return { ok: false, error: "model_scan_metadata_schema_mismatch" };
-  }
-  if (metadata.evidence_classification !== "analysis") {
-    return { ok: false, error: "model_scan_evidence_class_invalid" };
-  }
-  if (metadata.status !== "completed") {
-    return { ok: false, error: "model_scan_metadata_status_invalid" };
-  }
-  return {
-    ok: true,
-    payload: {
-      models: body.models as ModelBehavior[],
-      scan_metadata: metadata as unknown as ModelScanMetadata,
-      schema_version: "studio.model-scan.v1",
-    },
-  };
-}
-
 function publicErrorMessage(raw: string): string {
   const trimmed = raw.trim();
   if (trimmed.length === 0) {
@@ -203,31 +168,21 @@ export function reduceModelScanJob(
         statusRoute: null,
       };
     case "submit_succeeded": {
-      const receipt = event.receipt;
-      if (
-        receipt.schema_version !== "studio.model-scan.job.v1"
-        || receipt.execution_mode !== "async_job"
-        || typeof receipt.job_id !== "string"
-        || receipt.job_id.length === 0
-        || typeof receipt.status_route !== "string"
-        || receipt.status_route.length === 0
-      ) {
+      const validatedReceipt = validateModelScanJobReceipt(event.receipt);
+      if (!validatedReceipt.ok) {
         return {
           behaviors: {},
-          error: "model_scan_job_receipt_invalid",
+          error: validatedReceipt.error,
           jobId: null,
           phase: "malformed",
           scanMetadata: null,
           statusRoute: null,
         };
       }
-      const initialStatus = receipt.job?.status;
+      const receipt = validatedReceipt.value;
+      const initialStatus = receipt.job.status;
       const phase: ModelScanJobPhase =
-        initialStatus === "running"
-          ? "running"
-          : initialStatus === "pending"
-            ? "pending"
-            : "pending";
+        initialStatus === "running" ? "running" : "pending";
       return {
         behaviors: {},
         error: null,
@@ -246,7 +201,18 @@ export function reduceModelScanJob(
         scanMetadata: null,
       };
     case "poll": {
-      const status = event.record.status;
+      const bound = validateModelScanPollRecord(event.record, state.jobId);
+      if (!bound.ok) {
+        return {
+          ...state,
+          behaviors: {},
+          error: bound.error,
+          phase: "malformed",
+          scanMetadata: null,
+        };
+      }
+      const record = bound.value;
+      const status = record.status;
       if (status === "pending") {
         return { ...state, phase: "pending", error: null };
       }
@@ -257,7 +223,7 @@ export function reduceModelScanJob(
         return {
           ...state,
           behaviors: {},
-          error: publicErrorMessage(event.record.error ?? "model_scan_job_failed"),
+          error: publicErrorMessage(record.error ?? "model_scan_job_failed"),
           phase: "failed",
           scanMetadata: null,
         };
@@ -281,7 +247,7 @@ export function reduceModelScanJob(
         };
       }
       if (status === "completed") {
-        const validated = validateModelScanJobResult(event.record.result);
+        const validated = validateModelScanJobResult(record.result);
         if (!validated.ok) {
           return {
             ...state,
@@ -293,10 +259,10 @@ export function reduceModelScanJob(
         }
         return {
           ...state,
-          behaviors: behaviorsFromPayload(validated.payload),
+          behaviors: behaviorsFromPayload(validated.value),
           error: null,
           phase: "completed",
-          scanMetadata: validated.payload.scan_metadata,
+          scanMetadata: validated.value.scan_metadata,
         };
       }
       return {

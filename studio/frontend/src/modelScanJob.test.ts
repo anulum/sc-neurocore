@@ -84,8 +84,8 @@ describe("validateModelScanJobResult", () => {
     if (!validated.ok) {
       return;
     }
-    expect(validated.payload.scan_metadata.evidence_classification).toBe("analysis");
-    expect(validated.payload.scan_metadata.status).toBe("completed");
+    expect(validated.value.scan_metadata.evidence_classification).toBe("analysis");
+    expect(validated.value.scan_metadata.status).toBe("completed");
   });
 
   it("rejects missing schema, wrong evidence class, and non-completed status", () => {
@@ -114,16 +114,7 @@ describe("validateModelScanJobResult", () => {
 
 describe("reduceModelScanJob", () => {
   it("clears stale success on new submit and blocks duplicates while busy", () => {
-    let state = reduceModelScanJob(initialModelScanJobState(), {
-      type: "poll",
-      record: jobRecord({
-        status: "completed",
-        result: validResult,
-        finished_at_utc: "2026-07-19T00:01:00Z",
-      }),
-    });
-    // force completed via submit then completed poll path
-    state = reduceModelScanJob(initialModelScanJobState(), { type: "submit_started" });
+    let state = reduceModelScanJob(initialModelScanJobState(), { type: "submit_started" });
     state = reduceModelScanJob(state, {
       type: "submit_succeeded",
       receipt: receipt(),
@@ -178,6 +169,28 @@ describe("reduceModelScanJob", () => {
     expect(malformed.phase).toBe("malformed");
     expect(malformed.scanMetadata).toBeNull();
     expect(malformed.behaviors).toEqual({});
+  });
+
+  it("rejects poll records for a different job id or kind as malformed", () => {
+    let state = reduceModelScanJob(initialModelScanJobState(), { type: "submit_started" });
+    state = reduceModelScanJob(state, {
+      type: "submit_succeeded",
+      receipt: receipt(),
+    });
+    const wrongId = reduceModelScanJob(state, {
+      type: "poll",
+      record: jobRecord({ status: "running", job_id: "sj_other" }),
+    });
+    expect(wrongId.phase).toBe("malformed");
+    expect(wrongId.error).toBe("model_scan_poll_job_id_mismatch");
+    expect(wrongId.scanMetadata).toBeNull();
+
+    const wrongKind = reduceModelScanJob(state, {
+      type: "poll",
+      record: jobRecord({ status: "running", kind: "analysis" }),
+    });
+    expect(wrongKind.phase).toBe("malformed");
+    expect(wrongKind.error).toBe("model_scan_poll_kind_mismatch");
   });
 
   it("maps job statuses to real phase labels without inventing progress", () => {
