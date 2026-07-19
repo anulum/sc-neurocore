@@ -73,7 +73,6 @@ def test_julia_package_init_cannot_gain_model_implementations() -> None:
         "_ensure_wilson_cowan_loaded",
         "_ensure_wong_wang_loaded",
         "_normalise_model_name",
-        "is_julia_error",
         "simulate_ermentrout_kopell_pop",
         "simulate_jansen_rit",
         "simulate_resonate_and_fire",
@@ -81,3 +80,16 @@ def test_julia_package_init_cannot_gain_model_implementations() -> None:
         "simulate_wilson_cowan",
         "simulate_wong_wang",
     }
+
+
+def test_julia_shared_runtime_is_owned_by_an_internal_module() -> None:
+    """Keep optional Julia state out of the package facade bucket."""
+    runtime = ROOT / "src/sc_neurocore/accel/julia/neurons/_runtime.py"
+    package_init = ROOT / "src/sc_neurocore/accel/julia/neurons/__init__.py"
+    runtime_text = runtime.read_text()
+    init_text = package_init.read_text()
+    assert runtime.is_file()
+    assert "def is_julia_error" in runtime_text
+    assert "from juliacall import Main" in runtime_text
+    assert "from juliacall import Main" not in init_text
+    assert sum(1 for _ in runtime.open()) < 100

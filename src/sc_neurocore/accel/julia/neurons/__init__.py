@@ -16,36 +16,23 @@ JIT warm-up (~5-10 s on cold start; sub-millisecond warm).
 from __future__ import annotations
 
 import math
-from pathlib import Path
 from typing import Any, cast
 
 import numpy as np
 import numpy.typing as npt
 
-try:
-    from juliacall import JuliaError as _JuliacallError
-    from juliacall import Main as _jl
+from . import _runtime
 
-    _JULIA_ERROR_TYPE: type[BaseException] | None = _JuliacallError
-    _HAS_JULIA_NEURONS = True
-except ImportError:
-    _jl = None
-    _JULIA_ERROR_TYPE = None
-    _HAS_JULIA_NEURONS = False
-
-
-_KERNEL_DIR = Path(__file__).resolve().parent
+_HAS_JULIA_NEURONS = _runtime.HAS_JULIA_NEURONS
+_jl = _runtime.JULIA_MAIN
+_KERNEL_DIR = _runtime.KERNEL_DIR
+is_julia_error = _runtime.is_julia_error
 _ERMENTROUT_KOPELL_POP_LOADED = False
 _RESONATE_AND_FIRE_LOADED = False
 _WONG_WANG_LOADED = False
 _JANSEN_RIT_LOADED = False
 _WILSON_COWAN_LOADED = False
 _RK4_NEURONS_LOADED = False
-
-
-def is_julia_error(error: BaseException) -> bool:
-    """Return whether ``error`` is the maintained Julia bridge exception."""
-    return _JULIA_ERROR_TYPE is not None and isinstance(error, _JULIA_ERROR_TYPE)
 
 
 def _ensure_wong_wang_loaded() -> Any:

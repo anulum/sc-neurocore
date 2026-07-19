@@ -15,7 +15,9 @@ from typing import Any
 import numpy as np
 import numpy.typing as npt
 
-from . import _KERNEL_DIR, _jl, is_julia_error
+from ._runtime import JULIA_MAIN as _jl
+from ._runtime import KERNEL_DIR as _KERNEL_DIR
+from ._runtime import is_julia_error
 
 _LOADED = False
 
