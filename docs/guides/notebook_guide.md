@@ -100,6 +100,11 @@ Neurons are taken only from the polyglot-complete set in
 | 41 | `41_one_model_five_views` | Hodgkin–Huxley, Morris–Lecar, AdEx: dynamics, f–I, SC rate pedagogy, didactic Q8.8 voltage quantisation, hardware-path pointers | Local figures only; not polyglot parity, FPGA power/timing, or full RTL co-sim for all three |
 | 42 | `42_fault_tolerance_theatre` | Perfect Integrator baseline plus SC unipolar product vs float under controlled BER | Local BER trends only; not radiation qualification or FIT rates |
 | 43 | `43_studio_evidence_cart_lab` | AdEx run plus pedagogical SHA-256 ledger aligned with `studio.evidence-cart.v1` field names | Python in-process digests only; not Studio browser cart or server evidence-bundle product export |
+| 44 | `44_shd_real_spike_walkthrough` | Local SHD H5 sample raster + Vertex `training_log.csv` curves when present | Local files only; no download, no leaderboard, no FPGA claim |
+| 45 | `45_nir_passport` | NIR LIF graph → `from_nir` → step → write/reload | Toy NIR LIF graph interop; not full HF catalogue export |
+| 46 | `46_energy_proxy_honest` | Perfect Integrator population toggle proxy (event vs clock) | Toggle counts only — not joules/PPA |
+| 47 | `47_closed_loop_in_silico` | Spike encode/decode + toy plant + PI companion | Simulation only; not clinical BCI |
+| 48 | `48_fail_closed_gallery` | Digest identity rejects + encoder gap notes + HF happy path | Not a full security audit |
 
 ## Running Notebooks
 
@@ -119,7 +124,9 @@ Use `quickstart_colab.ipynb` — installs sc-neurocore automatically.
 
 | Notebooks | Extra dependencies |
 |-----------|-------------------|
-| 01–16, 20, 25, 41–43 | `matplotlib` (visualisation) |
+| 01–16, 20, 25, 41–48 | `matplotlib` (visualisation) |
+| 44 (optional SHD plot) | `h5py` when SHD H5 is present |
+| 45 | `nir` package |
 | 17 | `matplotlib`, `numpy.linalg` (SVD) |
 | 21–22 | None beyond sc-neurocore |
 | 23 | `matplotlib` |

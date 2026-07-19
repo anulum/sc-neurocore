@@ -18,7 +18,7 @@ The notebooks are executable documentation for onboarding, feature exploration, 
 | Hardware team | `08_equation_to_verilog`, `13_quantisation_pipeline`, `27_python_to_proven_silicon`, `29_golden_path_evidence`. |
 | Commercial evaluator | `29_golden_path_evidence`, `34_industrial_readiness_evidence`, `36_fault_resilience_evidence`, `38_formal_snn_verification_standard_evidence`. |
 | Interop reviewer | `05_nir_bridge`, `28_domain_bridge`, and the cross-framework benchmark documentation. |
-| High-fidelity demos | `41_one_model_five_views` (HH / Morris–Lecar / AdEx), `42_fault_tolerance_theatre` (Perfect Integrator + SC BER), `43_studio_evidence_cart_lab` (AdEx digests). |
+| High-fidelity demos | `41`–`43` (HH/ML/AdEx/PI core), then `44` SHD local, `45` NIR passport, `46` energy proxy, `47` closed-loop sim, `48` fail-closed gallery. |
 
 ## Reproducibility rules
 
@@ -38,5 +38,10 @@ monorepo plan
 | `41_one_model_five_views.ipynb` | Hodgkin–Huxley, Morris–Lecar, AdEx | Dynamics → f–I → SC rate pedagogy → quant demo → hardware pointers |
 | `42_fault_tolerance_theatre.ipynb` | Perfect Integrator | SC product vs float under bit flips |
 | `43_studio_evidence_cart_lab.ipynb` | AdEx | Pedagogical ledger digests (Studio cart companion) |
+| `44_shd_real_spike_walkthrough.ipynb` | local SHD/Vertex data | Real artefacts on disk only |
+| `45_nir_passport.ipynb` | NIR LIF graph | Interop write/reload |
+| `46_energy_proxy_honest.ipynb` | Perfect Integrator pop | Toggles, not joules |
+| `47_closed_loop_in_silico.ipynb` | codec + PI | Simulation-only loop |
+| `48_fail_closed_gallery.ipynb` | AdEx / PI | Correct rejections + API gaps |
 
 For the full notebook map, see `docs/guides/notebook_guide.md`.
