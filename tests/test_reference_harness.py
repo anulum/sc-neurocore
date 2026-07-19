@@ -34,6 +34,7 @@ _EXTERNAL_SOURCE_PREFIXES = {
     "iqif": "https://github.com/twetto/iq-neuron/blob/",
 }
 _DETERMINISTIC_SCHEMA_TRACES = {
+    "adaptive_threshold_if": "adaptive_threshold_if_tonic_adaptation_doi",
     "adex": "adex_resting_adaptation_doi",
     "cazelles_map": "cazelles_map_bursting_doi",
     "chialvo_map": "chialvo_map_doi",

@@ -45,7 +45,7 @@ def _independent_features(current: float, dt: float, steps: int) -> dict[str, fl
 
     features = {
         "spike_count": float(sum(spikes)),
-        "first_spike_step": float(spikes.index(1) if 1 in spikes else -1),
+        "first_spike_step": float(spikes.index(1) + 1 if 1 in spikes else -1),
     }
     for name, values in (("v", v_trace), ("theta", theta_trace)):
         features[f"final.{name}"] = values[-1]

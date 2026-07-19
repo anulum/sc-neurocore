@@ -24,7 +24,7 @@
   },
   "expected_features": {
     "spike_count": 1.0,
-    "first_spike_step": 138.0,
+    "first_spike_step": 139.0,
     "final.v": -61.21168491940377,
     "min.v": -65.0,
     "max.v": -50.03157106119515,

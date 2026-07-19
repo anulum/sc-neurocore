@@ -29,6 +29,7 @@ from __future__ import annotations
 
 import json
 import sys
+import tomllib
 from pathlib import Path
 
 import pytest
@@ -43,14 +44,21 @@ from sc_neurocore.neurons.model_catalogue import load_descriptor  # noqa: E402
 
 
 def _descriptor_dois() -> list[tuple[str, str]]:
-    """Return ``(model, doi)`` for every descriptor that claims a provenance DOI."""
+    """Return every primary or named secondary provenance DOI in descriptors."""
     rows: list[tuple[str, str]] = []
     for toml_path in sorted(DESCRIPTOR_DIR.glob("*.toml")):
         descriptor = load_descriptor(toml_path.stem)
-        provenance = getattr(descriptor, "provenance", None)
-        doi = getattr(provenance, "doi", None) if provenance else None
-        if doi:
-            rows.append((toml_path.stem, doi))
+        if descriptor.provenance.doi:
+            rows.append((toml_path.stem, descriptor.provenance.doi))
+        payload = tomllib.loads(toml_path.read_text(encoding="utf-8"))
+        raw_provenance = payload.get("provenance", {})
+        if not isinstance(raw_provenance, dict):
+            continue
+        for key, value in sorted(raw_provenance.items()):
+            if key != "doi" and not key.endswith("_doi"):
+                continue
+            if isinstance(value, str) and value and value != descriptor.provenance.doi:
+                rows.append((f"{toml_path.stem}:{key}", value))
     return rows
 
 
