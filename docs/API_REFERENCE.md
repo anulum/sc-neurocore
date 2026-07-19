@@ -32105,6 +32105,36 @@ Build the adaptive-precision router over shared Studio runtime state.
 
 ---
 
+## Module `studio.api.analysis_jobs`
+
+### Class `AnalysisJobValidationError`
+Raised when an analysis job request payload is invalid.
+
+- **__init__**(code)
+- **to_public_detail**()
+  - Return a path-free public error detail.
+
+### Function `validate_analysis_job_request(req)`
+Validate the job request and return kind, payload dump, and cost hints.
+
+Returns
+-------
+tuple
+    ``(analysis, payload_dump, projected_simulations, duration_ms, dt_ms)``.
+
+Raises
+------
+AnalysisJobValidationError
+    When the payload does not match the selected analysis schema.
+
+### Function `run_analysis_job_task(analysis, payload_dump, _job_context)`
+Execute one validated analysis payload and return a public result dict.
+
+### Function `submit_analysis_job(job_manager, req)`
+Validate and submit one analysis job; return the public job receipt.
+
+---
+
 ## Module `studio.api.audit`
 
 ### Function `build_audit_router(context)`
@@ -32362,6 +32392,14 @@ Request body for frequency-response analysis.
 
 ### Class `HeatmapRequest`
 Request body for two-parameter response heatmap analysis.
+
+
+### Class `AnalysisJobRequest`
+Request body for asynchronous heavy analysis job submission.
+
+The ``analysis`` field selects the synchronous analysis kind. ``payload``
+must match the corresponding synchronous request schema (for example
+:class:`BifurcationRequest` when ``analysis`` is ``bifurcation``).
 
 
 ### Class `NetworkRequest`

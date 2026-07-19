@@ -23,7 +23,9 @@ from sc_neurocore.studio.platform.policy_routes import (
 )
 
 
-def _poll_job_completed(client: TestClient, status_route: str, *, timeout_s: float = 10.0) -> dict[str, Any]:
+def _poll_job_completed(
+    client: TestClient, status_route: str, *, timeout_s: float = 10.0
+) -> dict[str, Any]:
     """Poll production job status until terminal completed (or fail)."""
 
     deadline = time.monotonic() + timeout_s
