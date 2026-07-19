@@ -20,6 +20,7 @@ import {
   type EvidenceCartExportBundle,
 } from "./evidenceCart";
 import {
+  analysisResultIdentity,
   decideAnalysisEnqueue,
   decideSimulationEnqueue,
   evidenceCartExportSatisfiesGuided,
@@ -95,19 +96,19 @@ export function useEvidenceCartSession(): EvidenceCartSession {
   }, [applyDecision]);
 
   const runAnalysisIntoCart = useCallback(async () => {
-    const before = useStudioStore.getState().fiResult;
-    const beforeId = before === null ? null : JSON.stringify(before);
+    const beforeId = analysisResultIdentity(useStudioStore.getState().fiResult);
     await useStudioStore.getState().runFICurve();
     const afterState = useStudioStore.getState();
     const after = afterState.fiResult;
-    const afterId = after === null ? null : JSON.stringify(after);
+    const afterId = analysisResultIdentity(after);
+    const runSucceeded = afterId !== null && afterId !== beforeId;
     setCart((current) => {
       const decision = decideAnalysisEnqueue(current, {
         analysisKind: "fi_curve",
         analysisResult: after,
         resultIdentityAfter: afterId,
         resultIdentityBefore: beforeId,
-        runSucceeded: after !== null && afterId !== beforeId,
+        runSucceeded,
         selectedModelName: afterState.selectedModelName,
         sourceMode: afterState.sourceMode,
       });

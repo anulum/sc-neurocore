@@ -24,6 +24,7 @@ import {
   type EvidenceCartExportBundle,
   type EvidenceCartItemKind,
 } from "./evidenceCart";
+export { analysisResultIdentity } from "./evidenceCartIdentity";
 
 export interface SimulationQueueInput {
   /** True when the store reports the last run completed successfully. */
@@ -109,6 +110,9 @@ export function decideSimulationEnqueue(
 
 /**
  * Decide whether to enqueue the exact analysis artefact that just succeeded.
+ *
+ * Identity is metadata ``result_sha256`` only (see {@link analysisResultIdentity}).
+ * Unchanged digests skip for every analysis kind; missing after-identity fails closed.
  */
 export function decideAnalysisEnqueue(
   cart: EvidenceCart,
@@ -117,12 +121,10 @@ export function decideAnalysisEnqueue(
   if (!input.runSucceeded || input.analysisResult === null || input.analysisResult === undefined) {
     return { action: "skip", reason: "analysis_run_failed", cart };
   }
-  if (
-    input.resultIdentityAfter !== null
-    && input.resultIdentityBefore !== null
-    && input.resultIdentityAfter === input.resultIdentityBefore
-    && input.analysisKind === "other"
-  ) {
+  if (input.resultIdentityAfter === null) {
+    return { action: "skip", reason: "analysis_result_identity_invalid", cart };
+  }
+  if (input.resultIdentityAfter === input.resultIdentityBefore) {
     return { action: "skip", reason: "analysis_result_unchanged", cart };
   }
   const sourceName =

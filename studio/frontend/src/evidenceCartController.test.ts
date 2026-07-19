@@ -194,6 +194,16 @@ describe("decideSimulationEnqueue", () => {
   });
 });
 
+const ANALYSIS_DIGEST_A = "a".repeat(64);
+const ANALYSIS_DIGEST_B = "b".repeat(64);
+const ANALYSIS_KINDS = [
+  "fi_curve",
+  "bifurcation",
+  "sensitivity",
+  "heatmap",
+  "other",
+] as const;
+
 describe("decideAnalysisEnqueue", () => {
   it("queues only the exact analysis result and does not bag unrelated fields", () => {
     const decision = decideAnalysisEnqueue(emptyEvidenceCart(), {
@@ -203,7 +213,7 @@ describe("decideAnalysisEnqueue", () => {
       analysisKind: "fi_curve",
       analysisResult: { currents: [0, 1], rates: [0, 5] },
       resultIdentityBefore: null,
-      resultIdentityAfter: "x",
+      resultIdentityAfter: ANALYSIS_DIGEST_A,
     });
     expect(decision.action).toBe("enqueue");
     if (decision.action !== "enqueue") {
@@ -229,6 +239,69 @@ describe("decideAnalysisEnqueue", () => {
       resultIdentityAfter: null,
     });
     expect(decision.action).toBe("skip");
+    if (decision.action === "skip") {
+      expect(decision.reason).toBe("analysis_run_failed");
+    }
+  });
+
+  it("skips unchanged digests for every analysis kind", () => {
+    for (const analysisKind of ANALYSIS_KINDS) {
+      const cart = emptyEvidenceCart();
+      const decision = decideAnalysisEnqueue(cart, {
+        runSucceeded: true,
+        sourceMode: "model",
+        selectedModelName: "AdExNeuron",
+        analysisKind,
+        analysisResult: { kind: analysisKind, value: 1 },
+        resultIdentityBefore: ANALYSIS_DIGEST_A,
+        resultIdentityAfter: ANALYSIS_DIGEST_A,
+      });
+      expect(decision.action).toBe("skip");
+      if (decision.action === "skip") {
+        expect(decision.reason).toBe("analysis_result_unchanged");
+        expect(decision.cart).toBe(cart);
+        expect(decision.cart.items).toHaveLength(0);
+      }
+    }
+  });
+
+  it("enqueues when digest changes even if payload shape matches", () => {
+    const decision = decideAnalysisEnqueue(emptyEvidenceCart(), {
+      runSucceeded: true,
+      sourceMode: "ode",
+      selectedModelName: "",
+      analysisKind: "heatmap",
+      analysisResult: { rates: [[1]], shape: "same" },
+      resultIdentityBefore: ANALYSIS_DIGEST_A,
+      resultIdentityAfter: ANALYSIS_DIGEST_B,
+    });
+    expect(decision.action).toBe("enqueue");
+    if (decision.action !== "enqueue") {
+      return;
+    }
+    expect(decision.cart.items).toHaveLength(1);
+    expect(
+      (decision.cart.items[0]?.payload as { analysis_kind: string }).analysis_kind,
+    ).toBe("heatmap");
+  });
+
+  it("fails closed when a claimed success lacks a valid after identity", () => {
+    const cart = emptyEvidenceCart();
+    const decision = decideAnalysisEnqueue(cart, {
+      runSucceeded: true,
+      sourceMode: "model",
+      selectedModelName: "AdExNeuron",
+      analysisKind: "fi_curve",
+      analysisResult: { currents: [0], rates: [1] },
+      resultIdentityBefore: ANALYSIS_DIGEST_A,
+      resultIdentityAfter: null,
+    });
+    expect(decision.action).toBe("skip");
+    if (decision.action === "skip") {
+      expect(decision.reason).toBe("analysis_result_identity_invalid");
+      expect(decision.cart).toBe(cart);
+      expect(decision.cart.items).toHaveLength(0);
+    }
   });
 });
 
