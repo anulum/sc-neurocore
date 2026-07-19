@@ -106,6 +106,15 @@ Neurons are taken only from the polyglot-complete set in
 | 47 | `47_closed_loop_in_silico` | Spike encode/decode + toy plant + PI companion | Simulation only; not clinical BCI |
 | 48 | `48_fail_closed_gallery` | Digest identity rejects + encoder gap notes + HF happy path | Not a full security audit |
 
+## Priority C demo scripts (`examples/`)
+
+| ID | File | Honesty boundary |
+|----|------|------------------|
+| DM-01 | `examples/dm01_spike_raster_gif.py` | Local HH animation only |
+| DM-02 | `examples/dm02_sc_error_sweep.py` | SC decode error curve; not silicon energy |
+| DM-03 | `examples/dm03_mnist_verilog_path.md` | Points at existing `mnist_fpga/demo.py` |
+| DM-04 | `examples/dm04_synthesis_report_reader.py` | Parses committed reports only |
+
 ## Running Notebooks
 
 ### Local

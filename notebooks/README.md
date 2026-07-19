@@ -44,4 +44,13 @@ monorepo plan
 | `47_closed_loop_in_silico.ipynb` | codec + PI | Simulation-only loop |
 | `48_fail_closed_gallery.ipynb` | AdEx / PI | Correct rejections + API gaps |
 
+### Priority C demo scripts (`examples/`)
+
+| Script | Story |
+| --- | --- |
+| `dm01_spike_raster_gif.py` | HH raster GIF/PNG |
+| `dm02_sc_error_sweep.py` | SC error vs length CSV/PNG |
+| `dm03_mnist_verilog_path.md` | MNIST→Verilog path pointer |
+| `dm04_synthesis_report_reader.py` | Read committed `hdl/reports/` only |
+
 For the full notebook map, see `docs/guides/notebook_guide.md`.

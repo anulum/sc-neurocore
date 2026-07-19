@@ -24,6 +24,21 @@ PYTHONPATH=src:bridge python examples/01_basic_sc_encoding.py
 ```
 
 | 12 | `mnist_fpga/demo.py` | MNIST-on-FPGA: train → Q8.8 → SC simulate → Verilog export |
+| DM-01 | `dm01_spike_raster_gif.py` | Hodgkin–Huxley spike-raster GIF/PNG (local demo, not a claim) |
+| DM-02 | `dm02_sc_error_sweep.py` | SC unipolar reconstruction error vs bitstream length (HH proxy) |
+| DM-03 | `dm03_mnist_verilog_path.md` | Pointer to `mnist_fpga/demo.py` one-command path |
+| DM-04 | `dm04_synthesis_report_reader.py` | Summarise committed Vivado/Yosys reports under `hdl/reports/` |
+
+High-fidelity demo programme (notebooks 41–48 + these scripts): monorepo plan
+`PLAN_2026-07-19T2301_notebook_demo_programme_high_fidelity_neurons.md`.
+
+```bash
+PYTHONPATH=src python examples/dm01_spike_raster_gif.py
+PYTHONPATH=src python examples/dm02_sc_error_sweep.py
+PYTHONPATH=src python examples/dm04_synthesis_report_reader.py
+```
+
+Generated files under `examples/output/` are local only — do not promote as package evidence.
 
 Examples marked **(v3 Rust engine)** require an available `sc_neurocore_engine`
 bridge install. For source-tree runs against local bridge code, use

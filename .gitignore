@@ -225,3 +225,6 @@ TODO
 
 # SymbiYosys workdirs for catalogue formal jobs
 hdl/formal/catalogue/*/
+
+# Local demo outputs (DM-01/02)
+examples/output/
