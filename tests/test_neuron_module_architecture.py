@@ -6,7 +6,7 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore — Neuron module ownership ratchets
 
-"""Architecture ratchets for neuron implementations extracted from bucket files."""
+"""Architecture ratchets for dedicated neuron implementation modules."""
 
 import ast
 from pathlib import Path
@@ -14,30 +14,72 @@ import re
 
 ROOT = Path(__file__).resolve().parents[1]
 
+_MODEL_CONTRACT_MODULES = {
+    "test_model_adaptive_threshold_moe_contracts.py": "TestAdaptiveThresholdMoENeuron",
+    "test_model_astrocyte_lif_contracts.py": "TestAstrocyteLIFNeuron",
+    "test_model_cochlear_hair_cell_contracts.py": "TestCochlearHairCell",
+    "test_model_dendritic_nmda_contracts.py": "TestDendriticNMDANeuron",
+    "test_model_direction_selective_rgc_contracts.py": "TestDirectionSelectiveRGC",
+    "test_model_hybrid_linear_attention.py": "TestHybridLinearAttentionNeuron",
+    "test_model_multicompartment_mcn_contracts.py": "TestMulticompartmentMCNNeuron",
+    "test_model_quantum_inspired_lif.py": "TestQuantumInspiredLIFNeuron",
+    "test_short_term_plasticity_contracts.py": "TestShortTermPlasticitySynapse",
+    "test_dopamine_stdp_contracts.py": "TestDopamineStdpSynapse",
+    "test_triplet_stdp_contracts.py": "TestTripletSTDP",
+}
+
 
 def test_aihara_rust_implementation_is_owned_by_its_module() -> None:
     dedicated = ROOT / "engine/src/neurons/aihara_map.rs"
-    bucket = ROOT / "engine/src/neurons/maps.rs"
+    aggregate = ROOT / "engine/src/neurons/maps.rs"
     assert dedicated.is_file()
     assert "pub struct AiharaMapNeuron" in dedicated.read_text()
-    assert "AiharaMap" not in bucket.read_text()
+    assert not aggregate.exists()
     assert sum(1 for _ in dedicated.open()) < 500
 
 
-def test_legacy_rust_map_bucket_cannot_gain_models() -> None:
-    """Freeze the legacy map bucket while models move to owned modules."""
-    bucket = (ROOT / "engine/src/neurons/maps.rs").read_text()
-    model_names = set(re.findall(r"^pub struct (\w+MapNeuron)", bucket, re.MULTILINE))
-    assert model_names == {
-        "CazellesMapNeuron",
-        "ChialvoMapNeuron",
-        "CourageNekorkinMapNeuron",
-        "ErmentroutKopellMapNeuron",
-        "IbarzTanakaMapNeuron",
-        "KilincBhattMapNeuron",
-        "MedvedevMapNeuron",
-        "RulkovMapNeuron",
+def test_rust_map_models_have_one_owned_module_each() -> None:
+    """Each map model owns its implementation and focused Rust tests."""
+    owners = {
+        "cazelles_map.rs": "CazellesMapNeuron",
+        "chialvo_map.rs": "ChialvoMapNeuron",
+        "courage_nekorkin_map.rs": "CourageNekorkinMapNeuron",
+        "ermentrout_kopell_map.rs": "ErmentroutKopellMapNeuron",
+        "ibarz_tanaka_map.rs": "IbarzTanakaMapNeuron",
+        "kilinc_bhatt_map.rs": "KilincBhattMapNeuron",
+        "medvedev_map.rs": "MedvedevMapNeuron",
+        "rulkov_map.rs": "RulkovMapNeuron",
     }
+    neuron_root = ROOT / "engine/src/neurons"
+    for filename, model_name in owners.items():
+        source = (neuron_root / filename).read_text()
+        definitions = re.findall(r"^pub struct (\w+MapNeuron)", source, re.MULTILINE)
+        assert definitions == [model_name]
+        assert "#[cfg(test)]" in source
+        assert len(source.splitlines()) < 300
+
+
+def test_rust_map_compatibility_namespace_has_no_implementation() -> None:
+    """The legacy namespace remains re-export-only and file-free."""
+    neuron_root = ROOT / "engine/src/neurons"
+    module_source = (neuron_root / "mod.rs").read_text()
+    assert not (neuron_root / "maps.rs").exists()
+    compatibility = module_source.split("pub mod maps {", maxsplit=1)[1].split("}", maxsplit=1)[0]
+    assert "pub use super::" in compatibility
+    assert "pub struct" not in compatibility
+    assert "impl " not in compatibility
+
+
+def test_neuron_and_synapse_contracts_are_module_specific() -> None:
+    """Mixed model test modules cannot replace per-model contract ownership."""
+    test_root = ROOT / "tests"
+    assert not (test_root / "test_gap_models.py").exists()
+    for filename, expected_class in _MODEL_CONTRACT_MODULES.items():
+        source = (test_root / filename).read_text()
+        tree = ast.parse(source)
+        classes = [node.name for node in tree.body if isinstance(node, ast.ClassDef)]
+        assert classes == [expected_class]
+        assert len(source.splitlines()) < 300
 
 
 def test_adaptive_threshold_julia_facade_is_not_in_package_init() -> None:
@@ -83,7 +125,7 @@ def test_julia_package_init_cannot_gain_model_implementations() -> None:
 
 
 def test_julia_shared_runtime_is_owned_by_an_internal_module() -> None:
-    """Keep optional Julia state out of the package facade bucket."""
+    """Keep optional Julia state out of the package facade."""
     runtime = ROOT / "src/sc_neurocore/accel/julia/neurons/_runtime.py"
     package_init = ROOT / "src/sc_neurocore/accel/julia/neurons/__init__.py"
     runtime_text = runtime.read_text()
