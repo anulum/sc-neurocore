@@ -24,6 +24,7 @@ import {
   type EvidenceCartExportBundle,
 } from "./evidenceCart";
 import EvidenceCartStrip from "./components/EvidenceCartStrip";
+import DevelopmentPreviewBanner from "./components/DevelopmentPreviewBanner";
 import TemplateLibrary from "./components/TemplateLibrary";
 import EquationEditor from "./components/EquationEditor";
 import ParameterSliders from "./components/ParameterSliders";
@@ -447,6 +448,9 @@ export default function App() {
 
   return (
     <div className="studio">
+      <DevelopmentPreviewBanner
+        deploymentProfile={s.operatorStatus?.deployment_profile ?? "development"}
+      />
       <header className="header">
         <div className="header-logo">
           <div className="dot" />
