@@ -10,6 +10,7 @@
 
 from __future__ import annotations
 
+import time
 from typing import Any
 
 import pytest
@@ -22,6 +23,23 @@ from sc_neurocore.studio.platform.policy_routes import (
 )
 
 
+def _poll_job_completed(client: TestClient, status_route: str, *, timeout_s: float = 10.0) -> dict[str, Any]:
+    """Poll production job status until terminal completed (or fail)."""
+
+    deadline = time.monotonic() + timeout_s
+    last: dict[str, Any] = {}
+    while time.monotonic() < deadline:
+        response = client.get(status_route)
+        assert response.status_code == 200
+        last = response.json()
+        if last.get("status") == "completed":
+            return last
+        if last.get("status") in {"failed", "timed_out", "cancelled"}:
+            pytest.fail(f"job terminal non-success: {last.get('status')}")
+        time.sleep(0.05)
+    pytest.fail(f"job did not complete within {timeout_s}s; last={last}")
+
+
 def test_analysis_and_model_scan_job_routes_are_registered_in_route_policy() -> None:
     """New job routes must be present in the default policy inventory."""
 
@@ -32,12 +50,12 @@ def test_analysis_and_model_scan_job_routes_are_registered_in_route_policy() -> 
     assert analysis_job.audit_action == "studio.analysis.job"
 
 
-def test_analysis_job_route_returns_async_job_immediately(
+def test_analysis_job_polls_to_completed_with_analysis_result_schema(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    """POST /api/analysis/jobs must not block the HTTP thread waiting for work."""
+    """POST /api/analysis/jobs must reach completed with a real analysis payload."""
 
-    from sc_neurocore.studio.api import simulation as simulation_routes
+    from sc_neurocore.studio.api import analysis_jobs as analysis_job_module
 
     def _fake_bifurcation(
         simulate_fn: Any,
@@ -54,7 +72,7 @@ def test_analysis_job_route_returns_async_job_immediately(
             "steps": sweep_steps,
         }
 
-    monkeypatch.setattr(simulation_routes, "bifurcation_sweep", _fake_bifurcation)
+    monkeypatch.setattr(analysis_job_module, "bifurcation_sweep", _fake_bifurcation)
     client = TestClient(
         create_app(StudioRuntimeSettings()),
         base_url="http://127.0.0.1",
@@ -80,9 +98,12 @@ def test_analysis_job_route_returns_async_job_immediately(
     assert payload["execution_mode"] == "async_job"
     assert payload["schema_version"] == "studio.analysis.job.v1"
     assert payload["analysis"] == "bifurcation"
-    assert str(payload["job_id"]).startswith("sj_")
-    assert payload["status_route"] == f"/api/studio/jobs/{payload['job_id']}"
-    assert payload["job"]["kind"] == "analysis"
+    completed = _poll_job_completed(client, payload["status_route"])
+    assert completed["status"] == "completed"
+    assert completed["kind"] == "analysis"
+    result = completed["result"]
+    assert isinstance(result, dict)
+    assert "analysis_metadata" in result or "sweep_param" in result
 
 
 def test_over_budget_heatmap_recommends_existing_analysis_jobs_route() -> None:

@@ -159,6 +159,8 @@ describe("evidence cart export digests", () => {
     const expectedAnalysisDigest = await sha256HexOfCanonicalJson(analysisPayload);
     expect(exportA.entries[0]?.payload_sha256).toBe(expectedSimDigest);
     expect(exportA.entries[1]?.payload_sha256).toBe(expectedAnalysisDigest);
+    expect(exportA.entries[0]?.payload).toEqual(simPayload);
+    expect(exportA.entries[1]?.payload).toEqual(analysisPayload);
 
     // Key order must not change digests (canonical JSON).
     const reordered = await sha256HexOfCanonicalJson({

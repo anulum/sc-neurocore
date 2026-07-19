@@ -55,12 +55,17 @@ export interface EvidenceCart {
   schema_version: typeof EVIDENCE_CART_SCHEMA_VERSION;
 }
 
-/** One exported artefact entry with digests. */
+/** One exported artefact entry with digests and the full payload. */
 export interface EvidenceCartExportEntry {
   classification: string;
   id: string;
   kind: EvidenceCartItemKind;
   label: string;
+  /**
+   * Canonical JSON payload of the queued artefact (must round-trip with
+   * ``payload_sha256``).
+   */
+  payload: unknown;
   /** SHA-256 hex digest of the canonical JSON payload. */
   payload_sha256: string;
   queued_at_utc: string;
@@ -182,23 +187,76 @@ export async function buildEvidenceCartExport(
       id: item.id,
       kind: item.kind,
       label: item.label,
+      payload: item.payload,
       payload_sha256: payloadSha,
       queued_at_utc: item.queuedAtUtc,
       source_name: item.sourceName ?? null,
     });
   }
-  const bundleBody = {
+  // Bundle digest excludes raw payloads so it remains stable metadata; each
+  // entry still carries payload + payload_sha256 for full reconstruction.
+  const digestBody = {
+    entry_count: entries.length,
+    entries: entries.map((entry) => ({
+      classification: entry.classification,
+      id: entry.id,
+      kind: entry.kind,
+      label: entry.label,
+      payload_sha256: entry.payload_sha256,
+      queued_at_utc: entry.queued_at_utc,
+      source_name: entry.source_name,
+    })),
+    exported_at_utc: exportedAtUtc,
+    kind_counts: kindCounts,
+    schema_version: EVIDENCE_CART_SCHEMA_VERSION,
+  };
+  const bundleSha = await sha256HexOfCanonicalJson(digestBody);
+  return {
     entry_count: entries.length,
     entries,
     exported_at_utc: exportedAtUtc,
     kind_counts: kindCounts,
     schema_version: EVIDENCE_CART_SCHEMA_VERSION,
-  };
-  const bundleSha = await sha256HexOfCanonicalJson(bundleBody);
-  return {
-    ...bundleBody,
     bundle_sha256: bundleSha,
   };
+}
+
+/**
+ * Verify that every export entry's ``payload_sha256`` matches its payload and
+ * that the bundle digest matches the metadata-only digest body.
+ */
+export async function verifyEvidenceCartExportRoundTrip(
+  bundle: EvidenceCartExportBundle,
+): Promise<{ ok: true } | { ok: false; error: string }> {
+  for (const entry of bundle.entries) {
+    const actual = await sha256HexOfCanonicalJson(entry.payload);
+    if (actual !== entry.payload_sha256) {
+      return {
+        ok: false,
+        error: `payload_sha256 mismatch for entry ${entry.id}`,
+      };
+    }
+  }
+  const digestBody = {
+    entry_count: bundle.entry_count,
+    entries: bundle.entries.map((entry) => ({
+      classification: entry.classification,
+      id: entry.id,
+      kind: entry.kind,
+      label: entry.label,
+      payload_sha256: entry.payload_sha256,
+      queued_at_utc: entry.queued_at_utc,
+      source_name: entry.source_name,
+    })),
+    exported_at_utc: bundle.exported_at_utc,
+    kind_counts: bundle.kind_counts,
+    schema_version: bundle.schema_version,
+  };
+  const recomputed = await sha256HexOfCanonicalJson(digestBody);
+  if (recomputed !== bundle.bundle_sha256) {
+    return { ok: false, error: "bundle_sha256 mismatch after round-trip" };
+  }
+  return { ok: true };
 }
 
 /**

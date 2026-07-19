@@ -102,10 +102,12 @@ def test_model_scan_within_catalogue_budget_runs_scan(
     assert payload["scan_metadata"]["evidence_classification"] == "analysis"
 
 
-def test_model_scan_job_route_returns_async_job_without_blocking_on_wait(
+def test_model_scan_job_route_polls_to_completed_with_model_scan_schema(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    """Oversized catalogues can be submitted as model_scan jobs immediately."""
+    """model_scan jobs must complete with studio.model-scan.v1 evidence class."""
+
+    import time
 
     monkeypatch.setattr(
         catalogue_routes,
@@ -144,5 +146,27 @@ def test_model_scan_job_route_returns_async_job_without_blocking_on_wait(
     assert payload["schema_version"] == "studio.model-scan.job.v1"
     assert isinstance(payload["job_id"], str)
     assert payload["job_id"].startswith("sj_")
-    assert payload["status_route"] == f"/api/studio/jobs/{payload['job_id']}"
-    assert payload["job"]["kind"] == "model_scan"
+    status_route = payload["status_route"]
+    assert status_route == f"/api/studio/jobs/{payload['job_id']}"
+
+    deadline = time.monotonic() + 10.0
+    last: dict[str, Any] = {}
+    while time.monotonic() < deadline:
+        job_response = client.get(status_route)
+        assert job_response.status_code == 200
+        last = job_response.json()
+        if last.get("status") == "completed":
+            break
+        if last.get("status") in {"failed", "timed_out", "cancelled"}:
+            pytest.fail(f"model_scan job failed: {last.get('status')}")
+        time.sleep(0.05)
+    else:
+        pytest.fail(f"model_scan job did not complete: {last}")
+
+    assert last["status"] == "completed"
+    assert last["kind"] == "model_scan"
+    result = last["result"]
+    assert isinstance(result, dict)
+    assert result["schema_version"] == "studio.model-scan.v1"
+    assert result["scan_metadata"]["evidence_classification"] == "analysis"
+    assert result["scan_metadata"]["schema_version"] == "studio.model-scan.v1"
