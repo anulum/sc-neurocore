@@ -734,6 +734,27 @@ export const fetchStudioJobStatus = () =>
   get<StudioJobStatus>("/studio/jobs/status");
 export const fetchStudioJobs = () =>
   get<StudioJobListResponse>("/studio/jobs");
+/** Fetch one Studio job record by id (production status surface). */
+export const fetchStudioJobRecord = (jobId: string) =>
+  get<StudioJobRecord>(`/studio/jobs/${encodeURIComponent(jobId)}`);
+/**
+ * Fetch one Studio job record using the exact ``status_route`` returned by a
+ * job-submit receipt (absolute ``/api/...`` path or client-relative ``/...``).
+ */
+export function fetchStudioJobAtStatusRoute(statusRoute: string): Promise<StudioJobRecord> {
+  const trimmed = statusRoute.trim();
+  if (trimmed.length === 0) {
+    return Promise.reject(new Error("empty_status_route"));
+  }
+  const path = trimmed.startsWith("/api/")
+    ? trimmed.slice("/api".length)
+    : trimmed.startsWith("/api")
+      ? trimmed.slice("/api".length) || "/"
+      : trimmed.startsWith("/")
+        ? trimmed
+        : `/${trimmed}`;
+  return get<StudioJobRecord>(path);
+}
 export const fetchStudioJobArtifact = (jobId: string, artifactPath: string) =>
   getBlob(
     `/studio/jobs/${encodeURIComponent(jobId)}/artifacts/${encodeArtifactPath(artifactPath)}`,
@@ -796,6 +817,20 @@ export const fetchFreqResponse = (req: Record<string, unknown>) => post<FreqResp
 export const fetchHeatmap = (req: Record<string, unknown>) => post<HeatmapResponse>("/heatmap", req);
 export const fetchCodegen = (req: Record<string, unknown>) => post<{ script: string; oneliner: string }>("/codegen", req);
 export const fetchModelScan = () => get<ModelScanResponse>("/models/scan");
+
+/** Receipt from ``POST /api/models/scan/jobs`` (async model-scan job). */
+export interface ModelScanJobReceipt {
+  execution_mode: "async_job";
+  job: StudioJobRecord;
+  job_id: string;
+  schema_version: "studio.model-scan.job.v1";
+  status_route: string;
+}
+
+/** Submit a full-catalogue model scan as an asynchronous Studio job. */
+export const submitModelScanJob = () =>
+  post<ModelScanJobReceipt>("/models/scan/jobs", {});
+
 export const simulateNetwork = (req: Record<string, unknown>) => post<NetworkResult>("/network/ei", req);
 
 export interface NetworkResult {

@@ -10,11 +10,11 @@ import { useEffect, useMemo, useState } from "react";
 import { useStudioStore } from "../stores/studio";
 import {
     fetchModelFacets,
-    fetchModelScan,
     type ModelBehavior,
     type ModelFacets,
     type ModelScanMetadata,
 } from "../api/client";
+import { useModelScanJob } from "../useModelScanJob";
 import EvidenceSummaryStrip, {
     type EvidenceSummaryItem,
 } from "./EvidenceSummaryStrip";
@@ -162,14 +162,10 @@ export default function ModelBrowser() {
         setModelFilter,
     } = useStudioStore();
 
-    const [behaviors, setBehaviors] = useState<Record<string, ModelBehavior>>(
-        {},
-    );
-    const [scanMetadata, setScanMetadata] = useState<ModelScanMetadata | null>(
-        null,
-    );
+    const modelScan = useModelScanJob();
+    const behaviors = modelScan.state.behaviors;
+    const scanMetadata = modelScan.state.scanMetadata;
     const [patternFilter, setPatternFilter] = useState<string>("");
-    const [scanLoaded, setScanLoaded] = useState(false);
     const [facets, setFacets] = useState<ModelFacets | null>(null);
     const [familyFilter, setFamilyFilter] = useState<string>("");
     const [behaviorFilter, setBehaviorFilter] = useState<string>("");
@@ -186,19 +182,6 @@ export default function ModelBrowser() {
             .then(setFacets)
             .catch(() => setFacets(null));
     }, []);
-
-    function loadBehaviors() {
-        if (scanLoaded) return;
-        setScanLoaded(true);
-        fetchModelScan()
-            .then((data) => {
-                const map: Record<string, ModelBehavior> = {};
-                for (const b of data.models) map[b.name] = b;
-                setBehaviors(map);
-                setScanMetadata(data.scan_metadata);
-            })
-            .catch(() => setScanLoaded(false));
-    }
 
     const grouped = useMemo(
         () =>
@@ -256,23 +239,65 @@ export default function ModelBrowser() {
                     }}
                 />
                 <button
-                    onClick={loadBehaviors}
+                    type="button"
+                    data-testid="model-scan-job-button"
+                    onClick={() => {
+                        if (modelScan.canSubmit) {
+                            modelScan.startScan();
+                        }
+                    }}
+                    disabled={modelScan.busy}
+                    aria-busy={modelScan.busy}
                     style={{
                         fontSize: 9,
                         padding: "2px 6px",
                         background: "var(--bg-tertiary)",
-                        color: scanLoaded
-                            ? "var(--accent)"
-                            : "var(--text-muted)",
+                        color:
+                            modelScan.state.phase === "completed"
+                                ? "var(--accent)"
+                                : "var(--text-muted)",
                         border: "1px solid var(--border)",
                         borderRadius: 3,
-                        cursor: "pointer",
+                        cursor: modelScan.busy ? "wait" : "pointer",
+                        opacity: modelScan.busy ? 0.7 : 1,
                     }}
-                    title="Optional live single-current firing-pattern scan (slow). The coloured dots already show each model's cached measured behaviour."
+                    title="Submit one asynchronous full-catalogue model scan job and poll its production status route. Coloured dots already show each model's cached measured behaviour."
                 >
-                    {scanLoaded ? "Scanned" : "Scan"}
+                    {modelScan.phaseLabel}
                 </button>
             </div>
+
+            {modelScan.state.error !== null && (
+                <div
+                    data-testid="model-scan-job-error"
+                    role="alert"
+                    style={{
+                        fontSize: 9,
+                        color: "var(--error, #ff5252)",
+                        marginBottom: 4,
+                    }}
+                >
+                    {modelScan.state.error}
+                </div>
+            )}
+
+            {(modelScan.state.phase === "pending"
+                || modelScan.state.phase === "running"
+                || modelScan.state.phase === "submitting") && (
+                <div
+                    data-testid="model-scan-job-status"
+                    style={{
+                        fontSize: 9,
+                        color: "var(--text-muted)",
+                        marginBottom: 4,
+                    }}
+                >
+                    scan job: {modelScan.state.phase}
+                    {modelScan.state.jobId !== null
+                        ? ` · ${modelScan.state.jobId}`
+                        : ""}
+                </div>
+            )}
 
             {facets && (
                 <select

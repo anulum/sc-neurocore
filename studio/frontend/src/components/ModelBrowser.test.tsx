@@ -6,10 +6,68 @@
 // Contact: www.anulum.li | protoscience@anulum.li
 // SC-NeuroCore — Source/config provenance header
 
-import { describe, expect, it } from "vitest";
+import { renderToStaticMarkup } from "react-dom/server";
+import { describe, expect, it, vi } from "vitest";
 
 import type { ModelBehavior, ModelScanMetadata } from "../api/client";
 import { buildModelScanEvidenceItems, filterAndGroupModels } from "./ModelBrowser";
+import type { ModelScanJobViewState } from "../modelScanJob";
+import { initialModelScanJobState } from "../modelScanJob";
+
+const mockScan: {
+  busy: boolean;
+  canSubmit: boolean;
+  phaseLabel: string;
+  startScan: ReturnType<typeof vi.fn>;
+  state: ModelScanJobViewState;
+} = {
+  busy: false,
+  canSubmit: true,
+  phaseLabel: "Scan",
+  startScan: vi.fn(),
+  state: initialModelScanJobState(),
+};
+
+vi.mock("../useModelScanJob", () => ({
+  useModelScanJob: () => mockScan,
+}));
+
+vi.mock("../stores/studio", () => ({
+  useStudioStore: () => ({
+    models: [
+      {
+        name: "LIFNeuron",
+        category: "IF",
+        family: "IF",
+        tier: 2,
+        science_tier: 3,
+        silicon_tier: null,
+        science_label: "S3",
+        silicon_label: "none",
+        behavior_tags: ["tonic"],
+        description: "LIF",
+        maturity: "validated",
+        evidence_kind: "publication",
+        provenance: {},
+        state_var_names: ["v"],
+        n_params: 2,
+      },
+    ],
+    selectedModelName: "",
+    modelFilter: "",
+    loadModels: vi.fn(),
+    selectModel: vi.fn(),
+    setModelFilter: vi.fn(),
+  }),
+}));
+
+vi.mock("../api/client", async () => {
+  const actual = await vi.importActual<typeof import("../api/client")>("../api/client");
+  return {
+    ...actual,
+    fetchModelFacets: async () => null,
+  };
+});
 
 interface BrowseModel {
   name: string;
@@ -88,6 +146,46 @@ describe("ModelBrowser", () => {
 
   it("omits evidence labels before a scan completes", () => {
     expect(buildModelScanEvidenceItems(null)).toEqual([]);
+  });
+
+  it("renders Scan control from job phase and shows path-free job error", async () => {
+    mockScan.busy = false;
+    mockScan.canSubmit = true;
+    mockScan.phaseLabel = "Scan";
+    mockScan.state = initialModelScanJobState();
+    const { default: ModelBrowser } = await import("./ModelBrowser");
+    const idle = renderToStaticMarkup(<ModelBrowser />);
+    expect(idle).toContain("data-testid=\"model-scan-job-button\"");
+    expect(idle).toContain("Scan");
+    expect(idle).not.toContain("data-testid=\"model-scan-job-error\"");
+
+    mockScan.busy = true;
+    mockScan.canSubmit = false;
+    mockScan.phaseLabel = "running";
+    mockScan.state = {
+      ...initialModelScanJobState(),
+      phase: "running",
+      jobId: "sj_scan_1",
+      statusRoute: "/api/studio/jobs/sj_scan_1",
+    };
+    const running = renderToStaticMarkup(<ModelBrowser />);
+    expect(running).toContain("running");
+    expect(running).toContain("data-testid=\"model-scan-job-status\"");
+    expect(running).toContain("sj_scan_1");
+    expect(running).toContain("disabled");
+
+    mockScan.busy = false;
+    mockScan.canSubmit = true;
+    mockScan.phaseLabel = "failed";
+    mockScan.state = {
+      ...initialModelScanJobState(),
+      phase: "failed",
+      error: "budget_exceeded",
+    };
+    const failed = renderToStaticMarkup(<ModelBrowser />);
+    expect(failed).toContain("data-testid=\"model-scan-job-error\"");
+    expect(failed).toContain("budget_exceeded");
+    expect(failed).not.toContain("class");
   });
 
   it("groups the catalogue by family with no filters", () => {
