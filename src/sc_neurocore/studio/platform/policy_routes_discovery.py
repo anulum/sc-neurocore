@@ -18,6 +18,12 @@ DISCOVERY_ROUTES: tuple[tuple[str, str, RouteVisibility, str], ...] = (
     ("GET", "/api/models", RouteVisibility.PUBLIC, "studio.models.read"),
     ("GET", "/api/models/{name}", RouteVisibility.PUBLIC, "studio.models.read"),
     ("GET", "/api/models/scan", RouteVisibility.PUBLIC, "studio.models.scan"),
+    (
+        "POST",
+        "/api/models/scan/jobs",
+        RouteVisibility.AUTHENTICATED,
+        "studio.models.scan.job",
+    ),
     ("GET", "/api/models/facets", RouteVisibility.PUBLIC, "studio.models.read"),
     ("GET", "/api/models/{name}/doc", RouteVisibility.PUBLIC, "studio.models.read"),
     ("GET", "/api/dcls/info", RouteVisibility.PUBLIC, "studio.dcls.read"),

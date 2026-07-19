@@ -37,6 +37,7 @@ from sc_neurocore.studio.api.analysis_guards import (
 from sc_neurocore.studio.api.common import _safe
 from sc_neurocore.studio.api.runtime import StudioApiContext
 from sc_neurocore.studio.api.schemas import (
+    AnalysisJobRequest,
     BifurcationRequest,
     CodegenRequest,
     CompareRequest,
@@ -59,6 +60,8 @@ from sc_neurocore.studio.codegen import (
 )
 from sc_neurocore.studio.models import simulate_model
 from sc_neurocore.studio.network import simulate_ei_network
+from sc_neurocore.studio.platform.jobs_context import StudioJobContext
+from sc_neurocore.studio.platform.jobs_models import StudioJobRejected
 from sc_neurocore.studio.simulation import simulate
 from sc_neurocore.studio.simulation_manifest import build_simulation_run_manifest
 
@@ -100,6 +103,144 @@ def build_simulation_router(context: StudioApiContext) -> APIRouter:
     """Build the simulation and analysis router over shared Studio runtime state."""
     router = APIRouter()
     analysis_budget = context.analysis_budget
+    studio_job_manager = context.studio_job_manager
+
+    @router.post("/api/analysis/jobs")
+    def api_analysis_job(req: AnalysisJobRequest) -> dict[str, Any]:
+        """Submit a heavy analysis run as an asynchronous Studio job.
+
+        Use this when a synchronous analysis route returns
+        ``execution_mode=job_required``. The job result carries the same
+        analysis payload shape as the corresponding synchronous endpoint.
+        """
+
+        analysis = req.analysis
+        payload_dump: dict[str, Any]
+        try:
+            if analysis == "fi_curve":
+                fi_body = FICurveRequest.model_validate(req.payload)
+                sim_count = fi_body.i_steps
+                duration = fi_body.duration
+                dt = fi_body.dt
+                payload_dump = fi_body.model_dump()
+            elif analysis == "bifurcation":
+                bif_body = BifurcationRequest.model_validate(req.payload)
+                sim_count = bif_body.sweep_steps
+                duration = bif_body.duration
+                dt = bif_body.dt
+                payload_dump = bif_body.model_dump()
+            elif analysis == "heatmap":
+                heat_body = HeatmapRequest.model_validate(req.payload)
+                sim_count = heat_body.x_steps * heat_body.y_steps
+                duration = heat_body.duration
+                dt = heat_body.dt
+                payload_dump = heat_body.model_dump()
+            else:
+                sens_body = SensitivityRequest.model_validate(req.payload)
+                sim_count = 1 + 2 * len(sens_body.params or {})
+                duration = sens_body.duration
+                dt = sens_body.dt
+                payload_dump = sens_body.model_dump()
+        except Exception as exc:  # noqa: BLE001 - map validation to 422
+            raise HTTPException(status_code=422, detail=f"invalid_analysis_payload: {exc}") from None
+
+        # Jobs intentionally skip the synchronous budget ceiling; the work is
+        # off the HTTP request thread. Still reject non-positive sizes early.
+        if sim_count < 1:
+            raise HTTPException(status_code=422, detail="analysis_job_empty")
+
+        def _task(_job_context: StudioJobContext) -> dict[str, object]:
+            if analysis == "fi_curve":
+                import numpy as np
+
+                fi = FICurveRequest.model_validate(payload_dump)
+                sim_fn = _make_simulate_fn(fi.model_dump())
+                currents = np.linspace(fi.i_min, fi.i_max, fi.i_steps).tolist()
+                rates = [sim_fn(current=float(i))["stats"]["rate_hz"] for i in currents]
+                result = _attach_analysis_metadata(
+                    "fi_curve", fi.model_dump(), {"currents": currents, "rates": rates}
+                )
+                return dict(result)
+            if analysis == "bifurcation":
+                bif = BifurcationRequest.model_validate(payload_dump)
+                sim_fn = _make_simulate_fn(bif.model_dump())
+                base_cfg = {
+                    "params": bif.params,
+                    "init": bif.init,
+                    "dt": bif.dt,
+                    "duration": bif.duration,
+                    "current": bif.current,
+                    "protocol": "sine",
+                }
+                sweep = bifurcation_sweep(
+                    sim_fn,
+                    base_cfg,
+                    bif.sweep_param,
+                    bif.sweep_min,
+                    bif.sweep_max,
+                    bif.sweep_steps,
+                )
+                result = _attach_analysis_metadata("bifurcation", bif.model_dump(), sweep)
+                return dict(result)
+            if analysis == "heatmap":
+                heat = HeatmapRequest.model_validate(payload_dump)
+                sim_fn = _make_simulate_fn(heat.model_dump())
+                heat_payload = heatmap_2d(
+                    sim_fn,
+                    {
+                        "params": heat.params,
+                        "init": heat.init,
+                        "dt": heat.dt,
+                        "duration": heat.duration,
+                        "current": heat.current,
+                        "protocol": "constant",
+                    },
+                    heat.param_x,
+                    heat.x_min,
+                    heat.x_max,
+                    heat.x_steps,
+                    heat.param_y,
+                    heat.y_min,
+                    heat.y_max,
+                    heat.y_steps,
+                )
+                result = _attach_analysis_metadata("heatmap", heat.model_dump(), heat_payload)
+                return dict(result)
+            sens = SensitivityRequest.model_validate(payload_dump)
+            sim_fn = _make_simulate_fn(sens.model_dump())
+            param_names = list((sens.params or {}).keys())
+            base_cfg = {
+                "params": sens.params,
+                "init": sens.init,
+                "dt": sens.dt,
+                "duration": sens.duration,
+                "current": sens.current,
+                "protocol": "constant",
+            }
+            sens_payload = sensitivity_analysis(sim_fn, base_cfg, param_names)
+            result = _attach_analysis_metadata("sensitivity", sens.model_dump(), sens_payload)
+            return dict(result)
+
+        try:
+            record = studio_job_manager.submit(
+                kind="analysis",
+                owner="studio",
+                request_id=None,
+                task=_task,
+            )
+        except StudioJobRejected as exc:
+            raise HTTPException(status_code=422, detail=str(exc)) from None
+        return {
+            "analysis": analysis,
+            "execution_mode": "async_job",
+            "job": record.to_public_dict(),
+            "job_id": record.job_id,
+            "projected_simulations": sim_count,
+            "schema_version": "studio.analysis.job.v1",
+            "status_route": f"/api/studio/jobs/{record.job_id}",
+            "duration_ms": duration,
+            "dt_ms": dt,
+        }
 
     @router.post("/api/simulate")
     def api_simulate(req: SimulateRequest) -> Any:

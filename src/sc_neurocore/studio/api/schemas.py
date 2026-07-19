@@ -10,7 +10,7 @@
 
 from __future__ import annotations
 
-from typing import Annotated, Any
+from typing import Annotated, Any, Literal
 
 from pydantic import AliasChoices, BaseModel, Field, StringConstraints
 
@@ -393,6 +393,18 @@ class HeatmapRequest(BaseModel):
     y_min: float
     y_max: float
     y_steps: int = Field(default=15, ge=3, le=30)
+
+
+class AnalysisJobRequest(BaseModel):
+    """Request body for asynchronous heavy analysis job submission.
+
+    The ``analysis`` field selects the synchronous analysis kind. ``payload``
+    must match the corresponding synchronous request schema (for example
+    :class:`BifurcationRequest` when ``analysis`` is ``bifurcation``).
+    """
+
+    analysis: Literal["fi_curve", "bifurcation", "heatmap", "sensitivity"]
+    payload: dict[str, Any] = Field(default_factory=dict)
 
 
 class NetworkRequest(BaseModel):

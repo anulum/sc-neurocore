@@ -72,6 +72,12 @@ COMPUTE_ROUTES: tuple[tuple[str, str, RouteVisibility, str], ...] = (
     ("POST", "/api/heatmap", RouteVisibility.AUTHENTICATED, "studio.analysis.heatmap"),
     (
         "POST",
+        "/api/analysis/jobs",
+        RouteVisibility.AUTHENTICATED,
+        "studio.analysis.job",
+    ),
+    (
+        "POST",
         "/api/compare",
         RouteVisibility.AUTHENTICATED,
         "studio.analysis.compare",
