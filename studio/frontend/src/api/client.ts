@@ -810,6 +810,39 @@ export const simulateModel = (req: Record<string, unknown>) => post<SimulateResp
 export const fetchFICurve = (req: Record<string, unknown>) => post<FICurveResponse>("/fi-curve", req);
 export const fetchBifurcation = (req: Record<string, unknown>) => post<BifurcationResponse>("/bifurcation", req);
 export const fetchSensitivity = (req: Record<string, unknown>) => post<SensitivityResponse>("/sensitivity", req);
+
+/** Analysis kinds accepted by ``POST /api/analysis/jobs``. */
+export type AnalysisJobKind = "fi_curve" | "bifurcation" | "heatmap" | "sensitivity";
+
+/** Request body for asynchronous heavy analysis job submission. */
+export interface AnalysisJobRequestBody {
+  analysis: AnalysisJobKind;
+  payload: Record<string, unknown>;
+}
+
+/** Receipt from ``POST /api/analysis/jobs``. */
+export interface AnalysisJobReceipt {
+  analysis: AnalysisJobKind;
+  dt_ms?: number;
+  duration_ms?: number;
+  execution_mode: "async_job";
+  job: StudioJobRecord;
+  job_id: string;
+  projected_simulations?: number;
+  schema_version: "studio.analysis.job.v1";
+  status_route: string;
+}
+
+/** Completed job result for one of the four supported analysis kinds. */
+export type AnalysisJobResult =
+  | FICurveResponse
+  | BifurcationResponse
+  | HeatmapResponse
+  | SensitivityResponse;
+
+/** Submit a heavy analysis run as an asynchronous Studio job. */
+export const submitAnalysisJob = (request: AnalysisJobRequestBody) =>
+  post<AnalysisJobReceipt>("/analysis/jobs", request);
 export const fetchNullclines = (req: Record<string, unknown>) => post<NullclineResponse>("/nullclines", req);
 export const fetchPrecision = (req: Record<string, unknown>) => post<PrecisionResponse>("/precision", req);
 export const fetchCompare = (a: Record<string, unknown>, b: Record<string, unknown>) => post<CompareResponse>("/compare", { config_a: a, config_b: b });
