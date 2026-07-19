@@ -16,6 +16,7 @@ import json
 import sys
 import time
 import urllib.error
+import urllib.parse
 import urllib.request
 from collections.abc import Callable
 from pathlib import Path
@@ -47,14 +48,34 @@ def detect_package(pyproject_path: Path) -> str:
 
 def _http_get(url: str) -> bytes:
     """Fetch the fixed HTTPS statistics endpoint and return its response body."""
-    with urllib.request.urlopen(url, timeout=30) as response:  # noqa: S310
+    parsed = urllib.parse.urlsplit(url)
+    path_parts = parsed.path.split("/")
+    if (
+        parsed.scheme != "https"
+        or parsed.hostname != "pypistats.org"
+        or parsed.username is not None
+        or parsed.password is not None
+        or parsed.port is not None
+        or path_parts[:3] != ["", "api", "packages"]
+        or len(path_parts) != 5
+        or not path_parts[3]
+        or path_parts[4] != "overall"
+        or parsed.query
+        or parsed.fragment
+    ):
+        raise ValueError("PyPI statistics URL must use the fixed HTTPS API origin and path")
+    with urllib.request.urlopen(  # noqa: S310  # nosec B310 - URL is constrained above
+        url,
+        timeout=30,
+    ) as response:
         body: bytes = response.read()
         return body
 
 
 def fetch_overall(package: str, fetch: Fetch = _http_get) -> dict[str, Any]:
     """Fetch and decode pypistats' overall payload for ``package``."""
-    raw = fetch(PYPISTATS_OVERALL.format(package=package))
+    package_segment = urllib.parse.quote(package, safe="")
+    raw = fetch(PYPISTATS_OVERALL.format(package=package_segment))
     decoded: dict[str, Any] = json.loads(raw)
     return decoded
 

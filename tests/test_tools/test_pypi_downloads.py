@@ -40,6 +40,56 @@ def test_detect_package_reads_project_name() -> None:
     assert dl.detect_package(ROOT / "pyproject.toml") == "sc-neurocore"
 
 
+class _FakeResponse:
+    def __enter__(self) -> _FakeResponse:
+        return self
+
+    def __exit__(self, *_args: object) -> None:
+        return None
+
+    def read(self) -> bytes:
+        return json.dumps(SAMPLE).encode()
+
+
+def test_http_get_accepts_only_the_quoted_fixed_api_url(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    calls: list[tuple[str, int]] = []
+
+    def fake_urlopen(url: str, *, timeout: int) -> _FakeResponse:
+        calls.append((url, timeout))
+        return _FakeResponse()
+
+    monkeypatch.setattr(dl.urllib.request, "urlopen", fake_urlopen)
+    assert dl.fetch_overall("sc/neurocore", dl._http_get) == SAMPLE
+    assert calls == [("https://pypistats.org/api/packages/sc%2Fneurocore/overall", 30)]
+
+
+@pytest.mark.parametrize(
+    "url",
+    (
+        "http://pypistats.org/api/packages/sc-neurocore/overall",
+        "https://example.invalid/api/packages/sc-neurocore/overall",
+        "https://user@pypistats.org/api/packages/sc-neurocore/overall",
+        "https://pypistats.org:443/api/packages/sc-neurocore/overall",
+        "https://pypistats.org/api/packages/sc/neurocore/overall",
+        "https://pypistats.org/api/packages/sc-neurocore/overall?mirrored=true",
+        "https://pypistats.org/api/packages/sc-neurocore/overall#fragment",
+        "https://pypistats.org/not-the-api",
+    ),
+)
+def test_http_get_rejects_untrusted_url_before_open(
+    url: str,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    def unexpected_urlopen(*_args: object, **_kwargs: object) -> None:
+        pytest.fail("urlopen must not run for an untrusted URL")
+
+    monkeypatch.setattr(dl.urllib.request, "urlopen", unexpected_urlopen)
+    with pytest.raises(ValueError, match="fixed HTTPS API"):
+        dl._http_get(url)
+
+
 def test_daily_counts_ignores_malformed_rows() -> None:
     payload: dict[str, Any] = {
         "data": [

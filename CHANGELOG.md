@@ -21,6 +21,9 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
   five-runtime 200,000-step benchmark.
 
 ### Fixed
+- Restricted the PyPI download metrics client to the exact HTTPS pypistats API
+  origin and path, encoded package names as single URL path segments, and added
+  fail-closed tests for untrusted schemes, hosts, credentials, ports, and paths.
 - Corrected the `AdaptiveThresholdIFNeuron` "Platkiewicz & Bhatt 2010"
   typographical attribution and the descriptor `integration.method = "euler"`
   mismatch (production always used the exact constant-input relaxation);
