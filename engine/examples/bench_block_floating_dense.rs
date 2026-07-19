@@ -180,7 +180,7 @@ fn main() {
     let load_average_before = load_average();
     let mode = BlockFloatingMode::bfp16_e3_x32();
     let mantissas = deterministic_mantissas();
-    let exponents = vec![0_u8; (N_INPUTS * N_OUTPUTS + mode.block_size - 1) / mode.block_size];
+    let exponents = vec![0_u8; (N_INPUTS * N_OUTPUTS).div_ceil(mode.block_size)];
     let inputs = deterministic_inputs();
     let mut ns_per_call = Vec::with_capacity(REPEATS);
     let mut checksum = 0_i64;
@@ -193,8 +193,7 @@ fn main() {
         overflow_count = run_overflow_count;
     }
     let saturating_mantissas = vec![16_384_i16; N_INPUTS * N_OUTPUTS];
-    let saturating_exponents =
-        vec![2_u8; (N_INPUTS * N_OUTPUTS + mode.block_size - 1) / mode.block_size];
+    let saturating_exponents = vec![2_u8; (N_INPUTS * N_OUTPUTS).div_ceil(mode.block_size)];
     let saturating_inputs = vec![32767_i32 << 16; N_INPUTS];
     let safe_envelope_report =
         block_floating_dense_q16(&mantissas, &exponents, &inputs, N_OUTPUTS, N_INPUTS, mode)

@@ -1185,7 +1185,7 @@ mod block_floating_benchmark_contract_tests {
                 round_div_nearest_even(raw_weight_code, 64)
             })
             .collect::<Vec<_>>();
-        let exponents = vec![0_u8; (N_INPUTS * N_OUTPUTS + mode.block_size - 1) / mode.block_size];
+        let exponents = vec![0_u8; (N_INPUTS * N_OUTPUTS).div_ceil(mode.block_size)];
         let inputs = (0..N_INPUTS)
             .map(|idx| (((idx * 19 + 5) % 257) as i32 - 128) << 8)
             .collect::<Vec<_>>();
@@ -1200,8 +1200,7 @@ mod block_floating_benchmark_contract_tests {
         assert!(envelope.conservative_overflow_free);
 
         let saturating_mantissas = vec![16_384_i16; N_INPUTS * N_OUTPUTS];
-        let saturating_exponents =
-            vec![2_u8; (N_INPUTS * N_OUTPUTS + mode.block_size - 1) / mode.block_size];
+        let saturating_exponents = vec![2_u8; (N_INPUTS * N_OUTPUTS).div_ceil(mode.block_size)];
         let saturating_inputs = vec![32767_i32 << 16; N_INPUTS];
         let saturating_result = block_floating_dense_q16(
             &saturating_mantissas,

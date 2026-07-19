@@ -276,10 +276,10 @@ mod tests {
     fn disconnected_pair_returns_zero() {
         // Two isolated edges: 0-1 and 2-3. Pair (0, 2) is disconnected.
         let mut g = vec![0.0; 16];
-        g[0 * 4 + 1] = 1.0;
-        g[1 * 4 + 0] = 1.0;
-        g[2 * 4 + 3] = 1.0;
-        g[3 * 4 + 2] = 1.0;
+        g[1] = 1.0;
+        g[4] = 1.0;
+        g[11] = 1.0;
+        g[14] = 1.0;
         let kappa = ollivier_ricci_curvature(&g, 4, 0, 2).unwrap();
         assert_eq!(kappa, 0.0);
     }

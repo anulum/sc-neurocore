@@ -138,9 +138,10 @@ mod tests {
     }
     #[test]
     fn theta_exact_positive_flow() {
-        let mut n = ThetaNeuron::default();
-        n.theta = 1.0;
-        n.dt = 0.2;
+        let mut n = ThetaNeuron {
+            theta: 1.0,
+            dt: 0.2,
+        };
         let root_i = 2.0_f64.sqrt();
         let phase = ((n.theta / 2.0).tan() / root_i).atan();
         let expected =
@@ -151,25 +152,28 @@ mod tests {
     }
     #[test]
     fn theta_exact_flow_reports_within_step_crossing() {
-        let mut n = ThetaNeuron::default();
-        n.theta = 2.5;
-        n.dt = 1.0;
+        let mut n = ThetaNeuron {
+            theta: 2.5,
+            dt: 1.0,
+        };
         assert_eq!(n.step(1.0), 1);
         assert!(n.theta >= -std::f64::consts::PI && n.theta <= std::f64::consts::PI);
     }
     #[test]
     fn theta_stable_fixed_point_preserved() {
-        let mut n = ThetaNeuron::default();
-        n.theta = -std::f64::consts::FRAC_PI_2;
-        n.dt = 100.0;
+        let mut n = ThetaNeuron {
+            theta: -std::f64::consts::FRAC_PI_2,
+            dt: 100.0,
+        };
         assert_eq!(n.step(-1.0), 0);
         assert!((n.theta + std::f64::consts::FRAC_PI_2).abs() < 1.0e-12);
     }
     #[test]
     fn theta_non_finite_exact_candidate_preserves_state() {
-        let mut n = ThetaNeuron::default();
-        n.theta = 0.25;
-        n.dt = 1.0e308;
+        let mut n = ThetaNeuron {
+            theta: 0.25,
+            dt: 1.0e308,
+        };
         let before = n.theta;
         assert_eq!(n.step(-1.0e308), 0);
         assert_eq!(n.theta, before);

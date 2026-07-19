@@ -150,14 +150,11 @@ fn main() {
     let inputs = deterministic_inputs();
     let mode = BlockFloatingMode::bfp16_e3_x32();
     let mantissas = deterministic_bfp_mantissas();
-    let exponents = vec![
-        mode.exponent_bias() as u8;
-        (N_INPUTS * N_OUTPUTS + mode.block_size - 1) / mode.block_size
-    ];
+    let exponents =
+        vec![mode.exponent_bias() as u8; (N_INPUTS * N_OUTPUTS).div_ceil(mode.block_size)];
     let underflow_weights = underflow_weights_mixed();
     let underflow_mantissas = underflow_mantissas_bfp();
-    let underflow_exponents =
-        vec![0_u8; (N_INPUTS * N_OUTPUTS + mode.block_size - 1) / mode.block_size];
+    let underflow_exponents = vec![0_u8; (N_INPUTS * N_OUTPUTS).div_ceil(mode.block_size)];
     let underflow_inputs = underflow_inputs();
 
     let mut mixed_ns = Vec::with_capacity(REPEATS);

@@ -554,7 +554,7 @@ mod tests {
         let x = spd_solve(&a, 2, &b, 1);
         let det = 4.0 * 3.0 - 1.0 * 1.0;
         let ref0 = (3.0 * 1.0 - 1.0 * 2.0) / det;
-        let ref1 = (-1.0 * 1.0 + 4.0 * 2.0) / det;
+        let ref1 = (-1.0 + 4.0 * 2.0) / det;
         assert!((x[0] - ref0).abs() < 1e-12 && (x[1] - ref1).abs() < 1e-12);
     }
 

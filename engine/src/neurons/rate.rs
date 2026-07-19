@@ -933,8 +933,7 @@ mod tests {
     }
     #[test]
     fn mcp_revalidates_public_threshold_mutation() {
-        let mut n = McCullochPittsNeuron::default();
-        n.theta = 0;
+        let n = McCullochPittsNeuron { theta: 0 };
         assert!(n.try_step(1, false).is_err());
     }
     #[test]

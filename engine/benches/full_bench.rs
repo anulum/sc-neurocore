@@ -405,11 +405,9 @@ fn bench_all(c: &mut Criterion) {
     });
 
     let mixed_weights_q88: Vec<i16> = (0..(64 * 32))
-        .map(|i| (((i * 17 + 11) % 513) as i32 - 256) as i16)
+        .map(|i| (((i * 17 + 11) % 513) - 256) as i16)
         .collect();
-    let mixed_inputs_q1616: Vec<i32> = (0..64)
-        .map(|i| (((i * 19 + 5) % 257) as i32 - 128) << 8)
-        .collect();
+    let mixed_inputs_q1616: Vec<i32> = (0..64).map(|i| (((i * 19 + 5) % 257) - 128) << 8).collect();
     c.bench_function("mixed_dense_q88_q1616_64x32", |b| {
         b.iter(|| {
             black_box(
@@ -425,12 +423,10 @@ fn bench_all(c: &mut Criterion) {
     });
     let bfp_mode = BlockFloatingMode::bfp16_e3_x32();
     let bfp_mantissas: Vec<i16> = (0..(64 * 32))
-        .map(|i| (((i * 23 + 3) % 1025) as i32 - 512) as i16)
+        .map(|i| (((i * 23 + 3) % 1025) - 512) as i16)
         .collect();
-    let bfp_exponents: Vec<u8> = vec![
-        bfp_mode.exponent_bias() as u8;
-        (64 * 32 + bfp_mode.block_size - 1) / bfp_mode.block_size
-    ];
+    let bfp_exponents: Vec<u8> =
+        vec![bfp_mode.exponent_bias() as u8; (64_usize * 32).div_ceil(bfp_mode.block_size)];
     c.bench_function("block_floating_dense_q16_64x32", |b| {
         b.iter(|| {
             black_box(
@@ -1625,7 +1621,7 @@ fn bench_all(c: &mut Criterion) {
         b.iter(|| {
             let mut n = JansenRitUnit::new();
             for _ in 0..100_000 {
-                black_box(n.step(220.0));
+                black_box(n.step(220.0).unwrap());
             }
         })
     });
@@ -1634,7 +1630,7 @@ fn bench_all(c: &mut Criterion) {
         b.iter(|| {
             let mut n = WongWangUnit::new(42);
             for _ in 0..100_000 {
-                black_box(n.step(0.02, 0.0));
+                black_box(n.step(0.02, 0.0).unwrap());
             }
         })
     });

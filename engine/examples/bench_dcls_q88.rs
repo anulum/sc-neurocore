@@ -27,9 +27,9 @@ fn deterministic_weights() -> Vec<i16> {
 
 fn spike_window(index: usize) -> [u8; TAPS] {
     let mut spikes = [0_u8; TAPS];
-    for tap in 0..TAPS {
+    for (tap, spike) in spikes.iter_mut().enumerate() {
         let value = (index + tap * 3) % 7;
-        spikes[tap] = if value == 0 || value == 1 || value == 4 {
+        *spike = if value == 0 || value == 1 || value == 4 {
             1
         } else {
             0

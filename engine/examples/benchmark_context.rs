@@ -181,6 +181,8 @@ pub fn measurement_context_json(load_average_before: &str) -> String {
     )
 }
 
+// This file is also included as a helper module by several benchmark examples.
+#[allow(dead_code)]
 fn main() {
     println!("{}", measurement_context_json(&load_average()));
 }

@@ -245,7 +245,7 @@ mod tests {
         n.i_asc2 = -0.2;
         assert_eq!(n.step(4.0), 0);
         assert!((n.v - (-67.7924658728125)).abs() < 1e-12);
-        assert!((n.theta - (-45.049541282631253)).abs() < 1e-12);
+        assert!((n.theta - (-45.049_541_282_631_25)).abs() < 1e-12);
         assert!((n.i_asc1 - 0.361935).abs() < 1e-12);
         assert!((n.i_asc2 - (-0.19900249583333334)).abs() < 1e-10);
     }
