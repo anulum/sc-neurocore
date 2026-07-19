@@ -2,8 +2,8 @@
   "auto_backend_order": [
     "rust",
     "mojo",
-    "julia",
     "go",
+    "julia",
     "python"
   ],
   "auto_backend_selection_basis": "same-host measured warm batch order; non-exclusive timings remain diagnostic",
@@ -12,18 +12,18 @@
       "available": true,
       "final_rate": 3.0,
       "final_rate_matches_python": true,
-      "max_call_ns": 8041338,
-      "median_call_ms": 2.643336,
-      "median_call_ns": 2643336.0,
-      "median_ns_per_step": 13.21668,
-      "min_call_ns": 2336520,
+      "max_call_ns": 8105737,
+      "median_call_ms": 2.645061,
+      "median_call_ns": 2645061.0,
+      "median_ns_per_step": 13.225305,
+      "min_call_ns": 2556759,
       "parity_max_abs_diff": 0.0,
       "samples_ns": [
-        3282528,
-        8041338,
-        2643336,
-        2475022,
-        2336520
+        3395842,
+        8105737,
+        2556759,
+        2584439,
+        2645061
       ],
       "trace_matches_python": true,
       "trace_mismatch_count": 0,
@@ -34,18 +34,18 @@
       "available": true,
       "final_rate": 3.0,
       "final_rate_matches_python": true,
-      "max_call_ns": 2715262,
-      "median_call_ms": 1.998344,
-      "median_call_ns": 1998344.0,
-      "median_ns_per_step": 9.99172,
-      "min_call_ns": 1778902,
+      "max_call_ns": 3854282,
+      "median_call_ms": 2.942511,
+      "median_call_ns": 2942511.0,
+      "median_ns_per_step": 14.712555,
+      "min_call_ns": 1831256,
       "parity_max_abs_diff": 0.0,
       "samples_ns": [
-        1998344,
-        1894817,
-        1778902,
-        2141841,
-        2715262
+        2038825,
+        1831256,
+        2942511,
+        3346866,
+        3854282
       ],
       "trace_matches_python": true,
       "trace_mismatch_count": 0,
@@ -56,18 +56,18 @@
       "available": true,
       "final_rate": 3.0,
       "final_rate_matches_python": true,
-      "max_call_ns": 2657338,
-      "median_call_ms": 1.832798,
-      "median_call_ns": 1832798.0,
-      "median_ns_per_step": 9.16399,
-      "min_call_ns": 1502387,
+      "max_call_ns": 2731289,
+      "median_call_ms": 2.244078,
+      "median_call_ns": 2244078.0,
+      "median_ns_per_step": 11.22039,
+      "min_call_ns": 1831926,
       "parity_max_abs_diff": 0.0,
       "samples_ns": [
-        1832798,
-        2657338,
-        1841660,
-        1785178,
-        1502387
+        2244078,
+        2367774,
+        2194431,
+        2731289,
+        1831926
       ],
       "trace_matches_python": true,
       "trace_mismatch_count": 0,
@@ -78,18 +78,18 @@
       "available": true,
       "final_rate": 3.0,
       "final_rate_matches_python": true,
-      "max_call_ns": 471621,
-      "median_call_ms": 0.167328,
-      "median_call_ns": 167328.0,
-      "median_ns_per_step": 0.83664,
-      "min_call_ns": 118110,
+      "max_call_ns": 463880,
+      "median_call_ms": 0.182848,
+      "median_call_ns": 182848.0,
+      "median_ns_per_step": 0.91424,
+      "min_call_ns": 141602,
       "parity_max_abs_diff": 0.0,
       "samples_ns": [
-        273421,
-        471621,
-        167328,
-        118694,
-        118110
+        335466,
+        463880,
+        182848,
+        141602,
+        142721
       ],
       "trace_matches_python": true,
       "trace_mismatch_count": 0,
@@ -100,18 +100,18 @@
       "available": true,
       "final_rate": 3.0,
       "final_rate_matches_python": true,
-      "max_call_ns": 1873775,
-      "median_call_ms": 1.482252,
-      "median_call_ns": 1482252.0,
-      "median_ns_per_step": 7.41126,
-      "min_call_ns": 1399031,
+      "max_call_ns": 2171036,
+      "median_call_ms": 1.624409,
+      "median_call_ns": 1624409.0,
+      "median_ns_per_step": 8.122045,
+      "min_call_ns": 1494545,
       "parity_max_abs_diff": 0.0,
       "samples_ns": [
-        1795901,
-        1873775,
-        1399031,
-        1482252,
-        1461533
+        1907695,
+        2171036,
+        1523491,
+        1624409,
+        1494545
       ],
       "trace_matches_python": true,
       "trace_mismatch_count": 0,
@@ -132,7 +132,7 @@
       "size_bytes": 15024
     },
     "rust_extension": {
-      "path": "/media/anulum/GOTM/aaa_God_of_the_Math_Collection/03_CODE/SC-NEUROCORE/.venv/lib/python3.12/site-packages/sc_neurocore_engine/sc_neurocore_engine.cpython-312-x86_64-linux-gnu.so",
+      "path": "bridge/sc_neurocore_engine/sc_neurocore_engine.cpython-312-x86_64-linux-gnu.so",
       "sha256": "c61c029c104317ee3e5c12abc5f0d7b4f7637f2863461c262a031cc13e3350c0",
       "size_bytes": 33890760
     }
@@ -145,9 +145,9 @@
     "go": "go version go1.24.0 linux/amd64",
     "julia": "julia version 1.12.6",
     "load_average": [
-      4.2822265625,
-      7.29150390625,
-      13.35986328125
+      6.77880859375,
+      7.33984375,
+      14.759765625
     ],
     "mojo": "Mojo 1.0.0b1 (a9591de6)",
     "platform": "Linux-6.17.0-35-generic-x86_64-with-glibc2.39",
@@ -194,9 +194,9 @@
     },
     "engine/src/bindings/threshold_linear_rate.rs": "30d60fcf1aa01b95ff1700bf31783cdfc2f574ecba7b8eb596c4555aee03430a",
     "engine/src/neurons/rate": {
-      "rs": "7f8ee8555fbf218a9c8e4998de5db0b5dc505047eb95b2010feae24cf3d61054"
+      "rs": "bce9e6b54e0c1c6c3dd572dc97b90e8b65f93406ca74211041b6a1a9a73f88e9"
     },
-    "engine/src/neurons/rate.rs": "7f8ee8555fbf218a9c8e4998de5db0b5dc505047eb95b2010feae24cf3d61054",
+    "engine/src/neurons/rate.rs": "bce9e6b54e0c1c6c3dd572dc97b90e8b65f93406ca74211041b6a1a9a73f88e9",
     "engine/src/pyo3_neurons": {
       "rs": "b69571347e26f09da292df35bf44cf055295038a16b04d82e4b619a50e764322"
     },
@@ -246,7 +246,7 @@
     },
     "src/sc_neurocore/neurons/models/threshold_linear_rate.py": "b95bc8fa72b515ffa48aeea56e0a3f46c12f6c559d633163af5295787287f44c"
   },
-  "timestamp_utc": "2026-07-19T16:33:09+00:00",
+  "timestamp_utc": "2026-07-19T19:02:27+00:00",
   "verification": {
     "rust_safety": {
       "command": [
@@ -256,7 +256,7 @@
         "--test",
         "/media/anulum/GOTM/_scratch/scn-ci-remediation-3314012-20260719T1758/src/sc_neurocore/accel/rust/safety/threshold_linear_rate.rs",
         "-o",
-        "/tmp/threshold-linear-rate-rust-x0ymcphw/threshold_linear_rate_tests"
+        "/tmp/threshold-linear-rate-rust-19r55wtm/threshold_linear_rate_tests"
       ],
       "output_tail": [
         "",

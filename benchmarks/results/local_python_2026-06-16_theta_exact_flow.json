@@ -7,10 +7,10 @@
       "final_state": {
         "theta": 0.3549750607569697
       },
-      "median_call_ms": 29.810077,
-      "minimum_call_ms": 24.014682,
+      "median_call_ms": 13.094658,
+      "minimum_call_ms": 12.479406,
       "parity_max_circular_phase_diff": 1.9895196601282805e-13,
-      "speedup_vs_python": 12.262157994425843,
+      "speedup_vs_python": 10.11689721106118,
       "used": true
     },
     "julia": {
@@ -20,10 +20,10 @@
       "final_state": {
         "theta": 0.3549750607568738
       },
-      "median_call_ms": 26.967588,
-      "minimum_call_ms": 19.257556,
+      "median_call_ms": 12.344935,
+      "minimum_call_ms": 11.333386,
       "parity_max_circular_phase_diff": 7.194245199571014e-14,
-      "speedup_vs_python": 13.55463729273823,
+      "speedup_vs_python": 10.731308751321897,
       "used": true
     },
     "mojo": {
@@ -33,10 +33,10 @@
       "final_state": {
         "theta": 0.3549750607569022
       },
-      "median_call_ms": 49.078121,
-      "minimum_call_ms": 44.727772,
+      "median_call_ms": 25.948767,
+      "minimum_call_ms": 24.766521,
       "parity_max_circular_phase_diff": 0.0,
-      "speedup_vs_python": 7.44804133801292,
+      "speedup_vs_python": 5.105341190199904,
       "used": true
     },
     "python": {
@@ -46,8 +46,8 @@
       "final_state": {
         "theta": 0.3549750607569022
       },
-      "median_call_ms": 365.535874,
-      "minimum_call_ms": 253.94979,
+      "median_call_ms": 132.477309,
+      "minimum_call_ms": 114.022156,
       "parity_max_circular_phase_diff": 0.0,
       "speedup_vs_python": 1.0,
       "used": true
@@ -59,10 +59,10 @@
       "final_state": {
         "theta": 0.3549750607569022
       },
-      "median_call_ms": 147.011729,
-      "minimum_call_ms": 101.516563,
+      "median_call_ms": 53.454689,
+      "minimum_call_ms": 49.533389,
       "parity_max_circular_phase_diff": 0.0,
-      "speedup_vs_python": 2.48644020777417,
+      "speedup_vs_python": 2.4783103499114922,
       "used": true
     }
   },
@@ -90,14 +90,14 @@
     "governor": "powersave",
     "kernel_isolated_cpus": "",
     "load_average_end": [
-      31.74169921875,
-      34.75634765625,
-      35.61572265625
+      7.91357421875,
+      14.6259765625,
+      20.91455078125
     ],
     "load_average_start": [
-      32.36279296875,
-      35.18994140625,
-      35.77880859375
+      7.4814453125,
+      14.78125,
+      21.033203125
     ],
     "measurement_scope": "single-logical-CPU affinity; kernel isolation and workstation load reported separately",
     "platform": "Linux-6.17.0-35-generic-x86_64-with-glibc2.39",
@@ -118,9 +118,9 @@
     },
     "benchmarks/bench_model_theta.py": "e4f14dc990766f17a0b66150546aaf68091679f08974c79c1a831e17bafa4069",
     "engine/src/neurons/trivial/theta": {
-      "rs": "e9ac0f16cc7aa9201f0bce11cd7f9b82312bf3892323b2026170f4fb9d875279"
+      "rs": "de7ee526e60dd7e245342b68a497d534dc9fb4e54e919ba357509dfd7275489f"
     },
-    "engine/src/neurons/trivial/theta.rs": "e9ac0f16cc7aa9201f0bce11cd7f9b82312bf3892323b2026170f4fb9d875279",
+    "engine/src/neurons/trivial/theta.rs": "de7ee526e60dd7e245342b68a497d534dc9fb4e54e919ba357509dfd7275489f",
     "src/sc_neurocore/accel/go/neurons/theta/theta": {
       "go": "4d733e264631c2657d66061eb8a2587e4b63191283e34f9997edca8a8f1e43cc"
     },
@@ -173,10 +173,10 @@
         "test theta::tests::test_theta_new ... ok",
         "test theta::tests::test_theta_step ... ok",
         "",
-        "test result: ok. 10 passed; 0 failed; 0 ignored; 0 measured; 976 filtered out; finished in 0.04s",
+        "test result: ok. 10 passed; 0 failed; 0 ignored; 0 measured; 1009 filtered out; finished in 0.01s",
         "",
         "",
-        "    Finished `release` profile [optimized] target(s) in 0.07s",
+        "    Finished `release` profile [optimized] target(s) in 0.02s",
         "     Running unittests safety/lib.rs (src/sc_neurocore/accel/rust/target/release/deps/sc_neurocore_safety-cbe1a14dec3b0ed8)"
       ],
       "passed": true,

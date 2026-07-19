@@ -2,91 +2,91 @@
   "backend_summary": {
     "go": {
       "backend": "go",
-      "median_ms": 14.982394000981003,
-      "min_ms": 14.369175012689084,
+      "median_ms": 17.809824086725712,
+      "min_ms": 16.693008947186172,
       "parity_max_abs_diff": 0.0,
-      "speedup_vs_python": 37.20246129994569,
+      "speedup_vs_python": 32.33580911055829,
       "spikes": 371008
     },
     "julia": {
       "backend": "julia",
-      "median_ms": 15.836403996217996,
-      "min_ms": 11.05115600512363,
+      "median_ms": 21.79291599895805,
+      "min_ms": 17.194741987623274,
       "parity_max_abs_diff": 0.0,
-      "speedup_vs_python": 35.19624361282691,
+      "speedup_vs_python": 26.425792307395668,
       "spikes": 371008
     },
     "mojo": {
       "backend": "mojo",
-      "median_ms": 14.448277011979371,
-      "min_ms": 13.346396997803822,
+      "median_ms": 20.681377965956926,
+      "min_ms": 18.5370760736987,
       "parity_max_abs_diff": 0.1971105443600312,
-      "speedup_vs_python": 38.57774408255719,
+      "speedup_vs_python": 27.846068715003007,
       "spikes": 371063
     },
     "python": {
       "backend": "python",
-      "median_ms": 557.3819330020342,
-      "min_ms": 538.0827189947013,
+      "median_ms": 575.8950719609857,
+      "min_ms": 565.3681589756161,
       "parity_max_abs_diff": 0.0,
       "speedup_vs_python": 1.0,
       "spikes": 371008
     },
     "rust": {
       "backend": "rust",
-      "median_ms": 13.899400015361607,
-      "min_ms": 13.64939400809817,
+      "median_ms": 12.54525303374976,
+      "min_ms": 12.292818981222808,
       "parity_max_abs_diff": 0.0,
-      "speedup_vs_python": 40.10115058103343,
+      "speedup_vs_python": 45.905417006073044,
       "spikes": 371008
     }
   },
   "benchmark": "courage_nekorkin_map_simulate",
   "environment": {
     "isolation": "non-isolated (loaded workstation)",
-    "numpy": "2.3.5",
+    "numpy": "2.2.6",
     "platform": "Linux-6.17.0-35-generic-x86_64-with-glibc2.39",
     "python": "3.12.3"
   },
   "results": [
     {
       "backend": "python",
-      "median_ms": 557.3819330020342,
-      "min_ms": 538.0827189947013,
+      "median_ms": 575.8950719609857,
+      "min_ms": 565.3681589756161,
       "parity_max_abs_diff": 0.0,
       "speedup_vs_python": 1.0,
       "spikes": 371008
     },
     {
       "backend": "rust",
-      "median_ms": 13.899400015361607,
-      "min_ms": 13.64939400809817,
+      "median_ms": 12.54525303374976,
+      "min_ms": 12.292818981222808,
       "parity_max_abs_diff": 0.0,
-      "speedup_vs_python": 40.10115058103343,
+      "speedup_vs_python": 45.905417006073044,
       "spikes": 371008
     },
     {
       "backend": "julia",
-      "median_ms": 15.836403996217996,
-      "min_ms": 11.05115600512363,
+      "median_ms": 21.79291599895805,
+      "min_ms": 17.194741987623274,
       "parity_max_abs_diff": 0.0,
-      "speedup_vs_python": 35.19624361282691,
+      "speedup_vs_python": 26.425792307395668,
       "spikes": 371008
     },
     {
       "backend": "go",
-      "median_ms": 14.982394000981003,
-      "min_ms": 14.369175012689084,
+      "median_ms": 17.809824086725712,
+      "min_ms": 16.693008947186172,
       "parity_max_abs_diff": 0.0,
-      "speedup_vs_python": 37.20246129994569,
+      "speedup_vs_python": 32.33580911055829,
       "spikes": 371008
     },
     {
       "backend": "mojo",
-      "median_ms": 14.448277011979371,
-      "min_ms": 13.346396997803822,
+      "median_ms": 20.681377965956926,
+      "min_ms": 18.5370760736987,
       "parity_max_abs_diff": 0.1971105443600312,
-      "speedup_vs_python": 38.57774408255719,
+      "speedup_vs_python": 27.846068715003007,
       "spikes": 371063
     }
   ],
@@ -100,9 +100,9 @@
     },
     "engine/src/lib.rs": "2474fd38ee7b4caf7795aa965b413a491dae7f7b47e96225853ba0452b0d7e06",
     "engine/src/neurons/maps": {
-      "rs": "dac37998dc471fc9f3f3d9288b72a3d18ed9c93881cbdfd9b50442ffd9231483"
+      "rs": "a1e98ac6e3787d6b29d038c3412ad117e4f0f1c35b5be7d32ea3f380809bf6b0"
     },
-    "engine/src/neurons/maps.rs": "dac37998dc471fc9f3f3d9288b72a3d18ed9c93881cbdfd9b50442ffd9231483",
+    "engine/src/neurons/maps.rs": "a1e98ac6e3787d6b29d038c3412ad117e4f0f1c35b5be7d32ea3f380809bf6b0",
     "src/sc_neurocore/accel/go/neurons/courage_nekorkin_map/courage_nekorkin_map": {
       "go": "84a2f46e1c3024ff3a49996a1c6c077ef43f76d724cce785943ccd1e29b3bb00"
     },

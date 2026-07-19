@@ -12,17 +12,17 @@
       "available": true,
       "final_rate": 0.9820137900379067,
       "final_rate_matches_python": true,
-      "max_call_ns": 13224410,
-      "median_call_ns": 9838430.0,
-      "median_ns_per_step": 49.19215,
-      "min_call_ns": 8637822,
+      "max_call_ns": 22773334,
+      "median_call_ns": 15896498.0,
+      "median_ns_per_step": 79.48249,
+      "min_call_ns": 14337427,
       "parity_max_abs_diff": 0.0,
       "samples_ns": [
-        9838430,
-        13224410,
-        8637822,
-        9092860,
-        10177696
+        16349864,
+        22773334,
+        15896498,
+        14473927,
+        14337427
       ],
       "trace_matches_python": true,
       "trace_mismatch_count": 0,
@@ -33,17 +33,17 @@
       "available": true,
       "final_rate": 0.9820137900379067,
       "final_rate_matches_python": true,
-      "max_call_ns": 5361825,
-      "median_call_ns": 4892502.0,
-      "median_ns_per_step": 24.46251,
-      "min_call_ns": 4096888,
+      "max_call_ns": 8735983,
+      "median_call_ns": 8058629.0,
+      "median_ns_per_step": 40.293145,
+      "min_call_ns": 7190788,
       "parity_max_abs_diff": 0.0,
       "samples_ns": [
-        5361825,
-        5203987,
-        4892502,
-        4849221,
-        4096888
+        7297482,
+        8058629,
+        8735983,
+        7190788,
+        8719287
       ],
       "trace_matches_python": true,
       "trace_mismatch_count": 0,
@@ -54,17 +54,17 @@
       "available": true,
       "final_rate": 0.9820137900379374,
       "final_rate_matches_python": true,
-      "max_call_ns": 3146460,
-      "median_call_ns": 1188723.0,
-      "median_ns_per_step": 5.943615,
-      "min_call_ns": 1137439,
+      "max_call_ns": 3500745,
+      "median_call_ns": 2742140.0,
+      "median_ns_per_step": 13.7107,
+      "min_call_ns": 2570024,
       "parity_max_abs_diff": 3.0753177782116836e-14,
       "samples_ns": [
-        3146460,
-        1643352,
-        1188723,
-        1151943,
-        1137439
+        2611857,
+        2785193,
+        2742140,
+        3500745,
+        2570024
       ],
       "trace_matches_python": true,
       "trace_mismatch_count": 0,
@@ -75,17 +75,17 @@
       "available": true,
       "final_rate": 0.9820137900379067,
       "final_rate_matches_python": true,
-      "max_call_ns": 21653628,
-      "median_call_ns": 18238102.0,
-      "median_ns_per_step": 91.19051,
-      "min_call_ns": 16937439,
+      "max_call_ns": 39820949,
+      "median_call_ns": 37340726.0,
+      "median_ns_per_step": 186.70363,
+      "min_call_ns": 36115964,
       "parity_max_abs_diff": 0.0,
       "samples_ns": [
-        21653628,
-        18238102,
-        16937439,
-        21168497,
-        18021873
+        36244619,
+        39327546,
+        37340726,
+        36115964,
+        39820949
       ],
       "trace_matches_python": true,
       "trace_mismatch_count": 0,
@@ -96,17 +96,17 @@
       "available": true,
       "final_rate": 0.9820137900379067,
       "final_rate_matches_python": true,
-      "max_call_ns": 4753549,
-      "median_call_ns": 4093074.0,
-      "median_ns_per_step": 20.46537,
-      "min_call_ns": 3984427,
+      "max_call_ns": 9721245,
+      "median_call_ns": 7283265.0,
+      "median_ns_per_step": 36.416325,
+      "min_call_ns": 7014566,
       "parity_max_abs_diff": 0.0,
       "samples_ns": [
-        4753549,
-        4665999,
-        4078622,
-        4093074,
-        3984427
+        9721245,
+        8035625,
+        7283265,
+        7221723,
+        7014566
       ],
       "trace_matches_python": true,
       "trace_mismatch_count": 0,
@@ -127,7 +127,7 @@
       "size_bytes": 15288
     },
     "rust_extension": {
-      "path": "/media/anulum/GOTM/aaa_God_of_the_Math_Collection/03_CODE/SC-NEUROCORE/.venv/lib/python3.12/site-packages/sc_neurocore_engine/sc_neurocore_engine.cpython-312-x86_64-linux-gnu.so",
+      "path": "bridge/sc_neurocore_engine/sc_neurocore_engine.cpython-312-x86_64-linux-gnu.so",
       "sha256": "c61c029c104317ee3e5c12abc5f0d7b4f7637f2863461c262a031cc13e3350c0",
       "size_bytes": 33890760
     }
@@ -140,9 +140,9 @@
     "go": "go version go1.24.0 linux/amd64",
     "julia": "julia version 1.12.6",
     "load_average": [
-      4.4755859375,
-      8.20166015625,
-      14.17333984375
+      5.97314453125,
+      7.2138671875,
+      14.80029296875
     ],
     "mojo": "Mojo 1.0.0b1 (a9591de6)",
     "platform": "Linux-6.17.0-35-generic-x86_64-with-glibc2.39",
@@ -188,9 +188,9 @@
     },
     "engine/src/bindings/sigmoid_rate.rs": "a8ec35efbefb306a9bd9d2f4f205a1948871265ce6f947c3ffa137767877ad5c",
     "engine/src/neurons/rate": {
-      "rs": "7f8ee8555fbf218a9c8e4998de5db0b5dc505047eb95b2010feae24cf3d61054"
+      "rs": "bce9e6b54e0c1c6c3dd572dc97b90e8b65f93406ca74211041b6a1a9a73f88e9"
     },
-    "engine/src/neurons/rate.rs": "7f8ee8555fbf218a9c8e4998de5db0b5dc505047eb95b2010feae24cf3d61054",
+    "engine/src/neurons/rate.rs": "bce9e6b54e0c1c6c3dd572dc97b90e8b65f93406ca74211041b6a1a9a73f88e9",
     "engine/src/pyo3_neurons": {
       "rs": "b69571347e26f09da292df35bf44cf055295038a16b04d82e4b619a50e764322"
     },
@@ -240,7 +240,7 @@
     },
     "src/sc_neurocore/neurons/models/sigmoid_rate.py": "3340acd62fd8a8a9eceea20903b4375f2fbddbcc00c6572bda965839041f2fec"
   },
-  "timestamp_utc": "2026-07-19T16:31:52+00:00",
+  "timestamp_utc": "2026-07-19T19:02:20+00:00",
   "verification": {
     "rust_safety": {
       "command": [
@@ -250,7 +250,7 @@
         "--test",
         "/media/anulum/GOTM/_scratch/scn-ci-remediation-3314012-20260719T1758/src/sc_neurocore/accel/rust/safety/sigmoid_rate.rs",
         "-o",
-        "/tmp/sigmoid-rate-rust-xpgnkbd6/sigmoid_rate_tests"
+        "/tmp/sigmoid-rate-rust-0hwl0uns/sigmoid_rate_tests"
       ],
       "output_tail": [
         "",

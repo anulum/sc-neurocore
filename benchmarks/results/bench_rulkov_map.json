@@ -2,91 +2,91 @@
   "backend_summary": {
     "go": {
       "backend": "go",
-      "median_ms": 14.659488020697609,
-      "min_ms": 14.18086199555546,
+      "median_ms": 16.453993041068316,
+      "min_ms": 15.735434950329363,
       "parity_max_abs_diff": 0.0,
-      "speedup_vs_python": 24.389886091113897,
+      "speedup_vs_python": 21.82182702455981,
       "spikes": 34
     },
     "julia": {
       "backend": "julia",
-      "median_ms": 17.711153981508687,
-      "min_ms": 17.24031800404191,
+      "median_ms": 19.37096705660224,
+      "min_ms": 17.180524999275804,
       "parity_max_abs_diff": 0.0,
-      "speedup_vs_python": 20.187461717748945,
+      "speedup_vs_python": 18.5357906477429,
       "spikes": 34
     },
     "mojo": {
       "backend": "mojo",
-      "median_ms": 15.840006002690643,
-      "min_ms": 15.48114200704731,
+      "median_ms": 15.908238012343645,
+      "min_ms": 14.193451963365078,
       "parity_max_abs_diff": 1.7763568394002505e-15,
-      "speedup_vs_python": 22.572165876586777,
+      "speedup_vs_python": 22.57045624580811,
       "spikes": 34
     },
     "python": {
       "backend": "python",
-      "median_ms": 357.5432429788634,
-      "min_ms": 328.32054499886,
+      "median_ms": 359.0561900055036,
+      "min_ms": 332.0040620164946,
       "parity_max_abs_diff": 0.0,
       "speedup_vs_python": 1.0,
       "spikes": 34
     },
     "rust": {
       "backend": "rust",
-      "median_ms": 16.332718019839376,
-      "min_ms": 16.022619005525485,
+      "median_ms": 13.294621021486819,
+      "min_ms": 13.221599045209587,
       "parity_max_abs_diff": 0.0,
-      "speedup_vs_python": 21.891227323251105,
+      "speedup_vs_python": 27.007628831630143,
       "spikes": 34
     }
   },
   "benchmark": "rulkov_map_simulate",
   "environment": {
     "isolation": "non-isolated (loaded workstation)",
-    "numpy": "2.3.5",
+    "numpy": "2.2.6",
     "platform": "Linux-6.17.0-35-generic-x86_64-with-glibc2.39",
     "python": "3.12.3"
   },
   "results": [
     {
       "backend": "python",
-      "median_ms": 357.5432429788634,
-      "min_ms": 328.32054499886,
+      "median_ms": 359.0561900055036,
+      "min_ms": 332.0040620164946,
       "parity_max_abs_diff": 0.0,
       "speedup_vs_python": 1.0,
       "spikes": 34
     },
     {
       "backend": "rust",
-      "median_ms": 16.332718019839376,
-      "min_ms": 16.022619005525485,
+      "median_ms": 13.294621021486819,
+      "min_ms": 13.221599045209587,
       "parity_max_abs_diff": 0.0,
-      "speedup_vs_python": 21.891227323251105,
+      "speedup_vs_python": 27.007628831630143,
       "spikes": 34
     },
     {
       "backend": "julia",
-      "median_ms": 17.711153981508687,
-      "min_ms": 17.24031800404191,
+      "median_ms": 19.37096705660224,
+      "min_ms": 17.180524999275804,
       "parity_max_abs_diff": 0.0,
-      "speedup_vs_python": 20.187461717748945,
+      "speedup_vs_python": 18.5357906477429,
       "spikes": 34
     },
     {
       "backend": "go",
-      "median_ms": 14.659488020697609,
-      "min_ms": 14.18086199555546,
+      "median_ms": 16.453993041068316,
+      "min_ms": 15.735434950329363,
       "parity_max_abs_diff": 0.0,
-      "speedup_vs_python": 24.389886091113897,
+      "speedup_vs_python": 21.82182702455981,
       "spikes": 34
     },
     {
       "backend": "mojo",
-      "median_ms": 15.840006002690643,
-      "min_ms": 15.48114200704731,
+      "median_ms": 15.908238012343645,
+      "min_ms": 14.193451963365078,
       "parity_max_abs_diff": 1.7763568394002505e-15,
-      "speedup_vs_python": 22.572165876586777,
+      "speedup_vs_python": 22.57045624580811,
       "spikes": 34
     }
   ],
@@ -100,9 +100,9 @@
     },
     "engine/src/lib.rs": "2474fd38ee7b4caf7795aa965b413a491dae7f7b47e96225853ba0452b0d7e06",
     "engine/src/neurons/maps": {
-      "rs": "dac37998dc471fc9f3f3d9288b72a3d18ed9c93881cbdfd9b50442ffd9231483"
+      "rs": "a1e98ac6e3787d6b29d038c3412ad117e4f0f1c35b5be7d32ea3f380809bf6b0"
     },
-    "engine/src/neurons/maps.rs": "dac37998dc471fc9f3f3d9288b72a3d18ed9c93881cbdfd9b50442ffd9231483",
+    "engine/src/neurons/maps.rs": "a1e98ac6e3787d6b29d038c3412ad117e4f0f1c35b5be7d32ea3f380809bf6b0",
     "src/sc_neurocore/accel/go/neurons/rulkov_map/rulkov_map": {
       "go": "b2fa952bb77163ae1fb8d34b5b5b59b666634725ccbe0fb872d9ef88458468bb"
     },

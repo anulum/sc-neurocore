@@ -2,91 +2,91 @@
   "backend_summary": {
     "go": {
       "backend": "go",
-      "median_ms": 58.85015899548307,
-      "min_ms": 58.60249500256032,
+      "median_ms": 64.60702104959637,
+      "min_ms": 63.33199399523437,
       "parity_max_abs_diff": 3.97237798210881e-12,
-      "speedup_vs_python": 5.28267775807797,
+      "speedup_vs_python": 5.261392283874184,
       "spikes": 20137
     },
     "julia": {
       "backend": "julia",
-      "median_ms": 41.5626679896377,
-      "min_ms": 40.897541999584064,
+      "median_ms": 46.153240953572094,
+      "min_ms": 44.145314022898674,
       "parity_max_abs_diff": 8.539835505416704e-13,
-      "speedup_vs_python": 7.47994392617673,
+      "speedup_vs_python": 7.365092353457673,
       "spikes": 20137
     },
     "mojo": {
       "backend": "mojo",
-      "median_ms": 47.326404019258916,
-      "min_ms": 46.48430601810105,
+      "median_ms": 48.8016870804131,
+      "min_ms": 48.34691097494215,
       "parity_max_abs_diff": 1.836397700571979e-11,
-      "speedup_vs_python": 6.568984743871075,
+      "speedup_vs_python": 6.965392025778423,
       "spikes": 20137
     },
     "python": {
       "backend": "python",
-      "median_ms": 310.88642598479055,
-      "min_ms": 295.77069298829883,
+      "median_ms": 339.9228820344433,
+      "min_ms": 326.01190195418894,
       "parity_max_abs_diff": 0.0,
       "speedup_vs_python": 1.0,
       "spikes": 20137
     },
     "rust": {
       "backend": "rust",
-      "median_ms": 49.06533900066279,
-      "min_ms": 48.531609994824976,
+      "median_ms": 48.88040095102042,
+      "min_ms": 48.546424019150436,
       "parity_max_abs_diff": 0.0,
-      "speedup_vs_python": 6.336171976323062,
+      "speedup_vs_python": 6.9541754040654435,
       "spikes": 20137
     }
   },
   "benchmark": "ermentrout_kopell_map_simulate",
   "environment": {
     "isolation": "non-isolated (loaded workstation)",
-    "numpy": "2.3.5",
+    "numpy": "2.2.6",
     "platform": "Linux-6.17.0-35-generic-x86_64-with-glibc2.39",
     "python": "3.12.3"
   },
   "results": [
     {
       "backend": "python",
-      "median_ms": 310.88642598479055,
-      "min_ms": 295.77069298829883,
+      "median_ms": 339.9228820344433,
+      "min_ms": 326.01190195418894,
       "parity_max_abs_diff": 0.0,
       "speedup_vs_python": 1.0,
       "spikes": 20137
     },
     {
       "backend": "rust",
-      "median_ms": 49.06533900066279,
-      "min_ms": 48.531609994824976,
+      "median_ms": 48.88040095102042,
+      "min_ms": 48.546424019150436,
       "parity_max_abs_diff": 0.0,
-      "speedup_vs_python": 6.336171976323062,
+      "speedup_vs_python": 6.9541754040654435,
       "spikes": 20137
     },
     {
       "backend": "julia",
-      "median_ms": 41.5626679896377,
-      "min_ms": 40.897541999584064,
+      "median_ms": 46.153240953572094,
+      "min_ms": 44.145314022898674,
       "parity_max_abs_diff": 8.539835505416704e-13,
-      "speedup_vs_python": 7.47994392617673,
+      "speedup_vs_python": 7.365092353457673,
       "spikes": 20137
     },
     {
       "backend": "go",
-      "median_ms": 58.85015899548307,
-      "min_ms": 58.60249500256032,
+      "median_ms": 64.60702104959637,
+      "min_ms": 63.33199399523437,
       "parity_max_abs_diff": 3.97237798210881e-12,
-      "speedup_vs_python": 5.28267775807797,
+      "speedup_vs_python": 5.261392283874184,
       "spikes": 20137
     },
     {
       "backend": "mojo",
-      "median_ms": 47.326404019258916,
-      "min_ms": 46.48430601810105,
+      "median_ms": 48.8016870804131,
+      "min_ms": 48.34691097494215,
       "parity_max_abs_diff": 1.836397700571979e-11,
-      "speedup_vs_python": 6.568984743871075,
+      "speedup_vs_python": 6.965392025778423,
       "spikes": 20137
     }
   ],
@@ -100,9 +100,9 @@
     },
     "engine/src/lib.rs": "2474fd38ee7b4caf7795aa965b413a491dae7f7b47e96225853ba0452b0d7e06",
     "engine/src/neurons/maps": {
-      "rs": "dac37998dc471fc9f3f3d9288b72a3d18ed9c93881cbdfd9b50442ffd9231483"
+      "rs": "a1e98ac6e3787d6b29d038c3412ad117e4f0f1c35b5be7d32ea3f380809bf6b0"
     },
-    "engine/src/neurons/maps.rs": "dac37998dc471fc9f3f3d9288b72a3d18ed9c93881cbdfd9b50442ffd9231483",
+    "engine/src/neurons/maps.rs": "a1e98ac6e3787d6b29d038c3412ad117e4f0f1c35b5be7d32ea3f380809bf6b0",
     "src/sc_neurocore/accel/go/neurons/ermentrout_kopell_map/ermentrout_kopell_map": {
       "go": "b6da0d40c4a384d65c05767e21f82c72f3ff5c33682f51dc04d05bfbbb73d2cc"
     },
