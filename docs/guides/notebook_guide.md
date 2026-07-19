@@ -87,6 +87,20 @@ These notebooks demonstrate capabilities unique to SC-NeuroCore — features not
 | 38 | `38_formal_snn_verification_standard_evidence` | Exercise the formal SNN verification profile, pass/fail/missing evidence accounting, wrong-kind rejection, optional safety-case evidence, and evidence guardrails | Local evidence-accounting behavior only; no external prover, model-checker, HDL proof, safety certification, or unbounded semantic-correctness claim |
 | 39 | `39_self_hosted_hub_evidence` | Generate and validate offline-first hub manifests, model-zoo index, Compose hardening, opt-in benchmark plan, bundle files, and config guardrails | Local bundle generation only; no Docker start, image build, production exposure, network-isolation proof, or operational-security certification claim |
 
+## High-fidelity demo notebooks (41–43)
+
+Programme plan: monorepo
+`.coordination/planning/SC-NEUROCORE/PLAN_2026-07-19T2301_notebook_demo_programme_high_fidelity_neurons.md`.
+
+Neurons are taken only from the polyglot-complete set in
+[`model_fidelity_status.md`](../api/model_fidelity_status.md).
+
+| # | Notebook | What you learn | Evidence boundary |
+|---|----------|---------------|-------------------|
+| 41 | `41_one_model_five_views` | Hodgkin–Huxley, Morris–Lecar, AdEx: dynamics, f–I, SC rate pedagogy, didactic Q8.8 voltage quantisation, hardware-path pointers | Local figures only; not polyglot parity, FPGA power/timing, or full RTL co-sim for all three |
+| 42 | `42_fault_tolerance_theatre` | Perfect Integrator baseline plus SC unipolar product vs float under controlled BER | Local BER trends only; not radiation qualification or FIT rates |
+| 43 | `43_studio_evidence_cart_lab` | AdEx run plus pedagogical SHA-256 ledger aligned with `studio.evidence-cart.v1` field names | Python in-process digests only; not Studio browser cart or server evidence-bundle product export |
+
 ## Running Notebooks
 
 ### Local
@@ -105,7 +119,7 @@ Use `quickstart_colab.ipynb` — installs sc-neurocore automatically.
 
 | Notebooks | Extra dependencies |
 |-----------|-------------------|
-| 01–16, 20, 25 | `matplotlib` (visualisation) |
+| 01–16, 20, 25, 41–43 | `matplotlib` (visualisation) |
 | 17 | `matplotlib`, `numpy.linalg` (SVD) |
 | 21–22 | None beyond sc-neurocore |
 | 23 | `matplotlib` |
