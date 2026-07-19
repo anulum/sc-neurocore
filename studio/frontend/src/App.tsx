@@ -11,6 +11,19 @@ import { useStudioStore } from "./stores/studio";
 import type { ViewTab } from "./stores/studio";
 import { panelCapabilityState } from "./capabilityShell";
 import type { PanelCapabilityState, PanelKey } from "./capabilityShell";
+import { downloadBrowserArtefact } from "./browserArtefactDownload";
+import {
+  analysisCartDraft,
+  buildEvidenceCartExport,
+  emptyEvidenceCart,
+  enqueueEvidenceCartArtefact,
+  evidenceCartExportFilename,
+  evidenceCartExportToBlob,
+  simulationCartDraft,
+  type EvidenceCart,
+  type EvidenceCartExportBundle,
+} from "./evidenceCart";
+import EvidenceCartStrip from "./components/EvidenceCartStrip";
 import TemplateLibrary from "./components/TemplateLibrary";
 import EquationEditor from "./components/EquationEditor";
 import ParameterSliders from "./components/ParameterSliders";
@@ -98,6 +111,11 @@ function CapabilityUnavailable({ state }: { state: PanelCapabilityState }) {
 
 export default function App() {
   const [guidedTrainingSkipped, setGuidedTrainingSkipped] = useState(false);
+  const [evidenceCart, setEvidenceCart] = useState<EvidenceCart>(() => emptyEvidenceCart());
+  const [evidenceCartExport, setEvidenceCartExport] = useState<EvidenceCartExportBundle | null>(
+    null,
+  );
+  const [evidenceCartError, setEvidenceCartError] = useState<string | null>(null);
   const s = useStudioStore();
   const loadCapabilities = s.loadCapabilities;
   const loadAuditStatus = s.loadAuditStatus;
@@ -134,7 +152,8 @@ export default function App() {
     evidenceExported: s.evidenceBundle !== null
       || s.projectEvidenceBundle !== null
       || s.compileEvidenceBundle !== null
-      || s.synthesisEvidenceBundle !== null,
+      || s.synthesisEvidenceBundle !== null
+      || evidenceCartExport !== null,
   };
   const guidedFlowCapabilities: GuidedFlowCapabilityMap = {
     design: true,
@@ -274,6 +293,87 @@ export default function App() {
         return;
     }
   };
+  const queueSimulationIntoEvidenceCart = () => {
+    const result = useStudioStore.getState().result;
+    const modelName = useStudioStore.getState().selectedModelName || "ode";
+    if (result === null) {
+      return;
+    }
+    setEvidenceCart((cart) => {
+      const queued = enqueueEvidenceCartArtefact(
+        cart,
+        simulationCartDraft(modelName, {
+          dt: result.dt,
+          model: modelName,
+          n_steps: result.n_steps,
+          spike_count: result.spike_count,
+          spikes: result.spikes,
+          time: result.time,
+        }),
+      );
+      if (!queued.ok) {
+        setEvidenceCartError(queued.error);
+        return cart;
+      }
+      setEvidenceCartError(null);
+      return queued.cart;
+    });
+  };
+  const queueAnalysisIntoEvidenceCart = () => {
+    const state = useStudioStore.getState();
+    const modelName = state.selectedModelName || "ode";
+    const payload = {
+      bif: state.bifResult,
+      char: state.charResult,
+      compare: state.compareResult,
+      fi: state.fiResult,
+      freq: state.freqResult,
+      heatmap: state.heatmapResult,
+      model: modelName,
+      nullcline: state.nullclineResult,
+      prec: state.precResult,
+      sens: state.sensResult,
+    };
+    const hasAnalysis = [
+      payload.fi,
+      payload.bif,
+      payload.sens,
+      payload.prec,
+      payload.heatmap,
+      payload.compare,
+      payload.nullcline,
+      payload.freq,
+      payload.char,
+    ].some((entry) => entry !== null);
+    if (!hasAnalysis) {
+      return;
+    }
+    setEvidenceCart((cart) => {
+      const queued = enqueueEvidenceCartArtefact(
+        cart,
+        analysisCartDraft(modelName, payload),
+      );
+      if (!queued.ok) {
+        setEvidenceCartError(queued.error);
+        return cart;
+      }
+      setEvidenceCartError(null);
+      return queued.cart;
+    });
+  };
+  const exportSessionEvidenceCart = async () => {
+    const bundle = await buildEvidenceCartExport(evidenceCart);
+    if ("error" in bundle) {
+      setEvidenceCartError(bundle.error);
+      throw new Error(bundle.error);
+    }
+    downloadBrowserArtefact(
+      evidenceCartExportToBlob(bundle),
+      evidenceCartExportFilename(bundle),
+    );
+    setEvidenceCartExport(bundle);
+    setEvidenceCartError(null);
+  };
   const guidedRun = buildGuidedRunController({
     capabilityMessages: {
       analyse: panelState("fi-curve").message,
@@ -282,11 +382,15 @@ export default function App() {
       synthesise: panelState("synth").message,
       train: panelState("train").message,
     },
-    exportReady: operatorWorkbench.evidenceActionEnabled,
+    exportReady: operatorWorkbench.evidenceActionEnabled || evidenceCart.items.length > 0,
     flow: guidedFlow,
     sourceMode: s.sourceMode,
   }, {
     exportEvidence: async () => {
+      if (evidenceCart.items.length > 0) {
+        await exportSessionEvidenceCart();
+        return;
+      }
       if (operatorWorkbench.evidenceExportTarget === null) {
         throw new Error("No evidence export target is available.");
       }
@@ -294,12 +398,14 @@ export default function App() {
     },
     runAnalysis: async () => {
       await s.runFICurve();
+      queueAnalysisIntoEvidenceCart();
     },
     runCompile: async () => {
       await s.runEmitSV();
     },
     runSimulation: async () => {
       await s.runSimulation();
+      queueSimulationIntoEvidenceCart();
     },
     runSynthesis: async () => {
       await s.runSynthesis();
@@ -539,13 +645,27 @@ export default function App() {
       <div className="main-content">
         <div className="left-panel">
           <div className="panel-section">
+            <EvidenceCartStrip
+              cart={evidenceCart}
+              error={evidenceCartError}
+              lastExport={evidenceCartExport}
+              onExport={() => {
+                void exportSessionEvidenceCart().catch(() => undefined);
+              }}
+            />
+          </div>
+          <div className="panel-section">
             <OperatorWorkbenchPanel
               onExportEvidence={operateWorkbenchEvidenceBundle}
               onOpenAdmin={() => activatePanel("admin")}
               onOpenCompiler={() => activatePanel(s.sourceMode === "ode" ? "verilog" : "canvas")}
               onOpenProjects={() => activatePanel(s.sourceMode === "model" ? "trace" : "ir")}
               onRunSimulation={() => {
-                if (!s.isSimulating && !panelUnavailable("trace")) void s.runSimulation();
+                if (!s.isSimulating && !panelUnavailable("trace")) {
+                  void s.runSimulation().then(() => {
+                    queueSimulationIntoEvidenceCart();
+                  });
+                }
               }}
               state={operatorWorkbench}
             />
