@@ -60,6 +60,28 @@ describe("analysisResultIdentity", () => {
     ).toBeNull();
   });
 
+  it("returns null for arrays and null at both object levels", () => {
+    expect(analysisResultIdentity([])).toBeNull();
+    expect(analysisResultIdentity([{ analysis_metadata: { result_sha256: DIGEST_B } }])).toBeNull();
+    expect(
+      analysisResultIdentity({
+        analysis_metadata: [{ result_sha256: DIGEST_B }],
+      }),
+    ).toBeNull();
+    expect(
+      analysisResultIdentity({
+        analysis_metadata: null,
+      }),
+    ).toBeNull();
+    expect(
+      analysisResultIdentity({
+        analysis_metadata: {
+          result_sha256: null,
+        },
+      }),
+    ).toBeNull();
+  });
+
   it("does not use object shape or client hashing for identity", () => {
     const left = {
       analysis_metadata: { result_sha256: DIGEST_B },

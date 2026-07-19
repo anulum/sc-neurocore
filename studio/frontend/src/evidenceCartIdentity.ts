@@ -9,23 +9,31 @@
 /**
  * Content-faithful identity for analysis results used by the evidence cart.
  * Never JSON-serialises payloads and never hashes client-side objects.
+ * Assertion-free structural narrowing at the unknown boundary.
  */
 
 const HEX_64 = /^[0-9a-f]{64}$/;
+
+/**
+ * True for plain objects and object-like values that are not arrays or null.
+ */
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
+}
 
 /**
  * Return normalized lowercase ``analysis_metadata.result_sha256`` when it is
  * exactly 64 hexadecimal characters; otherwise ``null``.
  */
 export function analysisResultIdentity(result: unknown): string | null {
-  if (result === null || typeof result !== "object") {
+  if (!isRecord(result)) {
     return null;
   }
-  const metadata = (result as { analysis_metadata?: unknown }).analysis_metadata;
-  if (metadata === null || typeof metadata !== "object") {
+  const metadata = result.analysis_metadata;
+  if (!isRecord(metadata)) {
     return null;
   }
-  const digest = (metadata as { result_sha256?: unknown }).result_sha256;
+  const digest = metadata.result_sha256;
   if (typeof digest !== "string") {
     return null;
   }
