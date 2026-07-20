@@ -205,9 +205,9 @@
     },
     "bridge/sc_neurocore_engine/__init__.py": "8376006c65309b3005b6a6e887891b5fd502687d9bfdd87b737c694eac1e8de7",
     "engine/src/lib": {
-      "rs": "2474fd38ee7b4caf7795aa965b413a491dae7f7b47e96225853ba0452b0d7e06"
+      "rs": "d24a8a26f785127eb830e8ba9f34c81f83c4066890595230dff20acbc56a4b75"
     },
-    "engine/src/lib.rs": "2474fd38ee7b4caf7795aa965b413a491dae7f7b47e96225853ba0452b0d7e06",
+    "engine/src/lib.rs": "d24a8a26f785127eb830e8ba9f34c81f83c4066890595230dff20acbc56a4b75",
     "engine/src/neurons/special/stochastic_point_processes": {
       "rs": "34054d40483513760965dc19fc0aad4017bbf318f3f0e659cb4c4e6c4d1125d8"
     },
