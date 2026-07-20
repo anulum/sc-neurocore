@@ -106,6 +106,20 @@ def test_module_level_importorskip_dependencies_accepts_expr_and_annassign(
     assert tool.module_level_importorskip_dependencies(test_file) == ("cupy", "mpi4py")
 
 
+def test_module_test_opt_out_requires_top_level_false_assignment(tmp_path: Path) -> None:
+    tool = _load_tool()
+    opted_out = tmp_path / "test_support.py"
+    enabled = tmp_path / "test_enabled.py"
+    nested = tmp_path / "test_nested.py"
+    _write(opted_out, "__test__ = False\n")
+    _write(enabled, "__test__ = True\n")
+    _write(nested, "def configure():\n    __test__ = False\n")
+
+    assert tool.has_module_test_opt_out(opted_out) is True
+    assert tool.has_module_test_opt_out(enabled) is False
+    assert tool.has_module_test_opt_out(nested) is False
+
+
 def test_build_inventory_audit_allows_only_module_level_optional_skips(
     tmp_path: Path,
 ) -> None:
@@ -115,6 +129,7 @@ def test_build_inventory_audit_allows_only_module_level_optional_skips(
         tmp_path / "tests/test_optional.py",
         "import pytest\nonnx = pytest.importorskip('onnx')\n",
     )
+    _write(tmp_path / "tests/test_support.py", "__test__ = False\n")
     _write(tmp_path / "tests/test_missing.py", "def test_missing():\n    assert True\n")
     _git_repo(tmp_path)
 
@@ -127,8 +142,13 @@ def test_build_inventory_audit_allows_only_module_level_optional_skips(
     assert audit.collected_tests == 1
     assert [item.path for item in audit.optional_import_skips] == ["tests/test_optional.py"]
     assert audit.optional_import_skips[0].dependencies == ("onnx",)
+    assert [item.path for item in audit.intentional_non_test_modules] == ["tests/test_support.py"]
     assert audit.unexpected_uncollected == ("tests/test_missing.py",)
-    assert audit.to_json()["unexpected_uncollected"] == ["tests/test_missing.py"]
+    payload = audit.to_json()
+    assert payload["intentional_non_test_modules"] == [
+        {"marker": "__test__ = False", "path": "tests/test_support.py"}
+    ]
+    assert payload["unexpected_uncollected"] == ["tests/test_missing.py"]
 
 
 def test_main_writes_json_and_returns_success_for_optional_skips(

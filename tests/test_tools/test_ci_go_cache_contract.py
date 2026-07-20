@@ -29,6 +29,20 @@ def test_ci_setup_go_caches_tracked_backend_manifests() -> None:
     assert all(relative in _tracked_files() for relative in dependency_paths)
 
 
+def test_ci_builds_rk4_neuron_parity_backends() -> None:
+    workflow_path = ROOT / ".github/workflows/ci.yml"
+    workflow = yaml.safe_load(workflow_path.read_text(encoding="utf-8"))
+    steps = workflow["jobs"]["test"]["steps"]
+    build_step = next(
+        step for step in steps if step.get("name") == "Build accelerator backends (Go + Mojo)"
+    )
+    run_text = build_step["run"]
+
+    assert "partition rk4_neurons" in run_text
+    assert 'go build -buildmode=c-shared -o "lib${model}.so"' in run_text
+    assert "mojo build --emit shared-lib --target-cpu x86-64-v3" in run_text
+
+
 def _tracked_files() -> set[str]:
     """Return repository-relative paths recorded in the Git index."""
     completed = subprocess.run(

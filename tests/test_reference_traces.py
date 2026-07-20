@@ -7,3 +7,5 @@
 # SC-NeuroCore — Reference-trace compatibility pointer
 
 """Reference-trace contracts live in test_reference_harness.py and per-model modules."""
+
+__test__ = False

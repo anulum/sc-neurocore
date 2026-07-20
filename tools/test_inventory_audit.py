@@ -38,6 +38,18 @@ class OptionalImportSkip:
 
 
 @dataclass(frozen=True)
+class IntentionalNonTestModule:
+    """A ``test_*.py`` compatibility or support module excluded explicitly."""
+
+    path: str
+
+    def to_json(self) -> dict[str, str]:
+        """Return a stable JSON object for audit artefacts."""
+
+        return {"path": self.path, "marker": "__test__ = False"}
+
+
+@dataclass(frozen=True)
 class TestInventoryAudit:
     """Repository test inventory compared with a pytest collect-only transcript."""
 
@@ -46,6 +58,7 @@ class TestInventoryAudit:
     collected_test_files: tuple[str, ...]
     collected_tests: int
     optional_import_skips: tuple[OptionalImportSkip, ...]
+    intentional_non_test_modules: tuple[IntentionalNonTestModule, ...]
     unexpected_uncollected: tuple[str, ...]
 
     @property
@@ -65,6 +78,10 @@ class TestInventoryAudit:
             "collected_tests": self.collected_tests,
             "optional_import_skip_count": len(self.optional_import_skips),
             "optional_import_skips": [item.to_json() for item in self.optional_import_skips],
+            "intentional_non_test_module_count": len(self.intentional_non_test_modules),
+            "intentional_non_test_modules": [
+                item.to_json() for item in self.intentional_non_test_modules
+            ],
             "unexpected_uncollected": list(self.unexpected_uncollected),
         }
 
@@ -120,6 +137,24 @@ def module_level_importorskip_dependencies(path: Path) -> tuple[str, ...]:
     return tuple(sorted(set(dependencies)))
 
 
+def has_module_test_opt_out(path: Path) -> bool:
+    """Return whether a module explicitly declares pytest's non-test marker."""
+
+    tree = ast.parse(path.read_text(encoding="utf-8"))
+    for node in tree.body:
+        if not isinstance(node, ast.Assign) or len(node.targets) != 1:
+            continue
+        target = node.targets[0]
+        if (
+            isinstance(target, ast.Name)
+            and target.id == "__test__"
+            and isinstance(node.value, ast.Constant)
+            and node.value.value is False
+        ):
+            return True
+    return False
+
+
 def build_inventory_audit(repo: Path, collect_output: str) -> TestInventoryAudit:
     """Build a test-inventory audit from git state and pytest collection output."""
 
@@ -127,9 +162,13 @@ def build_inventory_audit(repo: Path, collect_output: str) -> TestInventoryAudit
     collected, collected_tests = parse_collect_only_output(collect_output)
     collected_set = set(collected)
     optional_skips: list[OptionalImportSkip] = []
+    intentional_non_tests: list[IntentionalNonTestModule] = []
     unexpected: list[str] = []
     for path in tracked:
         if path in collected_set:
+            continue
+        if has_module_test_opt_out(repo / path):
+            intentional_non_tests.append(IntentionalNonTestModule(path=path))
             continue
         dependencies = module_level_importorskip_dependencies(repo / path)
         if dependencies:
@@ -143,6 +182,7 @@ def build_inventory_audit(repo: Path, collect_output: str) -> TestInventoryAudit
         collected_test_files=collected,
         collected_tests=collected_tests,
         optional_import_skips=tuple(optional_skips),
+        intentional_non_test_modules=tuple(intentional_non_tests),
         unexpected_uncollected=tuple(unexpected),
     )
 

@@ -11,11 +11,18 @@
 from __future__ import annotations
 
 import ctypes as ct
-from typing import Any
+from typing import Any, Protocol, cast
 
 import pytest
 
 from sc_neurocore._native import learning_runtime as runtime
+
+
+__test__ = False
+
+
+class _CValue(Protocol):
+    value: int | float
 
 
 class FakeCFunction:
@@ -82,7 +89,7 @@ class FakeLearningLib:
         self.rule_steps.append((pre, post, float(reward.value), float(dt.value)))
 
     def step_rule_batched(self, *_args: object) -> None:
-        self.batch_counts.append(int(_args[-2].value))
+        self.batch_counts.append(int(cast(_CValue, _args[-2]).value))
 
     def get_rule_weight(self, _ptr: int) -> float:
         return 0.75
@@ -114,7 +121,7 @@ class FakeLearningLib:
         self.learner_steps.append((fired, pre, float(reward.value), float(dt.value)))
 
     def step_learner_batched(self, *_args: object) -> None:
-        self.batch_counts.append(int(_args[-2].value))
+        self.batch_counts.append(int(cast(_CValue, _args[-2]).value))
 
     def destroy_learner(self, ptr: int) -> None:
         self.destroyed["learner"].append(ptr)
@@ -123,10 +130,10 @@ class FakeLearningLib:
         return self.layer_ptr
 
     def step_rule_layer(self, *_args: object) -> None:
-        self.layer_steps.append(float(_args[-1].value))
+        self.layer_steps.append(float(cast(_CValue, _args[-1]).value))
 
     def step_rule_layer_analog(self, *_args: object) -> None:
-        self.analog_seeds.append(int(_args[-2].value))
+        self.analog_seeds.append(int(cast(_CValue, _args[-2]).value))
 
     def get_rule_layer_weights(self, _ptr: int, output: Any) -> None:
         for index, value in enumerate((0.1, 0.2, 0.3)):
@@ -157,7 +164,7 @@ class FakeLearningLib:
         return self.wgpu_ptr
 
     def step_wgpu_layer(self, *_args: object) -> None:
-        self.wgpu_steps.append(float(_args[-1].value))
+        self.wgpu_steps.append(float(cast(_CValue, _args[-1]).value))
 
     def get_wgpu_weights(self, _ptr: int, output: Any) -> None:
         for index, value in enumerate((0.4, 0.5, 0.6)):

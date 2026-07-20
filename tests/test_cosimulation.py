@@ -7,3 +7,5 @@
 # SC-NeuroCore — Co-simulation compatibility pointer
 
 """Co-simulation contracts live in test_cosim_emitters.py and per-model modules."""
+
+__test__ = False

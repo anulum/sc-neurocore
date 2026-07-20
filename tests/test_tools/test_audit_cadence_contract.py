@@ -68,6 +68,20 @@ def test_audit_cadence_collects_inventory_without_running_full_suite() -> None:
     assert "--cov" not in run_text
 
 
+def test_audit_cadence_builds_collection_gating_backends() -> None:
+    """Keep native parity modules collectable instead of module-skipped."""
+
+    workflow = _load_workflow()
+    steps = workflow["jobs"]["test-inventory"]["steps"]
+    uses = [str(step.get("uses", "")) for step in steps if isinstance(step, dict)]
+    run_text = _run_text(workflow)
+
+    assert any(item.startswith("actions/setup-go@") for item in uses)
+    assert any(item.startswith("prefix-dev/setup-pixi@") for item in uses)
+    assert "for model in rk4_neurons wilson_cowan" in run_text
+    assert "mojo build --emit shared-lib --target-cpu x86-64-v3" in run_text
+
+
 def test_audit_cadence_is_documented_and_in_navigation() -> None:
     """Keep the workflow, public guide, and MkDocs navigation connected."""
 

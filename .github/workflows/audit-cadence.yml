@@ -31,13 +31,44 @@ jobs:
     steps:
       - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
 
+      - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+        with:
+          go-version: "1.26.3"
+          cache-dependency-path: src/sc_neurocore/accel/go/go.mod
+
       - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
         with:
           python-version: "3.12"
           cache: pip
 
+      - uses: prefix-dev/setup-pixi@a09b6247153796b190642a2b53fac4241043cf6f # v0.10.0
+        with:
+          pixi-version: v0.73.0
+          manifest-path: src/sc_neurocore/accel/mojo/pixi.toml
+
+      - name: Expose mojo without shadowing the CI Python
+        run: |
+          sudo tee /usr/local/bin/mojo >/dev/null <<SH
+          #!/usr/bin/env bash
+          exec pixi run --manifest-path "$GITHUB_WORKSPACE/src/sc_neurocore/accel/mojo/pixi.toml" mojo "\$@"
+          SH
+          sudo chmod +x /usr/local/bin/mojo
+          mojo --version
+
       - name: Install package
         run: python tools/ci_install_dev.py
+
+      - name: Build collection-gating native backends
+        shell: bash
+        run: |
+          set -euo pipefail
+          for model in rk4_neurons wilson_cowan; do
+            ( cd "src/sc_neurocore/accel/go/${model}" \
+                && go build -buildmode=c-shared -o "lib${model}.so" "${model}.go" )
+            ( cd "src/sc_neurocore/accel/mojo/${model}" \
+                && mojo build --emit shared-lib --target-cpu x86-64-v3 \
+                  -o "lib${model}.so" "${model}.mojo" )
+          done
 
       - name: Collect pytest inventory
         run: |
