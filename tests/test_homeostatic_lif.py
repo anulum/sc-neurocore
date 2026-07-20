@@ -84,3 +84,14 @@ def test_rate_trace_is_exponential_spike_average():
     assert neuron.rate_trace == pytest.approx(0.5)
     neuron.step(0.0)
     assert neuron.rate_trace == pytest.approx(0.25)
+
+
+def test_homeostatic_lif_get_state_reports_threshold_and_trace() -> None:
+    """The public state includes the adapted threshold and rate trace."""
+    neuron = HomeostaticLIFNeuron(target_rate=0.1, noise_std=0.0)
+    neuron.step(1.0)
+
+    state = neuron.get_state()
+
+    assert state["threshold"] == pytest.approx(neuron.v_threshold)
+    assert state["rate_trace"] == pytest.approx(neuron.rate_trace)

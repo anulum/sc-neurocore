@@ -154,6 +154,15 @@ def test_assign_synapse_precisions_rejects_non_finite_sensitivity_maps() -> None
         )
 
 
+def test_assign_synapse_precisions_rejects_mismatched_sensitivity_shape() -> None:
+    """Synapse planning requires each sensitivity map to match its weight layer."""
+    with pytest.raises(ValueError, match="match its layer weight shape"):
+        assign_synapse_precisions(
+            [np.ones((2, 2))],
+            sensitivity_maps=[np.ones((3, 3))],
+        )
+
+
 def test_zero_sensitivity_synapses_use_minimum_length_and_zero_stochastic_bound() -> None:
     """Zero-sensitivity synapses keep the minimum bitstream length."""
     [row] = assign_synapse_precisions(
