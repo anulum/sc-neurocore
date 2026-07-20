@@ -37,6 +37,8 @@ pub mod brunel;
 pub mod connectome;
 pub mod conv;
 pub mod cordiv;
+#[path = "bindings/cordiv.rs"]
+mod cordiv_binding;
 pub mod cortical_column;
 pub mod cortical_inject;
 pub mod dna;
@@ -655,8 +657,7 @@ fn sc_neurocore_engine(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_function(wrap_pyfunction!(py_simulate_ei_network, m)?)?;
     m.add_function(wrap_pyfunction!(py_batch_simulate, m)?)?;
     m.add_function(wrap_pyfunction!(rk4_neurons::py_rk4_neuron_simulate, m)?)?;
-    m.add_function(wrap_pyfunction!(py_cordiv, m)?)?;
-    m.add_function(wrap_pyfunction!(py_adaptive_length, m)?)?;
+    cordiv_binding::register(m)?;
     predictive_coding_binding::register(m)?;
     m.add_function(wrap_pyfunction!(py_phi_star, m)?)?;
     m.add_class::<PyCorticalColumn>()?;
@@ -701,25 +702,6 @@ fn sc_neurocore_engine(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_function(wrap_pyfunction!(py_parallel_csr_spmv_add, m)?)?;
     m.add_function(wrap_pyfunction!(py_parallel_csr_multi_spmv_add, m)?)?;
     Ok(())
-}
-
-// ── CORDIV + adaptive length ─────────────────────────────────────────
-
-#[pyfunction]
-fn py_cordiv(
-    py: Python<'_>,
-    numerator: PyReadonlyArray1<'_, u8>,
-    denominator: PyReadonlyArray1<'_, u8>,
-) -> PyResult<Py<PyArray1<u8>>> {
-    let num = numerator.as_slice()?;
-    let den = denominator.as_slice()?;
-    let result = cordiv::cordiv(num, den);
-    Ok(result.into_pyarray(py).into())
-}
-
-#[pyfunction]
-fn py_adaptive_length(epsilon: f64, confidence: f64) -> usize {
-    cordiv::adaptive_length_hoeffding(epsilon, confidence)
 }
 
 // ── Phi* ─────────────────────────────────────────────────────────────
