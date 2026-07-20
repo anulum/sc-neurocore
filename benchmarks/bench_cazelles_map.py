@@ -35,6 +35,7 @@ import time
 from pathlib import Path
 
 import numpy as np
+import numpy.typing as npt
 
 from sc_neurocore.neurons.models import cazelles_map
 from sc_neurocore.neurons.models.cazelles_map import CazellesMapNeuron
@@ -47,7 +48,7 @@ SOURCE_HASH_PATHS = (
     "benchmarks/bench_cazelles_map.py",
     "src/sc_neurocore/neurons/models/cazelles_map.py",
     "engine/src/lib.rs",
-    "engine/src/neurons/maps.rs",
+    "engine/src/neurons/cazelles_map.rs",
     "src/sc_neurocore/accel/go/neurons/cazelles_map/cazelles_map.go",
     "src/sc_neurocore/accel/julia/neurons/cazelles_map.jl",
     "src/sc_neurocore/accel/mojo/neurons/cazelles_map.mojo",
@@ -97,10 +98,10 @@ def _probe_mojo() -> tuple[bool, str]:
     return (ok, "" if ok else "accel/mojo/neurons/libcazelles.so not built")
 
 
-def _run(backend: str) -> tuple[float, float, np.ndarray, int]:
+def _run(backend: str) -> tuple[float, float, npt.NDArray[np.float64], int]:
     CazellesMapNeuron().simulate(N_STEPS, CURRENT, backend=backend)  # warm-up (JIT for Julia)
     times_ms: list[float] = []
-    trace = np.empty(0)
+    trace: npt.NDArray[np.float64] = np.empty(0, dtype=np.float64)
     spikes = 0
     for _ in range(N_REPEATS):
         t0 = time.perf_counter()
@@ -151,7 +152,7 @@ def main(argv: list[str]) -> int:
         )
         return 2
 
-    reference: np.ndarray | None = None
+    reference: npt.NDArray[np.float64] | None = None
     python_median: float | None = None
     rows: list[dict[str, object]] = []
 
@@ -168,7 +169,8 @@ def main(argv: list[str]) -> int:
             python_median = median_ms
             parity = 0.0
         else:
-            assert reference is not None
+            if reference is None:
+                raise RuntimeError("Python reference must run before accelerated backends")
             parity = float(np.max(np.abs(trace - reference)))
         speedup = (python_median / median_ms) if python_median and median_ms > 0 else float("nan")
         print(f"{name:<8}  {median_ms:>12.2f}  {min_ms:>12.2f}  {parity:>12.2e}  {speedup:>8.2f}x")

@@ -73,7 +73,9 @@ def test_committed_evidence_matches_live_sources_and_bounded_parity() -> None:
     artifact = (
         benchmark.REPOSITORY / "benchmarks/results/local_python_2026-07-13_dpi_neuron_circuit.json"
     )
-    payload = json.loads(artifact.read_text(encoding="utf-8"))
+    artifact_text = artifact.read_text(encoding="utf-8")
+    assert str(benchmark.REPOSITORY) not in artifact_text
+    payload = json.loads(artifact_text)
 
     assert payload["schema_version"] == "sc-neurocore.polyglot-benchmark.v1"
     assert payload["kernel"] == benchmark.KERNEL

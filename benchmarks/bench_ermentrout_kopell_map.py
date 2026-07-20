@@ -35,6 +35,7 @@ import time
 from pathlib import Path
 
 import numpy as np
+import numpy.typing as npt
 
 from sc_neurocore.neurons.models import ermentrout_kopell_map_neuron as ek
 from sc_neurocore.neurons.models.ermentrout_kopell_map_neuron import ErmentroutKopellMapNeuron
@@ -47,7 +48,7 @@ SOURCE_HASH_PATHS = (
     "benchmarks/bench_ermentrout_kopell_map.py",
     "src/sc_neurocore/neurons/models/ermentrout_kopell_map_neuron.py",
     "engine/src/lib.rs",
-    "engine/src/neurons/maps.rs",
+    "engine/src/neurons/ermentrout_kopell_map.rs",
     "src/sc_neurocore/accel/go/neurons/ermentrout_kopell_map/ermentrout_kopell_map.go",
     "src/sc_neurocore/accel/julia/neurons/ermentrout_kopell_map_neuron.jl",
     "src/sc_neurocore/accel/mojo/neurons/ermentrout_kopell_map_neuron.mojo",
@@ -92,10 +93,10 @@ def _probe_mojo() -> tuple[bool, str]:
     return (ok, "" if ok else "accel/mojo/neurons/libermentrout.so not built")
 
 
-def _run(backend: str) -> tuple[float, float, np.ndarray, int]:
+def _run(backend: str) -> tuple[float, float, npt.NDArray[np.float64], int]:
     ErmentroutKopellMapNeuron().simulate(N_STEPS, CURRENT, backend=backend)  # warm-up (Julia JIT)
     times_ms: list[float] = []
-    trace = np.empty(0)
+    trace: npt.NDArray[np.float64] = np.empty(0, dtype=np.float64)
     spikes = 0
     for _ in range(N_REPEATS):
         t0 = time.perf_counter()
@@ -146,7 +147,7 @@ def main(argv: list[str]) -> int:
         )
         return 2
 
-    reference: np.ndarray | None = None
+    reference: npt.NDArray[np.float64] | None = None
     python_median: float | None = None
     rows: list[dict[str, object]] = []
 
@@ -163,7 +164,8 @@ def main(argv: list[str]) -> int:
             python_median = median_ms
             parity = 0.0
         else:
-            assert reference is not None
+            if reference is None:
+                raise RuntimeError("Python reference must run before accelerated backends")
             parity = float(np.max(np.abs(trace - reference)))
         speedup = (python_median / median_ms) if python_median and median_ms > 0 else float("nan")
         print(f"{name:<8}  {median_ms:>12.2f}  {min_ms:>12.2f}  {parity:>12.2e}  {speedup:>8.2f}x")

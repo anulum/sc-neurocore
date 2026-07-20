@@ -16,6 +16,7 @@ import os
 from pathlib import Path
 
 import numpy as np
+import numpy.typing as npt
 import pytest
 
 from benchmarks import bench_model_threshold_linear_rate as benchmark
@@ -54,7 +55,9 @@ def test_binary_hashes_bind_loaded_native_artifacts() -> None:
 
 
 def test_committed_evidence_matches_sources_and_exact_parity() -> None:
-    payload = json.loads(benchmark.DEFAULT_OUTPUT.read_text(encoding="utf-8"))
+    artifact_text = benchmark.DEFAULT_OUTPUT.read_text(encoding="utf-8")
+    assert str(benchmark.REPOSITORY) not in artifact_text
+    payload = json.loads(artifact_text)
     assert payload["schema_version"] == "sc-neurocore.polyglot-benchmark.v1"
     assert payload["kernel"] == benchmark.KERNEL
     assert payload["production_speed_claim"] is False
@@ -126,7 +129,9 @@ def test_parity_failure_is_not_published(
     monkeypatch.setattr(benchmark, "_binary_hashes", lambda: {})
     monkeypatch.setattr(benchmark, "_environment", lambda: {})
 
-    def measured(backend: str, n_steps: int, _repeats: int):
+    def measured(
+        backend: str, n_steps: int, _repeats: int
+    ) -> tuple[list[int], npt.NDArray[np.float64], float]:
         value = 4.0 if backend == "mojo" else 3.0
         return [1], np.full(n_steps, value), value
 

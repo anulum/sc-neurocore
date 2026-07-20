@@ -190,13 +190,22 @@ def _verify_rust_safety() -> dict[str, object]:
     with tempfile.TemporaryDirectory(prefix="threshold-linear-rate-rust-") as directory:
         binary = Path(directory) / "threshold_linear_rate_tests"
         command = ["rustc", "--edition", "2021", "--test", str(source), "-o", str(binary)]
+        display_command = [
+            "rustc",
+            "--edition",
+            "2021",
+            "--test",
+            _display_path(source),
+            "-o",
+            "<temporary>/threshold_linear_rate_tests",
+        ]
         try:
             compiled = subprocess.run(
                 command, check=False, capture_output=True, text=True, timeout=120
             )
             if compiled.returncode != 0:
                 return {
-                    "command": command,
+                    "command": display_command,
                     "passed": False,
                     "returncode": compiled.returncode,
                     "output_tail": (compiled.stdout + compiled.stderr).splitlines()[-20:],
@@ -206,13 +215,13 @@ def _verify_rust_safety() -> dict[str, object]:
             )
         except OSError as exc:
             return {
-                "command": command,
+                "command": display_command,
                 "passed": False,
                 "returncode": -1,
                 "output_tail": [str(exc)],
             }
     return {
-        "command": command,
+        "command": display_command,
         "passed": executed.returncode == 0,
         "returncode": executed.returncode,
         "output_tail": (executed.stdout + executed.stderr).splitlines()[-20:],

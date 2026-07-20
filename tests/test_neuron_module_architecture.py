@@ -9,6 +9,7 @@
 """Architecture ratchets for dedicated neuron implementation modules."""
 
 import ast
+import inspect
 from pathlib import Path
 import re
 
@@ -92,6 +93,17 @@ def test_adaptive_threshold_julia_facade_is_not_in_package_init() -> None:
     assert "def _ensure_adaptive_threshold_if_loaded" not in init_text
     assert "simulate_adaptive_threshold_if as simulate_adaptive_threshold_if" in init_text
     assert sum(1 for _ in dedicated.open()) < 200
+
+
+def test_alpha_julia_facade_is_not_in_package_init() -> None:
+    from sc_neurocore.accel.julia import neurons
+    from sc_neurocore.accel.julia.neurons import alpha
+
+    assert neurons.simulate_alpha is alpha.simulate_alpha
+    assert neurons._ensure_alpha_loaded is alpha._ensure_loaded
+    implementation_path = inspect.getsourcefile(neurons.simulate_alpha)
+    assert implementation_path is not None
+    assert Path(implementation_path).resolve() == Path(alpha.__file__).resolve()
 
 
 def test_julia_package_init_cannot_gain_model_implementations() -> None:

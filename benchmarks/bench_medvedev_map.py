@@ -45,7 +45,7 @@ SOURCE_PATHS = (
     "benchmarks/bench_medvedev_map.py",
     "bridge/sc_neurocore_engine/__init__.py",
     "engine/src/lib.rs",
-    "engine/src/neurons/maps.rs",
+    "engine/src/neurons/medvedev_map.rs",
     "src/sc_neurocore/accel/go/neurons/medvedev_map/libmedvedev.h",
     "src/sc_neurocore/accel/go/neurons/medvedev_map/medvedev_map.go",
     "src/sc_neurocore/accel/julia/neurons/medvedev_map.jl",

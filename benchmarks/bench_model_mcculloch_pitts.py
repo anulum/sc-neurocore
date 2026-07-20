@@ -246,6 +246,10 @@ def _measure_backend(
 def _verify_rust_safety() -> dict[str, Any]:
     """Compile and execute the actual standalone Rust-safety tests."""
     source = REPOSITORY / "src/sc_neurocore/accel/rust/safety/mcculloch_pitts.rs"
+    display_command = (
+        "rustc --edition=2021 --test "
+        f"{source.relative_to(REPOSITORY).as_posix()} -O -o <temp-binary> && <temp-binary>"
+    )
     with tempfile.TemporaryDirectory(prefix="sc_neurocore_mcp_safety_") as temp_dir:
         binary = Path(temp_dir) / "mcculloch_pitts_safety_tests"
         command = ["rustc", "--edition=2021", "--test", str(source), "-O", "-o", str(binary)]
@@ -272,14 +276,14 @@ def _verify_rust_safety() -> dict[str, Any]:
             )
         except (OSError, subprocess.TimeoutExpired) as exc:
             return {
-                "command": " ".join(command[:-2]) + " -o <temp-binary> && <temp-binary>",
+                "command": display_command,
                 "passed": False,
                 "returncode": -1,
                 "output_tail": [str(exc)],
             }
     output = (executed.stdout + "\n" + executed.stderr).strip().splitlines()
     return {
-        "command": " ".join(command[:-2]) + " -o <temp-binary> && <temp-binary>",
+        "command": display_command,
         "passed": compiled.returncode == 0 and executed.returncode == 0,
         "returncode": executed.returncode if compiled.returncode == 0 else compiled.returncode,
         "output_tail": output[-12:],

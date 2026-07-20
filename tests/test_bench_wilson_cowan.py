@@ -16,6 +16,7 @@ import os
 from pathlib import Path
 
 import numpy as np
+import numpy.typing as npt
 import pytest
 
 from benchmarks import bench_wilson_cowan as benchmark
@@ -60,7 +61,9 @@ def test_binary_hashes_bind_loaded_native_artifacts() -> None:
 
 
 def test_committed_evidence_matches_sources_and_bounded_parity() -> None:
-    payload = json.loads(benchmark.DEFAULT_OUTPUT.read_text(encoding="utf-8"))
+    artifact_text = benchmark.DEFAULT_OUTPUT.read_text(encoding="utf-8")
+    assert str(benchmark.REPOSITORY) not in artifact_text
+    payload = json.loads(artifact_text)
     assert payload["schema_version"] == "sc-neurocore.polyglot-benchmark.v1"
     assert payload["kernel"] == benchmark.KERNEL
     assert payload["production_speed_claim"] is False
@@ -132,7 +135,13 @@ def test_parity_failure_is_not_published(
     monkeypatch.setattr(benchmark, "_binary_hashes", lambda: {})
     monkeypatch.setattr(benchmark, "_environment", lambda: {})
 
-    def measured(backend: str, n_steps: int, _repeats: int):
+    def measured(
+        backend: str, n_steps: int, _repeats: int
+    ) -> tuple[
+        list[int],
+        tuple[npt.NDArray[np.float64], npt.NDArray[np.float64]],
+        tuple[float, float],
+    ]:
         value = 0.8 if backend == "mojo" else 0.2
         traces = (np.full(n_steps, value), np.full(n_steps, 0.1))
         return [1], traces, (value, 0.1)

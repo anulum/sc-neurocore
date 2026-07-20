@@ -224,6 +224,10 @@ def _measure_backend(
 def _verify_rust_safety() -> dict[str, Any]:
     """Compile and execute the actual standalone IQIF Rust-safety tests."""
     source = REPOSITORY / "src/sc_neurocore/accel/rust/safety/iqif.rs"
+    display_command = (
+        "rustc --edition=2021 --test "
+        f"{source.relative_to(REPOSITORY).as_posix()} -O -o <temp-binary> && <temp-binary>"
+    )
     with tempfile.TemporaryDirectory(prefix="sc_neurocore_iqif_safety_") as temp_dir:
         binary = Path(temp_dir) / "iqif_safety_tests"
         compile_command = [
@@ -257,14 +261,14 @@ def _verify_rust_safety() -> dict[str, Any]:
                 executed = compiled
         except (OSError, subprocess.TimeoutExpired) as exc:
             return {
-                "command": " ".join(compile_command) + " && <compiled-test-binary>",
+                "command": display_command,
                 "passed": False,
                 "returncode": -1,
                 "output_tail": [str(exc)],
             }
     output = (executed.stdout + "\n" + executed.stderr).strip().splitlines()
     return {
-        "command": " ".join(compile_command[:-2]) + " -o <temp-binary> && <temp-binary>",
+        "command": display_command,
         "passed": compiled.returncode == 0 and executed.returncode == 0,
         "returncode": executed.returncode if compiled.returncode == 0 else compiled.returncode,
         "output_tail": output[-12:],

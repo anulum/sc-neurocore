@@ -1830,7 +1830,7 @@
       "source_hashes": {
         "benchmarks/bench_cazelles_map.py": "source_hashes.benchmarks/bench_cazelles_map.py",
         "engine/src/lib.rs": "source_hashes.engine/src/lib.rs",
-        "engine/src/neurons/maps.rs": "source_hashes.engine/src/neurons/maps.rs",
+        "engine/src/neurons/cazelles_map.rs": "source_hashes.engine/src/neurons/cazelles_map.rs",
         "src/sc_neurocore/neurons/models/cazelles_map.py": "source_hashes.src/sc_neurocore/neurons/models/cazelles_map.py",
         "src/sc_neurocore/accel/go/neurons/cazelles_map/cazelles_map.go": "source_hashes.src/sc_neurocore/accel/go/neurons/cazelles_map/cazelles_map.go",
         "src/sc_neurocore/accel/julia/neurons/cazelles_map.jl": "source_hashes.src/sc_neurocore/accel/julia/neurons/cazelles_map.jl",
@@ -1899,7 +1899,7 @@
       "source_hashes": {
         "benchmarks/bench_rulkov_map.py": "source_hashes.benchmarks/bench_rulkov_map.py",
         "engine/src/lib.rs": "source_hashes.engine/src/lib.rs",
-        "engine/src/neurons/maps.rs": "source_hashes.engine/src/neurons/maps.rs",
+        "engine/src/neurons/rulkov_map.rs": "source_hashes.engine/src/neurons/rulkov_map.rs",
         "src/sc_neurocore/neurons/models/rulkov_map.py": "source_hashes.src/sc_neurocore/neurons/models/rulkov_map.py",
         "src/sc_neurocore/accel/go/neurons/rulkov_map/rulkov_map.go": "source_hashes.src/sc_neurocore/accel/go/neurons/rulkov_map/rulkov_map.go",
         "src/sc_neurocore/accel/julia/neurons/rulkov_map.jl": "source_hashes.src/sc_neurocore/accel/julia/neurons/rulkov_map.jl",
@@ -1974,7 +1974,7 @@
       "source_hashes": {
         "benchmarks/bench_courage_nekorkin_map_simulate.py": "source_hashes.benchmarks/bench_courage_nekorkin_map_simulate.py",
         "engine/src/lib.rs": "source_hashes.engine/src/lib.rs",
-        "engine/src/neurons/maps.rs": "source_hashes.engine/src/neurons/maps.rs",
+        "engine/src/neurons/courage_nekorkin_map.rs": "source_hashes.engine/src/neurons/courage_nekorkin_map.rs",
         "src/sc_neurocore/neurons/models/courage_nekorkin_map.py": "source_hashes.src/sc_neurocore/neurons/models/courage_nekorkin_map.py",
         "src/sc_neurocore/accel/go/neurons/courage_nekorkin_map/courage_nekorkin_map.go": "source_hashes.src/sc_neurocore/accel/go/neurons/courage_nekorkin_map/courage_nekorkin_map.go",
         "src/sc_neurocore/accel/julia/neurons/courage_nekorkin_map.jl": "source_hashes.src/sc_neurocore/accel/julia/neurons/courage_nekorkin_map.jl",
@@ -2043,7 +2043,7 @@
       "source_hashes": {
         "benchmarks/bench_ermentrout_kopell_map.py": "source_hashes.benchmarks/bench_ermentrout_kopell_map.py",
         "engine/src/lib.rs": "source_hashes.engine/src/lib.rs",
-        "engine/src/neurons/maps.rs": "source_hashes.engine/src/neurons/maps.rs",
+        "engine/src/neurons/ermentrout_kopell_map.rs": "source_hashes.engine/src/neurons/ermentrout_kopell_map.rs",
         "src/sc_neurocore/neurons/models/ermentrout_kopell_map_neuron.py": "source_hashes.src/sc_neurocore/neurons/models/ermentrout_kopell_map_neuron.py",
         "src/sc_neurocore/accel/go/neurons/ermentrout_kopell_map/ermentrout_kopell_map.go": "source_hashes.src/sc_neurocore/accel/go/neurons/ermentrout_kopell_map/ermentrout_kopell_map.go",
         "src/sc_neurocore/accel/julia/neurons/ermentrout_kopell_map_neuron.jl": "source_hashes.src/sc_neurocore/accel/julia/neurons/ermentrout_kopell_map_neuron.jl",
@@ -2119,7 +2119,7 @@
         "benchmarks/bench_ibarz_tanaka_map.py": "source_hashes.benchmarks/bench_ibarz_tanaka_map.py",
         "bridge/sc_neurocore_engine/__init__.py": "source_hashes.bridge/sc_neurocore_engine/__init__.py",
         "engine/src/lib.rs": "source_hashes.engine/src/lib.rs",
-        "engine/src/neurons/maps.rs": "source_hashes.engine/src/neurons/maps.rs",
+        "engine/src/neurons/ibarz_tanaka_map.rs": "source_hashes.engine/src/neurons/ibarz_tanaka_map.rs",
         "src/sc_neurocore/accel/go/neurons/ibarz_tanaka_map/ibarz_tanaka_map.go": "source_hashes.src/sc_neurocore/accel/go/neurons/ibarz_tanaka_map/ibarz_tanaka_map.go",
         "src/sc_neurocore/accel/go/neurons/ibarz_tanaka_map/libibarz.h": "source_hashes.src/sc_neurocore/accel/go/neurons/ibarz_tanaka_map/libibarz.h",
         "src/sc_neurocore/accel/julia/neurons/ibarz_tanaka_map.jl": "source_hashes.src/sc_neurocore/accel/julia/neurons/ibarz_tanaka_map.jl",
@@ -2293,7 +2293,7 @@
         "benchmarks/bench_medvedev_map.py": "source_hashes.benchmarks/bench_medvedev_map.py",
         "bridge/sc_neurocore_engine/__init__.py": "source_hashes.bridge/sc_neurocore_engine/__init__.py",
         "engine/src/lib.rs": "source_hashes.engine/src/lib.rs",
-        "engine/src/neurons/maps.rs": "source_hashes.engine/src/neurons/maps.rs",
+        "engine/src/neurons/medvedev_map.rs": "source_hashes.engine/src/neurons/medvedev_map.rs",
         "src/sc_neurocore/accel/go/neurons/medvedev_map/libmedvedev.h": "source_hashes.src/sc_neurocore/accel/go/neurons/medvedev_map/libmedvedev.h",
         "src/sc_neurocore/accel/go/neurons/medvedev_map/medvedev_map.go": "source_hashes.src/sc_neurocore/accel/go/neurons/medvedev_map/medvedev_map.go",
         "src/sc_neurocore/accel/julia/neurons/medvedev_map.jl": "source_hashes.src/sc_neurocore/accel/julia/neurons/medvedev_map.jl",

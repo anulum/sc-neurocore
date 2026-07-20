@@ -155,11 +155,11 @@ impl AlphaNeuron {
         drive: f64,
         tau: f64,
         dt: f64,
+        decay: f64,
     ) -> Result<(f64, f64), AlphaError> {
         let steady_state = tau * drive;
         let rise_delta = rise_state - steady_state;
         let current_delta = current_state - steady_state;
-        let decay = (-dt / tau).exp();
         let rise_next = steady_state + rise_delta * decay;
         let current_next = steady_state + decay * (current_delta + rise_delta * dt / tau);
         if !rise_next.is_finite() || !current_next.is_finite() {
@@ -172,13 +172,12 @@ impl AlphaNeuron {
         current_delta: f64,
         rise_delta: f64,
         tau_drive: f64,
-        tau_v: f64,
         dt: f64,
+        rates: [f64; 2],
+        decays: [f64; 2],
     ) -> Result<f64, AlphaError> {
-        let rate_v = 1.0 / tau_v;
-        let rate_drive = 1.0 / tau_drive;
-        let decay_v = (-dt / tau_v).exp();
-        let decay_drive = (-dt / tau_drive).exp();
+        let [rate_v, rate_drive] = rates;
+        let [decay_v, decay_drive] = decays;
         let contribution = if (rate_v - rate_drive).abs() <= 1.0e-14 {
             rate_v * decay_v * (current_delta * dt + rise_delta * dt * dt / (2.0 * tau_drive))
         } else {
@@ -196,34 +195,54 @@ impl AlphaNeuron {
     }
 
     /// Advance one exact-flow interval with explicit error reporting.
+    #[inline]
     pub fn try_step(&mut self, exc_current: f64, inh_current: f64) -> Result<i32, AlphaError> {
         self.validate()?;
         if !exc_current.is_finite() || !inh_current.is_finite() {
             return Err(AlphaError::NonFiniteInput);
         }
-        let (a_exc_next, i_exc_next) =
-            Self::filter_candidates(self.a_exc, self.i_exc, exc_current, self.tau_exc, self.dt)?;
-        let (a_inh_next, i_inh_next) =
-            Self::filter_candidates(self.a_inh, self.i_inh, inh_current, self.tau_inh, self.dt)?;
+        let rate_v = 1.0 / self.tau_v;
+        let rate_exc = 1.0 / self.tau_exc;
+        let rate_inh = 1.0 / self.tau_inh;
+        let decay_v = (-self.dt / self.tau_v).exp();
+        let decay_exc = (-self.dt / self.tau_exc).exp();
+        let decay_inh = (-self.dt / self.tau_inh).exp();
+        let (a_exc_next, i_exc_next) = Self::filter_candidates(
+            self.a_exc,
+            self.i_exc,
+            exc_current,
+            self.tau_exc,
+            self.dt,
+            decay_exc,
+        )?;
+        let (a_inh_next, i_inh_next) = Self::filter_candidates(
+            self.a_inh,
+            self.i_inh,
+            inh_current,
+            self.tau_inh,
+            self.dt,
+            decay_inh,
+        )?;
         let exc_steady = self.tau_exc * exc_current;
         let inh_steady = self.tau_inh * inh_current;
         let v_steady = self.v_rest + exc_steady - inh_steady;
-        let decay_v = (-self.dt / self.tau_v).exp();
         let v_next = v_steady
             + (self.v - v_steady) * decay_v
             + Self::drive_contribution(
                 self.i_exc - exc_steady,
                 self.a_exc - exc_steady,
                 self.tau_exc,
-                self.tau_v,
                 self.dt,
+                [rate_v, rate_exc],
+                [decay_v, decay_exc],
             )?
             - Self::drive_contribution(
                 self.i_inh - inh_steady,
                 self.a_inh - inh_steady,
                 self.tau_inh,
-                self.tau_v,
                 self.dt,
+                [rate_v, rate_inh],
+                [decay_v, decay_inh],
             )?;
         if !v_next.is_finite() {
             return Err(AlphaError::NonFiniteCandidate);
@@ -241,6 +260,7 @@ impl AlphaNeuron {
     }
 
     /// Preserve the legacy scalar API while failing closed on invalid input.
+    #[inline]
     pub fn step(&mut self, exc_current: f64, inh_current: f64) -> i32 {
         self.try_step(exc_current, inh_current).unwrap_or(0)
     }
@@ -383,10 +403,10 @@ mod tests {
 
     #[test]
     fn filter_matches_exact_alpha_cascade() {
-        let (rise_next, current_next) =
-            AlphaNeuron::filter_candidates(0.25, 0.1, 2.0, 5.0, 0.5).unwrap();
-        let steady = 5.0 * 2.0;
         let decay = (-0.5_f64 / 5.0).exp();
+        let (rise_next, current_next) =
+            AlphaNeuron::filter_candidates(0.25, 0.1, 2.0, 5.0, 0.5, decay).unwrap();
+        let steady = 5.0 * 2.0;
         let expected_rise = steady + (0.25 - steady) * decay;
         let expected_current = steady + decay * ((0.1 - steady) + (0.25 - steady) * 0.5 / 5.0);
         assert!((rise_next - expected_rise).abs() < 1.0e-12);
@@ -395,9 +415,11 @@ mod tests {
 
     #[test]
     fn drive_contribution_handles_equal_time_constants() {
-        let exact = AlphaNeuron::drive_contribution(0.3, 0.2, 20.0, 20.0, 0.5).unwrap();
         let rate = 1.0 / 20.0;
         let decay = (-0.5_f64 / 20.0).exp();
+        let exact =
+            AlphaNeuron::drive_contribution(0.3, 0.2, 20.0, 0.5, [rate, rate], [decay, decay])
+                .unwrap();
         let expected = rate * decay * (0.3 * 0.5 + 0.2 * 0.5 * 0.5 / (2.0 * 20.0));
         assert!((exact - expected).abs() < 1.0e-12);
     }

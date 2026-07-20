@@ -921,6 +921,13 @@ Run the Julia exact-relaxation recurrence with typed failure translation.
 
 ---
 
+## Module `accel.julia.neurons.alpha`
+
+### Function `simulate_alpha(v_init, a_exc_init, i_exc_init, a_inh_init, i_inh_init, v_rest, v_threshold, tau_v, tau_exc, tau_inh, dt, exc_current, inh_current)`
+Run the Julia exact-flow recurrence with typed failure translation.
+
+---
+
 ## Module `accel.lapicque`
 
 ### Function `ensure_julia_loaded()`

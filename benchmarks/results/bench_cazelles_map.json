@@ -2,42 +2,42 @@
   "backend_summary": {
     "go": {
       "backend": "go",
-      "median_ms": 10.380176012404263,
-      "min_ms": 10.09862800128758,
+      "median_ms": 12.041572015732527,
+      "min_ms": 9.709884994663298,
       "parity_max_abs_diff": 0.0,
-      "speedup_vs_python": 86.52494793558816,
+      "speedup_vs_python": 77.04974547817422,
       "spikes": 24
     },
     "julia": {
       "backend": "julia",
-      "median_ms": 27.60718099307269,
-      "min_ms": 25.508059072308242,
+      "median_ms": 27.677409001626074,
+      "min_ms": 26.224902947433293,
       "parity_max_abs_diff": 0.0,
-      "speedup_vs_python": 32.532991661150994,
+      "speedup_vs_python": 33.52192609195418,
       "spikes": 24
     },
     "mojo": {
       "backend": "mojo",
-      "median_ms": 12.8543860046193,
-      "min_ms": 11.358696967363358,
+      "median_ms": 10.084601934067905,
+      "min_ms": 9.785331087186933,
       "parity_max_abs_diff": 0.00029589556250742,
-      "speedup_vs_python": 69.87064094020255,
+      "speedup_vs_python": 92.00165410941932,
       "spikes": 24
     },
     "python": {
       "backend": "python",
-      "median_ms": 898.14418903552,
-      "min_ms": 877.9273540712893,
+      "median_ms": 927.8000589692965,
+      "min_ms": 857.3091790312901,
       "parity_max_abs_diff": 0.0,
       "speedup_vs_python": 1.0,
       "spikes": 24
     },
     "rust": {
       "backend": "rust",
-      "median_ms": 12.723079998977482,
-      "min_ms": 12.490120949223638,
+      "median_ms": 12.100009014829993,
+      "min_ms": 11.910640983842313,
       "parity_max_abs_diff": 0.0,
-      "speedup_vs_python": 70.59172693307762,
+      "speedup_vs_python": 76.67763369698054,
       "spikes": 24
     }
   },
@@ -51,58 +51,58 @@
   "results": [
     {
       "backend": "python",
-      "median_ms": 898.14418903552,
-      "min_ms": 877.9273540712893,
+      "median_ms": 927.8000589692965,
+      "min_ms": 857.3091790312901,
       "parity_max_abs_diff": 0.0,
       "speedup_vs_python": 1.0,
       "spikes": 24
     },
     {
       "backend": "rust",
-      "median_ms": 12.723079998977482,
-      "min_ms": 12.490120949223638,
+      "median_ms": 12.100009014829993,
+      "min_ms": 11.910640983842313,
       "parity_max_abs_diff": 0.0,
-      "speedup_vs_python": 70.59172693307762,
+      "speedup_vs_python": 76.67763369698054,
       "spikes": 24
     },
     {
       "backend": "julia",
-      "median_ms": 27.60718099307269,
-      "min_ms": 25.508059072308242,
+      "median_ms": 27.677409001626074,
+      "min_ms": 26.224902947433293,
       "parity_max_abs_diff": 0.0,
-      "speedup_vs_python": 32.532991661150994,
+      "speedup_vs_python": 33.52192609195418,
       "spikes": 24
     },
     {
       "backend": "go",
-      "median_ms": 10.380176012404263,
-      "min_ms": 10.09862800128758,
+      "median_ms": 12.041572015732527,
+      "min_ms": 9.709884994663298,
       "parity_max_abs_diff": 0.0,
-      "speedup_vs_python": 86.52494793558816,
+      "speedup_vs_python": 77.04974547817422,
       "spikes": 24
     },
     {
       "backend": "mojo",
-      "median_ms": 12.8543860046193,
-      "min_ms": 11.358696967363358,
+      "median_ms": 10.084601934067905,
+      "min_ms": 9.785331087186933,
       "parity_max_abs_diff": 0.00029589556250742,
-      "speedup_vs_python": 69.87064094020255,
+      "speedup_vs_python": 92.00165410941932,
       "spikes": 24
     }
   ],
   "source_hashes": {
     "benchmarks/bench_cazelles_map": {
-      "py": "c9b2f2e410d3e402efb71b4972dadd17662227a6da2a9b270169effc7327bf96"
+      "py": "28919b591aab9b075a334cfc3a74643863b1755f2a014893bd9b7ebfe54d8713"
     },
-    "benchmarks/bench_cazelles_map.py": "c9b2f2e410d3e402efb71b4972dadd17662227a6da2a9b270169effc7327bf96",
+    "benchmarks/bench_cazelles_map.py": "28919b591aab9b075a334cfc3a74643863b1755f2a014893bd9b7ebfe54d8713",
     "engine/src/lib": {
       "rs": "2474fd38ee7b4caf7795aa965b413a491dae7f7b47e96225853ba0452b0d7e06"
     },
     "engine/src/lib.rs": "2474fd38ee7b4caf7795aa965b413a491dae7f7b47e96225853ba0452b0d7e06",
-    "engine/src/neurons/maps": {
-      "rs": "a1e98ac6e3787d6b29d038c3412ad117e4f0f1c35b5be7d32ea3f380809bf6b0"
+    "engine/src/neurons/cazelles_map": {
+      "rs": "a2e4e94229f9937180f68ce1b0df78cbd29702d343a4372fb64b017b08ffee85"
     },
-    "engine/src/neurons/maps.rs": "a1e98ac6e3787d6b29d038c3412ad117e4f0f1c35b5be7d32ea3f380809bf6b0",
+    "engine/src/neurons/cazelles_map.rs": "a2e4e94229f9937180f68ce1b0df78cbd29702d343a4372fb64b017b08ffee85",
     "src/sc_neurocore/accel/go/neurons/cazelles_map/cazelles_map": {
       "go": "edf95baa85c18aeade3e186e6cb11b73e04adc97a8c160fa1144ee41885cbdd5"
     },

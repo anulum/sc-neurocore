@@ -60,7 +60,9 @@ def test_binary_hashes_bind_loaded_native_artifacts() -> None:
 def test_committed_evidence_matches_sources_and_full_parity() -> None:
     """Bind the published five-lane artifact to current code and behaviour."""
     artifact = benchmark.DEFAULT_OUTPUT
-    payload = json.loads(artifact.read_text(encoding="utf-8"))
+    artifact_text = artifact.read_text(encoding="utf-8")
+    assert str(benchmark.REPOSITORY) not in artifact_text
+    payload = json.loads(artifact_text)
     assert payload["schema_version"] == "sc-neurocore.polyglot-benchmark.v1"
     assert payload["kernel"] == benchmark.KERNEL
     assert payload["production_speed_claim"] is False
@@ -158,4 +160,6 @@ def test_real_rust_safety_gate_executes_enrolled_module() -> None:
     result = benchmark._verify_rust_safety()
     assert result["passed"] is True
     assert result["returncode"] == 0
-    assert any("8 passed" in line for line in result["output_tail"])
+    output_tail = result["output_tail"]
+    assert isinstance(output_tail, list)
+    assert any(isinstance(line, str) and "8 passed" in line for line in output_tail)

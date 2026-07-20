@@ -192,7 +192,11 @@ def _verify_rust_safety() -> dict[str, Any]:
         timeout=300,
         check=False,
     )
-    output = (completed.stdout + "\n" + completed.stderr).strip().splitlines()
+    repository_prefix = f"{REPOSITORY}/"
+    output = [
+        line.replace(repository_prefix, "")
+        for line in (completed.stdout + "\n" + completed.stderr).strip().splitlines()
+    ]
     return {
         "command": " ".join(command),
         "passed": completed.returncode == 0,

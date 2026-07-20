@@ -388,7 +388,7 @@ graph TD
         K --> L[Verilog RTL<br/>AXI-Lite + LIF Core]
         K2 --> L
         L --> M[FPGA Bitstream<br/>Xilinx / Intel]
-        L --> V[Formal Verification<br/>58 proof jobs · catalogue + legacy]
+        L --> V[Formal Verification<br/>59 proof jobs · catalogue + legacy]
     end
 
     subgraph "Domain Bridges (optional)"
@@ -453,12 +453,12 @@ hdl/
   sc_event_neuron.v           -- Event-triggered LIF (power ∝ spike rate)
   sc_aer_router.v             -- AER event distribution to target neurons
   tb_sc_*.v (16 testbenches)  -- Self-checking simulation testbenches
-  formal/ (58 proof jobs)     -- catalogue dual-axis perfect + legacy SC cores
+  formal/ (59 proof jobs)     -- catalogue dual-axis perfect + legacy SC cores
 ```
 
-Formal verification inventory: **58 SymbiYosys proof jobs and 192 formal
-statements (162 assert, 7 assume, 23 cover)** under `hdl/formal/` (18
-non-catalogue jobs + **40 catalogue jobs** under `hdl/formal/catalogue/`). This
+Formal verification inventory: **59 SymbiYosys proof jobs and 193 formal
+statements (163 assert, 7 assume, 23 cover)** under `hdl/formal/` (18
+non-catalogue jobs + **41 catalogue jobs** under `hdl/formal/catalogue/`). This
 counts the git-tracked jobs a clean checkout proves; re-emit the generated
 catalogue harnesses with `tools/emit_catalogue_formal.py`.
 

@@ -3,7 +3,7 @@
   "name": "alpha_dual_synapse_doi",
   "model": {
     "schema_name": "alpha",
-    "runner": "universal_dsl"
+    "runner": "hand_model"
   },
   "protocol": {
     "dt": 1.0,

@@ -71,7 +71,9 @@ def test_source_hashes_cover_declared_implementation_surfaces() -> None:
 def test_committed_evidence_matches_live_sources_and_full_parity() -> None:
     """Bind the measured five-lane artifact to current code and behavior."""
     artifact = benchmark.REPOSITORY / "benchmarks/results/local_python_2026-06-18_coba_lif_rk4.json"
-    payload = json.loads(artifact.read_text(encoding="utf-8"))
+    artifact_text = artifact.read_text(encoding="utf-8")
+    assert str(benchmark.REPOSITORY) not in artifact_text
+    payload = json.loads(artifact_text)
 
     assert payload["schema_version"] == "sc-neurocore.polyglot-benchmark.v1"
     assert payload["kernel"] == benchmark.KERNEL

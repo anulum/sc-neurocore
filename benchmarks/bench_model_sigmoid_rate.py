@@ -201,6 +201,15 @@ def _verify_rust_safety() -> dict[str, object]:
             "-o",
             str(binary),
         ]
+        display_command = [
+            "rustc",
+            "--edition",
+            "2021",
+            "--test",
+            _display_path(source),
+            "-o",
+            "<temporary>/sigmoid_rate_tests",
+        ]
         try:
             compiled = subprocess.run(
                 compile_command,
@@ -212,7 +221,7 @@ def _verify_rust_safety() -> dict[str, object]:
             if compiled.returncode != 0:
                 output = (compiled.stdout + compiled.stderr).splitlines()
                 return {
-                    "command": compile_command,
+                    "command": display_command,
                     "passed": False,
                     "returncode": compiled.returncode,
                     "output_tail": output[-20:],
@@ -226,14 +235,14 @@ def _verify_rust_safety() -> dict[str, object]:
             )
         except OSError as exc:
             return {
-                "command": compile_command,
+                "command": display_command,
                 "passed": False,
                 "returncode": -1,
                 "output_tail": [str(exc)],
             }
     output = (executed.stdout + executed.stderr).splitlines()
     return {
-        "command": compile_command,
+        "command": display_command,
         "passed": executed.returncode == 0,
         "returncode": executed.returncode,
         "output_tail": output[-20:],
