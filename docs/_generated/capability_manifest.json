@@ -971,7 +971,7 @@
     "python_model_classes": 158,
     "python_model_source_modules": 153,
     "rust_pyo3_model_wrappers": 176,
-    "test_files": 1471
+    "test_files": 1472
   },
   "documentation": {
     "public_pages": [
@@ -3795,6 +3795,7 @@
       "tests/test_optics/test_photonic_layer.py",
       "tests/test_optics.py",
       "tests/test_optimizer/test_collect_synthesis_observation_tool.py",
+      "tests/test_optimizer/test_engine_bindings.py",
       "tests/test_optimizer/test_feedback_loop.py",
       "tests/test_optimizer/test_observation_loader.py",
       "tests/test_optimizer/test_optimise_sc_design_tool.py",

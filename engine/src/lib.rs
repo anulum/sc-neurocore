@@ -57,6 +57,8 @@ pub mod network_runner;
 pub mod neuron;
 pub mod neurons;
 pub mod optimizer;
+#[path = "bindings/optimizer.rs"]
+mod optimizer_binding;
 pub mod partition;
 pub mod phi;
 pub mod photonic;
@@ -664,9 +666,7 @@ fn sc_neurocore_engine(m: &Bound<'_, PyModule>) -> PyResult<()> {
     quantum::bindings::register(m)?;
     // Photonic NoC acceleration
     photonic::bindings::register(m)?;
-    // SC-Optimizer acceleration
-    m.add_function(wrap_pyfunction!(py_opt_sa_search, m)?)?;
-    m.add_function(wrap_pyfunction!(py_opt_extract_pareto, m)?)?;
+    optimizer_binding::register(m)?;
     evolution_binding::register(m)?;
     // LGSSM Kalman filter (predictive_model)
     m.add_function(wrap_pyfunction!(py_lgssm_kalman_filter, m)?)?;
@@ -2186,99 +2186,6 @@ impl PySCPNMetrics {
     fn consciousness_index(phases_l4: Vec<f64>, glyph_l7: [f64; 6]) -> f64 {
         scpn::SCPNMetrics::consciousness_index(&phases_l4, &glyph_l7)
     }
-}
-
-// ── SC-Optimizer PyO3 Wrappers ───────────────────────────────────────
-
-/// Run SA design-space search (Rust-accelerated).
-///
-/// mac_counts: per-layer MAC counts
-/// weights: per-layer scoring weights
-/// Returns dict with best config indices, score, pareto data
-#[pyfunction]
-#[pyo3(signature = (mac_counts, weights, max_luts, max_power, max_latency=0, t_init=1.0, t_min=0.001, alpha=0.95, max_iter=2000, seed=42))]
-fn py_opt_sa_search<'py>(
-    py: Python<'py>,
-    mac_counts: Vec<i64>,
-    weights: Vec<f64>,
-    max_luts: i64,
-    max_power: f64,
-    max_latency: i64,
-    t_init: f64,
-    t_min: f64,
-    alpha: f64,
-    max_iter: usize,
-    seed: u64,
-) -> PyResult<Py<PyAny>> {
-    let candidates: Vec<Vec<optimizer::Candidate>> = mac_counts
-        .iter()
-        .map(|&mc| optimizer::generate_candidates(mc))
-        .collect();
-
-    let result = optimizer::simulated_annealing(
-        &candidates,
-        &weights,
-        max_luts,
-        max_power,
-        max_latency,
-        t_init,
-        t_min,
-        alpha,
-        max_iter,
-        seed,
-    );
-
-    let dict = PyDict::new(py);
-    match result {
-        Some(r) => {
-            // Extract details before moving best_config
-            let mut luts_list = Vec::new();
-            let mut power_list = Vec::new();
-            let mut acc_list = Vec::new();
-            for (i, &idx) in r.best_config.iter().enumerate() {
-                let c = &candidates[i][idx];
-                luts_list.push(c.luts);
-                power_list.push(c.power);
-                acc_list.push(c.accuracy);
-            }
-
-            dict.set_item("best_config", r.best_config)?;
-            dict.set_item("best_score", r.best_score)?;
-            dict.set_item("pareto_luts", r.pareto_luts)?;
-            dict.set_item("pareto_power", r.pareto_power)?;
-            dict.set_item("pareto_score", r.pareto_score)?;
-            dict.set_item("feasible", true)?;
-            dict.set_item("layer_luts", luts_list)?;
-            dict.set_item("layer_power", power_list)?;
-            dict.set_item("layer_accuracy", acc_list)?;
-        }
-        None => {
-            dict.set_item("feasible", false)?;
-        }
-    }
-    dict.set_item("backend", "rust")?;
-    Ok(dict.into_any().unbind())
-}
-
-/// Extract Pareto frontier from (luts, power, score) arrays.
-#[pyfunction]
-fn py_opt_extract_pareto<'py>(
-    py: Python<'py>,
-    luts: Vec<i64>,
-    power: Vec<f64>,
-    score: Vec<f64>,
-) -> PyResult<Py<PyAny>> {
-    let indices = optimizer::extract_pareto(&luts, &power, &score);
-    let dict = PyDict::new(py);
-    let p_luts: Vec<i64> = indices.iter().map(|&i| luts[i]).collect();
-    let p_power: Vec<f64> = indices.iter().map(|&i| power[i]).collect();
-    let p_score: Vec<f64> = indices.iter().map(|&i| score[i]).collect();
-    dict.set_item("indices", indices)?;
-    dict.set_item("luts", p_luts)?;
-    dict.set_item("power", p_power)?;
-    dict.set_item("score", p_score)?;
-    dict.set_item("backend", "rust")?;
-    Ok(dict.into_any().unbind())
 }
 
 // ── LGSSM Kalman filter (predictive_model) ──────────────────────────
