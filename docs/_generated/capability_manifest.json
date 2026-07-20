@@ -971,7 +971,7 @@
     "python_model_classes": 158,
     "python_model_source_modules": 153,
     "rust_pyo3_model_wrappers": 175,
-    "test_files": 1441
+    "test_files": 1443
   },
   "documentation": {
     "public_pages": [
@@ -3092,7 +3092,6 @@
       "tests/test_compiler_precision_solver.py",
       "tests/test_compiler_proof_transforms.py",
       "tests/test_compiler_service.py",
-      "tests/test_compiler_small_coverage_batch.py",
       "tests/test_compiler_surface_policy.py",
       "tests/test_compiler_validation_units.py",
       "tests/test_compression_toolkit.py",
@@ -3396,12 +3395,14 @@
       "tests/test_integration.py",
       "tests/test_intelligence_core.py",
       "tests/test_intelligence_digital_twin.py",
+      "tests/test_intelligence_dispatch_planner.py",
       "tests/test_intelligence_exotic_physics.py",
       "tests/test_intelligence_hdl_toolbox.py",
       "tests/test_intelligence_power_and_thermal.py",
       "tests/test_intelligence_reporting.py",
       "tests/test_intelligence_security_and_compliance.py",
       "tests/test_intelligence_soc_and_chiplet.py",
+      "tests/test_intelligence_target_recommender.py",
       "tests/test_intelligence_verification_and_safety.py",
       "tests/test_interfaces/test_bci.py",
       "tests/test_interfaces/test_bci_closed_loop.py",
@@ -3813,6 +3814,7 @@
       "tests/test_public_docstring_policy.py",
       "tests/test_publish_workflow.py",
       "tests/test_pynq_driver.py",
+      "tests/test_q_format_contracts.py",
       "tests/test_qat.py",
       "tests/test_qat_lsq.py",
       "tests/test_qat_observers.py",

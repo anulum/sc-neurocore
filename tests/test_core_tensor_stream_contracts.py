@@ -63,6 +63,13 @@ def test_tensor_stream_quantum_to_probability_uses_born_rule() -> None:
     np.testing.assert_allclose(probabilities, [0.0, 0.5, 1.0])
 
 
+def test_tensor_stream_to_prob_falls_back_for_unknown_domain() -> None:
+    """Return raw data when no specialised domain decoder applies."""
+    stream = TensorStream(data=np.array([0.2, 0.8]), domain="spike")
+
+    np.testing.assert_array_equal(stream.to_prob(), np.array([0.2, 0.8]))
+
+
 def test_tensor_stream_rejects_unknown_domain_for_bitstream_conversion() -> None:
     stream = TensorStream(data=np.zeros(3), domain="unknown")
 
