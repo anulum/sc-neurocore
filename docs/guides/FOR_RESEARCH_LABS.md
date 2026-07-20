@@ -183,7 +183,7 @@ train-to-hardware export path.
 ## Rust Engine (Optional, Recommended)
 
 The Rust SIMD engine provides committed SIMD benchmark artefacts, AVX-512,
-AVX2, or NEON auto-dispatch, 175 Rust PyO3 model wrappers, and a 162-model
+AVX2, or NEON auto-dispatch, 176 Rust PyO3 model wrappers, and a 162-model
 NetworkRunner dispatch list.
 
 ```bash

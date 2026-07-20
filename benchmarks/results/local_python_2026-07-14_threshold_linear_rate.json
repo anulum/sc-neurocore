@@ -186,9 +186,9 @@
     },
     "benchmarks/bench_model_threshold_linear_rate.py": "92ec4113c4732057f7e4e58aa930ebfc1b1c817a7cd0df733e8b679b47c928fc",
     "bridge/sc_neurocore_engine/__init__": {
-      "py": "8376006c65309b3005b6a6e887891b5fd502687d9bfdd87b737c694eac1e8de7"
+      "py": "92b282bce4f49cd7f60c1f2130a26418c9a3c657e0551076d0b7c55e6cde8049"
     },
-    "bridge/sc_neurocore_engine/__init__.py": "8376006c65309b3005b6a6e887891b5fd502687d9bfdd87b737c694eac1e8de7",
+    "bridge/sc_neurocore_engine/__init__.py": "92b282bce4f49cd7f60c1f2130a26418c9a3c657e0551076d0b7c55e6cde8049",
     "engine/src/bindings/threshold_linear_rate": {
       "rs": "30d60fcf1aa01b95ff1700bf31783cdfc2f574ecba7b8eb596c4555aee03430a"
     },

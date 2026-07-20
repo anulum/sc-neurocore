@@ -173,7 +173,7 @@ dependency matrix and research-only boundaries.
 
 ### Rust Engine and Benchmark Evidence
 
-The optional Rust engine provides SIMD-accelerated simulation, 175 Rust PyO3
+The optional Rust engine provides SIMD-accelerated simulation, 176 Rust PyO3
 model wrappers, a 162-model NetworkRunner dispatch list, and fused E-I network
 simulation. Release automation builds pre-built `sc_neurocore_engine` wheels
 with `maturin` for Python 3.10-3.14 on Linux x86_64/aarch64, macOS, and Windows.
@@ -377,7 +377,7 @@ graph TD
         B --> F{Backend?}
         F -->|CPU| G[NumPy / Numba SIMD]
         F -->|GPU| H[CuPy CUDA]
-        F -->|Rust| I[sc_neurocore_engine<br/>Brunel benchmark artefact: 39-202x vs Brian2<br/>175 Rust PyO3 wrappers · 162-model NetworkRunner]
+        F -->|Rust| I[sc_neurocore_engine<br/>Brunel benchmark artefact: 39-202x vs Brian2<br/>176 Rust PyO3 wrappers · 162-model NetworkRunner]
         F -->|MPI| MPI[mpi4py distributed<br/>billion-neuron scale]
     end
 
@@ -674,9 +674,9 @@ pip install -r requirements.txt       # runtime only
 pip install -r requirements-dev.txt   # runtime + dev tools
 ```
 
-## Rust Engine (175 PyO3 Wrappers, 162-Model NetworkRunner)
+## Rust Engine (176 PyO3 Wrappers, 162-Model NetworkRunner)
 
-The `sc_neurocore_engine` crate provides 175 Rust PyO3 model wrappers callable
+The `sc_neurocore_engine` crate provides 176 Rust PyO3 model wrappers callable
 from Python (including ArcaneNeuron), a 162-model NetworkRunner with
 Rayon-parallel population simulation (100K+ neurons), and SIMD-accelerated
 primitives with dispatch across five ISAs (AVX-512, AVX2, NEON, SVE,
@@ -696,7 +696,7 @@ evidence before publication.
 | Category | Scope |
 |----------|-------|
 | Primitives | Bernoulli + Sobol bitstream, pack/unpack, popcount, SIMD (5 ISAs) |
-| Neurons | 175 PyO3 model wrappers; 162 names wired into NetworkRunner |
+| Neurons | 176 PyO3 model wrappers; 162 names wired into NetworkRunner |
 | NetworkRunner | 162-model fused simulation loop with CSR projections and Rayon parallelism |
 | Synapses | Static, STDP, Reward-STDP |
 | Layers | Dense, Conv2D, Recurrent, Learning, Fusion, Memristive, Attention |

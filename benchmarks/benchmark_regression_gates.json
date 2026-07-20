@@ -1423,7 +1423,7 @@
         "benchmarks/bench_model_poisson.py": "source_hashes.benchmarks/bench_model_poisson.py",
         "bridge/sc_neurocore_engine/__init__.py": "source_hashes.bridge/sc_neurocore_engine/__init__.py",
         "engine/src/lib.rs": "source_hashes.engine/src/lib.rs",
-        "engine/src/neurons/special/stochastic_point_processes.rs": "source_hashes.engine/src/neurons/special/stochastic_point_processes.rs",
+        "engine/src/neurons/special.rs": "source_hashes.engine/src/neurons/special.rs",
         "engine/src/pyo3_neurons.rs": "source_hashes.engine/src/pyo3_neurons.rs",
         "src/sc_neurocore/accel/poisson.py": "source_hashes.src/sc_neurocore/accel/poisson.py",
         "src/sc_neurocore/accel/go/neurons/poisson/poisson.go": "source_hashes.src/sc_neurocore/accel/go/neurons/poisson/poisson.go",

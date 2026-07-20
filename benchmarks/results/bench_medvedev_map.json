@@ -110,9 +110,9 @@
     },
     "benchmarks/bench_medvedev_map.py": "a1909438b48026404742d7c46b5e209a848e3528c0a51973ab9674daae874e96",
     "bridge/sc_neurocore_engine/__init__": {
-      "py": "8376006c65309b3005b6a6e887891b5fd502687d9bfdd87b737c694eac1e8de7"
+      "py": "92b282bce4f49cd7f60c1f2130a26418c9a3c657e0551076d0b7c55e6cde8049"
     },
-    "bridge/sc_neurocore_engine/__init__.py": "8376006c65309b3005b6a6e887891b5fd502687d9bfdd87b737c694eac1e8de7",
+    "bridge/sc_neurocore_engine/__init__.py": "92b282bce4f49cd7f60c1f2130a26418c9a3c657e0551076d0b7c55e6cde8049",
     "engine/src/lib": {
       "rs": "a83c6b1c4d4c7e325428a8a2370a9b1eec5acb84411acffb772abd7fe3fc3176"
     },

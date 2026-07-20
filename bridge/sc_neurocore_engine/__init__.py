@@ -409,6 +409,41 @@ __all__ = [
 ]
 
 
+# ─── Extracted engine-domain re-exports ───────────────────────────────
+try:
+    from sc_neurocore_engine.sc_neurocore_engine import (
+        py_evo_batch_crossover,
+        py_evo_batch_fitness,
+        py_evo_batch_mutate,
+        py_evo_diversity,
+        py_evo_novelty,
+        py_evo_tournament,
+    )
+
+    __all__ += [
+        "py_evo_batch_crossover",
+        "py_evo_batch_fitness",
+        "py_evo_batch_mutate",
+        "py_evo_diversity",
+        "py_evo_novelty",
+        "py_evo_tournament",
+    ]
+    _evolution_rust_available = True
+except ImportError:
+    _evolution_rust_available = False
+
+try:
+    from sc_neurocore_engine.sc_neurocore_engine import (
+        py_opt_extract_pareto,
+        py_opt_sa_search,
+    )
+
+    __all__ += ["py_opt_extract_pareto", "py_opt_sa_search"]
+    _optimizer_rust_available = True
+except ImportError:
+    _optimizer_rust_available = False
+
+
 # ─── Bridges Rust acceleration paths ──────────────────────────────────
 # The bridges/ Python modules (quantum_annealing, dna_mapper, photonic_noc)
 # probe these names with `try: from sc_neurocore_engine import py_qa_*`.
