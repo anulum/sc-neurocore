@@ -27,3 +27,59 @@ def test_dispatch_assigns_remainder_neurons_to_first_backend() -> None:
     )
 
     assert sum(plan.total_neurons_per_backend.values()) == 1001
+
+
+class TestHeterogeneousDispatch:
+    """Multi-backend SNN dispatch."""
+
+    def test_two_backends(self) -> None:
+        from sc_neurocore.compiler.intelligence import (
+            plan_heterogeneous_dispatch,
+        )
+
+        plan = plan_heterogeneous_dispatch(
+            {"v": "a + b", "u": "c * d"},
+            ["fpga", "gpu"],
+        )
+        assert "fpga" in plan.backends
+        assert "gpu" in plan.backends
+        assert plan.estimated_speedup > 1.0
+
+    def test_single_backend(self) -> None:
+        from sc_neurocore.compiler.intelligence import (
+            plan_heterogeneous_dispatch,
+        )
+
+        plan = plan_heterogeneous_dispatch(
+            {"v": "a + b"},
+            ["fpga"],
+        )
+        assert len(plan.sync_barriers) == 0
+        assert plan.total_neurons_per_backend["fpga"] == 1000
+
+    def test_three_backends(self) -> None:
+        from sc_neurocore.compiler.intelligence import (
+            plan_heterogeneous_dispatch,
+        )
+
+        plan = plan_heterogeneous_dispatch(
+            {"v": "a", "u": "b", "w": "c"},
+            ["fpga", "mcu", "gpu"],
+            neuron_count=3000,
+        )
+        assert len(plan.sync_barriers) == 2
+        total = sum(plan.total_neurons_per_backend.values())
+        assert total == 3000
+
+    def test_neuron_distribution(self) -> None:
+        from sc_neurocore.compiler.intelligence import (
+            plan_heterogeneous_dispatch,
+        )
+
+        plan = plan_heterogeneous_dispatch(
+            {"v": "a", "u": "b"},
+            ["fpga", "gpu"],
+            neuron_count=100,
+        )
+        total = sum(plan.total_neurons_per_backend.values())
+        assert total == 100

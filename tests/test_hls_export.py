@@ -164,3 +164,55 @@ class TestCompiles:
         cpp = generate_hls_cpp("sc_x", {"v": "tanh(v) + sigmoid(v) + exprel(I) + exp(v)"})
         result = self._compile(tmp_path, cpp, "sc_x")
         assert result.returncode == 0, result.stderr
+
+
+class TestHLSCppExport:
+    """Vitis/Catapult HLS C++ translation."""
+
+    def test_vitis_export(self) -> None:
+        from sc_neurocore.compiler.intelligence import generate_hls_cpp
+
+        cpp = generate_hls_cpp(
+            "sc_lif",
+            {"v": "v + I_t - v * leak"},
+            data_width=16,
+            fraction=8,
+        )
+        assert "ap_fixed<16,8>" in cpp
+        assert "#pragma HLS PIPELINE" in cpp
+        assert "void sc_lif(" in cpp
+        assert "V_THRESH" in cpp
+
+    def test_catapult_export(self) -> None:
+        from sc_neurocore.compiler.intelligence import generate_hls_cpp
+
+        cpp = generate_hls_cpp(
+            "sc_hh",
+            {"v": "a + b", "n": "c * d"},
+            hls_tool="catapult",
+        )
+        assert "Catapult" in cpp
+        assert "v_next" in cpp
+        assert "n_next" in cpp
+
+    def test_include_guard(self) -> None:
+        from sc_neurocore.compiler.intelligence import generate_hls_cpp
+
+        cpp = generate_hls_cpp("sc_lif", {"v": "a + b"})
+        assert "#ifndef SC_LIF_HLS_H" in cpp
+        assert "#endif" in cpp
+
+    def test_state_struct(self) -> None:
+        from sc_neurocore.compiler.intelligence import generate_hls_cpp
+
+        cpp = generate_hls_cpp("sc_izh", {"v": "a", "u": "b"})
+        assert "struct sc_izh_state" in cpp
+        assert "fp_t v;" in cpp
+        assert "fp_t u;" in cpp
+
+    def test_spike_detection(self) -> None:
+        from sc_neurocore.compiler.intelligence import generate_hls_cpp
+
+        cpp = generate_hls_cpp("sc_lif", {"v": "v + I_t"})
+        assert "spike_out" in cpp
+        assert "V_THRESH" in cpp
