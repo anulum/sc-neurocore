@@ -65,6 +65,8 @@ pub mod optimizer;
 mod optimizer_binding;
 pub mod partition;
 pub mod phi;
+#[path = "bindings/phi.rs"]
+mod phi_binding;
 pub mod photonic;
 pub mod ping;
 pub mod predictive_coding;
@@ -659,7 +661,7 @@ fn sc_neurocore_engine(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_function(wrap_pyfunction!(rk4_neurons::py_rk4_neuron_simulate, m)?)?;
     cordiv_binding::register(m)?;
     predictive_coding_binding::register(m)?;
-    m.add_function(wrap_pyfunction!(py_phi_star, m)?)?;
+    phi_binding::register(m)?;
     m.add_class::<PyCorticalColumn>()?;
     m.add_class::<PyRallDendrite>()?;
     analysis::bindings::register(m)?;
@@ -702,27 +704,6 @@ fn sc_neurocore_engine(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_function(wrap_pyfunction!(py_parallel_csr_spmv_add, m)?)?;
     m.add_function(wrap_pyfunction!(py_parallel_csr_multi_spmv_add, m)?)?;
     Ok(())
-}
-
-// ── Phi* ─────────────────────────────────────────────────────────────
-
-#[pyfunction]
-fn py_phi_star(_py: Python<'_>, data: PyReadonlyArray2<'_, f64>, tau: usize) -> PyResult<f64> {
-    if !data.is_c_contiguous() {
-        return Err(PyValueError::new_err(
-            "py_phi_star requires C-contiguous array input",
-        ));
-    }
-    let shape = data.shape();
-    let n_channels = shape[0];
-    let n_timesteps = shape[1];
-    let flat = data.as_slice().map_err(|e| {
-        PyValueError::new_err(format!("py_phi_star requires C-contiguous array: {e}"))
-    })?;
-    let channels: Vec<Vec<f64>> = (0..n_channels)
-        .map(|i| flat[i * n_timesteps..(i + 1) * n_timesteps].to_vec())
-        .collect();
-    Ok(phi::phi_star(&channels, tau))
 }
 
 // ── Cortical column ──────────────────────────────────────────────────
