@@ -11,6 +11,7 @@
 from __future__ import annotations
 
 import json
+from pathlib import Path
 from unittest.mock import patch
 
 import pytest
@@ -77,15 +78,11 @@ def test_stochastic_backprop_benchmark_rejects_invalid_contract_values() -> None
         {"steps": 0},
         {"learning_rate": 0.0},
     ):
-        try:
+        with pytest.raises(ValueError):
             build_stochastic_backprop_benchmark(**kwargs)
-        except ValueError:
-            pass
-        else:
-            raise AssertionError(f"expected ValueError for {kwargs}")
 
 
-def test_write_stochastic_backprop_benchmark_writes_canonical_json(tmp_path) -> None:
+def test_write_stochastic_backprop_benchmark_writes_canonical_json(tmp_path: Path) -> None:
     output = tmp_path / "stochastic_backprop.json"
 
     path = write_stochastic_backprop_benchmark(
@@ -131,7 +128,7 @@ def test_estimator_regression_manifest_covers_multiple_lengths_and_acceptance_ga
     assert manifest["acceptance"]["pathwise_variance_zero"] is True
 
 
-def test_write_estimator_regression_manifest_writes_canonical_json(tmp_path) -> None:
+def test_write_estimator_regression_manifest_writes_canonical_json(tmp_path: Path) -> None:
     output = tmp_path / "stochastic_backprop_estimator_regression.json"
 
     path = write_stochastic_backprop_estimator_regression_manifest(

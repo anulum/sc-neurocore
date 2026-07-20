@@ -10,6 +10,9 @@
 
 from __future__ import annotations
 
+from typing import Any
+
+import pytest
 
 from sc_neurocore.compiler.static_analysis import (
     FixedPointEnvelopeProof,
@@ -274,16 +277,10 @@ class TestFixedPointEnvelopeProof:
 
     def test_invalid_format_and_empty_bounds_fail_closed(self) -> None:
         """Malformed proof requests are rejected before producing a manifest."""
-        for kwargs in (
-            {"total_bits": 0, "fractional_bits": 0},
-            {"total_bits": 16, "fractional_bits": 16},
-        ):
-            try:
-                prove_fixed_point_envelope([1], **kwargs)
-            except ValueError:
-                pass
-            else:
-                raise AssertionError(f"invalid format accepted: {kwargs}")
+        with pytest.raises(ValueError):
+            prove_fixed_point_envelope([1], total_bits=0, fractional_bits=0)
+        with pytest.raises(ValueError):
+            prove_fixed_point_envelope([1], total_bits=16, fractional_bits=16)
 
         try:
             prove_fixed_point_envelope([])
@@ -295,8 +292,9 @@ class TestFixedPointEnvelopeProof:
     def test_non_integer_bound_codes_are_rejected(self) -> None:
         """Proof inputs must be integer Q-code bounds, not floats or bools."""
         for bad_code in (1.0, True):
+            invalid_code: Any = bad_code
             try:
-                prove_fixed_point_envelope([bad_code])
+                prove_fixed_point_envelope([invalid_code])
             except TypeError as exc:
                 assert "integer Q-code" in str(exc)
             else:

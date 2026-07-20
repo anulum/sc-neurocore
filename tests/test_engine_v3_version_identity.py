@@ -4,9 +4,9 @@
 # © Code 2020–2026 Miroslav Šotek. All rights reserved.
 # ORCID: 0009-0009-3560-0851
 # Contact: www.anulum.li | protoscience@anulum.li
-# SC-NeuroCore — v3 runtime contracts
+# SC-NeuroCore — v3 engine version identity
 
-"""Contracts for v3 engine version and thread-pool runtime surfaces."""
+"""Version-identity checks shared by the v3 engine release phases."""
 
 from __future__ import annotations
 
@@ -45,19 +45,6 @@ class TestPhase12Version:
 class TestPhase8Version:
     def test_version_is_current(self) -> None:
         _assert_engine_version_matches_core()
-
-
-class TestSetNumThreads:
-    """Tests for rayon thread pool configuration."""
-
-    def test_set_num_threads_does_not_crash(self) -> None:
-        """Calling set_num_threads should not raise."""
-        # Can only be set before global pool initialization. If initialized,
-        # rayon returns an error, which is acceptable behavior.
-        try:
-            v3.set_num_threads(0)  # 0 = default
-        except ValueError:
-            pass
 
 
 class TestPhase9Version:

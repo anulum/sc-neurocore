@@ -23,6 +23,7 @@ from __future__ import annotations
 import math
 import string
 
+import numpy as np
 import pytest
 from hypothesis import given, settings, HealthCheck
 from hypothesis import strategies as st
@@ -97,7 +98,7 @@ class TestEquationBuilderFuzz:
 
     @given(expr=_EXPR)
     @settings(max_examples=200, suppress_health_check=[HealthCheck.too_slow])
-    def test_safe_expressions_never_crash(self, expr: str) -> None:
+    def test_safe_expressions_fail_closed_or_produce_finite_state(self, expr: str) -> None:
         """Random but syntactically-plausible expressions should either
         succeed or raise ValueError — never an uncontrolled exception."""
         try:
@@ -107,14 +108,21 @@ class TestEquationBuilderFuzz:
                 parameters={},
                 dt=0.1,
             )
-            # Step with safe inputs — should not crash
-            neuron.step(I=1.0, w=0.5, u=0.0, x=0.0, y=0.0, z=0.0, theta=0.0)
-        except (ValueError, ZeroDivisionError, OverflowError, FloatingPointError):
-            pass  # Expected for some random expressions (FloatingPointError = fail-closed divergence)
-        except Exception as e:
-            # NameError is OK (unknown variables), TypeError is OK (type mismatches)
-            if not isinstance(e, (NameError, TypeError)):
-                pytest.fail(f"Unexpected exception for expr={expr!r}: {e}")
+            with np.errstate(divide="raise", invalid="raise", over="raise"):
+                neuron.step(I=1.0, w=0.5, u=0.0, x=0.0, y=0.0, z=0.0, theta=0.0)
+        except (
+            ValueError,
+            ZeroDivisionError,
+            OverflowError,
+            FloatingPointError,
+            NameError,
+            TypeError,
+        ):
+            return
+        except Exception as exc:
+            pytest.fail(f"Unexpected exception for expr={expr!r}: {exc}")
+
+        assert math.isfinite(float(neuron.state["v"]))
 
     @given(hostile=_HOSTILE_STRINGS)
     @settings(max_examples=50)
@@ -130,20 +138,21 @@ class TestEquationBuilderFuzz:
 
     @given(expr=st.text(min_size=1, max_size=200))
     @settings(max_examples=300, suppress_health_check=[HealthCheck.too_slow])
-    def test_random_text_never_executes(self, expr: str) -> None:
-        """Completely random text should raise ValueError/SyntaxError,
-        never execute anything."""
+    def test_random_text_fails_closed_without_uncontrolled_exceptions(self, expr: str) -> None:
+        """Random text is either rejected or produces a valid sandboxed neuron."""
         try:
-            EquationNeuron(
+            neuron = EquationNeuron(
                 equations={"v": expr},
                 state={"v": 0.0},
                 parameters={},
                 dt=0.1,
             )
         except (ValueError, SyntaxError, TypeError):
-            pass  # Expected
-        except Exception:
-            pass  # Any other exception is acceptable, just not code execution
+            return
+        except Exception as exc:
+            pytest.fail(f"Unexpected exception for random expression {expr!r}: {exc}")
+
+        assert isinstance(neuron, EquationNeuron)
 
 
 # ---------------------------------------------------------------------------
