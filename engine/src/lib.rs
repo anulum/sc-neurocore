@@ -64,6 +64,8 @@ pub mod phi;
 pub mod photonic;
 pub mod ping;
 pub mod predictive_coding;
+#[path = "bindings/predictive_coding.rs"]
+mod predictive_coding_binding;
 pub mod pyo3_neurons;
 pub mod quantum;
 pub mod rall_dendrite;
@@ -653,11 +655,7 @@ fn sc_neurocore_engine(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_function(wrap_pyfunction!(rk4_neurons::py_rk4_neuron_simulate, m)?)?;
     m.add_function(wrap_pyfunction!(py_cordiv, m)?)?;
     m.add_function(wrap_pyfunction!(py_adaptive_length, m)?)?;
-    m.add_function(wrap_pyfunction!(py_prediction_error, m)?)?;
-    m.add_function(wrap_pyfunction!(py_predict_xor_ema, m)?)?;
-    m.add_function(wrap_pyfunction!(py_predict_xor_lfsr, m)?)?;
-    m.add_function(wrap_pyfunction!(py_recover_xor_ema, m)?)?;
-    m.add_function(wrap_pyfunction!(py_recover_xor_lfsr, m)?)?;
+    predictive_coding_binding::register(m)?;
     m.add_function(wrap_pyfunction!(py_phi_star, m)?)?;
     m.add_class::<PyCorticalColumn>()?;
     m.add_class::<PyRallDendrite>()?;
@@ -725,90 +723,6 @@ fn py_cordiv(
 #[pyfunction]
 fn py_adaptive_length(epsilon: f64, confidence: f64) -> usize {
     cordiv::adaptive_length_hoeffding(epsilon, confidence)
-}
-
-// ── Predictive coding ────────────────────────────────────────────────
-
-#[pyfunction]
-fn py_prediction_error(
-    _py: Python<'_>,
-    predicted: PyReadonlyArray1<'_, u64>,
-    actual: PyReadonlyArray1<'_, u64>,
-    length: usize,
-) -> PyResult<f64> {
-    let pred = predicted
-        .as_slice()
-        .map_err(|e| PyValueError::new_err(format!("predicted array must be contiguous: {e}")))?;
-    let act = actual
-        .as_slice()
-        .map_err(|e| PyValueError::new_err(format!("actual array must be contiguous: {e}")))?;
-    Ok(predictive_coding::prediction_error_packed(
-        pred, act, length,
-    ))
-}
-
-// ── Spike codec predictors (EMA + LFSR) ─────────────────────────────
-
-#[pyfunction]
-fn py_predict_xor_ema(
-    _py: Python<'_>,
-    spikes: PyReadonlyArray1<'_, i8>,
-    n_channels: usize,
-    alpha: f64,
-    threshold: f64,
-) -> PyResult<(Py<PyArray1<i8>>, usize)> {
-    let data = spikes
-        .as_slice()
-        .map_err(|e| PyValueError::new_err(format!("spikes must be contiguous: {e}")))?;
-    let (errors, correct) =
-        predictive_coding::predict_and_xor_ema(data, n_channels, alpha, threshold);
-    Ok((PyArray1::from_vec(_py, errors).into(), correct))
-}
-
-#[pyfunction]
-fn py_recover_xor_ema(
-    _py: Python<'_>,
-    errors: PyReadonlyArray1<'_, i8>,
-    n_channels: usize,
-    alpha: f64,
-    threshold: f64,
-) -> PyResult<Py<PyArray1<i8>>> {
-    let data = errors
-        .as_slice()
-        .map_err(|e| PyValueError::new_err(format!("errors must be contiguous: {e}")))?;
-    let spikes = predictive_coding::xor_and_recover_ema(data, n_channels, alpha, threshold);
-    Ok(PyArray1::from_vec(_py, spikes).into())
-}
-
-#[pyfunction]
-fn py_predict_xor_lfsr(
-    _py: Python<'_>,
-    spikes: PyReadonlyArray1<'_, i8>,
-    n_channels: usize,
-    alpha_q8: i32,
-    seed: u16,
-) -> PyResult<(Py<PyArray1<i8>>, usize)> {
-    let data = spikes
-        .as_slice()
-        .map_err(|e| PyValueError::new_err(format!("spikes must be contiguous: {e}")))?;
-    let (errors, correct) =
-        predictive_coding::predict_and_xor_lfsr(data, n_channels, alpha_q8, seed);
-    Ok((PyArray1::from_vec(_py, errors).into(), correct))
-}
-
-#[pyfunction]
-fn py_recover_xor_lfsr(
-    _py: Python<'_>,
-    errors: PyReadonlyArray1<'_, i8>,
-    n_channels: usize,
-    alpha_q8: i32,
-    seed: u16,
-) -> PyResult<Py<PyArray1<i8>>> {
-    let data = errors
-        .as_slice()
-        .map_err(|e| PyValueError::new_err(format!("errors must be contiguous: {e}")))?;
-    let spikes = predictive_coding::xor_and_recover_lfsr(data, n_channels, alpha_q8, seed);
-    Ok(PyArray1::from_vec(_py, spikes).into())
 }
 
 // ── Phi* ─────────────────────────────────────────────────────────────

@@ -971,7 +971,7 @@
     "python_model_classes": 158,
     "python_model_source_modules": 153,
     "rust_pyo3_model_wrappers": 176,
-    "test_files": 1472
+    "test_files": 1473
   },
   "documentation": {
     "public_pages": [
@@ -3831,6 +3831,7 @@
       "tests/test_precision_envelope_guard_hdl.py",
       "tests/test_precision_overflow_trap_hdl.py",
       "tests/test_predictive_coding.py",
+      "tests/test_predictive_coding_engine_bindings.py",
       "tests/test_predictive_spike_codec.py",
       "tests/test_pretrained.py",
       "tests/test_privacy.py",
