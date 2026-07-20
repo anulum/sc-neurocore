@@ -108,9 +108,11 @@ class TestGLMAnalytical:
     def test_log_rate_clipping(self):
         """log_rate clipped to [-20, 20] → exp(20) ≈ 4.85e8."""
         n = GLMNeuron(mu=100.0)  # extreme mu
-        # Should not overflow
-        n.step(1000.0)
-        assert True  # no exception
+        spike = n.step(1000.0)
+
+        assert spike == 1
+        assert np.all(np.isfinite(n._stim_buf))
+        assert np.all(np.isfinite(n._spike_buf))
 
     def test_baseline_rate_at_zero_input(self):
         """At zero stimulus, no history: log_rate = μ = -3.0 → λ = exp(-3) ≈ 0.05."""
@@ -123,11 +125,9 @@ class TestGLMAnalytical:
     def test_spike_enters_spike_buffer(self):
         """After spike, spike_buf[0] = 1.0."""
         n = GLMNeuron(mu=10.0)  # high mu to guarantee spike
-        # Run until spike
-        for _ in range(100):
-            if n.step(10.0) == 1:
-                assert n._spike_buf[0] == 1.0
-                break
+
+        assert n.step(10.0) == 1
+        assert n._spike_buf[0] == 1.0
 
 
 # ---------------------------------------------------------------------------
@@ -156,10 +156,12 @@ class TestGLMDynamics:
     @pytest.mark.parametrize("stim", [0.0, 2.0, 5.0, 10.0])
     def test_stim_sweep(self, stim: float):
         n = GLMNeuron()
-        for _ in range(1000):
-            n.step(stim)
-        # No crash
-        assert True
+        spikes = [n.step(stim) for _ in range(1000)]
+
+        assert set(spikes) <= {0, 1}
+        np.testing.assert_array_equal(n._stim_buf, np.full(n.n_k, stim))
+        assert set(n._spike_buf) <= {0.0, 1.0}
+        assert np.all(np.isfinite(n._spike_buf))
 
 
 # ---------------------------------------------------------------------------

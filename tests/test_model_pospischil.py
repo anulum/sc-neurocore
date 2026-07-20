@@ -218,20 +218,16 @@ class TestPospischilGating:
 class TestPospischilSpikeMechanism:
     def test_upward_crossing_only(self):
         n = PospischilNeuron()
-        prev_v = n.v
-        false_down = 0
+        spike_count = 0
         for _ in range(50000):
-            s = n.step(10.0)
-            # v_prev in step() is captured inside, but we can check
-            # that spike never occurs when voltage trend is downward
-            if s == 1:
-                # After spike, v has been updated — we trust the
-                # internal v_prev check
-                pass
-            prev_v = n.v
-        # Just verify some spikes occurred
-        n2 = PospischilNeuron()
-        assert len(_run(n2, current=10.0, steps=50000)) > 100
+            previous_v = n.v
+            spike = n.step(10.0)
+            crossed_upward = previous_v < n.v_threshold <= n.v
+
+            assert spike == int(crossed_upward)
+            spike_count += spike
+
+        assert spike_count > 100
 
 
 # ---------------------------------------------------------------------------
