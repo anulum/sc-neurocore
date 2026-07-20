@@ -4,9 +4,9 @@
 # © Code 2020–2026 Miroslav Šotek. All rights reserved.
 # ORCID: 0009-0009-3560-0851
 # Contact: www.anulum.li | protoscience@anulum.li
-# SC-NeuroCore — Equation builder coverage contract tests
+# SC-NeuroCore — Equation builder edge contract tests
 
-"""Focused coverage contracts for equation-builder sandbox edge paths."""
+"""Focused contracts for equation-builder sandbox edge paths."""
 
 from __future__ import annotations
 

@@ -4,9 +4,9 @@
 # © Code 2020–2026 Miroslav Šotek. All rights reserved.
 # ORCID: 0009-0009-3560-0851
 # Contact: www.anulum.li | protoscience@anulum.li
-# SC-NeuroCore — Focused cortical-column coverage contracts
+# SC-NeuroCore — Focused cortical-column edge contracts
 
-"""Strict-typed coverage contracts for cortical-column edge branches."""
+"""Strict-typed contracts for cortical-column edge behaviour."""
 
 from __future__ import annotations
 
