@@ -208,10 +208,10 @@
       "rs": "2474fd38ee7b4caf7795aa965b413a491dae7f7b47e96225853ba0452b0d7e06"
     },
     "engine/src/lib.rs": "2474fd38ee7b4caf7795aa965b413a491dae7f7b47e96225853ba0452b0d7e06",
-    "engine/src/neurons/special": {
-      "rs": "4a28e8ccce86f3d6d04448831a55204709cdd3129a68f544a09aa3a730d1dd76"
+    "engine/src/neurons/special/stochastic_point_processes": {
+      "rs": "34054d40483513760965dc19fc0aad4017bbf318f3f0e659cb4c4e6c4d1125d8"
     },
-    "engine/src/neurons/special.rs": "4a28e8ccce86f3d6d04448831a55204709cdd3129a68f544a09aa3a730d1dd76",
+    "engine/src/neurons/special/stochastic_point_processes.rs": "34054d40483513760965dc19fc0aad4017bbf318f3f0e659cb4c4e6c4d1125d8",
     "engine/src/pyo3_neurons": {
       "rs": "23c60bedac7b55b22b6e83f26d07ce31b544b9c0f449d5d7d00d05663ba1b2d9"
     },
