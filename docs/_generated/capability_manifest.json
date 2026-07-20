@@ -971,7 +971,7 @@
     "python_model_classes": 158,
     "python_model_source_modules": 153,
     "rust_pyo3_model_wrappers": 176,
-    "test_files": 1470
+    "test_files": 1471
   },
   "documentation": {
     "public_pages": [
@@ -3261,6 +3261,7 @@
       "tests/test_evo_substrate/test_development.py",
       "tests/test_evo_substrate/test_ecology.py",
       "tests/test_evo_substrate/test_emission.py",
+      "tests/test_evo_substrate/test_engine_bindings.py",
       "tests/test_evo_substrate/test_fitness.py",
       "tests/test_evo_substrate/test_genome.py",
       "tests/test_evo_substrate/test_lineage.py",

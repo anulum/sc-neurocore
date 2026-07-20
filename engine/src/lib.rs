@@ -28,6 +28,8 @@ pub mod attention;
 pub mod bitstream;
 #[path = "bindings/bitstream.rs"]
 mod bitstream_binding;
+#[path = "bindings/evolution.rs"]
+mod evolution_binding;
 #[path = "bindings/hdc.rs"]
 mod hdc_binding;
 pub use hdc_binding::PyBitStreamTensor;
@@ -665,13 +667,7 @@ fn sc_neurocore_engine(m: &Bound<'_, PyModule>) -> PyResult<()> {
     // SC-Optimizer acceleration
     m.add_function(wrap_pyfunction!(py_opt_sa_search, m)?)?;
     m.add_function(wrap_pyfunction!(py_opt_extract_pareto, m)?)?;
-    // Evolutionary substrate acceleration
-    m.add_function(wrap_pyfunction!(py_evo_batch_mutate, m)?)?;
-    m.add_function(wrap_pyfunction!(py_evo_batch_fitness, m)?)?;
-    m.add_function(wrap_pyfunction!(py_evo_batch_crossover, m)?)?;
-    m.add_function(wrap_pyfunction!(py_evo_diversity, m)?)?;
-    m.add_function(wrap_pyfunction!(py_evo_novelty, m)?)?;
-    m.add_function(wrap_pyfunction!(py_evo_tournament, m)?)?;
+    evolution_binding::register(m)?;
     // LGSSM Kalman filter (predictive_model)
     m.add_function(wrap_pyfunction!(py_lgssm_kalman_filter, m)?)?;
     m.add_function(wrap_pyfunction!(py_ollivier_ricci_curvature, m)?)?;
@@ -2283,76 +2279,6 @@ fn py_opt_extract_pareto<'py>(
     dict.set_item("score", p_score)?;
     dict.set_item("backend", "rust")?;
     Ok(dict.into_any().unbind())
-}
-
-// ── Evolutionary Substrate PyO3 Wrappers ─────────────────────────────
-
-/// Batch-mutate population weights (Rust-accelerated).
-#[pyfunction]
-#[pyo3(signature = (genomes, mutation_rate=0.1, mutation_scale=0.1, seed=42))]
-fn py_evo_batch_mutate(
-    _py: Python<'_>,
-    mut genomes: Vec<Vec<f64>>,
-    mutation_rate: f64,
-    mutation_scale: f64,
-    seed: u64,
-) -> Vec<Vec<f64>> {
-    evo::batch_mutate_weights(&mut genomes, mutation_rate, mutation_scale, seed);
-    genomes
-}
-
-/// Batch fitness evaluation (Rust-accelerated).
-#[pyfunction]
-fn py_evo_batch_fitness(
-    _py: Python<'_>,
-    genomes: Vec<Vec<f64>>,
-    inputs: Vec<f64>,
-    target: f64,
-) -> Vec<f64> {
-    evo::batch_evaluate_fitness(&genomes, &inputs, target)
-}
-
-/// Batch uniform crossover (Rust-accelerated).
-#[pyfunction]
-#[pyo3(signature = (parents_a, parents_b, seed=42))]
-fn py_evo_batch_crossover(
-    _py: Python<'_>,
-    parents_a: Vec<Vec<f64>>,
-    parents_b: Vec<Vec<f64>>,
-    seed: u64,
-) -> Vec<Vec<f64>> {
-    evo::batch_crossover(&parents_a, &parents_b, seed)
-}
-
-/// Population diversity (mean pairwise L2 distance).
-#[pyfunction]
-fn py_evo_diversity(_py: Python<'_>, genomes: Vec<Vec<f64>>) -> f64 {
-    evo::population_diversity(&genomes)
-}
-
-/// Novelty scores against archive.
-#[pyfunction]
-#[pyo3(signature = (genomes, archive, k_nearest=5))]
-fn py_evo_novelty(
-    _py: Python<'_>,
-    genomes: Vec<Vec<f64>>,
-    archive: Vec<Vec<f64>>,
-    k_nearest: usize,
-) -> Vec<f64> {
-    evo::novelty_scores(&genomes, &archive, k_nearest)
-}
-
-/// Tournament selection.
-#[pyfunction]
-#[pyo3(signature = (fitness, n_select, tournament_size=3, seed=42))]
-fn py_evo_tournament(
-    _py: Python<'_>,
-    fitness: Vec<f64>,
-    n_select: usize,
-    tournament_size: usize,
-    seed: u64,
-) -> Vec<usize> {
-    evo::tournament_select(&fitness, n_select, tournament_size, seed)
 }
 
 // ── LGSSM Kalman filter (predictive_model) ──────────────────────────
