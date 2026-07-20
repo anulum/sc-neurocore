@@ -44,6 +44,8 @@ pub mod ei_network;
 pub mod encoder;
 pub mod evo;
 pub mod fault;
+#[path = "bindings/fault.rs"]
+mod fault_binding;
 pub mod fusion;
 #[cfg(feature = "gpu")]
 pub mod gpu;
@@ -690,12 +692,7 @@ fn sc_neurocore_engine(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_function(wrap_pyfunction!(py_hindmarsh_rose_simulate, m)?)?;
     m.add_function(wrap_pyfunction!(py_fitzhugh_rinzel_simulate, m)?)?;
     m.add_function(wrap_pyfunction!(py_izhikevich2007_simulate, m)?)?;
-    // Byte-level fault injection (parity with FaultInjector.inject)
-    m.add_function(wrap_pyfunction!(py_inject_bitflip_u8, m)?)?;
-    m.add_function(wrap_pyfunction!(py_inject_stuck_at_0_u8, m)?)?;
-    m.add_function(wrap_pyfunction!(py_inject_stuck_at_1_u8, m)?)?;
-    m.add_function(wrap_pyfunction!(py_inject_dropout_u8, m)?)?;
-    m.add_function(wrap_pyfunction!(py_inject_gaussian_u8, m)?)?;
+    fault_binding::register(m)?;
     // Hierarchical partitioner KL refine
     m.add_function(wrap_pyfunction!(py_kl_refine, m)?)?;
     // PINGCircuit per-step kernel
@@ -3137,73 +3134,6 @@ fn py_izhikevich2007_simulate<'py>(
     };
     let (trace, spikes) = neuron.simulate(n_steps, current);
     (trace.into_pyarray(py), spikes, neuron.v, neuron.u)
-}
-
-// ── Byte-level fault injection (PyO3) ──
-//
-// Each function consumes a numpy bool/uint8 array (read-only), copies
-// into a Vec<u8>, applies the inject kernel in pure Rust, and returns
-// (corrupted_array, num_affected). RNG seed is per-call so back-to-back
-// invocations are reproducible at the API level.
-
-#[pyfunction]
-fn py_inject_bitflip_u8<'py>(
-    py: Python<'py>,
-    bitstream: PyReadonlyArray1<'_, u8>,
-    ber: f64,
-    seed: u64,
-) -> PyResult<(Py<PyArray1<u8>>, u64)> {
-    let mut buf = bitstream.as_slice()?.to_vec();
-    let n = fault::inject_bitflip_u8(&mut buf, ber, seed);
-    Ok((buf.into_pyarray(py).into(), n))
-}
-
-#[pyfunction]
-fn py_inject_stuck_at_0_u8<'py>(
-    py: Python<'py>,
-    bitstream: PyReadonlyArray1<'_, u8>,
-    ber: f64,
-    seed: u64,
-) -> PyResult<(Py<PyArray1<u8>>, u64)> {
-    let mut buf = bitstream.as_slice()?.to_vec();
-    let n = fault::inject_stuck_at_0_u8(&mut buf, ber, seed);
-    Ok((buf.into_pyarray(py).into(), n))
-}
-
-#[pyfunction]
-fn py_inject_stuck_at_1_u8<'py>(
-    py: Python<'py>,
-    bitstream: PyReadonlyArray1<'_, u8>,
-    ber: f64,
-    seed: u64,
-) -> PyResult<(Py<PyArray1<u8>>, u64)> {
-    let mut buf = bitstream.as_slice()?.to_vec();
-    let n = fault::inject_stuck_at_1_u8(&mut buf, ber, seed);
-    Ok((buf.into_pyarray(py).into(), n))
-}
-
-#[pyfunction]
-fn py_inject_dropout_u8<'py>(
-    py: Python<'py>,
-    bitstream: PyReadonlyArray1<'_, u8>,
-    ber: f64,
-    seed: u64,
-) -> PyResult<(Py<PyArray1<u8>>, u64)> {
-    let mut buf = bitstream.as_slice()?.to_vec();
-    let n = fault::inject_dropout_u8(&mut buf, ber, seed);
-    Ok((buf.into_pyarray(py).into(), n))
-}
-
-#[pyfunction]
-fn py_inject_gaussian_u8<'py>(
-    py: Python<'py>,
-    bitstream: PyReadonlyArray1<'_, u8>,
-    ber: f64,
-    seed: u64,
-) -> PyResult<(Py<PyArray1<u8>>, u64)> {
-    let mut buf = bitstream.as_slice()?.to_vec();
-    let n = fault::inject_gaussian_u8(&mut buf, ber, seed);
-    Ok((buf.into_pyarray(py).into(), n))
 }
 
 // ── Hierarchical partitioner — KL refine (PyO3) ──
