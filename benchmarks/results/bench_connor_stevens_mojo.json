@@ -5,17 +5,17 @@
       "event_count": 9,
       "event_count_matches_python": true,
       "final_state": {
-        "a": 0.7477258134908621,
-        "b": 0.049111674678897245,
-        "h": 0.3742691885736849,
-        "m": 0.9352218688849527,
-        "n": 0.5162641019382758,
-        "v": 43.41446053939869
+        "a": 0.7477258134908654,
+        "b": 0.04911167467889706,
+        "h": 0.3742691885736774,
+        "m": 0.935221868884962,
+        "n": 0.5162641019382804,
+        "v": 43.414460539399464
       },
-      "median_call_ms": 3.723926,
-      "minimum_call_ms": 3.524465,
-      "parity_max_abs_diff": 7.910253874143791e-07,
-      "speedup_vs_python": 47.82032752530528,
+      "median_call_ms": 4.974272,
+      "minimum_call_ms": 4.440987,
+      "parity_max_abs_diff": 7.9102448768964e-07,
+      "speedup_vs_python": 49.25112860736204,
       "used": true
     },
     "python": {
@@ -30,8 +30,8 @@
         "n": 0.5162640994287648,
         "v": 43.41446009137186
       },
-      "median_call_ms": 178.079361,
-      "minimum_call_ms": 168.47462,
+      "median_call_ms": 244.98851,
+      "minimum_call_ms": 195.754627,
       "parity_max_abs_diff": 0.0,
       "speedup_vs_python": 1.0,
       "used": true
@@ -48,10 +48,10 @@
         "n": 0.516264099428764,
         "v": 43.414460091371694
       },
-      "median_call_ms": 5.178056,
-      "minimum_call_ms": 5.045851,
+      "median_call_ms": 7.757325,
+      "minimum_call_ms": 6.754488,
       "parity_max_abs_diff": 6.252776074688882e-13,
-      "speedup_vs_python": 34.391161663759526,
+      "speedup_vs_python": 31.581570966795898,
       "used": true
     }
   },
@@ -63,20 +63,20 @@
   ],
   "meta": {
     "affinity": [
-      0
+      2
     ],
     "cpu": "11th Gen Intel(R) Core(TM) i5-11600K @ 3.90GHz",
     "governor": "powersave",
     "kernel_isolated_cpus": "",
     "load_average_end": [
-      5.18701171875,
-      6.26220703125,
-      13.1923828125
+      18.12939453125,
+      17.365234375,
+      16.51416015625
     ],
     "load_average_start": [
-      5.18701171875,
-      6.26220703125,
-      13.1923828125
+      18.05322265625,
+      17.33740234375,
+      16.50048828125
     ],
     "measurement_scope": "single-logical-CPU affinity; kernel isolation and workstation load reported separately",
     "platform": "Linux-6.17.0-35-generic-x86_64-with-glibc2.39",
@@ -95,17 +95,17 @@
     },
     "benchmarks/bench_connor_stevens_mojo.py": "56e7a29961e0ce869909e30b4687a007572c8d97a4dbc850e0455be76ab467f4",
     "bridge/sc_neurocore_engine/__init__": {
-      "py": "dcb53d42fd204d57186e4287758149f8a6b28668d1dfbb3fa88692f5bbd633e0"
+      "py": "8376006c65309b3005b6a6e887891b5fd502687d9bfdd87b737c694eac1e8de7"
     },
-    "bridge/sc_neurocore_engine/__init__.py": "dcb53d42fd204d57186e4287758149f8a6b28668d1dfbb3fa88692f5bbd633e0",
+    "bridge/sc_neurocore_engine/__init__.py": "8376006c65309b3005b6a6e887891b5fd502687d9bfdd87b737c694eac1e8de7",
     "engine/src/neurons/biophysical": {
       "rs": "9776fe629c58d03e74d324fae5e224dd4e320e9dc26ae88e21ae75e1ca46a4bf"
     },
     "engine/src/neurons/biophysical.rs": "9776fe629c58d03e74d324fae5e224dd4e320e9dc26ae88e21ae75e1ca46a4bf",
     "engine/src/pyo3_neurons": {
-      "rs": "b69571347e26f09da292df35bf44cf055295038a16b04d82e4b619a50e764322"
+      "rs": "23c60bedac7b55b22b6e83f26d07ce31b544b9c0f449d5d7d00d05663ba1b2d9"
     },
-    "engine/src/pyo3_neurons.rs": "b69571347e26f09da292df35bf44cf055295038a16b04d82e4b619a50e764322",
+    "engine/src/pyo3_neurons.rs": "23c60bedac7b55b22b6e83f26d07ce31b544b9c0f449d5d7d00d05663ba1b2d9",
     "src/sc_neurocore/accel/go/services/connor_stevens": {
       "go": "c0e5f54829b644790c2dab7894df47fd3e09720cfe9771b0454ab63496697995"
     },
