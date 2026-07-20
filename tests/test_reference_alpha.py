@@ -10,11 +10,23 @@
 
 from __future__ import annotations
 
+import json
+from importlib import resources
 import math
+from typing import Any, cast
 
 import pytest
 
-from sc_neurocore.neurons.reference_traces import load_reference_trace_spec
+
+_ARTIFACT_NAME = "alpha_dual_synapse_doi.json"
+
+
+def _load_artifact() -> dict[str, Any]:
+    """Load the packaged hand-model reference artefact."""
+    path = resources.files("sc_neurocore.neurons").joinpath("reference_trace_data", _ARTIFACT_NAME)
+    payload: object = json.loads(path.read_text(encoding="utf-8"))
+    assert isinstance(payload, dict)
+    return cast("dict[str, Any]", payload)
 
 
 def _drive_contribution(
@@ -104,21 +116,27 @@ def _independent_features(
 
 
 def test_trace_features_match_independent_exact_flow_reference() -> None:
-    spec = load_reference_trace_spec("alpha_dual_synapse_doi")
+    artifact = _load_artifact()
+    model = artifact["model"]
+    protocol = artifact["protocol"]
+    provenance = artifact["provenance"]
+    expected_features = artifact["expected_features"]
     expected = _independent_features(
-        i_exc_drive=spec.protocol.inputs["I_exc"],
-        i_inh_drive=spec.protocol.inputs["I_inh"],
-        dt=spec.protocol.dt,
-        steps=spec.protocol.steps,
+        i_exc_drive=protocol["inputs"]["I_exc"],
+        i_inh_drive=protocol["inputs"]["I_inh"],
+        dt=protocol["dt"],
+        steps=protocol["steps"],
     )
 
-    assert spec.schema_name == "alpha"
-    assert spec.provenance.kind == "analytic_exact_flow_reference"
-    assert "doi:10.1017/CBO9780511815706" in spec.provenance.citation
-    assert "Rall 1967" in spec.provenance.citation
-    assert set(expected) == set(spec.expected_features)
+    assert artifact["schema_version"] == "sc-neurocore.reference-trace.v1"
+    assert artifact["name"] == "alpha_dual_synapse_doi"
+    assert model == {"schema_name": "alpha", "runner": "hand_model"}
+    assert provenance["kind"] == "analytic_exact_flow_reference"
+    assert "doi:10.1017/CBO9780511815706" in provenance["citation"]
+    assert "Rall 1967" in provenance["citation"]
+    assert set(expected) == set(expected_features)
     for feature_name, feature_value in expected.items():
-        assert spec.expected_features[feature_name] == pytest.approx(
+        assert expected_features[feature_name] == pytest.approx(
             feature_value,
             rel=0.0,
             abs=1.0e-12,
