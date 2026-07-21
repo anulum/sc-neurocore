@@ -971,7 +971,7 @@
     "python_model_classes": 158,
     "python_model_source_modules": 153,
     "rust_pyo3_model_wrappers": 176,
-    "test_files": 1486
+    "test_files": 1487
   },
   "documentation": {
     "public_pages": [
@@ -3820,6 +3820,7 @@
       "tests/test_perfect_integrator_backend_loading.py",
       "tests/test_perfect_integrator_backends.py",
       "tests/test_pernarowski_backends.py",
+      "tests/test_pernarowski_engine_binding.py",
       "tests/test_petri_net.py",
       "tests/test_phi_engine_bindings.py",
       "tests/test_phi_estimation.py",

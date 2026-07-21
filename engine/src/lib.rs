@@ -80,6 +80,8 @@ pub mod optimizer;
 #[path = "bindings/optimizer.rs"]
 mod optimizer_binding;
 pub mod partition;
+#[path = "bindings/pernarowski.rs"]
+mod pernarowski_binding;
 pub mod phi;
 #[path = "bindings/phi.rs"]
 mod phi_binding;
@@ -699,7 +701,7 @@ fn sc_neurocore_engine(m: &Bound<'_, PyModule>) -> PyResult<()> {
     courage_nekorkin_map_binding::register(m)?;
     mckean_binding::register(m)?;
     wilson_hr_binding::register(m)?;
-    m.add_function(wrap_pyfunction!(py_pernarowski_simulate, m)?)?;
+    pernarowski_binding::register(m)?;
     m.add_function(wrap_pyfunction!(py_terman_wang_simulate, m)?)?;
     m.add_function(wrap_pyfunction!(py_coba_lif_simulate, m)?)?;
     m.add_function(wrap_pyfunction!(py_escape_rate_simulate, m)?)?;
@@ -2392,48 +2394,6 @@ fn py_iqif_simulate<'py>(
         trace.push(neuron.v);
     }
     Ok((trace.into_pyarray(py), spikes, neuron.v))
-}
-
-/// N-step Pernarowski (1994) pancreatic beta-cell burster simulation.
-///
-/// Parity contract with
-/// `sc_neurocore.neurons.models.pernarowski.PernarowskiNeuron.simulate`: for the
-/// same parameters and constant input the returned `v` trace, upward-crossing
-/// spike count, and final `(v, w, z)` state are bit-identical to the Python RK4
-/// reference (the cubic uses `v.powi(3)` = `v*v*v`, matching the Python `v*v*v`;
-/// no transcendental functions).
-#[pyfunction]
-#[pyo3(signature = (v0, w0, z0, alpha, beta, eps1, eps2, gamma, dt, v_threshold, n_steps, current))]
-#[allow(clippy::too_many_arguments)]
-fn py_pernarowski_simulate<'py>(
-    py: Python<'py>,
-    v0: f64,
-    w0: f64,
-    z0: f64,
-    alpha: f64,
-    beta: f64,
-    eps1: f64,
-    eps2: f64,
-    gamma: f64,
-    dt: f64,
-    v_threshold: f64,
-    n_steps: usize,
-    current: f64,
-) -> (Bound<'py, PyArray1<f64>>, i64, f64, f64, f64) {
-    let mut neuron = crate::neurons::PernarowskiNeuron {
-        v: v0,
-        w: w0,
-        z: z0,
-        alpha,
-        beta,
-        eps1,
-        eps2,
-        gamma,
-        dt,
-        v_threshold,
-    };
-    let (trace, spikes) = neuron.simulate(n_steps, current);
-    (trace.into_pyarray(py), spikes, neuron.v, neuron.w, neuron.z)
 }
 
 /// N-step Terman-Wang (LEGION) relaxation-oscillator simulation.
