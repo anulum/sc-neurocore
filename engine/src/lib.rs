@@ -67,6 +67,8 @@ pub mod ir;
 pub mod layer;
 pub(crate) mod learning_bindings;
 pub mod lgssm;
+#[path = "bindings/mckean.rs"]
+mod mckean_binding;
 #[path = "bindings/medvedev_map.rs"]
 mod medvedev_map_binding;
 pub mod network_runner;
@@ -693,7 +695,7 @@ fn sc_neurocore_engine(m: &Bound<'_, PyModule>) -> PyResult<()> {
     chialvo_map_binding::register(m)?;
     cazelles_map_binding::register(m)?;
     courage_nekorkin_map_binding::register(m)?;
-    m.add_function(wrap_pyfunction!(py_mckean_simulate, m)?)?;
+    mckean_binding::register(m)?;
     m.add_function(wrap_pyfunction!(py_wilson_hr_simulate, m)?)?;
     m.add_function(wrap_pyfunction!(py_pernarowski_simulate, m)?)?;
     m.add_function(wrap_pyfunction!(py_terman_wang_simulate, m)?)?;
@@ -2388,43 +2390,6 @@ fn py_iqif_simulate<'py>(
         trace.push(neuron.v);
     }
     Ok((trace.into_pyarray(py), spikes, neuron.v))
-}
-
-/// N-step McKean (1970) piecewise-linear FitzHugh-Nagumo caricature simulation.
-///
-/// Parity contract with
-/// `sc_neurocore.neurons.models.mckean.McKeanNeuron.simulate`: for the same
-/// parameters and constant input the returned `v` trace, upward-`v_peak`-crossing
-/// spike count, and final `(v, w)` state are bit-identical to the Python RK4
-/// reference (the piecewise-linear right-hand side is exact arithmetic —
-/// additions, multiplications and branch selection, no transcendental functions —
-/// and a two-dimensional autonomous flow cannot be chaotic).
-#[pyfunction]
-#[pyo3(signature = (v0, w0, a, epsilon, gamma, dt, v_peak, n_steps, current))]
-#[allow(clippy::too_many_arguments)]
-fn py_mckean_simulate<'py>(
-    py: Python<'py>,
-    v0: f64,
-    w0: f64,
-    a: f64,
-    epsilon: f64,
-    gamma: f64,
-    dt: f64,
-    v_peak: f64,
-    n_steps: usize,
-    current: f64,
-) -> (Bound<'py, PyArray1<f64>>, i64, f64, f64) {
-    let mut neuron = crate::neurons::McKeanNeuron {
-        v: v0,
-        w: w0,
-        a,
-        epsilon,
-        gamma,
-        dt,
-        v_peak,
-    };
-    let (trace, spikes) = neuron.simulate(n_steps, current);
-    (trace.into_pyarray(py), spikes, neuron.v, neuron.w)
 }
 
 /// N-step Wilson (1999) polynomial cortical-neuron simulation.
