@@ -349,11 +349,13 @@ class SCOptimizer:
                 pareto_power,
                 pareto_score,
             )
-            frontier = list(
-                zip(
-                    pareto_result["luts"],
-                    pareto_result["power"],
-                    pareto_result["score"],
+            frontier = self._sort_and_dedupe_frontier(
+                list(
+                    zip(
+                        pareto_result["luts"],
+                        pareto_result["power"],
+                        pareto_result["score"],
+                    )
                 )
             )
         else:
@@ -439,12 +441,22 @@ class SCOptimizer:
                         break
             if not dominated:
                 frontier.append(p)
-        # Sort by LUTs ascending
-        frontier.sort(key=lambda x: x[0])
-        # Deduplicate
-        seen = set()
-        deduped = []
-        for pt in frontier:
+        return SCOptimizer._sort_and_dedupe_frontier(frontier)
+
+    @staticmethod
+    def _sort_and_dedupe_frontier(
+        frontier: List[Tuple[int, float, float]],
+    ) -> List[Tuple[int, float, float]]:
+        """Return the frontier sorted by LUTs ascending with duplicate points removed.
+
+        Both the Rust-accelerated and pure-Python annealing paths funnel their
+        non-dominated points through this normaliser, so the reported Pareto
+        frontier honours the same ordering and deduplication contract regardless
+        of which backend produced it.
+        """
+        seen: set[Tuple[int, float, float]] = set()
+        deduped: List[Tuple[int, float, float]] = []
+        for pt in sorted(frontier, key=lambda x: x[0]):
             key = (pt[0], round(pt[1], 4), round(pt[2], 4))
             if key not in seen:
                 seen.add(key)

@@ -173,6 +173,24 @@ def test_annealing_dispatches_to_rust_backend(monkeypatch):
     assert len(report.pareto_frontier) == 2
 
 
+def test_annealing_rust_frontier_is_sorted_and_deduplicated(monkeypatch):
+    # A Rust backend may emit non-dominated points in arbitrary order and with
+    # exact duplicates; the report must still expose a LUT-sorted, deduplicated
+    # frontier so it honours the same contract as the pure-Python fallback.
+    network = [LayerProfile(id="L0", mac_count=100), LayerProfile(id="L1", mac_count=200)]
+    result = _fake_sa_result(len(network))
+    result["pareto_luts"] = [200, 100, 100]
+    result["pareto_power"] = [2.0, 1.0, 1.0]
+    result["pareto_score"] = [0.95, 0.9, 0.9]
+    _install_fake_rust(monkeypatch, result)
+    opt = SCOptimizer(HardwareBudget(max_luts=10**6, max_power_mw=10**4))
+    report = opt.optimize_annealing(network)
+    assert report is not None
+    luts_vals = [p[0] for p in report.pareto_frontier]
+    assert luts_vals == sorted(luts_vals)
+    assert luts_vals == [100, 200]
+
+
 def test_annealing_rust_infeasible_returns_none(monkeypatch):
     network = [LayerProfile(id="L0", mac_count=100)]
     _install_fake_rust(monkeypatch, _fake_sa_result(len(network), feasible=False))
