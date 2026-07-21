@@ -971,7 +971,7 @@
     "python_model_classes": 158,
     "python_model_source_modules": 153,
     "rust_pyo3_model_wrappers": 176,
-    "test_files": 1478
+    "test_files": 1479
   },
   "documentation": {
     "public_pages": [
@@ -3040,6 +3040,7 @@
       "tests/test_chaos.py",
       "tests/test_chaotic_encoder.py",
       "tests/test_chialvo_map_backends.py",
+      "tests/test_chialvo_map_engine_binding.py",
       "tests/test_chip_compiler.py",
       "tests/test_chiplet/hierarchical_partitioner_support.py",
       "tests/test_chiplet/test_chiplet_architecture.py",
