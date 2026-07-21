@@ -11,6 +11,7 @@ Shared test configuration and fixtures for SC-NeuroCore.
 """
 
 import os
+import shlex
 import subprocess
 from collections.abc import Callable, Iterator
 from pathlib import Path
@@ -22,7 +23,8 @@ from filelock import FileLock
 from tests.reload_guard import restore_first_party_reloads
 
 _REPO_ROOT = Path(__file__).resolve().parents[1]
-_CARGO_LIB_LOCK = _REPO_ROOT / "engine" / "target" / ".cargo-lib-test.lock"
+_CARGO_LIB_LOCK = _REPO_ROOT / "target" / ".cargo-lib-test.lock"
+_CARGO_LIB_TEST_PREFIX = ("cargo", "test", "--no-default-features", "--jobs", "1")
 
 
 def _run_cargo_lib_test(test_filter: str) -> subprocess.CompletedProcess[str]:
@@ -31,10 +33,11 @@ def _run_cargo_lib_test(test_filter: str) -> subprocess.CompletedProcess[str]:
     pytest-xdist distributes the UltraScale+ and DCLS Rust contract tests across
     workers (CI uses ``--dist loadfile``), so without serialisation their
     ``cargo test`` subprocesses can run concurrently against the shared
-    ``engine/target`` directory and race during a build, surfacing as ``cargo``
-    exit status 101 on the slow coverage job. A file lock keyed on
-    ``engine/target`` serialises the invocations without changing the suite-wide
-    xdist distribution mode.
+    workspace ``target`` directory and race during a build. The selected
+    contracts do not use the optional Z3 supervisor, while the separate v3
+    Engine workflow tests the default-feature crate. Disabling default features
+    here avoids rebuilding bundled Z3 inside the Python matrix, and one Cargo
+    build job bounds compiler memory use without changing the tested contracts.
 
     Parameters
     ----------
@@ -48,18 +51,27 @@ def _run_cargo_lib_test(test_filter: str) -> subprocess.CompletedProcess[str]:
 
     Raises
     ------
-    subprocess.CalledProcessError
-        If ``cargo test`` exits with a non-zero status.
+    AssertionError
+        If ``cargo test`` exits with a non-zero status. The exception includes
+        the complete captured standard output and standard error.
     """
     _CARGO_LIB_LOCK.parent.mkdir(parents=True, exist_ok=True)
     with FileLock(str(_CARGO_LIB_LOCK)):
-        return subprocess.run(
-            ["cargo", "test", test_filter, "--lib"],
+        command = [*_CARGO_LIB_TEST_PREFIX, test_filter, "--lib"]
+        completed = subprocess.run(
+            command,
             cwd=_REPO_ROOT / "engine",
-            check=True,
+            check=False,
             capture_output=True,
             text=True,
         )
+    if completed.returncode != 0:
+        raise AssertionError(
+            f"{shlex.join(command)} exited with code {completed.returncode}\n"
+            f"--- stdout ---\n{completed.stdout}\n"
+            f"--- stderr ---\n{completed.stderr}"
+        )
+    return completed
 
 
 @pytest.fixture
@@ -70,7 +82,8 @@ def cargo_lib_test() -> Callable[[str], subprocess.CompletedProcess[str]]:
     -------
     Callable[[str], subprocess.CompletedProcess[str]]
         Callable taking a ``cargo test`` filter substring and returning the
-        completed process; raises ``subprocess.CalledProcessError`` on failure.
+        completed process; raises ``AssertionError`` with complete Cargo output
+        on failure.
     """
     return _run_cargo_lib_test
 
