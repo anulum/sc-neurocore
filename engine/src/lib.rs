@@ -45,6 +45,8 @@ pub mod cordiv;
 mod cordiv_binding;
 pub mod cortical_column;
 pub mod cortical_inject;
+#[path = "bindings/courage_nekorkin_map.rs"]
+mod courage_nekorkin_map_binding;
 pub mod dna;
 pub mod ei_network;
 pub mod encoder;
@@ -682,7 +684,7 @@ fn sc_neurocore_engine(m: &Bound<'_, PyModule>) -> PyResult<()> {
     ollivier_ricci_binding::register(m)?;
     chialvo_map_binding::register(m)?;
     cazelles_map_binding::register(m)?;
-    m.add_function(wrap_pyfunction!(py_courage_nekorkin_map_simulate, m)?)?;
+    courage_nekorkin_map_binding::register(m)?;
     m.add_function(wrap_pyfunction!(py_mckean_simulate, m)?)?;
     m.add_function(wrap_pyfunction!(py_wilson_hr_simulate, m)?)?;
     m.add_function(wrap_pyfunction!(py_pernarowski_simulate, m)?)?;
@@ -2378,49 +2380,6 @@ fn py_iqif_simulate<'py>(
         trace.push(neuron.v);
     }
     Ok((trace.into_pyarray(py), spikes, neuron.v))
-}
-
-/// N-step Courbage-Nekorkin-Vdovin (2007) discontinuous spiking-map simulation.
-///
-/// Parity contract with
-/// `sc_neurocore.neurons.models.courage_nekorkin_map.CourageNekorkinMapNeuron.simulate`:
-/// for the same parameters and constant input the returned `x` trace,
-/// upward-crossing spike count, and final `(x, y)` state are bit-identical to
-/// the Python reference (the map is exact floating-point arithmetic — additions,
-/// multiplications, one division for the breakpoints, and a piecewise/Heaviside
-/// branch, no transcendental functions).
-#[pyfunction]
-#[pyo3(signature = (x0, y0, m0, m1, a, d, j, beta, eps, x_threshold, n_steps, current))]
-#[allow(clippy::too_many_arguments)]
-fn py_courage_nekorkin_map_simulate<'py>(
-    py: Python<'py>,
-    x0: f64,
-    y0: f64,
-    m0: f64,
-    m1: f64,
-    a: f64,
-    d: f64,
-    j: f64,
-    beta: f64,
-    eps: f64,
-    x_threshold: f64,
-    n_steps: usize,
-    current: f64,
-) -> (Bound<'py, PyArray1<f64>>, i64, f64, f64) {
-    let mut neuron = crate::neurons::CourageNekorkinMapNeuron {
-        x: x0,
-        y: y0,
-        m0,
-        m1,
-        a,
-        d,
-        j,
-        beta,
-        eps,
-        x_threshold,
-    };
-    let (trace, spikes) = neuron.simulate(n_steps, current);
-    (trace.into_pyarray(py), spikes, neuron.x, neuron.y)
 }
 
 /// Parity contract with `sc_neurocore.neurons.models.rulkov_map.RulkovMapNeuron.simulate`:
