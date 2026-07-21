@@ -12,6 +12,7 @@ from __future__ import annotations
 
 import importlib
 import math
+import sys
 from typing import Any
 
 import numpy as np
@@ -69,7 +70,8 @@ def test_step_count_conversion_errors_are_stable(
     with pytest.raises(error) as captured:
         extension.py_chialvo_map_simulate(0.0, 0.0, 0.89, 0.6, 0.28, 0.04, 1.0, n_steps, 0.0)
     assert str(captured.value) == message
-    assert captured.value.__notes__ == ["while processing 'n_steps'"]
+    if sys.version_info >= (3, 11):
+        assert captured.value.__notes__ == ["while processing 'n_steps'"]
 
 
 @pytest.mark.parametrize(

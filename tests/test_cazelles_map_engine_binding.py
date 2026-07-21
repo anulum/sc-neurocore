@@ -11,6 +11,7 @@
 from __future__ import annotations
 
 import importlib
+import sys
 from typing import Any
 
 import numpy as np
@@ -70,7 +71,8 @@ def test_step_count_conversion_errors_are_stable(
     with pytest.raises(error) as captured:
         extension.py_cazelles_map_simulate(0.1, 0.0, 3.8, 0.01, 0.5, 0.9, n_steps, 0.05)
     assert str(captured.value) == message
-    assert captured.value.__notes__ == ["while processing 'n_steps'"]
+    if sys.version_info >= (3, 11):
+        assert captured.value.__notes__ == ["while processing 'n_steps'"]
 
 
 def test_production_rust_backend_uses_the_installed_extension() -> None:

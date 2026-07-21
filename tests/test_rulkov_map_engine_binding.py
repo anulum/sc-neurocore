@@ -11,6 +11,7 @@
 from __future__ import annotations
 
 import importlib
+import sys
 from typing import Any
 
 import numpy as np
@@ -97,7 +98,8 @@ def test_step_count_conversion_errors_are_stable(
             0.0,
         )
     assert str(captured.value) == message
-    assert captured.value.__notes__ == ["while processing 'n_steps'"]
+    if sys.version_info >= (3, 11):
+        assert captured.value.__notes__ == ["while processing 'n_steps'"]
 
 
 def test_production_rust_backend_is_exactly_the_installed_extension() -> None:
