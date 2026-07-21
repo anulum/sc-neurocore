@@ -114,9 +114,9 @@
     },
     "bridge/sc_neurocore_engine/__init__.py": "92b282bce4f49cd7f60c1f2130a26418c9a3c657e0551076d0b7c55e6cde8049",
     "engine/src/lib": {
-      "rs": "e29694c7640bd6c8809cd8aa882ca967ee4b37113f88f83b85b112a7d1310a29"
+      "rs": "888b4b53a77522f584bd07d9f140c5e73fe74f974e59af77832ac7eed35ec287"
     },
-    "engine/src/lib.rs": "e29694c7640bd6c8809cd8aa882ca967ee4b37113f88f83b85b112a7d1310a29",
+    "engine/src/lib.rs": "888b4b53a77522f584bd07d9f140c5e73fe74f974e59af77832ac7eed35ec287",
     "engine/src/neurons/medvedev_map": {
       "rs": "8663bec2d95e79ee4488eba753552ecbfeb5be6cd9ecd4a78f65fcc057a09fd1"
     },

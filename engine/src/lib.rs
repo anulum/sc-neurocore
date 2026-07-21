@@ -105,6 +105,8 @@ pub mod supervisor;
 pub mod synapses;
 pub mod topology;
 pub mod wilson_cowan;
+#[path = "bindings/wilson_hr.rs"]
+mod wilson_hr_binding;
 pub mod wong_wang;
 
 #[pyclass(
@@ -696,7 +698,7 @@ fn sc_neurocore_engine(m: &Bound<'_, PyModule>) -> PyResult<()> {
     cazelles_map_binding::register(m)?;
     courage_nekorkin_map_binding::register(m)?;
     mckean_binding::register(m)?;
-    m.add_function(wrap_pyfunction!(py_wilson_hr_simulate, m)?)?;
+    wilson_hr_binding::register(m)?;
     m.add_function(wrap_pyfunction!(py_pernarowski_simulate, m)?)?;
     m.add_function(wrap_pyfunction!(py_terman_wang_simulate, m)?)?;
     m.add_function(wrap_pyfunction!(py_coba_lif_simulate, m)?)?;
@@ -2390,38 +2392,6 @@ fn py_iqif_simulate<'py>(
         trace.push(neuron.v);
     }
     Ok((trace.into_pyarray(py), spikes, neuron.v))
-}
-
-/// N-step Wilson (1999) polynomial cortical-neuron simulation.
-///
-/// Parity contract with
-/// `sc_neurocore.neurons.models.wilson_hr.WilsonHRNeuron.simulate`: for the same
-/// parameters and constant input the returned `v` trace (already hard-reset to
-/// `-0.7` on spiking steps), spike count, and final `(v, r)` state are
-/// bit-identical to the Python RK4 reference (the right-hand side is exact
-/// polynomial arithmetic — no transcendental functions).
-#[pyfunction]
-#[pyo3(signature = (v0, r0, tau_r, v_peak, dt, n_steps, current))]
-#[allow(clippy::too_many_arguments)]
-fn py_wilson_hr_simulate<'py>(
-    py: Python<'py>,
-    v0: f64,
-    r0: f64,
-    tau_r: f64,
-    v_peak: f64,
-    dt: f64,
-    n_steps: usize,
-    current: f64,
-) -> (Bound<'py, PyArray1<f64>>, i64, f64, f64) {
-    let mut neuron = crate::neurons::WilsonHRNeuron {
-        v: v0,
-        r: r0,
-        tau_r,
-        v_peak,
-        dt,
-    };
-    let (trace, spikes) = neuron.simulate(n_steps, current);
-    (trace.into_pyarray(py), spikes, neuron.v, neuron.r)
 }
 
 /// N-step Pernarowski (1994) pancreatic beta-cell burster simulation.
