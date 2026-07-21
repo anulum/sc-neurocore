@@ -96,9 +96,9 @@
     },
     "benchmarks/bench_courage_nekorkin_map_simulate.py": "260663bb7f0dd129fd04b44813f05f79bb1577ecab7f15801e93d7a73d064b2e",
     "engine/src/lib": {
-      "rs": "3fb5eff22ce9a1f0d9605eb6375f0d452849062176da2af357c6e3419b8021da"
+      "rs": "4dda18ea85ca5eeaaa3fb3eaa221cf84eda6da0230d17a526a6e23d9ef43a8f3"
     },
-    "engine/src/lib.rs": "3fb5eff22ce9a1f0d9605eb6375f0d452849062176da2af357c6e3419b8021da",
+    "engine/src/lib.rs": "4dda18ea85ca5eeaaa3fb3eaa221cf84eda6da0230d17a526a6e23d9ef43a8f3",
     "engine/src/neurons/courage_nekorkin_map": {
       "rs": "d02e322d8af53ac6631f603f8f4d1b6a8aaa3b8f90b7a2a25d59c664c6c7ff80"
     },

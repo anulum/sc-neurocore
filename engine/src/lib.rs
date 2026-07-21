@@ -50,6 +50,8 @@ mod courage_nekorkin_map_binding;
 pub mod dna;
 pub mod ei_network;
 pub mod encoder;
+#[path = "bindings/ermentrout_kopell_map.rs"]
+mod ermentrout_kopell_map_binding;
 pub mod evo;
 pub mod fault;
 #[path = "bindings/fault.rs"]
@@ -704,7 +706,7 @@ fn sc_neurocore_engine(m: &Bound<'_, PyModule>) -> PyResult<()> {
     rulkov_map_binding::register(m)?;
     ibarz_tanaka_map_binding::register(m)?;
     medvedev_map_binding::register(m)?;
-    m.add_function(wrap_pyfunction!(py_ermentrout_kopell_map_simulate, m)?)?;
+    ermentrout_kopell_map_binding::register(m)?;
     m.add_function(wrap_pyfunction!(py_fitzhugh_nagumo_simulate, m)?)?;
     m.add_function(wrap_pyfunction!(py_hindmarsh_rose_simulate, m)?)?;
     m.add_function(wrap_pyfunction!(py_fitzhugh_rinzel_simulate, m)?)?;
@@ -2386,34 +2388,6 @@ fn py_iqif_simulate<'py>(
         trace.push(neuron.v);
     }
     Ok((trace.into_pyarray(py), spikes, neuron.v))
-}
-
-/// Parity contract with
-/// `sc_neurocore.neurons.models.ermentrout_kopell_map_neuron.ErmentroutKopellMapNeuron.simulate`:
-/// for the same parameters and constant input the returned `theta` trace,
-/// upward-crossing spike count, and final `theta` state match the Python
-/// reference bit-for-bit on a shared libm (the only transcendental is `cos`,
-/// and the non-chaotic phase flow does not amplify ULP differences). This is a
-/// one-dimensional phase map, so there is no second state.
-#[pyfunction]
-#[pyo3(signature = (theta0, dt, gain, theta_threshold, n_steps, current))]
-fn py_ermentrout_kopell_map_simulate<'py>(
-    py: Python<'py>,
-    theta0: f64,
-    dt: f64,
-    gain: f64,
-    theta_threshold: f64,
-    n_steps: usize,
-    current: f64,
-) -> (Bound<'py, PyArray1<f64>>, i64, f64) {
-    let mut neuron = crate::neurons::ErmentroutKopellMapNeuron {
-        theta: theta0,
-        dt,
-        gain,
-        theta_threshold,
-    };
-    let (trace, spikes) = neuron.simulate(n_steps, current);
-    (trace.into_pyarray(py), spikes, neuron.theta)
 }
 
 /// N-step McKean (1970) piecewise-linear FitzHugh-Nagumo caricature simulation.

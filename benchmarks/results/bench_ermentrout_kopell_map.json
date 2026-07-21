@@ -96,9 +96,9 @@
     },
     "benchmarks/bench_ermentrout_kopell_map.py": "9d72d25d24e33ed12b44e7c39a116462cc38428bc8fabf4f5f96a56e89d7df3f",
     "engine/src/lib": {
-      "rs": "3fb5eff22ce9a1f0d9605eb6375f0d452849062176da2af357c6e3419b8021da"
+      "rs": "4dda18ea85ca5eeaaa3fb3eaa221cf84eda6da0230d17a526a6e23d9ef43a8f3"
     },
-    "engine/src/lib.rs": "3fb5eff22ce9a1f0d9605eb6375f0d452849062176da2af357c6e3419b8021da",
+    "engine/src/lib.rs": "4dda18ea85ca5eeaaa3fb3eaa221cf84eda6da0230d17a526a6e23d9ef43a8f3",
     "engine/src/neurons/ermentrout_kopell_map": {
       "rs": "b2dde8eb0b745eed748eaffe8bf0f0743750bb6c5572cbafd53e4ca8e4a29740"
     },
