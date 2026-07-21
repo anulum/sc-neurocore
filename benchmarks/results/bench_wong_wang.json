@@ -235,9 +235,9 @@
     },
     "engine/src/bindings/wong_wang.rs": "59d69deca4c6238c00de600a7aaa0bb3cbd2a33551a789ac25c59c7a790ba29b",
     "engine/src/lib": {
-      "rs": "a83c6b1c4d4c7e325428a8a2370a9b1eec5acb84411acffb772abd7fe3fc3176"
+      "rs": "c7a1399225cad1723bf8c87cd315be5f2da75fccf58b50ebc6fb433b75420ba7"
     },
-    "engine/src/lib.rs": "a83c6b1c4d4c7e325428a8a2370a9b1eec5acb84411acffb772abd7fe3fc3176",
+    "engine/src/lib.rs": "c7a1399225cad1723bf8c87cd315be5f2da75fccf58b50ebc6fb433b75420ba7",
     "engine/src/neurons/special": {
       "rs": "24472635b8b2878b96a955763dcd9934a6699204118ff8fbb71435d1f2e5e680"
     },

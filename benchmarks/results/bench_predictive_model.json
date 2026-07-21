@@ -410,7 +410,7 @@
     "bridge/sc_neurocore_engine/__init__.py": "92b282bce4f49cd7f60c1f2130a26418c9a3c657e0551076d0b7c55e6cde8049",
     "bridge/sc_neurocore_engine/world_model.py": "ba54bf0ac3d41487b93e702fce3744764711a41d606b8834a33884d74cb27fe2",
     "engine/src/lgssm.rs": "654ea16b17f35e2ca27c8e35a8903e2c206c8f041f22a55f9651449e2d4c8145",
-    "engine/src/lib.rs": "a83c6b1c4d4c7e325428a8a2370a9b1eec5acb84411acffb772abd7fe3fc3176",
+    "engine/src/lib.rs": "c7a1399225cad1723bf8c87cd315be5f2da75fccf58b50ebc6fb433b75420ba7",
     "src/sc_neurocore/accel/go/lgssm/lgssm.go": "0950d11e2a602ef3d39ad497031bf7443bc678f0eba172a85aec41ffcb94df79",
     "src/sc_neurocore/accel/julia/world_model/predictive_model.jl": "9125448c41ecabaaf0debebf4273024b624d3557a94ddffdee33f0e0b9b7b69c",
     "src/sc_neurocore/accel/mojo/world_model/lgssm.mojo": "b1ec7b274facf6ae02252ca47f6118fb1009518fe5e8cac065f9cb7a9e2bc660",
