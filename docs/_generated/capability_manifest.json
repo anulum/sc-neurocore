@@ -971,7 +971,7 @@
     "python_model_classes": 158,
     "python_model_source_modules": 153,
     "rust_pyo3_model_wrappers": 176,
-    "test_files": 1487
+    "test_files": 1488
   },
   "documentation": {
     "public_pages": [
@@ -4174,6 +4174,7 @@
       "tests/test_temporal_properties.py",
       "tests/test_tensor_stream.py",
       "tests/test_terman_wang_backends.py",
+      "tests/test_terman_wang_engine_binding.py",
       "tests/test_theta_backend_loading.py",
       "tests/test_theta_backends.py",
       "tests/test_threshold_linear_rate_backend_loading.py",

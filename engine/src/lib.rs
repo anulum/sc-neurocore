@@ -105,6 +105,8 @@ pub mod sobol;
 #[cfg(feature = "z3")]
 pub mod supervisor;
 pub mod synapses;
+#[path = "bindings/terman_wang.rs"]
+mod terman_wang_binding;
 pub mod topology;
 pub mod wilson_cowan;
 #[path = "bindings/wilson_hr.rs"]
@@ -702,7 +704,7 @@ fn sc_neurocore_engine(m: &Bound<'_, PyModule>) -> PyResult<()> {
     mckean_binding::register(m)?;
     wilson_hr_binding::register(m)?;
     pernarowski_binding::register(m)?;
-    m.add_function(wrap_pyfunction!(py_terman_wang_simulate, m)?)?;
+    terman_wang_binding::register(m)?;
     m.add_function(wrap_pyfunction!(py_coba_lif_simulate, m)?)?;
     m.add_function(wrap_pyfunction!(py_escape_rate_simulate, m)?)?;
     m.add_function(wrap_pyfunction!(py_poisson_simulate, m)?)?;
@@ -2394,46 +2396,6 @@ fn py_iqif_simulate<'py>(
         trace.push(neuron.v);
     }
     Ok((trace.into_pyarray(py), spikes, neuron.v))
-}
-
-/// N-step Terman-Wang (LEGION) relaxation-oscillator simulation.
-///
-/// Parity contract with
-/// `sc_neurocore.neurons.models.terman_wang.TermanWangOscillator.simulate`: for
-/// the same parameters and constant input the returned `v` trace, upward-crossing
-/// spike count, and final `(v, w)` state match the Python RK4 reference. The cubic
-/// uses `v.powi(3)` = `v*v*v` (matching the Python `v*v*v`); the `tanh` gating
-/// resolves to the same glibc symbol as Python on Linux, so this backend is
-/// bit-identical there (Julia/Go/Mojo use their own libm `tanh`, ULP-bounded, and
-/// the two-dimensional relaxation oscillator is non-chaotic so it does not amplify).
-#[pyfunction]
-#[pyo3(signature = (v0, w0, alpha, beta, epsilon, rho, dt, v_peak, n_steps, current))]
-#[allow(clippy::too_many_arguments)]
-fn py_terman_wang_simulate<'py>(
-    py: Python<'py>,
-    v0: f64,
-    w0: f64,
-    alpha: f64,
-    beta: f64,
-    epsilon: f64,
-    rho: f64,
-    dt: f64,
-    v_peak: f64,
-    n_steps: usize,
-    current: f64,
-) -> (Bound<'py, PyArray1<f64>>, i64, f64, f64) {
-    let mut neuron = crate::neurons::TermanWangOscillator {
-        v: v0,
-        w: w0,
-        alpha,
-        beta,
-        epsilon,
-        rho,
-        dt,
-        v_peak,
-    };
-    let (trace, spikes) = neuron.simulate(n_steps, current);
-    (trace.into_pyarray(py), spikes, neuron.v, neuron.w)
 }
 
 /// Parity contract with
