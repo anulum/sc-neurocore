@@ -48,6 +48,7 @@ BACKENDS = ("python", "rust", "julia", "go", "mojo")
 SOURCE_PATHS = (
     "benchmarks/bench_model_escape_rate.py",
     "bridge/sc_neurocore_engine/__init__.py",
+    "engine/src/bindings/escape_rate.rs",
     "engine/src/lib.rs",
     "engine/src/neurons/trivial/escape_rate.rs",
     "engine/src/pyo3_neurons.rs",

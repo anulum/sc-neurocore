@@ -96,9 +96,9 @@
     },
     "benchmarks/bench_cazelles_map.py": "28919b591aab9b075a334cfc3a74643863b1755f2a014893bd9b7ebfe54d8713",
     "engine/src/lib": {
-      "rs": "41bc8bfc5cdecc29a700d505c88f414597dcac4dd961fc10c696bd443df96a79"
+      "rs": "6f35e899d5c698392f96ca9931e81fb3457e8f45961a22d73b7adcb7dfef0db1"
     },
-    "engine/src/lib.rs": "41bc8bfc5cdecc29a700d505c88f414597dcac4dd961fc10c696bd443df96a79",
+    "engine/src/lib.rs": "6f35e899d5c698392f96ca9931e81fb3457e8f45961a22d73b7adcb7dfef0db1",
     "engine/src/neurons/cazelles_map": {
       "rs": "a2e4e94229f9937180f68ce1b0df78cbd29702d343a4372fb64b017b08ffee85"
     },

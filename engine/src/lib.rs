@@ -28,6 +28,8 @@ pub mod attention;
 pub mod bitstream;
 #[path = "bindings/bitstream.rs"]
 mod bitstream_binding;
+#[path = "bindings/escape_rate.rs"]
+mod escape_rate_binding;
 #[path = "bindings/evolution.rs"]
 mod evolution_binding;
 #[path = "bindings/hdc.rs"]
@@ -708,7 +710,7 @@ fn sc_neurocore_engine(m: &Bound<'_, PyModule>) -> PyResult<()> {
     pernarowski_binding::register(m)?;
     terman_wang_binding::register(m)?;
     coba_lif_binding::register(m)?;
-    m.add_function(wrap_pyfunction!(py_escape_rate_simulate, m)?)?;
+    escape_rate_binding::register(m)?;
     m.add_function(wrap_pyfunction!(py_poisson_simulate, m)?)?;
     m.add_function(wrap_pyfunction!(py_iqif_simulate, m)?)?;
     m.add_function(wrap_pyfunction!(py_mihalas_niebur_simulate, m)?)?;
@@ -2193,66 +2195,6 @@ fn py_lgssm_kalman_filter<'py>(
     dict.set_item("log_likelihood", result.log_likelihood)?;
     dict.set_item("backend", "rust")?;
     Ok(dict.into_any().unbind())
-}
-
-/// Full-contract seeded EscapeRate batch with the canonical LFSR16 trial.
-#[pyfunction]
-#[pyo3(signature = (
-    v0, v_rest, v_reset, v_threshold, tau_m, rho_0, delta_u, resistance,
-    dt, rng_state, n_steps, current
-))]
-#[allow(clippy::too_many_arguments, clippy::type_complexity)]
-fn py_escape_rate_simulate<'py>(
-    py: Python<'py>,
-    v0: f64,
-    v_rest: f64,
-    v_reset: f64,
-    v_threshold: f64,
-    tau_m: f64,
-    rho_0: f64,
-    delta_u: f64,
-    resistance: f64,
-    dt: f64,
-    rng_state: u16,
-    n_steps: usize,
-    current: f64,
-) -> PyResult<(
-    Bound<'py, PyArray1<f64>>,
-    Bound<'py, PyArray1<u8>>,
-    f64,
-    u16,
-)> {
-    let mut neuron = crate::neurons::EscapeRateNeuron {
-        v: v0,
-        v_rest,
-        v_reset,
-        v_threshold,
-        tau_m,
-        rho_0,
-        delta_u,
-        resistance,
-        dt,
-        rng_state,
-        initial_seed: rng_state,
-    };
-    if !neuron.valid() || !current.is_finite() {
-        return Err(PyValueError::new_err(
-            "invalid EscapeRate simulation state or input",
-        ));
-    }
-    let mut trace = Vec::with_capacity(n_steps);
-    let mut events = Vec::with_capacity(n_steps);
-    for _ in 0..n_steps {
-        let spike = neuron.try_step(current).map_err(PyValueError::new_err)?;
-        trace.push(neuron.v);
-        events.push(spike as u8);
-    }
-    Ok((
-        trace.into_pyarray(py),
-        events.into_pyarray(py),
-        neuron.v,
-        neuron.rng_state,
-    ))
 }
 
 /// Full-contract homogeneous-Poisson batch with the canonical LFSR16 trial.
