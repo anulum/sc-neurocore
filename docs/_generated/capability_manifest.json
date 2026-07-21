@@ -971,7 +971,7 @@
     "python_model_classes": 158,
     "python_model_source_modules": 153,
     "rust_pyo3_model_wrappers": 176,
-    "test_files": 1480
+    "test_files": 1481
   },
   "documentation": {
     "public_pages": [
@@ -3937,6 +3937,7 @@
       "tests/test_riscv_driver.py",
       "tests/test_robotics.py",
       "tests/test_rulkov_map_backends.py",
+      "tests/test_rulkov_map_engine_binding.py",
       "tests/test_run_experimental_suite.py",
       "tests/test_rust_attention_softmax.py",
       "tests/test_rust_graph_sparse.py",
