@@ -174,6 +174,65 @@ const fiCurveResponse = {
   rates: [0, 10, 22],
 };
 
+// W12-D moved the guided f-I analysis off the legacy sync /api/fi-curve onto the
+// async analysis-job runner (runStudioAnalysisJob -> POST /api/analysis/jobs ->
+// poll status_route). Mock that submit + poll(running -> completed) flow so the
+// guided run resolves fiResult and advances past "Run f-I analysis".
+const analysisJobReceipt = {
+  analysis: "fi_curve",
+  execution_mode: "async_job",
+  job: {
+    artifacts: [],
+    created_at_utc: "2026-07-20T00:00:00Z",
+    error: null,
+    execution_model: "thread",
+    finished_at_utc: null,
+    job_id: "sj_guided_fi",
+    kind: "analysis",
+    owner: "studio",
+    request_id: null,
+    result: null,
+    started_at_utc: null,
+    status: "pending",
+  },
+  job_id: "sj_guided_fi",
+  schema_version: "studio.analysis.job.v1",
+  status_route: "/api/studio/jobs/sj_guided_fi",
+};
+
+const analysisJobPoll = {
+  sequence: [
+    {
+      artifacts: [],
+      created_at_utc: "2026-07-20T00:00:00Z",
+      error: null,
+      execution_model: "thread",
+      finished_at_utc: null,
+      job_id: "sj_guided_fi",
+      kind: "analysis",
+      owner: "studio",
+      request_id: null,
+      result: null,
+      started_at_utc: "2026-07-20T00:00:01Z",
+      status: "running",
+    },
+    {
+      artifacts: [],
+      created_at_utc: "2026-07-20T00:00:00Z",
+      error: null,
+      execution_model: "thread",
+      finished_at_utc: "2026-07-20T00:00:02Z",
+      job_id: "sj_guided_fi",
+      kind: "analysis",
+      owner: "studio",
+      request_id: null,
+      result: fiCurveResponse,
+      started_at_utc: "2026-07-20T00:00:01Z",
+      status: "completed",
+    },
+  ],
+};
+
 const verilog = "module lif(input clk, output spike); assign spike = clk; endmodule";
 
 const compileResponse = {
@@ -302,7 +361,8 @@ function guidedMocks(): Map<string, ApiMockPayload> {
     ["/api/templates", []],
     ["/api/presets", []],
     ["/api/simulate", simulationResponse],
-    ["/api/fi-curve", fiCurveResponse],
+    ["/api/analysis/jobs", analysisJobReceipt],
+    ["/api/studio/jobs/sj_guided_fi", analysisJobPoll],
     ["/api/ir/emit-sv-direct", compileResponse],
     ["/api/synth/run", synthesisResponse],
     ["/api/studio/evidence/bundle", evidenceBundle],
@@ -341,7 +401,7 @@ test("guided operator run executes one ODE workflow through evidence export", as
   await expect(page.getByText("Workflow complete", { exact: true }).first()).toBeVisible();
 
   expect(api.requests("/api/simulate")).toBe(1);
-  expect(api.requests("/api/fi-curve")).toBe(1);
+  expect(api.requests("/api/analysis/jobs")).toBe(1);
   expect(api.requests("/api/ir/emit-sv-direct")).toBe(1);
   expect(api.requests("/api/synth/run")).toBe(1);
   expect(api.requests("/api/studio/evidence/bundle")).toBe(0);
