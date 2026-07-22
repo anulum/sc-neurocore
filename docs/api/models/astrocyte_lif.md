@@ -479,10 +479,10 @@ Reset v to e_l, ca to 0.
 
 | Equation | Python location | Rust location |
 |----------|----------------|---------------|
-| $dCa/dt = -Ca/\tau_{ca} + \delta \cdot S_{pre}/dt$ | `astrocyte_lif.py:82-85` | `multi_compartment.rs:1101-1106` |
-| $Ca \geq 0$ clamp | `astrocyte_lif.py:86` | `multi_compartment.rs:1108` |
-| $I_{glio} = g_{glio} \cdot H(Ca - Ca_{thresh})$ | `astrocyte_lif.py:89` | `multi_compartment.rs:1111-1114` |
-| $\tau_m \, dV/dt = -(V-E_L) + I + I_{glio}$ | `astrocyte_lif.py:92` | `multi_compartment.rs:1118` |
+| $dCa/dt = -Ca/\tau_{ca} + \delta \cdot S_{pre}/dt$ | `astrocyte_lif.py:82-85` | `multi_compartment/astrocyte_lif.rs:57-63` |
+| $Ca \geq 0$ clamp | `astrocyte_lif.py:86` | `multi_compartment/astrocyte_lif.rs:64` |
+| $I_{glio} = g_{glio} \cdot H(Ca - Ca_{thresh})$ | `astrocyte_lif.py:89` | `multi_compartment/astrocyte_lif.rs:67-71` |
+| $\tau_m \, dV/dt = -(V-E_L) + I + I_{glio}$ | `astrocyte_lif.py:92` | `multi_compartment/astrocyte_lif.rs:74-75` |
 
 ---
 

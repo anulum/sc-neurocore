@@ -45,7 +45,7 @@ Python reference implementation (`src/sc_neurocore/`).
 | Simple spiking (2D+) | 22 | `neurons/simple_spiking/` + facade | Done |
 | Discrete maps | 6 | `neurons/maps.rs` | Done |
 | Biophysical (HH-type) | 20 | `neurons/biophysical/` + facade | Done |
-| Multi-compartment | 7 | `neurons/multi_compartment.rs` | Done |
+| Multi-compartment | 7 | `neurons/multi_compartment/` + facade | Done |
 | Stochastic/population | 13 | `neurons/special.rs` | Done |
 | Hardware emulators | 9 | `neurons/hardware.rs` | Done |
 | Rate/other | 11 | `neurons/rate.rs` | Done |

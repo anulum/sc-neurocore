@@ -508,7 +508,7 @@ print(f"Total spikes: {spike_count(mon)}")
 | File | Lines | Description |
 |------|-------|-------------|
 | `src/sc_neurocore/neurons/models/booth_rinzel.py` | 110 | Python reference |
-| `engine/src/neurons/multi_compartment.rs` | (shared) | Rust implementation |
+| `engine/src/neurons/multi_compartment/booth_rinzel.rs` | (dedicated) | Rust implementation |
 | `tests/test_model_booth_rinzel.py` | ~150 | 15 tests |
 
 ---

@@ -72,7 +72,7 @@ Spike: upward crossing of $V$ through $V_\theta=-20$ mV.
 | Surface | File |
 |---------|------|
 | Python (reference) | `neurons/models/marder_stg.py` |
-| Rust engine | `engine/src/neurons/multi_compartment.rs` (Python↔Rust spike parity) |
+| Rust engine | `engine/src/neurons/multi_compartment/marder_stg.rs` (Python↔Rust spike parity) |
 | Rust safety mirror | `accel/rust/safety/marder_stg.rs` |
 | Julia | `accel/julia/neurons/marder_stg.jl` |
 | Go | `accel/go/services/marder_stg.go` |

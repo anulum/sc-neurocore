@@ -80,7 +80,7 @@ or higher coupling can still spike, and the test suite covers that regime.
 | Surface | File | Validation |
 |---------|------|------------|
 | Python | `src/sc_neurocore/neurons/models/rall_cable.py` | `tests/test_model_rall_cable.py` |
-| Rust engine | `engine/src/neurons/multi_compartment.rs` | targeted Cargo engine tests |
+| Rust engine | `engine/src/neurons/multi_compartment/rall_cable.rs` | targeted Cargo engine tests |
 | Rust safety | `src/sc_neurocore/accel/rust/safety/rall_cable.rs` | `rustc --test` |
 | Go service | `src/sc_neurocore/accel/go/services/rall_cable.go` | `rall_cable_test.go` |
 | Julia kernel | `src/sc_neurocore/accel/julia/neurons/rall_cable.jl` | smoke step and benchmark |

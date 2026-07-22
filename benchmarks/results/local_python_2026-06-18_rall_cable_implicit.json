@@ -272,10 +272,10 @@
     }
   ],
   "source_hashes": {
-    "benchmarks/bench_model_rall_cable.py": "d6b07bf6d7ae96f00ab72ad5f76d1e4f379fea1228e62c56bb654132cdbf8a4b",
+    "benchmarks/bench_model_rall_cable.py": "9a43ceba47093e5e612c68cdb14940512a358908998d154f9c0565800067e87f",
     "engine/Cargo.toml": "3a571b276005266dcfba9f635e8e5e18edaee48d081daa447c5803980930904a",
     "engine/examples/bench_rall_cable_implicit.rs": "f80b16c983ca4f6803d22c196ac96e895a4151377a3f890563018d7d24eaa441",
-    "engine/src/neurons/multi_compartment.rs": "15cdea6c5f8fc095c4942016b2db4ea04e0bd1bb5596b10f7b03de93779d9bea",
+    "engine/src/neurons/multi_compartment/rall_cable.rs": "5fb0c05d88c33427804b7fe4006789765c830c71139e49464e93b22275c3f16a",
     "src/sc_neurocore/neurons/models/rall_cable.py": "cd2d7b1d414584b52ff149ea6a8406ced1cebea80c928cbaf4b4aced75fbb179",
     "src/sc_neurocore/accel/go/services/rall_cable.go": "3a059d8f5c4766ef99f2032b0e0f22c88d00425484a6386c8b5508c25f785c10",
     "src/sc_neurocore/accel/go/services/rall_cable_test.go": "ca83b14433f4369fc403f1c02d5879d2eebc5a3c9b4c64a360d94a10a2ea3d42",
@@ -283,7 +283,7 @@
     "src/sc_neurocore/accel/mojo/kernels/rall_cable.mojo": "aca3070df22e6ba0060daa14ee5222defb0440bc64b5da05557bc8170d3c0744",
     "src/sc_neurocore/accel/rust/safety/rall_cable.rs": "66f055e5bab3311d6eccf214ec4e840ac4420ea36938530f9479f5caec0c50d0",
     "benchmarks/bench_model_rall_cable": {
-      "py": "d6b07bf6d7ae96f00ab72ad5f76d1e4f379fea1228e62c56bb654132cdbf8a4b"
+      "py": "9a43ceba47093e5e612c68cdb14940512a358908998d154f9c0565800067e87f"
     },
     "engine/Cargo": {
       "toml": "3a571b276005266dcfba9f635e8e5e18edaee48d081daa447c5803980930904a"
@@ -291,8 +291,8 @@
     "engine/examples/bench_rall_cable_implicit": {
       "rs": "f80b16c983ca4f6803d22c196ac96e895a4151377a3f890563018d7d24eaa441"
     },
-    "engine/src/neurons/multi_compartment": {
-      "rs": "15cdea6c5f8fc095c4942016b2db4ea04e0bd1bb5596b10f7b03de93779d9bea"
+    "engine/src/neurons/multi_compartment/rall_cable": {
+      "rs": "5fb0c05d88c33427804b7fe4006789765c830c71139e49464e93b22275c3f16a"
     },
     "src/sc_neurocore/neurons/models/rall_cable": {
       "py": "cd2d7b1d414584b52ff149ea6a8406ced1cebea80c928cbaf4b4aced75fbb179"

@@ -107,7 +107,7 @@ Calcium candidates are clipped to `>= 0` before the next sub-step.
 | Surface | File |
 |---------|------|
 | Python reference | `src/sc_neurocore/neurons/models/hay_l5.py` |
-| Rust engine | `engine/src/neurons/multi_compartment.rs` |
+| Rust engine | `engine/src/neurons/multi_compartment/hay_l5.rs` |
 | Rust safety mirror | `src/sc_neurocore/accel/rust/safety/hay_l5.rs` |
 | Go service | `src/sc_neurocore/accel/go/services/hay_l5.go` |
 | Julia mirror | `src/sc_neurocore/accel/julia/neurons/hay_l5.jl` |

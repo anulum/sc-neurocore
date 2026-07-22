@@ -91,7 +91,7 @@ crossing of $V_s$ through $V_\theta = -20$ mV.
 | Surface | File | Notes |
 |---------|------|-------|
 | Python (reference) | `neurons/models/pinsky_rinzel.py` | RK4, 8 states |
-| Rust engine | `engine/src/neurons/multi_compartment.rs` | RK4; Python↔Rust spike-count parity |
+| Rust engine | `engine/src/neurons/multi_compartment/pinsky_rinzel.rs` | RK4; Python↔Rust spike-count parity |
 | Rust safety mirror | `accel/rust/safety/pinsky_rinzel.rs` | RK4, fail-closed |
 | Julia | `accel/julia/neurons/pinsky_rinzel.jl` | RK4 |
 | Go | `accel/go/services/pinsky_rinzel.go` | RK4, dual-input `StepDend` + `Step` |

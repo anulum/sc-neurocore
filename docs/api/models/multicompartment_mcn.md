@@ -401,7 +401,7 @@ Sigmoid gate: 1/(1 + exp(-β·x)).
 | Surface | Path | Role |
 |---------|------|------|
 | Python reference | `src/sc_neurocore/neurons/models/multicompartment_mcn.py` | Public model, validation, `baseline_euler` comparison mode |
-| Rust engine | `engine/src/neurons/multi_compartment.rs` | Compiled production backend and Rust benchmark path |
+| Rust engine | `engine/src/neurons/multi_compartment/multicompartment_mcn.rs` | Compiled production backend and Rust benchmark path |
 | Rust safety mirror | `src/sc_neurocore/accel/rust/safety/multicompartment_mcn.rs` | Standalone safety-surface parity check |
 | Go service | `src/sc_neurocore/accel/go/services/multicompartment_mcn.go` | Native Go RK4 service and benchmark hook |
 | Julia mirror | `src/sc_neurocore/accel/julia/neurons/multicompartment_mcn.jl` | Julia RK4 parity mirror |
@@ -525,12 +525,12 @@ Measured local regression results from
 
 | Equation | Python location | Rust location |
 |----------|----------------|---------------|
-| $\tau_b \, dV_b/dt = -V_b + x_b$ | `multicompartment_mcn.py:202` | `multi_compartment.rs:1130` |
-| $\tau_a \, dV_a/dt = -V_a + x_a$ | `multicompartment_mcn.py:203` | `multi_compartment.rs:1131` |
-| $\sigma(V_a) = 1/(1+e^{-\beta V_a})$ | `multicompartment_mcn.py:157-171` | `multi_compartment.rs:1094-1096` |
-| $\tau \, dU/dt = -U + \sigma \cdot [g(V_b-U)+I]$ | `multicompartment_mcn.py:200-201` | `multi_compartment.rs:1128-1129` |
-| RK4 candidate | `multicompartment_mcn.py:209-254` | `multi_compartment.rs:1135-1166` |
-| $S = \Theta(U - V_{th})$, reset $U \leftarrow 0$ | `multicompartment_mcn.py:333-339` | `multi_compartment.rs:1178-1182` |
+| $\tau_b \, dV_b/dt = -V_b + x_b$ | `multicompartment_mcn.py:202` | `multi_compartment/multicompartment_mcn.rs:107` |
+| $\tau_a \, dV_a/dt = -V_a + x_a$ | `multicompartment_mcn.py:203` | `multi_compartment/multicompartment_mcn.rs:108` |
+| $\sigma(V_a) = 1/(1+e^{-\beta V_a})$ | `multicompartment_mcn.py:157-171` | `multi_compartment/multicompartment_mcn.rs:72-74` |
+| $\tau \, dU/dt = -U + \sigma \cdot [g(V_b-U)+I]$ | `multicompartment_mcn.py:200-201` | `multi_compartment/multicompartment_mcn.rs:106` |
+| RK4 candidate | `multicompartment_mcn.py:209-254` | `multi_compartment/multicompartment_mcn.rs:112-144` |
+| $S = \Theta(U - V_{th})$, reset $U \leftarrow 0$ | `multicompartment_mcn.py:333-339` | `multi_compartment/multicompartment_mcn.rs:165-169` |
 
 ---
 

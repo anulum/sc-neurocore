@@ -37,8 +37,8 @@ SOURCE_HASH_PATHS = {
     "engine/Cargo.toml": REPO_ROOT / "engine/Cargo.toml",
     "engine/examples/bench_dendritic_nmda_rk4.rs": REPO_ROOT
     / "engine/examples/bench_dendritic_nmda_rk4.rs",
-    "engine/src/neurons/multi_compartment.rs": REPO_ROOT
-    / "engine/src/neurons/multi_compartment.rs",
+    "engine/src/neurons/multi_compartment/dendritic_nmda.rs": REPO_ROOT
+    / "engine/src/neurons/multi_compartment/dendritic_nmda.rs",
     "src/sc_neurocore/neurons/models/dendritic_nmda.py": REPO_ROOT
     / "src/sc_neurocore/neurons/models/dendritic_nmda.py",
     "src/sc_neurocore/accel/go/services/dendritic_nmda.go": REPO_ROOT

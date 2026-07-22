@@ -38,8 +38,8 @@ SOURCE_HASH_PATHS = {
     "engine/Cargo.toml": REPO_ROOT / "engine/Cargo.toml",
     "engine/examples/bench_multicompartment_mcn_rk4.rs": REPO_ROOT
     / "engine/examples/bench_multicompartment_mcn_rk4.rs",
-    "engine/src/neurons/multi_compartment.rs": REPO_ROOT
-    / "engine/src/neurons/multi_compartment.rs",
+    "engine/src/neurons/multi_compartment/multicompartment_mcn.rs": REPO_ROOT
+    / "engine/src/neurons/multi_compartment/multicompartment_mcn.rs",
     "src/sc_neurocore/neurons/models/multicompartment_mcn.py": REPO_ROOT
     / "src/sc_neurocore/neurons/models/multicompartment_mcn.py",
     "src/sc_neurocore/accel/go/services/multicompartment_mcn.go": REPO_ROOT

@@ -37,8 +37,8 @@ SOURCE_HASH_PATHS = {
     "engine/Cargo.toml": REPO_ROOT / "engine/Cargo.toml",
     "engine/examples/bench_rall_cable_implicit.rs": REPO_ROOT
     / "engine/examples/bench_rall_cable_implicit.rs",
-    "engine/src/neurons/multi_compartment.rs": REPO_ROOT
-    / "engine/src/neurons/multi_compartment.rs",
+    "engine/src/neurons/multi_compartment/rall_cable.rs": REPO_ROOT
+    / "engine/src/neurons/multi_compartment/rall_cable.rs",
     "src/sc_neurocore/neurons/models/rall_cable.py": REPO_ROOT
     / "src/sc_neurocore/neurons/models/rall_cable.py",
     "src/sc_neurocore/accel/go/services/rall_cable.go": REPO_ROOT

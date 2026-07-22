@@ -400,7 +400,7 @@ core throughput claim.
 | Continuous attractor | 10k | 6.58 ms | **658 ns** | 16-unit bump attractor |
 | Arcane | 10k | 1.37 ms | **137 ns** | Deep accumulator + novelty |
 
-### Multi-Compartment (`neurons/multi_compartment.rs`)
+### Multi-Compartment (`neurons/multi_compartment/`)
 
 | Model | Steps | Median | Per step | Notes |
 |-------|-------|--------|----------|-------|

@@ -209,10 +209,10 @@
   "python": "3.12.3",
   "repeats": 5,
   "source_hashes": {
-    "benchmarks/bench_model_hay_l5.py": "12b237d92caef3eb84493e50b7154120b3ca788266aea9acd7e4d99a2e6d7065",
+    "benchmarks/bench_model_hay_l5.py": "07721bb198f088c77c829ee3c84f767b21eb5009096d915b1be0e4ac7a53ec3d",
     "engine/Cargo.toml": "3a571b276005266dcfba9f635e8e5e18edaee48d081daa447c5803980930904a",
     "engine/examples/bench_hay_l5_rk4.rs": "03b5d278e5a25c44dca633546bff20e23de2519084e85df5a6141ee595836627",
-    "engine/src/neurons/multi_compartment.rs": "15cdea6c5f8fc095c4942016b2db4ea04e0bd1bb5596b10f7b03de93779d9bea",
+    "engine/src/neurons/multi_compartment/hay_l5.rs": "43a95dc8e1ec8531aa50669044c673905e9d77b16852d32da6522aaebdd95ac7",
     "src/sc_neurocore/accel/go/services/hay_l5.go": "b42c754b1e72b5ba860d43a4f2f7f0af2371839a1b3d7241c235bab03b78a8cb",
     "src/sc_neurocore/accel/go/services/hay_l5_test.go": "3e336208d7ad786c71aa7e2f40647a2b58fd753afdb0421dc32251e2333c1a64",
     "src/sc_neurocore/accel/julia/neurons/hay_l5.jl": "87fce58bfc7b4378ef77d145695843a4d65bdbacb05eac0dedc1794974618170",

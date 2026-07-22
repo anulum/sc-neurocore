@@ -274,10 +274,10 @@
     }
   ],
   "source_hashes": {
-    "benchmarks/bench_model_multicompartment_mcn.py": "4fb5f26e863fd9fb02447822812797d1abe7c482d6cb5eda5c584619f8613f31",
+    "benchmarks/bench_model_multicompartment_mcn.py": "30b482660dd0071fe3970515e32645bfce720e9db904c0eaf86fbcd3d6793e67",
     "engine/Cargo.toml": "3a571b276005266dcfba9f635e8e5e18edaee48d081daa447c5803980930904a",
     "engine/examples/bench_multicompartment_mcn_rk4.rs": "1e8c496f2cd816d0b8398045402b267a92f9b59b6be3e712bc0f4f336b69f98f",
-    "engine/src/neurons/multi_compartment.rs": "15cdea6c5f8fc095c4942016b2db4ea04e0bd1bb5596b10f7b03de93779d9bea",
+    "engine/src/neurons/multi_compartment/multicompartment_mcn.rs": "5c03bc6ecca82429c18ea8d1cbba33bef5d8ebb6f44ef3269d48fb66d056cfc9",
     "src/sc_neurocore/neurons/models/multicompartment_mcn.py": "c50f84dc732a9876f6184a837e26ae1b3629f2398f3fbec34ede175fcd844596",
     "src/sc_neurocore/accel/go/services/multicompartment_mcn.go": "9aabac2f2093a0e828f06771728a437beb67b2cd402ecbf81779e4839e79166a",
     "src/sc_neurocore/accel/go/services/multicompartment_mcn_test.go": "7c09de47b70ff65ba47b459f0fd40edaa056e3ea0ee255d1ef119e0d3cbf31da",
