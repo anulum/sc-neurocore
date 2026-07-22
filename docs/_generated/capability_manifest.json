@@ -970,8 +970,8 @@
     "public_documentation_pages": 583,
     "python_model_classes": 158,
     "python_model_source_modules": 153,
-    "rust_pyo3_model_wrappers": 178,
-    "test_files": 1512
+    "rust_pyo3_model_wrappers": 177,
+    "test_files": 1513
   },
   "documentation": {
     "public_pages": [
@@ -2562,7 +2562,6 @@
       "BendaHerzNeuron",
       "BertramPhantomBurster",
       "BitStreamTensor",
-      "BitstreamAverager",
       "BoothRinzelNeuron",
       "BrainScaleSAdExNeuron",
       "BrunelNetwork",
@@ -2623,6 +2622,7 @@
       "InhibitoryLIFNeuron",
       "InhomogeneousPoissonNeuron",
       "IntegerQIFNeuron",
+      "Izhikevich",
       "JansenRitUnit",
       "KLIFNeuron",
       "KilincBhattMapNeuron",
@@ -2651,7 +2651,6 @@
       "MultiTimescaleNeuron",
       "MyelinatedAxon",
       "NMDANeuron",
-      "NetworkRunner",
       "NeuroGridNeuron",
       "Nociceptor",
       "NodeOfRanvier",
@@ -3471,6 +3470,7 @@
       "tests/test_izhikevich2007_backends.py",
       "tests/test_izhikevich2007_engine_binding.py",
       "tests/test_izhikevich_20_patterns.py",
+      "tests/test_izhikevich_engine_binding.py",
       "tests/test_jansen_rit_accel_dispatch_contracts.py",
       "tests/test_jansen_rit_backends.py",
       "tests/test_jansen_rit_dynamics.py",

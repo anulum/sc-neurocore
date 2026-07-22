@@ -89,6 +89,8 @@ mod iqif_binding;
 pub mod ir;
 #[path = "bindings/izhikevich2007.rs"]
 mod izhikevich2007_binding;
+#[path = "bindings/izhikevich.rs"]
+mod izhikevich_binding;
 pub mod layer;
 pub(crate) mod learning_bindings;
 pub mod lgssm;
@@ -326,7 +328,7 @@ fn sc_neurocore_engine(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_class::<PySCPNMetrics>()?;
     hdc_binding::register(m)?;
     m.add_class::<PyBrunelNetwork>()?;
-    m.add_class::<PyIzhikevich>()?;
+    izhikevich_binding::register(m)?;
     ir::bindings::register(m)?;
     m.add_class::<PyAdExNeuron>()?;
     m.add_class::<PyExpIFNeuron>()?;
@@ -502,48 +504,6 @@ fn set_num_threads(n: usize) -> PyResult<()> {
         .build_global()
         .map_err(|e| PyValueError::new_err(format!("Cannot set thread pool: {e}")))
 }
-
-// ── Izhikevich PyO3 wrapper ─────────────────────────────────────
-
-#[pyclass(
-    name = "Izhikevich",
-    module = "sc_neurocore_engine.sc_neurocore_engine"
-)]
-pub struct PyIzhikevich {
-    inner: neuron::Izhikevich,
-}
-
-#[pymethods]
-impl PyIzhikevich {
-    #[new]
-    #[pyo3(signature = (a=0.02, b=0.2, c=-65.0, d=8.0, dt=1.0))]
-    fn new(a: f64, b: f64, c: f64, d: f64, dt: f64) -> Self {
-        Self {
-            inner: neuron::Izhikevich::new(a, b, c, d, dt),
-        }
-    }
-
-    fn step(&mut self, current: f64) -> i32 {
-        self.inner.step(current)
-    }
-
-    fn reset(&mut self) {
-        self.inner.reset();
-    }
-
-    fn reset_state(&mut self) {
-        self.reset();
-    }
-
-    fn get_state(&self, py: Python<'_>) -> PyResult<Py<PyAny>> {
-        let dict = PyDict::new(py);
-        dict.set_item("v", self.inner.v)?;
-        dict.set_item("u", self.inner.u)?;
-        Ok(dict.into_any().unbind())
-    }
-}
-
-// ── BitstreamAverager PyO3 wrapper ──────────────────────────────
 
 // ── AdEx, ExpIF, Lapicque PyO3 wrappers ────────────────────────
 

@@ -67,6 +67,25 @@ def test_rust_wrapper_scan_includes_modular_binding_siblings(tmp_path: Path) -> 
     assert tool._rust_pyo3_wrapper_names(facade) == ["FacadeModel", "ModularModel"]
 
 
+def test_rust_model_wrapper_scan_excludes_engine_infrastructure(tmp_path: Path) -> None:
+    tool = _load_tool()
+    facade = tmp_path / "engine/src/pyo3_neurons.rs"
+    binding = tmp_path / "engine/src/bindings/infrastructure.rs"
+    _write_file(
+        facade,
+        'py_neuron_default!("ActualModel", PyActualModel, ActualModel);\n',
+    )
+    _write_file(
+        binding,
+        "\n".join(
+            f'#[pyclass(name = "{name}", module = "example")]\nstruct Py{name};'
+            for name in ("BitstreamAverager", "Lfsr16", "NetworkRunner")
+        ),
+    )
+
+    assert tool._rust_pyo3_wrapper_names(facade) == ["ActualModel"]
+
+
 def test_manifest_validation_rejects_count_drift() -> None:
     tool = _load_tool()
     manifest = tool.build_capability_manifest(_repo_root())

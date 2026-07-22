@@ -95,9 +95,9 @@ SC-NeuroCore is positioned for neuromorphic R&D, stochastic accelerator design, 
 | Python model source modules | 153 |
 | Python model classes | 158 |
 | Model documentation pages | 175 |
-| Rust PyO3 model wrappers | 178 |
+| Rust PyO3 model wrappers | 177 |
 | Optional extras | 28 |
-| Python test files | 1512 |
+| Python test files | 1513 |
 | Public documentation pages | 583 |
 | GitHub Actions workflows | 20 |
 
@@ -676,7 +676,7 @@ pip install -r requirements-dev.txt   # runtime + dev tools
 
 ## Rust Engine (176 PyO3 Wrappers, 162-Model NetworkRunner)
 
-The `sc_neurocore_engine` crate provides 176 Rust PyO3 model wrappers callable
+The `sc_neurocore_engine` crate provides 177 Rust PyO3 model wrappers callable
 from Python (including ArcaneNeuron), a 162-model NetworkRunner with
 Rayon-parallel population simulation (100K+ neurons), and SIMD-accelerated
 primitives with dispatch across five ISAs (AVX-512, AVX2, NEON, SVE,
@@ -696,7 +696,7 @@ evidence before publication.
 | Category | Scope |
 |----------|-------|
 | Primitives | Bernoulli + Sobol bitstream, pack/unpack, popcount, SIMD (5 ISAs) |
-| Neurons | 176 PyO3 model wrappers; 162 names wired into NetworkRunner |
+| Neurons | 177 PyO3 model wrappers; 162 names wired into NetworkRunner |
 | NetworkRunner | 162-model fused simulation loop with CSR projections and Rayon parallelism |
 | Synapses | Static, STDP, Reward-STDP |
 | Layers | Dense, Conv2D, Recurrent, Learning, Fusion, Memristive, Attention |
